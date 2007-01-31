@@ -1,0 +1,142 @@
+#!/usr/bin/perl
+use Getopt::Std;
+
+
+#randomiserer urlkøen.
+
+use String::CRC32;
+use common qw(fin_domene);
+
+use constant UrlQueuePostLength => 204;
+use constant nrOfqueues => 4000;
+
+#make elementer man skal ha i minne fo hver kø. Når dette nåes lagres den køen på disk.
+use constant maxQueuesElementsInMemory => 1000000;
+
+our $terminated = 0;
+my $queues = ();
+
+getopts('t', \%opts);
+
+print "t : $opts{'t'}, ARGV $ARGV[0]\n";
+
+if ($#ARGV == -1) {
+	print qq{
+Dette programet splitter UrlQueue i N (definert i: nrOfqueues) mindre 
+køer basert på domene, som så merges, slik at urler fra samme domene 
+ikke blir liggenede rett etter hverandre. Dette for å ungå at vi besøker
+en server for ofte.
+
+Bruk:
+	perl splitUrlQueue.pl UrlQueueFil
+};
+	exit;
+}
+
+
+
+
+open(UDFILE,"+<$ARGV[0]") or die("Cant open $ARGV[0]: $!");
+binmode(UDFILE);
+flock(UDFILE,2);
+
+my $ElementsInMemory = 0;
+my $cont = 0;
+$SIG{INT} = $SIG{TERM} = $SIG{HUP} = \&signal_handler;
+while ((!eof(UDFILE)) && (not $terminated)) {
+
+	read(UDFILE,$post,UrlQueuePostLength) or warn($!);
+	my ($url,$DocID) = unpack('A200,I',$post);
+	
+	my $UrlCRC32 = crc32(fin_domene($url));
+	my $mod = $UrlCRC32 % nrOfqueues;
+	#print "$mod - $url\n"; 
+	
+	push(@{ $queues[$mod] },$post);
+	#push(@{ $queues[$mod] },$url);
+	
+	$ElementsInMemory++;
+	
+	if ($ElementsInMemory > maxQueuesElementsInMemory) {
+		savequeue(@queues);
+		#nuler ut køen nå nor den er lagret
+		@queues = ();
+		$ElementsInMemory = 0;
+	}
+
+	if (($cont % 100000) == 0) {
+		print "Kommet til $cont\n";
+	}
+
+	$cont++;
+}
+
+if (exists $opts{'t'}) {
+	print "will truncate file\n";
+	truncate(UDFILE,0) or warn("can`t truncate: $!");
+}
+
+close(UDFILE);
+
+savequeue(@queues);
+
+
+
+
+
+
+sub savequeue {
+	my(@queue) = @_;
+	#my $queuenr = shift;
+	#my @queue = shift;
+
+	print "saveing queus\n";
+	
+	open(NEWUDFILE,'>>../data/UrlQueue') or die("Cant open ../data/UrlQueue: $!");
+	binmode(NEWUDFILE);
+	flock(NEWUDFILE,2);
+	# Reset the file pointer to the end of the file, in case 
+	# someone wrote to it while we waited for the lock...
+	seek(NEWUDFILE,0,2);
+
+
+	#så lenge vi fortsetter å lese ut poster gjør vi det
+	$posterigjen = 1;
+	while ($posterigjen) {
+	
+	$posterigjen = 0;
+	
+		my $count = 0;
+		foreach $i (@queue) {
+		
+			if (scalar(@{ $i} ) != 0) {
+				my $post = shift(@{ $i});
+			
+				#print "$count: $post\n";
+				print NEWUDFILE $post;
+				
+				$posterigjen = 1;
+			}
+		
+			$count++;
+		}
+	}
+	
+	close(NEWUDFILE);
+	
+
+}
+
+############################################################################################################################
+# hånterer signaler
+############################################################################################################################
+sub signal_handler {	
+	if (not $terminated) {
+		$terminated = 1;
+
+		print "\n\aOk, begynner og avslutte\n\n";
+	}
+	else {
+		die("Motok killsignal nr to, dør");
+	}
+}

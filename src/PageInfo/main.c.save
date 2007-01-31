@@ -1,0 +1,24 @@
+#include "../common/DocumentIndex.h"
+
+int main (int argc, char *argv[]) {
+
+        struct DocumentIndexFormat DocumentIndexPost;
+	unsigned int DocID;
+
+        if (argc < 2) {
+                printf("Dette programet gir info om en DocID\n\n\tUsage PageInfo DocID\n");
+                exit(0);
+        }
+
+	DocID = atol(argv[1]);
+
+	//int DIRead (struct DocumentIndexFormat *DocumentIndexPost, int DocID)
+
+	if (DIRead(&DocumentIndexPost,DocID)) {
+
+		printf("Url: %s\nSprok: %s\nOffensive_code: %hu\nDokumenttype: %s\nCrawleDato: %u\nAntallFeiledeCrawl: %hu\nAdultWeight: %hu\nRepositorySize: %u\nResourceSize: %u\nIPAddress: %u\nresponse: %hu\n",DocumentIndexPost.Url, DocumentIndexPost.Sprok, DocumentIndexPost.Offensive_code, DocumentIndexPost.Dokumenttype,  DocumentIndexPost.CrawleDato, DocumentIndexPost.AntallFeiledeCrawl,  DocumentIndexPost.Sha1, DocumentIndexPost.AdultWeight, DocumentIndexPost.RepositorySize, DocumentIndexPost.ResourceSize, DocumentIndexPost.IPAddress, DocumentIndexPost.response);
+	}
+	else {
+		printf("Cant read post\n");
+	}
+}

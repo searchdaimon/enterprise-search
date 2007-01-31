@@ -1,0 +1,94 @@
+
+Forord
+
+	Boitho's lagringssytem baserer seg på pakker med 500K sider. En slik pakke kales 
+	en "lot". Systemet kan lagre i 64 forskjelige mapper, slik at man kan bruke 64 disker. 
+	Mappene som kan brukes er spesifisert i filen "maplist.conf".
+
+	Lot'ene er veldig selvstendige, med alle informasjonen vi kjener for en side, som bilde, htmlen
+	og reversert index. De knyttes sammen av den inverterte indeksen. Denne arketekturen gjør det lett å 
+	flytte runt på lot'er.
+
+
+Bygging.
+
+	En felles Makefile i root mappen bygger det meste, bare skriv "make".
+
+
+Oversikt over hva mapper og filer i CVS treet gjør og betyr.
+
+Root filer
+
+        Makefile
+		Feles Makefile
+
+        maplist.conf
+		Oversikt over mapper for å lagre lot'er i.
+Mapper
+
+	Root mapper
+
+	/bin
+	/data
+	/perl
+	/php
+	/src
+
+
+/bin
+	Holder alle programmer bygd fra kildekode og shell skript.
+
+
+/data
+	Diverse data filer programene trenger.
+
+	Adult*.txt er svartelister brukt av pornofilteret for å lage en vekt for hvor 
+	pornografisk en side er. Et ord eller frase på hver linje.
+
+
+	/data/AdultHardCoreWords.txt
+		Ord som ikke brukes til vanlig, men bare brukes i en pornografisk betydning.
+
+	/data/AdultWords.txt
+		Ord som ofte brukes i pornografiske samenhenger.
+
+	/data/AdultFraser.txt
+		Fraser på to ord som ofte brukes i pornografiske samenhenger. En side kan for eksempel 
+		inneholde ”nude” og ”girls” uten å være spesielt prornografik, ""men ”ude ""giir
+		en høyere sannsynelighet.
+	
+	/data/bann_list.txt
+		Domener som har blitt bannet, med kommentarer som starter med "#"
+
+
+/perl
+
+	/perl/IndexerLot.pl
+		Indekserer en lot
+
+	/perl/InvertetIndexMaker.pl
+		Lager en felles invertert index for alle de reverserte indeksene som fins for alle lotene.
+
+	/per/lotwith.pl
+		Printer ut lot'er med en bestemt resurs / fil. For. eks "perl lotwith.pl reposetory" vil gi
+		en oversikt over alle lot'er som har "reposetory" fil.
+
+/php
+
+	/php/webklient/
+		Klienten kunder kan kjøre for å integrere Boitho resultater på sin side via XML feed.
+
+/src
+	Kildekode filer
+
+	/src/common
+		Felles filer.
+
+	/src/boitho_merge
+		Program for å legge til nye url’er.
+
+	/src/rread
+		Program som tar et lot nr inn og printer ut alle dokumntene i den loten.
+
+	/src/searchkernel
+		Kjernekoden for å kunne søke.

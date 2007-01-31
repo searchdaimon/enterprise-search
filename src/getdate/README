@@ -1,0 +1,4 @@
+Add new language:
+ Copy a set of tables, translate them and change the suffix.
+ Add a LANGAUGE_SUFFIX to getdate.h
+ Add add_language(SUFFIX) in init_getdate()

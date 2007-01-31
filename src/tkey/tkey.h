@@ -1,0 +1,2 @@
+int tkeyisok (char tkey[]);
+

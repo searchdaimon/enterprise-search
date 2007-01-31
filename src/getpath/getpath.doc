@@ -1,0 +1,12 @@
+/*
+ * getpath.doc
+ */
+
+/*
+ This little utility function parses a DOS file name and returns a structure
+ containing the drive, path, name and extension of the file.  If the drive 
+ and path are omitted in the input filename, getpath supplies the current
+ working directory by default.  The function was written for the Aztec C (tm)
+ compiler, but should be compatible with any standard C compiler.  A small
+ program, sample.c is included to show the operation of the function.
+*/

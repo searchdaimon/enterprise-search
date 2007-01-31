@@ -1,0 +1,3 @@
+parseTheEnv (struct QueryDataForamt *QueryData);
+
+

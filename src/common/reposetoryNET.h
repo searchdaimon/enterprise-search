@@ -1,0 +1,34 @@
+#ifndef _REPOSETORYNET_H_
+#define _REPOSETORYNET_H_
+#include <stdio.h>
+#include "define.h"
+
+int rGetNextNET(char *HostName, unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,char subname[]);
+
+
+void DIWriteNET (char *HostName, struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[]);
+
+int DIReadNET (char *HostName, struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[]);
+
+void closeNET ();
+
+unsigned long int DIGetIp (char *HostName, unsigned int DocID,char subname[]);
+
+
+void setLastIndexTimeForLotNET(char *HostName, int LotNr,char subname[]);
+unsigned int GetLastIndexTimeForLotNET(char *HostName, int LotNr,char subname[]);
+
+int rSendFile(char source[], char dest[], int LotNr, char opentype[],char subname[]);
+
+
+int rSendFileByOpenHandler(FILE *FILEHANDLER, char dest[], int LotNr, char opentype[],char subname[]);
+
+int rGetFileByOpenHandler(char source[],FILE *FILEHANDLER,int LotNr,char subname[]);
+
+int rmkdir(char dest[], int LotNr,char subname[]);
+
+int rComand(char dest[], int LotNr,char subname[]);
+
+off_t rGetFileSize(char source[], int LotNr,char subname[]);
+
+#endif //_REPOSETORYNET_H_

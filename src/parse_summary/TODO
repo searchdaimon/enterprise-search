@@ -1,0 +1,11 @@
+- Støtte for andre escapes enn bokstaver (f.eks tegnet for copyright).
+- Støtte for unicode.
+- Noen dokumenter forårsaker parse error?
+
+Summary:
+- Flere tagger som trigger span_start.
+
+Highlighter:
+- Utnytte setninger bedre.
+- Escapes teller for mange bokstaver med tanke på 160-tegn-grensa.
+- Støtte for æ, ø, å (escapes) i søkeord.

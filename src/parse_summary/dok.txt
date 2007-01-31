@@ -1,0 +1,28 @@
+
+D H S s S s h S s S s S s d D S s S s S s S s S s d
+[ [  x   x  ]  x   x   x  ] [  x   x   x   x   x  ]
+
+For hvert nytt ord som startposisjon, beregn "godheten" til startposisjonen, og "godheten" til sammendraget.
+
+
+s = w w w w w w w w .
+
+
+D H S s h S s d D S s d
+[ [  x  ]  x  ] [  x  ]
+
+x = w w w w . w w w w w w . w w . w w w w
+
+- Analyser setninger
+
+- Sjekk for trefford
+- Sjekk for trefffraser
+
+Beste snippet:
+
+Dynamisk programmering:
+
+- DIV-tag
+- Head-tag
+- Antall treff-ord
+- Antall treff-fraser

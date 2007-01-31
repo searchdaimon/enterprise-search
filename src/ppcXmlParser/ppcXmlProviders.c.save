@@ -1,0 +1,128 @@
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "../httpGet/httpGet.h"
+
+#include "ppcXml.h"
+
+void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages, int *nrOfPpcPages,char query[], char userip[]) {
+
+	int i, y;
+	char buff[200];
+       	char *htmlstring = NULL;
+	char url[1024];
+
+	printf("%s\n",provider);
+
+	if (strcmp(provider,"revenuepilot") == 0) {
+		
+
+
+		//genererer url
+	
+		
+		sprintf(url,"http://search.revenuepilot.com/servlet/search?mode=xml2&id=24605&tid=0&perpage=5&filter=on&skip=0&related=off&ip=%s&keyword=%s",userip,query);
+
+
+        	httpGet(&htmlstring,url);
+
+		///////////////////////////////////
+		//debug: lagre datane vi får inn
+		/*
+		FILE *FH;
+		FH = fopen("boithoads.out","w");
+		fprintf(FH,"%s",htmlstring);
+		fclose(FH);
+		*/
+		///////////////////////////////////
+
+        	//printf("html string:\n%s\n\n",htmlstring);
+
+
+
+		
+		parsPpcAds(htmlstring,ppcPages,nrOfPpcPages,"RESULTS","LISTING",NULL,"TITLE","DESCRIPTION","LINK","BID","DOMAIN");
+
+        	free(htmlstring);
+
+		for(i=0;i<(*nrOfPpcPages);i++) {
+			//printf("%i : %s\n",i,ppcPages[i].url);
+			//sprintf(ppcPages[i].url,"aaaa %s",ppcPages[i].url);
+			strcpy(buff,"http://");
+			strcat(buff,ppcPages[i].url);
+			strcpy(ppcPages[i].url,buff);
+			strcat(ppcPages[i].url,"/");
+			//printf("done %i : %s\n",i,ppcPages[i].url);
+
+			for(y=0;y<strlen(ppcPages[i].title);y++) {
+
+                        	if(
+                        		(isalnum(ppcPages[i].title[y]))
+                        		|| (43 == (unsigned int)ppcPages[i].title[y])
+                        		|| (34 == (unsigned int)ppcPages[i].title[y])
+                        		|| (32 == (unsigned int)ppcPages[i].title[y])
+                        		|| (45 == (unsigned int)ppcPages[i].title[y])
+                        		|| (128 < (unsigned int)ppcPages[i].title[y])
+
+                        	) {
+                        	        //gjø ingenting for nå
+                        	}
+                        	else {
+                                	ppcPages[i].title[y] = ' ';
+                        	}
+
+                	}
+			for(y=0;y<strlen(ppcPages[i].description);y++) {
+
+                        	if(
+                        		(isalnum(ppcPages[i].description[y]))
+                        		|| (43 == (unsigned int)ppcPages[i].description[y])
+                        		|| (34 == (unsigned int)ppcPages[i].description[y])
+                        		|| (32 == (unsigned int)ppcPages[i].description[y])
+                        		|| (45 == (unsigned int)ppcPages[i].description[y])
+                        		|| (128 < (unsigned int)ppcPages[i].description[y])
+
+                        	) {
+                        	        //gjø ingenting for nå
+                        	}
+                        	else {
+                                	ppcPages[i].description[y] = ' ';
+                        	}
+
+                	}
+
+		}
+
+	}
+	else if (strcmp(provider,"hent") == 0) {
+
+		sprintf(url,"http://www.hent.no/hent/xml.php?cdata=1&strict=1&affiliate=boitho&Terms=%s&IP=%s",query,userip);
+
+		httpGet(&htmlstring,url);
+
+		///////////////////////////////////
+                //debug: lagre datane vi får inn
+		/*
+		FILE *FH;
+                FH = fopen("boithoads.out","w");
+                fprintf(FH,"%s",htmlstring);
+                fclose(FH);
+		*/
+		///////////////////////////////////
+
+		parsPpcAds(htmlstring,ppcPages,nrOfPpcPages,"dsxout","listing","results","title","description","redirect","BID","url");
+
+		for(i=0;i<nrOfPpcPages;i++) {
+	
+		}
+
+
+        	free(htmlstring);
+
+	}
+	else {
+		printf("unknow prowider: %s\n",provider);
+	}
+
+
+}

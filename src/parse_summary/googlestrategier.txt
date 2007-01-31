@@ -1,0 +1,28 @@
+
+Google - Presentasjon av sammendrag på søketreff:
+
+Første søketreff.
+
+Tar fra begynnelsen av setningen (om innenfor scopet).
+Selv om søketreffet blir det siste ordet som kommer med.
+
+Dersom paragrafen avslutter innenfor scopet, tas tekst før
+den første setningen med.
+
+Av og til tar den med tekst før starten av første setning,
+i tillegg til tekst etter ("... bla. Bla bla. Bla ...").
+Ukjent kriterium.
+
+"DETTE ER EN OVERSKRIFT"
+"Dette er fortsettelsen."
+blir: "Dette er en overskrift. Dette er fortsettelsen."
+
+Av og til tas med to treff med ... imellom.
+Ukjent kriterium.
+
+
+Tilfeller med flere søkeord:
+
+Velger sammendrag med flest mulig søketreff innenfor scopet.
+
+Alternativt en sammensetning av to treff med ... imellom.

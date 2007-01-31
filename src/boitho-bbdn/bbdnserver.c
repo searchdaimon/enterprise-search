@@ -1,0 +1,220 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <inttypes.h>
+
+
+#include "../common/define.h"
+#include "../common/daemon.h"
+#include "../bbdocument/bbdocument.h"
+
+#include "bbdn.h"
+
+#define PROTOCOLVERSION 1
+
+void connectHandler(int socket);
+
+
+
+int main (void) {
+
+        sconnect(connectHandler, BLDPORT);
+
+        printf("conek ferdig \n");
+
+        exit(0);
+}
+
+void connectHandler(int socket) {
+        struct packedHedderFormat packedHedder;
+	int isAuthenticated = 0;
+	char tkeyForTest[32];
+	int i,n;
+	int intrespons;
+	int count = 0;
+
+
+while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
+
+	#ifdef DEBUG
+	printf("size is: %i\nversion: %i\ncommand: %i\n",packedHedder.size,packedHedder.version,packedHedder.command);
+	#endif
+	packedHedder.size = packedHedder.size - sizeof(packedHedder);
+
+	if (packedHedder.command == bbc_askToAuthenticate) {
+		if ((i=recv(socket, tkeyForTest, sizeof(tkeyForTest),MSG_WAITALL)) == -1) {
+        	    perror("Cant read tkeyForTest");
+        	    exit(1);
+        	}		
+		if (1) {
+			printf("authenticated\n");
+			intrespons = bbc_authenticate_ok;
+
+			bbdocument_init();
+
+			isAuthenticated = 1;
+		}
+		else {
+			printf("authenticate faild\n");
+			intrespons = bbc_authenticate_feiled;
+
+               	}
+
+		if ((n=sendall(socket, &intrespons, sizeof(intrespons))) == -1) {
+                               perror("Cant recv filerest");
+                               exit(1);
+               	}
+			
+		
+	}
+	else {
+		if (!isAuthenticated) {
+			printf("user not autentikated\n");
+			exit(1);
+		}
+
+
+		if (packedHedder.command == bbc_docadd) {
+			#ifdef DEBUG
+			printf("bbc_docadd\n");
+			#endif
+
+			char *subname,*documenturi,*documenttype,*document,*acl,*title,*doctype;
+			int dokument_size;
+			unsigned int lastmodified;
+
+			//subname
+			if ((i=recv(socket, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
+                    		perror("Cant read intrespons");
+                    		exit(1);
+                	}
+			subname = malloc(intrespons +1);
+			if ((i=recv(socket, subname, intrespons,MSG_WAITALL)) == -1) {
+                                perror("Cant read subname");
+                                exit(1);
+                        }
+
+			//documenturi
+			if ((i=recv(socket, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
+                    		perror("Cant read intrespons");
+                    		exit(1);
+                	}
+			documenturi = malloc(intrespons +1);
+			if ((i=recv(socket, documenturi, intrespons,MSG_WAITALL)) == -1) {
+                                perror("Cant read documenturi");
+                                exit(1);
+                        }
+
+			//documenttype
+			if ((i=recv(socket, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
+                    		perror("Cant read intrespons");
+                    		exit(1);
+                	}
+			documenttype = malloc(intrespons +1);
+			if ((i=recv(socket, documenttype, intrespons,MSG_WAITALL)) == -1) {
+                                perror("Cant read documenttype");
+                                exit(1);
+                        }
+
+			//document
+			//dokument_size
+			if ((i=recv(socket, &dokument_size, sizeof(dokument_size),MSG_WAITALL)) == -1) {
+                    		perror("Cant read dokument_size");
+                    		exit(1);
+                	}
+			if (dokument_size == 0) {
+				document = NULL;
+			}
+			else {
+				document = malloc(dokument_size +1);
+				if ((i=recv(socket, document, dokument_size,MSG_WAITALL)) == -1) {
+                        	        perror("Cant read document");
+                        	        exit(1);
+                        	}
+			}
+			//lastmodified
+			if ((i=recv(socket, &lastmodified, sizeof(lastmodified),MSG_WAITALL)) == -1) {
+                    		perror("Cant read lastmodified");
+                    		exit(1);
+                	}
+
+			//acl
+			if ((i=recv(socket, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
+                    		perror("Cant read intrespons");
+                    		exit(1);
+                	}
+			acl = malloc(intrespons +1);
+			if ((i=recv(socket, acl, intrespons,MSG_WAITALL)) == -1) {
+                                perror("Cant read acl");
+                                exit(1);
+                        }
+
+			//title
+			if ((i=recv(socket, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
+                    		perror("Cant read intrespons");
+                    		exit(1);
+                	}
+			title = malloc(intrespons +1);
+			if ((i=recv(socket, title, intrespons,MSG_WAITALL)) == -1) {
+                                perror("Cant read title");
+                                exit(1);
+                        }
+
+			//doctype
+			if ((i=recv(socket, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
+                    		perror("Cant read intrespons");
+                    		exit(1);
+                	}
+			doctype = malloc(intrespons +1);
+			if ((i=recv(socket, doctype, intrespons,MSG_WAITALL)) == -1) {
+                                perror("Cant read doctype");
+                                exit(1);
+                        }
+			printf("got subname \"%s\": title \"%s\". Nr %i\n",subname,title,count);
+
+			bbdocument_add(subname,documenturi,documenttype,document,dokument_size,lastmodified,acl,title,doctype);
+
+			free(subname);
+			free(documenturi);
+			free(documenttype);
+			free(document);
+			free(acl);
+			free(title);
+			free(doctype);
+		}
+		else if (packedHedder.command == bbc_closecollection) {
+			printf("closecollection\n");
+			char *subname;
+			//subname
+                        if ((i=recv(socket, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
+                                perror("Cant read intrespons");
+                                exit(1);
+                        }
+                        subname = malloc(intrespons +1);
+                        if ((i=recv(socket, subname, intrespons,MSG_WAITALL)) == -1) {
+                                perror("Cant read subname");
+                                exit(1);
+                        }
+
+			bbdocument_close();
+
+			//toDo må bruke subname, og C ikke perl her
+			printf("cleanin lots start\n");
+			system("perl /home/boitho/boitho/websearch/perl/cleanLots.pl");
+			printf("cleanin lots end\n");
+
+			
+		}
+		else {
+			printf("unnown comand. %i\n", packedHedder.command);
+		}
+	}
+
+	++count;
+
+}
+
+}
