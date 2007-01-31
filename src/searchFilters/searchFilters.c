@@ -137,12 +137,12 @@ int filterSameCrc32(int showabal,struct SiderFormat *CurentSider, struct SiderFo
 
 }
 
-int filterSameUrl(int showabal,struct SiderFormat *CurentSider, struct SiderFormat *Sider) {
+int filterSameUrl(int showabal,char url[], struct SiderFormat *Sider) {
 
 	int i;
 
 	for (i=0;i<showabal;i++) {
-		if (strcmp(Sider[i].url,(*CurentSider).url) == 0) {
+		if (strcmp(Sider[i].url,url) == 0) {
 			//printf("Url is the same\n");
 			return 1;
 		}		

@@ -26,3 +26,28 @@ void debug(const char *fmt, ...) {
 
 }
 
+
+void bwarn(const char *fmt, ...) {
+
+        #ifdef DEBUG
+
+
+        va_list     ap;
+
+        va_start(ap, fmt);
+
+                printf("bwarn: ");
+                vprintf(fmt,ap);
+                printf("\n");
+
+
+
+
+        va_end(ap);
+
+	//kansje skrive det til fil?
+        #endif
+
+}
+
+

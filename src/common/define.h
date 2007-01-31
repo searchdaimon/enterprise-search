@@ -32,6 +32,7 @@
 #define AdultWeightForXXX 50
 
 #define cashedir "/home/boitho/cashedir"
+#define prequerydir "/home/boitho/prequerydir"
 
 #define BoithosAmazonAssociateTag "boitho-20"
 #define BoithosAmazonSubscriptionId "0WG4PH85SE9114TS7JR2"
@@ -47,6 +48,7 @@
 //#define maxSubnameLength 64
 #define maxSubnameLength 512 //512 fra 6 nov
 
+#define BSDPORT 6501 //search system
 #define BLDPORT 3490 //lot deamon
 #define BADPORT 3491 //Boitho autentifisering
 #define CMDPORT 3492 //boitho crawler manager
@@ -260,6 +262,8 @@ struct SiderFormat {
 	char user[21];
 	float bid;
 	struct subnamesFormat subname;
+	char HtmlPreparsed;
+	double pageGenerateTime;
 };
 
 struct queryTimeFormat {
@@ -280,6 +284,24 @@ struct queryTimeFormat {
 	double crawlManager;
 	double getUserObjekt;
 	double cmc_conect;
+	double UrlSearch;
+	double popRank;
+	double responseShortning;
+	double searchSimple;
+};
+
+struct filtersTrapedFormat {
+	int filterAdultWeight_1;
+	int filterSameCrc32_1;
+	int filterSameUrl;
+	int find_domain_no_subname;
+	int filterSameDomain;
+	int filterTLDs;
+	int filterResponse;
+	int cantpopResult;
+	int cmc_pathaccess;
+	int filterSameCrc32_2;
+	int cantDIRead;
 };
 
 struct SiderHederFormat {
@@ -294,6 +316,7 @@ struct SiderHederFormat {
 	int nrOfSubnames;
 	//int *dates[11]; //= {0,0,0,0,0,0,0,0,0,0,0};
 	int dates[11];
+	struct filtersTrapedFormat filtersTraped;
 };
 
 //formatet på anchor filer
