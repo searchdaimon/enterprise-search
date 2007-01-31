@@ -1,6 +1,6 @@
 
-#CC=gcc -p -g
-CC=/usr/local/bin/gcc -O2
+CC=/usr/local/bin/gcc -p -g
+#CC=/usr/local/bin/gcc -O2
 # -O2 -Wall
 
 all:

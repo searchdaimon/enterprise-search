@@ -89,8 +89,8 @@ utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
 \&#[0-9]+;		{ bhpm_newutf8( atoi(&(yytext[2])), yyscanner, WORD ); }
 \&			{ bhpm_newstring("&amp;", yyscanner, ESC); }
 [\ \t\n\r\f]+		{ (bhpmget_extra(yyscanner))->space = 1; }
-{latin-sup}		{ bhpm_newutf8( (int)yytext[0], yyscanner, WORD ); printf("[%s]\n", yytext); }
-[\200-\377]		{ bhpm_newutf8( (int)yytext[0], yyscanner, ESC); }
+{latin-sup}		{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, WORD ); printf("[%s]\n", yytext); }
+[\200-\377]		{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, ESC); }
 \<{blank}*script[^\>]*\> {	// Ignore characters between script-tags.
 			    BEGIN SCRIPT;
 			}
@@ -367,6 +367,8 @@ static inline void bhpm_newutf8( int val, yyscan_t scanner, int tt )
 {
     struct bhpm_yy_extra	*le = bhpmget_extra( scanner );
     int				old_slen;
+
+//    printf("\033[1;33m%i\033[0m\n", val);
 
     if (le->tt == WORD && (tt != WORD || le->space == 1))
 	{
