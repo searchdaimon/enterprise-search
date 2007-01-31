@@ -202,38 +202,14 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 							//htmlBufferSize = strlen(htmlBuffer);
 							//printf("titleaa %s\n",titleaa);
 						
-							/////////////////// Midlertidig bugfiks for No title problemet 
-							if (titleaa[0] == '\0') {
+							//må være med når No title buggen er fikset. Slett dette og hakk ut det over
+							//ToDo minne kopiering er kansje ikke det raskeste her
+							strcpy(htmlBuffer,body);
+							htmlBufferSize = strlen(htmlBuffer);
+							printf("titleaa %s\n",titleaa);
 
-								printf("title is emty. Will try to read html from disk\n");
+							(*Sider).HtmlPreparsed = 1;
 
-								if (titleaa != NULL) free(titleaa);
-                                        			if (body != NULL) free(body);
-                                        			if (metakeyw != NULL) free(metakeyw);
-                                        			if (metadesc != NULL) free(metadesc);
-
-								if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&aclbuffer) != 1) {
-									//kune ikke lese html. Pointer owerflow ?
-									printf("error reding html for %s\n",(*Sider).DocumentIndex.Url);
-									sprintf((*Sider).description,"Html error. Can't read html");
-									(*Sider).title[0] = '\0';
-									(*SiderHeder).showabal++;
-									returnStatus = 1;
-								
-								}
-								else {
-
-									generate_summary( htmlBuffer, htmlBufferSize, &titleaa, &body, &metakeyw, &metadesc );
-								}
-							//}
-                                        		}
-							else {
-								//må være med når No title buggen er fikset. Slett dette og hakk ut det over
-								//ToDo minne kopiering er kansje ikke det raskeste her
-								strcpy(htmlBuffer,body);
-								htmlBufferSize = strlen(htmlBuffer);
-								printf("titleaa %s\n",titleaa);
-							}
 					
 						///////////////////////////////////////
 					}
@@ -254,6 +230,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 
 						generate_summary( htmlBuffer, htmlBufferSize, &titleaa, &body, &metakeyw, &metadesc );
 						
+						(*Sider).HtmlPreparsed = 0;
 
                         	                /*
 						//Debug: får å sette vedier riktig hvis man skal hake ut sumery og hilitning

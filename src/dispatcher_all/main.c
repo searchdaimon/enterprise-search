@@ -563,8 +563,8 @@ int main(int argc, char *argv[])
 	//for nå angir vi bare servere slik. Må skilles u i egen fil siden
 
 	//char *servers[] = { "bbs-002.boitho.com" , "bbs-003.boitho.com", "bbs-004.boitho.com", "bbs-005.boitho.com", "bbs-006.boitho.com" , "bbs-007.boitho.com" };
-	char *servers[] = { "bbs-002.boitho.com" , "bbs-003.boitho.com", "bbs-004.boitho.com", "bbs-005.boitho.com", "bbs-006.boitho.com" };
-	//char *servers[] = { "localhost" };
+	//char *servers[] = { "bbs-002.boitho.com" , "bbs-003.boitho.com", "bbs-004.boitho.com", "bbs-005.boitho.com", "bbs-006.boitho.com" };
+	char *servers[] = { "localhost" };
 	//char *servers[] = { "bbs-002.boitho.com" };
 
 	

@@ -5,7 +5,7 @@ CC = /usr/local/bin/gcc
 
 # Arguments passed to the compiler: -g causes the compiler to insert
 # debugging info into the executable and -Wall turns on all warnings
-CFLAGS =
+CFLAGS = -g
 
 # The dynamic libraries that the executable needs to be linked to
 # fjerner -ldb -static. Må legge dette til der de skal være
@@ -107,7 +107,7 @@ DIconvert: src/DIconvert/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/DIconvert/main.c -o bin/DIconvert $(LDFLAGS)
 
 boithoad: src/boithoad/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -D WITH_CONFIG
+	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -D WITH_CONFIG
 
 boithoadtest: src/boithoadtest/main.c
 	$(CC) $(CFLAGS) src/boithoadtest/main.c src/boithoadClientLib/liboithoaut.a -o bin/boithoadtest $(LDFLAGS)
