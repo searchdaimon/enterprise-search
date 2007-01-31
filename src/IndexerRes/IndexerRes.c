@@ -10,7 +10,7 @@
 #include "../common/langdetect.h"
 #include "../common/langToNr.h"
 #include "../IndexerRes/IndexerRes.h"
-
+#include "../parser/html_parser.h"
 
 
 
@@ -164,6 +164,82 @@ int wordTypeadd;
 				++pagewords.nr;		
 			}
 }
+
+void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf , void *largs)
+{
+
+
+	struct pagewordsFormat *pagewords = (struct pagewordsFormat *)largs;
+
+	#ifdef DEBUG
+    		printf("\t%s (%i) ", word, pos);
+	#endif
+    switch (pu)
+        {
+            case pu_word: 
+
+			wordsAdd(word,puf);
+
+			#ifdef DEBUG
+	    			switch (puf)
+        			{
+        			    	case puf_none: printf(" none"); break;
+        			    	case puf_title: printf(" +title"); break;
+        		    		case puf_h1: printf(" +h1"); break;
+        		    		case puf_h2: printf(" +h2"); break;
+        		    		case puf_h3: printf(" +h3"); break;
+        		    		case puf_h4: printf(" +h4"); break;
+        		    		case puf_h5: printf(" +h5"); break;
+        		    		case puf_h6: printf(" +h6"); break;
+		        	}
+
+				printf("[word] is now %s ",word); 
+			#endif
+
+
+		break;
+            case pu_linkword: 
+			#ifdef DEBUG
+				printf("[linkword]"); 
+			#endif
+		break;
+            case pu_link:
+
+			
+			linkadd(word);
+			#ifdef DEBUG 
+				printf("[link]"); 
+			#endif
+		break;
+            case pu_baselink:
+			#ifdef DEBUG 
+				printf("[baselink]");
+			#endif 
+		break;
+            case pu_meta_keywords: 
+			#ifdef DEBUG
+				printf("[meta keywords]"); 
+			#endif
+			break;
+            case pu_meta_description:
+			#ifdef DEBUG 
+				printf("[meta description]"); 
+			#endif
+			break;
+            case pu_meta_author:
+			#ifdef DEBUG 
+				printf("[meta author]");
+			#endif 
+			break;
+            default: printf("[...]");
+        }
+
+	#ifdef DEBUG
+    		printf("\n");
+	#endif
+
+}
+
 
 int compare_elements_words (const void *p1, const void *p2) {
 
@@ -627,37 +703,6 @@ void html_parser_timout( int signo )
 
 }
 
-int handelPage_urlsonly(char lotServer[], unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char HtmlBuffer[],int HtmlBufferLength,char imagebuffebuffer[],FILE *revindexFilesHa[],struct DocumentIndexFormat *DocumentIndexPost, int DocID,int httpResponsCodes[], struct adultFormat *adult) {
-	
-	if ((*ReposetoryHeader).response == 200) {
-
-
-				if (strcmp((*ReposetoryHeader).content_type,"htm") == 0) {
-
-					//setter opp en alarm slik at run_html_parser blir avbrut hvis den henger seg 
-					alarm_got_raised = 0;
-					signal(SIGALRM, html_parser_timout);
-					
-					alarm( 5 );
-					//parser htmlen
-
-					run_html_parser( (*ReposetoryHeader).url, HtmlBuffer, HtmlBufferLength, fn_urlsonly );
-					alarm( 0);
-					if(alarm_got_raised) {
-						printf("run_html_parser did time out. At DocID %lu\n",(*ReposetoryHeader).DocID);
-					}
-					else {
-
-					}
-				
-				}
-				else {
-					printf("unknown content_type \"%s\"\n",(*ReposetoryHeader).content_type);
-				}
-
-
-	}
-}
 
 void handelPage(char lotServer[], unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char HtmlBuffer[],int HtmlBufferLength,char imagebuffebuffer[],FILE *revindexFilesHa[],struct DocumentIndexFormat *DocumentIndexPost, int DocID,int httpResponsCodes[], struct adultFormat *adult, unsigned char *langnr) {
 
@@ -667,6 +712,7 @@ void handelPage(char lotServer[], unsigned int LotNr,struct ReposetoryHeaderForm
 			++httpResponsCodes[(*ReposetoryHeader).response];
 		}
 
+		char *title, *body;
 
 		//printf("%lu %s\n",(*ReposetoryHeader).DocID, (*ReposetoryHeader).url);
 
@@ -682,7 +728,6 @@ void handelPage(char lotServer[], unsigned int LotNr,struct ReposetoryHeaderForm
 				//	fclose(FH);
 				//	exit(1);
 				//}
-
 		
 				
 				//begynner på en ny side
@@ -696,7 +741,10 @@ void handelPage(char lotServer[], unsigned int LotNr,struct ReposetoryHeaderForm
 					
 					alarm( 5 );
 					//parser htmlen
-					run_html_parser( (*ReposetoryHeader).url, HtmlBuffer, HtmlBufferLength, fn );
+					//run_html_parser( (*ReposetoryHeader).url, HtmlBuffer, HtmlBufferLength, fn );
+
+					html_parser_run((*ReposetoryHeader).url, HtmlBuffer, HtmlBufferLength,&title,&body,fn,NULL);
+
 					alarm( 0);
 					if(alarm_got_raised) {
 						printf("run_html_parser did time out. At DocID %lu\n",(*ReposetoryHeader).DocID);
@@ -733,135 +781,12 @@ void handelPage(char lotServer[], unsigned int LotNr,struct ReposetoryHeaderForm
 //		}
 
 			
+		free(title);
+		free(body);
 
 }
 
 
 
-void fn_urlsonly( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf )
-{
 
-
-	#ifdef DEBUG
-    		printf("\t%s (%i) ", word, pos);
-	#endif
-    switch (pu)
-        {
-            case pu_word: 
-
-
-		break;
-            case pu_linkword: 
-			#ifdef DEBUG
-				printf("[linkword]"); 
-			#endif
-		break;
-            case pu_link:
-			linkadd(word);
-			#ifdef DEBUG 
-				printf("[link]"); 
-			#endif
-		break;
-            case pu_baselink:
-			#ifdef DEBUG 
-				printf("[baselink]");
-			#endif 
-		break;
-            case pu_meta_keywords: 
-			#ifdef DEBUG
-				printf("[meta keywords]"); 
-			#endif
-		break;
-            case pu_meta_description:
-			#ifdef DEBUG 
-				printf("[meta description]"); 
-			#endif
-		break;
-            case pu_meta_author:
-			#ifdef DEBUG 
-				printf("[meta author]");
-			#endif 
-		break;
-            default: printf("[...]");
-        }
-
-	#ifdef DEBUG
-    		printf("\n");
-	#endif
-
-}
-
-
-void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf )
-{
-
-
-	#ifdef DEBUG
-    		printf("\t%s (%i) ", word, pos);
-	#endif
-    switch (pu)
-        {
-            case pu_word: 
-
-			wordsAdd(word,puf);
-
-			#ifdef DEBUG
-	    			switch (puf)
-        			{
-        			    	case puf_none: printf(" none"); break;
-        			    	case puf_title: printf(" +title"); break;
-        		    		case puf_h1: printf(" +h1"); break;
-        		    		case puf_h2: printf(" +h2"); break;
-        		    		case puf_h3: printf(" +h3"); break;
-        		    		case puf_h4: printf(" +h4"); break;
-        		    		case puf_h5: printf(" +h5"); break;
-        		    		case puf_h6: printf(" +h6"); break;
-		        	}
-
-				printf("[word] is now %s ",word); 
-			#endif
-
-
-		break;
-            case pu_linkword: 
-			#ifdef DEBUG
-				printf("[linkword]"); 
-			#endif
-		break;
-            case pu_link:
-
-			
-			linkadd(word);
-			#ifdef DEBUG 
-				printf("[link]"); 
-			#endif
-		break;
-            case pu_baselink:
-			#ifdef DEBUG 
-				printf("[baselink]");
-			#endif 
-		break;
-            case pu_meta_keywords: 
-			#ifdef DEBUG
-				printf("[meta keywords]"); 
-			#endif
-			break;
-            case pu_meta_description:
-			#ifdef DEBUG 
-				printf("[meta description]"); 
-			#endif
-			break;
-            case pu_meta_author:
-			#ifdef DEBUG 
-				printf("[meta author]");
-			#endif 
-			break;
-            default: printf("[...]");
-        }
-
-	#ifdef DEBUG
-    		printf("\n");
-	#endif
-
-}
 

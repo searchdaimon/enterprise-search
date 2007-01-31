@@ -57,7 +57,7 @@ wordConverter: src/wordConverter/main.c
 	$(CC) src/wordConverter/main.c -o bin/wordConverter
 
 #brukte før src/parser/libhtml_parser.a, byttet til src/parser/lex.yy.c src/parser/lex.yy.c slik at vi kan bruke gdb
-IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c  src/parser/lex.yy.c src/parser/y.tab.c -o bin/IndexerLot $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
+IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c src/parser/lex.bhpm.c src/parser/y.tab.c -o bin/IndexerLot $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
 
 IndexerLot: src/IndexerLot/main.c
 	$(CC) $(IndexerLot)

@@ -328,6 +328,7 @@ struct wordsFormat {
         unsigned int WordID;
         unsigned int position;
         unsigned short occurrence;
+	int unsortetIndexPosition;
 };
 
 

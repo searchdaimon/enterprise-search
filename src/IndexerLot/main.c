@@ -150,6 +150,7 @@ void alclot_add(struct alclotFormat *alclot,char acl[]) {
 int makePreParsedSummary(char HtmlBuffer[], int HtmlBufferSize, unsigned int DocID, FILE *SFH,
 	unsigned int *SummaryPointer,unsigned short *SummarySize) {
 
+/*
 #ifndef BLACK_BOKS
 
 	int n;
@@ -205,6 +206,7 @@ int makePreParsedSummary(char HtmlBuffer[], int HtmlBufferSize, unsigned int Doc
 	free(SummeryBuf);
 
 #endif
+*/
 }
 
 int main (int argc, char *argv[]) {

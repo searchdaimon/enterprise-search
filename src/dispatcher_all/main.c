@@ -1,4 +1,5 @@
     #include "../common/define.h"
+    #include "../common/lot.h"
     #include <arpa/inet.h>
     #include <stdio.h>
     #include <stdlib.h>
@@ -19,6 +20,9 @@
     #include "GeoIPCity.h"
 #endif
 
+    //temp
+    #define NO_LOGING
+
     #include <mysql.h>
 
     #include "../searchFilters/searchFilters.h"
@@ -28,13 +32,13 @@
     #include "../common/bstr.h"
     #include "../tkey/tkey.h"
 
-    #define PORT 6500 // the port client will be connecting to 
+    //#define PORT 6500 // the port client will be connecting to 
 
     #define MAXDATASIZE 100 // max number of bytes we can get at once 
 
     #define maxServers 100
 
-
+    extern int errno;
 
     //i hundredels sekunder (100 = 1sec)
     #define maxSocketWait_SiderHeder 1000
@@ -122,7 +126,7 @@ int bsconnect (int *sockfd, char server[]) {
 		fcntl((*sockfd), F_SETFL, O_NONBLOCK);
 		
         	their_addr.sin_family = AF_INET;    // host byte order 
-        	their_addr.sin_port = htons(PORT);  // short, network byte order 
+        	their_addr.sin_port = htons(BSDPORT);  // short, network byte order 
         	their_addr.sin_addr = *((struct in_addr *)he->h_addr);
         	memset(&(their_addr.sin_zero), '\0', 8);  // zero the rest of the struct 
 
@@ -177,17 +181,17 @@ int bsconnect (int *sockfd, char server[]) {
 int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 
 
-			int dataReceived = 0;
-			int y = 0;
-//        struct timeval timeout;
-//        struct timeval time;
+	int dataReceived = 0;
+	int y = 0;
+//      struct timeval timeout;
+//      struct timeval time;
         struct timespec timeout;
         struct timespec time;
         int socketWait;
 	int n,i;
-		int returnstatus = 1;
+	int returnstatus = 1;
 
-	//hvsi vi fikk en sokket som ikke har noen verdi. SIkkert da den har blit kanselert før
+	//hvsi vi fikk en sokket som ikke har noen verdi. Sikkert da den har blit kanselert før
 	if ((*sockfd) == 0) {
 		return 0;
 	}
@@ -267,7 +271,13 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 int bsConectAndQuery(int *sockfd,int nrOfServers, char *servers[],struct queryNodeHederFormat *queryNodeHeder) {
 
 	int i;
- //kobler til vanlige servere
+
+	#ifdef DEBUG
+	struct timeval start_time, end_time;
+	gettimeofday(&start_time, NULL);
+	#endif
+
+ 	//kobler til vanlige servere
         for (i=0;i<nrOfServers;i++) {
                 if (bsconnect (&sockfd[i], servers[i])) {
 			#ifdef DEBUG
@@ -297,9 +307,126 @@ int bsConectAndQuery(int *sockfd,int nrOfServers, char *servers[],struct queryNo
 		#endif
 	}
 
+	#ifdef DEBUG
+	gettimeofday(&end_time, NULL);
+	printf("Time debug: bsConectAndQuery %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
+}
+
+int bdread_continue(int sockfd[], int nrof,int bytesleft[], int lastgoodread[], int readsdone, int maxSocketWait) {
+
+	int i;
+	int nrleft = 0;
+
+	//går gjenom alle og finner hvor mange vi venter på
+	for (i=0;i<nrof;i++) {
+		printf("%i: sockfd %i bytesleft %i\n",i,sockfd[i],bytesleft[i]);
+		if ((sockfd[i] != 0) && (bytesleft[i] != 0)) {
+			++nrleft;
+		}
+	}
+
+	printf("bdread_continue nrleft %i\n",nrleft);
+
+	if (maxSocketWait < (readsdone / 0.01)) {
+		debug("max time hit. Hav done %i reads.",readsdone);
+		return 0;
+	}
+	else if (nrleft == 0) {
+		debug("nrleft is 0");
+		return 0;
+	}
+
+
+	return 1;
+
+}
+
+//leser datasize fra nrof og lagrer sekvensielt i result
+int bdread(int sockfd[],int nrof,int datasize, void *result, int maxSocketWait) {
+
+	int sendt[nrof];
+	int bytesleft[nrof];
+	int lastgoodread[nrof];
+	int readsdone = 0;
+	int i,n;
+	void *thisresult;
+        struct timespec time;
+	/* Initialize the time data structure. */
+        time.tv_sec = 0;
+        //time.tv_usec = 10 * 1000000; // milliseconds * nanosec. 10 * 1000000 = 0.01 sek
+        time.tv_nsec = 10000000; // i nanoseconds = 0.01 sek
+
+	printf("datasize %i\n",datasize);
+
+	//inaliserer sendt og bytesleft
+	for (i=0;i<nrof;i++) {
+		sendt[i] = 0;
+		bytesleft[i] = datasize;
+	}
+
+	i=0;
+	while ( bdread_continue(sockfd,nrof,bytesleft,lastgoodread,readsdone,maxSocketWait) ) {
+
+		if (sockfd[i] == 0) {
+			continue;
+		}
+
+		nanosleep(&time,NULL);
+		++readsdone;		
+
+		thisresult = ( result + ((datasize * i )- datasize) );
+
+		if ((n=recv(sockfd[i], thisresult + sendt[i], bytesleft[i], MSG_DONTWAIT )) == -1 ) {
+
+					
+				if (errno == EAGAIN) {
+					#ifdef DEBUG
+					printf("EAGAIN. wait %i < %i\n",readsdone,maxSocketWait);
+					#endif
+
+				}
+				else {
+					//noe feil har skjed, eksitter
+					perror("bdread: recv SiderHeder");
+		
+					//ToDo: utestet
+					//connected[i] = 0;
+					close(sockfd[i]);
+					sockfd[i] = 0;
+				}
+			}
+			else if (n==0) {
+				//nanosleep(&time,NULL);
+				//++socketWait;
+				#ifdef DEBUG
+                                               printf("n==0. Peer has performed an orderly shutdown when trying to read\n");
+                                #endif
+                                //connected[i] = 0;
+				close(sockfd[i]);
+				sockfd[i] = 0;
+
+
+			}
+			else {
+				sendt[i] +=n;
+				bytesleft[i] -=n;
+			}
+
+			#ifdef DEBUG					
+				printf("reciving %i of %i. readsdone %i\n",n,datasize,readsdone);
+			#endif
+				
+	}
+
 }
 
 int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,struct SiderFormat *Sider, int *pageNr) {
+
+	#ifdef DEBUG
+	struct timeval start_time, end_time;
+	gettimeofday(&start_time, NULL);
+	#endif
 
 	int i,y;
 	int net_status;
@@ -338,6 +465,9 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 		}
 	}
 
+	//int bdread(int sockfd[],int nrof,int datasize, void *result, int maxSocketWait)
+
+//	bdread(sockfd,nrOfServers,sizeof(struct SiderHederFormat),SiderHeder, maxSocketWait_SiderHeder);
 
 	//(*pageNr) = 0;
 	for (i=0;i<nrOfServers;i++) {
@@ -357,6 +487,12 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 
 			}
 	}
+
+
+	#ifdef DEBUG
+	gettimeofday(&end_time, NULL);
+	printf("Time debug: brGetPages %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
 
 }
 int main(int argc, char *argv[])
@@ -390,6 +526,7 @@ int main(int argc, char *argv[])
         struct QueryDataForamt QueryData;
 	//int connected[maxServers];
 	int NonAdultPages,AdultPages;
+	struct timeval main_start_time, main_end_time;
 	struct timeval start_time, end_time;
 	int nrRespondedServers;
 	char errormessage[maxerrorlen];
@@ -400,14 +537,20 @@ int main(int argc, char *argv[])
 	struct timeval time;
 	int socketWait;	
 	int hascashe;
+        int hasprequery;
+	char prequeryfile[512];
+	char cashefile[512];
+
 	char *cpnt;
 
 	struct queryNodeHederFormat queryNodeHeder;
 
-	char cashefile[512];
+	#ifdef DEBUG
+	gettimeofday(&start_time, NULL);
+	#endif
 
 	//starter å ta tiden
-	gettimeofday(&start_time, NULL);
+	gettimeofday(&main_start_time, NULL);
 
 	
 	char query [2048];
@@ -420,7 +563,9 @@ int main(int argc, char *argv[])
 	//for nå angir vi bare servere slik. Må skilles u i egen fil siden
 
 	//char *servers[] = { "bbs-002.boitho.com" , "bbs-003.boitho.com", "bbs-004.boitho.com", "bbs-005.boitho.com", "bbs-006.boitho.com" , "bbs-007.boitho.com" };
-	char *servers[] = { "localhost" };
+	char *servers[] = { "bbs-002.boitho.com" , "bbs-003.boitho.com", "bbs-004.boitho.com", "bbs-005.boitho.com", "bbs-006.boitho.com" };
+	//char *servers[] = { "localhost" };
+	//char *servers[] = { "bbs-002.boitho.com" };
 
 	
 	char *addservers[] = { };
@@ -435,8 +580,11 @@ int main(int argc, char *argv[])
 	//////////////////
 
         //send out an HTTP header:
-        printf("Content-type: text/xml\n\n");
-
+	#ifdef DEBUG
+	        printf("Content-type: text/plain\n\n");
+	#else
+	        printf("Content-type: text/xml\n\n");
+	#endif
 
         //hvis vi har argumeneter er det første et query
         if (getenv("QUERY_STRING") == NULL) {
@@ -524,13 +672,14 @@ int main(int argc, char *argv[])
 		//strcpy(QueryData.userip,"64.236.24.28");
 
 		if (cgi_getentrystr("subname") == NULL) {
-                        die(2,"Did'n receive any subname.");
+                        //die(2,"Did'n receive any subname.");
+			strscpy(QueryData.subname,"www",sizeof(QueryData.subname) -1);
                 }
 		else {
 			strscpy(QueryData.subname,cgi_getentrystr("subname"),sizeof(QueryData.subname) -1);
 		}
 
-
+		#ifdef BLACK_BOKS
 		if (cgi_getentrystr("tkey") == NULL) {
                         die(2,"Did'n receive any tkey.");
                 }
@@ -545,7 +694,7 @@ int main(int argc, char *argv[])
 				die(2,"Wrong tkey.");
 			}
 		}
-
+		#endif
 
 		if (cgi_getentrystr("orderby") == NULL) {
 			QueryData.orderby[0] = '\0';
@@ -631,7 +780,14 @@ int main(int argc, char *argv[])
 	
 
         }
+	#ifdef DEBUG
+	gettimeofday(&end_time, NULL);
+	printf("Time debug: init %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
 
+	#ifdef DEBUG
+	gettimeofday(&start_time, NULL);
+	#endif
 
         if (strlen(QueryData.query) > MaxQueryLen -1) {
                 die(3,"Query to long.");
@@ -680,29 +836,40 @@ int main(int argc, char *argv[])
 	strcpy(QueryData.queryhtml,QueryData.query);
 	strsandr(QueryData.queryhtml,"\"","&quot;");
 	//printf("query behandlet %s\n",QueryData.queryhtml);
+	#ifdef DEBUG
+		gettimeofday(&end_time, NULL);
+		printf("Time debug: query normalizeing %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
+
+	#ifdef DEBUG
+	gettimeofday(&start_time, NULL);
+	#endif
 
 	#ifndef BLACK_BOKS
 	//prøver å finne ut hvilket land ut fra ip
 	GeoIP *gi;
 	GeoIPRecord * gir;
 
-        gi = GeoIP_open("/home/boitho/boithoTools/data/GeoLiteCity.dat", GEOIP_MEMORY_CACHE);
+        //gi = GeoIP_open("/home/boitho/boithoTools/data/GeoLiteCity.dat", GEOIP_MEMORY_CACHE);
+        gi = GeoIP_open("/home/boitho/boithoTools/data/GeoLiteCity.dat", GEOIP_STANDARD);
         if (gi == NULL) {
-                fprintf(stderr, "Error opening database\n");
+                fprintf(stderr, "Error opening ip database\n");
                 //exit(1);
         }
 	else {
         	//iparesse
         	if ((gir = GeoIP_record_by_name (gi, (const char *)&QueryData.userip)) == NULL) {
-        	        fprintf(stderr, "Error looking up ip for %s\n",QueryData.userip);
+			strscpy(QueryData.GeoIPcontry,"na",sizeof(QueryData.GeoIPcontry));
+        	        fprintf(stderr, "Error looking up ip for \"%s\". Wil use \"%s\" as country code\n",QueryData.userip,QueryData.GeoIPcontry);
+
         	}
 		else {
 			sprintf(QueryData.GeoIPcontry,"%s",gir->country_code);
 		
 	
 
-		#ifdef DEBUG
-        	printf("GeoIP: %s\t%s\t%s\t%s\t%s\t%f\t%f\t%d\t%d\n", queryNodeHeder.userip,
+			#ifdef DEBUG
+        		printf("GeoIP: %s\t%s\t%s\t%s\t%s\t%f\t%f\t%d\t%d\n", queryNodeHeder.userip,
                                          gir->country_code,
                                          gir->region,
                                          gir->city,
@@ -711,9 +878,9 @@ int main(int argc, char *argv[])
                                          gir->longitude,
                                          gir->dma_code,
                                          gir->area_code);
-		printf("GeoIPcontry: %s\n",QueryData.GeoIPcontry);
-		#endif
-        	GeoIPRecord_delete(gir);
+			printf("GeoIPcontry: %s\n",QueryData.GeoIPcontry);
+			#endif
+        		GeoIPRecord_delete(gir);
 		}
 
 		GeoIP_delete(gi);
@@ -722,7 +889,15 @@ int main(int argc, char *argv[])
 		sprintf(QueryData.GeoIPcontry,"na");
 	#endif
 
-	
+	#ifdef DEBUG
+	gettimeofday(&end_time, NULL);
+	printf("Time debug: geoip %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
+
+	#ifdef DEBUG
+	gettimeofday(&start_time, NULL);
+	#endif
+		
 	//kopierer inn query	
 	strscpy(queryNodeHeder.query,QueryData.query,sizeof(queryNodeHeder.query) -1);
 	strscpy(queryNodeHeder.subname,QueryData.subname,sizeof(queryNodeHeder.subname) -1);
@@ -757,39 +932,76 @@ int main(int argc, char *argv[])
 
 	Sider = malloc(QueryData.MaxsHits * maxServers * sizeof(struct SiderFormat));
 
+	#ifdef DEBUG
+	gettimeofday(&end_time, NULL);
+	printf("Time debug: query copying %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
+
 	#ifdef WITH_CASHE
 	//tester for cashe
 	//v3 sprintf(cashefile,"%s/%s.%i.%s.%s",cashedir,QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry,QueryData.languageFilter);
 	sprintf(cashefile,"%s/%s.%i.%s",cashedir,QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
+	
+	sprintf(prequeryfile,"%s/%s.%i.%s",prequerydir,QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
 	FILE *CACHE;
 
-	if ((CACHE = fopen(cashefile,"rb")) != NULL) {
-		hascashe = 1;
+	if ((CACHE = fopen(prequeryfile,"rb")) != NULL) {
+		hasprequery = 1;
+
+		debug("can open prequeryfile file \"%s\"",prequeryfile);
 
 		flock(fileno(CACHE),LOCK_SH);
 		fread(&pageNr,sizeof(pageNr),1,CACHE);
 		fread(&FinalSiderHeder,sizeof(FinalSiderHeder),1,CACHE);
                 fread(&SiderHeder,sizeof(SiderHeder),1,CACHE);
 
+		debug("have %i cashed pages",pageNr);
+		
                 for (i=0;i<nrOfServers * QueryData.MaxsHits;i++) {
                         fread(&Sider[i],sizeof(struct SiderFormat),1,CACHE);
                         //printf("%s\n",Sider[i].uri);
                 }
+		
+		//fread(&Sider[i],(sizeof(struct SiderFormat) * nrOfServers * QueryData.MaxsHits),1,CACHE);
+		fclose(CACHE);
+	}
+	else if ((CACHE = fopen(cashefile,"rb")) != NULL) {
+		hascashe = 1;
 
+		debug("can open cashe file \"%s\"",cashefile);
+
+		flock(fileno(CACHE),LOCK_SH);
+		fread(&pageNr,sizeof(pageNr),1,CACHE);
+		fread(&FinalSiderHeder,sizeof(FinalSiderHeder),1,CACHE);
+                fread(&SiderHeder,sizeof(SiderHeder),1,CACHE);
+
+		debug("have %i cashed pages",pageNr);
+		
+                for (i=0;i<nrOfServers * QueryData.MaxsHits;i++) {
+                        fread(&Sider[i],sizeof(struct SiderFormat),1,CACHE);
+                        //printf("%s\n",Sider[i].uri);
+                }
+		
+		//fread(&Sider[i],(sizeof(struct SiderFormat) * nrOfServers * QueryData.MaxsHits),1,CACHE);
 		fclose(CACHE);
 	}
 	else {
+		//fprintf(stderr,"cant aces cashe file \"%s\": %s\n",cashefile,strerror(errno));
 		hascashe = 0;
+		hasprequery = 0;
 		pageNr = 0;
 
 	}
 	#else
+		hasprequery = 0;
 		hascashe = 0;
 		pageNr = 0;
 	#endif
 
 
-
+	#ifdef DEBUG
+	gettimeofday(&start_time, NULL);
+	#endif
 
 	/*tempaa
 	//inaliserer side arrayen
@@ -803,16 +1015,21 @@ int main(int argc, char *argv[])
 	bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder);
 
 	//kobler til vanlige servere
-	if (!hascashe) {
+	if ((!hascashe) && (!hasprequery)) {
 		bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder);
 	}
 
-	if (!hascashe) {
+	if ((!hascashe) && (!hasprequery)) {
 		brGetPages(sockfd,nrOfServers,SiderHeder,Sider,&pageNr);
 
 	}
 	//addserver bruker som regel mest tid, så tar den sist slik at vi ikke trenger å vente unødvendig
 	brGetPages(addsockfd,nrOfAddServers,AddSiderHeder,Sider,&pageNr);
+
+	#ifdef DEBUG
+	gettimeofday(&end_time, NULL);
+	printf("Time debug: geting pages %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
 
 
 	FinalSiderHeder.TotaltTreff = 0;
@@ -857,11 +1074,18 @@ int main(int argc, char *argv[])
 		addError(&errorha,11,"Not all the search nodes responded to your query. Result quality may have been negatively effected.");
 	}
 
-
+	#ifdef DEBUG
+	gettimeofday(&start_time, NULL);
+	#endif
 	//sorterer resultatene
 	//mgsort(Sider, nrOfServers * QueryData.MaxsHits , sizeof(struct SiderFormat), compare_elements);
 	mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements);
-	
+
+	#ifdef DEBUG
+	gettimeofday(&end_time, NULL);
+	printf("Time debug: mgsort_1 %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
+
 
 	posisjon=0;
 	for(i=0;i<QueryData.MaxsHits * nrOfServers;i++) {
@@ -896,7 +1120,10 @@ int main(int argc, char *argv[])
 	#endif
 	//hvis vi har adult pages sjekker vi om vi har nokk ikke adult pages å vise, hvis ikke viser vi bare adult
 
-		
+	#ifdef DEBUG
+	gettimeofday(&start_time, NULL);
+	#endif		
+
 		//dette er kansje ikke optimalet, da vi går gjenom alle siden. Ikke bare de som skal være med
 		for(i=0;i<QueryData.MaxsHits * nrOfServers;i++) {
 
@@ -906,7 +1133,7 @@ int main(int argc, char *argv[])
 				Sider[i].deletet = 1;
 
 
-				if ((QueryData.filterOn) && (filterSameUrl(i,&Sider[i],Sider)) ) {
+				if ((QueryData.filterOn) && (filterSameUrl(i,Sider[i].url,Sider)) ) {
 					#ifdef DEBUG
                         			printf("Hav seen url befor. Url '%s', DocID %u\n",Sider[i].url,Sider[i].iindex.DocID);
 					#endif
@@ -957,11 +1184,24 @@ int main(int argc, char *argv[])
 
 //		}
 //	}
+	#ifdef DEBUG
+	gettimeofday(&end_time, NULL);
+	printf("Time debug: filter pages %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
 
+
+	#ifdef DEBUG
+	gettimeofday(&start_time, NULL);
+	#endif
+	
 	//resorterer query
 	//mgsort(Sider, nrOfServers * QueryData.MaxsHits , sizeof(struct SiderFormat), compare_elements_posisjon);
 	mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements_posisjon);
 
+	#ifdef DEBUG
+	gettimeofday(&end_time, NULL);
+	printf("Time debug: mgsort_2 %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
 
 	/*tempaa
 	FinalSiderHeder.showabal = 0;
@@ -981,8 +1221,8 @@ int main(int argc, char *argv[])
 	totlaAds = 0;
 
 	//stopper å ta tidn og kalkulerer hvor lang tid vi brukte
-	gettimeofday(&end_time, NULL);
-	FinalSiderHeder.total_usecs = getTimeDifference(&start_time,&end_time);
+	gettimeofday(&main_end_time, NULL);
+	FinalSiderHeder.total_usecs = getTimeDifference(&main_start_time,&main_end_time);
 	
         printf("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?> \n");
         printf("<!DOCTYPE family SYSTEM \"http://www.boitho.com/xml/search.dtd\"> \n");
@@ -990,7 +1230,7 @@ int main(int argc, char *argv[])
         printf("<SEARCH>\n");   
 	//får rare svar fra hilite. Dropper å bruke den får nå
 	FinalSiderHeder.hiliteQuery[0] = '\0';
-        printf("<RESULT_INFO TOTAL=\"%i\" QUERY=\"%s\" HILITE=\"%s\" TIME=\"%f\" FILTERED=\"%i\" SHOWABAL=\"%i\" CASHE=\"%i\" GEOIPCONTRY=\"%s\" SUBNAME=\"%s\"/>\n",FinalSiderHeder.TotaltTreff,QueryData.queryhtml,FinalSiderHeder.hiliteQuery,FinalSiderHeder.total_usecs,FinalSiderHeder.filtered,FinalSiderHeder.showabal,hascashe,QueryData.GeoIPcontry,QueryData.subname);
+        printf("<RESULT_INFO TOTAL=\"%i\" QUERY=\"%s\" HILITE=\"%s\" TIME=\"%f\" FILTERED=\"%i\" SHOWABAL=\"%i\" CASHE=\"%i\" PREQUERY=\"%i\" GEOIPCONTRY=\"%s\" SUBNAME=\"%s\"/>\n",FinalSiderHeder.TotaltTreff,QueryData.queryhtml,FinalSiderHeder.hiliteQuery,FinalSiderHeder.total_usecs,FinalSiderHeder.filtered,FinalSiderHeder.showabal,hascashe,hasprequery,QueryData.GeoIPcontry,QueryData.subname);
 
 
 	//viser info om serverne som svarte
@@ -1021,7 +1261,7 @@ int main(int argc, char *argv[])
 	}
 
 
-	if (!hascashe) {
+	if ((!hascashe) && (!hasprequery)) {
 
 		for (i=0;i<nrOfServers;i++) {
                 	if (sockfd[i] != 0) {
@@ -1030,7 +1270,54 @@ int main(int argc, char *argv[])
                 	 		printf("\t<TOTALTIME>%f</TOTALTIME>\n",SiderHeder[i].total_usecs);
 					printf("\t<FILTERED>%i</FILTERED>\n",SiderHeder[i].filtered);
 					printf("\t<HITS>%i</HITS>\n",SiderHeder[i].TotaltTreff);
+
+					#ifndef DEBUG
+					printf("\t<TIMES>");
+						
+						printf("\t<AthorSearch>%f</AthorSearch>\n",SiderHeder[i].queryTime.AthorSearch);
+						printf("\t<AthorRank>%f</AthorRank>\n",SiderHeder[i].queryTime.AthorRank);
+						printf("\t<UrlSearch>%f</UrlSearch>\n",SiderHeder[i].queryTime.UrlSearch);
+						printf("\t<MainSearch>%f</MainSearch>\n",SiderHeder[i].queryTime.MainSearch);
+						printf("\t<MainRank>%f</MainRank>\n",SiderHeder[i].queryTime.MainRank);
+						printf("\t<MainAthorMerge>%f</MainAthorMerge>\n",SiderHeder[i].queryTime.MainAthorMerge);
+						printf("\t<popRank>%f</popRank>\n",SiderHeder[i].queryTime.popRank);
+						printf("\t<responseShortning>%f</responseShortning>\n",SiderHeder[i].queryTime.responseShortning);
+
+						printf("\t<allrankCalc>%f</allrankCalc>\n",SiderHeder[i].queryTime.allrankCalc);
+						printf("\t<indexSort>%f</indexSort>\n",SiderHeder[i].queryTime.indexSort);
+						printf("\t<searchSimple>%f</searchSimple>\n",SiderHeder[i].queryTime.searchSimple);
+
+						printf("\t<popResult>%f</popResult>\n",SiderHeder[i].queryTime.popResult);
+						printf("\t<adultcalk>%f</adultcalk>\n",SiderHeder[i].queryTime.adultcalk);
+
+						#ifdef BLACK_BOKS
+							printf("\t<filetypes>%f</filetypes>\n",SiderHeder[i].queryTime.filetypes);
+							printf("\t<iintegerGetValueDate>%f</iintegerGetValueDate>\n",SiderHeder[i].queryTime.iintegerGetValueDate);
+							printf("\t<dateview>%f</dateview>\n",SiderHeder[i].queryTime.dateview);
+							printf("\t<crawlManager>%f</crawlManager>\n",SiderHeder[i].queryTime.crawlManager);
+							printf("\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);
+							printf("\t<cmc_conect>%f</cmc_conect>\n",SiderHeder[i].queryTime.cmc_conect);
+						#endif
+					printf("\t</TIMES>");
+
+					printf("\t<FILTERTRAPP>");
+						printf("\t<filterAdultWeight_1>%i</filterAdultWeight_1>\n",SiderHeder[i].filtersTraped.filterAdultWeight_1);
+						printf("\t<filterSameCrc32_1>%i</filterSameCrc32_1>\n",SiderHeder[i].filtersTraped.filterSameCrc32_1);
+						printf("\t<filterSameUrl>%i</filterSameUrl>\n",SiderHeder[i].filtersTraped.filterSameUrl);
+						printf("\t<find_domain_no_subname>%i</find_domain_no_subname>\n",SiderHeder[i].filtersTraped.find_domain_no_subname);
+						printf("\t<filterSameDomain>%i</filterSameDomain>\n",SiderHeder[i].filtersTraped.filterSameDomain);
+						printf("\t<filterTLDs>%i</filterTLDs>\n",SiderHeder[i].filtersTraped.filterTLDs);
+						printf("\t<filterResponse>%i</filterResponse>\n",SiderHeder[i].filtersTraped.filterResponse);
+						printf("\t<cantpopResult>%i</cantpopResult>\n",SiderHeder[i].filtersTraped.cantpopResult);
+						printf("\t<cmc_pathaccess>%i</cmc_pathaccess>\n",SiderHeder[i].filtersTraped.cmc_pathaccess);
+						printf("\t<filterSameCrc32_2>%i</filterSameCrc32_2>\n",SiderHeder[i].filtersTraped.filterSameCrc32_2);
+
+					printf("\t</FILTERTRAPP>");
+					#endif
+
 				printf("</SEARCHNODES>\n");
+
+
 			}	
 		}
 
@@ -1055,6 +1342,8 @@ int main(int argc, char *argv[])
         	printf("  <ERRORMESSAGE>%s</ERRORMESSAGE>\n",errorha.errormessage[i]);
         	printf("</ERROR>\n");
 	}
+
+	#ifdef BLACK_BOKS
 	
 	for (i=0;i<SiderHeder[0].nrOfSubnames;i++) {
 		printf("<COLLECTION>\n");
@@ -1077,20 +1366,22 @@ int main(int argc, char *argv[])
 			printf("%s: %i",SiderHeder[0].subnames[i].filtypes[y].name,SiderHeder[0].subnames[i].filtypes[y].nrof);
 		}
 		printf("</FILELIST>\n");
-		printf("</COLLECTION>");
+		printf("</COLLECTION>\n");
 
 
 	}
-	
-		char *dateview_type_names[] = {"","TODAY","YESTERDAY","LAST_WEEK","LAST_MONTH","THIS_YEAR","LAST_YEAR","WEEK","MONTH","YEARS_AGO"};
+		
+	char *dateview_type_names[] = {"","TODAY","YESTERDAY","LAST_WEEK","LAST_MONTH","THIS_YEAR","LAST_YEAR","WEEK","MONTH","YEARS_AGO"};
 
-		printf("<DATES>\n");
-			for (y=1;y<10;y++) {
-				if (SiderHeder[0].dates > 0) {
-					printf("\t<%s>%i</%s>\n",dateview_type_names[y],SiderHeder[0].dates[y],dateview_type_names[y]);
-				}
+	printf("<DATES>\n");
+		for (y=1;y<10;y++) {
+			if (SiderHeder[0].dates > 0) {
+				printf("\t<%s>%i</%s>\n",dateview_type_names[y],SiderHeder[0].dates[y],dateview_type_names[y]);
 			}
-		printf("</DATES>\n");
+		}
+	printf("</DATES>\n");
+
+	#endif
 
 		//skal printe ut FinalSiderHeder.showabal sider, men noen av sidene kan være slettet
 	i=0;
@@ -1134,17 +1425,17 @@ int main(int argc, char *argv[])
 		
 			if (Sider[i].type == siderType_ppctop) {
 				printf("<RESULT_PPC>\n");
-				printf("<BID>%f</BID>\n",Sider[i].bid);
+				printf("\t<BID>%f</BID>\n",Sider[i].bid);
 				++totlaAds; //ikke helt bra denne. Vi teller antall anonser vist, ikke totalt
 			}
 			else if (Sider[i].type == siderType_ppcside) {
 				printf("<RESULT_PPCSIDE>\n");
-				printf("<BID>%f</BID>\n",Sider[i].bid);
+				printf("\t<BID>%f</BID>\n",Sider[i].bid);
 				++totlaAds; //ikke helt bra denne. Vi teller antall anonser vist, ikke totalt 
 			}
 			else {
                 		printf("<RESULT>\n");
-				printf("<BID></BID>\n");
+				printf("\t<BID></BID>\n");
 			}
 
                 	printf("\t<DOCID>%i-%i</DOCID>\n",Sider[i].iindex.DocID,rLotForDOCid(Sider[i].iindex.DocID));
@@ -1202,6 +1493,8 @@ int main(int argc, char *argv[])
 			printf("\t<CRAWLERVERSION>%f</CRAWLERVERSION>\n",Sider[i].DocumentIndex.clientVersion);
 
 			printf("\t<CRC32>%u</CRC32>\n",Sider[i].DocumentIndex.crc32);
+			printf("\t<HTMLPREPARSED>%i</HTMLPREPARSED>\n",Sider[i].HtmlPreparsed);
+			printf("\t<PAGEGENERATETIME>%f</PAGEGENERATETIME>\n",Sider[i].pageGenerateTime);
 
 			printf("\t<SERVERNAME>%s</SERVERNAME>\n",Sider[i].servername);
 
@@ -1219,6 +1512,8 @@ int main(int argc, char *argv[])
 				ctime_r((time_t *)&Sider[i].DocumentIndex.CrawleDato,timebuf);
 				timebuf[24] = '\0';
 				printf("\t<TIME_ISO>%s</TIME_ISO>\n",timebuf);
+
+				printf("<RESULT_COLLECTION>%s</RESULT_COLLECTION>\n",Sider[i].subname.subname);
 
 			#endif
 		
@@ -1251,9 +1546,13 @@ int main(int argc, char *argv[])
 
 	printf("</SEARCH>\n");
 	
+	#ifdef DEBUG
+	gettimeofday(&start_time, NULL);
+	#endif
 
 	//stenger ned stdout da det ikke skal sendes ut mer data, og dertfor er det ikke noen vits at klienten venter mer
-	fclose(stdout);
+	//frøykter apache dreper den den da. Kan ikke gjøre
+	//fclose(stdout);
 
 	//stenger ned tilkoblingen til nodene
 	for (i=0;i<nrOfServers;i++) {
@@ -1273,7 +1572,10 @@ int main(int argc, char *argv[])
         	fclose(LOGFILE);
 	}
 
-
+	#ifdef DEBUG
+	gettimeofday(&end_time, NULL);
+	printf("Time debug: end clean up %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
 
 
 	#ifdef WITH_CASHE
@@ -1283,6 +1585,9 @@ int main(int argc, char *argv[])
 		//CACHE = open(cashefile,"r+b");
 		//fputc('1',CACHE); //fremprovoserer en oppdatering av akksestiden		
 		//fclose(CACHE);
+	}
+	else if(hasprequery) {
+		//har prequery
 	}
 	//skriver bare cashe hvis vi fikk svar fra all servere
 	else if (nrRespondedServers == nrOfServers) {
@@ -1299,9 +1604,10 @@ int main(int argc, char *argv[])
 		
 			for (i=0;i<pageNr;i++) {
 				//vi casher bare normale sider
-				if (Sider[i].type == siderType_normal) {
+				//temp. jade online load test
+				//if (Sider[i].type == siderType_normal) {
 					fwrite(&Sider[i],sizeof(struct SiderFormat),1,CACHE);
-				}
+				//}
 			}
 
 			//printf("aa %i %i %i\n",sizeof(FinalSiderHeder),sizeof(SiderHeder),sizeof(*Sider[2]));
@@ -1314,9 +1620,9 @@ int main(int argc, char *argv[])
 	free(Sider);
 
 	/********************************************************************************************/
-	//ppc
-	//ok, vi har sent førespørsel om data vi kan nå sende til mysql serveren eter anonser
+	//mysql logging
 	/********************************************************************************************/
+	#ifndef NO_LOGING
 	#ifdef DEBUG
 		printf("Connecting to mysql db\n");
 	#endif
@@ -1346,8 +1652,9 @@ int main(int argc, char *argv[])
 
 	//mysql_free_result(mysqlres);
 	mysql_close(&demo_db);
-	/********************************************************************************************/
+	#endif
 
+	/********************************************************************************************/
         return 0;
 } 
 

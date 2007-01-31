@@ -17,7 +17,6 @@
 #include "../common/DocumentIndex.h"
 #include "../common/lot.h"
 
-#include "../parser/html_parser.h"
 
 #define maxWordForPage 4000
 #define maxAdultWords 500
@@ -50,8 +49,6 @@ struct addNewUrlhaFormat global_addNewUrlha;
 struct addNewUrlhaFormat global_addNewUrlha_pri1;
 struct addNewUrlhaFormat global_addNewUrlha_pri2;
 
-void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf );
-void fn_urlsonly( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf );
 
 struct adultWordFormat {
 	char word[maxWordlLen +1];
