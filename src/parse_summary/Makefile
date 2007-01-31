@@ -4,7 +4,7 @@
 
 LEMON=./lemon -s
 LEX=flex -f -8
-CC=gcc -p -g
+CC=/usr/local/bin/gcc -g
 SUMMARY=summary.parser
 HIGHLIGHT=highlight.parser
 
