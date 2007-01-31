@@ -103,6 +103,8 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
             perror("setsockopt");
             exit(1);
         }
+
+	debug("will listen on port %i",PORT);
         
         my_addr.sin_family = AF_INET;         // host byte order
         my_addr.sin_port = htons(PORT);     // short, network byte order
@@ -149,27 +151,57 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
             }
             printf("server: got connection from %s\n", inet_ntoa(their_addr.sin_addr));
 	    #ifdef DEBUG
-		printf("runing in debug mode. Wont fork. (problematik to us gdb then\n)");
-                sh_pointer(new_fd);
-		close(new_fd);
-		
-	    #else
-            if (!fork()) { // this is the child process
-		printf("Forket to new prosses\n");
+		printf("runing in debug mode\n");
+		#ifdef DEBUG_WITH_FORK
+			printf("roning in debug but form mode (DEBUG_WITH_FORK)\n");
 
-                close(sockfd); // child doesn't need the listener
-                sh_pointer(new_fd);
+	            if (!fork()) { // this is the child process
+			printf("Forket to new prosses\n");
+	
+	                close(sockfd); // child doesn't need the listener
+	                sh_pointer(new_fd);
 
-		//if (send(new_fd, "Hello, world!\n", 14, 0) == -1)
-                //    perror("send");
+			//if (send(new_fd, "Hello, world!\n", 14, 0) == -1)
+	                //    perror("send");
                 
-		close(new_fd);
+			close(new_fd);
 
-		printf("server: closeing connection from %s\n", inet_ntoa(their_addr.sin_addr));
+			printf("server: closeing connection from %s\n", inet_ntoa(their_addr.sin_addr));
 
-                exit(0);
-            }
-	    close(new_fd);  // parent doesn't need this
+	                exit(0);
+	            }
+		    close(new_fd);  // parent doesn't need this
+
+		#else
+			printf("runing in debug mode. Wont fork. (problematik to us gdb then)\n");
+                	sh_pointer(new_fd);
+			close(new_fd);
+		#endif
+	    #else
+		#ifdef NO_FORK
+			printf("Not in debug mode, but Wont fork. (problematik to us gdb then)\n");
+                        sh_pointer(new_fd);
+                        close(new_fd);
+		#else 
+		    	printf("runing in normal fork mode\n");
+
+        	    	if (!fork()) { // this is the child process
+				printf("Forket to new prosses\n");
+
+        		        close(sockfd); // child doesn't need the listener
+        		        sh_pointer(new_fd);
+
+				//if (send(new_fd, "Hello, world!\n", 14, 0) == -1)
+        		        //    perror("send");
+                
+				close(new_fd);
+
+				printf("server: closeing connection from %s\n", inet_ntoa(their_addr.sin_addr));
+
+            		    exit(0);
+            		}
+	    		close(new_fd);  // parent doesn't need this
+		#endif
 	    #endif
         }
 
@@ -196,6 +228,8 @@ int cconnect (char *hostname, int PORT) {
         //    fprintf(stderr,"usage: client hostname\n");
         //    exit(1);
         //}
+
+	debug("conecting to %s:%i",hostname,PORT);
 
         if ((he=gethostbyname(hostname)) == NULL) {  // get the host info 
             perror("gethostbyname");
@@ -294,6 +328,8 @@ int sendall(int s, void *buf, int len) {
         int bytesleft = len; // how many we have left to send
         int n;
 
+	debug("will send %i",len);
+
         while(total < len) {
             if ((n = send(s, buf+total, bytesleft, 0)) == -1) {
 			//perror("send");
@@ -311,9 +347,10 @@ int sendall(int s, void *buf, int len) {
 }
 
 int recvall(int sockfd, void *buf, int len) {
-	#ifdef DEBUG
-	printf("resiving data\n");	
-	#endif
+	
+	//debug("!!!!resiving data");	
+	debug("will read %i",len);
+
 /*
 	if (recv(sockfd, buf,len,MSG_WAITALL) == -1) {
 		return 0;
@@ -322,6 +359,8 @@ int recvall(int sockfd, void *buf, int len) {
 		return 1;
 	}
 */
+
+
 	int total = 0;
         int bytesleft = len; // how many we have left to send
 	int n;
@@ -330,12 +369,15 @@ int recvall(int sockfd, void *buf, int len) {
 		if ((n = read(sockfd, buf+total, bytesleft)) == -1) {
 			return 0;
 		}
+
+		debug("recved %i bytes. total red %i, left %i, total to get %i",n,total,bytesleft,len);
+
 		total += n;
             	bytesleft -= n;
-		printf("read: n %i\n",n);
 	}
 
 	return total;
+
 }
 
 int sendpacked(int socket,short command, short version, int dataSize, void *data,char subname[]) {
@@ -356,6 +398,7 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 
 	//hvi data er null betur det at denne vil bli sent siden, av annen kode
         if (data != NULL) {
+		debug("sendpacked: data NOT NULL. Will sendit");
                 i = send(socket,data,dataSize,0);
         }
 

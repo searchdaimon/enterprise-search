@@ -24,7 +24,10 @@
 
 #define MAXFILTYPES 100
 
-#define BOITHO_MYSQL_DB "boithobbdemo"
+#define MAX_COLLECTIONS 20
+
+//#define BOITHO_MYSQL_DB "boithobbdemo"
+#define BOITHO_MYSQL_DB "boithobb"
 
 #define AdultWeightForXXX 50
 
@@ -256,6 +259,7 @@ struct SiderFormat {
 	char url[1024];
 	char user[21];
 	float bid;
+	struct subnamesFormat subname;
 };
 
 struct queryTimeFormat {
@@ -286,7 +290,7 @@ struct SiderHederFormat {
 	char hiliteQuery[50];
 	struct queryTimeFormat queryTime;
 	char servername[32];
-	struct subnamesFormat subnames[4]; //temp: hardkoder her. Segfeiler!. tom for stack ?
+	struct subnamesFormat subnames[MAX_COLLECTIONS];
 	int nrOfSubnames;
 	//int *dates[11]; //= {0,0,0,0,0,0,0,0,0,0,0};
 	int dates[11];

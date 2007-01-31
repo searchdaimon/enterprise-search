@@ -12,5 +12,6 @@ int split(const char *Input, char *Delim, char ***List);
 int btolower(int c);
 void saafree(char **List);
 void ntobr (char textbuff[], int texbufftsize);
+size_t strlwcat(char *dst, const char *src, size_t siz);
 
 #endif

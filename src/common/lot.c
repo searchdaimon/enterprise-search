@@ -97,14 +97,16 @@ FILE *lotOpenFileNoCashe(unsigned int DocID,char resource[],char type[], char lo
 FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock,char subname[]) {
 
 
-FILE *FILEHANDLER;
-int i;
-char FilePath[128];
-char File [128];
+	FILE *FILEHANDLER;
+	int i;
+	char FilePath[PATH_MAX]; 	//var 128
+	char File [PATH_MAX];	//var 128
+
+	printf("subname: \"%s\"\n",subname);
 
                  GetFilPathForLot(FilePath,LotNr,subname);
                  strcpy(File,FilePath);
-                 strncat(File,resource,128);
+                 strncat(File,resource,PATH_MAX); //var 128
 
 		#ifdef DEBUG
                 	printf("lotOpenFileNoCasheByLotNr: opening file \"%s\" for %s\n",File,type);

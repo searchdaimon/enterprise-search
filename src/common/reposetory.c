@@ -590,8 +590,11 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			}
 		}
 
-		printf("image is at %u\n",(unsigned int)ftell(LotFileOpen));
-		
+		//må ha #ifdef, slik at vi ikke kaller ftell unødvendig, når vi ikke er i debug modus
+		#ifdef DEBUG
+		debug("image is at %u\n",(unsigned int)ftell(LotFileOpen));
+		#endif
+
 		if ((*ReposetoryHeader).imageSize == 0) {
 			//printf("imageSize is 0. Skipping to read it\n");
 		}
