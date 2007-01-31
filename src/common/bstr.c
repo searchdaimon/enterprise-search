@@ -58,13 +58,12 @@ void strsandr (char text[], char find[], char replace[]) {
 	//blir problemer her for korte strenger med slange replasments. Slenger på +512 som er midlertidig fix
 	char *buff = malloc((strlen(text) * 2) +512);
 
+	buff[0] = '\0';
 	char *bptr;
 	char *cprtold = text;
 
 	cptr = text;
 	bptr = buff;
-
-	buff[0] = '\0';
 
 	strcpy(buff,text);	
 
@@ -398,4 +397,17 @@ int main() {
 } /* main() */
 #endif //__TEST_SPLIT__
 
+// like strlcat, but test self for if the src is to long to add to dst, and givs a warning
+size_t strlwcat(char *dst, const char *src, size_t siz) {
 
+	size_t len;
+
+	len = strlcat(dst,src,siz);
+
+	if (len >= siz) {
+		bwarn("strlwcat: ENAMETOOLONG");
+	}
+
+
+	return len;
+}
