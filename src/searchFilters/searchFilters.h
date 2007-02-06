@@ -10,3 +10,6 @@ int filterSameCrc32(int showabal,struct SiderFormat *CurentSider, struct SiderFo
 int find_domain_no_subname (char url[],char domain[], int sizeofdomain);
 int filterTLDs(char domain[]);
 int filterSameUrl(int showabal,char url[], struct SiderFormat *Sider);
+int find_TLD(char domain[], char TLD[],int TLDsize);
+int filterDomainLength(char domain[]);
+int filterDomainNrOfLines(char domain[]);

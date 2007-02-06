@@ -1024,11 +1024,17 @@ int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsi
 
 }
 
-void addNewUrlOpen(struct addNewUrlhaFormat *addNewUrlha) {
+
+
+void addNewUrlOpen(struct addNewUrlhaFormat *addNewUrlha,int lotNr, char openmode[],char subname[]) {
 	(*addNewUrlha).OpenLot = -1;
+	if (((*addNewUrlha).NYEURLER = lotOpenFileNoCasheByLotNr(lotNr,"nyeurler",openmode,'e',subname)) == NULL) {
+		perror("nyeurler");
+		exit(1);
+	}
 }
 
-void addNewUrl (struct addNewUrlhaFormat *addNewUrlha, struct updateFormat *updatePost, char fileName[],char subname[]) {
+void addNewUrl (struct addNewUrlhaFormat *addNewUrlha, struct updateFormat *updatePost) {
 
 
        
@@ -1039,37 +1045,6 @@ void addNewUrl (struct addNewUrlhaFormat *addNewUrlha, struct updateFormat *upda
         int LotNr;
      	char LotPath[512];
 	int err;
-        LotNr = rLotForDOCid((*updatePost).DocID_from);
-
-        if ((*addNewUrlha).OpenLot != LotNr) {
-
-                if ((*addNewUrlha).OpenLot != -1) {
-                        fclose((*addNewUrlha).NYEURLER);
-                }
-
-		GetFilPathForLot(LotPath,LotNr,subname);
-                 sprintf(FilePath,"%snyeurler",LotPath);
-
-		if (strlen(fileName) != 0){
-			strcat(FilePath,fileName);
-		}
-		else {
-		}
-
-		printf("opening nyurlfile %s\n",FilePath);
-
-		//appender ikke
-     		if (((*addNewUrlha).NYEURLER = fopen(FilePath,"wb")) == NULL) {
-			makePath(LotPath);
-
-			if (((*addNewUrlha).NYEURLER = fopen(FilePath,"wb")) == NULL) {
-                   		perror(FilePath);
-                        	exit(1);
-			}
-                }
-
-                (*addNewUrlha).OpenLot = LotNr;
-        }
 
 
 
@@ -1106,4 +1081,5 @@ void addNewUrl (struct addNewUrlhaFormat *addNewUrlha, struct updateFormat *upda
                 fwrite(updatePost,sizeof(struct updateFormat),1,(*addNewUrlha).NYEURLER);
 
 }
+
 

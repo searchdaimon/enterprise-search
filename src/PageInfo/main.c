@@ -107,7 +107,7 @@ int main (int argc, char *argv[]) {
 		}
 		if (optShowWords) {
 			printf("words:\n");
-			run_html_parser( DocumentIndexPost.Url, htmlBuffer, htmlBufferSize, fn );
+			//run_html_parser( DocumentIndexPost.Url, htmlBuffer, htmlBufferSize, fn );
 		}
 	}
 	else {

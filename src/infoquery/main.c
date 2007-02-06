@@ -7,7 +7,7 @@
 
 #include "../boithoadClientLib/liboithoaut.h"
 
-#include "..//bbdocument/bbdocument.h"
+#include "../bbdocument/bbdocument.h"
 
 int main (int argc, char *argv[]) {
 
@@ -229,7 +229,7 @@ int main (int argc, char *argv[]) {
 		int errorbufflen = 512;
                 char errorbuff[errorbufflen];
 		char **respons_list;
-
+		/*
 		if (!cmc_conect(&socketha,errorbuff,errorbufflen)) {
                         printf("Error: %s\n",errorbuff);
                         exit(1);
@@ -238,6 +238,7 @@ int main (int argc, char *argv[]) {
 		cmc_deleteCollection(socketha,value);
 
 		cmc_close(socketha);
+		*/
 	}
 	else if (strcmp(key,"getPassword") == 0) {
 		if(value == NULL) {printf("no value given.\n");exit(1);}

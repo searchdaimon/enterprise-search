@@ -1,3 +1,5 @@
+
+/******************************/
 #include "searchkernel.h"
 
 #include "../common/poprank.h"
@@ -20,6 +22,10 @@
 #include <string.h>
 #include <sys/uio.h>
 #include <unistd.h>
+
+
+#define cfg_main "/home/boitho/config/main.cfg"
+
 #ifdef WITH_THREAD
 	#include <pthread.h>
 #endif
@@ -33,6 +39,11 @@ int	service_count;
 
 //gloal variabel for å holde servernavn
 char servername[32];
+
+//#ifndef BLACK_BOKS
+	#include <libconfig.h>
+	struct config_t cfg;
+//#endif
 
 #ifdef WITH_PROFILING
 	static int profiling_runcount = 0;
@@ -67,7 +78,24 @@ int main(int argc, char *argv[])
 	}
 	#endif
 	/***********************************************************************************/
-	
+
+	//#ifndef BLACK_BOKS
+	config_setting_t *cfgarray;
+
+  	/* Initialize the configuration */
+  	config_init(&cfg);
+
+
+  	/* Load the file */
+	#ifdef DEBUG
+  	printf("loading [%s]..\n",cfg_main);
+	#endif
+
+  	if (!config_read_file(&cfg, cfg_main)) {
+    		printf("[%s]failed: %s at line %i\n",cfg_main,config_error_text(&cfg),config_error_line(&cfg));
+		exit(1);
+	}
+	//#endif	
 
 	#ifdef WITH_THREAD
 		pthread_t chld_thr;
@@ -146,6 +174,9 @@ int main(int argc, char *argv[])
 		newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
 
 		if(newsockfd < 0) {
+			//fprintf(stderr,"server: a
+
+/***************************************/
 			//fprintf(stderr,"server: accept error\n"), exit(0);
 			fprintf(stderr,"server: accept error\n");
 		}
@@ -175,22 +206,24 @@ void *do_chld(void *arg)
 	FILE *LOGFILE;
 	int 	mysocfd = (int) arg;
 	char 	data[100];
-	char **Data;
-	int Count;
-
-	#ifdef DEBUG
-	struct timeval start_time, end_time;
-	#endif
-
-
-	int nrOfSubnames;
-	//struct subnamesFormat subnames[10];
-	struct subnamesFormat *subnames;
-
 	int 	i,n;
 	struct queryNodeHederFormat queryNodeHeder;
 	struct SiderFormat *Sider;
 	int net_status;
+	
+	//struct SiderFormat Sid
+
+	int nrOfSubnames;
+        struct subnamesFormat *subnames;
+
+	config_setting_t *cfgstring;
+	config_setting_t *cfgcollection;
+	config_setting_t *cfgcollections;
+
+	struct subnamesConfigFormat subnamesDefaultsConfig;
+/***************************************/
+	char **Data;
+        int Count;
 
 	//struct SiderFormat Sider[MaxsHits * 2];
 
@@ -280,6 +313,187 @@ void *do_chld(void *arg)
 
 	subnames = malloc(sizeof(struct subnamesFormat) * Count);
 
+
+
+/***************************************/
+	 
+
+
+	if ((cfgcollections = config_lookup(&cfg, "collections")) == NULL) {
+		
+		printf("can't load \"collections\" from config\n");
+		exit(1);
+	}
+
+	if ((cfgcollection = config_setting_get_member(cfgcollections, "defaults")) == NULL ) {
+		printf("can't load \"collections defaults\" from config\n");
+		exit(1);
+
+	}
+
+
+	/****************/
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "summary") ) == NULL) {
+                printf("can't load \"summary\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.summary = config_setting_get_string(cfgstring);
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameUrl") ) == NULL) {
+                printf("can't load \"summary\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.filterSameUrl = config_setting_get_bool(cfgstring);
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameUrl") ) == NULL) {
+                printf("can't load \"summary\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.filterSameUrl = config_setting_get_bool(cfgstring);
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameDomain") ) == NULL) {
+                printf("can't load \"summary\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.filterSameDomain = config_setting_get_bool(cfgstring);
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterTLDs") ) == NULL) {
+                printf("can't load \"summary\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.filterTLDs = config_setting_get_bool(cfgstring);
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterResponse") ) == NULL) {
+                printf("can't load \"summary\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.filterResponse = config_setting_get_bool(cfgstring);
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameCrc32") ) == NULL) {
+                printf("can't load \"summary\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.filterSameCrc32 = config_setting_get_bool(cfgstring);
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankAthorArray") ) == NULL) {
+                printf("can't load \"summary\" from config\n");
+                exit(1);
+        }
+	
+	subnamesDefaultsConfig.rankAthorArrayLen = config_setting_length(cfgstring);
+	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankAthorArrayLen) {
+		subnamesDefaultsConfig.rankAthorArrayLen = BMAX_RANKARRAY;
+	}
+	for(i=0;i<subnamesDefaultsConfig.rankAthorArrayLen;i++) {
+		subnamesDefaultsConfig.rankAthorArray[i] = config_setting_get_int_elem(cfgstring,i);
+	}
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankTittelArray") ) == NULL) {
+                printf("can't load \"summary\" from config\n");
+                exit(1);
+        }
+	
+	subnamesDefaultsConfig.rankTittelArrayLen = config_setting_length(cfgstring);
+	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankTittelArrayLen) {
+		subnamesDefaultsConfig.rankTittelArrayLen = BMAX_RANKARRAY;
+	}
+	for(i=0;i<subnamesDefaultsConfig.rankTittelArrayLen;i++) {
+		subnamesDefaultsConfig.rankTittelArray[i] = config_setting_get_int_elem(cfgstring,i);
+	}
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankHeadlineArray") ) == NULL) {
+                printf("can't load \"summary\" from config\n");
+                exit(1);
+        }
+	
+	subnamesDefaultsConfig.rankHeadlineArrayLen = config_setting_length(cfgstring);
+	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankHeadlineArrayLen) {
+		subnamesDefaultsConfig.rankHeadlineArrayLen = BMAX_RANKARRAY;
+	}
+	for(i=0;i<subnamesDefaultsConfig.rankHeadlineArrayLen;i++) {
+		subnamesDefaultsConfig.rankHeadlineArray[i] = config_setting_get_int_elem(cfgstring,i);
+	}
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankBodyArray") ) == NULL) {
+                printf("can't load \"summary\" from config\n");
+                exit(1);
+        }
+	
+	subnamesDefaultsConfig.rankBodyArrayLen = config_setting_length(cfgstring);
+	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankBodyArrayLen) {
+		subnamesDefaultsConfig.rankBodyArrayLen = BMAX_RANKARRAY;
+	}
+	for(i=0;i<subnamesDefaultsConfig.rankBodyArrayLen;i++) {
+
+
+		subnamesDefaultsConfig.rankBodyArray[i] = config_setting_get_int_elem(cfgstring,i);
+	}
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankUrlArray") ) == NULL) {
+                printf("can't load \"summary\" from config\n");
+                exit(1);
+        }
+	
+	subnamesDefaultsConfig.rankUrlArrayLen = config_setting_length(cfgstring);
+	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankUrlArrayLen) {
+		subnamesDefaultsConfig.rankUrlArrayLen = BMAX_RANKARRAY;
+	}
+	for(i=0;i<subnamesDefaultsConfig.rankUrlArrayLen;i++) {
+		subnamesDefaultsConfig.rankUrlArray[i] = config_setting_get_int_elem(cfgstring,i);
+	}
+
+	//rankTittelFirstWord
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankTittelFirstWord") ) == NULL) {
+                printf("can't load \"rankTittelFirstWord\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.rankTittelFirstWord = config_setting_get_int(cfgstring);
+
+
+	//rankUrlMainWord
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankUrlMainWord") ) == NULL) {
+                printf("can't load \"rankUrlMainWord\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.rankUrlMainWord = config_setting_get_int(cfgstring);
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "defaultthumbnail") ) == NULL) {
+                printf("can't load \"defaultthumbnail\" from config\n");
+        }
+	else {
+		subnamesDefaultsConfig.defaultthumbnail = config_setting_get_string(cfgstring);
+	}
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "isPaidInclusion") ) == NULL) {
+                printf("can't load \"isPaidInclusion\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.isPaidInclusion = config_setting_get_bool(cfgstring);
+
+	/****************/
+
+
+
   	Count = 0;
 	nrOfSubnames = 0;
 	printf("nrOfSubnames %i\n",nrOfSubnames);
@@ -291,6 +505,181 @@ void *do_chld(void *arg)
 	    		printf("\t\taa: added : %d\t\"%s\" (len %i)\n", Count, Data[Count],strlen(Data[Count]));
 
 			strscpy(subnames[nrOfSubnames].subname,Data[Count],sizeof(subnames[nrOfSubnames].subname));
+
+			//setter at vi først skal bruke defult config
+			subnames[nrOfSubnames].config = subnamesDefaultsConfig;
+
+			if ((cfgcollection = config_setting_get_member(cfgcollections, subnames[nrOfSubnames].subname)) == NULL ) {
+				printf("can't load \"collections\" from config for \"%s\"\n",subnames[nrOfSubnames].subname);
+			}
+			else {
+				/****************/
+				if ( (cfgstring = config_setting_get_member(cfgcollection, "summary") ) == NULL) {
+                			printf("can't load \"summary\" from config\n");
+        			}
+				else {
+				subnames[nrOfSubnames].config.summary = config_setting_get_string(cfgstring);
+				}
+
+				if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameUrl") ) == NULL) {
+                			printf("can't load \"filterSameUrl\" from config\n");
+        			}
+				else {
+					subnames[nrOfSubnames].config.filterSameUrl = config_setting_get_bool(cfgstring);
+				}
+
+
+				if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameDomain") ) == NULL) {
+                			printf("can't load \"filterSameDomain\" from config\n");
+        			}
+				else {
+					subnames[nrOfSubnames].config.filterSameDomain = config_setting_get_bool(cfgstring);
+				}
+
+				if ( (cfgstring = config_setting_get_member(cfgcollection, "filterTLDs") ) == NULL) {
+                			printf("can't load \"filterTLDs\" from config\n");
+        			}
+				else {
+					subnames[nrOfSubnames].config.filterTLDs = config_setting_get_bool(cfgstring);
+				}
+
+				if ( (cfgstring = config_setting_get_member(cfgcollection, "filterResponse") ) == NULL) {
+                			printf("can't load \"filterResponse\" from config\n");
+        			}
+				else {
+					subnames[nrOfSubnames].config.filterResponse = config_setting_get_bool(cfgstring);
+				}
+
+				if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameCrc32") ) == NULL) {
+                			printf("can't load \"filterSameCrc32\" from config\n");
+        			}
+				else {
+					subnames[nrOfSubnames].config.filterSameCrc32 = config_setting_get_bool(cfgstring);
+				}
+
+
+				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankTittelFirstWord") ) == NULL) {
+                			printf("can't load \"rankTittelFirstWord\" from config\n");
+        			}
+				else {
+					subnames[nrOfSubnames].config.rankTittelFirstWord = config_setting_get_int(cfgstring);
+				}
+
+				//rankUrlMainWord
+				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankUrlMainWord") ) == NULL) {
+                			printf("can't load \"rankUrlMainWord\" from config\n");
+        			}
+				else {
+					subnames[nrOfSubnames].config.rankUrlMainWord = config_setting_get_int(cfgstring);
+				}
+
+				printf("filterSameUrl: %i\n",subnames[nrOfSubnames].config.filterSameUrl);
+				printf("filterSameDomain: %i\n",subnames[nrOfSubnames].config.filterSameDomain);
+				printf("filterTLDs: %i\n",subnames[nrOfSubnames].config.filterTLDs);
+				printf("filterResponse: %i\n",subnames[nrOfSubnames].config.filterResponse);
+				printf("filterSameCrc32: %i\n",subnames[nrOfSubnames].config.filterSameCrc32);
+
+				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankAthorArray") ) == NULL) {
+                			printf("can't load \"filterSameCrc32\" from config\n");
+        			}
+				else {
+
+					subnames[nrOfSubnames].config.rankAthorArrayLen = config_setting_length(cfgstring);
+					if (BMAX_RANKARRAY < subnames[nrOfSubnames].config.rankAthorArrayLen) {
+						subnames[nrOfSubnames].config.rankAthorArrayLen = BMAX_RANKARRAY;
+					}
+
+					for(i=0;i<subnames[nrOfSubnames].config.rankAthorArrayLen;i++) {
+						subnames[nrOfSubnames].config.rankAthorArray[i] = config_setting_get_int_elem(cfgstring,i);
+					}
+
+				}
+
+
+				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankTittelArray") ) == NULL) {
+                			printf("can't load \"filterSameCrc32\" from config\n");
+        			}
+				else {
+
+					subnames[nrOfSubnames].config.rankTittelArrayLen = config_setting_length(cfgstring);
+					if (BMAX_RANKARRAY < subnames[nrOfSubnames].config.rankTittelArrayLen) {
+						subnames[nrOfSubnames].config.rankTittelArrayLen = BMAX_RANKARRAY;
+					}
+
+					for(i=0;i<subnames[nrOfSubnames].config.rankTittelArrayLen;i++) {
+						subnames[nrOfSubnames].config.rankTittelArray[i] = config_setting_get_int_elem(cfgstring,i);
+					}
+
+				}
+
+
+				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankHeadlineArray") ) == NULL) {
+                			printf("can't load \"filterSameCrc32\" from config\n");
+        			}
+				else {
+
+					subnames[nrOfSubnames].config.rankHeadlineArrayLen = config_setting_length(cfgstring);
+					if (BMAX_RANKARRAY < subnames[nrOfSubnames].config.rankHeadlineArrayLen) {
+						subnames[nrOfSubnames].config.rankHeadlineArrayLen = BMAX_RANKARRAY;
+					}
+
+					for(i=0;i<subnames[nrOfSubnames].config.rankHeadlineArrayLen;i++) {
+						subnames[nrOfSubnames].config.rankHeadlineArray[i] = config_setting_get_int_elem(cfgstring,i);
+					}
+
+				}
+
+
+				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankBodyArray") ) == NULL) {
+                			printf("can't load \"filterSameCrc32\" from config\n");
+        			}
+				else {
+
+					subnames[nrOfSubnames].config.rankBodyArrayLen = config_setting_length(cfgstring);
+					if (BMAX_RANKARRAY < subnames[nrOfSubnames].config.rankBodyArrayLen) {
+						subnames[nrOfSubnames].config.rankBodyArrayLen = BMAX_RANKARRAY;
+					}
+
+					for(i=0;i<subnames[nrOfSubnames].config.rankBodyArrayLen;i++) {
+						subnames[nrOfSubnames].config.rankBodyArray[i] = config_setting_get_int_elem(cfgstring,i);
+					}
+
+				}
+
+				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankUrlArray") ) == NULL) {
+                			printf("can't load \"filterSameCrc32\" from config\n");
+        			}
+				else {
+
+					subnames[nrOfSubnames].config.rankUrlArrayLen = config_setting_length(cfgstring);
+					if (BMAX_RANKARRAY < subnames[nrOfSubnames].config.rankUrlArrayLen) {
+						subnames[nrOfSubnames].config.rankUrlArrayLen = BMAX_RANKARRAY;
+					}
+
+					for(i=0;i<subnames[nrOfSubnames].config.rankUrlArrayLen;i++) {
+						subnames[nrOfSubnames].config.rankUrlArray[i] = config_setting_get_int_elem(cfgstring,i);
+					}
+
+				}
+
+
+				if ( (cfgstring = config_setting_get_member(cfgcollection, "defaultthumbnail") ) == NULL) {
+                			printf("can't load \"defaultthumbnail\" from config\n");
+        			}
+				else {
+					subnames[nrOfSubnames].config.defaultthumbnail = config_setting_get_string(cfgstring);
+				}
+
+				if ( (cfgstring = config_setting_get_member(cfgcollection, "isPaidInclusion") ) == NULL) {
+                			printf("can't load \"isPaidInclusion\" from config\n");
+        			}
+				else {
+					subnames[nrOfSubnames].config.isPaidInclusion = config_setting_get_bool(cfgstring);
+				}
+
+
+				/****************/
+			}
 
 			printf("nrOfSubnames a %i\n",nrOfSubnames);	
 			++nrOfSubnames;
@@ -318,11 +707,14 @@ void *do_chld(void *arg)
 		printf("subname nr %i: \"%s\"\n",i,subnames[i].subname);
 	}
 
+	SiderHeder.filtypesnrof = MAXFILTYPES;
+
 	//v3 dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,servername,subnames,SiderHeder.nrOfSubnames,queryNodeHeder.MaxsHits,queryNodeHeder.start, queryNodeHeder.filterOn, queryNodeHeder.languageFilter);
 	dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,
 			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
 			queryNodeHeder.start, queryNodeHeder.filterOn, 
-			"",queryNodeHeder.orderby,SiderHeder.dates,queryNodeHeder.search_user);
+			"",queryNodeHeder.orderby,SiderHeder.dates,queryNodeHeder.search_user,
+			SiderHeder.filtypes,&SiderHeder.filtypesnrof);
 
 	//kopierer inn subnames. Kan bare sende over MAX_COLLECTIONS, men søker i alle
 
@@ -337,6 +729,7 @@ void *do_chld(void *arg)
 		printf("%s: %i\n",SiderHeder.subnames[i].subname,SiderHeder.subnames[i].hits);
 	}
 	printf("\n");
+
 
 	printf("TotaltTreff %i,showabal %i,filtered %i,total_usecs %f\n",SiderHeder.TotaltTreff,SiderHeder.showabal,SiderHeder.filtered,SiderHeder.total_usecs);
 
@@ -371,7 +764,7 @@ void *do_chld(void *arg)
 	for(i=0;i<SiderHeder.showabal;i++) {
 	//for (i=0;i<queryNodeHeder.MaxsHits;i++) {
 		//if (!Sider[i].deletet) {		
-			//printf("sending %s, deletet %i\n",Sider[i].DocumentIndex.Url,Sider[i].deletet);	
+			printf("sending %s, deletet %i\n",Sider[i].DocumentIndex.Url,Sider[i].deletet);	
 			//printf("bb: -%s-\n",Sider[i].title);
 			if ((n=sendall(mysocfd,&Sider[i], sizeof(struct SiderFormat))) != sizeof(struct SiderFormat)) {
 				printf("send only %i of %i\n",n,sizeof(struct SiderFormat));
@@ -402,6 +795,8 @@ void *do_chld(void *arg)
 
 	//pthread_exit((void *)0); /* exit with status */
 
+
+/***************************************/
 		#ifdef WITH_PROFILING
 			if (profiling_runcount >= 0) {
 				printf("exiting to do profiling. Hav done %i runs\n",profiling_runcount);
@@ -412,5 +807,4 @@ void *do_chld(void *arg)
 			++profiling_runcount;
 		#endif
 
-}
-
+ }

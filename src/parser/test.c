@@ -9,6 +9,7 @@
 
 void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* wordlist )
 {
+/*
     printf("\t%s (%i) ", word, pos);
 
     switch (pu)
@@ -37,6 +38,7 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 	}
 
     printf("\n");
+*/
 }
 
 
@@ -89,7 +91,7 @@ int main( int argc, char *argv[] )
 	    fclose(file);
 
 //	    printf("Title: %s\n", title);
-	    printf("Title: %s\nBody:\n%s\n", title, body);
+//	    printf("Title: %s\nBody:\n%s\n", title, body);
 	    free(title);
 	    free(body);
 	}

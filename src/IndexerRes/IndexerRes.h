@@ -17,6 +17,7 @@
 #include "../common/DocumentIndex.h"
 #include "../common/lot.h"
 
+#include "../parser/html_parser.h"
 
 #define maxWordForPage 4000
 #define maxAdultWords 500
@@ -63,6 +64,8 @@ struct revIndexFomat {
         unsigned long WordID;
         unsigned long nr;
         unsigned short hits[MaxsHitsInIndex];
+	int bucket;
+
 };
 struct adultWordFraserFormat {
         char word[maxWordlLen +1];
@@ -88,6 +91,14 @@ struct adultFormat {
 //	unsigned short occurrence;
 //};
 
+struct nrofBucketElementsFormat {
+            int records;
+            int hits;
+            void *bucketbuff;
+            int bucketbuffsize;
+            void *p;
+};
+
 struct pagewordsFormat {
 	int nr;
 	int nextPosition;
@@ -96,15 +107,26 @@ struct pagewordsFormat {
 	int revIndexnr;
 	struct revIndexFomat revIndex[maxWordForPage];
 	int nrOfOutLinks;
+	char lasturl[201];
+	int curentUrlIsDynamic;
+	unsigned int curentDocID;
+	struct nrofBucketElementsFormat nrofBucketElements[NrOfDataDirectorys];
 };
+
 struct pagewordsFormat pagewords;
 
 void html_parser_timout( int signo );
 void pagewordsSortOnOccurrence();
 
-void handelPage(char lotServer[], unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader,
-char HtmlBuffer[],int HtmlBufferLength,char imagebuffebuffer[],FILE *revindexFilesHa[],
-struct DocumentIndexFormat *DocumentIndexPost, int DocID,int httpResponsCodes[],
-struct adultFormat *adult, unsigned char *langnr);
 void copyRepToDi(struct DocumentIndexFormat *DocumentIndexPost,struct ReposetoryHeaderFormat *ReposetoryHeader);
 
+void revindexFilesAppendWords(struct pagewordsFormat *pagewords,FILE *revindexFilesHa[],unsigned int DocID,unsigned char *langnr);
+
+void wordsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int DocID,unsigned char *langnr) ;
+
+void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader,
+                char HtmlBuffer[],int HtmlBufferLength,struct DocumentIndexFormat *DocumentIndexPost,
+                int DocID,int httpResponsCodes[], struct adultFormat *adult, unsigned char *langnr,
+                char **title, char **body);
+
+void wordsReset(struct pagewordsFormat *pagewords);

@@ -1,3 +1,4 @@
+/*****************************************/
 #include <stdio.h>
 #include <string.h>
 #include <zlib.h>
@@ -10,27 +11,27 @@
 #include "../common/langdetect.h"
 #include "../common/langToNr.h"
 #include "../IndexerRes/IndexerRes.h"
-#include "../parser/html_parser.h"
 
 
 
-void wordsReset() {
 
-	pagewords.nr = 0;
-	pagewords.nextPosition = 0;	
-	pagewords.revIndexnr = 0;
-	pagewords.nrOfOutLinks = 0;
+void wordsReset(struct pagewordsFormat *pagewords) {
+
+	(*pagewords).nr = 0;
+	(*pagewords).nextPosition = 0;	
+	(*pagewords).revIndexnr = 0;
+	(*pagewords).nrOfOutLinks = 0;
+	(*pagewords).lasturl[0] = '\0';
 }
 
-void linkadd(char word[]) {
+void linkadd(struct pagewordsFormat *pagewords, char word[]) {
 
 		int i;
 
                 struct updateFormat updatePost;
-		static char lasturl[201] = {""};
 
 		//øker oversikten over antall utgående linker
-		++pagewords.nrOfOutLinks;
+		++(*pagewords).nrOfOutLinks;
 
 		//if (global_source_url_havpri) {
 		//	printf("%s\n",word);
@@ -38,10 +39,10 @@ void linkadd(char word[]) {
 		if (!globalIndexerLotConfig.collectUrls) {
 			//skal ikke lagge til urler
 		}
-		else if (strcmp(lasturl,word) == 0) {
+		else if (strcmp((*pagewords).lasturl,word) == 0) {
 			//gider ikke legge til like url. Men hva hvis dette er på en ny side. Denne burde bli resettet
 		}
-		else if ((strchr(word,'?') != NULL) && (global_curentUrlIsDynamic)) {
+		else if ((strchr(word,'?') != NULL) && ((*pagewords).curentUrlIsDynamic)) {
                         //printf("NO add %s\n",word);
                 }
 		else if (gyldig_url(word)) {
@@ -51,10 +52,10 @@ void linkadd(char word[]) {
                       
 			strncpy((char *)updatePost.url,word,sizeof(updatePost.url));
                         strncpy((char *)updatePost.linktext,"",sizeof(updatePost.linktext));
-                        updatePost.DocID_from = global_curentDocID;
+                        updatePost.DocID_from = (*pagewords).curentDocID;
 
 			if (globalIndexerLotConfig.urlfilter == NULL) {
-                        	addNewUrl(&global_addNewUrlha_pri1,&updatePost,"_pri1",subname);
+                        	addNewUrl(&global_addNewUrlha_pri1,&updatePost);
 			}
 			else {
 				//tester filterer om vi skal legge til en url
@@ -63,7 +64,7 @@ void linkadd(char word[]) {
 	                                //printf("\t\t%i\tis ttl \"%s\" in url \"%s\"\n", i, globalIndexerLotConfig.urlfilter[i],word);
 					if (url_isttl(word,globalIndexerLotConfig.urlfilter[i])) {
 						//printf("added url\n");
-						addNewUrl(&global_addNewUrlha_pri1,&updatePost,"_pri1",subname);
+						addNewUrl(&global_addNewUrlha_pri1,&updatePost);
 						break;
 					}
 					++i;
@@ -93,16 +94,17 @@ void linkadd(char word[]) {
 			//printf("NO ADD %s\n",word);
 		}
 
-		strncpy(lasturl,word,sizeof(lasturl));
+		strncpy((*pagewords).lasturl,word,sizeof((*pagewords).lasturl));
 
 }
 
 
-void wordsAdd(char word[],enum parsed_unit_flag puf) {
+void wordsAdd(struct pagewordsFormat *pagewords, char word[],enum parsed_unit_flag puf) {
+
 int i;
 int wordlLength;
 int wordTypeadd;
-			if (pagewords.nr > maxWordForPage){
+			if ((*pagewords).nr > maxWordForPage){
 				#ifdef DEBUG
 					printf("mor then maxWordForPage words\n");
 				#endif
@@ -148,28 +150,26 @@ int wordTypeadd;
 
 
 				#ifdef DEBUG_ADULT
-					strcpy(pagewords.words[pagewords.nr].word,word);
+					strcpy((*pagewords).words[(*pagewords).nr].word,word);
 				#endif
-				pagewords.words[pagewords.nr].WordID =  crc32boitho(word);
-				pagewords.words[pagewords.nr].position = (pagewords.nextPosition + wordTypeadd);
+				(*pagewords).words[(*pagewords).nr].WordID =  crc32boitho(word);
+				(*pagewords).words[(*pagewords).nr].position = ((*pagewords).nextPosition + wordTypeadd);
 				// må ha en index posisjon her. Slik at vi kan finne ord før og etter. Posisjon er koded
-				pagewords.words[pagewords.nr].unsortetIndexPosition = pagewords.nr;
+				(*pagewords).words[(*pagewords).nr].unsortetIndexPosition = (*pagewords).nr;
 
-				//printf("nextPosition %i, wordTypeadd %i, position %i\n",pagewords.nextPosition,wordTypeadd,pagewords.words[pagewords.nr].position);
+				//printf("nextPosition %i, wordTypeadd %i, position %i\n",(*pagewords).nextPosition,wordTypeadd,(*pagewords).words[(*pagewords).nr].position);
 
-				++pagewords.nextPosition;
+				++(*pagewords).nextPosition;
 
-				//printf("%s : %lu\n",word,pagewords.words[pagewords.nr]);
+				//printf("%s : %lu\n",word,(*pagewords).words[(*pagewords).nr]);
 
-				++pagewords.nr;		
+				++(*pagewords).nr;		
 			}
 }
 
-void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf , void *largs)
+void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* pagewords )
 {
 
-
-	struct pagewordsFormat *pagewords = (struct pagewordsFormat *)largs;
 
 	#ifdef DEBUG
     		printf("\t%s (%i) ", word, pos);
@@ -178,7 +178,7 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf , v
         {
             case pu_word: 
 
-			wordsAdd(word,puf);
+			wordsAdd(pagewords,word,puf);
 
 			#ifdef DEBUG
 	    			switch (puf)
@@ -206,7 +206,7 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf , v
             case pu_link:
 
 			
-			linkadd(word);
+			linkadd(pagewords,word);
 			#ifdef DEBUG 
 				printf("[link]"); 
 			#endif
@@ -239,6 +239,10 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf , v
 	#endif
 
 }
+
+
+
+/**************************************/
 
 
 int compare_elements_words (const void *p1, const void *p2) {
@@ -595,6 +599,7 @@ void adultLoad (struct adultFormat *adult) {
 	}
 */
 
+
 }
 
 void revindexFilesOpenNET(FILE *revindexFilesHa[]) {
@@ -621,59 +626,6 @@ void revindexFilesSendNET(FILE *revindexFilesHa[],int lotNr) {
 		rSendFileByOpenHandler(revindexFilesHa[i],dest,lotNr,"a",subname);
 	}
 }
-/**************************************************************************************
-Skriver reversert index til disk
-***************************************************************************************/
-void revindexFilesAppendWords(FILE *revindexFilesHa[],unsigned int DocID,unsigned char *langnr) {
-
-	int i,y;
-	int bucket;
-
-	/*	
-	//skriver først en hedder til alle filene
-	for(i=0;i<NrOfDataDirectorys;i++) {
-		fwrite(&DocID,sizeof(unsigned int),1,revindexFilesHa[i]);
-		// skriver 3 tegn av sprøket. Er det vi bruker
-		//fwrite(&lang,sizeof(char),3,revindexFilesHa[i]);
-		//temp, lattlige språkproblemer her :(
-		fprintf(revindexFilesHa[i],"aa ");
-	}
-	*/
-
-	for(i=0;i<pagewords.revIndexnr;i++) {
-
-
-		bucket = pagewords.revIndex[i].WordID % NrOfDataDirectorys;
-
-		#ifdef DEBUG
-			printf("WordID %lu forekomster %i (+1). bucket %i\n",pagewords.revIndex[i].WordID,pagewords.revIndex[i].nr,bucket);
-		#endif
-
-		//++pagewords.revIndex[i].nr;
-		fwrite(&DocID,sizeof(unsigned int),1,revindexFilesHa[bucket]);
-		//fprintf(revindexFilesHa[bucket],"aa ");
-		fwrite(langnr,sizeof(char),1,revindexFilesHa[bucket]);
-		//printf("lang1 %i%\n",(int)*langnr);
-
-		fwrite(&pagewords.revIndex[i].WordID,sizeof(unsigned long),1,revindexFilesHa[bucket]);	
-		fwrite(&pagewords.revIndex[i].nr,sizeof(unsigned long),1,revindexFilesHa[bucket]);
-
-		for(y=0;y<pagewords.revIndex[i].nr;y++) {
-			//printf("\thits %i\n",pagewords.revIndex[i].hits[y]);
-			fwrite(&pagewords.revIndex[i].hits[y],sizeof(unsigned short),1,revindexFilesHa[bucket]);
-		}
-
-	}	
-
-	/*
-	//skriver record terminator
-	for(i=0;i<NrOfDataDirectorys;i++) {
-		//ToDo: her bruker vi \n for linefeed, men bruker \cJ i perl. På andre platformer en *nix vil det føre til problmer
-		//	erstatt \n med tegnet for linefeed
-		fprintf(revindexFilesHa[i],"**\n");
-	}
-	*/
-}
 
 void copyRepToDi(struct DocumentIndexFormat *DocumentIndexPost,struct ReposetoryHeaderFormat *ReposetoryHeader) {
 			strcpy((*DocumentIndexPost).Url,(*ReposetoryHeader).url);
@@ -693,6 +645,135 @@ void copyRepToDi(struct DocumentIndexFormat *DocumentIndexPost,struct Reposetory
 
 }
 
+
+
+
+//copy a memory area, and return the size copyed
+static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
+//size_t memcpyrc(void *s1, const void *s2, size_t n) {
+        memcpy(s1,s2,n);
+
+        return n;
+}
+
+void wordsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int DocID,unsigned char *langnr) {
+
+	int i,y;
+
+	for(i=0;i<NrOfDataDirectorys;i++) {
+		(*pagewords).nrofBucketElements[i].records = 0;
+		(*pagewords).nrofBucketElements[i].hits = 0;
+	}
+
+	for(i=0;i<(*pagewords).revIndexnr;i++) {
+
+		(*pagewords).revIndex[i].bucket = (*pagewords).revIndex[i].WordID % NrOfDataDirectorys;
+
+		++(*pagewords).nrofBucketElements[(*pagewords).revIndex[i].bucket].records;
+		(*pagewords).nrofBucketElements[(*pagewords).revIndex[i].bucket].hits += (*pagewords).revIndex[i].nr;
+	}
+	
+	for(i=0;i<NrOfDataDirectorys;i++) {
+		(*pagewords).nrofBucketElements[i].bucketbuffsize = ((sizeof(unsigned int) + sizeof(char) + sizeof(unsigned long) + sizeof(unsigned long)) * (*pagewords).nrofBucketElements[i].records) + ((*pagewords).nrofBucketElements[i].hits * sizeof(unsigned short));
+		//printf("bucketbuffsize %i\n",(*pagewords).nrofBucketElements[i].bucketbuffsize);
+
+		(*pagewords).nrofBucketElements[i].bucketbuff = malloc((*pagewords).nrofBucketElements[i].bucketbuffsize);
+	}
+
+	//setter pekeren til begyndelsen. Siden vil vi jo flytte denne etter hvert som vi kommer lenger ut
+	for(i=0;i<NrOfDataDirectorys;i++) {
+		(*pagewords).nrofBucketElements[i].p = (*pagewords).nrofBucketElements[i].bucketbuff;
+	}
+
+	//bruker en temperær p peker her som erstatning for (*pagewords).nrofBucketElements[(*pagewords).revIndex[i].bucket].p, 
+	//så koden ikke blir så uoversiktelig
+	void *p;
+	for(i=0;i<(*pagewords).revIndexnr;i++) {
+		
+			p = (*pagewords).nrofBucketElements[(*pagewords).revIndex[i].bucket].p;
+
+			p += memcpyrc(p,&DocID,sizeof(unsigned int));
+			p += memcpyrc(p,langnr,sizeof(char));
+			p += memcpyrc(p,&(*pagewords).revIndex[i].WordID,sizeof(unsigned long));
+			p += memcpyrc(p,&(*pagewords).revIndex[i].nr,sizeof(unsigned long));
+			for(y=0;y<(*pagewords).revIndex[i].nr;y++) {
+				p += memcpyrc(p,&(*pagewords).revIndex[i].hits[y],sizeof(unsigned short));
+			}
+
+			(*pagewords).nrofBucketElements[(*pagewords).revIndex[i].bucket].p = p;
+		
+	}
+
+}
+
+
+/**************************************************************************************
+Skriver reversert index til disk
+***************************************************************************************/
+void revindexFilesAppendWords(struct pagewordsFormat *pagewords,FILE *revindexFilesHa[],unsigned int DocID,unsigned char *langnr) {
+
+	int i,y;
+	int bucket;
+
+	/*	
+	//skriver først en hedder til alle filene
+	for(i=0;i<NrOfDataDirectorys;i++) {
+		fwrite(&DocID,sizeof(unsigned int),1,revindexFilesHa[i]);
+		// skriver 3 tegn av sprøket. Er det vi bruker
+		//fwrite(&lang,sizeof(char),3,revindexFilesHa[i]);
+		//temp, lattlige språkproblemer her :(
+		fprintf(revindexFilesHa[i],"aa ");
+	}
+	*/
+
+
+	for(i=0;i<NrOfDataDirectorys;i++) {
+		if ((*pagewords).nrofBucketElements[i].bucketbuffsize != 0) {
+			fwrite((*pagewords).nrofBucketElements[i].bucketbuff,(*pagewords).nrofBucketElements[i].bucketbuffsize,1,revindexFilesHa[i]);
+		}
+	}
+
+	for(i=0;i<NrOfDataDirectorys;i++) {
+			free((*pagewords).nrofBucketElements[i].bucketbuff);
+		
+	}
+/*
+	for(i=0;i<(*pagewords).revIndexnr;i++) {
+
+
+		bucket = (*pagewords).revIndex[i].WordID % NrOfDataDirectorys;
+
+		#ifdef DEBUG
+			printf("WordID %lu forekomster %i (+1). bucket %i\n",(*pagewords).revIndex[i].WordID,(*pagewords).revIndex[i].nr,bucket);
+		#endif
+
+		//++(*pagewords).revIndex[i].nr;
+		fwrite(&DocID,sizeof(unsigned int),1,revindexFilesHa[bucket]);
+		//fprintf(revindexFilesHa[bucket],"aa ");
+		fwrite(langnr,sizeof(char),1,revindexFilesHa[bucket]);
+		//printf("lang1 %i%\n",(int)*langnr);
+
+		fwrite(&(*pagewords).revIndex[i].WordID,sizeof(unsigned long),1,revindexFilesHa[bucket]);	
+		fwrite(&(*pagewords).revIndex[i].nr,sizeof(unsigned long),1,revindexFilesHa[bucket]);
+
+		for(y=0;y<(*pagewords).revIndex[i].nr;y++) {
+			//printf("\thits %i\n",(*pagewords).revIndex[i].hits[y]);
+			fwrite(&(*pagewords).revIndex[i].hits[y],sizeof(unsigned short),1,revindexFilesHa[bucket]);
+		}
+
+	}	
+*/
+	/*
+	//skriver record terminator
+	for(i=0;i<NrOfDataDirectorys;i++) {
+		//ToDo: her bruker vi \n for linefeed, men bruker \cJ i perl. På andre platformer en *nix vil det føre til problmer
+		//	erstatt \n med tegnet for linefeed
+		fprintf(revindexFilesHa[i],"**\n");
+	}
+	*/
+}
+
+
 void html_parser_timout( int signo )
 {
     if ( signo == SIGALRM ) {
@@ -704,54 +785,45 @@ void html_parser_timout( int signo )
 }
 
 
-void handelPage(char lotServer[], unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char HtmlBuffer[],int HtmlBufferLength,char imagebuffebuffer[],FILE *revindexFilesHa[],struct DocumentIndexFormat *DocumentIndexPost, int DocID,int httpResponsCodes[], struct adultFormat *adult, unsigned char *langnr) {
 
-		int AdultWeight;
+void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, 
+		char HtmlBuffer[],int HtmlBufferLength,struct DocumentIndexFormat *DocumentIndexPost, 
+		int DocID,int httpResponsCodes[], struct adultFormat *adult, unsigned char *langnr,
+		char **title, char **body) {
+
+		//int AdultWeight;
+		//char *title = NULL;
+		//char *body = NULL;
 
 		if ((*ReposetoryHeader).response < nrOfHttpResponsCodes) {
 			++httpResponsCodes[(*ReposetoryHeader).response];
 		}
 
-		char *title, *body;
 
 		//printf("%lu %s\n",(*ReposetoryHeader).DocID, (*ReposetoryHeader).url);
 
-//		if (((*ReposetoryHeader).response >= 200) && ((*ReposetoryHeader).response <= 299)) {
 
 		
-
-			
-				//if ((*ReposetoryHeader).DocID == 363093661) {
-				//	FILE *FH;
-				//	FH = fopen("/tmp/IndexerLotdump.html","wb");
-				//	fwrite(HtmlBuffer,HtmlBufferSize,1,FH);
-				//	fclose(FH);
-				//	exit(1);
-				//}
-		
-				
-				//begynner på en ny side
-				wordsReset();
-
-				if (strcmp((*ReposetoryHeader).content_type,"htm") == 0) {
 
 					//setter opp en alarm slik at run_html_parser blir avbrut hvis den henger seg 
-					alarm_got_raised = 0;
-					signal(SIGALRM, html_parser_timout);
+					//alarm_got_raised = 0;
+					//signal(SIGALRM, html_parser_timout);
 					
-					alarm( 5 );
+					//alarm( 5 );
 					//parser htmlen
+					//printf("html: %s\n\nUrl \"%s\"\nHtmlBufferLength %i\n",HtmlBuffer,(*ReposetoryHeader).url,HtmlBufferLength);
 					//run_html_parser( (*ReposetoryHeader).url, HtmlBuffer, HtmlBufferLength, fn );
+					//html_parser_run( "http://YAHOOgroups.com/svada/index.html", buf, size, &title, &body, fn, NULL );
+					html_parser_run((*ReposetoryHeader).url,HtmlBuffer, HtmlBufferLength,title, body,fn,pagewords );
+					//alarm( 0);
+					//if(alarm_got_raised) {
+					//	printf("run_html_parser did time out. At DocID %lu\n",(*ReposetoryHeader).DocID);
+					//}
+					//else {
 
-					html_parser_run((*ReposetoryHeader).url, HtmlBuffer, HtmlBufferLength,&title,&body,fn,NULL);
 
-					alarm( 0);
-					if(alarm_got_raised) {
-						printf("run_html_parser did time out. At DocID %lu\n",(*ReposetoryHeader).DocID);
-					}
-					else {
-
-						wordsMakeRevIndex(adult,&AdultWeight,langnr);
+						/*
+						wordsMakeRevIndex(pagewords,adult,&AdultWeight,langnr);
 
 						if (AdultWeight > 255) {
 							(*DocumentIndexPost).AdultWeight = 255;
@@ -760,33 +832,14 @@ void handelPage(char lotServer[], unsigned int LotNr,struct ReposetoryHeaderForm
 							(*DocumentIndexPost).AdultWeight = AdultWeight;
 						}
 
-						revindexFilesAppendWords(revindexFilesHa,(*ReposetoryHeader).DocID,langnr);
-					}
+						revindexFilesAppendWords(pagewords,revindexFilesHa,(*ReposetoryHeader).DocID,langnr);
+						*/
+					//}
 				
-				}
-				else if (strcmp((*ReposetoryHeader).content_type,"btx") == 0) {
-					//ToDo: definer Boitho TeXt formatet
-				}
-				else {
-					printf("unknown content_type \"%s\"\n",(*ReposetoryHeader).content_type);
-				}
 
-
-//			}
-
-//		}
-//		else { //not in 200->299 range
-//			//radress må vel ikke nulles her, like går å ha den pekene til strukturen i reposetoryet 
-//			HtmlBufferSize = 0;
-//		}
-
-			
-		free(title);
-		free(body);
-
+		
+		//free(body);
+		//free(title);
 }
-
-
-
 
 

@@ -258,3 +258,55 @@ int filterTLDs(char domain[]) {
         return 0;
 
 }
+int find_TLD(char domain[], char TLD[],int TLDsize) {
+
+      char *cpoint;
+
+      if ((cpoint = strrchr(domain,'.')) == NULL) {
+                printf("bad domain\n");
+                return 0;
+        }
+      //h<E5>pper over . i domene. Skal ha "com", ikke ".com"
+      ++cpoint;
+
+      strscpy(TLD,cpoint,TLDsize);
+      return 1;
+}
+int filterDomainNrOfLines(char domain[]) {
+
+      #define maxdomainlines 2
+
+      int n=0;
+      char *cpnt;
+
+
+      cpnt = domain;
+      while ((cpnt = strchr(cpnt,'-')) != NULL) {
+              ++n;
+              ++cpnt;
+      }
+
+      if (n > maxdomainlines) {
+              return 1;
+      }
+      else {
+                return 0;
+        }
+
+}
+
+
+int filterDomainLength(char domain[]) {
+
+      #define maxdomainlen 30;
+
+      if (strlen(domain) > 30) {
+              return 1;
+      }
+      else {
+              return 0;
+      }
+
+}
+
+

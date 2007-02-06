@@ -22,7 +22,9 @@ LIBGeoIP = -lGeoIP
 
 CURLLIBS = `curl-config --libs`
 
-BBDOCUMENT = src/bbdocument/bbdocument.c -I/usr/local/BerkeleyDB.4.5/include/ -L/usr/local/BerkeleyDB.4.5/lib/ -ldb
+IM = -L/home/eirik/.root/lib -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
+
+BBDOCUMENT = src/bbdocument/bbdocument.c src/generateThumbnail/generate_thumbnail.c -I/usr/local/BerkeleyDB.4.5/include/ -L/usr/local/BerkeleyDB.4.5/lib/ -ldb -D BLACK_BOKS $(IM)
 
 #openldap med venner. Må linke det statisk inn, å bare bruke -lldap fungerer ikke
 #
@@ -85,7 +87,7 @@ searchfilterTest: src/searchfilterTest/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/searchfilterTest/main.c src/searchfilter/searchfilter.c -o bin/searchfilterTest $(LDFLAGS)
 
 infoquery: src/infoquery/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/infoquery/main.c src/boithoadClientLib/liboithoaut.a -o bin/infoquery $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/infoquery/main.c src/acls/acls.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c $(BBDOCUMENT) -o bin/infoquery $(LDFLAGS) 
 
 GetIndexAsArrayTest: src/GetIndexAsArrayTest/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/GetIndexAsArrayTest/main.c -o bin/GetIndexAsArrayTest $(LDFLAGS)
@@ -148,7 +150,7 @@ searchcl : src/searchkernel/searchcl.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/query/lex.query.o src/searchkernel/cgi-util.c src/searchkernel/parseEnv.c src/searchkernel/searchkernel.c src/searchkernel/search.c src/searchkernel/searchcl.c src/parse_summary/libsummary.a -o bin/searchcl $(LDFLAGS)
 
 #dropper -D WITH_MEMINDEX og -D WITH_RANK_FILTER for nå
-SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a -o bin/searchd $(LDFLAGS) -lpthread -D WITH_THREAD
+SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a -o bin/searchd $(LDFLAGS) -lpthread -D WITH_THREAD -lconfig
 
 searchd : src/searchkernel/searchd.c
 	$(CC) $(SEARCHCOMMAND) -D WITH_RANK_FILTER
@@ -267,7 +269,7 @@ SortUdfile: src/SortUdfile/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/SortUdfile/main.c -o bin/SortUdfile $(LDFLAGS)
 
 PageInfo: src/PageInfo/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/PageInfo/main.c src/parser/lex.yy.c src/parser/y.tab.c -o bin/PageInfo $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/PageInfo/main.c src/parser/lex.bhpm.c src/parser/y.tab.c -o bin/PageInfo $(LDFLAGS)
 
 PageInfobb: src/PageInfo/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/PageInfo/main.c src/parser/lex.yy.c src/parser/y.tab.c -o bin/PageInfo $(LDFLAGS) -D BLACK_BOKS

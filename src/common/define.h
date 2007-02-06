@@ -11,6 +11,10 @@
 
 #define BOITHO_VAR_DIR "/home/boitho/var"
 
+#define MAXFILTYPES 100
+
+#define BMAX_RANKARRAY 20
+
 #ifdef BLACK_BOKS
 	#define NrofDocIDsInLot 5000
 #else
@@ -140,10 +144,39 @@ struct subnamesFiltypesFormat {
 	int nrof;
 };
 
+struct subnamesConfigFormat {
+        const char *summary;
+     char filterSameUrl; //bool
+     char filterSameDomain;
+     char filterTLDs;
+     char filterResponse;
+     char filterSameCrc32;
+
+        char rankAthorArray[BMAX_RANKARRAY];
+     char rankAthorArrayLen;
+
+        char rankTittelArray[BMAX_RANKARRAY];
+     char rankTittelArrayLen;
+        char rankTittelFirstWord;
+
+        char rankHeadlineArray[BMAX_RANKARRAY];
+     char rankHeadlineArrayLen;
+
+        char rankBodyArray[BMAX_RANKARRAY];
+     char rankBodyArrayLen;
+
+        char rankUrlArray[BMAX_RANKARRAY];
+     char rankUrlArrayLen;
+        char rankUrlMainWord;
+
+     const char *defaultthumbnail;
+
+     char isPaidInclusion; //bool
+};
 struct subnamesFormat {
 	char subname[64];
 	int hits;
-
+	struct subnamesConfigFormat config;
 	int nrOfFiletypes;
 	struct subnamesFiltypesFormat filtypes[MAXFILTYPES];
 
@@ -304,6 +337,11 @@ struct filtersTrapedFormat {
 	int cantDIRead;
 };
 
+struct filtypesFormat {
+	char name[5]; //4 for navn og \0
+	int nrof;
+};
+
 struct SiderHederFormat {
 	int filtered;
 	int showabal;
@@ -317,6 +355,9 @@ struct SiderHederFormat {
 	//int *dates[11]; //= {0,0,0,0,0,0,0,0,0,0,0};
 	int dates[11];
 	struct filtersTrapedFormat filtersTraped;
+	int filtypesnrof;
+	struct filtypesFormat filtypes[MAXFILTYPES];
+
 };
 
 //formatet på anchor filer

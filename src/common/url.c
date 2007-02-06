@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "define.h"
 #include "debug.h"
 
@@ -167,5 +168,18 @@ int url_havpri2(char word[]) {
 	else {
 		return 0;
 	}
+}
+
+int url_isttl(char word[],char ttl[]) {
+    char ttlfull[6];
+
+    snprintf(ttlfull,sizeof(ttlfull),".%s/",ttl);
+
+    if (strstr((word + 7),ttlfull) == NULL) {
+            return 0;
+    }
+    else {
+            return 1;
+    }
 }
 

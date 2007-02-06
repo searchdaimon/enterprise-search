@@ -19,10 +19,17 @@
 #define popvekt 0.6
 #define termvekt 0.4
 
+#define responseShortToMin 10000
+
 #include <math.h>
 #include <stdlib.h>
 
 #include "search.h"
+
+#ifdef WITH_THREAD
+        #include <pthread.h>
+
+#endif
 
 //rangeringsfilter er der vi har et hvist antall treff, definert som RFC (Rank Filter Cutoff).
 //har vi så mnage treff filtrerer vi ut de under en hvis rankt
@@ -33,25 +40,27 @@
 int compare_elements (const void *,const void *);
 int compare_filetypes (const void *p1, const void *p2);
 
-
+/*
 struct filesKeyFormat {
 	struct subnamesFormat *subname;
 	char filename[4];
 };
-
+*/
 static unsigned int fileshashfromkey(void *ky)
 {
-    struct filesKeyFormat *k = (struct filesKeyFormat *)ky;
-    return ((unsigned int)k->subname + (unsigned int)k->filename[0] + (unsigned int)k->filename[1] + (unsigned int)k->filename[2] + (unsigned int)k->filename[3]);
+    char *k = (char *)ky;
+    //struct filesKeyFormat *k = (struct filesKeyFormat *)ky;
+    //return ((unsigned int)k->subname + (unsigned int)k->filename[0] + (unsigned int)k->filename[1] + (unsigned int)k->filename[2] + (unsigned int)k->filename[3]);
+	return((int)k[0]);
 }
 
 static int filesequalkeys(void *k1, void *k2)
 {
-    return (0 == memcmp(k1,k2,sizeof(struct filesKeyFormat)));
+    return (0 == strcmp(k1,k2));
 }
 
 
-int rankUrl(const unsigned short *hits, int nrofhit) {
+int rankUrl(const unsigned short *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname) {
 	int rank, i;
 
 	rank = 0;
@@ -64,11 +73,13 @@ int rankUrl(const unsigned short *hits, int nrofhit) {
         		rank =+  poengForUrlSub;
         	}
 	}
+
+	printf("rankUrl: DocID %u, rank %i\n",DocID,rank);
 	
 	return rank;
 }
 
-int rankAthor(const unsigned short *hits, int nrofhit) {
+int rankAthor(const unsigned short *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname) {
 	int rank, i;
 
 	rank = 0;
@@ -82,37 +93,66 @@ int rankAthor(const unsigned short *hits, int nrofhit) {
 		rank = maxPoengAthor;
 	}
 
+	printf("rankAthor: DocID %u, rank %i\n",DocID,rank);
+
 	return rank;
 }
 
-int rankMain(const unsigned short *hits, int nrofhit) {
+int rank_calc(int nr, char *rankArray,char rankArrayLen) {
+
+	if (nr == 0) {
+		return 0;
+	}
+	else if (nr >= rankArrayLen) {
+		//printf("to large. rankArrayLen %i, nr %i, returning %i\n",rankArrayLen,nr,rankArray[rankArrayLen -1]);
+		return rankArray[rankArrayLen -1];
+	}
+	else {
+		//printf("in range. rankArrayLen  %i. nr %i, value %i\n",rankArrayLen,nr,rankArray[nr -1]);
+		return rankArray[nr -1];
+	}
+}
+
+int rankMain(const unsigned short *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname) {
+
 
 	int i;
-	int poengBody, poengHeadline, poengTittel, poengUrl; 
-	double poengDouble;
+        int nrBody, nrHeadline, nrTittel, nrUrl;
+        double poengDouble;
 
-                               poengBody = 0;
-                                poengHeadline = 0;
-                                poengTittel = 0;
-                                poengUrl = 0;
+	nrBody		 = 0;
+	nrHeadline	 = 0;
+	nrTittel	 = 0;
+	nrUrl		 = 0;
 
-                                // kjører gjenom anttall hit
-				for (i = 0;i < nrofhit; i++) {
+	poengDouble 	 = 0;
 
+        // kjører gjenom anttall hit
+	for (i = 0;i < nrofhit; i++) {
+
+					//printf("\thit %i\n",(int)hits[i]);
                                         /*************************************************
                                         lagger til poeng
                                         *************************************************/
-                                        if (hits[i] >= 1000) {              //Body
-                                                poengBody += poengForBody;
+                                        if (hits[i] >= 1000) {      //Body
+                                                ++nrBody;
                                         }
                                         else if (hits[i] >= 500) {  //Headline
-                                                poengHeadline += poengForHeadline;
+                                                ++nrHeadline;
                                         }
                                         else if (hits[i] >= 100) {  //Tittel
-                                                poengTittel += poengForTittel;
+						//spesialtilfelle. er først title ord 
+						//Hvis vi er første ord i titleen vil det rangeres spesielt
+						if (hits[i] == 100) {	
+							poengDouble += (*subname).config.rankTittelFirstWord;
+						}
+						else {
+                                                	++nrTittel;
+						}
                                         }
                                         else if (hits[i] == 2) {
-                                                //poengUrl += poengForMainUrlWord;
+
+			                      //poengUrl += poengForMainUrlWord;
                                         }
                                         else if (hits[i] >= 1) {    //url
                                                 // ingen urler i body mere
@@ -122,48 +162,20 @@ int rankMain(const unsigned short *hits, int nrofhit) {
                                                 //printf("Error, fikk inn 0 eller mindre\n");
                                         }
                                         /**************************************************/
-                                }
+        }
 
-                                //Kalkulerer total poeng
-                                poengDouble = 0;
 
-                                if (poengBody != 0) {
-                                        //poengDouble += log(poengBody);
-                                        //temp: 16 now:
-                                        if (poengBody > maxPoengBody) {
-                                                poengBody = maxPoengBody;
-                                        }
-                                        else {
-                                                poengDouble += poengBody;
-                                        }
-                                }
-                                if (poengHeadline != 0) {
-                                        //poengDouble += log(poengHeadline);
-                                        if (poengHeadline > MaxPoengHeadline) {
-                                                poengDouble += MaxPoengHeadline;
-                                        }
-                                        else {
-                                                poengDouble += poengHeadline;
-                                        }
-                                }
-                                if (poengTittel != 0) {
-                                        //poengDouble += log(poengTittel);
-                                        if (poengTittel > MaxPoengTittel) {
-                                                poengDouble += MaxPoengTittel;
-                                        }
-                                        else {
-                                                poengDouble += poengTittel;
-                                        }
-                                }
-                                if (poengUrl != 0) {
-                                        //poengDouble += log(poengUrl);
-                                        poengDouble += poengUrl;
-                                }
+	poengDouble += rank_calc(nrBody,(*subname).config.rankBodyArray,(*subname).config.rankBodyArrayLen);
+	poengDouble += rank_calc(nrHeadline,(*subname).config.rankHeadlineArray,(*subname).config.rankHeadlineArrayLen);
+	poengDouble += rank_calc(nrTittel,(*subname).config.rankTittelArray,(*subname).config.rankTittelArrayLen);
+	poengDouble += rank_calc(nrUrl,(*subname).config.rankUrlArray,(*subname).config.rankUrlArrayLen);
+
+	//printf("rankMain: DocID %u, nrofhit %i ,rank %f\n",DocID,nrofhit,poengDouble);
 
 	return (int)ceil(poengDouble);
 
-}
-
+}                          
+/*****************************************************************/
 
 void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int alen, struct iindexFormat *b, int blen) {
 	int i=0;
@@ -393,7 +405,7 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 }
 
 //hopper over orde. Må da flytte alle ordene et hakk bortover
-frase_stopword(struct iindexFormat *c, int *clen) {
+void frase_stopword(struct iindexFormat *c, int *clen) {
 	int i,y;
 
 	for (i=0;i<*clen;i++) {
@@ -523,7 +535,34 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 }
 
 
-void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat *TeffArray,query_array *queryParsed,struct iindexFormat *TmpArray,struct subnamesFormat *subname, int (*rank)(const unsigned short *,const int), int languageFilterNr, int languageFilterAsNr[]){
+
+/*******************************************/
+
+int searchIndex_getnrs(char *indexType,query_array *queryParsed,struct subnamesFormat *subname,int languageFilterNr,
+                int languageFilterAsNr[]) {
+	int nr;
+
+	//dagur: 
+	nr = 1;
+/*
+
+				break;
+
+		}
+
+	}
+*/
+	printf("searchIndex_getnrs: nrs %i\n",nr);
+
+	printf("searchIndex_getnrs: end\n");
+
+	return nr;
+}
+
+void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat *TeffArray,
+		query_array *queryParsed,struct iindexFormat *TmpArray,struct subnamesFormat *subname, 
+		int (*rank)(const unsigned short *,const int,const unsigned int DocID,struct subnamesFormat *subname), int languageFilterNr, 
+		int languageFilterAsNr[]){
 
 	int i, y, j,k;
 	char queryelement[128];
@@ -574,12 +613,12 @@ for (i=0; i<(*queryParsed).n; i++)
 						//if (*TeffArrayElementer == 0) {
 						if (i == 0) {
 							TmpArrayLen = (*TeffArrayElementer);
-							GetIndexAsArray(TeffArrayElementer,TeffArray,&WordIDcrc32,indexType,"aa",subname,rank,languageFilterNr, languageFilterAsNr);
+							GetIndexAsArray(TeffArrayElementer,TeffArray,WordIDcrc32,indexType,"aa",subname,rank,languageFilterNr, languageFilterAsNr);
 							(*TeffArrayElementer) = (*TeffArrayElementer) - TmpArrayLen;
 						}
 						else {
 							TmpArrayLen = 0;
-							GetIndexAsArray(&TmpArrayLen,TmpArray,&WordIDcrc32,indexType,"aa",subname,rank,languageFilterNr, languageFilterAsNr);
+							GetIndexAsArray(&TmpArrayLen,TmpArray,WordIDcrc32,indexType,"aa",subname,rank,languageFilterNr, languageFilterAsNr);
 						
 							printf("did find %i pages\n",TmpArrayLen);
 												
@@ -627,7 +666,7 @@ for (i=0; i<(*queryParsed).n; i++)
 						if (j == 0) {
 			                                //TmpArrayLen = (*TeffArrayElementer);
 							tmpResultElementer = 0;
-							GetIndexAsArray(&tmpResultElementer,tmpResult,&WordIDcrc32,indexType,"aa",subname,rank,languageFilterNr, languageFilterAsNr);
+							GetIndexAsArray(&tmpResultElementer,tmpResult,WordIDcrc32,indexType,"aa",subname,rank,languageFilterNr, languageFilterAsNr);
 
                                                         //(*TeffArrayElementer) = (*TeffArrayElementer) - TmpArrayLen;        	        
 							//printf("TeffArrayElementer %i\n",(*TeffArrayElementer));
@@ -647,7 +686,7 @@ for (i=0; i<(*queryParsed).n; i++)
                                         		else {
 							
 								TmpArrayLen = 0;
-								GetIndexAsArray(&TmpArrayLen,TmpArray,&WordIDcrc32,indexType,"aa",subname,rank,languageFilterNr, languageFilterAsNr);
+								GetIndexAsArray(&TmpArrayLen,TmpArray,WordIDcrc32,indexType,"aa",subname,rank,languageFilterNr, languageFilterAsNr);
 
 								printf("\t dddd: frase_merge %i %i\n",(*TeffArrayElementer),TmpArrayLen);
 
@@ -712,13 +751,104 @@ for (i=0; i<(*queryParsed).n; i++)
 
 }
 
+struct searchIndex_thread_argFormat {
+	char *indexType;
+	struct subnamesFormat *subnames;
+	int nrOfSubnames;
+	query_array *queryParsed;
+	int languageFilterNr;
+	int *languageFilterAsNr;
+	int resultArrayLen;
+	struct iindexFormat *resultArray;
+	double searchtime;
+};
 
-void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *TotaltTreff, query_array *queryParsed, struct queryTimeFormat *queryTime, struct subnamesFormat subnames[], int nrOfSubnames,int languageFilterNr, int languageFilterAsNr[], char orderby[], int dates[]) {
+void *searchIndex_thread(void *arg)
+{
 
-	int i,y;
+        struct searchIndex_thread_argFormat *searchIndex_thread_arg = (struct searchIndex_thread_argFormat *)arg;
+	int i;
+
+	int ArrayLen;
+
+	struct iindexFormat *TmpArray; 
+	struct iindexFormat *Array;
+	int (*rank)(const unsigned short *,const int,const unsigned int DocID,struct subnamesFormat *subname);
+
+	struct timeval start_time, end_time;
+
+	gettimeofday(&start_time, NULL);
+
+
+	TmpArray 	= (struct iindexFormat *)malloc(maxIndexElements * sizeof(struct iindexFormat));
+	Array 		= (struct iindexFormat *)malloc(maxIndexElements * sizeof(struct iindexFormat));
+
+	int hits;
+
+	if (strcmp((*searchIndex_thread_arg).indexType,"Athor") == 0) {
+		rank = rankAthor;
+	}
+	else if (strcmp((*searchIndex_thread_arg).indexType,"Url") == 0) {
+		rank = rankUrl;
+	}
+	else if (strcmp((*searchIndex_thread_arg).indexType,"Main") == 0) {
+		rank = rankMain;
+	}
+	else {
+		printf("unknown index type \"%s\"\n",(*searchIndex_thread_arg).indexType);
+		return;
+	}
+	#ifdef WITH_THREAD
+	pthread_t tid;
+        tid = pthread_self();
+        printf("is thread id %u. Wil search \"%s\"\n",(unsigned int)tid,(*searchIndex_thread_arg).indexType);
+	#endif
+
+
+
+	ArrayLen = 0;
+	printf("nrOfSubnames %i\n",(*searchIndex_thread_arg).nrOfSubnames);
+	for(i=0;i<(*searchIndex_thread_arg).nrOfSubnames;i++) {
+		hits = ArrayLen;
+		searchIndex((*searchIndex_thread_arg).indexType,
+			&ArrayLen,
+			Array,
+			(*searchIndex_thread_arg).queryParsed,
+			TmpArray,
+			&(*searchIndex_thread_arg).subnames[i],
+			rank,
+			(*searchIndex_thread_arg).languageFilterNr, 
+			(*searchIndex_thread_arg).languageFilterAsNr
+		);
+
+		hits = ArrayLen - hits;
+		(*searchIndex_thread_arg).subnames[i].hits += hits;
+		printf("searchIndex_thread: index %s, hits %i\n",(*searchIndex_thread_arg).indexType,hits);
+	}
+
+	free(TmpArray);
+
+	(*searchIndex_thread_arg).resultArrayLen = ArrayLen;
+	(*searchIndex_thread_arg).resultArray = Array;
+
+	gettimeofday(&end_time, NULL);
+	(*searchIndex_thread_arg).searchtime = getTimeDifference(&start_time,&end_time);
+	printf("searchtime %f\n",(*searchIndex_thread_arg).searchtime);
+
+}
+
+void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *TotaltTreff, 
+		query_array *queryParsed, struct queryTimeFormat *queryTime, 
+		struct subnamesFormat subnames[], int nrOfSubnames,int languageFilterNr, 
+		int languageFilterAsNr[], char orderby[], int dates[],
+		struct filtypesFormat *filtypes, int *filtypesnrof) {
+
+	int i,y,n;
 	//int x=0,j=0,k=0;
-	int PopRank;
+	unsigned char PopRank;
+	int responseShortTo;
 
+	int rankcount[256]; // rank går fra 0-252 (unsigned char)
 	//int M,N;
 	int tmpint;
 
@@ -738,18 +868,251 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	int AthorArrayLen;
 
 	//char *WordID;
-
-
-
-
+	struct searchIndex_thread_argFormat searchIndex_thread_arg_Athor;
+	struct searchIndex_thread_argFormat searchIndex_thread_arg_Url;
+	struct searchIndex_thread_argFormat searchIndex_thread_arg_Main;
 	
      
         int baseArrayLen,MainArrayHits;
-	//int TmpArrayLen;	
-	*TeffArrayElementer = 0;
+	int TmpArrayLen;	
 	//unsigned long WordIDcrc32;
+	unsigned int PredictNrAthor;
+	unsigned int PredictNrUrl;
+	unsigned int PredictNrMain;
+
+	PredictNrAthor	= 0;
+	PredictNrUrl	= 0;
+	PredictNrMain	= 0;
+
+	pthread_t threadid_Athor = 0;
+	pthread_t threadid_Url = 0;
+	pthread_t threadid_Main = 0;
+
+	//resetter subnmes hits
+	for(i=0;i<nrOfSubnames;i++) {		
+		subnames[i].hits = 0;
+	}
+
+	#ifndef BLACK_BOKS
+	//finner først ca hvor mange treff vi fil få. Dette brukes for å avgjøre om vi kan 
+	//klare oss med å søke i bare url og athor, eller om vi må søke i alt
+	//Athor
+	for(i=0;i<nrOfSubnames;i++) {		
+		PredictNrAthor += searchIndex_getnrs("Athor",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
+	}
+
+	//Url
+	for(i=0;i<nrOfSubnames;i++) {		
+		PredictNrUrl += searchIndex_getnrs("Url",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
+	}
+	#endif
+
+	//Main
+	for(i=0;i<nrOfSubnames;i++) {		
+		PredictNrMain += searchIndex_getnrs("Main",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
+	}
+
+	printf("PredictNrAthor %u, PredictNrUrl %u, PredictNrMain %u\n",PredictNrAthor,PredictNrUrl,PredictNrMain);
+
+	//nullstiller alle resultat tellere
+	searchIndex_thread_arg_Athor.resultArrayLen = 0;
+	searchIndex_thread_arg_Url.resultArrayLen = 0;
+	searchIndex_thread_arg_Main.resultArrayLen = 0;
 
 
+	searchIndex_thread_arg_Athor.searchtime = 0;
+	searchIndex_thread_arg_Url.searchtime = 0;
+	searchIndex_thread_arg_Main.searchtime = 0;
+
+	
+	#ifndef BLACK_BOKS
+	//Athor	
+	if (PredictNrAthor > 0) {
+		searchIndex_thread_arg_Athor.indexType = "Athor";
+		searchIndex_thread_arg_Athor.nrOfSubnames = nrOfSubnames;
+		searchIndex_thread_arg_Athor.subnames = subnames;
+		searchIndex_thread_arg_Athor.queryParsed = queryParsed;
+		searchIndex_thread_arg_Athor.languageFilterNr = languageFilterNr;
+		searchIndex_thread_arg_Athor.languageFilterAsNr = languageFilterAsNr;
+		#ifdef WITH_THREAD
+			n = pthread_create(&threadid_Athor, NULL, searchIndex_thread, &searchIndex_thread_arg_Athor);
+		#else
+			searchIndex_thread(&searchIndex_thread_arg_Athor);
+		#endif
+	}
+
+	//Url
+	if (PredictNrUrl > 0) {
+		searchIndex_thread_arg_Url.indexType = "Url";
+		searchIndex_thread_arg_Url.nrOfSubnames = nrOfSubnames;
+		searchIndex_thread_arg_Url.subnames = subnames;
+		searchIndex_thread_arg_Url.queryParsed = queryParsed;
+		searchIndex_thread_arg_Url.languageFilterNr = languageFilterNr;
+		searchIndex_thread_arg_Url.languageFilterAsNr = languageFilterAsNr;
+		#ifdef WITH_THREAD
+			n = pthread_create(&threadid_Url, NULL, searchIndex_thread, &searchIndex_thread_arg_Url);
+		#else
+			searchIndex_thread(&searchIndex_thread_arg_Url);	
+		#endif
+	}
+
+
+	//Main
+	//vi søker ikke main hvis vi antar at vi har flere en xxx elementer i Athor
+	if ((PredictNrMain > 0) && (PredictNrAthor < 20000)) {
+	#else
+	if(1) {
+	#endif
+
+		searchIndex_thread_arg_Main.indexType = "Main";
+		searchIndex_thread_arg_Main.nrOfSubnames = nrOfSubnames;
+		searchIndex_thread_arg_Main.subnames = subnames;
+		searchIndex_thread_arg_Main.queryParsed = queryParsed;
+		searchIndex_thread_arg_Main.languageFilterNr = languageFilterNr;
+		searchIndex_thread_arg_Main.languageFilterAsNr = languageFilterAsNr;
+
+		#ifdef WITH_THREAD
+			n = pthread_create(&threadid_Main, NULL, searchIndex_thread, &searchIndex_thread_arg_Main);
+		#else
+			searchIndex_thread(&searchIndex_thread_arg_Main);	
+		#endif
+	}
+
+	#ifdef WITH_THREAD
+		//joiner trådene
+		pthread_join(threadid_Athor, NULL);
+		pthread_join(threadid_Url, NULL);
+		pthread_join(threadid_Main, NULL);
+	#endif
+
+	printf("Athor ArrayLen %i, Url ArrayLen %i, Main ArrayLen %i\n",searchIndex_thread_arg_Athor.resultArrayLen,searchIndex_thread_arg_Url.resultArrayLen,searchIndex_thread_arg_Main.resultArrayLen);
+
+	//sanker inn tiden
+	(*queryTime).AthorSearch = searchIndex_thread_arg_Athor.searchtime;
+	(*queryTime).UrlSearch = searchIndex_thread_arg_Url.searchtime;
+	(*queryTime).MainSearch = searchIndex_thread_arg_Main.searchtime;
+
+
+	gettimeofday(&start_time, NULL);
+
+	TmpArray 	= (struct iindexFormat *)malloc(maxIndexElements * sizeof(struct iindexFormat));
+	TmpArrayLen = 0;
+
+	//Athor
+	if (searchIndex_thread_arg_Athor.resultArrayLen > 0) {
+		(*TeffArrayElementer) = 0;
+		or_merge(TmpArray,&TmpArrayLen,TeffArray,(*TeffArrayElementer),
+			searchIndex_thread_arg_Athor.resultArray,searchIndex_thread_arg_Athor.resultArrayLen);
+		free(searchIndex_thread_arg_Athor.resultArray);
+		memcpy(TeffArray,TmpArray,sizeof(struct iindexFormat) * TmpArrayLen);
+		(*TeffArrayElementer) = TmpArrayLen;
+	}
+
+	//Url
+	if (searchIndex_thread_arg_Url.resultArrayLen > 0) {
+		or_merge(TmpArray,&TmpArrayLen,TeffArray,(*TeffArrayElementer),
+			searchIndex_thread_arg_Url.resultArray,searchIndex_thread_arg_Url.resultArrayLen);
+		free(searchIndex_thread_arg_Url.resultArray);
+		memcpy(TeffArray,TmpArray,sizeof(struct iindexFormat) * TmpArrayLen);
+		(*TeffArrayElementer) = TmpArrayLen;
+	}
+
+
+	//Main
+	if (searchIndex_thread_arg_Main.resultArrayLen > 0) {
+		or_merge(TmpArray,&TmpArrayLen,TeffArray,(*TeffArrayElementer),
+			searchIndex_thread_arg_Main.resultArray,searchIndex_thread_arg_Main.resultArrayLen);
+		free(searchIndex_thread_arg_Main.resultArray);
+		memcpy(TeffArray,TmpArray,sizeof(struct iindexFormat) * TmpArrayLen);
+		(*TeffArrayElementer) = TmpArrayLen;
+	}
+
+
+	free(TmpArray);
+
+        gettimeofday(&end_time, NULL);
+        (*queryTime).MainAthorMerge = getTimeDifference(&start_time,&end_time);
+
+
+	gettimeofday(&start_time, NULL);
+
+	y=0;
+       	for (i = 0; i < (*TeffArrayElementer); i++) {
+       	        PopRank = popRankForDocIDMemArray(TeffArray[i].DocID);
+		//neste linje må fjeres hvis vi skal ha forkorting
+		TeffArray[i].PopRank = PopRank;
+		//her kan vi ha forkortning av array
+		//if (PopRank > 0) {
+               	//	TeffArray[y] = TeffArray[i];
+                //        TeffArray[y].PopRank = PopRank;
+                //	++y;
+		//}
+	}
+
+        gettimeofday(&end_time, NULL);
+        (*queryTime).popRank = getTimeDifference(&start_time,&end_time);
+
+	//kutter ned på treff errayen, basert på rank. Slik at vå får ferre elemeneter å sortere
+
+	if ((*TeffArrayElementer) > 20000) {
+
+		for(i=0; i<= 255;i++) {
+			rankcount[i] = 0;
+		}
+
+		//først gå vi gjenom alle hittene og finner hvilkene rank som fårekommer
+		for (i=0; i < (*TeffArrayElementer); i++) {
+
+
+			++rankcount[TeffArray[i].PopRank];
+		}
+
+		//vi går så gjenom alle rankene og finner den største ranken som vil gi 
+		//oss responseShortToMin sider
+		y=0;
+		responseShortTo=256;
+		//for(i=255;(i>=0) && (y < responseShortToMin);i--) {
+		//while ((responseShortTo>=0) && (y < responseShortToMin)) {
+		do {
+			--responseShortTo;
+
+			y += rankcount[responseShortTo];
+			if (rankcount[responseShortTo] != 0) {
+				printf("rank %i: %i\n",responseShortTo,(int)rankcount[responseShortTo]);
+			}
+
+
+		} while((responseShortTo>0) && (y <= responseShortToMin));
+		
+		printf("responseShortTo: %i, y: %i\n",responseShortTo,y);
+		
+		//fjerner sider som er lavere en responseShortTo 
+		y=0;
+       		for (i = 0; i < (*TeffArrayElementer); i++) {
+			
+			if (TeffArray[i].PopRank > responseShortTo) {
+        	       		TeffArray[y] = TeffArray[i];
+        	        	++y;
+			}
+		}
+
+		printf("shortet respons array from %i to %i.\n",(*TeffArrayElementer),y);
+		(*TeffArrayElementer) = y;
+
+		
+	}
+
+	gettimeofday(&start_time, NULL);
+
+
+        gettimeofday(&end_time, NULL);
+        (*queryTime).responseShortning = getTimeDifference(&start_time,&end_time);
+
+
+	(*TotaltTreff) = (*TeffArrayElementer);
+
+
+/*
 	gettimeofday(&start_time, NULL);
 
 	TmpArray 	= (struct iindexFormat *)malloc(maxIndexElements * sizeof(struct iindexFormat));
@@ -834,226 +1197,13 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
                 }
 		else {
 			for (i = 0; i < UrlArrayLen; i++) {
-                                UrlArray[i].PopRank = popRankForDocIDMemArray(UrlArray[i].DocID);
-
-                        }
-		}
-		#else
-			for (i = 0; i < UrlArrayLen; i++) {
-                                UrlArray[i].PopRank = popRankForDocIDMemArray(UrlArray[i].DocID);
-
-                        }
-                #endif
-
-	#endif
-
-	printf("\turl merger. UrlArrayLen %i, AthorArrayLen %i\n",UrlArrayLen,AthorArrayLen);
-	or_merge(TeffArray,TeffArrayElementer,AthorArray,AthorArrayLen,UrlArray,UrlArrayLen);
-	printf("AthorArray %u\n",(unsigned int)AthorArray);
-
-	free(AthorArray);
-	free(UrlArray);
-	gettimeofday(&end_time, NULL);
-	(*queryTime).AthorSearch = getTimeDifference(&start_time,&end_time);
-
-	printf("TeffArrayElementer: %i\n",*TeffArrayElementer);
-
-	//for testing kan vi spesifisere at vi bare skal ha treff fra ATHOR 
-	#ifdef ATHOR_ONLY
-		if (1) {
-	#else
-		if (*TeffArrayElementer > 20000) {
-	#endif
-		/*
-		//gjør rnagering
-		for (i = 0; i < (*TeffArrayElementer); i++) {
-                        TeffArray[i].PopRank = popRankForDocIDMemArray(TeffArray[i].DocID);
-		}
-		*/
-
-		(*TotaltTreff) = (*TeffArrayElementer);
-		
-
-		printf("ATHOR: TotaltTreff %i, TeffArrayElementer: %i\n",(*TotaltTreff),(*TeffArrayElementer));
-	}
-	else {
-
+                                UrlArray[i].PopRank = popRankForDocIDMemArray(Ur
+*/	
+/*************************************************************************************/
 
 	
-		MainArray = (struct iindexFormat *)malloc(maxIndexElements * sizeof(struct iindexFormat));
-		AthorArray = (struct iindexFormat *)malloc(maxIndexElements * sizeof(struct iindexFormat));
-
-		//for oring kan vi ikke ha en ev erayene som merges som resultatarry, slik som på oring
-		//må ha en egen til dette. Legger derfor Athor svarene i en egen array.
-		//kopierer Athor da den som regel vil være minst
-		#ifdef WITH_RANK_FILTER
-		if ((*TeffArrayElementer) > AthorRFC1) {
-			
-			gettimeofday(&start_time, NULL);
-				y = 0;
-				for (i=0;i<(*TeffArrayElementer);i++) {
-
-					TeffArray[i].PopRank = popRankForDocIDMemArray(TeffArray[i].DocID);
-
-                      			if (TeffArray[i].PopRank > 12) {
-						AthorArray[y] = TeffArray[i];
-						++y;
-					}
-		
-				}
-			gettimeofday(&end_time, NULL);
-                        (*queryTime).AthorRank = getTimeDifference(&start_time,&end_time);
-
-			printf("aa: filtrerte Athor array fra %i til %i\n",(*TeffArrayElementer),y);
-
-			(*TeffArrayElementer) = y;
-		}
-		else {
-			gettimeofday(&start_time, NULL);
-				for (i=0;i<(*TeffArrayElementer);i++) {
-					TeffArray[i].PopRank = popRankForDocIDMemArray(TeffArray[i].DocID);
-					AthorArray[i] = TeffArray[i];
-				}
-			gettimeofday(&end_time, NULL);
-                        (*queryTime).AthorRank = getTimeDifference(&start_time,&end_time);
-			
-			printf("filtrerte ikke Athor array\n");
-			printf("aa: Athor array har %i elementer\n",(*TeffArrayElementer));
-
-		}
-		#else
-
-			gettimeofday(&start_time, NULL);
-                        	for (i=0;i<(*TeffArrayElementer);i++) {
-                                	TeffArray[i].PopRank = popRankForDocIDMemArray(TeffArray[i].DocID);
-                                	AthorArray[i] = TeffArray[i];
-                        	}
-			gettimeofday(&end_time, NULL);
-			(*queryTime).AthorRank = getTimeDifference(&start_time,&end_time);
-
-                        printf("aa: Athor array har %i elementer\n",(*TeffArrayElementer));	
-		#endif
-
-
-		gettimeofday(&start_time, NULL);
-		MainArrayLen=0;	
-		for(i=0;i<nrOfSubnames;i++) {
-			tmpint = MainArrayLen;
-			printf("\nhit pre i: %i %i %i\n",i,tmpint,MainArrayLen);
-			searchIndex("Main",&MainArrayLen,MainArray,queryParsed,TmpArray,&subnames[i],rankMain,languageFilterNr, languageFilterAsNr);
-			printf("hit aa %i - %i\n",MainArrayLen,subnames[i].hits);
-
-			subnames[i].hits = MainArrayLen - tmpint;
-		}
-			
-		printf("TmpArray p %u\n",(unsigned int)TmpArray);
-
-
-		gettimeofday(&end_time, NULL);
-                (*queryTime).MainSearch = getTimeDifference(&start_time,&end_time);
-
-		//må ta vare på antall hists også, MainArrayLen er lengden, og den forandres
-		MainArrayHits = MainArrayLen;
-
-
-		#ifdef WITH_RANK_FILTER
-		if (MainArrayLen > MainRFC1) {
-			//filtrerer bort små forekomster i main array
-			gettimeofday(&start_time, NULL);
-
-                        y = 0;
-                        for (i=0;i<MainArrayLen;i++) {
-                                MainArray[i].PopRank = popRankForDocIDMemArray(MainArray[i].DocID);
-
-                                if (MainArray[i].PopRank > 30) {
-                                        MainArray[y] = MainArray[i];
-                                        ++y;
-                                }
-                        }
-                        printf("filtrerte main array fra %i til %i\n",MainArrayLen,y);
-
-                        MainArrayLen = y;
-
-                        gettimeofday(&end_time, NULL);
-                        (*queryTime).MainRank = getTimeDifference(&start_time,&end_time);
-
-
-		}
-		else if (MainArrayLen > MainRFC2) {
-			//filtrerer bort små forekomster i main array
-			gettimeofday(&start_time, NULL);
-			y = 0;
-                	for (i=0;i<MainArrayLen;i++) {
-				MainArray[i].PopRank = popRankForDocIDMemArray(MainArray[i].DocID);
-
-				if (MainArray[i].PopRank > 12) {
-					MainArray[y] = MainArray[i];
-					++y;
-				}
-			}
-                        gettimeofday(&end_time, NULL);
-                        (*queryTime).MainRank = getTimeDifference(&start_time,&end_time);
-
-			printf("filtrerte main array fra %i til %i\n",MainArrayLen,y);
-
-			MainArrayLen = y;
-		}
-		else {
-			gettimeofday(&start_time, NULL);
-				for (i=0;i<MainArrayLen;i++) {
-					MainArray[i].PopRank = popRankForDocIDMemArray(MainArray[i].DocID);
-					//printf("%lu: %i\n",MainArray[i].DocID,MainArray[i].PopRank);
-				}
-                        gettimeofday(&end_time, NULL);
-                        (*queryTime).MainRank = getTimeDifference(&start_time,&end_time);
-			
-			printf("filtrerte ikke main array\n");
-		}
-		#else
-
-			gettimeofday(&start_time, NULL);
-                        	for (i=0;i<MainArrayLen;i++) {
-                                	MainArray[i].PopRank = popRankForDocIDMemArray(MainArray[i].DocID);
-                                	//printf("%lu: %i\n",MainArray[i].DocID,MainArray[i].PopRank);
-                        	}
-
-			gettimeofday(&end_time, NULL);
-                        (*queryTime).MainRank = getTimeDifference(&start_time,&end_time);
-
-			printf("filtrerte ikke main array\n");
-
-			printf("aa: Main array har %i elementer\n",MainArrayLen);
-
-		#endif
-
-		//(*TotaltTreff) = (*TeffArrayElementer) + MainArrayLen;
-		(*TotaltTreff) = (*TeffArrayElementer) + MainArrayHits;
-
-		printf("TotaltTreff: %i, TeffArrayElementer %i, MainArrayLen %i\n",(*TotaltTreff),(*TeffArrayElementer),MainArrayLen);
-
-		gettimeofday(&start_time, NULL);
-			or_merge(TeffArray,&baseArrayLen,AthorArray,*TeffArrayElementer,MainArray,MainArrayLen);
-                gettimeofday(&end_time, NULL);
-                (*queryTime).MainAthorMerge = getTimeDifference(&start_time,&end_time);
-
-		printf("baseArrayLen %i\n",baseArrayLen);
-
-		free(MainArray);
-		free(AthorArray);
-
-		(*TeffArrayElementer) = baseArrayLen;
-
-		//er +i riktig her??
-		//(*TotaltTreff) = (*TeffArrayElementer) +i;	
-		//(*TotaltTreff) = (*TeffArrayElementer) + MainArrayLen;
-	}
-
-	
-		printf("TmpArray p %u\n",(unsigned int)TmpArray);
-	free(TmpArray);
-
-
 	#ifdef BLACK_BOKS
+
 		//lager en oversikt over filformater
 		/*
 			Dette her blit en ganske komplisert sak. Vi har hash nøkler på fårmatet "subname-filtype", i en strukt.
@@ -1106,7 +1256,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
                 	subnames[i].nrOfFiletypes = 0;
 		}
 		/* Iterator constructor only returns a valid iterator if
-		* the hashtable is not empty */
+		 the hashtable is not empty 
+		*/
 
 		if (hashtable_count(h) > 0)
 		{
@@ -1320,7 +1471,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 }
 
-//qsort(subnames[i].filtypes,subnames[i].nrOfFiletypes,sizeof(struct subnamesFiltypesFormat),compare_filetypes);
 
 int compare_filetypes (const void *p1, const void *p2) {
         if (((struct subnamesFiltypesFormat*)p1)->nrof > ((struct subnamesFiltypesFormat*)p2)->nrof)
@@ -1339,4 +1489,5 @@ int compare_elements (const void *p1, const void *p2) {
                 return ((struct iindexFormat*)p1)->allrank < ((struct iindexFormat*)p2)->allrank;
 
 }
+
 

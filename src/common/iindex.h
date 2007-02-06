@@ -1,6 +1,10 @@
 #include "define.h"
 
-void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray, unsigned long *WordID,  char * IndexType, char *IndexSprok,struct subnamesFormat *subname, int (*rank)(const unsigned short *,const int),int languageFilterNr, int languageFilterAsNr[]);
+void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
+                unsigned long WordIDcrc32, char * IndexType, char *IndexSprok,
+                struct subnamesFormat *subname,
+                int (*rank)(const unsigned short *,const int,const unsigned int DocID,struct subnamesFormat *subname),
+                int languageFilterNr, int languageFilterAsNr[] );
 
 void GetNForTerm(unsigned long WordIDcrc32, char *IndexType, char *IndexSprok, int  *TotaltTreff, char subname[]);
 
