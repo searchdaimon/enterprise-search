@@ -89,7 +89,7 @@ utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
 \&#[0-9]+;		{ bhpm_newutf8( atoi(&(yytext[2])), yyscanner, WORD ); }
 \&			{ bhpm_newstring("&amp;", yyscanner, ESC); }
 [\ \t\n\r\f]+		{ (bhpmget_extra(yyscanner))->space = 1; }
-{latin-sup}		{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, WORD ); printf("[%s]\n", yytext); }
+{latin-sup}		{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, WORD ); }
 [\200-\377]		{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, ESC); }
 \<{blank}*script[^\>]*\> {	// Ignore characters between script-tags.
 			    BEGIN SCRIPT;
