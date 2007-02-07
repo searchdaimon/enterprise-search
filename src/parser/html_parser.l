@@ -208,6 +208,41 @@ struct htmlesc_val bhpm_heval[252] =
 {"yacute", 253},{"yen", 165},{"yuml", 255},{"zeta", 950},{"zwj", 8205},{"zwnj", 8204}};
 
 
+struct htmlesc_val bhpm_hecval[190] =
+{{"aacute", 193}, {"acirc", 194},
+{"acute", 180}, {"aelig", 198}, {"agrave", 192}, {"alefsym", 8501}, {"alpha", 913}, {"amp", 38},
+{"and", 8743}, {"ang", 8736}, {"aring", 197}, {"asymp", 8776}, {"atilde", 195}, {"auml", 196},
+{"bdquo", 8222}, {"beta", 914}, {"brvbar", 166}, {"bull", 8226}, {"cap", 8745}, {"ccedil", 199},
+{"cedil", 184}, {"cent", 162}, {"chi", 935}, {"circ", 710}, {"clubs", 9827}, {"cong", 8773},
+{"copy", 169}, {"crarr", 8629}, {"cup", 8746}, {"curren", 164}, {"dagger", 8224}, {"darr", 8595},
+{"deg", 176}, {"delta", 916}, {"diams", 9830}, {"divide", 247}, {"eacute", 201}, {"ecirc", 202},
+{"egrave", 200}, {"empty", 8709}, {"emsp", 8195}, {"ensp", 8194}, {"epsilon", 917}, {"equiv", 8801},
+{"eta", 919}, {"eth", 208}, {"euml", 203}, {"euro", 8364}, {"exist", 8707}, {"fnof", 402},
+{"forall", 8704}, {"frac12", 189}, {"frac14", 188}, {"frac34", 190}, {"frasl", 8260}, {"gamma", 915},
+{"ge", 8805}, {"gt", 62}, {"harr", 8596}, {"hearts", 9829}, {"hellip", 8230}, {"iacute", 205},
+{"icirc", 206}, {"iexcl", 161}, {"igrave", 204}, {"image", 8465}, {"infin", 8734}, {"int", 8747},
+{"iota", 921}, {"iquest", 191}, {"isin", 8712}, {"iuml", 207}, {"kappa", 922}, {"lambda", 923},
+{"lang", 9001}, {"laquo", 171}, {"larr", 8592}, {"lceil", 8968}, {"ldquo", 8220}, {"le", 8804},
+{"lfloor", 8970}, {"lowast", 8727}, {"loz", 9674}, {"lrm", 8206}, {"lsaquo", 8249}, {"lsquo", 8216},
+{"lt", 60}, {"macr", 175}, {"mdash", 8212}, {"micro", 181}, {"middot", 183}, {"minus", 8722},
+{"mu", 924}, {"nabla", 8711}, {"nbsp", 160}, {"ndash", 8211}, {"ne", 8800}, {"ni", 8715},
+{"not", 172}, {"notin", 8713}, {"nsub", 8836}, {"ntilde", 209}, {"nu", 925}, {"oacute", 211},
+{"ocirc", 212}, {"oelig", 338}, {"ograve", 210}, {"oline", 8254}, {"omega", 937}, {"omicron", 927},
+{"oplus", 8853}, {"or", 8744}, {"ordf", 170}, {"ordm", 186}, {"oslash", 216}, {"otilde", 213},
+{"otimes", 8855}, {"ouml", 214}, {"para", 182}, {"part", 8706}, {"permil", 8240}, {"perp", 8869},
+{"phi", 934}, {"pi", 928}, {"piv", 982}, {"plusmn", 177}, {"pound", 163}, {"prime", 8242},
+{"prod", 8719}, {"prop", 8733}, {"psi", 936}, {"quot", 34}, {"radic", 8730}, {"rang", 9002},
+{"raquo", 187}, {"rarr", 8594}, {"rceil", 8969}, {"rdquo", 8221}, {"real", 8476}, {"reg", 174},
+{"rfloor", 8971}, {"rho", 929}, {"rlm", 8207}, {"rsaquo", 8250}, {"rsquo", 8217}, {"sbquo", 8218},
+{"scaron", 352}, {"sdot", 8901}, {"sect", 167}, {"shy", 173}, {"sigma", 931}, {"sigmaf", 962},
+{"sim", 8764}, {"spades", 9824}, {"sub", 8834}, {"sube", 8838}, {"sum", 8721}, {"sup1", 185},
+{"sup2", 178}, {"sup3", 179}, {"sup", 8835}, {"supe", 8839}, {"szlig", 223}, {"tau", 932},
+{"there4", 8756}, {"theta", 920}, {"thetasym", 977}, {"thinsp", 8201}, {"thorn", 222}, {"tilde", 732},
+{"times", 215}, {"trade", 8482}, {"uacute", 218}, {"uarr", 8593}, {"ucirc", 219}, {"ugrave", 217},
+{"uml", 168}, {"upsih", 978}, {"upsilon", 933}, {"uuml", 220}, {"weierp", 8472}, {"xi", 926},
+{"yacute", 221}, {"yen", 165}, {"yuml", 255}, {"zeta", 918}, {"zwj", 8205}, {"zwnj", 8204}};
+
+
 static inline void add_to_summary( char *str, yyscan_t scanner )
 {
     struct bhpm_yy_extra	*he = bhpmget_extra(scanner);
@@ -288,6 +323,8 @@ static inline void add_to_summary( char *str, yyscan_t scanner )
 
 static inline void send_word( char *str, yyscan_t scanner )
 {
+    if (strlen(str) < 2) return;
+
     struct bhpm_yy_extra	*he = bhpmget_extra(scanner);
 
     if (he->alink)
@@ -430,14 +467,25 @@ static inline int bhpm_htmlesc_val_compare( const void *a, const void *b )
 }
 
 
+static inline int bhpm_htmlesc_val_casecompare( const void *a, const void *b )
+{
+//    printf("%s %s\n", (char*)a, ((struct htmlesc_val*)b)->str );
+    return strncasecmp( (char*)a, ((struct htmlesc_val*)b)->str, strlen(((struct htmlesc_val*)b)->str) );
+}
+
+
 static inline void bhpm_new_esc_to_utf8( const char* str, yyscan_t scanner, int tt )
 {
     struct htmlesc_val	*escape;
 
     escape = bsearch( &(str[1]), bhpm_heval, 252, sizeof(struct htmlesc_val), bhpm_htmlesc_val_compare );
 
+    if (escape == NULL)
+	{
+	    // Dette skjer kun hvis escapen ikke har rett på store eller små bokstaver.
+	    escape = bsearch( &(str[1]), bhpm_hecval, 190, sizeof(struct htmlesc_val), bhpm_htmlesc_val_casecompare );
+	}
+
     // escape skal ikke kunne være null, ettersom str allerede er verifisert å skulle eksistere.
     bhpm_newutf8( escape->val, scanner, tt );
 }
-
-
