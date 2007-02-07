@@ -91,7 +91,7 @@ int main( int argc, char *argv[] )
 	    fclose(file);
 
 //	    printf("Title: %s\n", title);
-//	    printf("Title: %s\nBody:\n%s\n", title, body);
+	    printf("Title: %s\nBody:\n%.512s\n", title, body);
 	    free(title);
 	    free(body);
 	}

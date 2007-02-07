@@ -360,7 +360,7 @@ static inline void bhpm_newstring( char *str, yyscan_t scanner, int tt )
 	    send_word( le->stringcircle[le->stringtop], scanner );
 	}
 
-    if (tt == le->tt && le->space == 0)
+    if (tt == le->tt && le->space == 0 && (tt == WORD || tt == ESC))
 	{
 	    strncpy( &(le->stringcircle[le->stringtop][le->slen]), str, maxNewString - le->slen );
 	    le->slen = strlen( le->stringcircle[le->stringtop] );

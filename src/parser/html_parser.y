@@ -97,6 +97,8 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 		if (search_automaton(sa_spacetags, (char*)$2) != -1)
 		    he->space = 1;
 
+//		printf("\033[1;33m%s\033[0m\n", $1);
+
 		switch (hit=search_automaton(sa_taglist, (char*)$2))
 		    {
 			case tag_a:
@@ -138,9 +140,15 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 					    lexwords(data->content_ptr);
 					    he->user_fn( bhpm_translate(data->content_ptr), 0, pu_meta_author, puf_none, he->wordlist );
 					}
+				    else if (!strcasecmp("redirect",data->name_ptr))
+					{
+					    lexwords(data->content_ptr);
+					    he->user_fn( bhpm_translate(data->content_ptr), 0, pu_meta_redirect, puf_none, he->wordlist );
+					}
 				}
 			    break;
 			case tag_title:
+//			    printf("\n\033[0;7mtitle\033[0m\n");
 			    he->title = 1;
 			    break;
 		    }
@@ -211,6 +219,11 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 				lexwords(data->content_ptr);
 				he->user_fn( bhpm_translate(data->content_ptr), 0, pu_meta_author, puf_none, he->wordlist );
 			    }
+			else if (!strcasecmp("redirect",data->name_ptr))
+			    {
+				lexwords(data->content_ptr);
+				he->user_fn( bhpm_translate(data->content_ptr), 0, pu_meta_redirect, puf_none, he->wordlist );
+			    }
 		    }
 
 		if (search_automaton(nha_tags, (char*)$2) != -1)
@@ -249,6 +262,13 @@ attr	: ATTR EQUALS TEXTFIELD
 			data->content_ptr++;
 			data->content_ptr[strlen(data->content_ptr)-1] = '\0';
 		    }
+		else if (!strcasecmp("redirect",(char*)$1))
+		    {
+			data->content_ptr = (char*)$3;
+			$$ = bhpm_content_attr;
+			data->content_ptr++;
+			data->content_ptr[strlen(data->content_ptr)-1] = '\0';
+		    }
 		else
 		    $$ = 0;
 	    }
@@ -265,6 +285,11 @@ attr	: ATTR EQUALS TEXTFIELD
 			$$ = bhpm_name_attr;
 		    }
 		else if (!strcasecmp("content",(char*)$1))
+		    {
+			data->content_ptr = (char*)$3;
+			$$ = bhpm_content_attr;
+		    }
+		else if (!strcasecmp("redirect",(char*)$1))
 		    {
 			data->content_ptr = (char*)$3;
 			$$ = bhpm_content_attr;
@@ -333,6 +358,7 @@ void clean(char *s)	// Clean textfield for backslashes.
     s[j] = '\0';
 }
 
+// Denne bør oppdateres:
 void lexwords(char *s)	// Lex for words in textfield.
 {
     int		i, j;
