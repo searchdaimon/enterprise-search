@@ -30,17 +30,14 @@ struct bhpm_yy_extra *bhpmget_extra( yyscan_t yyscanner );
 // ---
 
 
-// Noen konstanter:
-const int	bhpm_href_attr=1, bhpm_name_attr=2, bhpm_content_attr=4;
-
-
 // Data for bison-parseren:
 struct bhpm_intern_data
 {
     char	*page_uri, *page_path, *page_rel_path;
     int		page_url_len;
 
-    char	*href_ptr, *name_ptr, *content_ptr;
+    char	*attr[16], *val[16];
+    int		num_attr;
 };
 
 
@@ -50,25 +47,30 @@ char* bhpm_translate(char *s);
 void clean(char *s);
 void lexwords(char *s);
 
-const char	*ca_taglist[] = {"a","base","h1","h2","h3","h4","h5","h6","meta","title"};
+char		*ca_taglist[] = {"a","base","h1","h2","h3","h4","h5","h6","meta","title"};
 enum		{ tag_a=0, tag_base, tag_h1, tag_h2, tag_h3, tag_h4, tag_h5, tag_h6, tag_meta, tag_title };
 const int	ca_taglist_size = 10;
 automaton	*sa_taglist = NULL;
 
-const char	*ca_spacetags[] = {"br","button","center","div","h1","h2,","h3","h4","h5","h6","hr","img","label","map","p","table"};
+char		*meta_taglist[] = {"keywords","description","author","redirect"};
+enum		{ meta_keywords=0, meta_description, meta_author, meta_redirect };
+const int	meta_taglist_size = 4;
+automaton	*sa_meta_taglist = NULL;
+
+char		*ca_spacetags[] = {"br","button","center","div","h1","h2","h3","h4","h5","h6","hr","img","label","map","p","table"};
 const int	ca_spacetags_size = 16;
 automaton	*sa_spacetags = NULL;
 
 
-const char	*nh_tags[] = {"h1","h2","h3","h4","h5","h6"};
+char		*nh_tags[] = {"h1","h2","h3","h4","h5","h6"};
 const int	nh_tags_size = 6;
 automaton	*nha_tags = NULL;
 
-const char	*nd_tags[] = {"div","ol","p","table","ul"};
+char		*nd_tags[] = {"div","ol","p","table","ul"};
 const int	nd_tags_size = 5;
 automaton	*nda_tags = NULL;
 
-const char	*ns_tags[] = {"br","li","td","th","tr"};
+char		*ns_tags[] = {"br","li","td","th","tr"};
 const int	ns_tags_size = 5;
 automaton	*nsa_tags = NULL;
 
@@ -97,55 +99,93 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 		if (search_automaton(sa_spacetags, (char*)$2) != -1)
 		    he->space = 1;
 
-//		printf("\033[1;33m%s\033[0m\n", $1);
+		if (he->wordcount < 25)
+		    {
+		printf("\033[1;33m<%s", (char*)$2);
+		int j;
+		for (j=0; j<data->num_attr; j++)
+		    {
+			printf(" (%s)", data->attr[j]);
+			if (data->val[j] != NULL)
+			    printf("={%s}", data->val[j]);
+		    }
+		printf(">\033[0m\n");
+		    }
 
 		switch (hit=search_automaton(sa_taglist, (char*)$2))
 		    {
 			case tag_a:
-			    if (($3 & bhpm_href_attr)>0)
-				{
-				    he->alink = 1;
-				    clean(data->href_ptr);
+			    {
+				int	i;
 
-				    char	*temp_link = create_full_link(data->href_ptr, data->page_url_len, data->page_uri, data->page_path );
-				    he->user_fn( temp_link, he->linkcount++, pu_link, puf_none, he->wordlist );	// new link
-				    free( temp_link );
-				}
+				for (i=0; i<data->num_attr; i++)
+				    {
+					if (!strcasecmp(data->attr[i], "href") && data->val[i]!=NULL)
+					    {
+						he->alink = 1;
+						clean(data->val[i]);
+
+						char	*temp_link = create_full_link(data->val[i], data->page_url_len, data->page_uri, data->page_path );
+						he->user_fn( temp_link, he->linkcount++, pu_link, puf_none, he->wordlist );	// new link
+						free( temp_link );
+					    }
+				    }
+			    }
 			    break;
 			case tag_base:
-			    if (($3 & bhpm_href_attr)>0)
-				{
-				    clean(data->href_ptr);
-				    he->user_fn( data->href_ptr, 0, pu_baselink, puf_none, he->wordlist );
-				}
+			    {
+				int	i;
+
+				for (i=0; i<data->num_attr; i++)
+				    {
+					if (!strcasecmp(data->attr[i], "href") && data->val[i]!=NULL)
+					    {
+						clean(data->val[i]);
+						he->user_fn( data->val[i], 0, pu_baselink, puf_none, he->wordlist );
+					    }
+				    }
+			    }
 			    break;
 			case tag_h1: case tag_h2: case tag_h3: case tag_h4: case tag_h5: case tag_h6:
 			    he->h = hit -tag_h1 +1;
 			    break;
 			case tag_meta:
-			    if ((($3 & bhpm_name_attr)>0) && (($3 & bhpm_content_attr)>0))
+			    {
+			    int			i;
+			    char		*content = NULL;
+			    enum parsed_unit	pu = pu_none;
+
+			    printf("meta:");
+
+			    for (i=0; i<data->num_attr; i++)
 				{
-				    if (!strcasecmp("keywords",data->name_ptr))
-					{
-					    lexwords(data->content_ptr);
-					    he->user_fn( bhpm_translate(data->content_ptr), 0, pu_meta_keywords, puf_none, he->wordlist );
-					}
-				    else if (!strcasecmp("description",data->name_ptr))
-					{
-					    lexwords(data->content_ptr);
-					    he->user_fn( bhpm_translate(data->content_ptr), 0, pu_meta_description, puf_none, he->wordlist );
-					}
-				    else if (!strcasecmp("author",data->name_ptr))
-					{
-					    lexwords(data->content_ptr);
-					    he->user_fn( bhpm_translate(data->content_ptr), 0, pu_meta_author, puf_none, he->wordlist );
-					}
-				    else if (!strcasecmp("redirect",data->name_ptr))
-					{
-					    lexwords(data->content_ptr);
-					    he->user_fn( bhpm_translate(data->content_ptr), 0, pu_meta_redirect, puf_none, he->wordlist );
-					}
+				    if (!strcasecmp(data->attr[i], "content"))
+					content = data->val[i];
+
+				    if (!strcasecmp(data->attr[i], "name") && data->val[i] != NULL)
+					switch (search_automaton(sa_meta_taglist, data->val[i]))
+					    {
+						case meta_keywords:
+						    pu = pu_meta_keywords;
+						    break;
+						case meta_description:
+						    pu = pu_meta_description;
+						    break;
+						case meta_author:
+						    pu = pu_meta_author;
+						    break;
+						case meta_redirect:
+						    pu = pu_meta_redirect;
+						    break;
+					    }
 				}
+
+			    if (pu != pu_none && content != NULL)
+				{
+				    lexwords(content);
+				    he->user_fn( bhpm_translate(content), 0, pu, puf_none, he->wordlist );
+				}
+			    }
 			    break;
 			case tag_title:
 //			    printf("\n\033[0;7mtitle\033[0m\n");
@@ -197,32 +237,52 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 
 		hit = search_automaton(sa_taglist, (char*)$2);
 
-		if (hit==tag_base && (($3 & bhpm_href_attr)>0))
+		if (hit==tag_base)
 		    {
-			clean(data->href_ptr);
-			he->user_fn( data->href_ptr, 0, pu_baselink, puf_none, he->wordlist );
+			int	i;
+
+			for (i=0; i<data->num_attr; i++)
+			    {
+				if (!strcasecmp(data->attr[i], "href") && data->val[i]!=NULL)
+				    {
+					clean(data->val[i]);
+					he->user_fn( data->val[i], 0, pu_baselink, puf_none, he->wordlist );
+				    }
+			    }
 		    }
-		else if (hit==tag_meta && (($3 & bhpm_name_attr)>0) && (($3 & bhpm_content_attr)>0))
+		else if (hit==tag_meta)
 		    {
-			if (!strcasecmp("keywords",data->name_ptr))
+			int			i;
+			char		*content = NULL;
+			enum parsed_unit	pu = pu_none;
+
+			for (i=0; i<data->num_attr; i++)
 			    {
-				lexwords(data->content_ptr);
-				he->user_fn( bhpm_translate(data->content_ptr), 0, pu_meta_keywords, puf_none, he->wordlist );
+				if (!strcasecmp(data->attr[i], "content"))
+				    content = data->val[i];
+
+				if (!strcasecmp(data->attr[i], "name") && data->val[i] != NULL)
+				    switch (search_automaton(sa_meta_taglist, data->val[i]))
+					{
+					    case meta_keywords:
+						pu = pu_meta_keywords;
+						break;
+					    case meta_description:
+						pu = pu_meta_description;
+						break;
+					    case meta_author:
+						pu = pu_meta_author;
+						break;
+					    case meta_redirect:
+						pu = pu_meta_redirect;
+						break;
+					}
 			    }
-			else if (!strcasecmp("description",data->name_ptr))
+
+			if (pu != pu_none && content != NULL)
 			    {
-				lexwords(data->content_ptr);
-				he->user_fn( bhpm_translate(data->content_ptr), 0, pu_meta_description, puf_none, he->wordlist );
-			    }
-			else if (!strcasecmp("author",data->name_ptr))
-			    {
-				lexwords(data->content_ptr);
-				he->user_fn( bhpm_translate(data->content_ptr), 0, pu_meta_author, puf_none, he->wordlist );
-			    }
-			else if (!strcasecmp("redirect",data->name_ptr))
-			    {
-				lexwords(data->content_ptr);
-				he->user_fn( bhpm_translate(data->content_ptr), 0, pu_meta_redirect, puf_none, he->wordlist );
+				lexwords(content);
+				he->user_fn( bhpm_translate(content), 0, pu, puf_none, he->wordlist );
 			    }
 		    }
 
@@ -235,117 +295,49 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 	    }
 	;
 attrlist :
-	    { $$ = 0; }
+	    { data->num_attr = 0; }
 	| attrlist attr
-	    { $$ = $1 | $2; }
+	    {}
 	;
 attr	: ATTR EQUALS TEXTFIELD
 	    {
-		if (!strcasecmp("href",(char*)$1))
+		if (data->num_attr < 16)
 		    {
-			data->href_ptr = (char*)$3;
-			$$ = bhpm_href_attr;
-			data->href_ptr++;
-			data->href_ptr[strlen(data->href_ptr)-1] = '\0';
+			data->attr[data->num_attr] = (char*)$1;
+			data->val[data->num_attr] = (char*)$3;
+			data->num_attr++;
 		    }
-		else if (!strcasecmp("name",(char*)$1))
-		    {
-			data->name_ptr = (char*)$3;
-			$$ = bhpm_name_attr;
-			data->name_ptr++;
-			data->name_ptr[strlen(data->name_ptr)-1] = '\0';
-		    }
-		else if (!strcasecmp("content",(char*)$1))
-		    {
-			data->content_ptr = (char*)$3;
-			$$ = bhpm_content_attr;
-			data->content_ptr++;
-			data->content_ptr[strlen(data->content_ptr)-1] = '\0';
-		    }
-		else if (!strcasecmp("redirect",(char*)$1))
-		    {
-			data->content_ptr = (char*)$3;
-			$$ = bhpm_content_attr;
-			data->content_ptr++;
-			data->content_ptr[strlen(data->content_ptr)-1] = '\0';
-		    }
-		else
-		    $$ = 0;
 	    }
 	| ATTR EQUALS ATTR
 	    {
-		if (!strcasecmp("href",(char*)$1))
+		if (data->num_attr < 16)
 		    {
-			data->href_ptr = (char*)$3;
-			$$ = bhpm_href_attr;
+			data->attr[data->num_attr] = (char*)$1;
+			data->val[data->num_attr] = (char*)$3;
+			data->num_attr++;
 		    }
-		else if (!strcasecmp("name",(char*)$1))
-		    {
-			data->name_ptr = (char*)$3;
-			$$ = bhpm_name_attr;
-		    }
-		else if (!strcasecmp("content",(char*)$1))
-		    {
-			data->content_ptr = (char*)$3;
-			$$ = bhpm_content_attr;
-		    }
-		else if (!strcasecmp("redirect",(char*)$1))
-		    {
-			data->content_ptr = (char*)$3;
-			$$ = bhpm_content_attr;
-		    }
-		else
-		    $$ = 0;
 	    }
 	| ATTR
-	    { $$ = 0; }
+	    {
+		if (data->num_attr < 16)
+		    {
+			data->attr[data->num_attr] = (char*)$1;
+			data->val[data->num_attr] = NULL;
+			data->num_attr++;
+		    }
+	    }
 	| TEXTFIELD
-	    { $$ = 0; }
+	    {
+		if (data->num_attr < 16)
+		    {
+			data->attr[data->num_attr] = (char*)$1;
+			data->val[data->num_attr] = NULL;
+			data->num_attr++;
+		    }
+	    }
 	;
 %%
 
-/*
-buffer* buffer_init( int _maxsize )
-{
-    buffer	*B = malloc(sizeof(buffer));
-
-    B->overflow = 0;
-    B->pos = 0;
-    B->maxsize = _maxsize -1;
-    B->data = malloc(_maxsize);
-
-    return B;
-}
-
-char* buffer_exit( buffer *B )
-{
-    char	*output;
-
-    output = malloc( B->pos +1 );
-    memcpy( output, B->data, B->pos );
-    output[B->pos] = '\0';
-
-    free( B->data );
-    free( B );
-
-    return output;
-}
-
-void bprintf( buffer *B, const char *fmt, ... )
-{
-    va_list	ap;
-    int		len_printed;
-
-    if (B->overflow) return;
-
-    va_start(ap, fmt);
-    len_printed = vsnprintf( &(B->data[B->pos]), B->maxsize - B->pos -1, fmt, ap );
-
-    B->pos+= len_printed;
-
-    if (B->pos >= B->maxsize-1) B->overflow = 1;
-}
-*/
 
 void clean(char *s)	// Clean textfield for backslashes.
 {
@@ -579,12 +571,13 @@ char* create_full_link( char *url, int page_url_len, char *page_uri, char *page_
 
 void html_parser_init()
 {
-    sa_taglist = build_automaton( ca_taglist_size, ca_taglist );
-    sa_spacetags = build_automaton( ca_spacetags_size, ca_spacetags );
+    sa_taglist = build_automaton( ca_taglist_size, (unsigned char**)ca_taglist );
+    sa_meta_taglist = build_automaton( meta_taglist_size, (unsigned char**)meta_taglist );
+    sa_spacetags = build_automaton( ca_spacetags_size, (unsigned char**)ca_spacetags );
 
-    nha_tags = build_automaton( nh_tags_size, nh_tags );
-    nda_tags = build_automaton( nd_tags_size, nd_tags );
-    nsa_tags = build_automaton( ns_tags_size, ns_tags );
+    nha_tags = build_automaton( nh_tags_size, (unsigned char**)nh_tags );
+    nda_tags = build_automaton( nd_tags_size, (unsigned char**)nd_tags );
+    nsa_tags = build_automaton( ns_tags_size, (unsigned char**)ns_tags );
 }
 
 void html_parser_exit()
@@ -594,6 +587,7 @@ void html_parser_exit()
     free_automaton(nha_tags);
 
     free_automaton(sa_spacetags);
+    free_automaton(sa_meta_taglist);
     free_automaton(sa_taglist);
 }
 
@@ -622,10 +616,6 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
     he->wordcount = 0;
     he->linkcount = 0;
     he->h = 0;
-
-    data->href_ptr = NULL;
-    data->name_ptr = NULL;
-    data->content_ptr = NULL;
 
     he->newhead = 0;
     he->newdiv = 1;

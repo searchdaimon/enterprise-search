@@ -28,7 +28,7 @@ static inline void bhpm_new_esc_to_utf8( const char* str, yyscan_t scanner, int 
 %}
 
 character	[a-z]
-legalchar	[a-z0-9_'`]
+legalchar	[a-z0-9_'`-]
 legaltegn	[!"#$%()*+,-./:;=?@[\\\]^{|}~]
 word		[0-9a-z'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõöøùúûüış]
 allemuligetegn	[!"#$%'()*+,-./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüış]
@@ -137,12 +137,14 @@ utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
 			    bhpm_newstring(yytext, yyscanner, ATTR);
 			    return ATTR;
 			}
-<TAG>\'(\\\'|[^\'])*\'	{
-			    bhpm_newstring(yytext, yyscanner, TEXTFIELD);
+<TAG>\'(\\\'|[^\'>])*\'	{
+			    yytext[strlen(yytext)-1] = '\0';
+			    bhpm_newstring(&(yytext[1]), yyscanner, TEXTFIELD);
 			    return TEXTFIELD;
 			}
-<TAG>\"(\\\"|[^\"])*\"	{
-			    bhpm_newstring(yytext, yyscanner, TEXTFIELD);
+<TAG>\"(\\\"|[^\">])*\"	{
+			    yytext[strlen(yytext)-1] = '\0';
+			    bhpm_newstring(&(yytext[1]), yyscanner, TEXTFIELD);
 			    return TEXTFIELD;
 			}
 <COMMENT>\-\-\>		{			BEGIN INITIAL; }
@@ -208,7 +210,7 @@ struct htmlesc_val bhpm_heval[252] =
 {"yacute", 253},{"yen", 165},{"yuml", 255},{"zeta", 950},{"zwj", 8205},{"zwnj", 8204}};
 
 
-struct htmlesc_val bhpm_hecval[190] =
+struct htmlesc_val bhpm_hecval[191] =
 {{"aacute", 193}, {"acirc", 194},
 {"acute", 180}, {"aelig", 198}, {"agrave", 192}, {"alefsym", 8501}, {"alpha", 913}, {"amp", 38},
 {"and", 8743}, {"ang", 8736}, {"aring", 197}, {"asymp", 8776}, {"atilde", 195}, {"auml", 196},
@@ -235,7 +237,7 @@ struct htmlesc_val bhpm_hecval[190] =
 {"raquo", 187}, {"rarr", 8594}, {"rceil", 8969}, {"rdquo", 8221}, {"real", 8476}, {"reg", 174},
 {"rfloor", 8971}, {"rho", 929}, {"rlm", 8207}, {"rsaquo", 8250}, {"rsquo", 8217}, {"sbquo", 8218},
 {"scaron", 352}, {"sdot", 8901}, {"sect", 167}, {"shy", 173}, {"sigma", 931}, {"sigmaf", 962},
-{"sim", 8764}, {"spades", 9824}, {"sub", 8834}, {"sube", 8838}, {"sum", 8721}, {"sup1", 185},
+{"sim", 8764}, {"spades", 9824}, {"sub", 8834}, {"sube", 8838}, {"sum", 8721}, {"sup", 8835}, {"sup1", 185},
 {"sup2", 178}, {"sup3", 179}, {"sup", 8835}, {"supe", 8839}, {"szlig", 223}, {"tau", 932},
 {"there4", 8756}, {"theta", 920}, {"thetasym", 977}, {"thinsp", 8201}, {"thorn", 222}, {"tilde", 732},
 {"times", 215}, {"trade", 8482}, {"uacute", 218}, {"uarr", 8593}, {"ucirc", 219}, {"ugrave", 217},
@@ -483,7 +485,7 @@ static inline void bhpm_new_esc_to_utf8( const char* str, yyscan_t scanner, int 
     if (escape == NULL)
 	{
 	    // Dette skjer kun hvis escapen ikke har rett på store eller små bokstaver.
-	    escape = bsearch( &(str[1]), bhpm_hecval, 190, sizeof(struct htmlesc_val), bhpm_htmlesc_val_casecompare );
+	    escape = bsearch( &(str[1]), bhpm_hecval, 191, sizeof(struct htmlesc_val), bhpm_htmlesc_val_casecompare );
 	}
 
     // escape skal ikke kunne være null, ettersom str allerede er verifisert å skulle eksistere.

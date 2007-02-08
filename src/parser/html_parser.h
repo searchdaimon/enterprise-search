@@ -9,7 +9,7 @@ extern "C" {
 
 enum parsed_unit
 {
-    pu_word, pu_link, pu_baselink, pu_linkword, pu_meta_keywords, pu_meta_author, pu_meta_description, pu_meta_redirect
+    pu_none, pu_word, pu_link, pu_baselink, pu_linkword, pu_meta_keywords, pu_meta_author, pu_meta_description, pu_meta_redirect
 };
 
 enum parsed_unit_flag
