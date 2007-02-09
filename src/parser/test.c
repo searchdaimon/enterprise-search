@@ -9,6 +9,7 @@
 
 void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* wordlist )
 {
+/*
     if (pos > 25 || pu==pu_link) return;
 
     printf("\t%s (%i) ", word, pos);
@@ -39,6 +40,7 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 	}
 
     printf("\n");
+*/
 }
 
 

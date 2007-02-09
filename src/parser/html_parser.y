@@ -98,7 +98,7 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 
 		if (search_automaton(sa_spacetags, (char*)$2) != -1)
 		    he->space = 1;
-
+/*
 		if (he->wordcount < 25)
 		    {
 		printf("\033[1;33m<%s", (char*)$2);
@@ -111,7 +111,7 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 		    }
 		printf(">\033[0m\n");
 		    }
-
+*/
 		switch (hit=search_automaton(sa_taglist, (char*)$2))
 		    {
 			case tag_a:
@@ -155,7 +155,7 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 			    char		*content = NULL;
 			    enum parsed_unit	pu = pu_none;
 
-			    printf("meta:");
+//			    printf("meta:");
 
 			    for (i=0; i<data->num_attr; i++)
 				{
