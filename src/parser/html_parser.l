@@ -244,10 +244,14 @@ struct htmlesc_val bhpm_hecval[191] =
 {"uml", 168}, {"upsih", 978}, {"upsilon", 933}, {"uuml", 220}, {"weierp", 8472}, {"xi", 926},
 {"yacute", 221}, {"yen", 165}, {"yuml", 255}, {"zeta", 918}, {"zwj", 8205}, {"zwnj", 8204}};
 
+int	_id=0;
 
 static inline void add_to_summary( char *str, yyscan_t scanner )
 {
     struct bhpm_yy_extra	*he = bhpmget_extra(scanner);
+
+//    if (_id<25)
+//    printf("(%i,%i,%i,%i,%i,%i,%i)\n", he->newhead, he->newdiv, he->newspan, he->inhead, he->indiv, he->inspan, he->space);
 
     if (he->title)
 	{
@@ -299,7 +303,6 @@ static inline void add_to_summary( char *str, yyscan_t scanner )
 		    bprintf(he->Bbody, "    <span>");
 		    he->inspan = 1;
 		    he->inhead = 0;
-		    he->newendhead = 0;
 		    he->h = 0;
 		}
 	    else if (he->newspan)
@@ -317,6 +320,7 @@ static inline void add_to_summary( char *str, yyscan_t scanner )
 	    he->newhead = 0;
 	    he->newdiv = 0;
 	    he->newspan = 0;
+	    he->newendhead = 0;
 
 	    bprintf(he->Bbody, "%s", str);
 	}

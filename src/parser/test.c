@@ -9,7 +9,6 @@
 
 void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* wordlist )
 {
-/*
     if (pos > 25 || pu==pu_link) return;
 
     printf("\t%s (%i) ", word, pos);
@@ -40,7 +39,6 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 	}
 
     printf("\n");
-*/
 }
 
 
@@ -93,7 +91,8 @@ int main( int argc, char *argv[] )
 	    fclose(file);
 
 //	    printf("Title: %s\n", title);
-	    printf("Title: %s\nBody:\n%.512s\n", title, body);
+//	    printf("Title: %s\nBody:\n%.512s\n", title, body);
+	    printf("Title: %s\nBody:\n%s\n", title, body);
 	    free(title);
 	    free(body);
 	}

@@ -4,6 +4,7 @@ CC=/usr/local/bin/gcc -p -g
 # -O2 -Wall
 
 all:
+	awk -f tags.awk tags.conf > html_parser_tags.h
 	yacc -d -p bhpm html_parser.y
 	flex -f -8 -P bhpm -i html_parser.l
 	$(CC) -c lex.bhpm.c y.tab.c

@@ -21,6 +21,7 @@ Håndtering av at page_uri er  NULL en skjelden gang i create_full_link
 #include "html_parser_common.h"
 #include "html_parser.h"
 #include "search_automaton.h"
+#include "html_parser_tags.h"
 
 // --- fra flex:
 typedef void* yyscan_t;
@@ -47,32 +48,12 @@ char* bhpm_translate(char *s);
 void clean(char *s);
 void lexwords(char *s);
 
-char		*ca_taglist[] = {"a","base","h1","h2","h3","h4","h5","h6","meta","title"};
-enum		{ tag_a=0, tag_base, tag_h1, tag_h2, tag_h3, tag_h4, tag_h5, tag_h6, tag_meta, tag_title };
-const int	ca_taglist_size = 10;
-automaton	*sa_taglist = NULL;
 
-char		*meta_taglist[] = {"keywords","description","author","redirect"};
+char		*meta_attr[] = {"keywords","description","author","redirect"};
 enum		{ meta_keywords=0, meta_description, meta_author, meta_redirect };
-const int	meta_taglist_size = 4;
-automaton	*sa_meta_taglist = NULL;
+const int	meta_attr_size = 4;
+automaton	*meta_attr_automaton = NULL;
 
-char		*ca_spacetags[] = {"br","button","center","div","h1","h2","h3","h4","h5","h6","hr","img","label","map","p","table"};
-const int	ca_spacetags_size = 16;
-automaton	*sa_spacetags = NULL;
-
-
-char		*nh_tags[] = {"h1","h2","h3","h4","h5","h6"};
-const int	nh_tags_size = 6;
-automaton	*nha_tags = NULL;
-
-char		*nd_tags[] = {"div","ol","p","table","ul"};
-const int	nd_tags_size = 5;
-automaton	*nda_tags = NULL;
-
-char		*ns_tags[] = {"br","li","td","th","tr"};
-const int	ns_tags_size = 5;
-automaton	*nsa_tags = NULL;
 
 %}
 
@@ -93,10 +74,11 @@ tag	: starttag
 starttag	: TAG_START ATTR attrlist TAG_STOPP
 	    {
 //		printf("\nStarttag: %s\n", $2);
-		int			hit;
 		struct bhpm_yy_extra	*he = bhpmget_extra(yyscanner);
+		int			hit = search_automaton(tags_automaton, (char*)$2);
 
-		if (search_automaton(sa_spacetags, (char*)$2) != -1)
+//		if (search_automaton(sa_spacetags, (char*)$2) != -1)
+		if ((hit>=0) && (tag_flags[hit] & tagf_space))
 		    he->space = 1;
 /*
 		if (he->wordcount < 25)
@@ -112,7 +94,7 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 		printf(">\033[0m\n");
 		    }
 */
-		switch (hit=search_automaton(sa_taglist, (char*)$2))
+		switch (hit)
 		    {
 			case tag_a:
 			    {
@@ -163,7 +145,7 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 					content = data->val[i];
 
 				    if (!strcasecmp(data->attr[i], "name") && data->val[i] != NULL)
-					switch (search_automaton(sa_meta_taglist, data->val[i]))
+					switch (search_automaton(meta_attr_automaton, data->val[i]))
 					    {
 						case meta_keywords:
 						    pu = pu_meta_keywords;
@@ -196,32 +178,30 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 		if (hit!=tag_title)
 		    he->title = 0;
 
-		if (search_automaton(nha_tags, (char*)$2) != -1)
+		if (tag_flags[hit] & tagf_head)
 			he->newhead = 1;
-		if (search_automaton(nda_tags, (char*)$2) != -1)
+		else if (tag_flags[hit] & tagf_div)
 			he->newdiv = 1;
-		if (search_automaton(nsa_tags, (char*)$2) != -1)
+		else if (tag_flags[hit] & tagf_span)
 			he->newspan = 1;
 	    }
 	;
 endtag	: ENDTAG_START ATTR ENDTAG_STOPP
 //	    { printf("endtag: %s\n", $2); }
 	    {
-		int	hit;
 		struct bhpm_yy_extra	*he = bhpmget_extra(yyscanner);
-
-		hit = search_automaton(sa_taglist, (char*)$2);
+		int			hit = search_automaton(tags_automaton, (char*)$2);
 
 		if (hit==tag_title)	he->title = 0;
-		else if (hit>=tag_h1 && hit<=tag_h6)	he->h = 0;
+		else if ((hit>=0) && (tag_flags[hit] & tagf_head))	he->h = 0;
 		else if (hit==tag_a)	he->alink = 0;
 
-		//!!!
-		if (search_automaton(nha_tags, (char*)$2) != -1)
+
+		if (tag_flags[hit] & tagf_head)
 			he->newendhead = 1;
-		if (search_automaton(nda_tags, (char*)$2) != -1)
+		else if (tag_flags[hit] & tagf_div)
 			he->newdiv = 1;
-		if (search_automaton(nsa_tags, (char*)$2) != -1)
+		else if (tag_flags[hit] & tagf_span)
 			he->newspan = 1;
 	    }
 	;
@@ -229,13 +209,14 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 //	    { printf("start/end-tag: %s\n", $2); }
 	    {
 //		printf("\nStart/end-tag: %s\n", $2);
-		int	hit;
 		struct bhpm_yy_extra	*he = bhpmget_extra(yyscanner);
+		int			hit = search_automaton(tags_automaton, (char*)$2);
 
-		if (search_automaton(sa_spacetags, (char*)$2) != -1)
+//		if (search_automaton(sa_spacetags, (char*)$2) != -1)
+		if ((hit>=0) && (tag_flags[hit] & tagf_space))
 		    he->space = 1;
 
-		hit = search_automaton(sa_taglist, (char*)$2);
+//		hit = search_automaton(sa_taglist, (char*)$2);
 
 		if (hit==tag_base)
 		    {
@@ -262,7 +243,7 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 				    content = data->val[i];
 
 				if (!strcasecmp(data->attr[i], "name") && data->val[i] != NULL)
-				    switch (search_automaton(sa_meta_taglist, data->val[i]))
+				    switch (search_automaton(meta_attr_automaton, data->val[i]))
 					{
 					    case meta_keywords:
 						pu = pu_meta_keywords;
@@ -286,11 +267,11 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 			    }
 		    }
 
-		if (search_automaton(nha_tags, (char*)$2) != -1)
-			he->newhead = 1;
-		if (search_automaton(nda_tags, (char*)$2) != -1)
+		if (tag_flags[hit] & tagf_head)
+			he->newendhead = 1;
+		else if (tag_flags[hit] & tagf_div)
 			he->newdiv = 1;
-		if (search_automaton(nsa_tags, (char*)$2) != -1)
+		else if (tag_flags[hit] & tagf_span)
 			he->newspan = 1;
 	    }
 	;
@@ -571,6 +552,7 @@ char* create_full_link( char *url, int page_url_len, char *page_uri, char *page_
 
 void html_parser_init()
 {
+/*
     sa_taglist = build_automaton( ca_taglist_size, (unsigned char**)ca_taglist );
     sa_meta_taglist = build_automaton( meta_taglist_size, (unsigned char**)meta_taglist );
     sa_spacetags = build_automaton( ca_spacetags_size, (unsigned char**)ca_spacetags );
@@ -578,10 +560,16 @@ void html_parser_init()
     nha_tags = build_automaton( nh_tags_size, (unsigned char**)nh_tags );
     nda_tags = build_automaton( nd_tags_size, (unsigned char**)nd_tags );
     nsa_tags = build_automaton( ns_tags_size, (unsigned char**)ns_tags );
+*/
+    tags_automaton = build_automaton( tags_size, (unsigned char**)tags );
+    meta_attr_automaton = build_automaton( meta_attr_size, (unsigned char**)meta_attr );
 }
 
 void html_parser_exit()
 {
+    free_automaton(meta_attr_automaton);
+    free_automaton(tags_automaton);
+/*
     free_automaton(nsa_tags);
     free_automaton(nda_tags);
     free_automaton(nha_tags);
@@ -589,6 +577,7 @@ void html_parser_exit()
     free_automaton(sa_spacetags);
     free_automaton(sa_meta_taglist);
     free_automaton(sa_taglist);
+*/
 }
 
 //void run_html_parser( char *url, char text[], int textsize, void (*fn)(char*,int,enum parsed_unit,enum parsed_unit_flag) )
