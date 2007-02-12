@@ -17,7 +17,7 @@ Håndtering av at page_uri er  NULL en skjelden gang i create_full_link
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "../common/bstr.h"
+#include "../common/utf8-strings.h"
 #include "html_parser_common.h"
 #include "html_parser.h"
 #include "search_automaton.h"
@@ -44,9 +44,7 @@ struct bhpm_intern_data
 
 char* create_full_link( char *url, int page_url_len, char *page_uri, char *page_path );
 
-char* bhpm_translate(char *s);
-void clean(char *s);
-void lexwords(char *s);
+void lexwords(unsigned char *s);
 
 
 char		*meta_attr[] = {"keywords","description","author","redirect"};
@@ -77,7 +75,6 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 		struct bhpm_yy_extra	*he = bhpmget_extra(yyscanner);
 		int			hit = search_automaton(tags_automaton, (char*)$2);
 
-//		if (search_automaton(sa_spacetags, (char*)$2) != -1)
 		if ((hit>=0) && (tag_flags[hit] & tagf_space))
 		    he->space = 1;
 /*
@@ -105,7 +102,7 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 					if (!strcasecmp(data->attr[i], "href") && data->val[i]!=NULL)
 					    {
 						he->alink = 1;
-						clean(data->val[i]);
+//						clean(data->val[i]);
 
 						char	*temp_link = create_full_link(data->val[i], data->page_url_len, data->page_uri, data->page_path );
 						he->user_fn( temp_link, he->linkcount++, pu_link, puf_none, he->wordlist );	// new link
@@ -122,7 +119,6 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 				    {
 					if (!strcasecmp(data->attr[i], "href") && data->val[i]!=NULL)
 					    {
-						clean(data->val[i]);
 						he->user_fn( data->val[i], 0, pu_baselink, puf_none, he->wordlist );
 					    }
 				    }
@@ -137,14 +133,11 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 			    char		*content = NULL;
 			    enum parsed_unit	pu = pu_none;
 
-//			    printf("meta:");
-
 			    for (i=0; i<data->num_attr; i++)
 				{
 				    if (!strcasecmp(data->attr[i], "content"))
 					content = data->val[i];
-
-				    if (!strcasecmp(data->attr[i], "name") && data->val[i] != NULL)
+				    else if (!strcasecmp(data->attr[i], "name") && data->val[i] != NULL)
 					switch (search_automaton(meta_attr_automaton, data->val[i]))
 					    {
 						case meta_keywords:
@@ -164,8 +157,8 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 
 			    if (pu != pu_none && content != NULL)
 				{
-				    lexwords(content);
-				    he->user_fn( bhpm_translate(content), 0, pu, puf_none, he->wordlist );
+				    lexwords((unsigned char*)content);
+				    he->user_fn( content, 0, pu, puf_none, he->wordlist );
 				}
 			    }
 			    break;
@@ -212,11 +205,8 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 		struct bhpm_yy_extra	*he = bhpmget_extra(yyscanner);
 		int			hit = search_automaton(tags_automaton, (char*)$2);
 
-//		if (search_automaton(sa_spacetags, (char*)$2) != -1)
 		if ((hit>=0) && (tag_flags[hit] & tagf_space))
 		    he->space = 1;
-
-//		hit = search_automaton(sa_taglist, (char*)$2);
 
 		if (hit==tag_base)
 		    {
@@ -226,7 +216,6 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 			    {
 				if (!strcasecmp(data->attr[i], "href") && data->val[i]!=NULL)
 				    {
-					clean(data->val[i]);
 					he->user_fn( data->val[i], 0, pu_baselink, puf_none, he->wordlist );
 				    }
 			    }
@@ -241,8 +230,7 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 			    {
 				if (!strcasecmp(data->attr[i], "content"))
 				    content = data->val[i];
-
-				if (!strcasecmp(data->attr[i], "name") && data->val[i] != NULL)
+				else if (!strcasecmp(data->attr[i], "name") && data->val[i] != NULL)
 				    switch (search_automaton(meta_attr_automaton, data->val[i]))
 					{
 					    case meta_keywords:
@@ -262,8 +250,8 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 
 			if (pu != pu_none && content != NULL)
 			    {
-				lexwords(content);
-				he->user_fn( bhpm_translate(content), 0, pu, puf_none, he->wordlist );
+				lexwords((unsigned char*)content);
+				he->user_fn( content, 0, pu, puf_none, he->wordlist );
 			    }
 		    }
 
@@ -320,35 +308,28 @@ attr	: ATTR EQUALS TEXTFIELD
 %%
 
 
-void clean(char *s)	// Clean textfield for backslashes.
-{
-    int		i, j;
-
-    for (i=0,j=0; s[i]!='\0'; i++)
-        if (s[i]!=0x5c)	// Backslash.
-	    s[j++] = s[i];
-
-    s[j] = '\0';
-}
-
-// Denne bør oppdateres:
-void lexwords(char *s)	// Lex for words in textfield.
+void lexwords(unsigned char *s)	// Lex for words in textfield.
 {
     int		i, j;
     char	word=0;
+    char	esc=0;
 
     //    word		[0-9a-z'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþ]
     for (i=0,j=0; s[i]!='\0'; i++)
-	if ((s[i]>='0') && (s[i]<='9')
-	    || (s[i]>='A') && (s[i]<='Z')
-	    || (s[i]>='a') && (s[i]<='z')
-	    || (s[i]>='À') && (s[i]<='ß')
-	    || (s[i]>='à') && (s[i]<='þ')
-	    || s[i]==0x27)
+	if (!esc && ((s[i]>='0' && s[i]<='9')
+	    || (s[i]>='A' && s[i]<='Z')
+	    || (s[i]>='a' && s[i]<='z')
+	    || (s[i]==0xc3 && s[i+1]>=0x80 && s[i+1]<=0x9e)
+	    || (s[i]==0xc3 && s[i+1]>=0xa0 && s[i+1]<=0xbe)
+	    || s[i]==0x27))
 	    {
 		s[j++] = s[i];
 		word = 1;
 	    }
+	else if (s[i]=='&')
+	    esc=1;
+	else if (s[i]==';')
+	    esc=0;
 	else
 	    {
 		if (word) s[j++] = ' ';
@@ -358,106 +339,6 @@ void lexwords(char *s)	// Lex for words in textfield.
     s[j] = '\0';
 }
 
-
-
-struct trans_tab
-{
-    char	*escape, translation;
-};
-
-struct trans_tab bhpm_tt[130] = {
-    {"#178",'²'},{"#179",'³'},{"#185",'¹'},{"#192",'À'},{"#193",'Á'},{"#194",'Â'},{"#195",'Ã'},{"#196",'Ä'},
-    {"#197",'Å'},{"#198",'Æ'},{"#199",'Ç'},{"#200",'È'},{"#201",'É'},{"#202",'Ê'},{"#203",'Ë'},{"#204",'Ì'},
-    {"#205",'Í'},{"#206",'Î'},{"#207",'Ï'},{"#208",'Ð'},{"#209",'Ñ'},{"#210",'Ò'},{"#211",'Ó'},{"#212",'Ô'},
-    {"#213",'Õ'},{"#214",'Ö'},{"#216",'Ø'},{"#217",'Ù'},{"#218",'Ú'},{"#219",'Û'},{"#220",'Ü'},{"#221",'Ý'},
-    {"#222",'Þ'},{"#223",'ß'},{"#224",'à'},{"#225",'á'},{"#226",'â'},{"#227",'ã'},{"#228",'ä'},{"#229",'å'},
-    {"#230",'æ'},{"#231",'ç'},{"#232",'è'},{"#233",'é'},{"#234",'ê'},{"#235",'ë'},{"#236",'ì'},{"#237",'í'},
-    {"#238",'î'},{"#239",'ï'},{"#240",'ð'},{"#241",'ñ'},{"#242",'ò'},{"#243",'ó'},{"#244",'ô'},{"#245",'õ'},
-    {"#246",'ö'},{"#248",'ø'},{"#249",'ù'},{"#250",'ú'},{"#251",'û'},{"#252",'ü'},{"#253",'ý'},{"#254",'þ'},
-    {"#255",'ÿ'},{"AElig",'Æ'},{"Aacute",'Á'},{"Acirc",'Â'},{"Agrave",'À'},{"Aring",'Å'},{"Atilde",'Ã'},{"Auml",'Ä'},
-    {"Ccedil",'Ç'},{"ETH",'Ð'},{"Eacute",'É'},{"Ecirc",'Ê'},{"Egrave",'È'},{"Euml",'Ë'},{"Iacute",'Í'},{"Icirc",'Î'},
-    {"Igrave",'Ì'},{"Iuml",'Ï'},{"Ntilde",'Ñ'},{"Oacute",'Ó'},{"Ocirc",'Ô'},{"Ograve",'Ò'},{"Oslash",'Ø'},{"Otilde",'Õ'},
-    {"Ouml",'Ö'},{"THORN",'Þ'},{"Uacute",'Ú'},{"Ucirc",'Û'},{"Ugrave",'Ù'},{"Uuml",'Ü'},{"Yacute",'Ý'},{"aacute",'á'},
-    {"acirc",'â'},{"aelig",'æ'},{"agrave",'à'},{"aring",'å'},{"atilde",'ã'},{"auml",'ä'},{"ccedil",'ç'},{"eacute",'é'},
-    {"ecirc",'ê'},{"egrave",'è'},{"eth",'ð'},{"euml",'ë'},{"iacute",'í'},{"icirc",'î'},{"igrave",'ì'},{"iuml",'ï'},
-    {"ntilde",'ñ'},{"oacute",'ó'},{"ocirc",'ô'},{"ograve",'ò'},{"oslash",'ø'},{"otilde",'õ'},{"ouml",'ö'},{"sup1",'¹'},
-    {"sup2",'²'},{"sup3",'³'},{"szlig",'ß'},{"thorn",'þ'},{"uacute",'ú'},{"ucirc",'û'},{"ugrave",'ù'},{"uuml",'ü'},
-    {"yacute",'ý'},{"yuml",'ÿ'}};
-
-
-int bhpm_compare(const void *a, const void *b)
-{
-    return strncmp( (char*)a, ((struct trans_tab*)b)->escape, strlen(((struct trans_tab*)b)->escape) );
-}
-
-// Translate escapes in string:
-char* bhpm_translate(char *s)
-{
-//    char	*d = (char*)malloc(strlen(s)+1);
-    char	*d = s;		// @@HACK: Test for memleak
-    int		i, j, k;
-    char	replace;
-
-    for (i=0, j=0; s[j]!='\0';)
-	switch (s[j])
-	    {
-		case '&':
-		    replace = 0;
-
-		    if (s[j+1]!='\0')
-			{
-			    struct trans_tab	*code = (struct trans_tab*)bsearch(&(s[j+1]),bhpm_tt,130,sizeof(struct trans_tab),bhpm_compare);
-
-			    if (code!=NULL)
-				{
-				    replace = 1;
-				    d[i++] = code->translation;
-				    j+= strlen(code->escape)+1;
-				    if (s[j]==';') j++;
-				}
-			}
-
-		    if (!replace)
-			{
-			    d[i++] = '&';
-			    j++;
-			}
-
-		    break;
-		default:
-		    d[i++] = s[j++];
-	    }
-
-end:
-    d[i] = '\0';
-    return d;
-}
-//rikit konvertering til små bokstaver. Støtter også æøå
-int bhpm_btolower(int c) {
-
-        c = (unsigned char)c;
-
-
-        if ((c >= 65) && (c <= 90)) {
-                //A-Z
-                c = c+32;
-        }
-        else if (c >= 192 && (c <=221)) {
-                //øæå og andre utviede chars over 127
-                c = c+32;
-        }
-
-        return c;
-}
-
-
-void convert_string_to_lowercase( unsigned char *c )
-{
-    int		i;
-
-    for (i=0; c[i]!='\0'; i++)
-	c[i] = (unsigned char)bhpm_btolower((int)c[i]);
-}
 
 // in: url
 // out: uri, path, rel_path	NB: minne må frigjøres!!
@@ -472,7 +353,7 @@ void url_split( char *url, char **uri, char **path, char **rel_path )
 	    for (i=8; i<len && url[i]!='/'; i++);
 	    pos_uri_end = i;
 	    (*uri) = (char*)strndup(url, i);
-	    convert_string_to_lowercase( (unsigned char*)(*uri) );
+	    convert_to_lowercase( (unsigned char*)(*uri) );
 	}
     else
 	{
@@ -552,15 +433,6 @@ char* create_full_link( char *url, int page_url_len, char *page_uri, char *page_
 
 void html_parser_init()
 {
-/*
-    sa_taglist = build_automaton( ca_taglist_size, (unsigned char**)ca_taglist );
-    sa_meta_taglist = build_automaton( meta_taglist_size, (unsigned char**)meta_taglist );
-    sa_spacetags = build_automaton( ca_spacetags_size, (unsigned char**)ca_spacetags );
-
-    nha_tags = build_automaton( nh_tags_size, (unsigned char**)nh_tags );
-    nda_tags = build_automaton( nd_tags_size, (unsigned char**)nd_tags );
-    nsa_tags = build_automaton( ns_tags_size, (unsigned char**)ns_tags );
-*/
     tags_automaton = build_automaton( tags_size, (unsigned char**)tags );
     meta_attr_automaton = build_automaton( meta_attr_size, (unsigned char**)meta_attr );
 }
@@ -569,16 +441,8 @@ void html_parser_exit()
 {
     free_automaton(meta_attr_automaton);
     free_automaton(tags_automaton);
-/*
-    free_automaton(nsa_tags);
-    free_automaton(nda_tags);
-    free_automaton(nha_tags);
-
-    free_automaton(sa_spacetags);
-    free_automaton(sa_meta_taglist);
-    free_automaton(sa_taglist);
-*/
 }
+
 
 //void run_html_parser( char *url, char text[], int textsize, void (*fn)(char*,int,enum parsed_unit,enum parsed_unit_flag) )
 void html_parser_run( char *url, char text[], int textsize, char **output_title, char **output_body,
@@ -590,6 +454,7 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
     he->slen = 0;
     he->tt = -1;
     he->stringtop = -1;
+    he->flush = 0;
 
     he->wordlist = wordlist;
 

@@ -28,8 +28,10 @@ static inline void bhpm_new_esc_to_utf8( const char* str, yyscan_t scanner, int 
 %}
 
 character	[a-z]
-legalchar	[a-z0-9_'`-]
+legalchar	[a-z0-9_'`]
+attrchar	[a-z0-9_-]
 legaltegn	[!"#$%()*+,-./:;=?@[\\\]^{|}~]
+tfchars		[a-z0-9_`\-!#$%()*+,-./:;=?@[\]^{|}~]
 word		[0-9a-z'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõöøùúûüış]
 allemuligetegn	[!"#$%'()*+,-./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüış]
 url		[0-9a-z&-.:/\\?=]
@@ -62,7 +64,7 @@ utf-8-2b	[\300-\337][\200-\277]
 utf-8-3b	[\340-\357][\200-\277][\200-\277]
 utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
 %option	nomain noyywrap reentrant bison-bridge
-%x	TAG ENDTAG COMMENT SCRIPT STYLE SELECT TEXTAREA
+%x	TAG ENDTAG COMMENT SCRIPT STYLE SELECT TEXTAREA TAG_TF
 %%
  /* ({allemuligetegn}|\&{nestenalleesc}|\&{nestenalleesc};|\&\#[0-9]+;)+    { bhpm_newstring(yytext, yyscanner); return WORD; } */
  /* Midlertidig fiks for escapes uten avsluttende semikolon: */
@@ -125,7 +127,7 @@ utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
 <TAG>\=			{
 			    return EQUALS;
 			}
-<TAG>{legalchar}+	{
+<TAG>{attrchar}+	{
 			    bhpm_newstring(yytext, yyscanner, ATTR);
 			    return ATTR;
 			}
@@ -137,16 +139,53 @@ utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
 			    bhpm_newstring(yytext, yyscanner, ATTR);
 			    return ATTR;
 			}
-<TAG>\'(\\\'|[^\'>])*\'	{
-			    yytext[strlen(yytext)-1] = '\0';
-			    bhpm_newstring(&(yytext[1]), yyscanner, TEXTFIELD);
-			    return TEXTFIELD;
+<TAG>\'			{
+			    struct bhpm_yy_extra	*he = bhpmget_extra(yyscanner);
+			    he->flush = 1;
+			    he->field_delimit = '\'';
+			    BEGIN TAG_TF;
 			}
-<TAG>\"(\\\"|[^\">])*\"	{
-			    yytext[strlen(yytext)-1] = '\0';
-			    bhpm_newstring(&(yytext[1]), yyscanner, TEXTFIELD);
-			    return TEXTFIELD;
+<TAG>\"			{
+			    struct bhpm_yy_extra	*he = bhpmget_extra(yyscanner);
+			    he->flush = 1;
+			    he->field_delimit = '"';
+			    BEGIN TAG_TF;
 			}
+<TAG_TF>\\\"		{ bhpm_newstring("\"", yyscanner, TEXTFIELD); }
+<TAG_TF>\\\'		{ bhpm_newstring("\'", yyscanner, TEXTFIELD); }
+<TAG_TF>\"		{
+			    if ((bhpmget_extra(yyscanner))->field_delimit == '"')
+				{
+				    BEGIN TAG;
+				    return TEXTFIELD;
+				}
+			    else bhpm_newstring("\"", yyscanner, TEXTFIELD);
+			}
+<TAG_TF>\'		{
+			    if ((bhpmget_extra(yyscanner))->field_delimit == '\'')
+				{
+				    BEGIN TAG;
+				    return TEXTFIELD;
+				}
+			    else bhpm_newstring("\'", yyscanner, TEXTFIELD);
+			}
+
+<TAG_TF>\\		{}
+<TAG_TF>({utf-8-2b}|{utf-8-3b}|{utf-8-4b})+	{ bhpm_newstring(yytext, yyscanner, TEXTFIELD); }
+<TAG_TF>\&{letteresc};?		{ bhpm_new_esc_to_utf8(yytext, yyscanner, TEXTFIELD); }
+<TAG_TF>{tfchars}+		{ bhpm_newstring(yytext, yyscanner, TEXTFIELD); }
+<TAG_TF>\&{tegnesc_minus};?	{ bhpm_new_esc_to_utf8(yytext, yyscanner, TEXTFIELD); }
+<TAG_TF>(\&nbsp;?)+		{ bhpm_newstring(" ", yyscanner, TEXTFIELD); }
+<TAG_TF>(\&#160;?)+		{ bhpm_newstring(" ", yyscanner, TEXTFIELD); }
+<TAG_TF>(\&quot;?|\&amp;?|\&lt;?|\&gt;?)+	{ bhpm_newstring(yytext, yyscanner, TEXTFIELD); }
+<TAG_TF>(\&#34;?|\&#38;?|\&#60;?|\&#62;?)+	{ bhpm_newstring(yytext, yyscanner, TEXTFIELD); }
+<TAG_TF>\&{tegnnumesc_minus};?		{ bhpm_newutf8( atoi(&(yytext[2])), yyscanner, TEXTFIELD ); }
+<TAG_TF>\&#[0-9]+;		{ bhpm_newutf8( atoi(&(yytext[2])), yyscanner, TEXTFIELD ); }
+<TAG_TF>\&			{ bhpm_newstring("&amp;", yyscanner, TEXTFIELD); }
+<TAG_TF>[\ \t\n\r\f]+		{ bhpm_newstring(" ", yyscanner, TEXTFIELD); }
+<TAG_TF>{latin-sup}		{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, TEXTFIELD ); }
+<TAG_TF>[\200-\377]		{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, TEXTFIELD); }
+
 <COMMENT>\-\-\>		{			BEGIN INITIAL; }
 <SCRIPT>\<\/{blank}*script[^\>]*\>	{	BEGIN INITIAL; }
 <STYLE>\<\/{blank}*style[^\>]*\>	{	BEGIN INITIAL; }
@@ -158,6 +197,13 @@ utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
 <*>.|\n			{}
 %%
 
+/*
+<TAG>\"(\\\"|[^\">])*\"	{
+			    yytext[strlen(yytext)-1] = '\0';
+			    bhpm_newstring(&(yytext[1]), yyscanner, TEXTFIELD);
+			    return TEXTFIELD;
+			}
+*/
 
 struct htmlesc_val
 {
@@ -357,26 +403,25 @@ static inline void send_word( char *str, yyscan_t scanner )
 
 static inline void bhpm_newstring( char *str, yyscan_t scanner, int tt )
 {
-    struct bhpm_yy_extra	*le = bhpmget_extra( scanner );
+    struct bhpm_yy_extra	*he = bhpmget_extra( scanner );
 
 
-    if (le->tt == WORD && (tt != WORD || le->space == 1))
+    if (he->tt == WORD && (tt != WORD || he->space == 1 || he->flush))
 	{
-//	    printf("\033[1;33mword: %s\033[0m\n", le->stringcircle[le->stringtop]);
-	    send_word( le->stringcircle[le->stringtop], scanner );
+//	    printf("\033[1;33mword: %s\033[0m\n", he->stringcircle[he->stringtop]);
+	    send_word( he->stringcircle[he->stringtop], scanner );
 	}
 
-    if (tt == le->tt && le->space == 0 && (tt == WORD || tt == ESC))
+    if ((tt == he->tt && he->space == 0 && (tt == WORD || tt == ESC)) || (tt==TEXTFIELD && he->flush==0))
 	{
-	    strncpy( &(le->stringcircle[le->stringtop][le->slen]), str, maxNewString - le->slen );
-	    le->slen = strlen( le->stringcircle[le->stringtop] );
+	    strncpy( &(he->stringcircle[he->stringtop][he->slen]), str, maxNewString - he->slen );
+	    he->slen = strlen( he->stringcircle[he->stringtop] );
 	}
     else
 	{
-
-	    le->tt = tt;
-	    le->stringtop++;
-	    if (le->stringtop >= 32) le->stringtop = 0;
+	    he->tt = tt;
+	    he->stringtop++;
+	    if (he->stringtop >= 32) he->stringtop = 0;
 
 	    #ifdef DEBUG
 		//Runar
@@ -389,17 +434,19 @@ static inline void bhpm_newstring( char *str, yyscan_t scanner, int tt )
 	        }
 	    #endif
 
-	    strncpy( le->stringcircle[le->stringtop], str, maxNewString );
-	    le->stringcircle[le->stringtop][maxNewString] = '\0';		// I tilfelle 'str' er lengre enn maxlengden.
+	    strncpy( he->stringcircle[he->stringtop], str, maxNewString );
+	    he->stringcircle[he->stringtop][maxNewString] = '\0';		// I tilfelle 'str' er lengre enn maxlengden.
 
-	    le->slen = strlen( le->stringcircle[le->stringtop] );
-	    *bhpmget_lval(scanner) = (int)le->stringcircle[le->stringtop];
+	    he->slen = strlen( he->stringcircle[he->stringtop] );
+	    *bhpmget_lval(scanner) = (int)he->stringcircle[he->stringtop];
 	}
 
     if (tt == WORD || tt == ESC)
 	{
 	    add_to_summary( str, scanner );
 	}
+
+    he->flush = 0;
 }
 
 
@@ -408,59 +455,59 @@ static inline void bhpm_newstring( char *str, yyscan_t scanner, int tt )
  */
 static inline void bhpm_newutf8( int val, yyscan_t scanner, int tt )
 {
-    struct bhpm_yy_extra	*le = bhpmget_extra( scanner );
+    struct bhpm_yy_extra	*he = bhpmget_extra( scanner );
     int				old_slen;
 
 //    printf("\033[1;33m%i\033[0m\n", val);
 
-    if (le->tt == WORD && (tt != WORD || le->space == 1))
+    if (he->tt == WORD && (tt != WORD || he->space == 1 || he->flush))
 	{
-//	    printf("\033[1;33mword: %s\033[0m\n", le->stringcircle[le->stringtop]);
-	    send_word( le->stringcircle[le->stringtop], scanner );
+//	    printf("\033[1;33mword: %s\033[0m\n", he->stringcircle[he->stringtop]);
+	    send_word( he->stringcircle[he->stringtop], scanner );
 	}
 
-    if (!(tt == le->tt && le->space == 0))
+    if (!((tt == he->tt && he->space == 0) || (tt == TEXTFIELD && he->flush == 0)))
 	{
-	    le->stringtop++;
-	    if (le->stringtop >= 32) le->stringtop = 0;
-	    le->slen = 0;
-	    le->tt = tt;
-	    *bhpmget_lval(scanner) = (int)le->stringcircle[le->stringtop];
+	    he->stringtop++;
+	    if (he->stringtop >= 32) he->stringtop = 0;
+	    he->slen = 0;
+	    he->tt = tt;
+	    *bhpmget_lval(scanner) = (int)he->stringcircle[he->stringtop];
 	}
-    else if (le->slen >= maxNewString - 5)
+    else if (he->slen >= maxNewString - 5)
 	return;
 
-    old_slen = le->slen;
+    old_slen = he->slen;
 
     if (val < 128)
 	{
-	    le->stringcircle[le->stringtop][le->slen++] = (char)val;
+	    he->stringcircle[he->stringtop][he->slen++] = (char)val;
 	}
     else if (val < 2048)
 	{
-	    le->stringcircle[le->stringtop][le->slen++] = (char)(192 + ((val>>6) & 0x1f));
-	    le->stringcircle[le->stringtop][le->slen++] = (char)(128 + (val & 0x3f));
+	    he->stringcircle[he->stringtop][he->slen++] = (char)(192 + ((val>>6) & 0x1f));
+	    he->stringcircle[he->stringtop][he->slen++] = (char)(128 + (val & 0x3f));
 	}
     else if (val < 65536)
 	{
-	    le->stringcircle[le->stringtop][le->slen++] = (char)(224 + ((val>>12) & 0xf));
-	    le->stringcircle[le->stringtop][le->slen++] = (char)(128 + ((val>>6) & 0x3f));
-	    le->stringcircle[le->stringtop][le->slen++] = (char)(128 + (val & 0x3f));
+	    he->stringcircle[he->stringtop][he->slen++] = (char)(224 + ((val>>12) & 0xf));
+	    he->stringcircle[he->stringtop][he->slen++] = (char)(128 + ((val>>6) & 0x3f));
+	    he->stringcircle[he->stringtop][he->slen++] = (char)(128 + (val & 0x3f));
 	}
     else
 	{
-	    le->stringcircle[le->stringtop][le->slen++] = (char)(240 + ((val>>18) & 0x7));
-	    le->stringcircle[le->stringtop][le->slen++] = (char)(128 + ((val>>12) & 0x3f));
-	    le->stringcircle[le->stringtop][le->slen++] = (char)(128 + ((val>>6) & 0x3f));
-	    le->stringcircle[le->stringtop][le->slen++] = (char)(128 + (val & 0x3f));
+	    he->stringcircle[he->stringtop][he->slen++] = (char)(240 + ((val>>18) & 0x7));
+	    he->stringcircle[he->stringtop][he->slen++] = (char)(128 + ((val>>12) & 0x3f));
+	    he->stringcircle[he->stringtop][he->slen++] = (char)(128 + ((val>>6) & 0x3f));
+	    he->stringcircle[he->stringtop][he->slen++] = (char)(128 + (val & 0x3f));
 	}
 
-    le->stringcircle[le->stringtop][le->slen] = '\0';
+    he->stringcircle[he->stringtop][he->slen] = '\0';
 
     if (tt == WORD || tt == ESC)
 	{
 //	    add_to_summary( "\033[1;33m", scanner );
-	    add_to_summary( &(le->stringcircle[le->stringtop][old_slen]), scanner );
+	    add_to_summary( &(he->stringcircle[he->stringtop][old_slen]), scanner );
 //	    add_to_summary( "\033[0m", scanner );
 	}
 }

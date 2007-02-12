@@ -24,6 +24,8 @@ struct bhpm_yy_extra
     int		slen, tt;
     int		stringtop;
     char	stringcircle[32][maxNewString +1];
+    char	flush;
+    char	field_delimit;
 
     char	title, alink; //, script=0;	init:=0
     int		wordcount, linkcount;	// init:=0
