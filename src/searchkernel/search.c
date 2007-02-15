@@ -1234,6 +1234,161 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 				#endif
 				filesKey = malloc(sizeof(struct filesKeyFormat));
 				(*filesKey).subname = TeffArray[i].subname;
+/***************************************************/
+				//lesKey).subname = TeffArray[i].subname;
+				//memcpy((*filesKey).filename,filetype,sizeof((*filesKey).filename)); 	
+				
+				memcpy(TeffArray[i].filetype,filetype,sizeof(TeffArray[i].filetype));
+				
+				if (NULL == (filesValue = hashtable_search(h,filetype) )) {    
+					printf("not found!. Vil insert first");
+					filesValue = malloc(sizeof(int));
+					(*filesValue) = 1;
+					filesKey = strdup(filetype);
+					if (! hashtable_insert(h,filesKey,filesValue) ) {
+						printf("cant insert\n");     
+						exit(-1);
+					}
+
+		                }
+				else {
+					++(*filesValue);
+				}
+			}
+		}
+
+		/*
+		for(i=0;i<nrOfSubnames;i++) {
+                	subnames[i].nrOfFiletypes = 0;
+		}
+		*/
+		/* Iterator constructor only returns a valid iterator if
+		* the hashtable is not empty */
+		int filtypesnrofLocal;
+		filtypesnrofLocal = 0;
+		if (hashtable_count(h) > 0)
+		{
+			struct hashtable_itr *itr;
+
+       			itr = hashtable_iterator(h);
+       			do {
+       				filesKey = hashtable_iterator_key(itr);
+       				filesValue = (int *)hashtable_iterator_value(itr);
+
+				printf("files \"%s\": %i\n",filesKey,*filesValue);
+				if (filtypesnrofLocal < (*filtypesnrof)) {
+					strcpy(filtypes[filtypesnrofLocal].name,filesKey);
+					filtypes[filtypesnrofLocal].nrof = (*filesValue);
+					++filtypesnrofLocal;
+				}
+				/*
+				if ((*(*filesKey).subname).nrOfFiletypes < MAXFILTYPES) {
+					memcpy((*(*filesKey).subname).filtypes[(*(*filesKey).subname).nrOfFiletypes].name,(*filesKey).filename,4);
+					(*(*filesKey).subname).filtypes[(*(*filesKey).subname).nrOfFiletypes].name[5] = '\0';
+					(*(*filesKey).subname).filtypes[(*(*filesKey).subname).nrOfFiletypes].nrof = (*filesValue);
+					++(*(*filesKey).subname).nrOfFiletypes;
+				}
+				*/
+
+       			} while (hashtable_iterator_advance(itr));
+    			free(itr);
+
+		}
+
+		hashtable_destroy(h,1); 
+
+		(*filtypesnrof) = filtypesnrofLocal;
+		for (i=0;i<(*filtypesnrof);i++) {
+			printf("file \"%s\": %i\n",filtypes[i].name,filtypes[i].nrof);
+		}
+
+		#ifdef BLACK_BOKS
+		//filter
+		struct filteronFormat filteron;
+		searchIndex_filters(queryParsed, &filteron);
+/*
+        char *filetype;
+        char *language;
+        char *collection;
+        char *date;
+        char *status;
+*/
+
+		if (filteron.filetype != NULL) {
+			printf("wil filter on filetype \"%s\"\n",filteron.filetype);
+			y=0;
+       			for (i = 0; i < (*TeffArrayElementer); i++) {
+				printf("TeffArray \"%s\" ? filteron \"%s\"\n",TeffArray[i].filetype,filteron.filetype);
+				if (strcmp(TeffArray[i].filetype,filteron.filetype) == 0) {
+        	       			TeffArray[y] = TeffArray[i];
+        		        	++y;
+				}
+			}
+			(*TeffArrayElementer) = y;
+
+
+		}
+
+		if (filteron.collection != NULL) {
+			printf("wil filter on collection \"%s\"\n",filteron.collection);
+			y=0;
+       			for (i = 0; i < (*TeffArrayElementer); i++) {
+				printf("TeffArray \"%s\" ? filteron \"%s\"\n",(*TeffArray[i].subname).subname,filteron.filetype);
+				if (strcmp((*TeffArray[i].subname).subname,filteron.collection) == 0) {
+        	       			TeffArray[y] = TeffArray[i];
+        		        	++y;
+				}
+			}
+			(*TeffArrayElementer) = y;
+	
+
+		}
+
+		
+
+		printf("filter dovn array to %i\n",(*TeffArrayElementer));
+
+		#endif
+
+		/*
+		// sort by nrof
+		for(i=0;i<nrOfSubnames;i++) {
+			printf("qsort filtypes %i\n",subnames[i].nrOfFiletypes);
+			qsort(subnames[i].filtypes,subnames[i].nrOfFiletypes,sizeof(struct subnamesFiltypesFormat),compare_filetypes);
+		}
+		*/
+		gettimeofday(&end_time, NULL);
+		(*queryTime).filetypes = getTimeDifference(&start_time,&end_time);
+
+
+		#ifdef DEBUG
+		/*
+		//show subnames and hits in then
+		for(i=0;i<nrOfSubnames;i++) {
+                        printf("nrOfFiletypes %s: %i\n",subnames[i].subname,subnames[i].nrOfFiletypes);
+			for(y=0;y<subnames[i].nrOfFiletypes;y++) {
+				printf("files %s %i\n",subnames[i].filtypes[y].name,subnames[i].filtypes[y].nrof);
+			}
+                }
+		*/
+		#endif
+
+
+	#endif
+
+	// BLACK_BOKS har ikke pop rank, bare term rank
+	#ifdef BLACK_BOKS
+
+
+		gettimeofday(&start_time, NULL);
+
+
+		printf("looking opp dates\n");
+
+		//slår opp alle datoene
+		for (i 
+/**********************************************/
+
 				memcpy((*filesKey).filename,filetype,sizeof((*filesKey).filename)); 	
 
 				if (NULL == (filesValue = hashtable_search(h,filesKey) )) {    
