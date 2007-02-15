@@ -85,8 +85,12 @@ utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
 (\&nbsp;?)+		{ (bhpmget_extra(yyscanner))->space = 1; }
 (\&#160;?)+		{ (bhpmget_extra(yyscanner))->space = 1; }
     /* quot,amp,lt og gt bør alltid sendes videre som character entities (html-escapes): */
-(\&quot;?|\&amp;?|\&lt;?|\&gt;?)+	{ bhpm_newstring(yytext, yyscanner, ESC); }
-(\&#34;?|\&#38;?|\&#60;?|\&#62;?)+	{ bhpm_newstring(yytext, yyscanner, ESC); }
+(\&quot;?|\&#34;?)	{ bhpm_newstring("&quot;", yyscanner, ESC); }
+(\&amp;?|\&#38;?)	{ bhpm_newstring("&amp;", yyscanner, ESC); }
+(\&lt;?|\&#60;?)	{ bhpm_newstring("&lt;", yyscanner, ESC); }
+(\&gt;?|\&#62;?)	{ bhpm_newstring("&gt;", yyscanner, ESC); }
+    /* (\&quot;?|\&amp;?|\&lt;?|\&gt;?)+	{ bhpm_newstring(yytext, yyscanner, ESC); } */
+    /* (\&#34;?|\&#38;?|\&#60;?|\&#62;?)+	{ bhpm_newstring(yytext, yyscanner, ESC); } */
 \&{tegnnumesc_minus};?		{ bhpm_newutf8( atoi(&(yytext[2])), yyscanner, ESC ); }
 \&#[0-9]+;		{ bhpm_newutf8( atoi(&(yytext[2])), yyscanner, WORD ); }
 \&			{ bhpm_newstring("&amp;", yyscanner, ESC); }
