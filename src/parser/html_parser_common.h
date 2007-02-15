@@ -7,7 +7,6 @@
 #include <stdlib.h>
 
 #include "html_parser.h"
-#include "search_automaton.h"
 
 #define maxNewString 1023
 

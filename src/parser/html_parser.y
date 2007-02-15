@@ -18,9 +18,9 @@ Håndtering av at page_uri er  NULL en skjelden gang i create_full_link
 #include <stdlib.h>
 
 #include "../common/utf8-strings.h"
+#include "../common/search_automaton.h"
 #include "html_parser_common.h"
 #include "html_parser.h"
-#include "search_automaton.h"
 #include "html_parser_tags.h"
 
 // --- fra flex:

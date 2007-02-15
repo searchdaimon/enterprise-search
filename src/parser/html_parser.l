@@ -1,7 +1,7 @@
 %{
 #include "html_parser_common.h"
 #include "y.tab.h"
-#include "search_automaton.h"
+#include "../common/search_automaton.h"
 
 #include <stdlib.h>
 #include <string.h>
