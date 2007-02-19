@@ -81,7 +81,8 @@ int main(int argc, char *argv[]) {
 
 	}
 	else {
-		printf(htmlBuf);
+		//printf(htmlBuf);
+		fwrite(htmlBuf,htmlBufSize,1,stdout);
 	}
 	free(htmlBuf);
 }

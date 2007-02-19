@@ -58,7 +58,10 @@ int main (int argc, char *argv[]) {
 	}
 	
 	FILE *fp;
-	fp = fopen("/home/boitho/logs/infoquery.log","a");
+	if ((fp = fopen("/home/boitho/logs/infoquery.log","a")) == NULL) {
+		perror("/home/boitho/logs/infoquery.log");
+		exit(1);
+	}
 	fprintf(fp,"%s: \"%s\"\n",key,value);	
 	fclose(fp);
 
@@ -116,18 +119,19 @@ int main (int argc, char *argv[]) {
 			
 			printf("group: %s\n",respons_list[i]);
 
-			userToSubname_getsubnamesAsSaa(&userToSubnameDb,respons_list[i],&collections, &nrofcollections);
+			if (userToSubname_getsubnamesAsSaa(&userToSubnameDb,respons_list[i],&collections, &nrofcollections)) {
 
 
-			if (nrofcollections != 0) {
-				printf("collections: %i\n",nrofcollections);
+				if (nrofcollections != 0) {
+					printf("collections: %i\n",nrofcollections);
 
-				for(y=0;y<nrofcollections;y++) {
-					printf("collection: %s\n",collections[y]);
+					for(y=0;y<nrofcollections;y++) {
+						printf("collection: %s\n",collections[y]);
+					}
+
+					saafree(collections);
+
 				}
-
-				saafree(collections);
-
 			}
 
                 }

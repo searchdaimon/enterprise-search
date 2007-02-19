@@ -33,6 +33,7 @@ int main (int argc, char *argv[]) {
 	unsigned lastIndexTime;
 	char subname[maxSubnameLength];
 	int optMustBeNewerThen = 0;
+	int optUnlink = 0;
 
 	struct revIndexArrayFomat *revIndexArray; 
 	revIndexArray = malloc(sizeof(struct revIndexArrayFomat) * revIndexArraySize);
@@ -40,8 +41,11 @@ int main (int argc, char *argv[]) {
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"n"))!=-1) {
+        while ((c=getopt(argc,argv,"nu"))!=-1) {
                 switch (c) {
+			case 'u':
+				optUnlink = 1;
+				break;
                         case 'n':
                                 optMustBeNewerThen = 1;
                                 break;
@@ -101,6 +105,10 @@ int main (int argc, char *argv[]) {
 
 			Indekser(revpath,iipath,revIndexArray);	
 
+			if (optUnlink) {
+				unlink(revpath);
+			}
+
 			//sletter revindex. Ingen vits i å ha den fylle opp plass
 			//remove(revpath);
 
@@ -134,6 +142,10 @@ int main (int argc, char *argv[]) {
 			}
 
 		Indekser(revpath,iipath,revIndexArray);	
+
+			if (optUnlink) {
+				unlink(revpath);
+			}
 	
 	}
 	else {

@@ -1,3 +1,5 @@
+#ifdef BLACK_BOKS
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,8 +74,8 @@ int userToSubname_getsubnamesAsSaa(struct userToSubnameDbFormat *userToSubnameDb
 
 	char buf[512];
 
-	if (!userToSubname_getsubnamesAsString(userToSubnameDb,username,buf)) {
-		printf("cant run userToSubname_getsubnamesAsString\n");
+	if (!userToSubname_getsubnamesAsString(userToSubnameDb,username,buf,sizeof(buf))) {
+		fprintf(stderr,"cant run userToSubname_getsubnamesAsString\n");
 		return 0;
 	}
 
@@ -87,7 +89,7 @@ int userToSubname_getsubnamesAsSaa(struct userToSubnameDbFormat *userToSubnameDb
 	return 1;
 }
 
-int userToSubname_getsubnamesAsString(struct userToSubnameDbFormat *userToSubnameDb,char username[],char subnames[]) {
+int userToSubname_getsubnamesAsString(struct userToSubnameDbFormat *userToSubnameDb,char username[],char subnames[], int subnameslen) {
 
 	//DB *dbp = (DB *)(*dbpp);
 	DBC *cursorp;
@@ -121,18 +123,21 @@ int userToSubname_getsubnamesAsString(struct userToSubnameDbFormat *userToSubnam
 
 	while (ret != DB_NOTFOUND) {
 		//printf("found collection \"%c%c%c%c\", size %i\n",(char *)data.data,data.size);
-		printf("key: %s, data: %s\n", (char *)key.data, (char *)data.data);
-		strcat(subnames,(char *)data.data);
-		strcat(subnames,",");
+		//printf("key: %s, data: %s\n", (char *)key.data, (char *)data.data);
+		strlwcat(subnames,(char *)data.data,subnameslen);
+		strlwcat(subnames,",",subnameslen);
+
 		ret = cursorp->c_get(cursorp, &key, &data, DB_NEXT_DUP);
 	}
-	//fjernes siste ,
-	subnames[strlen(subnames) -1] = '\0';
 
 	/* Close the cursor */
 	if (cursorp != NULL) {
 		cursorp->c_close(cursorp);
 	}
+
+	//fjernes siste ,
+	subnames[strlen(subnames) -1] = '\0';
+
 
 	//(*dbpp) = (int *)dbp;
 
@@ -189,4 +194,6 @@ int userToSubname_close (struct userToSubnameDbFormat *userToSubnameDb) {
 
         //(*dbpp) = (int *)dbp;
 }
+
+#endif
 

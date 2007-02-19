@@ -54,6 +54,8 @@ struct uriindexFormat {
 
 int bbdocument_makethumb( char documenttype[],char document[],size_t dokument_size,char **imagebuffer,size_t *imageSize) {
 
+	#ifdef BBDOCUMENT_IMAGE
+
 	if (strcmp(documenttype,"pdf") == 0) {
 		//pdf convert
 		if (((*imagebuffer) = generate_pdf_thumbnail( document, dokument_size, imageSize )) == NULL) {
@@ -67,11 +69,16 @@ int bbdocument_makethumb( char documenttype[],char document[],size_t dokument_si
 	}
 	debug("imageSize %u",(unsigned int)(*imageSize));
 	return 1;
+
+	#else
+		return 0;
+	#endif
 }
 
 int bbdocument_freethumb(char *imagebuffer) {
-
+	#ifdef BBDOCUMENT_IMAGE
 	imagebuffer = free_thumbnail_memory( imagebuffer );
+	#endif
 }
 
 int bbdocument_init() {

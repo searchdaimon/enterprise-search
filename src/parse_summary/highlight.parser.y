@@ -367,7 +367,7 @@ int buf_printf(struct parser_data *pd, const char *fmt, ...);
 %parse_failure
 {
     fprintf(stderr, "\nhighlight.y: Parse Failure.\n");
-    exit(-1);
+    //exit(-1);
 }
 
 %stack_overflow

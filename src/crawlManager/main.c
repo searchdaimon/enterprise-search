@@ -247,7 +247,7 @@ int scan_found_get (char ***scares,int *nr) {
 
 }
 /************************************************************/
-
+/************************************************************/
 int scan (struct hashtable *h,char ***shares,int *nrofshares,char crawlertype[],char host[],char username[],char password[]) {
 
 	struct crawlLibInfoFormat *crawlLibInfo;
@@ -309,7 +309,7 @@ int cm_start(struct hashtable **h) {
 		if (dp->d_name[0] == '.') {
 			continue;
 		}
-		sprintf(libpath,"%s/%s",crawlersdir,dp->d_name);	
+		sprintf(libpath,"%s/%s/%s.so",crawlersdir,dp->d_name,dp->d_name);	
 
 
 		lib_handle = dlopen(libpath, RTLD_LAZY);
@@ -328,6 +328,7 @@ int cm_start(struct hashtable **h) {
 	            exit(1);
 	        }
 
+		
 		printf("loaded \"%s\"\n",(*crawlLibInfo).shortname);
 
 
@@ -364,6 +365,9 @@ int cm_start(struct hashtable **h) {
 
 
 }
+
+
+/************************************************************/
 
 int cm_getCrawlLibInfo(struct hashtable *h,struct crawlLibInfoFormat **crawlLibInfo,char shortname[]) {
 	printf("cm_getCrawlLibInfo: start\n");

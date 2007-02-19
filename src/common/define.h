@@ -144,6 +144,12 @@ struct subnamesFiltypesFormat {
 	int nrof;
 };
 
+struct filteronFormat {
+
+	char *filetype;
+	char *collection;
+};
+
 struct subnamesConfigFormat {
         const char *summary;
      char filterSameUrl; //bool
@@ -180,6 +186,12 @@ struct subnamesFormat {
 	int nrOfFiletypes;
 	struct subnamesFiltypesFormat filtypes[MAXFILTYPES];
 
+};
+
+struct brankPageElementsFormat {
+	unsigned long int IPAddress;
+	unsigned char nrOfOutLinks;
+	unsigned short response;
 };
 
 //formatet på dokumenet indeks posten
@@ -267,6 +279,7 @@ struct iindexFormat {
 	unsigned char langnr;
 	struct subnamesFormat *subname;
 	unsigned long int date; //16 nov 2006
+	char filetype[5];
 };
 
 

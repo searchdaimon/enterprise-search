@@ -1,5 +1,3 @@
-/*****************************************************************************/
-
 #include <stdio.h>
 #include <string.h>
 #include <zlib.h>
@@ -15,6 +13,7 @@
 #include "../searchFilters/searchFilters.h"
 
 #include "../common/bstr.h"
+#include "../common/define.h"
 
 
 //#include "../parse_summary/summary.h"
@@ -178,7 +177,6 @@ int makePreParsedSummary(const char body[], int bodylen,const  char title[],int 
 	int metadesclen, Bytef **WorkBuffer,uLong *WorkBufferSize	
 ) {
 
-#ifndef BLACK_BOKS
 
 	int n;
 	char *SummeryBuf;
@@ -208,7 +206,7 @@ int makePreParsedSummary(const char body[], int bodylen,const  char title[],int 
 	//free(WorkBuffer);
 	free(SummeryBuf);
 
-#endif
+
 }
 
 struct DIArrayFormat {
@@ -216,6 +214,8 @@ struct DIArrayFormat {
 	unsigned int DocID;
 	char haveawvalue;
 	unsigned char awvalue;
+	struct brankPageElementsFormat brankPageElements;
+	char haverankPageElements;
 };
 
 struct IndexerLot_workthreadFormat {
@@ -227,6 +227,7 @@ struct IndexerLot_workthreadFormat {
 	struct adultFormat *adult;
 	FILE *ADULTWEIGHTFH;
 	FILE *SFH;
+	FILE *brankPageElementsFH;
 	struct alclotFormat *alclot;
 	int pageCount;
 	int httpResponsCodes[nrOfHttpResponsCodes];
@@ -234,6 +235,7 @@ struct IndexerLot_workthreadFormat {
 	int optPrintInfo;
 	char **optOnlyTLD;
 	struct DIArrayFormat *DIArray;
+	//struct DIArrayFormat DIArray[NrofDocIDsInLot];
 	struct addNewUrlhaFormat addNewUrlha;
 
 	#ifdef WITH_THREAD
@@ -303,10 +305,10 @@ int IndexerLot_filterOnlyTLD (char **optOnlyTLD,char TLD[]) {
 }
 
 
-//void *IndexerLot_workthread(void *arg) {
-//
-//	struct IndexerLot_workthreadFormat *argstruct = (struct IndexerLot_workthreadFormat *)arg;
-void *IndexerLot_workthread(struct IndexerLot_workthreadFormat *argstruct) {
+void *IndexerLot_workthread(void *arg) {
+
+	struct IndexerLot_workthreadFormat *argstruct = (struct IndexerLot_workthreadFormat *)arg;
+//void *IndexerLot_workthread(struct IndexerLot_workthreadFormat *argstruct) {
 
 	int i;
 	int sizeofhtmlcompressdbuffer = 524288 * 2;
@@ -365,9 +367,10 @@ void *IndexerLot_workthread(struct IndexerLot_workthreadFormat *argstruct) {
 				SummaryBuffer = NULL;
 
 				//begynner på en ny side
-                                wordsReset(&pagewords);
+                                wordsReset(&pagewords,ReposetoryHeader.DocID);
 
 				//printf("D: %u, R: %lu\n",ReposetoryHeader.DocID, radress);
+
 
 				#ifndef BLACK_BOKS
 
@@ -407,46 +410,22 @@ void *IndexerLot_workthread(struct IndexerLot_workthreadFormat *argstruct) {
 	
 					HtmlBufferLength = sizeofHtmlBuffer;
 					if ( (nerror = uncompress((Bytef*)HtmlBuffer,(uLong *)&HtmlBufferLength,(Bytef*)htmlcompressdbuffer,ReposetoryHeader.htmlSize)) != 0) {
-						//#ifdef DEBUG
+						#ifdef DEBUG
                        				printf("uncompress error. Code: %i for DocID %u-%i. ReposetoryHeader.htmlSize %i,sizeofHtmlBuffer %i\n",nerror,ReposetoryHeader.DocID,rLotForDOCid(ReposetoryHeader.DocID),ReposetoryHeader.htmlSize,sizeofHtmlBuffer);
-						//#endif
+						#endif
                        				continue;
 			                }
-					if (ReposetoryHeader.DocID == 125630232) {
-						continue;
-					}
-					else if (ReposetoryHeader.DocID == 125608875) {
-						printf("is 125608875\n");
+
+					/*
+					if (ReposetoryHeader.DocID == 125768695) {
 						FILE *fh;
-						fh = fopen("/tmp/125608875.html","wb");
+						fh = fopen("/tmp/125768695.html","w");
 						fwrite(HtmlBuffer,1,HtmlBufferLength,fh);
 						fclose(fh);
-						continue;
+						continue;	
 					}
-					else if (ReposetoryHeader.DocID == 125619554) {
-						printf("is 125619554\n");
-						FILE *fh;
-						fh = fopen("/tmp/125619554.html","wb");
-						fwrite(HtmlBuffer,1,HtmlBufferLength,fh);
-						fclose(fh);
-						continue;
-					}
-					else if (ReposetoryHeader.DocID == 125619527) {
-						printf("is 125619527\n");
-						FILE *fh;
-						fh = fopen("/tmp/125619527.html","wb");
-						fwrite(HtmlBuffer,1,HtmlBufferLength,fh);
-						fclose(fh);
-						continue;
-					}
-					else if (ReposetoryHeader.DocID == 125670032) {
-						printf("is 125670032\n");
-						FILE *fh;
-						fh = fopen("/tmp/125670032.html","wb");
-						fwrite(HtmlBuffer,1,HtmlBufferLength,fh);
-						fclose(fh);
-						continue;
-					}
+					*/
+
 					//usikker her. Skal det vare +1? strlen() blir da en større en HtmlBufferLength
 					//HtmlBuffer[HtmlBufferLength +1] = '\0';
 
@@ -456,9 +435,11 @@ void *IndexerLot_workthread(struct IndexerLot_workthreadFormat *argstruct) {
 					//har ikke metadesc enda
 					metadesc = strdup("");
 
+					#ifndef BLACK_BOKS
+
 					makePreParsedSummary(body,strlen(body),title,strlen(title),metadesc,strlen(metadesc),
 						&SummaryBuffer,&SummaryBufferSize);
-
+					#endif
 
 
 					(*DocumentIndexPost).crc32 = crc32boithonl(HtmlBuffer,HtmlBufferLength);
@@ -523,32 +504,24 @@ void *IndexerLot_workthread(struct IndexerLot_workthreadFormat *argstruct) {
 					//lager summery
 					if ((body != NULL) && (title != NULL) && (metadesc != NULL)) {
 
-					//temp
-					//	makePreParsedSummary(body,strlen(body),title,strlen(title),metadesc,strlen(metadesc),ReposetoryHeader.DocID,
-					//		(*argstruct).SFH,&(*DocumentIndexPost).SummaryPointer,&(DocumentIndexPost).SummarySize);
-					
+						#ifndef BLACK_BOKS
+
 						SummaryWrite(SummaryBuffer,SummaryBufferSize,&(*DocumentIndexPost).SummaryPointer,
 							&(*DocumentIndexPost).SummarySize,ReposetoryHeader.DocID,(*argstruct).SFH);
-			
-						free(SummaryBuffer);
+						#endif
 
-
-
-                				free(body);
-                				free(title);
-						free(metadesc);
-
-						//printf("lang %s\n",lang);
+						//printf("SummaryBufferSize %i\n",SummaryBufferSize);
 						
 
 
 						revindexFilesAppendWords(&pagewords,(*argstruct).revindexFilesHa,ReposetoryHeader.DocID,&langnr);
 
-						DocIDPlace = ((ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr)) * sizeof(unsigned char));
-						//printf("DocID %u, DocIDPlace %i\n",ReposetoryHeader.DocID,DocIDPlace);
-						fseek((*argstruct).ADULTWEIGHTFH,DocIDPlace,SEEK_SET);
-	
-	                			fwrite(&awvalue,sizeof(awvalue),1,(*argstruct).ADULTWEIGHTFH);
+						//DocIDPlace = ((ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr)) * sizeof(unsigned char));
+						////printf("DocID %u, DocIDPlace %i\n",ReposetoryHeader.DocID,DocIDPlace);
+						//fseek((*argstruct).ADULTWEIGHTFH,DocIDPlace,SEEK_SET);
+						//	
+	                			//fwrite(&awvalue,sizeof(awvalue),1,(*argstruct).ADULTWEIGHTFH);
+
 
 					}
 
@@ -579,10 +552,27 @@ void *IndexerLot_workthread(struct IndexerLot_workthreadFormat *argstruct) {
 				#endif
 
 				DocIDPlace = (ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr));
-			
-				(*argstruct).DIArray[DocIDPlace].p = DocumentIndexPost;
+
 				(*argstruct).DIArray[DocIDPlace].DocID = ReposetoryHeader.DocID;						
 			
+				(*argstruct).DIArray[DocIDPlace].p = DocumentIndexPost;
+			
+
+				(*argstruct).DIArray[DocIDPlace].haveawvalue = 1;
+				(*argstruct).DIArray[DocIDPlace].awvalue = awvalue;						
+
+
+				(*argstruct).DIArray[DocIDPlace].haverankPageElements = 1;
+				(*argstruct).DIArray[DocIDPlace].brankPageElements.IPAddress = 		(*DocumentIndexPost).IPAddress;
+				(*argstruct).DIArray[DocIDPlace].brankPageElements.nrOfOutLinks = 	(*DocumentIndexPost).nrOfOutLinks;
+				(*argstruct).DIArray[DocIDPlace].brankPageElements.response = 		(*DocumentIndexPost).response;
+			
+				free(SummaryBuffer);
+
+
+       				free(body);
+       				free(title);
+				free(metadesc);
 
 		}		
 
@@ -774,6 +764,8 @@ int main (int argc, char *argv[]) {
 
 		argstruct.ADULTWEIGHTFH = lotOpenFileNoCasheByLotNr(lotNr,"AdultWeight",openmode, 'e',subname);
 		argstruct.SFH = lotOpenFileNoCasheByLotNr(lotNr,"summary",openmode,'r',subname);
+		argstruct.brankPageElementsFH = lotOpenFileNoCasheByLotNr(lotNr,"brankPageElements",openmode,'r',subname);
+
 
 
 		addNewUrlOpen(&argstruct.addNewUrlha,lotNr,openmode,subname);
@@ -792,24 +784,31 @@ int main (int argc, char *argv[]) {
 		argstruct.optPrintInfo		= optPrintInfo;
 		argstruct.optOnlyTLD		= optOnlyTLD;
 
-		argstruct.DIArray = malloc(NrofDocIDsInLot);
+		//malloc
+		argstruct.DIArray = malloc( NrofDocIDsInLot * sizeof(struct DIArrayFormat) );
+
+		for(i=0;i<NrofDocIDsInLot;i++) {
+			//printf("i %i\n",i);
+			argstruct.DIArray[i].p = NULL;
+			argstruct.DIArray[i].haveawvalue = 0;
+			argstruct.DIArray[i].haverankPageElements = 0;
+		}
 
 		//init mutex
 		#ifdef WITH_THREAD
+
+			pthread_mutex_init(&argstruct.reposetorymutex, NULL);
+			pthread_mutex_init(&argstruct.restmutex, NULL);
+
 			if (optNrofWorkThreads == 0) {
 				printf("won't use threads\n");
 				IndexerLot_workthread(&argstruct);
 			}
 			else {
 				printf("wil use %i threads\n",optNrofWorkThreads);
-				pthread_t threadid[optNrofWorkThreads];
-				pthread_mutex_init(&argstruct);
-			}
-			else {
+			
 				printf("wil use %i threads\n",optNrofWorkThreads);
 				pthread_t threadid[optNrofWorkThreads];
-				pthread_mutex_init(&argstruct.reposetorymutex, NULL);
-				pthread_mutex_init(&argstruct.restmutex, NULL);
 
 				for(i=0;i<optNrofWorkThreads;i++) {
 					printf("starting tread nr %i\n",i);
@@ -822,11 +821,11 @@ int main (int argc, char *argv[]) {
         			}
 			}
 		#else
-
+			printf("wasent build with threads\n");
 			IndexerLot_workthread(&argstruct);
 
 		#endif
-
+		
 
 		for(i=0;i<NrofDocIDsInLot;i++) {
 			if (argstruct.DIArray[i].p != NULL) {
@@ -842,7 +841,15 @@ int main (int argc, char *argv[]) {
 
 				//printf("DocID %u, DocIDPlace %i\n",ReposetoryHeader.DocID,DocIDPlace);
 				fseek(argstruct.ADULTWEIGHTFH,DocIDPlace,SEEK_SET);	
-               			fwrite(&argstruct.DIArray[DocIDPlace].awvalue,sizeof(unsigned char),1,argstruct.ADULTWEIGHTFH);
+               			fwrite(&argstruct.DIArray[i].awvalue,sizeof(unsigned char),1,argstruct.ADULTWEIGHTFH);
+			}
+
+			if (argstruct.DIArray[i].haverankPageElements == 1) {
+
+				DocIDPlace = ((argstruct.DIArray[i].DocID - LotDocIDOfset(argstruct.lotNr)) * sizeof(struct brankPageElementsFormat));
+				//printf("DocIDPlace %i, size %u\n",DocIDPlace,(unsigned int)sizeof(struct brankPageElementsFormat));
+				fseek(argstruct.brankPageElementsFH,DocIDPlace,SEEK_SET);
+				fwrite(&argstruct.DIArray[i].brankPageElements,sizeof(struct brankPageElementsFormat),1,argstruct.brankPageElementsFH);
 			}
 
 		}
@@ -856,6 +863,7 @@ int main (int argc, char *argv[]) {
 		
 		fclose(argstruct.ADULTWEIGHTFH);
 		fclose(argstruct.SFH);
+		fclose(argstruct.brankPageElementsFH);
 
 		// vi må ikke kopiere revindex filene da vi jobber på de lokale direkte
 //	}
@@ -865,7 +873,7 @@ int main (int argc, char *argv[]) {
 
 	html_parser_exit();
 	 langdetectDestroy();
-	free(argstruct.adult);
+	free(argstruct.DIArray);
 	free(argstruct.adult);
 
 	if (globalIndexerLotConfig.urlfilter != NULL) {

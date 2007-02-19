@@ -537,19 +537,30 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 		char filter[128];
 		
 		//henter konfi verdier
-		const char *msad_domain = config_getentrystr("msad_domain");
+		const char *msad_domain 	= config_getentrystr("msad_domain");
    		const char *admin_username 	= config_getentrystr("msad_user");
    		const char *admin_password 	= config_getentrystr("msad_password");
-   		const char *ldap_host 	= config_getentrystr("msad_ip");
+   		const char *ldap_host 		= config_getentrystr("msad_ip");
    		const char *ldap_domain 	= config_getentrystr("msad_domain");
-   		const int   ldap_port 	= config_getentryint("msad_port");
-		const char *ldap_group 	= config_getentrystr("msad_group");
+   		const int   ldap_port 		= config_getentryint("msad_port");
+		const char *ldap_group 		= config_getentrystr("msad_group");
+		const char *msad_ldapstring 	= config_getentrystr("msad_ldapstring");
+		const char *msad_ldapbase 	= config_getentrystr("msad_ldapbase");
 
-		char ldap_base[128] = "";
+		char ldap_base[528] = "";
 
-		ldap_genBaseName(ldap_base,ldap_domain);
-
-		sprintf(adminsdistinguishedName,"cn=%s,cn=%s,%s",admin_username,ldap_group,ldap_base);
+		if (msad_ldapbase == NULL) {
+			ldap_genBaseName(ldap_base,ldap_domain);
+		}
+		else {
+			strscpy(ldap_base,msad_ldapbase,sizeof(ldap_base));
+		}
+		if (msad_ldapstring == NULL) {
+			sprintf(adminsdistinguishedName,"cn=%s,cn=%s,%s",admin_username,ldap_group,ldap_base);
+		}
+		else {
+			strscpy(adminsdistinguishedName,msad_ldapstring,sizeof(adminsdistinguishedName));
+		}
 
    		if (!ldap_connect(&ld,ldap_host,ldap_port,ldap_base,adminsdistinguishedName,admin_password)) {
 			printf("can't connect to ldap server\n");
@@ -765,6 +776,8 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 			}                  
 
 			printf("bad_getPassword: end\n");
+//printf("exiting to show pd\n");
+//exit(1);
 		}
 		else {
 			printf("unnown comand. %i at %s:%d\n", packedHedder.command,__FILE__,__LINE__);

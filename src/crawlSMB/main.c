@@ -5,45 +5,38 @@
 
 #include "crawlsmb.h"
 #include "scan.h"
+#include "cleanresource.h"
 
 //#include "../boitho-bbdn/bbdnclient.h"
 
 
 #include "../crawl/crawl.h"
 
-int cleanresource(char resource[]) {
-
-	char *cp;
-
-	//gjør om på formatet slik at \\ blir //
-	if (strchr(resource,'\\') != NULL) {
-		crawlWarn("collection \"%s\" contains \"\\\" characters. Corect format is //host/shares not \\\\host\\shares. Will convert \"\\\" to \"/\"",resource);
-
-		while((cp = strchr(resource,'\\')) != NULL) {
-			cp[0] = '/';
-		}		
-
-	}
-
-}
 
 
 int crawlpatAcces(char resource[], char username[], char password[]) 
 {
         //tester om vi kan koble til
 	char        *prefix;
+	char	*resourcereal;
 	int status;
 	int no_auth = 0;
 
-	cleanresource(resource);
+	resourcereal = resource;
 
-        printf("crawlSMB: \n\tresource: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",resource,username,password);
+	//fjerner file: i begyndelsen
+	if (strncmp("file:",resourcereal,strlen("file:")) == 0) {
+		resourcereal += strlen("file:");
+	}
 
+	cleanresourceWinToUnix(resourcereal);
+
+        printf("crawlSMB: \n\tresourcereal: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",resourcereal,username,password);
 
 
 	prefix = smb_mkprefix( username, password );
 
-	status =  smb_test_open( prefix, resource);
+	status =  smb_test_open( prefix, resourcereal);
 
 	free(prefix);
 
@@ -64,7 +57,7 @@ int crawlcanconect( struct collectionFormat *collection)
 	int status;
 	int no_auth = 0;
 
-	cleanresource((*collection).resource);
+	cleanresourceWinToUnix((*collection).resource);
 
         printf("crawlSMB: \n\tresource: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",(*collection).resource,(*collection).user,(*collection).password);
 
@@ -96,7 +89,7 @@ int crawlfirst(struct collectionFormat *collection,
 
 	printf("crawlfirst: start\n");
 
-	cleanresource((*collection).resource);
+	cleanresourceWinToUnix((*collection).resource);
 	if ((*collection).user == NULL) {
 		no_auth = 1;
 	}
@@ -127,7 +120,7 @@ int crawlupdate(struct collectionFormat *collection,
 	int result;
 	char        *prefix;
 	
-	cleanresource((*collection).resource);
+	cleanresourceWinToUnix((*collection).resource);
 
 	if ((*collection).user == NULL) {
 		no_auth = 1;

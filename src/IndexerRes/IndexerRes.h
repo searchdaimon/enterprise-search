@@ -111,9 +111,10 @@ struct pagewordsFormat {
 	int curentUrlIsDynamic;
 	unsigned int curentDocID;
 	struct nrofBucketElementsFormat nrofBucketElements[NrOfDataDirectorys];
+	unsigned int DocID;
 };
 
-struct pagewordsFormat pagewords;
+//struct pagewordsFormat pagewords;
 
 void html_parser_timout( int signo );
 void pagewordsSortOnOccurrence();
@@ -129,4 +130,4 @@ void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct Rep
                 int DocID,int httpResponsCodes[], struct adultFormat *adult, unsigned char *langnr,
                 char **title, char **body);
 
-void wordsReset(struct pagewordsFormat *pagewords);
+void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID);

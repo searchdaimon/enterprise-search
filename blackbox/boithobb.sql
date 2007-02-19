@@ -250,6 +250,8 @@ insert into config values("msad_port","3666");
 -- Builtin or Users
 insert into config values("msad_group","Users");
 
+insert into config values("msad_ldapstring","CN=Black Box,OU=Users,OU=EA-Forskningsparken,OU=Customers,DC=i04,DC=local");
+insert into config values("msad_ldapbase","OU=Users,OU=EA-Forskningsparken,OU=Customers,DC=i04,DC=local");
 
 UPDATE `config` SET `configvalue` = 'bbtest.searchdaimon.com' WHERE `configkey` = 'msad_domain';
 UPDATE `config` SET `configvalue` = 'bbtest.searchdaimon.com\Boitho' WHERE `configkey` = 'msad_user';

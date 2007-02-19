@@ -220,8 +220,8 @@ int cconnect (char *hostname, int PORT) {
         struct sockaddr_in their_addr; // connector's address information 
 
 	#ifdef DEBUG
-	extern int errno;
-	int errnosave;
+	//extern int errno;
+	//int errnosave;
 	#endif
 
         //if (argc != 2) {
@@ -277,9 +277,9 @@ int cconnect (char *hostname, int PORT) {
     		// Wait for up to TIMEOUT seconds to connect. 
     		if (select (sockfd + 1, &rd_fds, &wr_fds, 0, &tv) <= 0) {
 			#ifdef DEBUG
-			errnosave = errno;
-      			perror ("connection timedout");
-			errno = errnosave;
+			//errnosave = errno;
+      			//perror ("connection timedout");
+			//errno = errnosave;
 			#endif
 			//close(sockfd); 
 			//sleep(5);
@@ -288,9 +288,9 @@ int cconnect (char *hostname, int PORT) {
     		// Can use getpeername() here instead of connect(). 
     		else if (connect (sockfd, (struct sockaddr *) &their_addr, sizeof their_addr) == -1 && errno != EISCONN) { 
 			#ifdef DEBUG
-			errnosave = errno;
-      			perror (hostname);
-			errno = errnosave;
+			//errnosave = errno;
+      			//perror (hostname);
+			//errno = errnosave;
 			#endif
 			//close(sockfd); 
 			//sleep(5);

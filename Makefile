@@ -23,14 +23,20 @@ LIBGeoIP = -lGeoIP
 CURLLIBS = `curl-config --libs`
 
 IM = -L/home/eirik/.root/lib -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
+#IM = /home/eirik/.root/lib/libMagick.a -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
 
-BBDOCUMENT = src/bbdocument/bbdocument.c src/generateThumbnail/generate_thumbnail.c -I/usr/local/BerkeleyDB.4.5/include/ -L/usr/local/BerkeleyDB.4.5/lib/ -ldb -D BLACK_BOKS $(IM)
+BDB = -I/usr/local/BerkeleyDB.4.5/include/ -L/usr/local/BerkeleyDB.4.5/lib/ -ldb
+
+BBDOCUMENT = src/bbdocument/bbdocument.c $(BDB) -D BLACK_BOKS
+BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail.c -DBBDOCUMENT_IMAGE $(IM)
 
 #openldap med venner. Må linke det statisk inn, å bare bruke -lldap fungerer ikke
 #
 #LDAP = -DWITH_OPENLDAP /usr/lib/libldap.a -lsasl2 -lsasl -lcrypt -lssl
 #LDAP = -DWITH_OPENLDAP -lldap -llber
-LDAP = -DWITH_OPENLDAP /usr/lib/libldap.so.2 /usr/lib/liblber.so.2
+#LDAP = -DWITH_OPENLDAP /usr/lib/libldap.so.2 /usr/lib/liblber.so.2
+#LDAP = -DWITH_OPENLDAP /usr/lib/libldap.a /usr/lib/liblber.a /usr/lib/libsasl.a /usr/lib/libcrypto.a -lssl
+LDAP = -DWITH_OPENLDAP /usr/lib/libldap.a /usr/lib/liblber.a /usr/lib/libsasl.a src/3pLibs/openssl-0.9.8d/libssl.a src/3pLibs/openssl-0.9.8d/libcrypto.a -ldl 
 
 #flag for å inkludere mysql
 #MYSQL = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
@@ -62,7 +68,7 @@ wordConverter: src/wordConverter/main.c
 IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c src/parser/lex.bhpm.c src/parser/y.tab.c -o bin/IndexerLot $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
 
 IndexerLot: src/IndexerLot/main.c
-	$(CC) $(IndexerLot)
+	$(CC) $(IndexerLot) -lpthread -DWITH_THREAD
 
 IndexerLotbb: src/IndexerLot/main.c
 	$(CC) $(IndexerLot) -D BLACK_BOKS src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c
@@ -87,7 +93,7 @@ searchfilterTest: src/searchfilterTest/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/searchfilterTest/main.c src/searchfilter/searchfilter.c -o bin/searchfilterTest $(LDFLAGS)
 
 infoquery: src/infoquery/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/infoquery/main.c src/acls/acls.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c $(BBDOCUMENT) -o bin/infoquery $(LDFLAGS) 
+	$(CC) $(CFLAGS) $(LIBS)*.c src/infoquery/main.c src/acls/acls.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c $(BBDOCUMENT) -o bin/infoquery $(LDFLAGS)
 
 GetIndexAsArrayTest: src/GetIndexAsArrayTest/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/GetIndexAsArrayTest/main.c -o bin/GetIndexAsArrayTest $(LDFLAGS)
@@ -127,7 +133,7 @@ lotcp: src/lotcp/main.c
 crawlFiles: src/crawlFiles/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/crawlFiles/main.c  -o bin/crawlFiles $(LDFLAGS) src/boitho-bbdn/bbdnclient.c -D BLACK_BOKS
 
-crawlSMB: src/crawlSMB/main.c
+#crawlSMB: src/crawlSMB/main.c
 #<<<<<<< Makefile
 #	flex -f -8 -i src/crawlSMB/acl.parser.l
 #	$(CC) $(CFLAGS) $(LIBS)*.c -lsmbclient src/crawlSMB/lex.yy.c src/boitho-bbdn/bbdnclient.c src/crawlSMB/crawlsmb.c src/crawlSMB/main.c -o bin/crawlSMB $(LDFLAGS) -D BLACK_BOKS
@@ -135,8 +141,8 @@ crawlSMB: src/crawlSMB/main.c
 #	flex -f -8 -i -o src/crawlSMB/lex.acl.c src/crawlSMB/acl.parser.l
 #	$(CC) $(CFLAGS) $(LIBS)*.c -lsmbclient src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawlSMB/main.c  -o bin/crawlSMB $(LDFLAGS) -D BLACK_BOKS
 #>>>>>>> 1.15
-	flex -f -8 -i -o src/crawlSMB/lex.acl.c src/crawlSMB/acl.parser.l
-	$(CC) $(CFLAGS) $(LIBS)*.c -lsmbclient src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o bin/crawlSMB $(LDFLAGS) -D BLACK_BOKS
+#	flex -f -8 -i -o src/crawlSMB/lex.acl.c src/crawlSMB/acl.parser.l
+#	$(CC) $(CFLAGS) $(LIBS)*.c -lsmbclient src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o bin/crawlSMB $(LDFLAGS) -D BLACK_BOKS
 
 	
 
@@ -150,13 +156,16 @@ searchcl : src/searchkernel/searchcl.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/query/lex.query.o src/searchkernel/cgi-util.c src/searchkernel/parseEnv.c src/searchkernel/searchkernel.c src/searchkernel/search.c src/searchkernel/searchcl.c src/parse_summary/libsummary.a -o bin/searchcl $(LDFLAGS)
 
 #dropper -D WITH_MEMINDEX og -D WITH_RANK_FILTER for nå
-SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a -o bin/searchd $(LDFLAGS) -lpthread -D WITH_THREAD -lconfig
+SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD -lconfig
 
 searchd : src/searchkernel/searchd.c
-	$(CC) $(SEARCHCOMMAND) -D WITH_RANK_FILTER
+	$(CC) $(SEARCHCOMMAND) -D WITH_RANK_FILTER -o bin/searchd
 
 searchdbb : src/searchkernel/searchd.c
-	$(CC) $(SEARCHCOMMAND) -D BLACK_BOKS
+	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb
+
+mergeUserToSubname: src/mergeUserToSubname/main.c
+	$(CC) $(CFLAGS) $(LIBS)*.c $(BDB) src/mergeUserToSubname/main.c src/acls/acls.c -o bin/mergeUserToSubname $(LDFLAGS) -DBLACK_BOKS
 
 boithoads: src/boithoads/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoads/main.c src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/httpGet/httpGet.c src/parse_summary/libsummary.a -o bin/boithoads $(LDFLAGS) $(MYSQL) $(LIBXML) $(CURLLIBS)
@@ -170,13 +179,13 @@ addout.cgi: src/addout.cgi/main.c
 ppcXmlParserTest: src/ppcXmlParserTest/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/ppcXmlParserTest/main.c src/parse_summary/libsummary.a src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/parse_summary/libsummary.a src/httpGet/httpGet.c -o bin/ppcXmlParserTest $(LDFLAGS) $(MYSQL) $(LIBXML) $(CURLLIBS)
 
-dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c -o bin/dispatcher_all $(LDFLAGS) $(MYSQL)
+dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c  $(LDFLAGS) $(MYSQL) -lconfig
 
 dispatcher_all: src/dispatcher_all/main.c
-		$(CC) $(dispatcherCOMAND) $(LIBGeoIP) -D WITH_CASHE
+		$(CC) $(dispatcherCOMAND) $(LIBGeoIP) -D WITH_CASHE -o bin/dispatcher_all
 
 dispatcher_allbb: src/dispatcher_all/main.c
-		$(CC) $(dispatcherCOMAND) -D BLACK_BOKS
+		$(CC) $(dispatcherCOMAND) -D BLACK_BOKS -o bin/dispatcher_allbb
 
 
 dispatcher: src/dispatcher/main.c
@@ -258,6 +267,9 @@ anchorread: src/anchorread/main.c
 
 BrankCalculate:	src/BrankCalculate/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate/*.c -o bin/BrankCalculate $(LDFLAGS)
+
+BrankCalculate2: src/BrankCalculate2/main.c
+	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate2/*.c -o bin/BrankCalculate2 $(LDFLAGS)
 
 BrankMerge: src/BrankMerge/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankMerge/*.c -o bin/BrankMerge $(LDFLAGS)
@@ -356,7 +368,7 @@ readIIndex: src/readIIndex/main.c
 	$(CC) src/readIIndex/main.c -o bin/readIIndex
 
 mergeIIndex: src/mergeIIndex/main.c
-	$(CC) src/mergeIIndex/main.c src/common/bfileutil.c src/common/lot.c src/common/bstr.c -o bin/mergeIIndex -lm -D_FILE_OFFSET_BITS=64
+	$(CC) $(CFLAGS) $(LIBS)*.c src/mergeIIndex/main.c -o bin/mergeIIndex $(LDFLAGS)
 
 
 boithoadClientLib: src/boithoadClientLib/boithoadClientLib.c
@@ -364,6 +376,24 @@ boithoadClientLib: src/boithoadClientLib/boithoadClientLib.c
 	$(CC) -c $(CFLAGS) src/boithoadClientLib/boithoadClientLib.c -o src/boithoadClientLib/boithoadClientLib.o  -g
 	ar rc src/boithoadClientLib/liboithoaut.a src/boithoadClientLib/boithoadClientLib.o src/boithoadClientLib/daemon.o
 	ranlib src/boithoadClientLib/liboithoaut.a
+
+
+crawlManager: src/crawlManager/main.c
+	$(CC) $(CFLAGS) $(LIBS)*.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c src/3pLibs/keyValueHash/hashtable.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -D WITH_CONFIG $(BBDOCUMENT) -static
+
+
+crawlSMB: src/crawlSMB/main.c
+	flex -f -8 -i -o src/crawlSMB/lex.acl.c src/crawlSMB/acl.parser.l
+
+	$(CC) $(CFLAGS) -fPIC -shared $(LIBS)*.c -lsmbclient src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) -D BLACK_BOKS -g
+	mkdir -p /home/boitho/boithoTools/crawlers/crawlSMB
+	cp src/crawlSMB/crawlSMB.so /home/boitho/boithoTools/crawlers/crawlSMB/
+
+crawlSFTP: src/crawlSFTP/crawlsftp.c
+	$(CC) $(CFLAGS) -fPIC -shared -o src/crawlSFTP/crawlSFTP.so src/crawlSFTP/crawlsftp.c src/crawlSFTP/rutines.c src/crawl/crawl.c src/3pLibs/libssh2/src/*.o -g -O2 -I/usr/include -I/usr/include -Isrc/3pLibs/libssh2/include/ -L/usr/lib -lcrypto -L/usr/lib -lz
+	mkdir -p /home/boitho/boithoTools/crawlers/crawlSFTP
+	cp src/crawlSFTP/crawlSFTP.so /home/boitho/boithoTools/crawlers/crawlSFTP/
+
 
 #kopierer filer slik at de blir tilgjengelig fra web
 webpublish:

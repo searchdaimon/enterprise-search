@@ -76,7 +76,7 @@ int main (int argc, char *argv[]) {
 		printf("crc32 %u\n",DocumentIndexPost.crc32);
 
 		printf("SummaryPointer %u\nSummarySize %hu\n\n",DocumentIndexPost.SummaryPointer,DocumentIndexPost.SummarySize);
-
+		printf("nrOfOutLinks: %u\n",(unsigned int)DocumentIndexPost.nrOfOutLinks);
 		///////////////
 		char *metadesc, *title, *body;
 

@@ -590,6 +590,9 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				
 			}
 
+                        TeffArray[y].TermRank = rank(TeffArray[y].hits,TeffArray[y].TermAntall,TeffArray[y].DocID,subname);
+			printf("TermRank: %i\n",TeffArray[y].TermRank);
+
 			#ifndef BLACK_BOKS
 				//midlertidig bug fiks. Ignorerer hit med DocID 0.
 				//ser ut til at vi har noen bugger som lager DocID 0. Skal ikke være med i index
@@ -665,6 +668,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
                	        //lagger til poeng
                         //
                         TeffArray[y].TermRank = rank(TeffArray[y].hits,TeffArray[y].TermAntall);
+			printf("TermRank: %i\n",TeffArray[y].TermRank);
                         //
 
 			
@@ -709,6 +713,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	}
 
 	printf("GetIndexAsArray: AntallTeff = %i\n",(*AntallTeff));
+
 }
 
 

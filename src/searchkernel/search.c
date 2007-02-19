@@ -11,7 +11,12 @@
 #include "../common/integerindex.h"
 #include "../3pLibs/keyValueHash/hashtable.h"
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
-#include "../getdate/dateview.h"
+
+#ifdef BLACK_BOKS
+
+	#include "../getdate/dateview.h"
+	#include "../acls/acls.c"
+#endif
 
 #include <string.h>
 #include <limits.h>
@@ -535,7 +540,30 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 }
 
 
+void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filteron) {
+	int i;
+	//dagur:
+	(*filteron).filetype	= NULL;
+	(*filteron).collection	= NULL;
+	for (i=0; i<(*queryParsed).n; i++)
+        {
+            //struct text_list *t_it = (*queryParsed).elem[i];
 
+            printf("Search type %c\n", (*queryParsed).query[i].operand );
+
+
+		switch ((*queryParsed).query[i].operand) {
+
+			case 'c':
+				(*filteron).collection = (*queryParsed).query[i].s[0];
+			break;
+
+
+		}
+		
+	}
+exit(1);
+}
 /*******************************************/
 
 int searchIndex_getnrs(char *indexType,query_array *queryParsed,struct subnamesFormat *subname,int languageFilterNr,
@@ -1217,7 +1245,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		gettimeofday(&start_time, NULL);
 
 		char filetype[5];
-		struct filesKeyFormat *filesKey;
+		//struct filesKeyFormat *filesKey;
+		char *filesKey;
 		int *filesValue;
 		struct hashtable *h;
 
@@ -1232,8 +1261,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 				#ifdef DEBUG
 				printf("file \"%c%c%c%c\"\n",filetype[0],filetype[1],filetype[2],filetype[3]);
 				#endif
-				filesKey = malloc(sizeof(struct filesKeyFormat));
-				(*filesKey).subname = TeffArray[i].subname;
+				//filesKey = malloc(sizeof(struct filesKeyFormat));
+				//(*filesKey).subname = TeffArray[i].subname;
 /***************************************************/
 				//lesKey).subname = TeffArray[i].subname;
 				//memcpy((*filesKey).filename,filetype,sizeof((*filesKey).filename)); 	
@@ -1277,7 +1306,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 				printf("files \"%s\": %i\n",filesKey,*filesValue);
 				if (filtypesnrofLocal < (*filtypesnrof)) {
-					strcpy(filtypes[filtypesnrofLocal].name,filesKey);
+					strscpy(filtypes[filtypesnrofLocal].name,filesKey,sizeof(filtypes[filtypesnrofLocal].name));
 					filtypes[filtypesnrofLocal].nrof = (*filesValue);
 					++filtypesnrofLocal;
 				}
@@ -1298,6 +1327,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		hashtable_destroy(h,1); 
 
 		(*filtypesnrof) = filtypesnrofLocal;
+		printf("filtypesnrof: %i\n",(*filtypesnrof));
 		for (i=0;i<(*filtypesnrof);i++) {
 			printf("file \"%s\": %i\n",filtypes[i].name,filtypes[i].nrof);
 		}
@@ -1376,91 +1406,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 	#endif
 
-	// BLACK_BOKS har ikke pop rank, bare term rank
-	#ifdef BLACK_BOKS
-
-
-		gettimeofday(&start_time, NULL);
-
-
-		printf("looking opp dates\n");
-
-		//slår opp alle datoene
-		for (i 
 /**********************************************/
 
-				memcpy((*filesKey).filename,filetype,sizeof((*filesKey).filename)); 	
-
-				if (NULL == (filesValue = hashtable_search(h,filesKey) )) {    
-					printf("not found!. Vil insert first");
-					filesValue = malloc(sizeof(int));
-					(*filesValue) = 1;
-					if (! hashtable_insert(h,filesKey,filesValue) ) {
-						printf("cant insert\n");     
-						exit(-1);
-					}
-
-		                }
-				else {
-					++(*filesValue);
-				}
-			}
-		}
-
-		for(i=0;i<nrOfSubnames;i++) {
-                	subnames[i].nrOfFiletypes = 0;
-		}
-		/* Iterator constructor only returns a valid iterator if
-		 the hashtable is not empty 
-		*/
-
-		if (hashtable_count(h) > 0)
-		{
-			struct hashtable_itr *itr;
-
-       			itr = hashtable_iterator(h);
-       			do {
-       				filesKey = (struct filesKeyFormat *)hashtable_iterator_key(itr);
-       				filesValue = (int *)hashtable_iterator_value(itr);
-
-				printf("files \"%s-%s\": %i\n",(*(*filesKey).subname).subname,(*filesKey).filename,*filesValue);
-
-				if ((*(*filesKey).subname).nrOfFiletypes < MAXFILTYPES) {
-					memcpy((*(*filesKey).subname).filtypes[(*(*filesKey).subname).nrOfFiletypes].name,(*filesKey).filename,4);
-					(*(*filesKey).subname).filtypes[(*(*filesKey).subname).nrOfFiletypes].name[5] = '\0';
-					(*(*filesKey).subname).filtypes[(*(*filesKey).subname).nrOfFiletypes].nrof = (*filesValue);
-					++(*(*filesKey).subname).nrOfFiletypes;
-				}
-
-       			} while (hashtable_iterator_advance(itr));
-    			free(itr);
-
-		}
-
-		hashtable_destroy(h,1); 
-
-		// sort by nrof
-		for(i=0;i<nrOfSubnames;i++) {
-			printf("qsort filtypes %i\n",subnames[i].nrOfFiletypes);
-			qsort(subnames[i].filtypes,subnames[i].nrOfFiletypes,sizeof(struct subnamesFiltypesFormat),compare_filetypes);
-		}
-
-		gettimeofday(&end_time, NULL);
-		(*queryTime).filetypes = getTimeDifference(&start_time,&end_time);
-
-
-		#ifdef DEBUG
-		//show subnames and hits in then
-		for(i=0;i<nrOfSubnames;i++) {
-                        printf("nrOfFiletypes %s: %i\n",subnames[i].subname,subnames[i].nrOfFiletypes);
-			for(y=0;y<subnames[i].nrOfFiletypes;y++) {
-				printf("files %s %i\n",subnames[i].filtypes[y].name,subnames[i].filtypes[y].nrof);
-			}
-                }
-		#endif
-
-
-	#endif
 
 	// BLACK_BOKS har ikke pop rank, bare term rank
 	#ifdef BLACK_BOKS

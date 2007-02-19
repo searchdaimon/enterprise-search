@@ -390,8 +390,8 @@ struct PagesResultsFormat {
 		pthread_mutex_t mutex;
 		#endif
 
-		struct filtypesFormat *filtypes;
-		int *filtypesnrof;
+		//struct filtypesFormat *filtypes;
+		//int filtypesnrof;
 };
 
 int nextIndex(struct PagesResultsFormat *PagesResults) {
@@ -857,7 +857,11 @@ char search_user[],struct filtypesFormat *filtypes, int *filtypesnrof) {
 
 	printf("searchSimple\n");
 	
-	searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTreff,&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,orderby,dates,PagesResults.filtypes, PagesResults.filtypesnrof);
+	searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTreff,
+			&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
+			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
+			orderby,dates,filtypes, filtypesnrof);
+
 	printf("end searchSimple\n");
 
 	/*

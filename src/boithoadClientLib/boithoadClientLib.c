@@ -186,7 +186,7 @@ int boithoad_getPassword(char username_in[], char password_in[]) {
 		forreturn = 1;
 	}
 	else {
-		printf("dident have a passord\n");
+		printf("dident have a passord at %s:%d\n",__FILE__,__LINE__);
 		strcpy(password_in,"");
 		forreturn = 0;
 	}

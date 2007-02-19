@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <libsmbclient.h>
 #include "get_auth_data_fn.h"
+#include "cleanresource.h"
 
 //#include "../boitho-bbdn/bbdnclient.h"
 //#include "../bbdocument/bbdocument.h"
@@ -180,9 +181,14 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
                     context_free(context);
 
-			crawldocumentExist.documenturi = entry_name;
+			//crawldocumentExist.documenturi = entry_name;
+			crawldocumentExist.documenturi = malloc(strlen(entry_name) + strlen("file:") +1);
+			sprintf(crawldocumentExist.documenturi,"file:%s",entry_name);
+
 			crawldocumentExist.lastmodified = file_stat.st_mtime;
 			crawldocumentExist.dokument_size = file_stat.st_size;
+
+			cleanresourceUnixToWin(crawldocumentExist.documenturi);
 
 			printf("times: st_atime %s ",ctime(&file_stat.st_atime));
 			printf("times: st_mtime %s ",ctime(&file_stat.st_mtime));
@@ -238,7 +244,9 @@ int smb_recursive_get( char *prefix, char *dir_name,
 					    smbc_urldecode( uri, entry_name, sizeof(entry_name)+1 );
 */
 #ifndef NO_BB
-        					crawldocumentAdd.documenturi	= entry_name;
+        					//crawldocumentAdd.documenturi	= entry_name;
+						crawldocumentAdd.documenturi = malloc(strlen(entry_name) + strlen("file:") +1);
+						sprintf(crawldocumentAdd.documenturi,"file:%s",entry_name);
         					crawldocumentAdd.documenttype	= "";
         					crawldocumentAdd.document	= fbuf;
         					crawldocumentAdd.dokument_size	= file_stat.st_size;
@@ -247,12 +255,18 @@ int smb_recursive_get( char *prefix, char *dir_name,
         					crawldocumentAdd.title		= dirp->name;
 					        crawldocumentAdd.doctype	= "";
 
+						cleanresourceUnixToWin(crawldocumentAdd.documenturi);
+
 						(*documentAdd)(collection ,&crawldocumentAdd);
+					
+						free(crawldocumentAdd.documenturi);
 
 		    				//documentAdd(bbdh, collection, entry_name, "", fbuf, file_stat.st_size, file_stat.st_mtime, parsed_acl, dirp->name ,"");
 #endif
 //					    printf("%s:\n%s\n\n", entry_name, fbuf);
 					}
+
+				    free(crawldocumentExist.documenturi); //usikker om dette er rikit plass
 
 				    smbc_close(fd);
 				    free(fbuf);
