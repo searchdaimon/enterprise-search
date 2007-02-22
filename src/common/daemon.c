@@ -104,8 +104,10 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
             exit(1);
         }
 
-	debug("will listen on port %i",PORT);
-        
+	#ifdef DEBUG
+	printf("will listen on port %i",PORT);
+        #endif
+
         my_addr.sin_family = AF_INET;         // host byte order
         my_addr.sin_port = htons(PORT);     // short, network byte order
         my_addr.sin_addr.s_addr = INADDR_ANY; // automatically fill with my IP
@@ -229,7 +231,9 @@ int cconnect (char *hostname, int PORT) {
         //    exit(1);
         //}
 
-	debug("conecting to %s:%i",hostname,PORT);
+	#ifdef DEBUG
+	printf("conecting to %s:%i",hostname,PORT);
+	#endif
 
         if ((he=gethostbyname(hostname)) == NULL) {  // get the host info 
             perror("gethostbyname");
@@ -327,15 +331,23 @@ int sendall(int s, void *buf, int len) {
         int total = 0;        // how many bytes we've sent
         int bytesleft = len; // how many we have left to send
         int n;
-
-	debug("will send %i",len);
+	
+	#ifdef DEBUG
+	printf("will send %i",len);
+	#endif
 
         while(total < len) {
+	
+
             if ((n = send(s, buf+total, bytesleft, 0)) == -1) {
 			//perror("send");
 			return 0;
 		}
-            //if (n == -1) { break; }
+            if (n == -1) { 
+		print("dident manage to send all the data as %s:%f.\n",__FILE__,__LINE__);
+		break; 
+	    }
+
             total += n;
             bytesleft -= n;
         }
@@ -349,7 +361,6 @@ int sendall(int s, void *buf, int len) {
 int recvall(int sockfd, void *buf, int len) {
 	
 	//debug("!!!!resiving data");	
-	debug("will read %i",len);
 
 /*
 	if (recv(sockfd, buf,len,MSG_WAITALL) == -1) {
@@ -365,12 +376,18 @@ int recvall(int sockfd, void *buf, int len) {
         int bytesleft = len; // how many we have left to send
 	int n;
 
+	#ifdef DEBUG
+	printf("will read %i",len);
+	#endif
+
 	while(total < len) {
 		if ((n = read(sockfd, buf+total, bytesleft)) == -1) {
 			return 0;
 		}
 
-		debug("recved %i bytes. total red %i, left %i, total to get %i",n,total,bytesleft,len);
+		#ifdef DEBUG
+		printf("recved %i bytes. total red %i, left %i, total to get %i",n,total,bytesleft,len);
+		#endif
 
 		total += n;
             	bytesleft -= n;
@@ -398,7 +415,9 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 
 	//hvi data er null betur det at denne vil bli sent siden, av annen kode
         if (data != NULL) {
-		debug("sendpacked: data NOT NULL. Will sendit");
+		#ifdef DEBUG
+		printf("sendpacked: data NOT NULL. Will sendit");
+		#endif
                 i = send(socket,data,dataSize,0);
         }
 

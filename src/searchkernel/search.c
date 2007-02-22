@@ -11,6 +11,7 @@
 #include "../common/integerindex.h"
 #include "../3pLibs/keyValueHash/hashtable.h"
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
+#include "../common/utf8-strings.h"
 
 #ifdef BLACK_BOKS
 
@@ -556,13 +557,19 @@ void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filter
 
 			case 'c':
 				(*filteron).collection = (*queryParsed).query[i].s[0];
+				printf("wil filter on collection: \"%s\"\n",(*filteron).collection);
 			break;
+			case 'f':
+				(*filteron).filetype = (*queryParsed).query[i].s[0];
+				printf("wil filter on filetype: \"%s\"\n",(*filteron).filetype);
+			break;
+			
 
 
 		}
 		
 	}
-exit(1);
+
 }
 /*******************************************/
 
@@ -592,7 +599,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 		int (*rank)(const unsigned short *,const int,const unsigned int DocID,struct subnamesFormat *subname), int languageFilterNr, 
 		int languageFilterAsNr[]){
 
-	int i, y, j,k;
+	int i, y, j,k,h;
 	char queryelement[128];
 	unsigned long WordIDcrc32;
 	int baseArrayLen;
@@ -634,6 +641,12 @@ for (i=0; i<(*queryParsed).n; i++)
                     			                			
                 				printf("queryelement:  %s\n", queryelement);
 
+						//gjør om il liten case
+						//for(h=0;h<strlen(queryelement);h++) {
+        					//	queryelement[h] = btolower(queryelement[h]);
+        					//}
+						convert_to_lowercase((unsigned char *)queryelement);
+
 						WordIDcrc32 = crc32boitho(queryelement);
 						//hvis vi ikke har noen elementer i base arrayen, legger vi inn direkte
 						//ToDo: kan ikke gjøre det da dette kansje ikke er første element
@@ -670,7 +683,6 @@ for (i=0; i<(*queryParsed).n; i++)
 					
 
 
-			                queryelement[0] = '\0';
                 			//while ( t_it!=NULL )
 					debug("will frases search for:");
 					for (j=0; j<(*queryParsed).query[i].n; j++) {
@@ -683,9 +695,18 @@ for (i=0; i<(*queryParsed).n; i++)
 
 					for (j=0; j<(*queryParsed).query[i].n; j++) {
 
-						WordIDcrc32 = crc32boitho((*queryParsed).query[i].s[j]);
+			                	strscpy(queryelement,(*queryParsed).query[i].s[j],sizeof(queryelement));
+
+						//gjør om il liten case
+						//for(h=0;h<strlen(queryelement);h++) {
+        					//	queryelement[h] = btolower(queryelement[h]);
+        					//}
+
+						convert_to_lowercase((unsigned char *)queryelement);
+
+						WordIDcrc32 = crc32boitho(queryelement);
                 			
-                    				printf("\nelement %s\n", (*queryParsed).query[i].s[j]);
+                    				printf("\nelement %s\n", queryelement);
                     				debug("crc32: %u",WordIDcrc32);
                     				
 						//printf("word %s is st %i\n",t_it->text,t_it->stopword);
@@ -837,6 +858,7 @@ void *searchIndex_thread(void *arg)
 	ArrayLen = 0;
 	printf("nrOfSubnames %i\n",(*searchIndex_thread_arg).nrOfSubnames);
 	for(i=0;i<(*searchIndex_thread_arg).nrOfSubnames;i++) {
+		
 		hits = ArrayLen;
 		searchIndex((*searchIndex_thread_arg).indexType,
 			&ArrayLen,
@@ -852,6 +874,7 @@ void *searchIndex_thread(void *arg)
 		hits = ArrayLen - hits;
 		(*searchIndex_thread_arg).subnames[i].hits += hits;
 		printf("searchIndex_thread: index %s, hits %i\n",(*searchIndex_thread_arg).indexType,hits);
+		
 	}
 
 	free(TmpArray);
@@ -869,7 +892,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		query_array *queryParsed, struct queryTimeFormat *queryTime, 
 		struct subnamesFormat subnames[], int nrOfSubnames,int languageFilterNr, 
 		int languageFilterAsNr[], char orderby[], int dates[],
-		struct filtypesFormat *filtypes, int *filtypesnrof) {
+		struct filtersFormat *filters) {
 
 	int i,y,n;
 	//int x=0,j=0,k=0;
@@ -1232,6 +1255,40 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	
 	#ifdef BLACK_BOKS
 
+		//filter
+		struct filteronFormat filteron;
+		searchIndex_filters(queryParsed, &filteron);
+/*
+        char *filetype;
+        char *language;
+        char *collection;
+        char *date;
+        char *status;
+*/
+
+
+		if (filteron.collection != NULL) {
+		
+
+			printf("wil filter on collection \"%s\"\n",filteron.collection);
+			y=0;
+       			for (i = 0; i < (*TeffArrayElementer); i++) {
+				printf("TeffArray \"%s\" ? filteron \"%s\"\n",(*TeffArray[i].subname).subname,filteron.collection);
+				if (strcmp((*TeffArray[i].subname).subname,filteron.collection) == 0) {
+        	       			TeffArray[y] = TeffArray[i];
+        		        	++y;
+				}
+			}
+			(*TeffArrayElementer) = y;
+	
+
+		}
+
+		
+
+		printf("filter dovn array to %i\n",(*TeffArrayElementer));
+
+
 		//lager en oversikt over filformater
 		/*
 			Dette her blit en ganske komplisert sak. Vi har hash nøkler på fårmatet "subname-filtype", i en strukt.
@@ -1293,92 +1350,46 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		*/
 		/* Iterator constructor only returns a valid iterator if
 		* the hashtable is not empty */
-		int filtypesnrofLocal;
-		filtypesnrofLocal = 0;
 		if (hashtable_count(h) > 0)
 		{
+			(*filters).filtypes.nrof = 0;
+
+			strscpy((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name,
+                                "All",
+	                        sizeof((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name));
+			++(*filters).filtypes.nrof;
+
 			struct hashtable_itr *itr;
 
        			itr = hashtable_iterator(h);
+			
        			do {
        				filesKey = hashtable_iterator_key(itr);
        				filesValue = (int *)hashtable_iterator_value(itr);
 
 				printf("files \"%s\": %i\n",filesKey,*filesValue);
-				if (filtypesnrofLocal < (*filtypesnrof)) {
-					strscpy(filtypes[filtypesnrofLocal].name,filesKey,sizeof(filtypes[filtypesnrofLocal].name));
-					filtypes[filtypesnrofLocal].nrof = (*filesValue);
-					++filtypesnrofLocal;
-				}
-				/*
-				if ((*(*filesKey).subname).nrOfFiletypes < MAXFILTYPES) {
-					memcpy((*(*filesKey).subname).filtypes[(*(*filesKey).subname).nrOfFiletypes].name,(*filesKey).filename,4);
-					(*(*filesKey).subname).filtypes[(*(*filesKey).subname).nrOfFiletypes].name[5] = '\0';
-					(*(*filesKey).subname).filtypes[(*(*filesKey).subname).nrOfFiletypes].nrof = (*filesValue);
-					++(*(*filesKey).subname).nrOfFiletypes;
-				}
-				*/
 
-       			} while (hashtable_iterator_advance(itr));
+					strscpy(
+						(*filters).filtypes.elements[ (*filters).filtypes.nrof ].name,
+						filesKey,
+						sizeof((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name));
+
+					(*filters).filtypes.elements[(*filters).filtypes.nrof].nrof = (*filesValue);
+					++(*filters).filtypes.nrof;
+				
+				
+       			} while ((hashtable_iterator_advance(itr)) && ((*filters).filtypes.nrof<MAXFILTERELEMENTS));
     			free(itr);
 
 		}
 
 		hashtable_destroy(h,1); 
 
-		(*filtypesnrof) = filtypesnrofLocal;
-		printf("filtypesnrof: %i\n",(*filtypesnrof));
-		for (i=0;i<(*filtypesnrof);i++) {
-			printf("file \"%s\": %i\n",filtypes[i].name,filtypes[i].nrof);
+		printf("filtypesnrof: %i\n",(*filters).filtypes.nrof);
+		for (i=0;i<(*filters).filtypes.nrof;i++) {
+			printf("file \"%s\": %i\n",(*filters).filtypes.elements[i].name,(*filters).filtypes.elements[i].nrof);
 		}
 
-		#ifdef BLACK_BOKS
-		//filter
-		struct filteronFormat filteron;
-		searchIndex_filters(queryParsed, &filteron);
-/*
-        char *filetype;
-        char *language;
-        char *collection;
-        char *date;
-        char *status;
-*/
-
-		if (filteron.filetype != NULL) {
-			printf("wil filter on filetype \"%s\"\n",filteron.filetype);
-			y=0;
-       			for (i = 0; i < (*TeffArrayElementer); i++) {
-				printf("TeffArray \"%s\" ? filteron \"%s\"\n",TeffArray[i].filetype,filteron.filetype);
-				if (strcmp(TeffArray[i].filetype,filteron.filetype) == 0) {
-        	       			TeffArray[y] = TeffArray[i];
-        		        	++y;
-				}
-			}
-			(*TeffArrayElementer) = y;
-
-
-		}
-
-		if (filteron.collection != NULL) {
-			printf("wil filter on collection \"%s\"\n",filteron.collection);
-			y=0;
-       			for (i = 0; i < (*TeffArrayElementer); i++) {
-				printf("TeffArray \"%s\" ? filteron \"%s\"\n",(*TeffArray[i].subname).subname,filteron.filetype);
-				if (strcmp((*TeffArray[i].subname).subname,filteron.collection) == 0) {
-        	       			TeffArray[y] = TeffArray[i];
-        		        	++y;
-				}
-			}
-			(*TeffArrayElementer) = y;
-	
-
-		}
-
-		
-
-		printf("filter dovn array to %i\n",(*TeffArrayElementer));
-
-		#endif
 
 		/*
 		// sort by nrof
@@ -1403,6 +1414,54 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		*/
 		#endif
 
+
+		//collections
+		//finner hvilken vi har trykket på, og markerer denne slik at det kan markeres i designed i klienten
+
+		(*filters).collections.nrof = 0;
+
+		strscpy( (*filters).collections.elements[(*filters).collections.nrof].name,"All",sizeof((*filters).collections.elements[(*filters).collections.nrof].name) );
+		(*filters).collections.elements[(*filters).collections.nrof].nrof = 0;
+		(*filters).collections.elements[(*filters).collections.nrof].checked = 1;
+
+		++(*filters).collections.nrof;
+
+		for(i=0;i<nrOfSubnames;i++) {
+			if ((*filters).collections.nrof < MAXFILTERELEMENTS) {
+
+			
+				if ((filteron.collection != NULL) && (strcmp(subnames[i].subname,filteron.collection) == 0)) {
+					//subnames[i].checked = 1;
+					//deselecter den gamle
+					(*filters).collections.elements[0].checked = 0;
+					(*filters).collections.elements[(*filters).collections.nrof].checked = 1;
+				}
+
+				strscpy( (*filters).collections.elements[(*filters).collections.nrof].name,subnames[i].subname,sizeof((*filters).collections.elements[(*filters).collections.nrof].name) );
+				(*filters).collections.elements[(*filters).collections.nrof].nrof = subnames[i].hits;
+				++(*filters).collections.nrof;
+			}
+		}
+
+		for (i=0;i<(*filters).collections.nrof;i++) {
+			printf("coll \"%s\"\n",(*filters).collections.elements[i].name);
+		}
+
+
+		if (filteron.filetype != NULL) {
+			printf("wil filter on filetype \"%s\"\n",filteron.filetype);
+			y=0;
+       			for (i = 0; i < (*TeffArrayElementer); i++) {
+				printf("TeffArray \"%s\" ? filteron \"%s\"\n",TeffArray[i].filetype,filteron.filetype);
+				if (strcmp(TeffArray[i].filetype,filteron.filetype) == 0) {
+        	       			TeffArray[y] = TeffArray[i];
+        		        	++y;
+				}
+			}
+			(*TeffArrayElementer) = y;
+
+
+		}
 
 	#endif
 

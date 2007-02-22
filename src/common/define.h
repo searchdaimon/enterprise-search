@@ -185,7 +185,6 @@ struct subnamesFormat {
 	struct subnamesConfigFormat config;
 	int nrOfFiletypes;
 	struct subnamesFiltypesFormat filtypes[MAXFILTYPES];
-
 };
 
 struct brankPageElementsFormat {
@@ -355,6 +354,25 @@ struct filtypesFormat {
 	int nrof;
 };
 
+#define MAXFILTERELEMENTS 10
+
+struct filterinfoElementsFormat {
+	char name[12];
+	char query[64];
+	int nrof;
+	char checked; //bool
+};
+
+struct filterinfoFormat {
+	struct filterinfoElementsFormat elements[MAXFILTERELEMENTS];
+	int nrof;
+};
+
+struct filtersFormat {
+	struct filterinfoFormat filtypes;
+	struct filterinfoFormat collections;	
+};
+
 struct SiderHederFormat {
 	int filtered;
 	int showabal;
@@ -369,8 +387,8 @@ struct SiderHederFormat {
 	int dates[11];
 	struct filtersTrapedFormat filtersTraped;
 	int filtypesnrof;
-	struct filtypesFormat filtypes[MAXFILTYPES];
-
+	//struct filtypesFormat filtypes[MAXFILTYPES];
+	struct filtersFormat filters;
 };
 
 //formatet på anchor filer

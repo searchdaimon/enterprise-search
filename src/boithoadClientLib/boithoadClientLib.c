@@ -33,7 +33,8 @@ int boithoa_getLdapResponsList(int socketha,char **respons_list[],int *nrofrespo
 
 		len = strnlen(ldaprecord,MAX_LDAP_ATTR_LEN);
                 (*respons_list)[(*nrofresponses)] = malloc(len +1);
-                strscpy((*respons_list)[(*nrofresponses)],ldaprecord,len +1);
+		//ToDO: strscpy
+                strncpy((*respons_list)[(*nrofresponses)],ldaprecord,len +1);
 
 		++(*nrofresponses);
 	}
@@ -135,7 +136,8 @@ int boithoad_groupsForUser(char username_in[],char **respons_list[],int *nrofres
 	int intresponse;
 	char username[64];
      
-	strscpy(username,username_in,sizeof(username));
+	//ToDo: strscpy
+	strncpy(username,username_in,sizeof(username));
 
         if ((socketha = cconnect("localhost", BADPORT)) == 0) {
 		return 0;
@@ -162,7 +164,8 @@ int boithoad_getPassword(char username_in[], char password_in[]) {
 	char password[64];
      	int forreturn = 0;
 
-	strscpy(username,username_in,sizeof(username));
+	//ToDo: strscpy
+	strncpy(username,username_in,sizeof(username));
 
         if ((socketha = cconnect("localhost", BADPORT)) == 0) {
 		return 0;

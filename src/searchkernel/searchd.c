@@ -311,8 +311,7 @@ void *do_chld(void *arg)
 
 	Count = split(queryNodeHeder.subname, ",", &Data);
 
-	subnames = malloc(sizeof(struct subnamesFormat) * Count);
-
+	subnames = malloc(sizeof(struct subnamesFormat) * Count ); 
 
 
 /***************************************/
@@ -492,10 +491,12 @@ void *do_chld(void *arg)
 
 	/****************/
 
-
+	
 
   	Count = 0;
-	nrOfSubnames = 0;
+	nrOfSubnames = 0; 
+
+
 	printf("nrOfSubnames %i\n",nrOfSubnames);
   	while( (Data[Count] != NULL) && (nrOfSubnames < MAX_COLLECTIONS)) {
     		printf("\t\taa: %d\t\"%s\"\n", Count, Data[Count]);
@@ -714,9 +715,10 @@ void *do_chld(void *arg)
 			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
 			queryNodeHeder.start, queryNodeHeder.filterOn, 
 			"",queryNodeHeder.orderby,SiderHeder.dates,queryNodeHeder.search_user,
-			SiderHeder.filtypes,&SiderHeder.filtypesnrof);
+			&SiderHeder.filters);
 
 	//kopierer inn subnames. Kan bare sende over MAX_COLLECTIONS, men søker i alle
+
 
 	for (i=0;((i<MAX_COLLECTIONS) && (i<nrOfSubnames));i++) {
 		//memcpy(SiderHeder.subnames[i],subnames[i],sizeof(struct subnamesFormat));

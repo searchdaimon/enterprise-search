@@ -7,8 +7,8 @@ CFLAGS =
 
 All: boithoadClientLib
 
-boithoadClientLib: boithoadClientLib.c
-	$(CC) -c $(CFLAGS) boithoadClientLib.c ../common/daemon.c
+boithoadClientLib: ../boithoadClientLib/boithoadClientLib.c
+	$(CC) -c $(CFLAGS) ../boithoadClientLib/boithoadClientLib.c ../common/daemon.c
 	ar rc liboithoaut.a boithoadClientLib.o daemon.o
 	ranlib liboithoaut.a
 

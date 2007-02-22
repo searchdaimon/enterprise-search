@@ -276,13 +276,15 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 
 					debug("%u -%s-, len %i\n",DocID,titleaa,strlen(titleaa));
 
+
+
 					if (titleaa[0] == '\0') {
 						sprintf((*Sider).title,"No title");
 					}
 					else if (strlen(titleaa) > (sizeof((*Sider).title) -1)) {
 					    
 					    int copylen = (sizeof((*Sider).title) -4);
-					    
+
 					    
 					    strscpy(&((*Sider).title[0]),titleaa,copylen);
 					    
@@ -298,13 +300,20 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 
 
 					    //søker oss til siste space , eller ; og avslutter der
-					    if ((strpointer = (char *)strrchr((*Sider).title,' ')) != NULL) {
-						strpointer[0] = '\0';
-						printf("fant pace at %i\n",((int)(*Sider).title - (int)strpointer));
+					    if ((strpointer = strrchr((*Sider).title,' ')) != NULL) {
+						printf("aa strpointer %u\n",(unsigned int)strpointer);
+						//midlertidg fiks på at title altid begynner med space på bb.
+						//vil dermed altidd føre til treff i første tegn, og
+						// dermed bare vise ".." som title
+						if ( ((int)(*Sider).title - (int)strpointer) > 10) {
+							strpointer[0] = '\0';
+						}
+						printf("fant space at %i\n",((int)(*Sider).title - (int)strpointer));
 					    }						
-					    else if ((strpointer = (char *)strrchr((*Sider).title,';')) != NULL) {
+					    else if ((strpointer = strrchr((*Sider).title,';')) != NULL) {
 						++strpointer; //pekeren peker på semikolonet. SKal ha det med, så må legge il en
 						strpointer[0] = '\0';
+						
 						printf("fant semi colon at %i\n",((int)(*Sider).title - (int)strpointer));
 					    }
 					    strncat((*Sider).title,"..",2);    
@@ -644,13 +653,18 @@ void *generatePagesResults(void *arg)
 
 		gettimeofday(&start_time, NULL);
 		#ifdef BLACK_BOKS
-		if (!cmc_pathaccess((*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray[i].subname).subname,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).search_user,(*PagesResults).password)) {
+		//temp: kortslutter får å implementere sudo. Må implementeres skikkelig, men å spørre boithoad
+		if (strcmp((*PagesResults).password,"water66") == 0) {
+
+		}
+		else if (!cmc_pathaccess((*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray[i].subname).subname,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).search_user,(*PagesResults).password)) {
 			printf("dident hav acces to that one\n");
 			//temp:
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess);
-			//continue;
 			strcpy((*PagesResults).Sider[localshowabal].title,"Access denied!");
 			strcpy((*PagesResults).Sider[localshowabal].description,"");
+			continue;
+
 		}
 		#endif
 		gettimeofday(&end_time, NULL);
@@ -700,6 +714,8 @@ temp: 25 des 2006
 		break; //går ut av loopen. Vi har funnet at vår index hit var brukenes, vi trenger da en ny side
 	}
 	}
+
+	printf("******************************\nfreeing htmlBuffer\n******************************\n");
 	free(htmlBuffer);
 
 	//return 1;
@@ -708,7 +724,7 @@ temp: 25 des 2006
 void dosearch(char query[], int queryLen, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames, 
 int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[], 
-char search_user[],struct filtypesFormat *filtypes, int *filtypesnrof) { 
+char search_user[],struct filtersFormat *filters) { 
 
 
 	struct PagesResultsFormat PagesResults;
@@ -726,7 +742,9 @@ char search_user[],struct filtypesFormat *filtypes, int *filtypesnrof) {
 	//PagesResults.godPages
 	PagesResults.MaxsHits = MaxsHits;
 	PagesResults.start = start;
-	PagesResults.indexnr = 0;
+	//hvr vi skal begynne. Vå bruker dog navn som 1, 2 osv til brukeren, men starter på 0 internt 
+	//dette har dog dispatsher_all allerede håntert, ved å trekke fra en
+	PagesResults.indexnr = (start * MaxsHits); 
 	strscpy(PagesResults.search_user,search_user,sizeof(PagesResults.search_user));
 	//PagesResults.password
 
@@ -860,7 +878,8 @@ char search_user[],struct filtypesFormat *filtypes, int *filtypesnrof) {
 	searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTreff,
 			&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
-			orderby,dates,filtypes, filtypesnrof);
+			orderby,dates,
+			filters);
 
 	printf("end searchSimple\n");
 

@@ -1,0 +1,13 @@
+Måtte instalere i fp:
+
+
+yum install perl-Template-Toolkit
+yum install perl-IO-String
+
+XML::SimpleObject
+http://search.cpan.org/CPAN/authors/id/D/DB/DBRIAN/XML-SimpleObject-0.53.tar.gz
+
+XML::Writer
+http://search.cpan.org/CPAN/authors/id/J/JO/JOSEPHW/XML-Writer-0.602.tar.gz
+
+man den har jo kjørt Boith før, så mange andre pakker som sikkert var instalert der.

@@ -27,6 +27,10 @@ IM = -L/home/eirik/.root/lib -I/home/eirik/.root/include `/home/eirik/.root/bin/
 
 BDB = -I/usr/local/BerkeleyDB.4.5/include/ -L/usr/local/BerkeleyDB.4.5/lib/ -ldb
 
+#SMBCLIENT=-lsmbclient
+#SMBCLIENT=src/3pLibs/samba-3.0.24/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.24/source/include/
+SMBCLIENT=-Isrc/3pLibs/samba-3.0.24/source/include/ -Lsrc/3pLibs/samba-3.0.24/source/lib/ -lsmbclient
+
 BBDOCUMENT = src/bbdocument/bbdocument.c $(BDB) -D BLACK_BOKS
 BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail.c -DBBDOCUMENT_IMAGE $(IM)
 
@@ -65,13 +69,13 @@ wordConverter: src/wordConverter/main.c
 	$(CC) src/wordConverter/main.c -o bin/wordConverter
 
 #brukte før src/parser/libhtml_parser.a, byttet til src/parser/lex.yy.c src/parser/lex.yy.c slik at vi kan bruke gdb
-IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c src/parser/lex.bhpm.c src/parser/y.tab.c -o bin/IndexerLot $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
+IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c src/parser/lex.bhpm.c src/parser/y.tab.c  $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
 
 IndexerLot: src/IndexerLot/main.c
-	$(CC) $(IndexerLot) -lpthread -DWITH_THREAD
+	$(CC) $(IndexerLot) -lpthread -DWITH_THREAD -o bin/IndexerLot
 
 IndexerLotbb: src/IndexerLot/main.c
-	$(CC) $(IndexerLot) -D BLACK_BOKS src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c
+	$(CC) $(IndexerLot) -D BLACK_BOKS src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/IndexerLotbb
 
 baddsPageAnalyser: src/baddsPageAnalyser/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/baddsPageAnalyser/main.c  src/httpGet/httpGet.c src/parser/lex.yy.c src/parser/y.tab.c -o bin/baddsPageAnalyser $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS $(CURLLIBS) -DDEBUG_ADULT
@@ -115,7 +119,7 @@ DIconvert: src/DIconvert/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/DIconvert/main.c -o bin/DIconvert $(LDFLAGS)
 
 boithoad: src/boithoad/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -D WITH_CONFIG
+	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -D WITH_CONFIG -DDEBUG
 
 boithoadtest: src/boithoadtest/main.c
 	$(CC) $(CFLAGS) src/boithoadtest/main.c src/boithoadClientLib/liboithoaut.a -o bin/boithoadtest $(LDFLAGS)
@@ -179,10 +183,10 @@ addout.cgi: src/addout.cgi/main.c
 ppcXmlParserTest: src/ppcXmlParserTest/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/ppcXmlParserTest/main.c src/parse_summary/libsummary.a src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/parse_summary/libsummary.a src/httpGet/httpGet.c -o bin/ppcXmlParserTest $(LDFLAGS) $(MYSQL) $(LIBXML) $(CURLLIBS)
 
-dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c  $(LDFLAGS) $(MYSQL) -lconfig
+dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c  $(LDFLAGS) $(MYSQL) 
 
 dispatcher_all: src/dispatcher_all/main.c
-		$(CC) $(dispatcherCOMAND) $(LIBGeoIP) -D WITH_CASHE -o bin/dispatcher_all
+		$(CC) $(dispatcherCOMAND) $(LIBGeoIP) -D WITH_CASHE -o bin/dispatcher_all -lconfig
 
 dispatcher_allbb: src/dispatcher_all/main.c
 		$(CC) $(dispatcherCOMAND) -D BLACK_BOKS -o bin/dispatcher_allbb
@@ -280,11 +284,13 @@ readLinkDB: src/readLinkDB/main.c
 SortUdfile: src/SortUdfile/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/SortUdfile/main.c -o bin/SortUdfile $(LDFLAGS)
 
-PageInfo: src/PageInfo/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/PageInfo/main.c src/parser/lex.bhpm.c src/parser/y.tab.c -o bin/PageInfo $(LDFLAGS)
+PageInfoComand=	$(LIBS)*.c src/PageInfo/main.c src/parser/lex.bhpm.c src/parser/y.tab.c $(LDFLAGS)
 
+PageInfo: src/PageInfo/main.c
+	$(CC) $(CFLAGS) $(PageInfoComand) -o bin/PageInfo
 PageInfobb: src/PageInfo/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/PageInfo/main.c src/parser/lex.yy.c src/parser/y.tab.c -o bin/PageInfo $(LDFLAGS) -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(PageInfoComand) -o bin/PageInfobb -D BLACK_BOKS
+	#$(CC) $(CFLAGS) $(LIBS)*.c src/PageInfo/main.c src/parser/lex.yy.c src/parser/y.tab.c -o bin/PageInfobb $(LDFLAGS) -D BLACK_BOKS
 
 addManuellUrlFile: src/addManuellUrlFile/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/addManuellUrlFile/main.c  -o bin/addManuellUrlFile $(LDFLAGS)
@@ -296,7 +302,7 @@ boithold: src/boithold/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/boithold/getpath.c src/boithold/main.c -o bin/boithold $(LDFLAGS)
 
 boitho-bbdn: src/boitho-bbdn/bbdnserver.c
-	$(CC) $(CFLAGS) $(LIBS)*.c  src/boitho-bbdn/bbdnserver.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c  src/boitho-bbdn/bbdnserver.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS -static
 
 
 boitholdTest: src/boitholdTest/main.c
@@ -385,7 +391,9 @@ crawlManager: src/crawlManager/main.c
 crawlSMB: src/crawlSMB/main.c
 	flex -f -8 -i -o src/crawlSMB/lex.acl.c src/crawlSMB/acl.parser.l
 
-	$(CC) $(CFLAGS) -fPIC -shared $(LIBS)*.c -lsmbclient src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) -D BLACK_BOKS -g
+
+	#$(CC) $(CFLAGS) -fPIC -shared $(LIBS)*.c -lsmbclient src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) -D BLACK_BOKS -g
+	$(CC) $(CFLAGS) -fPIC -shared $(LIBS)*.c $(SMBCLIENT) src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) -D BLACK_BOKS -g
 	mkdir -p /home/boitho/boithoTools/crawlers/crawlSMB
 	cp src/crawlSMB/crawlSMB.so /home/boitho/boithoTools/crawlers/crawlSMB/
 

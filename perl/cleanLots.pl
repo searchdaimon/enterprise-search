@@ -22,7 +22,7 @@ foreach my $lot (0 .. 4096) {
 				print "name $dirtyfile\n";
 				print "lot $lot, subname $subname\n";
 
-				$command = qq{bin/IndexerLot $lot $subname};
+				$command = qq{bin/IndexerLotbb $lot $subname};
 				print "runing $command\n";
 				system($command);
 

@@ -3,6 +3,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
                 query_array *queryParsed, struct queryTimeFormat *queryTime,
                 struct subnamesFormat subnames[], int nrOfSubnames,int languageFilterNr,
                 int languageFilterAsNr[], char orderby[], int dates[],
-                struct filtypesFormat *filtypes, int *filtypesnrof);
+                struct filtersFormat *filters);
 
 

@@ -52,6 +52,7 @@ int main (int argc, char *argv[]) {
 		perror("aclcollectionlist");
 	}
 	else {
+		printf("looping tru\n");
 		while(fgets(username,sizeof(username),fp) != NULL) {
 			chomp(username);
 			printf("username \"%s\"\n",username);

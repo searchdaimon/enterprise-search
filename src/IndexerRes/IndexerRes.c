@@ -11,7 +11,7 @@
 #include "../common/langdetect.h"
 #include "../common/langToNr.h"
 #include "../IndexerRes/IndexerRes.h"
-
+#include "../common/utf8-strings.h"
 
 
 
@@ -147,9 +147,10 @@ int wordTypeadd;
 				wordlLength = strlen(word);
 
 				//gjør om til små bokstaver
-				for(i=0;i<wordlLength;i++) {
-					word[i] = (char)btolower(word[i]);
-				}
+				//for(i=0;i<wordlLength;i++) {
+				//	word[i] = (char)btolower(word[i]);
+				//}
+				convert_to_lowercase((unsigned char *)word);
 
 
 				#ifdef DEBUG_ADULT

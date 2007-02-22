@@ -311,7 +311,7 @@ int cm_start(struct hashtable **h) {
 		}
 		sprintf(libpath,"%s/%s/%s.so",crawlersdir,dp->d_name,dp->d_name);	
 
-
+		printf("loading path \"%s\"\n",libpath);
 		lib_handle = dlopen(libpath, RTLD_LAZY);
 		if (!lib_handle) {
 		    fprintf(stderr, "Error during dlopen(): %s. File %s\n", dlerror(),libpath);

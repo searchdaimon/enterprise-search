@@ -19,7 +19,12 @@
 
 #include "../parser/html_parser.h"
 
-#define maxWordForPage 4000
+#ifdef BLACK_BOKS
+	#define maxWordForPage 40000
+#else
+	#define maxWordForPage 4000
+#endif
+
 #define maxAdultWords 500
 #define maxWordlLen 30
 #define MaxAdultWordCount 60

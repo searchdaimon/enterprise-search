@@ -234,6 +234,8 @@ int bbdocument_convert(char filetype[],char document[],int dokument_size,char *d
 	int exeocbuflen;
 	int i;
 
+	printf("dokument_size %i, strlen %i\n",dokument_size,strlen(document));
+
 	//konverterer filnavn til liten case
 	for (i=0;i < strlen(filetype);i++) {
 		//printf("%c\n",filetype[i]);
@@ -280,7 +282,7 @@ int bbdocument_convert(char filetype[],char document[],int dokument_size,char *d
 		printf("don't have converter for \"%s\"\n",filetype);
 		(*documentfinishedbufsize) = 0;
 
-		#ifdef DEBUG
+		//#ifdef DEBUG
 		printf("writing to unknownfiltype.log\n");
 		if ((fp = fopen("/home/boitho/logs/unknownfiltype.log","ab")) == NULL) {
 			perror("/home/boitho/logs/unknownfiltype.log");
@@ -290,7 +292,7 @@ int bbdocument_convert(char filetype[],char document[],int dokument_size,char *d
 			fclose(fp);
 		}	
 		printf("writing to unknownfiltype.log. done\n");
-		#endif
+		//#endif
 
 		return 0;
 	}
@@ -314,15 +316,23 @@ int bbdocument_convert(char filetype[],char document[],int dokument_size,char *d
 		cpbuf = malloc(cpbufsize);
 
 		memcpy(cpbuf,document,dokument_size);
-		strcasesandr(cpbuf,cpbufsize,"\n","<br>\n");
+		cpbuf[dokument_size] = '\0';
+//	printf("cpbuf %s\n",cpbuf);
 
+		//temp: hvårfår får vi problemer med bp.txt her. Tar ikke med hele dokumentet
+//		strcasesandr(cpbuf,cpbufsize,"\n","<br>\n");
+//	printf("cpbuf %s\n",cpbuf);
+
+printf("document %i\n",strlen(document));
+printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 		//legger det inn i et html dokument, med riktig tittel	
-		
+	//printf("cpbuf %s\n",cpbuf);
 		snprintf(documentfinishedbuf,(*documentfinishedbufsize),html_tempelate,titlefromadd,cpbuf);
                 (*documentfinishedbufsize) = strlen(documentfinishedbuf);
-
+	//printf("documentfinishedbufsize %i\n",(*documentfinishedbufsize));
+	//	printf("aa %s\n",documentfinishedbuf);
 		free(cpbuf);
-
+//exit(1);
                 return 1;
 	}
 
@@ -352,6 +362,7 @@ int bbdocument_convert(char filetype[],char document[],int dokument_size,char *d
 	printf("command: %s\n",(*fileFilter).command);
 	#endif
 
+	//ToDo: overskriver vi den gbobale fileFilter her?? . Skal ikke det
 	strsandr((*fileFilter).command,"#file",filconvertetfile_real);
 	strsandr((*fileFilter).command,"#outtxtfile",filconvertetfile_out_txt);
 	strsandr((*fileFilter).command,"#outhtmlfile",filconvertetfile_out_html);
@@ -361,9 +372,10 @@ int bbdocument_convert(char filetype[],char document[],int dokument_size,char *d
 	//bruker "a b", som ikke riktig blir to argumenter her, a og b
 	//splitter på space får å lage en argc
 	TokCount = split((*fileFilter).command, " ", &splitdata);
-	#ifdef DEBUG
+	//#ifdef DEBUG
 	printf("splitet comand in %i, program is \"%s\"\n",TokCount,splitdata[0]);
-	#endif
+	//#endif
+	printf("running: %s\n",(*fileFilter).command);
 	//sender med størelsen på buferen nå. Vil få størelsen på hva vi leste tilbake
 	exeocbuflen = (*documentfinishedbufsize);
 	exeoc(splitdata,documentfinishedbuf,&exeocbuflen);	
@@ -409,6 +421,8 @@ int bbdocument_convert(char filetype[],char document[],int dokument_size,char *d
 			return 0;
 		}		
        		fstat(fileno(fh),&inode);
+
+		printf("did read back %i bytes from file\n",inode.st_size);
 
                 cpbuf = malloc(inode.st_size +1);
                 
@@ -510,6 +524,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		debug("htmlbuffersize %i",htmlbuffersize);
 	}
 
+
 	//prøver å lag et bilde
 	//if ( (imagebuffer = generate_thumbnail( document, dokument_size, &imageSize )) == NULL ) {
 	if (!bbdocument_makethumb(documenttype_real,document,dokument_size,&imagebuffer,&imageSize)) {
@@ -571,13 +586,14 @@ int bbdocument_deletecoll(char collection[]) {
 	LotNr = 1;
 	while(lotOpenFileNoCasheByLotNr(LotNr,"reposetory","r",'s',collection) != NULL) {
 		GetFilPathForLot(FilePath,LotNr,collection);
+/*
 		
 		//toDo: Denne kan vere farlig. Man kan vel lage FilePath verdier som kan skade? 
 		sprintf(command,"rm -rf \"%s\"",FilePath);
 		printf("runing: %s\n",command);
 
 		system(command);
-
+*/
 		++LotNr;
 	}
 	

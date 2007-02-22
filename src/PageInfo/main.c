@@ -11,7 +11,7 @@
 
 #include "../parser/html_parser.h"
 
-void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf );
+void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* pagewords );
 
 int main (int argc, char *argv[]) {
 
@@ -108,6 +108,8 @@ int main (int argc, char *argv[]) {
 		if (optShowWords) {
 			printf("words:\n");
 			//run_html_parser( DocumentIndexPost.Url, htmlBuffer, htmlBufferSize, fn );
+			char *title, *body;
+			html_parser_run(DocumentIndexPost.Url,htmlBuffer, htmlBufferSize,&title, &body,fn,NULL );
 		}
 	}
 	else {
@@ -154,9 +156,7 @@ int main (int argc, char *argv[]) {
 
 
 
-
-
-void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf )
+void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* pagewords )
 {
 
 
@@ -181,14 +181,16 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf )
                                 }
 
                                 printf("[word] is now %s ",word);
+                      
 
 
                 break;
             case pu_linkword:
-                     
                                 printf("[linkword]");
                 break;
             case pu_link:
+
+
                                 printf("[link]");
                 break;
             case pu_baselink:
@@ -209,6 +211,3 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf )
                 printf("\n");
 
 }
-
-
-

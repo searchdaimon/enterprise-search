@@ -42,6 +42,7 @@ int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsiz
 		//execv("/bin/cat",execvarg);
 		//printf("program is \"%s\"\n",exeargv[0]);
 		if (execv(exeargv[0],exeargv) == -1) {
+			printf("can't execv at %f:%d\n",__FILE__,__LINE__);
 			perror(exeargv[0]);
 		}
 		printf("did return from execv. Somthing is wrong\n");
@@ -73,9 +74,9 @@ int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsiz
 		}
 		(*documentfinishedbufsize) = i;
 		documentfinishedbuf[(*documentfinishedbufsize) +1] = '\0';
-		#ifdef DEBUG
+		//#ifdef DEBUG
 		printf("documentfinishedbufsize %i\n",(*documentfinishedbufsize));
-		#endif
+		//#endif
 		close(pipefd[0]);
 
 

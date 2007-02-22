@@ -15,10 +15,12 @@
     #include <errno.h> 
     #include <time.h>
 
+	#ifndef BLACK_BOKS
     #include <libconfig.h>
 
 
     #define cfg_dispatcher "/home/boitho/config/dispatcher.cfg"
+	#endif
 
 #ifndef BLACK_BOKS
     #include "GeoIP.h"
@@ -527,7 +529,7 @@ int main(int argc, char *argv[])
 	FILE *LOGFILE;
 	//struct SiderFormat Sider[20 * maxServers];
 	struct SiderFormat *Sider;
-
+	char colchecked[20];
 	
         struct SiderHederFormat SiderHeder[maxServers];
         struct SiderHederFormat AddSiderHeder[maxServers];
@@ -568,7 +570,7 @@ int main(int argc, char *argv[])
 	gettimeofday(&main_start_time, NULL);
 
 	//config
-  	//#ifndef BLACK_BOKS
+  	#ifndef BLACK_BOKS
 		config_setting_t *cfgarray;
 		struct config_t cfg;
 
@@ -599,7 +601,7 @@ int main(int argc, char *argv[])
 	  	}
 
 		dispconfig.useprequery = config_setting_get_bool(cfgarray);
-	//#endif
+	#endif
 	
 	char query [2048];
 	static MYSQL demo_db;
@@ -701,6 +703,8 @@ int main(int argc, char *argv[])
 	#else
 	        printf("Content-type: text/xml\n\n");
 	#endif
+
+	memset(&QueryData,'\0',sizeof(QueryData));
 
         //hvis vi har argumeneter er det første et query
         if (getenv("QUERY_STRING") == NULL) {
@@ -933,9 +937,10 @@ int main(int argc, char *argv[])
 	}
 
         //gjør om til liten case
-        for(i=0;i<strlen(QueryData.query);i++) {
-                QueryData.query[i] = btolower(QueryData.query[i]);
-        }
+	//21 feb 2007: collection er case sensetiv. Bare søkeord skal gjøres om. Må gjøre dette en annen plass
+        //for(i=0;i<strlen(QueryData.query);i++) {
+        //        QueryData.query[i] = btolower(QueryData.query[i]);
+        //}
 
 	//nårmalisere query. 
 	strcasesandr(QueryData.query,sizeof(QueryData.query),"."," ");
@@ -1494,10 +1499,36 @@ int main(int argc, char *argv[])
 	}
 
 	#ifdef BLACK_BOKS
-	
+
+	for(i=0;i<SiderHeder[0].filters.collections.nrof;i++) {
+
+		if (SiderHeder[0].filters.collections.elements[i].checked) {
+			strscpy(colchecked," SELECTED=\"TRUE\"",sizeof(colchecked));
+		}
+		else {
+			strscpy(colchecked,"",sizeof(colchecked));
+		}
+
+		printf("<COLLECTION%s>\n",colchecked);
+		printf("<NAME>%s</NAME>\n",SiderHeder[0].filters.collections.elements[i].name);
+		printf("<TOTALRESULTSCOUNT>%i</TOTALRESULTSCOUNT>\n",SiderHeder[0].filters.collections.elements[i].nrof);
+
+		printf("</COLLECTION>\n");
+
+		
+	}
+	/*	
 	for (i=0;i<SiderHeder[0].nrOfSubnames;i++) {
-		printf("<COLLECTION>\n");
-	
+
+		if (SiderHeder[0].subnames[i].checked) {
+			strscpy(colchecked," SELECTED=\"TRUE\"",sizeof(colchecked));
+		}
+		else {
+			strscpy(colchecked,"",sizeof(colchecked));
+		}
+
+		printf("<COLLECTION%s>\n",colchecked);
+
 		//viser bar en del av subnamet. Må tenke på hva vi skal gjør her. Hadde vært fint om brukeren kunne 
 		//bruk subname som "mail", mine filer osv, og vi mappet til til de han har tilgang til
 		if ((cpnt = strchr(SiderHeder[0].subnames[i].subname,'_')) != NULL) {
@@ -1506,28 +1537,18 @@ int main(int argc, char *argv[])
 	
 		printf("<NAME>%s</NAME>\n",SiderHeder[0].subnames[i].subname);
 		printf("<TOTALRESULTSCOUNT>%i</TOTALRESULTSCOUNT>\n",SiderHeder[0].subnames[i].hits);
-		/*
-		printf("<FILELIST>\n");
-		for (y=0;y<SiderHeder[0].subnames[i].nrOfFiletypes;y++) {
-			//vil bare ha med "," der vi har printet ut filelist før
-			if (y>0) {
-				printf(",");
-			}
-			SiderHeder[0].subnames[i].filtypes[y].name[0] = toupper(SiderHeder[0].subnames[i].filtypes[y].name[0]);
-			printf("%s: %i",SiderHeder[0].subnames[i].filtypes[y].name,SiderHeder[0].subnames[i].filtypes[y].nrof);
-		}
-		printf("</FILELIST>\n");
-		*/
+
 		printf("</COLLECTION>\n");
 
 
 	}
+	*/
 
 
-	for (i=0;i<SiderHeder[0].filtypesnrof;i++) {
+	for (i=0;i<SiderHeder[0].filters.filtypes.nrof;i++) {
 		printf("<FILETYPE>\n");
 
-		printf("<FILENAME>%s</FILENAME>\n<FILENR>%i</FILENR>",SiderHeder[0].filtypes[i].name,SiderHeder[0].filtypes[i].nrof);
+		printf("<FILENAME>%s</FILENAME>\n<FILENR>%i</FILENR>",SiderHeder[0].filters.filtypes.elements[i].name,SiderHeder[0].filters.filtypes.elements[i].nrof);
 		
 		printf("</FILETYPE>\n");
 
@@ -1832,7 +1853,9 @@ int main(int argc, char *argv[])
 	/********************************************************************************************/
 
   	/* Free the configuration */
+	#ifndef BLACK_BOKS
 	config_destroy(&cfg);
+	#endif
 
         return 0;
 } 

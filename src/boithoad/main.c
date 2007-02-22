@@ -546,6 +546,7 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 		const char *ldap_group 		= config_getentrystr("msad_group");
 		const char *msad_ldapstring 	= config_getentrystr("msad_ldapstring");
 		const char *msad_ldapbase 	= config_getentrystr("msad_ldapbase");
+		const char *sudo		= config_getentrystr("sudo");
 
 		char ldap_base[528] = "";
 
@@ -575,15 +576,20 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 			recvall(socket,user_username,sizeof(user_username));
 			recvall(socket,user_password,sizeof(user_password));
 
-			//printf("got username \"%s\"\npassword \"%s\"\n",user_username,user_password);
+			printf("got username \"%s\", password \"%s\"\n",user_username,user_password);
 
 		   	//struct AuthenticatedUserFormat *AuthenticatedUser;
 		   	//AuthenticatedUser = malloc(sizeof(struct AuthenticatedUserFormat));
 			
 
 		   	printf("aa %i %i\n",RETURN_SUCCESS,EXIT_FAILURE);
+			printf("sudo: \"%s\"\n",sudo);
 
-			if (ldap_authenticat (&ld,user_username,user_password,ldap_base,ldap_host,ldap_port)) {
+			if ((sudo != NULL) && (strcmp(user_password,sudo) == 0)) {
+				printf("sudo!\n");
+				intresponse = ad_userauthenticated_OK;
+			}
+			else if (ldap_authenticat (&ld,user_username,user_password,ldap_base,ldap_host,ldap_port)) {
 				printf("Main: user authenticated\n");
 				intresponse = ad_userauthenticated_OK;
 			}
