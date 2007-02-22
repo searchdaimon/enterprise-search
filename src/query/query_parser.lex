@@ -289,7 +289,7 @@ void get_query( char text[], int text_size, query_array *qa )
 }
 
 /******************************************/
-/*
+
 struct _qp_html_esc
 {
     char	c, *esc;
@@ -367,9 +367,9 @@ char* _qp_convert_to_html_escapes( char *src )
 
     return dest;
 }
-*/
+
 /******************************************/
-/*
+
 void copy_htmlescaped_query( query_array *qa_dest, query_array *qa_src )
 {
     int		i, j;
@@ -387,7 +387,7 @@ void copy_htmlescaped_query( query_array *qa_dest, query_array *qa_src )
 		}
 	}
 }
-*/
+
 
 // Frigjør data i 'qa':
 void destroy_query( query_array *qa )

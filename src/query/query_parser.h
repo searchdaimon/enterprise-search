@@ -59,6 +59,6 @@ void destroy_query( query_array *qa );
 /*
  *	Gjør om utvidede ascii-tegn til html-escapes i query-et:
  */
-//void copy_htmlescaped_query( query_array *qa_dest, query_array *qa_src );
+void copy_htmlescaped_query( query_array *qa_dest, query_array *qa_src );
 
 #endif	// _QUERY_PARSER_H_
