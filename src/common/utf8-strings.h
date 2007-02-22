@@ -10,7 +10,7 @@
 
 
 // Konverterer en tekststreng til små bokstaver:
-static inline char* convert_to_lowercase( unsigned char *str )
+static inline void convert_to_lowercase( unsigned char *str )
 {
     int         i;
 
