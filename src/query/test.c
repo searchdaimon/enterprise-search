@@ -1,5 +1,5 @@
 /*
- *	(C) Boitho 2004-2006, Written by Magnus Galåen
+ *	(C) Boitho 2004-2007, Written by Magnus Galåen
  *
  *	Example for "query_parser".
  *
@@ -15,7 +15,8 @@ void testit();
 
 int main( int argc, char *argv[] )
 {
-    testit( argv[1] );
+    if (argc>1)
+	testit( argv[1] );
 
     return 0;
 }
@@ -27,6 +28,8 @@ void testit( char *tekst )
 //    char		*tekst = "+hvor- \" \"  -e\"r - d'u\"\"?";
 //    char		*tekst = "boitho date:\"this week\"";
     query_array		qa;
+
+//    tekst = "espen Øxnes æøå ÆØLÅ aæødlapAWÅÆAØÅ Ã¦Ã¸Ã¥ Ã¦æÃ¸aÃB¥";
 
     get_query( tekst, strlen(tekst), &qa);
 

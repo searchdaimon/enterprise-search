@@ -1,6 +1,6 @@
 %{
 /*
- *	(C) Boitho 2004-2006, Written by Magnus Galåen
+ *	(C) Boitho 2004-2007, Written by Magnus Galåen
  *
  */
 #include <stdio.h>
@@ -8,15 +8,15 @@
 #include "query_parser.h"
 
 
-query_array _query_array_init( int n );
-void _query_array_destroy( query_array qa );
-string_array _string_array_init( int n );
-void _string_array_destroy( string_array sa );
+static inline query_array _query_array_init( int n );
+static inline void _query_array_destroy( query_array qa );
+static inline string_array _string_array_init( int n );
+static inline void _string_array_destroy( string_array sa );
 
 struct _qp_word_temp_query;
-void _qp_word_init( char operand, yyscan_t scanner );
-void _qp_word_add( char *text, yyscan_t scanner );
-void _qp_word_exit( yyscan_t scanner );
+static inline void _qp_word_init( char operand, yyscan_t scanner );
+static inline void _qp_word_add( char *text, yyscan_t scanner );
+static inline void _qp_word_exit( yyscan_t scanner );
 
 struct _qp_text_list
 {
@@ -54,7 +54,11 @@ struct _qp_yy_extra
 
 %}
 
-word		[0-9a-z'_ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõöøùúûüışÿ]
+letter		[0-9a-z'_ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõöøùúûüışÿ]
+utf-8-2b        [\300-\337][\200-\277]
+utf-8-3b        [\340-\357][\200-\277][\200-\277]
+utf-8-4b        [\360-\367][\200-\277][\200-\277][\200-\277]
+word		[0-9a-zA-Z'_ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõöøùúûüışÿ]|[\300-\337][\200-\277]|[\340-\357][\200-\277][\200-\277]|[\360-\367][\200-\277][\200-\277][\200-\277]
 %option	noyywrap reentrant
 %x PHRASE COMMAND CMD_PHRASE
 %%
@@ -103,7 +107,7 @@ word		[0-9a-z'_ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõöøùúûüışÿ]
 
 
 // Initialiser og alloker et nytt query_array:
-query_array _query_array_init( int n )
+static inline query_array _query_array_init( int n )
 {
     query_array		qa;
 
@@ -114,13 +118,13 @@ query_array _query_array_init( int n )
 }
 
 // Frigjør et gammelt query_array:
-void _query_array_destroy( query_array qa )
+static inline void _query_array_destroy( query_array qa )
 {
     free( qa.query );
 }
 
 // Initialiser og alloker et nytt string_array:
-string_array _string_array_init( int n )
+static inline string_array _string_array_init( int n )
 {
     string_array	sa;
 
@@ -131,13 +135,13 @@ string_array _string_array_init( int n )
 }
 
 // Frigjør et gammelt string_array:
-void _string_array_destroy( string_array sa )
+static inline void _string_array_destroy( string_array sa )
 {
     free( sa.s );
 }
 
 // Initialiser og klargjør for innlesing av nytt ord eller strofe:
-void _qp_word_init( char operand, yyscan_t scanner )
+static inline void _qp_word_init( char operand, yyscan_t scanner )
 {
     struct _qp_yy_extra		*qe = yyget_extra( scanner );
 
@@ -148,9 +152,25 @@ void _qp_word_init( char operand, yyscan_t scanner )
 }
 
 // Legg til ord:
-void _qp_word_add( char *text, yyscan_t scanner )
+static inline void _qp_word_add( char *str, yyscan_t scanner )
 {
     struct _qp_yy_extra		*qe = yyget_extra( scanner );
+    unsigned char		text[1024];
+    int				i, j;
+
+    // Max wordlength is 1024.
+    for (i=0, j=0; str[i]!='\0' && j<1023; i++)
+	{
+	    if ((unsigned char)str[i] >= 0xc0 && ((unsigned char)str[i+1] < 0x80 || (unsigned char)str[i+1] > 0xbf))
+		{
+		    text[j++] = 0xc0 + (((unsigned char)str[i])>>6);
+		    text[j++] = 0x80 + (((unsigned char)str[i]) & 0x3f);
+		}
+	    else
+		text[j++] = (unsigned char)str[i];
+	}
+
+    text[j] = '\0';
 
     qe->is_prefix = 0;
 
@@ -165,12 +185,12 @@ void _qp_word_add( char *text, yyscan_t scanner )
 	    qe->_qp_word_tl_last = qe->_qp_word_tl_last->next;
 	}
 
-    qe->_qp_word_tl_last->text = strdup(text);
+    qe->_qp_word_tl_last->text = strdup((char*)text);
     qe->_qp_word_tl_last->next = NULL;
 }
 
 // Avslutt innlesing av ord eller strofe:
-void _qp_word_exit( yyscan_t scanner )
+static inline void _qp_word_exit( yyscan_t scanner )
 {
     struct _qp_yy_extra		*qe = yyget_extra( scanner );
 
@@ -269,7 +289,7 @@ void get_query( char text[], int text_size, query_array *qa )
 }
 
 /******************************************/
-
+/*
 struct _qp_html_esc
 {
     char	c, *esc;
@@ -347,9 +367,9 @@ char* _qp_convert_to_html_escapes( char *src )
 
     return dest;
 }
-
+*/
 /******************************************/
-
+/*
 void copy_htmlescaped_query( query_array *qa_dest, query_array *qa_src )
 {
     int		i, j;
@@ -367,7 +387,7 @@ void copy_htmlescaped_query( query_array *qa_dest, query_array *qa_src )
 		}
 	}
 }
-
+*/
 
 // Frigjør data i 'qa':
 void destroy_query( query_array *qa )

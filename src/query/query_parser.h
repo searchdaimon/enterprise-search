@@ -1,5 +1,5 @@
 /*
- *	(C) Boitho 2004-2006, Written by Magnus Galåen
+ *	(C) Boitho 2004-2007, Written by Magnus Galåen
  *
  *  Støttede operatorer er som følger;
  *	+	(Pluss)
@@ -9,6 +9,7 @@
  *
  *  CHANGELOG:
  *
+ *    22.02.2007	Har lagt til støtte for utf-8 unicode. Latin-1-supplement blir automatisk konvertert.
  *    23.11.2006	Har lagt til støtte for kommandoer: filetype/language/collection/date/status
  *    30.10.2006	La til støtte for minus-operator. Fikset potensiell memory-leak ved malformatert query.
  *    10.03.2006	Skiftet datastruktur fra "struct query" (basert på lenket
@@ -58,6 +59,6 @@ void destroy_query( query_array *qa );
 /*
  *	Gjør om utvidede ascii-tegn til html-escapes i query-et:
  */
-void copy_htmlescaped_query( query_array *qa_dest, query_array *qa_src );
+//void copy_htmlescaped_query( query_array *qa_dest, query_array *qa_src );
 
 #endif	// _QUERY_PARSER_H_
