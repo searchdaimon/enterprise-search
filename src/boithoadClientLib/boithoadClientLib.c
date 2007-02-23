@@ -54,7 +54,14 @@ int boitho_authenticat(char username_in[],char password_in[]) {
         strncpy(username,username_in,sizeof(username));
         strncpy(password,password_in,sizeof(password));
 
-        socketha = cconnect("localhost", BADPORT);
+        if ((socketha = cconnect("localhost", BADPORT)) == 0) {
+		perror("localhost");
+		return 0;
+	}
+
+	#ifdef DEBUG
+		printf("boitho_authenticat: dic cconnect\n");
+	#endif
 
         sendpacked(socketha,bad_askToAuthenticate,BLDPROTOCOLVERSION, 0, NULL,"");
 

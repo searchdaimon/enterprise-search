@@ -14,7 +14,7 @@
     #include <fcntl.h>
     #include <errno.h> 
     #include <time.h>
-
+    
 	#ifndef BLACK_BOKS
     #include <libconfig.h>
 
@@ -1379,7 +1379,8 @@ int main(int argc, char *argv[])
 	gettimeofday(&main_end_time, NULL);
 	FinalSiderHeder.total_usecs = getTimeDifference(&main_start_time,&main_end_time);
 	
-        printf("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?> \n");
+        //printf("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?> \n");
+        printf("<?xml version=\"1.0\" encoding=\"UTF-8\" ?> \n");
         printf("<!DOCTYPE family SYSTEM \"http://www.boitho.com/xml/search.dtd\"> \n");
 
         printf("<SEARCH>\n");   

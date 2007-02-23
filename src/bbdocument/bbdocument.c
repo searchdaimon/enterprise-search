@@ -582,10 +582,13 @@ int bbdocument_deletecoll(char collection[]) {
 
 	int LotNr;
 	char FilePath[512];
+	FILE *fh;
 
 	LotNr = 1;
-	while(lotOpenFileNoCasheByLotNr(LotNr,"reposetory","r",'s',collection) != NULL) {
+	while((fh =lotOpenFileNoCasheByLotNr(LotNr,"reposetory","r",'s',collection)) != NULL) {
 		GetFilPathForLot(FilePath,LotNr,collection);
+
+		fclose(fh);
 /*
 		
 		//toDo: Denne kan vere farlig. Man kan vel lage FilePath verdier som kan skade? 

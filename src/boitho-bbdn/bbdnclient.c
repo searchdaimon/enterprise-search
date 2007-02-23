@@ -62,95 +62,52 @@ int bbdn_docadd(int socketha,char subname[],char documenturi[],char documenttype
 	//sender heder
         sendpacked(socketha,bbc_docadd,BLDPROTOCOLVERSION, 0, NULL,"");
 
-/*
-	//subname
-	len = strlen(subname) +1;
-        if(sendall(socketha,&len, sizeof(int)) == 0) {
-		perror("sendall");
-		exit(1);
-	} 
-	sendall(socketha,subname, len);
-
-	//documenturi
-	len = strlen(documenturi) +1;
-        sendall(socketha,&len, sizeof(int));
-	sendall(socketha,documenturi, len);
-
-	//documenttype
-	len = strlen(documenttype) +1;
-        sendall(socketha,&len, sizeof(int));
-	sendall(socketha,documenttype, len);
-
-	//document
-	//dokument_size
-        sendall(socketha,&dokument_size, sizeof(int));
-	sendall(socketha,document, dokument_size);
-
-	//lastmodified
-	sendall(socketha,&lastmodified, sizeof(int));
-
-	//acl
-	len = strlen(acl) +1;
-        sendall(socketha,&len, sizeof(int));
-	sendall(socketha,acl, len);
-
-	//title
-	len = strlen(title) +1;
-        sendall(socketha,&len, sizeof(int));
-	sendall(socketha,title, len);
-
-	//doctype
-	len = strlen(doctype) +1;
-        sendall(socketha,&len, sizeof(int));
-	sendall(socketha,doctype, len);
-
-*/
 
         //subname
         len = strlen(subname) +1;
 	debug("sending (len %i): \"%s\"",len,subname);
-        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall subname len"); exit(1); }
-        if(sendall(socketha,subname, len) == 0) { perror("sendall subname"); exit(1); }
+        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall subname len"); return 0; }
+        if(sendall(socketha,subname, len) == 0) { perror("sendall subname"); return 0; }
 
         //documenturi
         len = strlen(documenturi) +1;
 	debug("sending (len %i): \"%s\"",len,documenturi);
-        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall documenturi len"); exit(1); }
-        if(sendall(socketha,documenturi, len) == 0) { perror("sendall documenturi"); exit(1); }
+        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall documenturi len"); return 0; }
+        if(sendall(socketha,documenturi, len) == 0) { perror("sendall documenturi"); return 0; }
 
         //documenttype
         len = strlen(documenttype) +1;
 	debug("sending (len %i): \"%s\"",len,documenttype);
-        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall documenttype len"); exit(1); }
-        if(sendall(socketha,documenttype, len) == 0) { perror("sendall documenttype"); exit(1); }
+        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall documenttype len"); return 0; }
+        if(sendall(socketha,documenttype, len) == 0) { perror("sendall documenttype"); return 0; }
 
         //document
         //dokument_size
 	debug("sending document(len %i)",dokument_size);
-        if(sendall(socketha,&dokument_size, sizeof(int)) == 0) { perror("sendall dokument_size"); exit(1); }
+        if(sendall(socketha,&dokument_size, sizeof(int)) == 0) { perror("sendall dokument_size"); return 0; }
 	if (dokument_size != 0) {
-        	if(sendall(socketha,document, dokument_size) == 0) { perror("sendall document"); exit(1); }
+        	if(sendall(socketha,document, dokument_size) == 0) { perror("sendall document"); return 0; }
 	}
         //lastmodified
-        if(sendall(socketha,&lastmodified, sizeof(int)) == 0) { perror("sendall lastmodified"); exit(1); }
+        if(sendall(socketha,&lastmodified, sizeof(int)) == 0) { perror("sendall lastmodified"); return 0; }
 
         //acl
         len = strlen(acl) +1;
 	debug("sending (len %i): \"%s\"",len,acl);
-        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall acl len"); exit(1); }
-        if(sendall(socketha,acl, len) == 0) { perror("sendall acl"); exit(1); }
+        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall acl len"); return 0; }
+        if(sendall(socketha,acl, len) == 0) { perror("sendall acl"); return 0; }
 
         //title
         len = strlen(title) +1;
 	debug("sending (len %i): \"%s\"",len,title);
-        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall title len"); exit(1); }
-        if(sendall(socketha,title, len) == 0) { perror("sendall title"); exit(1); }
+        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall title len"); return 0; }
+        if(sendall(socketha,title, len) == 0) { perror("sendall title"); return 0; }
 
         //doctype
         len = strlen(doctype) +1;
 	debug("sending (len %i): \"%s\"",len,doctype);
-        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall doctype len"); exit(1); }
-        if(sendall(socketha,doctype, len) == 0) { perror("sendall doctype"); exit(1); }
+        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall doctype len"); return 0; }
+        if(sendall(socketha,doctype, len) == 0) { perror("sendall doctype"); return 0; }
 
 }
 

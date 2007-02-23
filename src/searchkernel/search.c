@@ -1458,11 +1458,14 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
         		        	++y;
 				}
 			}
+
 			(*TeffArrayElementer) = y;
 
 
 		}
 
+		//ToDo: er vel bare for bb dette? 
+		(*TotaltTreff) = (*TeffArrayElementer);
 	#endif
 
 /**********************************************/

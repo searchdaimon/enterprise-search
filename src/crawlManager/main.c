@@ -46,7 +46,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 	printf("uri %s, title %s\n",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).title);
 
 	//send it inn
-	bbdn_docadd((*collection).socketha,
+	if (!bbdn_docadd((*collection).socketha,
 			(*collection).collection_name,
 			(*crawldocumentAdd).documenturi,
 			(*crawldocumentAdd).documenttype,
@@ -55,8 +55,22 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 			(*crawldocumentAdd).lastmodified,
 			(*crawldocumentAdd).acl,
 			(*crawldocumentAdd).title,
-			(*crawldocumentAdd).doctype
-		);
+			(*crawldocumentAdd).doctype)
+	) {
+		printf("can't sent to bbdn!\nWill sleep and then reconect. Wont send same doc again.\n");
+		
+		bbdn_closecollection((*collection).socketha,(*collection).collection_name);
+
+		sleep(10);
+
+		if (!bbdn_conect(&(*collection).socketha,"")) {
+			berror("can't conect to bbdn (boitho backend document server)\n");
+			return 0;
+		}
+
+		//exit(1);
+
+	}
 
 
 	printf("documentAdd end\n");

@@ -18,6 +18,8 @@
 #include "../common/bstr.h"
 #include "../query/query_parser.h"
 
+#include "../utf8-filter/utf8-filter.h"
+
 #ifdef WITH_THREAD
         #include <pthread.h>
 	#define NROF_GENERATEPAGES_THREADS 5
@@ -43,6 +45,16 @@
 //#include "cgi-util.h"
 
 	//struct iindexFormat *TeffArray; //[maxIndexElements];
+
+void utfclean(char test[],int len) {
+
+
+	char        *ny = utf8_filter(test);
+
+	strscpy(test,ny,len);
+
+	free(ny);
+}
 
 int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,struct iindexFormat *TeffArray,struct QueryDataForamt QueryData, char *htmlBuffer,unsigned int htmlBufferSize, char servername[],char subname[]) {
 
@@ -261,6 +273,8 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 					else {
 						strscpy((*Sider).description,summary,sizeof((*Sider).description));
 					}
+
+					utfclean((*Sider).description,sizeof((*Sider).description));
 
 					//sjekker om vi har en & på slutten. Hvis vi har skal det også være en ;. Dette får å ungå at
 					//vi har klart å kappe av før ; en kommer, eks: v Frp&rsquo ...

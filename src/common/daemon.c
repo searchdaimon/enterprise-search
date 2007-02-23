@@ -331,22 +331,34 @@ int sendall(int s, void *buf, int len) {
         int total = 0;        // how many bytes we've sent
         int bytesleft = len; // how many we have left to send
         int n;
+	int tosend;
 	
 	#ifdef DEBUG
-	printf("will send %i",len);
+	printf("will send %i b\n",len);
 	#endif
 
         while(total < len) {
-	
 
-            if ((n = send(s, buf+total, bytesleft, 0)) == -1) {
+	    if (bytesleft > 16392) {
+		tosend = 16392;
+	    }
+	    else {
+		tosend = bytesleft;
+	    }
+
+            if ((n = send(s, buf+total, tosend, 0)) == -1) {
+            //if ((n = send(s, buf+total, bytesleft, 0)) == -1) {
 			//perror("send");
 			return 0;
 		}
             if (n == -1) { 
-		print("dident manage to send all the data as %s:%f.\n",__FILE__,__LINE__);
-		break; 
+		printf("dident manage to send all the data as %s:%f.\n",__FILE__,__LINE__);
+		//break; 
+		return 0;
 	    }
+	    #ifdef DEBUG
+		printf("sendall: sent %i b. %i b left.\n",n,bytesleft);		
+	    #endif
 
             total += n;
             bytesleft -= n;
@@ -355,6 +367,9 @@ int sendall(int s, void *buf, int len) {
         //*len = total; // return number actually sent here
 
         //return n==-1?-1:0; // return -1 on failure, 0 on success
+	#ifdef DEBUG
+	printf("sendall: ending. Will return that we sent %i b\n",total);
+	#endif
 	return total;
 }
 
@@ -386,7 +401,7 @@ int recvall(int sockfd, void *buf, int len) {
 		}
 
 		#ifdef DEBUG
-		printf("recved %i bytes. total red %i, left %i, total to get %i",n,total,bytesleft,len);
+		printf("recved %i bytes. total red %i, left %i, total to get %i\n",n,total,bytesleft,len);
 		#endif
 
 		total += n;
@@ -407,6 +422,7 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
         packedHedder.command    = command;
 	strcpy(packedHedder.subname,subname);
 
+	printf("sendpacked: start\n");
 
         i = sendall(socket, (char*)&packedHedder, sizeof(struct packedHedderFormat));
 
@@ -420,6 +436,8 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 		#endif
                 i = send(socket,data,dataSize,0);
         }
+
+	printf("sendpacked: end\n");
 
 
 }

@@ -85,7 +85,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			char *subname,*documenturi,*documenttype,*document,*acl,*title,*doctype;
 			int dokument_size;
 			unsigned int lastmodified;
-
+/*
 			//subname
 			if ((i=recv(socket, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
                     		perror("Cant read intrespons");
@@ -173,6 +173,96 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
                                 perror("Cant read doctype");
                                 exit(1);
                         }
+*/
+
+			//subname
+			if ((i=recvall(socket, &intrespons, sizeof(intrespons))) == 0) {
+                    		perror("Cant read intrespons");
+                    		exit(1);
+                	}
+			subname = malloc(intrespons +1);
+			if ((i=recvall(socket, subname, intrespons)) == 0) {
+                                perror("Cant read subname");
+                                exit(1);
+                        }
+
+			//documenturi
+			if ((i=recvall(socket, &intrespons, sizeof(intrespons))) == 0) {
+                    		perror("Cant read intrespons");
+                    		exit(1);
+                	}
+			documenturi = malloc(intrespons +1);
+			if ((i=recvall(socket, documenturi, intrespons)) == 0) {
+                                perror("Cant read documenturi");
+                                exit(1);
+                        }
+
+			//documenttype
+			if ((i=recvall(socket, &intrespons, sizeof(intrespons))) == 0) {
+                    		perror("Cant read intrespons");
+                    		exit(1);
+                	}
+			documenttype = malloc(intrespons +1);
+			if ((i=recvall(socket, documenttype, intrespons)) == 0) {
+                                perror("Cant read documenttype");
+                                exit(1);
+                        }
+
+			//document
+			//dokument_size
+			if ((i=recvall(socket, &dokument_size, sizeof(dokument_size))) == 0) {
+                    		perror("Cant read dokument_size");
+                    		exit(1);
+                	}
+			if (dokument_size == 0) {
+				document = NULL;
+			}
+			else {
+				document = malloc(dokument_size +1);
+				if ((i=recvall(socket, document, dokument_size)) == 0) {
+                        	        perror("Cant read document");
+                        	        exit(1);
+                        	}
+			}
+			//lastmodified
+			if ((i=recvall(socket, &lastmodified, sizeof(lastmodified))) == 0) {
+                    		perror("Cant read lastmodified");
+                    		exit(1);
+                	}
+
+			//acl
+			if ((i=recvall(socket, &intrespons, sizeof(intrespons))) == 0) {
+                    		perror("Cant read intrespons");
+                    		exit(1);
+                	}
+			acl = malloc(intrespons +1);
+			if ((i=recvall(socket, acl, intrespons)) == 0) {
+                                perror("Cant read acl");
+                                exit(1);
+                        }
+
+			//title
+			if ((i=recvall(socket, &intrespons, sizeof(intrespons))) == 0) {
+                    		perror("Cant read intrespons");
+                    		exit(1);
+                	}
+			title = malloc(intrespons +1);
+			if ((i=recvall(socket, title, intrespons)) == 0) {
+                                perror("Cant read title");
+                                exit(1);
+                        }
+
+			//doctype
+			if ((i=recvall(socket, &intrespons, sizeof(intrespons))) == 0) {
+                    		perror("Cant read intrespons");
+                    		exit(1);
+                	}
+			doctype = malloc(intrespons +1);
+			if ((i=recvall(socket, doctype, intrespons)) == 0) {
+                                perror("Cant read doctype");
+                                exit(1);
+                        }
+
 			printf("got subname \"%s\": title \"%s\". Nr %i\n",subname,title,count);
 
 			bbdocument_add(subname,documenturi,documenttype,document,dokument_size,lastmodified,acl,title,doctype);
@@ -203,7 +293,8 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 
 			//toDo må bruke subname, og C ikke perl her
 			printf("cleanin lots start\n");
-			system("perl /home/boitho/boitho/websearch/perl/cleanLots.pl");
+			//system("perl /home/boitho/boitho/websearch/perl/cleanLots.pl");
+			system("perl /home/boitho/boithoTools/perl/cleanLots.pl");
 			printf("cleanin lots end\n");
 
 			

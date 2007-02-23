@@ -358,7 +358,7 @@ struct filtypesFormat {
 
 struct filterinfoElementsFormat {
 	char name[12];
-	char query[64];
+	char query[MaxQueryLen];
 	int nrof;
 	char checked; //bool
 };
@@ -378,7 +378,7 @@ struct SiderHederFormat {
 	int showabal;
 	int TotaltTreff;
 	double total_usecs;
-	char hiliteQuery[50];
+	char hiliteQuery[MaxQueryLen];
 	struct queryTimeFormat queryTime;
 	char servername[32];
 	struct subnamesFormat subnames[MAX_COLLECTIONS];
@@ -431,7 +431,7 @@ struct wordsFormat {
 struct queryNodeHederFormat
 {
 	//toDo, skal ikke dette være MaxQueryLen ?
-	char query[50];
+	char query[MaxQueryLen];
 	char subname[maxSubnameLength];
 	int MaxsHits;
 	int start;
