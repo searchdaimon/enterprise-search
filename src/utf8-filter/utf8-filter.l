@@ -43,7 +43,7 @@ char* utf8_filter( char *str )
     char		*output;
 
     data->pos = 0;
-    data->buf = malloc(len);
+    data->buf = malloc(len+1);
 
     yylex_init( &scanner );
     yyset_extra( data, scanner );
