@@ -151,6 +151,14 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 
 	printf("pathAccess: start\n");
 
+	//temp:
+	//26.0207:quiq fix. Lagger til domene i brukernav
+	char username_t[64];
+	strcpy(username_t,"i04\\");
+	strcat(username_t,username);
+	strcpy(username,username_t);
+
+
 	gettimeofday(&start_time, NULL);
 	debug("cm_searchForCollection");
 	if (!cm_searchForCollection(collection,&collections,&nrofcollections)) {
