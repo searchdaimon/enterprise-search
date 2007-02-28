@@ -1,3 +1,8 @@
+/*
+ * Eirik A. Nygaard
+ * February 2007
+ */
+
 
 %{
 

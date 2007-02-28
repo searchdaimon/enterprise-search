@@ -1,3 +1,7 @@
+/*
+ * Eirik A. Nygaard
+ * February 2007
+ */
 
 #define _GNU_SOURCE
 
