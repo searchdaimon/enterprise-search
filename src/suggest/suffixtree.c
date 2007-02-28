@@ -6,7 +6,6 @@
 #include <ctype.h>
 #include <strings.h>
 #include <string.h>
-#include <assert.h>
 #include <errno.h>
 
 #include "suffixtree.h"
@@ -54,11 +53,25 @@ _suffixtree_insert_new_node(void)
 {
 	struct suffixtree *sf;
 
-	sf = malloc(sizeof(*sf));
-	assert(sf);
+	if ((sf = malloc(sizeof(*sf))) == NULL)
+		return NULL;
 	suffixtree_allocate_node(sf);
 
 	return sf;
+}
+
+static void
+_suffixtree_delete_node(struct suffixtree *sf)
+{
+	struct suffixtree *child;
+
+	forchildren(child, sf)
+		_suffixtree_delete_node(child);
+
+	if (sf->suffix)
+		free(sf->suffix);
+
+	free(sf);
 }
 
 static struct suffixtree *
@@ -67,7 +80,7 @@ _suffixtree_insert_find_child(struct suffixtree *root, struct suggest_input *dat
 	struct suffixtree *sf;
 	unsigned int i;
 
-	for (sf = root->children; sf != NULL; sf = sf->next) {
+	forchildren(sf, root) {
 		i = find_common_substr(data->word + suffixlen, sf->suffix);
 		if (i == strlen(sf->suffix)) {
 			return sf;
@@ -76,14 +89,19 @@ _suffixtree_insert_find_child(struct suffixtree *root, struct suggest_input *dat
 			/* Split up node */
 			struct suffixtree *sf2;
 
-			sf2 = _suffixtree_insert_new_node();
-			sf2->suffix = strdup(sf->suffix + i);
-			assert(sf2->suffix);
+			if ((sf2 = _suffixtree_insert_new_node()) == NULL)
+				return NULL;
+			if ((sf2->suffix = strdup(sf->suffix + i)) == NULL) {
+				_suffixtree_delete_node(sf2);
+				return NULL;
+			}
 			sf2->children = sf->children;
 			sf->children = sf2;
 			free(sf->suffix);
-			sf->suffix = strndup(data->word + suffixlen, i);
-			assert(sf->suffix);
+			if ((sf->suffix = strndup(data->word + suffixlen, i)) == NULL) {
+				_suffixtree_delete_node(sf);
+				return NULL;
+			}
 			if (sf->si) {
 				sf2->si = sf->si;
 				sf->si = NULL;
@@ -106,8 +124,8 @@ _suffixtree_insert(struct suffixtree *root, struct suggest_input *data, unsigned
 	struct suffixtree *sf;
 
 	if (root->suffix == NULL && !root->isroot) {
-		root->suffix = strdup(data->word + suffixlen);
-		assert(root->suffix);
+		if ((root->suffix = strdup(data->word + suffixlen)) == NULL)
+			return;
 		root->si = data;
 	}
 	else if (suffixlen == strlen(data->word) && root->si == NULL) {
@@ -129,7 +147,7 @@ suffixtree_insert(struct suffixtree *root, struct suggest_input *data)
 #error "MAX_BEST must be at least 1"
 #endif
 
-void
+int
 suffixtree_most_used(struct suffixtree *root)
 {
 	struct suffixtree *sf;
@@ -141,7 +159,7 @@ suffixtree_most_used(struct suffixtree *root)
 	if (root->children == NULL) {
 		root->best[pos++] = root->si;
 		root->best[pos] = NULL;
-		return;
+		return 0;
 	}
 
 	forchildren(sf, root) {
@@ -149,8 +167,8 @@ suffixtree_most_used(struct suffixtree *root)
 		children++;
 	}	
 
-	bookkeeping = malloc(sizeof(int) * children);
-	assert(bookkeeping != NULL);
+	if ((bookkeeping = malloc(sizeof(int) * children)) == NULL)
+		return -1;
 	bzero(bookkeeping, sizeof(int) * children);
 
 	for (i = 0; i < MAX_BEST; i++) {
@@ -197,6 +215,8 @@ suffixtree_most_used(struct suffixtree *root)
 		bookkeeping[min]++;
 	}
 	root->best[i] = NULL;
+
+	return 0;
 }
 
 struct suggest_input *_suffixtree_find_word(struct suffixtree *, char *, unsigned int);
@@ -206,7 +226,7 @@ _suffixtree_find_word_children(struct suffixtree *root, char *word, unsigned int
 {
 	struct suffixtree *sf;
 
-	for (sf = root->children; sf != NULL; sf = sf->next) {
+	forchildren(sf, root) {
 		if ((unsigned int)find_common_substr(word+len, sf->suffix) == strlen(sf->suffix)) {
 			return _suffixtree_find_word(sf, word, len + strlen(sf->suffix));
 		}
@@ -222,7 +242,7 @@ suffixtree_scan(struct suffixtree *root)
 	int i = 0;
 
 	// Children
-	for (sf = root->children; sf != NULL; sf = sf->next) {
+	forchildren(sf, root) {
 		i += suffixtree_scan(sf);
 	}
 
@@ -257,7 +277,7 @@ _suffixtree_find_suffix_children(struct suffixtree *root, char *word, unsigned i
 {
 	struct suffixtree *sf;
 
-	for (sf = root->children; sf != NULL; sf = sf->next) {
+	forchildren(sf, root) {
 		if ((unsigned int)find_common_substr(word+len, sf->suffix) == strlen(sf->suffix)) {
 			printf("suffix: %s\n", sf->suffix);
 			return _suffixtree_find_suffix(sf, word, len + strlen(sf->suffix));

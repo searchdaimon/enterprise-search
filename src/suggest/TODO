@@ -1,0 +1,3 @@
+ * Check return values of functions doing allocation and others that might
+   fail.
+ * Switch the linked list into a better structure (red-black tree?)
