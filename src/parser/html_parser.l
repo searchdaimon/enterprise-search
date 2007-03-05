@@ -28,14 +28,14 @@ static inline void bhpm_new_esc_to_utf8( const char* str, yyscan_t scanner, int 
 %}
 
 character	[a-z]
-legalchar	[a-z0-9_'`]
-attrchar	[a-z0-9_-]
+legalchar	[a-z0-9'`]
+attrchar	[a-z0-9\-_]
 legaltegn	[!"#$%()*+,-./:;=?@[\\\]^{|}~]
 tfchars		[a-z0-9_`\-!#$%()*+,-./:;=?@[\]^{|}~]
 word		[0-9a-z'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþ]
 allemuligetegn	[!"#$%'()*+,-./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþ]
 url		[0-9a-z&-.:/\\?=]
-blank		[ \t\n]
+blank		[ \t\n_]
 tillatesc	(aacute|acirc|aelig|agrave|aring|atilde|auml|ccedil|eacute|ecirc|egrave|eth|euml|iacute|icirc|igrave|iuml|ntilde|oacute|ocirc|ograve|oslash|otilde|ouml|sup1|sup2|sup3|szlig|thorn|uacute|ucirc|ugrave|uuml|yacute|yuml)
 tillatnumesc	(#178|#179|#185|#192|#193|#194|#195|#196|#197|#198|#199|#200|#201|#202|#203|#204|#205|#206|#207|#208|#209|#210|#211|#212|#213|#214|#216|#217|#218|#219|#220|#221|#222|#223|#224|#225|#226|#227|#228|#229|#230|#231|#232|#233|#234|#235|#236|#237|#238|#239|#240|#241|#242|#243|#244|#245|#246|#248|#249|#250|#251|#252|#253|#254|#255)
 nestenalleesc	(iexcl|cent|pound|curren|yen|brvbar|sect|uml|copy|ordf|laquo|not|shy|reg|macr|deg|plusmn|sup2|sup3|acute|micro|para|middot|cedil|sup1|ordm|raquo|frac14|frac12|frac34|iquest|Agrave|Aacute|Acirc|Atilde|Auml|Aring|AElig|Ccedil|Egrave|Eacute|Ecirc|Euml|Igrave|Iacute|Icirc|Iuml|ETH|Ntilde|Ograve|Oacute|Ocirc|Otilde|Ouml|times|Oslash|Ugrave|Uacute|Ucirc|Uuml|Yacute|THORN|szlig|agrave|aacute|acirc|atilde|auml|aring|aelig|ccedil|egrave|eacute|ecirc|euml|igrave|iacute|icirc|iuml|eth|ntilde|ograve|oacute|ocirc|otilde|ouml|divide|oslash|ugrave|uacute|ucirc|uuml|yacute|thorn|yuml|fnof|Alpha|Beta|Gamma|Delta|Epsilon|Zeta|Eta|Theta|Iota|Kappa|Lambda|Mu|Nu|Xi|Omicron|Pi|Rho|Sigma|Tau|Upsilon|Phi|Chi|Psi|Omega|alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigmaf|sigma|tau|upsilon|phi|chi|psi|omega|thetasym|upsih|piv|bull|hellip|prime|Prime|oline|frasl|weierp|image|real|trade|alefsym|larr|uarr|rarr|darr|harr|crarr|lArr|uArr|rArr|dArr|hArr|forall|part|exist|empty|nabla|isin|notin|ni|prod|sum|minus|lowast|radic|prop|infin|ang|and|or|cap|cup|int|there4|sim|cong|asymp|ne|equiv|le|ge|sub|sup|nsub|sube|supe|oplus|otimes|perp|sdot|lceil|rceil|lfloor|rfloor|lang|rang|loz|spades|clubs|hearts|diams|quot|amp|lt|gt|OElig|oelig|Scaron|scaron|Yuml|circ|tilde|ensp|emsp|thinsp|zwnj|zwj|lrm|rlm|ndash|mdash|lsquo|rsquo|sbquo|ldquo|rdquo|bdquo|dagger|Dagger|permil|lsaquo|rsaquo|euro)
@@ -94,7 +94,7 @@ utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
 \&{tegnnumesc_minus};?		{ bhpm_newutf8( atoi(&(yytext[2])), yyscanner, ESC ); }
 \&#[0-9]+;		{ bhpm_newutf8( atoi(&(yytext[2])), yyscanner, WORD ); }
 \&			{ bhpm_newstring("&amp;", yyscanner, ESC); }
-[\ \t\n\r\f]+		{ (bhpmget_extra(yyscanner))->space = 1; }
+[\ \t\n\r\f_]+		{ (bhpmget_extra(yyscanner))->space = 1; }
 {latin-sup}		{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, WORD ); }
 [\200-\377]		{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, ESC); }
 \<{blank}*script[^\>]*\> {	// Ignore characters between script-tags.
