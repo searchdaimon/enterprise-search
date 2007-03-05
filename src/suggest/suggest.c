@@ -79,6 +79,18 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 	return 0;
 }
 
+void
+suggest_most_used(struct suggest_data *sd)
+{
+	suffixtree_most_used(&sd->tree);
+}
+
+struct suggest_input **
+suggest_find_prefix(struct suggest_data *sd, char *prefix)
+{
+	return suffixtree_find_suffix(&sd->tree, prefix);
+}
+
 
 #ifdef TEST_SUGGEST
 
@@ -115,11 +127,12 @@ main(int argc, char **argv)
 	//printf("Word: %x\n", suffixtree_find_word(&(sd->tree), "individualsiaiaiai"));
 	//printf("Word: %x\n", suffixtree_find_word(&(sd->tree), "individ"));
 	//
-	suffixtree_most_used(&(sd->tree));
-	si = suffixtree_find_suffix(&(sd->tree), "individ");
+	suggest_most_used(sd);
+	si = suggest_find_prefix(sd, "individ");
 	
 	//printf("si... %x\n", *si);
 #if 1
+	printf("Printing the most used word starting with 'individ'\n");
 	for (; *si != NULL; si++) {
 		printf("Something: %s / %d\n", (*si)->word, (*si)->frequency);
 	}
@@ -148,6 +161,8 @@ main(int argc, char **argv)
 	{
 		struct suffixtree *sf = &(sd->tree);
 		int a;
+
+		printf("The most used words in the dictionary:\n");
 		for (a=0; sf->best[a] != NULL; a++) {
 			printf("%s <=> %d\n", sf->best[a]->word, sf->best[a]->frequency);
 		}

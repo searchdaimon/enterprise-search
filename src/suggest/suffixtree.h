@@ -20,6 +20,7 @@ int suffixtree_init(struct suffixtree *);
 void suffixtree_insert(struct suffixtree *, struct suggest_input *);
 struct suggest_input *suffixtree_find_word(struct suffixtree *, char *);
 int suffixtree_most_used(struct suffixtree *);
+struct suggest_input **suffixtree_find_suffix(struct suffixtree *, char *);
 
 
 #endif
