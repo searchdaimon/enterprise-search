@@ -26,6 +26,7 @@
 #define PRIME_TBLSIZ 100
 
 #include "../generateThumbnail/generate_thumbnail.h"
+#include "../generateThumbnail/generate_thumbnail_by_convert.h"
 
 #define filconvertetfile "/tmp/boithofilconverter"
 
@@ -67,12 +68,24 @@ int bbdocument_makethumb( char documenttype[],char document[],size_t dokument_si
 	else if (((*imagebuffer) = generate_thumbnail( document, dokument_size, imageSize )) == NULL) {
 		return 0;
 	}
-	debug("imageSize %u",(unsigned int)(*imageSize));
-	return 1;
 
 	#else
+	if (strcmp(documenttype,"pdf") == 0) {
+		//pdf convert
+		if (((*imagebuffer) = generate_pdf_thumbnail_by_convert( document, dokument_size, imageSize )) == NULL) {
+			return 0;
+
+		}
+			return 1;
+	}
+	else if (((*imagebuffer) = generate_thumbnail_by_convert( document, dokument_size, imageSize, documenttype)) == NULL ) {
+		printf("error: cant run generate_thumbnail_by_convert\n");
 		return 0;
+	}
 	#endif
+	printf("imageSize %u",(unsigned int)(*imageSize));
+	return 1;
+
 }
 
 int bbdocument_freethumb(char *imagebuffer) {
@@ -597,6 +610,8 @@ int bbdocument_deletecoll(char collection[]) {
 
 		system(command);
 */
+		rrmdir(FilePath);
+
 		++LotNr;
 	}
 	

@@ -11,6 +11,7 @@
 #include "generate_thumbnail.h"
 
 #define gspath "/usr/bin/gs"
+
 #define converttemptemplate "/tmp/generateThumbnail"
 
 #define DoMagick(wand,X) \
@@ -31,6 +32,7 @@
 	        return NULL; \
 	    } \
     }
+
 
 unsigned char* generate_pdf_thumbnail( const void *document, const size_t size, size_t *new_size ) {
 

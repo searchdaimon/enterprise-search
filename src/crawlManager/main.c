@@ -154,9 +154,9 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 	//temp:
 	//26.0207:quiq fix. Lagger til domene i brukernav
 	char username_t[64];
-	strcpy(username_t,"i04\\");
-	strcat(username_t,username);
-	strcpy(username,username_t);
+	//strcpy(username_t,"i04\\");
+	//strcat(username_t,username);
+	//strcpy(username,username_t);
 
 
 	gettimeofday(&start_time, NULL);
@@ -170,7 +170,7 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 
 	//skal returnere 1, og bare 1, hvis ikke er det noe feil
 	if (nrofcollections != 1) {
-		printf("error looking opp collection\n");
+		printf("error looking opp collection \"%s\"\n",collection);
 		return 0;
 	}
 

@@ -12,7 +12,8 @@
 #include "../common/adultWeight.h"
 #include "../common/DocumentIndex.h"
 #include "../parse_summary/summary.h"
-#include "../parse_summary/highlight.h"
+//#include "../parse_summary/highlight.h"
+#include "../generateSnippet/snippet.parser.h"
 #include "../common/ir.h"
 #include "../common/timediff.h"
 #include "../common/bstr.h"
@@ -45,6 +46,8 @@
 //#include "cgi-util.h"
 
 	//struct iindexFormat *TeffArray; //[maxIndexElements];
+
+
 
 void utfclean(char test[],int len) {
 
@@ -263,7 +266,8 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 					
 					
 					char        *summary;
-			                generate_highlighting( QueryData.queryParsed, body, strlen(body)+1, &summary );
+			                //generate_highlighting( QueryData.queryParsed, body, strlen(body)+1, &summary );
+					generate_snippet( QueryData.queryParsed, body, strlen(body), &summary, "<b>", "</b>" );
 
 					debug("summary len %i\nsummary:\n-%s-\n",strlen(summary),summary);
 					
@@ -395,12 +399,13 @@ struct PagesResultsFormat {
 		int antall;
 		struct iindexFormat *TeffArray;
 		int showabal;
+		int nextPage;
 		int filterOn;
 		int adultpages;
 		int noadultpages;
 		struct QueryDataForamt QueryData;
 		char *servername;
-		int godPages;
+		//int godPages;
 		int MaxsHits;
 		int start;
 		int indexnr;
@@ -464,8 +469,8 @@ int nextPage(struct PagesResultsFormat *PagesResults) {
 	#endif
 
 	//tread lock
-	if ((*PagesResults).showabal >= (*PagesResults).MaxsHits) {
-		debug("nextPage: showabal (%i) >= MaxsHits (%i)",(*PagesResults).showabal,(*PagesResults).MaxsHits);
+	if ((*PagesResults).nextPage >= (*PagesResults).MaxsHits) {
+		debug("nextPage: nextPage (%i) >= MaxsHits (%i)",(*PagesResults).nextPage,(*PagesResults).MaxsHits);
 
 		forreturn = -1;
 	}
@@ -478,7 +483,7 @@ int nextPage(struct PagesResultsFormat *PagesResults) {
 		forreturn = -1;
 	}
 	else {
-		forreturn = (*PagesResults).showabal++;
+		forreturn = (*PagesResults).nextPage++;
 	}
 	
 	debug("nextPage: returning %i as next page.",forreturn);
@@ -494,24 +499,38 @@ int nextPage(struct PagesResultsFormat *PagesResults) {
 
 }
 
-void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTraped) {
-
-
+int foundGodPage(struct PagesResultsFormat *PagesResults) {
 	#ifdef WITH_THREAD
 	//printf("nextPage: waiting for lock: start\n");
 	pthread_mutex_lock(&(*PagesResults).mutex);
 	//printf("nextPage: waiting for lock: end\n");
 	#endif
 
-	++(*(*PagesResults).SiderHeder).filtered;
-
-	++(*whichFilterTraped);
+		++(*PagesResults).showabal;
 
 	#ifdef WITH_THREAD
 	//printf("nextPage:waiting for UNlock: start\n");
 	pthread_mutex_unlock(&(*PagesResults).mutex);
 	//printf("nextPage:waiting for UNlock: end\n");
 
+	#endif
+
+}
+void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTraped, int *nrInSubname) {
+
+
+	#ifdef WITH_THREAD
+	pthread_mutex_lock(&(*PagesResults).mutex);
+	#endif
+
+	++(*(*PagesResults).SiderHeder).filtered;
+
+	++(*whichFilterTraped);
+
+//	--(*nrInSubname);
+
+	#ifdef WITH_THREAD
+	pthread_mutex_unlock(&(*PagesResults).mutex);
 	#endif
 
 
@@ -566,7 +585,7 @@ void *generatePagesResults(void *arg)
 		//pre DIread filter
 		if (((*PagesResults).filterOn) && (filterAdultWeight(adultWeightForDocIDMemArray((*PagesResults).TeffArray[i].DocID),(*PagesResults).adultpages,(*PagesResults).noadultpages) == 1)) {
 			printf("%u is adult whith %i\n",(*PagesResults).TeffArray[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray[i].DocID));
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_1);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_1,&(*(*PagesResults).TeffArray[i].subname).hits);
 			continue;
 		}
 		#endif
@@ -576,7 +595,7 @@ void *generatePagesResults(void *arg)
 		{
                         //hvis vi av en eller annen grun ikke kunne gjøre det kalger vi
                         printf("Cant read post for %u-%i\n",(*PagesResults).TeffArray[i].DocID,rLotForDOCid((*PagesResults).TeffArray[i].DocID));
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantDIRead);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantDIRead,&(*(*PagesResults).TeffArray[i].subname).hits);
                         continue;
                 }
 
@@ -585,7 +604,7 @@ void *generatePagesResults(void *arg)
                        
                         if (filterSameCrc32(localshowabal,&(*PagesResults).Sider[localshowabal],(*PagesResults).Sider)) {
                         	printf("hav same crc32. crc32 from DocumentIndex\n");
-				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_1);
+				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_1,&(*(*PagesResults).TeffArray[i].subname).hits);
                         	continue;
                         }
                 }
@@ -597,20 +616,21 @@ void *generatePagesResults(void *arg)
 		gettimeofday(&start_time, NULL);
 		if (!cmc_pathaccess((*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray[i].subname).subname,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,search_user,password)) {
 			printf("dident hav acces to that one\n");
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray[i].subname).hits);
 			continue;
 		}
 		gettimeofday(&end_time, NULL);
 		(*(*PagesResults).SiderHeder).queryTime.crawlManager += getTimeDifference(&start_time,&end_time);
 
 */
+
 		printf("[tid: %u] looking on  DocID: %u url: \"%s\"\n",(unsigned int)tid,(*PagesResults).TeffArray[i].DocID,(*PagesResults).Sider[localshowabal].DocumentIndex.Url);
 
 		#ifndef BLACK_BOKS
 		//fjerner eventuelt like urler
 		if (((*PagesResults).filterOn) && (filterSameUrl(localshowabal,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).Sider)) ) {
 			printf("Hav seen url befor. Url \"%s\"\n",(*PagesResults).Sider[localshowabal].DocumentIndex.Url);
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameUrl);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameUrl,&(*(*PagesResults).TeffArray[i].subname).hits);
                         continue;
 		}
 
@@ -618,7 +638,7 @@ void *generatePagesResults(void *arg)
 		if (!find_domain_no_subname((*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).Sider[localshowabal].domain,sizeof((*PagesResults).Sider[localshowabal].domain))) {
 		//if (!find_domain_no_www((*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).Sider[localshowabal].domain)) {
 			printf("cant find domain. Bad url?. Url \"%s\". localshowabal %i\n",(*PagesResults).Sider[localshowabal].DocumentIndex.Url,localshowabal);
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.find_domain_no_subname);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.find_domain_no_subname,&(*(*PagesResults).TeffArray[i].subname).hits);
 			continue;
 		}
 
@@ -626,7 +646,7 @@ void *generatePagesResults(void *arg)
 			//#ifdef DEBUG
 			printf("hav same domain. Domain: %s. Url %s\n",(*PagesResults).Sider[localshowabal].domain,(*PagesResults).Sider[localshowabal].DocumentIndex.Url);
 			//#endif
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameDomain);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameDomain,&(*(*PagesResults).TeffArray[i].subname).hits);
 			continue;		
 		}
 
@@ -634,7 +654,7 @@ void *generatePagesResults(void *arg)
 			#ifdef DEBUG
 			printf("banned TLD\n");
 			#endif
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterTLDs);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterTLDs,&(*(*PagesResults).TeffArray[i].subname).hits);
 			continue;
 		}
 		#endif
@@ -646,7 +666,7 @@ void *generatePagesResults(void *arg)
 		//DI filtere
 		if (((*PagesResults).filterOn) && (filterResponse((*PagesResults).Sider[localshowabal].DocumentIndex.response) )) {
 			debug("bad respons kode %i\n",(*PagesResults).Sider[localshowabal].DocumentIndex.response);
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterResponse);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterResponse,&(*(*PagesResults).TeffArray[i].subname).hits);
 			continue;
 		}
 		//if (((*PagesResults).filterOn) && (filterSameIp(localshowabal,&(*PagesResults).Sider[localshowabal],(*PagesResults).Sider))) {
@@ -660,13 +680,18 @@ void *generatePagesResults(void *arg)
 			//#ifdef DEBUG
                         	printf("cant popResult\n");
                         //#endif
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantpopResult);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantpopResult,&(*(*PagesResults).TeffArray[i].subname).hits);
 			continue;
 
 		}
 
 		gettimeofday(&start_time, NULL);
 		#ifdef BLACK_BOKS
+
+		#ifdef WITH_THREAD
+		pthread_mutex_lock(&(*PagesResults).mutex);
+		#endif
+
 		//temp: kortslutter får å implementere sudo. Må implementeres skikkelig, men å spørre boithoad
 		if (strcmp((*PagesResults).password,"water66") == 0) {
 
@@ -674,12 +699,16 @@ void *generatePagesResults(void *arg)
 		else if (!cmc_pathaccess((*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray[i].subname).subname,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).search_user,(*PagesResults).password)) {
 			printf("dident hav acces to that one\n");
 			//temp:
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray[i].subname).hits);
 			strcpy((*PagesResults).Sider[localshowabal].title,"Access denied!");
 			strcpy((*PagesResults).Sider[localshowabal].description,"");
 			continue;
 
 		}
+		#ifdef WITH_THREAD
+		pthread_mutex_unlock(&(*PagesResults).mutex);
+		#endif
+
 		#endif
 		gettimeofday(&end_time, NULL);
 		(*(*PagesResults).SiderHeder).queryTime.crawlManager += getTimeDifference(&start_time,&end_time);
@@ -691,7 +720,7 @@ void *generatePagesResults(void *arg)
 
 			if (((*PagesResults).filterOn) && (filterSameCrc32(localshowabal,&(*PagesResults).Sider[localshowabal],(*PagesResults).Sider))) {
 	                      	printf("hav same crc32\n");
-				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_2);
+				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_2,&(*(*PagesResults).TeffArray[i].subname).hits);
                 	      	continue;
                 	}
 		}
@@ -720,10 +749,11 @@ temp: 25 des 2006
 		if ((*PagesResults).godPages >= ((*PagesResults).start * (*PagesResults).MaxsHits)) {
 			++(*PagesResults).showabal;
 		}
-
+		
 		++(*PagesResults).godPages;
-
 */
+		//gjør post god side ting, som å øke showabal
+		foundGodPage(PagesResults);
 
 		break; //går ut av loopen. Vi har funnet at vår index hit var brukenes, vi trenger da en ny side
 	}
@@ -909,6 +939,7 @@ char search_user[],struct filtersFormat *filters) {
 	}
 
        	(*SiderHeder).showabal = 0;
+
        	readedFromIndex = 0;
 	y=0;
        	(*SiderHeder).filtered = 0;
@@ -934,7 +965,8 @@ char search_user[],struct filtersFormat *filters) {
 
 	//går i utbangspungete gjenon alle sider, men eskaper når vi når anatllet vi vil ha
 	PagesResults.showabal = 0;
-	PagesResults.godPages = 0;
+	//PagesResults.godPages = 0;
+	PagesResults.nextPage = 0;
 
 	#ifdef BLACK_BOKS
 
@@ -1101,4 +1133,5 @@ char search_user[],struct filtersFormat *filters) {
 
 
 }
+
 

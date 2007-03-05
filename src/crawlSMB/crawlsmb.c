@@ -13,6 +13,7 @@
 
 //#include "../boitho-bbdn/bbdnclient.h"
 //#include "../bbdocument/bbdocument.h"
+#include "../common/iconv.h"
 
 #include "../crawl/crawl.h"
 
@@ -98,8 +99,11 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
     struct crawldocumentExistFormat crawldocumentExist;
     struct crawldocumentAddFormat crawldocumentAdd;
-
-
+    int isize;
+    iconv_t isoconp;
+    if ( (isoconp = iconv_open("UTF-8","ISO-8859-15")) ==  (iconv_t)(-1) ) {
+                perror("iconv_open");
+    }
 
     context = context_init(no_auth);
 
@@ -185,6 +189,15 @@ int smb_recursive_get( char *prefix, char *dir_name,
 			crawldocumentExist.documenturi = malloc(strlen(entry_name) + strlen("file:") +1);
 			sprintf(crawldocumentExist.documenturi,"file:%s",entry_name);
 
+
+			char        uri[sizeof(entry_name)+1];
+			smbc_urldecode( uri, entry_name, sizeof(entry_name)+1 );
+        					
+			isize = (strlen(uri) *2)+ strlen("file:");
+			crawldocumentExist.documenturi = malloc(isize);
+			sprintf(crawldocumentExist.documenturi,"file:%s",uri);
+			iconv_convert(isoconp ,&crawldocumentExist.documenturi, isize);
+
 			crawldocumentExist.lastmodified = file_stat.st_mtime;
 			crawldocumentExist.dokument_size = file_stat.st_size;
 
@@ -244,15 +257,21 @@ int smb_recursive_get( char *prefix, char *dir_name,
 					    smbc_urldecode( uri, entry_name, sizeof(entry_name)+1 );
 */
 #ifndef NO_BB
-        					//crawldocumentAdd.documenturi	= entry_name;
-						crawldocumentAdd.documenturi = malloc(strlen(entry_name) + strlen("file:") +1);
-						sprintf(crawldocumentAdd.documenturi,"file:%s",entry_name);
+						char        uri[sizeof(entry_name)+1];
+						smbc_urldecode( uri, entry_name, sizeof(entry_name)+1 );
+        					
+						isize = (strlen(uri) *2)+ strlen("file:");
+						crawldocumentAdd.documenturi = malloc(isize);
+						sprintf(crawldocumentAdd.documenturi,"file:%s",uri);
+						iconv_convert(isoconp ,&crawldocumentAdd.documenturi, isize);
+
         					crawldocumentAdd.documenttype	= "";
         					crawldocumentAdd.document	= fbuf;
         					crawldocumentAdd.dokument_size	= file_stat.st_size;
         					crawldocumentAdd.lastmodified	= file_stat.st_mtime;
         					crawldocumentAdd.acl 		= parsed_acl;
-        					crawldocumentAdd.title		= dirp->name;
+        					crawldocumentAdd.title		= malloc(strlen(dirp->name) +1);
+						smbc_urldecode( crawldocumentAdd.title, dirp->name, strlen(dirp->name) +1);
 					        crawldocumentAdd.doctype	= "";
 
 						cleanresourceUnixToWin(crawldocumentAdd.documenturi);
@@ -292,6 +311,8 @@ next_it:
       	crawlperror("crawlsmb.c-smb_recursive_get: Error! Could not free smbc context at %s:%d",__FILE__,__LINE__);
         return 0;
     }
+
+    iconv_close(isoconp);
 }
 
 
@@ -394,15 +415,26 @@ int smb_test_open( char *prefix, char *dir_name)
     // Det viser seg at dersom vi koder den dekodete URI-en blir den ødelagt ('/' blir %2F).
     // Har derfor fjernet støtte for å lagre menneskelig lesbar uri.
 
-    int		uri_size = strlen(prefix) + strlen(dir_name) + 1;
+    int		uri_size = strlen(prefix) + (strlen(dir_name) *2) + 1;
     char	uri[uri_size];
     int		fd;
     SMBCCTX	*context;
     int no_auth = 0; //kan ikke ha manglende bruker og passord her
+    iconv_t isoconp;
+
 
     context = context_init(no_auth);
 
     snprintf(uri, uri_size, "%s%s", prefix, dir_name);
+
+    if ( (isoconp = iconv_open("ISO-8859-15","UTF-8")) ==  (iconv_t)(-1) ) {
+                perror("iconv_open");
+    }
+
+	char *urip = uri;
+	iconv_convert(isoconp, &urip,uri_size);
+
+    iconv_close(isoconp);
 
     printf("Opening %s ... ", uri);
     fflush(stdout);

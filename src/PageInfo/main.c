@@ -160,9 +160,9 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 {
 
 
-        #ifdef DEBUG
+        //#ifdef DEBUG
                 printf("\t%s (%i) ", word, pos);
-        #endif
+        //#endif
     switch (pu)
         {
             case pu_word:

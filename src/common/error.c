@@ -15,11 +15,12 @@
 void berror(const char *fmt, ...) {
 
 
-	printf("in berror\n");
 
 	va_list     ap;
 
     	va_start(ap, fmt);
+
+	printf("in berror\n");
 
 	//#ifdef DEBUG	
 		printf("berror: ");	

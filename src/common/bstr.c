@@ -58,9 +58,10 @@ void strsandr (char text[], char find[], char replace[]) {
 	//blir problemer her for korte strenger med slange replasments. Slenger på +512 som er midlertidig fix
 	char *buff = malloc((strlen(text) * 2) +512);
 
-	buff[0] = '\0';
 	char *bptr;
 	char *cprtold = text;
+
+	buff[0] = '\0';
 
 	cptr = text;
 	bptr = buff;
@@ -120,9 +121,10 @@ void ntobr (char textbuff[], int texbufftsize) {
 	int rlen = strlen(replace);
 	int flen = strlen(find);
 	char *buff = malloc((texbufftsize * 2));
-	buff[0] = '\0';
 	char *bptr;
 	char *cprtold = textbuff;
+
+	buff[0] = '\0';
 
 	cptr = textbuff;
 	bptr = buff;
@@ -188,9 +190,10 @@ void strcasesandr (char textbuff[], int texbufftsize,char find[], char replace[]
 	int rlen = strlen(replace);
 	int flen = strlen(find);
 	char *buff = malloc((texbufftsize * 2));
-	buff[0] = '\0';
 	char *bptr;
 	char *cprtold = textbuff;
+
+	buff[0] = '\0';
 
 	cptr = textbuff;
 	bptr = buff;

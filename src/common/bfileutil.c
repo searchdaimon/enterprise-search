@@ -1,3 +1,16 @@
+#include <sys/types.h>
+#include <dirent.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+//#include "bfileutil.h"
+
+
 /*
 ripped from http://www.opensource.apple.com/darwinsource/tarballs/other/distcc-31.0.81.tar.gz
 eks use: mkdir_p("/tmp/aaa/bb/",755) 
@@ -32,15 +45,6 @@ eks use: mkdir_p("/tmp/aaa/bb/",755)
  * <code>path_to_dir</code> must not be <code>NULL</code>
  **/
 
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
-//#include "bfileutil.h"
 
 int bmkdir_p(const char *path_to_dir,int mode)
 {
@@ -113,6 +117,42 @@ char *sfindductype(char filepath[]) {
                 }
         }
         return NULL;
+}
+
+
+/*
+	rekursiv sletting av en mappe. Skal bare selltte den mappen, og undermapper. Skal ikke
+	kunne da en dagur og gi den "xx / yy", og den sletter /
+*/
+int rrmdir(char dir[]) {
+
+        DIR *dirp;
+        struct dirent *dp;
+	char path[PATH_MAX];
+
+	if ((dirp = opendir( dir )) == NULL) {
+		perror(dir);
+		return 0;
+	}
+
+	while ((dp = readdir(dirp)) != NULL) {
+		if (dp->d_name[0] == '.') {
+                        continue;
+                }
+
+		snprintf(path,sizeof(path),"%s/%s",dir,dp->d_name);
+
+		if (dp->d_type == DT_DIR) { 
+			printf("dir: %s\n",path);
+			rrmdir(path);
+		}
+		else {
+			printf("file: %s\n",path);
+		}
+
+		//gjør selve slettingen
+		remove(path);
+	}	
 }
 
 
