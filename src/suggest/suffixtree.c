@@ -115,7 +115,8 @@ _suffixtree_insert_find_child(struct suffixtree *root, struct suggest_input *dat
 		}
 	}
 	
-	sf = _suffixtree_insert_new_node();
+	if ((sf = _suffixtree_insert_new_node()) == NULL)
+		return NULL;
 	sf->next = root->children;
 	root->children = sf;
 
@@ -128,8 +129,10 @@ _suffixtree_insert(struct suffixtree *root, struct suggest_input *data, unsigned
 	struct suffixtree *sf;
 
 	if (root->suffix == NULL && !root->isroot) {
-		if ((root->suffix = strdup(data->word + suffixlen)) == NULL)
+		if ((root->suffix = strdup(data->word + suffixlen)) == NULL) {
+			fprintf(stderr, "Unable to copy suffix string: '%s'", strerror(errno));
 			return;
+		}
 		root->si = data;
 	}
 	else if (suffixlen == strlen(data->word) && root->si == NULL) {
@@ -137,6 +140,10 @@ _suffixtree_insert(struct suffixtree *root, struct suggest_input *data, unsigned
 	}
 	else {
 		sf = _suffixtree_insert_find_child(root, data, suffixlen);
+		if (sf == NULL) {
+			fprintf(stderr, "Could not find an available child: '%s'\n", strerror(errno));
+			return;
+		}
 		_suffixtree_insert(sf, data, suffixlen + (sf->suffix ? strlen(sf->suffix) : 0));
 	}
 }
