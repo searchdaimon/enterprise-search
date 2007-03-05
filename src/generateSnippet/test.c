@@ -18,8 +18,8 @@ int main(int argc, char *argv[])
 
     int		paramnr;
 //    char	*sok = "Clustering \"Used to \" \"the combination\" \"patches whicH\"";
-//    char	*sok = argv[1];
-    char	*sok = "Galåen";
+    char	*sok = argv[1];
+//    char	*sok = "Galåen";
     query_array	qa;
 
     get_query(sok, strlen(sok), &qa);
