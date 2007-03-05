@@ -121,6 +121,7 @@ static inline automaton* build_automaton( int num_args, unsigned char **words )
 
     convert_to_lowercase(words[0]);
     base->str = strdup( (char*)words[0] );
+//    printf("Adding %s\n", (char*)words[0]);
     base->terminal = 0;
 
     for (i=1; i<num_args; i++)
@@ -130,6 +131,7 @@ static inline automaton* build_automaton( int num_args, unsigned char **words )
 	    unsigned char	c = words[i][p];
 
 	    convert_to_lowercase(words[i]);
+//	    printf("Adding %s\n", (char*)words[i]);
 
 	    while (words[i][p]!='\0')
 		{
@@ -228,7 +230,12 @@ static inline int search_automaton( automaton *base, const char *word )
 		}
 
 	    if (word[n]=='\0')
-		return A->terminal;
+		{
+		    if (A->str[i]=='\0')
+			return A->terminal;
+		    else
+			return -1;
+		}
 
 	    c = word[n];
 	    if ((c>='A' && c<='Z') || (last==0xc3 && c>=0x80 && c<=0x9e))
