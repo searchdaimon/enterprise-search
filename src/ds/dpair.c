@@ -18,12 +18,12 @@ int pair_compare( container *C, value a, value b )
 {
     int		ret;
 
-    ret = compare( ((pair_container_priv*)C->priv)->A, pair(a).first, pair(b).first );
+    ret = ds_compare( ((pair_container_priv*)C->priv)->A, pair(a).first, pair(b).first );
 
     if (ret != 0)
 	return ret;
 
-    return compare( ((pair_container_priv*)C->priv)->B, pair(a).second, pair(b).second );
+    return ds_compare( ((pair_container_priv*)C->priv)->B, pair(a).second, pair(b).second );
 }
 
 alloc_data pair_ap_allocate( container *C, va_list ap )

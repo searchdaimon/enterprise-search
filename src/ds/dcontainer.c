@@ -148,7 +148,7 @@ container* custom_container(int obj_size, int(*compare)(container*, value, value
 
 /* fancy allocate: */
 
-int compare( container *C, value a, value b )
+int ds_compare( container *C, value a, value b )
 {
     return C->compare( C, a, b );
 }

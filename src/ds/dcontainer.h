@@ -48,7 +48,7 @@ struct container
 
 /* fancy allocate: */
 
-int compare( container *C, value a, value b );
+int ds_compare( container *C, value a, value b );
 
 value allocate( container *C, ... );
 
