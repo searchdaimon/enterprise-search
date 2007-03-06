@@ -4,6 +4,7 @@
  *
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "query_parser.h"
 
@@ -55,6 +56,7 @@ struct _qp_yy_extra
 %}
 
 letter		[0-9a-z'_ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõöøùúûüışÿ]
+eletter		[0-9a-zA-Z\-_]
 utf-8-2b        [\300-\337][\200-\277]
 utf-8-3b        [\340-\357][\200-\277][\200-\277]
 utf-8-4b        [\360-\367][\200-\277][\200-\277][\200-\277]
@@ -67,6 +69,24 @@ word		[0-9a-zA-Z'_ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõöøùúûüışÿ
 \+?[fF][iI][lL][eE][tT][yY][pP][eE]\ *:	{ _qp_word_init('f', yyscanner); BEGIN COMMAND; }
 \+?[lL][aA][nN][gG][uU][aA][gG][eE]\ *:	{ _qp_word_init('l', yyscanner); BEGIN COMMAND; }
 \+?[cC][oO][lL][lL][eE][cC][tT][iI][oO][nN]\ *:	{ _qp_word_init('c', yyscanner); BEGIN COMMAND; }
+{eletter}+@({eletter}+\.)+{eletter}+	{
+//			    printf("epost: %s\n", yytext);
+
+			    char	*epost = strdup(yytext), *ptrptr, *token;
+
+			    _qp_word_init('"', yyscanner);
+
+			    token = strtok_r(epost, ".@", &ptrptr);
+			    while (token!=NULL)
+				{
+//				    printf("token:%s\n", token);
+				    _qp_word_add(token, yyscanner);
+				    token = strtok_r(NULL, ".@", &ptrptr);
+				}
+
+			    free(epost);
+			    _qp_word_exit(yyscanner);
+			}
 {word}+			{
 			    _qp_word_init('+', yyscanner);
 			    _qp_word_add( yytext, yyscanner );

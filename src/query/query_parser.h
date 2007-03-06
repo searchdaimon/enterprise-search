@@ -9,6 +9,7 @@
  *
  *  CHANGELOG:
  *
+ *    06.03.2007	Epostadresser blir nå skrevet om til fraser (med '.' og '@' som delimitere).
  *    22.02.2007	Har lagt til støtte for utf-8 unicode. Latin-1-supplement blir automatisk konvertert.
  *    23.11.2006	Har lagt til støtte for kommandoer: filetype/language/collection/date/status
  *    30.10.2006	La til støtte for minus-operator. Fikset potensiell memory-leak ved malformatert query.
