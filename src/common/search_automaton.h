@@ -89,7 +89,7 @@ static inline automaton* new_automaton()
     return A;
 }
 
-
+/*
 void print_automaton( char *prefix, automaton *A )
 {
     int		i;
@@ -113,7 +113,7 @@ void print_automaton( char *prefix, automaton *A )
 		}
 	}
 }
-
+*/
 
 static inline automaton* build_automaton( int num_args, unsigned char **words )
 {
