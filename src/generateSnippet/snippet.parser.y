@@ -44,7 +44,7 @@ const int	show = 0;
 const int	v_section_div=1, v_section_head=2, v_section_span=4;
 
 static inline int buf_printf(struct bsg_intern_data *data, const char *fmt, ...);
-static inline void test_for_snippet(struct bsg_intern_data *data);
+static inline void test_for_snippet(struct bsg_intern_data *data, char forced);
 
 %}
 
@@ -106,6 +106,8 @@ sentence :
 	{
     	    if (bsgpget_extra(yyscanner)->space) { buf_printf(data, " "); bsgpget_extra(yyscanner)->space = 0; }
 
+//	    printf("(%s)\n", (char*)$2);
+
 	    queue_push(data->Q, data->bpos, data->q_flags);
 	    data->q_flags = 0;
 
@@ -143,7 +145,7 @@ sentence :
 
 	    data->last_match = ret;
 
-	    test_for_snippet(data);
+	    test_for_snippet(data,0);
 	}
 	| sentence EOS
 	{
@@ -169,7 +171,7 @@ sentence :
 		    case '}': data->klamme_sikksakk--; break;
 		}
 */
-	    test_for_snippet(data);
+	    test_for_snippet(data,0);
 	}
 	| sentence OTHER
 	{
@@ -199,7 +201,7 @@ static inline int buf_printf(struct bsg_intern_data *data, const char *fmt, ...)
 	    char	*new_buf;
 	    int		new_size;
 
-	    printf("new_size = %i (%i)\n", data->bsize, len_printed);
+//	    printf("new_size = %i (%i)\n", data->bsize, len_printed);
 
 	    if (len_printed < data->bsize)
 		new_size = data->bsize*2;
@@ -228,11 +230,11 @@ static inline int buf_printf(struct bsg_intern_data *data, const char *fmt, ...)
 }
 
 
-static inline void test_for_snippet(struct bsg_intern_data *data)
+static inline void test_for_snippet(struct bsg_intern_data *data, char forced)
 {
-    if (queue_size(data->Q) > 0)
-	{
-	    while ((data->bpos - pair(queue_peak(data->Q)).first.i) > SNIPPET_SIZE)
+//    if (queue_size(data->Q) > 0)
+//	{
+	    while (queue_size(data->Q) > 0 && ((data->bpos - pair(queue_peak(data->Q)).first.i) > SNIPPET_SIZE || forced))
 		{
 		    value	temp = queue_peak(data->Q);
 		    int 	pos, flags;
@@ -345,7 +347,7 @@ static inline void test_for_snippet(struct bsg_intern_data *data)
 */
 		    queue_pop(data->Q);
 		}
-	}
+//	}
 }
 
 
@@ -480,6 +482,9 @@ void generate_snippet( query_array qa, char text[], int text_size, char **output
 	{
 	}
 
+    test_for_snippet(data,1);
+    if (data->best_stop==0)
+	data->best_stop = data->bpos;
     *output_text = print_best_snippet(data, b_start, b_end);
 
     bsgp_delete_buffer( bs, scanner );

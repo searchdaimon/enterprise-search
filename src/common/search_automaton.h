@@ -15,7 +15,7 @@ struct automaton;
 typedef struct automaton
 {
     int				terminal;
-    char			*str;
+    unsigned char		*str;
     struct automaton		*next[256];
 } automaton;
 
@@ -89,7 +89,7 @@ static inline automaton* new_automaton()
     return A;
 }
 
-/*
+
 void print_automaton( char *prefix, automaton *A )
 {
     int		i;
@@ -101,9 +101,9 @@ void print_automaton( char *prefix, automaton *A )
 	{
 	    if (A->next[i]!=NULL)
 		{
-		    char	*new_prefix = malloc(strlen(prefix)+strlen(A->str)+2);
+		    char	*new_prefix = malloc(strlen(prefix)+strlen((char*)A->str)+2);
 		    strcpy(new_prefix, prefix);
-		    strcat(new_prefix, A->str);
+		    strcat(new_prefix, (char*)A->str);
 		    new_prefix[strlen(new_prefix)+1] = '\0';
 		    new_prefix[strlen(new_prefix)] = (unsigned char)i;
 
@@ -113,7 +113,7 @@ void print_automaton( char *prefix, automaton *A )
 		}
 	}
 }
-*/
+
 
 static inline automaton* build_automaton( int num_args, unsigned char **words )
 {
@@ -121,7 +121,7 @@ static inline automaton* build_automaton( int num_args, unsigned char **words )
     int		i, j;
 
     convert_to_lowercase(words[0]);
-    base->str = strdup( (char*)words[0] );
+    base->str = (unsigned char*)strdup( (char*)words[0] );
 //    printf("Adding %s\n", (char*)words[0]);
     base->terminal = 0;
 
@@ -130,21 +130,22 @@ static inline automaton* build_automaton( int num_args, unsigned char **words )
 	    automaton		*A = base;
 	    int			p=0, n;
 	    unsigned char	c = words[i][p];
+	    char		terminated = 0;
 
 	    convert_to_lowercase(words[i]);
 //	    printf("Adding %s\n", (char*)words[i]);
 
-	    while (words[i][p]!='\0')
+	    while (words[i][p]!='\0' && !terminated)
 		{
 		    for (n=0; A->str[n]==words[i][p+n] && A->str[n]!='\0' && words[i][p+n]!='\0'; n++);
 
 		    // If A->str and words[i][p] share their first n characters, and len(A->str)>n:
 		    if ((A->str[n]!=words[i][p+n]) && (A->str[n]!='\0'))
 			{
-			    automaton	*N = new_automaton();
-			    char	*temp_str;
+			    automaton		*N = new_automaton();
+			    unsigned char	*temp_str;
 
-			    N->str = strdup( (char*)&(A->str[n+1]) );
+			    N->str = (unsigned char*)strdup( (char*)&(A->str[n+1]) );
 
 			    for (j=0; j<256; j++)
 				{
@@ -156,9 +157,11 @@ static inline automaton* build_automaton( int num_args, unsigned char **words )
 
 			    A->next[A->str[n]] = N;
 
+//			    printf("[%s] => [%c]->[%s]\n", &(A->str[n]), A->str[n], &(A->str[n+1]));
+
 			    temp_str = A->str;
 			    temp_str[n] = '\0';
-			    A->str = strdup(temp_str);
+			    A->str = (unsigned char*)strdup((char*)temp_str);
 			    free(temp_str);
 
 			    N->terminal = A->terminal;
@@ -171,24 +174,33 @@ static inline automaton* build_automaton( int num_args, unsigned char **words )
 		    || (A->str[n]=='\0' && words[i][p+n]!='\0' && A->next[words[i][p+n]]==NULL))
 			{
 			    automaton	*N = new_automaton();
+//			    printf("[%c]->[%s]\n", words[i][p+n], &(words[i][p+n+1]));
 
-			    N->str = strdup( (char*)&(words[i][p+n+1]) );
+			    N->str = (unsigned char*)strdup( (char*)&(words[i][p+n+1]) );
 			    A->next[words[i][p+n]] = N;
 			    N->terminal = i;
+			    terminated = 1;
 			}
 
 		    // If A->str and words[i][p] are equal or len(words[i][p])==n
 		    if (words[i][p+n]=='\0')
 			{
+//			    printf("terminal\n");
 			    A->terminal = i;
+			    terminated = 1;
 			}
 
 		    A = A->next[words[i][p+n]];
 		    p+= n;
 		    if (words[i][p]!='\0') p++;
+//		    printf("-- next iteration --\n");
 		}
 	}
-
+/*
+    printf("Added words to automata:\n");
+    print_automaton("", base);
+    printf("---\n");
+*/
     return base;
 }
 
@@ -213,6 +225,7 @@ static inline int search_automaton( automaton *base, const char *word )
 {
     automaton		*A = base;
     int			i, n;
+//    unsigned char	*word = (unsigned char*)_word;
     unsigned char	c, last=255;
 
 //    printf("%s(%i)(%i) ?\n", word, (int)base, (int)word);
@@ -226,9 +239,12 @@ static inline int search_automaton( automaton *base, const char *word )
 			c+= 32;	// 'a' - 'A'
 		    last = c;
 
+//		    printf("(%c,%c)", A->str[i], c);
 		    if (c!=A->str[i])
 			return -1;
 		}
+
+//	    printf("%c", word[n]);
 
 	    if (word[n]=='\0')
 		{
