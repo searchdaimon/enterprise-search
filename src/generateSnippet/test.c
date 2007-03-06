@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     int		paramnr;
 //    char	*sok = "Clustering \"Used to \" \"the combination\" \"patches whicH\"";
 //    char	*sok = argv[1];
-    char	*sok = "\"Magnus GalÃ¥en\"";
+    char	*sok = "Magnus Galåen";
     query_array	qa;
 
     get_query(sok, strlen(sok), &qa);
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 
 	    char	*snippet;
 
-	    generate_snippet( qa, buf, size, &snippet, "<b>", "</b>" );
+	    generate_snippet( qa, buf, size, &snippet, "\033[1;32m", "\033[0m", 320 );
 
 	    printf("%s\n", snippet);
 	    free(snippet);

@@ -13,8 +13,6 @@
 #include "../ds/dqueue.h"
 #include "snippet.parser.common.h"
 
-#define SNIPPET_SIZE	160
-
 // --- fra flex:
 typedef void* yyscan_t;
 typedef struct bsgp_buffer_state *YY_BUFFER_STATE;
@@ -38,6 +36,7 @@ struct bsg_intern_data
     int		klamme_firkant, klamme_rund, klamme_sikksakk;
     int		q_flags;
     int		best_score, best_start, best_stop;
+    int		snippet_size;
 };
 
 const int	show = 0;
@@ -234,7 +233,7 @@ static inline void test_for_snippet(struct bsg_intern_data *data, char forced)
 {
 //    if (queue_size(data->Q) > 0)
 //	{
-	    while (queue_size(data->Q) > 0 && ((data->bpos - pair(queue_peak(data->Q)).first.i) > SNIPPET_SIZE || forced))
+	    while (queue_size(data->Q) > 0 && ((data->bpos - pair(queue_peak(data->Q)).first.i) > data->snippet_size || forced))
 		{
 		    value	temp = queue_peak(data->Q);
 		    int 	pos, flags;
@@ -355,7 +354,7 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 {
     int		i, pos;
     char	m;
-    int		bsize = SNIPPET_SIZE*10;
+    int		bsize = data->snippet_size*5;
     char	buf[bsize];
     int		bpos=0;
     value	phrase;
@@ -412,7 +411,7 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 }
 
 
-void generate_snippet( query_array qa, char text[], int text_size, char **output_text, char* b_start, char* b_end )
+void generate_snippet( query_array qa, char text[], int text_size, char **output_text, char* b_start, char* b_end, int _snippet_size )
 {
     struct bsgp_yy_extra	*he = malloc(sizeof(struct bsgp_yy_extra));
     struct bsg_intern_data	*data = malloc(sizeof(struct bsg_intern_data));
@@ -421,6 +420,8 @@ void generate_snippet( query_array qa, char text[], int text_size, char **output
 
     he->stringtop = 0;
     he->space = 0;
+
+    data->snippet_size = _snippet_size;
 
     data->bpos = 0;
     data->bsize = 65536;
