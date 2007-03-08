@@ -392,12 +392,14 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
                 else if( a[i].DocID < b[j].DocID ) {
                         //printf("%i < %i\n",a[i].DocID,b[j].DocID);
 
-                        //c[k++] = a[i++];
+                        c[k++] = a[i++];
+			(*baselen)++;
                         i++;
                 }
                 else {
                         //printf("%i > %i\n",a[i].DocID,b[j].DocID);
-                        //c[k++] = b[j++];
+                        c[k++] = b[j++];
+			(*baselen)++;
                         j++;
                 }
         }

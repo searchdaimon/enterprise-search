@@ -348,7 +348,7 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 				> (*adult).AdultWords[adultpos].crc32) 
 				&& (adultpos < (*adult).adultWordnr)) {
 				#ifdef DEBUG
-					printf("testing for %lu %s\n",(*adult).AdultWords[adultpos].crc32,(*adult).AdultWords[adultpos].word);
+					//printf("testing for %lu %s\n",(*adult).AdultWords[adultpos].crc32,(*adult).AdultWords[adultpos].word);
 				#endif
 				++adultpos;
 			}
@@ -833,6 +833,7 @@ void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct Rep
 					//run_html_parser( (*ReposetoryHeader).url, HtmlBuffer, HtmlBufferLength, fn );
 					//html_parser_run( "http://YAHOOgroups.com/svada/index.html", buf, size, &title, &body, fn, NULL );
 					html_parser_run((*ReposetoryHeader).url,HtmlBuffer, HtmlBufferLength,title, body,fn,pagewords );
+					//printf("title %s\n",(*title));
 					//alarm( 0);
 					//if(alarm_got_raised) {
 					//	printf("run_html_parser did time out. At DocID %lu\n",(*ReposetoryHeader).DocID);

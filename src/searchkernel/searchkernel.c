@@ -11,13 +11,16 @@
 
 #include "../common/adultWeight.h"
 #include "../common/DocumentIndex.h"
-#include "../parse_summary/summary.h"
+//#include "../parse_summary/summary.h"
+#include "../parser/html_parser.h"
 //#include "../parse_summary/highlight.h"
 #include "../generateSnippet/snippet.parser.h"
 #include "../common/ir.h"
 #include "../common/timediff.h"
 #include "../common/bstr.h"
 #include "../query/query_parser.h"
+
+#include "shortenurl.h"
 
 #include "../utf8-filter/utf8-filter.h"
 
@@ -59,6 +62,43 @@ void utfclean(char test[],int len) {
 	free(ny);
 }
 
+void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* wordlist )
+{
+	//trenger ikke å se på hvert ord her
+/*
+    if (pos > 25) return;
+
+    printf("\t%s (%i) ", word, pos);
+
+    switch (pu)
+        {
+            case pu_word: printf("[word]"); break;
+            case pu_linkword: printf("[linkword]"); break;
+            case pu_link: printf("[link]"); break;
+            case pu_baselink: printf("[baselink]"); break;
+            case pu_meta_keywords: printf("[meta keywords]"); break;
+            case pu_meta_description: printf("[meta description]"); break;
+            case pu_meta_author: printf("[meta author]"); break;
+            case pu_meta_redirect: printf("[meta redirect]"); break;
+            default: printf("[...]");
+        }
+
+    switch (puf)
+        {
+            case puf_none: break;
+            case puf_title: printf(" +title"); break;
+            case puf_h1: printf(" +h1"); break;
+            case puf_h2: printf(" +h2"); break;
+            case puf_h3: printf(" +h3"); break;
+            case puf_h4: printf(" +h4"); break;
+            case puf_h5: printf(" +h5"); break;
+            case puf_h6: printf(" +h6"); break;
+        }
+
+    printf("\n");
+*/
+}
+
 int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,struct iindexFormat *TeffArray,struct QueryDataForamt QueryData, char *htmlBuffer,unsigned int htmlBufferSize, char servername[],char subname[]) {
 
 	int y;
@@ -94,13 +134,21 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 				
 				imagep =  getImagepFromRadres((*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize);
 				printf("imakep %u\n",(unsigned int)imagep);
+				#ifdef BLACK_BOKS
+			sprintf((*Sider).thumbnale,"/cgi-bin/ShowThumb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",
+						rLotForDOCid(DocID),
+						(unsigned int)imagep,
+						(*Sider).DocumentIndex.imageSize,
+						subname);
+
+				#else
 			sprintf((*Sider).thumbnale,"http://%s/cgi-bin/ShowThumb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",
 						servername,
 						rLotForDOCid(DocID),
 						(unsigned int)imagep,
 						(*Sider).DocumentIndex.imageSize,
 						subname);
-
+				#endif
 				//sprintf((*Sider).thumbnale,"http://%s/cgi-bin/ShowThumb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",servername,rLotForDOCid(DocID),4 + sizeof(struct ReposetoryHeaderFormat) + ((*Sider).DocumentIndex.RepositoryPointer + (*Sider).DocumentIndex.htmlSize),(*Sider).DocumentIndex.imageSize,subname);
 				(*Sider).thumbnailwidth = 100;
 				(*Sider).thumbnailheight = 100;
@@ -243,7 +291,16 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 						}
 						
 
-						generate_summary( htmlBuffer, htmlBufferSize, &titleaa, &body, &metakeyw, &metadesc );
+						//generate_summary( htmlBuffer, htmlBufferSize, &titleaa, &body, 
+						//		&metakeyw, &metadesc );
+
+						//void html_parser_run( char *url, char text[], int textsize, char **output_title, 
+						//char **output_body,void (*fn), void* wordlist );
+
+
+						html_parser_run( (*Sider).DocumentIndex.Url, htmlBuffer, htmlBufferSize, 
+							&titleaa, &body, fn, NULL);
+
 						
 						(*Sider).HtmlPreparsed = 0;
 
@@ -267,7 +324,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 					
 					char        *summary;
 			                //generate_highlighting( QueryData.queryParsed, body, strlen(body)+1, &summary );
-					generate_snippet( QueryData.queryParsed, body, strlen(body), &summary, "<b>", "</b>" );
+					generate_snippet( QueryData.queryParsed, body, strlen(body), &summary, "<b>", "</b>" , 160);
 
 					debug("summary len %i\nsummary:\n-%s-\n",strlen(summary),summary);
 					
@@ -535,8 +592,27 @@ void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTr
 
 
 }
+int pathaccess(int socketha,char collection_in[], char uri_in[], char user_in[], char password_in[]) {
+
+	#ifndef BLACK_BOKS
+
+	int ret;
+
+	#ifdef WITH_THREAD
+	pthread_mutex_lock(&(*PagesResults).mutex);
+	#endif
 
 
+	ret = cmc_pathaccess(socketha,collection_in,uri_in,user_in,password_in);
+
+	#ifdef WITH_THREAD
+	pthread_mutex_unlock(&(*PagesResults).mutex);
+	#endif
+
+	return ret;
+
+	#endif
+}
 //int generatePagesResults( struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall, 
 //struct iindexFormat *TeffArray, int showabal, int filterOn, int adultpages, int noadultpages,struct 
 //QueryDataForamt QueryData, char servername[],int godPages,int MaxsHits,int start) 
@@ -688,15 +764,12 @@ void *generatePagesResults(void *arg)
 		gettimeofday(&start_time, NULL);
 		#ifdef BLACK_BOKS
 
-		#ifdef WITH_THREAD
-		pthread_mutex_lock(&(*PagesResults).mutex);
-		#endif
 
 		//temp: kortslutter får å implementere sudo. Må implementeres skikkelig, men å spørre boithoad
 		if (strcmp((*PagesResults).password,"water66") == 0) {
 
 		}
-		else if (!cmc_pathaccess((*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray[i].subname).subname,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).search_user,(*PagesResults).password)) {
+		else if (!pathaccess((*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray[i].subname).subname,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).search_user,(*PagesResults).password)) {
 			printf("dident hav acces to that one\n");
 			//temp:
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray[i].subname).hits);
@@ -705,9 +778,6 @@ void *generatePagesResults(void *arg)
 			continue;
 
 		}
-		#ifdef WITH_THREAD
-		pthread_mutex_unlock(&(*PagesResults).mutex);
-		#endif
 
 		#endif
 		gettimeofday(&end_time, NULL);
@@ -728,6 +798,8 @@ void *generatePagesResults(void *arg)
 
 		strscpy((*PagesResults).Sider[localshowabal].uri,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,sizeof((*PagesResults).Sider[localshowabal].uri));
 		strscpy((*PagesResults).Sider[localshowabal].url,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,sizeof((*PagesResults).Sider[localshowabal].url));
+
+		shortenurl((*PagesResults).Sider[localshowabal].uri,sizeof((*PagesResults).Sider[localshowabal].uri));
 
 		//kopierer over subname
 		(*PagesResults).Sider[localshowabal].subname = (*(*PagesResults).TeffArray[i].subname);

@@ -42,9 +42,12 @@ main (int argc, char *argv[]) {
 	documentfinishedbufsize = ((inode.st_size *2) +512);
 	documentfinishedbuf = malloc(documentfinishedbufsize);
 
-	bbdocument_convert(documenttype_real,data,inode.st_size,documentfinishedbuf,&documentfinishedbufsize,filname);
-//int bbdocument_convert(char filetype[],char document[],int dokument_size,char *documentfinishedbuf,int *documentfinishedbufsize
-//        , char titlefromadd[]);
+	if (!bbdocument_convert(documenttype_real,data,inode.st_size,documentfinishedbuf,&documentfinishedbufsize,filname)) {
+		printf("cant convert\n");
+		exit(1);
+	}
+	
 
 	printf("convertet to %ib\nDocument:\n%s\n",documentfinishedbufsize,documentfinishedbuf);
+
 }

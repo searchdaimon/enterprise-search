@@ -568,6 +568,15 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			perror("cant read ReposetoryHeader");
 		}
 
+		#ifdef DEBUG
+			printf("ReposetoryHeader:\n");
+			printf("\tDocID: %u\n",(*ReposetoryHeader).DocID);
+			printf("\turl: \"%s\"\n",(*ReposetoryHeader).url);
+			printf("\thtmlSize: %ho\n",(*ReposetoryHeader).htmlSize);
+			printf("\timageSize: %ho\n",(*ReposetoryHeader).imageSize);
+			printf("\n");
+		#endif
+
 
 		if (htmlbufferSize < (*ReposetoryHeader).htmlSize) {
 			printf("htmlSize lager then buffer. %i\n",htmlbufferSize);

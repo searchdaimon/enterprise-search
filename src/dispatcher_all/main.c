@@ -943,7 +943,7 @@ int main(int argc, char *argv[])
         //}
 
 	//nårmalisere query. 
-	strcasesandr(QueryData.query,sizeof(QueryData.query),"."," ");
+	//strcasesandr(QueryData.query,sizeof(QueryData.query),"."," ");
 
 	for(i=0;i<strlen(QueryData.query);i++) {
 
@@ -956,6 +956,8 @@ int main(int argc, char *argv[])
                 || (32 == (unsigned int)QueryData.query[i])
 		|| (45 == (unsigned int)QueryData.query[i])
 		|| (58 == (unsigned int)QueryData.query[i])
+		|| (64 == (unsigned int)QueryData.query[i]) // @
+		|| (46 == (unsigned int)QueryData.query[i]) // .
 		|| (128 < (unsigned int)QueryData.query[i])
 
 		) {

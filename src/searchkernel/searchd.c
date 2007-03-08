@@ -2,6 +2,8 @@
 /******************************/
 #include "searchkernel.h"
 
+#include "../common/bstr.h"
+
 #include "../common/poprank.h"
 #include "../common/adultWeight.h"
 #include "../common/daemon.h"
@@ -9,7 +11,7 @@
 #include "../boithoadClientLib/liboithoaut.h"
 #include "../common/timediff.h"
 #include <sys/time.h>
-
+#include "../parser/html_parser.h"
 
 #define _REENTRANT
 
@@ -96,6 +98,8 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	//#endif	
+
+	html_parser_init();
 
 	#ifdef WITH_THREAD
 		pthread_t chld_thr;
@@ -193,6 +197,8 @@ int main(int argc, char *argv[])
 		}
 
 	}
+
+	html_parser_exit();
 	
 	return(0);
 }

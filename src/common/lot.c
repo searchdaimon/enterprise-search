@@ -37,6 +37,19 @@ FILE *bfopen(char name[],char flags[]) {
 	char *cptr;
 	char fulname[512];
 
+	if ((cptr = getenv("BOITHOHOME")) == NULL) {
+		fprintf(stderr,"Error: Can't get environment value \"BOITHOHOME\"\n");
+		exit(1);
+	}
+	else if (name[0] == '/') {
+		fprintf(stderr,"Error: name ");
+	}
+	else {
+		sprintf(fulname,"%s/%s",cptr,name);
+		return fopen(fulname,flags);
+	}
+
+/*
 	if ((cptr = getenv("BOITHOHOME")) != NULL) {
 		sprintf(fulname,"%s/%s",cptr,name);
 		return fopen(fulname,flags); 
@@ -44,7 +57,7 @@ FILE *bfopen(char name[],char flags[]) {
 	else {
 		return fopen(name,flags);
 	}
-
+*/
 }
 
 int HasSufficientSpace(char FilePath[], int needSpace) {
@@ -102,7 +115,7 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
 	char FilePath[PATH_MAX]; 	//var 128
 	char File [PATH_MAX];	//var 128
 
-	printf("subname: \"%s\"\n",subname);
+	printf("subname: \"%s\", resource %s\n",subname,resource);
 
                  GetFilPathForLot(FilePath,LotNr,subname);
                  strcpy(File,FilePath);

@@ -191,13 +191,15 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
 
 			char        uri[sizeof(entry_name)+1];
+
 			smbc_urldecode( uri, entry_name, sizeof(entry_name)+1 );
         					
 			isize = (strlen(uri) *2)+ strlen("file:");
 			crawldocumentExist.documenturi = malloc(isize);
 			sprintf(crawldocumentExist.documenturi,"file:%s",uri);
 			iconv_convert(isoconp ,&crawldocumentExist.documenturi, isize);
-
+			
+			
 			crawldocumentExist.lastmodified = file_stat.st_mtime;
 			crawldocumentExist.dokument_size = file_stat.st_size;
 
@@ -263,15 +265,22 @@ int smb_recursive_get( char *prefix, char *dir_name,
 						isize = (strlen(uri) *2)+ strlen("file:");
 						crawldocumentAdd.documenturi = malloc(isize);
 						sprintf(crawldocumentAdd.documenturi,"file:%s",uri);
+						#ifdef URLDECODE
 						iconv_convert(isoconp ,&crawldocumentAdd.documenturi, isize);
+						#endif
 
         					crawldocumentAdd.documenttype	= "";
         					crawldocumentAdd.document	= fbuf;
         					crawldocumentAdd.dokument_size	= file_stat.st_size;
         					crawldocumentAdd.lastmodified	= file_stat.st_mtime;
         					crawldocumentAdd.acl 		= parsed_acl;
-        					crawldocumentAdd.title		= malloc(strlen(dirp->name) +1);
+
+						isize = ((strlen(dirp->name) *2) +1);
+        					crawldocumentAdd.title	= malloc(isize);
 						smbc_urldecode( crawldocumentAdd.title, dirp->name, strlen(dirp->name) +1);
+						#ifdef URLDECODE
+						iconv_convert(isoconp ,&crawldocumentAdd.title, isize);
+						#endif
 					        crawldocumentAdd.doctype	= "";
 
 						cleanresourceUnixToWin(crawldocumentAdd.documenturi);

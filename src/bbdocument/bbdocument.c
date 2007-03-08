@@ -32,6 +32,12 @@
 
 #define html_tempelate "<html>\n<head>\n<title>%s</title>\n<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'>\n</head>\n<body>\n%s\n</body>\n</html>\n"
 
+//muligens bare convert:
+// ai
+char *supportetimages[] = {"png", "jpg", "jepg", "bmp", "tif", "tiff", "gif", "eps", "ai", "psd",'\0'};
+
+
+
 //globals
 CHTbl htbl;
 
@@ -53,6 +59,21 @@ struct uriindexFormat {
 };
 
 
+
+int canconvert(char have[]) {
+        int i;
+
+        i =0;
+        while(supportetimages[i] != NULL) {
+                if (strcmp(supportetimages[i],have) == 0) {
+                        return 1;
+                }
+                ++i;
+        }
+
+        return 0;
+}
+
 int bbdocument_makethumb( char documenttype[],char document[],size_t dokument_size,char **imagebuffer,size_t *imageSize) {
 
 	#ifdef BBDOCUMENT_IMAGE
@@ -65,11 +86,12 @@ int bbdocument_makethumb( char documenttype[],char document[],size_t dokument_si
 		}
 			return 1;
 	}
-	else if (((*imagebuffer) = generate_thumbnail( document, dokument_size, imageSize )) == NULL) {
+	else if (canconvert(documenttype) && (((*imagebuffer) = generate_thumbnail( document, dokument_size, imageSize )) == NULL)) {
 		return 0;
 	}
 
 	#else
+	#if BBDOCUMENT_IMAGE_BY_CONVERT
 	if (strcmp(documenttype,"pdf") == 0) {
 		//pdf convert
 		if (((*imagebuffer) = generate_pdf_thumbnail_by_convert( document, dokument_size, imageSize )) == NULL) {
@@ -78,10 +100,11 @@ int bbdocument_makethumb( char documenttype[],char document[],size_t dokument_si
 		}
 			return 1;
 	}
-	else if (((*imagebuffer) = generate_thumbnail_by_convert( document, dokument_size, imageSize, documenttype)) == NULL ) {
+	else if (canconvert(documenttype) && (((*imagebuffer) = generate_thumbnail_by_convert( document, dokument_size, imageSize, documenttype)) == NULL )) {
 		printf("error: cant run generate_thumbnail_by_convert\n");
 		return 0;
 	}
+	#endif
 	#endif
 	printf("imageSize %u",(unsigned int)(*imageSize));
 	return 1;
@@ -146,11 +169,12 @@ int bbdocument_init() {
 			TokCount = split(lines, ": ", &splitdata);			
 			//printf("\tfound %d token(s):\n", TokCount);
 
+			/*
 			if (TokCount != 2) {
 				printf("bad config line \"%s\". Splitet in %i elements\n",lines,TokCount);
 				continue;
 			}
-
+			*/
 
 			if (strcmp(splitdata[0],"documentstype") == 0) {
 				//nyt filter
@@ -166,7 +190,11 @@ int bbdocument_init() {
 
 			}
 			else if (strcmp(splitdata[0],"command") == 0) {
-				strcpy((*fileFilter).command,splitdata[1]);
+				//vi kan ha : i komandoen. Kopierer derfor først inn hele, så fjerner vi command:
+				//strcpy((*fileFilter).command,splitdata[1]);
+			
+				strscpy((*fileFilter).command,lines,sizeof((*fileFilter).command));
+				strcasesandr((*fileFilter).command,sizeof((*fileFilter).command),"command:","");
 				//leger til path der vi har sakt vi skal ha lokal path ( ./ )
 				strcasesandr((*fileFilter).command,sizeof((*fileFilter).command),"./",path);
 				printf(".command %s\n",(*fileFilter).command);
@@ -332,7 +360,7 @@ int bbdocument_convert(char filetype[],char document[],int dokument_size,char *d
 		cpbuf[dokument_size] = '\0';
 //	printf("cpbuf %s\n",cpbuf);
 
-		//temp: hvårfår får vi problemer med bp.txt her. Tar ikke med hele dokumentet
+		//temp: hvorfår får vi problemer med bp.txt her. Tar ikke med hele dokumentet
 //		strcasesandr(cpbuf,cpbufsize,"\n","<br>\n");
 //	printf("cpbuf %s\n",cpbuf);
 
@@ -391,8 +419,23 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 	printf("running: %s\n",(*fileFilter).command);
 	//sender med størelsen på buferen nå. Vil få størelsen på hva vi leste tilbake
 	exeocbuflen = (*documentfinishedbufsize);
-	exeoc(splitdata,documentfinishedbuf,&exeocbuflen);	
-	
+
+	/*
+	if (!exeoc(splitdata,documentfinishedbuf,&exeocbuflen)) {
+		printf("can't run filter\n");
+		(*documentfinishedbufsize) = 0;
+		return 0;
+	}
+	*/
+	//bin/sh -c "ls -1"	
+	char *shargs[] = {"/bin/sh","-c",(*fileFilter).command ,'\0'};	
+	printf("runnig: /bin/sh -c %s\n",(*fileFilter).command);
+	if (!exeoc(shargs,documentfinishedbuf,&exeocbuflen)) {
+		printf("can't run filter\n");
+		(*documentfinishedbufsize) = 0;
+		return 0;
+
+	}
 	#ifdef DEBUG
 	printf("did convert to %i bytes (strlen %i)\n",exeocbuflen,strlen(documentfinishedbuf));
 	#endif
@@ -526,22 +569,22 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		strcpy(ReposetoryHeader.doctype,doctype);
 	}
 
-	if (bbdocument_convert(documenttype_real,document,dokument_size,htmlbuffer,&htmlbuffersize,title)) {
+	if (!bbdocument_convert(documenttype_real,document,dokument_size,htmlbuffer,&htmlbuffersize,title)) {
 
-	}
-	else {
+		printf("can't run bbdocument_convert\n");
+		//lager en tom html buffer
 		//Setter titelen som subjekt. Hva hvis vi ikke har title?
 		sprintf(htmlbuffer,html_tempelate,title,"");
 		htmlbuffersize = strlen(htmlbuffer);
-		debug("useing title \"%s\" as title",title);
-		debug("htmlbuffersize %i",htmlbuffersize);
+		printf("useing title \"%s\" as title\n",title);
+		printf("htmlbuffersize %i\n",htmlbuffersize);
 	}
 
 
 	//prøver å lag et bilde
 	//if ( (imagebuffer = generate_thumbnail( document, dokument_size, &imageSize )) == NULL ) {
 	if (!bbdocument_makethumb(documenttype_real,document,dokument_size,&imagebuffer,&imageSize)) {
-		debug("can't generate image");
+		printf("can't generate image");
 		ReposetoryHeader.imageSize = 0;
 	}
 	else {
@@ -581,6 +624,8 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 	#ifdef DEBUG	
 	printf("legger til DocID \"%u\", time \"%u\"\n",ReposetoryHeader.DocID,lastmodified);
+	printf("htmlSize %ho, imageSize %ho\n",ReposetoryHeader.htmlSize,ReposetoryHeader.imageSize);
+	printf("html: -%s-\n",htmlbuffer);
 	#endif
 
 	uriindex_add(ReposetoryHeader.url,ReposetoryHeader.DocID,lastmodified,subname);
