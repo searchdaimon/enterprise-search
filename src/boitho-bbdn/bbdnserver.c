@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <inttypes.h>
 
-
+#include "../common/boithohome.h"
 #include "../common/define.h"
 #include "../common/daemon.h"
 #include "../bbdocument/bbdocument.h"
@@ -293,8 +293,12 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 
 			//toDo må bruke subname, og C ikke perl her
 			printf("cleanin lots start\n");
+			char command[PATH_MAX];
+			snprintf(command,sizeof(command),"perl %s",bfile("perl/cleanLots.pl"));
 			//system("perl /home/boitho/boitho/websearch/perl/cleanLots.pl");
-			system("perl /home/boitho/boithoTools/perl/cleanLots.pl");
+			//system("perl /home/boitho/boithoTools/perl/cleanLots.pl");
+
+			system(command);
 			printf("cleanin lots end\n");
 
 			

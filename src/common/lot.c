@@ -2,6 +2,7 @@
 #include "define.h"
 #include "bstr.h"
 #include "bfileutil.h"
+#include "boithohome.h"
 
 #include <stdlib.h>
 #include <fcntl.h>
@@ -266,23 +267,11 @@ void lotCloseFiles() {
 FILE *openMaplist() {
 
 	FILE *MAPLIST;
-	char *maplistpathpointer;
 
-        char maplistpath[255] = "/home/boitho/config/maplist.conf";
-
-	#if DEBUG
-		printf("openig maplist %s\n",maplistpath);
-	#endif
-
-
-        //skriver over vanlig maplistpath hvis vi har det definert i env variablen MAPLIST
-        if ((maplistpathpointer = getenv("MAPLIST")) != NULL) {
-                strncpy(maplistpath,maplistpathpointer,sizeof(maplistpath));
-        }
 
         //leser liten over mapper vi kan bruke.
-        if ( (MAPLIST = fopen(maplistpath,"r")) == NULL) {
-                perror(maplistpath);
+        if ( (MAPLIST = bfopen("config/maplist.conf","r")) == NULL) {
+                perror(bfile("config/maplist.conf"));
                 exit(1);
         }
 

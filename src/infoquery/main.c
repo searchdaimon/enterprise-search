@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "../common/boithohome.h"
 #include "../acls/acls.h"
 #include "../crawlManager/client.h"
 
@@ -58,8 +59,8 @@ int main (int argc, char *argv[]) {
 	}
 	
 	FILE *fp;
-	if ((fp = fopen("/home/boitho/logs/infoquery.log","a")) == NULL) {
-		perror("/home/boitho/logs/infoquery.log");
+	if ((fp = bfopen("logs/infoquery.log","a")) == NULL) {
+		perror(bfile("logs/infoquery.log"));
 		exit(1);
 	}
 	fprintf(fp,"%s: \"%s\"\n",key,value);	

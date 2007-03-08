@@ -14,12 +14,12 @@
     #include <fcntl.h>
     #include <errno.h> 
     #include <time.h>
+    #include "../common/boithohome.h"
     
 	#ifndef BLACK_BOKS
     #include <libconfig.h>
 
-
-    #define cfg_dispatcher "/home/boitho/config/dispatcher.cfg"
+    #define cfg_dispatcher "config/dispatcher.cfg"
 	#endif
 
 #ifndef BLACK_BOKS
@@ -83,7 +83,7 @@ void die(int errorcode,char errormessage[]) {
 	printf("</search>\n");
 
         //ToDo: må ha låsing her
-        if ((LOGFILE = fopen("/home/boitho/config/query.log","a")) == NULL) {
+        if ((LOGFILE = bfopen("config/query.log","a")) == NULL) {
                 perror("logfile");
         }
         else {
@@ -580,7 +580,7 @@ int main(int argc, char *argv[])
 
 	  	/* Load the file */
 		#ifdef DEBUG
-	  	printf("loading [%s]..\n",cfg_dispatcher);
+	  	printf("loading [%s]..\n",bfile(cfg_dispatcher));
 		#endif
 
 	  	if (!config_read_file(&cfg, cfg_dispatcher)) {
@@ -988,8 +988,8 @@ int main(int argc, char *argv[])
 	GeoIP *gi;
 	GeoIPRecord * gir;
 
-        //gi = GeoIP_open("/home/boitho/boithoTools/data/GeoLiteCity.dat", GEOIP_MEMORY_CACHE);
-        gi = GeoIP_open("/home/boitho/boithoTools/data/GeoLiteCity.dat", GEOIP_STANDARD);
+        //gi = GeoIP_open(bfile("data/GeoLiteCity.dat"), GEOIP_MEMORY_CACHE);
+        gi = GeoIP_open(bfile("data/GeoLiteCity.dat"), GEOIP_STANDARD);
         if (gi == NULL) {
                 fprintf(stderr, "Error opening ip database\n");
                 //exit(1);
@@ -1388,7 +1388,7 @@ int main(int argc, char *argv[])
         printf("<SEARCH>\n");   
 	//får rare svar fra hilite. Dropper å bruke den får nå
 	FinalSiderHeder.hiliteQuery[0] = '\0';
-        printf("<RESULT_INFO TOTAL=\"%i\" QUERY=\"%s\" HILITE=\"%s\" TIME=\"%f\" FILTERED=\"%i\" SHOWABAL=\"%i\" CASHE=\"%i\" PREQUERY=\"%i\" GEOIPCONTRY=\"%s\" SUBNAME=\"%s\"/>\n",FinalSiderHeder.TotaltTreff,QueryData.queryhtml,FinalSiderHeder.hiliteQuery,FinalSiderHeder.total_usecs,FinalSiderHeder.filtered,FinalSiderHeder.showabal,hascashe,hasprequery,QueryData.GeoIPcontry,QueryData.subname);
+        printf("<RESULT_INFO TOTAL=\"%i\" QUERY=\"%s\" HILITE=\"%s\" TIME=\"%f\" FILTERED=\"%i\" SHOWABAL=\"%i\" CASHE=\"%i\" PREQUERY=\"%i\" GEOIPCONTRY=\"%s\" SUBNAME=\"%s\" BOITHOHOME=\"%s\"/>\n",FinalSiderHeder.TotaltTreff,QueryData.queryhtml,FinalSiderHeder.hiliteQuery,FinalSiderHeder.total_usecs,FinalSiderHeder.filtered,FinalSiderHeder.showabal,hascashe,hasprequery,QueryData.GeoIPcontry,QueryData.subname,bfile(""));
 
 
 	//viser info om serverne som svarte
@@ -1760,8 +1760,8 @@ int main(int argc, char *argv[])
 	}
 
 
-	//ToDo: må ha låsing her
-	if ((LOGFILE = fopen("/home/boitho/config/query.log","a")) == NULL) {
+	
+	if ((LOGFILE = bfopen("config/query.log","a")) == NULL) {
 		perror("logfile");
 	}
 	else {

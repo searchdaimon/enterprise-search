@@ -1,5 +1,6 @@
 #ifdef BLACK_BOKS
 
+#include "../common/boithohome.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,7 +14,7 @@
 
 
 
-#define userToSubnameDbFile "/home/boitho/config/userToSubname.db"
+#define userToSubnameDbFile "config/userToSubname.db"
 
 
 int userToSubname_open(struct userToSubnameDbFormat *userToSubnameDb) {
@@ -54,7 +55,7 @@ int userToSubname_open(struct userToSubnameDbFormat *userToSubnameDb) {
 
 
                 /* open the database. */
-                if ((ret = (*userToSubnameDb).dbp->open((*userToSubnameDb).dbp, NULL, userToSubnameDbFile, NULL, DB_BTREE, DB_CREATE, 0664)) != 0) {
+                if ((ret = (*userToSubnameDb).dbp->open((*userToSubnameDb).dbp, NULL, bfile(userToSubnameDbFile), NULL, DB_BTREE, DB_CREATE, 0664)) != 0) {
                         (*userToSubnameDb).dbp->err((*userToSubnameDb).dbp, ret, "%s: open", userToSubnameDb);
                         //goto err1;
                         return (0);

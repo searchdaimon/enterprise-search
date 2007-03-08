@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "define.h"
-
+#include "boithohome.h"
 
 
 #define local_unknown -1
@@ -81,8 +81,8 @@ void lotlistLoad() {
 		MemoryLotlist[i].hasServer = 0;
 	}
 
-	if ((LOTLISTFH = fopen("/home/boitho/config/lotlist.conf","r")) == NULL) {
-		perror("lotlist.conf");
+	if ((LOTLISTFH = bfopen("config/lotlist.conf","r")) == NULL) {
+		perror(bfile("config/lotlist.conf"));
 		exit(1);
 	}
 

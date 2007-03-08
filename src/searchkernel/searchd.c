@@ -1,7 +1,7 @@
 
 /******************************/
 #include "searchkernel.h"
-
+#include "../common/boithohome.h"
 #include "../common/bstr.h"
 
 #include "../common/poprank.h"
@@ -26,7 +26,7 @@
 #include <unistd.h>
 
 
-#define cfg_main "/home/boitho/config/main.cfg"
+#define cfg_main "config/searchd.cfg"
 
 #ifdef WITH_THREAD
 	#include <pthread.h>
@@ -90,11 +90,11 @@ int main(int argc, char *argv[])
 
   	/* Load the file */
 	#ifdef DEBUG
-  	printf("loading [%s]..\n",cfg_main);
+  	printf("loading [%s]..\n",bfile(cfg_main));
 	#endif
 
-  	if (!config_read_file(&cfg, cfg_main)) {
-    		printf("[%s]failed: %s at line %i\n",cfg_main,config_error_text(&cfg),config_error_line(&cfg));
+  	if (!config_read_file(&cfg, bfile(cfg_main))) {
+    		printf("[%s]failed: %s at line %i\n",bfile(cfg_main),config_error_text(&cfg),config_error_line(&cfg));
 		exit(1);
 	}
 	//#endif	
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 	printf("servername %s\n",servername);
 
 	//ToDo: må ha låsing her
-        if ((LOGFILE = fopen("/home/boitho/config/query.log","a")) == NULL) {
+        if ((LOGFILE = bfopen("config/query.log","a")) == NULL) {
                 perror("logfile");
         }
         else {
@@ -261,7 +261,7 @@ void *do_chld(void *arg)
 
 
 	//ToDo: må ha låsing her
-        if ((LOGFILE = fopen("/home/boitho/config/query.log","a")) == NULL) {
+        if ((LOGFILE = bfopen("config/query.log","a")) == NULL) {
                 perror("logfile");
         }
         else {
