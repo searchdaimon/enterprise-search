@@ -8,7 +8,7 @@
 
 
 
-FILE *bfopen(char name[],char flags[]);
+//FILE *bfopen(char name[],char flags[]);
 int rLotForDOCid (unsigned int DocID);
 void GetFilPathForLot(char *FilePath,int LotNr,char subname[]);
 void GetFilPathForLotFile(char *FilePath,char lotfile[],int LotNr,char subname[]);

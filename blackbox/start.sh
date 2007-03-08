@@ -1,12 +1,14 @@
+echo starting from $BOITHOHOME
+
 echo "starting boithoad"
-/usr/local/sbin/daemonize /home/boitho/boithoTools/bin/everrun /home/boitho/boithoTools/bin/boithoad
+/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $BOITHOHOME/bin/boithoad
 
 echo "starting crawlManager"
-/usr/local/sbin/daemonize /home/boitho/boithoTools/bin/everrun /home/boitho/boithoTools/bin/crawlManager
+/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $BOITHOHOME/bin/crawlManager
 
 echo "starting boitho-bbdn"
-/usr/local/sbin/daemonize /home/boitho/boithoTools/bin/everrun /home/boitho/boithoTools/bin/boitho-bbdn
+/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $BOITHOHOME/bin/boitho-bbdn
 
 echo "starting searchdbb"
-/usr/local/sbin/daemonize /home/boitho/boithoTools/bin/everrun /home/boitho/boithoTools/bin/searchdbb localhost
+/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $BOITHOHOME/bin/searchdbb localhost
 

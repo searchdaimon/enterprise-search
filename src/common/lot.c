@@ -32,33 +32,6 @@ static LotFilesInalisert = 0;
 //array med opne filhonterere
 struct OpenFilesFormat OpenFiles[MaxOpenFiles];
 
-FILE *bfopen(char name[],char flags[]) {
-
-	char *cptr;
-	char fulname[512];
-
-	if ((cptr = getenv("BOITHOHOME")) == NULL) {
-		fprintf(stderr,"Error: Can't get environment value \"BOITHOHOME\"\n");
-		exit(1);
-	}
-	else if (name[0] == '/') {
-		fprintf(stderr,"Error: name ");
-	}
-	else {
-		sprintf(fulname,"%s/%s",cptr,name);
-		return fopen(fulname,flags);
-	}
-
-/*
-	if ((cptr = getenv("BOITHOHOME")) != NULL) {
-		sprintf(fulname,"%s/%s",cptr,name);
-		return fopen(fulname,flags); 
-	}
-	else {
-		return fopen(name,flags);
-	}
-*/
-}
 
 int HasSufficientSpace(char FilePath[], int needSpace) {
 

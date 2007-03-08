@@ -123,7 +123,7 @@ int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsiz
 			i += n;			
 			//printf("did read %ib, tot %i\n",n,i);
 		}
-
+		
 		close(pipefd[0]);
 
 		(*documentfinishedbufsize) = i;

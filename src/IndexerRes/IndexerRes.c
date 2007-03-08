@@ -13,7 +13,7 @@
 #include "../IndexerRes/IndexerRes.h"
 #include "../common/utf8-strings.h"
 
-
+#include "../common/boithohome.h"
 
 void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID) {
 

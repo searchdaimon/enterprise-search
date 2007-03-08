@@ -22,7 +22,8 @@ LIBGeoIP = -lGeoIP
 
 CURLLIBS = `curl-config --libs`
 
-IM = -L/home/eirik/.root/lib -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
+IM = /home/eirik/.root/lib/libMagick.a /home/eirik/.root/lib/libWand.a -I/home/eirik/.root/include
+#IM = -L/home/eirik/.root/lib -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
 #IM = /home/eirik/.root/lib/libMagick.a -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
 
 BDB = -I/usr/local/BerkeleyDB.4.5/include/ -L/usr/local/BerkeleyDB.4.5/lib/ -ldb
@@ -32,7 +33,8 @@ BDB = -I/usr/local/BerkeleyDB.4.5/include/ -L/usr/local/BerkeleyDB.4.5/lib/ -ldb
 SMBCLIENT=-Isrc/3pLibs/samba-3.0.24/source/include/ -Lsrc/3pLibs/samba-3.0.24/source/lib/ -lsmbclient
 
 BBDOCUMENT = src/bbdocument/bbdocument.c $(BDB) -D BLACK_BOKS
-BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail.c -DBBDOCUMENT_IMAGE $(IM)
+#BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail.c -DBBDOCUMENT_IMAGE $(IM)
+BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail_by_convert.c -DBBDOCUMENT_IMAGE_BY_CONVERT
 
 #openldap med venner. Må linke det statisk inn, å bare bruke -lldap fungerer ikke
 #
@@ -51,6 +53,9 @@ MYSQL_THREAD = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient_r
 #LIBXML = -I/usr/include/libxml2 -L/usr/lib -lxml2
 LIBXML = -I/usr/include/libxml2  -lxml2
 
+#HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c  
+HTMLPARSER=src/parser/libhtml_parser.a
+
 # The Dependency Rules
 # They take the form
 # target : dependency1 dependency2...
@@ -68,8 +73,10 @@ tempFikes: IndexerLot_fik32bitbug DIconvert
 wordConverter: src/wordConverter/main.c
 	$(CC) src/wordConverter/main.c -o bin/wordConverter
 
+
+
 #brukte før src/parser/libhtml_parser.a, byttet til src/parser/lex.yy.c src/parser/lex.yy.c slik at vi kan bruke gdb
-IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c src/parser/lex.bhpm.c src/parser/y.tab.c  $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
+IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c $(HTMLPARSER) $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
 
 IndexerLot: src/IndexerLot/main.c
 	$(CC) $(IndexerLot) -lpthread -DWITH_THREAD -o bin/IndexerLot
@@ -160,7 +167,8 @@ searchcl : src/searchkernel/searchcl.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/query/lex.query.o src/searchkernel/cgi-util.c src/searchkernel/parseEnv.c src/searchkernel/searchkernel.c src/searchkernel/search.c src/searchkernel/searchcl.c src/parse_summary/libsummary.a -o bin/searchcl $(LDFLAGS)
 
 #dropper -D WITH_MEMINDEX og -D WITH_RANK_FILTER for nå
-SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD -lconfig
+#SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD -lconfig
+SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/searchkernel/shortenurl.c src/query/lex.query.o src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a $(LDFLAGS) -lpthread -D WITH_THREAD -lconfig
 
 searchd : src/searchkernel/searchd.c
 	$(CC) $(SEARCHCOMMAND) -D WITH_RANK_FILTER -o bin/searchd
@@ -302,7 +310,7 @@ boithold: src/boithold/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/boithold/getpath.c src/boithold/main.c -o bin/boithold $(LDFLAGS)
 
 boitho-bbdn: src/boitho-bbdn/bbdnserver.c
-	$(CC) $(CFLAGS) $(LIBS)*.c  src/boitho-bbdn/bbdnserver.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS -static
+	$(CC) $(CFLAGS) $(LIBS)*.c  src/boitho-bbdn/bbdnserver.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE) -static
 
 
 boitholdTest: src/boitholdTest/main.c
@@ -357,9 +365,13 @@ ShowThumb: src/ShowThumb/main.c
 ShowThumbbb: src/ShowThumb/main.c
 	$(CC) $(SHOWTHUMBCMANDS) -D BLACK_BOKS
 
-ShowCache: src/ShowCache/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/ShowCache/main.c src/cgi-util/cgi-util.c -o bin/ShowCache $(LDFLAGS)
+ShowCacheCOMMAND = $(CFLAGS) $(LIBS)*.c src/ShowCache/main.c src/cgi-util/cgi-util.c $(LDFLAGS) -o bin/ShowCache
 
+ShowCache: src/ShowCache/main.c
+	$(CC) $(ShowCacheCOMMAND)
+
+ShowCachebb: src/ShowCache/main.c
+	$(CC) $(ShowCacheCOMMAND) -D BLACK_BOKS
 
 boithoshmd: src/boithoshmd/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/boithoshmd/main.c -o bin/boithoshmd $(LDFLAGS)
