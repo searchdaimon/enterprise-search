@@ -4,12 +4,8 @@
  */
 
 %#include "../suggest/suggest.h"
-%#include "main.h"
 
-const MAX_ENTRIES = 11; /* Must match NUM_BEST in ../suggest/suggest.h */
-const MAX_STR = 256;
-
-typedef string wordtype<MAX_STR>; /* director entry */
+typedef string wordtype<>; /* a word */
 
 typedef struct namenode *namelist; /* link in the listing */
 
@@ -18,7 +14,7 @@ typedef struct namenode *namelist; /* link in the listing */
 
 struct namenode {
 	wordtype name;
-	/*int frequency;*/
+	int frequency;
 	namelist next; /* next entry */
 };
 
@@ -30,9 +26,8 @@ union numbest_res switch (int _errno) {
 };
 
 
-
 program SUGGEST {
 	version SUGGESTVERS {
-		namenode get_best_results(string) = 1;
+		numbest_res get_best_results(string) = 1;
 	} = 1;
-} = 0x200ff000;
+} = 0x200ff013;

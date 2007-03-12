@@ -6,24 +6,24 @@
 CLIENT = suggest_client
 SERVER = suggest_server
 
-SOURCES_CLNT.c = main_clnt.c
+SOURCES_CLNT.c = 
 SOURCES_CLNT.h = 
-SOURCES_SVC.c = mymain.c ../suggest/suffixtree.c ../suggest/suggest.c main_svc.c
+SOURCES_SVC.c = ../suggest/suggest.c ../suggest/suffixtree.c
 SOURCES_SVC.h = 
 SOURCES.x = suggest.x
 
-TARGETS_SVC.c = suggest_svc.c suggest_xdr.c 
-TARGETS_CLNT.c = suggest_clnt.c suggest_xdr.c 
-TARGETS = suggest.h suggest_xdr.c suggest_clnt.c suggest_svc.c 
+TARGETS_SVC.c = suggest_svc.c suggest_server.c suggest_xdr.c 
+TARGETS_CLNT.c = suggest_clnt.c suggest_client.c suggest_xdr.c 
+TARGETS = suggest.h suggest_xdr.c suggest_clnt.c suggest_svc.c
 
 OBJECTS_CLNT = $(SOURCES_CLNT.c:%.c=%.o) $(TARGETS_CLNT.c:%.c=%.o)
 OBJECTS_SVC = $(SOURCES_SVC.c:%.c=%.o) $(TARGETS_SVC.c:%.c=%.o)
 # Compiler flags 
 
 CPPFLAGS += -D_REENTRANT
-CFLAGS += -g -W -Wall -O1
+CFLAGS += -g 
 LDLIBS += -lnsl -lpthread 
-RPCGENFLAGS = -N -M
+RPCGENFLAGS = -M
 
 # Targets 
 
