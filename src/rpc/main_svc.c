@@ -17,25 +17,26 @@ get_best_results_1_svc(char *arg1, numbest_res *result,  struct svc_req *rqstp)
 	printf("Looking up: %s\n", arg1);
 	if (si == NULL) {
 		result->_errno = errno;
-		return ;
+		return 1;
 	}
-	nlp = &result->numbest_res_u.list;
+	nlp = &(result->numbest_res_u.list);
 	for (; *si != NULL; si++) {
-		nl = *nlp = malloc(sizeof(namenode));
+		nl = malloc(sizeof(namenode));
+		*nlp = nl;
 		if (nl == NULL) {
 			/* XXX: memleak? */
 			result->_errno = errno;
 			return 1;
 		}
 		nl->name = (*si)->word;
-		nl->frequency = (*si)->frequency;
-		printf("Hmm: %s %d\n", nl->name, nl->frequency);
+		//nl->frequency = (*si)->frequency;
 		nlp = &nl->next;
 	}
 	*nlp = NULL;
+	result->_errno = 0;
 
 
-	return 0;
+	return 1;
 }
 
 int

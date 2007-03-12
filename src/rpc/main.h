@@ -6,5 +6,6 @@
 
 struct suggest_data *suggest_data;
 
+int mymain(int, char **);
 
 #endif /* _MAIN_H_ */

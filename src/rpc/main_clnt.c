@@ -6,14 +6,14 @@
 void
 suggest_1(char *host, char *arg)
 {
-	CLIENT *clnt;
+	CLIENT *clnt = NULL;
 	enum clnt_stat retval_1;
 	numbest_res result_1;
 	char * get_best_results_1_arg;
 	namelist nl;
 
 #ifndef DEBUG
-	clnt = clnt_create (host, SUGGEST, SUGGESTVERS, "tcp");
+	clnt = clnt_create (host, SUGGEST, SUGGESTVERS, "udp");
 	if (clnt == NULL) {
 		clnt_pcreateerror (host);
 		exit (1);
@@ -25,13 +25,13 @@ suggest_1(char *host, char *arg)
 	if (retval_1 != RPC_SUCCESS) {
 		clnt_perror (clnt, "call failed");
 	}
-
-	if (retval_1 == RPC_SUCCESS) {
+	else {
 		for (nl = result_1.numbest_res_u.list;
 				nl != NULL;
 				nl = nl->next) {
 			printf("%s\n", nl->name);
 		}
+
 	}
 
 

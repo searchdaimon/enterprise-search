@@ -15,12 +15,12 @@ typedef struct namenode *namelist; /* link in the listing */
 
 /* A node in the directory listing */
 
+
 struct namenode {
 	wordtype name;
-	int frequency;
+	/*int frequency;*/
 	namelist next; /* next entry */
 };
-
 
 union numbest_res switch (int _errno) {
 	case 0:
@@ -30,8 +30,9 @@ union numbest_res switch (int _errno) {
 };
 
 
+
 program SUGGEST {
 	version SUGGESTVERS {
-		numbest_res get_best_results(string) = 1;
+		namenode get_best_results(string) = 1;
 	} = 1;
 } = 0x200ff000;
