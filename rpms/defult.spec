@@ -14,6 +14,11 @@ Group: Boitho/authentication
 Prefix: %{_prefix}
 BuildRoot: /var/tmp/%{name}-buildroot
 
+
+#Turn off automatic dependency generation
+#se http://fedora.redhat.com/docs/drafts/rpm-guide-en/ch-packaging-guidelines.html
+Autoreq: 0 
+
 %description
 This library contains C++ utility classes for using IP(sockets).
 
@@ -24,7 +29,7 @@ This library contains C++ utility classes for using IP(sockets).
 
 %build
 %install
-DESTDIR=$RPM_BUILD_ROOT/home/boitho/bin/
+DESTDIR=$RPM_BUILD_ROOT#destdir
 rm -rf $DESTDIR
 mkdir -p $DESTDIR
 

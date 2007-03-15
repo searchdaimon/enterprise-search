@@ -1,3 +1,5 @@
+use strict;
+
 print "$#ARGV\n";
 
 if ($#ARGV == -1) {
@@ -9,15 +11,19 @@ my $version = shift @ARGV or die("please suply a version");
 my $dest = shift @ARGV or die("please suply a dest");
 
 #my $source = shift @ARGV or die("please suply a source");
-my $source = '';
 
+my $source = '';
 while ($#ARGV > -1) {
-	$source .= shift @ARGV;
+	my $file = shift @ARGV;
+	$source .= $file . ' ';
 	print "geting\n";
 }
 
 
 my $name_and_version = $name . '-' . $version;
+
+#detlarerer mye brukte varibaler
+my $command;
 
 print "name: $name\n";
 print "version: $version\n";
@@ -37,12 +43,16 @@ my $findout = `find $name_and_version -type f`;
 print "findout: $findout\n";
 my @files = split(/\n/,$findout);
 
+
 #går gjenom hver linje of fjerner mappen
+my $remove = $name_and_version . '/';
+
 for my $i (0 .. $#files) {
+	print "bb $i : $files[$i]\n";
 	#ikke 100% riktig dette, skal ha ^ $ eller noe får å pare treff i begyndelsen. Har dog ikke g så skal jo bare treffe en gang, og alle skal jo starte på det
-	my $remove = $name_and_version . '/';
-	$files[i] =~ s/$remove//;
-	print "file: $i : $files[i]\n";
+	$files[$i] =~ s/$remove//;
+	print "file: $i : $files[$i]\n";
+
 }
 
 #create install list
@@ -55,7 +65,7 @@ for my $i (@files) {
 #create file list
 my $fileslist = '';
 for my $i (@files) {
-	$fileslist = "$dest/$i\n";
+	$fileslist .= "$dest/$i\n";
 }
 
 
@@ -81,6 +91,7 @@ $spec =~ s/#name/$name/g;
 $spec =~ s/#version/$version/g;
 $spec =~ s/#filesinstal/$filesinstal/g;
 $spec =~ s/#fileslist/$fileslist/g;
+$spec =~ s/#destdir/$dest/g;
 
 my $specfile = $name . ".spec";
 
