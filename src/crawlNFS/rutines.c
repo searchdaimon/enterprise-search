@@ -12,6 +12,7 @@
 #include "../crawl/crawl.h"
 #include "../common/define.h"
 #include "../crawl/crawlLocalFiles.h"
+#include "../common/boithohome.h"
 
 #include "../3pLibs/keyValueHash/hashtable.h"
 
@@ -107,7 +108,7 @@ char *getfs(char nfsfs[]) {
 		return found;
 	}
 	//finner ut mappen vi vil ha.
-	sprintf(localfsdir,"%s/mounted_XXXXXX",BOITHO_VAR_DIR);
+	sprintf(localfsdir,"%s/mounted_XXXXXX",bfile("var"));
 
 	if ((localfs = mktemp(localfsdir)) == NULL) {
 		perror("mktemp");
@@ -153,8 +154,8 @@ int crawlinit() {
 
 
 	//kjører gjenom alle filsystemer vi eventeult har mountet og unmunter og fjerner mappen
-	if ((DIRH = opendir(BOITHO_VAR_DIR)) == NULL) {
-                perror(BOITHO_VAR_DIR);
+	if ((DIRH = opendir(bfile("var"))) == NULL) {
+                perror(bfile("var"));
                 return 0;
         }
 
@@ -166,7 +167,7 @@ int crawlinit() {
                 }
                 else if (dp->d_type == DT_DIR) {
 
-                	sprintf(nextdirname,"%s/%s/",BOITHO_VAR_DIR,dp->d_name);
+                	sprintf(nextdirname,"%s/%s/",bfile("var"),dp->d_name);
 
 			printf("cleaning mountet fs %s\n",nextdirname);
 

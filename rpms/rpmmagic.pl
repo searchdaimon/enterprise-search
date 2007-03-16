@@ -1,4 +1,5 @@
 use strict;
+use File::Copy;
 
 print "$#ARGV\n";
 
@@ -8,17 +9,16 @@ if ($#ARGV == -1) {
 
 my $name = shift @ARGV or die("please suply a name");
 my $version = shift @ARGV or die("please suply a version");
+
+my $source = shift @ARGV or die("please suply a source");
 my $dest = shift @ARGV or die("please suply a dest");
 
-#my $source = shift @ARGV or die("please suply a source");
-
-my $source = '';
+my @files;
 while ($#ARGV > -1) {
 	my $file = shift @ARGV;
-	$source .= $file . ' ';
-	print "geting\n";
+	push(@files,$file);
+	print "file: $file\n";	
 }
-
 
 my $name_and_version = $name . '-' . $version;
 
@@ -27,7 +27,8 @@ my $command;
 
 print "name: $name\n";
 print "version: $version\n";
-print "source: $source\n";
+print "$source: $source\n";
+print "$dest: $dest\n";
 
 #mkdir -p $(boitho-ad_name)-$(boitho-ad_version)
 
@@ -35,39 +36,40 @@ print "source: $source\n";
 mkdir($name_and_version,0755) or warn("cant create $name_and_version: $!");
 
 #kopierer inn
-system("cp -r $source $name_and_version");
+#system("cp -r $source $name_and_version");
 
 
-#lager en liste over alle filene
-my $findout = `find $name_and_version -type f`;
-print "findout: $findout\n";
-my @files = split(/\n/,$findout);
-
-
-#går gjenom hver linje of fjerner mappen
-my $remove = $name_and_version . '/';
-
-for my $i (0 .. $#files) {
-	print "bb $i : $files[$i]\n";
-	#ikke 100% riktig dette, skal ha ^ $ eller noe får å pare treff i begyndelsen. Har dog ikke g så skal jo bare treffe en gang, og alle skal jo starte på det
-	$files[$i] =~ s/$remove//;
-	print "file: $i : $files[$i]\n";
-
-}
 
 #create install list
 my $filesinstal = '';
-for my $i (@files) {
-	$filesinstal .= "install -s -m 755 $i \$DESTDIR/$i\n";
-}
-#print "$filesinstal\n";
-
-#create file list
 my $fileslist = '';
-for my $i (@files) {
-	$fileslist .= "$dest/$i\n";
-}
 
+for my $i (@files) {
+	my $filedest = $dest . '/' . $i;
+	#$filesinstal .= "install -s -m 755 $i \$DESTDIR/$i\n";
+	$filesinstal .= "install -D -m 755 $i \$DESTDIR/$i\n";
+	$fileslist .= $filedest . "\n";
+}
+print "filesinstal:\n$filesinstal\n";
+print "fileslist:\n$fileslist\n";
+
+for my $i (@files) {
+
+	my $filesource = $source . '/' . $i;
+	my $filedest = $name_and_version . '/' . $i;
+
+	my $folder = $filedest;
+	$folder =~ s/[^\/]+$//;	
+
+	$command = "mkdir -p $folder";
+	print "running: $command\n";
+	system($command);
+
+	print "cp $filesource -> $filedest\n";
+
+	copy($filesource, $filedest) or die "File cannot be copied: $!";
+	
+}
 
 my $tarfile = $name_and_version . ".tar.gz ";
 $command = "tar -z -c -f $tarfile $name_and_version";

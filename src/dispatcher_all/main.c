@@ -19,6 +19,9 @@
 	#ifndef BLACK_BOKS
     #include <libconfig.h>
 
+    #define cashedir "cashedir"
+    #define prequerydir "prequerydir"
+
     #define cfg_dispatcher "config/dispatcher.cfg"
 	#endif
 
@@ -83,8 +86,8 @@ void die(int errorcode,char errormessage[]) {
 	printf("</search>\n");
 
         //ToDo: må ha låsing her
-        if ((LOGFILE = bfopen("config/query.log","a")) == NULL) {
-                perror("logfile");
+        if ((LOGFILE = bfopen("logs/query.log","a")) == NULL) {
+                perror(bfile("logs/query.log"));
         }
         else {
 		
@@ -1084,10 +1087,9 @@ int main(int argc, char *argv[])
 
 	#ifdef WITH_CASHE
 	//tester for cashe
-	//v3 sprintf(cashefile,"%s/%s.%i.%s.%s",cashedir,QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry,QueryData.languageFilter);
-	sprintf(cashefile,"%s/%s.%i.%s",cashedir,QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
+	sprintf(cashefile,"%s/%s.%i.%s",bfile(cashedir),QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
 	
-	sprintf(prequeryfile,"%s/%s.%i.%s",prequerydir,QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
+	sprintf(prequeryfile,"%s/%s.%i.%s",bfile(prequerydir),QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
 	FILE *CACHE;
 
 	if ((dispconfig.useprequery) && ((CACHE = fopen(prequeryfile,"rb")) != NULL)) {
@@ -1761,8 +1763,8 @@ int main(int argc, char *argv[])
 
 
 	
-	if ((LOGFILE = bfopen("config/query.log","a")) == NULL) {
-		perror("logfile");
+	if ((LOGFILE = bfopen("logs/query.log","a")) == NULL) {
+		perror(bfile("logs/query.log"));
 	}
 	else {
 		flock(fileno(LOGFILE),LOCK_EX);

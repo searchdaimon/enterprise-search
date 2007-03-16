@@ -9,7 +9,6 @@
 
 #define NrOfDataDirectorys 64
 
-#define BOITHO_VAR_DIR "/home/boitho/var"
 
 #define MAXFILTYPES 100
 
@@ -35,8 +34,6 @@
 
 #define AdultWeightForXXX 50
 
-#define cashedir "/home/boitho/cashedir"
-#define prequerydir "/home/boitho/prequerydir"
 
 #define BoithosAmazonAssociateTag "boitho-20"
 #define BoithosAmazonSubscriptionId "0WG4PH85SE9114TS7JR2"

@@ -224,11 +224,13 @@ static int auth_boitho_authorize(const char *user, const char* pw,
 static int auth_boitho_handler(request_rec *r)
 {
 
+	/*
 	#ifdef APACHE_V13
 	ap_log_error(APLOG_MARK, APLOG_ERR, r->server,"test");
 	#else
 	ap_log_error(APLOG_MARK, APLOG_EMERG, 0, r->server, "test\n");
 	#endif
+	*/
      int ret;
      const char *sent_pw; 
      char str[200];

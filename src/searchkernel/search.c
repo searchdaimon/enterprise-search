@@ -1317,6 +1317,11 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 				printf("woldent get integerindex\n");
 			}
 			else {
+				// filetype kan være på opptil 4 bokstaver. Hvsi det er ferre en 4 så vil 
+				// det være \0 er paddet på slutten, men hvsi det er 4 så er det ikke det.
+				// legger derfor til \0 som 5 char, slik at vi har en gyldig string
+				filetype[4] = '\0';
+
 				#ifdef DEBUG
 				printf("file \"%c%c%c%c\"\n",filetype[0],filetype[1],filetype[2],filetype[3]);
 				#endif
@@ -1326,7 +1331,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 				//lesKey).subname = TeffArray[i].subname;
 				//memcpy((*filesKey).filename,filetype,sizeof((*filesKey).filename)); 	
 				
-				memcpy(TeffArray[i].filetype,filetype,sizeof(TeffArray[i].filetype));
+				//memcpy(TeffArray[i].filetype,filetype,sizeof(TeffArray[i].filetype));
+				strscpy(TeffArray[i].filetype,filetype,sizeof(TeffArray[i].filetype));
 				
 				if (NULL == (filesValue = hashtable_search(h,filetype) )) {    
 					printf("not found!. Vil insert first");

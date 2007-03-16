@@ -584,7 +584,8 @@ void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTr
 
 	++(*whichFilterTraped);
 
-//	--(*nrInSubname);
+	//runarb: 13 mars. Hvorfor var denne komentert ut???
+	--(*nrInSubname);
 
 	#ifdef WITH_THREAD
 	pthread_mutex_unlock(&(*PagesResults).mutex);
@@ -1189,16 +1190,16 @@ char search_user[],struct filtersFormat *filters) {
 	printf("filters:\n");
 	printf("\tcantDIRead %i\n",(*SiderHeder).filtersTraped.cantDIRead);
 
-	printf("\tfilterAdultWeight_1 %i\n",(*SiderHeder).filtersTraped.filterAdultWeight_1);
-	printf("\tfilterSameCrc32_1 %i\n",(*SiderHeder).filtersTraped.filterSameCrc32_1);
-	printf("\tfilterSameUrl %i\n",(*SiderHeder).filtersTraped.filterSameUrl);
-	printf("\tfind_domain_no_subname %i\n",(*SiderHeder).filtersTraped.find_domain_no_subname);
-	printf("\tfilterSameDomain %i\n",(*SiderHeder).filtersTraped.filterSameDomain);
-	printf("\tfilterTLDs %i\n",(*SiderHeder).filtersTraped.filterTLDs);
-	printf("\tfilterResponse %i\n",(*SiderHeder).filtersTraped.filterResponse);
-	printf("\tcantpopResult %i\n",(*SiderHeder).filtersTraped.cantpopResult);
-	printf("\tcmc_pathaccess %i\n",(*SiderHeder).filtersTraped.cmc_pathaccess);
-	printf("\tfilterSameCrc32_2 %i\n",(*SiderHeder).filtersTraped.filterSameCrc32_2);
+	printf("\t%-40s %i\n","filterAdultWeight_1",(*SiderHeder).filtersTraped.filterAdultWeight_1);
+	printf("\t%-40s %i\n","filterSameCrc32_1",(*SiderHeder).filtersTraped.filterSameCrc32_1);
+	printf("\t%-40s %i\n","filterSameUrl",(*SiderHeder).filtersTraped.filterSameUrl);
+	printf("\t%-40s %i\n","find_domain_no_subname",(*SiderHeder).filtersTraped.find_domain_no_subname);
+	printf("\t%-40s %i\n","filterSameDomain",(*SiderHeder).filtersTraped.filterSameDomain);
+	printf("\t%-40s %i\n","filterTLDs",(*SiderHeder).filtersTraped.filterTLDs);
+	printf("\t%-40s %i\n","filterResponse",(*SiderHeder).filtersTraped.filterResponse);
+	printf("\t%-40s %i\n","cantpopResult",(*SiderHeder).filtersTraped.cantpopResult);
+	printf("\t%-40s %i\n","cmc_pathaccess",(*SiderHeder).filtersTraped.cmc_pathaccess);
+	printf("\t%-40s %i\n","filterSameCrc32_2",(*SiderHeder).filtersTraped.filterSameCrc32_2);
 
 	printf("\n\n");
 

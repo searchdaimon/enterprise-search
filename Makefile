@@ -53,8 +53,9 @@ MYSQL_THREAD = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient_r
 #LIBXML = -I/usr/include/libxml2 -L/usr/lib -lxml2
 LIBXML = -I/usr/include/libxml2  -lxml2
 
-#HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c  
-HTMLPARSER=src/parser/libhtml_parser.a
+
+HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c  
+#HTMLPARSER=src/parser/libhtml_parser.a
 
 # The Dependency Rules
 # They take the form

@@ -422,7 +422,7 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
         packedHedder.command    = command;
 	strcpy(packedHedder.subname,subname);
 
-	printf("sendpacked: start\n");
+	//printf("sendpacked: start\n");
 
         i = sendall(socket, (char*)&packedHedder, sizeof(struct packedHedderFormat));
 
@@ -437,7 +437,7 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
                 i = send(socket,data,dataSize,0);
         }
 
-	printf("sendpacked: end\n");
+	//printf("sendpacked: end\n");
 
 
 }
