@@ -185,7 +185,7 @@ int ReadIIndexRecordFromMemeory (int *Adress, int *SizeForTerm, unsigned long Qu
 	struct DictionaryFormat dummy;
 	iindexfile = WordIDcrc32 % AntallBarrals;
 	
-	printf("WordIDcrc32 %lu\n",WordIDcrc32);
+	printf("ReadIIndexRecordFromMemeory: WordIDcrc32 %lu\n",WordIDcrc32);
 
 	printf("FromMemeory iindexfile %i elements %i\n",iindexfile,AthorDictionary[iindexfile].elements);
 
@@ -270,7 +270,7 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 	iindexfile = WordIDcrc32 % AntallBarrals;
 	GetFilePathForIDictionary(FilePath,IndexPath,iindexfile,IndexType,IndexSprok,subname);
 
-	printf("From disk iindexfile %i WordIDcrc32 %lu\n",iindexfile,WordIDcrc32);
+	printf("ReadIIndexRecord: From disk iindexfile %i WordIDcrc32 %lu\n",iindexfile,WordIDcrc32);
 
 	//sprintf(IndexPath,"%s/iindex/%s/dictionary/%s/%i.txt",FilePath,IndexType,IndexSprok, iindexfile);
 
@@ -311,9 +311,9 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 			fread(&DictionaryPost,DictionaryRecordSize,1,dictionaryha);
 			printf("did read %u\n",DictionaryPost.WordID);
 		}
-		*/
+		
 		printf("\n####################################################\n");
-
+		*/
 		//	
 
 		//binersøker

@@ -841,8 +841,7 @@ temp: 25 des 2006
 void dosearch(char query[], int queryLen, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames, 
 int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[], 
-char search_user[],struct filtersFormat *filters) { 
-
+char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *searchd_config) { 
 
 	struct PagesResultsFormat PagesResults;
 
@@ -1059,7 +1058,7 @@ char search_user[],struct filtersFormat *filters) {
 		//int socketha;
 		int errorbufflen = 512;
 		char errorbuff[errorbufflen];
-		if (!cmc_conect(&PagesResults.cmcsocketha,errorbuff,errorbufflen)) {
+		if (!cmc_conect(&PagesResults.cmcsocketha,errorbuff,errorbufflen,(*searchd_config).cmc_port)) {
                         printf("Error: %s\n",errorbuff);
                         exit(1);
 	        }

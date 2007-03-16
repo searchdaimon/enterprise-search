@@ -15,6 +15,7 @@
     #include <errno.h> 
     #include <time.h>
     #include "../common/boithohome.h"
+    #include "../maincfg/maincfg.h"
     
 	#ifndef BLACK_BOKS
     #include <libconfig.h>
@@ -117,7 +118,7 @@ void addError(struct errorhaFormat *errorha, int errorcode,char errormessage[]) 
 }
 
 
-int bsconnect (int *sockfd, char server[]) {
+int bsconnect (int *sockfd, char server[], int port) {
 
 
 	int returnstatus = 0;
@@ -142,7 +143,7 @@ int bsconnect (int *sockfd, char server[]) {
 		fcntl((*sockfd), F_SETFL, O_NONBLOCK);
 		
         	their_addr.sin_family = AF_INET;    // host byte order 
-        	their_addr.sin_port = htons(BSDPORT);  // short, network byte order 
+        	their_addr.sin_port = htons(port);  // short, network byte order 
         	their_addr.sin_addr = *((struct in_addr *)he->h_addr);
         	memset(&(their_addr.sin_zero), '\0', 8);  // zero the rest of the struct 
 
@@ -286,7 +287,7 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 
 }
 
-int bsConectAndQuery(int *sockfd,int nrOfServers, char *servers[],struct queryNodeHederFormat *queryNodeHeder,int alreadynr) {
+int bsConectAndQuery(int *sockfd,int nrOfServers, char *servers[],struct queryNodeHederFormat *queryNodeHeder,int alreadynr, int port) {
 
 	int i;
 
@@ -297,7 +298,7 @@ int bsConectAndQuery(int *sockfd,int nrOfServers, char *servers[],struct queryNo
 
  	//kobler til vanlige servere
         for (i=0;i<nrOfServers;i++) {
-                if (bsconnect (&sockfd[i +alreadynr], servers[i])) {
+                if (bsconnect (&sockfd[i +alreadynr], servers[i], port)) {
 			#ifdef DEBUG
                         printf("can connect\n");
 			#endif
@@ -572,6 +573,13 @@ int main(int argc, char *argv[])
 	//starter å ta tiden
 	gettimeofday(&main_start_time, NULL);
 
+
+	struct config_t maincfg;
+
+	maincfg = maincfgopen();
+
+	int searchport = maincfg_get_int(&maincfg,"BSDPORT");
+
 	//config
   	#ifndef BLACK_BOKS
 		config_setting_t *cfgarray;
@@ -586,8 +594,8 @@ int main(int argc, char *argv[])
 	  	printf("loading [%s]..\n",bfile(cfg_dispatcher));
 		#endif
 
-	  	if (!config_read_file(&cfg, cfg_dispatcher)) {
-	    		printf("[%s]failed: %s at line %i\n",cfg_dispatcher,config_error_text(&cfg),config_error_line(&cfg));
+	  	if (!config_read_file(&cfg, bfile(cfg_dispatcher))) {
+	    		printf("[%s]failed: %s at line %i\n",bfile(bfile(cfg_dispatcher),config_error_text(&cfg),config_error_line(&cfg));
 			exit(1);
 		}
 
@@ -1157,13 +1165,13 @@ int main(int argc, char *argv[])
 
 	//kobler til vanlige servere
 	if ((!hascashe) && (!hasprequery)) {
-		bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,0);
+		bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,0,searchport);
 	}
 
 	//addservere
-	bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder,0);
+	bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder,0,searchport);
 	//Paid inclusion
-	bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,nrOfServers);
+	bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,nrOfServers,searchport);
 
 
 	//Paid inclusion

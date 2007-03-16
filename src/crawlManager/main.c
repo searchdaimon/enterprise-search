@@ -13,14 +13,14 @@
 #include "../common/daemon.h"
 #include "../common/error.h"
 #include "../common/timediff.h"
-
+#include "../common/boithohome.h"
+#include "../maincfg/maincfg.h"
 #include "../boitho-bbdn/bbdnclient.h"
 
 #include "../bbdocument/bbdocument.h"
 
 #include "../3pLibs/keyValueHash/hashtable.h"
 
-#define crawlersdir "/home/boitho/boithoTools/crawlers"
 
 #define crawl_crawl 1
 #define crawl_recrawl 2
@@ -322,8 +322,8 @@ int cm_start(struct hashtable **h) {
 
 	(*h) = create_hashtable(20, cm_hashfromkey, cm_equalkeys);
 
-	if ((dirp = opendir(crawlersdir)) == NULL) {
-		perror(crawlersdir);
+	if ((dirp = opendir(bfile("crawlers"))) == NULL) {
+		perror(bfile("crawlers"));
 		exit(1);
 	}	
 
@@ -331,7 +331,7 @@ int cm_start(struct hashtable **h) {
 		if (dp->d_name[0] == '.') {
 			continue;
 		}
-		sprintf(libpath,"%s/%s/%s.so",crawlersdir,dp->d_name,dp->d_name);	
+		sprintf(libpath,"%s/%s/%s.so",bfile("crawlers"),dp->d_name,dp->d_name);	
 
 		printf("loading path \"%s\"\n",libpath);
 		lib_handle = dlopen(libpath, RTLD_LAZY);
@@ -942,9 +942,23 @@ void connectHandler(int socket) {
 
 int main (int argc, char *argv[]) {
 
+	struct config_t maincfg;
+
+
+	printf("crawlManager: in main\n");
+
+
+	printf("crawlManager: running maincfgopen\n");
+        maincfg = maincfgopen();
+
+	printf("crawlManager: running maincfg_get_int\n");
+        int crawlport = maincfg_get_int(&maincfg,"CMDPORT");
+
+	printf("crawlManager: runing cm_start\n");
+
 	cm_start(&global_h);
 
 
-        sconnect(connectHandler, CMDPORT);
+      sconnect(connectHandler, crawlport);
 }
 

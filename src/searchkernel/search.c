@@ -650,6 +650,7 @@ for (i=0; i<(*queryParsed).n; i++)
 						convert_to_lowercase((unsigned char *)queryelement);
 
 						WordIDcrc32 = crc32boitho(queryelement);
+						printf("searchIndex: WordIDcrc32 %u\n",WordIDcrc32);
 						//hvis vi ikke har noen elementer i base arrayen, legger vi inn direkte
 						//ToDo: kan ikke gjøre det da dette kansje ikke er første element
 						//må skille her
@@ -707,7 +708,8 @@ for (i=0; i<(*queryParsed).n; i++)
 						convert_to_lowercase((unsigned char *)queryelement);
 
 						WordIDcrc32 = crc32boitho(queryelement);
-                			
+						printf("searchIndex: WordIDcrc32 %u\n",WordIDcrc32);
+
                     				printf("\nelement %s\n", queryelement);
                     				debug("crc32: %u",WordIDcrc32);
                     				

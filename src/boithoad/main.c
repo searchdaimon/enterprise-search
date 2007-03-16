@@ -521,7 +521,7 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 	printf("size is: %i\nversion: %i\ncommand: %i\n",packedHedder.size,packedHedder.version,packedHedder.command);
         packedHedder.size = packedHedder.size - sizeof(packedHedder);
 
-	const char *authenticatmetod = config_getentrystr("authenticatmetod");
+	const char *authenticatmetod = bconfig_getentrystr("authenticatmetod");
 
 	if (strcmp(authenticatmetod,"msad") == 0) {
 
@@ -537,16 +537,16 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 		char filter[128];
 		
 		//henter konfi verdier
-		const char *msad_domain 	= config_getentrystr("msad_domain");
-   		const char *admin_username 	= config_getentrystr("msad_user");
-   		const char *admin_password 	= config_getentrystr("msad_password");
-   		const char *ldap_host 		= config_getentrystr("msad_ip");
-   		const char *ldap_domain 	= config_getentrystr("msad_domain");
-   		const int   ldap_port 		= config_getentryint("msad_port");
-		const char *ldap_group 		= config_getentrystr("msad_group");
-		const char *msad_ldapstring 	= config_getentrystr("msad_ldapstring");
-		const char *msad_ldapbase 	= config_getentrystr("msad_ldapbase");
-		const char *sudo		= config_getentrystr("sudo");
+		const char *msad_domain 	= bconfig_getentrystr("msad_domain");
+   		const char *admin_username 	= bconfig_getentrystr("msad_user");
+   		const char *admin_password 	= bconfig_getentrystr("msad_password");
+   		const char *ldap_host 		= bconfig_getentrystr("msad_ip");
+   		const char *ldap_domain 	= bconfig_getentrystr("msad_domain");
+   		const int   ldap_port 		= bconfig_getentryint("msad_port");
+		const char *ldap_group 		= bconfig_getentrystr("msad_group");
+		const char *msad_ldapstring 	= bconfig_getentrystr("msad_ldapstring");
+		const char *msad_ldapbase 	= bconfig_getentrystr("msad_ldapbase");
+		const char *sudo		= bconfig_getentrystr("sudo");
 
 		char ldap_base[528] = "";
 
@@ -805,27 +805,27 @@ printf("connectHandler: end\n");
 }
 
 void badldap_init() {
-   	if (config_getentrystr("msad_user") == NULL) {
+   	if (bconfig_getentrystr("msad_user") == NULL) {
 		printf("cant read config for msad_user\n");
 		exit(1);
 	}
-   	if (config_getentrystr("msad_password") == NULL) {
+   	if (bconfig_getentrystr("msad_password") == NULL) {
 		printf("cant read config for msad_password\n");
 		exit(1);
         }
-   	if (config_getentrystr("msad_ip") == NULL) {
+   	if (bconfig_getentrystr("msad_ip") == NULL) {
 		printf("cant read config for msad_ip\n");
 		exit(1);
         }
-   	if (config_getentrystr("msad_domain") == NULL) {
+   	if (bconfig_getentrystr("msad_domain") == NULL) {
 		printf("cant read config for msad_domain\n");
 		exit(1);
         }
-   	if (config_getentrystr("msad_port") == NULL) {
+   	if (bconfig_getentrystr("msad_port") == NULL) {
 		printf("cant read config for msad_port\n");
 		exit(1);
         }
-   	if (config_getentrystr("msad_group") == NULL) {
+   	if (bconfig_getentrystr("msad_group") == NULL) {
 		printf("cant read config for msad_group\n");
 		exit(1);
         }
@@ -851,7 +851,7 @@ static int boithoad_equalkeys(void *k1, void *k2)
 
 int main( int argc, char *argv[] ) {
 
-   config_init();
+   bconfig_init();
 
    gloabal_user_h = create_hashtable(16, boithoad_hashfromkey, boithoad_equalkeys);
 

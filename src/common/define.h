@@ -49,10 +49,10 @@
 //#define maxSubnameLength 64
 #define maxSubnameLength 512 //512 fra 6 nov
 
-#define BSDPORT 6501 //search system
+//#define BSDPORT 6501 //search system
 #define BLDPORT 3490 //lot deamon
 #define BADPORT 3491 //Boitho autentifisering
-#define CMDPORT 3492 //boitho crawler manager
+//#define CMDPORT 3492 //boitho crawler manager
 
 #define nrOfHttpResponsCodes 700
 

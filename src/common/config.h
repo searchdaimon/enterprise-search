@@ -1,7 +1,7 @@
 #ifdef WITH_CONFIG
 
-int config_init();
-const char *config_getentrystr(char vantkey[]);
-int config_getentryint(char vantkey[]);
+int bconfig_init();
+const char *bconfig_getentrystr(char vantkey[]);
+int bconfig_getentryint(char vantkey[]);
 
 #endif

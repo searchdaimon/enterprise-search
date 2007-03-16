@@ -12,6 +12,7 @@
 #include "../common/timediff.h"
 #include <sys/time.h>
 #include "../parser/html_parser.h"
+#include "../maincfg/maincfg.h"
 
 #define _REENTRANT
 
@@ -51,14 +52,23 @@ char servername[32];
 	static int profiling_runcount = 0;
 #endif
 
+
 int main(int argc, char *argv[])
 {
-	int 	sockfd, newsockfd;
+	int 	sockfd;
+	//int newsockfd;
 	socklen_t clilen;
 	struct sockaddr_in cli_addr, serv_addr;
 	FILE *LOGFILE;
 	FILE *LOCK;
+	struct searchd_configFORMAT searchd_config;
 
+	struct config_t maincfg;
+
+        maincfg = maincfgopen();
+
+        int searchport = maincfg_get_int(&maincfg,"BSDPORT");
+	searchd_config. cmc_port = maincfg_get_int(&maincfg,"CMDPORT");
 
 	/***********************************************************************************/
 	//prøver å få fil lock. Bare en deamon kan kjøre avgangen
@@ -153,7 +163,7 @@ int main(int argc, char *argv[])
 	memset((char *) &serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	serv_addr.sin_port = htons(BSDPORT);
+	serv_addr.sin_port = htons(searchport);
 
 	//seter at sokket kan rebrukes
         int yes=1;
@@ -163,7 +173,7 @@ int main(int argc, char *argv[])
         }
 	
 	if(bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-		fprintf(stderr,"server: can't bind local address. Port %i\n",BSDPORT);
+		fprintf(stderr,"server: can't bind local address. Port %i\n",searchport);
 		exit(0);
 	}	
 
@@ -175,9 +185,9 @@ int main(int argc, char *argv[])
 	for(;;)
 	{
 		clilen = sizeof(cli_addr);
-		newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+		searchd_config.newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
 
-		if(newsockfd < 0) {
+		if(searchd_config.newsockfd < 0) {
 			//fprintf(stderr,"server: a
 
 /***************************************/
@@ -188,11 +198,11 @@ int main(int argc, char *argv[])
 
 			#ifdef WITH_THREAD
 			/* create a new thread to process the incomming request */
-				//thr_create(NULL, 0, do_chld, (void *) newsockfd, THR_DETACHED, &chld_thr);
-				pthread_create(&chld_thr, NULL, do_chld, (void *) newsockfd);
+				//thr_create(NULL, 0, do_chld, (void *) searchd_config, THR_DETACHED, &chld_thr);
+				pthread_create(&chld_thr, NULL, do_chld, (void *) &searchd_config);
 				/* the server is now free to accept another socket request */
 			#else
-				do_chld((void *) newsockfd);	
+				do_chld((void *) searchd_config);	
 			#endif
 		}
 
@@ -209,8 +219,11 @@ int main(int argc, char *argv[])
 */
 void *do_chld(void *arg)
 {
+	//int 	mysocfd = (int) arg;
+	struct searchd_configFORMAT *searchd_config = arg;
+	int   mysocfd = (*searchd_config).newsockfd;
+
 	FILE *LOGFILE;
-	int 	mysocfd = (int) arg;
 	char 	data[100];
 	int 	i,n;
 	struct queryNodeHederFormat queryNodeHeder;
@@ -721,7 +734,9 @@ void *do_chld(void *arg)
 			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
 			queryNodeHeder.start, queryNodeHeder.filterOn, 
 			"",queryNodeHeder.orderby,SiderHeder.dates,queryNodeHeder.search_user,
-			&SiderHeder.filters);
+			&SiderHeder.filters,
+			searchd_config
+			);
 
 	//kopierer inn subnames. Kan bare sende over MAX_COLLECTIONS, men søker i alle
 

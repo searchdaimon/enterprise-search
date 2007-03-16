@@ -5,11 +5,12 @@
 #include "../common/daemon.h"
 
 
-int cmc_conect(int *socketha, char statusbuff[],int statusbufflen) {
+int cmc_conect(int *socketha, char statusbuff[],int statusbufflen, int port) {
 
 	extern int errno;
 
-        if (((*socketha) = cconnect("127.0.0.1", CMDPORT)) == 0) {
+
+        if (((*socketha) = cconnect("127.0.0.1", port)) == 0) {
 		snprintf(statusbuff,statusbufflen,"cconnect: %s",strerror(errno));
 		return 0;
 	}

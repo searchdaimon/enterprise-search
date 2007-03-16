@@ -9,6 +9,7 @@
 #include "../boithoadClientLib/liboithoaut.h"
 
 #include "../bbdocument/bbdocument.h"
+#include "../maincfg/maincfg.h"
 
 int main (int argc, char *argv[]) {
 
@@ -57,6 +58,12 @@ int main (int argc, char *argv[]) {
 	if (argc >= 6) {
 		value4 = argv[5];
 	}
+
+	struct config_t maincfg;
+        maincfg = maincfgopen();
+
+        int cmc_port = maincfg_get_int(&maincfg,"CMDPORT");
+
 	
 	FILE *fp;
 	if ((fp = bfopen("logs/infoquery.log","a")) == NULL) {
@@ -153,7 +160,7 @@ int main (int argc, char *argv[]) {
 		int socketha;
 		int errorbufflen = 512;
 		char errorbuff[errorbufflen];
-		if (!cmc_conect(&socketha,errorbuff,errorbufflen)) {
+		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
 			printf("Error: %s\n",errorbuff);
 			exit(1);
 		}
@@ -172,7 +179,7 @@ int main (int argc, char *argv[]) {
 		int socketha;
 		int errorbufflen = 512;
 		char errorbuff[errorbufflen];
-		if (!cmc_conect(&socketha,errorbuff,errorbufflen)) {
+		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
 			printf("Error: %s\n",errorbuff);
 			exit(1);
 		}
@@ -205,7 +212,7 @@ int main (int argc, char *argv[]) {
 		int nrofresponses;
 		char *errormsg;
 
-		if (!cmc_conect(&socketha,errorbuff,errorbufflen)) {
+		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
                         printf("Error: %s\n",errorbuff);
                         exit(1);
                 }
@@ -235,7 +242,7 @@ int main (int argc, char *argv[]) {
                 char errorbuff[errorbufflen];
 		char **respons_list;
 		/*
-		if (!cmc_conect(&socketha,errorbuff,errorbufflen)) {
+		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
                         printf("Error: %s\n",errorbuff);
                         exit(1);
                 }

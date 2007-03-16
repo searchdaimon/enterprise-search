@@ -1,7 +1,14 @@
 #include "../query/query_parser.h"
 #include "../common/define.h"
 
+struct searchd_configFORMAT {
+        int     newsockfd;
+	int cmc_port;
+};
+
+
 void dosearch(char query[], int queryLen, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames,
 int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[],
-char search_user[],struct filtersFormat *filters);
+char search_user[],struct filtersFormat *filters,
+	struct searchd_configFORMAT *searchd_config);

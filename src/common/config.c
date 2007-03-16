@@ -16,7 +16,7 @@ struct _configdataFormat {
 struct _configdataFormat *_configdata;
 int _configdatanr;
 
-int config_init() {
+int bconfig_init() {
 
 
 	//bb har confg i mysql
@@ -79,7 +79,7 @@ int config_init() {
 }
 
 
-const char *config_getentrystr(char vantkey[]) {
+const char *bconfig_getentrystr(char vantkey[]) {
 
 	int i;
 
@@ -95,8 +95,8 @@ const char *config_getentrystr(char vantkey[]) {
 	return NULL;
 }
 
-int config_getentryint(char vantkey[]) {
-	return atoi(config_getentrystr(vantkey));
+int bconfig_getentryint(char vantkey[]) {
+	return atoi(bconfig_getentrystr(vantkey));
 }
 #endif
 

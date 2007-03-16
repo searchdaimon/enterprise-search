@@ -54,6 +54,7 @@ void linkadd(struct pagewordsFormat *pagewords, char word[]) {
 			//printf("ADD %s\n",word);
                       
 			strncpy((char *)updatePost.url,word,sizeof(updatePost.url));
+			//ToDo: se fn() også. Ser ut til å mangle håntering av anker tekst her??
                         strncpy((char *)updatePost.linktext,"",sizeof(updatePost.linktext));
                         updatePost.DocID_from = (*pagewords).curentDocID;
 
@@ -157,6 +158,9 @@ int wordTypeadd;
 					strcpy((*pagewords).words[(*pagewords).nr].word,word);
 				#endif
 				(*pagewords).words[(*pagewords).nr].WordID =  crc32boitho(word);
+					#ifdef DEBUG
+						printf(" (crc %s -> %u) ",word,(*pagewords).words[(*pagewords).nr].WordID);
+					#endif				
 				(*pagewords).words[(*pagewords).nr].position = ((*pagewords).nextPosition + wordTypeadd);
 				// må ha en index posisjon her. Slik at vi kan finne ord før og etter. Posisjon er kodet
 				(*pagewords).words[(*pagewords).nr].unsortetIndexPosition = (*pagewords).nr;
@@ -203,14 +207,21 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 
 		break;
             case pu_linkword: 
+			//på vep hånterer vi link tekst som ankertekst. På bb er det en del av dokumentet
+			//ToDo: Vi ser ut til å mangle håntering av link ord her???
+			//har det falt ut ??
+			#ifdef BLACK_BOKS
+				wordsAdd(pagewords,word,puf_none);
+			#endif
+
 			#ifdef DEBUG
 				printf("[linkword]"); 
 			#endif
 		break;
             case pu_link:
-
-			
+					
 			linkadd(pagewords,word);
+			
 			#ifdef DEBUG 
 				printf("[link]"); 
 			#endif

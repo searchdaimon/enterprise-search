@@ -66,7 +66,7 @@ HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c
 # other targets that are processed if make is invoked with no arguments
 # However if you invoke make as "make output-data", it will only try to 
 # generate the file output-data and its dependencies, not plot.png 
-all : analyseShortRank makeSumaryCashe IndexerLotUrl LotInvertetIndexMaker getUncrawledPages fixsAsciixBug lotlistDispatcher dispatcher_all wordConverter filterNyeUrlerFil IndexerLot nyeurlerIntegeryCheck searchfilterTest lotlistPrint testGetNextLotForIndex everrun ipbann BrankMerge ShowCache mergeIIndex readIIndex cpLotFile readLinkDB builIpDB ConvertRankToShortRankFile boithoshmd readDocumentIndex ShowThumb UrlToDocIDSplitUdfile UrlToDocIDQuery UrlToDocIDIndexer boithold boitholdTest searchd searchcl addanchors readNyeUrlerFil anchorread PoprankMerge readLinkFile IndexerLotLite addUrlsToIndex rread ThumbnaleDemon dumpLotAsFiles webpublish addManuellUrlFile BrankCalculate SortUdfile PageInfo readMainIndex SplittUdfileByLot
+all : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname
 
 tempFikes: IndexerLot_fik32bitbug DIconvert
 
@@ -80,140 +80,240 @@ wordConverter: src/wordConverter/main.c
 IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c $(HTMLPARSER) $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
 
 IndexerLot: src/IndexerLot/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(IndexerLot) -lpthread -DWITH_THREAD -o bin/IndexerLot
 
 IndexerLotbb: src/IndexerLot/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(IndexerLot) -D BLACK_BOKS src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/IndexerLotbb
 
 baddsPageAnalyser: src/baddsPageAnalyser/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/baddsPageAnalyser/main.c  src/httpGet/httpGet.c src/parser/lex.yy.c src/parser/y.tab.c -o bin/baddsPageAnalyser $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS $(CURLLIBS) -DDEBUG_ADULT
 
 IndexerLot_langtest: src/IndexerLot_langtest/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLot_langtest/main.c  src/parser/lex.yy.c src/parser/y.tab.c -o bin/IndexerLot_langtest $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS -DDEBUG_ADULT
 	
 
 IndexerLot_fik32bitbug: src/IndexerLot_fik32bitbug/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLot_fik32bitbug/main.c  src/parser/libhtml_parser.a -o bin/IndexerLot_fik32bitbug $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
 
 IndexerLot_getno: src/IndexerLot_getno/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLot_getno/main.c  src/parser/lex.yy.c src/parser/lex.yy.c -o bin/IndexerLot_getno $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
 
 lotlistDispatcher: src/lotlistDispatcher/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/lotlistDispatcher/main.c -o bin/lotlistDispatcher $(LDFLAGS)
 
 searchfilterTest: src/searchfilterTest/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/searchfilterTest/main.c src/searchfilter/searchfilter.c -o bin/searchfilterTest $(LDFLAGS)
 
 infoquery: src/infoquery/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/infoquery/main.c src/acls/acls.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c $(BBDOCUMENT) -o bin/infoquery $(LDFLAGS)
+	@echo ""
+	@echo "$@:"
+	$(CC) $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/infoquery/main.c src/acls/acls.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c $(BBDOCUMENT) -o bin/infoquery $(LDFLAGS) -lconfig
 
 GetIndexAsArrayTest: src/GetIndexAsArrayTest/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/GetIndexAsArrayTest/main.c -o bin/GetIndexAsArrayTest $(LDFLAGS)
 
 bbdocumentWebAdd: src/bbdocumentWebAdd/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/bbdocumentWebAdd/main.c src/base64/base64.c -o bin/bbdocumentWebAdd $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS
 
 bbdocumentMakeLotUrlsdb: src/bbdocumentMakeLotUrlsdb/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/bbdocumentMakeLotUrlsdb/main.c -o bin/bbdocumentMakeLotUrlsdb $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS
 
 bbdocumentConvertTest: src/bbdocumentConvertTest/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/bbdocumentConvertTest/main.c -o bin/bbdocumentConvertTest $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS
 
 
 analyseShortRank: src/analyseShortRank/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) src/analyseShortRank/main.c -o bin/analyseShortRank $(LDFLAGS)
 
 DIconvert: src/DIconvert/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/DIconvert/main.c -o bin/DIconvert $(LDFLAGS)
 
 boithoad: src/boithoad/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -D WITH_CONFIG -DDEBUG
 
 boithoadtest: src/boithoadtest/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) src/boithoadtest/main.c src/boithoadClientLib/liboithoaut.a -o bin/boithoadtest $(LDFLAGS)
 
 
 lotlistPrint: src/lotlistPrint/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/lotlistPrint/main.c  -o bin/lotlistPrint $(LDFLAGS)
 
 cleanCacheDir: src/cleanCacheDir/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) src/cleanCacheDir/main.c -o bin/cleanCacheDir
 
 lotcp: src/lotcp/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/lotcp/main.c  -o bin/lotcp $(LDFLAGS)
 
 crawlFiles: src/crawlFiles/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/crawlFiles/main.c  -o bin/crawlFiles $(LDFLAGS) src/boitho-bbdn/bbdnclient.c -D BLACK_BOKS
+	@echo ""
+	@echo "$@:"
 
-#crawlSMB: src/crawlSMB/main.c
-#<<<<<<< Makefile
-#	flex -f -8 -i src/crawlSMB/acl.parser.l
-#	$(CC) $(CFLAGS) $(LIBS)*.c -lsmbclient src/crawlSMB/lex.yy.c src/boitho-bbdn/bbdnclient.c src/crawlSMB/crawlsmb.c src/crawlSMB/main.c -o bin/crawlSMB $(LDFLAGS) -D BLACK_BOKS
-#=======
-#	flex -f -8 -i -o src/crawlSMB/lex.acl.c src/crawlSMB/acl.parser.l
-#	$(CC) $(CFLAGS) $(LIBS)*.c -lsmbclient src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawlSMB/main.c  -o bin/crawlSMB $(LDFLAGS) -D BLACK_BOKS
-#>>>>>>> 1.15
-#	flex -f -8 -i -o src/crawlSMB/lex.acl.c src/crawlSMB/acl.parser.l
-#	$(CC) $(CFLAGS) $(LIBS)*.c -lsmbclient src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o bin/crawlSMB $(LDFLAGS) -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c src/crawlFiles/main.c  -o bin/crawlFiles $(LDFLAGS) src/boitho-bbdn/bbdnclient.c -D BLACK_BOKS
 
 	
 
 testGetNextLotForIndex: src/testGetNextLotForIndex/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/testGetNextLotForIndex/main.c  -o bin/testGetNextLotForIndex $(LDFLAGS)
 
 everrun: src/everrun/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) src/everrun/main.c -o bin/everrun
 
 searchcl : src/searchkernel/searchcl.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/query/lex.query.o src/searchkernel/cgi-util.c src/searchkernel/parseEnv.c src/searchkernel/searchkernel.c src/searchkernel/search.c src/searchkernel/searchcl.c src/parse_summary/libsummary.a -o bin/searchcl $(LDFLAGS)
 
 #dropper -D WITH_MEMINDEX og -D WITH_RANK_FILTER for nå
 #SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD -lconfig
-SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/searchkernel/shortenurl.c src/query/lex.query.o src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a $(LDFLAGS) -lpthread -D WITH_THREAD -lconfig
+SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/lex.query.o src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a $(LDFLAGS) -lpthread -D WITH_THREAD -lconfig
 
 searchd : src/searchkernel/searchd.c
+	@echo ""
+	@echo "$@:"
+	
 	$(CC) $(SEARCHCOMMAND) -D WITH_RANK_FILTER -o bin/searchd
 
 searchdbb : src/searchkernel/searchd.c
+	@echo ""
+	@echo "$@:"
 	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/utf8-filter/lex.u8fl.o
 
 mergeUserToSubname: src/mergeUserToSubname/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c $(BDB) src/mergeUserToSubname/main.c src/acls/acls.c -o bin/mergeUserToSubname $(LDFLAGS) -DBLACK_BOKS
 
 boithoads: src/boithoads/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoads/main.c src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/httpGet/httpGet.c src/parse_summary/libsummary.a -o bin/boithoads $(LDFLAGS) $(MYSQL) $(LIBXML) $(CURLLIBS)
 
 boithoadshread: src/boithoads/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoads/main.c src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/httpGet/httpGet.c src/parse_summary/libsummary.a -o bin/boithoads $(LDFLAGS) $(MYSQL_THREAD) $(LIBXML) $(CURLLIBS) -D WITH_THREAD -lpthread
 
 addout.cgi: src/addout.cgi/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) src/addout.cgi/main.c src/cgi-util/cgi-util.c -o bin/addout.cgi $(LDFLAGS) $(MYSQL) 
 
 ppcXmlParserTest: src/ppcXmlParserTest/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/ppcXmlParserTest/main.c src/parse_summary/libsummary.a src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/parse_summary/libsummary.a src/httpGet/httpGet.c -o bin/ppcXmlParserTest $(LDFLAGS) $(MYSQL) $(LIBXML) $(CURLLIBS)
 
-dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c  $(LDFLAGS) $(MYSQL)
+dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c  $(LDFLAGS) $(MYSQL)
 
 dispatcher_all: src/dispatcher_all/main.c
-		$(CC) $(dispatcherCOMAND) $(LIBGeoIP) -D WITH_CASHE -o bin/dispatcher_all -lconfig
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(dispatcherCOMAND) $(LIBGeoIP) -D WITH_CASHE -o bin/dispatcher_all -lconfig
 
 dispatcher_allbb: src/dispatcher_all/main.c
-		$(CC) $(dispatcherCOMAND) -D BLACK_BOKS -o bin/dispatcher_allbb
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(dispatcherCOMAND) -D BLACK_BOKS -o bin/dispatcher_allbb -lconfig
 
 
 dispatcher: src/dispatcher/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/dispatcher/main.c src/cgi-util/cgi-util.c -o bin/dispatcher $(LDFLAGS)
 
 putFilesIntoFileTree: src/putFilesIntoFileTree/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/putFilesIntoFileTree/main.c -o bin/putFilesIntoFileTree $(LDFLAGS)
 
 nyeurlerIntegeryCheck: src/nyeurlerIntegeryCheck/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/nyeurlerIntegeryCheck/main.c -o bin/nyeurlerIntegeryCheck $(LDFLAGS)
 
 rread : src/rread/rread.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/rread/rread.c -o bin/rread $(LDFLAGS)
 
+
 convertReposetoryCOMAND = $(CFLAGS) $(LIBS)*.c src/convertReposetory/main.c -o bin/convertReposetory $(LDFLAGS)
+
 convertReposetory: src/convertReposetory/main.c
 	$(CC) $(convertReposetoryCOMAND)
 
@@ -222,33 +322,63 @@ convertReposetorybb: src/convertReposetory/main.c
 
 
 makeSumaryCashe: src/makeSumaryCashe/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/makeSumaryCashe/main.c src/parse_summary/libsummary.a -o bin/makeSumaryCashe $(LDFLAGS) -D NOWARNINGS
 
 rread_getsomeurls: src/rread_getsomeurls/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/rread_getsomeurls/main.c -o bin/rread_getsomeurls $(LDFLAGS)
 
 IndexerLotLite: src/IndexerLotLite/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLotLite/main.c -o bin/IndexerLotLite $(LDFLAGS)
 
 readMainIndex: src/readMainIndex/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/readMainIndex/main.c -o bin/readMainIndex $(LDFLAGS)
 
 readMainIndexSearchSha1: src/readMainIndexSearchSha1/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/readMainIndexSearchSha1/main.c -o bin/readMainIndexSearchSha1 $(LDFLAGS)
 
 LotInvertetIndexMaker: src/LotInvertetIndexMaker/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMaker/main.c -o bin/LotInvertetIndexMaker $(LDFLAGS)
 
-listLostLots: src/listLostLots/main.c
+listLostLots: src/listLostLots/main.c	
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/listLostLots/main.c -o bin/listLostLots $(LDFLAGS)
 
 recoverUrlForLot: src/recoverUrlForLot/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/recoverUrlForLot/main.c -o bin/recoverUrlForLot $(LDFLAGS)
 
 removeUnnecessaryRevindex: src/removeUnnecessaryRevindex/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/removeUnnecessaryRevindex/main.c -o bin/removeUnnecessaryRevindex $(LDFLAGS)
 
 LotInvertetIndexMaker2:	src/LotInvertetIndexMaker2/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMaker2/main.c -o bin/LotInvertetIndexMaker2 $(LDFLAGS)
 
 ThumbnaleDemon: src/ThumbnaleDemon/main.c
@@ -296,97 +426,184 @@ SortUdfile: src/SortUdfile/main.c
 PageInfoComand=	$(LIBS)*.c src/PageInfo/main.c src/parser/lex.bhpm.c src/parser/y.tab.c $(LDFLAGS)
 
 PageInfo: src/PageInfo/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(PageInfoComand) -o bin/PageInfo
+
 PageInfobb: src/PageInfo/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(PageInfoComand) -o bin/PageInfobb -D BLACK_BOKS
-	#$(CC) $(CFLAGS) $(LIBS)*.c src/PageInfo/main.c src/parser/lex.yy.c src/parser/y.tab.c -o bin/PageInfobb $(LDFLAGS) -D BLACK_BOKS
 
 addManuellUrlFile: src/addManuellUrlFile/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/addManuellUrlFile/main.c  -o bin/addManuellUrlFile $(LDFLAGS)
 
 dumpLotAsFiles: src/dumpLotAsFiles/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/dumpLotAsFiles/main.c -o bin/dumpLotAsFiles $(LDFLAGS)
 
 boithold: src/boithold/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/boithold/getpath.c src/boithold/main.c -o bin/boithold $(LDFLAGS)
 
 boitho-bbdn: src/boitho-bbdn/bbdnserver.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c  src/boitho-bbdn/bbdnserver.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE) -static
 
 
 boitholdTest: src/boitholdTest/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/boitholdTest/main.c -o bin/boitholdTest $(LDFLAGS)
 
 SplittUdfileByLot: src/SplittUdfileByLot/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/SplittUdfileByLot/main.c -o bin/SplittUdfileByLot $(LDFLAGS)
 
 UrlToDocIDIndexer: src/UrlToDocIDIndexer/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/UrlToDocIDIndexer/main.c -o bin/UrlToDocIDIndexer $(LDFLAGS)
 
 UrlToDocIDQuery: src/UrlToDocIDQuery/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/UrlToDocIDQuery/main.c -o bin/UrlToDocIDQuery $(LDFLAGS)
 
 UrlToDocIDSplitUdfile: src/UrlToDocIDSplitUdfile/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/UrlToDocIDSplitUdfile/main.c -o bin/UrlToDocIDSplitUdfile $(LDFLAGS)
 
 addReposerotyToIndex: src/addReposerotyToIndex/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/addReposerotyToIndex/main.c -o bin/addReposerotyToIndex $(LDFLAGS)
 
 
 readDocumentIndex: src/readDocumentIndex/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/readDocumentIndex/main.c -o bin/readDocumentIndex $(LDFLAGS)
 
 adultBuildIndex: src/adultBuildIndex/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/adultBuildIndex/main.c -o bin/adultBuildIndex $(LDFLAGS)
 
 ipdbBuildLotIndex: src/ipdbBuildLotIndex/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/ipdbBuildLotIndex/main.c -o bin/ipdbBuildLotIndex $(LDFLAGS)
 
 ipdbMakeMain: src/ipdbMakeMain/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/ipdbMakeMain/main.c -o bin/ipdbMakeMain $(LDFLAGS)
 
 IndexerLotUrl: src/IndexerLotUrl/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLotUrl/main.c -o bin/IndexerLotUrl $(LDFLAGS)
 
 fixsAsciixBug: src/fixsAsciixBug/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/fixsAsciixBug/main.c -o bin/fixsAsciixBug $(LDFLAGS)
 
 getUncrawledPages: src/getUncrawledPages/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/getUncrawledPages/main.c -o bin/getUncrawledPages $(LDFLAGS)
 
 cpLotFile: src/cpLotFile/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/cpLotFile/main.c -o bin/cpLotFile $(LDFLAGS)
 
 
 SHOWTHUMBCMANDS = $(CFLAGS) $(LIBS)*.c src/ShowThumb/main.c src/cgi-util/cgi-util.c -o bin/ShowThumb $(LDFLAGS)
 
 ShowThumb: src/ShowThumb/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(SHOWTHUMBCMANDS)
 
 ShowThumbbb: src/ShowThumb/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(SHOWTHUMBCMANDS) -D BLACK_BOKS
 
 ShowCacheCOMMAND = $(CFLAGS) $(LIBS)*.c src/ShowCache/main.c src/cgi-util/cgi-util.c $(LDFLAGS) -o bin/ShowCache
 
 ShowCache: src/ShowCache/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(ShowCacheCOMMAND)
 
 ShowCachebb: src/ShowCache/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(ShowCacheCOMMAND) -D BLACK_BOKS
 
 boithoshmd: src/boithoshmd/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/boithoshmd/main.c -o bin/boithoshmd $(LDFLAGS)
 
 builIpDB: src/builIpDB/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/builIpDB/main.c -o bin/builIpDB $(LDFLAGS)
 
 ConvertRankToShortRankFile: src/ConvertRankToShortRankFile/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) src/ConvertRankToShortRankFile/main.c -lm -o bin/ConvertRankToShortRankFile
 
 readIIndex: src/readIIndex/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) src/readIIndex/main.c -o bin/readIIndex
 
 mergeIIndex: src/mergeIIndex/main.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) $(LIBS)*.c src/mergeIIndex/main.c -o bin/mergeIIndex $(LDFLAGS)
 
 
@@ -398,23 +615,31 @@ boithoadClientLib: src/boithoadClientLib/boithoadClientLib.c
 
 
 crawlManager: src/crawlManager/main.c
+	@echo ""
+	@echo "$@:"
+
 	#22 feb 2007, fjerner -static
-	$(CC) $(CFLAGS) $(LIBS)*.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c src/3pLibs/keyValueHash/hashtable.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -D WITH_CONFIG $(BBDOCUMENT)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c src/3pLibs/keyValueHash/hashtable.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) -lconfig
 
 
 crawlSMB: src/crawlSMB/main.c
+	@echo ""
+	@echo "$@:"
+
 	flex -f -8 -i -o src/crawlSMB/lex.acl.c src/crawlSMB/acl.parser.l
 
 
-	#$(CC) $(CFLAGS) -fPIC -shared $(LIBS)*.c -lsmbclient src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) -D BLACK_BOKS -g
 	$(CC) $(CFLAGS) -fPIC -shared $(LIBS)*.c $(SMBCLIENT) src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) -D BLACK_BOKS -g
-	mkdir -p /home/boitho/boithoTools/crawlers/crawlSMB
-	cp src/crawlSMB/crawlSMB.so /home/boitho/boithoTools/crawlers/crawlSMB/
+	mkdir -p crawlers/crawlSMB
+	cp src/crawlSMB/crawlSMB.so crawlers/crawlSMB/
 
 crawlSFTP: src/crawlSFTP/crawlsftp.c
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) -fPIC -shared -o src/crawlSFTP/crawlSFTP.so src/crawlSFTP/crawlsftp.c src/crawlSFTP/rutines.c src/crawl/crawl.c src/3pLibs/libssh2/src/*.o -g -O2 -I/usr/include -I/usr/include -Isrc/3pLibs/libssh2/include/ -L/usr/lib -lcrypto -L/usr/lib -lz
-	mkdir -p /home/boitho/boithoTools/crawlers/crawlSFTP
-	cp src/crawlSFTP/crawlSFTP.so /home/boitho/boithoTools/crawlers/crawlSFTP/
+	mkdir -p crawlers/crawlSFTP
+	cp src/crawlSFTP/crawlSFTP.so crawlers/crawlSFTP/
 
 
 #kopierer filer slik at de blir tilgjengelig fra web

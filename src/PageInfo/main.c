@@ -55,7 +55,8 @@ int main (int argc, char *argv[]) {
 
 
         if ((argc - optind)!= 3) {
-		printf("Dette programet gir info om en DocID\n\n\tUsage PageInfo DocID\n");
+		printf("Dette programet gir info om en DocID\n\n\tUsage PageInfo DocID collection\n");
+		exit(1);
 	}
 
 	DocID = atol(argv[1 +optind]);
