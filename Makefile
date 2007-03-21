@@ -66,7 +66,7 @@ HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c
 # other targets that are processed if make is invoked with no arguments
 # However if you invoke make as "make output-data", it will only try to 
 # generate the file output-data and its dependencies, not plot.png 
-all : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname
+all : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest
 
 tempFikes: IndexerLot_fik32bitbug DIconvert
 
