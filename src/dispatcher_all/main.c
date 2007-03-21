@@ -317,6 +317,7 @@ int bsConectAndQuery(int *sockfd,int nrOfServers, char *servers[],struct queryNo
 		
 		if (sockfd[i +alreadynr] != 0) {
 			if (sendall(sockfd[i +alreadynr],(*queryNodeHeder).query,sizeof(struct queryNodeHederFormat)) != sizeof(struct queryNodeHederFormat)) {
+				fprintf(stderr,"Eroor: Cant connect. Server %s:%i\n",servers[i], port);
 				perror("sendall");
 				sockfd[i] = 0;
 			}
@@ -591,11 +592,11 @@ int main(int argc, char *argv[])
 
 	  	/* Load the file */
 		#ifdef DEBUG
-	  	printf("loading [%s]..\n",bfile(cfg_dispatcher));
+		  	printf("loading [%s]..\n", bfile(cfg_dispatcher) );
 		#endif
 
-	  	if (!config_read_file(&cfg, bfile(cfg_dispatcher))) {
-	    		printf("[%s]failed: %s at line %i\n",bfile(bfile(cfg_dispatcher),config_error_text(&cfg),config_error_line(&cfg));
+	  	if (!config_read_file(&cfg, bfile(cfg_dispatcher) )) {
+	    		printf("[%s]failed: %s at line %i\n",bfile(cfg_dispatcher),config_error_text(&cfg),config_error_line(&cfg));
 			exit(1);
 		}
 
