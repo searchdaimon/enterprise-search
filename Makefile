@@ -71,7 +71,7 @@ HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb
+bb : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun
 
 tempFikes: IndexerLot_fik32bitbug DIconvert
 
