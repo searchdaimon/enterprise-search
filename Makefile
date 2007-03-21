@@ -42,7 +42,8 @@ BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail_by_convert.c -DBBDOC
 #LDAP = -DWITH_OPENLDAP -lldap -llber
 #LDAP = -DWITH_OPENLDAP /usr/lib/libldap.so.2 /usr/lib/liblber.so.2
 #LDAP = -DWITH_OPENLDAP /usr/lib/libldap.a /usr/lib/liblber.a /usr/lib/libsasl.a /usr/lib/libcrypto.a -lssl
-LDAP = -DWITH_OPENLDAP /usr/lib/libldap.a /usr/lib/liblber.a /usr/lib/libsasl.a src/3pLibs/openssl-0.9.8d/libssl.a src/3pLibs/openssl-0.9.8d/libcrypto.a -ldl 
+#LDAP = -DWITH_OPENLDAP /usr/lib/libldap.a /usr/lib/liblber.a /usr/lib/libsasl.a src/3pLibs/openssl-0.9.8d/libssl.a src/3pLibs/openssl-0.9.8d/libcrypto.a -ldl 
+LDAP = -DWITH_OPENLDAP /usr/lib/libldap.a /usr/lib/liblber.a /usr/lib/libsasl.a /usr/local/lib/libssl.a /usr/local/lib/libcrypto.a -ldl 
 
 #flag for å inkludere mysql
 #MYSQL = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
