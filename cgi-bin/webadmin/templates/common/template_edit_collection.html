@@ -1,0 +1,80 @@
+[%	# Template for editing or inputting data regarding a collection.
+	# Provide an array in the variable fields with what input fields
+	# you wish to show to the user.
+	# Input fileds avaiable are: collection, authentication, groups, share and crawling. %]
+
+[% 
+
+	# NOTE!!: Share MUST contain the key connector_name and a 
+	# valid connector value. If it does not, you will get the cryptic
+	# error "template: file error - : not found"
+	# This might not be true if you don't use the field share.
+
+%]
+
+[% PROCESS 'template_connector_blocks.html' %]
+[% PROCESS 'template_edit_blocks.html' %]
+
+[% FOREACH field IN fields %]
+	[% IF field == 'collection' %]
+		[% PROCESS sub_fields
+			header = 'Collection'
+			blocks = ['collection']
+			icon = 'mimetypes'
+		%]
+	[% ELSIF field == 'authentication' %]
+		[% PROCESS sub_fields 
+			header = 'Authentication'
+			blocks = ['authentication']
+			icon = 'personal'
+		%]
+	[% ELSIF field == 'groups' %]
+		[% PROCESS sub_fields
+			header = 'Groups'
+			blocks = ['groups']
+			icon = 'group'
+		%]
+
+
+	[% ELSIF field == 'connector' %]
+		[% PROCESS sub_fields
+			header = 'What to crawl'
+			blocks = [share.connector_name]
+			icon = 'yast_nfs_32'
+		%]
+	[% ELSIF field == 'crawling' %]
+		[% PROCESS sub_fields
+			header = 'Crawling behaviour'
+			blocks = ['active', 'rate']
+			icon = 'configure'
+		%]
+	
+	[% ELSIF field == 'advanced' %]
+		[% PROCESS sub_fields
+			header = 'Advanced management'
+			blocks = ['advanced']
+			icon = 'configure'
+		%]
+
+	[% ELSE %]
+		Developer warning: unknown field [% field %].
+	[% END %]
+[% END %]
+
+
+
+[% BLOCK sub_fields %]
+<div class="connector_block">
+	<h3>[% header %]</h3>
+	<img src="file.cgi?i=[% icon %]" alt="" />
+	<div class="connector_block_inner">
+	
+	[% FOREACH block IN blocks %]
+		[% PROCESS $block
+			prefix = 'share'
+			share = share %]
+	[% END %]
+
+	</div>
+</div>
+[% END %]

@@ -1,0 +1,11 @@
+[% # Template to get the standard table. Use together with template_table_row.html %]
+<table class="default_table">
+		<tr>
+		[% FOREACH h IN header %]
+			<th>[% h %]</th>
+		[% END %]
+		</tr>
+	[% content %]
+
+
+</table>

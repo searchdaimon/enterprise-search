@@ -1,0 +1,44 @@
+[% INCLUDE 'header.html' %]
+
+[% IF error_no_username %]
+	[% WRAPPER 'template_message.html' type='error' %]
+		You forgot to enter a username.
+
+	[% END %]
+[% END %]
+
+[% user = authentication.0.username %]
+[% pass = authentication.0.password %]
+[% id = authentication.0.id %]
+
+[% IF action == 'new' %]
+	<h2>Add new username/password pair</h2>
+[% ELSE %]
+	<h2>Edit [% "$user/$pass "%]</h2>
+[% END %]
+<div style="margin-bottom: 1em;">
+<img src="file.cgi?i=back&amp;size=22x22" alt="" style="border : 0px solid;" />
+<a href="authentication.cgi">Back to authentication</a>
+</div>
+
+<form action="authentication.cgi" method="post">
+<div style="margin-left : 1em; border-left-style : dashed; padding-left : 1em; background-color : #D3DBEF">
+<table style="width : 60%;">
+	<tr>
+		<td>Username:</td><td><input type="text" name="auth.username" value="[% user %]" /></td>
+	</tr><tr>
+		<td>Password:</td><td><input type="text" name="auth.password" value="[% pass %]" /></td>
+	</tr>
+</table>
+[% IF action == 'new' %]
+	<input type="submit" name="submit_new_pair" value="Add pair" />
+[% ELSE %] [% # edit %]
+	<input type="hidden" name="auth.id" value="[% id %]" />
+	<input type="submit" name="submit_changes" value="Submit changes" />
+[% END %]
+</div>
+
+</form>
+
+
+[% INCLUDE 'footer.html' %]

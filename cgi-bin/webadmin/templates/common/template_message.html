@@ -1,0 +1,39 @@
+[%	# Default template to showing messages.
+	# Icon, header and background color depends on the type of message.
+	# The different types are: info, help, error, warning and success.
+	# Provide type through the variable type.
+	
+%]
+[% background = "#dce4f9" %]
+[% IF type == 'info' %]
+	[% title = 'Information' %]
+	[% background = "#dce4f9" %]
+	[% icon = "info" %]
+[% ELSIF type == 'help' %]
+	[% title = 'Support' %]
+	[% background = "#dce4f9" %]
+	[% icon = "agt_support" %]
+[% ELSIF type == 'error' %]
+	[% title = "Ooops!" %]
+	[% background = "#fefcea" %]
+	[% icon = 'error' %]
+[% ELSIF type == 'success' %]
+	[% title = "Success!" %]
+	[% background = "#d8fbaf" %]
+	[% icon = "button_ok" %]
+
+[% ELSIF type == 'warning' %]
+	[% title = "Warning" %]
+	[% background = "#fefcea" %]
+	[% icon = "error" %]
+[% END %]
+
+<div class="message_box" style="background: [%background%]; ">
+	<img src="file.cgi?size=64x64&amp;i=[% icon %]" title="[% title %]" alt="[% title %]" style="float : left" />
+	<p>
+		<!-- <strong>[% title %]</strong><br /><br /> -->
+		[% content %]
+
+	</p>
+	
+</div>

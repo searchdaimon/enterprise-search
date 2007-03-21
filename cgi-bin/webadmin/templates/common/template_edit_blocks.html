@@ -1,0 +1,185 @@
+[% 
+	# Various connector blocks used to edit collections. This is
+	# a helper template for template_edit_collection
+%]
+
+[% 
+	# I tried to do this without tables, I really did! %]
+
+
+[% rates = [
+	{ 'Every 5 minutes' => '5' },
+	{ 'Every 15 minutes' => '15' },
+	{ 'Every hour' => '60' },
+	{ 'Every 3 hours' => '180' },
+	{ 'Every 6 hours' => '360' },
+	{ 'Every 12 hours' => '720' },
+	{ 'Every day' => '1440' },
+	{ 'Every 3 days' => '4320' },
+	{ 'Every week' => '10080' },
+	{ 'Every 2 weeks' => '20160' },
+	{ 'Every 4 weeks' => '40320' },
+] %]
+			
+[% prefix = "share" UNLESS prefix %]
+[% optional = BLOCK %]<span style="font-size : x-small;">(Optional)</span>[% END %] 
+
+[% BLOCK active %]
+	<div class="block_default">Active:
+		<div class="block_inner">
+		<input type="radio" name="[% prefix %].active" value="1"
+			[% IF share.active or !share.active.defined %] checked="checked" [% END %] /> Yes
+		<input type="radio" name="[% prefix %].active" value="0"
+			[% IF share.active.defined
+				and !share.active %] 
+				checked="checked" [% END %] /> No
+		
+	</div></div>
+[% END %]
+
+[% BLOCK collection %]
+	<div class="block_default">Collection name:
+		<div class="block_inner">
+			<input type="text" value="[% share.collection_name %]" 
+				name="[% prefix %].collection_name" />
+	
+		</div>
+	</div>
+[% END %]
+
+[% BLOCK authentication %]
+
+	[% IF authentication.size %]
+		<h4>Choose authentication values</h4>
+		<div style="margin-left : 1em;">
+		<select name="[% prefix %].auth_id">
+			<option value="">(None needed/New values)</option>
+			[% FOREACH authentication %]
+				<option value="[% id %]"
+					[% "selected=\"selected\"" IF share.auth_id == id %]
+					>[% username %]/[% password %]</option>
+			[% END %]
+		</select>
+		</div>
+		<h4>Use new authentication values</h4>
+	[% END %]
+	<div style="margin-left : 1em;">
+	
+	<div class="block_default">
+		Username:
+	
+		<div class="block_inner">
+			<input type="text" name="[% prefix %].username" 
+			[% UNLESS share.auth_id %] value="[% share.username %]" [% END %] />
+		</div>
+	</div>
+		
+	<div class="block_default" style="margin-top : 0.5em;">
+		Password:
+		<div class="block_inner">
+			<input type="password" name="[% prefix %].password" 
+			[% UNLESS share.auth_id %] value="[% share.password %]"[% END %] />
+		</div>
+	</div>
+		
+
+	</div>
+[% END %]
+
+[% BLOCK groups %]
+
+[% IF group_list.size %]
+	<div class="block_default">
+		Group access:
+		<div style="block_inner" >
+			<div style="background : white; max-width : 80%; border : 1px solid;">
+			<div style="overflow:auto; min-height : 5em; max-height : 12em; margin-bottom : 1em: margin-top : 1em;">
+			[% i = 0 %]
+			[% FOREACH group IN group_list %]				
+				<label for="group[% i %]" 
+					style="display : block; padding-left : 1em; padding-right : 1em;">
+					
+				<input name="share.group_member[[% i %]]" type="checkbox" id="group[% i %]"
+						value="[% group %]"
+						[% IF share.group_member.grep("^$group$").0 %]
+							[% # Check if share is a member of this group %]
+							checked="checked"
+						[% END %]
+						 /> [% group %]
+						
+				</label>
+
+				[% i = i + 1 %]
+			[% END %]
+			</div></div>
+		</div></div>
+
+
+[% ELSE %]
+	[% WRAPPER 'template_info.html' %]
+		Error: Couldn't find any groups.
+	[% END %]
+
+[% END %]
+[% END %]
+
+[% BLOCK connectors %]
+
+		[% IF use_radio_buttons 
+			and connectors.size < 10 %]
+			[% FOREACH connectors %]
+			[% i = i + 1 %]
+			<input type="radio" value="[% id %]" name="[% prefix %].connector"
+				id = "choose_connector[[% i %]]"
+				[% IF id == share.connector %] 
+					checked="checked" 
+				[% END %] 
+				[% IF lock_connector %] readonly="readonly" [% END %]> 
+				<label for="choose_connector[[% i %]]">[% name %]</label><br />
+			[% END %]
+		
+		[% ELSE %]
+		<select name="[% prefix %].connector">
+			[% FOREACH connectors %]
+			<option value="[% id %]"
+				[% IF id == share.connector %] 
+					selected="selected" 
+				[% END %] >[% name %]</option>
+			[% END %]
+		</select>
+		[% END %]
+[% END %]
+
+[% BLOCK rate %]
+	<div class="block_default" style="height : 17em;">
+	Recrawl every:
+	<div class="block_inner">
+		<input type="radio" value="" name="[% prefix %].rate"
+		[% UNLESS share.rate %] checked="checked" [% END %] />
+			(Default rate)<br /> [% # TODO: Show default rate %]
+	[% FOREACH r IN rates %]
+		[% text = r.keys.0 %]
+		[% minutes = r.values.0 %]
+		
+		<input type="radio" value="[% minutes %]" name="[% prefix %].rate" id="[% prefix %].rate.[% minutes %]"
+			[% IF share.rate == minutes %] 
+				checked="checked" 
+			[% END %]> <label for="[% prefix %].rate.[% minutes %]">[% text %]</label><br />
+	[% END %]
+	</div>
+	
+	</div>
+	
+[% END %]
+
+[% BLOCK advanced %]
+	<div class="block_default">
+	Full crawl: 
+	<div class="block_inner" >
+		
+		<input type="submit" name="advanced.full_recrawl.submit" value="Force full crawl now" />
+		<input type="hidden" name="advanced.full_recrawl.id" value="[% id %]" />
+		
+	</div>
+	</div>
+[% END %]

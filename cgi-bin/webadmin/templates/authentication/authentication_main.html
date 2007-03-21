@@ -1,0 +1,59 @@
+[% INCLUDE 'header.html' title = 'Authentication' %]
+
+[% IF success_insert_pair %]
+	[% WRAPPER 'template_message.html' type='success' %]
+		Username/password pair has been added.
+
+	[% END %]
+[% ELSIF success_delete_pair %]
+	[% WRAPPER 'template_message.html' type='success' %]
+		Username/password pair deleted.
+	[% END %]
+[% ELSIF success_submit_changes %]
+	[% WRAPPER 'template_message.html' type='success' %]
+		Username/password have been updated.
+	[% END %]
+[% ELSE %]
+	[% WRAPPER 'template_message.html' type='info' %]
+		You may wish to use the same username and password for many collections.<br />
+		For convenience, it's possible to create username/password pairs here to ease
+		the data input when adding new collections.
+	[% END %]
+[% END %]
+
+
+
+<h2>Existing authentication</h2>
+	<form action="authentication.cgi" method="post">
+[% IF authentication.size %]
+	[% WRAPPER 'template_table.html' 
+		header = ['', 'Username', 'Password', ''] %]
+		[% i = 0 %]
+		[% FOREACH pair IN authentication %]
+			[% color = 1 - color %]
+			[% WRAPPER 'template_table_row.html' %]
+			<td>
+				<img src="file.cgi?i=personal" alt="" style="border : 0px solid;" />
+			</td>
+			<td>[% pair.username %]</td>
+			<td>[% pair.password %]</td>
+			<td style="text-align : right;">
+				<input type="submit" value="Edit"     name="edit_pair[[% i %]].submit" />
+				<input type="hidden" value="[% pair.id %]" name="edit_pair[[% i %]].id" />
+				<input type="submit" value="Delete"   name="delete_pair[[% i %]].submit" />
+				<input type="hidden" value="[% pair.id %]" name="delete_pair[[% i %]].id" />
+			</td>
+			
+			[% END %]
+			[% i = i + 1 %]
+		[% END %]
+	[% END %]
+[% ELSE %]
+	[% WRAPPER 'template_info.html' %]
+		You've yet to create a username and password pair.
+	[% END %]
+[% END %]
+<div style="margin-top: 1em;"></div>
+	<input type="submit" value="Add a new pair" name="add_new_pair" />
+</form>
+[% INCLUDE 'footer.html' %]

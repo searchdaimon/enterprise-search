@@ -1,0 +1,27 @@
+[% IF error_collection_exists %]
+	[% WRAPPER 'template_message.html'
+		type = 'error' %]
+		Collection name is taken. You can pick another name, 
+		or leave the field blank for a random name.
+	[% END %]
+[% ELSIF error_missing_connector %]
+	[% WRAPPER 'template_message.html' 
+		type = 'error' %]
+		You forgot to select a connector.
+	[% END %]
+[% ELSIF error_missing_host %]
+	[% WRAPPER 'template_message.html' 
+		type = 'error' %]
+		You forgot to enter hostname.
+	[% END %]
+[% ELSIF error_missing_share %]
+	[% WRAPPER 'template_message.html' 
+		type = 'error' %]
+		You forgot to enter what to crawl.
+	[% END %]
+[% ELSIF error_collection_not_exist %]
+	[% WRAPPER 'template_message.html'
+		type = 'error' %]
+		There doesn't exist a collection with that name.
+	[% END %]
+[% END %]

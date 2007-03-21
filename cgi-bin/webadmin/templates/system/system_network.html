@@ -1,0 +1,39 @@
+[% INCLUDE 'header.html' title = 'System overview' %]
+[% USE HTML %]
+[% USE Dumper %]
+[% PROCESS 'network_config.html' %]
+
+
+[% PROCESS 'template_tabs.html' 
+	tabs = [
+	{
+		'name'		=> 'System diagnostics',
+		'url'		=> 'system.cgi',
+		'selected'	=> 0,
+	},
+	{
+		'name'		=> 'Upload software package',
+		'url'		=> 'system.cgi?view=package_upload'
+		'selected'	=> 0,
+	},
+	{
+		'name'		=> 'Network configuration',
+		'url'		=> 'system.cgi?view=network',
+		'selected'  => 1,
+	},
+]
+%]
+
+[% IF error_msg_net.defined %]
+	[% WRAPPER 'template_message.html' type='error' %] [% error_msg_net %] [% END %]
+[% END %]
+[% IF succ_msg_net.defined %]
+	[% WRAPPER 'template_message.html' type='success' %] Network configuration updated [% END %]
+[% END %]
+
+<form action="system.cgi" method="post">
+[% PROCESS network_config %]
+<input type="submit" name="submit.network_conf" value="Apply changes" />
+</form>
+
+[% INCLUDE 'footer.html' %]

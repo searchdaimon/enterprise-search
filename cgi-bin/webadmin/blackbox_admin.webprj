@@ -1,0 +1,488 @@
+<!DOCTYPE webproject>
+<webproject>
+  <project type="Local" name="blackbox_admin" encoding="utf8" >
+    <upload/>
+    <author>Boitho</author>
+    <email/>
+    <defaultDTD>-//W3C//DTD XHTML 1.0 Strict//EN</defaultDTD>
+    <item url="" uploadstatus="1" />
+    <templates>templates/</templates>
+    <toolbars>toolbars/</toolbars>
+    <item url="Sql/" uploadstatus="1" />
+    <item modified_time="1170379195" url="Sql/Config.pm" uploadstatus="1" />
+    <item modified_time="1165656469" url="Sql/mymod.pm" uploadstatus="1" />
+    <item modified_time="1170356299" url="Sql/Sql.pm" uploadstatus="1" />
+    <item url="templates/" uploadstatus="1" />
+    <item modified_time="1165656469" url="login.cgi" uploadstatus="1" />
+    <annotations/>
+    <item modified_time="1169849031" url="Sql/Connectors.pm" uploadstatus="1" />
+    <item modified_time="1170092361" url="Sql/Shares.pm" uploadstatus="1" />
+    <item modified_time="1165656469" url="Sql/ConnectorsFor.pm" uploadstatus="1" />
+    <item url="templates/scan.html" uploadstatus="1" />
+    <item modified_time="1169829039" url="scan.cgi" uploadstatus="1" />
+    <item url="Tools/" uploadstatus="1" />
+    <item modified_time="1165656469" url="Modules" uploadstatus="1" />
+    <item url="Modules/Samba/" uploadstatus="1" />
+    <item url="Modules/Samba/Scan.pm" uploadstatus="1" />
+    <item url="templates/template_edit_shares.html" uploadstatus="1" />
+    <item url="templates/view_log.html" uploadstatus="1" />
+    <item url="templates/template_success.html" uploadstatus="1" />
+    <item modified_time="1169829138" url="add.cgi" uploadstatus="1" />
+    <item url="templates/template_warning.html" uploadstatus="1" />
+    <item modified_time="1169828680" url="overview.cgi" uploadstatus="1" />
+    <item url="templates/scan_details_table.html" uploadstatus="1" />
+    <item url="templates/add_messages.html" uploadstatus="1" />
+    <item modified_time="1170427879" url="settings.cgi" uploadstatus="1" />
+    <item modified_time="1165656469" url="Sql/Settings.pm" uploadstatus="1" />
+    <item modified_time="1166524355" url="download.cgi" uploadstatus="1" />
+    <item modified_time="1169828696" url="logs.cgi" uploadstatus="1" />
+    <item modified_time="1166524412" url="users.cgi" uploadstatus="1" />
+    <item url="Modules/Boitho/" uploadstatus="1" />
+    <item modified_time="1166618442" url="Modules/Boitho/Infoquery.pm" uploadstatus="1" />
+    <item modified_time="1170365264" url="Sql/CollectionAuth.pm" uploadstatus="1" />
+    <item url="templates/authentication_add.html" uploadstatus="1" />
+    <item url="templates/authentication_edit_pair.html" uploadstatus="1" />
+    <item modified_time="1169829233" url="authentication.cgi" uploadstatus="1" />
+    <item modified_time="1170365254" url="Sql/ShareGroups.pm" uploadstatus="1" />
+    <item url="Modules/Boitho/Scan/" uploadstatus="1" />
+    <item modified_time="1165656469" url="Modules/Boitho/Scan/Samba.pm" uploadstatus="1" />
+    <item modified_time="1170076965" url="Modules/Boitho/Scan.pm" uploadstatus="1" />
+    <item modified_time="1169849695" url="Sql/ScanResults.pm" uploadstatus="1" />
+    <item url="templates/overview/" uploadstatus="1" />
+    <item modified_time="1170417510" url="templates/overview/overview.html" uploadstatus="1" />
+    <item modified_time="1166620671" url="templates/overview/overview_delete_share.html" uploadstatus="1" />
+    <item modified_time="1166620730" url="templates/overview/overview_edit.html" uploadstatus="1" />
+    <item url="templates/common/" uploadstatus="1" />
+    <item modified_time="1166551758" url="config.pm" uploadstatus="1" />
+    <item url="templates/settings/" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/settings/settings_delete_all.html" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/settings/settings_delete_done.html" uploadstatus="1" />
+    <item modified_time="1165656469" url="Modules/Boitho/Scan/Common.pm" uploadstatus="1" />
+    <item modified_time="1165656469" url="Modules/Boitho/Scan/MySql.pm" uploadstatus="1" />
+    <item modified_time="1169118476" url="Modules/Boitho/PhoneHome.pm" uploadstatus="1" />
+    <item modified_time="1169118607" url="help.cgi" uploadstatus="1" />
+    <item modified_time="1165777428" url="templates/overview/overview_messages.html" uploadstatus="1" />
+    <item url="templates/add/" uploadstatus="1" />
+    <item modified_time="1165686873" url="templates/add/add.html" uploadstatus="1" />
+    <item modified_time="1165675907" url="templates/add/add_details.html" uploadstatus="1" />
+    <item url="templates/logs/" uploadstatus="1" />
+    <item modified_time="1170377059" url="templates/logs/logs_main.html" uploadstatus="1" />
+    <item modified_time="1165843261" url="templates/logs/logs_search.html" uploadstatus="1" />
+    <item modified_time="1165841677" url="templates/common/template_tabs.html" uploadstatus="1" />
+    <item modified_time="1165857038" url="Sql/Search_logg.pm" uploadstatus="1" />
+    <item modified_time="1166620789" url="templates/overview/overview_manage.html" uploadstatus="1" />
+    <item url="templates/scan/" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/scan/scan_bottom.html" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/scan/scan_done.html" uploadstatus="1" />
+    <item modified_time="1170349631" url="templates/scan/scan_main.html" uploadstatus="1" />
+    <item modified_time="1169744184" url="templates/scan/scan_new.html" uploadstatus="1" />
+    <item modified_time="1165675598" url="templates/scan/scan_results.html" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/scan/scan_top.html" uploadstatus="1" />
+    <item url="templates/authentication/" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/authentication/authentication_delete_pair.html" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/authentication/authentication_main.html" uploadstatus="1" />
+    <item modified_time="1170347668" url="templates/common/header.html" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/common/footer.html" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/authentication/authentication_pair_form.html" uploadstatus="1" />
+    <item modified_time="1170374299" url="templates/common/menu_left.html" uploadstatus="1" />
+    <item url="templates/help/" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/help/help_phone_home.html" uploadstatus="1" />
+    <item url="templates/users/" uploadstatus="1" />
+    <item modified_time="1165677879" url="templates/users/users_details.html" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/users/users_main.html" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/common/template_collection_warnings.html" uploadstatus="1" />
+    <item modified_time="1166623646" url="templates/common/template_connector_blocks.html" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/common/template_connector_help.html" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/common/template_delete.html" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/common/template_description.html" uploadstatus="1" />
+    <item modified_time="1165846611" url="templates/common/template_edit_collection.html" uploadstatus="1" />
+    <item url="templates/login/" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/login/template_form.html" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/common/template_info.html" uploadstatus="1" />
+    <item modified_time="1165656469" url="templates/common/template_message.html" uploadstatus="1" />
+    <item modified_time="1170021353" url="templates/common/template_table.html" uploadstatus="1" />
+    <item modified_time="1170024326" url="templates/common/template_table_row.html" uploadstatus="1" />
+    <item modified_time="1166525561" url="templates/common/template_edit_blocks.html" uploadstatus="1" />
+    <item modified_time="1169828761" url="system.cgi" uploadstatus="1" />
+    <item url="templates/system/" uploadstatus="1" />
+    <item modified_time="1169481850" url="templates/system/system_main.html" uploadstatus="1" />
+    <item modified_time="1169828814" url="Modules/Boitho/RaidStatus.pm" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/" uploadstatus="1" />
+    <item modified_time="1170428021" url="Page" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/inventories/" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/patches/" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/patches/20061214134813-90d65-e8aeb3798560e354200e78ec6e26d6a19f95d771.gz" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/patches/20061214143134-90d65-a4138dec87a8ff1c380eb8a23de9bb1e440d4e7f.gz" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/patches/20061214144855-90d65-3285115ac073e94e7886c420a03e48993b9b517f.gz" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/patches/20061214151832-90d65-08b1659d5ec8d3a320d03dd1f915d033abace819.gz" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/patches/20061215132153-90d65-d75782c1a8e0a5d18b7c8eac79f444d86ccd074b.gz" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/patches/20061215132247-90d65-90378d4cde34bc1ed5c35bc262298bb1483991f8.gz" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/patches/20061215133148-90d65-66ea1ebc51967c9c2eddc83cba6c78b703d4daf4.gz" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/patches/20061215133202-90d65-506b7603af524ef31bdb0abf87cd586d5b6700aa.gz" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/patches/pending" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/prefs/" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/prefs/author" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/prefs/binaries" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/prefs/boring" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/prefs/motd" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/pristine/" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/pristine/fdiskwrap.c" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/pristine/getstatus.pl" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/pristine/Makefile" uploadstatus="1" />
+    <item modified_time="1169070358" url="Modules/Boitho/RaidStatus/_darcs/inventory" uploadstatus="1" />
+    <item modified_time="1169474990" url="Modules/Boitho/RaidStatus/fdiskwrap" uploadstatus="1" />
+    <item modified_time="1169070507" url="Modules/Boitho/RaidStatus/fdiskwrap.c" uploadstatus="1" />
+    <item modified_time="1169474990" url="Modules/Boitho/RaidStatus/fdiskwrap.o" uploadstatus="1" />
+    <item modified_time="1169070507" url="Modules/Boitho/RaidStatus/Makefile" uploadstatus="1" />
+    <item modified_time="1169070507" url="Modules/Boitho/RaidStatus/mdstat-both-active-output" uploadstatus="1" />
+    <item modified_time="1169070507" url="Modules/Boitho/RaidStatus/mdstat-rebuild-output" uploadstatus="1" />
+    <item modified_time="1169740713" url="Page/Add.pm" uploadstatus="1" />
+    <item modified_time="1169740767" url="Page/Logs.pm" uploadstatus="1" />
+    <item modified_time="1170342884" url="Page/Overview.pm" uploadstatus="1" />
+    <item modified_time="1169740949" url="Page/System.pm" uploadstatus="1" />
+    <item modified_time="1169740878" url="Page/Users.pm" uploadstatus="1" />
+    <item url="Common/" uploadstatus="1" />
+    <item modified_time="1165656469" url="Common/Collection.pm" uploadstatus="1" />
+    <item modified_time="1170076640" url="Common/Scan.pm" uploadstatus="1" />
+    <item modified_time="1170349543" url="Common/Generic.pm" uploadstatus="1" />
+    <item modified_time="1170350998" url="setup.cgi" uploadstatus="1" />
+    <item modified_time="1170351427" url="templates/setup" uploadstatus="1" />
+    <item url="Common/Common.pm" uploadstatus="1" />
+    <item modified_time="1170094295" url="Page/Setup.pm" uploadstatus="1" />
+    <item modified_time="1169982714" url="Modules/Boitho/Scan/Samba2.pm" uploadstatus="1" />
+    <item modified_time="1170417225" url="Modules/Boitho/SettingsExport.pm" uploadstatus="1" />
+    <item modified_time="1170428021" url="Page/Settings.pm" uploadstatus="1" />
+    <item modified_time="1170378192" url="templates/settings/settings_import_export.html" uploadstatus="1" />
+    <item modified_time="1170362788" url="templates/settings/settings_advanced.html" uploadstatus="1" />
+    <item modified_time="1170421895" url="templates/settings/settings_main.html" uploadstatus="1" />
+    <item url="templates/system/system_upload.html" uploadstatus="1" />
+    <item url="styles/setup.css" uploadstatus="1" />
+    <item url="styles/" uploadstatus="1" />
+    <item url="templates/setup/setup_start.html" uploadstatus="1" />
+    <item url="templates/setup/setup_complete.html" uploadstatus="1" />
+    <item url="templates/setup/setup_scan_scanning_top.html" uploadstatus="1" />
+    <item url="templates/setup/setup_scan_scanning_bottom.html" uploadstatus="1" />
+    <item url="templates/setup/setup_scan_process_results.html" uploadstatus="1" />
+    <item url="templates/setup/setup_scan_process_done.html" uploadstatus="1" />
+    <item url="templates/setup/setup_login.html" uploadstatus="1" />
+    <item url="templates/setup/setup_integration_method.html" uploadstatus="1" />
+    <item url="templates/setup/setup_integration_values.html" uploadstatus="1" />
+    <item url="templates/setup/setup_common.html" uploadstatus="1" />
+    <item url="Page/Setup/" uploadstatus="1" />
+    <item url="Page/Setup/Network.pm" uploadstatus="1" />
+    <item url="Page/Abstract.pm" uploadstatus="1" />
+    <item url="templates/setup/setup_network_config.html" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig.pm" uploadstatus="1" />
+    <item url="Common/FormFlow.pm" uploadstatus="1" />
+    <item url="Common/CVS/" uploadstatus="1" />
+    <item url="Common/CVS/Entries" uploadstatus="1" />
+    <item url="Common/CVS/Repository" uploadstatus="1" />
+    <item url="Common/CVS/Root" uploadstatus="1" />
+    <item url="icon/" uploadstatus="1" />
+    <item url="icon/128x128/" uploadstatus="1" />
+    <item url="icon/128x128/CVS/" uploadstatus="1" />
+    <item url="icon/128x128/CVS/Entries" uploadstatus="1" />
+    <item url="icon/128x128/CVS/Repository" uploadstatus="1" />
+    <item url="icon/128x128/CVS/Root" uploadstatus="1" />
+    <item url="icon/128x128/info.png" uploadstatus="1" />
+    <item url="icon/16x16/" uploadstatus="1" />
+    <item url="icon/16x16/CVS/" uploadstatus="1" />
+    <item url="icon/16x16/CVS/Entries" uploadstatus="1" />
+    <item url="icon/16x16/CVS/Repository" uploadstatus="1" />
+    <item url="icon/16x16/CVS/Root" uploadstatus="1" />
+    <item url="icon/16x16/1day.png" uploadstatus="1" />
+    <item url="icon/16x16/7days.png" uploadstatus="1" />
+    <item url="icon/16x16/doc.png" uploadstatus="1" />
+    <item url="icon/16x16/document2.png" uploadstatus="1" />
+    <item url="icon/16x16/document.png" uploadstatus="1" />
+    <item url="icon/16x16/html.png" uploadstatus="1" />
+    <item url="icon/16x16/image.png" uploadstatus="1" />
+    <item url="icon/16x16/images.png" uploadstatus="1" />
+    <item url="icon/16x16/mime.png" uploadstatus="1" />
+    <item url="icon/16x16/month.png" uploadstatus="1" />
+    <item url="icon/16x16/pdf-document.png" uploadstatus="1" />
+    <item url="icon/16x16/personal.png" uploadstatus="1" />
+    <item url="icon/16x16/sound.png" uploadstatus="1" />
+    <item url="icon/16x16/tar.png" uploadstatus="1" />
+    <item url="icon/16x16/today.png" uploadstatus="1" />
+    <item url="icon/16x16/txt.png" uploadstatus="1" />
+    <item url="icon/16x16/video2.png" uploadstatus="1" />
+    <item url="icon/22x22/" uploadstatus="1" />
+    <item url="icon/22x22/CVS/" uploadstatus="1" />
+    <item url="icon/22x22/CVS/Entries" uploadstatus="1" />
+    <item url="icon/22x22/CVS/Repository" uploadstatus="1" />
+    <item url="icon/22x22/CVS/Root" uploadstatus="1" />
+    <item url="icon/22x22/agt_action_fail.png" uploadstatus="1" />
+    <item url="icon/22x22/agt_action_success.png" uploadstatus="1" />
+    <item url="icon/22x22/agt_reload.png" uploadstatus="1" />
+    <item url="icon/22x22/back.png" uploadstatus="1" />
+    <item url="icon/22x22/configure.png" uploadstatus="1" />
+    <item url="icon/22x22/edit_add.png" uploadstatus="1" />
+    <item url="icon/22x22/hardware.png" uploadstatus="1" />
+    <item url="icon/22x22/kdmconfig.png" uploadstatus="1" />
+    <item url="icon/22x22/lists.png" uploadstatus="1" />
+    <item url="icon/22x22/log.png" uploadstatus="1" />
+    <item url="icon/22x22/mimetypes.png" uploadstatus="1" />
+    <item url="icon/22x22/personal.png" uploadstatus="1" />
+    <item url="icon/22x22/remote.png" uploadstatus="1" />
+    <item url="icon/22x22/search.png" uploadstatus="1" />
+    <item url="icon/32x32/" uploadstatus="1" />
+    <item url="icon/32x32/CVS/" uploadstatus="1" />
+    <item url="icon/32x32/CVS/Entries" uploadstatus="1" />
+    <item url="icon/32x32/CVS/Repository" uploadstatus="1" />
+    <item url="icon/32x32/CVS/Root" uploadstatus="1" />
+    <item url="icon/32x32/agt_action_fail.png" uploadstatus="1" />
+    <item url="icon/32x32/agt_action_success.png" uploadstatus="1" />
+    <item url="icon/32x32/agt_reload.png" uploadstatus="1" />
+    <item url="icon/32x32/agt_support.png" uploadstatus="1" />
+    <item url="icon/32x32/button_cancel.png" uploadstatus="1" />
+    <item url="icon/32x32/configure.png" uploadstatus="1" />
+    <item url="icon/32x32/filesave.png" uploadstatus="1" />
+    <item url="icon/32x32/kdmconfig.png" uploadstatus="1" />
+    <item url="icon/32x32/mimetypes_disabled.png" uploadstatus="1" />
+    <item url="icon/32x32/mimetypes.png" uploadstatus="1" />
+    <item url="icon/32x32/next.png" uploadstatus="1" />
+    <item url="icon/32x32/personal.png" uploadstatus="1" />
+    <item url="icon/32x32/player_fwd.png" uploadstatus="1" />
+    <item url="icon/32x32/revert.png" uploadstatus="1" />
+    <item url="icon/32x32/search.png" uploadstatus="1" />
+    <item url="icon/32x32/yast_nfs_32_disabled.png" uploadstatus="1" />
+    <item url="icon/32x32/yast_nfs_32.png" uploadstatus="1" />
+    <item url="icon/48x48/" uploadstatus="1" />
+    <item url="icon/48x48/CVS/" uploadstatus="1" />
+    <item url="icon/48x48/CVS/Entries" uploadstatus="1" />
+    <item url="icon/48x48/CVS/Repository" uploadstatus="1" />
+    <item url="icon/48x48/CVS/Root" uploadstatus="1" />
+    <item url="icon/48x48/info.png" uploadstatus="1" />
+    <item url="icon/48x48/yast_nfs.png" uploadstatus="1" />
+    <item url="icon/64x64/" uploadstatus="1" />
+    <item url="icon/64x64/CVS/" uploadstatus="1" />
+    <item url="icon/64x64/CVS/Entries" uploadstatus="1" />
+    <item url="icon/64x64/CVS/Repository" uploadstatus="1" />
+    <item url="icon/64x64/CVS/Root" uploadstatus="1" />
+    <item url="icon/64x64/button_cancel.png" uploadstatus="1" />
+    <item url="icon/64x64/button_ok.png" uploadstatus="1" />
+    <item url="icon/64x64/editdelete.png" uploadstatus="1" />
+    <item url="icon/64x64/error.png" uploadstatus="1" />
+    <item url="icon/64x64/info.png" uploadstatus="1" />
+    <item url="icon/CVS/" uploadstatus="1" />
+    <item url="icon/CVS/Entries" uploadstatus="1" />
+    <item url="icon/CVS/Repository" uploadstatus="1" />
+    <item url="icon/CVS/Root" uploadstatus="1" />
+    <item url="icon/other/" uploadstatus="1" />
+    <item url="icon/other/CVS/" uploadstatus="1" />
+    <item url="icon/other/CVS/Entries" uploadstatus="1" />
+    <item url="icon/other/CVS/Repository" uploadstatus="1" />
+    <item url="icon/other/CVS/Root" uploadstatus="1" />
+    <item url="icon/other/logo_mini2.png" uploadstatus="1" />
+    <item url="icon/other/logo.png" uploadstatus="1" />
+    <item url="icon/other/logo_smaller.png" uploadstatus="1" />
+    <item url="Modules/Boitho/CVS/" uploadstatus="1" />
+    <item url="Modules/Boitho/CVS/Entries" uploadstatus="1" />
+    <item url="Modules/Boitho/CVS/Repository" uploadstatus="1" />
+    <item url="Modules/Boitho/CVS/Root" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/CVS/" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/CVS/Entries" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/CVS/Repository" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/CVS/Root" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP/" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP/t/" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP/t/ExtUtils/" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP/t/ExtUtils/TBone.pm" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP/t/ipv4.t" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP/t/ipv6.t" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP/Changes" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP/COPYING" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP/ipcount" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP/IP.pm" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP/iptab" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP/Makefile.PL" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP/MANIFEST" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP/META.yml" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP/Net-IP.spec.PL" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP/README" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Net/IP.pm" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/a.out" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/configwrite.c" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/.configwrite.c.swp" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/configwrite.o" uploadstatus="1" />
+    <item url="Modules/Boitho/NetConfig/Makefile" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/CVS/" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/CVS/Entries" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/CVS/Repository" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/CVS/Root" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/CVS/" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/CVS/Entries" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/CVS/Repository" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/CVS/Root" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/inventories/CVS/" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/inventories/CVS/Entries" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/inventories/CVS/Repository" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/inventories/CVS/Root" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/patches/CVS/" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/patches/CVS/Entries" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/patches/CVS/Repository" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/patches/CVS/Root" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/prefs/CVS/" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/prefs/CVS/Entries" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/prefs/CVS/Repository" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/prefs/CVS/Root" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/pristine/CVS/" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/pristine/CVS/Entries" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/pristine/CVS/Repository" uploadstatus="1" />
+    <item url="Modules/Boitho/RaidStatus/_darcs/pristine/CVS/Root" uploadstatus="1" />
+    <item url="Modules/Boitho/Scan/CVS/" uploadstatus="1" />
+    <item url="Modules/Boitho/Scan/CVS/Entries" uploadstatus="1" />
+    <item url="Modules/Boitho/Scan/CVS/Repository" uploadstatus="1" />
+    <item url="Modules/Boitho/Scan/CVS/Root" uploadstatus="1" />
+    <item url="Modules/CVS/" uploadstatus="1" />
+    <item url="Modules/CVS/Entries" uploadstatus="1" />
+    <item url="Modules/CVS/Repository" uploadstatus="1" />
+    <item url="Modules/CVS/Root" uploadstatus="1" />
+    <item url="Page/Abstract/" uploadstatus="1" />
+    <item url="Page/Abstract/CVS/" uploadstatus="1" />
+    <item url="Page/Abstract/CVS/Entries" uploadstatus="1" />
+    <item url="Page/Abstract/CVS/Repository" uploadstatus="1" />
+    <item url="Page/Abstract/CVS/Root" uploadstatus="1" />
+    <item url="Page/Abstract/Network.pm" uploadstatus="1" />
+    <item url="Page/CVS/" uploadstatus="1" />
+    <item url="Page/CVS/Entries" uploadstatus="1" />
+    <item url="Page/CVS/Repository" uploadstatus="1" />
+    <item url="Page/CVS/Root" uploadstatus="1" />
+    <item url="Page/Setup/CVS/" uploadstatus="1" />
+    <item url="Page/Setup/CVS/Entries" uploadstatus="1" />
+    <item url="Page/Setup/CVS/Repository" uploadstatus="1" />
+    <item url="Page/Setup/CVS/Root" uploadstatus="1" />
+    <item url="Page/System/" uploadstatus="1" />
+    <item url="Page/System/CVS/" uploadstatus="1" />
+    <item url="Page/System/CVS/Entries" uploadstatus="1" />
+    <item url="Page/System/CVS/Repository" uploadstatus="1" />
+    <item url="Page/System/CVS/Root" uploadstatus="1" />
+    <item url="Page/System/Network.pm" uploadstatus="1" />
+    <item url="Sql/CVS/" uploadstatus="1" />
+    <item url="Sql/CVS/Entries" uploadstatus="1" />
+    <item url="Sql/CVS/Repository" uploadstatus="1" />
+    <item url="Sql/CVS/Root" uploadstatus="1" />
+    <item url="styles/CVS/" uploadstatus="1" />
+    <item url="styles/CVS/Entries" uploadstatus="1" />
+    <item url="styles/CVS/Repository" uploadstatus="1" />
+    <item url="styles/CVS/Root" uploadstatus="1" />
+    <item url="styles/default.css" uploadstatus="1" />
+    <item url="templates/add/CVS/" uploadstatus="1" />
+    <item url="templates/add/CVS/Entries" uploadstatus="1" />
+    <item url="templates/add/CVS/Repository" uploadstatus="1" />
+    <item url="templates/add/CVS/Root" uploadstatus="1" />
+    <item url="templates/authentication/CVS/" uploadstatus="1" />
+    <item url="templates/authentication/CVS/Entries" uploadstatus="1" />
+    <item url="templates/authentication/CVS/Repository" uploadstatus="1" />
+    <item url="templates/authentication/CVS/Root" uploadstatus="1" />
+    <item url="templates/common/CVS/" uploadstatus="1" />
+    <item url="templates/common/CVS/Entries" uploadstatus="1" />
+    <item url="templates/common/CVS/Repository" uploadstatus="1" />
+    <item url="templates/common/CVS/Root" uploadstatus="1" />
+    <item url="templates/common/network_config.html" uploadstatus="1" />
+    <item url="templates/CVS/" uploadstatus="1" />
+    <item url="templates/CVS/Entries" uploadstatus="1" />
+    <item url="templates/CVS/Repository" uploadstatus="1" />
+    <item url="templates/CVS/Root" uploadstatus="1" />
+    <item url="templates/help/CVS/" uploadstatus="1" />
+    <item url="templates/help/CVS/Entries" uploadstatus="1" />
+    <item url="templates/help/CVS/Repository" uploadstatus="1" />
+    <item url="templates/help/CVS/Root" uploadstatus="1" />
+    <item url="templates/login/CVS/" uploadstatus="1" />
+    <item url="templates/login/CVS/Entries" uploadstatus="1" />
+    <item url="templates/login/CVS/Repository" uploadstatus="1" />
+    <item url="templates/login/CVS/Root" uploadstatus="1" />
+    <item url="templates/logs/CVS/" uploadstatus="1" />
+    <item url="templates/logs/CVS/Entries" uploadstatus="1" />
+    <item url="templates/logs/CVS/Repository" uploadstatus="1" />
+    <item url="templates/logs/CVS/Root" uploadstatus="1" />
+    <item url="templates/overview/CVS/" uploadstatus="1" />
+    <item url="templates/overview/CVS/Entries" uploadstatus="1" />
+    <item url="templates/overview/CVS/Repository" uploadstatus="1" />
+    <item url="templates/overview/CVS/Root" uploadstatus="1" />
+    <item url="templates/scan/CVS/" uploadstatus="1" />
+    <item url="templates/scan/CVS/Entries" uploadstatus="1" />
+    <item url="templates/scan/CVS/Repository" uploadstatus="1" />
+    <item url="templates/scan/CVS/Root" uploadstatus="1" />
+    <item url="templates/settings/CVS/" uploadstatus="1" />
+    <item url="templates/settings/CVS/Entries" uploadstatus="1" />
+    <item url="templates/settings/CVS/Repository" uploadstatus="1" />
+    <item url="templates/settings/CVS/Root" uploadstatus="1" />
+    <item url="templates/setup/CVS/" uploadstatus="1" />
+    <item url="templates/setup/CVS/Entries" uploadstatus="1" />
+    <item url="templates/setup/CVS/Repository" uploadstatus="1" />
+    <item url="templates/setup/CVS/Root" uploadstatus="1" />
+    <item url="templates/setup/setup_integration.html" uploadstatus="1" />
+    <item url="templates/system/CVS/" uploadstatus="1" />
+    <item url="templates/system/CVS/Entries" uploadstatus="1" />
+    <item url="templates/system/CVS/Repository" uploadstatus="1" />
+    <item url="templates/system/CVS/Root" uploadstatus="1" />
+    <item url="templates/system/system_network.html" uploadstatus="1" />
+    <item url="templates/users/CVS/" uploadstatus="1" />
+    <item url="templates/users/CVS/Entries" uploadstatus="1" />
+    <item url="templates/users/CVS/Repository" uploadstatus="1" />
+    <item url="templates/users/CVS/Root" uploadstatus="1" />
+    <item url="blackbox_admin.session" uploadstatus="1" />
+    <item url="blackbox_admin.webprj" uploadstatus="1" />
+    <item url="file.cgi" uploadstatus="1" />
+    <item url="Page/Setup/Auth.pm" uploadstatus="1" />
+    <item url="Modules/Boitho/LicenseAuth.pm" uploadstatus="1" />
+    <item url="templates/setup/setup_auth.html" uploadstatus="1" />
+    <item url="CGI/" />
+    <item url="CGI/CVS/" />
+    <item url="CGI/CVS/Entries" />
+    <item url="CGI/CVS/Repository" />
+    <item url="CGI/CVS/Root" />
+    <item url="CGI/State/" />
+    <item url="CGI/State/CVS/" />
+    <item url="CGI/State/CVS/Entries" />
+    <item url="CGI/State/CVS/Repository" />
+    <item url="CGI/State/CVS/Root" />
+    <item url="CGI/State/t/" />
+    <item url="CGI/State/t/CVS/" />
+    <item url="CGI/State/t/CVS/Entries" />
+    <item url="CGI/State/t/CVS/Repository" />
+    <item url="CGI/State/t/CVS/Root" />
+    <item url="CGI/State/t/test.t" />
+    <item url="CGI/State/Changes" />
+    <item url="CGI/State/Makefile.PL" />
+    <item url="CGI/State/MANIFEST" />
+    <item url="CGI/CGI-State-0.02.tar.gz" />
+    <item url="CGI/State.pm" />
+    <item url="CVS/" />
+    <item url="CVS/Entries" />
+    <item url="CVS/Repository" />
+    <item url="CVS/Root" />
+    <item url="Net/" />
+    <item url="Net/IP/" />
+    <item url="Net/IP/t/" />
+    <item url="Net/IP/t/ExtUtils/" />
+    <item url="Net/IP/t/ExtUtils/TBone.pm" />
+    <item url="Net/IP/t/ipv4.t" />
+    <item url="Net/IP/t/ipv6.t" />
+    <item url="Net/IP/Changes" />
+    <item url="Net/IP/COPYING" />
+    <item url="Net/IP/ipcount" />
+    <item url="Net/IP/IP.pm" />
+    <item url="Net/IP/iptab" />
+    <item url="Net/IP/Makefile.PL" />
+    <item url="Net/IP/MANIFEST" />
+    <item url="Net/IP/META.yml" />
+    <item url="Net/IP/Net-IP.spec.PL" />
+    <item url="Net/IP/README" />
+    <item url="Net/IP.pm" />
+    <item url="templates/setup/setup_auth_license.html" />
+    <item url="templates/setup/setup_auth_manual.html" />
+    <item url="toolbars/" />
+    <item url="toolbars/CVS/" />
+    <item url="toolbars/CVS/Entries" />
+    <item url="toolbars/CVS/Repository" />
+    <item url="toolbars/CVS/Root" />
+    <item url="Page/Setup/Login.pm" />
+    <item url="Page/Setup/Integration.pm" />
+  </project>
+</webproject>

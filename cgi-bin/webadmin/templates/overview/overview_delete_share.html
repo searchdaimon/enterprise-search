@@ -1,0 +1,11 @@
+[% INCLUDE 'header.html' title='Delete share' %]
+[% USE HTML %]
+
+[% WRAPPER 'template_delete.html' 
+	it = collection_name
+	form = 'overview.cgi' %]
+
+	Are you sure you want to delete [% HTML.escape(collection_name) %]?
+[% END %]
+
+[% INCLUDE 'footer.html' %]

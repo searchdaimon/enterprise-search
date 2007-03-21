@@ -1,0 +1,13 @@
+[% IF color %]
+	[% background = 'background : #d3dbef;' %]
+[% END %]
+	
+[% IF disabled %] 
+	[% background = 'background : #F0F0F0;' %]
+	[% # alternative: background = 'background : #F5F5F5;' %]
+	[% text_color = 'color : gray;' %]
+[% END %]
+
+<tr class="default_table_row" style="[% background %][% text_color %][% other %]">
+	[% content %]
+</tr>

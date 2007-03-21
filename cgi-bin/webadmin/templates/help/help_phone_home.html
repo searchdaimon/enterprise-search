@@ -1,0 +1,54 @@
+[% INCLUDE 'header.html'
+	title = "SearchDaimon Phone Home" %]
+
+<h2>SearchDaimon Phone Home</h2>
+
+<!--[% WRAPPER 'template_message.html' type='info' %]
+	SearchDaimon Phone Home service opens up a connection to SearchDaimon, and allows us to accist you remotely.<br />
+	You should leave this service running when not in need of support.
+[% END %]-->
+[% IF phone_start_retv.defined %]
+	[% UNLESS phone_start_retv %]
+		[% message_success = "Phone Home service has been started." %]
+	[% ELSE %]
+		[% message_fail = "Phone Home service could not be start started." %]
+	[% END %]
+[% END %]
+
+[% IF phone_stop_retv.defined %]
+	[% IF phone_stop_retv %]
+		[% message_success = "Phone Home service has been stopped." %]
+	[% ELSE %]
+		[% message_fail = "Phone Home service couldn't be stopped." %]
+	[% END %]
+[% END %]
+
+[% IF message_success %]
+	[% WRAPPER 'template_message.html' type="success" %][% message_success %][% END %]
+[% END %][% IF message_fail %]
+	[% WRAPPER 'template_message.html' type="warning" %][% message_fail %][% END %]
+[% END %]
+
+
+[% IF phone_running_pid %]
+	SearchDaimon Phone Home Service is currently <strong>running</strong>.
+[% ELSE %]
+	SearchDaimon Phone Home service is currently <strong>not running</strong>.
+[% END %]
+
+
+
+<div> <!--style="width : 30%; background-color : [% bg %]; margin-top : 1em; padding-top : 1em; padding-bottom : 1em; text-align: center; border : 1px solid;"-->
+	<form action="help.cgi" method="post">
+	<input type="hidden" value="phone_home" name="action" />
+		[% IF phone_running_pid %]
+			<input type="hidden" value="stop" name="do" />
+			<input type="submit" name="phone_stop" value="Stop Phone Home service" />
+		[% ELSE %]
+			<input type="hidden" value="start" name="do" />
+			<input type="submit" name="phone_start" value="Start Phone Home service" />
+		[% END %]
+	</form>
+</div>
+
+[% INCLUDE 'footer.html' %]

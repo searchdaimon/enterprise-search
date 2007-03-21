@@ -1,0 +1,132 @@
+package Page::Logs;
+use strict;
+use warnings;
+use Carp;
+use File::stat;
+use Data::Dumper;
+use Sql::Sql;
+use Sql::Search_logg;
+use config qw($CONFIG);
+my %CONFIG = %$CONFIG;
+
+sub new {
+	my $class = shift;
+	my $dbh = shift;
+	my $self = {};
+	bless $self, $class;
+	$self->_init($dbh);
+	return $self;
+}
+
+sub _init {
+	my ($self, $dbh) = (@_);
+	$self->{'dbh'} = $dbh;
+	$self->{'sqlSearch'} = Sql::Search_logg->new($dbh);
+}
+
+
+sub get_logs {
+	my $self = shift;
+	my @result = ( );
+	my %logfiles = %{$CONFIG{'logfiles'}};
+	while (my ($filename, $description) = each(%logfiles)) {
+		my @size = $self->_get_size($filename);
+		push @result, {
+			'filename' => $filename,
+			'description' => $description,
+			'size' => \@size
+		};
+
+	}	
+
+	return \@result;
+}
+
+sub _get_size {
+	my $self = shift;
+	my $filename = shift;
+	return 0 unless(-e "$CONFIG{'log_path'}/$filename");
+
+	my $size = stat("$CONFIG{'log_path'}/$filename")->size;
+	
+	if ($size < 1024) {
+		return (int($size), '');
+	}
+	elsif (($size / 1024) < 1024) {
+		return (int($size / 1024), "K");
+	}
+	else  {
+		return (int($size / 1024 / 1024), "M");
+	}
+}
+
+sub _parse_log {
+	my $self = shift;
+	my $filename = shift;
+	my $lines = shift;
+	
+	unless ($lines =~ /^\d+$/) {
+		carp "lines variable did not contain a number.";	
+		return;
+	}
+	
+	$lines = 500 if ($lines > 500);
+
+	return ( ) 
+		unless ($self->_get_size($filename))[0];
+
+	my $command = "tail";
+	if ($filename =~ /\.\d+/) {
+		# Ends with a number. Asuming it's reversed.
+		$command = "head";
+	}
+	open my $tail, "$command -n $lines '$CONFIG{'log_path'}/"."\Q$filename"."'|"
+		or croak "coulnt execute tail: $!";
+	my @content = <$tail>;
+
+	@content = reverse @content if ($command eq "head");
+
+	return \@content;
+}
+
+sub download {
+	my $self = shift if (ref($_[0]));
+	my $filename = shift;
+	my %logfiles = %{$CONFIG{'logfiles'}};
+	my $valid = grep /^$filename$/, keys (%logfiles);
+	return 0 unless($valid);
+
+	open my $file, "$CONFIG{'log_path'}/"."\Q$filename"
+		or croak "couldn't open $CONFIG{'log_path'}/$filename";
+
+	print $_ while (<$file>);
+#	print <$file>; # This method reads the entire file into memory.
+
+	return 1;
+}
+
+sub show_search_log($$) {
+	my ($self, $vars) = (@_);
+	my $sqlSearch = $self->{'sqlSearch'};
+	
+	$vars->{'search'} = $sqlSearch->get_log;
+
+	return ($vars, 'logs_search.html');
+}
+
+sub show_logfile_content($$) {
+	my ($self, $vars, $log) = (@_);
+	my $filename = $log->{'name'};
+	my $count = $log->{'lines'};
+	$count = 250 unless($count);
+	my $lines = $self->_parse_log($filename, $count);
+		
+	my $logfile = {
+		'filename' => $filename,
+		'lines' => $lines,
+	};
+	
+	$vars->{'logfile'} = $logfile;
+	return $vars;
+}
+1;

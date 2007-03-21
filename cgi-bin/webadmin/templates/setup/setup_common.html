@@ -1,0 +1,69 @@
+[% BLOCK step_indicator %]
+		[% step_info = [
+			{
+				title    = 'Getting started',
+				helptext = '
+					<p>
+						Welcome to Search Daimon administration panel.
+					</p>
+					<p>
+						This getting started wizard is ment to let you locate, and add
+						network shares to crawl with ease.
+					</p>
+					
+					<p>
+						You are free to skip the wizard. You can run it at any time later.
+					</p>'
+				},
+			
+			{
+				title    = 'Scan for network shares',
+				helptext = '
+					<p>
+						Now running a quick scan on the local network. <br />
+						Customized scans will be available to you in the administration panel.
+					</p>
+
+				',
+			},
+			{
+				title    = 'Create collections from the results',
+				helptext = '
+					<p>
+						This step allows you to create collections from found network shares. These
+						can be modified later in the administration panel.
+					</p>
+					<p>
+						<ul>
+							<li><a href="#">What is a collection?</a></li>
+						</ul>
+					</p>				
+				',
+			},
+			{
+				title    = 'All done',
+				helptext = ''
+			} 
+			] %]
+
+
+	<div id="step_indicator">
+		<h2>Step [% step %] of 4</h2>
+		
+		<ol>
+			[% i = 1 %]
+			[% FOREACH info IN step_info %]
+				[% IF i == step %]
+					<li id="current_step">[% info.title %]</li>
+				[% ELSE %]
+					<li>[% info.title %]</li>
+				[% END %]
+				[% i = i + 1 %]
+			[% END %]
+		</ol>
+		
+		[% info_index = step - 1 %]
+		[% step_info.$info_index.helptext %]
+		
+	</div>
+[% END %]

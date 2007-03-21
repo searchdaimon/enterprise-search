@@ -1,0 +1,53 @@
+[% INCLUDE 'header.html' title="Upload software package" %]
+
+[% PROCESS 'template_tabs.html' 
+	tabs = [
+	{
+		'name'		=> 'System diagnostics',
+		'url'		=> 'system.cgi',
+		'selected'	=> 0,
+	},
+	{
+		'name'		=> 'Upload software package',
+		'url'		=> 'system.cgi?view=package_upload'
+		'selected'	=> 1,
+	},
+	{
+		'name'		=> 'Network configuration',
+		'url'		=> 'system.cgi?view=network',
+		'selected'  => 0,
+	},
+]
+%]
+
+<h3>Upload software package</h3>
+
+[% IF install_success.defined %]
+	[% IF install_success.0 %]
+		[% msg = "Package has been installed." %]
+		[% type = "success" %]
+	[% ELSE %]
+		[% msg = "Installation failed: <br /> $install_success.1" %]
+		[% type = "error" %]
+	[% END %]
+	
+	[% WRAPPER 'template_message.html' type=type %]
+		[% msg %]
+	[% END %]
+	
+[% END %]
+
+
+<form enctype="multipart/form-data" method="post" action="system.cgi">
+<div>
+	
+	<input type="file" name="package_file" />
+	<input type="submit" name="package_upload_button" value="Upload software package" />
+	
+</div>
+</form>
+
+
+
+
+[% INCLUDE 'footer.html' %]

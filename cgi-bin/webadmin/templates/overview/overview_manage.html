@@ -1,0 +1,54 @@
+[% INCLUDE 'header.html' title = 'Advanced management' %]
+[% USE HTML %]
+[% PROCESS 'template_connector_blocks.html' %]
+[% PROCESS 'template_collection_warnings.html' %]
+
+[% IF recrawl_request.defined %]
+
+	[% IF recrawl_request %]
+		[% WRAPPER 'template_message.html'
+			type = 'success' %]
+
+			Request for a full recrawl has been request submitted.
+
+		[% END %]
+
+	[% ELSE %]
+		[% WRAPPER 'template_message.html'
+			type = 'warning' %]
+
+			Unable to submit recrawl request.
+			[% IF recrawl_error %]
+				<br />Error: [% HTML.escape(recrawl_error) %]
+			[% END %]
+		[% END %]
+	[% END %]
+[% END %]
+
+[% PROCESS 'template_tabs.html' 
+	tabs = [
+	{
+		'name' => 'Edit collection',
+		'url' => "overview.cgi?action=edit&amp;id=$id"
+		'selected' => 0
+	},
+	{
+		'name' => 'Advanced management',
+		'url' => "overview.cgi?action=manage&amp;id=$id",
+		'selected' => 1
+		
+	}]
+%]
+
+[% UNLESS error_collection_not_exist %]
+	<h2>Management for [% HTML.escape(share.collection_name) %]</h2>
+	
+	
+	<form method="post" action="overview.cgi">
+	[% WRAPPER 'template_edit_collection.html'
+		fields = ['advanced'] %]
+	[% END %]	
+	</form>
+[% END %]
+[% INCLUDE 'footer.html' %]
+

@@ -1,0 +1,73 @@
+[% # New scan main %]
+[% INCLUDE 'header.html' %]
+[% IF success_delete_result %]
+	[% WRAPPER 'template_message.html'
+		type = 'success' %]
+		Scan result deleted.
+	[% END %]
+	
+[% END %]
+
+
+
+<h2>Scan results</h2>
+<div style="margin-bottom : 1em; font-size : large;">
+<img src="file.cgi?size=22x22&amp;i=edit_add" alt="new" style="border : 0px solid;" /> <strong><a href="scan.cgi?action=new">Start a new scan</a></strong>
+</div>
+
+[% i = 0 %]
+[% IF results.size %]
+	<form action="scan.cgi" method="post">
+	[% WRAPPER 'template_table.html' 
+		header = ['', 'Range', 'Connector', 'Started', 'Info', ''] %]
+	
+		[% FOREACH results %]
+			[% color = 1 - color %]
+			[% WRAPPER 'template_table_row.html' %]
+				<td>
+					[% IF done %]
+					<a href="scan.cgi?action=process&amp;id=[% id %]">
+						<img src="file.cgi?i=agt_action_success" alt="Scan done" style="border: 0px solid;" /></a>
+					[% ELSE %]
+						<img src="file.cgi?i=search" alt="Searching" style="border: 0px solid;" />
+					[% END %]
+				</td>
+				<td>
+					[% IF range %]
+						[% range %]
+					[% ELSE %]
+						Default range
+					[% END %]</td>
+				<td>[% connector %]</td>
+				<td>[% time %]</td>	
+				<td>
+				
+					[% IF done %]
+						The scan has completed.<br />
+						You can <a href="scan.cgi?action=process&amp;id=[% id %]">process it</a> now.
+					[% ELSE %]
+						The scan is still running.
+					[% END %]
+					<br />
+				
+
+				<td>	
+					[% IF done %]
+					<input type="submit" name="delete_result[[% i %]].submit" value="Delete" />
+					<input type="hidden" name="delete_result[[% i %]].id" value="[% id %]" />
+					[% ELSE %]
+					<input type="submit" name="kill_pid[[% i %]].submit" value="Kill" />
+					<input type="hidden" name="kill.id[[% i %]]" value="[% id %]" />
+					[% END %]
+				</td>
+			[% END %]
+			[% i = i + 1 %]
+		[% END %] [% # foreach %]
+	[% END %]
+	</form>
+[% ELSE %]
+	[% WRAPPER 'template_info.html' %]There are no unprocessed scan results[% END %]
+[% END %]
+
+
+[% INCLUDE 'footer.html' %]

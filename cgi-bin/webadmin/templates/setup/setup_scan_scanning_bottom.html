@@ -1,0 +1,19 @@
+	<li style="color : green; font-weight : bold; margin-top : 0.5em;">All done!</li>
+	
+	</ol>
+	</div>
+	[% # continuing from inside of a wizard_box element %]
+
+	
+	<div id="buttons_block">
+	<form action="setup.cgi" method="post">
+		[% i = 0 %]
+		[% FOREACH id IN result_ids %]
+			<input type="hidden" name="result_id[[% i %]]" value="[% id %]" />
+			[% i = i + 1 %]
+		[% END %]
+		<input type="hidden" name="form_id" value="scan_complete" />
+		<input type="submit" value="Create collections" class="next_button" />
+	</form>
+
+</div>

@@ -1,0 +1,39 @@
+[% INCLUDE 'header.html' 
+	title = 'Sign in'
+	simple_header = 1
+	extra_css = ['setup']
+%]
+
+<div id="wizard_block">
+	<img id="logo" src="/logo_mini2.png" alt="" />
+	<h2>First time wizard</h2>
+	<h3>- Integrate to your network</h3>
+	
+	<form action="setup.cgi" method="post">
+	<input type="hidden" name="form_id" value="integration_method" />
+		
+	<h3>Integration method</h3>
+	<form action="setup.cgi" method="post" />
+		<ul>
+			<li>
+				<input type="radio" name="auth_method" value="msad" id="auth_msad" checked="true" /> 
+				<label for="auth_msad">Microsoft Active Directory</label>
+					
+			</li>
+			<li>
+
+				<input type="radio" name="auth_method" value="ldap" id="auth_ldap" /> 
+				<label for="auth_ldap">LDAP</label>
+			</li>
+			<li>
+				<input type="radio" name="auth_method" value="shadow" id="auth_shadow" /> 
+				<label for="auth_shadow">/etc/shadow</label>
+			</li>
+		</ul>
+			
+	<div id="buttons_block">
+		<input type="submit" name="next_button" value="Continue" class="next_button" />
+	<div>
+	</form>
+</div>	
+[% INCLUDE 'footer.html' %]

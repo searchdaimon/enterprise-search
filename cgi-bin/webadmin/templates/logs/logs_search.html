@@ -1,0 +1,41 @@
+[% INCLUDE 'header.html' title = 'Logs' %]
+[% USE HTML %]
+
+
+[% #tid, query, search_bruker, treff, search_tid, ip_adresse HTTP_USER_AGENT, side %]
+[% PROCESS 'template_tabs.html' 
+	tabs = [
+	{
+		'name' => 'Log files',
+		'url' => 'logs.cgi'
+		'selected' => 0
+	},
+	{
+		'name' => 'Search log',
+		'url' => 'logs.cgi?view=search',
+		'selected' => 1
+		
+	}]
+%]
+<h2> Last [% search.size %] searches </h2>
+
+
+[% WRAPPER 'template_table.html'
+	header = ['Time', 'User', 'Query', 'Result page', 'Total hits', 'Execution time', 'Client'] %]
+
+	[% FOREACH search %]
+		[% color = 1 - color %]
+		[% WRAPPER 'template_table_row.html' %]
+			<td>[% tid %]</td>
+			<td>[% HTML.escape(search_bruker) %]</td>
+			<td>[% HTML.escape(query) %]</td>
+			<td>[% side %]</td>
+			<td>[% treff %]</td>
+			<td>[% search_tid %]</td>
+			<td><a href="#" title="[% HTML.escape(HTTP_USER_AGENT) %]">[% ip_adresse %]</a></td>
+		[% END %]
+	[% END %]
+[% END %]
+
+
+[% INCLUDE 'footer.html' title = 'Logs - Searches' %]

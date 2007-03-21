@@ -1,0 +1,60 @@
+[% INCLUDE 'header.html' title='Export and import settings' %]
+
+
+
+[% PROCESS 'template_tabs.html' 
+	tabs = [
+	{
+		'name'		=> 'Main settings',
+		'url'		=> 'settings.cgi',
+		'selected'	=> 0,
+	},
+	{
+		'name'		=> 'Advanced settings',
+		'url'		=> 'settings.cgi?view=advanced'
+		'selected'	=> 0
+	},
+	{
+		'name'		=> 'Import and export settings',
+		'url'		=> 'settings.cgi?view=import_export',
+		'selected'	=> 1,
+		
+	}]
+%]
+<div id="settings">
+	<h2>Export and import settings</h2>
+	
+	[% IF import_success.defined %]
+		[% IF import_success.success %]
+			[% msg = "Settings have been imported." %]
+			[% type = 'success' %]
+		[% ELSE %]
+			[% msg = "Settings could not be imported. <br />
+					$import_success.message" %]
+			[% type = 'error' %]
+		[% END %]
+	
+		[% WRAPPER 'template_message.html' 
+			type = type %]
+			[% msg %]
+		[% END %]
+	[% END %]
+	
+	
+	<h3>Export settings</h3>
+	
+			<form action="settings.cgi" method="get">
+				<input type="submit" name="export_settings" value="Download exported settings" />
+			</form>
+	
+	<h3 style="margin-top : 2em;">Import settings</h3>
+			<div style="float : left; position : relative;">
+			<form method="post" enctype="multipart/form-data" action="settings.cgi">
+				<input name="import_file" type="file" />
+				<div style="position : absolute; right : 0; top : 2.5em;">
+					<input type="submit" name="import_button" value="Import settings" />
+				</div>
+			</form>
+	</div>
+</div>
+[% INCLUDE 'footer.html' %]

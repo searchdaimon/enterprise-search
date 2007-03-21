@@ -1,0 +1,36 @@
+[% INCLUDE 'header.html' title='Add share' %]
+[% INCLUDE 'template_collection_warnings.html' %]
+
+[% PROCESS 'template_connector_help.html' %]
+
+<h2>Part 2 - Details</h2>
+
+[% help_block = "help_$block_connector" %]
+[% IF $help_block %]
+	[% # There exists help text for this connector %]
+	[% WRAPPER 'template_message.html'
+		type='help' %]
+		[% $help_block %]
+	[% END %]
+[% END %]
+
+<form method="post" action="add.cgi">			
+	[% WRAPPER 'template_edit_collection.html'
+		fields = input_fields %]
+	[% END %]
+
+[% # Keeping values from the first form %]
+<input type="hidden" name="share.collection_name" value="[% state.share.collection_name %]" />
+<input type="hidden" name="share.connector" value="[% state.share.connector %]" />
+[% IF from_scan %]
+	<input type="hidden" value="[% from_scan %]" name="from_scan" />
+[% END %]
+
+<div style="margin-top : 1em;">
+
+<input type="submit" name="submit_second_form" value="Add share" />
+</div>
+</form>
+
+
+[% INCLUDE 'footer.html' %]

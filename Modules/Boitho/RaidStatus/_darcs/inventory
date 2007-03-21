@@ -1,0 +1,16 @@
+[Start parsing of /dev/mdstat
+Eirik A. Nygaard <eirikald@pvv.ntnu.no>**20061214134813] 
+[More parsing
+Eirik A. Nygaard <eirikald@pvv.ntnu.no>**20061214143134] 
+[Catch another faulty case
+Eirik A. Nygaard <eirikald@pvv.ntnu.no>**20061214144855] 
+[Remarks and comments
+Eirik A. Nygaard <eirikald@pvv.ntnu.no>**20061214151832] 
+[Add an fdisk wrapper, allows getstatus to run as non-root
+Eirik A. Nygaard <eirikald@pvv.ntnu.no>**20061215132153] 
+[Use the new fdisk wrapper
+Eirik A. Nygaard <eirikald@pvv.ntnu.no>**20061215132247] 
+[Add a little comment header
+Eirik A. Nygaard <eirikald@pvv.ntnu.no>**20061215133148] 
+[Remove garbage
+Eirik A. Nygaard <eirikald@pvv.ntnu.no>**20061215133202] 

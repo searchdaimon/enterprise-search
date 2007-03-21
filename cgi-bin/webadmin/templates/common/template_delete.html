@@ -1,0 +1,22 @@
+[% # Standard confirm delete dialog. 
+   # Returns 'confirm_delete' value as POST on confirmed delete.
+   # Variables: 
+   # - form: filename/url to send form to.
+   # - it : What to delete, shown in header.
+   # - id : Optional. Inserts an hidden field with the id value %]
+
+<h2>Delete [% it %]</h2>
+[% WRAPPER 'template_message.html' type='warning' %]
+	[% content %]	
+
+	<form action="[% form %]" method="post">
+	<div style="margin-top : 1em;" >
+	[% IF id %]
+		<input type="hidden" value="[% id %]" name="id" />
+	[% END %]
+	<input type="submit" name="confirm_delete" value="Yes, delete it." />
+	<input type="submit" name="abort_delete" value="No, take me back." />
+	</div>
+	</form>
+
+[% END %]

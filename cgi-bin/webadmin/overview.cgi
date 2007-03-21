@@ -1,0 +1,126 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Template;
+use CGI;
+use Carp;
+use Sql::Sql;
+use Sql::Connectors;
+use Sql::Shares;
+use CGI::State;
+use Page::Overview;
+use Data::Dumper;
+BEGIN {
+	push @INC, "Modules";
+}
+use Boitho::Infoquery;
+
+my $cgi = CGI->new;
+my $state = CGI::State->state($cgi);
+print $cgi->header('text/html');
+
+my $vars = { };
+
+my $sql = Sql::Sql->new();
+my $dbh = $sql->get_connection();
+my $overview = Page::Overview->new($dbh, $state);
+
+my $sqlConnectors = Sql::Connectors->new($dbh);
+
+my $template_file = 'overview.html';
+
+
+
+if (defined($state->{'action'})) {
+	my $action = $state->{'action'};
+	my $id = $state->{'id'};
+	
+	# User requested share to be crawled
+	if ($action eq 'crawl') {
+		$vars = $overview->crawl_collection($vars, $id);
+		
+		($vars, $template_file) = 
+			$overview->list_collections($vars);
+	}
+	
+	elsif ($action eq 'edit') {
+		# User wants to edit a collection. Show form.
+		$vars->{'return_to'} = 'overview';
+		($vars, $template_file) = $overview->edit_collection($vars, $id);
+	}
+	
+	elsif ($action eq 'delete') {
+		# User wants to delete a collection. Confirm.
+		($vars, $template_file) = $overview->delete_collection($vars, $id);
+	}
+	
+	elsif ($action eq 'activate') {
+		# User is activating a disabled collection. Do it.
+		$vars = $overview->activate_collection($vars, $id);
+		($vars, $template_file) = 
+			$overview->list_collections($vars);
+	}
+
+	elsif ($action eq 'manage') {
+		# User is in the advanced management tab.
+		($vars, $template_file) = $overview->manage_collection($vars, $id);
+	}
+}
+
+elsif(defined($state->{'advanced'})) {
+	my @action = keys(%{$state->{'advanced'}});
+	my $id = $state->{'id'};
+
+	if ($action[0] eq 'full_recrawl') {
+		# User is forcing a full recrawl from management.
+		my $submit_values = 
+			$state->{'advanced'}{'full_recrawl'};
+		($vars, $template_file) = 
+			$overview->recrawl_collection($vars, $submit_values);
+	}
+}
+
+elsif (defined($state->{'edit'})) {
+	# Show edit share form.
+	my $collection = $state->{'edit'};
+ 	($vars, $template_file) = $overview->edit_collection($vars, $collection);
+}
+
+elsif (defined($state->{'submit_edit'})) {
+	# User submits modification for a collection;
+	my $valid;
+	($vars, $valid) = $overview->submit_edit($vars);
+		
+	unless ($valid) {
+		# Something wrong. Show edit form again.
+		my $id = $vars->{'share'}{'id'};
+		($vars, $template_file) = $overview->edit_collection($vars, $id);
+	}
+	else {
+		# We're done. Back to default page.
+		($vars, $template_file) = 
+			$overview->list_collections($vars);
+	}
+}
+
+
+
+elsif (defined($state->{'confirm_delete'})) {
+	my $id = $state->{'id'};
+	$vars = $overview->delete_collection_confirmed($vars, $id);
+	
+	($vars, $template_file) = $overview->list_collections($vars);
+}
+
+else {
+	# Show default page (list of collections)
+	($vars, $template_file) = 
+		$overview->list_collections($vars);
+}
+
+
+
+my $template = Template->new(
+	{INCLUDE_PATH => './templates:./templates/overview:./templates/common',});
+$template->process($template_file, $vars)
+        or croak $template->error();

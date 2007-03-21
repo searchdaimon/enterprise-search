@@ -1,0 +1,29 @@
+[% INCLUDE 'header.html' title='Users' %]
+
+[% #Main page for users.cgi %]
+
+<h2>Users</h2>
+
+[% WRAPPER 'template_description.html' %]
+	System has a total of [% users.size %] users.
+[% END %]
+
+[% WRAPPER 'template_table.html' 
+	header = ['', 'Username'] %]
+	[% FOREACH username IN users %]
+		[% color = 1 - color %]
+		[% WRAPPER 'template_table_row.html' %]
+		
+		<td>
+			<img src="file.cgi?i=personal" alt="" />
+		</td>
+		<td>
+			<a href="users.cgi?user=[% username %]">[% username %]</a>
+		</td>
+		
+		[% END %]
+	[% END %]
+[% END %]
+
+
+[% INCLUDE 'footer.html' %]

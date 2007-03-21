@@ -1,0 +1,60 @@
+[% USE Dumper %]
+[% BLOCK network_config %]
+	<div class="block_default" style="margin-top : 1em;">
+		<input type="radio" name="netconf.method" 
+			value="auto" id="netconf_method_auto" 
+				[% IF netconf.BOOTPROTO == "dhcp"
+					OR BOOTPROTO == "bootp" %]
+					checked="checked"
+			[% END %] /> 
+		<label for="netconf_method_auto"><strong>Automatic:</strong></label>
+
+		<div class="block_inner">
+			<select name="netconf.BOOTPROTO">
+				<option value="dhcp" 
+					[% IF netconf.BOOTPROTO == 'dhcp' %]
+						selected="selected"
+					[% END %]>dhcp (default)</option>
+				<option value="bootp"
+					[% IF netconf.BOOTPROTO == 'bootp' %]
+						selected="selected"
+					[% END %]>bootp</option>
+			</select>
+		</div>
+	</div>
+	
+	<div class="block_default">
+		<input type="radio" name="netconf.method" 
+			value="static" id="netconf_method_static" 
+				[% IF netconf.BOOTPROTO == 'static' %]
+					checked="checked"
+				[% END %] />
+		<label for="netconf_method_static"><strong>Static:</strong></label>
+	
+	<div style="margin-left : 2em; margin-top: 0.5em;">	
+		<div class="block_default">
+			IP:
+			<div class="block_inner">
+			<input type="text" name="netconf.IPADDR" value="[% HTML.escape(netconf.IPADDR) %]" />
+			</div>
+		</div>
+		
+		<div class="block_default">
+			Netmask:
+			<div class="block_inner">
+			<input type="text" name="netconf.NETMASK" value="[% HTML.escape(netconf.NETMASK) %]" />
+			</div>
+		</div>
+		
+		<div class="block_default">
+			Gateway:
+			<div class="block_inner">
+			<input type="text" name="netconf.GATEWAY" value="[% HTML.escape(netconf.GATEWAY) %]" />
+			</div>
+		</div>
+	</div>
+
+	
+
+
+[% END %]

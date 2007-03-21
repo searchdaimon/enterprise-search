@@ -1,0 +1,24 @@
+<!DOCTYPE webprojectsession>
+<webprojectsession>
+  <session usePreviewPrefix="0" previewPrefix="" >
+    <itemcursorpositions>
+      <item line="16" column="1" url="Page/Setup/Network.pm" />
+      <item line="11" column="0" url="Page/Setup/Auth.pm" />
+      <item line="54" column="1" url="Page/Setup/Login.pm" />
+      <item line="19" column="43" url="templates/setup/setup_integration_method.html" />
+      <item line="32" column="75" url="system.cgi" />
+      <item line="227" column="20" url="setup.cgi" />
+    </itemcursorpositions>
+    <uploadprofiles defaultProfile="@" >
+      <profile remote_host="" remote_port="" remote_path="" remote_protocol="ftp" user="" name="@" />
+    </uploadprofiles>
+    <treestatus>
+      <openfolder url="Page" />
+      <openfolder url="Page/Abstract" />
+      <openfolder url="Page/Setup" />
+      <openfolder url="Page/System" />
+      <openfolder url="templates" />
+      <openfolder url="templates/setup" />
+    </treestatus>
+  </session>
+</webprojectsession>

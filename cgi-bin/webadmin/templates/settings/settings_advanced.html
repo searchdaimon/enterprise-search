@@ -1,0 +1,101 @@
+
+[% INCLUDE 'header.html'
+	title = 'Advanced settings' %]
+
+[% PROCESS 'template_tabs.html' 
+	tabs = [
+	{
+		'name'		=> 'Main settings',
+		'url'		=> 'settings.cgi',
+		'selected'	=> 0,
+	},
+	{
+		'name'		=> 'Advanced settings',
+		'url'		=> 'settings.cgi?view=advanced'
+		'selected'	=> 1
+	},
+	{
+		'name'		=> 'Import and export settings',
+		'url'		=> 'settings.cgi?view=import_export',
+		'selected'	=> 0,
+		
+	}]
+%]
+
+<h2>Advanced settings</h2>
+
+[% IF success_settings_update %]
+	[% WRAPPER 'template_message.html'
+		type='success' %]
+		Settings were updated.
+	[% END %]
+[% END %]
+
+<h3>Default settings</h3>
+[% WRAPPER 'template_description.html' %]
+	Alter the default settings.
+[% END %]
+<form action="settings.cgi" method="post">
+[% WRAPPER 'template_table.html' 
+	header = ['Setting', 'Value'] %]
+	[% FOREACH default_settings %]
+	[% color = 1 - color %]
+	[% WRAPPER 'template_table_row.html' %]
+		<td style="width : 50%">[% name %]</td>
+		<td style="width : 50%"><input type="text" name="setting.[% table_key %]" value="[% table_value %]" />
+			<span style="font-size : small;">(Original value is [% original %])</span>
+		</td>
+	[% END %]
+	[% END %]
+[% END %]
+<div style="margin-top : 1em;">
+<input type="submit" name="submit_settings" value="Submit changes" />
+</div>
+
+</form>
+
+<h3>All settings</h3>
+
+[% WRAPPER 'template_description.html' %]
+	
+	Settings as saved internally by the software. Altering these to an invalid values could cause hard to trace errors.
+	
+[% END %]
+
+<form action="settings.cgi" method="post">
+[% WRAPPER 'template_table.html' 
+	header = ['Setting','Value'] %]
+
+	[% FOREACH settings %]
+		[% color = 1 - color %]
+		[% WRAPPER 'template_table_row.html' %]
+		
+			<td style="width : 50%">[% configkey %]</td>
+			<td style="width : 50%"><input type="text" name="setting.[% configkey %]" value="[% configvalue %]" /></td>
+	
+		[% END %]
+	[% END %]
+[% END %]
+
+<div style="margin-top : 1em;">
+<input type="submit" name="submit_settings" value="Submit changes" />
+</div>
+
+</form>
+
+<h3>Reset configuration</h3>
+<form action="settings.cgi" method="post">
+	[% WRAPPER 'template_description.html' %]
+		
+		Beware: This will <strong>DELETE ALL</strong> your settings and share configurations.
+
+		<br /><br />Be sure of if this is really what you want.
+
+	[% END %]
+	<div>
+	<input type="submit" value="Delete ALL settings AND shares" 
+		name="reset_configuration" />
+	</div>
+</form>
+
+[% INCLUDE 'footer.html' %]

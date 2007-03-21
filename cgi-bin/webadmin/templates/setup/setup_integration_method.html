@@ -1,0 +1,115 @@
+[% INCLUDE 'header.html' 
+	title = 'Sign in'
+	simple_header = 1
+	extra_css = ['setup']
+%]
+
+<div id="wizard_block">
+	<img id="logo" src="file.cgi?i=logo_mini2&amp;size=other" alt="" />
+	<h2>First time wizard</h2>
+	<h3>- Integrate to your network</h3>
+	
+	<form action="setup.cgi" method="post">
+	<input type="hidden" name="form_id" value="integration_method" />
+		
+		
+	[% IF show_dap_config %]
+		[% SET dap = show_dap_config %]
+	[% END %] 
+	<form action="setup.cgi" method="post" />
+		<ul style="list-style-type : none;">
+			<li>
+				<input type="radio" name="auth_method" value="msad" id="auth_msad" 
+					[% IF !dap or dap == 'msad' %]
+						checked="true"
+					[% ELSIF dap %]
+						disabled="true" 
+					[% END %]
+				/> 
+				
+				
+				<label for="auth_msad">Microsoft Active Directory</label>
+					
+				[% IF show_dap_config == 'msad' %]
+					</li>
+					<li>
+					[% PROCESS dap_config dap='msad' %]
+				
+				[% END %]
+			</li>
+			<li>
+
+				<input type="radio" name="auth_method" value="ldap" id="auth_ldap"
+					[% IF dap == 'ldap' %]
+						checked="true"
+					[% ELSIF dap %]
+						disabled="true"
+					[% END %] /> 
+				
+				<label for="auth_ldap">LDAP</label>
+
+				[% IF show_dap_config == 'ldap' %]
+					</li>
+					<li>
+						[% PROCESS dap_config dap='ldap' %] 
+					
+				[% END %]
+			</li>
+			<li>
+				<input type="radio" name="auth_method" value="shadow" id="auth_shadow"
+					[% IF dap %]
+						disabled="true"
+					[% END %] /> 
+					
+				<label for="auth_shadow">/etc/shadow</label>
+			</li>
+		</ul>
+			
+	<div id="buttons_block">
+		<input type="submit" name="next_button" value="Continue" class="next_button" />
+	<div>
+	</form>
+</div>	
+
+
+
+
+[% BLOCK dap_config %]
+	<div class="block_default">
+		Domain
+		<div class="block_inner">
+			<input type="text" name="domain" />
+		</div>
+	</div>
+	
+	<div class="block_default">
+		User
+		<div class="block_inner">
+			<input type="text" name="user" />
+		</div>
+	</div>
+	
+	<div class="block_default">
+		Password
+		<div class="block_inner">
+			<input type="password" name="password" />
+		</div>
+	</div>
+	
+	<div class="block_default">
+		IP
+		<div class="block_inner">
+			<input type="text" name="ip" />
+		</div>
+	</div>
+	
+	<div class="block_default">
+		Port
+		<div class="block_inner">
+			<input type="text" name="port" [% IF dap == 'msad' %]value="389"[% END %] />
+		</div>
+	</div>
+	
+	<input type="hidden" name="auth_config" value="[% dap %]" />
+[% END %]
+[% INCLUDE 'footer.html' %]

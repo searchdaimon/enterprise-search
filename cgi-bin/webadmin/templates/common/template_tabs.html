@@ -1,0 +1,7 @@
+<ul id="tabs">
+[% FOREACH tabs %]
+	<li [% IF selected %]id="selected"[% END %]>
+		<a href="[% url %]">[% name %]</a>
+	</li>
+[% END %]
+</ul>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+
+<head>
+	<title>[% title %] - Search Daimon administration panel</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="file.cgi?css=default" type="text/css">
+	[% FOREACH css IN extra_css %]
+		<link rel="stylesheet" href="file.cgi?css=[% css %]" type="text/css">
+	[% END %]
+</head>
+<body>
+[% IF login_header OR simple_header %]
+	
+[% ELSE %]
+	<div>
+		<a href="overview.cgi"><img src="file.cgi?i=logo_smaller&amp;size=other" 
+			alt="" style="border : 0px solid;" /></a>
+	</div>
+	[% INCLUDE 'menu_left.html' %]
+	[% ie_hack = 'height : 1%;' %]
+	<div style="margin-left : 17%; margin-top : 1.1em;[% ie_hack %];">
+[% END %]

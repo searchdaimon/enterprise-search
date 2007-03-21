@@ -1,0 +1,98 @@
+[% USE HTML %]
+[% USE Dumper %]
+[% INCLUDE 'header.html' 
+	title = 'Sign in'
+	simple_header = 1
+	extra_css = ['setup']
+%]
+
+[% ldap_name = {
+	'msad' => "Microsoft Active Directory (msad)",
+	'ldap' => "Lightweight Directory Access Protocol (ldap)",
+} %]
+
+<div id="wizard_block">
+	<img id="logo" src="file.cgi?i=logo_mini2&amp;size=other" alt="" />
+	<h2>First time wizard</h2>
+	<h3>- Integrate with [% ldap_name.$method %]</h3>
+	
+	[% IF error_msg.defined %]
+		[% WRAPPER 'template_message.html'
+			type = 'error' %]
+			[% error_msg %]
+		[% END %]
+	[% END %]
+
+	<form action="setup.cgi" method="post">
+	
+									
+				[% IF  method == 'msad' %]
+					[% PROCESS dap_config 
+						dap='msad'
+						dap_settings = dap_settings %]
+				[% END %]
+
+				[% IF method == 'ldap' %]
+						[% PROCESS dap_config 
+							dap = 'ldap'
+							dap_settings = dap_settings %] 
+				[% END %]
+				
+				<input type="hidden" name="auth_method" value="[% method %]" />
+				<input type="hidden" name="form_id" value="integration_values" />
+				
+				<div id="buttons_block">
+					<input type="submit" name="next_button" value="Continue" class="next_button" />
+				</div>
+	</form>
+	
+</div>
+		
+
+
+
+[% BLOCK dap_config %]
+	
+	<div class="block_default">
+		Domain
+		<div class="block_inner">
+			<input type="text" name="domain" value="[% HTML.escape(dap_settings.domain) %]" />
+		</div>
+	</div>
+	
+	<div class="block_default">
+		User
+		<div class="block_inner">
+			<input type="text" name="user" value="[% HTML.escape(dap_settings.user) %]" />
+		</div>
+	</div>
+	
+	<div class="block_default">
+		Password
+		<div class="block_inner">
+			<input type="password" name="password" value="[% HTML.escape(dap_settings.password) %]" />
+		</div>
+	</div>
+	
+	<div class="block_default">
+		IP
+		<div class="block_inner">
+			<input type="text" name="ip" value="[% HTML.escape(dap_settings.ip) %]" />
+		</div>
+	</div>
+	<!--
+	<div class="block_default">
+		Port
+		<div class="block_inner">
+			<input type="text" name="port" 
+					[% IF dap_settings.port.defined %] value="[% HTML.escape(dap_settings.port) %]"
+					[% ELSIF dap == 'msad' %] value="389"
+					[% END %] />
+		</div>
+	</div>-->
+	
+	<input type="hidden" name="auth_config" value="[% dap %]" />
+[% END %]
+
+
+[% INCLUDE 'footer.html' %]

@@ -1,0 +1,88 @@
+[% INCLUDE 'header.html' title = 'System overview' %]
+[% USE HTML %]
+
+[% PROCESS 'template_tabs.html' 
+	tabs = [
+	{
+		'name'		=> 'System diagnostics',
+		'url'		=> 'system.cgi',
+		'selected'	=> 1,
+	},
+	{
+		'name'		=> 'Upload software package',
+		'url'		=> 'system.cgi?view=package_upload'
+		'selected'	=> 0,
+	},
+	{
+		'name'		=> 'Network configuration',
+		'url'		=> 'system.cgi?view=network',
+		'selected'  => 0,
+	},
+]
+%]
+
+<div style="margin-top : 1em;">
+[% WRAPPER 'template_table.html' 
+	header = ['', 'Component', 'Status', 'Details'] %]
+
+	[% WRAPPER 'template_table_row.html'
+		color = 0 %]
+		<td style="width : 40px;">[% PROCESS status_icon 
+				error = raid.error.defined %]</td>
+		<td style="width : 20%">RAID drives</td>
+		<td style="width : 10%">[% PROCESS status_text 
+				error = raid.error.defined %]</td>
+		<td style="width : 65%;">
+			[% raid.error %]
+		
+			<p>
+				[% IF raid.drives.size %]
+					<ul>
+					[% FOREACH drive IN raid.drives %]
+						<li>[% drive.name %].. 
+							[% IF drive.online %]
+								[% PROCESS status_ok %]
+							[% ELSE %]
+								[% PROCESS status_error msg = "not responding" %]
+							[% END %]
+						</li>
+					[% END %]
+					</ul>
+				[% ELSE %]
+					No RAID drives found.
+				[% END %]
+			</p>
+		</td>
+	[% END %]
+	[% WRAPPER 'template_table_row.html' 
+		color = 1 %]
+		<td>[% PROCESS status_icon 
+				error = integration.error.defined %]</td>
+		<td>Integration with [% integration.method %]</td>
+		<td>[% PROCESS status_text 
+				error = integration.error.defined %]</td>
+		
+		<td>
+			[% integration.error %]
+		</td>
+	[% END %]
+[% END %]
+</div>
+
+[% BLOCK status_text %]
+	[% IF error %]
+		<span style="color : red; font-weight : bolder;">Error</span>
+	[% ELSE %]
+		<span style="color : green;">OK</span>	
+	[% END %]
+[% END %]
+
+[% BLOCK status_icon %]
+	[% IF error %]
+		<img src="file.cgi?i=agt_action_fail" alt="ok" />
+	[% ELSE %]
+		<img src="file.cgi?i=agt_action_success" alt="fail" />
+	[% END %]
+[% END %]
+
+[% INCLUDE 'footer.html' %]

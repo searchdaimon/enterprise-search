@@ -1,0 +1,108 @@
+#wizard_block {
+    width : 70%;
+    border : 1px solid;
+    border-color : silver;
+    margin-right : 15%;
+    padding : 1em;
+  }
+  
+#wizard_block #logo {
+	float : right;
+	clear : right;
+	border : 0px solid;
+}
+
+
+#wizard_block h1, #wizard_block h2, #wizard_block h3 {
+    padding : 0;
+    margin : 0;
+    color : #044a90;
+  }
+
+#wizard_block h1 {
+	font-size : xx-large;
+}
+
+#wizard_block h2 {
+	font-size : x-large;
+}
+
+#wizard_block h3 {
+    font-size : large;
+  }
+
+
+
+#wizard_block #step_indicator {
+	border : 2px solid;
+	border-color : #e7f3fb;
+	margin : 1em;
+	font-size : small;
+	background-color : #dce4f9;
+	padding : 1em;
+
+}
+
+#wizard_block #step_indicator li {
+	color : #044a90;
+}
+
+#wizard_block #current_step {
+	font-weight : bold;
+}
+#wizard_block .buttons_block {
+	margin-left : 2em;
+}
+
+#wizard_block .next_button, .skip_button, .reload_button {
+    border : 1px solid;
+    padding-right : 40px;
+    height:32px;
+    color:#044a90;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    border-color : silver;
+    background : #FFFFFF no-repeat scroll right;
+  }
+
+#wizard_block #scanning_list {
+	font-size : large;
+}
+
+
+
+#wizard_block .skip_button {
+    background-image : url(file.cgi?i=player_fwd);
+  }
+
+
+#wizard_block .next_button {
+    background-image : url(file.cgi?i=next);
+  }
+
+#wizard_block .reload_button {
+	background-image : url(file.cgi?i=agt_reload);
+}
+
+
+#wizard_block .result_block {
+	margin-left : 1em;
+	margin-right : 1em;
+	margin-top : 1em;
+	border-top : 1px solid;
+	border-bottom : 1px solid;
+	border-color :  #e7f3fb;
+
+}
+
+#wizard_block .result_block ol {
+	list-style-type : none;
+	margin : 0;
+	padding : 0;
+}
+
+#wizard_block .result_block ul {
+	list-style-type : none;
+	margin : 0;
+	padding : 0;
+}

@@ -1,0 +1,45 @@
+[% IF crawl_request.defined %]
+	[% IF crawl_request %]
+		[% WRAPPER 'template_message.html' 
+			type='success'%]
+			Crawling request has been submitted.
+		[% END %]
+	[% ELSE %]
+		[% message = '' %]
+		[% IF crawl_error_not_exist %]
+			[% message = 'The collection you requested to be crawled does not exist.' %]
+		[% ELSE %]
+			[% message = "Could not submit crawling request. <br /> $crawl_error" %]
+			
+		[% END %]
+		
+		[% WRAPPER 'template_message.html'
+			type='error' %]
+			[% message %]
+		
+		[% END %]
+	[% END %]
+[% ELSIF edit_success or active_success %]
+	[% WRAPPER 'template_message.html'
+		type = 'success' %]
+		Changes have been saved.
+	[% END %]
+[% ELSIF delete_request.defined %]
+	[% IF delete_request %]
+		[% WRAPPER 'template_message.html'
+			type = 'success' %]
+			Collection has been deleted
+		[% END %]
+	[% ELSE %]
+		[% WRAPPER 'template_message.html' 
+			type = 'error' %]
+			Couldn't delete collection. <br /> [% delete_error %]
+		[% END %]
+	[% END %]
+	
+[% ELSIF success_activate %]
+	[% WRAPPER 'template_message.html'
+		type='success' %]
+		Collection has been activated
+	[% END %]
+[% END %]

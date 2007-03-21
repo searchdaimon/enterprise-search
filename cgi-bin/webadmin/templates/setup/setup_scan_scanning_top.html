@@ -1,0 +1,18 @@
+[% INCLUDE 'header.html' 
+	title = 'First time wizard'
+	simple_header = 1
+	extra_css = ['setup']
+%]
+[% PROCESS 'setup_common.html' %]
+
+<div id="wizard_block">
+	<img id="logo" src="file.cgi?i=logo_mini2&amp;size=other" alt="" />
+	<h2>First time wizard</h2>
+	<h3>- Scan for network shares</h3>
+	
+	[% PROCESS step_indicator
+		step = 2 %]
+		
+	<h3>Running scans</h3>
+	<div id="scanning_list">
+	<ol>

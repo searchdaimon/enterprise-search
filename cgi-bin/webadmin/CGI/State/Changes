@@ -1,0 +1,13 @@
+Revision history for Perl extension CGI::State.
+
+0.02  Sat Jan 13 03:50:34 2000
+  - Bug fix for $over_write variable, at line 42.  Some
+    versions of perl would not work with this syntax.
+  - Minor Documentation cleanups
+  - Testing scripts re-written, and now do more than
+    just "use" the module.  Functionality is tested now.
+
+0.01  Tue Jan 09 00:29:22 2000
+	- original version; created by h2xs 1.20 with options
+		-AX CGI::State
+  - Beta Release to CPAN

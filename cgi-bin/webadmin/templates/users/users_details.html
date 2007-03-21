@@ -1,0 +1,54 @@
+[% INCLUDE 'header.html' title="Groups" %]
+[% USE HTML %]
+
+[% # Used with user.cgi to show details about a user. %]
+
+<h2>Details for user [% HTML.escape(username) %]</h2>
+
+
+<div>
+<a href="users.cgi"><img src="file.cgi?i=back&amp;size=22x22" alt="" style="border : 0px solid;" /></a> 
+	<a href="users.cgi">Back to user list</a>
+</div>
+
+<h3>Groups</h3>
+[% IF groups.keys.size %]
+	[% WRAPPER 'template_description.html' %]
+		User is member of [% groups.keys.size %]
+			[% IF groups.keys.size == 1 %] group.
+			[% ELSE %] groups.
+			[% END %]
+	[% END %]
+	[% WRAPPER 'template_table.html' 
+		header = ['', 'Group', 'Collections in group'] %]
+		
+		
+		[% FOREACH group IN groups.keys.sort %]
+			[% color = 1 - color %]
+		
+			[% WRAPPER 'template_table_row.html' %]
+			
+			<td><img src="file.cgi?i=kdmconfig" alt="" /></td>
+			<td>[% group %]</td>
+			<td>
+				<ul>
+				[% FOREACH collection IN groups.$group %]
+					<li><a href="overview.cgi?edit=[% collection %]">[% collection %]</a></li>
+				[% END %]
+				</ul>
+			
+			</td>
+		
+			[% END %]
+		[% END %]
+		
+		
+	[% END %]
+[% ELSE %]
+	[% WRAPPER 'template_description.html' %]
+		User is not a member of any group.
+	[% END %]
+[% END %]
+
+
+[% INCLUDE 'footer.html' %]

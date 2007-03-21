@@ -1,0 +1,141 @@
+[%	#
+	# Blocks used to show the relevant fields to edit depending on the type of connector.
+	# A helper template for template_edit_collection
+	
+%]
+
+[% prefix = "share" UNLESS prefix %]
+[% optional = BLOCK %]<span style="font-size : x-small;">(Optional)</span>[% END %]
+[% BLOCK SMB %]
+	<div class="block_default">
+		Resource:
+		<div class="block_inner">
+			<input type="text" name="[% prefix %].resource" value="[% share.resource %]" />
+		<br  /><span style="font-size : x-small; font-style: italic;">
+		Example: \\samba.boitho.com\sharedFolder</span>
+		</div>
+	</div>
+[% END %]
+
+[% BLOCK sFTP %]
+
+	<div class="block_default">
+		Host:
+		<div class="block_inner">
+			<input type="text" name="[% prefix %].host" value="[% share.host %]" />
+		<br  />
+		<span style="font-size : x-small; font-style: italic;">
+			Example: login.boitho.com
+		</span>
+		</div>
+	</div>
+
+	<div class="block_default">
+		Resource:
+		<div class="block_inner">
+			<input type="text" name="[% prefix %].resource" value="[% share.resource %]" />
+		<br  />
+		<span style="font-size : x-small; font-style: italic;">
+			Example: /home
+		</span>
+		</div>
+	</div>
+[% END %]
+
+[% BLOCK ODBC %]
+	<div class="block_default">
+		Host:
+		<div class="block_inner">
+			<input type="text" name="[% prefix %].host" 
+					value="[% share.host %]" />
+		</div>
+	</div>
+	<div class="block_default" style="margin-top : 0.5em;">
+	
+		Query #1:
+		<div class="block_inner">
+			<input name="[% prefix %].query1" type="text" 
+				value="[% share.query1 %]" /> [% optional %]
+		</div>
+	</div>
+	<div class="block_default" style="margin-top : 0.5em;">
+		Query #2:
+		<div class="block_inner">
+			<input name="[% prefix %].query2" type="text" 
+				value="[% share.query2 %]" /> [% optional %]
+		</div>
+	</div>
+[% END %]
+
+[% BLOCK http %]
+
+	<div class="block_default">
+		Webpage:
+		<div class="block_inner">
+			<input type="text" name="[% prefix %].resource" value="[% share.resource %]" />
+		<br  />
+		<span style="font-size : x-small; font-style: italic;">
+			Example: http://www.searchdaimon.com/blog/
+		</span>
+		</div>
+	</div>
+
+	<div class="block_default" style="margin-top : 0.5em;">
+	
+		Filter: must contain
+		<div class="block_inner">
+			<input name="[% prefix %].query1" type="text" 
+				value="[% share.query1 %]" /> [% optional %]
+		</div>
+	</div>
+	<div class="block_default" style="margin-top : 0.5em;">
+		Filter: must NOT contain
+		<div class="block_inner">
+			<input name="[% prefix %].query2" type="text" 
+				value="[% share.query2 %]" /> [% optional %]
+		</div>
+	</div>
+[% END %]
+
+[% BLOCK MySQL %]
+	[% PROCESS ODBC 
+		prefix = prefix
+		share = share %]
+[% END %]
+
+[% BLOCK LDAP %]
+
+	<div class="block_default">
+		Host:
+		<div class="block_inner">
+			<input type="text" name="[% prefix %].host" value="[% share.host %]" />
+		</div>
+	</div>
+	<div class="block_default">
+		Domain:
+		<div class="block_inner">
+			<input name="[% prefix %].domain" type="text" 
+				value="[% share.domain %]" /> [% optional %]
+		</div>
+	</div>
+[% END %]
+
+[% BLOCK NFS %]
+	<div class="block_default">
+		Host:
+		<div class="block_inner">
+                        <input type="text" name="[% prefix %].host" value="[% share.host %]" />
+		</div>
+	</div>
+[% END %]
+
+[% BLOCK Local %]
+	<div class="block_default">
+                Resource:
+		<div class="block_inner">
+                        <input type="text" name="[% prefix %].resource" value="[% share.resource %]" />
+                <br  /><span style="font-size : x-small; font-style: italic;">
+                Example: /usr/share/documents</span>
+		</div>
+	</div>
+[% END %]

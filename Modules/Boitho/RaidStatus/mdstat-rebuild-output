@@ -1,0 +1,5 @@
+Personalities : [raid1] 
+md0 : active raid1 hdb2[2] hda2[1]
+      10048576 blocks [2/1] [_U]
+      [==================>..]  recovery = 91.7% (9221632/10048576) finish=1.1min speed=11693K/sec
+unused devices: <none>

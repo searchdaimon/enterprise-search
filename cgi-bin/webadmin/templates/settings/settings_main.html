@@ -1,0 +1,80 @@
+[% INCLUDE 'header.html' title="Settings" %]
+[% PROCESS 'template_tabs.html' 
+	tabs = [
+	{
+		'name'		=> 'Main settings',
+		'url'		=> 'settings.cgi',
+		'selected'	=> 1,
+	},
+	{
+		'name'		=> 'Advanced settings',
+		'url'		=> 'settings.cgi?view=advanced'
+		'selected'	=> 0,
+	},
+	{
+		'name'		=> 'Import and export settings',
+		'url'		=> 'settings.cgi?view=import_export',
+		'selected'	=> 0,
+		
+	}]
+%]
+
+[% versions = [
+	{
+		'value'  => 'production',
+		'title' => 'Production',
+	},
+	{
+		'value'  => 'testing',
+		'title' => 'Testing',
+	},
+	{
+		'value'  => 'development',
+		'title' => 'Development',
+	}
+] %]
+
+<div id="settings">
+	
+	<h3>Select version</h3>
+	
+	[% IF selected_new.defined %]
+		[% WRAPPER 'template_message.html' type='success' %]
+		Version preference changed to [% selected_new %]
+		[% END %]
+	[% ELSE %]
+		[% WRAPPER 'template_message.html'
+			type='info' %]
+			Select what version of search daimon software you want to run.
+			<ul>
+				<li><strong>Production</strong> is the most tested and stable version.</li>
+				<li><strong>Testing</strong> is a middle way and contains packages that have not reached production yet.</li>
+				<li><strong>Development</strong> is the latest and untested software.</li>
+			</ul>
+			Only stable is guaranteed to work at all times.
+		[% END %]
+	[% END %]
+	
+	<form action="settings.cgi" method="post">
+	<ul id="version_list">
+
+		[% FOREACH versions %]
+
+		<li>
+			<input type="radio" name="dist" 
+				value="[% value %]" id="dist_[% value %]" 
+				[% IF dist_preference == value %]
+					checked="checked"
+				[% END %] /> 
+			<label for="dist_[% value %]">[% title %]</label>
+		</li>
+		[% END %]
+	</ul>
+	<input type="submit" name="dist_select" value="Select version" />
+	</form>
+</div>
+
+
+
+
+[% INCLUDE 'footer.html' %]

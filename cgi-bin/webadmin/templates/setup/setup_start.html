@@ -1,0 +1,23 @@
+[% INCLUDE 'header.html' title="First time wizard" 
+	simple_header = 1
+	extra_css = ['setup']
+	 %]
+[% PROCESS 'setup_common.html' 
+	step = 1 %]
+
+<div id="wizard_block">
+	<img id="logo" src="file.cgi?i=logo_mini2&amp;size=other" alt="" />
+	<h2>First time wizard</h2>
+	<h3>- Getting started</h3>
+	
+	[% PROCESS step_indicator %]
+	
+	<form action="setup.cgi" method="post">
+	<input type="hidden" name="form_id" value="getting_started" />
+	<div id="buttons_block">
+		<input type="submit" name="next_button" value="Scan network" class="next_button" />
+		<input type="submit" name="skip_button" value="Skip wizard" class="skip_button" />
+	<div>
+	</form>
+</div>
+
