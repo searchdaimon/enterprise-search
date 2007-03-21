@@ -74,7 +74,7 @@ $CONFIG->{'netscript_dir'} = "/etc/sysconfig/network-scripts"; ## Must also be c
 
 
 # Path to configwrite executable
-$CONFIG->{'configwrite_path'} = "Modules/Boitho/NetConfig/configwrite";
+$CONFIG->{'configwrite_path'} = $ENV{'BOITHOHOME'} . "/Modules/Boitho/NetConfig/configwrite";
 
 
 # Network interface to configure
