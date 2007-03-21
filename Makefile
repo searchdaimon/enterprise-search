@@ -235,13 +235,22 @@ searchcl : src/searchkernel/searchcl.c
 #SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD -lconfig
 SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/lex.query.o src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a $(LDFLAGS) -lpthread -D WITH_THREAD -lconfig
 
-searchd : src/searchkernel/searchd.c
+
+searchddep:
+	#ting searchd trenger
+	@echo ""
+	@echo "$@:"
+	for i in src/query src/parser src/generateSnippet; do\
+           (cd $$i; $(MAKE) all);\
+        done
+
+searchd : searchddep src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
 	
 	$(CC) $(SEARCHCOMMAND) -D WITH_RANK_FILTER -o bin/searchd
 
-searchdbb : src/searchkernel/searchd.c
+searchdbb : searchddep src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
 	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/utf8-filter/lex.u8fl.o
