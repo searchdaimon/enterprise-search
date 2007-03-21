@@ -240,7 +240,7 @@ searchddep:
 	#ting searchd trenger
 	@echo ""
 	@echo "$@:"
-	for i in src/query src/parser src/generateSnippet; do\
+	for i in src/query src/parser src/generateSnippet src/ds src/utf8-filter; do\
            (cd $$i; $(MAKE) all);\
         done
 
