@@ -4,7 +4,8 @@ package Page::Setup::Integration;
 use strict;
 use warnings;
 BEGIN {
-	push @INC, "Modules";
+	#push @INC, "Modules";
+	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Carp;
 use Page::Abstract;

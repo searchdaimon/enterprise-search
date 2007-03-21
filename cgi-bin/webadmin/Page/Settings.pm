@@ -5,7 +5,8 @@ use Data::Dumper;
 use Carp;
 use config (qw($CONFIG));
 BEGIN {
-	push @INC, "Modules";
+	#push @INC, "Modules";
+	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Boitho::SettingsExport;
 use Sql::Config;

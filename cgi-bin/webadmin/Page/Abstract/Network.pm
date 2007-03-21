@@ -7,7 +7,8 @@ use Page::Abstract;
 our @ISA = qw(Page::Abstract);
 use config qw($CONFIG);
 BEGIN {
-	push @INC, "Modules";
+	#push @INC, "Modules";
+	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Boitho::NetConfig;
 

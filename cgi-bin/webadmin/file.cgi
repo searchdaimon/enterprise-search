@@ -4,7 +4,8 @@ use warnings;
 use CGI;
 use CGI::State;
 BEGIN {
-    push @INC, 'Modules';
+	#push @INC, 'Modules';
+	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Boitho::WebFile qw(get);
 

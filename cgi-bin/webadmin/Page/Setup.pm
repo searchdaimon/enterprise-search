@@ -10,7 +10,8 @@ use Sql::Connectors;
 use Sql::Shares;
 use Sql::Config;
 BEGIN {
-	push @INC, "Modules";
+	#push @INC, "Modules";
+	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Boitho::Infoquery;
 

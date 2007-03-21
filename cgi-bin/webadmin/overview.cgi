@@ -11,7 +11,8 @@ use CGI::State;
 use Page::Overview;
 use Data::Dumper;
 BEGIN {
-	push @INC, "Modules";
+	#push @INC, "Modules";
+	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Boitho::Infoquery;
 
