@@ -1,6 +1,10 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+BEGIN {
+        push @INC, $ENV{'BOITHOHOME'} . '/Modules';
+}
+
 use Template;
 use CGI;
 use Carp;

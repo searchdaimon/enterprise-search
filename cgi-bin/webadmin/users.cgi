@@ -10,7 +10,6 @@ use CGI;
 use CGI::State;
 use Carp;
 use Template;
-#runarb: Feil her? Fjernet Modules::, men info query ser ikke ut til å fungere :(
 #use Modules::Boitho::Infoquery;
 use Boitho::Infoquery;
 use Data::Dumper;
