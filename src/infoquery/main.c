@@ -68,11 +68,12 @@ int main (int argc, char *argv[]) {
 	FILE *fp;
 	if ((fp = bfopen("logs/infoquery.log","a")) == NULL) {
 		perror(bfile("logs/infoquery.log"));
-		exit(1);
+		//exit(1);
 	}
-	fprintf(fp,"%s: \"%s\"\n",key,value);	
-	fclose(fp);
-
+	else {
+		fprintf(fp,"%s: \"%s\"\n",key,value);	
+		fclose(fp);
+	}
 	if (strcmp(key,"listUsers") == 0) {
 		boithoad_listUsers(&respons_list,&responsnr);
 
