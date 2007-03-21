@@ -3,7 +3,8 @@ package Boitho::Scan;
 use strict;
 use warnings;
 BEGIN {
-	push @INC, "Modules";
+	#push @INC, "Modules";
+	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Boitho::Infoquery;
 use Boitho::Scan::Samba;

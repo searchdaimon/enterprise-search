@@ -1,11 +1,18 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+
+BEGIN {
+        push @INC, $ENV{'BOITHOHOME'} . '/Modules';
+}
+
 use CGI;
 use CGI::State;
 use Carp;
 use Template;
-use Modules::Boitho::Infoquery;
+#runarb: Feil her? Fjernet Modules::, men info query ser ikke ut til å fungere :(
+#use Modules::Boitho::Infoquery;
+use Boitho::Infoquery;
 use Data::Dumper;
 
 my $cgi = CGI->new;
