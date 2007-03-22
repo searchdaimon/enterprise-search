@@ -11,13 +11,18 @@ if ($#ARGV < 0) {
 }
 
 for my $i (0 .. $#ARGV) {
-	print "$ARGV[$i]\n";
+	#print "$ARGV[$i]\n";
+	#tar bort eventuelt / på slutten
+	$ARGV[$i] =~ s/\/$//;
 }
 
+my $count = 0;
 for my $i (0 .. 64) {
 
 	my $nr = $i % ($#ARGV +1);
 
 	#print "nr: $nr (i: $i, a: $#ARGV)\n";
-	print "$ARGV[$nr]\n";
+	print "$ARGV[$nr]/$count\n";
+
+	++$count;
 }
