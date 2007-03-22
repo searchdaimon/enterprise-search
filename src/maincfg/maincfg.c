@@ -1,7 +1,7 @@
 #include "../common/boithohome.h"
 #include <libconfig.h>
 
-#define cfg_main "config/main.cfg"
+#define cfg_main "config/main.conf"
 
 struct config_t maincfgopen() {
 

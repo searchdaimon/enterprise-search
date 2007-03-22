@@ -23,7 +23,7 @@
     #define cashedir "cashedir"
     #define prequerydir "prequerydir"
 
-    #define cfg_dispatcher "config/dispatcher.cfg"
+    #define cfg_dispatcher "config/dispatcher.conf"
 	#endif
 
 #ifndef BLACK_BOKS

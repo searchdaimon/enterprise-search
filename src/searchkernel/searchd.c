@@ -27,7 +27,7 @@
 #include <unistd.h>
 
 
-#define cfg_main "config/searchd.cfg"
+#define cfg_main "config/searchd.conf"
 
 #ifdef WITH_THREAD
 	#include <pthread.h>
