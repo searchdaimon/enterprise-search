@@ -1,0 +1,4 @@
+documentstype: msg
+command: /usr/bin/perl ./msgconvert.pl #file
+outputformat: text
+outputtype: stdio

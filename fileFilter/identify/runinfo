@@ -1,0 +1,45 @@
+documentstype: jpg
+command: identify -format "Geometry: %wx%h, Format: %m" #file
+outputformat: text
+outputtype: stdio
+
+documentstype: png
+command: identify -format "Geometry: %wx%h, Format: %m" #file
+outputformat: text
+outputtype: stdio
+
+documentstype: tif
+command: identify -format "Geometry: %wx%h, Format: %m" #file
+outputformat: text
+outputtype: stdio
+
+documentstype: tiff
+command: identify -format "Geometry: %wx%h, Format: %m" #file
+outputformat: text
+outputtype: stdio
+
+documentstype: bmp
+command: identify -format "Geometry: %wx%h, Format: %m" #file
+outputformat: text
+outputtype: stdio
+
+documentstype: gif
+command: identify -format "Geometry: %wx%h, Format: %m" #file
+outputformat: text
+outputtype: stdio
+
+documentstype: eps
+command: identify -format "Geometry: %wx%h, Format: %m" #file
+outputformat: text
+outputtype: stdio
+
+documentstype: ai
+command: identify -format "Geometry: %wx%h, Format: %m" #file
+outputformat: text
+outputtype: stdio
+
+documentstype: psd
+command: identify -format "Geometry: %wx%h, Format: %m" #file
+outputformat: text
+outputtype: stdio
+

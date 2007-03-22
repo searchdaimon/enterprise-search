@@ -1,0 +1,15 @@
+documentstype: doc
+command: /usr/bin/catdoc #file
+outputformat: text
+outputtype: stdio
+
+documentstype: xls
+command: /usr/bin/xls2csv #file
+outputformat: text
+outputtype: stdio
+
+documentstype: ppt
+command: ./catppt #file
+outputformat: text
+outputtype: stdio
+

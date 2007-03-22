@@ -1,0 +1,33 @@
+documentstype: doc
+command: /usr/bin/abiword --to=txt #file
+outputformat: textfile
+
+documentstype: abw
+command: /usr/bin/abiword --to=txt #file
+outputformat: textfile
+
+#documentstype: ppt
+#command: /usr/bin/abiword --to=txt #file
+#outputformat: textfile
+
+documentstype: pdf
+command: /usr/bin/abiword --to=txt #file
+#command: /usr/bin/AbiWord --to=txt #file
+outputformat: textfile
+
+documentstype: dot
+command: /usr/bin/abiword --to=txt #file
+outputformat: textfile
+
+documentstype: rtf
+command: /usr/bin/abiword --to=txt #file
+outputformat: textfile
+
+documentstype: wpf
+command: /usr/bin/abiword --to=txt #file
+outputformat: textfile
+
+documentstype: sdw
+command: /usr/bin/abiword --to=txt #file
+outputformat: textfile
+

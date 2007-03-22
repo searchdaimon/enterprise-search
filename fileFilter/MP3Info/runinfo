@@ -1,0 +1,6 @@
+documentstype: mp3
+command: ./mp3info -p "Title: %t, Artist: %a, Album: %l, Year: %y, Time: %m.%s" #file
+#command: ./mp3info #file
+outputformat: text
+outputtype: stdio
+
