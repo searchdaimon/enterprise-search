@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
 	/***********************************************************************************/
 	//prøver å få fil lock. Bare en deamon kan kjøre avgangen
 
+	/*
 	#ifndef ALLOW_MULTIPLE_SEARCHD
 	if ((LOCK = fopen("/tmp/searchd.loc","w")) == NULL) {
 		perror("lock file");
@@ -89,6 +90,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	#endif
+	*/
 	/***********************************************************************************/
 
 	//#ifndef BLACK_BOKS
