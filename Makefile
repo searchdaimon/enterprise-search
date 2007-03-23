@@ -102,6 +102,12 @@ baddsPageAnalyser: src/baddsPageAnalyser/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/baddsPageAnalyser/main.c  src/httpGet/httpGet.c src/parser/lex.yy.c src/parser/y.tab.c -o bin/baddsPageAnalyser $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS $(CURLLIBS) -DDEBUG_ADULT
 
+rreadWithRank: src/rreadWithRank/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/rreadWithRank/main.c  -o bin/rreadWithRank $(LDFLAGS) 
+
 IndexerLot_langtest: src/IndexerLot_langtest/main.c
 	@echo ""
 	@echo "$@:"

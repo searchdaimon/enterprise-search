@@ -1,7 +1,8 @@
 #!/usr/bin/perl
 
+use URI::URL;
 use Digest::SHA1  qw(sha1);
-use IR qw(ResulveUrl);
+#use IR qw(ResulveUrl);
 use common qw(gyldig_url);
 
 # land liste, data fra http://www.din.de/gremien/nas/nabd/iso3166ma/codlstp1/ , og honde modifisert av runar
@@ -490,15 +491,15 @@ $linje = <INF>;       # reads one line from the file into the scalar $a
 			#    unsigned char       linktext[50];
 			#};
 
-			if (gyldig_url($url)) {			
-				#print NYEURLER pack('A20 A200 A50',sha1($url),$url,$titel);			
+			#if (gyldig_url($url)) {			
+			#	#print NYEURLER pack('A20 A200 A50',sha1($url),$url,$titel);			
 				print NYEURLER "$url\n";
 				++$count_url_gyldig;
-			}
-			else {
-				#print "Url ugyldig: $url\n";
-				++$count_url_Ikkegyldig;
-			}	
+			#}
+			#else {
+			#	#print "Url ugyldig: $url\n";
+			#	++$count_url_Ikkegyldig;
+			#}	
 
 			#print "$url - $titel\n";
 	
@@ -542,3 +543,13 @@ sub signal_handler {
 		die("Motok killsignal nr to, dør");
 	}
 }
+
+sub ResulveUrl {
+        my($BaseUrl,$NyUrl) = @_;
+
+        $link = new URI::URL $NyUrl;
+        $FerdigUrl = $link->abs($BaseUrl);
+
+        return $FerdigUrl;
+}
+
