@@ -10,7 +10,10 @@ CC = gcc
 INSTBINDIR = /usr/local/sbin
 DEFINES = -D INSTBINDIR=\\\"$(INSTBINDIR)\\\"
 
-all:  mod_auth_boitho.so
+all:
+	@echo "make Apache1 or make Apache2"
+Apache1: mod_auth_boitho.soApache1
+Apache2: mod_auth_boitho.soApache2
 
 install:
 
@@ -25,6 +28,9 @@ clean:
 
 
 
-mod_auth_boitho.so: mod_auth_boitho.c 
-	$(APXS) $(DEFINES) -c mod_auth_boitho.c ../liboithoaut/liboithoaut.a
+mod_auth_boitho.soApache1: mod_auth_boitho.c 
+	$(APXS) $(DEFINES) -DAPACHE_V13 -c mod_auth_boitho.c ../boithoadClientLib/liboithoaut.a
+
+mod_auth_boitho.soApache2: mod_auth_boitho.c 
+	$(APXS) $(DEFINES) -c mod_auth_boitho.c ../boithoadClientLib/liboithoaut.a
 

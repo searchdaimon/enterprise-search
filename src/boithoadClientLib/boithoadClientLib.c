@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../common/define.h"
-#include "../common/daemon.h"
+//#include "../common/define.h"
+//#include "../common/daemon.h"
+#include "daemon.h"
+#include "boithoad.h"
 
 //motar en enkel respons liste. Den begynner med en int som sier hov lang den er
 int boithoa_getLdapResponsList(int socketha,char **respons_list[],int *nrofresponses) {
@@ -63,7 +65,7 @@ int boitho_authenticat(char username_in[],char password_in[]) {
 		printf("boitho_authenticat: dic cconnect\n");
 	#endif
 
-        sendpacked(socketha,bad_askToAuthenticate,BLDPROTOCOLVERSION, 0, NULL,"");
+        sendpacked(socketha,bad_askToAuthenticate,BADPROTOCOLVERSION, 0, NULL,"");
 
 	sendall(socketha,username, sizeof(username));
 	sendall(socketha,password, sizeof(password));
@@ -93,7 +95,7 @@ int boithoad_listGroups( char **respons_list[],int *nrofresponses){
 		return 0;
 	} 
 
-	sendpacked(socketha,bad_listGroups,BLDPROTOCOLVERSION, 0, NULL,"");
+	sendpacked(socketha,bad_listGroups,BADPROTOCOLVERSION, 0, NULL,"");
 
 
 	if (!boithoa_getLdapResponsList(socketha,respons_list,nrofresponses)) {
@@ -115,7 +117,7 @@ int boithoad_listUsers(char **respons_list[],int *nrofresponses){
 		return 0;
 	} 
 
-	sendpacked(socketha,bad_listUsers,BLDPROTOCOLVERSION, 0, NULL,"");
+	sendpacked(socketha,bad_listUsers,BADPROTOCOLVERSION, 0, NULL,"");
 
 
 	if (!boithoa_getLdapResponsList(socketha,respons_list,nrofresponses)) {
@@ -150,7 +152,7 @@ int boithoad_groupsForUser(char username_in[],char **respons_list[],int *nrofres
 		return 0;
 	}
 
-        sendpacked(socketha,bad_groupsForUser,BLDPROTOCOLVERSION, 0, NULL,"");
+        sendpacked(socketha,bad_groupsForUser,BADPROTOCOLVERSION, 0, NULL,"");
 
 	sendall(socketha,username, sizeof(username));
 	
@@ -178,7 +180,7 @@ int boithoad_getPassword(char username_in[], char password_in[]) {
 		return 0;
 	}
 
-        sendpacked(socketha,bad_getPassword,BLDPROTOCOLVERSION, 0, NULL,"");
+        sendpacked(socketha,bad_getPassword,BADPROTOCOLVERSION, 0, NULL,"");
 
 	sendall(socketha,username, sizeof(username));
 	

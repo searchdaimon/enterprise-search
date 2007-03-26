@@ -29,7 +29,7 @@
 #define LOG_FAILED_ATTEMPTS
 
 //if v1.3
-#define APACHE_V13
+//#define APACHE_V13
 #ifdef APACHE_V13
 	#define apr_pool_t pool
 	#define apr_palloc ap_pcalloc
@@ -40,7 +40,8 @@
 #endif
 
 
-#include "../liboithoaut/liboithoaut.h"
+//#include "../liboithoaut/liboithoaut.h"
+#include "../boithoadClientLib/liboithoaut.h"
 
 #include "ap_config.h"
 

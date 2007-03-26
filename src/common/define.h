@@ -44,14 +44,27 @@
 
 #define rNetTrabsferBlok 65536
 
-#define MAX_LDAP_ATTR_LEN 512
 
 //#define maxSubnameLength 64
 #define maxSubnameLength 512 //512 fra 6 nov
 
 //#define BSDPORT 6501 //search system
 #define BLDPORT 3490 //lot deamon
-#define BADPORT 3491 //Boitho autentifisering
+
+//flyttet til boithoad.h
+//#define BADPORT 3491 //Boitho autentifisering
+//#define MAX_LDAP_ATTR_LEN 512
+//
+//#define bad_askToAuthenticate		1
+//#define bad_listUsers 		10
+//#define bad_listGroups		11
+//#define bad_groupsForUser		20
+//#define bad_getPassword		30
+//#define ad_userauthenticated_OK  111
+//#define ad_userauthenticated_ERROR  000
+
+
+
 //#define CMDPORT 3492 //boitho crawler manager
 
 #define nrOfHttpResponsCodes 700
@@ -62,6 +75,7 @@
 #define DefultMaxsHits 20
 
 #define MaxQueryLen 100
+
 
 #define BLDPROTOCOLVERSION 1
 
@@ -101,11 +115,6 @@
 
 #define net_CanDo		13
 
-#define bad_askToAuthenticate	1
-#define bad_listUsers 		10
-#define bad_listGroups		11
-#define bad_groupsForUser	20
-#define bad_getPassword		30
 
 #define siderType_normal 	1
 #define siderType_ppcside 	2
@@ -125,8 +134,6 @@
 #define poengForUrlSub 2
 #define poengForUrlMain 30 //temp. til vi har url filtrering i dispatsjer
 
-#define ad_userauthenticated_OK  111
-#define ad_userauthenticated_ERROR  000
 
 #define maxPoengBody 5
 #define MaxPoengHeadline 12
