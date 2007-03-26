@@ -17,6 +17,7 @@ struct suggest_input {
 void suggest_most_used(struct suggest_data *);
 int suggest_read_frequency(struct suggest_data *, char *);
 struct suggest_input **suggest_find_prefix(struct suggest_data *, char *);
+struct suggest_data *suggest_init(void);
 
 #endif
 

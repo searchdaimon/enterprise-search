@@ -2,7 +2,7 @@
  * Eirik A. Nygaard
  * February 2007
  */
-
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -167,6 +167,32 @@ main(int argc, char **argv)
 			printf("%s <=> %d\n", sf->best[a]->word, sf->best[a]->frequency);
 		}
 	}
+
+	do {
+		do {
+			char *buf;
+			size_t len;
+			unsigned int size = 1024;
+			struct suggest_input *si2;
+
+			buf = NULL;
+			printf("Enter prefix: ");
+			fflush(stdin);
+			len = getline(&buf, &size, stdin);
+			buf[len-1] = '\0';
+			si = suggest_find_prefix(sd, buf);
+			if (si2 == NULL) {
+				printf("No match for '%s'\n", buf);
+				continue;
+			}
+			else {
+				printf("Printing the most used word starting with '%s'\n", buf);
+				for (; *si != NULL; si++) {
+					printf("Something: %s / %d\n", (*si)->word, (*si)->frequency);
+				}
+			}
+		} while(1);
+	} while(0);
 
 	return 0;
 }
