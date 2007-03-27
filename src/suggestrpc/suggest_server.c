@@ -114,7 +114,7 @@ get_best_results_1_svc(char **argp, struct svc_req *rqstp)
 #if 1
 	nlp = &result.numbest_res_u.list;
 	for (si = suggest_find_prefix(sd, *argp);
-	     *si != NULL;
+	     si != NULL && *si != NULL;
 	     si++) {
 		nl = *nlp = (namenode *)
 			malloc(sizeof(namenode));
