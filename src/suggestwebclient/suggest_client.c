@@ -25,10 +25,12 @@ suggest_1(char *host, char *arg)
 	}
 #endif	/* DEBUG */
 
+	/* XXX: set lower timeout */
 	result_1 = get_best_results_1(&arg, clnt);
 	if (!result_1) {
 #if 1
-		clnt_perror (clnt, "call failed");
+		printf("Content-type: text/html\n\n");
+		//clnt_perror (clnt, "call failed");
 #endif
 	}
 	else {
