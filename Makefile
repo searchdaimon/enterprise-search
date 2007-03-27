@@ -84,6 +84,15 @@ wordConverter: src/wordConverter/main.c
 #brukte før src/parser/libhtml_parser.a, byttet til src/parser/lex.yy.c src/parser/lex.yy.c slik at vi kan bruke gdb
 IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c $(HTMLPARSER) $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
 
+Suggest:
+	@echo ""
+	@echo "$@:"
+
+	(cd src/suggestrpc; make)
+	cp src/suggestrpc/suggest_server bin/
+	(cd src/suggestwebclient; make)
+	cp src/suggestwebclient/suggest_webclient bin/
+
 IndexerLot: src/IndexerLot/main.c
 	@echo ""
 	@echo "$@:"
