@@ -90,10 +90,9 @@ char x2c(char *what)
 
 void unescape_url(char *url)
 {
-debug("url",url);
-
   register int x,y,len;
   
+  debug("url",url);
   len = strlen(url);
   
   for (x=0, y=0; url[y]; ++x, ++y)
