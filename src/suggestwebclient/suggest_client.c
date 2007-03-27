@@ -34,18 +34,20 @@ suggest_1(char *host, char *arg)
 	else {
 		if (result_1->_errno == 0) {
 			namelist nl;
+			printf("Content-type: text/html\n\n");
 			printf("<table>\n");
 			for (nl = result_1->numbest_res_u.list;
 			     nl != NULL;
 			     nl = nl->next) {
 				printf("\t<tr>\n");
-				printf("\t\t<td>%s</td><td>%d</td>\n", nl->name, nl->frequency);
+				printf("\t\t<td>%s</td><td>%d</td>\n",
+				       nl->name, nl->frequency);
 				printf("\t</tr>\n");
 			}
 			printf("</table>\n");
 		}
 		else {
-			printf("error...\n");
+			printf("Content-type: text/html\n\n");
 		}
 	}
 
