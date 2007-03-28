@@ -20,9 +20,7 @@ sub new {
 sub start {
     my ($self, $service) = @_;
     $self->_validate_service($service);
-    
-    
-    #TODO: Implement
+    $self->_exec_service_suid($service, "start");
 }
 
 
@@ -34,7 +32,7 @@ sub start {
 sub stop {
     my ($self, $service) = @_;
     $self->_validate_service($service);
-    #TODO: Implement
+    $self->_exec_service_suid($service, "stop");
 }
 
 
@@ -46,7 +44,7 @@ sub stop {
 sub restart {
     my ($self, $service) = @_;
     $self->_validate_service($service);
-    #TODO: Implement
+    $self->_exec_service_suid($service, "restart");
 }
 
 ##
