@@ -9,11 +9,13 @@
 #include <unistd.h>
 #include <inttypes.h>
 
+#include "../boithoadClientLib/boithoad.h"
 
 #include "../common/define.h"
 #include "../common/daemon.h"
 #include "../common/config.h"
 #include "../common/bstr.h"
+#include "../common/logs.h"
 #include "userobjekt.h"
 
 #include "../common/list.h"
@@ -26,6 +28,7 @@
 
 static struct hashtable  *gloabal_user_h = NULL;
 
+FILE *LOGACCESS, *LOGERROR;
 
 void connectHandler(int socket);
 
@@ -565,6 +568,7 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 
    		if (!ldap_connect(&ld,ldap_host,ldap_port,ldap_base,adminsdistinguishedName,admin_password)) {
 			printf("can't connect to ldap server\n");
+			blog(LOGERROR,1,"can't connect to ldap server. Useing server \"%s:%i\", ldap_base \"%s\", adminsdistinguishedName \"%s\"\n",ldap_host,ldap_port,ldap_base,adminsdistinguishedName);
 			return;
    		}
 
@@ -587,13 +591,16 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 
 			if ((sudo != NULL) && (strcmp(user_password,sudo) == 0)) {
 				printf("sudo!\n");
+				blog(LOGACCESS,1,"sudo to user \"%s\".\n",user_username);
 				intresponse = ad_userauthenticated_OK;
 			}
 			else if (ldap_authenticat (&ld,user_username,user_password,ldap_base,ldap_host,ldap_port)) {
 				printf("Main: user authenticated\n");
+				blog(LOGACCESS,1,"user \"%s\" successfuly authenticated.\n",user_username);
 				intresponse = ad_userauthenticated_OK;
 			}
 			else {
+				blog(LOGERROR,1,"could not authenticate user \"%s\".\n",user_username);
 				intresponse = ad_userauthenticated_ERROR;
 				printf("Main: user NOT authenticated\n");
 			}
@@ -850,6 +857,12 @@ static int boithoad_equalkeys(void *k1, void *k2)
 
 
 int main( int argc, char *argv[] ) {
+
+        if (!openlogs(&LOGACCESS,&LOGERROR,"boithoad")) {
+                perror("logs");
+                exit(1);
+        }
+
 
    bconfig_init();
 

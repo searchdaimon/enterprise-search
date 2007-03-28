@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include <dlfcn.h>      /* defines dlopen(), etc.       */
 #include <sys/types.h>
@@ -14,8 +15,11 @@
 #include "../common/error.h"
 #include "../common/timediff.h"
 #include "../common/boithohome.h"
+#include "../common/logs.h"
 #include "../maincfg/maincfg.h"
 #include "../boitho-bbdn/bbdnclient.h"
+
+#include "../common/boithohome.h"
 
 #include "../bbdocument/bbdocument.h"
 
@@ -28,6 +32,10 @@
 struct hashtable *global_h;
 
 //int crawlfirst(struct collectionFormat *collection)
+
+FILE *LOGACCESS, *LOGERROR;
+int global_bbdnport;
+
 
 int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],int *nrofcollections);
 
@@ -57,19 +65,23 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 			(*crawldocumentAdd).title,
 			(*crawldocumentAdd).doctype)
 	) {
-		printf("can't sent to bbdn!\nWill sleep and then reconect. Wont send same doc again.\n");
+
+		blog(LOGERROR,1,"can't sent to bbdn! Tryed to send doc \"%s\" Will sleep and then reconect. Wont send same doc again.\n",(*crawldocumentAdd).documenturi);
 		
 		bbdn_closecollection((*collection).socketha,(*collection).collection_name);
 
 		sleep(10);
 
-		if (!bbdn_conect(&(*collection).socketha,"")) {
-			berror("can't conect to bbdn (boitho backend document server)\n");
+		if (!bbdn_conect(&(*collection).socketha,"",global_bbdnport)) {
+			blog(LOGERROR,1,"can't conect to bbdn (boitho backend document server)\n");
 			return 0;
 		}
 
 		//exit(1);
 
+	}
+	else {
+		blog(LOGACCESS,1,"crawled url: \"%s\", size: %i b, ACL: \"%s\"\n",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).dokument_size,(*crawldocumentAdd).acl);
 	}
 
 
@@ -604,7 +616,7 @@ int crawlcanconect (char cvalue[]) {
 
 	if (nrofcollections == 1) {
 		//make a conectina for add to use
-		if (!bbdn_conect(&collection[0].socketha,"")) {
+		if (!bbdn_conect(&collection[0].socketha,"",global_bbdnport)) {
 			//berror("can't conect to bbdn (boitho backend document server)\n");
 			return 0;
 		}
@@ -685,7 +697,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag) {
 
 
 		//make a conectina for add to use
-		if (!bbdn_conect(&collection[i].socketha,"")) {
+		if (!bbdn_conect(&collection[i].socketha,"",global_bbdnport)) {
 			berror("can't conect to bbdn (boitho backend document server)");
 			set_crawler_message(0,bstrerror(),collection[i].id);
 		}
@@ -942,8 +954,14 @@ void connectHandler(int socket) {
 
 int main (int argc, char *argv[]) {
 
+
 	struct config_t maincfg;
 
+
+	if (!openlogs(&LOGACCESS,&LOGERROR,"crawlManager")) {
+		perror("logs");
+		exit(1);
+	}
 
 	printf("crawlManager: in main\n");
 
@@ -953,7 +971,7 @@ int main (int argc, char *argv[]) {
 
 	printf("crawlManager: running maincfg_get_int\n");
         int crawlport = maincfg_get_int(&maincfg,"CMDPORT");
-
+	global_bbdnport = maincfg_get_int(&maincfg,"BLDPORT");
 	printf("crawlManager: runing cm_start\n");
 
 	cm_start(&global_h);

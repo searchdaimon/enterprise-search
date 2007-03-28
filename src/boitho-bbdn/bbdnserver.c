@@ -10,6 +10,7 @@
 #include "../common/define.h"
 #include "../common/daemon.h"
 #include "../bbdocument/bbdocument.h"
+#include "../maincfg/maincfg.h"
 
 #include "bbdn.h"
 
@@ -21,7 +22,17 @@ void connectHandler(int socket);
 
 int main (void) {
 
-        sconnect(connectHandler, BLDPORT);
+	struct config_t maincfg;
+
+
+        printf("crawlManager: running maincfgopen\n");
+        maincfg = maincfgopen();
+
+        printf("crawlManager: running maincfg_get_int\n");
+        int bbdnport = maincfg_get_int(&maincfg,"BLDPORT");
+
+
+        sconnect(connectHandler, bbdnport);
 
         printf("conek ferdig \n");
 

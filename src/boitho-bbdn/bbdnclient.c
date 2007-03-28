@@ -6,12 +6,12 @@
 #include "../common/error.h"
 #include "../common/debug.h"
 
-int bbdn_conect(int *socketha, char tkey[]) {
+int bbdn_conect(int *socketha, char tkey[], int PORT) {
 
 	int intrespons;
 	int i;
 
-	if (((*socketha) = cconnect("127.0.0.1", BLDPORT)) == 0) {
+	if (((*socketha) = cconnect("127.0.0.1", PORT)) == 0) {
 		bperror("Cant cconnect");
 		return 0;
 	}

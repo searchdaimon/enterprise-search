@@ -47,7 +47,7 @@ int socketsendsaa(int socketha,char **respons_list[],int nrofresponses) {
 //motar en enkel respons liste. Den begynner med en int som sier hov lang den er
 int socketgetsaa(int socketha,char **respons_list[],int *nrofresponses) {
 
-        char ldaprecord[MAX_LDAP_ATTR_LEN];
+        //char ldaprecord[MAX_LDAP_ATTR_LEN];
         int intresponse,i,len;
 
         if (!recvall(socketha,&intresponse,sizeof(intresponse))) {
@@ -114,6 +114,7 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
         memset(&(my_addr.sin_zero), '\0', 8); // zero the rest of the struct
 
         if (bind(sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1) {
+	    fprintf(stderr,"Canr bind to port %i\n",PORT);
             perror("bind");
             exit(1);
         }

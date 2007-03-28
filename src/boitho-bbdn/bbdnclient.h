@@ -2,7 +2,7 @@
 #define _BBDHCLIENT__H_
 
 
-int bbdn_conect(int *socketha, char tkey[]);
+int bbdn_conect(int *socketha, char tkey[], int PORT);
 
 
 int bbdn_docadd(int socketha,char subname[],char documenturi[],char documenttype[],char document[],
