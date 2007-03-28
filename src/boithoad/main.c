@@ -506,8 +506,8 @@ int getPrimaryGroupFromDnUsername (char cn[],char username[], int sizeofusername
 }
 
 
-//her driver vi og kaller return, men da blir ikke alt, som loggene, stenkt ned riktig. Må heller bruke 
-goto eller continue
+//her driver vi og kaller return, men da blir ikke alt, som loggene, stenkt ned riktig. 
+//Må heller bruke goto eller continue
 void connectHandler(int socket) {
 	struct packedHedderFormat packedHedder;
 	int intresponse;
@@ -631,8 +631,8 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 				printf("adding user \"%s\" to user hash\n",k);
 				if (! hashtable_insert(gloabal_user_h,k,userobjekt) )
 				{    
-					printf("can't isert\n"); 
-					exit(-1);
+					printf("can't isert user in userobjekt\n"); 
+					//exit(-1);
 		               	}
 
 				printf("hashtable_count %u\n",hashtable_count(gloabal_user_h));
@@ -651,21 +651,23 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
                                 printf("can't ldap search\n");
                                 intresponse = 0;
                                 sendall(socket,&intresponse, sizeof(intresponse));
-                                return;
+                                //return;
                         }
+			else {
 
-			//sender antal
-                        sendall(socket,&nrOfSearcResults, sizeof(nrOfSearcResults));
+				//sender antal
+                        	sendall(socket,&nrOfSearcResults, sizeof(nrOfSearcResults));
 
-                        printf("found %i gruups\n",nrOfSearcResults);
-                        for(i=0;i<nrOfSearcResults;i++) {
-                                printf("user \"%s\"\n",respons[i]);
-                                strscpy(ldaprecord,respons[i],sizeof(ldaprecord));
-                                sendall(socket,ldaprecord, sizeof(ldaprecord));
+                        	printf("found %i gruups\n",nrOfSearcResults);
+                        	for(i=0;i<nrOfSearcResults;i++) {
+                        	        printf("user \"%s\"\n",respons[i]);
+                        	        strscpy(ldaprecord,respons[i],sizeof(ldaprecord));
+                        	        sendall(socket,ldaprecord, sizeof(ldaprecord));
 
-                        }
+                        	}
 
-			ldap_simple_free(respons);
+				ldap_simple_free(respons);
+			}
 
 		}
 		else if (packedHedder.command == bad_listUsers) {
@@ -676,21 +678,22 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
                                 printf("can't ldap search\n");
                                 intresponse = 0;
                                 sendall(socket,&intresponse, sizeof(intresponse));
-                                return;
+                                //return;
                         }
+			else {
+				//sender antal
+                        	sendall(socket,&nrOfSearcResults, sizeof(nrOfSearcResults));
 
-			//sender antal
-                        sendall(socket,&nrOfSearcResults, sizeof(nrOfSearcResults));
+                        	printf("found %i gruups\n",nrOfSearcResults);
+                        	for(i=0;i<nrOfSearcResults;i++) {
+                        	        printf("user \"%s\"\n",respons[i]);
+                        	        strscpy(ldaprecord,respons[i],sizeof(ldaprecord));
+                        	        sendall(socket,ldaprecord, sizeof(ldaprecord));
 
-                        printf("found %i gruups\n",nrOfSearcResults);
-                        for(i=0;i<nrOfSearcResults;i++) {
-                                printf("user \"%s\"\n",respons[i]);
-                                strscpy(ldaprecord,respons[i],sizeof(ldaprecord));
-                                sendall(socket,ldaprecord, sizeof(ldaprecord));
+                        	}
 
-                        }
-
-			ldap_simple_free(respons);
+				ldap_simple_free(respons);
+			}
 		}
 		else if (packedHedder.command == bad_groupsForUser) {
 			printf("listUsers\n");
@@ -706,7 +709,7 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 				sendall(socket,&intresponse, sizeof(intresponse));
 				return;
         		}
-
+			
 			//finner hovedgruppe fra cn
 			if (!getPrimaryGroupFromDnUsername (cn,primarygroup,sizeof(primarygroup))) {
 				printf("cnat fins group name.\n");
@@ -759,7 +762,7 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 
 			}
 			ldap_simple_free(respons);			
-
+			
 		}
 		else if (packedHedder.command == bad_getPassword) {
 			printf("bad_getPassword: start\n");
