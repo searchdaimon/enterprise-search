@@ -506,8 +506,8 @@ int getPrimaryGroupFromDnUsername (char cn[],char username[], int sizeofusername
 }
 
 
-//her driver vi og kaller return, men da blir ikke alt, som loggene, stenkt ned riktig. 
-//Må heller bruke goto eller continue
+//her driver vi og kaller return, men da blir ikke alt, som loggene, stenkt ned riktig. Må heller bruke 
+goto eller continue
 void connectHandler(int socket) {
 	struct packedHedderFormat packedHedder;
 	int intresponse;
