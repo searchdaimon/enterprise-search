@@ -32,6 +32,13 @@ print "$dest: $dest\n";
 
 #mkdir -p $(boitho-ad_name)-$(boitho-ad_version)
 
+#sletter gammel mappe
+#toDo Er dette farlig. Kan vi ta en dagur her???
+$command = "rm -rf -v \"$name_and_version\"";
+print "running: $command\n";
+system($command);
+
+
 #lager en mappe
 mkdir($name_and_version,0755) or warn("cant create $name_and_version: $!");
 
@@ -47,7 +54,11 @@ my $fileslist = '';
 for my $i (@files) {
 	my $filedest = $dest . '/' . $i;
 	#$filesinstal .= "install -s -m 755 $i \$DESTDIR/$i\n";
-	$filesinstal .= "install -D -m 755 $i \$DESTDIR/$i\n";
+	#$filesinstal .= "install -D -m 755 $i \$DESTDIR/$i\n";
+	
+	#$filesinstal .= "mkdir -p \$DESTDIR\n";
+	$filesinstal .= "cp -r --parents $i \$DESTDIR/\n";
+
 	$fileslist .= $filedest . "\n";
 }
 print "filesinstal:\n$filesinstal\n";
@@ -67,7 +78,11 @@ for my $i (@files) {
 
 	print "cp $filesource -> $filedest\n";
 
-	copy($filesource, $filedest) or die "File cannot be copied: $!";
+	#copy($filesource, $filedest) or die "File cannot be copied: $!";
+	$command = "cp -r $filesource $filedest";
+	print "running: $command\n";
+	system($command);
+	
 	
 }
 

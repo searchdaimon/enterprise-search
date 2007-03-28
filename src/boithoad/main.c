@@ -28,7 +28,6 @@
 
 static struct hashtable  *gloabal_user_h = NULL;
 
-FILE *LOGACCESS, *LOGERROR;
 
 void connectHandler(int socket);
 
@@ -507,13 +506,22 @@ int getPrimaryGroupFromDnUsername (char cn[],char username[], int sizeofusername
 }
 
 
-
+//her driver vi og kaller return, men da blir ikke alt, som loggene, stenkt ned riktig. 
+//Må heller bruke goto eller continue
 void connectHandler(int socket) {
 	struct packedHedderFormat packedHedder;
 	int intresponse;
 	char user_username[64];
         char user_password[64];
 	int i;
+
+	FILE *LOGACCESS, *LOGERROR;
+
+        if (!openlogs(&LOGACCESS,&LOGERROR,"boithoad")) {
+                perror("logs");
+                exit(1);
+        }
+
 
 	printf("got new connection\n");
 
@@ -805,6 +813,9 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 
 	}
 
+
+	closelogs(LOGACCESS,LOGERROR);
+
 	printf("end off while\n");
 }
 
@@ -858,10 +869,6 @@ static int boithoad_equalkeys(void *k1, void *k2)
 
 int main( int argc, char *argv[] ) {
 
-        if (!openlogs(&LOGACCESS,&LOGERROR,"boithoad")) {
-                perror("logs");
-                exit(1);
-        }
 
 
    bconfig_init();

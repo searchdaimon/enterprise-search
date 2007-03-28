@@ -20,7 +20,15 @@ boitho-boitho-bbdn_version = 1.7.0
 boitho-base_name = boitho-base
 boitho-base_version = 1.3.0
 
+boitho-bbadmin_name = boitho-bbadmin
+boitho-bbadmin_version = 2.7.3
+
 all: boithoad startscripts searchdbb crawlManager dispatcher_allbb boitho-bbdn ShowThumb base
+
+bbadmin:
+	perl rpmmagic.pl $(boitho-bbadmin_name) $(boitho-bbadmin_version) /home/boitho/boitho/websearch /home/boitho/boithoTools cgi-bin/webadmin Modules
+
+	rpm -bb $(boitho-bbadmin_name).spec
 
 boithoad:
 	perl rpmmagic.pl $(boitho-ad_name) $(boitho-ad_version) /home/boitho/boitho/websearch /home/boitho/boithoTools bin/boithoad
@@ -63,6 +71,7 @@ ShowThumb:
 	perl rpmmagic.pl $(boitho-ShowThumb_name) $(boitho-ShowThumb_version) /home/boitho/boitho/websearch /home/boitho/boithoTools bin/ShowThumb
 
 	rpm -bb $(boitho-ShowThumb_name).spec
+
 
 base:
 	rm -rf $(boitho-base_name)-$(boitho-base_version)

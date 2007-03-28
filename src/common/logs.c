@@ -49,3 +49,8 @@ int openlogs(FILE **LOGACCESS, FILE **LOGERROR, char name[]) {
 
 	return 1;
 }
+
+void closelogs(FILE *LOGACCESS, FILE *LOGERROR) {
+	fclose(LOGACCESS);
+	fclose(LOGERROR);
+}
