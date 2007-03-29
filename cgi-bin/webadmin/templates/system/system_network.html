@@ -1,28 +1,10 @@
-[% INCLUDE 'header.html' title = 'System overview' %]
+[% INCLUDE 'header.html' title = 'Configure network' %]
 [% USE HTML %]
 [% USE Dumper %]
 [% PROCESS 'network_config.html' %]
 
+[% PROCESS 'system_tabs.html' selected="Network configuration" %]
 
-[% PROCESS 'template_tabs.html' 
-	tabs = [
-	{
-		'name'		=> 'System diagnostics',
-		'url'		=> 'system.cgi',
-		'selected'	=> 0,
-	},
-	{
-		'name'		=> 'Upload software package',
-		'url'		=> 'system.cgi?view=package_upload'
-		'selected'	=> 0,
-	},
-	{
-		'name'		=> 'Network configuration',
-		'url'		=> 'system.cgi?view=network',
-		'selected'  => 1,
-	},
-]
-%]
 
 [% IF error_msg_net.defined %]
 	[% WRAPPER 'template_message.html' type='error' %] [% error_msg_net %] [% END %]

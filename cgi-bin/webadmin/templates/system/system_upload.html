@@ -1,24 +1,7 @@
 [% INCLUDE 'header.html' title="Upload software package" %]
 
-[% PROCESS 'template_tabs.html' 
-	tabs = [
-	{
-		'name'		=> 'System diagnostics',
-		'url'		=> 'system.cgi',
-		'selected'	=> 0,
-	},
-	{
-		'name'		=> 'Upload software package',
-		'url'		=> 'system.cgi?view=package_upload'
-		'selected'	=> 1,
-	},
-	{
-		'name'		=> 'Network configuration',
-		'url'		=> 'system.cgi?view=network',
-		'selected'  => 0,
-	},
-]
-%]
+[% PROCESS 'system_tabs.html' selected="Upload software package" %]
+
 
 <h3>Upload software package</h3>
 

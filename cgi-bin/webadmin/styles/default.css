@@ -87,34 +87,7 @@ A:active { color : blue; }
     margin-left : 50%;
   }
 
-#overview .button_list {
-	list-style-type: none;
-	margin : 0;
-	padding : 0;
-	float : right;
-	min-width : 100px;
 
-}
-
-#overview .button_list li {
-	margin : 0.2em;
-}
-
-#overview .button_list a {
-	color : #333333;
-	padding-left : 0.2em;
-}
-
-#overview .button_list div {
-    border : 1px solid;
-    border-color : #FFFFFF;
-    padding-left : 0.5em;
-    padding-right : 0.5em;
-    padding-top : 0.2em;
-    padding-bottom : 0.2em;
-    background-color : #E7E7F7;
-	font-size : small;
-}
 
 
 #tabs {
@@ -145,7 +118,41 @@ A:active { color : blue; }
     background-color : #EEEEEE;
   }
 
+/**
+  * Global classes */
 
+/* Button list */
+.button_list {
+	list-style-type: none;
+	margin : 0;
+	padding : 0;
+	float : right;
+	min-width : 100px;
+
+}
+
+.button_list li {
+	margin : 0.2em;
+}
+
+.button_list a {
+	color : #333333;
+	padding-left : 0.2em;
+}
+
+.button_list div {
+    border : 1px solid;
+    border-color : #FFFFFF;
+    padding-left : 0.5em;
+    padding-right : 0.5em;
+    padding-top : 0.2em;
+    padding-bottom : 0.2em;
+    background-color : #E7E7F7;
+	font-size : small;
+}
+
+
+/* settings blocks */
 .block_default {
     width : 100%;
     text-align : top;

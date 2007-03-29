@@ -12,21 +12,18 @@ use Template;
 use Page::System;
 use Data::Dumper;
 use Page::System::Network;
+use Page::System::Services;
+use Common::Generic qw(init_root_page);
 
-my $cgi = CGI->new;
-my $state_ptr = CGI::State->state($cgi);
-my %state = %$state_ptr;
-print $cgi->header('text/html');
+my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
+	= init_root_page('/templates/system', 'Page::System');
 
-my $vars = { };
-my $template = Template->new(
-	{INCLUDE_PATH => './templates:./templates/system:./templates/common',});
+my %state = %{$state_ptr};
 my $template_file;
 
-my $sql = Sql::Sql->new();
-my $dbh = $sql->get_connection();
-my $page = Page::System->new($dbh);
-my $pageNetwork = Page::System::Network->new($dbh);
+my $pageNetwork  = Page::System::Network->new($dbh);
+my $pageServices = Page::System::Services->new($dbh);
+
 
 if (defined $state{'submit'}) {
 	my $button = $state{'submit'};
@@ -37,6 +34,8 @@ if (defined $state{'submit'}) {
 		($vars, $template_file) = $pageNetwork->show_network_config($vars);	
 	}
 }
+
+
 elsif (defined $state{'view'}) {
 	my $view = $state{'view'};
 	
@@ -46,8 +45,12 @@ elsif (defined $state{'view'}) {
 		($vars, $template_file) = $page->show_upload_page($vars);
 	}
 	
-	if ($view eq "network") {
+	elsif ($view eq "network") {
 		($vars, $template_file) = $pageNetwork->show_network_config($vars);
+	}
+
+	elsif ($view eq "services") {
+		($vars, $template_file) = $pageServices->show($vars);
 	}
 }
 elsif (defined $state{'package_upload_button'}) {
@@ -55,10 +58,27 @@ elsif (defined $state{'package_upload_button'}) {
 	# Let him upload it, then try to install it.
 	($vars, $template_file) = $page->upload_package($vars, $state{'package_file'});
 }
+
+elsif (defined $state{'action'}) {
+	my $action = $state{'action'};
+	my $service = $state{'name'};
+
+	if (grep { /^$action$/ } "start_service", "stop_service", "restart_service") {
+		my %params = (
+			"start_service" => "start",
+			"stop_service"  => "stop",
+			"restart_service" => "restart");
+
+
+		($vars, $template_file) = $pageServices->action($vars, $service, $params{$action});
+	}
+}
+
+
 else {
 	($vars, $template_file) = $page->show_system_diagnostics($vars);
 }
  	
-
+print $cgi->header('text/html');
 $template->process($template_file, $vars)
         or croak $template->error() . "\n";

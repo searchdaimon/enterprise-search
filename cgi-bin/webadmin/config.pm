@@ -62,6 +62,8 @@ $CONFIG->{'valid_auth_methods'} = ['msad', 'ldap', 'shadow'];
 # Path to upload new rpm packages for installation
 $CONFIG->{'rpm_upload_folder'} = "/tmp";
 
+# Init-services to include in webadmin
+$CONFIG->{'init_services'} = ['crawlManager', 'boitho-bbdn', 'searchdbb'];
 
 # Group: Network
 
@@ -97,6 +99,7 @@ $CONFIG->{'interface_url'} = "http://dagurval.boitho.com/cgi-bin/license_auth/if
 
 # URL to the search daimon manual activation
 $CONFIG->{'activate_url'} = "http://dagurval.boitho.com/cgi-bin/license_auth/custom.pl";
+
 
 
 

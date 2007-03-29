@@ -1,25 +1,7 @@
 [% INCLUDE 'header.html' title = 'System overview' %]
 [% USE HTML %]
 
-[% PROCESS 'template_tabs.html' 
-	tabs = [
-	{
-		'name'		=> 'System diagnostics',
-		'url'		=> 'system.cgi',
-		'selected'	=> 1,
-	},
-	{
-		'name'		=> 'Upload software package',
-		'url'		=> 'system.cgi?view=package_upload'
-		'selected'	=> 0,
-	},
-	{
-		'name'		=> 'Network configuration',
-		'url'		=> 'system.cgi?view=network',
-		'selected'  => 0,
-	},
-]
-%]
+[% PROCESS 'system_tabs.html' selected="System diagnostics" %]
 
 <div style="margin-top : 1em;">
 [% WRAPPER 'template_table.html' 
