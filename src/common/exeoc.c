@@ -106,7 +106,10 @@ int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsiz
 
 
 		waitpid(pid,&waitstatus,0);
-		printf("waitpid finished. waitstatus %i\n",waitstatus);
+		#ifdef DEBUG
+			printf("waitng for pid \"%i\"\n",pid);
+		#endif
+
 
 		/*
 		trenger ikke noe wait her. Vi blokker jo ved read
