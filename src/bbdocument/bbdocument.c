@@ -9,6 +9,9 @@
 #include <inttypes.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 
 #include "../common/define.h"
 #include "../common/debug.h"
@@ -381,9 +384,9 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 		Vi har konverter. Må skrive til fil får å kunne sende den med
 	*****************************************************************************/
 
-	sprintf(filconvertetfile_real,"%s.%s",filconvertetfile,filetype);
-	sprintf(filconvertetfile_out_txt,"%s.txt",filconvertetfile,filetype);
-	sprintf(filconvertetfile_out_html,"%s.html",filconvertetfile,filetype);
+	sprintf(filconvertetfile_real,"%s-%u.%s",(unsigned int)getpid(),filconvertetfile,filetype);
+	sprintf(filconvertetfile_out_txt,"%s-%u.txt",(unsigned int)getpid(),filconvertetfile,filetype);
+	sprintf(filconvertetfile_out_html,"%s-%u.html",(unsigned int)getpid(),filconvertetfile,filetype);
 	#ifdef DEBUG
 	printf("bbdocument_convert: filconvertetfile_real \"%s\"\n",filconvertetfile_real);
 	#endif

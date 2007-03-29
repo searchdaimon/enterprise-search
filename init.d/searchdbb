@@ -1,0 +1,125 @@
+#!/bin/sh
+#
+# chkconfig: 345 99 10
+# description: Starts and stops the Boitho Daemon searchdbb.
+# processname: searchdbb
+
+
+# Source function library.
+if [ -f /etc/init.d/functions ] ; then
+  . /etc/init.d/functions
+elif [ -f /etc/rc.d/init.d/functions ] ; then
+  . /etc/rc.d/init.d/functions
+else
+  exit 0
+fi
+
+if [ "$BOITHOHOME" == "" ]; then
+    export BOITHOHOME=/home/boitho/boithoTools
+fi
+# Byttes ut:
+B_RUN="/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $BOITHOHOME/bin/searchdbb localhost"
+B_NAME=searchdbb
+RETVAL=0
+
+start() {
+	echo -n $"Starting Boitho Daemon "$B_NAME"."
+	daemon $B_RUN
+	RETVAL=$?
+	echo
+	return $RETVAL
+}	
+
+stop() {
+	echo -n $"Shutting down Boitho Daemon "$B_NAME"."
+
+	RC=0
+	notset=1
+	killlevel="-9"
+	base=$B_NAME
+
+        # Find pid.
+	pids=`pidof $BOITHOHOME/bin/everrun`
+	if [ "$pids" == "" ]; then
+	    pid=""
+	else
+	    pid=`ps -o pid,args -w -p $pids|grep $B_NAME|awk '{ printf("%s ", $1); }'`
+	fi
+	pid2=`pidof $BOITHOHOME/bin/$B_NAME`
+	pid="$pid $pid2"
+
+        # Kill it.
+        if [ -n "${pid:-}" ] ; then
+                [ "$BOOTUP" = "verbose" -a -z "$LSB" ] && echo -n "$base "
+		if [ "$notset" -eq "1" ] ; then
+		       if checkpid $pid 2>&1; then
+			   # TERM first, then KILL if not dead
+			   kill -TERM $pid
+			   usleep 100000
+			   if checkpid $pid && sleep 1 &&
+			      checkpid $pid && sleep 3 &&
+			      checkpid $pid ; then
+                                kill -KILL $pid
+				usleep 100000
+			   fi
+		        fi
+			checkpid $pid
+			RC=$?
+			[ "$RC" -eq 0 ] && failure $"$base shutdown" || success $"$base shutdown"
+			RC=$((! $RC))
+		# use specified level only
+		else
+		        if checkpid $pid >/dev/null 2>&1; then
+	                	kill $killlevel $pid
+				RC=$?
+				[ "$RC" -eq 0 ] && success $"$base $killlevel" || failure $"$base $killlevel"
+			fi
+		fi
+	else
+	    failure $"$base shutdown"
+	    RC=1
+	fi
+
+	echo
+	return $RC
+}
+
+restart() {
+	stop
+	start
+}	
+
+
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
+	;;
+  status)
+	pids=`pidof $BOITHOHOME/bin/everrun`
+	if [ "$pids" == "" ]; then
+	    pid=""
+	else
+	    pid=`ps -o pid,args -w -p $pids|grep $B_NAME|awk '{ printf("%s ", $1); }'`
+	fi
+	pid2=`pidof $BOITHOHOME/bin/$B_NAME`
+	pid="$pid $pid2"
+	base=$B_NAME
+
+	if [ "$pid" != "" ] ; then
+	        echo $"${base} (pid $pid) is running..."
+	else
+		echo $"${base} is stopped"
+	fi
+	;;
+  restart)
+  	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart}"
+	exit 1
+esac
+
+exit $?
