@@ -37,11 +37,11 @@ int main () {
 
 */
 
-int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize) {
+int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret) {
 	pid_t pid;
 	int     pipefd[2];
 	int i,n;
-	//int waitstatus;
+	pid_t waitstatus;
 
 	if ((*documentfinishedbufsize) <= linelen) {
 		fprintf(stderr,"Error: buffer must be larger then\n",linelen);
@@ -88,7 +88,7 @@ int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsiz
 		BUGFIKS: runarb
 		Et eller annet skjer hvis vi kaller execv med
 		et program som ikke finnes. Vi får da segfeil i indeksereren
-		kaller derfor /bin/false for å da på en verdig måte
+		kaller derfor /bin/false for å dø på en verdig måte
 				
 		*******************************************/		
 		char *falesaar[] = {"/bin/false",'\0'}; 
@@ -104,13 +104,17 @@ int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsiz
 		// Parent process closes up output side of pipe
                 close(pipefd[1]);
 
+
+		waitpid(pid,&waitstatus,0);
+		printf("waitpid finished. waitstatus %i\n",waitstatus);
+
 		/*
 		trenger ikke noe wait her. Vi blokker jo ved read
 		#ifdef DEBUG
 			printf("waitng for pid \"%i\"\n",pid);
 		#endif
 
-		//waitpid(pid,&waitstatus,0);
+		waitpid(pid,&waitstatus,0);
 		//waitpid(pid,&waitstatus,WUNTRACED);
 
 		#ifdef DEBUG
@@ -128,9 +132,10 @@ int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsiz
 
 		(*documentfinishedbufsize) = i;
 		documentfinishedbuf[(*documentfinishedbufsize) +1] = '\0';
-		//#ifdef DEBUG
-		printf("documentfinishedbufsize \"%i\" at %s:%d\n",(*documentfinishedbufsize),__FILE__,__LINE__);
-		//#endif
+
+		#ifdef DEBUG
+			printf("documentfinishedbufsize \"%i\" at %s:%d\n",(*documentfinishedbufsize),__FILE__,__LINE__);
+		#endif
 
 		if (i==0) {
 			printf("Error: dident manage to read back any data from filfilter\n");
@@ -152,7 +157,7 @@ int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsiz
 			return 0;
 		}
 		*/
-
+		(*ret) = waitstatus;
 		return 1;
 	}
 
