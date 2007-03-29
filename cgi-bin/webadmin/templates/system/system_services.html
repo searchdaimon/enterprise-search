@@ -1,0 +1,56 @@
+[% INCLUDE 'header.html' title = 'Manage services' %]
+[% USE HTML %]
+[% USE Dumper %]
+
+[% PROCESS 'system_tabs.html' selected="Manage services" %]
+
+
+
+<h2>Search Daimon Services</h2>
+
+[% IF error_msg_serv.defined %]
+	[% WRAPPER 'template_message.html' type='error' %][% error_msg_serv %] [% END %]
+[% END %]
+[% IF succ_msg_serv.defined %]
+	[% WRAPPER 'template_message.html' type='success' %][% succ_msg_serv %][% END %]
+[% END %]
+
+[% WRAPPER 'template_table.html' 
+	header = ['Status', 'Service', 'Response', ''] %]
+
+	
+	[% FOREACH service IN service_stats %]
+		[% WRAPPER 'template_table_row.html' %]
+			<td>[% IF service.status %]<img src="file.cgi?i=agt_action_success" alt="succ" />
+				[% ELSE %]<img src="file.cgi?i=agt_action_fail" alt="fail" />
+				[% END %]
+			</td>
+			<td>[% service.name %]</td>
+			<td>[% service.message %]</td>
+			<td>
+				<ul class="button_list">
+					[% IF service.status # service is running %]
+					<li>
+						<div>
+							<a href="system.cgi?action=stop_service&amp;name=[% service.name %]">Stop</a>
+						</div>
+					</li>
+					[% ELSE %]
+					<li>
+						<div>
+							<a href="system.cgi?action=start_service&amp;name=[% service.name %]">Start</a>
+						</div>
+						
+					</li>
+					[% END %]
+					<li>
+						<div>
+							<a href="system.cgi?action=restart_service&amp;name=[% service.name %]">Restart</a>
+						</div>
+					</li>
+				</ul>
+			</td>
+		[% END %]
+		[% color = 1 - color %] 
+	[% END %]
+[% END %]

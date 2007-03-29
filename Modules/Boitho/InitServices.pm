@@ -1,8 +1,11 @@
 # Class: Boitho::InitServices
 # Class to manage boitho services.
 package Boitho::InitServices;
+use strict;
+use warnings;
 use Carp;
 use constant INIT_DIR => "/etc/init.d/";
+use constant WRAPPER_PATH => $ENV{'BOITHOHOME'} . "/Modules/Boitho/InitServices/initwrapper";
 
 sub new {
     my $class = shift;
@@ -20,7 +23,8 @@ sub new {
 sub start {
     my ($self, $service) = @_;
     $self->_validate_service($service);
-    $self->_exec_service_suid($service, "start");
+    my ($status, $message) = $self->_exec_service_suid($service, "start");
+    return ($status, $message);
 }
 
 
@@ -32,7 +36,9 @@ sub start {
 sub stop {
     my ($self, $service) = @_;
     $self->_validate_service($service);
-    $self->_exec_service_suid($service, "stop");
+    
+    my ($status, $message) = $self->_exec_service_suid($service, "stop");
+    return ($status, $message);
 }
 
 
@@ -44,7 +50,9 @@ sub stop {
 sub restart {
     my ($self, $service) = @_;
     $self->_validate_service($service);
-    $self->_exec_service_suid($service, "restart");
+
+    my ($status, $message) = $self->_exec_service_suid($service, "restart");
+    return ($status, $message);
 }
 
 ##
@@ -60,31 +68,12 @@ sub status {
        
     $self->_validate_service($service);
 
-    return $self->_exec_service("status");
+    my ($status, $message) = $self->_exec_service_suid($service, "status");
+    
+    return ($status, $message);
 }
 
 # Group: Private methods
-
-##
- # Execute init service
- #
- # Attributes:
- #	service   - Service name
- #	parameter - Parameter to service. WARN: It won't be escaped.
-sub _exec_service {
-    my ($self, $service, $parameter) = @_;
-
-    my $exec = INIT_DIR . $service . " $parameter|";
-
-    open my $servh, $exec
-	or croak "Unable to execute $exec, $?";
-
-    my @output = <$serviceh>;
-    my $status = 1;
-    
-    close $servh or $status = 0;
-    return ($status, join('\n', @output));
-}
 
 ##
  # Execute service with wrapper
@@ -94,8 +83,7 @@ sub _exec_service {
  #	parameter - Parameter to service. WARN: It won't be escaped.
 sub _exec_service_suid {
     my ($self, $service, $parameter) = @_;
-    
-    my $exec = WRAPPER_PATH . "$service $parameter|";
+    my $exec = WRAPPER_PATH . " $service $parameter|";
 
     open my $wraph, $exec
 	or croak "Unable to execute $service with wrapper, $?";
@@ -103,7 +91,7 @@ sub _exec_service_suid {
     my @output = <$wraph>;
     my $status = 1;
 
-    close $servh or $status = 0;
+    close $wraph or $status = 0;
     return ($status, join('\n', @output));
 }
 ##

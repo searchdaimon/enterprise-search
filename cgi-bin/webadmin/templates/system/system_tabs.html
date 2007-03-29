@@ -1,0 +1,26 @@
+[% tabs = [
+	{
+		'name'		=> 'System diagnostics',
+		'url'		=> 'system.cgi',
+	},
+	{
+		'name'		=> 'Upload software package',
+		'url'		=> 'system.cgi?view=package_upload'
+	},
+	{
+		'name'		=> 'Network configuration',
+		'url'		=> 'system.cgi?view=network',
+	},
+	{
+		'name'		=> 'Manage services',
+		'url'		=> 'system.cgi?view=services',
+	}
+] %]
+
+<ul id="tabs">
+[% FOREACH tabs %]
+	<li [% IF selected == name %]id="selected"[% END %]>
+		<a href="[% url %]">[% name %]</a>
+	</li>
+[% END %]
+</ul>
