@@ -92,7 +92,7 @@ sub _exec_service_suid {
     my $status = 1;
 
     close $wraph or $status = 0;
-    return ($status, join('\n', @output));
+    return ($status, join("\n", @output));
 }
 ##
  # Croak if service doesn't exist.
