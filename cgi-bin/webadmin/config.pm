@@ -17,13 +17,15 @@ $CONFIG->{'config_path'} = "/home/boitho/boithoTools/setup.txt";
 # Group: Logs
 
 # Path to where to look for logfiles.
-$CONFIG->{'log_path'} = '/home/boitho/logs';
+$CONFIG->{'log_path'} = $ENV{'BOITHOHOME'} . '/logs';
 
 # Logfiles visible to the user.
 # Syntax to add new one: 'filename' => "description",
 $CONFIG->{'logfiles'} = {
 	'access_log' => "http access log",
 	'error_log' => "http error log",
+	'crawlManager_access' => "crawlManager access log",
+	'crawlManager_error' => "crawlManager error log",
 };
 
 
