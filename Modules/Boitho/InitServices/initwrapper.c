@@ -1,17 +1,13 @@
-#include <sys/types.h>
-
 #include <stdio.h>
-#include <pwd.h>
-#include <unistd.h>
 #include <stdlib.h>
-#include <errno.h>
-#include <ctype.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 #include "../../../../websearch/src/common/exeoc.h"
 
-
-#define DO_SUID 0
+#define DO_SUID 1
+#define UID_USER 507
 #define INIT_DIR "/etc/init.d/"
 
 void exec_and_exit(char *service, char *param);
@@ -21,13 +17,15 @@ int str_in_list(const char *list[], char *str);
 int str_equals(const char *param, char *string);
 void show_usage();
 
+// header end
+
 const char *valid_services[] = {"crawlManager", "boitho-bbdn", "searchdbb", '\0'};
-const char *valid_params[] = {"start", "stop", "restart", '\0'};
+const char *valid_params[] = {"start", "stop", "restart", "status", '\0'};
 
 int main(int argc, char **argv) {
 	if (DO_SUID) {
-	    if (setuid(0) != 0) {
-		printf("Unable to setuid(0)\n");
+	    if (setuid(UID_USER) != 0) {
+		printf("Unable to setuid(%d)\n", UID_USER);
 		exit(2);
 	    }
 	}
@@ -78,14 +76,15 @@ void exec_and_exit(char *service, char *param) {
 
     //printf("kjorer %s %s %s \n", shargs[0], shargs[1], shargs[2]);
 
-
-    if (!exeoc(shargs, exeocbuf, &exeocbuflen)) {
+    int exec_return;
+    if (!exeoc(shargs, exeocbuf, &exeocbuflen, &exec_return)) {
 	printf("Unable to execute service\n");
 	exit(EXIT_FAILURE);
     }
 
     printf(exeocbuf);
-    exit(EXIT_SUCCESS);
+    exit(exec_return);
+    
 }
 
 int is_valid_service(char *service) {
@@ -121,7 +120,7 @@ int str_equals(const char *param, char *string) {
  * Show program usage and exit.
  */
 void show_usage() {
-    printf("Usage: ./initwrapper start|stop|restart\n");
+    printf("Usage: ./initwrapper service start|stop|restart|status\n");
     exit(1);
 }
 
