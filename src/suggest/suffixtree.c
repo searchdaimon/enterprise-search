@@ -289,10 +289,10 @@ _suffixtree_find_suffix_children(struct suffixtree *root, char *word, unsigned i
 	struct suffixtree *sf;
 
 	forchildren(sf, root) {
-		if ((unsigned int)find_common_substr(word+len, sf->suffix) == strlen(sf->suffix))
-			return _suffixtree_find_suffix(sf, word, len + strlen(sf->suffix));
+		if ((unsigned int)find_common_substr(word+len, sf->suffix) > 0)
+			return _suffixtree_find_suffix(sf, word,
+			                               len + strlen(sf->suffix));
 	}
-
 	return NULL;
 }
 
