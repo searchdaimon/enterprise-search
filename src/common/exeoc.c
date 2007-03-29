@@ -100,7 +100,7 @@ int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsiz
 		
 	}
 	else {
-		printf("perent. Child pid %i\n",(int)pid);
+		//printf("perent. Child pid %i\n",(int)pid);
 		// Parent process closes up output side of pipe
                 close(pipefd[1]);
 
