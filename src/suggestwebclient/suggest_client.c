@@ -36,17 +36,19 @@ suggest_1(char *host, char *arg)
 	else {
 		if (result_1->_errno == 0) {
 			namelist nl;
+			int i = 0;
 			printf("Content-type: text/html\n\n");
-			printf("<table>\n");
 			for (nl = result_1->numbest_res_u.list;
 			     nl != NULL;
 			     nl = nl->next) {
-				printf("\t<tr>\n");
-				printf("\t\t<td>%s</td><td>%d</td>\n",
-				       nl->name, nl->frequency);
-				printf("\t</tr>\n");
+				printf("<div class=\"internalsuggest\" id=\"is%d\""
+				" onmouseover=\"highlightobj(this);\""
+				">\n",
+				i++);
+				printf("%s\n",
+				       nl->name);//, nl->frequency);
+				printf("</div>\n");
 			}
-			printf("</table>\n");
 		}
 		else {
 			printf("Content-type: text/html\n\n");
