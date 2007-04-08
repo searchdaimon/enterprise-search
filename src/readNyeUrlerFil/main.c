@@ -8,6 +8,8 @@ int main (int argc, char *argv[]) {
         int i, y;
 	FILE *nyeurler;
 
+	int count = 0;
+
 	printf("size of format %i\n",sizeof(updatePost));
 
         if (argc < 2) {
@@ -30,7 +32,8 @@ int main (int argc, char *argv[]) {
 		while (!feof(nyeurler)) {
 		
 			fread(&updatePost,sizeof(struct updateFormat),1,nyeurler);
-			
+
+						
 			printf("%s %s %u ",updatePost.url,updatePost.linktext,updatePost.DocID_from);
 			//printf("%u\n",updatePost.DocID_from);
 			//debug vise sha1'en
@@ -39,11 +42,12 @@ int main (int argc, char *argv[]) {
 			}
 			printf("\n");
 			
+			++count;	
 		}		
 
 		fclose(nyeurler);
 	}
 
 
-
+	printf("count: %i\n",count);
 }

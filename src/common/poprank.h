@@ -20,6 +20,6 @@ int popRankForDocIDMmap(int DocID);
 void popopenMmap();
 void popopenMemArray(char servername[],char subname[]);
 int popRankForDocIDMemArray(unsigned int DocID);
-
+void popopenMemArray_oneLot(char subname[], int i);
 
 #endif

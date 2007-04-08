@@ -267,10 +267,18 @@ void lotCloseFiles() {
 FILE *openMaplist() {
 
 	FILE *MAPLIST;
+	char *cptr;
 
-
+	//sjekker først om vi har en env variabel kalt "BOITHOMAPLIST". Hvis vi har det så bruker vi den filen
+	//gjør det slik slik at vi kan ha lokal maplist, på hver bbs, man fortsat ha resten likt på alle, og på read onlu nfs.
+	if ((cptr = getenv("BOITHOMAPLIST")) != NULL) {
+		if ( (MAPLIST = fopen(cptr,"r")) == NULL) {
+			perror(cptr);
+			exit(1);
+		}
+	}
         //leser liten over mapper vi kan bruke.
-        if ( (MAPLIST = bfopen("config/maplist.conf","r")) == NULL) {
+        else if ( (MAPLIST = bfopen("config/maplist.conf","r")) == NULL) {
                 perror(bfile("config/maplist.conf"));
                 exit(1);
         }

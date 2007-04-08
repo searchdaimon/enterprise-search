@@ -10,8 +10,8 @@
 #include "sha1.h"
 #include "bstr.h"
 //#include "define.h"
-#include <errno.h>
-extern int errno;
+//#include <errno.h>
+//extern int errno;
 
 #include <arpa/inet.h> //for inet_aton()
 #include <sys/types.h> //for time()
@@ -392,7 +392,7 @@ int rReadSummary(unsigned int *DocID,char **metadesc, char **title, char **body 
 	printf("DocID %u\nrsize %u\n",*DocID,rsize);
 
 	if ((n=fread(WorkBuff,rsize,1,SFILE)) != 1) {
-        	printf("cant read. n = %i, rsize = %i, errno %i\n",n,rsize,errno);
+        	printf("cant read. n = %i, rsize = %i\n",n,rsize);
                 perror("read");
 	}
 

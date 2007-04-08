@@ -51,7 +51,8 @@ main (int argc, char *argv[]) {
 		rank = popRankForDocIDMemArray(ReposetoryHeader.DocID);
 
 		if (rank >= minrank) {
-			printf("DocId: %i url: %s res %hi htmls %hi time %lu, rank %i\n",ReposetoryHeader.DocID,ReposetoryHeader.url,ReposetoryHeader.response,ReposetoryHeader.htmlSize,ReposetoryHeader.time,rank);
+			//printf("DocId: %i url: %s res %hi htmls %hi time %lu, rank %i\n",ReposetoryHeader.DocID,ReposetoryHeader.url,ReposetoryHeader.response,ReposetoryHeader.htmlSize,ReposetoryHeader.time,rank);
+			printf("%s\n",ReposetoryHeader.url);
 		}
 		//printf("################################\n%s##############################\n",htmlbuffer);
 

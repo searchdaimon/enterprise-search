@@ -78,6 +78,52 @@ void popopenMmap() {
 
 }
 
+
+void popopenMemArray_oneLot(char subname[], int i) {
+
+        FILE *FH;
+	
+	unsigned char rank;
+	int LocalLots;
+	char LotFile[128];
+	int branksize;
+
+
+			GetFilPathForLot(LotFile,i,subname);
+			strcat(LotFile,"Brank");
+
+			// prøver å opne
+			if ( (FH = fopen(LotFile,"rb")) == NULL ) {
+                		perror(LotFile);
+				popMemArray[i] = 0;
+		        }
+			else {
+
+				printf("loaded lot %i\n",i);
+
+				branksize = sizeof(unsigned char) * NrofDocIDsInLot;
+
+				if ((popMemArray[i] = (unsigned char*)malloc(branksize)) == NULL) {
+					printf("malloc eror for lot %i\n",i);
+					perror("malloc");
+					exit(1);
+				}
+
+				fread(popMemArray[i],branksize,1,FH);
+
+				//debug: viser alle rankene vi laster
+				//for(y=0;y<branksize;y++) {
+				//	printf("DocID %i, rank %i\n",y,popMemArray[i][y]);
+				//}
+
+				fclose(FH);
+
+				++LocalLots;
+
+			}
+
+}
+
 void popopenMemArray(char servername[], char subname[]) {
 
         FILE *FH;

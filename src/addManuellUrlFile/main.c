@@ -1,6 +1,10 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "../common/sha1.h"
 #include "../common/define.h"
+#include "../common/url.h"
 
 int main (int argc, char *argv[]) {
 
@@ -9,7 +13,7 @@ int main (int argc, char *argv[]) {
 	SHA1Context sha;	
 	char filname[128];
 
-	int postcount, filcount;
+	int postcount, filcount, count;
 
 	struct updateFormat NyeUrlPost;
 
@@ -23,8 +27,31 @@ int main (int argc, char *argv[]) {
 
 	postcount = 0;
 	filcount = 0;
-	while (gets(buff) != NULL) {
+	count = 0;
+	//while (gets(buff) != NULL) {
+	while (fgets(buff, sizeof(buff), stdin) != NULL) {
 
+
+		if (buff[strlen(buff) -1] == '\n') {
+			buff[strlen(buff) -1] = '\0';
+		}
+
+		if (strncmp(buff,"ms:",3) == 0) {
+			//hvis vi har på fårhånd manuelt funnet ut at de er ok vil de starte på "ms:"
+			//vi skal ikke gjøre noen tester på om de er ok eller ikke
+			//strcpy(buff,buff+3);
+			memmove(buff,buff+3,strlen(buff));
+			//printf("ms: \"%s\"\n",buff);
+		}
+		else if (!gyldig_url(buff)) {
+			//printf("bad url: \"%s\"\n",buff);
+			continue;
+		}
+		else if (!isOkTttl(buff)) {
+			//printf("bad ttl: \"%s\"\n",buff);
+			continue;
+		}
+		
 		//hvis count er større en maks poster vi skal ha i filen setter vi den til 0, slik at en ny blir åpnet
                 if (postcount > 4000000) {
                         postcount = 0;
@@ -79,9 +106,12 @@ int main (int argc, char *argv[]) {
 		fwrite(&NyeUrlPost,sizeof(struct updateFormat),1,NYEFILE);
 
 		
-                postcount++;		
+                ++postcount;		
+		++count;
 	}
 
 	fclose(NYEFILE);
+
+	printf("added %i urls\n",count);
 }
 

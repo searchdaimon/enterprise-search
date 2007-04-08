@@ -33,6 +33,10 @@ int gyldig_url(char word[]) {
 			debug("To long. Was %i bytes",lengt);
 			return 0;
                 }
+		else if (word[lengt -1] == '\n') {
+			debug("url has \\n as last char");
+			return 0;
+		}
                 else if (cpnt == NULL) {
                         debug("bad url. cpnt is NULL");
 			return 0;
@@ -168,6 +172,38 @@ int url_havpri2(char word[]) {
 	else {
 		return 0;
 	}
+}
+
+int isOkTttl(char word[]) {
+
+//Barry
+//> 2) Initially we can start with .com, .net, .org., .gov, . mil, .edu,.biz.,
+//> .info, .us as well as 
+//> .uk, .eu, .au and .nz from your existing index
+
+
+	if (
+		(strstr((word + 7),".com/") != NULL)
+		|| (strstr((word + 7),".net/") != NULL)
+		|| (strstr((word + 7),".org/") != NULL)
+		|| (strstr((word + 7),".gov/") != NULL)
+		|| (strstr((word + 7),".mil/") != NULL)
+		|| (strstr((word + 7),".edu/") != NULL)
+		|| (strstr((word + 7),".biz/") != NULL)
+		|| (strstr((word + 7),".info/") != NULL)
+		|| (strstr((word + 7),".us/") != NULL)
+		|| (strstr((word + 7),".uk/") != NULL)
+		|| (strstr((word + 7),".eu/") != NULL)
+		|| (strstr((word + 7),".au/") != NULL)
+		|| (strstr((word + 7),".nz/") != NULL)
+		) {
+                //printf("hav .pri/\n");
+        	return 1;
+        }
+	else {
+		return 0;
+	}
+
 }
 
 int url_isttl(char word[],char ttl[]) {

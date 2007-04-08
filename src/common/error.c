@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #ifdef WITH_THREAD
 
@@ -38,7 +39,7 @@ void berror(const char *fmt, ...) {
 
 void bperror(const char *fmt, ...) {
 
-        extern int errno;
+        //extern int errno;
 
         char *syserror = strerror(errno);
 
