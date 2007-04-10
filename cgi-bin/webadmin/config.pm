@@ -12,7 +12,7 @@ our $CONFIG = {};
 # Group: MySQL configuration
 
 # Path to the file containing info for establishing a MySQL connection.
-$CONFIG->{'config_path'} = "/home/boitho/boithoTools/setup.txt";
+$CONFIG->{'config_path'} = $ENV{'BOITHOHOME'} . '/config/setup.txt';
 
 # Group: Logs
 
