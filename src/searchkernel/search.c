@@ -1033,10 +1033,17 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		#endif
 	}
 
+
+	//joiner trådene
+	#ifndef BLACK_BOKS
+		#ifdef WITH_THREAD
+			//joiner trådene
+			pthread_join(threadid_Athor, NULL);
+			pthread_join(threadid_Url, NULL);
+		#endif
+	#endif
+
 	#ifdef WITH_THREAD
-		//joiner trådene
-		pthread_join(threadid_Athor, NULL);
-		pthread_join(threadid_Url, NULL);
 		pthread_join(threadid_Main, NULL);
 	#endif
 

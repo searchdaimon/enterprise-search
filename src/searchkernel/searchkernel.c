@@ -593,7 +593,7 @@ void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTr
 
 
 }
-int pathaccess(int socketha,char collection_in[], char uri_in[], char user_in[], char password_in[]) {
+int pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection_in[], char uri_in[], char user_in[], char password_in[]) {
 
 
 	int ret = 0;
@@ -771,7 +771,7 @@ void *generatePagesResults(void *arg)
 		if (strcmp((*PagesResults).password,"water66") == 0) {
 			printf("pathaccess: have sodo password. Won't do pathaccess\n");
 		}
-		else if (!pathaccess((*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray[i].subname).subname,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).search_user,(*PagesResults).password)) {
+		else if (!pathaccess(PagesResults, (*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray[i].subname).subname,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).search_user,(*PagesResults).password)) {
 			printf("dident hav acces to that one\n");
 			//temp:
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray[i].subname).hits);

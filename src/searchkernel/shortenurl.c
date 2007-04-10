@@ -34,11 +34,15 @@ void shortenurl(char *url,int urllen) {
 		return;
 	}
 
-Count = 0;
-  while( (Data[Count] != NULL) )
-    printf("\t\t%d\t\"%s\"\n", Count, Data[Count++]);
-  printf("\n");
+	/*
+	Count = 0;
+  	while( (Data[Count] != NULL) ) {
+    		printf("\t\t%d\t\"%s\"\n", Count, Data[Count]);
+  		printf("\n");
 
+		Count++;
+  	}
+	*/
 	--TokCount; //split ser ut til å begynner på 1, ikke på 0 
 
 
@@ -46,8 +50,6 @@ Count = 0;
 
   	Count = 0;
 
-
-  	Count = 0;
 	added = 0;
 	suburllen = 0;
 	while( (Data[Count] != NULL) ) {

@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
 				pthread_create(&chld_thr, NULL, do_chld, (void *) &searchd_config);
 				/* the server is now free to accept another socket request */
 			#else
-				do_chld((void *) searchd_config);	
+				do_chld((void *) &searchd_config);	
 			#endif
 		}
 
@@ -256,6 +256,9 @@ void *do_chld(void *arg)
 		printf("Socket number = %d\n",mysocfd);
 	#endif
 
+	#ifdef DEBUG
+        	struct timeval start_time, end_time;
+	#endif
 
 	/* read from the given socket */
 
