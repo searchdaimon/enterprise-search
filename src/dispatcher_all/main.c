@@ -14,6 +14,7 @@
     #include <fcntl.h>
     #include <errno.h> 
     #include <time.h>
+    #include <errno.h>
     #include "../common/boithohome.h"
     #include "../maincfg/maincfg.h"
     
@@ -49,7 +50,7 @@
 
     #define maxServers 100
 
-    extern int errno;
+    //extern int errno;
 
     //i hundredels sekunder (100 = 1sec)
     #define maxSocketWait_SiderHeder 1000

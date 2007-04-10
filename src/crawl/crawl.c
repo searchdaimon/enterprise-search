@@ -1,10 +1,11 @@
+#include <errno.h>
+
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <error.h>
 
 #ifdef WITH_THREAD
         __thread static char _warnmsg[512] = { "" };
@@ -41,7 +42,7 @@ char *strcrawlWarn() {
 
 void crawlperror(const char *fmt, ...) {
 
-	extern int errno;
+	//extern int errno;
 
 	char *syserror = strerror(errno);
 

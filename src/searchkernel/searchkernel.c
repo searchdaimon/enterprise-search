@@ -563,6 +563,7 @@ int foundGodPage(struct PagesResultsFormat *PagesResults) {
 	//printf("nextPage: waiting for lock: end\n");
 	#endif
 
+		printf("this is a good page\n");
 		++(*PagesResults).showabal;
 
 	#ifdef WITH_THREAD
@@ -585,7 +586,9 @@ void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTr
 	++(*whichFilterTraped);
 
 	//runarb: 13 mars. Hvorfor var denne komentert ut???
+	printf("increaseFiltered 1: %i %u\n",(*nrInSubname),(unsigned int)nrInSubname);
 	--(*nrInSubname);
+	printf("increaseFiltered 2: %i %u\n",(*nrInSubname),(unsigned int)nrInSubname);
 
 	#ifdef WITH_THREAD
 	pthread_mutex_unlock(&(*PagesResults).mutex);
@@ -773,10 +776,12 @@ void *generatePagesResults(void *arg)
 		}
 		else if (!pathaccess(PagesResults, (*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray[i].subname).subname,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).search_user,(*PagesResults).password)) {
 			printf("dident hav acces to that one\n");
-			//temp:
+
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray[i].subname).hits);
-			strcpy((*PagesResults).Sider[localshowabal].title,"Access denied!");
-			strcpy((*PagesResults).Sider[localshowabal].description,"");
+
+			//temp:
+			//strcpy((*PagesResults).Sider[localshowabal].title,"Access denied!");
+			//strcpy((*PagesResults).Sider[localshowabal].description,"");
 			continue;
 
 		}
@@ -1008,12 +1013,22 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	}
 	*/
 
+	//intresnag debug info
+	#ifdef BLACK_BOKS
+	//viser hvordan treffene er i subnames
+		printf("subname records:\n");
+		for (i=0;i<nrOfSubnames;i++) {
+			printf("\t\"%s\": %i\n",subnames[i].subname,subnames[i].hits);
+		}
+	#endif
+
 	//setter alle sidene som sletett
 	for (i=0;i<PagesResults.MaxsHits;i++) {
 		Sider[i].deletet = 1;
 	}
 
-       	(*SiderHeder).showabal = 0;
+       	// vi bruker ikke denne mer før siden. Vi henter verdien til å lagre i den fra   PagesResults.showabal
+	//(*SiderHeder).showabal = 0;
 
        	readedFromIndex = 0;
 	y=0;

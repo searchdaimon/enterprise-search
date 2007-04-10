@@ -7,7 +7,7 @@
 
 int cmc_conect(int *socketha, char statusbuff[],int statusbufflen, int port) {
 
-	extern int errno;
+	//extern int errno;
 
 
         if (((*socketha) = cconnect("127.0.0.1", port)) == 0) {
@@ -168,7 +168,7 @@ int cmc_crawlcanconect (int socketha, char vantcollection[], char statusbuff[],i
 	char *respons;
 	char collection[64];
 
-	extern int errno;
+	//extern int errno;
 
 
 	sendpacked(socketha,cm_crawlcanconect,BLDPROTOCOLVERSION, 0, NULL,"");

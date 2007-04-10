@@ -351,6 +351,7 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 				//printf("word %lu %s\n",(*pagewords).revIndex[(*pagewords).revIndexnr].WordID,(*pagewords).words_sorted[i].word);
 			#endif
 
+			#ifndef BLACK_BOKS
 			///////////////////////////
 			// adultWords
 
@@ -416,6 +417,7 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 			}
 
 			///////////////////////////
+			#endif
 
 			oldRevIndexnr = (*pagewords).revIndexnr;
 			//har fåt et til ord i revindex
@@ -483,6 +485,10 @@ int compare_elements_AdultFraser (const void *p1, const void *p2) {
 
 
 void adultLoad (struct adultFormat *adult) {
+
+	#ifdef BLACK_BOKS
+		printf("Note: Wont load adult filter. Is abb\n");
+	#else
 
 	FILE *FH;
 	char buff[128];
@@ -627,7 +633,7 @@ void adultLoad (struct adultFormat *adult) {
 	}
 */
 
-
+	#endif
 }
 
 void revindexFilesOpenNET(FILE *revindexFilesHa[]) {

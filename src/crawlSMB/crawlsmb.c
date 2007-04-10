@@ -48,6 +48,7 @@ int context_free( SMBCCTX *context );
 
 
 
+
 /*
     Create prefix for smb-url from username and password ("smb://username:password@")
  */

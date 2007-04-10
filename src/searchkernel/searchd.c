@@ -754,7 +754,7 @@ void *do_chld(void *arg)
 
 	printf("subnames:\n");
 	for (i=0;i<SiderHeder.nrOfSubnames;i++) {
-		printf("%s: %i\n",SiderHeder.subnames[i].subname,SiderHeder.subnames[i].hits);
+		printf("\t%s: %i\n",SiderHeder.subnames[i].subname,SiderHeder.subnames[i].hits);
 	}
 	printf("\n");
 

@@ -37,7 +37,8 @@
 
 //muligens bare convert:
 // ai
-char *supportetimages[] = {"png", "jpg", "jepg", "bmp", "tif", "tiff", "gif", "eps", "ai", "psd",'\0'};
+//bugger "psd"
+char *supportetimages[] = {"png", "jpg", "jepg", "bmp", "tif", "tiff", "gif", "eps", "ai", '\0'};
 
 
 
@@ -103,14 +104,21 @@ int bbdocument_makethumb( char documenttype[],char document[],size_t dokument_si
 		}
 			return 1;
 	}
-	else if (canconvert(documenttype) && (((*imagebuffer) = generate_thumbnail_by_convert( document, dokument_size, imageSize, documenttype)) == NULL )) {
-		printf("error: cant run generate_thumbnail_by_convert\n");
-		return 0;
+	else if (canconvert(documenttype)) {
+
+		if ((((*imagebuffer) = generate_thumbnail_by_convert( document, dokument_size, imageSize, documenttype)) == NULL )) {
+			printf("error: cant run generate_thumbnail_by_convert\n");
+			return 0;
+		}
+		else {
+			return 1;
+		}
 	}
 	#endif
 	#endif
-	printf("imageSize %u",(unsigned int)(*imageSize));
-	return 1;
+	
+	printf("imageSize %u at %s:%i\n",(unsigned int)(*imageSize),__FILE__,__LINE__);
+	return 0;
 
 }
 
@@ -388,6 +396,7 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 	sprintf(filconvertetfile_real,"%s-%u.%s",filconvertetfile,(unsigned int)getpid(),filetype);
 	sprintf(filconvertetfile_out_txt,"%s-%u.txt",filconvertetfile,(unsigned int)getpid(),filetype);
 	sprintf(filconvertetfile_out_html,"%s-%u.html",filconvertetfile,(unsigned int)getpid(),filetype);
+
 	#ifdef DEBUG
 	printf("bbdocument_convert: filconvertetfile_real \"%s\"\n",filconvertetfile_real);
 	#endif
@@ -412,6 +421,11 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 	strsandr((*fileFilter).command,"#outtxtfile",filconvertetfile_out_txt);
 	strsandr((*fileFilter).command,"#outhtmlfile",filconvertetfile_out_html);
 
+	//hvis vi skal lage en ny fil må vi slette den gamle
+	//sletter den etterpå i steden. Men før vi kaller return
+	//if (strcmp((*fileFilter).outputformat,"textfile") == 0) {
+	//	unlink(filconvertetfile_out_txt);
+	//}
 
 	//her parser vi argumenter selv, og hver space blir en ny argyment, selv om vi 
 	//bruker "a b", som ikke riktig blir to argumenter her, a og b
@@ -435,9 +449,11 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 	char *shargs[] = {"/bin/sh","-c",(*fileFilter).command ,'\0'};	
 	printf("runnig: /bin/sh -c %s\n",(*fileFilter).command);
 	if (!exeoc(shargs,documentfinishedbuf,&exeocbuflen,&ret)) {
-		printf("can't run filter\n");
-		(*documentfinishedbufsize) = 0;
-		return 0;
+		printf("dident get any data from exeoc. But can be a filter that creates files, sow wil continue\n");
+		//kan ikke sette den til 0 da vi bruker den får å vite hvos stor bufferen er lengere nede
+		//(*documentfinishedbufsize) = 0;
+		documentfinishedbuf[0] = '\0';
+		//return 0;
 
 	}
 	#ifdef DEBUG
@@ -473,6 +489,7 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 		FILE *fh;
 		struct stat inode; 
 		char *cpbuf;
+		printf("filconvertetfile_out_txt: \"%s\"\n",filconvertetfile_out_txt);
 
 		if ((fh = fopen(filconvertetfile_out_txt,"rb")) == NULL) {
 			printf("cant open out file \"%s\"\n",filconvertetfile_out_txt);
@@ -482,18 +499,32 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 		}		
        		fstat(fileno(fh),&inode);
 
-		printf("did read back %i bytes from file\n",inode.st_size);
 
-                cpbuf = malloc(inode.st_size +1);
+                if ((cpbuf = malloc(inode.st_size +1)) == NULL) {
+			perror("malloc");
+			return 0;
+		}
                 
         	fread(cpbuf,1,inode.st_size,fh);
+		cpbuf[inode.st_size] = '\0';
+
+		printf("did read back %i bytes from file \"%s\"\n",(int)inode.st_size,filconvertetfile_out_txt);
+
+		printf("strlen cpbuf: %i\n",strlen(cpbuf));
 
 		fclose(fh);
+
+		printf("hav size %i\n",(*documentfinishedbufsize));
 
 		snprintf(documentfinishedbuf,(*documentfinishedbufsize),html_tempelate,titlefromadd,cpbuf);
                 (*documentfinishedbufsize) = strlen(documentfinishedbuf);
 
+		printf("documentfinishedbufsize: %i\n",(*documentfinishedbufsize));
+
 		free(cpbuf);
+
+		//seltter filen vi lagde
+		unlink(filconvertetfile_out_txt);
 
 	}
 	else if (strcmp((*fileFilter).outputformat,"htmlfile") == 0) {
@@ -584,19 +615,20 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		printf("htmlbuffersize %i\n",htmlbuffersize);
 	}
 
+	//printf("document (size %i)\"%s\"\n",htmlbuffersize,htmlbuffer);
+
 
 	//prøver å lag et bilde
 	//if ( (imagebuffer = generate_thumbnail( document, dokument_size, &imageSize )) == NULL ) {
 	if (!bbdocument_makethumb(documenttype_real,document,dokument_size,&imagebuffer,&imageSize)) {
-		printf("can't generate image");
+		printf("can't generate image\n");
 		ReposetoryHeader.imageSize = 0;
 	}
 	else {
-		debug("generated image");
+		debug("generated image\n");
 		ReposetoryHeader.imageSize = imageSize;
 	}
 
-	//printf("document \"%s\"\n",htmlbuffer);
 
 	ReposetoryHeader.htmlSize = htmlbuffersize;
 

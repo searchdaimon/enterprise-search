@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -24,13 +23,16 @@ unsigned char* generate_thumbnail_by_convert(const void *document, const size_t 
 	char documentfile[PATH_MAX];
 	char imagefile[PATH_MAX];
 	struct stat inode;      // lager en struktur for fstat å returnere.
+	int n;
 
 	//tmpfilename = mktemp("/tmp/generateThumbnail_XXXXXX"); //make a unique temporary file name
 
+	unlink(documentfile);
+	unlink(imagefile);
 
 	
-	snprintf(documentfile,sizeof(documentfile),"%s.%s",converttemptemplate,type);
-	snprintf(imagefile,sizeof(imagefile),"%s.png",converttemptemplate);
+	snprintf(documentfile,sizeof(documentfile),"%s-doc.%s",converttemptemplate,type);
+	snprintf(imagefile,sizeof(imagefile),"%s-image.png",converttemptemplate);
 	
 	if ((fp = fopen(documentfile,"wb")) == NULL) {
 		printf(documentfile);
@@ -47,8 +49,8 @@ unsigned char* generate_thumbnail_by_convert(const void *document, const size_t 
 	//composite -gravity center /home/boitho/public_html/div/test.png /home/boitho/boithoTools/data/100x100.png /home/boitho/public_html/div/test2.png
 	snprintf(command,sizeof(command),"%s -gravity center  %s %s %s",compositepath,imagefile,backgroundpng,imagefile);
 	printf("runing %s\n",command);
-	system(command);
-
+	n = system(command);
+	printf("generate_thumbnail_by_convert: n = %i\n",n);
 
 	if ((fp = fopen(imagefile,"rb")) == NULL) {
                 printf(imagefile);
@@ -61,9 +63,9 @@ unsigned char* generate_thumbnail_by_convert(const void *document, const size_t 
 	(*new_size) = inode.st_size;
 
 	fclose(fp);
+
+	printf("created image om size %i\n",(*new_size));
     
-	unlink(documentfile);
-	unlink(imagefile);
 
 	return image;
 	
