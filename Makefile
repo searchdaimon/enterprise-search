@@ -29,11 +29,14 @@ IM = /home/eirik/.root/lib/libMagick.a /home/eirik/.root/lib/libWand.a -I/home/e
 #IM = -L/home/eirik/.root/lib -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
 #IM = /home/eirik/.root/lib/libMagick.a -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
 
-BDB = -I/usr/local/BerkeleyDB.4.5/include/ -L/usr/local/BerkeleyDB.4.5/lib/ -ldb
+#BDB = -I/usr/local/BerkeleyDB.4.5/include/ -L/usr/local/BerkeleyDB.4.5/lib/ -ldb
+BDB = -I/usr/local/BerkeleyDB.4.5/include/ /usr/local/BerkeleyDB.4.5/lib/libdb.a
 
 #SMBCLIENT=-lsmbclient
-#SMBCLIENT=src/3pLibs/samba-3.0.24/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.24/source/include/
-SMBCLIENT=-Isrc/3pLibs/samba-3.0.24/source/include/ -Lsrc/3pLibs/samba-3.0.24/source/lib/ -lsmbclient
+#skrur dette på igjen. Brukte det og segfeile når vi hadde det med statisk?
+# !! av ukjenet grunner ser dette ut til og altid må være sist hvis vi skal linke statisk
+SMBCLIENT=src/3pLibs/samba-3.0.24/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.24/source/include/
+#SMBCLIENT=-Isrc/3pLibs/samba-3.0.24/source/include/ -Lsrc/3pLibs/samba-3.0.24/source/lib/ -lsmbclient
 
 BBDOCUMENT = src/bbdocument/bbdocument.c $(BDB) -D BLACK_BOKS
 #BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail.c -DBBDOCUMENT_IMAGE $(IM)
@@ -278,7 +281,7 @@ mergeUserToSubname: src/mergeUserToSubname/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c $(BDB) src/mergeUserToSubname/main.c src/acls/acls.c -o bin/mergeUserToSubname $(LDFLAGS) -DBLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c src/mergeUserToSubname/main.c src/acls/acls.c -o bin/mergeUserToSubname $(LDFLAGS) -DBLACK_BOKS $(BDB)
 
 boithoads: src/boithoads/main.c
 	@echo ""
@@ -316,7 +319,7 @@ dispatcher_allbb: src/dispatcher_all/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) -D BLACK_BOKS -o bin/dispatcher_allbb $(LIBCONFIG)
+	$(CC) $(dispatcherCOMAND) -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG)
 
 
 dispatcher: src/dispatcher/main.c
@@ -535,7 +538,13 @@ readDocumentIndex: src/readDocumentIndex/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/readDocumentIndex/main.c -o bin/readDocumentIndex $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/readDocumentIndex/main.c -o bin/readDocumentIndex $(LDFLAGS)
+
+readDocumentIndexWithRank: src/readDocumentIndexWithRank/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/readDocumentIndexWithRank/main.c -o bin/readDocumentIndexWithRank $(LDFLAGS)
 
 adultBuildIndex: src/adultBuildIndex/main.c
 	@echo ""
@@ -580,7 +589,7 @@ cpLotFile: src/cpLotFile/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/cpLotFile/main.c -o bin/cpLotFile $(LDFLAGS)
 
 
-SHOWTHUMBCMANDS = $(CFLAGS) $(LIBS)*.c src/ShowThumb/main.c src/cgi-util/cgi-util.c -o bin/ShowThumb $(LDFLAGS)
+SHOWTHUMBCMANDS = $(CFLAGS) $(LIBS)*.c src/ShowThumb/main.c src/cgi-util/cgi-util.c -o cgi-bin/ShowThumb $(LDFLAGS)
 
 ShowThumb: src/ShowThumb/main.c
 	@echo ""
@@ -594,7 +603,7 @@ ShowThumbbb: src/ShowThumb/main.c
 
 	$(CC) $(SHOWTHUMBCMANDS) -D BLACK_BOKS
 
-ShowCacheCOMMAND = $(CFLAGS) $(LIBS)*.c src/ShowCache/main.c src/cgi-util/cgi-util.c $(LDFLAGS) -o bin/ShowCache
+ShowCacheCOMMAND = $(CFLAGS) $(LIBS)*.c src/ShowCache/main.c src/cgi-util/cgi-util.c $(LDFLAGS) -o cgi-bin/ShowCache
 
 ShowCache: src/ShowCache/main.c
 	@echo ""
@@ -661,7 +670,7 @@ crawlSMB: src/crawlSMB/main.c
 	flex -f -8 -i -o src/crawlSMB/lex.acl.c src/crawlSMB/acl.parser.l
 
 
-	$(CC) $(CFLAGS) -fPIC -shared $(LIBS)*.c $(SMBCLIENT) src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) -D BLACK_BOKS -g
+	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g -Wl,-static $(LIBS)*.c src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) $(SMBCLIENT)
 	mkdir -p crawlers/crawlSMB
 	cp src/crawlSMB/crawlSMB.so crawlers/crawlSMB/
 
