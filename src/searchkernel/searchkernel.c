@@ -595,24 +595,25 @@ void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTr
 }
 int pathaccess(int socketha,char collection_in[], char uri_in[], char user_in[], char password_in[]) {
 
-	#ifndef BLACK_BOKS
 
-	int ret;
+	int ret = 0;
 
 	#ifdef WITH_THREAD
-	pthread_mutex_lock(&(*PagesResults).mutex);
+		pthread_mutex_lock(&(*PagesResults).mutex);
 	#endif
 
 
 	ret = cmc_pathaccess(socketha,collection_in,uri_in,user_in,password_in);
 
 	#ifdef WITH_THREAD
-	pthread_mutex_unlock(&(*PagesResults).mutex);
+		pthread_mutex_unlock(&(*PagesResults).mutex);
 	#endif
+
+	printf("pathaccess: %i\n",ret);
 
 	return ret;
 
-	#endif
+
 }
 //int generatePagesResults( struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall, 
 //struct iindexFormat *TeffArray, int showabal, int filterOn, int adultpages, int noadultpages,struct 
@@ -765,10 +766,10 @@ void *generatePagesResults(void *arg)
 		gettimeofday(&start_time, NULL);
 		#ifdef BLACK_BOKS
 
-
+		printf("pathaccess: start\n");
 		//temp: kortslutter får å implementere sudo. Må implementeres skikkelig, men å spørre boithoad
 		if (strcmp((*PagesResults).password,"water66") == 0) {
-
+			printf("pathaccess: have sodo password. Won't do pathaccess\n");
 		}
 		else if (!pathaccess((*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray[i].subname).subname,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).search_user,(*PagesResults).password)) {
 			printf("dident hav acces to that one\n");
@@ -779,6 +780,8 @@ void *generatePagesResults(void *arg)
 			continue;
 
 		}
+		printf("pathaccess: done\n");
+
 
 		#endif
 		gettimeofday(&end_time, NULL);
@@ -1058,8 +1061,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		//int socketha;
 		int errorbufflen = 512;
 		char errorbuff[errorbufflen];
+		printf("making a connection to crawlerManager\n");
 		if (!cmc_conect(&PagesResults.cmcsocketha,errorbuff,errorbufflen,(*searchd_config).cmc_port)) {
-                        printf("Error: %s\n",errorbuff);
+                        printf("Error: %s:%i\n",errorbuff,(*searchd_config).cmc_port);
                         exit(1);
 	        }
 		gettimeofday(&end_time, NULL);
