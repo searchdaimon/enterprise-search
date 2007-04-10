@@ -32,7 +32,7 @@ $CONFIG->{'logfiles'} = {
 # Group: External utilites
 
 # Path to the infoquery executable
-$CONFIG->{'infoquery'} = "/home/boitho/boithoTools/bin/infoquery";
+$CONFIG->{'infoquery'} = $ENV{'BOITHOHOME'} . '/bin/infoquery';
 
 # Path to bb phone hone executable.
 $CONFIG->{'phone_home_path'}
