@@ -75,12 +75,15 @@ int main (int argc, char *argv[]) {
 		fclose(fp);
 	}
 	if (strcmp(key,"listUsers") == 0) {
-		boithoad_listUsers(&respons_list,&responsnr);
-
-		printf("users: %i\n",responsnr);
-                for (i=0;i<responsnr;i++) {
-                        printf("user: %s\n",respons_list[i]);
-                }
+		if(!boithoad_listUsers(&respons_list,&responsnr)) {
+			perror("Error:Can't conect to boithoad");
+		}
+		else {
+			printf("users: %i\n",responsnr);
+                	for (i=0;i<responsnr;i++) {
+                	        printf("user: %s\n",respons_list[i]);
+                	}
+		}
 	}
 	else if (strcmp(key,"listGroups") == 0) {
 		boithoad_listGroups(&respons_list,&responsnr);

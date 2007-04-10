@@ -76,7 +76,9 @@ int userToSubname_getsubnamesAsSaa(struct userToSubnameDbFormat *userToSubnameDb
 	char buf[512];
 
 	if (!userToSubname_getsubnamesAsString(userToSubnameDb,username,buf,sizeof(buf))) {
+		#ifdef DEBUG
 		fprintf(stderr,"cant run userToSubname_getsubnamesAsString\n");
+		#endif
 		return 0;
 	}
 

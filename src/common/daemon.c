@@ -105,7 +105,7 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
         }
 
 	#ifdef DEBUG
-	printf("will listen on port %i",PORT);
+	printf("will listen on port %i\n",PORT);
         #endif
 
         my_addr.sin_family = AF_INET;         // host byte order
@@ -130,11 +130,11 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
 	// må i såfalt gjøre om flagget
 	#ifdef CANT_IGNORE_SIGCHLD
 		//sliter met at denne ikke fungerer. Må fikses om vi skal kjøre på andre plattformer
-		printf("sig handler\n");
+		printf("CANT_IGNORE_SIGCHLD: on\n");
 		sa.sa_handler = sigchld_handler; // reap all dead processes
 		sa.sa_flags = SA_RESTART;		
 	#else
-		printf("sig int\n");
+		printf("CANT_IGNORE_SIGCHLD: off\n");
 	   	sa.sa_handler = SIG_IGN;
 	    	sa.sa_flags = 0;
 	#endif
@@ -145,7 +145,7 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
                         exit(1);
                 }
 
-
+	printf("bind ok. Antering accept loop\n");
         while(1) {  // main accept() loop
             sin_size = sizeof(struct sockaddr_in);
             if ((new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size)) == -1) {

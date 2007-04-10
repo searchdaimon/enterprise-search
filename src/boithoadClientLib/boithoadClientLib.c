@@ -114,6 +114,9 @@ int boithoad_listUsers(char **respons_list[],int *nrofresponses){
 	int socketha;
 
 	if ((socketha = cconnect("localhost", BADPORT)) == 0) {
+		#ifdef DEBUG
+			printf("cant connect to boithobd at %s:%d\n",__FILE__,__LINE__);
+		#endif
 		return 0;
 	} 
 
