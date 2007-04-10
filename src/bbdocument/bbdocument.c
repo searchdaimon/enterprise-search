@@ -277,6 +277,7 @@ int bbdocument_convert(char filetype[],char document[],int dokument_size,char *d
 	char filconvertetfile_out_html[512];
 	int exeocbuflen;
 	int i;
+	int ret;
 
 	printf("dokument_size %i, strlen %i\n",dokument_size,strlen(document));
 
@@ -384,9 +385,9 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 		Vi har konverter. Må skrive til fil får å kunne sende den med
 	*****************************************************************************/
 
-	sprintf(filconvertetfile_real,"%s-%u.%s",(unsigned int)getpid(),filconvertetfile,filetype);
-	sprintf(filconvertetfile_out_txt,"%s-%u.txt",(unsigned int)getpid(),filconvertetfile,filetype);
-	sprintf(filconvertetfile_out_html,"%s-%u.html",(unsigned int)getpid(),filconvertetfile,filetype);
+	sprintf(filconvertetfile_real,"%s-%u.%s",filconvertetfile,(unsigned int)getpid(),filetype);
+	sprintf(filconvertetfile_out_txt,"%s-%u.txt",filconvertetfile,(unsigned int)getpid(),filetype);
+	sprintf(filconvertetfile_out_html,"%s-%u.html",filconvertetfile,(unsigned int)getpid(),filetype);
 	#ifdef DEBUG
 	printf("bbdocument_convert: filconvertetfile_real \"%s\"\n",filconvertetfile_real);
 	#endif
@@ -433,7 +434,7 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 	//bin/sh -c "ls -1"	
 	char *shargs[] = {"/bin/sh","-c",(*fileFilter).command ,'\0'};	
 	printf("runnig: /bin/sh -c %s\n",(*fileFilter).command);
-	if (!exeoc(shargs,documentfinishedbuf,&exeocbuflen)) {
+	if (!exeoc(shargs,documentfinishedbuf,&exeocbuflen,&ret)) {
 		printf("can't run filter\n");
 		(*documentfinishedbufsize) = 0;
 		return 0;
