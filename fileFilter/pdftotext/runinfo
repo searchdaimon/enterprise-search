@@ -1,0 +1,3 @@
+documentstype: pdf
+command: /usr/bin/pdftotext #file
+outputformat: textfile
