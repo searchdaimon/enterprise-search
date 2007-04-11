@@ -1,0 +1,3 @@
+#to update run
+
+yum -c /etc/yumBoithoOnly.conf shell /etc/yumBoithoOnly.yum
