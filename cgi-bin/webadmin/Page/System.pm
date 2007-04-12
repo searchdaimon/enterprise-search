@@ -119,37 +119,5 @@ sub _integration_status($$) {
 	return \%status;
 }
 
-sub upload_package($$$) {
-	my ($self, $vars, $file) = @_;
-	my $upload_folder = $CONFIG->{'rpm_upload_folder'};
-	my $buffer;
-	my $filenum = 0;
-	
-	# Upload file.
-	while (-e "$upload_folder/new_package_$filenum.rpm") {
-		$filenum++;
-	}
-	open my $rpm_file, ">$upload_folder/new_package_$filenum.rpm";
-	while (read($file, $buffer, 1024)) {
-		print {$rpm_file} $buffer;
-	}
-
-	# Install file
-	eval {
-		# TODO: install function goes here.
-		croak "Install not implemented.";
-	};
-	$vars->{'install_success'} = [1, "OK"];
-	$vars->{'install_success'} = [0, $@] if $@;
-	
-	#Show upload page
-	return $self->show_upload_page($vars);
-}
-
-sub show_upload_page($$) {
-	my ($self, $vars) = @_;
-	my $template_file = "system_upload.html";
-	return ($vars, $template_file);
-}
 
 1;

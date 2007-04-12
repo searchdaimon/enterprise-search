@@ -13,6 +13,7 @@ use Page::System;
 use Data::Dumper;
 use Page::System::Network;
 use Page::System::Services;
+use Page::System::Packages;
 use Common::Generic qw(init_root_page);
 
 my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
@@ -23,6 +24,7 @@ my $template_file;
 
 my $pageNetwork  = Page::System::Network->new($dbh);
 my $pageServices = Page::System::Services->new($dbh);
+my $pagePackages = Page::System::Packages->new($dbh);
 
 
 if (defined $state{'submit'}) {
@@ -42,7 +44,7 @@ elsif (defined $state{'view'}) {
 	if ($view eq "package_upload") {
 		# Show the package upload page
 		
-		($vars, $template_file) = $page->show_upload_page($vars);
+		($vars, $template_file) = $pagePackages->show($vars);
 	}
 	
 	elsif ($view eq "network") {
@@ -55,8 +57,8 @@ elsif (defined $state{'view'}) {
 }
 elsif (defined $state{'package_upload_button'}) {
 	# User is uploading a file.
-	# Let him upload it, then try to install it.
-	($vars, $template_file) = $page->upload_package($vars, $state{'package_file'});
+
+	($vars, $template_file) = $pagePackages->upload_package($vars, $state{'package_file'});
 }
 
 elsif (defined $state{'action'}) {

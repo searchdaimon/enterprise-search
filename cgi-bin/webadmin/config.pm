@@ -60,7 +60,9 @@ $CONFIG->{'valid_auth_methods'} = ['msad', 'ldap', 'shadow'];
 # Group: System
 
 # Path to upload new rpm packages for installation
-$CONFIG->{'rpm_upload_folder'} = "/tmp";
+# - This should only be writeable to the http-process.
+# - This also needs to be configured in the rpm-wrapper.
+$CONFIG->{'rpm_upload_folder'} = "/tmp/rpm";
 
 # Init-services to include in webadmin
 $CONFIG->{'init_services'} = ['crawlManager', 'boitho-bbdn', 'searchdbb'];

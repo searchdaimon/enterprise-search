@@ -1,13 +1,11 @@
 [% INCLUDE 'header.html' title="Upload software package" %]
+[% USE HTML %]
 
 [% PROCESS 'system_tabs.html' selected="Upload software package" %]
 
-
-<h3>Upload software package</h3>
-
 [% IF install_success.defined %]
 	[% IF install_success.0 %]
-		[% msg = "Package has been installed." %]
+		[% msg = "Packages have been installed." %]
 		[% type = "success" %]
 	[% ELSE %]
 		[% msg = "Installation failed: <br /> $install_success.1" %]
@@ -17,9 +15,58 @@
 	[% WRAPPER 'template_message.html' type=type %]
 		[% msg %]
 	[% END %]
-	
 [% END %]
 
+<h3>Software updates</h3>
+[% UNLESS availabe_updates.defined %]
+	
+	<input type="submit" name="software.check_updates" value="Check for updates.." />
+
+[% ELSE %]
+
+	[% UNLESS available_updates.size %]
+
+		<p>Your system is up to date. There are currently no updatese avaialble for the 
+<strong>[% bbox_version %]</strong> version of Black Box.</p>
+
+	[% ELSE %]
+		[% WRAPPER 'template_table.html'
+				header = ['', 'Software package'] %]
+	
+		[% FOREACH package IN available_updates %]
+			<p>Updates available</p>
+		
+			
+			[% WRAPPER 'template_table_row.html' %]
+	
+				<td><!-- todo: find icon --></td>
+				<td>[% package %]</td>
+			
+			[% color = 1 - color %]
+			[% END #row %]
+		[% END #foreach %]
+		[% END #table %]
+	[% END %]
+
+[% END %]
+
+<h3>Upload software package</h3>
+
+
+[% IF succ_upload_file.defined %]
+	[% WRAPPER 'template_message.html' type="success" %]
+		[% HTML.escape(succ_upload_file) %] has been uploaded.
+	[% END %]
+[% ELSIF error_no_rpm_suff.defined %]
+	[% WRAPPER 'template_message.html' type="error" %]
+		Uploaded failed. 
+		[% IF error_no_rpm_filename.defined %]
+			[% HTML.escape(error_no_rpm_filename) %] is not a RPM file.
+		[% ELSE %]
+			File is not a RPM file.
+		[% END %]
+	[% END %]
+[% END %]
 
 <form enctype="multipart/form-data" method="post" action="system.cgi">
 <div>
@@ -29,6 +76,23 @@
 	
 </div>
 </form>
+
+[% WRAPPER 'template_table.html'
+	header = ['', 'Software package', 'Remove'] %]
+
+	[% FOREACH package IN uploaded_packages %]
+	
+		[% WRAPPER 'template_table_row.html' %]
+			
+			<td><!-- --></td>
+			<td>[% package %]</td>
+			<td><a href="system.cgi?pkg_remove=[% package %]">Remove</a></td>
+			
+		[% END %]
+	[% color = 1 - color %]
+	[% END %]
+[% END %]
+<input type="submit" value="Install" />
 
 
 

@@ -1,12 +1,12 @@
 [% INCLUDE 'header.html' title='Delete username/password pair' %] 
 
-[% user = authentication.0.username %]
-[% pass = authentication.0.password %]
+[% user = authentication.username %]
+[% pass = authentication.password %]
 
 [% WRAPPER 'template_delete.html' 
 	it = "pair $user/$pass"
 	form = 'authentication.cgi' 
-	id = authentication.0.id
+	id = authentication.id
 	%]
 
 	Are you sure you want to delete username/password pair <em>[% "$user/$pass" %]</em>?

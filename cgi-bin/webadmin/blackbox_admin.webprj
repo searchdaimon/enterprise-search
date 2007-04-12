@@ -432,57 +432,64 @@
     <item url="Page/Setup/Auth.pm" uploadstatus="1" />
     <item url="Modules/Boitho/LicenseAuth.pm" uploadstatus="1" />
     <item url="templates/setup/setup_auth.html" uploadstatus="1" />
-    <item url="CGI/" />
-    <item url="CGI/CVS/" />
-    <item url="CGI/CVS/Entries" />
-    <item url="CGI/CVS/Repository" />
-    <item url="CGI/CVS/Root" />
-    <item url="CGI/State/" />
-    <item url="CGI/State/CVS/" />
-    <item url="CGI/State/CVS/Entries" />
-    <item url="CGI/State/CVS/Repository" />
-    <item url="CGI/State/CVS/Root" />
-    <item url="CGI/State/t/" />
-    <item url="CGI/State/t/CVS/" />
-    <item url="CGI/State/t/CVS/Entries" />
-    <item url="CGI/State/t/CVS/Repository" />
-    <item url="CGI/State/t/CVS/Root" />
-    <item url="CGI/State/t/test.t" />
-    <item url="CGI/State/Changes" />
-    <item url="CGI/State/Makefile.PL" />
-    <item url="CGI/State/MANIFEST" />
-    <item url="CGI/CGI-State-0.02.tar.gz" />
-    <item url="CGI/State.pm" />
-    <item url="CVS/" />
-    <item url="CVS/Entries" />
-    <item url="CVS/Repository" />
-    <item url="CVS/Root" />
-    <item url="Net/" />
-    <item url="Net/IP/" />
-    <item url="Net/IP/t/" />
-    <item url="Net/IP/t/ExtUtils/" />
-    <item url="Net/IP/t/ExtUtils/TBone.pm" />
-    <item url="Net/IP/t/ipv4.t" />
-    <item url="Net/IP/t/ipv6.t" />
-    <item url="Net/IP/Changes" />
-    <item url="Net/IP/COPYING" />
-    <item url="Net/IP/ipcount" />
-    <item url="Net/IP/IP.pm" />
-    <item url="Net/IP/iptab" />
-    <item url="Net/IP/Makefile.PL" />
-    <item url="Net/IP/MANIFEST" />
-    <item url="Net/IP/META.yml" />
-    <item url="Net/IP/Net-IP.spec.PL" />
-    <item url="Net/IP/README" />
-    <item url="Net/IP.pm" />
-    <item url="templates/setup/setup_auth_license.html" />
-    <item url="templates/setup/setup_auth_manual.html" />
-    <item url="toolbars/" />
-    <item url="toolbars/CVS/" />
-    <item url="toolbars/CVS/Entries" />
-    <item url="toolbars/CVS/Repository" />
-    <item url="toolbars/CVS/Root" />
-    <item url="Page/Setup/Login.pm" />
-    <item url="Page/Setup/Integration.pm" />
+    <item url="CGI/" uploadstatus="1" />
+    <item url="CGI/CVS/" uploadstatus="1" />
+    <item url="CGI/CVS/Entries" uploadstatus="1" />
+    <item url="CGI/CVS/Repository" uploadstatus="1" />
+    <item url="CGI/CVS/Root" uploadstatus="1" />
+    <item url="CGI/State/" uploadstatus="1" />
+    <item url="CGI/State/CVS/" uploadstatus="1" />
+    <item url="CGI/State/CVS/Entries" uploadstatus="1" />
+    <item url="CGI/State/CVS/Repository" uploadstatus="1" />
+    <item url="CGI/State/CVS/Root" uploadstatus="1" />
+    <item url="CGI/State/t/" uploadstatus="1" />
+    <item url="CGI/State/t/CVS/" uploadstatus="1" />
+    <item url="CGI/State/t/CVS/Entries" uploadstatus="1" />
+    <item url="CGI/State/t/CVS/Repository" uploadstatus="1" />
+    <item url="CGI/State/t/CVS/Root" uploadstatus="1" />
+    <item url="CGI/State/t/test.t" uploadstatus="1" />
+    <item url="CGI/State/Changes" uploadstatus="1" />
+    <item url="CGI/State/Makefile.PL" uploadstatus="1" />
+    <item url="CGI/State/MANIFEST" uploadstatus="1" />
+    <item url="CGI/CGI-State-0.02.tar.gz" uploadstatus="1" />
+    <item url="CGI/State.pm" uploadstatus="1" />
+    <item url="CVS/" uploadstatus="1" />
+    <item url="CVS/Entries" uploadstatus="1" />
+    <item url="CVS/Repository" uploadstatus="1" />
+    <item url="CVS/Root" uploadstatus="1" />
+    <item url="Net/" uploadstatus="1" />
+    <item url="Net/IP/" uploadstatus="1" />
+    <item url="Net/IP/t/" uploadstatus="1" />
+    <item url="Net/IP/t/ExtUtils/" uploadstatus="1" />
+    <item url="Net/IP/t/ExtUtils/TBone.pm" uploadstatus="1" />
+    <item url="Net/IP/t/ipv4.t" uploadstatus="1" />
+    <item url="Net/IP/t/ipv6.t" uploadstatus="1" />
+    <item url="Net/IP/Changes" uploadstatus="1" />
+    <item url="Net/IP/COPYING" uploadstatus="1" />
+    <item url="Net/IP/ipcount" uploadstatus="1" />
+    <item url="Net/IP/IP.pm" uploadstatus="1" />
+    <item url="Net/IP/iptab" uploadstatus="1" />
+    <item url="Net/IP/Makefile.PL" uploadstatus="1" />
+    <item url="Net/IP/MANIFEST" uploadstatus="1" />
+    <item url="Net/IP/META.yml" uploadstatus="1" />
+    <item url="Net/IP/Net-IP.spec.PL" uploadstatus="1" />
+    <item url="Net/IP/README" uploadstatus="1" />
+    <item url="Net/IP.pm" uploadstatus="1" />
+    <item url="templates/setup/setup_auth_license.html" uploadstatus="1" />
+    <item url="templates/setup/setup_auth_manual.html" uploadstatus="1" />
+    <item url="toolbars/" uploadstatus="1" />
+    <item url="toolbars/CVS/" uploadstatus="1" />
+    <item url="toolbars/CVS/Entries" uploadstatus="1" />
+    <item url="toolbars/CVS/Repository" uploadstatus="1" />
+    <item url="toolbars/CVS/Root" uploadstatus="1" />
+    <item url="Page/Setup/Login.pm" uploadstatus="1" />
+    <item url="Page/Setup/Integration.pm" uploadstatus="1" />
+    <item url="Sql/SqlAbstract.pm" uploadstatus="1" />
+    <item url="Page/System/Services.pm" uploadstatus="1" />
+    <item url="Sql/Abstract.pm" uploadstatus="1" />
+    <item url="templates/system/system_services.html" uploadstatus="1" />
+    <item url="templates/system/system_tabs.html" uploadstatus="1" />
+    <item url="Page/Authentication.pm" uploadstatus="1" />
+    <item url="Common/Validate.pm" uploadstatus="1" />
   </project>
 </webproject>

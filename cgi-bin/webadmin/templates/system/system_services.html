@@ -9,10 +9,10 @@
 <h2>Search Daimon Services</h2>
 
 [% IF error_msg_serv.defined %]
-	[% WRAPPER 'template_message.html' type='error' %][% error_msg_serv %] [% END %]
+	[% WRAPPER 'template_message.html' type='error' %]<pre>[% HTML.escape(error_msg_serv) %]</pre> [% END %]
 [% END %]
 [% IF succ_msg_serv.defined %]
-	[% WRAPPER 'template_message.html' type='success' %][% succ_msg_serv %][% END %]
+	[% WRAPPER 'template_message.html' type='success' %]<pre>[% HTML.escape(succ_msg_serv) %]</pre>[% END %]
 [% END %]
 
 [% WRAPPER 'template_table.html' 

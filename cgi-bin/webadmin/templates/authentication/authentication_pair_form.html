@@ -7,9 +7,9 @@
 	[% END %]
 [% END %]
 
-[% user = authentication.0.username %]
-[% pass = authentication.0.password %]
-[% id = authentication.0.id %]
+[% user = authentication.username %]
+[% pass = authentication.password %]
+[% id = authentication.id %]
 
 [% IF action == 'new' %]
 	<h2>Add new username/password pair</h2>

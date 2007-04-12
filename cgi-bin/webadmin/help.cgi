@@ -7,7 +7,7 @@ use Carp;
 use Template;
 use Data::Dumper;
 BEGIN {
-	unshift @INC, "Modules";
+	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Boitho::PhoneHome qw(bb_phone_home_start bb_phone_home_stop bb_phone_home_running);
 

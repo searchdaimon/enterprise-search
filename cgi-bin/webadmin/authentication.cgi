@@ -9,93 +9,72 @@ use CGI::State;
 use Template;
 use Data::Dumper;
 use Common::Generic;
+use Common::Generic qw(init_root_page);
+use Page::Authentication;
 
-my $cgi = CGI->new;
-my $state = CGI::State->state($cgi);
-print $cgi->header('text/html');
 
-my $vars = { };
-my $template = Template->new({INCLUDE_PATH => './templates:./templates/authentication:./templates/common',});
 
-my $sql = Sql::Sql->new;
-my $dbh = $sql->get_connection();
+# Group: Init
+my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
+	= init_root_page('/templates/authentication', 'Page::Authentication');
+
+my %state = %{$state_ptr};
+my $template_file;
+
 my $sqlAuth = Sql::CollectionAuth->new($dbh);
 my $common = Common::Generic->new($dbh);
 
-my $template_file = 'authentication_main.html';
+# Group: Submit actions
 
-my $pair_submit = 1 if ($state->{'submit_new_pair'} 
-			or $state->{'submit_changes'});
+if (defined $state{'confirm_delete'}) {
+	# User has confirmed a delete. 
+	($vars, $template_file) = $page->delete_auth($vars, 
+				   $state{'id'}, 
+				   $ENV{'REQUEST_METHOD'});
+}
 
-#Pages that use the default page (only showing a message at the top).
-if ($state->{'confirm_delete'}) {
-	# User confirms a delete. Delete from database, show success message.
-	croak ("The action must be a POST request to work.") 
-		unless($ENV{'REQUEST_METHOD'} eq 'POST');
+if (defined $state{'submit_new_pair'}) {
+	# User submitted new pair.
+	my $auth = $state{'auth'};
+	($vars, $template_file) 
+		= $page->new_auth($vars, $auth->{'username'}, $auth->{'password'});
 
-	$sqlAuth->delete_authentication($state->{'id'});
-	$vars->{'success_delete_pair'} = 1;
+}
+
+if (defined $state{'submit_changes'}) {
+	# User edited a pair.
+	my $auth = $state{'auth'};
+	($vars, $template_file)
+		= $page->edit_auth($vars, $auth->{'id'}, $auth->{'username'}, $auth->{'password'});
 }
 
 
-# Pages that don't use the default page.
-if ($state->{'add_new_pair'}) {
-	# Show add form
-	$vars->{'action'} = 'new';
-	$template_file = 'authentication_pair_form.html';
-}
-elsif (my $id = $common->request($state->{'delete_pair'})) {
-	# Show confirm delete dialog
-	my $authpair = $sqlAuth->get_authentication($id);
-	$vars->{'authentication'} = $authpair;
-	$template_file = 'authentication_delete_pair.html';
-}
-elsif ($id = $common->request($state->{'edit_pair'})) {
-	# Show edit username/password dialog.
-	my $authpair = $sqlAuth->get_authentication($id);
-	$vars->{'authentication'} = $authpair;
-	$vars->{'action'} = 'edit';
-	$template_file = 'authentication_pair_form.html';
-}
-elsif ($pair_submit) {
-	# Either a new pair, or changes to a pair were submittet.
-	my $auth = $state->{'auth'};
-	my $action = $state->{'submit_changes'}	? 'edit' : 'new';
-	
-	unless($auth->{'username'}) {
-		# Error, show form again.
-		$template_file = "authentication_pair_form.html";
-		$vars->{'action'} = $action;
-		$vars->{'error_no_username'} = 1;
-		$vars->{'authentication'} = [$auth];
-	}
-	else {
-		#All good
-		if ($action eq 'new') {
-			# Add new pair. Show success message.
-			$sqlAuth->insert_authentication($auth->{'username'}, $auth->{'password'});
-			$vars->{'success_insert_pair'} = 1;
-			
-		}
-		elsif ($action eq 'edit') {
-			# Edit existing pair. Show success message.
-			$sqlAuth->update_authentication(
-						$auth->{'id'}, 
-						$auth->{'username'}, 
-						$auth->{'password'});
-			$vars->{'success_submit_changes'} = 1;
-		}
-		
-		$vars->{'authentication'} = 
-			$sqlAuth->get_authentication;
-	}
-}
-else { 
-	# Showing default page (list usernames)
-	my $authpairs = $sqlAuth->get_authentication;
-	$vars->{'authentication'} = $authpairs;
+# Group: View page
+
+
+if (defined $state{'add_new_pair'}) {
+	# User pressed add new pair. Show form.
+
+	($vars, $template_file) = $page->show_add_form($vars);
 }
 
 
+if (my $id = $common->request($state{'delete_pair'})) {
+	# User pressed pair delete button. Show confirm delete dialog	
+
+	($vars, $template_file) = $page->show_delete_confirm($vars, $id);
+}
+if (my $id = $common->request($state{'edit_pair'})) {
+	# User pressed edit button. Show edit form.
+
+	($vars, $template_file) = $page->show_edit_form($vars, $id);
+}
+
+unless (defined $template_file) {
+	# Show default page (list all auth)
+	($vars, $template_file) = $page->show_auth_list($vars);
+}
+
+print $cgi->header('text/html');
 $template->process($template_file, $vars)
         or croak $template->error();
