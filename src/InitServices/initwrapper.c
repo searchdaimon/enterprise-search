@@ -24,10 +24,12 @@ const char *valid_params[] = {"start", "stop", "restart", "status", '\0'};
 
 int main(int argc, char **argv) {
 	if (DO_SUID) {
+	
 	    if (setuid(UID_USER) != 0) {
 		printf("Unable to setuid(%d)\n", UID_USER);
 		exit(2);
 	    }
+	
 	}
 	
 	if (argc == 3) {
@@ -69,9 +71,11 @@ void exec_and_exit(char *service, char *param) {
 
     char exec_string[512];
     snprintf(exec_string, sizeof(exec_string), 
-		    "%s%s %s", INIT_DIR, service, param);
-    
-    char *shargs[] = {"/bin/sh", "-c", exec_string, '\0'};
+		    "%s%s", INIT_DIR, service);
+
+    //runarb: gjør om slik at vi bruker /bin/sh direkte, uten -c    
+    //char *shargs[] = {"/bin/sh", "-c", exec_string, '\0'};
+    char *shargs[] = {"/bin/sh", exec_string, param, '\0'};
     exeocbuflen = sizeof(exeocbuf);
 
     //printf("kjorer %s %s %s \n", shargs[0], shargs[1], shargs[2]);

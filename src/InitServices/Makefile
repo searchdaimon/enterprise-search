@@ -5,7 +5,7 @@ CC = gcc
 all: $(PROG)
 
 #$(PROG): ../common/exeoc.c
-$(PROG):
-	$(CC) $(CFLAGS) -o $@ initwrapper.c ../common/exeoc.c $?
+$(PROG): initwrapper.c
+	$(CC) $(CFLAGS) -o $(PROG) ../common/exeoc.c $?
 	#chown root $(PROG)
 	#chmod +s $(PROG)
