@@ -655,6 +655,11 @@ boithoadClientLib: src/boithoadClientLib/boithoadClientLib.c
 	ranlib src/boithoadClientLib/liboithoaut.a
 
 
+InitServices: src/InitServices/initwrapper.c
+	(cd src/InitServices/; make)
+
+	cp src/InitServices/initwrapper setuid/
+
 crawlManager: src/crawlManager/main.c
 	@echo ""
 	@echo "$@:"

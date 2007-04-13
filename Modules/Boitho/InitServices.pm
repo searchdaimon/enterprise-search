@@ -5,7 +5,8 @@ use strict;
 use warnings;
 use Carp;
 use constant INIT_DIR => "/etc/init.d/";
-use constant WRAPPER_PATH => $ENV{'BOITHOHOME'} . "/Modules/Boitho/InitServices/initwrapper";
+#use constant WRAPPER_PATH => $ENV{'BOITHOHOME'} . "/Modules/Boitho/InitServices/initwrapper";
+use constant WRAPPER_PATH => $ENV{'BOITHOHOME'} . "setuid/initwrapper";
 
 sub new {
     my $class = shift;
