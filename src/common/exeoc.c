@@ -37,6 +37,18 @@ int main () {
 
 */
 
+static int alarm_got_raised;
+
+void exeoc_timeout_ha( int signo )
+{
+    if ( signo == SIGALRM ) {
+        printf("got alarm\n");
+        alarm_got_raised = 1;
+    }
+
+
+}
+
 int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret) {
 	pid_t pid;
 	int     pipefd[2];
@@ -44,7 +56,7 @@ int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsiz
 	pid_t waitstatus;
 
 	if ((*documentfinishedbufsize) <= linelen) {
-		fprintf(stderr,"Error: buffer must be larger then\n",linelen);
+		fprintf(stderr,"Error: buffer must be larger then %i\n",linelen);
 	}	
 
 	//printf("documentfinishedbufsize %i\n",(*documentfinishedbufsize));
@@ -105,25 +117,8 @@ int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsiz
                 close(pipefd[1]);
 
 
-		waitpid(pid,&waitstatus,0);
-		#ifdef DEBUG
-			printf("waitng for pid \"%i\"\n",pid);
-		#endif
 
 
-		/*
-		trenger ikke noe wait her. Vi blokker jo ved read
-		#ifdef DEBUG
-			printf("waitng for pid \"%i\"\n",pid);
-		#endif
-
-		waitpid(pid,&waitstatus,0);
-		//waitpid(pid,&waitstatus,WUNTRACED);
-
-		#ifdef DEBUG
-			printf("waitpid finished. waitstatus %i\n",waitstatus);
-		#endif 
-		*/
 		i=0;
 		while (((n = read(pipefd[0], &documentfinishedbuf[i], linelen)) > 1) 
 			&& (i + linelen < (*documentfinishedbufsize))) {
@@ -160,8 +155,48 @@ int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsiz
 			return 0;
 		}
 		*/
+
+		#ifdef DEBUG
+			printf("waitng for pid \"%i\"\n",pid);
+		#endif
+		//waitpid(pid,&waitstatus,0);
+		waitpid(pid,&waitstatus,WUNTRACED);
+
+
+		#ifdef DEBUG
+			printf("waitpid finished. waitstatus %i\n",waitstatus);
+		#endif 
+
 		(*ret) = waitstatus;
 		return 1;
 	}
 
 }
+
+int exeoc_timeout(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret, int timeout) {
+
+	int n;
+
+        //setter opp en alarm slik at run_html_parser blir avbrut hvis den henger seg
+	alarm_got_raised = 0;
+        signal(SIGALRM, exeoc_timeout_ha);
+
+        alarm( timeout );
+
+		n = exeoc(exeargv,documentfinishedbuf,documentfinishedbufsize,ret);
+
+        alarm( 0);
+
+        if(alarm_got_raised) {
+              	printf("run_html_parser did time out.\n");
+		return 0;
+        }
+	else {
+
+		return n;
+	}
+
+}
+
+
+

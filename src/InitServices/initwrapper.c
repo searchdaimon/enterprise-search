@@ -7,7 +7,7 @@
 #include "../common/exeoc.h"
 
 #define DO_SUID 1
-#define UID_USER 507
+#define UID_USER 0
 #define INIT_DIR "/etc/init.d/"
 
 void exec_and_exit(char *service, char *param);
