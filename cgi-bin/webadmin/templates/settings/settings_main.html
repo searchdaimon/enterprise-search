@@ -75,6 +75,21 @@
 </div>
 
 
+<div id="settings">
+
+        <h3>Update manualy</h3>
+		[% WRAPPER 'template_message.html'
+			type='info' %]
+			Look for update manualy.
+
+		[% END %]
+	<form action="update.cgi" method="get">
+
+	<input type="submit" name="update_now" value="Update" />
+
+	</form>
+
+</div>
 
 
 [% INCLUDE 'footer.html' %]
