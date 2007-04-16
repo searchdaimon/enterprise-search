@@ -77,7 +77,7 @@ HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun setuidcaller
+bb : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun setuidcaller InitServices
 
 tempFikes: IndexerLot_fik32bitbug DIconvert
 
@@ -274,7 +274,7 @@ searchcl : src/searchkernel/searchcl.c
 
 #dropper -D WITH_MEMINDEX og -D WITH_RANK_FILTER for nå
 #SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD $(LIBCONFIG)
-SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/lex.query.o src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a $(LDFLAGS) -lpthread -D WITH_THREAD $(LIBCONFIG)
+SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/lex.query.o src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a $(LDFLAGS) -lpthread $(LIBCONFIG)
 
 
 searchddep:
@@ -289,7 +289,7 @@ searchd : searchddep src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
 	
-	$(CC) $(SEARCHCOMMAND) -D WITH_RANK_FILTER -o bin/searchd
+	$(CC) $(SEARCHCOMMAND) -D WITH_RANK_FILTER -D WITH_THREAD -o bin/searchd 
 
 searchdbb : searchddep src/searchkernel/searchd.c
 	@echo ""
@@ -678,6 +678,9 @@ InitServices: src/InitServices/initwrapper.c
 	(cd src/InitServices/; make)
 
 	cp src/InitServices/initwrapper setuid/
+
+yumupdate:
+	$(CC) $(CFLAGS) src/common/exeoc.c src/yumupdate/yumupdate.c -o setuid/yumupdate
 
 crawlManager: src/crawlManager/main.c
 	@echo ""
