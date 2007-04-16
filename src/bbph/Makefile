@@ -1,5 +1,5 @@
 
-PROG=	bbph
+PROG=	bbphc
 OBJS=	bbphc.o
 LDFLAGS=-lssl -lcrypto
 CFLAGS=	-Wall -g -W -O1
