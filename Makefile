@@ -77,7 +77,7 @@ HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun setuidcaller InitServices
+bb : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun setuidcaller InitServices searchddep
 
 tempFikes: IndexerLot_fik32bitbug DIconvert
 
@@ -285,13 +285,13 @@ searchddep:
            (cd $$i; $(MAKE) all);\
         done
 
-searchd : searchddep src/searchkernel/searchd.c
+searchd : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
 	
 	$(CC) $(SEARCHCOMMAND) -D WITH_RANK_FILTER -D WITH_THREAD -o bin/searchd 
 
-searchdbb : searchddep src/searchkernel/searchd.c
+searchdbb : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
 	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/utf8-filter/lex.u8fl.o
