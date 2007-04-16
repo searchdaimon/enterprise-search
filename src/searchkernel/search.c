@@ -193,12 +193,14 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 	while ((i<alen) && (j<blen) && (k < maxIndexElements))
 	{
 
+	//printf("or_merge: merge a: %i (\"%s\"), b: %i (\"%s\")\n",a[i].DocID,(*a[i].subname).subname,b[j].DocID,(*b[i].subname).subname);
+
 	//if (b[j].DocID == 2788928) {
 	//	printf("b: %i , %i\n",a[i].DocID,b[j].DocID);
 	//	printf("b TermAntall %i\n",b[j].TermAntall);
 	//}
 		if (a[i].DocID == b[j].DocID) {
-			//printf("%i == %i\n",a[i].DocID,b[j].DocID);
+			//printf("or_merge: %i == %i\n",a[i].DocID,b[j].DocID);
 			//c[k] = a[i];
 
 			//c[k].TermRank = a[i].TermRank + b[j].TermRank;		
@@ -820,7 +822,7 @@ void *searchIndex_thread(void *arg)
 {
 
         struct searchIndex_thread_argFormat *searchIndex_thread_arg = (struct searchIndex_thread_argFormat *)arg;
-	int i;
+	int i,y;
 
 	int ArrayLen;
 
@@ -877,7 +879,12 @@ void *searchIndex_thread(void *arg)
 
 		hits = ArrayLen - hits;
 		(*searchIndex_thread_arg).subnames[i].hits += hits;
-		printf("searchIndex_thread: index %s, hits %i\n",(*searchIndex_thread_arg).indexType,hits);
+		printf("searchIndex_thread: index %s, subname \"%s\",hits %i\n",(*searchIndex_thread_arg).indexType,(*searchIndex_thread_arg).subnames[i].subname,hits);
+
+		//for (y = 0; y < ArrayLen; y++) {
+		//	Array[y].subname = &(*searchIndex_thread_arg).subnames[i];
+		//	printf("acc TeffArray: \"%s\" (i %i)\n",(*Array[y].subname).subname,y);			
+		//}
 		
 	}
 
@@ -1033,6 +1040,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		#endif
 	}
 
+	
 
 	//joiner trådene
 	#ifndef BLACK_BOKS
@@ -1047,7 +1055,12 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		pthread_join(threadid_Main, NULL);
 	#endif
 
-	printf("Athor ArrayLen %i, Url ArrayLen %i, Main ArrayLen %i\n",searchIndex_thread_arg_Athor.resultArrayLen,searchIndex_thread_arg_Url.resultArrayLen,searchIndex_thread_arg_Main.resultArrayLen);
+	for (i = 0; i < searchIndex_thread_arg_Main.resultArrayLen; i++) {
+		printf("abb TeffArray: \"%s\" (i %i)\n",(*searchIndex_thread_arg_Main.resultArray[i].subname).subname,i);			
+	}
+
+	printf("Athor ArrayLen %i, Url ArrayLen %i, Main ArrayLen %i\n",searchIndex_thread_arg_Athor.resultArrayLen,
+			searchIndex_thread_arg_Url.resultArrayLen,searchIndex_thread_arg_Main.resultArrayLen);
 
 	//sanker inn tiden
 	(*queryTime).AthorSearch = searchIndex_thread_arg_Athor.searchtime;
@@ -1097,6 +1110,10 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 
 	gettimeofday(&start_time, NULL);
+
+	for (i = 0; i < (*TeffArrayElementer); i++) {
+		printf("aaa TeffArray: \"%s\" (i %i)\n",(*TeffArray[i].subname).subname,i);			
+	}
 
 	y=0;
        	for (i = 0; i < (*TeffArrayElementer); i++) {
@@ -1281,7 +1298,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		if (filteron.collection != NULL) {
 		
 
-			printf("wil filter on collection \"%s\"\n",filteron.collection);
+			printf("will filter on collection \"%s\"\n",filteron.collection);
 			y=0;
        			for (i = 0; i < (*TeffArrayElementer); i++) {
 				printf("TeffArray \"%s\" ? filteron \"%s\"\n",(*TeffArray[i].subname).subname,filteron.collection);
@@ -1290,6 +1307,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
         		        	++y;
 				}
 			}
+			printf("filteron.collection: filter dovn array to from %i, to %i\n",(*TeffArrayElementer),y);
+
 			(*TeffArrayElementer) = y;
 	
 
@@ -1297,7 +1316,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 		
 
-		printf("filter dovn array to %i\n",(*TeffArrayElementer));
 
 
 		//lager en oversikt over filformater

@@ -8,6 +8,16 @@
 //usikker på om vi skal ha med denne. Er det kansje bedre og lagge inn strcasestr her?
 //#define _GNU_SOURCE //for strcasestr 
 
+
+char *strdupnul(char *in) {
+	if (in == NULL) {
+		return NULL;
+	}
+	else {
+		return strdup(in);
+	}
+}
+
 int btolower(int c) {
 
         c = (unsigned char)c;

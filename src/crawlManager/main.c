@@ -11,6 +11,7 @@
 
 #include "../crawl/crawl.h"
 #include "../common/define.h"
+#include "../common/bstr.h"
 #include "../common/daemon.h"
 #include "../common/error.h"
 #include "../common/timediff.h"
@@ -46,6 +47,23 @@ int documentExist(struct collectionFormat *collection, struct crawldocumentExist
 	printf("documentExist: end\n");
 
 	return 0;
+}
+
+int documentError(int level, const char *fmt, ...) {
+
+
+
+        va_list     ap;
+
+        va_start(ap, fmt);
+
+
+        vprintf(fmt,ap);
+
+	bvlog(LOGERROR,level,fmt,ap);
+
+        va_end(ap);
+
 }
 
 int documentAdd(struct collectionFormat *collection, struct crawldocumentAddFormat *crawldocumentAdd) {
@@ -108,7 +126,7 @@ int cmr_crawlcanconect(struct hashtable *h, struct collectionFormat *collection)
 
 	printf("wil crawl \"%s\"\n",(*collection).resource);
 
-	if (!(*(*crawlLibInfo).crawlcanconect)(collection)) {
+	if (!(*(*crawlLibInfo).crawlcanconect)(collection,documentError)) {
 		//overfører error
 		berror((*crawlLibInfo).strcrawlError());
         	 return 0;
@@ -129,7 +147,7 @@ int crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 
 	printf("wil crawl \"%s\"\n",(*collection).resource);
 
-	if (!(*(*crawlLibInfo).crawlfirst)(collection,documentExist,documentAdd)) {
+	if (!(*(*crawlLibInfo).crawlfirst)(collection,documentExist,documentAdd,documentError)) {
         	printf("problems in crawlfirst_ld\n");
 		//overfører error
                 berror((*crawlLibInfo).strcrawlError());
@@ -141,14 +159,31 @@ int crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 
 }
 
+char *adduserprefix(struct collectionFormat *collections,char username[]) {
 
-int pathAccess(struct hashtable *h, char collection[], char uri[], char username[], char password[]) {
+	char *newusername;
+
+	if ((*collections).userprefix != NULL) {
+		newusername = malloc(strlen((*collections).userprefix) + strlen(username) +1);
+		strcpy(newusername,(*collections).userprefix);
+		strcat(newusername,username);
+	}
+	else {
+		newusername = strdup(username);
+	}
+
+	return newusername;
+}
+
+int pathAccess(struct hashtable *h, char collection[], char uri[], char username_in[], char password[]) {
 
 
 
 	struct collectionFormat *collections; // bare en "s" skiller collection og collections her. Ikke bra, bør finne på bedre navn
 	int nrofcollections;
 	int forreturn;
+
+	char *username;
 
 	struct crawlLibInfoFormat *crawlLibInfo;
 	struct timeval start_time, end_time;
@@ -165,11 +200,12 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 
 	//temp:
 	//26.0207:quiq fix. Lagger til domene i brukernav
+	/*
 	char username_t[64];
 	strcpy(username_t,"i04\\");
 	strcat(username_t,username);
 	strcpy(username,username_t);
-
+	*/
 
 	gettimeofday(&start_time, NULL);
 	debug("cm_searchForCollection");
@@ -199,11 +235,14 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 	printf("wil pathAccess \"%s\"\n",uri);
 
 	gettimeofday(&start_time, NULL);
+
+	username = adduserprefix(collections,username_in);
+
 	if ((*crawlLibInfo).crawlpatAcces == NULL) {
 		printf("cralwer her ikke crawlpatAcces. returnerer tilgang. Må i fremtiden slå det opp\n");
 		forreturn = 1;
 	}
-	else if (!(*(*crawlLibInfo).crawlpatAcces)(uri,username,password)) {
+	else if (!(*(*crawlLibInfo).crawlpatAcces)(uri,username,password,documentError)) {
         	printf("Can't crawlLibInfo. Can by denyed or somthing else\n");
 		//overfører error
                 berror((*crawlLibInfo).strcrawlError());
@@ -216,6 +255,7 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 	gettimeofday(&end_time, NULL);
 	pathAccessTimes.crawlpatAcces = getTimeDifference(&start_time,&end_time);
 
+
 	printf("pathAccess: times\n");	
 	printf("\tsearchForCollection: %f\n",pathAccessTimes.searchForCollection);
 	printf("\tgetCrawlLibInfo: %f\n",pathAccessTimes.getCrawlLibInfo);
@@ -223,6 +263,14 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 
 	printf("pathAccess: end\n");
 
+	if (forreturn == 1) {
+		blog(LOGACCESS,2,"pathAccess allowed url: \"%s\", user: \"%s\", time used %f s\n",uri,username,pathAccessTimes.crawlpatAcces);
+	}
+	else {
+		blog(LOGACCESS,2,"pathAccess denyed url: \"%s\", user: \"%s\", time used %f s\n",uri,username,pathAccessTimes.crawlpatAcces);
+	}
+
+	free(username);
 	
 	return forreturn;
 
@@ -240,7 +288,7 @@ int crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
 
 	printf("wil crawl \"%s\"\n",(*collection).resource);
 
-	if (!(*(*crawlLibInfo).crawlupdate)(collection,documentExist,documentAdd)) {
+	if (!(*(*crawlLibInfo).crawlupdate)(collection,documentExist,documentAdd,documentError)) {
         	printf("problems in crawlfirst_ld\n");
 		//overfører error
                 berror((*crawlLibInfo).strcrawlError());
@@ -300,7 +348,7 @@ int scan (struct hashtable *h,char ***shares,int *nrofshares,char crawlertype[],
 
 	scan_found_start();
 
-	if (!(*(*crawlLibInfo).scan)(scan_found_share,host,username,password)) {
+	if (!(*(*crawlLibInfo).scan)(scan_found_share,host,username,password,documentError)) {
                 printf("problems in scan\n");
 		return 0;
         }
@@ -472,7 +520,8 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 						query1, \
 						query2, \
 						auth_id, \
-						shares.id \
+						shares.id, \
+						shares.userprefix \
 					from \
 						shares,connectors \
 					where \
@@ -490,7 +539,8 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 						query1, \
 						query2, \
 						auth_id, \
-						shares.id \
+						shares.id, \
+						shares.userprefix \
 					from \
 						shares,connectors \
 					where \
@@ -520,7 +570,7 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 
         i=0;
         while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
-        	debug("\tdata %s, %s, %s, %s\n",mysqlrow[0],mysqlrow[1],mysqlrow[2],mysqlrow[3]);
+        	debug("\tdata resource: %s, connector: %s, collection_name: %s, lastCrawl: %s, userprefix: %s\n",mysqlrow[0],mysqlrow[1],mysqlrow[2],mysqlrow[3],mysqlrow[8]);
 		
 		//lagger inn i info struct
 		(*collection)[i].resource  		= strdup(mysqlrow[0]);	
@@ -546,6 +596,8 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 		}
 
 		(*collection)[i].id = strtoul(mysqlrow[7], (char **)NULL, 10);
+		(*collection)[i].userprefix = strdupnul(mysqlrow[8]);
+
 
 		//fjerner ikke aski tegn, som / og space. De fører til problemer
 		for(y=0;y<strlen((*collection)[i].collection_name);y++) {
@@ -612,9 +664,12 @@ int crawlcanconect (char cvalue[]) {
 	int nrofcollections;
 	int i;
 
+	printf("crawlcanconect: cm_searchForCollection start\n");
 	cm_searchForCollection(cvalue,&collection,&nrofcollections);
-
+	printf("crawlcanconect: cm_searchForCollection done\n");
 	if (nrofcollections == 1) {
+		/*
+		Temp: funger ikke når vi kompilerer debug
 		//make a conectina for add to use
 		if (!bbdn_conect(&collection[0].socketha,"",global_bbdnport)) {
 			//berror("can't conect to bbdn (boitho backend document server)\n");
@@ -624,7 +679,14 @@ int crawlcanconect (char cvalue[]) {
 		if (!cmr_crawlcanconect(global_h,&collection[0])) {
 			return 0;
 		}
-		
+
+		//ber bbdn om å lukke
+		printf("closeing bbdn con\n");
+                bbdn_close(&collection[0].socketha);
+		*/
+	}
+	else {
+		printf("crawlcanconect: Error got back %i coll to crawl\n",nrofcollections);
 	}
 
 
@@ -642,11 +704,14 @@ int set_crawler_message(int crawler_success  , char mrg[], unsigned int id) {
         MYSQL_RES *mysqlres; /* To be used to fetch information into */
         MYSQL_ROW mysqlrow;
 
+	blog(LOGACCESS,2,"set_crawler_message: mesage: \"%s\", success: %i, id: %i\n",mrg,crawler_success,id);
+
         mysql_init(&demo_db);
 
         //koble til mysql
         if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
                 printf(mysql_error(&demo_db));
+		blog(LOGERROR,1,"Mysql Error: \"%s\"\n",mysql_error(&demo_db));
                 exit(1);
         }
 
@@ -663,12 +728,13 @@ int set_crawler_message(int crawler_success  , char mrg[], unsigned int id) {
 
 	}
 
-
+	blog(LOGACCESS,2,"mysql query: \"%s\"\n",mysql_query);
 
         printf("mysql_query: %s\n",mysql_query);
 
         if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
-                printf(mysql_error(&demo_db));
+                //printf(mysql_error(&demo_db));
+		blog(LOGERROR,1,"Mysql Error: \"%s\"\n",mysql_error(&demo_db));
                 exit(1);
         }
 
@@ -695,6 +761,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag) {
 
 	for(i=0;i<nrofcollections;i++) {
 
+		blog(LOGACCESS,1,"Starting crawl of collection \"%s\" (id %u)\n",collection[i].collection_name,collection[i].id);
 
 		//make a conectina for add to use
 		if (!bbdn_conect(&collection[i].socketha,"",global_bbdnport)) {
@@ -744,6 +811,9 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag) {
 			//ber bbdn om å lukke
 			bbdn_close(&collection[i].socketha);
 		}
+
+		blog(LOGACCESS,1,"Finished crawling of collection \"%s\" (id %u)\n",collection[i].collection_name,collection[i].id);
+
 	}
 
 	sm_collectionfree(&collection,nrofcollections);

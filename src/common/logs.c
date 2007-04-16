@@ -9,6 +9,13 @@
 
 //FILE *LOGACCESS, *LOGERROR;
 
+void bvlog(FILE *LOG, int level,const char *fmt,va_list ap) {
+
+        vfprintf(LOG,fmt,ap);
+	fprintf(LOG,"\n");
+}
+
+
 void blog(FILE *LOG, int level, const char *fmt, ...) {
 
         va_list     ap;

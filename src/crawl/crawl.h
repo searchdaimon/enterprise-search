@@ -22,6 +22,7 @@ struct collectionFormat {
 	char *host;
 	int auth_id;
 	unsigned int id;
+	char *userprefix;
 };
 
 struct crawldocumentExistFormat {
@@ -46,17 +47,21 @@ struct crawlLibInfoFormat {
 	// a pointer to a crawlfirst rutine
 	int (*crawlfirst)(struct collectionFormat *collection,
 		int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
-	        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd));
+	        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
+		int (*documentError)(int level, const char *fmt, ...)
+	);
 
 	int (*crawlupdate)(struct collectionFormat *collection,
 		int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
-	        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd));
+	        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
+		int (*documentError)(int level, const char *fmt, ...)
+	);
 
-	int (*crawlcanconect)(struct collectionFormat *collection);
+	int (*crawlcanconect)(struct collectionFormat *collection,int (*documentError)(int level, const char *fmt, ...));
 
-	int (*crawlpatAcces)(char resource[], char username[], char password[]);
+	int (*crawlpatAcces)(char resource[], char username[], char password[],int (*documentError)(int level, const char *fmt, ...));
 
-	int (*scan)(int (*scan_found_share)(char share[]),char host[],char username[], char password[]);
+	int (*scan)(int (*scan_found_share)(char share[]),char host[],char username[], char password[],int (*documentError)(int level, const char *fmt, ...));
 
 	int crawl_security;
 	char *shortname;

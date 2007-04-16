@@ -590,8 +590,12 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				
 			}
 
+			//legger til en peker til subname
+			TeffArray[y].subname = subname;
+
+
                         TeffArray[y].TermRank = rank(TeffArray[y].hits,TeffArray[y].TermAntall,TeffArray[y].DocID,subname);
-			printf("TermRank: %i\n",TeffArray[y].TermRank);
+			printf("TermRank: %i, subname \"%s\"\n",TeffArray[y].TermRank,(*TeffArray[y].subname).subname);
 
 			#ifndef BLACK_BOKS
 				//midlertidig bug fiks. Ignorerer hit med DocID 0.
@@ -602,8 +606,6 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 			#endif
 
 
-			//legger til en peker til subname
-			TeffArray[y].subname = subname;
 
 			
 			//int languageFilterNr, int languageFilterAsNr

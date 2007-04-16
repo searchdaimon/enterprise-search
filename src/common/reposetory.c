@@ -621,9 +621,15 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 		//leser acl
 		#ifdef BLACK_BOKS
 
-			#ifdef DEBUG
+			//begrenser størelsen på en acl. Slik at en klikk ikke gjør at alt ikke fungerer. Må tenke på om 200 er nokk størelse her
+			if ((*ReposetoryHeader).aclSize > 200) {
+				printf("bad acl size. acl size %i\n",(*ReposetoryHeader).aclSize);
+				return 0;
+			}
+
+			//#ifdef DEBUG
 			printf("acl size %i\n",(*ReposetoryHeader).aclSize);
-			#endif
+			//#endif
 			(*aclbuffer) = malloc((*ReposetoryHeader).aclSize +1);
 			if ((*ReposetoryHeader).aclSize != 0) {
 				if (fread((*aclbuffer),(*ReposetoryHeader).aclSize,1,LotFileOpen) != 1) {
