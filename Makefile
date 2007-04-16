@@ -77,7 +77,7 @@ HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun
+bb : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun setuidcaller
 
 tempFikes: IndexerLot_fik32bitbug DIconvert
 
@@ -89,6 +89,25 @@ wordConverter: src/wordConverter/main.c
 
 #brukte før src/parser/libhtml_parser.a, byttet til src/parser/lex.yy.c src/parser/lex.yy.c slik at vi kan bruke gdb
 IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c $(HTMLPARSER) $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
+
+setuidcaller:
+	@echo ""
+	@echo "$@:"
+
+	(cd src/bb-phone-home/; make)
+	@if [ `id -u` == 0 ]; then \
+		cp -f src/bb-phone-home/setuidcaller bin/; \
+		chown root bin/setuidcaller; \
+		chmod +s bin/setuidcaller; \
+	else \
+		echo "################"; \
+		echo "You are not root. Run these commands as root"; \
+		echo "cp src/bb-phone-home/setuidcaller bin/"; \
+		echo "chown root bin/setuidcaller"; \
+		echo "chmod +s bin/setuidcaller"; \
+		echo "################"; \
+	fi
+
 
 Suggest:
 	@echo ""
