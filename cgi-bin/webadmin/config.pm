@@ -35,8 +35,7 @@ $CONFIG->{'logfiles'} = {
 $CONFIG->{'infoquery'} = $ENV{'BOITHOHOME'} . '/bin/infoquery';
 
 # Path to bb phone hone executable.
-$CONFIG->{'phone_home_path'}
-	= "/home/eirik/Boitho/boitho/websearch/src/bb-phone-home/setuidcaller";
+$CONFIG->{'phone_home_path'} = $ENV{'BOITHOHOME'} . "/bin/setuidcaller";
 
 
 # Group: Settings
