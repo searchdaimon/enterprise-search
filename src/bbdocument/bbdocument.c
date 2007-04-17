@@ -16,6 +16,7 @@
 #include "../common/define.h"
 #include "../common/debug.h"
 #include "../common/exeoc.h"
+#include "../common/boithohome.h"
 
 #include "../common/reposetory.h"
 #include "../common/bstr.h"
@@ -140,21 +141,21 @@ int bbdocument_init() {
 	int TokCount;
 	struct fileFilterFormat *fileFilter = NULL;
 
-	char fileFilterName[] = "/home/boitho/boithoTools/fileFilter";
+	char fileFilterName[] = "fileFilter";
 
 
 	chtbl_init(&htbl, PRIME_TBLSIZ, bbdocument_h, bbdocument_hmatch, free);
 
-	printf("opening %s\n",fileFilterName);
-	if ((dirp = opendir(fileFilterName)) == NULL) {
-		fprintf(stderr,"warn: cant open fileFilter \"%s\". Cant use fileFilters\n",fileFilterName);
+	printf("opening %s\n",bfile(fileFilterName));
+	if ((dirp = opendir(bfile(fileFilterName))) == NULL) {
+		fprintf(stderr,"warn: cant open fileFilter \"%s\". Cant use fileFilters\n",bfile(fileFilterName));
 		return 1;
 	}  
 	while ((dp = readdir(dirp)) != NULL) {
 		if (dp->d_name[0] == '.') {
 			continue;
 		}
-		sprintf(path,"%s/%s/",fileFilterName,dp->d_name);
+		sprintf(path,"%s/%s/",bfile(fileFilterName),dp->d_name);
 		sprintf(buf,"%sruninfo",path);
 		printf("%s\n",buf);
 		if ((filep = fopen(buf,"r")) == NULL) {
@@ -205,7 +206,7 @@ int bbdocument_init() {
 				//strcpy((*fileFilter).command,splitdata[1]);
 			
 				strscpy((*fileFilter).command,lines,sizeof((*fileFilter).command));
-				strcasesandr((*fileFilter).command,sizeof((*fileFilter).command),"command:","");
+				strcasesandr((*fileFilter).command,sizeof((*fileFilter).command),"command: ","");
 				//leger til path der vi har sakt vi skal ha lokal path ( ./ )
 				strcasesandr((*fileFilter).command,sizeof((*fileFilter).command),"./",path);
 				printf(".command %s\n",(*fileFilter).command);
@@ -337,8 +338,8 @@ int bbdocument_convert(char filetype[],char document[],int dokument_size,char *d
 
 		//#ifdef DEBUG
 		printf("writing to unknownfiltype.log\n");
-		if ((fp = fopen("/home/boitho/logs/unknownfiltype.log","ab")) == NULL) {
-			perror("/home/boitho/logs/unknownfiltype.log");
+		if ((fp = fopen(bfile("logs/unknownfiltype.log"),"ab")) == NULL) {
+			perror(bfile("logs/unknownfiltype.log"));
 		}
 		else {
 			fprintf(fp,"%s: %s\n",titlefromadd,filetype);
@@ -446,8 +447,13 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 	}
 	*/
 	//bin/sh -c "ls -1"	
-	char *shargs[] = {"/bin/sh","-c",(*fileFilter).command ,'\0'};	
-	printf("runnig: /bin/sh -c %s\n",(*fileFilter).command);
+	//char *shargs[] = {"/bin/sh","-c","-v",(*fileFilter).command ,'\0'};	
+	//printf("runnig: /bin/sh -c %s\n",(*fileFilter).command);
+
+	char escapetcommand[512];
+	sprintf(escapetcommand,"%s",(*fileFilter).command);
+	char *shargs[] = {"/bin/sh","-c",escapetcommand ,'\0'};	
+	printf("runnig: /bin/sh -c %s\n",escapetcommand);
 	if (!exeoc(shargs,documentfinishedbuf,&exeocbuflen,&ret)) {
 		printf("dident get any data from exeoc. But can be a filter that creates files, sow wil continue\n");
 		//kan ikke sette den til 0 da vi bruker den får å vite hvos stor bufferen er lengere nede
@@ -551,7 +557,7 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 	}
 
 	#ifndef DEBUG
-	unlink(filconvertetfile_real);
+	//unlink(filconvertetfile_real);
 	#endif
 
 	return 1;
@@ -709,7 +715,7 @@ int bbdocument_deletecoll(char collection[]) {
 	}
 	*/
 	//temp: Hardkoder iinde slettingen midlertidig
-
+	//kan dette Dagures?
 	for (LotNr=0;LotNr<64;LotNr++) {
 		sprintf(command,"rm -rf /home/boitho/cvstestdata/lot/%i/iindex/%s",LotNr,collection);
 

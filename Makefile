@@ -35,8 +35,8 @@ BDB = -I/usr/local/BerkeleyDB.4.5/include/ /usr/local/BerkeleyDB.4.5/lib/libdb.a
 #SMBCLIENT=-lsmbclient
 #skrur dette på igjen. Brukte det og segfeile når vi hadde det med statisk?
 # !! av ukjenet grunner ser dette ut til og altid må være sist hvis vi skal linke statisk
-SMBCLIENT=src/3pLibs/samba-3.0.24/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.24/source/include/
-#SMBCLIENT=-Isrc/3pLibs/samba-3.0.24/source/include/ -Lsrc/3pLibs/samba-3.0.24/source/lib/ -lsmbclient
+#SMBCLIENT=src/3pLibs/samba-3.0.24/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.24/source/include/
+SMBCLIENT=/home/boitho/src/3pLibs/samba-3.0.24/source/bin/libsmbclient.a -I/home/boitho/src/3pLibs/samba-3.0.24/source/include/
 
 BBDOCUMENT = src/bbdocument/bbdocument.c $(BDB) -D BLACK_BOKS
 #BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail.c -DBBDOCUMENT_IMAGE $(IM)

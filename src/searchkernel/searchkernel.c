@@ -574,7 +574,7 @@ int foundGodPage(struct PagesResultsFormat *PagesResults) {
 	#endif
 
 }
-void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTraped, int *nrInSubname) {
+void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTraped, int *nrInSubname,struct iindexFormat *iindex) {
 
 
 	#ifdef WITH_THREAD
@@ -585,10 +585,14 @@ void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTr
 
 	++(*whichFilterTraped);
 
-	//runarb: 13 mars. Hvorfor var denne komentert ut???
-	printf("increaseFiltered 1: %i %u\n",(*nrInSubname),(unsigned int)nrInSubname);
+	//runarb:1 13 mars. Hvorfor var denne komentert ut???
+	//runarb:2 for de vi nå bruker subname som filter
+	//runarb:3 kan det være det er nyttig for web søket og ha rikitig tall her? 
 	--(*nrInSubname);
-	printf("increaseFiltered 2: %i %u\n",(*nrInSubname),(unsigned int)nrInSubname);
+
+	#ifdef BLACK_BOKS
+		(*iindex).deleted = 1;
+	#endif
 
 	#ifdef WITH_THREAD
 	pthread_mutex_unlock(&(*PagesResults).mutex);
@@ -662,11 +666,19 @@ void *generatePagesResults(void *arg)
 		//	(*PagesResults).filterOn = 0;
 		//}
 
+		#ifdef BLACK_BOKS
+		//hvis index filter tidligere har funet ut at dette ikke er et pra treff går vi til neste
+		if ((*PagesResults).TeffArray[i].indexFiltered.filename == 1) {
+			printf("index filtered\n");
+			continue;
+		}
+		#endif
+
 		#ifndef BLACK_BOKS
 		//pre DIread filter
 		if (((*PagesResults).filterOn) && (filterAdultWeight(adultWeightForDocIDMemArray((*PagesResults).TeffArray[i].DocID),(*PagesResults).adultpages,(*PagesResults).noadultpages) == 1)) {
 			printf("%u is adult whith %i\n",(*PagesResults).TeffArray[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray[i].DocID));
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_1,&(*(*PagesResults).TeffArray[i].subname).hits);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_1,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
 			continue;
 		}
 		#endif
@@ -676,7 +688,7 @@ void *generatePagesResults(void *arg)
 		{
                         //hvis vi av en eller annen grun ikke kunne gjøre det kalger vi
                         printf("Cant read post for %u-%i\n",(*PagesResults).TeffArray[i].DocID,rLotForDOCid((*PagesResults).TeffArray[i].DocID));
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantDIRead,&(*(*PagesResults).TeffArray[i].subname).hits);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantDIRead,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
                         continue;
                 }
 
@@ -685,7 +697,7 @@ void *generatePagesResults(void *arg)
                        
                         if (filterSameCrc32(localshowabal,&(*PagesResults).Sider[localshowabal],(*PagesResults).Sider)) {
                         	printf("hav same crc32. crc32 from DocumentIndex\n");
-				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_1,&(*(*PagesResults).TeffArray[i].subname).hits);
+				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_1,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
                         	continue;
                         }
                 }
@@ -711,7 +723,7 @@ void *generatePagesResults(void *arg)
 		//fjerner eventuelt like urler
 		if (((*PagesResults).filterOn) && (filterSameUrl(localshowabal,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).Sider)) ) {
 			printf("Hav seen url befor. Url \"%s\"\n",(*PagesResults).Sider[localshowabal].DocumentIndex.Url);
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameUrl,&(*(*PagesResults).TeffArray[i].subname).hits);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameUrl,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
                         continue;
 		}
 
@@ -719,7 +731,7 @@ void *generatePagesResults(void *arg)
 		if (!find_domain_no_subname((*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).Sider[localshowabal].domain,sizeof((*PagesResults).Sider[localshowabal].domain))) {
 		//if (!find_domain_no_www((*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).Sider[localshowabal].domain)) {
 			printf("cant find domain. Bad url?. Url \"%s\". localshowabal %i\n",(*PagesResults).Sider[localshowabal].DocumentIndex.Url,localshowabal);
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.find_domain_no_subname,&(*(*PagesResults).TeffArray[i].subname).hits);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.find_domain_no_subname,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
 			continue;
 		}
 
@@ -727,7 +739,7 @@ void *generatePagesResults(void *arg)
 			//#ifdef DEBUG
 			printf("hav same domain. Domain: %s. Url %s\n",(*PagesResults).Sider[localshowabal].domain,(*PagesResults).Sider[localshowabal].DocumentIndex.Url);
 			//#endif
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameDomain,&(*(*PagesResults).TeffArray[i].subname).hits);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameDomain,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
 			continue;		
 		}
 
@@ -735,7 +747,7 @@ void *generatePagesResults(void *arg)
 			#ifdef DEBUG
 			printf("banned TLD\n");
 			#endif
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterTLDs,&(*(*PagesResults).TeffArray[i].subname).hits);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterTLDs,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
 			continue;
 		}
 		#endif
@@ -747,7 +759,7 @@ void *generatePagesResults(void *arg)
 		//DI filtere
 		if (((*PagesResults).filterOn) && (filterResponse((*PagesResults).Sider[localshowabal].DocumentIndex.response) )) {
 			debug("bad respons kode %i\n",(*PagesResults).Sider[localshowabal].DocumentIndex.response);
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterResponse,&(*(*PagesResults).TeffArray[i].subname).hits);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterResponse,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
 			continue;
 		}
 		//if (((*PagesResults).filterOn) && (filterSameIp(localshowabal,&(*PagesResults).Sider[localshowabal],(*PagesResults).Sider))) {
@@ -761,7 +773,7 @@ void *generatePagesResults(void *arg)
 			//#ifdef DEBUG
                         	printf("cant popResult\n");
                         //#endif
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantpopResult,&(*(*PagesResults).TeffArray[i].subname).hits);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantpopResult,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
 			continue;
 
 		}
@@ -777,7 +789,7 @@ void *generatePagesResults(void *arg)
 		else if (!pathaccess(PagesResults, (*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray[i].subname).subname,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).search_user,(*PagesResults).password)) {
 			printf("dident hav acces to that one\n");
 
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray[i].subname).hits);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
 
 			//temp:
 			//strcpy((*PagesResults).Sider[localshowabal].title,"Access denied!");
@@ -799,7 +811,7 @@ void *generatePagesResults(void *arg)
 
 			if (((*PagesResults).filterOn) && (filterSameCrc32(localshowabal,&(*PagesResults).Sider[localshowabal],(*PagesResults).Sider))) {
 	                      	printf("hav same crc32\n");
-				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_2,&(*(*PagesResults).TeffArray[i].subname).hits);
+				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_2,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
                 	      	continue;
                 	}
 		}
@@ -852,6 +864,7 @@ int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int 
 char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *searchd_config) { 
 
 	struct PagesResultsFormat PagesResults;
+	struct filteronFormat filteron;
 
 	PagesResults.Sider = Sider;
 	PagesResults.SiderHeder = SiderHeder;
@@ -1003,7 +1016,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,dates,
-			filters);
+			filters,&filteron);
 
 	printf("end searchSimple\n");
 
@@ -1125,13 +1138,28 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	
 	//5: printf("end\n");
-
 	
 	//finer først tiden vi brukte
 	gettimeofday(&globalend_time, NULL); 
 	(*SiderHeder).total_usecs = getTimeDifference(&globalstart_time,&globalend_time);
 
 
+	//teller opp filteree
+	/*
+searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTreff,
+                        &PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
+                        subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
+                        orderby,dates,
+                        filters)
+	*/
+
+	#ifdef BLACK_BOKS
+		searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron);
+	
+		//fjerner filtered fra total oversikten
+		//ToDo: bør dette også gjøres for web?
+		(*SiderHeder).TotaltTreff = (*SiderHeder).TotaltTreff - (*SiderHeder).filtered;
+	#endif
 
 	//lager en liste med ordene som ingikk i queryet til hiliting
 	hiliteQuery[0] = '\0';

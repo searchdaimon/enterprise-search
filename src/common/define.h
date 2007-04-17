@@ -270,6 +270,11 @@ struct DictionaryFormat {
 	unsigned long SizeForTerm;
 };
 
+struct indexFilteredFormat {
+
+	char filename; //bool
+};
+
 // Formatett på treff i indeksen
 struct iindexFormat {
 	int DocID;
@@ -282,7 +287,12 @@ struct iindexFormat {
 	unsigned char langnr;
 	struct subnamesFormat *subname;
 	unsigned long int date; //16 nov 2006
-	char filetype[5];
+
+	#ifdef BLACK_BOKS
+		char filetype[5];
+		char deleted;
+		struct indexFilteredFormat indexFiltered;
+	#endif
 };
 
 

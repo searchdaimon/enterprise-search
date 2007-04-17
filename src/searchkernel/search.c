@@ -903,7 +903,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		query_array *queryParsed, struct queryTimeFormat *queryTime, 
 		struct subnamesFormat subnames[], int nrOfSubnames,int languageFilterNr, 
 		int languageFilterAsNr[], char orderby[], int dates[],
-		struct filtersFormat *filters) {
+		struct filtersFormat *filters,
+		struct filteronFormat *filteron) {
 
 	int i,y,n;
 	//int x=0,j=0,k=0;
@@ -1284,8 +1285,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	#ifdef BLACK_BOKS
 
 		//filter
-		struct filteronFormat filteron;
-		searchIndex_filters(queryParsed, &filteron);
+		searchIndex_filters(queryParsed, filteron);
 /*
         char *filetype;
         char *language;
@@ -1295,14 +1295,14 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 */
 
 
-		if (filteron.collection != NULL) {
+		if ((*filteron).collection != NULL) {
 		
 
-			printf("will filter on collection \"%s\"\n",filteron.collection);
+			printf("will filter on collection \"%s\"\n",(*filteron).collection);
 			y=0;
        			for (i = 0; i < (*TeffArrayElementer); i++) {
-				printf("TeffArray \"%s\" ? filteron \"%s\"\n",(*TeffArray[i].subname).subname,filteron.collection);
-				if (strcmp((*TeffArray[i].subname).subname,filteron.collection) == 0) {
+				printf("TeffArray \"%s\" ? filteron \"%s\"\n",(*TeffArray[i].subname).subname,(*filteron).collection);
+				if (strcmp((*TeffArray[i].subname).subname,(*filteron).collection) == 0) {
         	       			TeffArray[y] = TeffArray[i];
         		        	++y;
 				}
@@ -1330,99 +1330,25 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 		gettimeofday(&start_time, NULL);
 
-		char filetype[5];
+		//char filetype[5];
 		//struct filesKeyFormat *filesKey;
-		char *filesKey;
-		int *filesValue;
-		struct hashtable *h;
-
-		h = create_hashtable(200, fileshashfromkey, filesequalkeys);
 
 		for (i = 0; i < (*TeffArrayElementer); i++) {
 			printf("i = %i, subname \"%s\"\n",i,(*TeffArray[i].subname).subname);
-			if (iintegerGetValueNoCashe(&filetype,4,TeffArray[i].DocID,"filtypes",(*TeffArray[i].subname).subname) == 0) {
+			if (iintegerGetValueNoCashe(&TeffArray[i].filetype,4,TeffArray[i].DocID,"filtypes",(*TeffArray[i].subname).subname) == 0) {
 				printf("woldent get integerindex\n");
+				TeffArray[i].filetype[0] = '\0';
 			}
 			else {
 				// filetype kan være på opptil 4 bokstaver. Hvsi det er ferre en 4 så vil 
 				// det være \0 er paddet på slutten, men hvsi det er 4 så er det ikke det.
 				// legger derfor til \0 som 5 char, slik at vi har en gyldig string
-				filetype[4] = '\0';
+				TeffArray[i].filetype[4] = '\0';
 
 				#ifdef DEBUG
-				printf("file \"%c%c%c%c\"\n",filetype[0],filetype[1],filetype[2],filetype[3]);
-				#endif
-				//filesKey = malloc(sizeof(struct filesKeyFormat));
-				//(*filesKey).subname = TeffArray[i].subname;
-/***************************************************/
-				//lesKey).subname = TeffArray[i].subname;
-				//memcpy((*filesKey).filename,filetype,sizeof((*filesKey).filename)); 	
-				
-				//memcpy(TeffArray[i].filetype,filetype,sizeof(TeffArray[i].filetype));
-				strscpy(TeffArray[i].filetype,filetype,sizeof(TeffArray[i].filetype));
-				
-				if (NULL == (filesValue = hashtable_search(h,filetype) )) {    
-					printf("not found!. Vil insert first");
-					filesValue = malloc(sizeof(int));
-					(*filesValue) = 1;
-					filesKey = strdup(filetype);
-					if (! hashtable_insert(h,filesKey,filesValue) ) {
-						printf("cant insert\n");     
-						exit(-1);
-					}
-
-		                }
-				else {
-					++(*filesValue);
-				}
+				printf("file \"%c%c%c%c\"\n",TeffArray[i].filetype);
+				#endif				
 			}
-		}
-
-		/*
-		for(i=0;i<nrOfSubnames;i++) {
-                	subnames[i].nrOfFiletypes = 0;
-		}
-		*/
-		/* Iterator constructor only returns a valid iterator if
-		* the hashtable is not empty */
-		if (hashtable_count(h) > 0)
-		{
-			(*filters).filtypes.nrof = 0;
-
-			strscpy((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name,
-                                "All",
-	                        sizeof((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name));
-			++(*filters).filtypes.nrof;
-
-			struct hashtable_itr *itr;
-
-       			itr = hashtable_iterator(h);
-			
-       			do {
-       				filesKey = hashtable_iterator_key(itr);
-       				filesValue = (int *)hashtable_iterator_value(itr);
-
-				printf("files \"%s\": %i\n",filesKey,*filesValue);
-
-					strscpy(
-						(*filters).filtypes.elements[ (*filters).filtypes.nrof ].name,
-						filesKey,
-						sizeof((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name));
-
-					(*filters).filtypes.elements[(*filters).filtypes.nrof].nrof = (*filesValue);
-					++(*filters).filtypes.nrof;
-				
-				
-       			} while ((hashtable_iterator_advance(itr)) && ((*filters).filtypes.nrof<MAXFILTERELEMENTS));
-    			free(itr);
-
-		}
-
-		hashtable_destroy(h,1); 
-
-		printf("filtypesnrof: %i\n",(*filters).filtypes.nrof);
-		for (i=0;i<(*filters).filtypes.nrof;i++) {
-			printf("file \"%s\": %i\n",(*filters).filtypes.elements[i].name,(*filters).filtypes.elements[i].nrof);
 		}
 
 
@@ -1450,52 +1376,28 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		#endif
 
 
-		//collections
-		//finner hvilken vi har trykket på, og markerer denne slik at det kan markeres i designed i klienten
 
-		(*filters).collections.nrof = 0;
+		if ((*filteron).filetype != NULL) {
+			printf("wil filter on filetype \"%s\"\n",(*filteron).filetype);
 
-		strscpy( (*filters).collections.elements[(*filters).collections.nrof].name,"All",sizeof((*filters).collections.elements[(*filters).collections.nrof].name) );
-		(*filters).collections.elements[(*filters).collections.nrof].nrof = 0;
-		(*filters).collections.elements[(*filters).collections.nrof].checked = 1;
-
-		++(*filters).collections.nrof;
-
-		for(i=0;i<nrOfSubnames;i++) {
-			if ((*filters).collections.nrof < MAXFILTERELEMENTS) {
-
-			
-				if ((filteron.collection != NULL) && (strcmp(subnames[i].subname,filteron.collection) == 0)) {
-					//subnames[i].checked = 1;
-					//deselecter den gamle
-					(*filters).collections.elements[0].checked = 0;
-					(*filters).collections.elements[(*filters).collections.nrof].checked = 1;
-				}
-
-				strscpy( (*filters).collections.elements[(*filters).collections.nrof].name,subnames[i].subname,sizeof((*filters).collections.elements[(*filters).collections.nrof].name) );
-				(*filters).collections.elements[(*filters).collections.nrof].nrof = subnames[i].hits;
-				++(*filters).collections.nrof;
-			}
-		}
-
-		for (i=0;i<(*filters).collections.nrof;i++) {
-			printf("coll \"%s\"\n",(*filters).collections.elements[i].name);
-		}
-
-
-		if (filteron.filetype != NULL) {
-			printf("wil filter on filetype \"%s\"\n",filteron.filetype);
+			/*
 			y=0;
        			for (i = 0; i < (*TeffArrayElementer); i++) {
-				printf("TeffArray \"%s\" ? filteron \"%s\"\n",TeffArray[i].filetype,filteron.filetype);
-				if (strcmp(TeffArray[i].filetype,filteron.filetype) == 0) {
+				printf("TeffArray \"%s\" ? filteron \"%s\"\n",TeffArray[i].filetype,(*filteron).filetype);
+				if (strcmp(TeffArray[i].filetype,(*filteron).filetype) == 0) {
         	       			TeffArray[y] = TeffArray[i];
         		        	++y;
 				}
 			}
 
 			(*TeffArrayElementer) = y;
+			*/
 
+			for (i = 0; i < (*TeffArrayElementer); i++) {
+				if (strcmp(TeffArray[i].filetype,(*filteron).filetype) != 0) {
+					TeffArray[i].indexFiltered.filename = 1;
+				}
+			}
 
 		}
 
@@ -1671,6 +1573,221 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 }
 
 
+int searchFilterCount(int *TeffArrayElementer, struct iindexFormat *TeffArray, struct filtersFormat *filters,
+		struct subnamesFormat subnames[], int nrOfSubnames,struct filteronFormat *filteron) {
+
+		char *filesKey;
+		int *filesValue;
+		struct hashtable *h;
+		int i;
+
+		h = create_hashtable(200, fileshashfromkey, filesequalkeys);
+
+		for (i = 0; i < (*TeffArrayElementer); i++) {
+
+			//his dette er en slettet index element så teller vi den ikke.
+			//dette så vi ikke skal telle ting som folk ikke her tilgang til
+			if (TeffArray[i].deleted) {
+				continue;
+			}
+				
+			if (NULL == (filesValue = hashtable_search(h,TeffArray[i].filetype) )) {    
+				printf("not found!. Vil insert first");
+				filesValue = malloc(sizeof(int));
+				(*filesValue) = 1;
+				filesKey = strdup(TeffArray[i].filetype);
+				if (! hashtable_insert(h,filesKey,filesValue) ) {
+					printf("cant insert\n");     
+					exit(-1);
+				}
+
+		        }
+			else {
+				++(*filesValue);
+			}
+		
+		}
+
+		/*
+		for(i=0;i<nrOfSubnames;i++) {
+                	subnames[i].nrOfFiletypes = 0;
+		}
+		*/
+
+		/* Iterator constructor only returns a valid iterator if
+		 the hashtable is not empty 
+		*/
+		if (hashtable_count(h) > 0)
+		{
+			(*filters).filtypes.nrof = 0;
+
+			//legger inn All feltet
+			strscpy((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name,
+                                "All",
+	                        sizeof((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name));
+			++(*filters).filtypes.nrof;
+
+			struct hashtable_itr *itr;
+
+       			itr = hashtable_iterator(h);
+			
+       			do {
+       				filesKey = hashtable_iterator_key(itr);
+       				filesValue = (int *)hashtable_iterator_value(itr);
+
+				printf("files \"%s\": %i\n",filesKey,*filesValue);
+
+					strscpy(
+						(*filters).filtypes.elements[ (*filters).filtypes.nrof ].name,
+						filesKey,
+						sizeof((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name));
+
+					(*filters).filtypes.elements[(*filters).filtypes.nrof].nrof = (*filesValue);
+					++(*filters).filtypes.nrof;
+				
+				
+       			} while ((hashtable_iterator_advance(itr)) && ((*filters).filtypes.nrof<MAXFILTERELEMENTS));
+    			free(itr);
+
+		}
+
+		hashtable_destroy(h,1); 
+
+		printf("filtypesnrof: %i\n",(*filters).filtypes.nrof);
+		for (i=0;i<(*filters).filtypes.nrof;i++) {
+			printf("file \"%s\": %i\n",(*filters).filtypes.elements[i].name,(*filters).filtypes.elements[i].nrof);
+		}
+
+
+		//collections
+		//finner hvilken vi har trykket på, og markerer denne slik at det kan markeres i designed i klienten
+		//kopierer også inn antall treff i hver subname
+		/*
+		(*filters).collections.nrof = 0;
+
+		strscpy( (*filters).collections.elements[(*filters).collections.nrof].name,"All",sizeof((*filters).collections.elements[(*filters).collections.nrof].name) );
+		(*filters).collections.elements[(*filters).collections.nrof].nrof = 0;
+		(*filters).collections.elements[(*filters).collections.nrof].checked = 1;
+
+		++(*filters).collections.nrof;
+
+		for(i=0;i<nrOfSubnames;i++) {
+			if ((*filters).collections.nrof < MAXFILTERELEMENTS) {
+
+			
+				if (((*filteron).collection != NULL) && (strcmp(subnames[i].subname,(*filteron).collection) == 0)) {
+					//subnames[i].checked = 1;
+					//deselecter den gamle
+					(*filters).collections.elements[0].checked = 0;
+					(*filters).collections.elements[(*filters).collections.nrof].checked = 1;
+				}
+
+				//legger inn verdier
+				strscpy( (*filters).collections.elements[(*filters).collections.nrof].name,subnames[i].subname,sizeof((*filters).collections.elements[(*filters).collections.nrof].name) );
+				(*filters).collections.elements[(*filters).collections.nrof].nrof = subnames[i].hits;
+				++(*filters).collections.nrof;
+			}
+		}
+		*/
+
+		//teller faktisk subnames
+		h = create_hashtable(200, fileshashfromkey, filesequalkeys);
+
+		for (i = 0; i < (*TeffArrayElementer); i++) {
+
+			//his dette er en slettet index element så teller vi den ikke.
+			//dette så vi ikke skal telle ting som folk ikke her tilgang til
+			if (TeffArray[i].deleted) {
+				continue;
+			}
+			else if (TeffArray[i].indexFiltered.filename == 1) {
+				continue;
+			}
+				
+			if (NULL == (filesValue = hashtable_search(h,(*TeffArray[i].subname).subname) )) {    
+				printf("not found!. Vil insert first");
+				filesValue = malloc(sizeof(int));
+				(*filesValue) = 1;
+				filesKey = strdup((*TeffArray[i].subname).subname);
+				if (! hashtable_insert(h,filesKey,filesValue) ) {
+					printf("cant insert\n");     
+					exit(-1);
+				}
+
+		        }
+			else {
+				++(*filesValue);
+			}
+		
+		}
+
+		/* Iterator constructor only returns a valid iterator if
+		 the hashtable is not empty 
+		*/
+		if (hashtable_count(h) > 0)
+		{
+			(*filters).collections.nrof = 0;
+
+			//legger inn All feltet
+			strscpy((*filters).collections.elements[ (*filters).collections.nrof ].name,
+                                "All",
+	                        sizeof((*filters).collections.elements[ (*filters).collections.nrof ].name));
+			(*filters).collections.elements[(*filters).collections.nrof].nrof = 0; //må vi ha dene her. Blir All brukt ?
+			++(*filters).collections.nrof;
+
+			struct hashtable_itr *itr;
+
+       			itr = hashtable_iterator(h);
+			
+       			do {
+       				filesKey = hashtable_iterator_key(itr);
+       				filesValue = (int *)hashtable_iterator_value(itr);
+
+				printf("files \"%s\": %i\n",filesKey,*filesValue);
+
+					strscpy(
+						(*filters).collections.elements[ (*filters).collections.nrof ].name,
+						filesKey,
+						sizeof((*filters).collections.elements[ (*filters).collections.nrof ].name));
+
+					(*filters).collections.elements[(*filters).collections.nrof].nrof = (*filesValue);
+
+					++(*filters).collections.nrof;
+				
+				
+       			} while ((hashtable_iterator_advance(itr)) && ((*filters).collections.nrof<MAXFILTERELEMENTS));
+    			free(itr);
+
+		}
+		hashtable_destroy(h,1); 
+
+		//legger en hvilken som er trykket på, om noen
+		//inaliserer alle først
+		for(i=0;((i<nrOfSubnames +1) && (i<MAXFILTERELEMENTS));i++) { //+1 for og få med All
+				(*filters).collections.elements[i].checked = 0;			
+		}
+		//hvis vi ikke har trykket på noen så markerer vi All, som er nr 0.
+		//hvis ikke skal vi søke oss gjenom og finne den som er trykket på
+
+		if ((*filteron).collection == NULL) {
+			(*filters).collections.elements[0].checked = 1;
+		}
+		else {
+			for(i=0;((i<nrOfSubnames +1) && (i<MAXFILTERELEMENTS));i++) { //+1 for og få med All
+
+				if (strcmp((*filters).collections.elements[i].name,(*filteron).collection) == 0) {
+					(*filters).collections.elements[i].checked = 1;
+				}
+				
+			}
+		}
+
+		for (i=0;i<(*filters).collections.nrof;i++) {
+			printf("coll \"%s\", checked %i\n",(*filters).collections.elements[i].name,(*filters).collections.elements[i].checked);
+		}
+
+
+}
 int compare_filetypes (const void *p1, const void *p2) {
         if (((struct subnamesFiltypesFormat*)p1)->nrof > ((struct subnamesFiltypesFormat*)p2)->nrof)
                 return -1;

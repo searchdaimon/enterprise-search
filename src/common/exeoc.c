@@ -60,7 +60,7 @@ int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsiz
 	}	
 
 	//printf("documentfinishedbufsize %i\n",(*documentfinishedbufsize));
-	#ifdef DEBUG
+	//#ifdef DEBUG
 		printf("runing program \"%s\"\n",exeargv[0]);
 		i=0;
 		while(exeargv[i] != '\0') {
@@ -68,7 +68,7 @@ int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsiz
 
 			++i;
 		}
-	#endif
+	//#endif
 
 	pipe(pipefd);
 
@@ -88,7 +88,6 @@ int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsiz
 		//sleep(1);
 		//char *execvarg[] = {"/bin/cat","/tmp/test.txt", '\0'};
 		//execv("/bin/cat",execvarg);
-		//printf("program is \"%s\"\n",exeargv[0]);
 		if (execv(exeargv[0],exeargv) == -1) {
 			fprintf(stderr,"Error: can't execv at %s:%d\n",__FILE__,__LINE__);
 			perror(exeargv[0]);
