@@ -14,7 +14,7 @@
 
 
 
-int crawlpatAcces(char resource[], char username[], char password[]) 
+int crawlpatAcces(char resource[], char username[], char password[], int (*documentError)(int level, const char *fmt, ...) ) 
 {
         //tester om vi kan koble til
 	char        *prefix;
@@ -36,7 +36,7 @@ int crawlpatAcces(char resource[], char username[], char password[])
 
 	prefix = smb_mkprefix( username, password );
 
-	status =  smb_test_open( prefix, resourcereal);
+	status =  smb_test_open( prefix, resourcereal,documentError);
 
 	free(prefix);
 
@@ -50,7 +50,7 @@ int crawlpatAcces(char resource[], char username[], char password[])
 	return status;
 }
 
-int crawlcanconect( struct collectionFormat *collection) 
+int crawlcanconect( struct collectionFormat *collection,int (*documentError)(int level, const char *fmt, ...)) 
 {
         //tester om vi kan koble til
 	char        *prefix;
@@ -61,14 +61,13 @@ int crawlcanconect( struct collectionFormat *collection)
 
         printf("crawlSMB: \n\tresource: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",(*collection).resource,(*collection).user,(*collection).password);
 
-
 	if ((*collection).user == NULL) {
 		no_auth = 1;
 	}
 
 	prefix = smb_mkprefix( (*collection).user, (*collection).password );
 
-	status =  smb_test_conect( prefix, (*collection).resource,no_auth );
+	status =  smb_test_conect( prefix, (*collection).resource,no_auth , documentError);
 
 	free(prefix);
 
@@ -77,7 +76,9 @@ int crawlcanconect( struct collectionFormat *collection)
 
 int crawlfirst(struct collectionFormat *collection,
 	int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
-        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd)) {
+        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
+	int (*documentError)(int level, const char *fmt, ...)
+	) {
 
         struct crawldocumentExistFormat crawldocumentExist;
         struct crawldocumentAddFormat crawldocumentAdd;
@@ -98,7 +99,7 @@ int crawlfirst(struct collectionFormat *collection,
         printf("crawlSMB: \n\tresource: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",(*collection).resource,(*collection).user,(*collection).password);
     	prefix = smb_mkprefix( (*collection).user, (*collection).password );
 
-    	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, 0,no_auth);
+    	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, documentError, 0,no_auth);
 
     	free(prefix);
 
@@ -110,7 +111,9 @@ int crawlfirst(struct collectionFormat *collection,
 
 int crawlupdate(struct collectionFormat *collection,
 	int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
-        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd)) {
+        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
+	int (*documentError)(int level, const char *fmt, ...)
+	) {
 
         struct crawldocumentExistFormat crawldocumentExist;
         struct crawldocumentAddFormat crawldocumentAdd;
@@ -131,7 +134,7 @@ int crawlupdate(struct collectionFormat *collection,
         printf("crawlSMB: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",(*collection).resource,(*collection).user,(*collection).password);
     	prefix = smb_mkprefix( (*collection).user, (*collection).password );
 
-    	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, (*collection).lastCrawl,no_auth);
+    	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, documentError, (*collection).lastCrawl,no_auth);
 
     	free(prefix);
 
