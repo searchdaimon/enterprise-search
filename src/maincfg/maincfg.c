@@ -23,6 +23,9 @@ struct config_t maincfgopen() {
 	return cfg;
 }
 
+void maincfgclose(struct config_t *cfg){
+	config_destroy(cfg);
+}
 
 int maincfg_get_int(const config_t *cfg, const char *val) {
 

@@ -5,5 +5,5 @@
 
 struct config_t maincfgopen();
 int maincfg_get_int(const config_t *cfg, const char *val);
-
+void maincfgclose(struct config_t *cfg);
 #endif

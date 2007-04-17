@@ -33,7 +33,7 @@
 #endif
 
     //temp
-    #define NO_LOGING
+    //#define NO_LOGING
 
     #include <mysql.h>
 
@@ -48,7 +48,14 @@
 
     #define MAXDATASIZE 100 // max number of bytes we can get at once 
 
-    #define maxServers 100
+
+	//ikke sikert 1 vil være for altid, da vi blant annent snart vil støtte clustring, men trenger desperat 
+	//og få ned stack støreslen, så valgrin fungerer igjen 
+	#ifdef BLACK_BOKS
+	    #define maxServers 30
+	#else
+	    #define maxServers 100
+	#endif
 
     //extern int errno;
 
@@ -529,8 +536,8 @@ int main(int argc, char *argv[])
 	int res;
 	int nerror;
 	int dataReceived[maxServers];
-	int siderDataReceived[maxServers];
-        char buf[MAXDATASIZE];
+	//int siderDataReceived[maxServers];
+        //char buf[MAXDATASIZE];
         //struct hostent *he[maxServers];
 	FILE *LOGFILE;
 	//struct SiderFormat Sider[20 * maxServers];
@@ -542,7 +549,7 @@ int main(int argc, char *argv[])
 
 
 	struct SiderHederFormat FinalSiderHeder;
-	char buff[4096]; //generell buffer
+	//char buff[4096]; //generell buffer
 	struct in_addr ipaddr;
         struct QueryDataForamt QueryData;
 	//int connected[maxServers];
@@ -715,6 +722,7 @@ int main(int argc, char *argv[])
 	        printf("Content-type: text/plain\n\n");
 	#else
 	        printf("Content-type: text/xml\n\n");
+	        //printf("Content-type: text/xml%c%c\n",13,10);
 	#endif
 
 	memset(&QueryData,'\0',sizeof(QueryData));
@@ -1636,10 +1644,11 @@ int main(int argc, char *argv[])
 			}
 			else {
                 		printf("<RESULT>\n");
-				printf("\t<BID></BID>\n");
+				//printf("\t<BID></BID>\n");
 			}
 
                 	printf("\t<DOCID>%i-%i</DOCID>\n",Sider[i].iindex.DocID,rLotForDOCid(Sider[i].iindex.DocID));
+
 
                 	printf("\t<TITLE><![CDATA[%s]]></TITLE>\n",Sider[i].title);
 
@@ -1647,13 +1656,15 @@ int main(int argc, char *argv[])
                 	//DocumentIndex
                 	printf("\t<URL><![CDATA[%s]]></URL>\n",Sider[i].url);
                 	printf("\t<URI><![CDATA[%s]]></URI>\n",Sider[i].uri);
-                	printf("\t<ADULTWEIGHT>%hu</ADULTWEIGHT>\n",Sider[i].DocumentIndex.AdultWeight);
 
-				//gjør om språk fra tall til code
-				//void getLangCode(char langcode[],int langnr)
-				//printf("lang nr is %s\n",Sider[i].DocumentIndex.Sprok);
-				getLangCode(documentlangcode,atoi(Sider[i].DocumentIndex.Sprok));
-				//printf("lang is %s\n",Sider[i].DocumentIndex.Sprok);
+			//gjør om språk fra tall til code
+			//void getLangCode(char langcode[],int langnr)
+			//printf("lang nr is %s\n",Sider[i].DocumentIndex.Sprok);
+			getLangCode(documentlangcode,atoi(Sider[i].DocumentIndex.Sprok));
+			//printf("lang is %s\n",Sider[i].DocumentIndex.Sprok);
+
+
+
 
                 	printf("\t<DOCUMENTLANGUAGE>%s</DOCUMENTLANGUAGE>\n",documentlangcode);
                 	//temp: blir rare tegn her              
@@ -1661,6 +1672,7 @@ int main(int argc, char *argv[])
 
                 	printf("\t<POSISJON>%i</POSISJON>\n",x);
                 	printf("\t<REPOSITORYSIZE>%u</REPOSITORYSIZE>\n",Sider[i].DocumentIndex.htmlSize);
+
 
 			if (Sider[i].thumbnale[0] != '\0') {
                 		printf("\t<THUMBNAIL>%s</THUMBNAIL>\n",Sider[i].thumbnale);
@@ -1673,31 +1685,17 @@ int main(int argc, char *argv[])
 				printf("\t<THUMBNAILWIDTH></THUMBNAILWIDTH>\n");
 				printf("\t<THUMBNAILHEIGHT></THUMBNAILHEIGHT>\n");
 			}
-                	printf("\t<CACHE>%s</CACHE>\n",Sider[i].cacheLink);
 
-                	printf("\t<METADESCRIPTION><![CDATA[]]></METADESCRIPTION>\n");
-                	printf("\t<CATEGORY></CATEGORY>\n");
-                	printf("\t<OFFENSIVE_CODE>FALSE</OFFENSIVE_CODE>\n");
 
 
                 	printf("\t<DESCRIPTION><![CDATA[%s]]></DESCRIPTION>\n",Sider[i].description);
-                	printf("\t<TERMRANK>%i</TERMRANK>\n",Sider[i].iindex.TermRank);
-                	printf("\t<POPRANK>%i</POPRANK>\n",Sider[i].iindex.PopRank);
-                	printf("\t<ALLRANK>%i</ALLRANK>\n",Sider[i].iindex.allrank);
 
-			ipaddr.s_addr = Sider[i].DocumentIndex.IPAddress;
 
-                	printf("\t<IPADDRESS>%s</IPADDRESS>\n",inet_ntoa(ipaddr));
-
-                	printf("\t<RESPONSE>%hu</RESPONSE>\n",Sider[i].DocumentIndex.response);
-
-			printf("\t<CRAWLERVERSION>%f</CRAWLERVERSION>\n",Sider[i].DocumentIndex.clientVersion);
 
 			printf("\t<CRC32>%u</CRC32>\n",Sider[i].DocumentIndex.crc32);
-			printf("\t<HTMLPREPARSED>%i</HTMLPREPARSED>\n",Sider[i].HtmlPreparsed);
-			printf("\t<PAGEGENERATETIME>%f</PAGEGENERATETIME>\n",Sider[i].pageGenerateTime);
 
-			printf("\t<SERVERNAME>%s</SERVERNAME>\n",Sider[i].servername);
+			//ser ikke ut til at vi teller den
+			//printf("\t<PAGEGENERATETIME>%f</PAGEGENERATETIME>\n",Sider[i].pageGenerateTime);
 
                 	printf("\t<NROFHITS>%i</NROFHITS>\n",Sider[i].iindex.TermAntall);
                 	//printer ut hits (hvor i dokumenetet orde befinner seg ).
@@ -1714,7 +1712,35 @@ int main(int argc, char *argv[])
 				timebuf[24] = '\0';
 				printf("\t<TIME_ISO>%s</TIME_ISO>\n",timebuf);
 
-				printf("<RESULT_COLLECTION>%s</RESULT_COLLECTION>\n",Sider[i].subname.subname);
+				printf("\t<RESULT_COLLECTION>%s</RESULT_COLLECTION>\n",Sider[i].subname.subname);
+
+				//sender en tom cashe link. Må ha cashe link hvis ikke bryter vi designet
+	                	printf("\t<CACHE></CACHE>\n");
+
+
+			#else
+				printf("\t<SERVERNAME>%s</SERVERNAME>\n",Sider[i].servername);
+
+	                	printf("\t<ADULTWEIGHT>%hu</ADULTWEIGHT>\n",Sider[i].DocumentIndex.AdultWeight);
+	                	printf("\t<METADESCRIPTION><![CDATA[]]></METADESCRIPTION>\n");
+	                	printf("\t<CATEGORY></CATEGORY>\n");
+	                	printf("\t<OFFENSIVE_CODE>FALSE</OFFENSIVE_CODE>\n");
+
+                		printf("\t<TERMRANK>%i</TERMRANK>\n",Sider[i].iindex.TermRank);
+                		printf("\t<POPRANK>%i</POPRANK>\n",Sider[i].iindex.PopRank);
+        	        	printf("\t<ALLRANK>%i</ALLRANK>\n",Sider[i].iindex.allrank);
+
+				ipaddr.s_addr = Sider[i].DocumentIndex.IPAddress;
+
+                		printf("\t<IPADDRESS>%s</IPADDRESS>\n",inet_ntoa(ipaddr));
+
+                		printf("\t<RESPONSE>%hu</RESPONSE>\n",Sider[i].DocumentIndex.response);
+
+				printf("\t<CRAWLERVERSION>%f</CRAWLERVERSION>\n",Sider[i].DocumentIndex.clientVersion);
+				printf("\t<HTMLPREPARSED>%i</HTMLPREPARSED>\n",Sider[i].HtmlPreparsed);
+
+	                	printf("\t<CACHE>%s</CACHE>\n",Sider[i].cacheLink);
+
 
 			#endif
 		
@@ -1746,6 +1772,7 @@ int main(int argc, char *argv[])
 	}
 
 	printf("</SEARCH>\n");
+
 	
 	#ifdef DEBUG
 	gettimeofday(&start_time, NULL);
@@ -1834,45 +1861,54 @@ int main(int argc, char *argv[])
 	//mysql logging
 	/********************************************************************************************/
 	#ifndef NO_LOGING
-	#ifdef DEBUG
-		printf("Connecting to mysql db\n");
-	#endif
+		#ifdef DEBUG
+			printf("Connecting to mysql db\n");
+		#endif
 
-	mysql_init(&demo_db);
+		mysql_init(&demo_db);
 
-	#ifndef BLACK_BOKS
-	if(!mysql_real_connect(&demo_db, "www2.boitho.com", "boitho_remote", "G7J7v5L5Y7", "boitho", 3306, NULL, 0)){
-    		printf(mysql_error(&demo_db));
-    		exit(1);
-	}
-	#else
-	if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
-    		printf(mysql_error(&demo_db));
-    		exit(1);
-	}
-	#endif
+		#ifndef BLACK_BOKS
+			if(!mysql_real_connect(&demo_db, "www2.boitho.com", "boitho_remote", "G7J7v5L5Y7", "boitho", 3306, NULL, 0)){
+    				fprintf(stderr,mysql_error(&demo_db));
+    				//exit(1);
+			}
+		#else
+			if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
+    				fprintf(stderr,mysql_error(&demo_db));
+    				//exit(1);
+			}
+		#endif
+		else {
 
-	//escaper queryet rikit
-	mysql_real_escape_string(&demo_db,QueryData.queryEscaped,QueryData.query,strlen(QueryData.query));
+			//escaper queryet rikit
+			mysql_real_escape_string(&demo_db,QueryData.queryEscaped,QueryData.query,strlen(QueryData.query));
 
 
-	//logger til mysql
-	sprintf(query,"insert DELAYED into search_logg values(NULL,NOW(),\"%s\",\"%s\",\"%i\",\"%f\",\"%s\",\"1\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\")",QueryData.queryEscaped,QueryData.search_user,FinalSiderHeder.TotaltTreff,FinalSiderHeder.total_usecs,QueryData.userip,totlaAds,QueryData.HTTP_ACCEPT_LANGUAGE,QueryData.HTTP_USER_AGENT,QueryData.HTTP_REFERER,QueryData.GeoIPcontry);
+			//logger til mysql
+			sprintf(query,"insert DELAYED into search_logg values(NULL,NOW(),\"%s\",\"%s\",\"%i\",\"%f\",\"%s\",\"1\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\")",QueryData.queryEscaped,QueryData.search_user,FinalSiderHeder.TotaltTreff,FinalSiderHeder.total_usecs,QueryData.userip,totlaAds,QueryData.HTTP_ACCEPT_LANGUAGE,QueryData.HTTP_USER_AGENT,QueryData.HTTP_REFERER,QueryData.GeoIPcontry);
 
-	mysql_real_query(&demo_db, query, strlen(query));
+			mysql_real_query(&demo_db, query, strlen(query));
 
-	//mysql_free_result(mysqlres);
-	mysql_close(&demo_db);
+			//mysql_free_result(mysqlres);
+			mysql_close(&demo_db);
+		}
 	#endif
 
 	/********************************************************************************************/
 
   	/* Free the configuration */
 	#ifndef BLACK_BOKS
-	config_destroy(&cfg);
+		config_destroy(&cfg);
 	#endif
 
-        return 0;
+	maincfgclose(&maincfg);
+
+//	fprintf(stderr,"dispatcher_all: done\n");
+
+	//må vi tvinge en buffer tømming ???
+	printf("\n\n");	
+
+        return EXIT_SUCCESS;
 } 
 
 
