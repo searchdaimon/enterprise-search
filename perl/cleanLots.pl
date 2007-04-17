@@ -22,15 +22,15 @@ foreach my $lot (0 .. 4096) {
 				print "name $dirtyfile\n";
 				print "lot $lot, subname $subname\n";
 
-				$command = qq{bin/IndexerLotbb $lot $subname};
+				$command = $ENV{'BOITHOHOME'} . "/bin/IndexerLotbb $lot $subname";
 				print "runing $command\n";
 				system($command);
 
-				$command = qq{bin/LotInvertetIndexMaker2 Main $lot $subname};
+				$command = $ENV{'BOITHOHOME'} . "/bin/LotInvertetIndexMaker2 Main $lot $subname";
 				print "runing $command\n";
                                 system($command);
 
-				$command = qq{bin/mergeUserToSubname $lot $subname};
+				$command = $ENV{'BOITHOHOME'} . "/bin/mergeUserToSubname $lot $subname";
 				print "runing $command\n";
                                 system($command);
 
@@ -54,7 +54,7 @@ print "\nmergeIIndex:\n";
 foreach my $key (keys %hiestinlot) {
 	print "key $key, value $hiestinlot{$key}\n";
 
-	$command = qq{bin/mergeIIndex 1 $hiestinlot{$key} Main aa $key};
+	$command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} Main aa $key";
 
 	print "runing $command\n";
 	system($command);
