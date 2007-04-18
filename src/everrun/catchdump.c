@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
 
 static void
 setrlimits(void)
@@ -21,7 +22,6 @@ setrlimits(void)
 	}
 	if (rlim.rlim_max == RLIM_INFINITY || rlim.rlim_cur < rlim.rlim_max) {
 		rlim.rlim_cur = rlim.rlim_max;
-		printf("rlim_cur: %d\n", rlim.rlim_cur);
 		if (setrlimit(RLIMIT_CORE, &rlim) == -1) {
 			perror("setrlimit");
 		}
@@ -30,7 +30,6 @@ setrlimits(void)
 		perror("getrlimit");
 		return;
 	}
-	printf("Soft: %d Hard: %d\n", rlim.rlim_cur, rlim.rlim_max);
 }
 
 #ifndef WCOREDUMP
@@ -88,50 +87,137 @@ get_coredumppath(int pid, char *buf, size_t len)
 }
 
 int
-grab_coredump(char *buf, int pid)
+dup_file(char *from, char *to)
+{
+	int fdfrom, fdto;
+	int n;
+	char buf[10240];
+
+	printf("%s => %s\n", from, to);
+	if ((fdfrom = open(from, O_RDONLY, 0)) == -1) {
+		perror("open(from)");
+		return -1;
+	}
+	if ((fdto = open(to, O_WRONLY|O_EXCL|O_CREAT)) == -1) {
+		perror("open(to)");
+		close(fdfrom);
+		return -1;
+	}
+	
+	while ((n = read(fdfrom, buf, sizeof(buf))) > 0) {
+		if (write(fdto, buf, n) == -1)
+			perror("write()");
+	}
+	if (n == -1) {
+		perror("read()");
+		close(fdfrom);
+		close(fdto);
+	}
+
+	close(fdfrom);
+	close(fdto);
+	
+	return 0;
+}
+
+int
+grab_coredump(char *buf, int pid, char *progname)
 {
 	struct stat st;
+	char path[1024];
+	char *p, *prognametmp;
 
 	/* Does the file exist? */
 	if (stat(buf, &st) == -1) {
 		return -1;
 	}
-
 	fprintf(stderr, "Found the file!\n");
+
+	if ((prognametmp = strdup(progname)) == NULL) {
+		return -1;
+	}
+
+	for (p = prognametmp; *p != '\0'; p++) {
+		if (*p == '/') {
+			*p = '-';
+		}
+	}
+	snprintf(path, sizeof(path), "/coredumps/saved/%s.%d", prognametmp, pid);
+	free(prognametmp);
+
+	if (dup_file(buf, path)) {
+		fprintf(stderr, "Unable to duplicate corefile, removing old one anyway.\n");
+		unlink(buf);
+		return -1;
+	}
+
+	fprintf(stderr, "Removing core file...\n");
+	unlink(buf);
 
 	return 0;
 }
 
 int
-main(void)
+dumpcatcher(char *prog, char **argv)
 {
 	int pid;
 
-	/* We need to set the core dump size */
-	setrlimits();
-
-	pid = fork();
+	pid = fork(); 
 	if (pid == 0) { /* Child */
-		execlp("/bin/sh", "sh", "dump.sh", NULL);
+		execvp(prog, argv);
 	} else if (pid > 0) { /* Parent */
 		int status;
 
 		while (waitpid(pid, &status, 0) <= 0) {
 			fprintf(stderr, "Looping...\n");
 		}
+		printf("Program exited...\n");
 		if (WIFSIGNALED(status) && WCOREDUMP(status)) {
 			char buf[1024];
 
 			/* Need to find the coredump if we get here... */
 			if (get_coredumppath(pid, buf, sizeof(buf)) == 0) {
 				printf("Got a coredump! %s\n", buf);
-				grab_coredump(buf, pid);
+				grab_coredump(buf, pid, prog);
 			} else {
 				fprintf(stderr, "Unable to locate coredump\n");
 			}
 		}
 	} else { /* Error */
 		perror("fork()");
+	}
+
+	return 0;
+}
+
+int
+main(int argc, char **argv)
+{
+	char **newargv;
+	int i;
+
+	if (argc < 2) {
+		fprintf(stderr, "Syntax: ./everrun prog [arg1 [argn ...]]\n");
+		exit(1);
+	}
+	newargv = malloc((argc)*sizeof(char *));
+	for (i = 0; i < argc; i++) {
+		newargv[i] = argv[i+1];
+	}
+	newargv[i] = NULL;
+
+	/* We need to set the core dump size */
+	setrlimits();
+
+	printf("Running: `");
+	for (i = 0; i < argc-1; i++) {
+		printf("%s%s", i==0?"":" ", newargv[i]);
+	}
+	puts("`");
+
+	for (;;) {
+		dumpcatcher(newargv[0], newargv);
+		sleep(5); // Avoid hammering
 	}
 
 	return 0;
