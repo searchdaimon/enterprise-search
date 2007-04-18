@@ -47,8 +47,7 @@ get_coredumppath(int pid, char *buf, size_t len)
 	if ((tmpbuf = malloc(len * sizeof(char))) == NULL)
 		return -1;
 
-	fp = fopen("/proc/sys/kernel/core_pattern", "r");
-	if (fp == NULL) {
+	if ((fp = fopen("/proc/sys/kernel/core_pattern", "r")) == NULL) {
 		free(tmpbuf);
 		return -1;
 	}
