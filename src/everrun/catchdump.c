@@ -139,8 +139,6 @@ grab_coredump(char *buf, int pid, char *progname)
 	if (stat(buf, &st) == -1) {
 		return -1;
 	}
-	fprintf(stderr, "Found the file!\n");
-
 	if ((prognametmp = strdup(progname)) == NULL) {
 		return -1;
 	}
@@ -154,12 +152,11 @@ grab_coredump(char *buf, int pid, char *progname)
 	free(prognametmp);
 
 	if (dup_file(buf, path)) {
-		fprintf(stderr, "Unable to duplicate corefile, removing old one anyway.\n");
+		perror("Unable to duplicate corefile, removing old one anyway");
 		unlink(buf);
 		return -1;
 	}
 
-	fprintf(stderr, "Removing core file...\n");
 	unlink(buf);
 
 	return 0;
@@ -184,7 +181,6 @@ dumpcatcher(char *prog, char **argv)
 
 			/* Need to find the coredump if we get here... */
 			if (get_coredumppath(pid, buf, sizeof(buf)) == 0) {
-				printf("Got a coredump: %s\n", buf);
 				grab_coredump(buf, pid, prog);
 			} else {
 				fprintf(stderr, "Unable to locate coredump.\n");
@@ -225,7 +221,6 @@ main(int argc, char **argv)
 	for (;;) {
 		dumpcatcher(newargv[0], newargv);
 		sleep(5); // Avoid hammering
-		printf("Restarting...\n");
 	}
 
 	return 0;
