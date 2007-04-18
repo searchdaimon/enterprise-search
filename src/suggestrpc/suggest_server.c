@@ -10,6 +10,8 @@
 #include "suggest.h"
 #include "../suggest/suggest.h"
 
+#include "../common/boithohome.h"
+
 pthread_mutex_t    mutex = PTHREAD_MUTEX_INITIALIZER;
 struct suggest_data *sd = NULL;
 
@@ -35,7 +37,12 @@ get_best_results_1_svc(char **argp, namenode *result, struct svc_req *rqstp)
 		sd = suggest_init();
 		if (sd == NULL)
 			return FALSE;
-		suggest_read_frequency(sd, "../suggest/UnikeTermerMedForekomst.ENG");
+		//runarb: legger inn støtte for å heller bruke dictionarywords.txt som ordbok
+		//suggest_read_frequency(sd, "../suggest/UnikeTermerMedForekomst.ENG");
+		if (suggest_read_frequency(sd, bfile("data/dictionarywords.txt")) == -1) {
+			perror(bfile("data/dictionarywords.txt"));
+			exit(EXIT_FAILURE);
+		}
 		suggest_most_used(sd);
 	}
 	if (pthread_mutex_unlock(&mutex) != 0) {
@@ -101,7 +108,13 @@ get_best_results_1_svc(char **argp, struct svc_req *rqstp)
 		sd = suggest_init();
 		if (sd == NULL)
 			return &result;
-		suggest_read_frequency(sd, "../suggest/UnikeTermerMedForekomst.ENG");
+		//runarb: legger inn støtte for å heller bruke dictionarywords.txt som ordbok
+		//suggest_read_frequency(sd, "../suggest/UnikeTermerMedForekomst.ENG");
+		if (suggest_read_frequency(sd, bfile("data/dictionarywords.txt")) == -1) {
+			perror(bfile("data/dictionarywords.txt"));
+			exit(EXIT_FAILURE);
+		}
+
 		suggest_most_used(sd);
 	}
 
