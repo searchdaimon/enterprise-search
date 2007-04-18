@@ -36,7 +36,7 @@ BDB = -I/usr/local/BerkeleyDB.4.5/include/ /usr/local/BerkeleyDB.4.5/lib/libdb.a
 #skrur dette på igjen. Brukte det og segfeile når vi hadde det med statisk?
 # !! av ukjenet grunner ser dette ut til og altid må være sist hvis vi skal linke statisk
 #SMBCLIENT=src/3pLibs/samba-3.0.24/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.24/source/include/
-SMBCLIENT=/home/boitho/src/3pLibs/samba-3.0.24/source/bin/libsmbclient.a -I/home/boitho/src/3pLibs/samba-3.0.24/source/include/
+SMBCLIENT=/home/boitho/src/samba-3.0.24/source/bin/libsmbclient.a -I/home/boitho/src/samba-3.0.24/source/include/
 
 BBDOCUMENT = src/bbdocument/bbdocument.c $(BDB) -D BLACK_BOKS
 #BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail.c -DBBDOCUMENT_IMAGE $(IM)
@@ -77,7 +77,7 @@ HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun setuidcaller InitServices searchddep
+bb : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun setuidcaller InitServices searchddep dictionarywordsLot
 
 tempFikes: IndexerLot_fik32bitbug DIconvert
 
@@ -128,7 +128,7 @@ IndexerLotbb: src/IndexerLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(IndexerLot) -D BLACK_BOKS src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/IndexerLotbb
+	$(CC) $(IndexerLot) -D BLACK_BOKS -D PRESERVE_WORDS src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/IndexerLotbb
 
 baddsPageAnalyser: src/baddsPageAnalyser/main.c
 	@echo ""
@@ -160,6 +160,12 @@ IndexerLot_getno: src/IndexerLot_getno/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLot_getno/main.c  src/parser/lex.yy.c src/parser/lex.yy.c -o bin/IndexerLot_getno $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
+
+dictionarywordsLot: src/dictionarywordsLot/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/dictionarywordsLot/main.c src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/dictionarywordsLot $(LDFLAGS)
 
 lotlistDispatcher: src/lotlistDispatcher/main.c
 	@echo ""
