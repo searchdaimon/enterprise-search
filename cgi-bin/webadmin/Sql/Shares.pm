@@ -11,7 +11,7 @@ my $table = "shares";
 my $dbh;
 my @valid = qw(host connector active success
 		last rate query1 query2
-		smb_name smb_workgroup resource domain collection_name auth_id);
+		smb_name smb_workgroup resource domain collection_name auth_id userprefix);
 
 sub new {
 	my $class = shift;
@@ -78,18 +78,23 @@ sub _get_collection_and_auth {
 sub update_share {
 	my $self = shift;
 	my $data = shift;
+
+	
 	
 	my ($collection_name, $auth_id) = $self->_get_collection_and_auth($data);
 	$data->{'collection_name'} = $collection_name;
-	$data->{'auth_id'} = $auth_id;	
+	$data->{'auth_id'} = $auth_id;
+
+	
 
 	# TODO: Use construct_update_query instead.
 	my @bind_values = ();
 	my $query = "UPDATE $table SET ";
 	while (my ($key, $value) = each(%$data)) {
-		next unless (grep /^$key$/, @valid);
+		next unless grep { /^$key$/ } @valid;
 		$query .= "$key=?,";
 		push @bind_values, $value;
+		
 		
 	}
 	chop ($query);
@@ -97,11 +102,13 @@ sub update_share {
 	$query .= " WHERE id = ?";
 	push @bind_values, $data->{'id'};
 	
-
+	carp "Query: ", $query;
 	my $sth = $dbh->prepare($query)
 		or croak("pepare: " . $dbh->errstr);
 	my $rv = $sth->execute(@bind_values)
 		or croak("execute:", $dbh->errstr);
+
+	
 	
 	return 1;
 }
@@ -191,7 +198,7 @@ sub get_share {
 	my $share = Sql::Sql::single_row_fetch($dbh, $query, $id);
 	
 	# Get username and password
-	($share->{'username'}, $share->{'password'}) = $sqlAuth->get_pair($id);
+	($share->{'username'}, $share->{'password'}) = $sqlAuth->get_pair_by_share($id);
 
 	return $share;
 }

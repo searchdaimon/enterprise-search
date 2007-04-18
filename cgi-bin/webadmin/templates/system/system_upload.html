@@ -18,40 +18,72 @@
 [% END %]
 
 <h3>Software updates</h3>
-[% UNLESS availabe_updates.defined %]
+[% UNLESS available_packages.defined %]
+<form action="system.cgi" method="POST">	
+	<input type="submit" name="submit.software_check_updates" value="Check for updates.." />
+</form>
+
+[% IF update_result.defined %]
 	
-	<input type="submit" name="software.check_updates" value="Check for updates.." />
+	<h4>Update result:</h4>
+	<ol>
+	[% FOREACH line IN update_result %]
+		[% color = 1 - color %]
+				<li>
+				[% IF color %]<span>
+				[% ELSE %]<span style="background : #f2f2f2"> [% END %]
+				[% HTML.escape(line) %] </span></li>
+	[% END %]
+	</ol>
+[% END %]
 
 [% ELSE %]
 
-	[% UNLESS available_updates.size %]
+	[% UNLESS available_packages.size %]
 
 		<p>Your system is up to date. There are currently no updatese avaialble for the 
 <strong>[% bbox_version %]</strong> version of Black Box.</p>
 
 	[% ELSE %]
+	    <h4>Updates available</h4>
 		[% WRAPPER 'template_table.html'
-				header = ['', 'Software package'] %]
+				header = ['', 'Software package', 'Version', 'Release'] %]
 	
-		[% FOREACH package IN available_updates %]
-			<p>Updates available</p>
+		[% FOREACH package IN available_packages %]
 		
 			
 			[% WRAPPER 'template_table_row.html' %]
 	
 				<td><!-- todo: find icon --></td>
-				<td>[% package %]</td>
-			
+				<td>[% package.name %]</td>
+				<td>[% package.version %]</td>
+				<td>[% package.release %]</td>
 			[% color = 1 - color %]
 			[% END #row %]
 		[% END #foreach %]
 		[% END #table %]
+
+		<form action="system.cgi" method="POST">
+		    <input type="submit" name="submit.software_install_available" value="Install updates" style="margin-top : 1em;" />
+		</form>
 	[% END %]
 
 [% END %]
 
 <h3>Upload software package</h3>
 
+[% IF install_result.defined %]
+	<h4>Install result:</h4>
+
+	<ol>
+	[% FOREACH line IN install_result %]
+		<li>
+				[% IF color %]<span>
+				[% ELSE %]<span style="background : #f2f2f2"> [% END %]
+				[% HTML.escape(line) %] </span></li>
+	[% END %]
+	</ol>
+[% END %]
 
 [% IF succ_upload_file.defined %]
 	[% WRAPPER 'template_message.html' type="success" %]
@@ -92,8 +124,9 @@
 	[% color = 1 - color %]
 	[% END %]
 [% END %]
-<input type="submit" value="Install" />
-
+<form action="system.cgi" method="post">
+	<input type="submit" name="submit.software_install_uploaded" value="Install" style="margin-top : 1em;" />
+</form>
 
 
 

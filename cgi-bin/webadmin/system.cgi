@@ -17,7 +17,7 @@ use Page::System::Packages;
 use Common::Generic qw(init_root_page);
 
 my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
-	= init_root_page('/templates/system', 'Page::System');
+	= init_root_page('/templates/system:./templates/common/network', 'Page::System');
 
 my %state = %{$state_ptr};
 my $template_file;
@@ -32,8 +32,23 @@ if (defined $state{'submit'}) {
 	
 	# User submitted network conf form.
 	if (defined $button->{'network_conf'}) {
-		$pageNetwork->process_network_config($vars, $state{'netconf'});
+		$pageNetwork->process_network_config($vars, $state{'netconf'}, $state{'resolv'});
 		($vars, $template_file) = $pageNetwork->show_network_config($vars);	
+	}
+
+	# User wants a list of available updates..
+	if (defined $button->{'software_check_updates'}) {
+	    ($vars, $template_file) = $pagePackages->show($vars, "SHOW_AVAILABLE");
+	}
+
+	# User wants to update software on the black box.
+	if (defined $button->{'software_install_available'}) {
+		($vars, $template_file) = $pagePackages->update_packages($vars);
+	}
+
+	# User wants to install manually uploaded packages
+	if (defined $button->{'software_install_uploaded'}) {
+		($vars, $template_file) = $pagePackages->install_uploaded($vars);
 	}
 }
 

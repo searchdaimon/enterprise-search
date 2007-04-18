@@ -32,9 +32,8 @@
 		[% PROCESS sub_fields
 			header = 'Groups'
 			blocks = ['groups']
-			icon = 'group'
+			icon = 'kdmconfig'
 		%]
-
 
 	[% ELSIF field == 'connector' %]
 		[% PROCESS sub_fields
@@ -56,8 +55,15 @@
 			icon = 'configure'
 		%]
 
+	[% ELSIF field == 'user_prefix' %]
+		[% PROCESS sub_fields
+			header = 'User prefix'
+			blocks = ['user_prefix']
+			icon = 'xedit'
+		%]
+
 	[% ELSE %]
-		Developer warning: unknown field [% field %].
+		Warning: unknown field [% field %].
 	[% END %]
 [% END %]
 

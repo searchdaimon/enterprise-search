@@ -93,7 +93,8 @@ A:active { color : blue; }
 #tabs {
     list-style-type : none;
     padding : 0;
-    margin : 0;
+    /* margin : 0 */
+	margin-bottom : 1em;
     border-bottom : 1px solid;
   }
 
@@ -221,4 +222,9 @@ A:active { color : blue; }
 .connector_block .connector_block_inner {
 	margin-left : 70px;
 	min-height : 60px;
+}
+
+.example {
+	font-size : x-small; 
+	font-style: italic;
 }

@@ -82,7 +82,8 @@ sub edit_collection {
 	my $template_file = "overview_edit.html";
 	my $sqlShares = $self->{'sqlShares'};
 	my $sqlGroups = $self->{'sqlGroups'};
-
+	
+	
 	my $state = $self->{'state'};
 	
 	my ($input_fields, $id);
@@ -131,25 +132,29 @@ sub manage_collection {
 }
 
 sub submit_edit {
-	my ($self, $vars) = (@_);
+	my ($self, $vars, $share) = @_;
 
-	my $sqlShares = $self->{'sqlShares'};
+	my $sqlShares     = $self->{'sqlShares'};
 	my $sqlConnectors = $self->{'sqlConnectors'};
-	my $sqlGroups = $self->{'sqlGroups'};
+	my $sqlGroups     = $self->{'sqlGroups'};
+
 	
-	my $state = $self->{'state'};
-	my $share = $state->{'share'};	
+
+	unless (defined $share) {
+		croak "argument share not provided";
+	}
+	
 	my $dbh = $self->{'dbh'};
 	
 	my $connector = $sqlShares->get_connector_name($share->{'id'});
 	
 	# Check for errors
-	my ($valid, $msg) = Collection::validate($dbh, $share, 
+	my $c_collection = Common::Collection->new($dbh);
+	my ($valid, $msg) = $c_collection->validate($share, 
 		qw(collection_name share));
-	
+
+
 	unless ($valid) {
-		
-		#$template_file = 'resources_edit.html';
 		$vars->{'share'} = $share;
 		$vars->{'input_fields'} = $sqlConnectors->get_input_fields($connector);
 		$vars->{$msg} = 1;
@@ -162,6 +167,7 @@ sub submit_edit {
 
 	$vars->{'edit_success'} = 1;
 	return ($vars, $valid);
+	
 }
 
 sub activate_collection($$$) {
@@ -268,8 +274,11 @@ sub _get_associated_data($$$) {
 	my $sqlAuth = $self->{'sqlAuth'};
 	my $infoquery = $self->{'infoQuery'};
 	
-	$vars->{'authentication'} = $sqlAuth->get_authentication
-		if grep /^authentication$/, @$fields;
+	if (grep { /^authentication$/ } @$fields) {
+		my @authdata = $sqlAuth->get_all_auth();
+		$vars->{'authentication'} = \@authdata;
+	}
+
 	$vars->{'connectors'} = $sqlConnectors->get_connectors()
 		if grep /^connector$/, @$fields;
 	$vars->{'group_list'} = $infoquery->listGroups

@@ -32,7 +32,7 @@ sub show {
 	
 	if ($show_available) {
 		$yum->clean();
-		my @updates = $yum->check_updates();
+		my @updates = $yum->check_update();
 		$vars->{'available_packages'} = \@updates;
 	}
 	
@@ -61,7 +61,7 @@ sub upload_package {
 	
 	# Add number suffix if file already exists.
 	my $filenum = q{};
-	while (-e "$upload_folder/$filenum$filename.rpm") {
+	while (-e "$upload_folder/$filenum$filename") {
 		if (not $filenum) {
 			$filenum = 1;
 		}
@@ -91,7 +91,15 @@ sub upload_package {
 	return $self->show($vars);
 }
 
-
+##
+# Strip mean (and not mean) characters from a given filename.
+# Helper function for upload_package();
+#
+# Parameters:
+#   filename - String with filename.
+#
+# Returns
+#   filename - Stripped filename
 sub strip_filename {
 	my ($self, $filename) = @_;
 	# Allowed chars: a-z, 0-9, -, .
@@ -109,5 +117,38 @@ sub strip_filename {
 	return $newname;
 }
 
+##
+# Runs yum update and shows package page with results from execution.
+sub update_packages {
+    my ($self, $vars) = @_;
+    
+    my ($status, @output) = $yum->update();
+    
+    $vars->{'update_result'} = \@output;
+
+    return $self->show($vars);
+}
+
+##
+# Install uploaded packages. Show results of install.
+sub install_uploaded {
+	my ($self, $vars) = @_;
+
+	my @new_packages = $yum->list_rpm_dir();
+	my @output;
+
+	foreach my $package (@new_packages) {
+		my ($success, @result) = $yum->localinstall($package);
+		@output = (@output, @result);
+
+		if ($success) {
+			#TODO: Delete rpm file.
+		}
+		
+	}
+	$vars->{'install_result'} = \@output;
+	
+	return $self->show($vars);
+}
 
 1;

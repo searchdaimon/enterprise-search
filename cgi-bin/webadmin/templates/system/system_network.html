@@ -1,17 +1,10 @@
-[% INCLUDE 'header.html' title = 'Configure network' %]
+[% INCLUDE 'header.html' title = 'Configure network' extra_css=['check_list'] %]
 [% USE HTML %]
-[% USE Dumper %]
 [% PROCESS 'network_config.html' %]
-
+[% PROCESS 'network_messages.html' %]
 [% PROCESS 'system_tabs.html' selected="Network configuration" %]
 
-
-[% IF error_msg_net.defined %]
-	[% WRAPPER 'template_message.html' type='error' %] [% error_msg_net %] [% END %]
-[% END %]
-[% IF succ_msg_net.defined %]
-	[% WRAPPER 'template_message.html' type='success' %] Network configuration updated [% END %]
-[% END %]
+[% checkListHTML %]
 
 <form action="system.cgi" method="post">
 [% PROCESS network_config %]

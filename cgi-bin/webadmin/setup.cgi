@@ -24,7 +24,7 @@ use Common::Generic qw(init_root_page);
 
 # Init
 my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
-	= init_root_page('/templates/setup', 'Page::Setup');
+	= init_root_page('/templates/setup:./templates/common/network', 'Page::Setup');
 my %state = %$state_ptr;
 my $template_file;
 my $header_printed;
@@ -91,14 +91,16 @@ sub process_login {
 }
 
 sub process_network {
+
+	
 	my ($vars, $success) 
-		= $pageNetwork->process_network_config($vars, $state{'netconf'});
+		= $pageNetwork->process_network_config($vars, $state{'netconf'}, $state{'resolv'});
 
 	if ($success) {
 		return $pageAuth->show_license_dialog($vars);	
 	}
 	else {
-		return $pageNetwork->show_network_config($vars, $state{'netconf'});
+		return $pageNetwork->show_network_config($vars, $state{'netconf'}, $state{'resolv'});
 	}
 }
 

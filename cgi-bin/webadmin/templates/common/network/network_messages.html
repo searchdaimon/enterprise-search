@@ -1,0 +1,44 @@
+[% UNLESS checkList.defined %]
+	Warning: checkList not initialized.
+[% END %]
+
+[% # Set icons to use 
+	checkList.set_icon(checkList.SUCCESS, "file.cgi?i=agt_action_success");
+	checkList.set_icon(checkList.FAIL,    "file.cgi?i=agt_action_fail");
+%]
+
+
+[% IF netconf_succ.defined %]
+	[% IF netconf_succ %]
+		[% state = checkList.SUCCESS %]
+		[% message = "Network confing file was updated." %]
+	[% ELSE %]
+		[% state = checkList.FAILED %]
+		[% message = "Network config file could not be written, error: $netconf_error" %]
+	[% END %]
+	
+	[% checkList.add(message, state) %]
+[% END %]
+
+
+[% IF resolv_succ.defined %]
+	[% IF resolv_succ %]
+		[% state = checkList.SUCCESS %]
+		[% message = "Domain name server config was updated." %]
+	[% ELSE %]
+		[% state = checkList.FAILED %]
+		[% message = "Domain name server config file could not be written, error: $resolv_error" %]
+	[% END %]
+	[% checkList.add(message, state) %]
+[% END %]
+
+[% IF restart_succ.defined %]
+	[% IF restart_succ %]
+		[% state = checkList.SUCCESS %]
+	[% ELSE %]
+		[% state = checkList.FAILED %]
+	[% END %]
+	[% checkList.add(restart_message, state) %]
+[% END %]
+
+[% checkListHTML = checkList.getList(1) %]

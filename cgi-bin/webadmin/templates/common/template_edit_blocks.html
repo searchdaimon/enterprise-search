@@ -3,9 +3,6 @@
 	# a helper template for template_edit_collection
 %]
 
-[% 
-	# I tried to do this without tables, I really did! %]
-
 
 [% rates = [
 	{ 'Every 5 minutes' => '5' },
@@ -183,3 +180,20 @@
 	</div>
 	</div>
 [% END %]
+
+
+[% USE Dumper %]
+[% BLOCK user_prefix %]
+	
+
+	<div class="block_default">
+		User prefix:
+	
+
+	<div class="block_inner" >
+		<input type="text" name="[% prefix %].userprefix" value="[% $prefix.userprefix %]" />[% optional %]
+		<br /><span class="example">Example: ad-company</span>
+	</div>
+	</div>
+[% END %]
+

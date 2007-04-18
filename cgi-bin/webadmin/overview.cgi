@@ -16,6 +16,8 @@ BEGIN {
 }
 use Boitho::Infoquery;
 
+
+
 my $cgi = CGI->new;
 my $state = CGI::State->state($cgi);
 print $cgi->header('text/html');
@@ -89,8 +91,9 @@ elsif (defined($state->{'edit'})) {
 
 elsif (defined($state->{'submit_edit'})) {
 	# User submits modification for a collection;
+	
 	my $valid;
-	($vars, $valid) = $overview->submit_edit($vars);
+	($vars, $valid) = $overview->submit_edit($vars, $state->{'share'});
 		
 	unless ($valid) {
 		# Something wrong. Show edit form again.

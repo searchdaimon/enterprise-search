@@ -1,5 +1,7 @@
 [% USE Dumper %]
 [% BLOCK network_config %]
+
+	<h4>Network device</h4>
 	<div class="block_default" style="margin-top : 1em;">
 		<input type="radio" name="netconf.method" 
 			value="auto" id="netconf_method_auto" 
@@ -9,7 +11,7 @@
 			[% END %] /> 
 		<label for="netconf_method_auto"><strong>Automatic:</strong></label>
 
-		<div class="block_inner">
+		<div class="block_inner" style="padding-left : 1.5em;">
 			<select name="netconf.BOOTPROTO">
 				<option value="dhcp" 
 					[% IF netconf.BOOTPROTO == 'dhcp' %]
@@ -54,7 +56,17 @@
 		</div>
 	</div>
 
-	
+	<h4>Domain Name System</h4>
+	<div class="block_default" style="height : 6em;">
+		DNS Server #1
+		<div class="block_inner">
+			<ul style="list-style-type : none; padding-left : 1.5em;">
+				<li><input type="text" name="resolv.nameserver.0" value="[% HTML.escape(resolv.nameserver.0) %]" /></li>
+				<li><input type="text" name="resolv.nameserver.1" value="[% HTML.escape(resolv.nameserver.1) %]" /></li>
+			</ul>
+		</div>
+	</div>
+
 
 
 [% END %]

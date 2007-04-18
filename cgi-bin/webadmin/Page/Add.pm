@@ -75,8 +75,11 @@ sub show_second_form {
 	if (!$share->{'connector_name'}) {
 		$share->{'connector_name'} = $sqlConnectors->get_name($connector)
 	}
-	$vars->{'share'} = $share;
-	$vars->{'authentication'} = $sqlAuth->get_authentication;
+
+	my @auth_data = $sqlAuth->get_all_auth();
+
+	$vars->{'share'} = $share;	
+	$vars->{'authentication'} = \@auth_data;
 	$vars->{'group_list'} = $iq->listGroups;
 	$vars->{'input_fields'} = $sqlConnectors->get_input_fields($connector);
 	$vars->{'from_scan'} = $state->{'from_scan'}
