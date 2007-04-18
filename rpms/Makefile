@@ -3,19 +3,22 @@ boitho-ad_name = boitho-ad
 boitho-ad_version = 0.2.3
 
 boitho-searchdbb_name = boitho-searchdbb
-boitho-searchdbb_version = 5.4.10
+boitho-searchdbb_version = 5.4.16
 
 boitho-crawlManager_name = boitho-crawlManager
-boitho-crawlManager_version = 1.3.2
+boitho-crawlManager_version = 1.3.14
 
 boitho-boitho-bbdn_name = boitho-bbdn
-boitho-boitho-bbdn_version = 1.7.0
+boitho-boitho-bbdn_version = 1.7.5
+
+boitho-fileFilter_name = boitho-fileFilter
+boitho-fileFilter_version = 1.3.1
 
 boitho-base_name = boitho-base
 boitho-base_version = 1.3.0
 
 boitho-bbadmin_name = boitho-bbadmin
-boitho-bbadmin_version = 2.7.9
+boitho-bbadmin_version = 2.7.15
 
 boitho-everrun_name = boitho-everrun
 boitho-everrun_version = 1.0.0
@@ -24,14 +27,24 @@ boitho-infoquery_name = boitho-infoquery
 boitho-infoquery_version = 2.0.1
 
 boitho-iindex_name = boitho-iindex
-boitho-iindex_version = 2.0.1
+boitho-iindex_version = 2.0.2
 
 boitho-webclient_name = boitho-webclient
-boitho-webclient_version = 6.0.1
+boitho-webclient_version = 6.0.2
+
+boithobb-setuid_name = boithobb-setuid
+boithobb-setuid_version = 1.0.2
+
+boithobb-bbadminhtaccess_name = boithobb-bbadminhtaccess
+boithobb-bbadminhtaccess_version = 1.0.0
 
 
-all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base
+all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb
 
+setuidbb:
+	perl rpmmagic.pl $(boithobb-setuid_name) $(boithobb-setuid_version) /home/boitho/boitho/websearch /home/boitho/boithoTools setuid
+
+	rpm -bb $(boithobb-setuid_name).spec
 
 webclient:
 
@@ -43,6 +56,11 @@ iindex:
 	perl rpmmagic.pl $(boitho-iindex_name) $(boitho-iindex_version) /home/boitho/boitho/websearch /home/boitho/boithoTools bin/IndexerLotbb bin/LotInvertetIndexMaker2 bin/mergeUserToSubname bin/mergeIIndex perl/cleanLots.pl
 
 	rpm -bb $(boitho-iindex_name).spec
+
+bbadminhtaccess:
+	perl rpmmagic.pl $(boithobb-bbadminhtaccess_name) $(boithobb-bbadminhtaccess_version) /home/boitho/boitho/websearch /home/boitho/boithoTools cgi-bin/webadmin/.htaccess cgi-bin/webadmin/.htpasswd
+
+	rpm -bb $(boithobb-bbadminhtaccess_name).spec
 
 bbadmin:
 	perl rpmmagic.pl $(boitho-bbadmin_name) $(boitho-bbadmin_version) /home/boitho/boitho/websearch /home/boitho/boithoTools cgi-bin/webadmin Modules
@@ -78,9 +96,14 @@ crawlManager:
 
 
 boitho-bbdn:
-	perl rpmmagic.pl --initd boitho-bbdn $(boitho-boitho-bbdn_name) $(boitho-boitho-bbdn_version) /home/boitho/boitho/websearch /home/boitho/boithoTools bin/boitho-bbdn fileFilter
+	perl rpmmagic.pl --initd boitho-bbdn $(boitho-boitho-bbdn_name) $(boitho-boitho-bbdn_version) /home/boitho/boitho/websearch /home/boitho/boithoTools bin/boitho-bbdn
 
 	rpm -bb $(boitho-boitho-bbdn_name).spec
+
+fileFilter:
+	perl rpmmagic.pl $(boitho-fileFilter_name) $(boitho-fileFilter_version) /home/boitho/boitho/websearch /home/boitho/boithoTools fileFilter
+
+	rpm -bb $(boitho-fileFilter_name).spec
 
 
 base:
@@ -97,7 +120,7 @@ base:
 clean:
 	#rm /home/boitho/redhat/SOURCES/boitho-ad-0.2.2.tar.gz $(boitho-ad_name).spec
 	#sletter buggde pakker
-	rm -f /home/boitho/redhat/RPMS/i386/boitho-*.rpm
+	rm -f /home/boitho/redhat/RPMS/i386/boitho*.rpm
 
 install:
-	cp /home/boitho/redhat/RPMS/i386/boitho-*.rpm ~/FedoraRepository/boitho/updates/4/i386/
+	cp --verbose /home/boitho/redhat/RPMS/i386/boitho*.rpm ~/FedoraRepository/boitho/updates/4/i386/

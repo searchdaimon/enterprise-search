@@ -41,7 +41,23 @@ echo "DESTDIR: " $DESTDIR
 %clean
 #rm -rf $RPM_BUILD_ROOT
 
+%pre
+#The %pre script executes just before the package is to be installed. It is the rare package that requires 
+#anything to be done prior to installation; none of the 350 packages that comprise Red Hat Linux Linux 4.0 make 
+#use of it. %post
+
+#rpm_pre
+
 %post
+#The %post script executes after the package has been installed. One of the most popular reasons a %post script is 
+#needed is to run ldconfig to update the list of available shared libraries after a new one has been installed. Of 
+#course, other functions can be performed in a %post script. For example, packages that install shells use the 
+#%post script to add the shell name to /etc/shells. 
+#
+#If a package uses a %post script to perform some function, quite often it will include a %postun script that 
+#performs the inverse of the %post script, after the package has been removed. 
+
+#rpm_post
 
 %postun
 

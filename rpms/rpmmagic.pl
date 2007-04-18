@@ -7,6 +7,17 @@ if ($#ARGV == -1) {
 
 }
 
+  use Getopt::Long;
+  my $pre = '';
+  my $post = '';
+  my $initd;
+  my $verbose;
+
+  my $result = GetOptions ("pre=s" => \$pre,    # rpm pre 
+                        "post=s"   => \$post,      # rpm post
+                        "initd=s"   => \$initd,      # rpm post
+			"verbose"  => \$verbose);
+
 my $name = shift @ARGV or die("please suply a name");
 my $version = shift @ARGV or die("please suply a version");
 
@@ -61,8 +72,35 @@ for my $i (@files) {
 
 	$fileslist .= $filedest . "\n";
 }
+if (defined($initd)) {
+	$filesinstal .= "install -D -m 755  init.d/$initd \$RPM_BUILD_ROOT/etc/init.d/$initd\n";
+	$fileslist .=  "/etc/init.d/$initd\n";
+}
+
+
+
 print "filesinstal:\n$filesinstal\n";
 print "fileslist:\n$fileslist\n";
+
+if (defined($initd)) {
+
+	#lager hva som skal kjøres før vi instalerer
+	$pre .= qq{
+if [ -f /etc/init.d/$initd ] ; then
+	sh /etc/init.d/$initd stop
+fi
+	};
+
+	$post .= qq{
+
+	#run chkconfig to add it to rc
+	chkconfig --add $initd
+
+	#start it
+	sh /etc/init.d/$initd start
+
+	};
+}
 
 for my $i (@files) {
 
@@ -71,6 +109,7 @@ for my $i (@files) {
 
 	my $folder = $filedest;
 	$folder =~ s/[^\/]+$//;	
+
 
 	$command = "mkdir -p $folder";
 	print "running: $command\n";
@@ -85,7 +124,26 @@ for my $i (@files) {
 	
 	
 }
+if (defined($initd)) {
+	my $filesource = $source . '/init.d/' . $initd;
+	my $filedest = $name_and_version . '/init.d/' . $initd;
 
+	my $folder = $filedest;
+	$folder =~ s/[^\/]+$//;	
+	
+	$command = "mkdir -p $folder";
+	print "running: $command\n";
+	system($command);
+
+	print "cp $filesource -> $filedest\n";
+
+	#copy($filesource, $filedest) or die "File cannot be copied: $!";
+	$command = "cp -r $filesource $filedest";
+	print "running: $command\n";
+	system($command);
+	
+
+}
 my $tarfile = $name_and_version . ".tar.gz ";
 $command = "tar -z -c -f $tarfile $name_and_version";
 print "running: $command\n";
@@ -109,6 +167,11 @@ $spec =~ s/#version/$version/g;
 $spec =~ s/#filesinstal/$filesinstal/g;
 $spec =~ s/#fileslist/$fileslist/g;
 $spec =~ s/#destdir/$dest/g;
+
+$spec =~ s/#rpm_pre/$pre/g;
+$spec =~ s/#rpm_post/$post/g;
+
+
 
 my $specfile = $name . ".spec";
 
