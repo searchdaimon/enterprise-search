@@ -1,3 +1,12 @@
+/*
+ * Catchdumper / everrun
+ *
+ * Constantly respawn a program, and save coredumps.
+ *
+ * Eirik A. Nygaard
+ * April 2007
+ */
+
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/types.h>
