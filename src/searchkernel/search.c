@@ -1617,9 +1617,11 @@ int searchFilterCount(int *TeffArrayElementer, struct iindexFormat *TeffArray, s
 		/* Iterator constructor only returns a valid iterator if
 		 the hashtable is not empty 
 		*/
+
+		(*filters).filtypes.nrof = 0;
+
 		if (hashtable_count(h) > 0)
 		{
-			(*filters).filtypes.nrof = 0;
 
 			//legger inn All feltet
 			strscpy((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name,
@@ -1697,7 +1699,7 @@ int searchFilterCount(int *TeffArrayElementer, struct iindexFormat *TeffArray, s
 
 			//his dette er en slettet index element så teller vi den ikke.
 			//dette så vi ikke skal telle ting som folk ikke her tilgang til
-			if (TeffArray[i].deleted) {
+			if (TeffArray[i].deleted == 1) {
 				continue;
 			}
 			else if (TeffArray[i].indexFiltered.filename == 1) {
@@ -1705,7 +1707,7 @@ int searchFilterCount(int *TeffArrayElementer, struct iindexFormat *TeffArray, s
 			}
 				
 			if (NULL == (filesValue = hashtable_search(h,(*TeffArray[i].subname).subname) )) {    
-				printf("not found!. Vil insert first");
+				printf("not found!. Vil insert first \"%s\"\n",(*TeffArray[i].subname).subname);
 				filesValue = malloc(sizeof(int));
 				(*filesValue) = 1;
 				filesKey = strdup((*TeffArray[i].subname).subname);
@@ -1724,9 +1726,11 @@ int searchFilterCount(int *TeffArrayElementer, struct iindexFormat *TeffArray, s
 		/* Iterator constructor only returns a valid iterator if
 		 the hashtable is not empty 
 		*/
+
+		(*filters).collections.nrof = 0;
+
 		if (hashtable_count(h) > 0)
 		{
-			(*filters).collections.nrof = 0;
 
 			//legger inn All feltet
 			strscpy((*filters).collections.elements[ (*filters).collections.nrof ].name,
@@ -1743,7 +1747,7 @@ int searchFilterCount(int *TeffArrayElementer, struct iindexFormat *TeffArray, s
        				filesKey = hashtable_iterator_key(itr);
        				filesValue = (int *)hashtable_iterator_value(itr);
 
-				printf("files \"%s\": %i\n",filesKey,*filesValue);
+				printf("collection \"%s\": %i\n",filesKey,*filesValue);
 
 					strscpy(
 						(*filters).collections.elements[ (*filters).collections.nrof ].name,
