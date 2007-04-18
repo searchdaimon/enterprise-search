@@ -260,11 +260,11 @@ testGetNextLotForIndex: src/testGetNextLotForIndex/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/testGetNextLotForIndex/main.c  -o bin/testGetNextLotForIndex $(LDFLAGS)
 
-everrun: src/everrun/main.c
+everrun: src/everrun/catchdump.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) src/everrun/main.c -o bin/everrun
+	$(CC) src/everrun/catchdump.c -o bin/everrun
 
 searchcl : src/searchkernel/searchcl.c
 	@echo ""
