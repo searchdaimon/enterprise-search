@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <fcntl.h>
 
+#define COREDUMPDIR "/coredumps/saved"
+
 static void
 setrlimits(void)
 {
@@ -148,7 +150,7 @@ grab_coredump(char *buf, int pid, char *progname)
 			*p = '-';
 		}
 	}
-	snprintf(path, sizeof(path), "/coredumps/saved/%s.%d", prognametmp, pid);
+	snprintf(path, sizeof(path), "%s/%s.%d", COREDUMPDIR, prognametmp, pid);
 	free(prognametmp);
 
 	if (dup_file(buf, path)) {
