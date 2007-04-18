@@ -102,7 +102,6 @@ dup_file(char *from, char *to)
 	int n;
 	char buf[10240];
 
-	printf("%s => %s\n", from, to);
 	if ((fdfrom = open(from, O_RDONLY, 0)) == -1) {
 		perror("open(from)");
 		return -1;
@@ -178,18 +177,17 @@ dumpcatcher(char *prog, char **argv)
 		int status;
 
 		while (waitpid(pid, &status, 0) <= 0) {
-			fprintf(stderr, "Looping...\n");
+			; // It should not iterate
 		}
-		printf("Program exited...\n");
 		if (WIFSIGNALED(status) && WCOREDUMP(status)) {
 			char buf[1024];
 
 			/* Need to find the coredump if we get here... */
 			if (get_coredumppath(pid, buf, sizeof(buf)) == 0) {
-				printf("Got a coredump! %s\n", buf);
+				printf("Got a coredump: %s\n", buf);
 				grab_coredump(buf, pid, prog);
 			} else {
-				fprintf(stderr, "Unable to locate coredump\n");
+				fprintf(stderr, "Unable to locate coredump.\n");
 			}
 		}
 	} else { /* Error */
@@ -227,6 +225,7 @@ main(int argc, char **argv)
 	for (;;) {
 		dumpcatcher(newargv[0], newargv);
 		sleep(5); // Avoid hammering
+		printf("Restarting...\n");
 	}
 
 	return 0;
