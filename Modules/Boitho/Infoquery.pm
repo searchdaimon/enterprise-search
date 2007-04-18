@@ -169,7 +169,6 @@ sub groupsAndCollectionForUser($$) {
 
 sub documentsInCollection($$) {
 	my ($self, $collection) = (@_);
-	
 	unless ($collection) {
 		carp "Didn't get a collection name.";
 		return;
@@ -201,7 +200,6 @@ sub _infoquery_exec($$) {
 		unless $infoquery_path;
 
 	my $exec_string = "$infoquery_path $parameters";
-	carp "Kjører: $exec_string";
 	open my $iq, "$exec_string |"
 		or carp "Unable to execute infoquery, $!";
 	my @output = <$iq> if $iq;

@@ -6,5 +6,5 @@ all: $(PROG)
 
 $(PROG): ../../../../websearch/src/common/exeoc.c
 	$(CC) $(CFLAGS) -o $@ $(PROG).c $?
-	chown root $(PROG)
-	chmod +s $(PROG)
+	#chown root $(PROG)
+	#chmod +s $(PROG)

@@ -18,55 +18,90 @@
 
 #include "../../../../websearch/src/common/exeoc.h"
 
-// header
-#define NET_IFCFG "netconf.test"
-#define NETSCRIPT_DIR "/tmp"
-#define MAX_INPUT_LENGHT 2047
-#define SUID 0
-#define INIT_NETWORK_PATH "/etc/rc.d/init.d/network restart"
+/* header */
+// netscript
+#define NET_IFCFG	   "netconf.test2"
+#define NETSCRIPT_DIR	   "/tmp"
 
-char * read_config(void);
+// resolv
+#define RESOLV_PATH	   "/tmp/resolv.conf"
+
+// generic
+#define INIT_NETWORK_PATH  "/etc/rc.d/init.d/network restart"
+#define MAX_INPUT_LENGHT   2047
+#define RUN_SUID	   0
+#define SUID_USER	   0
+
+#define RESOLVCONF_FILE    1
+#define NETCONFIG_FILE     2
+
+char *read_config(void);
 void validate_input(char *input);
-void write_config(char *input);
-void restart_network(void);
+void write_config(char *input, int conf_file);
+int  restart_network(void);
+void show_usage(void);
+/* header end */
 
-// code
 int main(int argc, char **argv) {
 	char *input;
-	if (SUID) {
-	    if (setuid(0) != 0) {
-		printf("Unable to setuid(0)\n");
-		exit(2);
-	    }
+#if RUN_SUID
+	if (setuid(SUID_USER) != 0) {
+	    printf("Unable to setuid(%s)\n", SUID_USER);
+	    exit(EXIT_FAILURE);
 	}
+#endif
+
+	int conf_file;
 	
 	if (argc == 2) {
 		
 		if (strcmp("restart", argv[1]) == 0) {
-			printf("Restarting network\n");
-			restart_network();
-			exit(0);
+		    printf("Restarting network\n");
+		    int return_value = restart_network();
+		    exit(return_value);
 		}
+
+		else if (strcmp("resolv", argv[1]) == 0) {
+		    conf_file = RESOLVCONF_FILE;
+		    
+
+		}
+
+		else if (strcmp("netconfig", argv[1]) == 0) {
+		    conf_file = NETCONFIG_FILE;
+		}
+
 		else {
-			printf(
-				"Usage: \n\
-				To write to config file: \n\
-				\tstart configwrite with no parameters, write to stdin. \n\
-				To restart network: \n\
-				\t./configwrite restart\n");	
-			exit(1);
+		    show_usage();
 		}
+	}
+	else {
+	    show_usage();
 	}
 	
 	input = read_config();
 	validate_input(input);
-	write_config(input);
+	write_config(input, conf_file);
 	free(input);
-	fflush(stdout);
-	return(0);
+	return 0;
+}
+
+/**
+ * Show usage and exit.
+ */
+void show_usage(void) {
+    printf("Usage: configwrite restart|resolv|netconfig\n");
+    printf("Write to stdin if resolv or netconfig parameter is used.\n");
+    exit(EXIT_FAILURE);
 }
 
 
+/**
+ * Reads content from stdin.
+ *
+ * Returns:
+ *	char* input - String with stdin content.
+ */
 char * read_config(void) {
 	char *input = malloc(sizeof(char[MAX_INPUT_LENGHT + 1]));
 	char buffer;
@@ -109,25 +144,45 @@ void validate_input(char *input) {
  * Write config file.
  *
  * Attributes:
- * 	content - Array with text to write to config.
+ * 	content   - Array with text to write to config.
+ * 	conf_file - What config file to write to. Values are defined in the header.
+ *
+ * Valid config files:
+ *	NETCONFIG_FILE  - Config file for fedora 3 network config.
+ *	RESOLVCONF_FILE - Resolv file.
 */
 
-void write_config(char* input) {
+void write_config(char* input, int conf_file) {
 	char path[512];
-	FILE *config_file;
+	FILE *fileh;
 	int i;
-	snprintf(path, sizeof(path), "%s/%s", NETSCRIPT_DIR, NET_IFCFG);
-	
-	config_file = fopen(path, "w");
 
-	if (config_file == NULL) {
-	    fprintf(stdout, "Unable to open config file for writing.");
-	    exit(5);
+	switch (conf_file) {
+
+	case NETCONFIG_FILE:
+	    snprintf(path, sizeof(path), "%s/%s", NETSCRIPT_DIR, NET_IFCFG);
+	    break;
+
+
+	case RESOLVCONF_FILE:
+	    strncpy(path, RESOLV_PATH, sizeof(path));
+	    break;
+
+	default:
+	    printf("Unknown conf_file id %d\n", conf_file);
+	    exit(EXIT_FAILURE);
 	}
 	
+	fileh = fopen(path, "w");
+
+	if (fileh == NULL) {
+	    fprintf(stdout, "Unable to open config file %s for writing.\n", path);
+	    exit(EXIT_FAILURE);
+	}
+
 	for (i = 0; i < MAX_INPUT_LENGHT; i++) {
 	    if (input[i] == '\0') break;
-	    fprintf(config_file, "%c", input[i]);
+	    fprintf(fileh, "%c", input[i]);
 	}
 }
 
@@ -137,20 +192,20 @@ void write_config(char* input) {
  *
 */
 
-void restart_network(void) {
+int restart_network(void) {
 	char exeocbuf[2048];
 	int  exeocbuflen;
+	int  return_value;
 
 	char *netargs[] = {"/bin/sh", "-c", INIT_NETWORK_PATH, '\0'};
 
 	exeocbuflen = sizeof(exeocbuf);
-	if (!exeoc(netargs, exeocbuf, &exeocbuflen)) {
+	if (!exeoc(netargs, exeocbuf, &exeocbuflen, &return_value)) {
 	    printf("Could not execute network restart procedure\n");
 	    exit(10);
 	}
 
 	printf("%s\n", exeocbuf);
-	
-	//system(RK_RESTART_CMD); //TODO: Fix.
+	return return_value;
 }
 

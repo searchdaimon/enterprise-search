@@ -9,6 +9,8 @@ use Net::IP qw(ip_is_ipv4 ip_is_ipv6);
 use FileHandle;
 use IPC::Open2;
 
+use constant RESOLV_PATH => "/etc/resolv.conf";
+
 # Constructor: new
 #
 # Attributes:
@@ -46,12 +48,16 @@ sub _init {
 	1;
 }
 
+sub parse {
+    croak "parse() is deprecated. Use parse_netconf() instead."
+}
+
 ##
-# Parse config into a hash
+# Parse Fedora network config into a hash
 #
 # Returns:
 # 	config_ref - Hashref with config values.
-sub parse {
+sub parse_netconf {
 	my $self = shift;
 	my $full_path = $self->{'netscript_dir'} . "/" . $self->{'ifcfg'};
 	open my $cfgfile_h, "<", $full_path
@@ -75,10 +81,39 @@ sub parse {
 }
 
 ##
+# Parse resolv.conf into a hash
+#
+# Returns:
+#   config_ref - Hashref with resolv values.
+#		 Values are in ARRAYs, because resolv.conf supports 
+#		 more than one value for a single keyword.
+sub parse_resolv {
+    my $self = shift;
+    open my $resolv_h, "<", RESOLV_PATH
+	or croak "Unable to open resolv file: $!";
+
+    my %config;
+
+    foreach my $line (<$resolv_h>) {
+	chomp $line;
+	next unless $line; # blank
+	my ($key, $value) = split " ", $line;
+	push @{$config{$key}}, $value;
+    }
+
+    return \%config;
+}
+
+sub generate {
+    croak "generate() is deprecated. Use generate_netconf()";
+}
+
+
+##
 # Generate config file. Stores config in instance, also returns it.
 #
 # Attributes:
-# 	options_ref = Hash with config options.
+# 	options_ref - Hash with config options.
 #
 # Options:
 #	GATEWAY - Gateway (IP)
@@ -93,7 +128,7 @@ sub parse {
 #	ONBOOT - Start on boot
 # Returns:
 #	config_content = String with config file.
-sub generate {
+sub generate_netconf {
 	my ($self, $options_ref) = @_;
 	
 	$self->_validate_ifcfg_options($options_ref);
@@ -108,79 +143,113 @@ sub generate {
 	return $config_content;
 }
 
-# Group: Private Methods
 
-##
-# Validate configfile options. Croaks on error.
+## 
+# Generate resolv.conf file. Store config instane, also returns it.
+# Does not support all keywords that resolv.conf supports. See section "Keywords" for full list.
 #
 # Attributes:
-#	options_ref - Hash with config options
-sub _validate_ifcfg_options {
-	my ($self, $options_ref) = @_;
-	my %options = %$options_ref;
+#   keywords_ref - Hash with resolv keywords and their values.
+#
+# Keywords:
+#   nameserver - IP to nameserver. Can contain a listref with more than one ip.
+#
+# Returns:
+#   resolv_content - Content for generated file.
+sub generate_resolv {
+    my ($self, $keyword_ref) = @_;
 
+    # validate
+    $self->_validate_resolv_keywords($keyword_ref);
 
-	# Known option check
-	my @valid_options = qw(GATEWAY NAME BOOTPROTO DEVICE MTU
-				NETMASK BROADCAST IPADDR NETWORK ONBOOT);
-
-	foreach my $option (@valid_options) {
-		croak "Unknown option $option"
-			unless grep /^$option$/, @valid_options;
+    # generate file content
+    my %keywords = %{$keyword_ref};
+    my $resolv_content;
+    while (my ($key, $value_ref) = each %keywords) {
+	foreach my $value (@{$value_ref}) {
+	    $resolv_content .= "$key $value\n";
 	}
+    }
 
-	# Valid BOOTPROTO
-	if (defined $options{'BOOTPROTO'}) {
-		my @valid_values = qw(static none dhcp bootp);
-		croak unless grep /^$options{'BOOTPROTO'}$/, @valid_values;
-	}
+    $self->{'resolv_content'} = $resolv_content;
+    return $resolv_content;
 
-	# Valid GATEWAY NETMASK BROADCAST IPADDR
-	foreach my $option (qw(GATEWAY NETMASK BROADCAST IPADDR NETWORK)) {
-		next unless defined $options{$option};
-		last if grep /^$options{'BOOTPROTO'}$/, "dhcp", "bootp"; # Ignore if it doesn't matter.
-		my $ip = $options{$option};
-		croak "$option: $ip is not a valid IP."
-			unless ip_is_ipv4($ip) or ip_is_ipv6($ip);
-	}
-
-
-	# Valid ONBOOT
-	if (defined $options{'ONBOOT'}) {
-		my $value = $options{'ONBOOT'};
-		croak "Not valid ONBOOT value. Must be yes or no"
-			unless (($value eq "yes") or ($value eq "no"));
-	}
-	
-	1;
 }
+
+sub save {
+    croak "save() is deprecated. Use save_netconf() instead.";
+}
+
 
 ##
-# Save config file.
-# Overwrites config file.
-sub save {
+# Save netconf config file.
+# Overwrites old config file.
+sub save_netconf {
 	my $self = shift;
 	my $content = $self->{'config_content'};
-	my $path = $self->{'configwrite_path'};
-	
-	my $success = 1;
-	
-	open2 (*CWREAD, *CWWRITE, "$path")
-		or die "Unable to execute configwrite: $!\n";
-	print CWWRITE $content;
-	print CWWRITE eof;
-	close CWWRITE or $success = 0; 
-	my $input = <CWREAD>;
-	close CWREAD  or $success = 0;
-	
-	
-	unless ($success) {
-		die "Error writing config: $input";
-	}
 
-	
+	croak "No content to write. You must run generate_netconf() first."
+	    unless defined $content;
+
+	$self->_save_file($content, "netconf");
 	1;
 }
+
+sub save_resolv {
+    my $self = shift;
+    my $content = $self->{'resolv_content'};
+	
+    croak "No content to write. You must run generate_resolv() first."
+	    unless defined $content;
+
+    $self->_save_file($content, "resolv");
+    1;
+}
+
+
+##
+# Generic save-file method for passing on data to the confwrite wrapper.
+# Croaks on write error.
+#
+# Attributes:
+#   content - Config content to write.
+#   keyword - What file to write to. See Keywords header for available keywords.
+# 
+# Keywords:
+#   netconf - For writing to netconfig file.
+#   resolv  - For writing to resolv config file.
+sub _save_file {
+    my ($self, $content, $keyword) = @_;
+
+    my @valid_keywords = qw(netconf resolv);
+    croak "Unknown keyword $keyword provided."
+	unless grep { /^$keyword$/ } @valid_keywords;
+    
+    croak "content argument not provided"
+	unless defined $content;
+
+    croak "keyword argument not provided"
+	unless defined $keyword;
+
+    my $path = $self->{'configwrite_path'};
+    
+    my $success = 1;
+
+    #write
+    open2 (*CWREAD, *CWWRITE, "$path $keyword")
+	or die "Unable to execute configwrite: $!\n";
+    print CWWRITE $content;
+    print CWWRITE eof;
+    close CWWRITE or $success = 0; 
+    my $input = <CWREAD>;
+    close CWREAD  or $success = 0;
+	
+    unless ($success) {
+	die "Error writing config: $input";
+    }
+
+}
+
 
 ##
 # Restart network connection
@@ -205,6 +274,93 @@ sub restart {
 		
 	return $input;
 }
+
+
+# Group: Private Methods
+
+##
+# Validate keywords. Croaks on error.
+# Note: Remember to croak on newline (\n) in a keys value, so user can't inject unchecked lines into config file.
+#
+# Attributes:
+#   keywords_ref - Hash with resolv keywords and their values. 
+sub _validate_resolv_keywords {
+    my ($self, $keywords_ref) = @_;
+    my %keywords = %{$keywords_ref};
+    
+    # Supported keywords
+    my @valid_keywords = qw(nameserver);
+    
+    # Valdate
+    foreach my $key (keys %keywords) {
+	croak "Not supported resolv keyword $key used\n"
+	    unless grep { /^$key$/  } @valid_keywords;
+    }
+
+    # Validate namesever
+    if (defined $keywords{'nameserver'}) {
+	my $value = $keywords{'nameserver'};
+	
+	if (ref($value) eq "SCALAR") {
+	    croak "$value is not a valid nameserver IP"
+		unless ip_is_ipv4($value) or ip_is_ipv6($value);
+	}
+
+	elsif (ref($value) eq "ARRAY") {
+	    foreach my $ip (@{$value}) {
+		croak "$ip is not a valid nameserver IP"
+		    unless ip_is_ipv4($ip) or ip_is_ipv6($value);
+	    }
+	}
+
+    }
+}
+
+##
+# Validate configfile options. Croaks on error.
+#
+# Attributes:
+#	options_ref - Hash with config options
+sub _validate_ifcfg_options {
+	my ($self, $options_ref) = @_;
+	my %options = %$options_ref;
+
+
+	# Known option check
+	my @valid_options = qw(GATEWAY NAME BOOTPROTO DEVICE MTU
+				NETMASK BROADCAST IPADDR NETWORK ONBOOT);
+
+	foreach my $option (keys %options) {
+		croak "Unknown option $option"
+			unless grep { /^$option$/ } @valid_options;
+	}
+
+	# Valid BOOTPROTO
+	if (defined $options{'BOOTPROTO'}) {
+		my @valid_values = qw(static none dhcp bootp);
+		croak unless grep /^$options{'BOOTPROTO'}$/, @valid_values;
+	}
+
+	# Valid GATEWAY NETMASK BROADCAST IPADDR
+	foreach my $option (qw(GATEWAY NETMASK BROADCAST IPADDR NETWORK)) {
+		next unless defined $options{$option};
+		#last if grep /^$options{'BOOTPROTO'}$/, "dhcp", "bootp"; # Ignore if it doesn't matter.
+		my $ip = $options{$option};
+		croak "$option: $ip is not a valid IP."
+			unless ip_is_ipv4($ip) or ip_is_ipv6($ip);
+	}
+
+
+	# Valid ONBOOT
+	if (defined $options{'ONBOOT'}) {
+		my $value = $options{'ONBOOT'};
+		croak "Not valid ONBOOT value. Must be yes or no"
+			unless (($value eq "yes") or ($value eq "no"));
+	}
+	
+	1;
+}
+
 
 
 use constant TEST => 0;

@@ -19,6 +19,11 @@ sub new {
     return $self;
 }
 
+##
+# Lists available updates.
+#
+# Returns:
+#   List with hashrefs, format {'name' => 'Name', 'version' => 'Version', 'release' => 'Release'}
 sub check_update {
     my $self = shift;
     #my ($status, @input) = $self->_exec_action("check-update");
@@ -41,7 +46,7 @@ boitho-searchdbb.i386                    5.4.11-1               boitho-released
     my @packages;
     foreach my $in (@input) {
 	chomp $in;
-	if ($in =~ m/^(\S+) \s+ (\S+) \s+ (\S+)/xs) {
+	if ($in =~ m/^(\S+) \s\s+ (\S+) \s\s+ (\S+)/xs) {
 	    push @packages, {
 		'name' => $1,
 		'version' => $2,
@@ -53,17 +58,25 @@ boitho-searchdbb.i386                    5.4.11-1               boitho-released
     return @packages;
 }
 
-
+##
+# Updates every currently installed package on local machine.
 sub update {
-    my $self;
+    my $self = shift;
     return $self->_exec_action("update");
 }
 
+##
+# Cleans updates-list cached on local machine.
 sub clean {
-    my $self;
+    my $self = shift;
     return $self->_exec_action("clean");
 }
 
+##
+# Installs given rpm package.
+#
+# Parameter:
+#   package - Software package.
 sub localinstall {
     my ($self, $package) = @_;
     return $self->_exec_action("localinstall", "\Q$package\E");
@@ -90,8 +103,13 @@ sub list_rpm_dir {
  # Attributes:
  #	service   - Service name
  #	parameter - Parameter to service. WARN: It won't be escaped.
+ #
+ # Returns:
+ #      status - True if wrapper exited with success, false if not.
+ #	@output - List with output.
 sub _exec_action {
     my ($self, $service, $parameter) = @_;
+    $parameter = "" unless defined $parameter;
     my $exec = WRAPPER_PATH . " $service $parameter|";
 
     open my $wraph, $exec
