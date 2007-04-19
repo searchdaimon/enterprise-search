@@ -10,6 +10,7 @@ use Boitho::Infoquery;
 use Data::Dumper;
 use Common::Collection;
 use Carp;
+use config qw($CONFIG);
 
 # Helper class with functions used with add.cgi
 # Function used to add shares.
@@ -69,7 +70,7 @@ sub show_second_form {
 	my $sqlAuth = $self->{'sqlAuth'};
 	my $template = $self->{'template'};
 	my $state = $self->{'state'};
-	my $iq = new Boitho::Infoquery;
+	my $iq = new Boitho::Infoquery($CONFIG->{'infoquery'});
 	
 	my $share = $state->{'share'};
 	if (!$share->{'connector_name'}) {

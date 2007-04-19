@@ -17,6 +17,8 @@ use Boitho::Infoquery;
 use Common::Collection;
 use Common::Generic;
 
+use config qw($CONFIG);
+
 sub new($$$) {
 	my $class = shift;
 	my $dbh = shift;
@@ -35,7 +37,7 @@ sub _init($$$) {
 	$self->{'sqlConnectors'} = Sql::Connectors->new($dbh);
 	$self->{'sqlAuth'}	 = Sql::CollectionAuth->new($dbh);
 	$self->{'sqlGroups'}	 = Sql::ShareGroups->new($dbh);
-	$self->{'infoQuery'}	 = Boitho::Infoquery->new;
+	$self->{'infoQuery'}	 = Boitho::Infoquery->new($CONFIG->{'infoquery'});
 	$self->{'common'}     	 = Common::Generic->new;
 	
 	my $sqlConfig = Sql::Config->new($dbh);

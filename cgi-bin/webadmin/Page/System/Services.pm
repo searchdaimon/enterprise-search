@@ -15,7 +15,7 @@ our @ISA = qw(Page::Abstract);
 sub _init {
 	my ($self) = @_;
 	$self->{'services'} = $CONFIG->{'init_services'};
-	$self->{'init'}     = Boitho::InitServices->new();
+	$self->{'init'}     = Boitho::InitServices->new($CONFIG->{'init_dir'}, $CONFIG->{'init_wrapper_path'});
 	return $self;
 }
 

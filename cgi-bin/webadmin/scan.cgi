@@ -90,9 +90,10 @@ elsif (defined($state->{'action'})) {
 		# Show scan form.
 		my $sqlConnectors = Sql::Connectors->new($dbh);
 		my $sqlAuth = Sql::CollectionAuth->new($dbh);
-		my $authentication = $sqlAuth->get_authentication;
+		my @authentication = $sqlAuth->get_all_auth();
+		
 		$vars->{'connectors'} = $sqlConnectors->get_connectors_with_scantool();
-		$vars->{'authentication'} = $sqlAuth->get_authentication;
+		$vars->{'authentication'} = \@authentication;
 		$template_file = "scan_new.html";
 
 	}

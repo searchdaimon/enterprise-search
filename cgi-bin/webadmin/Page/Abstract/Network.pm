@@ -21,9 +21,9 @@ my $netConfig;
 sub _init {
 	my $self = shift;
 
-	$netConfig = Boitho::NetConfig->new(	$CONFIG->{'net_ifcfg'},
-											$CONFIG->{'netscript_dir'},
-											$CONFIG->{'configwrite_path'});
+	$netConfig = Boitho::NetConfig
+		->new($CONFIG->{'net_ifcfg'}, $CONFIG->{'netscript_dir'}, 
+			  $CONFIG->{'configwrite_path'}, $CONFIG->{'resolv_path'});
 }
 
 ##

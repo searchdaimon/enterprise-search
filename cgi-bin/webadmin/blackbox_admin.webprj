@@ -483,16 +483,18 @@
     <item modified_time="1174509300" url="toolbars/CVS/Root" uploadstatus="1" />
     <item modified_time="1174506387" url="Page/Setup/Login.pm" uploadstatus="1" />
     <item modified_time="1174506387" url="Page/Setup/Integration.pm" uploadstatus="1" />
-    <item modified_time="1175175608" url="Page/System/Services.pm" />
-    <item modified_time="1175178821" url="templates/system/system_services.html" />
-    <item modified_time="1175175949" url="templates/system/system_tabs.html" />
-    <item modified_time="1176053436" url="Common/Validate.pm" />
-    <item modified_time="1176054496" url="Page/Authentication.pm" />
-    <item modified_time="1176053808" url="Sql/Abstract.pm" />
-    <item modified_time="1176718059" url="Page/System/Packages.pm" />
-    <item modified_time="1176655008" url="update.cgi" />
-    <item url="templates/common/network/" />
-    <item url="templates/common/network/network_config.html" />
-    <item url="templates/common/network/network_messages.html" />
+    <item modified_time="1175175608" url="Page/System/Services.pm" uploadstatus="1" />
+    <item modified_time="1175178821" url="templates/system/system_services.html" uploadstatus="1" />
+    <item modified_time="1175175949" url="templates/system/system_tabs.html" uploadstatus="1" />
+    <item modified_time="1176053436" url="Common/Validate.pm" uploadstatus="1" />
+    <item modified_time="1176054496" url="Page/Authentication.pm" uploadstatus="1" />
+    <item modified_time="1176053808" url="Sql/Abstract.pm" uploadstatus="1" />
+    <item modified_time="1176718059" url="Page/System/Packages.pm" uploadstatus="1" />
+    <item modified_time="1176655008" url="update.cgi" uploadstatus="1" />
+    <item url="templates/common/network/" uploadstatus="1" />
+    <item url="templates/common/network/network_config.html" uploadstatus="1" />
+    <item url="templates/common/network/network_messages.html" uploadstatus="1" />
+    <item url="Common/TplCheckList.pm" uploadstatus="1" />
+    <item url="styles/check_list.css" uploadstatus="1" />
   </project>
 </webproject>

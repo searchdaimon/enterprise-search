@@ -2,13 +2,12 @@
 <webprojectsession>
   <session usePreviewPrefix="0" previewPrefix="" >
     <itemcursorpositions>
-      <item line="213" column="25" url="Page/Abstract/Network.pm" />
-      <item line="9" column="8" url="Page/System/Network.pm" />
-      <item line="53" column="50" url="Page/System.pm" />
-      <item line="19" column="65" url="system.cgi" />
-      <item line="0" column="0" url="templates/common/network/network_config.html" />
-      <item line="31" column="9" url="templates/common/network/network_messages.html" />
-      <item line="7" column="0" url="templates/system/system_network.html" />
+      <item column="0" line="42" url="templates/common/network/network_messages.html" />
+      <item column="35" line="104" url="Common/TplCheckList.pm" />
+      <item column="48" line="59" url="templates/common/network/network_config.html" />
+      <item column="0" line="0" url="Page/System/Network.pm" />
+      <item line="25" column="70" url="Page/Abstract/Network.pm" />
+      <item line="85" column="46" url="config.pm" />
     </itemcursorpositions>
     <uploadprofiles defaultProfile="@" >
       <profile remote_host="" remote_port="" remote_path="" remote_protocol="ftp" user="" name="@" />
@@ -20,6 +19,8 @@
       <openfolder url="Page/Setup" />
       <openfolder url="Page/System" />
       <openfolder url="Sql" />
+      <openfolder url="icon" />
+      <openfolder url="icon/32x32" />
       <openfolder url="styles" />
       <openfolder url="templates" />
       <openfolder url="templates/common" />

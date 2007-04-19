@@ -19,7 +19,7 @@ my $yum;
 
 sub _init {
 	my ($self) = @_;
-	$yum = Boitho::YumWrapper->new($CONFIG->{'rpm_upload_folder'});
+	$yum = Boitho::YumWrapper->new($CONFIG->{'rpm_upload_folder'}, $CONFIG->{'yum_wrapper_path'});
 	return $self;
 }
 

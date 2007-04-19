@@ -12,7 +12,7 @@ use Sql::ScanResults;
 use Boitho::Scan;
 use Sql::CollectionAuth;
 use Sql::Connectors;
-
+use config qw($CONFIG);
 
 ## Class for processing scans in database.
 
@@ -30,7 +30,7 @@ sub _initialize($$) {
 	my $dbh = shift;
 	$self->{'dbh'} = $dbh;
 	$self->{'sqlResults'} = Sql::ScanResults->new($dbh);
-	$self->{'scan'} = Boitho::Scan->new();
+	$self->{'scan'} = Boitho::Scan->new($CONFIG->{'infoquery'});
 	$self->{'sqlAuth'} = Sql::CollectionAuth->new($dbh);
 	$self->{'sqlConnectors'} = Sql::Connectors->new($dbh);
 	$self->{'common'} = Common::Generic->new();

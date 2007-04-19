@@ -12,7 +12,7 @@ use config qw($CONFIG);
 use Data::Dumper;
 use Boitho::RaidStatus qw(getraidinfo);
 use Boitho::Infoquery;
-
+use config qw($CONFIG);
 
 sub new($) {
 	my $class = shift;
@@ -25,7 +25,7 @@ sub new($) {
 sub _init($$) {
 	my ($self, $dbh) = @_;
 	$self->{'sqlConfig'} = Sql::Config->new($dbh);
-	$self->{'infoQuery'} = Boitho::Infoquery->new;
+	$self->{'infoQuery'} = Boitho::Infoquery->new($CONFIG->{'infoquery'});
 }
 
 sub show_system_diagnostics($$) {
