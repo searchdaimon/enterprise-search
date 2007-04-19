@@ -25,7 +25,7 @@
 		[% WRAPPER 'template_table.html' 
 			header = ['', 'Hosts', 'Shares'] %]
 			
-			[% FOREACH result IN results %]
+			[% FOREACH result IN connector %]
 			[% j = 0 %]
 			[% color = 1 - color %]
 			[% WRAPPER 'template_table_row.html' %]
