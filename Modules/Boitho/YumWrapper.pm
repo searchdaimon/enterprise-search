@@ -6,16 +6,23 @@ use warnings;
 use Carp;
 use File::Glob qw(bsd_glob);
 use File::Basename qw(basename);
-use constant WRAPPER_PATH => $ENV{'BOITHOHOME'} . "/Modules/Boitho/YumWrapper/yumwrapper";
 
 my $rpm_dir;
+my $wrapper_path;
 
 sub new {
     my $class = shift;
-    $rpm_dir = shift;
-    croak "Path to RPM Dir not provided.\n" unless $rpm_dir;
     my $self = {};
     bless $self, $class;
+
+    # init
+    ($rpm_dir, $wrapper_path) = @_;
+    croak "Path to RPM directory you provided is not a directory."
+	unless -d $rpm_dir;
+
+    croak "Wrapper path provided is not executable"
+	unless -x $wrapper_path;
+
     return $self;
 }
 
@@ -110,7 +117,7 @@ sub list_rpm_dir {
 sub _exec_action {
     my ($self, $service, $parameter) = @_;
     $parameter = "" unless defined $parameter;
-    my $exec = WRAPPER_PATH . " $service $parameter|";
+    my $exec = $wrapper_path . " $service $parameter|";
 
     open my $wraph, $exec
 	or croak "Unable to execute yum-wrapper, $?";

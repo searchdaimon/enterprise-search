@@ -1,3 +1,6 @@
+# Class: Boitho::Infoquery
+# Wrapper for Boitho's tool infoquery.
+
 package Boitho::Infoquery;
 use strict;
 use warnings;
@@ -6,28 +9,16 @@ use Data::Dumper;
 use constant VERSION => 1.0;
 use constant VERBOSE => 0;
 
-# This class is a wrapper for Boitho's tool infoquery.
-
 my $infoquery_path;
-
-eval {
-	# Get's path to infoquery from a config file.
-	# The path should be in $CONFIG->{'infoquery'}
-	require config;
-	import config qw($CONFIG);
-	our $CONFIG;
-	$infoquery_path = $CONFIG->{'infoquery'};
-};
-if ($@) { # Warn if verbose
-	carp "Could not load config file, 
-	path must be provided when creating an instance. $@" if VERBOSE;
-}
-
 my $error = "";
 
 sub new {
 	my $class = shift;
 	$infoquery_path = shift if @_;
+    
+	croak "Infoquery path ($infoquery_path) does not exist."
+	    unless -e $infoquery_path;
+	
 	my $self = {};
 	bless $self, $class;
 	return $self;

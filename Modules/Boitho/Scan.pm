@@ -21,14 +21,18 @@ sub new {
 	my $class = shift;
 	my $self = {};
 	bless $self, $class;
-	$self->_initialize;
+	$self->_initialize(@_);
 	return $self;
 }
 
 sub _initialize {
-	my $self = shift;
+	my ($self, $infoquery_path) = @_;
+
+	croak "Infoquery path given is not executable"
+	    unless -x $infoquery_path;
+
 	$self->{'smb'} = new Boitho::Scan::Samba;
-	$self->{'infoquery'} = new Boitho::Infoquery;
+	$self->{'infoquery'} = new Boitho::Infoquery($infoquery_path);
 }
 
 ## Returns true if there exists a scanning utility for connector.

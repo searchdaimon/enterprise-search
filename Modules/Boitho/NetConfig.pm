@@ -9,8 +9,6 @@ use Net::IP qw(ip_is_ipv4 ip_is_ipv6);
 use FileHandle;
 use IPC::Open2;
 
-use constant RESOLV_PATH => "/etc/resolv.conf";
-
 # Constructor: new
 #
 # Attributes:
@@ -33,11 +31,14 @@ sub new {
 #	netscript-dir - Path to config directory
 sub _init {
 	my $self = shift;
-	croak "Must provide 3 parameters." unless @_ == 3;
-	my ($ifcfg, $netscript_dir, $configwrite_path) = @_;
+	croak "Must provide 4 parameters." unless @_ == 4;
+	my ($ifcfg, $netscript_dir, $configwrite_path, $resolv_path) = @_;
 
 	croak "Config file $netscript_dir/$ifcfg does not exist."
 		unless -e "$netscript_dir/$ifcfg";
+
+	croak "Resolv config file $resolv_path does not exist."
+		unless -e "$resolv_path";
 		
 	croak "Configwrite, $configwrite_path, is not executable"
 		unless -x $configwrite_path;
@@ -45,6 +46,7 @@ sub _init {
 	$self->{'netscript_dir'} = $netscript_dir;
 	$self->{'ifcfg'} = $ifcfg;
 	$self->{'configwrite_path'} = $configwrite_path;
+	$self->{'resolv_path'} = $resolv_path;
 	1;
 }
 
@@ -89,7 +91,7 @@ sub parse_netconf {
 #		 more than one value for a single keyword.
 sub parse_resolv {
     my $self = shift;
-    open my $resolv_h, "<", RESOLV_PATH
+    open my $resolv_h, "<", $self->{'resolv_path'}
 	or croak "Unable to open resolv file: $!";
 
     my %config;

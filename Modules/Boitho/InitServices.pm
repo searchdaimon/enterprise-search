@@ -4,14 +4,29 @@ package Boitho::InitServices;
 use strict;
 use warnings;
 use Carp;
-use constant INIT_DIR => "/etc/init.d/";
-#use constant WRAPPER_PATH => $ENV{'BOITHOHOME'} . "/Modules/Boitho/InitServices/initwrapper";
-use constant WRAPPER_PATH => $ENV{'BOITHOHOME'} . "/setuid/initwrapper";
 
+my $init_path;
+my $wrapper_path;
+
+##
+# Default constructor.
+# 
+# Parameters:
+#   init_path - Path to systems init dir (usually /etc/init.d/). Must end as '/'.
+#   wrapper_path - Path to InitServices suid wrapper
 sub new {
     my $class = shift;
     my $self = {};
     bless $self, $class;
+    
+    ($init_path, $wrapper_path) = @_;
+    
+    croak "Init path provided is not a directory"
+	unless -d $init_path;
+
+    croak "Wrapper path provided is not executable"
+	unless -x $wrapper_path;
+    
     return $self;
 }
 
@@ -84,7 +99,7 @@ sub status {
  #	parameter - Parameter to service. WARN: It won't be escaped.
 sub _exec_service_suid {
     my ($self, $service, $parameter) = @_;
-    my $exec = WRAPPER_PATH . " $service $parameter|";
+    my $exec = $wrapper_path . " $service $parameter|";
 
     open my $wraph, $exec
 	or croak "Unable to execute $service with wrapper, $?";
@@ -106,7 +121,7 @@ sub _validate_service {
     croak "Service not provided"
 	unless $service;
 
-    my $path = INIT_DIR . $service;
+    my $path = $init_path . $service;
     croak "$path does not exist"
 	unless -e $path;
 
