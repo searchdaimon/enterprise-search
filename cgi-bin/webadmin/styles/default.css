@@ -184,9 +184,13 @@ A:active { color : blue; }
 	margin-bottom:1em;
 }
 
-.message_box p {
+.message_box .mb_text {
 	margin-left : 80px;
-	font-size : smaller;
+	font-size : small;
+}
+
+.message_box img {
+	float : left;
 }
 
 .
