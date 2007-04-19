@@ -77,7 +77,7 @@ HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun setuidcaller InitServices searchddep dictionarywordsLot
+bb : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun setuidcaller InitServices searchddep dictionarywordsLot YumWrapper NetConfig
 
 tempFikes: IndexerLot_fik32bitbug DIconvert
 
@@ -684,6 +684,14 @@ InitServices: src/InitServices/initwrapper.c
 	(cd src/InitServices/; make)
 
 	cp src/InitServices/initwrapper setuid/
+
+YumWrapper: src/YumWrapper/yumwrapper.c
+	(cd src/YumWrapper; make)
+	cp src/YumWrapper/yumwrapper setuid/
+
+NetConfig: src/NetConfig/configwrite.c
+	(cd src/NetConfig; make)
+	cp src/NetConfig/configwrite setuid/
 
 yumupdate:
 	$(CC) $(CFLAGS) src/common/exeoc.c src/yumupdate/yumupdate.c -o setuid/yumupdate
