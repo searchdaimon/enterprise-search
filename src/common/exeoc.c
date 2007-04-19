@@ -49,7 +49,8 @@ void exeoc_timeout_ha( int signo )
 
 }
 
-int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret) {
+int exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret,int alsostderr) {
+
 	pid_t pid;
 	int     pipefd[2];
 	int i,n;
@@ -83,6 +84,13 @@ int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsiz
 
 		if (dup2(pipefd[1],fileno(stdout)) == -1) {
 			perror("dup2");
+		}
+
+		//ogaå fange stderr
+		if (alsostderr) {
+			if (dup2(pipefd[1],fileno(stderr)) == -1) {
+				perror("dup2");
+			}
 		}
 
 		//sleep(1);
@@ -198,4 +206,11 @@ int exeoc_timeout(char *exeargv[],char documentfinishedbuf[],int *documentfinish
 }
 
 
+
+int exeoc_stdall(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret) {
+	exeoc_stdselect(exeargv,documentfinishedbuf,documentfinishedbufsize,ret,1);
+}
+int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret) {
+	exeoc_stdselect(exeargv,documentfinishedbuf,documentfinishedbufsize,ret,0);
+}
 
