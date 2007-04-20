@@ -56,7 +56,8 @@ use constant RobotName => 'boitho.com-dc';
 
 use constant SocketTimeout => 600; #10 minn timeout
 
-use constant MakeThumbnale => 1; #om vi skal lage bilder for sidene vi laster ned. 1= skall, 0=skall ikke
+#use constant MakeThumbnale => 1; #om vi skal lage bilder for sidene vi laster ned. 1= skall, 0=skall ikke
+use constant MakeThumbnale => 0; #om vi skal lage bilder for sidene vi laster ned. 1= skall, 0=skall ikke
 
 #my $UrlQueue = Thread::Queue->new;
 
@@ -166,7 +167,7 @@ sub make_new_child {
 		@UrlQueue = ();
 		#while (scalar(@UrlQueue) <= MinUrlInQue -1) {
 			my $lastetUrler = 0;
-	 		open(UrlQueueFA,"+<../data/UrlQueue") or warn($!);
+	 		open(UrlQueueFA,"+<../data/UrlQueue") or warn("Can't open UrlQueue: $!");
 			binmode(UrlQueueFA);
 			flock(UrlQueueFA,2);
 		
@@ -1130,14 +1131,18 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 							#robots.txt filen er komprimert, og må unkomprimeres først
 							$html = uncompress($html) or warn("cant uncompress: $!");
 
-                                                	#hvis robot.txtene er minder en 800 bytes lagres den idatabasen, hvis ikke er det ikke plass, er en gre$
-                                                	if ($side{htmllength} < 800) {
+                                                	#hvis robot.txtene er minder en 800 bytes lagres den idatabasen, hvis ikke er det ikke plass, 
+							#så vi lagrer bare de første 799 bytene. Dette får å takle store robots.txt filer, som 
+							#webmasterworld, som har en blog i sin
+							#fra og med 11.04.07 2024 bytes
+                                                	if ($side{htmllength} < 2024) {
                                                         	$DBMrobottxt{$domene} = pack('A A*','1',$html) or warn($!);
-                                                        	print "Mindre en 800 bytes, lagrer\n";
+                                                        	print "Mindre en 2024 bytes, lagrer\n";
                                                 	}
                                                 	else {
-                                                        	$DBMrobottxt{$domene} = pack('A','3') or warn($!);
- 								print "Størren en 800 bytes,\n";
+                                                        	#$DBMrobottxt{$domene} = pack('A','3') or warn($!);
+                                                        	$DBMrobottxt{$domene} = pack('A A2024','1',$html) or warn($!);
+ 								print "Størren en 2024 bytes,\n";
                                                 	}
 
        
@@ -1183,7 +1188,7 @@ print ", time: $RobotsTxtData < " . (time - 3600);
                         	}) or warn("can´t do statment: ",$dbh->errstr);
 
 				$rv = $dbh->do(qq{
-					insert into okdownloaded values(null,"$userName","$countOKCrawl",now())
+					insert into okdownloaded values(null,"$userName","$countOKCrawl","$countRobotstxt",now())
 				}) or warn("can´t do statment: ",$dbh->errstr);
 
 
