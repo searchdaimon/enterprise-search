@@ -168,6 +168,9 @@ sub ResulveUrl {
 ###################################################################################################################
 BEGIN {
 
+	warn("have disabled AdultWords.txt loading");
+	return;
+
 	my $adultWords;	#persitent variabel. Blir her melom hver gang vi kalle subrutinen
 
 		#Prøver å laste listen

@@ -84,17 +84,45 @@ for my $i (0..$nrofthreads) {
 
 sub workthread {
 
-	use Text::MediawikiFormat prefix => $baseurl;
+	#use Text::MediawikiFormat prefix => $baseurl;
 
-	my $p = HTML::LinkExtor->new(\&cb, $baseurl);
+	#my $p = HTML::LinkExtor->new(\&cb, $baseurl);
 
-	while ($DataElement = $DataQueue->dequeue) { 
+	while ($text = $DataQueue->dequeue) { 
             	#print "Popped one off the queue\n";
 	
-		my $html = wikiformat ($DataElement);
+		#my $html = wikiformat ($DataElement);
 
-		$p->parse($html);
+		#$p->parse($html);
+        	my @urls = ();
+        	while ($text =~ m/\[([^\]\[]+)\]/g) {
+        	        #print "link: $1\n";
+        	        push(@urls,$1);
+        	}
+        	#exit;
+        	foreach my $i (@urls) {
 
+#			print "o: $i\n";
+
+                	if (($i =~ /http:\/\//) && ($i !~ /wikipedia\.org/)) {
+                	        #print "$i -> ";
+
+                	        if ($i =~ /\|/) {
+                	                ($i, undef) = split(/\|/,$i);
+                	                #print "| $i\n";
+                	        }
+                	        elsif ($i =~ / /) {
+                	                $i =~ s/ .*//g;
+                	        }
+
+#                	        print "a: $i\n";
+				printurl($i);
+        	        }
+			else {
+				#print "n $i\n";
+			}
+	        }
+		#print "\n";
         } 
 
 }
@@ -129,7 +157,7 @@ sub printurl {
 
 		lock($fileacces);
 
-		#print $purl, "\n";
+		#print "wiki: $purl\n";
 		print OUT $purl, "\n";
 	}
 }
