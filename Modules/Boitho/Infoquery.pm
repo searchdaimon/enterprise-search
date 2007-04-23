@@ -114,6 +114,7 @@ sub scan($$$$$) {
 	my $param = "scan \Q$connector\E \Q$host\E";
 		$param .= " \Q$username\E" if $username;
 		$param .= " \Q$password\E" if $password;
+
 		
 	return $self->_getList($param, 'share');
 }
@@ -191,6 +192,7 @@ sub _infoquery_exec($$) {
 		unless $infoquery_path;
 
 	my $exec_string = "$infoquery_path $parameters";
+	#carp "Kjorer infoquery slik: $exec_string";
 	open my $iq, "$exec_string |"
 		or carp "Unable to execute infoquery, $!";
 	my @output = <$iq> if $iq;

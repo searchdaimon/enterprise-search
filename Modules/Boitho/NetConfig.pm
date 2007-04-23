@@ -7,7 +7,7 @@ use Data::Dumper;
 use Carp;
 use Net::IP qw(ip_is_ipv4 ip_is_ipv6);
 use FileHandle;
-use IPC::Open2;
+#use IPC::Open2;
 
 # Constructor: new
 #
@@ -193,7 +193,7 @@ sub save_netconf {
 	croak "No content to write. You must run generate_netconf() first."
 	    unless defined $content;
 
-	$self->_save_file($content, "netconf");
+	$self->_save_file($content, "netconfig");
 	1;
 }
 
@@ -223,7 +223,7 @@ sub save_resolv {
 sub _save_file {
     my ($self, $content, $keyword) = @_;
 
-    my @valid_keywords = qw(netconf resolv);
+    my @valid_keywords = qw(netconfig resolv);
     croak "Unknown keyword $keyword provided."
 	unless grep { /^$keyword$/ } @valid_keywords;
     
@@ -238,17 +238,17 @@ sub _save_file {
     my $success = 1;
 
     #write
-    open2 (*CWREAD, *CWWRITE, "$path $keyword")
+    open my $configwriterh, "|$path $keyword"
 	or die "Unable to execute configwrite: $!\n";
-    print CWWRITE $content;
-    print CWWRITE eof;
-    close CWWRITE or $success = 0; 
-    my $input = <CWREAD>;
-    close CWREAD  or $success = 0;
+    print { $configwriterh } $content;
+    print { $configwriterh } eof;
+    close $configwriterh 
+	or $success = 0;
 	
     unless ($success) {
-	die "Error writing config: $input";
+	die "Configwriter was unable to write to configfile. (See apache error log for details)";
     }
+    1;
 
 }
 
@@ -340,14 +340,20 @@ sub _validate_ifcfg_options {
 	# Valid BOOTPROTO
 	if (defined $options{'BOOTPROTO'}) {
 		my @valid_values = qw(static none dhcp bootp);
-		croak unless grep /^$options{'BOOTPROTO'}$/, @valid_values;
+		croak "$options{BOOTPROTO} is not a valid connection (BOOTPROTO) method"
+			unless grep { /^$options{'BOOTPROTO'}$/ } @valid_values;
 	}
+
+	# Gateway, netmask etc can be empty if we're using dhcp.
+	my $using_dhcp;
+	$using_dhcp = 1 if $options{'BOOTPROTO'} eq "dhcp";
 
 	# Valid GATEWAY NETMASK BROADCAST IPADDR
 	foreach my $option (qw(GATEWAY NETMASK BROADCAST IPADDR NETWORK)) {
 		next unless defined $options{$option};
 		#last if grep /^$options{'BOOTPROTO'}$/, "dhcp", "bootp"; # Ignore if it doesn't matter.
 		my $ip = $options{$option};
+		next if not $ip and $using_dhcp; # Can be empty, we're using dhcp
 		croak "$option: $ip is not a valid IP."
 			unless ip_is_ipv4($ip) or ip_is_ipv6($ip);
 	}
@@ -359,7 +365,14 @@ sub _validate_ifcfg_options {
 		croak "Not valid ONBOOT value. Must be yes or no"
 			unless (($value eq "yes") or ($value eq "no"));
 	}
-	
+
+	# Valid network device
+	if (defined $option{'DEVICE'}) {
+	    my $value = $options{'DEVICE'};
+	    my @valid_devices = qw(eth0 eth1);
+	    croak "$value is not a valid network device"
+		unless grep { /^$value$/ } @valid_devices;
+	}
 	1;
 }
 
