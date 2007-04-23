@@ -22,4 +22,5 @@ my $usage = qq^
 my @valid_size = qw(16x16 22x22 32x32 48x48 64x64 128x128 other);
 my @valid_ext  = qw(png jpg jpeg);
 
-Boitho::WebFile::get(['image', 'css'], \@valid_size, \@valid_ext);
+Boitho::WebFile::get(['image', 'css', 'javascript'], \@valid_size, \@valid_ext);
+

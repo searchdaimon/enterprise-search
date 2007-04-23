@@ -3,7 +3,6 @@ use strict;
 use warnings;
 use Carp;
 use Data::Dumper;
-use Time::Local;
 use Sql::Shares;
 use Sql::Connectors;
 use Sql::CollectionAuth;
@@ -16,6 +15,7 @@ BEGIN {
 use Boitho::Infoquery;
 use Common::Collection;
 use Common::Generic;
+use Common::Data::Overview;
 
 use config qw($CONFIG);
 
@@ -37,14 +37,14 @@ sub _init($$$) {
 	$self->{'sqlConnectors'} = Sql::Connectors->new($dbh);
 	$self->{'sqlAuth'}	 = Sql::CollectionAuth->new($dbh);
 	$self->{'sqlGroups'}	 = Sql::ShareGroups->new($dbh);
-	$self->{'infoQuery'}	 = Boitho::Infoquery->new($CONFIG->{'infoquery'});
 	$self->{'common'}     	 = Common::Generic->new;
+	$self->{'dataOverview'} = Common::Data::Overview->new($dbh);
+	$self->{'infoQuery'}   = Boitho::Infoquery->new($CONFIG->{'infoquery'});
+	#my $sqlConfig = Sql::Config->new($dbh);
 	
-	my $sqlConfig = Sql::Config->new($dbh);
-	
-	$self->{'default_crawl_rate'} 
-		= $sqlConfig->get_setting('default_crawl_rate');
-	$self->{'sqlConfig'}	 = $sqlConfig;
+	#$self->{'default_crawl_rate'} 
+	#	= $sqlConfig->get_setting('default_crawl_rate');
+	#$self->{'sqlConfig'}	 = $sqlConfig;
 }
 
 ## Sends a crawl collection request to infoquery.
@@ -72,7 +72,9 @@ sub crawl_collection($$) {
 
 sub list_collections($$) {
 	my ($self, $vars) = (@_);
-	$vars->{'connectors'} = $self->_get_connectors;
+	my $dataOverview = $self->{'dataOverview'};
+	my @connectors = $dataOverview->get_connectors_with_collections();	
+	$vars->{'connectors'} = \@connectors;
 	return ($vars, 'overview.html');
 }
 
@@ -320,147 +322,10 @@ sub _add_collection_field($$) {
 	return $fields;
 }
 
-## Get all connectors and their shares.
 sub _get_connectors {
-	my $self = shift;
-	my $sqlConnectors = $self->{'sqlConnectors'};
-	
-	my $connectors = $sqlConnectors->get_with_shares;
-	
-	for my $c (0..$#{@{$connectors}}) {
-		my $shares = $connectors->[$c]{'shares'};
-		next unless($shares);
-		
-		for my $s (0..$#{@{$shares}}) {
-			# Add some extra info for each share.
-			
-			# Not showing info for a disabled share,
-			# no need to get it.
-			next unless $shares->[$s]{'active'};
-				
-			$shares->[$s] 
-				= $self->_add_smarter_rate($shares->[$s]);
-			$shares->[$s] 
-				= $self->_add_next_crawl($shares->[$s]);
-			$shares->[$s] 
-				= $self->_add_documents_in_collection($shares->[$s]);
-		}
-
-		$connectors->[$c]{'shares'} = $shares;
-	
-	}
-	
-	return $connectors;
+	croak "_get_connectors() is deprecated. Use method in class Common::Data::Overview";
 }
 
-
-## Add "smart rate" to a share. This adds a variable with 
-## recrawl rate in text. Example: "Crawled every 12 hours."
-sub _add_smarter_rate($$) {
-	my ($self, $share)	= @_;
-	my $default_rate	= $self->{'default_crawl_rate'};
-	my $rate 		= $share->{'rate'};
-
-	$rate = $default_rate unless($rate);
-
-	my $smart_rate  	= $self->_minutes_to_text($rate);
-	$share->{'smart_rate'}  = $smart_rate;
-
-	return $share;
-}
-
-## Add variable with next crawl in text.
-## Example: "Should have been crawled 10 days ago."
-sub _add_next_crawl {
-	my ($self, $share) = @_;
-	my $default_rate   = $self->{'default_crawl_rate'};
-
-	my $last = $share->{'last'};
-	my $rate = $share->{'rate'};
-	$rate = $default_rate unless $rate;
-
-	return $share unless $last; # need to know last to find next
-	
-	my $next_crawl		= $self->_get_next_crawl($rate, $last);
-	$share->{'next_crawl'}	= $next_crawl;
-
-	return $share;
-}
-
-## Add a variable with document count for a share.
-sub _add_documents_in_collection {
-	my ($self, $share)  = @_;
-	my $infoquery 	    = $self->{'infoQuery'};
-	my $collection_name = $share->{'collection_name'};
-
-	my $doc_count 
-		= $infoquery->documentsInCollection($collection_name);
-	$share->{'doc_count'} = $doc_count;
-
-	return $share;
-}
-
-## Given crawl rate, and time of last crawl, this function returns
-## a string saying when next crawl happens (or should have happened).
-sub _get_next_crawl {
-	my $self = shift;
-	my ($rate, $last) = (@_);
-	unless($last and $rate) {
-		carp "Missing eather \$last or \$rate.";
-		return;
-	}
-	
-	#make $last into unixtime, if it isn't.
-	unless ($last =~ /^\d+$/) {
-		$last = $self->_mysql_to_unixtime($last);
-	}
-	
-	my $time_ago = time - $last;
-	my $time_left = ($rate * 60) - $time_ago; # * 60 to get seconds.
-	
-	my $to_text = $self->_minutes_to_text(abs($time_left / 60));
-	if ($time_left < 0) { return "Should have been crawled $to_text ago"; }
-	return "Next crawl in $to_text";
-
-}
-
-## Change to mysql time string to unixstamp
-sub _mysql_to_unixtime {
-	my $self = shift;
-	my $mysql_time = shift;
-	return unless $mysql_time;
-	#/(\d\d\d\d)-?(\d\d)-?(\d\d) ?(\d\d):?(\d\d):?(\d\d)/;
-	my ($year, $month, $day, $hour, $minute, $second) 
-		= $mysql_time 
-		=~ /(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/;
-	my $unixtime = eval { timelocal($second, $minute, $hour, $day, 
-			 ($month - 1), ($year - 1900)) };
-	carp $@ if $@;
-	
-	$unixtime;
-}
-
-## Method to change seconds into text.
-## Example outputs: "1 day", "5 minutes", "12 hours"
-sub _minutes_to_text {
-	my $self = shift;
-	my $minutes = shift;
-	return unless $minutes;
-	if ($minutes < 60) { # less than an hour
-		$minutes = int $minutes;
-		return "$minutes minute" if ($minutes == 1);
-		return "$minutes minutes";
-	}
-	elsif ($minutes < 1440) { #less than an day
-		my $hours = int($minutes / 60);
-		return "$hours hour" if ($hours == 1);
-		return "$hours hours";
-	}
-	
-	my $days = int($minutes / 60 / 24);
-	return "$days day" if ($days == 1);
-	return "$days days";
-}
 
 
 1;

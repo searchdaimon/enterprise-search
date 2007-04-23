@@ -116,6 +116,11 @@ elsif (defined($state->{'confirm_delete'})) {
 	($vars, $template_file) = $overview->list_collections($vars);
 }
 
+elsif (defined $state->{'fetch_inner'}) {
+	($vars, $template_file) = $overview->list_collections($vars);
+	$vars->{'show_only_inner'} = 1;
+}
+
 else {
 	# Show default page (list of collections)
 	($vars, $template_file) = 

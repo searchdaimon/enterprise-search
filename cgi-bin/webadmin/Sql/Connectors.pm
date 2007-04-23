@@ -76,22 +76,22 @@ sub get_with_shares {
 	my $self = shift;
 	my $sqlShares = Sql::Shares->new($dbh);
 	my $only_active = shift;
-	my @data = ();
+	my @connector_list;
 
  	foreach my $connector (@{$self->get_connectors}) {
-		my $shares;
+		my @shares;
 		if ($only_active) {
- 			$shares = $sqlShares->get_active_shares($connector->{'name'});
+ 			@shares = $sqlShares->get_active_shares($connector->{'name'});
 		}
 		else {
-			$shares = $sqlShares->get_shares($connector->{'name'});
+			@shares = $sqlShares->get_all_by_connector($connector->{'name'});
 		}
-		push (@data, {
+		push (@connector_list, {
 			'name' => $connector->{'name'},
 			'comment' => $connector->{'comment'},
-			'shares' => $shares });
+			'shares' => \@shares });
  	}
-	return \@data;
+	return @connector_list;
 
 }
 

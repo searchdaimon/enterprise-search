@@ -79,6 +79,8 @@ $CONFIG{'yum_wrapper_path'}  = $ENV{'BOITHOHOME'} . "/setuid/yumwrapper";
 
 # Group: Network
 
+# The network device that is configurable
+$CONFIG{'net_device'} = "eth1";
 
 # Name of network device configuration file
 # Is hardcoded into configwrite.c and *needs also be changed there*

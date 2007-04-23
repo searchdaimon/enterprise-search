@@ -1,124 +1,28 @@
-[% INCLUDE 'header.html' 
-	title = 'Collections overview'
-%]
-[% USE HTML %]
+[% PROCESS 'overview_common.html' %]
 
+[% IF show_only_inner %]
+	[% ##
+	   # Show only connectors and tables. %]
 
-[% PROCESS overview_messages.html %]
-
-<h2>Collections</h2>
-
-<form action="overview.cgi" method="post">
-<div id="overview">
-[% i = 0 %]
-[% FOREACH connectors %]
-	<h3>[% name %]</h3>
-	[% color = 0 %]
-	[% IF shares.size %]
+	[% PROCESS list_connectors %]
+[% ELSE %]
+	[% ##
+	   # Normal view. %]
 	
-		[% WRAPPER 'template_table.html'
-		header = ['Status', 'Collection', 'Last crawl', 'Next crawl', 'Collection size' ''] %]
-	
-		[% FOREACH share IN shares %]
-			[% color = 1 - color %]
-			[% IF share.active;
-				disabled = 0;
-			   ELSE;
-			   	disabled = 1; 
-			   END %]
-			[% WRAPPER 'template_table_row.html' 
-				disabled = disabled
-				other = 'padding-top : 1em; padding-bottom : 1em;' %]
-				<td style="width : 64px;">
-					[% IF share.active %]
-						[% IF share.crawler_success %] 
-							<img src="file.cgi?i=agt_action_success" alt="ok" />
-						[% ELSE %] 
-							<img src="file.cgi?i=agt_action_fail" alt="fail" />
-						[% END %]
-					[% ELSE %]
-						<img src="file.cgi?i=mimetypes_disabled" alt="Not active" />
-					[% END %]
-				</td>
-	
-				<td style="width : 15%">
-					[% HTML.escape(share.collection_name) %]
-				</td>
-		
-				<td style="width : 15%">
-					[% IF share.active %]
-						[% IF share.last %]
-							[% HTML.escape(share.last) %]
-						[% ELSE %]
-							Not fully crawled
-						[% END %]
-	
-						[% IF share.crawler_message %]
-							<br /><br />
-							<!--
-							<span style="font-size : small;"><em>Crawler respons: 
-							[% share.crawler_message %]</em></span>-->
-						[% END %]
-					[% END %]
-				</td>
-				<td style="width : 30%">
-					[% IF share.active %]
-						[% IF share.next_crawl %]
-							[% share.next_crawl %]. <br />
-						[% END %]
-						
-						[% IF share.rate %]
-							Crawled every [% share.smart_rate %].
-						[% ELSE %]
-							Every [% share.smart_rate %] (default)
-						[% END %]
-					[% END %]
-				</td>
-				<td>
-					[% IF share.active %]
-						[% share.doc_count %]&nbsp;documents
-					[% END %]
-				</td>
-				<td>
+	[% INCLUDE 'header.html' 
+		title = 'Collections overview'
+		extra_js = ['overview_update']
+		onload = 'overview_update_interval(3)'
+	%]
 
-					<ul class="button_list">
-					[% IF share.active %]
-					<li>
-						<div>
-							<a href="overview.cgi?action=crawl&amp;id=[% share.id %]">Crawl&nbsp;now</a>
-						</div>
-					</li>
-					[% ELSE %]
-					<li>
-						<div>
-							<a href="overview.cgi?action=activate&amp;id=[% share.id %]">Activate</a>
-						</div>
-					</li>
-					[% END %]
-					<li>
-						<div>
-							<a href="overview.cgi?action=edit&amp;id=[% share.id %]">Manage</a>
-						</div>
-					</li>
-					<li>
-						<div>
-							<a href="overview.cgi?action=delete&amp;id=[% share.id %]">Delete</a>
-						</div>
-					</li>
-				</td>
-			[% END %]
-					</ul>
-		[% END %] <!-- foreach shares -->
-		[% END %] <!-- table -->
+	[% PROCESS overview_messages.html %]
 	
-	[% ELSE %]
-		[% WRAPPER 'template_info.html' %]
-			There are no shares being indexed.
-		[% END %]
-	[% END %]
-[% i = i + 1 %]
-[% END %] <!-- foreach connectors-->
-</div>
-</form>
+	<h2>Collections</h2>
+	<div id="overview">
+	[% PROCESS list_connectors %]
+	</div>
+	
+	
+	[% INCLUDE 'footer.html' %]
 
-[% INCLUDE 'footer.html' %]
+[% END %]

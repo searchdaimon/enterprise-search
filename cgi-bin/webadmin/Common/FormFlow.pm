@@ -42,6 +42,7 @@ sub add {
 #	form - Form identifier
 sub process {
 	my ($self, $form) = @_;
+	
 	my @flow = @{$self->{'flow'}};
 	croak "No form id provided"
 		unless defined $form;

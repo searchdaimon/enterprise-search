@@ -75,7 +75,11 @@ sub process_network_config {
 	my ($self, $vars, $netconf_user_ref, $resolv_user_ref) = @_;
 	my $restart_result;
 
+	# We always want to start the device on boot
+	$netconf_user_ref->{'ONBOOT'} = "yes";
 	
+	# Overwrite whatever evil hacker tried to put as network device
+	$netconf_user_ref->{'DEVICE'} = $CONFIG->{'net_device'};
 	
 	# Attempt to generate and save config files.
 	$resolv_user_ref 

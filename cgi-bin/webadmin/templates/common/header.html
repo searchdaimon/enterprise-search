@@ -10,8 +10,11 @@
 	[% FOREACH css IN extra_css %]
 		<link rel="stylesheet" href="file.cgi?css=[% css %]" type="text/css">
 	[% END %]
+	[% FOREACH js IN extra_js %]
+		<script src="file.cgi?js=[% js %]"></script>
+	[% END %]
 </head>
-<body>
+<body [% IF onload %] onload="[% onload %]"[% END %]>
 [% IF login_header OR simple_header %]
 	
 [% ELSE %]
