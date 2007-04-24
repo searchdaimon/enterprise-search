@@ -50,12 +50,12 @@ sub get_connectors_with_collections {
 	
 	my @connectors = $sqlConnectors->get_with_shares();
 	
-	my $conn_count = scalar @connectors;
-	for my $c (0..($conn_count-1)) {
+	my $conn_count = (scalar @connectors) - 1;
+	for my $c (0..($conn_count)) {
 		my $shares_ref = $connectors[$c]{'shares'};
 		next unless($shares_ref);
 		
-		my $share_count = scalar @{$shares_ref};
+		my $share_count = (scalar @{$shares_ref}) - 1;
 		for my $s (0..$share_count) {
 			# Add some extra info for each share.
 			
