@@ -20,7 +20,7 @@ sub new {
     croak "Path to RPM directory you provided is not a directory."
 	unless -d $rpm_dir;
 
-    croak "Wrapper path provided is not executable"
+    croak "Wrapper path \"$wrapper_path\" provided is not executable"
 	unless -x $wrapper_path;
 
     return $self;

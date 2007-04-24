@@ -367,7 +367,9 @@ sub _validate_ifcfg_options {
 	}
 
 	# Valid network device
-	if (defined $option{'DEVICE'}) {
+	#if (defined $option{'DEVICE'}) {
+	#runarb: ser ut til og ha glemt en s her. Skal være optionS, ikke option
+	if (defined $options{'DEVICE'}) {
 	    my $value = $options{'DEVICE'};
 	    my @valid_devices = qw(eth0 eth1);
 	    croak "$value is not a valid network device"
