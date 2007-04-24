@@ -91,10 +91,11 @@ main(void)
 	unsigned int i;
 #define get_date(x) get_date(x, NULL, 0)
 
-	init_getdate();
+	//init_getdate();
 	date_info_start(&dv, 0, -1);
 
 #if 1
+	/*
 	date_info_add(&dv, get_date("last week"));
 	date_info_add(&dv, get_date("2 years ago"));
 	date_info_add(&dv, get_date("last week"));
@@ -112,17 +113,24 @@ main(void)
 
 	date_info_add(&dv, get_date("last year"));
 	date_info_add(&dv, get_date("4 years ago"));
+	*/
 #else
-
+	/*
 	date_info_add(&dv, get_date("1 year 3 week ago"));
 	date_info_add(&dv, get_date("1 year 3 week ago"));
 	date_info_add(&dv, get_date("1 year 2 week ago"));
 	date_info_add(&dv, get_date("1 year 4 week ago"));
 	date_info_add(&dv, get_date("1 year 2 week ago"));
 	date_info_add(&dv, get_date("1 year 5 week ago"));
-
+	*/
 #endif
 
+	date_info_add(&dv, 1067116681);
+	date_info_add(&dv, 1141239390);
+	date_info_add(&dv, 1071945355);
+	date_info_add(&dv, 1161882999);
+	date_info_add(&dv, 1107718883);
+	date_info_add(&dv, 1164224319);
 
 	/* Not needed right now */
 	dv2 = date_info_end(&dv);

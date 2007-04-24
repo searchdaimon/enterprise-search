@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "getdate.h"
+
 //#define yyparse getdate_yyparse
 #define yylex datelib_yylex
 #define yyerror datelib_yyerror
@@ -28,7 +30,8 @@ static int yyerror (char **, struct datelib *, const char *);
 void subtract_date(struct tm *, enum yytokentype, int);
 void set_lowest(struct datelib *, enum yytokentype);
 
-
+/*
+Runarb: legger denne i getdate.h slik at den kan brukes av andre programmer
 struct datelib {
 	time_t start;
 	time_t end;
@@ -41,6 +44,7 @@ struct datelib {
 
 	enum yytokentype lowest;
 };
+*/
 
 %}
 
@@ -401,6 +405,9 @@ getdate(char *str, struct datelib *dl)
 	return 0;
 }
 
+//Runarb: Vi vil ikke ha en main metode i o filen vi skal inkludere andre plasser
+//legger den heller ut som test.c
+/*
 int
 main(int argc, char **argv)
 {
@@ -418,4 +425,4 @@ main(int argc, char **argv)
 
 	return 0;
 }
-
+*/

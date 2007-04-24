@@ -4,7 +4,7 @@ CFLAGS= -DTEST -Wall -W -g -DYYDEBUG=1 -O1
 all: getdate
 
 getdate: getdate.tab.o #getdate.lex.o
-	$(CC) $(LDFLAGS) getdate.tab.o -o getdate
+	$(CC) $(LDFLAGS) getdate.tab.o test.c -o getdate
 
 
 getdate.tab.c: getdate.y
