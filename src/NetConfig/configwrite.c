@@ -12,16 +12,16 @@
 
 /* header */
 // netscript
-#define NET_IFCFG	   "netconf.test2"
-#define NETSCRIPT_DIR	   "/tmp"
+#define NET_IFCFG	   "ifcfg-eth1"
+#define NETSCRIPT_DIR	   "/etc/sysconfig/network-scripts"
 
 // resolv
-#define RESOLV_PATH	   "/tmp/resolv.conf"
+#define RESOLV_PATH	   "/etc/resolv.conf"
 
 // generic
 #define INIT_NETWORK_PATH  "/etc/rc.d/init.d/network restart"
 #define MAX_INPUT_LENGHT   2047
-#define RUN_SUID	   0
+#define RUN_SUID	   1
 #define SUID_USER	   0
 
 #define RESOLVCONF_FILE    1
@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
 	char *input;
 #if RUN_SUID
 	if (setuid(SUID_USER) != 0) {
-	    printf("Unable to setuid(%s)\n", SUID_USER);
+	    fprintf(stderr, "Unable to setuid(%d)\n", SUID_USER);
 	    exit(EXIT_FAILURE);
 	}
 #endif
@@ -82,8 +82,8 @@ int main(int argc, char **argv) {
  * Show usage and exit.
  */
 void show_usage(void) {
-    printf("Usage: configwrite restart|resolv|netconfig\n");
-    printf("Write to stdin if resolv or netconfig parameter is used.\n");
+    fprintf(stderr, "Usage: configwrite restart|resolv|netconfig\n");
+    fprintf(stderr, "Write to stdin if resolv or netconfig parameter is used.\n");
     exit(EXIT_FAILURE);
 }
 
@@ -100,7 +100,7 @@ char * read_config(void) {
 	int i = 0;
 	while ( (buffer = fgetc(stdin)) != EOF ) {
 		if (i > (MAX_INPUT_LENGHT)) {
-			fprintf(stdout, "Input to long, aborting.\n");
+			fprintf(stderr, "Input to long, aborting.\n");
 			exit(3);
 		}
 		input[i] = buffer;
@@ -126,7 +126,7 @@ void validate_input(char *input) {
 		     && in != '='  && in != '.' 
 		     && in != '\n' && in != '"') 
 		{
-		    fprintf(stdout, "Input contains invalid character '%c'\n", in);
+		    fprintf(stderr, "Input contains invalid character '%c'\n", in);
 		    exit(4);
 		}
 	}
@@ -161,14 +161,14 @@ void write_config(char* input, int conf_file) {
 	    break;
 
 	default:
-	    printf("Unknown conf_file id %d\n", conf_file);
+	    fprintf(stderr, "Unknown conf_file id %d\n", conf_file);
 	    exit(EXIT_FAILURE);
 	}
 	
 	fileh = fopen(path, "w");
 
 	if (fileh == NULL) {
-	    fprintf(stdout, "Unable to open config file %s for writing.\n", path);
+	    fprintf(stderr, "Unable to open config file %s for writing.\n", path);
 	    exit(EXIT_FAILURE);
 	}
 
@@ -193,8 +193,8 @@ int restart_network(void) {
 
 	exeocbuflen = sizeof(exeocbuf);
 	if (!exeoc(netargs, exeocbuf, &exeocbuflen, &return_value)) {
-	    printf("Could not execute network restart procedure\n");
-	    exit(10);
+	    fprintf(stderr, "Could not execute network restart procedure\n");
+	    exit(EXIT_FAILURE);
 	}
 
 	printf("%s\n", exeocbuf);
