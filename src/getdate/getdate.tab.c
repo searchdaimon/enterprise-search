@@ -97,6 +97,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define __INGETDATE
 #include "getdate.h"
 
 //#define yyparse getdate_yyparse
@@ -106,8 +107,6 @@
 //void yyerror(char *);
 //static int datelib_yylex(YYSTYPE *, char **);
 
-struct datelib;
-
 static int yyparse ();
 static int yylex ();
 static int yyerror (char **, struct datelib *, const char *);
@@ -115,21 +114,6 @@ static int yyerror (char **, struct datelib *, const char *);
 void subtract_date(struct tm *, enum yytokentype, int);
 void set_lowest(struct datelib *, enum yytokentype);
 
-/*
-Runarb: legger denne i getdate.h slik at den kan brukes av andre programmer
-struct datelib {
-	time_t start;
-	time_t end;
-
-	struct tm tmstart;
-
-	struct {
-		int year, month, week, day;
-	} modify;
-
-	enum yytokentype lowest;
-};
-*/
 
 
 
@@ -153,13 +137,13 @@ struct datelib {
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 52 "getdate.y"
+#line 36 "getdate.y"
 {
 	int number;
 	int month;
 }
-/* Line 193 of yacc.c.  */
-#line 163 "getdate.tab.c"
+/* Line 187 of yacc.c.  */
+#line 147 "getdate.tab.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -172,7 +156,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 176 "getdate.tab.c"
+#line 160 "getdate.tab.c"
 
 #ifdef short
 # undef short
@@ -457,8 +441,8 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    72,    72,    74,    81,    82,    85,    86,    87,    88,
-      92,   100,   108,   116
+       0,    56,    56,    58,    65,    66,    69,    70,    71,    72,
+      76,    84,    92,   100
 };
 #endif
 
@@ -1374,24 +1358,24 @@ yyreduce:
   switch (yyn)
     {
         case 3:
-#line 74 "getdate.y"
+#line 58 "getdate.y"
     {
 			//printf("Found a daterange\n");
 		;}
     break;
 
   case 4:
-#line 81 "getdate.y"
+#line 65 "getdate.y"
     { (yyval.number) = 1; ;}
     break;
 
   case 5:
-#line 82 "getdate.y"
+#line 66 "getdate.y"
     { (yyval.number) = yylval.number; ;}
     break;
 
   case 10:
-#line 92 "getdate.y"
+#line 76 "getdate.y"
     {
 			set_lowest(result, DAY);
 			result->modify.day += (yyvsp[(1) - (2)].number);
@@ -1400,7 +1384,7 @@ yyreduce:
     break;
 
   case 11:
-#line 100 "getdate.y"
+#line 84 "getdate.y"
     {
 			set_lowest(result, WEEK);
 			result->modify.week += (yyvsp[(1) - (2)].number);
@@ -1409,7 +1393,7 @@ yyreduce:
     break;
 
   case 12:
-#line 108 "getdate.y"
+#line 92 "getdate.y"
     {
 			set_lowest(result, MONTH);
 			result->modify.month += (yyvsp[(1) - (2)].number);
@@ -1418,7 +1402,7 @@ yyreduce:
     break;
 
   case 13:
-#line 116 "getdate.y"
+#line 100 "getdate.y"
     {
 			set_lowest(result, YEAR);
 			result->modify.year += (yyvsp[(1) - (2)].number);
@@ -1428,7 +1412,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1432 "getdate.tab.c"
+#line 1416 "getdate.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1642,7 +1626,7 @@ yyreturn:
 }
 
 
-#line 123 "getdate.y"
+#line 107 "getdate.y"
 
 
 
@@ -1690,6 +1674,7 @@ _datelib_yylex(YYSTYPE *yylval, char **inputp)
 
 	input = *inputp;
 
+start:
 	while (isspace(*input))
 		input++;
 	if (*input == '\0')
@@ -1723,9 +1708,8 @@ _datelib_yylex(YYSTYPE *yylval, char **inputp)
 		int i;
 		char *p;
 
-		for (p = input; (isalnum(*input)); input++) {
-			//printf("looping2 %c\n", *input);
-		}
+		for (p = input; (isalnum(*input)); input++)
+			;
 		if (!issep(*input))
 			lexreturn(unknown);
 
@@ -1733,6 +1717,8 @@ _datelib_yylex(YYSTYPE *yylval, char **inputp)
 			*input = '\0';
 			input++;
 		}
+		if (strcmp(p, "ago") == 0) /* XXX */
+			goto start;
 		for (i = 0; wordtable[i].token != -1; i++) {
 			if (strcmp(wordtable[i].word, p) == 0) {
 				lexreturn(wordtable[i].token);
@@ -1912,6 +1898,8 @@ getdate(char *str, struct datelib *dl)
 	time_t now, test;
 	struct tm tmend;
 
+	printf("%s\n", str);
+
 	p = input;
 	
 	now = time(NULL);
@@ -1928,18 +1916,26 @@ getdate(char *str, struct datelib *dl)
 	return 0;
 }
 
-//Runarb: Vi vil ikke ha en main metode i o filen vi skal inkludere andre plasser
-//legger den heller ut som test.c
-/*
+#ifdef TEST_GETDATE
+
 int
 main(int argc, char **argv)
 {
 	struct datelib dl;
 
-	getdate("2 years 5 days 1 week", &dl);
+	getdate("2 years 5 days 1 week ago", &dl);
+	printf("%s\n", ctime(&dl.start));
+	printf("%s\n", ctime(&dl.end));
 	getdate("1 years", &dl);
+	printf("%s\n", ctime(&dl.start));
+	printf("%s\n", ctime(&dl.end));
 	getdate("2 months", &dl);
+	printf("%s\n", ctime(&dl.start));
+	printf("%s\n", ctime(&dl.end));
 	getdate("1 months", &dl);
+	printf("%s\n", ctime(&dl.start));
+	printf("%s\n", ctime(&dl.end));
+
 
 	getdate("last months", &dl);
 
@@ -1948,5 +1944,6 @@ main(int argc, char **argv)
 
 	return 0;
 }
-*/
+
+#endif /* TEST_GETDATE */
 
