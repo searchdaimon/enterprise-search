@@ -1,10 +1,11 @@
 
-CFLAGS= -DTEST -Wall -W -g -DYYDEBUG=1 -O1
+CFLAGS+= -Wall -W -g -DYYDEBUG=1 -O1
+#CFLAGS+= -DTEST_GETDATE 
 
-all: getdate dateview
+all: getdate
 
-getdate: getdate.tab.o test.c #getdate.lex.o
-	$(CC) $(LDFLAGS) getdate.tab.o test.c -o getdate
+getdate: getdate.tab.o test.o
+	$(CC) $(LDFLAGS) getdate.tab.o test.o -o getdate
 
 
 getdate.tab.c: getdate.y
@@ -16,5 +17,5 @@ getdate.lex.c: getdate.l
 dateview: dateview.c
 	$(CC)  -DTEST_DATEVIEW dateview.c getdate.tab.c -o dateview
 clean:
-	rm -f getdate getdate.tab.c getdate.tab.o
+	rm -f getdate getdate.tab.c getdate.tab.o test.o
 

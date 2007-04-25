@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define __INGETDATE
 #include "getdate.h"
 
 //#define yyparse getdate_yyparse
@@ -21,8 +22,6 @@
 //void yyerror(char *);
 //static int datelib_yylex(YYSTYPE *, char **);
 
-struct datelib;
-
 static int yyparse ();
 static int yylex ();
 static int yyerror (char **, struct datelib *, const char *);
@@ -30,21 +29,6 @@ static int yyerror (char **, struct datelib *, const char *);
 void subtract_date(struct tm *, enum yytokentype, int);
 void set_lowest(struct datelib *, enum yytokentype);
 
-/*
-Runarb: legger denne i getdate.h slik at den kan brukes av andre programmer
-struct datelib {
-	time_t start;
-	time_t end;
-
-	struct tm tmstart;
-
-	struct {
-		int year, month, week, day;
-	} modify;
-
-	enum yytokentype lowest;
-};
-*/
 
 %}
 
@@ -167,6 +151,7 @@ _datelib_yylex(YYSTYPE *yylval, char **inputp)
 
 	input = *inputp;
 
+start:
 	while (isspace(*input))
 		input++;
 	if (*input == '\0')
@@ -200,9 +185,8 @@ _datelib_yylex(YYSTYPE *yylval, char **inputp)
 		int i;
 		char *p;
 
-		for (p = input; (isalnum(*input)); input++) {
-			//printf("looping2 %c\n", *input);
-		}
+		for (p = input; (isalnum(*input)); input++)
+			;
 		if (!issep(*input))
 			lexreturn(unknown);
 
@@ -210,6 +194,8 @@ _datelib_yylex(YYSTYPE *yylval, char **inputp)
 			*input = '\0';
 			input++;
 		}
+		if (strcmp(p, "ago") == 0) /* XXX */
+			goto start;
 		for (i = 0; wordtable[i].token != -1; i++) {
 			if (strcmp(wordtable[i].word, p) == 0) {
 				lexreturn(wordtable[i].token);
@@ -389,6 +375,8 @@ getdate(char *str, struct datelib *dl)
 	time_t now, test;
 	struct tm tmend;
 
+	printf("%s\n", str);
+
 	p = input;
 	
 	now = time(NULL);
@@ -405,18 +393,26 @@ getdate(char *str, struct datelib *dl)
 	return 0;
 }
 
-//Runarb: Vi vil ikke ha en main metode i o filen vi skal inkludere andre plasser
-//legger den heller ut som test.c
-/*
+#ifdef TEST_GETDATE
+
 int
 main(int argc, char **argv)
 {
 	struct datelib dl;
 
-	getdate("2 years 5 days 1 week", &dl);
+	getdate("2 years 5 days 1 week ago", &dl);
+	printf("%s\n", ctime(&dl.start));
+	printf("%s\n", ctime(&dl.end));
 	getdate("1 years", &dl);
+	printf("%s\n", ctime(&dl.start));
+	printf("%s\n", ctime(&dl.end));
 	getdate("2 months", &dl);
+	printf("%s\n", ctime(&dl.start));
+	printf("%s\n", ctime(&dl.end));
 	getdate("1 months", &dl);
+	printf("%s\n", ctime(&dl.start));
+	printf("%s\n", ctime(&dl.end));
+
 
 	getdate("last months", &dl);
 
@@ -425,4 +421,5 @@ main(int argc, char **argv)
 
 	return 0;
 }
-*/
+
+#endif /* TEST_GETDATE */
