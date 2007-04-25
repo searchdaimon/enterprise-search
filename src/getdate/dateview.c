@@ -89,6 +89,8 @@ main(void)
 	dateview *dv2;
 	enum dateview_output_type type = TWO_YEARS_PLUS;
 	unsigned int i;
+	time_t date;
+
 #define get_date(x) get_date(x, NULL, 0)
 
 	//init_getdate();
@@ -125,12 +127,26 @@ main(void)
 	*/
 #endif
 
-	date_info_add(&dv, 1067116681);
-	date_info_add(&dv, 1141239390);
-	date_info_add(&dv, 1071945355);
-	date_info_add(&dv, 1161882999);
-	date_info_add(&dv, 1107718883);
-	date_info_add(&dv, 1164224319);
+	date = 1141239390;
+	printf("%s",ctime(&date));	
+	date_info_add(&dv, date);
+
+	date = 1071945355;
+	printf("%s",ctime(&date));	
+	date_info_add(&dv, date);
+
+	date = 1161882999;
+	printf("%s",ctime(&date));	
+	date_info_add(&dv, date);
+
+	date = 1107718883;
+	printf("%s",ctime(&date));	
+	date_info_add(&dv, date);
+
+	date = 1164224319;
+	printf("%s",ctime(&date));	
+	date_info_add(&dv, date);
+
 
 	/* Not needed right now */
 	dv2 = date_info_end(&dv);
@@ -138,6 +154,14 @@ main(void)
 	for (i = 0; i < type; i++) {
 		printf("Type: %d Count: %d\n", i, dv2->output[i]);
 	}
+
+        TODAY,
+        YESTERDAY,
+        LAST_WEEK,
+        LAST_MONTH,
+        THIS_YEAR,
+        LAST_YEAR,
+        TWO_YEARS_PLUS,
 
 	date_info_free(dv2);
 
