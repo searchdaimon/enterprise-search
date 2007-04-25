@@ -446,7 +446,13 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 		return 0;
 	}
 	*/
+
 	//bin/sh -c "ls -1"	
+
+	//char *shargs[] = {"/bin/sh","-c",(*fileFilter).command ,'\0'};	
+	//printf("runnig: /bin/sh -c %s\n",(*fileFilter).command);
+	//if (!exeoc_timeout(shargs,documentfinishedbuf,&exeocbuflen,&ret,60)) {
+
 	//char *shargs[] = {"/bin/sh","-c","-v",(*fileFilter).command ,'\0'};	
 	//printf("runnig: /bin/sh -c %s\n",(*fileFilter).command);
 
@@ -455,6 +461,7 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 	char *shargs[] = {"/bin/sh","-c",escapetcommand ,'\0'};	
 	printf("runnig: /bin/sh -c %s\n",escapetcommand);
 	if (!exeoc(shargs,documentfinishedbuf,&exeocbuflen,&ret)) {
+
 		printf("dident get any data from exeoc. But can be a filter that creates files, sow wil continue\n");
 		//kan ikke sette den til 0 da vi bruker den får å vite hvos stor bufferen er lengere nede
 		//(*documentfinishedbufsize) = 0;
@@ -479,11 +486,13 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 		strscpy(documentfinishedbuf,cpbuf,(*documentfinishedbufsize));
 		(*documentfinishedbufsize) = strlen(documentfinishedbuf);
 
-		free(cpbuf);
 
 		#ifdef DEBUG	
 		printf("maked html document of %i b (html_tempelate is %i b, cpbuf %i)\n",strlen(documentfinishedbuf),strlen(html_tempelate),strlen(cpbuf));
 		#endif
+
+		free(cpbuf);
+
 
 	}
 	else if (strcmp((*fileFilter).outputformat,"html") == 0) {
@@ -681,7 +690,10 @@ int bbdocument_deletecoll(char collection[]) {
 	char command[512];
 
 	int LotNr;
+	int i;
 	char FilePath[512];
+	char IndexPath[512];
+	char DictionaryPath[512];
 	FILE *fh;
 
 	LotNr = 1;
@@ -714,6 +726,17 @@ int bbdocument_deletecoll(char collection[]) {
 		//system(command);
 	}
 	*/
+
+	for (i=0;i<64;i++) {
+		GetFilePathForIindex(FilePath,IndexPath,i,"Main","aa",collection);
+		GetFilePathForIDictionary(FilePath,DictionaryPath,i,"Main","aa",collection);
+		//printf("FilePath: %s\nIndexPath: %s\nDictionaryPath: %s\n",FilePath,IndexPath,DictionaryPath);
+		unlink(IndexPath);		
+		unlink(DictionaryPath);		
+		
+	}
+
+	/*
 	//temp: Hardkoder iinde slettingen midlertidig
 	//kan dette Dagures?
 	for (LotNr=0;LotNr<64;LotNr++) {
@@ -723,6 +746,7 @@ int bbdocument_deletecoll(char collection[]) {
 
 		system(command);
 	}
+	*/
 }
 
 

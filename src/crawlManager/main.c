@@ -141,7 +141,7 @@ int crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 	struct crawlLibInfoFormat *crawlLibInfo;
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,(*collection).connector)) {
-		printf("cant get CrawlLibInfo\n");
+		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.\n");
 		exit(1);
 	}
 
@@ -151,6 +151,7 @@ int crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
         	printf("problems in crawlfirst_ld\n");
 		//overfører error
                 berror((*crawlLibInfo).strcrawlError());
+		blog(LOGERROR,1,"Error: Problems in crawlfirst_ld.\n");
 
 		return 0;
        	}
@@ -282,16 +283,17 @@ int crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
 	struct crawlLibInfoFormat *crawlLibInfo;
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,(*collection).connector)) {
-		printf("cant get CrawlLibInfo\n");
+		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.\n");
 		exit(1);
 	}
 
 	printf("wil crawl \"%s\"\n",(*collection).resource);
 
 	if (!(*(*crawlLibInfo).crawlupdate)(collection,documentExist,documentAdd,documentError)) {
-        	printf("problems in crawlfirst_ld\n");
+        	
 		//overfører error
                 berror((*crawlLibInfo).strcrawlError());
+		blog(LOGERROR,1,"Error: problems in crawlfirst_ld.\n");
 
 		return 0;
        	}
@@ -335,12 +337,15 @@ int scan (struct hashtable *h,char ***shares,int *nrofshares,char crawlertype[],
 	struct crawlLibInfoFormat *crawlLibInfo;
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,crawlertype)) {
-                printf("cant get CrawlLibInfo\n");
+		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.\n");
+
                 exit(1);
         }
 
 	if ((*crawlLibInfo).scan == NULL) {
 		printf("cant scan. Crawler dosent suport it.\n");
+		blog(LOGERROR,1,"Error: cant scan. Crawler dosent suport it.\n");
+
 		return 0;
 	}
 
@@ -350,6 +355,8 @@ int scan (struct hashtable *h,char ***shares,int *nrofshares,char crawlertype[],
 
 	if (!(*(*crawlLibInfo).scan)(scan_found_share,host,username,password,documentError)) {
                 printf("problems in scan\n");
+		blog(LOGERROR,1,"Error: problems in scan.\n");
+
 		return 0;
         }
 
@@ -384,6 +391,8 @@ int cm_start(struct hashtable **h) {
 
 	if ((dirp = opendir(bfile("crawlers"))) == NULL) {
 		perror(bfile("crawlers"));
+		blog(LOGERROR,1,"Error: cant open crawlers directory.\n");
+
 		exit(1);
 	}	
 
@@ -396,8 +405,8 @@ int cm_start(struct hashtable **h) {
 		printf("loading path \"%s\"\n",libpath);
 		lib_handle = dlopen(libpath, RTLD_LAZY);
 		if (!lib_handle) {
-		    fprintf(stderr, "Error during dlopen(): %s. File %s\n", dlerror(),libpath);
-		    exit(1);
+			blog(LOGERROR,1,"Error: during dlopen(): %s. File %s.\n",dlerror(),libpath);
+		    	exit(1);
 		}
 
 	
@@ -406,7 +415,10 @@ int cm_start(struct hashtable **h) {
 		/* check that no error occured */
 	        error_msg = dlerror();
 	        if (error_msg) {
-	            fprintf(stderr, "Error locating '%s' - %s\n",dp->d_name, error_msg);
+			blog(LOGERROR,1,"Error: Error locating '%s' - %s\n",dp->d_name, error_msg);
+
+	        
+
 	            exit(1);
 	        }
 
@@ -423,6 +435,8 @@ int cm_start(struct hashtable **h) {
 		}
 		else if (!(*crawlLibInfo).crawlinit()) {
 			printf("crawlinit dident return 1\n");
+			blog(LOGERROR,1,"Error: crawlinit dident return 1\n");
+
 			exit(1);
 		}
 
@@ -432,7 +446,9 @@ int cm_start(struct hashtable **h) {
 		}
 
 		if (! hashtable_insert((*h),(*crawlLibInfo).shortname,crawlLibInfo) ) {
-                        printf("cant insert\n");
+                        
+			blog(LOGERROR,1,"Error: can't hastable insert\n");
+
                 	exit(-1);
                 }
 
@@ -505,6 +521,8 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 	//koble til mysql
 	if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
                 printf(mysql_error(&demo_db));
+			blog(LOGERROR,1,"MySQL Error: \"%s\"\n",mysql_error(&demo_db));
+
                 exit(1);
         }
 
@@ -552,6 +570,8 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 
 	if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
                	printf(mysql_error(&demo_db));
+		blog(LOGERROR,1,"MySQL Error: \"%s\".\n",mysql_error(&demo_db));
+		
                	exit(1);
        	}
 	mysqlres=mysql_store_result(&demo_db); /* Download result from server */
