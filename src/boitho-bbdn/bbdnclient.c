@@ -49,8 +49,10 @@ int bbdn_conect(int *socketha, char tkey[], int PORT) {
 
 int bbdn_close(int socketha) {
 	if(!close(socketha)) {
+		printf("Error: bbdn_close can't close\n");
 		perror("close");
 	}
+
 }
 
 int bbdn_docadd(int socketha,char subname[],char documenturi[],char documenttype[],char document[],
