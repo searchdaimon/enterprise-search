@@ -496,14 +496,16 @@
     <item url="templates/common/network/network_messages.html" uploadstatus="1" />
     <item url="Common/TplCheckList.pm" uploadstatus="1" />
     <item url="styles/check_list.css" uploadstatus="1" />
-    <item url="rest.cgi" />
-    <item url="XMLInterface/" />
-    <item url="XMLInterface/Overview.pm" />
-    <item url="XMLInterface/Abstract.pm" />
-    <item url="Common/Data/" />
-    <item url="Common/Data/Overview.pm" />
-    <item url="Common/Data/Abstract.pm" />
-    <item url="javascript/" />
-    <item url="javascript/overview_update.js" />
+    <item url="rest.cgi" uploadstatus="1" />
+    <item url="XMLInterface/" uploadstatus="1" />
+    <item url="XMLInterface/Overview.pm" uploadstatus="1" />
+    <item url="XMLInterface/Abstract.pm" uploadstatus="1" />
+    <item url="Common/Data/" uploadstatus="1" />
+    <item url="Common/Data/Overview.pm" uploadstatus="1" />
+    <item url="Common/Data/Abstract.pm" uploadstatus="1" />
+    <item url="javascript/" uploadstatus="1" />
+    <item url="javascript/overview_update.js" uploadstatus="1" />
+    <item url="templates/overview/overview_common.html" />
+    <item url="templates/overview/overview_inner.html" />
   </project>
 </webproject>

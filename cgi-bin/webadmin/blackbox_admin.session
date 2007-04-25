@@ -2,44 +2,33 @@
 <webprojectsession>
   <session usePreviewPrefix="0" previewPrefix="" >
     <itemcursorpositions>
-      <item line="82" column="31" url="config.pm" />
-      <item line="20" column="0" url="Page/System/Services.pm" />
-      <item line="21" column="67" url="Page/System/Packages.pm" />
-      <item line="49" column="61" url="Sql/Shares.pm" />
-      <item line="158" column="26" url="Sql/Abstract.pm" />
-      <item line="94" column="21" url="Sql/Sql.pm" />
-      <item line="88" column="29" url="Sql/Connectors.pm" />
-      <item line="42" column="56" url="overview.cgi" />
-      <item line="75" column="0" url="XMLInterface/Overview.pm" />
-      <item line="0" column="23" url="XMLInterface/Abstract.pm" />
-      <item line="13" column="16" url="Common/Data/Overview.pm" />
-      <item line="21" column="0" url="Sql/ShareGroups.pm" />
-      <item line="59" column="17" url="Sql/Config.pm" />
-      <item line="21" column="2" url="Common/Data/Abstract.pm" />
-      <item line="36" column="0" url="rest.cgi" />
-      <item line="0" column="0" url="scan.cgi" />
-      <item line="53" column="0" url="Common/Generic.pm" />
-      <item line="44" column="4" url="Common/FormFlow.pm" />
-      <item line="0" column="0" url="setup.cgi" />
-      <item line="30" column="30" url="javascript/overview_update.js" />
-      <item line="0" column="0" url="Page/Setup/Network.pm" />
-      <item line="52" column="0" url="Page/Abstract/Network.pm" />
+      <item line="0" column="0" url="javascript/overview_update.js" />
+      <item line="14" column="44" url="templates/overview/overview.html" />
+      <item line="13" column="40" url="templates/common/header.html" />
+      <item line="0" column="0" url="templates/common/template_table.html" />
+      <item line="119" column="16" url="templates/overview/overview_common.html" />
+      <item line="118" column="35" url="overview.cgi" />
+      <item line="54" column="16" url="XMLInterface/Overview.pm" />
+      <item line="53" column="34" url="Common/Data/Overview.pm" />
     </itemcursorpositions>
     <uploadprofiles defaultProfile="@" >
       <profile remote_host="" remote_port="" remote_path="" remote_protocol="ftp" user="" name="@" />
     </uploadprofiles>
     <treestatus>
       <openfolder url="Common" />
+      <openfolder url="Common/Data" />
       <openfolder url="Page" />
       <openfolder url="Page/Abstract" />
       <openfolder url="Page/Setup" />
       <openfolder url="Page/System" />
       <openfolder url="Sql" />
+      <openfolder url="XMLInterface" />
       <openfolder url="javascript" />
       <openfolder url="styles" />
       <openfolder url="templates" />
       <openfolder url="templates/common" />
       <openfolder url="templates/common/network" />
+      <openfolder url="templates/overview" />
       <openfolder url="templates/scan" />
       <openfolder url="templates/system" />
     </treestatus>

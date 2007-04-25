@@ -69,6 +69,11 @@ function update_overview(html) {
 	// becomes much duplicate work...
 
 	var overview = document.getElementById('overview');
+	var overview_new = document.createElement('div');
+	overview_new.setAttribute('id', "overview");
+	overview_new.innerHTML = html;
+
+	overview.parentNode.replaceChild(overview_new, overview);
 	overview.innerHTML = html;
 }
 

@@ -9,8 +9,7 @@
 		
 		[% IF result_id.defined %]
 			<br /><br />Return back to 
-				<a href="scan.cgi?action=process&amp;id=[% result_id %]">
-				scan results</a>
+				<a href="scan.cgi?action=process&amp;id=[% result_id %]">scan results</a>
 		[% END %]
 		
 	[% END %]
@@ -50,7 +49,7 @@
 		<td style="width : 64px;"><img src="file.cgi?i=yast_nfs&amp;size=48x48" alt="" style="border : 0px solid;" /></td>
 		<td>
 		[% PROCESS connectors
-			use_radio_buttons = 1
+			use_radio_buttons = 0
 		 %]
 		</td>
 		<td>

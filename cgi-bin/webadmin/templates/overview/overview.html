@@ -18,9 +18,11 @@
 	[% PROCESS overview_messages.html %]
 	
 	<h2>Collections</h2>
+	<form action="overview.cgi" method="post">
 	<div id="overview">
 	[% PROCESS list_connectors %]
 	</div>
+	</form>
 	
 	
 	[% INCLUDE 'footer.html' %]

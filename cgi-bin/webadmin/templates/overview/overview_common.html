@@ -1,8 +1,6 @@
 [% USE HTML %]
 
 [% BLOCK list_connectors %]
-	<form action="overview.cgi" method="post">
-	<div id="overview">
 	[% i = 0 %]
 	[% FOREACH connectors %]
 		<h3>[% name %]</h3>
@@ -114,7 +112,5 @@
 	[% END #connectors %]
 
 
-	</div>
-	</form>
 
 [% END #block %]
