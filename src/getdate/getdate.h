@@ -3,17 +3,6 @@
 
 #include <time.h>
 
-//Runarb: Ser ikke ut til å bruke dette?
-//int state;
-//union datedata {
-//	int number;
-//	char *foo;
-//} datedata;
-//
-//#define ANUMBER 1
-//#define TNUMBER 2
-//#define WORD 3
-
 struct datelib {
         time_t start;
         time_t end;
