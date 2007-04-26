@@ -268,7 +268,7 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 		blog(LOGACCESS,2,"pathAccess allowed url: \"%s\", user: \"%s\", time used %f s\n",uri,username,pathAccessTimes.crawlpatAcces);
 	}
 	else {
-		blog(LOGACCESS,2,"pathAccess denyed url: \"%s\", user: \"%s\", time used %f s\n",uri,username,pathAccessTimes.crawlpatAcces);
+		blog(LOGERROR,2,"pathAccess denyed url: \"%s\", user: \"%s\", time used %f s, Error: \"%s\"\n",uri,username,pathAccessTimes.crawlpatAcces,(*crawlLibInfo).strcrawlError());
 	}
 
 	free(username);

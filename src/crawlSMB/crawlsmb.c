@@ -438,6 +438,22 @@ int smb_test_open( char *prefix, char *dir_name, int (*documentError)(int level,
 
     context = context_init(no_auth);
 
+/*
+	if ( (isoconp = iconv_open("ISO-8859-15","UTF-8")) ==  (iconv_t)(-1) ) {
+                perror("iconv_open");
+    }
+
+	char dir_nameesc[201];
+
+	iconv_convert(isoconp, &dir_name,200);
+
+	smbc_urlencode(dir_nameesc,dir_name,200);
+	snprintf(uri, uri_size, "%s%s", prefix, dir_nameesc);
+	char *urip = uri;
+
+	iconv_close(isoconp);
+*/
+
     snprintf(uri, uri_size, "%s%s", prefix, dir_name);
 
     if ( (isoconp = iconv_open("ISO-8859-15","UTF-8")) ==  (iconv_t)(-1) ) {
@@ -446,6 +462,7 @@ int smb_test_open( char *prefix, char *dir_name, int (*documentError)(int level,
 
 	char *urip = uri;
 	iconv_convert(isoconp, &urip,uri_size);
+	
 
     iconv_close(isoconp);
 
@@ -460,7 +477,7 @@ int smb_test_open( char *prefix, char *dir_name, int (*documentError)(int level,
 
 	    if (errno != EACCES)
 		{
-		    documentError(1,"crawlsmb.c: Error! Could not open %s", dir_name);
+		    documentError(1,"crawlsmb.c: Error! Could not open \"%s\"", urip);
 		}
 
 	    context_free(context);
