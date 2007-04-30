@@ -402,17 +402,58 @@ char* create_full_link( char *url, int page_url_len, char *page_uri, char *page_
 	return new_url;
     }
 
+//    printf("\nlink: %s %s %s\n", uri, path, rel_path);
+
     if (uri==NULL)
 	{
 	    strcpy(new_url, page_uri);
 
-	    if (path!=NULL)
-		strcat( new_url, path );
-	    else if (page_path!=NULL)
-		strcat( new_url, page_path );
+	    if (path==NULL && page_path!=NULL && rel_path!=NULL)
+		{
+		    int		i = 0, j;
+		    int		backsteps=0;
 
-	    if (rel_path!=NULL)
-		strcat( new_url, rel_path );
+		    while (1)
+			{
+			    if (!strncmp(&(rel_path[i]), "../", 3))
+				{
+				    i+= 3;
+				    backsteps++;
+				}
+			    else if (!strncmp(&(rel_path[i]), "./", 2))
+				{
+				    i+= 2;
+				}
+			    else break;
+			}
+
+//		    printf("Backsteps: %i\n", backsteps);
+
+		    backsteps++;
+		    for (j=strlen(page_path)-1; backsteps>0 && j>0; j--)
+			{
+//			    printf("%c", page_path[j]);
+			    if (page_path[j]=='/')
+				{
+				    backsteps--;
+				    if (backsteps==0) break;
+				}
+			}
+//		    printf("\n");
+
+		    strncat( new_url, page_path, j+1 );
+		    strcat( new_url, &(rel_path[i]) );
+		}
+	    else
+		{
+		    if (path!=NULL)
+			strcat( new_url, path );
+		    else if (page_path!=NULL)
+			strcat( new_url, page_path );
+
+		    if (rel_path!=NULL)
+			strcat( new_url, rel_path );
+		}
 	}
     else
 	{
