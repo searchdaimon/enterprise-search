@@ -13,6 +13,8 @@ struct datelib {
                 int year, month, week, day;
         } modify;
 
+	int frombigbang;
+
 #ifdef __INGETDATE
         enum yytokentype lowest;
 #else

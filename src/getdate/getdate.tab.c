@@ -1636,7 +1636,7 @@ yyreturn:
 
 
 #define issep(c) (isspace(c) || c == '\n' || c == '\0')
-#define lexreturn(token) do { *inputp = input; printf("Token: %d\n", token); return (token); } while (0)
+#define lexreturn(token) do { *inputp = input; return (token); } while (0)
 
 struct wordtable {
 	int token;
@@ -1724,7 +1724,7 @@ start:
 		}
 		if (strcmp(p, "ago") == 0) /* XXX */
 			goto start;
-		if (strcmp(p, "plus") == 0) /* XXX */
+		if (strcmp(p, "plus") == 0)
 			lexreturn(PLUS);
 
 		for (i = 0; wordtable[i].token != -1; i++) {
@@ -1827,7 +1827,7 @@ datelib_yylex(YYSTYPE *yylval, char **inputp)
 static int
 datelib_yyerror(char **input, struct datelib *dl, const char *s)
 {
-	fprintf(stderr, "Error near token: %s -- %s\n", *input, s);
+	dl->frombigbang = 2;
 	return 0;
 }
 
@@ -1906,7 +1906,8 @@ getdate(char *str, struct datelib *dl)
 	time_t now, test;
 	struct tm tmend;
 
-	printf("%s\n", str);
+	if (input == NULL)
+		return -1;
 
 	p = input;
 	
@@ -1916,6 +1917,10 @@ getdate(char *str, struct datelib *dl)
 	dl->frombigbang = 0;
 	memset(&dl->modify, '\0', sizeof(dl->modify));
 	yyparse(&input, dl);
+	if (dl->frombigbang == 2) {
+		free(p);
+		return -1;
+	}
 	fixdate(dl, &tmend);
 	test = mktime(&dl->tmstart);
 	dl->start = dl->frombigbang ? 0 : test;
