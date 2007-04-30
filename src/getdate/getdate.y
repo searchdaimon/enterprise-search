@@ -41,6 +41,7 @@ void set_lowest(struct datelib *, enum yytokentype);
 %token unknown
 %token NUMBER WORD
 %token DAY WEEK MONTH YEAR 
+%token PLUS
 
 %type	<number>	NUMBER
 %type	<number>	number
@@ -55,10 +56,14 @@ void set_lowest(struct datelib *, enum yytokentype);
 
 daterange:
 		/* NULL */
-	|	daterange date {
-			//printf("Found a daterange\n");
-		}
+	|	daterange date plus
 	;
+
+plus:
+		/* NULL */
+	|	PLUS {
+		result->frombigbang = 1;
+	}
 
 number:
 		/* NULL means 1 */
@@ -109,7 +114,7 @@ year:
 
 
 #define issep(c) (isspace(c) || c == '\n' || c == '\0')
-#define lexreturn(token) do { *inputp = input; return (token); } while (0)
+#define lexreturn(token) do { *inputp = input; printf("Token: %d\n", token); return (token); } while (0)
 
 struct wordtable {
 	int token;
@@ -136,6 +141,7 @@ struct numbertable {
 struct numbertable numbertable[] = {
 	{ "this", 0 },
 	{ "last", 1 },
+	{ "two", 2 },
 	{ NULL, -1 }
 };
 
@@ -196,6 +202,9 @@ start:
 		}
 		if (strcmp(p, "ago") == 0) /* XXX */
 			goto start;
+		if (strcmp(p, "plus") == 0) /* XXX */
+			lexreturn(PLUS);
+
 		for (i = 0; wordtable[i].token != -1; i++) {
 			if (strcmp(wordtable[i].word, p) == 0) {
 				lexreturn(wordtable[i].token);
@@ -382,11 +391,12 @@ getdate(char *str, struct datelib *dl)
 	now = time(NULL);
 	gmtime_r(&now, &dl->tmstart);
 	dl->lowest = YEAR;
+	dl->frombigbang = 0;
 	memset(&dl->modify, '\0', sizeof(dl->modify));
 	yyparse(&input, dl);
 	fixdate(dl, &tmend);
 	test = mktime(&dl->tmstart);
-	dl->start = test;
+	dl->start = dl->frombigbang ? 0 : test;
 	free(p);
 	test = mktime(&tmend);
 	dl->end = test;

@@ -72,7 +72,8 @@
      DAY = 261,
      WEEK = 262,
      MONTH = 263,
-     YEAR = 264
+     YEAR = 264,
+     PLUS = 265
    };
 #endif
 /* Tokens.  */
@@ -83,6 +84,7 @@
 #define WEEK 262
 #define MONTH 263
 #define YEAR 264
+#define PLUS 265
 
 
 
@@ -143,7 +145,7 @@ typedef union YYSTYPE
 	int month;
 }
 /* Line 187 of yacc.c.  */
-#line 147 "getdate.tab.c"
+#line 149 "getdate.tab.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -156,7 +158,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 160 "getdate.tab.c"
+#line 162 "getdate.tab.c"
 
 #ifdef short
 # undef short
@@ -374,17 +376,17 @@ union yyalloc
 #define YYLAST   8
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  10
+#define YYNTOKENS  11
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  8
+#define YYNNTS  9
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  13
+#define YYNRULES  15
 /* YYNRULES -- Number of states.  */
-#define YYNSTATES  14
+#define YYNSTATES  16
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   264
+#define YYMAXUTOK   265
 
 #define YYTRANSLATE(YYX)						\
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
@@ -418,7 +420,7 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8,     9
+       5,     6,     7,     8,     9,    10
 };
 
 #if YYDEBUG
@@ -426,23 +428,24 @@ static const yytype_uint8 yytranslate[] =
    YYRHS.  */
 static const yytype_uint8 yyprhs[] =
 {
-       0,     0,     3,     4,     7,     8,    10,    12,    14,    16,
-      18,    21,    24,    27
+       0,     0,     3,     4,     8,     9,    11,    12,    14,    16,
+      18,    20,    22,    25,    28,    31
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
 static const yytype_int8 yyrhs[] =
 {
-      11,     0,    -1,    -1,    11,    13,    -1,    -1,     4,    -1,
-      14,    -1,    15,    -1,    16,    -1,    17,    -1,    12,     6,
-      -1,    12,     7,    -1,    12,     8,    -1,    12,     9,    -1
+      12,     0,    -1,    -1,    12,    15,    13,    -1,    -1,    10,
+      -1,    -1,     4,    -1,    16,    -1,    17,    -1,    18,    -1,
+      19,    -1,    14,     6,    -1,    14,     7,    -1,    14,     8,
+      -1,    14,     9,    -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    56,    56,    58,    65,    66,    69,    70,    71,    72,
-      76,    84,    92,   100
+       0,    57,    57,    59,    62,    64,    70,    71,    74,    75,
+      76,    77,    81,    89,    97,   105
 };
 #endif
 
@@ -452,8 +455,8 @@ static const yytype_uint8 yyrline[] =
 static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "unknown", "NUMBER", "WORD", "DAY",
-  "WEEK", "MONTH", "YEAR", "$accept", "daterange", "number", "date", "day",
-  "week", "month", "year", 0
+  "WEEK", "MONTH", "YEAR", "PLUS", "$accept", "daterange", "plus",
+  "number", "date", "day", "week", "month", "year", 0
 };
 #endif
 
@@ -462,22 +465,23 @@ static const char *const yytname[] =
    token YYLEX-NUM.  */
 static const yytype_uint16 yytoknum[] =
 {
-       0,   256,   257,   258,   259,   260,   261,   262,   263,   264
+       0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
+     265
 };
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    10,    11,    11,    12,    12,    13,    13,    13,    13,
-      14,    15,    16,    17
+       0,    11,    12,    12,    13,    13,    14,    14,    15,    15,
+      15,    15,    16,    17,    18,    19
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     0,     2,     0,     1,     1,     1,     1,     1,
-       2,     2,     2,     2
+       0,     2,     0,     3,     0,     1,     0,     1,     1,     1,
+       1,     1,     2,     2,     2,     2
 };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
@@ -485,29 +489,29 @@ static const yytype_uint8 yyr2[] =
    means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       2,     4,     1,     5,     0,     3,     6,     7,     8,     9,
-      10,    11,    12,    13
+       2,     6,     1,     7,     0,     4,     8,     9,    10,    11,
+      12,    13,    14,    15,     5,     3
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     1,     4,     5,     6,     7,     8,     9
+      -1,     1,    15,     4,     5,     6,     7,     8,     9
 };
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
-#define YYPACT_NINF -2
+#define YYPACT_NINF -10
 static const yytype_int8 yypact[] =
 {
-      -2,     0,    -2,    -2,    -1,    -2,    -2,    -2,    -2,    -2,
-      -2,    -2,    -2,    -2
+     -10,     0,   -10,   -10,    -1,    -9,   -10,   -10,   -10,   -10,
+     -10,   -10,   -10,   -10,   -10,   -10
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-      -2,    -2,    -2,    -2,    -2,    -2,    -2,    -2
+     -10,   -10,   -10,   -10,   -10,   -10,   -10,   -10,   -10
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
@@ -517,20 +521,20 @@ static const yytype_int8 yypgoto[] =
 #define YYTABLE_NINF -1
 static const yytype_uint8 yytable[] =
 {
-       2,     0,     0,     0,     3,    10,    11,    12,    13
+       2,    14,     0,     0,     3,    10,    11,    12,    13
 };
 
 static const yytype_int8 yycheck[] =
 {
-       0,    -1,    -1,    -1,     4,     6,     7,     8,     9
+       0,    10,    -1,    -1,     4,     6,     7,     8,     9
 };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
    symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,    11,     0,     4,    12,    13,    14,    15,    16,    17,
-       6,     7,     8,     9
+       0,    12,     0,     4,    14,    15,    16,    17,    18,    19,
+       6,     7,     8,     9,    10,    13
 };
 
 #define yyerrok		(yyerrstatus = 0)
@@ -1357,25 +1361,25 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-        case 3:
-#line 58 "getdate.y"
+        case 5:
+#line 64 "getdate.y"
     {
-			//printf("Found a daterange\n");
-		;}
+		result->frombigbang = 1;
+	;}
     break;
 
-  case 4:
-#line 65 "getdate.y"
+  case 6:
+#line 70 "getdate.y"
     { (yyval.number) = 1; ;}
     break;
 
-  case 5:
-#line 66 "getdate.y"
+  case 7:
+#line 71 "getdate.y"
     { (yyval.number) = yylval.number; ;}
     break;
 
-  case 10:
-#line 76 "getdate.y"
+  case 12:
+#line 81 "getdate.y"
     {
 			set_lowest(result, DAY);
 			result->modify.day += (yyvsp[(1) - (2)].number);
@@ -1383,8 +1387,8 @@ yyreduce:
 		;}
     break;
 
-  case 11:
-#line 84 "getdate.y"
+  case 13:
+#line 89 "getdate.y"
     {
 			set_lowest(result, WEEK);
 			result->modify.week += (yyvsp[(1) - (2)].number);
@@ -1392,8 +1396,8 @@ yyreduce:
 		;}
     break;
 
-  case 12:
-#line 92 "getdate.y"
+  case 14:
+#line 97 "getdate.y"
     {
 			set_lowest(result, MONTH);
 			result->modify.month += (yyvsp[(1) - (2)].number);
@@ -1401,8 +1405,8 @@ yyreduce:
 		;}
     break;
 
-  case 13:
-#line 100 "getdate.y"
+  case 15:
+#line 105 "getdate.y"
     {
 			set_lowest(result, YEAR);
 			result->modify.year += (yyvsp[(1) - (2)].number);
@@ -1412,7 +1416,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1416 "getdate.tab.c"
+#line 1420 "getdate.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1626,13 +1630,13 @@ yyreturn:
 }
 
 
-#line 107 "getdate.y"
+#line 112 "getdate.y"
 
 
 
 
 #define issep(c) (isspace(c) || c == '\n' || c == '\0')
-#define lexreturn(token) do { *inputp = input; return (token); } while (0)
+#define lexreturn(token) do { *inputp = input; printf("Token: %d\n", token); return (token); } while (0)
 
 struct wordtable {
 	int token;
@@ -1659,6 +1663,7 @@ struct numbertable {
 struct numbertable numbertable[] = {
 	{ "this", 0 },
 	{ "last", 1 },
+	{ "two", 2 },
 	{ NULL, -1 }
 };
 
@@ -1719,6 +1724,9 @@ start:
 		}
 		if (strcmp(p, "ago") == 0) /* XXX */
 			goto start;
+		if (strcmp(p, "plus") == 0) /* XXX */
+			lexreturn(PLUS);
+
 		for (i = 0; wordtable[i].token != -1; i++) {
 			if (strcmp(wordtable[i].word, p) == 0) {
 				lexreturn(wordtable[i].token);
@@ -1905,11 +1913,12 @@ getdate(char *str, struct datelib *dl)
 	now = time(NULL);
 	gmtime_r(&now, &dl->tmstart);
 	dl->lowest = YEAR;
+	dl->frombigbang = 0;
 	memset(&dl->modify, '\0', sizeof(dl->modify));
 	yyparse(&input, dl);
 	fixdate(dl, &tmend);
 	test = mktime(&dl->tmstart);
-	dl->start = test;
+	dl->start = dl->frombigbang ? 0 : test;
 	free(p);
 	test = mktime(&tmend);
 	dl->end = test;
