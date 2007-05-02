@@ -9,6 +9,7 @@ BEGIN {
 	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Boitho::InitServices;
+use Page::Abstract;
 use config qw($CONFIG);
 our @ISA = qw(Page::Abstract);
 

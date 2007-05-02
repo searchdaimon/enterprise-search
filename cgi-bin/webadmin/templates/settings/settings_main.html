@@ -1,23 +1,5 @@
 [% INCLUDE 'header.html' title="Settings" %]
-[% PROCESS 'template_tabs.html' 
-	tabs = [
-	{
-		'name'		=> 'Main settings',
-		'url'		=> 'settings.cgi',
-		'selected'	=> 1,
-	},
-	{
-		'name'		=> 'Advanced settings',
-		'url'		=> 'settings.cgi?view=advanced'
-		'selected'	=> 0,
-	},
-	{
-		'name'		=> 'Import and export settings',
-		'url'		=> 'settings.cgi?view=import_export',
-		'selected'	=> 0,
-		
-	}]
-%]
+[% PROCESS 'settings_tabs.html' selected="Main Settings" %]
 
 [% versions = [
 	{
@@ -70,7 +52,7 @@
 		</li>
 		[% END %]
 	</ul>
-	<input type="submit" name="dist_select" value="Select version" />
+	<input type="submit" name="submit.dist_select" value="Select version" />
 	</form>
 </div>
 

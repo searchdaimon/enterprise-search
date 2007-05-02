@@ -7,8 +7,11 @@
 [% background = "#dce4f9" %]
 [% IF type == 'info' %]
 	[% title = 'Information' %]
-	[% background = "#dce4f9" %]
+	[% background = "#eff2fb" %]
 	[% icon = "info" %]
+[% ELSIF type == "discreet_info" %]
+	[% background = "#dce4f9" %]
+	[% discreet = 1 %]
 [% ELSIF type == 'help' %]
 	[% title = 'Support' %]
 	[% background = "#dce4f9" %]
@@ -28,12 +31,19 @@
 	[% icon = "error" %]
 [% END %]
 
-<div class="message_box" style="background: [%background%]; ">
-	<img src="file.cgi?size=64x64&amp;i=[% icon %]" title="[% title %]" alt="[% title %]" />
-	<div class="mb_text">
-		<!-- <strong>[% title %]</strong><br /><br /> -->
-		[% content %]
 
-	</div>
+
+<div class="message_box" style="background: [%background%]; ">
+
+	[% UNLESS discreet %]	
+		<img src="file.cgi?size=64x64&amp;i=[% icon %]" title="[% title %]" alt="[% title %]" />
+		
+		<div class="mb_text">
+			<!-- <strong>[% title %]</strong><br /><br /> -->
+			[% content %]
 	
+		</div>
+	[% ELSE %]
+		[% content %]
+	[% END %]
 </div>

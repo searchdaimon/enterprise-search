@@ -17,25 +17,24 @@
 	[% END %]
 [% END %]
 
-<h3>Software updates</h3>
-[% UNLESS available_packages.defined %]
-<form action="system.cgi" method="POST">	
-	<input type="submit" name="submit.software_check_updates" value="Check for updates.." />
-</form>
-
-[% IF update_result.defined %]
+<h2>Software updates</h2>
+<h3>Check for Black Box updates</h3>
+[% IF available_packages_error.defined %]
 	
-	<h4>Update result:</h4>
-	<ol>
-	[% FOREACH line IN update_result %]
-		[% color = 1 - color %]
-				<li>
-				[% IF color %]<span>
-				[% ELSE %]<span style="background : #f2f2f2"> [% END %]
-				[% HTML.escape(line) %] </span></li>
-	[% END %]
-	</ol>
+	[% WRAPPER 'template_message.html' type="error" %][% available_packages_error %][% END %]
+
 [% END %]
+[% UNLESS available_packages.defined %]
+	[% WRAPPER 'template_message.html' type="info" %]
+		Check for new updates, and install them.
+	[% END %]	
+
+	<form action="system.cgi" method="post">
+		<div>
+		<input type="submit" name="submit.software_check_updates" value="Check for updates.." />
+		</div>
+	</form>
+	
 
 [% ELSE %]
 
@@ -48,7 +47,7 @@
 	    <h4>Updates available</h4>
 		[% WRAPPER 'template_table.html'
 				header = ['', 'Software package', 'Version', 'Release'] %]
-	
+		[% color = 0 %]
 		[% FOREACH package IN available_packages %]
 		
 			
@@ -70,17 +69,43 @@
 
 [% END %]
 
+
+[% IF update_result.defined %]
+	
+	<h4>Update result:</h4>
+	<ol>
+	[% color = 0 %]
+	[% FOREACH line IN update_result %]
+		[% color = 1 - color %]
+				<li>
+				[% IF color %]<div>
+				[% ELSE %]<div style="background : #f2f2f2"> [% END %]
+				[% HTML.escape(line) %]</div></li>
+	[% END %]
+	</ol>
+[% END %]
+
 <h3>Upload software package</h3>
+
+[% WRAPPER 'template_message.html' type="info" %]
+	To upload and install new software, you need to:
+	<ol>
+		<li>Upload the packages you want installed.</li>
+		<li>Run install by pressing the appearing install button.</li>
+	</ol>
+
+[% END %]
 
 [% IF install_result.defined %]
 	<h4>Install result:</h4>
 
 	<ol>
 	[% FOREACH line IN install_result %]
+		[% color = 1 - color %]	
 		<li>
-				[% IF color %]<span>
-				[% ELSE %]<span style="background : #f2f2f2"> [% END %]
-				[% HTML.escape(line) %] </span></li>
+				[% IF color %]<div>
+				[% ELSE %]<div style="background : #f2f2f2"> [% END %]
+				[% HTML.escape(line) %] </div></li>
 	[% END %]
 	</ol>
 [% END %]
@@ -98,36 +123,54 @@
 			File is not a RPM file.
 		[% END %]
 	[% END %]
+
+[% ELSIF remove_uploaded_succ.defined %]
+
+	[% IF remove_uploaded_succ %]
+		[% WRAPPER 'template_message.html' type="success" %][% remove_uploaded_message %][% END %]
+	[% ELSE %]
+		[% WRAPPER 'template_message.html' type="error" %][% remove_uploaded_message %][% END %]
+	[% END %]
+
 [% END %]
+
 
 <form enctype="multipart/form-data" method="post" action="system.cgi">
-<div>
+	<div style="float : left; position : relative; margin-top : 1em; ">
+		
+		File: <input type="file" name="package_file" />
 	
-	<input type="file" name="package_file" />
-	<input type="submit" name="package_upload_button" value="Upload software package" />
-	
-</div>
+		<div style="position : absolute; right : 0; top : 2.5em;">
+			<input type="submit" name="package_upload_button" value="Upload software package" />
+		</div>
+		
+	</div>
 </form>
 
-[% WRAPPER 'template_table.html'
-	header = ['', 'Software package', 'Remove'] %]
-
-	[% FOREACH package IN uploaded_packages %]
+[% IF uploaded_packages.defined AND uploaded_packages.size %]
+	<h4 style="margin-top : 7em;">Uploaded packages</h4>
 	
-		[% WRAPPER 'template_table_row.html' %]
-			
-			<td><!-- --></td>
-			<td>[% package %]</td>
-			<td><a href="system.cgi?pkg_remove=[% package %]">Remove</a></td>
-			
+	[% WRAPPER 'template_table.html'
+		header = ['', 'Software package', 'Remove'] %]
+		[% color = 0 %]
+		[% FOREACH package IN uploaded_packages %]
+		
+			[% WRAPPER 'template_table_row.html' %]
+				
+				<td><!-- icon --></td>
+				<td>[% package %]</td>
+				<td><a href="system.cgi?action=pkg_remove&amp;pkg=[% package %]">Remove</a></td>
+				
+			[% END %]
+		[% color = 1 - color %]
 		[% END %]
-	[% color = 1 - color %]
 	[% END %]
+	<form action="system.cgi" method="post">
+		<div>
+		<input type="submit" name="submit.software_install_uploaded" value="Install" style="margin-top : 1em;" />
+		</div>
+	</form>
 [% END %]
-<form action="system.cgi" method="post">
-	<input type="submit" name="submit.software_install_uploaded" value="Install" style="margin-top : 1em;" />
-</form>
-
 
 
 [% INCLUDE 'footer.html' %]

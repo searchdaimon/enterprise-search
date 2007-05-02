@@ -1,4 +1,4 @@
-package Page::System::Network;
+package Page::Settings::Network;
 use strict;
 use warnings;
 use Carp;
@@ -7,7 +7,7 @@ use Page::Abstract::Network;
 
 our @ISA = qw(Page::Abstract::Network);
 
-use constant NETWORK_TPL => "system_network.html";
+use constant NETWORK_TPL => "settings_network.html";
 
 ##
 #

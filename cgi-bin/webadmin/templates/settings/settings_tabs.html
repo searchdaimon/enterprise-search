@@ -1,0 +1,26 @@
+[% tabs = [
+	{
+		'name'		=> 'Main Settings',
+		'url'		=> 'settings.cgi',
+	},
+	{
+		'name'		=> 'Advanced Settings',
+		'url'		=> 'settings.cgi?view=advanced',
+	},
+	{
+		'name'		=> 'Network Configuration',
+		'url'		=> 'settings.cgi?view=network',
+	},
+	{
+		'name'		=> 'Import and export settings',
+		'url'		=> 'settings.cgi?view=import_export',
+	},
+] %]
+
+<ul id="tabs">
+[% FOREACH tabs %]
+	<li [% IF selected == name %]id="selected"[% END %]>
+		<a href="[% url %]">[% name %]</a>
+	</li>
+[% END %]
+</ul>

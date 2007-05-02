@@ -16,12 +16,12 @@
 [% END %]
 <h2>
 [% IF success %]
-	Part 1 - Add a new collection
+	Add a new collection (part 1 of 2)
 [% ELSIF from_scan %]
 	[% #Adding a result from scan %]
-	Part 1 - Add a collection from scan
+	Add a collection from scan - Part 1 of 2
 [% ELSE %]
-	Part 1 - Add a collection
+	Add a collection - Part 1 of 2
 [% END %]</h2>
 
 
@@ -62,7 +62,7 @@
 				[% END %]
 			[% END %]
 			<input type="text" name="share.collection_name" value="[% collection_name %]" />
-				<span style="font-size : x-small;">(Optional)</span><br />
+				<span style="font-size : x-small;">(Recommended)</span><br />
 		</td>	
 	[% END %]
 

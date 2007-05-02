@@ -13,6 +13,7 @@ body {
     font-family : sans-serif;
 	color : black;
 	background-color : white;
+	font-size : small;
 }
 
 A:link { color : blue; }
@@ -48,8 +49,9 @@ A:active { color : blue; }
 	border-color : #d5e9f7;
 	padding : 0.2em;
 	margin-bottom : 0.2em;
-	font-size : small;
-	font-weight : bold;
+	font-size : small; 
+	/* font-size : x-small; */
+	/* font-weight : bold; */
 }
 
 #left_menu a {

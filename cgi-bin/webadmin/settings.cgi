@@ -8,26 +8,60 @@ use CGI::State;
 use Template;
 use Data::Dumper;
 use Page::Settings;
+use Page::Settings::Network;
+use Common::Generic qw(init_root_page);
 
-my $cgi = CGI->new;
-my $state_ptr = CGI::State->state($cgi);
-my %state = %$state_ptr;
+my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
+	= init_root_page('/templates/settings:./templates/common/network', 'Page::Settings');
 
+my %state = %{$state_ptr};
+my $template_file;
 
-my $vars;
-my $template = Template->new({INCLUDE_PATH => './templates:./templates/settings:./templates/common',});
+my $pageNetwork = Page::Settings::Network->new($dbh);
 
-my $sql = Sql::Sql->new;
-my $dbh = $sql->get_connection();
-my $page = Page::Settings->new($dbh);
+# Group: User actions
 
-my $template_file = 'settings_main.html';
+if (defined($state{'submit'})) {
+	my $button = $state{'submit'};
 
+	# User submitted network conf form.
+	if (defined $button->{'network_conf'}) {
+		$pageNetwork->process_network_config($vars, $state{'netconf'}, $state{'resolv'});
+		($vars, $template_file) = $pageNetwork->show_network_config($vars);	
+	}
 
-if (defined($state{'reset_configuration'})) {
-	# User wants to delete. Confirm it.
-	($vars, $template_file) = $page->show_confirm_dialog($vars);
+	elsif (defined $button->{'reset_configuration'}) {
+		# User wants to reset configuration. Confirm.
+		($vars, $template_file) = $page->show_confirm_dialog($vars);
+	}
+
+	elsif (defined $button->{'submit_settings'}) {
+		# Update config values, show success message.
+		$vars = $page->update_settings($vars, $state{'setting'});
+		($vars, $template_file) 
+			= $page->show_advanced_settings_updated($vars);
+	}
+
+	elsif (defined $button->{'export_settings'}) {
+		# User is downloading exported settings
+		print $cgi->header('text/plain');
+		print $page->export_settings();
+		exit 0;
+	}
+
+	elsif (defined $button->{'import_settings'}) {
+		# User is importing a file.
+		($vars, $template_file) 
+			= $page->import_settings($vars, $cgi->param("import_file"));
+	}
+
+	elsif (defined $button->{'dist_select'}) {
+		# User selected a different version from main settings
+		($vars, $template_file) 
+			= $page->select_dist_version($vars, $state{'dist'});
+	}
 }
+
 elsif (defined($state{'confirm_delete'})) {
 	# User confirmed delete. Delete settings
 	croak ("The operation must be a POST request to work.") 
@@ -37,20 +71,10 @@ elsif (defined($state{'confirm_delete'})) {
 	
 }
 
-elsif (defined($state{'submit_settings'})) {
-	# Update config values, show success message.
-	$vars = $page->update_settings($vars, $state{'setting'});
-	($vars, $template_file) 
-		= $page->show_advanced_settings_updated($vars);
-}
 
-elsif (defined($state{'export_settings'})) {
-	# User is downloading exported settings
-	print $cgi->header('text/plain');
-	print $page->export_settings();
-	exit 0;
 
-}
+
+# Group: Views
 
 elsif (defined($state{'view'})) {
 	my $view = $state{'view'};
@@ -62,23 +86,18 @@ elsif (defined($state{'view'})) {
 	elsif ($view eq "advanced") {
 		($vars, $template_file) = $page->show_advanced_settings($vars);
 	}
+
+	elsif ($view eq "network") {
+		($vars, $template_file) = $pageNetwork->show_network_config($vars);
+	}
 }
 
-elsif (defined($state{'import_button'})) {
-	# User is importing a file.
-	($vars, $template_file) = $page->import_settings($vars, $cgi->param("import_file"));
-}
 
-elsif (defined($state{'dist_select'})) {
-	# User selected a different version from main settings
-	($vars, $template_file) 
-		= $page->select_dist_version($vars, $state{'dist'});
-}
-
-else { 
+unless (defined $template_file) {
 	# Show main page.
 	($vars, $template_file) 
 		= $page->show_main_settings($vars);
+
 }
 
 

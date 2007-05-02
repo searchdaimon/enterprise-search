@@ -1,26 +1,8 @@
 
 [% INCLUDE 'header.html'
-	title = 'Advanced settings' %]
+	title = 'Advanced Settings' %]
 
-[% PROCESS 'template_tabs.html' 
-	tabs = [
-	{
-		'name'		=> 'Main settings',
-		'url'		=> 'settings.cgi',
-		'selected'	=> 0,
-	},
-	{
-		'name'		=> 'Advanced settings',
-		'url'		=> 'settings.cgi?view=advanced'
-		'selected'	=> 1
-	},
-	{
-		'name'		=> 'Import and export settings',
-		'url'		=> 'settings.cgi?view=import_export',
-		'selected'	=> 0,
-		
-	}]
-%]
+[% PROCESS 'settings_tabs.html' selected="Advanced Settings" %]
 
 <h2>Advanced settings</h2>
 
@@ -49,7 +31,7 @@
 	[% END %]
 [% END %]
 <div style="margin-top : 1em;">
-<input type="submit" name="submit_settings" value="Submit changes" />
+<input type="submit" name="submit.submit_settings" value="Submit changes" />
 </div>
 
 </form>
@@ -78,7 +60,7 @@
 [% END %]
 
 <div style="margin-top : 1em;">
-<input type="submit" name="submit_settings" value="Submit changes" />
+<input type="submit" name="submit.submit_settings" value="Submit changes" />
 </div>
 
 </form>
@@ -94,7 +76,7 @@
 	[% END %]
 	<div>
 	<input type="submit" value="Delete ALL settings AND shares" 
-		name="reset_configuration" />
+		name="submit.reset_configuration" />
 	</div>
 </form>
 

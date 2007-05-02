@@ -2,14 +2,17 @@
 <webprojectsession>
   <session usePreviewPrefix="0" previewPrefix="" >
     <itemcursorpositions>
-      <item line="0" column="0" url="javascript/overview_update.js" />
-      <item line="14" column="44" url="templates/overview/overview.html" />
-      <item line="13" column="40" url="templates/common/header.html" />
-      <item line="0" column="0" url="templates/common/template_table.html" />
-      <item line="119" column="16" url="templates/overview/overview_common.html" />
-      <item line="118" column="35" url="overview.cgi" />
-      <item line="54" column="16" url="XMLInterface/Overview.pm" />
-      <item line="53" column="34" url="Common/Data/Overview.pm" />
+      <item line="17" column="6" url="templates/settings/settings_tabs.html" />
+      <item line="32" column="106" url="templates/common/menu_left.html" />
+      <item line="0" column="55" url="templates/settings/settings_network.html" />
+      <item line="1" column="55" url="templates/settings/settings_main.html" />
+      <item line="0" column="53" url="templates/settings/settings_delete_done.html" />
+      <item line="0" column="53" url="templates/settings/settings_delete_all.html" />
+      <item line="2" column="23" url="templates/settings/settings_advanced.html" />
+      <item line="37" column="0" url="templates/settings/settings_import_export.html" />
+      <item line="21" column="34" url="settings.cgi" />
+      <item line="18" column="0" url="system.cgi" />
+      <item line="19" column="2" url="Page/Settings/Network.pm" />
     </itemcursorpositions>
     <uploadprofiles defaultProfile="@" >
       <profile remote_host="" remote_port="" remote_path="" remote_protocol="ftp" user="" name="@" />
@@ -19,6 +22,7 @@
       <openfolder url="Common/Data" />
       <openfolder url="Page" />
       <openfolder url="Page/Abstract" />
+      <openfolder url="Page/Settings" />
       <openfolder url="Page/Setup" />
       <openfolder url="Page/System" />
       <openfolder url="Sql" />
@@ -26,11 +30,6 @@
       <openfolder url="javascript" />
       <openfolder url="styles" />
       <openfolder url="templates" />
-      <openfolder url="templates/common" />
-      <openfolder url="templates/common/network" />
-      <openfolder url="templates/overview" />
-      <openfolder url="templates/scan" />
-      <openfolder url="templates/system" />
     </treestatus>
   </session>
 </webprojectsession>

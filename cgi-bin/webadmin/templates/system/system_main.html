@@ -1,4 +1,4 @@
-[% INCLUDE 'header.html' title = 'System overview' %]
+[% INCLUDE 'header.html' title = 'System diagnostics' %]
 [% USE HTML %]
 
 [% PROCESS 'system_tabs.html' selected="System diagnostics" %]
@@ -21,7 +21,7 @@
 				[% IF raid.drives.size %]
 					<ul>
 					[% FOREACH drive IN raid.drives %]
-						<li>[% drive.name %].. 
+						<li>[% drive.name %]
 							[% IF drive.online %]
 								[% PROCESS status_ok %]
 							[% ELSE %]

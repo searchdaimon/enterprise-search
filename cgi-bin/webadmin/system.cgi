@@ -11,7 +11,7 @@ use CGI::State;
 use Template;
 use Page::System;
 use Data::Dumper;
-use Page::System::Network;
+
 use Page::System::Services;
 use Page::System::Packages;
 use Common::Generic qw(init_root_page);
@@ -22,19 +22,14 @@ my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
 my %state = %{$state_ptr};
 my $template_file;
 
-my $pageNetwork  = Page::System::Network->new($dbh);
+
 my $pageServices = Page::System::Services->new($dbh);
 my $pagePackages = Page::System::Packages->new($dbh);
 
 
-if (defined $state{'submit'}) {
-	my $button = $state{'submit'};
+if (defined $state{'submit'}) { #POST actions
+	my $button = $state{'submit'};	
 	
-	# User submitted network conf form.
-	if (defined $button->{'network_conf'}) {
-		$pageNetwork->process_network_config($vars, $state{'netconf'}, $state{'resolv'});
-		($vars, $template_file) = $pageNetwork->show_network_config($vars);	
-	}
 
 	# User wants a list of available updates..
 	if (defined $button->{'software_check_updates'}) {
@@ -52,24 +47,20 @@ if (defined $state{'submit'}) {
 	}
 }
 
-
 elsif (defined $state{'view'}) {
 	my $view = $state{'view'};
 	
-	if ($view eq "package_upload") {
+	if ($view eq "updates") {
 		# Show the package upload page
 		
 		($vars, $template_file) = $pagePackages->show($vars);
-	}
-	
-	elsif ($view eq "network") {
-		($vars, $template_file) = $pageNetwork->show_network_config($vars);
 	}
 
 	elsif ($view eq "services") {
 		($vars, $template_file) = $pageServices->show($vars);
 	}
 }
+
 elsif (defined $state{'package_upload_button'}) {
 	# User is uploading a file.
 
@@ -88,6 +79,14 @@ elsif (defined $state{'action'}) {
 
 
 		($vars, $template_file) = $pageServices->action($vars, $service, $params{$action});
+	}
+
+	elsif ($action eq "pkg_remove") {
+		# User wants to remove a uploaded package.
+		
+		my $pkg = $state{'pkg'};
+		($vars, $template_file)  #todo chekc if rpm
+			= $pagePackages->remove_uploaded_package($vars, $pkg);
 	}
 }
 

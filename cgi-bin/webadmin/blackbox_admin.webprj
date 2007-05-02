@@ -361,7 +361,6 @@
     <item modified_time="1176371229" url="Page/System/CVS/Entries" uploadstatus="1" />
     <item modified_time="1174509300" url="Page/System/CVS/Repository" uploadstatus="1" />
     <item modified_time="1174509300" url="Page/System/CVS/Root" uploadstatus="1" />
-    <item modified_time="1174505751" url="Page/System/Network.pm" uploadstatus="1" />
     <item url="Sql/CVS/" uploadstatus="1" />
     <item modified_time="1176371274" url="Sql/CVS/Entries" uploadstatus="1" />
     <item modified_time="1174509300" url="Sql/CVS/Repository" uploadstatus="1" />
@@ -420,7 +419,6 @@
     <item modified_time="1176371235" url="templates/system/CVS/Entries" uploadstatus="1" />
     <item modified_time="1174509300" url="templates/system/CVS/Repository" uploadstatus="1" />
     <item modified_time="1174509300" url="templates/system/CVS/Root" uploadstatus="1" />
-    <item modified_time="1175176940" url="templates/system/system_network.html" uploadstatus="1" />
     <item url="templates/users/CVS/" uploadstatus="1" />
     <item modified_time="1174509300" url="templates/users/CVS/Entries" uploadstatus="1" />
     <item modified_time="1174509300" url="templates/users/CVS/Repository" uploadstatus="1" />
@@ -505,7 +503,11 @@
     <item url="Common/Data/Abstract.pm" uploadstatus="1" />
     <item url="javascript/" uploadstatus="1" />
     <item url="javascript/overview_update.js" uploadstatus="1" />
-    <item url="templates/overview/overview_common.html" />
-    <item url="templates/overview/overview_inner.html" />
+    <item url="templates/overview/overview_common.html" uploadstatus="1" />
+    <item url="templates/overview/overview_inner.html" uploadstatus="1" />
+    <item url="templates/settings/settings_tabs.html" />
+    <item url="templates/settings/settings_network.html" />
+    <item url="Page/Settings/" />
+    <item url="Page/Settings/Network.pm" />
   </project>
 </webproject>

@@ -32,8 +32,25 @@ sub show {
 	
 	if ($show_available) {
 		$yum->clean();
-		my @updates = $yum->check_update();
-		$vars->{'available_packages'} = \@updates;
+		my ($success, @output) = $yum->check_update();
+	
+		
+		unless ($success) {
+			# something went wrong. Show the user.
+			my $errmsg;
+			if (scalar @output) {
+				$errmsg = "Error during update: " . join("<br />\n", @output);
+			}
+			else {
+				$errmsg = "Unknown error during update. The error log should contain the details.";
+			}
+			$vars->{'available_packages_error'} = $errmsg;
+		}
+		
+		else {
+			# all good, show the output.
+			$vars->{'available_packages'} = \@output;
+		}
 	}
 	
 	return ($vars, PACKAGES_TPL);
@@ -118,7 +135,7 @@ sub strip_filename {
 }
 
 ##
-# Runs yum update and shows package page with results from execution.
+# Runs yum update and shows results from execution.
 sub update_packages {
     my ($self, $vars) = @_;
     
@@ -138,16 +155,60 @@ sub install_uploaded {
 	my @output;
 
 	foreach my $package (@new_packages) {
-		my ($success, @result) = $yum->localinstall($package);
+		my ($success, @result) = $yum->install($package);
 		@output = (@output, @result);
 
 		if ($success) {
-			#TODO: Delete rpm file.
+			my $rpm_dir = $CONFIG->{'rpm_upload_folder'};	
+			#unlink "$rpm_dir/$package";
+			
 		}
 		
 	}
 	$vars->{'install_result'} = \@output;
 	
+	return $self->show($vars);
+}
+
+##
+# Delete uploaded file
+sub remove_uploaded_package {
+	my ($self, $vars, $filename) = @_;
+
+	unless ($filename) {
+		carp "remove_upload_package called without a filename";
+		return;
+	}
+	# validate
+	unless ($filename =~ /rpm$/) {
+		$vars->{'remove_uploaded_succ'}    = 0;
+		$vars->{'remove_uploaded_message'} = "File is not a rpm file. Can't delete'.";
+		return $self->show($vars);
+	}
+
+	# if the file was uploaded through the webadmin,
+	# it should pass the strip_filename function without a problem
+	$filename = $self->strip_filename($filename);
+
+	# Delete file.
+	my $rpm_dir = $CONFIG->{'rpm_upload_folder'};
+	my $path = "$rpm_dir/$filename";
+
+	my $deleted_count;
+	if (-e $path) {
+		$deleted_count = unlink $path;
+	}
+
+	# Check for error.
+	if ($deleted_count) {
+		$vars->{'remove_uploaded_succ'}    = 1;
+		$vars->{'remove_uploaded_message'} = "$filename has been deleted.";
+	}	
+	else  {
+		$vars->{'remove_uploaded_succ'} = 0; 
+		$vars->{'remove_uploaded_message'} = "Unable to delete file $filename";
+	}
+
 	return $self->show($vars);
 }
 
