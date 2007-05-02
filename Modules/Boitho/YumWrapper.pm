@@ -4,8 +4,11 @@ package Boitho::YumWrapper;
 use strict;
 use warnings;
 use Carp;
+use Data::Dumper;
 use File::Glob qw(bsd_glob);
 use File::Basename qw(basename);
+
+use constant USE_DEBUG_DATA => 0;
 
 my $rpm_dir;
 my $wrapper_path;
@@ -33,11 +36,12 @@ sub new {
 #   List with hashrefs, format {'name' => 'Name', 'version' => 'Version', 'release' => 'Release'}
 sub check_update {
     my $self = shift;
-    #my ($status, @input) = $self->_exec_action("check-update");
 
-## test data.
-my @input = qq(
-Loading "installonlyn" plugin
+    my ($succ, @input);
+    
+    if (USE_DEBUG_DATA) {
+	$succ = 1;
+	@input = qq(Loading "installonlyn" plugin
 Setting up repositories
 Reading repository metadata in from local files
 
@@ -46,9 +50,17 @@ audit-libs.i386                          1.4.2-5.fc6            updates
 audit-libs-python.x86_64                 1.4.2-5.fc6            updates
 boitho-crawlManager.i386                 1.3.3-1                boitho-released
 boitho-searchdbb.i386                    5.4.11-1               boitho-released
-    );
-    @input = split "\n", $input[0];
-#end test
+	);
+	@input = split "\n", $input[0];
+	carp Dumper(\@input);
+    }
+    else {
+	($succ, @input) = $self->_exec_action("check-update");
+    }
+
+    unless ($succ) { 
+	return ($succ, @input);
+    }
 
     my @packages;
     foreach my $in (@input) {
@@ -62,7 +74,7 @@ boitho-searchdbb.i386                    5.4.11-1               boitho-released
 	}
     }
 
-    return @packages;
+    return ($succ, @packages);
 }
 
 ##
@@ -84,9 +96,9 @@ sub clean {
 #
 # Parameter:
 #   package - Software package.
-sub localinstall {
+sub install {
     my ($self, $package) = @_;
-    return $self->_exec_action("localinstall", "\Q$package\E");
+    return $self->_exec_action("install", "\Q$package\E");
 
 }
 
