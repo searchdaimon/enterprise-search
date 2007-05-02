@@ -1,3 +1,7 @@
+/**
+ * Package for installing packages with yum and rpm on fedora 4.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,15 +14,22 @@
 
 #include "../common/exeoc.h"
 
-#define DO_SUID 0
-#define UID_USER 0
-#define YUM_PATH "/usr/bin/yum"
-#define YUM_FLAGS "-y" //asume yes
+#define DO_SUID 1
+#define SUID_USER 0
 
-#define RPM_PATH "/tmp/rpm"
+#define YUM_PATH    "/usr/bin/yum"
+#define YUM_FLAGS   "-y" //asume yes
+#define RPM_PATH    "/bin/rpm"
+#define RPM_FLAGS   "-Uvh"
+
+// dir where uploaded packages are
+#define RPM_DIR_PATH "/tmp/rpm" 
+
+#define PROGRAM_RPM 1
+#define PROGRAM_YUM 2
 
 int pkg_exists(char * rpm_path);
-void exec_and_exit(char *service, char *param);
+void exec_and_exit(int program, char *service, char *param);
 int validate_pkg(char *pkg);
 int is_valid_action(char *action);
 int str_in_list(const char *list[], char *str);
@@ -27,50 +38,60 @@ void show_usage();
 
 // header end
 
-const char *valid_actions[] = {"check-update", "update", "clean", "localinstall", '\0'};
+const char *valid_actions[] = {"check-update", "update", "clean", "install", '\0'};
 
 int main(int argc, char **argv) {
 #if DO_SUID
-	if (setuid(UID_USER) != 0) {
-	    printf("Unable to setuid(%d)\n", UID_USER);
+	if (setuid(SUID_USER) != 0) {
+	    printf("Unable to setuid(%d)\n", SUID_USER);
 	    exit(EXIT_FAILURE);
 	}
 #endif
-	
-	if (argc >= 2) {
-		char *yum_arg;
-		char *action = argv[1];
-		//char *param   = argv[2];
 
-		if (is_valid_action(action)) {
-		    yum_arg = (argc == 3) ? argv[2] : NULL;
-
-		    if (str_equals(action, "localinstall")) {
-			validate_pkg(yum_arg);
-			
-			char rpm_path[512];
-			snprintf(rpm_path, sizeof(rpm_path), "%s/%s", RPM_PATH, yum_arg);
-			
-			if (!pkg_exists(rpm_path)) {
-			    printf("Package %s does not exist.\n", rpm_path);
-			    exit(EXIT_FAILURE);
-			}
-
-		    }
-
-		    else if (str_equals(action, "clean")) {
-			yum_arg = "all";
-		    }
-		    
-		    exec_and_exit(action, yum_arg);
-		}
-		else {
-		    printf("Action %s is not valid.\n", action);
-		}
+	if (argc < 2) {
+	    printf("Too few arguments provided.\n");
+	    show_usage();
 	}
-		    
-	show_usage();
+
 	
+	char *second_arg;
+	char *action = argv[1];
+	int program_to_exec = PROGRAM_YUM;
+
+	if (!is_valid_action(action)) {
+	    printf("Action %s is not valid.\n", action);
+	    show_usage();
+	}
+		
+
+	second_arg = (argc == 3) ? argv[2] : NULL;
+
+	if (str_equals(action, "install")) {
+	    if (second_arg == NULL) {
+		printf("You need to provide a package name.\n");
+		show_usage();
+	    }
+	    validate_pkg(second_arg);
+		
+		
+	    char rpm_path[512];
+	    snprintf(rpm_path, sizeof(rpm_path), "%s/%s", RPM_DIR_PATH, second_arg);
+		
+	    if (!pkg_exists(rpm_path)) {
+		printf("Package %s does not exist.\n", rpm_path);
+		exit(EXIT_FAILURE);
+	    }
+
+	    second_arg = rpm_path;
+	    program_to_exec = PROGRAM_RPM;
+
+	}
+
+	else if (str_equals(action, "clean")) {
+	    second_arg = "all";
+	}
+	    
+	exec_and_exit(program_to_exec, action, second_arg);
 	return 0;
 }
 
@@ -80,21 +101,36 @@ int pkg_exists(char * rpm_path) {
 }
 
 /**
- * Execute service and exit.
- *
+ * Execute program and exit.
  */
-void exec_and_exit(char *action, char *yum_arg) {
-    char exeocbuf[1024];
-    int exeocbuflen;
+void exec_and_exit(int program, char *action, char *second_arg) {
+    char exeocbuf[200000];
+    int  exeocbuflen;
+
     void *args;
 
-    if (yum_arg == NULL) {
-	char *no_yum_arg[] = {YUM_PATH, YUM_FLAGS, action, '\0'};
-	args = no_yum_arg;
-    }
-    else {
-	char *args_pkg[] = {YUM_PATH, YUM_FLAGS, action, yum_arg, '\0'};
-	args = args_pkg;
+    switch (program) {
+    case PROGRAM_RPM: 
+	{
+	char * my_args[] = {RPM_PATH, RPM_FLAGS, second_arg, '\0'};
+	args = my_args;
+	break;
+	}
+
+    case PROGRAM_YUM:
+	if (second_arg == NULL) {
+	    char * my_args[] = {YUM_PATH, YUM_FLAGS, action, '\0'};
+	    args = my_args;
+	}
+	else {
+	    char * my_args[] = {YUM_PATH, YUM_FLAGS, action, second_arg, '\0'};
+	    args = my_args;
+	}
+	break;
+
+    default:
+	fprintf(stderr, "exec_and_exec: Unknown program %d\n", program);
+	exit(EXIT_FAILURE);
     }
 
     exeocbuflen = sizeof(exeocbuf);
@@ -102,7 +138,7 @@ void exec_and_exit(char *action, char *yum_arg) {
 
     int exec_return;
     if (!exeoc(args, exeocbuf, &exeocbuflen, &exec_return)) {
-	printf("Unable to execute yum\n");
+	printf("Unable to execute program\n");
 	exit(EXIT_FAILURE);
     }
 
@@ -117,12 +153,13 @@ int is_valid_action(char *action) {
 
 int validate_pkg(char *pkg) {
     int i = 0;
-    for ( ; i < sizeof(pkg); i++) {
-	char in = pkg[i];
+    char in;
+    while ((in = pkg[i]) != '\0') {
 	if (!(isalnum(in) || in == '.' || in == '-')) { // example input: webadmin-0.1.rpm
 	    printf("Package name (%s) contains invalid character %c\n", pkg, in);
 	    exit(EXIT_FAILURE);
 	}
+	i++;
     }
 
     return 1;
@@ -155,3 +192,4 @@ void show_usage() {
     exit(1);
 }
 
+//rpm -Uvh /tmp/asdf.rpm
