@@ -18,7 +18,7 @@ boitho-base_name = boitho-base
 boitho-base_version = 1.3.0
 
 boitho-bbadmin_name = boitho-bbadmin
-boitho-bbadmin_version = 2.7.15
+boitho-bbadmin_version = 2.7.17
 
 boitho-everrun_name = boitho-everrun
 boitho-everrun_version = 1.0.0
@@ -63,7 +63,9 @@ bbadminhtaccess:
 	rpm -bb $(boithobb-bbadminhtaccess_name).spec
 
 bbadmin:
-	perl rpmmagic.pl $(boitho-bbadmin_name) $(boitho-bbadmin_version) /home/boitho/boitho/websearch /home/boitho/boithoTools cgi-bin/webadmin Modules
+	echo BOITHOHOME
+	echo $(BOITHOHOME)
+	perl rpmmagic.pl $(boitho-bbadmin_name) $(boitho-bbadmin_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/webadmin Modules
 
 	rpm -bb $(boitho-bbadmin_name).spec
 

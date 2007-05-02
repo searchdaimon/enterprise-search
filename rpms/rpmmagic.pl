@@ -150,7 +150,7 @@ print "running: $command\n";
 system($command);
 
 #flytter til redhat mappen
-system("mv $tarfile /home/boitho/redhat/SOURCES/");
+system("mv $tarfile ~/redhat/SOURCES/");
 
 #lager spec file
 open(INF,"defult.spec") or die("defult.spec: $!");
