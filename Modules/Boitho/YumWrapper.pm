@@ -20,7 +20,7 @@ sub new {
 
     # init
     ($rpm_dir, $wrapper_path) = @_;
-    croak "Path to RPM directory you provided is not a directory."
+    croak "Path \"$rpm_dir\" to RPM directory you provided is not a directory."
 	unless -d $rpm_dir;
 
     croak "Wrapper path \"$wrapper_path\" provided is not executable"
