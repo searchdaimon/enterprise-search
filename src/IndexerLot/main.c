@@ -30,12 +30,6 @@
 	
 #endif
 
-#ifdef BLACK_BOKS
-//acllot includes
-#include "../3pLibs/keyValueHash/hashtable.h"
-#include "../3pLibs/keyValueHash/hashtable_itr.h"
-
-
 struct DIArrayFormat {
 	struct DocumentIndexFormat *p;
 	unsigned int DocID;
@@ -75,6 +69,14 @@ struct IndexerLot_workthreadFormat {
 		FILE *dictionarywordsfFH;
 	#endif
 };
+
+
+#ifdef BLACK_BOKS
+//acllot includes
+#include "../3pLibs/keyValueHash/hashtable.h"
+#include "../3pLibs/keyValueHash/hashtable_itr.h"
+
+
 
 struct alclotFormat {
 	char subname[maxSubnameLength];
@@ -531,15 +533,17 @@ void *IndexerLot_workthread(void *arg) {
 
 						revindexFilesAppendWords(&pagewords,(*argstruct).revindexFilesHa,ReposetoryHeader.DocID,&langnr);
 
-						dictionaryWordsWrite(&pagewords,(*argstruct).dictionarywordsfFH);
-
+						#ifdef BLACK_BOKS
+							dictionaryWordsWrite(&pagewords,(*argstruct).dictionarywordsfFH);
+						#else
+							linksWrite(&pagewords,(*argstruct).addNewUrlha);
+						#endif
 						//DocIDPlace = ((ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr)) * sizeof(unsigned char));
 						////printf("DocID %u, DocIDPlace %i\n",ReposetoryHeader.DocID,DocIDPlace);
 						//fseek((*argstruct).ADULTWEIGHTFH,DocIDPlace,SEEK_SET);
 						//	
 	                			//fwrite(&awvalue,sizeof(awvalue),1,(*argstruct).ADULTWEIGHTFH);
 
-						linksWrite(&pagewords,(*argstruct).addNewUrlha);
 
 					}
 
@@ -789,8 +793,9 @@ int main (int argc, char *argv[]) {
 		argstruct.ADULTWEIGHTFH = lotOpenFileNoCasheByLotNr(lotNr,"AdultWeight",openmode, 'e',subname);
 		argstruct.SFH = lotOpenFileNoCasheByLotNr(lotNr,"summary",openmode,'r',subname);
 		argstruct.brankPageElementsFH = lotOpenFileNoCasheByLotNr(lotNr,"brankPageElements",openmode,'r',subname);
+		#ifdef BLACK_BOKS
 		argstruct.dictionarywordsfFH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords_raw",openmode,'r',subname);
-
+		#endif
 
 		for (i=0;i<NEWURLFILES_NR;i++) {
 			addNewUrlOpen(&argstruct.addNewUrlha[i],lotNr,openmode,subname,i);
@@ -891,8 +896,9 @@ int main (int argc, char *argv[]) {
 		fclose(argstruct.ADULTWEIGHTFH);
 		fclose(argstruct.SFH);
 		fclose(argstruct.brankPageElementsFH);
+		#ifdef BLACK_BOKS
 		fclose(argstruct.dictionarywordsfFH);
-
+		#endif
 		// vi må ikke kopiere revindex filene da vi jobber på de lokale direkte
 //	}
 
