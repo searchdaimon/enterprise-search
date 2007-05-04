@@ -271,7 +271,8 @@ int wordTypeadd;
 				convert_to_lowercase((unsigned char *)word);
 
 
-				#ifdef DEBUG_ADULT
+				//#ifdef DEBUG_ADULT
+				#ifdef PRESERVE_WORDS
 					strcpy((*pagewords).words[(*pagewords).nr].word,word);
 				#endif
 				(*pagewords).words[(*pagewords).nr].WordID =  crc32boitho(word);
@@ -427,7 +428,8 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 		//(*pagewords).words_sorted[i].WordID = (*pagewords).words[i].WordID;
 		//(*pagewords).words_sorted[i].position = (*pagewords).words[i].position;
 		(*pagewords).words_sorted[i] = (*pagewords).words[i];
-		#ifdef DEBUG_ADULT
+		//#ifdef DEBUG_ADULT
+		#ifdef PRESERVE_WORDS
 			strcpy((*pagewords).words_sorted[i].word,(*pagewords).words[i].word);
 		#endif
 	}
@@ -465,10 +467,13 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 			(*pagewords).revIndex[(*pagewords).revIndexnr].nr = 0;
 			(*pagewords).revIndex[(*pagewords).revIndexnr].hits[(*pagewords).revIndex[(*pagewords).revIndexnr].nr] = (*pagewords).words_sorted[i].position;
 
-			#ifdef DEBUG_ADULT			
+			//#ifdef DEBUG_ADULT			
+			#ifdef PRESERVE_WORDS
 				strcpy((*pagewords).revIndex[(*pagewords).revIndexnr].word,(*pagewords).words_sorted[i].word);
+				(*pagewords).revIndex[(*pagewords).revIndexnr].wordnr = 1;
 				//printf("word %lu %s\n",(*pagewords).revIndex[(*pagewords).revIndexnr].WordID,(*pagewords).words_sorted[i].word);
 			#endif
+
 
 			#ifndef BLACK_BOKS
 			///////////////////////////
@@ -548,6 +553,10 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 		else {
 			#ifdef DEBUG
 				printf("word seen befor. Adding. WordID \"%u\"\n",(*pagewords).words_sorted[i].WordID);
+			#endif
+
+			#ifdef PRESERVE_WORDS
+				++(*pagewords).revIndex[oldRevIndexnr].wordnr;
 			#endif
 			// ord er set før, skal legges til det tidligere
 			// må passe på at vi ikke overskriver med flere hits en MaxsHits
@@ -813,6 +822,7 @@ void wordsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int Doc
 
 	int i,y;
 
+
 	for(i=0;i<NrOfDataDirectorys;i++) {
 		(*pagewords).nrofBucketElements[i].records = 0;
 		(*pagewords).nrofBucketElements[i].hits = 0;
@@ -858,9 +868,23 @@ void wordsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int Doc
 		
 	}
 
+
+
 }
+void dictionaryWordsWrite (struct pagewordsFormat *pagewords,FILE *FH) {
 
+	int i;
 
+	#ifdef PRESERVE_WORDS
+		for(i=0;i<(*pagewords).revIndexnr;i++) {
+			#ifdef DEBUG
+			printf("word: \"%s\": %i\n",(*pagewords).revIndex[i].word,(*pagewords).revIndex[i].wordnr);
+			#endif
+			fprintf(FH,"%s %i\n",(*pagewords).revIndex[i].word,(*pagewords).revIndex[i].wordnr);
+		}
+	#endif
+
+}
 /**************************************************************************************
 Skriver reversert index til disk
 ***************************************************************************************/
@@ -887,10 +911,14 @@ void revindexFilesAppendWords(struct pagewordsFormat *pagewords,FILE *revindexFi
 		}
 	}
 
+
 	for(i=0;i<NrOfDataDirectorys;i++) {
 			free((*pagewords).nrofBucketElements[i].bucketbuff);
 		
 	}
+
+
+
 /*
 	for(i=0;i<(*pagewords).revIndexnr;i++) {
 

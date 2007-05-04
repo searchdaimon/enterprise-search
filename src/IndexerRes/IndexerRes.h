@@ -30,7 +30,6 @@
 #define maxWordlLen 30
 #define MaxAdultWordCount 60
 
-//#define DEBUG_ADULT
 
 //#define subname "www"
 
@@ -64,8 +63,10 @@ struct adultWordFormat {
 };
 
 struct revIndexFomat {
-	#ifdef DEBUG_ADULT
+	//#ifdef DEBUG_ADULT
+	#ifdef PRESERVE_WORDS
 		char word[maxWordlLen +1];
+		unsigned int wordnr;
 	#endif
         unsigned long WordID;
         unsigned long nr;
@@ -148,4 +149,5 @@ void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct Rep
                 char **title, char **body);
 
 void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID);
+void dictionaryWordsWrite (struct pagewordsFormat *pagewords,FILE *FH);
 void linksWrite(struct pagewordsFormat *pagewords,struct addNewUrlhaFormat addNewUrlha[]);

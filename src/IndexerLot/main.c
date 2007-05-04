@@ -36,6 +36,46 @@
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
 
 
+struct DIArrayFormat {
+	struct DocumentIndexFormat *p;
+	unsigned int DocID;
+	char haveawvalue;
+	unsigned char awvalue;
+	struct brankPageElementsFormat brankPageElements;
+	char haverankPageElements;
+};
+
+struct IndexerLot_workthreadFormat {
+	int lotNr;
+	char *subname;
+        unsigned int FiltetTime;
+        unsigned int FileOffset;
+	FILE *revindexFilesHa[NrOfDataDirectorys];
+	struct adultFormat *adult;
+	FILE *ADULTWEIGHTFH;
+	FILE *SFH;
+	FILE *brankPageElementsFH;
+	struct alclotFormat *alclot;
+	int pageCount;
+	int httpResponsCodes[nrOfHttpResponsCodes];
+	int optMaxDocuments;
+	int optPrintInfo;
+	int optMakeWordList;
+	char **optOnlyTLD;
+	struct DIArrayFormat *DIArray;
+	//struct DIArrayFormat DIArray[NrofDocIDsInLot];
+	struct addNewUrlhaFormat addNewUrlha[NEWURLFILES_NR];
+
+	#ifdef WITH_THREAD
+        	pthread_mutex_t reposetorymutex;
+        	pthread_mutex_t restmutex;
+       	#endif
+
+	#ifdef PRESERVE_WORDS
+		FILE *dictionarywordsfFH;
+	#endif
+};
+
 struct alclotFormat {
 	char subname[maxSubnameLength];
 	char openmode[4];
@@ -48,6 +88,9 @@ struct aclusernameFormat {
 	char username[MAX_USER_NAME_LEN];
 	int len;
 };
+
+
+
 
 static unsigned int alclot_hashfromkey(void *ky)
 {
@@ -209,40 +252,6 @@ int makePreParsedSummary(const char body[], int bodylen,const  char title[],int 
 
 }
 
-struct DIArrayFormat {
-	struct DocumentIndexFormat *p;
-	unsigned int DocID;
-	char haveawvalue;
-	unsigned char awvalue;
-	struct brankPageElementsFormat brankPageElements;
-	char haverankPageElements;
-};
-
-struct IndexerLot_workthreadFormat {
-	int lotNr;
-	char *subname;
-        unsigned int FiltetTime;
-        unsigned int FileOffset;
-	FILE *revindexFilesHa[NrOfDataDirectorys];
-	struct adultFormat *adult;
-	FILE *ADULTWEIGHTFH;
-	FILE *SFH;
-	FILE *brankPageElementsFH;
-	struct alclotFormat *alclot;
-	int pageCount;
-	int httpResponsCodes[nrOfHttpResponsCodes];
-	int optMaxDocuments;
-	int optPrintInfo;
-	char **optOnlyTLD;
-	struct DIArrayFormat *DIArray;
-	//struct DIArrayFormat DIArray[NrofDocIDsInLot];
-	struct addNewUrlhaFormat addNewUrlha[NEWURLFILES_NR];
-
-	#ifdef WITH_THREAD
-        	pthread_mutex_t reposetorymutex;
-        	pthread_mutex_t restmutex;
-       	#endif
-};
 
 int getNextPage(struct IndexerLot_workthreadFormat *argstruct,char htmlcompressdbuffer[],int htmlcompressdbuffer_size, 
 	char imagebuffer[],int imagebuffer_size,unsigned long int *radress, char **acl,struct ReposetoryHeaderFormat *ReposetoryHeader) {
@@ -522,6 +531,8 @@ void *IndexerLot_workthread(void *arg) {
 
 						revindexFilesAppendWords(&pagewords,(*argstruct).revindexFilesHa,ReposetoryHeader.DocID,&langnr);
 
+						dictionaryWordsWrite(&pagewords,(*argstruct).dictionarywordsfFH);
+
 						//DocIDPlace = ((ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr)) * sizeof(unsigned char));
 						////printf("DocID %u, DocIDPlace %i\n",ReposetoryHeader.DocID,DocIDPlace);
 						//fseek((*argstruct).ADULTWEIGHTFH,DocIDPlace,SEEK_SET);
@@ -608,6 +619,7 @@ int main (int argc, char *argv[]) {
 	unsigned int optrEindex = 0;
 	unsigned int optMaxDocuments = 0;
 	unsigned int optPrintInfo = 0;
+	unsigned int optMakeWordList = 0;
 	char **optOnlyTLD = NULL;
 
 	off_t DocIDPlace;
@@ -624,7 +636,7 @@ int main (int argc, char *argv[]) {
 	extern char *optarg;
        	extern int optind, opterr, optopt;
 	char c;
-	while ((c=getopt(argc,argv,"neu:t:m:pl:"))!=-1) {
+	while ((c=getopt(argc,argv,"neu:t:m:pl:w"))!=-1) {
                 switch (c) {
 			case 'l':
 				split(optarg, ",", &optOnlyTLD);
@@ -637,6 +649,11 @@ int main (int argc, char *argv[]) {
 			case 'p':
 				optPrintInfo = 1;
 				break;
+			case 'w':
+				//lag en ordbok
+				optMakeWordList = 1;
+				break;
+
                         case 'n':
                     
 /*****************************************************************************/
@@ -772,6 +789,7 @@ int main (int argc, char *argv[]) {
 		argstruct.ADULTWEIGHTFH = lotOpenFileNoCasheByLotNr(lotNr,"AdultWeight",openmode, 'e',subname);
 		argstruct.SFH = lotOpenFileNoCasheByLotNr(lotNr,"summary",openmode,'r',subname);
 		argstruct.brankPageElementsFH = lotOpenFileNoCasheByLotNr(lotNr,"brankPageElements",openmode,'r',subname);
+		argstruct.dictionarywordsfFH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords_raw",openmode,'r',subname);
 
 
 		for (i=0;i<NEWURLFILES_NR;i++) {
@@ -792,7 +810,7 @@ int main (int argc, char *argv[]) {
 		argstruct.optMaxDocuments	= optMaxDocuments;
 		argstruct.optPrintInfo		= optPrintInfo;
 		argstruct.optOnlyTLD		= optOnlyTLD;
-
+		argstruct.optMakeWordList 		= optMakeWordList;
 		//malloc
 		argstruct.DIArray = malloc( NrofDocIDsInLot * sizeof(struct DIArrayFormat) );
 
@@ -873,6 +891,7 @@ int main (int argc, char *argv[]) {
 		fclose(argstruct.ADULTWEIGHTFH);
 		fclose(argstruct.SFH);
 		fclose(argstruct.brankPageElementsFH);
+		fclose(argstruct.dictionarywordsfFH);
 
 		// vi må ikke kopiere revindex filene da vi jobber på de lokale direkte
 //	}
