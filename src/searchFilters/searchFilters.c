@@ -3,88 +3,7 @@
 
 #include "searchFilters.h"
 
-//fjerner også www. i begyndelsen av en url, slik at det blir lettere å samenligne www.vg.no == vg.no
-int find_domain_no_subname (char url[],char domain[], int sizeofdomain) {
-//ToDo har lagt til sizeofdomain, for å ungå buffer owerflow
-        char *cpnt;
-        char buff[64];
-        char darray[10][64];
-        int i,y;
-        //kutter av http:// (de 7 første tegnene)
-        strncpy(domain,url + 7,sizeofdomain -1);
-
-
-
-
-        //søker oss til / og kapper
-        if ((cpnt = strchr(domain,'/')) == NULL) {
-                printf("bad url\n");
-                return 0;
-        }
-        else {
-                domain[cpnt - domain] = '\0';
-
-                strncpy(buff,domain,sizeof(buff));
-                i = 0;
-                while ((cpnt = strrchr(buff,'.')) != NULL) {
-                        //++cpnt;
-                        //printf("el %s\n",cpnt);
-                        strncpy(darray[i],cpnt,sizeof(darray[i]));
-                        cpnt[0] = '\0';
-                        ++i;
-                }
-                strncpy(darray[i],buff,sizeof(darray[i]));
-
-                if (strlen(darray[1]) > 3) {
-                        //printf("%s > 3\n",darray[1]);
-                        domain[0] = '\0';
-
-                        sprintf(domain,"%s%s",darray[1],darray[0]);
-
-                        if (strncmp(domain,"www",3) == 0) {
-                                strcpy(domain,domain +3);
-                        }
-
-                        //fjerner . på begyndelsen
-                        strcpy(domain,domain +1);
-                }
-                else {
-                        //returnerer domanet slik vi fant det lengere opp
-                        if (strncmp(domain,"www.",4) == 0) {
-                                strcpy(domain,domain +4);
-                        }
-
-                }
-
-                return 1;
-        }
-}
-
-
-
-//fjerner også www. i begyndelsen av en url, slik at det blir lettere å samenligne www.vg.no == vg.no
-int find_domain_no_www (char url[],char domain[], int sizeofdomain) {
-
-        char *cpnt;
-
-
-        //kutter av http:// (de 7 første tegnene)
-        strncpy(domain,url + 7,sizeofdomain -1);
-
-	if (strncmp(domain,"www.",4) == 0) {
-		strcpy(domain,domain +4);
-	}
-
-        //søker oss til / og kapper
-        if ((cpnt = strchr(domain,'/')) == NULL) {
-                //printf("bad url\n");
-                return 0;
-        }
-        else {
-                domain[cpnt - domain] = '\0';
-                return 1;
-        }
-}
+#include "../common/url.h"
 
 int filterAdultWeight(char AdultWeight,int adultpages,int noadultpages) {
 
@@ -258,20 +177,7 @@ int filterTLDs(char domain[]) {
         return 0;
 
 }
-int find_TLD(char domain[], char TLD[],int TLDsize) {
 
-      char *cpoint;
-
-      if ((cpoint = strrchr(domain,'.')) == NULL) {
-                printf("bad domain\n");
-                return 0;
-        }
-      //h<E5>pper over . i domene. Skal ha "com", ikke ".com"
-      ++cpoint;
-
-      strscpy(TLD,cpoint,TLDsize);
-      return 1;
-}
 int filterDomainNrOfLines(char domain[]) {
 
       #define maxdomainlines 2

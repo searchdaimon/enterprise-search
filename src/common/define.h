@@ -9,6 +9,7 @@
 
 #define NrOfDataDirectorys 64
 
+#define NEWURLFILES_NR 5
 
 #define MAXFILTYPES 100
 

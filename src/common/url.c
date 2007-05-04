@@ -1,31 +1,91 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
 #include "define.h"
 #include "debug.h"
+#include "bstr.h"
 
+int strchrcount(char s[], char c) {
+
+	char *cpnt = s;
+	int count = 0;
+
+	while ((cpnt = strchr(cpnt,c)) != NULL) {
+		++cpnt;
+		++count;
+	}
+
+	return count;
+}
+
+int url_normalization (char url[], int urlsize) {
+
+	char domain[200];
+	char *cpnt;
+
+
+	//prøver å finne domener uten trailing slash
+        //kutter av http:// (de 7 første tegnene)
+        strscpy(domain,url + 7,sizeof(domain));
+
+        //søker oss til / , hvis vi ikke har har vi nokk en domene skrevet som www.boitho.com.
+	//vi ønsker da og legge på / for og få www.boitho.com/
+	// kan også være www.boitho.com?query=chat. Så hvis det er ? i den kan vi ikke bare apende en /
+        if ( ((cpnt = strchr(domain,'/')) == NULL) && ((cpnt = strchr(domain,'?')) == NULL)) {
+                //printf("bad url\n");
+                //return 0;
+		//printf("no trailing slash. Url \"%s\"\n",url);
+		strlcat(url,"/",urlsize);
+		//printf("no trailing slash. revriten to Url \"%s\"\n",url);
+		
+        }
+
+}
 
 int gyldig_url(char word[]) {
                 static char lasturl[201] = {""};
                 int lengt;
                 char *cpnt;
+                char *filetype;
+		int querylength;
 		struct updateFormat updatePost;
-
-		
-
+		char domain[128];
+		int subdomains;
+		int domainNrOfLines;
 
                 lengt = strlen(word);
 
+		if (!find_domain(word,domain,sizeof(domain)) ) {
+			printf("can't find domain. Url \"%s\"\n",word);
+			return 0;
+		}
+
+		//teller subdomener
+		subdomains = strchrcount(domain,'.');
+		
+
+		domainNrOfLines = strchrcount(domain,'-');
+
+		//printf("url: \"%s\", subdomains = %i, domainNrOfLines = %i\n",word,subdomains,domainNrOfLines);
+		
                 //finner siste bokstav
                 if (word[lengt -1] == '/') {
-                        cpnt = &word[lengt -1];
+                        filetype = &word[lengt -1];
                 }
                 else {
-                        if ((cpnt = strrchr(word,'.')) == NULL){
-                                cpnt = NULL;
+                        if ((filetype = strrchr(word,'.')) == NULL){
+                                filetype = NULL;
                         }
                 }
-                        //printf("cpnt %s\n",cpnt);
+                        //printf("filetype %s\n",filetype);
+
+		//finner lengde på query. Altså det som er etter ?
+		querylength = 0;
+		if ((cpnt = strstr(word,"?")) != NULL) {
+			querylength = strlen(cpnt +1); //+1 da vi ikke skal ha med ?
+		}
+		//printf("url \"%s\", querylength %i\n",word,querylength);
 
 
                 //temp: for nå tar vi bare korte urler
@@ -33,38 +93,55 @@ int gyldig_url(char word[]) {
 			debug("To long. Was %i bytes",lengt);
 			return 0;
                 }
+		else if (querylength > 21) {
+			debug("To long query. Was %i bytes",querylength);
+			return 0;
+		}
+		else if (subdomains == 1) {
+			//if not will we index boitho.com and www.boitho.com. Now are we only takint he www.boitho"
+			printf("To few subdomains. Most have one. Url: \"%s\"\n",word);
+			return 0;
+		}
+		else if (domainNrOfLines >= 3) {
+			debug("To many lines in domain. Was %i lines. Url: \"%s\"\n",domainNrOfLines,word);
+			return 0;
+		}
 		else if (word[lengt -1] == '\n') {
 			debug("url has \\n as last char");
 			return 0;
 		}
-                else if (cpnt == NULL) {
-                        debug("bad url. cpnt is NULL");
+                else if (filetype == NULL) {
+                        debug("bad url. filetype is NULL");
 			return 0;
                 }
                 else if (
                         !(
-                        (strcmp(cpnt,"/") == 0)
-                        || (strstr(cpnt,"?") != NULL)
-                        || (strcmp(cpnt,".cfm") == 0)
-                        || (strcmp(cpnt,".htm") == 0)
-                        || (strcmp(cpnt,".html") == 0)
-                        || (strcmp(cpnt,".shtml") == 0)
-                        || (strcmp(cpnt,".shtm") == 0)
-                        || (strcmp(cpnt,".php") == 0)
-                        || (strcmp(cpnt,".asp") == 0)
-                        || (strcmp(cpnt,".stm") == 0)
-                        || (strcmp(cpnt,".ece") == 0)
-                        || (strcmp(cpnt,".aspx") == 0)
-                        || (strcmp(cpnt,".do") == 0)
-                        || (strcmp(cpnt,".jsp") == 0)
+                        (strcmp(filetype,"/") == 0)
+                        || (strstr(filetype,"?") != NULL)
+                        || (strcmp(filetype,".cfm") == 0)
+                        || (strcmp(filetype,".htm") == 0)
+                        || (strcmp(filetype,".html") == 0)
+                        || (strcmp(filetype,".shtml") == 0)
+                        || (strcmp(filetype,".shtm") == 0)
+                        || (strcmp(filetype,".php") == 0)
+                        || (strcmp(filetype,".asp") == 0)
+                        || (strcmp(filetype,".stm") == 0)
+                        || (strcmp(filetype,".ece") == 0)
+                        || (strcmp(filetype,".aspx") == 0)
+                        || (strcmp(filetype,".do") == 0)
+                        || (strcmp(filetype,".jsp") == 0)
                         )
                 ) {
                         //tar bar de filendelsene vi vil ha
-                        debug("bad ending \"%s\"",cpnt);
+                        debug("bad ending \"%s\"",filetype);
 			return 0;
                 }
                 else if (strchr(word,'#') != NULL) {
                         //printf("has #: %s\n",word);
+			return 0;
+                }
+                else if (strchr(word,'@') != NULL) {
+                        //printf("has @: %s\n",word);
 			return 0;
                 }
                 else if (strchr(word,'%') != NULL) {
@@ -128,6 +205,14 @@ int gyldig_url(char word[]) {
 			debug("hav /index",word);
 			return 0;
 		}
+		else if (strstr(word,"mailto:") != NULL) {
+			debug("hav mailto:",word);
+			return 0;
+		}
+		else if (strstr(word,"//:") != NULL) {
+			debug("hav //:",word);
+			return 0;
+		}
                 else if (lengt > sizeof(updatePost.url)) {
                         debug("url to long at %i char",strlen(word));
 			return 0;
@@ -138,6 +223,8 @@ int gyldig_url(char word[]) {
 			return 1;
 		}
 
+		printf("bug: did go to end in gyldig_url(). Isnt suposet to happend\n");
+		exit(1);
 }
 
 
@@ -217,5 +304,126 @@ int url_isttl(char word[],char ttl[]) {
     else {
             return 1;
     }
+}
+
+
+//fjerner også www. i begyndelsen av en url, slik at det blir lettere å samenligne www.vg.no == vg.no
+int find_domain_no_subname (char url[],char domain[], int sizeofdomain) {
+//ToDo har lagt til sizeofdomain, for å ungå buffer owerflow
+        char *cpnt;
+        char buff[64];
+        char darray[10][64];
+        int i,y;
+        //kutter av http:// (de 7 første tegnene)
+        strncpy(domain,url + 7,sizeofdomain -1);
+
+
+
+
+        //søker oss til / og kapper
+        if ((cpnt = strchr(domain,'/')) == NULL) {
+                printf("bad url\n");
+                return 0;
+        }
+        else {
+                domain[cpnt - domain] = '\0';
+
+                strncpy(buff,domain,sizeof(buff));
+                i = 0;
+                while ((cpnt = strrchr(buff,'.')) != NULL) {
+                        //++cpnt;
+                        //printf("el %s\n",cpnt);
+                        strncpy(darray[i],cpnt,sizeof(darray[i]));
+                        cpnt[0] = '\0';
+                        ++i;
+                }
+                strncpy(darray[i],buff,sizeof(darray[i]));
+
+                if (strlen(darray[1]) > 3) {
+                        //printf("%s > 3\n",darray[1]);
+                        domain[0] = '\0';
+
+                        sprintf(domain,"%s%s",darray[1],darray[0]);
+
+                        if (strncmp(domain,"www",3) == 0) {
+                                strcpy(domain,domain +3);
+                        }
+
+                        //fjerner . på begyndelsen
+                        strcpy(domain,domain +1);
+                }
+                else {
+                        //returnerer domanet slik vi fant det lengere opp
+                        if (strncmp(domain,"www.",4) == 0) {
+                                strcpy(domain,domain +4);
+                        }
+
+                }
+
+                return 1;
+        }
+}
+
+
+
+//fjerner også www. i begyndelsen av en url, slik at det blir lettere å samenligne www.vg.no == vg.no
+int find_domain_no_www (char url[],char domain[], int sizeofdomain) {
+
+        char *cpnt;
+
+
+        //kutter av http:// (de 7 første tegnene)
+        strncpy(domain,url + 7,sizeofdomain -1);
+
+	if (strncmp(domain,"www.",4) == 0) {
+		strcpy(domain,domain +4);
+	}
+
+        //søker oss til / og kapper
+        if ((cpnt = strchr(domain,'/')) == NULL) {
+                //printf("bad url\n");
+                return 0;
+        }
+        else {
+                domain[cpnt - domain] = '\0';
+                return 1;
+        }
+}
+
+
+int find_TLD(char domain[], char TLD[],int TLDsize) {
+
+      char *cpoint;
+
+      if ((cpoint = strrchr(domain,'.')) == NULL) {
+                printf("bad domain\n");
+                return 0;
+        }
+      //h<E5>pper over . i domene. Skal ha "com", ikke ".com"
+      ++cpoint;
+
+      strscpy(TLD,cpoint,TLDsize);
+      return 1;
+}
+
+
+
+int find_domain (char url[],char domain[],int domainsize) {
+
+        char *cpnt;
+
+
+        //kutter av http:// (de 7 første tegnene)
+        strscpy(domain,url + 7,domainsize);
+
+        //søker oss til / og kapper
+        if ((cpnt = strchr(domain,'/')) == NULL) {
+                //printf("bad url\n");
+                return 0;
+        }
+        else {
+                domain[cpnt - domain] = '\0';
+                return 1;
+        }
 }
 

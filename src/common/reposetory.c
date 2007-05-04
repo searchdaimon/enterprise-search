@@ -1043,9 +1043,14 @@ int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsi
 
 
 
-void addNewUrlOpen(struct addNewUrlhaFormat *addNewUrlha,int lotNr, char openmode[],char subname[]) {
+void addNewUrlOpen(struct addNewUrlhaFormat *addNewUrlha,int lotNr, char openmode[],char subname[], int nr) {
 	(*addNewUrlha).OpenLot = -1;
-	if (((*addNewUrlha).NYEURLER = lotOpenFileNoCasheByLotNr(lotNr,"nyeurler",openmode,'e',subname)) == NULL) {
+
+	char filepath[512];
+
+	sprintf(filepath,"nyeurler.%i",nr);
+
+	if (((*addNewUrlha).NYEURLER = lotOpenFileNoCasheByLotNr(lotNr,filepath,openmode,'e',subname)) == NULL) {
 		perror("nyeurler");
 		exit(1);
 	}

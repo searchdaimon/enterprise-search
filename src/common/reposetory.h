@@ -91,7 +91,7 @@ void risave (int DocID, char *image, int size,char subname[]);
 void anchoradd(unsigned int DocID,char *text,int textsize,char subname[]);
 int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsigned int *radress,unsigned int *rsize,char subname[]);
 
-void addNewUrlOpen(struct addNewUrlhaFormat *addNewUrlha,int lotNr, char openmode[],char subname[]);
+void addNewUrlOpen(struct addNewUrlhaFormat *addNewUrlha,int lotNr, char openmode[],char subname[], int nr);
 void addNewUrl (struct addNewUrlhaFormat *addNewUrlha, struct updateFormat *updatePost);
 
 
