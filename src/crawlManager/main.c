@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
-
+#include <sys/file.h> //flock
 #include <dlfcn.h>      /* defines dlopen(), etc.       */
 #include <sys/types.h>
 #include <dirent.h>
@@ -772,16 +772,50 @@ cm_setCrawStartMsg(struct collectionFormat *collection,int nrofcollections) {
 	}
 }
 
+//dette bør nokk på litt sikt flyttes ut i dokument manageren
+int crawl_lock(FILE *LOCK, char collection[]) {
+
+	char lockfile[512];
+
+	sprintf(lockfile,"/tmp/boitho-%s.lock",collection);
+
+	if ((LOCK = fopen(lockfile,"w+")) == NULL) {
+		perror(lockfile);
+		return 0;
+	}
+
+	//trying to get a lock. If we can we vil keep it as long we are crawling to rewnet dublicat crawling
+	if (flock(fileno(LOCK),LOCK_EX | LOCK_NB) != 0) {
+		fclose(LOCK);
+		return 0;
+	}	
+	else {
+		return 1;
+	}
+
+}
+int crawl_unlock(FILE *LOCK) {
+	return fclose(LOCK);
+}
+
 int crawl (struct collectionFormat *collection,int nrofcollections, int flag) {
 
 
 	int i;
+	FILE *LOCK;
 
 	//if (nrofcollections == 1) {
 
 	for(i=0;i<nrofcollections;i++) {
 
 		blog(LOGACCESS,1,"Starting crawl of collection \"%s\" (id %u)\n",collection[i].collection_name,collection[i].id);
+
+		//tester at vi ikke allerede holder på å crawle denne fra før
+		if (!crawl_lock(LOCK,collection[i].collection_name)) {
+			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". Are all redy crawling it.\n",collection[i].collection_name);
+			continue;
+		}
+
 
 		//make a conectina for add to use
 		if (!bbdn_conect(&collection[i].socketha,"",global_bbdnport)) {
@@ -830,7 +864,11 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag) {
 			
 			//ber bbdn om å lukke
 			bbdn_close(&collection[i].socketha);
+
+
 		}
+
+		crawl_unlock(LOCK);
 
 		blog(LOGACCESS,1,"Finished crawling of collection \"%s\" (id %u)\n",collection[i].collection_name,collection[i].id);
 
