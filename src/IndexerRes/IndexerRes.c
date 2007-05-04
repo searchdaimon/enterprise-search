@@ -9,11 +9,13 @@
 #include <unistd.h>
 
 #include "../common/langdetect.h"
+#include "../common/bstr.h"
 #include "../common/langToNr.h"
 #include "../IndexerRes/IndexerRes.h"
 #include "../common/utf8-strings.h"
 
 #include "../common/boithohome.h"
+
 
 void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID) {
 
@@ -25,25 +27,139 @@ void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID) {
 	(*pagewords).DocID = DocID;
 }
 
+void linksWrite(struct pagewordsFormat *pagewords,struct addNewUrlhaFormat addNewUrlha[]) {
+	int i, len;
+
+	struct updateFormat updatePost;
+
+	for(i=0;i<(*pagewords).nrOfOutLinks;i++) {
+
+		if ((IndexerMaxLinks)> i) {
+
+			if ((*pagewords).outlinks[i].good) {
+
+				len = (*pagewords).outlinks[i].linktextlen;
+				//fjerner space på slutten
+				if (len > 0) {
+					(*pagewords).outlinks[i].linktext[len -1] = '\0';
+				}	
+
+				//tømmer minne for å gjøre filene mer komprimeringsvendlige
+				memset(updatePost.url,'\0',sizeof(updatePost.url));
+				memset(updatePost.linktext,'\0',sizeof(updatePost.linktext));
+
+				strscpy((char *)updatePost.url,(*pagewords).outlinks[i].url,sizeof((*pagewords).outlinks[i].url));
+				strscpy((char *)updatePost.linktext,(*pagewords).outlinks[i].linktext,sizeof( (*pagewords).outlinks[i].linktext ));
+				updatePost.DocID_from = (*pagewords).curentDocID;
+
+				//printf("linksWrite: \"%s\", text \"%s\", len %i\n",updatePost.url,updatePost.linktext,len);
+				//bruker sidens DocID til å velge hvilken fil. Usikker på om det er lurt, men det er lett og implementere for nå
+				addNewUrl(&addNewUrlha[(*pagewords).curentDocID % NEWURLFILES_NR],&updatePost);			
+
+			}
+		}
+	}
+
+}
+
+
+void linkwordadd(struct pagewordsFormat *pagewords, char word[]) {
+
+
+	int wordlLength;
+
+	//printf("link word \"%s\"\n",word);
+
+	wordlLength = strlen(word);
+
+	convert_to_lowercase((unsigned char *)word);
+	
+	//-1 så vi ikke appender alt på slutten av siste linken hvis vi har mr en IndexerMaxLinks
+	if ((IndexerMaxLinks)> (*pagewords).nrOfOutLinks) {
+
+		if (!(*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].good) {
+			//dårlig link
+		}
+		else if (((*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].linktextlen + wordlLength +2 ) > sizeof((*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].linktext)) {
+			//har ikke mer plass til link tekst
+		}
+		else {
+			//må ha -1 her da det er den nåverende vi jobber på, ikke den neste
+			strcpy((*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].linktext + (*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].linktextlen,word);
+			(*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].linktextlen += wordlLength;
+			strcpy((*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].linktext + (*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].linktextlen," ");
+			(*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].linktextlen += 1;
+		}
+	}	
+	else {
+		#ifdef DEBUG
+		printf("note: to many links. Has %i sow far\n",(*pagewords).nrOfOutLinks);
+		#endif
+	}
+
+}
+
+
 void linkadd(struct pagewordsFormat *pagewords, char word[]) {
 
 		int i;
+		char url[201];
 
-                struct updateFormat updatePost;
+		strscpy(url,word,sizeof(url));
 
-		//printf("linkadd. DocID %u, link \"%s\"\n",(*pagewords).DocID,word);
+		//printf("linkadd. DocID %u, link \"%s\"\n",(*pagewords).DocID,url);
+
+
+		if (IndexerMaxLinks > (*pagewords).nrOfOutLinks) {
+
+			//inaliserer den til å våre dårlig
+			(*pagewords).outlinks[(*pagewords).nrOfOutLinks].good = 0;
+
+			url_normalization (url,sizeof(url));
+
+			if (!globalIndexerLotConfig.collectUrls) {
+				//skal ikke lagge til urler
+			}
+			//else if (strcmp((*pagewords).lasturl,url) == 0) {
+			//	//gider ikke legge til like url. Men hva hvis dette er på en ny side. Denne burde bli resettet			
+			//}
+			else if ((strchr(url,'?') != NULL) && ((*pagewords).curentUrlIsDynamic)) {
+                	        //printf("NO add, dynamic -> dunamic %s\n",(*pagewords).updatePost[i].url);
+                	}
+			else if (!gyldig_url(url)) {
+				//printf("bad url: \"%s\"\n",url);
+			}
+			else if (!isOkTttl(url)) {
+				//printf("bad ttl: \"%s\"\n",url);
+			}
+			else {
+
+
+
+				//(*pagewords).updatePost[(*pagewords).nrOfOutLinks].DocID_from = (*pagewords).curentDocID;
+				 strscpy((char *)(*pagewords).outlinks[(*pagewords).nrOfOutLinks].url,url,sizeof((*pagewords).outlinks[(*pagewords).nrOfOutLinks].url));
+				(*pagewords).outlinks[(*pagewords).nrOfOutLinks].linktext[0] = '\0';
+				(*pagewords).outlinks[(*pagewords).nrOfOutLinks].linktextlen = 0;
+				(*pagewords).outlinks[(*pagewords).nrOfOutLinks].good = 1;
+			}
+		}
 
 		//øker oversikten over antall utgående linker
 		++(*pagewords).nrOfOutLinks;
 
-		//if (global_source_url_havpri) {
-		//	printf("%s\n",word);
-		//}
+
+
+	
+
+		/*
+
+                struct updateFormat updatePost;
+
 		if (!globalIndexerLotConfig.collectUrls) {
 			//skal ikke lagge til urler
 		}
 		else if (strcmp((*pagewords).lasturl,word) == 0) {
-			//gider ikke legge til like url. Men hva hvis dette er på en ny side. Denne burde bli resettet
+			//gider ikke legge til like url. Men hva hvis dette er på en ny side. Denne burde bli resettet			
 		}
 		else if ((strchr(word,'?') != NULL) && ((*pagewords).curentUrlIsDynamic)) {
                         //printf("NO add %s\n",word);
@@ -74,24 +190,24 @@ void linkadd(struct pagewordsFormat *pagewords, char word[]) {
 					++i;
                                 }				
 			}
-			/*
+			
 
-			if (url_havpri1(word) || global_source_url_havpri) {
-				//printf("hav pri %s\n",word);
-                        	addNewUrl(&global_addNewUrlha_pri1,&updatePost,"_pri1",subname);
-			}
-
-			temp: skrur av crawling av ikke pri sider
-			else if (url_havpri2(word)) {
-				//printf("source_url_havpri %s\n",word);
-                                addNewUrl(&global_addNewUrlha_pri2,&updatePost,"_pri2",subname);
-			}
-			else {
-				//printf("normal %s\n",word);
-                        	addNewUrl(&global_addNewUrlha,&updatePost,"",subname);
-
-			}
-			*/
+			//if (url_havpri1(word) || global_source_url_havpri) {
+			//	//printf("hav pri %s\n",word);
+                        //	addNewUrl(&global_addNewUrlha_pri1,&updatePost,"_pri1",subname);
+			//}
+			//
+			//temp: skrur av crawling av ikke pri sider
+			//else if (url_havpri2(word)) {
+			//	//printf("source_url_havpri %s\n",word);
+                        //        addNewUrl(&global_addNewUrlha_pri2,&updatePost,"_pri2",subname);
+			//}
+			//else {
+			//	//printf("normal %s\n",word);
+                        //	addNewUrl(&global_addNewUrlha,&updatePost,"",subname);
+			//
+			//}
+			
 
                 }
 		else {
@@ -100,6 +216,7 @@ void linkadd(struct pagewordsFormat *pagewords, char word[]) {
 
 		strncpy((*pagewords).lasturl,word,sizeof((*pagewords).lasturl));
 
+		*/
 }
 
 
@@ -212,6 +329,8 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 			//har det falt ut ??
 			#ifdef BLACK_BOKS
 				wordsAdd(pagewords,word,puf_none);
+			#else
+				linkwordadd(pagewords,word);
 			#endif
 
 			#ifdef DEBUG
@@ -829,10 +948,6 @@ void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct Rep
 		//int AdultWeight;
 		//char *title = NULL;
 		//char *body = NULL;
-
-		if ((*ReposetoryHeader).response < nrOfHttpResponsCodes) {
-			++httpResponsCodes[(*ReposetoryHeader).response];
-		}
 
 
 		//printf("%lu %s\n",(*ReposetoryHeader).DocID, (*ReposetoryHeader).url);

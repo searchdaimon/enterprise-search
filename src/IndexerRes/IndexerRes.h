@@ -19,6 +19,7 @@
 
 #include "../parser/html_parser.h"
 
+
 #ifdef BLACK_BOKS
 	#define maxWordForPage 40000
 #else
@@ -104,6 +105,15 @@ struct nrofBucketElementsFormat {
             void *p;
 };
 
+#define IndexerMaxLinks 4048
+
+struct outlinksFormat {
+	char linktext[50];
+	char url[200];
+	int linktextlen;
+	int good;
+};
+
 struct pagewordsFormat {
 	int nr;
 	int nextPosition;
@@ -117,6 +127,8 @@ struct pagewordsFormat {
 	unsigned int curentDocID;
 	struct nrofBucketElementsFormat nrofBucketElements[NrOfDataDirectorys];
 	unsigned int DocID;
+	//struct updateFormat updatePost[IndexerMaxLinks];
+	struct outlinksFormat outlinks[IndexerMaxLinks];
 };
 
 //struct pagewordsFormat pagewords;
@@ -136,3 +148,4 @@ void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct Rep
                 char **title, char **body);
 
 void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID);
+void linksWrite(struct pagewordsFormat *pagewords,struct addNewUrlhaFormat addNewUrlha[]);

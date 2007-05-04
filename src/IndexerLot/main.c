@@ -236,7 +236,7 @@ struct IndexerLot_workthreadFormat {
 	char **optOnlyTLD;
 	struct DIArrayFormat *DIArray;
 	//struct DIArrayFormat DIArray[NrofDocIDsInLot];
-	struct addNewUrlhaFormat addNewUrlha;
+	struct addNewUrlhaFormat addNewUrlha[NEWURLFILES_NR];
 
 	#ifdef WITH_THREAD
         	pthread_mutex_t reposetorymutex;
@@ -501,6 +501,12 @@ void *IndexerLot_workthread(void *arg) {
 						pthread_mutex_lock(&(*argstruct).restmutex);
 					#endif
 
+                			if (ReposetoryHeader.response < nrOfHttpResponsCodes) {
+                        			++(*argstruct).httpResponsCodes[ReposetoryHeader.response];
+                			}
+
+
+
 					//lager summery
 					if ((body != NULL) && (title != NULL) && (metadesc != NULL)) {
 
@@ -522,6 +528,7 @@ void *IndexerLot_workthread(void *arg) {
 						//	
 	                			//fwrite(&awvalue,sizeof(awvalue),1,(*argstruct).ADULTWEIGHTFH);
 
+						linksWrite(&pagewords,(*argstruct).addNewUrlha);
 
 					}
 
@@ -767,8 +774,10 @@ int main (int argc, char *argv[]) {
 		argstruct.brankPageElementsFH = lotOpenFileNoCasheByLotNr(lotNr,"brankPageElements",openmode,'r',subname);
 
 
+		for (i=0;i<NEWURLFILES_NR;i++) {
+			addNewUrlOpen(&argstruct.addNewUrlha[i],lotNr,openmode,subname,i);
+		}
 
-		addNewUrlOpen(&argstruct.addNewUrlha,lotNr,openmode,subname);
 		//temp:Søker til problemområdet
 		//FileOffset = 334603785;		
 		html_parser_init();
