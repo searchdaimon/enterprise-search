@@ -3,8 +3,10 @@
 #include <stdlib.h>
 
 #include "dateview.h"
-#include "getdate.h"
 
+#ifdef TEST_DATEVIEW
+	#include "getdate.h"
+#endif
 
 
 void

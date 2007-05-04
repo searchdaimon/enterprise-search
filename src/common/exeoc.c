@@ -180,6 +180,13 @@ int exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfini
 
 }
 
+int exeoc_stdall(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret) {
+	exeoc_stdselect(exeargv,documentfinishedbuf,documentfinishedbufsize,ret,1);
+}
+int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret) {
+	exeoc_stdselect(exeargv,documentfinishedbuf,documentfinishedbufsize,ret,0);
+}
+
 int exeoc_timeout(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret, int timeout) {
 
 	int n;
@@ -207,10 +214,4 @@ int exeoc_timeout(char *exeargv[],char documentfinishedbuf[],int *documentfinish
 
 
 
-int exeoc_stdall(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret) {
-	exeoc_stdselect(exeargv,documentfinishedbuf,documentfinishedbufsize,ret,1);
-}
-int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret) {
-	exeoc_stdselect(exeargv,documentfinishedbuf,documentfinishedbufsize,ret,0);
-}
 

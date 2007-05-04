@@ -590,15 +590,17 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				
 			}
 
+			TeffArray[y].subname = subname;
+
 			#ifdef BLACK_BOKS
 				//legger til en peker til subname
-				TeffArray[y].subname = subname;
 				TeffArray[y].deleted = 0;
 				TeffArray[y].indexFiltered.filename = 0;
+				TeffArray[y].indexFiltered.date = 0;
 			#endif
 
                         TeffArray[y].TermRank = rank(TeffArray[y].hits,TeffArray[y].TermAntall,TeffArray[y].DocID,subname);
-			printf("TermRank: %i, subname \"%s\"\n",TeffArray[y].TermRank,(*TeffArray[y].subname).subname);
+			printf("TermRank: %i, subname \"%s\", DocID %u\n",TeffArray[y].TermRank,(*TeffArray[y].subname).subname,TeffArray[y].DocID);
 
 			#ifndef BLACK_BOKS
 				//midlertidig bug fiks. Ignorerer hit med DocID 0.

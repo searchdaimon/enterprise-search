@@ -151,7 +151,9 @@ int rrmdir(char dir[]) {
 		}
 
 		//gjør selve slettingen
-		remove(path);
+		if (remove(path) != 0) {
+			perror("remove");
+		}
 	}	
 }
 

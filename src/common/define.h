@@ -152,6 +152,7 @@ struct filteronFormat {
 
 	char *filetype;
 	char *collection;
+	char *date;
 };
 
 struct subnamesConfigFormat {
@@ -273,6 +274,7 @@ struct DictionaryFormat {
 struct indexFilteredFormat {
 
 	char filename; //bool
+	char date;
 };
 
 // Formatett på treff i indeksen
@@ -286,7 +288,9 @@ struct iindexFormat {
 	char phraseMatch;
 	unsigned char langnr;
 	struct subnamesFormat *subname;
-	unsigned long int date; //16 nov 2006
+	//unsigned long int date; //16 nov 2006
+	//19.04.07
+	time_t date; //16 nov 2006
 
 	#ifdef BLACK_BOKS
 		char filetype[5];
@@ -368,7 +372,7 @@ struct filtypesFormat {
 	int nrof;
 };
 
-#define MAXFILTERELEMENTS 10
+#define MAXFILTERELEMENTS 30
 
 struct filterinfoElementsFormat {
 	char name[12];
@@ -431,7 +435,8 @@ struct mainIndexFormat
 };
 
 struct wordsFormat {
-        #ifdef DEBUG_ADULT
+        //#ifdef DEBUG_ADULT
+        #ifdef PRESERVE_WORDS
                 char word[maxWordlLen];
         #endif
         unsigned int WordID;

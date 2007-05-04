@@ -89,7 +89,9 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
 	char FilePath[PATH_MAX]; 	//var 128
 	char File [PATH_MAX];	//var 128
 
-	printf("subname: \"%s\", resource %s\n",subname,resource);
+	#ifdef DEBUG
+		printf("subname: \"%s\", resource %s\n",subname,resource);
+	#endif
 
                  GetFilPathForLot(FilePath,LotNr,subname);
                  strcpy(File,FilePath);

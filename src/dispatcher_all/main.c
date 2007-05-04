@@ -1577,16 +1577,34 @@ int main(int argc, char *argv[])
 
 	}		
 
-	char *dateview_type_names[] = {"","TODAY","YESTERDAY","LAST_WEEK","LAST_MONTH","THIS_YEAR","LAST_YEAR","WEEK","MONTH","YEARS_AGO"};
+	char *dateview_type_names[] = { "TODAY",
+					"YESTERDAY",
+					"LAST_WEEK",
+					"LAST_MONTH",
+					"THIS_YEAR",
+					"LAST_YEAR",
+					"TWO_YEARS_PLUS"};
+
+			/*
+        			TODAY = 1,
+        			YESTERDAY,
+        			LAST_WEEK,
+        			LAST_MONTH,
+        			THIS_YEAR,
+        			LAST_YEAR,
+        			TWO_YEARS_PLUS,
+			*/
 
 	printf("<DATES>\n");
-		for (y=1;y<10;y++) {
+		printf("\t<ALL>0</ALL>\n");
+		printf("\t<WEEK>0</WEEK>\n");
+		printf("\t<MONTH>0</MONTH>\n");
+		for (y=0;y<7;y++) {
 			if (SiderHeder[0].dates > 0) {
 				printf("\t<%s>%i</%s>\n",dateview_type_names[y],SiderHeder[0].dates[y],dateview_type_names[y]);
 			}
 		}
 	printf("</DATES>\n");
-
 	#endif
 
 		//skal printe ut FinalSiderHeder.showabal sider, men noen av sidene kan være slettet
@@ -1697,6 +1715,11 @@ int main(int argc, char *argv[])
 			//ser ikke ut til at vi teller den
 			//printf("\t<PAGEGENERATETIME>%f</PAGEGENERATETIME>\n",Sider[i].pageGenerateTime);
 
+               		printf("\t<TERMRANK>%i</TERMRANK>\n",Sider[i].iindex.TermRank);
+
+               		printf("\t<POPRANK>%i</POPRANK>\n",Sider[i].iindex.PopRank);
+       	        	printf("\t<ALLRANK>%i</ALLRANK>\n",Sider[i].iindex.allrank);
+
                 	printf("\t<NROFHITS>%i</NROFHITS>\n",Sider[i].iindex.TermAntall);
                 	//printer ut hits (hvor i dokumenetet orde befinner seg ).
                 	printf("\t<HITS>");
@@ -1704,6 +1727,8 @@ int main(int argc, char *argv[])
                 	        printf("%hu ",Sider[i].iindex.hits[y]);
                 	}
                 	printf("</HITS>\n");
+
+
 
 			#ifdef BLACK_BOKS
 				char timebuf[26];
@@ -1726,9 +1751,6 @@ int main(int argc, char *argv[])
 	                	printf("\t<CATEGORY></CATEGORY>\n");
 	                	printf("\t<OFFENSIVE_CODE>FALSE</OFFENSIVE_CODE>\n");
 
-                		printf("\t<TERMRANK>%i</TERMRANK>\n",Sider[i].iindex.TermRank);
-                		printf("\t<POPRANK>%i</POPRANK>\n",Sider[i].iindex.PopRank);
-        	        	printf("\t<ALLRANK>%i</ALLRANK>\n",Sider[i].iindex.allrank);
 
 				ipaddr.s_addr = Sider[i].DocumentIndex.IPAddress;
 

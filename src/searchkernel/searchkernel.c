@@ -20,6 +20,9 @@
 #include "../common/bstr.h"
 #include "../query/query_parser.h"
 
+#include "../getdate/getdate.h"
+
+
 #include "shortenurl.h"
 
 #include "../utf8-filter/utf8-filter.h"
@@ -672,6 +675,10 @@ void *generatePagesResults(void *arg)
 			printf("index filtered\n");
 			continue;
 		}
+		if ((*PagesResults).TeffArray[i].indexFiltered.date == 1) {
+			printf("index filtered\n");
+			continue;
+		}
 		#endif
 
 		#ifndef BLACK_BOKS
@@ -971,8 +978,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
             printf("\n");
         }
-*/
 
+*/
 	int languageFilterAsNr[5];
 
 	int languageFilternr;
@@ -1015,7 +1022,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTreff,
 			&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
-			orderby,dates,
+			orderby,
 			filters,&filteron);
 
 	printf("end searchSimple\n");
@@ -1154,7 +1161,7 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	*/
 
 	#ifdef BLACK_BOKS
-		searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron);
+		searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,&(*SiderHeder).queryTime);
 	
 		//fjerner filtered fra total oversikten
 		//ToDo: bør dette også gjøres for web?

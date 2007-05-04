@@ -15,7 +15,9 @@
 
 #ifdef BLACK_BOKS
 
+	//#include "../common/commondate/dateview.h"
 	#include "../getdate/dateview.h"
+	#include "../getdate/getdate.h"
 	#include "../acls/acls.c"
 #endif
 
@@ -315,6 +317,9 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
         {
                 if (a[i].DocID == b[j].DocID) {
 
+                        printf("%i == %i\n",a[i].DocID,b[j].DocID);
+
+
 			//TermRank = a[i].TermRank + b[j].TermRank;
 			//termrank blir den verdien som er minst. Det gjør at det lønner seg å ha 
 			//høye verdier for begge. Ikke slik at et dokument som er "ord1, ord1, ord1 ord2"
@@ -392,19 +397,20 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
                         (*baselen)++;
                 }
                 else if( a[i].DocID < b[j].DocID ) {
-                        //printf("%i < %i\n",a[i].DocID,b[j].DocID);
+                        printf("%i < %i\n",a[i].DocID,b[j].DocID);
 
-                        c[k++] = a[i++];
-			(*baselen)++;
+                        //c[k++] = a[i++];
+			//(*baselen)++;
                         i++;
                 }
                 else {
-                        //printf("%i > %i\n",a[i].DocID,b[j].DocID);
-                        c[k++] = b[j++];
-			(*baselen)++;
+                        printf("%i > %i\n",a[i].DocID,b[j].DocID);
+                        //c[k++] = b[j++];
+			//(*baselen)++;
                         j++;
                 }
         }
+
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
 	printf("Time debug: andprox_merge %u\n",getTimeDifference(&start_time,&end_time));
@@ -415,10 +421,10 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 }
 
 //hopper over orde. Må da flytte alle ordene et hakk bortover
-void frase_stopword(struct iindexFormat *c, int *clen) {
+void frase_stopword(struct iindexFormat *c, int clen) {
 	int i,y;
 
-	for (i=0;i<*clen;i++) {
+	for (i=0;i<clen;i++) {
 
 		for(y=0;y<c[i].TermAntall;y++) {
 			c[i].hits[y]++;
@@ -546,10 +552,12 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 
 
 void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filteron) {
-	int i;
+	int i,len,j;
 	//dagur:
 	(*filteron).filetype	= NULL;
 	(*filteron).collection	= NULL;
+	(*filteron).date	= NULL;
+
 	for (i=0; i<(*queryParsed).n; i++)
         {
             //struct text_list *t_it = (*queryParsed).elem[i];
@@ -567,7 +575,25 @@ void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filter
 				(*filteron).filetype = (*queryParsed).query[i].s[0];
 				printf("wil filter on filetype: \"%s\"\n",(*filteron).filetype);
 			break;
-			
+			case 'd':
+				(*filteron).date = (*queryParsed).query[i].s[0];
+				printf("wil filter on filetype: \"%s\"\n",(*filteron).date);
+					len = 0;
+					for (j=0; j<(*queryParsed).query[i].n; j++) {
+						len += strlen((*queryParsed).query[i].s[j]) +1;
+			                	//strscpy(queryelement,(*queryParsed).query[i].s[j],sizeof(queryelement));
+					}
+					(*filteron).date = malloc(len +1); 
+					(*filteron).date[0] = '\0';
+					for (j=0; j<(*queryParsed).query[i].n; j++) {
+						printf("date element \"%s\"\n",(*queryParsed).query[i].s[j]);
+			                	strcat((*filteron).date,(*queryParsed).query[i].s[j]);
+						strcat((*filteron).date," ");
+					}
+					(*filteron).date[len -1] = '\0'; // -1 da vi har en space på slutten. Er denne vi vil ha bort
+					printf("date \"%s\", len %i\n",(*filteron).date,len);
+					//exit(1);
+			break;
 
 
 		}
@@ -630,6 +656,7 @@ for (i=0; i<(*queryParsed).n; i++)
             printf("Search type %c\n", (*queryParsed).query[i].operand );
 
 
+
 		switch ((*queryParsed).query[i].operand) {
 
 			case '+':
@@ -644,6 +671,21 @@ for (i=0; i<(*queryParsed).n; i++)
                     				strncat(queryelement,(*queryParsed).query[i].s[j],sizeof(queryelement));
                     			                			
                 				printf("queryelement:  %s\n", queryelement);
+
+						// hvis vi er et kort ord så har vi ikke fåt noen ord nummer palssering, så vi skal ikke øke hits
+						if ( isShortWord(queryelement) ) {
+							printf("is short word\n");
+							continue;
+						}
+						//utestet
+						//else if (isStoppWord(queryelement)) {
+						//	printf("is stopword\n");
+						//	 //frase_stopword(tmpResult,tmpResultElementer);
+						//	(*queryParsed).query[i].stopword = 1;
+						//	//exit(1);
+						//	continue;
+						//}
+
 
 						//gjør om il liten case
 						//for(h=0;h<strlen(queryelement);h++) {
@@ -702,17 +744,33 @@ for (i=0; i<(*queryParsed).n; i++)
 
 			                	strscpy(queryelement,(*queryParsed).query[i].s[j],sizeof(queryelement));
 
+                    				printf("\nelement %s\n", queryelement);
+
 						//gjør om il liten case
 						//for(h=0;h<strlen(queryelement);h++) {
         					//	queryelement[h] = btolower(queryelement[h]);
         					//}
+
+						// hvis vi er et kort ord så har vi ikke fåt noen ord nummer palssering, så vi skal ikke øke hits
+						if ( isShortWord(queryelement) ) {
+							printf("is short word\n");
+							continue;
+						}
+						//utestet
+						//else if (isStoppWord(queryelement)) {
+						//	printf("is stopword\n");
+						//	 //frase_stopword(tmpResult,tmpResultElementer);
+						//	(*queryParsed).query[i].stopword = 1;
+						//	//exit(1);
+						//	continue;
+						//}
+						
 
 						convert_to_lowercase((unsigned char *)queryelement);
 
 						WordIDcrc32 = crc32boitho(queryelement);
 						printf("searchIndex: WordIDcrc32 %u\n",WordIDcrc32);
 
-                    				printf("\nelement %s\n", queryelement);
                     				debug("crc32: %u",WordIDcrc32);
                     				
 						//printf("word %s is st %i\n",t_it->text,t_it->stopword);
@@ -734,11 +792,11 @@ for (i=0; i<(*queryParsed).n; i++)
 							//else
 							//støtter ikke stopord 
 							//if (t_it->stopword) {
-							if (0) {
-								//printf("er sttopword 2\n");
-								frase_stopword(TeffArray,TeffArrayElementer);
-							}
-                                        		else {
+							//if (0) {
+							//	//printf("er sttopword 2\n");
+							//	frase_stopword(TeffArray,TeffArrayElementer);
+							//}
+                                        		//else {
 							
 								TmpArrayLen = 0;
 								GetIndexAsArray(&TmpArrayLen,TmpArray,WordIDcrc32,indexType,"aa",subname,rank,languageFilterNr, languageFilterAsNr);
@@ -753,7 +811,7 @@ for (i=0; i<(*queryParsed).n; i++)
                                         	        	//}
                                                						
 								(*TeffArrayElementer) = baseArrayLen;
-							}
+							//}
                 				}
 						//t_it = t_it->next;
 
@@ -902,7 +960,7 @@ void *searchIndex_thread(void *arg)
 void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *TotaltTreff, 
 		query_array *queryParsed, struct queryTimeFormat *queryTime, 
 		struct subnamesFormat subnames[], int nrOfSubnames,int languageFilterNr, 
-		int languageFilterAsNr[], char orderby[], int dates[],
+		int languageFilterAsNr[], char orderby[],
 		struct filtersFormat *filters,
 		struct filteronFormat *filteron) {
 
@@ -1420,6 +1478,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		//slår opp alle datoene
 		for (i = 0; i < *TeffArrayElementer; i++) {
 			iintegerGetValueNoCashe(&TeffArray[i].date,sizeof(int),TeffArray[i].DocID,"dates",(*TeffArray[i].subname).subname);
+			printf("got %u\n",TeffArray[i].date);
 		}
 		printf("looking opp dates end\n");
 
@@ -1427,45 +1486,41 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		(*queryTime).iintegerGetValueDate = getTimeDifference(&start_time,&end_time);
 
 
-		gettimeofday(&start_time, NULL);
-		//kjører dateview
-		dateview dv;
-		dateview *dvo;
-
-		printf("dateview start\n");
-		date_info_start(&dv, 0, -1);
-		
-		printf("for all dates\n");		
-		for (i = 0; i < *TeffArrayElementer; i++) {
-			date_info_add(&dv, (time_t)TeffArray[i].date);
-		}
-		printf("for all dates end\n");
-
-		dvo = date_info_end(&dv);
-
-
-		//inaliserer
-		for (i=0;i<10;i++) {
-			dates[i] = 0;
-		}
-
-		enum dateview_output_type type = TWO_YEARS_PLUS;
-		for (i = 0; i < type; i++) {
-		                printf("Type: %d Count: %d\n", i, dvo->output[i]);
-				dates[i] = dvo->output[i];
-	        }
-		
-		//for (; dvo != NULL; dvo = dvo->next) {
-		//
-		//	dates[(int)dvo->type] = dvo->length;
-		//}
-		printf("dateview end\n");
-
-		gettimeofday(&end_time, NULL);
-		(*queryTime).dateview = getTimeDifference(&start_time,&end_time);
 
 
 		gettimeofday(&start_time, NULL);
+
+		//filter on date
+		if ((*filteron).date != NULL) {
+			printf("wil filter on date \"%s\"\n",(*filteron).date);
+
+			struct datelib dl;
+
+			dl.start = dl.end = 0;
+			getdate((*filteron).date, &dl);
+
+			printf("start time: u: %u, i: %i, s: %s\n", dl.start, dl.start, ctime(&dl.start));
+		        printf("end time: u: %u, i: %i, s: %s\n", dl.end, dl.end ,ctime(&dl.end));
+
+
+			for (i = 0; i < *TeffArrayElementer; i++) {
+
+				printf("start %u, end %u, element %u\n",dl.start,dl.end,TeffArray[i].date);
+				
+				if ((TeffArray[i].date >= dl.start) && (TeffArray[i].date <= dl.end)) {
+					printf("time hit %s",ctime(&TeffArray[i].date));
+				}
+				else {
+					printf("not time hit %s",ctime(&TeffArray[i].date));
+					TeffArray[i].indexFiltered.date = 1;
+
+				}
+
+			}		
+			
+			
+
+		}
 
 		printf("order by \"%s\"\n",orderby);
 
@@ -1486,6 +1541,10 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 			printf("do normal sort\n");
 			for (i = 0; i < *TeffArrayElementer; i++) {
 				TeffArray[i].allrank = TeffArray[i].TermRank;
+
+				if (TeffArray[i].phraseMatch) {
+                                        TeffArray[i].allrank = TeffArray[i].allrank * 2;
+                                }
 			}
 		}
 		gettimeofday(&end_time, NULL);
@@ -1573,13 +1632,21 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 }
 
 
-int searchFilterCount(int *TeffArrayElementer, struct iindexFormat *TeffArray, struct filtersFormat *filters,
-		struct subnamesFormat subnames[], int nrOfSubnames,struct filteronFormat *filteron) {
+int searchFilterCount(int *TeffArrayElementer, 
+			struct iindexFormat *TeffArray, 
+			struct filtersFormat *filters,
+			struct subnamesFormat subnames[], 
+			int nrOfSubnames,
+			struct filteronFormat *filteron,
+			int dates[],
+			struct queryTimeFormat *queryTime
+		) {
 
 		char *filesKey;
 		int *filesValue;
 		struct hashtable *h;
 		int i;
+		struct timeval start_time, end_time;
 
 		h = create_hashtable(200, fileshashfromkey, filesequalkeys);
 
@@ -1588,6 +1655,9 @@ int searchFilterCount(int *TeffArrayElementer, struct iindexFormat *TeffArray, s
 			//his dette er en slettet index element så teller vi den ikke.
 			//dette så vi ikke skal telle ting som folk ikke her tilgang til
 			if (TeffArray[i].deleted) {
+				continue;
+			}
+			else if (TeffArray[i].indexFiltered.date == 1) {
 				continue;
 			}
 				
@@ -1705,6 +1775,9 @@ int searchFilterCount(int *TeffArrayElementer, struct iindexFormat *TeffArray, s
 			else if (TeffArray[i].indexFiltered.filename == 1) {
 				continue;
 			}
+			else if (TeffArray[i].indexFiltered.date == 1) {
+				continue;
+			}
 				
 			if (NULL == (filesValue = hashtable_search(h,(*TeffArray[i].subname).subname) )) {    
 				printf("not found!. Vil insert first \"%s\"\n",(*TeffArray[i].subname).subname);
@@ -1789,6 +1862,52 @@ int searchFilterCount(int *TeffArrayElementer, struct iindexFormat *TeffArray, s
 		for (i=0;i<(*filters).collections.nrof;i++) {
 			printf("coll \"%s\", checked %i\n",(*filters).collections.elements[i].name,(*filters).collections.elements[i].checked);
 		}
+
+
+		//dates
+		gettimeofday(&start_time, NULL);
+		//kjører dateview
+		dateview dv;
+		dateview *dvo;
+
+		printf("dateview start\n");
+		date_info_start(&dv, 0, -1);
+		
+		printf("for all dates\n");		
+		for (i = 0; i < *TeffArrayElementer; i++) {
+			if (TeffArray[i].deleted == 1) {
+				continue;
+			}
+			else if (TeffArray[i].indexFiltered.filename == 1) {
+				continue;
+			}
+
+			date_info_add(&dv, (time_t)TeffArray[i].date);
+		}
+		printf("for all dates end\n");
+
+		dvo = date_info_end(&dv);
+
+
+		//inaliserer
+		for (i=0;i<10;i++) {
+			dates[i] = 0;
+		}
+
+		enum dateview_output_type type = TWO_YEARS_PLUS;
+		for (i = 0; i < type; i++) {
+		                printf("Type: %d Count: %d\n", i, dvo->output[i]);
+				dates[i] = dvo->output[i];
+	        }
+		
+		//for (; dvo != NULL; dvo = dvo->next) {
+		//
+		//	dates[(int)dvo->type] = dvo->length;
+		//}
+		printf("dateview end\n");
+
+		gettimeofday(&end_time, NULL);
+		(*queryTime).dateview = getTimeDifference(&start_time,&end_time);
 
 
 }

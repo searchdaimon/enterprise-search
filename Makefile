@@ -300,7 +300,7 @@ searchd : src/searchkernel/searchd.c
 searchdbb : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/utf8-filter/lex.u8fl.o
+	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/utf8-filter/lex.u8fl.o src/getdate/getdate.tab.o
 
 mergeUserToSubname: src/mergeUserToSubname/main.c
 	@echo ""

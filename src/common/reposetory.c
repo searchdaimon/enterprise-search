@@ -5,6 +5,7 @@
 
 #include "define.h"
 
+#include "stdlib.h"
 #include "lot.h"
 #include "reposetory.h"
 #include "sha1.h"
@@ -258,8 +259,9 @@ unsigned int rGeneraeADocID (char subname[]) {
 			printf("dident read %i char, but %i\n",inode.st_size,n);
 			perror("fread");
 		}
-		//ToDO: støt unsigned int, ikke bare nt
-		DocID = atoi(buff);
+		buff[inode.st_size] = '\0';
+
+		DocID = atou(buff);
 		//printf("new docid %u = %s\n",DocID,buff);
 
 		fclose(DocIDFILE);
@@ -271,7 +273,7 @@ unsigned int rGeneraeADocID (char subname[]) {
 
 	DocIDFILE = lotOpenFileNoCasheByLotNr(1,"DocID","w",'e',subname);
 
-
+	printf("rGeneraeADocID: writing DocID %u\n",DocID);
 
 	fprintf(DocIDFILE,"%u",DocID);
 

@@ -105,4 +105,6 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 off_t getImagepFromRadres(unsigned int radress64bit,unsigned int htmlbufferSize);
 unsigned int rLastDocID(char subname[]);
 
+unsigned int rGeneraeADocID(char subname[]);
+
 #endif //_REPOSETORY_H_
