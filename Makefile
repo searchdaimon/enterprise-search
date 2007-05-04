@@ -35,8 +35,10 @@ BDB = -I/usr/local/BerkeleyDB.4.5/include/ /usr/local/BerkeleyDB.4.5/lib/libdb.a
 #SMBCLIENT=-lsmbclient
 #skrur dette på igjen. Brukte det og segfeile når vi hadde det med statisk?
 # !! av ukjenet grunner ser dette ut til og altid må være sist hvis vi skal linke statisk
+
 #SMBCLIENT=src/3pLibs/samba-3.0.24/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.24/source/include/
 SMBCLIENT=/home/boitho/src/samba-3.0.24/source/bin/libsmbclient.a -I/home/boitho/src/samba-3.0.24/source/include/
+#SMBCLIENT=-Isrc/3pLibs/samba-3.0.24/source/include/ -Lsrc/3pLibs/samba-3.0.24/source/lib/ -lsmbclient
 
 BBDOCUMENT = src/bbdocument/bbdocument.c $(BDB) -D BLACK_BOKS
 #BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail.c -DBBDOCUMENT_IMAGE $(IM)
@@ -251,6 +253,30 @@ lotcp: src/lotcp/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/lotcp/main.c  -o bin/lotcp $(LDFLAGS)
+
+netlotStart: src/netlotStart/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/netlotStart/main.c  -o bin/netlotStart $(LDFLAGS)
+
+netlotEnd: src/netlotEnd/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/netlotEnd/main.c  -o bin/netlotEnd $(LDFLAGS)
+
+LotNyeurlerSort: src/LotNyeurlerSort/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/LotNyeurlerSort/main.c  -o bin/LotNyeurlerSort $(LDFLAGS)
+
+LotNyeurlerMove: src/LotNyeurlerMove/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/LotNyeurlerMove/main.c  -o bin/LotNyeurlerMove $(LDFLAGS)
 
 crawlFiles: src/crawlFiles/main.c
 	@echo ""
@@ -538,19 +564,19 @@ UrlToDocIDIndexer: src/UrlToDocIDIndexer/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/UrlToDocIDIndexer/main.c -o bin/UrlToDocIDIndexer $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/UrlToDocIDIndexer/main.c -o bin/UrlToDocIDIndexer $(LDFLAGS) $(BDB)
 
 UrlToDocIDQuery: src/UrlToDocIDQuery/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/UrlToDocIDQuery/main.c -o bin/UrlToDocIDQuery $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/getDocIDFromUrl/getDocIDFromUrl.c src/UrlToDocIDQuery/main.c -o bin/UrlToDocIDQuery $(LDFLAGS) $(BDB)
 
 UrlToDocIDSplitUdfile: src/UrlToDocIDSplitUdfile/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/UrlToDocIDSplitUdfile/main.c -o bin/UrlToDocIDSplitUdfile $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/UrlToDocIDSplitUdfile/main.c -o bin/UrlToDocIDSplitUdfile $(LDFLAGS)
 
 addReposerotyToIndex: src/addReposerotyToIndex/main.c
 	@echo ""
