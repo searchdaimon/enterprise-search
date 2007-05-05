@@ -19,6 +19,12 @@
 
 #include "../parser/html_parser.h"
 
+#ifdef BLACK_BOKS
+	#define IndexerMaxLinks 40
+#else
+	#define IndexerMaxLinks 4048
+#endif
+
 
 #ifdef BLACK_BOKS
 	#define maxWordForPage 40000
@@ -106,11 +112,6 @@ struct nrofBucketElementsFormat {
             void *p;
 };
 
-#ifdef BLACK_BOKS
-	#define IndexerMaxLinks 40
-#else
-	#define IndexerMaxLinks 4048
-#endif
 
 struct outlinksFormat {
 	char linktext[50];

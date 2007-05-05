@@ -6,6 +6,10 @@
 #include <math.h>
 #include <signal.h>
 #include <unistd.h>
+
+#include "../common/define.h"
+#include "../common/langdetect.h"
+
 #include "../common/crc32.h"
 
 #include "../IndexerRes/IndexerRes.h"
@@ -13,7 +17,7 @@
 #include "../searchFilters/searchFilters.h"
 
 #include "../common/bstr.h"
-#include "../common/define.h"
+#include "../common/debug.h"
 
 
 //#include "../parse_summary/summary.h"
@@ -58,7 +62,10 @@ struct IndexerLot_workthreadFormat {
 	char **optOnlyTLD;
 	struct DIArrayFormat *DIArray;
 	//struct DIArrayFormat DIArray[NrofDocIDsInLot];
+
+	#ifndef BLACK_BOKS
 	struct addNewUrlhaFormat addNewUrlha[NEWURLFILES_NR];
+	#endif
 
 	#ifdef WITH_THREAD
         	pthread_mutex_t reposetorymutex;
@@ -132,7 +139,7 @@ void alclot_close(struct alclotFormat *alclot) {
 
 	fp = lotOpenFileNoCasheByLotNr((*alclot).lotNr,"acllist",(*alclot).openmode, 'e',(*alclot).subname);
 
-	struct hashtable **h; //temp
+	//struct hashtable **h; //temp
 
 	struct aclusernameFormat *aclusername;
 	int *value;
@@ -157,6 +164,8 @@ void alclot_close(struct alclotFormat *alclot) {
 	printf("acl list end\n");
 	fclose(fp);
         hashtable_destroy((struct hashtable *)(*alclot).h,1);
+
+	free(alclot);
 }
 void alclot_add(struct alclotFormat *alclot,char acl[]) {
 
@@ -169,6 +178,11 @@ void alclot_add(struct alclotFormat *alclot,char acl[]) {
 	int *value;
 
   	TokCount = split(acl, ",", &Data);
+
+	//Count = 0;
+	//while( (Data[Count] != NULL) ) {
+	//	printf("god user \"%s\"\n",Data[Count]);
+	//}
 
   	Count = 0;
   	while( (Data[Count] != NULL) ) {
@@ -239,7 +253,7 @@ int makePreParsedSummary(const char body[], int bodylen,const  char title[],int 
 	(*WorkBuffer) = malloc((*WorkBufferSize));
 
         if ( (n = compress((*WorkBuffer),WorkBufferSize,(Bytef *)SummeryBuf,SummeryBufLen)) != 0) {
-		printf("compress error. Code: %i. WorkBufferSize %i, SummeryBufLen %i\n",n,WorkBufferSize,SummeryBufLen);
+		printf("compress error. Code: %u. WorkBufferSize %u, SummeryBufLen %i\n",n,(unsigned int)WorkBufferSize,(unsigned int)SummeryBufLen);
         }
         else {
 
@@ -321,11 +335,18 @@ void *IndexerLot_workthread(void *arg) {
 	struct IndexerLot_workthreadFormat *argstruct = (struct IndexerLot_workthreadFormat *)arg;
 //void *IndexerLot_workthread(struct IndexerLot_workthreadFormat *argstruct) {
 
-	int i;
 	int sizeofhtmlcompressdbuffer = 524288 * 2;
-        char *htmlcompressdbuffer = malloc(sizeofhtmlcompressdbuffer);
+
+	char *htmlcompressdbuffer;
+        if ((htmlcompressdbuffer = malloc(sizeofhtmlcompressdbuffer)) == NULL) {
+		perror("malloc");
+		exit(1);
+	}
+
+	
+	int i;
         char imagebuffer[524288];  //0.5 mb
-	int sizeofHtmlBuffer = 524288 * 2;
+	unsigned int sizeofHtmlBuffer = 524288 * 2;
 	char *HtmlBuffer = malloc(sizeofHtmlBuffer);
 
 	struct pagewordsFormat pagewords;
@@ -525,6 +546,9 @@ void *IndexerLot_workthread(void *arg) {
 
 						SummaryWrite(SummaryBuffer,SummaryBufferSize,&(*DocumentIndexPost).SummaryPointer,
 							&(*DocumentIndexPost).SummarySize,ReposetoryHeader.DocID,(*argstruct).SFH);
+
+							linksWrite(&pagewords,(*argstruct).addNewUrlha);
+
 						#endif
 
 						//printf("SummaryBufferSize %i\n",SummaryBufferSize);
@@ -533,10 +557,9 @@ void *IndexerLot_workthread(void *arg) {
 
 						revindexFilesAppendWords(&pagewords,(*argstruct).revindexFilesHa,ReposetoryHeader.DocID,&langnr);
 
-						#ifdef BLACK_BOKS
+						#ifdef PRESERVE_WORDS
 							dictionaryWordsWrite(&pagewords,(*argstruct).dictionarywordsfFH);
-						#else
-							linksWrite(&pagewords,(*argstruct).addNewUrlha);
+					
 						#endif
 						//DocIDPlace = ((ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr)) * sizeof(unsigned char));
 						////printf("DocID %u, DocIDPlace %i\n",ReposetoryHeader.DocID,DocIDPlace);
@@ -573,6 +596,8 @@ void *IndexerLot_workthread(void *arg) {
 					pthread_mutex_unlock(&(*argstruct).restmutex);
 				#endif
 
+				#ifdef BLACK_BOKS
+
 				DocIDPlace = (ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr));
 
 				(*argstruct).DIArray[DocIDPlace].DocID = ReposetoryHeader.DocID;						
@@ -588,6 +613,7 @@ void *IndexerLot_workthread(void *arg) {
 				(*argstruct).DIArray[DocIDPlace].brankPageElements.IPAddress = 		(*DocumentIndexPost).IPAddress;
 				(*argstruct).DIArray[DocIDPlace].brankPageElements.nrOfOutLinks = 	(*DocumentIndexPost).nrOfOutLinks;
 				(*argstruct).DIArray[DocIDPlace].brankPageElements.response = 		(*DocumentIndexPost).response;
+				#endif
 			
 				free(SummaryBuffer);
 
@@ -646,8 +672,10 @@ int main (int argc, char *argv[]) {
 				split(optarg, ",", &optOnlyTLD);
 				printf("wil only index TLD's:\n");
 				i = 0;
-				while( (optOnlyTLD[i] != NULL) )
-				    printf("\t%i\"%s\"\n", i, optOnlyTLD[i++]);
+				while( (optOnlyTLD[i] != NULL) ) {
+				    printf("\t%i\"%s\"\n", i, optOnlyTLD[i]);
+					i++;
+				}
 
 				break;
 			case 'p':
@@ -686,7 +714,8 @@ int main (int argc, char *argv[]) {
 					printf("will only collect url of ending:\n");
 					i=0;
 					while( (globalIndexerLotConfig.urlfilter[i] != NULL) ) {
-    						printf("\t\t%i\t\"%s\"\n", i, globalIndexerLotConfig.urlfilter[i++]);
+    						printf("\t\t%i\t\"%s\"\n", i, globalIndexerLotConfig.urlfilter[i]);
+						i++;
 					}
 
 				}
@@ -787,19 +816,23 @@ int main (int argc, char *argv[]) {
 
 		#ifdef BLACK_BOKS		
 			alclot_init(&argstruct.alclot,subname,openmode,lotNr);
+		#else
+
+
+			argstruct.ADULTWEIGHTFH = lotOpenFileNoCasheByLotNr(lotNr,"AdultWeight",openmode, 'e',subname);
+			argstruct.SFH = lotOpenFileNoCasheByLotNr(lotNr,"summary",openmode,'r',subname);
+			argstruct.brankPageElementsFH = lotOpenFileNoCasheByLotNr(lotNr,"brankPageElements",openmode,'r',subname);
+
+			for (i=0;i<NEWURLFILES_NR;i++) {
+				addNewUrlOpen(&argstruct.addNewUrlha[i],lotNr,openmode,subname,i);
+			}	
+
 		#endif
 
-
-		argstruct.ADULTWEIGHTFH = lotOpenFileNoCasheByLotNr(lotNr,"AdultWeight",openmode, 'e',subname);
-		argstruct.SFH = lotOpenFileNoCasheByLotNr(lotNr,"summary",openmode,'r',subname);
-		argstruct.brankPageElementsFH = lotOpenFileNoCasheByLotNr(lotNr,"brankPageElements",openmode,'r',subname);
-		#ifdef BLACK_BOKS
-		argstruct.dictionarywordsfFH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords_raw",openmode,'r',subname);
+		#ifdef PRESERVE_WORDS
+			argstruct.dictionarywordsfFH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords_raw",openmode,'r',subname);
 		#endif
 
-		for (i=0;i<NEWURLFILES_NR;i++) {
-			addNewUrlOpen(&argstruct.addNewUrlha[i],lotNr,openmode,subname,i);
-		}
 
 		//temp:Søker til problemområdet
 		//FileOffset = 334603785;		
@@ -815,7 +848,7 @@ int main (int argc, char *argv[]) {
 		argstruct.optMaxDocuments	= optMaxDocuments;
 		argstruct.optPrintInfo		= optPrintInfo;
 		argstruct.optOnlyTLD		= optOnlyTLD;
-		argstruct.optMakeWordList 		= optMakeWordList;
+		argstruct.optMakeWordList 	= optMakeWordList;
 		//malloc
 		argstruct.DIArray = malloc( NrofDocIDsInLot * sizeof(struct DIArrayFormat) );
 
@@ -858,7 +891,7 @@ int main (int argc, char *argv[]) {
 
 		#endif
 		
-
+		#ifndef BLACK_BOKS
 		for(i=0;i<NrofDocIDsInLot;i++) {
 			if (argstruct.DIArray[i].p != NULL) {
 				
@@ -885,18 +918,21 @@ int main (int argc, char *argv[]) {
 			}
 
 		}
+		#endif
 
 		#ifdef BLACK_BOKS
 			alclot_close(argstruct.alclot);
+		#else
+			fclose(argstruct.ADULTWEIGHTFH);
+			fclose(argstruct.SFH);
+			fclose(argstruct.brankPageElementsFH);
 		#endif
 
 		//skriver riktig indexstide til lotten
 		setLastIndexTimeForLot(lotNr,argstruct.httpResponsCodes,subname);
 		
-		fclose(argstruct.ADULTWEIGHTFH);
-		fclose(argstruct.SFH);
-		fclose(argstruct.brankPageElementsFH);
-		#ifdef BLACK_BOKS
+		
+		#ifdef PRESERVE_WORDS
 		fclose(argstruct.dictionarywordsfFH);
 		#endif
 		// vi må ikke kopiere revindex filene da vi jobber på de lokale direkte
