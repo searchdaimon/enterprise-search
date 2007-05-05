@@ -106,7 +106,11 @@ struct nrofBucketElementsFormat {
             void *p;
 };
 
-#define IndexerMaxLinks 4048
+#ifdef BLACK_BOKS
+	#define IndexerMaxLinks 40
+#else
+	#define IndexerMaxLinks 4048
+#endif
 
 struct outlinksFormat {
 	char linktext[50];
@@ -151,3 +155,5 @@ void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct Rep
 void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID);
 void dictionaryWordsWrite (struct pagewordsFormat *pagewords,FILE *FH);
 void linksWrite(struct pagewordsFormat *pagewords,struct addNewUrlhaFormat addNewUrlha[]);
+
+void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *adult,int *adultWeight, unsigned char *langnr);
