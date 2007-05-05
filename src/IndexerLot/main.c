@@ -380,6 +380,10 @@ void *IndexerLot_workthread(void *arg) {
 //dagur: ReposetoryHeader;
 	struct DocumentIndexFormat *DocumentIndexPost;
 
+
+	wordsInit(&pagewords);
+
+
 	while (getNextPage(argstruct,htmlcompressdbuffer,sizeofhtmlcompressdbuffer,imagebuffer,sizeof(imagebuffer),
 		&radress,&acl,&ReposetoryHeader)) {
 
@@ -628,6 +632,7 @@ void *IndexerLot_workthread(void *arg) {
 	free(htmlcompressdbuffer);
 	free(HtmlBuffer);
 
+	wordsEnd(&pagewords);
 
 }
 

@@ -19,11 +19,7 @@
 
 #include "../parser/html_parser.h"
 
-#ifdef BLACK_BOKS
-	#define IndexerMaxLinks 40
-#else
-	#define IndexerMaxLinks 4048
-#endif
+#define IndexerMaxLinks 4048
 
 
 #ifdef BLACK_BOKS
@@ -134,7 +130,8 @@ struct pagewordsFormat {
 	struct nrofBucketElementsFormat nrofBucketElements[NrOfDataDirectorys];
 	unsigned int DocID;
 	//struct updateFormat updatePost[IndexerMaxLinks];
-	struct outlinksFormat outlinks[IndexerMaxLinks];
+	//struct outlinksFormat outlinks[IndexerMaxLinks];
+	struct outlinksFormat *outlinks;
 };
 
 //struct pagewordsFormat pagewords;
@@ -158,3 +155,5 @@ void dictionaryWordsWrite (struct pagewordsFormat *pagewords,FILE *FH);
 void linksWrite(struct pagewordsFormat *pagewords,struct addNewUrlhaFormat addNewUrlha[]);
 
 void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *adult,int *adultWeight, unsigned char *langnr);
+void wordsInit(struct pagewordsFormat *pagewords);
+void wordsEnd(struct pagewordsFormat *pagewords);

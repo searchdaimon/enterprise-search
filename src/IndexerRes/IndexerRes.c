@@ -16,7 +16,15 @@
 
 #include "../common/boithohome.h"
 
+void wordsInit(struct pagewordsFormat *pagewords) {
 
+	(*pagewords).outlinks = malloc(sizeof(struct outlinksFormat) * IndexerMaxLinks);	
+
+}
+
+void wordsEnd(struct pagewordsFormat *pagewords) {
+	free((*pagewords).outlinks);
+}
 void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID) {
 
 	(*pagewords).nr = 0;
