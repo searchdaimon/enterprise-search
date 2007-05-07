@@ -55,17 +55,22 @@
 			icon = 'configure'
 		%]
 
-	[% ELSIF field == 'user_prefix' %]
-		[% PROCESS sub_fields
-			header = 'User prefix'
-			blocks = ['user_prefix']
-			icon = 'xedit'
-		%]
 
 	[% ELSE %]
 		Warning: unknown field [% field %].
 	[% END %]
 [% END %]
+	
+
+[% ## HACK - La user_prefix alltid vises til
+#	  vi har en maate aa oppdatere hvilken felt som skal vises i databasen.
+#	  skal egentlig vaere i for-lokken ovenfor. 7/5/2007 %]
+[% #ELSIF field == 'user_prefix' %]
+		[% PROCESS sub_fields
+			header = 'User prefix'
+			blocks = ['user_prefix']
+			icon = 'xedit'
+		%]
 
 
 
