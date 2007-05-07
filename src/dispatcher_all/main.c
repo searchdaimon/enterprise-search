@@ -1597,8 +1597,6 @@ int main(int argc, char *argv[])
 
 	printf("<DATES>\n");
 		printf("\t<ALL>0</ALL>\n");
-		printf("\t<WEEK>0</WEEK>\n");
-		printf("\t<MONTH>0</MONTH>\n");
 		for (y=0;y<7;y++) {
 			if (SiderHeder[0].dates > 0) {
 				printf("\t<%s>%i</%s>\n",dateview_type_names[y],SiderHeder[0].dates[y],dateview_type_names[y]);

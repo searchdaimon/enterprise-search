@@ -478,6 +478,7 @@ struct PagesResultsFormat {
 		pthread_mutex_t mutex;
 		#endif
 
+
 		//struct filtypesFormat *filtypes;
 		//int filtypesnrof;
 };
@@ -951,6 +952,11 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	get_query( PagesResults.QueryData.query, queryLen, &PagesResults.QueryData.queryParsed );
 
+	#ifdef BLACK_BOKS
+	get_query( search_user, queryLen, &PagesResults.QueryData.search_user_as_query );
+	#endif
+
+
         printf("ll: query %s\n",PagesResults.QueryData.query);
 
 /*
@@ -1023,7 +1029,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
-			filters,&filteron);
+			filters,&filteron,&PagesResults.QueryData.search_user_as_query);
 
 	printf("end searchSimple\n");
 
@@ -1091,6 +1097,22 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		printf("got pw \"%s\" -> \"%s\"\n",PagesResults.search_user,PagesResults.password);
 		gettimeofday(&end_time, NULL);
 	        (*SiderHeder).queryTime.getUserObjekt = getTimeDifference(&start_time,&end_time);
+
+		/****************************************************************/
+		//hent alle grupper
+		char **groups_respons_list;
+		int groups_responsnr;
+		//boithoad_listGroups(&groups_respons_list,&groups_responsnr);
+		if (!boithoad_groupsForUser(PagesResults.search_user,&groups_respons_list,&groups_responsnr)) {
+                        perror("Error: boithoad_groupsForUser");
+                        return;
+                }
+                printf("groups: %i\n",groups_responsnr);
+                for (i=0;i<groups_responsnr;i++) {
+                        printf("group: %s\n",groups_respons_list[i]);
+                }
+		/****************************************************************/
+
 
 		gettimeofday(&start_time, NULL);
 		//int socketha;

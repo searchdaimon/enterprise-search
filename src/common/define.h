@@ -494,6 +494,8 @@ struct QueryDataForamt {
 //v3	char languageFilter[12];
 	char orderby[10];
 	char tkey[33]; // 32 bytes key +1 for \0
+
+	query_array search_user_as_query;
 };
 
 

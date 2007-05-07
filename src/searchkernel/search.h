@@ -4,7 +4,9 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
                 struct subnamesFormat subnames[], int nrOfSubnames,int languageFilterNr,
                 int languageFilterAsNr[], char orderby[],
                 struct filtersFormat *filters,
-		struct filteronFormat *filteron);
+		struct filteronFormat *filteron,
+		query_array *search_user_as_query
+		);
 
 int searchFilterCount(int *TeffArrayElementer, 
 			struct iindexFormat *TeffArray, 
