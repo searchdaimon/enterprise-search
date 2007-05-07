@@ -1,2 +1,3 @@
-query: "Magnus Galåen" Magnus
-  - fungerer ikke (Magnus highlightes, men ikke "Magnus Galåen")
+Når er single_snippet best, og når er dual_snippet best?
+Nå teller ',' og '.' likeverdig, '.' bør telle mer.
+Sørg for alltid å få med eos etter snippet dersom det eksisterer.
