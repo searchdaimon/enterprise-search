@@ -7,6 +7,7 @@ use Carp;
 use Data::Dumper;
 use File::Glob qw(bsd_glob);
 use File::Basename qw(basename);
+use File::Path qw(mkpath);
 
 use constant USE_DEBUG_DATA => 0;
 
@@ -20,8 +21,17 @@ sub new {
 
     # init
     ($rpm_dir, $wrapper_path) = @_;
-    croak "Path \"$rpm_dir\" to RPM directory you provided is not a directory."
-	unless -d $rpm_dir;
+
+    if (-e $rpm_dir and !(-d $rpm_dir)) {
+	croak "rpm dir $rpm_dir exists, but is not a directory. It must be a directory.";
+    }
+
+    unless (-d $rpm_dir) {
+	carp "rpm folder $rpm_dir does not exist. Making it.";
+
+	eval    { mkpath($rpm_dir) };
+	if ($@) { croak "Unable to create rpm dir $rpm_dir: $@"	}
+    }
 
     croak "Wrapper path \"$wrapper_path\" provided is not executable"
 	unless -x $wrapper_path;
