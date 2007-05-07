@@ -1,12 +1,14 @@
 [% INCLUDE 'header.html'
-	title = "SearchDaimon Phone Home" %]
+	title = "Searchdaimon Phone Home" %]
 
-<h2>SearchDaimon Phone Home</h2>
+<h2>Searchdaimon Phone Home</h2>
 
-<!--[% WRAPPER 'template_message.html' type='info' %]
-	SearchDaimon Phone Home service opens up a connection to SearchDaimon, and allows us to accist you remotely.<br />
-	You should leave this service running when not in need of support.
-[% END %]-->
+[% WRAPPER 'template_message.html' type='info' %]
+	Searchdaimon Phone Home service opens up a connection to Searchdaimon, and allows us to assist remotely.<br />
+	You should not leave this service running when not in need of support.
+[% END %]
+
+
 [% IF phone_start_retv.defined %]
 	[% UNLESS phone_start_retv %]
 		[% message_success = "Phone Home service has been started." %]
@@ -31,9 +33,9 @@
 
 
 [% IF phone_running_pid %]
-	SearchDaimon Phone Home Service is currently <strong>running</strong>.
+	Searchdaimon Phone Home Service is currently <strong>running</strong>.
 [% ELSE %]
-	SearchDaimon Phone Home service is currently <strong>not running</strong>.
+	Searchdaimon Phone Home service is currently <strong>not running</strong>.
 [% END %]
 
 
