@@ -63,6 +63,12 @@ inline value vector_get( container *C, int id )
 }
 
 
+inline void vector_set( container *C, int id, value v )
+{
+    ((vector_container_priv*)C->priv)->elem[id] = v;
+}
+
+
 inline int vector_size( container *C )
 {
     return ((vector_container_priv*)C->priv)->size;

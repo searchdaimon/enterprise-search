@@ -20,6 +20,8 @@ extern inline void vector_pushback( container *C, ... );
 
 
 extern inline value vector_get( container *C, int id );
+
+extern inline void vector_set( container *C, int id, value v );
 /*
 {
     return ((vector_container_priv*)C->priv)->elem[id];
