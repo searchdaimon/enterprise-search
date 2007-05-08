@@ -87,12 +87,12 @@ word		[0-9a-zA-Z'_ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ‗אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏ÿ
 			    free(epost);
 			    _qp_word_exit(yyscanner);
 			}
-{word}+			{
+{word}{word}+		{
 			    _qp_word_init('+', yyscanner);
 			    _qp_word_add( yytext, yyscanner );
 			    _qp_word_exit( yyscanner );
 			}
-\+{word}+		{
+\+{word}{word}+		{
 			    _qp_word_init('+', yyscanner);
 			    _qp_word_add( &(yytext[1]), yyscanner );
 			    _qp_word_exit( yyscanner );
@@ -100,7 +100,7 @@ word		[0-9a-zA-Z'_ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ‗אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏ÿ
 \ 			{
 			    yyget_extra(yyscanner)->is_prefix = 1;
 			}
-\-{word}+		{
+\-{word}{word}+		{
 			    if ( yyget_extra(yyscanner)->is_prefix )
 				{
 				    _qp_word_init('-', yyscanner);
@@ -120,7 +120,7 @@ word		[0-9a-zA-Z'_ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ‗אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏ÿ
 <COMMAND>{word}+	{ _qp_word_add( yytext, yyscanner ); _qp_word_exit( yyscanner ); BEGIN INITIAL; }
 <CMD_PHRASE>{word}+	{ _qp_word_add( yytext, yyscanner ); }
 <CMD_PHRASE>\"		{ _qp_word_exit( yyscanner );			BEGIN INITIAL; }
-<PHRASE>{word}+		{ _qp_word_add( yytext, yyscanner ); }
+<PHRASE>{word}{word}+	{ _qp_word_add( yytext, yyscanner ); }
 <PHRASE>\"		{ _qp_word_exit( yyscanner );			BEGIN INITIAL; }
 <*>.|\n			{}
 %%
