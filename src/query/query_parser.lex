@@ -2,6 +2,7 @@
 /*
  *	(C) Boitho 2004-2007, Written by Magnus Galåen
  *
+ *	Mai 2007: La til støtte for OR. Syntax: Skriv | foran ord eller frase som skal OR-es. OR og NOT samtidig fungerer ikke.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,7 +42,7 @@ struct _qp_yy_extra
     char				*custom_input;
     int					custom_pos, custom_size;
 
-    char				is_prefix, is_accepting;
+    char				is_prefix, is_accepting, or_is_on;
 };
 
 /*
@@ -74,7 +75,12 @@ word		[0-9a-zA-Z'_ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ
 
 			    char	*epost = strdup(yytext), *ptrptr, *token;
 
-			    _qp_word_init('"', yyscanner);
+			    if (yyget_extra(yyscanner)->or_is_on)
+				{
+				    _qp_word_init('|', yyscanner);
+				    yyget_extra(yyscanner)->or_is_on = 0;
+				}
+			    else _qp_word_init('"', yyscanner);
 
 			    token = strtok_r(epost, ".@", &ptrptr);
 			    while (token!=NULL)
@@ -88,14 +94,27 @@ word		[0-9a-zA-Z'_ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ
 			    _qp_word_exit(yyscanner);
 			}
 {word}{word}+		{
-			    _qp_word_init('+', yyscanner);
+			    if (yyget_extra(yyscanner)->or_is_on)
+				{
+				    _qp_word_init('|', yyscanner);
+				    yyget_extra(yyscanner)->or_is_on = 0;
+				}
+			    else _qp_word_init('+', yyscanner);
 			    _qp_word_add( yytext, yyscanner );
 			    _qp_word_exit( yyscanner );
 			}
 \+{word}{word}+		{
-			    _qp_word_init('+', yyscanner);
+			    if (yyget_extra(yyscanner)->or_is_on)
+				{
+				    _qp_word_init('|', yyscanner);
+				    yyget_extra(yyscanner)->or_is_on = 0;
+				}
+			    else _qp_word_init('+', yyscanner);
 			    _qp_word_add( &(yytext[1]), yyscanner );
 			    _qp_word_exit( yyscanner );
+			}
+\|			{
+			    yyget_extra(yyscanner)->or_is_on = 1;
 			}
 \ 			{
 			    yyget_extra(yyscanner)->is_prefix = 1;
@@ -109,12 +128,24 @@ word		[0-9a-zA-Z'_ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ
 				}
 			    else
 				{
-				    _qp_word_init('+', yyscanner);
+				    if (yyget_extra(yyscanner)->or_is_on)
+					{
+					    _qp_word_init('|', yyscanner);
+					    yyget_extra(yyscanner)->or_is_on = 0;
+					}
+				    else _qp_word_init('+', yyscanner);
 				    _qp_word_add( &(yytext[1]), yyscanner );
 				    _qp_word_exit( yyscanner );
 				}
 			}
-\"			{ _qp_word_init('"', yyscanner);		BEGIN PHRASE; }
+\"			{
+			    if (yyget_extra(yyscanner)->or_is_on)
+				{
+				    _qp_word_init('|', yyscanner);
+				    yyget_extra(yyscanner)->or_is_on = 0;
+				}
+			    else _qp_word_init('"', yyscanner);		BEGIN PHRASE;
+			}
 \-\"			{ _qp_word_init('~', yyscanner);		BEGIN PHRASE; }
 <COMMAND>\"		{ 						BEGIN CMD_PHRASE; }
 <COMMAND>{word}+	{ _qp_word_add( yytext, yyscanner ); _qp_word_exit( yyscanner ); BEGIN INITIAL; }
@@ -237,6 +268,7 @@ void get_query( char text[], int text_size, query_array *qa )
 
     qe->is_prefix = 1;
     qe->is_accepting = 0;
+    qe->or_is_on = 0;
 
     qe->custom_input = text;
     qe->custom_pos = 0;

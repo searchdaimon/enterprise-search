@@ -29,6 +29,7 @@
 #define QUERY_COLLECTION 'c'
 #define QUERY_DATE	'd'
 #define QUERY_STATUS	's'
+#define QUERY_OR	'|'
 
 
 struct
