@@ -24,6 +24,7 @@
 
 #ifdef BLACK_BOKS
 	#define maxWordForPage 40000
+	#define maxAclForPage 10
 #else
 	#define maxWordForPage 4000
 #endif
@@ -132,6 +133,15 @@ struct pagewordsFormat {
 	//struct updateFormat updatePost[IndexerMaxLinks];
 	//struct outlinksFormat outlinks[IndexerMaxLinks];
 	struct outlinksFormat *outlinks;
+
+	#ifdef BLACK_BOKS
+		int aclnr;
+		struct wordsFormat acls[maxAclForPage];
+		struct wordsFormat acls_sorted[maxAclForPage];
+		int aclIndexnr;
+	        struct revIndexFomat aclIndex[maxAclForPage];
+		struct nrofBucketElementsFormat nrofAclBucketElements[NrOfDataDirectorys];
+	#endif
 };
 
 //struct pagewordsFormat pagewords;
@@ -157,3 +167,7 @@ void linksWrite(struct pagewordsFormat *pagewords,struct addNewUrlhaFormat addNe
 void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *adult,int *adultWeight, unsigned char *langnr);
 void wordsInit(struct pagewordsFormat *pagewords);
 void wordsEnd(struct pagewordsFormat *pagewords);
+void acladd(struct pagewordsFormat *pagewords, char word[]);
+void aclsMakeRevIndex(struct pagewordsFormat *pagewords);
+void aclsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int DocID,unsigned char *langnr);
+void aclindexFilesAppendWords(struct pagewordsFormat *pagewords,FILE *aclindexFilesHa[],unsigned int DocID,unsigned char *langnr);

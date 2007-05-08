@@ -49,6 +49,7 @@ struct IndexerLot_workthreadFormat {
         unsigned int FiltetTime;
         unsigned int FileOffset;
 	FILE *revindexFilesHa[NrOfDataDirectorys];
+	FILE *aclindexFilesHa[NrOfDataDirectorys];
 	struct adultFormat *adult;
 	FILE *ADULTWEIGHTFH;
 	FILE *SFH;
@@ -167,7 +168,7 @@ void alclot_close(struct alclotFormat *alclot) {
 
 	free(alclot);
 }
-void alclot_add(struct alclotFormat *alclot,char acl[]) {
+void alclot_add(struct pagewordsFormat *pagewords,struct alclotFormat *alclot,char acl[]) {
 
 
 	struct hashtable **h; //temp
@@ -179,10 +180,14 @@ void alclot_add(struct alclotFormat *alclot,char acl[]) {
 
   	TokCount = split(acl, ",", &Data);
 
-	//Count = 0;
-	//while( (Data[Count] != NULL) ) {
-	//	printf("god user \"%s\"\n",Data[Count]);
-	//}
+	//legger til acler
+	Count = 0;
+	while( (Data[Count] != NULL) ) {
+		printf("god user \"%s\"\n",Data[Count]);
+	
+		acladd(pagewords, Data[Count]);
+		++Count;
+	}
 
   	Count = 0;
   	while( (Data[Count] != NULL) ) {
@@ -345,11 +350,13 @@ void *IndexerLot_workthread(void *arg) {
 
 	
 	int i;
-        char imagebuffer[524288];  //0.5 mb
+	int sizeofimagebuffer = 524288; //0.5 mb
+	char *imagebuffer =  malloc(sizeofimagebuffer);
+        //char imagebuffer[524288];  //0.5 mb
 	unsigned int sizeofHtmlBuffer = 524288 * 2;
 	char *HtmlBuffer = malloc(sizeofHtmlBuffer);
 
-	struct pagewordsFormat pagewords;
+	struct pagewordsFormat *pagewords = malloc(sizeof(struct pagewordsFormat));
 
 	int nerror;
 	char TLD[5];
@@ -381,10 +388,10 @@ void *IndexerLot_workthread(void *arg) {
 	struct DocumentIndexFormat *DocumentIndexPost;
 
 
-	wordsInit(&pagewords);
+	wordsInit(pagewords);
 
 
-	while (getNextPage(argstruct,htmlcompressdbuffer,sizeofhtmlcompressdbuffer,imagebuffer,sizeof(imagebuffer),
+	while (getNextPage(argstruct,htmlcompressdbuffer,sizeofhtmlcompressdbuffer,imagebuffer,sizeofimagebuffer,
 		&radress,&acl,&ReposetoryHeader)) {
 
 				DocumentIndexPost = malloc(sizeof(struct DocumentIndexFormat));
@@ -403,7 +410,7 @@ void *IndexerLot_workthread(void *arg) {
 				SummaryBuffer = NULL;
 
 				//begynner på en ny side
-                                wordsReset(&pagewords,ReposetoryHeader.DocID);
+                                wordsReset(pagewords,ReposetoryHeader.DocID);
 
 				//printf("D: %u, R: %lu\n",ReposetoryHeader.DocID, radress);
 
@@ -436,12 +443,12 @@ void *IndexerLot_workthread(void *arg) {
 				else if ((ReposetoryHeader.response >= 200) && (ReposetoryHeader.response <= 299)) {	
 
 
-                                	pagewords.curentDocID = ReposetoryHeader.DocID;
+                                	(*pagewords).curentDocID = ReposetoryHeader.DocID;
                                 	if (strchr(ReposetoryHeader.url,'?') == 0) {
-                                        	pagewords.curentUrlIsDynamic = 0;
+                                        	(*pagewords).curentUrlIsDynamic = 0;
                                 	}
                         	        else {
-                	                        pagewords.curentUrlIsDynamic = 1;
+                	                        (*pagewords).curentUrlIsDynamic = 1;
         	                        }
 	
 					HtmlBufferLength = sizeofHtmlBuffer;
@@ -467,7 +474,7 @@ void *IndexerLot_workthread(void *arg) {
 
 					//printf("document \"%s\" %i b\n",HtmlBuffer,HtmlBufferLength);
 
-					handelPage(&pagewords,(*argstruct).lotNr,&ReposetoryHeader,HtmlBuffer,HtmlBufferLength,DocumentIndexPost,ReposetoryHeader.DocID,(*argstruct).httpResponsCodes,(*argstruct).adult,&langnr,&title,&body);
+					handelPage(pagewords,(*argstruct).lotNr,&ReposetoryHeader,HtmlBuffer,HtmlBufferLength,DocumentIndexPost,ReposetoryHeader.DocID,(*argstruct).httpResponsCodes,(*argstruct).adult,&langnr,&title,&body);
 					//har ikke metadesc enda
 					metadesc = strdup("");
 
@@ -483,14 +490,15 @@ void *IndexerLot_workthread(void *arg) {
 
 					//setter anatll utgående linker
 					//bruker en unsigned char. Kan ikke ha flere en 255 
-					if (pagewords.nrOfOutLinks > 255) {
+					if ((*pagewords).nrOfOutLinks > 255) {
 						(*DocumentIndexPost).nrOfOutLinks = 255;
 					}
 					else {
-						(*DocumentIndexPost).nrOfOutLinks = pagewords.nrOfOutLinks;
+						(*DocumentIndexPost).nrOfOutLinks = (*pagewords).nrOfOutLinks;
 					}
 
-					wordsMakeRevIndex(&pagewords,(*argstruct).adult,&AdultWeight,&langnr);
+					wordsMakeRevIndex(pagewords,(*argstruct).adult,&AdultWeight,&langnr);
+					
 
 					if (AdultWeight > 255) {
                                         	(*DocumentIndexPost).AdultWeight = 255;
@@ -500,7 +508,7 @@ void *IndexerLot_workthread(void *arg) {
                                         }
 
 
-					wordsMakeRevIndexBucket (&pagewords,ReposetoryHeader.DocID,&langnr);
+					wordsMakeRevIndexBucket (pagewords,ReposetoryHeader.DocID,&langnr);
 
 					
 
@@ -537,6 +545,27 @@ void *IndexerLot_workthread(void *arg) {
 						pthread_mutex_lock(&(*argstruct).restmutex);
 					#endif
 
+					#ifdef BLACK_BOKS
+						//handel acl
+						//trenger dette acl greiene å være her, kan di ikke være lenger opp, der vi ikke har trå lås ?
+						alclot_add(pagewords,(*argstruct).alclot,acl);
+
+						aclsMakeRevIndex(pagewords);
+						aclsMakeRevIndexBucket (pagewords,ReposetoryHeader.DocID,&langnr);
+
+
+						debug("time %u\n",ReposetoryHeader.time);
+
+						iintegerSetValue(&ReposetoryHeader.time,sizeof(int),ReposetoryHeader.DocID,"dates",(*argstruct).subname);
+						//printf("filtypes \"%c%c%c%c\"\n",ReposetoryHeader.doctype[0],ReposetoryHeader.doctype[1],ReposetoryHeader.doctype[2],ReposetoryHeader.doctype[3]);
+						//normaliserer
+						for(i=0;i<4;i++) {
+							ReposetoryHeader.doctype[i] = btolower(ReposetoryHeader.doctype[i]);
+						}
+						iintegerSetValue(&ReposetoryHeader.doctype,4,ReposetoryHeader.DocID,"filtypes",(*argstruct).subname);
+					#endif
+
+
                 			if (ReposetoryHeader.response < nrOfHttpResponsCodes) {
                         			++(*argstruct).httpResponsCodes[ReposetoryHeader.response];
                 			}
@@ -551,7 +580,7 @@ void *IndexerLot_workthread(void *arg) {
 						SummaryWrite(SummaryBuffer,SummaryBufferSize,&(*DocumentIndexPost).SummaryPointer,
 							&(*DocumentIndexPost).SummarySize,ReposetoryHeader.DocID,(*argstruct).SFH);
 
-							linksWrite(&pagewords,(*argstruct).addNewUrlha);
+							linksWrite(pagewords,(*argstruct).addNewUrlha);
 
 						#endif
 
@@ -559,10 +588,12 @@ void *IndexerLot_workthread(void *arg) {
 						
 
 
-						revindexFilesAppendWords(&pagewords,(*argstruct).revindexFilesHa,ReposetoryHeader.DocID,&langnr);
+						revindexFilesAppendWords(pagewords,(*argstruct).revindexFilesHa,ReposetoryHeader.DocID,&langnr);
 
+						aclindexFilesAppendWords(pagewords,(*argstruct).aclindexFilesHa,ReposetoryHeader.DocID,&langnr);
+						
 						#ifdef PRESERVE_WORDS
-							dictionaryWordsWrite(&pagewords,(*argstruct).dictionarywordsfFH);
+							dictionaryWordsWrite(pagewords,(*argstruct).dictionarywordsfFH);
 					
 						#endif
 						//DocIDPlace = ((ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr)) * sizeof(unsigned char));
@@ -579,20 +610,6 @@ void *IndexerLot_workthread(void *arg) {
 
 
 
-					#ifdef BLACK_BOKS
-						//handel acl
-						alclot_add((*argstruct).alclot,acl);
-
-						debug("time %u\n",ReposetoryHeader.time);
-
-						iintegerSetValue(&ReposetoryHeader.time,sizeof(int),ReposetoryHeader.DocID,"dates",(*argstruct).subname);
-						//printf("filtypes \"%c%c%c%c\"\n",ReposetoryHeader.doctype[0],ReposetoryHeader.doctype[1],ReposetoryHeader.doctype[2],ReposetoryHeader.doctype[3]);
-						//normaliserer
-						for(i=0;i<4;i++) {
-							ReposetoryHeader.doctype[i] = btolower(ReposetoryHeader.doctype[i]);
-						}
-						iintegerSetValue(&ReposetoryHeader.doctype,4,ReposetoryHeader.DocID,"filtypes",(*argstruct).subname);
-					#endif
 
 
 
@@ -600,7 +617,6 @@ void *IndexerLot_workthread(void *arg) {
 					pthread_mutex_unlock(&(*argstruct).restmutex);
 				#endif
 
-				#ifdef BLACK_BOKS
 
 				DocIDPlace = (ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr));
 
@@ -617,7 +633,7 @@ void *IndexerLot_workthread(void *arg) {
 				(*argstruct).DIArray[DocIDPlace].brankPageElements.IPAddress = 		(*DocumentIndexPost).IPAddress;
 				(*argstruct).DIArray[DocIDPlace].brankPageElements.nrOfOutLinks = 	(*DocumentIndexPost).nrOfOutLinks;
 				(*argstruct).DIArray[DocIDPlace].brankPageElements.response = 		(*DocumentIndexPost).response;
-				#endif
+				
 			
 				free(SummaryBuffer);
 
@@ -632,7 +648,7 @@ void *IndexerLot_workthread(void *arg) {
 	free(htmlcompressdbuffer);
 	free(HtmlBuffer);
 
-	wordsEnd(&pagewords);
+	wordsEnd(pagewords);
 
 }
 
@@ -818,6 +834,7 @@ int main (int argc, char *argv[]) {
 
 
 		revindexFilesOpenLocal(argstruct.revindexFilesHa,lotNr,"Main",openmode,subname);
+		revindexFilesOpenLocal(argstruct.aclindexFilesHa,lotNr,"Acl",openmode,subname);
 
 		#ifdef BLACK_BOKS		
 			alclot_init(&argstruct.alclot,subname,openmode,lotNr);
@@ -896,7 +913,7 @@ int main (int argc, char *argv[]) {
 
 		#endif
 		
-		#ifndef BLACK_BOKS
+		
 		for(i=0;i<NrofDocIDsInLot;i++) {
 			if (argstruct.DIArray[i].p != NULL) {
 				
@@ -905,11 +922,13 @@ int main (int argc, char *argv[]) {
 				free(argstruct.DIArray[i].p);
 			}
 
+			#ifndef BLACK_BOKS
+
 			if (argstruct.DIArray[i].haveawvalue == 1) {
 
 				DocIDPlace = ((argstruct.DIArray[i].DocID - LotDocIDOfset(argstruct.lotNr)) * sizeof(unsigned char));
 
-				//printf("DocID %u, DocIDPlace %i\n",ReposetoryHeader.DocID,DocIDPlace);
+				printf("DocID %u, DocIDPlace %i\n",argstruct.DIArray[i].DocID,DocIDPlace);
 				fseek(argstruct.ADULTWEIGHTFH,DocIDPlace,SEEK_SET);	
                			fwrite(&argstruct.DIArray[i].awvalue,sizeof(unsigned char),1,argstruct.ADULTWEIGHTFH);
 			}
@@ -921,9 +940,9 @@ int main (int argc, char *argv[]) {
 				fseek(argstruct.brankPageElementsFH,DocIDPlace,SEEK_SET);
 				fwrite(&argstruct.DIArray[i].brankPageElements,sizeof(struct brankPageElementsFormat),1,argstruct.brankPageElementsFH);
 			}
-
+			#endif
 		}
-		#endif
+		
 
 		#ifdef BLACK_BOKS
 			alclot_close(argstruct.alclot);
