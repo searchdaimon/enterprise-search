@@ -238,6 +238,7 @@ static inline int buf_printf(struct bsg_intern_data *data, const char *fmt, ...)
 }
 
 
+// TODO: Rydde i denne funksjonen:
 static inline void test_for_snippet(struct bsg_intern_data *data, char forced)
 {
 	    while (queue_size(data->Q) > 0 && (((data->bpos - pair(queue_peak(data->Q)).first.i) > data->snippet_size) || forced))
@@ -245,8 +246,8 @@ static inline void test_for_snippet(struct bsg_intern_data *data, char forced)
 		    value	temp = queue_peak(data->Q);
 		    int 	pos, flags;
 		    value	phrase;
-		    int		i, j;
-		    char	m, n;
+		    int		i;
+		    char	m;
 		    int		d_hits;
 		    int		score=0;
 
@@ -382,8 +383,8 @@ static inline void test_for_snippet(struct bsg_intern_data *data, char forced)
 		    value	temp = queue_peak(data->Q2);
 		    int 	pos, flags;
 		    value	phrase;
-		    int		i, j;
-		    char	m, n;
+		    int		i;
+		    char	m;
 		    int		d_hits;
 		    int		score=0;
 
@@ -519,6 +520,7 @@ static inline void test_for_snippet(struct bsg_intern_data *data, char forced)
 }
 
 
+// TODO: Rydde i denne funksjonen:
 static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_start, char* b_end )
 {
     int		i, pos;
@@ -592,6 +594,7 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 }
 
 
+// TODO: Rydde i denne funksjonen:
 static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char* b_start, char* b_end )
 {
     int		i, j, x;
@@ -602,6 +605,8 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
     int		bpos=0;
     int		best_hits = 0;
 
+    // Finn de to mini-snippetene som utfyller hverandre best:
+
     for (i=0; i<data->num_queries; i++)
 	for (j=i+1; j<data->num_queries; j++)
 	    {
@@ -609,6 +614,8 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
 
 		if (bin_hits > best_hits)
 		    {
+			best_hits = bin_hits;
+
 			if (data->q_best_start[i] < data->q_best_start[j])
 			    {
 				nr1 = i;
@@ -621,37 +628,17 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
 			    }
 		    }
 	    }
-/*
-    for (i=1; i<data->num_queries; i++)
-	if (data->q_best_score[i] > data->q_best_score[bestebeste])
-	    bestebeste = i;
 
-    for (i=0; i<data->num_queries; i++)
-	if ((data->q_best_score[i] > data->q_best_score[nestebeste])
-	    && (data->q_best_start[i] != data->q_best_start[bestebeste]))
-	    nestebeste = i;
-*/
+    // Dersom de to mini-snippetene tilsammen ikke er bedre enn den store, så skrive ut vanlig snippet istedet:
     if ((nr1==nr2) || (data->q_best_score[nr1] == 0 || data->q_best_score[nr2] == 0)
-	|| (data->q_best_start[nr1] == data->q_best_start[nr2]))
+	|| (data->q_best_start[nr1] == data->q_best_start[nr2])
+	|| (best_hits < data->best_hits)
+	|| (best_hits == data->best_hits && (((data->q_best_score[nr1] | data->q_best_score[nr2]) & 31) <= data->best_score)))
 	{
 	    return print_best_snippet( data, b_start, b_end );
 	}
-//    else
-//	{
-//	    printf("\n(%i + %i)\n", bestebeste, nestebeste);
-//	}
-/*
-    if (data->q_best_start[bestebeste] < data->q_best_start[nestebeste])
-	{
-	    nr1 = bestebeste;
-	    nr2 = nestebeste;
-	}
-    else
-	{
-	    nr1 = nestebeste;
-	    nr2 = bestebeste;
-	}
-*/
+
+    // Skriv ut to mini-snippets med '...' imellom:
     for (nr=nr1, x=0; x<2; nr=nr2, x++)
 	{
 	    int		pos;
