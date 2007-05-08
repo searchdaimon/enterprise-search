@@ -47,6 +47,52 @@ SMBCCTX* context_init();
 int context_free( SMBCCTX *context );
 
 
+/*
+ * boithosmbc_wholeurlencode()
+ * By Runarb
+ *
+ * Convert any characters not specifically allowed in a URL into their %xx
+ * equivalent.
+ *
+ * Based on libsmbs smbc_urlencode(), but do not encode / sow it can be used on a whole url
+ *
+ * Returns the remaining buffer length.
+ */
+int
+boithosmbc_wholeurlencode(char * dest, char * src, int max_dest_len)
+{
+        char hex[] = "0123456789ABCDEF";
+
+        for (; *src != '\0' && max_dest_len >= 3; src++) {
+
+                if ((*src < '0' &&
+                     *src != '-' &&
+                     *src != '/' &&
+                     //*src != ' ' &&
+                     *src != '.') ||
+                    (*src > '9' &&
+                     *src < 'A') ||
+                    (*src > 'Z' &&
+                     *src < 'a' &&
+                     *src != '_') ||
+                    (*src > 'z')) {
+                        *dest++ = '%';
+                        *dest++ = hex[(*src >> 4) & 0x0f];
+                        *dest++ = hex[*src & 0x0f];
+                        max_dest_len -= 3;
+                } else {
+                        *dest++ = *src;
+                        max_dest_len--;
+                }
+        }
+
+        *dest++ = '\0';
+        max_dest_len--;
+        
+        return max_dest_len;
+}
+
+
 
 
 /*
@@ -452,20 +498,52 @@ int smb_test_open( char *prefix, char *dir_name, int (*documentError)(int level,
 	char *urip = uri;
 
 	iconv_close(isoconp);
+
 */
 
+    	if ( (isoconp = iconv_open("ISO-8859-15","UTF-8")) ==  (iconv_t)(-1) ) {
+                perror("iconv_open");
+		return 0;
+    	}
+
+
+//	iconv_convert(isoconp, &dir_name,uri_size);
+
+	//kan denne blir lengere en hvs vi har alokert? ISO-8859-15 er vel altid bare 1 tegn, mens utf-8 kan være 
+	//flere. Så vi skal vel aldri få flere når vi går fra UTF-8 til ISO-8859-15. Andre veien deromot  ville ha skap problemer  
+	//ser dog ut til at vi ikke får til å free'e den etterpå. Lager en kopi
+	char *prefixiso = malloc(uri_size);
+	strscpy(prefixiso,prefix,uri_size);
+//	iconv_convert(isoconp, &prefixiso,uri_size);
+
+	//bør ha en max url lengde definert her
+	char dir_nameesc[1024];
+//tt	boithosmbc_wholeurlencode(dir_nameesc,dir_name,sizeof(dir_nameesc) -1);
+	strcpy(dir_nameesc,dir_name);
+
+	iconv_close(isoconp);
+
+	snprintf(uri, uri_size, "%s%s", prefixiso, dir_nameesc);
+	//char *urip = uri;
+	free(prefixiso);
+
+	printf("urip: \"%s\"\n",uri);
+
+
+/*
     snprintf(uri, uri_size, "%s%s", prefix, dir_name);
 
     if ( (isoconp = iconv_open("ISO-8859-15","UTF-8")) ==  (iconv_t)(-1) ) {
                 perror("iconv_open");
     }
 
+
 	char *urip = uri;
 	iconv_convert(isoconp, &urip,uri_size);
 	
 
     iconv_close(isoconp);
-
+*/
     printf("Opening %s ... ", uri);
     fflush(stdout);
 
@@ -477,7 +555,7 @@ int smb_test_open( char *prefix, char *dir_name, int (*documentError)(int level,
 
 	    if (errno != EACCES)
 		{
-		    documentError(1,"crawlsmb.c: Error! Could not open \"%s\"", urip);
+		    documentError(1,"crawlsmb.c: Error! Could not open \"%s\": %s", uri,strerror(errno));
 		}
 
 	    context_free(context);
@@ -543,4 +621,5 @@ int context_free( SMBCCTX *context )
 
 	return 1;
 }
+
 
