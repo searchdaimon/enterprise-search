@@ -204,7 +204,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
                     char        full_entry_name[strlen(prefix) + _dname_size + 1];
                     char        value[1024];
                     struct stat file_stat;
-		    char	*parsed_acl;
+		    char	**parsed_acl;
 
                     sprintf(entry_name, "%s/%s", dir_name, dirp->name);
                     sprintf(full_entry_name, "%s%s", prefix, entry_name);
@@ -219,12 +219,15 @@ int smb_recursive_get( char *prefix, char *dir_name,
                     else
                         {
 			    parsed_acl = parseacl_read_access( value );
-			    printf("Users allowed to read '%s':\t'%s'\n", entry_name, parsed_acl);
+			    printf("Users allowed to read '%s':\t'%s'\n", entry_name, parsed_acl[0]);
+			    printf("Users denied              :\t'%s'\n", parsed_acl[1]);
                         }
 
                     if ( smbc_stat(full_entry_name, &file_stat) < 0 )
                         {
                             documentError(1,"crawlsmb.c: Error! Could not get stat for %s", entry_name);
+			    free(parsed_acl[0]);
+			    free(parsed_acl[1]);
                             free(parsed_acl);
 			    context_free(context);
 			    context = context_init(no_auth);
@@ -321,7 +324,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
         					crawldocumentAdd.document	= fbuf;
         					crawldocumentAdd.dokument_size	= file_stat.st_size;
         					crawldocumentAdd.lastmodified	= file_stat.st_mtime;
-        					crawldocumentAdd.acl 		= parsed_acl;
+        					crawldocumentAdd.acl 		= parsed_acl[0];	// TODO: Her må også DENIED-lista legges til!!!
 
 						isize = ((strlen(dirp->name) *2) +1);
         					crawldocumentAdd.title	= malloc(isize);
@@ -351,6 +354,8 @@ int smb_recursive_get( char *prefix, char *dir_name,
 			    context_free(context);
 			}
 
+		    free(parsed_acl[0]);
+		    free(parsed_acl[1]);
 		    free(parsed_acl);
 		    context = context_init(no_auth);
                 }
