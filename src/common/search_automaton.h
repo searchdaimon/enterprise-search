@@ -129,7 +129,6 @@ static inline automaton* build_automaton( int num_args, unsigned char **words )
 	{
 	    automaton		*A = base;
 	    int			p=0, n;
-	    unsigned char	c = words[i][p];
 	    char		terminated = 0;
 
 	    convert_to_lowercase(words[i]);
@@ -171,7 +170,7 @@ static inline automaton* build_automaton( int num_args, unsigned char **words )
 		    // If A->str and words[i][p] share their first n characters, and n< length of both,
 		    // OR if n==len(A->str) and the path for words[i] stops here:
 		    if ((A->str[n]!=words[i][p+n]) && (A->str[n]!='\0') && (words[i][p+n]!='\0')
-		    || (A->str[n]=='\0' && words[i][p+n]!='\0' && A->next[words[i][p+n]]==NULL))
+		    || ((A->str[n]=='\0') && (words[i][p+n]!='\0') && (A->next[words[i][p+n]]==NULL)))
 			{
 			    automaton	*N = new_automaton();
 //			    printf("[%c]->[%s]\n", words[i][p+n], &(words[i][p+n+1]));
@@ -207,7 +206,7 @@ static inline automaton* build_automaton( int num_args, unsigned char **words )
 
 static inline void free_automaton( automaton* A )
 {
-    int		i, j;
+    int		i;
 
     for (i=0; i<256; i++)
 	{
