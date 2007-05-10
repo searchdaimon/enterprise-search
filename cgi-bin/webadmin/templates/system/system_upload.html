@@ -17,18 +17,15 @@
 	[% END %]
 [% END %]
 
-<h2>Software updates</h2>
-<h3>Check for Black Box updates</h3>
+<h1>Software updates</h1>
+<h2>Check for Black Box updates</h2>
 [% IF available_packages_error.defined %]
 	
 	[% WRAPPER 'template_message.html' type="error" %][% available_packages_error %][% END %]
 
 [% END %]
 [% UNLESS available_packages.defined %]
-	[% WRAPPER 'template_message.html' type="info" %]
-		Check for new updates, and install them.
-	[% END %]	
-
+	
 	<form action="system.cgi" method="post">
 		<div>
 		<input type="submit" name="submit.software_check_updates" value="Check for updates.." />
@@ -53,7 +50,7 @@
 			
 			[% WRAPPER 'template_table_row.html' %]
 	
-				<td><!-- todo: find icon --></td>
+				<td style="width : 25px;"><img src="file.cgi?icon=rpm&amp;size=22x22" alt="" /></td>
 				<td>[% package.name %]</td>
 				<td>[% package.version %]</td>
 				<td>[% package.release %]</td>
@@ -62,7 +59,7 @@
 		[% END #foreach %]
 		[% END #table %]
 
-		<form action="system.cgi" method="POST">
+		<form action="system.cgi" method="post">
 		    <input type="submit" name="submit.software_install_available" value="Install updates" style="margin-top : 1em;" />
 		</form>
 	[% END %]
@@ -85,16 +82,7 @@
 	</ol>
 [% END %]
 
-<h3>Upload software package</h3>
-
-[% WRAPPER 'template_message.html' type="info" %]
-	To upload and install new software, you need to:
-	<ol>
-		<li>Upload the packages you want installed.</li>
-		<li>Run install by pressing the appearing install button.</li>
-	</ol>
-
-[% END %]
+<h2 style="margin-top: 3em;">Upload software package</h2>
 
 [% IF install_result.defined %]
 	<h4>Install result:</h4>
@@ -157,7 +145,7 @@
 		
 			[% WRAPPER 'template_table_row.html' %]
 				
-				<td><!-- icon --></td>
+				<td style="width:25px;"><img src="file.cgi?i=rpm&amp;size=22x22" alt="" /></td>
 				<td>[% package %]</td>
 				<td><a href="system.cgi?action=pkg_remove&amp;pkg=[% package %]">Remove</a></td>
 				

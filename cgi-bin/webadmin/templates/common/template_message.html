@@ -35,14 +35,19 @@
 
 <div class="message_box" style="background: [%background%]; ">
 
-	[% UNLESS discreet %]	
-		<img src="file.cgi?size=64x64&amp;i=[% icon %]" title="[% title %]" alt="[% title %]" />
-		
-		<div class="mb_text">
-			<!-- <strong>[% title %]</strong><br /><br /> -->
-			[% content %]
+	[% UNLESS discreet %]
+		<table>
+		<tr>
+			<td style="width:70px;">
+				<img src="file.cgi?size=64x64&amp;i=[% icon %]" 
+						title="[% title %]" alt="[% title %]" /></td>
+			<td>
+				<div class="mb_text">[% content %]</div>
+			</td>
+		</tr>
+
+		</table>
 	
-		</div>
 	[% ELSE %]
 		[% content %]
 	[% END %]

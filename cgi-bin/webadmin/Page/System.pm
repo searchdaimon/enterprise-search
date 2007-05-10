@@ -37,6 +37,12 @@ sub show_system_diagnostics {
 	my ($self, $vars, $opt_ref) = @_;
 	my $template_file = "system_main.html";
 	my @lots = $lotinfo->lot_info($opt_ref);
+
+	if (defined $opt_ref) {
+		# asume we want to see lot details if we specified options.
+		$vars->{'show_lot_details'} = 1;
+	}
+
 	$vars->{'lotinfo'}     = \@lots;
 	$vars->{'raid'} 	   = $self->_raid_status;
 	$vars->{'integration'} = $self->_integration_status;

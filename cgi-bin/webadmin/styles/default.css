@@ -179,7 +179,7 @@ A:active { color : blue; }
 }
 
 .message_box {
-	height : 64px; 
+	
 	padding : 1em; 
 	border-top : 1px solid; 
 	border-bottom: 1px solid; 
@@ -187,12 +187,13 @@ A:active { color : blue; }
 }
 
 .message_box .mb_text {
-	margin-left : 80px;
+	/* margin-left : 80px; */
 	font-size : small;
 }
 
 .message_box img {
 	float : left;
+
 }
 
 .
