@@ -7,9 +7,10 @@ use strict;
 use warnings;
 
 use Carp;
+use File::Find;
 use Data::Dumper;
 use Filesys::Df;
-use File::Size;
+use Number::Bytes::Human qw(format_bytes);
 
 use constant MOUNTS_INFO => "/proc/mounts";
 use constant DEBUG => 0;
@@ -53,7 +54,7 @@ sub new {
 #
 # Available options:
 # 	show_lot_size - Fetch size for indiviudal lot.
-sub lots_info {
+sub lot_info {
 	my ($self, $options_ref) = @_;
 	%opt = %{$options_ref} if defined $options_ref;
 
@@ -157,18 +158,19 @@ sub get_mount_paths {
 #	left - Space left on disk
 sub _get_mount_df {
 	my ($self, $mount_path) = @_;
-	my ($size, $used, $left, $percent_full);	
+	my ($size, $used, $left, $percent_full);
+
+	
 
 	if (DEBUG) { print "getting df info for mount $mount_path\n" }
-	my $df_ref = df($mount_path);
+	my $df_ref = df($mount_path, 1);
 
-	print Dumper(\$df_ref);	
 
 	if (defined $df_ref) {
-		$size         = $df_ref->{'blocks'};
-		$used         = $df_ref->{'used'};
-		$left	      = $df_ref->{'bfree'};
-		$percent_full = $df_ref->{'per'};
+		$size         = format_bytes($df_ref->{'blocks'});
+		$used         = format_bytes($df_ref->{'used'});
+		$left	      = format_bytes($df_ref->{'bfree'});
+		$percent_full = format_bytes($df_ref->{'per'});
 	}
 	else {
 		carp "Unable to get disk usage for mount $mount_path";
@@ -195,18 +197,12 @@ sub _add_lot {
 	my %lot_info;
 	$lot_info{'path'} = $lot_path;
 	
-	if ($opt{'show_lot_size'}) {
-		my $fsize = File::Size->new(
-			'dir'	    => $lot_path,
-			'blocksize' => 1024,
-			'followsymlinks' => 1,
-			'humanreadable' => 0,
-		);
-
-		$lot_info{'size'} = $fsize->getsize();
+	if ($opt{'show_lot_usage'}) {
+		$lot_info{'usage'} 
+		    = format_bytes($self->_get_dir_size($lot_path));
 	}
 	else {
-		$lot_info{'size'} = undef;
+		$lot_info{'usage'} = undef;
 	}
 
 	push @{$merged_ref->{$mount_path}}, \%lot_info;
@@ -228,46 +224,32 @@ sub _match_mount {
 	return;
 }
 
-# Group: Additional Info
-#
-# Example output from <lots_info>
-# >(	{
-# >	'left' => 82531292,
-# >	'used' => 32253148,
-# >	'mount' => '/',
-# >	'per' => 28,
-# >	'size' => 114784440
-# >	'lots' => [
-# >		{
-# >			'size' => '0',
-# >			'path' => '/home/dagurval/src/boitho/websearch/lot/0'
-# >		},
-# >		{
-# >			'size' => '0',
-# >			'path' => '/home/dagurval/src/boitho/websearch/lot/1'
-# >		},
-# >		],
-# >	},
-# >	{
-# >	'left' => 8335876,
-# >	'used' => 284582716,
-# >	'mount' => '/mnt/test test',
-# >	'per' => 97,
-# >	'size' => 292918592
-# >	'lots' => [
-# >		{
-# >			'size' => '219399893',
-# >			'path' => '/mnt/test test/lot'
-# >		}
-# >		],
-# >	}
-# >)
+##
+# Get size of a directory.
+sub _get_dir_size {
+    my ($self, $dir) = @_;
+    my $total_size = 0;
+    
+    my $get_size = sub { $total_size += -s $File::Find::name || 0 };
+
+    my $opt_ref = 
+	{ wanted => $get_size, 
+	   follow => 1, # follow symlinks
+	   follow_skip => 2, #skip dupes
+	};
+
+    find($opt_ref, $dir);
+    return $total_size;
+    
+}
 
 
 
 
 if (DEBUG) {
-	my $ls = SD::LotInfo->new("maplist.conf");
-	my @r = $ls->lots_info({'show_lot_size' => 1});
+	my $ls = SD::LotInfo->new($ENV{'BOITHOHOME'}. "/config/maplist.conf");
+	my @r = $ls->lot_info({'show_lot_size' => 1});
 	print Dumper(\@r);
 }
+
+1;
