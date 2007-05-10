@@ -256,6 +256,12 @@ lotcp: src/lotcp/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/lotcp/main.c  -o bin/lotcp $(LDFLAGS)
 
+missinglotDetectLocal: src/missinglotDetectLocal/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/missinglotDetectLocal/main.c  -o bin/missinglotDetectLocal $(LDFLAGS)
+
 netlotStart: src/netlotStart/main.c
 	@echo ""
 	@echo "$@:"
@@ -315,7 +321,7 @@ searchddep:
 	#ting searchd trenger
 	@echo ""
 	@echo "$@:"
-	for i in src/query src/parser src/generateSnippet src/ds src/utf8-filter; do\
+	for i in src/query src/parser src/generateSnippet src/ds src/utf8-filter src/getdate; do\
            (cd $$i; $(MAKE) all);\
         done
 
