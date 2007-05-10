@@ -1,10 +1,14 @@
+#!/usr/bin/perl
+
 package Boitho::CrawlWatch;
 use strict;
 use warnings;
 use POSIX qw(setsid);
 use Carp;
 BEGIN {
-    unshift @INC, "../Modules";
+	#runarb: gjør om slik at denne kan kalles fra hvor som helst
+    	#unshift @INC, "../Modules";
+	unshift @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Boitho::Infoquery;
 use DBI;
@@ -12,7 +16,7 @@ use Data::Dumper;
 
 use constant RECHECK_DELAY => 300; # 5 min
 use constant PID_FILE => "/tmp/crawl_watch.pid";
-use constant SQL_CONFIG_FILE => "/home/boitho/boithoTools/setup.txt";
+use constant SQL_CONFIG_FILE => $ENV{'BOITHOHOME'} . "/config/setup.txt";
 use constant PATH_TO_INFOQUERY => $ENV{'BOITHOHOME'} . "/bin/infoquery";
 use constant DEBUG => 1;
 
