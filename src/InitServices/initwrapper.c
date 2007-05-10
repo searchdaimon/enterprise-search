@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
  *	param   - parameter to service
  */
 void exec_and_exit(char *service, char *param) {
-    char exeocbuf[1024];
+    char exeocbuf[200000];
     int exeocbuflen;
 
 
