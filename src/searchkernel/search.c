@@ -1671,7 +1671,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 }
 
-
+#ifdef BLACK_BOKS
 int searchFilterCount(int *TeffArrayElementer, 
 			struct iindexFormat *TeffArray, 
 			struct filtersFormat *filters,
@@ -1951,6 +1951,7 @@ int searchFilterCount(int *TeffArrayElementer,
 
 
 }
+#endif
 int compare_filetypes (const void *p1, const void *p2) {
         if (((struct subnamesFiltypesFormat*)p1)->nrof > ((struct subnamesFiltypesFormat*)p2)->nrof)
                 return -1;

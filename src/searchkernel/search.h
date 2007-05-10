@@ -8,6 +8,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		query_array *search_user_as_query
 		);
 
+#ifdef BLACK_BOKS
 int searchFilterCount(int *TeffArrayElementer, 
 			struct iindexFormat *TeffArray, 
 			struct filtersFormat *filters,
@@ -17,3 +18,4 @@ int searchFilterCount(int *TeffArrayElementer,
 			int dates[],
 			struct queryTimeFormat *queryTime
 		);
+#endif

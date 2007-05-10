@@ -79,7 +79,9 @@ HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun setuidcaller InitServices searchddep dictionarywordsLot YumWrapper NetConfig
+bb : searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun  searchddep dictionarywordsLot webadmindep
+
+webadmindep: YumWrapper NetConfig InitServices setuidcaller yumupdate
 
 tempFikes: IndexerLot_fik32bitbug DIconvert
 
@@ -306,7 +308,7 @@ searchcl : src/searchkernel/searchcl.c
 
 #dropper -D WITH_MEMINDEX og -D WITH_RANK_FILTER for nå
 #SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD $(LIBCONFIG)
-SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/lex.query.o src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a $(LDFLAGS) -lpthread $(LIBCONFIG)
+SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/lex.query.o src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG)
 
 
 searchddep:
@@ -326,7 +328,7 @@ searchd : src/searchkernel/searchd.c
 searchdbb : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/utf8-filter/lex.u8fl.o src/getdate/getdate.tab.o
+	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o
 
 mergeUserToSubname: src/mergeUserToSubname/main.c
 	@echo ""
@@ -364,7 +366,7 @@ dispatcher_all: src/dispatcher_all/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) $(LIBGeoIP) -D WITH_CASHE -o bin/dispatcher_all $(LIBCONFIG)
+	$(CC) $(dispatcherCOMAND) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG)
 
 dispatcher_allbb: src/dispatcher_all/main.c
 	@echo ""
@@ -508,6 +510,9 @@ readLinkDB: src/readLinkDB/main.c
 
 SortUdfile: src/SortUdfile/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/SortUdfile/main.c -o bin/SortUdfile $(LDFLAGS)
+
+SortUdfileToNewFiles: src/SortUdfileToNewFiles/main.c
+	$(CC) $(CFLAGS) $(LIBS)*.c src/SortUdfileToNewFiles/main.c -o bin/SortUdfileToNewFiles $(LDFLAGS)
 
 PageInfoComand=	$(LIBS)*.c src/PageInfo/main.c src/parser/lex.bhpm.c src/parser/y.tab.c $(LDFLAGS)
 

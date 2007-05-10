@@ -604,6 +604,7 @@ void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTr
 
 
 }
+#ifdef BLACK_BOKS
 int pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection_in[], char uri_in[], char user_in[], char password_in[]) {
 
 
@@ -626,6 +627,7 @@ int pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collec
 
 
 }
+#endif
 //int generatePagesResults( struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall, 
 //struct iindexFormat *TeffArray, int showabal, int filterOn, int adultpages, int noadultpages,struct 
 //QueryDataForamt QueryData, char servername[],int godPages,int MaxsHits,int start) 
