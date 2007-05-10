@@ -77,6 +77,10 @@ $CONFIG{'init_wrapper_path'} = $ENV{'BOITHOHOME'} . "/setuid/initwrapper";
 # Path to yum wrapper
 $CONFIG{'yum_wrapper_path'}  = $ENV{'BOITHOHOME'} . "/setuid/yumwrapper";
 
+# Path to maplist.conf file.
+$CONFIG{'maplist_path'} = $ENV{'BOITHOHOME'} . "/config/maplist.conf";
+
+
 # Group: Network
 
 # The network device that is configurable

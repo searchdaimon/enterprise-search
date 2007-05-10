@@ -45,6 +45,11 @@ if (defined $state{'submit'}) { #POST actions
 	if (defined $button->{'software_install_uploaded'}) {
 		($vars, $template_file) = $pagePackages->install_uploaded($vars);
 	}
+
+	# User wants to see siez for all lots.
+	if (defined $button->{'show_lot_size'}) {
+		($vars, $template_file) = $page->show_system_diagnostics($vars, {'show_lot_usage' => 1});
+	}
 }
 
 elsif (defined $state{'view'}) {

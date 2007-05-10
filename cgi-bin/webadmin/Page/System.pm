@@ -12,7 +12,10 @@ use config qw($CONFIG);
 use Data::Dumper;
 use Boitho::RaidStatus qw(getraidinfo);
 use Boitho::Infoquery;
+use SD::LotInfo;
 use config qw($CONFIG);
+
+my $lotinfo;
 
 sub new($) {
 	my $class = shift;
@@ -26,12 +29,15 @@ sub _init($$) {
 	my ($self, $dbh) = @_;
 	$self->{'sqlConfig'} = Sql::Config->new($dbh);
 	$self->{'infoQuery'} = Boitho::Infoquery->new($CONFIG->{'infoquery'});
+	$lotinfo = SD::LotInfo->new($CONFIG->{'maplist_path'});
+	
 }
 
-sub show_system_diagnostics($$) {
-	my ($self, $vars) = @_;
+sub show_system_diagnostics {
+	my ($self, $vars, $opt_ref) = @_;
 	my $template_file = "system_main.html";
-	
+	my @lots = $lotinfo->lot_info($opt_ref);
+	$vars->{'lotinfo'}     = \@lots;
 	$vars->{'raid'} 	   = $self->_raid_status;
 	$vars->{'integration'} = $self->_integration_status;
 	

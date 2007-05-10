@@ -505,9 +505,9 @@
     <item url="javascript/overview_update.js" uploadstatus="1" />
     <item url="templates/overview/overview_common.html" uploadstatus="1" />
     <item url="templates/overview/overview_inner.html" uploadstatus="1" />
-    <item url="templates/settings/settings_tabs.html" />
-    <item url="templates/settings/settings_network.html" />
-    <item url="Page/Settings/" />
-    <item url="Page/Settings/Network.pm" />
+    <item url="templates/settings/settings_tabs.html" uploadstatus="1" />
+    <item url="templates/settings/settings_network.html" uploadstatus="1" />
+    <item url="Page/Settings/" uploadstatus="1" />
+    <item url="Page/Settings/Network.pm" uploadstatus="1" />
   </project>
 </webproject>
