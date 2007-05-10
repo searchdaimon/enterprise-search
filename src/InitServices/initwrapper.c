@@ -19,7 +19,7 @@ void show_usage();
 
 // header end
 
-const char *valid_services[] = {"crawlManager", "boitho-bbdn", "searchdbb", '\0'};
+const char *valid_services[] = {"crawlManager", "boitho-bbdn", "searchdbb", "crawl_watch", '\0'};
 const char *valid_params[] = {"start", "stop", "restart", "status", '\0'};
 
 int main(int argc, char **argv) {
