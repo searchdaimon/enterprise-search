@@ -16,11 +16,9 @@ BEGIN {
 }
 use Boitho::Infoquery;
 
-
-
 my $cgi = CGI->new;
 my $state = CGI::State->state($cgi);
-print $cgi->header('text/html');
+
 
 my $vars = { };
 
@@ -128,6 +126,7 @@ else {
 }
 
 
+print $cgi->header(-type => 'text/html', -expires => 'now');
 
 my $template = Template->new(
 	{INCLUDE_PATH => './templates:./templates/overview:./templates/common',});
