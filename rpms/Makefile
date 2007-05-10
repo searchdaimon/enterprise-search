@@ -38,27 +38,30 @@ boithobb-setuid_version = 1.0.2
 boithobb-bbadminhtaccess_name = boithobb-bbadminhtaccess
 boithobb-bbadminhtaccess_version = 1.0.0
 
+boithobb-crawl_watch_name = boithobb-crawl_watch
+boithobb-crawl_watch_version = 1.0.0
+
 
 all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb
 
 setuidbb:
-	perl rpmmagic.pl $(boithobb-setuid_name) $(boithobb-setuid_version) /home/boitho/boitho/websearch /home/boitho/boithoTools setuid
+	perl rpmmagic.pl $(boithobb-setuid_name) $(boithobb-setuid_version) $(BOITHOHOME) /home/boitho/boithoTools setuid
 
 	rpm -bb $(boithobb-setuid_name).spec
 
 webclient:
 
-	perl rpmmagic.pl $(boitho-webclient_name) $(boitho-webclient_version) /home/boitho/boitho/websearch /home/boitho/boithoTools public_html/webclient
+	perl rpmmagic.pl $(boitho-webclient_name) $(boitho-webclient_version) $(BOITHOHOME) /home/boitho/boithoTools public_html/webclient
 
 	rpm -bb $(boitho-webclient_name).spec
 
 iindex:
-	perl rpmmagic.pl $(boitho-iindex_name) $(boitho-iindex_version) /home/boitho/boitho/websearch /home/boitho/boithoTools bin/IndexerLotbb bin/LotInvertetIndexMaker2 bin/mergeUserToSubname bin/mergeIIndex perl/cleanLots.pl
+	perl rpmmagic.pl $(boitho-iindex_name) $(boitho-iindex_version) $(BOITHOHOME) /home/boitho/boithoTools bin/IndexerLotbb bin/LotInvertetIndexMaker2 bin/mergeUserToSubname bin/mergeIIndex perl/cleanLots.pl
 
 	rpm -bb $(boitho-iindex_name).spec
 
 bbadminhtaccess:
-	perl rpmmagic.pl $(boithobb-bbadminhtaccess_name) $(boithobb-bbadminhtaccess_version) /home/boitho/boitho/websearch /home/boitho/boithoTools cgi-bin/webadmin/.htaccess cgi-bin/webadmin/.htpasswd
+	perl rpmmagic.pl $(boithobb-bbadminhtaccess_name) $(boithobb-bbadminhtaccess_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/webadmin/.htaccess cgi-bin/webadmin/.htpasswd
 
 	rpm -bb $(boithobb-bbadminhtaccess_name).spec
 
@@ -70,40 +73,45 @@ bbadmin:
 	rpm -bb $(boitho-bbadmin_name).spec
 
 boithoad:
-	perl rpmmagic.pl --initd boithoad $(boitho-ad_name) $(boitho-ad_version) /home/boitho/boitho/websearch /home/boitho/boithoTools bin/boithoad
+	perl rpmmagic.pl --initd boithoad $(boitho-ad_name) $(boitho-ad_version) $(BOITHOHOME) /home/boitho/boithoTools bin/boithoad
 
 	rpm -bb $(boitho-ad_name).spec
 
+crawl_watch:
+	perl rpmmagic.pl --initd crawl_watch $(boithobb-crawl_watch_name) $(boithobb-crawl_watch_version) $(BOITHOHOME) /home/boitho/boithoTools perl/crawl_watch.pl
+
+	rpm -bb $(boithobb-crawl_watch_name).spec
+
 
 everrun:
-	perl rpmmagic.pl $(boitho-everrun_name) $(boitho-everrun_version) /home/boitho/boitho/websearch /home/boitho/boithoTools bin/everrun
+	perl rpmmagic.pl $(boitho-everrun_name) $(boitho-everrun_version) $(BOITHOHOME) /home/boitho/boithoTools bin/everrun
 
 	rpm -bb $(boitho-everrun_name).spec
 
 infoquery:
-	perl rpmmagic.pl $(boitho-infoquery_name) $(boitho-infoquery_version) /home/boitho/boitho/websearch /home/boitho/boithoTools bin/infoquery
+	perl rpmmagic.pl $(boitho-infoquery_name) $(boitho-infoquery_version) $(BOITHOHOME) /home/boitho/boithoTools bin/infoquery
 
 	rpm -bb $(boitho-infoquery_name).spec
 
 searchdbb:
-	perl rpmmagic.pl --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) /home/boitho/boitho/websearch /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumb cgi-bin/ShowCache
+	perl rpmmagic.pl --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumb cgi-bin/ShowCache
 
 	rpm -bb $(boitho-searchdbb_name).spec
 
 
 crawlManager:
-	perl rpmmagic.pl --initd crawlManager $(boitho-crawlManager_name) $(boitho-crawlManager_version) /home/boitho/boitho/websearch /home/boitho/boithoTools bin/crawlManager crawlers
+	perl rpmmagic.pl --initd crawlManager $(boitho-crawlManager_name) $(boitho-crawlManager_version) $(BOITHOHOME) /home/boitho/boithoTools bin/crawlManager crawlers
 
 	rpm -bb $(boitho-crawlManager_name).spec
 
 
 boitho-bbdn:
-	perl rpmmagic.pl --initd boitho-bbdn $(boitho-boitho-bbdn_name) $(boitho-boitho-bbdn_version) /home/boitho/boitho/websearch /home/boitho/boithoTools bin/boitho-bbdn
+	perl rpmmagic.pl --initd boitho-bbdn $(boitho-boitho-bbdn_name) $(boitho-boitho-bbdn_version) $(BOITHOHOME) /home/boitho/boithoTools bin/boitho-bbdn
 
 	rpm -bb $(boitho-boitho-bbdn_name).spec
 
 fileFilter:
-	perl rpmmagic.pl $(boitho-fileFilter_name) $(boitho-fileFilter_version) /home/boitho/boitho/websearch /home/boitho/boithoTools fileFilter
+	perl rpmmagic.pl $(boitho-fileFilter_name) $(boitho-fileFilter_version) $(BOITHOHOME) /home/boitho/boithoTools fileFilter
 
 	rpm -bb $(boitho-fileFilter_name).spec
 
