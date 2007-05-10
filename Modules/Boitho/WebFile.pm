@@ -91,7 +91,7 @@ sub set_img_dir { $img_dir = shift }
 sub print_image() {
 	my ($size, $ext, $icon) = @_;
 	my $path = "$img_dir/$size/$icon.$ext";
-	print $cgi->header("image/$ext");
+	print $cgi->header(-type => "image/$ext", -expires => "+1h");
 	print_file_contents($path, "image");
 	1;
 }
