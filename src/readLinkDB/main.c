@@ -1,16 +1,13 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "../common/define.h"
-#include "../common/DocumentIndex.h"
 
 int main (int argc, char *argv[]) {
 
 	FILE *LINKDBFILE;
 
-	struct linkdb_block
-	{
-    		unsigned int        DocID_from;
-    		unsigned int        DocID_to;
-	};
 
 
 	struct linkdb_block linkdbPost;
@@ -34,28 +31,7 @@ int main (int argc, char *argv[]) {
 	
 	while (!feof(LINKDBFILE)) {
 		fread(&linkdbPost,sizeof(linkdbPost),1,LINKDBFILE);
-		//printf("%lu -> %lu\n",linkdbPost.DocID_from,linkdbPost.DocID_to);
-
-		
-		//på grun av bugs må vi filtrere ut nest DocID som var nestførst i forige  run
-		if (linkdbPost.DocID_to == 5619738) {		
-			FoundFromInfo = DIRead(&FromDocumentIndexPost,linkdbPost.DocID_from);
-
-			FoundToInfo = DIRead(&ToDocumentIndexPost,linkdbPost.DocID_to);
-	
-			if ((FoundFromInfo) && (FoundToInfo)) {
-				printf("%s (fip %lu) d: %u -> %s(tip %lu) D: %u\n",FromDocumentIndexPost.Url,FromDocumentIndexPost.IPAddress,linkdbPost.DocID_from,ToDocumentIndexPost.Url,ToDocumentIndexPost.IPAddress,linkdbPost.DocID_to);
-			}
-			else if (FoundFromInfo) {
-				printf("%s -> %u\n",FromDocumentIndexPost.Url,linkdbPost.DocID_to);
-			}
-			else if (FoundToInfo) {
-				printf("%u -> %s\n",linkdbPost.DocID_from,ToDocumentIndexPost.Url);
-                	}
-			else {
-				printf("a %u -> %u\n",linkdbPost.DocID_from,linkdbPost.DocID_to);
-			}
-		}
+		printf("%u -> %u\n",linkdbPost.DocID_from,linkdbPost.DocID_to);
 	}	
 
 
