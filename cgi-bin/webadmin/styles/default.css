@@ -179,7 +179,7 @@ A:active { color : blue; }
 }
 
 .message_box {
-	min-height : 64px; 
+	height : 64px; 
 	padding : 1em; 
 	border-top : 1px solid; 
 	border-bottom: 1px solid; 
@@ -204,7 +204,7 @@ A:active { color : blue; }
 	margin-right : 1em;
 	margin-top : 1em;
 	width : 60%;
-	padding-left : 1em;"
+	padding-left : 1em;
 }
 
 .connector_block {

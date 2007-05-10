@@ -45,7 +45,7 @@
 							[% END %]
 		
 							[% IF share.crawler_message %]
-								<div style="font-size : xx-small;">Status: [% share.crawler_message %]</div>
+								<div style="font-size : xx-small;">Status: [% HTML.escape(share.crawler_message) %]</div>
 							[% END %]
 						[% END %]
 					</td>
