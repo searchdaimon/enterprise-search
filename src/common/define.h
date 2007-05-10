@@ -416,6 +416,13 @@ struct anchorfileFormat {
 	char text[50];
 };
 
+struct linkdb_block
+{
+	unsigned int        DocID_from;
+	unsigned int        DocID_to;
+};
+
+
 struct udfileFormat {
 	unsigned char url[200];
 	unsigned int DocID;
