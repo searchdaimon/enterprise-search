@@ -499,6 +499,10 @@ addUrlsToIndex: src/addUrlsToIndex/main.c
 readLinkFile: src/readLinkFile/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/readLinkFile/main.c -o bin/readLinkFile $(LDFLAGS)
 
+mergeLinkDB:
+	(cd src/mergeLinkDB/; make)
+	cp src/mergeLinkDB/mergeLinkDB bin/mergeLinkDB
+
 anchorread: src/anchorread/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/anchorread/main.c -o bin/anchorread $(LDFLAGS)
 
