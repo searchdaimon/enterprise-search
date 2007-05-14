@@ -144,10 +144,13 @@ int find_by_from(struct linkdb_block * block_a, struct linkdb_block * block_b) {
 
 /**
  * Dump all remaining content of the file that is not at eof.
- * One of the files must be at eof, or this will have unexpected results.
  */
 void dump_remaining(FILE * file_a, FILE * file_b, FILE * out) {
-	FILE * in = (feof(file_a)) ? file_b : file_a;
+	FILE * in;
+	if (feof(file_a) && feof(file_b))
+		return;
+
+	in = (feof(file_a)) ? file_b : file_a;
 
 	struct linkdb_block block;
 	while (!feof(in)) {
