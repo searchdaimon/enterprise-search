@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-
 package Boitho::CrawlWatch;
 use strict;
 use warnings;
