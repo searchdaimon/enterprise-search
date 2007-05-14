@@ -159,7 +159,7 @@ void dump_remaining(FILE * file_a, FILE * file_b, FILE * out) {
 	}
 }
 
-int int_compare(int a, int b) {
+int int_compare(unsigned int a, unsigned int b) {
 	if (a < b)
 		return -1;
 	if (a > b)

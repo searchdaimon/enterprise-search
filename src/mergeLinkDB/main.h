@@ -12,6 +12,6 @@ void read_next_blocks(struct linkdb_block * block_a, struct linkdb_block * block
 				FILE * file_a, FILE * file_b, int block_out);
 int find_by_from(struct linkdb_block * block_a, struct linkdb_block * block_b);
 void dump_remaining(FILE * file_a, FILE * file_b, FILE * out);
-int int_compare(int a, int b);
+int int_compare(unsigned int a, unsigned int b);
 void write_out(FILE * output, struct linkdb_block * db_block);
 FILE * open_db_file(const char * filename);
