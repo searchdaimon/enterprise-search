@@ -2,7 +2,6 @@
 #
 # chkconfig: 345 99 10
 # description: Starts and stops the Boitho Daemon crawl_watch.pl.
-# processname: crawl_watch
 
 
 # Source function library.
@@ -14,13 +13,29 @@ else
   exit 0
 fi
 
+
+
 if [ "$BOITHOHOME" == "" ]; then
     export BOITHOHOME=/home/boitho/boithoTools
 fi
 # Byttes ut:
-B_RUN="/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $BOITHOHOME/perl/crawl_watch.pl"
+B_SCRIPT="$BOITHOHOME/perl/crawl_watch.pl"
+B_RUN="/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $B_SCRIPT"
 B_NAME=crawl_watch
 RETVAL=0
+
+
+Script_pids= # global var for last return of get_script_pids()
+##
+# Function to get pid for perl script.
+# send the perl process script argument as a pareameter.
+function get_script_pids {
+    scriptfile=$1
+    perls=`pidof /usr/bin/perl`
+    
+    Script_pids=`ps -o pid,args -w -p $perls | grep $scriptfile | awk '{ printf("%s ", $1); }'`
+}
+
 
 start() {
 	echo -n $"Starting Boitho Daemon "$B_NAME"."
@@ -44,9 +59,11 @@ stop() {
 	    pid=""
 	else
 	    pid=`ps -o pid,args -w -p $pids|grep $B_NAME|awk '{ printf("%s ", $1); }'`
+	    echo -n "pid: $pid"
 	fi
-	pid2=`pidof $BOITHOHOME/bin/$B_NAME`
-	pid="$pid $pid2"
+
+	get_script_pids $B_SCRIPT;
+	pid="$pid $Script_pids"
 
         # Kill it.
         if [ -n "${pid:-}" ] ; then
@@ -104,8 +121,8 @@ case "$1" in
 	else
 	    pid=`ps -o pid,args -w -p $pids|grep $B_NAME|awk '{ printf("%s ", $1); }'`
 	fi
-	pid2=`pidof $BOITHOHOME/bin/$B_NAME`
-	pid="$pid $pid2"
+	get_script_pids $B_SCRIPT
+	pid="$pid $Script_pids"
 	base=$B_NAME
 
 	if [ "$pid" != "" ] ; then
