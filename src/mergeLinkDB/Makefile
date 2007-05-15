@@ -1,5 +1,5 @@
 CC = gcc
-CCFLAGS = -Wall -g -c
+CCFLAGS = -Wall -g -c -D_FILE_OFFSET_BITS=64
 
 mergeLinkDB: main.o ../common/define.h
 	$(CC) $(LDFLAGS) $^ -o $@

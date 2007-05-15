@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "main.h"
 
@@ -12,25 +13,69 @@ int main (int argc, char *argv[]) {
 	
 	FILE * linkfile_a; 
 	FILE * linkfile_b; 
-	FILE * output;
+        FILE *outfh;
 
-	if (argc < 4) {
+        char *outfile = strdup("/tmp/sdweb-XXXXXX");
+        int outfd;
+
+	if (argc < 3) {
    		fprintf(stderr, "Programmet tar inn to linkdb filer og slaar de sammen");
-		fprintf(stderr, "til ny (sortert) fil\n\nUsage: ./mergeLinkDB db1 db2 output\n");
+		fprintf(stderr, "til ny (sortert) fil\n\nUsage: ./mergeLinkDB output linkdb\n");
 		exit(EXIT_FAILURE);
     	}
 	
+	//skriver ut lit status slik at vi kan se progresjon hvis vi kjører dette fra et skript
+	printf("merging %s < %s\n",argv[1],argv[2]);
+
 	linkfile_a = open_db_file(argv[1]);
 	linkfile_b = open_db_file(argv[2]);
 
+
+
+	//lager en temperert navn
+        if ((outfd = mkstemp(outfile)) == -1) {
+                perror("mkstemp");
+		exit(EXIT_FAILURE);
+        }
+
+
+	//åpner filen med det temerere navnet
+        if ((outfh = fdopen(outfd,"w")) == NULL) {
+                perror("mkstemp");
+		exit(EXIT_FAILURE);
+        }
+
+	#ifdef debug
+        printf("tmp outfile: \"%s\"\n",outfile);
+	#endif
+
+	/*
 	char * outfile = argv[3];
 	if ((output = fopen(outfile, "wb")) == NULL) {
 		fprintf(stderr, "Unable to write to file %s", outfile);
 		perror(outfile);
 		exit(EXIT_FAILURE);
 	}
+	*/
 
-	run_merge(linkfile_a, linkfile_b, output);
+	run_merge(linkfile_a, linkfile_b, outfh);
+
+	//må lokke før vi kopierer. Hvis ikke kan det være data i bufferen som ikke blir med.
+	fclose(outfh);
+	close(outfd);
+
+	//sletter den gamle filen
+	if (unlink(argv[1]) != 0) {
+		perror(argv[1]);
+	}
+
+	//flytter den nye filen slik at den blir output filen
+	if (rename(outfile,argv[1]) == -1) {
+		perror("rename");
+		exit(EXIT_FAILURE);
+	}
+
+	free(outfile);
 
 	return 1;
 }
@@ -178,7 +223,7 @@ void write_out(FILE * output, struct linkdb_block * db_block) {
 FILE * open_db_file(const char * filename) {
     FILE * fh;
     if ((fh = fopen(filename, "rb")) == NULL) {
-		fprintf(stderr, "Unable to read file %s", filename);
+		fprintf(stderr, "Unable to open file. ");
 		perror(filename);
 		exit(EXIT_FAILURE);
     }
