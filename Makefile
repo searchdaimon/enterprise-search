@@ -262,6 +262,32 @@ missinglotDetectLocal: src/missinglotDetectLocal/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/missinglotDetectLocal/main.c  -o bin/missinglotDetectLocal $(LDFLAGS)
 
+sortLinkdb: src/linkdbTools/sortLinkdb.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/linkdbTools/sortLinkdb.c  -o bin/sortLinkdb $(LDFLAGS)
+
+BrankCalculate2GetPageElements: src/BrankCalculate2GetPageElements/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate2GetPageElements/main.c  -o bin/BrankCalculate2GetPageElements $(LDFLAGS)
+
+
+BrankCalculate2Publish: src/BrankCalculate2Publish/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate2Publish/main.c  -o bin/BrankCalculate2Publish $(LDFLAGS)
+
+
+vipurls: src/vipurls/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/vipurls/main.c  -o bin/vipurls $(LDFLAGS)
+
 netlotStart: src/netlotStart/main.c
 	@echo ""
 	@echo "$@:"
@@ -511,6 +537,9 @@ BrankCalculate:	src/BrankCalculate/main.c
 
 BrankCalculate2: src/BrankCalculate2/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate2/*.c -o bin/BrankCalculate2 $(LDFLAGS)
+
+BrankCalculate3: src/BrankCalculate3/main.c
+	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate3/*.c -o bin/BrankCalculate3 $(LDFLAGS)
 
 BrankMerge: src/BrankMerge/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankMerge/*.c -o bin/BrankMerge $(LDFLAGS)
