@@ -31,13 +31,13 @@ while (1) { #main loop
 
 	if (defined $next_crawl and $next_crawl < RECHECK_DELAY) {
 	    logwrite("Crawl check done. Next scheduled in in ", 
-		int($next_crawl / 60), " minutes\n");
+		int($next_crawl / 60), " minutes");
 
 	    sleep $next_crawl;
 	}
 	else {
 	    logwrite("Crawl check done. Next scheduled in in ", 
-		int(RECHECK_DELAY / 60), " minutes.\n");
+		int(RECHECK_DELAY / 60), " minutes.");
 	    
 	    sleep RECHECK_DELAY;
 	}
@@ -56,9 +56,10 @@ sub logwrite {
     my $success = open my $logh, ">>", LOG_FILE;
 
     if ($success) { 
-	my $time = gmtime(time());
-	print {$logh} "$time - ";
-	print {$logh} join(q{}, @data);
+		my $time = gmtime(time());
+		print {$logh} "$time - ";
+		print {$logh} join(q{}, @data);
+		print {$logh} "\n";
     }
     else {
 	warn "Unable to write to logfile: $!. Disableing logging.";
@@ -295,14 +296,14 @@ sub crawl {
 	my $collection = shift;
 	my $infoquery = Boitho::Infoquery->new(PATH_TO_INFOQUERY);
 	if ($infoquery->crawlCollection($collection)) {
-		logwrite("Crawling $collection\n");
+		logwrite("Crawling $collection");
 	}
 	else {
 		my $error = "";
 		if ($infoquery->get_error) {
 			$error = $infoquery->get_error;
 		}
-		logwrite("Unable to crawl $collection, $error \n");
+		logwrite("Unable to crawl $collection, $error");
 	}
 	1;
 }
