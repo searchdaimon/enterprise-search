@@ -39,7 +39,7 @@ boithobb-bbadminhtaccess_name = boithobb-bbadminhtaccess
 boithobb-bbadminhtaccess_version = 1.0.0
 
 boithobb-crawl_watch_name = boithobb-crawl_watch
-boithobb-crawl_watch_version = 1.0.0
+boithobb-crawl_watch_version = 1.0.1
 
 
 all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb

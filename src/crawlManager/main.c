@@ -142,7 +142,8 @@ int crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,(*collection).connector)) {
 		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.\n");
-		exit(1);
+		//exit(1);
+		return 0;
 	}
 
 	printf("wil crawl \"%s\"\n",(*collection).resource);
@@ -688,8 +689,9 @@ int crawlcanconect (char cvalue[]) {
 	cm_searchForCollection(cvalue,&collection,&nrofcollections);
 	printf("crawlcanconect: cm_searchForCollection done\n");
 	if (nrofcollections == 1) {
-		/*
-		Temp: funger ikke når vi kompilerer debug
+		
+		#ifndef DEBUG
+		//Temp: funger ikke når vi kompilerer debug. Må også compilere crawlManager debug
 		//make a conectina for add to use
 		if (!bbdn_conect(&collection[0].socketha,"",global_bbdnport)) {
 			//berror("can't conect to bbdn (boitho backend document server)\n");
@@ -703,7 +705,7 @@ int crawlcanconect (char cvalue[]) {
 		//ber bbdn om å lukke
 		printf("closeing bbdn con\n");
                 bbdn_close(&collection[0].socketha);
-		*/
+		#endif
 	}
 	else {
 		printf("crawlcanconect: Error got back %i coll to crawl\n",nrofcollections);
@@ -772,21 +774,28 @@ cm_setCrawStartMsg(struct collectionFormat *collection,int nrofcollections) {
 	}
 }
 
-//dette bør nokk på litt sikt flyttes ut i dokument manageren
-int crawl_lock(FILE *LOCK, char collection[]) {
 
+struct collection_lockFormat {
 	char lockfile[512];
+	FILE *LOCK;	
+};
 
-	sprintf(lockfile,"/tmp/boitho-%s.lock",collection);
+//dette bør nokk på litt sikt flyttes ut i dokument manageren
+int crawl_lock(struct collection_lockFormat *collection_lock, char collection[]) {
 
-	if ((LOCK = fopen(lockfile,"w+")) == NULL) {
-		perror(lockfile);
+	//oppretter var mappen hvis den ikke finnes. Dette slik at vi slipper og gjøre dette under instalsjonen
+	bmkdir_p(bfile("var/"),0755);
+
+	sprintf((*collection_lock).lockfile,"var/boitho-%s.lock",collection);
+
+	if (((*collection_lock).LOCK = bfopen((*collection_lock).lockfile,"w+")) == NULL) {
+		perror((*collection_lock).lockfile);
 		return 0;
 	}
 
 	//trying to get a lock. If we can we vil keep it as long we are crawling to rewnet dublicat crawling
-	if (flock(fileno(LOCK),LOCK_EX | LOCK_NB) != 0) {
-		fclose(LOCK);
+	if (flock(fileno((*collection_lock).LOCK),LOCK_EX | LOCK_NB) != 0) {
+		fclose((*collection_lock).LOCK);
 		return 0;
 	}	
 	else {
@@ -794,8 +803,10 @@ int crawl_lock(FILE *LOCK, char collection[]) {
 	}
 
 }
-int crawl_unlock(FILE *LOCK) {
-	return fclose(LOCK);
+int crawl_unlock(struct collection_lockFormat *collection_lock) {
+	fclose((*collection_lock).LOCK);
+	unlink((*collection_lock).lockfile);
+	return 1;
 }
 
 int crawl (struct collectionFormat *collection,int nrofcollections, int flag) {
@@ -805,13 +816,14 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag) {
 	FILE *LOCK;
 
 	//if (nrofcollections == 1) {
+	struct collection_lockFormat collection_lock;
 
 	for(i=0;i<nrofcollections;i++) {
 
 		blog(LOGACCESS,1,"Starting crawl of collection \"%s\" (id %u)\n",collection[i].collection_name,collection[i].id);
 
 		//tester at vi ikke allerede holder på å crawle denne fra før
-		if (!crawl_lock(LOCK,collection[i].collection_name)) {
+		if (!crawl_lock(&collection_lock,collection[i].collection_name)) {
 			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". Are all redy crawling it.\n",collection[i].collection_name);
 			continue;
 		}
@@ -868,7 +880,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag) {
 
 		}
 
-		crawl_unlock(LOCK);
+		crawl_unlock(&collection_lock);
 
 		blog(LOGACCESS,1,"Finished crawling of collection \"%s\" (id %u)\n",collection[i].collection_name,collection[i].id);
 
