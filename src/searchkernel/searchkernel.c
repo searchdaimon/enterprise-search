@@ -259,7 +259,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 
 					
 					if (((*Sider).DocumentIndex.SummaryPointer != 0) && 
-							((rReadSummary(&DocID,&metadesc, &titleaa,&body,(*Sider).DocumentIndex.SummaryPointer,(*Sider).DocumentIndex.SummarySize,subname) != 0))) {
+							((rReadSummary(DocID,&metadesc, &titleaa,&body,(*Sider).DocumentIndex.SummaryPointer,(*Sider).DocumentIndex.SummarySize,subname) != 0))) {
 
 							printf("hav Summary on disk\n");
 	
@@ -270,8 +270,11 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 						
 							//må være med når No title buggen er fikset. Slett dette og hakk ut det over
 							//ToDo minne kopiering er kansje ikke det raskeste her
+							/*
+							//vi bruker ikke html buffer engdernede, men body
 							strcpy(htmlBuffer,body);
 							htmlBufferSize = strlen(htmlBuffer);
+							*/
 							printf("titleaa %s\n",titleaa);
 
 							(*Sider).HtmlPreparsed = 1;
@@ -327,30 +330,35 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 					
 					char        *summary;
 			                //generate_highlighting( QueryData.queryParsed, body, strlen(body)+1, &summary );
-					generate_snippet( QueryData.queryParsed, body, strlen(body), &summary, "<b>", "</b>" , 160);
-
-					debug("summary len %i\nsummary:\n-%s-\n",strlen(summary),summary);
-					
-					if (strlen(summary) > (sizeof((*Sider).description) -1) ) {
-						sprintf((*Sider).description,"Sumary to lang at %i.",strlen(summary));
+					//temp: bug generate_snippet er ikke ut til å takle og ha en tom body
+					if (strlen(body) == 0) {
+						(*Sider).description[0] = '\0';
 					}
 					else {
-						strscpy((*Sider).description,summary,sizeof((*Sider).description));
-					}
-
-					utfclean((*Sider).description,sizeof((*Sider).description));
-
-					//sjekker om vi har en & på slutten. Hvis vi har skal det også være en ;. Dette får å ungå at
-					//vi har klart å kappe av før ; en kommer, eks: v Frp&rsquo ...
-					char *andcp;
-					if ((andcp = strrchr((*Sider).description,'&')) != NULL) {
-						if (strchr(andcp,';') == NULL) {
-							andcp[0] = '\0';
-						}
-					}
-
-					free(summary);
+						generate_snippet( QueryData.queryParsed, body, strlen(body), &summary, "<b>", "</b>" , 160);
 					
+						printf("summary len %i\nsummary:\n-%s-\n",strlen(summary),summary);
+					
+						if (strlen(summary) > (sizeof((*Sider).description) -1) ) {
+							sprintf((*Sider).description,"Error: Sumary to large. Was %i but only space for %i.",strlen(summary),sizeof((*Sider).description) -1);
+						}
+						else {
+							strscpy((*Sider).description,summary,sizeof((*Sider).description));
+						}
+					
+						utfclean((*Sider).description,sizeof((*Sider).description));
+
+						//sjekker om vi har en & på slutten. Hvis vi har skal det også være en ;. Dette får å ungå at
+						//vi har klart å kappe av før ; en kommer, eks: v Frp&rsquo ...
+						char *andcp;
+						if ((andcp = strrchr((*Sider).description,'&')) != NULL) {
+							if (strchr(andcp,';') == NULL) {
+								andcp[0] = '\0';
+							}
+						}
+
+						free(summary);
+					}
 
 					debug("%u -%s-, len %i\n",DocID,titleaa,strlen(titleaa));
 
@@ -1265,8 +1273,8 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	#endif
 
 	printf("filters:\n");
-	printf("\tcantDIRead %i\n",(*SiderHeder).filtersTraped.cantDIRead);
 
+	printf("\t%-40s %i\n","cantDIRead",(*SiderHeder).filtersTraped.cantDIRead);
 	printf("\t%-40s %i\n","filterAdultWeight_1",(*SiderHeder).filtersTraped.filterAdultWeight_1);
 	printf("\t%-40s %i\n","filterSameCrc32_1",(*SiderHeder).filtersTraped.filterSameCrc32_1);
 	printf("\t%-40s %i\n","filterSameUrl",(*SiderHeder).filtersTraped.filterSameUrl);
@@ -1280,8 +1288,36 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 
 	printf("\n\n");
 
+	#ifdef EXPLAIN_RANK
+	printf("|%-10s|%-10s||%-10s|%-10s|%-10s|%-18s|%-10s|%-10s|\n",
+		"TermRank",
+		"PopRank",
+		"Body",
+		"Headline",
+		"Tittel",
+		"Athor (nr)",
+		"UrlM",
+		"Url"
+		);
+	printf("|----------|----------||----------|----------|----------|------------------|----------|----------|\n");
 
+	for(i=0;i<(*SiderHeder).showabal;i++) {
+                        printf("|%10i|%10i||%10i|%10i|%10i|%10i (%5i)|%10i|%10i| %s\n",
 
+				Sider[i].iindex.TermRank,
+				Sider[i].iindex.PopRank,
+
+				Sider[i].iindex.rank_explaind.rankBody,
+				Sider[i].iindex.rank_explaind.rankHeadline,
+				Sider[i].iindex.rank_explaind.rankTittel,
+				Sider[i].iindex.rank_explaind.rankAthor,
+				Sider[i].iindex.rank_explaind.nrAthor,
+				Sider[i].iindex.rank_explaind.rankUrl_mainbody,
+				Sider[i].iindex.rank_explaind.rankUrl,
+				Sider[i].DocumentIndex.Url
+				);
+	}
+	#endif
 }
 
 

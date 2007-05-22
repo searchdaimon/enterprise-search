@@ -27,7 +27,7 @@
 #include <unistd.h>
 
 
-#define cfg_main "config/searchd.conf"
+#define cfg_searchd "config/searchd.conf"
 
 #ifdef WITH_THREAD
 	#include <pthread.h>
@@ -102,11 +102,11 @@ int main(int argc, char *argv[])
 
   	/* Load the file */
 	#ifdef DEBUG
-  	printf("loading [%s]..\n",bfile(cfg_main));
+  	printf("loading [%s]..\n",bfile(cfg_searchd));
 	#endif
 
-  	if (!config_read_file(&cfg, bfile(cfg_main))) {
-    		printf("[%s]failed: %s at line %i\n",bfile(cfg_main),config_error_text(&cfg),config_error_line(&cfg));
+  	if (!config_read_file(&cfg, bfile(cfg_searchd))) {
+    		printf("[%s]failed: %s at line %i\n",bfile(cfg_searchd),config_error_text(&cfg),config_error_line(&cfg));
 		exit(1);
 	}
 	//#endif	
