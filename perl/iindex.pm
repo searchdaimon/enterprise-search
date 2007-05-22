@@ -55,7 +55,7 @@ sub add {
 }
 
 sub WriteIIndexToFile {
-	my($self,$type,$revindexFilNr,$lotNr) = @_;
+	my($self,$type,$revindexFilNr,$lotNr,$subname) = @_;
 
 	
 	foreach my $sprok (keys %{ $self->{'iindex'} }) {
@@ -63,7 +63,7 @@ sub WriteIIndexToFile {
 		#lagrer på samme plass som lot med samme nr
 		#my $LotPath = Boitho::Lot::GetFilePathForIindex($revindexFilNr);
 		
-		my $LotPath = Boitho::Lot::GetFilPathForLot($lotNr);
+		my $LotPath = Boitho::Lot::GetFilPathForLot($lotNr,$subname);
 		#fjerner / på slutten
 		chop($LotPath);
 
@@ -119,7 +119,8 @@ sub WriteIIndexToFile {
 
 			print IINDEX pack('L L',$term,$countAntall);
 
-			print "term $term, antall $countAntall\n";
+			#debug: viser hva vi har av treff
+			#print "term $term, antall $countAntall\n";
 			#sorterer på DocID og lager index
 			foreach my $DocID (sort {$a <=> $b} keys %TermHash) {
 					
@@ -135,11 +136,14 @@ sub WriteIIndexToFile {
                                         print "smaler then 1: ${ $TermHash{$DocID} }[0]\n";
                                 }
 
-				print IINDEX pack('L L',$DocID,${ $TermHash{$DocID} }[0]);
+				#print IINDEX pack('L L',$DocID,${ $TermHash{$DocID} }[0]);
+				#14 may. språk støtte
+				print IINDEX pack('L A L',$DocID,0,${ $TermHash{$DocID} }[0]);
 
 				print IINDEX ${ $TermHash{$DocID} }[1]; #legger til hit list
-
-				print "\tDocID: $DocID antall: ${ $TermHash{$DocID} }[0]\n";
+					
+				#debug: viser ting
+				#print "\tDocID: $DocID antall: ${ $TermHash{$DocID} }[0]\n";
 			
 			}
 			

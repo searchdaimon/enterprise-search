@@ -15,7 +15,7 @@ use constant AntallBarrals => 64; # må være lik som i iindex.pm
 # innvariabler:
 # $updateMode, hvilken type oppdateing vi skal gjøre, enten >> for appending, eller > for overskriving, samme som for filer
 sub OpenForApending {
-	my($class,$type,$LotNr,$updateMode) = @_;
+	my($class,$type,$LotNr,$updateMode,$subname) = @_;
 	#my $class = '';
 	my $self = {}; #allocate new hash for objekt
 	
@@ -33,7 +33,7 @@ sub OpenForApending {
 	my $i = 0;
 
 	#henter lot path, slik at vi vet hvor vi skal lagre
-	my $Path = Boitho::Lot::GetFilPathForLot($LotNr);
+	my $Path = Boitho::Lot::GetFilPathForLot($LotNr,$subname);
 	$Path = $Path . '/revindex/' . $type;
 	
 	#sjekker om den pathen fins, hvis ikke lagrer vi den
@@ -76,7 +76,11 @@ sub ApendAray {
 		my $bukket = fmod($crc32,AntallBarrals);
 	
 		if (!$self->{inalisert}->{$bukket}) {
-			print { $self->{filhonterere}->{$bukket} } pack('L A3',$DocID,$sprok);
+			
+			#print { $self->{filhonterere}->{$bukket} } pack('L A3',$DocID,$sprok);
+			#14 may 2007. Gjør om til å bruke tall som språk. Må legge til støtte til og finne rikig,
+			#ikke bare skrive 0
+			print { $self->{filhonterere}->{$bukket} } pack('L A',$DocID,0);
 			$self->{inalisert}->{$bukket} = 1;
 		}
 	

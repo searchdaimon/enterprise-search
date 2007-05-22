@@ -31,7 +31,7 @@ if ($#ARGV < 1) {
 my $type = $ARGV[0];
 my $lotNr = $ARGV[1];
 
-if (!Boitho::Lot::lotHasSufficientSpace($lotNr,4096)) {
+if (!Boitho::Lot::lotHasSufficientSpace($lotNr,4096,subname)) {
 	print "Has insufficient space\n";
 	exit;
 }
@@ -63,7 +63,7 @@ if ($#ARGV == 1) {
 else {
         print "Indexing bucket $ARGV[2]\n";
 
-        Indekser($ARGV[2],'Main',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Main');
+        Indekser($ARGV[2],'Main',Boitho::Lot::GetFilPathForLot($lotNr,subname). 'revindex/Main');
 }
 
 }
@@ -76,7 +76,7 @@ if ($#ARGV == 1) {
         	print "$i\n";
 
         	eval {  #eval slik at vi bare fortsetter hvis det skjer noe feil
-                	Indekser($i,'Athor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Athor');
+                	Indekser($i,'Athor',Boitho::Lot::GetFilPathForLot($lotNr,subname). 'revindex/Athor');
         	}; warn $@ if $@;
 	}
 }
@@ -179,8 +179,9 @@ sub Indekser {
 							#print "length " . length($RindexRecord) . "\n";
 							#print "$RindexRecord\n";
 							#print " -" . substr($RindexRecord,0,4) . "-\n";
-							my ($DocID,$sprok) = unpack('L A3',substr($RindexRecord,0,7)) or warn("cant substr: $!");
-							$lestTilOgMed = $lestTilOgMed + 7;
+							#my ($DocID,$sprok) = unpack('L A3',substr($RindexRecord,0,7)) or warn("cant substr: $!");
+							my ($DocID,$sprok) = unpack('L A',substr($RindexRecord,0,5)) or warn("cant substr: $!");
+							$lestTilOgMed = $lestTilOgMed + 5;
 		
 							#print "DocID: $DocID\n";
 							#print "DocID: $DocID, sprok: $sprok\n";
@@ -207,7 +208,7 @@ sub Indekser {
 							
 								my $HitListSize = $antall * 2;
 								if ((length($RindexRecord) - $lestTilOgMed) < $HitListSize) {
-                                                                        print "error hitlis to long DocID: $DocID\n";
+                                                                        print "error hitlis to long DocID: $DocID, lestTilOgMed $lestTilOgMed, HitListSize $HitListSize\n";
                                                                         last;
                                                                 }
 
@@ -222,7 +223,9 @@ sub Indekser {
 									$iindex_ha->add($sprok,$DocID,$WordID,$antall,$HitList);
 								}
 								else {
-									print "lang \"$sprok\" not supported WordID: $WordID, antall: $antall\n";
+									#print "lang \"$sprok\" not supported WordID: $WordID, antall: $antall\n";
+									#14 may 2007, legger til linjen under får å prøve å ha støtte for stpåk tall
+									$iindex_ha->add("aa",$DocID,$WordID,$antall,$HitList);
 								}
 							}
 							if ($lestTilOgMed != length($RindexRecord)) {
@@ -238,5 +241,5 @@ sub Indekser {
 	}
 	#close(INF) or die ("Cant close file: $!");
 
-	$iindex_ha->WriteIIndexToFile($type,$revindexFilNr,$lotNr);
+	$iindex_ha->WriteIIndexToFile($type,$revindexFilNr,$lotNr,subname);
 }
