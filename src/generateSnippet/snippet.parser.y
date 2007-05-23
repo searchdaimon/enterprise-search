@@ -20,6 +20,16 @@ YY_BUFFER_STATE bsgp_scan_bytes( const char *bytes, int len, yyscan_t yyscanner 
 struct bsgp_yy_extra *bsgpget_extra( yyscan_t yyscanner );
 // ---
 
+#ifdef DEBUG
+#define DEBUG_ON
+#endif
+
+#ifdef DEBUG2
+#ifndef DEBUG_ON
+#define DEBUG_ON
+#endif
+#endif
+
 
 struct bsg_intern_data
 {
@@ -44,7 +54,7 @@ struct bsg_intern_data
     int		history_crnt, history_size;
     int		*phrase_sizes;
     int		num_queries;
-#ifdef DEBUG
+#ifdef DEBUG_ON
     char	sbuf[2048];
     int		spos;
     char	last_top;
@@ -247,30 +257,32 @@ static inline int buf_printf(struct bsg_intern_data *data, const char *fmt, ...)
 }
 
 
-// TODO: Rydde i denne funksjonen:
-static inline void test_for_snippet(struct bsg_intern_data *data, char forced)
+static inline void calculate_snippet(struct bsg_intern_data *data, char forced, int type, container *Q, int *VMatch_start, int maxsize, char verbose)
 {
-	    while (queue_size(data->Q) > 0 && (((data->bpos - pair(queue_peak(data->Q)).first.i) > data->snippet_size) || forced))
+    while (queue_size(Q) > 0 && (((data->bpos - pair(queue_peak(Q)).first.i) > maxsize) || forced))
+	{
+	    value	temp = queue_peak(Q);
+	    int 	pos, flags;
+	    value	phrase;
+	    int		i, j;
+	    char	m;
+	    int		d_hits;
+	    int		score=0;
+#ifdef DEBUG_ON
+	    int		_spos = 0;
+	    char	_sbuf[2048];
+#endif
+
+	    pos = pair(temp).first.i;
+	    flags = pair(temp).second.i;
+
+#ifdef DEBUG_ON
+	    if (verbose)
 		{
-		    value	temp = queue_peak(data->Q);
-		    int 	pos, flags;
-		    value	phrase;
-		    int		i, j;
-		    char	m;
-		    int		d_hits;
-		    int		score=0;
-
-		    pos = pair(temp).first.i;
-		    flags = pair(temp).second.i;
-
-#ifdef DEBUG
-		    int		_spos = 0;
-		    char	_sbuf[2048];
-
 		    if (forced)
 			_spos+= sprintf(_sbuf+_spos, "frc ");
 		    else
-			_spos+= sprintf(_sbuf+_spos, "%i ", (data->bpos - pair(queue_peak(data->Q)).first.i) );
+			_spos+= sprintf(_sbuf+_spos, "%i ", (data->bpos - pair(queue_peak(Q)).first.i) );
 
 		    if (flags & v_section_div)
 			_spos+= sprintf(_sbuf+_spos, "D");
@@ -291,150 +303,146 @@ static inline void test_for_snippet(struct bsg_intern_data *data, char forced)
 			_spos+= sprintf(_sbuf+_spos, "s");
 		    else
 			_spos+= sprintf(_sbuf+_spos, "_");
+		}
 #endif
 
-		    for (i=data->VMatch_start; i<vector_size(data->VMatch)
-			&& pair(vector_get(data->VMatch,i)).first.i < pos; i++);
-		    data->VMatch_start = i;
+	    for (i=(*VMatch_start); i<vector_size(data->VMatch)
+		&& pair(vector_get(data->VMatch,i)).first.i < pos; i++);
+	    (*VMatch_start) = i;
 
-		    m = (i < vector_size(data->VMatch));
+	    m = (i < vector_size(data->VMatch));
 
-		    if (m)
-			{
-			    phrase = vector_get(data->VMatch,i);
-			}
+	    if (m)
+		{
+		    phrase = vector_get(data->VMatch,i);
+		}
 
-		    int		treff[data->num_queries];
-		    int		sum_hits = 0;
-		    int		k;
-		    int		bin_hits = 0;
+	    int		treff[data->num_queries];
+	    int		sum_hits = 0;
+	    int		k;
+	    int		bin_hits = 0;
 
-		    for (k=0; k<data->num_queries; k++)
-			treff[k] = 0;
+	    for (k=0; k<data->num_queries; k++)
+		treff[k] = 0;
 
-		    for (k=data->VMatch_start; k<vector_size(data->VHit); k++)
-			{
-			    int		a = vector_get(data->VHit,k).i;
-			    treff[a]++;
-			    sum_hits+= data->phrase_sizes[a];
+	    for (k=(*VMatch_start); k<vector_size(data->VHit); k++)
+		{
+		    int		a = vector_get(data->VHit,k).i;
+		    treff[a]++;
+		    sum_hits+= data->phrase_sizes[a];
 
-			    if (a<32) bin_hits|= (1<<a);
-			}
+		    if (a<32) bin_hits|= (1<<a);
+		}
 
-		    d_hits = 0;
-		    for (k=0; k<data->num_queries; k++)
-			if (treff[k])
-			    d_hits++;
+	    d_hits = 0;
+	    for (k=0; k<data->num_queries; k++)
+		if (treff[k])
+		    d_hits++;
 
-//		    printf("[%i] ", d_hits);
+//	    printf("[%i] ", d_hits);
 
-		    int		closeness = 0;
+	    int		closeness = 0;
 
+	    {
+	    int		l, n;
+	    int		diff[data->num_queries];
+	    int		matrix[data->num_queries][data->num_queries];
+
+	    for (l=0; l<data->num_queries; l++)
+		diff[l] = -1;
+
+	    for (l=0; l<data->num_queries; l++)
+		for (n=0; n<data->num_queries; n++)
+		    matrix[l][n] = 10000;
+
+	    int		lastnr = -1;
+	    for (j = (*VMatch_start); j<vector_size(data->VWordNr); j++)
+		{
+		    int		thisnr = vector_get(data->VWordNr,j).i;
+		    int		thisq = vector_get(data->VHit,j).i;
+		    int		z;
+
+		    if (lastnr>=0)
 		    {
-		    int		l, n;
-		    int		diff[data->num_queries];
-		    int		matrix[data->num_queries][data->num_queries];
-
-		    for (l=0; l<data->num_queries; l++)
-			diff[l] = -1;
-
-		    for (l=0; l<data->num_queries; l++)
-			for (n=0; n<data->num_queries; n++)
-			    matrix[l][n] = 10000;
-
-		    int		lastnr = -1;
-		    for (j = data->VMatch_start; j<vector_size(data->VWordNr); j++)
-			{
-			    int		thisnr = vector_get(data->VWordNr,j).i;
-			    int		thisq = vector_get(data->VHit,j).i;
-			    int		z;
-
-			    if (lastnr>=0)
+		    for (z=0; z<data->num_queries; z++)
+		    {
+			if (diff[z] >= 0 && z!=thisq)
 			    {
-//			    _spos+= sprintf(_sbuf+_spos, "-");
-			    for (z=0; z<data->num_queries; z++)
-			    {
-				if (diff[z] >= 0 && z!=thisq)
-				    {
-				    if (thisnr-diff[z] < matrix[thisq][z])
-					{
-					    matrix[thisq][z] = matrix[z][thisq] = thisnr-diff[z];
-					}
-//				    _spos+= sprintf(_sbuf+_spos, "|%i", thisnr-diff[z]);
-				    }
-//				else if (z==thisq)
-//				    _spos+= sprintf(_sbuf+_spos, "|o");
-//				else
-//				    _spos+= sprintf(_sbuf+_spos, "|x");
-			    }
-//			    _spos+= sprintf(_sbuf+_spos, "|- ");
-			    }
-
-//			    _spos+= sprintf(_sbuf+_spos, "%i ", thisnr);
-			    lastnr = thisnr;
-			    diff[thisq] = thisnr;
-			}
-
-		    int		bucket[4];
-
-		    for (l=0; l<4; l++)
-			bucket[l] = 0;
-
-		    for (l=0; l<data->num_queries; l++)
-			for (n=l+1; n<data->num_queries; n++)
-			    {
-				if (matrix[l][n] == 1)
-				    bucket[0]++;
-				else if (matrix[l][n] == 2)
-				    bucket[1]++;
-				else if (matrix[l][n] <= 4)
-				    bucket[2]++;
-				else
-				    bucket[3]++;
-				
-//				_spos+= sprintf(_sbuf+_spos, "(%i:%i=[%i])", l, n, matrix[l][n]);
-			    }
-
-		    int		rest = 0;
-//		    _spos+= sprintf(_sbuf+_spos, " :");
-		    for (l=0; l<4; l++)
-			{
-			    bucket[l]+= rest;
-			    if (bucket[l]>3)
+			    if (thisnr-diff[z] < matrix[thisq][z])
 				{
-				    rest = bucket[l]-3;
-				    bucket[l] = 3;
+				    matrix[thisq][z] = matrix[z][thisq] = thisnr-diff[z];
 				}
-//			    _spos+= sprintf(_sbuf+_spos, "%i:", bucket[l]);
-			    closeness+= bucket[l]<<((3-l)*2);
+			    }
+		    }
+		    }
+
+		    lastnr = thisnr;
+		    diff[thisq] = thisnr;
+		}
+
+	    int		bucket[4];
+
+	    for (l=0; l<4; l++)
+		bucket[l] = 0;
+
+	    for (l=0; l<data->num_queries; l++)
+		for (n=l+1; n<data->num_queries; n++)
+		    {
+			if (matrix[l][n] == 1)
+			    bucket[0]++;
+			else if (matrix[l][n] == 2)
+			    bucket[1]++;
+			else if (matrix[l][n] <= 4)
+			    bucket[2]++;
+			else
+			    bucket[3]++;
+		    }
+
+	    int		rest = 0;
+
+	    for (l=0; l<4; l++)
+		{
+		    bucket[l]+= rest;
+		    if (bucket[l]>3)
+			{
+			    rest = bucket[l]-3;
+			    bucket[l] = 3;
 			}
 
-#ifdef DEBUG
+		    closeness+= bucket[l]<<((3-l)*2);
+		}
+
+#ifdef DEBUG_ON
+	    if (verbose)
+		{
 		    _spos+= sprintf(_sbuf+_spos, "\033[1;35m");
 		    _spos+= sprintf(_sbuf+_spos, " (%i) ", closeness);
 		    _spos+= sprintf(_sbuf+_spos, "\033[0m");
+		}
 #endif
-		    }
+	    }
 
-		    // Calculate score:
-		    score|= (d_hits<<17);
-		    score|= (closeness<<9);
-		    if (sum_hits > 15)
-			score|= 0xf0;
-		    else
-			score|= (sum_hits<<5);
+	    // Calculate score:
+	    score|= (d_hits<<17);
+	    score|= (closeness<<9);
+	    if (sum_hits > 15)
+		score|= 0xf0;
+	    else
+		score|= (sum_hits<<5);
 
-		    if ((flags & v_section_div) && !(flags & v_section_head))
-			score|= 16;
-		    if ((flags & v_section_div) && (flags & v_section_head))
-			score|= 8;
-		    if (!(flags & v_section_div) && (flags & v_section_head))
-			score|= 4;
-		    if ((flags & v_section_span))
-			score|= 2;
-		    if ((flags & v_section_sentence))
-			score|= 1;
+	    if ((flags & v_section_div) && !(flags & v_section_head))
+		score|= 16;
+	    if ((flags & v_section_div) && (flags & v_section_head))
+		score|= 8;
+	    if (!(flags & v_section_div) && (flags & v_section_head))
+		score|= 4;
+	    if ((flags & v_section_span))
+		score|= 2;
+	    if ((flags & v_section_sentence))
+		score|= 1;
 
+	    if (type==1)
+		{
 		    if (score > data->best_score)
 			{
 			    data->best_score = score;
@@ -442,7 +450,25 @@ static inline void test_for_snippet(struct bsg_intern_data *data, char forced)
 			    data->best_stop = data->bpos;
 			    data->best_hits = bin_hits;
 			}
-#ifdef DEBUG
+		}
+	    else
+		{
+		    for (k=0; k<data->num_queries; k++)
+			{
+			    if (treff[k] && score > data->q_best_score[k])
+				{
+//				    printf("(%i)", k);
+				    data->q_best_score[k] = score;
+				    data->q_best_start[k] = pos;
+				    data->q_best_stop[k] = data->bpos;
+				    data->q_best_hits[k] = bin_hits;
+				}
+			}
+		}
+
+#ifdef DEBUG_ON
+	    if (verbose)
+		{
 		    _spos+= sprintf(_sbuf+_spos, "\033[1;31m");
 		    _spos+= sprintf(_sbuf+_spos, "%5i ", score);
 		    _spos+= sprintf(_sbuf+_spos, "\033[0m");
@@ -480,234 +506,31 @@ static inline void test_for_snippet(struct bsg_intern_data *data, char forced)
 		    data->last_top = (score > data->last_score);
 		    data->last_score = score;
 		    memcpy(data->sbuf, _sbuf, 2048);
-#endif
-		    queue_pop(data->Q);
-
-		    if (forced && queue_size(data->Q) > 0 &&  ((data->bpos - pair(queue_peak(data->Q)).first.i) < (data->snippet_size*3/4)))
-			break;
 		}
-
-  // *******************************************************
-
-	    while (queue_size(data->Q2) > 0 && (((data->bpos - pair(queue_peak(data->Q2)).first.i) > (data->snippet_size/2)) || forced))
-		{
-		    value	temp = queue_peak(data->Q2);
-		    int 	pos, flags;
-		    value	phrase;
-		    int		i, j;
-		    char	m;
-		    int		d_hits;
-		    int		score=0;
-
-		    pos = pair(temp).first.i;
-		    flags = pair(temp).second.i;
-
-#ifdef DEBUG2
-		    if (forced)
-			printf("frc ");
-		    else
-			printf("%i ", (data->bpos - pair(queue_peak(data->Q)).first.i) );
-
-		    if (flags & v_section_div)
-			printf("D");
-		    else
-			printf("_");
-
-		    if (flags & v_section_head)
-			printf("H");
-		    else
-			printf("_");
-
-		    if (flags & v_section_span)
-			printf("S");
-		    else
-			printf("_");
-
-		    if (flags & v_section_sentence)
-			printf("s");
-		    else
-			printf("_");
 #endif
 
-		    for (i=data->VMatch_start2; i<vector_size(data->VMatch)
-			&& pair(vector_get(data->VMatch,i)).first.i < pos; i++);
-		    data->VMatch_start2 = i;
+	    queue_pop(Q);
 
-		    m = (i < vector_size(data->VMatch));
+	    if (forced && queue_size(Q) > 0 &&  ((data->bpos - pair(queue_peak(Q)).first.i) < (maxsize*3/4)))
+		break;
+	}
+}
 
-		    if (m)
-			{
-			    phrase = vector_get(data->VMatch,i);
-			}
 
-		    int		treff[data->num_queries];
-		    int		sum_hits = 0;
-		    int		k;
-		    int		bin_hits = 0;
 
-		    for (k=0; k<data->num_queries; k++)
-			treff[k] = 0;
-
-		    for (k=data->VMatch_start2; k<vector_size(data->VHit); k++)
-			{
-			    int		a = vector_get(data->VHit,k).i;
-			    treff[a]++;
-			    sum_hits+= data->phrase_sizes[a];
-
-			    if (a<32) bin_hits|= (1<<a);
-			}
-
-		    d_hits = 0;
-		    for (k=0; k<data->num_queries; k++)
-			if (treff[k])
-			    d_hits++;
-
-//		    printf("[%i] ", d_hits);
-//---
-		    int		closeness = 0;
-
-		    {
-		    int		l, n;
-		    int		diff[data->num_queries];
-		    int		matrix[data->num_queries][data->num_queries];
-
-		    for (l=0; l<data->num_queries; l++)
-			diff[l] = -1;
-
-		    for (l=0; l<data->num_queries; l++)
-			for (n=0; n<data->num_queries; n++)
-			    matrix[l][n] = 10000;
-
-		    int		lastnr = -1;
-		    for (j = data->VMatch_start; j<vector_size(data->VWordNr); j++)
-			{
-			    int		thisnr = vector_get(data->VWordNr,j).i;
-			    int		thisq = vector_get(data->VHit,j).i;
-			    int		z;
-
-			    if (lastnr>=0)
-			    {
-			    for (z=0; z<data->num_queries; z++)
-			    {
-				if (diff[z] >= 0 && z!=thisq)
-				    {
-				    if (thisnr-diff[z] < matrix[thisq][z])
-					{
-					    matrix[thisq][z] = matrix[z][thisq] = thisnr-diff[z];
-					}
-				    }
-			    }
-			    }
-
-			    lastnr = thisnr;
-			    diff[thisq] = thisnr;
-			}
-
-		    int		bucket[4];
-
-		    for (l=0; l<4; l++)
-			bucket[l] = 0;
-
-		    for (l=0; l<data->num_queries; l++)
-			for (n=l+1; n<data->num_queries; n++)
-			    {
-				if (matrix[l][n] == 1)
-				    bucket[0]++;
-				else if (matrix[l][n] == 2)
-				    bucket[1]++;
-				else if (matrix[l][n] <= 4)
-				    bucket[2]++;
-				else
-				    bucket[3]++;
-				
-			    }
-
-		    int		rest = 0;
-
-		    for (l=0; l<4; l++)
-			{
-			    bucket[l]+= rest;
-			    if (bucket[l]>3)
-				{
-				    rest = bucket[l]-3;
-				    bucket[l] = 3;
-				}
-			    closeness+= bucket[l]<<((3-l)*2);
-			}
+static inline void test_for_snippet(struct bsg_intern_data *data, char forced)
+{
+#ifdef DEBUG
+    calculate_snippet(data, forced, 1, data->Q, &(data->VMatch_start), data->snippet_size, 1);
+#else
+    calculate_snippet(data, forced, 1, data->Q, &(data->VMatch_start), data->snippet_size, 0);
+#endif
 
 #ifdef DEBUG2
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;35m");
-		    _spos+= sprintf(_sbuf+_spos, " (%i) ", closeness);
-		    _spos+= sprintf(_sbuf+_spos, "\033[0m");
+    calculate_snippet(data, forced, 2, data->Q2, &(data->VMatch_start2), data->snippet_size/2, 1);
+#else
+    calculate_snippet(data, forced, 2, data->Q2, &(data->VMatch_start2), data->snippet_size/2, 0);
 #endif
-		    }
-
-		    // Calculate score:
-		    score|= (d_hits<<17);
-		    score|= (closeness<<9);
-
-		    if (sum_hits > 15)
-			score|= 0xf0;
-		    else
-			score|= (sum_hits<<5);
-
-		    if ((flags & v_section_div) && !(flags & v_section_head))
-			score|= 16;
-		    if ((flags & v_section_div) && (flags & v_section_head))
-			score|= 8;
-		    if (!(flags & v_section_div) && (flags & v_section_head))
-			score|= 4;
-		    if ((flags & v_section_span))
-			score|= 2;
-		    if ((flags & v_section_sentence))
-			score|= 1;
-
-		    for (k=0; k<data->num_queries; k++)
-			{
-			    if (treff[k] && score > data->q_best_score[k])
-				{
-//				    printf("(%i)", k);
-				    data->q_best_score[k] = score;
-				    data->q_best_start[k] = pos;
-				    data->q_best_stop[k] = data->bpos;
-				    data->q_best_hits[k] = bin_hits;
-				}
-			}
-#ifdef DEBUG2
-		    printf("%5i ", score);
-		    printf("{%i} ", bin_hits);
-
-		    for (;pos < data->bpos; pos++)
-			{
-			    if (m && pos == pair(phrase).first.i)
-				{
-				    printf("\033[1;36m\'");
-				}
-
-			    if (m && pos == pair(phrase).second.i)
-				{
-				    printf("\'\033[0m");
-
-				    i++;
-				    m = (i < vector_size(data->VMatch));
-
-				    if (m)
-					{
-					    phrase = vector_get(data->VMatch,i);
-					}
-				}
-
-			    printf("%c", data->buf[pos]);
-			}
-		    if (m && pos == pair(phrase).second.i)
-			printf("\'\033[0m");
-		    printf("\n");
-#endif
-		    queue_pop(data->Q2);
-
-		    if (forced && queue_size(data->Q2) > 0 &&  ((data->bpos - pair(queue_peak(data->Q2)).first.i) < (data->snippet_size*3/8)))
-			break;
-		}
 }
 
 
@@ -1118,6 +941,7 @@ void generate_snippet( query_array qa, char text[], int text_size, char **output
 
     data->A = build_automaton(sigma_size, qw);
     free(qw);
+    free(sigma);
 
     data->best_score = 0;
     data->best_start = 0;
@@ -1162,9 +986,22 @@ void generate_snippet( query_array qa, char text[], int text_size, char **output
     destroy(data->Q2);
     destroy(data->Q);
 
+    free(data->q_best_score);
+    free(data->q_best_start);
+    free(data->q_best_stop);
+    free(data->q_best_hits);
+
     free(data->q_stop);
     free(data->q_dep);
 //    printf("%s\n", data->buf);
+    free(data->accepted);
+    free(data->history);
+    free(data->phrase_sizes);
+
+    for (i=0; i<num_qw+1; i++)
+	free(data->d[i]);
+    free(data->d);
+
     free(data->buf);
 
     free(data);
