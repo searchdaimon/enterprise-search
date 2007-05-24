@@ -1,5 +1,5 @@
 /**
- *	(C) Copyleft 2006, Magnus Galåen
+ *	(C) Copyleft 2006-2007, Magnus Galåen
  *
  *	dvector.h: Vector-container.
  */
@@ -22,9 +22,6 @@ extern inline void vector_pushback( container *C, ... );
 extern inline value vector_get( container *C, int id );
 
 extern inline void vector_set( container *C, int id, value v );
-/*
-{
-    return ((vector_container_priv*)C->priv)->elem[id];
-}
-*/
+
+
 #endif	// _DVECTOR_H_
