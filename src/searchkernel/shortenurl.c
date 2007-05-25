@@ -13,11 +13,26 @@ void shortenurl(char *url,int urllen) {
 	int added, suburllen;
 	int i;
 	char slash[2];
-
+	int len;
+	len = strlen(url);
 	printf("inn url %s\n",url);
 
+	//tar bort http:// først
+	if (strncmp(url,"http://",7) == 0) {
+		strcpy(url,url +7);
+	}
+
+	//tar bort / sist
+	len -= 7 ;
+
+	if (url[len -1] == '/') {
+		url[len -1] = '\0';
+	}
+
+	len -= 1;
+
 	//hvis den er kort kan vi bare returnere
-	if (strlen(url) < 80) {
+	if (len < 80) {
 		return;
 	}
 

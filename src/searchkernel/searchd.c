@@ -49,6 +49,7 @@ char servername[32];
 //#endif
 
 #ifdef WITH_PROFILING
+	#define profiling_maxruncount 3
 	static int profiling_runcount = 0;
 #endif
 
@@ -826,13 +827,14 @@ void *do_chld(void *arg)
 
 /***************************************/
 		#ifdef WITH_PROFILING
-			if (profiling_runcount >= 0) {
+			++profiling_runcount;
+
+			if (profiling_runcount >= profiling_maxruncount) {
 				printf("exiting to do profiling. Hav done %i runs\n",profiling_runcount);
 				sleep(1);
 				exit(1);
 			}
 			printf("hav runed %i times\n",profiling_runcount);
-			++profiling_runcount;
 		#endif
 
  }

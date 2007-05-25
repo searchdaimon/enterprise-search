@@ -419,7 +419,7 @@ static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
 void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray, 
 		unsigned long WordIDcrc32, char * IndexType, char *IndexSprok,
 		struct subnamesFormat *subname, 
-		int (*rank)(const unsigned short *,const int,const unsigned int DocID,struct subnamesFormat *subname),
+		int (*rank)(const unsigned short *,const int,const unsigned int DocID,struct subnamesFormat *subname, struct iindexFormat *TeffArray),
 		int languageFilterNr, int languageFilterAsNr[] ) {
 
 
@@ -450,17 +450,22 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	unsigned short hit;
 
 
-	int isv3 = 0;
-
+	int isv3 = 1;
+/*
 	//temp. FIkser at ikke alle indekser er v3
 	if (strcmp(IndexType,"Main") == 0) {
 		printf("vv: %s is v3\n",IndexType);
 		isv3 = 1;
 	}
+	else if (strcmp(IndexType,"Url") == 0) {
+		printf("vv: %s is v3\n",IndexType);
+		isv3 = 1;
+	}	
 	else {
 		printf("vv: %s is NOT v3\n",IndexType);
 		isv3 = 0;
 	}
+*/
 	printf("languageFilterNr: %i\n",languageFilterNr);
 	//temp:
 	//isv3 = 0;
@@ -599,8 +604,8 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				TeffArray[y].indexFiltered.date = 0;
 			#endif
 
-                        TeffArray[y].TermRank = rank(TeffArray[y].hits,TeffArray[y].TermAntall,TeffArray[y].DocID,subname);
-			printf("TermRank: %i, subname \"%s\", DocID %u\n",TeffArray[y].TermRank,(*TeffArray[y].subname).subname,TeffArray[y].DocID);
+                        TeffArray[y].TermRank = rank(TeffArray[y].hits,TeffArray[y].TermAntall,TeffArray[y].DocID,subname,&TeffArray[y]);
+			//printf("TermRank: %i, subname \"%s\", DocID %u\n",TeffArray[y].TermRank,(*TeffArray[y].subname).subname,TeffArray[y].DocID);
 
 			#ifndef BLACK_BOKS
 				//midlertidig bug fiks. Ignorerer hit med DocID 0.

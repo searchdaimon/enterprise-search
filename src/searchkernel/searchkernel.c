@@ -138,7 +138,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 				imagep =  getImagepFromRadres((*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize);
 				printf("imakep %u\n",(unsigned int)imagep);
 				#ifdef BLACK_BOKS
-			sprintf((*Sider).thumbnale,"/cgi-bin/ShowThumb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",
+			sprintf((*Sider).thumbnale,"/cgi-bin/ShowThumbbb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",
 						rLotForDOCid(DocID),
 						(unsigned int)imagep,
 						(*Sider).DocumentIndex.imageSize,
@@ -185,7 +185,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 				memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
 				
 				(*SiderHeder).showabal++;
-				returnStatus = 0;
+				returnStatus = 1;
 			}
 			else {
 				//int rread (struct ReposetoryFormat *ReposetoryData,unsigned int *radress,unsigned int *rsize,unsigned long DocID)			
@@ -275,7 +275,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 							strcpy(htmlBuffer,body);
 							htmlBufferSize = strlen(htmlBuffer);
 							*/
-							printf("titleaa %s\n",titleaa);
+							//printf("titleaa %s\n",titleaa);
 
 							(*Sider).HtmlPreparsed = 1;
 
@@ -337,7 +337,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 					else {
 						generate_snippet( QueryData.queryParsed, body, strlen(body), &summary, "<b>", "</b>" , 160);
 					
-						printf("summary len %i\nsummary:\n-%s-\n",strlen(summary),summary);
+						//printf("summary len %i\nsummary:\n-%s-\n",strlen(summary),summary);
 					
 						if (strlen(summary) > (sizeof((*Sider).description) -1) ) {
 							sprintf((*Sider).description,"Error: Sumary to large. Was %i but only space for %i.",strlen(summary),sizeof((*Sider).description) -1);
@@ -870,7 +870,7 @@ temp: 25 des 2006
 	}
 	}
 
-	printf("******************************\nfreeing htmlBuffer\n******************************\n");
+	//printf("******************************\nfreeing htmlBuffer\n******************************\n");
 	free(htmlBuffer);
 
 	//return 1;
@@ -1195,10 +1195,11 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	#ifdef BLACK_BOKS
 		searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,&(*SiderHeder).queryTime);
 	
-		//fjerner filtered fra total oversikten
-		//ToDo: bør dette også gjøres for web?
-		(*SiderHeder).TotaltTreff = (*SiderHeder).TotaltTreff - (*SiderHeder).filtered;
 	#endif
+
+	//fjerner filtered fra total oversikten
+	//ToDo: bør dette også gjøres for web?
+	(*SiderHeder).TotaltTreff = (*SiderHeder).TotaltTreff - (*SiderHeder).filtered;
 
 	//lager en liste med ordene som ingikk i queryet til hiliting
 	hiliteQuery[0] = '\0';
@@ -1250,16 +1251,22 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 
 	//printer ut info om brukt tid
 	printf("Time\n");
-	printf("\tAthorSearch %f\n",(*SiderHeder).queryTime.AthorSearch);
-	printf("\tAthorRank %f\n",(*SiderHeder).queryTime.AthorRank);
-	printf("\tMainSearch %f\n",(*SiderHeder).queryTime.MainSearch);
-	printf("\tMainRank %f\n",(*SiderHeder).queryTime.MainRank);
-	printf("\tMainAthorMerge %f\n",(*SiderHeder).queryTime.MainAthorMerge);
-	printf("\tallrankCalc %f\n",(*SiderHeder).queryTime.allrankCalc);
-	printf("\tindexSort %f\n",(*SiderHeder).queryTime.indexSort);
-	printf("\tpopResult %f\n",(*SiderHeder).queryTime.popResult);
-	printf("\tadultcalk %f\n",(*SiderHeder).queryTime.adultcalk);
+	//printf("\tAthorSearch %f\n",(*SiderHeder).queryTime.AthorSearch);
+	printf("\t%-40s %f\n","AthorSearch",(*SiderHeder).queryTime.AthorSearch);
+	printf("\t%-40s %f\n","AthorRank",(*SiderHeder).queryTime.AthorRank);
+	printf("\t%-40s %f\n","MainSearch",(*SiderHeder).queryTime.MainSearch);
+	printf("\t%-40s %f\n","MainRank",(*SiderHeder).queryTime.MainRank);
+	printf("\t%-40s %f\n","MainAthorMerge",(*SiderHeder).queryTime.MainAthorMerge);
+	printf("\n");
+	printf("\t%-40s %f\n","popRank",(*SiderHeder).queryTime.popRank);
+	printf("\t%-40s %f\n","responseShortning",(*SiderHeder).queryTime.responseShortning);
+	printf("\n");
+	printf("\t%-40s %f\n","allrankCalc",(*SiderHeder).queryTime.allrankCalc);
+	printf("\t%-40s %f\n","indexSort",(*SiderHeder).queryTime.indexSort);
+	printf("\t%-40s %f\n","popResult",(*SiderHeder).queryTime.popResult);
+	printf("\t%-40s %f\n","adultcalk",(*SiderHeder).queryTime.adultcalk);
 
+	
 
 	#ifdef BLACK_BOKS
 	printf("\tfiletypes %f\n",(*SiderHeder).queryTime.filetypes);

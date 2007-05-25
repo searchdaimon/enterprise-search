@@ -116,7 +116,7 @@ int rankAthor(const unsigned short *hits, int nrofhit,const unsigned int DocID,s
 	return rank;
 }
 
-int rank_calc(int nr, char *rankArray,char rankArrayLen) {
+static inline int rank_calc(int nr, char *rankArray,char rankArrayLen) {
 
 	if (nr == 0) {
 		return 0;
@@ -1219,6 +1219,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	TmpArray 	= (struct iindexFormat *)malloc(maxIndexElements * sizeof(struct iindexFormat));
 	TmpArrayLen = 0;
 
+	/*
 	//Athor
 	if (searchIndex_thread_arg_Athor.resultArrayLen > 0) {
 		(*TeffArrayElementer) = 0;
@@ -1237,8 +1238,12 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		memcpy(TeffArray,TmpArray,sizeof(struct iindexFormat) * TmpArrayLen);
 		(*TeffArrayElementer) = TmpArrayLen;
 	}
-
-
+	*/
+	//ormerger Athor og Url inn i en temper array
+	or_merge(TmpArray,&TmpArrayLen,searchIndex_thread_arg_Athor.resultArray,searchIndex_thread_arg_Athor.resultArrayLen,
+		searchIndex_thread_arg_Url.resultArray,searchIndex_thread_arg_Url.resultArrayLen);
+	
+	/*
 	//Main
 	if (searchIndex_thread_arg_Main.resultArrayLen > 0) {
 		or_merge(TmpArray,&TmpArrayLen,TeffArray,(*TeffArrayElementer),
@@ -1247,7 +1252,14 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		memcpy(TeffArray,TmpArray,sizeof(struct iindexFormat) * TmpArrayLen);
 		(*TeffArrayElementer) = TmpArrayLen;
 	}
-
+	*/
+	//merger inn temperer og main 
+	or_merge(TeffArray,TeffArrayElementer,TmpArray,TmpArrayLen,
+		searchIndex_thread_arg_Main.resultArray,searchIndex_thread_arg_Main.resultArrayLen);
+	free(searchIndex_thread_arg_Athor.resultArray);
+	free(searchIndex_thread_arg_Url.resultArray);
+	free(searchIndex_thread_arg_Main.resultArray);
+	
 	//sjekker at dokumenter er i Aclen
 
 	free(TmpArray);
@@ -1258,17 +1270,14 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 	gettimeofday(&start_time, NULL);
 
-	/*
-	for (i = 0; i < (*TeffArrayElementer); i++) {
-		printf("aaa TeffArray: \"%s\" (i %i)\n",(*TeffArray[i].subname).subname,i);			
-	}
-	*/
 
-	y=0;
+	//y=0;
        	for (i = 0; i < (*TeffArrayElementer); i++) {
-       	        PopRank = popRankForDocIDMemArray(TeffArray[i].DocID);
+       	        //PopRank = popRankForDocIDMemArray(TeffArray[i].DocID);
 		//neste linje må fjeres hvis vi skal ha forkorting
-		TeffArray[i].PopRank = PopRank;
+		//TeffArray[i].PopRank = PopRank;
+		TeffArray[i].PopRank = popRankForDocIDMemArray(TeffArray[i].DocID);
+
 		//her kan vi ha forkortning av array
 		//if (PopRank > 0) {
                	//	TeffArray[y] = TeffArray[i];
@@ -1281,6 +1290,11 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
         (*queryTime).popRank = getTimeDifference(&start_time,&end_time);
 
 	//kutter ned på treff errayen, basert på rank. Slik at vå får ferre elemeneter å sortere
+
+	//totalt treff. Viv il så korte ned TeffArray
+	(*TotaltTreff) = (*TeffArrayElementer);
+
+	gettimeofday(&start_time, NULL);
 
 	#ifdef WITH_RANK_FILTER
 	
@@ -1307,10 +1321,11 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 			--responseShortTo;
 
 			y += rankcount[responseShortTo];
+			#ifdef DEBUG
 			if (rankcount[responseShortTo] != 0) {
 				printf("rank %i: %i\n",responseShortTo,(int)rankcount[responseShortTo]);
 			}
-
+			#endif
 
 		} while((responseShortTo>0) && (y <= responseShortToMin));
 		
@@ -1335,14 +1350,12 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	
 	#endif
 
-	gettimeofday(&start_time, NULL);
 
 
         gettimeofday(&end_time, NULL);
         (*queryTime).responseShortning = getTimeDifference(&start_time,&end_time);
 
 
-	(*TotaltTreff) = (*TeffArrayElementer);
 
 
 /*
