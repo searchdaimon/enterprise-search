@@ -1799,6 +1799,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 void searchFilterInit(struct filtersFormat *filters, int dates[]) {
 
+	int i;
+
 	(*filters).filtypes.nrof 	= 0;
 	(*filters).collections.nrof 	= 0;
 

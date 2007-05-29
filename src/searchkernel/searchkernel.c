@@ -919,7 +919,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	//struct iindexFormat *TeffArray;
 
 	#ifdef BLACK_BOKS
-	searchFilterInit(filters);
+	searchFilterInit(filters,dates);
 	#endif
 
 	//int godPages; //antal sider som kan vises. (ikke det samme som antal sider som faktisk skal vises )

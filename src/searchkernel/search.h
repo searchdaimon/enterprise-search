@@ -19,5 +19,5 @@ int searchFilterCount(int *TeffArrayElementer,
 			struct queryTimeFormat *queryTime
 		);
 
-void searchFilterInit(struct filtersFormat *filters);
+void searchFilterInit(struct filtersFormat *filters,int dates[]);
 #endif
