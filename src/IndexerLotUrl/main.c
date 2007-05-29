@@ -5,6 +5,8 @@
 #include "../common/DocumentIndex.h"
 #include "../common/ir.h"
 #include "../common/revindex.h"
+#include "../common/url.h"
+#include "../common/bstr.h"
 
 #define subname "www"
 
@@ -13,6 +15,7 @@ int main (int argc, char *argv[]) {
 
 	struct DocumentIndexFormat DocumentIndexPost;
 	int lotNr;
+	int i;
 	unsigned int DocID;
 	char domainArray[10][64];	
 	char url[201];
@@ -24,6 +27,9 @@ int main (int argc, char *argv[]) {
 	unsigned short hits;
 	int nr;
 	int y;
+	unsigned char lang;
+	char **Data;
+  	int Count, TokCount;
 
         if (argc < 2) {
                 printf("Dette programet leser en DocumentIndex. Gi det et lot nr. \n\n\tUsage: ./readDocumentIndex 1");
@@ -37,39 +43,42 @@ int main (int argc, char *argv[]) {
 
 
 	while (DIGetNext (&DocumentIndexPost,lotNr,&DocID,subname)) {
+
+
 		if (DocumentIndexPost.Url[0] == '\0') {
 
 		}
 		else if (strncmp(DocumentIndexPost.Url,"http://",7) != 0) {
 			//printf("no http: %s\n",DocumentIndexPost.Url);
 		}
-		else if (!find_domain(DocumentIndexPost.Url,domain)) {
+		else if (!find_domain(DocumentIndexPost.Url,domain,sizeof(domain))) {
 			//printf("!find_domain %s\n",DocumentIndexPost.Url);
 		}
 		else {
 			//printf("DocID: %u, url: %s\n",DocID,DocumentIndexPost.Url);
 
-			
+			#ifdef DEBUG
+			printf("url: \"%s\", DocID %u\n",DocumentIndexPost.Url,DocID);
+			printf("dd: %s\n",domain);
+			#endif
 
-			//printf("dd: %s\n",domain);
-			
-			cpntlast = domain;
+
+
+  			TokCount = split(domain, ".", &Data);
 
 			hits = 1;
-			while ((cpnt = strrchr(cpntlast,'.')) != NULL) {
-	
-				cpntlast[cpnt - cpntlast] = '\0';;			
+			for (i=(TokCount-1);i>=0;i--) {
 			
-				++cpnt;
 
-	
 			
-				if ((strcmp(cpnt,"www") != 0) && (!isStoppWord(cpnt))) {
+
+				if ((strcmp(Data[i],"www") != 0) && (!isStoppWord(Data[i]))) {
 				
-					//printf("\t%s %i\n",cpnt,hits);
-
+					#ifdef DEBUG
+					printf("\t\"%s\" %i\n",Data[i],hits);
+					#endif
 			
-					WordID = crc32boitho(cpnt);
+					WordID = crc32boitho(Data[i]);
 
                 			bucket = WordID % NrOfDataDirectorys;
 
@@ -78,7 +87,12 @@ int main (int argc, char *argv[]) {
 					nr = 1; 
                 
         	        		fwrite(&DocID,sizeof(unsigned int),1,revindexFilesHa[bucket]);
-        	        		fprintf(revindexFilesHa[bucket],"aa ");
+					//runarb: 13 mai 2007. vi har byttet til å bruke et tal for språk.
+					//burde da dette fra DocumentIndex hvis det finnes, men lagres ikke der
+					//må si i IndexRes på hvordan vi gjør det der
+        	        		//fprintf(revindexFilesHa[bucket],"aa ");
+					lang = 0;
+					fwrite(&lang,sizeof(unsigned char),1,revindexFilesHa[bucket]);
 
         	        		fwrite(&WordID,sizeof(unsigned long),1,revindexFilesHa[bucket]);
         	        		fwrite(&nr,sizeof(unsigned long),1,revindexFilesHa[bucket]);
@@ -92,13 +106,14 @@ int main (int argc, char *argv[]) {
 					++hits;
 				}
 				else {
-					//printf("\tskipt: %s %i\n",cpnt,hits);
+					//printf("\tskipt: %s %i\n",Data[i],hits);
 
 					++hits;
 				}
 
 
 			}
+  			FreeSplitList(Data);
 
 			
 		}
