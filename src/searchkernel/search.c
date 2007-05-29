@@ -68,7 +68,7 @@ static int filesequalkeys(void *k1, void *k2)
 }
 
 
-int rankUrl(const unsigned short *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexFormat *TeffArray) {
+static inline int rankUrl(const unsigned short *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexFormat *TeffArray) {
 	int rank, i;
 
 	rank = 0;
@@ -91,7 +91,7 @@ int rankUrl(const unsigned short *hits, int nrofhit,const unsigned int DocID,str
 	return rank;
 }
 
-int rankAthor(const unsigned short *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexFormat *TeffArray) {
+static inline int rankAthor(const unsigned short *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexFormat *TeffArray) {
 	int rank, i, nr;
 
 	nr = 0;
@@ -131,10 +131,10 @@ static inline int rank_calc(int nr, char *rankArray,char rankArrayLen) {
 	}
 }
 
-int rankAcl(const unsigned short *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexFormat *TeffArray) {
+static inline int rankAcl(const unsigned short *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexFormat *TeffArray) {
 	return 1;
 }
-int rankMain(const unsigned short *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexFormat *TeffArray) {
+static inline int rankMain(const unsigned short *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexFormat *TeffArray) {
 
 
 	int i;
@@ -151,38 +151,38 @@ int rankMain(const unsigned short *hits, int nrofhit,const unsigned int DocID,st
         // kjører gjenom anttall hit
 	for (i = 0;i < nrofhit; i++) {
 
-					//printf("\thit %i\n",(int)hits[i]);
-                                        /*************************************************
-                                        lagger til poeng
-                                        *************************************************/
-                                        if (hits[i] >= 1000) {      //Body
-                                                ++nrBody;
-                                        }
-                                        else if (hits[i] >= 500) {  //Headline
-                                                ++nrHeadline;
-                                        }
-                                        else if (hits[i] >= 100) {  //Tittel
-						//spesialtilfelle. er først title ord 
-						//Hvis vi er første ord i titleen vil det rangeres spesielt
-						if (hits[i] == 100) {	
-							rank += (*subname).config.rankTittelFirstWord;
-						}
-						else {
-                                                	++nrTittel;
-						}
-                                        }
-                                        else if (hits[i] == 2) {
+		//printf("\thit %i\n",(int)hits[i]);
+                /*************************************************
+                lagger til poeng
+                *************************************************/
+                if (hits[i] >= 1000) {      //Body
+                	++nrBody;
+                }
+                else if (hits[i] >= 500) {  //Headline
+                	++nrHeadline;
+                }
+                else if (hits[i] >= 100) {  //Tittel
+			//spesialtilfelle. er først title ord 
+			//Hvis vi er første ord i titleen vil det rangeres spesielt
+			if (hits[i] == 100) {	
+				rank += (*subname).config.rankTittelFirstWord;
+			}
+			else {
+                               	++nrTittel;
+			}
+               	}
+                else if (hits[i] == 2) {
 
-			                      //poengUrl += poengForMainUrlWord;
-                                        }
-                                        else if (hits[i] >= 1) {    //url
-                                                // ingen urler i body mere
-                                                //poengUrl += poengForUrl;
-                                        }
-                                        else {
-                                                //printf("Error, fikk inn 0 eller mindre\n");
-                                        }
-                                        /**************************************************/
+                	//poengUrl += poengForMainUrlWord;
+               	}
+                else if (hits[i] >= 1) {    //url
+                	// ingen urler i body mere
+                	//poengUrl += poengForUrl;
+                }
+                else {
+                	//printf("Error, fikk inn 0 eller mindre\n");
+                }
+                /**************************************************/
         }
 
 
@@ -672,9 +672,38 @@ int searchIndex_getnrs(char *indexType,query_array *queryParsed,struct subnamesF
 	return nr;
 }
 
+void rankUrlArray(int TeffArrayElementer, struct iindexFormat *TeffArray,struct subnamesFormat *subname) {
+	int y;
+
+	for (y=0; y<TeffArrayElementer; y++) {
+		TeffArray[y].TermRank = rankUrl(TeffArray[y].hits,TeffArray[y].TermAntall,TeffArray[y].DocID,subname,&TeffArray[y]);
+	}
+}
+void rankAthorArray(int TeffArrayElementer, struct iindexFormat *TeffArray,struct subnamesFormat *subname) {
+	int y;
+
+	for (y=0; y<TeffArrayElementer; y++) {
+		TeffArray[y].TermRank = rankAthor(TeffArray[y].hits,TeffArray[y].TermAntall,TeffArray[y].DocID,subname,&TeffArray[y]);
+	}
+}
+void rankAclArray(int TeffArrayElementer, struct iindexFormat *TeffArray,struct subnamesFormat *subname) {
+	int y;
+
+	for (y=0; y<TeffArrayElementer; y++) {
+		TeffArray[y].TermRank = rankUrl(TeffArray[y].hits,TeffArray[y].TermAntall,TeffArray[y].DocID,subname,&TeffArray[y]);
+	}
+}
+void rankMainArray(int TeffArrayElementer, struct iindexFormat *TeffArray,struct subnamesFormat *subname) {
+	int y;
+
+	for (y=0; y<TeffArrayElementer; y++) {
+		TeffArray[y].TermRank = rankMain(TeffArray[y].hits,TeffArray[y].TermAntall,TeffArray[y].DocID,subname,&TeffArray[y]);
+	}
+}
+
 void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat *TeffArray,
 		query_array *queryParsed,struct iindexFormat *TmpArray,struct subnamesFormat *subname, 
-		int (*rank)(const unsigned short *,const int,const unsigned int DocID,struct subnamesFormat *subname, struct iindexFormat *TeffArray), 
+		void (*rank)(int TeffArrayElementer, struct iindexFormat *TeffArray,struct subnamesFormat *subname), 
 		int languageFilterNr, 
 		int languageFilterAsNr[]){
 
@@ -750,13 +779,16 @@ for (i=0; i<(*queryParsed).n; i++)
 						//if (*TeffArrayElementer == 0) {
 						if (i == 0) {
 							TmpArrayLen = (*TeffArrayElementer);
-							GetIndexAsArray(TeffArrayElementer,TeffArray,WordIDcrc32,indexType,"aa",subname,rank,languageFilterNr, languageFilterAsNr);
+							GetIndexAsArray(TeffArrayElementer,TeffArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
+							rank((*TeffArrayElementer),TeffArray,subname);
+
 							(*TeffArrayElementer) = (*TeffArrayElementer) - TmpArrayLen;
 						}
 						else {
 							TmpArrayLen = 0;
-							GetIndexAsArray(&TmpArrayLen,TmpArray,WordIDcrc32,indexType,"aa",subname,rank,languageFilterNr, languageFilterAsNr);
-						
+							GetIndexAsArray(&TmpArrayLen,TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
+							rank(TmpArrayLen,TmpArray,subname);
+
 							printf("did find %i pages\n",TmpArrayLen);
 												
 						
@@ -828,7 +860,8 @@ for (i=0; i<(*queryParsed).n; i++)
 						if (j == 0) {
 			                                //TmpArrayLen = (*TeffArrayElementer);
 							tmpResultElementer = 0;
-							GetIndexAsArray(&tmpResultElementer,tmpResult,WordIDcrc32,indexType,"aa",subname,rank,languageFilterNr, languageFilterAsNr);
+							GetIndexAsArray(&tmpResultElementer,tmpResult,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
+							rank(tmpResultElementer,tmpResult,subname);
 
                                                         //(*TeffArrayElementer) = (*TeffArrayElementer) - TmpArrayLen;        	        
 							//printf("TeffArrayElementer %i\n",(*TeffArrayElementer));
@@ -848,7 +881,8 @@ for (i=0; i<(*queryParsed).n; i++)
                                         		//else {
 							
 								TmpArrayLen = 0;
-								GetIndexAsArray(&TmpArrayLen,TmpArray,WordIDcrc32,indexType,"aa",subname,rank,languageFilterNr, languageFilterAsNr);
+								GetIndexAsArray(&TmpArrayLen,TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
+								rank(TmpArrayLen,TmpArray,subname);
 
 								printf("\t dddd: frase_merge %i %i\n",(*TeffArrayElementer),TmpArrayLen);
 
@@ -935,7 +969,7 @@ void *searchIndex_thread(void *arg)
 
 	struct iindexFormat *TmpArray; 
 	struct iindexFormat *Array;
-	int (*rank)(const unsigned short *,const int,const unsigned int DocID,struct subnamesFormat *subname, struct iindexFormat *TeffArray);
+	void (*rank)(int TeffArrayElementer, struct iindexFormat *TeffArray,struct subnamesFormat *subname);
 
 	struct timeval start_time, end_time;
 
@@ -948,16 +982,16 @@ void *searchIndex_thread(void *arg)
 	int hits;
 
 	if (strcmp((*searchIndex_thread_arg).indexType,"Athor") == 0) {
-		rank = rankAthor;
+		rank = rankAthorArray;
 	}
 	else if (strcmp((*searchIndex_thread_arg).indexType,"Url") == 0) {
-		rank = rankUrl;
+		rank = rankUrlArray;
 	}
 	else if (strcmp((*searchIndex_thread_arg).indexType,"Main") == 0) {
-		rank = rankMain;
+		rank = rankMainArray;
 	}
 	else if (strcmp((*searchIndex_thread_arg).indexType,"Acl") == 0) {
-		rank = rankAcl;
+		rank = rankAclArray;
 	}
 	else {
 		printf("unknown index type \"%s\"\n",(*searchIndex_thread_arg).indexType);
@@ -1239,10 +1273,17 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		(*TeffArrayElementer) = TmpArrayLen;
 	}
 	*/
+	#ifndef BLACK_BOKS
+
 	//ormerger Athor og Url inn i en temper array
 	or_merge(TmpArray,&TmpArrayLen,searchIndex_thread_arg_Athor.resultArray,searchIndex_thread_arg_Athor.resultArrayLen,
 		searchIndex_thread_arg_Url.resultArray,searchIndex_thread_arg_Url.resultArrayLen);
-	
+
+	free(searchIndex_thread_arg_Athor.resultArray);
+	free(searchIndex_thread_arg_Url.resultArray);
+
+	#endif
+
 	/*
 	//Main
 	if (searchIndex_thread_arg_Main.resultArrayLen > 0) {
@@ -1256,8 +1297,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	//merger inn temperer og main 
 	or_merge(TeffArray,TeffArrayElementer,TmpArray,TmpArrayLen,
 		searchIndex_thread_arg_Main.resultArray,searchIndex_thread_arg_Main.resultArrayLen);
-	free(searchIndex_thread_arg_Athor.resultArray);
-	free(searchIndex_thread_arg_Url.resultArray);
+
 	free(searchIndex_thread_arg_Main.resultArray);
 	
 	//sjekker at dokumenter er i Aclen

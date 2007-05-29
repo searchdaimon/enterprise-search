@@ -288,6 +288,18 @@ vipurls: src/vipurls/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/vipurls/main.c  -o bin/vipurls $(LDFLAGS)
 
+urldispatcher: src/urldispatcher/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/urldispatcher/main.c  -o bin/urldispatcher $(LDFLAGS)
+
+urlsDocumentIndexadd: src/urlsDocumentIndexadd/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/urlsDocumentIndexadd/main.c  -o bin/urlsDocumentIndexadd -D DI_FILE_CASHE $(LDFLAGS)
+
 netlotStart: src/netlotStart/main.c
 	@echo ""
 	@echo "$@:"
@@ -340,7 +352,7 @@ searchcl : src/searchkernel/searchcl.c
 
 #dropper -D WITH_MEMINDEX og -D WITH_RANK_FILTER for nå
 #SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD $(LIBCONFIG)
-SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/lex.query.o src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG)
+SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/lex.query.o src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D EXPLAIN_RANK
 
 
 searchddep:
@@ -355,7 +367,7 @@ searchd : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
 	
-	$(CC) $(SEARCHCOMMAND) -D WITH_RANK_FILTER -D WITH_THREAD -o bin/searchd 
+	$(CC) $(SEARCHCOMMAND) -D WITH_RANK_FILTER -D WITH_THREAD -D DEFLOT -o bin/searchd 
 
 searchdbb : src/searchkernel/searchd.c
 	@echo ""
@@ -392,7 +404,7 @@ ppcXmlParserTest: src/ppcXmlParserTest/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/ppcXmlParserTest/main.c src/parse_summary/libsummary.a src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/parse_summary/libsummary.a src/httpGet/httpGet.c -o bin/ppcXmlParserTest $(LDFLAGS) $(MYSQL) $(LIBXML) $(CURLLIBS)
 
-dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c  $(LDFLAGS) $(MYSQL)
+dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c -D EXPLAIN_RANK $(LDFLAGS) $(MYSQL)
 
 dispatcher_all: src/dispatcher_all/main.c
 	@echo ""
@@ -539,7 +551,7 @@ BrankCalculate2: src/BrankCalculate2/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate2/*.c -o bin/BrankCalculate2 $(LDFLAGS)
 
 BrankCalculate3: src/BrankCalculate3/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate3/*.c -o bin/BrankCalculate3 $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate3/*.c -o bin/BrankCalculate3 $(LDFLAGS)
 
 BrankMerge: src/BrankMerge/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankMerge/*.c -o bin/BrankMerge $(LDFLAGS)
@@ -684,19 +696,19 @@ cpLotFile: src/cpLotFile/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/cpLotFile/main.c -o bin/cpLotFile $(LDFLAGS)
 
 
-SHOWTHUMBCMANDS = $(CFLAGS) $(LIBS)*.c src/ShowThumb/main.c src/cgi-util/cgi-util.c -o cgi-bin/ShowThumb $(LDFLAGS)
+SHOWTHUMBCMANDS = $(CFLAGS) $(LIBS)*.c src/ShowThumb/main.c src/cgi-util/cgi-util.c $(LDFLAGS)
 
 ShowThumb: src/ShowThumb/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(SHOWTHUMBCMANDS)
+	$(CC) $(SHOWTHUMBCMANDS) -o cgi-bin/ShowThumb
 
 ShowThumbbb: src/ShowThumb/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(SHOWTHUMBCMANDS) -D BLACK_BOKS
+	$(CC) $(SHOWTHUMBCMANDS) -o cgi-bin/ShowThumbbb -D BLACK_BOKS
 
 ShowCacheCOMMAND = $(CFLAGS) $(LIBS)*.c src/ShowCache/main.c src/cgi-util/cgi-util.c $(LDFLAGS) -o cgi-bin/ShowCache
 

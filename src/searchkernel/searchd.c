@@ -226,13 +226,16 @@ void *do_chld(void *arg)
 	struct searchd_configFORMAT *searchd_config = arg;
 	int   mysocfd = (*searchd_config).newsockfd;
 
+	struct timeval globalstart_time, globalend_time;
+
+
 	FILE *LOGFILE;
 	char 	data[100];
 	int 	i,n;
 	struct queryNodeHederFormat queryNodeHeder;
 	struct SiderFormat *Sider;
 	int net_status;
-	
+
 	//struct SiderFormat Sid
 
 	int nrOfSubnames;
@@ -250,6 +253,9 @@ void *do_chld(void *arg)
 	//struct SiderFormat Sider[MaxsHits * 2];
 
 	struct SiderHederFormat SiderHeder;
+
+	gettimeofday(&globalstart_time, NULL);
+
 	
 	#ifdef WITH_THREAD
 		printf("Child thread [%d]: Socket number = %d\n", pthread_self(), mysocfd);
@@ -269,7 +275,8 @@ void *do_chld(void *arg)
 
 	//sender svar med en gang at vi kan gjøre dette
 	net_status = net_CanDo;
-	if ((n=sendall(mysocfd,&net_status, sizeof(net_status))) != sizeof(net_status)) {
+	//if ((n=sendall(mysocfd,&net_status, sizeof(net_status))) != sizeof(net_status)) {
+	if ((n=send(mysocfd,&net_status, sizeof(net_status),MSG_NOSIGNAL)) != sizeof(net_status)) {
 		printf("send only %i of %i\n",n,sizeof(net_status));
 		perror("sendall net_status");
 	}
@@ -735,14 +742,27 @@ void *do_chld(void *arg)
 
 	SiderHeder.filtypesnrof = MAXFILTYPES;
 
+	SiderHeder.errorstrlen=sizeof(SiderHeder.errorstr);
 	//v3 dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,servername,subnames,SiderHeder.nrOfSubnames,queryNodeHeder.MaxsHits,queryNodeHeder.start, queryNodeHeder.filterOn, queryNodeHeder.languageFilter);
-	dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,
+	if (!dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,
 			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
 			queryNodeHeder.start, queryNodeHeder.filterOn, 
 			"",queryNodeHeder.orderby,SiderHeder.dates,queryNodeHeder.search_user,
 			&SiderHeder.filters,
-			searchd_config
-			);
+			searchd_config,
+			SiderHeder.errorstr, &SiderHeder.errorstrlen
+			)) 
+		{
+			SiderHeder.responstype 	= searchd_responstype_error;
+			//setter at vi ikke hadde noen svar
+			SiderHeder.TotaltTreff 	= 0;
+			SiderHeder.showabal	= 0;
+
+			printf("Error: cand do dosearch: \"%s\"\n",SiderHeder.errorstr);
+	}
+	else {
+		SiderHeder.responstype = searchd_responstype_normalsearch;
+	}
 
 	//kopierer inn subnames. Kan bare sende over MAX_COLLECTIONS, men søker i alle
 
@@ -758,6 +778,10 @@ void *do_chld(void *arg)
 		printf("\t%s: %i\n",SiderHeder.subnames[i].subname,SiderHeder.subnames[i].hits);
 	}
 	printf("\n");
+
+	//finer først tiden vi brukte
+        gettimeofday(&globalend_time, NULL);
+        SiderHeder.total_usecs = getTimeDifference(&globalstart_time,&globalend_time);
 
 
 	printf("TotaltTreff %i,showabal %i,filtered %i,total_usecs %f\n",SiderHeder.TotaltTreff,SiderHeder.showabal,SiderHeder.filtered,SiderHeder.total_usecs);
@@ -775,7 +799,9 @@ void *do_chld(void *arg)
 	}
 	*/
 
-	if ((n=sendall(mysocfd,&SiderHeder, sizeof(SiderHeder))) != sizeof(SiderHeder)) {
+
+	//if ((n=sendall(mysocfd,&SiderHeder, sizeof(SiderHeder))) != sizeof(SiderHeder)) {
+	if ((n=send(mysocfd,&SiderHeder, sizeof(SiderHeder),MSG_NOSIGNAL)) != sizeof(SiderHeder)) {
 		printf("send only %i of %i\n",n,sizeof(SiderHeder));
 		perror("sendall SiderHeder");
 	}
@@ -789,7 +815,7 @@ void *do_chld(void *arg)
 	gettimeofday(&start_time, NULL);
 	#endif
 
-	
+	/*
 	for(i=0;i<SiderHeder.showabal;i++) {
 	//for (i=0;i<queryNodeHeder.MaxsHits;i++) {
 		//if (!Sider[i].deletet) {		
@@ -805,7 +831,14 @@ void *do_chld(void *arg)
 		//	printf("page is deleted\n");
 		//}
 	}
-	
+	*/	
+
+	//if ((n=sendall(mysocfd,Sider, sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits)) != (sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits)) {
+
+	if ((n=send(mysocfd,Sider, sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits, MSG_NOSIGNAL)) != (sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits)) {
+		printf("send only %i of %i\n",n,sizeof(struct SiderFormat));
+		perror("sendall");
+	}		
 	
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
@@ -836,5 +869,6 @@ void *do_chld(void *arg)
 			}
 			printf("hav runed %i times\n",profiling_runcount);
 		#endif
+
 
  }

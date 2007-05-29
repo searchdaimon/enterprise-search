@@ -10,6 +10,9 @@
 #include "lot.h"
 #include "iindex.h"
 
+#ifdef TIME_DEBUG
+	#include "timediff.h"
+#endif
 
 struct DictionaryMemoryFormat {
 	struct DictionaryFormat *Dictionary;
@@ -419,10 +422,11 @@ static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
 void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray, 
 		unsigned long WordIDcrc32, char * IndexType, char *IndexSprok,
 		struct subnamesFormat *subname, 
-		int (*rank)(const unsigned short *,const int,const unsigned int DocID,struct subnamesFormat *subname, struct iindexFormat *TeffArray),
 		int languageFilterNr, int languageFilterAsNr[] ) {
 
-
+	#ifdef TIME_DEBUG
+		struct timeval start_time, end_time;
+	#endif
 
 	FILE *fileha;
 	char InnBuff[8]; //1040162
@@ -489,6 +493,10 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 		printf("Åpner index %s\n",IndexPath);
 
+		#ifdef TIME_DEBUG
+		gettimeofday(&start_time, NULL);
+		#endif
+
 		//fileha = fopen("data/iindex/Main/index/ENG/17.txt","rb");
 		//if ((fileha = fopen("data/iindex/Main/index/aa/17.txt","rb")) == NULL) {
 		if ((fileha = fopen(IndexPath,"rb")) == NULL) {
@@ -499,21 +507,21 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		fseek(fileha,Adress,0);
 
 
-
-		fread(&term,sizeof(unsigned long),1,fileha);
-		fread(&Antall,sizeof(unsigned long),1,fileha);
+		
+		//fread(&term,sizeof(unsigned long),1,fileha);
+		//fread(&Antall,sizeof(unsigned long),1,fileha);
 
 
 		#ifdef TIME_DEBUG
 		gettimeofday(&end_time, NULL);
-		printf("Time debug: read tern name and number %f\n",getTimeDifference(&start_time,&end_time));
+		printf("Time debug: open, seek and read tern name and number %f\n",getTimeDifference(&start_time,&end_time));
 		#endif
 
 		#ifdef TIME_DEBUG
 		gettimeofday(&start_time, NULL);
 		#endif
-			SizeForTerm -= (sizeof(term) + sizeof(Antall));
-			Adress -= (sizeof(term) + sizeof(Antall));
+			//SizeForTerm -= (sizeof(term) + sizeof(Antall));
+			//Adress -= (sizeof(term) + sizeof(Antall));
 			printf("size %i\n",SizeForTerm);
 			char *allindex;
 
@@ -524,6 +532,9 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 			}
 			char *allindexp = allindex;
 			fread(allindex,sizeof(char),SizeForTerm,fileha);
+
+allindex += memcpyrc(&term,allindex,sizeof(unsigned long));
+allindex += memcpyrc(&Antall,allindex,sizeof(unsigned long));
 
 			//fseek(fileha,Adress,0);
 		#ifdef TIME_DEBUG
@@ -604,7 +615,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				TeffArray[y].indexFiltered.date = 0;
 			#endif
 
-                        TeffArray[y].TermRank = rank(TeffArray[y].hits,TeffArray[y].TermAntall,TeffArray[y].DocID,subname,&TeffArray[y]);
+                        //TeffArray[y].TermRank = rank(TeffArray[y].hits,TeffArray[y].TermAntall,TeffArray[y].DocID,subname,&TeffArray[y]);
 			//printf("TermRank: %i, subname \"%s\", DocID %u\n",TeffArray[y].TermRank,(*TeffArray[y].subname).subname,TeffArray[y].DocID);
 
 			#ifndef BLACK_BOKS
@@ -638,6 +649,10 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 		}
 
+		#ifdef TIME_DEBUG
+		gettimeofday(&end_time, NULL);
+		printf("Time debug: memcopy index into place %f\n",getTimeDifference(&start_time,&end_time));
+		#endif
 
 		free(allindexp);
 

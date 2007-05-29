@@ -876,10 +876,10 @@ temp: 25 des 2006
 	//return 1;
 }
 
-void dosearch(char query[], int queryLen, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
+int dosearch(char query[], int queryLen, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames, 
 int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[], 
-char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *searchd_config) { 
+char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *searchd_config, char *errorstr,int *errorLen) { 
 
 	struct PagesResultsFormat PagesResults;
 	struct filteronFormat filteron;
@@ -934,11 +934,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		memset(&PagesResults.QueryData,' ',sizeof(PagesResults.QueryData));
 	#endif
 
-	struct timeval globalstart_time, globalend_time;
 	struct timeval start_time, end_time;
 	struct timeval popResult_start_time, popResult_end_time;
 
-	//7double total_usecs;
 	int rank;
 	int ret;
 
@@ -950,7 +948,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	//struct ReposetoryFormat ReposetoryData;
 	//char ReposetoryHtml[10][5000];
 
-	gettimeofday(&globalstart_time, NULL);
 	//5: printf("Start time was %d uSec.\n", start_time.tv_usec);
 
 	//7int TotaltTreff;
@@ -1101,8 +1098,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		//henter inn brukerens passord
 		printf("geting pw for \"%s\"\n",PagesResults.search_user);
 		if (!boithoad_getPassword(PagesResults.search_user,PagesResults.password)) {
-			printf("Can't boithoad_getPassword. Brukeren er ikke logget inn??\n");
-			exit(0);
+			//printf("Can't boithoad_getPassword. Brukeren er ikke logget inn??\n");
+			(*errorLen) = snprintf(errorstr,(*errorLen),"Can't get user info from authentication backend");
+			return(0);
 		}
 		printf("got pw \"%s\" -> \"%s\"\n",PagesResults.search_user,PagesResults.password);
 		gettimeofday(&end_time, NULL);
@@ -1130,8 +1128,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		char errorbuff[errorbufflen];
 		printf("making a connection to crawlerManager\n");
 		if (!cmc_conect(&PagesResults.cmcsocketha,errorbuff,errorbufflen,(*searchd_config).cmc_port)) {
-                        printf("Error: %s:%i\n",errorbuff,(*searchd_config).cmc_port);
-                        exit(1);
+                        //printf("Error: %s:%i\n",errorbuff,(*searchd_config).cmc_port);
+			(*errorLen) = snprintf(errorstr,(*errorLen),"Can't connect to crawler manager: \"%s\", port %i",errorbuff,(*searchd_config).cmc_port);
+
+                        return(0);
 	        }
 		gettimeofday(&end_time, NULL);
 	        (*SiderHeder).queryTime.cmc_conect = getTimeDifference(&start_time,&end_time);
@@ -1178,9 +1178,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	
 	//5: printf("end\n");
 	
-	//finer først tiden vi brukte
-	gettimeofday(&globalend_time, NULL); 
-	(*SiderHeder).total_usecs = getTimeDifference(&globalstart_time,&globalend_time);
 
 
 	//teller opp filteree
@@ -1241,7 +1238,7 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	//ToDo: er det altid et komma for mye ?	
 	if (hiliteQuery[strlen(hiliteQuery) -1] == ',') {hiliteQuery[strlen(hiliteQuery) -1] = '\0';}
 
-	printf("<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\"/>\n",(*SiderHeder).TotaltTreff,PagesResults.QueryData.query,hiliteQuery,(*SiderHeder).total_usecs,(*SiderHeder).filtered,(*SiderHeder).showabal);
+	printf("<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" filtered=\"%i\" showabal=\"%i\"/>\n",(*SiderHeder).TotaltTreff,PagesResults.QueryData.query,hiliteQuery,(*SiderHeder).filtered,(*SiderHeder).showabal);
 	
 	printf("free TeffArray\n");
 	free(PagesResults.TeffArray);
@@ -1325,6 +1322,8 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 				);
 	}
 	#endif
+
+	return 1;
 }
 
 

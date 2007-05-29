@@ -64,6 +64,8 @@
 //#define ad_userauthenticated_OK  111
 //#define ad_userauthenticated_ERROR  000
 
+#define searchd_responstype_error		10
+#define searchd_responstype_normalsearch 	20
 
 
 //#define CMDPORT 3492 //boitho crawler manager
@@ -73,7 +75,6 @@
 //maxs hits i et dokument som skal lagres, ikke som skal vises i søk
 #define MaxsHitsInIndex 20
 
-#define DefultMaxsHits 20
 
 #define MaxQueryLen 100
 
@@ -189,8 +190,9 @@ struct subnamesFormat {
 	char subname[64];
 	int hits;
 	struct subnamesConfigFormat config;
-	int nrOfFiletypes;
-	struct subnamesFiltypesFormat filtypes[MAXFILTYPES];
+	//28 mai 2007: tar bort, ser ikke ut til å være brukt lengde, etter at vi implementerete filtyper som filter
+	//int nrOfFiletypes;
+	//struct subnamesFiltypesFormat filtypes[MAXFILTYPES];
 };
 
 struct brankPageElementsFormat {
@@ -278,6 +280,17 @@ struct indexFilteredFormat {
 	char date;
 };
 
+struct rank_explaindFormat {
+	unsigned short rankBody;
+	unsigned short rankHeadline;
+	unsigned short rankTittel;
+	unsigned short rankAthor;
+	unsigned short rankUrl_mainbody;
+	unsigned short rankUrl;
+
+	unsigned short nrAthor;	
+};
+
 // Formatett på treff i indeksen
 struct iindexFormat {
 	int DocID;
@@ -298,6 +311,10 @@ struct iindexFormat {
 		char deleted;
 		struct indexFilteredFormat indexFiltered;
 	#endif
+
+	#ifdef EXPLAIN_RANK
+		struct rank_explaindFormat rank_explaind;
+	#endif
 };
 
 
@@ -309,7 +326,7 @@ struct SiderFormat {
 	//char htmlBuffer[30000];
 	//char *htmlBuffer;
 	int htmlSize;
-	char description[512];
+	char description[250]; 
 	char title [70];
 	char thumbnale[128];
 	int thumbnailwidth;
@@ -317,12 +334,20 @@ struct SiderFormat {
 	char cacheLink[128];
 	char domain[65];
 	char servername[32];
-	float posisjon;
+	//29 mai 2007. Gjør om til int, ser ikke ut til å bruke flyttetall her
+	//float posisjon;
+	int posisjon;
 	int deletet;
 	unsigned int crc32;
 	int type;
-	char uri[1024];
-	char url[1024];
+
+	#ifdef BLACK_BOKS
+		char uri[1024];
+		char url[1024];
+	#else
+		char uri[201];
+		char url[201];
+	#endif
 	char user[21];
 	float bid;
 	struct subnamesFormat subname;
@@ -388,8 +413,10 @@ struct filterinfoFormat {
 };
 
 struct filtersFormat {
+	 #ifdef BLACK_BOKS
 	struct filterinfoFormat filtypes;
 	struct filterinfoFormat collections;	
+	#endif
 };
 
 struct SiderHederFormat {
@@ -403,10 +430,13 @@ struct SiderHederFormat {
 	struct subnamesFormat subnames[MAX_COLLECTIONS];
 	int nrOfSubnames;
 	//int *dates[11]; //= {0,0,0,0,0,0,0,0,0,0,0};
-	int dates[11];
 	struct filtersTrapedFormat filtersTraped;
+	int dates[11];
 	int filtypesnrof;
 	//struct filtypesFormat filtypes[MAXFILTYPES];
+        char errorstr[250];
+        int errorstrlen;
+	int responstype;
 	struct filtersFormat filters;
 };
 

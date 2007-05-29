@@ -7,8 +7,8 @@ struct searchd_configFORMAT {
 };
 
 
-void dosearch(char query[], int queryLen, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
+int dosearch(char query[], int queryLen, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames,
 int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[],
 char search_user[],struct filtersFormat *filters,
-	struct searchd_configFORMAT *searchd_config);
+	struct searchd_configFORMAT *searchd_config, char *errorstr,int *errorLen);

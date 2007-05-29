@@ -17,6 +17,8 @@
     #include <errno.h>
     #include "../common/boithohome.h"
     #include "../maincfg/maincfg.h"
+
+#define DefultMaxsHits 20
     
 	#ifndef BLACK_BOKS
     #include <libconfig.h>
@@ -33,7 +35,7 @@
 #endif
 
     //temp
-    //#define NO_LOGING
+    #define NO_LOGING
 
     #include <mysql.h>
 
@@ -451,13 +453,14 @@ int bdread(int sockfd[],int nrof,int datasize, void *result, int maxSocketWait) 
 
 int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,struct SiderFormat *Sider, int *pageNr,int alreadynr) {
 
+	int i,y;
+	int net_status;
+
 	#ifdef DEBUG
 	struct timeval start_time, end_time;
 	gettimeofday(&start_time, NULL);
 	#endif
 
-	int i,y;
-	int net_status;
 	//sejjer om vi har fåt et midlertidig svar på at jobben har begynt
 	/****************************************************************/
 	for (i=alreadynr;i<nrOfServers+alreadynr;i++) {
@@ -478,9 +481,16 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 		}			
 		
 	}
+	#ifdef DEBUG
+	gettimeofday(&end_time, NULL);
+	printf("Time debug: brGetPages.jobstart pages %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
 
 	/****************************************************************/
 
+	#ifdef DEBUG
+	gettimeofday(&start_time, NULL);
+	#endif
 
 	for (i=alreadynr;i<nrOfServers+alreadynr;i++) {
 	
@@ -493,24 +503,39 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 		}
 	}
 
+	#ifdef DEBUG
+	gettimeofday(&end_time, NULL);
+	printf("Time debug: brGetPages.reading heder pages %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
+
 	//int bdread(int sockfd[],int nrof,int datasize, void *result, int maxSocketWait)
 
 //	bdread(sockfd,nrOfServers,sizeof(struct SiderHederFormat),SiderHeder, maxSocketWait_SiderHeder);
+
+	#ifdef DEBUG
+	gettimeofday(&start_time, NULL);
+	#endif
+
 
 	//(*pageNr) = 0;
 	for (i=alreadynr;i<nrOfServers+alreadynr;i++) {
 		
 		#ifdef DEBUG
-			printf("i: %i. That has %i pages. Soctet %i\n",i,SiderHeder[i].showabal,sockfd[i]);
+			printf("i: %i. Server \"%s\" that has %i pages. Soctet %i\n",i,SiderHeder[i].servername,SiderHeder[i].showabal,sockfd[i]);
 		#endif
 			if (sockfd[i] != 0) {
 
+				/*
 				for(y=0;y<SiderHeder[i].showabal;y++) {
 
 					if (bsread (&sockfd[i],sizeof(struct SiderFormat),(char *)&Sider[(*pageNr)],maxSocketWait_SiderHeder)) {
 						(*pageNr)++;
 					}
-
+				}
+				*/
+				
+				if (bsread (&sockfd[i],sizeof(struct SiderFormat) * SiderHeder[i].showabal,(char *)&Sider[(*pageNr)],maxSocketWait_SiderHeder)) {
+					(*pageNr) += SiderHeder[i].showabal;
 				}
 
 			}
@@ -519,12 +544,18 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	printf("Time debug: brGetPages %f\n",getTimeDifference(&start_time,&end_time));
+	printf("Time debug: brGetPages.reading pages %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
 }
 int main(int argc, char *argv[])
 {
+
+	//#ifdef WITH_PROFILING
+	//int pcount;
+	//for (pcount=0;pcount<=50;pcount++) {	
+	//#endif
+
         int sockfd[maxServers];
         int addsockfd[maxServers];
 	int i,y,n,funnet,x;
@@ -544,8 +575,11 @@ int main(int argc, char *argv[])
 	struct SiderFormat *Sider;
 	char colchecked[20];
 	
-        struct SiderHederFormat SiderHeder[maxServers];
-        struct SiderHederFormat AddSiderHeder[maxServers];
+        //struct SiderHederFormat SiderHeder[maxServers];
+        //struct SiderHederFormat AddSiderHeder[maxServers];
+
+        struct SiderHederFormat *SiderHeder = malloc(sizeof(struct SiderHederFormat) * maxServers);
+        struct SiderHederFormat *AddSiderHeder = malloc(sizeof(struct SiderHederFormat) * maxServers);
 
 
 	struct SiderHederFormat FinalSiderHeder;
@@ -570,6 +604,7 @@ int main(int argc, char *argv[])
 	char cashefile[512];
 
 	char *cpnt;
+	char *lastdomain = NULL;
 
 	struct queryNodeHederFormat queryNodeHeder;
 
@@ -661,7 +696,10 @@ int main(int argc, char *argv[])
 
 		nrOfServers = config_setting_length(cfgarray);
 
-		servers = malloc(sizeof(char *) * (nrOfServers + nrOfPiServers));
+		//ToDO: vi har nrOfPiServers med her, men uten at jeg kan se at vi fakrisk 
+		//legger inn de. tar bort
+		//servers = malloc(sizeof(char *) * (nrOfServers + nrOfPiServers));
+		servers = malloc(sizeof(char *) * (nrOfServers));
 
 		for(i=0;i<nrOfServers;i++) {
 			servers[i] = strdup(config_setting_get_string_elem(cfgarray,i));
@@ -1080,7 +1118,7 @@ int main(int argc, char *argv[])
 	strscpy(queryNodeHeder.AmazonSubscriptionId,QueryData.AmazonSubscriptionId,sizeof(queryNodeHeder.AmazonSubscriptionId) -1);
 
 	queryNodeHeder.MaxsHits = QueryData.MaxsHits;
-	if (nrOfServers >= 4) {
+	if (nrOfServers >= 3) {
 		queryNodeHeder.MaxsHits = (queryNodeHeder.MaxsHits / 2); // datane er fordelt, så hver server trenger ikke å generere mer en xx deler av den
 	}
 	queryNodeHeder.filterOn = QueryData.filterOn;
@@ -1105,7 +1143,8 @@ int main(int argc, char *argv[])
 
 	#ifdef WITH_CASHE
 	//tester for cashe
-	sprintf(cashefile,"%s/%s.%i.%s",bfile(cashedir),QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
+	//sprintf(cashefile,"%s/%s.%i.%s",bfile(cashedir),QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
+	sprintf(cashefile,"%s/%s.%i.%s","/home/boitho/var/cashedir",QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
 	
 	sprintf(prequeryfile,"%s/%s.%i.%s",bfile(prequerydir),QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
 	FILE *CACHE;
@@ -1245,6 +1284,14 @@ int main(int argc, char *argv[])
 		addError(&errorha,11,"Not all the search nodes responded to your query. Result quality may have been negatively effected.");
 	}
 
+	//hånterer error. Viser den hvis vi hadde noen
+	if (nrRespondedServers != 0) {
+		for(i=0;i<(nrOfServers + nrOfPiServers) && !funnet;i++) {
+			if (SiderHeder[i].responstype == searchd_responstype_error) {
+				addError(&errorha,11,SiderHeder[i].errorstr);
+			}
+		}
+	}
 	#ifdef DEBUG
 	gettimeofday(&start_time, NULL);
 	#endif
@@ -1311,7 +1358,9 @@ int main(int argc, char *argv[])
 					#ifdef DEBUG
                         			printf("Hav seen url befor. Url '%s', DocID %u\n",Sider[i].url,Sider[i].iindex.DocID);
 					#endif
-                        		(*SiderHeder).filtered++;
+                        		//(*SiderHeder).filtered++;
+					FinalSiderHeder.filtered++;
+					--FinalSiderHeder.TotaltTreff;
                         		continue;
                 		}
 
@@ -1321,6 +1370,9 @@ int main(int argc, char *argv[])
 					#ifdef DEBUG
 						printf("slettet adult side %s ault %i\n",Sider[i].url,Sider[i].DocumentIndex.AdultWeight);
 					#endif
+                        		//(*SiderHeder).filtered++;
+					FinalSiderHeder.filtered++;
+					--FinalSiderHeder.TotaltTreff;
 					continue;
 				}
 
@@ -1329,7 +1381,9 @@ int main(int argc, char *argv[])
 					#ifdef DEBUG
                         	        	printf("hav same crc32. crc32 from DocumentIndex\n");
 					#endif
-                        	        (*SiderHeder).filtered++;
+                        	        //(*SiderHeder).filtered++;
+					FinalSiderHeder.filtered++;
+					--FinalSiderHeder.TotaltTreff;
                         	        continue;
                         	}
 
@@ -1338,7 +1392,9 @@ int main(int argc, char *argv[])
 					#ifdef DEBUG
                         			printf("hav same domain \"%s\"\n",Sider[i].domain);
 					#endif
-                        		(*SiderHeder).filtered++;
+                        		//(*SiderHeder).filtered++;
+					FinalSiderHeder.filtered++;
+					--FinalSiderHeder.TotaltTreff;
                         		continue;
                 		}
 				/*
@@ -1346,7 +1402,9 @@ int main(int argc, char *argv[])
 					#ifdef DEBUG
                         			printf("hav same Description. DocID %i\n",Sider[i].iindex.DocID);
 					#endif
-					(*SiderHeder).filtered++;
+					//(*SiderHeder).filtered++;
+					FinalSiderHeder.filtered++;
+					--FinalSiderHeder.TotaltTreff;
                         		continue;
                 		}
 				*/
@@ -1401,6 +1459,12 @@ int main(int argc, char *argv[])
 	gettimeofday(&main_end_time, NULL);
 	FinalSiderHeder.total_usecs = getTimeDifference(&main_start_time,&main_end_time);
 	
+	//Sier ikke noe om filtrerte treff hvis vi hadde mange nokk
+	if (FinalSiderHeder.TotaltTreff>100) {
+
+		FinalSiderHeder.filtered = 0;;
+	}
+
         //printf("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?> \n");
         printf("<?xml version=\"1.0\" encoding=\"UTF-8\" ?> \n");
         printf("<!DOCTYPE family SYSTEM \"http://www.boitho.com/xml/search.dtd\"> \n");
@@ -1412,7 +1476,7 @@ int main(int argc, char *argv[])
 
 
 	//viser info om serverne som svarte
-	printf("<SEARCHNODES_INFO NROFSEARCHNODES=\"%i\" />",nrRespondedServers);
+	printf("<SEARCHNODES_INFO NROFSEARCHNODES=\"%i\" />\n",nrRespondedServers);
 	
 	/*
 	for (i=0;i<nrOfServers;i++) {
@@ -1450,47 +1514,47 @@ int main(int argc, char *argv[])
 					printf("\t<HITS>%i</HITS>\n",SiderHeder[i].TotaltTreff);
 
 					#ifndef DEBUG
-					printf("\t<TIMES>");
+					printf("\t<TIMES>\n");
 						
-						printf("\t<AthorSearch>%f</AthorSearch>\n",SiderHeder[i].queryTime.AthorSearch);
-						printf("\t<AthorRank>%f</AthorRank>\n",SiderHeder[i].queryTime.AthorRank);
-						printf("\t<UrlSearch>%f</UrlSearch>\n",SiderHeder[i].queryTime.UrlSearch);
-						printf("\t<MainSearch>%f</MainSearch>\n",SiderHeder[i].queryTime.MainSearch);
-						printf("\t<MainRank>%f</MainRank>\n",SiderHeder[i].queryTime.MainRank);
-						printf("\t<MainAthorMerge>%f</MainAthorMerge>\n",SiderHeder[i].queryTime.MainAthorMerge);
-						printf("\t<popRank>%f</popRank>\n",SiderHeder[i].queryTime.popRank);
-						printf("\t<responseShortning>%f</responseShortning>\n",SiderHeder[i].queryTime.responseShortning);
+						printf("\t\t<AthorSearch>%f</AthorSearch>\n",SiderHeder[i].queryTime.AthorSearch);
+						printf("\t\t<AthorRank>%f</AthorRank>\n",SiderHeder[i].queryTime.AthorRank);
+						printf("\t\t<UrlSearch>%f</UrlSearch>\n",SiderHeder[i].queryTime.UrlSearch);
+						printf("\t\t<MainSearch>%f</MainSearch>\n",SiderHeder[i].queryTime.MainSearch);
+						printf("\t\t<MainRank>%f</MainRank>\n",SiderHeder[i].queryTime.MainRank);
+						printf("\t\t<MainAthorMerge>%f</MainAthorMerge>\n",SiderHeder[i].queryTime.MainAthorMerge);
+						printf("\t\t<popRank>%f</popRank>\n",SiderHeder[i].queryTime.popRank);
+						printf("\t\t<responseShortning>%f</responseShortning>\n",SiderHeder[i].queryTime.responseShortning);
 
-						printf("\t<allrankCalc>%f</allrankCalc>\n",SiderHeder[i].queryTime.allrankCalc);
-						printf("\t<indexSort>%f</indexSort>\n",SiderHeder[i].queryTime.indexSort);
-						printf("\t<searchSimple>%f</searchSimple>\n",SiderHeder[i].queryTime.searchSimple);
+						printf("\t\t<allrankCalc>%f</allrankCalc>\n",SiderHeder[i].queryTime.allrankCalc);
+						printf("\t\t<indexSort>%f</indexSort>\n",SiderHeder[i].queryTime.indexSort);
+						printf("\t\t<searchSimple>%f</searchSimple>\n",SiderHeder[i].queryTime.searchSimple);
 
-						printf("\t<popResult>%f</popResult>\n",SiderHeder[i].queryTime.popResult);
-						printf("\t<adultcalk>%f</adultcalk>\n",SiderHeder[i].queryTime.adultcalk);
+						printf("\t\t<popResult>%f</popResult>\n",SiderHeder[i].queryTime.popResult);
+						printf("\t\t<adultcalk>%f</adultcalk>\n",SiderHeder[i].queryTime.adultcalk);
 
 						#ifdef BLACK_BOKS
-							printf("\t<filetypes>%f</filetypes>\n",SiderHeder[i].queryTime.filetypes);
-							printf("\t<iintegerGetValueDate>%f</iintegerGetValueDate>\n",SiderHeder[i].queryTime.iintegerGetValueDate);
-							printf("\t<dateview>%f</dateview>\n",SiderHeder[i].queryTime.dateview);
-							printf("\t<crawlManager>%f</crawlManager>\n",SiderHeder[i].queryTime.crawlManager);
-							printf("\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);
-							printf("\t<cmc_conect>%f</cmc_conect>\n",SiderHeder[i].queryTime.cmc_conect);
+							printf("\t\t<filetypes>%f</filetypes>\n",SiderHeder[i].queryTime.filetypes);
+							printf("\t\t<iintegerGetValueDate>%f</iintegerGetValueDate>\n",SiderHeder[i].queryTime.iintegerGetValueDate);
+							printf("\t\t<dateview>%f</dateview>\n",SiderHeder[i].queryTime.dateview);
+							printf("\t\t<crawlManager>%f</crawlManager>\n",SiderHeder[i].queryTime.crawlManager);
+							printf("\t\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);
+							printf("\t\t<cmc_conect>%f</cmc_conect>\n",SiderHeder[i].queryTime.cmc_conect);
 						#endif
-					printf("\t</TIMES>");
+					printf("\t</TIMES>\n");
 
-					printf("\t<FILTERTRAPP>");
-						printf("\t<filterAdultWeight_1>%i</filterAdultWeight_1>\n",SiderHeder[i].filtersTraped.filterAdultWeight_1);
-						printf("\t<filterSameCrc32_1>%i</filterSameCrc32_1>\n",SiderHeder[i].filtersTraped.filterSameCrc32_1);
-						printf("\t<filterSameUrl>%i</filterSameUrl>\n",SiderHeder[i].filtersTraped.filterSameUrl);
-						printf("\t<find_domain_no_subname>%i</find_domain_no_subname>\n",SiderHeder[i].filtersTraped.find_domain_no_subname);
-						printf("\t<filterSameDomain>%i</filterSameDomain>\n",SiderHeder[i].filtersTraped.filterSameDomain);
-						printf("\t<filterTLDs>%i</filterTLDs>\n",SiderHeder[i].filtersTraped.filterTLDs);
-						printf("\t<filterResponse>%i</filterResponse>\n",SiderHeder[i].filtersTraped.filterResponse);
-						printf("\t<cantpopResult>%i</cantpopResult>\n",SiderHeder[i].filtersTraped.cantpopResult);
-						printf("\t<cmc_pathaccess>%i</cmc_pathaccess>\n",SiderHeder[i].filtersTraped.cmc_pathaccess);
-						printf("\t<filterSameCrc32_2>%i</filterSameCrc32_2>\n",SiderHeder[i].filtersTraped.filterSameCrc32_2);
+					printf("\t<FILTERTRAPP>\n");
+						printf("\t\t<filterAdultWeight_1>%i</filterAdultWeight_1>\n",SiderHeder[i].filtersTraped.filterAdultWeight_1);
+						printf("\t\t<filterSameCrc32_1>%i</filterSameCrc32_1>\n",SiderHeder[i].filtersTraped.filterSameCrc32_1);
+						printf("\t\t<filterSameUrl>%i</filterSameUrl>\n",SiderHeder[i].filtersTraped.filterSameUrl);
+						printf("\t\t<find_domain_no_subname>%i</find_domain_no_subname>\n",SiderHeder[i].filtersTraped.find_domain_no_subname);
+						printf("\t\t<filterSameDomain>%i</filterSameDomain>\n",SiderHeder[i].filtersTraped.filterSameDomain);
+						printf("\t\t<filterTLDs>%i</filterTLDs>\n",SiderHeder[i].filtersTraped.filterTLDs);
+						printf("\t\t<filterResponse>%i</filterResponse>\n",SiderHeder[i].filtersTraped.filterResponse);
+						printf("\t\t<cantpopResult>%i</cantpopResult>\n",SiderHeder[i].filtersTraped.cantpopResult);
+						printf("\t\t<cmc_pathaccess>%i</cmc_pathaccess>\n",SiderHeder[i].filtersTraped.cmc_pathaccess);
+						printf("\t\t<filterSameCrc32_2>%i</filterSameCrc32_2>\n",SiderHeder[i].filtersTraped.filterSameCrc32_2);
 
-					printf("\t</FILTERTRAPP>");
+					printf("\t</FILTERTRAPP>\n");
 					#endif
 
 				printf("</SEARCHNODES>\n");
@@ -1668,7 +1732,6 @@ int main(int argc, char *argv[])
 
                 	printf("\t<TITLE><![CDATA[%s]]></TITLE>\n",Sider[i].title);
 
-
                 	//DocumentIndex
                 	printf("\t<URL><![CDATA[%s]]></URL>\n",Sider[i].url);
                 	printf("\t<URI><![CDATA[%s]]></URI>\n",Sider[i].uri);
@@ -1742,6 +1805,22 @@ int main(int argc, char *argv[])
 
 
 			#else
+
+				
+	                	printf("\t<DOMAIN>%s</DOMAIN>\n",Sider[i].domain);
+
+				//finer om forige treff hadde samme domene
+				if (i>0 && (lastdomain != NULL) && (strcmp(Sider[i].domain,lastdomain) == 0)) {			
+		                	printf("\t<DOMAIN_GROUPED>TRUE</DOMAIN_GROUPED>\n");
+				}
+				else {
+		                	printf("\t<DOMAIN_GROUPED>FALSE</DOMAIN_GROUPED>\n");
+
+				}
+				// ikke 100% riktig dette, da vi vil få problemer med at ppc reklame får samme side kan 
+				// være siste, og da blir treff 1 rykket inn
+				lastdomain = Sider[i].domain;
+
 				printf("\t<SERVERNAME>%s</SERVERNAME>\n",Sider[i].servername);
 
 	                	printf("\t<ADULTWEIGHT>%hu</ADULTWEIGHT>\n",Sider[i].DocumentIndex.AdultWeight);
@@ -1820,7 +1899,8 @@ int main(int argc, char *argv[])
 
 
 	
-	if ((LOGFILE = bfopen("logs/query.log","a")) == NULL) {
+	//if ((LOGFILE = bfopen("logs/query.log","a")) == NULL) {
+	if ((LOGFILE = fopen("/home/boitho/var/logs/query.log","a")) == NULL) {
 		perror(bfile("logs/query.log"));
 	}
 	else {
@@ -1849,7 +1929,7 @@ int main(int argc, char *argv[])
 	//skriver bare cashe hvis vi fikk svar fra all servere
 	else if (nrRespondedServers == nrOfServers) {
 		if ((CACHE = fopen(cashefile,"wb")) == NULL) {
-			printf("Can't open cashefile for writing.\n");
+			fprintf(stderr,"Can't open cashefile for writing.\n");
 			perror(cashefile);
 		}
 		else {
@@ -1925,9 +2005,33 @@ int main(int argc, char *argv[])
 
 //	fprintf(stderr,"dispatcher_all: done\n");
 
+	free(SiderHeder);
+	free(AddSiderHeder);
+
+	//hvis vi har web system kan vi ha flere servere, og de er da som en char **
+	#ifndef BLACK_BOKS
+		for(i=0;i<nrOfServers;i++) {
+			free(servers[i]);
+		}
+		for(i=0;i<nrOfPiServers;i++) {
+			free(piservers[i]);
+		}
+		for(i=0;i<nrOfAddServers;i++) {
+			free(addservers[i]);
+		}
+
+
+		free(servers);
+		free(piservers);
+		free(addservers);
+	#endif
+
 	//må vi tvinge en buffer tømming ???
 	printf("\n\n");	
 
+	//#ifdef WITH_PROFILING
+	//	}
+	//#endif
         return EXIT_SUCCESS;
 } 
 
