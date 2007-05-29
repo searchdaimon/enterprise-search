@@ -5,7 +5,7 @@ BEGIN {
 	push @INC, $ENV{'BOITHOHOME'} . "/Modules";
 }
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 use SD::License::Server;
 
 my %keys;
