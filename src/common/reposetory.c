@@ -365,7 +365,7 @@ int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer
 	
 }
 
-int rReadSummary(unsigned int *DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[]) {
+int rReadSummary(const unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[]) {
 
 	FILE *SFILE;
 	char WorkBuff[300000];
@@ -373,12 +373,12 @@ int rReadSummary(unsigned int *DocID,char **metadesc, char **title, char **body 
 	char *cptr, *HtmlBufferPtr;
 	int size;
 	int i;
-
+	unsigned int DocID_infile;
 
 	unsigned int HtmlBufferSize;
 	int n, nerror;
 
-	if ((SFILE = lotOpenFileNoCashe(*DocID,"summary","rb",'s',subname)) == NULL) {
+	if ((SFILE = lotOpenFileNoCashe(DocID,"summary","rb",'s',subname)) == NULL) {
 		return 0;
 	}
 
@@ -388,10 +388,15 @@ int rReadSummary(unsigned int *DocID,char **metadesc, char **title, char **body 
 		return 0;
 	}
 	
-	if ((n=fread(DocID,sizeof(unsigned int),1,SFILE)) != 1) {
+	if ((n=fread(&DocID_infile,sizeof(unsigned int),1,SFILE)) != 1) {
                 perror("read");
 	}
-	printf("DocID %u\nrsize %u\n",*DocID,rsize);
+	printf("DocID %u, DocID_infile %u\nrsize %u\n",DocID,DocID_infile,rsize);
+
+	if (DocID_infile != DocID) {
+		printf("DocID_infile != DocID. Summery point to wron summery\n");
+		return 0;
+	}
 
 	if ((n=fread(WorkBuff,rsize,1,SFILE)) != 1) {
         	printf("cant read. n = %i, rsize = %i\n",n,rsize);
@@ -400,7 +405,7 @@ int rReadSummary(unsigned int *DocID,char **metadesc, char **title, char **body 
 
 	HtmlBufferSize = sizeof(HtmlBuffer);
 	if ( (nerror = uncompress((Bytef*)HtmlBuffer,(uLong *)&HtmlBufferSize,(Bytef *)WorkBuff,rsize)) != 0) {
-        	printf("uncompress error. Code: %i for DocID %u-%i\n",nerror,*DocID,rLotForDOCid(*DocID));
+        	printf("uncompress error. Code: %i for DocID %u-%i\n",nerror,DocID,rLotForDOCid(DocID));
 
 		return 0;
 	}

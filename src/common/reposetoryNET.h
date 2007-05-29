@@ -1,6 +1,7 @@
 #ifndef _REPOSETORYNET_H_
 #define _REPOSETORYNET_H_
 #include <stdio.h>
+#include <sys/file.h>
 #include "define.h"
 
 int rGetNextNET(char *HostName, unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,char subname[]);

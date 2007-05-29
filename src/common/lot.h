@@ -3,17 +3,22 @@
 
 #include <stdio.h>
 #include <math.h>
+#include "define.h"
 
 #define MaxOpenFiles  10
 
+#ifdef DEFLOT
+	#define rLotForDOCid(x) (int)((x / NrofDocIDsInLot) +1) 
+	#define LotDocIDOfset(x) ((NrofDocIDsInLot * x) - NrofDocIDsInLot)
+#else
+	int rLotForDOCid (unsigned int DocID);
+	int LotDocIDOfset (int LotNr);
 
-
+#endif
 //FILE *bfopen(char name[],char flags[]);
-int rLotForDOCid (unsigned int DocID);
 void GetFilPathForLot(char *FilePath,int LotNr,char subname[]);
 void GetFilPathForLotFile(char *FilePath,char lotfile[],int LotNr,char subname[]);
 void GetFilPathForLotByDocID(char *FilePath,int DocID,char subname[]);
-int LotDocIDOfset (int LotNr);
 void GetFilePathForIindex (char *FilePath, char *FileName,int IndexNr,char Type[], char lang[],char subname[]);
 void GetFilePathForIDictionary(char *FilePath, char *FileName,int IndexNr,char Type[], char lang[],char subname[]);
 void GetFilPathForThumbnaleByDocID(char *FileName,int DocID,char subname[]);

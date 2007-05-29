@@ -6,6 +6,20 @@
 #include "debug.h"
 #include "bstr.h"
 
+int isWikiUrl(char url[]) {
+
+	if (strstr(url,"/wiki/") != NULL) {
+		#ifdef DEBUG
+		printf("is wiki: \"%s\"\n",url);
+		#endif
+		return 1;
+	}
+	else {
+		return 0;
+	}
+
+}
+
 int strchrcount(char s[], char c) {
 
 	char *cpnt = s;
@@ -57,7 +71,7 @@ int gyldig_url(char word[]) {
                 lengt = strlen(word);
 
 		if (!find_domain(word,domain,sizeof(domain)) ) {
-			printf("can't find domain. Url \"%s\"\n",word);
+			debug("gyldig_url: can't find domain. Url \"%s\"\n",word);
 			return 0;
 		}
 
@@ -99,7 +113,7 @@ int gyldig_url(char word[]) {
 		}
 		else if (subdomains == 1) {
 			//if not will we index boitho.com and www.boitho.com. Now are we only takint he www.boitho"
-			printf("To few subdomains. Most have one. Url: \"%s\"\n",word);
+			debug("To few subdomains. Most have one. Url: \"%s\"\n",word);
 			return 0;
 		}
 		else if (domainNrOfLines >= 3) {
@@ -130,6 +144,7 @@ int gyldig_url(char word[]) {
                         || (strcmp(filetype,".aspx") == 0)
                         || (strcmp(filetype,".do") == 0)
                         || (strcmp(filetype,".jsp") == 0)
+			|| isWikiUrl(word)
                         )
                 ) {
                         //tar bar de filendelsene vi vil ha
@@ -308,42 +323,45 @@ int url_isttl(char word[],char ttl[]) {
 
 
 //fjerner også www. i begyndelsen av en url, slik at det blir lettere å samenligne www.vg.no == vg.no
-int find_domain_no_subname (char url[],char domain[], int sizeofdomain) {
+int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
 //ToDo har lagt til sizeofdomain, for å ungå buffer owerflow
+
+	#define maxsubdomains 10
+
         char *cpnt;
         char buff[64];
         char darray[10][64];
         int i,y;
         //kutter av http:// (de 7 første tegnene)
-        strncpy(domain,url + 7,sizeofdomain -1);
+        strscpy(domain,url + 7,sizeofdomain -1);
 
 
 
 
         //søker oss til / og kapper
         if ((cpnt = strchr(domain,'/')) == NULL) {
-                printf("bad url\n");
+                printf("bad url. Dont have any / after protokoll, or domain (or subdomain) is to long Url \"%s\"\n",url);
                 return 0;
         }
         else {
                 domain[cpnt - domain] = '\0';
 
-                strncpy(buff,domain,sizeof(buff));
+                strscpy(buff,domain,sizeof(buff));
                 i = 0;
-                while ((cpnt = strrchr(buff,'.')) != NULL) {
+                while (((cpnt = strrchr(buff,'.'))) != NULL && (i<maxsubdomains)) {
                         //++cpnt;
                         //printf("el %s\n",cpnt);
-                        strncpy(darray[i],cpnt,sizeof(darray[i]));
+                        strscpy(darray[i],cpnt,sizeof(darray[i]));
                         cpnt[0] = '\0';
                         ++i;
                 }
-                strncpy(darray[i],buff,sizeof(darray[i]));
+                strscpy(darray[i],buff,sizeof(darray[i]));
 
                 if (strlen(darray[1]) > 3) {
                         //printf("%s > 3\n",darray[1]);
                         domain[0] = '\0';
 
-                        sprintf(domain,"%s%s",darray[1],darray[0]);
+                        snprintf(domain,sizeofdomain,"%s%s",darray[1],darray[0]);
 
                         if (strncmp(domain,"www",3) == 0) {
                                 strcpy(domain,domain +3);
@@ -355,10 +373,14 @@ int find_domain_no_subname (char url[],char domain[], int sizeofdomain) {
                 else {
                         //returnerer domanet slik vi fant det lengere opp
                         if (strncmp(domain,"www.",4) == 0) {
-                                strcpy(domain,domain +4);
+                                strscpy(domain,domain +4,sizeofdomain);
                         }
 
                 }
+
+		//18 mai 2007. Forsikrer os at vi altid slutter på \0
+		//underlig at det er nædvendig. Men ser ut til at det kan oppstå feil som gir oss domene uten \0
+		domain[sizeofdomain] = '\0';
 
                 return 1;
         }

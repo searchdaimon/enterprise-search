@@ -33,7 +33,35 @@ static LotFilesInalisert = 0;
 //array med opne filhonterere
 struct OpenFilesFormat OpenFiles[MaxOpenFiles];
 
+#ifndef DEFLOT
+//LotForDOCid returnerer hvilken lot DOCid skal i
+int rLotForDOCid (unsigned int DocID) {
+	int lot;
+	
+	lot	= (int)((DocID / NrofDocIDsInLot) +1);
 
+	/*
+	//gjode litt om her så vi ikke trenger å bruke ceil. Da det er trekt
+	//testen nedenfor sjekker at vi fortsatt får samme resultat
+	if (lot != ceil((DocID / NrofDocIDsInLot) +1)) {
+		printf("lot proble\n");
+		exit(1);
+	}
+	*/
+	return lot;
+}
+
+/*
+Antall DocIDer som er før denne lotten. Dette er viktig å vite da da indekser 
+bruker DocID for adresering, og lotene er på en måte som en stabel med kort, man 
+må vite hvor nåverende kort bgynner
+*/
+int LotDocIDOfset (int LotNr) {
+
+	return ((NrofDocIDsInLot * LotNr) - NrofDocIDsInLot);
+}
+
+#endif
 int HasSufficientSpace(char FilePath[], int needSpace) {
 
 
@@ -120,7 +148,9 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
 		//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
 		else if (strcmp(type,"rb") == 0) {
 			if ( (FILEHANDLER = (FILE *)fopen64(File,type)) == NULL ) {
+				#ifdef DEBUG
 				perror(File);
+				#endif
 				return NULL;
 			}
 		}
@@ -328,22 +358,6 @@ void MakeMapListMap () {
 
 
 
-//LotForDOCid returnerer hvilken lot DOCid skal i
-int rLotForDOCid (unsigned int DocID) {
-	int lot;
-	
-	lot	= (int)((DocID / NrofDocIDsInLot) +1);
-
-	/*
-	//gjode litt om her så vi ikke trenger å bruke ceil. Da det er trekt
-	//testen nedenfor sjekker at vi fortsatt får samme resultat
-	if (lot != ceil((DocID / NrofDocIDsInLot) +1)) {
-		printf("lot proble\n");
-		exit(1);
-	}
-	*/
-	return lot;
-}
 // gir hav som er første DocID i en lot
 int GetStartDocIFForLot (int LotNr) {
 	return ((LotNr * NrofDocIDsInLot) - NrofDocIDsInLot);
@@ -446,15 +460,6 @@ void GetFilPathForLotByDocID(char *FilePath,int DocID,char subname[]) {
 	
 }
 
-/*
-Antall DocIDer som er før denne lotten. Dette er viktig å vite da da indekser 
-bruker DocID for adresering, og lotene er på en måte som en stabel med kort, man 
-må vite hvor nåverende kort bgynner
-*/
-int LotDocIDOfset (int LotNr) {
-
-	return ((NrofDocIDsInLot * LotNr) - NrofDocIDsInLot);
-}
 
 //gir ful path for et bilde fra DocID
 void GetFilPathForThumbnaleByDocID(char *FileName,int DocID,char subname[]) {

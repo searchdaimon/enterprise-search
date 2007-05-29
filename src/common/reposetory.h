@@ -82,7 +82,7 @@ int rGetNext (unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader
 
 void runpack(struct ReposetoryFormat *ReposetoryData,char *inndata,int length);
 
-int rReadSummary(unsigned int *DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[]);
+int rReadSummary(unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[]);
 
 //Bilde rutiner
 void risave (int DocID, char *image, int size,char subname[]);

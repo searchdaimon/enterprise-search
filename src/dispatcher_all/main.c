@@ -1286,7 +1286,7 @@ int main(int argc, char *argv[])
 
 	//hånterer error. Viser den hvis vi hadde noen
 	if (nrRespondedServers != 0) {
-		for(i=0;i<(nrOfServers + nrOfPiServers) && !funnet;i++) {
+		for(i=0;i<(nrOfServers + nrOfPiServers)) {
 			if (SiderHeder[i].responstype == searchd_responstype_error) {
 				addError(&errorha,11,SiderHeder[i].errorstr);
 			}

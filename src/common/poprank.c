@@ -112,9 +112,12 @@ void popopenMemArray_oneLot(char subname[], int i) {
 				fread(popMemArray[i],branksize,1,FH);
 
 				//debug: viser alle rankene vi laster
-				//for(y=0;y<branksize;y++) {
-				//	printf("DocID %i, rank %i\n",y,popMemArray[i][y]);
-				//}
+				/*
+				int y;
+				for(y=0;y<NrofDocIDsInLot;y++) {
+					printf("DocID %i, rank %u. i:%i, y:%i\n",(y + LotDocIDOfset(i)),(unsigned int)popMemArray[i][y],i,y);
+				}
+				*/				
 
 				fclose(FH);
 
@@ -211,6 +214,7 @@ int popRankForDocIDMemArray(unsigned int DocID) {
 
 
 		if (popMemArray[LotNr] != 0) {
+			//printf("have rank %u, i:%i, y:%i\n",(unsigned int)popMemArray[LotNr][DocIDPlace],LotNr,DocIDPlace);
 			return popMemArray[LotNr][DocIDPlace];
 		}
 		else {

@@ -15,15 +15,27 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
+
+//globals
+static char lastServer[32] = "noone";
+
+static int socketha;
+//static int socketOpen = 0;
+
+//stenger ned sco hvis vi får en error
+int socketError () {
+
+	close(socketha);
+
+        strcpy(lastServer,"noone");
+
+}
+
 int conectTo(int LotNr) {
 
-	//globals
-	static int socketha;
-	static int socketOpen = 0;
 
 	char HostName[32]; 
 
-        static char lastServer[32] = "noone";
 
         //printf("sendig lot %i to %s\n",LotNr,HostName);
 
@@ -97,16 +109,20 @@ off_t rGetFileSize(char source[], int LotNr,char subname[]) {
 
 int rGetFileByOpenHandler(char source[],FILE *FILEHANDLER,int LotNr,char subname[]) {
 
-	int socketha = conectTo(LotNr);
+	int socketha;
 
 	int n;
-	printf("rGetFileByOpenHandler\n");
 	int filnamelen;
 	off_t filesize;
 	off_t i;
 	char c;
 	char *filblocbuff;
         off_t fileBloks,filerest;
+
+	//printf("rGetFileByOpenHandler\n");
+
+	//kobler til
+	socketha = conectTo(LotNr);
 
 	fseek(FILEHANDLER,SEEK_SET,0);
 
@@ -140,8 +156,9 @@ int rGetFileByOpenHandler(char source[],FILE *FILEHANDLER,int LotNr,char subname
             exit(1);
         }
 
+	#ifdef DEBUG
         printf("fileBloks: %" PRId64 ", filerest: %" PRId64 "\n",fileBloks,filerest);
-
+	#endif
 	
         filblocbuff = (char *)malloc(rNetTrabsferBlok);
 	if (fileBloks > 0) {
@@ -185,8 +202,9 @@ int rGetFileByOpenHandler(char source[],FILE *FILEHANDLER,int LotNr,char subname
 		printf("%i\n",(int)c);
 	}
 	*/
+	#ifdef DEBUG
 	printf("file read end\n");
-
+	#endif
 }
 
 int rmkdir(char dest[], int LotNr,char subname[]) {
@@ -266,6 +284,15 @@ int rSendFileByOpenHandler(FILE *FILEHANDLER, char dest[], int LotNr, char opent
 
 	//printf("sendig lot %i to %s\n",LotNr,HostName);
 
+	if (strlen(opentype) != 1) {
+		printf("Error: rSendFileByOpenHandler: opentype can only be one caracter, and \"w\" or \"a\", not \"%s\"\n.",opentype);
+		exit(1);
+	}
+	else if (opentype[0] != 'w' && opentype[0] != 'a') {
+		printf("Error: rSendFileByOpenHandler: opentype can only be \"w\" or \"a\", not \"%s\"\n.",opentype);
+		exit(1);
+	}
+
 	int socketha = conectTo(LotNr);
 
 
@@ -274,7 +301,11 @@ int rSendFileByOpenHandler(FILE *FILEHANDLER, char dest[], int LotNr, char opent
 
 
 	//sender heder
-	sendpacked(socketha,C_rSendFile,BLDPROTOCOLVERSION, 0, NULL,subname);
+	if (!sendpacked(socketha,C_rSendFile,BLDPROTOCOLVERSION, 0, NULL,subname)) {
+		fprintf(stderr,"han't sendpacked\n");
+		socketError();
+		return 0;
+	}
 
 	//sender lotnr
         sendall(socketha,&LotNr, sizeof(LotNr));
@@ -287,7 +318,7 @@ int rSendFileByOpenHandler(FILE *FILEHANDLER, char dest[], int LotNr, char opent
 	//sender destinasjon
 	sendall(socketha,dest, destLen);
 
-        //sender fil opningstype, writ, apend. Sender også \0
+        //sender fil opningstype, write, apend. Sender også \0
         sendall(socketha,opentype, sizeof(char) +1);
 
 	//finner hvor stor filen er
@@ -305,11 +336,18 @@ int rSendFileByOpenHandler(FILE *FILEHANDLER, char dest[], int LotNr, char opent
 
 	filblocbuff = (char *)malloc(rNetTrabsferBlok);
 	for (i=0;i<fileBloks;i++) {
-                if (n= (fread(filblocbuff,sizeof(char),rNetTrabsferBlok,FILEHANDLER)) == -1) {
+                if (n= (fread(filblocbuff,sizeof(char),rNetTrabsferBlok,FILEHANDLER)) != rNetTrabsferBlok) {
                         perror("read");
+			printf("Is the file open for bout read and write. Not only write?. Did read %i of %i\n",n,rNetTrabsferBlok);
+
+			return 0;
                 }
-		//temp:
-                sendall(socketha,filblocbuff,rNetTrabsferBlok);
+		
+                if (!sendall(socketha,filblocbuff,rNetTrabsferBlok)) {
+			printf("rSendFileByOpenHandler: can't sendall\n");
+			socketError();
+			return 0;
+		}
                 //send(socketha,filblocbuff,rNetTrabsferBlok,0);
         }
 
@@ -320,7 +358,11 @@ int rSendFileByOpenHandler(FILE *FILEHANDLER, char dest[], int LotNr, char opent
         	perror("read");
 		exit(1);
         }
-	sendall(socketha,filblocbuff,filerest);
+	if (!sendall(socketha,filblocbuff,filerest)) {
+		printf("rSendFileByOpenHandler: can't send filerest\n");
+		socketError();
+		return 0;
+	}
 
 	free(filblocbuff);
 
