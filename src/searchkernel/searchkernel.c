@@ -918,7 +918,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	//struct iindexFormat *TeffArray;
 
-
+	#ifdef BLACK_BOKS
+	searchFilterInit(filters);
+	#endif
 
 	//int godPages; //antal sider som kan vises. (ikke det samme som antal sider som faktisk skal vises )
 	int readedFromIndex;
@@ -953,6 +955,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	//7int TotaltTreff;
 	
 	//char buff[64]; //generell buffer
+
 
 	//kopierer query inn i strukturen som holder query date
 	strscpy(PagesResults.QueryData.query,query,sizeof(PagesResults.QueryData.query));
@@ -1322,6 +1325,8 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 				);
 	}
 	#endif
+
+	return 1;
 }
 
 

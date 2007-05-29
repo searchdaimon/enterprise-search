@@ -1273,10 +1273,17 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		(*TeffArrayElementer) = TmpArrayLen;
 	}
 	*/
+	#ifndef BLACK_BOKS
+
 	//ormerger Athor og Url inn i en temper array
 	or_merge(TmpArray,&TmpArrayLen,searchIndex_thread_arg_Athor.resultArray,searchIndex_thread_arg_Athor.resultArrayLen,
 		searchIndex_thread_arg_Url.resultArray,searchIndex_thread_arg_Url.resultArrayLen);
-	
+
+	free(searchIndex_thread_arg_Athor.resultArray);
+	free(searchIndex_thread_arg_Url.resultArray);
+
+	#endif
+
 	/*
 	//Main
 	if (searchIndex_thread_arg_Main.resultArrayLen > 0) {
@@ -1290,8 +1297,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	//merger inn temperer og main 
 	or_merge(TeffArray,TeffArrayElementer,TmpArray,TmpArrayLen,
 		searchIndex_thread_arg_Main.resultArray,searchIndex_thread_arg_Main.resultArrayLen);
-	free(searchIndex_thread_arg_Athor.resultArray);
-	free(searchIndex_thread_arg_Url.resultArray);
+
 	free(searchIndex_thread_arg_Main.resultArray);
 	
 	//sjekker at dokumenter er i Aclen
@@ -1790,6 +1796,13 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 }
 
 #ifdef BLACK_BOKS
+
+void searchFilterInit(struct filtersFormat *filters) {
+
+	(*filters).filtypes.nrof 	= 0;
+	(*filters).collections.nrof 	= 0;
+}
+
 int searchFilterCount(int *TeffArrayElementer, 
 			struct iindexFormat *TeffArray, 
 			struct filtersFormat *filters,
