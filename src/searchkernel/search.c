@@ -1797,10 +1797,15 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 #ifdef BLACK_BOKS
 
-void searchFilterInit(struct filtersFormat *filters) {
+void searchFilterInit(struct filtersFormat *filters, int dates[]) {
 
 	(*filters).filtypes.nrof 	= 0;
 	(*filters).collections.nrof 	= 0;
+
+	for (i=0;i<10;i++) {
+		dates[i] = 0;
+	}
+
 }
 
 int searchFilterCount(int *TeffArrayElementer, 
