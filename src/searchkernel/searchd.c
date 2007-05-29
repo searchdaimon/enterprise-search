@@ -757,8 +757,6 @@ void *do_chld(void *arg)
 			//setter at vi ikke hadde noen svar
 			SiderHeder.TotaltTreff 	= 0;
 			SiderHeder.showabal	= 0;
-
-			printf("Error: cand do dosearch: \"%s\"\n",SiderHeder.errorstr);
 	}
 	else {
 		SiderHeder.responstype = searchd_responstype_normalsearch;

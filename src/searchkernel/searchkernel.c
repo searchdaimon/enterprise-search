@@ -1322,8 +1322,6 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 				);
 	}
 	#endif
-
-	return 1;
 }
 
 
