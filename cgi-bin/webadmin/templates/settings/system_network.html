@@ -1,0 +1,14 @@
+[% INCLUDE 'header.html' title = 'Configure network' extra_css=['check_list'] %]
+[% USE HTML %]
+[% PROCESS 'network_config.html' %]
+[% PROCESS 'network_messages.html' %]
+[% PROCESS 'settings_tabs.html' selected="Network Configuration" %]
+
+[% checkListHTML %]
+
+<form action="system.cgi" method="post">
+[% PROCESS network_config %]
+<input type="submit" name="submit.network_conf" value="Apply changes" />
+</form>
+
+[% INCLUDE 'footer.html' %]

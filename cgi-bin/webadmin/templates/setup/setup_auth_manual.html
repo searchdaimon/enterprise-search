@@ -1,7 +1,7 @@
 [% USE HTML %]
 [% USE Dumper %]
 [% INCLUDE 'header.html' 
-	title = 'Configure network'
+	title = 'Manual activation'
 	simple_header = 1
 	extra_css = ['setup']
 %]
@@ -20,7 +20,7 @@
 	[% END %]
 		<p>
 			To activate, go to <a href="[% activate_url %]" target="_blank">[% activate_url %]</a>
-			on a computer connected to the internet, and fill in license and hardware code. You will then be provided with a authentication code.</p>
+			on a computer connected to the internet, and fill in license and hardware code. You will then be provided with a <em>signature.</em></p>
 			
 			<p>
 			Your <em>hardware code</em> is:
@@ -31,10 +31,12 @@
 			
 			</p>
 
-	<h3>Input authentication code:</h3>
+	<h3>Activate</h3>
 	<form action="setup.cgi" method="post">
-	<input type="text" value="[% auth_code %]" name="auth_code" />
-	<input type="hidden" name="form_id" value="auth_code_valid" />
+	Signature: <input type="text" value="[% signature %]" name="signature" /><br />
+	License: <input type="text" value="[% license %]" name="license" />
+	<input type="hidden" name="form_id" value="manual_act" />
+	<input type="hidden" name="hardware" value="[% hardware_code %]" />
 		
 	<div id="buttons_block">
 		<input type="submit" name="next_button" value="Activate" class="next_button" />

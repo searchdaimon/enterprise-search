@@ -108,11 +108,8 @@ $CONFIG{'network_interface'} = "eth1";
 
 # Group: License authentication
 
-# Path to the software that generates hardware-hash.
-$CONFIG{'hwgen_path'} = "/bin/date";
-
-# Path to the software that validates authentication code.
-$CONFIG{'authvalid_path'} = "/bin/true";
+$CONFIG{'bb_sha_test_path'} = $ENV{'BOITHOHOME'} . "/bin/bb_sha_test";
+$CONFIG{'bb_verify_msg'}    = $ENV{'BOITHOHOME'} . "/bin/bb_verify_msg";
 
 # URL to the search daimon interface
 $CONFIG{'interface_url'} = "http://dagurval.boitho.com/cgi-bin/license_auth/if.pl";
@@ -120,6 +117,9 @@ $CONFIG{'interface_url'} = "http://dagurval.boitho.com/cgi-bin/license_auth/if.p
 # URL to the search daimon manual activation
 $CONFIG{'activate_url'} = "http://dagurval.boitho.com/cgi-bin/license_auth/custom.pl";
 
+# File to store license in
+$CONFIG{'license_file'} = "/tmp/bb_license";
+$CONFIG{'signature_file'} = "/tmp/bb_signature";
 
 
 

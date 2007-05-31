@@ -27,7 +27,7 @@ my $lc = SD::License::Client->new(
 {
 	my $hash = $lc->bb_sha_test();
 	
-	like($hash, qr{^(\w{6}-){4}\w+},
+	like($hash, qr{^(\w{6}-){4}\w+$},
 		"Generate hardware hash (bb_sha_test)");
 }
 

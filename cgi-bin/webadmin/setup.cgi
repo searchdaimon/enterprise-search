@@ -43,7 +43,7 @@ if (my $id = $state{'form_id'}) { #we're coming from a form.
 	$flow   ->add('login', \&process_login)
 			->add('network_config', \&process_network)
 			->add('license_valid', \&process_license)
-			->add('auth_code_valid', \&process_manual_act)
+			->add('manual_act', \&process_manual_act)
 			->add('integration_method', \&process_integration_method)
 			->add('integration_values', \&process_integration_values);
 
@@ -119,13 +119,14 @@ sub process_license {
 
 
 sub process_manual_act {
-	my ($vars, $success) = $pageAuth->process_auth_code($vars, $state{'auth_code'});
+	my ($vars, $success) = $pageAuth->process_signature($vars, $state{'license'}, 
+											$state{'hardware'}, $state{'signature'});
 
 	if ($success) {
 		return $pageIntegration->show_integration_methods($vars);
 	}
 	else {
-		return $pageAuth->show_activation_dialog($vars, $state{'auth_code'});
+		return $pageAuth->show_activation_dialog($vars, $state{'license'}, $state{'signature'});
 	}
 }
 

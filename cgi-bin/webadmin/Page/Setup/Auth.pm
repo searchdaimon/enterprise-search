@@ -8,24 +8,28 @@ BEGIN {
 	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Carp;
-use Boitho::LicenseAuth;
+use SD::License::Client;
+use SD::License::ClientCommunication;
 use Page::Abstract;
 use Sql::Config;
 use config qw($CONFIG);
 our @ISA = qw(Page::Abstract);
+
+my $licenseComm;
+my $licenseClient;
+my $sqlConfig;
+
 
 ##
 # Init.
 sub _init {
 	my $self = shift;
 	my $dbh = $self->{'dbh'};
-	my $licauth_params = {
-			'hwgen_path'     => $CONFIG->{'hwgen_path'},
-			'interface_url'  => $CONFIG->{'interface_url'},
-			'authvalid_path' => $CONFIG->{'authvalid_path'},
-		};
-	$self->{'licenseAuth'} = Boitho::LicenseAuth->new($licauth_params);
-	$self->{'sqlConfig'} = Sql::Config->new($dbh);
+
+	$sqlConfig = Sql::Config->new($dbh);
+	$licenseComm   = SD::License::ClientCommunication->new($CONFIG->{'interface_url'});
+	$licenseClient = SD::License::Client->new($CONFIG->{'bb_sha_test_path'}, $CONFIG->{'bb_verify_msg'});
+	
 	return $self;
 }
 ##
@@ -48,82 +52,110 @@ sub show_license_dialog {
 ##
 # Display link to manual activation, field to insert auth-code.
 #
-# Attributes:
-#	vars - Template vars
-#
-# Returns:
-#	vars - Template vars
-#	template-file - Template file
 sub show_activation_dialog {
-	my ($self, $vars, $auth_code) = @_;
+	my ($self, $vars, $license, $signature) = @_;
 	my $template_file = "setup_auth_manual.html";
-	my $licenseAuth = $self->{'licenseAuth'};
 
 	$vars->{'activate_url'} = $CONFIG->{'activate_url'};
-	
-	$vars->{'auth_code'} = $auth_code
-		if defined $auth_code;
+
+	$vars->{'license'}   = $license
+		if defined $license;
+	$vars->{'signature'} = $signature
+		if defined $signature;
 
 	$vars->{'hardware_code'} 
-		= $licenseAuth->generate_hardware_code();
+		= $licenseClient->bb_sha_test();
 	
 	return ($vars, $template_file);
 }
 
 ##
 # Authenticates license against search daimon authserver. 
-# Calls <show_license_dialog> on fail, or <????> on success.
 #
 # Attributes:
 #	vars - Template vars
 #	license - User license
+#
+# Returns:
+#	vars - Template vars
+#	success - True/False on success.
 sub process_license {
 	my ($self, $vars, $license) = @_;
-	my $licenseAuth = $self->{'licenseAuth'};
-	my $sqlConfig = $self->{'sqlConfig'};
 	
-	my ($auth_code, $erromsg);
+	# Request signature from server
+	my ($signature, $hwhash);
 	eval {
-		return 1; # DEBUG: Slik vi får testet alt annet.
-		$licenseAuth->generate_hardware_code();
-		$auth_code = $licenseAuth->authenticate($license);
+		$hwhash = $licenseClient->bb_sha_test();
+		$signature = $licenseComm->authenticate($license, $hwhash);
 	};
 	if ($@) {
 		# Error
-		$vars->{'error_msg_auth'} = $@;
+		my $errmsg = $@;
+		$errmsg =~ s/at (.*) line.*//; # strip "at /path/ line .." from errormsg
+		$vars->{'error_msg_auth'} = $errmsg;
 		return ($vars, 0);
 	}
 
-	unless ($licenseAuth->auth_code_is_valid($auth_code)) {
-		$vars->{'error_msg_auth'} 
-			= "License appeared to be valid, but the response from
-			activation server could not be verified. Please try again, or 
+	# License existed for hw in SD db.
+	# Check if it's valid for the hardware.
+	my ($sig_is_valid, $errmsg) = $licenseClient->bb_verify_msg($license, $hwhash, $signature);
+	unless ($sig_is_valid) {
+		my $err = "License appears to be invalid.";
+		$err .= " Error retuned was <i>$errmsg</i>." if $errmsg;
+		$err .= "Please try again, or 
 			try <a href=\"setup.cgi?view=manual_activation\">manual activation</a>.";
+		$vars->{'error_msg_auth'}  = $err;
 		return ($vars, 0);
 	}
 
-	# Success! Store auth code and proceed.
-	$sqlConfig->insert_setting('auth_code', $auth_code, $license);
+	$self->_store_license_data($license, $signature);
+	
 	return ($vars, 1);
 }
 
 ##
-# Validate authcode on manual activation.
-# Calls <show_activation_dialog> on fail, or <????> on success.
-# Attributes:
-#	vars - Template vars
-#	auth_code - Authentication code
-sub process_auth_code {
-	my ($self, $vars, $auth_code) = @_;
-	my $licenseAuth = $self->{'licenseAuth'};
+# Validate signature on manual activation.
+sub process_signature {
+	my ($self, $vars, $license, $hardware, $signature) = @_;
 	
-	if ($licenseAuth->auth_code_is_valid($auth_code)) {
+	my ($valid, $error) = $licenseClient->bb_verify_msg($license, $hardware, $signature);
+	
+	if ($valid) {
+		$self->_store_license_data($license, $signature);
 		return ($vars, 1);
 	}
 	else {
-		$vars->{'error_msg_auth'} = "Authentication code is not correct.";
+		my $errmsg = "Signature could not be verified.";
+		$errmsg .= " $error." if ($error);
+		$vars->{'error_msg_auth'} = $errmsg;
 		return ($vars, 0);
 	}
+}
+
+# Group: Private methods
+
+##
+# Store license and signature in a file.
+#
+# Attributes:
+#	license   - User license
+#	signature - License/hw signature. 
+sub _store_license_data {
+	my ($self, $license, $signature) = @_;
+
+	open my $lh, ">", $CONFIG->{'license_file'},
+		or croak "Unable to open license file ", $CONFIG->{'license_file'};
+
+	print {$lh} $license;
+	close $lh;
+
+	open my $sh, ">", $CONFIG->{'signature_file'}, 
+		or croak "Unable to open signature file ", $CONFIG->{'signature_file'};
+
+	print {$sh} $signature;
+	close $sh;
+
+	1;
 }
 
 

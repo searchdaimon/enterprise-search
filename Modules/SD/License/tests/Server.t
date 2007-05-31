@@ -29,7 +29,7 @@ $ls = SD::License::Server->new(
 #sub test_bb_sign_msg
 {
 	my $signature = $ls->bb_sign_msg($keys{'private'}, $hardware_hash);
-	like($signature, qr{^((\w{4})-){7}(\w{4})},
+	like($signature, qr{^((\w{4})-){7}(\w{4})$},
 		"Signing with bb_sign_msg");
 
 	eval {

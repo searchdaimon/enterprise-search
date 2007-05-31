@@ -17,11 +17,11 @@ sub new {
 	}
 	($generatekeys_path, $sign_msg_path) = @_;
 
-	unless (-e $generatekeys_path) {
-		croak "bb_generatekeys program ($generatekeys_path) is not executable.";
+	unless (-x $generatekeys_path) {
+		croak "bb_generatekeys program", $generatekeys_path, " is not executable.";
 	}
-	unless (-e $sign_msg_path) {
-		croak "bb_sign_msg program ($sign_msg_path) is not executable.";
+	unless (-x $sign_msg_path) {
+		croak "bb_sign_msg program, ", $sign_msg_path, " is not executable.";
 	}
 	return bless {}, $class;
 }
