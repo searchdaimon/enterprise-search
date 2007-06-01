@@ -2,26 +2,13 @@
 <webprojectsession>
   <session usePreviewPrefix="0" previewPrefix="" >
     <itemcursorpositions>
-      <item column="40" line="42" url="Page/System.pm" />
-      <item column="40" line="49" url="system.cgi" />
-      <item column="4" line="38" url="templates/common/template_message.html" />
-      <item line="86" column="23" url="setup.cgi" />
+      <item line="42" column="40" url="Page/System.pm" />
+      <item line="49" column="40" url="system.cgi" />
+      <item line="38" column="4" url="templates/common/template_message.html" />
+      <item column="23" line="86" url="setup.cgi" />
     </itemcursorpositions>
     <uploadprofiles defaultProfile="@" >
       <profile remote_host="" remote_port="" remote_path="" remote_protocol="ftp" user="" name="@" />
     </uploadprofiles>
-    <treestatus>
-      <openfolder url="Page" />
-      <openfolder url="Page/Abstract" />
-      <openfolder url="Page/Settings" />
-      <openfolder url="Page/Setup" />
-      <openfolder url="javascript" />
-      <openfolder url="styles" />
-      <openfolder url="templates" />
-      <openfolder url="templates/common" />
-      <openfolder url="templates/overview" />
-      <openfolder url="templates/setup" />
-      <openfolder url="templates/system" />
-    </treestatus>
   </session>
 </webprojectsession>

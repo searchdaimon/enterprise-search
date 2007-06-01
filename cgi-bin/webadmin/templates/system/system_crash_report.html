@@ -1,0 +1,24 @@
+[% INCLUDE 'header.html' title="Crash handler" %]
+[% USE HTML %]
+
+<h2>Crash report for [% core.core_file %] - [% core.time %]</h2>
+
+<p>
+<img src="file.cgi?i=back&amp;size=22x22" alt="" style="border : 0px solid;" />
+<a href="system.cgi?view=crashes">Back to crash reports</a>
+</p>
+
+<pre>
+[% HTML.escape(report) %]
+</pre>
+
+<div>
+<form action="system.cgi" method="post">
+	<input type="hidden" name="core_file" value="[% HTML.escape(core.core_file) %]" />
+	<input type="hidden" name="core_time" value="[% HTML.escape(core.time) %]" />
+	<input type="hidden" name="report" value="[% HTML.escape(report) %]" />
+	<input type="submit" value="Send report" name="submit.crash_send_report" />
+</form>
+</div>
+
+[% INCLUDE 'footer.html' %]

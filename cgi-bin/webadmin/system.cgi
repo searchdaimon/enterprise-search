@@ -11,9 +11,11 @@ use CGI::State;
 use Template;
 use Page::System;
 use Data::Dumper;
+use Switch;
 
 use Page::System::Services;
 use Page::System::Packages;
+use Page::System::Crashes;
 use Common::Generic qw(init_root_page);
 
 my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
@@ -25,6 +27,7 @@ my $template_file;
 
 my $pageServices = Page::System::Services->new($dbh);
 my $pagePackages = Page::System::Packages->new($dbh);
+my $pageCrashes  = Page::System::Crashes->new($dbh);
 
 
 if (defined $state{'submit'}) { #POST actions
@@ -50,19 +53,35 @@ if (defined $state{'submit'}) { #POST actions
 	if (defined $button->{'show_lot_size'}) {
 		($vars, $template_file) = $page->show_system_diagnostics($vars, {'show_lot_usage' => 1});
 	}
+
+	# USe wants to send a crash report.
+	if (defined $button->{'crash_send_report'}) {
+		($vars, $template_file) = $pageCrashes->send_report($vars, $state{'core_file'}, 
+			$state{'core_time'}, $state{'report'})
+	}
 }
 
 elsif (defined $state{'view'}) {
 	my $view = $state{'view'};
 	
-	if ($view eq "updates") {
-		# Show the package upload page
+	switch ($view) {
+		case "updates" {
+			# Show the package upload page
 		
-		($vars, $template_file) = $pagePackages->show($vars);
-	}
+			($vars, $template_file) = $pagePackages->show($vars);
+		}
 
-	elsif ($view eq "services") {
-		($vars, $template_file) = $pageServices->show($vars);
+		case "services" {
+			($vars, $template_file) = $pageServices->show($vars);
+		}
+
+		case "crashes" {
+			($vars, $template_file) = $pageCrashes->show($vars);
+		}
+
+		case "crash_report" {
+			($vars, $template_file) = $pageCrashes->show_report($vars, $state{'core'});
+		}
 	}
 }
 

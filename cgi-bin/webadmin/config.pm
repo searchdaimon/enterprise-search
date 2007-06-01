@@ -80,6 +80,14 @@ $CONFIG{'yum_wrapper_path'}  = $ENV{'BOITHOHOME'} . "/setuid/yumwrapper";
 # Path to maplist.conf file.
 $CONFIG{'maplist_path'} = $ENV{'BOITHOHOME'} . "/config/maplist.conf";
 
+# Core dump directory
+$CONFIG{'cores_path'}   = "/tmp/cores2";
+
+# Commands to execute in gdb when generating a crash report
+$CONFIG{'gdb_report_cmd'} = qq{bt};
+
+# URL to submit crash reports to
+$CONFIG->{'core_report_url'} = "http://dagurval.boitho.com/cgi-bin/report/submit.pl";
 
 # Group: Network
 

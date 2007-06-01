@@ -1,0 +1,38 @@
+[% INCLUDE 'header.html' title="Crash handler" %]
+[% USE HTML %]
+
+<h2>Service crash reports</h2>
+
+[% IF report_send_success.defined %]
+
+	[% IF report_send_success %]
+		[% WRAPPER 'template_message.html' type='success' %]
+			Report sent successfully.
+		[% END %]
+
+	[% ELSE %]
+		[% WRAPPER 'template_message.html' type='error' %]		
+			Unable to send report. [% report_send_error %]
+		[% END %]
+	[% END %]
+[% END %] 
+
+[% IF core_list.size %]
+	
+	[% WRAPPER 'template_table.html' 
+		header = ['', 'Crash reports', 'Time'] %]
+		[% color = 0 %]
+		[% FOREACH core IN core_list %]
+		[% WRAPPER 'template_table_row.html' %]
+			<td><!-- icon --></td>
+			<td><a href="system.cgi?view=crash_report&amp;core=[% HTML.escape(core.core_file) %]">
+					[% HTML.escape(core.core_file) %]</a></td>
+			<td>[% core.time %]</td>
+		[% END #row %]
+		[% color = 1 - color %]
+		[% END %]
+	[% END %]
+[% ELSE %]
+	<p>No crash reports pending.</p>
+[% END %]
+[% INCLUDE 'footer.html' %]
