@@ -84,7 +84,7 @@ crawl_watch:
 
 
 everrun:
-	perl rpmmagic.pl --initd everrun $(boitho-everrun_name) $(boitho-everrun_version) $(BOITHOHOME) /home/boitho/boithoTools bin/everrun
+	perl rpmmagic.pl --post "mkdir -p /coredumps/saved" --initd everrun $(boitho-everrun_name) $(boitho-everrun_version) $(BOITHOHOME) /home/boitho/boithoTools bin/everrun
 
 	rpm -bb $(boitho-everrun_name).spec
 
