@@ -1,5 +1,6 @@
 [% INCLUDE 'header.html' title="Crash handler" %]
 [% USE HTML %]
+[% PROCESS "system_diag_tabs.html" %]
 
 <h2>Service crash reports</h2>
 
@@ -24,7 +25,7 @@
 		[% color = 0 %]
 		[% FOREACH core IN core_list %]
 		[% WRAPPER 'template_table_row.html' %]
-			<td><!-- icon --></td>
+			<td style="width : 40px;"><img src="file.cgi?i=core" alt="" /></td>
 			<td><a href="system.cgi?view=crash_report&amp;core=[% HTML.escape(core.core_file) %]">
 					[% HTML.escape(core.core_file) %]</a></td>
 			<td>[% core.time %]</td>

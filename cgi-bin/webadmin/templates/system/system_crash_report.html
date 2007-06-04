@@ -1,6 +1,7 @@
 [% INCLUDE 'header.html' title="Crash handler" %]
 [% USE HTML %]
 
+
 <h2>Crash report for [% core.core_file %] - [% core.time %]</h2>
 
 <p>
@@ -8,17 +9,26 @@
 <a href="system.cgi?view=crashes">Back to crash reports</a>
 </p>
 
-<pre>
-[% HTML.escape(report) %]
-</pre>
+[% WRAPPER 'template_message.html' type='info' %]
+<p>This crash report can help us to identify problems and improve our software.</p>
 
-<div>
 <form action="system.cgi" method="post">
 	<input type="hidden" name="core_file" value="[% HTML.escape(core.core_file) %]" />
 	<input type="hidden" name="core_time" value="[% HTML.escape(core.time) %]" />
 	<input type="hidden" name="report" value="[% HTML.escape(report) %]" />
 	<input type="submit" value="Send report" name="submit.crash_send_report" />
 </form>
+[% END %]
+
+<h3>Crash report</h3>
+<pre style="background : #f2f2f2">
+[% HTML.escape(report) %]
+</pre>
+
+<div>
+
 </div>
+
+
 
 [% INCLUDE 'footer.html' %]

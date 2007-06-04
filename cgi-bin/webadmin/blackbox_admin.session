@@ -2,13 +2,26 @@
 <webprojectsession>
   <session usePreviewPrefix="0" previewPrefix="" >
     <itemcursorpositions>
-      <item line="42" column="40" url="Page/System.pm" />
-      <item line="49" column="40" url="system.cgi" />
-      <item line="38" column="4" url="templates/common/template_message.html" />
-      <item column="23" line="86" url="setup.cgi" />
+      <item line="58" column="75" url="system.cgi" />
+      <item line="0" column="0" url="Page/System/Packages.pm" />
+      <item line="0" column="0" url="Page/System/Services.pm" />
+      <item line="113" column="0" url="config.pm" />
+      <item line="17" column="9" url="templates/system/system_crash_overview.html" />
+      <item line="33" column="3" url="templates/system/system_crash_report.html" />
+      <item line="1" column="14" url="templates/system/system_upload.html" />
+      <item line="64" column="73" url="Page/System/Crashes.pm" />
+      <item line="15" column="30" url="login.cgi" />
+      <item line="12" column="36" url="logs.cgi" />
     </itemcursorpositions>
     <uploadprofiles defaultProfile="@" >
       <profile remote_host="" remote_port="" remote_path="" remote_protocol="ftp" user="" name="@" />
     </uploadprofiles>
+    <treestatus>
+      <openfolder url="templates" />
+      <openfolder url="templates/system" />
+      <openfolder url="templates/authentication" />
+      <openfolder url="Page" />
+      <openfolder url="Page/System" />
+    </treestatus>
   </session>
 </webprojectsession>

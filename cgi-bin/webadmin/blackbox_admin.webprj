@@ -509,5 +509,8 @@
     <item url="templates/settings/settings_network.html" uploadstatus="1" />
     <item url="Page/Settings/" uploadstatus="1" />
     <item url="Page/Settings/Network.pm" uploadstatus="1" />
+    <item url="Page/System/Crashes.pm" />
+    <item url="templates/system/system_crash_overview.html" />
+    <item url="templates/system/system_crash_report.html" />
   </project>
 </webproject>

@@ -1,7 +1,9 @@
 [% INCLUDE 'header.html' title = 'System diagnostics' %]
 [% USE HTML %]
 
-<h1>Components</h1>
+[% PROCESS 'system_diag_tabs.html' %]
+
+<h2>Components</h2>
 <div style="margin-top : 1em;">
 [% WRAPPER 'template_table.html' 
 	header = ['', 'Component', 'Status', 'Details'] %]
@@ -50,7 +52,7 @@
 [% END %]
 </div>
 
-<h1 style="margin-top : 2em;">Document disk usage</h1>
+<h2 style="margin-top : 2em;">Document disk usage</h2>
 
 <div>
 	[% WRAPPER 'template_message.html' type="info" %]
