@@ -6,11 +6,11 @@
 
 <p>
 <img src="file.cgi?i=back&amp;size=22x22" alt="" style="border : 0px solid;" />
-<a href="system.cgi?view=crashes">Back to crash reports</a>
+<a href="system.cgi?view=crashes">Back to service crash reports</a>
 </p>
 
 [% WRAPPER 'template_message.html' type='info' %]
-<p>This crash report can help us to identify problems and improve our software.</p>
+<p>Crash reports can help to identify software problems. Contents of the crash report is shown below.</p>
 
 <form action="system.cgi" method="post">
 	<input type="hidden" name="core_file" value="[% HTML.escape(core.core_file) %]" />
