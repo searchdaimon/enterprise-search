@@ -126,8 +126,8 @@ $CONFIG{'interface_url'} = "http://dagurval.boitho.com/cgi-bin/license_auth/if.p
 $CONFIG{'activate_url'} = "http://dagurval.boitho.com/cgi-bin/license_auth/custom.pl";
 
 # File to store license in
-$CONFIG{'license_file'} = "/tmp/bb_license";
-$CONFIG{'signature_file'} = "/tmp/bb_signature";
+$CONFIG{'license_file'}   = $ENV{'BOITHOHOME'} . "/config/bb_license";
+$CONFIG{'signature_file'} = $ENV{'BOITHOHOME'} . "/config/bb_signature";
 
 
 
