@@ -168,11 +168,10 @@ sub _get_gdb_backtrace {
 	open my $gdbh, "$exec |"
 		or croak "Unable to execute gdb: ", $!;
 
-		
 	my @backtrace = <$gdbh>;
 	close $gdbh;
 	unlink $tmp_filename;
-	return join '\n', @backtrace;
+	return join q{}, @backtrace;
 }
 
 1;
