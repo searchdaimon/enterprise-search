@@ -48,13 +48,16 @@ int main(int argc, char *argv[])
 
 	    char	*snippet;
 
-	    generate_snippet( qa, buf, size, &snippet, "\033[1;32m", "\033[0m", 320 );
+	    int		success = generate_snippet( qa, buf, size, &snippet, "\033[1;32m", "\033[0m", 320 );
 
 	    printf("%s\n", snippet);
 	    free(snippet);
 	    free(buf);
 
 	    fclose(file);
+
+	    if (!success)
+		printf("FAILURE WHEN PARSING.\n");
 	}
 
     destroy_query(&qa);

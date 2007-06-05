@@ -54,6 +54,7 @@ struct bsg_intern_data
     int		history_crnt, history_size;
     int		*phrase_sizes;
     int		num_queries;
+    char	parse_error;
 #ifdef DEBUG_ON
     char	sbuf[2048];
     int		spos;
@@ -733,7 +734,7 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
 }
 
 
-void generate_snippet( query_array qa, char text[], int text_size, char **output_text, char* b_start, char* b_end, int _snippet_size )
+int generate_snippet( query_array qa, char text[], int text_size, char **output_text, char* b_start, char* b_end, int _snippet_size )
 {
     struct bsgp_yy_extra	*he = malloc(sizeof(struct bsgp_yy_extra));
     struct bsg_intern_data	*data = malloc(sizeof(struct bsg_intern_data));
@@ -967,7 +968,9 @@ void generate_snippet( query_array qa, char text[], int text_size, char **output
 
     YY_BUFFER_STATE	bs = bsgp_scan_bytes( text, text_size, scanner );
 
-    while ((yv = bsgpparse(data, scanner)) != 0)
+    data->parse_error = 0;
+
+    while ((yv = bsgpparse(data, scanner)) != 0 && data->parse_error==0)
 	{
 	}
 
@@ -1004,13 +1007,17 @@ void generate_snippet( query_array qa, char text[], int text_size, char **output
 
     free(data->buf);
 
+    int		success = !data->parse_error;
     free(data);
     free(he);
+
+    return success;
 }
 
 
 bsgperror( struct bsg_intern_data *data, yyscan_t scanner, char *s )
 {
     fprintf(stderr, "Parse error: %s\n", s);
+    data->parse_error = 1;
 }
 
