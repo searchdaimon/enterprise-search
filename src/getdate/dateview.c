@@ -155,6 +155,7 @@ main(void)
 		printf("Type: %d Count: %d\n", i, dv2->output[i]);
 	}
 
+#if 0
         TODAY,
         YESTERDAY,
         LAST_WEEK,
@@ -162,6 +163,7 @@ main(void)
         THIS_YEAR,
         LAST_YEAR,
         TWO_YEARS_PLUS,
+#endif
 
 	date_info_free(dv2);
 
