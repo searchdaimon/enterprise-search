@@ -3,11 +3,9 @@ package Boitho::Scan;
 use strict;
 use warnings;
 BEGIN {
-	#push @INC, "Modules";
 	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Boitho::Infoquery;
-use Boitho::Scan::Samba;
 use XML::Parser;
 use XML::SimpleObject;
 use XML::Writer;
@@ -15,124 +13,183 @@ use IO::String;
 use Carp;
 use Data::Dumper;
 
+use constant HOOK_SCAN_START  => "scan start";
+use constant HOOK_SCAN_DONE   => "scan done";
+use constant HOOK_SHARE_FOUND => "share found";
+my @scan_start_hooks;
+my @scan_done_hooks;
+my @share_found_hooks;
+
+use constant GENIP_PATH => $ENV{BOITHOHOME} . "/Modules/Boitho/Scan/genip/genip";
+
+use constant DEBUG => 0;
+
+# TODO: Ask infoquery what is supported, rather than hardcode.
 my @supported_connectors = qw(SMB);
+
+my $infoquery;
 
 sub new {
 	my $class = shift;
 	my $self = {};
 	bless $self, $class;
-	$self->_initialize(@_);
+	$self->_init(@_);
 	return $self;
 }
 
-sub _initialize {
+sub _init {
 	my ($self, $infoquery_path) = @_;
 
-	croak "Infoquery path given is not executable"
+	croak "Infoquery path given is not executable. Path: ", $infoquery_path
 	    unless -x $infoquery_path;
 
-	$self->{'smb'} = new Boitho::Scan::Samba;
-	$self->{'infoquery'} = new Boitho::Infoquery($infoquery_path);
+	croak "Genip is not executable. Path: ", GENIP_PATH,
+		unless -x GENIP_PATH;
+
+	$infoquery  = Boitho::Infoquery->new($infoquery_path);
+
+	if (DEBUG) {
+		$self->add_hook_scan_start(\&debug);
+		$self->add_hook_scan_done(\&debug);
+		$self->add_hook_share_found(\&debug);
+	}
 }
 
-## Returns true if there exists a scanning utility for connector.
-sub is_supported_connector($$) {
+##
+# Arguments:
+#	connector - Connector name
+#
+# Returns:
+#	is_supported - True/false on supported connector
+sub is_supported_connector {
 	my ($self, $connector) = @_;
 	map { return 1 if $_ eq $connector } @supported_connectors;
 	0;
 }
 
-## Generic scan method. Send in connector as first parameter, range as second.
-sub scan($$$$$) {
+##
+# Scan range.
+sub scan {
 	my $self = shift;
-	my ($connector, $range, $username, $password) = (@_);
-	$self->{'username'} = $username;
-	$self->{'password'} = $password;
-	$self->{'started'} = time;
-	if ($connector eq 'SMB') {
-		$self->_smb_scan($range);
-	}
-	elsif ($connector eq 'MySQL') {
-		$self->_mysql_scan($range);
+	my ($connector, $range, $username, $password, $use_icmp_scan) = (@_);
+
+	croak "scan requires 4 arguments" unless (scalar @_ == 5);
+
+	croak "Connector $connector is not supported"
+		unless ($self->is_supported_connector($connector));
+
+
+	my @hosts;
+	if ($use_icmp_scan) {
+		@hosts = $self->_nmap_icmp_scan($range);
 	}
 	else {
-		carp "Unknown connector $connector";
+		@hosts = $self->_get_hosts_in_range($range);
+	}
+
+	if (DEBUG) { debug("hosts: ", Dumper(\@hosts)) };
+
+	my @scan_results;
+	foreach my $host (@hosts) {
+		my @shares = $self->_scan_host($connector, $host, $username, $password);
+		push @scan_results, { 
+			'addr'   => $host,
+			'shares' => \@shares
+		};
+		
+	}
+
+	my $xml_result = $self->_create_xml(@scan_results);
+	return $xml_result;
+}
+
+##
+# Add function to run when scanning a host.
+#
+# Function should take arguments: connector, host
+#
+# Arguments:
+#	function_ptr - Pointer to function
+sub add_hook_scan_start {
+	my ($self, $function_ptr) = @_;
+	push @scan_start_hooks, $function_ptr;
+}
+
+sub add_hook_share_found {
+	my ($self, $function_ptr) = @_;
+	push @share_found_hooks, $function_ptr;
+}
+
+##
+# Add function to run when done scanning a host.
+#
+# Function should take arguments: connector, host, result, msg
+#
+# Arguments:
+#	function_ptr - Pointer to function
+sub add_hook_scan_done {
+	my ($self, $function_ptr) = @_;
+	push @scan_done_hooks, $function_ptr;
+}
+
+##
+# Find shares on given host.
+#
+# Arguments:
+#	connector - Connector name
+#	host - Host ip/addr
+#
+# Returns:
+#	found_shares - List with found shares.
+sub _scan_host {
+	my ($self, $connector, $host, $username, $password) = @_;
+
+	croak "given connector not supported"
+		unless $self->is_supported_connector($connector);
+
+	for my $nr (1..4) {
+		croak "Missing argument $nr"
+			unless defined $_[$nr];
+	}
+	
+	$self->_feed_hooks(HOOK_SCAN_START, $connector, $host);
+
+	debug("To infoquery: ", $connector, $host, $username, $password);
+		
+	my $found_shares_ref = $infoquery->scan(
+						$connector, 
+						$host, 
+						$username,
+						$password);
+
+	debug("Found shares: ", Dumper($found_shares_ref));
+		
+	unless ($found_shares_ref) {
+		my $errmsg;
+		$errmsg = "infoquery scan returned an error: " . $infoquery->get_error;
+		$self->_feed_hooks(HOOK_SCAN_DONE, $connector, $host, undef, $errmsg);
 		return;
 	}
 
-	$self->_create_xml;
-	return 1;
-}
-
-sub _smb_scan($$) {
-	my $self = shift;
-	my $range =  shift;
-	my $smb = $self->{'smb'}; 
-	
-	$smb->scan($range);
-	my @hosts = $smb->get_hosts;
-	$self->_scan_for_shares('SMB', \@hosts);
-
-	return 1;
-}
-
-## Not needed, just like the above sub
-sub _mysql_scan($$) {
-	my $self = shift;
-	my $range = shift;
-	my $mysql = $self->{'mysql'};
-	$mysql->scan($range);
-	my @hosts = $mysql->get_hosts;
-	$self->_scan_for_shares('MySQL', \@hosts);
-	1;
-}
-
-sub _scan_for_shares($$) {
-	my $self = shift;
-	my $connector = shift;
-	my $hosts = shift;
-	my $iq = $self->{'infoquery'};
-	my @hosts_with_shares = ();
-	foreach my $addr (@$hosts) {
-		$self->_log("Looking for shares on $addr", 1);
-		my %host;
-		if ($connector eq 'SMB') {
-			$host{'name'} = $self->{'smb'}->get_name($addr);
-			$host{'workgroup'} = $self->{'smb'}->get_workgroup($addr);
-		}
-		$host{'addr'} = $addr;
-		my @shares;
-		
-		my $found_shares = $iq->scan(
-					$connector, 
-					$addr, 
-					$self->{'username'}, 
-					$self->{'password'});
-		
-		if (!$found_shares) {
-			carp ("scan returned an error: " . $iq->get_error);
-			next;
-		}
-
-		foreach my $share (@$found_shares) {
-			$self->_log("Found share $share on $addr");
-			push @shares, $share;
-		}
-		$host{'shares'} = \@shares;
-		push @hosts_with_shares, \%host;
-
+	foreach my $share (@{$found_shares_ref}) {
+		$self->_feed_hooks(HOOK_SHARE_FOUND, $connector, $host, $share);
 	}
 
-	$self->{'hosts'} = \@hosts_with_shares;
-
-	return 1;
+	$self->_feed_hooks(HOOK_SCAN_DONE, $connector, $host, $found_shares_ref);
+	return @{$found_shares_ref}; 
 }
 
-## Takes datastructure of a scan result, and returns an XML of it.
-sub _create_xml($$) {
-	my $self = shift;
-	my $hosts = $self->{'hosts'};
-	my $xml = '';
+##
+# Generate XML data for scan results.
+#
+# Arguments:
+#	scan_results - list with scan results
+#
+# Returns:
+#	xml - results as xml data
+sub _create_xml {
+	my ($self, @scan_results) = @_;
+	my $xml = q{};
 	my $output = IO::String->new($xml);
 	my $wr = new XML::Writer(OUTPUT => $output, DATA_MODE => 1, DATA_INDENT => 2);
 
@@ -145,7 +202,7 @@ sub _create_xml($$) {
 	# </result>
 
 	$wr->startTag('result');
-	foreach my $host (@$hosts) {
+	foreach my $host (@scan_results) {
 		next unless($host);
 		#print Dumper 
 		$wr->startTag('host', 
@@ -162,12 +219,7 @@ sub _create_xml($$) {
 		$wr->endTag('host');
 	}
 	$wr->endTag('result');
-	$self->{'xml'} = $xml;
-}
-
-sub get_xml($) {
-	my $self = shift;
-	return $self->{'xml'};
+	return $xml;
 }
 
 ## Read result xml into a datastucture that Template can parse.
@@ -203,15 +255,102 @@ sub parse_xml($$) {
 	
 }
 
-sub get_started {
-	my $self = shift;	
-	return $self->{'started'};
+##
+# Uses genip to get all hosts in given range. Range can be the same syntax as nmap uses.
+#
+# Arguments:
+#	range - Ip range
+#
+# Returns:
+#	hosts - List with all hosts in range
+sub _get_hosts_in_range {
+	my ($self, $range) = @_;
 
+	my @hosts;
+	
+	my $exec = GENIP_PATH . " \Q$range\E";
+	open my $geniph, "$exec |"
+		or croak "Unable to execute genip, $!";
+
+	while (my $ip = <$geniph>) {
+		chomp $ip;
+		push @hosts, $ip;
+	}
+	close $geniph or croak "Genip exited with error $!";
+
+	return @hosts;
 }
 
-sub _log {
-	my ($self, $message, $level) = (@_);
-	print "$message <br />";
+##
+# Use nmap to ping-scan range. Finds hosts that respond.
+#
+# Arguments:
+#	range - Ip range
+#
+# Returns:
+#	hosts - List of hosts that responded to ping-scan
+sub _nmap_icmp_scan {
+	my ($self, $range) = @_;
+
+	my @hosts;
+
+	my $exec = "nmap -sP -oG - -n \Q$range\E";
+	debug("nmap exec ", $exec);
+
+	open my $nmaph, "$exec|"
+		or croak "Unable to execute nmap $!";
+
+	while (my $line = <$nmaph>) {
+		debug("nmap: ", $line);
+		my $ip = $1 if $line =~ m{Host:\s((.*)+)\s\(}xms;
+		next unless $ip;
+		push @hosts, $ip;
+	}
+	
+	close $nmaph;
+
+	return @hosts;
 }
+
+##
+# Run hook-functions on given event.
+sub _feed_hooks {
+	my $self = shift;
+	my $hook = shift;
+
+	my ($connector, $host, $result, $msg, $share);
+	if ($hook eq HOOK_SCAN_START) { 
+		($connector, $host) = @_;
+		&{$_}($connector, $host)
+			 foreach @scan_start_hooks;
+	}
+	elsif ($hook eq HOOK_SCAN_DONE) {
+		($connector, $host, $result, $msg) = @_;
+		&{$_}($connector, $host, $result, $msg)
+				 foreach @scan_done_hooks;
+
+	}
+	elsif ($hook eq HOOK_SHARE_FOUND) {
+		($connector, $host, $share) = @_;
+		&{$_}($connector, $host, $share)
+			foreach @share_found_hooks;
+	}
+	else {
+		croak "Unknown hook $hook";
+	}
+}
+
+sub debug {
+	return unless DEBUG;
+	print "DEBUG: ", join(" ", @_), "\n";
+}
+
+use constant test => 0;
+if (test) {
+	my $s = Boitho::Scan->new($ENV{'BOITHOHOME'} . "/bin/infoquery");
+	my $res = $s->scan("SMB", "213.179.58.120-125", "Boitho", "1234Asd", 1);
+	carp $res;
+}
+
 
 1;

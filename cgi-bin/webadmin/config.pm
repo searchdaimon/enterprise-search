@@ -6,8 +6,8 @@ use strict;
 use warnings;
 use Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw($CONFIG);
-my %CONFIG;
+our @EXPORT_OK = qw($CONFIG %CONFIG);
+our %CONFIG;
 our $CONFIG = \%CONFIG; #backwards compatible..
 
 # Group: MySQL configuration

@@ -1,5 +1,4 @@
-[% # New scan main %]
-[% INCLUDE 'header.html' %]
+[% INCLUDE 'header.html' title = "Scan results" %]
 [% IF success_delete_result %]
 	[% WRAPPER 'template_message.html'
 		type = 'success' %]
@@ -7,8 +6,6 @@
 	[% END %]
 	
 [% END %]
-
-
 
 <h2>Scan results</h2>
 <div style="margin-bottom : 1em; font-size : large;">
@@ -34,7 +31,11 @@
 				</td>
 				<td>
 					[% IF range %]
-						[% range %]
+						[% IF done %]
+						<strong><a href="scan.cgi?action=process&amp;id=[% id %]">View results</a></strong> for [% range %]
+						[% ELSE %]
+							[% range %]
+						[% END %]
 					[% ELSE %]
 						Default range
 					[% END %]</td>
@@ -44,7 +45,6 @@
 				
 					[% IF done %]
 						The scan has completed.<br />
-						You can <a href="scan.cgi?action=process&amp;id=[% id %]">process it</a> now.
 					[% ELSE %]
 						The scan is still running.
 					[% END %]
@@ -53,11 +53,9 @@
 
 				<td>	
 					[% IF done %]
-					<input type="submit" name="delete_result[[% i %]].submit" value="Delete" />
-					<input type="hidden" name="delete_result[[% i %]].id" value="[% id %]" />
-					[% ELSE %]
-					<input type="submit" name="kill_pid[[% i %]].submit" value="Kill" />
-					<input type="hidden" name="kill.id[[% i %]]" value="[% id %]" />
+					<input type="submit" name="submit.delete_result[[% i %]].submit" value="Delete" />
+					<input type="hidden" name="submit.delete_result[[% i %]].id" value="[% id %]" />
+					
 					[% END %]
 				</td>
 			[% END %]

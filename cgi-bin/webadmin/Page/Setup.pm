@@ -5,7 +5,6 @@ use Carp;
 use CGI;
 use File::stat;
 use Data::Dumper;
-use Common::Scan;
 use Sql::Connectors;
 use Sql::Shares;
 use Sql::Config;
@@ -14,6 +13,7 @@ BEGIN {
 	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Boitho::Infoquery;
+use config qw(%CONFIG);
 
 use constant DEBUG => 1;
 
@@ -31,11 +31,10 @@ sub new {
 sub _init {
 	my ($self, $dbh) = (@_);
 	$self->{'dbh'} = $dbh;
-	$self->{'scan'} = Common::Scan->new($dbh);
 	$self->{'sqlConnectors'} = Sql::Connectors->new($dbh);
 	$self->{'sqlShares'} 	 = Sql::Shares->new($dbh);
 	$self->{'sqlConfig'}	 = Sql::Config->new($dbh);
-	$self->{'infoQuery'}	 = Boitho::Infoquery->new;
+	$self->{'infoQuery'}	 = Boitho::Infoquery->new($CONFIG{infoquery});
 }
 
 sub show_start_scan($$) {

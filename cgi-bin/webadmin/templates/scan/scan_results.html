@@ -1,95 +1,94 @@
 [% INCLUDE 'header.html' title = 'Processing result' %]
+[% USE Dumper %]
 [% i = 0 %]
 
-[% UNLESS results %]
 
+[% IF succ_scan_added %]
+	[% WRAPPER 'template_message.html' type='success' %]
+		A collection has been created from share.
+	[% END %]
+[% END %]
+
+[% UNLESS results %]
 	[% WRAPPER 'template_message.html' type='error' %] 
 		The result you requested does not exist.
 	[% END %]
 [% ELSE %]
-
 	<h2>Scan results</h2>
-
 [% END %]
+
+
+
 <div style="margin-bottom : 1em;">
 	<img src="file.cgi?i=back&amp;size=22x22" style="border : 0px solid;" /> <a href="scan.cgi">Return to scan</a>
 </div>
 
 
-[% IF results %]
-	[% IF results.size %]
-	<div>
-		<form action="add.cgi" method="post">
-		<input type="hidden" name="adding_from_scan" value="1" />
-		<input type="hidden" name="connector" value="[% connector %]" />
-		[% WRAPPER 'template_table.html' 
-			header = ['', 'Hosts', 'Shares'] %]
-			
-			[% FOREACH result IN connector %]
-			[% j = 0 %]
-			[% color = 1 - color %]
-			[% WRAPPER 'template_table_row.html' %]
-				<td style="vertical-align : top;">
-					<img src="file.cgi?i=yast_nfs_32" 
-						style="border:  0px solid;"/>
-				</td>
-			
-				<td style="vertical-align : top;">[% result.addr %]</td>
-				<td>
+[% IF results.size %]
+	<ul style="list-style-type : none; padding : 0;">
+
+		
+		[% FOREACH result IN results %]
+			<li><h4><img src="file.cgi?i=yast_nfs_32" 
+						style="border:  0px solid;"/> Results for host [% result.addr %]</h4>
+				[% color = 0 %]
+				
 				[% IF result.shares.size %]
-					<table style="width : 100%; border-spacing : 0px 0px;">
-					[% FOREACH share IN result.shares %]
-						[% row_color = 1 - row_color %]
-						[% WRAPPER 'template_table_row.html' 
-							color = row_color %]
-						<td style="width : 32px;">
-							<img src="file.cgi?i=mimetypes"
-							style="border: 0px solid;" />
-						</td>
-						<td>[% share %]</td>
-						<td style="text-align : right;">
-							<input type="submit" value="Add" 
-							name="add_collection[[% j %]].submit" />
-							<input type="hidden"
-							name="add_collection[[% j %]].host"
-							value="[% result.addr %]" />
-							<input type="hidden"
-							name="add_collection[[% j %]].path"
-							value="[% share %]" /> </td>
-						[% END %]
-					[% j = 1 + j %]
-					[% END %]
-					</table>
-				[% ELSE %]
-					<div style="text-size : x-small;">Didn't find any 
-						shares on the host.</div>
+					[% PROCESS show_shares 
+						result = result %]
+				[% ELSE %]	
+					No shares found on host
 				[% END %]
-				</td>
-			
-				[% i = i + 1 %]
-			[% END %] [% # row %]
-			[% END %] [% # foreach %]
-		
-		
+				
+			</li>
 		[% END %]
-		<input type="hidden" name="result_id" value="[% id %]" />
-		</form>
-	
-	[% ELSE %]
-		[% WRAPPER 'template_info.html' %] There were no shares found during 
-		this scan. [% END %]
-	[% END %]
-	
+	</ul>
+
+
+
 	<form action="scan.cgi" method="post">
 	<div style="margin-top : 1em;">
 		
-		<input type="submit" name="delete_result[0].submit" 
+		<input type="submit" name="submit.delete_result[0].submit" 
 			value="I'm done, delete results." />
-		<input type="hidden" name="delete_result[0].id" value="[% id %]" />
+		<input type="hidden" name="submit.delete_result[0].id" value="[% id %]" />
 	</div>
 	</form>
 	
 	</div>
+[% END %]
+
+[% INCLUDE 'footer.html' %]
+
+
+
+
+
+
+
+[% BLOCK show_shares %]
+
+	[% result.shares.size %] shares found on host.
+
+	
+	[% WRAPPER 'template_table.html' 
+		headers= ['share'] style="width : 35%" %]
+
+		[% FOREACH share IN result.shares %]
+		
+		[% WRAPPER 'template_table_row.html' %]
+			<td>[% share %]</td>
+			<td style="text-align: right;">
+				<form action="add.cgi" method="post">
+					<input type="hidden" name="share.connector" value="[% connector %]" />
+					<input type="hidden" name="share.host" value="[% result.addr %]" />
+					<input type="hidden" name="share.collection_name" value="[% share %]" />
+					<input type="hidden" name="share.path" value="[% share %]" />
+					<input type="hidden" name="from_scan_result" value="[% id %]" />
+					<input type="submit" value="Add as collection" style="margin-top : 0.5em; height : 22px; background : #e7e7f7" /> 
+				</form>
+			</td>
+		[% color = 1 - color %]
+		[% END %][% END %][% END %]
 
 [% END %]
-[% INCLUDE 'footer.html' %]

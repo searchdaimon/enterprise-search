@@ -16,18 +16,16 @@
 [% END %]
 <h2>
 [% IF success %]
-	Add a new collection (part 1 of 2)
+	<h2>Add a new collection (part 1 of 2)</h2>
 [% ELSIF from_scan %]
 	[% #Adding a result from scan %]
-	Add a collection from scan - Part 1 of 2
+	<h2>Add a collection from scan - Part 1 of 2</h2>
 [% ELSE %]
-	Add a collection - Part 1 of 2
-[% END %]</h2>
+	<h2>Add a collection - Part 1 of 2</h2>
 
-
-[% WRAPPER 'template_message.html' 
+	[% WRAPPER 'template_message.html' 
 	type = 'info'%]
-	There are two steps to add a new share. 
+	There are two parts in adding a new share. 
 	<ol>
 		<li>Specify what type of connector the collection uses, name the collection.<br />
 			<div style="text-size : x-small;">
@@ -38,7 +36,11 @@
 		<li>Add more details on how to how to crawl it, and other crawling behaviour.</li>
 	</ol>
 
+	[% END %]
 [% END %]
+
+
+
 
 <form action="add.cgi" method="post">
 
@@ -54,13 +56,6 @@
 		</td>
 		<td>
 			[% collection_name = share.collection_name %]
-			[% IF from_scan %]
-				[% IF share.resource %]
-					[% collection_name = share.resource %]
-				[% ELSIF share.path %]
-					[% collection_name = share.path %]
-				[% END %]
-			[% END %]
 			<input type="text" name="share.collection_name" value="[% collection_name %]" />
 				<span style="font-size : x-small;">(Recommended)</span><br />
 		</td>	

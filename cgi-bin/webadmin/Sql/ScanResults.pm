@@ -4,6 +4,7 @@ use warnings;
 use Carp;
 use Sql::Sql;
 use Data::Dumper;
+use Sql::Connectors;
 
 my $table = "scanResults";
 my @valid = qw(connector time range result_xml done);
