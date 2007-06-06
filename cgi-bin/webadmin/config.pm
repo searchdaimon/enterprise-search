@@ -28,6 +28,7 @@ $CONFIG{'logfiles'} = {
 	'crawlManager_access' => "crawlManager access log",
 	'crawlManager_error' => "crawlManager error log",
 	'indexing' => "index log",
+	'crawl_watch' => "crawl_watch.log",
 };
 
 
@@ -39,6 +40,8 @@ $CONFIG{'infoquery'} = $ENV{'BOITHOHOME'} . '/bin/infoquery';
 # Path to bb phone hone executable.
 $CONFIG{'phone_home_path'} = $ENV{'BOITHOHOME'} . "/bin/setuidcaller";
 
+# Scan, to generate ip list from ranges (not a SD developed utility)
+$CONFIG{'genip_path'} = $ENV{BOITHOHOME} . "/Modules/Boitho/Scan/genip/genip";
 
 # Group: Settings
 
@@ -131,33 +134,6 @@ $CONFIG{'license_file'}   = $ENV{'BOITHOHOME'} . "/config/bb_license";
 $CONFIG{'signature_file'} = $ENV{'BOITHOHOME'} . "/config/bb_signature";
 
 
-
-
-
-
-# ## CONFIGURATION DONE. Please don't edit anything below. ##
-# 
-# # Group: Validation
-# # Code to check that everything is configured.
-# my @config_settings = qw(config_path log_path logfiles infoquery phone_home_path
-# 				 default_settings valid_auth_methods rpm_upload_folder net_ifcfg 
-# 				 netscript_dir network_interface configwrite_path hwgen_path authvalid_path
-# 				interface_url activate_url);
-# 
-# conf_check(@config_settings);
-# ##
-# # Croak if any config setting is missing.
-# #
-# # Attributes:
-# #	@settings - Settings to check
-# sub conf_check {
-# 	my @settings = @_;
-# 	
-# 	foreach my $setting (@settings) {
-# 		die "Setting $setting has not been configure. Please edit config.pm"
-# 			unless defined $CONFIG->{$setting};
-# 	}
-# }
 
 
 1;

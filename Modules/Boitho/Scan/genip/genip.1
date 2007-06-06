@@ -1,0 +1,127 @@
+.TH genip 1 "1 April 2006" "bindshell.net"
+.SH NAME
+.B genip
+\- Generate lists of IP addresses
+.SH SYNOPSIS
+.B genip
+.RB [ " \-h " ]
+.RB [ " \-i \fPfilename " ]
+[
+.I "<target\-spec> ..."
+]
+.br
+.B genip
+.RB "\-r"
+.RB "<ipaddress>"
+.RB "<ipaddress>"
+.SH DESCRIPTION
+.B genip
+has two modes of operation that are detailed below:
+.SS NMap Mode (Default)
+In this mode
+.B genip
+will expand all target specifications listed on the command line.  Since
+.B genip
+is essentially just the NMap target parsing code it functions in exactly
+the same way.  Here is what the NMap documentation has to say about target
+specification:
+.P
+Everything that isn't an option (or option argument)
+is treated as a target host specification.  The simplest
+case is listing single hostnames or IP addresses on the
+command line.  If you want to scan a subnet of IP addresses,
+you can append
+.B "/mask"
+to the hostname
+or IP address.
+.B mask
+must be between 0 (scan the whole Internet) and 32 (scan the
+single host specified).  Use /24 to scan a class "C" address
+and /16 for a class "B".
+.Sp
+There is also a more powerful notation which lets you
+specify an IP address using lists/ranges for each element.
+Thus you can scan the whole class "B" network 192.168.*.* by
+specifying "192.168.*.*" or "192.168.0-255.0-255" or even
+"192.168.1-50,51-255.1,2,3,4,5-255".  And of course you can
+use the mask notation: "192.168.0.0/16".  These are all
+equivalent.  If you use asterisks ("*"), remember that most
+shells require you to escape them with back slashes or
+protect them with quotes.
+.SS Range Mode
+In this mode two (and only two!) IP addresses must be specified, in dotted
+quad notation, and the output is all the addresses between the two
+(inclusive).  This mode can be used to cross class boundaries.
+.SS Options
+The following options are available in either mode of operation:
+.TP
+.B \-h
+Display usage information
+.TP
+.B \-i
+Read target specifications from the give filename.  If a filename of "\-"
+used, target specifications are read from standard in.  Target
+specifications read from input files are processed in NMap mode regardless
+of the presence of the 
+.B \-r
+option.
+.SH EXAMPLES
+In its most basic form
+.B genip
+simply echos the IP addresses listed on the command line:
+.P
+.B genip 10.1.1.1 10.3.4.5
+.br
+10.1.1.1
+.br
+10.3.4.5
+.P
+By use one of the many expansion methods detailed above a large number of IP
+addresses can be generated from simple command line specifications:
+.P
+.B genip 10.1.1.1-3
+.br
+10.1.1.1
+.br
+10.1.1.2
+.br
+10.1.1.3
+.P
+By selecting range mode (with the use of the
+.B \-r
+flag) it is a simple matter to generate address lists that cross class
+boundaries:
+.P
+.B genip -r 10.1.1.254 10.1.2.2
+.br
+10.1.1.254
+.br
+10.1.1.255
+.br
+10.1.2.0
+.br
+10.1.2.1
+.br
+10.1.2.2
+.SH SEE ALSO
+nmap(1)
+.SH AUTHOR
+Dave Armstrong
+.I <dave@bindshell.net>
+.SH DISTRIBUTION
+The latest version of
+.B genip
+can always be obtained from:
+.PP
+.RS
+http://www.bindshell.net/tools
+.RE
+.PP
+Target specification code (and related documntation) was extracted from nmap
+(by Fyodor
+.I <fyodor@insecure.org>
+).
+.B genip
+is therefore a "derived work" and release under the GNU General
+Public License (a copy of which should be contained within the distribution
+archive).

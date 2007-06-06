@@ -20,7 +20,7 @@ my @scan_start_hooks;
 my @scan_done_hooks;
 my @share_found_hooks;
 
-use constant GENIP_PATH => $ENV{BOITHOHOME} . "/Modules/Boitho/Scan/genip/genip";
+my $genip_path;
 
 use constant DEBUG => 0;
 
@@ -38,13 +38,15 @@ sub new {
 }
 
 sub _init {
-	my ($self, $infoquery_path) = @_;
+	my ($self, $infoquery_path, $l_genip_path) = @_;
 
 	croak "Infoquery path given is not executable. Path: ", $infoquery_path
 	    unless -x $infoquery_path;
 
-	croak "Genip is not executable. Path: ", GENIP_PATH,
-		unless -x GENIP_PATH;
+	croak "Genip is not executable. Path: ", $l_genip_path
+		unless -x $l_genip_path;
+	
+	$genip_path = $l_genip_path;
 
 	$infoquery  = Boitho::Infoquery->new($infoquery_path);
 
@@ -268,7 +270,7 @@ sub _get_hosts_in_range {
 
 	my @hosts;
 	
-	my $exec = GENIP_PATH . " \Q$range\E";
+	my $exec = $genip_path . " \Q$range\E";
 	open my $geniph, "$exec |"
 		or croak "Unable to execute genip, $!";
 
