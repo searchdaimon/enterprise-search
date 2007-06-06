@@ -27,20 +27,16 @@ setrlimits(void)
 {
 	struct rlimit rlim;
 
-	if (getrlimit(RLIMIT_CORE, &rlim) == -1) {
-		perror("getrlimit");
-		return;
-	}
-	if (rlim.rlim_max == RLIM_INFINITY || rlim.rlim_cur < rlim.rlim_max) {
-		rlim.rlim_cur = rlim.rlim_max;
-		if (setrlimit(RLIMIT_CORE, &rlim) == -1) {
-			perror("setrlimit");
-		}
+	rlim.rlim_cur = RLIM_INFINITY;
+	rlim.rlim_max = RLIM_INFINITY;
+	if (setrlimit(RLIMIT_CORE, &rlim) == -1) {
+		perror("setrlimit");
 	}
 	if (getrlimit(RLIMIT_CORE, &rlim) == -1) {
 		perror("getrlimit");
 		return;
 	}
+	printf("%d %d\n", rlim.rlim_cur, rlim.rlim_max);
 }
 
 #ifndef WCOREDUMP
@@ -181,9 +177,11 @@ dumpcatcher(char *prog, char **argv)
 		if (WIFSIGNALED(status) && WCOREDUMP(status)) {
 			char buf[1024];
 
+			puts("Dumped core...\n");
 			/* Need to find the coredump if we get here... */
 			if (get_coredumppath(pid, buf, sizeof(buf)) == 0) {
-				grab_coredump(buf, pid, prog);
+				if (grab_coredump(buf, pid, prog) < 0)
+					perror("Unable to grab coredump");
 			} else {
 				fprintf(stderr, "Unable to locate coredump.\n");
 			}
@@ -221,8 +219,9 @@ main(int argc, char **argv)
 	puts("`");
 
 	for (;;) {
+		puts("Trying...\n");
 		dumpcatcher(newargv[0], newargv);
-		sleep(5); // Avoid hammering
+		sleep(1); // Avoid hammering
 	}
 
 	return 0;
