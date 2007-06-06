@@ -60,7 +60,7 @@ sub _get_size {
 	}
 }
 
-sub _parse_log {
+sub _read_log {
 	my $self = shift;
 	my $filename = shift;
 	my $lines = shift;
@@ -76,11 +76,11 @@ sub _parse_log {
 		unless ($self->_get_size($filename))[0];
 
 	my $command = "tail";
-	if ($filename =~ /\.\d+/) {
+	if ($filename =~ /\.\d+$/) {
 		# Ends with a number. Asuming it's reversed.
 		$command = "head";
 	}
-	open my $tail, "$command -n $lines '$CONFIG{'log_path'}/"."\Q$filename"."'|"
+	open my $tail, "$command -n $lines $CONFIG{'log_path'}/\Q$filename\E |"
 		or croak "coulnt execute tail: $!";
 	my @content = <$tail>;
 
@@ -119,7 +119,7 @@ sub show_logfile_content($$) {
 	my $filename = $log->{'name'};
 	my $count = $log->{'lines'};
 	$count = 250 unless($count);
-	my $lines = $self->_parse_log($filename, $count);
+	my $lines = $self->_read_log($filename, $count);
 		
 	my $logfile = {
 		'filename' => $filename,

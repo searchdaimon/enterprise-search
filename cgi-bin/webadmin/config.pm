@@ -28,7 +28,7 @@ $CONFIG{'logfiles'} = {
 	'crawlManager_access' => "crawlManager access log",
 	'crawlManager_error' => "crawlManager error log",
 	'indexing' => "index log",
-	'crawl_watch' => "crawl_watch.log",
+	'crawl_watch.log' => "Crawl Watch log",
 };
 
 

@@ -81,9 +81,9 @@
 			[% FOREACH message IN logfile.lines %]
 				[% color = 1 - color %]
 				<li>
-				[% IF color %]<span>
-				[% ELSE %]<span style="background : #f2f2f2"> [% END %]
-				[% HTML.escape(message) %] </span></li>
+				[% IF color %]<div>
+				[% ELSE %]<div style="background : #f2f2f2"> [% END %]
+				[% HTML.escape(message) %] </div></li>
 				
 				
 				
