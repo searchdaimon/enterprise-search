@@ -21,7 +21,7 @@ boitho-bbadmin_name = boitho-bbadmin
 boitho-bbadmin_version = 2.7.17
 
 boitho-everrun_name = boitho-everrun
-boitho-everrun_version = 1.0.0
+boitho-everrun_version = 1.0.1
 
 boitho-infoquery_name = boitho-infoquery
 boitho-infoquery_version = 2.0.1
@@ -84,7 +84,7 @@ crawl_watch:
 
 
 everrun:
-	perl rpmmagic.pl --post "mkdir -p /coredumps/saved" --initd everrun $(boitho-everrun_name) $(boitho-everrun_version) $(BOITHOHOME) /home/boitho/boithoTools bin/everrun
+	perl rpmmagic.pl --post "install -d -o boitho /coredumps/saved" --initd everrun $(boitho-everrun_name) $(boitho-everrun_version) $(BOITHOHOME) /home/boitho/boithoTools bin/everrun
 
 	rpm -bb $(boitho-everrun_name).spec
 
