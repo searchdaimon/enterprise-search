@@ -1,5 +1,6 @@
     #include "../common/define.h"
     #include "../common/lot.h"
+    #include "../common/vid.h"
     #include <arpa/inet.h>
     #include <stdio.h>
     #include <stdlib.h>
@@ -556,6 +557,8 @@ int main(int argc, char *argv[])
 	//for (pcount=0;pcount<=50;pcount++) {	
 	//#endif
 
+	char queryEscaped[MaxQueryLen*2+1];
+
         int sockfd[maxServers];
         int addsockfd[maxServers];
 	int i,y,n,funnet,x;
@@ -574,6 +577,11 @@ int main(int argc, char *argv[])
 	//struct SiderFormat Sider[20 * maxServers];
 	struct SiderFormat *Sider;
 	char colchecked[20];
+
+        #define salt "sdjbjolQdfgkkf"
+        char vidbuf[64];
+        time_t etime;
+        time(&etime);
 	
         //struct SiderHederFormat SiderHeder[maxServers];
         //struct SiderHederFormat AddSiderHeder[maxServers];
@@ -612,6 +620,8 @@ int main(int argc, char *argv[])
 
 	#ifdef DEBUG
 	gettimeofday(&start_time, NULL);
+
+	printf("struct SiderFormat size %i\n",sizeof(struct SiderFormat));
 	#endif
 
 	//starter å ta tiden
@@ -1149,7 +1159,7 @@ int main(int argc, char *argv[])
 	sprintf(prequeryfile,"%s/%s.%i.%s",bfile(prequerydir),QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
 	FILE *CACHE;
 
-	if ((dispconfig.useprequery) && ((CACHE = fopen(prequeryfile,"rb")) != NULL)) {
+	if ((dispconfig.useprequery) && (QueryData.filterOn) && ((CACHE = fopen(prequeryfile,"rb")) != NULL)) {
 		hasprequery = 1;
 
 		debug("can open prequeryfile file \"%s\"",prequeryfile);
@@ -1157,7 +1167,7 @@ int main(int argc, char *argv[])
 		flock(fileno(CACHE),LOCK_SH);
 		fread(&pageNr,sizeof(pageNr),1,CACHE);
 		fread(&FinalSiderHeder,sizeof(FinalSiderHeder),1,CACHE);
-                fread(&SiderHeder,sizeof(SiderHeder),1,CACHE);
+                fread(SiderHeder,sizeof(struct SiderHederFormat) * maxServers,1,CACHE);
 
 		debug("have %i cashed pages",pageNr);
 		
@@ -1169,7 +1179,7 @@ int main(int argc, char *argv[])
 		//fread(&Sider[i],(sizeof(struct SiderFormat) * nrOfServers * QueryData.MaxsHits),1,CACHE);
 		fclose(CACHE);
 	}
-	else if ((dispconfig.usecashe) && ((CACHE = fopen(cashefile,"rb")) != NULL)) {
+	else if ((dispconfig.usecashe) && (QueryData.filterOn) && ((CACHE = fopen(cashefile,"rb")) != NULL)) {
 		hascashe = 1;
 
 		debug("can open cashe file \"%s\"",cashefile);
@@ -1177,7 +1187,7 @@ int main(int argc, char *argv[])
 		flock(fileno(CACHE),LOCK_SH);
 		fread(&pageNr,sizeof(pageNr),1,CACHE);
 		fread(&FinalSiderHeder,sizeof(FinalSiderHeder),1,CACHE);
-                fread(&SiderHeder,sizeof(SiderHeder),1,CACHE);
+                fread(SiderHeder,sizeof(struct SiderHederFormat) * maxServers,1,CACHE);
 
 		debug("have %i cashed pages",pageNr);
 		
@@ -1231,7 +1241,7 @@ int main(int argc, char *argv[])
 
 	}
 
-
+	//addservere
 	//addserver bruker som regel mest tid, så tar den sist slik at vi ikke trenger å vente unødvendig
 	brGetPages(addsockfd,nrOfAddServers,AddSiderHeder,Sider,&pageNr,0);
 
@@ -1240,62 +1250,82 @@ int main(int argc, char *argv[])
 	printf("Time debug: geting pages %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
+	if ((!hascashe) && (!hasprequery)) {
 
-	FinalSiderHeder.TotaltTreff = 0;
-	FinalSiderHeder.filtered = 0;
-	nrRespondedServers = 0;
+		FinalSiderHeder.TotaltTreff = 0;
+		FinalSiderHeder.filtered = 0;
+		nrRespondedServers = 0;
 
-	for (i=0;i<(nrOfServers + nrOfPiServers);i++) {
-		//aaaaa
-		if (sockfd[i] != 0) {
-			FinalSiderHeder.TotaltTreff += SiderHeder[i].TotaltTreff;
-			FinalSiderHeder.filtered += SiderHeder[i].filtered;
-			#ifdef DEBUG
-	        	printf("<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\" servername=\"%s\"/>\n",SiderHeder[i].TotaltTreff,QueryData.query,SiderHeder[i].hiliteQuery,SiderHeder[i].total_usecs,SiderHeder[i].filtered,SiderHeder[i].showabal,SiderHeder[i].servername);
-			#endif
+		for (i=0;i<(nrOfServers + nrOfPiServers);i++) {
+			//aaaaa
+			if (sockfd[i] != 0) {
+				FinalSiderHeder.TotaltTreff += SiderHeder[i].TotaltTreff;
+				FinalSiderHeder.filtered += SiderHeder[i].filtered;
+				#ifdef DEBUG
+	        		printf("<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\" servername=\"%s\"/>\n",SiderHeder[i].TotaltTreff,QueryData.query,SiderHeder[i].hiliteQuery,SiderHeder[i].total_usecs,SiderHeder[i].filtered,SiderHeder[i].showabal,SiderHeder[i].servername);
+				#endif
 
-			++nrRespondedServers;
+				++nrRespondedServers;
+			}
 		}
-	}
 
+		#ifdef DEBUG
+		printf("addservers (have %i):\n",nrOfAddServers);
+		for (i=0;i<nrOfAddServers;i++) {
+			//aaaaa
+			if (addsockfd[i] != 0) {
+		        	printf("\t<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\" servername=\"%s\"/>\n",AddSiderHeder[i].TotaltTreff,QueryData.query,AddSiderHeder[i].hiliteQuery,AddSiderHeder[i].total_usecs,AddSiderHeder[i].filtered,AddSiderHeder[i].showabal,AddSiderHeder[i].servername);
 
+			}
+			else {
+				printf("addserver nr %i's sockfd is 0\n",i);
+			}
+		}
+		#endif
 
 	
-	//finner en hillitet query
-	if (nrRespondedServers != 0) {
-		funnet = 0;
-		for(i=0;i<(nrOfServers + nrOfPiServers) && !funnet;i++) {
-			if ((sockfd[i] != 0) && (SiderHeder[i].hiliteQuery != '\0')) {
-				strcpy(FinalSiderHeder.hiliteQuery,SiderHeder[i].hiliteQuery);
-				funnet =1;
+
+	
+		//finner en hillitet query
+		if (nrRespondedServers != 0) {
+			funnet = 0;
+			for(i=0;i<(nrOfServers + nrOfPiServers) && !funnet;i++) {
+				if ((sockfd[i] != 0) && (SiderHeder[i].hiliteQuery != '\0')) {
+					strcpy(FinalSiderHeder.hiliteQuery,SiderHeder[i].hiliteQuery);
+					funnet =1;
+				}
 			}
 		}
-	}
-	else {
-		FinalSiderHeder.hiliteQuery[0] = '\0';
-	}
+		else {
+			FinalSiderHeder.hiliteQuery[0] = '\0';
+		}
 
-	//hvis vi ikke fikk svar fra noen
-	if(nrRespondedServers == 0) {
-		die(16,"Couldnt contact the Boitho search system. Please try again later.");
-	}
-	//genererer feil om at ikke alle server svarte på queryet
-	if (nrRespondedServers != (nrOfServers + nrOfPiServers)) {
-		addError(&errorha,11,"Not all the search nodes responded to your query. Result quality may have been negatively effected.");
-	}
-
-	//hånterer error. Viser den hvis vi hadde noen
-	if (nrRespondedServers != 0) {
-		for(i=0;i<(nrOfServers + nrOfPiServers);i++) {
-			if (SiderHeder[i].responstype == searchd_responstype_error) {
-				addError(&errorha,11,SiderHeder[i].errorstr);
+		//hvis vi ikke fikk svar fra noen
+		if(nrRespondedServers == 0) {
+			die(16,"Couldnt contact the Boitho search system. Please try again later.");
+		}
+		//genererer feil om at ikke alle server svarte på queryet
+		if (nrRespondedServers != (nrOfServers + nrOfPiServers)) {
+			addError(&errorha,11,"Not all the search nodes responded to your query. Result quality may have been negatively effected.");
+		}
+		//hånterer error. Viser den hvis vi hadde noen
+		if (nrRespondedServers != 0) {
+			for(i=0;i<(nrOfServers + nrOfPiServers);i++) {
+				if (SiderHeder[i].responstype == searchd_responstype_error) {
+					addError(&errorha,11,SiderHeder[i].errorstr);
+				}
 			}
 		}
+
 	}
+
 	#ifdef DEBUG
 	gettimeofday(&start_time, NULL);
 	#endif
 	//sorterer resultatene
+	#ifdef DEBUG
+		printf("mgsort: pageNr %i\n",pageNr);
+	#endif
 	//mgsort(Sider, nrOfServers * QueryData.MaxsHits , sizeof(struct SiderFormat), compare_elements);
 	mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements);
 
@@ -1379,7 +1409,7 @@ int main(int argc, char *argv[])
 				if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameCrc32) 
 					&& filterSameCrc32(i,&Sider[i],Sider)) {
 					#ifdef DEBUG
-                        	        	printf("hav same crc32. crc32 from DocumentIndex\n");
+                        	        	printf("hav same crc32. crc32 from DocumentIndex. Will delete \"%s\"\n",Sider[i].DocumentIndex.Url);
 					#endif
                         	        //(*SiderHeder).filtered++;
 					FinalSiderHeder.filtered++;
@@ -1475,35 +1505,13 @@ int main(int argc, char *argv[])
         printf("<RESULT_INFO TOTAL=\"%i\" QUERY=\"%s\" HILITE=\"%s\" TIME=\"%f\" FILTERED=\"%i\" SHOWABAL=\"%i\" CASHE=\"%i\" PREQUERY=\"%i\" GEOIPCONTRY=\"%s\" SUBNAME=\"%s\" BOITHOHOME=\"%s\"/>\n",FinalSiderHeder.TotaltTreff,QueryData.queryhtml,FinalSiderHeder.hiliteQuery,FinalSiderHeder.total_usecs,FinalSiderHeder.filtered,FinalSiderHeder.showabal,hascashe,hasprequery,QueryData.GeoIPcontry,QueryData.subname,bfile(""));
 
 
-	//viser info om serverne som svarte
-	printf("<SEARCHNODES_INFO NROFSEARCHNODES=\"%i\" />\n",nrRespondedServers);
 	
-	/*
-	for (i=0;i<nrOfServers;i++) {
-                //tempaa:if (sockfd[i] != 0) {
-			printf("<SEARCHNODES>\n");
-				printf("\t<NODENAME>%s</NODENAME>\n",SiderHeder[i].servername);
-                 		printf("\t<TOTALTIME>%f</TOTALTIME>\n",SiderHeder[i].total_usecs);
-				printf("\t<FILTERED>%i</FILTERED>\n",SiderHeder[i].filtered);
-				printf("\t<HITS>%i</HITS>\n",SiderHeder[i].TotaltTreff);
-			printf("</SEARCHNODES>\n");
-		//}	
-	}
-	*/
-	//cashe eller ingen cashe. Adserverene skal vises
-	for (i=0;i<nrOfAddServers;i++) {
-       	        if (addsockfd[i] != 0) {
-			printf("<SEARCHNODES>\n");
-				printf("\t<NODENAME>%s</NODENAME>\n",AddSiderHeder[i].servername);
-       	         		printf("\t<TOTALTIME>%f</TOTALTIME>\n",AddSiderHeder[i].total_usecs);
-				printf("\t<FILTERED>%i</FILTERED>\n",AddSiderHeder[i].filtered);
-				printf("\t<HITS>%i</HITS>\n",AddSiderHeder[i].TotaltTreff);
-			printf("</SEARCHNODES>\n");
-		}	
-	}
 
 
 	if ((!hascashe) && (!hasprequery)) {
+
+		//viser info om serverne som svarte
+		printf("<SEARCHNODES_INFO NROFSEARCHNODES=\"%i\" />\n",nrRespondedServers);
 
 		for (i=0;i<nrOfServers + nrOfPiServers;i++) {
                 	if (sockfd[i] != 0) {
@@ -1546,6 +1554,7 @@ int main(int argc, char *argv[])
 						printf("\t\t<filterAdultWeight_1>%i</filterAdultWeight_1>\n",SiderHeder[i].filtersTraped.filterAdultWeight_1);
 						printf("\t\t<filterSameCrc32_1>%i</filterSameCrc32_1>\n",SiderHeder[i].filtersTraped.filterSameCrc32_1);
 						printf("\t\t<filterSameUrl>%i</filterSameUrl>\n",SiderHeder[i].filtersTraped.filterSameUrl);
+						printf("\t\t<filterNoUrl>%i</filterNoUrl>\n",SiderHeder[i].filtersTraped.filterNoUrl);
 						printf("\t\t<find_domain_no_subname>%i</find_domain_no_subname>\n",SiderHeder[i].filtersTraped.find_domain_no_subname);
 						printf("\t\t<filterSameDomain>%i</filterSameDomain>\n",SiderHeder[i].filtersTraped.filterSameDomain);
 						printf("\t\t<filterTLDs>%i</filterTLDs>\n",SiderHeder[i].filtersTraped.filterTLDs);
@@ -1575,6 +1584,29 @@ int main(int argc, char *argv[])
 
 	}
 	
+	/*
+	for (i=0;i<nrOfServers;i++) {
+                //tempaa:if (sockfd[i] != 0) {
+			printf("<SEARCHNODES>\n");
+				printf("\t<NODENAME>%s</NODENAME>\n",SiderHeder[i].servername);
+                 		printf("\t<TOTALTIME>%f</TOTALTIME>\n",SiderHeder[i].total_usecs);
+				printf("\t<FILTERED>%i</FILTERED>\n",SiderHeder[i].filtered);
+				printf("\t<HITS>%i</HITS>\n",SiderHeder[i].TotaltTreff);
+			printf("</SEARCHNODES>\n");
+		//}	
+	}
+	*/
+	//cashe eller ingen cashe. Adserverene skal vises
+	for (i=0;i<nrOfAddServers;i++) {
+       	        if (addsockfd[i] != 0) {
+			printf("<SEARCHNODES>\n");
+				printf("\t<NODENAME>%s</NODENAME>\n",AddSiderHeder[i].servername);
+       	         		printf("\t<TOTALTIME>%f</TOTALTIME>\n",AddSiderHeder[i].total_usecs);
+				printf("\t<FILTERED>%i</FILTERED>\n",AddSiderHeder[i].filtered);
+				printf("\t<HITS>%i</HITS>\n",AddSiderHeder[i].TotaltTreff);
+			printf("</SEARCHNODES>\n");
+		}	
+	}
 
 
 	//hvis vi har noen errorrs viser vi de
@@ -1667,6 +1699,42 @@ int main(int argc, char *argv[])
 			}
 		}
 	printf("</DATES>\n");
+
+	#else
+
+		#ifdef DEBUG
+        	printf("|%-10s|%-10s|%-10s||%-10s|%-10s|%-10s|%-18s|%-10s|%-10s|\n",
+                	"AllRank",
+                	"TermRank",
+                	"PopRank",
+                	"Body",
+                	"Headline",
+                	"Tittel",
+                	"Athor (nr)",
+                	"UrlM",
+                	"Url"
+                );
+        	printf("|----------|----------|----------||----------|----------|----------|------------------|----------|----------|\n");
+
+                for(i=0;i<FinalSiderHeder.showabal;i++) {
+                        printf("|%10i|%10i|%10i||%10i|%10i|%10i|%10i (%5i)|%10i|%10i| %s\n",
+
+				Sider[i].iindex.allrank,
+                                Sider[i].iindex.TermRank,
+                                Sider[i].iindex.PopRank,
+
+                                Sider[i].iindex.rank_explaind.rankBody,
+                                Sider[i].iindex.rank_explaind.rankHeadline,
+                                Sider[i].iindex.rank_explaind.rankTittel,
+                                Sider[i].iindex.rank_explaind.rankAthor,
+                                Sider[i].iindex.rank_explaind.nrAthor,
+                                Sider[i].iindex.rank_explaind.rankUrl_mainbody,
+                                Sider[i].iindex.rank_explaind.rankUrl,
+                                Sider[i].DocumentIndex.Url
+                                );
+                }
+
+		#endif
 	#endif
 
 		//skal printe ut FinalSiderHeder.showabal sider, men noen av sidene kan være slettet
@@ -1741,6 +1809,10 @@ int main(int argc, char *argv[])
 			//printf("lang nr is %s\n",Sider[i].DocumentIndex.Sprok);
 			getLangCode(documentlangcode,atoi(Sider[i].DocumentIndex.Sprok));
 			//printf("lang is %s\n",Sider[i].DocumentIndex.Sprok);
+
+			//finner vid
+        		vid_u(vidbuf,sizeof(vidbuf),salt,Sider[i].iindex.DocID,etime,QueryData.userip);
+			printf("\t<VID>%s</VID>\n",vidbuf);
 
 
 
@@ -1840,6 +1912,8 @@ int main(int argc, char *argv[])
 
 	                	printf("\t<CACHE>%s</CACHE>\n",Sider[i].cacheLink);
 
+	                	//printf("\t<PATHLEN>%u</PATHLEN>\n",(unsigned int)Sider[i].pathlen);
+
 
 			#endif
 		
@@ -1881,6 +1955,9 @@ int main(int argc, char *argv[])
 	//frøykter apache dreper den den da. Kan ikke gjøre
 	//fclose(stdout);
 
+	//30 mai 2007
+	//ser ut til å skape problemer når vi har cashed verdier her
+	if ((!hascashe) && (!hasprequery)) {
 	//kalkulerer dette på ny, men uten pi servere
 	nrRespondedServers = 0;
         for (i=0;i<nrOfServers;i++) {
@@ -1896,7 +1973,7 @@ int main(int argc, char *argv[])
         		close(sockfd[i]);
 		}
 	}
-
+	}
 
 	
 	//if ((LOGFILE = bfopen("logs/query.log","a")) == NULL) {
@@ -1905,7 +1982,7 @@ int main(int argc, char *argv[])
 	}
 	else {
 		flock(fileno(LOGFILE),LOCK_EX);
-        	fprintf(LOGFILE,"%s %i\n",queryNodeHeder.query,FinalSiderHeder.TotaltTreff);
+        	fprintf(LOGFILE,"%s %i %f\n",queryNodeHeder.query,FinalSiderHeder.TotaltTreff,FinalSiderHeder.total_usecs);
         	fclose(LOGFILE);
 	}
 
@@ -1926,6 +2003,9 @@ int main(int argc, char *argv[])
 	else if(hasprequery) {
 		//har prequery
 	}
+	else if (!QueryData.filterOn) {
+
+	}
 	//skriver bare cashe hvis vi fikk svar fra all servere
 	else if (nrRespondedServers == nrOfServers) {
 		if ((CACHE = fopen(cashefile,"wb")) == NULL) {
@@ -1937,7 +2017,7 @@ int main(int argc, char *argv[])
 			flock(fileno(CACHE),LOCK_EX);
 			fwrite(&pageNr,sizeof(pageNr),1,CACHE);
 			fwrite(&FinalSiderHeder,sizeof(FinalSiderHeder),1,CACHE);
-			fwrite(&SiderHeder,sizeof(SiderHeder),1,CACHE);
+			fwrite(SiderHeder,sizeof(struct SiderHederFormat) * maxServers,1,CACHE);
 		
 			for (i=0;i<pageNr;i++) {
 				//vi casher bare normale sider
@@ -1948,7 +2028,7 @@ int main(int argc, char *argv[])
 				//}
 			}
 
-			//printf("aa %i %i %i\n",sizeof(FinalSiderHeder),sizeof(SiderHeder),sizeof(*Sider[2]));
+			//printf("aa %i %i %i\n",sizeof(FinalSiderHeder),sizeof(struct SiderHederFormat) * maxServers,sizeof(*Sider[2]));
 
 			fclose(CACHE);
 		}
@@ -1981,11 +2061,11 @@ int main(int argc, char *argv[])
 		else {
 
 			//escaper queryet rikit
-			mysql_real_escape_string(&demo_db,QueryData.queryEscaped,QueryData.query,strlen(QueryData.query));
+			mysql_real_escape_string(&demo_db,queryEscaped,QueryData.query,strlen(QueryData.query));
 
 
 			//logger til mysql
-			sprintf(query,"insert DELAYED into search_logg values(NULL,NOW(),\"%s\",\"%s\",\"%i\",\"%f\",\"%s\",\"1\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\")",QueryData.queryEscaped,QueryData.search_user,FinalSiderHeder.TotaltTreff,FinalSiderHeder.total_usecs,QueryData.userip,totlaAds,QueryData.HTTP_ACCEPT_LANGUAGE,QueryData.HTTP_USER_AGENT,QueryData.HTTP_REFERER,QueryData.GeoIPcontry);
+			sprintf(query,"insert DELAYED into search_logg values(NULL,NOW(),\"%s\",\"%s\",\"%i\",\"%f\",\"%s\",\"1\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\")",queryEscaped,QueryData.search_user,FinalSiderHeder.TotaltTreff,FinalSiderHeder.total_usecs,QueryData.userip,totlaAds,QueryData.HTTP_ACCEPT_LANGUAGE,QueryData.HTTP_USER_AGENT,QueryData.HTTP_REFERER,QueryData.GeoIPcontry);
 
 			mysql_real_query(&demo_db, query, strlen(query));
 
@@ -2073,14 +2153,22 @@ int compare_elements_posisjon (const void *p1, const void *p2) {
 			}
 	}
 	*/
+	//hvis vi har en normal side, og har forskjelig path lengde
 	else if (((struct SiderFormat*)p1)->type == siderType_normal) {
-		if (((struct SiderFormat*)p1)->posisjon == ((struct SiderFormat*)p2)->posisjon){
+		if (((struct SiderFormat*)p1)->posisjon == ((struct SiderFormat*)p2)->posisjon ){
 
-			//printf("a: %s - %s\n",((struct SiderFormat*)p1)->DocumentIndex.Url,((struct SiderFormat*)p2)->DocumentIndex.Url);
+			//printf("a: %s (%i) - %s (%i)\n",((struct SiderFormat*)p1)->DocumentIndex.Url,((struct SiderFormat*)p1)->pathlen,((struct SiderFormat*)p2)->DocumentIndex.Url,((struct SiderFormat*)p2)->pathlen);
+			if (((struct SiderFormat*)p1)->pathlen == ((struct SiderFormat*)p2)->pathlen) {
+				if (((struct SiderFormat*)p1)->iindex.allrank > ((struct SiderFormat*)p2)->iindex.allrank) {
+                        		return -1;
+                		}
+                		else {
+                	        	return ((struct SiderFormat*)p1)->iindex.allrank < ((struct SiderFormat*)p2)->iindex.allrank;
+        	        	}			
 	
-			//printf("pos: %i, d: %i d: %i\n",((struct SiderFormat*)p1)->posisjon,((struct SiderFormat*)p1)->deletet,((struct SiderFormat*)p2)->deletet);
-			if (strlen(((struct SiderFormat*)p1)->url) < 
-				strlen(((struct SiderFormat*)p2)->url) ) {
+			}
+			else if (((struct SiderFormat*)p1)->pathlen < 
+				((struct SiderFormat*)p2)->pathlen ) {
 				return -1;
 			}
 			else {

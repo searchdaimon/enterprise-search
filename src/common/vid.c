@@ -1,0 +1,18 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+
+
+void vid_u (char buf[], int bufsize,char salt[], unsigned int value, time_t etime, char ip[]) {
+
+	//printf("bufsize %i, salt %s, value %u, etime %u\n",bufsize,salt,value,etime);
+
+        unsigned int crc;
+        snprintf(buf,bufsize,"%s%u%u%s",salt,value,(unsigned int)etime,ip);
+
+        crc = crc32boitho(buf);
+
+        snprintf(buf,bufsize,"%u-%u",crc,(unsigned int)etime);
+}
+
