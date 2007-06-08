@@ -5,7 +5,7 @@
 
 int main()
 {
-    filetypes_info	*fti = getfiletype_init("filetypes.nbo.conf");
+    filetypes_info	*fti = getfiletype_init("filetypes.eng.conf");
 
     printf("Match: %s\n", getfiletype(fti, "pdf"));
 
