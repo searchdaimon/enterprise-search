@@ -1,5 +1,5 @@
 /**
- *	(C) Copyleft 2006-2007, Magnus Galåen
+ *	(C) Copyright 2006-2007, Magnus Galåen
  *
  *	dvector.h: Vector-container.
  */

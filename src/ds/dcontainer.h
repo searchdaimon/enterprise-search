@@ -1,6 +1,6 @@
 
 /**
- *	(C) Copyleft 2006, Magnus Galåen
+ *	(C) Copyright 2006, Magnus Galåen
  *
  *	dcontainer.h: Basic containers.
  */

@@ -7,13 +7,14 @@ all:
 	$(CC) -c dvector.c
 	$(CC) -c dstack.c
 	$(CC) -c dqueue.c
-	ar rc libds.a dcontainer.o dpair.o dvector.o dstack.o dqueue.o
+	$(CC) -c dlist.c
+	ar rc libds.a dcontainer.o dpair.o dvector.o dstack.o dqueue.o dlist.o
 	ranlib libds.a
 
 test:
 	$(CC) -o test test.c libds.a
 
 clean:
-	rm -rf dcontainer.o dpair.o dvector.o dstack.o dqueue.o test libds.a
+	rm -rf dcontainer.o dpair.o dvector.o dstack.o dqueue.o dlist.o test libds.a
 
-.PHONY:	all clean
+.PHONY:	all clean test

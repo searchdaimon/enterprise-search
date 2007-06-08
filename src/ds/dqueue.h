@@ -1,7 +1,7 @@
 // Uferdig!!!
 
 /**
- *	(C) Copyleft 2007, Magnus Galåen
+ *	(C) Copyright 2007, Magnus Galåen
  *
  *	dqueue.h: Queue-container.
  */

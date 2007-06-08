@@ -1,5 +1,5 @@
 /**
- *	(C) Copyleft 2006, Magnus Galåen
+ *	(C) Copyright 2006, Magnus Galåen
  *
  *	dmap.h: Map-container.
  */

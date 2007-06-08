@@ -67,8 +67,12 @@ static inline int string_compare( container *C, value a, value b )
 inline alloc_data string_ap_allocate( container *C, va_list ap )
 {
     alloc_data	x;
+    char	*c = va_arg(ap, char*);
 
-    x.v.ptr = strdup( va_arg(ap, char*) );
+    if (c==NULL)
+	x.v.ptr = NULL;
+    else
+	x.v.ptr = strdup(c);
 //    printf("allocated %s\n", (char*)x.v.ptr);
 
     x.ap = ap;
@@ -79,7 +83,8 @@ inline alloc_data string_ap_allocate( container *C, va_list ap )
 
 inline void string_deallocate( container *C, value a )
 {
-    free(a.ptr);
+    if (a.ptr!=NULL)
+        free(a.ptr);
 }
 
 inline void string_destroy( container *C )

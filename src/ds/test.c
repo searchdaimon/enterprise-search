@@ -6,12 +6,40 @@
 #include "dvector.h"
 #include "dstack.h"
 #include "dqueue.h"
+#include "dlist.h"
 
 
 /* main: */
 
 int main()
 {
+    container	*L = list_container( int_container() );
+
+    list_pushback(L, 5);
+    list_pushfront(L, 3);
+    list_insert(L, list_begin(L)->next, 4);
+    list_pushback(L, 6);
+    list_pushfront(L, 1);
+    list_insert(L, list_begin(L)->next, 2);
+
+    list_iterator *it = list_begin(L);
+
+    printf("list(%i): ", list_size(L));
+    int		del;
+    for (del=0; it!=NULL; del++)
+	{
+	    list_iterator	*gammel_it = it;
+	    printf("%i ", it->x.i);
+	    it = it->next;
+	    if (del&1) list_erase(L, gammel_it);
+	}
+    printf(" |  ");
+    for (it=list_end(L); it!=NULL; it=it->previous)
+	{
+	    printf("%i ", it->x.i);
+	}
+    printf("\n");
+
     container	*I = int_container();
     value	v;
 
@@ -82,7 +110,10 @@ int main()
     stack_push(S, -8);
 
     while (stack_size(S)>0)
-	printf("%i\n", stack_pop(S).i);
+	{
+	    printf("%i\n", stack_peak(S).i);
+	    stack_pop(S);
+	}
 
     destroy(S);
 /*

@@ -19,7 +19,7 @@ void stack_destroy( container *C )
     stack_container_priv	*S = C->priv;
     int				i;
 
-    for (i=0; i<S->size; i++)
+    for (i=0; i<S->top; i++)
 	deallocate( S->C, S->elem[i] );
 
     free(S->elem);
@@ -55,7 +55,7 @@ void stack_push( container *C, ... )
     va_end(ad.ap);
 }
 
-
+/*
 value stack_pop( container *C )
 {
     stack_container_priv	*S = C->priv;
@@ -69,6 +69,21 @@ value stack_pop( container *C )
 
     S->top--;
     return S->elem[S->top];
+}
+*/
+void stack_pop( container *C )
+{
+    stack_container_priv	*S = C->priv;
+
+    if (S->top==0)
+	{
+	    fprintf(stderr, "stack_pop: Error! Attempting to pop value from empty stack!\n");
+
+	    return;
+	}
+
+    S->top--;
+    deallocate(S->C, S->elem[S->top]);
 }
 
 

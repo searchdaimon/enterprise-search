@@ -78,6 +78,7 @@ void queue_pop( container *C )
 	{
 	    fprintf(stderr, "queue_pop: Error! Attempting to pop value from empty queue!\n");
 //	    return (value)NULL;
+	    return;
 	}
 
     deallocate(Q->C, Q->elem[Q->head]);

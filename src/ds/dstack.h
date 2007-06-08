@@ -1,5 +1,5 @@
 /**
- *	(C) Copyleft 2006, Magnus Galåen
+ *	(C) Copyright 2006-2007, Magnus Galåen
  *
  *	dstack.h: Stack-container.
  */
@@ -15,7 +15,7 @@
 container* stack_container( container *C );
 
 int stack_size( container *C );
-value stack_pop( container *C );
+void stack_pop( container *C );
 value stack_peak( container *C );
 void stack_push( container *C, ... );
 
