@@ -1945,6 +1945,9 @@ int searchFilterCount(int *TeffArrayElementer,
 			if ((cpnt = getfiletype(fti, (*filters).filtypes.elements[i].name)) != NULL) {
 				strscpy((*filters).filtypes.elements[i].longname,cpnt,sizeof((*filters).filtypes.elements[i].longname));
 			}
+			else {
+				strscpy((*filters).filtypes.elements[i].longname,cpnt,sizeof((*filters).filtypes.elements[i].name));
+			}
 
 		}
 
