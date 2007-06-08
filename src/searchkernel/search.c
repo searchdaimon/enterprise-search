@@ -1968,6 +1968,21 @@ int searchFilterCount(int *TeffArrayElementer,
 		//teller faktisk subnames
 		h = create_hashtable(200, fileshashfromkey, filesequalkeys);
 
+		//legger først inn alle subnames med verdien 0, slik at de blir med i tellingen.
+		for(i=0;i<nrOfSubnames;i++) {
+			filesValue = malloc(sizeof(int));
+			(*filesValue) = 0;
+
+               		filesKey = strdup(subnames[i].subname);
+
+			if (! hashtable_insert(h,filesKey,filesValue) ) {
+				printf("cant insert\n");     
+				exit(-1);
+			}
+
+        	}
+
+
 		for (i = 0; i < (*TeffArrayElementer); i++) {
 
 			//his dette er en slettet index element så teller vi den ikke.
