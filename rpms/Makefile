@@ -3,10 +3,10 @@ boitho-ad_name = boitho-ad
 boitho-ad_version = 0.2.3
 
 boitho-searchdbb_name = boitho-searchdbb
-boitho-searchdbb_version = 5.4.16
+boitho-searchdbb_version = 5.4.53
 
 boitho-crawlManager_name = boitho-crawlManager
-boitho-crawlManager_version = 1.3.14
+boitho-crawlManager_version = 1.3.27
 
 boitho-boitho-bbdn_name = boitho-bbdn
 boitho-boitho-bbdn_version = 1.7.5
@@ -18,10 +18,10 @@ boitho-base_name = boitho-base
 boitho-base_version = 1.3.0
 
 boitho-bbadmin_name = boitho-bbadmin
-boitho-bbadmin_version = 2.7.17
+boitho-bbadmin_version = 2.7.30
 
 boitho-everrun_name = boitho-everrun
-boitho-everrun_version = 1.0.1
+boitho-everrun_version = 2.0.0
 
 boitho-infoquery_name = boitho-infoquery
 boitho-infoquery_version = 2.0.1
@@ -30,10 +30,10 @@ boitho-iindex_name = boitho-iindex
 boitho-iindex_version = 2.0.2
 
 boitho-webclient_name = boitho-webclient
-boitho-webclient_version = 6.0.2
+boitho-webclient_version = 6.0.13
 
 boithobb-setuid_name = boithobb-setuid
-boithobb-setuid_version = 1.0.2
+boithobb-setuid_version = 1.0.3
 
 boithobb-bbadminhtaccess_name = boithobb-bbadminhtaccess
 boithobb-bbadminhtaccess_version = 1.0.0
@@ -68,7 +68,7 @@ bbadminhtaccess:
 bbadmin:
 	echo BOITHOHOME
 	echo $(BOITHOHOME)
-	perl rpmmagic.pl $(boitho-bbadmin_name) $(boitho-bbadmin_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/webadmin Modules
+	perl rpmmagic.pl --requires "boithobb-setuid" $(boitho-bbadmin_name) $(boitho-bbadmin_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/webadmin Modules
 
 	rpm -bb $(boitho-bbadmin_name).spec
 
@@ -94,13 +94,13 @@ infoquery:
 	rpm -bb $(boitho-infoquery_name).spec
 
 searchdbb:
-	perl rpmmagic.pl --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumb cgi-bin/ShowCache
+	perl rpmmagic.pl --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumbbb cgi-bin/ShowCache config/filetypes.eng.conf config/filetypes.nbo.conf
 
 	rpm -bb $(boitho-searchdbb_name).spec
 
 
 crawlManager:
-	perl rpmmagic.pl --initd crawlManager $(boitho-crawlManager_name) $(boitho-crawlManager_version) $(BOITHOHOME) /home/boitho/boithoTools bin/crawlManager crawlers
+	perl rpmmagic.pl --requires boithobb-crawl_watch --initd crawlManager $(boitho-crawlManager_name) $(boitho-crawlManager_version) $(BOITHOHOME) /home/boitho/boithoTools bin/crawlManager crawlers
 
 	rpm -bb $(boitho-crawlManager_name).spec
 
