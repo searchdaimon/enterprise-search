@@ -146,7 +146,7 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
                 	}
 		}
 		//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
-		else if (strcmp(type,"rb") == 0) {
+		else if ((strcmp(type,"rb") == 0) || (strcmp(type,"r") == 0)) {
 			if ( (FILEHANDLER = (FILE *)fopen64(File,type)) == NULL ) {
 				#ifdef DEBUG
 				perror(File);

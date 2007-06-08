@@ -4,6 +4,10 @@
 //sjekker om et ord er stoppord
 int isStoppWord(char *term) {
 
+	if (isShortWord(term)) {
+		return 1;
+	}
+
 	return 0;
 	
 }

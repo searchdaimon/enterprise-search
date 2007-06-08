@@ -6,6 +6,27 @@
 #include "debug.h"
 #include "bstr.h"
 
+
+int find_domain_path_len (char url[]) {
+
+
+        char *cpnt;
+
+        //søker oss til / og kapper
+        if ((cpnt = strchr(url + 7,'/')) == NULL) {
+                //printf("bad url\n");
+                return 0;
+        }
+        else {
+                #ifdef DEBUG
+                printf("aa %s, len %i\n",cpnt,strlen(cpnt));
+                #endif
+
+                return strlen(cpnt);
+        }
+}
+
+
 int isWikiUrl(char url[]) {
 
 	if (strstr(url,"/wiki/") != NULL) {
@@ -298,6 +319,7 @@ int isOkTttl(char word[]) {
 		|| (strstr((word + 7),".eu/") != NULL)
 		|| (strstr((word + 7),".au/") != NULL)
 		|| (strstr((word + 7),".nz/") != NULL)
+		|| (strstr((word + 7),".fm/") != NULL)  // brukes av mange netradioer, som di.fm
 		) {
                 //printf("hav .pri/\n");
         	return 1;
@@ -321,7 +343,79 @@ int url_isttl(char word[],char ttl[]) {
     }
 }
 
+int find_domain_no_subname2 (const char url[],char domain[], int sizeofdomain) {
 
+ char **Data;
+  int Count, TokCount;
+	int i;
+
+	if (!find_domain_no_www(url,domain,sizeofdomain)) {
+		return 0;
+	}
+
+  	TokCount = split(domain, ".", &Data);
+
+	#ifdef DEBUG
+
+		printf("url %s\n",url);
+
+		printf("TokCount %i\n",TokCount);
+  		Count = 0;
+  		while( (Data[Count] != NULL) )
+    			printf("\t\t%d\t\"%s\"\n", Count, Data[Count++]);
+  		printf("\n");
+
+		printf("nr %i\n",TokCount);
+
+
+	#endif
+
+	//--TokCount;
+	domain[0] = '\0';
+
+	if (TokCount < 2) {
+		printf("bad domain url: \"%s\", nr %i\n",url, TokCount);
+
+		return 0;
+	}
+
+/*
+	if (strlen(Data[TokCount -2]) == 2) {
+
+		for (i=3;i>0;i--) {
+
+			printf("oo i %i (%i)\n",i,TokCount -i);
+			printf("oo i %i (%i), \"%s\"\n",i,TokCount -i,Data[TokCount -i]);
+			strlcat(domain,Data[TokCount -i],sizeofdomain);
+			strlcat(domain,".",sizeofdomain);
+
+		}
+
+	}	
+	else {
+*/
+
+		for (i=2;i>0;i--) {
+			//printf("i %i (%i), \"%s\"\n",i,TokCount -i,Data[TokCount -i]);
+			strlcat(domain,Data[TokCount -i],sizeofdomain);
+			strlcat(domain,".",sizeofdomain);
+
+		}
+		
+//	}
+
+
+	domain[strlen(domain) -1] = '\0';
+	//printf("Count %i\n",Count);
+
+	#ifdef DEBUG
+	printf("domain: \"%s\"\n",domain);
+	#endif
+  FreeSplitList(Data);
+
+  return 1;
+
+}
 //fjerner også www. i begyndelsen av en url, slik at det blir lettere å samenligne www.vg.no == vg.no
 int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
 //ToDo har lagt til sizeofdomain, for å ungå buffer owerflow
@@ -395,10 +489,10 @@ int find_domain_no_www (char url[],char domain[], int sizeofdomain) {
 
 
         //kutter av http:// (de 7 første tegnene)
-        strncpy(domain,url + 7,sizeofdomain -1);
+        strscpy(domain,url + 7,sizeofdomain);
 
 	if (strncmp(domain,"www.",4) == 0) {
-		strcpy(domain,domain +4);
+		strscpy(domain,domain +4,sizeofdomain);
 	}
 
         //søker oss til / og kapper

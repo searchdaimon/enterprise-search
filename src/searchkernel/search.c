@@ -27,7 +27,7 @@
 #define popvekt 0.6
 #define termvekt 0.4
 
-#define responseShortToMin 10000
+#define responseShortToMin 20000
 
 #include <math.h>
 #include <stdlib.h>
@@ -91,6 +91,8 @@ static inline int rankUrl(const unsigned short *hits, int nrofhit,const unsigned
 	return rank;
 }
 
+#define logrank(v,r,d) ((log((v * d) +1) * r)) 
+
 static inline int rankAthor(const unsigned short *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexFormat *TeffArray) {
 	int rank, i, nr;
 
@@ -100,7 +102,9 @@ static inline int rankAthor(const unsigned short *hits, int nrofhit,const unsign
 		nr++;
 	}
 
-	rank = (int)(nr * 0.1);
+	//rank = (int)(nr * 0.1);
+
+	rank = logrank(nr,40,0.009);
 
 	#ifdef EXPLAIN_RANK
 		TeffArray->rank_explaind.nrAthor = nr;
@@ -353,8 +357,8 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 
 			c[k] = a[i];
 
-			/*
-			20 mai 2007. Usikker på om dette er så lurt. fjerner for nå			
+			
+			//20 mai 2007. Usikker på om dette er så lurt. fjerner for nå			
 
 			//TermRank = a[i].TermRank + b[j].TermRank;
 			//termrank blir den verdien som er minst. Det gjør at det lønner seg å ha 
@@ -369,8 +373,8 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 				
 
 			c[k].TermRank = TermRank;
-			*/
-			c[k].TermRank = ((a[i].TermRank + a[i].TermRank) / 2);
+			
+			//c[k].TermRank = ((a[i].TermRank + a[i].TermRank) / 2);
 
 			c[k].phraseMatch = 0;
 
@@ -1759,12 +1763,33 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 				//New
 				//hvis vi har en veldig lav termrank lar vi ikke popranken telle
 				//dette for og hindre et sider som google.com kommer opp på ale mulige rare termer
+				/*
 				if (TeffArray[i].TermRank <= 2) {
 					TeffArray[i].allrank = TeffArray[i].TermRank;
 				}
 				else {
 					TeffArray[i].allrank = TeffArray[i].TermRank + TeffArray[i].PopRank;
 				}
+				*/
+				/*
+				if (TeffArray[i].PopRank > TeffArray[i].TermRank) {
+					//TeffArray[i].allrank = (((TeffArray[i].PopRank+1)/(TeffArray[i].TermRank+1))*100);
+					TeffArray[i].allrank = (TeffArray[i].PopRank+TeffArray[i].TermRank) * ((255/TeffArray[i].PopRank+1)*TeffArray[i].TermRank);
+				}
+				else {
+					TeffArray[i].allrank = (((TeffArray[i].TermRank+1)/(TeffArray[i].PopRank+1))*100);
+					TeffArray[i].allrank = (TeffArray[i].PopRank+TeffArray[i].TermRank) * ((255/TeffArray[i].TermRank+1)*TeffArray[i].PopRank);
+				}
+				*/
+				if (TeffArray[i].TermRank > TeffArray[i].PopRank) {
+					TeffArray[i].allrank = TeffArray[i].PopRank * TeffArray[i].PopRank;
+				}
+				else {
+					TeffArray[i].allrank = TeffArray[i].TermRank * TeffArray[i].PopRank;
+				}
+
+				//(3/120)*100
+				//TeffArray[i].allrank = ((5 * TeffArray[i].TermRank) + (5 * TeffArray[i].PopRank));
 			}
                 gettimeofday(&end_time, NULL);
                 (*queryTime).allrankCalc = getTimeDifference(&start_time,&end_time);

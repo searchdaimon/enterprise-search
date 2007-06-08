@@ -400,7 +400,11 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 }
 
 //copy a memory area, and return the size copyed
+#ifdef DEBUG
+static size_t memcpyrc(void *s1, const void *s2, size_t n) {
+#else
 static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
+#endif
 //size_t memcpyrc(void *s1, const void *s2, size_t n) {
         memcpy(s1,s2,n);
 
@@ -455,21 +459,24 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 
 	int isv3 = 1;
-/*
+
+	#ifdef HAVE_IS3_BUG
+
 	//temp. FIkser at ikke alle indekser er v3
 	if (strcmp(IndexType,"Main") == 0) {
 		printf("vv: %s is v3\n",IndexType);
-		isv3 = 1;
+		isv3 = 0;
 	}
 	else if (strcmp(IndexType,"Url") == 0) {
 		printf("vv: %s is v3\n",IndexType);
-		isv3 = 1;
+		isv3 = 0;
 	}	
 	else {
 		printf("vv: %s is NOT v3\n",IndexType);
 		isv3 = 0;
 	}
-*/
+	#endif
+
 	printf("languageFilterNr: %i\n",languageFilterNr);
 	//temp:
 	//isv3 = 0;
@@ -533,8 +540,8 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 			char *allindexp = allindex;
 			fread(allindex,sizeof(char),SizeForTerm,fileha);
 
-allindex += memcpyrc(&term,allindex,sizeof(unsigned long));
-allindex += memcpyrc(&Antall,allindex,sizeof(unsigned long));
+			allindex += memcpyrc(&term,allindex,sizeof(unsigned long));
+			allindex += memcpyrc(&Antall,allindex,sizeof(unsigned long));
 
 			//fseek(fileha,Adress,0);
 		#ifdef TIME_DEBUG

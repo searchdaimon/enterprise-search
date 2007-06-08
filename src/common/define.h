@@ -140,7 +140,7 @@
 #define maxPoengBody 5
 #define MaxPoengHeadline 12
 #define MaxPoengTittel 17
-#define maxPoengAthor 60
+#define maxPoengAthor 260
 
 //Lengden på en okument post lengde
 //#define DocumentIndexPOSTLENGTH 253
@@ -353,6 +353,10 @@ struct SiderFormat {
 	struct subnamesFormat subname;
 	char HtmlPreparsed;
 	double pageGenerateTime;
+
+	unsigned char pathlen;
+
+	unsigned short DomainID;
 };
 
 struct queryTimeFormat {
@@ -391,6 +395,9 @@ struct filtersTrapedFormat {
 	int cmc_pathaccess;
 	int filterSameCrc32_2;
 	int cantDIRead;
+	int getingDomainID;
+	int sameDomainID;
+	int filterNoUrl;
 };
 
 struct filtypesFormat {
@@ -513,7 +520,7 @@ struct QueryDataForamt {
         char query[MaxQueryLen];
         //struct query queryParsed;
 	query_array queryParsed;
-	char queryEscaped[MaxQueryLen*2+1];
+	//char queryEscaped[MaxQueryLen*2+1];
 	char queryhtml[MaxQueryLen*2+1];
 	char userip[16];
 	char subname[maxSubnameLength];

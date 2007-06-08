@@ -7,9 +7,11 @@ int isOkTttl(char word[]);
 int url_isttl(char word[],char ttl[]);
 
 int find_domain_no_subname (const char url[],char domain[], int sizeofdomain);
+int find_domain_no_subname2 (const char url[],char domain[], int sizeofdomain);
 int find_domain_no_www (char url[],char domain[], int sizeofdomain);
 int find_TLD(char domain[], char TLD[],int TLDsize);
 //int find_domain (char url[],char domain[]);
 int find_domain (char url[],char domain[],int domainsize);
 int url_normalization (char url[], int urlsize);
 int isWikiUrl(char url[]);
+int find_domain_path_len (char url[]);

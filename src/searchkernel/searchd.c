@@ -5,6 +5,7 @@
 #include "../common/bstr.h"
 
 #include "../common/poprank.h"
+#include "../common/integerindex.h"
 #include "../common/adultWeight.h"
 #include "../common/daemon.h"
 #include "../acls/acls.h"
@@ -25,6 +26,7 @@
 #include <string.h>
 #include <sys/uio.h>
 #include <unistd.h>
+#include <time.h>
 
 
 #define cfg_searchd "config/searchd.conf"
@@ -53,9 +55,12 @@ char servername[32];
 	static int profiling_runcount = 0;
 #endif
 
+struct iintegerMemArrayFormat global_DomainIDs;
 
 int main(int argc, char *argv[])
 {
+
+
 	int 	sockfd;
 	//int newsockfd;
 	socklen_t clilen;
@@ -66,9 +71,75 @@ int main(int argc, char *argv[])
 
 	struct config_t maincfg;
 
+        int searchport = 0;
+	int optLog = 0;
+        extern char *optarg;
+        extern int optind, opterr, optopt;
+        char c;
+        while ((c=getopt(argc,argv,"lp:"))!=-1) {
+                switch (c) {
+                        case 'p':
+                                searchport = atoi(optarg);
+				printf("will use port %i\n",searchport);
+                                break;
+                        case 'l':
+				optLog = 1;
+                                break;
+
+			default:
+                        	exit(1);
+                }
+        
+	}
+        --optind;
+
+        printf("argc %i, optind %i\n",argc,optind);
+
+
+	strncpy(servername,argv[1 +optind],sizeof(servername) -1);
+
+
+	#ifdef BLACK_BOKS
+	time_t starttime;
+
+	time(&starttime);
+	
+	FILE *FH;
+
+	#define stdoutlog "logs/searchdbb_stdout"
+	#define stderrlog "logs/searchdbb_stderr"
+
+	if (optLog) {
+		printf("opening log \"%s\"\n",bfile(stdoutlog));
+	
+		if ((FH = freopen (bfile(stdoutlog), "a+", stdout)) == NULL) {
+			perror(bfile(stdoutlog));
+
+		}
+
+		printf("opening log \"%s\"\n",bfile(stderrlog));
+	
+		if ((FH = freopen (bfile(stderrlog), "a+", stderr)) == NULL) {
+			perror(bfile(stderrlog));
+
+		}
+
+		//setter filene til å være linjebuferet, akurat slik en terminal er, ikke block bufferede slik en fil er
+		//hvis ikke får vi ikke med oss siste del hvis vi får en seg feil
+		setvbuf(stdout, NULL, _IOLBF, 0); 
+		setvbuf(stderr, NULL, _IOLBF, 0); 
+	}
+	
+	printf("starting. Time %s",ctime(&starttime));
+	fprintf(stderr,"Error test\n");
+	#endif
+
         maincfg = maincfgopen();
 
-        int searchport = maincfg_get_int(&maincfg,"BSDPORT");
+	if (searchport == 0) {
+        	searchport = maincfg_get_int(&maincfg,"BSDPORT");
+	}
+
 	searchd_config. cmc_port = maincfg_get_int(&maincfg,"CMDPORT");
 
 	/***********************************************************************************/
@@ -127,13 +198,12 @@ int main(int argc, char *argv[])
                 exit(0);
         }
 
-	strncpy(servername,argv[1],sizeof(servername) -1);
 
 	printf("servername %s\n",servername);
 
 	//ToDo: må ha låsing her
         if ((LOGFILE = bfopen("config/query.log","a")) == NULL) {
-                perror("logfile");
+                perror(bfile("config/query.log"));
         }
         else {
                 fprintf(LOGFILE,"starting server %s\n",servername);
@@ -151,6 +221,9 @@ int main(int argc, char *argv[])
 	adultWeightopenMemArray(servername,"www"); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
 	printf("done\n");
 
+
+	iintegerLoadMemArray(&global_DomainIDs,"domainid",sizeof(unsigned short),servername, "www");
+
 	IIndexInaliser();
 
 	#ifdef WITH_MEMINDEX
@@ -167,7 +240,7 @@ int main(int argc, char *argv[])
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_addr.sin_port = htons(searchport);
-
+	printf("will bind to port %i\n",searchport);
 	//seter at sokket kan rebrukes
         int yes=1;
         if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
@@ -750,7 +823,8 @@ void *do_chld(void *arg)
 			"",queryNodeHeder.orderby,SiderHeder.dates,queryNodeHeder.search_user,
 			&SiderHeder.filters,
 			searchd_config,
-			SiderHeder.errorstr, &SiderHeder.errorstrlen
+			SiderHeder.errorstr, &SiderHeder.errorstrlen,
+			&global_DomainIDs
 			)) 
 		{
 

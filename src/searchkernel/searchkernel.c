@@ -19,6 +19,7 @@
 #include "../common/timediff.h"
 #include "../common/bstr.h"
 #include "../query/query_parser.h"
+#include "../common/integerindex.h"
 
 #include "../getdate/getdate.h"
 
@@ -117,7 +118,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 	char *strpointer;
    
 	int termpos;
-	char queryelement[MaxQueryLen];
+	//char queryelement[MaxQueryLen];
 	int returnStatus = 0;	
 	//for (i = 0; ((i < 10) && (i < antall)); i++) {
 	//while (((*SiderHeder).showabal < PagesResults.MaxsHits) && (i < antall)) {
@@ -335,6 +336,11 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 						(*Sider).description[0] = '\0';
 					}
 					else {
+
+						#ifdef DEBUG
+							printf("calling generate_snippet with strlen body %i\n\nbody %s\n",strlen(body),body);
+						#endif
+
 						generate_snippet( QueryData.queryParsed, body, strlen(body), &summary, "<b>", "</b>" , 160);
 					
 						//printf("summary len %i\nsummary:\n-%s-\n",strlen(summary),summary);
@@ -480,6 +486,10 @@ struct PagesResultsFormat {
 		int cmcsocketha;
 		char search_user[64];
 		char password[64];
+		struct iintegerMemArrayFormat *DomainIDs;
+
+		int filtered;
+		int memfiltered;
 
 		#ifdef WITH_THREAD
 		//pthread_mutexattr_t mutex;
@@ -501,8 +511,8 @@ int nextIndex(struct PagesResultsFormat *PagesResults) {
 	//printf("nextIndex: waiting for lock: end\n");
 	#endif
 
-	if ((*(*PagesResults).SiderHeder).filtered > 300) {
-		debug("nextIndex: filtered (%i) > 300",(*(*PagesResults).SiderHeder).filtered);
+	if ((*PagesResults).filtered > 300) {
+		debug("nextIndex: filtered (%i) > 300",(*PagesResults).filtered);
 		forreturn = -1;
 	}
 	//mister vi en her? var før >, bytet til >=
@@ -586,14 +596,15 @@ int foundGodPage(struct PagesResultsFormat *PagesResults) {
 	#endif
 
 }
-void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTraped, int *nrInSubname,struct iindexFormat *iindex) {
+void increaseMemFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTraped, int *nrInSubname,struct iindexFormat *iindex) {
 
 
 	#ifdef WITH_THREAD
 	pthread_mutex_lock(&(*PagesResults).mutex);
 	#endif
 
-	++(*(*PagesResults).SiderHeder).filtered;
+	//++(*(*PagesResults).SiderHeder).filtered;
+	++(*PagesResults).memfiltered;
 
 	++(*whichFilterTraped);
 
@@ -612,6 +623,34 @@ void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTr
 
 
 }
+void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTraped, int *nrInSubname,struct iindexFormat *iindex) {
+
+
+	#ifdef WITH_THREAD
+	pthread_mutex_lock(&(*PagesResults).mutex);
+	#endif
+
+	//++(*(*PagesResults).SiderHeder).filtered;
+	++(*PagesResults).filtered;
+
+	++(*whichFilterTraped);
+
+	//runarb:1 13 mars. Hvorfor var denne komentert ut???
+	//runarb:2 for de vi nå bruker subname som filter
+	//runarb:3 kan det være det er nyttig for web søket og ha rikitig tall her? 
+	--(*nrInSubname);
+
+	#ifdef BLACK_BOKS
+		(*iindex).deleted = 1;
+	#endif
+
+	#ifdef WITH_THREAD
+	pthread_mutex_unlock(&(*PagesResults).mutex);
+	#endif
+
+
+}
+
 #ifdef BLACK_BOKS
 int pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection_in[], char uri_in[], char user_in[], char password_in[]) {
 
@@ -650,7 +689,7 @@ void *generatePagesResults(void *arg)
         unsigned int htmlBufferSize = 900000;
 
 	char *htmlBuffer;
-
+	unsigned short *DomainID;
 
 	struct timeval start_time, end_time;
 	int localshowabal;
@@ -695,10 +734,41 @@ void *generatePagesResults(void *arg)
 		#ifndef BLACK_BOKS
 		//pre DIread filter
 		if (((*PagesResults).filterOn) && (filterAdultWeight(adultWeightForDocIDMemArray((*PagesResults).TeffArray[i].DocID),(*PagesResults).adultpages,(*PagesResults).noadultpages) == 1)) {
+			#ifdef DEBUG
 			printf("%u is adult whith %i\n",(*PagesResults).TeffArray[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray[i].DocID));
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_1,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+			#endif
+			increaseMemFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_1,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
 			continue;
 		}
+
+		//uanset om vi har filter eller ikke så slår vi opp domainid. Men hvis vi har filter på så teller vi også
+		if (!iintegerMemArrayGet ((*PagesResults).DomainIDs,&DomainID,sizeof(*DomainID),(*PagesResults).TeffArray[i].DocID) ) {
+			#ifdef DEBUG
+			printf("can't lookup DomainID\n");
+			#endif
+			(*PagesResults).Sider[localshowabal].DomainID = 0;
+
+			if (((*PagesResults).filterOn)) {
+				increaseMemFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.getingDomainID,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+
+				continue;
+			}
+		}
+		else {
+			(*PagesResults).Sider[localshowabal].DomainID = (*DomainID);
+			//printf("DomainID %ho\n",(*PagesResults).Sider[localshowabal].DomainID);
+			
+		}
+
+                if (((*PagesResults).filterOn) && (filterSameDomainID(localshowabal,&(*PagesResults).Sider[localshowabal],(*PagesResults).Sider))) {
+			#ifdef DEBUG
+			printf("Have same DomainID\n");
+			#endif
+			increaseMemFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.sameDomainID,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+			continue;
+			
+		}
+
 		#endif
 
 		//leser DI
@@ -709,6 +779,7 @@ void *generatePagesResults(void *arg)
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantDIRead,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
                         continue;
                 }
+
 
 		//filtrerer ut dublikater fra med crc32 fra DocumentIndex
 		if ((*PagesResults).Sider[localshowabal].DocumentIndex.crc32 != 0) {
@@ -738,6 +809,14 @@ void *generatePagesResults(void *arg)
 		printf("[tid: %u] looking on  DocID: %u url: \"%s\"\n",(unsigned int)tid,(*PagesResults).TeffArray[i].DocID,(*PagesResults).Sider[localshowabal].DocumentIndex.Url);
 
 		#ifndef BLACK_BOKS
+
+		if ((*PagesResults).Sider[localshowabal].DocumentIndex.Url[0] == '\0') {
+			printf("DocumentIndex url is emty\n");
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterNoUrl,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+
+			continue;
+		}
+
 		//fjerner eventuelt like urler
 		if (((*PagesResults).filterOn) && (filterSameUrl(localshowabal,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).Sider)) ) {
 			printf("Hav seen url befor. Url \"%s\"\n",(*PagesResults).Sider[localshowabal].DocumentIndex.Url);
@@ -838,6 +917,8 @@ void *generatePagesResults(void *arg)
 		strscpy((*PagesResults).Sider[localshowabal].uri,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,sizeof((*PagesResults).Sider[localshowabal].uri));
 		strscpy((*PagesResults).Sider[localshowabal].url,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,sizeof((*PagesResults).Sider[localshowabal].url));
 
+		(*PagesResults).Sider[localshowabal].pathlen = find_domain_path_len((*PagesResults).Sider[localshowabal].uri);
+
 		shortenurl((*PagesResults).Sider[localshowabal].uri,sizeof((*PagesResults).Sider[localshowabal].uri));
 
 		//kopierer over subname
@@ -879,7 +960,9 @@ temp: 25 des 2006
 int dosearch(char query[], int queryLen, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames, 
 int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[], 
-char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *searchd_config, char *errorstr,int *errorLen) { 
+char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *searchd_config, char *errorstr,int *errorLen,
+	struct iintegerMemArrayFormat *DomainIDs
+	) { 
 
 	struct PagesResultsFormat PagesResults;
 	struct filteronFormat filteron;
@@ -902,9 +985,15 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	PagesResults.indexnr = (start * MaxsHits); 
 	strscpy(PagesResults.search_user,search_user,sizeof(PagesResults.search_user));
 	//PagesResults.password
+	PagesResults.DomainIDs = DomainIDs;
+	PagesResults.filtered		= 0;
+	PagesResults.memfiltered	= 0;	
 
 
          (*SiderHeder).filtersTraped.cantDIRead = 0;
+         (*SiderHeder).filtersTraped.getingDomainID = 0;
+         (*SiderHeder).filtersTraped.sameDomainID = 0;
+
          (*SiderHeder).filtersTraped.filterAdultWeight_1 = 0;
          (*SiderHeder).filtersTraped.filterSameCrc32_1 = 0;
          (*SiderHeder).filtersTraped.filterSameUrl = 0;
@@ -915,6 +1004,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
          (*SiderHeder).filtersTraped.cantpopResult = 0;
          (*SiderHeder).filtersTraped.cmc_pathaccess = 0;
          (*SiderHeder).filtersTraped.filterSameCrc32_2 = 0;
+         (*SiderHeder).filtersTraped.filterNoUrl = 0;
 
 	//struct iindexFormat *TeffArray;
 
@@ -1105,7 +1195,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			(*errorLen) = snprintf(errorstr,(*errorLen),"Can't get user info from authentication backend");
 			return(0);
 		}
-		printf("got pw \"%s\" -> \"%s\"\n",PagesResults.search_user,PagesResults.password);
+		//printf("got pw \"%s\" -> \"%s\"\n",PagesResults.search_user,PagesResults.password);
 		gettimeofday(&end_time, NULL);
 	        (*SiderHeder).queryTime.getUserObjekt = getTimeDifference(&start_time,&end_time);
 
@@ -1174,6 +1264,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	(*SiderHeder).showabal = PagesResults.showabal;
 
+	//lager en filtered verdi
+	(*SiderHeder).filtered = PagesResults.filtered + PagesResults.memfiltered;	
+
 
 	gettimeofday(&popResult_end_time, NULL);
         (*SiderHeder).queryTime.popResult = getTimeDifference(&popResult_start_time,&popResult_end_time);
@@ -1196,6 +1289,8 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 		searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,&(*SiderHeder).queryTime);
 	
 	#endif
+
+
 
 	//fjerner filtered fra total oversikten
 	//ToDo: bør dette også gjøres for web?
@@ -1282,9 +1377,13 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	printf("filters:\n");
 
 	printf("\t%-40s %i\n","cantDIRead",(*SiderHeder).filtersTraped.cantDIRead);
+	printf("\t%-40s %i\n","getingDomainID",(*SiderHeder).filtersTraped.getingDomainID);
+	printf("\t%-40s %i\n","sameDomainID",(*SiderHeder).filtersTraped.sameDomainID);
+
 	printf("\t%-40s %i\n","filterAdultWeight_1",(*SiderHeder).filtersTraped.filterAdultWeight_1);
 	printf("\t%-40s %i\n","filterSameCrc32_1",(*SiderHeder).filtersTraped.filterSameCrc32_1);
 	printf("\t%-40s %i\n","filterSameUrl",(*SiderHeder).filtersTraped.filterSameUrl);
+	printf("\t%-40s %i\n","filterNoUrl",(*SiderHeder).filtersTraped.filterNoUrl);
 	printf("\t%-40s %i\n","find_domain_no_subname",(*SiderHeder).filtersTraped.find_domain_no_subname);
 	printf("\t%-40s %i\n","filterSameDomain",(*SiderHeder).filtersTraped.filterSameDomain);
 	printf("\t%-40s %i\n","filterTLDs",(*SiderHeder).filtersTraped.filterTLDs);
@@ -1309,7 +1408,7 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	printf("|----------|----------||----------|----------|----------|------------------|----------|----------|\n");
 
 	for(i=0;i<(*SiderHeder).showabal;i++) {
-                        printf("|%10i|%10i||%10i|%10i|%10i|%10i (%5i)|%10i|%10i| %s\n",
+                        printf("|%10i|%10i||%10i|%10i|%10i|%10i (%5i)|%10i|%10i| %s (DocID %u-%i)\n",
 
 				Sider[i].iindex.TermRank,
 				Sider[i].iindex.PopRank,
@@ -1321,7 +1420,9 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 				Sider[i].iindex.rank_explaind.nrAthor,
 				Sider[i].iindex.rank_explaind.rankUrl_mainbody,
 				Sider[i].iindex.rank_explaind.rankUrl,
-				Sider[i].DocumentIndex.Url
+				Sider[i].DocumentIndex.Url,
+				Sider[i].iindex.DocID,
+				rLotForDOCid(Sider[i].iindex.DocID)
 				);
 	}
 	#endif
