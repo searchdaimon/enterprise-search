@@ -1946,7 +1946,7 @@ int searchFilterCount(int *TeffArrayElementer,
 				strscpy((*filters).filtypes.elements[i].longname,cpnt,sizeof((*filters).filtypes.elements[i].longname));
 			}
 			else {
-				strscpy((*filters).filtypes.elements[i].longname,cpnt,sizeof((*filters).filtypes.elements[i].name));
+				strscpy((*filters).filtypes.elements[i].longname,(*filters).filtypes.elements[i].name,sizeof((*filters).filtypes.elements[i].longname));
 			}
 
 		}
