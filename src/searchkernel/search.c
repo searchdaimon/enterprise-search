@@ -1970,14 +1970,20 @@ int searchFilterCount(int *TeffArrayElementer,
 
 		//legger først inn alle subnames med verdien 0, slik at de blir med i tellingen.
 		for(i=0;i<nrOfSubnames;i++) {
-			filesValue = malloc(sizeof(int));
-			(*filesValue) = 0;
 
-               		filesKey = strdup(subnames[i].subname);
 
-			if (! hashtable_insert(h,filesKey,filesValue) ) {
-				printf("cant insert\n");     
-				exit(-1);
+			//ser ut til at subnames kan komme flere ganger. Hvis man for eks er med i to grupper som begge har tilgant til "felles"
+			if (NULL == (filesValue = hashtable_search(h,subnames[i].subname) )) {    
+
+				filesValue = malloc(sizeof(int));
+				(*filesValue) = 0;
+
+               			filesKey = strdup(subnames[i].subname);
+
+				if (! hashtable_insert(h,filesKey,filesValue) ) {
+					printf("cant insert\n");     
+					exit(-1);
+				}
 			}
 
         	}
