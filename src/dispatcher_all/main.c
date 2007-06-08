@@ -1667,7 +1667,10 @@ int main(int argc, char *argv[])
 	for (i=0;i<SiderHeder[0].filters.filtypes.nrof;i++) {
 		printf("<FILETYPE>\n");
 
-		printf("<FILENAME>%s</FILENAME>\n<FILENR>%i</FILENR>",SiderHeder[0].filters.filtypes.elements[i].name,SiderHeder[0].filters.filtypes.elements[i].nrof);
+		printf("<FILENAME>%s</FILENAME>\n<FILELONGNAME>%s</FILELONGNAME>\n<FILENR>%i</FILENR>",
+				SiderHeder[0].filters.filtypes.elements[i].name,
+				SiderHeder[0].filters.filtypes.elements[i].longname,
+				SiderHeder[0].filters.filtypes.elements[i].nrof);
 		
 		printf("</FILETYPE>\n");
 

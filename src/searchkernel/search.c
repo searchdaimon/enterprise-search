@@ -19,6 +19,7 @@
 	#include "../getdate/dateview.h"
 	#include "../getdate/getdate.h"
 	#include "../acls/acls.c"
+	#include "../getFiletype/getfiletype.h"
 #endif
 
 #include <string.h>
@@ -1900,6 +1901,9 @@ int searchFilterCount(int *TeffArrayElementer,
 			strscpy((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name,
                                 "All",
 	                        sizeof((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name));
+			strscpy((*filters).filtypes.elements[ (*filters).filtypes.nrof ].longname,
+                                "All",
+	                        sizeof((*filters).filtypes.elements[ (*filters).filtypes.nrof ].longname));
 			++(*filters).filtypes.nrof;
 
 			struct hashtable_itr *itr;
@@ -1928,11 +1932,23 @@ int searchFilterCount(int *TeffArrayElementer,
 
 		hashtable_destroy(h,1); 
 
+
+		filetypes_info      *fti = getfiletype_init(bfile("config/filetypes.eng.conf"));
+		char *cpnt;
+
+
 		printf("filtypesnrof: %i\n",(*filters).filtypes.nrof);
 		for (i=0;i<(*filters).filtypes.nrof;i++) {
 			printf("file \"%s\": %i\n",(*filters).filtypes.elements[i].name,(*filters).filtypes.elements[i].nrof);
+
+	    		printf("Match: %s\n", getfiletype(fti, (*filters).filtypes.elements[i].name));
+			if ((cpnt = getfiletype(fti, (*filters).filtypes.elements[i].name)) != NULL) {
+				strscpy((*filters).filtypes.elements[i].longname,cpnt,sizeof((*filters).filtypes.elements[i].longname));
+			}
+
 		}
 
+		getfiletype_destroy(fti);
 
 		//collections
 		//finner hvilken vi har trykket på, og markerer denne slik at det kan markeres i designed i klienten
