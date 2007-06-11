@@ -16,11 +16,16 @@
 
 #include "../common/boithohome.h"
 
+struct AdultFraserRecordFormat {
+	char word1[128];
+	char word2[128];	
+	int weight;
+};
+
 void wordsInit(struct pagewordsFormat *pagewords) {
 
 	(*pagewords).outlinks = malloc(sizeof(struct outlinksFormat) * IndexerMaxLinks);	
 
-	printf("struct pagewordsFormat %i\n",sizeof(struct pagewordsFormat));	
 }	
 
 //kalles sist når man skal slutte og bruke en pagewords. Free'er det som er alokert
@@ -113,6 +118,7 @@ void linkwordadd(struct pagewordsFormat *pagewords, char word[]) {
 
 }
 
+#ifdef BLACK_BOKS
 void acladd(struct pagewordsFormat *pagewords, char word[]) {
 
 	convert_to_lowercase((unsigned char *)word);
@@ -131,6 +137,7 @@ void acladd(struct pagewordsFormat *pagewords, char word[]) {
 		++(*pagewords).aclnr;
 	}
 }
+#endif
 
 void linkadd(struct pagewordsFormat *pagewords, char word[]) {
 
@@ -149,7 +156,9 @@ void linkadd(struct pagewordsFormat *pagewords, char word[]) {
 
 			url_normalization (url,sizeof(url));
 
-			if (!globalIndexerLotConfig.collectUrls) {
+			//temp: butt ut linje 1 med linje 2 når wiki bugen er reparset
+			//if (!globalIndexerLotConfig.collectUrls) {
+			if ((!globalIndexerLotConfig.collectUrls) && (!isWikiUrl(word))) {
 				//skal ikke lagge til urler
 			}
 			//else if (strcmp((*pagewords).lasturl,url) == 0) {
@@ -398,7 +407,7 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 				printf("[meta author]");
 			#endif 
 			break;
-            default: printf("[...]");
+            default: printf("fn: Unknown type of word\n");
         }
 
 	#ifdef DEBUG
@@ -412,6 +421,9 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 /**************************************/
 
 
+int compare_elements_AdultFraserRecordFormat (const void *p1, const void *p2) {
+	return (strcmp(((struct AdultFraserRecordFormat *)p1)->word1,((struct AdultFraserRecordFormat *)p2)->word1));
+}
 int compare_elements_words (const void *p1, const void *p2) {
 
 //        struct iindexFormat *t1 = (struct iindexFormat*)p1;
@@ -447,6 +459,7 @@ static int cmp1_crc32(const void *p, const void *q)
 //	qsort(&pagewords.revIndex, pagewords.revIndexnr , sizeof(struct revIndexFomat), compare_elements_nr);
 //
 //}
+#ifdef BLACK_BOKS
 void aclsMakeRevIndex(struct pagewordsFormat *pagewords) {
 
 	int i;
@@ -470,6 +483,7 @@ void aclsMakeRevIndex(struct pagewordsFormat *pagewords) {
 		++(*pagewords).aclIndexnr;
 	}
 }
+#endif
 /****************************************************/
 void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *adult,int *adultWeight, unsigned char *langnr) {
 
@@ -571,7 +585,7 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 				
 				//har hitt. Lopper gjenom word2'ene på jakt etter ord nr to
 				#ifdef DEBUG_ADULT
-					printf("frase hit %s\n",(*adult).adultFraser[adultFraserpos].word);
+					printf("word is first in frase %s\n",(*adult).adultFraser[adultFraserpos].word);
 					printf("word pos %i\n",(*pagewords).words_sorted[i].unsortetIndexPosition);
 					printf("bb nex word is \"%s\"\n",(*pagewords).words[((*pagewords).words_sorted[i].unsortetIndexPosition +1)].word);
 					printf("x words to try %i, pos %i\n",(*adult).adultFraser[adultFraserpos].adultWordCount,
@@ -588,7 +602,8 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 						//øker adult verdien med vekt
 						(*adultWeight) += (*adult).adultFraser[adultFraserpos].adultWord[y].weight;
 						//printf("adultWeight2 %u\n",(*adultWeight));
-						break;
+						// 1 juli. Blir feil og gå ut av loopen her da vi kan ha treff på flere fraser.
+						//break;
 					}
 				}
 
@@ -676,9 +691,6 @@ void adultLoad (struct adultFormat *adult) {
 	char buff[128];
 	int i,y,x;
 	char *cpoint;
-	char word1[128];
-	char word2[128];	
-	int weight;
 	unsigned long crc32tmp;
 
 	//AdultWordsFile
@@ -747,25 +759,40 @@ void adultLoad (struct adultFormat *adult) {
                         exit(1);
 	}
 
-	i=-1;
-	while ((fgets(buff,sizeof(buff) -1,FH) != NULL) && (i < maxAdultWords)) {
+	y=0;
+	struct AdultFraserRecordFormat AdultFraserRecords[maxAdultWords];
+
+	while ((fgets(buff,sizeof(buff) -1,FH) != NULL) && (y < maxAdultWords)) {
                 //gjør om til lite case
                 for(x=0;x<strlen(buff);x++) {
                         buff[x] = btolower(buff[x]);
                 }
 
+		if (buff[0] == '#' || buff[0] == '\n') {
+			//printf("comment \"%s\"\n",buff);
+			continue;
+		}
+
 		//printf("buff %s\n",buff);
-		if ((x=sscanf(buff,"%s %s %i\n",word1,word2,&weight))!=3) {
+		if ((x=sscanf(buff,"%s %s %i\n",AdultFraserRecords[y].word1,AdultFraserRecords[y].word2,&AdultFraserRecords[y].weight))!=3) {
 			
 			printf("bad AdultFraserVektetFile format: \"%s\" . x: %i\n",buff, x);
-
+			exit(1);
 		}
-		else {
+		++y;
+	}
 
-			//printf("%i: %s, %s, %i\n",i,word1,word2,weight);
+
+	qsort(AdultFraserRecords, y , sizeof(struct AdultFraserRecordFormat), compare_elements_AdultFraserRecordFormat);
 	
+	i=-1;	
+	for (x=0;x<y;x++) {
+
+			#ifdef DEBUG
+			printf("%i: %s, %s, %i\n",i,AdultFraserRecords[x].word1,AdultFraserRecords[x].word2,AdultFraserRecords[x].weight);
+			#endif	
 			//finner crc32 verdeien for første ord
-			crc32tmp = crc32boitho(word1);
+			crc32tmp = crc32boitho(AdultFraserRecords[x].word1);
 
 			//hvsi dette er første så her vi ikke noen forige å legge den til i, så vi må opprette ny
 			//hvsi dette derimot har samme word1 som forige så legger vi det til
@@ -777,18 +804,18 @@ void adultLoad (struct adultFormat *adult) {
 			}
 		
 
-			strcpy((*adult).adultFraser[i].word,word1);
-			(*adult).adultFraser[i].crc32 = crc32boitho(word1);		
+			strcpy((*adult).adultFraser[i].word,AdultFraserRecords[x].word1);
+			(*adult).adultFraser[i].crc32 = crc32boitho(AdultFraserRecords[x].word1);		
 
-			(*adult).adultFraser[i].adultWord[(*adult).adultFraser[i].adultWordCount].weight = weight;
-			strcpy((*adult).adultFraser[i].adultWord[(*adult).adultFraser[i].adultWordCount].word,word2);
-			(*adult).adultFraser[i].adultWord[(*adult).adultFraser[i].adultWordCount].crc32 = crc32boitho(word2);
+			(*adult).adultFraser[i].adultWord[(*adult).adultFraser[i].adultWordCount].weight = AdultFraserRecords[x].weight;
+			strcpy((*adult).adultFraser[i].adultWord[(*adult).adultFraser[i].adultWordCount].word,AdultFraserRecords[x].word2);
+			(*adult).adultFraser[i].adultWord[(*adult).adultFraser[i].adultWordCount].crc32 = crc32boitho(AdultFraserRecords[x].word2);
 
 			if ((*adult).adultFraser[i].adultWordCount < MaxAdultWordCount -1) {
 				++(*adult).adultFraser[i].adultWordCount;
 			}
 			else {
-				printf("MaxAdultWordCount %i for %s\n",MaxAdultWordCount,buff);
+				printf("MaxAdultWordCount %i for %s\n",MaxAdultWordCount,AdultFraserRecords[x].word1);
 				exit(1);
 			}
 
@@ -796,16 +823,15 @@ void adultLoad (struct adultFormat *adult) {
 
 
 
-		}
 	}
 	fclose(FH);
 
 	(*adult).adultWordFrasernr = i;
 	qsort((*adult).adultFraser, (*adult).adultWordFrasernr , sizeof(struct adultWordFraserFormat), compare_elements_AdultFraser);
 
-/*
+	#ifdef DEBUG
 	for(i=0;i<(*adult).adultWordFrasernr;i++) {
-		printf("%i, -%s-, nr %i\n",i,(*adult).adultFraser[i].word,(*adult).adultFraser[i].adultWordCount);
+		printf("nr %i, word: \"%s\", subwords %i\n",i,(*adult).adultFraser[i].word,(*adult).adultFraser[i].adultWordCount);
 
 		for(y=0;y<(*adult).adultFraser[i].adultWordCount;y++) {
 			printf("\t %i: %s-%s: %i\n",y,(*adult).adultFraser[i].word,(*adult).adultFraser[i].adultWord[y].word,(*adult).adultFraser[i].adultWord[y].weight);
@@ -813,7 +839,8 @@ void adultLoad (struct adultFormat *adult) {
 		
 
 	}
-*/
+	#endif
+	
 
 	#endif
 }
@@ -872,6 +899,7 @@ static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
         return n;
 }
 
+#ifdef BLACK_BOKS
 void aclsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int DocID,unsigned char *langnr) {
 
 
@@ -924,6 +952,7 @@ void aclsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int DocI
 
 }
 
+#endif
 void wordsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int DocID,unsigned char *langnr) {
 
 	int i,y;
@@ -995,6 +1024,7 @@ void dictionaryWordsWrite (struct pagewordsFormat *pagewords,FILE *FH) {
 /**************************************************************************************
 Skriver acl index til disk
 ***************************************************************************************/
+#ifdef BLACK_BOKS
 void aclindexFilesAppendWords(struct pagewordsFormat *pagewords,FILE *aclindexFilesHa[],unsigned int DocID,unsigned char *langnr) {
 
 	int i,y;
@@ -1014,6 +1044,7 @@ void aclindexFilesAppendWords(struct pagewordsFormat *pagewords,FILE *aclindexFi
 	}
 
 }
+#endif
 /**************************************************************************************
 Skriver reversert index til disk
 ***************************************************************************************/
@@ -1099,7 +1130,7 @@ void html_parser_timout( int signo )
 
 void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		char HtmlBuffer[],int HtmlBufferLength,struct DocumentIndexFormat *DocumentIndexPost, 
-		int DocID,int httpResponsCodes[], struct adultFormat *adult, unsigned char *langnr,
+		int DocID,int httpResponsCodes[], struct adultFormat *adult,
 		char **title, char **body) {
 
 		//int AdultWeight;

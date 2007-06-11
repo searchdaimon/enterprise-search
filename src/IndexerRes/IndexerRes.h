@@ -31,7 +31,7 @@
 
 #define maxAdultWords 500
 #define maxWordlLen 30
-#define MaxAdultWordCount 60
+#define MaxAdultWordCount 80
 
 
 //#define subname "www"
@@ -157,7 +157,7 @@ void wordsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int Doc
 
 void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader,
                 char HtmlBuffer[],int HtmlBufferLength,struct DocumentIndexFormat *DocumentIndexPost,
-                int DocID,int httpResponsCodes[], struct adultFormat *adult, unsigned char *langnr,
+                int DocID,int httpResponsCodes[], struct adultFormat *adult,
                 char **title, char **body);
 
 void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID);
@@ -167,7 +167,12 @@ void linksWrite(struct pagewordsFormat *pagewords,struct addNewUrlhaFormat addNe
 void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *adult,int *adultWeight, unsigned char *langnr);
 void wordsInit(struct pagewordsFormat *pagewords);
 void wordsEnd(struct pagewordsFormat *pagewords);
+
+void adultLoad (struct adultFormat *adult);
+
+#ifdef BLACK_BOKS
 void acladd(struct pagewordsFormat *pagewords, char word[]);
 void aclsMakeRevIndex(struct pagewordsFormat *pagewords);
 void aclsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int DocID,unsigned char *langnr);
 void aclindexFilesAppendWords(struct pagewordsFormat *pagewords,FILE *aclindexFilesHa[],unsigned int DocID,unsigned char *langnr);
+#endif

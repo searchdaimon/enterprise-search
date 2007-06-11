@@ -18,6 +18,7 @@
 
 #include "../common/bstr.h"
 #include "../common/debug.h"
+#include "../common/ir.h"
 
 
 //#include "../parse_summary/summary.h"
@@ -41,6 +42,7 @@ struct DIArrayFormat {
 	unsigned char awvalue;
 	struct brankPageElementsFormat brankPageElements;
 	char haverankPageElements;
+	unsigned short int DomainDI;
 };
 
 struct IndexerLot_workthreadFormat {
@@ -362,6 +364,7 @@ void *IndexerLot_workthread(void *arg) {
 	char TLD[5];
 	unsigned long int radress;
 	char *acl = NULL;
+	unsigned short int DomainDI;
 
 	unsigned int HtmlBufferLength;
 	unsigned char langnr;
@@ -418,7 +421,7 @@ void *IndexerLot_workthread(void *arg) {
 				#ifndef BLACK_BOKS
 
 				if (!find_domain_no_subname(ReposetoryHeader.url,domain,sizeof(domain)) ) {
-					printf("can't find domain. Url \"%s\"\n",ReposetoryHeader.url);
+					debug("can't find domain. Url \"%s\"\n",ReposetoryHeader.url);
 				}
 				else if (!find_TLD(domain,TLD,sizeof(TLD))) {
 					printf("cnat find TLD. Url \"%s\"\n",ReposetoryHeader.url);
@@ -474,7 +477,7 @@ void *IndexerLot_workthread(void *arg) {
 
 					//printf("document \"%s\" %i b\n",HtmlBuffer,HtmlBufferLength);
 
-					handelPage(pagewords,(*argstruct).lotNr,&ReposetoryHeader,HtmlBuffer,HtmlBufferLength,DocumentIndexPost,ReposetoryHeader.DocID,(*argstruct).httpResponsCodes,(*argstruct).adult,&langnr,&title,&body);
+					handelPage(pagewords,(*argstruct).lotNr,&ReposetoryHeader,HtmlBuffer,HtmlBufferLength,DocumentIndexPost,ReposetoryHeader.DocID,(*argstruct).httpResponsCodes,(*argstruct).adult,&title,&body);
 					//har ikke metadesc enda
 					metadesc = strdup("");
 
@@ -486,7 +489,6 @@ void *IndexerLot_workthread(void *arg) {
 
 
 					(*DocumentIndexPost).crc32 = crc32boithonl(HtmlBuffer,HtmlBufferLength);
-					sprintf((*DocumentIndexPost).Sprok,"%i",langnr);
 
 					//setter anatll utgående linker
 					//bruker en unsigned char. Kan ikke ha flere en 255 
@@ -498,7 +500,9 @@ void *IndexerLot_workthread(void *arg) {
 					}
 
 					wordsMakeRevIndex(pagewords,(*argstruct).adult,&AdultWeight,&langnr);
-					
+
+					sprintf((*DocumentIndexPost).Sprok,"%i",langnr);
+
 
 					if (AdultWeight > 255) {
                                         	(*DocumentIndexPost).AdultWeight = 255;
@@ -534,6 +538,7 @@ void *IndexerLot_workthread(void *arg) {
 					awvalue = 0;
 				}
 
+
 					//data skal kopieres over uanset hva som skjer
 					//kopierer over di data
 					copyRepToDi(DocumentIndexPost,&ReposetoryHeader);
@@ -556,13 +561,18 @@ void *IndexerLot_workthread(void *arg) {
 
 						debug("time %u\n",ReposetoryHeader.time);
 
-						iintegerSetValue(&ReposetoryHeader.time,sizeof(int),ReposetoryHeader.DocID,"dates",(*argstruct).subname);
+						iintegerSetValueNoCashe(&ReposetoryHeader.time,sizeof(int),ReposetoryHeader.DocID,"dates",(*argstruct).subname);
 						//printf("filtypes \"%c%c%c%c\"\n",ReposetoryHeader.doctype[0],ReposetoryHeader.doctype[1],ReposetoryHeader.doctype[2],ReposetoryHeader.doctype[3]);
 						//normaliserer
 						for(i=0;i<4;i++) {
 							ReposetoryHeader.doctype[i] = btolower(ReposetoryHeader.doctype[i]);
 						}
-						iintegerSetValue(&ReposetoryHeader.doctype,4,ReposetoryHeader.DocID,"filtypes",(*argstruct).subname);
+						iintegerSetValueNoCashe(&ReposetoryHeader.doctype,4,ReposetoryHeader.DocID,"filtypes",(*argstruct).subname);
+
+					#else
+
+						DomainDI = calcDomainID(domain);
+
 					#endif
 
 
@@ -590,8 +600,9 @@ void *IndexerLot_workthread(void *arg) {
 
 						revindexFilesAppendWords(pagewords,(*argstruct).revindexFilesHa,ReposetoryHeader.DocID,&langnr);
 
-						aclindexFilesAppendWords(pagewords,(*argstruct).aclindexFilesHa,ReposetoryHeader.DocID,&langnr);
-						
+						#ifdef BLACK_BOKS
+							aclindexFilesAppendWords(pagewords,(*argstruct).aclindexFilesHa,ReposetoryHeader.DocID,&langnr);
+						#endif
 						#ifdef PRESERVE_WORDS
 							dictionaryWordsWrite(pagewords,(*argstruct).dictionarywordsfFH);
 					
@@ -634,7 +645,9 @@ void *IndexerLot_workthread(void *arg) {
 				(*argstruct).DIArray[DocIDPlace].brankPageElements.nrOfOutLinks = 	(*DocumentIndexPost).nrOfOutLinks;
 				(*argstruct).DIArray[DocIDPlace].brankPageElements.response = 		(*DocumentIndexPost).response;
 				
-			
+
+				(*argstruct).DIArray[DocIDPlace].DomainDI = DomainDI;
+					
 				free(SummaryBuffer);
 
 
@@ -664,6 +677,7 @@ int main (int argc, char *argv[]) {
         unsigned int FileOffset;
 	//char lotServer[64];
 	char *subname;
+	struct iintegerFormat iinteger;
 	
 	unsigned int lastIndexTime;
 	unsigned int optMustBeNewerThen = 0;
@@ -849,6 +863,11 @@ int main (int argc, char *argv[]) {
 				addNewUrlOpen(&argstruct.addNewUrlha[i],lotNr,openmode,subname,i);
 			}	
 
+			if (!iintegerOpenForLot(&iinteger,"domainid",sizeof(unsigned short),lotNr, ">>", subname)) {
+                		perror("iintegerOpenForLot");
+        	        	exit(1);
+	        	}		
+
 		#endif
 
 		#ifdef PRESERVE_WORDS
@@ -912,7 +931,7 @@ int main (int argc, char *argv[]) {
 			IndexerLot_workthread(&argstruct);
 
 		#endif
-		
+
 		
 		for(i=0;i<NrofDocIDsInLot;i++) {
 			if (argstruct.DIArray[i].p != NULL) {
@@ -928,9 +947,11 @@ int main (int argc, char *argv[]) {
 
 				DocIDPlace = ((argstruct.DIArray[i].DocID - LotDocIDOfset(argstruct.lotNr)) * sizeof(unsigned char));
 
-				printf("DocID %u, DocIDPlace %i\n",argstruct.DIArray[i].DocID,DocIDPlace);
+				//printf("DocID %u, DocIDPlace %i\n",argstruct.DIArray[i].DocID,DocIDPlace);
 				fseek(argstruct.ADULTWEIGHTFH,DocIDPlace,SEEK_SET);	
                			fwrite(&argstruct.DIArray[i].awvalue,sizeof(unsigned char),1,argstruct.ADULTWEIGHTFH);
+
+				iintegerSetValue(&iinteger,&argstruct.DIArray[i].DomainDI,sizeof(argstruct.DIArray[i].DomainDI),argstruct.DIArray[i].DocID,subname);
 			}
 
 			if (argstruct.DIArray[i].haverankPageElements == 1) {
@@ -940,6 +961,8 @@ int main (int argc, char *argv[]) {
 				fseek(argstruct.brankPageElementsFH,DocIDPlace,SEEK_SET);
 				fwrite(&argstruct.DIArray[i].brankPageElements,sizeof(struct brankPageElementsFormat),1,argstruct.brankPageElementsFH);
 			}
+			
+
 			#endif
 		}
 		
@@ -950,6 +973,7 @@ int main (int argc, char *argv[]) {
 			fclose(argstruct.ADULTWEIGHTFH);
 			fclose(argstruct.SFH);
 			fclose(argstruct.brankPageElementsFH);
+			iintegerClose(&iinteger);
 		#endif
 
 		//skriver riktig indexstide til lotten
