@@ -2,7 +2,7 @@
 CFLAGS+= -Wall -W -g -DYYDEBUG=1 -O1
 #CFLAGS+= -DTEST_GETDATE 
 
-all: getdate
+all: getdate dateview
 
 getdate: getdate.tab.o test.o
 	$(CC) $(LDFLAGS) getdate.tab.o test.o -o getdate
