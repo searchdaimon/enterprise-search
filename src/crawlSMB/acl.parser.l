@@ -34,6 +34,7 @@ mask := <cmd>/0/<rights>
 
 */
 const long int	mask_read = 0x00120089;
+const long int  mask_denied_read = 0x00020089;
 int	is_acl, read_everyone;
 char	*user;
 int	allowed;
@@ -65,39 +66,36 @@ ACL:			{ /*printf("ACL:\n");*/			is_acl = 1;	BEGIN(DOMAIN); }
 <MASK_RIGHTS>0x[0-9a-fA-F]+	{
 			    /*printf("%s\n", ((strtol(yytext, NULL, 0) & mask_read) == mask_read ? "read_access" : "none"));*/
 
-			    if ((strtol(yytext, NULL, 0) & mask_read) == mask_read)
+			    if ((strtol(yytext, NULL, 0) & mask_read) == mask_read && allowed)
 				{
-				    if (allowed)
+				    if (user!=NULL && !strcmp(user, "Everyone"))
 					{
-					    if (user!=NULL && !strcmp(user, "Everyone"))
-						{
-						    abuf_pos = snprintf(abuf, 1023, "Everyone");
-						    read_everyone = 1;
-						}
-
-					    if (!read_everyone)
-						{
-						    if (abuf_pos>0)
-							abuf_pos+= snprintf(abuf + abuf_pos, 1023-abuf_pos, ",%s", user);
-						    else
-							abuf_pos+= snprintf(abuf + abuf_pos, 1023-abuf_pos, "%s", user);
-						}
+					    abuf_pos = snprintf(abuf, 1023, "Everyone");
+					    read_everyone = 1;
 					}
-				    else
-					{
-					    if (user!=NULL && !strcmp(user, "Everyone"))
-						{
-						    dbuf_pos = snprintf(dbuf, 1023, "Everyone");
-						    read_everyone = 1;
-						}
 
-					    if (!read_everyone)
-						{
-						    if (dbuf_pos>0)
-							dbuf_pos+= snprintf(dbuf + dbuf_pos, 1023-dbuf_pos, ",%s", user);
-						    else
-							dbuf_pos+= snprintf(dbuf + dbuf_pos, 1023-dbuf_pos, "%s", user);
-						}
+				    if (!read_everyone)
+					{
+					    if (abuf_pos>0)
+						abuf_pos+= snprintf(abuf + abuf_pos, 1023-abuf_pos, ",%s", user);
+					    else
+						abuf_pos+= snprintf(abuf + abuf_pos, 1023-abuf_pos, "%s", user);
+					}
+				}
+			    else if ((strtol(yytext, NULL, 0) & mask_denied_read) == mask_denied_read && !allowed)
+				{
+				    if (user!=NULL && !strcmp(user, "Everyone"))
+					{
+					    dbuf_pos = snprintf(dbuf, 1023, "Everyone");
+					    read_everyone = 1;
+					}
+
+				    if (!read_everyone)
+					{
+					    if (dbuf_pos>0)
+						dbuf_pos+= snprintf(dbuf + dbuf_pos, 1023-dbuf_pos, ",%s", user);
+					    else
+						dbuf_pos+= snprintf(dbuf + dbuf_pos, 1023-dbuf_pos, "%s", user);
 					}
 				}
 
@@ -110,7 +108,7 @@ ACL:			{ /*printf("ACL:\n");*/			is_acl = 1;	BEGIN(DOMAIN); }
 
 char** parseacl_read_access( char *acl_code )
 {
-//    printf("acl: %s\n\n", acl_code);
+    printf("acl: %s\n", acl_code);
     user = NULL;
     abuf_pos = 0;
     dbuf_pos = 0;

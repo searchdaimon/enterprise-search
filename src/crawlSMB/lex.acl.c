@@ -2346,6 +2346,7 @@ mask := <cmd>/0/<rights>
 
 */
 const long int	mask_read = 0x00120089;
+const long int  mask_denied_read = 0x00020089;
 int	is_acl, read_everyone;
 char	*user;
 int	allowed;
@@ -2354,7 +2355,7 @@ int	abuf_pos, dbuf_pos;
 
 
 
-#line 2358 "src/crawlSMB/lex.acl.c"
+#line 2359 "src/crawlSMB/lex.acl.c"
 
 #define INITIAL 0
 #define NUMBER 1
@@ -2496,9 +2497,9 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 48 "src/crawlSMB/acl.parser.l"
+#line 49 "src/crawlSMB/acl.parser.l"
 
-#line 2502 "src/crawlSMB/lex.acl.c"
+#line 2503 "src/crawlSMB/lex.acl.c"
 
 	if ( !(yy_init) )
 		{
@@ -2571,39 +2572,39 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 49 "src/crawlSMB/acl.parser.l"
+#line 50 "src/crawlSMB/acl.parser.l"
 { /*printf("Revision: ");*/		is_acl = 0;	BEGIN(NUMBER); }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 50 "src/crawlSMB/acl.parser.l"
+#line 51 "src/crawlSMB/acl.parser.l"
 { /*printf("Owner:\n");*/		is_acl = 0;	BEGIN(DOMAIN); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 51 "src/crawlSMB/acl.parser.l"
+#line 52 "src/crawlSMB/acl.parser.l"
 { /*printf("Group:\n");*/		is_acl = 0;	BEGIN(DOMAIN); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 52 "src/crawlSMB/acl.parser.l"
+#line 53 "src/crawlSMB/acl.parser.l"
 { /*printf("ACL:\n");*/			is_acl = 1;	BEGIN(DOMAIN); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 53 "src/crawlSMB/acl.parser.l"
+#line 54 "src/crawlSMB/acl.parser.l"
 { /*printf("%s\n", yytext);*/		BEGIN(INITIAL); }
 	YY_BREAK
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 54 "src/crawlSMB/acl.parser.l"
+#line 55 "src/crawlSMB/acl.parser.l"
 { /*printf("\tDomain: %s\n", yytext);*/	BEGIN(USER); }
 	YY_BREAK
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 55 "src/crawlSMB/acl.parser.l"
+#line 56 "src/crawlSMB/acl.parser.l"
 {
 			    /*printf("\tUser/Group: %s\n", yytext);*/
 			    if (user!=NULL) free(user);
@@ -2615,53 +2616,50 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 63 "src/crawlSMB/acl.parser.l"
+#line 64 "src/crawlSMB/acl.parser.l"
 { /*printf("\tALLOWED ");*/ allowed = 1;	BEGIN(MASK_RIGHTS); }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 64 "src/crawlSMB/acl.parser.l"
+#line 65 "src/crawlSMB/acl.parser.l"
 { /*printf("\tDENIED ");*/ allowed = 0;		BEGIN(MASK_RIGHTS); }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 65 "src/crawlSMB/acl.parser.l"
+#line 66 "src/crawlSMB/acl.parser.l"
 {
 			    /*printf("%s\n", ((strtol(yytext, NULL, 0) & mask_read) == mask_read ? "read_access" : "none"));*/
 
-			    if ((strtol(yytext, NULL, 0) & mask_read) == mask_read)
+			    if ((strtol(yytext, NULL, 0) & mask_read) == mask_read && allowed)
 				{
-				    if (allowed)
+				    if (user!=NULL && !strcmp(user, "Everyone"))
 					{
-					    if (user!=NULL && !strcmp(user, "Everyone"))
-						{
-						    abuf_pos = snprintf(abuf, 1023, "Everyone");
-						    read_everyone = 1;
-						}
-
-					    if (!read_everyone)
-						{
-						    if (abuf_pos>0)
-							abuf_pos+= snprintf(abuf + abuf_pos, 1023-abuf_pos, ",%s", user);
-						    else
-							abuf_pos+= snprintf(abuf + abuf_pos, 1023-abuf_pos, "%s", user);
-						}
+					    abuf_pos = snprintf(abuf, 1023, "Everyone");
+					    read_everyone = 1;
 					}
-				    else
-					{
-					    if (user!=NULL && !strcmp(user, "Everyone"))
-						{
-						    dbuf_pos = snprintf(dbuf, 1023, "Everyone");
-						    read_everyone = 1;
-						}
 
-					    if (!read_everyone)
-						{
-						    if (dbuf_pos>0)
-							dbuf_pos+= snprintf(dbuf + dbuf_pos, 1023-dbuf_pos, ",%s", user);
-						    else
-							dbuf_pos+= snprintf(dbuf + dbuf_pos, 1023-dbuf_pos, "%s", user);
-						}
+				    if (!read_everyone)
+					{
+					    if (abuf_pos>0)
+						abuf_pos+= snprintf(abuf + abuf_pos, 1023-abuf_pos, ",%s", user);
+					    else
+						abuf_pos+= snprintf(abuf + abuf_pos, 1023-abuf_pos, "%s", user);
+					}
+				}
+			    else if ((strtol(yytext, NULL, 0) & mask_denied_read) == mask_denied_read && !allowed)
+				{
+				    if (user!=NULL && !strcmp(user, "Everyone"))
+					{
+					    dbuf_pos = snprintf(dbuf, 1023, "Everyone");
+					    read_everyone = 1;
+					}
+
+				    if (!read_everyone)
+					{
+					    if (dbuf_pos>0)
+						dbuf_pos+= snprintf(dbuf + dbuf_pos, 1023-dbuf_pos, ",%s", user);
+					    else
+						dbuf_pos+= snprintf(dbuf + dbuf_pos, 1023-dbuf_pos, "%s", user);
 					}
 				}
 
@@ -2670,21 +2668,21 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 106 "src/crawlSMB/acl.parser.l"
+#line 104 "src/crawlSMB/acl.parser.l"
 { /*printf("---\n");*/ }
 	YY_BREAK
 case 12:
 /* rule 12 can match eol */
 YY_RULE_SETUP
-#line 107 "src/crawlSMB/acl.parser.l"
+#line 105 "src/crawlSMB/acl.parser.l"
 {}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 108 "src/crawlSMB/acl.parser.l"
+#line 106 "src/crawlSMB/acl.parser.l"
 ECHO;
 	YY_BREAK
-#line 2688 "src/crawlSMB/lex.acl.c"
+#line 2686 "src/crawlSMB/lex.acl.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(NUMBER):
 case YY_STATE_EOF(DOMAIN):
@@ -3670,14 +3668,14 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 108 "src/crawlSMB/acl.parser.l"
+#line 106 "src/crawlSMB/acl.parser.l"
 
 
 
 
 char** parseacl_read_access( char *acl_code )
 {
-//    printf("acl: %s\n\n", acl_code);
+    printf("acl: %s\n", acl_code);
     user = NULL;
     abuf_pos = 0;
     dbuf_pos = 0;

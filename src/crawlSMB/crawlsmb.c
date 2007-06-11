@@ -219,8 +219,8 @@ int smb_recursive_get( char *prefix, char *dir_name,
                     else
                         {
 			    parsed_acl = parseacl_read_access( value );
-			    printf("Users allowed to read '%s':\t'%s'\n", entry_name, parsed_acl[0]);
-			    printf("Users denied              :\t'%s'\n", parsed_acl[1]);
+			    printf("Users ALLOWED to read '%s':\t'%s'\n", entry_name, parsed_acl[0]);
+			    printf("Users DENIED :\t'%s'\n", parsed_acl[1]);
                         }
 
                     if ( smbc_stat(full_entry_name, &file_stat) < 0 )
