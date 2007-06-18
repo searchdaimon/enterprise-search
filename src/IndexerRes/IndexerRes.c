@@ -42,7 +42,8 @@ void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID) {
 	(*pagewords).DocID = DocID;
 
 	#ifdef BLACK_BOKS
-		(*pagewords).aclnr = 0;
+		(*pagewords).acl_allow.aclnr = 0;
+		(*pagewords).acl_denied.aclnr = 0;
 	#endif
 }
 
@@ -119,22 +120,23 @@ void linkwordadd(struct pagewordsFormat *pagewords, char word[]) {
 }
 
 #ifdef BLACK_BOKS
-void acladd(struct pagewordsFormat *pagewords, char word[]) {
+void acladd(struct IndexerRes_acls *acl, char word[]) {
+
 
 	convert_to_lowercase((unsigned char *)word);
 	printf("acladd: got \"%s\"\n",word);
 
-	if ((*pagewords).aclnr > maxAclForPage){
+	if ((*acl).aclnr > maxAclForPage){
         	#ifdef DEBUG
                 	printf("mor then maxAclForPage words\n");
                #endif
         }
         else {
 
-		(*pagewords).acls[(*pagewords).aclnr].WordID =  crc32boitho(word);
-		(*pagewords).acls[(*pagewords).aclnr].position = 0;
+		(*acl).acls[(*acl).aclnr].WordID =  crc32boitho(word);
+		(*acl).acls[(*acl).aclnr].position = 0;
 
-		++(*pagewords).aclnr;
+		++(*acl).aclnr;
 	}
 }
 #endif
@@ -460,27 +462,27 @@ static int cmp1_crc32(const void *p, const void *q)
 //
 //}
 #ifdef BLACK_BOKS
-void aclsMakeRevIndex(struct pagewordsFormat *pagewords) {
+void aclsMakeRevIndex(struct IndexerRes_acls *acl) {
 
 	int i;
 	
-	printf("aclsMakeRevIndex: aclns %i\n",(*pagewords).aclnr);
-	for(i=0;i<(*pagewords).aclnr;i++) {
-		printf("aclsMakeRevIndex: crc32: %u\n",(*pagewords).acls[i].WordID);
-		(*pagewords).acls_sorted[i] = (*pagewords).acls[i];
+	printf("aclsMakeRevIndex: aclns %i\n",(*acl).aclnr);
+	for(i=0;i<(*acl).aclnr;i++) {
+		printf("aclsMakeRevIndex: crc32: %u\n",(*acl).acls[i].WordID);
+		(*acl).acls_sorted[i] = (*acl).acls[i];
 	}
 
 	//sorter ordene
-	qsort(&(*pagewords).acls_sorted, (*pagewords).aclnr , sizeof(struct wordsFormat), compare_elements_words);
+	qsort(&(*acl).acls_sorted, (*acl).aclnr , sizeof(struct wordsFormat), compare_elements_words);
 
-	(*pagewords).aclIndexnr = 0;
-	for(i=0;i<(*pagewords).aclnr;i++) {
+	(*acl).aclIndexnr = 0;
+	for(i=0;i<(*acl).aclnr;i++) {
 
-		(*pagewords).aclIndex[(*pagewords).aclIndexnr].WordID = (*pagewords).acls_sorted[i].WordID;
-		(*pagewords).aclIndex[(*pagewords).aclIndexnr].nr = 0;
-		//(*pagewords).aclIndex[(*pagewords).aclIndexnr].hits[(*pagewords).aclIndex[(*pagewords).aclIndexnr].nr] = (*pagewords).acls_sorted[i].position;
+		(*acl).aclIndex[(*acl).aclIndexnr].WordID = (*acl).acls_sorted[i].WordID;
+		(*acl).aclIndex[(*acl).aclIndexnr].nr = 0;
+		//(*acl).aclIndex[(*acl).aclIndexnr].hits[(*acl).aclIndex[(*acl).aclIndexnr].nr] = (*acl).acls_sorted[i].position;
 
-		++(*pagewords).aclIndexnr;
+		++(*acl).aclIndexnr;
 	}
 }
 #endif
@@ -900,53 +902,55 @@ static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
 }
 
 #ifdef BLACK_BOKS
-void aclsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int DocID,unsigned char *langnr) {
+
+void aclsMakeRevIndexBucket (struct IndexerRes_acls *acl,unsigned int DocID,unsigned char *langnr) {
+
 
 
 	int i,y;
 
 	for(i=0;i<NrOfDataDirectorys;i++) {
-		(*pagewords).nrofAclBucketElements[i].records = 0;
-		(*pagewords).nrofAclBucketElements[i].hits = 0;
+		(*acl).nrofAclBucketElements[i].records = 0;
+		(*acl).nrofAclBucketElements[i].hits = 0;
 	}
 
-	//printf("aclIndexnr %i\n",(*pagewords).aclIndexnr);
-	for(i=0;i<(*pagewords).aclIndexnr;i++) {
+	//printf("aclIndexnr %i\n",(*acl).aclIndexnr);
+	for(i=0;i<(*acl).aclIndexnr;i++) {
 
-		(*pagewords).aclIndex[i].bucket = (*pagewords).aclIndex[i].WordID % NrOfDataDirectorys;
+		(*acl).aclIndex[i].bucket = (*acl).aclIndex[i].WordID % NrOfDataDirectorys;
 
-		++(*pagewords).nrofAclBucketElements[(*pagewords).aclIndex[i].bucket].records;
-		(*pagewords).nrofAclBucketElements[(*pagewords).aclIndex[i].bucket].hits += (*pagewords).aclIndex[i].nr;
+		++(*acl).nrofAclBucketElements[(*acl).aclIndex[i].bucket].records;
+		(*acl).nrofAclBucketElements[(*acl).aclIndex[i].bucket].hits += (*acl).aclIndex[i].nr;
 	}
 
 	for(i=0;i<NrOfDataDirectorys;i++) {
-		(*pagewords).nrofAclBucketElements[i].bucketbuffsize = ((sizeof(unsigned int) + sizeof(char) + sizeof(unsigned long) + sizeof(unsigned long)) * (*pagewords).nrofAclBucketElements[i].records) + ((*pagewords).nrofAclBucketElements[i].hits * sizeof(unsigned short));
-		//printf("bucketbuffsize %i\n",(*pagewords).nrofaclBucketElements[i].bucketbuffsize);
+		(*acl).nrofAclBucketElements[i].bucketbuffsize = ((sizeof(unsigned int) + sizeof(char) + sizeof(unsigned long) + sizeof(unsigned long)) * (*acl).nrofAclBucketElements[i].records) + ((*acl).nrofAclBucketElements[i].hits * sizeof(unsigned short));
+		//printf("bucketbuffsize %i\n",(*acl).nrofaclBucketElements[i].bucketbuffsize);
 
-		(*pagewords).nrofAclBucketElements[i].bucketbuff = malloc((*pagewords).nrofAclBucketElements[i].bucketbuffsize);
+		(*acl).nrofAclBucketElements[i].bucketbuff = malloc((*acl).nrofAclBucketElements[i].bucketbuffsize);
 	}
 
 	//setter pekeren til begyndelsen. Siden vil vi jo flytte denne etter hvert som vi kommer lenger ut
 	for(i=0;i<NrOfDataDirectorys;i++) {
-		(*pagewords).nrofAclBucketElements[i].p = (*pagewords).nrofAclBucketElements[i].bucketbuff;
+		(*acl).nrofAclBucketElements[i].p = (*acl).nrofAclBucketElements[i].bucketbuff;
 	}
 
-	//bruker en temperær p peker her som erstatning for (*pagewords).nrofaclBucketElements[(*pagewords).aclIndex[i].bucket].p, 
+	//bruker en temperær p peker her som erstatning for (*acl).nrofaclBucketElements[(*acl).aclIndex[i].bucket].p, 
 	//så koden ikke blir så uoversiktelig
 	void *p;
-	for(i=0;i<(*pagewords).aclIndexnr;i++) {
+	for(i=0;i<(*acl).aclIndexnr;i++) {
 		
-			p = (*pagewords).nrofAclBucketElements[(*pagewords).aclIndex[i].bucket].p;
+			p = (*acl).nrofAclBucketElements[(*acl).aclIndex[i].bucket].p;
 
 			p += memcpyrc(p,&DocID,sizeof(unsigned int));
 			p += memcpyrc(p,langnr,sizeof(char));
-			p += memcpyrc(p,&(*pagewords).aclIndex[i].WordID,sizeof(unsigned long));
-			p += memcpyrc(p,&(*pagewords).aclIndex[i].nr,sizeof(unsigned long));
-			for(y=0;y<(*pagewords).aclIndex[i].nr;y++) {
-				p += memcpyrc(p,&(*pagewords).aclIndex[i].hits[y],sizeof(unsigned short));
+			p += memcpyrc(p,&(*acl).aclIndex[i].WordID,sizeof(unsigned long));
+			p += memcpyrc(p,&(*acl).aclIndex[i].nr,sizeof(unsigned long));
+			for(y=0;y<(*acl).aclIndex[i].nr;y++) {
+				p += memcpyrc(p,&(*acl).aclIndex[i].hits[y],sizeof(unsigned short));
 			}
 
-			(*pagewords).nrofAclBucketElements[(*pagewords).aclIndex[i].bucket].p = p;
+			(*acl).nrofAclBucketElements[(*acl).aclIndex[i].bucket].p = p;
 		
 	}
 
@@ -1025,21 +1029,22 @@ void dictionaryWordsWrite (struct pagewordsFormat *pagewords,FILE *FH) {
 Skriver acl index til disk
 ***************************************************************************************/
 #ifdef BLACK_BOKS
-void aclindexFilesAppendWords(struct pagewordsFormat *pagewords,FILE *aclindexFilesHa[],unsigned int DocID,unsigned char *langnr) {
+void aclindexFilesAppendWords(struct IndexerRes_acls *acl,FILE *aclindexFilesHa[],unsigned int DocID,unsigned char *langnr) {
+
 
 	int i,y;
 	int bucket;
 
 
 	for(i=0;i<NrOfDataDirectorys;i++) {
-		if ((*pagewords).nrofAclBucketElements[i].bucketbuffsize != 0) {
-			fwrite((*pagewords).nrofAclBucketElements[i].bucketbuff,(*pagewords).nrofAclBucketElements[i].bucketbuffsize,1,aclindexFilesHa[i]);
+		if ((*acl).nrofAclBucketElements[i].bucketbuffsize != 0) {
+			fwrite((*acl).nrofAclBucketElements[i].bucketbuff,(*acl).nrofAclBucketElements[i].bucketbuffsize,1,aclindexFilesHa[i]);
 		}
 	}
 
 
 	for(i=0;i<NrOfDataDirectorys;i++) {
-			free((*pagewords).nrofAclBucketElements[i].bucketbuff);
+			free((*acl).nrofAclBucketElements[i].bucketbuff);
 		
 	}
 

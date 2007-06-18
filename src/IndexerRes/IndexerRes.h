@@ -117,6 +117,18 @@ struct outlinksFormat {
 	int good;
 };
 
+#ifdef BLACK_BOKS
+
+struct IndexerRes_acls {
+	int aclnr;
+	struct wordsFormat acls[maxAclForPage];
+	struct wordsFormat acls_sorted[maxAclForPage];
+	int aclIndexnr;
+        struct revIndexFomat aclIndex[maxAclForPage];
+	struct nrofBucketElementsFormat nrofAclBucketElements[NrOfDataDirectorys];
+};
+#endif
+
 struct pagewordsFormat {
 	int nr;
 	int nextPosition;
@@ -135,12 +147,8 @@ struct pagewordsFormat {
 	struct outlinksFormat *outlinks;
 
 	#ifdef BLACK_BOKS
-		int aclnr;
-		struct wordsFormat acls[maxAclForPage];
-		struct wordsFormat acls_sorted[maxAclForPage];
-		int aclIndexnr;
-	        struct revIndexFomat aclIndex[maxAclForPage];
-		struct nrofBucketElementsFormat nrofAclBucketElements[NrOfDataDirectorys];
+		struct IndexerRes_acls acl_allow;
+		struct IndexerRes_acls acl_denied;
 	#endif
 };
 
@@ -171,8 +179,9 @@ void wordsEnd(struct pagewordsFormat *pagewords);
 void adultLoad (struct adultFormat *adult);
 
 #ifdef BLACK_BOKS
-void acladd(struct pagewordsFormat *pagewords, char word[]);
-void aclsMakeRevIndex(struct pagewordsFormat *pagewords);
-void aclsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int DocID,unsigned char *langnr);
-void aclindexFilesAppendWords(struct pagewordsFormat *pagewords,FILE *aclindexFilesHa[],unsigned int DocID,unsigned char *langnr);
+void acladd(struct IndexerRes_acls *acl, char word[]);
+void aclsMakeRevIndex(struct IndexerRes_acls *acl);
+void aclsMakeRevIndexBucket (struct IndexerRes_acls *acl,unsigned int DocID,unsigned char *langnr);
+void aclindexFilesAppendWords(struct IndexerRes_acls *acl,FILE *aclindexFilesHa[],unsigned int DocID,unsigned char *langnr);
+
 #endif

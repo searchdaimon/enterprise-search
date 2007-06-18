@@ -79,7 +79,8 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 			(*crawldocumentAdd).document,
 			(*crawldocumentAdd).dokument_size,
 			(*crawldocumentAdd).lastmodified,
-			(*crawldocumentAdd).acl,
+			(*crawldocumentAdd).acl_allow,
+			(*crawldocumentAdd).acl_denied,
 			(*crawldocumentAdd).title,
 			(*crawldocumentAdd).doctype)
 	) {
@@ -99,7 +100,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 
 	}
 	else {
-		blog(LOGACCESS,1,"crawled url: \"%s\", size: %i b, ACL: \"%s\"\n",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).dokument_size,(*crawldocumentAdd).acl);
+		blog(LOGACCESS,1,"crawled url: \"%s\", size: %i b, ACL: allow \"%s\", denied \"%s\"\n",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).dokument_size,(*crawldocumentAdd).acl_allow,(*crawldocumentAdd).acl_denied);
 	}
 
 
@@ -787,6 +788,8 @@ int crawl_lock(struct collection_lockFormat *collection_lock, char collection[])
 	bmkdir_p(bfile("var/"),0755);
 
 	sprintf((*collection_lock).lockfile,"var/boitho-%s.lock",collection);
+
+	printf("locking lock \"%s\"\n",(*collection_lock).lockfile);
 
 	if (((*collection_lock).LOCK = bfopen((*collection_lock).lockfile,"w+")) == NULL) {
 		perror((*collection_lock).lockfile);

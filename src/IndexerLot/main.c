@@ -51,7 +51,8 @@ struct IndexerLot_workthreadFormat {
         unsigned int FiltetTime;
         unsigned int FileOffset;
 	FILE *revindexFilesHa[NrOfDataDirectorys];
-	FILE *aclindexFilesHa[NrOfDataDirectorys];
+	FILE *acl_allowindexFilesHa[NrOfDataDirectorys];
+	FILE *acl_deniedindexFilesHa[NrOfDataDirectorys];
 	struct adultFormat *adult;
 	FILE *ADULTWEIGHTFH;
 	FILE *SFH;
@@ -170,7 +171,28 @@ void alclot_close(struct alclotFormat *alclot) {
 
 	free(alclot);
 }
-void alclot_add(struct pagewordsFormat *pagewords,struct alclotFormat *alclot,char acl[]) {
+
+void iiacladd(struct IndexerRes_acls *iiacl,char acl[]) {
+
+  	char **Data;
+  	int Count, TokCount;
+
+  	TokCount = split(acl, ",", &Data);
+
+
+	//legger til acler
+	Count = 0;
+	while( (Data[Count] != NULL) ) {
+		printf("god acl \"%s\"\n",Data[Count]);
+	
+		acladd(iiacl, Data[Count]);
+		++Count;
+	}
+
+  	FreeSplitList(Data);
+
+}
+void alclot_add(struct alclotFormat *alclot,char acl[]) {
 
 
 	struct hashtable **h; //temp
@@ -182,14 +204,6 @@ void alclot_add(struct pagewordsFormat *pagewords,struct alclotFormat *alclot,ch
 
   	TokCount = split(acl, ",", &Data);
 
-	//legger til acler
-	Count = 0;
-	while( (Data[Count] != NULL) ) {
-		printf("god user \"%s\"\n",Data[Count]);
-	
-		acladd(pagewords, Data[Count]);
-		++Count;
-	}
 
   	Count = 0;
   	while( (Data[Count] != NULL) ) {
@@ -277,7 +291,7 @@ int makePreParsedSummary(const char body[], int bodylen,const  char title[],int 
 
 
 int getNextPage(struct IndexerLot_workthreadFormat *argstruct,char htmlcompressdbuffer[],int htmlcompressdbuffer_size, 
-	char imagebuffer[],int imagebuffer_size,unsigned long int *radress, char **acl,struct ReposetoryHeaderFormat *ReposetoryHeader) {
+	char imagebuffer[],int imagebuffer_size,unsigned long int *radress, char **acl_allow, char **acl_denied,struct ReposetoryHeaderFormat *ReposetoryHeader) {
 	//lock
 	int forreturn;
 	//må holde status om rGetNext() har sakt at dette er siste. Hvis ikke hamrer vi bortenfor eof
@@ -295,7 +309,7 @@ int getNextPage(struct IndexerLot_workthreadFormat *argstruct,char htmlcompressd
 		 forreturn = 0;
 	}
 	else if (rGetNext((*argstruct).lotNr,ReposetoryHeader,htmlcompressdbuffer,htmlcompressdbuffer_size,
-			imagebuffer,radress,(*argstruct).FiltetTime,(*argstruct).FileOffset,(*argstruct).subname,acl)) {
+			imagebuffer,radress,(*argstruct).FiltetTime,(*argstruct).FileOffset,(*argstruct).subname,acl_allow,acl_denied)) {
 
 		++(*argstruct).pageCount;
 
@@ -363,7 +377,8 @@ void *IndexerLot_workthread(void *arg) {
 	int nerror;
 	char TLD[5];
 	unsigned long int radress;
-	char *acl = NULL;
+	char *acl_allow = NULL;
+	char *acl_denied = NULL;
 	unsigned short int DomainDI;
 
 	unsigned int HtmlBufferLength;
@@ -395,7 +410,7 @@ void *IndexerLot_workthread(void *arg) {
 
 
 	while (getNextPage(argstruct,htmlcompressdbuffer,sizeofhtmlcompressdbuffer,imagebuffer,sizeofimagebuffer,
-		&radress,&acl,&ReposetoryHeader)) {
+		&radress,&acl_allow,&acl_denied,&ReposetoryHeader)) {
 
 				DocumentIndexPost = malloc(sizeof(struct DocumentIndexFormat));
 
@@ -553,10 +568,16 @@ void *IndexerLot_workthread(void *arg) {
 					#ifdef BLACK_BOKS
 						//handel acl
 						//trenger dette acl greiene å være her, kan di ikke være lenger opp, der vi ikke har trå lås ?
-						alclot_add(pagewords,(*argstruct).alclot,acl);
+						alclot_add((*argstruct).alclot,acl_allow);
+						
+						iiacladd(&(*pagewords).acl_allow,acl_allow);
+						iiacladd(&(*pagewords).acl_denied,acl_denied);
 
-						aclsMakeRevIndex(pagewords);
-						aclsMakeRevIndexBucket (pagewords,ReposetoryHeader.DocID,&langnr);
+						aclsMakeRevIndex(&(*pagewords).acl_allow);
+						aclsMakeRevIndex(&(*pagewords).acl_denied);
+
+						aclsMakeRevIndexBucket (&(*pagewords).acl_allow,ReposetoryHeader.DocID,&langnr);
+						aclsMakeRevIndexBucket (&(*pagewords).acl_denied,ReposetoryHeader.DocID,&langnr);
 
 
 						debug("time %u\n",ReposetoryHeader.time);
@@ -600,9 +621,13 @@ void *IndexerLot_workthread(void *arg) {
 
 						revindexFilesAppendWords(pagewords,(*argstruct).revindexFilesHa,ReposetoryHeader.DocID,&langnr);
 
+
 						#ifdef BLACK_BOKS
-							aclindexFilesAppendWords(pagewords,(*argstruct).aclindexFilesHa,ReposetoryHeader.DocID,&langnr);
+							aclindexFilesAppendWords(&(*pagewords).acl_allow,(*argstruct).acl_allowindexFilesHa,ReposetoryHeader.DocID,&langnr);
+							aclindexFilesAppendWords(&(*pagewords).acl_denied,(*argstruct).acl_deniedindexFilesHa,ReposetoryHeader.DocID,&langnr);
+
 						#endif
+
 						#ifdef PRESERVE_WORDS
 							dictionaryWordsWrite(pagewords,(*argstruct).dictionarywordsfFH);
 					
@@ -848,7 +873,8 @@ int main (int argc, char *argv[]) {
 
 
 		revindexFilesOpenLocal(argstruct.revindexFilesHa,lotNr,"Main",openmode,subname);
-		revindexFilesOpenLocal(argstruct.aclindexFilesHa,lotNr,"Acl",openmode,subname);
+		revindexFilesOpenLocal(argstruct.acl_allowindexFilesHa,lotNr,"acl_allow",openmode,subname);
+		revindexFilesOpenLocal(argstruct.acl_deniedindexFilesHa,lotNr,"acl_denied",openmode,subname);
 
 		#ifdef BLACK_BOKS		
 			alclot_init(&argstruct.alclot,subname,openmode,lotNr);
@@ -974,6 +1000,8 @@ int main (int argc, char *argv[]) {
 			fclose(argstruct.SFH);
 			fclose(argstruct.brankPageElementsFH);
 			iintegerClose(&iinteger);
+
+
 		#endif
 
 		//skriver riktig indexstide til lotten

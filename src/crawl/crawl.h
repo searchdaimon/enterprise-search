@@ -37,7 +37,9 @@ struct crawldocumentAddFormat {
 	char *document;
         int dokument_size;
 	unsigned int lastmodified;
-	char *acl;
+	//char *acl;
+	char *acl_allow;
+	char *acl_denied;
 	char *title;
 	char *doctype;
 };
