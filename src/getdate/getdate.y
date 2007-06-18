@@ -22,13 +22,19 @@
 //void yyerror(char *);
 //static int datelib_yylex(YYSTYPE *, char **);
 
+struct nexttoken {
+	enum yytokentype token;
+	union {
+		int number;
+	} value;
+};
+
 static int yyparse ();
 static int yylex ();
-static int yyerror (char **, struct datelib *, const char *);
+static int yyerror (char **, struct datelib *, struct nexttoken *, const char *);
 
 void subtract_date(struct tm *, enum yytokentype, int);
 void set_lowest(struct datelib *, enum yytokentype);
-
 
 %}
 
@@ -48,8 +54,10 @@ void set_lowest(struct datelib *, enum yytokentype);
 
 %pure-parser
 %lex-param   {char **input}
+%lex-param   {struct nexttoken *nexttoken}
 %parse-param {char **input}
 %parse-param {struct datelib *result}
+%parse-param {struct nexttoken *nexttoken}
 
 
 %%
@@ -119,18 +127,21 @@ year:
 struct wordtable {
 	int token;
 	const char *word;
+	int number;
 };
 
 struct wordtable wordtable[] = {
-	{ YEAR, "years" },
-	{ YEAR, "year" },
-	{ MONTH, "month" },
-	{ MONTH, "months" },
-	{ WEEK, "week" },
-	{ WEEK, "weeks" },
-	{ DAY, "day" },
-	{ DAY, "days" },
-	{ -1, NULL }
+	{ YEAR, "years", -1 },
+	{ YEAR, "year", -1 },
+	{ MONTH, "month", -1 },
+	{ MONTH, "months", -1 },
+	{ WEEK, "week", -1 },
+	{ WEEK, "weeks", -1 },
+	{ DAY, "day", -1 },
+	{ DAY, "days", -1 },
+	{ DAY, "today", 0 },
+	{ DAY, "yesterday", 1 },
+	{ -1, NULL, -1 }
 };
 
 struct numbertable {
@@ -150,12 +161,18 @@ struct numbertable numbertable[] = {
 
 /* XXX: Rewrite into flex */
 static int
-_datelib_yylex(YYSTYPE *yylval, char **inputp)
+_datelib_yylex(YYSTYPE *yylval, char **inputp, struct nexttoken *nt)
 {
 	char *input;
 	int c;
 
 	input = *inputp;
+
+	if (nt->token != unknown) {
+		enum yytokentype tok = nt->token;
+		nt->token = unknown;
+		return tok;
+	}
 
 start:
 	while (isspace(*input))
@@ -207,7 +224,13 @@ start:
 
 		for (i = 0; wordtable[i].token != -1; i++) {
 			if (strcmp(wordtable[i].word, p) == 0) {
-				lexreturn(wordtable[i].token);
+				if (wordtable[i].number != -1) {
+					nt->token = wordtable[i].token;
+					yylval->number = wordtable[i].number;
+					lexreturn(NUMBER);
+				} else {
+					lexreturn(wordtable[i].token);
+				}
 			}
 		}
 		for (i = 0; numbertable[i].word != NULL; i++) {
@@ -292,9 +315,9 @@ subtract_date(struct tm *tm, enum yytokentype type, int number)
 
 
 static int
-datelib_yylex(YYSTYPE *yylval, char **inputp)
+datelib_yylex(YYSTYPE *yylval, char **inputp, struct nexttoken *nt)
 {
-	int foo = _datelib_yylex(yylval, inputp);
+	int foo = _datelib_yylex(yylval, inputp, nt);
 
 	//printf("Foo: %d\n", foo);
 
@@ -303,7 +326,7 @@ datelib_yylex(YYSTYPE *yylval, char **inputp)
 
 
 static int
-datelib_yyerror(char **input, struct datelib *dl, const char *s)
+datelib_yyerror(char **input, struct datelib *dl, struct nexttoken *nt, const char *s)
 {
 	dl->frombigbang = 2;
 	return 0;
@@ -383,6 +406,7 @@ getdate(char *str, struct datelib *dl)
 	char *p, *input = strdup(str);
 	time_t now, test;
 	struct tm tmend;
+	struct nexttoken nexttoken;
 
 	if (input == NULL)
 		return -1;
@@ -394,7 +418,8 @@ getdate(char *str, struct datelib *dl)
 	dl->lowest = YEAR;
 	dl->frombigbang = 0;
 	memset(&dl->modify, '\0', sizeof(dl->modify));
-	yyparse(&input, dl);
+	nexttoken.token = unknown;
+	yyparse(&input, dl, &nexttoken);
 	if (dl->frombigbang == 2) {
 		free(p);
 		return -1;

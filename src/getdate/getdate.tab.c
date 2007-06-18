@@ -109,13 +109,19 @@
 //void yyerror(char *);
 //static int datelib_yylex(YYSTYPE *, char **);
 
+struct nexttoken {
+	enum yytokentype token;
+	union {
+		int number;
+	} value;
+};
+
 static int yyparse ();
 static int yylex ();
-static int yyerror (char **, struct datelib *, const char *);
+static int yyerror (char **, struct datelib *, struct nexttoken *, const char *);
 
 void subtract_date(struct tm *, enum yytokentype, int);
 void set_lowest(struct datelib *, enum yytokentype);
-
 
 
 
@@ -139,13 +145,13 @@ void set_lowest(struct datelib *, enum yytokentype);
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 36 "getdate.y"
+#line 42 "getdate.y"
 {
 	int number;
 	int month;
 }
 /* Line 187 of yacc.c.  */
-#line 149 "getdate.tab.c"
+#line 155 "getdate.tab.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -158,7 +164,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 162 "getdate.tab.c"
+#line 168 "getdate.tab.c"
 
 #ifdef short
 # undef short
@@ -444,8 +450,8 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    57,    57,    59,    62,    64,    70,    71,    74,    75,
-      76,    77,    81,    89,    97,   105
+       0,    65,    65,    67,    70,    72,    78,    79,    82,    83,
+      84,    85,    89,    97,   105,   113
 };
 #endif
 
@@ -567,7 +573,7 @@ do								\
     }								\
   else								\
     {								\
-      yyerror (input, result, YY_("syntax error: cannot back up")); \
+      yyerror (input, result, nexttoken, YY_("syntax error: cannot back up")); \
       YYERROR;							\
     }								\
 while (YYID (0))
@@ -624,7 +630,7 @@ while (YYID (0))
 #ifdef YYLEX_PARAM
 # define YYLEX yylex (&yylval, YYLEX_PARAM)
 #else
-# define YYLEX yylex (&yylval, input)
+# define YYLEX yylex (&yylval, input, nexttoken)
 #endif
 
 /* Enable debugging if requested.  */
@@ -647,7 +653,7 @@ do {									  \
     {									  \
       YYFPRINTF (stderr, "%s ", Title);					  \
       yy_symbol_print (stderr,						  \
-		  Type, Value, input, result); \
+		  Type, Value, input, result, nexttoken); \
       YYFPRINTF (stderr, "\n");						  \
     }									  \
 } while (YYID (0))
@@ -661,21 +667,23 @@ do {									  \
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, char **input, struct datelib *result)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, char **input, struct datelib *result, struct nexttoken *nexttoken)
 #else
 static void
-yy_symbol_value_print (yyoutput, yytype, yyvaluep, input, result)
+yy_symbol_value_print (yyoutput, yytype, yyvaluep, input, result, nexttoken)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
     char **input;
     struct datelib *result;
+    struct nexttoken *nexttoken;
 #endif
 {
   if (!yyvaluep)
     return;
   YYUSE (input);
   YYUSE (result);
+  YYUSE (nexttoken);
 # ifdef YYPRINT
   if (yytype < YYNTOKENS)
     YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
@@ -697,15 +705,16 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, input, result)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, char **input, struct datelib *result)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, char **input, struct datelib *result, struct nexttoken *nexttoken)
 #else
 static void
-yy_symbol_print (yyoutput, yytype, yyvaluep, input, result)
+yy_symbol_print (yyoutput, yytype, yyvaluep, input, result, nexttoken)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
     char **input;
     struct datelib *result;
+    struct nexttoken *nexttoken;
 #endif
 {
   if (yytype < YYNTOKENS)
@@ -713,7 +722,7 @@ yy_symbol_print (yyoutput, yytype, yyvaluep, input, result)
   else
     YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
 
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep, input, result);
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep, input, result, nexttoken);
   YYFPRINTF (yyoutput, ")");
 }
 
@@ -753,14 +762,15 @@ do {								\
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (YYSTYPE *yyvsp, int yyrule, char **input, struct datelib *result)
+yy_reduce_print (YYSTYPE *yyvsp, int yyrule, char **input, struct datelib *result, struct nexttoken *nexttoken)
 #else
 static void
-yy_reduce_print (yyvsp, yyrule, input, result)
+yy_reduce_print (yyvsp, yyrule, input, result, nexttoken)
     YYSTYPE *yyvsp;
     int yyrule;
     char **input;
     struct datelib *result;
+    struct nexttoken *nexttoken;
 #endif
 {
   int yynrhs = yyr2[yyrule];
@@ -774,7 +784,7 @@ yy_reduce_print (yyvsp, yyrule, input, result)
       fprintf (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
-		       		       , input, result);
+		       		       , input, result, nexttoken);
       fprintf (stderr, "\n");
     }
 }
@@ -782,7 +792,7 @@ yy_reduce_print (yyvsp, yyrule, input, result)
 # define YY_REDUCE_PRINT(Rule)		\
 do {					\
   if (yydebug)				\
-    yy_reduce_print (yyvsp, Rule, input, result); \
+    yy_reduce_print (yyvsp, Rule, input, result, nexttoken); \
 } while (YYID (0))
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1033,20 +1043,22 @@ yysyntax_error (char *yyresult, int yystate, int yychar)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, char **input, struct datelib *result)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, char **input, struct datelib *result, struct nexttoken *nexttoken)
 #else
 static void
-yydestruct (yymsg, yytype, yyvaluep, input, result)
+yydestruct (yymsg, yytype, yyvaluep, input, result, nexttoken)
     const char *yymsg;
     int yytype;
     YYSTYPE *yyvaluep;
     char **input;
     struct datelib *result;
+    struct nexttoken *nexttoken;
 #endif
 {
   YYUSE (yyvaluep);
   YYUSE (input);
   YYUSE (result);
+  YYUSE (nexttoken);
 
   if (!yymsg)
     yymsg = "Deleting";
@@ -1071,7 +1083,7 @@ int yyparse ();
 #endif
 #else /* ! YYPARSE_PARAM */
 #if defined __STDC__ || defined __cplusplus
-int yyparse (char **input, struct datelib *result);
+int yyparse (char **input, struct datelib *result, struct nexttoken *nexttoken);
 #else
 int yyparse ();
 #endif
@@ -1100,12 +1112,13 @@ yyparse (YYPARSE_PARAM)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 int
-yyparse (char **input, struct datelib *result)
+yyparse (char **input, struct datelib *result, struct nexttoken *nexttoken)
 #else
 int
-yyparse (input, result)
+yyparse (input, result, nexttoken)
     char **input;
     struct datelib *result;
+    struct nexttoken *nexttoken;
 #endif
 #endif
 {
@@ -1362,24 +1375,24 @@ yyreduce:
   switch (yyn)
     {
         case 5:
-#line 64 "getdate.y"
+#line 72 "getdate.y"
     {
 		result->frombigbang = 1;
 	;}
     break;
 
   case 6:
-#line 70 "getdate.y"
+#line 78 "getdate.y"
     { (yyval.number) = 1; ;}
     break;
 
   case 7:
-#line 71 "getdate.y"
+#line 79 "getdate.y"
     { (yyval.number) = yylval.number; ;}
     break;
 
   case 12:
-#line 81 "getdate.y"
+#line 89 "getdate.y"
     {
 			set_lowest(result, DAY);
 			result->modify.day += (yyvsp[(1) - (2)].number);
@@ -1388,7 +1401,7 @@ yyreduce:
     break;
 
   case 13:
-#line 89 "getdate.y"
+#line 97 "getdate.y"
     {
 			set_lowest(result, WEEK);
 			result->modify.week += (yyvsp[(1) - (2)].number);
@@ -1397,7 +1410,7 @@ yyreduce:
     break;
 
   case 14:
-#line 97 "getdate.y"
+#line 105 "getdate.y"
     {
 			set_lowest(result, MONTH);
 			result->modify.month += (yyvsp[(1) - (2)].number);
@@ -1406,7 +1419,7 @@ yyreduce:
     break;
 
   case 15:
-#line 105 "getdate.y"
+#line 113 "getdate.y"
     {
 			set_lowest(result, YEAR);
 			result->modify.year += (yyvsp[(1) - (2)].number);
@@ -1416,7 +1429,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1420 "getdate.tab.c"
+#line 1433 "getdate.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1452,7 +1465,7 @@ yyerrlab:
     {
       ++yynerrs;
 #if ! YYERROR_VERBOSE
-      yyerror (input, result, YY_("syntax error"));
+      yyerror (input, result, nexttoken, YY_("syntax error"));
 #else
       {
 	YYSIZE_T yysize = yysyntax_error (0, yystate, yychar);
@@ -1476,11 +1489,11 @@ yyerrlab:
 	if (0 < yysize && yysize <= yymsg_alloc)
 	  {
 	    (void) yysyntax_error (yymsg, yystate, yychar);
-	    yyerror (input, result, yymsg);
+	    yyerror (input, result, nexttoken, yymsg);
 	  }
 	else
 	  {
-	    yyerror (input, result, YY_("syntax error"));
+	    yyerror (input, result, nexttoken, YY_("syntax error"));
 	    if (yysize != 0)
 	      goto yyexhaustedlab;
 	  }
@@ -1504,7 +1517,7 @@ yyerrlab:
       else
 	{
 	  yydestruct ("Error: discarding",
-		      yytoken, &yylval, input, result);
+		      yytoken, &yylval, input, result, nexttoken);
 	  yychar = YYEMPTY;
 	}
     }
@@ -1560,7 +1573,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-		  yystos[yystate], yyvsp, input, result);
+		  yystos[yystate], yyvsp, input, result, nexttoken);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -1598,7 +1611,7 @@ yyabortlab:
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (input, result, YY_("memory exhausted"));
+  yyerror (input, result, nexttoken, YY_("memory exhausted"));
   yyresult = 2;
   /* Fall through.  */
 #endif
@@ -1606,7 +1619,7 @@ yyexhaustedlab:
 yyreturn:
   if (yychar != YYEOF && yychar != YYEMPTY)
      yydestruct ("Cleanup: discarding lookahead",
-		 yytoken, &yylval, input, result);
+		 yytoken, &yylval, input, result, nexttoken);
   /* Do not reclaim the symbols of the rule which action triggered
      this YYABORT or YYACCEPT.  */
   YYPOPSTACK (yylen);
@@ -1614,7 +1627,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-		  yystos[*yyssp], yyvsp, input, result);
+		  yystos[*yyssp], yyvsp, input, result, nexttoken);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -1630,7 +1643,7 @@ yyreturn:
 }
 
 
-#line 112 "getdate.y"
+#line 120 "getdate.y"
 
 
 
@@ -1641,18 +1654,21 @@ yyreturn:
 struct wordtable {
 	int token;
 	const char *word;
+	int number;
 };
 
 struct wordtable wordtable[] = {
-	{ YEAR, "years" },
-	{ YEAR, "year" },
-	{ MONTH, "month" },
-	{ MONTH, "months" },
-	{ WEEK, "week" },
-	{ WEEK, "weeks" },
-	{ DAY, "day" },
-	{ DAY, "days" },
-	{ -1, NULL }
+	{ YEAR, "years", -1 },
+	{ YEAR, "year", -1 },
+	{ MONTH, "month", -1 },
+	{ MONTH, "months", -1 },
+	{ WEEK, "week", -1 },
+	{ WEEK, "weeks", -1 },
+	{ DAY, "day", -1 },
+	{ DAY, "days", -1 },
+	{ DAY, "today", 0 },
+	{ DAY, "yesterday", 1 },
+	{ -1, NULL, -1 }
 };
 
 struct numbertable {
@@ -1672,12 +1688,18 @@ struct numbertable numbertable[] = {
 
 /* XXX: Rewrite into flex */
 static int
-_datelib_yylex(YYSTYPE *yylval, char **inputp)
+_datelib_yylex(YYSTYPE *yylval, char **inputp, struct nexttoken *nt)
 {
 	char *input;
 	int c;
 
 	input = *inputp;
+
+	if (nt->token != unknown) {
+		enum yytokentype tok = nt->token;
+		nt->token = unknown;
+		return tok;
+	}
 
 start:
 	while (isspace(*input))
@@ -1729,7 +1751,13 @@ start:
 
 		for (i = 0; wordtable[i].token != -1; i++) {
 			if (strcmp(wordtable[i].word, p) == 0) {
-				lexreturn(wordtable[i].token);
+				if (wordtable[i].number != -1) {
+					nt->token = wordtable[i].token;
+					yylval->number = wordtable[i].number;
+					lexreturn(NUMBER);
+				} else {
+					lexreturn(wordtable[i].token);
+				}
 			}
 		}
 		for (i = 0; numbertable[i].word != NULL; i++) {
@@ -1814,9 +1842,9 @@ subtract_date(struct tm *tm, enum yytokentype type, int number)
 
 
 static int
-datelib_yylex(YYSTYPE *yylval, char **inputp)
+datelib_yylex(YYSTYPE *yylval, char **inputp, struct nexttoken *nt)
 {
-	int foo = _datelib_yylex(yylval, inputp);
+	int foo = _datelib_yylex(yylval, inputp, nt);
 
 	//printf("Foo: %d\n", foo);
 
@@ -1825,7 +1853,7 @@ datelib_yylex(YYSTYPE *yylval, char **inputp)
 
 
 static int
-datelib_yyerror(char **input, struct datelib *dl, const char *s)
+datelib_yyerror(char **input, struct datelib *dl, struct nexttoken *nt, const char *s)
 {
 	dl->frombigbang = 2;
 	return 0;
@@ -1848,6 +1876,7 @@ fixdate(struct datelib *dl, struct tm *tmend)
 	subtract_date(&dl->tmstart, DAY, dl->modify.week * 7 + dl->modify.day);
 
 	memcpy(tmend, &dl->tmstart, sizeof *tmend);
+	printf("dl->lowest: %d\n", dl->lowest);
 	switch (dl->lowest) {
 		case YEAR:
 			tmend->tm_year++;
@@ -1905,6 +1934,7 @@ getdate(char *str, struct datelib *dl)
 	char *p, *input = strdup(str);
 	time_t now, test;
 	struct tm tmend;
+	struct nexttoken nexttoken;
 
 	if (input == NULL)
 		return -1;
@@ -1916,7 +1946,8 @@ getdate(char *str, struct datelib *dl)
 	dl->lowest = YEAR;
 	dl->frombigbang = 0;
 	memset(&dl->modify, '\0', sizeof(dl->modify));
-	yyparse(&input, dl);
+	nexttoken.token = unknown;
+	yyparse(&input, dl, &nexttoken);
 	if (dl->frombigbang == 2) {
 		free(p);
 		return -1;
