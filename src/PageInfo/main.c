@@ -8,6 +8,7 @@
 #include "../common/DocumentIndex.h"
 #include "../common/poprank.h"
 #include "../common/reposetory.h"
+#include "../common/search_automaton.h"
 
 #include "../parser/html_parser.h"
 
@@ -29,6 +30,8 @@ int main (int argc, char *argv[]) {
 	struct popl popindex;	
 	unsigned int htmlBufferSize;
 	char *htmlBuffer;
+	char *acl_allowbuffer = NULL;
+	char *acl_deniedbuffer = NULL;
 
 	printf("%i\n",argc);
 
@@ -96,15 +99,21 @@ int main (int argc, char *argv[]) {
 		if ((optShowhtml) || (optShowWords)) {
 			htmlBufferSize = 300000;
 			htmlBuffer = malloc(htmlBufferSize);
-			char *aclbuffer = NULL;
 			struct ReposetoryHeaderFormat ReposetoryHeader;
 
-			rReadHtml(htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize,DocID,subname,&ReposetoryHeader,&aclbuffer);
+			rReadHtml(htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer);
+
 		}
 		if (optShowhtml) {
 
 			printf("html uncompresed size %i\n",htmlBufferSize);
 			printf("html buff:\n*******************************\n%s\n*******************************\n\n",htmlBuffer);
+
+			#ifdef BLACK_BOKS
+				printf("acl_allowbuffer: \"%s\"\n",acl_allowbuffer);
+				printf("acl_deniedbuffer: \"%s\"\n",acl_deniedbuffer);
+			#endif
+
 		}
 		if (optShowWords) {
 			printf("words:\n");
@@ -181,8 +190,10 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
                                         case puf_h6: printf(" +h6"); break;
                                 }
 
+				convert_to_lowercase(word);
+
                                 printf("[word] is now %s ",word);
-                      
+				printf("crc32 %u",crc32boitho(word));                      
 
 
                 break;
