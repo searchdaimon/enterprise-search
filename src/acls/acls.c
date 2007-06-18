@@ -13,7 +13,6 @@
 #include "../common/define.h"
 
 
-
 #define userToSubnameDbFile "config/userToSubname.db"
 
 
@@ -113,14 +112,18 @@ int userToSubname_getsubnamesAsString(struct userToSubnameDbFormat *userToSubnam
 
 	subnames[0] = '\0';
 
+
+
 	/*
 	 * Position the cursor to the first record in the database whose
 	 * key and data begin with the correct strings.	
 	 */	
 	ret = cursorp->c_get(cursorp, &key, &data, DB_SET);
 
+
 	//fant ingen
 	if (ret == DB_NOTFOUND) {
+		printf("DB_NOTFOUND for key \"%s\"\n",key.data);
 		return 0;
 	}
 
