@@ -579,7 +579,7 @@ int bbdocument_close () {
 
 }
 
-int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],int dokument_size,unsigned int lastmodified,char *acl,char title[], char doctype[]) {
+int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,char title[], char doctype[]) {
 
 	
 
@@ -664,14 +664,15 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	ReposetoryHeader.response = 200;
 	strcpy(ReposetoryHeader.content_type,"htm");
 
-	ReposetoryHeader.aclSize = strlen(acl);
+	ReposetoryHeader.acl_allowSize = strlen(acl_allow);
+	ReposetoryHeader.acl_deniedSize = strlen(acl_denied);
 	ReposetoryHeader.time = lastmodified;
 
 	#ifdef DEBUG
-	printf("acl was \"%s\", %i bytes\nsubname %s\n",acl,ReposetoryHeader.aclSize,subname);
+	printf("ACL was allow \"%s\", %i bytes, denied \"%s\", %i bytes\nsubname %s\n",acl_allow,ReposetoryHeader.acl_allowSize,acl_allow,ReposetoryHeader.acl_allowSize,subname);
 	#endif
 
-	rApendPostcompress(&ReposetoryHeader,htmlbuffer,imagebuffer,subname,acl);
+	rApendPostcompress(&ReposetoryHeader,htmlbuffer,imagebuffer,subname,acl_allow,acl_denied);
 
 	#ifdef DEBUG	
 	printf("legger til DocID \"%u\", time \"%u\"\n",ReposetoryHeader.DocID,lastmodified);
@@ -695,6 +696,8 @@ int bbdocument_deletecoll(char collection[]) {
 	char IndexPath[512];
 	char DictionaryPath[512];
 	FILE *fh;
+
+	printf("remowing \"%s\"\n",collection);
 
 	LotNr = 1;
 	while((fh =lotOpenFileNoCasheByLotNr(LotNr,"reposetory","r",'s',collection)) != NULL) {
@@ -747,6 +750,7 @@ int bbdocument_deletecoll(char collection[]) {
 		system(command);
 	}
 	*/
+
 }
 
 
