@@ -346,7 +346,7 @@ fixdate(struct datelib *dl, struct tm *tmend)
 
 	subtract_date(&dl->tmstart, YEAR, dl->modify.year);
 	subtract_date(&dl->tmstart, MONTH, dl->modify.month);
-	subtract_date(&dl->tmstart, DAY, dl->modify.week * 7 + dl->modify.day);
+	subtract_date(&dl->tmstart, DAY, (dl->modify.week * 7) + dl->modify.day);
 
 	memcpy(tmend, &dl->tmstart, sizeof *tmend);
 	switch (dl->lowest) {
@@ -376,8 +376,8 @@ fixdate(struct datelib *dl, struct tm *tmend)
 					tmend->tm_mday += 7;
 				}
 			}
-			dl->tmstart.tm_mday = 0;
-			tmend->tm_mday = 0;
+			//dl->tmstart.tm_mday = 0;
+			//tmend->tm_mday = 0;
 		case DAY:
 			if (dl->lowest == DAY) {
 				if (tmend->tm_mday >= 30) {
