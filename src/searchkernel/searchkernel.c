@@ -108,7 +108,8 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 	int y;
 	char        *titleaa, *body, *metakeyw, *metadesc;
 	struct ReposetoryHeaderFormat ReposetoryHeader;
-	char *aclbuffer = NULL;
+	char *acl_allowbuffer = NULL;
+	char *acl_deniedbuffer = NULL;
 	off_t imagep;
 
 	titleaa = body = metakeyw = metadesc = NULL;
@@ -202,7 +203,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 				}
 				else if (((*Sider).DocumentIndex.response == 302) || ((*Sider).DocumentIndex.response == 301)) {
 
-					if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&aclbuffer) != 1) {
+					if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer) != 1) {
 						//kune ikke lese html. Pointer owerflow ?
 						printf("error reding html for %s\n",(*Sider).DocumentIndex.Url);
 						sprintf((*Sider).description,"Html error. Can't read html");
@@ -286,7 +287,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 					else {
 
 						debug("dont hav Summary on disk. Will hav to read html\n");	
-						if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&aclbuffer) != 1) {
+						if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer) != 1) {
 							//kune ikke lese html. Pointer owerflow ?
 							printf("error reding html for %s\n",(*Sider).DocumentIndex.Url);
 							sprintf((*Sider).description,"Html error. Can't read html");
@@ -463,7 +464,8 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 
 
 	//temp:
-	if (aclbuffer != NULL) {free(aclbuffer);}		
+	if (acl_allowbuffer != NULL) {free(acl_allowbuffer);}		
+	if (acl_deniedbuffer != NULL) {free(acl_deniedbuffer);}		
 
 	return returnStatus;
 }
@@ -1046,6 +1048,70 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	
 	//char buff[64]; //generell buffer
 
+	#ifdef BLACK_BOKS
+
+		//henter brukerens passord fra boithoad
+		gettimeofday(&start_time, NULL);
+		//henter inn brukerens passord
+		printf("geting pw for \"%s\"\n",PagesResults.search_user);
+		if (!boithoad_getPassword(PagesResults.search_user,PagesResults.password)) {
+			//printf("Can't boithoad_getPassword. Brukeren er ikke logget inn??\n");
+			(*errorLen) = snprintf(errorstr,(*errorLen),"Can't get user info from authentication backend");
+			return(0);
+		}
+		//printf("got pw \"%s\" -> \"%s\"\n",PagesResults.search_user,PagesResults.password);
+		gettimeofday(&end_time, NULL);
+	        (*SiderHeder).queryTime.getUserObjekt = getTimeDifference(&start_time,&end_time);
+
+		/****************************************************************/
+		//hent alle grupper
+		char **groups_respons_list;
+		int groups_responsnr;
+		char groupOrQuery[1024];
+
+		//boithoad_listGroups(&groups_respons_list,&groups_responsnr);
+		if (!boithoad_groupsForUser(PagesResults.search_user,&groups_respons_list,&groups_responsnr)) {
+                        perror("Error: boithoad_groupsForUser");
+                        return;
+                }
+		groupOrQuery[0] = '\0';
+                printf("groups: %i\n",groups_responsnr);
+                for (i=0;i<groups_responsnr;i++) {
+                        printf("group: %s\n",groups_respons_list[i]);
+
+			strlcat(groupOrQuery," |",sizeof(groupOrQuery));
+			strlcat(groupOrQuery,groups_respons_list[i],sizeof(groupOrQuery));
+                }
+
+		//legger til brukernavnet
+		strlcat(groupOrQuery," |",sizeof(groupOrQuery));
+		strlcat(groupOrQuery,PagesResults.search_user,sizeof(groupOrQuery));
+
+		printf("groupOrQuery \"%s\"\n",groupOrQuery);
+		/****************************************************************/
+
+
+		gettimeofday(&start_time, NULL);
+		//int socketha;
+		int errorbufflen = 512;
+		char errorbuff[errorbufflen];
+		printf("making a connection to crawlerManager\n");
+		if (!cmc_conect(&PagesResults.cmcsocketha,errorbuff,errorbufflen,(*searchd_config).cmc_port)) {
+                        //printf("Error: %s:%i\n",errorbuff,(*searchd_config).cmc_port);
+			(*errorLen) = snprintf(errorstr,(*errorLen),"Can't connect to crawler manager: \"%s\", port %i",errorbuff,(*searchd_config).cmc_port);
+
+                        return(0);
+	        }
+		gettimeofday(&end_time, NULL);
+	        (*SiderHeder).queryTime.cmc_conect = getTimeDifference(&start_time,&end_time);
+
+		(*SiderHeder).queryTime.crawlManager = 0;
+
+	#else
+		(*SiderHeder).queryTime.cmc_conect = 0;
+		(*SiderHeder).queryTime.crawlManager = 0;
+	#endif
+
 
 	//kopierer query inn i strukturen som holder query date
 	strscpy(PagesResults.QueryData.query,query,sizeof(PagesResults.QueryData.query));
@@ -1053,11 +1119,12 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	get_query( PagesResults.QueryData.query, queryLen, &PagesResults.QueryData.queryParsed );
 
 	#ifdef BLACK_BOKS
-	get_query( search_user, queryLen, &PagesResults.QueryData.search_user_as_query );
+	get_query( groupOrQuery, strlen(groupOrQuery), &PagesResults.QueryData.search_user_as_query );
 	#endif
 
 
         printf("ll: query %s\n",PagesResults.QueryData.query);
+
 
 /*
 //temp: skrur av detektering av stopord
@@ -1184,58 +1251,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	//PagesResults.godPages = 0;
 	PagesResults.nextPage = 0;
 
-	#ifdef BLACK_BOKS
-
-		//henter brukerens passord fra boithoad
-		gettimeofday(&start_time, NULL);
-		//henter inn brukerens passord
-		printf("geting pw for \"%s\"\n",PagesResults.search_user);
-		if (!boithoad_getPassword(PagesResults.search_user,PagesResults.password)) {
-			//printf("Can't boithoad_getPassword. Brukeren er ikke logget inn??\n");
-			(*errorLen) = snprintf(errorstr,(*errorLen),"Can't get user info from authentication backend");
-			return(0);
-		}
-		//printf("got pw \"%s\" -> \"%s\"\n",PagesResults.search_user,PagesResults.password);
-		gettimeofday(&end_time, NULL);
-	        (*SiderHeder).queryTime.getUserObjekt = getTimeDifference(&start_time,&end_time);
-
-		/****************************************************************/
-		//hent alle grupper
-		char **groups_respons_list;
-		int groups_responsnr;
-		//boithoad_listGroups(&groups_respons_list,&groups_responsnr);
-		if (!boithoad_groupsForUser(PagesResults.search_user,&groups_respons_list,&groups_responsnr)) {
-                        perror("Error: boithoad_groupsForUser");
-                        return;
-                }
-                printf("groups: %i\n",groups_responsnr);
-                for (i=0;i<groups_responsnr;i++) {
-                        printf("group: %s\n",groups_respons_list[i]);
-                }
-		/****************************************************************/
-
-
-		gettimeofday(&start_time, NULL);
-		//int socketha;
-		int errorbufflen = 512;
-		char errorbuff[errorbufflen];
-		printf("making a connection to crawlerManager\n");
-		if (!cmc_conect(&PagesResults.cmcsocketha,errorbuff,errorbufflen,(*searchd_config).cmc_port)) {
-                        //printf("Error: %s:%i\n",errorbuff,(*searchd_config).cmc_port);
-			(*errorLen) = snprintf(errorstr,(*errorLen),"Can't connect to crawler manager: \"%s\", port %i",errorbuff,(*searchd_config).cmc_port);
-
-                        return(0);
-	        }
-		gettimeofday(&end_time, NULL);
-	        (*SiderHeder).queryTime.cmc_conect = getTimeDifference(&start_time,&end_time);
-
-		(*SiderHeder).queryTime.crawlManager = 0;
-
-	#else
-		(*SiderHeder).queryTime.cmc_conect = 0;
-		(*SiderHeder).queryTime.crawlManager = 0;
-	#endif
-
+//cuted
 	gettimeofday(&popResult_start_time, NULL);
 
 

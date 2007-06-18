@@ -33,7 +33,7 @@ int bbdn_conect(int *socketha, char tkey[], int PORT) {
         }
 	
 	if (intrespons == bbc_authenticate_ok) {
-		printf("bbc authenticate ok");
+		printf("bbc authenticate ok\n");
 		return 1;
 	}
 	else if (intrespons == bbc_authenticate_feiled) {
@@ -56,7 +56,7 @@ int bbdn_close(int socketha) {
 }
 
 int bbdn_docadd(int socketha,char subname[],char documenturi[],char documenttype[],char document[],
-	int dokument_size,unsigned int lastmodified,char *acl, char title[],char doctype[]) {
+	int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied, char title[],char doctype[]) {
 
 	int len;
 
@@ -93,11 +93,17 @@ int bbdn_docadd(int socketha,char subname[],char documenturi[],char documenttype
         //lastmodified
         if(sendall(socketha,&lastmodified, sizeof(int)) == 0) { perror("sendall lastmodified"); return 0; }
 
-        //acl
-        len = strlen(acl) +1;
-	debug("sending (len %i): \"%s\"",len,acl);
-        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall acl len"); return 0; }
-        if(sendall(socketha,acl, len) == 0) { perror("sendall acl"); return 0; }
+        //acl_allow
+        len = strlen(acl_allow) +1;
+	debug("sending (len %i): \"%s\"",len,acl_allow);
+        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall acl_allow len"); return 0; }
+        if(sendall(socketha,acl_allow, len) == 0) { perror("sendall acl_allow"); return 0; }
+
+        //acl_denied
+        len = strlen(acl_denied) +1;
+	debug("sending (len %i): \"%s\"",len,acl_denied);
+        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall acl_denied len"); return 0; }
+        if(sendall(socketha,acl_denied, len) == 0) { perror("sendall acl_denied"); return 0; }
 
         //title
         len = strlen(title) +1;

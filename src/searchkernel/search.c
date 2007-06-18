@@ -292,6 +292,70 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 	printf("or_merge a and b of length %i %i. Into %i\n",alen,blen,(*baselen));
 	printf("end or merge\n");
 }
+
+void andNot_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int alen, struct iindexFormat *b, int blen) {
+	int i=0;
+	int j=0;
+	int k=0;
+
+	(*baselen) = 0;
+
+	while ((i<alen) && (j<blen) && (k < maxIndexElements))
+	{
+
+	//printf("or_merge: merge a: %i (\"%s\"), b: %i (\"%s\")\n",a[i].DocID,(*a[i].subname).subname,b[j].DocID,(*b[i].subname).subname);
+
+		if (a[i].DocID == b[j].DocID) {
+			printf("andNot_merge: Not DocID %u\n",a[i].DocID);
+			++j; ++i;
+		}
+ 		else if( a[i].DocID < b[j].DocID ) {
+			printf("andNot_merge: DocID %u < DocID %u\n",a[i].DocID,b[j].DocID);
+
+                	c[k] = a[i];
+			
+			++i; 
+			++k;
+			++(*baselen);
+		}
+		
+ 		else {
+			printf("andNot_merge: DocID %u > DocID %u\n",a[i].DocID,b[j].DocID);
+
+	                //c[k] = b[j];
+
+			++j; 
+			//++k;
+			//++(*baselen);
+		}
+		
+	}
+
+	printf("andNot_merge: end of one array i %i, alen %i, j %i, blen %i. k %i\n",i,alen,j,blen,k);
+
+	while (i<alen && (k < maxIndexElements)){
+
+                c[k] = a[i];
+
+		printf("andNot_merge: overflow DocID %u\n",a[i].DocID);
+
+		++k; ++i;
+		++(*baselen);
+	}
+
+	/*	
+	while (j<blen && (k < maxIndexElements)) {
+
+                c[k] = b[j];
+
+		++k; ++j;
+		++(*baselen);
+	}
+	*/
+	printf("andNot_merge a and b of length %i %i. Into %i\n",alen,blen,(*baselen));
+	printf("end or merge\n");
+}
+
 void and_merge(struct iindexFormat *c, int *baselen, int originalLen, struct iindexFormat *a, int alen, struct iindexFormat *b, int blen) {
 	int i=0,j=0;
 	int TermRank;
@@ -300,7 +364,6 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, struct iin
 
 	(*baselen) = 0;
 
-	printf("and_merge a and b of length %i %i\n",alen,blen);
 
 
 	while (i<alen && j<blen)
@@ -331,6 +394,9 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, struct iin
 			j++;
 		}
 	}
+
+	printf("and_merge a and b of length %i %i, into %i, starting to add on element %i\n",alen,blen,(*baselen),originalLen);
+
 }
 
 //and søk med progsymasjon () mere vekt  hvis ordene er nerme en fjernt.
@@ -695,7 +761,7 @@ void rankAclArray(int TeffArrayElementer, struct iindexFormat *TeffArray,struct 
 	int y;
 
 	for (y=0; y<TeffArrayElementer; y++) {
-		TeffArray[y].TermRank = rankUrl(TeffArray[y].hits,TeffArray[y].TermAntall,TeffArray[y].DocID,subname,&TeffArray[y]);
+		TeffArray[y].TermRank = rankAcl(TeffArray[y].hits,TeffArray[y].TermAntall,TeffArray[y].DocID,subname,&TeffArray[y]);
 	}
 }
 void rankMainArray(int TeffArrayElementer, struct iindexFormat *TeffArray,struct subnamesFormat *subname) {
@@ -760,14 +826,6 @@ for (i=0; i<(*queryParsed).n; i++)
 							printf("is short word\n");
 							continue;
 						}
-						//utestet
-						//else if (isStoppWord(queryelement)) {
-						//	printf("is stopword\n");
-						//	 //frase_stopword(tmpResult,tmpResultElementer);
-						//	(*queryParsed).query[i].stopword = 1;
-						//	//exit(1);
-						//	continue;
-						//}
 
 
 						//gjør om il liten case
@@ -811,6 +869,62 @@ for (i=0; i<(*queryParsed).n; i++)
 				break;
 
 
+			case '|':
+                                        //while ( t_it!=NULL )
+                                        printf("will or search for:\n");
+                                        for (j=0; j<(*queryParsed).query[i].n; j++) {
+                                                printf("\t%s\n",(*queryParsed).query[i].s[j]);
+                                        }
+					for (j=0; j<(*queryParsed).query[i].n; j++) {
+                    				printf("aa_ søker på \"%s\"\n", (*queryParsed).query[i].s[j]);
+                    				strscpy(queryelement,(*queryParsed).query[i].s[j],sizeof(queryelement));
+                    			                			
+                				printf("queryelement:  %s\n", queryelement);
+
+						// hvis vi er et kort ord så har vi ikke fåt noen ord nummer palssering, så vi skal ikke øke hits
+						if ( isShortWord(queryelement) ) {
+							printf("is short word\n");
+							continue;
+						}
+
+
+						//gjør om il liten case
+						//for(h=0;h<strlen(queryelement);h++) {
+        					//	queryelement[h] = btolower(queryelement[h]);
+        					//}
+						convert_to_lowercase((unsigned char *)queryelement);
+
+						WordIDcrc32 = crc32boitho(queryelement);
+						printf("searchIndex: WordIDcrc32 %u\n",WordIDcrc32);
+						//hvis vi ikke har noen elementer i base arrayen, legger vi inn direkte
+						//ToDo: kan ikke gjøre det da dette kansje ikke er første element
+						//må skille her
+						//if (*TeffArrayElementer == 0) {
+						if (i == 0) {
+							TmpArrayLen = (*TeffArrayElementer);
+							GetIndexAsArray(TeffArrayElementer,TeffArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
+							rank((*TeffArrayElementer),TeffArray,subname);
+
+							(*TeffArrayElementer) = (*TeffArrayElementer) - TmpArrayLen;
+						}
+						else {
+							TmpArrayLen = 0;
+							GetIndexAsArray(&TmpArrayLen,TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
+							rank(TmpArrayLen,TmpArray,subname);
+
+							printf("did find %i pages\n",TmpArrayLen);
+												
+							or_merge(TeffArray,&baseArrayLen,TeffArray,(*TeffArrayElementer),TmpArray,TmpArrayLen);
+							printf("baseArrayLen %i\n",baseArrayLen);
+							(*TeffArrayElementer) = baseArrayLen;
+
+						}
+
+					//	t_it = t_it->next;
+					}
+
+					
+				break;
 
 			case '"':
 					
@@ -957,6 +1071,7 @@ struct searchIndex_thread_argFormat {
 	struct subnamesFormat *subnames;
 	int nrOfSubnames;
 	query_array *queryParsed;
+	query_array *search_user_as_query;
 	int languageFilterNr;
 	int *languageFilterAsNr;
 	int resultArrayLen;
@@ -984,6 +1099,20 @@ void *searchIndex_thread(void *arg)
 	TmpArray 	= (struct iindexFormat *)malloc(maxIndexElements * sizeof(struct iindexFormat));
 	Array 		= (struct iindexFormat *)malloc(maxIndexElements * sizeof(struct iindexFormat));
 
+	#ifdef BLACK_BOKS
+	struct iindexFormat *acl_allowArray;
+	int acl_allowArrayLen;
+	acl_allowArray 		= (struct iindexFormat *)malloc(maxIndexElements * sizeof(struct iindexFormat));
+
+	struct iindexFormat *acl_deniedArray;
+	int acl_deniedArrayLen;
+	acl_deniedArray 		= (struct iindexFormat *)malloc(maxIndexElements * sizeof(struct iindexFormat));
+
+	struct iindexFormat *searcArray;
+	int searcArrayLen;
+	searcArray 		= (struct iindexFormat *)malloc(maxIndexElements * sizeof(struct iindexFormat));
+	#endif
+
 	int hits;
 
 	if (strcmp((*searchIndex_thread_arg).indexType,"Athor") == 0) {
@@ -994,9 +1123,6 @@ void *searchIndex_thread(void *arg)
 	}
 	else if (strcmp((*searchIndex_thread_arg).indexType,"Main") == 0) {
 		rank = rankMainArray;
-	}
-	else if (strcmp((*searchIndex_thread_arg).indexType,"Acl") == 0) {
-		rank = rankAclArray;
 	}
 	else {
 		printf("unknown index type \"%s\"\n",(*searchIndex_thread_arg).indexType);
@@ -1011,9 +1137,84 @@ void *searchIndex_thread(void *arg)
 
 
 	ArrayLen = 0;
+	
 	printf("nrOfSubnames %i\n",(*searchIndex_thread_arg).nrOfSubnames);
 	for(i=0;i<(*searchIndex_thread_arg).nrOfSubnames;i++) {
+
+		#ifdef BLACK_BOKS
+	
+		searcArrayLen = 0;
+	
+		searchIndex((*searchIndex_thread_arg).indexType,
+			&searcArrayLen,
+			searcArray,
+			(*searchIndex_thread_arg).queryParsed,
+			TmpArray,
+			&(*searchIndex_thread_arg).subnames[i],
+			rank,
+			(*searchIndex_thread_arg).languageFilterNr, 
+			(*searchIndex_thread_arg).languageFilterAsNr
+		);
+
+
+		//for (y = 0; y < ArrayLen; y++) {
+		//	printf("acc TeffArray: \"%s\" (i %i)\n",(*Array[y].subname).subname,y);			
+		//}
+
+		//acl_allow sjekk
+		acl_allowArrayLen = 0;
+		acl_deniedArrayLen = 0;
+
+		searchIndex("acl_allow",
+			&acl_allowArrayLen,
+			acl_allowArray,
+			(*searchIndex_thread_arg).search_user_as_query,
+			TmpArray,
+			&(*searchIndex_thread_arg).subnames[i],
+			rankAclArray,
+			(*searchIndex_thread_arg).languageFilterNr, 
+			(*searchIndex_thread_arg).languageFilterAsNr
+		);
+
+		searchIndex("acl_denied",
+			&acl_deniedArrayLen,
+			acl_deniedArray,
+			(*searchIndex_thread_arg).search_user_as_query,
+			TmpArray,
+			&(*searchIndex_thread_arg).subnames[i],
+			rankAclArray,
+			(*searchIndex_thread_arg).languageFilterNr, 
+			(*searchIndex_thread_arg).languageFilterAsNr
+		);
+
+		printf("acl_allowArrayLen %i:\n",acl_allowArrayLen);
+		for (y = 0; y < acl_allowArrayLen; y++) {
+			printf("acl_allow TeffArray: DocID %u\n",acl_allowArray[y].DocID);			
+		}
+
+		printf("acl_deniedArrayLen %i:\n",acl_deniedArrayLen);
+		for (y = 0; y < acl_deniedArrayLen; y++) {
+			printf("acl_denied TeffArray: DocID %u\n",acl_deniedArray[y].DocID);			
+		}
+
+		hits = ArrayLen;
+	
+		//merger får å bare ta med de vi har en acl_allow til
+		and_merge(Array,&ArrayLen,ArrayLen,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
+
+		//void andNot_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int alen, 
+		//struct iindexFormat *b, int blen)
+		andNot_merge(Array,&ArrayLen,Array,ArrayLen,acl_deniedArray,acl_deniedArrayLen);
+
+		ArrayLen = ArrayLen + hits;
 		
+		hits = ArrayLen - hits;
+
+		(*searchIndex_thread_arg).subnames[i].hits += hits;
+		printf("searchIndex_thread: index %s, subname \"%s\",hits %i\n",(*searchIndex_thread_arg).indexType,(*searchIndex_thread_arg).subnames[i].subname,hits);
+
+
+		#else
 		hits = ArrayLen;
 		searchIndex((*searchIndex_thread_arg).indexType,
 			&ArrayLen,
@@ -1026,14 +1227,19 @@ void *searchIndex_thread(void *arg)
 			(*searchIndex_thread_arg).languageFilterAsNr
 		);
 
+
+		//for (y = 0; y < ArrayLen; y++) {
+		//	printf("acc TeffArray: \"%s\" (i %i)\n",(*Array[y].subname).subname,y);			
+		//}
+
 		hits = ArrayLen - hits;
 		(*searchIndex_thread_arg).subnames[i].hits += hits;
 		printf("searchIndex_thread: index %s, subname \"%s\",hits %i\n",(*searchIndex_thread_arg).indexType,(*searchIndex_thread_arg).subnames[i].subname,hits);
 
-		//for (y = 0; y < ArrayLen; y++) {
-		//	Array[y].subname = &(*searchIndex_thread_arg).subnames[i];
-		//	printf("acc TeffArray: \"%s\" (i %i)\n",(*Array[y].subname).subname,y);			
-		//}
+
+		#endif
+
+
 		
 	}
 
@@ -1085,7 +1291,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	struct searchIndex_thread_argFormat searchIndex_thread_arg_Athor;
 	struct searchIndex_thread_argFormat searchIndex_thread_arg_Url;
 	struct searchIndex_thread_argFormat searchIndex_thread_arg_Main;
-	struct searchIndex_thread_argFormat searchIndex_thread_arg_Acl;
+	//struct searchIndex_thread_argFormat searchIndex_thread_arg_Acl;
 	
      
         int baseArrayLen,MainArrayHits;
@@ -1094,7 +1300,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	unsigned int PredictNrAthor;
 	unsigned int PredictNrUrl;
 	unsigned int PredictNrMain;
-	unsigned int PredictNrAcl;
+	//unsigned int PredictNrAcl;
 
 	PredictNrAthor	= 0;
 	PredictNrUrl	= 0;
@@ -1103,7 +1309,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	pthread_t threadid_Athor = 0;
 	pthread_t threadid_Url = 0;
 	pthread_t threadid_Main = 0;
-	pthread_t threadid_Acl = 0;
+	//pthread_t threadid_Acl = 0;
 
 	//resetter subnmes hits
 	for(i=0;i<nrOfSubnames;i++) {		
@@ -1111,9 +1317,10 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	}
 
 	#ifdef BLACK_BOKS
-		for(i=0;i<nrOfSubnames;i++) {		
-			PredictNrAcl += searchIndex_getnrs("Acl",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
-		}
+
+		//for(i=0;i<nrOfSubnames;i++) {		
+		//	PredictNrAcl += searchIndex_getnrs("Acl",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
+		//}
 
 	#else
 	//finner først ca hvor mange treff vi fil få. Dette brukes for å avgjøre om vi kan 
@@ -1140,17 +1347,18 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	searchIndex_thread_arg_Athor.resultArrayLen = 0;
 	searchIndex_thread_arg_Url.resultArrayLen = 0;
 	searchIndex_thread_arg_Main.resultArrayLen = 0;
-	searchIndex_thread_arg_Acl.resultArrayLen = 0;
+	//searchIndex_thread_arg_Acl.resultArrayLen = 0;
 
 
 	searchIndex_thread_arg_Athor.searchtime = 0;
 	searchIndex_thread_arg_Url.searchtime = 0;
 	searchIndex_thread_arg_Main.searchtime = 0;
-	searchIndex_thread_arg_Acl.searchtime = 0;
+	//searchIndex_thread_arg_Acl.searchtime = 0;
 
 	
 	#ifdef BLACK_BOKS
 
+	/*
 		//alc
 		searchIndex_thread_arg_Acl.indexType = "Acl";
 		searchIndex_thread_arg_Acl.nrOfSubnames = nrOfSubnames;
@@ -1164,6 +1372,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		#else
 			searchIndex_thread(&searchIndex_thread_arg_Acl);	
 		#endif
+	*/		
 
 	#else
 	//Athor	
@@ -1172,6 +1381,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		searchIndex_thread_arg_Athor.nrOfSubnames = nrOfSubnames;
 		searchIndex_thread_arg_Athor.subnames = subnames;
 		searchIndex_thread_arg_Athor.queryParsed = queryParsed;
+		searchIndex_thread_arg_Athor.search_user_as_query = search_user_as_query;
 		searchIndex_thread_arg_Athor.languageFilterNr = languageFilterNr;
 		searchIndex_thread_arg_Athor.languageFilterAsNr = languageFilterAsNr;
 		#ifdef WITH_THREAD
@@ -1187,6 +1397,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		searchIndex_thread_arg_Url.nrOfSubnames = nrOfSubnames;
 		searchIndex_thread_arg_Url.subnames = subnames;
 		searchIndex_thread_arg_Url.queryParsed = queryParsed;
+		searchIndex_thread_arg_Url.search_user_as_query = search_user_as_query;
 		searchIndex_thread_arg_Url.languageFilterNr = languageFilterNr;
 		searchIndex_thread_arg_Url.languageFilterAsNr = languageFilterAsNr;
 		#ifdef WITH_THREAD
@@ -1209,6 +1420,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		searchIndex_thread_arg_Main.nrOfSubnames = nrOfSubnames;
 		searchIndex_thread_arg_Main.subnames = subnames;
 		searchIndex_thread_arg_Main.queryParsed = queryParsed;
+		searchIndex_thread_arg_Main.search_user_as_query = search_user_as_query;
 		searchIndex_thread_arg_Main.languageFilterNr = languageFilterNr;
 		searchIndex_thread_arg_Main.languageFilterAsNr = languageFilterAsNr;
 
@@ -1244,8 +1456,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	}
 	*/
 
-	printf("Athor ArrayLen %i, Url ArrayLen %i, Main ArrayLen %i, Acl ArrayLen\n",searchIndex_thread_arg_Athor.resultArrayLen,
-			searchIndex_thread_arg_Url.resultArrayLen,searchIndex_thread_arg_Main.resultArrayLen,searchIndex_thread_arg_Acl.resultArrayLen);
+	printf("Athor ArrayLen %i, Url ArrayLen %i, Main ArrayLen %i\n",searchIndex_thread_arg_Athor.resultArrayLen,
+			searchIndex_thread_arg_Url.resultArrayLen,searchIndex_thread_arg_Main.resultArrayLen);
 
 	//sanker inn tiden
 	(*queryTime).AthorSearch = searchIndex_thread_arg_Athor.searchtime;
@@ -1278,8 +1490,9 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		(*TeffArrayElementer) = TmpArrayLen;
 	}
 	*/
-	#ifndef BLACK_BOKS
+	#ifdef BLACK_BOKS
 
+	#else
 	//ormerger Athor og Url inn i en temper array
 	or_merge(TmpArray,&TmpArrayLen,searchIndex_thread_arg_Athor.resultArray,searchIndex_thread_arg_Athor.resultArrayLen,
 		searchIndex_thread_arg_Url.resultArray,searchIndex_thread_arg_Url.resultArrayLen);

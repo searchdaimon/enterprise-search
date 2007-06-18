@@ -254,7 +254,9 @@ struct ReposetoryHeaderFormat {
 	unsigned short userID;
 	double clientVersion;
 	#ifdef BLACK_BOKS
-		int aclSize;
+		//int aclSize;
+		int acl_allowSize;
+		int acl_deniedSize;
 		time_t storageTime; //3 now
 		char doctype[4]; //3 now
 		char reservedSpace[64]; //3 now

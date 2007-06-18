@@ -282,7 +282,7 @@ unsigned int rGeneraeADocID (char subname[]) {
 	return DocID;
 }
 
-int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl[]) {
+int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[]) {
 	#ifdef DEBUG
 		printf("rApendPostcompress: starting\n");
 	#endif
@@ -303,7 +303,7 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 	(*ReposetoryHeader).htmlSize = WorkBuffSize;
 
 
-	rApendPost(ReposetoryHeader,WorkBuff,imagebuffer,subname,acl);
+	rApendPost(ReposetoryHeader,WorkBuff,imagebuffer,subname,acl_allow,acl_denied);
 
 	free(WorkBuff);
 
@@ -311,7 +311,7 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 		printf("rApendPostcompress: finished\n");
 	#endif
 }
-int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl[]) {
+int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[]) {
 
 	//finner ut når dette ble gjort
 	#ifdef BLACK_BOKS
@@ -349,7 +349,8 @@ int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer
 
 	//skriver acl
 	#ifdef BLACK_BOKS
-		fwrite(acl,(*ReposetoryHeader).aclSize,1,RFILE);
+		fwrite(acl_allow,(*ReposetoryHeader).acl_allowSize,1,RFILE);
+		fwrite(acl_denied,(*ReposetoryHeader).acl_deniedSize,1,RFILE);
 	#endif
 
         //skriver record seperator
@@ -485,7 +486,8 @@ int rReadSummary(const unsigned int DocID,char **metadesc, char **title, char **
 
 //leser en post
 int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radress64bit,unsigned int 
-		rsize,unsigned int DocID,char subname[],struct ReposetoryHeaderFormat *ReposetoryHeader,char **aclbuffer) {
+		rsize,unsigned int DocID,char subname[],struct ReposetoryHeaderFormat *ReposetoryHeader,
+		char **acl_allowbuffer,char **acl_deniedbuffer) {
 
 	FILE *RFILE;
 	int error;
@@ -528,7 +530,7 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
                 //        char imagebuffer[],char **aclbuffer,char recordseparator[])
 
 		
-		rReadPost(RFILE,ReposetoryHeader,WorkBuff,sizeof(WorkBuff),NULL,aclbuffer,recordseparator);
+		rReadPost(RFILE,ReposetoryHeader,WorkBuff,sizeof(WorkBuff),NULL,acl_allowbuffer,acl_deniedbuffer,recordseparator);
 
 		#ifdef DDEBUG
 		printf("acl \"%s\"\n",(*aclbuffer));
@@ -561,7 +563,7 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 }
 
 int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
-			char imagebuffer[],char **aclbuffer,char recordseparator[]) {
+			char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[]) {
 		
 		int n;
 
@@ -629,25 +631,46 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 		#ifdef BLACK_BOKS
 
 			//begrenser størelsen på en acl. Slik at en klikk ikke gjør at alt ikke fungerer. Må tenke på om 200 er nokk størelse her
-			if ((*ReposetoryHeader).aclSize > 200) {
-				printf("bad acl size. acl size %i\n",(*ReposetoryHeader).aclSize);
+			if ((*ReposetoryHeader).acl_allowSize > 200) {
+				printf("bad acl_allowSize. size %i\n",(*ReposetoryHeader).acl_allowSize);
+				return 0;
+			}
+			if ((*ReposetoryHeader).acl_deniedSize > 200) {
+				printf("bad acl_deniedSize. size %i\n",(*ReposetoryHeader).acl_deniedSize);
 				return 0;
 			}
 
 			//#ifdef DEBUG
-			printf("acl size %i\n",(*ReposetoryHeader).aclSize);
+			printf("acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
 			//#endif
-			(*aclbuffer) = malloc((*ReposetoryHeader).aclSize +1);
-			if ((*ReposetoryHeader).aclSize != 0) {
-				if (fread((*aclbuffer),(*ReposetoryHeader).aclSize,1,LotFileOpen) != 1) {
-					printf("cant't read acl. Acl size %i\n",(*ReposetoryHeader).aclSize);
+			(*acl_allowbuffer) = malloc((*ReposetoryHeader).acl_allowSize +1);
+			if ((*ReposetoryHeader).acl_allowSize != 0) {
+				if (fread((*acl_allowbuffer),(*ReposetoryHeader).acl_allowSize,1,LotFileOpen) != 1) {
+					printf("cant't read acl_allow. acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
 					perror("");
 				}
 			}
-			(*aclbuffer)[(*ReposetoryHeader).aclSize] = '\0';
+			(*acl_allowbuffer)[(*ReposetoryHeader).acl_allowSize] = '\0';
 
 			#ifdef DEBUG
-			printf("did read acl %i b, that vas \"%s\"\n",(*ReposetoryHeader).aclSize,(*aclbuffer));
+			printf("did read acl_allow %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_allowSize,(*acl_allowbuffer));
+			#endif
+
+
+			//#ifdef DEBUG
+			printf("acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
+			//#endif
+			(*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1);
+			if ((*ReposetoryHeader).acl_deniedSize != 0) {
+				if (fread((*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize,1,LotFileOpen) != 1) {
+					printf("cant't read acl_denied. acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
+					perror("");
+				}
+			}
+			(*acl_deniedbuffer)[(*ReposetoryHeader).acl_deniedSize] = '\0';
+
+			#ifdef DEBUG
+			printf("did read acl_denied %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_deniedSize,(*acl_deniedbuffer));
 			#endif
 		#else
 			//(*aclbuffer) = NULL;
@@ -674,7 +697,7 @@ while (rGetNext(LotNr,ReposetoryData)) {
 */
 int rGetNext (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
 int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,
-char subname[], char **aclbuffer) {
+char subname[], char **acl_allowbuffer,char **acl_deniedbuffer) {
 
 	//global variabel for rGetNext
 	static FILE *LotFileOpen;
@@ -742,7 +765,7 @@ char subname[], char **aclbuffer) {
                 //        char imagebuffer[],char **aclbuffer,char recordseparator[])
 
 
-		rReadPost(LotFileOpen,ReposetoryHeader,htmlbuffer,htmlbufferSize,imagebuffer,aclbuffer,recordseparator);
+		rReadPost(LotFileOpen,ReposetoryHeader,htmlbuffer,htmlbufferSize,imagebuffer,acl_allowbuffer,acl_deniedbuffer,recordseparator);
 
 		//runpack(ReposetoryData,buff,bufflength);
 		

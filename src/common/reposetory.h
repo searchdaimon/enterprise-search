@@ -76,9 +76,11 @@ void rapend (struct ReposetoryFormat ReposetoryData, long int radress);
 void rclose ();
 
 int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radress64bit,unsigned int rsize,unsigned
-				int DocID,char subname[],struct ReposetoryHeaderFormat *ReposetoryHeader,char **aclbuffer);
+				int DocID,char subname[],struct ReposetoryHeaderFormat *ReposetoryHeader,
+				char **acl_allowbuffer,char **acl_deniedbuffer
+				);
 
-int rGetNext (unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset, char subname[], char **aclbuffer);
+int rGetNext (unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset, char subname[], char **acl_allowbuffer,char **acl_deniedbuffer);
 
 void runpack(struct ReposetoryFormat *ReposetoryData,char *inndata,int length);
 
@@ -95,12 +97,12 @@ void addNewUrlOpen(struct addNewUrlhaFormat *addNewUrlha,int lotNr, char openmod
 void addNewUrl (struct addNewUrlhaFormat *addNewUrlha, struct updateFormat *updatePost);
 
 
-int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl[]);
-int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl[]);
+int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[]);
+int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[]);
 void setLastIndexTimeForLot(int LotNr,int httpResponsCodes[],char subname[]);
 unsigned int GetLastIndexTimeForLot(int LotNr,char subname[]);
 int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
-                        char imagebuffer[],char **aclbuffer,char recordseparator[]);
+                        char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[]);
 
 off_t getImagepFromRadres(unsigned int radress64bit,unsigned int htmlbufferSize);
 unsigned int rLastDocID(char subname[]);
