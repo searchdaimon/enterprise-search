@@ -42,12 +42,12 @@ int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified
  acl
 */
 //rutine for å legge til et dokument
-int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],int dokument_size,unsigned int 
-	lastmodified,char *acl_allow, char *acl_denied, char title[],char doctype[]);
+int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int 
+	lastmodified,char *acl_allow, char *acl_denied, const char title[],char doctype[]);
 
 
-int bbdocument_convert(char filetype[],char document[],int dokument_size,char *documentfinishedbuf,int *documentfinishedbufsize
-	, char titlefromadd[]);
+int bbdocument_convert(char filetype[],char document[],const int dokument_size,char *documentfinishedbuf,int *documentfinishedbufsize
+	, const char titlefromadd[]);
 
 
 int bbdocument_close ();

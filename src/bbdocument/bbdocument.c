@@ -276,19 +276,19 @@ char *acl_normalize(char *acl[]) {
 
 }
 
-int bbdocument_convert(char filetype[],char document[],int dokument_size,char *documentfinishedbuf,int *documentfinishedbufsize, char titlefromadd[]) {
+int bbdocument_convert(char filetype[],char document[],const int dokument_size,char *documentfinishedbuf,int *documentfinishedbufsize, const char titlefromadd[]) {
 
 	char **splitdata;
         int TokCount;
 	FILE *fp;
-	char filconvertetfile_real[512];
-	char filconvertetfile_out_txt[512];
-	char filconvertetfile_out_html[512];
+	char filconvertetfile_real[216];
+	char filconvertetfile_out_txt[216];
+	char filconvertetfile_out_html[216];
 	int exeocbuflen;
 	int i;
 	int ret;
 
-	printf("dokument_size %i, strlen %i\n",dokument_size,strlen(document));
+	printf("bbdocument_convert: dokument_size %i, title \"%s\"\n",dokument_size,titlefromadd);
 
 	//konverterer filnavn til liten case
 	for (i=0;i < strlen(filetype);i++) {
@@ -342,6 +342,8 @@ int bbdocument_convert(char filetype[],char document[],int dokument_size,char *d
 			perror(bfile("logs/unknownfiltype.log"));
 		}
 		else {
+			printf("title %s\n",titlefromadd);
+			printf("filetype %s\n",filetype);
 			fprintf(fp,"%s: %s\n",titlefromadd,filetype);
 			fclose(fp);
 		}	
@@ -579,7 +581,7 @@ int bbdocument_close () {
 
 }
 
-int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,char title[], char doctype[]) {
+int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,const char title[], char doctype[]) {
 
 	
 
@@ -593,6 +595,9 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	unsigned int DocIDForExistTest;
 	unsigned int lastmodifiedForExistTest;
 
+	printf("dokument_size 4 %i, title %s\n",dokument_size, title);
+
+
 	//tester at det ikke finnes først
 	if ((uriindex_get(documenturi,&DocIDForExistTest,&lastmodifiedForExistTest,subname))
 		&& (lastmodifiedForExistTest == lastmodified)
@@ -600,6 +605,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		printf("bbdocument_add: Uri \"%s\" all redy exist with DocID \"%u\" and time \"%u\"\n",documenturi,DocIDForExistTest,lastmodifiedForExistTest);
 		return 0;
 	}
+	printf("dokument_size 2 %i\n",dokument_size);
 
 	if (documenttype[0] == '\0') {
 		if ((documenttype_real = sfindductype(documenturi)) == NULL) {
@@ -611,13 +617,17 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		documenttype_real = malloc(strlen(documenttype));
 		strcpy(documenttype_real,documenttype);
 	}
+	printf("dokument_size 4 %i, title %s\n",dokument_size, title);
+
+
 	//hvis vi ikke her med noen egen doctype så bruker vi den vi har fått via documenttype
 	if (doctype[0] == '\0') {
-		strcpy(ReposetoryHeader.doctype,documenttype_real);
+		strscpy(ReposetoryHeader.doctype,documenttype_real,sizeof(ReposetoryHeader.doctype));
 	}
 	else {
-		strcpy(ReposetoryHeader.doctype,doctype);
+		strscpy(ReposetoryHeader.doctype,doctype,sizeof(ReposetoryHeader.doctype));
 	}
+	printf("dokument_size 4 %i, title %s\n",dokument_size, title);
 
 	if (!bbdocument_convert(documenttype_real,document,dokument_size,htmlbuffer,&htmlbuffersize,title)) {
 
