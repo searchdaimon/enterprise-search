@@ -72,11 +72,11 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 				// Let's add it
 				crawldocumentAdd.documenturi = crawldocumentExist.documenturi;
 				crawldocumentAdd.title = "SOMETITLE";
-				crawldocumentAdd.documenttype = "";
+				crawldocumentAdd.documenttype = "eml";
 				crawldocumentAdd.document = mail.buf;
-				crawldocumentAdd.dokument_size = mail.size; // Last byte is string null terminator
+				crawldocumentAdd.dokument_size = mail.size-1; // Last byte is string null terminator
 				crawldocumentAdd.lastmodified = cur->modified;
-				crawldocumentAdd.acl_allow = "";
+				crawldocumentAdd.acl_allow = "Users";
 				crawldocumentAdd.acl_denied = "";
 				//crawldocumentAdd.acl = NULL;
 
@@ -101,7 +101,7 @@ crawlcanconect(struct collectionFormat *collection,
 	char *listxml;
 
 	/* XXX: Should we do some more checking here? */
-	listxml = ex_getContent("http://129.241.50.208/exchange/rb/", collection->user, collection->password);
+	listxml = ex_getContent(collection->resource, collection->user, collection->password);
 
 	connected = (listxml != NULL);
 	free(listxml);
@@ -115,10 +115,10 @@ crawlGo(struct crawlinfo *ci)
 	char *listxml;
 
 	xmlGetWarningsDefaultValue = 0;
-	listxml = ex_getContent("http://129.241.50.208/exchange/rb/", USERNAME, PASSWORD);
+	listxml = ex_getContent(ci->collection->resource, ci->collection->user, ci->collection->password);
 	if (listxml == NULL)
 		return 1;
-	grabContent(listxml, "http://129.241.50.208/exchange/rb/", USERNAME, PASSWORD, ci);
+	grabContent(listxml, ci->collection->resource, USERNAME, PASSWORD, ci);
 	free(listxml);
 
 	return 0;
