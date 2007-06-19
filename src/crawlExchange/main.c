@@ -74,8 +74,11 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 				crawldocumentAdd.title = "SOMETITLE";
 				crawldocumentAdd.documenttype = "";
 				crawldocumentAdd.document = mail.buf;
-				crawldocumentAdd.dokument_size = mail.size-1; // Last byte is string null terminator
+				crawldocumentAdd.dokument_size = mail.size; // Last byte is string null terminator
+				printf("Added '%.10s...' len: %d\n", mail.buf, mail.size); 
 				crawldocumentAdd.lastmodified = cur->modified;
+				crawldocumentAdd.acl_allow = NULL;
+				crawldocumentAdd.acl_denied = NULL;
 				//crawldocumentAdd.acl = NULL;
 
 				(ci->documentAdd)(ci->collection, &crawldocumentAdd);
