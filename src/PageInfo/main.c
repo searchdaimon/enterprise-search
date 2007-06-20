@@ -127,22 +127,26 @@ int main (int argc, char *argv[]) {
 	}
 
 
-		popopen (&popextern,"/home/boitho/config/popextern");
-        	popopen (&popintern,"/home/boitho/config/popintern");
-        	popopen (&popnoc,"/home/boitho/config/popnoc");
-		popopen (&popindex,"/home/boitho/config/popindex");
-
-		PopRankextern =  popRankForDocID(&popextern,DocID);
-		PopRankintern =  popRankForDocID(&popintern,DocID);
-		PopRanknoc =  popRankForDocID(&popnoc,DocID);
-		PopRanindex = popRankForDocID(&popindex,DocID);		
-
-		popclose(&popextern);
-        	popclose(&popintern);
-        	popclose(&popnoc);
-		popclose(&popindex);
-
-		printf("PopRankextern: %i\nPopRankintern %i\nPopRanknoc %i\npopindex %i\n",PopRankextern,PopRankintern,PopRanknoc,PopRanindex);
+		if (popopen (&popextern,"/home/boitho/config/popextern")) {
+			PopRankextern =  popRankForDocID(&popextern,DocID);
+			printf("PopRankextern: %i\n",PopRankextern);
+			popclose(&popextern);
+		}
+        	if (popopen (&popintern,"/home/boitho/config/popintern")) {
+			PopRankintern =  popRankForDocID(&popintern,DocID);
+			printf("PopRankintern %i\n",PopRankintern);
+			popclose(&popintern);
+		}
+        	if (popopen (&popnoc,"/home/boitho/config/popnoc")) {
+			PopRanknoc =  popRankForDocID(&popnoc,DocID);
+			printf("PopRanknoc %i\n",PopRanknoc);
+			popclose(&popnoc);
+		}
+		if (popopen (&popindex,"/home/boitho/config/popindex")) {
+			PopRanindex = popRankForDocID(&popindex,DocID);		
+			printf("popindex %i\n",PopRanindex);
+			popclose(&popindex);
+		}
 
 
 
