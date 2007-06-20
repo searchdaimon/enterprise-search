@@ -24,7 +24,7 @@ all: $(PROG)
 
 $(PROG): $(OBJS)
 	$(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOKS -g -Wl,-static 
-	cp $(PROG) /home/eirik/Boitho/boitho/websearch/crawlers/crawlExchange
+	cp $(PROG) ../..//crawlers/crawlExchange
 
 clean:
 	rm -f ${OBJS} ${PROG}
