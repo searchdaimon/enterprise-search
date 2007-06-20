@@ -5,6 +5,7 @@
  */
 
 #include <stdio.h>
+#define _GNU_SOURCE
 #include <string.h>
 
 #include "xml.h"
@@ -69,20 +70,34 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 			} else if ((ci->documentExist)(ci->collection, &crawldocumentExist)) {
 				// This document already exists
 			} else {
+				char *p, *p2;
 				// Let's add it
 				crawldocumentAdd.documenturi = crawldocumentExist.documenturi;
-				crawldocumentAdd.title = "SOMETITLE";
+				/* Find the subject */
+				p = strcasestr(mail.buf, "subject:");
+				if (p == NULL || *p == '\0') {
+					crawldocumentAdd.title = "NoTitle";
+				} else {
+					for (p++; *p == ' '; p++)
+						;
+					p += 8; // strlen("subject:");
+					for (p2 = p; *p2 != '\n' && *p2 != '\r' && *p2 != '\0'; p2++)
+						;
+					crawldocumentAdd.title = strndup(p, p2 - p);
+					if (crawldocumentAdd.title == NULL)
+						crawldocumentAdd.title = "NoTitle'";
+				}
 				crawldocumentAdd.documenttype = "eml";
 				crawldocumentAdd.document = mail.buf;
 				crawldocumentAdd.dokument_size = mail.size-1; // Last byte is string null terminator
 				crawldocumentAdd.lastmodified = cur->modified;
 				crawldocumentAdd.acl_allow = "Users";
 				crawldocumentAdd.acl_denied = "";
-				//crawldocumentAdd.acl = NULL;
 
+				printf("Adding: '%s'\n", crawldocumentAdd.title);
 				(ci->documentAdd)(ci->collection, &crawldocumentAdd);
 			}
-
+			free(crawldocumentAdd.title);
 			free(crawldocumentExist.documenturi);
 			free(mail.buf);
 		}
