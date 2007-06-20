@@ -305,8 +305,9 @@ int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat rev
 			//printf("\t\thit %hu\n",revIndexArray[i].hits[y]);
 			fwrite(&revIndexArray[i].hits[y],sizeof(short),1,REVINDEXFH);
 		}
-
-		//printf("DocID %u, WordID: %u, %u\n",revIndexArray[i].DocID,revIndexArray[i].WordID,revIndexArray[i].nrOfHits);		
+		#ifdef DEBUG
+		printf("DocID %u, WordID: %u, %u\n",revIndexArray[i].DocID,revIndexArray[i].WordID,revIndexArray[i].nrOfHits);		
+		#endif
 	}
 
 	fclose(REVINDEXFH);
