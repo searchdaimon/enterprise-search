@@ -104,7 +104,7 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 	}
 	freeStringList(urls);
 
-	return 0;
+	return 1;
 }
 
 
@@ -128,15 +128,16 @@ int
 crawlGo(struct crawlinfo *ci)
 {
 	char *listxml;
+	int ret;
 
 	xmlGetWarningsDefaultValue = 0;
 	listxml = ex_getContent(ci->collection->resource, ci->collection->user, ci->collection->password);
 	if (listxml == NULL)
-		return 1;
-	grabContent(listxml, ci->collection->resource, USERNAME, PASSWORD, ci);
+		return 0;
+	ret = grabContent(listxml, ci->collection->resource, USERNAME, PASSWORD, ci);
 	free(listxml);
 
-	return 0;
+	return ret;
 }
 
 int
