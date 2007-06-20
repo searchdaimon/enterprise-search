@@ -136,7 +136,7 @@ int exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfini
 		close(pipefd[0]);
 
 		(*documentfinishedbufsize) = i;
-		documentfinishedbuf[(*documentfinishedbufsize) +1] = '\0';
+		documentfinishedbuf[(*documentfinishedbufsize)] = '\0';
 
 		#ifdef DEBUG
 			printf("documentfinishedbufsize \"%i\" at %s:%d\n",(*documentfinishedbufsize),__FILE__,__LINE__);
