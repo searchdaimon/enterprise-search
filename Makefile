@@ -8,7 +8,7 @@ CC = /usr/local/bin/gcc
 CFLAGS = -g
 
 # Used to add debugging to boitho-bbdn and crawlManager
-WITHDEBUG = #-DDEBUG
+#WITHDEBUG = -DDEBUG
 
 # The dynamic libraries that the executable needs to be linked to
 # fjerner -ldb -static. Må legge dette til der de skal være
@@ -82,7 +82,7 @@ HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : src/common/libcommon.a getFileType searchddep searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun dictionarywordsLot webadmindep
+bb : commonclean src/common/libcommon.a getFileType searchddep searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun dictionarywordsLot webadmindep
 
 webadmindep: YumWrapper NetConfig InitServices setuidcaller yumupdate
 
@@ -100,8 +100,10 @@ getFileType:
 IndexerLot= $(CFLAGS) $(LIBS) src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c $(HTMLPARSER) $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
 
 
-src/common/libcommon.a:
+commonclean:
 	(cd src/common; make clean)
+
+src/common/libcommon.a:
 	(cd src/common; make)
 
 setuidcaller:
@@ -857,3 +859,4 @@ webpublish:
 #clean :
 #	rm -f program *.png output-data
 
+.PHONY: src/common/libcommon.a
