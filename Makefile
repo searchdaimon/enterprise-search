@@ -8,7 +8,7 @@ CC = /usr/local/bin/gcc
 CFLAGS = -g
 
 # Used to add debugging to boitho-bbdn and crawlManager
-#WITHDEBUG = -DDEBUG
+WITHDEBUG = -DDEBUG
 
 # The dynamic libraries that the executable needs to be linked to
 # fjerner -ldb -static. Må legge dette til der de skal være
@@ -104,7 +104,7 @@ commonclean:
 	(cd src/common; make clean)
 
 src/common/libcommon.a:
-	(cd src/common; make)
+	(cd src/common; make BLACKBOX=yes)
 
 setuidcaller:
 	@echo ""
