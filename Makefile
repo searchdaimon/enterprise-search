@@ -101,6 +101,7 @@ IndexerLot= $(CFLAGS) $(LIBS) src/IndexerRes/IndexerRes.c src/IndexerLot/main.c 
 
 
 src/common/libcommon.a:
+	(cd src/common; make clean)
 	(cd src/common; make)
 
 setuidcaller:
