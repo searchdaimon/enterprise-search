@@ -329,8 +329,6 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	#endif
 
 
-	
-
 	struct fileFilterFormat *fileFilter = malloc(sizeof(struct fileFilterFormat));
 	struct fileFilterFormat *fileFilterOrginal = fileFilter;
 
@@ -357,8 +355,10 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		return 0;
 	}
 	else {
+		memcpy(fileFilterOrginal, fileFilter, sizeof(*fileFilterOrginal));
+		fileFilter = fileFilterOrginal;
 		#ifdef DEBUG
-			printf("hav onverter for file type\n");
+			printf("have converter for file type\n");
 		#endif
 	}
 
@@ -383,8 +383,8 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 //		strcasesandr(cpbuf,cpbufsize,"\n","<br>\n");
 //	printf("cpbuf %s\n",cpbuf);
 
-printf("document %i\n",strlen(document));
-printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
+		printf("document %i\n",strlen(document));
+		printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 		//legger det inn i et html dokument, med riktig tittel	
 	//printf("cpbuf %s\n",cpbuf);
 		snprintf(documentfinishedbuf,(*documentfinishedbufsize),html_tempelate,titlefromadd,cpbuf);
@@ -417,13 +417,12 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 	/*****************************************************************************/
 
 
-	free(fileFilterOrginal);
-
 	#ifdef DEBUG
 	printf("command: %s\n",(*fileFilter).command);
 	#endif
 
 	//ToDo: overskriver vi den gbobale fileFilter her?? . Skal ikke det
+	// Burde ikke gjøre det nå leng.
 	strsandr((*fileFilter).command,"#file",filconvertetfile_real);
 	strsandr((*fileFilter).command,"#outtxtfile",filconvertetfile_out_txt);
 	strsandr((*fileFilter).command,"#outhtmlfile",filconvertetfile_out_html);
@@ -516,6 +515,7 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 			printf("cant open out file \"%s\"\n",filconvertetfile_out_txt);
 			perror(filconvertetfile_out_txt);
 			(*documentfinishedbufsize) = 0;
+			free(fileFilterOrginal);
 			return 0;
 		}		
        		fstat(fileno(fh),&inode);
@@ -523,6 +523,7 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 
                 if ((cpbuf = malloc(inode.st_size +1)) == NULL) {
 			perror("malloc");
+			free(fileFilterOrginal);
 			return 0;
 		}
                 
@@ -535,7 +536,7 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 
 		fclose(fh);
 
-		printf("hav size %i\n",(*documentfinishedbufsize));
+		printf("have size %i\n",(*documentfinishedbufsize));
 
 		snprintf(documentfinishedbuf,(*documentfinishedbufsize),html_tempelate,titlefromadd,cpbuf);
                 (*documentfinishedbufsize) = strlen(documentfinishedbuf);
@@ -565,15 +566,48 @@ printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 
 		fclose(fh);
 	}
+	else if (strcmp(fileFilter->outputformat, "dir") == 0) {
+		char *p;
+		int len;
+
+		len = exeocbuflen;
+		p = strdup(documentfinishedbuf);
+		if (p == NULL) {
+			free(fileFilterOrginal);
+			return 0;
+		}
+		while (*p != '\0') {
+			char *ft, *path;
+			ft = p;
+			for (; *p != ' '; p++)
+				len--;
+			*p = '\0';
+			path = ++p;
+			for (; *p != '\n'; p++)
+				len--;
+
+			if (*p == '\n')
+				*p++ = '\0';
+
+			/* We have a new file, let's get to work on it */
+			printf("Got: %s: %s\n", ft, path);
+		}
+
+		free(fileFilterOrginal);
+		return 0;
+	}
 	else {
-		printf("unknown dokument outputformat \"%s\"\n",(*fileFilter).outputformat);
+		printf("unknown dokument outputformat \"%s\"\n",fileFilter->outputformat);
 		(*documentfinishedbufsize) = 0;
+		free(fileFilterOrginal);
 		return 0;
 	}
 
 	#ifndef DEBUG
 	//unlink(filconvertetfile_real);
 	#endif
+
+	//free(fileFilterOrginal);
 
 	return 1;
 }
