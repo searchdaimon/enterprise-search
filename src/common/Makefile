@@ -14,7 +14,7 @@ all: $(LIB)
 
 $(LIB): $(OBJS)
 	ar rc $(LIB) $(OBJS)
-	ranlib libds.a
+	ranlib $(LIB)
 
 clean:
 	rm -rf $(OBJS) $(LIBS)
