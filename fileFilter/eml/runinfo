@@ -1,0 +1,5 @@
+documentstype: eml
+command: /home/eirik/Boitho/emlsplit/emlsplit.pl #file
+outputformat: dir
+outputtype: stdio
+
