@@ -7,12 +7,15 @@ CC = /usr/local/bin/gcc
 # debugging info into the executable and -Wall turns on all warnings
 CFLAGS = -g
 
+# Used to add debugging to boitho-bbdn and crawlManager
+WITHDEBUG = #-DDEBUG
+
 # The dynamic libraries that the executable needs to be linked to
 # fjerner -ldb -static. Må legge dette til der de skal være
 LDFLAGS = -lm -lz -D_FILE_OFFSET_BITS=64 -O2
 
 #pop rank bibloteket
-LIBS = src/common/
+LIBS = src/common/libcommon.a
 
 LIBGeoIP = -lGeoIP
 
@@ -79,7 +82,7 @@ HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : searchddep searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun dictionarywordsLot webadmindep
+bb : src/common/libcommon.a getFileType searchddep searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun dictionarywordsLot webadmindep
 
 webadmindep: YumWrapper NetConfig InitServices setuidcaller yumupdate
 
@@ -90,9 +93,15 @@ wordConverter: src/wordConverter/main.c
 	$(CC) src/wordConverter/main.c -o bin/wordConverter
 
 
+getFileType:
+	(cd src/getFiletype/; make)
 
 #brukte før src/parser/libhtml_parser.a, byttet til src/parser/lex.yy.c src/parser/lex.yy.c slik at vi kan bruke gdb
-IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c $(HTMLPARSER) $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
+IndexerLot= $(CFLAGS) $(LIBS) src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c $(HTMLPARSER) $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
+
+
+src/common/libcommon.a:
+	(cd src/common; make)
 
 setuidcaller:
 	@echo ""
@@ -122,95 +131,95 @@ Suggest:
 	(cd src/suggestwebclient; make)
 	cp src/suggestwebclient/suggest_webclient bin/
 
-IndexerLot: src/IndexerLot/main.c
+IndexerLot: src/IndexerLot/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(IndexerLot) -lpthread -DWITH_THREAD -o bin/IndexerLot
+	$(CC) $(IndexerLot) -lpthread -DWITH_THREAD -o bin/IndexerLot $(LIBS)
 
-IndexerLotbb: src/IndexerLot/main.c
+IndexerLotbb: src/IndexerLot/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(IndexerLot) -D BLACK_BOKS -D PRESERVE_WORDS src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/IndexerLotbb
+	$(CC) $(IndexerLot) -D BLACK_BOKS -D PRESERVE_WORDS src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/IndexerLotbb $(LIBS)
 
-baddsPageAnalyser: src/baddsPageAnalyser/main.c
+baddsPageAnalyser: src/baddsPageAnalyser/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/baddsPageAnalyser/main.c  src/httpGet/httpGet.c src/parser/lex.yy.c src/parser/y.tab.c -o bin/baddsPageAnalyser $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS $(CURLLIBS) -DDEBUG_ADULT
+	$(CC) $(CFLAGS) src/IndexerRes/IndexerRes.c src/baddsPageAnalyser/main.c  src/httpGet/httpGet.c src/parser/lex.yy.c src/parser/y.tab.c -o bin/baddsPageAnalyser $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS $(CURLLIBS) -DDEBUG_ADULT $(LIBS)
 
-rreadWithRank: src/rreadWithRank/main.c
+rreadWithRank: src/rreadWithRank/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/rreadWithRank/main.c  -o bin/rreadWithRank $(LDFLAGS) 
+	$(CC) $(CFLAGS) src/rreadWithRank/main.c  -o bin/rreadWithRank $(LDFLAGS)  $(LIBS)
 
-IndexerLot_langtest: src/IndexerLot_langtest/main.c
+IndexerLot_langtest: src/IndexerLot_langtest/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLot_langtest/main.c  src/parser/lex.yy.c src/parser/y.tab.c -o bin/IndexerLot_langtest $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS -DDEBUG_ADULT
+	$(CC) $(CFLAGS) src/IndexerLot_langtest/main.c  src/parser/lex.yy.c src/parser/y.tab.c -o bin/IndexerLot_langtest $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS -DDEBUG_ADULT $(LIBS)
 	
 
-IndexerLot_fik32bitbug: src/IndexerLot_fik32bitbug/main.c
+IndexerLot_fik32bitbug: src/IndexerLot_fik32bitbug/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLot_fik32bitbug/main.c  src/parser/libhtml_parser.a -o bin/IndexerLot_fik32bitbug $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
+	$(CC) $(CFLAGS) src/IndexerLot_fik32bitbug/main.c  src/parser/libhtml_parser.a -o bin/IndexerLot_fik32bitbug $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS $(LIBS)
 
-IndexerLot_getno: src/IndexerLot_getno/main.c
+IndexerLot_getno: src/IndexerLot_getno/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLot_getno/main.c  src/parser/lex.yy.c src/parser/lex.yy.c -o bin/IndexerLot_getno $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
+	$(CC) $(CFLAGS) src/IndexerLot_getno/main.c  src/parser/lex.yy.c src/parser/lex.yy.c -o bin/IndexerLot_getno $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS $(LIBS)
 
-dictionarywordsLot: src/dictionarywordsLot/main.c
+dictionarywordsLot: src/dictionarywordsLot/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/dictionarywordsLot/main.c src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/dictionarywordsLot $(LDFLAGS)
+	$(CC) $(CFLAGS) src/dictionarywordsLot/main.c src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/dictionarywordsLot $(LDFLAGS) $(LIBS)
 
-lotlistDispatcher: src/lotlistDispatcher/main.c
+lotlistDispatcher: src/lotlistDispatcher/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/lotlistDispatcher/main.c -o bin/lotlistDispatcher $(LDFLAGS)
+	$(CC) $(CFLAGS) src/lotlistDispatcher/main.c -o bin/lotlistDispatcher $(LDFLAGS) $(LIBS)
 
-searchfilterTest: src/searchfilterTest/main.c
+searchfilterTest: src/searchfilterTest/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/searchfilterTest/main.c src/searchfilter/searchfilter.c -o bin/searchfilterTest $(LDFLAGS)
+	$(CC) $(CFLAGS) src/searchfilterTest/main.c src/searchfilter/searchfilter.c -o bin/searchfilterTest $(LDFLAGS) $(LIBS)
 
-infoquery: src/infoquery/main.c
+infoquery: src/infoquery/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
-	$(CC) $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/infoquery/main.c src/acls/acls.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c $(BBDOCUMENT) -o bin/infoquery $(LDFLAGS) $(LIBCONFIG)
+	$(CC) $(CFLAGS) src/maincfg/maincfg.c src/infoquery/main.c src/acls/acls.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c $(BBDOCUMENT) -o bin/infoquery $(LDFLAGS) $(LIBCONFIG) $(LIBS)
 
-GetIndexAsArrayTest: src/GetIndexAsArrayTest/main.c
-	@echo ""
-	@echo "$@:"
-
-	$(CC) $(CFLAGS) $(LIBS)*.c src/GetIndexAsArrayTest/main.c -o bin/GetIndexAsArrayTest $(LDFLAGS)
-
-bbdocumentWebAdd: src/bbdocumentWebAdd/main.c
+GetIndexAsArrayTest: src/GetIndexAsArrayTest/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/bbdocumentWebAdd/main.c src/base64/base64.c -o bin/bbdocumentWebAdd $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS
+	$(CC) $(CFLAGS) src/GetIndexAsArrayTest/main.c -o bin/GetIndexAsArrayTest $(LDFLAGS) $(LIBS)
 
-bbdocumentMakeLotUrlsdb: src/bbdocumentMakeLotUrlsdb/main.c
+bbdocumentWebAdd: src/bbdocumentWebAdd/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/bbdocumentMakeLotUrlsdb/main.c -o bin/bbdocumentMakeLotUrlsdb $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS
+	$(CC) $(CFLAGS) src/bbdocumentWebAdd/main.c src/base64/base64.c -o bin/bbdocumentWebAdd $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS $(LIBS)
 
-bbdocumentConvertTest: src/bbdocumentConvertTest/main.c
+bbdocumentMakeLotUrlsdb: src/bbdocumentMakeLotUrlsdb/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/bbdocumentConvertTest/main.c -o bin/bbdocumentConvertTest $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS
+	$(CC) $(CFLAGS) src/bbdocumentMakeLotUrlsdb/main.c -o bin/bbdocumentMakeLotUrlsdb $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS $(LIBS)
+
+bbdocumentConvertTest: src/bbdocumentConvertTest/main.c $(LIBS)
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) src/bbdocumentConvertTest/main.c -o bin/bbdocumentConvertTest $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS $(LIBS)
 
 
 analyseShortRank: src/analyseShortRank/main.c
@@ -219,17 +228,17 @@ analyseShortRank: src/analyseShortRank/main.c
 
 	$(CC) $(CFLAGS) src/analyseShortRank/main.c -o bin/analyseShortRank $(LDFLAGS)
 
-DIconvert: src/DIconvert/main.c
+DIconvert: src/DIconvert/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/DIconvert/main.c -o bin/DIconvert $(LDFLAGS)
+	$(CC) $(CFLAGS) src/DIconvert/main.c -o bin/DIconvert $(LDFLAGS) $(LIBS)
 
-boithoad: src/boithoad/main.c
+boithoad: src/boithoad/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -D WITH_CONFIG -DDEBUG
+	$(CC) $(CFLAGS) src/boithoad/main.c src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -D WITH_CONFIG -DDEBUG $(LIBS)
 
 boithoadtest: src/boithoadtest/main.c
 	@echo ""
@@ -238,11 +247,11 @@ boithoadtest: src/boithoadtest/main.c
 	$(CC) $(CFLAGS) src/boithoadtest/main.c src/boithoadClientLib/liboithoaut.a -o bin/boithoadtest $(LDFLAGS)
 
 
-lotlistPrint: src/lotlistPrint/main.c
+lotlistPrint: src/lotlistPrint/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/lotlistPrint/main.c  -o bin/lotlistPrint $(LDFLAGS)
+	$(CC) $(CFLAGS) src/lotlistPrint/main.c  -o bin/lotlistPrint $(LDFLAGS) $(LIBS)
 
 cleanCacheDir: src/cleanCacheDir/main.c
 	@echo ""
@@ -250,105 +259,105 @@ cleanCacheDir: src/cleanCacheDir/main.c
 
 	$(CC) $(CFLAGS) src/cleanCacheDir/main.c -o bin/cleanCacheDir
 
-lotcp: src/lotcp/main.c
+lotcp: src/lotcp/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/lotcp/main.c  -o bin/lotcp $(LDFLAGS)
+	$(CC) $(CFLAGS) src/lotcp/main.c  -o bin/lotcp $(LDFLAGS) $(LIBS)
 
-missinglotDetectLocal: src/missinglotDetectLocal/main.c
+missinglotDetectLocal: src/missinglotDetectLocal/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/missinglotDetectLocal/main.c  -o bin/missinglotDetectLocal $(LDFLAGS)
+	$(CC) $(CFLAGS) src/missinglotDetectLocal/main.c  -o bin/missinglotDetectLocal $(LDFLAGS) $(LIBS)
 
-missinglotRemoveFormUdfile: src/missinglotRemoveFormUdfile/main.c
+missinglotRemoveFormUdfile: src/missinglotRemoveFormUdfile/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/missinglotRemoveFormUdfile/main.c  -o bin/missinglotRemoveFormUdfile $(LDFLAGS)
+	$(CC) $(CFLAGS) src/missinglotRemoveFormUdfile/main.c  -o bin/missinglotRemoveFormUdfile $(LDFLAGS) $(LIBS)
 
-missinglotGetFormUdfile: src/missinglotGetFormUdfile/main.c
+missinglotGetFormUdfile: src/missinglotGetFormUdfile/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/missinglotGetFormUdfile/main.c  -o bin/missinglotGetFormUdfile $(LDFLAGS)
+	$(CC) $(CFLAGS) src/missinglotGetFormUdfile/main.c  -o bin/missinglotGetFormUdfile $(LDFLAGS) $(LIBS)
 
-sortLinkdb: src/linkdbTools/sortLinkdb.c
+sortLinkdb: src/linkdbTools/sortLinkdb.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/linkdbTools/sortLinkdb.c  -o bin/sortLinkdb $(LDFLAGS)
+	$(CC) $(CFLAGS) src/linkdbTools/sortLinkdb.c  -o bin/sortLinkdb $(LDFLAGS) $(LIBS)
 
-BrankCalculate2GetPageElements: src/BrankCalculate2GetPageElements/main.c
+BrankCalculate2GetPageElements: src/BrankCalculate2GetPageElements/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate2GetPageElements/main.c  -o bin/BrankCalculate2GetPageElements $(LDFLAGS)
+	$(CC) $(CFLAGS) src/BrankCalculate2GetPageElements/main.c  -o bin/BrankCalculate2GetPageElements $(LDFLAGS) $(LIBS)
 
 
-BrankCalculate2Publish: src/BrankCalculate2Publish/main.c
+BrankCalculate2Publish: src/BrankCalculate2Publish/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate2Publish/main.c  -o bin/BrankCalculate2Publish $(LDFLAGS)
+	$(CC) $(CFLAGS) src/BrankCalculate2Publish/main.c  -o bin/BrankCalculate2Publish $(LDFLAGS) $(LIBS)
 
 
-vipurls: src/vipurls/main.c
+vipurls: src/vipurls/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/vipurls/main.c  -o bin/vipurls $(LDFLAGS)
+	$(CC) $(CFLAGS) src/3pLibs/keyValueHash/hashtable.c src/vipurls/main.c  -o bin/vipurls $(LDFLAGS) $(LIBS)
 
-urldispatcher: src/urldispatcher/main.c
+urldispatcher: src/urldispatcher/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/urldispatcher/main.c  -o bin/urldispatcher $(LDFLAGS)
+	$(CC) $(CFLAGS) src/urldispatcher/main.c  -o bin/urldispatcher $(LDFLAGS) $(LIBS)
 
-urlsDocumentIndexadd: src/urlsDocumentIndexadd/main.c
+urlsDocumentIndexadd: src/urlsDocumentIndexadd/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/urlsDocumentIndexadd/main.c  -o bin/urlsDocumentIndexadd -D DI_FILE_CASHE $(LDFLAGS)
+	$(CC) $(CFLAGS) src/urlsDocumentIndexadd/main.c  -o bin/urlsDocumentIndexadd -D DI_FILE_CASHE $(LDFLAGS) $(LIBS)
 
-netlotStart: src/netlotStart/main.c
+netlotStart: src/netlotStart/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/netlotStart/main.c  -o bin/netlotStart $(LDFLAGS)
+	$(CC) $(CFLAGS) src/netlotStart/main.c  -o bin/netlotStart $(LDFLAGS) $(LIBS)
 
-netlotEnd: src/netlotEnd/main.c
+netlotEnd: src/netlotEnd/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/netlotEnd/main.c  -o bin/netlotEnd $(LDFLAGS)
+	$(CC) $(CFLAGS) src/netlotEnd/main.c  -o bin/netlotEnd $(LDFLAGS) $(LIBS)
 
-LotNyeurlerSort: src/LotNyeurlerSort/main.c
+LotNyeurlerSort: src/LotNyeurlerSort/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/LotNyeurlerSort/main.c  -o bin/LotNyeurlerSort $(LDFLAGS)
+	$(CC) $(CFLAGS) src/LotNyeurlerSort/main.c  -o bin/LotNyeurlerSort $(LDFLAGS) $(LIBS)
 
-LotNyeurlerMove: src/LotNyeurlerMove/main.c
+LotNyeurlerMove: src/LotNyeurlerMove/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/LotNyeurlerMove/main.c  -o bin/LotNyeurlerMove $(LDFLAGS)
+	$(CC) $(CFLAGS) src/LotNyeurlerMove/main.c  -o bin/LotNyeurlerMove $(LDFLAGS) $(LIBS)
 
-crawlFiles: src/crawlFiles/main.c
+crawlFiles: src/crawlFiles/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/crawlFiles/main.c  -o bin/crawlFiles $(LDFLAGS) src/boitho-bbdn/bbdnclient.c -D BLACK_BOKS
+	$(CC) $(CFLAGS) src/crawlFiles/main.c  -o bin/crawlFiles $(LDFLAGS) src/boitho-bbdn/bbdnclient.c -D BLACK_BOKS $(LIBS)
 
 	
 
-testGetNextLotForIndex: src/testGetNextLotForIndex/main.c
+testGetNextLotForIndex: src/testGetNextLotForIndex/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/testGetNextLotForIndex/main.c  -o bin/testGetNextLotForIndex $(LDFLAGS)
+	$(CC) $(CFLAGS) src/testGetNextLotForIndex/main.c  -o bin/testGetNextLotForIndex $(LDFLAGS) $(LIBS)
 
 everrun: src/everrun/catchdump.c
 	@echo ""
@@ -356,15 +365,15 @@ everrun: src/everrun/catchdump.c
 
 	$(CC) src/everrun/catchdump.c -o bin/everrun
 
-searchcl : src/searchkernel/searchcl.c
+searchcl : src/searchkernel/searchcl.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/query/lex.query.o src/searchkernel/cgi-util.c src/searchkernel/parseEnv.c src/searchkernel/searchkernel.c src/searchkernel/search.c src/searchkernel/searchcl.c src/parse_summary/libsummary.a -o bin/searchcl $(LDFLAGS)
+	$(CC) $(CFLAGS) src/query/lex.query.o src/searchkernel/cgi-util.c src/searchkernel/parseEnv.c src/searchkernel/searchkernel.c src/searchkernel/search.c src/searchkernel/searchcl.c src/parse_summary/libsummary.a -o bin/searchcl $(LDFLAGS) $(LIBS)
 
-#dropper -D WITH_MEMINDEX og -D WITH_RANK_FILTER for nå
-#SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD $(LIBCONFIG)
-SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/lex.query.o src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D EXPLAIN_RANK
+#dropper -D WITH_MEMINDEX og -D WITH_RANK_FILTER for n
+#SEARCHCOMMAND = $(CFLAGS) src/query/lex.query.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD $(LIBCONFIG) $(LIBS)
+SEARCHCOMMAND = $(CFLAGS) src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/lex.query.o src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D EXPLAIN_RANK
 
 
 searchddep:
@@ -375,34 +384,34 @@ searchddep:
            (cd $$i; $(MAKE) all);\
         done
 
-searchd : src/searchkernel/searchd.c
+searchd : src/searchkernel/searchd.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 	
-	$(CC) $(SEARCHCOMMAND) -D WITH_RANK_FILTER -D WITH_THREAD -D DEFLOT -o bin/searchd 
+	$(CC) $(SEARCHCOMMAND) -D WITH_RANK_FILTER -D WITH_THREAD -D DEFLOT -o bin/searchd  $(LIBS)
 
-searchdbb : src/searchkernel/searchd.c
+searchdbb : src/searchkernel/searchd.c $(LIBS)
 	@echo ""
 	@echo "$@:"
-	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/getfiletype.o src/ds/libds.a
+	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/getfiletype.o src/ds/libds.a $(LIBS)
 
-mergeUserToSubname: src/mergeUserToSubname/main.c
-	@echo ""
-	@echo "$@:"
-
-	$(CC) $(CFLAGS) $(LIBS)*.c src/mergeUserToSubname/main.c src/acls/acls.c -o bin/mergeUserToSubname $(LDFLAGS) -DBLACK_BOKS $(BDB)
-
-boithoads: src/boithoads/main.c
+mergeUserToSubname: src/mergeUserToSubname/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoads/main.c src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/httpGet/httpGet.c src/parse_summary/libsummary.a -o bin/boithoads $(LDFLAGS) $(MYSQL) $(LIBXML) $(CURLLIBS) -D EXPLAIN_RANK
+	$(CC) $(CFLAGS) src/mergeUserToSubname/main.c src/acls/acls.c -o bin/mergeUserToSubname $(LDFLAGS) -DBLACK_BOKS $(BDB) $(LIBS)
 
-boithoadshread: src/boithoads/main.c
+boithoads: src/boithoads/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoads/main.c src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/httpGet/httpGet.c src/parse_summary/libsummary.a -o bin/boithoads $(LDFLAGS) $(MYSQL_THREAD) $(LIBXML) $(CURLLIBS) -D WITH_THREAD -lpthread
+	$(CC) $(CFLAGS) src/boithoads/main.c src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/httpGet/httpGet.c src/parse_summary/libsummary.a -o bin/boithoads $(LDFLAGS) $(MYSQL) $(LIBXML) $(CURLLIBS) -D EXPLAIN_RANK $(LIBS)
+
+boithoadshread: src/boithoads/main.c $(LIBS)
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) src/boithoads/main.c src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/httpGet/httpGet.c src/parse_summary/libsummary.a -o bin/boithoads $(LDFLAGS) $(MYSQL_THREAD) $(LIBXML) $(CURLLIBS) -D WITH_THREAD -lpthread $(LIBS)
 
 addout.cgi: src/addout.cgi/main.c
 	@echo ""
@@ -410,358 +419,358 @@ addout.cgi: src/addout.cgi/main.c
 
 	$(CC) $(CFLAGS) src/addout.cgi/main.c src/cgi-util/cgi-util.c -o bin/addout.cgi $(LDFLAGS) $(MYSQL) 
 
-ppcXmlParserTest: src/ppcXmlParserTest/main.c
+ppcXmlParserTest: src/ppcXmlParserTest/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/ppcXmlParserTest/main.c src/parse_summary/libsummary.a src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/parse_summary/libsummary.a src/httpGet/httpGet.c -o bin/ppcXmlParserTest $(LDFLAGS) $(MYSQL) $(LIBXML) $(CURLLIBS)
+	$(CC) $(CFLAGS) src/ppcXmlParserTest/main.c src/parse_summary/libsummary.a src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/parse_summary/libsummary.a src/httpGet/httpGet.c -o bin/ppcXmlParserTest $(LDFLAGS) $(MYSQL) $(LIBXML) $(CURLLIBS) $(LIBS)
 
-dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c -D EXPLAIN_RANK $(LDFLAGS) $(MYSQL)
+dispatcherCOMAND = $(CFLAGS) src/maincfg/maincfg.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c -D EXPLAIN_RANK $(LDFLAGS) $(MYSQL)
 
-dispatcher_all: src/dispatcher_all/main.c
+dispatcher_all: src/dispatcher_all/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG)
+	$(CC) $(dispatcherCOMAND) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG) $(LIBS)
 
-dispatcher_allbb: src/dispatcher_all/main.c
+dispatcher_allbb: src/dispatcher_all/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG)
+	$(CC) $(dispatcherCOMAND) -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(LIBS)
 
 
-dispatcher: src/dispatcher/main.c
+dispatcher: src/dispatcher/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/dispatcher/main.c src/cgi-util/cgi-util.c -o bin/dispatcher $(LDFLAGS)
+	$(CC) $(CFLAGS) src/dispatcher/main.c src/cgi-util/cgi-util.c -o bin/dispatcher $(LDFLAGS) $(LIBS)
 
-putFilesIntoFileTree: src/putFilesIntoFileTree/main.c
+putFilesIntoFileTree: src/putFilesIntoFileTree/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/putFilesIntoFileTree/main.c -o bin/putFilesIntoFileTree $(LDFLAGS)
+	$(CC) $(CFLAGS) src/putFilesIntoFileTree/main.c -o bin/putFilesIntoFileTree $(LDFLAGS) $(LIBS)
 
-nyeurlerIntegeryCheck: src/nyeurlerIntegeryCheck/main.c
+nyeurlerIntegeryCheck: src/nyeurlerIntegeryCheck/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/nyeurlerIntegeryCheck/main.c -o bin/nyeurlerIntegeryCheck $(LDFLAGS)
+	$(CC) $(CFLAGS) src/nyeurlerIntegeryCheck/main.c -o bin/nyeurlerIntegeryCheck $(LDFLAGS) $(LIBS)
 
-rread : src/rread/rread.c
+rread : src/rread/rread.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/rread/rread.c -o bin/rread $(LDFLAGS)
+	$(CC) $(CFLAGS) src/rread/rread.c -o bin/rread $(LDFLAGS) $(LIBS)
 
 
-convertReposetoryCOMAND = $(CFLAGS) $(LIBS)*.c src/convertReposetory/main.c -o bin/convertReposetory $(LDFLAGS)
+convertReposetoryCOMAND = $(CFLAGS) src/convertReposetory/main.c -o bin/convertReposetory $(LDFLAGS) $(LIBS)
 
-convertReposetory: src/convertReposetory/main.c
+convertReposetory: src/convertReposetory/main.c $(LIBS)
 	$(CC) $(convertReposetoryCOMAND)
 
 convertReposetorybb: src/convertReposetory/main.c
 	$(CC) $(convertReposetoryCOMAND) -D BLACK_BOKS
 
 
-makeSumaryCashe: src/makeSumaryCashe/main.c
+makeSumaryCashe: src/makeSumaryCashe/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/makeSumaryCashe/main.c src/parse_summary/libsummary.a -o bin/makeSumaryCashe $(LDFLAGS) -D NOWARNINGS
+	$(CC) $(CFLAGS) src/makeSumaryCashe/main.c src/parse_summary/libsummary.a -o bin/makeSumaryCashe $(LDFLAGS) -D NOWARNINGS $(LIBS)
 
-rread_getsomeurls: src/rread_getsomeurls/main.c
+rread_getsomeurls: src/rread_getsomeurls/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/rread_getsomeurls/main.c -o bin/rread_getsomeurls $(LDFLAGS)
+	$(CC) $(CFLAGS) src/rread_getsomeurls/main.c -o bin/rread_getsomeurls $(LDFLAGS) $(LIBS)
 
-IndexerLotLite: src/IndexerLotLite/main.c
+IndexerLotLite: src/IndexerLotLite/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLotLite/main.c -o bin/IndexerLotLite $(LDFLAGS)
+	$(CC) $(CFLAGS) src/IndexerLotLite/main.c -o bin/IndexerLotLite $(LDFLAGS) $(LIBS)
 
-readMainIndex: src/readMainIndex/main.c
+readMainIndex: src/readMainIndex/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/readMainIndex/main.c -o bin/readMainIndex $(LDFLAGS)
+	$(CC) $(CFLAGS) src/readMainIndex/main.c -o bin/readMainIndex $(LDFLAGS) $(LIBS)
 
-readMainIndexSearchSha1: src/readMainIndexSearchSha1/main.c
+readMainIndexSearchSha1: src/readMainIndexSearchSha1/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/readMainIndexSearchSha1/main.c -o bin/readMainIndexSearchSha1 $(LDFLAGS)
+	$(CC) $(CFLAGS) src/readMainIndexSearchSha1/main.c -o bin/readMainIndexSearchSha1 $(LDFLAGS) $(LIBS)
 
-LotInvertetIndexMaker: src/LotInvertetIndexMaker/main.c
+LotInvertetIndexMaker: src/LotInvertetIndexMaker/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMaker/main.c -o bin/LotInvertetIndexMaker $(LDFLAGS)
+	$(CC) $(CFLAGS) src/LotInvertetIndexMaker/main.c -o bin/LotInvertetIndexMaker $(LDFLAGS) $(LIBS)
 
-LotInvertetIndexMakerSplice: src/LotInvertetIndexMakerSplice/main.c
+LotInvertetIndexMakerSplice: src/LotInvertetIndexMakerSplice/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMakerSplice/main.c -o bin/LotInvertetIndexMakerSplice $(LDFLAGS)
+	$(CC) $(CFLAGS) src/LotInvertetIndexMakerSplice/main.c -o bin/LotInvertetIndexMakerSplice $(LDFLAGS) $(LIBS)
 
-listLostLots: src/listLostLots/main.c	
+listLostLots: src/listLostLots/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/listLostLots/main.c -o bin/listLostLots $(LDFLAGS)
+	$(CC) $(CFLAGS) src/listLostLots/main.c -o bin/listLostLots $(LDFLAGS) $(LIBS)
 
-recoverUrlForLot: src/recoverUrlForLot/main.c
+recoverUrlForLot: src/recoverUrlForLot/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/recoverUrlForLot/main.c -o bin/recoverUrlForLot $(LDFLAGS)
+	$(CC) $(CFLAGS) src/recoverUrlForLot/main.c -o bin/recoverUrlForLot $(LDFLAGS) $(LIBS)
 
-removeUnnecessaryRevindex: src/removeUnnecessaryRevindex/main.c
+removeUnnecessaryRevindex: src/removeUnnecessaryRevindex/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/removeUnnecessaryRevindex/main.c -o bin/removeUnnecessaryRevindex $(LDFLAGS)
+	$(CC) $(CFLAGS) src/removeUnnecessaryRevindex/main.c -o bin/removeUnnecessaryRevindex $(LDFLAGS) $(LIBS)
 
-LotInvertetIndexMaker2:	src/LotInvertetIndexMaker2/main.c
+LotInvertetIndexMaker2:	src/LotInvertetIndexMaker2/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMaker2/main.c -o bin/LotInvertetIndexMaker2 $(LDFLAGS)
+	$(CC) $(CFLAGS) src/LotInvertetIndexMaker2/main.c -o bin/LotInvertetIndexMaker2 $(LDFLAGS) $(LIBS)
 
-ThumbnaleDemon: src/ThumbnaleDemon/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/ThumbnaleDemon/main.c -o bin/ThumbnaleDemon $(LDFLAGS)
+ThumbnaleDemon: src/ThumbnaleDemon/main.c $(LIBS)
+	$(CC) $(CFLAGS) src/ThumbnaleDemon/main.c -o bin/ThumbnaleDemon $(LDFLAGS) $(LIBS)
 
-PoprankMerge: src/PoprankMerge/poptorank.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/PoprankMerge/poptorank.c -o bin/PoprankMerge $(LDFLAGS)
+PoprankMerge: src/PoprankMerge/poptorank.c $(LIBS)
+	$(CC) $(CFLAGS) src/PoprankMerge/poptorank.c -o bin/PoprankMerge $(LDFLAGS) $(LIBS)
 
-ipbann: src/ipbann/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/ipbann/main.c  -o bin/ipbann $(LDFLAGS)
+ipbann: src/ipbann/main.c $(LIBS)
+	$(CC) $(CFLAGS) src/ipbann/main.c  -o bin/ipbann $(LDFLAGS) $(LIBS)
 
-addanchors: src/addanchors/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/addanchors/main.c -o bin/addanchors $(LDFLAGS)
+addanchors: src/addanchors/main.c $(LIBS)
+	$(CC) $(CFLAGS) src/addanchors/main.c -o bin/addanchors $(LDFLAGS) $(LIBS)
 
-IndexerLotAnchors: src/IndexerLotAnchors/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLotAnchors/main.c -o bin/IndexerLotAnchors $(LDFLAGS)
+IndexerLotAnchors: src/IndexerLotAnchors/main.c $(LIBS)
+	$(CC) $(CFLAGS) src/IndexerLotAnchors/main.c -o bin/IndexerLotAnchors $(LDFLAGS) $(LIBS)
 
-readNyeUrlerFil: src/readNyeUrlerFil/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/readNyeUrlerFil/main.c  -o bin/readNyeUrlerFil $(LDFLAGS)
+readNyeUrlerFil: src/readNyeUrlerFil/main.c $(LIBS)
+	$(CC) $(CFLAGS) src/readNyeUrlerFil/main.c  -o bin/readNyeUrlerFil $(LDFLAGS) $(LIBS)
 
-filterNyeUrlerFil: src/filterNyeUrlerFil/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/filterNyeUrlerFil/main.c  -o bin/filterNyeUrlerFil $(LDFLAGS)
+filterNyeUrlerFil: src/filterNyeUrlerFil/main.c $(LIBS)
+	$(CC) $(CFLAGS) src/filterNyeUrlerFil/main.c  -o bin/filterNyeUrlerFil $(LDFLAGS) $(LIBS)
 
-addUrlsToIndex: src/addUrlsToIndex/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/addUrlsToIndex/main.c -o bin/addUrlsToIndex $(LDFLAGS)
+addUrlsToIndex: src/addUrlsToIndex/main.c $(LIBS)
+	$(CC) $(CFLAGS) src/addUrlsToIndex/main.c -o bin/addUrlsToIndex $(LDFLAGS) $(LIBS)
 
-readLinkFile: src/readLinkFile/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/readLinkFile/main.c -o bin/readLinkFile $(LDFLAGS)
+readLinkFile: src/readLinkFile/main.c $(LIBS)
+	$(CC) $(CFLAGS) src/readLinkFile/main.c -o bin/readLinkFile $(LDFLAGS) $(LIBS)
 
 mergeLinkDB:
 	(cd src/mergeLinkDB/; make)
 	cp src/mergeLinkDB/mergeLinkDB bin/mergeLinkDB
 
-anchorread: src/anchorread/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/anchorread/main.c -o bin/anchorread $(LDFLAGS)
+anchorread: src/anchorread/main.c $(LIBS)
+	$(CC) $(CFLAGS) src/anchorread/main.c -o bin/anchorread $(LDFLAGS) $(LIBS)
 
-BrankCalculate:	src/BrankCalculate/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate/*.c -o bin/BrankCalculate $(LDFLAGS)
+BrankCalculate:	src/BrankCalculate/main.c $(LIBS)
+	$(CC) $(CFLAGS) src/BrankCalculate/*.c -o bin/BrankCalculate $(LDFLAGS) $(LIBS)
 
-BrankCalculate2: src/BrankCalculate2/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate2/*.c -o bin/BrankCalculate2 $(LDFLAGS)
+BrankCalculate2: src/BrankCalculate2/main.c $(LIBS)
+	$(CC) $(CFLAGS) src/BrankCalculate2/*.c -o bin/BrankCalculate2 $(LDFLAGS) $(LIBS)
 
-BrankCalculate3: src/BrankCalculate3/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate3/*.c -o bin/BrankCalculate3 $(LDFLAGS)
+BrankCalculate3: src/BrankCalculate3/main.c $(LIBS)
+	$(CC) $(CFLAGS) src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate3/*.c -o bin/BrankCalculate3 $(LDFLAGS) $(LIBS)
 
-BrankMerge: src/BrankMerge/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankMerge/*.c -o bin/BrankMerge $(LDFLAGS)
+BrankMerge: src/BrankMerge/main.c $(LIBS)
+	$(CC) $(CFLAGS) src/BrankMerge/*.c -o bin/BrankMerge $(LDFLAGS) $(LIBS)
 
-readLinkDB: src/readLinkDB/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/readLinkDB/main.c -o bin/readLinkDB $(LDFLAGS)
+readLinkDB: src/readLinkDB/main.c $(LIBS)
+	$(CC) $(CFLAGS) src/readLinkDB/main.c -o bin/readLinkDB $(LDFLAGS) $(LIBS)
 
-SortUdfile: src/SortUdfile/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/SortUdfile/main.c -o bin/SortUdfile $(LDFLAGS)
+SortUdfile: src/SortUdfile/main.c $(LIBS)
+	$(CC) $(CFLAGS) src/SortUdfile/main.c -o bin/SortUdfile $(LDFLAGS) $(LIBS)
 
-SortUdfileToNewFiles: src/SortUdfileToNewFiles/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/SortUdfileToNewFiles/main.c -o bin/SortUdfileToNewFiles $(LDFLAGS)
+SortUdfileToNewFiles: src/SortUdfileToNewFiles/main.c $(LIBS)
+	$(CC) $(CFLAGS) src/SortUdfileToNewFiles/main.c -o bin/SortUdfileToNewFiles $(LDFLAGS) $(LIBS)
 
-PageInfoComand=	$(LIBS)*.c src/PageInfo/main.c src/parser/lex.bhpm.c src/parser/y.tab.c $(LDFLAGS)
+PageInfoComand= src/PageInfo/main.c src/parser/lex.bhpm.c src/parser/y.tab.c $(LDFLAGS)
 
-PageInfo: src/PageInfo/main.c
+PageInfo: src/PageInfo/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(PageInfoComand) -o bin/PageInfo
+	$(CC) $(CFLAGS) $(PageInfoComand) -o bin/PageInfo $(LIBS)
 
-PageInfobb: src/PageInfo/main.c
+PageInfobb: src/PageInfo/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(PageInfoComand) -o bin/PageInfobb -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(PageInfoComand) -o bin/PageInfobb -D BLACK_BOKS $(LIBS)
 
-addManuellUrlFile: src/addManuellUrlFile/main.c
+addManuellUrlFile: src/addManuellUrlFile/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/addManuellUrlFile/main.c  -o bin/addManuellUrlFile $(LDFLAGS)
+	$(CC) $(CFLAGS) src/addManuellUrlFile/main.c  -o bin/addManuellUrlFile $(LDFLAGS) $(LIBS)
 
-dumpLotAsFiles: src/dumpLotAsFiles/main.c
+dumpLotAsFiles: src/dumpLotAsFiles/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/dumpLotAsFiles/main.c -o bin/dumpLotAsFiles $(LDFLAGS)
+	$(CC) $(CFLAGS) src/dumpLotAsFiles/main.c -o bin/dumpLotAsFiles $(LDFLAGS) $(LIBS)
 
-boithold: src/boithold/main.c
+boithold: src/boithold/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/boithold/getpath.c src/boithold/main.c -o bin/boithold $(LDFLAGS)
+	$(CC) $(CFLAGS) src/boithold/getpath.c src/boithold/main.c -o bin/boithold $(LDFLAGS) $(LIBS)
 
-boitho-bbdn: src/boitho-bbdn/bbdnserver.c
+boitho-bbdn: src/boitho-bbdn/bbdnserver.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c  src/boitho-bbdn/bbdnserver.c src/maincfg/maincfg.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE) -static $(LIBCONFIG)
+	$(CC) $(CFLAGS)  src/boitho-bbdn/bbdnserver.c src/maincfg/maincfg.c -o bin/boitho-bbdn $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE) -static $(LIBCONFIG) $(WITHDEBUG) $(LIBS) $(LDFLAGS)
 
 
-boitholdTest: src/boitholdTest/main.c
+boitholdTest: src/boitholdTest/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/boitholdTest/main.c -o bin/boitholdTest $(LDFLAGS)
+	$(CC) $(CFLAGS) src/boitholdTest/main.c -o bin/boitholdTest $(LDFLAGS) $(LIBS)
 
-SplittUdfileByLot: src/SplittUdfileByLot/main.c
+SplittUdfileByLot: src/SplittUdfileByLot/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/SplittUdfileByLot/main.c -o bin/SplittUdfileByLot $(LDFLAGS)
+	$(CC) $(CFLAGS) src/SplittUdfileByLot/main.c -o bin/SplittUdfileByLot $(LDFLAGS) $(LIBS)
 
-UrlToDocIDIndexer: src/UrlToDocIDIndexer/main.c
+UrlToDocIDIndexer: src/UrlToDocIDIndexer/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/UrlToDocIDIndexer/main.c -o bin/UrlToDocIDIndexer $(LDFLAGS) $(BDB)
+	$(CC) $(CFLAGS) src/UrlToDocIDIndexer/main.c -o bin/UrlToDocIDIndexer $(LDFLAGS) $(BDB) $(LIBS)
 
-UrlToDocIDQuery: src/UrlToDocIDQuery/main.c
+UrlToDocIDQuery: src/UrlToDocIDQuery/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/getDocIDFromUrl/getDocIDFromUrl.c src/UrlToDocIDQuery/main.c -o bin/UrlToDocIDQuery $(LDFLAGS) $(BDB)
+	$(CC) $(CFLAGS) src/getDocIDFromUrl/getDocIDFromUrl.c src/UrlToDocIDQuery/main.c -o bin/UrlToDocIDQuery $(LDFLAGS) $(BDB) $(LIBS)
 
-UrlToDocIDSplitUdfile: src/UrlToDocIDSplitUdfile/main.c
+UrlToDocIDSplitUdfile: src/UrlToDocIDSplitUdfile/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/UrlToDocIDSplitUdfile/main.c -o bin/UrlToDocIDSplitUdfile $(LDFLAGS)
+	$(CC) $(CFLAGS) src/UrlToDocIDSplitUdfile/main.c -o bin/UrlToDocIDSplitUdfile $(LDFLAGS) $(LIBS)
 
-addReposerotyToIndex: src/addReposerotyToIndex/main.c
+addReposerotyToIndex: src/addReposerotyToIndex/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/addReposerotyToIndex/main.c -o bin/addReposerotyToIndex $(LDFLAGS)
+	$(CC) $(CFLAGS) -ldb src/addReposerotyToIndex/main.c -o bin/addReposerotyToIndex $(LDFLAGS) $(LIBS)
 
 
-readDocumentIndex: src/readDocumentIndex/main.c
+readDocumentIndex: src/readDocumentIndex/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/readDocumentIndex/main.c -o bin/readDocumentIndex $(LDFLAGS)
+	$(CC) $(CFLAGS) src/readDocumentIndex/main.c -o bin/readDocumentIndex $(LDFLAGS) $(LIBS)
 
-readDocumentIndexWithRank: src/readDocumentIndexWithRank/main.c
+readDocumentIndexWithRank: src/readDocumentIndexWithRank/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/readDocumentIndexWithRank/main.c -o bin/readDocumentIndexWithRank $(LDFLAGS)
+	$(CC) $(CFLAGS) src/readDocumentIndexWithRank/main.c -o bin/readDocumentIndexWithRank $(LDFLAGS) $(LIBS)
 
-adultBuildIndex: src/adultBuildIndex/main.c
+adultBuildIndex: src/adultBuildIndex/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/adultBuildIndex/main.c -o bin/adultBuildIndex $(LDFLAGS)
+	$(CC) $(CFLAGS) src/adultBuildIndex/main.c -o bin/adultBuildIndex $(LDFLAGS) $(LIBS)
 
-ipdbBuildLotIndex: src/ipdbBuildLotIndex/main.c
+ipdbBuildLotIndex: src/ipdbBuildLotIndex/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/ipdbBuildLotIndex/main.c -o bin/ipdbBuildLotIndex $(LDFLAGS)
+	$(CC) $(CFLAGS) src/ipdbBuildLotIndex/main.c -o bin/ipdbBuildLotIndex $(LDFLAGS) $(LIBS)
 
-ipdbMakeMain: src/ipdbMakeMain/main.c
+ipdbMakeMain: src/ipdbMakeMain/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/ipdbMakeMain/main.c -o bin/ipdbMakeMain $(LDFLAGS)
+	$(CC) $(CFLAGS) src/ipdbMakeMain/main.c -o bin/ipdbMakeMain $(LDFLAGS) $(LIBS)
 
-IndexerLotUrl: src/IndexerLotUrl/main.c
+IndexerLotUrl: src/IndexerLotUrl/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLotUrl/main.c -o bin/IndexerLotUrl $(LDFLAGS)
+	$(CC) $(CFLAGS) src/IndexerLotUrl/main.c -o bin/IndexerLotUrl $(LDFLAGS) $(LIBS)
 
-IndexerLotDomainId: src/IndexerLotDomainId/main.c
+IndexerLotDomainId: src/IndexerLotDomainId/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLotDomainId/main.c -o bin/IndexerLotDomainId $(LDFLAGS)
+	$(CC) $(CFLAGS) src/IndexerLotDomainId/main.c -o bin/IndexerLotDomainId $(LDFLAGS) $(LIBS)
 
-fixsAsciixBug: src/fixsAsciixBug/main.c
+fixsAsciixBug: src/fixsAsciixBug/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/fixsAsciixBug/main.c -o bin/fixsAsciixBug $(LDFLAGS)
+	$(CC) $(CFLAGS) -ldb src/fixsAsciixBug/main.c -o bin/fixsAsciixBug $(LDFLAGS) $(LIBS)
 
-getUncrawledPages: src/getUncrawledPages/main.c
+getUncrawledPages: src/getUncrawledPages/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/getUncrawledPages/main.c -o bin/getUncrawledPages $(LDFLAGS)
+	$(CC) $(CFLAGS) -ldb src/getUncrawledPages/main.c -o bin/getUncrawledPages $(LDFLAGS) $(LIBS)
 
-cpLotFile: src/cpLotFile/main.c
+cpLotFile: src/cpLotFile/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/cpLotFile/main.c -o bin/cpLotFile $(LDFLAGS)
+	$(CC) $(CFLAGS) -ldb src/cpLotFile/main.c -o bin/cpLotFile $(LDFLAGS) $(LIBS)
 
 
-SHOWTHUMBCMANDS = $(CFLAGS) $(LIBS)*.c src/ShowThumb/main.c src/cgi-util/cgi-util.c $(LDFLAGS)
+SHOWTHUMBCMANDS = $(CFLAGS) src/ShowThumb/main.c src/cgi-util/cgi-util.c $(LDFLAGS)
 
-ShowThumb: src/ShowThumb/main.c
+ShowThumb: src/ShowThumb/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(SHOWTHUMBCMANDS) -o cgi-bin/ShowThumb
+	$(CC) $(SHOWTHUMBCMANDS) -o cgi-bin/ShowThumb $(LIBS)
 
-ShowThumbbb: src/ShowThumb/main.c
+ShowThumbbb: src/ShowThumb/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(SHOWTHUMBCMANDS) -o cgi-bin/ShowThumbbb -D BLACK_BOKS
+	$(CC) $(SHOWTHUMBCMANDS) -o cgi-bin/ShowThumbbb -D BLACK_BOKS $(LIBS)
 
-ShowCacheCOMMAND = $(CFLAGS) $(LIBS)*.c src/ShowCache/main.c src/cgi-util/cgi-util.c $(LDFLAGS) -o cgi-bin/ShowCache
+ShowCacheCOMMAND = $(CFLAGS) src/ShowCache/main.c src/cgi-util/cgi-util.c $(LDFLAGS) -o cgi-bin/ShowCache
 
-ShowCache: src/ShowCache/main.c
+ShowCache: src/ShowCache/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(ShowCacheCOMMAND)
+	$(CC) $(ShowCacheCOMMAND) $(LIBS)
 
-ShowCachebb: src/ShowCache/main.c
+ShowCachebb: src/ShowCache/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(ShowCacheCOMMAND) -D BLACK_BOKS
+	$(CC) $(ShowCacheCOMMAND) -D BLACK_BOKS $(LIBS)
 
-boithoshmd: src/boithoshmd/main.c
+boithoshmd: src/boithoshmd/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/boithoshmd/main.c -o bin/boithoshmd $(LDFLAGS)
+	$(CC) $(CFLAGS) -ldb src/boithoshmd/main.c -o bin/boithoshmd $(LDFLAGS) $(LIBS)
 
-builIpDB: src/builIpDB/main.c
+builIpDB: src/builIpDB/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c -ldb src/builIpDB/main.c -o bin/builIpDB $(LDFLAGS)
+	$(CC) $(CFLAGS) -ldb src/builIpDB/main.c -o bin/builIpDB $(LDFLAGS) $(LIBS)
 
 ConvertRankToShortRankFile: src/ConvertRankToShortRankFile/main.c
 	@echo ""
@@ -775,11 +784,11 @@ readIIndex: src/readIIndex/main.c
 
 	$(CC) src/readIIndex/main.c -o bin/readIIndex
 
-mergeIIndex: src/mergeIIndex/main.c
+mergeIIndex: src/mergeIIndex/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/mergeIIndex/main.c -o bin/mergeIIndex $(LDFLAGS)
+	$(CC) $(CFLAGS) src/mergeIIndex/main.c -o bin/mergeIIndex $(LDFLAGS) $(LIBS)
 
 
 boithoadClientLib: src/boithoadClientLib/boithoadClientLib.c
@@ -805,22 +814,22 @@ NetConfig: src/NetConfig/configwrite.c
 yumupdate:
 	$(CC) $(CFLAGS) src/common/exeoc.c src/yumupdate/yumupdate.c -o setuid/yumupdate
 
-crawlManager: src/crawlManager/main.c
+crawlManager: src/crawlManager/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
 	#22 feb 2007, fjerner -static
-	$(CC) $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c src/3pLibs/keyValueHash/hashtable.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG)
+	$(CC) $(CFLAGS) src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c src/3pLibs/keyValueHash/hashtable.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) $(WITHDEBUG) $(LIBS)
 
 
-crawlSMB: src/crawlSMB/main.c
+crawlSMB: src/crawlSMB/main.c $(LIBS)
 	@echo ""
 	@echo "$@:"
 
 	flex -f -8 -i -o src/crawlSMB/lex.acl.c src/crawlSMB/acl.parser.l
 
 
-	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g -Wl,-static $(LIBS)*.c src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) $(SMBCLIENT)
+	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g -Wl,-static src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) $(SMBCLIENT) $(LIBS)
 	mkdir -p crawlers/crawlSMB
 	cp src/crawlSMB/crawlSMB.so crawlers/crawlSMB/
 
