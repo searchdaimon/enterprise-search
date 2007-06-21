@@ -43,7 +43,9 @@ void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID) {
 
 	#ifdef BLACK_BOKS
 		(*pagewords).acl_allow.aclnr = 0;
+		#ifdef IIACL
 		(*pagewords).acl_denied.aclnr = 0;
+		#endif
 	#endif
 }
 

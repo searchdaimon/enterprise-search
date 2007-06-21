@@ -51,8 +51,10 @@ struct IndexerLot_workthreadFormat {
         unsigned int FiltetTime;
         unsigned int FileOffset;
 	FILE *revindexFilesHa[NrOfDataDirectorys];
+	#ifdef IIACL
 	FILE *acl_allowindexFilesHa[NrOfDataDirectorys];
 	FILE *acl_deniedindexFilesHa[NrOfDataDirectorys];
+	#endif
 	struct adultFormat *adult;
 	FILE *ADULTWEIGHTFH;
 	FILE *SFH;
@@ -489,6 +491,8 @@ void *IndexerLot_workthread(void *arg) {
 
 					//usikker her. Skal det vare +1? strlen() blir da en større en HtmlBufferLength
 					//HtmlBuffer[HtmlBufferLength +1] = '\0';
+                       			//printf("url: %s\n",ReposetoryHeader.url);
+
 
 					//printf("document \"%s\" %i b\n",HtmlBuffer,HtmlBufferLength);
 
@@ -570,6 +574,7 @@ void *IndexerLot_workthread(void *arg) {
 						//trenger dette acl greiene å være her, kan di ikke være lenger opp, der vi ikke har trå lås ?
 						alclot_add((*argstruct).alclot,acl_allow);
 						
+						#ifdef IIACL
 						iiacladd(&(*pagewords).acl_allow,acl_allow);
 						iiacladd(&(*pagewords).acl_denied,acl_denied);
 
@@ -578,7 +583,7 @@ void *IndexerLot_workthread(void *arg) {
 
 						aclsMakeRevIndexBucket (&(*pagewords).acl_allow,ReposetoryHeader.DocID,&langnr);
 						aclsMakeRevIndexBucket (&(*pagewords).acl_denied,ReposetoryHeader.DocID,&langnr);
-
+						#endif
 
 						debug("time %u\n",ReposetoryHeader.time);
 
@@ -623,9 +628,10 @@ void *IndexerLot_workthread(void *arg) {
 
 
 						#ifdef BLACK_BOKS
+							#ifdef IIACL
 							aclindexFilesAppendWords(&(*pagewords).acl_allow,(*argstruct).acl_allowindexFilesHa,ReposetoryHeader.DocID,&langnr);
 							aclindexFilesAppendWords(&(*pagewords).acl_denied,(*argstruct).acl_deniedindexFilesHa,ReposetoryHeader.DocID,&langnr);
-
+							#endif
 						#endif
 
 						#ifdef PRESERVE_WORDS
@@ -873,10 +879,14 @@ int main (int argc, char *argv[]) {
 
 
 		revindexFilesOpenLocal(argstruct.revindexFilesHa,lotNr,"Main",openmode,subname);
-		revindexFilesOpenLocal(argstruct.acl_allowindexFilesHa,lotNr,"acl_allow",openmode,subname);
-		revindexFilesOpenLocal(argstruct.acl_deniedindexFilesHa,lotNr,"acl_denied",openmode,subname);
 
 		#ifdef BLACK_BOKS		
+
+			#ifdef IIACL
+				revindexFilesOpenLocal(argstruct.acl_allowindexFilesHa,lotNr,"acl_allow",openmode,subname);
+				revindexFilesOpenLocal(argstruct.acl_deniedindexFilesHa,lotNr,"acl_denied",openmode,subname);
+			#endif
+
 			alclot_init(&argstruct.alclot,subname,openmode,lotNr);
 		#else
 

@@ -31,7 +31,7 @@
 
 #define maxAdultWords 500
 #define maxWordlLen 30
-#define MaxAdultWordCount 80
+#define MaxAdultWordCount 100
 
 
 //#define subname "www"
@@ -148,7 +148,9 @@ struct pagewordsFormat {
 
 	#ifdef BLACK_BOKS
 		struct IndexerRes_acls acl_allow;
+		#ifdef IIACL
 		struct IndexerRes_acls acl_denied;
+		#endif
 	#endif
 };
 
