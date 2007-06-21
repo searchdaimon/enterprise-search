@@ -1374,6 +1374,9 @@ int main(int argc, char *argv[])
 	gettimeofday(&start_time, NULL);
 	#endif		
 
+		struct filtersTrapedFormat dispatcherfiltersTraped;
+		filtersTrapedReset(&dispatcherfiltersTraped);
+
 		//dette er kansje ikke optimalet, da vi går gjenom alle siden. Ikke bare de som skal være med
 		for(i=0;i<QueryData.MaxsHits * nrOfServers + nrOfPiServers;i++) {
 
@@ -1391,11 +1394,17 @@ int main(int argc, char *argv[])
                         		//(*SiderHeder).filtered++;
 					FinalSiderHeder.filtered++;
 					--FinalSiderHeder.TotaltTreff;
+					++dispatcherfiltersTraped.filterSameUrl;					
                         		continue;
                 		}
 
+
 				#ifndef BLACK_BOKS
 
+				/*
+				// 19. juni
+				//ToDo: fjerner adult vekt filtrering her. Er det trykt. Hvis vi for eks har misket resultater, men ikke noen noder hadde fø sider, og tilot adoult
+				// hva er egentlig adoult filter statur på searchd nå?
 				if ((QueryData.filterOn) && Sider[i].DocumentIndex.AdultWeight > 50) {
 					#ifdef DEBUG
 						printf("slettet adult side %s ault %i\n",Sider[i].url,Sider[i].DocumentIndex.AdultWeight);
@@ -1403,9 +1412,10 @@ int main(int argc, char *argv[])
                         		//(*SiderHeder).filtered++;
 					FinalSiderHeder.filtered++;
 					--FinalSiderHeder.TotaltTreff;
+					++dispatcherfiltersTraped.filterAdultWeight_value;
 					continue;
 				}
-
+				*/
 				if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameCrc32) 
 					&& filterSameCrc32(i,&Sider[i],Sider)) {
 					#ifdef DEBUG
@@ -1414,6 +1424,8 @@ int main(int argc, char *argv[])
                         	        //(*SiderHeder).filtered++;
 					FinalSiderHeder.filtered++;
 					--FinalSiderHeder.TotaltTreff;
+					++dispatcherfiltersTraped.filterSameCrc32_1;
+
                         	        continue;
                         	}
 
@@ -1425,6 +1437,8 @@ int main(int argc, char *argv[])
                         		//(*SiderHeder).filtered++;
 					FinalSiderHeder.filtered++;
 					--FinalSiderHeder.TotaltTreff;
+					++dispatcherfiltersTraped.filterSameDomain;
+
                         		continue;
                 		}
 				/*
@@ -1506,9 +1520,29 @@ int main(int argc, char *argv[])
 
 
 	
+	//viser info om dispatcher_all
+	printf("<DISPATCHER_INFO>\n");
+		printf("\t<FILTERTRAPP>\n");
+			printf("\t\t<filterAdultWeight_bool>%i</filterAdultWeight_bool>\n",dispatcherfiltersTraped.filterAdultWeight_bool);
+			printf("\t\t<filterAdultWeight_value>%i</filterAdultWeight_value>\n",dispatcherfiltersTraped.filterAdultWeight_value);
+			printf("\t\t<filterSameCrc32_1>%i</filterSameCrc32_1>\n",dispatcherfiltersTraped.filterSameCrc32_1);
+			printf("\t\t<filterSameUrl>%i</filterSameUrl>\n",dispatcherfiltersTraped.filterSameUrl);
+			printf("\t\t<filterNoUrl>%i</filterNoUrl>\n",dispatcherfiltersTraped.filterNoUrl);
+			printf("\t\t<find_domain_no_subname>%i</find_domain_no_subname>\n",dispatcherfiltersTraped.find_domain_no_subname);
+			printf("\t\t<filterSameDomain>%i</filterSameDomain>\n",dispatcherfiltersTraped.filterSameDomain);
+			printf("\t\t<filterTLDs>%i</filterTLDs>\n",dispatcherfiltersTraped.filterTLDs);
+			printf("\t\t<filterResponse>%i</filterResponse>\n",dispatcherfiltersTraped.filterResponse);
+			printf("\t\t<cantpopResult>%i</cantpopResult>\n",dispatcherfiltersTraped.cantpopResult);
+			printf("\t\t<cmc_pathaccess>%i</cmc_pathaccess>\n",dispatcherfiltersTraped.cmc_pathaccess);
+			printf("\t\t<filterSameCrc32_2>%i</filterSameCrc32_2>\n",dispatcherfiltersTraped.filterSameCrc32_2);
+
+					printf("\t</FILTERTRAPP>\n");
+	printf("</DISPATCHER_INFO>\n");
 
 
 	if ((!hascashe) && (!hasprequery)) {
+
+
 
 		//viser info om serverne som svarte
 		printf("<SEARCHNODES_INFO NROFSEARCHNODES=\"%i\" />\n",nrRespondedServers);
@@ -1551,7 +1585,8 @@ int main(int argc, char *argv[])
 					printf("\t</TIMES>\n");
 
 					printf("\t<FILTERTRAPP>\n");
-						printf("\t\t<filterAdultWeight_1>%i</filterAdultWeight_1>\n",SiderHeder[i].filtersTraped.filterAdultWeight_1);
+						printf("\t\t<filterAdultWeight_bool>%i</filterAdultWeight_bool>\n",SiderHeder[i].filtersTraped.filterAdultWeight_bool);
+						printf("\t\t<filterAdultWeight_value>%i</filterAdultWeight_value>\n",SiderHeder[i].filtersTraped.filterAdultWeight_value);
 						printf("\t\t<filterSameCrc32_1>%i</filterSameCrc32_1>\n",SiderHeder[i].filtersTraped.filterSameCrc32_1);
 						printf("\t\t<filterSameUrl>%i</filterSameUrl>\n",SiderHeder[i].filtersTraped.filterSameUrl);
 						printf("\t\t<filterNoUrl>%i</filterNoUrl>\n",SiderHeder[i].filtersTraped.filterNoUrl);
@@ -1858,12 +1893,13 @@ int main(int argc, char *argv[])
 
                 	printf("\t<NROFHITS>%i</NROFHITS>\n",Sider[i].iindex.TermAntall);
                 	//printer ut hits (hvor i dokumenetet orde befinner seg ).
+			/*
                 	printf("\t<HITS>");
                 	for (y=0; (y < Sider[i].iindex.TermAntall) && (y < MaxTermHit); y++) {
                 	        printf("%hu ",Sider[i].iindex.hits[y]);
                 	}
                 	printf("</HITS>\n");
-
+			*/
 
 
 			#ifdef BLACK_BOKS

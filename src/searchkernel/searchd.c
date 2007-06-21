@@ -410,13 +410,6 @@ void *do_chld(void *arg)
 
 	#endif
 
-	printf("subname \"%s\"\n",queryNodeHeder.subname);
-
-	//dekoder subname
-
-	Count = split(queryNodeHeder.subname, ",", &Data);
-
-	subnames = malloc(sizeof(struct subnamesFormat) * Count ); 
 
 
 /***************************************/
@@ -570,7 +563,6 @@ void *do_chld(void *arg)
 
 	subnamesDefaultsConfig.rankTittelFirstWord = config_setting_get_int(cfgstring);
 
-
 	//rankUrlMainWord
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankUrlMainWord") ) == NULL) {
                 printf("can't load \"rankUrlMainWord\" from config\n");
@@ -596,6 +588,13 @@ void *do_chld(void *arg)
 
 	/****************/
 
+	printf("subname \"%s\"\n",queryNodeHeder.subname);
+
+	//dekoder subname
+
+	Count = split(queryNodeHeder.subname, ",", &Data);
+
+	subnames = malloc(sizeof(struct subnamesFormat) * Count ); 
 	
 
   	Count = 0;
@@ -617,8 +616,11 @@ void *do_chld(void *arg)
 
 			if ((cfgcollection = config_setting_get_member(cfgcollections, subnames[nrOfSubnames].subname)) == NULL ) {
 				printf("can't load \"collections\" from config for \"%s\"\n",subnames[nrOfSubnames].subname);
+
 			}
 			else {
+
+
 				/****************/
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "summary") ) == NULL) {
                 			printf("can't load \"summary\" from config\n");
@@ -785,8 +787,10 @@ void *do_chld(void *arg)
 
 
 				/****************/
+			
 			}
 
+			
 			printf("nrOfSubnames a %i\n",nrOfSubnames);	
 			++nrOfSubnames;
 			printf("nrOfSubnames b %i\n",nrOfSubnames);

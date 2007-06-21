@@ -262,6 +262,18 @@ missinglotDetectLocal: src/missinglotDetectLocal/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/missinglotDetectLocal/main.c  -o bin/missinglotDetectLocal $(LDFLAGS)
 
+missinglotRemoveFormUdfile: src/missinglotRemoveFormUdfile/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/missinglotRemoveFormUdfile/main.c  -o bin/missinglotRemoveFormUdfile $(LDFLAGS)
+
+missinglotGetFormUdfile: src/missinglotGetFormUdfile/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/missinglotGetFormUdfile/main.c  -o bin/missinglotGetFormUdfile $(LDFLAGS)
+
 sortLinkdb: src/linkdbTools/sortLinkdb.c
 	@echo ""
 	@echo "$@:"
@@ -384,7 +396,7 @@ boithoads: src/boithoads/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoads/main.c src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/httpGet/httpGet.c src/parse_summary/libsummary.a -o bin/boithoads $(LDFLAGS) $(MYSQL) $(LIBXML) $(CURLLIBS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoads/main.c src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/httpGet/httpGet.c src/parse_summary/libsummary.a -o bin/boithoads $(LDFLAGS) $(MYSQL) $(LIBXML) $(CURLLIBS) -D EXPLAIN_RANK
 
 boithoadshread: src/boithoads/main.c
 	@echo ""
@@ -489,6 +501,12 @@ LotInvertetIndexMaker: src/LotInvertetIndexMaker/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMaker/main.c -o bin/LotInvertetIndexMaker $(LDFLAGS)
 
+LotInvertetIndexMakerSplice: src/LotInvertetIndexMakerSplice/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMakerSplice/main.c -o bin/LotInvertetIndexMakerSplice $(LDFLAGS)
+
 listLostLots: src/listLostLots/main.c	
 	@echo ""
 	@echo "$@:"
@@ -524,6 +542,9 @@ ipbann: src/ipbann/main.c
 
 addanchors: src/addanchors/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/addanchors/main.c -o bin/addanchors $(LDFLAGS)
+
+IndexerLotAnchors: src/IndexerLotAnchors/main.c
+	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLotAnchors/main.c -o bin/IndexerLotAnchors $(LDFLAGS)
 
 readNyeUrlerFil: src/readNyeUrlerFil/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/readNyeUrlerFil/main.c  -o bin/readNyeUrlerFil $(LDFLAGS)
@@ -676,6 +697,12 @@ IndexerLotUrl: src/IndexerLotUrl/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLotUrl/main.c -o bin/IndexerLotUrl $(LDFLAGS)
+
+IndexerLotDomainId: src/IndexerLotDomainId/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLotDomainId/main.c -o bin/IndexerLotDomainId $(LDFLAGS)
 
 fixsAsciixBug: src/fixsAsciixBug/main.c
 	@echo ""

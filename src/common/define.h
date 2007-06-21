@@ -7,6 +7,8 @@
 //#include "DocumentIndex.h"
 //#include "lot.h"
 
+#define maxTotalIindexHits MaxTermHit * maxIndexElements
+
 #define NrOfDataDirectorys 64
 
 #define NEWURLFILES_NR 5
@@ -142,6 +144,9 @@
 #define MaxPoengTittel 17
 #define maxPoengAthor 260
 
+#define complicacy_maxPoengAthorPhraserank 260
+#define complicacy_maxPoengAthorSimple 30
+
 //Lengden på en okument post lengde
 //#define DocumentIndexPOSTLENGTH 253
 
@@ -256,7 +261,9 @@ struct ReposetoryHeaderFormat {
 	#ifdef BLACK_BOKS
 		//int aclSize;
 		int acl_allowSize;
+		#ifdef IIACL
 		int acl_deniedSize;
+		#endif
 		time_t storageTime; //3 now
 		char doctype[4]; //3 now
 		char reservedSpace[64]; //3 now
@@ -290,14 +297,22 @@ struct rank_explaindFormat {
 	unsigned short rankUrl_mainbody;
 	unsigned short rankUrl;
 
+	unsigned short nrAthorPhrase;
 	unsigned short nrAthor;	
 };
 
+struct hitsFormat {
+	unsigned short pos;
+	char phrase;
+};
+
 // Formatett på treff i indeksen
-struct iindexFormat {
+struct iindexMainElements {
 	int DocID;
 	int TermAntall;
-	unsigned short hits[MaxTermHit];
+	//unsigned short hits[MaxTermHit];
+	//unsigned short *hits;
+	struct hitsFormat *hits;
 	int TermRank;
 	int PopRank;
 	unsigned long int allrank; //byttet til unsigned long 24. okt 2006. unsigned long er 4 bit int
@@ -320,10 +335,17 @@ struct iindexFormat {
 };
 
 
+struct iindexFormat {
+	//unsigned short hits[maxTotalIindexHits];
+	struct hitsFormat hits[maxTotalIindexHits];
+	int nrofHits;
+	struct iindexMainElements iindex[maxIndexElements];
+};
+
 // formatet for dataene for sidene skal være
 struct SiderFormat {
 	struct DocumentIndexFormat DocumentIndex;
-	struct iindexFormat iindex;
+	struct iindexMainElements iindex;
 	//struct ReposetoryFormat Reposetory;	
 	//char htmlBuffer[30000];
 	//char *htmlBuffer;
@@ -386,7 +408,8 @@ struct queryTimeFormat {
 };
 
 struct filtersTrapedFormat {
-	int filterAdultWeight_1;
+	int filterAdultWeight_bool;
+	int filterAdultWeight_value;
 	int filterSameCrc32_1;
 	int filterSameUrl;
 	int find_domain_no_subname;

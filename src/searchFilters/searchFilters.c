@@ -4,8 +4,29 @@
 #include "searchFilters.h"
 
 #include "../common/url.h"
+#include "../common/lot.h"
 
-int filterAdultWeight(char AdultWeight,int adultpages,int noadultpages) {
+void filtersTrapedReset(struct filtersTrapedFormat *filtersTraped) {
+
+        filtersTraped->filterAdultWeight_bool	= 0;
+        filtersTraped->filterAdultWeight_value	= 0;
+        filtersTraped->filterSameCrc32_1	= 0;
+        filtersTraped->filterSameUrl		= 0;
+        filtersTraped->find_domain_no_subname	= 0;
+        filtersTraped->filterSameDomain		= 0;
+        filtersTraped->filterTLDs		= 0;
+        filtersTraped->filterResponse		= 0;
+        filtersTraped->cantpopResult		= 0;
+        filtersTraped->cmc_pathaccess		= 0;
+        filtersTraped->filterSameCrc32_2	= 0;
+        filtersTraped->cantDIRead		= 0;
+        filtersTraped->getingDomainID 		= 0;
+        filtersTraped->sameDomainID 		= 0;
+        filtersTraped->filterNoUrl 		= 0;
+
+}
+
+int filterAdultWeight_bool(char AdultWeight,int adultpages,int noadultpages) {
 
 	if (noadultpages > 10) {
 		//hvis vi har mange nokk sider, viser vi ikke en side hvis den er adult
@@ -23,11 +44,29 @@ int filterAdultWeight(char AdultWeight,int adultpages,int noadultpages) {
 
 }
 
+int filterAdultWeight_value(int AdultWeight,int adultpages,int noadultpages) {
+
+	if (noadultpages > 10) {
+		//hvis vi har mange nokk sider, viser vi ikke en side hvis den er adult
+		if (AdultWeight >= AdultWeightForXXX) {
+			return 1;
+		}
+		else {
+			return 0;
+		}
+	}
+	else {
+		//hvis vi har fårfå sider så filtrerer vi ikke
+		return 0;
+	}
+
+}
+
 
 int filterResponse(int responscode) {
 
 	//filtrerer hvis det ikke er lovlige responskoder
-	if ((responscode == 200) || (responscode == 301) || (responscode == 302)) {
+	if ((responscode == 200) || (responscode == 301) || (responscode == 302) || (responscode == 0)) {
 		return 0;
 	}
 	else {
@@ -44,8 +83,9 @@ int filterSameCrc32(int showabal,struct SiderFormat *CurentSider, struct SiderFo
 
 	for (i=0;i<showabal;i++) {
 		if (Sider[i].DocumentIndex.crc32 == (*CurentSider).DocumentIndex.crc32) {
-			//printf("crc32 is the same\n");
-
+			#ifdef DEBUG
+			printf("crc32 is the same for Url \"%s\" == \"%s\"\n",Sider[i].DocumentIndex.Url,(*CurentSider).DocumentIndex.Url);
+			#endif
 			return 1;
 
 			++count;
@@ -53,6 +93,37 @@ int filterSameCrc32(int showabal,struct SiderFormat *CurentSider, struct SiderFo
 	}
 
 	return 0;
+
+}
+
+int filterSameDomainID(int showabal,struct SiderFormat *CurentSider, struct SiderFormat *Sider) {
+
+	int i;
+	int count = 0;
+
+	for (i=0;i<showabal;i++) {
+
+		if (!Sider[i].deletet) {
+
+			if (Sider[i].DomainID == (*CurentSider).DomainID) {
+				#ifdef DEBUG
+				printf("DomainID is the same\n");
+				#endif
+		
+
+				++count;
+			}		
+
+		}
+	}
+
+	if (count < 2) {
+		return 0;
+	}
+	else {
+		return 1;
+	}
+
 
 }
 
@@ -131,6 +202,13 @@ int filterSameDomain(int showabal,struct SiderFormat *CurentSider, struct SiderF
 		if (!Sider[i].deletet) {
 
 			if (strcmp((*CurentSider).domain,Sider[i].domain) == 0) {
+				#ifdef DEBUG
+				if (count < 2) {
+				printf("domain is the same. Urls Url \"%s\" (domain \"%s\", DociD %u-%i, DomainID %ho) == \"%s\" (domain \"%s\", DocID %u-%i, DomainID %ho)\n",
+					Sider[i].DocumentIndex.Url,Sider[i].domain,Sider[i].iindex.DocID,rLotForDOCid(Sider[i].iindex.DocID),Sider[i].DomainID,
+					(*CurentSider).DocumentIndex.Url,(*CurentSider).domain,(*CurentSider).iindex.DocID,rLotForDOCid((*CurentSider).iindex.DocID),(*CurentSider).DomainID);
+				}
+				#endif
 				//printf("domain is the same. %s == %s\n",(*CurentSider).domain,Sider[i].domain);
 
 				(*CurentSider).posisjon = Sider[i].posisjon;
@@ -141,6 +219,9 @@ int filterSameDomain(int showabal,struct SiderFormat *CurentSider, struct SiderF
 
 	}
 
+	#ifdef DEBUG
+	printf("have a total of %i from this domain\n",count);
+	#endif
 
 	if (count < 2) {
 		return 0;

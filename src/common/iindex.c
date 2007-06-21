@@ -450,6 +450,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 	int Adress = 0;
 	int SizeForTerm = 0;
+	int maxIIindexSize;
 	int iindexfile;
 	char FilePath[255];
 
@@ -530,6 +531,14 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 			//SizeForTerm -= (sizeof(term) + sizeof(Antall));
 			//Adress -= (sizeof(term) + sizeof(Antall));
 			printf("size %i\n",SizeForTerm);
+
+			maxIIindexSize = maxIndexElements * 209;
+
+			if (SizeForTerm > maxIIindexSize) { // DocID 4b +  langnr 1b + TermAntall 4b + (100 hit * 2b)
+				printf("size it to large. Will only read first %i bytes\n",maxIIindexSize);
+				SizeForTerm = maxIIindexSize;
+			}
+
 			char *allindex;
 
 			if ((allindex = malloc(SizeForTerm)) == NULL) {
@@ -564,71 +573,90 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		for (i = 0; ((i < Antall) && (y < maxIndexElements)); i++) {
 
 
-			TeffArray[y].phraseMatch = 0;
+			TeffArray->iindex[y].phraseMatch = 0;
 
 			//v3
 			if (isv3) {
 				
-				allindex += memcpyrc(&TeffArray[y].DocID,allindex,sizeof(unsigned long));
+				allindex += memcpyrc(&TeffArray->iindex[y].DocID,allindex,sizeof(unsigned long));
 
 				// v3 har langnr
-				allindex += memcpyrc(&TeffArray[y].langnr,allindex,sizeof(char));
+				allindex += memcpyrc(&TeffArray->iindex[y].langnr,allindex,sizeof(char));
 
-				allindex += memcpyrc(&TeffArray[y].TermAntall,allindex,sizeof(unsigned long));
+				allindex += memcpyrc(&TeffArray->iindex[y].TermAntall,allindex,sizeof(unsigned long));
 				
 			}
 			else {
-				allindex += memcpyrc(&TeffArray[y].DocID,allindex,sizeof(unsigned long));
+				allindex += memcpyrc(&TeffArray->iindex[y].DocID,allindex,sizeof(unsigned long));
 
-				allindex += memcpyrc(&TeffArray[y].TermAntall,allindex,sizeof(unsigned long));
+				allindex += memcpyrc(&TeffArray->iindex[y].TermAntall,allindex,sizeof(unsigned long));
 
 			}
 
-			//printf("DociD %u, TermAntall %u\n",TeffArray[y].DocID,TeffArray[y].TermAntall);		
-			if (TeffArray[y].TermAntall > MaxsHitsInIndex) {
+			//printf("DociD %u, TermAntall %u\n",TeffArray->iindex[y].DocID,TeffArray->iindex[y].TermAntall);		
+			//if (TeffArray->iindex[y].TermAntall > MaxsHitsInIndex) {
 
-				//allindex += memcpyrc( &TeffArray[y].hits,allindex,(sizeof(unsigned short) * TeffArray[y].TermAntall) );
+				//allindex += memcpyrc( &TeffArray->iindex[y].hits,allindex,(sizeof(unsigned short) * TeffArray->iindex[y].TermAntall) );
 				//Leser først maksimum vi kan ha, så flytter vi peggeren over de andre
-				allindex += memcpyrc( &TeffArray[y].hits,allindex,(sizeof(unsigned short) * MaxsHitsInIndex) );
-				allindex += ( sizeof(unsigned short) * (TeffArray[y].TermAntall - MaxsHitsInIndex) );
+				//allindex += memcpyrc( &TeffArray->iindex[y].hits,allindex,(sizeof(unsigned short) * MaxsHitsInIndex) );
+				//slutter hvis vi har tat for mange hits
+				if ((TeffArray->nrofHits + TeffArray->iindex[y].TermAntall) > maxTotalIindexHits) {
+					printf("Har max hits. Har nå %i\n",TeffArray->nrofHits);
+					TeffArray->iindex[y].TermAntall = 0;
+					break;
+				}
+				allindex += memcpyrc( &TeffArray->hits[TeffArray->nrofHits].pos,allindex,(sizeof(unsigned short) * TeffArray->iindex[y].TermAntall) );
+				TeffArray->iindex[y].hits = &TeffArray->hits[TeffArray->nrofHits];
+
+				#ifdef DEBUG
+				printf("inserting into DocID %u nrofHits %i, %i hits, max %i, p %u\n",TeffArray->iindex[y].DocID,TeffArray->nrofHits,TeffArray->iindex[y].TermAntall,maxTotalIindexHits,(unsigned int )TeffArray->iindex[y].hits);			
+				#endif
+				//for (i=0;i<TeffArray->iindex[y].TermAntall;i++) {
+				//	printf("%hu ",TeffArray->iindex[y].hits[i].pos);
+				//}
+				//printf("\n");
+
+				TeffArray->nrofHits += TeffArray->iindex[y].TermAntall;
+
+				//allindex += ( sizeof(unsigned short) * (TeffArray->iindex[y].TermAntall - MaxsHitsInIndex) );
 
 				//kan våre vi får for mange hits i athor, da vi ikke eher overholt noen grense. 
 				//burde heller lagre en verdi på hvor mange hits vi har eller noe
 
-		  		//printf("error. TermAntall to large at %i (max %i)\n",TeffArray[y].TermAntall,MaxsHitsInIndex);
-				//printf("(TeffArray[y].TermAntall - maxIndexElements) %i, maxIndexElements %i\n",(TeffArray[y].TermAntall - maxIndexElements),maxIndexElements);
+		  		//printf("error. TermAntall to large at %i (max %i)\n",TeffArray->iindex[y].TermAntall,MaxsHitsInIndex);
+				//printf("(TeffArray->iindex[y].TermAntall - maxIndexElements) %i, maxIndexElements %i\n",(TeffArray->iindex[y].TermAntall - maxIndexElements),maxIndexElements);
 				//ToDo: denne blir hvis aldri kjørt, må undersøke det
 				/*
-				for (z = 0;(z < (TeffArray[y].TermAntall - maxIndexElements)) && (z < maxIndexElements); y++) {
+				for (z = 0;(z < (TeffArray->iindex[y].TermAntall - maxIndexElements)) && (z < maxIndexElements); y++) {
 					//allindex += memcpyrc(&hit,allindex,sizeof(unsigned short));
 					allindex += sizeof(unsigned short);
 					printf("z %i\n",z);
 				}
 				*/
-				//allindex += ( sizeof(unsigned short) * (TeffArray[y].TermAntall - MaxsHitsInIndex) );
-			}
-			else {
-				//fread(&TeffArray[y].hits,TeffArray[y].TermAntall,sizeof(unsigned short),fileha);
-				allindex += memcpyrc(&TeffArray[y].hits,allindex,(sizeof(unsigned short) * TeffArray[y].TermAntall));				
-				
-			}
+				//allindex += ( sizeof(unsigned short) * (TeffArray->iindex[y].TermAntall - MaxsHitsInIndex) );
+			//}
+			//else {
+			//	//fread(&TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall,sizeof(unsigned short),fileha);
+			//	allindex += memcpyrc(&TeffArray->iindex[y].hits,allindex,(sizeof(unsigned short) * TeffArray->iindex[y].TermAntall));				
+			//	
+			//}
 
-			TeffArray[y].subname = subname;
+			TeffArray->iindex[y].subname = subname;
 
 			#ifdef BLACK_BOKS
 				//legger til en peker til subname
-				TeffArray[y].deleted = 0;
-				TeffArray[y].indexFiltered.filename = 0;
-				TeffArray[y].indexFiltered.date = 0;
+				TeffArray->iindex[y].deleted = 0;
+				TeffArray->iindex[y].indexFiltered.filename = 0;
+				TeffArray->iindex[y].indexFiltered.date = 0;
 			#endif
 
-                        //TeffArray[y].TermRank = rank(TeffArray[y].hits,TeffArray[y].TermAntall,TeffArray[y].DocID,subname,&TeffArray[y]);
-			//printf("TermRank: %i, subname \"%s\", DocID %u\n",TeffArray[y].TermRank,(*TeffArray[y].subname).subname,TeffArray[y].DocID);
+                        //TeffArray->iindex[y].TermRank = rank(TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall,TeffArray->iindex[y].DocID,subname,&TeffArray[y]);
+			//printf("TermRank: %i, subname \"%s\", DocID %u\n",TeffArray->iindex[y].TermRank,(*TeffArray->iindex[y].subname).subname,TeffArray->iindex[y].DocID);
 
 			#ifndef BLACK_BOKS
 				//midlertidig bug fiks. Ignorerer hit med DocID 0.
 				//ser ut til at vi har noen bugger som lager DocID 0. Skal ikke være med i index
-				if (TeffArray[y].DocID == 0) {
+				if (TeffArray->iindex[y].DocID == 0) {
 					continue;
 				}
 			#endif
@@ -641,7 +669,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				++y;
 			}
 			else if (languageFilterNr == 1) {
-				if (languageFilterAsNr[0] == TeffArray[y].langnr) {
+				if (languageFilterAsNr[0] == TeffArray->iindex[y].langnr) {
 					printf("filter hit\n");
 					++y;
 				}
@@ -650,7 +678,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				//søker os gjenom språkene vi skal filtrerte på
 				//int h;
 				//for(h=0;h<(languageFilterNr -1);h++) {
-				//	languageFilterAsNr[h] = TeffArray[y].langnr
+				//	languageFilterAsNr[h] = TeffArray->iindex[y].langnr
 				//}
 			}
 
@@ -669,60 +697,60 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		y=(*AntallTeff);
 		for (i = 0; ((i < Antall) && (y < maxIndexElements)); i++) {
 
-			fread(&TeffArray[y].DocID,sizeof(unsigned long),1,fileha);
+			fread(&TeffArray->iindex[y].DocID,sizeof(unsigned long),1,fileha);
 
 
 			//v3
 			if (isv3) {
-				fread(&TeffArray[y].langnr,sizeof(char),1,fileha);
+				fread(&TeffArray->iindex[y].langnr,sizeof(char),1,fileha);
 			}
-			//printf("lang %i\n",(int)TeffArray[y].langnr);
-       			fread(&TeffArray[y].TermAntall,sizeof(unsigned long),1,fileha);
+			//printf("lang %i\n",(int)TeffArray->iindex[y].langnr);
+       			fread(&TeffArray->iindex[y].TermAntall,sizeof(unsigned long),1,fileha);
 
 
 		
-			if (TeffArray[y].TermAntall > MaxsHitsInIndex) {
+			if (TeffArray->iindex[y].TermAntall > MaxsHitsInIndex) {
 
-				fread(&TeffArray[y].hits,TeffArray[y].TermAntall,sizeof(unsigned short),fileha);
+				fread(&TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall,sizeof(unsigned short),fileha);
 
 				//kan våre vi får for mange hits i athor, da vi ikke eher overholt noen grense. 
 				//burde heller lagre en verdi på hvor mange hits vi har eller noe
 
-		  		//printf("error. TermAntall to large at %i\n",TeffArray[y].TermAntall);
-				for (z = 0;(z < (TeffArray[y].TermAntall - maxIndexElements)) && (z < maxIndexElements); y++) {
+		  		//printf("error. TermAntall to large at %i\n",TeffArray->iindex[y].TermAntall);
+				for (z = 0;(z < (TeffArray->iindex[y].TermAntall - maxIndexElements)) && (z < maxIndexElements); y++) {
 					fread(&hit,sizeof(unsigned short),1,fileha);
 				}
 			}
 			else {
-				fread(&TeffArray[y].hits,TeffArray[y].TermAntall,sizeof(unsigned short),fileha);
+				fread(&TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall,sizeof(unsigned short),fileha);
 
 			}
 
 			//
                	        //lagger til poeng
                         //
-                        TeffArray[y].TermRank = rank(TeffArray[y].hits,TeffArray[y].TermAntall);
-			printf("TermRank: %i\n",TeffArray[y].TermRank);
+                        TeffArray->iindex[y].TermRank = rank(TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall);
+			printf("TermRank: %i\n",TeffArray->iindex[y].TermRank);
                         //
 
 			
-			//if (TeffArray[y].DocID == 5630541) {
-			//	printf("Ja, vi har 5630541, med %i - %i, rank %i\n",(int)TeffArray[y].TermAntall,MaxsHitsInIndex,(int)TeffArray[y].TermRank);
+			//if (TeffArray->iindex[y].DocID == 5630541) {
+			//	printf("Ja, vi har 5630541, med %i - %i, rank %i\n",(int)TeffArray->iindex[y].TermAntall,MaxsHitsInIndex,(int)TeffArray->iindex[y].TermRank);
 			//	
 			//}
 			
 
 			//legger til en peker til subname
-			TeffArray[y].subname = subname;
+			TeffArray->iindex[y].subname = subname;
 
-			//printf("languageFilterNr: %i, languageFilterAsNr[0]: %i, TeffArray[y].langnr: %i\n",languageFilterNr,languageFilterAsNr[0],TeffArray[y].langnr);
+			//printf("languageFilterNr: %i, languageFilterAsNr[0]: %i, TeffArray->iindex[y].langnr: %i\n",languageFilterNr,languageFilterAsNr[0],TeffArray->iindex[y].langnr);
 			
 			//int languageFilterNr, int languageFilterAsNr
 			if (languageFilterNr == 0) {
 				++y;
 			}
 			else if (languageFilterNr == 1) {
-				if (languageFilterAsNr[0] == TeffArray[y].langnr) {
+				if (languageFilterAsNr[0] == TeffArray->iindex[y].langnr) {
 					printf("filter hit\n");
 					++y;
 				}
@@ -731,7 +759,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				//søker os gjenom språkene vi skal filtrerte på
 				//int h;
 				//for(h=0;h<(languageFilterNr -1);h++) {
-				//	languageFilterAsNr[h] = TeffArray[y].langnr
+				//	languageFilterAsNr[h] = TeffArray->iindex[y].langnr
 				//}
 			}
 

@@ -102,8 +102,9 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
     printf("\n");
 */
 }
-
-int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,struct iindexFormat *TeffArray,struct QueryDataForamt QueryData, char *htmlBuffer,unsigned int htmlBufferSize, char servername[],char subname[]) {
+int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,
+	struct iindexMainElements *TeffArray,struct QueryDataForamt QueryData, char *htmlBuffer,
+	unsigned int htmlBufferSize, char servername[],char subname[]) {
 
 	int y;
 	char        *titleaa, *body, *metakeyw, *metadesc;
@@ -598,7 +599,8 @@ int foundGodPage(struct PagesResultsFormat *PagesResults) {
 	#endif
 
 }
-void increaseMemFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTraped, int *nrInSubname,struct iindexFormat *iindex) {
+void increaseMemFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTraped, 
+	int *nrInSubname,struct iindexMainElements *iindex) {
 
 
 	#ifdef WITH_THREAD
@@ -625,7 +627,8 @@ void increaseMemFiltered(struct PagesResultsFormat *PagesResults,int *whichFilte
 
 
 }
-void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTraped, int *nrInSubname,struct iindexFormat *iindex) {
+void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTraped, 
+	int *nrInSubname,struct iindexMainElements *iindex) {
 
 
 	#ifdef WITH_THREAD
@@ -715,7 +718,7 @@ void *generatePagesResults(void *arg)
 	debug("localshowabal %i",localshowabal);
 
 	while ((i=nextIndex(PagesResults)) != -1) {
-	debug("i %i, DocID %u\n",i,(*PagesResults).TeffArray[i].DocID);
+	debug("i %i, DocID %u\n",i,(*PagesResults).TeffArray->iindex[i].DocID);
 
 		//if ((*SiderHeder).filtered > 300) {
 		//	(*PagesResults).filterOn = 0;
@@ -723,11 +726,11 @@ void *generatePagesResults(void *arg)
 
 		#ifdef BLACK_BOKS
 		//hvis index filter tidligere har funet ut at dette ikke er et pra treff går vi til neste
-		if ((*PagesResults).TeffArray[i].indexFiltered.filename == 1) {
+		if ((*PagesResults).TeffArray->iindex[i].indexFiltered.filename == 1) {
 			printf("index filtered\n");
 			continue;
 		}
-		if ((*PagesResults).TeffArray[i].indexFiltered.date == 1) {
+		if ((*PagesResults).TeffArray->iindex[i].indexFiltered.date == 1) {
 			printf("index filtered\n");
 			continue;
 		}
@@ -735,23 +738,27 @@ void *generatePagesResults(void *arg)
 
 		#ifndef BLACK_BOKS
 		//pre DIread filter
-		if (((*PagesResults).filterOn) && (filterAdultWeight(adultWeightForDocIDMemArray((*PagesResults).TeffArray[i].DocID),(*PagesResults).adultpages,(*PagesResults).noadultpages) == 1)) {
+		printf("adult %u: %i\n",(*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
+		if (((*PagesResults).filterOn) && (filterAdultWeight_bool(adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID),(*PagesResults).adultpages,(*PagesResults).noadultpages) == 1)) {
 			#ifdef DEBUG
-			printf("%u is adult whith %i\n",(*PagesResults).TeffArray[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray[i].DocID));
+			printf("%u is adult whith %i\n",(*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
 			#endif
-			increaseMemFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_1,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+			increaseMemFiltered(PagesResults,
+				&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_bool,
+				&(*(*PagesResults).TeffArray->iindex[i].subname).hits,
+				&(*PagesResults).TeffArray->iindex[i]);
 			continue;
 		}
 
 		//uanset om vi har filter eller ikke så slår vi opp domainid. Men hvis vi har filter på så teller vi også
-		if (!iintegerMemArrayGet ((*PagesResults).DomainIDs,&DomainID,sizeof(*DomainID),(*PagesResults).TeffArray[i].DocID) ) {
+		if (!iintegerMemArrayGet ((*PagesResults).DomainIDs,&DomainID,sizeof(*DomainID),(*PagesResults).TeffArray->iindex[i].DocID) ) {
 			#ifdef DEBUG
 			printf("can't lookup DomainID\n");
 			#endif
 			(*PagesResults).Sider[localshowabal].DomainID = 0;
 
 			if (((*PagesResults).filterOn)) {
-				increaseMemFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.getingDomainID,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+				increaseMemFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.getingDomainID,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 
 				continue;
 			}
@@ -766,7 +773,7 @@ void *generatePagesResults(void *arg)
 			#ifdef DEBUG
 			printf("Have same DomainID\n");
 			#endif
-			increaseMemFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.sameDomainID,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+			increaseMemFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.sameDomainID,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 			continue;
 			
 		}
@@ -774,21 +781,27 @@ void *generatePagesResults(void *arg)
 		#endif
 
 		//leser DI
-		if (!DIRead(&(*PagesResults).Sider[localshowabal].DocumentIndex,(*PagesResults).TeffArray[i].DocID,(*(*PagesResults).TeffArray[i].subname).subname)) 
+		if (!DIRead(&(*PagesResults).Sider[localshowabal].DocumentIndex,(*PagesResults).TeffArray->iindex[i].DocID,(*(*PagesResults).TeffArray->iindex[i].subname).subname)) 
 		{
                         //hvis vi av en eller annen grun ikke kunne gjøre det kalger vi
-                        printf("Cant read post for %u-%i\n",(*PagesResults).TeffArray[i].DocID,rLotForDOCid((*PagesResults).TeffArray[i].DocID));
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantDIRead,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+                        printf("Cant read post for %u-%i\n",(*PagesResults).TeffArray->iindex[i].DocID,rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID));
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantDIRead,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
                         continue;
                 }
 
+		//adult fra di
+		if (((*PagesResults).filterOn) && (filterAdultWeight_value((*PagesResults).Sider[localshowabal].DocumentIndex.AdultWeight,(*PagesResults).adultpages,(*PagesResults).noadultpages)) ) {
+			printf("Hav seen url befor. Url \"%s\"\n",(*PagesResults).Sider[localshowabal].DocumentIndex.Url);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_value,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
+                        continue;
+		}
 
 		//filtrerer ut dublikater fra med crc32 fra DocumentIndex
 		if ((*PagesResults).Sider[localshowabal].DocumentIndex.crc32 != 0) {
                        
                         if (filterSameCrc32(localshowabal,&(*PagesResults).Sider[localshowabal],(*PagesResults).Sider)) {
                         	printf("hav same crc32. crc32 from DocumentIndex\n");
-				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_1,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_1,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
                         	continue;
                         }
                 }
@@ -798,9 +811,9 @@ void *generatePagesResults(void *arg)
 		//int cmc_pathaccess(int socketha,char collection_in[], char uri_in, char user_in[], char password_in[]);
 
 		gettimeofday(&start_time, NULL);
-		if (!cmc_pathaccess((*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray[i].subname).subname,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,search_user,password)) {
+		if (!cmc_pathaccess((*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray->iindex[i].subname).subname,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,search_user,password)) {
 			printf("dident hav acces to that one\n");
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray[i].subname).hits);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray->iindex[i].subname).hits);
 			continue;
 		}
 		gettimeofday(&end_time, NULL);
@@ -808,13 +821,13 @@ void *generatePagesResults(void *arg)
 
 */
 
-		printf("[tid: %u] looking on  DocID: %u url: \"%s\"\n",(unsigned int)tid,(*PagesResults).TeffArray[i].DocID,(*PagesResults).Sider[localshowabal].DocumentIndex.Url);
+		printf("[tid: %u] looking on  DocID: %u url: \"%s\"\n",(unsigned int)tid,(*PagesResults).TeffArray->iindex[i].DocID,(*PagesResults).Sider[localshowabal].DocumentIndex.Url);
 
 		#ifndef BLACK_BOKS
 
 		if ((*PagesResults).Sider[localshowabal].DocumentIndex.Url[0] == '\0') {
 			printf("DocumentIndex url is emty\n");
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterNoUrl,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterNoUrl,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 
 			continue;
 		}
@@ -822,7 +835,7 @@ void *generatePagesResults(void *arg)
 		//fjerner eventuelt like urler
 		if (((*PagesResults).filterOn) && (filterSameUrl(localshowabal,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).Sider)) ) {
 			printf("Hav seen url befor. Url \"%s\"\n",(*PagesResults).Sider[localshowabal].DocumentIndex.Url);
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameUrl,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameUrl,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
                         continue;
 		}
 
@@ -830,7 +843,7 @@ void *generatePagesResults(void *arg)
 		if (!find_domain_no_subname((*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).Sider[localshowabal].domain,sizeof((*PagesResults).Sider[localshowabal].domain))) {
 		//if (!find_domain_no_www((*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).Sider[localshowabal].domain)) {
 			printf("cant find domain. Bad url?. Url \"%s\". localshowabal %i\n",(*PagesResults).Sider[localshowabal].DocumentIndex.Url,localshowabal);
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.find_domain_no_subname,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.find_domain_no_subname,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 			continue;
 		}
 
@@ -838,7 +851,7 @@ void *generatePagesResults(void *arg)
 			//#ifdef DEBUG
 			printf("hav same domain. Domain: %s. Url %s\n",(*PagesResults).Sider[localshowabal].domain,(*PagesResults).Sider[localshowabal].DocumentIndex.Url);
 			//#endif
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameDomain,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameDomain,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 			continue;		
 		}
 
@@ -846,7 +859,7 @@ void *generatePagesResults(void *arg)
 			#ifdef DEBUG
 			printf("banned TLD\n");
 			#endif
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterTLDs,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterTLDs,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 			continue;
 		}
 		#endif
@@ -858,7 +871,7 @@ void *generatePagesResults(void *arg)
 		//DI filtere
 		if (((*PagesResults).filterOn) && (filterResponse((*PagesResults).Sider[localshowabal].DocumentIndex.response) )) {
 			debug("bad respons kode %i\n",(*PagesResults).Sider[localshowabal].DocumentIndex.response);
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterResponse,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterResponse,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 			continue;
 		}
 		//if (((*PagesResults).filterOn) && (filterSameIp(localshowabal,&(*PagesResults).Sider[localshowabal],(*PagesResults).Sider))) {
@@ -868,11 +881,11 @@ void *generatePagesResults(void *arg)
 		//}
 		#endif
 		
-		if (!popResult(&(*PagesResults).Sider[localshowabal], (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray[i].DocID,&(*PagesResults).TeffArray[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,(*(*PagesResults).TeffArray[i].subname).subname)) {
+		if (!popResult(&(*PagesResults).Sider[localshowabal], (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,(*(*PagesResults).TeffArray->iindex[i].subname).subname)) {
 			//#ifdef DEBUG
                         	printf("cant popResult\n");
                         //#endif
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantpopResult,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantpopResult,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 			continue;
 
 		}
@@ -885,10 +898,10 @@ void *generatePagesResults(void *arg)
 		if (strcmp((*PagesResults).password,"water66") == 0) {
 			printf("pathaccess: have sodo password. Won't do pathaccess\n");
 		}
-		else if (!pathaccess(PagesResults, (*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray[i].subname).subname,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).search_user,(*PagesResults).password)) {
+		else if (!pathaccess(PagesResults, (*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray->iindex[i].subname).subname,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,(*PagesResults).search_user,(*PagesResults).password)) {
 			printf("dident hav acces to that one\n");
 
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 
 			//temp:
 			//strcpy((*PagesResults).Sider[localshowabal].title,"Access denied!");
@@ -910,7 +923,7 @@ void *generatePagesResults(void *arg)
 
 			if (((*PagesResults).filterOn) && (filterSameCrc32(localshowabal,&(*PagesResults).Sider[localshowabal],(*PagesResults).Sider))) {
 	                      	printf("hav same crc32\n");
-				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_2,&(*(*PagesResults).TeffArray[i].subname).hits,&(*PagesResults).TeffArray[i]);
+				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_2,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
                 	      	continue;
                 	}
 		}
@@ -924,7 +937,7 @@ void *generatePagesResults(void *arg)
 		shortenurl((*PagesResults).Sider[localshowabal].uri,sizeof((*PagesResults).Sider[localshowabal].uri));
 
 		//kopierer over subname
-		(*PagesResults).Sider[localshowabal].subname = (*(*PagesResults).TeffArray[i].subname);
+		(*PagesResults).Sider[localshowabal].subname = (*(*PagesResults).TeffArray->iindex[i].subname);
 
 		(*PagesResults).Sider[localshowabal].posisjon = localshowabal +1;
 
@@ -996,7 +1009,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
          (*SiderHeder).filtersTraped.getingDomainID = 0;
          (*SiderHeder).filtersTraped.sameDomainID = 0;
 
-         (*SiderHeder).filtersTraped.filterAdultWeight_1 = 0;
+         (*SiderHeder).filtersTraped.filterAdultWeight_bool = 0;
+         (*SiderHeder).filtersTraped.filterAdultWeight_value = 0;
          (*SiderHeder).filtersTraped.filterSameCrc32_1 = 0;
          (*SiderHeder).filtersTraped.filterSameUrl = 0;
          (*SiderHeder).filtersTraped.find_domain_no_subname = 0;
@@ -1019,7 +1033,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	int i, y, j;
 	int x;
 
-	PagesResults.TeffArray = malloc(maxIndexElements * sizeof(struct iindexFormat));
+	PagesResults.TeffArray = malloc(sizeof(struct iindexFormat));
 
 	//int adultpages, noadultpages;
 	//struct QueryDataForamt QueryData;
@@ -1234,7 +1248,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	for (i=0;((i<100) && (i<PagesResults.antall));i++) {
 
 		//printf("DocID %u, aw %i\n",PagesResults.TeffArray[i].DocID,adultWeightForDocIDMemArray(PagesResults.TeffArray[i].DocID));
-		if (adultWeightForDocIDMemArray(PagesResults.TeffArray[i].DocID)) {
+		if (adultWeightForDocIDMemArray(PagesResults.TeffArray->iindex[i].DocID)) {
 			++PagesResults.adultpages;	
 		}
 		else {
@@ -1396,7 +1410,8 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	printf("\t%-40s %i\n","getingDomainID",(*SiderHeder).filtersTraped.getingDomainID);
 	printf("\t%-40s %i\n","sameDomainID",(*SiderHeder).filtersTraped.sameDomainID);
 
-	printf("\t%-40s %i\n","filterAdultWeight_1",(*SiderHeder).filtersTraped.filterAdultWeight_1);
+	printf("\t%-40s %i\n","filterAdultWeight_bool",(*SiderHeder).filtersTraped.filterAdultWeight_bool);
+	printf("\t%-40s %i\n","filterAdultWeight_value",(*SiderHeder).filtersTraped.filterAdultWeight_value);
 	printf("\t%-40s %i\n","filterSameCrc32_1",(*SiderHeder).filtersTraped.filterSameCrc32_1);
 	printf("\t%-40s %i\n","filterSameUrl",(*SiderHeder).filtersTraped.filterSameUrl);
 	printf("\t%-40s %i\n","filterNoUrl",(*SiderHeder).filtersTraped.filterNoUrl);
@@ -1411,20 +1426,20 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	printf("\n\n");
 
 	#ifdef EXPLAIN_RANK
-	printf("|%-10s|%-10s||%-10s|%-10s|%-10s|%-18s|%-10s|%-10s|\n",
+	printf("|%-10s|%-10s||%-10s|%-10s|%-10s|%-25s|%-10s|%-10s|\n",
 		"TermRank",
 		"PopRank",
 		"Body",
 		"Headline",
 		"Tittel",
-		"Athor (nr)",
+		"Athor (nr nrp)",
 		"UrlM",
 		"Url"
 		);
-	printf("|----------|----------||----------|----------|----------|------------------|----------|----------|\n");
+	printf("|----------|----------||----------|----------|----------|------------------------|----------|----------|\n");
 
 	for(i=0;i<(*SiderHeder).showabal;i++) {
-                        printf("|%10i|%10i||%10i|%10i|%10i|%10i (%5i)|%10i|%10i| %s (DocID %u-%i)\n",
+                        printf("|%10i|%10i||%10i|%10i|%10i|%10i (%5i %5i)|%10i|%10i| %s (DocID %u-%i)\n",
 
 				Sider[i].iindex.TermRank,
 				Sider[i].iindex.PopRank,
@@ -1434,6 +1449,7 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 				Sider[i].iindex.rank_explaind.rankTittel,
 				Sider[i].iindex.rank_explaind.rankAthor,
 				Sider[i].iindex.rank_explaind.nrAthor,
+				Sider[i].iindex.rank_explaind.nrAthorPhrase,
 				Sider[i].iindex.rank_explaind.rankUrl_mainbody,
 				Sider[i].iindex.rank_explaind.rankUrl,
 				Sider[i].DocumentIndex.Url,

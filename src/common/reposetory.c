@@ -350,7 +350,9 @@ int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer
 	//skriver acl
 	#ifdef BLACK_BOKS
 		fwrite(acl_allow,(*ReposetoryHeader).acl_allowSize,1,RFILE);
+		#ifdef IIACL
 		fwrite(acl_denied,(*ReposetoryHeader).acl_deniedSize,1,RFILE);
+		#endif
 	#endif
 
         //skriver record seperator
@@ -635,11 +637,14 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 				printf("bad acl_allowSize. size %i\n",(*ReposetoryHeader).acl_allowSize);
 				return 0;
 			}
+			#ifdef IIACL
 			if ((*ReposetoryHeader).acl_deniedSize > 200) {
 				printf("bad acl_deniedSize. size %i\n",(*ReposetoryHeader).acl_deniedSize);
 				return 0;
 			}
+			#endif
 
+			
 			//#ifdef DEBUG
 			printf("acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
 			//#endif
@@ -652,6 +657,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			}
 			(*acl_allowbuffer)[(*ReposetoryHeader).acl_allowSize] = '\0';
 
+			#ifdef IIACL
 			#ifdef DEBUG
 			printf("did read acl_allow %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_allowSize,(*acl_allowbuffer));
 			#endif
@@ -671,6 +677,8 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 
 			#ifdef DEBUG
 			printf("did read acl_denied %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_deniedSize,(*acl_deniedbuffer));
+			#endif
+
 			#endif
 		#else
 			//(*aclbuffer) = NULL;
