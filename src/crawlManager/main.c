@@ -57,7 +57,7 @@ int documentError(int level, const char *fmt, ...) {
 
         va_start(ap, fmt);
 
-
+	printf("documentError: ");
         vprintf(fmt,ap);
 
 	bvlog(LOGERROR,level,fmt,ap);

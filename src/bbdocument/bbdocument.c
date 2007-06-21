@@ -90,6 +90,7 @@ int bbdocument_makethumb( char documenttype[],char document[],size_t dokument_si
 
 		}
 			return 1;
+		return 0;
 	}
 	else if (canconvert(documenttype) && (((*imagebuffer) = generate_thumbnail( document, dokument_size, imageSize )) == NULL)) {
 		return 0;
@@ -99,11 +100,14 @@ int bbdocument_makethumb( char documenttype[],char document[],size_t dokument_si
 	#if BBDOCUMENT_IMAGE_BY_CONVERT
 	if (strcmp(documenttype,"pdf") == 0) {
 		//pdf convert
+/*
 		if (((*imagebuffer) = generate_pdf_thumbnail_by_convert( document, dokument_size, imageSize )) == NULL) {
 			return 0;
 
 		}
 			return 1;
+*/	
+		return 0;
 	}
 	else if (canconvert(documenttype)) {
 
@@ -675,7 +679,9 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	strcpy(ReposetoryHeader.content_type,"htm");
 
 	ReposetoryHeader.acl_allowSize = strlen(acl_allow);
+	#ifdef IIACL
 	ReposetoryHeader.acl_deniedSize = strlen(acl_denied);
+	#endif
 	ReposetoryHeader.time = lastmodified;
 
 	#ifdef DEBUG
