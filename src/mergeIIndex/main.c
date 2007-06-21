@@ -261,11 +261,11 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 		//ToDo: dette er nokk ikke optimalt når man tenker på hastighet. Må se på dette
 		qsort(iindexfile, nrOffIindexFiles , sizeof(struct iindexfileFormat), compare_elements);
 
+#if 0
 		for (i=0;i<nrOffIindexFiles;i++) {
-		
-			//printf("%i: t %lu : %lu eof %i\n",iindexfile[i].nr,iindexfile[i].lastTerm,iindexfile[i].lastAntall,iindexfile[i].eof);
-			
+			printf("%i: t %lu : %lu eof %i\n",iindexfile[i].nr,iindexfile[i].lastTerm,iindexfile[i].lastAntall,iindexfile[i].eof);
 		}
+#endif
 
 		//finner elementene som skal kopieres inn
 		mergeTerm = iindexfile[0].lastTerm;
