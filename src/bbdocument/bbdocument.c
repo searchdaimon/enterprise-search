@@ -568,7 +568,9 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	}
 	else if (strcmp(fileFilter->outputformat, "dir") == 0) {
 		char *p;
-		int len;
+		int len, failed = 0;
+		int iter = 0;
+		char *curdocp = documentfinishedbuf;
 
 		len = exeocbuflen;
 		p = strdup(documentfinishedbuf);
@@ -578,23 +580,85 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		}
 		while (*p != '\0') {
 			char *ft, *path;
+
+			printf("greponthis: Iteration: %d\n", iter++);
 			ft = p;
 			for (; *p != ' '; p++)
 				len--;
 			*p = '\0';
 			path = ++p;
+			/* XXX: strchr() */
 			for (; *p != '\n'; p++)
 				len--;
 
 			if (*p == '\n')
 				*p++ = '\0';
 
+			curdocp[0] = '\0';
 			/* We have a new file, let's get to work on it */
-			printf("Got: %s: %s\n", ft, path);
-		}
+			printf("########Got: %s: %s\n", ft, path);
+			{
+				char *docbuf, *p;
+				char *convdocbuf;
+				int docbufsize, convdocbufsize;
+				struct stat st;
+				int n;
+				char buf[1024];
+				FILE *fp;
 
-		free(fileFilterOrginal);
-		return 0;
+				if (stat(path, &st) == -1) { /* Unable to access file, move on to the next */
+					perror("stat");
+					failed++;
+					continue;
+				}
+
+				docbuf = malloc(st.st_size + 1); /* Make room for our lovely '\0' */
+				p = docbuf;
+				if (docbuf == NULL) {
+					perror("malloc");
+					failed++;
+					free(docbuf);
+					continue;
+				}
+				docbufsize = st.st_size;
+				if ((fp = fopen(path, "r")) == NULL) {
+					perror("fopen");
+					failed++;
+					failed++;
+					free(docbuf);
+					continue;
+				}
+				fread(docbuf, 1, docbufsize, fp);
+				fclose(fp);
+				//unlink(path);
+				docbuf[docbufsize] = '\0';
+				printf("##### Read in file...\n");
+				convdocbufsize = docbufsize * 2 + 512;
+				if ((convdocbuf = malloc(convdocbufsize)) == NULL) {
+					perror("malloc");
+					failed++;
+					free(docbuf);
+					continue;
+				}
+
+				if (bbdocument_convert(ft, docbuf, docbufsize, convdocbuf, &convdocbufsize, "directorycontent") == 0) {
+					fprintf(stderr, "Failed on bbdocument_convert.\n");
+					failed++;
+					free(docbuf);
+					free(convdocbuf);
+					continue;
+				}
+				printf("greponthis: %x %x %x\n", curdocp, convdocbuf, documentfinishedbuf);
+				memcpy(curdocp, convdocbuf, convdocbufsize);
+				curdocp += convdocbufsize;
+				
+				free(convdocbuf);
+				free(docbuf);
+			}
+		}
+		*curdocp = '\0';
+		*documentfinishedbufsize = curdocp - documentfinishedbuf; 
+		//printf("Got this: %d %d<<\n%s\n", strlen(documentfinishedbuf), *documentfinishedbufsize, documentfinishedbuf);
 	}
 	else {
 		printf("unknown dokument outputformat \"%s\"\n",fileFilter->outputformat);
@@ -607,7 +671,9 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	//unlink(filconvertetfile_real);
 	#endif
 
-	//free(fileFilterOrginal);
+	//printf("documentfinishedbuf is: \n...\n%s\n...\n", documentfinishedbuf);
+
+	free(fileFilterOrginal);
 
 	return 1;
 }
