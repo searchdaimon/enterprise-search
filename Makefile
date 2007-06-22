@@ -79,7 +79,7 @@ HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : searchddep searchdbb dispatcher_allbb crawlManager infoquery crawlSMB boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun dictionarywordsLot webadmindep
+bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun dictionarywordsLot webadmindep
 
 webadmindep: YumWrapper NetConfig InitServices setuidcaller yumupdate
 
@@ -88,6 +88,12 @@ tempFikes: IndexerLot_fik32bitbug DIconvert
 
 wordConverter: src/wordConverter/main.c
 	$(CC) src/wordConverter/main.c -o bin/wordConverter
+
+getFiletype:
+	@echo ""
+	@echo "$@:"
+
+	(cd src/getFiletype; make)
 
 
 
@@ -823,6 +829,12 @@ crawlSMB: src/crawlSMB/main.c
 	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g -Wl,-static $(LIBS)*.c src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) $(SMBCLIENT)
 	mkdir -p crawlers/crawlSMB
 	cp src/crawlSMB/crawlSMB.so crawlers/crawlSMB/
+
+crawlExchange:
+	@echo ""
+	@echo "$@:"
+
+	(cd src/crawlExchange; make)
 
 crawlSFTP: src/crawlSFTP/crawlsftp.c
 	@echo ""
