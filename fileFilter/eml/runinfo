@@ -1,5 +1,4 @@
 documentstype: eml
-command: /usr/bin/perl emlsplit.pl #file
+command: /usr/bin/perl $BOITHOHOME/fileFilter/eml/emlsplit.pl #file
 outputformat: dir
 outputtype: stdio
-
