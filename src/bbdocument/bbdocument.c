@@ -635,7 +635,6 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 				fclose(fp);
 				//unlink(path);
 				docbuf[docbufsize] = '\0';
-				printf("##### Read in file...\n");
 				convdocbufsize = 0;
 #if 0
 				convdocbufsize = docbufsize * 2 + 512;
@@ -673,7 +672,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		}
 		*curdocp = '\0';
 		*documentfinishedbufsize = curdocp - documentfinishedbuftmp; 
-		printf("Got this: %d %d<<\n%s\n", strlen(*documentfinishedbuf), *documentfinishedbufsize, *documentfinishedbuf);
+		//printf("Got this: %d %d<<\n%s\n", strlen(*documentfinishedbuf), *documentfinishedbufsize, *documentfinishedbuf);
 		//free(p);
 	}
 	else {
