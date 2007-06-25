@@ -1,0 +1,4 @@
+documentstype: zip
+command: /usr/bin/perl $BOITHOHOME/fileFilter/containers/extract.pl #file
+outputformat: dir
+outputtype: stdio
