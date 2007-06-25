@@ -580,6 +580,8 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 			free(fileFilterOrginal);
 			return 0;
 		}
+		sprintf(*documentfinishedbuf, html_tempelate, titlefromadd, "");
+		curdocp += strlen(*documentfinishedbuf);
 		while (*p != '\0') {
 			char *ft, *path;
 
@@ -600,7 +602,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 			/* We have a new file, let's get to work on it */
 			printf("########Got: %s: %s\n", ft, path);
 			{
-				char *docbuf, *p;
+				char *docbuf;
 				char *convdocbuf;
 				int docbufsize, convdocbufsize;
 				struct stat st;
@@ -615,7 +617,6 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 				}
 
 				docbuf = malloc(st.st_size + 1); /* Make room for our lovely '\0' */
-				p = docbuf;
 				if (docbuf == NULL) {
 					perror("malloc");
 					failed++;
@@ -672,7 +673,8 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		}
 		*curdocp = '\0';
 		*documentfinishedbufsize = curdocp - documentfinishedbuftmp; 
-		//printf("Got this: %d %d<<\n%s\n", strlen(documentfinishedbuf), *documentfinishedbufsize, documentfinishedbuf);
+		printf("Got this: %d %d<<\n%s\n", strlen(*documentfinishedbuf), *documentfinishedbufsize, *documentfinishedbuf);
+		//free(p);
 	}
 	else {
 		printf("unknown dokument outputformat \"%s\"\n",fileFilter->outputformat);
