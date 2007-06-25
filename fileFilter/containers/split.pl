@@ -14,7 +14,7 @@ my $tmpdir = mkdtemp('/tmp/containersplitXXXXXX');
 my $ok = $ae->extract(to => $tmpdir);
 
 foreach (@{ $ae->files }) {
-	print 'dat';
+	print ''; # XXX: Detect filetype here?
 	print ' ';
 	print $tmpdir . "/" . $_;
 	print "\n";
