@@ -280,7 +280,7 @@ char *acl_normalize(char *acl[]) {
 
 }
 
-int bbdocument_convert(char filetype[],char document[],const int dokument_size,char *documentfinishedbuf,int *documentfinishedbufsize, const char titlefromadd[]) {
+int bbdocument_convert(char filetype[],char document[],const int dokument_size,char **documentfinishedbuf,int *documentfinishedbufsize, const char titlefromadd[]) {
 
 	char **splitdata;
         int TokCount;
@@ -291,6 +291,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	int exeocbuflen;
 	int i;
 	int ret;
+	char *documentfinishedbuftmp;
 
 	printf("bbdocument_convert: dokument_size %i, title \"%s\"\n",dokument_size,titlefromadd);
 
@@ -304,23 +305,24 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	printf("documentfinishedbufsize is %i\n",(*documentfinishedbufsize));
 	#endif
 
-	//(*documentfinishedbufsize) = (documentsize * 2);
-	//documentfinishedbuf = (char *)malloc((*documentfinishedbufsize));
+	(*documentfinishedbufsize) = (dokument_size * 2) + 512;
+	*documentfinishedbuf = malloc((*documentfinishedbufsize));
+	documentfinishedbuftmp = *documentfinishedbuf;
 
 	//hvis vi har et html dokument kan vi bruke dette direkte
 	//er dog noe uefektist her, ved at vi gjør minnekopiering
 	if ((strcmp(filetype,"htm") == 0) || (strcmp(filetype,"html") == 0 )) {
-		memcpy(documentfinishedbuf,document,dokument_size +1);
-                (*documentfinishedbufsize) = strlen(documentfinishedbuf);
+		memcpy(documentfinishedbuftmp,document,dokument_size +1);
+                (*documentfinishedbufsize) = strlen(documentfinishedbuftmp);
 		return 1;
 	}
 	else if (strcmp(filetype,"hnxt") == 0) {
                
 		ntobr(document,dokument_size);
  
-		snprintf(documentfinishedbuf,(*documentfinishedbufsize),html_tempelate,titlefromadd,document);
+		snprintf(documentfinishedbuftmp,(*documentfinishedbufsize),html_tempelate,titlefromadd,document);
 
-                (*documentfinishedbufsize) = strlen(documentfinishedbuf);
+                (*documentfinishedbufsize) = strlen(documentfinishedbuftmp);
 		return 1;
 	}
 
@@ -387,8 +389,8 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 		//legger det inn i et html dokument, med riktig tittel	
 	//printf("cpbuf %s\n",cpbuf);
-		snprintf(documentfinishedbuf,(*documentfinishedbufsize),html_tempelate,titlefromadd,cpbuf);
-                (*documentfinishedbufsize) = strlen(documentfinishedbuf);
+		snprintf(documentfinishedbuftmp,(*documentfinishedbufsize),html_tempelate,titlefromadd,cpbuf);
+                (*documentfinishedbufsize) = strlen(documentfinishedbuftmp);
 	//printf("documentfinishedbufsize %i\n",(*documentfinishedbufsize));
 	//	printf("aa %s\n",documentfinishedbuf);
 		free(cpbuf);
@@ -465,17 +467,17 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	sprintf(escapetcommand,"%s",(*fileFilter).command);
 	char *shargs[] = {"/bin/sh","-c",escapetcommand ,'\0'};	
 	printf("runnig: /bin/sh -c %s\n",escapetcommand);
-	if (!exeoc(shargs,documentfinishedbuf,&exeocbuflen,&ret)) {
+	if (!exeoc(shargs,documentfinishedbuftmp,&exeocbuflen,&ret)) {
 
 		printf("dident get any data from exeoc. But can be a filter that creates files, sow wil continue\n");
 		//kan ikke sette den til 0 da vi bruker den får å vite hvos stor bufferen er lengere nede
 		//(*documentfinishedbufsize) = 0;
-		documentfinishedbuf[0] = '\0';
+		documentfinishedbuftmp[0] = '\0';
 		//return 0;
 
 	}
 	#ifdef DEBUG
-	printf("did convert to %i bytes (strlen %i)\n",exeocbuflen,strlen(documentfinishedbuf));
+	printf("did convert to %i bytes (strlen %i)\n",exeocbuflen,strlen(documentfinishedbuftmp));
 	#endif
 
 	if (strcmp((*fileFilter).outputformat,"text") == 0) {
@@ -488,12 +490,12 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		cpbufsize = (strlen(html_tempelate) + exeocbuflen + strlen(titlefromadd)+1);	
 		cpbuf = malloc(cpbufsize);
 		snprintf(cpbuf,cpbufsize,html_tempelate,titlefromadd,documentfinishedbuf);
-		strscpy(documentfinishedbuf,cpbuf,(*documentfinishedbufsize));
-		(*documentfinishedbufsize) = strlen(documentfinishedbuf);
+		strscpy(documentfinishedbuftmp,cpbuf,(*documentfinishedbufsize));
+		(*documentfinishedbufsize) = strlen(documentfinishedbuftmp);
 
 
 		#ifdef DEBUG	
-		printf("maked html document of %i b (html_tempelate is %i b, cpbuf %i)\n",strlen(documentfinishedbuf),strlen(html_tempelate),strlen(cpbuf));
+		printf("maked html document of %i b (html_tempelate is %i b, cpbuf %i)\n",strlen(documentfinishedbuftmp),strlen(html_tempelate),strlen(cpbuf));
 		#endif
 
 		free(cpbuf);
@@ -538,8 +540,8 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
 		printf("have size %i\n",(*documentfinishedbufsize));
 
-		snprintf(documentfinishedbuf,(*documentfinishedbufsize),html_tempelate,titlefromadd,cpbuf);
-                (*documentfinishedbufsize) = strlen(documentfinishedbuf);
+		snprintf(documentfinishedbuftmp,(*documentfinishedbufsize),html_tempelate,titlefromadd,cpbuf);
+                (*documentfinishedbufsize) = strlen(documentfinishedbuftmp);
 
 		printf("documentfinishedbufsize: %i\n",(*documentfinishedbufsize));
 
@@ -562,7 +564,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		if ((*documentfinishedbufsize) > inode.st_size) {
 			(*documentfinishedbufsize) = inode.st_size;
 		}
-        	fread(documentfinishedbuf,1,(*documentfinishedbufsize),fh);
+        	fread(documentfinishedbuftmp,1,(*documentfinishedbufsize),fh);
 
 		fclose(fh);
 	}
@@ -570,10 +572,10 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		char *p;
 		int len, failed = 0;
 		int iter = 0;
-		char *curdocp = documentfinishedbuf;
+		char *curdocp = documentfinishedbuftmp;
 
 		len = exeocbuflen;
-		p = strdup(documentfinishedbuf);
+		p = strdup(documentfinishedbuftmp);
 		if (p == NULL) {
 			free(fileFilterOrginal);
 			return 0;
@@ -633,6 +635,8 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 				//unlink(path);
 				docbuf[docbufsize] = '\0';
 				printf("##### Read in file...\n");
+				convdocbufsize = 0;
+#if 0
 				convdocbufsize = docbufsize * 2 + 512;
 				if ((convdocbuf = malloc(convdocbufsize)) == NULL) {
 					perror("malloc");
@@ -640,15 +644,25 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 					free(docbuf);
 					continue;
 				}
-
-				if (bbdocument_convert(ft, docbuf, docbufsize, convdocbuf, &convdocbufsize, "directorycontent") == 0) {
+#endif
+				/* XXX: untested */
+				while (((curdocp - documentfinishedbuftmp) + (char *)docbufsize) > (char *)documentfinishedbufsize) {
+					char *oldptr = *documentfinishedbuf;
+					
+					printf("We had to realloc.\n");
+					*documentfinishedbufsize *= 2;
+					*documentfinishedbuf = realloc(*documentfinishedbuf, *documentfinishedbufsize);
+					curdocp = *documentfinishedbuf + (curdocp - oldptr);
+					documentfinishedbuftmp = *documentfinishedbuf;
+				}
+				if (bbdocument_convert(ft, docbuf, docbufsize, &convdocbuf, &convdocbufsize, "directorycontent") == 0) {
 					fprintf(stderr, "Failed on bbdocument_convert.\n");
 					failed++;
 					free(docbuf);
 					free(convdocbuf);
 					continue;
 				}
-				printf("greponthis: %x %x %x\n", curdocp, convdocbuf, documentfinishedbuf);
+				printf("greponthis: %x %x %x\n", curdocp, convdocbuf, documentfinishedbuftmp);
 				memcpy(curdocp, convdocbuf, convdocbufsize);
 				curdocp += convdocbufsize;
 				
@@ -657,7 +671,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 			}
 		}
 		*curdocp = '\0';
-		*documentfinishedbufsize = curdocp - documentfinishedbuf; 
+		*documentfinishedbufsize = curdocp - documentfinishedbuftmp; 
 		//printf("Got this: %d %d<<\n%s\n", strlen(documentfinishedbuf), *documentfinishedbufsize, documentfinishedbuf);
 	}
 	else {
@@ -691,8 +705,8 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 	struct ReposetoryHeaderFormat ReposetoryHeader;
 
-	int htmlbuffersize = ((dokument_size *2) +512);	//+512 da vi skal ha med div meta data, som html kode
-	char *htmlbuffer = malloc(htmlbuffersize);
+	int htmlbuffersize = 0;//((dokument_size *2) +512);	//+512 da vi skal ha med div meta data, som html kode
+	char *htmlbuffer = NULL;// = malloc(htmlbuffersize);
 	char *imagebuffer;
 	char *documenttype_real;
 	size_t imageSize;
@@ -733,12 +747,14 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	}
 	printf("dokument_size 4 %i, title %s\n",dokument_size, title);
 
-	if (!bbdocument_convert(documenttype_real,document,dokument_size,htmlbuffer,&htmlbuffersize,title)) {
+	if (!bbdocument_convert(documenttype_real,document,dokument_size,&htmlbuffer,&htmlbuffersize,title)) {
 
 		printf("can't run bbdocument_convert\n");
 		//lager en tom html buffer
 		//Setter titelen som subjekt. Hva hvis vi ikke har title?
-		sprintf(htmlbuffer,html_tempelate,title,"");
+		htmlbuffersize = strlen(html_tempelate) + strlen(title) + 1;
+		htmlbuffer = malloc(htmlbuffersize);
+		snprintf(htmlbuffer, htmlbuffersize, html_tempelate,title,"");
 		htmlbuffersize = strlen(htmlbuffer);
 		printf("useing title \"%s\" as title\n",title);
 		printf("htmlbuffersize %i\n",htmlbuffersize);

@@ -46,7 +46,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	lastmodified,char *acl_allow, char *acl_denied, const char title[],char doctype[]);
 
 
-int bbdocument_convert(char filetype[],char document[],const int dokument_size,char *documentfinishedbuf,int *documentfinishedbufsize
+int bbdocument_convert(char filetype[],char document[],const int dokument_size,char **documentfinishedbuf,int *documentfinishedbufsize
 	, const char titlefromadd[]);
 
 
