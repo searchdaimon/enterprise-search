@@ -32,20 +32,20 @@
 #define QUERY_OR	'|'
 
 
-struct
+typedef struct
 {
     int			n;
     int			stopword;
     char		operand;
     char		**s;
     char		**spelled;
-} typedef string_array;
+} string_array;
 
-struct
+typedef struct
 {
     int			n;
     string_array	*query;
-} typedef query_array;
+} query_array;
 
 
 /*
