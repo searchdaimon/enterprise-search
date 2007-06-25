@@ -5,16 +5,13 @@
  */
 
 #include <stdio.h>
-#define _GNU_SOURCE
+#define _GNU_SOURCE 1
 #include <string.h>
 
 #include "xml.h"
 #include "webdav.h"
 
 #include "../crawl/crawl.h"
-
-#define USERNAME "rb"
-#define PASSWORD "Hurra123"
 
 struct crawlinfo {
 	int (*documentExist)(struct collectionFormat *, struct crawldocumentExistFormat *);
@@ -76,7 +73,7 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 				/* Find the subject */
 				p = strcasestr(mail.buf, "subject:");
 				if (p == NULL || *p == '\0') {
-					crawldocumentAdd.title = "NoTitle";
+					crawldocumentAdd.title = "";
 				} else {
 					for (p++; *p == ' '; p++)
 						;
@@ -85,13 +82,14 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 						;
 					crawldocumentAdd.title = strndup(p, p2 - p);
 					if (crawldocumentAdd.title == NULL)
-						crawldocumentAdd.title = "NoTitle'";
+						crawldocumentAdd.title = "";
 				}
 				crawldocumentAdd.documenttype = "eml";
+				crawldocumentAdd.doctype = "";
 				crawldocumentAdd.document = mail.buf;
 				crawldocumentAdd.dokument_size = mail.size-1; // Last byte is string null terminator
 				crawldocumentAdd.lastmodified = cur->modified;
-				crawldocumentAdd.acl_allow = "Users";
+				crawldocumentAdd.acl_allow = "Users"; /* XXX */
 				crawldocumentAdd.acl_denied = "";
 
 				printf("Adding: '%s'\n", crawldocumentAdd.title);
@@ -134,7 +132,7 @@ crawlGo(struct crawlinfo *ci)
 	listxml = ex_getContent(ci->collection->resource, ci->collection->user, ci->collection->password);
 	if (listxml == NULL)
 		return 0;
-	ret = grabContent(listxml, ci->collection->resource, USERNAME, PASSWORD, ci);
+	ret = grabContent(listxml, ci->collection->resource, ci->collection->user, ci->collection->user, ci);
 	free(listxml);
 
 	return ret;
