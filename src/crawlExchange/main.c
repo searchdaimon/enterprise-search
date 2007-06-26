@@ -56,6 +56,7 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 				continue;
 
 			crawldocumentExist.documenturi = strdup((char *)cur->str);
+			crawldocumentExist.lastmodified = cur->modified;
 			if (crawldocumentExist.documenturi == NULL) {
 				(ci->documentError)(1, "Could not allocate memory for documenturi");
 				free(crawldocumentExist.documenturi);
