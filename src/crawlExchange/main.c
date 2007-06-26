@@ -132,7 +132,7 @@ crawlGo(struct crawlinfo *ci)
 	listxml = ex_getContent(ci->collection->resource, ci->collection->user, ci->collection->password);
 	if (listxml == NULL)
 		return 0;
-	ret = grabContent(listxml, ci->collection->resource, ci->collection->user, ci->collection->user, ci);
+	ret = grabContent(listxml, ci->collection->resource, ci->collection->user, ci->collection->password, ci);
 	free(listxml);
 
 	return ret;
