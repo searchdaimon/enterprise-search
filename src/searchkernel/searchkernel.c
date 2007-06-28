@@ -340,7 +340,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 					else {
 
 						#ifdef DEBUG
-							printf("calling generate_snippet with strlen body %i\n\nbody %s\n",strlen(body),body);
+							printf("calling generate_snippet with strlen body %i\n",strlen(body));
 						#endif
 
 						generate_snippet( QueryData.queryParsed, body, strlen(body), &summary, "<b>", "</b>" , 160);
@@ -734,6 +734,10 @@ void *generatePagesResults(void *arg)
 			printf("index filtered\n");
 			continue;
 		}
+		if ((*PagesResults).TeffArray->iindex[i].indexFiltered.subname == 1) {
+			printf("index filtered\n");
+			continue;
+		}
 		#endif
 
 		#ifndef BLACK_BOKS
@@ -789,6 +793,8 @@ void *generatePagesResults(void *arg)
                         continue;
                 }
 
+		printf("[tid: %u] looking on  DocID: %u url: \"%s\"\n",(unsigned int)tid,(*PagesResults).TeffArray->iindex[i].DocID,(*PagesResults).Sider[localshowabal].DocumentIndex.Url);
+
 		//adult fra di
 		if (((*PagesResults).filterOn) && (filterAdultWeight_value((*PagesResults).Sider[localshowabal].DocumentIndex.AdultWeight,(*PagesResults).adultpages,(*PagesResults).noadultpages)) ) {
 			printf("Hav seen url befor. Url \"%s\"\n",(*PagesResults).Sider[localshowabal].DocumentIndex.Url);
@@ -821,7 +827,6 @@ void *generatePagesResults(void *arg)
 
 */
 
-		printf("[tid: %u] looking on  DocID: %u url: \"%s\"\n",(unsigned int)tid,(*PagesResults).TeffArray->iindex[i].DocID,(*PagesResults).Sider[localshowabal].DocumentIndex.Url);
 
 		#ifndef BLACK_BOKS
 

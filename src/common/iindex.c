@@ -54,7 +54,7 @@ void IIndexLoad (char Type[], char lang[],char subname[]) {
 		//sprintf(IndexPath,"%s/iindex/Athor/dictionary/%s/%i.txt",FilePath,IndexSprok, i);
 
         	if ((dictionaryha = fopen(IndexPath,"rb")) == NULL) {
-                	printf("Cant read Dictionary at %s\n",IndexPath);
+                	printf("Cant read Dictionary for %s at %s:%d\n",IndexPath,__FILE__,__LINE__);
         	        perror(IndexPath);
         	        //exit(1);
 	        }
@@ -109,7 +109,7 @@ void IIndexLoad (char Type[], char lang[],char subname[]) {
                 //sprintf(IndexPath,"%s/iindex/Main/dictionary/%s/%i.txt",FilePath,IndexSprok, i);
 
                 if ((dictionaryha = fopen(IndexPath,"rb")) == NULL) {
-                        printf("Cant read Dictionary at %s\n",IndexPath);
+                        printf("Cant read Dictionary for %s at %s:%d\n",IndexPath,__FILE__,__LINE__);
                         perror(IndexPath);
                         //exit(1);
                 }
@@ -231,7 +231,7 @@ int ReadIIndexRecordFromMemeory (int *Adress, int *SizeForTerm, unsigned long Qu
 
 	}
 	else {
-		printf("Wrong IndexType \"%s\"\n",IndexType);
+		printf("ReadIIndexRecordFromMemeory: Wrong IndexType \"%s\"\n",IndexType);
 		return 0;
 	}
 }
@@ -259,9 +259,9 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 
 	struct stat inode;	// lager en struktur for fstat å returnere.
 
-	int DictionaryRecordSize;
+	//int DictionaryRecordSize;
 	
-	DictionaryRecordSize = sizeof(DictionaryPost);
+	//DictionaryRecordSize = sizeof(DictionaryPost);
 
 
 	//DictionaryRecordSize = sizeof(DictionaryPost)
@@ -284,7 +284,7 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 	#endif
 
 	if ((dictionaryha = fopen(IndexPath,"rb")) == NULL) {
-		printf("Cant read Dictionary at %s\n",IndexPath);
+		printf("Cant read Dictionary for %s at %s:%d\n",IndexPath,__FILE__,__LINE__);
 		perror(IndexPath);
 		//exit(1);
 
@@ -298,10 +298,11 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 
 		fstat(fileno(dictionaryha),&inode);
 
-		printf("Stat: %i\n",inode.st_size);
+		printf("Stat: %u / %i\n",(unsigned int)inode.st_size,sizeof(struct DictionaryFormat));
 
-		max = inode.st_size / DictionaryRecordSize;
+
 		min = 0;
+		max = inode.st_size / sizeof(struct DictionaryFormat);
 
 		printf("min %i, max %i\n",min,max);
 	
@@ -311,7 +312,7 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 		printf("alle Dictionary forekomster:\n");
 		int i;
 		for (i=0;i<max;i++) {
-			fread(&DictionaryPost,DictionaryRecordSize,1,dictionaryha);
+			fread(&DictionaryPost,sizeof(struct DictionaryFormat),1,dictionaryha);
 			printf("did read %u\n",DictionaryPost.WordID);
 		}
 		
@@ -330,13 +331,19 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 			//halvert = (int)((((max - min) / 2)) * 0.5);
 
 
-			posisjon = halvert * DictionaryRecordSize;
+			posisjon = halvert * sizeof(struct DictionaryFormat);
 
-			printf("\tmax: %i, min: %i, halvert: %i, (max - min): %i\n",max,min,halvert,(max - min));
+			printf("\tmax: %i, min: %i, halvert: %i, (max - min): %i. posisjon %i\n",max,min,halvert,(max - min),posisjon);
 			//exit(1);
-			fseek(dictionaryha,posisjon,0);
+			if (fseek(dictionaryha,posisjon,0) != 0) {
+				printf("can't seek to post\n");
+				break;
+			}
 	
-			fread(&DictionaryPost,DictionaryRecordSize,1,dictionaryha);
+			if (fread(&DictionaryPost,sizeof(struct DictionaryFormat),1,dictionaryha) != 1) {
+				printf("can't read post\n");
+				break;
+			}
 
 			printf("WordID: %lu = %lu ?\n",DictionaryPost.WordID,Query_WordID);
 			if (Query_WordID == DictionaryPost.WordID) {
@@ -366,17 +373,21 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 
 			++count;
 		}
-		printf("line 365\n");
+		printf("line 370\n");
 		//leser siste
 		//toDo: hvorfor kommer ikke altid siste post med når vi halverer. Skyldes det bruk av floor() lengere opp?
 		//leser manuelt får nå
 		if (!fant) {
-			posisjon = (halvert -1) * DictionaryRecordSize;
+			posisjon = (halvert -1) * sizeof(struct DictionaryFormat);
 			fseek(dictionaryha,posisjon,0);
-			fread(&DictionaryPost,DictionaryRecordSize,1,dictionaryha);
-			if (Query_WordID == DictionaryPost.WordID) {
-				fant = 1;
-                	        printf("Fant: WordID: %lu = %lu ?\n",DictionaryPost.WordID,Query_WordID);			
+			if (fread(&DictionaryPost,sizeof(struct DictionaryFormat),1,dictionaryha) != 1) {
+				printf("can't read last post\n");
+			}
+			else {
+				if (Query_WordID == DictionaryPost.WordID) {
+					fant = 1;
+                		        printf("Fant: WordID: %lu = %lu ?\n",DictionaryPost.WordID,Query_WordID);			
+				}
 			}
 		}
 
@@ -484,12 +495,15 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	
 	//5: printf("%s crc32: %lu\n",WordID,WordIDcrc32);
 
+	//setter denne til 0, slik at hvis i ikke fr til å opne filen, eller hente ordboken er den 0
+	(*AntallTeff) = 0;
+
 	//prøver førs å lese fra minne
 	//temp:
 	if ((!ReadIIndexRecordFromMemeory(&Adress, &SizeForTerm,WordIDcrc32,IndexType,IndexSprok,WordIDcrc32,(*subname).subname))
 	&& (!ReadIIndexRecord(&Adress, &SizeForTerm,WordIDcrc32,IndexType,IndexSprok,WordIDcrc32,(*subname).subname))
 	) {
-		//*AntallTeff = 0;
+
 	}
 	else {
 
@@ -648,6 +662,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				TeffArray->iindex[y].deleted = 0;
 				TeffArray->iindex[y].indexFiltered.filename = 0;
 				TeffArray->iindex[y].indexFiltered.date = 0;
+				TeffArray->iindex[y].indexFiltered.subname = 0;
 			#endif
 
                         //TeffArray->iindex[y].TermRank = rank(TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall,TeffArray->iindex[y].DocID,subname,&TeffArray[y]);
