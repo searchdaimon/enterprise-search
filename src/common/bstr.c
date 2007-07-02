@@ -1,9 +1,11 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 //search and replace
 
 #include "bstr.h"
+#include "strlcat.h"
 
 //usikker på om vi skal ha med denne. Er det kansje bedre og lagge inn strcasestr her?
 //#define _GNU_SOURCE //for strcasestr 
@@ -78,7 +80,7 @@ void strsandr (char text[], char find[], char replace[]) {
 
 	strcpy(buff,text);	
 
-	while (cptr = strstr(cptr,find)) {
+	while ((cptr = strstr(cptr,find))) {
 
 		//printf("found!\n");
 	
@@ -141,7 +143,7 @@ void ntobr (char textbuff[], int texbufftsize) {
 
 	strcpy(buff,textbuff);	
 
-	while (cptr = (char *)strstr(cptr,find)) {
+	while ((cptr = (char *)strstr(cptr,find))) {
 
 		if ((cptr == textbuff) || (cptr[-1] == '>')) {
 
@@ -210,7 +212,7 @@ void strcasesandr (char textbuff[], int texbufftsize,char find[], char replace[]
 
 	strcpy(buff,textbuff);	
 
-	while (cptr = (char *)strcasestr(cptr,find)) {
+	while ((cptr = (char *)strcasestr(cptr,find))) {
 
 		//printf("ss %i, %i\n",((bptr + (cptr - textbuff)) - bptr), ((bptr + (cptr - cprtold)) - bptr) );
 		bptr = (bptr + (cptr - cprtold));
@@ -270,7 +272,7 @@ void strscpy(char *dest, const char *src, size_t n) {
 
  	srcstrlen = strlen(src);
 
-	if (srcstrlen >= n) {
+	if ((unsigned int)srcstrlen >= n) {
 		srcstrlen = (n -1);
 	}
 
