@@ -32,7 +32,7 @@ int socketsendsaa(int socketha,char **respons_list[],int nrofresponses) {
 	sendall(socketha,&nrofresponses, sizeof(int));
 
 	for (i=0;i<nrofresponses;i++) {
-		len = (strlen((*respons_list)[i]) +1); //+1 da vi sender \0 også
+		len = (strlen((*respons_list)[i]) +1); //+1 da vi sender \0 ogsaa
 
 		if (!sendall(socketha,&len,sizeof(len))) {
 			perror("sendall");
