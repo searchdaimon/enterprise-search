@@ -287,6 +287,7 @@ struct indexFilteredFormat {
 
 	char filename; //bool
 	char date;
+	char subname;
 };
 
 struct rank_explaindFormat {
@@ -433,8 +434,8 @@ struct filtypesFormat {
 #define MAXFILTERELEMENTS 30
 
 struct filterinfoElementsFormat {
-	char name[12];
-	char longname[12];
+	char name[20];
+	char longname[20];
 	char query[MaxQueryLen];
 	int nrof;
 	char checked; //bool
