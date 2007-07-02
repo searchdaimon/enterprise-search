@@ -3,14 +3,14 @@
 
 # Parameters
 
-CC=gcc 
+CC=/usr/local/bin/gcc 
 
 CLIENT = suggest_client
 SERVER = suggest_server
 
 SOURCES_CLNT.c = 
 SOURCES_CLNT.h = 
-SOURCES_SVC.c = ../suggest/suggest.c ../suggest/suffixtree.c
+SOURCES_SVC.c = ../suggest/suggest.c ../suggest/suffixtree.c ../suggest/acl.c
 SOURCES_SVC.h = 
 SOURCES.x = suggest.x
 
@@ -23,7 +23,7 @@ OBJECTS_SVC = $(SOURCES_SVC.c:%.c=%.o) $(TARGETS_SVC.c:%.c=%.o)
 # Compiler flags 
 
 CPPFLAGS += -D_REENTRANT
-CFLAGS += -g 
+CFLAGS += -g  -DWITH_ACL
 LDLIBS += -lnsl -lpthread 
 RPCGENFLAGS = 
 
@@ -42,7 +42,7 @@ $(CLIENT) : $(OBJECTS_CLNT)
 	$(CC) -o $(CLIENT) $(OBJECTS_CLNT) $(LDLIBS) 
 
 $(SERVER) : $(OBJECTS_SVC) 
-	$(CC) -o $(SERVER) $(OBJECTS_SVC) $(LDLIBS)
+	$(CC) -o $(SERVER) $(OBJECTS_SVC) $(LDLIBS) ../boithoadClientLib/*.c
 
  clean:
 	 $(RM) core $(TARGETS) $(OBJECTS_CLNT) $(OBJECTS_SVC) $(CLIENT) $(SERVER)

@@ -1012,16 +1012,18 @@ void wordsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int Doc
 
 
 }
-void dictionaryWordsWrite (struct pagewordsFormat *pagewords,FILE *FH) {
+void dictionaryWordsWrite (struct pagewordsFormat *pagewords,FILE *FH, char *acl_allow, char *acl_denied) {
 
 	int i;
 
 	#ifdef PRESERVE_WORDS
 		for(i=0;i<(*pagewords).revIndexnr;i++) {
 			#ifdef DEBUG
-			printf("word: \"%s\": %i\n",(*pagewords).revIndex[i].word,(*pagewords).revIndex[i].wordnr);
+			printf("word: \"%s\": %i (acl: allow: %s denied: %s)\n",(*pagewords).revIndex[i].word, 
+			       (*pagewords).revIndex[i].wordnr, acl_allow, acl_denied);
+
 			#endif
-			fprintf(FH,"%s %i\n",(*pagewords).revIndex[i].word,(*pagewords).revIndex[i].wordnr);
+			fprintf(FH,"%s %i %s %s\n",(*pagewords).revIndex[i].word,(*pagewords).revIndex[i].wordnr, acl_allow, acl_denied ? acl_denied : "");
 		}
 	#endif
 

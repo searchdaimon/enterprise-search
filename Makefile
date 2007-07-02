@@ -175,7 +175,7 @@ dictionarywordsLot: src/dictionarywordsLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/dictionarywordsLot/main.c src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/dictionarywordsLot $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/dictionarywordsLot/main.c src/dictionarywordsLot/set.c src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/dictionarywordsLot $(LDFLAGS)
 
 lotlistDispatcher: src/lotlistDispatcher/main.c
 	@echo ""

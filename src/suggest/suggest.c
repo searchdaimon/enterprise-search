@@ -7,12 +7,15 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "../common/bstr.h"
+
 #include "suggest.h"
 #include "suffixtree.h"
+#include "acl.h"
 
 
 int
-suggest_add_item(struct suggest_data *sd, char *word, int freq)
+suggest_add_item(struct suggest_data *sd, char *word, int freq, char *aclallow, char *acldeny)
 {
 	struct suggest_input *si;
 
@@ -21,7 +24,23 @@ suggest_add_item(struct suggest_data *sd, char *word, int freq)
 		return -1;
 
 	si->word = strdup(word);
+	if (si->word == NULL) {
+		perror("strdup(word)");
+		return -1;
+	}
 	si->frequency = freq;
+#ifdef WITH_ACL
+	si->aclallow = acl_parse_list(aclallow);
+	if (si->aclallow == NULL) {
+		perror("acl_parse_list(aclallow)");
+		return -1;
+	}
+	si->acldeny = acl_parse_list(acldeny);
+	if (si->acldeny == NULL) {
+		perror("acl_parse_list(acldeny)");
+		return -1;
+	}
+#endif
 
 	suffixtree_insert(&(sd->tree), si);
 
@@ -53,27 +72,59 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 {
 	FILE *fp;
 	int freq, linenum;
+	int got;
 	char word[1024];
+	char aclallow[1024];
+	char acldeny[1024];
 
 	if ((fp = fopen(wordlist, "r")) == NULL)
 		return -1;
 
 	linenum = 1;
+	got = 0;
 	while (!feof(fp)) {
-		if (fscanf(fp, "%s %d\n", word, &freq) != 2) {
-			fprintf(stderr, "Unable to read parse line %d in %s\n", linenum, wordlist);
+		int ret;
+		size_t len;
+		char *line = NULL;
+		char **linedata;
+		acldeny[0] = '\0';
+
+		getline(&line, &len, fp);
+		if (line[0] == '\0') {
+			free(line);
 			continue;
 		}
-
-		suggest_add_item(sd, word, freq);
+		if (line == NULL || split(line, " ", &linedata) < 2) {
+	//	if ((ret = fscanf(fp, "%s %d %s %s\n", word, &freq, aclallow, acldeny)) < 3) {
+			printf("'%s' %d\n", line, len);
+			fprintf(stderr, "Unable to read parse line %d in %s\n", linenum, wordlist);
+			linenum++;
+			continue;
+		}
+		strcpy(word, linedata[0]);
+		freq = atol(linedata[1]);
+		if (linedata[2])
+			strcpy(aclallow, linedata[2]);
+		else
+			strcpy(linedata[2], "");
+		if (linedata[2] && linedata[3])
+			strcpy(acldeny, linedata[3]);
+		else
+			strcpy(linedata[3], "");
+		
+		//printf("%s <=> %d\nGot acl allow: %s\nGot acl deny: %s\n", word, freq, aclallow, acldeny);
+		if (suggest_add_item(sd, word, freq, aclallow, acldeny) == -1) {
+			perror("suggest_add_item()");
+		}
 
 		linenum++;
+		got++;
 		if ((linenum % 100000) == 0) {
 			printf("100000 new word!\n");
 		}
 	}
-		
-	printf("Collected: %d\n", linenum);
+
+	printf("Collected: %d\n", got);
 	fclose(fp);
 
 	return 0;
@@ -86,9 +137,16 @@ suggest_most_used(struct suggest_data *sd)
 }
 
 struct suggest_input **
+#ifdef WITH_ACL
+suggest_find_prefix(struct suggest_data *sd, char *prefix, char *user)
+#else
 suggest_find_prefix(struct suggest_data *sd, char *prefix)
+#endif
 {
-	return suffixtree_find_suffix(&sd->tree, prefix);
+#ifndef WITH_ACL
+	char *user = NULL;
+#endif 
+	return suffixtree_find_prefix(&sd->tree, prefix, user);
 }
 
 
@@ -102,14 +160,16 @@ main(int argc, char **argv)
 	char *word = "logge"; //"heimdalsmunnen";
 	FILE *fp;
 	int i;
-	struct suggest_input **suffixtree_find_suffix(struct suffixtree *, char *);
+	struct suggest_input **suffixtree_find_prefix(struct suffixtree *, char *, char *);
 
 
 	if (sd == NULL) {
 		fprintf(stderr, "Could not initialize suggest\n");
 		return 1;
 	}
-	printf("%d\n", suggest_read_frequency(sd, "UnikeTermerMedForekomst.ENG"));
+	printf("%d\n", suggest_read_frequency(sd, "/home/eirik/Boitho/boitho/websearch/lot/1/1/Exchangetest/dictionarywords"));
+	//printf("%d\n", suggest_read_frequency(sd, "testinput.list"));
+	//printf("%d\n", suggest_read_frequency(sd, "UnikeTermerMedForekomst.ENG"));
 	//printf("%d\n", suggest_read_frequency(sd, "liten.list"));
 	//printf("%d\n", suggest_read_frequency(sd, "wordlist.7"));
 #if 0
@@ -128,10 +188,10 @@ main(int argc, char **argv)
 	//printf("Word: %x\n", suffixtree_find_word(&(sd->tree), "individ"));
 	//
 	suggest_most_used(sd);
-	si = suggest_find_prefix(sd, "individ");
+	//si = suggest_find_prefix(sd, "individ");
 	
 	//printf("si... %x\n", *si);
-#if 1
+#if 0
 	printf("Printing the most used word starting with 'individ'\n");
 	for (; *si != NULL; si++) {
 		printf("Something: %s / %d\n", (*si)->word, (*si)->frequency);
@@ -169,30 +229,34 @@ main(int argc, char **argv)
 	}
 
 	do {
-		do {
-			char *buf;
-			size_t len;
-			unsigned int size = 1024;
-			struct suggest_input *si2;
+		char *buf;
+		size_t len;
+		unsigned int size = 1024;
+		struct suggest_input *si2;
 
-			buf = NULL;
-			printf("Enter prefix: ");
-			fflush(stdin);
-			len = getline(&buf, &size, stdin);
-			buf[len-1] = '\0';
-			si = suggest_find_prefix(sd, buf);
-			if (si2 == NULL) {
-				printf("No match for '%s'\n", buf);
-				continue;
+		buf = NULL;
+		printf("Enter prefix: ");
+		fflush(stdin);
+		len = getline(&buf, &size, stdin);
+		buf[len-1] = '\0';
+#ifdef WITH_ACL
+		si = suggest_find_prefix(sd, buf, "eirik");
+#else
+		si = suggest_find_prefix(sd, buf);
+#endif
+		if (si == NULL) {
+			printf("No match for '%s'\n", buf);
+			free(buf);
+			continue;
+		}
+		else {
+			printf("Printing the most used word starting with '%s'\n", buf);
+			for (; *si != NULL; si++) {
+				printf("Something: %s / %d\n", (*si)->word, (*si)->frequency);
 			}
-			else {
-				printf("Printing the most used word starting with '%s'\n", buf);
-				for (; *si != NULL; si++) {
-					printf("Something: %s / %d\n", (*si)->word, (*si)->frequency);
-				}
-			}
-		} while(1);
-	} while(0);
+		}
+		free(buf);
+	} while(1);
 
 	return 0;
 }

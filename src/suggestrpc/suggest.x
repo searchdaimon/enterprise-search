@@ -18,6 +18,11 @@ struct namenode {
 	namelist next; /* next entry */
 };
 
+struct senddata {
+	wordtype word;
+	wordtype user;
+};
+
 union numbest_res switch (int _errno) {
 	case 0:
 		namelist list; /* no error: return directory listing */
@@ -28,6 +33,7 @@ union numbest_res switch (int _errno) {
 
 program SUGGEST {
 	version SUGGESTVERS {
-		numbest_res get_best_results(string) = 1;
-	} = 1;
+		numbest_res get_best_results(struct senddata) = 1;
+	} = 2;
+
 } = 0x200ff013;

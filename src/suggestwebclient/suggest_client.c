@@ -12,10 +12,14 @@
 #include "../cgi-util/cgi-util.h"
 
 void
-suggest_1(char *host, char *arg)
+suggest_1(char *host, char *arg, char *user)
 {
 	CLIENT *clnt;
 	numbest_res *result_1;
+	struct senddata args;
+
+	args.word = arg;
+	args.user = user;
 
 #ifndef	DEBUG
 	clnt = clnt_create (host, SUGGEST, SUGGESTVERS, "udp");
@@ -26,7 +30,7 @@ suggest_1(char *host, char *arg)
 #endif	/* DEBUG */
 
 	/* XXX: set lower timeout */
-	result_1 = get_best_results_1(&arg, clnt);
+	result_1 = get_best_results_2(&args, clnt);
 	if (!result_1) {
 #if 1
 		printf("Content-type: text/html\n\n");
@@ -71,6 +75,7 @@ main (int argc, char *argv[])
 {
 	char *host = NULL;
 	char *prefix;
+	char *user;
 	int ret;
 
 	if (getenv("QUERY_STRING")) {
@@ -83,19 +88,26 @@ main (int argc, char *argv[])
 			fprintf(stderr, "Did not find a prefix.\n");
 			exit(0);
 		}
+		user = getenv("REMOTE_USER");
+		if (user == NULL) {
+			printf("Content-type: text/xml\n\n");
+			printf("Not logged in.\n");
+			exit(0);
+		}
 	}
 	else {
-		if (argc < 3) {
-			printf("Usage: ./prog host prefix\n");
+		if (argc < 4) {
+			printf("Usage: ./prog host prefix user\n");
 			exit(1);
 		}
 		host = argv[1];
 		prefix = argv[2];
+		user = argv[3];
 	}
 
 	if (host == NULL)
 		host = RPC_HOST;
-	suggest_1 (host, prefix);
+	suggest_1 (host, prefix, user);
 
 	return 0;
 }

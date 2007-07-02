@@ -635,7 +635,7 @@ void *IndexerLot_workthread(void *arg) {
 						#endif
 
 						#ifdef PRESERVE_WORDS
-							dictionaryWordsWrite(pagewords,(*argstruct).dictionarywordsfFH);
+							dictionaryWordsWrite(pagewords,(*argstruct).dictionarywordsfFH, acl_allow, acl_denied);
 					
 						#endif
 						//DocIDPlace = ((ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr)) * sizeof(unsigned char));

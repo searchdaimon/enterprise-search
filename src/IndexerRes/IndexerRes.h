@@ -171,7 +171,7 @@ void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct Rep
                 char **title, char **body);
 
 void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID);
-void dictionaryWordsWrite (struct pagewordsFormat *pagewords,FILE *FH);
+void dictionaryWordsWrite (struct pagewordsFormat *pagewords, FILE *FH, char *, char *);
 void linksWrite(struct pagewordsFormat *pagewords,struct addNewUrlhaFormat addNewUrlha[]);
 
 void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *adult,int *adultWeight, unsigned char *langnr);

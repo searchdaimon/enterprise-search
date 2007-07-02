@@ -87,7 +87,7 @@ get_best_results_1_svc(char **argp, namenode *result, struct svc_req *rqstp)
  */
 
 numbest_res *
-get_best_results_1_svc(char **argp, struct svc_req *rqstp)
+get_best_results_2_svc(struct senddata *argp, struct svc_req *rqstp)
 {
 	bool_t retval;
 	namelist nl;
@@ -111,6 +111,7 @@ get_best_results_1_svc(char **argp, struct svc_req *rqstp)
 		//runarb: legger inn støtte for å heller bruke dictionarywords.txt som ordbok
 		//suggest_read_frequency(sd, "../suggest/UnikeTermerMedForekomst.ENG");
 		if (suggest_read_frequency(sd, bfile("data/dictionarywords.txt")) == -1) {
+		//if (suggest_read_frequency(sd, "/home/eirik/Boitho/boitho/websearch/src/suggest/testinput.list") == -1) {
 			perror(bfile("data/dictionarywords.txt"));
 			exit(EXIT_FAILURE);
 		}
@@ -126,7 +127,7 @@ get_best_results_1_svc(char **argp, struct svc_req *rqstp)
 	called = 1;
 #if 1
 	nlp = &result.numbest_res_u.list;
-	for (si = suggest_find_prefix(sd, *argp);
+	for (si = suggest_find_prefix(sd, argp->word, argp->user);
 	     si != NULL && *si != NULL;
 	     si++) {
 		nl = *nlp = (namenode *)
@@ -143,7 +144,7 @@ get_best_results_1_svc(char **argp, struct svc_req *rqstp)
 	*nlp = (namelist)NULL;
 	result._errno = 0;
 #else
-	si = suggest_find_prefix(sd, *argp);
+	si = suggest_find_prefix(sd, argp->word, argp->user);
 	result->name = strdup((*si)->word);
 	result->frequency = (*si)->frequency;
 #endif

@@ -7,11 +7,14 @@
 #include "suggest.h"
 
 void
-suggest_1(char *host, char *arg)
+suggest_1(char *host, char *arg, char *user)
 {
 	CLIENT *clnt;
 	enum clnt_stat retval_1;
 	numbest_res *result_1;
+	struct senddata args = {
+		arg, user
+	};
 
 #ifndef	DEBUG
 	clnt = clnt_create (host, SUGGEST, SUGGESTVERS, "udp");
@@ -21,7 +24,7 @@ suggest_1(char *host, char *arg)
 	}
 #endif	/* DEBUG */
 
-	result_1 = get_best_results_1(&arg, clnt);
+	result_1 = get_best_results_2(&args, clnt);
 	if (!retval_1)// != RPC_SUCCESS) {
 	{
 
@@ -54,11 +57,11 @@ main (int argc, char *argv[])
 {
 	char *host;
 
-	if (argc < 3) {
-		printf ("usage: %s server_host arg\n", argv[0]);
+	if (argc < 4) {
+		printf ("usage: %s server_host arg user\n", argv[0]);
 		exit (1);
 	}
 	host = argv[1];
-	suggest_1 (host, argv[2]);
+	suggest_1 (host, argv[2], argv[3]);
 	//_exit(0); /* avoid segfault */
 }

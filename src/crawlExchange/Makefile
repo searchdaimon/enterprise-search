@@ -24,6 +24,7 @@ all: $(PROG)
 
 $(PROG): $(OBJS)
 	$(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOKS -g -Wl,-static 
+	mkdir ../..//crawlers/crawlExchange || true
 	cp $(PROG) ../..//crawlers/crawlExchange
 
 clean:

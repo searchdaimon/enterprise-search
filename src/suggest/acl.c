@@ -1,0 +1,95 @@
+#ifdef WITH_ACL
+
+#define _GNU_SOURCE
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "acl.h"
+#include "../boithoadClientLib/liboithoaut.h"
+
+#define MIN(x,y) (x > y ? y : x)
+
+int acl_in_list(char *, char **);
+
+int
+acl_is_allowed(char **allow, char **deny, char *group)
+{
+	int num;
+	int i;
+	char **groups;
+	int gotallow = 0;
+
+	if (acl_in_list(group, deny))
+		return 0;
+	if (acl_in_list(group, allow))
+		gotallow = 1;
+	if (!boithoad_groupsForUser(group, &groups, &num))
+		return 0;
+
+	for (i = 0; i < num; i++) {
+		if (!gotallow) {
+			if (acl_in_list(groups[i], allow)) {
+				gotallow = 1;
+			}
+		}
+		if (acl_in_list(groups[i], deny))
+			return 0;
+	}
+
+	return gotallow;
+}
+
+int
+acl_in_list(char *group, char **list)
+{
+	char *p, *p2;
+	unsigned int grouplen;
+
+	for (; *list != NULL; list++) {
+		if (strcmp(*list, group) == 0)
+			return 1;
+	}
+
+	return 0;
+}
+
+char **
+acl_parse_list(char *list)
+{
+	char *p, *p2;
+	char **acls;
+	int aclsize;
+	int i;
+
+	aclsize = 0;
+	acls = NULL;
+	for (p = list, i = 0; p != NULL; p = p2+1, i++) {
+		unsigned int len;
+
+		if (aclsize < i+1) {
+			if (aclsize == 0)
+				aclsize = 4;
+			else
+				aclsize *= 2;
+			acls = realloc(acls, aclsize * sizeof(char *));
+			if (acls == NULL)
+				return NULL;
+		}
+		p2 = strchr(p, ',');
+		len = p2 == NULL ? strlen(p) : (unsigned int)(p2 - p);
+		acls[i] = strndup(p, len);
+
+		if (p2 == NULL) {
+			i++;
+			break;
+		}
+	}
+
+	acls = realloc(acls, (i+1) * sizeof(char *));
+	acls[i] = NULL;
+
+	return acls;
+}
+
+#endif
