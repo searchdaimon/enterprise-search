@@ -834,6 +834,7 @@ crawlExchange:
 	@echo ""
 	@echo "$@:"
 
+	(cd src/crawlExchange; make clean)
 	(cd src/crawlExchange; make)
 
 crawlSFTP: src/crawlSFTP/crawlsftp.c
