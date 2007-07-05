@@ -31,6 +31,8 @@ static FILE *bfopen(char name[],char flags[]) {
                 return fopen(name,flags);
         }
 */
+
+	return NULL;
 }
 
 static char *bfile(char name[]) {
@@ -49,6 +51,8 @@ static char *bfile(char name[]) {
                 sprintf(fulname,"%s/%s",cptr,name);
                 return fulname;
         }
+
+	return NULL;
 }
 
 #endif
