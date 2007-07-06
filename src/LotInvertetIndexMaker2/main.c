@@ -173,7 +173,6 @@ int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat rev
 	unsigned int nrofDocIDsForWordID[revIndexArraySize];
 	int forekomstnr;
 
-
 	if ((REVINDEXFH = fopen(revindexPath,"rb")) == NULL) {
 		perror(revindexPath);
 		//exit(1);
@@ -191,7 +190,10 @@ int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat rev
 		
 		
 
-			fread(&revIndexArray[count].DocID,sizeof(revIndexArray[count].DocID),1,REVINDEXFH);
+			if (fread(&revIndexArray[count].DocID,sizeof(revIndexArray[count].DocID),1,REVINDEXFH) != 1) {
+				printf("can'tt read any more data\n");
+				break;
+			}
 			//v3
 			fread(&revIndexArray[count].langnr,sizeof(char),1,REVINDEXFH);
 			//printf("lang1 %i\n",(int)revIndexArray[count].langnr);
@@ -242,10 +244,6 @@ int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat rev
 
 	fclose(REVINDEXFH);
 
-	if ((REVINDEXFH = fopen(iindexPath,"wb")) == NULL) {
-		perror(iindexPath);
-		exit(1);
-	}
 	
 	//printf("sort\n");
 	//sorterer på WordID
@@ -259,6 +257,11 @@ int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat rev
 	mgsort(revIndexArray, count , sizeof(struct revIndexArrayFomat),compare_elements);
 
 	//int mgsort(void *data, int size, int esize, int (*compare) (const void *key1, const void *key2));
+
+	if ((REVINDEXFH = fopen(iindexPath,"wb")) == NULL) {
+		perror(iindexPath);
+		exit(1);
+	}
 
 	//teller forkomster av DocID's pr WordID
 	lastWordID = 0;
@@ -279,13 +282,13 @@ int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat rev
 	for(i=0;i<count;i++) {
 		
 		if (lastWordID != revIndexArray[i].WordID) {
-		
-			fwrite(&revIndexArray[i].WordID,sizeof(revIndexArray[i].WordID),1,REVINDEXFH);
-			fwrite(&nrofDocIDsForWordID[forekomstnr],sizeof(int),1,REVINDEXFH);
 
 			#ifdef DEBUG
 				printf("write WordID %u, nr %u\n",revIndexArray[i].WordID,nrofDocIDsForWordID[forekomstnr]);
 			#endif
+		
+			fwrite(&revIndexArray[i].WordID,sizeof(revIndexArray[i].WordID),1,REVINDEXFH);
+			fwrite(&nrofDocIDsForWordID[forekomstnr],sizeof(int),1,REVINDEXFH);
 
 			++forekomstnr;
 		}
@@ -302,11 +305,13 @@ int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat rev
 
 		//skriver alle hittene		
 		for(y=0;y<revIndexArray[i].nrOfHits;y++) {
-			//printf("\t\thit %hu\n",revIndexArray[i].hits[y]);
+			#ifdef DEBUG		
+				printf("\t\thit %hu\n",revIndexArray[i].hits[y]);
+			#endif
 			fwrite(&revIndexArray[i].hits[y],sizeof(short),1,REVINDEXFH);
 		}
 		#ifdef DEBUG
-		printf("DocID %u, WordID: %u, %u\n",revIndexArray[i].DocID,revIndexArray[i].WordID,revIndexArray[i].nrOfHits);		
+		printf("write: DocID %u, WordID: %u, %u\n",revIndexArray[i].DocID,revIndexArray[i].WordID,revIndexArray[i].nrOfHits);		
 		#endif
 	}
 

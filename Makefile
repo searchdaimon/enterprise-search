@@ -138,7 +138,7 @@ IndexerLotbb: src/IndexerLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(IndexerLot) -D BLACK_BOKS -D PRESERVE_WORDS src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/IndexerLotbb
+	$(CC) $(IndexerLot) -D BLACK_BOKS -D PRESERVE_WORDS src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/IndexerLotbb -DIIACL
 
 baddsPageAnalyser: src/baddsPageAnalyser/main.c
 	@echo ""
@@ -390,7 +390,7 @@ searchd : src/searchkernel/searchd.c
 searchdbb : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/getfiletype.o src/ds/libds.a
+	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/getfiletype.o src/ds/libds.a -DIIACL
 
 mergeUserToSubname: src/mergeUserToSubname/main.c
 	@echo ""
@@ -628,7 +628,7 @@ boitho-bbdn: src/boitho-bbdn/bbdnserver.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c  src/boitho-bbdn/bbdnserver.c src/maincfg/maincfg.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE) -static $(LIBCONFIG)
+	$(CC) $(CFLAGS) $(LIBS)*.c  src/boitho-bbdn/bbdnserver.c src/maincfg/maincfg.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE) -static $(LIBCONFIG) -DIIACL
 
 
 boitholdTest: src/boitholdTest/main.c
@@ -816,7 +816,7 @@ crawlManager: src/crawlManager/main.c
 	@echo "$@:"
 
 	#22 feb 2007, fjerner -static
-	$(CC) $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c src/3pLibs/keyValueHash/hashtable.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c src/3pLibs/keyValueHash/hashtable.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL
 
 
 crawlSMB: src/crawlSMB/main.c

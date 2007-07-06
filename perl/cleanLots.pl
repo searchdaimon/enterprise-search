@@ -1,3 +1,8 @@
+#dublicate stdout to log what is happening
+open(STDOUT, ">>$ENV{'BOITHOHOME'}/logs/indexing") || die "Can't dup stdout";
+open(STDERR, ">>&STDOUT") || die "Can't dup stdout";
+
+
 
 use Boitho::Lot;
 
@@ -30,6 +35,15 @@ foreach my $lot (0 .. 4096) {
 				print "runing $command\n";
                                 system($command);
 
+				$command = $ENV{'BOITHOHOME'} . "/bin/LotInvertetIndexMaker2 acl_allow $lot $subname";
+				print "runing $command\n";
+                                system($command);
+
+				$command = $ENV{'BOITHOHOME'} . "/bin/LotInvertetIndexMaker2 acl_denied $lot $subname";
+				print "runing $command\n";
+                                system($command);
+
+
 				$command = $ENV{'BOITHOHOME'} . "/bin/mergeUserToSubname $lot $subname";
 				print "runing $command\n";
                                 system($command);
@@ -55,7 +69,14 @@ foreach my $key (keys %hiestinlot) {
 	print "key $key, value $hiestinlot{$key}\n";
 
 	$command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} Main aa $key";
+	print "runing $command\n";
+	system($command);
 
+	$command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} acl_allow aa $key";
+	print "runing $command\n";
+	system($command);
+
+	$command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} acl_denied aa $key";
 	print "runing $command\n";
 	system($command);
 }

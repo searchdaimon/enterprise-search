@@ -344,7 +344,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 
                         	for (z = 0;z < TermAntall; z++) {
 					if ((n=fread(&hit,sizeof(unsigned short),1,iindexfile[i].fileha)) != 1) {
-						printf("cant read hit for %s\n",iindexfile[i].PathForLotIndex);
+						printf("can't read hit for %s\n",iindexfile[i].PathForLotIndex);
 		                       		perror(iindexfile[i].PathForLotIndex);
                                         	exit(1);
                                 	}
