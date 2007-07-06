@@ -20,6 +20,8 @@
 #include "../common/debug.h"
 #include "../common/ir.h"
 
+#include "../banlists/ban.h"
+
 
 //#include "../parse_summary/summary.h"
 
@@ -436,8 +438,10 @@ void *IndexerLot_workthread(void *arg) {
 
 
 				#ifndef BLACK_BOKS
-
-				if (!find_domain_no_subname(ReposetoryHeader.url,domain,sizeof(domain)) ) {
+				if (isIpBan(ReposetoryHeader.IPAddress)) {
+					printf("ip adrsess %u is on ban list. Url \"%s\"\n",ReposetoryHeader.IPAddress,ReposetoryHeader.url);
+				}
+				else if (!find_domain_no_subname(ReposetoryHeader.url,domain,sizeof(domain)) ) {
 					debug("can't find domain. Url \"%s\"\n",ReposetoryHeader.url);
 				}
 				else if (!find_TLD(domain,TLD,sizeof(TLD))) {
@@ -827,6 +831,11 @@ int main (int argc, char *argv[]) {
 
 	adultLoad(argstruct.adult);
 
+
+	if (!ipbanLoad()) {
+		printf("can't load ip ban list\n");
+		exit(1);
+	}
 
 	//temp: må hente dette fra slot server eller fil
 	FileOffset = 0;
