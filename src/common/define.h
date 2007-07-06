@@ -351,7 +351,8 @@ struct SiderFormat {
 	//char htmlBuffer[30000];
 	//char *htmlBuffer;
 	int htmlSize;
-	char description[250]; 
+	//char description[250]; 
+	char description[300]; 
 	char title [70];
 	char thumbnale[128];
 	int thumbnailwidth;

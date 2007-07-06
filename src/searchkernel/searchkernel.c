@@ -1431,7 +1431,8 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	printf("\n\n");
 
 	#ifdef EXPLAIN_RANK
-	printf("|%-10s|%-10s||%-10s|%-10s|%-10s|%-25s|%-10s|%-10s|\n",
+	printf("|%-10s|%-10s|%-10s||%-10s|%-10s|%-10s|%-25s|%-10s|%-10s|\n",
+		"AllRank",
 		"TermRank",
 		"PopRank",
 		"Body",
@@ -1441,11 +1442,12 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 		"UrlM",
 		"Url"
 		);
-	printf("|----------|----------||----------|----------|----------|------------------------|----------|----------|\n");
+	printf("|----------|----------|----------||----------|----------|----------|------------------------|----------|----------|\n");
 
 	for(i=0;i<(*SiderHeder).showabal;i++) {
-                        printf("|%10i|%10i||%10i|%10i|%10i|%10i (%5i %5i)|%10i|%10i| %s (DocID %u-%i)\n",
+                        printf("|%10i|%10i|%10i||%10i|%10i|%10i|%10i (%5i %5i)|%10i|%10i| %s (DocID %u-%i)\n",
 
+				Sider[i].iindex.allrank,
 				Sider[i].iindex.TermRank,
 				Sider[i].iindex.PopRank,
 

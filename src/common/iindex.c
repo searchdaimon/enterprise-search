@@ -4,11 +4,20 @@
 #include <math.h>
 #include <sys/stat.h>
 #include <string.h>
-
+#include <unistd.h>
+#include <sys/mman.h>
 
 #include "define.h"
 #include "lot.h"
 #include "iindex.h"
+
+#define MMAP_IINDEX
+
+#ifdef MMAP_IINDEX
+       #include <sys/types.h>
+       #include <sys/stat.h>
+       #include <fcntl.h>
+#endif
 
 #ifdef TIME_DEBUG
 	#include "timediff.h"
@@ -263,6 +272,13 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 	
 	//DictionaryRecordSize = sizeof(DictionaryPost);
 
+	#ifdef TIME_DEBUG
+                struct timeval start_time, end_time;
+	#endif
+
+        #ifdef TIME_DEBUG
+                gettimeofday(&start_time, NULL);
+        #endif
 
 	//DictionaryRecordSize = sizeof(DictionaryPost)
 	//revindexFilNr = fmod(WordIDcrc32,AntallBarrals);
@@ -394,6 +410,11 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 
 		fclose(dictionaryha);
 
+                #ifdef TIME_DEBUG
+                gettimeofday(&end_time, NULL);
+                printf("Time debug: ReadIIndexRecord total time %f\n",getTimeDifference(&start_time,&end_time));
+                #endif
+
 		if (fant) {
 			*Adress = DictionaryPost.Adress;
 			*SizeForTerm = DictionaryPost.SizeForTerm;
@@ -441,9 +462,12 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 	#ifdef TIME_DEBUG
 		struct timeval start_time, end_time;
+		struct timeval start_time_total, end_time_total;
+		gettimeofday(&start_time_total, NULL);
 	#endif
 
 	FILE *fileha;
+
 	char InnBuff[8]; //1040162
 	int ReadOffsett = 0;
 	char buff[512];
@@ -468,6 +492,10 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	//unsigned long DocID;
 	//unsigned long TermAntall;
 	unsigned short hit;
+	//void *allip;
+	char *allindex;
+	char *allindexp;
+
 
 
 	int isv3 = 1;
@@ -515,74 +543,95 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 		printf("Åpner index %s\n",IndexPath);
 
+
+		printf("size %i\n",SizeForTerm);
+
 		#ifdef TIME_DEBUG
-		gettimeofday(&start_time, NULL);
+			gettimeofday(&start_time, NULL);
 		#endif
 
-		//fileha = fopen("data/iindex/Main/index/ENG/17.txt","rb");
-		//if ((fileha = fopen("data/iindex/Main/index/aa/17.txt","rb")) == NULL) {
 		if ((fileha = fopen(IndexPath,"rb")) == NULL) {
 			perror(IndexPath);
 		}
 		else {
 
-		fseek(fileha,Adress,0);
+			#ifdef TIME_DEBUG
+				gettimeofday(&end_time, NULL);
+				printf("Time debug: open %f\n",getTimeDifference(&start_time,&end_time));
+			#endif
+
+		#ifdef MMAP_IINDEX
 
 
-		
-		//fread(&term,sizeof(unsigned long),1,fileha);
-		//fread(&Antall,sizeof(unsigned long),1,fileha);
+	
+				//lseek(filed,Adress,0);
+				off_t mmap_offset;
+
+				mmap_offset = Adress % getpagesize();
+
+				printf("Adress %i, page size %i, mmap_offset %i\n",Adress,getpagesize(),mmap_offset);
+
+				//Adress = 0;
+				//mmap_offset = 0;
 
 
-		#ifdef TIME_DEBUG
-		gettimeofday(&end_time, NULL);
-		printf("Time debug: open, seek and read tern name and number %f\n",getTimeDifference(&start_time,&end_time));
+				if ((allindex = mmap(0,SizeForTerm + mmap_offset,PROT_READ,MAP_SHARED,fileno(fileha),Adress - mmap_offset) ) == NULL) {
+					perror("mmap");
+				}
+
+				allindexp = allindex;
+
+				allindex += mmap_offset;
+
+		#else
+
+
+				fseek(fileha,Adress,0);
+
+
+				maxIIindexSize = maxIndexElements * 209;
+
+				if (SizeForTerm > maxIIindexSize) { // DocID 4b +  langnr 1b + TermAntall 4b + (100 hit * 2b)
+					printf("size it to large. Will only read first %i bytes\n",maxIIindexSize);
+					SizeForTerm = maxIIindexSize;
+				}
+
+
+				if ((allindex = malloc(SizeForTerm)) == NULL) {
+					perror("malloc");
+					(*AntallTeff) = 0;
+					return;
+				}
+				#ifdef TIME_DEBUG
+				gettimeofday(&start_time, NULL);
+				#endif
+
+				fread(allindex,sizeof(char),SizeForTerm,fileha);
+
+				allindexp = allindex;
+
+				#ifdef TIME_DEBUG
+					gettimeofday(&end_time, NULL);
+					printf("Time debug: read all at ones %f\n",getTimeDifference(&start_time,&end_time));
+				#endif
 		#endif
+
+
+
+
+
+
 
 		#ifdef TIME_DEBUG
 		gettimeofday(&start_time, NULL);
 		#endif
-			//SizeForTerm -= (sizeof(term) + sizeof(Antall));
-			//Adress -= (sizeof(term) + sizeof(Antall));
-			printf("size %i\n",SizeForTerm);
 
-			maxIIindexSize = maxIndexElements * 209;
-
-			if (SizeForTerm > maxIIindexSize) { // DocID 4b +  langnr 1b + TermAntall 4b + (100 hit * 2b)
-				printf("size it to large. Will only read first %i bytes\n",maxIIindexSize);
-				SizeForTerm = maxIIindexSize;
-			}
-
-			char *allindex;
-
-			if ((allindex = malloc(SizeForTerm)) == NULL) {
-				perror("malloc");
-				(*AntallTeff) = 0;
-				return;
-			}
-			char *allindexp = allindex;
-			fread(allindex,sizeof(char),SizeForTerm,fileha);
-
-			allindex += memcpyrc(&term,allindex,sizeof(unsigned long));
-			allindex += memcpyrc(&Antall,allindex,sizeof(unsigned long));
-
-			//fseek(fileha,Adress,0);
-		#ifdef TIME_DEBUG
-		gettimeofday(&end_time, NULL);
-		printf("Time debug: read all at ones %f\n",getTimeDifference(&start_time,&end_time));
-		#endif
-
-
-		//y=0;
-		//for (i = 0; ((i < Antall) && (i < maxIndexElements)); i++) {
 		y=(*AntallTeff);
 
-		#ifdef TIME_DEBUG
-		gettimeofday(&start_time, NULL);
-		#endif
+		allindex += memcpyrc(&term,allindex,sizeof(unsigned long));
+		allindex += memcpyrc(&Antall,allindex,sizeof(unsigned long));
 
-		void *allip;
-		allip = allindex;
+		TeffArray->nrofHits = 0;
 
 		for (i = 0; ((i < Antall) && (y < maxIndexElements)); i++) {
 
@@ -607,53 +656,35 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 			}
 
-			//printf("DociD %u, TermAntall %u\n",TeffArray->iindex[y].DocID,TeffArray->iindex[y].TermAntall);		
-			//if (TeffArray->iindex[y].TermAntall > MaxsHitsInIndex) {
 
-				//allindex += memcpyrc( &TeffArray->iindex[y].hits,allindex,(sizeof(unsigned short) * TeffArray->iindex[y].TermAntall) );
-				//Leser først maksimum vi kan ha, så flytter vi peggeren over de andre
-				//allindex += memcpyrc( &TeffArray->iindex[y].hits,allindex,(sizeof(unsigned short) * MaxsHitsInIndex) );
 				//slutter hvis vi har tat for mange hits
 				if ((TeffArray->nrofHits + TeffArray->iindex[y].TermAntall) > maxTotalIindexHits) {
 					printf("Har max hits. Har nå %i\n",TeffArray->nrofHits);
 					TeffArray->iindex[y].TermAntall = 0;
 					break;
 				}
-				allindex += memcpyrc( &TeffArray->hits[TeffArray->nrofHits].pos,allindex,(sizeof(unsigned short) * TeffArray->iindex[y].TermAntall) );
+
 				TeffArray->iindex[y].hits = &TeffArray->hits[TeffArray->nrofHits];
 
+				//vi må koppiere de inn 1 og 1 slik at posisjon blir riktig, og phrase blir 0
+				for (z=0;z<TeffArray->iindex[y].TermAntall;z++) {
+					allindex += memcpyrc( &TeffArray->hits[TeffArray->nrofHits].pos,allindex,sizeof(unsigned short) );
+					TeffArray->hits[TeffArray->nrofHits].phrase = 0;
+
+					++TeffArray->nrofHits;
+					//printf("%hu ",TeffArray->iindex[y].hits[z].pos);
+				}
+
+
 				#ifdef DEBUG
-				printf("inserting into DocID %u nrofHits %i, %i hits, max %i, p %u\n",TeffArray->iindex[y].DocID,TeffArray->nrofHits,TeffArray->iindex[y].TermAntall,maxTotalIindexHits,(unsigned int )TeffArray->iindex[y].hits);			
+				//printf("inserting into DocID %u nrofHits %i, %i hits, max %i, p %u\n",TeffArray->iindex[y].DocID,TeffArray->nrofHits,TeffArray->iindex[y].TermAntall,maxTotalIindexHits,(unsigned int )TeffArray->iindex[y].hits);			
 				#endif
 				//for (i=0;i<TeffArray->iindex[y].TermAntall;i++) {
 				//	printf("%hu ",TeffArray->iindex[y].hits[i].pos);
 				//}
 				//printf("\n");
 
-				TeffArray->nrofHits += TeffArray->iindex[y].TermAntall;
 
-				//allindex += ( sizeof(unsigned short) * (TeffArray->iindex[y].TermAntall - MaxsHitsInIndex) );
-
-				//kan våre vi får for mange hits i athor, da vi ikke eher overholt noen grense. 
-				//burde heller lagre en verdi på hvor mange hits vi har eller noe
-
-		  		//printf("error. TermAntall to large at %i (max %i)\n",TeffArray->iindex[y].TermAntall,MaxsHitsInIndex);
-				//printf("(TeffArray->iindex[y].TermAntall - maxIndexElements) %i, maxIndexElements %i\n",(TeffArray->iindex[y].TermAntall - maxIndexElements),maxIndexElements);
-				//ToDo: denne blir hvis aldri kjørt, må undersøke det
-				/*
-				for (z = 0;(z < (TeffArray->iindex[y].TermAntall - maxIndexElements)) && (z < maxIndexElements); y++) {
-					//allindex += memcpyrc(&hit,allindex,sizeof(unsigned short));
-					allindex += sizeof(unsigned short);
-					printf("z %i\n",z);
-				}
-				*/
-				//allindex += ( sizeof(unsigned short) * (TeffArray->iindex[y].TermAntall - MaxsHitsInIndex) );
-			//}
-			//else {
-			//	//fread(&TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall,sizeof(unsigned short),fileha);
-			//	allindex += memcpyrc(&TeffArray->iindex[y].hits,allindex,(sizeof(unsigned short) * TeffArray->iindex[y].TermAntall));				
-			//	
-			//}
 
 			TeffArray->iindex[y].subname = subname;
 
@@ -665,8 +696,6 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				TeffArray->iindex[y].indexFiltered.subname = 0;
 			#endif
 
-                        //TeffArray->iindex[y].TermRank = rank(TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall,TeffArray->iindex[y].DocID,subname,&TeffArray[y]);
-			//printf("TermRank: %i, subname \"%s\", DocID %u\n",TeffArray->iindex[y].TermRank,(*TeffArray->iindex[y].subname).subname,TeffArray->iindex[y].DocID);
 
 			#ifndef BLACK_BOKS
 				//midlertidig bug fiks. Ignorerer hit med DocID 0.
@@ -676,10 +705,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				}
 			#endif
 
-
-
 			
-			//int languageFilterNr, int languageFilterAsNr
 			if (languageFilterNr == 0) {
 				++y;
 			}
@@ -704,8 +730,11 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		printf("Time debug: memcopy index into place %f\n",getTimeDifference(&start_time,&end_time));
 		#endif
 
-		free(allindexp);
-
+		#ifdef MMAP_IINDEX
+			munmap(allindexp,SizeForTerm);
+		#else
+			free(allindexp);
+		#endif
 /*
 		//y=0;
 		//for (i = 0; ((i < Antall) && (i < maxIndexElements)); i++) {
@@ -784,17 +813,24 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 		printf("jj: i=%i,y=%i\n",i,y);
 		*AntallTeff = y;
+			
 		fclose(fileha);
+		
 
 	} // fopen
 	}
+
+	#ifdef TIME_DEBUG
+                gettimeofday(&end_time_total, NULL);
+                printf("Time debug: GetIndexAsArray total %f\n",getTimeDifference(&start_time_total,&end_time_total));
+      	#endif
 
 	printf("GetIndexAsArray: AntallTeff = %i\n",(*AntallTeff));
 
 }
 
 
-void GetNForTerm(unsigned long WordIDcrc32, char *IndexType, char *IndexSprok, int *TotaltTreff, char subname[]) {
+void GetNForTerm(unsigned long WordIDcrc32, char *IndexType, char *IndexSprok, int *TotaltTreff, struct subnamesFormat *subname) {
 
 		int Adress;
         	int SizeForTerm;
@@ -804,11 +840,20 @@ void GetNForTerm(unsigned long WordIDcrc32, char *IndexType, char *IndexSprok, i
 		unsigned long Antall;
 		FILE *fileha;		    
 		//////////////////////////////////////////////
-		ReadIIndexRecord(&Adress, &SizeForTerm,WordIDcrc32,"Main","aa",WordIDcrc32,subname);
+		if ((!ReadIIndexRecordFromMemeory(&Adress, &SizeForTerm,WordIDcrc32,IndexType,IndexSprok,WordIDcrc32,(*subname).subname))
+		&& (!ReadIIndexRecord(&Adress, &SizeForTerm,WordIDcrc32,IndexType,IndexSprok,WordIDcrc32,(*subname).subname))
+		) {
+			//*AntallTeff = 0;
+			(*TotaltTreff) = 0;
+
+		}
+		else {
+
+		//ReadIIndexRecord(&Adress, &SizeForTerm,WordIDcrc32,"Main","aa",WordIDcrc32,subname->subname);
 				    
 				    
 		iindexfile = WordIDcrc32 % AntallBarrals;
-		GetFilePathForIindex(IndexPath,IndexFile,iindexfile,IndexType,IndexSprok,subname);
+		GetFilePathForIindex(IndexPath,IndexFile,iindexfile,IndexType,IndexSprok,subname->subname);
 		sprintf(IndexPath,"%s/iindex/%s/index/%s/%i.txt",IndexPath,IndexType,IndexSprok, iindexfile);
 		    
 										    
@@ -822,8 +867,9 @@ void GetNForTerm(unsigned long WordIDcrc32, char *IndexType, char *IndexSprok, i
 																						
 										
 		
-		*TotaltTreff = 	(int)Antall;												
+		(*TotaltTreff) = 	Antall;												
 		//////////////////////////////////////////////
+		}
 																									
 }
 
