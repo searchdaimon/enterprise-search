@@ -828,7 +828,7 @@ void *do_chld(void *arg)
 			&SiderHeder.filters,
 			searchd_config,
 			SiderHeder.errorstr, &SiderHeder.errorstrlen,
-			&global_DomainIDs
+			&global_DomainIDs, queryNodeHeder.HTTP_USER_AGENT
 			)) 
 		{
 

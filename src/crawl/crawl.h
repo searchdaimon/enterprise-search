@@ -1,6 +1,8 @@
 #ifndef _CRAWL__H_
 #define _CRAWL__H_
 
+#include "../common/define.h"
+
 void crawlperror(const char *fmt, ...);
 void crawlWarn(const char *fmt, ...);
 char *strcrawlWarn();
@@ -64,6 +66,7 @@ struct crawlLibInfoFormat {
 	int (*crawlpatAcces)(char resource[], char username[], char password[],int (*documentError)(int level, const char *fmt, ...));
 
 	int (*scan)(int (*scan_found_share)(char share[]),char host[],char username[], char password[],int (*documentError)(int level, const char *fmt, ...));
+	int (*rewrite_url)(char *, enum platform_type, enum browser_type);
 
 	int crawl_security;
 	char *shortname;

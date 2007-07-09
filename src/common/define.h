@@ -130,6 +130,7 @@
 #define cm_pathaccess		4
 #define cm_recrawlcollection	10
 #define cm_deleteCollection	50
+#define cm_rewriteurl		60
 
 //verdier av forskjelige term posisjoner
 #define poengForBody 1	
@@ -569,6 +570,29 @@ struct QueryDataForamt {
 
 	query_array search_user_as_query;
 };
+
+
+enum platform_type {
+	UNKNOWN_PLATFORM = 0,
+	UNIX,
+	WINDOWS,
+	MAC,
+};
+
+enum browser_type {
+	UNKNOWN_BROWSER = 0,
+	MOZILLA,
+	OPERA,
+	IE,
+};
+
+struct rewriteFormat {
+	enum platform_type ptype;
+	enum browser_type btype;
+	char collection[64];
+	char uri[512];
+};
+
 
 
 #endif //_DEFINE__H_

@@ -102,6 +102,52 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
     printf("\n");
 */
 }
+
+
+enum platform_type
+get_platform(char *useragent)
+{
+	if (strstr(useragent, "Windows"))
+		return WINDOWS;
+	if (strstr(useragent, "Linux"))
+		return UNIX;
+	if (strstr(useragent, "Mac OS X"))
+		return MAC;
+	return UNKNOWN_PLATFORM;
+}
+
+enum browser_type
+get_browser(char *useragent)
+{
+	if (strstr(useragent, "MSIE"))
+		return IE;
+	if (strstr(useragent, "Opera"))
+		return OPERA;
+	if (strstr(useragent, "Mozilla"))
+		return MOZILLA;
+	return UNKNOWN_BROWSER;
+}
+
+int
+handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum browser_type btype, char *collection,
+           char *url_out, size_t len, int sock)
+{
+
+#ifdef WITH_THREAD
+	pthread_mutex_lock(&PagesResults->mutex);
+#endif
+
+	cmc_rewrite_url(sock, collection, url_in, lenin, ptype, btype, url_out, len);
+
+#ifdef WITH_THREAD
+	pthread_mutex_unlock(&PagesResults->mutex);
+#endif
+
+	return 1;
+}
+
+
+
 int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,
 	struct iindexMainElements *TeffArray,struct QueryDataForamt QueryData, char *htmlBuffer,
 	unsigned int htmlBufferSize, char servername[],char subname[]) {
@@ -489,6 +535,7 @@ struct PagesResultsFormat {
 		int cmcsocketha;
 		char search_user[64];
 		char password[64];
+		char useragent[64];
 		struct iintegerMemArrayFormat *DomainIDs;
 
 		int filtered;
@@ -699,6 +746,16 @@ void *generatePagesResults(void *arg)
 	struct timeval start_time, end_time;
 	int localshowabal;
 	//tread lock
+
+#if BLACK_BOKS
+
+	enum platform_type ptype; 
+	enum browser_type btype; 
+
+	ptype = get_platform(PagesResults->useragent);
+	btype = get_browser(PagesResults->useragent);
+
+#endif
 
 	if ((htmlBuffer = malloc(htmlBufferSize)) == NULL) {
 		perror("can't malloc");
@@ -916,6 +973,14 @@ void *generatePagesResults(void *arg)
 		}
 		printf("pathaccess: done\n");
 
+		printf("url rewrite: start\n");
+
+#ifdef BLACK_BOKS
+		handle_url_rewrite(PagesResults->Sider[localshowabal].DocumentIndex.Url, sizeof(PagesResults->Sider[localshowabal].DocumentIndex.Url), ptype, btype, PagesResults->TeffArray->iindex[i].subname->subname, PagesResults->Sider[localshowabal].DocumentIndex.Url, sizeof(PagesResults->Sider[localshowabal].DocumentIndex.Url), PagesResults->cmcsocketha);
+
+#endif
+
+		printf("url rewrite: done\n");
 
 		#endif
 		gettimeofday(&end_time, NULL);
@@ -981,7 +1046,7 @@ int dosearch(char query[], int queryLen, struct SiderFormat *Sider, struct Sider
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames, 
 int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[], 
 char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *searchd_config, char *errorstr,int *errorLen,
-	struct iintegerMemArrayFormat *DomainIDs
+	struct iintegerMemArrayFormat *DomainIDs, char *useragent
 	) { 
 
 	struct PagesResultsFormat PagesResults;
@@ -1008,6 +1073,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	PagesResults.DomainIDs = DomainIDs;
 	PagesResults.filtered		= 0;
 	PagesResults.memfiltered	= 0;	
+	strcpy(PagesResults.useragent, useragent);
 
 
          (*SiderHeder).filtersTraped.cantDIRead = 0;

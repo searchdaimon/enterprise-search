@@ -894,6 +894,27 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag) {
 
 }
 
+int
+rewriteurl(char *collection, char *uri, size_t len, enum platform_type ptype, enum browser_type btype) {
+
+	struct crawlLibInfoFormat *crawlLibInfo;
+	struct collectionFormat *collections;
+	int nrofcollections;
+
+	cm_searchForCollection(collection,&collections,&nrofcollections);
+
+	if (!cm_getCrawlLibInfo(global_h,&crawlLibInfo,collections->connector)) {
+		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.\n");
+		//exit(1);
+		return 0;
+	}
+
+	if (crawlLibInfo->rewrite_url == NULL || !((*crawlLibInfo->rewrite_url)(uri, ptype, btype)))
+		return 0;
+
+	return 1;
+
+}
 
 void connectHandler(int socket) {
 
@@ -1083,8 +1104,30 @@ void connectHandler(int socket) {
 			printf("crawlcanconect: done");
 			
 		}
-	        else {
-			 printf("unnown comand. %i\n", packedHedder.command);
+		else if (packedHedder.command == cm_rewriteurl) {
+			struct rewriteFormat rewrite;
+			struct timeval start_time2, end_time2;
+
+			puts("cm_rewriteurl start");
+
+	printf("Receiving data..... %d\n", sizeof(rewrite));
+	gettimeofday(&start_time2, NULL);
+			recvall(socket, &rewrite,sizeof(rewrite));
+		
+	gettimeofday(&end_time2, NULL);
+	printf("# 222 ### Time debug: sending url rewrite data %f\n",getTimeDifference(&start_time2,&end_time2));
+
+	
+			rewriteurl(rewrite.collection, rewrite.uri, sizeof(rewrite.uri), rewrite.ptype, rewrite.btype);
+
+			if (sendall(socket, rewrite.uri, sizeof(rewrite.uri)) == 0) {
+				perror("sendall(uri)");
+			}
+
+			puts("cm_rewriteurl end");
+	        }
+		else {
+			 printf("unknown command. %i\n", packedHedder.command);
 	        }
 
 		gettimeofday(&end_time_all, NULL);

@@ -144,6 +144,28 @@ int crawlupdate(struct collectionFormat *collection,
         return result;
 }
 
+int
+smb_rewrite_url(char *uri, enum platform_type ptype, enum browser_type btype)
+{
+	char *tmpuri = strdup(uri+7);
+
+	if (ptype == MAC) {
+		int i;
+
+		for (i = 0; i < strlen(tmpuri); i++)
+			if (tmpuri[i] == '\\')
+				tmpuri[i] = '/';
+
+		sprintf(uri, "smb://%s", tmpuri);
+	} else if (btype == MOZILLA) {
+		sprintf(uri, "file://///%s", tmpuri);
+	}
+
+	return 1;
+}
+
+
+
 struct crawlLibInfoFormat crawlLibInfo = {
 	NULL,
         crawlfirst,
@@ -151,6 +173,7 @@ struct crawlLibInfoFormat crawlLibInfo = {
         crawlcanconect,
 	crawlpatAcces,
 	scanSMB,
+	smb_rewrite_url,
         crawl_security_acl,
         "SMB",
 	strcrawlError

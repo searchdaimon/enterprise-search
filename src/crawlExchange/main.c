@@ -21,6 +21,63 @@ struct crawlinfo {
 	unsigned int timefilter;
 };
 
+int crawlcanconect(struct collectionFormat *collection,
+                   int (*documentError)(int, const char *, ...) __attribute__((unused)));
+int crawlfirst(struct collectionFormat *collection,
+		int (*documentExist)(struct collectionFormat *, struct crawldocumentExistFormat *),
+		int (*documentAdd)(struct collectionFormat *, struct crawldocumentAddFormat *),
+		int (*documentError)(int, const char *, ...));
+int crawlupdate(struct collectionFormat *collection,
+		int (*documentExist)(struct collectionFormat *, struct crawldocumentExistFormat *),
+		int (*documentAdd)(struct collectionFormat *, struct crawldocumentAddFormat *),
+		int (*documentError)(int, const char *, ...));
+
+
+int 
+ex_rewrite_url(char *uri, enum platform_type ptype, enum browser_type btype)
+{
+
+	sprintf(uri, "%s", uri);
+
+	return 1;
+}
+
+
+struct crawlLibInfoFormat crawlLibInfo = {
+	NULL,
+	crawlfirst,
+	crawlupdate,
+	crawlcanconect,
+	NULL,
+	NULL,
+	NULL,
+	crawl_security_none,
+	"Exchange",
+	strcrawlError
+};
+
+
+
+char *
+make_crawl_uri(char *uri)
+{
+	int len;
+	int i;
+	char *p;
+
+/*
+	i = strlen(crawlLibInfo.shortname);
+	len = strlen(uri) + i + 1 + 1;
+	p = malloc(len);
+	strcpy(p, crawlLibInfo.shortname);
+	strcpy(p + i, "|");
+	strcpy(p + i + 1, uri);
+	*/
+	p = strdup(uri);
+
+	return p;
+}
+
 /* Does not detect loops, but they should not happen anyway */
 int
 grabContent(char *xml, char *url, const char *username, const char *password, struct crawlinfo *ci)
@@ -55,7 +112,7 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 			if (ex_getEmail((char *)cur->str, username, password, &mail) == NULL)
 				continue;
 
-			crawldocumentExist.documenturi = strdup((char *)cur->str);
+			crawldocumentExist.documenturi = make_crawl_uri((char *)cur->str);
 			crawldocumentExist.lastmodified = cur->modified;
 			if (crawldocumentExist.documenturi == NULL) {
 				(ci->documentError)(1, "Could not allocate memory for documenturi");
@@ -90,7 +147,16 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 				crawldocumentAdd.document = mail.buf;
 				crawldocumentAdd.dokument_size = mail.size-1; // Last byte is string null terminator
 				crawldocumentAdd.lastmodified = cur->modified;
-				crawldocumentAdd.acl_allow = "Users"; /* XXX */
+				crawldocumentAdd.acl_allow = NULL;
+				p = strstr(url, "/exchange/");
+				if (p != NULL) {
+					p += strlen("/exchange/");
+					p2 = strchr(p, '/');
+					if (p2 != NULL) 
+						crawldocumentAdd.acl_allow = strndup(p, p2 - p); /* XXX: Anything that should be added? */
+				}
+				if (crawldocumentAdd.acl_allow == NULL)
+					crawldocumentAdd.acl_allow = "";
 				crawldocumentAdd.acl_denied = "";
 
 				printf("Adding: '%s'\n", crawldocumentAdd.title);
@@ -98,6 +164,8 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 			}
 			free(crawldocumentAdd.title);
 			free(crawldocumentExist.documenturi);
+			if (crawldocumentAdd.acl_allow[0] != '\0')
+				free(crawldocumentAdd.acl_allow);
 			free(mail.buf);
 		}
 	}
@@ -175,19 +243,6 @@ crawlupdate(struct collectionFormat *collection,
 
 	return crawlGo(&ci);
 }
-
-struct crawlLibInfoFormat crawlLibInfo = {
-	NULL,
-	crawlfirst,
-	crawlupdate,
-	crawlcanconect,
-	NULL,
-	NULL,
-	crawl_security_none,
-	"Exchange",
-	strcrawlError
-};
-
 #if 0
 
 int

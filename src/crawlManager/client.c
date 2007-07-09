@@ -162,6 +162,30 @@ int cmc_pathaccess(int socketha,char collection_in[], char uri_in[], char user_i
 	return intrespons;
 }
 
+int
+cmc_rewrite_url(int socketha, char *collection_in, char *uri_in, size_t inlen, enum platform_type ptype, enum browser_type btype,
+                char *uri_out, size_t len)
+{
+	char uri[512];
+	struct rewriteFormat rewrite;
+	struct timeval start_time, end_time;
+
+	strscpy(rewrite.collection, collection_in, sizeof(rewrite.collection));
+	strscpy(rewrite.uri, uri_in, sizeof(rewrite.uri));
+	rewrite.ptype = ptype;
+	rewrite.btype = btype;
+
+	sendpacked(socketha, cm_rewriteurl, BLDPROTOCOLVERSION, sizeof(rewrite), &rewrite, "");
+
+	if (recvall(socketha, uri, sizeof(uri)) == 0) {
+		perror("recvall(uri)");
+		exit(1);
+	}
+	strscpy(uri_out, uri, len);
+
+	return 1;
+}
+
 int cmc_crawlcanconect (int socketha, char vantcollection[], char statusbuff[],int statusbufflen) {
 	int i;
 	int intrespons;
