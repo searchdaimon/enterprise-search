@@ -1,2 +1,1 @@
-int getDocIDFromUrl(char url[],unsigned int *DocID);
-
+int getDocIDFromUrl(char bdbfiledir[],char url[],unsigned int *DocID);
