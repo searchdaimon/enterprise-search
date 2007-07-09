@@ -1,9 +1,11 @@
-#include "define.h"
-
-#include <db.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "crc32.h"
+
+#include "../common/define.h"
+
+#include <db.h>
+#include "../common/crc32.h"
 
 #ifdef _WIN32
 extern int getopt(int, char * const *, const char *);
@@ -15,7 +17,7 @@ extern int getopt(int, char * const *, const char *);
 /*************************************************************************************
 * slår opp i databasen for å finne DoCID for en url
 *************************************************************************************/
-int getDocIDFromUrl(char url[],unsigned int *DocID) {
+int getDocIDFromUrl(char bdbfiledir[],char url[],unsigned int *DocID) {
 
         unsigned long crc32Value;
         int dbFileForUrl;
@@ -27,10 +29,10 @@ int getDocIDFromUrl(char url[],unsigned int *DocID) {
 
         //finner ut hvilken database vi skal opne
         //lager en has verdi slik at vi kan velge en av filene
-        crc32Value = crc32(url);
+        crc32Value = crc32boitho(url);
         dbFileForUrl = (crc32Value % nrOfUrlToDocIDFiles);
 
-        sprintf(fileName,"%s%i.db",URLTODOCIDINDEX,dbFileForUrl);
+        sprintf(fileName,"%s%i.db",bdbfiledir,dbFileForUrl);
 
 
         #ifdef DEBUG
@@ -44,7 +46,8 @@ int getDocIDFromUrl(char url[],unsigned int *DocID) {
         }
 
         /* open the database. */
-        if ((ret = dbp->open(dbp, fileName, NULL, DB_BTREE, DB_CREATE, 0444)) != 0) {
+        //if ((ret = dbp->open(dbp, NULL, fileName, NULL, DB_BTREE, DB_CREATE, 0444)) != 0) {
+        if ((ret = dbp->open(dbp, NULL, fileName, NULL, DB_BTREE, DB_RDONLY, 0444)) != 0) {
                 dbp->err(dbp, ret, "%s: open", fileName);
                 //goto err1;
         }
@@ -67,7 +70,9 @@ int getDocIDFromUrl(char url[],unsigned int *DocID) {
                 return 1;
         }
         else if (ret == DB_NOTFOUND) {
+		#ifdef DEBUG
                 dbp->err(dbp, ret, "DBcursor->get");
+		#endif
                 return 0;
         }
         else {
