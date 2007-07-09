@@ -16,7 +16,7 @@ void show (char url[], int n, unsigned int DocID) {
 		printf("DocID: %u\n",DocID);
 	}
 	else {
-		printf("ukjent DocID\n");
+		printf("unknown DocID\n");
 	}
 
 }
@@ -73,14 +73,13 @@ int main (int argc, char *argv[]) {
         }
         --optind;
 
-        //printf("argc %i, optind %i\n",argc,optind);
 
 	if (optFiles != 0) {
 
 
 
 		if (argc - optind < 2) {
-               		printf("Dette programet indekserer en ud file\n\n\tBruke\n\tUrlToDocIDQuery -f bdbfiledir file [ file ..n ]\n\n");
+               		printf("Dette programet viser DocID for urler. Eventuelt urler i text  filer\n\n\tBruke\n\tUrlToDocIDQuery -f bdbfiledir file [ file ..n ]\n\n");
                		exit(0);
        		}
 
