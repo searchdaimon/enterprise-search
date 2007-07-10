@@ -197,7 +197,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
                                 exit(1);
                         }
 
-			printf("got subname \"%s\": title \"%s\". Nr %i\n",subname,title,count);
+			printf("got subname \"%s\": title \"%s\". Nr %i, dokument_size %i\n",subname,title,count,dokument_size);
 
 			bbdocument_add(subname,documenturi,documenttype,document,dokument_size,lastmodified,acl_allow,acl_denied,title,doctype);
 
@@ -232,7 +232,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			snprintf(command,sizeof(command),"perl %s",bfile("perl/cleanLots.pl"));
 			//system("perl /home/boitho/boitho/websearch/perl/cleanLots.pl");
 			//system("perl /home/boitho/boithoTools/perl/cleanLots.pl");
-
+			printf("running \"%s\"\n",command);
 			system(command);
 			printf("cleanin lots end\n");
 
