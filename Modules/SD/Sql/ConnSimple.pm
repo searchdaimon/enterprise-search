@@ -47,7 +47,8 @@ sub sql_exec {
 	my ($dbh, $query, @binds) = @_;
 	my $sth = $dbh->prepare($query)
 		or croak "prepare:", $dbh->errstr;
-	$sth->execute(@binds);
+	$sth->execute(@binds)
+		or croak "exec: ", $dbh->errstr;
 	return $sth;
 }
 
