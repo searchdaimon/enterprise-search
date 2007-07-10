@@ -97,8 +97,6 @@ getFiletype:
 
 
 
-#brukte før src/parser/libhtml_parser.a, byttet til src/parser/lex.yy.c src/parser/lex.yy.c slik at vi kan bruke gdb
-IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c $(HTMLPARSER) $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
 
 setuidcaller:
 	@echo ""
@@ -128,11 +126,14 @@ Suggest:
 	(cd src/suggestwebclient; make)
 	cp src/suggestwebclient/suggest_webclient bin/
 
+#brukte før src/parser/libhtml_parser.a, byttet til src/parser/lex.yy.c src/parser/lex.yy.c slik at vi kan bruke gdb
+IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c $(HTMLPARSER) $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS
+
 IndexerLot: src/IndexerLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(IndexerLot) -lpthread -DWITH_THREAD -o bin/IndexerLot
+	$(CC) $(IndexerLot) -lpthread -DWITH_THREAD src/banlists/ban.c src/3pLibs/keyValueHash/hashtable.c -o bin/IndexerLot
 
 IndexerLotbb: src/IndexerLot/main.c
 	@echo ""
@@ -540,8 +541,8 @@ LotInvertetIndexMaker2:	src/LotInvertetIndexMaker2/main.c
 ThumbnaleDemon: src/ThumbnaleDemon/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/ThumbnaleDemon/main.c -o bin/ThumbnaleDemon $(LDFLAGS)
 
-PoprankMerge: src/PoprankMerge/poptorank.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/PoprankMerge/poptorank.c -o bin/PoprankMerge $(LDFLAGS)
+PoprankMerge: src/PoprankMerge/main.c
+	$(CC) $(CFLAGS) src/PoprankMerge/main.c -o bin/PoprankMerge $(LDFLAGS)
 
 ipbann: src/ipbann/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/ipbann/main.c  -o bin/ipbann $(LDFLAGS)
