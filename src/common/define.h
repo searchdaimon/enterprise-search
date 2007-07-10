@@ -146,7 +146,7 @@
 #define maxPoengAthor 260
 
 #define complicacy_maxPoengAthorPhraserank 260
-#define complicacy_maxPoengAthorSimple 30
+#define complicacy_maxPoengAthorSimple 6
 
 //Lengden på en okument post lengde
 //#define DocumentIndexPOSTLENGTH 253
