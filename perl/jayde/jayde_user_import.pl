@@ -61,7 +61,7 @@ sub main {
     # Sanity check.
     foreach my $file (@files) {
         unless (-f $file) {
-            print <STDERR>, "$file is not a file\n";
+            print STDERR "$file is not a file\n";
             show_usage();
         }
     }
