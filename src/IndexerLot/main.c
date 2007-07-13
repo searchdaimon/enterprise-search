@@ -187,6 +187,10 @@ void iiacladd(struct IndexerRes_acls *iiacl,char acl[]) {
 	//legger til acler
 	Count = 0;
 	while( (Data[Count] != NULL) ) {
+
+		//gruppenavn med spacer skaper problemer. Erstater det med X i steden
+		strsandr(Data[Count]," ","X");
+
 		printf("got acl \"%s\"\n",Data[Count]);
 
 		if (Data[Count][0] == '\0') {			
@@ -216,6 +220,10 @@ void alclot_add(struct alclotFormat *alclot,char acl[]) {
 
   	Count = 0;
   	while( (Data[Count] != NULL) ) {
+
+		//gruppenavn med spacer skaper problemer. Erstater det med X i steden
+		strsandr(Data[Count]," ","X");
+
 
 		#ifdef DEBUG
 		printf("god user \"%s\"\n",Data[Count]);

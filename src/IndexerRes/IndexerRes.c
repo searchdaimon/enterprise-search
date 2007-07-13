@@ -467,6 +467,7 @@ static int cmp1_crc32(const void *p, const void *q)
 void aclsMakeRevIndex(struct IndexerRes_acls *acl) {
 
 	int i;
+	unsigned int lastWodID;
 	
 	printf("aclsMakeRevIndex: aclns %i\n",(*acl).aclnr);
 	for(i=0;i<(*acl).aclnr;i++) {
@@ -478,13 +479,22 @@ void aclsMakeRevIndex(struct IndexerRes_acls *acl) {
 	qsort(&(*acl).acls_sorted, (*acl).aclnr , sizeof(struct wordsFormat), compare_elements_words);
 
 	(*acl).aclIndexnr = 0;
+	lastWodID = 0;
 	for(i=0;i<(*acl).aclnr;i++) {
 
-		(*acl).aclIndex[(*acl).aclIndexnr].WordID = (*acl).acls_sorted[i].WordID;
-		(*acl).aclIndex[(*acl).aclIndexnr].nr = 0;
-		//(*acl).aclIndex[(*acl).aclIndexnr].hits[(*acl).aclIndex[(*acl).aclIndexnr].nr] = (*acl).acls_sorted[i].position;
+		if (lastWodID == (*acl).acls_sorted[i].WordID) {
+			printf("aclsMakeRevIndex: is the same as last WordId: %u\n",(*acl).acls_sorted[i].WordID);
 
-		++(*acl).aclIndexnr;
+		}
+		else {
+			printf("aclsMakeRevIndex: adding crc32: %u\n",(*acl).acls_sorted[i].WordID);
+
+			(*acl).aclIndex[(*acl).aclIndexnr].WordID = (*acl).acls_sorted[i].WordID;
+			(*acl).aclIndex[(*acl).aclIndexnr].nr = 0;
+			//(*acl).aclIndex[(*acl).aclIndexnr].hits[(*acl).aclIndex[(*acl).aclIndexnr].nr] = (*acl).acls_sorted[i].position;
+			lastWodID = (*acl).aclIndex[(*acl).aclIndexnr].WordID;
+			++(*acl).aclIndexnr;
+		}
 	}
 }
 #endif

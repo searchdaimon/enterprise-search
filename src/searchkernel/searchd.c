@@ -57,6 +57,19 @@ char servername[32];
 
 struct iintegerMemArrayFormat global_DomainIDs;
 
+int isInSubname(struct subnamesFormat *subnames,int nrOfSubnames,char s[]) {
+
+	int i;
+
+	for (i=0;i<nrOfSubnames;i++) {
+		if (strcmp(subnames[i].subname,s) == 0) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -606,7 +619,13 @@ void *do_chld(void *arg)
     		printf("\t\taa: %d\t\"%s\"\n", Count, Data[Count]);
 
 		//tar ikke med tomme subnames (som bare er en \0)
-		if (Data[Count][0] != '\0') {
+		if (Data[Count][0] == '\0') {
+
+		}
+		else if (isInSubname(subnames,nrOfSubnames,Data[Count])) {
+			printf("all redy have \"%s\" as a subname\n",Data[Count]);
+		} 
+		else {
 	    		printf("\t\taa: added : %d\t\"%s\" (len %i)\n", Count, Data[Count],strlen(Data[Count]));
 
 			strscpy(subnames[nrOfSubnames].subname,Data[Count],sizeof(subnames[nrOfSubnames].subname));

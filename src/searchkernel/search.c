@@ -270,11 +270,28 @@ static inline void rank_explaindSumm(struct rank_explaindFormat *t, struct rank_
 #endif
 
 void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int alen, struct iindexFormat *b, int blen) {
+
+	int x;
+
 	int i=0;
 	int j=0;
 	int k=0;
 
 	(*baselen) = 0;
+
+	x=0;
+	printf("a array:\n");
+	while (x<alen){
+                printf("\t%u\n",a->iindex[x].DocID);
+		++x;
+	}
+	
+	x=0;
+	printf("b array:\n");
+	while (x<blen) {
+                printf("\t%u\n",b->iindex[x].DocID);
+		++x;
+	}
 
 	while ((i<alen) && (j<blen) && (k < maxIndexElements))
 	{
@@ -286,7 +303,7 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 	//	printf("b TermAntall %i\n",b[j].TermAntall);
 	//}
 		if (a->iindex[i].DocID == b->iindex[j].DocID) {
-			//printf("or_merge: %i == %i\n",a[i].DocID,b[j].DocID);
+			printf("or_merge: %i == %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
 			//c[k] = a[i];
 
 			//c[k].TermRank = a[i].TermRank + b[j].TermRank;		
@@ -307,6 +324,9 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 			++(*baselen);
 		}
  		else if( a->iindex[i].DocID < b->iindex[j].DocID ) {
+
+			printf("or_merge: %i < %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
+
                 	c->iindex[k] = a->iindex[i];
 			
 			++i; 
@@ -314,6 +334,9 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 			++(*baselen);
 		}
  		else {
+
+			printf("or_merge: %i > %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
+
 	                c->iindex[k] = b->iindex[j];
 
 			++j; 

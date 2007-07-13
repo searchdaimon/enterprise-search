@@ -1162,10 +1162,14 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		groupOrQuery[0] = '\0';
                 printf("groups: %i\n",groups_responsnr);
                 for (i=0;i<groups_responsnr;i++) {
+
+			strsandr(groups_respons_list[i]," ","X");
+
                         printf("group: %s\n",groups_respons_list[i]);
 
 			strlcat(groupOrQuery," |",sizeof(groupOrQuery));
 			strlcat(groupOrQuery,groups_respons_list[i],sizeof(groupOrQuery));
+
                 }
 
 		//legger til brukernavnet
@@ -1173,6 +1177,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		strlcat(groupOrQuery,PagesResults.search_user,sizeof(groupOrQuery));
 
 		printf("groupOrQuery \"%s\"\n",groupOrQuery);
+
+
 		/****************************************************************/
 
 
