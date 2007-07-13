@@ -40,15 +40,15 @@ int main (int argc, char *argv[]) {
 			fread(&langnr,sizeof(char),1,fileha);
         		fread(&TermAntall,sizeof(unsigned long),1,fileha);
 
-			printf("DocID: %u, langnr: %i, nr: %u\n",DocID,(int)langnr,TermAntall);
+			printf("DocID: %u, langnr: %i, nr: %u. Hits: ",DocID,(int)langnr,TermAntall);
 
 			for (y = 0;y < TermAntall; y++) {
                 		        fread(&hit,sizeof(unsigned short),1,fileha);
 
-					//printf("%i,",hit);
+					printf("%hu,",hit);
 
 			}
-			//printf("\n");
+			printf("\n");
 		}	
 		//printf("\n\n");
 	}
