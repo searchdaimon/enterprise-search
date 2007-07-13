@@ -187,9 +187,14 @@ void iiacladd(struct IndexerRes_acls *iiacl,char acl[]) {
 	//legger til acler
 	Count = 0;
 	while( (Data[Count] != NULL) ) {
-		printf("god acl \"%s\"\n",Data[Count]);
-	
-		acladd(iiacl, Data[Count]);
+		printf("got acl \"%s\"\n",Data[Count]);
+
+		if (Data[Count][0] == '\0') {			
+			printf("got emty acl. Ignoring\n");
+		}
+		else {
+			acladd(iiacl, Data[Count]);
+		}
 		++Count;
 	}
 
@@ -831,11 +836,12 @@ int main (int argc, char *argv[]) {
 
 	adultLoad(argstruct.adult);
 
-
-	if (!ipbanLoad()) {
-		printf("can't load ip ban list\n");
-		exit(1);
-	}
+	#ifndef BLACK_BOKS		
+		if (!ipbanLoad()) {
+			printf("can't load ip ban list\n");
+			exit(1);
+		}
+	#endif
 
 	//temp: må hente dette fra slot server eller fil
 	FileOffset = 0;
