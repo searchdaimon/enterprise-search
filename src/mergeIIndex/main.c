@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 
 //temp
 #include <sys/types.h>
@@ -70,7 +71,7 @@ int main (int argc, char *argv[]) {
 		char *subname = argv[5];
 		
 		for (i=0;i<=63;i++) {
-	
+			printf("bucket: %i\n",i);
 			mergei(i,startIndex,stoppIndex,type,lang,subname,&DocIDcount);
 		}
 
@@ -176,13 +177,22 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 		exit(1);
         }
 
+	printf("FinalDictionaryFileName \"%s\"\n",FinalDictionaryFileName);
+
 	//nrOffIindexFiles = argc -2;
 
 
 	iindexfile = malloc((stoppIndex - startIndex) * sizeof(struct iindexfileFormat));
 
 	//printf("out file %s\nnrOffIindexFiles %i\n",FinalIindexFileName,nrOffIindexFiles);
-	
+
+	//setter alle som ikke åpnet	
+        count=0;
+	for (i=startIndex;i<stoppIndex;i++) {
+		iindexfile[count].fileha = NULL;
+
+		++count;
+	}
 
 	count=0;
 	for (i=startIndex;i<stoppIndex;i++) {
@@ -196,17 +206,25 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 		//printf("aa iindex file %s\n",iindexfile[count].PathForLotIndex);
 
                 if ((iindexfile[count].fileha = fopen(iindexfile[count].PathForLotIndex,"rb")) == NULL) {
-                        //perror(PathForLotIndex);
+			//ENOENT = No such file or directory
+			if (errno == ENOENT) {
+				debug("No such file or directory: %s\n",iindexfile[count].PathForLotIndex);
+			}
+			else {
+				printf("errno %i, ENOENT %i\n",errno,ENOENT);
+                        	perror(PathForLotIndex);
+				exit(1);
+			}
 			//debug: viser hvilkene filer vi IKKE fikk åpnet
-			//printf("cant open %s\n",iindexfile[count].PathForLotIndex);
+			//printf("can't open %s\n",iindexfile[count].PathForLotIndex);
                 }
                	//leser inn første term
                	else if (fread(&iindexfile[count].lastTerm,sizeof(unsigned long),1,iindexfile[count].fileha) != 1) {
-			printf("cant read first lastTerm for %s. Ignoring it\n",iindexfile[count].PathForLotIndex);
+			printf("can't read first lastTerm for %s. Ignoring it\n",iindexfile[count].PathForLotIndex);
                         perror("read");
 		}
             	else if (fread(&iindexfile[count].lastAntall,sizeof(unsigned long),1,iindexfile[count].fileha) != 1) {
-			printf("cant read first lastAntall for %s. Ignoring it\n",iindexfile[count].PathForLotIndex);
+			printf("can't read first lastAntall for %s. Ignoring it\n",iindexfile[count].PathForLotIndex);
                         perror("read");
 		}
 		else {
@@ -261,12 +279,6 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 		//ToDo: dette er nokk ikke optimalt når man tenker på hastighet. Må se på dette
 		qsort(iindexfile, nrOffIindexFiles , sizeof(struct iindexfileFormat), compare_elements);
 
-#if 0
-		for (i=0;i<nrOffIindexFiles;i++) {
-			printf("%i: t %lu : %lu eof %i\n",iindexfile[i].nr,iindexfile[i].lastTerm,iindexfile[i].lastAntall,iindexfile[i].eof);
-		}
-#endif
-
 		//finner elementene som skal kopieres inn
 		mergeTerm = iindexfile[0].lastTerm;
 		i = 0;
@@ -295,7 +307,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 		//kjører gjenom alle filene og skriver ut de som har index
 		//for (i=0;i<nrOffIindexFiles;i++) {
 
-			//printf("aa: %i skriv %lu : %lu fra nr %i\n",i,iindexfile[i].lastTerm,iindexfile[i].lastAntall,iindexfile[i].nr);
+			//printf("i: %i skriv lastTerm %lu : lastAntall %lu fra nr %i\n",i,iindexfile[i].lastTerm,iindexfile[i].lastAntall,iindexfile[i].nr);
 
 			
 			/////////////////////////////////////////////////
@@ -344,7 +356,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 
                         	for (z = 0;z < TermAntall; z++) {
 					if ((n=fread(&hit,sizeof(unsigned short),1,iindexfile[i].fileha)) != 1) {
-						printf("can't read hit for %s\n",iindexfile[i].PathForLotIndex);
+						printf("can't read hit for %s. z: %i, TermAntall: %i\n",iindexfile[i].PathForLotIndex,z,TermAntall);
 		                       		perror(iindexfile[i].PathForLotIndex);
                                         	exit(1);
                                 	}
@@ -405,8 +417,13 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 	fclose(FinalDictionaryFileFA);
 	fclose(FinalIindexFileFA);
 
-	for (i=2;i<nrOffIindexFiles;i++) {
-		fclose(iindexfile[i].fileha);
+	//for (i=0;i<nrOffIindexFiles;i++) {
+	count=0;
+	for (i=startIndex;i<stoppIndex;i++) {
+		if (iindexfile[count].fileha != NULL) {
+			fclose(iindexfile[count].fileha);
+		}
+		++count;
 	}
 
 
