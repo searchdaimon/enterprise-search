@@ -371,8 +371,10 @@ void andNot_merge(struct iindexFormat *c, int *baselen, int *added,struct iindex
 	int i=0;
 	int j=0;
 	int k=0;
-
+	int x;
 	(*baselen) = 0;
+
+	printf("andNot_merge: start\n");
 
 	while ((i<alen) && (j<blen) && (k < maxIndexElements))
 	{
@@ -387,6 +389,23 @@ void andNot_merge(struct iindexFormat *c, int *baselen, int *added,struct iindex
 			printf("andNot_merge: DocID %u < DocID %u. Add\n",a->iindex[i].DocID,b->iindex[j].DocID);
 
                 	c->iindex[k] = a->iindex[i];
+			
+			c->iindex[k].hits = &c->hits[c->nrofHits];
+
+			//kopierer hits
+			c->iindex[k].TermAntall = 0;
+			printf("a TermAntall %i, c->nrofHits %i\n",a->iindex[i].TermAntall,c->nrofHits);
+			printf("size %i\n",sizeof(c->iindex[k]));
+			for(x=0;x<a->iindex[i].TermAntall;x++) {
+				//#ifdef DEBUG
+				printf("aaa %hu\n",a->iindex[i].hits[x].pos);
+				//#endif
+				c->iindex[k].hits[c->iindex[k].TermAntall].pos = a->iindex[i].hits[x].pos;
+				c->iindex[k].hits[c->iindex[k].TermAntall].phrase = 0;
+				++c->iindex[k].TermAntall;
+				++c->nrofHits;
+
+			}
 			
 			++i; 
 			++k;
@@ -410,21 +429,27 @@ void andNot_merge(struct iindexFormat *c, int *baselen, int *added,struct iindex
 
                 c->iindex[k] = a->iindex[i];
 
+		//kopierer hits
+		c->iindex[k].TermAntall = 0;
+		c->iindex[k].hits = &c->hits[c->nrofHits];
+
+		for(x=0;x<a->iindex[i].TermAntall;x++) {
+			//#ifdef DEBUG
+			printf("aaa %hu\n",a->iindex[i].hits[x].pos);
+			//#endif
+			c->iindex[k].hits[c->iindex[k].TermAntall].pos = a->iindex[i].hits[x].pos;
+			c->iindex[k].hits[c->iindex[k].TermAntall].phrase = 0;
+			++c->iindex[k].TermAntall;
+			++c->nrofHits;
+
+		}
+
 		printf("andNot_merge: overflow DocID %u\n",a->iindex[i].DocID);
 
 		++k; ++i;
 		++(*baselen);
 	}
 
-	/*	
-	while (j<blen && (k < maxIndexElements)) {
-
-                c->iindex[k] = b->iindex[j];
-
-		++k; ++j;
-		++(*baselen);
-	}
-	*/
 
 	printf("andNot_merge: have:\n");
 	for(i=0;i<k;i++) {
@@ -441,7 +466,7 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 	int i=0,j=0;
 	int TermRank;
 
-
+	int x;
 	int k=originalLen;
 
 	//runarb: 28, jul 2007
@@ -469,6 +494,34 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
                         c->iindex[k].TermRank = TermRank;
 			c->iindex[k].phraseMatch = 0;
 
+
+			//copying hits
+			#ifdef DEBUG
+			printf("and_merge: hist a %hu, b %hu\n",a->iindex[i].TermAntall,b->iindex[j].TermAntall);
+			#endif
+			c->iindex[k].TermAntall = 0;
+			c->iindex[k].hits = &c->hits[c->nrofHits];
+
+			for(x=0;x<a->iindex[i].TermAntall;x++) {
+				#ifdef DEBUG
+				printf("aaa %hu\n",a->iindex[i].hits[x].pos);
+				#endif
+				c->iindex[k].hits[c->iindex[k].TermAntall].pos = a->iindex[i].hits[x].pos;
+				c->iindex[k].hits[c->iindex[k].TermAntall].phrase = 0;
+				++c->iindex[k].TermAntall;
+				++c->nrofHits;
+			}
+			for(x=0;x<b->iindex[j].TermAntall;x++) {
+				#ifdef DEBUG
+				printf("bbb %hu\n",b->iindex[j].hits[x].pos);
+				#endif
+				c->iindex[k].hits[c->iindex[k].TermAntall].pos = b->iindex[j].hits[x].pos;
+				c->iindex[k].hits[c->iindex[k].TermAntall].phrase = 0;
+				++c->iindex[k].TermAntall;
+				++c->nrofHits;
+			}
+			
+
 			k++; j++; i++;
 			(*baselen)++;
 		}
@@ -493,6 +546,10 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 	printf("and_merge a and b of length %i %i, into %i, starting to add on element %i\n",alen,blen,(*baselen),originalLen);
 
 }
+
+
+
+
 
 //and søk med progsymasjon () mere vekt  hvis ordene er nerme en fjernt.
 void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct iindexFormat *a, int alen, struct iindexFormat *b, int blen) {
@@ -716,6 +773,7 @@ void iindexArrayHitsCopy(struct iindexFormat *a, struct iindexFormat *b, int i) 
 	
 }
 
+
 void iindexArrayCopy(struct iindexFormat *a, struct iindexFormat *b, int blen) {
 
 	int i;
@@ -729,6 +787,46 @@ void iindexArrayCopy(struct iindexFormat *a, struct iindexFormat *b, int blen) {
 
 }
 
+/*
+
+!!!!!!! utestet, fungerer bare kansje
+
+void iindexArrayCopy2(struct iindexFormat *c, int *baselen,int Originallen, struct iindexFormat *a, int alen) {
+
+	int x;
+        int i=0,j=0;
+	int k=Originallen;
+	int y;
+	int ah,bh;
+	//int hitcount;
+	int found;
+	int TermRank;
+	//unsigned short hits[MaxTermHit];
+        (*baselen) = Originallen;
+
+	while (i<alen && (k < maxIndexElements)){
+
+                c->iindex[k] = a->iindex[i];
+
+		c->iindex[k].TermAntall = 0;
+		c->iindex[k].hits = &c->hits[c->nrofHits];
+
+		for(x=0;x<a->iindex[i].TermAntall;x++) {
+			#ifdef DEBUG
+			printf("aaa %hu\n",a->iindex[i].hits[x].pos);
+			#endif
+			c->iindex[k].hits[c->iindex[k].TermAntall].pos = a->iindex[i].hits[x].pos;
+			c->iindex[k].hits[c->iindex[k].TermAntall].phrase = 0;
+			++c->iindex[k].TermAntall;
+			++c->nrofHits;
+		}
+
+		++k; ++i;
+		++(*baselen);
+	}
+
+}
+*/
 //frasesk. Denne er dog ikke bra, egentlig en versjon av andprox_merge der bare de sidene med distanse 1 blir med
 void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct iindexFormat *a, int alen, struct iindexFormat *b, int blen) {
         int i=0,j=0;
@@ -1377,9 +1475,9 @@ void *searchIndex_thread(void *arg)
 {
 
         struct searchIndex_thread_argFormat *searchIndex_thread_arg = (struct searchIndex_thread_argFormat *)arg;
-	int i,y;
+	int i,y,x;
 
-	int ArrayLen;
+	int ArrayLen, TmpArrayLen;
 
 	struct iindexFormat *TmpArray; 
 	struct iindexFormat *Array;
@@ -1496,6 +1594,7 @@ void *searchIndex_thread(void *arg)
 			acl_allowArrayLen = 0;
 			acl_deniedArrayLen = 0;
 
+
 			searchIndex("acl_allow",
 				&acl_allowArrayLen,
 				acl_allowArray,
@@ -1530,24 +1629,46 @@ void *searchIndex_thread(void *arg)
 
 			printf("searcArrayLen %i:\n",searcArrayLen);
 			for (y = 0; y < searcArrayLen; y++) {
-				printf("Main TeffArray: DocID %u\n",searcArray->iindex[y].DocID);			
+				printf("Main TeffArray: DocID %u\nHits (%i): \n",searcArray->iindex[y].DocID,searcArray->iindex[y].TermAntall);			
+				for (x=0;x<searcArray->iindex[y].TermAntall;x++) {
+					printf("\t%hu\n",searcArray->iindex[y].hits[x]);
+				}		
+
 			}
 
 			//hits = ArrayLen;
 	
 			//merger får å bare ta med de vi har en acl_allow til
-			and_merge(Array,&ArrayLen,ArrayLen,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
+			//and_merge(Array,&ArrayLen,ArrayLen,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
+			and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
 
 
 			printf("after first merge:\n");
 			for (y = 0; y < ArrayLen; y++) {
-				printf("TeffArray: DocID %u\n",Array->iindex[y].DocID);			
+				printf("TeffArray: DocID %u\nHits (%i): \n",Array->iindex[y].DocID,Array->iindex[y].TermAntall);	
+				for (x=0;x<Array->iindex[y].TermAntall;x++) {
+					printf("\t%hu\n",Array->iindex[y].hits[x]);
+				}		
 			}
 
 
 			//void andNot_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int alen, 
 			//struct iindexFormat *b, int blen)
-			andNot_merge(Array,&ArrayLen,&hits,Array,ArrayLen,acl_deniedArray,acl_deniedArrayLen);
+			//andNot_merge(Array,&ArrayLen,&hits,Array,ArrayLen,acl_deniedArray,acl_deniedArrayLen);
+			//andNot_merge(TmpArray,&TmpArrayLen,&hits,Array,ArrayLen,acl_deniedArray,acl_deniedArrayLen);
+
+			andNot_merge(Array,&ArrayLen,&hits,TmpArray,TmpArrayLen,acl_deniedArray,acl_deniedArrayLen);
+
+
+
+
+			printf("etter andNot_merge:\n");
+			for (y = 0; y < ArrayLen; y++) {
+				printf("TeffArray: DocID %u\nHits (%i): \n",Array->iindex[y].DocID,Array->iindex[y].TermAntall);	
+				for (x=0;x<Array->iindex[y].TermAntall;x++) {
+					printf("\t%hu\n",Array->iindex[y].hits[x]);
+				}		
+			}
 
 			//ArrayLen = ArrayLen + hits;
 
