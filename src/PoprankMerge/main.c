@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#define mmap_MaxDocIDToAdd 100000000
+#define mmap_MaxDocIDToAdd 300000000 //3 000 millioner
 
 struct popmemmapFormat {
         int *ranks;
@@ -69,7 +69,7 @@ int popopenMmap(struct popmemmapFormat *popmemmap,char *filname) {
 
 
         popmemmap->ranks = mmap(0,popmemmap->size,PROT_READ|PROT_WRITE,MAP_SHARED,popmemmap->fd,0);
-	printf("mmap ret %i\n",(unsigned int)popmemmap->ranks);
+	printf("mmap ret %"PRId64"\n",popmemmap->ranks);
 
 
        	if ((int)popmemmap->ranks == -1) {
@@ -136,16 +136,20 @@ int main (int argc, char *argv[]) {
 	//struct popl popha;
 	struct popmemmapFormat popmemmap;
 
-	if (argc < 2) {
-		printf("No popfile given\n\nUsage:\n\t./PoprankMerge popfil\n\n");
+	if (argc < 3) {
+		printf("No popfile given\n\nUsage:\n\t./PoprankMerge mainPopfile updatePopfil\n\n");
 		exit(1);
 	}
-	if ((POPFILE = fopen(argv[1],"rb")) == NULL) {
-		perror(argv[1]);
+
+	char *mainpopfile = argv[1];
+
+	if ((POPFILE = fopen(argv[2],"rb")) == NULL) {
+		perror(argv[2]);
 	}
 
+
 	//popopen(&popha,"/home/boitho/config/popindex");
-	if (!popopenMmap(&popmemmap,"/home/boitho/config/popindex")) {
+	if (!popopenMmap(&popmemmap,mainpopfile)) {
 		printf("can't mmap\n");
 		exit(1);
 	}
