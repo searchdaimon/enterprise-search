@@ -13,7 +13,6 @@ use Jayde::UserImport::Handler;
 use Log::Log4perl;
 use Readonly;
 use Date::Format;
-use Switch;
 
 BEGIN {
     push @INC, $ENV{BOITHOHOME} . "/Modules";
