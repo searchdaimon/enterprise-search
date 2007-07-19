@@ -17,9 +17,9 @@ int boithoa_getLdapResponsList(int socketha,char **respons_list[],int *nrofrespo
 		return 0;
 	}
 
-	#ifdef DEBUG
+	//#ifdef DEBUG
 	printf("nr %i\n",intresponse);
-	#endif
+	//#endif
 
 	(*respons_list) = malloc((sizeof(char *) * intresponse) +1);
         (*nrofresponses) = 0;
@@ -29,9 +29,9 @@ int boithoa_getLdapResponsList(int socketha,char **respons_list[],int *nrofrespo
 			return 0;
 		}
 
-		#ifdef DEBUG
+		//#ifdef DEBUG
 		printf("record \"%s\"\n",ldaprecord);
-		#endif
+		//#endif
 
 		len = strnlen(ldaprecord,MAX_LDAP_ATTR_LEN);
                 (*respons_list)[(*nrofresponses)] = malloc(len +1);
@@ -196,7 +196,7 @@ int boithoad_getPassword(char username_in[], char password_in[]) {
 		if (!recvall(socketha,password,sizeof(password))) {
                 	return 0;
         	}
-		printf("got \"%s\"\n",password);
+		//printf("got \"%s\"\n",password);
 		strcpy(password_in,password);
 		forreturn = 1;
 	}
