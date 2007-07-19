@@ -363,6 +363,33 @@ int GetStartDocIFForLot (int LotNr) {
 	return ((LotNr * NrofDocIDsInLot) - NrofDocIDsInLot);
 }
 
+int sadd(int in, int max) {
+
+	int ret = in;
+
+	++ret;
+
+	ret = ret % max;
+
+	return ret;
+
+}
+
+int indexNrOffset(int IndexNr,char Type[]) {
+
+
+	if (strcmp(Type,"Url") == 0) {
+		return sadd(IndexNr +1,63);
+	}
+	else if (strcmp(Type,"Athor") == 0) {
+		return sadd(IndexNr +2,63);
+	}
+	else {
+		return IndexNr;		
+	}
+}
+
+
 void GetFilePathForIDictionary (char *FilePath, char *FileName,int IndexNr,char Type[], char lang[],char subname[]) {
 
 	//hvis vi ikke har inlisert mapplisten enda gjør vi det.
@@ -371,6 +398,8 @@ void GetFilePathForIDictionary (char *FilePath, char *FileName,int IndexNr,char 
 		MakeMapListMap();
 		MapListInitialised = 1;
 	}
+
+	IndexNr = indexNrOffset(IndexNr,Type);
 
 	//printf("dataDirectorys: %s\n",dataDirectorys[IndexNr].Name);
 	if (strcmp(subname,"www") == 0) {
@@ -385,6 +414,8 @@ void GetFilePathForIDictionary (char *FilePath, char *FileName,int IndexNr,char 
 
 	}
 }
+
+
 void GetFilePathForIindex (char *FilePath, char *FileName,int IndexNr,char Type[], char lang[],char subname[]) {
 
 	//hvis vi ikke har inlisert mapplisten enda gjør vi det.
@@ -395,6 +426,8 @@ void GetFilePathForIindex (char *FilePath, char *FileName,int IndexNr,char Type[
 	}
 
 	//printf("dataDirectorys: %s\n",dataDirectorys[IndexNr].Name);
+
+	IndexNr = indexNrOffset(IndexNr,Type);
 
 	if (strcmp(subname,"www") == 0) {
 		sprintf(FilePath,"%s/iindex/%s/index/%s/",dataDirectorys[IndexNr].Name,Type,lang);
