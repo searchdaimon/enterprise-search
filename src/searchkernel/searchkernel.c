@@ -1288,12 +1288,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	pthread_mutex_lock(&PagesResults.mutex);
 
 	//start som thread that can get the pages
-#if 0
 	for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
 		//pthread_create(&chld_thr, NULL, do_chld, (void *) newsockfd);
 		ret = pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults);		
 	}
-#endif
 	#endif
 
 	printf("searchSimple\n");
@@ -1368,11 +1366,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	pthread_mutex_unlock(&PagesResults.mutex);
 
 	//venter på trådene
-#if 0
 	for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
 		ret = pthread_join(threadid[i], NULL);
 	}
-#endif
 
 	//free mutex'en
 	ret = pthread_mutex_destroy(&PagesResults.mutex);
@@ -1751,11 +1747,14 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	//låser mutex. Vi er jo enda ikke kalre til å kjøre
 	pthread_mutex_lock(&PagesResults.mutex);
 
+
+#if 0
 	//start som thread that can get the pages
 	for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
 		//pthread_create(&chld_thr, NULL, do_chld, (void *) newsockfd);
 		ret = pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults);		
 	}
+#endif
 	#endif
 
 	printf("searchSimple\n");
@@ -1837,9 +1836,11 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	pthread_mutex_unlock(&PagesResults.mutex);
 
 	//venter på trådene
+#if 0
 	for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
 		ret = pthread_join(threadid[i], NULL);
 	}
+#endif
 
 	//free mutex'en
 	ret = pthread_mutex_destroy(&PagesResults.mutex);
