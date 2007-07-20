@@ -27,7 +27,6 @@ Readonly::Hash my %DB_LAYOUT => (
         sRealname => 'navn',
         sSecretQuestion => 'hemmelig_sporsmaal',
         sSecretAnswer => 'hemmelig_svar',
-        iAutoLogin => 'auto_login',
         nCreateDate => 'opprettet',
         nLastLoginDate => 'sist_login',
         nStatus => 'status',
@@ -41,6 +40,7 @@ Readonly::Hash my %IGNORED_ELEMENTS => (
         UserAccount => 1,
         iMaxAlerts => 1,
         setApplications => 1,
+        iAutoLogin => 1,
     );
 
 
