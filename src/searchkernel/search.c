@@ -282,14 +282,14 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 	x=0;
 	printf("a array:\n");
 	while (x<alen){
-                printf("\t%u\n",a->iindex[x].DocID);
+                //printf("\t%u\n",a->iindex[x].DocID);
 		++x;
 	}
 	
 	x=0;
 	printf("b array:\n");
 	while (x<blen) {
-                printf("\t%u\n",b->iindex[x].DocID);
+                //printf("\t%u\n",b->iindex[x].DocID);
 		++x;
 	}
 
@@ -303,7 +303,7 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 	//	printf("b TermAntall %i\n",b[j].TermAntall);
 	//}
 		if (a->iindex[i].DocID == b->iindex[j].DocID) {
-			printf("or_merge: %i == %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
+			//printf("or_merge: %i == %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
 			//c[k] = a[i];
 
 			//c[k].TermRank = a[i].TermRank + b[j].TermRank;		
@@ -325,7 +325,7 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 		}
  		else if( a->iindex[i].DocID < b->iindex[j].DocID ) {
 
-			printf("or_merge: %i < %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
+			//printf("or_merge: %i < %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
 
                 	c->iindex[k] = a->iindex[i];
 			
@@ -335,7 +335,7 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 		}
  		else {
 
-			printf("or_merge: %i > %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
+			//printf("or_merge: %i > %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
 
 	                c->iindex[k] = b->iindex[j];
 
@@ -1761,7 +1761,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		int languageFilterAsNr[], char orderby[],
 		struct filtersFormat *filters,
 		struct filteronFormat *filteron,
-		query_array *search_user_as_query
+		query_array *search_user_as_query, unsigned int *getRank
 		) {
 
 	int i,y,n;
@@ -1812,6 +1812,9 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	pthread_t threadid_Main = 0;
 	//pthread_t threadid_Acl = 0;
 
+
+	if (getRank)
+		printf("We are doing some getRankin'...\n");
 	//resetter subnmes hits
 	for(i=0;i<nrOfSubnames;i++) {		
 		subnames[i].hits = 0;
@@ -2059,7 +2062,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 	#ifdef WITH_RANK_FILTER
 	
-	if ((*TeffArrayElementer) > 20000) {
+	if (getRank == NULL && (*TeffArrayElementer) > 20000) {
 
 		for(i=0; i<= 255;i++) {
 			rankcount[i] = 0;
@@ -2268,6 +2271,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		//struct filesKeyFormat *filesKey;
 
 		for (i = 0; i < (*TeffArrayElementer); i++) {
+			//printf("$%%$$%%$$$$$$$$$$$$$$ Eirik: %d\n", TeffArray->iindex[i].DocID);
 			printf("i = %i, subname \"%s\"\n",i,(*TeffArray->iindex[i].subname).subname);
 			if (iintegerGetValueNoCashe(&TeffArray->iindex[i].filetype,4,TeffArray->iindex[i].DocID,"filtypes",(*TeffArray->iindex[i].subname).subname) == 0) {
 				printf("woldent get integerindex\n");
@@ -2420,8 +2424,10 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 				if (TeffArray->iindex[i].phraseMatch) {
                                         TeffArray->iindex[i].allrank = TeffArray->iindex[i].allrank * 2;
                                 }
+				//printf(" $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Got a score of: %d\n", TeffArray->iindex[i].allrank);
 			}
 		}
+
 		gettimeofday(&end_time, NULL);
                 (*queryTime).allrankCalc = getTimeDifference(&start_time,&end_time);
 	#else
@@ -2523,6 +2529,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 				}
 				*/
 				TeffArray->iindex[i].allrank = (((100.0/255.0) * TeffArray->iindex[i].TermRank) * TeffArray->iindex[i].PopRank);
+				//printf(" $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Got a score of: %d\n", TeffArray->iindex[i].allrank);
 
 				//TeffArray->iindex[i].allrank = ((1000 / TeffArray->iindex[i].TermRank) * TeffArray->iindex[i].PopRank);
 
@@ -2544,6 +2551,21 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	gettimeofday(&end_time, NULL);
 	(*queryTime).indexSort = getTimeDifference(&start_time,&end_time);
 
+
+	/* If we are getting the current rank we sum up the pages better ranked
+	 * than the rank we put in and return that result */
+	if (getRank) {
+		*getRank = 1;
+		for (i = 0; i < (*TeffArrayElementer); i++) {
+			/* XXX: Decide on a comparison, we are giving an optimistic one now */
+			if (TeffArray->iindex[i].allrank >= *getRank) {
+				(*getRank)++;
+				//printf("####################### Found a position of: %d\n", i);
+				//break;
+			}
+		}
+		printf("Position: %d\n", *getRank);
+	}
 
 		//temp:
 		/********************************************************************************/

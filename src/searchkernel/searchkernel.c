@@ -130,17 +130,19 @@ get_browser(char *useragent)
 
 int
 handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum browser_type btype, char *collection,
-           char *url_out, size_t len, int sock)
+           char *url_out, size_t len, int sock, pthread_mutex_t *lock)
 {
 
+#ifdef BLACK_BOX
 #ifdef WITH_THREAD
-	pthread_mutex_lock(&PagesResults->mutex);
+	pthread_mutex_lock(lock);
 #endif
 
 	cmc_rewrite_url(sock, collection, url_in, lenin, ptype, btype, url_out, len);
 
 #ifdef WITH_THREAD
-	pthread_mutex_unlock(&PagesResults->mutex);
+	pthread_mutex_unlock(lock);
+#endif
 #endif
 
 	return 1;
@@ -150,7 +152,7 @@ handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum br
 
 int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,
 	struct iindexMainElements *TeffArray,struct QueryDataForamt QueryData, char *htmlBuffer,
-	unsigned int htmlBufferSize, char servername[],char subname[]) {
+	unsigned int htmlBufferSize, char servername[],char subname[], unsigned int getRank) {
 
 	int y;
 	char        *titleaa, *body, *metakeyw, *metadesc;
@@ -380,7 +382,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 					char        *summary;
 			                //generate_highlighting( QueryData.queryParsed, body, strlen(body)+1, &summary );
 					//temp: bug generate_snippet er ikke ut til å takle og ha en tom body
-					if (strlen(body) == 0) {
+					if (strlen(body) == 0 || getRank) {
 						(*Sider).description[0] = '\0';
 					}
 					else {
@@ -537,6 +539,7 @@ struct PagesResultsFormat {
 		char password[64];
 		char useragent[64];
 		struct iintegerMemArrayFormat *DomainIDs;
+		int getRank;
 
 		int filtered;
 		int memfiltered;
@@ -752,8 +755,10 @@ void *generatePagesResults(void *arg)
 	enum platform_type ptype; 
 	enum browser_type btype; 
 
-	ptype = get_platform(PagesResults->useragent);
-	btype = get_browser(PagesResults->useragent);
+	if (!PagesResults->getRank) {
+		ptype = get_platform(PagesResults->useragent);
+		btype = get_browser(PagesResults->useragent);
+	}
 
 #endif
 
@@ -943,7 +948,7 @@ void *generatePagesResults(void *arg)
 		//}
 		#endif
 		
-		if (!popResult(&(*PagesResults).Sider[localshowabal], (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,(*(*PagesResults).TeffArray->iindex[i].subname).subname)) {
+		if (!popResult(&(*PagesResults).Sider[localshowabal], (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,(*(*PagesResults).TeffArray->iindex[i].subname).subname, PagesResults->getRank)) {
 			//#ifdef DEBUG
                         	printf("cant popResult\n");
                         //#endif
@@ -976,8 +981,15 @@ void *generatePagesResults(void *arg)
 		printf("url rewrite: start\n");
 
 #ifdef BLACK_BOKS
-		handle_url_rewrite(PagesResults->Sider[localshowabal].DocumentIndex.Url, sizeof(PagesResults->Sider[localshowabal].DocumentIndex.Url), ptype, btype, PagesResults->TeffArray->iindex[i].subname->subname, PagesResults->Sider[localshowabal].DocumentIndex.Url, sizeof(PagesResults->Sider[localshowabal].DocumentIndex.Url), PagesResults->cmcsocketha);
-
+		if (!PagesResults->getRank) {
+			handle_url_rewrite(PagesResults->Sider[localshowabal].DocumentIndex.Url, sizeof(PagesResults->Sider[localshowabal].DocumentIndex.Url), ptype, btype, PagesResults->TeffArray->iindex[i].subname->subname, PagesResults->Sider[localshowabal].DocumentIndex.Url, sizeof(PagesResults->Sider[localshowabal].DocumentIndex.Url), PagesResults->cmcsocketha, 
+#ifdef WITH_THREAD
+			&PagesResults->mutex
+#else
+			NULL
+#endif
+			);
+		}
 #endif
 
 		printf("url rewrite: done\n");
@@ -1073,6 +1085,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	PagesResults.DomainIDs = DomainIDs;
 	PagesResults.filtered		= 0;
 	PagesResults.memfiltered	= 0;	
+	PagesResults.getRank		= 0;
 	strcpy(PagesResults.useragent, useragent);
 
 
@@ -1287,7 +1300,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
-			filters,&filteron,&PagesResults.QueryData.search_user_as_query);
+			filters,&filteron,&PagesResults.QueryData.search_user_as_query, NULL);
 
 	printf("end searchSimple\n");
 
@@ -1362,6 +1375,473 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	#else 
 		generatePagesResults(&PagesResults);		
+	#endif
+
+	#ifdef BLACK_BOKS
+		cmc_close(PagesResults.cmcsocketha);
+	#endif
+
+
+	(*SiderHeder).showabal = PagesResults.showabal;
+
+	//lager en filtered verdi
+	(*SiderHeder).filtered = PagesResults.filtered + PagesResults.memfiltered;	
+
+
+	gettimeofday(&popResult_end_time, NULL);
+        (*SiderHeder).queryTime.popResult = getTimeDifference(&popResult_start_time,&popResult_end_time);
+
+	
+	//5: printf("end\n");
+	
+
+
+	//teller opp filteree
+	/*
+searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTreff,
+                        &PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
+                        subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
+                        orderby,dates,
+                        filters)
+	*/
+
+	#ifdef BLACK_BOKS
+		searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,&(*SiderHeder).queryTime);
+	
+	#endif
+
+
+
+	//fjerner filtered fra total oversikten
+	//ToDo: bør dette også gjøres for web?
+	(*SiderHeder).TotaltTreff = (*SiderHeder).TotaltTreff - (*SiderHeder).filtered;
+
+	//lager en liste med ordene som ingikk i queryet til hiliting
+	hiliteQuery[0] = '\0';
+	//printf("size %i\n",PagesResults.QueryData.queryParsed.size);
+
+	printf("hiliteQuery\n");
+	//x=0;
+	//for (y=0; y<PagesResults.QueryData.queryParsed.size; y++) {
+	//	struct text_list *t_it = PagesResults.QueryData.queryParsed.elem[y];
+	for (i=0; i<PagesResults.QueryData.queryParsed.n; i++) {
+
+		//while ( t_it!=NULL )
+		for (j=0; j<PagesResults.QueryData.queryParsed.query[i].n; j++)
+                {
+
+			//if (!t_it->stopword) {
+                		//ToDo vanlig strcat gir fare for buffer overflov her
+				//strncat(hiliteQuery,t_it->text,sizeof(*hiliteQuery) -1); 
+		        	strcat(hiliteQuery,PagesResults.QueryData.queryParsed.query[i].s[j]);      	
+
+				//appender et komma, slik at vi får en komma separert liste med ord
+				strncat(hiliteQuery,",",sizeof(*hiliteQuery) -1);		
+				strcat(hiliteQuery,",");
+			//}
+
+			//t_it = t_it->next;
+
+			//temp: midlertidig fiks får å slippe problemer med querys som har mange \\\\\\ i seg
+			//if (x>10) {
+			//	break;
+			//}
+			//++x;
+		}
+
+	}
+	printf("hiliteQuery END\n");
+
+	//det vil bli et komma for mye på slutten, fjerner det.
+	//ToDo: er det altid et komma for mye ?	
+	if (hiliteQuery[strlen(hiliteQuery) -1] == ',') {hiliteQuery[strlen(hiliteQuery) -1] = '\0';}
+
+	printf("<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" filtered=\"%i\" showabal=\"%i\"/>\n",(*SiderHeder).TotaltTreff,PagesResults.QueryData.query,hiliteQuery,(*SiderHeder).filtered,(*SiderHeder).showabal);
+	
+	printf("free TeffArray\n");
+	free(PagesResults.TeffArray);
+
+	destroy_query( &PagesResults.QueryData.queryParsed );
+
+
+	//printer ut info om brukt tid
+	printf("Time\n");
+	//printf("\tAthorSearch %f\n",(*SiderHeder).queryTime.AthorSearch);
+	printf("\t%-40s %f\n","AthorSearch",(*SiderHeder).queryTime.AthorSearch);
+	printf("\t%-40s %f\n","AthorRank",(*SiderHeder).queryTime.AthorRank);
+	printf("\t%-40s %f\n","MainSearch",(*SiderHeder).queryTime.MainSearch);
+	printf("\t%-40s %f\n","MainRank",(*SiderHeder).queryTime.MainRank);
+	printf("\t%-40s %f\n","MainAthorMerge",(*SiderHeder).queryTime.MainAthorMerge);
+	printf("\n");
+	printf("\t%-40s %f\n","popRank",(*SiderHeder).queryTime.popRank);
+	printf("\t%-40s %f\n","responseShortning",(*SiderHeder).queryTime.responseShortning);
+	printf("\n");
+	printf("\t%-40s %f\n","allrankCalc",(*SiderHeder).queryTime.allrankCalc);
+	printf("\t%-40s %f\n","indexSort",(*SiderHeder).queryTime.indexSort);
+	printf("\t%-40s %f\n","popResult",(*SiderHeder).queryTime.popResult);
+	printf("\t%-40s %f\n","adultcalk",(*SiderHeder).queryTime.adultcalk);
+
+	
+
+	#ifdef BLACK_BOKS
+	printf("\tfiletypes %f\n",(*SiderHeder).queryTime.filetypes);
+	printf("\tiintegerGetValueDate %f\n",(*SiderHeder).queryTime.iintegerGetValueDate);
+	printf("\tdateview %f\n",(*SiderHeder).queryTime.dateview);
+	printf("\tcrawlManager %f\n",(*SiderHeder).queryTime.crawlManager);
+
+	printf("\tgetUserObjekt %f\n",(*SiderHeder).queryTime.getUserObjekt);
+	printf("\tcmc_conect %f\n",(*SiderHeder).queryTime.cmc_conect);
+
+	#endif
+
+	printf("filters:\n");
+
+	printf("\t%-40s %i\n","cantDIRead",(*SiderHeder).filtersTraped.cantDIRead);
+	printf("\t%-40s %i\n","getingDomainID",(*SiderHeder).filtersTraped.getingDomainID);
+	printf("\t%-40s %i\n","sameDomainID",(*SiderHeder).filtersTraped.sameDomainID);
+
+	printf("\t%-40s %i\n","filterAdultWeight_bool",(*SiderHeder).filtersTraped.filterAdultWeight_bool);
+	printf("\t%-40s %i\n","filterAdultWeight_value",(*SiderHeder).filtersTraped.filterAdultWeight_value);
+	printf("\t%-40s %i\n","filterSameCrc32_1",(*SiderHeder).filtersTraped.filterSameCrc32_1);
+	printf("\t%-40s %i\n","filterSameUrl",(*SiderHeder).filtersTraped.filterSameUrl);
+	printf("\t%-40s %i\n","filterNoUrl",(*SiderHeder).filtersTraped.filterNoUrl);
+	printf("\t%-40s %i\n","find_domain_no_subname",(*SiderHeder).filtersTraped.find_domain_no_subname);
+	printf("\t%-40s %i\n","filterSameDomain",(*SiderHeder).filtersTraped.filterSameDomain);
+	printf("\t%-40s %i\n","filterTLDs",(*SiderHeder).filtersTraped.filterTLDs);
+	printf("\t%-40s %i\n","filterResponse",(*SiderHeder).filtersTraped.filterResponse);
+	printf("\t%-40s %i\n","cantpopResult",(*SiderHeder).filtersTraped.cantpopResult);
+	printf("\t%-40s %i\n","cmc_pathaccess",(*SiderHeder).filtersTraped.cmc_pathaccess);
+	printf("\t%-40s %i\n","filterSameCrc32_2",(*SiderHeder).filtersTraped.filterSameCrc32_2);
+
+	printf("\n\n");
+
+	#ifdef EXPLAIN_RANK
+	printf("|%-10s|%-10s|%-10s||%-10s|%-10s|%-10s|%-25s|%-10s|%-10s|\n",
+		"AllRank",
+		"TermRank",
+		"PopRank",
+		"Body",
+		"Headline",
+		"Tittel",
+		"Athor (nr nrp)",
+		"UrlM",
+		"Url"
+		);
+	printf("|----------|----------|----------||----------|----------|----------|------------------------|----------|----------|\n");
+
+	for(i=0;i<(*SiderHeder).showabal;i++) {
+                        printf("|%10i|%10i|%10i||%10i|%10i|%10i|%10i (%5i %5i)|%10i|%10i| %s (DocID %u-%i)\n",
+
+				Sider[i].iindex.allrank,
+				Sider[i].iindex.TermRank,
+				Sider[i].iindex.PopRank,
+
+				Sider[i].iindex.rank_explaind.rankBody,
+				Sider[i].iindex.rank_explaind.rankHeadline,
+				Sider[i].iindex.rank_explaind.rankTittel,
+				Sider[i].iindex.rank_explaind.rankAthor,
+				Sider[i].iindex.rank_explaind.nrAthor,
+				Sider[i].iindex.rank_explaind.nrAthorPhrase,
+				Sider[i].iindex.rank_explaind.rankUrl_mainbody,
+				Sider[i].iindex.rank_explaind.rankUrl,
+				Sider[i].DocumentIndex.Url,
+				Sider[i].iindex.DocID,
+				rLotForDOCid(Sider[i].iindex.DocID)
+				);
+	}
+	#endif
+
+	return 1;
+}
+
+
+
+int
+dorank(char query[], int queryLen, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
+char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames, 
+int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[], 
+char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *searchd_config, char *errorstr,int *errorLen,
+	struct iintegerMemArrayFormat *DomainIDs, int rankType, unsigned int rankDocId, int *ranking)
+{ 
+	struct PagesResultsFormat PagesResults;
+	struct filteronFormat filteron;
+
+	PagesResults.Sider = Sider;
+	PagesResults.SiderHeder = SiderHeder;
+	PagesResults.antall = 0;
+	//PagesResults.TeffArray;
+	//PagesResults.showabal;
+	PagesResults.filterOn = filterOn;
+	//PagesResults.adultpages
+	//PagesResults.noadultpages
+	//PagesResults.QueryData
+	PagesResults.servername = servername;
+	//PagesResults.godPages
+	PagesResults.MaxsHits = MaxsHits;
+	PagesResults.start = 0;
+	//hvr vi skal begynne. Vå bruker dog navn som 1, 2 osv til brukeren, men starter på 0 internt 
+	//dette har dog dispatsher_all allerede håntert, ved å trekke fra en
+	PagesResults.indexnr = 0;//(start * MaxsHits); 
+	strscpy(PagesResults.search_user,search_user,sizeof(PagesResults.search_user));
+	//PagesResults.password
+	PagesResults.DomainIDs = DomainIDs;
+	PagesResults.filtered		= 0;
+	PagesResults.memfiltered	= 0;	
+	PagesResults.getRank		= 1;
+
+
+         (*SiderHeder).filtersTraped.cantDIRead = 0;
+         (*SiderHeder).filtersTraped.getingDomainID = 0;
+         (*SiderHeder).filtersTraped.sameDomainID = 0;
+
+         (*SiderHeder).filtersTraped.filterAdultWeight_bool = 0;
+         (*SiderHeder).filtersTraped.filterAdultWeight_value = 0;
+         (*SiderHeder).filtersTraped.filterSameCrc32_1 = 0;
+         (*SiderHeder).filtersTraped.filterSameUrl = 0;
+         (*SiderHeder).filtersTraped.find_domain_no_subname = 0;
+         (*SiderHeder).filtersTraped.filterSameDomain = 0;
+         (*SiderHeder).filtersTraped.filterTLDs = 0;
+         (*SiderHeder).filtersTraped.filterResponse = 0;
+         (*SiderHeder).filtersTraped.cantpopResult = 0;
+         (*SiderHeder).filtersTraped.cmc_pathaccess = 0;
+         (*SiderHeder).filtersTraped.filterSameCrc32_2 = 0;
+         (*SiderHeder).filtersTraped.filterNoUrl = 0;
+
+	//struct iindexFormat *TeffArray;
+
+	#ifdef BLACK_BOKS
+	searchFilterInit(filters,dates);
+	#endif
+
+	//int godPages; //antal sider som kan vises. (ikke det samme som antal sider som faktisk skal vises )
+	int readedFromIndex;
+	int i, y, j;
+	int x;
+
+	PagesResults.TeffArray = malloc(sizeof(struct iindexFormat));
+
+	//int adultpages, noadultpages;
+	//struct QueryDataForamt QueryData;
+
+	#ifdef DEBUG
+		memset(&PagesResults.QueryData,' ',sizeof(PagesResults.QueryData));
+	#endif
+
+	struct timeval start_time, end_time;
+	struct timeval popResult_start_time, popResult_end_time;
+
+	int rank;
+	int ret;
+
+	//7int filtered; //antal sider som ble filtrert ut
+	//int showabal; //holder antal sider som kunne vises
+
+	struct DocumentIndexFormat DocumentIndexPost;
+	
+	//struct ReposetoryFormat ReposetoryData;
+	//char ReposetoryHtml[10][5000];
+
+	//5: printf("Start time was %d uSec.\n", start_time.tv_usec);
+
+	//7int TotaltTreff;
+	
+	//char buff[64]; //generell buffer
+
+ /* False */
+	#ifdef BLACK_BOKS
+		//henter brukerens passord fra boithoad
+		gettimeofday(&start_time, NULL);
+		//henter inn brukerens passord
+		printf("geting pw for \"%s\"\n",PagesResults.search_user);
+		if (!boithoad_getPassword(PagesResults.search_user,PagesResults.password)) {
+			//printf("Can't boithoad_getPassword. Brukeren er ikke logget inn??\n");
+			(*errorLen) = snprintf(errorstr,(*errorLen),"Can't get user info from authentication backend");
+			return(0);
+		}
+		//printf("got pw \"%s\" -> \"%s\"\n",PagesResults.search_user,PagesResults.password);
+		gettimeofday(&end_time, NULL);
+	        (*SiderHeder).queryTime.getUserObjekt = getTimeDifference(&start_time,&end_time);
+
+		/****************************************************************/
+		//hent alle grupper
+		char **groups_respons_list;
+		int groups_responsnr;
+		char groupOrQuery[1024];
+
+		//boithoad_listGroups(&groups_respons_list,&groups_responsnr);
+		if (!boithoad_groupsForUser(PagesResults.search_user,&groups_respons_list,&groups_responsnr)) {
+                        perror("Error: boithoad_groupsForUser");
+                        return;
+                }
+		groupOrQuery[0] = '\0';
+                printf("groups: %i\n",groups_responsnr);
+                for (i=0;i<groups_responsnr;i++) {
+                        printf("group: %s\n",groups_respons_list[i]);
+
+			strlcat(groupOrQuery," |",sizeof(groupOrQuery));
+			strlcat(groupOrQuery,groups_respons_list[i],sizeof(groupOrQuery));
+                }
+
+		//legger til brukernavnet
+		strlcat(groupOrQuery," |",sizeof(groupOrQuery));
+		strlcat(groupOrQuery,PagesResults.search_user,sizeof(groupOrQuery));
+
+		printf("groupOrQuery \"%s\"\n",groupOrQuery);
+		/****************************************************************/
+
+
+		gettimeofday(&start_time, NULL);
+		//int socketha;
+		int errorbufflen = 512;
+		char errorbuff[errorbufflen];
+		printf("making a connection to crawlerManager\n");
+		if (!cmc_conect(&PagesResults.cmcsocketha,errorbuff,errorbufflen,(*searchd_config).cmc_port)) {
+                        //printf("Error: %s:%i\n",errorbuff,(*searchd_config).cmc_port);
+			(*errorLen) = snprintf(errorstr,(*errorLen),"Can't connect to crawler manager: \"%s\", port %i",errorbuff,(*searchd_config).cmc_port);
+
+                        return(0);
+	        }
+		gettimeofday(&end_time, NULL);
+	        (*SiderHeder).queryTime.cmc_conect = getTimeDifference(&start_time,&end_time);
+
+		(*SiderHeder).queryTime.crawlManager = 0;
+
+	#else
+		(*SiderHeder).queryTime.cmc_conect = 0;
+		(*SiderHeder).queryTime.crawlManager = 0;
+	#endif
+
+
+	//kopierer query inn i strukturen som holder query date
+	strscpy(PagesResults.QueryData.query,query,sizeof(PagesResults.QueryData.query));
+
+	get_query( PagesResults.QueryData.query, queryLen, &PagesResults.QueryData.queryParsed );
+
+	#ifdef BLACK_BOKS
+	get_query( groupOrQuery, strlen(groupOrQuery), &PagesResults.QueryData.search_user_as_query );
+	#endif
+
+
+        printf("ll: query %s\n",PagesResults.QueryData.query);
+
+	int languageFilterAsNr[5];
+
+	int languageFilternr;
+
+	if (languageFilter[0] != '\0') {
+		printf("languageFilter: %s\n",languageFilter);
+		languageFilterAsNr[0] = getLangNr(languageFilter);
+		languageFilternr = 1;
+	}
+	else {
+		languageFilternr = 0;
+	}
+
+
+	#ifdef WITH_THREAD
+	pthread_t threadid[NROF_GENERATEPAGES_THREADS];
+
+	//ret = pthread_mutexattr_init(&PagesResults.mutex);
+	ret = pthread_mutex_init(&PagesResults.mutex, NULL);
+
+	//låser mutex. Vi er jo enda ikke kalre til å kjøre
+	pthread_mutex_lock(&PagesResults.mutex);
+
+	//start som thread that can get the pages
+	for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
+		//pthread_create(&chld_thr, NULL, do_chld, (void *) newsockfd);
+		ret = pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults);		
+	}
+	#endif
+
+	printf("searchSimple\n");
+	
+	searchSimple(&PagesResults.antall,PagesResults.TeffArray,&SiderHeder->TotaltTreff,
+			&PagesResults.QueryData.queryParsed,&SiderHeder->queryTime,
+			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
+			orderby,
+			filters,&filteron,&PagesResults.QueryData.search_user_as_query,
+			(rankType == RANK_TYPE_SUM ? (unsigned int *)ranking : NULL));
+	//&rankDocId);
+
+	printf("end searchSimple\n");
+
+	printf("rankDocId: %d\n", rankDocId);
+	if (rankType == RANK_TYPE_FIND) {
+		*ranking = -1;
+		printf("Some document: %d\n", PagesResults.TeffArray->iindex[i].DocID);
+		for (i = 0; i < PagesResults.antall; i++) {
+			//printf("Found document: %d\n", PagesResults.TeffArray->iindex[i].DocID);
+			if (rankDocId == PagesResults.TeffArray->iindex[i].DocID) {
+				*ranking = PagesResults.TeffArray->iindex[i].allrank;
+				printf("This is actually what we wanted rank is: %d\n", PagesResults.TeffArray->iindex[i].allrank);
+				break;
+			}
+		}
+	}
+
+	//intresnag debug info
+	#ifdef BLACK_BOKS
+	//viser hvordan treffene er i subnames
+		printf("subname records:\n");
+		for (i=0;i<nrOfSubnames;i++) {
+			printf("\t\"%s\": %i\n",subnames[i].subname,subnames[i].hits);
+		}
+	#endif
+
+	//setter alle sidene som sletett
+	for (i=0;i<PagesResults.MaxsHits;i++) {
+		Sider[i].deletet = 1;
+	}
+
+       	readedFromIndex = 0;
+	y=0;
+       	(*SiderHeder).filtered = 0;
+
+	gettimeofday(&start_time, NULL);
+	//kalkulerer antall adult sier i første n resultater
+	PagesResults.noadultpages = 0;
+	PagesResults.adultpages = 0;
+	for (i=0;((i<100) && (i<PagesResults.antall));i++) {
+
+		//printf("DocID %u, aw %i\n",PagesResults.TeffArray[i].DocID,adultWeightForDocIDMemArray(PagesResults.TeffArray[i].DocID));
+		if (adultWeightForDocIDMemArray(PagesResults.TeffArray->iindex[i].DocID)) {
+			++PagesResults.adultpages;	
+		}
+		else {
+			++PagesResults.noadultpages;
+		}
+	}
+	printf("noadultpages %i, PagesResults.adultpages %i\n",PagesResults.noadultpages,PagesResults.adultpages);
+	gettimeofday(&end_time, NULL);
+        (*SiderHeder).queryTime.adultcalk = getTimeDifference(&start_time,&end_time);
+	////////
+
+	//går i utbangspungete gjenon alle sider, men eskaper når vi når anatllet vi vil ha
+	PagesResults.showabal = 0;
+	//PagesResults.godPages = 0;
+	PagesResults.nextPage = 0;
+
+//cuted
+	gettimeofday(&popResult_start_time, NULL);
+
+
+
+	#ifdef WITH_THREAD
+
+	//vi har data. Lå tårdene jobbe med det
+	pthread_mutex_unlock(&PagesResults.mutex);
+
+	//venter på trådene
+	for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
+		ret = pthread_join(threadid[i], NULL);
+	}
+
+	//free mutex'en
+	ret = pthread_mutex_destroy(&PagesResults.mutex);
+
+	#else 
+	generatePagesResults(&PagesResults);		
 	#endif
 
 	#ifdef BLACK_BOKS

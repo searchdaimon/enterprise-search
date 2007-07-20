@@ -321,6 +321,7 @@ void *do_chld(void *arg)
 	struct queryNodeHederFormat queryNodeHeder;
 	struct SiderFormat *Sider;
 	int net_status;
+	int ranking;
 
 	//struct SiderFormat Sid
 
@@ -370,6 +371,8 @@ void *do_chld(void *arg)
 
 	printf("MaxsHits %i\n",queryNodeHeder.MaxsHits);
 	Sider  = (struct SiderFormat *)malloc(sizeof(struct SiderFormat) * (queryNodeHeder.MaxsHits));
+
+	printf("Ranking search?\n");
 
 
 	//ToDo: må ha låsing her
@@ -840,7 +843,7 @@ void *do_chld(void *arg)
 
 	SiderHeder.errorstrlen=sizeof(SiderHeder.errorstr);
 	//v3 dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,servername,subnames,SiderHeder.nrOfSubnames,queryNodeHeder.MaxsHits,queryNodeHeder.start, queryNodeHeder.filterOn, queryNodeHeder.languageFilter);
-	if (!dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,
+	if (!queryNodeHeder.getRank && !dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,
 			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
 			queryNodeHeder.start, queryNodeHeder.filterOn, 
 			"",queryNodeHeder.orderby,SiderHeder.dates,queryNodeHeder.search_user,
@@ -857,6 +860,80 @@ void *do_chld(void *arg)
 			SiderHeder.showabal	= 0;
 
 			printf("Error: cand do dosearch: \"%s\"\n",SiderHeder.errorstr);
+	}
+	else if (queryNodeHeder.getRank)  {
+		printf("########################################### Ranking document: %d\n", queryNodeHeder.getRank);
+		if (dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,
+			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
+			queryNodeHeder.start, queryNodeHeder.filterOn, 
+			"",queryNodeHeder.orderby,SiderHeder.dates,queryNodeHeder.search_user,
+			&SiderHeder.filters,
+			searchd_config,
+			SiderHeder.errorstr, &SiderHeder.errorstrlen,
+			&global_DomainIDs, RANK_TYPE_FIND, queryNodeHeder.getRank, &ranking
+		)) {
+			int status;
+			int n;
+			
+			if (ranking == -1) {
+				status = net_nomatch;
+				if ((n=send(mysocfd, &status, sizeof(status),0)) != sizeof(status)) {
+					printf("send only %i of %i\n",n,sizeof(status));
+					perror("sendall status");
+					return;
+				}
+			} else {
+				status = net_match;
+				if ((n=send(mysocfd, &status, sizeof(status),0)) != sizeof(status)) {
+					printf("send only %i of %i\n",n,sizeof(status));
+					perror("sendall status2");
+					return;
+				}
+				if ((n=send(mysocfd, &ranking, sizeof(ranking),0)) != sizeof(ranking)) {
+					printf("send only %i of %i\n",n,sizeof(ranking));
+					perror("sendall ranking");
+					return;
+				}
+			}
+
+			if (recv(mysocfd, &ranking, sizeof(ranking), 0) == -1) {
+				perror("recv ranking");
+				return;
+			}
+
+			printf("########################## Doing stuff or something... %d\n", ranking);
+			
+			if (!dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,
+				servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
+				queryNodeHeder.start, queryNodeHeder.filterOn, 
+				"",queryNodeHeder.orderby,SiderHeder.dates,queryNodeHeder.search_user,
+				&SiderHeder.filters,
+				searchd_config,
+				SiderHeder.errorstr, &SiderHeder.errorstrlen,
+				&global_DomainIDs, RANK_TYPE_SUM, 0/*queryNodeHeder.getRank*/, &ranking)) {
+
+				perror("Got some kind of an error?");
+				return;
+			} else {
+				printf("Let us see how this ranking went: %d\n", ranking);
+				if ((n=send(mysocfd, &ranking, sizeof(ranking),0)) != sizeof(ranking)) {
+					printf("send only %i of %i\n",n,sizeof(ranking));
+					perror("sendall ranking2");
+					return;
+				}
+			}
+
+			SiderHeder.responstype = searchd_responstype_ranking;
+			return;
+		} else {
+			SiderHeder.responstype = searchd_responstype_error;
+			SiderHeder.TotaltTreff 	= 0;
+			SiderHeder.showabal	= 0;
+		}
+
+
+		printf("doRank()\n");
+		//setter at vi ikke hadde noen svar
 	}
 	else {
 		SiderHeder.responstype = searchd_responstype_normalsearch;
@@ -934,7 +1011,7 @@ void *do_chld(void *arg)
 	//if ((n=sendall(mysocfd,Sider, sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits)) != (sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits)) {
 
 	if ((n=send(mysocfd,Sider, sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits, MSG_NOSIGNAL)) != (sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits)) {
-		printf("send only %i of %i\n",n,sizeof(struct SiderFormat));
+		printf("send only %i of %i\n",n,sizeof(struct SiderFormat)*queryNodeHeder.MaxsHits);
 		perror("sendall");
 	}		
 	

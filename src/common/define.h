@@ -68,6 +68,7 @@
 
 #define searchd_responstype_error		10
 #define searchd_responstype_normalsearch 	20
+#define searchd_responstype_ranking		30
 
 
 //#define CMDPORT 3492 //boitho crawler manager
