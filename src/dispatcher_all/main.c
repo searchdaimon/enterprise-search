@@ -614,6 +614,9 @@ int main(int argc, char *argv[])
 	char *cpnt;
 	char *lastdomain = NULL;
 
+	unsigned int getRank; /* Set if we are looking for the rank of a specific query on a url */
+
+	unsigned int wantedDocId;
 	struct queryNodeHederFormat queryNodeHeder;
 
 	struct dispconfigFormat dispconfig;
@@ -902,14 +905,7 @@ int main(int argc, char *argv[])
 			strscpy(QueryData.orderby,cgi_getentrystr("orderby"),sizeof(QueryData.orderby) -1);
 		}
 
-		if (cgi_getentryint("maxshits") == 0) {
-			QueryData.MaxsHits = DefultMaxsHits;
-		}
-		else {
-			QueryData.MaxsHits = cgi_getentryint("maxshits");			
-		}
-
-		
+	
 		if (cgi_getentryint("start") == 0) {
 			QueryData.start = 1;
 		}
@@ -976,6 +972,24 @@ int main(int argc, char *argv[])
 			fprintf(stderr,"Dident get a AmazonSubscriptionId\n");
 		}
 
+		if (cgi_getentrystr("getrank") == NULL) {
+			getRank = 0;
+			QueryData.rankUrl[0] = '\0';
+		} else {
+			getRank = 1;
+			strscpy(QueryData.rankUrl, cgi_getentrystr("getrank"), sizeof(QueryData.rankUrl));
+		}
+
+		if (!getRank) {
+			if (cgi_getentryint("maxshits") == 0) {
+				QueryData.MaxsHits = DefultMaxsHits;
+			}
+			else {
+				QueryData.MaxsHits = cgi_getentryint("maxshits");			
+			}
+		} else {
+			QueryData.MaxsHits = 10; /* Just keep this value here for now, should not be needed later on */
+		}
 	
 
         }
@@ -1013,6 +1027,17 @@ int main(int argc, char *argv[])
 
 	//nårmalisere query. 
 	//strcasesandr(QueryData.query,sizeof(QueryData.query),"."," ");
+
+
+	if (getRank) {
+		if (!getDocIDFromUrl("/home/boitho/UrlToDocID/", QueryData.rankUrl, &wantedDocId)) {
+			die(100, "Unable to find docId");
+		} else {
+			getRank = wantedDocId;
+			queryNodeHeder.getRank = wantedDocId;
+			
+		}
+	}
 
 	for(i=0;i<strlen(QueryData.query);i++) {
 
@@ -1159,7 +1184,7 @@ int main(int argc, char *argv[])
 	sprintf(prequeryfile,"%s/%s.%i.%s",bfile(prequerydir),QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
 	FILE *CACHE;
 
-	if ((dispconfig.useprequery) && (QueryData.filterOn) && ((CACHE = fopen(prequeryfile,"rb")) != NULL)) {
+	if (getRank == 0 && (dispconfig.useprequery) && (QueryData.filterOn) && ((CACHE = fopen(prequeryfile,"rb")) != NULL)) {
 		hasprequery = 1;
 
 		debug("can open prequeryfile file \"%s\"",prequeryfile);
@@ -1179,7 +1204,7 @@ int main(int argc, char *argv[])
 		//fread(&Sider[i],(sizeof(struct SiderFormat) * nrOfServers * QueryData.MaxsHits),1,CACHE);
 		fclose(CACHE);
 	}
-	else if ((dispconfig.usecashe) && (QueryData.filterOn) && ((CACHE = fopen(cashefile,"rb")) != NULL)) {
+	else if (getRank == 0 && (dispconfig.usecashe) && (QueryData.filterOn) && ((CACHE = fopen(cashefile,"rb")) != NULL)) {
 		hascashe = 1;
 
 		debug("can open cashe file \"%s\"",cashefile);
@@ -1227,14 +1252,121 @@ int main(int argc, char *argv[])
 		bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,0,searchport);
 	}
 
+
 	//addservere
 	bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder,0,searchport);
 	//Paid inclusion
 	bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,nrOfServers,searchport);
-
-
 	//Paid inclusion
 	brGetPages(sockfd,nrOfPiServers,SiderHeder,Sider,&pageNr,0);
+
+
+	if (getRank) {
+		int endranking = 0;
+		int ranking = -1;
+		int net_status;
+		int n;
+
+		for (i = 0; i < nrOfServers; i++) {
+			if (sockfd[i] != 0) {
+				int status;
+				//motter hedderen for svaret
+				if (bsread (&sockfd[i],sizeof(net_status), (char *)&net_status, maxSocketWait_CanDo)) {
+					if (net_status != net_CanDo) {
+						printf("net_status wasn't net_CanDo but %i\n",net_status);
+						sockfd[i] = 0;
+					}
+				}
+				else {
+					perror("initial protocol read failed");
+					sockfd[i] = 0;
+					continue;
+				}
+
+				if (!bsread(&sockfd[i],sizeof(status), (char *)&status, 1000)) //maxSocketWait_CanDo))
+					perror("foo");
+				if (status == net_match) {
+					if (!bsread(&sockfd[i],sizeof(ranking), (char *)&ranking, 1000))//maxSocketWait_CanDo))
+						perror("foo");
+				} else if (status == net_nomatch) {
+					//return 1;
+				} else {
+					die(1, "searchd does not support ranking?");
+				}
+
+
+				//if (recv(sockfd[i], &ranking, sizeof(ranking), MSG_WAITALL) != sizeof(ranking))
+				//	perror("recv(ranking)");
+			}
+		}
+		if (ranking != -1) {
+			for (i = 0; i < nrOfServers; i++) {
+				if (sockfd[i] != 0)
+					send(sockfd[i], &ranking, sizeof(ranking), 0);
+			}
+
+			for (i = 0; i < nrOfServers; i++) {
+				if (sockfd[i] != 0) {
+					if (!bsread(&sockfd[i],sizeof(ranking), (char *)&ranking, 399999999))//maxSocketWait_CanDo))
+						perror("foo2");
+					endranking += ranking;
+				}
+			}
+		}
+		else {
+			int data = -1;
+			printf("No ranking found...\n");
+			die(1, "No rank found");
+		}
+
+		printf("<ranking>\n");
+
+		if (endranking == 0) {
+			printf("\t<noresult />\n");
+		} else {
+			printf("\t<rank>%d</rank>\n", endranking);
+			printf("\t<url>%s</url>\n", QueryData.rankUrl);
+			printf("\t<docid>%d</docid>\n", wantedDocId);
+		}
+
+		printf("</ranking>\n");
+
+		/* Free the configuration */
+#ifndef BLACK_BOKS
+		config_destroy(&cfg);
+#endif
+
+		maincfgclose(&maincfg);
+
+		free(SiderHeder);
+		free(AddSiderHeder);
+		free(Sider);
+
+		for (i=0;i<nrOfServers + nrOfPiServers;i++) {
+			if (sockfd[i] != 0) {
+				close(sockfd[i]);
+			}
+		}
+
+#ifndef BLACK_BOKS
+		for(i=0;i<nrOfServers;i++) {
+			free(servers[i]);
+		}
+		for(i=0;i<nrOfPiServers;i++) {
+			free(piservers[i]);
+		}
+		for(i=0;i<nrOfAddServers;i++) {
+			free(addservers[i]);
+		}
+
+		free(servers);
+		free(piservers);
+		free(addservers);
+#endif
+
+		return 0;
+	}
+
 
 	if ((!hascashe) && (!hasprequery)) {
 		brGetPages(sockfd,nrOfServers,SiderHeder,Sider,&pageNr,nrOfPiServers);
@@ -1778,8 +1910,16 @@ int main(int argc, char *argv[])
 		//skal printe ut FinalSiderHeder.showabal sider, men noen av sidene kan være slettet
 	i=0;
 	x=0;
+
+
 	while ((x<FinalSiderHeder.showabal) && (i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)))) {
+		printf("%d %d %d\n", getRank, Sider[i].iindex.DocID, rLotForDOCid(Sider[i].iindex.DocID));
 	
+		if (getRank &&
+		    Sider[i].iindex.DocID != getRank) {
+			i++;
+			continue;
+		}
 
 		
 		if (!Sider[i].deletet) {
@@ -1834,6 +1974,8 @@ int main(int argc, char *argv[])
 			}
 
                 	printf("\t<DOCID>%i-%i</DOCID>\n",Sider[i].iindex.DocID,rLotForDOCid(Sider[i].iindex.DocID));
+			if (getRank)
+				printf("\t<RANK>%d</RANK>\n", x);
 
 
                 	printf("\t<TITLE><![CDATA[%s]]></TITLE>\n",Sider[i].title);
@@ -1863,21 +2005,23 @@ int main(int argc, char *argv[])
                 	printf("\t<REPOSITORYSIZE>%u</REPOSITORYSIZE>\n",Sider[i].DocumentIndex.htmlSize);
 
 
-			if (Sider[i].thumbnale[0] != '\0') {
-                		printf("\t<THUMBNAIL>%s</THUMBNAIL>\n",Sider[i].thumbnale);
+			if (!getRank) {
+				if (Sider[i].thumbnale[0] != '\0') {
+					printf("\t<THUMBNAIL>%s</THUMBNAIL>\n",Sider[i].thumbnale);
 
-        	        	printf("\t<THUMBNAILWIDTH>%i</THUMBNAILWIDTH>\n",Sider[i].thumbnailwidth);
-	                	printf("\t<THUMBNAILHEIGHT>%i</THUMBNAILHEIGHT>\n",Sider[i].thumbnailheight);
+					printf("\t<THUMBNAILWIDTH>%i</THUMBNAILWIDTH>\n",Sider[i].thumbnailwidth);
+					printf("\t<THUMBNAILHEIGHT>%i</THUMBNAILHEIGHT>\n",Sider[i].thumbnailheight);
+				}
+				else {
+					printf("\t<THUMBNAIL></THUMBNAIL>\n");
+					printf("\t<THUMBNAILWIDTH></THUMBNAILWIDTH>\n");
+					printf("\t<THUMBNAILHEIGHT></THUMBNAILHEIGHT>\n");
+				}
+
+
+
+				printf("\t<DESCRIPTION><![CDATA[%s]]></DESCRIPTION>\n",Sider[i].description);
 			}
-			else {
-				printf("\t<THUMBNAIL></THUMBNAIL>\n");
-				printf("\t<THUMBNAILWIDTH></THUMBNAILWIDTH>\n");
-				printf("\t<THUMBNAILHEIGHT></THUMBNAILHEIGHT>\n");
-			}
-
-
-
-                	printf("\t<DESCRIPTION><![CDATA[%s]]></DESCRIPTION>\n",Sider[i].description);
 
 
 
@@ -2045,8 +2189,8 @@ int main(int argc, char *argv[])
 	else if (!QueryData.filterOn) {
 
 	}
-	//skriver bare cashe hvis vi fikk svar fra all servere
-	else if (nrRespondedServers == nrOfServers) {
+	//skriver bare cashe hvis vi fikk svar fra all servere, og vi var ikke ute etter ranking
+	else if (getRank == 0 && nrRespondedServers == nrOfServers) {
 		if ((CACHE = fopen(cashefile,"wb")) == NULL) {
 			fprintf(stderr,"Can't open cashefile for writing.\n");
 			perror(cashefile);
