@@ -610,6 +610,7 @@ int main(int argc, char *argv[])
         int hasprequery;
 	char prequeryfile[512];
 	char cashefile[512];
+	struct filtersTrapedFormat dispatcherfiltersTraped;
 
 	char *cpnt;
 	char *lastdomain = NULL;
@@ -1315,7 +1316,9 @@ int main(int argc, char *argv[])
 		}
 		else {
 			int data = -1;
+			#ifdef DEBUG
 			printf("No ranking found...\n");
+			#endif
 			die(1, "No rank found");
 		}
 
@@ -1382,11 +1385,12 @@ int main(int argc, char *argv[])
 	printf("Time debug: geting pages %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
+	nrRespondedServers = 0;
+
 	if ((!hascashe) && (!hasprequery)) {
 
 		FinalSiderHeder.TotaltTreff = 0;
 		FinalSiderHeder.filtered = 0;
-		nrRespondedServers = 0;
 
 		for (i=0;i<(nrOfServers + nrOfPiServers);i++) {
 			//aaaaa
@@ -1449,22 +1453,145 @@ int main(int argc, char *argv[])
 			}
 		}
 
+
+		//fjerner eventuelle adult sider
+		AdultPages = 0;
+		NonAdultPages = 0;
+		for(i=0;i<QueryData.MaxsHits * nrOfServers + nrOfPiServers;i++) {	
+			if (!Sider[i].deletet) {
+
+				if (Sider[i].DocumentIndex.AdultWeight > 50) {
+					++AdultPages;
+				}
+				else {
+					++NonAdultPages;
+				}
+
+			}		
+		}
+	
+		#ifdef DEBUG
+			printf("AdultPages %i, NonAdultPages: %i\n",AdultPages,NonAdultPages);
+		#endif
+		//hvis vi har adult pages sjekker vi om vi har nokk ikke adult pages å vise, hvis ikke viser vi bare adult
+
+		#ifdef DEBUG
+		gettimeofday(&start_time, NULL);
+		#endif
+		//sorterer resultatene
+		#ifdef DEBUG
+			printf("mgsort: pageNr %i\n",pageNr);
+		#endif
+		mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements);
+
+		#ifdef DEBUG
+		gettimeofday(&end_time, NULL);
+		printf("Time debug: mgsort_1 %f\n",getTimeDifference(&start_time,&end_time));
+		#endif
+
+		#ifdef DEBUG
+		gettimeofday(&start_time, NULL);
+		#endif		
+
+			filtersTrapedReset(&dispatcherfiltersTraped);
+
+			//dette er kansje ikke optimalet, da vi går gjenom alle siden. Ikke bare de som skal være med
+			for(i=0;i<QueryData.MaxsHits * nrOfServers + nrOfPiServers;i++) {
+
+				#ifdef DEBUG
+				printf("looking on url %s, %i, %i\n",Sider[i].DocumentIndex.Url,Sider[i].deletet,Sider[i].DocumentIndex.AdultWeight);
+				#endif
+				if (!Sider[i].deletet) {
+					//setter som slettet
+					Sider[i].deletet = 1;
+
+
+					if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameUrl) 
+						&& (filterSameUrl(i,Sider[i].url,Sider)) ) {
+						#ifdef DEBUG
+                        			printf("Hav seen url befor. Url '%s', DocID %u\n",Sider[i].url,Sider[i].iindex.DocID);
+						#endif
+                        			//(*SiderHeder).filtered++;
+						FinalSiderHeder.filtered++;
+						--FinalSiderHeder.TotaltTreff;
+						++dispatcherfiltersTraped.filterSameUrl;					
+                        			continue;
+                			}
+
+
+					#ifndef BLACK_BOKS
+
+					/*
+					// 19. juni
+					//ToDo: fjerner adult vekt filtrering her. Er det trykt. Hvis vi for eks har misket resultater, men ikke noen noder hadde fø sider, og tilot adoult
+					// hva er egentlig adoult filter statur på searchd nå?
+					if ((QueryData.filterOn) && Sider[i].DocumentIndex.AdultWeight > 50) {
+						#ifdef DEBUG
+							printf("slettet adult side %s ault %i\n",Sider[i].url,Sider[i].DocumentIndex.AdultWeight);
+						#endif
+                        			//(*SiderHeder).filtered++;
+						FinalSiderHeder.filtered++;
+						--FinalSiderHeder.TotaltTreff;
+						++dispatcherfiltersTraped.filterAdultWeight_value;
+						continue;
+					}
+					*/
+					if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameCrc32) 
+						&& filterSameCrc32(i,&Sider[i],Sider)) {
+						#ifdef DEBUG
+                        		        	printf("hav same crc32. crc32 from DocumentIndex. Will delete \"%s\"\n",Sider[i].DocumentIndex.Url);
+						#endif
+                        		        //(*SiderHeder).filtered++;
+						FinalSiderHeder.filtered++;
+						--FinalSiderHeder.TotaltTreff;
+						++dispatcherfiltersTraped.filterSameCrc32_1;
+	
+        	                	        continue;
+        	                	}
+
+					if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameDomain) 
+						&& (filterSameDomain(i,&Sider[i],Sider))) {
+						#ifdef DEBUG
+                        				printf("hav same domain \"%s\"\n",Sider[i].domain);
+						#endif
+                        			//(*SiderHeder).filtered++;
+						FinalSiderHeder.filtered++;
+						--FinalSiderHeder.TotaltTreff;
+						++dispatcherfiltersTraped.filterSameDomain;
+
+                        			continue;
+                			}
+					/*
+					if ((QueryData.filterOn) && filterDescription(i,&Sider[i],Sider)) {
+						#ifdef DEBUG
+                        				printf("hav same Description. DocID %i\n",Sider[i].iindex.DocID);
+						#endif
+						//(*SiderHeder).filtered++;
+						FinalSiderHeder.filtered++;
+						--FinalSiderHeder.TotaltTreff;
+                        			continue;
+                			}
+					*/
+                			#endif
+
+					//printf("url %s\n",Sider[i].DocumentIndex.Url);
+
+					//hvis siden overlevde helt hit er den ok
+				Sider[i].deletet = 0;
+				}
+			}
+
+//			}
+//		}
+
+
+	} // !hascashe && !hasprequery
+	else {
+		nrRespondedServers = 1;
+
 	}
 
-	#ifdef DEBUG
-	gettimeofday(&start_time, NULL);
-	#endif
-	//sorterer resultatene
-	#ifdef DEBUG
-		printf("mgsort: pageNr %i\n",pageNr);
-	#endif
-	//mgsort(Sider, nrOfServers * QueryData.MaxsHits , sizeof(struct SiderFormat), compare_elements);
-	mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements);
-
-	#ifdef DEBUG
-	gettimeofday(&end_time, NULL);
-	printf("Time debug: mgsort_1 %f\n",getTimeDifference(&start_time,&end_time));
-	#endif
+	//why was sort here???
 
 
 	posisjon=0;
@@ -1481,120 +1608,6 @@ int main(int argc, char *argv[])
 
 
 	
-	//fjerner eventuelle adult sider
-	AdultPages = 0;
-	NonAdultPages = 0;
-	for(i=0;i<QueryData.MaxsHits * nrOfServers + nrOfPiServers;i++) {	
-		if (!Sider[i].deletet) {
-
-			if (Sider[i].DocumentIndex.AdultWeight > 50) {
-				++AdultPages;
-			}
-			else {
-				++NonAdultPages;
-			}
-
-		}		
-	}
-	
-	#ifdef DEBUG
-		printf("AdultPages %i, NonAdultPages: %i\n",AdultPages,NonAdultPages);
-	#endif
-	//hvis vi har adult pages sjekker vi om vi har nokk ikke adult pages å vise, hvis ikke viser vi bare adult
-
-	#ifdef DEBUG
-	gettimeofday(&start_time, NULL);
-	#endif		
-
-		struct filtersTrapedFormat dispatcherfiltersTraped;
-		filtersTrapedReset(&dispatcherfiltersTraped);
-
-		//dette er kansje ikke optimalet, da vi går gjenom alle siden. Ikke bare de som skal være med
-		for(i=0;i<QueryData.MaxsHits * nrOfServers + nrOfPiServers;i++) {
-
-			//printf("url %s, %i, %i\n",Sider[i].DocumentIndex.Url,Sider[i].deletet,Sider[i].DocumentIndex.AdultWeight);
-			if (!Sider[i].deletet) {
-				//setter som slettet
-				Sider[i].deletet = 1;
-
-
-				if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameUrl) 
-					&& (filterSameUrl(i,Sider[i].url,Sider)) ) {
-					#ifdef DEBUG
-                        			printf("Hav seen url befor. Url '%s', DocID %u\n",Sider[i].url,Sider[i].iindex.DocID);
-					#endif
-                        		//(*SiderHeder).filtered++;
-					FinalSiderHeder.filtered++;
-					--FinalSiderHeder.TotaltTreff;
-					++dispatcherfiltersTraped.filterSameUrl;					
-                        		continue;
-                		}
-
-
-				#ifndef BLACK_BOKS
-
-				/*
-				// 19. juni
-				//ToDo: fjerner adult vekt filtrering her. Er det trykt. Hvis vi for eks har misket resultater, men ikke noen noder hadde fø sider, og tilot adoult
-				// hva er egentlig adoult filter statur på searchd nå?
-				if ((QueryData.filterOn) && Sider[i].DocumentIndex.AdultWeight > 50) {
-					#ifdef DEBUG
-						printf("slettet adult side %s ault %i\n",Sider[i].url,Sider[i].DocumentIndex.AdultWeight);
-					#endif
-                        		//(*SiderHeder).filtered++;
-					FinalSiderHeder.filtered++;
-					--FinalSiderHeder.TotaltTreff;
-					++dispatcherfiltersTraped.filterAdultWeight_value;
-					continue;
-				}
-				*/
-				if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameCrc32) 
-					&& filterSameCrc32(i,&Sider[i],Sider)) {
-					#ifdef DEBUG
-                        	        	printf("hav same crc32. crc32 from DocumentIndex. Will delete \"%s\"\n",Sider[i].DocumentIndex.Url);
-					#endif
-                        	        //(*SiderHeder).filtered++;
-					FinalSiderHeder.filtered++;
-					--FinalSiderHeder.TotaltTreff;
-					++dispatcherfiltersTraped.filterSameCrc32_1;
-
-                        	        continue;
-                        	}
-
-				if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameDomain) 
-					&& (filterSameDomain(i,&Sider[i],Sider))) {
-					#ifdef DEBUG
-                        			printf("hav same domain \"%s\"\n",Sider[i].domain);
-					#endif
-                        		//(*SiderHeder).filtered++;
-					FinalSiderHeder.filtered++;
-					--FinalSiderHeder.TotaltTreff;
-					++dispatcherfiltersTraped.filterSameDomain;
-
-                        		continue;
-                		}
-				/*
-				if ((QueryData.filterOn) && filterDescription(i,&Sider[i],Sider)) {
-					#ifdef DEBUG
-                        			printf("hav same Description. DocID %i\n",Sider[i].iindex.DocID);
-					#endif
-					//(*SiderHeder).filtered++;
-					FinalSiderHeder.filtered++;
-					--FinalSiderHeder.TotaltTreff;
-                        		continue;
-                		}
-				*/
-                		#endif
-
-				//printf("url %s\n",Sider[i].DocumentIndex.Url);
-
-				//hvis siden overlevde helt hit er den ok
-				Sider[i].deletet = 0;
-			}
-		}
-
-//		}
-//	}
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
 	printf("Time debug: filter pages %f\n",getTimeDifference(&start_time,&end_time));
@@ -1648,8 +1661,21 @@ int main(int argc, char *argv[])
         printf("<SEARCH>\n");   
 	//får rare svar fra hilite. Dropper å bruke den får nå
 	FinalSiderHeder.hiliteQuery[0] = '\0';
-        printf("<RESULT_INFO TOTAL=\"%i\" QUERY=\"%s\" HILITE=\"%s\" TIME=\"%f\" FILTERED=\"%i\" SHOWABAL=\"%i\" CASHE=\"%i\" PREQUERY=\"%i\" GEOIPCONTRY=\"%s\" SUBNAME=\"%s\" BOITHOHOME=\"%s\"/>\n",FinalSiderHeder.TotaltTreff,QueryData.queryhtml,FinalSiderHeder.hiliteQuery,FinalSiderHeder.total_usecs,FinalSiderHeder.filtered,FinalSiderHeder.showabal,hascashe,hasprequery,QueryData.GeoIPcontry,QueryData.subname,bfile(""));
-
+        printf("<RESULT_INFO TOTAL=\"%i\" QUERY=\"%s\" HILITE=\"%s\" TIME=\"%f\" FILTERED=\"%i\" SHOWABAL=\"%i\" CASHE=\"%i\" \
+		PREQUERY=\"%i\" GEOIPCONTRY=\"%s\" SUBNAME=\"%s\" BOITHOHOME=\"%s\" NROFSEARCHNODES=\"%i\"/>\n",
+		FinalSiderHeder.TotaltTreff,
+		QueryData.queryhtml,
+		FinalSiderHeder.hiliteQuery,
+		FinalSiderHeder.total_usecs,
+		FinalSiderHeder.filtered,
+		FinalSiderHeder.showabal,
+		hascashe,
+		hasprequery,
+		QueryData.GeoIPcontry,
+		QueryData.subname,
+		bfile(""),
+		nrRespondedServers
+	);
 
 	
 	//viser info om dispatcher_all
@@ -1677,7 +1703,7 @@ int main(int argc, char *argv[])
 
 
 		//viser info om serverne som svarte
-		printf("<SEARCHNODES_INFO NROFSEARCHNODES=\"%i\" />\n",nrRespondedServers);
+		//printf("<SEARCHNODES_INFO NROFSEARCHNODES=\"%i\" />\n",nrRespondedServers);
 
 		for (i=0;i<nrOfServers + nrOfPiServers;i++) {
                 	if (sockfd[i] != 0) {
@@ -1744,9 +1770,9 @@ int main(int argc, char *argv[])
                 
 		printf("<SEARCHNODES>\n");
 			printf("\t<NODENAME>cashe.boitho.com</NODENAME>\n");
-               		printf("\t<TOTALTIME>0</TOTALTIME>\n");
+               		printf("\t<TOTALTIME>%f</TOTALTIME>\n",FinalSiderHeder.total_usecs);
 			printf("\t<FILTERED>0</FILTERED>\n");
-			printf("\t<HITS>0</HITS>\n");
+			printf("\t<HITS>%i</HITS>\n",FinalSiderHeder.TotaltTreff);
 		printf("</SEARCHNODES>\n");
 
 	}
@@ -2340,6 +2366,7 @@ int compare_elements_posisjon (const void *p1, const void *p2) {
 	else if (((struct SiderFormat*)p1)->type == siderType_normal) {
 		if (((struct SiderFormat*)p1)->posisjon == ((struct SiderFormat*)p2)->posisjon ){
 
+			/*
 			//printf("a: %s (%i) - %s (%i)\n",((struct SiderFormat*)p1)->DocumentIndex.Url,((struct SiderFormat*)p1)->pathlen,((struct SiderFormat*)p2)->DocumentIndex.Url,((struct SiderFormat*)p2)->pathlen);
 			if (((struct SiderFormat*)p1)->pathlen == ((struct SiderFormat*)p2)->pathlen) {
 				if (((struct SiderFormat*)p1)->iindex.allrank > ((struct SiderFormat*)p2)->iindex.allrank) {
@@ -2356,7 +2383,15 @@ int compare_elements_posisjon (const void *p1, const void *p2) {
 			}
 			else {
 				return 1;
-			}		
+			}	
+			*/	
+			if (((struct SiderFormat*)p1)->iindex.allrank > ((struct SiderFormat*)p2)->iindex.allrank) {
+                        	return -1;
+                	}
+                	else {
+                        	return ((struct SiderFormat*)p1)->iindex.allrank < ((struct SiderFormat*)p2)->iindex.allrank;
+                	}			
+
 		}
         	else if (((struct SiderFormat*)p1)->posisjon < ((struct SiderFormat*)p2)->posisjon)
         	        return -1;

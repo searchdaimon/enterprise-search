@@ -279,6 +279,8 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 
 	(*baselen) = 0;
 
+	/*
+	//debug: print ot verdiene før de merges
 	x=0;
 	printf("a array:\n");
 	while (x<alen){
@@ -292,7 +294,7 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
                 //printf("\t%u\n",b->iindex[x].DocID);
 		++x;
 	}
-
+	*/
 	while ((i<alen) && (j<blen) && (k < maxIndexElements))
 	{
 
@@ -607,34 +609,7 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 
 
 			ah = bh = 0;
-			/*
-			//lopper gjenom alle hitene og finner de som er rett etter hverandre
-			while (ah<a[i].TermAntall && bh <b[j].TermAntall) {
 
-				
-				if (a[i].hits[ah] < b[j].hits[bh]) {
-					distance = b[j].hits[bh] - a[i].hits[ah];
-
-					//printf("%i < %i = %i\n",a[i].hits[ah],b[j].hits[bh],distance);
-
-					ah++;
-				}
-				else {
-					distance =  a[i].hits[ah] - b[j].hits[bh];
-
-					//printf("%i > %i = %i\n",a[i].hits[ah],b[j].hits[bh],distance);
-					bh++;
-				}
-
-				//bør også se på å belønne fraser som er nermere en X og X, kansje i intervalene 1, 10, 100 ?
-				if (distance == 1) {
-					//ToDo: må så på en bedre møte å øke TermRank når man har sammenfallende hits
-					c[k].TermRank = c[k].TermRank * 2;					
-				}
-				
-
-			};
-			*/
 			//printf("ah %i TermAntall %i, bh %i TermAntall %i, MaxsHitsInIndex %i\n",ah,a->iindex[i].TermAntall,bh,b->iindex[j].TermAntall,MaxsHitsInIndex);
 
 			c->iindex[k].TermAntall = 0;
@@ -657,9 +632,11 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 					
 					if ((a->iindex[i].hits[ah].phrase != -1) && (b->iindex[j].hits[bh].phrase != -1)) {
 						c->iindex[k].hits[c->iindex[k].TermAntall].phrase = 1;
+						++c->phrasenr;
 					}
 					else {
 						c->iindex[k].hits[c->iindex[k].TermAntall].phrase = -1;
+						--c->phrasenr;
 					}
 					++c->iindex[k].TermAntall;
 
@@ -880,6 +857,7 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 					//hits[hitcount].pos = b->iindex[j].hits[bh].pos;
 					c->iindex[k].hits[c->iindex[k].TermAntall].pos = b->iindex[j].hits[bh].pos;
 					c->iindex[k].hits[c->iindex[k].TermAntall].phrase = 1;
+					++c->phrasenr;
 
 					debug("frase_merge: frase hit DocID %u %hu %hu is now %hu\n",c->iindex[k].DocID,a->iindex[i].hits[ah].pos,b->iindex[j].hits[bh].pos,c->iindex[k].hits[c->iindex[k].TermAntall].pos);
 
@@ -1151,6 +1129,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 	int newadded;
 
 	TeffArray->nrofHits = 0;
+	TeffArray->phrasenr = 0;
 
 	(*complicacy) = 0;
 

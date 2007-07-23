@@ -128,6 +128,7 @@ get_browser(char *useragent)
 	return UNKNOWN_BROWSER;
 }
 
+#ifdef BLACK_BOKS
 int
 handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum browser_type btype, char *collection,
            char *url_out, size_t len, int sock, pthread_mutex_t *lock)
@@ -147,7 +148,7 @@ handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum br
 
 	return 1;
 }
-
+#endif
 
 
 int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,
@@ -806,9 +807,9 @@ void *generatePagesResults(void *arg)
 		//pre DIread filter
 		printf("adult %u: %i\n",(*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
 		if (((*PagesResults).filterOn) && (filterAdultWeight_bool(adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID),(*PagesResults).adultpages,(*PagesResults).noadultpages) == 1)) {
-			#ifdef DEBUG
+			//#ifdef DEBUG
 			printf("%u is adult whith %i\n",(*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
-			#endif
+			//#endif
 			increaseMemFiltered(PagesResults,
 				&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_bool,
 				&(*(*PagesResults).TeffArray->iindex[i].subname).hits,
@@ -998,7 +999,7 @@ void *generatePagesResults(void *arg)
 		gettimeofday(&end_time, NULL);
 		(*(*PagesResults).SiderHeder).queryTime.crawlManager += getTimeDifference(&start_time,&end_time);
 
-		//Så lenge vi ikke har crc32 for alle doemener
+		//Så lenge vi ikke har crc32 for alle domener
 		if ((*PagesResults).Sider[localshowabal].DocumentIndex.crc32 == 0) {
 			(*PagesResults).Sider[localshowabal].DocumentIndex.crc32 = crc32boitho(htmlBuffer);
 		
@@ -1924,6 +1925,7 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	//printf("\tAthorSearch %f\n",(*SiderHeder).queryTime.AthorSearch);
 	printf("\t%-40s %f\n","AthorSearch",(*SiderHeder).queryTime.AthorSearch);
 	printf("\t%-40s %f\n","AthorRank",(*SiderHeder).queryTime.AthorRank);
+	printf("\t%-40s %f\n","UrlSearch",(*SiderHeder).queryTime.UrlSearch);
 	printf("\t%-40s %f\n","MainSearch",(*SiderHeder).queryTime.MainSearch);
 	printf("\t%-40s %f\n","MainRank",(*SiderHeder).queryTime.MainRank);
 	printf("\t%-40s %f\n","MainAthorMerge",(*SiderHeder).queryTime.MainAthorMerge);
