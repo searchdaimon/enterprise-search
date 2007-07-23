@@ -948,7 +948,7 @@ void *generatePagesResults(void *arg)
 		//}
 		#endif
 		
-		if (!popResult(&(*PagesResults).Sider[localshowabal], (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,(*(*PagesResults).TeffArray->iindex[i].subname).subname, PagesResults->getRank)) {
+		if (PagesResults->getRank == 0 && !popResult(&(*PagesResults).Sider[localshowabal], (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,(*(*PagesResults).TeffArray->iindex[i].subname).subname, PagesResults->getRank)) {
 			//#ifdef DEBUG
                         	printf("cant popResult\n");
                         //#endif
@@ -1011,12 +1011,16 @@ void *generatePagesResults(void *arg)
 		}
 		///////////
 
-		strscpy((*PagesResults).Sider[localshowabal].uri,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,sizeof((*PagesResults).Sider[localshowabal].uri));
-		strscpy((*PagesResults).Sider[localshowabal].url,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,sizeof((*PagesResults).Sider[localshowabal].url));
+		if (1 || !PagesResults->getRank) {
+			strscpy((*PagesResults).Sider[localshowabal].uri,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,sizeof((*PagesResults).Sider[localshowabal].uri));
+			strscpy((*PagesResults).Sider[localshowabal].url,(*PagesResults).Sider[localshowabal].DocumentIndex.Url,sizeof((*PagesResults).Sider[localshowabal].url));
 
-		(*PagesResults).Sider[localshowabal].pathlen = find_domain_path_len((*PagesResults).Sider[localshowabal].uri);
+			(*PagesResults).Sider[localshowabal].pathlen = find_domain_path_len((*PagesResults).Sider[localshowabal].uri);
 
-		shortenurl((*PagesResults).Sider[localshowabal].uri,sizeof((*PagesResults).Sider[localshowabal].uri));
+			shortenurl((*PagesResults).Sider[localshowabal].uri,sizeof((*PagesResults).Sider[localshowabal].uri));
+
+			strcpy((*PagesResults).Sider[localshowabal].servername,(*PagesResults).servername);
+		}
 
 		//kopierer over subname
 		(*PagesResults).Sider[localshowabal].subname = (*(*PagesResults).TeffArray->iindex[i].subname);
@@ -1026,7 +1030,6 @@ void *generatePagesResults(void *arg)
 
 		(*PagesResults).Sider[localshowabal].bid = 0;
 
-		strcpy((*PagesResults).Sider[localshowabal].servername,(*PagesResults).servername);
 
 		(*PagesResults).Sider[localshowabal].type = siderType_normal;
 		
@@ -1300,7 +1303,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
-			filters,&filteron,&PagesResults.QueryData.search_user_as_query, NULL);
+			filters,&filteron,&PagesResults.QueryData.search_user_as_query);
 
 	printf("end searchSimple\n");
 
@@ -1748,13 +1751,11 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	pthread_mutex_lock(&PagesResults.mutex);
 
 
-#if 0
 	//start som thread that can get the pages
 	for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
 		//pthread_create(&chld_thr, NULL, do_chld, (void *) newsockfd);
 		ret = pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults);		
 	}
-#endif
 	#endif
 
 	printf("searchSimple\n");
@@ -1763,8 +1764,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			&PagesResults.QueryData.queryParsed,&SiderHeder->queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
-			filters,&filteron,&PagesResults.QueryData.search_user_as_query,
-			(rankType == RANK_TYPE_SUM ? (unsigned int *)ranking : NULL));
+			filters,&filteron,&PagesResults.QueryData.search_user_as_query);
 	//&rankDocId);
 
 	printf("end searchSimple\n");
@@ -1782,7 +1782,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			}
 		}
 	}
-
 	//intresnag debug info
 	#ifdef BLACK_BOKS
 	//viser hvordan treffene er i subnames
@@ -1836,11 +1835,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	pthread_mutex_unlock(&PagesResults.mutex);
 
 	//venter på trådene
-#if 0
 	for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
 		ret = pthread_join(threadid[i], NULL);
 	}
-#endif
 
 	//free mutex'en
 	ret = pthread_mutex_destroy(&PagesResults.mutex);
@@ -1853,6 +1850,24 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		cmc_close(PagesResults.cmcsocketha);
 	#endif
 
+
+	if (rankType == RANK_TYPE_SUM) {
+		/* If we are getting the current rank we sum up the pages better ranked
+		 * than the rank we put in and return that result */
+		int ranksum = 0;
+
+		for (i = 0; i < SiderHeder->TotaltTreff; i++) {
+			if (PagesResults.TeffArray->iindex[i].allrank >= *ranking) {
+				/* XXX */
+				if (PagesResults.Sider[i].deletet == 0 && strlen(PagesResults.Sider[i].DocumentIndex.Url) > 0) {
+					//printf("Page: %d <<%s>>\n", PagesResults.TeffArray->iindex[i].allrank, PagesResults.Sider[i].DocumentIndex.Url);
+					ranksum++;
+				}
+			}
+		}
+		printf("Position: %d\n", ranksum);
+		*ranking = ranksum;
+	}
 
 	(*SiderHeder).showabal = PagesResults.showabal;
 
@@ -1891,38 +1906,6 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	//lager en liste med ordene som ingikk i queryet til hiliting
 	hiliteQuery[0] = '\0';
 	//printf("size %i\n",PagesResults.QueryData.queryParsed.size);
-
-	printf("hiliteQuery\n");
-	//x=0;
-	//for (y=0; y<PagesResults.QueryData.queryParsed.size; y++) {
-	//	struct text_list *t_it = PagesResults.QueryData.queryParsed.elem[y];
-	for (i=0; i<PagesResults.QueryData.queryParsed.n; i++) {
-
-		//while ( t_it!=NULL )
-		for (j=0; j<PagesResults.QueryData.queryParsed.query[i].n; j++)
-                {
-
-			//if (!t_it->stopword) {
-                		//ToDo vanlig strcat gir fare for buffer overflov her
-				//strncat(hiliteQuery,t_it->text,sizeof(*hiliteQuery) -1); 
-		        	strcat(hiliteQuery,PagesResults.QueryData.queryParsed.query[i].s[j]);      	
-
-				//appender et komma, slik at vi får en komma separert liste med ord
-				strncat(hiliteQuery,",",sizeof(*hiliteQuery) -1);		
-				strcat(hiliteQuery,",");
-			//}
-
-			//t_it = t_it->next;
-
-			//temp: midlertidig fiks får å slippe problemer med querys som har mange \\\\\\ i seg
-			//if (x>10) {
-			//	break;
-			//}
-			//++x;
-		}
-
-	}
-	printf("hiliteQuery END\n");
 
 	//det vil bli et komma for mye på slutten, fjerner det.
 	//ToDo: er det altid et komma for mye ?	

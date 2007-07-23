@@ -1761,7 +1761,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		int languageFilterAsNr[], char orderby[],
 		struct filtersFormat *filters,
 		struct filteronFormat *filteron,
-		query_array *search_user_as_query, unsigned int *getRank
+		query_array *search_user_as_query
 		) {
 
 	int i,y,n;
@@ -1813,8 +1813,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	//pthread_t threadid_Acl = 0;
 
 
-	if (getRank)
-		printf("We are doing some getRankin'...\n");
 	//resetter subnmes hits
 	for(i=0;i<nrOfSubnames;i++) {		
 		subnames[i].hits = 0;
@@ -2062,7 +2060,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 	#ifdef WITH_RANK_FILTER
 	
-	if (getRank == NULL && (*TeffArrayElementer) > 20000) {
+	if ((*TeffArrayElementer) > 20000) {
 
 		for(i=0; i<= 255;i++) {
 			rankcount[i] = 0;
@@ -2550,22 +2548,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		printf("sort ferdig\n");
 	gettimeofday(&end_time, NULL);
 	(*queryTime).indexSort = getTimeDifference(&start_time,&end_time);
-
-
-	/* If we are getting the current rank we sum up the pages better ranked
-	 * than the rank we put in and return that result */
-	if (getRank) {
-		*getRank = 1;
-		for (i = 0; i < (*TeffArrayElementer); i++) {
-			/* XXX: Decide on a comparison, we are giving an optimistic one now */
-			if (TeffArray->iindex[i].allrank >= *getRank) {
-				(*getRank)++;
-				//printf("####################### Found a position of: %d\n", i);
-				//break;
-			}
-		}
-		printf("Position: %d\n", *getRank);
-	}
 
 		//temp:
 		/********************************************************************************/

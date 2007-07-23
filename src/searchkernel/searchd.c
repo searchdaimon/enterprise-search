@@ -901,8 +901,6 @@ void *do_chld(void *arg)
 				return;
 			}
 
-			printf("########################## Doing stuff or something... %d\n", ranking);
-			
 			if (!dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,
 				servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
 				queryNodeHeder.start, queryNodeHeder.filterOn, 
