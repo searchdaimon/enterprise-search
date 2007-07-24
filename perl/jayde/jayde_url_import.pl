@@ -65,8 +65,12 @@ sub url_record {
     $log->info("Got url ", $data{sUrl}, " for user ", $data{sUser});
 
     eval {
-        sql_insert_user_url($data{sUser}, $data{sUrl});
+        sql_insert_user_url($data{sUser}, $data{sUrl}, 
+        time2str("%Y-%m-%d %H-%M-%S", $data{datecreated}),
+        time2str("%Y-%m-%d", $data{datemodified}));
+        
     };
+
     if ($@) {
         $log->warn($@);
     }
@@ -86,9 +90,10 @@ sub connect_to_db {
 
 
 sub sql_insert_url {
-    my $url = shift;
-    my $query = "INSERT INTO submission_url (url) VALUES (?)";
-    my $sth = sql_exec($dbh, $query, $url);
+    my ($url, $indexed) = @_;
+
+    my $query = "INSERT INTO submission_url (url, last_indexed) VALUES (?, ?)";
+    my $sth = sql_exec($dbh, $query, $url, $indexed);
     return $dbh->{ q{mysql_insertid} };
 }
 
@@ -103,14 +108,14 @@ sub sql_get_url_id {
 
 
 sub sql_insert_user_url {
-    my ($user, $url) = @_;
+    my ($user, $url, $added, $indexed) = @_;
     my $url_id = sql_get_url_id($url)
-        || sql_insert_url($url);
+        || sql_insert_url($url, $indexed);
 
     my $query = "INSERT INTO submission_userurl (bruker_navn, url, added)
-        VALUES(?, ?, NOW())";
+        VALUES(?, ?, ?)";
 
-    my $sth = sql_exec($dbh, $query, $user, $url_id);
+    my $sth = sql_exec($dbh, $query, $user, $url_id, $added);
 }
 
 
