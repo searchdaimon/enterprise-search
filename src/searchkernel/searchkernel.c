@@ -1174,7 +1174,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		//boithoad_listGroups(&groups_respons_list,&groups_responsnr);
 		if (!boithoad_groupsForUser(PagesResults.search_user,&groups_respons_list,&groups_responsnr)) {
                         perror("Error: boithoad_groupsForUser");
-                        return;
+                        return 0;
                 }
 		groupOrQuery[0] = '\0';
                 printf("groups: %i\n",groups_responsnr);

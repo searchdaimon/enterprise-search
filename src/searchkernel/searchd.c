@@ -843,7 +843,12 @@ void *do_chld(void *arg)
 
 	SiderHeder.errorstrlen=sizeof(SiderHeder.errorstr);
 	//v3 dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,servername,subnames,SiderHeder.nrOfSubnames,queryNodeHeder.MaxsHits,queryNodeHeder.start, queryNodeHeder.filterOn, queryNodeHeder.languageFilter);
-	if (!queryNodeHeder.getRank && !dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,
+
+	printf("queryNodeHeder.getRank %i\n",queryNodeHeder.getRank);
+
+	if (!queryNodeHeder.getRank) {
+
+		if (!dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,
 			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
 			queryNodeHeder.start, queryNodeHeder.filterOn, 
 			"",queryNodeHeder.orderby,SiderHeder.dates,queryNodeHeder.search_user,
@@ -853,13 +858,14 @@ void *do_chld(void *arg)
 			&global_DomainIDs, queryNodeHeder.HTTP_USER_AGENT
 			)) 
 		{
-
+			printf("dosearch did not return 1\n");
 			SiderHeder.responstype 	= searchd_responstype_error;
 			//setter at vi ikke hadde noen svar
 			SiderHeder.TotaltTreff 	= 0;
 			SiderHeder.showabal	= 0;
 
 			printf("Error: cand do dosearch: \"%s\"\n",SiderHeder.errorstr);
+		}
 	}
 	else if (queryNodeHeder.getRank)  {
 		printf("########################################### Ranking document: %d\n", queryNodeHeder.getRank);

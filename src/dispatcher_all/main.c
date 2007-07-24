@@ -803,6 +803,10 @@ int main(int argc, char *argv[])
 				QueryData.search_user[0] = '\0';
 			#endif
 
+
+			getRank = 0;
+			QueryData.rankUrl[0] = '\0';
+
 			QueryData.MaxsHits = DefultMaxsHits;
 			QueryData.start = 1;
 			QueryData.filterOn = 1;
@@ -981,19 +985,21 @@ int main(int argc, char *argv[])
 			strscpy(QueryData.rankUrl, cgi_getentrystr("getrank"), sizeof(QueryData.rankUrl));
 		}
 
-		if (!getRank) {
-			if (cgi_getentryint("maxshits") == 0) {
-				QueryData.MaxsHits = DefultMaxsHits;
-			}
-			else {
-				QueryData.MaxsHits = cgi_getentryint("maxshits");			
-			}
-		} else {
-			QueryData.MaxsHits = 10; /* Just keep this value here for now, should not be needed later on */
-		}
 	
 
         }
+
+	if (!getRank) {
+		if (cgi_getentryint("maxshits") == 0) {
+			QueryData.MaxsHits = DefultMaxsHits;
+		}
+		else {
+			QueryData.MaxsHits = cgi_getentryint("maxshits");			
+		}
+	} else {
+		QueryData.MaxsHits = 10; /* Just keep this value here for now, should not be needed later on */
+	}
+
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
 	printf("Time debug: init %f\n",getTimeDifference(&start_time,&end_time));
@@ -1038,6 +1044,9 @@ int main(int argc, char *argv[])
 			queryNodeHeder.getRank = wantedDocId;
 			
 		}
+	}
+	else {
+		queryNodeHeder.getRank = 0;
 	}
 
 	for(i=0;i<strlen(QueryData.query);i++) {
