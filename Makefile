@@ -1,7 +1,7 @@
 # Makefile
 
 # The compiler to be used
-CC = /usr/local/bin/gcc
+CC = gcc
 
 # Arguments passed to the compiler: -g causes the compiler to insert
 # debugging info into the executable and -Wall turns on all warnings
@@ -81,7 +81,7 @@ all:
 
 bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun dictionarywordsLot webadmindep
 
-webadmindep: YumWrapper NetConfig InitServices setuidcaller yumupdate
+webadmindep: YumWrapper NetConfig InitServices setuidcaller
 
 tempFikes: IndexerLot_fik32bitbug DIconvert
 
@@ -306,6 +306,12 @@ vipurls: src/vipurls/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/vipurls/main.c  -o bin/vipurls $(LDFLAGS)
+
+shortUrls: src/shortUrls/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/shortUrls/main.c  -o bin/shortUrls $(LDFLAGS)
 
 urldispatcher: src/urldispatcher/main.c
 	@echo ""
@@ -579,7 +585,7 @@ BrankCalculate2: src/BrankCalculate2/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate2/*.c -o bin/BrankCalculate2 $(LDFLAGS)
 
 BrankCalculate3: src/BrankCalculate3/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate3/*.c -o bin/BrankCalculate3 $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate3/main.c -o bin/BrankCalculate3 $(LDFLAGS) -DDEFLOT
 
 BrankMerge: src/BrankMerge/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankMerge/*.c -o bin/BrankMerge $(LDFLAGS)
