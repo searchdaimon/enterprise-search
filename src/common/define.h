@@ -346,6 +346,7 @@ struct iindexFormat {
 	struct hitsFormat hits[maxTotalIindexHits];
 	int nrofHits;
 	struct iindexMainElements iindex[maxIndexElements];
+	int phrasenr;
 };
 
 // formatet for dataene for sidene skal være
