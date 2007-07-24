@@ -1,7 +1,6 @@
 ##
 # SAX Handler class for parsing Jayde user url xml dump.
 # based on Jayde::UserImport::Handler.
-# dvj, 2007
 package Jayde::UrlImport::Handler;
 use strict;
 use warnings;

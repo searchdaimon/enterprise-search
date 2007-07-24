@@ -1,8 +1,7 @@
 ##
-# Tool for importing jayde userdb to searchdaimon's userdb.
-# dvj, 2007
+# Tool for importing jayde url-userdb to searchdaimon's url-userdb.
 #
-# Usage: ./jayde_user_import.pl file1.xml [file2.xml ...]
+# Usage: ./jayde_url_import.pl file1.xml [file2.xml ...]
 use strict;
 use warnings;
 use Carp;
