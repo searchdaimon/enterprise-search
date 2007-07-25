@@ -1,4 +1,5 @@
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "dcontainer.h"
@@ -7,36 +8,233 @@
 #include "dstack.h"
 #include "dqueue.h"
 #include "dlist.h"
+#include "dmap.h"
+
+
+void list_in_list_test()
+{
+    container	*L = list_container( list_container( int_container() ) );
+    container	*LL;
+
+    list_pushback(L);
+    LL = list_node(list_end(L))->val.C;
+    list_pushback(LL, 1);
+    list_pushback(LL, 2);
+    list_pushback(LL, 3);
+    list_pushback(LL, 4);
+
+    list_pushback(L);
+    LL = list_node(list_end(L))->val.C;
+    list_pushback(LL, 5);
+    list_pushback(LL, 6);
+    list_pushback(LL, 7);
+
+    iterator	it1, it2;
+    it1 = list_begin(L);
+    for (; it1.valid; it1=list_next(it1))
+	{
+	    it2 = list_begin(list_node(it1)->val.C);
+	    for (; it2.valid; it2=list_next(it2))
+		printf("%i ", list_node(it2)->val.i);
+	    printf("\n");
+	}
+
+    destroy(L);
+}
+
+
+void map_in_list_test()
+{
+    container	*L = list_container( map_container( int_container(), string_container() ) );
+    container	*M;
+
+    list_pushback(L);
+    M = list_node(list_end(L))->val.C;
+    map_insert(M, 4, "bra");
+    map_insert(M, 1, "abra");
+    map_insert(M, 3, "da");
+    map_insert(M, 2, "ka");
+
+    list_pushback(L);
+    M = list_node(list_end(L))->val.C;
+    map_insert(M, 6, "pokus");
+    map_insert(M, 7, "filiokus");
+    map_insert(M, 5, "hokus");
+
+    iterator	it1, it2;
+    it1 = list_begin(L);
+    for (; it1.valid; it1=list_next(it1))
+	{
+	    it2 = map_begin(list_node(it1)->val.C);
+	    for (; it2.valid; it2=map_next(it2))
+		printf("%i ", map_node(it2)->key.i);
+	    printf("\n");
+	}
+
+    destroy(L);
+}
+
+
+void stack_in_vector_test()
+{
+    container	*V = vector_container( stack_container( int_container() ) );
+    container	*S;
+
+    vector_pushback(V);
+    vector_pushback(V);
+    vector_pushback(V);
+    vector_pushback(V);
+
+    S = vector_get(V,0).C;
+    stack_push(S, 7);
+    stack_push(S, 3);
+    stack_push(S, 3);
+    stack_push(S, 1);
+    stack_push(S, 3);
+    S = vector_get(V,1).C;
+    stack_push(S, 5);
+    stack_push(S, 3);
+    stack_push(S, 2);
+    stack_push(S, 1);
+    stack_push(S, 1);
+    S = vector_get(V,2).C;
+    stack_push(S, 11);
+    stack_push(S, 7);
+    stack_push(S, 5);
+    stack_push(S, 3);
+    stack_push(S, 2);
+    S = vector_get(V,3).C;
+    stack_push(S, 4);
+    stack_push(S, 2);
+
+    int		i;
+    for (i=0; i<vector_size(V); i++)
+	{
+	    printf(": ");
+	    S = vector_get(V,i).C;
+	    while (stack_size(S)>0)
+		{
+		    printf("%i ", stack_peak(S).i);
+		    stack_pop(S);
+		}
+	    printf("\n");
+	}
+
+    destroy(V);
+}
+
+
+void list_in_map_test()
+{
+    container	*M = map_container( string_container(), list_container( string_container() ) );
+    container	*L = list_container( string_container() ), *L2 = list_container( string_container() );
+
+    list_pushback(L, "aaa");
+    list_pushback(L, "bab");
+    list_pushback(L, "cac");
+    list_pushback(L, "ddd");
+
+    map_insert_value(M, string_value("baluba"), container_value(L));
+
+    list_pushback(L2, "555");
+    list_pushback(L2, "777");
+    list_pushback(L2, "999");
+
+    map_insert_value(M, string_value("boliboli"), container_value(L2));
+
+    iterator	mit = map_begin(M);
+    for (; mit.valid; mit=map_next(mit))
+	{
+	    iterator	it = list_begin(map_node(mit)->val.C);
+	    for (; it.valid; it=list_next(it))
+		printf("%s ", (char*)list_node(it)->val.ptr);
+	    printf("\n");
+	}
+
+    destroy(M);
+}
 
 
 /* main: */
 
 int main()
 {
+    list_in_list_test();
+    map_in_list_test();
+    stack_in_vector_test();
+    list_in_map_test();
+    exit(0);
+
+    container	*M = map_container( int_container(), string_container() );
+
+    map_insert(M, 3, "tre");
+    map_insert(M, 2, "to");
+    map_insert(M, 8, "åtte");
+    map_insert(M, 5, "fem");
+    map_insert(M, 9, "ni");
+    map_insert(M, 1, "en");
+    map_insert(M, 4, "fire");
+    map_insert(M, 7, "sju");
+
+    iterator	mit = map_begin(M);
+    for (; mit.valid; mit=map_next(mit))
+	{
+	    printf("%i: %s\n", map_node(mit)->key.i, (char*)map_node(mit)->val.ptr);
+	}
+
+    printf("---\n");
+
+    mit = map_end(M);
+    for (; mit.valid; mit=map_previous(mit))
+	{
+	    printf("%i: %s\n", map_node(mit)->key.i, (char*)map_node(mit)->val.ptr);
+	}
+
+    printf("---\n");
+
+    value	w;
+    w.i = 5;
+    mit = map_find_value(M, w);
+    if (mit.valid)
+        printf("%i: %s\n", map_node(mit)->key.i, (char*)map_node(mit)->val.ptr);
+    else
+	printf("not found\n");
+
+    mit = map_find(M, 3);
+    if (mit.valid)
+        printf("%i: %s\n", map_node(mit)->key.i, (char*)map_node(mit)->val.ptr);
+    else
+	printf("not found\n");
+
+    //-----
+
     container	*L = list_container( int_container() );
+    iterator	it;
 
     list_pushback(L, 5);
     list_pushfront(L, 3);
-    list_insert(L, list_begin(L)->next, 4);
+    list_insert(L, list_next(list_begin(L)), 4);
     list_pushback(L, 6);
     list_pushfront(L, 1);
-    list_insert(L, list_begin(L)->next, 2);
+    it = list_begin(L);
+    it = list_next(it);
+    list_insert(L, it, 2);
 
-    list_iterator *it = list_begin(L);
+    it = list_begin(L);
 
     printf("list(%i): ", list_size(L));
     int		del;
-    for (del=0; it!=NULL; del++)
+    for (del=0; it.valid; del++)
 	{
-	    list_iterator	*gammel_it = it;
-	    printf("%i ", it->x.i);
-	    it = it->next;
+	    iterator	gammel_it = it;
+	    printf("%i ", list_node(it)->val.i);
+	    it = list_next(it);
 	    if (del&1) list_erase(L, gammel_it);
 	}
     printf(" |  ");
-    for (it=list_end(L); it!=NULL; it=it->previous)
+    for (it=list_end(L); it.valid; it = list_previous(it))
 	{
-	    printf("%i ", it->x.i);
+	    printf("%i ", list_node(it)->val.i);
 	}
     printf("\n");
 

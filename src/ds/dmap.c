@@ -1,313 +1,433 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-//#include <unistd.h>
-#include <string.h>
 
+#include "dcontainer.h"
 #include "dstack.h"
 #include "dmap.h"
 
-typedef struct map_node map_node;
-typedef struct map_iterator map_iterator;
-
-struct map_node
-{
-    enum { Red, Black } color;
-    map_node		*parent, *left_child, *right_child;
-    value		key, data;
-};
 
 typedef struct
 {
     container		*Key, *Data;
-    map_node            *root;
+    _map_node_            *root;
     int                 size;
-} container_map_priv;
+} map_container_priv;
 
-struct map_iterator
+
+
+inline alloc_data map_ap_allocate( container *C, va_list ap )
 {
-    map_node		*current;
-    stack		*status;
-};
+    container	*N = C->clone(C);
+    alloc_data	x;
+
+    x.v.C = N;
+    x.ap = ap;
+
+    return x;
+}
 
 
+inline void map_deallocate( container *C, value a )
+{
+    destroy(a.C);
+}
 
-void map_deltree( map_node *n )
+
+void map_deltree( container *C, _map_node_ *n )
 {
     if (n->left_child != NULL)
-	map_deltree( n->left_child );
+	map_deltree( C, n->left_child );
     if (n->right_child != NULL)
-	map_deltree( n->right_child );
+	map_deltree( C, n->right_child );
 
-    free( n );
+    map_container_priv	*MP = C->priv;
+
+    deallocate(MP->Key, n->key);
+    deallocate(MP->Data, n->val);
+    free(n);
 }
 
-void map_deallocate( map_root *M )
+
+void map_destroy( container *C )
 {
-    map_deltree( M->root );
-    free( M );
+    map_container_priv	*MP = C->priv;
+
+    if (MP->root!=NULL) map_deltree( C, MP->root );
+    destroy( MP->Key );
+    destroy( MP->Data );
+    free(MP);
+    free(C);
 }
 
-void map_insert( container *C, ... )
-{
-    container_map_priv	*M = C->priv;
-    map_node		*it = M->root, *last_it = M->root;
 
-    if (M->root == NULL)
+inline void map_insert( container *C, ... )
+{
+    va_list		ap;
+    alloc_data		ad;
+    map_container_priv	*MP = C->priv;
+    value		key, val;
+
+    va_start(ap, C);
+    ad = MP->Key->ap_allocate(MP->Key, ap);
+    key = ad.v;
+    ap = ad.ap;
+    ad = MP->Data->ap_allocate(MP->Data, ap);
+    val = ad.v;
+    va_end(ad.ap);
+
+    if (MP->size == 0)
         {
-            M->root = malloc(sizeof(map_node));
-            M->root->color = Black;
-            M->root->parent = NULL;
-            M->root->left_child = NULL;
-            M->root->right_child = NULL;
-            M->root->key = key;
-            M->root->data = data;
-            M->size++;
-//            printf("map_insert: Root is %i\n", M->root->key.i);
-
+            MP->root = malloc(sizeof(_map_node_));
+            MP->root->color = Black;
+            MP->root->parent = NULL;
+            MP->root->left_child = NULL;
+            MP->root->right_child = NULL;
+	    MP->root->key = key;
+	    MP->root->val = val;
+            MP->size++;
+//            printf("map_insert: Root is %i\n", key.i);
             return;
         }
 
-    while (it!=NULL)
+    _map_node_		*node = MP->root, *last_node = MP->root;
+//    printf("map_insert: Adding %i\n", key.i);
+
+    while (node!=NULL)
         {
-    	    int		cmp = M->Ckey->compare( it->key, key );
+    	    int		cmp = MP->Key->compare( MP->Key, node->key, key );
 
 	    if (!cmp)
                 {
-//            	    it->data = M->et->data_conflict( it->data, data );
 		    // For now, do nothing if the key already exists.
 		    // It is possible to expand this to include multimap etc.
 //        	    printf("map_insert: Conflict with %i\n", key.i);
                     return;
                 }
 
-            last_it = it;
+            last_node = node;
 
             if (cmp > 0)
-                it = it->left_child;
+//		{printf("left\n");
+                node = node->left_child;
             else
-                it = it->right_child;
+//		{printf("right\n");
+                node = node->right_child;
         }
 
-    it = (map_node*)malloc(sizeof(map_node));
-    it->color = Red;
-    it->parent = last_it;
-    it->left_child = NULL;
-    it->right_child = NULL;
-    it->key = key;
-    it->data = data;
+    node = malloc(sizeof(_map_node_));
+    node->color = Red;
+    node->parent = last_node;
+    node->left_child = NULL;
+    node->right_child = NULL;
+    node->key = key;
+    node->val = val;
 
-    if (M->Ckey->compare( last_it->key, key ) > 0)
+    if (MP->Key->compare( MP->Key, last_node->key, key ) > 0)
 	{
 //	    printf("map_insert: Inserting %i at left.\n", key.i);
-    	    last_it->left_child = it;
+    	    last_node->left_child = node;
     	}
     else
 	{
 //	    printf("map_insert: Inserting %i at right.\n", key.i);
-    	    last_it->right_child = it;
+    	    last_node->right_child = node;
         }
 
-    M->size++;
+    MP->size++;
 
 /*
     // Red-Black-Tree:
-    while (it != *root && it->parent->color == Red)
+    while (node != *root && node->parent->color == Red)
         {
         }
 */
 }
 
-/**/
-void stack_push( container *C, ... )
+
+
+inline void map_insert_value( container *C, value key, value val )
 {
-    va_list			ap;
-    alloc_data			ad;
-    stack_container_priv	*S = C->priv;
+    map_container_priv	*MP = C->priv;
 
-    if (S->top >= S->size)
+    if (MP->size == 0)
+        {
+            MP->root = malloc(sizeof(_map_node_));
+            MP->root->color = Black;
+            MP->root->parent = NULL;
+            MP->root->left_child = NULL;
+            MP->root->right_child = NULL;
+	    MP->root->key = key;
+	    MP->root->val = val;
+            MP->size++;
+//            printf("map_insert: Root is %i\n", key.i);
+            return;
+        }
+
+    _map_node_		*node = MP->root, *last_node = MP->root;
+//    printf("map_insert: Adding %i\n", key.i);
+
+    while (node!=NULL)
+        {
+    	    int		cmp = MP->Key->compare( MP->Key, node->key, key );
+
+	    if (!cmp)
+                {
+		    // For now, do nothing if the key already exists.
+		    // It is possible to expand this to include multimap etc.
+//        	    printf("map_insert: Conflict with %i\n", key.i);
+                    return;
+                }
+
+            last_node = node;
+
+            if (cmp > 0)
+//		{printf("left\n");
+                node = node->left_child;
+            else
+//		{printf("right\n");
+                node = node->right_child;
+        }
+
+    node = malloc(sizeof(_map_node_));
+    node->color = Red;
+    node->parent = last_node;
+    node->left_child = NULL;
+    node->right_child = NULL;
+    node->key = key;
+    node->val = val;
+
+    if (MP->Key->compare( MP->Key, last_node->key, key ) > 0)
 	{
-	    value	*old_elem = S->elem;
-	    int		old_size = S->size;
+//	    printf("map_insert: Inserting %i at left.\n", key.i);
+    	    last_node->left_child = node;
+    	}
+    else
+	{
+//	    printf("map_insert: Inserting %i at right.\n", key.i);
+    	    last_node->right_child = node;
+        }
 
-	    S->size*= 2;
-	    S->elem = malloc(sizeof(value) * S->size);
-	    memcpy( S->elem, old_elem, sizeof(value) * old_size );
-	    free(old_elem);
-	}
-
-    va_start(ap, C);
-
-    ad = S->C->ap_allocate( S->C, ap );
-    S->elem[S->top] = ad.v;
-    S->top++;
-
-    va_end(ad.ap);
+    MP->size++;
 }
 
-/**/
 
-map_iterator* map_it_allocate( map_root *M )
+
+
+inline iterator map_next( const iterator old_it )
 {
-    map_iterator	*it = (map_iterator*)malloc(sizeof(map_iterator));
+    iterator	it = old_it;
+    int		s = 2;
 
-    it->current = M->root;
+    it.valid = 1;
 
-    if (it->current == NULL)
+    while (it.node != NULL)
 	{
-	    it->status = NULL;
+	    switch (s)
+		{
+		    case 0:
+			s = 1;
+			if (map_node(it)->left_child != NULL)
+			    {
+				it.node = map_node(it)->left_child;
+				s = 0;
+			    }
+			break;
+		    case 1:
+			s = 2;
+			return it;
+		    case 2:
+			s = 3;
+			if (map_node(it)->right_child != NULL)
+			    {
+				it.node = map_node(it)->right_child;
+				s = 0;
+			    }
+			break;
+		    default:
+			if (map_node(it)->parent != NULL && it.node == map_node(it)->parent->left_child)
+			    s = 1;
+			else // if (map_node(it)->parent != NULL && it.node == map_node(it)->parent->right_child)
+			    s = 3;
+
+			it.node = map_node(it)->parent;
+		}
+	}
+
+    it.valid = 0;
+    return it;
+}
+
+
+inline iterator map_previous( const iterator old_it )
+{
+    iterator	it = old_it;
+    int		s = 2;
+
+    it.valid = 1;
+
+    while (it.node != NULL)
+	{
+	    switch (s)
+		{
+		    case 0:
+			s = 1;
+			if (map_node(it)->right_child != NULL)
+			    {
+				it.node = map_node(it)->right_child;
+				s = 0;
+			    }
+			break;
+		    case 1:
+			s = 2;
+			return it;
+		    case 2:
+			s = 3;
+			if (map_node(it)->left_child != NULL)
+			    {
+				it.node = map_node(it)->left_child;
+				s = 0;
+			    }
+			break;
+		    default:
+			if (map_node(it)->parent != NULL && it.node == map_node(it)->parent->right_child)
+			    s = 1;
+			else // if (map_node(it)->parent != NULL && it.node == map_node(it)->parent->left_child)
+			    s = 3;
+
+			it.node = map_node(it)->parent;
+		}
+	}
+
+    it.valid = 0;
+    return it;
+}
+
+
+inline iterator map_begin( container *C )
+{
+    map_container_priv	*MP = C->priv;
+    iterator		it;
+
+    if (MP->size==0)
+	{
+	    it.valid = 0;
+	    it.node = NULL;
 	    return it;
 	}
 
-    it->status = stack_allocate( int_container() );
-    stack_push( it->status, i2d(0) );
-
-    map_it_next( it );
+    it.node = MP->root;
+    while (map_node(it)->left_child != NULL)
+	it.node = map_node(it)->left_child;;
+    it.valid = 1;
 
     return it;
 }
 
 
-void map_it_deallocate( map_iterator *it )
+inline iterator map_end( container *C )
 {
-    if (it->status != NULL)
-	stack_deallocate( it->status );
+    map_container_priv	*MP = C->priv;
+    iterator		it;
 
-    free(it);
-}
-
-
-void map_it_next( map_iterator *it )
-{
-    while (it->current != NULL)
+    if (MP->size==0)
 	{
-	    int		s = stack_pop( it->status ).i;
-
-	    switch (s)
-		{
-		    case 0:
-		        stack_push( it->status, i2d(1) );
-			if (it->current->left_child != NULL)
-			    {
-	    			it->current = it->current->left_child;
-			        stack_push( it->status, i2d(0) );
-	    		    }
-	    		break;
-	    	    case 1:
-		        stack_push( it->status, i2d(2) );
-	    		return;
-	    	    case 2:
-		        stack_push( it->status, i2d(3) );
-			if (it->current->right_child != NULL)
-			    {
-				it->current = it->current->right_child;
-			        stack_push( it->status, i2d(0) );
-			    }
-			break;
-		    default:
-			it->current = it->current->parent;
-		}
+	    it.valid = 0;
+	    it.node = NULL;
+	    return it;
 	}
+
+    it.node = MP->root;
+    while (map_node(it)->right_child != NULL)
+	it.node = map_node(it)->right_child;
+    it.valid = 1;
+
+    return it;
 }
 
 
-map_node* map_find( map_root *M, data_c key )
+inline iterator map_find_value( container *C, value key )
 {
-    map_node		*n = M->root;
+    map_container_priv	*MP = C->priv;
+    iterator		it;
 
-    while (n!=NULL)
+    it.node = ((map_container_priv*)C->priv)->root;
+
+    while (it.node!=NULL)
 	{
-	    int		cmp = M->Ckey->compare(n->key, key);
+	    int		cmp = MP->Key->compare(MP->Key, map_node(it)->key, key);
 
 	    if (cmp==0)
-		return n;
+		{
+		    it.valid = 1;
+		    return it;
+		}
 	    if (cmp>0)
-		n = n->left_child;
+		{
+    		    it.node = map_node(it)->left_child;
+		}
 	    else
-		n = n->right_child;
+		{
+		    it.node = map_node(it)->right_child;
+		}
 	}
 
-    return n;
+    it.valid = 0;
+    return it;
 }
 
 
-int main()
+inline iterator map_find( container *C, ... )
 {
-    char	*a = "hubba bubba", *b="kaffe er drikke", *c="hadet", *d="bra";
+    va_list		ap;
+    alloc_data		ad;
+    map_container_priv	*MP = C->priv;
+    value		key;
+    iterator		it;
 
-    map_root	*M = map_allocate( str_container(), int_container() );
+    va_start(ap, C);
+    ad = MP->Key->ap_allocate(MP->Key, ap);
+    key = ad.v;
+    va_end(ap);
 
-    map_insert( M, s2d(a), i2d(1) );
-    map_insert( M, s2d(b), i2d(1) );
-    map_insert( M, s2d(c), i2d(0) );
-    map_insert( M, s2d(d), i2d(1) );
-    map_insert( M, s2d(a), i2d(0) );
-    map_insert( M, s2d(c), i2d(1) );
+    it = map_find_value( C, key );
 
-    map_iterator	*it = map_it_allocate( M );
+    deallocate(MP->Key, key);
 
-    while (it->current != NULL)
-	{
-	    printf("%s (%s)\n", (char*)it->current->key.ptr, (it->current->data.i > 0 ? "true" : "false"));
-	    map_it_next( it );
-	}
-
-    map_it_deallocate( it );
-
-    map_deallocate( M );
-
-    M = map_allocate( int_container(), str_container() );
-    map_insert( M, i2d(8), s2d("alfa") );
-    map_insert( M, i2d(19), s2d("bravo") );
-    map_insert( M, i2d(2), s2d("charlie") );
-    map_insert( M, i2d(7), s2d("delta") );
-    map_insert( M, i2d(3), s2d("ekko") );
-    map_insert( M, i2d(1), s2d("foxtrot") );
-    map_insert( M, i2d(17), s2d("gamma") );
-    map_insert( M, i2d(10), s2d("hohoho") );
-
-    it = map_it_allocate( M );
-
-    while (it->current != NULL)
-	{
-	    printf("%i (%s)\n", it->current->key.i, (char*)it->current->data.ptr );
-	    map_it_next( it );
-	}
-
-    printf("---\n");
-
-    map_node	*n;
-    n = map_find( M, i2d(17) );
-    printf("%i (%s)\n", n->key.i, (char*)n->data.ptr);
-    n = map_find( M, i2d(7) );
-    printf("%i (%s)\n", n->key.i, (char*)n->data.ptr);
-    n = map_find( M, i2d(10) );
-    printf("%i (%s)\n", n->key.i, (char*)n->data.ptr);
-    n = map_find( M, i2d(13) );
-    if (n==NULL) printf("NULL\n");
-
-    map_it_deallocate( it );
-
-    map_deallocate( M );
+    return it;
 }
 
 
+inline int map_size( container *C )
+{
+    return ((map_container_priv*)C->priv)->size;
+}
+
+
+inline container* map_clone( container *C )
+{
+    map_container_priv	*LP = C->priv;
+    container		*N = LP->Key->clone(LP->Key),
+			*M = LP->Data->clone(LP->Data);
+    return map_container(N,M);
+}
 
 container* map_container( container *Key, container *Data )
 {
-    container			*MC = malloc(sizeof(container));
-    map_container_priv		*M = malloc(sizeof(map_container_priv));
+    container			*M = malloc(sizeof(container));
+    map_container_priv		*MP = malloc(sizeof(map_container_priv));
 
-    MC->compare = NULL;
-    MC->ap_allocate = NULL;
-    MC->deallocate = NULL;
-    MC->destroy = map_destroy;
-    MC->priv = M;
+    M->compare = NULL;
+    M->ap_allocate = map_ap_allocate;
+    M->deallocate = map_deallocate;
+    M->destroy = map_destroy;
+    M->clone = map_clone;
+    M->priv = MP;
 
-    M->Key = Key;
-    M->Data = Data;
-    M->root = NULL;
-    M->size = 0;
+    MP->Key = Key;
+    MP->Data = Data;
+    MP->root = NULL;
+    MP->size = 0;
 
-    return MC;
+    return M;
 }

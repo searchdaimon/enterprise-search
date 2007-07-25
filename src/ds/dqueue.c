@@ -15,6 +15,24 @@ typedef struct
 } queue_container_priv;
 
 
+inline alloc_data queue_ap_allocate( container *C, va_list ap )
+{
+    container	*N = C->clone(C);
+    alloc_data	x;
+
+    x.v.C = N;
+    x.ap = ap;
+
+    return x;
+}
+
+
+inline void queue_deallocate( container *C, value a )
+{
+    destroy(a.C);
+}
+
+
 void queue_destroy( container *C )
 {
     queue_container_priv	*Q = C->priv;
@@ -114,15 +132,24 @@ int queue_size( container *C )
 }
 
 
+inline container* queue_clone( container *C )
+{
+    queue_container_priv	*LP = C->priv;
+    container			*N = LP->C->clone(LP->C);
+    return queue_container(N);
+}
+
+
 container* queue_container( container *C )
 {
     container			*QX = malloc(sizeof(container));
     queue_container_priv	*QP = malloc(sizeof(queue_container_priv));
 
     QX->compare = NULL;
-    QX->ap_allocate = NULL;
-    QX->deallocate = NULL;
+    QX->ap_allocate = queue_ap_allocate;
+    QX->deallocate = queue_deallocate;
     QX->destroy = queue_destroy;
+    QX->clone = queue_clone;
     QX->priv = QP;
 
     QP->C = C;

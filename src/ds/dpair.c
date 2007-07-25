@@ -82,6 +82,14 @@ void pair_destroy( container *C )
     free(C);
 }
 
+inline container* pair_clone( container *C )
+{
+    pair_container_priv	*LP = C->priv;
+    container		*N = LP->A->clone(LP->A),
+			*M = LP->B->clone(LP->B);
+    return pair_container(N,M);
+}
+
 container* pair_container( container *A, container *B )
 {
     container	*C = (container*)malloc(sizeof(container));

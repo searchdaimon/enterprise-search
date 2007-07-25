@@ -14,6 +14,24 @@ typedef struct
 } stack_container_priv;
 
 
+inline alloc_data stack_ap_allocate( container *C, va_list ap )
+{
+    container	*N = C->clone(C);
+    alloc_data	x;
+
+    x.v.C = N;
+    x.ap = ap;
+
+    return x;
+}
+
+
+inline void stack_deallocate( container *C, value a )
+{
+    destroy(a.C);
+}
+
+
 void stack_destroy( container *C )
 {
     stack_container_priv	*S = C->priv;
@@ -108,15 +126,24 @@ int stack_size( container *C )
 }
 
 
+inline container* stack_clone( container *C )
+{
+    stack_container_priv	*LP = C->priv;
+    container			*N = LP->C->clone(LP->C);
+    return stack_container(N);
+}
+
+
 container* stack_container( container *C )
 {
     container			*S = malloc(sizeof(container));
     stack_container_priv	*SP = malloc(sizeof(stack_container_priv));
 
     S->compare = NULL;
-    S->ap_allocate = NULL;
-    S->deallocate = NULL;
+    S->ap_allocate = stack_ap_allocate;
+    S->deallocate = stack_deallocate;
     S->destroy = stack_destroy;
+    S->clone = stack_clone;
     S->priv = SP;
 
     SP->C = C;

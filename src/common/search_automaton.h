@@ -90,12 +90,18 @@ static inline automaton* new_automaton()
 }
 
 /*
-void print_automaton( char *prefix, automaton *A )
+static inline void print_automaton( char *prefix, automaton *A, int n )
 {
     int		i;
 
+//    for (i=0; i<n; i++) printf(" ");
+//    printf("%s|%s", prefix, A->str);
+
     if (A->terminal>=0)
-	printf("%s%s\n", prefix, A->str);
+	printf("%s|%s\n", prefix, A->str);
+
+//    if (A->terminal>=0) printf(" (x)");
+//    printf("\n");
 
     for (i=0; i<255; i++)
 	{
@@ -107,7 +113,10 @@ void print_automaton( char *prefix, automaton *A )
 		    new_prefix[strlen(new_prefix)+1] = '\0';
 		    new_prefix[strlen(new_prefix)] = (unsigned char)i;
 
-		    print_automaton(new_prefix, A->next[i]);
+//		    int		j;
+//		    for (j=0; j<n+1; j++) printf(" ");
+//		    printf("%s|%s|%c\n", prefix, A->str, (char)i);
+		    print_automaton(new_prefix, A->next[i], n+2);
 
 		    free(new_prefix);
 		}
@@ -134,7 +143,8 @@ static inline automaton* build_automaton( int num_args, unsigned char **words )
 	    convert_to_lowercase(words[i]);
 //	    printf("Adding %s\n", (char*)words[i]);
 
-	    while (words[i][p]!='\0' && !terminated)
+//	    while (words[i][p]!='\0' && !terminated)
+	    while (!terminated)
 		{
 		    for (n=0; A->str[n]==words[i][p+n] && A->str[n]!='\0' && words[i][p+n]!='\0'; n++);
 
@@ -195,11 +205,11 @@ static inline automaton* build_automaton( int num_args, unsigned char **words )
 //		    printf("-- next iteration --\n");
 		}
 	}
-/*
-    printf("Added words to automata:\n");
-    print_automaton("", base);
-    printf("---\n");
-*/
+
+//    printf("Added words to automata:\n");
+//    print_automaton("", base, 0);
+//    printf("---\n");
+
     return base;
 }
 
@@ -248,7 +258,11 @@ static inline int search_automaton( automaton *base, const char *word )
 	    if (word[n]=='\0')
 		{
 		    if (A->str[i]=='\0')
-			return A->terminal;
+			{
+//			    printf("[%i,§,%i]\n", i, A->terminal);
+//			    print_automaton((char*)word, A, 0);
+			    return A->terminal;
+			}
 		    else
 			return -1;
 		}
@@ -259,6 +273,7 @@ static inline int search_automaton( automaton *base, const char *word )
 	    last = c;
 
 	    A = A->next[c];
+//	    printf("(next %c)", (char)c);
 	}
 
     return -1;

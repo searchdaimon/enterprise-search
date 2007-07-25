@@ -42,6 +42,16 @@ inline void int_destroy( container *C )
     free(C);
 }
 
+inline container* int_clone( container *C )
+{
+    return int_container();
+}
+
+inline value int_copy( container *C, value a )
+{
+    return a;
+}
+
 container* int_container()
 {
     container	*C = (container*)malloc(sizeof(container));
@@ -50,6 +60,8 @@ container* int_container()
     C->ap_allocate = int_ap_allocate;
     C->deallocate = int_deallocate;
     C->destroy = int_destroy;
+    C->clone = int_clone;
+    C->copy = int_copy;
     C->priv = NULL;
 
     return C;
@@ -92,6 +104,19 @@ inline void string_destroy( container *C )
     free(C);
 }
 
+
+inline container* string_clone( container *C )
+{
+    return string_container();
+}
+
+inline value string_copy( container *C, value a )
+{
+    value	v;
+    v.ptr = strdup(a.ptr);
+    return v;
+}
+
 container* string_container()
 {
     container	*C = (container*)malloc(sizeof(container));
@@ -100,10 +125,68 @@ container* string_container()
     C->ap_allocate = string_ap_allocate;
     C->deallocate = string_deallocate;
     C->destroy = string_destroy;
+    C->clone = string_clone;
+    C->copy = string_copy;
     C->priv = NULL;
 
     return C;
 }
+
+
+/* ptr_container: */
+
+static inline int ptr_compare( container *C, value a, value b )
+{
+    if (a.i < b.i)
+	return -1;
+    else if (a.i > b.i)
+	return 1;
+    else
+	return 0;
+}
+
+
+static inline alloc_data ptr_ap_allocate( container *C, va_list ap )
+{
+    alloc_data	x;
+
+    x.v.ptr = va_arg(ap, void*);
+//    printf("allocated %i\n", x.v.i);
+
+    x.ap = ap;
+
+    return x;
+}
+
+
+static inline void ptr_deallocate( container *C, value a )
+{
+}
+
+inline void ptr_destroy( container *C )
+{
+    free(C);
+}
+
+inline container* ptr_clone( container *C )
+{
+    return ptr_container();
+}
+
+container* ptr_container()
+{
+    container	*C = (container*)malloc(sizeof(container));
+
+    C->compare = ptr_compare;
+    C->ap_allocate = ptr_ap_allocate;
+    C->deallocate = ptr_deallocate;
+    C->destroy = ptr_destroy;
+    C->clone = ptr_clone;
+    C->priv = NULL;
+
+    return C;
+}
+
 
 /* custom_container: */
 /*
@@ -184,4 +267,9 @@ void destroy( container *C )
 {
     C->destroy(C);
 }
-
+/*
+void destroy_iterator( iterator *it )
+{
+    it->destroy(it);
+}
+*/

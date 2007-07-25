@@ -1,5 +1,6 @@
 
 CC=/usr/local/bin/gcc -Wall -O2
+#CC=/usr/local/bin/gcc -g
 
 all:
 	$(CC) -c dcontainer.c
@@ -8,13 +9,14 @@ all:
 	$(CC) -c dstack.c
 	$(CC) -c dqueue.c
 	$(CC) -c dlist.c
-	ar rc libds.a dcontainer.o dpair.o dvector.o dstack.o dqueue.o dlist.o
+	$(CC) -c dmap.c
+	ar rc libds.a dcontainer.o dpair.o dvector.o dstack.o dqueue.o dlist.o dmap.o
 	ranlib libds.a
 
 test:
 	$(CC) -o test test.c libds.a
 
 clean:
-	rm -rf dcontainer.o dpair.o dvector.o dstack.o dqueue.o dlist.o test libds.a
+	rm -rf dcontainer.o dpair.o dvector.o dstack.o dqueue.o dlist.o dmap.o test libds.a
 
 .PHONY:	all clean test

@@ -15,6 +15,23 @@ typedef struct
 } vector_container_priv;
 
 
+inline alloc_data vector_ap_allocate( container *C, va_list ap )
+{
+    container	*N = C->clone(C);
+    alloc_data	x;
+
+    x.v.C = N;
+    x.ap = ap;
+
+    return x;
+}
+
+
+inline void vector_deallocate( container *C, value a )
+{
+    destroy(a.C);
+}
+
 
 void vector_destroy( container *C )
 {
@@ -75,6 +92,13 @@ inline int vector_size( container *C )
 }
 
 
+inline container* vector_clone( container *C )
+{
+    vector_container_priv	*LP = C->priv;
+    container			*N = LP->C->clone(LP->C);
+    return vector_container(N);
+}
+
 
 container* vector_container( container *C )
 {
@@ -82,9 +106,10 @@ container* vector_container( container *C )
     vector_container_priv	*VP = malloc(sizeof(vector_container_priv));
 
     V->compare = NULL;
-    V->ap_allocate = NULL;
-    V->deallocate = NULL;
+    V->ap_allocate = vector_ap_allocate;
+    V->deallocate = vector_deallocate;
     V->destroy = vector_destroy;
+    V->clone = vector_clone;
     V->priv = VP;
 
     VP->C = C;

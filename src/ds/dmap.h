@@ -1,5 +1,5 @@
 /**
- *	(C) Copyright 2006, Magnus Galåen
+ *	(C) Copyright 2006-2007, Magnus Galåen
  *
  *	dmap.h: Map-container.
  */
@@ -12,58 +12,36 @@
 #include "dcontainer.h"
 
 
-container* map_container( container *C );
+#define map_node(_var) ((_map_node_*)(_var).node)
 
-int map_size( container *Key, container *Value );
-value map_find( container *C, value key );
-void map_insert( container *C, ... );
+
+typedef struct _map_node_ _map_node_;
+typedef struct map_iterator map_iterator;
+
+struct _map_node_
+{
+    enum { Red, Black } color;
+    _map_node_		*parent, *left_child, *right_child;
+    value		key, val;
+};
+
+
+
+container* map_container( container *Key, container *Data );
+
+extern inline int map_size( container *C );
+
+extern inline iterator map_begin( container *C );
+extern inline iterator map_end( container *C );
+
+extern inline iterator map_next( const iterator old_it );
+extern inline iterator map_previous( const iterator old_it );
+
+extern inline iterator map_find( container *C, ... );
+extern inline iterator map_find_value( container *C, value key );
+
+extern inline void map_insert( container *C, ... );
+extern inline void map_insert_value( container *C, value key, value data );
 
 
 #endif	// _DMAP_H_
-
-/*
-#ifndef _C_MAP_H_
-#define _C_MAP_H_
-
-
-#include "c_container.h"
-#include "c_stack.h"
-
-typedef struct map_node map_node;
-typedef struct map_root map_root;
-typedef struct map_iterator map_iterator;
-
-struct map_node
-{
-    enum { Red, Black } color;
-    map_node		*parent, *left_child, *right_child;
-    data_c		key, data;
-};
-
-struct map_root
-{
-    map_node            *root;
-    int                 size;
-    container		*Ckey, *Cdata;
-};
-
-struct map_iterator
-{
-    map_node		*current;
-    stack		*status;
-};
-
-
-map_root* map_allocate( container *Ckey, container *Cdata );
-void map_deallocate( map_root *M );
-
-void map_insert( map_root *M, data_c key, data_c data );
-map_node* map_find( map_root *M, data_c key );
-
-map_iterator* map_it_allocate( map_root *M );
-void map_it_deallocate( map_iterator *it );
-void map_it_next( map_iterator *it );
-
-
-#endif	// _C_MAP_H_
-*/

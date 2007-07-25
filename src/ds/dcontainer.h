@@ -1,6 +1,6 @@
 
 /**
- *	(C) Copyright 2006, Magnus Galåen
+ *	(C) Copyright 2006-2007, Magnus Galåen
  *
  *	dcontainer.h: Basic containers.
  */
@@ -10,6 +10,7 @@
 
 
 #include <stdarg.h>
+#include <string.h>
 
 //#define ex(_type,_var) (*((_type##_value*)_var.ptr))
 
@@ -20,12 +21,16 @@
     Og compare.
 */
 
+typedef struct container container;
+typedef struct iterator iterator;
+
 typedef union
 {
     int		i;
     char	c;
     double	d;
     void	*ptr;
+    container	*C;
 } value;
 
 typedef struct alloc_data
@@ -34,7 +39,6 @@ typedef struct alloc_data
     va_list	ap;
 } alloc_data;
 
-typedef struct container container;
 
 struct container
 {
@@ -42,9 +46,16 @@ struct container
     alloc_data	(*ap_allocate)( container *C, va_list ap );
     void	(*deallocate)( container *C, value a );
     void	(*destroy)( container *C );
+    container*	(*clone)( container *C );
+    value	(*copy)( container *C, value a );
     void	*priv;
 };
 
+struct iterator
+{
+    void	*node;
+    int		valid;
+};
 
 /* fancy allocate: */
 
@@ -56,6 +67,13 @@ void deallocate( container *C, value v );
 
 void destroy( container *C );
 
+static inline value copy( container *C, value v )
+{
+    return C->copy( C, v );
+}
+
+//void destroy_iterator( iterator *it );
+
 
 /* int_container: */
 
@@ -65,8 +83,43 @@ container* int_container();
 
 container* string_container();
 
+container* ptr_container();
+
 /* custom_container: */
 
 //container* custom_container(int obj_size, int(*compare)(container*, value, value));
+
+
+static inline value int_value( int val )
+{
+    value	v;
+    v.i = val;
+    return v;
+}
+
+
+static inline value string_value( char *val )
+{
+    value	v;
+    v.ptr = strdup(val);
+    return v;
+}
+
+
+static inline value ptr_value( void *val )
+{
+    value	v;
+    v.ptr = val;
+    return v;
+}
+
+
+static inline value container_value( container *val )
+{
+    value	v;
+    v.C = val;
+    return v;
+}
+
 
 #endif	// _DCONTAINER_H_
