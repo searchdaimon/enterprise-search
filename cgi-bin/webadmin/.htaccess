@@ -1,0 +1,6 @@
+AuthName "Restricted Area"
+AuthUserFile /home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd 
+AuthGroupFile /dev/null
+AuthType Basic
+
+require user admin
