@@ -23,6 +23,10 @@ main (int argc, char *argv[]) {
 	char *acl_allow;
 	char *acl_deny;
 
+	char uncompresshtml[50000];
+	int uncompresshtmlLength;
+	int nerror;
+
 	if (argc < 3) {
 		printf("Error ingen lotnr spesifisert.\n\nEksempel på bruk for å lese lot 2:\n\trread 2 www\n");
 		exit(1);
@@ -38,15 +42,17 @@ main (int argc, char *argv[]) {
 
 
 	//loppergjenom alle
-// int rGetNext (unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],
-// int htmlbufferSize, char imagebuffer[], unsigned long int *radress,
-// unsigned int FilterTime, unsigned int FileOffset, char subname[]);
-
 	while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&radress,0,0,subname,&acl_allow,&acl_deny)) {
 
 		printf("DocId: %i url: %s res %hi htmls %hi time %lu\n",ReposetoryHeader.DocID,ReposetoryHeader.url,ReposetoryHeader.response,ReposetoryHeader.htmlSize,ReposetoryHeader.time);
+		uncompresshtmlLength = sizeof(uncompresshtml);
+		if ( (nerror = uncompress((Bytef*)uncompresshtml,(uLong *)&uncompresshtmlLength,(Bytef*)htmlbuffer,ReposetoryHeader.htmlSize)) != 0) {
+                	printf("uncompress error. Code: %i\n",nerror);
+                
+                        continue;
+                }
 
-		printf("################################\n%s##############################\n",htmlbuffer);
+		printf("################################\n%s##############################\n",uncompresshtml);
 
 	}
 	
