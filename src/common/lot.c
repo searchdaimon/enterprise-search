@@ -19,6 +19,8 @@
 struct OpenFilesFormat {
         short int LotNr;
         FILE *FILEHANDLER;
+	char subname[maxSubnameLength];
+	char type[5];
 };
 
 
@@ -215,11 +217,13 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
 
         //begynner med å søke cashen. Lopper til vi enten er ferdig, eller til vi har funne ønskede i cashen
 	i = 0;
-        while ((i < MaxOpenFiles) && (OpenFiles[i].LotNr != LotNr)) {
+        while ((i < MaxOpenFiles) && (OpenFiles[i].LotNr != LotNr) && (strcmp(OpenFiles[i].subname,subname) == 0)
+	&& (strcmp(OpenFiles[i].type,type)==0)
+	) {
                 i++;
         }
         //temp: skrur av søking her med i=0
-        //type er også lagt til uten at det tar hensyn til det i cashe arrayen
+        //type of og subname er også lagt til uten at det tar hensyn til det i cashe arrayen
         i = 0;
 
 
@@ -258,6 +262,8 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
                 }
 
 		OpenFiles[i].LotNr = LotNr;
+		strcpy(OpenFiles[i].subname,subname);
+		strcpy(OpenFiles[i].type,type);
 
 		#ifdef DEBUG
 			printf("lotOpenFile: tryint to obtain lock \"%c\"\n",lock);
