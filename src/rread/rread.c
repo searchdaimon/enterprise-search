@@ -20,7 +20,8 @@ main (int argc, char *argv[]) {
 
 	char htmlbuffer[524288];
 	char imagebuffer[524288];
-	char *acl;
+	char *acl_allow;
+	char *acl_deny;
 
 	if (argc < 3) {
 		printf("Error ingen lotnr spesifisert.\n\nEksempel på bruk for å lese lot 2:\n\trread 2 www\n");
@@ -41,7 +42,7 @@ main (int argc, char *argv[]) {
 // int htmlbufferSize, char imagebuffer[], unsigned long int *radress,
 // unsigned int FilterTime, unsigned int FileOffset, char subname[]);
 
-	while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&radress,0,0,subname,&acl)) {
+	while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&radress,0,0,subname,&acl_allow,&acl_deny)) {
 
 		printf("DocId: %i url: %s res %hi htmls %hi time %lu\n",ReposetoryHeader.DocID,ReposetoryHeader.url,ReposetoryHeader.response,ReposetoryHeader.htmlSize,ReposetoryHeader.time);
 
