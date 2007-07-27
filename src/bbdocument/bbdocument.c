@@ -600,7 +600,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
 			curdocp[0] = '\0';
 			/* We have a new file, let's get to work on it */
-			printf("########Got: %s: %s\n", ft, path);
+			//printf("########Got: %s: %s\n", ft, path);
 			{
 				char *docbuf;
 				char *convdocbuf;
@@ -627,13 +627,12 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 				if ((fp = fopen(path, "r")) == NULL) {
 					perror("fopen");
 					failed++;
-					failed++;
 					free(docbuf);
 					continue;
 				}
 				fread(docbuf, 1, docbufsize, fp);
 				fclose(fp);
-				//unlink(path);
+				unlink(path);
 				docbuf[docbufsize] = '\0';
 				convdocbufsize = 0;
 #if 0
