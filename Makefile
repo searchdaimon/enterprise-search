@@ -9,7 +9,7 @@ CFLAGS = -g
 
 # The dynamic libraries that the executable needs to be linked to
 # fjerner -ldb -static. Må legge dette til der de skal være
-LDFLAGS = -lm -lz -D_FILE_OFFSET_BITS=64 -O2
+LDFLAGS = -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL
 
 #pop rank bibloteket
 LIBS = src/common/
@@ -467,6 +467,12 @@ rread : src/rread/rread.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/rread/rread.c -o bin/rread $(LDFLAGS)
+
+rreadbb : src/rread/rread.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/rread/rread.c -o bin/rread $(LDFLAGS) -D BLACK_BOKS
 
 
 convertReposetoryCOMAND = $(CFLAGS) $(LIBS)*.c src/convertReposetory/main.c -o bin/convertReposetory $(LDFLAGS)

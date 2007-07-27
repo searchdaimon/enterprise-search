@@ -46,7 +46,7 @@ main (int argc, char *argv[]) {
 
 		printf("DocId: %i url: %s res %hi htmls %hi time %lu\n",ReposetoryHeader.DocID,ReposetoryHeader.url,ReposetoryHeader.response,ReposetoryHeader.htmlSize,ReposetoryHeader.time);
 
-		//printf("################################\n%s##############################\n",htmlbuffer);
+		printf("################################\n%s##############################\n",htmlbuffer);
 
 	}
 	
