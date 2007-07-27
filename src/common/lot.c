@@ -217,22 +217,23 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
 
         //begynner med å søke cashen. Lopper til vi enten er ferdig, eller til vi har funne ønskede i cashen
 	i = 0;
-        while ((i < MaxOpenFiles) && (OpenFiles[i].LotNr != LotNr) && (strcmp(OpenFiles[i].subname,subname) == 0)
-	&& (strcmp(OpenFiles[i].type,type)==0)
-	) {
+        while ((i < MaxOpenFiles) && (OpenFiles[i].LotNr != LotNr)) {
                 i++;
         }
         //temp: skrur av søking her med i=0
-        //type of og subname er også lagt til uten at det tar hensyn til det i cashe arrayen
+        //type of og subname er også lagt til uten at det tar hensyn til det i søket
         i = 0;
 
 
 
         //hvis vi fant i casehn returnerer vi den
-        if (OpenFiles[i].LotNr == LotNr) {
+        if (OpenFiles[i].LotNr == LotNr  
+		&& (strcmp(OpenFiles[i].subname,subname) == 0)
+        	&& (strcmp(OpenFiles[i].type,type)==0)
+	) {
                 return OpenFiles[i].FILEHANDLER;
         }
-        //hvis ikke opner vi og returnerer
+        //hvis ikke åpner vi og returnerer
         else {
 
 		//hvis dette er en open filhonterer, må vi lukke den
