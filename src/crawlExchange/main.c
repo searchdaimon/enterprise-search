@@ -120,7 +120,7 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 				free(mail.buf);
 				continue;
 			}
-			if (ci->timefilter > 0 && ci->timefilter >= crawldocumentExist.lastmodified) {
+			if (ci->timefilter > 0 && ci->timefilter > crawldocumentExist.lastmodified) {
 				printf("Have the same or newer version of %s\n", cur->str);
 			} else if ((ci->documentExist)(ci->collection, &crawldocumentExist)) {
 				// This document already exists
@@ -220,6 +220,7 @@ crawlfirst(struct collectionFormat *collection,
 	ci.documentAdd = documentAdd;
 	ci.documentError = documentError;
 	ci.collection = collection;
+	ci.timefilter = 0;
 	printf("crawlEXCHANGE: %s\n", collection->resource);
 
 	return crawlGo(&ci);
@@ -238,6 +239,7 @@ crawlupdate(struct collectionFormat *collection,
 	ci.documentAdd = documentAdd;
 	ci.documentError = documentError;
 	ci.collection = collection;
+	ci.timefilter = collection->lastCrawl;
 
 	printf("crawlEXCHANGE: %s\n", collection->resource);
 
