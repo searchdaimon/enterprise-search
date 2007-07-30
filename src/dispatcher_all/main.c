@@ -21,14 +21,14 @@
 
 #define DefultMaxsHits 20
     
-	#ifndef BLACK_BOKS
+#ifndef BLACK_BOKS
     #include <libconfig.h>
 
     #define cashedir "cashedir"
     #define prequerydir "prequerydir"
+#endif
 
     #define cfg_dispatcher "config/dispatcher.conf"
-	#endif
 
 #ifndef BLACK_BOKS
     #include "GeoIP.h"
@@ -639,24 +639,25 @@ int main(int argc, char *argv[])
 	int searchport = maincfg_get_int(&maincfg,"BSDPORT");
 
 	//config
+	config_setting_t *cfgarray;
+	struct config_t cfg;
+
+
+	/* Initialize the configuration */
+	config_init(&cfg);
+
+	/* Load the file */
+	#ifdef DEBUG
+		printf("loading [%s]..\n", bfile(cfg_dispatcher) );
+	#endif
+
+	if (!config_read_file(&cfg, bfile(cfg_dispatcher) )) {
+		printf("[%s]failed: %s at line %i\n",bfile(cfg_dispatcher),config_error_text(&cfg),config_error_line(&cfg));
+		exit(1);
+	}
+
+
   	#ifndef BLACK_BOKS
-		config_setting_t *cfgarray;
-		struct config_t cfg;
-
-
-	  	/* Initialize the configuration */
-	  	config_init(&cfg);
-
-	  	/* Load the file */
-		#ifdef DEBUG
-		  	printf("loading [%s]..\n", bfile(cfg_dispatcher) );
-		#endif
-
-	  	if (!config_read_file(&cfg, bfile(cfg_dispatcher) )) {
-	    		printf("[%s]failed: %s at line %i\n",bfile(cfg_dispatcher),config_error_text(&cfg),config_error_line(&cfg));
-			exit(1);
-		}
-
 	    	if ( (cfgarray = config_lookup(&cfg, "usecashe") ) == NULL) {
 			printf("can't load \"usecashe\" from config\n");
 			exit(1);
@@ -681,9 +682,11 @@ int main(int argc, char *argv[])
 	//////////////////
 	//for nå angir vi bare servere slik. Må skilles u i egen fil siden
 
+
 	int nrOfServers;
 	int nrOfPiServers;
 	int nrOfAddServers;
+
 
 	#ifdef BLACK_BOKS
 
@@ -707,6 +710,8 @@ int main(int argc, char *argv[])
 			printf("can't load \"servers\" from config\n");
 			exit(1);
 	  	}
+
+
 
 		nrOfServers = config_setting_length(cfgarray);
 
@@ -985,7 +990,51 @@ int main(int argc, char *argv[])
 			strscpy(QueryData.rankUrl, cgi_getentrystr("getrank"), sizeof(QueryData.rankUrl));
 		}
 
-	
+#ifdef DEBUG
+		gettimeofday(&start_time, NULL);
+#endif
+		char *remoteaddr = getenv("REMOTE_ADDR");
+		fprintf(stderr, "remote addr: %s\n", remoteaddr);
+
+		int accesshosts, hasaccess = 0;
+		if (remoteaddr != NULL &&
+		    (cfgarray = config_lookup(&cfg, "access")) != NULL && (accesshosts = config_setting_length(cfgarray)) > 0) {
+			for(i=0; i < accesshosts; i++) {
+				const char *p;
+				char *p2;
+
+				if (strcmp(remoteaddr, "127.0.0.1") == 0) {
+					hasaccess = 1;
+					break;
+				}
+				p = config_setting_get_string_elem(cfgarray, i);
+				p2 = strchr(p, ':');
+				if (p2 == NULL) {
+					fprintf(stderr, "Invalid string in config file: '%s'\n", p);
+					continue;
+				}
+				*p2 = '\0';
+				p2++;
+				fprintf(stderr, "%s %s\n", p, p2);
+				if (strcmp(p, remoteaddr) == 0) {
+					char *key;
+
+					if ((key = cgi_getentrystr("secret")) != NULL) {
+						fprintf(stderr, "'%s'\n", key);
+						if (strcmp(key, p2) == 0) {
+							hasaccess = 1;
+						}
+					}
+					break;
+				}
+			}
+		}
+		if (hasaccess == 0)
+			die(1, "Not allowed to handle request from that address");
+#ifdef DEBUG
+		gettimeofday(&end_time, NULL);
+		printf("Time debug: access %f\n",getTimeDifference(&start_time,&end_time));
+#endif
 
         }
 
