@@ -994,7 +994,6 @@ int main(int argc, char *argv[])
 		gettimeofday(&start_time, NULL);
 #endif
 		char *remoteaddr = getenv("REMOTE_ADDR");
-		fprintf(stderr, "remote addr: %s\n", remoteaddr);
 
 		int accesshosts, hasaccess = 0;
 		if (remoteaddr != NULL &&
@@ -1015,12 +1014,10 @@ int main(int argc, char *argv[])
 				}
 				*p2 = '\0';
 				p2++;
-				fprintf(stderr, "%s %s\n", p, p2);
 				if (strcmp(p, remoteaddr) == 0) {
 					char *key;
 
 					if ((key = cgi_getentrystr("secret")) != NULL) {
-						fprintf(stderr, "'%s'\n", key);
 						if (strcmp(key, p2) == 0) {
 							hasaccess = 1;
 						}
