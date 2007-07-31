@@ -146,6 +146,10 @@ sub sql_user_url_exists {
 sub sql_insert_user_url {
     my ($user, $url, $added, $indexed) = @_;
     $log->debug("inserting $user $url\n");
+    if (length $url > 254) {
+        $log->fatal("URL \"$url\"for user $user is too long to fit db field. Ignoring.");
+        return;
+    }
     my $url_id = sql_get_url_id($url)
         || sql_insert_url($url, $indexed);
 
