@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<users>
  <UserAccount id="32853">
   <sUser>"postmaster"</sUser>
   <sPassword>"000c98dce4d5f26a144586c34eafe666"</sPassword>
@@ -942,4 +941,52 @@
    <array-element>"216.153.232.207"</array-element>
   </setProps>
  </UserAccount>
-</users>
+ <UserAccount id="252668">
+  <sUser>"168zai"</sUser>
+  <sPassword>"1435a34531468b4af14d39a1c4c1fdab"</sPassword>
+  <sRealname>"168"</sRealname>
+  <sSecretQuestion>"我的真名是？"</sSecretQuestion>
+  <sSecretAnswer>"77968a41c3ee9487abe95dcd24bfb92a"</sSecretAnswer>
+  <iAutoLogin>0</iAutoLogin>
+  <iMaxAlerts>0</iMaxAlerts>
+  <nCreateDate>1161570352</nCreateDate>
+  <nLastLoginDate>1161570352</nLastLoginDate>
+  <nStatus>0</nStatus>
+  <iType>0</iType>
+  <nTrialExpireDate>0</nTrialExpireDate>
+  <setApplications>
+   <array-element>"/exact/account/free"</array-element>
+  </setApplications>
+  <setProps>
+   <array-element>""</array-element>
+   <array-element>"11312221@163.com"</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>"1161570414"</array-element>
+   <array-element>"218.18.222.29"</array-element>
+  </setProps>
+ </UserAccount>
+ 

@@ -79,8 +79,18 @@ sub main {
             if ($line =~ /^\s+<\/UserAccount/) {
                 $record_open = 0;
                 push @record, $line;
-                add_user_record(
-                    %{ XMLin(join q{}, @record) });
+
+                my %userdata;
+                eval {
+                    %userdata = %{ XMLin(join q{}, @record)  };
+                };
+                if ($@) {
+                    $log->error("Unable to parse user record, error: ", $@, 
+                        " Data: ", join(q{}, @record));
+                    next;
+                }
+                add_user_record(%userdata);
+                next;
             }
        
             push @record, $line;
