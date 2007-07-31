@@ -7,11 +7,10 @@ use warnings;
 use Carp;
 use Data::Dumper;
 use YAML;
-use XML::Parser::PerlSAX;
-use Jayde::UrlImport::Handler;
 use Log::Log4perl;
 use Readonly;
 use Date::Format;
+use XML::Simple;
 
 BEGIN {
     push @INC, $ENV{BOITHOHOME} . "/Modules";
@@ -19,10 +18,11 @@ BEGIN {
 use SD::Sql::ConnSimple qw(sql_setup get_dbh sql_exec);
 
 Readonly::Scalar my $DB_NAME => "boithoweb";
+Readonly::Scalar my $STRIP_QUOTATIONS => 1;
     
 # init log
 Log::Log4perl::init('log4perl.conf');
-my $log = Log::Log4perl->get_logger('jayde.urlimport');
+my $log = Log::Log4perl->get_logger('jayde.import.url');
 
 my $dbh;
 
@@ -45,9 +45,28 @@ sub main {
 
     # parse contents to db.
     foreach my $file (@files) {
-        my $handler = Jayde::UrlImport::Handler->new($file, \&url_record);
-        my $parser = XML::Parser::PerlSAX->new(Handler => $handler);
-        $parser->parse(Source => {SystemId => $file});
+        open my $fh, "<", $file
+            or die "unable to open $file, ", $!;
+       
+        my @record;
+        my $record_open = 0;
+        while (my $line = <$fh>) {
+
+            if ($line =~ /^\s*<UserUrl/) {
+                $log->debug("new url");
+                $record_open = 1;
+                undef @record;
+
+            }
+            if ($line =~ /^\s*<\/UserUrl/) {
+                $log->debug("url done");
+                $record_open = 0;
+                push @record, $line;
+                url_record(%{ XMLin(join q{}, @record) });
+                next;
+            }
+            push @record, $line;
+        }
     }
 
     $log->info("Done parsing ", scalar @files, " documents.");
@@ -60,19 +79,23 @@ sub show_usage {
 
 
 sub url_record {
-    my ($document, %data) = @_;
+    my %data = @_;
     $log->info("Got url ", $data{sUrl}, " for user ", $data{sUser});
 
-    eval {
-        sql_insert_user_url($data{sUser}, $data{sUrl}, 
-        time2str("%Y-%m-%d %H-%M-%S", $data{datecreated}),
-        time2str("%Y-%m-%d", $data{datemodified}));
-        
-    };
-
-    if ($@) {
-        $log->warn($@);
+    if ($STRIP_QUOTATIONS) {
+        $data{sUser} =~ s/^"//;
+        $data{sUser} =~ s/"$//;
+        $data{sUrl}  =~ s/^"//;
+        $data{sUrl}  =~ s/"$//;
     }
+
+    my $indexed = !$data{datemodified} ? 0
+        : time2str("%Y-%m-%d %H-%M-%S", $data{datemodified});
+
+    sql_insert_user_url($data{sUser}, $data{sUrl}, 
+            time2str("%Y-%m-%d %H-%M-%S", $data{datecreated}),
+            $indexed);
+        
 }
 
 
@@ -105,16 +128,39 @@ sub sql_get_url_id {
     return $id;
 }
 
+sub sql_user_url_exists {
+    my ($user, $url) = @_;
+
+    my $query = "SELECT bruker_navn FROM submission_userurl
+        WHERE bruker_navn = ? and url = ?";
+    my $sth = sql_exec($dbh, $query, $user, $url);
+    my ($result) = $sth->fetchrow;
+
+   return $result ? 1 : 0; 
+}
+
 
 sub sql_insert_user_url {
     my ($user, $url, $added, $indexed) = @_;
+    $log->debug("inserting $user $url\n");
     my $url_id = sql_get_url_id($url)
         || sql_insert_url($url, $indexed);
 
+    if (sql_user_url_exists($user, $url_id)) {
+        $log->warn("User url $url for $user exists. Ignoring");
+        return;
+    }
+
+    $log->debug("adding user $user url $url\n");
     my $query = "INSERT INTO submission_userurl (bruker_navn, url, added)
         VALUES(?, ?, ?)";
 
-    my $sth = sql_exec($dbh, $query, $user, $url_id, $added);
+    eval {
+        sql_exec($dbh, $query, $user, $url_id, $added);
+    };
+    if ($@) {
+        $log->warn($@);
+    }
 }
 
 

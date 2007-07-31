@@ -1,15 +1,10 @@
-##
-# Tool for importing jayde userdb to searchdaimon's userdb.
-# dvj, 2007
-#
-# Usage: ./jayde_user_import.pl file1.xml [file2.xml ...]
+#!/usr/bin/env perl
 use strict;
 use warnings;
+use XML::Simple;
 use Carp;
 use Data::Dumper;
 use YAML;
-use XML::Parser::PerlSAX;
-use Jayde::UserImport::Handler;
 use Log::Log4perl;
 use Readonly;
 use Date::Format;
@@ -19,8 +14,9 @@ BEGIN {
 }
 use SD::Sql::ConnSimple qw(sql_setup get_dbh sql_exec);
 
+Readonly::Scalar my $STRIP_QUOTATIONS => 1;
 Readonly::Scalar my $DB_NAME => "boithoweb";
-    
+Readonly::Array my @RAND_CHRS => ('a'..'z', 0..9, 'A'..'Z');
 Readonly::Hash my %DB_LAYOUT => (
         sUser =>  'bruker_navn',
         sPassword => 'passord',
@@ -46,7 +42,7 @@ Readonly::Hash my %IGNORED_ELEMENTS => (
 
 # init log
 Log::Log4perl::init('log4perl.conf');
-my $log = Log::Log4perl->get_logger('jayde.userimport');
+my $log = Log::Log4perl->get_logger('jayde.import.user');
 
 my $dbh;
 
@@ -69,12 +65,38 @@ sub main {
 
     # parse contents to db.
     foreach my $file (@files) {
-        my $handler = Jayde::UserImport::Handler->new($file, \&add_user_record, \&handler_log);
-        my $parser = XML::Parser::PerlSAX->new(Handler => $handler);
-        $parser->parse(Source => {SystemId => $file});
+        my $record_open;
+        
+        open my $fh, "<", $file
+            or die "unable to open file $file, ", $!;
+        
+        my @record;
+        while (my $line = <$fh>) {
+            if ($line =~ /^\s+<UserAccount/) {
+                $record_open = 1;
+                undef @record;
+            }
+            if ($line =~ /^\s+<\/UserAccount/) {
+                $record_open = 0;
+                push @record, $line;
+                add_user_record(
+                    %{ XMLin(join q{}, @record) });
+            }
+       
+            push @record, $line;
+        }
     }
 
     $log->info("Done parsing ", scalar @files, " documents.");
+    1;
+}
+
+sub strip_quotations {
+    my $str = shift;
+    return $str unless $str;
+    $str =~ s/^"//;
+    $str =~ s/"$//;
+    return $str;
     1;
 }
 
@@ -82,25 +104,21 @@ sub show_usage {
     die "Usage: jayde_user_import.pl file1.xml [file2.xml ...]\n";
 }
 
-##
-# Logger for SAX handler.
-# Handles log-events by passing them onto log4perl.
-sub handler_log {
-    my ($level, @msg) = @_;
-    my $log = Log::Log4perl->get_logger('jayde.userimport.handler');
-    $log->$level(@msg);
-}
-
-##
-# User record hook for SAX handler.
 # Adds user record to DB.
 sub add_user_record {
-    my ($document, %user_data) = @_;
+    my %user_data = @_;
+    #$log->debug(Dumper(\%user_data));
     $log->info("Got user record for user ", $user_data{sUser});
+
+    if (!$user_data{sUser}) {
+        $log->fatal("Got a record without username.", "User data: ", Dumper(\%user_data));
+    }
+
 
     # Transform data to suit our db-setup.
     my %transformed; 
     while (my ($key, $value) = each %user_data) {
+
         unless (defined $DB_LAYOUT{$key}) {
             next if $IGNORED_ELEMENTS{$key};
             $log->warn("Ignoring unknown element $key.");
@@ -109,6 +127,15 @@ sub add_user_record {
 
         my $new_key = $DB_LAYOUT{$key};
         if ($key eq "setProps") {
+            next unless ref $value eq 'HASH';
+            next unless $value->{'array-element'};
+
+            $value = $value->{'array-element'};
+            if ($STRIP_QUOTATIONS) {
+                for my $i (0..scalar @{$value}) {
+                    $value->[$i] = strip_quotations($value->[$i]);
+                }
+            }
             my %data = (
                     account_notes => $value->[0],
                     company_name  => $value->[2],
@@ -132,10 +159,31 @@ sub add_user_record {
         }
 
         else {
-            $transformed{$new_key} = (ref $value) ? Dump($value) : $value;
+
+            if (ref $value) {
+                $transformed{$new_key} = Dump($value);
+            }
+            else {
+                $value = strip_quotations($value)
+                    if $STRIP_QUOTATIONS;
+                $transformed{$new_key} = $value;
+            }
         }
     }
+
+    # User also needs confirm and ban code.
+    $transformed{ban_code} = rand_str(6);
+    $transformed{confirm_code} = rand_str(6);
+
+    #$log->debug(Dumper(\%transformed));
     add_to_db(%transformed);
+}
+
+sub rand_str {
+    my $len = shift;
+    my $rand_str;
+    $rand_str .= @RAND_CHRS[rand @RAND_CHRS] for 1..$len;
+    return $rand_str;
 }
 
 
