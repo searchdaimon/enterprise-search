@@ -90,7 +90,7 @@ sub url_record {
     }
 
     $data{sUrl} = "http://" . $data{sUrl}
-        unless $data{sUrl} =~ /^http:\/\//;
+        unless $data{sUrl} =~ /^(http:\/\/|https:\/\/)/;
 
     my $indexed = !$data{datemodified} ? 0
         : time2str("%Y-%m-%d %H-%M-%S", $data{datemodified});
