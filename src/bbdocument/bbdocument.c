@@ -654,7 +654,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 					curdocp = *documentfinishedbuf + (curdocp - oldptr);
 					documentfinishedbuftmp = *documentfinishedbuf;
 				}
-				if (bbdocument_convert(ft, docbuf, docbufsize, &convdocbuf, &convdocbufsize, "directorycontent") == 0) {
+				if (bbdocument_convert(ft, docbuf, docbufsize, &convdocbuf, &convdocbufsize, "") == 0) {
 					fprintf(stderr, "Failed on bbdocument_convert.\n");
 					failed++;
 					free(docbuf);
