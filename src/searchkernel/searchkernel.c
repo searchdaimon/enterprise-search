@@ -1055,7 +1055,23 @@ temp: 25 des 2006
 	//printf("******************************\nfreeing htmlBuffer\n******************************\n");
 	free(htmlBuffer);
 
+
+	#ifdef WITH_THREAD
+	//må man kelle denne?
+	pthread_exit(NULL);
+	#endif
+
 	//return 1;
+}
+
+int sider_allrank_sort (const void *p1, const void *p2) {
+	
+	if (((struct SiderFormat *)p1)->iindex.allrank > ((struct SiderFormat *)p2)->iindex.allrank) {
+		 return -1;
+	}
+	else {
+		return (((struct SiderFormat *)p1)->iindex.allrank < ((struct SiderFormat *)p2)->iindex.allrank);
+	}
 }
 
 int dosearch(char query[], int queryLen, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
@@ -1293,7 +1309,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	//start som thread that can get the pages
 	for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
-		//pthread_create(&chld_thr, NULL, do_chld, (void *) newsockfd);
+
 		ret = pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults);		
 	}
 	#endif
@@ -1385,6 +1401,13 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		cmc_close(PagesResults.cmcsocketha);
 	#endif
 
+	/*
+	en siste sortering er nødvendig da sidene kan være i usortert rekkefølgde. Dette skjer da 
+	side nr ut til trådene sekvensielt, men det kan være at de så leser arrayen i annen rekkefølge. 
+	Eller at den siden ikke skal være med lengere (ble slettet)
+	*/
+	qsort(Sider,PagesResults.showabal,sizeof(struct SiderFormat),sider_allrank_sort);
+
 
 	(*SiderHeder).showabal = PagesResults.showabal;
 
@@ -1472,9 +1495,9 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	printf("Time\n");
 	//printf("\tAthorSearch %f\n",(*SiderHeder).queryTime.AthorSearch);
 	printf("\t%-40s %f\n","AthorSearch",(*SiderHeder).queryTime.AthorSearch);
-	printf("\t%-40s %f\n","AthorRank",(*SiderHeder).queryTime.AthorRank);
+	//printf("\t%-40s %f\n","AthorRank",(*SiderHeder).queryTime.AthorRank);
 	printf("\t%-40s %f\n","MainSearch",(*SiderHeder).queryTime.MainSearch);
-	printf("\t%-40s %f\n","MainRank",(*SiderHeder).queryTime.MainRank);
+	//printf("\t%-40s %f\n","MainRank",(*SiderHeder).queryTime.MainRank);
 	printf("\t%-40s %f\n","MainAthorMerge",(*SiderHeder).queryTime.MainAthorMerge);
 	printf("\n");
 	printf("\t%-40s %f\n","popRank",(*SiderHeder).queryTime.popRank);
@@ -1593,6 +1616,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	PagesResults.memfiltered	= 0;	
 	PagesResults.getRank		= 1;
 
+	unsigned short DomainID;
 
          (*SiderHeder).filtersTraped.cantDIRead = 0;
          (*SiderHeder).filtersTraped.getingDomainID = 0;
@@ -1858,13 +1882,46 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		int ranksum = 0;
 
 		for (i = 0; i < SiderHeder->TotaltTreff; i++) {
+			/***************************************************************
+			Tror vi hånterer iltrering feil nå
+			***************************************************************/
+			/*
+			runarb: ikke baser deg på PagesResults.Sider da den maxs vil være 10 sider lang
 			if (PagesResults.TeffArray->iindex[i].allrank >= *ranking) {
-				/* XXX */
+				// XXX 
 				if (PagesResults.Sider[i].deletet == 0 && strlen(PagesResults.Sider[i].DocumentIndex.Url) > 0) {
 					//printf("Page: %d <<%s>>\n", PagesResults.TeffArray->iindex[i].allrank, PagesResults.Sider[i].DocumentIndex.Url);
 					ranksum++;
 				}
 			}
+			*/
+
+			printf("adult %u: %i\n",PagesResults.TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray(PagesResults.TeffArray->iindex[i].DocID));
+			if ((PagesResults.filterOn) && (filterAdultWeight_bool(adultWeightForDocIDMemArray(PagesResults.TeffArray->iindex[i].DocID),PagesResults.adultpages,PagesResults.noadultpages) == 1)) {
+				//#ifdef DEBUG
+				printf("%u is adult whith %i\n",PagesResults.TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray(PagesResults.TeffArray->iindex[i].DocID));
+				//#endif
+			}
+
+			//slår opp DomainID
+			if (!iintegerMemArrayGet (PagesResults.DomainIDs,&DomainID,sizeof(DomainID),PagesResults.TeffArray->iindex[i].DocID) ) {
+				#ifdef DEBUG
+				printf("can't lookup DomainID\n");
+				#endif
+
+				continue;
+
+			}
+
+			//legg DomaindID inn i en hash. Hvis vi har hat mer en 2 sider fra samme DomainID fra før, så skal denne ikke telles med
+
+
+			//øk til slut rank simen
+			ranksum++;
+
+			/***************************************************************/
+
+
 		}
 		printf("Position: %d\n", ranksum);
 		*ranking = ranksum;
@@ -1924,10 +1981,10 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	printf("Time\n");
 	//printf("\tAthorSearch %f\n",(*SiderHeder).queryTime.AthorSearch);
 	printf("\t%-40s %f\n","AthorSearch",(*SiderHeder).queryTime.AthorSearch);
-	printf("\t%-40s %f\n","AthorRank",(*SiderHeder).queryTime.AthorRank);
+	//printf("\t%-40s %f\n","AthorRank",(*SiderHeder).queryTime.AthorRank);
 	printf("\t%-40s %f\n","UrlSearch",(*SiderHeder).queryTime.UrlSearch);
 	printf("\t%-40s %f\n","MainSearch",(*SiderHeder).queryTime.MainSearch);
-	printf("\t%-40s %f\n","MainRank",(*SiderHeder).queryTime.MainRank);
+	//printf("\t%-40s %f\n","MainRank",(*SiderHeder).queryTime.MainRank);
 	printf("\t%-40s %f\n","MainAthorMerge",(*SiderHeder).queryTime.MainAthorMerge);
 	printf("\n");
 	printf("\t%-40s %f\n","popRank",(*SiderHeder).queryTime.popRank);

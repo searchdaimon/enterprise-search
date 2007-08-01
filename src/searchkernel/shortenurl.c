@@ -19,7 +19,8 @@ void shortenurl(char *url,int urllen) {
 
 	//tar bort http:// først
 	if (strncmp(url,"http://",7) == 0) {
-		strcpy(url,url +7);
+		//strcpy(url,url +7);
+		memmove(url, url +7, len);
 	}
 
 	//tar bort / sist
