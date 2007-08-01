@@ -7,7 +7,7 @@
 ###################################################################
 
 if ($#ARGV < 0) {
-	print "usage: perl perl/makemaplist.pl directory [ directory ]";
+	die "usage: perl perl/makemaplist.pl directory [ directory ]";
 }
 
 for my $i (0 .. $#ARGV) {
