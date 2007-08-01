@@ -206,12 +206,12 @@ inline void list_insert( container *C, const iterator it, ... )
 	}
     else
 	{
-	    _list_node_		*previous = list_node(it)->previous;
+	    _list_node_		*previous = ((_list_node_*)it.node)->previous;
 
 	    if (previous!=NULL) previous->next = m;
 	    m->previous = previous;
 	    m->next = it.node;
-	    list_node(it)->previous = m;
+	    ((_list_node_*)it.node)->previous = m;
 	}
 
     va_start(ap, it);
@@ -228,24 +228,25 @@ inline void list_erase( container *C, const iterator it )
 {
     list_container_priv	*LP = C->priv;
 
-    if (list_node(it)->previous==NULL)
+    if (((_list_node_*)it.node)->previous==NULL)
 	{
-	    LP->head = list_node(it)->next;
+	    LP->head = ((_list_node_*)it.node)->next;
 	}
     else
 	{
-	    list_node(it)->previous->next = list_node(it)->next;
+	    ((_list_node_*)it.node)->previous->next = ((_list_node_*)it.node)->next;
 	}
 
-    if (list_node(it)->next==NULL)
+    if (((_list_node_*)it.node)->next==NULL)
 	{
-	    LP->tail = list_node(it)->previous;
+	    LP->tail = ((_list_node_*)it.node)->previous;
 	}
     else
 	{
-	    list_node(it)->next->previous = list_node(it)->previous;
+	    ((_list_node_*)it.node)->next->previous = ((_list_node_*)it.node)->previous;
 	}
 
+    free(it.node);
     LP->size--;
 }
 
@@ -275,7 +276,7 @@ inline iterator list_next( const iterator old_it )
 {
     iterator	it;
 
-    it.node = list_node(old_it)->next;
+    it.node = ((_list_node_*)old_it.node)->next;
     if (it.node == NULL) it.valid = 0;
     else it.valid = 1;
 
@@ -287,7 +288,7 @@ inline iterator list_previous( const iterator old_it )
 {
     iterator	it;
 
-    it.node = list_node(old_it)->previous;
+    it.node = ((_list_node_*)old_it.node)->previous;
     if (it.node == NULL) it.valid = 0;
     else it.valid = 1;
 

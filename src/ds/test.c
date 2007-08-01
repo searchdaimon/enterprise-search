@@ -17,14 +17,14 @@ void list_in_list_test()
     container	*LL;
 
     list_pushback(L);
-    LL = list_node(list_end(L))->val.C;
+    LL = list_val(list_end(L)).C;
     list_pushback(LL, 1);
     list_pushback(LL, 2);
     list_pushback(LL, 3);
     list_pushback(LL, 4);
 
     list_pushback(L);
-    LL = list_node(list_end(L))->val.C;
+    LL = list_val(list_end(L)).C;
     list_pushback(LL, 5);
     list_pushback(LL, 6);
     list_pushback(LL, 7);
@@ -33,9 +33,9 @@ void list_in_list_test()
     it1 = list_begin(L);
     for (; it1.valid; it1=list_next(it1))
 	{
-	    it2 = list_begin(list_node(it1)->val.C);
+	    it2 = list_begin(list_val(it1).C);
 	    for (; it2.valid; it2=list_next(it2))
-		printf("%i ", list_node(it2)->val.i);
+		printf("%i ", list_val(it2).i);
 	    printf("\n");
 	}
 
@@ -49,14 +49,14 @@ void map_in_list_test()
     container	*M;
 
     list_pushback(L);
-    M = list_node(list_end(L))->val.C;
+    M = list_val(list_end(L)).C;
     map_insert(M, 4, "bra");
     map_insert(M, 1, "abra");
     map_insert(M, 3, "da");
     map_insert(M, 2, "ka");
 
     list_pushback(L);
-    M = list_node(list_end(L))->val.C;
+    M = list_val(list_end(L)).C;
     map_insert(M, 6, "pokus");
     map_insert(M, 7, "filiokus");
     map_insert(M, 5, "hokus");
@@ -65,9 +65,9 @@ void map_in_list_test()
     it1 = list_begin(L);
     for (; it1.valid; it1=list_next(it1))
 	{
-	    it2 = map_begin(list_node(it1)->val.C);
+	    it2 = map_begin(list_val(it1).C);
 	    for (; it2.valid; it2=map_next(it2))
-		printf("%i ", map_node(it2)->key.i);
+		printf("%i ", map_key(it2).i);
 	    printf("\n");
 	}
 
@@ -145,9 +145,9 @@ void list_in_map_test()
     iterator	mit = map_begin(M);
     for (; mit.valid; mit=map_next(mit))
 	{
-	    iterator	it = list_begin(map_node(mit)->val.C);
+	    iterator	it = list_begin(map_val(mit).C);
 	    for (; it.valid; it=list_next(it))
-		printf("%s ", (char*)list_node(it)->val.ptr);
+		printf("%s ", (char*)list_val(it).ptr);
 	    printf("\n");
 	}
 
@@ -179,7 +179,7 @@ int main()
     iterator	mit = map_begin(M);
     for (; mit.valid; mit=map_next(mit))
 	{
-	    printf("%i: %s\n", map_node(mit)->key.i, (char*)map_node(mit)->val.ptr);
+	    printf("%i: %s\n", map_key(mit).i, (char*)map_val(mit).ptr);
 	}
 
     printf("---\n");
@@ -187,7 +187,7 @@ int main()
     mit = map_end(M);
     for (; mit.valid; mit=map_previous(mit))
 	{
-	    printf("%i: %s\n", map_node(mit)->key.i, (char*)map_node(mit)->val.ptr);
+	    printf("%i: %s\n", map_key(mit).i, (char*)map_val(mit).ptr);
 	}
 
     printf("---\n");
@@ -196,13 +196,13 @@ int main()
     w.i = 5;
     mit = map_find_value(M, w);
     if (mit.valid)
-        printf("%i: %s\n", map_node(mit)->key.i, (char*)map_node(mit)->val.ptr);
+        printf("%i: %s\n", map_key(mit).i, (char*)map_val(mit).ptr);
     else
 	printf("not found\n");
 
     mit = map_find(M, 3);
     if (mit.valid)
-        printf("%i: %s\n", map_node(mit)->key.i, (char*)map_node(mit)->val.ptr);
+        printf("%i: %s\n", map_key(mit).i, (char*)map_val(mit).ptr);
     else
 	printf("not found\n");
 
@@ -227,14 +227,14 @@ int main()
     for (del=0; it.valid; del++)
 	{
 	    iterator	gammel_it = it;
-	    printf("%i ", list_node(it)->val.i);
+	    printf("%i ", list_val(it).i);
 	    it = list_next(it);
 	    if (del&1) list_erase(L, gammel_it);
 	}
     printf(" |  ");
     for (it=list_end(L); it.valid; it = list_previous(it))
 	{
-	    printf("%i ", list_node(it)->val.i);
+	    printf("%i ", list_val(it).i);
 	}
     printf("\n");
 

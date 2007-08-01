@@ -227,9 +227,9 @@ inline iterator map_next( const iterator old_it )
 		{
 		    case 0:
 			s = 1;
-			if (map_node(it)->left_child != NULL)
+			if (((_map_node_*)it.node)->left_child != NULL)
 			    {
-				it.node = map_node(it)->left_child;
+				it.node = ((_map_node_*)it.node)->left_child;
 				s = 0;
 			    }
 			break;
@@ -238,19 +238,19 @@ inline iterator map_next( const iterator old_it )
 			return it;
 		    case 2:
 			s = 3;
-			if (map_node(it)->right_child != NULL)
+			if (((_map_node_*)it.node)->right_child != NULL)
 			    {
-				it.node = map_node(it)->right_child;
+				it.node = ((_map_node_*)it.node)->right_child;
 				s = 0;
 			    }
 			break;
 		    default:
-			if (map_node(it)->parent != NULL && it.node == map_node(it)->parent->left_child)
+			if (((_map_node_*)it.node)->parent != NULL && it.node == ((_map_node_*)it.node)->parent->left_child)
 			    s = 1;
-			else // if (map_node(it)->parent != NULL && it.node == map_node(it)->parent->right_child)
+			else // if (((_map_node_*)it.node)->parent != NULL && it.node == ((_map_node_*)it.node)->parent->right_child)
 			    s = 3;
 
-			it.node = map_node(it)->parent;
+			it.node = ((_map_node_*)it.node)->parent;
 		}
 	}
 
@@ -272,9 +272,9 @@ inline iterator map_previous( const iterator old_it )
 		{
 		    case 0:
 			s = 1;
-			if (map_node(it)->right_child != NULL)
+			if (((_map_node_*)it.node)->right_child != NULL)
 			    {
-				it.node = map_node(it)->right_child;
+				it.node = ((_map_node_*)it.node)->right_child;
 				s = 0;
 			    }
 			break;
@@ -283,19 +283,19 @@ inline iterator map_previous( const iterator old_it )
 			return it;
 		    case 2:
 			s = 3;
-			if (map_node(it)->left_child != NULL)
+			if (((_map_node_*)it.node)->left_child != NULL)
 			    {
-				it.node = map_node(it)->left_child;
+				it.node = ((_map_node_*)it.node)->left_child;
 				s = 0;
 			    }
 			break;
 		    default:
-			if (map_node(it)->parent != NULL && it.node == map_node(it)->parent->right_child)
+			if (((_map_node_*)it.node)->parent != NULL && it.node == ((_map_node_*)it.node)->parent->right_child)
 			    s = 1;
-			else // if (map_node(it)->parent != NULL && it.node == map_node(it)->parent->left_child)
+			else // if (((_map_node_*)it.node)->parent != NULL && it.node == ((_map_node_*)it.node)->parent->left_child)
 			    s = 3;
 
-			it.node = map_node(it)->parent;
+			it.node = ((_map_node_*)it.node)->parent;
 		}
 	}
 
@@ -317,8 +317,8 @@ inline iterator map_begin( container *C )
 	}
 
     it.node = MP->root;
-    while (map_node(it)->left_child != NULL)
-	it.node = map_node(it)->left_child;;
+    while (((_map_node_*)it.node)->left_child != NULL)
+	it.node = ((_map_node_*)it.node)->left_child;;
     it.valid = 1;
 
     return it;
@@ -338,8 +338,8 @@ inline iterator map_end( container *C )
 	}
 
     it.node = MP->root;
-    while (map_node(it)->right_child != NULL)
-	it.node = map_node(it)->right_child;
+    while (((_map_node_*)it.node)->right_child != NULL)
+	it.node = ((_map_node_*)it.node)->right_child;
     it.valid = 1;
 
     return it;
@@ -355,7 +355,7 @@ inline iterator map_find_value( container *C, value key )
 
     while (it.node!=NULL)
 	{
-	    int		cmp = MP->Key->compare(MP->Key, map_node(it)->key, key);
+	    int		cmp = MP->Key->compare(MP->Key, ((_map_node_*)it.node)->key, key);
 
 	    if (cmp==0)
 		{
@@ -364,11 +364,11 @@ inline iterator map_find_value( container *C, value key )
 		}
 	    if (cmp>0)
 		{
-    		    it.node = map_node(it)->left_child;
+    		    it.node = ((_map_node_*)it.node)->left_child;
 		}
 	    else
 		{
-		    it.node = map_node(it)->right_child;
+		    it.node = ((_map_node_*)it.node)->right_child;
 		}
 	}
 

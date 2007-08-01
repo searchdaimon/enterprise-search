@@ -12,7 +12,7 @@
 #include "dcontainer.h"
 
 
-#define list_node(_var) ((_list_node_*)(_var).node)
+#define list_val(_var) (((_list_node_*)(_var).node)->val)
 
 
 /*

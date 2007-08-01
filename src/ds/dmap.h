@@ -12,7 +12,8 @@
 #include "dcontainer.h"
 
 
-#define map_node(_var) ((_map_node_*)(_var).node)
+#define map_val(_var) (((_map_node_*)(_var).node)->val)
+#define map_key(_var) (((_map_node_*)(_var).node)->key)
 
 
 typedef struct _map_node_ _map_node_;

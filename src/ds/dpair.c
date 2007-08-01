@@ -98,6 +98,7 @@ container* pair_container( container *A, container *B )
     C->ap_allocate = pair_ap_allocate;
     C->deallocate = pair_deallocate;
     C->destroy = pair_destroy;
+    C->clone = pair_clone;
     C->priv = (void*)malloc(sizeof(pair_container_priv));
     ((pair_container_priv*)C->priv)->A = A;
     ((pair_container_priv*)C->priv)->B = B;
