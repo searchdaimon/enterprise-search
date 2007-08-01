@@ -461,6 +461,8 @@ int cm_start(struct hashtable **h) {
 
 	}
 
+	closedir(dirp);
+
 	printf("cm_start end\n");
 
 
