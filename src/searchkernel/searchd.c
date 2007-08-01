@@ -75,6 +75,7 @@ int main(int argc, char *argv[])
 
 
 	int 	sockfd;
+	int runCount;
 	//int newsockfd;
 	socklen_t clilen;
 	struct sockaddr_in cli_addr, serv_addr;
@@ -86,10 +87,12 @@ int main(int argc, char *argv[])
 
         int searchport = 0;
 	int optLog = 0;
+	int optMax = 0;
+	
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"lp:"))!=-1) {
+        while ((c=getopt(argc,argv,"lp:m:"))!=-1) {
                 switch (c) {
                         case 'p':
                                 searchport = atoi(optarg);
@@ -97,6 +100,9 @@ int main(int argc, char *argv[])
                                 break;
                         case 'l':
 				optLog = 1;
+                                break;
+                        case 'm':
+				optMax = atoi(optarg);
                                 break;
 
 			default:
@@ -154,6 +160,8 @@ int main(int argc, char *argv[])
 	}
 
 	searchd_config. cmc_port = maincfg_get_int(&maincfg,"CMDPORT");
+
+	maincfgclose(&maincfg);
 
 	/***********************************************************************************/
 	//prøver å få fil lock. Bare en deamon kan kjøre avgangen
@@ -271,28 +279,55 @@ int main(int argc, char *argv[])
 
 	listen(sockfd, 5);
 
+	runCount = 0;
+
+	signal(SIGCLD, SIG_IGN);  /* now I don't have to wait() for forked children! */
+
 	for(;;)
 	{
 		clilen = sizeof(cli_addr);
 		searchd_config.newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
 
 		if(searchd_config.newsockfd < 0) {
-			//fprintf(stderr,"server: a
 
-/***************************************/
-			//fprintf(stderr,"server: accept error\n"), exit(0);
 			fprintf(stderr,"server: accept error\n");
 		}
 		else {
-
+			/*
 			#ifdef WITH_THREAD
-			/* create a new thread to process the incomming request */
+			 	//create a new thread to process the incomming request
 				//thr_create(NULL, 0, do_chld, (void *) searchd_config, THR_DETACHED, &chld_thr);
 				pthread_create(&chld_thr, NULL, do_chld, (void *) &searchd_config);
-				/* the server is now free to accept another socket request */
+				//the server is now free to accept another socket request
 			#else
 				do_chld((void *) &searchd_config);	
 			#endif
+			*/
+			if (fork() == 0) { // this is the child process
+
+				close(sockfd); // child doesn't need the listener
+	
+				do_chld((void *) &searchd_config);	
+				 
+
+				close(searchd_config.newsockfd);
+		
+				exit(0);
+			}
+			else {
+				close(searchd_config.newsockfd); // perent doesn't need the new socket
+			}
+		}
+
+		++runCount;
+
+		if ((optMax != 0) && (runCount >= optMax)) {
+			//venter på siste trå. Ikke helt optimalt dette, da vi kan ha flere tråer som kjører i paralell
+			#ifdef WITH_THREAD
+				pthread_join(chld_thr, NULL);
+			#endif
+			printf("have reached Max runs. Exiting\n");
+			break;
 		}
 
 	}
@@ -869,6 +904,7 @@ void *do_chld(void *arg)
 	}
 	else if (queryNodeHeder.getRank)  {
 		printf("########################################### Ranking document: %d\n", queryNodeHeder.getRank);
+
 		if (dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,
 			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
 			queryNodeHeder.start, queryNodeHeder.filterOn, 
