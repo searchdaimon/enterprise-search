@@ -59,10 +59,10 @@
 
 
 static unsigned int hash_domainid_fn(void *k) { /* XXX: Make a proper hash function here */
-	return *(unsigned int *)k;
+	return *(unsigned short int *)k;
 }
 static int equal_domainid_fn(void *key1, void *key2) {
-	return (*(unsigned int *)key1) == (*(unsigned int *)key2);
+	return (*(unsigned short int *)key1) == (*(unsigned short int *)key2);
 }
 
 
@@ -818,9 +818,9 @@ void *generatePagesResults(void *arg)
 		//pre DIread filter
 		printf("adult %u: %i\n",(*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
 		if (((*PagesResults).filterOn) && (filterAdultWeight_bool(adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID),(*PagesResults).adultpages,(*PagesResults).noadultpages) == 1)) {
-			//#ifdef DEBUG
+			#ifdef DEBUG
 			printf("%u is adult whith %i\n",(*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
-			//#endif
+			#endif
 			increaseMemFiltered(PagesResults,
 				&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_bool,
 				&(*(*PagesResults).TeffArray->iindex[i].subname).hits,
@@ -1568,7 +1568,7 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	printf("|----------|----------|----------||----------|----------|----------|------------------------|----------|----------|\n");
 
 	for(i=0;i<(*SiderHeder).showabal;i++) {
-                        printf("|%10i|%10i|%10i||%10i|%10i|%10i|%10i (%5i %5i)|%10i|%10i| %s (DocID %u-%i)\n",
+                        printf("|%10i|%10i|%10i||%10i|%10i|%10i|%10i (%5i %5i)|%10i|%10i| %s (DocID %u-%i, DomainID %hu)\n",
 
 				Sider[i].iindex.allrank,
 				Sider[i].iindex.TermRank,
@@ -1584,7 +1584,8 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 				Sider[i].iindex.rank_explaind.rankUrl,
 				Sider[i].DocumentIndex.Url,
 				Sider[i].iindex.DocID,
-				rLotForDOCid(Sider[i].iindex.DocID)
+				rLotForDOCid(Sider[i].iindex.DocID),
+				Sider[i].DomainID
 				);
 	}
 	#endif
@@ -1627,7 +1628,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	PagesResults.memfiltered	= 0;	
 	PagesResults.getRank		= 1;
 
-	unsigned short DomainID;
+	unsigned short *DomainID;
 
          (*SiderHeder).filtersTraped.cantDIRead = 0;
          (*SiderHeder).filtersTraped.getingDomainID = 0;
@@ -1900,7 +1901,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		for (i = 0; i < SiderHeder->TotaltTreff; i++) {
 			int *hash_key, *hash_value;
 			/***************************************************************
-			Tror vi hånterer iltrering feil nå
+			Tror vi hånterer filtrering feil nå
 			***************************************************************/
 			/*
 			runarb: ikke baser deg på PagesResults.Sider da den maxs vil være 10 sider lang
@@ -1915,14 +1916,14 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 			//printf("adult %u: %i\n",PagesResults.TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray(PagesResults.TeffArray->iindex[i].DocID));
 			if ((PagesResults.filterOn) && (filterAdultWeight_bool(adultWeightForDocIDMemArray(PagesResults.TeffArray->iindex[i].DocID),PagesResults.adultpages,PagesResults.noadultpages) == 1)) {
-				//#ifdef DEBUG
+				#ifdef DEBUG
 				printf("%u is adult whith %i\n",PagesResults.TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray(PagesResults.TeffArray->iindex[i].DocID));
-				//#endif
+				#endif
 				continue;
 			}
 
 			//slår opp DomainID
-			if (!iintegerMemArrayGet (PagesResults.DomainIDs,&DomainID,sizeof(DomainID),PagesResults.TeffArray->iindex[i].DocID) ) {
+			if (!iintegerMemArrayGet (PagesResults.DomainIDs,&DomainID,sizeof(*DomainID),PagesResults.TeffArray->iindex[i].DocID) ) {
 				#ifdef DEBUG
 				printf("can't lookup DomainID\n");
 				#endif
@@ -1931,7 +1932,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 			}
 
-			if ((hash_value = hashtable_search(hash_domainid, &DomainID)) == NULL) {
+
+			//legg DomaindID inn i en hash. Hvis vi har hat mer en 2 sider fra samme DomainID fra før, så skal denne ikke telles med
+
+			if ((hash_value = hashtable_search(hash_domainid, DomainID)) == NULL) {
 				hash_key = malloc(sizeof(*hash_key));
 				if (hash_key == NULL)
 					continue;
@@ -1940,21 +1944,26 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 					free(hash_key);
 					continue;
 				}
-				*hash_key = DomainID;
+				*hash_key = *DomainID;
 				*hash_value = 1;
 				hashtable_insert(hash_domainid, hash_key, hash_value);
 			} else {
+				printf("have seen this domain %u %i times before\n",*DomainID,(*hash_value));
 				(*hash_value) += 1;
-				if ((*hash_value)++ >= 2)
+				if ((*hash_value) > 2)
 					continue;
 			}
 
-			//legg DomaindID inn i en hash. Hvis vi har hat mer en 2 sider fra samme DomainID fra før, så skal denne ikke telles med
 
 
 			// Rank siden til slutt hvis den har en hÃyere rank enn siden vi skal ranke
 			if (PagesResults.TeffArray->iindex[i].allrank >= *ranking) {
+				printf("Have a higher ranked page. DocID: %10u, DomainID %hu, i: %5i\n",PagesResults.TeffArray->iindex[i].DocID,*DomainID,i);
 				ranksum++;
+			}
+			else {
+				printf("Is below posible pages. Wont search whole array\n");
+				break;
 			}
 
 			/***************************************************************/
