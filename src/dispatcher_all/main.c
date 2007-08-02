@@ -1017,7 +1017,7 @@ int main(int argc, char *argv[])
 				if (strcmp(p, remoteaddr) == 0) {
 					char *key;
 
-					if ((key = cgi_getentrystr("secret")) != NULL) {
+					if ((key = cgi_getentrystr("secret")) != NULL || strcmp(p, "all") == 0) {
 						if (strcmp(key, p2) == 0) {
 							hasaccess = 1;
 						}
@@ -1994,14 +1994,6 @@ int main(int argc, char *argv[])
 
 
 	while ((x<FinalSiderHeder.showabal) && (i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)))) {
-		printf("%d %d %d\n", getRank, Sider[i].iindex.DocID, rLotForDOCid(Sider[i].iindex.DocID));
-	
-		if (getRank &&
-		    Sider[i].iindex.DocID != getRank) {
-			i++;
-			continue;
-		}
-
 		
 		if (!Sider[i].deletet) {
 
