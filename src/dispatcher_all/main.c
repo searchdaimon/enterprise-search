@@ -1014,10 +1014,10 @@ int main(int argc, char *argv[])
 				}
 				*p2 = '\0';
 				p2++;
-				if (strcmp(p, remoteaddr) == 0) {
+				if (strcmp(p, remoteaddr) == 0 || strcmp(p, "all") == 0) {
 					char *key;
 
-					if ((key = cgi_getentrystr("secret")) != NULL || strcmp(p, "all") == 0) {
+					if ((key = cgi_getentrystr("secret")) != NULL) {
 						if (strcmp(key, p2) == 0) {
 							hasaccess = 1;
 						}
