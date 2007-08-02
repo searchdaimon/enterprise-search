@@ -1,4 +1,5 @@
 
+			// Rank siden til slutt hvis den har en hÃyere rank enn siden vi skal ranke
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -22,6 +23,8 @@
 #include "../common/integerindex.h"
 
 #include "../getdate/getdate.h"
+
+#include "../3pLibs/keyValueHash/hashtable.h"
 
 
 #include "shortenurl.h"
@@ -53,6 +56,14 @@
 //#include "cgi-util.h"
 
 	//struct iindexFormat *TeffArray; //[maxIndexElements];
+
+
+static unsigned int hash_domainid_fn(void *k) { /* XXX: Make a proper hash function here */
+	return *(unsigned int *)k;
+}
+static int equal_domainid_fn(void *key1, void *key2) {
+	return (*(unsigned int *)key1) == (*(unsigned int *)key2);
+}
 
 
 
@@ -1766,6 +1777,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	}
 
 
+#if 0
 	#ifdef WITH_THREAD
 	pthread_t threadid[NROF_GENERATEPAGES_THREADS];
 
@@ -1782,6 +1794,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		ret = pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults);		
 	}
 	#endif
+#endif
 
 	printf("searchSimple\n");
 	
@@ -1854,6 +1867,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 
 
+#if 0
 	#ifdef WITH_THREAD
 
 	//vi har data. Lå tårdene jobbe med det
@@ -1870,7 +1884,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#else 
 	generatePagesResults(&PagesResults);		
 	#endif
-
+#endif
 	#ifdef BLACK_BOKS
 		cmc_close(PagesResults.cmcsocketha);
 	#endif
@@ -1880,8 +1894,11 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		/* If we are getting the current rank we sum up the pages better ranked
 		 * than the rank we put in and return that result */
 		int ranksum = 0;
+		struct hashtable *hash_domainid;
 
+		hash_domainid = create_hashtable(16, hash_domainid_fn, equal_domainid_fn);
 		for (i = 0; i < SiderHeder->TotaltTreff; i++) {
+			int *hash_key, *hash_value;
 			/***************************************************************
 			Tror vi hånterer iltrering feil nå
 			***************************************************************/
@@ -1896,11 +1913,12 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			}
 			*/
 
-			printf("adult %u: %i\n",PagesResults.TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray(PagesResults.TeffArray->iindex[i].DocID));
+			//printf("adult %u: %i\n",PagesResults.TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray(PagesResults.TeffArray->iindex[i].DocID));
 			if ((PagesResults.filterOn) && (filterAdultWeight_bool(adultWeightForDocIDMemArray(PagesResults.TeffArray->iindex[i].DocID),PagesResults.adultpages,PagesResults.noadultpages) == 1)) {
 				//#ifdef DEBUG
 				printf("%u is adult whith %i\n",PagesResults.TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray(PagesResults.TeffArray->iindex[i].DocID));
 				//#endif
+				continue;
 			}
 
 			//slår opp DomainID
@@ -1913,11 +1931,31 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 			}
 
+			if ((hash_value = hashtable_search(hash_domainid, &DomainID)) == NULL) {
+				hash_key = malloc(sizeof(*hash_key));
+				if (hash_key == NULL)
+					continue;
+				hash_value = malloc(sizeof(*hash_value));
+				if (hash_value == NULL) {
+					free(hash_key);
+					continue;
+				}
+				*hash_key = DomainID;
+				*hash_value = 1;
+				hashtable_insert(hash_domainid, hash_key, hash_value);
+			} else {
+				(*hash_value) += 1;
+				if ((*hash_value)++ >= 2)
+					continue;
+			}
+
 			//legg DomaindID inn i en hash. Hvis vi har hat mer en 2 sider fra samme DomainID fra før, så skal denne ikke telles med
 
 
-			//øk til slut rank simen
-			ranksum++;
+			// Rank siden til slutt hvis den har en hÃyere rank enn siden vi skal ranke
+			if (PagesResults.TeffArray->iindex[i].allrank >= *ranking) {
+				ranksum++;
+			}
 
 			/***************************************************************/
 
@@ -1925,6 +1963,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		}
 		printf("Position: %d\n", ranksum);
 		*ranking = ranksum;
+		hashtable_destroy(hash_domainid, 1);
 	}
 
 	(*SiderHeder).showabal = PagesResults.showabal;
@@ -1965,9 +2004,6 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	hiliteQuery[0] = '\0';
 	//printf("size %i\n",PagesResults.QueryData.queryParsed.size);
 
-	//det vil bli et komma for mye på slutten, fjerner det.
-	//ToDo: er det altid et komma for mye ?	
-	if (hiliteQuery[strlen(hiliteQuery) -1] == ',') {hiliteQuery[strlen(hiliteQuery) -1] = '\0';}
 
 	printf("<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" filtered=\"%i\" showabal=\"%i\"/>\n",(*SiderHeder).TotaltTreff,PagesResults.QueryData.query,hiliteQuery,(*SiderHeder).filtered,(*SiderHeder).showabal);
 	

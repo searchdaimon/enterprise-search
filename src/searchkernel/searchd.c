@@ -27,6 +27,7 @@
 #include <sys/uio.h>
 #include <unistd.h>
 #include <time.h>
+#include <errno.h>
 
 
 #define cfg_searchd "config/searchd.conf"
@@ -436,7 +437,11 @@ void *do_chld(void *arg)
 	}
 	else {
 		char subnamebuf[maxSubnameLength];
-		queryNodeHeder.subname[0] = '\0';
+
+#if 0
+		//queryNodeHeder.subname[0] = '\0';
+		if (strlen(queryNodeHeder.subname) > 0)
+			strlwcat(queryNodeHeder.subname, ",", sizeof(queryNodeHeder.subname));
 		boithoad_groupsForUser(queryNodeHeder.search_user,&respons_list,&responsnr);
 	        printf("groups: %i\n",responsnr);
 	        for (i=0;i<responsnr;i++) {
@@ -456,6 +461,7 @@ void *do_chld(void *arg)
 		//fjerner ,
 		queryNodeHeder.subname[strlen(queryNodeHeder.subname) -1] = '\0';
 	        boithoad_respons_list_free(respons_list);
+#endif
 		userToSubname_close(&userToSubnameDb);
 	}
 
@@ -919,13 +925,17 @@ void *do_chld(void *arg)
 			
 			if (ranking == -1) {
 				status = net_nomatch;
+				printf("1 Sending: %d\n", sizeof(status));
 				if ((n=send(mysocfd, &status, sizeof(status),0)) != sizeof(status)) {
 					printf("send only %i of %i\n",n,sizeof(status));
 					perror("sendall status");
 					return;
 				}
 			} else {
-				status = net_match;
+				int data[2];
+				data[0] = net_match;
+				data[1] = ranking;
+#if 0
 				if ((n=send(mysocfd, &status, sizeof(status),0)) != sizeof(status)) {
 					printf("send only %i of %i\n",n,sizeof(status));
 					perror("sendall status2");
@@ -936,12 +946,22 @@ void *do_chld(void *arg)
 					perror("sendall ranking");
 					return;
 				}
+#else
+				printf("2 Sending: %d\n", sizeof(data));
+				if ((n = send(mysocfd, data, sizeof(data),0)) != sizeof(data)) {
+					printf("send only %i of %i\n",n,sizeof(data));
+					perror("sendall data");
+					return;
+				}
+#endif
 			}
 
-			if (recv(mysocfd, &ranking, sizeof(ranking), 0) == -1) {
+			printf("3 Receiving: %d\n",sizeof(ranking));
+			if (recv(mysocfd, &ranking, sizeof(ranking), 0) != sizeof(ranking)) {
 				perror("recv ranking");
 				return;
 			}
+			printf("Received ranking: %d\n", ranking);
 
 			if (!dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,
 				servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
@@ -955,15 +975,25 @@ void *do_chld(void *arg)
 				perror("Got some kind of an error?");
 				return;
 			} else {
+				int ranking2;
 				printf("Let us see how this ranking went: %d\n", ranking);
-				if ((n=send(mysocfd, &ranking, sizeof(ranking),0)) != sizeof(ranking)) {
-					printf("send only %i of %i\n",n,sizeof(ranking));
+				ranking2 = ranking;
+				status = 0xabdedd0f;
+				printf("4 Sending: %d %d\n", sizeof(ranking), ranking);
+				printf("Ranking: %p\n", &ranking);
+#if 1
+				if ((n = send(mysocfd, &ranking2, sizeof(ranking2), 0)) != sizeof(ranking2)) {
+					printf("send only %i of %i\n", n, sizeof(ranking2));
 					perror("sendall ranking2");
 					return;
 				}
+#endif
+				printf("Sent: %d %d\n", ranking, n);
+				sleep(5);
 			}
 
 			SiderHeder.responstype = searchd_responstype_ranking;
+			close(mysocfd);
 			return;
 		} else {
 			SiderHeder.responstype = searchd_responstype_error;
