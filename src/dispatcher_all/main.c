@@ -793,6 +793,7 @@ int main(int argc, char *argv[])
 
 			strcpy(QueryData.userip,"213.179.58.99");
 
+
 			/*
                         QueryData.query[0] = '\0';
 			
@@ -1329,48 +1330,45 @@ int main(int argc, char *argv[])
 				//motter hedderen for svaret
 				if (bsread (&sockfd[i],sizeof(net_status), (char *)&net_status, maxSocketWait_CanDo)) {
 					if (net_status != net_CanDo) {
-						printf("net_status wasn't net_CanDo but %i\n",net_status);
+						fprintf(stderr, "net_status wasn't net_CanDo but %i\n",net_status);
 						sockfd[i] = 0;
+						continue;
 					}
-				}
-				else {
+				} else {
 					perror("initial protocol read failed");
 					sockfd[i] = 0;
 					continue;
 				}
-
+ 
 				if (!bsread(&sockfd[i],sizeof(status), (char *)&status, 1000)) //maxSocketWait_CanDo))
-					perror("foo");
-				if (status == net_match) {
+					die(2, "Unable to get rank status");
+				else if (status == net_match) {
 					if (!bsread(&sockfd[i],sizeof(ranking), (char *)&ranking, 1000))//maxSocketWait_CanDo))
-						perror("foo");
+						perror("recv read");
 				} else if (status == net_nomatch) {
 					//return 1;
 				} else {
-					die(1, "searchd does not support ranking?");
+					//die(1, "searchd does not support ranking?");
 				}
-
-
-				//if (recv(sockfd[i], &ranking, sizeof(ranking), MSG_WAITALL) != sizeof(ranking))
-				//	perror("recv(ranking)");
 			}
 		}
 		if (ranking != -1) {
 			for (i = 0; i < nrOfServers; i++) {
-				if (sockfd[i] != 0)
-					send(sockfd[i], &ranking, sizeof(ranking), 0);
+				if (sockfd[i] != 0) {
+					if (send(sockfd[i], &ranking, sizeof(ranking), 0) != sizeof(ranking))
+						perror("send...");
+				}
 			}
 
 			for (i = 0; i < nrOfServers; i++) {
 				if (sockfd[i] != 0) {
-					if (!bsread(&sockfd[i],sizeof(ranking), (char *)&ranking, 399999999))//maxSocketWait_CanDo))
-						perror("foo2");
+					if (!bsread(&sockfd[i], sizeof(ranking), (char *)&ranking, 10000))
+						perror("endranking");
 					endranking += ranking;
 				}
 			}
 		}
 		else {
-			int data = -1;
 			#ifdef DEBUG
 			printf("No ranking found...\n");
 			#endif
