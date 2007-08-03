@@ -573,18 +573,32 @@ cache_hash(char *query, int start, char *country)
 	return hash;
 }
 
+enum cache_type {
+	CACHE_PREQUERY,
+	CACHE_SEARCH
+};
+
 char *
-cache_path(char *path, size_t len, char *query, int start, char *country)
+cache_path(char *path, size_t len, enum cache_type type, char *query, int start, char *country)
 {
 	char tmppath[PATH_MAX];
 	unsigned int hash;
 	char *p;
+	char *cache;
 
+	switch (type) {
+	case CACHE_PREQUERY:
+		cache = "cache/prequery";
+		break;
+	case CACHE_SEARCH:
+		cache = "cache/search";
+		break;
+	}
 	hash = cache_hash(query, start, country);
 	p = (char *)&hash;
 	//snprintf(path, len, "%s/%x%x/%x%x", bfile("cache"), *p & 0xF, (*p >> 4) & 0xF, *(p+1) & 0xF, (*(p+1) >> 4) & 0xF);
 	mkdir(bfile("cache"), 0700);
-	snprintf(path, len, "%s/%x%x", bfile("cache"), *p & 0xF, (*p >> 4) & 0xF);
+	snprintf(path, len, "%s/%x%x", bfile(cache), *p & 0xF, (*p >> 4) & 0xF);
 	mkdir(path, 0700);
 	p++;
 	snprintf(tmppath, len, "%s/%x%x", path, *p & 0xF, (*p >> 4) & 0xF);
@@ -1397,35 +1411,25 @@ int main(int argc, char *argv[])
 
 	char cachepath[1024];
 
-	cache_path(cachepath, sizeof(cachepath), QueryData.queryhtml, QueryData.start, QueryData.GeoIPcontry);
+	cache_path(cachepath, sizeof(cachepath), CACHE_SEARCH, QueryData.queryhtml, QueryData.start, QueryData.GeoIPcontry);
+	cache_path(prequeryfile, sizeof(cachepath), CACHE_PREQUERY, QueryData.queryhtml, QueryData.start, QueryData.GeoIPcontry);
 
 	//tester for cashe
 	//sprintf(cashefile,"%s/%s.%i.%s",bfile(cashedir),QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
-	sprintf(cashefile,"%s/%s.%i.%s","/home/boitho/var/cashedir",QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
+	//sprintf(cashefile,"%s/%s.%i.%s","/home/boitho/var/cashedir",QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
 	
 	//char prequerydir[] = "/tmp/";
-	sprintf(prequeryfile,"%s/%s.%i.%s",bfile("prequerydir"),QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
-	FILE *CACHE;
+	//sprintf(prequeryfile,"%s/%s.%i.%s",bfile("prequerydir"),QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
+	//FILE *CACHE;
 
-	if (getRank == 0 && (dispconfig.useprequery) && (QueryData.filterOn) && ((CACHE = fopen(prequeryfile,"rb")) != NULL)) {
+	if (getRank == 0 && (dispconfig.useprequery) && (QueryData.filterOn) &&
+	    cache_read(prequeryfile, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider)) {
 		hasprequery = 1;
 
 		debug("can open prequeryfile file \"%s\"",prequeryfile);
 
-		flock(fileno(CACHE),LOCK_SH);
-		fread(&pageNr,sizeof(pageNr),1,CACHE);
-		fread(&FinalSiderHeder,sizeof(FinalSiderHeder),1,CACHE);
-                fread(SiderHeder,sizeof(struct SiderHederFormat) * maxServers,1,CACHE);
 
-		debug("have %i cashed pages",pageNr);
-		
-                for (i=0;i<nrOfServers * QueryData.MaxsHits;i++) {
-                        fread(&Sider[i],sizeof(struct SiderFormat),1,CACHE);
-                        //printf("%s\n",Sider[i].uri);
-                }
-		
-		//fread(&Sider[i],(sizeof(struct SiderFormat) * nrOfServers * QueryData.MaxsHits),1,CACHE);
-		fclose(CACHE);
+
 	}
 	else if (getRank == 0 && (dispconfig.usecashe) && (QueryData.filterOn) &&
 	         cache_read(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider)) {
