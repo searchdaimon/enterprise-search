@@ -438,8 +438,8 @@ void *do_chld(void *arg)
 	else {
 		char subnamebuf[maxSubnameLength];
 
-#if 0
-		//queryNodeHeder.subname[0] = '\0';
+#if 1
+		queryNodeHeder.subname[0] = '\0';
 		if (strlen(queryNodeHeder.subname) > 0)
 			strlwcat(queryNodeHeder.subname, ",", sizeof(queryNodeHeder.subname));
 		boithoad_groupsForUser(queryNodeHeder.search_user,&respons_list,&responsnr);
