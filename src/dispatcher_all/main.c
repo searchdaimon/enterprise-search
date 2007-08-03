@@ -585,6 +585,7 @@ cache_path(char *path, size_t len, enum cache_type type, char *query, int start,
 	unsigned int hash;
 	char *p;
 	char *cache;
+	size_t left;
 
 	switch (type) {
 	case CACHE_PREQUERY:
@@ -594,16 +595,24 @@ cache_path(char *path, size_t len, enum cache_type type, char *query, int start,
 		cache = "cache/search";
 		break;
 	}
+	left = len;
 	hash = cache_hash(query, start, country);
 	p = (char *)&hash;
-	//snprintf(path, len, "%s/%x%x/%x%x", bfile("cache"), *p & 0xF, (*p >> 4) & 0xF, *(p+1) & 0xF, (*(p+1) >> 4) & 0xF);
-	mkdir(bfile(cache), 0700);
-	snprintf(path, len, "%s/%x%x", bfile(cache), *p & 0xF, (*p >> 4) & 0xF);
+	strncpy(path, bfile(cache), len);
+	left -= strlen(path);
+	mkdir(path, 0700);
+	snprintf(tmppath, sizeof(tmppath), "/%x%x", *p & 0xF, (*p >> 4) & 0xF);
+	strncat(path, tmppath, left);
+	left -= strlen(tmppath);
 	mkdir(path, 0700);
 	p++;
-	snprintf(tmppath, len, "%s/%x%x", path, *p & 0xF, (*p >> 4) & 0xF);
-	mkdir(tmppath, 0700);
-	snprintf(path, len, "%s/%s.%d.%s", tmppath, query, start, country);
+	snprintf(tmppath, sizeof(tmppath), "/%x%x", *p & 0xF, (*p >> 4) & 0xF);
+	strncat(path, tmppath, left);
+	left -= strlen(tmppath);
+	mkdir(path, 0700);
+	snprintf(tmppath, sizeof(tmppath), "/%s.%d.%s", query, start, country);
+	strncat(path, tmppath, left);
+	left -= strlen(tmppath);
 
 	return path;
 }
