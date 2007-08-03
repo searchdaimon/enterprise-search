@@ -687,6 +687,12 @@ readDocumentIndex: src/readDocumentIndex/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/readDocumentIndex/main.c -o bin/readDocumentIndex $(LDFLAGS)
 
+resolveRedirects: src/resolveRedirects/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/resolveRedirects/main.c -o bin/resolveRedirects $(LDFLAGS)
+
 readDocumentIndexWithRank: src/readDocumentIndexWithRank/main.c
 	@echo ""
 	@echo "$@:"
