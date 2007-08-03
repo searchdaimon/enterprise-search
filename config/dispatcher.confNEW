@@ -9,6 +9,7 @@ piservers = [ ];
 addservers = [];
 
 usecashe	= FALSE;
+cachetimeout	= 604800;
 useprequery	= FALSE;
 
 access = [ "213.179.58.99:theSecret" ];

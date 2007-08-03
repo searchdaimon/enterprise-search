@@ -9,6 +9,7 @@
     #include <string.h>
     #include <netdb.h>
     #include <sys/types.h>
+#include <sys/stat.h>
     #include <netinet/in.h>
     #include <sys/socket.h>
     #include <unistd.h>
@@ -614,16 +615,32 @@ cache_path(char *path, size_t len, enum cache_type type, char *query, int start,
 
 int
 cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
-           size_t sider_header_len, struct SiderFormat *sider)
+           size_t sider_header_len, struct SiderFormat *sider, int cachetimeout)
 {
 	gzFile *cache;
 	int fd, i, ret;
+	struct stat st;
 
 	if ((fd = open(path, O_RDONLY)) == -1) {
-		perror("open");
 		return 0;
 	}
 	flock(fd, LOCK_SH);
+
+	/* Invalidate cache ? */
+	if (cachetimeout > 0 && fstat(fd, &st) != -1) {
+		time_t now;
+
+		now = time(NULL);
+
+		if (now - st.st_mtime > cachetimeout) {
+			fprintf(stderr, "Cache too old, invalidating\n");
+			unlink(path);
+			flock(fd, LOCK_UN);
+			close(fd);
+			return 0;
+		}
+	}	
+
 	if ((cache = gzdopen(fd, "r")) == NULL) {
 		flock(fd, LOCK_UN);
 		close(fd);
@@ -798,6 +815,8 @@ int main(int argc, char *argv[])
 	struct queryNodeHederFormat queryNodeHeder;
 
 	struct dispconfigFormat dispconfig;
+	int cachetimeout;
+	config_setting_t *cfgstring;
 
 	#ifdef DEBUG
 	gettimeofday(&start_time, NULL);
@@ -833,6 +852,12 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	if ((cfgstring = config_lookup(&cfg, "cachetimeout")) == NULL) {
+		cachetimeout = 0;
+	} else {
+		cachetimeout = config_setting_get_int(cfgstring);
+	}
+	fprintf(stderr, "Timeout: %d\n", cachetimeout);
 
   	#ifndef BLACK_BOKS
 	    	if ( (cfgarray = config_lookup(&cfg, "usecashe") ) == NULL) {
@@ -1417,25 +1442,15 @@ int main(int argc, char *argv[])
 	cache_path(cachepath, sizeof(cachepath), CACHE_SEARCH, QueryData.queryhtml, QueryData.start, QueryData.GeoIPcontry);
 	cache_path(prequeryfile, sizeof(cachepath), CACHE_PREQUERY, QueryData.queryhtml, QueryData.start, QueryData.GeoIPcontry);
 
-	//tester for cashe
-	//sprintf(cashefile,"%s/%s.%i.%s",bfile(cashedir),QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
-	//sprintf(cashefile,"%s/%s.%i.%s","/home/boitho/var/cashedir",QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
-	
-	//char prequerydir[] = "/tmp/";
-	//sprintf(prequeryfile,"%s/%s.%i.%s",bfile("prequerydir"),QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
-	//FILE *CACHE;
-
 	if (getRank == 0 && (dispconfig.useprequery) && (QueryData.filterOn) &&
-	    cache_read(prequeryfile, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider)) {
+	    cache_read(prequeryfile, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, 0)) {
 		hasprequery = 1;
 
 		debug("can open prequeryfile file \"%s\"",prequeryfile);
 
-
-
 	}
 	else if (getRank == 0 && (dispconfig.usecashe) && (QueryData.filterOn) &&
-	         cache_read(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider)) {
+	         cache_read(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, cachetimeout)) {
 		hascashe = 1;
 
 		fprintf(stderr, "Using the cache...\n");
