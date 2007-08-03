@@ -663,14 +663,14 @@ cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struc
 		goto err;
 	}
 
-	fprintf(stderr, "Got %d cached pages\n", *page_nr);
+	//fprintf(stderr, "Got %d cached pages\n", *page_nr);
 	for (i = 0; i < *page_nr; i++) {
 		if (gzread(cache, &sider[i], sizeof(*sider)) != sizeof(*sider)) {
 			perror("Unable to read cache");
 			goto err;
 		}
 
-		fprintf(stderr, "cache: read: %s\n", sider[i].uri);
+		//fprintf(stderr, "cache: read: %s\n", sider[i].uri);
 	}
 	
 
@@ -696,7 +696,6 @@ cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, stru
 	}
 	flock(fd, LOCK_EX);
 	if ((cache = gzdopen(fd, "w")) == NULL) {
-		perror("hmp?");
 		return 0;
 	}
 
@@ -722,7 +721,7 @@ cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, stru
 			perror("Unable to write cache");
 			goto err;
 		}
-		fprintf(stderr, "cache: wrote: %s\n", sider[i].uri);
+		//fprintf(stderr, "cache: wrote: %s\n", sider[i].uri);
 	}
 	
 
