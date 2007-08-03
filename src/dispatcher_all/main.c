@@ -597,7 +597,7 @@ cache_path(char *path, size_t len, enum cache_type type, char *query, int start,
 	hash = cache_hash(query, start, country);
 	p = (char *)&hash;
 	//snprintf(path, len, "%s/%x%x/%x%x", bfile("cache"), *p & 0xF, (*p >> 4) & 0xF, *(p+1) & 0xF, (*(p+1) >> 4) & 0xF);
-	mkdir(bfile("cache"), 0700);
+	mkdir(bfile(cache), 0700);
 	snprintf(path, len, "%s/%x%x", bfile(cache), *p & 0xF, (*p >> 4) & 0xF);
 	mkdir(path, 0700);
 	p++;
