@@ -16,6 +16,7 @@
     #include <errno.h> 
     #include <time.h>
     #include <errno.h>
+#include <zlib.h>
     #include "../common/boithohome.h"
     #include "../maincfg/maincfg.h"
 
@@ -549,6 +550,165 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 	#endif
 
 }
+
+
+/* Cache helper functions */
+
+// sprintf(cashefile,"%s/%s.%i.%s","/home/boitho/var/cashedir",QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
+
+#ifdef WITH_CASHE
+
+unsigned int
+cache_hash(char *query, int start, char *country)
+{
+	unsigned int hash = 0xf23c203;
+	char *p;
+
+	hash *= start;
+	for(p = query; *p; p++)
+		hash += *p * 38;
+	for(p = country; *p; p++)
+		hash += *p * 39;
+	
+	return hash;
+}
+
+char *
+cache_path(char *path, size_t len, char *query, int start, char *country)
+{
+	char tmppath[PATH_MAX];
+	unsigned int hash;
+	char *p;
+
+	hash = cache_hash(query, start, country);
+	p = (char *)&hash;
+	//snprintf(path, len, "%s/%x%x/%x%x", bfile("cache"), *p & 0xF, (*p >> 4) & 0xF, *(p+1) & 0xF, (*(p+1) >> 4) & 0xF);
+	mkdir(bfile("cache"), 0700);
+	snprintf(path, len, "%s/%x%x", bfile("cache"), *p & 0xF, (*p >> 4) & 0xF);
+	mkdir(path, 0700);
+	p++;
+	snprintf(tmppath, len, "%s/%x%x", path, *p & 0xF, (*p >> 4) & 0xF);
+	mkdir(tmppath, 0700);
+	snprintf(path, len, "%s/%s.%d.%s", tmppath, query, start, country);
+
+	return path;
+}
+
+
+int
+cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
+           size_t sider_header_len, struct SiderFormat *sider)
+{
+	gzFile *cache;
+	int fd, i, ret;
+
+	if ((fd = open(path, O_RDONLY)) == -1) {
+		perror("open");
+		return 0;
+	}
+	flock(fd, LOCK_SH);
+	if ((cache = gzdopen(fd, "r")) == NULL) {
+		flock(fd, LOCK_UN);
+		close(fd);
+		return 0;
+	}
+
+	ret = 1;
+	if (gzread(cache, page_nr, sizeof(*page_nr)) != sizeof(*page_nr)) {
+		perror("gzread(page_nr)");
+		goto err;
+	}
+
+	if (gzread(cache, final_sider, sizeof(*final_sider)) != sizeof(*final_sider)) {
+		perror("gzread(final_sider)");
+		goto err;
+	}
+
+	if (gzread(cache, sider_header, sizeof(*sider_header)*sider_header_len) != sizeof(*sider_header)*sider_header_len) {
+		perror("gzread(final_sider)");
+		goto err;
+	}
+
+	fprintf(stderr, "Got %d cached pages\n", *page_nr);
+	for (i = 0; i < *page_nr; i++) {
+		if (gzread(cache, &sider[i], sizeof(*sider)) != sizeof(*sider)) {
+			perror("Unable to read cache");
+			goto err;
+		}
+
+		fprintf(stderr, "cache: read: %s\n", sider[i].uri);
+	}
+	
+
+	goto out;
+ err:
+	ret = 1;
+ out:
+	gzclose(cache);
+	flock(fd, LOCK_UN);
+	close(fd);
+	return ret;
+}
+
+int
+cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
+            size_t sider_header_len, struct SiderFormat *sider, size_t sider_len)
+{
+	gzFile *cache;
+	int fd, i, ret;
+
+	if ((fd = open(path, O_CREAT|O_WRONLY|O_EXCL, 0600)) == -1) {
+		return 0;
+	}
+	flock(fd, LOCK_EX);
+	if ((cache = gzdopen(fd, "w")) == NULL) {
+		perror("hmp?");
+		return 0;
+	}
+
+	ret = 1;
+	fprintf(stderr, "Writing %x pages\n", *page_nr);
+	if (gzwrite(cache, page_nr, sizeof(*page_nr)) != sizeof(*page_nr)) {
+		perror("gzwrite(page_nr)");
+		goto err;
+	}
+
+	if (gzwrite(cache, final_sider, sizeof(*final_sider)) != sizeof(*final_sider)) {
+		perror("gzwrite(final_sider)");
+		goto err;
+	}
+
+	if (gzwrite(cache, sider_header, sizeof(*sider_header)*sider_header_len) != sizeof(*sider_header)*sider_header_len) {
+		perror("gzwrite(final_sider)");
+		goto err;
+	}
+
+	for (i = 0; i < sider_len; i++) {
+		if (gzwrite(cache, &sider[i], sizeof(*sider)) != sizeof(*sider)) {
+			perror("Unable to write cache");
+			goto err;
+		}
+		fprintf(stderr, "cache: wrote: %s\n", sider[i].uri);
+	}
+	
+
+	goto out;
+ err:
+	ret = 0;
+	unlink(path);
+ out:
+	gzclose(cache);
+	flock(fd, LOCK_UN);
+	close(fd);
+	return ret;
+}
+
+#endif
+
+
+
+
+
 int main(int argc, char *argv[])
 {
 
@@ -1234,11 +1394,17 @@ int main(int argc, char *argv[])
 	#endif
 
 	#ifdef WITH_CASHE
+
+	char cachepath[1024];
+
+	cache_path(cachepath, sizeof(cachepath), QueryData.queryhtml, QueryData.start, QueryData.GeoIPcontry);
+
 	//tester for cashe
 	//sprintf(cashefile,"%s/%s.%i.%s",bfile(cashedir),QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
 	sprintf(cashefile,"%s/%s.%i.%s","/home/boitho/var/cashedir",QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
 	
-	sprintf(prequeryfile,"%s/%s.%i.%s",bfile(prequerydir),QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
+	//char prequerydir[] = "/tmp/";
+	sprintf(prequeryfile,"%s/%s.%i.%s",bfile("prequerydir"),QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
 	FILE *CACHE;
 
 	if (getRank == 0 && (dispconfig.useprequery) && (QueryData.filterOn) && ((CACHE = fopen(prequeryfile,"rb")) != NULL)) {
@@ -1261,28 +1427,13 @@ int main(int argc, char *argv[])
 		//fread(&Sider[i],(sizeof(struct SiderFormat) * nrOfServers * QueryData.MaxsHits),1,CACHE);
 		fclose(CACHE);
 	}
-	else if (getRank == 0 && (dispconfig.usecashe) && (QueryData.filterOn) && ((CACHE = fopen(cashefile,"rb")) != NULL)) {
+	else if (getRank == 0 && (dispconfig.usecashe) && (QueryData.filterOn) &&
+	         cache_read(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider)) {
 		hascashe = 1;
 
+		fprintf(stderr, "Using the cache...\n");
+
 		debug("can open cashe file \"%s\"",cashefile);
-
-		flock(fileno(CACHE),LOCK_SH);
-		fread(&pageNr,sizeof(pageNr),1,CACHE);
-		fread(&FinalSiderHeder,sizeof(FinalSiderHeder),1,CACHE);
-                fread(SiderHeder,sizeof(struct SiderHederFormat) * maxServers,1,CACHE);
-
-		debug("have %i cashed pages",pageNr);
-		
-                for (i=0;i<nrOfServers * QueryData.MaxsHits;i++) {
-                        if ((n=fread(&Sider[i],sizeof(struct SiderFormat),1,CACHE)) != 1) {
-				debug("cant 1 read cashe page. Did read %i.",n);
-				//--pageNr;
-			}
-                        debug("cashe: reading %s",Sider[i].uri);
-                }
-		
-		//fread(&Sider[i],(sizeof(struct SiderFormat) * nrOfServers * QueryData.MaxsHits),1,CACHE);
-		fclose(CACHE);
 	}
 	else {
 		//fprintf(stderr,"cant aces cashe file \"%s\": %s\n",cashefile,strerror(errno));
@@ -2261,30 +2412,9 @@ int main(int argc, char *argv[])
 
 	}
 	//skriver bare cashe hvis vi fikk svar fra all servere, og vi var ikke ute etter ranking
-	else if (getRank == 0 && nrRespondedServers == nrOfServers) {
-		if ((CACHE = fopen(cashefile,"wb")) == NULL) {
-			fprintf(stderr,"Can't open cashefile for writing.\n");
-			perror(cashefile);
-		}
-		else {
-
-			flock(fileno(CACHE),LOCK_EX);
-			fwrite(&pageNr,sizeof(pageNr),1,CACHE);
-			fwrite(&FinalSiderHeder,sizeof(FinalSiderHeder),1,CACHE);
-			fwrite(SiderHeder,sizeof(struct SiderHederFormat) * maxServers,1,CACHE);
-		
-			for (i=0;i<pageNr;i++) {
-				//vi casher bare normale sider
-				//temp. jade online load test
-				debug("cashing %s\n",Sider[i].url);
-				//if ((Sider[i].type == siderType_normal) && (!Sider[i].subname.config.isPaidInclusion)) {
-					fwrite(&Sider[i],sizeof(struct SiderFormat),1,CACHE);
-				//}
-			}
-
-			//printf("aa %i %i %i\n",sizeof(FinalSiderHeder),sizeof(struct SiderHederFormat) * maxServers,sizeof(*Sider[2]));
-
-			fclose(CACHE);
+	else if (getRank == 0 && pageNr > 0 && nrRespondedServers == nrOfServers) {
+		if (!cache_write(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, pageNr)) {
+			perror("cache_write");
 		}
 	}
 	#endif
