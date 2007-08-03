@@ -856,8 +856,6 @@ int main(int argc, char *argv[])
 	} else {
 		cachetimeout = config_setting_get_int(cfgstring);
 	}
-	fprintf(stderr, "Timeout: %d\n", cachetimeout);
-
   	#ifndef BLACK_BOKS
 	    	if ( (cfgarray = config_lookup(&cfg, "usecashe") ) == NULL) {
 			printf("can't load \"usecashe\" from config\n");
@@ -1451,8 +1449,6 @@ int main(int argc, char *argv[])
 	else if (getRank == 0 && (dispconfig.usecashe) && (QueryData.filterOn) &&
 	         cache_read(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, cachetimeout)) {
 		hascashe = 1;
-
-		fprintf(stderr, "Using the cache...\n");
 
 		debug("can open cashe file \"%s\"",cashefile);
 	}
