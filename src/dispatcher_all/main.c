@@ -1189,6 +1189,8 @@ int main(int argc, char *argv[])
 			getRank = 1;
 			strscpy(QueryData.rankUrl, cgi_getentrystr("getrank"), sizeof(QueryData.rankUrl));
 		}
+//Runarb: Dette er vel bare aktuelt for black boks. For web trnger eksterne klienter å kalle dispatcher_all direkte?
+#ifdef BLACK_BOKS
 
 #ifdef DEBUG
 		gettimeofday(&start_time, NULL);
@@ -1233,6 +1235,7 @@ int main(int argc, char *argv[])
 		printf("Time debug: access %f\n",getTimeDifference(&start_time,&end_time));
 #endif
 
+#endif
         }
 
 	if (!getRank) {
@@ -1938,10 +1941,10 @@ int main(int argc, char *argv[])
 					printf("\t<TIMES>\n");
 						
 						printf("\t\t<AthorSearch>%f</AthorSearch>\n",SiderHeder[i].queryTime.AthorSearch);
-						printf("\t\t<AthorRank>%f</AthorRank>\n",SiderHeder[i].queryTime.AthorRank);
+						//printf("\t\t<AthorRank>%f</AthorRank>\n",SiderHeder[i].queryTime.AthorRank);
 						printf("\t\t<UrlSearch>%f</UrlSearch>\n",SiderHeder[i].queryTime.UrlSearch);
 						printf("\t\t<MainSearch>%f</MainSearch>\n",SiderHeder[i].queryTime.MainSearch);
-						printf("\t\t<MainRank>%f</MainRank>\n",SiderHeder[i].queryTime.MainRank);
+						//printf("\t\t<MainRank>%f</MainRank>\n",SiderHeder[i].queryTime.MainRank);
 						printf("\t\t<MainAthorMerge>%f</MainAthorMerge>\n",SiderHeder[i].queryTime.MainAthorMerge);
 						printf("\t\t<popRank>%f</popRank>\n",SiderHeder[i].queryTime.popRank);
 						printf("\t\t<responseShortning>%f</responseShortning>\n",SiderHeder[i].queryTime.responseShortning);
