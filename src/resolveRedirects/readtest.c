@@ -19,6 +19,8 @@ main(int argc, char **argv)
 		printf("%u => %u (reason: %hu)\n", redir.DocID, redir.redirectTo, redir.response);
 	}
 
+	fclose(fp);
+
 	return 0;
 }
 
