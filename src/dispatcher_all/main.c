@@ -2216,9 +2216,6 @@ int main(int argc, char *argv[])
 			}
 
                 	printf("\t<DOCID>%i-%i</DOCID>\n",Sider[i].iindex.DocID,rLotForDOCid(Sider[i].iindex.DocID));
-			if (getRank)
-				printf("\t<RANK>%d</RANK>\n", x);
-
 
                 	printf("\t<TITLE><![CDATA[%s]]></TITLE>\n",Sider[i].title);
 
