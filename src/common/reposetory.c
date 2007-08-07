@@ -520,6 +520,9 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 		RFILE = lotOpenFileNoCashe(DocID,"reposetory","rb",'s',subname);
 
 		//3 nov 2006: radress64bit = radress64bit + sizeof(struct ReposetoryHeaderFormat);
+		if (RFILE == NULL) {
+			return 0;
+		}
 
 		//printf("fseeko64\n");
 		if (fseeko64(RFILE,(off_t)radress64bit,SEEK_SET) == -1) {
