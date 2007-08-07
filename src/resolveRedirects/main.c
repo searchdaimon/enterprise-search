@@ -66,9 +66,7 @@ main (int argc, char **argv)
 			if (HtmlBufferLen < 200) {
 				if (strncmp("http://", HtmlBuffer, 7) != 0) {
 					//fprintf(stderr, "Invalid url: %s\n", HtmlBuffer);
-					continue;
-				}
-				if (resolveDocIDfromUrl(HtmlBuffer, &redirDocID)) {
+				} else if (resolveDocIDfromUrl(HtmlBuffer, &redirDocID)) {
 					struct redirects redir;
 					printf("%u => %u (reason: %hu)\n", DocID, redirDocID, DocumentIndexPost.response);
 					redir.DocID = DocID;
