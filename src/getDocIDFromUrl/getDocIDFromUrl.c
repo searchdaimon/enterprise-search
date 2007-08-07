@@ -67,16 +67,19 @@ int getDocIDFromUrl(char bdbfiledir[],char url[],unsigned int *DocID) {
         if ((ret = dbp->get(dbp, NULL, &key, &data, 0)) == 0) {
                 //printf("%s : %u-%i \n", key.data, *(int *)data.data,rLotForDOCid(*(int *)data.data));
                 *DocID = *(int *)data.data;
+		dbp->close(dbp, 0);
                 return 1;
         }
         else if (ret == DB_NOTFOUND) {
 		#ifdef DEBUG
                 dbp->err(dbp, ret, "DBcursor->get");
 		#endif
+		dbp->close(dbp, 0);
                 return 0;
         }
         else {
                 dbp->err(dbp, ret, "DBcursor->get");
+		dbp->close(dbp, 0);
                 return 0;
         }
 
