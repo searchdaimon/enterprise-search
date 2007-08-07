@@ -589,10 +589,10 @@ cache_path(char *path, size_t len, enum cache_type type, char *query, int start,
 
 	switch (type) {
 	case CACHE_PREQUERY:
-		cache = "cache/prequery";
+		cache = "var/cache/prequery";
 		break;
 	case CACHE_SEARCH:
-		cache = "cache/search";
+		cache = "var/cache/search";
 		break;
 	}
 	hash = cache_hash(query, start, country);
