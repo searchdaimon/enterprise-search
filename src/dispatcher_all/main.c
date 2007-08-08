@@ -723,6 +723,204 @@ cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, stru
 #endif
 
 
+void
+init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg)
+{
+	int res;
+	config_setting_t *cfgarray;
+
+	// Initialize the CGI lib
+	res = cgi_init();
+
+	// Was there an error initializing the CGI???
+	if (res != CGIERR_NONE) {
+		printf("Error # %d: %s<p>\n", res, cgi_strerror(res));
+		die(1,"Cgi-lib error.");
+	}
+
+	if (cgi_getentrystr("query") == NULL) {
+		die(2,"Did'n receive any query.");
+	}
+	else {
+		strscpy(QueryData->query,cgi_getentrystr("query"),sizeof(QueryData->query) -1);
+	}
+
+
+	if (cgi_getentrystr("search_bruker") == NULL) {
+		fprintf(stderr,"Did'n receive any username.");
+		QueryData->search_user[0] = '\0';
+	}
+	else {
+		strscpy((char *)QueryData->search_user,cgi_getentrystr("search_bruker"),sizeof(QueryData->query) -1);
+	}
+
+
+	if (cgi_getentrystr("userip") == NULL) {
+		fprintf(stderr,"Did'n receive any user ip.");
+		QueryData->userip[0] = '\0';
+	}
+	else {
+		strscpy(QueryData->userip,cgi_getentrystr("userip"),sizeof(QueryData->userip) -1);
+	}
+	//temp:setter ip manuelt for å teste
+	//strcpy(QueryData->userip,"64.236.24.28");
+
+	if (cgi_getentrystr("subname") == NULL) {
+		//die(2,"Did'n receive any subname.");
+		strscpy(QueryData->subname,"www",sizeof(QueryData->subname) -1);
+	}
+	else {
+		strscpy(QueryData->subname,cgi_getentrystr("subname"),sizeof(QueryData->subname) -1);
+	}
+
+#ifdef BLACK_BOKS
+	if (cgi_getentrystr("tkey") == NULL) {
+		die(2,"Did'n receive any tkey.");
+	}
+	else if (strlen(cgi_getentrystr("tkey")) != 32) {
+		die(2,"tkey isent 32 bytes long\n");
+	}
+	else {
+		strscpy(QueryData->tkey,cgi_getentrystr("tkey"),sizeof(QueryData->tkey));
+
+		//sjek tkey
+		if (!tkeyisok(QueryData->tkey)) {
+			die(2,"Wrong tkey.");
+		}
+	}
+#endif
+
+	if (cgi_getentrystr("orderby") == NULL) {
+		QueryData->orderby[0] = '\0';
+	}
+	else {
+		strscpy(QueryData->orderby,cgi_getentrystr("orderby"),sizeof(QueryData->orderby) -1);
+	}
+
+
+	if (cgi_getentryint("start") == 0) {
+		QueryData->start = 1;
+	}
+	else {
+		QueryData->start = cgi_getentryint("start");
+	}
+
+	if ((cgi_getentrystr("filter") == NULL) || (strcmp(cgi_getentrystr("filter"),"") == 0) ) {
+		QueryData->filterOn = 1;
+	}
+	else {
+		QueryData->filterOn = cgi_getentryint("filter");
+	}
+
+
+	if (cgi_getentrystr("HTTP_ACCEPT_LANGUAGE") != NULL) {
+		strscpy(QueryData->HTTP_ACCEPT_LANGUAGE,cgi_getentrystr("HTTP_ACCEPT_LANGUAGE"),sizeof(QueryData->HTTP_ACCEPT_LANGUAGE));
+	}
+	else {
+		QueryData->HTTP_ACCEPT_LANGUAGE[0] = '\0';
+		fprintf(stderr,"Dident get a HTTP_ACCEPT_LANGUAGE\n");
+	}
+
+	if (cgi_getentrystr("HTTP_USER_AGENT") != NULL) {
+		strscpy(QueryData->HTTP_USER_AGENT,cgi_getentrystr("HTTP_USER_AGENT"),sizeof(QueryData->HTTP_USER_AGENT));
+	}
+	else {
+		QueryData->HTTP_USER_AGENT[0] = '\0';
+		fprintf(stderr,"Dident get a HTTP_USER_AGENT\n");
+	}
+
+	if (cgi_getentrystr("HTTP_REFERER") != NULL) {
+		strscpy(QueryData->HTTP_REFERER,cgi_getentrystr("HTTP_REFERER"),sizeof(QueryData->HTTP_REFERER));
+	}
+	else {
+		QueryData->HTTP_REFERER[0] = '\0';
+		fprintf(stderr,"Dident get a HTTP_REFERER\n");
+	}
+
+
+
+	if (cgi_getentrystr("languageFilter") != NULL) {
+		//v13 strscpy(QueryData->languageFilter,cgi_getentrystr("languageFilter"),sizeof(QueryData->languageFilter) -1);
+	}
+	else {
+		//v13 QueryData->languageFilter[0] = '\0';
+		//v13 fprintf(stderr,"Dident get a languageFilter\n");
+	}
+
+
+	if (cgi_getentrystr("AmazonAssociateTag") != NULL) {
+		strscpy(QueryData->AmazonAssociateTag,cgi_getentrystr("AmazonAssociateTag"),sizeof(QueryData->AmazonAssociateTag) -1);
+	}
+	else {
+		QueryData->AmazonAssociateTag[0] = '\0';
+		fprintf(stderr,"Dident get a AmazonAssociateTag\n");
+	}
+
+	if (cgi_getentrystr("AmazonSubscriptionId") != NULL) {
+		strscpy(QueryData->AmazonSubscriptionId,cgi_getentrystr("AmazonSubscriptionId"),sizeof(QueryData->AmazonSubscriptionId) -1);
+	}
+	else {
+		QueryData->AmazonSubscriptionId[0] = '\0';
+		fprintf(stderr,"Dident get a AmazonSubscriptionId\n");
+	}
+
+	if (cgi_getentrystr("getrank") == NULL) {
+		QueryData->rankUrl[0] = '\0';
+	} else {
+		strscpy(QueryData->rankUrl, cgi_getentrystr("getrank"), sizeof(QueryData->rankUrl));
+	}
+	//Runarb: Dette er vel bare aktuelt for black boks. For web trnger eksterne klienter å kalle dispatcher_all direkte?
+#ifdef BLACK_BOKS
+
+#ifdef DEBUG
+	gettimeofday(&start_time, NULL);
+#endif
+	char *remoteaddr = getenv("REMOTE_ADDR");
+
+	int accesshosts, hasaccess = 0;
+	if (remoteaddr != NULL &&
+			(cfgarray = config_lookup(cfg, "access")) != NULL && (accesshosts = config_setting_length(cfgarray)) > 0) {
+		int i;
+
+		for(i=0; i < accesshosts; i++) {
+			const char *p;
+			char *p2;
+
+			if (strcmp(remoteaddr, "127.0.0.1") == 0) {
+				hasaccess = 1;
+				break;
+			}
+			p = config_setting_get_string_elem(cfgarray, i);
+			p2 = strchr(p, ':');
+			if (p2 == NULL) {
+				fprintf(stderr, "Invalid string in config file: '%s'\n", p);
+				continue;
+			}
+			*p2 = '\0';
+			p2++;
+			if (strcmp(p, remoteaddr) == 0 || strcmp(p, "all") == 0) {
+				char *key;
+
+				if ((key = cgi_getentrystr("secret")) != NULL) {
+					if (strcmp(key, p2) == 0) {
+						hasaccess = 1;
+					}
+				}
+				break;
+			}
+		}
+	}
+	if (hasaccess == 0)
+		die(1, "Not allowed to handle request from that address");
+#ifdef DEBUG
+	gettimeofday(&end_time, NULL);
+	dprintf("Time debug: access %f\n",getTimeDifference(&start_time,&end_time));
+#endif
+
+#endif
+
+}
+
 
 
 
@@ -803,9 +1001,8 @@ int main(int argc, char *argv[])
 
 	#ifdef DEBUG
 	gettimeofday(&start_time, NULL);
-
-	dprintf("struct SiderFormat size %i\n",sizeof(struct SiderFormat));
 	#endif
+	dprintf("struct SiderFormat size %i\n",sizeof(struct SiderFormat));
 
 	//starter å ta tiden
 	gettimeofday(&main_start_time, NULL);
@@ -1029,195 +1226,11 @@ int main(int argc, char *argv[])
                 }
         }
         else {
-		// Initialize the CGI lib
-        	res = cgi_init();
-
-		// Was there an error initializing the CGI???
-	        if (res != CGIERR_NONE) {
-        	        printf("Error # %d: %s<p>\n", res, cgi_strerror(res));
-			die(1,"Cgi-lib error.");
-        	}
-		
-		if (cgi_getentrystr("query") == NULL) {
-                	die(2,"Did'n receive any query.");
-        	}
-		else {
-        	        strscpy(QueryData.query,cgi_getentrystr("query"),sizeof(QueryData.query) -1);
-	        }
-
-
-		if (cgi_getentrystr("search_bruker") == NULL) {
-                	fprintf(stderr,"Did'n receive any username.");
-			QueryData.search_user[0] = '\0';
-        	}
-		else {
-        	        strscpy((char *)QueryData.search_user,cgi_getentrystr("search_bruker"),sizeof(QueryData.query) -1);
-	        }
-
-
-		if (cgi_getentrystr("userip") == NULL) {
-                        fprintf(stderr,"Did'n receive any user ip.");
-			QueryData.userip[0] = '\0';
-                }
-		else {
-			strscpy(QueryData.userip,cgi_getentrystr("userip"),sizeof(QueryData.userip) -1);
-		}
-		//temp:setter ip manuelt for å teste
-		//strcpy(QueryData.userip,"64.236.24.28");
-
-		if (cgi_getentrystr("subname") == NULL) {
-                        //die(2,"Did'n receive any subname.");
-			strscpy(QueryData.subname,"www",sizeof(QueryData.subname) -1);
-                }
-		else {
-			strscpy(QueryData.subname,cgi_getentrystr("subname"),sizeof(QueryData.subname) -1);
-		}
-
-		#ifdef BLACK_BOKS
-		if (cgi_getentrystr("tkey") == NULL) {
-                        die(2,"Did'n receive any tkey.");
-                }
-		else if (strlen(cgi_getentrystr("tkey")) != 32) {
-			die(2,"tkey isent 32 bytes long\n");
-		}
-		else {
-			strscpy(QueryData.tkey,cgi_getentrystr("tkey"),sizeof(QueryData.tkey));
-
-			//sjek tkey
-			if (!tkeyisok(QueryData.tkey)) {
-				die(2,"Wrong tkey.");
-			}
-		}
-		#endif
-
-		if (cgi_getentrystr("orderby") == NULL) {
-			QueryData.orderby[0] = '\0';
-                }
-		else {
-			strscpy(QueryData.orderby,cgi_getentrystr("orderby"),sizeof(QueryData.orderby) -1);
-		}
-
-	
-		if (cgi_getentryint("start") == 0) {
-			QueryData.start = 1;
-		}
-		else {
-			QueryData.start = cgi_getentryint("start");
-		}
-
-		if ((cgi_getentrystr("filter") == NULL) || (strcmp(cgi_getentrystr("filter"),"") == 0) ) {
-			QueryData.filterOn = 1;
-		}
-		else {
-			QueryData.filterOn = cgi_getentryint("filter");
-		}
-
-
-		if (cgi_getentrystr("HTTP_ACCEPT_LANGUAGE") != NULL) {
-			strscpy(QueryData.HTTP_ACCEPT_LANGUAGE,cgi_getentrystr("HTTP_ACCEPT_LANGUAGE"),sizeof(QueryData.HTTP_ACCEPT_LANGUAGE));
-		}
-		else {
-			QueryData.HTTP_ACCEPT_LANGUAGE[0] = '\0';
-			fprintf(stderr,"Dident get a HTTP_ACCEPT_LANGUAGE\n");
-		}
-
-		if (cgi_getentrystr("HTTP_USER_AGENT") != NULL) {
-			strscpy(QueryData.HTTP_USER_AGENT,cgi_getentrystr("HTTP_USER_AGENT"),sizeof(QueryData.HTTP_USER_AGENT));
-		}
-		else {
-			QueryData.HTTP_USER_AGENT[0] = '\0';
-			fprintf(stderr,"Dident get a HTTP_USER_AGENT\n");
-		}
-
-		if (cgi_getentrystr("HTTP_REFERER") != NULL) {
-			strscpy(QueryData.HTTP_REFERER,cgi_getentrystr("HTTP_REFERER"),sizeof(QueryData.HTTP_REFERER));
-		}
-		else {
-			QueryData.HTTP_REFERER[0] = '\0';
-			fprintf(stderr,"Dident get a HTTP_REFERER\n");
-		}
-
-
-
-		if (cgi_getentrystr("languageFilter") != NULL) {
-			//v13 strscpy(QueryData.languageFilter,cgi_getentrystr("languageFilter"),sizeof(QueryData.languageFilter) -1);
-		}
-		else {
-			//v13 QueryData.languageFilter[0] = '\0';
-			//v13 fprintf(stderr,"Dident get a languageFilter\n");
-		}
-
-
-		if (cgi_getentrystr("AmazonAssociateTag") != NULL) {
-			strscpy(QueryData.AmazonAssociateTag,cgi_getentrystr("AmazonAssociateTag"),sizeof(QueryData.AmazonAssociateTag) -1);
-		}
-		else {
-			QueryData.AmazonAssociateTag[0] = '\0';
-			fprintf(stderr,"Dident get a AmazonAssociateTag\n");
-		}
-
-		if (cgi_getentrystr("AmazonSubscriptionId") != NULL) {
-			strscpy(QueryData.AmazonSubscriptionId,cgi_getentrystr("AmazonSubscriptionId"),sizeof(QueryData.AmazonSubscriptionId) -1);
-		}
-		else {
-			QueryData.AmazonSubscriptionId[0] = '\0';
-			fprintf(stderr,"Dident get a AmazonSubscriptionId\n");
-		}
-
-		if (cgi_getentrystr("getrank") == NULL) {
+		init_cgi(&QueryData, &cfg);
+		if (QueryData.rankUrl[0] == '\0')
 			getRank = 0;
-			QueryData.rankUrl[0] = '\0';
-		} else {
+		else
 			getRank = 1;
-			strscpy(QueryData.rankUrl, cgi_getentrystr("getrank"), sizeof(QueryData.rankUrl));
-		}
-//Runarb: Dette er vel bare aktuelt for black boks. For web trnger eksterne klienter å kalle dispatcher_all direkte?
-#ifdef BLACK_BOKS
-
-#ifdef DEBUG
-		gettimeofday(&start_time, NULL);
-#endif
-		char *remoteaddr = getenv("REMOTE_ADDR");
-
-		int accesshosts, hasaccess = 0;
-		if (remoteaddr != NULL &&
-		    (cfgarray = config_lookup(&cfg, "access")) != NULL && (accesshosts = config_setting_length(cfgarray)) > 0) {
-			for(i=0; i < accesshosts; i++) {
-				const char *p;
-				char *p2;
-
-				if (strcmp(remoteaddr, "127.0.0.1") == 0) {
-					hasaccess = 1;
-					break;
-				}
-				p = config_setting_get_string_elem(cfgarray, i);
-				p2 = strchr(p, ':');
-				if (p2 == NULL) {
-					fprintf(stderr, "Invalid string in config file: '%s'\n", p);
-					continue;
-				}
-				*p2 = '\0';
-				p2++;
-				if (strcmp(p, remoteaddr) == 0 || strcmp(p, "all") == 0) {
-					char *key;
-
-					if ((key = cgi_getentrystr("secret")) != NULL) {
-						if (strcmp(key, p2) == 0) {
-							hasaccess = 1;
-						}
-					}
-					break;
-				}
-			}
-		}
-		if (hasaccess == 0)
-			die(1, "Not allowed to handle request from that address");
-#ifdef DEBUG
-		gettimeofday(&end_time, NULL);
-		dprintf("Time debug: access %f\n",getTimeDifference(&start_time,&end_time));
-#endif
-
-#endif
         }
 
 	if (!getRank) {
