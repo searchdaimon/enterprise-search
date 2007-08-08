@@ -1559,10 +1559,7 @@ int main(int argc, char *argv[])
 		printf("</ranking>\n");
 
 		/* Free the configuration */
-#ifndef BLACK_BOKS
 		config_destroy(&cfg);
-#endif
-
 		maincfgclose(&maincfg);
 
 		free(SiderHeder);
@@ -2478,10 +2475,7 @@ int main(int argc, char *argv[])
 	/********************************************************************************************/
 
   	/* Free the configuration */
-	#ifndef BLACK_BOKS
-		config_destroy(&cfg);
-	#endif
-
+	config_destroy(&cfg);
 	maincfgclose(&maincfg);
 
 //	fprintf(stderr,"dispatcher_all: done\n");
