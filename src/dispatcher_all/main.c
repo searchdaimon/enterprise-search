@@ -728,6 +728,7 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg)
 {
 	int res;
 	config_setting_t *cfgarray;
+	struct timeval start_time, end_time;
 
 	// Initialize the CGI lib
 	res = cgi_init();
@@ -922,6 +923,245 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg)
 }
 
 
+int
+handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
+               struct QueryDataForamt *QueryData,
+               struct SiderHederFormat *FinalSiderHeder, int fromCache, struct errorhaFormat *errorha,
+               int pageNr, int nrOfServers, int nrOfPiServers, struct filtersTrapedFormat *dispatcherfiltersTraped,
+	       int *nrRespondedServers) 
+{
+	int AdultPages, NonAdultPages;
+	int posisjon, i;
+	int funnet;
+	struct timeval start_time, end_time;
+
+
+	*nrRespondedServers = 0;
+	if (!fromCache) {
+
+		FinalSiderHeder->TotaltTreff = 0;
+		FinalSiderHeder->filtered = 0;
+
+		for (i=0;i<(nrOfServers + nrOfPiServers);i++) {
+			//aaaaa
+			if (sockfd[i] != 0) {
+				FinalSiderHeder->TotaltTreff += SiderHeder[i].TotaltTreff;
+				FinalSiderHeder->filtered += SiderHeder[i].filtered;
+				dprintf("<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\" servername=\"%s\"/>\n",SiderHeder[i].TotaltTreff,QueryData->query,SiderHeder[i].hiliteQuery,SiderHeder[i].total_usecs,SiderHeder[i].filtered,SiderHeder[i].showabal,SiderHeder[i].servername);
+
+				(*nrRespondedServers)++;
+			}
+		}
+
+#if 0
+#ifdef DEBUG
+		dprintf("addservers (have %i):\n",nrOfAddServers);
+		for (i=0;i<nrOfAddServers;i++) {
+			//aaaaa
+			if (addsockfd[i] != 0) {
+				dprintf("\t<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\" servername=\"%s\"/>\n",AddSiderHeder[i].TotaltTreff,QueryData->query,AddSiderHeder[i].hiliteQuery,AddSiderHeder[i].total_usecs,AddSiderHeder[i].filtered,AddSiderHeder[i].showabal,AddSiderHeder[i].servername);
+
+			}
+			else {
+				dprintf("addserver nr %i's sockfd is 0\n",i);
+			}
+		}
+#endif
+#endif
+
+		//finner en hillitet query
+		if (*nrRespondedServers != 0) {
+			funnet = 0;
+			for(i=0;i<(nrOfServers + nrOfPiServers) && !funnet;i++) {
+				if ((sockfd[i] != 0) && (SiderHeder[i].hiliteQuery != '\0')) {
+					strcpy(FinalSiderHeder->hiliteQuery,SiderHeder[i].hiliteQuery);
+					funnet =1;
+				}
+			}
+		}
+		else {
+			FinalSiderHeder->hiliteQuery[0] = '\0';
+		}
+
+		//hvis vi ikke fikk svar fra noen
+		if(*nrRespondedServers == 0) {
+			die(16,"Couldnt contact the Boitho search system. Please try again later.");
+		}
+		//genererer feil om at ikke alle server svarte på queryet
+		if (*nrRespondedServers != (nrOfServers + nrOfPiServers)) {
+			addError(errorha,11,"Not all the search nodes responded to your query. Result quality may have been negatively effected.");
+		}
+		//hånterer error. Viser den hvis vi hadde noen
+		if (*nrRespondedServers != 0) {
+			for(i=0;i<(nrOfServers + nrOfPiServers);i++) {
+				if (SiderHeder[i].responstype == searchd_responstype_error) {
+					addError(errorha,11,SiderHeder[i].errorstr);
+				}
+			}
+		}
+
+		//fjerner eventuelle adult sider
+		AdultPages = 0;
+		NonAdultPages = 0;
+		for(i=0;i<QueryData->MaxsHits * nrOfServers + nrOfPiServers;i++) {	
+			if (!Sider[i].deletet) {
+
+				if (Sider[i].DocumentIndex.AdultWeight > 50) {
+					++AdultPages;
+				}
+				else {
+					++NonAdultPages;
+				}
+
+			}		
+		}
+
+		dprintf("AdultPages %i, NonAdultPages: %i\n",AdultPages,NonAdultPages);
+		//hvis vi har adult pages sjekker vi om vi har nokk ikke adult pages å vise, hvis ikke viser vi bare adult
+
+#ifdef DEBUG
+		gettimeofday(&start_time, NULL);
+#endif
+		//sorterer resultatene
+		dprintf("mgsort: pageNr %i\n",pageNr);
+		mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements);
+
+#ifdef DEBUG
+		gettimeofday(&end_time, NULL);
+		dprintf("Time debug: mgsort_1 %f\n",getTimeDifference(&start_time,&end_time));
+#endif
+
+#ifdef DEBUG
+		gettimeofday(&start_time, NULL);
+#endif		
+
+		filtersTrapedReset(dispatcherfiltersTraped);
+
+		//dette er kansje ikke optimalet, da vi går gjenom alle siden. Ikke bare de som skal være med
+		for(i=0;i<QueryData->MaxsHits * nrOfServers + nrOfPiServers;i++) {
+
+			dprintf("looking on url %s, %i, %i\n",Sider[i].DocumentIndex.Url,Sider[i].deletet,Sider[i].DocumentIndex.AdultWeight);
+			if (!Sider[i].deletet) {
+				//setter som slettet
+				Sider[i].deletet = 1;
+
+
+				if ((QueryData->filterOn) && (Sider[i].subname.config.filterSameUrl) 
+						&& (filterSameUrl(i,Sider[i].url,Sider)) ) {
+					dprintf("Hav seen url befor. Url '%s', DocID %u\n",Sider[i].url,Sider[i].iindex.DocID);
+					//(*SiderHeder).filtered++;
+					FinalSiderHeder->filtered++;
+					--FinalSiderHeder->TotaltTreff;
+					++dispatcherfiltersTraped->filterSameUrl;					
+					continue;
+				}
+
+#ifndef BLACK_BOKS
+
+#if 0
+				// 19. juni
+				//ToDo: fjerner adult vekt filtrering her. Er det trykt. Hvis vi for eks har misket resultater, men ikke noen noder hadde fø sider, og tilot adoult
+				// hva er egentlig adoult filter statur på searchd nå?
+				if ((QueryData->filterOn) && Sider[i].DocumentIndex.AdultWeight > 50) {
+					dprintf("slettet adult side %s ault %i\n",Sider[i].url,Sider[i].DocumentIndex.AdultWeight);
+					//(*SiderHeder).filtered++;
+					FinalSiderHeder->filtered++;
+					--FinalSiderHeder->TotaltTreff;
+					++dispatcherfiltersTraped->filterAdultWeight_value;
+					continue;
+				}
+#endif
+				if ((QueryData->filterOn) && (Sider[i].subname.config.filterSameCrc32) 
+						&& filterSameCrc32(i,&Sider[i],Sider)) {
+					dprintf("hav same crc32. crc32 from DocumentIndex. Will delete \"%s\"\n",Sider[i].DocumentIndex.Url);
+					//(*SiderHeder).filtered++;
+					FinalSiderHeder->filtered++;
+					--FinalSiderHeder->TotaltTreff;
+					++dispatcherfiltersTraped->filterSameCrc32_1;
+
+					continue;
+				}
+
+				if ((QueryData->filterOn) && (Sider[i].subname.config.filterSameDomain) 
+						&& (filterSameDomain(i,&Sider[i],Sider))) {
+					dprintf("hav same domain \"%s\"\n",Sider[i].domain);
+					//(*SiderHeder).filtered++;
+					FinalSiderHeder->filtered++;
+					--FinalSiderHeder->TotaltTreff;
+					++dispatcherfiltersTraped->filterSameDomain;
+
+					continue;
+				}
+
+#if 0
+				if ((QueryData->filterOn) && filterDescription(i,&Sider[i],Sider)) {
+					dprintf("hav same Description. DocID %i\n",Sider[i].iindex.DocID);
+					//(*SiderHeder).filtered++;
+					FinalSiderHeder->filtered++;
+					--FinalSiderHeder->TotaltTreff;
+					continue;
+				}
+#endif
+#endif
+
+				//printf("url %s\n",Sider[i].DocumentIndex.Url);
+
+				//hvis siden overlevde helt hit er den ok
+				Sider[i].deletet = 0;
+			}
+		}
+
+	} // !hascashe && !hasprequery
+	else {
+		*nrRespondedServers = 1;
+
+	}
+
+	//why was sort here???
+	posisjon=0;
+	for(i=0;i<QueryData->MaxsHits * nrOfServers + nrOfPiServers;i++) {
+		if (!Sider[i].deletet) {
+			Sider[i].posisjon = posisjon++;
+		}
+
+		//dprintf("%s\n",Sider[i].url);
+	}	
+
+
+#ifdef DEBUG
+	gettimeofday(&end_time, NULL);
+	dprintf("Time debug: filter pages %f\n",getTimeDifference(&start_time,&end_time));
+#endif
+
+
+#ifdef DEBUG
+	gettimeofday(&start_time, NULL);
+#endif
+
+	//resorterer query
+	//mgsort(Sider, nrOfServers * QueryData->MaxsHits , sizeof(struct SiderFormat), compare_elements_posisjon);
+	mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements_posisjon);
+
+#ifdef DEBUG
+	gettimeofday(&end_time, NULL);
+	dprintf("Time debug: mgsort_2 %f\n",getTimeDifference(&start_time,&end_time));
+#endif
+
+	/* tempaa */
+#if 0
+	FinalSiderHeder->showabal = 0;
+	for(i=0;i<QueryData->MaxsHits * nrOfServers;i++) {
+		if (!Sider[i].deletet) {
+			++FinalSiderHeder->showabal;
+		}
+	}
+#endif
+
+	FinalSiderHeder->showabal = pageNr;
+	if (FinalSiderHeder->showabal > QueryData->MaxsHits) {
+		FinalSiderHeder->showabal = QueryData->MaxsHits;
+	}
+}
 
 
 int main(int argc, char *argv[])
@@ -936,7 +1176,7 @@ int main(int argc, char *argv[])
 
         int sockfd[maxServers];
         int addsockfd[maxServers];
-	int i,y,n,funnet,x;
+	int i,y,n,x;
 	int pageNr;
 	char documentlangcode[4];
 	int totlaAds;
@@ -970,14 +1210,14 @@ int main(int argc, char *argv[])
 	struct in_addr ipaddr;
         struct QueryDataForamt QueryData;
 	//int connected[maxServers];
-	int NonAdultPages,AdultPages;
+	//int NonAdultPages,AdultPages;
 	struct timeval main_start_time, main_end_time;
 	struct timeval start_time, end_time;
 	int nrRespondedServers;
 	char errormessage[maxerrorlen];
 	struct errorhaFormat errorha;
 	errorha.nr = 0;
-	int posisjon;
+	//int posisjon;
 	struct timeval timeout;
 	struct timeval time;
 	int socketWait;	
@@ -1577,7 +1817,6 @@ int main(int argc, char *argv[])
 
 	if ((!hascashe) && (!hasprequery)) {
 		brGetPages(sockfd,nrOfServers,SiderHeder,Sider,&pageNr,nrOfPiServers);
-
 	}
 
 	//addservere
@@ -1589,6 +1828,10 @@ int main(int argc, char *argv[])
 	dprintf("Time debug: geting pages %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
+	handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, (hascashe || hasprequery), &errorha, pageNr,
+	               nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers);
+
+#if 0
 	nrRespondedServers = 0;
 
 	if ((!hascashe) && (!hasprequery)) {
@@ -1814,7 +2057,6 @@ int main(int argc, char *argv[])
 
 	
 	//} //casche
-	totlaAds = 0;
 
 	//stopper å ta tidn og kalkulerer hvor lang tid vi brukte
 	gettimeofday(&main_end_time, NULL);
@@ -1824,6 +2066,9 @@ int main(int argc, char *argv[])
 	if (FinalSiderHeder.TotaltTreff>100) {
 		FinalSiderHeder.filtered = 0;
 	}
+
+#endif
+	totlaAds = 0;
 
         //printf("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?> \n");
         printf("<?xml version=\"1.0\" encoding=\"UTF-8\" ?> \n");
