@@ -1478,9 +1478,6 @@ int main(int argc, char *argv[])
 	bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder,0,searchport);
 	//Paid inclusion
 	bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,nrOfServers,searchport);
-	//Paid inclusion
-	brGetPages(sockfd,nrOfPiServers,SiderHeder,Sider,&pageNr,0);
-
 
 	if (getRank) {
 		int endranking = 0;
@@ -1581,6 +1578,8 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
+	//Paid inclusion
+	brGetPages(sockfd,nrOfPiServers,SiderHeder,Sider,&pageNr,0);
 
 	if ((!hascashe) && (!hasprequery)) {
 		brGetPages(sockfd,nrOfServers,SiderHeder,Sider,&pageNr,nrOfPiServers);
@@ -1627,9 +1626,6 @@ int main(int argc, char *argv[])
 			}
 		}
 		#endif
-
-	
-
 	
 		//finner en hillitet query
 		if (nrRespondedServers != 0) {
@@ -1661,7 +1657,6 @@ int main(int argc, char *argv[])
 				}
 			}
 		}
-
 
 		//fjerner eventuelle adult sider
 		AdultPages = 0;
@@ -1719,7 +1714,6 @@ int main(int argc, char *argv[])
 					continue;
 				}
 
-
 #ifndef BLACK_BOKS
 
 #if 0
@@ -1776,19 +1770,13 @@ printf("hav same Description. DocID %i\n",Sider[i].iindex.DocID);
 			}
 		}
 
-		//			}
-		//		}
-
-
-} // !hascashe && !hasprequery
+	} // !hascashe && !hasprequery
 	else {
 		nrRespondedServers = 1;
 
 	}
 
 	//why was sort here???
-
-
 	posisjon=0;
 	for(i=0;i<QueryData.MaxsHits * nrOfServers + nrOfPiServers;i++) {
 		if (!Sider[i].deletet) {
@@ -1797,8 +1785,6 @@ printf("hav same Description. DocID %i\n",Sider[i].iindex.DocID);
 
 		//dprintf("%s\n",Sider[i].url);
 	}	
-
-
 
 	
 	#ifdef DEBUG
