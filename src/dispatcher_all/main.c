@@ -1168,10 +1168,7 @@ int main(int argc, char *argv[])
                         printf("Error ingen query spesifisert eller subname .\n\nEksempel på bruk for å søke på boitho:\n\tsearchkernel boitho www\n\n\n");
                 }
                 else {
-
 			strcpy(QueryData.userip,"213.179.58.99");
-
-
 			/*
                         QueryData.query[0] = '\0';
 			
@@ -1186,7 +1183,6 @@ int main(int argc, char *argv[])
 			#else
 				QueryData.search_user[0] = '\0';
 			#endif
-
 
 			getRank = 0;
 			QueryData.rankUrl[0] = '\0';
@@ -1350,9 +1346,7 @@ int main(int argc, char *argv[])
 
         	}
 		else {
-			sprintf(QueryData.GeoIPcontry,"%s",gir->country_code);
-		
-	
+			strcpy(QueryData.GeoIPcontry, gir->country_code);
 
         		dprintf("GeoIP: %s\t%s\t%s\t%s\t%s\t%f\t%f\t%d\t%d\n", queryNodeHeder.userip,
                                          gir->country_code,
@@ -1750,17 +1744,16 @@ int main(int argc, char *argv[])
 
 					continue;
 				}
-				/*
-				   if ((QueryData.filterOn) && filterDescription(i,&Sider[i],Sider)) {
-#ifdef DEBUG
-printf("hav same Description. DocID %i\n",Sider[i].iindex.DocID);
-#endif
-				//(*SiderHeder).filtered++;
-				FinalSiderHeder.filtered++;
-				--FinalSiderHeder.TotaltTreff;
-				continue;
+
+#if 0
+				if ((QueryData.filterOn) && filterDescription(i,&Sider[i],Sider)) {
+					dprintf("hav same Description. DocID %i\n",Sider[i].iindex.DocID);
+					//(*SiderHeder).filtered++;
+					FinalSiderHeder.filtered++;
+					--FinalSiderHeder.TotaltTreff;
+					continue;
 				}
-				 */
+#endif
 #endif
 
 				//printf("url %s\n",Sider[i].DocumentIndex.Url);
