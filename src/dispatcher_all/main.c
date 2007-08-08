@@ -1533,7 +1533,6 @@ int main(int argc, char *argv[])
 			}
 		}
 		else {
-			dprintf("No ranking found...\n");
 			die(1, "No rank found");
 		}
 
@@ -1679,111 +1678,109 @@ int main(int argc, char *argv[])
 
 			}		
 		}
-	
+
 		dprintf("AdultPages %i, NonAdultPages: %i\n",AdultPages,NonAdultPages);
 		//hvis vi har adult pages sjekker vi om vi har nokk ikke adult pages å vise, hvis ikke viser vi bare adult
 
-		#ifdef DEBUG
+#ifdef DEBUG
 		gettimeofday(&start_time, NULL);
-		#endif
+#endif
 		//sorterer resultatene
 		dprintf("mgsort: pageNr %i\n",pageNr);
 		mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements);
 
-		#ifdef DEBUG
+#ifdef DEBUG
 		gettimeofday(&end_time, NULL);
 		dprintf("Time debug: mgsort_1 %f\n",getTimeDifference(&start_time,&end_time));
-		#endif
+#endif
 
-		#ifdef DEBUG
+#ifdef DEBUG
 		gettimeofday(&start_time, NULL);
-		#endif		
+#endif		
 
-			filtersTrapedReset(&dispatcherfiltersTraped);
+		filtersTrapedReset(&dispatcherfiltersTraped);
 
-			//dette er kansje ikke optimalet, da vi går gjenom alle siden. Ikke bare de som skal være med
-			for(i=0;i<QueryData.MaxsHits * nrOfServers + nrOfPiServers;i++) {
+		//dette er kansje ikke optimalet, da vi går gjenom alle siden. Ikke bare de som skal være med
+		for(i=0;i<QueryData.MaxsHits * nrOfServers + nrOfPiServers;i++) {
 
-				dprintf("looking on url %s, %i, %i\n",Sider[i].DocumentIndex.Url,Sider[i].deletet,Sider[i].DocumentIndex.AdultWeight);
-				if (!Sider[i].deletet) {
-					//setter som slettet
-					Sider[i].deletet = 1;
+			dprintf("looking on url %s, %i, %i\n",Sider[i].DocumentIndex.Url,Sider[i].deletet,Sider[i].DocumentIndex.AdultWeight);
+			if (!Sider[i].deletet) {
+				//setter som slettet
+				Sider[i].deletet = 1;
 
 
-					if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameUrl) 
+				if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameUrl) 
 						&& (filterSameUrl(i,Sider[i].url,Sider)) ) {
-                        			dprintf("Hav seen url befor. Url '%s', DocID %u\n",Sider[i].url,Sider[i].iindex.DocID);
-                        			//(*SiderHeder).filtered++;
-						FinalSiderHeder.filtered++;
-						--FinalSiderHeder.TotaltTreff;
-						++dispatcherfiltersTraped.filterSameUrl;					
-                        			continue;
-                			}
-
-
-					#ifndef BLACK_BOKS
-
-					/*
-					// 19. juni
-					//ToDo: fjerner adult vekt filtrering her. Er det trykt. Hvis vi for eks har misket resultater, men ikke noen noder hadde fø sider, og tilot adoult
-					// hva er egentlig adoult filter statur på searchd nå?
-					if ((QueryData.filterOn) && Sider[i].DocumentIndex.AdultWeight > 50) {
-						#ifdef DEBUG
-							printf("slettet adult side %s ault %i\n",Sider[i].url,Sider[i].DocumentIndex.AdultWeight);
-						#endif
-                        			//(*SiderHeder).filtered++;
-						FinalSiderHeder.filtered++;
-						--FinalSiderHeder.TotaltTreff;
-						++dispatcherfiltersTraped.filterAdultWeight_value;
-						continue;
-					}
-					*/
-					if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameCrc32) 
-						&& filterSameCrc32(i,&Sider[i],Sider)) {
-						dprintf("hav same crc32. crc32 from DocumentIndex. Will delete \"%s\"\n",Sider[i].DocumentIndex.Url);
-                        		        //(*SiderHeder).filtered++;
-						FinalSiderHeder.filtered++;
-						--FinalSiderHeder.TotaltTreff;
-						++dispatcherfiltersTraped.filterSameCrc32_1;
-	
-        	                	        continue;
-        	                	}
-
-					if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameDomain) 
-						&& (filterSameDomain(i,&Sider[i],Sider))) {
-						dprintf("hav same domain \"%s\"\n",Sider[i].domain);
-                        			//(*SiderHeder).filtered++;
-						FinalSiderHeder.filtered++;
-						--FinalSiderHeder.TotaltTreff;
-						++dispatcherfiltersTraped.filterSameDomain;
-
-                        			continue;
-                			}
-					/*
-					if ((QueryData.filterOn) && filterDescription(i,&Sider[i],Sider)) {
-						#ifdef DEBUG
-                        				printf("hav same Description. DocID %i\n",Sider[i].iindex.DocID);
-						#endif
-						//(*SiderHeder).filtered++;
-						FinalSiderHeder.filtered++;
-						--FinalSiderHeder.TotaltTreff;
-                        			continue;
-                			}
-					*/
-                			#endif
-
-					//printf("url %s\n",Sider[i].DocumentIndex.Url);
-
-					//hvis siden overlevde helt hit er den ok
-				Sider[i].deletet = 0;
+					dprintf("Hav seen url befor. Url '%s', DocID %u\n",Sider[i].url,Sider[i].iindex.DocID);
+					//(*SiderHeder).filtered++;
+					FinalSiderHeder.filtered++;
+					--FinalSiderHeder.TotaltTreff;
+					++dispatcherfiltersTraped.filterSameUrl;					
+					continue;
 				}
+
+
+#ifndef BLACK_BOKS
+
+#if 0
+				// 19. juni
+				//ToDo: fjerner adult vekt filtrering her. Er det trykt. Hvis vi for eks har misket resultater, men ikke noen noder hadde fø sider, og tilot adoult
+				// hva er egentlig adoult filter statur på searchd nå?
+				if ((QueryData.filterOn) && Sider[i].DocumentIndex.AdultWeight > 50) {
+					dprintf("slettet adult side %s ault %i\n",Sider[i].url,Sider[i].DocumentIndex.AdultWeight);
+					//(*SiderHeder).filtered++;
+					FinalSiderHeder.filtered++;
+					--FinalSiderHeder.TotaltTreff;
+					++dispatcherfiltersTraped.filterAdultWeight_value;
+					continue;
+				}
+#endif
+				if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameCrc32) 
+						&& filterSameCrc32(i,&Sider[i],Sider)) {
+					dprintf("hav same crc32. crc32 from DocumentIndex. Will delete \"%s\"\n",Sider[i].DocumentIndex.Url);
+					//(*SiderHeder).filtered++;
+					FinalSiderHeder.filtered++;
+					--FinalSiderHeder.TotaltTreff;
+					++dispatcherfiltersTraped.filterSameCrc32_1;
+
+					continue;
+				}
+
+				if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameDomain) 
+						&& (filterSameDomain(i,&Sider[i],Sider))) {
+					dprintf("hav same domain \"%s\"\n",Sider[i].domain);
+					//(*SiderHeder).filtered++;
+					FinalSiderHeder.filtered++;
+					--FinalSiderHeder.TotaltTreff;
+					++dispatcherfiltersTraped.filterSameDomain;
+
+					continue;
+				}
+				/*
+				   if ((QueryData.filterOn) && filterDescription(i,&Sider[i],Sider)) {
+#ifdef DEBUG
+printf("hav same Description. DocID %i\n",Sider[i].iindex.DocID);
+#endif
+				//(*SiderHeder).filtered++;
+				FinalSiderHeder.filtered++;
+				--FinalSiderHeder.TotaltTreff;
+				continue;
+				}
+				 */
+#endif
+
+				//printf("url %s\n",Sider[i].DocumentIndex.Url);
+
+				//hvis siden overlevde helt hit er den ok
+				Sider[i].deletet = 0;
 			}
+		}
 
-//			}
-//		}
+		//			}
+		//		}
 
 
-	} // !hascashe && !hasprequery
+} // !hascashe && !hasprequery
 	else {
 		nrRespondedServers = 1;
 
@@ -1846,8 +1843,7 @@ int main(int argc, char *argv[])
 	
 	//Sier ikke noe om filtrerte treff hvis vi hadde mange nokk
 	if (FinalSiderHeder.TotaltTreff>100) {
-
-		FinalSiderHeder.filtered = 0;;
+		FinalSiderHeder.filtered = 0;
 	}
 
         //printf("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?> \n");
@@ -1876,103 +1872,101 @@ int main(int argc, char *argv[])
 	
 	//viser info om dispatcher_all
 	printf("<DISPATCHER_INFO>\n");
-		printf("\t<FILTERTRAPP>\n");
-			printf("\t\t<filterAdultWeight_bool>%i</filterAdultWeight_bool>\n",dispatcherfiltersTraped.filterAdultWeight_bool);
-			printf("\t\t<filterAdultWeight_value>%i</filterAdultWeight_value>\n",dispatcherfiltersTraped.filterAdultWeight_value);
-			printf("\t\t<filterSameCrc32_1>%i</filterSameCrc32_1>\n",dispatcherfiltersTraped.filterSameCrc32_1);
-			printf("\t\t<filterSameUrl>%i</filterSameUrl>\n",dispatcherfiltersTraped.filterSameUrl);
-			printf("\t\t<filterNoUrl>%i</filterNoUrl>\n",dispatcherfiltersTraped.filterNoUrl);
-			printf("\t\t<find_domain_no_subname>%i</find_domain_no_subname>\n",dispatcherfiltersTraped.find_domain_no_subname);
-			printf("\t\t<filterSameDomain>%i</filterSameDomain>\n",dispatcherfiltersTraped.filterSameDomain);
-			printf("\t\t<filterTLDs>%i</filterTLDs>\n",dispatcherfiltersTraped.filterTLDs);
-			printf("\t\t<filterResponse>%i</filterResponse>\n",dispatcherfiltersTraped.filterResponse);
-			printf("\t\t<cantpopResult>%i</cantpopResult>\n",dispatcherfiltersTraped.cantpopResult);
-			printf("\t\t<cmc_pathaccess>%i</cmc_pathaccess>\n",dispatcherfiltersTraped.cmc_pathaccess);
-			printf("\t\t<filterSameCrc32_2>%i</filterSameCrc32_2>\n",dispatcherfiltersTraped.filterSameCrc32_2);
-
-					printf("\t</FILTERTRAPP>\n");
+	printf("\t<FILTERTRAPP>\n");
+	{
+		printf("\t\t<filterAdultWeight_bool>%i</filterAdultWeight_bool>\n",dispatcherfiltersTraped.filterAdultWeight_bool);
+		printf("\t\t<filterAdultWeight_value>%i</filterAdultWeight_value>\n",dispatcherfiltersTraped.filterAdultWeight_value);
+		printf("\t\t<filterSameCrc32_1>%i</filterSameCrc32_1>\n",dispatcherfiltersTraped.filterSameCrc32_1);
+		printf("\t\t<filterSameUrl>%i</filterSameUrl>\n",dispatcherfiltersTraped.filterSameUrl);
+		printf("\t\t<filterNoUrl>%i</filterNoUrl>\n",dispatcherfiltersTraped.filterNoUrl);
+		printf("\t\t<find_domain_no_subname>%i</find_domain_no_subname>\n",dispatcherfiltersTraped.find_domain_no_subname);
+		printf("\t\t<filterSameDomain>%i</filterSameDomain>\n",dispatcherfiltersTraped.filterSameDomain);
+		printf("\t\t<filterTLDs>%i</filterTLDs>\n",dispatcherfiltersTraped.filterTLDs);
+		printf("\t\t<filterResponse>%i</filterResponse>\n",dispatcherfiltersTraped.filterResponse);
+		printf("\t\t<cantpopResult>%i</cantpopResult>\n",dispatcherfiltersTraped.cantpopResult);
+		printf("\t\t<cmc_pathaccess>%i</cmc_pathaccess>\n",dispatcherfiltersTraped.cmc_pathaccess);
+		printf("\t\t<filterSameCrc32_2>%i</filterSameCrc32_2>\n",dispatcherfiltersTraped.filterSameCrc32_2);
+	}
+	printf("\t</FILTERTRAPP>\n");
 	printf("</DISPATCHER_INFO>\n");
 
 
 	if ((!hascashe) && (!hasprequery)) {
 
-
-
 		//viser info om serverne som svarte
 		//printf("<SEARCHNODES_INFO NROFSEARCHNODES=\"%i\" />\n",nrRespondedServers);
 
 		for (i=0;i<nrOfServers + nrOfPiServers;i++) {
-                	if (sockfd[i] != 0) {
+			if (sockfd[i] != 0) {
 				printf("<SEARCHNODES>\n");
-					printf("\t<NODENAME>%s</NODENAME>\n",SiderHeder[i].servername);
-                	 		printf("\t<TOTALTIME>%f</TOTALTIME>\n",SiderHeder[i].total_usecs);
-					printf("\t<FILTERED>%i</FILTERED>\n",SiderHeder[i].filtered);
-					printf("\t<HITS>%i</HITS>\n",SiderHeder[i].TotaltTreff);
+				printf("\t<NODENAME>%s</NODENAME>\n",SiderHeder[i].servername);
+				printf("\t<TOTALTIME>%f</TOTALTIME>\n",SiderHeder[i].total_usecs);
+				printf("\t<FILTERED>%i</FILTERED>\n",SiderHeder[i].filtered);
+				printf("\t<HITS>%i</HITS>\n",SiderHeder[i].TotaltTreff);
 
-					#ifndef DEBUG
-					printf("\t<TIMES>\n");
-						
-						printf("\t\t<AthorSearch>%f</AthorSearch>\n",SiderHeder[i].queryTime.AthorSearch);
-						//printf("\t\t<AthorRank>%f</AthorRank>\n",SiderHeder[i].queryTime.AthorRank);
-						printf("\t\t<UrlSearch>%f</UrlSearch>\n",SiderHeder[i].queryTime.UrlSearch);
-						printf("\t\t<MainSearch>%f</MainSearch>\n",SiderHeder[i].queryTime.MainSearch);
-						//printf("\t\t<MainRank>%f</MainRank>\n",SiderHeder[i].queryTime.MainRank);
-						printf("\t\t<MainAthorMerge>%f</MainAthorMerge>\n",SiderHeder[i].queryTime.MainAthorMerge);
-						printf("\t\t<popRank>%f</popRank>\n",SiderHeder[i].queryTime.popRank);
-						printf("\t\t<responseShortning>%f</responseShortning>\n",SiderHeder[i].queryTime.responseShortning);
+#ifndef DEBUG
+				printf("\t<TIMES>\n");
+				{
+					printf("\t\t<AthorSearch>%f</AthorSearch>\n",SiderHeder[i].queryTime.AthorSearch);
+					//printf("\t\t<AthorRank>%f</AthorRank>\n",SiderHeder[i].queryTime.AthorRank);
+					printf("\t\t<UrlSearch>%f</UrlSearch>\n",SiderHeder[i].queryTime.UrlSearch);
+					printf("\t\t<MainSearch>%f</MainSearch>\n",SiderHeder[i].queryTime.MainSearch);
+					//printf("\t\t<MainRank>%f</MainRank>\n",SiderHeder[i].queryTime.MainRank);
+					printf("\t\t<MainAthorMerge>%f</MainAthorMerge>\n",SiderHeder[i].queryTime.MainAthorMerge);
+					printf("\t\t<popRank>%f</popRank>\n",SiderHeder[i].queryTime.popRank);
+					printf("\t\t<responseShortning>%f</responseShortning>\n",SiderHeder[i].queryTime.responseShortning);
 
-						printf("\t\t<allrankCalc>%f</allrankCalc>\n",SiderHeder[i].queryTime.allrankCalc);
-						printf("\t\t<indexSort>%f</indexSort>\n",SiderHeder[i].queryTime.indexSort);
-						printf("\t\t<searchSimple>%f</searchSimple>\n",SiderHeder[i].queryTime.searchSimple);
+					printf("\t\t<allrankCalc>%f</allrankCalc>\n",SiderHeder[i].queryTime.allrankCalc);
+					printf("\t\t<indexSort>%f</indexSort>\n",SiderHeder[i].queryTime.indexSort);
+					printf("\t\t<searchSimple>%f</searchSimple>\n",SiderHeder[i].queryTime.searchSimple);
 
-						printf("\t\t<popResult>%f</popResult>\n",SiderHeder[i].queryTime.popResult);
-						printf("\t\t<adultcalk>%f</adultcalk>\n",SiderHeder[i].queryTime.adultcalk);
+					printf("\t\t<popResult>%f</popResult>\n",SiderHeder[i].queryTime.popResult);
+					printf("\t\t<adultcalk>%f</adultcalk>\n",SiderHeder[i].queryTime.adultcalk);
 
-						#ifdef BLACK_BOKS
-							printf("\t\t<filetypes>%f</filetypes>\n",SiderHeder[i].queryTime.filetypes);
-							printf("\t\t<iintegerGetValueDate>%f</iintegerGetValueDate>\n",SiderHeder[i].queryTime.iintegerGetValueDate);
-							printf("\t\t<dateview>%f</dateview>\n",SiderHeder[i].queryTime.dateview);
-							printf("\t\t<crawlManager>%f</crawlManager>\n",SiderHeder[i].queryTime.crawlManager);
-							printf("\t\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);
-							printf("\t\t<cmc_conect>%f</cmc_conect>\n",SiderHeder[i].queryTime.cmc_conect);
-						#endif
-					printf("\t</TIMES>\n");
+#ifdef BLACK_BOKS
+					printf("\t\t<filetypes>%f</filetypes>\n",SiderHeder[i].queryTime.filetypes);
+					printf("\t\t<iintegerGetValueDate>%f</iintegerGetValueDate>\n",SiderHeder[i].queryTime.iintegerGetValueDate);
+					printf("\t\t<dateview>%f</dateview>\n",SiderHeder[i].queryTime.dateview);
+					printf("\t\t<crawlManager>%f</crawlManager>\n",SiderHeder[i].queryTime.crawlManager);
+					printf("\t\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);
+					printf("\t\t<cmc_conect>%f</cmc_conect>\n",SiderHeder[i].queryTime.cmc_conect);
+#endif
+				}
+				printf("\t</TIMES>\n");
 
-					printf("\t<FILTERTRAPP>\n");
-						printf("\t\t<filterAdultWeight_bool>%i</filterAdultWeight_bool>\n",SiderHeder[i].filtersTraped.filterAdultWeight_bool);
-						printf("\t\t<filterAdultWeight_value>%i</filterAdultWeight_value>\n",SiderHeder[i].filtersTraped.filterAdultWeight_value);
-						printf("\t\t<filterSameCrc32_1>%i</filterSameCrc32_1>\n",SiderHeder[i].filtersTraped.filterSameCrc32_1);
-						printf("\t\t<filterSameUrl>%i</filterSameUrl>\n",SiderHeder[i].filtersTraped.filterSameUrl);
-						printf("\t\t<filterNoUrl>%i</filterNoUrl>\n",SiderHeder[i].filtersTraped.filterNoUrl);
-						printf("\t\t<find_domain_no_subname>%i</find_domain_no_subname>\n",SiderHeder[i].filtersTraped.find_domain_no_subname);
-						printf("\t\t<filterSameDomain>%i</filterSameDomain>\n",SiderHeder[i].filtersTraped.filterSameDomain);
-						printf("\t\t<filterTLDs>%i</filterTLDs>\n",SiderHeder[i].filtersTraped.filterTLDs);
-						printf("\t\t<filterResponse>%i</filterResponse>\n",SiderHeder[i].filtersTraped.filterResponse);
-						printf("\t\t<cantpopResult>%i</cantpopResult>\n",SiderHeder[i].filtersTraped.cantpopResult);
-						printf("\t\t<cmc_pathaccess>%i</cmc_pathaccess>\n",SiderHeder[i].filtersTraped.cmc_pathaccess);
-						printf("\t\t<filterSameCrc32_2>%i</filterSameCrc32_2>\n",SiderHeder[i].filtersTraped.filterSameCrc32_2);
-
-					printf("\t</FILTERTRAPP>\n");
-					#endif
+				printf("\t<FILTERTRAPP>\n");
+				{
+					printf("\t\t<filterAdultWeight_bool>%i</filterAdultWeight_bool>\n",SiderHeder[i].filtersTraped.filterAdultWeight_bool);
+					printf("\t\t<filterAdultWeight_value>%i</filterAdultWeight_value>\n",SiderHeder[i].filtersTraped.filterAdultWeight_value);
+					printf("\t\t<filterSameCrc32_1>%i</filterSameCrc32_1>\n",SiderHeder[i].filtersTraped.filterSameCrc32_1);
+					printf("\t\t<filterSameUrl>%i</filterSameUrl>\n",SiderHeder[i].filtersTraped.filterSameUrl);
+					printf("\t\t<filterNoUrl>%i</filterNoUrl>\n",SiderHeder[i].filtersTraped.filterNoUrl);
+					printf("\t\t<find_domain_no_subname>%i</find_domain_no_subname>\n",SiderHeder[i].filtersTraped.find_domain_no_subname);
+					printf("\t\t<filterSameDomain>%i</filterSameDomain>\n",SiderHeder[i].filtersTraped.filterSameDomain);
+					printf("\t\t<filterTLDs>%i</filterTLDs>\n",SiderHeder[i].filtersTraped.filterTLDs);
+					printf("\t\t<filterResponse>%i</filterResponse>\n",SiderHeder[i].filtersTraped.filterResponse);
+					printf("\t\t<cantpopResult>%i</cantpopResult>\n",SiderHeder[i].filtersTraped.cantpopResult);
+					printf("\t\t<cmc_pathaccess>%i</cmc_pathaccess>\n",SiderHeder[i].filtersTraped.cmc_pathaccess);
+					printf("\t\t<filterSameCrc32_2>%i</filterSameCrc32_2>\n",SiderHeder[i].filtersTraped.filterSameCrc32_2);
+				}
+				printf("\t</FILTERTRAPP>\n");
+#endif
 
 				printf("</SEARCHNODES>\n");
 
 
 			}	
 		}
-
 	}
 	else {
-                
 		printf("<SEARCHNODES>\n");
-			printf("\t<NODENAME>cashe.boitho.com</NODENAME>\n");
-               		printf("\t<TOTALTIME>%f</TOTALTIME>\n",FinalSiderHeder.total_usecs);
-			printf("\t<FILTERED>0</FILTERED>\n");
-			printf("\t<HITS>%i</HITS>\n",FinalSiderHeder.TotaltTreff);
+		printf("\t<NODENAME>cashe.boitho.com</NODENAME>\n");
+		printf("\t<TOTALTIME>%f</TOTALTIME>\n",FinalSiderHeder.total_usecs);
+		printf("\t<FILTERED>0</FILTERED>\n");
+		printf("\t<HITS>%i</HITS>\n",FinalSiderHeder.TotaltTreff);
 		printf("</SEARCHNODES>\n");
-
 	}
-	
+
 	/*
 	for (i=0;i<nrOfServers;i++) {
                 //tempaa:if (sockfd[i] != 0) {
@@ -2227,8 +2221,6 @@ int main(int argc, char *argv[])
 					printf("\t<THUMBNAILHEIGHT></THUMBNAILHEIGHT>\n");
 				}
 
-
-
 				printf("\t<DESCRIPTION><![CDATA[%s]]></DESCRIPTION>\n",Sider[i].description);
 			}
 
@@ -2267,9 +2259,7 @@ int main(int argc, char *argv[])
 				//sender en tom cashe link. Må ha cashe link hvis ikke bryter vi designet
 	                	printf("\t<CACHE></CACHE>\n");
 
-
 			#else
-
 				
 	                	printf("\t<DOMAIN>%s</DOMAIN>\n",Sider[i].domain);
 
