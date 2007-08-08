@@ -71,6 +71,12 @@
     #define maxerrors 5
     #define maxerrorlen 201
 
+#ifdef DEBUG
+#define dprintf(str, args...) printf(str, #args)
+#else
+#define dprintf(str, args...) 
+#endif
+
 
 
     struct errorhaFormat {
@@ -140,71 +146,67 @@ int bsconnect (int *sockfd, char server[], int port) {
 	int nerror;
 	struct hostent *he;
 	
-		#ifdef DEBUG
-			printf("server: %s\n",server);
-		#endif
+	dprintf("server: %s\n",server);
 
-        	if ((he = gethostbyname(server)) == NULL) {  // get the host info 
-        	    perror("gethostbyname");
-        	    die(6,"Gethostbyname error.");
-	        }
-		
-	        if (((*sockfd) = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        	    perror("socket");
-        	    die(7,"Socket error.");
-        	}
-		fcntl((*sockfd), F_SETFL, O_NONBLOCK);
-		
-        	their_addr.sin_family = AF_INET;    // host byte order 
-        	their_addr.sin_port = htons(port);  // short, network byte order 
-        	their_addr.sin_addr = *((struct in_addr *)he->h_addr);
-        	memset(&(their_addr.sin_zero), '\0', 8);  // zero the rest of the struct 
+	if ((he = gethostbyname(server)) == NULL) {  // get the host info 
+		perror("gethostbyname");
+		die(6,"Gethostbyname error.");
+	}
 
-		/* Initialize the timeout data structure. */
-		timeout.tv_sec = 1;
-		timeout.tv_usec = 0;
+	if (((*sockfd) = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+		perror("socket");
+		die(7,"Socket error.");
+	}
+	fcntl((*sockfd), F_SETFL, O_NONBLOCK);
 
-		fd_set set;
-		/* Initialize the file descriptor set. */
-           	FD_ZERO(&set);
-           	FD_SET((*sockfd), &set);
+	their_addr.sin_family = AF_INET;    // host byte order 
+	their_addr.sin_port = htons(port);  // short, network byte order 
+	their_addr.sin_addr = *((struct in_addr *)he->h_addr);
+	memset(&(their_addr.sin_zero), '\0', 8);  // zero the rest of the struct 
 
-        	if ((nerror = connect((*sockfd), (struct sockaddr *)&their_addr,sizeof(struct sockaddr))) == -1) {
-		
-			//vi har en no bloacking socket og connect har begynt. Må så bruke select for å vente på den
-			if (errno == EINPROGRESS) {
+	/* Initialize the timeout data structure. */
+	timeout.tv_sec = 1;
+	timeout.tv_usec = 0;
 
-				nerror = select((*sockfd) +1, NULL ,&set, NULL,&timeout);
+	fd_set set;
+	/* Initialize the file descriptor set. */
+	FD_ZERO(&set);
+	FD_SET((*sockfd), &set);
 
-				//hvis vi ikke fikk noen error er vi nå kobblet til
-				if (nerror == 1) {
-					//connected[i] = 1;
-					returnstatus = 1;
-				}
-				else {
-					//connected[i] = 0;
-					perror(server);
-					returnstatus = 0;
-				}
+	if ((nerror = connect((*sockfd), (struct sockaddr *)&their_addr,sizeof(struct sockaddr))) == -1) {
+
+		//vi har en no bloacking socket og connect har begynt. Må så bruke select for å vente på den
+		if (errno == EINPROGRESS) {
+
+			nerror = select((*sockfd) +1, NULL ,&set, NULL,&timeout);
+
+			//hvis vi ikke fikk noen error er vi nå kobblet til
+			if (nerror == 1) {
+				//connected[i] = 1;
+				returnstatus = 1;
 			}
 			else {
-        	    		perror(server);
-        	    		//connected[i] = 0;
+				//connected[i] = 0;
+				perror(server);
 				returnstatus = 0;
 			}
-	        }
-		else {
-			//connected[i] = 1;
-			returnstatus = 1;
 		}
+		else {
+			perror(server);
+			//connected[i] = 0;
+			returnstatus = 0;
+		}
+	}
+	else {
+		//connected[i] = 1;
+		returnstatus = 1;
+	}
 
 	if (returnstatus == 0) {
-		#ifdef DEBUG 
-			printf("somthing is wrong. Closeing socket\n");
-		#endif
-                (*sockfd) = 0;
-        }
-	
+		dprintf("somthing is wrong. Closeing socket\n");
+		(*sockfd) = 0;
+	}
+
 	return returnstatus;
 }
 
@@ -225,125 +227,119 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 	if ((*sockfd) == 0) {
 		return 0;
 	}
-			
-			socketWait = 0;
-			/* Initialize the time data structure. */
-	                time.tv_sec = 0;
-        	        //time.tv_usec = 10 * 1000000; // milliseconds * nanosec. 10 * 1000000 = 0.01 sek
-        	        time.tv_nsec = 10000000; // i nanoseconds = 0.01 sek
 
-			//mens vi venter på data, eller til vi ikke gidder å vente mere
-			while ((dataReceived < datasize) && (socketWait < maxSocketWait)) {
-			
-				if ((n=recv((*sockfd), (&buff[y] + dataReceived), datasize - dataReceived, MSG_DONTWAIT )) == -1 ) {
-					
-					if (errno == EAGAIN) {
-						#ifdef DEBUG
-							printf("EAGAIN. wait %i < %i\n",socketWait,maxSocketWait);
-						#endif
-    						nanosleep(&time,NULL);
-						++socketWait;		
+	socketWait = 0;
+	/* Initialize the time data structure. */
+	time.tv_sec = 0;
+	//time.tv_usec = 10 * 1000000; // milliseconds * nanosec. 10 * 1000000 = 0.01 sek
+	time.tv_nsec = 10000000; // i nanoseconds = 0.01 sek
 
-					}
-					else {
-						//noe feil har skjed, eksitter
-						perror("recv SiderHeder");
-		
-						//ToDo: utestet
-						//connected[i] = 0;
-						returnstatus = 0;
-						break;
-					}
-				}
-				else if (n==0) {
-					//nanosleep(&time,NULL);
-					//++socketWait;
-					#ifdef DEBUG
-                                                printf("n==0. Peer has performed an orderly shutdown when trying to read\n");
-						perror("recv SiderHeder");
+	//mens vi venter på data, eller til vi ikke gidder å vente mere
+	while ((dataReceived < datasize) && (socketWait < maxSocketWait)) {
 
-                                        #endif
-                                        //connected[i] = 0;
-					returnstatus = 0;
-                                        break;
+		if ((n=recv((*sockfd), (&buff[y] + dataReceived), datasize - dataReceived, MSG_DONTWAIT )) == -1 ) {
 
-				}
-				else {
-					dataReceived += n;
-				}
+			if (errno == EAGAIN) {
+				dprintf("EAGAIN. wait %i < %i\n",socketWait,maxSocketWait);
+				nanosleep(&time,NULL);
+				++socketWait;		
 
-				#ifdef DEBUG					
-					printf("reciving %i of %i. SocketWait %i\n",dataReceived,datasize,socketWait);
-				#endif
-
-
-				
 			}
-			//vi timet ut socketetn. Setter den som ikke tilkoblet
-			if (socketWait >= maxSocketWait) {
-				#ifdef DEBUG	
-					printf("timed out\n");
-				#endif
+			else {
+				//noe feil har skjed, eksitter
+				perror("recv SiderHeder");
+
+				//ToDo: utestet
 				//connected[i] = 0;
 				returnstatus = 0;
+				break;
 			}
+		}
+		else if (n==0) {
+			//nanosleep(&time,NULL);
+			//++socketWait;
+			dprintf("n==0. Peer has performed an orderly shutdown when trying to read\n");
+#ifdef DEBUG
+			perror("recv SiderHeder");
+#endif
+			//connected[i] = 0;
+			returnstatus = 0;
+			break;
+
+		}
+		else {
+			dataReceived += n;
+		}
+
+		dprintf("reciving %i of %i. SocketWait %i\n",dataReceived,datasize,socketWait);
+
+	}
+	//vi timet ut socketetn. Setter den som ikke tilkoblet
+	if (socketWait >= maxSocketWait) {
+		dprintf("timed out\n");
+		//connected[i] = 0;
+		returnstatus = 0;
+	}
 
 	if (returnstatus == 0) {
 		(*sockfd) = 0;
-		#ifdef DEBUG 
-			printf("somthing is wrong. Closeing socket\n");
-		#endif
-
+		dprintf("somthing is wrong. Closeing socket\n");
 	}
 
 	return returnstatus;
 
 }
 
+int
+bsQuery(int *sock, struct queryNodeHederFormat *queryNodeHeder)
+{
+	if (sock == 0)
+		return 0;
+
+	if (sendall(*sock, queryNodeHeder, sizeof(*queryNodeHeder)) != sizeof(*queryNodeHeder)) {
+		perror("sendall");
+		*sock = 0;
+	}
+
+}
+
+
 int bsConectAndQuery(int *sockfd,int nrOfServers, char *servers[],struct queryNodeHederFormat *queryNodeHeder,int alreadynr, int port) {
 
 	int i;
-
-	#ifdef DEBUG
+#ifdef DEBUG
 	struct timeval start_time, end_time;
+#endif
+
+#ifdef DEBUG
 	gettimeofday(&start_time, NULL);
-	#endif
+#endif
 
- 	//kobler til vanlige servere
-        for (i=0;i<nrOfServers;i++) {
-                if (bsconnect (&sockfd[i +alreadynr], servers[i], port)) {
-			#ifdef DEBUG
-                        printf("can connect\n");
-			#endif
-                }
-		else {
-			#ifdef DEBUG
-			printf("can NOT connect\n");
-			#endif
-			sockfd[i] = 0;
-
+	//kobler til vanlige servere
+	for (i=0;i<nrOfServers;i++) {
+		if (bsconnect (&sockfd[i +alreadynr], servers[i], port)) {
+			dprintf("can connect\n");
 		}
-        }	
+		else {
+			dprintf("can NOT connect\n");
+			sockfd[i] = 0;
+		}
+	}	
 	//sender ut forespørsel
 	for (i=0;i<nrOfServers;i++) {
 		//sender forespørsel
-		
-		if (sockfd[i +alreadynr] != 0) {
-			if (sendall(sockfd[i +alreadynr],(*queryNodeHeder).query,sizeof(struct queryNodeHederFormat)) != sizeof(struct queryNodeHederFormat)) {
-				fprintf(stderr,"Eroor: Cant connect. Server %s:%i\n",servers[i], port);
-				perror("sendall");
-				sockfd[i] = 0;
-			}
+
+		if (sockfd[i+alreadynr] != 0) {
+			if (!bsQuery(&sockfd[i+alreadynr], queryNodeHeder))
+				fprintf(stderr,"Error: Can't connect. Server %s:%i\n",servers[i], port);
 		}
-		#ifdef DEBUG
-			printf("sending of queryNodeHeder end\n");
-		#endif
+		dprintf("sending of queryNodeHeder end\n");
 	}
 
-	#ifdef DEBUG
+#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	printf("Time debug: bsConectAndQuery %f\n",getTimeDifference(&start_time,&end_time));
-	#endif
+#endif
+	dprintf("Time debug: bsConectAndQuery %f\n",getTimeDifference(&start_time,&end_time));
 }
 
 int bdread_continue(int sockfd[], int nrof,int bytesleft[], int lastgoodread[], int readsdone, int maxSocketWait) {
@@ -414,10 +410,7 @@ int bdread(int sockfd[],int nrof,int datasize, void *result, int maxSocketWait) 
 
 					
 				if (errno == EAGAIN) {
-					#ifdef DEBUG
-					printf("EAGAIN. wait %i < %i\n",readsdone,maxSocketWait);
-					#endif
-
+					dprintf("EAGAIN. wait %i < %i\n",readsdone,maxSocketWait);
 				}
 				else {
 					//noe feil har skjed, eksitter
@@ -432,9 +425,7 @@ int bdread(int sockfd[],int nrof,int datasize, void *result, int maxSocketWait) 
 			else if (n==0) {
 				//nanosleep(&time,NULL);
 				//++socketWait;
-				#ifdef DEBUG
-                                               printf("n==0. Peer has performed an orderly shutdown when trying to read\n");
-                                #endif
+				dprintf("n==0. Peer has performed an orderly shutdown when trying to read\n");
                                 //connected[i] = 0;
 				close(sockfd[i]);
 				sockfd[i] = 0;
@@ -446,10 +437,7 @@ int bdread(int sockfd[],int nrof,int datasize, void *result, int maxSocketWait) 
 				bytesleft[i] -=n;
 			}
 
-			#ifdef DEBUG					
-				printf("reciving %i of %i. readsdone %i\n",n,datasize,readsdone);
-			#endif
-				
+			dprintf("reciving %i of %i. readsdone %i\n",n,datasize,readsdone);
 	}
 
 }
@@ -475,9 +463,7 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 
 
 				if (net_status != net_CanDo) {
-					#ifdef DEBUG
-						printf("net_status wasen net_CanDo but %i\n",net_status);
-					#endif
+					dprintf("net_status wasen net_CanDo but %i\n",net_status);
 					sockfd[i] = 0;
 				}
 			}
@@ -486,7 +472,7 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 	}
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	printf("Time debug: brGetPages.jobstart pages %f\n",getTimeDifference(&start_time,&end_time));
+	dprintf("Time debug: brGetPages.jobstart pages %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
 	/****************************************************************/
@@ -508,7 +494,7 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	printf("Time debug: brGetPages.reading heder pages %f\n",getTimeDifference(&start_time,&end_time));
+	dprintf("Time debug: brGetPages.reading heder pages %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
 	//int bdread(int sockfd[],int nrof,int datasize, void *result, int maxSocketWait)
@@ -523,9 +509,7 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 	//(*pageNr) = 0;
 	for (i=alreadynr;i<nrOfServers+alreadynr;i++) {
 		
-		#ifdef DEBUG
-			printf("i: %i. Server \"%s\" that has %i pages. Soctet %i\n",i,SiderHeder[i].servername,SiderHeder[i].showabal,sockfd[i]);
-		#endif
+			dprintf("i: %i. Server \"%s\" that has %i pages. Soctet %i\n",i,SiderHeder[i].servername,SiderHeder[i].showabal,sockfd[i]);
 			if (sockfd[i] != 0) {
 
 				/*
@@ -547,7 +531,7 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	printf("Time debug: brGetPages.reading pages %f\n",getTimeDifference(&start_time,&end_time));
+	dprintf("Time debug: brGetPages.reading pages %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
 }
@@ -820,7 +804,7 @@ int main(int argc, char *argv[])
 	#ifdef DEBUG
 	gettimeofday(&start_time, NULL);
 
-	printf("struct SiderFormat size %i\n",sizeof(struct SiderFormat));
+	dprintf("struct SiderFormat size %i\n",sizeof(struct SiderFormat));
 	#endif
 
 	//starter å ta tiden
@@ -842,9 +826,7 @@ int main(int argc, char *argv[])
 	config_init(&cfg);
 
 	/* Load the file */
-	#ifdef DEBUG
-		printf("loading [%s]..\n", bfile(cfg_dispatcher) );
-	#endif
+	dprintf("loading [%s]..\n", bfile(cfg_dispatcher) );
 
 	if (!config_read_file(&cfg, bfile(cfg_dispatcher) )) {
 		printf("[%s]failed: %s at line %i\n",bfile(cfg_dispatcher),config_error_text(&cfg),config_error_line(&cfg));
@@ -1232,7 +1214,7 @@ int main(int argc, char *argv[])
 			die(1, "Not allowed to handle request from that address");
 #ifdef DEBUG
 		gettimeofday(&end_time, NULL);
-		printf("Time debug: access %f\n",getTimeDifference(&start_time,&end_time));
+		dprintf("Time debug: access %f\n",getTimeDifference(&start_time,&end_time));
 #endif
 
 #endif
@@ -1251,7 +1233,7 @@ int main(int argc, char *argv[])
 
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	printf("Time debug: init %f\n",getTimeDifference(&start_time,&end_time));
+	dprintf("Time debug: init %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
 	#ifdef DEBUG
@@ -1329,7 +1311,7 @@ int main(int argc, char *argv[])
 	//printf("query behandlet %s\n",QueryData.queryhtml);
 	#ifdef DEBUG
 		gettimeofday(&end_time, NULL);
-		printf("Time debug: query normalizeing %f\n",getTimeDifference(&start_time,&end_time));
+		dprintf("Time debug: query normalizeing %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
 	#ifdef DEBUG
@@ -1359,8 +1341,7 @@ int main(int argc, char *argv[])
 		
 	
 
-			#ifdef DEBUG
-        		printf("GeoIP: %s\t%s\t%s\t%s\t%s\t%f\t%f\t%d\t%d\n", queryNodeHeder.userip,
+        		dprintf("GeoIP: %s\t%s\t%s\t%s\t%s\t%f\t%f\t%d\t%d\n", queryNodeHeder.userip,
                                          gir->country_code,
                                          gir->region,
                                          gir->city,
@@ -1369,8 +1350,7 @@ int main(int argc, char *argv[])
                                          gir->longitude,
                                          gir->dma_code,
                                          gir->area_code);
-			printf("GeoIPcontry: %s\n",QueryData.GeoIPcontry);
-			#endif
+			dprintf("GeoIPcontry: %s\n",QueryData.GeoIPcontry);
         		GeoIPRecord_delete(gir);
 		}
 
@@ -1382,7 +1362,7 @@ int main(int argc, char *argv[])
 
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	printf("Time debug: geoip %f\n",getTimeDifference(&start_time,&end_time));
+	dprintf("Time debug: geoip %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
 	#ifdef DEBUG
@@ -1432,7 +1412,7 @@ int main(int argc, char *argv[])
 
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	printf("Time debug: query copying %f\n",getTimeDifference(&start_time,&end_time));
+	dprintf("Time debug: query copying %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
 	#ifdef WITH_CASHE
@@ -1511,8 +1491,8 @@ int main(int argc, char *argv[])
 					continue;
 				}
  
-				if (!bsread(&sockfd[i],sizeof(status), (char *)&status, 1000)) //maxSocketWait_CanDo))
-					die(2, "Unable to get rank status");
+			if (!bsread(&sockfd[i],sizeof(status), (char *)&status, 1000)) //maxSocketWait_CanDo))
+				die(2, "Unable to get rank status");
 				else if (status == net_match) {
 					if (!bsread(&sockfd[i],sizeof(ranking), (char *)&ranking, 1000))//maxSocketWait_CanDo))
 						perror("recv read");
@@ -1540,9 +1520,7 @@ int main(int argc, char *argv[])
 			}
 		}
 		else {
-			#ifdef DEBUG
-			printf("No ranking found...\n");
-			#endif
+			dprintf("No ranking found...\n");
 			die(1, "No rank found");
 		}
 
@@ -1603,7 +1581,7 @@ int main(int argc, char *argv[])
 
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	printf("Time debug: geting pages %f\n",getTimeDifference(&start_time,&end_time));
+	dprintf("Time debug: geting pages %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
 	nrRespondedServers = 0;
@@ -1618,20 +1596,18 @@ int main(int argc, char *argv[])
 			if (sockfd[i] != 0) {
 				FinalSiderHeder.TotaltTreff += SiderHeder[i].TotaltTreff;
 				FinalSiderHeder.filtered += SiderHeder[i].filtered;
-				#ifdef DEBUG
-	        		printf("<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\" servername=\"%s\"/>\n",SiderHeder[i].TotaltTreff,QueryData.query,SiderHeder[i].hiliteQuery,SiderHeder[i].total_usecs,SiderHeder[i].filtered,SiderHeder[i].showabal,SiderHeder[i].servername);
-				#endif
+	        		dprintf("<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\" servername=\"%s\"/>\n",SiderHeder[i].TotaltTreff,QueryData.query,SiderHeder[i].hiliteQuery,SiderHeder[i].total_usecs,SiderHeder[i].filtered,SiderHeder[i].showabal,SiderHeder[i].servername);
 
 				++nrRespondedServers;
 			}
 		}
 
 		#ifdef DEBUG
-		printf("addservers (have %i):\n",nrOfAddServers);
+		dprintf("addservers (have %i):\n",nrOfAddServers);
 		for (i=0;i<nrOfAddServers;i++) {
 			//aaaaa
 			if (addsockfd[i] != 0) {
-		        	printf("\t<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\" servername=\"%s\"/>\n",AddSiderHeder[i].TotaltTreff,QueryData.query,AddSiderHeder[i].hiliteQuery,AddSiderHeder[i].total_usecs,AddSiderHeder[i].filtered,AddSiderHeder[i].showabal,AddSiderHeder[i].servername);
+		        	dprintf("\t<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\" servername=\"%s\"/>\n",AddSiderHeder[i].TotaltTreff,QueryData.query,AddSiderHeder[i].hiliteQuery,AddSiderHeder[i].total_usecs,AddSiderHeder[i].filtered,AddSiderHeder[i].showabal,AddSiderHeder[i].servername);
 
 			}
 			else {
@@ -1691,23 +1667,19 @@ int main(int argc, char *argv[])
 			}		
 		}
 	
-		#ifdef DEBUG
-			printf("AdultPages %i, NonAdultPages: %i\n",AdultPages,NonAdultPages);
-		#endif
+		dprintf("AdultPages %i, NonAdultPages: %i\n",AdultPages,NonAdultPages);
 		//hvis vi har adult pages sjekker vi om vi har nokk ikke adult pages å vise, hvis ikke viser vi bare adult
 
 		#ifdef DEBUG
 		gettimeofday(&start_time, NULL);
 		#endif
 		//sorterer resultatene
-		#ifdef DEBUG
-			printf("mgsort: pageNr %i\n",pageNr);
-		#endif
+		dprintf("mgsort: pageNr %i\n",pageNr);
 		mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements);
 
 		#ifdef DEBUG
 		gettimeofday(&end_time, NULL);
-		printf("Time debug: mgsort_1 %f\n",getTimeDifference(&start_time,&end_time));
+		dprintf("Time debug: mgsort_1 %f\n",getTimeDifference(&start_time,&end_time));
 		#endif
 
 		#ifdef DEBUG
@@ -1719,9 +1691,7 @@ int main(int argc, char *argv[])
 			//dette er kansje ikke optimalet, da vi går gjenom alle siden. Ikke bare de som skal være med
 			for(i=0;i<QueryData.MaxsHits * nrOfServers + nrOfPiServers;i++) {
 
-				#ifdef DEBUG
-				printf("looking on url %s, %i, %i\n",Sider[i].DocumentIndex.Url,Sider[i].deletet,Sider[i].DocumentIndex.AdultWeight);
-				#endif
+				dprintf("looking on url %s, %i, %i\n",Sider[i].DocumentIndex.Url,Sider[i].deletet,Sider[i].DocumentIndex.AdultWeight);
 				if (!Sider[i].deletet) {
 					//setter som slettet
 					Sider[i].deletet = 1;
@@ -1729,9 +1699,7 @@ int main(int argc, char *argv[])
 
 					if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameUrl) 
 						&& (filterSameUrl(i,Sider[i].url,Sider)) ) {
-						#ifdef DEBUG
-                        			printf("Hav seen url befor. Url '%s', DocID %u\n",Sider[i].url,Sider[i].iindex.DocID);
-						#endif
+                        			dprintf("Hav seen url befor. Url '%s', DocID %u\n",Sider[i].url,Sider[i].iindex.DocID);
                         			//(*SiderHeder).filtered++;
 						FinalSiderHeder.filtered++;
 						--FinalSiderHeder.TotaltTreff;
@@ -1759,9 +1727,7 @@ int main(int argc, char *argv[])
 					*/
 					if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameCrc32) 
 						&& filterSameCrc32(i,&Sider[i],Sider)) {
-						#ifdef DEBUG
-                        		        	printf("hav same crc32. crc32 from DocumentIndex. Will delete \"%s\"\n",Sider[i].DocumentIndex.Url);
-						#endif
+						dprintf("hav same crc32. crc32 from DocumentIndex. Will delete \"%s\"\n",Sider[i].DocumentIndex.Url);
                         		        //(*SiderHeder).filtered++;
 						FinalSiderHeder.filtered++;
 						--FinalSiderHeder.TotaltTreff;
@@ -1772,9 +1738,7 @@ int main(int argc, char *argv[])
 
 					if ((QueryData.filterOn) && (Sider[i].subname.config.filterSameDomain) 
 						&& (filterSameDomain(i,&Sider[i],Sider))) {
-						#ifdef DEBUG
-                        				printf("hav same domain \"%s\"\n",Sider[i].domain);
-						#endif
+						dprintf("hav same domain \"%s\"\n",Sider[i].domain);
                         			//(*SiderHeder).filtered++;
 						FinalSiderHeder.filtered++;
 						--FinalSiderHeder.TotaltTreff;
@@ -1821,9 +1785,7 @@ int main(int argc, char *argv[])
 			Sider[i].posisjon = posisjon++;
 		}
 
-		#ifdef DEBUG
-			//printf("%s\n",Sider[i].url);
-		#endif
+		//dprintf("%s\n",Sider[i].url);
 	}	
 
 
@@ -1831,7 +1793,7 @@ int main(int argc, char *argv[])
 	
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	printf("Time debug: filter pages %f\n",getTimeDifference(&start_time,&end_time));
+	dprintf("Time debug: filter pages %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
 
@@ -1845,7 +1807,7 @@ int main(int argc, char *argv[])
 
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	printf("Time debug: mgsort_2 %f\n",getTimeDifference(&start_time,&end_time));
+	dprintf("Time debug: mgsort_2 %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
 	/*tempaa
@@ -2163,9 +2125,7 @@ int main(int argc, char *argv[])
 		
 		if (!Sider[i].deletet) {
 
-			#ifdef DEBUG		
-				printf("r %i, a: %i, bid : %f, u: %s. DocID: %u\n",Sider[i].iindex.allrank,Sider[i].DocumentIndex.AdultWeight,Sider[i].bid,Sider[i].url,Sider[i].iindex.DocID);
-			#endif
+			dprintf("r %i, a: %i, bid : %f, u: %s. DocID: %u\n",Sider[i].iindex.allrank,Sider[i].DocumentIndex.AdultWeight,Sider[i].bid,Sider[i].url,Sider[i].iindex.DocID);
 
 			//har url i <![CDATA[ ]]> paranteser nå 
 		/*
@@ -2355,9 +2315,7 @@ int main(int argc, char *argv[])
 			}
 		}
 		else{ 
-			#ifdef DEBUG
-			printf("nr %i er deletet. Rank %i\n",i,Sider[i].iindex.allrank);
-			#endif
+			dprintf("nr %i er deletet. Rank %i\n",i,Sider[i].iindex.allrank);
 		}
 		
 		++i;
@@ -2407,7 +2365,7 @@ int main(int argc, char *argv[])
 
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	printf("Time debug: end clean up %f\n",getTimeDifference(&start_time,&end_time));
+	dprintf("Time debug: end clean up %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
 
@@ -2439,9 +2397,7 @@ int main(int argc, char *argv[])
 	//mysql logging
 	/********************************************************************************************/
 	#ifndef NO_LOGING
-		#ifdef DEBUG
-			printf("Connecting to mysql db\n");
-		#endif
+		dprintf("Connecting to mysql db\n");
 
 		mysql_init(&demo_db);
 
