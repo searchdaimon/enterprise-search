@@ -2481,36 +2481,43 @@ int main(int argc, char *argv[])
 } 
 
 
-int compare_elements (const void *p1, const void *p2) {
+int compare_elements (const void *_p1, const void *_p2) {
+	const struct SiderFormat *p1, *p2;
 
-	if (((struct SiderFormat*)p1)->type != ((struct SiderFormat*)p2)->type) {
+	p1 = _p1;
+	p2 = _p2;
+
+	if (p1->type != p2->type) {
                 //sortering på type, slik at ppc kommer sammen, og først
-                //printf("type %i != %i\n",((struct SiderFormat*)p1)->type,((struct SiderFormat*)p2)->type);
-                if (((struct SiderFormat*)p1)->type > ((struct SiderFormat*)p2)->type)
+                //printf("type %i != %i\n",p1->type,p2->type);
+                if (p1->type > p2->type)
                         return -1;
                 else
-                        return ((struct SiderFormat*)p1)->type < ((struct SiderFormat*)p2)->type;
+                        return p1->type < p2->type;
         }
-        else if (((struct SiderFormat*)p1)->iindex.allrank > ((struct SiderFormat*)p2)->iindex.allrank)
+        else if (p1->iindex.allrank > p2->iindex.allrank)
                 return -1;
         else
-                return ((struct SiderFormat*)p1)->iindex.allrank < ((struct SiderFormat*)p2)->iindex.allrank;
+                return p1->iindex.allrank < p2->iindex.allrank;
 
 }
-int compare_elements_posisjon (const void *p1, const void *p2) {
+int compare_elements_posisjon (const void *_p1, const void *_p2) {
+	const struct SiderFormat *p1, *p2;
 
+	p1 = _p1;
+	p2 = _p2;
 
-	if (((struct SiderFormat*)p1)->type != ((struct SiderFormat*)p2)->type) {
+	if (p1->type != p2->type) {
 		//sortering på type, slik at ppc kommer sammen, og først. Må så sorteres etter pris og relevans
-		//printf("type %i != %i\n",((struct SiderFormat*)p1)->type,((struct SiderFormat*)p2)->type);
-		if (((struct SiderFormat*)p1)->type > ((struct SiderFormat*)p2)->type)
+		//printf("type %i != %i\n",p1->type,p2->type);
+		if (p1->type > p2->type)
 			return -1;
 		else
-			return ((struct SiderFormat*)p1)->type < ((struct SiderFormat*)p2)->type;
+			return p1->type < p2->type;
 	}
 	/*
-	else if (((struct SiderFormat*)p1)->subname.config.isPaidInclusion || ((struct SiderFormat*)p2)->subname.config.isPaidInclusion) {
-			if ( ((struct SiderFormat*)p2)->subname.config.isPaidInclusion) {
+	else if (p1->subname.config.isPaidInclusion || p2->subname.config.isPaidInclusion) {
+			if ( p2->subname.config.isPaidInclusion) {
 				return 1;
 			}
 			else {
@@ -2519,58 +2526,58 @@ int compare_elements_posisjon (const void *p1, const void *p2) {
 	}
 	*/
 	//hvis vi har en normal side, og har forskjelig path lengde
-	else if (((struct SiderFormat*)p1)->type == siderType_normal) {
-		if (((struct SiderFormat*)p1)->posisjon == ((struct SiderFormat*)p2)->posisjon ){
+	else if (p1->type == siderType_normal) {
+		if (p1->posisjon == p2->posisjon ){
 
 			/*
-			//printf("a: %s (%i) - %s (%i)\n",((struct SiderFormat*)p1)->DocumentIndex.Url,((struct SiderFormat*)p1)->pathlen,((struct SiderFormat*)p2)->DocumentIndex.Url,((struct SiderFormat*)p2)->pathlen);
-			if (((struct SiderFormat*)p1)->pathlen == ((struct SiderFormat*)p2)->pathlen) {
-				if (((struct SiderFormat*)p1)->iindex.allrank > ((struct SiderFormat*)p2)->iindex.allrank) {
+			//printf("a: %s (%i) - %s (%i)\n",p1->DocumentIndex.Url,p1->pathlen,p2->DocumentIndex.Url,p2->pathlen);
+			if (p1->pathlen == p2->pathlen) {
+				if (p1->iindex.allrank > p2->iindex.allrank) {
                         		return -1;
                 		}
                 		else {
-                	        	return ((struct SiderFormat*)p1)->iindex.allrank < ((struct SiderFormat*)p2)->iindex.allrank;
+                	        	return p1->iindex.allrank < p2->iindex.allrank;
         	        	}			
 	
 			}
-			else if (((struct SiderFormat*)p1)->pathlen < 
-				((struct SiderFormat*)p2)->pathlen ) {
+			else if (p1->pathlen < 
+				p2->pathlen ) {
 				return -1;
 			}
 			else {
 				return 1;
 			}	
 			*/	
-			if (((struct SiderFormat*)p1)->iindex.allrank > ((struct SiderFormat*)p2)->iindex.allrank) {
+			if (p1->iindex.allrank > p2->iindex.allrank) {
                         	return -1;
                 	}
                 	else {
-                        	return ((struct SiderFormat*)p1)->iindex.allrank < ((struct SiderFormat*)p2)->iindex.allrank;
+                        	return p1->iindex.allrank < p2->iindex.allrank;
                 	}			
 
 		}
-        	else if (((struct SiderFormat*)p1)->posisjon < ((struct SiderFormat*)p2)->posisjon)
+        	else if (p1->posisjon < p2->posisjon)
         	        return -1;
         	else {
-        	        return ((struct SiderFormat*)p1)->posisjon > ((struct SiderFormat*)p2)->posisjon;
+        	        return p1->posisjon > p2->posisjon;
 		}
 	}
 	else {
 	//for ppc og ppc_side sider. Sorterer først på bud, så pr relevans
-		if (((struct SiderFormat*)p1)->bid == ((struct SiderFormat*)p2)->bid) {
+		if (p1->bid == p2->bid) {
 			
-			if (((struct SiderFormat*)p1)->iindex.allrank > ((struct SiderFormat*)p2)->iindex.allrank) {
+			if (p1->iindex.allrank > p2->iindex.allrank) {
                         	return -1;
                 	}
                 	else {
-                        	return ((struct SiderFormat*)p1)->iindex.allrank < ((struct SiderFormat*)p2)->iindex.allrank;
+                        	return p1->iindex.allrank < p2->iindex.allrank;
                 	}			
 		}
-		else if (((struct SiderFormat*)p1)->bid > ((struct SiderFormat*)p2)->bid) {
+		else if (p1->bid > p2->bid) {
                         return -1;
 		}
                 else {
-                        return ((struct SiderFormat*)p1)->bid < ((struct SiderFormat*)p2)->bid;
+                        return p1->bid < p2->bid;
                 }
 	}
 }
