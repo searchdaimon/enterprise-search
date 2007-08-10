@@ -11,5 +11,6 @@ addservers = [];
 usecashe	= FALSE;
 cachetimeout	= 604800;
 useprequery	= FALSE;
+writeprequery	= FALSE;
 
 access = [ "213.179.58.99:theSecret" ];

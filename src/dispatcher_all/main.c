@@ -92,6 +92,7 @@
 	struct dispconfigFormat {
 		char usecashe;
 		char useprequery;
+		char writeprequery;
 	};
 
 void die(int errorcode,char errormessage[]) {
@@ -545,6 +546,7 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 
 #ifdef WITH_CASHE
 
+/* Probably very weak */
 unsigned int
 cache_hash(char *query, int start, char *country)
 {
@@ -569,6 +571,7 @@ char *
 cache_path(char *path, size_t len, enum cache_type type, char *query, int start, char *country)
 {
 	char tmppath[PATH_MAX];
+	char modquery[PATH_MAX];
 	unsigned int hash;
 	char *p;
 	char *cache;
@@ -581,18 +584,27 @@ cache_path(char *path, size_t len, enum cache_type type, char *query, int start,
 		cache = "var/cache/search";
 		break;
 	}
-	hash = cache_hash(query, start, country);
+
+	/* XXX: Base 64 encode the query */
+	strcpy(modquery, query);
+	for (p = modquery; *p; p++) {
+		if (*p == '/')
+			*p = '-';
+		else if (*p == ' ')
+			*p = '#';
+	}
+	hash = cache_hash(modquery, start, country);
 	p = (char *)&hash;
 	strncpy(path, bfile(cache), len);
-	mkdir(path, 0700);
+	mkdir(path, 0755);
 	snprintf(tmppath, sizeof(tmppath), "/%x%x", *p & 0xF, (*p >> 4) & 0xF);
 	strncat(path, tmppath, len);
-	mkdir(path, 0700);
+	mkdir(path, 0755);
 	p++;
 	snprintf(tmppath, sizeof(tmppath), "/%x%x", *p & 0xF, (*p >> 4) & 0xF);
 	strncat(path, tmppath, len);
-	mkdir(path, 0700);
-	snprintf(tmppath, sizeof(tmppath), "/%s.%d.%s", query, start, country);
+	mkdir(path, 0755);
+	snprintf(tmppath, sizeof(tmppath), "/%s.%d.%s", modquery, start, country);
 	strncat(path, tmppath, len);
 
 	return path;
@@ -677,7 +689,7 @@ cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, stru
 	gzFile *cache;
 	int fd, i, ret;
 
-	if ((fd = open(path, O_CREAT|O_WRONLY|O_EXCL, 0600)) == -1) {
+	if ((fd = open(path, O_CREAT|O_WRONLY|O_EXCL, 0644)) == -1) {
 		return 0;
 	}
 	flock(fd, LOCK_EX);
@@ -686,7 +698,6 @@ cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, stru
 	}
 
 	ret = 1;
-	fprintf(stderr, "Writing %x pages\n", *page_nr);
 	if (gzwrite(cache, page_nr, sizeof(*page_nr)) != sizeof(*page_nr)) {
 		perror("gzwrite(page_nr)");
 		goto err;
@@ -890,7 +901,7 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg)
 
 	int accesshosts, hasaccess = 0;
 	if (remoteaddr != NULL &&
-			(cfgarray = config_lookup(cfg, "access")) != NULL && (accesshosts = config_setting_length(cfgarray)) > 0) {
+	    (cfgarray = config_lookup(cfg, "access")) != NULL && (accesshosts = config_setting_length(cfgarray)) > 0) {
 		int i;
 
 		for(i=0; i < accesshosts; i++) {
@@ -1299,6 +1310,14 @@ int main(int argc, char *argv[])
 	  	}
 
 		dispconfig.useprequery = config_setting_get_bool(cfgarray);
+
+	    	if ( (cfgarray = config_lookup(&cfg, "writeprequery") ) == NULL) {
+			printf("can't load \"writeprequery\" from config\n");
+			exit(1);
+	  	}
+
+		dispconfig.writeprequery = config_setting_get_bool(cfgarray);
+
 	#endif
 	
 	char query [2048];
@@ -2397,7 +2416,14 @@ int main(int argc, char *argv[])
 	}
 	//skriver bare cashe hvis vi fikk svar fra all servere, og vi var ikke ute etter ranking
 	else if (getRank == 0 && pageNr > 0 && nrRespondedServers == nrOfServers) {
-		if (!cache_write(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, pageNr)) {
+		if (dispconfig.writeprequery) {
+			if (!cache_write(prequeryfile, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, pageNr)) {
+				//fprintf(stderr, "Prequery file: %s\n",prequeryfile);
+				perror("cache_write");
+			}
+		}
+		else if (!cache_write(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, pageNr)) {
+			//fprintf(stderr, "Cache file: %s\n", cachepath);
 			perror("cache_write");
 		}
 	}
