@@ -1718,6 +1718,7 @@ int main(int argc, char *argv[])
 		int net_status;
 		int n;
 
+		/* XXX: Need to handle the paid inclusion servers as well? */
 		for (i = 0; i < nrOfServers; i++) {
 			if (sockfd[i] != 0) {
 				int status;
