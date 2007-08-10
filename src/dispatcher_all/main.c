@@ -872,6 +872,14 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg)
 	} else {
 		strscpy(QueryData->rankUrl, cgi_getentrystr("getrank"), sizeof(QueryData->rankUrl));
 	}
+
+	if (cgi_getentryint("maxshits") == 0) {
+		QueryData->MaxsHits = DefultMaxsHits;
+	}
+	else {
+		QueryData->MaxsHits = cgi_getentryint("maxshits");			
+	}
+
 	//Runarb: Dette er vel bare aktuelt for black boks. For web trnger eksterne klienter å kalle dispatcher_all direkte?
 #ifdef BLACK_BOKS
 
@@ -1471,17 +1479,6 @@ int main(int argc, char *argv[])
 			getRank = 1;
         }
 
-	if (!getRank) {
-		if (cgi_getentryint("maxshits") == 0) {
-			QueryData.MaxsHits = DefultMaxsHits;
-		}
-		else {
-			QueryData.MaxsHits = cgi_getentryint("maxshits");			
-		}
-	} else {
-		QueryData.MaxsHits = 10; /* Just keep this value here for now, should not be needed later on */
-	}
-
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
 	dprintf("Time debug: init %f\n",getTimeDifference(&start_time,&end_time));
@@ -1769,7 +1766,7 @@ int main(int argc, char *argv[])
 			die(1, "No rank found");
 		}
 
-		if (endranking < 20) {
+		if (endranking < QueryData.MaxsHits) {
 			queryNodeHeder.getRank = 0;
 
 			for (i=0;i<nrOfServers + nrOfPiServers;i++) {
