@@ -156,7 +156,7 @@ smb_rewrite_url(char *uri, enum platform_type ptype, enum browser_type btype)
 			if (tmpuri[i] == '\\')
 				tmpuri[i] = '/';
 
-		sprintf(uri, "smb://%s", tmpuri);
+		sprintf(uri, "sdsmb://%s", tmpuri);
 	} else if (btype == MOZILLA) {
 		sprintf(uri, "file://///%s", tmpuri);
 	}
