@@ -36,12 +36,16 @@ int socketsendsaa(int socketha,char **respons_list[],int nrofresponses) {
 
 		if (!sendall(socketha,&len,sizeof(len))) {
 			perror("sendall");
+			return 0;
 		}
 
 		if (!sendall(socketha,(*respons_list)[i],len)) {
 			perror("sendall");
+			return 0;
 		}
 	}
+
+	return 1;
 }
 
 //motar en enkel respons liste. Den begynner med en int som sier hov lang den er
@@ -82,6 +86,7 @@ int socketgetsaa(int socketha,char **respons_list[],int *nrofresponses) {
 
         (*respons_list)[(*nrofresponses)] = '\0';
 
+	return 1;
 }
 
 //rutine som binder seg til PORT og kaller sh_pointer hver gang det kommer en ny tilkobling
