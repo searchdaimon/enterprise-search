@@ -16,6 +16,8 @@ int ipdbOpen(struct ipdbl *ipdbha) {
                 exit(1);
         }
 	printf("file opend %s\n",IPDBPATH);
+
+	return 1;
 }
 
 unsigned int ipdbForDocID(struct ipdbl *ipdbha,unsigned int DocID) {
