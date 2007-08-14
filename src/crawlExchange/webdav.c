@@ -131,9 +131,19 @@ ex_getContent(const char *url, const char *username, const char *password)
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buf);
 	//curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 	//curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "<?xml version=\"1.0\" encoding=\"utf-8\"?><propfind xmlns=\"DAV:\"><prop><getcontentlength xmlns=\"DAV:\"/><getlastmodified xmlns=\"DAV:\"/></prop></propfind>");
-	//curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "<?xml version=\"1.0\" encoding=\"utf-8\"?><propfind xmlns=\"DAV:\"><prop><getcontentlength xmlns=\"DAV:\"/><getlastmodified xmlns=\"DAV:\"/><executable xmlns=\"http://apache.org/dav/props/\" /><resourcetype xmlns=\"DAV:\"/><checked-in xmlns=\"DAV:\"/><checked-out xmlns=\"DAV:\"/></prop></propfind>");
-	// 
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDS,
+		"<?xml version=\"1.0\"?>"
+		"<d:propfind xmlns:d='DAV:' xmlns:c='urn:schemas:httpmail:' xmlns:p='http://schemas.microsoft.com/mapi/proptag/'>"
+			"<d:prop>"
+			"<d:displayname/>"
+			"<d:getcontentlength/>"
+			"<d:getlastmodified/>"
+			"<c:subject/>"
+			"<p:xfff0102/>"
+		"</d:prop>"
+		"</d:propfind>"
+	);
+
 	result = curl_easy_perform(curl);
 	curl_slist_free_all(headers);
 	curl_easy_cleanup(curl);

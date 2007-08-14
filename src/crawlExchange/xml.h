@@ -12,6 +12,7 @@ typedef struct stringListElement {
 	xmlChar *str;
 	unsigned int modified;
 	int contentlen;
+	char id[1024];
 	struct stringListElement *next;
 } stringListElement;
 

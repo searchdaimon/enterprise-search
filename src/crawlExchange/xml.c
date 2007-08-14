@@ -33,7 +33,7 @@ ex_parsetime(xmlChar *time)
 }
 
 xmlChar *
-getInfo(const xmlDocPtr doc, xmlNodePtr cur, unsigned int *modified, int *size)
+getInfo(const xmlDocPtr doc, xmlNodePtr cur, unsigned int *modified, int *size, char *id)
 {
 	xmlChar *ahref = NULL;
 
@@ -51,6 +51,9 @@ getInfo(const xmlDocPtr doc, xmlNodePtr cur, unsigned int *modified, int *size)
 							*modified = ex_parsetime(xmlNodeListGetString(doc, props2->xmlChildrenNode, 1));
 						if (xmlStrcmp(props2->name, (xmlChar *)"getcontentlength") == 0)
 							*size = atoi((char *)xmlNodeListGetString(doc, props2->xmlChildrenNode, 1));
+						if (xmlStrcmp(props2->name, (xmlChar *)"xfff0102") == 0)
+							strcpy(id, (char *)xmlNodeListGetString(doc, props2->xmlChildrenNode, 1));
+
 					}
 				}
 			}
@@ -82,8 +85,9 @@ getEmailUrls(const char *data)
 		if (xmlStrcmp(cur->name, (const xmlChar *)"response") == 0) {
 			unsigned int modified;
 			int size;
+			char id[1024];
 
-			str = getInfo(doc, cur, &modified, &size);
+			str = getInfo(doc, cur, &modified, &size, id);
 			if (str) {
 				if (tail) {
 					tail->next = malloc(sizeof(stringListElement));
@@ -92,6 +96,7 @@ getEmailUrls(const char *data)
 					tail->str = str;
 					tail->modified = modified;
 					tail->contentlen = size;
+					strcpy(tail->id, id);
 				}
 				else {
 					head = malloc(sizeof(stringListElement));
@@ -99,6 +104,7 @@ getEmailUrls(const char *data)
 					head->str = str;
 					head->modified = modified;
 					head->contentlen = size;
+					strcpy(head->id, id);
 					tail = head;
 				}
 			}

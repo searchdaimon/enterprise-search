@@ -11,6 +11,7 @@
 #include "xml.h"
 #include "webdav.h"
 
+#include "../base64/base64.h"
 #include "../crawl/crawl.h"
 
 struct crawlinfo {
@@ -59,12 +60,25 @@ struct crawlLibInfoFormat crawlLibInfo = {
 
 
 char *
-make_crawl_uri(char *uri)
+make_crawl_uri(char *uri, char *id)
 {
 	int len;
 	int i;
 	char *p;
+	char out[1024], some[5];
+	char outlookid[1024];
 
+	len = base64_decode(out, id, 1024);
+	p = out;
+	outlookid[0] = '\0';
+	while (len--) {
+		sprintf(some, "%.2x", (*p & 0xff));
+		strcat(outlookid, some);
+		p++;
+	}
+
+	sprintf(out, "outlook:%s\n", outlookid);
+	printf("Out: %s\n", out);
 /*
 	i = strlen(crawlLibInfo.shortname);
 	len = strlen(uri) + i + 1 + 1;
@@ -73,7 +87,8 @@ make_crawl_uri(char *uri)
 	strcpy(p + i, "|");
 	strcpy(p + i + 1, uri);
 	*/
-	p = strdup(uri);
+	//p = strdup(uri);
+	p = strdup(out);
 
 	return p;
 }
@@ -112,7 +127,7 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 			if (ex_getEmail((char *)cur->str, username, password, &mail) == NULL)
 				continue;
 
-			crawldocumentExist.documenturi = make_crawl_uri((char *)cur->str);
+			crawldocumentExist.documenturi = make_crawl_uri((char *)cur->str, cur->id);
 			crawldocumentExist.lastmodified = cur->modified;
 			if (crawldocumentExist.documenturi == NULL) {
 				(ci->documentError)(1, "Could not allocate memory for documenturi");
