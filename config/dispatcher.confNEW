@@ -14,3 +14,9 @@ useprequery	= FALSE;
 writeprequery	= FALSE;
 
 access = [ "213.179.58.99:theSecret" ];
+
+#jayde:
+#UrlToDocID     = "/home/boitho/UrlToDocID/";
+#bbh:
+UrlToDocID      = "/mnt/node1/hda4/UrlToDocID/";
+

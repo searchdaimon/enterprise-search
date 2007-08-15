@@ -93,6 +93,7 @@
 		char usecashe;
 		char useprequery;
 		char writeprequery;
+		const char *UrlToDocID;
 	};
 
 void die(int errorcode,char errormessage[]) {
@@ -1318,6 +1319,13 @@ int main(int argc, char *argv[])
 
 		dispconfig.writeprequery = config_setting_get_bool(cfgarray);
 
+	    	if ( (cfgarray = config_lookup(&cfg, "UrlToDocID") ) == NULL) {
+			printf("can't load \"UrlToDocID\" from config\n");
+			exit(1);
+	  	}
+
+		dispconfig.UrlToDocID = config_setting_get_string(cfgarray);
+
 	#endif
 	
 	char query [2048];
@@ -1433,28 +1441,54 @@ int main(int argc, char *argv[])
 
         //hvis vi har argumeneter er det første et query
         if (getenv("QUERY_STRING") == NULL) {
+
+	        char *optRank = NULL;
+
+        	extern char *optarg;
+        	extern int optind, opterr, optopt;
+        	char c;
+        	while ((c=getopt(argc,argv,"r:"))!=-1) {
+        	        switch (c) {
+        	                case 'r':
+        	                        optRank = optarg;
+                	                printf("will look up rank for \"%s\"\n",optRank);
+                	                break;
+                        	default:
+					printf("ukjent option\n");
+                                	exit(1);
+                	}
+
+        	}
+        	--optind;
+
+        	printf("argc %i, optind %i\n",argc,optind);
+
+
+
+
                 if (argc < 3 ) {
                         printf("Error ingen query spesifisert eller subname .\n\nEksempel på bruk for å søke på boitho:\n\tsearchkernel boitho www\n\n\n");
                 }
                 else {
 			strcpy(QueryData.userip,"213.179.58.99");
-			/*
-                        QueryData.query[0] = '\0';
-			
-                        for(i=1;i<argc ;i++) {
-                                sprintf(QueryData.query,"%s %s",QueryData.query,argv[i]);
-                        }
-			*/
-                        strcpy(QueryData.query,argv[1]);
-			strcpy(QueryData.subname,argv[2]);
+
+                        strcpy(QueryData.query,argv[1 +optind]);
+			strcpy(QueryData.subname,argv[2 +optind]);
 			#ifdef BLACK_BOKS
-				strcpy(QueryData.search_user,argv[3]);
+				strcpy(QueryData.search_user,argv[3 +optind]);
 			#else
 				QueryData.search_user[0] = '\0';
 			#endif
 
-			getRank = 0;
-			QueryData.rankUrl[0] = '\0';
+			if (optRank == NULL) {
+				getRank = 0;
+				QueryData.rankUrl[0] = '\0';
+			}
+			else {
+				getRank = 1;
+				strscpy(QueryData.rankUrl,optRank,sizeof(QueryData.rankUrl));
+				printf("will rank \"%s\"\n",QueryData.rankUrl);
+			}
 
 			QueryData.MaxsHits = DefultMaxsHits;
 			QueryData.start = 1;
@@ -1467,7 +1501,6 @@ int main(int argc, char *argv[])
 			//v3 QueryData.languageFilter[0] = '\0';
 			QueryData.orderby[0] = '\0';
 
-                        //printf("argc :%i %s %s\n",argc,argv[1],argv[2]);
                         printf("query %s, subname %s\n",QueryData.query,QueryData.subname);
 
 			//printer ut oversikt over serverne vi skal koble til
@@ -1535,7 +1568,7 @@ int main(int argc, char *argv[])
 
 
 	if (getRank) {
-		if (!getDocIDFromUrl("/home/boitho/UrlToDocID/", QueryData.rankUrl, &wantedDocId)) {
+		if (!getDocIDFromUrl(dispconfig.UrlToDocID, QueryData.rankUrl, &wantedDocId)) {
 			die(100, "Unable to find docId");
 		} else {
 			getRank = wantedDocId;
