@@ -1,3 +1,8 @@
+use Compress::Zlib;
+
+use Boitho::Reposetory;
+
+
 require LWP::Parallel::UserAgent;
   use HTTP::Request; 
 
@@ -11,6 +16,14 @@ require LWP::Parallel::UserAgent;
   # and cache filename.
   my $rules = new WWW::RobotRules::AnyDBM_File 'ParallelUA', 'cache';
 
+
+my $subname = 'freelistning';
+
+my $DABUG = 0;
+my $urlAtATime = 250;
+
+use constant UrlQueuePostLength => 204;
+
 use Time::HiRes;
 
 my $lasttime = Time::HiRes::time;
@@ -18,27 +31,35 @@ print "\n\nStarter å beansmarke\n";
 my $count = 0;  
 
 my @reqs;
+#my $DocID;
 
   		#laster inn urler
-		open(INF,"inn.test") or die("Can't open inn.test: $!");
-		@ary = <INF>;
-		close(INF);
+		open(INF,"submission_url.crawl") or die("Can't open inn.test: $!");
 
-		foreach $line (@ary) {
+		#foreach $line (@ary) {
 
-   			chomp($line);
+   		#	chomp($line);
 
-	    		print "$line, nr $count\n";
-			if ($line eq '') {
-				print "emty line in file\n";
+		while (read(INF,$post,UrlQueuePostLength)) {
+
+                        my ($url,$DocID) = unpack('A200,I',$post);
+
+
+	    		print "$url, nr $count\n";
+			if ($url eq '') {
+				print "emty url in file\n";
 				next;
 			}
 
-			$req = new HTTP::Request(GET => $line);
-			
-			push(@reqs,$req);
 
-			if ($count > 10) {
+			my %element;
+			$element{'url'} = $url;			
+			$element{'DocID'} = $DocID;			
+			#$DocID++;
+
+			push(@reqs,\%element);
+
+			if ($count > $urlAtATime) {
 				print "last. count $count\n";
 				#last;
 				crawlSomeUrls($rules,\@reqs);
@@ -53,6 +74,7 @@ my @reqs;
 
 		#/laster inn urler
 
+		close(INF);
 
   print "done loading\n";
 
@@ -64,63 +86,69 @@ sub crawlSomeUrls {
 
 	my ($rules,$reqs) = @_;
 
-  my ($req,$res);
+  	my ($req,$res);
+  	my %DocIDToUrlHash;
 
+	my $curentTime = time;
 
-  # create new UserAgent (actually, a Robot)
-  my $pua = new LWP::Parallel::RobotUA ("boitho.com-robot/3.1 ( http://www.boitho.com/bot.html )", 'abuse@boitho.com', $rules);
+  	# create new UserAgent (actually, a Robot)
+  	my $pua = new LWP::Parallel::RobotUA ("boitho.com-robot/3.1 ( http://www.boitho.com/bot.html )", 'abuse@boitho.com', $rules);
 
-  $pua->timeout   (5);  # in seconds
-  $pua->delay    ( 0);  # in seconds
-  $pua->max_req  ( 1);  # max parallel requests per server
-  $pua->max_hosts(20);  # max parallel servers accessed
-  $pua->redirect  (0);	#tilater ikke redirekts
+  	$pua->timeout   (5);  # in seconds
+  	$pua->delay    ( 0);  # in seconds
+  	$pua->max_req  ( 1);  # max parallel requests per server
+  	$pua->max_hosts(20);  # max parallel servers accessed
+  	$pua->redirect  (0);	#tilater ikke redirekts
  
   
   
-  # for our own print statements that follow below:
-  local($\) = ""; # ensure standard $OUTPUT_RECORD_SEPARATOR
+  	# for our own print statements that follow below:
+  	local($\) = ""; # ensure standard $OUTPUT_RECORD_SEPARATOR
 
-  # register requests
-  foreach $req (@{ $reqs }) {
-  	print "Registering '".$req->url."'\n";
-  	$pua->register ($req , \&handle_answer);
-  	#  Each request, even if it failed to # register properly, will
-  	#  show up in the final list of # requests returned by $pua->wait,
-  	#  so you can examine it # later.
-  }
-  print "done Registering\n";
+  	# register requests
+  	foreach $element (@{ $reqs }) {
 
-  # $pua->wait returns a pointer to an associative array, containing
-  # an '$entry' for each request made, sorted by its url. (as returned
-  # by $request->url->as_string)
-  my $entries = $pua->wait(); # give another timeout here, 25 seconds
+		$req = new HTTP::Request(GET => %{ $element }->{'url'});
+		$DocIDToUrlHash{%{ $element }->{'url'}} = %{ $element }->{'DocID'};
 
-  # let's see what we got back (see also callback function!!)
-  foreach (keys %$entries) {
-    $res = $entries->{$_}->response;
+  		print "Registering '".$req->url."'\n";
+  		$pua->register ($req , \&handle_answer);
+  		#  Each request, even if it failed to # register properly, will
+  		#  show up in the final list of # requests returned by $pua->wait,
+  		#  so you can examine it # later.
+  	}
+  	print "done Registering\n";
 
-    # examine response to find cascaded requests (redirects, etc) and
-    # set current response to point to the very first response of this
-    # sequence. (not very exciting if you set '$pua->redirect(0)')
-    my $r = $res; my @redirects;
-    while ($r) { 
-	$res = $r; 
-	$r = $r->previous; 
-	push (@redirects, $res) if $r;
-    }
+  	# $pua->wait returns a pointer to an associative array, containing
+  	# an '$entry' for each request made, sorted by its url. (as returned
+  	# by $request->url->as_string)
+  	my $entries = $pua->wait(); # give another timeout here, 25 seconds
+
+	# let's see what we got back (see also callback function!!)
+	foreach (keys %$entries) {
+    		$res = $entries->{$_}->response;
+
+    		# examine response to find cascaded requests (redirects, etc) and
+    		# set current response to point to the very first response of this
+    		# sequence. (not very exciting if you set '$pua->redirect(0)')
+    		my $r = $res; my @redirects;
+    		while ($r) { 
+			$res = $r; 
+			$r = $r->previous; 
+			push (@redirects, $res) if $r;
+    		}
     
     
 		#ToDO: $res->request er av og til "undef", hvorfor ? (sjekker for det nå, men hvorfor skjer det)
 		if (defined $res->request) {
 			# summarize response. see "perldoc HTTP::Response"
-    		print "Answer for ",$res->request->url," was \t ",$res->code,": ", $res->message, "\n";
+    			print "Answer for ",$res->request->url," DcoID: ", $DocIDToUrlHash{$res->request->url}," was \t '",$res->code,"': ", $res->message, "\n";
 	
 			#$ferdig_side{'url'} = $res->request->url;
 			#$ferdig_side{content_type} = $res->content_type; 
 			#$ferdig_side{'response_code'} = $res->code;
 			#$ferdig_side{response_content} = $res->content;
-			
+		
 			#print "<side>\n";
 			#print "	<head>\n";
 			#print "	URL: " . $res->request->url . "\n";
@@ -131,14 +159,26 @@ sub crawlSomeUrls {
 			#print  	$res->content . "\n";
 			#print "	</content>\n";
 			#print "</side>\n";
+
+			my $html_compressed = compress($res->content);
+
+my $ipaddress = "0.0.0.0";
+my $clientapplicationversion = "0.1";
+my $userID = "internal";
+my $image = '';
+
+Boitho::Reposetory::rApendPost($DocIDToUrlHash{$res->request->url},$res->request->url,'htm',
+$res->code,$ipaddress,$curentTime,$clientapplicationversion,$userID,$html_compressed,
+length($html_compressed),$image,length($image),$subname);
 			
 		}
 		
-    # print redirection history, in case we got redirected
-    foreach (@redirects) {
-		print "\t",$_->request->url, "\t", $_->code,": ", $_->message,"\n";
-    }
-  }
+	    	# print redirection history, in case we got redirected
+	    	foreach (@redirects) {
+			print "\t",$_->request->url, "\t", $_->code,": ", $_->message,"\n";
+	    	}
+  	
+	}
 
 
 }  
@@ -149,8 +189,9 @@ sub crawlSomeUrls {
 sub handle_answer {
     my ($content, $response, $protocol, $entry) = @_;
 
-    print "Handling answer from '",$response->request->url,": ", length($content), " bytes, Code ", $response->code, ", ", $response->message,"\n";
-
+	if ($DEBUG) {
+    print "Handling partial answer from '",$response->request->url,": ", length($content), " bytes, Code ", $response->code, ", ", $response->message,"\n";
+	}	
     if (length ($content) ) {
 	# just store content if it comes in
 	$response->add_content($content);
