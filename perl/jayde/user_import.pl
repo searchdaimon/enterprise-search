@@ -8,6 +8,7 @@ use YAML;
 use Log::Log4perl;
 use Readonly;
 use Date::Format;
+use Unicode::MapUTF8 qw(from_utf8);
 
 BEGIN {
     push @INC, $ENV{BOITHOHOME} . "/Modules";
@@ -144,6 +145,12 @@ sub add_user_record {
             if ($STRIP_QUOTATIONS) {
                 for my $i (0..scalar @{$value}) {
                     $value->[$i] = strip_quotations($value->[$i]);
+
+                    if ($value->[$i]) {
+                        utf8::encode($value->[$i]);
+                        $value->[$i] = from_utf8({-string => $value->[$i], 
+                                        -charset => 'ISO-8859-1'})
+                    }
                 }
             }
             my %data = (
@@ -176,7 +183,14 @@ sub add_user_record {
             else {
                 $value = strip_quotations($value)
                     if $STRIP_QUOTATIONS;
-                $transformed{$new_key} = $value;
+                
+                # XMLin alters the string in a way
+                # that we need to encode it to UTF8.
+
+                # MySQL doesn't like UTF8, so we then need it converted to
+                # ISO-8859-1
+                utf8::encode($value);
+                $transformed{$new_key} = from_utf8({-string => $value, -charset => 'ISO-8859-1'});
             }
         }
     }

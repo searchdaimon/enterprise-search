@@ -39,7 +39,7 @@
   <sUser>"support"</sUser>
   <sPassword>"5c900f2ec3e3135c8c10235d596abc54"</sPassword>
   <sRealname>"ExactSeek Support"</sRealname>
-  <sSecretQuestion>"s"</sSecretQuestion>
+  <sSecretQuestion>"så"</sSecretQuestion>
   <sSecretAnswer>"83878c91171338902e0fe0fb97a8c47a"</sSecretAnswer>
   <iAutoLogin>0</iAutoLogin>
   <iMaxAlerts>0</iMaxAlerts>
@@ -990,3 +990,51 @@
   </setProps>
  </UserAccount>
  
+ <UserAccount id="323080">
+  <sUser>"runarb"</sUser>
+  <sPassword>"78ec354bf0947d9f7dcb589e9ab6ad90"</sPassword>
+  <sRealname>"Runar Buvik"</sRealname>
+  <sSecretQuestion>"Navn på katt"</sSecretQuestion>
+  <sSecretAnswer>"ea5572e481f74b540bc561d3e41af0aa"</sSecretAnswer>
+  <iAutoLogin>0</iAutoLogin>
+  <iMaxAlerts>0</iMaxAlerts>
+  <nCreateDate>1168902914</nCreateDate>
+  <nLastLoginDate>1168955290</nLastLoginDate>
+  <nStatus>0</nStatus>
+  <iType>0</iType>
+  <nTrialExpireDate>0</nTrialExpireDate>
+  <setApplications>
+   <array-element>"/exact/account/free"</array-element>
+  </setApplications>
+  <setProps>
+   <array-element>""</array-element>
+   <array-element>"runarbu@yahoo.no"</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>""</array-element>
+   <array-element>"1168903260"</array-element>
+   <array-element>"129.241.50.216"</array-element>
+  </setProps>
+ </UserAccount>
