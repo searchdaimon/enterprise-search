@@ -294,30 +294,36 @@ int main(int argc, char *argv[])
 			fprintf(stderr,"server: accept error\n");
 		}
 		else {
-			/*
-			#ifdef WITH_THREAD
-			 	//create a new thread to process the incomming request
-				//thr_create(NULL, 0, do_chld, (void *) searchd_config, THR_DETACHED, &chld_thr);
-				pthread_create(&chld_thr, NULL, do_chld, (void *) &searchd_config);
-				//the server is now free to accept another socket request
-			#else
-				do_chld((void *) &searchd_config);	
-			#endif
-			*/
-			if (fork() == 0) { // this is the child process
 
-				close(sockfd); // child doesn't need the listener
+			#ifdef DEBUG
+				do_chld((void *) &searchd_config);
+
+			#else
+				/*
+				#ifdef WITH_THREAD
+			 		//create a new thread to process the incomming request
+					//thr_create(NULL, 0, do_chld, (void *) searchd_config, THR_DETACHED, &chld_thr);
+					pthread_create(&chld_thr, NULL, do_chld, (void *) &searchd_config);
+					//the server is now free to accept another socket request
+				#else
+					do_chld((void *) &searchd_config);	
+				#endif
+				*/
+				if (fork() == 0) { // this is the child process
+
+					close(sockfd); // child doesn't need the listener
 	
-				do_chld((void *) &searchd_config);	
+					do_chld((void *) &searchd_config);	
 				 
 
-				close(searchd_config.newsockfd);
+					close(searchd_config.newsockfd);
 		
-				exit(0);
-			}
-			else {
-				close(searchd_config.newsockfd); // perent doesn't need the new socket
-			}
+					exit(0);
+				}
+				else {
+					close(searchd_config.newsockfd); // perent doesn't need the new socket
+				}
+			#endif
 		}
 
 		++runCount;
@@ -423,6 +429,9 @@ void *do_chld(void *arg)
 	printf("query:%s\n",queryNodeHeder.query);
 
 	strcpy(SiderHeder.servername,servername);
+
+
+
 	#ifdef BLACK_BOKS
 
 
@@ -635,6 +644,15 @@ void *do_chld(void *arg)
 		subnamesDefaultsConfig.defaultthumbnail = config_setting_get_string(cfgstring);
 	}
 
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "sqlImpressionsLogQuery") ) == NULL) {
+                printf("can't load \"sqlImpressionsLogQuery\" from config\n");
+		subnamesDefaultsConfig.sqlImpressionsLogQuery[0] = '\0';
+
+        }
+	else {
+		strscpy(subnamesDefaultsConfig.sqlImpressionsLogQuery,config_setting_get_string(cfgstring),sizeof(subnamesDefaultsConfig.sqlImpressionsLogQuery));
+	}
+
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "isPaidInclusion") ) == NULL) {
                 printf("can't load \"isPaidInclusion\" from config\n");
@@ -841,6 +859,13 @@ void *do_chld(void *arg)
 					subnames[nrOfSubnames].config.defaultthumbnail = config_setting_get_string(cfgstring);
 				}
 
+				if ( (cfgstring = config_setting_get_member(cfgcollection, "sqlImpressionsLogQuery") ) == NULL) {
+                			printf("can't load \"sqlImpressionsLogQuery\" from config\n");
+        			}
+				else {
+					strscpy(subnames[nrOfSubnames].config.sqlImpressionsLogQuery,config_setting_get_string(cfgstring),sizeof(subnames[nrOfSubnames].config.sqlImpressionsLogQuery));
+				}
+
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "isPaidInclusion") ) == NULL) {
                 			printf("can't load \"isPaidInclusion\" from config\n");
         			}
@@ -866,6 +891,8 @@ void *do_chld(void *arg)
 
 	printf("\n");
 
+
+
 	FreeSplitList(Data);
 
 /*
@@ -876,9 +903,14 @@ void *do_chld(void *arg)
 	strscpy(subnames[0].subname,"www",sizeof(subnames[0].subname));
 */
 
+	#ifdef DEBUG
+	printf("\n##########################################################\n");
+	printf("subnames:\nTotal of %i\n",nrOfSubnames);
 	for (i=0;i<nrOfSubnames;i++) {
 		printf("subname nr %i: \"%s\"\n",i,subnames[i].subname);
 	}
+	printf("##########################################################\n\n");
+	#endif
 
 	SiderHeder.filtypesnrof = MAXFILTYPES;
 
