@@ -1,6 +1,8 @@
     #include "../common/define.h"
     #include "../common/lot.h"
     #include "../common/vid.h"
+    #include "../common/stdlib.h"
+
     #include <arpa/inet.h>
     #include <stdio.h>
     #include <stdlib.h>
@@ -38,7 +40,7 @@
 #endif
 
     //temp
-    #define NO_LOGING
+    //#define NO_LOGING
 
     #include <mysql.h>
 
@@ -787,6 +789,7 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg)
 	else {
 		strscpy(QueryData->subname,cgi_getentrystr("subname"),sizeof(QueryData->subname) -1);
 	}
+
 
 #ifdef BLACK_BOKS
 	if (cgi_getentrystr("tkey") == NULL) {
@@ -2462,7 +2465,6 @@ int main(int argc, char *argv[])
 	}
 	#endif
 
-	free(Sider);
 
 	/********************************************************************************************/
 	//mysql logging
@@ -2473,7 +2475,7 @@ int main(int argc, char *argv[])
 		mysql_init(&demo_db);
 
 		#ifndef BLACK_BOKS
-			if(!mysql_real_connect(&demo_db, "www2.boitho.com", "boitho_remote", "G7J7v5L5Y7", "boitho", 3306, NULL, 0)){
+			if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", "boithoweb", 3306, NULL, 0)){
     				fprintf(stderr,mysql_error(&demo_db));
     				//exit(1);
 			}
@@ -2490,16 +2492,74 @@ int main(int argc, char *argv[])
 
 
 			//logger til mysql
-			sprintf(query,"insert DELAYED into search_logg values(NULL,NOW(),\"%s\",\"%s\",\"%i\",\"%f\",\"%s\",\"1\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\")",queryEscaped,QueryData.search_user,FinalSiderHeder.TotaltTreff,FinalSiderHeder.total_usecs,QueryData.userip,totlaAds,QueryData.HTTP_ACCEPT_LANGUAGE,QueryData.HTTP_USER_AGENT,QueryData.HTTP_REFERER,QueryData.GeoIPcontry);
+			sprintf(query,"insert DELAYED into search_logg values(NULL,NOW(),\"%s\",\"%s\",\"%i\",\"%f\",\"%s\",\"1\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\")",
+				queryEscaped,QueryData.search_user,
+				FinalSiderHeder.TotaltTreff,
+				FinalSiderHeder.total_usecs,
+				QueryData.userip,
+				totlaAds,
+				QueryData.HTTP_ACCEPT_LANGUAGE,
+				QueryData.HTTP_USER_AGENT,
+				QueryData.HTTP_REFERER,
+				QueryData.GeoIPcontry
+			);
 
 			mysql_real_query(&demo_db, query, strlen(query));
 
 			//mysql_free_result(mysqlres);
+
+			//lopper gjenom og logger Paid Inclusion
+			printf("looking for Paid Inclusion\n");
+			x = 0;
+			i = 0;			
+			
+			while ((x<FinalSiderHeder.showabal) && (i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)))) {
+		
+				if (!Sider[i].deletet) {
+					#ifdef DEBUG
+					printf("pi analyse. Subname \"%s\", pi \"%i\"\n",Sider[i].subname.subname, (int)Sider[i].subname.config.isPaidInclusion);
+					#endif
+
+					if (Sider[i].subname.config.isPaidInclusion) {
+					
+
+						strscpy(query,Sider[i].subname.config.sqlImpressionsLogQuery,sizeof(query));
+						strsandr(query,"$DocID",utoa(Sider[i].iindex.DocID));
+
+						strsandr(query,"$query",queryEscaped);
+						strsandr(query,"$hits",bitoa(FinalSiderHeder.TotaltTreff) );
+						strsandr(query,"$time",ftoa(FinalSiderHeder.total_usecs));
+						strsandr(query,"$ipadress",QueryData.userip);
+						strsandr(query,"$spot",bitoa(x));
+
+						#ifdef DEBUG
+						printf("query \"%s\"\n",query);
+						#endif
+
+						mysql_real_query(&demo_db, query, strlen(query));
+
+					}
+					else {
+						#ifdef DEBUG
+						printf("is NOT pi! :(\n");
+						#endif
+					}
+				}
+				//teller bare normale sider (hva med Paid Inclusion ?)
+				if (Sider[i].type == siderType_normal) {
+					++x;
+				}
+
+				++i;
+			}
+
 			mysql_close(&demo_db);
 		}
 	#endif
 
 	/********************************************************************************************/
+
+	free(Sider);
 
   	/* Free the configuration */
 	config_destroy(&cfg);
