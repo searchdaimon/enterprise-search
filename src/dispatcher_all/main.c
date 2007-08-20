@@ -1858,7 +1858,6 @@ int main(int argc, char *argv[])
 				bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,0,searchport);
 			}
 
-
 			//addservere
 			bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder,0,searchport);
 			//Paid inclusion
@@ -1874,9 +1873,6 @@ int main(int argc, char *argv[])
 			//addservere
 			//addserver bruker som regel mest tid, så tar den sist slik at vi ikke trenger å vente unødvendig
 			brGetPages(addsockfd,nrOfAddServers,AddSiderHeder,Sider,&pageNr,0);
-
-
-
 
 			handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, (hascashe || hasprequery), &errorha, pageNr,
 				       nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers);
@@ -1963,6 +1959,18 @@ int main(int argc, char *argv[])
 
 	handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, (hascashe || hasprequery), &errorha, pageNr,
 	               nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers);
+
+
+	//stopper #ta tidn og kalkulerer hvor lang tid vi brukte
+	gettimeofday(&main_end_time, NULL);
+	FinalSiderHeder.total_usecs = getTimeDifference(&main_start_time,&main_end_time);
+
+	//Sier ikke noe om filtrerte treff hvis vi hadde mange nokk
+	if (FinalSiderHeder.TotaltTreff>100) {
+		FinalSiderHeder.filtered = 0;;
+	}
+
+
 
 	totlaAds = 0;
 
