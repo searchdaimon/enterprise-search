@@ -25,6 +25,7 @@ struct collectionFormat {
 	int auth_id;
 	unsigned int id;
 	char *userprefix;
+	char **users;
 };
 
 struct crawldocumentExistFormat {
