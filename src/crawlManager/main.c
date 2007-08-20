@@ -222,7 +222,7 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 	//skal returnere 1, og bare 1, hvis ikke er det noe feil
 	if (nrofcollections != 1) {
 		printf("error looking opp collection \"%s\"\n",collection);
-		return 0;
+		return 1;
 	}
 
 
@@ -509,6 +509,47 @@ int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections)
 	//toDo: hvorfor segfeiler vi her ????
 	//free(collection);
 }
+
+int
+cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
+{
+        char mysql_query [2048];
+	MYSQL_RES *mysqlres; /* To be used to fetch information into */
+        MYSQL_ROW mysqlrow;
+	int i, numUsers;
+
+	sprintf(mysql_query, "SELECT name FROM shareUsers WHERE share = %d",
+	       collection->id);
+
+	if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
+               	printf(mysql_error(db));
+		blog(LOGERROR,1,"MySQL Error: \"%s\".\n",mysql_error(db));
+               	return 0;
+       	}
+	mysqlres=mysql_store_result(db); /* Download result from server */
+
+	numUsers = mysql_num_rows(mysqlres);
+
+	if (numUsers == 0) {
+		collection->users = NULL;
+		return 1;
+	}
+	else {
+		debug("nrofrows %i\n", numUsers);
+		collection->users = malloc((numUsers+1) * sizeof(char *));
+		if (collection->users == NULL)
+			return 0;
+		i=0;
+		while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
+			collection->users[i] = strdup(mysqlrow[0]);
+			i++;
+		}
+		collection->users[i] = NULL;
+	}
+	
+	return 1;
+}
+
 int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],int *nrofcollections) {
 
         char mysql_query [2048];
@@ -635,6 +676,8 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 		}
 
 		debug("resource \"%s\", connector \"%s\", collection_name \"%s\"\n",(*collection)[i].resource,(*collection)[i].connector,(*collection)[i].collection_name);
+
+		cm_collectionFetchUsers(collection[i], &demo_db);
 
 		//crawler ny
                 ++i;
