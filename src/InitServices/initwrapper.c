@@ -19,18 +19,19 @@ void show_usage();
 
 // header end
 
-const char *valid_services[] = {"crawlManager", "boitho-bbdn", "searchdbb", "crawl_watch", '\0'};
+const char *valid_services[] = {"crawlManager", "boitho-bbdn", 
+        "searchdbb", "crawl_watch", "boithoad", '\0'};
 const char *valid_params[] = {"start", "stop", "restart", "status", '\0'};
 
 int main(int argc, char **argv) {
-	if (DO_SUID) {
+
+#if DO_SUID
+    if (setuid(UID_USER) != 0) {
+        printf("Unable to setuid(%d)\n", UID_USER);
+        exit(2);
+    }
 	
-	    if (setuid(UID_USER) != 0) {
-		printf("Unable to setuid(%d)\n", UID_USER);
-		exit(2);
-	    }
-	
-	}
+#endif
 	
 	if (argc == 3) {
 		char *service = argv[1];
