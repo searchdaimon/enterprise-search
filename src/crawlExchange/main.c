@@ -4,6 +4,8 @@
  * June, 2007
  */
 
+#include <sys/param.h>
+
 #include <stdio.h>
 #define _GNU_SOURCE 1
 #include <string.h>
@@ -38,7 +40,7 @@ int
 ex_rewrite_url(char *uri, enum platform_type ptype, enum browser_type btype)
 {
 
-	sprintf(uri, "%s", uri);
+	//sprintf(uri, "%s", uri);
 
 	return 1;
 }
@@ -77,8 +79,7 @@ make_crawl_uri(char *uri, char *id)
 		p++;
 	}
 
-	sprintf(out, "outlook:%s\n", outlookid);
-	printf("Out: %s\n", out);
+	sprintf(out, "outlook:%s", outlookid);
 /*
 	i = strlen(crawlLibInfo.shortname);
 	len = strlen(uri) + i + 1 + 1;
@@ -194,32 +195,82 @@ int
 crawlcanconect(struct collectionFormat *collection,
                    int (*documentError)(int, const char *, ...) __attribute__((unused)))
 {
-	int connected;
 	char *listxml;
+	char origresource[PATH_MAX];
+	char resource[PATH_MAX];
+	char *user;
+	char **users;
+	
+	if (strstr(collection->resource, "://")) {
+		snprintf(origresource, sizeof(origresource), "%s/exchange", collection->resource);
+	} else {
+		snprintf(origresource, sizeof(origresource), "http://%s/exchange", collection->resource);
+	}
 
-	/* XXX: Should we do some more checking here? */
-	listxml = ex_getContent(collection->resource, collection->user, collection->password);
+	for (users = collection->users; users && *users; users++) {
+		user = *users;
 
-	connected = (listxml != NULL);
-	free(listxml);
+		snprintf(resource, sizeof(resource), "%s/%s/", origresource, user);
+		printf("Resource: %s\n", resource);
+		/* Shut up the xml parser a bit */
+		xmlGetWarningsDefaultValue = 0;
+		listxml = ex_getContent(resource, collection->user, collection->password);
+		//listxml = NULL;
+		if (listxml != NULL) {
+			free(listxml);
+			return 1;
+		}
+	}
 
-	return connected;
+	return 0;
 }
 
 int
 crawlGo(struct crawlinfo *ci)
 {
 	char *listxml;
-	int ret;
+	int err;
+	char origresource[PATH_MAX];
+	char resource[PATH_MAX];
+	char *user;
+	char **users;
+#if 0
+	char *fakeusers[] = {
+		"rb",
+		"eirik",
+		"dagur",
+		NULL
+	};
+#endif
+	
+	//users = "eirik rb runarb";
+	if (strstr(ci->collection->resource, "://")) {
+		snprintf(origresource, sizeof(origresource), "%s/exchange", ci->collection->resource);
+	} else {
+		snprintf(origresource, sizeof(origresource), "http://%s/exchange", ci->collection->resource);
+	}
 
-	xmlGetWarningsDefaultValue = 0;
-	listxml = ex_getContent(ci->collection->resource, ci->collection->user, ci->collection->password);
-	if (listxml == NULL)
-		return 0;
-	ret = grabContent(listxml, ci->collection->resource, ci->collection->user, ci->collection->password, ci);
-	free(listxml);
+	err = 0;
+	for (users = ci->collection->users; users && *users; users++) {
+	//for (users = fakeusers; *users; users++) {
+		user = *users;
 
-	return ret;
+		snprintf(resource, sizeof(resource), "%s/%s/", origresource, user);
+		/* Shut up the xml parser a bit */
+		xmlGetWarningsDefaultValue = 0;
+		listxml = ex_getContent(resource, ci->collection->user, ci->collection->password);
+		//listxml = NULL;
+		if (listxml == NULL) {
+			err++;
+		} else {
+			if (!grabContent(listxml, resource, ci->collection->user, ci->collection->password, ci))
+				err++;
+			free(listxml);
+		}
+	}
+
+	return 0;
+	//return err == 0 ? 0 : 1;
 }
 
 int
