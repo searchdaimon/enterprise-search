@@ -899,6 +899,7 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg)
 		QueryData->MaxsHits = cgi_getentryint("maxshits");			
 	}
 
+
 	//Runarb: Dette er vel bare aktuelt for black boks. For web trnger eksterne klienter å kalle dispatcher_all direkte?
 #ifdef BLACK_BOKS
 
@@ -1580,6 +1581,9 @@ int main(int argc, char *argv[])
 
 
 	if (getRank) {
+		//normaliserer url. Setter for eks / på slutten
+		url_normalization(QueryData.rankUrl,sizeof(QueryData.rankUrl));
+
 		if (!getDocIDFromUrl(dispconfig.UrlToDocID, QueryData.rankUrl, &wantedDocId)) {
 			die(100, "Unable to find docId");
 		} else {
@@ -2593,7 +2597,7 @@ int main(int argc, char *argv[])
 						strsandr(query,"$hits",bitoa(FinalSiderHeder.TotaltTreff) );
 						strsandr(query,"$time",ftoa(FinalSiderHeder.total_usecs));
 						strsandr(query,"$ipadress",QueryData.userip);
-						strsandr(query,"$spot",bitoa(x));
+						strsandr(query,"$spot",bitoa(x + (QueryData.start * QueryData.MaxsHits)));
 
 						#ifdef DEBUG
 						printf("query \"%s\"\n",query);
