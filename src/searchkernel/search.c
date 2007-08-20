@@ -1740,7 +1740,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		int languageFilterAsNr[], char orderby[],
 		struct filtersFormat *filters,
 		struct filteronFormat *filteron,
-		query_array *search_user_as_query
+		query_array *search_user_as_query,
+		int ranking
 		) {
 
 	int i,y,n;
@@ -2039,7 +2040,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 	#ifdef WITH_RANK_FILTER
 	
-	if ((*TeffArrayElementer) > 20000) {
+	if ((*TeffArrayElementer) > 20000 && !ranking) {
 
 		for(i=0; i<= 255;i++) {
 			rankcount[i] = 0;

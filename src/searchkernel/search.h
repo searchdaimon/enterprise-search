@@ -5,7 +5,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
                 int languageFilterAsNr[], char orderby[],
                 struct filtersFormat *filters,
 		struct filteronFormat *filteron,
-		query_array *search_user_as_query
+		query_array *search_user_as_query,
+		int
 		);
 
 #ifdef BLACK_BOKS

@@ -1331,7 +1331,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
-			filters,&filteron,&PagesResults.QueryData.search_user_as_query);
+			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 0);
 
 	printf("end searchSimple\n");
 
@@ -1803,7 +1803,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			&PagesResults.QueryData.queryParsed,&SiderHeder->queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
-			filters,&filteron,&PagesResults.QueryData.search_user_as_query);
+			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 1);
 	//&rankDocId);
 
 	printf("end searchSimple\n");
