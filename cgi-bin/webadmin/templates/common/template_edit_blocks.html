@@ -89,12 +89,11 @@
 	<div class="block_default">
 		Group access:
 		<div style="block_inner" >
-			<div style="background : white; max-width : 80%; border : 1px solid;">
-			<div style="overflow:auto; min-height : 5em; max-height : 12em; margin-bottom : 1em: margin-top : 1em;">
+			<div class="checklist_outer">
+			<div class="checklist_inner">
 			[% i = 0 %]
 			[% FOREACH group IN group_list %]				
-				<label for="group[% i %]" 
-					style="display : block; padding-left : 1em; padding-right : 1em;">
+				<label for="group[% i %]">
 					
 				<input name="share.group_member[[% i %]]" type="checkbox" id="group[% i %]"
 						value="[% group %]"
@@ -195,5 +194,28 @@
 		<br /><span class="example">Example: ad-company</span>
 	</div>
 	</div>
+[% END %]
+
+[% BLOCK user_select %]
+    <div class="block_default">
+	<div style="block_inner" >
+	<div class="checklist_outer">
+	<div class="checklist_inner">
+	[% i = 0 %]
+	[% FOREACH user IN user_list %]				
+            <label for="user[% i %]">
+					
+		<input name="share.user[[% i %]]" type="checkbox" id="user[% i %]"
+		    [% IF share.user.grep("^$user$").0 %]
+                        checked="checked"
+                    [% END %]
+					value="[% user %]"
+		/> [% user %]
+						
+	    </label>
+	    [% i = i + 1 %]
+	[% END %]
+	</div></div>
+    </div>
 [% END %]
 

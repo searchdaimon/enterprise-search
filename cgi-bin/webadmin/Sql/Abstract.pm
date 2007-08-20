@@ -44,10 +44,27 @@ sub sql_single {
 	my $query = shift;
 	my @binds = @_;
 	
-	my $sth = $self->_prepare_and_execute($query, @binds);
+        my $sth = $self->_prepare_and_execute($query, @binds);
 	return $sth->fetchrow_array();
 }
 
+sub sql_array {
+    my $self = shift;
+    my $query = shift;
+    my @binds = @_;
+
+    my $sth = $self->_prepare_and_execute($query, @binds);
+    my @res;
+    while (my @row = $sth->fetchrow_array()) {
+        if (scalar @row > 1) {
+            push @res, \@row;
+        }
+        else {
+            push @res, $row[0];
+        }
+    }
+    return @res;
+}
 
 ##
 # Returns array with SELECT-results as hashref. One hashref per result.

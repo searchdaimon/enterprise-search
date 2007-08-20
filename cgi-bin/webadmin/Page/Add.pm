@@ -5,6 +5,7 @@ use Sql::Shares;
 use Sql::Connectors;
 use Sql::CollectionAuth;
 use Sql::ShareGroups;
+use Sql::ShareUsers;
 #use Modules::Boitho::Infoquery;
 use Boitho::Infoquery;
 use Data::Dumper;
@@ -45,9 +46,11 @@ sub add_share {
 	my $share = shift;
 	my $sqlShares = $self->{'sqlShares'};
 	my $sqlGroups = Sql::ShareGroups->new($self->{'dbh'});
+	my $sqlUsers  = Sql::ShareUsers->new($self->{'dbh'});
 	$share->{'active'} = 1 if ($share->{'active'}); # HTML form sets it to "on"
 	my $id = $sqlShares->insert_share($share);
 	$sqlGroups->set_groups($id, $share->{'group_member'});
+	$sqlUsers->set_users($id, $share->{'user'});
 	
 	return 1;
 }
@@ -81,7 +84,8 @@ sub show_second_form {
 
 	$vars->{'share'} = $share;	
 	$vars->{'authentication'} = \@auth_data;
-	$vars->{'group_list'} = $iq->listGroups;
+	$vars->{'group_list'} = $iq->listGroups();
+	$vars->{'user_list'}  = $iq->listUsers();
 	$vars->{'input_fields'} = $sqlConnectors->get_input_fields($connector);
 	$vars->{'from_scan'} = $state->{'from_scan'}
 		if $state->{'from_scan'}; # Coming from scan result. Contain's id.

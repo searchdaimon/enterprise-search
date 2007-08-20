@@ -1,7 +1,5 @@
 [%	# Template for editing or inputting data regarding a collection.
-	# Provide an array in the variable fields with what input fields
-	# you wish to show to the user.
-	# Input fileds avaiable are: collection, authentication, groups, share and crawling. %]
+	# Input fileds avaiable are: collection, authentication, groups, share, exchange_user_select and crawling. %]
 
 [% 
 
@@ -54,6 +52,13 @@
 			blocks = ['advanced']
 			icon = 'configure'
 		%]
+
+        [% ELSIF field == 'exchange_user_select' %]
+            [% PROCESS sub_fields
+                header = 'Users to index'
+                blocks = ['user_select']
+                icon = 'kdmconfig'
+            %]
 
 	[% ELSIF field == 'user_prefix' %]
 

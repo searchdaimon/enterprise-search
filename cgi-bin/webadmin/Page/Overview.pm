@@ -7,6 +7,7 @@ use Sql::Shares;
 use Sql::Connectors;
 use Sql::CollectionAuth;
 use Sql::ShareGroups;
+use Sql::ShareUsers;
 use Sql::Config;
 BEGIN {
 	#push @INC, 'Modules';
@@ -19,10 +20,8 @@ use Common::Data::Overview;
 
 use config qw($CONFIG);
 
-sub new($$$) {
-	my $class = shift;
-	my $dbh = shift;
-	my $state = shift;
+sub new {
+    my ($class, $dbh, $state) = @_;
 	my $self = {};
 	bless $self, $class;
 	$self->_init($dbh, $state);
@@ -37,9 +36,11 @@ sub _init($$$) {
 	$self->{'sqlConnectors'} = Sql::Connectors->new($dbh);
 	$self->{'sqlAuth'}	 = Sql::CollectionAuth->new($dbh);
 	$self->{'sqlGroups'}	 = Sql::ShareGroups->new($dbh);
+        $self->{'sqlUsers'}      = Sql::ShareUsers->new($dbh);
 	$self->{'common'}     	 = Common::Generic->new;
 	$self->{'dataOverview'} = Common::Data::Overview->new($dbh);
 	$self->{'infoQuery'}   = Boitho::Infoquery->new($CONFIG->{'infoquery'});
+
 	#my $sqlConfig = Sql::Config->new($dbh);
 	
 	#$self->{'default_crawl_rate'} 
@@ -86,6 +87,7 @@ sub edit_collection {
 	my $template_file = "overview_edit.html";
 	my $sqlShares = $self->{'sqlShares'};
 	my $sqlGroups = $self->{'sqlGroups'};
+        my $sqlUsers = $self->{'sqlUsers'};
 	
 	
 	my $state = $self->{'state'};
@@ -111,7 +113,9 @@ sub edit_collection {
 			# Collection exists, continue.
  			my $share =  $sqlShares->get_share($id);
  			$share->{'group_member'} = $sqlGroups->get_groups($id)
- 				if grep /^groups$/, @$input_fields;
+ 			    if grep /^groups$/, @$input_fields;
+                        $share->{'user'} = [ $sqlUsers->get_users($id) ]
+                            if grep /user/, @{$input_fields};
  			$vars->{'share'} = $share;
  		}
 	}
@@ -141,6 +145,7 @@ sub submit_edit {
 	my $sqlShares     = $self->{'sqlShares'};
 	my $sqlConnectors = $self->{'sqlConnectors'};
 	my $sqlGroups     = $self->{'sqlGroups'};
+        my $sqlUsers      = $self->{'sqlUsers'};
 
 	
 
@@ -165,9 +170,10 @@ sub submit_edit {
 		return ($vars, $valid);
 	}
 	
-	# Contine with the submit.
+	# Continue with the submit.
 	$sqlShares->update_share($share);
-	$sqlGroups->set_groups($share->{'id'}, $share->{'group_member'});
+	$sqlGroups->set_groups($share->{id}, $share->{group_member});
+        $sqlUsers->set_users($share->{id}, $share->{user});
 
 	$vars->{'edit_success'} = 1;
 	return ($vars, $valid);
@@ -287,6 +293,8 @@ sub _get_associated_data($$$) {
 		if grep /^connector$/, @$fields;
 	$vars->{'group_list'} = $infoquery->listGroups
 		if grep /^groups$/, @$fields;
+	$vars->{'user_list'} = $infoquery->listUsers()
+		if grep /^exchange_user_select$/, @$fields;
 	return $vars;
 }
 

@@ -212,7 +212,7 @@ sub exists {
 #
 # Attributes:
 #	collection_name - Collectio name
-sub colleciton_name_exists {
+sub collection_name_exists {
 	my ($self, $collection_name) = @_;
 	return $self->get_id_by_collection($collection_name);
 }
@@ -368,7 +368,7 @@ sub _generate_random_name($) {
 
 		$counter++;
 		carp ("_generate_random_name is using too many attempts at finding a name.") if ($counter > 4);
-	} while ($self->exists($name));
+	} while ($self->collection_name_exists($name));
 	return $name;
 }
 

@@ -235,3 +235,23 @@ A:active { color : blue; }
 	font-size : x-small; 
 	font-style: italic;
 }
+
+.checklist_outer {
+    background : white; 
+    max-width : 80%; 
+    border : 1px solid;
+}
+
+.checklist_inner {
+    overflow:auto; 
+    min-height : 5em; 
+    max-height : 12em; 
+    margin-bottom : 1em: 
+    margin-top : 1em;
+}
+
+.checklist_inner label {
+    display : block; 
+    padding-left : 1em; 
+    padding-right : 1em;
+}
