@@ -17,7 +17,7 @@ COMMONSOBJ=	adultWeight.o chtbl.o debug.o iconv.o ir.o logs.o poprank.o sha1.o t
 		bstr.o daemon.o exeoc.o ipdb.o list.o mgsort.o revindex.o strlcpy.o
 
 OBJS+=		$(COMMONSOBJ)
-OBJS+=		crawl.o ../base64/base64.c
+OBJS+=		crawl.o ../base64/base64.o
 
 
 all: $(PROG)
