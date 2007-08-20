@@ -512,9 +512,10 @@
     <item url="Page/System/Crashes.pm" uploadstatus="1" />
     <item url="templates/system/system_crash_overview.html" uploadstatus="1" />
     <item url="templates/system/system_crash_report.html" uploadstatus="1" />
-    <item url="Page/Scan.pm" />
-    <item url="Page/Scan/" />
-    <item url="Page/Scan/Scanning.pm" />
-    <item url="Page/Scan/Process.pm" />
+    <item url="Page/Scan.pm" uploadstatus="1" />
+    <item url="Page/Scan/" uploadstatus="1" />
+    <item url="Page/Scan/Scanning.pm" uploadstatus="1" />
+    <item url="Page/Scan/Process.pm" uploadstatus="1" />
+    <item url="Sql/ShareUsers.pm" />
   </project>
 </webproject>

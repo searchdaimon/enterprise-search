@@ -2,29 +2,19 @@
 <webprojectsession>
   <session usePreviewPrefix="0" previewPrefix="" >
     <itemcursorpositions>
-      <item line="59" column="53" url="scan.cgi" />
-      <item line="21" column="11" url="Page/Scan.pm" />
-      <item line="6" column="20" url="Sql/ScanResults.pm" />
-      <item line="2" column="0" url="Page/Scan/Scanning.pm" />
-      <item line="75" column="4" url="Page/Scan/Process.pm" />
-      <item line="132" column="0" url="Common/Scan.pm" />
-      <item line="9" column="3" url="config.pm" />
-      <item line="1" column="0" url="templates/scan/scan_main.html" />
-      <item line="0" column="0" url="Common/Generic.pm" />
-      <item line="87" column="42" url="templates/scan/scan_results.html" />
+      <item line="0" column="0" url="add.cgi" />
+      <item line="61" column="26" url="Page/Add.pm" />
+      <item line="18" column="1" url="Sql/ShareGroups.pm" />
+      <item line="15" column="34" url="Sql/ShareUsers.pm" />
+      <item line="61" column="0" url="Sql/Abstract.pm" />
+      <item line="253" column="41" url="Page/Overview.pm" />
     </itemcursorpositions>
     <uploadprofiles defaultProfile="@" >
       <profile remote_host="" remote_port="" remote_path="" remote_protocol="ftp" user="" name="@" />
     </uploadprofiles>
     <treestatus>
-      <openfolder url="Common" />
       <openfolder url="Page" />
-      <openfolder url="Page/Scan" />
       <openfolder url="Sql" />
-      <openfolder url="templates" />
-      <openfolder url="templates/authentication" />
-      <openfolder url="templates/scan" />
-      <openfolder url="templates/system" />
     </treestatus>
   </session>
 </webprojectsession>
