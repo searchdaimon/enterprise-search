@@ -346,6 +346,7 @@ my %types =
 my $fileemail;
 
 $fileemail = shift @ARGV or die "Usage: ./emlsplit.pl emlfile" ;
+system("cp $fileemail /tmp/someemail.eml");
 
 my $message;
 {
@@ -355,6 +356,17 @@ my $message;
 }
 
 my $parsed = Email::MIME->new($message);
+
+my $headername = "/tmp/dirfilter/".$parsed->invent_filename.".header.";
+open(my $mh, "> $headername") or die "$!: $headername";
+foreach my $hn ($parsed->header_names) {
+	my @values = $parsed->header($hn);
+	print $mh "$hn:";
+	print $mh join(", ", @values);
+	print $mh "\n";
+}
+close($mh);
+print ("txt" ." ".$headername."\n");
 
 my @parts = $parsed->parts;
 #print $#parts."\n";
