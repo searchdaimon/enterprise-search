@@ -195,6 +195,9 @@ struct subnamesConfigFormat {
      const char *defaultthumbnail;
 
      char isPaidInclusion; //bool
+
+	//sql query som vil bli utført hver gang vi ser en side i denne subnamet
+	char sqlImpressionsLogQuery[252];
 };
 struct subnamesFormat {
 	char subname[64];
@@ -206,7 +209,7 @@ struct subnamesFormat {
 };
 
 struct brankPageElementsFormat {
-	unsigned long int IPAddress;
+	unsigned int IPAddress;
 	unsigned char nrOfOutLinks;
 	unsigned short response;
 };
@@ -225,7 +228,7 @@ struct DocumentIndexFormat {
         unsigned short imageSize;
 	unsigned int ResourcePointer;
 	unsigned short ResourceSize;
-        unsigned long int IPAddress;
+        unsigned int IPAddress;
         unsigned short response;
         unsigned short userID;
         double clientVersion;
@@ -248,7 +251,7 @@ struct ReposetoryFormat {
         char url[201];
         char content_type[7];
         char content[MaxReposetoryContent];
-	unsigned long int IPAddress;
+	unsigned int IPAddress;
 	unsigned short response;
 };
 
@@ -256,11 +259,11 @@ struct ReposetoryHeaderFormat {
 	unsigned int DocID;
         char url[200];
         char content_type[4];
-        unsigned long int IPAddress;
+        unsigned int IPAddress;
         unsigned short response;
 	unsigned short htmlSize;
 	unsigned short imageSize;
-	unsigned long int time;
+	unsigned int time;
 	unsigned short userID;
 	double clientVersion;
 	#ifdef BLACK_BOKS
@@ -283,9 +286,9 @@ struct StorageDirectorysFormat {
 
 //formater på filene som ineholder ordbokene
 struct DictionaryFormat {
-	unsigned long WordID;
-	unsigned long Adress;
-	unsigned long SizeForTerm;
+	unsigned int WordID;
+	unsigned int Adress;
+	unsigned int SizeForTerm;
 };
 
 struct indexFilteredFormat {
@@ -321,7 +324,7 @@ struct iindexMainElements {
 	struct hitsFormat *hits;
 	int TermRank;
 	int PopRank;
-	unsigned long int allrank; //byttet til unsigned long 24. okt 2006. unsigned long er 4 bit int
+	unsigned int allrank; //byttet til unsigned long 24. okt 2006. unsigned long er 4 bit int. 05 augus 2007: dropper "long", er 8 bytes på x86_64
 	char phraseMatch;
 	unsigned char langnr;
 	struct subnamesFormat *subname;
@@ -353,11 +356,7 @@ struct iindexFormat {
 struct SiderFormat {
 	struct DocumentIndexFormat DocumentIndex;
 	struct iindexMainElements iindex;
-	//struct ReposetoryFormat Reposetory;	
-	//char htmlBuffer[30000];
-	//char *htmlBuffer;
 	int htmlSize;
-	//char description[250]; 
 	char description[300]; 
 	char title [70];
 	char thumbnale[128];
@@ -389,6 +388,9 @@ struct SiderFormat {
 	unsigned char pathlen;
 
 	unsigned short DomainID;
+
+	//buffering som gjør at vi kan lagre den på fil, og fortsatt bruke gammel data
+	char reserved[40];
 };
 
 struct queryTimeFormat {
@@ -396,9 +398,9 @@ struct queryTimeFormat {
 	double indexSort;
 	double dictionarySearch;
 	double AthorSearch;
-	double AthorRank;
+	//double AthorRank;
 	double MainSearch;
-	double MainRank;
+	//double MainRank;
 	double MainAthorMerge;
 	double allrankCalc;
 	double popResult;

@@ -381,7 +381,7 @@ void *do_chld(void *arg)
 
 	//struct SiderFormat Sider[MaxsHits * 2];
 
-	struct SiderHederFormat SiderHeder;
+	struct SiderHederFormat *SiderHeder = malloc(sizeof(struct SiderHederFormat));
 
 	gettimeofday(&globalstart_time, NULL);
 
@@ -428,7 +428,7 @@ void *do_chld(void *arg)
 
 	printf("query:%s\n",queryNodeHeder.query);
 
-	strcpy(SiderHeder.servername,servername);
+	strcpy(SiderHeder->servername,servername);
 
 
 
@@ -912,44 +912,44 @@ void *do_chld(void *arg)
 	printf("##########################################################\n\n");
 	#endif
 
-	SiderHeder.filtypesnrof = MAXFILTYPES;
+	SiderHeder->filtypesnrof = MAXFILTYPES;
 
-	SiderHeder.errorstrlen=sizeof(SiderHeder.errorstr);
-	//v3 dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,servername,subnames,SiderHeder.nrOfSubnames,queryNodeHeder.MaxsHits,queryNodeHeder.start, queryNodeHeder.filterOn, queryNodeHeder.languageFilter);
+	SiderHeder->errorstrlen=sizeof(SiderHeder->errorstr);
+	//v3 dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,SiderHeder,SiderHeder->hiliteQuery,servername,subnames,SiderHeder->nrOfSubnames,queryNodeHeder.MaxsHits,queryNodeHeder.start, queryNodeHeder.filterOn, queryNodeHeder.languageFilter);
 
 	printf("queryNodeHeder.getRank %i\n",queryNodeHeder.getRank);
 
 	if (!queryNodeHeder.getRank) {
 
-		if (!dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,
+		if (!dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,SiderHeder,SiderHeder->hiliteQuery,
 			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
 			queryNodeHeder.start, queryNodeHeder.filterOn, 
-			"",queryNodeHeder.orderby,SiderHeder.dates,queryNodeHeder.search_user,
-			&SiderHeder.filters,
+			"",queryNodeHeder.orderby,SiderHeder->dates,queryNodeHeder.search_user,
+			&SiderHeder->filters,
 			searchd_config,
-			SiderHeder.errorstr, &SiderHeder.errorstrlen,
+			SiderHeder->errorstr, &SiderHeder->errorstrlen,
 			&global_DomainIDs, queryNodeHeder.HTTP_USER_AGENT
 			)) 
 		{
 			printf("dosearch did not return 1\n");
-			SiderHeder.responstype 	= searchd_responstype_error;
+			SiderHeder->responstype 	= searchd_responstype_error;
 			//setter at vi ikke hadde noen svar
-			SiderHeder.TotaltTreff 	= 0;
-			SiderHeder.showabal	= 0;
+			SiderHeder->TotaltTreff 	= 0;
+			SiderHeder->showabal		= 0;
 
-			printf("Error: cand do dosearch: \"%s\"\n",SiderHeder.errorstr);
+			printf("Error: cand do dosearch: \"%s\"\n",SiderHeder->errorstr);
 		}
 	}
 	else if (queryNodeHeder.getRank)  {
 		printf("########################################### Ranking document: %d\n", queryNodeHeder.getRank);
 
-		if (dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,
+		if (dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,SiderHeder,SiderHeder->hiliteQuery,
 			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
 			queryNodeHeder.start, queryNodeHeder.filterOn, 
-			"",queryNodeHeder.orderby,SiderHeder.dates,queryNodeHeder.search_user,
-			&SiderHeder.filters,
+			"",queryNodeHeder.orderby,SiderHeder->dates,queryNodeHeder.search_user,
+			&SiderHeder->filters,
 			searchd_config,
-			SiderHeder.errorstr, &SiderHeder.errorstrlen,
+			SiderHeder->errorstr, &SiderHeder->errorstrlen,
 			&global_DomainIDs, RANK_TYPE_FIND, queryNodeHeder.getRank, &ranking
 		)) {
 			int status;
@@ -995,13 +995,13 @@ void *do_chld(void *arg)
 			}
 			printf("Received ranking: %d\n", ranking);
 
-			if (!dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,&SiderHeder,SiderHeder.hiliteQuery,
+			if (!dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,SiderHeder,SiderHeder->hiliteQuery,
 				servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
 				queryNodeHeder.start, queryNodeHeder.filterOn, 
-				"",queryNodeHeder.orderby,SiderHeder.dates,queryNodeHeder.search_user,
-				&SiderHeder.filters,
+				"",queryNodeHeder.orderby,SiderHeder->dates,queryNodeHeder.search_user,
+				&SiderHeder->filters,
 				searchd_config,
-				SiderHeder.errorstr, &SiderHeder.errorstrlen,
+				SiderHeder->errorstr, &SiderHeder->errorstrlen,
 				&global_DomainIDs, RANK_TYPE_SUM, 0/*queryNodeHeder.getRank*/, &ranking)) {
 
 				perror("Got some kind of an error?");
@@ -1024,13 +1024,13 @@ void *do_chld(void *arg)
 				sleep(5);
 			}
 
-			SiderHeder.responstype = searchd_responstype_ranking;
+			SiderHeder->responstype = searchd_responstype_ranking;
 			close(mysocfd);
 			return;
 		} else {
-			SiderHeder.responstype = searchd_responstype_error;
-			SiderHeder.TotaltTreff 	= 0;
-			SiderHeder.showabal	= 0;
+			SiderHeder->responstype = searchd_responstype_error;
+			SiderHeder->TotaltTreff 	= 0;
+			SiderHeder->showabal	= 0;
 		}
 
 
@@ -1038,30 +1038,29 @@ void *do_chld(void *arg)
 		//setter at vi ikke hadde noen svar
 	}
 	else {
-		SiderHeder.responstype = searchd_responstype_normalsearch;
+		SiderHeder->responstype = searchd_responstype_normalsearch;
 	}
 
 	//kopierer inn subnames. Kan bare sende over MAX_COLLECTIONS, men søker i alle
 
 
 	for (i=0;((i<MAX_COLLECTIONS) && (i<nrOfSubnames));i++) {
-		//memcpy(SiderHeder.subnames[i],subnames[i],sizeof(struct subnamesFormat));
-		SiderHeder.subnames[i] = subnames[i];
+		SiderHeder->subnames[i] = subnames[i];
 	}
-	SiderHeder.nrOfSubnames = i--;
+	SiderHeder->nrOfSubnames = i--;
 
 	printf("subnames:\n");
-	for (i=0;i<SiderHeder.nrOfSubnames;i++) {
-		printf("\t%s: %i\n",SiderHeder.subnames[i].subname,SiderHeder.subnames[i].hits);
+	for (i=0;i<SiderHeder->nrOfSubnames;i++) {
+		printf("\t%s: %i\n",SiderHeder->subnames[i].subname,SiderHeder->subnames[i].hits);
 	}
 	printf("\n");
 
 	//finer først tiden vi brukte
         gettimeofday(&globalend_time, NULL);
-        SiderHeder.total_usecs = getTimeDifference(&globalstart_time,&globalend_time);
+        SiderHeder->total_usecs = getTimeDifference(&globalstart_time,&globalend_time);
 
 
-	printf("TotaltTreff %i,showabal %i,filtered %i,total_usecs %f\n",SiderHeder.TotaltTreff,SiderHeder.showabal,SiderHeder.filtered,SiderHeder.total_usecs);
+	printf("TotaltTreff %i,showabal %i,filtered %i,total_usecs %f\n",SiderHeder->TotaltTreff,SiderHeder->showabal,SiderHeder->filtered,SiderHeder->total_usecs);
 
 	#ifdef DEBUG
 	gettimeofday(&start_time, NULL);
@@ -1069,7 +1068,7 @@ void *do_chld(void *arg)
 
 	/*
 	//finner faktisk showabal, vi kan ha slettede sider. Vil ikke sende de
-	for(i=0;i<SiderHeder.showabal;i++) {
+	for(i=0;i<SiderHeder->showabal;i++) {
 		if (!Sider[i].deletet) {
 
 		}
@@ -1077,9 +1076,8 @@ void *do_chld(void *arg)
 	*/
 
 
-	//if ((n=sendall(mysocfd,&SiderHeder, sizeof(SiderHeder))) != sizeof(SiderHeder)) {
-	if ((n=send(mysocfd,&SiderHeder, sizeof(SiderHeder),MSG_NOSIGNAL)) != sizeof(SiderHeder)) {
-		printf("send only %i of %i\n",n,sizeof(SiderHeder));
+	if ((n=send(mysocfd,SiderHeder, sizeof(struct SiderHederFormat),MSG_NOSIGNAL)) != sizeof(struct SiderHederFormat)) {
+		printf("send only %i of %i\n",n,sizeof(struct SiderHederFormat));
 		perror("sendall SiderHeder");
 	}
 	#ifdef DEBUG
@@ -1092,25 +1090,6 @@ void *do_chld(void *arg)
 	gettimeofday(&start_time, NULL);
 	#endif
 
-	/*
-	for(i=0;i<SiderHeder.showabal;i++) {
-	//for (i=0;i<queryNodeHeder.MaxsHits;i++) {
-		//if (!Sider[i].deletet) {		
-			printf("sending %s, deletet %i\n",Sider[i].DocumentIndex.Url,Sider[i].deletet);	
-			//printf("bb: -%s-\n",Sider[i].title);
-			if ((n=sendall(mysocfd,&Sider[i], sizeof(struct SiderFormat))) != sizeof(struct SiderFormat)) {
-				printf("send only %i of %i\n",n,sizeof(struct SiderFormat));
-				perror("sendall");
-			}		
-
-		//}
-		//else {
-		//	printf("page is deleted\n");
-		//}
-	}
-	*/	
-
-	//if ((n=sendall(mysocfd,Sider, sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits)) != (sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits)) {
 
 	if ((n=send(mysocfd,Sider, sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits, MSG_NOSIGNAL)) != (sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits)) {
 		printf("send only %i of %i\n",n,sizeof(struct SiderFormat)*queryNodeHeder.MaxsHits);
@@ -1129,6 +1108,7 @@ void *do_chld(void *arg)
 
 	free(Sider);
 	free(subnames);
+	free(SiderHeder);
 
 	printf("exiting\n");
 
