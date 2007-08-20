@@ -200,7 +200,7 @@
     <div class="block_default">
 	<div style="block_inner" >
 	<div class="checklist_outer">
-	<div class="checklist_inner">
+	<div class="checklist_inner" id="userList">
 	[% i = 0 %]
 	[% FOREACH user IN user_list %]				
             <label for="user[% i %]">
@@ -216,6 +216,8 @@
 	    [% i = i + 1 %]
 	[% END %]
 	</div></div>
+        <a href="javascript:void" onclick="set_checked('user', true)">select all</a> &nbsp;
+        <a href="javascript:void" onclick="set_checked('user', false)">unselect all</a>
     </div>
 [% END %]
 
