@@ -80,6 +80,10 @@
 #endif
 
 
+/* Set if you want to write prequery data */
+int prequerywriteFlag = 0;
+
+
 
     struct errorhaFormat {
                 int nr;
@@ -1450,8 +1454,13 @@ int main(int argc, char *argv[])
         	extern char *optarg;
         	extern int optind, opterr, optopt;
         	char c;
-        	while ((c=getopt(argc,argv,"r:"))!=-1) {
+        	while ((c=getopt(argc,argv,"pr:"))!=-1) {
         	        switch (c) {
+				case 'p':
+					prequerywriteFlag = 1;
+					dispconfig.writeprequery = 1;
+					printf("Forcing prequery write\n");
+					break;
         	                case 'r':
         	                        optRank = optarg;
                 	                printf("will look up rank for \"%s\"\n",optRank);
@@ -1723,14 +1732,14 @@ int main(int argc, char *argv[])
 	cache_path(cachepath, sizeof(cachepath), CACHE_SEARCH, QueryData.queryhtml, QueryData.start, QueryData.GeoIPcontry);
 	cache_path(prequeryfile, sizeof(cachepath), CACHE_PREQUERY, QueryData.queryhtml, QueryData.start, QueryData.GeoIPcontry);
 
-	if (getRank == 0 && (dispconfig.useprequery) && (QueryData.filterOn) &&
+	if (!prequerywriteFlag && getRank == 0 && (dispconfig.useprequery) && (QueryData.filterOn) &&
 	    cache_read(prequeryfile, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, 0)) {
 		hasprequery = 1;
 
 		debug("can open prequeryfile file \"%s\"",prequeryfile);
 
 	}
-	else if (getRank == 0 && (dispconfig.usecashe) && (QueryData.filterOn) &&
+	else if (!prequerywriteFlag && getRank == 0 && (dispconfig.usecashe) && (QueryData.filterOn) &&
 	         cache_read(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, cachetimeout)) {
 		hascashe = 1;
 
@@ -1831,17 +1840,63 @@ int main(int argc, char *argv[])
 				}
 			}
 
+			for (i=0;i<nrOfServers + nrOfPiServers;i++) {
+				if (sockfd[i] != 0) {
+					close(sockfd[i]);
+				}
+			}
+//
+//			brGetPages(sockfd,nrOfPiServers,SiderHeder,Sider,&pageNr,nrOfServers);
+//			if ((!hascashe) && (!hasprequery)) {
+//				brGetPages(sockfd,nrOfServers,SiderHeder,Sider,&pageNr,0);
+//			}
+//
+
+
+			//kobler til vanlige servere
+			if ((!hascashe) && (!hasprequery)) {
+				bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,0,searchport);
+			}
+
+
+			//addservere
+			bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder,0,searchport);
+			//Paid inclusion
+			bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,nrOfServers,searchport);
+
+			//Paid inclusion
 			brGetPages(sockfd,nrOfPiServers,SiderHeder,Sider,&pageNr,0);
+
 			if ((!hascashe) && (!hasprequery)) {
 				brGetPages(sockfd,nrOfServers,SiderHeder,Sider,&pageNr,nrOfPiServers);
 			}
 
+			//addservere
+			//addserver bruker som regel mest tid, så tar den sist slik at vi ikke trenger å vente unødvendig
+			brGetPages(addsockfd,nrOfAddServers,AddSiderHeder,Sider,&pageNr,0);
 
-			for(i=0;i<FinalSiderHeder.showabal;i++) {
+
+
+
+			handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, (hascashe || hasprequery), &errorha, pageNr,
+				       nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers);
+
+			//for((x<FinalSiderHeder.showabal) && (i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)))) {
+
+
+			x = 0;
+			int printed = 0;
+			for(i=0;x < FinalSiderHeder.showabal && i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)); i++) {
+				if (Sider[i].deletet)
+					continue;
 				if (Sider[i].iindex.DocID == wantedDocId) {
-					endranking = i+1;
+					endranking = printed+1;
 					break;
 				}
+				if (Sider[i].type == siderType_normal) {
+					x++;
+				}
+				printed++;
 			}
 		}
 
