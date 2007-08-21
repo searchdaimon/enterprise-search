@@ -56,6 +56,7 @@ LDAP = -DWITH_OPENLDAP /usr/lib/libldap.a /usr/lib/liblber.a /usr/lib/libsasl.a 
 #flag for å inkludere mysql
 #MYSQL = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
 MYSQL = -I/usr/include/mysql /usr/lib/mysql/libmysqlclient.a
+MYSQL4 = -I/home/eirik/.root/include/mysql -L/home/eirik/.root/lib/mysql/ -lmysqlclient -DMYSQLFOUR
 
 MYSQL_THREAD = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient_r
 
@@ -429,19 +430,19 @@ ppcXmlParserTest: src/ppcXmlParserTest/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/ppcXmlParserTest/main.c src/parse_summary/libsummary.a src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/parse_summary/libsummary.a src/httpGet/httpGet.c -o bin/ppcXmlParserTest $(LDFLAGS) $(MYSQL) $(LIBXML) $(CURLLIBS)
 
-dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c src/getDocIDFromUrl/getDocIDFromUrl.c -D EXPLAIN_RANK $(LDFLAGS) $(MYSQL) $(BDB)
+dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c src/getDocIDFromUrl/getDocIDFromUrl.c -D EXPLAIN_RANK $(LDFLAGS) $(BDB)
 
 dispatcher_all: src/dispatcher_all/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG)
+	$(CC) $(dispatcherCOMAND) $(MYSQL4) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG)
 
 dispatcher_allbb: src/dispatcher_all/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG)
+	$(CC) $(dispatcherCOMAND) $(MYSQL) -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG)
 
 
 dispatcher: src/dispatcher/main.c
