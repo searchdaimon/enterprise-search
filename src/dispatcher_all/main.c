@@ -1803,8 +1803,8 @@ int main(int argc, char *argv[])
 					continue;
 				}
  
-			if (!bsread(&sockfd[i],sizeof(status), (char *)&status, 1000)) //maxSocketWait_CanDo))
-				die(2, "Unable to get rank status");
+				if (!bsread(&sockfd[i],sizeof(status), (char *)&status, 1000)) //maxSocketWait_CanDo))
+					die(2, "Unable to get rank status");
 				else if (status == net_match) {
 					if (!bsread(&sockfd[i],sizeof(ranking), (char *)&ranking, 1000))//maxSocketWait_CanDo))
 						perror("recv read");
@@ -2622,7 +2622,8 @@ int main(int argc, char *argv[])
 			x = 0;
 			i = 0;			
 			sprintf(query,"INSERT DELAYED INTO search_logg (tid,query,search_bruker,treff,search_tid,ip_adresse,betaler_keywords_treff,HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang,spot,piDocID) VALUES(NOW(),?,?,?,?,?,?,?,?,?,?,?,?)");
-			mysql_stmt_prepare(logstmt, query, strlen(query));
+			mysql_stmt_prepare(pilogstmt, query, strlen(query));
+			mysql_stmt_bind_param(pilogstmt, bind);
 			while ((x<FinalSiderHeder.showabal) && (i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)))) {
 		
 				if (!Sider[i].deletet) {
@@ -2642,7 +2643,7 @@ int main(int argc, char *argv[])
 						bind[11].is_unsigned = 1; 
 
 
-						mysql_stmt_execute(logstmt);
+						mysql_stmt_execute(pilogstmt);
 
 					}
 					else {
@@ -2657,7 +2658,7 @@ int main(int argc, char *argv[])
 				++i;
 			}
 
-			mysql_stmt_close(logstmt);
+			mysql_stmt_close(pilogstmt);
 
 			mysql_close(&demo_db);
 		}
