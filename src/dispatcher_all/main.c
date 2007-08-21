@@ -2486,7 +2486,6 @@ int main(int argc, char *argv[])
 	}
 	}
 
-	
 	//if ((LOGFILE = bfopen("logs/query.log","a")) == NULL) {
 	if ((LOGFILE = fopen("/home/boitho/var/logs/query.log","a")) == NULL) {
 		perror(bfile("logs/query.log"));
@@ -2536,6 +2535,136 @@ int main(int argc, char *argv[])
 	/********************************************************************************************/
 	//mysql logging
 	/********************************************************************************************/
+#if MYSQLFOUR
+	#ifndef NO_LOGING
+		MYSQL_STMT *logstmt, *pilogstmt;
+		dprintf("Connecting to mysql db\n");
+
+		mysql_init(&demo_db);
+
+		#ifndef BLACK_BOKS
+			if(!mysql_real_connect(&demo_db, "localhost", "boitholog", "G7J7v5L5Y7", "boitholog", 3306, NULL, 0)){
+    				fprintf(stderr,mysql_error(&demo_db));
+    				//exit(1);
+			}
+		#else
+			if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
+    				fprintf(stderr,mysql_error(&demo_db));
+    				//exit(1);
+			}
+		#endif
+		else {
+
+			MYSQL_BIND bind[12];
+			unsigned long len[12];
+			memset(bind, 0, sizeof(bind));
+			logstmt = mysql_stmt_init(&demo_db);
+			pilogstmt = mysql_stmt_init(&demo_db);
+
+			//escaper queryet rikit
+			//mysql_real_escape_string(&demo_db,queryEscaped,QueryData.query,strlen(QueryData.query));
+
+			sprintf(query,"INSERT DELAYED INTO search_logg (tid,query,search_bruker,treff,search_tid,ip_adresse,betaler_keywords_treff,HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang) VALUES(NOW(),?,?,?,?,?,?,?,?,?,?)");
+			mysql_stmt_prepare(logstmt, query, strlen(query));
+			bind[0].buffer_type = MYSQL_TYPE_STRING; // query
+			bind[0].buffer = QueryData.query;
+			len[0] = strlen(QueryData.query);
+			bind[0].length = &len[0];
+
+			bind[1].buffer_type = MYSQL_TYPE_STRING; // user
+			bind[1].buffer = QueryData.search_user;
+			len[1] = strlen(QueryData.search_user);
+			bind[1].length = &len[1];
+
+			bind[2].buffer_type = MYSQL_TYPE_LONG; // treff
+			bind[2].buffer = &FinalSiderHeder.TotaltTreff;
+
+			bind[3].buffer_type = MYSQL_TYPE_FLOAT; // s√ketid
+			bind[3].buffer = &FinalSiderHeder.total_usecs;
+
+			bind[4].buffer_type = MYSQL_TYPE_STRING; // ip
+			bind[4].buffer = QueryData.userip;
+			len[4] = strlen(QueryData.userip);
+			bind[4].length = &len[4];
+
+			bind[5].buffer_type = MYSQL_TYPE_LONG; // betaler
+			bind[5].buffer = &totlaAds;
+			
+			bind[6].buffer_type = MYSQL_TYPE_STRING; // http lang
+			bind[6].buffer = QueryData.HTTP_ACCEPT_LANGUAGE;
+			len[6] = strlen(QueryData.HTTP_ACCEPT_LANGUAGE);
+			bind[6].length = &len[6];
+
+			bind[7].buffer_type = MYSQL_TYPE_STRING; // http user agent
+			bind[7].buffer = QueryData.HTTP_USER_AGENT;
+			len[7] = strlen(QueryData.HTTP_USER_AGENT);
+			bind[7].length = &len[7];
+
+			bind[8].buffer_type = MYSQL_TYPE_STRING; // http referer
+			bind[8].buffer = QueryData.HTTP_REFERER;
+			len[8] = strlen(QueryData.HTTP_REFERER);
+			bind[8].length = &len[8];
+
+			bind[9].buffer_type = MYSQL_TYPE_STRING; // geoip
+			bind[9].buffer = QueryData.GeoIPcontry;
+			len[9] = strlen(QueryData.GeoIPcontry);
+			bind[9].length = &len[9];
+
+
+			mysql_stmt_bind_param(logstmt, bind);
+
+			mysql_stmt_execute(logstmt);
+			mysql_stmt_close(logstmt);
+
+			//mysql_free_result(mysqlres);
+
+			//lopper gjenom og logger Paid Inclusion
+			x = 0;
+			i = 0;			
+			sprintf(query,"INSERT DELAYED INTO search_logg (tid,query,search_bruker,treff,search_tid,ip_adresse,betaler_keywords_treff,HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang,spot,piDocID) VALUES(NOW(),?,?,?,?,?,?,?,?,?,?,?,?)");
+			mysql_stmt_prepare(logstmt, query, strlen(query));
+			while ((x<FinalSiderHeder.showabal) && (i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)))) {
+		
+				if (!Sider[i].deletet) {
+					dprintf("pi analyse. Subname \"%s\", pi \"%i\"\n",Sider[i].subname.subname, (int)Sider[i].subname.config.isPaidInclusion);
+
+					if (Sider[i].subname.config.isPaidInclusion) {
+						unsigned int spot;
+
+						spot = x + (QueryData.start * QueryData.MaxsHits);
+								
+						bind[10].buffer_type = MYSQL_TYPE_LONG ; // spot 
+						bind[10].buffer = &spot;
+						bind[10].is_unsigned = 1; 
+
+						bind[11].buffer_type = MYSQL_TYPE_LONG; // piDocID
+						bind[11].buffer = &Sider[i].iindex.DocID;
+						bind[11].is_unsigned = 1; 
+
+
+						mysql_stmt_execute(logstmt);
+
+					}
+					else {
+						dprintf("is NOT pi! :(\n");
+					}
+				}
+				//teller bare normale sider (hva med Paid Inclusion ?)
+				if (Sider[i].type == siderType_normal) {
+					++x;
+				}
+
+				++i;
+			}
+
+			mysql_stmt_close(logstmt);
+
+			mysql_close(&demo_db);
+		}
+	#endif
+
+#else /* MYSQLFOUR */
+
 	#ifndef NO_LOGING
 		dprintf("Connecting to mysql db\n");
 
@@ -2623,6 +2752,10 @@ int main(int argc, char *argv[])
 			mysql_close(&demo_db);
 		}
 	#endif
+
+
+
+#endif /* MYSQLFOUR */
 
 	/********************************************************************************************/
 
