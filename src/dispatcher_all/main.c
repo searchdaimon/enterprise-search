@@ -2651,6 +2651,7 @@ int main(int argc, char *argv[])
 					}
 				}
 				//teller bare normale sider (hva med Paid Inclusion ?)
+				// Denne skal vel vaere innenfor !deletet?
 				if (Sider[i].type == siderType_normal) {
 					++x;
 				}
