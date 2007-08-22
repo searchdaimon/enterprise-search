@@ -2561,9 +2561,6 @@ int main(int argc, char *argv[])
 			logstmt = mysql_stmt_init(&demo_db);
 			pilogstmt = mysql_stmt_init(&demo_db);
 
-			//escaper queryet rikit
-			//mysql_real_escape_string(&demo_db,queryEscaped,QueryData.query,strlen(QueryData.query));
-
 			sprintf(query,"INSERT DELAYED INTO search_logg (tid,query,search_bruker,treff,search_tid,ip_adresse,betaler_keywords_treff,HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang) VALUES(NOW(),?,?,?,?,?,?,?,?,?,?)");
 			mysql_stmt_prepare(logstmt, query, strlen(query));
 			bind[0].buffer_type = MYSQL_TYPE_STRING; // query
