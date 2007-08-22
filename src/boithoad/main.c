@@ -695,6 +695,31 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 				ldap_simple_free(respons);
 			}
 		}
+		else if (packedHedder.command == bad_sidToUser) {
+			char objectSid[512];
+
+			recvall(socket,objectSid,sizeof(objectSid));
+
+			sprintf(filter,"(&(objectSid=%s)(objectClass=user))", objectSid);			
+			if (!ldap_simple_search(&ld,filter,"username,CN",&respons,&nrOfSearcResults,ldap_base) || nrOfSearcResults != 1) {
+                                printf("can't ldap search\n");
+                                intresponse = 0;
+                                sendall(socket,&intresponse, sizeof(intresponse));
+                                //return;
+                        }
+			else {
+
+				strscpy(user_username, *respons, sizeof(user_username));
+
+				//sender antal
+				intresponse = 1;
+                        	sendall(socket,&intresponse, sizeof(intresponse));
+
+				sendall(socket,user_username, sizeof(user_username));
+
+				ldap_simple_free(respons);
+			}
+		}
 		else if (packedHedder.command == bad_groupsForUser) {
 			printf("listUsers\n");
 			char primarygroup[64];

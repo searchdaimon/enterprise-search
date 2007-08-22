@@ -35,6 +35,7 @@ int main (int argc, char *argv[]) {
 		printf("deleteCollection <collection name>\n");
 		printf("scan <crawlertype> <host> <username> <password>\n");
 		printf("documentsInCollection <collection name>\n");
+		printf("SidToUser <sid>\n");
 		printf("\nReturns %i on success and %i on failure\n",EXIT_SUCCESS,EXIT_FAILURE);
 		exit(1);
 
@@ -264,6 +265,15 @@ int main (int argc, char *argv[]) {
 		//int boithoad_getPassword(char username_in[], char password[])
 		boithoad_getPassword(value,password);
 		printf("%s -> %s\n",value,password);
+	}
+	else if (strcmp(key,"SidToUser") == 0) {
+		char user[64];
+		if(value == NULL) {printf("no value given.\n");exit(1);}
+
+		if (boithoad_sidToUser(value, user))
+			printf("Documents: %s\n", user);
+		else
+			printf("No match\n");
 	}
 	else {
 		printf("unknown key %s\n",key);

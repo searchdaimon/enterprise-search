@@ -1,7 +1,8 @@
 
 
 #define BADPROTOCOLVERSION 1
-#define BADPORT 3491
+#define BADPORT 5491
+//#define BADPORT 3491
 #define MAX_LDAP_ATTR_LEN 512
 
 //må kalle dette noe annet, hvis ikke får vi en dublikat med define.h
@@ -13,6 +14,7 @@
 #define bad_listGroups          11
 #define bad_groupsForUser       20
 #define bad_getPassword         30
+#define bad_sidToUser		40
 
 #define ad_userauthenticated_OK  111
 #define ad_userauthenticated_ERROR  000
