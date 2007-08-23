@@ -1,8 +1,7 @@
 
 
 #define BADPROTOCOLVERSION 1
-#define BADPORT 5491
-//#define BADPORT 3491
+#define BADPORT 3491
 #define MAX_LDAP_ATTR_LEN 512
 
 //må kalle dette noe annet, hvis ikke får vi en dublikat med define.h
