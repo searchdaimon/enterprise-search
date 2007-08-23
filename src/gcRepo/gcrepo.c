@@ -10,14 +10,6 @@
 
 
 
-//int DIRead (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[]) {
-
-
-
-
-
-
-
 int
 main(int argc, char **argv)
 {
@@ -40,10 +32,12 @@ main(int argc, char **argv)
 	LotNr = atoi(argv[1]);
 	subname = argv[2];
 
+#if 0
 	printf("lotnr %i\n",LotNr);
 
 	GetFilPathForLot(lotPath,LotNr,subname);
 	printf("Opning lot at: %s for %s\n",lotPath,subname);
+#endif
 
 
 	//loppergjenom alle
