@@ -40,7 +40,6 @@ main(int argc, char **argv)
 #endif
 
 
-	//loppergjenom alle
 	while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&raddress,0,0,subname,&acl_allow,&acl_deny)) {
 		struct DocumentIndexFormat docindex;
 
