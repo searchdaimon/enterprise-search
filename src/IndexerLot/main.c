@@ -995,7 +995,7 @@ int main (int argc, char *argv[]) {
 		for(i=0;i<NrofDocIDsInLot;i++) {
 			if (argstruct.DIArray[i].p != NULL) {
 				
-				DIWrite(argstruct.DIArray[i].p,argstruct.DIArray[i].DocID,argstruct.subname);
+				DIWrite(argstruct.DIArray[i].p,argstruct.DIArray[i].DocID,argstruct.subname, NULL);
 
 				free(argstruct.DIArray[i].p);
 			}

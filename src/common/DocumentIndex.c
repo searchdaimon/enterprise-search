@@ -24,7 +24,7 @@ static int openDocumentIndex = -1;
 /*
 finner riktif fil og Søker seg frem til riktig adresse, slik at man bare kan lese/skrive
 */
-FILE *GetFileHandler (unsigned int DocID,char type,char subname[]) {
+FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname) {
 
 	#ifndef DI_FILE_CASHE
 		FILE *DocumentIndexHA;
@@ -65,7 +65,7 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[]) {
 		GetFilPathForLot(FilePath,LotNr,subname);
 		
 		strncpy(FileName,FilePath,128);
-		strncat(FileName,"DocumentIndex",128);
+		strncat(FileName,diname == NULL ? "DocumentIndex" : diname,128);
 
 		//debug:viser hvpathen til loten
 		//printf("path: %s\n",FileName);
@@ -147,14 +147,14 @@ int DIHaveIndex (int lotNr,char subname[]) {
 /*
 skriver en post til DocumentIndex
 */
-void DIWrite (struct DocumentIndexFormat *DocumentIndexPost, unsigned int DocID,char subname[]) {
+void DIWrite (struct DocumentIndexFormat *DocumentIndexPost, unsigned int DocID,char subname[], char *diname) {
 
 
 	FILE *file;
 
 	//printf("ha uinalisert %i\n",(int)file);
 	
-	if ((file = GetFileHandler(DocID,'w',subname)) != NULL) {
+	if ((file = GetFileHandler(DocID,'w',subname, diname)) != NULL) {
 
 		//printf("fa mottat %i\n",(int)file);
 
@@ -279,7 +279,7 @@ int DIRead (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subnam
 	FILE *file;
 	int forReturn;
 
-	if ((file = GetFileHandler(DocID,'r',subname)) != NULL) {
+	if ((file = GetFileHandler(DocID,'r',subname, NULL)) != NULL) {
 
 
 		#ifdef BLACK_BOKS

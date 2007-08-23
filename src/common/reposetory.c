@@ -282,7 +282,7 @@ unsigned int rGeneraeADocID (char subname[]) {
 	return DocID;
 }
 
-int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[]) {
+int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame) {
 	#ifdef DEBUG
 		printf("rApendPostcompress: starting\n");
 	#endif
@@ -303,7 +303,7 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 	(*ReposetoryHeader).htmlSize = WorkBuffSize;
 
 
-	rApendPost(ReposetoryHeader,WorkBuff,imagebuffer,subname,acl_allow,acl_denied);
+	rApendPost(ReposetoryHeader,WorkBuff,imagebuffer,subname,acl_allow,acl_denied, reponame);
 
 	free(WorkBuff);
 
@@ -311,7 +311,8 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 		printf("rApendPostcompress: finished\n");
 	#endif
 }
-int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[]) {
+unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame) {
+	unsigned long int offset;
 
 	//finner ut når dette ble gjort
 	#ifdef BLACK_BOKS
@@ -325,11 +326,13 @@ int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer
 		exit(1);
 	}
 
-        RFILE = lotOpenFile((*ReposetoryHeader).DocID,"reposetory","r+b",'e',subname);
+        RFILE = lotOpenFile((*ReposetoryHeader).DocID, reponame == NULL ? "reposetory" : reponame,"r+b",'e',subname);
 
 
         //søker til slutten
         fseek(RFILE,0,SEEK_END);
+
+	offset = ftello64(RFILE);
 
 	//skriver verson
 	#ifdef BLACK_BOKS
@@ -366,6 +369,7 @@ int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer
 		fclose(dirtfh);
 	#endif
 	
+	return offset;
 }
 
 int rReadSummary(const unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[]) {
