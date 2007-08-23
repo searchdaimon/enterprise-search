@@ -16,7 +16,6 @@ main(int argc, char **argv)
 	struct ReposetoryHeaderFormat ReposetoryHeader;
 	int LotNr;
 	char *subname;
-	char lotPath[255];
 	char htmlbuffer[524288];
 	char imagebuffer[524288];
 	char *acl_allow;
@@ -31,13 +30,6 @@ main(int argc, char **argv)
 
 	LotNr = atoi(argv[1]);
 	subname = argv[2];
-
-#if 0
-	printf("lotnr %i\n",LotNr);
-
-	GetFilPathForLot(lotPath,LotNr,subname);
-	printf("Opning lot at: %s for %s\n",lotPath,subname);
-#endif
 
 
 	while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&raddress,0,0,subname,&acl_allow,&acl_deny)) {
