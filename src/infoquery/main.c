@@ -36,6 +36,7 @@ int main (int argc, char *argv[]) {
 		printf("scan <crawlertype> <host> <username> <password>\n");
 		printf("documentsInCollection <collection name>\n");
 		printf("SidToUser <sid>\n");
+		printf("AuthUser <username> <password>\n");
 		printf("\nReturns %i on success and %i on failure\n",EXIT_SUCCESS,EXIT_FAILURE);
 		exit(1);
 
@@ -275,7 +276,17 @@ int main (int argc, char *argv[]) {
 		else
 			printf("No match\n");
 	}
-	else {
+	else if (strcmp(key,"AuthUser") == 0) {
+		if (value2 == NULL) {
+			printf("AuthUser username password\n");
+			exit(1);
+		}
+		if (boitho_authenticat(value, value2)) {
+			printf("%s is authenticated...\n", value);
+		} else {
+			printf("User not authenticated\n");
+		}
+	} else {
 		printf("unknown key %s\n",key);
 	}
 
