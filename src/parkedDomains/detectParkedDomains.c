@@ -113,20 +113,21 @@ traverse_dictionary(char *filename, DB *dbp)
 		//in.s_addr = documentIndex[n].IPAddress;
 		//printf("%s %s\n", inet_ntoa(in), documentIndex[n].Url);
 
+		num = 0;
 		memset(&key, 0, sizeof(key));
 		memset(&data, 0, sizeof(data));
 		dbkey.addr = documentIndex[n].IPAddress;
 		dbkey.num = 0;
 		key.data = &dbkey;
 		key.size = sizeof(dbkey);
-		data.data = &num;
-		data.size = sizeof(num);
+		//data.data = &num;
+		//data.size = sizeof(num);
 
 		if ((ret = dbp->get(dbp, NULL, &key, &data, 0)) == 0) {
-			num = *(unsigned int *)data.data;
+			int anum = *(unsigned int *)data.data;
 			//printf(" %d\n", num);// documentIndex[n].IPAddress, num);
-			//in.s_addr = *(unsigned long int *)key.data;
-			//printf("db: %s: key retrieved: data was %d.\n", inet_ntoa(in), num); 
+			in.s_addr = dbkey.addr; //*(unsigned long int *)key.data;
+			//printf("db: %s: key retrieved: data was %d.\n", inet_ntoa(in), anum); 
 
 #if 1
 			memset(&key, 0, sizeof(key));
@@ -139,22 +140,24 @@ traverse_dictionary(char *filename, DB *dbp)
 			data.size = sizeof(num);
 #endif
 
+#if 0
 			if ((ret = dbp->del(dbp, NULL, &key, 0)) == 0) {
 				//printf("db: %s: key was deleted.\n", (char *)key.data);
 			} else {
 				dbp->err(dbp, ret, "DB->del");
 				exit(1);
 			}
+#endif
 
-			num++;
+			anum++;
 			memset(&key, 0, sizeof(key));
 			memset(&data, 0, sizeof(data));
 			dbkey.addr = documentIndex[n].IPAddress;
 			dbkey.num = 0;
 			key.data = &dbkey;
 			key.size = sizeof(dbkey);
-			data.data = &num; 
-			data.size = sizeof(num);
+			data.data = &anum; 
+			data.size = sizeof(anum);
 
 			if ((ret = dbp->put(dbp, NULL, &key, &data, 0)) == 0) {
 				//printf("db: %d: key stored.\n", *(unsigned long int *)key.data);
@@ -162,8 +165,9 @@ traverse_dictionary(char *filename, DB *dbp)
 				dbp->err(dbp, ret, "DB->put");
 				//exit(1);
 			}
+			insert_url(dbp, documentIndex[n].IPAddress, anum, documentIndex[n].Url);
 		} else if (ret == DB_NOTFOUND) {
-			num = 1;
+			int anum = 1;
 
 #if 1
 			memset(&key, 0, sizeof(key));
@@ -173,8 +177,8 @@ traverse_dictionary(char *filename, DB *dbp)
 			key.data = &dbkey;
 			key.size = sizeof(dbkey);
 #endif
-			data.data = &num; 
-			data.size = sizeof(num);
+			data.data = &anum; 
+			data.size = sizeof(anum);
 			if ((ret = dbp->put(dbp, NULL, &key, &data, 0)) == 0) {
 				//printf("db: %d: key stored.\n", *(unsigned long int *)key.data);
 			} else {
@@ -221,6 +225,8 @@ traverse_dictionary(char *filename, DB *dbp)
 	fclose(fp);
 }
 
+#define dbCashe 314572800+314572800       //300 mb
+#define dbCasheBlokes 1         //hvor mange deler vi skal dele cashen opp i. Ofte kan man ikke alokere store blikker samenhengenede
 
 int
 main(int argc, char **argv)
@@ -244,9 +250,14 @@ main(int argc, char **argv)
 	if ((ret = db_create(&maindb, NULL, 0)) != 0) {
 		err(1, "db_create: %s\n", db_strerror(ret));
 	}
-	//if ((ret = maindb->open(maindb, NULL, "db/maindb", NULL, DB_BTREE, DB_CREATE|DB_EXCL, 0664)) != 0) {
+	if ((ret = maindb->set_cachesize(maindb, 0, dbCashe, dbCasheBlokes)) != 0) {
+		maindb->err(maindb, ret, "set_cachesize");
+	}
+
+
+	if ((ret = maindb->open(maindb, NULL, "db/maindb", NULL, DB_BTREE, DB_CREATE|DB_EXCL, 0664)) != 0) {
 	//if ((ret = maindb->open(maindb, NULL, "db/maindb", NULL, DB_BTREE, DB_CREATE, 0664)) != 0) {
-	if ((ret = maindb->open(maindb, NULL, "db/maindb", NULL, DB_BTREE, DB_RDONLY, 0664)) != 0) {
+	//if ((ret = maindb->open(maindb, NULL, "db/maindb", NULL, DB_BTREE, DB_RDONLY, 0664)) != 0) {
 		maindb->err(maindb, ret, "%s", "db/maindb");
 		exit(1);
 	}
