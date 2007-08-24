@@ -1,8 +1,12 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
 #include "../common/define.h"
 #include "../common/lot.h"
-#include "../common/reposetory.h"
+#include "../common/reposetoryNET.h"
 
-#include <stdio.h>
 
 #define maxOpenFiles 200
 
@@ -17,7 +21,7 @@ struct filesFormat {
 
 int main (int argc, char *argv[]) {
 
-	FILE *UPDATEFILE;
+	//FILE *UPDATEFILE;
 	struct anchorfileFormat anchorfileData;
 	int lotNr,i,count;
 	struct filesFormat files[maxLots];
@@ -26,16 +30,19 @@ int main (int argc, char *argv[]) {
 	int usetime;
 	//tester for at vi har fåt hvilken fil vi skal bruke
 	if (argc < 2) {
-		printf("Usage: ./addanchors anchorfile\n\n\tanchorfile, fil med tekster på linker\n\n");
+		printf("Usage: ./addanchors subname < anchorfile \n\n\tanchorfile, fil med tekster på linker\n\n");
 		exit(1);
 	}
 
-	if ((UPDATEFILE = fopen(argv[1],"rb")) == NULL) {
+	//char *anchorfile = argv[1];
+	char *subname = argv[1];
+	/*
+	if ((UPDATEFILE = fopen(anchorfile,"rb")) == NULL) {
                 printf("Cant read anchorfile ");
-                perror(argv[1]);
+                perror(anchorfile);
                 exit(1);
         }
-
+	*/
 	for (i=0;i<maxLots;i++) {
 		files[i].open = 0;	
 		files[i].havebeenopen = 0;	
@@ -45,8 +52,9 @@ int main (int argc, char *argv[]) {
 	usetime = 1;
 	openfilescount = 0;
 	count = 0;
-	while(!feof(UPDATEFILE)) {
-		fread(&anchorfileData,sizeof(struct anchorfileFormat),1,UPDATEFILE);
+	while (fread(&anchorfileData,sizeof(struct anchorfileFormat),1,stdin) > 0) {
+	//while(!feof(UPDATEFILE)) {
+	//	fread(&anchorfileData,sizeof(struct anchorfileFormat),1,UPDATEFILE);
 		
 		lotNr = rLotForDOCid(anchorfileData.DocID);
 
@@ -113,7 +121,7 @@ int main (int argc, char *argv[]) {
 
 		++count;
 	}
-	fclose(UPDATEFILE);
+	//fclose(UPDATEFILE);
 
 
 	for (i=0;i<maxLots;i++) {
@@ -124,7 +132,7 @@ int main (int argc, char *argv[]) {
 			}
 			//sender den over nettverket
 
-			rSendFile(files[i].name, "anchors", i, "a");
+			rSendFile(files[i].name, "anchors", i, "a", subname);
 			
 			
 			//sletter filen
