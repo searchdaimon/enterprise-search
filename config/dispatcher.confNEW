@@ -20,3 +20,11 @@ access = [ "213.179.58.99:theSecret" ];
 #bbh:
 UrlToDocID      = "/mnt/node1/hda4/UrlToDocID/";
 
+        mysql_webdb: {
+                host            = "localhost";
+                user            = "boitho";
+                password        = "G7J7v5L5Y7";
+                db              = "boithoweb";
+        };
+
+
