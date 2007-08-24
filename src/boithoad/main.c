@@ -701,7 +701,7 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 			recvall(socket,objectSid,sizeof(objectSid));
 
 			sprintf(filter,"(&(objectSid=%s)(objectClass=user))", objectSid);			
-			if (!ldap_simple_search(&ld,filter,"username,CN",&respons,&nrOfSearcResults,ldap_base) || nrOfSearcResults != 1) {
+			if (!ldap_simple_search(&ld,filter,"sAMAccountName",&respons,&nrOfSearcResults,ldap_base) || nrOfSearcResults != 1) {
                                 printf("can't ldap search\n");
                                 intresponse = 0;
                                 sendall(socket,&intresponse, sizeof(intresponse));
