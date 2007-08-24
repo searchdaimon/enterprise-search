@@ -59,7 +59,7 @@ int boitho_authenticat(char username_in[],char password_in[]) {
 		if (!boithoad_sidToUser(password_in+10, siduser))
 			return 0;
 
-		if (strcasecmp(siduser, username_in) != 0)
+		if (strcmp(siduser, username_in) != 0)
 			return 0;
 
 		return 1;
