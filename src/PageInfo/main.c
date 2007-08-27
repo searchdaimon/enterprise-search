@@ -235,6 +235,7 @@ int main (int argc, char *argv[]) {
 		char *anchorBuffer;
 	
 		anchorBufferSize = anchorRead(rLotForDOCid(DocID),subname,DocID,NULL,-1);
+		anchorBufferSize += 1;
 		anchorBuffer = malloc(anchorBufferSize);
 		anchorRead(rLotForDOCid(DocID),subname,DocID,anchorBuffer,anchorBufferSize);
 
