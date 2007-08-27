@@ -238,10 +238,9 @@ struct DocumentIndexFormat {
         unsigned int SummaryPointer;
         unsigned short SummarySize;
         unsigned int crc32;
-	#ifdef BLACK_BOKS
-		char reservedSpace[64]; //3 now
-	#endif
-
+#ifdef BLACK_BOKS
+	char reservedSpace[64]; //3 now
+#endif
 };
 
 #define MaxReposetoryContent 30000
@@ -602,6 +601,13 @@ struct rewriteFormat {
 	char uri[512];
 };
 
+#define ANCHORMAGIC 0xb309a213
+
+struct anchorRepo {
+	int magic;
+	unsigned int DocID;
+	size_t len;
+};
 
 
 #endif //_DEFINE__H_
