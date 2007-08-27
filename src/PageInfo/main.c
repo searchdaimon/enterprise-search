@@ -12,12 +12,104 @@
 
 #include "../parser/html_parser.h"
 
-void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* pagewords );
+/*
+void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* wordlist )
+{
+    //if (pos > 25) return;
+
+    printf("\t%s (%i) ", word, pos);
+    printf("pu %i ",pu);
+
+    switch (pu)
+        {
+            case pu_word: printf("[word]"); break;
+            case pu_linkword: printf("[linkword]"); break;
+            case pu_link: printf("[link]"); break;
+            case pu_baselink: printf("[baselink]"); break;
+            case pu_meta_keywords: printf("[meta keywords]"); break;
+            case pu_meta_description: printf("[meta description]"); break;
+            case pu_meta_author: printf("[meta author]"); break;
+            case pu_meta_redirect: printf("[meta redirect]"); break;
+            default: printf("[...]");
+        }
+
+    switch (puf)
+        {
+            case puf_none: break;
+            case puf_title: printf(" +title"); break;
+            case puf_h1: printf(" +h1"); break;
+            case puf_h2: printf(" +h2"); break;
+            case puf_h3: printf(" +h3"); break;
+            case puf_h4: printf(" +h4"); break;
+            case puf_h5: printf(" +h5"); break;
+            case puf_h6: printf(" +h6"); break;
+        }
+
+    printf("\n");
+}
+*/
+
+void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* pagewords )
+{
+
+
+        //#ifdef DEBUG
+                printf("\t%s (%i) ", word, pos);
+		printf("type %i ",pu);
+        //#endif
+    switch (pu)
+        {
+            case pu_word:
+
+
+                                switch (puf)
+                                {
+                                        case puf_none: printf(" none"); break;
+                                        case puf_title: printf(" +title"); break;
+                                        case puf_h1: printf(" +h1"); break;
+                                        case puf_h2: printf(" +h2"); break;
+                                        case puf_h3: printf(" +h3"); break;
+                                        case puf_h4: printf(" +h4"); break;
+                                        case puf_h5: printf(" +h5"); break;
+                                        case puf_h6: printf(" +h6"); break;
+                                }
+
+				convert_to_lowercase(word);
+
+                                printf("[word] is now %s ",word);
+				printf("crc32 %u",crc32boitho(word));                      
+
+
+                break;
+            case pu_linkword:
+                                printf("[linkword]");
+                break;
+            case pu_link:
+                                printf("[link]");
+                break;
+            case pu_baselink:
+                                printf("[baselink]");
+                break;
+            case pu_meta_keywords:
+                                printf("[meta keywords]");
+                        break;
+            case pu_meta_description:
+                                printf("[meta description]");
+                        break;
+            case pu_meta_author:
+                                printf("[meta author]");
+                        break;
+            default: printf("[...]");
+        }
+
+                printf("\n");
+
+}
+
 
 int main (int argc, char *argv[]) {
 
         struct DocumentIndexFormat DocumentIndexPost;
-	unsigned int DocID;
 	int PopRankextern;
 	int PopRankintern;
 	int PopRanknoc;
@@ -37,16 +129,24 @@ int main (int argc, char *argv[]) {
 
 	int optShowhtml = 0;
 	int optShowWords = 0;
+	int optSummary = 0;
+	int optAnchor = 0;
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"hw"))!=-1) {
+        while ((c=getopt(argc,argv,"hwsa"))!=-1) {
                 switch (c) {
                         case 'h':
                                 optShowhtml = 1;
                                 break;
                         case 'w':
 				optShowWords = 1;
+                                break;
+                        case 's':
+				optSummary = 1;
+                                break;
+                        case 'a':
+				optAnchor = 1;
                                 break;
                         default:
                                           exit(1);
@@ -62,8 +162,10 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
-	DocID = atol(argv[1 +optind]);
+	const unsigned int DocID = atol(argv[1 +optind]);
 	char *subname = argv[2 +optind];
+
+	html_parser_init();
 
 	printf("subname \"%s\", DocID %u\n",subname,DocID);
 
@@ -84,9 +186,11 @@ int main (int argc, char *argv[]) {
 		///////////////
 		char *metadesc, *title, *body;
 
-		if (rReadSummary(&DocID,&metadesc, &title, &body,DocumentIndexPost.SummaryPointer,DocumentIndexPost.SummarySize,subname)) {
+		if (rReadSummary(DocID,&metadesc, &title, &body,DocumentIndexPost.SummaryPointer,DocumentIndexPost.SummarySize,subname)) {
 			printf("title %s\nmetadesc %s\n",title,metadesc);
-			//printf("body\n%s\n\n",body);
+			if (optSummary) {
+				printf("sumary body\n*******************\n%s\n*******************\n\n",body);
+			}
 		}
 		else {
 			printf("dont have summery\n");
@@ -126,6 +230,24 @@ int main (int argc, char *argv[]) {
 		printf("Cant read post\n");
 	}
 
+	if (optAnchor) {
+		int anchorBufferSize = 3000;
+		char *anchorBuffer = malloc(anchorBufferSize);
+	
+		anchorRead(rLotForDOCid(DocID),subname,DocID,anchorBuffer,anchorBufferSize);
+
+		printf("#######################################\nanchors:\n%s\n#######################################\n",anchorBuffer);
+
+		free(anchorBuffer);
+	}
+
+
+		#ifndef BLACK_BOKS
+
+		popopen (&popindex,"/home/boitho/config/popindex");
+		PopRanindex = popRankForDocID(&popindex,DocID);		
+		popclose(&popindex);
+		printf("popindex %i\n",PopRanindex);
 
 		if (popopen (&popextern,"/home/boitho/config/popextern")) {
 			PopRankextern =  popRankForDocID(&popextern,DocID);
@@ -150,6 +272,13 @@ int main (int argc, char *argv[]) {
 
 
 
+		printf("PopRankextern: %i\nPopRankintern %i\nPopRanknoc %i\n",PopRankextern,PopRankintern,PopRanknoc);
+		
+
+		int brank;
+		popopenMemArray_oneLot(subname,rLotForDOCid(DocID));
+		brank = popRankForDocIDMemArray(DocID);
+		printf("brank %i\n",brank);
 		//short rank
 		if ( (FH = fopen(SHORTPOPFILE,"rb")) == NULL ) {
                 	perror("open");
@@ -165,65 +294,12 @@ int main (int argc, char *argv[]) {
 		
 			fclose(FH);
 		}
+
+		#endif
+
+
+		printf("done\n");
 }
 
 
 
-
-void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* pagewords )
-{
-
-
-        //#ifdef DEBUG
-                printf("\t%s (%i) ", word, pos);
-        //#endif
-    switch (pu)
-        {
-            case pu_word:
-
-
-                                switch (puf)
-                                {
-                                        case puf_none: printf(" none"); break;
-                                        case puf_title: printf(" +title"); break;
-                                        case puf_h1: printf(" +h1"); break;
-                                        case puf_h2: printf(" +h2"); break;
-                                        case puf_h3: printf(" +h3"); break;
-                                        case puf_h4: printf(" +h4"); break;
-                                        case puf_h5: printf(" +h5"); break;
-                                        case puf_h6: printf(" +h6"); break;
-                                }
-
-				convert_to_lowercase(word);
-
-                                printf("[word] is now %s ",word);
-				printf("crc32 %u",crc32boitho(word));                      
-
-
-                break;
-            case pu_linkword:
-                                printf("[linkword]");
-                break;
-            case pu_link:
-
-
-                                printf("[link]");
-                break;
-            case pu_baselink:
-                                printf("[baselink]");
-                break;
-            case pu_meta_keywords:
-                                printf("[meta keywords]");
-                        break;
-            case pu_meta_description:
-                                printf("[meta description]");
-                        break;
-            case pu_meta_author:
-                                printf("[meta author]");
-                        break;
-            default: printf("[...]");
-        }
-
-                printf("\n");
-
-}
