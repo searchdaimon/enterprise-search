@@ -231,9 +231,11 @@ int main (int argc, char *argv[]) {
 	}
 
 	if (optAnchor) {
-		int anchorBufferSize = 3000;
-		char *anchorBuffer = malloc(anchorBufferSize);
+		int anchorBufferSize;
+		char *anchorBuffer;
 	
+		anchorBufferSize = anchorRead(rLotForDOCid(DocID),subname,DocID,NULL,-1);
+		anchorBuffer = malloc(anchorBufferSize);
 		anchorRead(rLotForDOCid(DocID),subname,DocID,anchorBuffer,anchorBufferSize);
 
 		printf("#######################################\nanchors:\n%s\n#######################################\n",anchorBuffer);
