@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <err.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "../common/define.h"
 #include "../common/DocumentIndex.h"
@@ -10,30 +12,12 @@
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
 
 
-
-static unsigned int ip_hashfromkey(void *ky)
-{
-	unsigned int k = (*(unsigned int *)ky);
-
-	return k;
-}
-
-static int ip_equalkeys(void *k1, void *k2)
-{
-	if ((*(unsigned int *)k1) == (*(unsigned int *)k2)) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
 struct hashvalue {
 	char *text;
 };
 
 struct values {
 	char *text;
-	char *p;
 	size_t len;
 	size_t curlen;
 };
@@ -45,16 +29,15 @@ alloc_values(struct values *val, int textlen)
 	size_t newlen;
 
 	newlen = val->len;
-	if (textlen + val->curlen + 1 >=  val->len) {
+	if (textlen + val->curlen >=  val->len) {
 		char *val2 = val->text;
 
 		newlen *= 2;
-		while (textlen + val->curlen + 1 >=  newlen)
+		while (textlen + val->curlen >=  newlen)
 			newlen *= 2;
 		if ((val->text = malloc(newlen)) == NULL)
 			err(1, "malloc(foo)");
 		strcpy(val->text, val2);
-		val->p = val->p - val2 + val->text;
 		free(val2);
 		val->len = newlen;
 	}
@@ -76,16 +59,15 @@ setup_values(struct values **val)
 		values[i].curlen = 0;
 		if ((values[i].text = malloc(size)) == NULL)
 			err(1, "malloc(text size)");
-
-		values[i].p = values[i].text;
 	}
 
 	*val = values;
 }
 
 
-int main (int argc, char **argv) {
-
+int
+main(int argc, char **argv)
+{
 	int LotNr;
 	char *subname;
 	unsigned int DocID;
@@ -97,6 +79,7 @@ int main (int argc, char **argv) {
 	unsigned int firstId = 0;
 	unsigned int c, d;
 	struct DocumentIndexFormat DocumentIndexPost;
+	char anchorPath[512], anchorPath2[512];
 	int i;
 
         //tester for at vi har fåt hvilken lot vi skal bruke
@@ -106,93 +89,73 @@ int main (int argc, char **argv) {
 	LotNr = atoi(argv[1]);
 	subname = argv[2];
 
-	//hash = create_hashtable(1000100, ip_hashfromkey, ip_equalkeys);
-
-	DIGetNext (&DocumentIndexPost, LotNr, &DocID, subname);
-	firstId = DocID;
+	firstId = LotDocIDOfset(LotNr);
 
 	setup_values(&values);
 
 	i = 0;
-	while (anchorGetNext(LotNr, &DocID, text, sizeof(text), &raddress, &rsize,
-	                     subname)) {
+	while (anchorGetNextnew(LotNr, &DocID, text, sizeof(text), &raddress, &rsize,
+	                     subname, NULL)) {
 		int len;
 		char *newvalue;
 
-		if (DocID == 63741334 || DocID == 63740388)
-			printf("%d: %s\n", DocID, text);
+		//if (DocID == 63741334 || DocID == 63740388)
+		//	printf("%d: %s\n", DocID, text);
 
 		c = DocID - firstId;
 		if (c > NrofDocIDsInLot-1) {
 			//printf("This thing should not be here... %u\n", DocID);
-			i++;
+			//i++;
 			continue;
 		}
 
 		len = strlen(text);
 
-		alloc_values(&values[c], len);
+		alloc_values(&values[c], len+1);
 
-		if (values[c].curlen > 0) {
-			strcpy(values[c].p, " ");
-			values[c].p++;
-		}
-
-		strcpy(values[c].p, text);
-		values[c].p++;
-		values[c].curlen += 1 + len;
-
-#if 0
-		struct hashvalue *hv;
-
-		if ((hv = hashtable_search(hash, &DocID)) == NULL) {
-			unsigned int *did;
-
-			if ((did = malloc(sizeof *did)) == NULL)
-				err(1, "malloc(sizeof *did)");
-			*did = DocID;
-
-			if ((hv = malloc(sizeof *hv)) == NULL)
-				err(1, "malloc(hv)");
-
-			if ((hv->text = strdup(text)) == NULL)
-				err(1, "strdup(text)");
-
-			if (!hashtable_insert(hash, did, hv))
-				err(1, "hashtable_insert()");
+		if (values[c].curlen == 0) {
+			strcpy(values[c].text, text);
+			values[c].curlen = len + 1;
 		} else {
-			char *newvalue;
-			char *value;
+			char *p;
 
-			value = hv->text;
+			p = values[c].text;
+			p += values[c].curlen - 1;
 
-			newvalue = malloc(strlen(value) + strlen(text) + 2);
-			if (newvalue == NULL)
-				err(1, "malloc(newvalue)");
-			sprintf(newvalue, "%s %s", value, text);
-
-			hv->text = newvalue;
-			free(value);
+			strcpy(p, " ");
+			p++;
+			strcpy(p, text);
+			values[c].curlen += len + 1;
 		}
-#endif
 	}
 
-	//hashtable_destroy(hash, 1);
 #if 1
 
-	printf("%d\n", i);
+	//printf("%d\n", i);
 #if 1
 	i = 0;
 	for (d = 0; d < NrofDocIDsInLot; d++) {
-		if (values[d].curlen > 0)
+		if (values[d].curlen > 0) {
+			unsigned int DocID;
+
+			DocID = firstId + d;
+			anchoraddnew(DocID, values[d].text, values[d].curlen-1, subname, "anchors.new");
 			i++;
-			//printf("DocID: %d: %s\n", firstId + d, values[d].text);
+		}
 	}
 #endif
 	printf("%d\n", i);
 #endif
 
+#if 0
+	GetFilPathForLot(anchorPath, LotNr, subname);
 
+	strcpy(anchorPath2, anchorPath);
+	strcat(anchorPath, "anchor.new");
+	strcat(anchorPath2, "anchors");
+
+	rename(anchorPath, anchorPath2);
+#endif
 
 	return 0;
 }
