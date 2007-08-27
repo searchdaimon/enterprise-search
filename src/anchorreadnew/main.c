@@ -20,7 +20,7 @@ int main (int argc, char *argv[]) {
 	subname = argv[2];
 
 	//int anchorGetNext (int LotNr,unsigned int *DocID,char *text,unsigned int *radress,unsigned int *rsize)
-	while (anchorGetNextnew(LotNr,&DocID,text,sizeof(text),&radress,&rsize, subname) ) {	
+	while (anchorGetNextnew(LotNr,&DocID,text,sizeof(text),&radress,&rsize, subname, NULL) ) {	
 		printf("DocID %i, text: %s\n",DocID,text);
 	}
 }
