@@ -1332,7 +1332,6 @@ anchorRead(int LotNr, char *subname, unsigned int DocID, char *text, int len)
 		fclose(fp);
 		return 1;
 	}
-	printf("??\n");
 
 	fclose(fp);
 	return 0;
