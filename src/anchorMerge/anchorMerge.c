@@ -118,7 +118,7 @@ main(int argc, char **argv)
 			p = values[c].text;
 			p += values[c].curlen - 1;
 
-			strcpy(p, " ");
+			strcpy(p, "\n");
 			p++;
 			strcpy(p, text);
 			values[c].curlen += len + 1;

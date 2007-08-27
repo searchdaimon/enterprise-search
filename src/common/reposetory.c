@@ -1100,7 +1100,7 @@ anchoraddnew(unsigned int DocID, char *text, size_t textsize, char *subname, cha
 	if (anchorRead(LotNr, subname, DocID, newtext, oldlen)) {
 		//printf("Got: %s\n", newtext);
 		p = newtext + oldlen-1;
-		strcpy(p, " ");
+		strcpy(p, "\n");
 		p++;
 	} else {
 		p = newtext;
@@ -1240,8 +1240,6 @@ int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsi
 
 
 int anchorGetNextnew(int LotNr,unsigned int *DocID,char *text,int textlength, unsigned int *radress,unsigned int *rsize,char *subname, off_t *offset) {
-
-	//global variabel for rGetNext
 	static FILE *LotFileOpen;
 	static int LotOpen = -1;
 	int bufflength;
