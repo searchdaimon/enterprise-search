@@ -44,8 +44,6 @@ main(int argc, char **argv) {
 	}
 #endif
 
-	lotCloseFiles();
-	
 	
 	return 0;
 }

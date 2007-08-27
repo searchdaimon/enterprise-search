@@ -1085,6 +1085,7 @@ anchoraddnew(unsigned int DocID, char *text, size_t textsize, char *subname, cha
 	char *p;
 	int oldlen;
 	int LotNr;
+	char path[1024];
 
 	LotNr = rLotForDOCid(DocID);
 
@@ -1122,7 +1123,9 @@ anchoraddnew(unsigned int DocID, char *text, size_t textsize, char *subname, cha
         //printf("%i : -%s-\n",DocID,text);
         //skaf filhandler
         //FILE *lotOpenFile(int DocID,char resource[],char type[]);
-        ANCHORFILE = lotOpenFile(DocID, filename == NULL ? "anchors.new" : filename,"ab",'s',subname);
+	GetFilPathForLot(path, LotNr, subname);
+	strcat(path, filename == NULL ? "anchors.new" : filename);
+	ANCHORFILE = fopen(path, "a");
 
 	offset = ftello64(ANCHORFILE);
 	//printf("Foo: %x\n", offset);
@@ -1133,6 +1136,7 @@ anchoraddnew(unsigned int DocID, char *text, size_t textsize, char *subname, cha
 	fwrite(&anchor, sizeof(anchor), 1, ANCHORFILE);
 	fwrite(newtext, oldlen + textsize, 1, ANCHORFILE);
 	anchorIndexWrite(DocID, subname, offset);
+	fclose(ANCHORFILE);
 }
 
 

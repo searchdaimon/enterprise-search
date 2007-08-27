@@ -153,7 +153,5 @@ main(int argc, char **argv)
 	rename(anchorPath, anchorPath2);
 #endif
 
-	lotCloseFiles();
-
 	return 0;
 }
