@@ -12,10 +12,6 @@
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
 
 
-struct hashvalue {
-	char *text;
-};
-
 struct values {
 	char *text;
 	size_t len;
