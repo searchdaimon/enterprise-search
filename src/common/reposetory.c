@@ -985,9 +985,159 @@ void risave (int DocID, char *image, int size,char subname[]) {
 
 }
 
-//legger til en "anchor" (tekst på link)
-void anchoradd(unsigned int DocID,char *text,int textsize,char subname[]) {
 
+/* AnchorIndex */
+FILE *
+anchorIndexOpen(unsigned int DocID, char type, char *subname)
+{
+	FILE *fp;
+	int LotNr;
+	char path[1024];
+
+	LotNr = rLotForDOCid(DocID);
+	GetFilPathForLot(path, LotNr, subname);
+
+	strcat(path, "anchorIndex");
+
+	if ((fp = fopen(path, "r+")) == NULL) {
+		if (type == 'w') {
+			fp = fopen(path, "w+");
+		}
+	}
+
+	return fp;
+}
+
+int
+anchorIndexPosition(FILE *fp, unsigned int DocID)
+{
+	int LotNr;
+
+	LotNr = rLotForDOCid(DocID);
+	if (fseek(fp, sizeof(struct anchorIndexFormat) * (DocID - LotDocIDOfset(LotNr)), SEEK_SET) != 0) {
+		warn("fseek");
+		return 0; 
+	}
+
+	return 1;
+}
+
+int
+anchorIndexWrite(unsigned int DocID, char *subname, off_t offset)
+{
+	FILE *fp;
+	struct anchorIndexFormat ai;
+
+	if ((fp = anchorIndexOpen(DocID, 'w', subname)) == NULL)
+		return 0;
+	if (!anchorIndexPosition(fp, DocID)) {
+		fclose(fp);
+		return 0;
+	}
+
+	ai.offset = offset;
+	if (fwrite(&ai, sizeof(ai), 1, fp) != 1) {
+		fclose(fp);
+		warn("fwrite");
+		return 0;
+	}
+	fclose(fp);
+
+	return 1;
+}
+
+int
+anchorIndexRead(unsigned int DocID, char *subname, off_t *offset)
+{
+	FILE *fp;
+	struct anchorIndexFormat ai;
+
+	if ((fp = anchorIndexOpen(DocID, 'w', subname)) == NULL)
+		return 0;
+	if (!anchorIndexPosition(fp, DocID)) {
+		fclose(fp);
+		return 0;
+	}
+
+	if (fread(&ai, sizeof(ai), 1, fp) != 1) {
+		fclose(fp);
+		return 0;
+	}
+
+	*offset = ai.offset;
+
+	fclose(fp);
+
+	return 1;
+}
+
+
+//legger til en "anchor" (tekst på link)
+void
+anchoraddnew(unsigned int DocID, char *text, size_t textsize, char *subname, char *filename)
+{
+        FILE *ANCHORFILE;
+        int i;
+	struct anchorRepo anchor;
+	struct DocumentIndexFormat docindex;
+	off_t offset;
+	char *newtext;
+	char *p;
+	int oldlen;
+	int LotNr;
+
+	LotNr = rLotForDOCid(DocID);
+
+	oldlen = anchorRead(LotNr, subname, DocID, NULL, -1);
+	if (oldlen > 0)
+		oldlen++;
+	if ((newtext = malloc(oldlen + textsize + 1)) == NULL) {
+		warn("malloc");
+		return;
+	}
+
+	if (anchorRead(LotNr, subname, DocID, newtext, oldlen)) {
+		//printf("Got: %s\n", newtext);
+		p = newtext + oldlen-1;
+		strcpy(p, " ");
+		p++;
+	} else {
+		p = newtext;
+	}
+	strcpy(p, text);
+	//printf("And: %s\n", newtext);
+
+
+        //printf("textsize %i\n",textsize);
+
+#if 0
+        //fjerner eventuelle SPACE på slutten
+        for(i=textsize-1; ((i>0) && ((text[i] == ' ') || (text[i] == '\0'))); i--) {
+                //printf("i: %i, c: %c cn: %i\n",i,text[i],(int)text[i]);
+        }
+        text[i +1] = '\0';
+        //fjerner eventuelle SPACE på slutten
+#endif
+
+        //printf("%i : -%s-\n",DocID,text);
+        //skaf filhandler
+        //FILE *lotOpenFile(int DocID,char resource[],char type[]);
+        ANCHORFILE = lotOpenFile(DocID, filename == NULL ? "anchors.new" : filename,"ab",'s',subname);
+
+	offset = ftello64(ANCHORFILE);
+	//printf("Foo: %x\n", offset);
+
+	anchor.magic = ANCHORMAGIC;
+	anchor.DocID = DocID;
+	anchor.len = oldlen + textsize;
+	fwrite(&anchor, sizeof(anchor), 1, ANCHORFILE);
+	fwrite(newtext, oldlen + textsize, 1, ANCHORFILE);
+	anchorIndexWrite(DocID, subname, offset);
+}
+
+
+//legger til en "anchor" (tekst på link)
+void anchoradd(unsigned int DocID,char *text,int textsize,char subname[], char *filename) {
         FILE *ANCHORFILE;
         int i;
 
@@ -1003,7 +1153,7 @@ void anchoradd(unsigned int DocID,char *text,int textsize,char subname[]) {
         //printf("%i : -%s-\n",DocID,text);
         //skaf filhandler
         //FILE *lotOpenFile(int DocID,char resource[],char type[]);
-        ANCHORFILE = lotOpenFile(DocID,"anchors","ab",'s',subname);
+        ANCHORFILE = lotOpenFile(DocID, filename == NULL ? "anchors" : filename,"ab",'s',subname);
 
         //skriver DocID
         fwrite(&DocID,sizeof(unsigned int),1,ANCHORFILE);
@@ -1083,6 +1233,109 @@ int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsi
         }
 
 }
+
+
+int anchorGetNextnew(int LotNr,unsigned int *DocID,char *text,int textlength, unsigned int *radress,unsigned int *rsize,char *subname, off_t *offset) {
+
+	//global variabel for rGetNext
+	static FILE *LotFileOpen;
+	static int LotOpen = -1;
+	int bufflength;
+	char FileName[128];
+	struct anchorRepo anchor;
+	//char buff[sizeof(*ReposetoryData)];
+
+	//tester om reposetoriet allerede er open, eller ikke
+	if (LotOpen != LotNr) {
+		//hvis den har vært open, lokker vi den. Hvi den er -1 er den ikke brukt enda, så ingen vits å å lokke den da :-)
+		if (LotOpen != -1) {
+			fclose(LotFileOpen);
+		}
+		GetFilPathForLot(FileName,LotNr,subname);
+		strncat(FileName,"anchors.new",128);
+
+		//printf("Opending lot %s\n",FileName);
+
+		if ( (LotFileOpen = fopen(FileName,"rb")) == NULL) {
+			perror(FileName);
+			exit(1);
+		}
+		LotOpen = LotNr;
+	}
+
+
+	if (offset != NULL)
+		*offset = ftello64(LotFileOpen);
+	if (fread(&anchor, sizeof(anchor), 1, LotFileOpen) == 1) {
+
+		*DocID = anchor.DocID;
+		if (anchor.len+1 > textlength) { /* No room for the text */
+			fread(text, textlength-1, 1, LotFileOpen);
+			text[textlength-1] = '\0';
+			/* Skip over the rest of the string */
+			fseek(LotFileOpen, anchor.len-textlength+1, SEEK_CUR);
+		} else {
+			fread(text, anchor.len, 1, LotFileOpen);
+			text[anchor.len] = '\0';
+		}
+
+		return 1;
+	}
+
+	return 0;
+}
+
+int
+anchorRead(int LotNr, char *subname, unsigned int DocID, char *text, int len)
+{
+	struct DocumentIndexFormat docindex;
+	FILE *fp;
+	char path[512];
+	struct anchorRepo anchor;
+	off_t offset;
+
+	if (!anchorIndexRead(DocID, subname, &offset))
+		return 0;
+
+	GetFilPathForLot(path, LotNr, subname);
+	strncat(path, "anchors.new", 512);
+
+	if ((fp = fopen(path, "r")) == NULL)
+		return 0;
+
+	if (fseek(fp, offset, SEEK_SET) == -1) {
+		fclose(fp);
+		return 0;
+	}
+	if (fread(&anchor, sizeof(anchor), 1, fp) == 1) {
+		if (anchor.DocID != DocID) {
+			fclose(fp);
+			return 0;
+		}
+
+		if (len == -1) {
+			return anchor.len;
+		} else if (anchor.len+1 > len) { /* No room for the text */
+			fread(text, len-1, 1, fp);
+			text[len-1] = '\0';
+			/* Skip over the rest of the string */
+			fseek(fp, anchor.len-len+1, SEEK_CUR);
+		} else {
+			fread(text, anchor.len, 1, fp);
+			text[anchor.len] = '\0';
+		}
+
+		fclose(fp);
+		return 1;
+	}
+	printf("??\n");
+
+	fclose(fp);
+	return 0;
+}
+
+
+
 
 
 

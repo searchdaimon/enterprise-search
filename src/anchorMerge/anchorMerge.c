@@ -90,8 +90,8 @@ main(int argc, char **argv)
 	setup_values(&values);
 
 	i = 0;
-	while (anchorGetNextnew(LotNr, &DocID, text, sizeof(text), &raddress, &rsize,
-	                     subname, NULL)) {
+	while (anchorGetNext(LotNr, &DocID, text, sizeof(text), &raddress, &rsize,
+	                     subname)) {
 		int len;
 		char *newvalue;
 
@@ -152,6 +152,8 @@ main(int argc, char **argv)
 
 	rename(anchorPath, anchorPath2);
 #endif
+
+	lotCloseFiles();
 
 	return 0;
 }

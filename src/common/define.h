@@ -3,6 +3,7 @@
 #define _DEFINE__H_
 
 #include <time.h>
+#include <sys/types.h>
 
 //#include "DocumentIndex.h"
 //#include "lot.h"
@@ -609,6 +610,9 @@ struct anchorRepo {
 	size_t len;
 };
 
+struct anchorIndexFormat {
+	off_t offset;
+};
 
 #endif //_DEFINE__H_
 

@@ -463,6 +463,14 @@ nyeurlerIntegeryCheck: src/nyeurlerIntegeryCheck/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/nyeurlerIntegeryCheck/main.c -o bin/nyeurlerIntegeryCheck $(LDFLAGS)
 
+DIread : src/DIread/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/DIread/main.c -o bin/DIread $(LDFLAGS)
+
+
+
 rread : src/rread/rread.c
 	@echo ""
 	@echo "$@:"
@@ -584,6 +592,9 @@ mergeLinkDB:
 
 anchorread: src/anchorread/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/anchorread/main.c -o bin/anchorread $(LDFLAGS)
+
+anchorreadnew: src/anchorreadnew/main.c
+	$(CC) $(CFLAGS) $(LIBS)*.c src/anchorreadnew/main.c -o bin/anchorreadnew $(LDFLAGS)
 
 BrankCalculate:	src/BrankCalculate/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate/*.c -o bin/BrankCalculate $(LDFLAGS)

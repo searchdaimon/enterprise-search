@@ -481,6 +481,7 @@ void GetFilPathForLot(char *FilePath,int LotNr,char subname[]) {
 	else {
 		sprintf(FilePath,"%s/%i/%s/",dataDirectorys[LotNr % 64].Name,LotNr,subname);
 	}
+
 	//printf("%s\n",FilePath);
 	//printf("dataDirectorys: %s\n",dataDirectorys[subdir].Name);
 

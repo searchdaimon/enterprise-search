@@ -22,6 +22,7 @@ Kal "ropen" for å opne Reposetoryet, "rclose" for å stenge Reposetoryet.
 */
 
 
+#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <zlib.h>
@@ -90,11 +91,20 @@ int rReadSummary(unsigned int DocID,char **metadesc, char **title, char **body ,
 void risave (int DocID, char *image, int size,char subname[]);
 
 //anchor
-void anchoradd(unsigned int DocID,char *text,int textsize,char subname[]);
+void anchoradd(unsigned int DocID,char *text,int textsize,char subname[], char *);
 int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsigned int *radress,unsigned int *rsize,char subname[]);
 
 void addNewUrlOpen(struct addNewUrlhaFormat *addNewUrlha,int lotNr, char openmode[],char subname[], int nr);
 void addNewUrl (struct addNewUrlhaFormat *addNewUrlha, struct updateFormat *updatePost);
+int anchorRead(int, char *, unsigned int, char *, int);
+int anchorGetNextnew(int,unsigned int *,char *,int, unsigned int *,unsigned int *,char *, off_t *);
+void anchoraddnew(unsigned int, char *, size_t, char *, char *);
+int anchorIndexWrite(unsigned int, char *, off_t);
+int anchorIndexRead(unsigned int, char *, off_t *);;;;
+
+
+
+
 
 
 unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *);
