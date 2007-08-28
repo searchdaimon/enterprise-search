@@ -327,7 +327,7 @@ else if (packedHedder.command == C_DIWrite) {
                 exit(1);
         }
 	
-	DIWrite(&DocumentIndexPost,DocID,packedHedder.subname);
+	DIWrite(&DocumentIndexPost,DocID,packedHedder.subname, NULL);
 	
 	//printf("DIWrite: %i\n",DocID);
 
@@ -506,6 +506,49 @@ else if (packedHedder.command == C_DIGetIp) {
 	sendall(socket,&DocumentIndexPost.IPAddress, sizeof(DocumentIndexPost.IPAddress));
 
 	
+}
+else if (packedHedder.command == C_anchorAdd) {
+	size_t textlen;
+	unsigned int DocID;
+	char *text;
+
+	printf("Add anchor....\n");
+	if ((i = recv(socket, &DocID, sizeof(DocID),MSG_WAITALL)) == -1) {
+        	perror("recv");
+                exit(1);
+        } else if ((i = recv(socket, &textlen, sizeof(textlen), MSG_WAITALL)) == -1) {
+        	perror("recv(textlen)");
+                exit(1);
+        }
+	text = malloc(textlen+1);
+	text[textlen] = '\0';
+	if ((i = recv(socket, text, textlen, MSG_WAITALL)) == -1) {
+        	perror("recv(text)");
+                exit(1);
+        } 
+
+	anchoraddnew(DocID, text, textlen, packedHedder.subname, NULL);
+	printf("Text for %d: %s\n", DocID, text);
+	
+	free(text);
+}
+else if (packedHedder.command == C_anchorGet) {
+	size_t len;
+	char *text;
+	int LotNr;
+	unsigned int DocID;
+	printf("Get anchor...\n");
+
+	if ((i = recv(socket, &DocID, sizeof(DocID),MSG_WAITALL)) == -1) {
+		perror("recv");
+		exit(1);
+	}
+	LotNr = rLotForDOCid(DocID);
+	len = anchorRead(LotNr, packedHedder.subname, DocID, NULL, -1);
+	sendall(socket, &len, sizeof(len));
+	text = malloc(len+1);
+	anchorRead(LotNr, packedHedder.subname, DocID, text, len+1);
+	sendall(socket, text, len);
 }
 else {
 	printf("unnown comand. %i\n", packedHedder.command);
