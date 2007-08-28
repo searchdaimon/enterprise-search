@@ -417,7 +417,7 @@ else if (packedHedder.command == C_rSendFile) {
             perror("Cant recv opentype");
             exit(1);
         }
-	printf("opentype %s\n",opentype);
+	printf("opentype \"%s\"\n",opentype);
 
 
 	GetFilPathForLot(FilePath,LotNr,packedHedder.subname);
