@@ -554,25 +554,20 @@ anchorReadNET(char *hostname, char *subname, unsigned int DocID, char *text, int
         }
 
 	sendpacked(socketha,C_anchorGet, BLDPROTOCOLVERSION, sizeof(DocID), &DocID, subname);
-	printf("1\n");
 
 	if ((i = recv(socketha, &textlen, sizeof(textlen),MSG_WAITALL)) == -1) {
 		perror("recv(textlen)");
 		exit(1);
 	}
-	printf("2 :: %d\n", textlen);
 	rtext = malloc(textlen+1);
-	printf("3\n");
 	if ((i = recv(socketha, rtext, textlen, MSG_WAITALL)) == -1) {
 		perror("recv(text)");
 		exit(1);
 	}
 	rtext[textlen] = '\0';
-	printf("4 :: %s\n", rtext);
 	strncpy(text, rtext, len-1);
 	text[len-1] = '\0';
 	free(rtext);
-	printf("%s\n", text);
 }
 
 
