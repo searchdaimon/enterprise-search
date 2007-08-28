@@ -470,6 +470,12 @@ DIread : src/DIread/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/DIread/main.c -o bin/DIread $(LDFLAGS)
 
 
+NETtest : src/NETtest/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/NETtest/main.c -o bin/NETtest $(LDFLAGS)
+
 
 rread : src/rread/rread.c
 	@echo ""
