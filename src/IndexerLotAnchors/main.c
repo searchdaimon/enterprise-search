@@ -17,11 +17,9 @@ int main (int argc, char *argv[]) {
 	int lotNr;
 	int i;
 	unsigned int DocID;
-	char text[50];
+	char text[16384];
 	unsigned int radress;
 	unsigned int rsize;
-	char **Data;
-  	int Count, TokCount;
 	unsigned short hits;
 	unsigned long WordID;
 	int bucket;
@@ -38,16 +36,16 @@ int main (int argc, char *argv[]) {
 		//begynner på 2000 så det skal være lett og skille de visuelt fra andre hits
 		nrOfLinkWordsToDocID[i] = 2000;
 	}
-        //tester for at vi har fåt hvilken lot vi skal bruke
-        if (argc < 3) {
-                printf("Usage: ./anchorread lotnr subname\n\n");
+	//tester for at vi har fåt hvilken lot vi skal bruke
+	if (argc < 3) {
+		printf("Usage: ./IndexerLotAnchors lotnr subname\n\n");
 		exit(1);
-        }
+	}
 
 	lotNr = atoi(argv[1]);
 	char *subname = argv[2];
 
-	if ( (FH = lotOpenFileNoCasheByLotNr(lotNr,"anchors","rb", 's',subname)) == NULL) {
+	if ( (FH = lotOpenFileNoCasheByLotNr(lotNr,"anchors.new","rb", 's',subname)) == NULL) {
 		printf("lot dont have a anchors file\n");
 		exit(1);
 	}	
@@ -56,71 +54,70 @@ int main (int argc, char *argv[]) {
 	revindexFilesOpenLocal(revindexFilesHa,lotNr,"Athor","wb",subname);
 
 	//int anchorGetNext (int LotNr,unsigned int *DocID,char *text,unsigned int *radress,unsigned int *rsize)
-	while (anchorGetNext(lotNr,&DocID,text,sizeof(text),&radress,&rsize,subname) ) {	
-
-			DocIDPlace = (DocID - LotDocIDOfset(rLotForDOCid(DocID)));	
-			++nrOfLinkWordsToDocID[DocIDPlace];
-
-
-
-			convert_to_lowercase((unsigned char *)text);
+	while (anchorGetNextnew(lotNr,&DocID,text,sizeof(text),&radress,&rsize,subname, NULL) ) {	
+		char **Data, **DataNewline;
+		int TokCountNewline, TokCount;
+		int j;
 
 
-			#ifdef DEBUG
-			if (DocID == 9516391) {
+		DocIDPlace = (DocID - LotDocIDOfset(rLotForDOCid(DocID)));	
+		++nrOfLinkWordsToDocID[DocIDPlace];
+
+		convert_to_lowercase((unsigned char *)text);
+
+
+#ifdef DEBUG
+		if (DocID == 125502594) {
 			printf("DocID %i, text: \"%s\", DocIDPlace %i, nrOfLinkWordsToDocID %i\n",DocID,text,DocIDPlace,nrOfLinkWordsToDocID[DocIDPlace]);
-			}
-			#endif
+		}
+#endif
 
-  			TokCount = split(text, " ", &Data);
+		TokCountNewline = split(text, "\n", &DataNewline);
 
-			//for (i=(TokCount-1);i>=0;i--) {
+		for (j=0; DataNewline[j] != NULL; j++) {
+			TokCount = split(DataNewline[j], " ", &Data);
+
 			i=0;
 			while (Data[i] != NULL) {
 
-				/*
+#ifdef DEBUG
 				if (nrOfLinkWordsToDocID[DocIDPlace] > 65505) {
-					#ifdef DEBUG
-						if (DocID == 9516391) {
-							printf("reach max nr of words for DocID %u. Hav %i+ words\n",DocID,nrOfLinkWordsToDocID[DocIDPlace]);
-						}
-					#endif
+					if (DocID == 125502594) {
+						printf("reach max nr of words for DocID %u. Hav %i+ words\n",DocID,nrOfLinkWordsToDocID[DocIDPlace]);
+					}
 					break;
 				}
-				*/
+#endif
 
 				if (Data[i][0] == '\0') {
-					#ifdef DEBUG
-						if (DocID == 9516391) {
+#ifdef DEBUG
+					if (DocID == 125502594) {
 
-							printf("emty data element\n");
-						}
-					#endif
+						printf("emty data element\n");
+					}
+#endif
 				} 
 				else if (strcmp(Data[i],"www") == 0) {
-					#ifdef DEBUG
-						if (DocID == 9516391) {
-							printf("www\n");
-						}
-					#endif
+#ifdef DEBUG
+					if (DocID == 125502594) {
+						printf("www\n");
+					}
+#endif
 					++nrOfLinkWordsToDocID[DocIDPlace];
 				} 
 				else if (isStoppWord(Data[i])) {
-					#ifdef DEBUG
-						if (DocID == 9516391) {
-							printf("stopword \"%s\"\n",Data[i]);
-						}
-					#endif
+#ifdef DEBUG
+					if (DocID == 125502594) {
+						printf("stopword \"%s\"\n",Data[i]);
+					}
+#endif
 					//++nrOfLinkWordsToDocID[DocIDPlace];
 				}
 				else {
-				
-					#ifdef DEBUG
+#ifdef DEBUG
 					//printf("\t\"%s\" %i\n",Data[i],nrOfLinkWordsToDocID[DocIDPlace]);
-					#endif
-
-
-			
+#endif
+#if 1
 
 					WordID = crc32boitho(Data[i]);
 
@@ -128,21 +125,21 @@ int main (int argc, char *argv[]) {
 						printf("got 0 as word id for \"%s\". Somthing may be wrong.\n",Data[i]);
 					}
 
-                			bucket = WordID % NrOfDataDirectorys;
+					bucket = WordID % NrOfDataDirectorys;
 
-                
-        	        		fwrite(&DocID,sizeof(unsigned int),1,revindexFilesHa[bucket]);
+
+					fwrite(&DocID,sizeof(unsigned int),1,revindexFilesHa[bucket]);
 					//runarb: 13 mai 2007. vi har byttet til å bruke et tal for språk.
 					//burde da dette fra DocumentIndex hvis det finnes, men lagres ikke der
 					//må si i IndexRes på hvordan vi gjør det der
-        	        		//fprintf(revindexFilesHa[bucket],"aa ");
+					//fprintf(revindexFilesHa[bucket],"aa ");
 					lang = 0;
 					nr = 1;
 					fwrite(&lang,sizeof(unsigned char),1,revindexFilesHa[bucket]);
 
-        	        		fwrite(&WordID,sizeof(unsigned long),1,revindexFilesHa[bucket]);
-        	        		fwrite(&nr,sizeof(unsigned long),1,revindexFilesHa[bucket]);
-					
+					fwrite(&WordID,sizeof(unsigned long),1,revindexFilesHa[bucket]);
+					fwrite(&nr,sizeof(unsigned long),1,revindexFilesHa[bucket]);
+
 					if (nrOfLinkWordsToDocID[DocIDPlace] > 65535) {
 						hits = 65535;
 					}
@@ -150,41 +147,34 @@ int main (int argc, char *argv[]) {
 						hits = nrOfLinkWordsToDocID[DocIDPlace];
 
 					}
-					
 
-					//hits = nrOfLinkWordsToDocID[DocIDPlace];
+#ifdef DEBUG
+					if (DocID == 125502594) {
+						printf("\thits \"%s\": %hu, bucket %i\n",Data[i],hits,bucket);
+					}
+#endif
 
-					#ifdef DEBUG
-						if (DocID == 9516391) {
-	        	        		       printf("\thits \"%s\": %hu, bucket %i\n",Data[i],hits,bucket);
-						}
-					#endif
+					fwrite(&hits,sizeof(unsigned short),1,revindexFilesHa[bucket]);
+#endif
 
-        		        	fwrite(&hits,sizeof(unsigned short),1,revindexFilesHa[bucket]);
-			                
-        	        		++nrOfLinkWordsToDocID[DocIDPlace];
-				
-			
+					++nrOfLinkWordsToDocID[DocIDPlace];
 				}
-
 
 				++i;
 			}
-  			FreeSplitList(Data);
+			FreeSplitList(Data);
 
-
-			#ifdef DEBUG
-				if (DocID == 9516391) {
+#ifdef DEBUG
+			if (DocID == 125502594) {
 				printf("\n");
-				}
-			#endif
+			}
+#endif
+		}
+		FreeSplitList(DataNewline);
 	}
 
 	free(nrOfLinkWordsToDocID);
 
+	return 0;
 }
 
-/*
-
-
-*/
