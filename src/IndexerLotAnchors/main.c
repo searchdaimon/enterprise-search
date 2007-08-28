@@ -117,7 +117,6 @@ int main (int argc, char *argv[]) {
 #ifdef DEBUG
 					//printf("\t\"%s\" %i\n",Data[i],nrOfLinkWordsToDocID[DocIDPlace]);
 #endif
-#if 1
 
 					WordID = crc32boitho(Data[i]);
 
@@ -145,7 +144,6 @@ int main (int argc, char *argv[]) {
 					}
 					else {
 						hits = nrOfLinkWordsToDocID[DocIDPlace];
-
 					}
 
 #ifdef DEBUG
@@ -153,9 +151,7 @@ int main (int argc, char *argv[]) {
 						printf("\thits \"%s\": %hu, bucket %i\n",Data[i],hits,bucket);
 					}
 #endif
-
 					fwrite(&hits,sizeof(unsigned short),1,revindexFilesHa[bucket]);
-#endif
 
 					++nrOfLinkWordsToDocID[DocIDPlace];
 				}
