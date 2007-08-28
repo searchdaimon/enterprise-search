@@ -56,14 +56,14 @@ DB *maindb;
 int fakeval = 1;
 
 void
-print_distinct(void)
+print_distinct(int cutoff)
 {
 	struct hashtable *hash;
 	DBC *dbcp;
 	DBT key, data;
 	int ret;
 
-	create_hashtable(1, hashfromkey_url, equalkeys_url);
+	//create_hashtable(1, hashfromkey_url, equalkeys_url);
 
 
 	memset(&key, 0, sizeof(key));
@@ -95,9 +95,10 @@ print_distinct(void)
 			continue;
 		in.s_addr = dbkey.addr;
 
-		if (num < 10)
+		if (num < cutoff)
 			continue;
-		//printf("Got %d record for %s\n", num, inet_ntoa(in));
+		printf("Got %d record for %s\n", num, inet_ntoa(in));
+#if 0
 		hash = create_hashtable(10, hashfromkey_url, equalkeys_url);
 		for (i = 1; i <= num; i++) {
 			char *hashkey;
@@ -140,10 +141,10 @@ print_distinct(void)
 			printf("%d is really %d\n", num, hashtable_count(hash));
 		}
 		hashtable_destroy(hash, 0);
-
+#endif
 	}
 	if (ret != DB_NOTFOUND) {
-		maindb->err(maindb, ret, "DBcursor->get");
+		maindb->err(maindb, ret, "DBcursor->c_get");
 		exit(1);
 	}
 
@@ -261,12 +262,16 @@ main(int argc, char **argv)
 	}
 
 	if (strcmp(argv[1], "distinct") == 0) {
-		print_distinct();
+		int cutoff = 10;
+
+		if (argc >= 3)
+			cutoff = atoi(argv[2]);
+		print_distinct(cutoff);
 	} else if (strcmp(argv[1], "all") == 0) {
 		print_all();
 	} else if (strcmp(argv[1], "list") == 0) {
 		printf("Commands:\n\n");
-		printf("distinct\n");
+		printf("distinct [cutoff]\n");
 	}
 
 
