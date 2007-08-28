@@ -21,6 +21,8 @@ utf-8-4b        [\360-\367][\200-\277][\200-\277][\200-\277]
 \<\/h2\>			{ return HEAD_END; }
 \<span\>			{ return SPAN_START; }
 \<\/span\>			{ return SPAN_END; }
+\<link\>			{ return LINK_START; }
+\<\/link\>			{ return LINK_END; }
 (\&quot;|\&amp;|\&gt;|\&lt;)+	{ bsgp_newstring(yytext, yyscanner); return OTHER; }
 ({legalchar}|{utf-8-2b}|{utf-8-3b}|{utf-8-4b})	{ bsgp_newstring(yytext, yyscanner); return OTHER; }
 ({legalchar}|{utf-8-2b}|{utf-8-3b}|{utf-8-4b})({legalchar}|{utf-8-2b}|{utf-8-3b}|{utf-8-4b})+	{ bsgp_newstring(yytext, yyscanner); return WORD; }

@@ -36,7 +36,8 @@ struct bsg_intern_data
     int		bsize, bpos;
     char	*buf;
     int		wordnr;
-    container	*Q, *Q2, *VMatch, *VSection, *VHit, *VWordNr;
+    char	in_link;
+    container	*Q, *Q2, *VMatch, *VSection, *VHit, *VWordNr, *VLink;
     int		VSection_start;
     automaton	*A;
     int		*q_dep;
@@ -75,7 +76,7 @@ static inline void test_for_snippet(struct bsg_intern_data *data, char forced);
 %parse-param { struct bsg_intern_data *data }
 %parse-param { yyscan_t yyscanner }
 %lex-param { yyscan_t yyscanner }
-%token DIV_START DIV_END HEAD_START HEAD_END SPAN_START SPAN_END WORD EOS PARANTES OTHER
+%token DIV_START DIV_END HEAD_START HEAD_END SPAN_START SPAN_END LINK_START LINK_END WORD EOS PARANTES OTHER
 
 %%
 doc	:
@@ -167,6 +168,7 @@ sentence :
 				    vector_pushback(data->VMatch, data->history[slot], data->bpos);
 				    vector_pushback(data->VHit, data->accepted[data->tilstand]);
 				    vector_pushback(data->VWordNr, data->wordnr);
+				    vector_pushback(data->VLink, data->in_link);
 				}
 			}
 		}
@@ -205,6 +207,14 @@ sentence :
 	{
 	    if (bsgpget_extra(yyscanner)->space) { buf_printf(data, " "); bsgpget_extra(yyscanner)->space = 0; }
 	    buf_printf(data, "%s", (char*)$2);
+	}
+	| sentence LINK_START
+	{
+	    data->in_link = 1;
+	}
+	| sentence LINK_END
+	{
+	    data->in_link = 0;
 	}
 	;
 %%
@@ -269,6 +279,7 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 	    char	m;
 	    int		d_hits;
 	    int		score=0;
+	    int		hits_in_links;
 #ifdef DEBUG_ON
 	    int		_spos = 0;
 	    char	_sbuf[2048];
@@ -381,6 +392,14 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 		    diff[thisq] = thisnr;
 		}
 
+	    hits_in_links = 0;
+	    for (j = (*VMatch_start); j<vector_size(data->VLink); j++)
+		{
+		    int		in_link = vector_get(data->VLink,j).i;
+
+		    if (in_link) hits_in_links++;
+		}
+
 	    int		bucket[4];
 
 	    for (l=0; l<4; l++)
@@ -420,11 +439,18 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 		    _spos+= sprintf(_sbuf+_spos, " (%i) ", closeness);
 		    _spos+= sprintf(_sbuf+_spos, "\033[0m");
 		}
+	    _spos+= sprintf(_sbuf+_spos, "[%i] ", hits_in_links);
 #endif
 	    }
 
+//	    sum_hits-= hits_in_links;
+	    int		num;
+	    num = 8 - hits_in_links;
+	    if (num<0) num = 0;
+
 	    // Calculate score:
-	    score|= (d_hits<<17);
+	    score|= (d_hits<<20);
+	    score|= (num<<17);
 	    score|= (closeness<<9);
 	    if (sum_hits > 15)
 		score|= 0xf0;
@@ -757,11 +783,13 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
     data->bsize = 65536;
     data->buf = malloc(data->bsize);
     data->wordnr = 0;
+    data->in_link = 0;
     data->Q = queue_container( pair_container( int_container(), int_container() ) );
     data->Q2 = queue_container( pair_container( int_container(), int_container() ) );
     data->VMatch = vector_container( pair_container( int_container(), int_container() ) );
     data->VHit = vector_container( int_container() );
     data->VWordNr = vector_container( int_container() );
+    data->VLink = vector_container( int_container() );
     data->VMatch_start = 0;
     data->VMatch_start2 = 0;
     data->q_flags = v_section_sentence;
@@ -983,6 +1011,7 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
     bsgplex_destroy( scanner );
 
     free_automaton(data->A);
+    destroy(data->VLink);
     destroy(data->VWordNr);
     destroy(data->VHit);
     destroy(data->VMatch);
