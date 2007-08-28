@@ -9,14 +9,6 @@
 
 
 
-typedef struct
-{
-    container		*C;
-    _list_node_		*head, *tail;
-    int			size;
-} list_container_priv;
-
-
 
 inline alloc_data list_ap_allocate( container *C, va_list ap )
 {
@@ -250,7 +242,7 @@ inline void list_erase( container *C, const iterator it )
     LP->size--;
 }
 
-
+/*
 inline iterator list_begin( container *C )
 {
     iterator	it;
@@ -300,7 +292,7 @@ inline int list_size( container *C )
 {
     return ((list_container_priv*)C->priv)->size;
 }
-
+*/
 
 inline container* list_clone( container *C )
 {

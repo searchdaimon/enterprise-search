@@ -30,6 +30,7 @@ typedef union
     char	c;
     double	d;
     void	*ptr;
+    char	*str;
     container	*C;
 } value;
 

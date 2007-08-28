@@ -4,12 +4,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "css_parser.h"
 #include "html_parser.h"
 
 
 void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* wordlist )
 {
-    if (pos > 25) return;
+    return;
+//    if (pos > 25) return;
 
     printf("\t%s (%i) ", word, pos);
 
@@ -54,6 +56,7 @@ int main( int argc, char *argv[] )
     int		paramnr;
 
     html_parser_init();
+    css_parser_init();
 
     for (paramnr=1; paramnr<argc; paramnr++)
 	{
@@ -70,7 +73,7 @@ int main( int argc, char *argv[] )
 	    struct stat	fileinfo;
 	    fstat( fileno( file ), &fileinfo );
 
-	    printf("Reading %i bytes...\n", fileinfo.st_size);
+//	    printf("Reading %i bytes...\n", fileinfo.st_size);
 
 	    int		size = fileinfo.st_size;
 	    char	*buf = (char*)malloc(sizeof(char)*size);
@@ -79,9 +82,10 @@ int main( int argc, char *argv[] )
 	    for (i=0; i<size;)
 		{
 		    i+= fread( (void*)&(buf[i]), sizeof(char), size-i, file );
-		    printf("%i...\n", i);
+//		    printf("%i...\n", i);
 		}
 
+	    printf("\n");
 //	    for (;;)
 	    char	*title, *body;
 
@@ -93,11 +97,12 @@ int main( int argc, char *argv[] )
 //	    printf("Title: %s\n", title);
 //	    printf("Title: %s\nBody:\n%.512s\n", title, body);
 
-	    printf("Title: %s\nBody:\n%s\n", title, body);
+	    printf("\n\033[1;34mTitle\033[0m: %s\n\033[1;34mBody\033[0m:\n%s\n", title, body);
 	    free(title);
 	    free(body);
 	}
 
+    css_parser_exit();
     html_parser_exit();
 
     exit(0);

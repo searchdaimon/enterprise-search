@@ -6,7 +6,9 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+#include "../ds/dcontainer.h"
 #include "html_parser.h"
+#include "css_parser.h"
 
 #define maxNewString 1023
 
@@ -25,13 +27,19 @@ struct bhpm_yy_extra
     char	stringcircle[32][maxNewString +1];
     char	flush;
     char	field_delimit;
+    int		nested_obj;
+
+    char	*stylesheet;
+    int		ss_size, ss_block;
+    css_selector_block	*css_selector_block;
 
     char	title, alink; //, script=0;	init:=0
     int		wordcount, linkcount;	// init:=0
     int		h;	// init:=0
+    char	invisible_text;
 
     buffer	*Btitle, *Bbody;
-    char	newhead, newdiv, newspan, inhead, indiv, inspan, newendhead;
+    char	newhead, newdiv, newspan, inhead, indiv, inspan, newendhead, inlink;
 
     void	*wordlist;
     void	(*user_fn)(char*,int,enum parsed_unit,enum parsed_unit_flag,void* wordlist);

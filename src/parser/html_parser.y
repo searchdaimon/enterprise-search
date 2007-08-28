@@ -4,6 +4,9 @@
 /*
 Changelog
 
+August 2007 (Magnus):
+    Parser nå css og detekterer cloaking.
+
 Januar 2007 (Magnus):
     Kildekoden er oppgradert til reentrant, og spytter i tillegg ut tekst-summary.
 
@@ -22,6 +25,13 @@ Håndtering av at page_uri er  NULL en skjelden gang i create_full_link
 #include "html_parser_common.h"
 #include "html_parser.h"
 #include "html_parser_tags.h"
+#include "../ds/dcontainer.h"
+#include "../ds/dpair.h"
+#include "../ds/dstack.h"
+#include "../ds/dlist.h"
+#include "../ds/dmap.h"
+#include "css_parser.h"
+
 
 // --- fra flex:
 typedef void* yyscan_t;
@@ -31,6 +41,14 @@ struct bhpm_yy_extra *bhpmget_extra( yyscan_t yyscanner );
 // ---
 
 
+struct tag_info
+{
+    int		tag;
+    int		color, background, fontsize;
+    char	hidden;
+    char	*tag_name, *tag_id, *tag_class;
+};
+
 // Data for bison-parseren:
 struct bhpm_intern_data
 {
@@ -39,6 +57,11 @@ struct bhpm_intern_data
 
     char	*attr[16], *val[16];
     int		num_attr;
+
+    int		color, background, fontsize;
+    char	hidden;
+
+    container	*tag_list;
 };
 
 
@@ -47,11 +70,22 @@ char* create_full_link( char *url, int page_url_len, char *page_uri, char *page_
 void lexwords(unsigned char *s);
 
 
+char is_invisible( int color, int background, int fontsize );
+void delete_tag_info(struct tag_info *ptr);
+int parse_color( char *color );
+
+
 char		*meta_attr[] = {"keywords","description","author","redirect"};
 enum		{ meta_keywords=0, meta_description, meta_author, meta_redirect };
 const int	meta_attr_size = 4;
 automaton	*meta_attr_automaton = NULL;
 
+char		*tag_attr[] = {"color","text","bgcolor","size","style","id","class"};
+enum		{ attr_color=0, attr_text, attr_bgcolor, attr_size, attr_style, attr_id, attr_class };
+const int	tag_attr_size = 7;
+automaton	*tag_attr_automaton = NULL;
+
+//void temp_func_css(struct bhpm_yy_extra *he, int hit, struct tag_info *ptr, char *arg_2, struct bhpm_intern_data *data);
 
 %}
 
@@ -71,26 +105,295 @@ tag	: starttag
 	;
 starttag	: TAG_START ATTR attrlist TAG_STOPP
 	    {
-//		printf("\nStarttag: %s\n", $2);
 		struct bhpm_yy_extra	*he = bhpmget_extra(yyscanner);
 		int			hit = search_automaton(tags_automaton, (char*)$2);
 
-		if ((hit>=0) && (tag_flags[hit] & tagf_space))
-		    he->space = 1;
-/*
-		if (he->wordcount < 25)
+		if (hit>=0)
 		    {
-		printf("\033[1;33m<%s", (char*)$2);
-		int j;
-		for (j=0; j<data->num_attr; j++)
-		    {
-			printf(" (%s)", data->attr[j]);
-			if (data->val[j] != NULL)
-			    printf("={%s}", data->val[j]);
-		    }
-		printf(">\033[0m\n");
-		    }
-*/
+			if (tag_flags[hit] & tagf_space)
+			    he->space = 1;
+
+			if (!(tag_flags[hit] & tagf_empty))
+			    {
+				struct tag_info	*ptr = malloc(sizeof(struct tag_info));
+
+				ptr->tag = hit;
+				ptr->tag_name = NULL;
+				ptr->tag_id = NULL;
+				ptr->tag_class = NULL;
+				ptr->color = -1;
+				ptr->background = -1;
+				ptr->fontsize = -1;
+				ptr->hidden = 0;
+
+		    	        list_pushback(data->tag_list, (void*)ptr);
+
+//				temp_func_css(he, hit, ptr, (char*)$2, data);
+
+				if (he->css_selector_block!=NULL)
+				    {
+					int		color=-1, background=-1, fontsize=-1;
+					int		i;
+
+					// Find matching selectors:
+					iterator	selector_it[3];
+
+					ptr->tag_name = strdup((char*)$2);
+					selector_it[0] = map_find(he->css_selector_block->tag_selectors, ptr->tag_name);
+					selector_it[1].valid = 0;
+					selector_it[2].valid = 0;
+
+					for (i=0; i<data->num_attr; i++)
+					    {
+						if (data->val[i]!=NULL)
+						    {
+							int	attr_val = search_automaton(tag_attr_automaton, data->attr[i]);
+
+							if (attr_val==attr_class)
+							    {
+								ptr->tag_class = strdup(data->val[i]);
+				    			        selector_it[1] = map_find(he->css_selector_block->class_selectors, ptr->tag_class);
+							    }
+							else if (attr_val==attr_id)
+							    {
+								ptr->tag_id = strdup(data->val[i]);
+								selector_it[2] = map_find(he->css_selector_block->id_selectors, ptr->tag_id);
+							    }
+						    }
+					    }
+
+					// Test for all selector-patterns ending with same tag, class or id:
+					for (i=0; i<3; i++)
+					    {
+						iterator	css_it;
+
+						if (selector_it[i].valid)
+						    css_it = list_begin(map_val(selector_it[i]).C);
+						else
+						    css_it.valid = 0;
+
+						// Test current selector for match:
+						for (; css_it.valid; css_it=list_next(css_it))
+						    {
+							css_selector	*selector = list_val(css_it).ptr;
+							iterator	rule_it = list_begin(selector->pattern);
+							iterator	tag_it = list_begin(data->tag_list);
+
+							for (; tag_it.valid && rule_it.valid; tag_it=list_next(tag_it))
+							    {
+								struct tag_info	*ptr = list_val(tag_it).ptr;
+								css_token	*token = list_val(rule_it).ptr;
+								char		match = 1;
+
+								if (token->type == css_child || token->type == css_descendant)
+								    {
+									rule_it=list_next(rule_it);
+									if (rule_it.valid) token = list_val(rule_it).ptr;
+								    }
+
+								for (; match && rule_it.valid;)
+								    {
+									match = 0;
+									switch (token->type)
+									    {
+										case css_tag:
+										    if (ptr->tag_name!=NULL && !strcasecmp(token->str, ptr->tag_name))
+											match = 1;
+										    break;
+										case css_class:
+										    if (ptr->tag_class!=NULL && !strcasecmp(token->str, ptr->tag_class))
+											match = 1;
+										    break;
+										case css_id:
+										    if (ptr->tag_id!=NULL && !strcasecmp(token->str, ptr->tag_id))
+											match = 1;
+										    break;
+									    }
+
+									if (match)
+									    {
+										rule_it=list_next(rule_it);
+										if (rule_it.valid) token = list_val(rule_it).ptr;
+									    }
+								    }
+							    }
+
+							if (!rule_it.valid)
+							    {
+								if (selector->color >= 0) color = selector->color;
+								if (selector->background >= 0) background = selector->background;
+								if (selector->fontsize >= 0) fontsize = selector->fontsize;
+								if (selector->hidden) ptr->hidden = 1;
+							    }
+						    }
+					    }
+
+					ptr->color = color;
+					ptr->background = background;
+					ptr->fontsize = fontsize;
+
+					if (color>=0) data->color = color;
+					if (background>=0) data->background = background;
+					if (fontsize>=0) data->fontsize = fontsize;
+				    } // end if (..css..)
+
+				int		i;
+				int		color=-1, background=-1, fontsize=-1;
+
+				for (i=0; i<data->num_attr; i++)
+				    {
+					if (data->val[i]!=NULL)
+					    {
+						int	attr_val = search_automaton(tag_attr_automaton, data->attr[i]);
+
+//				    		if (!strcasecmp(data->attr[i], "color") || (hit==tag_body && !strcasecmp(data->attr[i], "text")))
+						if (attr_val==attr_color || (hit==tag_body && attr_val==attr_text))
+					    // basefont, font
+				    		    {
+							color = parse_color(data->val[i]);
+						    }
+//						else if (!strcasecmp(data->attr[i], "bgcolor"))
+						else if (attr_val==attr_bgcolor)
+					    // body, table, th, td, tr
+						    {
+							background = parse_color(data->val[i]);
+						    }
+//						else if (hit==tag_font && !strcasecmp(data->attr[i], "size"))
+						else if (hit==tag_font && attr_val==attr_size)
+						    { // 1==10, 2==13, 3==16, 4==18, 5==24, 6==32, 7==48
+							int	size_mod[7] = {10,13,16,18,24,32,48};
+							int	k;
+
+							k = atoi(data->val[i]);
+							if (k>=1 && k<=7)
+							    fontsize = size_mod[k-1];
+						    }
+//				    	        else if (!strcasecmp(data->attr[i], "style"))
+						else if (attr_val==attr_style)
+						    {
+//							{blank}*{ident}+{blank}*:{blank}*{value}+{blank}*;?
+							int	p = 0, n, r, j;
+							char	*T = data->val[i];
+							char	*ident, *value[16];
+
+							while (T[p]!='\0')
+							    {
+								while (T[p]!='\0' && (T[p]==' ' || T[p]=='\t' || T[p]=='\r' || T[p]=='\n' || T[p]=='\f')) p++;
+								ident = &(T[p]);
+								while (T[p]!='\0' && !(T[p]==' ' || T[p]=='\t' || T[p]=='\r' || T[p]=='\n' || T[p]=='\f' || T[p]==':')) p++;
+								n = p;
+								while (T[p]!='\0' && (T[p]==' ' || T[p]=='\t' || T[p]=='\r' || T[p]=='\n' || T[p]=='\f' || T[p]==':')) p++;
+								T[n] = '\0';
+
+								j = 0;
+								while (T[p]!='\0' && T[p]!=';')
+								    {
+									value[j] = &(T[p]);
+									while (T[p]!='\0' && T[p]!=';' && T[p]!=' ' && T[p]!='\t' && T[p]!='\r' && T[p]!='\n' && T[p]!='\f') p++;
+									r = p;
+									while (T[p]!='\0' && T[p]!=';' && (T[p]==' ' || T[p]=='\t' || T[p]=='\r' || T[p]=='\n' || T[p]=='\f')) p++;
+									T[r] = '\0';
+									j++;
+								    }
+
+								if (T[p]==';') p++;
+
+								if (strlen(ident)>0 && strlen(value[0])>0)
+								    {
+									int	z;
+									int	tmp;
+
+									if (!strcmp(ident, "font-size") || !strcmp(ident, "font"))
+									    {
+										tmp = -1;
+
+										for (z=0; z<j; z++)
+										    {
+											if (value[z][0]>='0' && value[z][0]<='9')
+											    {
+												int	len = strlen(value[z]);
+												if ((value[z][len-1]>='0' && value[z][len-1]<='9')
+												    || (value[z][len-2]=='p' && value[z][len-1]=='x'))
+											    	    tmp = atoi(value[z]);
+											    }
+											else if (!strcmp(value[z], "xx-small"))
+											    tmp = 9;
+											else if (!strcmp(value[z], "x-small"))
+											    tmp = 10;
+											else if (!strcmp(value[z], "small"))
+											    tmp = 13;
+											else if (!strcmp(value[z], "medium"))
+											    tmp = 16;
+											else if (!strcmp(value[z], "large"))
+											    tmp = 18;
+											else if (!strcmp(value[z], "x-large"))
+											    tmp = 24;
+											else if (!strcmp(value[z], "xx-large"))
+											    tmp = 32;
+
+											if (tmp>=0) fontsize = tmp;
+										    }
+									    }
+									else if (!strcmp(ident, "color"))
+									    {
+										tmp = -1;
+										for (z=0; z<j; z++)
+										    {
+											tmp = parse_color(value[z]);
+											if (tmp>=0) color = tmp;
+										    }
+									    }
+									else if (!strcmp(ident, "background") || !strcmp(ident, "background-color"))
+									    {
+										tmp = -1;
+										for (z=0; z<j; z++)
+										    {
+											tmp = parse_color(value[z]);
+											if (tmp>=0) background = tmp;
+										    }
+									    }
+									else if (!strcmp(ident, "visibility"))
+									    {
+										for (z=0; z<j; z++)
+										    if (!strcmp(value[z], "hidden"))
+											{
+											    ptr->hidden = 1;
+											    break;
+											}
+									    }
+								    }
+							    }
+						    }
+					    }
+				    }
+
+				if (ptr->hidden) data->hidden++;
+
+				if (color>=0 || background>=0 || fontsize>=0 || data->hidden>0)
+				    {
+					if (color>=0)
+					    {
+						data->color = color;
+						ptr->color = color;
+					    }
+					if (background>=0)
+					    {
+						data->background = background;
+						ptr->background = background;
+					    }
+					if (fontsize>=0)
+					    {
+						data->fontsize = fontsize;
+						ptr->fontsize = fontsize;
+					    }
+
+					if (data->hidden) he->invisible_text = 1;
+					else he->invisible_text = is_invisible(data->color, data->background, data->fontsize);
+				    }
+			    } // end if (.. tagf_empty)
+		    } // end if (hit>=0)
+
+
 		switch (hit)
 		    {
 			case tag_a:
@@ -196,6 +499,62 @@ endtag	: ENDTAG_START ATTR ENDTAG_STOPP
 			he->newdiv = 1;
 		else if (tag_flags[hit] & tagf_span)
 			he->newspan = 1;
+
+		if (hit>=0 && list_size(data->tag_list)>1)
+		    {
+//			printf("\033[1;34m</%s>\033[0m\n", (char*)$2);
+
+			int		i;
+
+			iterator	it = list_end(data->tag_list);
+			for (; it.valid; it=list_previous(it))
+			    {
+				struct tag_info	*ptr = list_val(it).ptr;
+
+				if (ptr->tag == hit)
+				    {
+//					printf("deleted: ");
+					if (tag_flags[ptr->tag] & tagf_block)
+					    {
+						iterator	gammel_it;
+						for (; it.valid;)
+						    {
+//							printf("%s ", ((struct tag_info*)list_val(it).ptr)->tag_name);
+							delete_tag_info(list_val(it).ptr);
+							gammel_it = it;
+							it=list_next(it);
+							list_erase(data->tag_list, gammel_it);
+						    }
+					    }
+					else
+					    {
+//						printf("%s", ptr->tag_name);
+						delete_tag_info(list_val(it).ptr);
+						list_erase(data->tag_list, it);
+					    }
+//					printf("\n");
+					break;
+				    }
+			    }
+
+			data->color = -1;
+			data->background = -1;
+			data->fontsize = -1;
+			data->hidden = 0;
+			it = list_end(data->tag_list);
+			for (; it.valid; it=list_previous(it))
+			    {
+				struct tag_info	*ptr = list_val(it).ptr;
+
+				if (data->color < 0 && ptr->color >= 0) data->color = ptr->color;
+				if (data->background < 0 && ptr->background >= 0) data->background = ptr->background;
+				if (data->fontsize < 0 && ptr->fontsize >= 0) data->fontsize = ptr->fontsize;
+				if (ptr->hidden) data->hidden++;
+			    }
+
+			if (data->hidden>0) he->invisible_text = 1;
+			else he->invisible_text = is_invisible(data->color, data->background, data->fontsize);
+		    }
 	    }
 	;
 startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
@@ -306,6 +665,140 @@ attr	: ATTR EQUALS TEXTFIELD
 	    }
 	;
 %%
+
+/*
+void temp_func_css(struct bhpm_yy_extra *he, int hit, struct tag_info *ptr, char *arg_2, struct bhpm_intern_data *data)
+{
+				if (he->css_selector_block!=NULL)
+				    {
+					int		color=-1, background=-1, fontsize=-1;
+					int		i;
+
+					// Find matching selectors:
+					iterator	selector_it[3];
+
+					ptr->tag_name = strdup(arg_2);
+					selector_it[0] = map_find(he->css_selector_block->tag_selectors, ptr->tag_name);
+					selector_it[1].valid = 0;
+					selector_it[2].valid = 0;
+
+					for (i=0; i<data->num_attr; i++)
+					    {
+						if (data->val[i]!=NULL)
+						    {
+							int	attr_val = search_automaton(tag_attr_automaton, data->attr[i]);
+
+							if (attr_val==attr_class)
+							    {
+								ptr->tag_class = strdup(data->val[i]);
+				    			        selector_it[1] = map_find(he->css_selector_block->class_selectors, ptr->tag_class);
+							    }
+							else if (attr_val==attr_id)
+							    {
+								ptr->tag_id = strdup(data->val[i]);
+								selector_it[2] = map_find(he->css_selector_block->id_selectors, ptr->tag_id);
+							    }
+						    }
+					    }
+
+					// Test for all selector-patterns ending with same tag, class or id:
+					for (i=0; i<3; i++)
+					    {
+						iterator	css_it;
+
+						if (selector_it[i].valid)
+						    css_it = list_begin(map_val(selector_it[i]).C);
+						else
+						    css_it.valid = 0;
+
+						// Test current selector for match:
+						for (; css_it.valid; css_it=list_next(css_it))
+						    {
+							css_selector	*selector = list_val(css_it).ptr;
+							iterator	rule_it = list_begin(selector->pattern);
+							iterator	tag_it = list_begin(data->tag_list);
+
+							for (; tag_it.valid && rule_it.valid; tag_it=list_next(tag_it))
+							    {
+								struct tag_info	*ptr = list_val(tag_it).ptr;
+								css_token	*token = list_val(rule_it).ptr;
+								char		match = 1;
+
+								if (token->type == css_child || token->type == css_descendant)
+								    {
+									rule_it=list_next(rule_it);
+									if (rule_it.valid) token = list_val(rule_it).ptr;
+								    }
+
+								for (; match && rule_it.valid;)
+								    {
+									match = 0;
+									switch (token->type)
+									    {
+										case css_tag:
+										    if (ptr->tag_name!=NULL && !strcasecmp(token->str, ptr->tag_name))
+											match = 1;
+										    break;
+										case css_class:
+										    if (ptr->tag_class!=NULL && !strcasecmp(token->str, ptr->tag_class))
+											match = 1;
+										    break;
+										case css_id:
+										    if (ptr->tag_id!=NULL && !strcasecmp(token->str, ptr->tag_id))
+											match = 1;
+										    break;
+									    }
+
+									if (match)
+									    {
+										rule_it=list_next(rule_it);
+										if (rule_it.valid) token = list_val(rule_it).ptr;
+									    }
+								    }
+							    }
+
+							if (!rule_it.valid)
+							    {
+								if (selector->color >= 0) color = selector->color;
+								if (selector->background >= 0) background = selector->background;
+								if (selector->fontsize >= 0) fontsize = selector->fontsize;
+								if (selector->hidden) ptr->hidden = 1;
+							    }
+						    }
+					    }
+
+					ptr->color = color;
+					ptr->background = background;
+					ptr->fontsize = fontsize;
+
+					if (color>=0) data->color = color;
+					if (background>=0) data->background = background;
+					if (fontsize>=0) data->fontsize = fontsize;
+				    } // end if (..css..)
+}
+*/
+
+void delete_tag_info(struct tag_info *ptr)
+{
+    free(ptr->tag_name);
+    free(ptr->tag_id);
+    free(ptr->tag_class);
+    free(ptr);
+}
+
+
+char is_invisible( int color, int background, int fontsize )
+{
+    int		diff, r, g, b;
+
+    r = abs( ((color>>16)&0xff) - ((background>>16)&0xff) );
+    g = abs( ((color>>8)&0xff) - ((background>>8)&0xff) );
+    b = abs( ((color)&0xff) - ((background)&0xff) );
+
+    diff = r+g+b;
+
+    return ((diff < 48) || (fontsize<8));
+}
 
 
 void lexwords(unsigned char *s)	// Lex for words in textfield.
@@ -474,12 +967,20 @@ char* create_full_link( char *url, int page_url_len, char *page_uri, char *page_
 
 void html_parser_init()
 {
+    // Removed elements: noframes, noscript, script, style, select, textarea, object
+
     tags_automaton = build_automaton( tags_size, (unsigned char**)tags );
     meta_attr_automaton = build_automaton( meta_attr_size, (unsigned char**)meta_attr );
+    tag_attr_automaton = build_automaton( tag_attr_size, (unsigned char**)tag_attr );
+//    color_names_automaton = build_automaton( color_names_size, (unsigned char**)color_names );
+//    text_containers_automaton = build_automaton( text_containers_size, (unsigned char**)text_containers );
 }
 
 void html_parser_exit()
 {
+//    free_automaton(text_containers_automaton);
+//    free_automaton(color_names_automaton);
+    free_automaton(tag_attr_automaton);
     free_automaton(meta_attr_automaton);
     free_automaton(tags_automaton);
 }
@@ -489,6 +990,8 @@ void html_parser_exit()
 void html_parser_run( char *url, char text[], int textsize, char **output_title, char **output_body,
     void (*fn)(char*,int,enum parsed_unit,enum parsed_unit_flag,void* wordlist), void* wordlist )
 {
+    assert(tags_automaton!=NULL);	// Gir feilmelding dersom man har glemt å kjøre html_parser_init().
+
     struct bhpm_yy_extra	*he = malloc(sizeof(struct bhpm_yy_extra));
     struct bhpm_intern_data	*data = malloc(sizeof(struct bhpm_intern_data));
 
@@ -519,9 +1022,36 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
     he->indiv = 0;
     he->inspan = 0;
     he->newendhead = 0;
+    he->inlink = 0;
+
+    he->css_selector_block = NULL;
 
     he->Btitle = buffer_init( 10240 );
     he->Bbody = buffer_init( textsize*2 );
+
+    data->tag_list = list_container( ptr_container() );
+
+    struct tag_info	*ptr = malloc(sizeof(struct tag_info));
+    ptr->tag = -1;
+    ptr->color = 0x000000;
+    ptr->background = 0xffffff;
+    ptr->fontsize = 16;	// medium
+    ptr->hidden = 0;
+    ptr->tag_name = strdup("");
+    ptr->tag_class = strdup("");
+    ptr->tag_id = strdup("");
+
+    list_pushback( data->tag_list, ptr );
+    data->color = ptr->color;
+    data->background = ptr->background;
+    data->fontsize = ptr->fontsize;
+
+//    data->font_list = list_container( pair_container( string_container(), pair_container( int_container(), int_container() ) ) );
+//    list_pushback( data->font_list, "", 0x000000, 0xffffff );
+
+//    data->crnt_txtcol = 0x000000;
+//    data->crnt_bgcol = 0xffffff;
+    he->invisible_text = 0;
 
     // Run parser:
     yyscan_t	scanner;
@@ -540,6 +1070,7 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
 //		he->space = 0;
 	}
 
+    if (he->inlink) bprintf(he->Bbody, "</link>");
     if (he->inspan) bprintf(he->Bbody, "</span>\n");
     if (he->inhead) bprintf(he->Bbody, "  </h2>\n");
     if (he->indiv) bprintf(he->Bbody, "</div>\n");
@@ -551,6 +1082,14 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
     *output_title = buffer_exit( he->Btitle );
     *output_body = buffer_exit( he->Bbody );
 
+//    destroy(data->font_list);
+    iterator	it = list_begin(data->tag_list);
+    for (; it.valid; it=list_next(it))
+	{
+	    delete_tag_info(list_val(it).ptr);
+	}
+
+    destroy(data->tag_list);
     free(data->page_uri);
     free(data->page_path);
     free(data->page_rel_path);
