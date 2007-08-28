@@ -37,9 +37,9 @@ int main (int argc, char *argv[]) {
 		printf("documentsInCollection <collection name>\n");
 		printf("SidToUser <sid>\n");
 		printf("AuthUser <username> <password>\n");
+		printf("GetPassword <username>\n");
 		printf("\nReturns %i on success and %i on failure\n",EXIT_SUCCESS,EXIT_FAILURE);
 		exit(1);
-
 	}
 
 	key = argv[1];
@@ -286,7 +286,20 @@ int main (int argc, char *argv[]) {
 		} else {
 			printf("User not authenticated\n");
 		}
-	} else {
+	}
+	else if (strcmp(key,"GetPassword") == 0) {
+		char password[1024];
+		if (value == NULL) {
+			printf("GetPassword username\n");
+			exit(1);
+		}
+		if (!boithoad_getPassword(value,password)) {
+			printf("Unable to get password for %s\n", value);
+		} else {
+			printf("Password for %s is %s\n", value, password);
+		}
+	}
+	else {
 		printf("unknown key %s\n",key);
 	}
 
