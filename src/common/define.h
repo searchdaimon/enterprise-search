@@ -117,6 +117,8 @@
 #define C_rmkdir	10
 #define C_rComand	11
 #define C_rGetSize	12
+#define C_anchorAdd	13
+#define C_anchorGet	14
 #define C_rEOF 		101
 
 #define net_CanDo		13
