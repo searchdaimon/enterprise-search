@@ -32,4 +32,8 @@ int rComand(char dest[], int LotNr,char subname[]);
 
 off_t rGetFileSize(char source[], int LotNr,char subname[]);
 
+void anchoraddnewNET(char *hostname, unsigned int DocID, char *text, size_t textsize, char *subname);
+void anchorReadNET(char *hostname, char *subname, unsigned int DocID, char *text, int len);
+
+
 #endif //_REPOSETORYNET_H_

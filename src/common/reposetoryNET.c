@@ -520,6 +520,62 @@ int DIReadNET (char *HostName, struct DocumentIndexFormat *DocumentIndexPost, in
 
 }
 
+
+void
+anchoraddnewNET(char *hostname, unsigned int DocID, char *text, size_t textsize, char *subname)
+{
+	static int socketha;
+        static int socketOpen;
+
+	if (socketOpen != 1) {
+                printf("connecting\n");
+                socketha = cconnect(hostname, BLDPORT);
+                socketOpen = 1;
+        }
+
+	sendpacked(socketha,C_anchorAdd, BLDPROTOCOLVERSION, sizeof(DocID), &DocID, subname);
+	sendall(socketha, &textsize, sizeof(textsize));
+	sendall(socketha, text, textsize);
+}
+
+void
+anchorReadNET(char *hostname, char *subname, unsigned int DocID, char *text, int len)
+{
+	static int socketha;
+        static int socketOpen;
+	size_t textlen;
+	char *rtext;
+	int i;
+
+	if (socketOpen != 1) {
+                printf("connecting\n");
+                socketha = cconnect(hostname, BLDPORT);
+                socketOpen = 1;
+        }
+
+	sendpacked(socketha,C_anchorGet, BLDPROTOCOLVERSION, sizeof(DocID), &DocID, subname);
+	printf("1\n");
+
+	if ((i = recv(socketha, &textlen, sizeof(textlen),MSG_WAITALL)) == -1) {
+		perror("recv(textlen)");
+		exit(1);
+	}
+	printf("2 :: %d\n", textlen);
+	rtext = malloc(textlen+1);
+	printf("3\n");
+	if ((i = recv(socketha, rtext, textlen, MSG_WAITALL)) == -1) {
+		perror("recv(text)");
+		exit(1);
+	}
+	rtext[textlen] = '\0';
+	printf("4 :: %s\n", rtext);
+	strncpy(text, rtext, len-1);
+	text[len-1] = '\0';
+	free(rtext);
+	printf("%s\n", text);
+}
+
+
 unsigned int GetLastIndexTimeForLotNET(char *HostName, int LotNr,char subname[]){
 
         int i;
