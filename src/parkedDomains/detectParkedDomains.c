@@ -28,30 +28,78 @@ struct dbkey {
 	unsigned long int addr;
 };
 
-FILE *cfp;
+#if 0
+struct dburlkey {
+	unsigned long int addr;
+	char url[128];
+};
 
-void
-insert_url(DB *dbp, unsigned long int addr, unsigned int num, char *url)
+#else
+
+struct dburlkey {
+	unsigned long int addr;
+	unsigned int hash;
+};
+
+#endif
+
+
+
+DB *urldb;
+
+
+FILE *cfp;
+FILE *log;
+
+int
+insert_url(DB *dbp, unsigned long int addr, char *url)
 {
-	struct dbkey dbkey;
+	struct dburlkey dbkey;
 	char *p, *p2;
 	unsigned int *hash;
 	DBT key, data;
+	DBT data2;
 	int ret;
+	int some;
+	struct in_addr in;
+	char url2[1024];
 	
 	if ((p = strstr(url, "://")) == NULL) {
 		warnx("Not a valid url: %s", url);
-		return;
+		return 0;
 	}
 	p += 3;
 	p2 = strchr(p, '/');
 
 	memset(&key, 0, sizeof(key));
 	memset(&data, 0, sizeof(data));
+	memset(&data2, 0, sizeof(data));
 	dbkey.addr = addr;
-	dbkey.num = num;
+#if 0
+	if (p2 == NULL) {
+		strcpy(dbkey.url, p);
+	} else {
+		strncpy(dbkey.url, p, p2-p);
+		dbkey.url[p2-p] = '\0';
+	}
+	key.data = &dbkey;
+	key.size = sizeof(dbkey.addr) + strlen(dbkey.url)+1;//sizeof(dbkey);
+#else
+	if (p2 == NULL) {
+		strcpy(url2, p);
+	} else {
+		strncpy(url2, p, p2-p);
+		url2[p2-p] = '\0';
+	}
+	dbkey.hash = crc32boitho(url2);
 	key.data = &dbkey;
 	key.size = sizeof(dbkey);
+#endif
+
+	some = 1;
+	data.data = &some;
+	data.size = sizeof(some);
+#if 0
 	data.data = p;
 	if (p2 == NULL) {
 		data.size = strlen(p)+1;
@@ -59,17 +107,34 @@ insert_url(DB *dbp, unsigned long int addr, unsigned int num, char *url)
 		p[p2-p] = '\0';
 		data.size = p2-p;
 	}
+#endif
 	//printf("Url: %s\n", p);
 	//data.data = &num;
 	//data.size = sizeof(num);
 
-	if ((ret = dbp->put(dbp, NULL, &key, &data, 0)) == 0) {
-		//printf("db: %d: key stored.\n", *(unsigned long int *)key.data);
+	if ((ret = dbp->get(dbp, NULL, &key, &data2, 0)) == 0) {
+		return 0;
+	} else if (ret == DB_NOTFOUND) {
+		in.s_addr = addr;
+#if 0
+		fprintf(log, "%s %s\n", inet_ntoa(in), dbkey.url);
+#else
+		fprintf(log, "%s %s\n", inet_ntoa(in), url2);
+#endif
+		if ((ret = dbp->put(dbp, NULL, &key, &data, 0)) == 0) {
+			//printf("db: %d: key stored.\n", *(unsigned long int *)key.data);
+		} else {
+			dbp->err(dbp, ret, "DB->put");
+			return 0;
+			//exit(1);
+		}
 	} else {
-		dbp->err(dbp, ret, "DB->put");
-		//exit(1);
+		dbp->err(dbp, ret, "DB->get");
+
+		return 0;
 	}
 
+	return 1;
 }
 
 #define NUMDI 128
@@ -95,6 +160,7 @@ traverse_dictionary(char *filename, DB *dbp)
 		unsigned int num;
 		DBT key, data;
 		struct dbkey dbkey;
+		char ip[1024];
 
 		if (n == 0) {
 			if ((n = fread(documentIndex, sizeof(struct DocumentIndexFormat), NUMDI, fp)) == 0) {
@@ -110,8 +176,13 @@ traverse_dictionary(char *filename, DB *dbp)
 		if (documentIndex[n].IPAddress == 0 || documentIndex[n].Url[0] == '\0')
 			continue;
 
-		//in.s_addr = documentIndex[n].IPAddress;
+#if 0
+		in.s_addr = documentIndex[n].IPAddress;
 		//printf("%s %s\n", inet_ntoa(in), documentIndex[n].Url);
+		strcpy(ip, inet_ntoa(in));
+		if (strcmp(ip, "217.160.226.73") == 0)
+			printf("%s\n", documentIndex[n].Url);
+#endif
 
 		num = 0;
 		memset(&key, 0, sizeof(key));
@@ -128,6 +199,11 @@ traverse_dictionary(char *filename, DB *dbp)
 			//printf(" %d\n", num);// documentIndex[n].IPAddress, num);
 			in.s_addr = dbkey.addr; //*(unsigned long int *)key.data;
 			//printf("db: %s: key retrieved: data was %d.\n", inet_ntoa(in), anum); 
+
+	
+			if (insert_url(urldb, documentIndex[n].IPAddress, documentIndex[n].Url) == 0) {
+				continue;
+			}
 
 #if 1
 			memset(&key, 0, sizeof(key));
@@ -165,7 +241,6 @@ traverse_dictionary(char *filename, DB *dbp)
 				dbp->err(dbp, ret, "DB->put");
 				//exit(1);
 			}
-			insert_url(dbp, documentIndex[n].IPAddress, anum, documentIndex[n].Url);
 		} else if (ret == DB_NOTFOUND) {
 			int anum = 1;
 
@@ -185,7 +260,7 @@ traverse_dictionary(char *filename, DB *dbp)
 				dbp->err(dbp, ret, "DB->put");
 				//exit(1);
 			}
-			insert_url(dbp, documentIndex[n].IPAddress, 1, documentIndex[n].Url);
+			insert_url(urldb, documentIndex[n].IPAddress, documentIndex[n].Url);
 		} else {
 			dbp->err(dbp, ret, "DB->get");
 			//exit(1);
@@ -225,7 +300,7 @@ traverse_dictionary(char *filename, DB *dbp)
 	fclose(fp);
 }
 
-#define dbCashe 314572800+314572800       //300 mb
+#define dbCashe 4*314572800  //300 mb
 #define dbCasheBlokes 1         //hvor mange deler vi skal dele cashen opp i. Ofte kan man ikke alokere store blikker samenhengenede
 
 int
@@ -240,6 +315,14 @@ main(int argc, char **argv)
 		fprintf(stderr, "Usage: ./prog dictionaryIndex\n");
 		return 1;
 	}
+
+
+#if 1
+	log = fopen("db/log.urls", "w");
+	if (log == NULL)
+		err(1, "Unable to open %s for appending", "db/log.urls");
+#endif
+
 
 #if 0
 	cfp = fopen(TMPFILE, "a");
@@ -259,6 +342,22 @@ main(int argc, char **argv)
 	//if ((ret = maindb->open(maindb, NULL, "db/maindb", NULL, DB_BTREE, DB_CREATE, 0664)) != 0) {
 	//if ((ret = maindb->open(maindb, NULL, "db/maindb", NULL, DB_BTREE, DB_RDONLY, 0664)) != 0) {
 		maindb->err(maindb, ret, "%s", "db/maindb");
+		exit(1);
+	}
+
+	
+	if ((ret = db_create(&urldb, NULL, 0)) != 0) {
+		err(1, "db_create: %s\n", db_strerror(ret));
+	}
+	if ((ret = urldb->set_cachesize(urldb, 0, dbCashe, dbCasheBlokes)) != 0) {
+		urldb->err(urldb, ret, "set_cachesize");
+	}
+
+
+	if ((ret = urldb->open(urldb, NULL, "db/urldb", NULL, DB_BTREE, DB_CREATE|DB_EXCL, 0664)) != 0) {
+	//if ((ret = urldb->open(urldb, NULL, "db/urldb", NULL, DB_BTREE, DB_CREATE, 0664)) != 0) {
+	//if ((ret = urldb->open(urldb, NULL, "db/urldb", NULL, DB_BTREE, DB_RDONLY, 0664)) != 0) {
+		urldb->err(urldb, ret, "%s", "db/urldb");
 		exit(1);
 	}
 
@@ -313,8 +412,14 @@ main(int argc, char **argv)
 		maindb->err(maindb, ret, "DBcursor->close");
 #endif
 
+	fclose(log);
+
 	if (maindb->close(maindb, 0) != 0)
 		return 1; 
+
+	if (urldb->close(urldb, 0) != 0)
+		return 1; 
+
 
 	return 0;
 }
