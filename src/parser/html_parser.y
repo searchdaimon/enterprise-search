@@ -1045,6 +1045,7 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
     data->color = ptr->color;
     data->background = ptr->background;
     data->fontsize = ptr->fontsize;
+    data->hidden = 0;
 
 //    data->font_list = list_container( pair_container( string_container(), pair_container( int_container(), int_container() ) ) );
 //    list_pushback( data->font_list, "", 0x000000, 0xffffff );
@@ -1094,6 +1095,9 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
     free(data->page_path);
     free(data->page_rel_path);
     free(data);
+
+    if (he->css_selector_block!=NULL)
+	destroy_selectors(he->css_selector_block);
     free(he);
 }
 

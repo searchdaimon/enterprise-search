@@ -217,6 +217,8 @@ utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
 
 				    he->stylesheet[he->ss_size] = '\0';
 
+				    if (he->css_selector_block!=NULL)
+					destroy_selectors(he->css_selector_block);
 				    he->css_selector_block = css_parser_run(he->stylesheet, he->ss_size);
 				    free(he->stylesheet);
 
