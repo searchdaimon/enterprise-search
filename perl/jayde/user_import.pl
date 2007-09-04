@@ -1,6 +1,5 @@
-# Imports URL-export from Jayde to Searchdaimons DB.
+# Tool for importing user-export from Jayde to Searchdaimons user DB.
 # Usage: jayde_user_import.pl file1.xml [file2.xml ...]
-
 #!/usr/bin/env perl
 use strict;
 use warnings;
