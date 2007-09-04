@@ -89,6 +89,10 @@ sub url_record {
         $data{sUrl}  =~ s/"$//;
     }
 
+    # remove unwanted spaces
+    chomp $data{sUrl};
+    $data{sUrl} =~ s/\s+$//;
+
     $data{sUrl} = "http://" . $data{sUrl}
         unless $data{sUrl} =~ /^(http:\/\/|https:\/\/)/;
 
@@ -119,6 +123,7 @@ sub sql_insert_url {
 
     my $query = "INSERT INTO submission_url (url, last_indexed) VALUES (?, ?)";
     my $sth = sql_exec($dbh, $query, $url, $indexed);
+
     return $dbh->{ q{mysql_insertid} };
 }
 

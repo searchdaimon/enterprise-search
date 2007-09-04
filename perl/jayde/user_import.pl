@@ -217,6 +217,10 @@ sub rand_str {
 sub add_to_db {
     my %data = @_;
 
+    # remove unwanted spaces
+    chomp $data{bruker_navn};
+    $data{bruker_navn} =~ s/\s+$//;
+    
     if (user_exists($data{bruker_navn})) {
         $log->warn("User $data{bruker_navn} conflicts with a user already in database. Ignoring.");
         return;
