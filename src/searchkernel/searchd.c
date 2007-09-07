@@ -89,11 +89,12 @@ int main(int argc, char *argv[])
         int searchport = 0;
 	int optLog = 0;
 	int optMax = 0;
+	char *optrankfile = NULL;
 	
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"lp:m:"))!=-1) {
+        while ((c=getopt(argc,argv,"lp:m:b:"))!=-1) {
                 switch (c) {
                         case 'p':
                                 searchport = atoi(optarg);
@@ -105,6 +106,9 @@ int main(int argc, char *argv[])
                         case 'm':
 				optMax = atoi(optarg);
                                 break;
+                        case 'b':
+				optrankfile = optarg;
+                                break;
 
 			default:
                         	exit(1);
@@ -115,6 +119,9 @@ int main(int argc, char *argv[])
 
         printf("argc %i, optind %i\n",argc,optind);
 
+	if (optrankfile == NULL) {
+		optrankfile = "Brank";
+	}
 
 	strncpy(servername,argv[1 +optind],sizeof(servername) -1);
 
@@ -236,7 +243,7 @@ int main(int argc, char *argv[])
 	//starter opp
         //laster inn alle poprankene
         printf("loding pop MemArray\n");
-        popopenMemArray(servername,"www"); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
+        popopenMemArray(servername,"www",optrankfile); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
         printf("done\n");
 
 	printf("loding adultWeight MemArray\n");
@@ -1066,14 +1073,6 @@ void *do_chld(void *arg)
 	gettimeofday(&start_time, NULL);
 	#endif
 
-	/*
-	//finner faktisk showabal, vi kan ha slettede sider. Vil ikke sende de
-	for(i=0;i<SiderHeder->showabal;i++) {
-		if (!Sider[i].deletet) {
-
-		}
-	}
-	*/
 
 
 	if ((n=send(mysocfd,SiderHeder, sizeof(struct SiderHederFormat),MSG_NOSIGNAL)) != sizeof(struct SiderHederFormat)) {

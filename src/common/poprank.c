@@ -4,6 +4,10 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <inttypes.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 
 #include "poprank.h"
@@ -12,9 +16,12 @@
 #include "lot.h" 
 #include "lotlist.h" 
 
+
+#define mmap_MaxDocIDToAdd 100000000
+
 FILE *POPINDEX;
-caddr_t POPINDEX_MMAP;
-int ShortPopIndexSize;
+//caddr_t POPINDEX_MMAP;
+//int ShortPopIndexSize;
 //unsigned char *popMemArray;
 
 unsigned char *popMemArray[maxLots];
@@ -50,33 +57,6 @@ int popGetNext (struct popl *popha, int *Rank,unsigned int *rDocID) {
 	}
 }
 
-//opner popindex
-
-void popopenMmap() {
-
- 	int fd;
-        struct stat inode;      // lager en struktur for fstat å returnere.
-
-
-
-        if ((fd = open(SHORTPOPFILE, O_RDWR)) == -1) {
-                perror("error");
-        }
-
-        fstat(fd,&inode);
-
-	//oppdaterer global variabel slik at vi vet størelsen
-	ShortPopIndexSize = inode.st_size;
-
-
-        POPINDEX_MMAP = mmap(0,ShortPopIndexSize,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
-
-        if ((int)POPINDEX_MMAP == -1) {
-                perror("mmap");
-        }
-        close(fd);
-
-}
 
 
 void popopenMemArray_oneLot(char subname[], int i) {
@@ -127,7 +107,7 @@ void popopenMemArray_oneLot(char subname[], int i) {
 
 }
 
-void popopenMemArray(char servername[], char subname[]) {
+void popopenMemArray(char servername[], char subname[], char rankfile[]) {
 
         FILE *FH;
 	int i;
@@ -148,7 +128,7 @@ void popopenMemArray(char servername[], char subname[]) {
 		if (lotlistIsLocal(i)) {
 
 			GetFilPathForLot(LotFile,i,subname);
-			strcat(LotFile,"Brank");
+			strcat(LotFile,rankfile);
 
 			// prøver å opne
 			if ( (FH = fopen(LotFile,"rb")) == NULL ) {
@@ -223,17 +203,147 @@ int popRankForDocIDMemArray(unsigned int DocID) {
 
 }
 
+/*
+//opner popindex
 
-int popRankForDocIDMmap(int DocID) {
+void *mmap3264(void *addr, off_t len, int prot, int flags,int fildes, off_t off) {
+	
+	int i, bloacks,size;
+	off_t offset;
+
+	
+	static void *mem[10];
+
+	offset = off;
+
+	bloacks = (int)ceil(len / 2147483647);
+
+	printf("bloacks %i, len %"PRId64"\n",bloacks,len);
+
+	for (i=0;i<bloacks;i++) {
+
+		size = 2147483647;
+
+        	mem[i] = mmap(0,size,PROT_READ|PROT_WRITE,MAP_SHARED,fildes,0);
+		printf("mmap ret %i\n",(unsigned int)mem[i]);
+
+       		if ((int)mem[i] == -1) {
+       		        perror("mmap");
+			return 0;
+        	}
+
+		offset += size;
+
+	}
+	exit(1);
+}
+*/
+int popopenMmap(struct popmemmapFormat *popmemmap,char *filname) {
+
+ 	//int fd;
+        struct stat inode;      // lager en struktur for fstat å returnere.
+	int i;
+	popmemmap->largesDocID = 0;
+
+        if ((popmemmap->fd = open(filname, O_RDWR)) == -1) {
+                perror(filname);
+		return 0;
+        }
+
+        fstat(popmemmap->fd,&inode);
+
+	popmemmap->size = inode.st_size;
+	printf("old file size %"PRId64"\n",popmemmap->size);
+
+        popmemmap->size += (sizeof(unsigned int) * mmap_MaxDocIDToAdd);
+	printf("new file size %"PRId64"\n",popmemmap->size);
+
+	#ifdef DEBUG
+
+	#else
+        /*
+        Stretch the file size to the size of the (mmapped) array of ints
+        */
+
+        if (lseek(popmemmap->fd, popmemmap->size +1, SEEK_SET) == -1) {
+                perror("Error calling lseek() to 'stretch' the file");
+                exit(EXIT_FAILURE);
+        }
+
+        /* Something needs to be written at the end of the file to
+        * have the file actually have the new size.
+        * Just writing an empty string at the current file position will do.
+        *
+        * Note:
+        *  - The current position in the file is at the end of the stretched
+        *    file due to the call to lseek().
+        *  - An empty string is actually a single '\0' character, so a zero-byte
+        *    will be written at the last byte of the file.
+        */
+        if (write(popmemmap->fd, "", 1) != 1) {
+                perror("Error writing last byte of the file");
+                exit(EXIT_FAILURE);
+        }
+	#endif
+
+
+
+        popmemmap->ranks = mmap(0,popmemmap->size,PROT_READ|PROT_WRITE,MAP_SHARED,popmemmap->fd,0);
+	printf("mmap ret %i\n",(unsigned int)popmemmap->ranks);
+
+
+       	if ((int)popmemmap->ranks == -1) {
+       	        perror("mmap");
+		return 0;
+        }
+
+
+	return 1;
+
+}
+
+
+void popcloseMmap (struct popmemmapFormat *popmemmap) {
+	ftruncate(popmemmap->fd,(popmemmap->largesDocID * sizeof(unsigned int)) );
+
+	munmap(popmemmap->ranks,popmemmap->size);
+
+        close(popmemmap->fd);
+	
+}
+int popRankForDocIDMmap(struct popmemmapFormat *popmemmap,unsigned int DocID) {
 	//printf("DocID %i\n",DocID);
 	//fohindrer at vi ber om en docid som er størrre en minne område og segfeiler.
-	//burde nokk had noe felles vasking i iindex.c i steden for her. Andre liter sikkert med det samme
-	if ((DocID < ShortPopIndexSize) && (DocID > 0)) {
-		return POPINDEX_MMAP[DocID];
+	if ((DocID * sizeof(unsigned int)) < popmemmap->size) {
+		return popmemmap->ranks[DocID];
 	}
 	else {
 		return -1;
 	}
+}
+int popRankForDocIDMmapSet(struct popmemmapFormat *popmemmap,unsigned int DocID,int increasement) {
+	//printf("DocID %i\n",DocID);
+	//fohindrer at vi ber om en docid som er størrre en minne område og segfeiler.
+
+	off_t size = (DocID * sizeof(unsigned int));
+
+	if (size < popmemmap->size) {
+		popmemmap->ranks[DocID] += increasement;
+
+		if (DocID > popmemmap->largesDocID) {
+			popmemmap->largesDocID = DocID;
+		}
+
+		return popmemmap->ranks[DocID];
+
+	}
+	else {
+		printf("DocID %u out of mmap bounds\n",DocID);
+		return -1;
+
+	}
+
+
 }
 int popopen (struct popl *popha, char *filname) {
 
@@ -241,7 +351,7 @@ int popopen (struct popl *popha, char *filname) {
 
 	(*popha).DocID = 0;
 
-        if ((((*popha).fh = fopen(filname,"r+b")) == NULL) && (((*popha).fh = fopen(filname,"w+b"))  == NULL)) {
+        if ((((*popha).fh = (FILE *)fopen(filname,"r+b")) == NULL) && (((*popha).fh = fopen(filname,"w+b"))  == NULL)) {
                 perror(filname);
 		return 0;
         }
@@ -265,13 +375,21 @@ int popRankForDocID(struct popl *popha,int DocID) {
 
 	int Rank  = -1;
 
+	off_t place;	
+
+	place = DocID * sizeof(int);
+
 	// prøver å søker og lese filen, hvis det ikke går er det nokk 
 	// for at vi ikke har noe rankk for denne filen enda, så vi retunerer 0
-	if ((fseek((*popha).fh,DocID* sizeof(Rank),SEEK_SET) == 0) && (fread(&Rank,sizeof(Rank),1,(*popha).fh) != 0)){
-		return Rank;
+	if (fseeko64((*popha).fh,place,SEEK_SET) != 0 ) {
+		return -2;
+	}
+	else if (fread(&Rank,sizeof(Rank),1,(*popha).fh) != 1){
+		printf("can't read at %"PRId64"\n",place);
+		return -3;
 	}
 	else {
-		return -2;
+		return Rank;
 	}
 	
 }
@@ -284,7 +402,7 @@ void popclose(struct popl *popha) {
 //setter verdien
 void popset (struct popl *popha,int DocID,int pop) {
 	//skriver ny verdi
-        fseek((*popha).fh,DocID * sizeof(pop),SEEK_SET);
+        fseeko((*popha).fh,DocID * sizeof(pop),SEEK_SET);
 
         fwrite(&pop,sizeof(pop),1,(*popha).fh);
 }
@@ -293,12 +411,19 @@ void popset (struct popl *popha,int DocID,int pop) {
 void popadd (struct popl *popha,int DocID,int increasement) {
 
 	int pop = 0;
-	
+	off_t place;	
+
+	place = DocID * sizeof(pop);
 
 	//lser inn gammel verdi
-	fseek((*popha).fh,DocID * sizeof(pop),SEEK_SET);
+	if (fseeko((*popha).fh,place,SEEK_SET) != 0) {
+		perror("popadd: fseek 1");
+		return;
+	}
 	
-	fread(&pop,sizeof(pop),1,(*popha).fh);
+	if (fread(&pop,sizeof(pop),1,(*popha).fh) != 1) {
+		perror("popadd: read");
+	}
 	
 	//printf("pop: %i\n",pop);
 
@@ -306,9 +431,16 @@ void popadd (struct popl *popha,int DocID,int increasement) {
 	pop = pop + increasement;
 
 	//skriver ny verdi
-	fseek((*popha).fh,DocID * sizeof(pop),SEEK_SET);
+	if (fseeko((*popha).fh,place,SEEK_SET) != 0) {
+		perror("popadd: fseek 2");
+		return;		
+	}
 	
-	fwrite(&pop,sizeof(pop),1,(*popha).fh);
+	if (fwrite(&pop,sizeof(pop),1,(*popha).fh) != 1) {
+		perror("popadd: fwrite");
+		return;		
+		
+	}
 	
 	
 }
