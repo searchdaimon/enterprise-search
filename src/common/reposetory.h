@@ -100,8 +100,11 @@ int anchorRead(int, char *, unsigned int, char *, int);
 int anchorGetNextnew(int,unsigned int *,char *,int, unsigned int *,unsigned int *,char *, off_t *);
 void anchoraddnew(unsigned int, char *, size_t, char *, char *);
 int anchorIndexWrite(unsigned int, char *, off_t);
-int anchorIndexRead(unsigned int, char *, off_t *);;;;
+int anchorIndexRead(unsigned int, char *, off_t *);
 
+/* Resource */
+void addResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t resourcelen);
+size_t getResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t resourcelen);
 
 
 

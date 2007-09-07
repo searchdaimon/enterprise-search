@@ -538,6 +538,7 @@ anchoraddnewNET(char *hostname, unsigned int DocID, char *text, size_t textsize,
 	sendall(socketha, text, textsize);
 }
 
+
 void
 anchorReadNET(char *hostname, char *subname, unsigned int DocID, char *text, int len)
 {
@@ -571,6 +572,30 @@ anchorReadNET(char *hostname, char *subname, unsigned int DocID, char *text, int
 }
 
 
+/* XXX: Send and receive compressed data */
+void
+readHTMLNET(char *subname, unsigned int DocID, char *text, size_t len)
+{
+	int socketha;
+	int i;
+	int LotNr;
+
+	LotNr = rLotForDOCid(DocID);
+	socketha = conectTo(LotNr);
+
+	sendpacked(socketha, C_readHTML, BLDPROTOCOLVERSION, sizeof(DocID), &DocID, subname);
+
+	sendall(socketha, &len, sizeof(len));
+	if ((i = recv(socketha, &len, sizeof(len), MSG_WAITALL)) == -1) {
+		perror("recv(len)");
+		exit(1);
+	}
+	if ((i = recv(socketha, text, len, MSG_WAITALL)) == -1) {
+		perror("recv(text)");
+		exit(1);
+	}
+}
+
 unsigned int GetLastIndexTimeForLotNET(char *HostName, int LotNr,char subname[]){
 
         int i;
@@ -598,6 +623,7 @@ unsigned int GetLastIndexTimeForLotNET(char *HostName, int LotNr,char subname[])
 	return IndexTime;
 
 }
+
 void setLastIndexTimeForLotNET(char *HostName, int LotNr,char subname[]){
 
 

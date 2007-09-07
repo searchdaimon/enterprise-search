@@ -1137,6 +1137,7 @@ anchoraddnew(unsigned int DocID, char *text, size_t textsize, char *subname, cha
 	fwrite(newtext, oldlen + textsize, 1, ANCHORFILE);
 	anchorIndexWrite(DocID, subname, offset);
 	fclose(ANCHORFILE);
+	free(newtext);
 }
 
 
@@ -1316,6 +1317,8 @@ anchorRead(int LotNr, char *subname, unsigned int DocID, char *text, int len)
 		}
 
 		if (len == -1) {
+			fclose(fp);
+
 			return anchor.len;
 		} else if (anchor.len+1 > len) { /* No room for the text */
 			fread(text, len-1, 1, fp);
@@ -1335,9 +1338,70 @@ anchorRead(int LotNr, char *subname, unsigned int DocID, char *text, int len)
 	return 0;
 }
 
+void
+addResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t resourcelen)
+{
+	char FileName[1024];
+	FILE *fp;
+	off_t offset;
+	struct DocumentIndexFormat docindex;
 
+	GetFilPathForLot(FileName,LotNr,subname);
+	strcat(FileName,"resource");
 
+	if ((fp = fopen(FileName, "a")) == NULL) {
+		warn("fopen(resource)");
+		return;
+	}
 
+	offset = ftello64(fp);
+	printf("Writing: %d\n", DocID);
+	if (fwrite(&DocID, sizeof(DocID), 1, fp) != 1)
+		warn("fwrite1");
+	if (fwrite(resource, resourcelen, 1, fp) != 1)
+		warn("fwrite2");
+	fclose(fp);
+
+	DIRead(&docindex, DocID, subname);
+	docindex.ResourcePointer = offset;
+	printf("Offset: %ld\n", offset);
+	docindex.ResourceSize = resourcelen;
+	DIWrite(&docindex, DocID, subname, NULL);
+}
+
+size_t
+getResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t resourcelen)
+{
+	char FileName[1024];
+	FILE *fp;
+	struct DocumentIndexFormat docindex;
+
+	DIRead(&docindex, DocID, subname);
+	if (resource != NULL) {
+		unsigned int rDocID;
+		size_t len;
+
+		GetFilPathForLot(FileName,LotNr,subname);
+		strcat(FileName,"resource");
+
+		if ((fp = fopen(FileName, "r")) == NULL) {
+			warn("fopen(resource)");
+			return 0;
+		}
+		fseek(fp, docindex.ResourcePointer, SEEK_SET);
+		fread(&rDocID, sizeof(rDocID), 1, fp);
+		if (rDocID != DocID) {
+			fclose(fp);
+			strcpy(resource, "");
+			return 0;
+		}
+		len = fread(resource, resourcelen > docindex.ResourceSize ? docindex.ResourceSize : resourcelen, 1, fp);
+
+		fclose(fp);
+	}
+
+	return docindex.ResourceSize;
+}
 
 
 void addNewUrlOpen(struct addNewUrlhaFormat *addNewUrlha,int lotNr, char openmode[],char subname[], int nr) {
