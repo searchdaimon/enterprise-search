@@ -711,6 +711,12 @@ resolveRedirects: src/resolveRedirects/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/resolveRedirects/main.c src/getDocIDFromUrl/getDocIDFromUrl.c -o bin/resolveRedirects $(LDFLAGS) $(BDB)
 
+redirResource: src/resolveRedirects/redirResource.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/resolveRedirects/redirResource.c src/getDocIDFromUrl/getDocIDFromUrl.c -o bin/redirResource $(LDFLAGS) $(BDB)
+
 readDocumentIndexWithRank: src/readDocumentIndexWithRank/main.c
 	@echo ""
 	@echo "$@:"
