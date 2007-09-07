@@ -220,7 +220,9 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
 
                 if ( (LotFileOpen = fopen(FileName,"rb")) == NULL) {
                         perror(FileName);
-                        exit(1);
+                        //exit(1);
+			LotOpen = -1;
+			return 0;
                 }
                 LotOpen = LotNr;
 		LastDocID = GetStartDocIFForLot(LotNr);
@@ -249,10 +251,16 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
 		#endif
 
         	if ((n=fread(DocumentIndexPost,sizeof(*DocumentIndexPost),1,LotFileOpen)) != 1) {
-                	printf("Can't reed DocumentIndexPost. n: %i\n",n);
-			perror("");
+			if (feof(LotFileOpen)) {
+				printf("hit eof for DocumentIndex\n");
+			}
+			else {
+                		printf("Can't reed DocumentIndexPost. n: %i, eof %i\n",n,feof(LotFileOpen));
+				perror("fread() DocumentIndexPost");
+			}
 			//stnger ned filen
 			fclose(LotFileOpen);
+			LotOpen = -1;
 
                 	//exit(1);
 			return 0;
@@ -267,6 +275,7 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
         //hvis vi er tom for data stenger vi filen, og retunerer en 0 som sier at vi er ferdig.
                 printf("ferdig\n");
                 fclose(LotFileOpen);
+		LotOpen = -1;
                 return 0;
         }
 }
@@ -278,6 +287,10 @@ int DIRead (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subnam
 
 	FILE *file;
 	int forReturn;
+
+	#ifdef DEBUG
+		printf("DIRead: reading for DocID %i, subname \"%s\"\n",DocID,subname);
+	#endif
 
 	if ((file = GetFileHandler(DocID,'r',subname, NULL)) != NULL) {
 
