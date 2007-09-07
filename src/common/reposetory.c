@@ -1364,7 +1364,7 @@ addResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t
 
 	DIRead(&docindex, DocID, subname);
 	docindex.ResourcePointer = offset;
-	printf("Offset: %ld\n", offset);
+	//printf("Offset: %ld\n", offset);
 	docindex.ResourceSize = resourcelen;
 	DIWrite(&docindex, DocID, subname, NULL);
 }
