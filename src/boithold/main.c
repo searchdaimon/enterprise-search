@@ -550,6 +550,36 @@ else if (packedHedder.command == C_anchorGet) {
 	anchorRead(LotNr, packedHedder.subname, DocID, text, len+1);
 	sendall(socket, text, len);
 }
+else if (packedHedder.command == C_readHTML) {
+	unsigned int DocID;
+	size_t len;
+	size_t rlen;
+	char *text;
+	char *acla, *acld;
+	struct DocumentIndexFormat DocIndex;
+	struct ReposetoryHeaderFormat ReposetoryHeader;
+
+	if ((i = recv(socket, &DocID, sizeof(DocID), MSG_WAITALL)) == -1) {
+		perror("recv");
+		exit(1);
+	}
+
+	if ((i = recv(socket, &len, sizeof(len), MSG_WAITALL)) == -1) {
+		perror("recv(len)");
+		exit(1);
+	}
+	rlen = len;
+	text = malloc(len);
+
+	DIRead(&DocIndex, DocID, packedHedder.subname);
+
+	rReadHtml(text, &len, DocIndex.RepositoryPointer, rlen, DocID, packedHedder.subname, &ReposetoryHeader,
+	          &acla, &acld);
+
+	//printf("Got: (%d) %s\n", rlen, text);
+	sendall(socket, &len, sizeof(len));
+	sendall(socket, text, len);
+}
 else {
 	printf("unnown comand. %i\n", packedHedder.command);
 }
