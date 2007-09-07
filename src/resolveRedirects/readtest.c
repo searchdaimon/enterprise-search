@@ -8,9 +8,15 @@ main(int argc, char **argv)
 {
 	FILE *fp;
 	struct redirects redir;
+	char *subname;
+	int LotNr;
+	char filename[1024];
 
 	if (argc < 2)
-		err(1, "Usage: ./readtest mappingsfile");
+		err(1, "Usage: ./readtest lotnr subname");
+
+	LotNr = atoi(argv[1]);
+	subname = argv[2];
 
 	if ((fp = fopen(argv[1], "r")) == NULL)
 		err(1, "fopen()");
