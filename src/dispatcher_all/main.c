@@ -3,6 +3,7 @@
     #include "../common/vid.h"
     #include "../common/stdlib.h"
 
+    #include <stdarg.h>
     #include <arpa/inet.h>
     #include <stdio.h>
     #include <stdlib.h>
@@ -107,13 +108,22 @@ int prequerywriteFlag = 0;
 		const char *webdb_db;
 	};
 
-void die(int errorcode,char errormessage[]) {
+
+
+void die(int errorcode,const char *fmt, ...) {
 	FILE *LOGFILE;
+
+	va_list     ap;
+	va_start(ap, fmt);
 
 	printf("<search>\n");
 	printf("<error>\n");
 	printf("  <errorcode>%i</errorcode>\n",errorcode); 
-	printf("  <errormessage>%s</errormessage>\n",errormessage); 
+
+	printf("  <errormessage>");
+		vprintf(fmt,ap);
+	printf("</errormessage>\n");
+ 
 	printf("</error>\n");
 	printf("<RESULT_INFO TOTAL=\"0\" QUERY=\"\" HILITE=\"\" TIME=\"0\" FILTERED=\"0\" SHOWABAL=\"0\" />\n");
 	printf("</search>\n");
@@ -125,10 +135,13 @@ void die(int errorcode,char errormessage[]) {
         else {
 		
 		flock(fileno(LOGFILE),LOCK_EX);
-                fprintf(LOGFILE,"error: %i %s\n",errorcode,errormessage);
+                //fprintf(LOGFILE,"error: %i %s\n",errorcode,errormessage);
+		vfprintf(LOGFILE,fmt,ap);
+		fprintf(LOGFILE,"\n");
                 fclose(LOGFILE);
         }
 
+        va_end(ap);
 
 	exit(1);
 
@@ -965,7 +978,7 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg)
 		}
 	}
 	if (hasaccess == 0)
-		die(1, "Not allowed to handle request from that address");
+		die(1, "Not allowed to handle request from ip address \"%s\".",remoteaddr);
 #ifdef DEBUG
 	gettimeofday(&end_time, NULL);
 	dprintf("Time debug: access %f\n",getTimeDifference(&start_time,&end_time));
