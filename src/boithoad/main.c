@@ -16,6 +16,7 @@
 #include "../common/config.h"
 #include "../common/bstr.h"
 #include "../common/logs.h"
+#include "../common/boithohome.h"
 #include "userobjekt.h"
 
 #include "../common/list.h"
@@ -895,27 +896,54 @@ static int boithoad_equalkeys(void *k1, void *k2)
 }
 
 
-int main( int argc, char *argv[] ) {
-
-
-
-   bconfig_init();
-
-   gloabal_user_h = create_hashtable(16, boithoad_hashfromkey, boithoad_equalkeys);
-
-
-   badldap_init();
-
-        sconnect(connectHandler, BADPORT);
-
-        printf("conek ferdig \n");
-
-        exit(0);
-
-
-
-
+void
+usage(void)
+{
+	fprintf(stderr, "boithoad [-l]\n");
+	exit(1);
 }
 
+#define STDOUTLOG "logs/boithoad_stdout"
+#define STDERRLOG "logs/boithoad_stderr"
 
+int
+main(int argc, char **argv)
+{
+	int ch;
+	int lflag;
+
+	lflag = 0;
+	while ((ch = getopt(argc, argv, "l")) != -1) {
+		switch (ch) {
+		case 'l':
+			lflag = 1;
+			break;
+		case '?':
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (lflag) {
+		fprintf(stderr, "Opening new stdout log\n");
+		if (freopen(bfile(STDOUTLOG), "a", stdout) == NULL)
+			perror(bfile(STDOUTLOG));
+                setvbuf(stdout, NULL, _IOLBF, 0);
+
+		fprintf(stderr, "Opening new stderr log\n");
+		if (freopen(bfile(STDERRLOG), "a", stderr) == NULL)
+			perror(bfile(STDERRLOG));
+		setvbuf(stderr, NULL, _IOLBF, 0);
+	}
+
+	bconfig_init();
+	gloabal_user_h = create_hashtable(16, boithoad_hashfromkey, boithoad_equalkeys);
+	badldap_init();
+	sconnect(connectHandler, BADPORT);
+	printf("connect done\n");
+
+	return(0);
+}
 
