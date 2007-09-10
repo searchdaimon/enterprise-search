@@ -74,7 +74,7 @@
     #define maxerrorlen 201
 
 #ifdef DEBUG
-#define dprintf(str, args...) printf(str, #args)
+#define dprintf(str, args...) printf(str, ##args)
 #else
 #define dprintf(str, args...) 
 #endif
@@ -100,6 +100,11 @@ int prequerywriteFlag = 0;
 		char useprequery;
 		char writeprequery;
 		const char *UrlToDocID;
+
+		const char *webdb_host;
+		const char *webdb_user;
+		const char *webdb_password;
+		const char *webdb_db;
 	};
 
 void die(int errorcode,char errormessage[]) {
@@ -348,8 +353,10 @@ int bsConectAndQuery(int *sockfd,int nrOfServers, char *servers[],struct queryNo
 
 #ifdef DEBUG
 	gettimeofday(&end_time, NULL);
+
+	printf("Time debug: bsConectAndQuery %f\n",getTimeDifference(&start_time,&end_time));
+
 #endif
-	dprintf("Time debug: bsConectAndQuery %f\n",getTimeDifference(&start_time,&end_time));
 }
 
 int bdread_continue(int sockfd[], int nrof,int bytesleft[], int lastgoodread[], int readsdone, int maxSocketWait) {
@@ -452,7 +459,8 @@ int bdread(int sockfd[],int nrof,int datasize, void *result, int maxSocketWait) 
 
 }
 
-int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,struct SiderFormat *Sider, int *pageNr,int alreadynr) {
+int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,struct SiderFormat *Sider, 
+	int *pageNr,int alreadynr) {
 
 	int i,y;
 	int net_status;
@@ -460,6 +468,10 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 	#ifdef DEBUG
 	struct timeval start_time, end_time;
 	gettimeofday(&start_time, NULL);
+	#endif
+
+	#ifdef DEBUG
+	printf("brGetPages: alreadynr %i, *pageNr %i\n",alreadynr,*pageNr);
 	#endif
 
 	//sejjer om vi har fåt et midlertidig svar på at jobben har begynt
@@ -492,6 +504,9 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 	#endif
 
 	for (i=alreadynr;i<nrOfServers+alreadynr;i++) {
+
+		//inaliserer til 0 slik at vi ikke tror at vi har noe data fra servere som ikke svarte
+		SiderHeder[i].showabal = 0;
 	
 		//motter hedderen for svaret
 		if (sockfd[i] != 0) {
@@ -518,8 +533,14 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 
 	//(*pageNr) = 0;
 	for (i=alreadynr;i<nrOfServers+alreadynr;i++) {
+
+			dprintf("aa: i: %i. Server \"%s\" that has %i pages. Soctet %i\n",
+				i,
+				SiderHeder[i].servername,
+				SiderHeder[i].showabal,
+				sockfd[i]);
 		
-			dprintf("i: %i. Server \"%s\" that has %i pages. Soctet %i\n",i,SiderHeder[i].servername,SiderHeder[i].showabal,sockfd[i]);
+
 			if (sockfd[i] != 0) {
 
 				/*
@@ -534,6 +555,8 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 				if (bsread (&sockfd[i],sizeof(struct SiderFormat) * SiderHeder[i].showabal,(char *)&Sider[(*pageNr)],maxSocketWait_SiderHeder)) {
 					(*pageNr) += SiderHeder[i].showabal;
 				}
+
+
 
 			}
 	}
@@ -977,8 +1000,17 @@ handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *
 			if (sockfd[i] != 0) {
 				FinalSiderHeder->TotaltTreff += SiderHeder[i].TotaltTreff;
 				FinalSiderHeder->filtered += SiderHeder[i].filtered;
-				dprintf("<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\" servername=\"%s\"/>\n",SiderHeder[i].TotaltTreff,QueryData->query,SiderHeder[i].hiliteQuery,SiderHeder[i].total_usecs,SiderHeder[i].filtered,SiderHeder[i].showabal,SiderHeder[i].servername);
-
+				/*
+				runarb: 31.08.07seg feiler her.
+				dprintf("<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\" servername=\"%s\"/>\n",
+					SiderHeder[i].TotaltTreff,
+					QueryData->query,
+					SiderHeder[i].hiliteQuery,
+					SiderHeder[i].total_usecs,
+					SiderHeder[i].filtered,
+					SiderHeder[i].showabal,
+					SiderHeder[i].servername);
+				*/
 				(*nrRespondedServers)++;
 			}
 		}
@@ -1070,7 +1102,7 @@ handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *
 		//dette er kansje ikke optimalet, da vi går gjenom alle siden. Ikke bare de som skal være med
 		for(i=0;i<QueryData->MaxsHits * nrOfServers + nrOfPiServers;i++) {
 
-			dprintf("looking on url %s, %i, %i\n",Sider[i].DocumentIndex.Url,Sider[i].deletet,Sider[i].DocumentIndex.AdultWeight);
+			dprintf("looking on url %s, deleted %i, adult %i, allrank %u, i %i, type %i\n",Sider[i].DocumentIndex.Url,Sider[i].deletet,Sider[i].DocumentIndex.AdultWeight,Sider[i].iindex.allrank,i,Sider[i].type);
 			if (!Sider[i].deletet) {
 				//setter som slettet
 				Sider[i].deletet = 1;
@@ -1305,7 +1337,9 @@ int main(int argc, char *argv[])
 	} else {
 		cachetimeout = config_setting_get_int(cfgstring);
 	}
+
   	#ifndef BLACK_BOKS
+
 	    	if ( (cfgarray = config_lookup(&cfg, "usecashe") ) == NULL) {
 			printf("can't load \"usecashe\" from config\n");
 			exit(1);
@@ -1333,6 +1367,46 @@ int main(int argc, char *argv[])
 	  	}
 
 		dispconfig.UrlToDocID = config_setting_get_string(cfgarray);
+
+
+		// mysql web db config
+	        if ((cfgarray = config_lookup(&cfg, "mysql_webdb")) == NULL) {
+	
+        	        printf("can't load \"mysql_webdb\" from config\n");
+                	exit(1);
+        	}
+
+
+        	if ( (cfgstring = config_setting_get_member(cfgarray, "host") ) == NULL) {
+                	printf("can't load \"host\" from config\n");
+                	exit(1);
+        	}
+
+        	dispconfig.webdb_host = config_setting_get_string(cfgstring);
+
+
+        	if ( (cfgstring = config_setting_get_member(cfgarray, "user") ) == NULL) {
+                	printf("can't load \"user\" from config\n");
+                	exit(1);
+        	}
+
+        	dispconfig.webdb_user = config_setting_get_string(cfgstring);
+
+
+        	if ( (cfgstring = config_setting_get_member(cfgarray, "password") ) == NULL) {
+                	printf("can't load \"password\" from config\n");
+                	exit(1);
+        	}
+
+        	dispconfig.webdb_password = config_setting_get_string(cfgstring);
+
+
+        	if ( (cfgstring = config_setting_get_member(cfgarray, "db") ) == NULL) {
+                	printf("can't load \"db\" from config\n");
+                	exit(1);
+        	}
+
+        	dispconfig.webdb_db = config_setting_get_string(cfgstring);
 
 	#endif
 	
@@ -1480,7 +1554,12 @@ int main(int argc, char *argv[])
 
 
                 if (argc < 3 ) {
-                        printf("Error ingen query spesifisert eller subname .\n\nEksempel på bruk for å søke på boitho:\n\tsearchkernel boitho www\n\n\n");
+                        printf("Error ingen query spesifisert eller subname .\n\nEksempel på bruk for å søke på boitho:\n");
+			#ifdef BLACK_BOKS
+				printf("\tdispatcher_all boitho www bruker\n\n\n");
+			#else
+				printf("\tdispatcher_all boitho www\n\n\n");
+			#endif
                 }
                 else {
 			strcpy(QueryData.userip,"213.179.58.99");
@@ -2377,6 +2456,8 @@ int main(int argc, char *argv[])
                 	printf("</HITS>\n");
 			*/
 
+			printf("\t<RESULT_COLLECTION>%s</RESULT_COLLECTION>\n",Sider[i].subname.subname);
+
 
 			#ifdef BLACK_BOKS
 				char timebuf[26];
@@ -2385,7 +2466,6 @@ int main(int argc, char *argv[])
 				timebuf[24] = '\0';
 				printf("\t<TIME_ISO>%s</TIME_ISO>\n",timebuf);
 
-				printf("\t<RESULT_COLLECTION>%s</RESULT_COLLECTION>\n",Sider[i].subname.subname);
 
 				//sender en tom cashe link. Må ha cashe link hvis ikke bryter vi designet
 	                	printf("\t<CACHE></CACHE>\n");
@@ -2624,7 +2704,7 @@ int main(int argc, char *argv[])
 			while ((x<FinalSiderHeder.showabal) && (i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)))) {
 		
 				if (!Sider[i].deletet) {
-					dprintf("pi analyse. Subname \"%s\", pi \"%i\"\n",Sider[i].subname.subname, (int)Sider[i].subname.config.isPaidInclusion);
+					//dprintf("pi analyse. Subname \"%s\", pi \"%i\"\n",Sider[i].subname.subname, (int)Sider[i].subname.config.isPaidInclusion);
 
 					if (Sider[i].subname.config.isPaidInclusion) {
 						unsigned int spot;
@@ -2644,7 +2724,7 @@ int main(int argc, char *argv[])
 
 					}
 					else {
-						dprintf("is NOT pi! :(\n");
+						//dprintf("is NOT pi! :(\n");
 					}
 				}
 				//teller bare normale sider (hva med Paid Inclusion ?)
@@ -2670,7 +2750,8 @@ int main(int argc, char *argv[])
 		mysql_init(&demo_db);
 
 		#ifndef BLACK_BOKS
-			if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", "boithoweb", 3306, NULL, 0)){
+			//if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", "boithoweb", 3306, NULL, 0)){
+			if(!mysql_real_connect(&demo_db, dispconfig.webdb_host, dispconfig.webdb_user, dispconfig.webdb_password, dispconfig.webdb_db, 3306, NULL, 0)){
     				fprintf(stderr,mysql_error(&demo_db));
     				//exit(1);
 			}
@@ -2704,7 +2785,9 @@ int main(int argc, char *argv[])
 			//mysql_free_result(mysqlres);
 
 			//lopper gjenom og logger Paid Inclusion
+			#ifdef DEBUG
 			printf("looking for Paid Inclusion\n");
+			#endif
 			x = 0;
 			i = 0;			
 			
