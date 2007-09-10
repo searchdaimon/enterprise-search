@@ -1,6 +1,6 @@
-#include "stdlib.h"
-#include "stdio.h"
-#include "string.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "resolveRedirects.h"
 
@@ -11,8 +11,11 @@
 #include "../getDocIDFromUrl/getDocIDFromUrl.h"
 
 
-#define URLTODOCIDDB "/mnt/node1/hda4/UrlToDocID/"
+//#define URLTODOCIDDB "/mnt/node1/hda4/UrlToDocID/"
+#define URLTODOCIDDB "/home/boitho/UrlToDocID/"
 #define NEWURLS "/tmp/new.urls.txt"
+
+char *urltodociddb;
 
 int
 resolveDocIDfromUrl(char *url, unsigned int *docid)
@@ -20,7 +23,7 @@ resolveDocIDfromUrl(char *url, unsigned int *docid)
 	int ret;
 	unsigned int id;
 
-	if ((ret = getDocIDFromUrl(URLTODOCIDDB, url, &id)))
+	if ((ret = getDocIDFromUrl(urltodociddb, url, &id)))
 		*docid = id;
 
 	return ret;
@@ -37,23 +40,28 @@ main (int argc, char **argv)
 	unsigned int HtmlBufferLen;
 	struct ReposetoryHeaderFormat ReposetoryHeader;
 	FILE *new, *mapping;
+	char filename[1024];
 
 	char *acl_allowbuffer, *acl_deniedbuffer;
 	unsigned int DocID, redirDocID;
 
 	if (argc < 5) {
 		printf("Dette programet identifiserer 301 og 302 redirects i DocumentIndex. Gi det et lot nr. \n\n"
-		       "\tUsage: ./readDocumentIndex 1 www docidmapingfile newurlsfile\n");
+		       "\tUsage: ./readDocumentIndex 1 www newurlsfile urltodociddb\n");
 		exit(0);
 	}
 
 	LotNr = atoi(argv[1]);
 	subname = argv[2];
 	DocID = 0;
+	urltodociddb = argv[4];
 
-	if ((mapping = fopen(argv[3], "w")) == NULL)
-		err(1, "fopen(mapping)");
-	if ((new = fopen(argv[4], "w")) == NULL)
+	GetFilPathForLot(filename, LotNr, "www");
+	strcat(filename, "redirmap");
+	if ((mapping = fopen(filename, "w")) == NULL)
+		err(1, "fopen(newurls)");
+
+	if ((new = fopen(argv[3], "w")) == NULL)
 		err(1, "fopen(newurls)");
 
 	while (DIGetNext(&DocumentIndexPost, LotNr, &DocID, subname)) {
