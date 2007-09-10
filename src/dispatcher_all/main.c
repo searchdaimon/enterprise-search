@@ -945,7 +945,11 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg)
 	char *remoteaddr = getenv("REMOTE_ADDR");
 
 	int accesshosts, hasaccess = 0;
-	if (remoteaddr != NULL &&
+	if (remoteaddr && strcmp(remoteaddr, "127.0.0.1") == 0) {
+		hasaccess = 1;
+	}
+
+	if (remoteaddr != NULL && hasaccess == 0 &&
 	    (cfgarray = config_lookup(cfg, "access")) != NULL && (accesshosts = config_setting_length(cfgarray)) > 0) {
 		int i;
 
@@ -953,10 +957,6 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg)
 			const char *p;
 			char *p2;
 
-			if (strcmp(remoteaddr, "127.0.0.1") == 0) {
-				hasaccess = 1;
-				break;
-			}
 			p = config_setting_get_string_elem(cfgarray, i);
 			p2 = strchr(p, ':');
 			if (p2 == NULL) {
