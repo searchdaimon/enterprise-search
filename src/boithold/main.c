@@ -599,6 +599,8 @@ void connectHandler(int socket) {
 		}
 		else if (packedHedder.command == C_urltodocid) {
 			char cmd;
+			int alloclen;
+			char *urlbuf;
 
 			if (urltodociddb == NULL) {
 				cmd = C_DOCID_NODB;
@@ -610,10 +612,12 @@ void connectHandler(int socket) {
 			}	
 			cmd = C_DOCID_NEXT;
 
+			alloclen = 1024;
+			urlbuf = malloc(alloclen);
+
 			do {
 				unsigned int DocID;
 				size_t len;
-				char *urlbuf;
 				if ((i = recv(socket, &cmd, sizeof(cmd), MSG_WAITALL)) == -1) {
 					err(1, "recv(cmd)");
 				}
@@ -623,7 +627,11 @@ void connectHandler(int socket) {
 				if ((i == recv(socket, &len, sizeof(len), MSG_WAITALL)) == -1) {
 					err(1, "recv(len)");
 				}
-				urlbuf = malloc(len+1); /* Leave room for '\0' */
+				if (alloclen < len+1) {
+					free(urlbuf);
+					alloclen *= 2;
+					urlbuf = malloc(alloclen);
+				}
 				if ((i == recv(socket, urlbuf, len, MSG_WAITALL)) == -1) {
 					err(1, "recv(len)");
 				}
@@ -638,6 +646,8 @@ void connectHandler(int socket) {
 					sendall(socket, &DocID, sizeof(DocID));
 				}
 			} while (1);
+
+			free(urlbuf);
 		}
 		else {
 			printf("unnown comand. %i\n", packedHedder.command);
