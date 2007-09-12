@@ -641,6 +641,56 @@ void setLastIndexTimeForLotNET(char *HostName, int LotNr,char subname[]){
 
 }
 
+int
+openUrlTODocIDNET(char *hostname)
+{
+	int sock;
+	char cmd;
+
+	sock = cconnect(hostname, BLDPORT);
+
+        //sender forespørsel
+        sendpacked(sock, C_urltodocid, BLDPROTOCOLVERSION, 0, NULL, "www");
+
+	recv(sock, &cmd, sizeof(cmd), MSG_WAITALL);
+	if (cmd == C_DOCID_NODB) {
+		fprintf(stderr, "No db is set for that lot daemon\n");
+		return -1;
+	}
+
+	return sock;
+}
+
+int
+getUrlTODOcIDNET(int sock, char *url, unsigned int *DocID)
+{
+	char cmd;
+	size_t len;
+
+	cmd = C_DOCID_NEXT;
+	sendall(sock, &cmd, sizeof(cmd));
+	len = strlen(url);
+	sendall(sock, &len, sizeof(len));
+	sendall(sock, url, len);
+	recv(sock, &cmd, sizeof(cmd), MSG_WAITALL);
+	if (cmd == C_DOCID_NOTFOUND) {
+		return 0;
+	} else {
+		recv(sock, DocID, sizeof(*DocID), MSG_WAITALL);
+		return 1;
+	}
+}
+
+void
+closeUrlTODocIDNET(int sock)
+{
+	char cmd;
+
+	cmd = C_DOCID_DONE;
+	sendall(sock, &cmd, sizeof(cmd));
+	close(sock);
+}
+
 
 void closeNET () {
 

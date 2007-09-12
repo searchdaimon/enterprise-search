@@ -17,15 +17,32 @@
 
 void connectHandler(int socket);
 
+char *urltodociddb;
 
+int
+main (int argc, char **argv)
+{
+	int ch;
 
-int main (void) {
+	urltodociddb = NULL;
+	while ((ch = getopt(argc, argv, "d:")) != -1) {
+		switch (ch) {
+			case 'd':
+				urltodociddb = optarg;
+				break;
+			case '?':
+			default:
+				err(1, "Unknown argument '%c'", ch);
+		}
+	}
+	argc -= optind;
+	argv += optind;
 
 	sconnect(connectHandler, BLDPORT);
 
-	printf("conek ferdig \n");
+	printf("connect done\n");
 
-	exit(0);
+	return (0);
 }
 
 void connectHandler(int socket) {
@@ -579,6 +596,48 @@ void connectHandler(int socket) {
 			//printf("Got: (%d) %s\n", rlen, text);
 			sendall(socket, &len, sizeof(len));
 			sendall(socket, text, len);
+		}
+		else if (packedHedder.command == C_urltodocid) {
+			char cmd;
+
+			if (urltodociddb == NULL) {
+				cmd = C_DOCID_NODB;
+				sendall(socket, &cmd, sizeof(cmd));
+				exit(1);
+			} else {
+				cmd = C_DOCID_READY;
+				sendall(socket, &cmd, sizeof(cmd));
+			}	
+			cmd = C_DOCID_NEXT;
+
+			do {
+				unsigned int DocID;
+				size_t len;
+				char *urlbuf;
+				if ((i = recv(socket, &cmd, sizeof(cmd), MSG_WAITALL)) == -1) {
+					err(1, "recv(cmd)");
+				}
+				if (cmd == C_DOCID_DONE)
+					break;
+
+				if ((i == recv(socket, &len, sizeof(len), MSG_WAITALL)) == -1) {
+					err(1, "recv(len)");
+				}
+				urlbuf = malloc(len+1); /* Leave room for '\0' */
+				if ((i == recv(socket, urlbuf, len, MSG_WAITALL)) == -1) {
+					err(1, "recv(len)");
+				}
+				urlbuf[len] = '\0';
+
+				if (!getDocIDFromUrl(urltodociddb, urlbuf, &DocID)) {
+					cmd = C_DOCID_NOTFOUND;
+					sendall(socket, &cmd, sizeof(cmd));
+				} else {
+					cmd = C_DOCID_FOUND;
+					sendall(socket, &cmd, sizeof(cmd));
+					sendall(socket, &DocID, sizeof(DocID));
+				}
+			} while (1);
 		}
 		else {
 			printf("unnown comand. %i\n", packedHedder.command);

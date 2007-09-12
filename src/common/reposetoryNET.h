@@ -37,6 +37,9 @@ void anchorReadNET(char *hostname, char *subname, unsigned int DocID, char *text
 
 void readHTMLNET(char *subname, unsigned int DocID, char *text, size_t len);
 
+int openUrlTODocIDNET(char *hostname);
+int getUrlTODOcIDNET(int sock, char *url, unsigned int *DocID);
+void closeUrlTODocIDNET(int sock);
 
 
 #endif //_REPOSETORYNET_H_

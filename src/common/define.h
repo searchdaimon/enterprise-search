@@ -120,7 +120,15 @@
 #define C_anchorAdd	13
 #define C_anchorGet	14
 #define C_readHTML	15
+#define C_urltodocid	16
 #define C_rEOF 		101
+
+#define C_DOCID_DONE	0
+#define C_DOCID_NEXT	1
+#define C_DOCID_NODB	2
+#define C_DOCID_NOTFOUND 3
+#define C_DOCID_FOUND	4
+#define C_DOCID_READY	5
 
 #define net_CanDo		13
 #define net_nomatch		14
