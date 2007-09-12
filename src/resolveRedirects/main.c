@@ -16,20 +16,6 @@
 #define URLTODOCIDDB "/home/boitho/UrlToDocID/"
 #define NEWURLS "/tmp/new.urls.txt"
 
-char *urltodociddb;
-
-int
-resolveDocIDfromUrl(char *url, unsigned int *docid)
-{
-	int ret;
-	unsigned int id;
-
-	if ((ret = getDocIDFromUrl(urltodociddb, url, &id)))
-		*docid = id;
-
-	return ret;
-}
-
 
 int
 main (int argc, char **argv)
@@ -47,18 +33,17 @@ main (int argc, char **argv)
 	char *acl_allowbuffer, *acl_deniedbuffer;
 	unsigned int DocID, redirDocID;
 
-	if (argc < 6) {
+	if (argc < 5) {
 		printf("Dette programet identifiserer 301 og 302 redirects i DocumentIndex. Gi det et lot nr. \n\n"
-		       "\tUsage: ./readDocumentIndex 1 www newurlsfile urltodociddb boitholdhostname\n");
+		       "\tUsage: ./readDocumentIndex 1 www newurlsfile boitholdhostname\n");
 		exit(0);
 	}
 
 	LotNr = atoi(argv[1]);
 	subname = argv[2];
 	DocID = 0;
-	urltodociddb = argv[4];
 
-	ldsock = openUrlTODocIDNET(argv[5]);
+	ldsock = openUrlTODocIDNET(argv[4]);
 	if (ldsock == -1)
 		err(1, "openUrlTODocIDNET()");
 
