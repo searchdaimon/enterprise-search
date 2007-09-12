@@ -7,7 +7,7 @@
 #include "../common/define.h"
 #include "../common/DocumentIndex.h"
 #include "../common/reposetory.h"
-#include "../common/url.h"
+#include "../common/reposetoryNET.h"
 
 #include "../getDocIDFromUrl/getDocIDFromUrl.h"
 
@@ -42,13 +42,14 @@ main (int argc, char **argv)
 	struct ReposetoryHeaderFormat ReposetoryHeader;
 	FILE *new, *mapping;
 	char filename[1024];
+	int ldsock;
 
 	char *acl_allowbuffer, *acl_deniedbuffer;
 	unsigned int DocID, redirDocID;
 
-	if (argc < 5) {
+	if (argc < 6) {
 		printf("Dette programet identifiserer 301 og 302 redirects i DocumentIndex. Gi det et lot nr. \n\n"
-		       "\tUsage: ./readDocumentIndex 1 www newurlsfile urltodociddb\n");
+		       "\tUsage: ./readDocumentIndex 1 www newurlsfile urltodociddb boitholdhostname\n");
 		exit(0);
 	}
 
@@ -56,6 +57,10 @@ main (int argc, char **argv)
 	subname = argv[2];
 	DocID = 0;
 	urltodociddb = argv[4];
+
+	ldsock = openUrlTODocIDNET(argv[5]);
+	if (ldsock == -1)
+		err(1, "openUrlTODocIDNET()");
 
 	GetFilPathForLot(filename, LotNr, "www");
 	strcat(filename, "redirmap");
@@ -68,23 +73,14 @@ main (int argc, char **argv)
 	while (DIGetNext(&DocumentIndexPost, LotNr, &DocID, subname)) {
 		if ((DocumentIndexPost.response == 301) || (DocumentIndexPost.response == 302)) {
 			HtmlBufferLen = sizeof(HtmlBuffer);
-
 			if (rReadHtml(HtmlBuffer, &HtmlBufferLen, DocumentIndexPost.RepositoryPointer, DocumentIndexPost.htmlSize,
-			              DocID, subname, &ReposetoryHeader, &acl_allowbuffer, &acl_deniedbuffer) == 0) {
-					printf("Can't read html \n");
+			              DocID, subname, &ReposetoryHeader, &acl_allowbuffer, &acl_deniedbuffer) == 0)
 				continue;
-
-			}
 
 			if (HtmlBufferLen < 200) {
 				if (strncmp("http://", HtmlBuffer, 7) != 0) {
-					//fprintf(stderr, "Invalid url: %s\n", HtmlBuffer);	
-					continue;
-				}
-
-				url_normalization(HtmlBuffer,sizeof(HtmlBuffer));
-
-				if (resolveDocIDfromUrl(HtmlBuffer, &redirDocID)) {
+					//fprintf(stderr, "Invalid url: %s\n", HtmlBuffer);
+				} else if (getUrlTODOcIDNET(ldsock, HtmlBuffer, &redirDocID)) {
 					struct redirects redir;
 					printf("%u => %u (reason: %hu)\n", DocID, redirDocID, DocumentIndexPost.response);
 					redir.DocID = DocID;
@@ -103,6 +99,7 @@ main (int argc, char **argv)
 
 	fclose(new);
 	fclose(mapping);
+	closeUrlTODocIDNET(ldsock);
 
 	//DIClose();
 
