@@ -7,6 +7,7 @@
 #include "../common/define.h"
 #include "../common/DocumentIndex.h"
 #include "../common/reposetory.h"
+#include "../common/url.h"
 
 #include "../getDocIDFromUrl/getDocIDFromUrl.h"
 
@@ -67,14 +68,23 @@ main (int argc, char **argv)
 	while (DIGetNext(&DocumentIndexPost, LotNr, &DocID, subname)) {
 		if ((DocumentIndexPost.response == 301) || (DocumentIndexPost.response == 302)) {
 			HtmlBufferLen = sizeof(HtmlBuffer);
+
 			if (rReadHtml(HtmlBuffer, &HtmlBufferLen, DocumentIndexPost.RepositoryPointer, DocumentIndexPost.htmlSize,
-			              DocID, subname, &ReposetoryHeader, &acl_allowbuffer, &acl_deniedbuffer) == 0)
+			              DocID, subname, &ReposetoryHeader, &acl_allowbuffer, &acl_deniedbuffer) == 0) {
+					printf("Can't read html \n");
 				continue;
+
+			}
 
 			if (HtmlBufferLen < 200) {
 				if (strncmp("http://", HtmlBuffer, 7) != 0) {
-					//fprintf(stderr, "Invalid url: %s\n", HtmlBuffer);
-				} else if (resolveDocIDfromUrl(HtmlBuffer, &redirDocID)) {
+					//fprintf(stderr, "Invalid url: %s\n", HtmlBuffer);	
+					continue;
+				}
+
+				url_normalization(HtmlBuffer,sizeof(HtmlBuffer));
+
+				if (resolveDocIDfromUrl(HtmlBuffer, &redirDocID)) {
 					struct redirects redir;
 					printf("%u => %u (reason: %hu)\n", DocID, redirDocID, DocumentIndexPost.response);
 					redir.DocID = DocID;
