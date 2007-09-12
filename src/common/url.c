@@ -6,6 +6,44 @@
 #include "debug.h"
 #include "bstr.h"
 
+//domener som har Country code second-level domain ccSLD domenesystem, slik som co.uk i name.co.uk
+char *SecondLevelDomain[] = {"uk","au","nz",NULL};
+
+int strchrcount(char s[], char c) {
+
+	char *cpnt = s;
+	int count = 0;
+
+	while ((cpnt = strchr(cpnt,c)) != NULL) {
+		++cpnt;
+		++count;
+	}
+
+	return count;
+}
+
+int url_depth(char url[]) {
+
+	int len;
+
+	if (strncmp(url,"http://",7) != 0) {
+		return -1;
+	}
+
+	len = strchrcount(url +7, '/');
+
+	//teller ikke med den siste /. slik at  http://www.boitho.com/div/file.html og http://www.boitho.com/div/mappe/ blir det samme
+	if (url[strlen(url) -1] == '/') {
+		#ifdef DEBUG
+		printf("url_depth: Url \"%s\" har / as last char\n",url);
+		#endif
+		--len;
+
+
+	}
+		
+	return len;
+}
 
 int find_domain_path_len (char url[]) {
 
@@ -41,18 +79,6 @@ int isWikiUrl(char url[]) {
 
 }
 
-int strchrcount(char s[], char c) {
-
-	char *cpnt = s;
-	int count = 0;
-
-	while ((cpnt = strchr(cpnt,c)) != NULL) {
-		++cpnt;
-		++count;
-	}
-
-	return count;
-}
 
 int url_normalization (char url[], int urlsize) {
 
@@ -76,6 +102,8 @@ int url_normalization (char url[], int urlsize) {
 		
         }
 
+
+	return 1;
 }
 
 int gyldig_url(char word[]) {
@@ -343,11 +371,106 @@ int url_isttl(char word[],char ttl[]) {
     }
 }
 
-int find_domain_no_subname2 (const char url[],char domain[], int sizeofdomain) {
+
+int isSecondLevelDomain(char ttl[]) {
+
+	int i = 0;
+	
+	while(SecondLevelDomain[i] != NULL) {
+
+		#ifdef DEBUG
+		printf("i %i, SecondLevelDomain %s ?= ttl %s\n",i,SecondLevelDomain[i],ttl);
+		#endif
+
+		if (strcmp(SecondLevelDomain[i],ttl) == 0) {
+			return 1;
+		}
+
+		++i;
+	}
+
+	return 0;
+
+}
+
+int find_domains_subname(const char url[],char domain[], int sizeofdomain) {
+
+ 	char **Data;
+  	int Count, TokCount;
+	int i;
+	int nrToGet;
+
+	if (!find_domain(url,domain,sizeofdomain)) {
+		return 0;
+	}
+
+  	TokCount = split(domain, ".", &Data);
+
+	#ifdef DEBUG
+
+		printf("url %s\n",url);
+
+		printf("TokCount %i\n",TokCount);
+  		Count = 0;
+  		while( (Data[Count] != NULL) ) {
+    			printf("\t\t%d\t\"%s\"\n", Count, Data[Count]);
+			Count++;
+		}
+  		printf("\n");
+
+		printf("nr %i\n",TokCount);
+
+	#endif
+
+	//--TokCount;
+	domain[0] = '\0';
+
+	#ifdef DEBUG
+	printf("isSecondLevelDomain domain \"%s\", i %i\n",Data[TokCount -1],isSecondLevelDomain(Data[TokCount -1]));
+	#endif
+
+	if (isSecondLevelDomain(Data[TokCount -1])) {
+		nrToGet = 3;
+	}
+	else {
+		nrToGet = 2;
+	}
+
+	if (TokCount < nrToGet) {
+		printf("bad domain url: \"%s\", nr %i\n",url, TokCount);
+
+		return 0;
+	}
+
+
+	
+	for (i=0;i<(TokCount -nrToGet);i++) {
+		//printf("i %i (%i), \"%s\"\n",i,TokCount,Data[i]);
+		strlcat(domain,Data[i],sizeofdomain);
+		strlcat(domain,".",sizeofdomain);
+	}
+
+
+	domain[strlen(domain) -1] = '\0';
+	//printf("Count %i\n",Count);
+
+	#ifdef DEBUG
+	printf("domain: \"%s\"\n",domain);
+	#endif
+
+
+  	FreeSplitList(Data);
+
+  	return 1;
+
+}
+
+int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
 
  char **Data;
   int Count, TokCount;
 	int i;
+	int nrToGet;
 
 	if (!find_domain_no_www(url,domain,sizeofdomain)) {
 		return 0;
@@ -373,36 +496,29 @@ int find_domain_no_subname2 (const char url[],char domain[], int sizeofdomain) {
 	//--TokCount;
 	domain[0] = '\0';
 
-	if (TokCount < 2) {
-		printf("bad domain url: \"%s\", nr %i\n",url, TokCount);
+	#ifdef DEBUG
+	printf("isSecondLevelDomain domain \"%s\", i %i\n",Data[TokCount -1],isSecondLevelDomain(Data[TokCount -1]));
+	#endif
 
+	if (isSecondLevelDomain(Data[TokCount -1])) {
+		nrToGet = 3;
+	}
+	else {
+		nrToGet = 2;
+	}
+
+	if (TokCount < nrToGet) {
+		printf("bad domain url: \"%s\", nr %i\n",url, TokCount);
 		return 0;
 	}
 
-/*
-	if (strlen(Data[TokCount -2]) == 2) {
 
-		for (i=3;i>0;i--) {
-
-			printf("oo i %i (%i)\n",i,TokCount -i);
-			printf("oo i %i (%i), \"%s\"\n",i,TokCount -i,Data[TokCount -i]);
-			strlcat(domain,Data[TokCount -i],sizeofdomain);
-			strlcat(domain,".",sizeofdomain);
-
-		}
-
-	}	
-	else {
-*/
-
-		for (i=2;i>0;i--) {
-			//printf("i %i (%i), \"%s\"\n",i,TokCount -i,Data[TokCount -i]);
-			strlcat(domain,Data[TokCount -i],sizeofdomain);
-			strlcat(domain,".",sizeofdomain);
-
-		}
-		
-//	}
+	
+	for (i=nrToGet;i>0;i--) {
+		//printf("i %i (%i), \"%s\"\n",i,TokCount -i,Data[TokCount -i]);
+		strlcat(domain,Data[TokCount -i],sizeofdomain);
+		strlcat(domain,".",sizeofdomain);
+	}
 
 
 	domain[strlen(domain) -1] = '\0';
@@ -416,6 +532,7 @@ int find_domain_no_subname2 (const char url[],char domain[], int sizeofdomain) {
   return 1;
 
 }
+/*
 //fjerner også www. i begyndelsen av en url, slik at det blir lettere å samenligne www.vg.no == vg.no
 int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
 //ToDo har lagt til sizeofdomain, for å ungå buffer owerflow
@@ -479,7 +596,7 @@ int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
                 return 1;
         }
 }
-
+*/
 
 
 //fjerner også www. i begyndelsen av en url, slik at det blir lettere å samenligne www.vg.no == vg.no
@@ -541,5 +658,29 @@ int find_domain (char url[],char domain[],int domainsize) {
                 domain[cpnt - domain] = '\0';
                 return 1;
         }
+}
+
+int url_nrOfSubDomains(char url[]) {
+
+	int subdomains;
+	char domain[512];
+
+	if (!find_domains_subname(url,domain,sizeof(domain)) ) {
+		debug("gyldig_url: can't find domain. Url \"%s\"\n",url);
+		return -1;
+	}
+
+	//hvis vi ikke har noen subdomene
+	if (domain[0] == '\0') {
+		return 0;
+	}
+
+	//teller subdomener
+	subdomains = strchrcount(domain,'.');
+
+	//test.ntnu er 2, ikke 1
+	++subdomains;
+
+	return subdomains;
 }
 
