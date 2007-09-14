@@ -558,12 +558,20 @@ anchorReadNET(char *hostname, char *subname, unsigned int DocID, char *text, int
 
 	if ((i = recv(socketha, &textlen, sizeof(textlen),MSG_WAITALL)) == -1) {
 		perror("recv(textlen)");
-		exit(1);
+		return;
 	}
 	rtext = malloc(textlen+1);
+	if (rtext == NULL) {
+		perror("malloc(rtext)");
+		text[0] = '\0';
+		return;
+	}
 	if ((i = recv(socketha, rtext, textlen, MSG_WAITALL)) == -1) {
 		perror("recv(text)");
-		exit(1);
+		free(rtext);
+		text[0] = '\0';
+		free(rtext);
+		return;
 	}
 	rtext[textlen] = '\0';
 	strncpy(text, rtext, len-1);
@@ -573,8 +581,8 @@ anchorReadNET(char *hostname, char *subname, unsigned int DocID, char *text, int
 
 
 /* XXX: Send and receive compressed data */
-void
-readHTMLNET(char *subname, unsigned int DocID, char *text, size_t maxlen)
+int
+readHTMLNET(char *subname, unsigned int DocID, char *text, size_t len)
 {
 	int socketha;
 	int i;
@@ -583,6 +591,10 @@ readHTMLNET(char *subname, unsigned int DocID, char *text, size_t maxlen)
 
 	LotNr = rLotForDOCid(DocID);
 	socketha = conectTo(LotNr);
+	if (socketha == -1) {
+		text[0] = '\0';
+		return 0;
+	}
 
 	sendpacked(socketha, C_readHTML, BLDPROTOCOLVERSION, sizeof(DocID), &DocID, subname);
 
@@ -592,21 +604,18 @@ readHTMLNET(char *subname, unsigned int DocID, char *text, size_t maxlen)
 		perror("recv(len)");
 		exit(1);
 	}
-
 	if (len == 0) {
-	
-	}
-	else if (len > maxlen) {
-		printf("len (%u)> maxlen (%u)\n",(unsigned int)len,(unsigned int)maxlen);
-		exit(1);
-	}
-	else {
+		text[0] = '\0';
+	} else {
 		if ((i = recv(socketha, text, len, MSG_WAITALL)) == -1) {
-			printf("readHTMLNET:can't recv. len %i\n",len);
-			perror("readHTMLNET:recv(text)");
-			exit(1);
+			printf("%x %d\n", text, len);
+			perror("recv(text)");
+			text[0] = '\0';
+			return 0;
 		}
 	}
+
+	return len;
 }
 
 unsigned int GetLastIndexTimeForLotNET(char *HostName, int LotNr,char subname[]){
