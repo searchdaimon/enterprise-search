@@ -587,7 +587,6 @@ readHTMLNET(char *subname, unsigned int DocID, char *text, size_t len)
 	int socketha;
 	int i;
 	int LotNr;
-	size_t len;
 
 	LotNr = rLotForDOCid(DocID);
 	socketha = conectTo(LotNr);
