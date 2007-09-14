@@ -588,14 +588,22 @@ void connectHandler(int socket) {
 			rlen = len;
 			text = malloc(len);
 
+			if (text == NULL)
+				exit(1);
+
 			DIRead(&DocIndex, DocID, packedHedder.subname);
 
-			rReadHtml(text, &len, DocIndex.RepositoryPointer, rlen, DocID, packedHedder.subname, &ReposetoryHeader,
-					&acla, &acld);
+			if (!rReadHtml(text, &len, DocIndex.RepositoryPointer, rlen, DocID, packedHedder.subname, &ReposetoryHeader,
+					&acla, &acld)) {
+				len = 0;
+				sendall(socket, &len, sizeof(len));
+			} else {
+				//printf("Got: (%d) %s\n", rlen, text);
+				sendall(socket, &len, sizeof(len));
+				sendall(socket, text, len);
+			}
 
-			//printf("Got: (%d) %s\n", rlen, text);
-			sendall(socket, &len, sizeof(len));
-			sendall(socket, text, len);
+			free(text);
 		}
 		else if (packedHedder.command == C_urltodocid) {
 			char cmd;
