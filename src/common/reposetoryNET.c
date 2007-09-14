@@ -50,9 +50,9 @@ int conectTo(int LotNr) {
 		#endif
 
                if (strcmp(lastServer,"noone") != 0) {
-			#ifdef DEBUG
+			//#ifdef DEBUG
                         printf("closing socket to %s\n",lastServer);
-			#endif
+			//#endif
                         close(socketha);
                }
 
@@ -62,9 +62,9 @@ int conectTo(int LotNr) {
 
         }
         else {
-		#ifdef DEBUG
+		//#ifdef DEBUG
                 printf("reusing socket to %s\n",lastServer);
-		#endif
+		//#endif
         }
 
 	return socketha;
@@ -100,7 +100,7 @@ off_t rGetFileSize(char source[], int LotNr,char subname[]) {
 
         //leser inn filstørelsen
         if ((i=recv(socketha, &fileBloks, sizeof(fileBloks),MSG_WAITALL)) == -1) {
-            perror("Cant recv fileBloks");
+            perror("rGetFileSize: Cant recv fileBloks");
             exit(1);
         }
 
@@ -147,7 +147,7 @@ int rGetFileByOpenHandler(char source[],FILE *FILEHANDLER,int LotNr,char subname
 
         //leser inn filstørelsen
         if ((i=recv(socketha, &fileBloks, sizeof(fileBloks),MSG_WAITALL)) == -1) {
-            perror("Cant recv fileBloks");
+            perror("rGetFileByOpenHandler: Cant recv fileBloks");
             exit(1);
         }
 
@@ -574,11 +574,12 @@ anchorReadNET(char *hostname, char *subname, unsigned int DocID, char *text, int
 
 /* XXX: Send and receive compressed data */
 void
-readHTMLNET(char *subname, unsigned int DocID, char *text, size_t len)
+readHTMLNET(char *subname, unsigned int DocID, char *text, size_t maxlen)
 {
 	int socketha;
 	int i;
 	int LotNr;
+	size_t len;
 
 	LotNr = rLotForDOCid(DocID);
 	socketha = conectTo(LotNr);
@@ -586,13 +587,25 @@ readHTMLNET(char *subname, unsigned int DocID, char *text, size_t len)
 	sendpacked(socketha, C_readHTML, BLDPROTOCOLVERSION, sizeof(DocID), &DocID, subname);
 
 	sendall(socketha, &len, sizeof(len));
+
 	if ((i = recv(socketha, &len, sizeof(len), MSG_WAITALL)) == -1) {
 		perror("recv(len)");
 		exit(1);
 	}
-	if ((i = recv(socketha, text, len, MSG_WAITALL)) == -1) {
-		perror("recv(text)");
+
+	if (len == 0) {
+	
+	}
+	else if (len > maxlen) {
+		printf("len (%u)> maxlen (%u)\n",(unsigned int)len,(unsigned int)maxlen);
 		exit(1);
+	}
+	else {
+		if ((i = recv(socketha, text, len, MSG_WAITALL)) == -1) {
+			printf("readHTMLNET:can't recv. len %i\n",len);
+			perror("readHTMLNET:recv(text)");
+			exit(1);
+		}
 	}
 }
 

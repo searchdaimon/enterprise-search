@@ -29,18 +29,24 @@ main(int argc, char **argv)
 	if ((fp = fopen(filename, "r")) == NULL)
 		err(1, "fopen(%s)", filename);
 
-	while (fread(&redir, sizeof(redir), 1, fp) == 1) {
-		char *text;
-		size_t len;
+	char *text;
+	size_t len;
 
-		len = 1024 * 1024;
-		text = malloc(len);
+	len = 1048576 * 5; //5MB
+	if ((text = malloc(len)) == NULL) {
+		perror("malloc");
+		exit(1);
+	}
+
+	while (fread(&redir, sizeof(redir), 1, fp) == 1) {
 
 		printf("%u => %u (reason: %hu)\n", redir.DocID, redir.redirectTo, redir.response);
 		readHTMLNET(subname, redir.redirectTo, text, len);
 		addResource(LotNr, subname, redir.DocID, text, strlen(text));
 	//	printf("And got html: ''%s''\n", text);
 	}
+
+	free(text);
 
 	fclose(fp);
 
