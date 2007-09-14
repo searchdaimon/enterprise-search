@@ -49,6 +49,7 @@
 #include "search.h"
 
 #include "../common/reposetory.h"
+#include "../common/reposetoryNET.h"
 //#include "../common/lot.h"
 
 //#include "../common/define.h"
@@ -263,8 +264,39 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 					returnStatus = 0;
 				}
 				else if (((*Sider).DocumentIndex.response == 302) || ((*Sider).DocumentIndex.response == 301)) {
+					if (Sider->DocumentIndex.ResourceSize != 0) {
+						char *resbuf;
+						size_t ressize;
+						int LotNr;
+						char *snippet;
 
-					if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer) != 1) {
+						LotNr = rLotForDOCid(DocID);
+						ressize = getResource(LotNr, "www", DocID, NULL, -1);
+						resbuf = malloc(ressize+1);
+						if (getResource(LotNr, "www", DocID, resbuf, ressize+1) == 0) {
+							fprintf(stderr, "Unable to get resource for %d\n", DocID);
+							(*Sider).title[0] = '\0';
+							(*SiderHeder).showabal++;
+							returnStatus = 0;
+						} else {
+							html_parser_run( (*Sider).DocumentIndex.Url, resbuf, ressize, 
+									&titleaa, &body, fn, NULL);
+
+							(*Sider).HtmlPreparsed = 0;
+							generate_snippet(QueryData.queryParsed, body, strlen(body), &snippet, "<b>", "</b>", 160);
+							strcpy(Sider->title, titleaa);
+							strcpy(Sider->description, snippet);
+							memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
+
+							(*SiderHeder).showabal++;
+							returnStatus = 1;
+
+							if (titleaa != NULL) free(titleaa);
+							if (body != NULL) free(body);
+							free(snippet);
+						}
+						free(resbuf);
+					} else if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer) != 1) {
 						//kune ikke lese html. Pointer owerflow ?
 						printf("error reding html for %s\n",(*Sider).DocumentIndex.Url);
 						sprintf((*Sider).description,"Html error. Can't read html");
