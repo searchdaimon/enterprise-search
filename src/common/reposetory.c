@@ -1345,6 +1345,13 @@ addResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t
 	FILE *fp;
 	off_t offset;
 	struct DocumentIndexFormat docindex;
+	int error;
+	int WorkBuffSize = resourcelen;
+	char *WorkBuff;
+
+	WorkBuff = malloc(WorkBuffSize);
+	int HtmlBufferSize = resourcelen;
+
 
 	GetFilPathForLot(FileName,LotNr,subname);
 	strcat(FileName,"resource");
@@ -1354,19 +1361,31 @@ addResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t
 		return;
 	}
 
+	if ((error = compress((Bytef *)WorkBuff,(uLongf *)&WorkBuffSize,(Bytef *)resource,(uLongf)HtmlBufferSize)) != 0) {
+		printf("compress error. Code: %i\n",error);
+		fclose(fp);
+		return;
+	}
+
 	offset = ftello64(fp);
 	printf("Writing: %d\n", DocID);
+	printf("size: %d, %d\n", resourcelen, WorkBuffSize);
 	if (fwrite(&DocID, sizeof(DocID), 1, fp) != 1)
 		warn("fwrite1");
-	if (fwrite(resource, resourcelen, 1, fp) != 1)
+	if (fwrite(&resourcelen, sizeof(resourcelen), 1, fp) != 1)
+		warn("fwrite1");
+	if (fwrite(&WorkBuffSize, sizeof(WorkBuffSize), 1, fp) != 1)
+		warn("fwrite1");
+	if (fwrite(WorkBuff, WorkBuffSize, 1, fp) != 1)
 		warn("fwrite2");
 	fclose(fp);
 
 	DIRead(&docindex, DocID, subname);
 	docindex.ResourcePointer = offset;
 	//printf("Offset: %ld\n", offset);
-	docindex.ResourceSize = resourcelen;
+	docindex.ResourceSize = WorkBuffSize;
 	DIWrite(&docindex, DocID, subname, NULL);
+	free(WorkBuff);
 }
 
 size_t
@@ -1375,32 +1394,45 @@ getResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t
 	char FileName[1024];
 	FILE *fp;
 	struct DocumentIndexFormat docindex;
+	unsigned int rDocID;
+	size_t len, clen;
+	unsigned int HtmlBufferSize;
+	char *workbuf;
+	int error;
 
 	DIRead(&docindex, DocID, subname);
-	if (resource != NULL) {
-		unsigned int rDocID;
-		size_t len;
 
-		GetFilPathForLot(FileName,LotNr,subname);
-		strcat(FileName,"resource");
+	GetFilPathForLot(FileName,LotNr,subname);
+	strcat(FileName,"resource");
 
-		if ((fp = fopen(FileName, "r")) == NULL) {
-			warn("fopen(resource)");
-			return 0;
-		}
-		fseek(fp, docindex.ResourcePointer, SEEK_SET);
-		fread(&rDocID, sizeof(rDocID), 1, fp);
-		if (rDocID != DocID) {
-			fclose(fp);
-			strcpy(resource, "");
-			return 0;
-		}
-		len = fread(resource, resourcelen > docindex.ResourceSize ? docindex.ResourceSize : resourcelen, 1, fp);
-
+	if ((fp = fopen(FileName, "r")) == NULL) {
+		warn("fopen(%s)", FileName);
+		return 0;
+	}
+	fseek(fp, docindex.ResourcePointer, SEEK_SET);
+	fread(&rDocID, sizeof(rDocID), 1, fp);
+	fread(&len, sizeof(len), 1, fp);
+	fread(&clen, sizeof(clen), 1, fp);
+	printf("len: %x clen: %x\n", len, clen);
+	if (rDocID != DocID) {
 		fclose(fp);
+		if (resource != NULL)
+			strcpy(resource, "");
+		return 0;
+	}
+	if (resource != NULL) {
+		workbuf = malloc(clen);
+		len = fread(workbuf, clen, 1, fp);
+		fclose(fp);
+		printf("reslen: %d, \n", resourcelen);
+		if ((error = uncompress((Bytef*)resource,(uLong *)&resourcelen,(Bytef *)workbuf,clen)) != 0) {
+			printf("uncompress error. Code: %i for DocID %u\n", error, DocID);
+			return 0;
+		}
+		len = resourcelen;
 	}
 
-	return docindex.ResourceSize;
+	return len;
 }
 
 
