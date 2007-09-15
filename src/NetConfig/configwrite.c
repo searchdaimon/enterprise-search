@@ -13,20 +13,15 @@
 #include "../common/exeoc.h"
 
 /* header */
-// netscript
 #define NET_IFCFG	   "ifcfg-eth1"
 #define NETSCRIPT_DIR	   "/etc/sysconfig/network-scripts"
-//#define NETSCRIPT_DIR	   "/tmp"
 
-// resolv
 #define RESOLV_PATH	   "/etc/resolv.conf"
-//#define RESOLV_PATH	   "/tmp/resolv.conf"
-
-// generic
 #define INIT_NETWORK_PATH  "/etc/init.d/network restart"
-#define MAX_INPUT_LINES    200
 #define RUN_SUID	   1
 #define SUID_USER	   0
+
+#define MAX_LINE_LENGTH 500
 
 #define CFG_RESOLV    1
 #define CFG_NET     2
@@ -77,7 +72,6 @@ int main(int argc, char **argv) {
 }
 
 void stdin_to_cfgfile(const int cfgfile) {
-#define MAX_LINE_LENGTH 500
 
     // read config
     char line[MAX_LINE_LENGTH];
