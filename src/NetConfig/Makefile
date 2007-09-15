@@ -1,5 +1,5 @@
 CC = /usr/local/bin/gcc
-CCFLAGS = -Wall -g -c
+CCFLAGS = -Wall -g -c -std=c99
 
 configwrite: configwrite.o ../common/exeoc.c
 	$(CC) $(LDFLAGS) $^ -o $@
