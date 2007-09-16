@@ -4,6 +4,10 @@ package Common::FormFlow;
 use strict;
 use warnings;
 use Carp;
+use constant FLOW_START_FORM => 'FLOW_START_FORM';
+use Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT_OK = qw(FLOW_START_FORM);
 
 # Constructor: new
 sub new {
@@ -42,19 +46,19 @@ sub add {
 #	form - Form identifier
 sub process {
 	my ($self, $form) = @_;
+        croak "No form id provided"
+            unless defined $form;
 	
 	my @flow = @{$self->{'flow'}};
-	croak "No form id provided"
-		unless defined $form;
 
 	my $process_method;
-	foreach my $flow_ref (@flow) {
-		last if ($process_method 
-					= $self->_find_method($form, $flow_ref));
-	}
+        foreach my $flow_ref (@flow) {
+            last if ($process_method 
+                    = $self->_find_method($form, $flow_ref));
+        }
 
-	croak "FormFlow: Form \"$form\" not found"
-		unless $process_method;
+	croak qq{FormFlow: Form "$form" not found}
+            unless $process_method;
 
 	return &$process_method();
 }
