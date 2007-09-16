@@ -6,6 +6,7 @@ use Carp;
 use Data::Dumper;
 use Page::Abstract;
 use Common::TplCheckList;
+use Net::IP qw(ip_is_ipv4 ip_is_ipv6);
 our @ISA = qw(Page::Abstract);
 use config qw($CONFIG);
 BEGIN {
@@ -78,12 +79,12 @@ sub process_network_config {
 	# We always want to start the device on boot
 	$netconf_user_ref->{'ONBOOT'} = "yes";
 	
-	# Overwrite whatever evil hacker tried to put as network device
+	# Overwrite in case someone tried to change the network device
 	$netconf_user_ref->{'DEVICE'} = $CONFIG->{'net_device'};
 	
 	# Attempt to generate and save config files.
-	$resolv_user_ref 
-		= $self->_clean_resolv($resolv_user_ref); # Remove empty settings.
+        $self->_clean_resolv($resolv_user_ref); # Remove empty settings.
+        
 
 	my ($resolv_succ, $resolv_errmsg) 
 			= $self->_save_resolv($resolv_user_ref);
@@ -120,7 +121,6 @@ sub process_network_config {
 }
 
 # Group: Private methods
-
 ##
 # Method to restart network.
 # Helper method for process_network_config.
@@ -221,6 +221,5 @@ sub _clean_resolv {
 			delete $value_ref->[$i] unless $value_ref->[$i];
 		}
 	}
-	return $keywords_ref;
 }
 1;
