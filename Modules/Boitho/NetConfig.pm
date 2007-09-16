@@ -241,7 +241,7 @@ sub _save_file {
     open my $configwriterh, "|$path $keyword"
 	or die "Unable to execute configwrite: $!\n";
     print { $configwriterh } $content;
-    print { $configwriterh } eof;
+    #print { $configwriterh } eof;
     close $configwriterh 
 	or $success = 0;
 	
@@ -320,6 +320,7 @@ sub _validate_resolv_keywords {
 
 ##
 # Validate configfile options. Croaks on error.
+# NOTE: Does not check the contents of IP, Nemask or Gateway if using dhcp.
 #
 # Attributes:
 #	options_ref - Hash with config options
@@ -347,16 +348,16 @@ sub _validate_ifcfg_options {
 	# Gateway, netmask etc can be empty if we're using dhcp.
 	my $using_dhcp;
 	$using_dhcp = 1 if $options{'BOOTPROTO'} eq "dhcp";
-
 	# Valid GATEWAY NETMASK BROADCAST IPADDR
-	foreach my $option (qw(GATEWAY NETMASK BROADCAST IPADDR NETWORK)) {
-		next unless defined $options{$option};
-		#last if grep /^$options{'BOOTPROTO'}$/, "dhcp", "bootp"; # Ignore if it doesn't matter.
-		my $ip = $options{$option};
-		next if not $ip and $using_dhcp; # Can be empty, we're using dhcp
+        if (not $using_dhcp) {
+            foreach my $option (qw(GATEWAY NETMASK BROADCAST IPADDR NETWORK)) {
+                my $ip = $options{$option};
+                next unless defined $ip;
+
 		croak "$option: $ip is not a valid IP."
 			unless ip_is_ipv4($ip) or ip_is_ipv6($ip);
-	}
+	    }
+        }
 
 
 	# Valid ONBOOT
