@@ -391,95 +391,97 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 					else he->invisible_text = is_invisible(data->color, data->background, data->fontsize);
 				    }
 			    } // end if (.. tagf_empty)
+
+
+//		    printf("(%s,%i)", (char*)$2, hit); fflush(stdout);
+		    switch (hit)
+		        {
+			    case tag_a:
+			        {
+				    int	i;
+
+				    for (i=0; i<data->num_attr; i++)
+					{
+					    if (!strcasecmp(data->attr[i], "href") && data->val[i]!=NULL)
+						{
+						    he->alink = 1;
+//							clean(data->val[i]);
+
+						    char	*temp_link = create_full_link(data->val[i], data->page_url_len, data->page_uri, data->page_path );
+						    he->user_fn( temp_link, he->linkcount++, pu_link, puf_none, he->wordlist );	// new link
+						    free( temp_link );
+					        }
+				        }
+			        }
+			        break;
+			    case tag_base:
+			        {
+				    int	i;
+
+				    for (i=0; i<data->num_attr; i++)
+				        {
+					    if (!strcasecmp(data->attr[i], "href") && data->val[i]!=NULL)
+					        {
+						    he->user_fn( data->val[i], 0, pu_baselink, puf_none, he->wordlist );
+					        }
+				        }
+			        }
+			        break;
+			    case tag_h1: case tag_h2: case tag_h3: case tag_h4: case tag_h5: case tag_h6:
+			        he->h = hit -tag_h1 +1;
+			        break;
+			    case tag_meta:
+			        {
+			        int			i;
+			        char		*content = NULL;
+				enum parsed_unit	pu = pu_none;
+
+				for (i=0; i<data->num_attr; i++)
+				    {
+				        if (!strcasecmp(data->attr[i], "content"))
+					    content = data->val[i];
+					else if (!strcasecmp(data->attr[i], "name") && data->val[i] != NULL)
+					    switch (search_automaton(meta_attr_automaton, data->val[i]))
+						{
+						    case meta_keywords:
+						        pu = pu_meta_keywords;
+						        break;
+						    case meta_description:
+						        pu = pu_meta_description;
+						        break;
+						    case meta_author:
+						        pu = pu_meta_author;
+						        break;
+						    case meta_redirect:
+						        pu = pu_meta_redirect;
+							break;
+						}
+				    }
+
+				if (pu != pu_none && content != NULL)
+				    {
+					lexwords((unsigned char*)content);
+					he->user_fn( content, 0, pu, puf_none, he->wordlist );
+				    }
+				}
+				break;
+			    case tag_title:
+//				printf("\n\033[0;7mtitle\033[0m\n");
+			        he->title = 1;
+			        break;
+			}
+
+		    if (hit!=tag_title)
+			he->title = 0;
+
+		    if (tag_flags[hit] & tagf_head)
+			    he->newhead = 1;
+		    else if (tag_flags[hit] & tagf_div)
+    			    he->newdiv = 1;
+    		    else if (tag_flags[hit] & tagf_span)
+			    he->newspan = 1;
+
 		    } // end if (hit>=0)
-
-
-		switch (hit)
-		    {
-			case tag_a:
-			    {
-				int	i;
-
-				for (i=0; i<data->num_attr; i++)
-				    {
-					if (!strcasecmp(data->attr[i], "href") && data->val[i]!=NULL)
-					    {
-						he->alink = 1;
-//						clean(data->val[i]);
-
-						char	*temp_link = create_full_link(data->val[i], data->page_url_len, data->page_uri, data->page_path );
-						he->user_fn( temp_link, he->linkcount++, pu_link, puf_none, he->wordlist );	// new link
-						free( temp_link );
-					    }
-				    }
-			    }
-			    break;
-			case tag_base:
-			    {
-				int	i;
-
-				for (i=0; i<data->num_attr; i++)
-				    {
-					if (!strcasecmp(data->attr[i], "href") && data->val[i]!=NULL)
-					    {
-						he->user_fn( data->val[i], 0, pu_baselink, puf_none, he->wordlist );
-					    }
-				    }
-			    }
-			    break;
-			case tag_h1: case tag_h2: case tag_h3: case tag_h4: case tag_h5: case tag_h6:
-			    he->h = hit -tag_h1 +1;
-			    break;
-			case tag_meta:
-			    {
-			    int			i;
-			    char		*content = NULL;
-			    enum parsed_unit	pu = pu_none;
-
-			    for (i=0; i<data->num_attr; i++)
-				{
-				    if (!strcasecmp(data->attr[i], "content"))
-					content = data->val[i];
-				    else if (!strcasecmp(data->attr[i], "name") && data->val[i] != NULL)
-					switch (search_automaton(meta_attr_automaton, data->val[i]))
-					    {
-						case meta_keywords:
-						    pu = pu_meta_keywords;
-						    break;
-						case meta_description:
-						    pu = pu_meta_description;
-						    break;
-						case meta_author:
-						    pu = pu_meta_author;
-						    break;
-						case meta_redirect:
-						    pu = pu_meta_redirect;
-						    break;
-					    }
-				}
-
-			    if (pu != pu_none && content != NULL)
-				{
-				    lexwords((unsigned char*)content);
-				    he->user_fn( content, 0, pu, puf_none, he->wordlist );
-				}
-			    }
-			    break;
-			case tag_title:
-//			    printf("\n\033[0;7mtitle\033[0m\n");
-			    he->title = 1;
-			    break;
-		    }
-
-		if (hit!=tag_title)
-		    he->title = 0;
-
-		if (tag_flags[hit] & tagf_head)
-			he->newhead = 1;
-		else if (tag_flags[hit] & tagf_div)
-			he->newdiv = 1;
-		else if (tag_flags[hit] & tagf_span)
-			he->newspan = 1;
 	    }
 	;
 endtag	: ENDTAG_START ATTR ENDTAG_STOPP
