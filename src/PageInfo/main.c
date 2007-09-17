@@ -131,10 +131,11 @@ int main (int argc, char *argv[]) {
 	int optShowWords = 0;
 	int optSummary = 0;
 	int optAnchor = 0;
+	int optResource = 0;
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"hwsa"))!=-1) {
+        while ((c=getopt(argc,argv,"hwsar"))!=-1) {
                 switch (c) {
                         case 'h':
                                 optShowhtml = 1;
@@ -148,6 +149,9 @@ int main (int argc, char *argv[]) {
                         case 'a':
 				optAnchor = 1;
                                 break;
+			case 'r':
+				optResource = 1;
+				break;
                         default:
                                           exit(1);
                 }
@@ -224,6 +228,17 @@ int main (int argc, char *argv[]) {
 			//run_html_parser( DocumentIndexPost.Url, htmlBuffer, htmlBufferSize, fn );
 			char *title, *body;
 			html_parser_run(DocumentIndexPost.Url,htmlBuffer, htmlBufferSize,&title, &body,fn,NULL );
+		}
+		if (optResource) {
+			char buf[500000];
+			printf("Resource:\n");
+			printf("Ptr: 0x%x Len: %x\n", DocumentIndexPost.ResourcePointer, DocumentIndexPost.ResourceSize);
+			if (getResource(rLotForDOCid(DocID), subname, DocID, buf, sizeof(buf)) == 0) {
+				printf("\tDid not get any resource\n");
+				warn("");
+			} else {
+				printf("%s\n", buf);
+			}
 		}
 	}
 	else {
