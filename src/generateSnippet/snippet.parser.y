@@ -131,7 +131,10 @@ sentence :
 	    queue_push(data->Q2, data->bpos, data->q_flags);
 	    data->q_flags = 0;
 
-	    int	ret = search_automaton( data->A, (char*)$2 );
+	    int	ret;
+
+	    if (data->num_queries>0) ret = search_automaton( data->A, (char*)$2 );
+	    else ret = -1;
 
 	    if (ret>=0)
 		{
@@ -794,199 +797,206 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
     data->VMatch_start2 = 0;
     data->q_flags = v_section_sentence;
 
-    for (i=0; i<qa.n; i++)
-	qw_size+= qa.query[i].n;
 
-    qw = malloc(sizeof(char*)*qw_size);
-    sigma = malloc(sizeof(int)*qw_size);
-    data->q_dep = malloc(sizeof(int)*qw_size);
-    data->q_stop = malloc(sizeof(char)*qw_size);
-    data->last_match = -1;
-    data->q_start = -1;
-
-    data->tilstand = 0;
     data->num_queries = qa.n;
 
-    for (i=0,sigma_size=0,num_qw=0; i<qa.n; i++)
+    if (data->num_queries > 0)
 	{
-	    if (qa.query[i].n > longest_phrase)
-		longest_phrase = qa.query[i].n;
+	    for (i=0; i<qa.n; i++)
+		qw_size+= qa.query[i].n;
 
-	    for (j=0; j<qa.query[i].n; j++)
+	    qw = malloc(sizeof(char*)*qw_size);
+	    sigma = malloc(sizeof(int)*qw_size);
+	    data->q_dep = malloc(sizeof(int)*qw_size);
+	    data->q_stop = malloc(sizeof(char)*qw_size);
+	    data->last_match = -1;
+	    data->q_start = -1;
+
+	    data->tilstand = 0;
+
+	    for (i=0,sigma_size=0,num_qw=0; i<qa.n; i++)
 		{
-		    if (j==0)
-			data->q_dep[sigma_size] = -1;
-		    else
-			data->q_dep[sigma_size] = sigma_size-1;
+		    if (qa.query[i].n > longest_phrase)
+			longest_phrase = qa.query[i].n;
 
-		    if (j==(qa.query[i].n-1))
-			data->q_stop[sigma_size] = 1;
-		    else
-			data->q_stop[sigma_size] = 0;
-
-		    found = -1;
-		    for (k=0; k<sigma_size; k++)
-			if (!strcmp(qa.query[i].s[j], (char*)qw[k]))
-			    {
-				found = k;
-				break;
-			    }
-
-		    if (found>=0)
+		    for (j=0; j<qa.query[i].n; j++)
 			{
-			    sigma[num_qw++] = found;
-			}
-		    else
-			{
-			    sigma[num_qw++] = sigma_size;
-			    qw[sigma_size++] = (unsigned char*)qa.query[i].s[j];
-			}
-		}
-	}
+			    if (j==0)
+				data->q_dep[sigma_size] = -1;
+			    else
+				data->q_dep[sigma_size] = sigma_size-1;
 
-    int		state, num_states=1;
-    int		P[num_qw+1][longest_phrase+1];
+			    if (j==(qa.query[i].n-1))
+				data->q_stop[sigma_size] = 1;
+			    else
+				data->q_stop[sigma_size] = 0;
 
-    data->phrase_sizes = malloc(sizeof(int)*qa.n);
-    data->history = malloc(sizeof(int)*longest_phrase);
-    data->history_crnt = 0;
-    data->history_size = longest_phrase;
-    data->accepted = malloc(sizeof(int)*(num_qw+1));
-    data->d = malloc(sizeof(int*)*(num_qw+1));
-    for (i=0; i<num_qw+1; i++)
-	data->d[i] = malloc(sizeof(int)*sigma_size);
+			    found = -1;
+			    for (k=0; k<sigma_size; k++)
+				if (!strcmp(qa.query[i].s[j], (char*)qw[k]))
+				    {
+					found = k;
+					break;
+				    }
 
-    for (i=0; i<num_qw+1; i++)
-	{
-	    for (j=0; j<sigma_size; j++)
-		data->d[i][j] = -1;
-
-	    data->accepted[i] = -1;
-	}
-
-    P[0][0] = -1;
-    for (i=0,num_qw=0; i<qa.n; i++)
-	{
-	    state = 0;
-
-	    for (j=0; j<qa.query[i].n; j++)
-		{
-		    int		last_state = state;
-
-		    if (data->d[state][sigma[num_qw]] == -1)
-			{
-			    data->d[state][sigma[num_qw]] = num_states;
-			    state = num_states;
-			    num_states++;
-			}
-		    else
-			{
-			    state = data->d[state][sigma[num_qw]];
-			}
-
-		    if (j>0)
-			{
-			    for (k=0; k<j; k++)
-			    {
-				P[state][k] = P[last_state][k];
-			    }
-			}
-		    P[state][j] = sigma[num_qw];
-		    P[state][j+1] = -1;
-		    num_qw++;
-		}
-
-	    data->accepted[state] = i;
-	    data->phrase_sizes[i] = qa.query[i].n;
-	}
-/*
-    printf("%i %i\n", num_states, num_qw);
-    assert(num_states <= num_qw+1);
-*/
-    // Generere "tilbakehopp" for tilstandsmaskin:
-    for (i=0; i<num_states; i++)
-	{
-	    for (j=0; j<sigma_size; j++)
-		{
-		    if (data->d[i][j]==-1)
-			{
-			    int		nstate=-1;
-			    int		l;
-
-			    if (P[i][0] == -1)
-				data->d[i][j] = 0;
+			    if (found>=0)
+				{
+				    sigma[num_qw++] = found;
+				}
 			    else
 				{
-				    for (l=1; ; l++)
-					{
-					    nstate = 0;
-
-					    for (k=l; P[i][k]!=-1; k++)
-						{
-						    nstate = data->d[nstate][P[i][k]];
-						    if (nstate==-1)
-							break;
-						}
-
-					    if (nstate!=-1)
-						{
-						    nstate = data->d[nstate][j];
-						    if (nstate!=-1)
-							break;
-						}
-
-					    if (P[i][l] == -1)
-						break;
-					}
-
-				    if (nstate==-1)
-					data->d[i][j] = 0;
-				    else
-					data->d[i][j] = nstate;
+				    sigma[num_qw++] = sigma_size;
+				    qw[sigma_size++] = (unsigned char*)qa.query[i].s[j];
 				}
 			}
 		}
-	}
+
+	    int		state, num_states=1;
+	    int		P[num_qw+1][longest_phrase+1];
+
+	    data->phrase_sizes = malloc(sizeof(int)*qa.n);
+	    data->history = malloc(sizeof(int)*longest_phrase);
+	    data->history_crnt = 0;
+	    data->history_size = longest_phrase;
+	    data->accepted = malloc(sizeof(int)*(num_qw+1));
+	    data->d = malloc(sizeof(int*)*(num_qw+1));
+	    for (i=0; i<num_qw+1; i++)
+		data->d[i] = malloc(sizeof(int)*sigma_size);
+
+	    for (i=0; i<num_qw+1; i++)
+		{
+		    for (j=0; j<sigma_size; j++)
+			data->d[i][j] = -1;
+
+		    data->accepted[i] = -1;
+		}
+
+	    P[0][0] = -1;
+	    for (i=0,num_qw=0; i<qa.n; i++)
+		{
+		    state = 0;
+
+		    for (j=0; j<qa.query[i].n; j++)
+			{
+			    int		last_state = state;
+
+			    if (data->d[state][sigma[num_qw]] == -1)
+				{
+				    data->d[state][sigma[num_qw]] = num_states;
+				    state = num_states;
+				    num_states++;
+				}
+			    else
+				{
+				    state = data->d[state][sigma[num_qw]];
+				}
+
+			    if (j>0)
+				{
+				    for (k=0; k<j; k++)
+				    {
+					P[state][k] = P[last_state][k];
+				    }
+				}
+			    P[state][j] = sigma[num_qw];
+			    P[state][j+1] = -1;
+			    num_qw++;
+			}
+
+		    data->accepted[state] = i;
+		    data->phrase_sizes[i] = qa.query[i].n;
+		}
+/*
+	    printf("%i %i\n", num_states, num_qw);
+	    assert(num_states <= num_qw+1);
+*/
+	    // Generere "tilbakehopp" for tilstandsmaskin:
+	    for (i=0; i<num_states; i++)
+		{
+		    for (j=0; j<sigma_size; j++)
+			{
+			    if (data->d[i][j]==-1)
+				{
+				    int		nstate=-1;
+				    int		l;
+
+				    if (P[i][0] == -1)
+					data->d[i][j] = 0;
+				    else
+					{
+					    for (l=1; ; l++)
+						{
+						    nstate = 0;
+
+						    for (k=l; P[i][k]!=-1; k++)
+							{
+							    nstate = data->d[nstate][P[i][k]];
+							    if (nstate==-1)
+								break;
+							}
+
+						    if (nstate!=-1)
+							{
+							    nstate = data->d[nstate][j];
+							    if (nstate!=-1)
+								break;
+							}
+
+						    if (P[i][l] == -1)
+							break;
+						}
+
+					    if (nstate==-1)
+						data->d[i][j] = 0;
+					    else
+						data->d[i][j] = nstate;
+					}
+				}
+			}
+		}
 
 #ifdef DEBUG
-    printf("   ");
-    for (i=0; i<sigma_size; i++)
-	printf("%c ", 'a'+i);
-    printf("\n--");
-    for (i=0; i<sigma_size; i++)
-	printf("--", i);
-    printf("\n");
+	    printf("   ");
+	    for (i=0; i<sigma_size; i++)
+		printf("%c ", 'a'+i);
+	    printf("\n--");
+	    for (i=0; i<sigma_size; i++)
+		printf("--", i);
+	    printf("\n");
 
-    for (i=0; i<num_states; i++)
-	{
-	    printf("%i: ", i);
-	    for (j=0; j<sigma_size; j++)
+	    for (i=0; i<num_states; i++)
 		{
-		    printf("%i ", data->d[i][j]);
+		    printf("%i: ", i);
+		    for (j=0; j<sigma_size; j++)
+			{
+			    printf("%i ", data->d[i][j]);
+			}
+		    printf("    (%i)\n", data->accepted[i]);
 		}
-	    printf("    (%i)\n", data->accepted[i]);
-	}
 #endif
 
-    data->A = build_automaton(sigma_size, qw);
-    free(qw);
-    free(sigma);
+	    data->A = build_automaton(sigma_size, qw);
+	    free(qw);
+	    free(sigma);
+
+
+	    data->q_best_score = malloc(sizeof(int)*data->num_queries);
+	    data->q_best_start = malloc(sizeof(int)*data->num_queries);
+	    data->q_best_stop = malloc(sizeof(int)*data->num_queries);
+	    data->q_best_hits = malloc(sizeof(int)*data->num_queries);
+
+	    for (i=0; i<data->num_queries; i++)
+		{
+		    data->q_best_score[i] = 0;
+		    data->q_best_start[i] = 0;
+		    data->q_best_stop[i] = 0;
+		}
+	}
 
     data->best_score = 0;
     data->best_start = 0;
     data->best_stop = 0;
 
-    data->q_best_score = malloc(sizeof(int)*data->num_queries);
-    data->q_best_start = malloc(sizeof(int)*data->num_queries);
-    data->q_best_stop = malloc(sizeof(int)*data->num_queries);
-    data->q_best_hits = malloc(sizeof(int)*data->num_queries);
-
-    for (i=0; i<data->num_queries; i++)
-	{
-	    data->q_best_score[i] = 0;
-	    data->q_best_start[i] = 0;
-	    data->q_best_stop[i] = 0;
-	}
 
     yyscan_t	scanner;
     int		yv;
@@ -1010,29 +1020,32 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
     bsgp_delete_buffer( bs, scanner );
     bsgplex_destroy( scanner );
 
-    free_automaton(data->A);
+    if (data->num_queries > 0)
+	{
+	    free_automaton(data->A);
+
+	    free(data->q_best_score);
+	    free(data->q_best_start);
+	    free(data->q_best_stop);
+	    free(data->q_best_hits);
+
+	    free(data->q_stop);
+	    free(data->q_dep);
+	    free(data->accepted);
+	    free(data->history);
+	    free(data->phrase_sizes);
+
+	    for (i=0; i<num_qw+1; i++)
+		free(data->d[i]);
+	    free(data->d);
+	}
+
     destroy(data->VLink);
     destroy(data->VWordNr);
     destroy(data->VHit);
     destroy(data->VMatch);
     destroy(data->Q2);
     destroy(data->Q);
-
-    free(data->q_best_score);
-    free(data->q_best_start);
-    free(data->q_best_stop);
-    free(data->q_best_hits);
-
-    free(data->q_stop);
-    free(data->q_dep);
-//    printf("%s\n", data->buf);
-    free(data->accepted);
-    free(data->history);
-    free(data->phrase_sizes);
-
-    for (i=0; i<num_qw+1; i++)
-	free(data->d[i]);
-    free(data->d);
 
     free(data->buf);
 
