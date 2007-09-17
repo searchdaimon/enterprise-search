@@ -12,6 +12,8 @@
 // Konverterer en tekststreng til små bokstaver:
 static inline void convert_to_lowercase( unsigned char *str )
 {
+    if (str==NULL) return;
+
     int         i;
 
     for (i=0; str[i]!='\0'; i++)
