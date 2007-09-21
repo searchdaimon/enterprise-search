@@ -18,6 +18,8 @@
 
 #define MAX_SUPORTET_LANG 50
 
+#define UrlToDocIDnrOfFiles 999
+
 #define BMAX_RANKARRAY 20
 
 #ifdef BLACK_BOKS
