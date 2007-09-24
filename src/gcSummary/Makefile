@@ -1,5 +1,5 @@
 CFLAGS=		-W -Wall -O0 -g -I/usr/local/BerkeleyDB.4.5/include/ -D_FILE_OFFSET_BITS=64
-LDFLAGS=	-lm -lz -D_FILE_OFFSET_BITS=64
+LDFLAGS=	-lm -lz -D_FILE_OFFSET_BITS=64 -DDI_FILE_CACHE
 PROG=		gcsummary
 CC=		/usr/local/bin/gcc
 

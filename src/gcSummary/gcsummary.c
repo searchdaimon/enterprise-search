@@ -15,18 +15,10 @@
 int
 main(int argc, char **argv)
 {
-	struct ReposetoryHeaderFormat ReposetoryHeader;
 	int LotNr;
 	char *subname;
-	char htmlbuffer[524288];
-	char imagebuffer[524288];
-	char *acl_allow;
-	char *acl_deny;
-	unsigned long int raddress;
 	char path[1024];
 	char path2[1024];
-	char path3[1024];
-	char sumpath[1024];
 	struct DocumentIndexFormat docindex;
 	unsigned int DocID;
 	FILE *fh, *newfh;
@@ -37,11 +29,18 @@ main(int argc, char **argv)
 	LotNr = atoi(argv[1]);
 	subname = argv[2];
 
-	if ((fh = lotOpenFileNoCasheByLotNr(LotNr,"summary","r",'e',subname)) == NULL) {
+	/* And we have a race... */
+	GetFilPathForLot(path, LotNr, subname);
+	strcpy(path2, path);
+	strcat(path, "summary");
+	strcat(path2, "summary.old");
+	rename(path, path2);
+
+	if ((fh = lotOpenFileNoCasheByLotNr(LotNr,"summary.old","r",'e',subname)) == NULL) {
 		err(1, "Unable to open summary file");
 	}
 
-	if ((newfh = lotOpenFileNoCasheByLotNr(LotNr,"summary.wip","w",'e',subname)) == NULL) {
+	if ((newfh = lotOpenFileNoCasheByLotNr(LotNr,"summary","w",'e',subname)) == NULL) {
 		err(1, "Unable to open summary wip file");
 	}
 
@@ -50,7 +49,6 @@ main(int argc, char **argv)
 	while (DIGetNext(&docindex, LotNr, &DocID, subname)) {
 		char sumbuf[65536];
 		unsigned int len, sDocID;
-		unsigned int ptr;
 
 #if 0
 		printf("Summarygrabing: %d\n", DocID);
@@ -78,46 +76,12 @@ main(int argc, char **argv)
 		docindex.SummaryPointer = ftell(newfh);
 		fwrite(&DocID, sizeof(DocID), 1, newfh);
 		fwrite(sumbuf, docindex.SummarySize, 1, newfh);
-		//DIWrite(&docindex, DocID, subname, NULL);
+		DIWrite(&docindex, DocID, subname, NULL);
 	}
-#if 0
-	while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&raddress,0,0,subname,&acl_allow,&acl_deny)) {
-
-
-		if (!DIRead(&docindex, ReposetoryHeader.DocID, subname)) {
-			fprintf(stderr, "Unable to locate a DI for %d\n", ReposetoryHeader.DocID);
-			continue;
-		}
-
-		//printf("%p\n", docindex.RepositoryPointer);
-		if (raddress == docindex.RepositoryPointer) {
-			unsigned long int offset;
-			offset = rApendPost(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_deny, "repo.wip");
-			docindex.RepositoryPointer = offset;
-			DIWrite(&docindex, ReposetoryHeader.DocID, subname, "DocumentIndex.wip");
-			printf("Writing DocID: %d\n", ReposetoryHeader.DocID);
-		} else {
-			printf("Garbage collecting %d at %lx\n", ReposetoryHeader.DocID, raddress);
-		}
-	}
-#endif
-
-	/* And we have a race... */
-#if 0
-	GetFilPathForLot(path, LotNr, subname);
-	strcpy(path2, path);
-	strcpy(path3, path);
-	strcat(path, "repo.wip");
-	strcat(path2, "reposetory");
-	rename(path, path2);
-	strcpy(path, path3);
-	strcat(path, "DocumentIndex.wip");
-	strcat(path3, "DocumentIndex");
-	rename(path, path3);
-#endif
 
 	fclose(fh);
 	fclose(newfh);
+	unlink(path2);
 
 	return 0;
 }
