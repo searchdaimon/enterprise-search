@@ -85,7 +85,7 @@ main(int argc, char **argv)
 		DIWrite(&docindex, DocID, subname, NULL);
 	}
 
-	//closeDICache();
+	closeDICache();
 	fclose(fh);
 	fclose(newfh);
 	unlink(path2);
