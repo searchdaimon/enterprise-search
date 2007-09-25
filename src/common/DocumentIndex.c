@@ -15,6 +15,14 @@ ToDo: trenger en "close" prosedyre for filhandlerene.
 static int openDocumentIndex = -1;
 #ifdef DI_FILE_CASHE
                 FILE *DocumentIndexHA;
+
+void closeDICache(void)
+{
+	if (openDocumentIndex != -1) {
+		openDocumentIndex = -1;
+		fclose(DocumentIndexHA);
+	}
+}
 #endif
 
 
@@ -173,6 +181,9 @@ void DIWrite (struct DocumentIndexFormat *DocumentIndexPost, unsigned int DocID,
 			perror("Can't write");
 			exit(1);
 		}
+#ifndef WITHOUT_DIWRITE_FSYNC
+		fsync(fileno(file));
+#endif
 	}
 	else {
 		printf("Cant get fh\n");
