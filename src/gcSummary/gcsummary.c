@@ -29,31 +29,23 @@ main(int argc, char **argv)
 	LotNr = atoi(argv[1]);
 	subname = argv[2];
 
-	/* And we have a race... */
 	GetFilPathForLot(path, LotNr, subname);
 	strcpy(path2, path);
 	strcat(path, "summary");
 	strcat(path2, "summary.old");
-	rename(path, path2);
+	if (rename(path, path2) != 0)
+		err(1, "rename(summary, summary.old)");
 
-	if ((fh = lotOpenFileNoCasheByLotNr(LotNr,"summary.old","r",'e',subname)) == NULL) {
+	if ((fh = lotOpenFileNoCasheByLotNr(LotNr,"summary.old","r",'e',subname)) == NULL)
 		err(1, "Unable to open summary file");
-	}
 
-	if ((newfh = lotOpenFileNoCasheByLotNr(LotNr,"summary","w",'e',subname)) == NULL) {
+	if ((newfh = lotOpenFileNoCasheByLotNr(LotNr,"summary","w",'e',subname)) == NULL)
 		err(1, "Unable to open summary wip file");
-	}
-
-
 
 	while (DIGetNext(&docindex, LotNr, &DocID, subname)) {
 		char sumbuf[65536];
 		unsigned int len, sDocID;
 
-#if 0
-		printf("Summarygrabing: %d\n", DocID);
-		printf("Seeking to: %x\n", docindex.SummaryPointer);
-#endif
 		len = docindex.SummarySize;
 		if (fseeko64(fh, (off_t)docindex.SummaryPointer, SEEK_SET) == -1) {
 			warn("Unable to seek to summary for %d", DocID);
