@@ -11,6 +11,7 @@
 #include "../common/lot.h"
 #include "../common/DocumentIndex.h"
 
+void closeDICache(void);
 
 int
 main(int argc, char **argv)
@@ -20,7 +21,7 @@ main(int argc, char **argv)
 	char path[1024];
 	char path2[1024];
 	struct DocumentIndexFormat docindex;
-	unsigned int DocID;
+	unsigned int DocID, firstDocID;
 	FILE *fh, *newfh;
 	
 	if (argc < 3)
@@ -42,20 +43,33 @@ main(int argc, char **argv)
 	if ((newfh = lotOpenFileNoCasheByLotNr(LotNr,"summary","w",'e',subname)) == NULL)
 		err(1, "Unable to open summary wip file");
 
+	fseeko64(fh, 0, SEEK_SET);
+	if (fread(&firstDocID, sizeof(firstDocID), 1, fh) != 1) {
+		warn("Unable to read first docid");
+	}
+
+
 	while (DIGetNext(&docindex, LotNr, &DocID, subname)) {
 		char sumbuf[65536];
 		unsigned int len, sDocID;
 
 		len = docindex.SummarySize;
+		if (docindex.SummaryPointer == NULL && DocID != firstDocID) {
+			printf("skiping...\n");
+			continue;
+		}
 		if (fseeko64(fh, (off_t)docindex.SummaryPointer, SEEK_SET) == -1) {
 			warn("Unable to seek to summary for %d", DocID);
 			continue;
 		}
 		if (fread(&sDocID, sizeof(sDocID), 1, fh) != 1) {
-			warn("Unable to read docid from summary");
+			if (feof(fh))
+				warnx("Hit eof while reading docid from summary");
+			else
+				warn("Unable to read docid from summary");
 			continue;
 		}
-		if (sDocID != DocID) {
+		if (sDocID != DocID && docindex.SummaryPointer != NULL) {
 			warnx("Did not read the same DocID as was requested");
 			continue;
 		}
@@ -71,6 +85,7 @@ main(int argc, char **argv)
 		DIWrite(&docindex, DocID, subname, NULL);
 	}
 
+	//closeDICache();
 	fclose(fh);
 	fclose(newfh);
 	unlink(path2);
