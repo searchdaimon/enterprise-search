@@ -29,6 +29,8 @@ $CONFIG{'logfiles'} = {
 	'crawlManager_error' => "crawlManager error log",
 	'indexing' => "index log",
 	'crawl_watch.log' => "Crawl Watch log",
+	'boithoad_access' => "ad access log",
+	'boithoad_error' => "ad error log",
 };
 
 
