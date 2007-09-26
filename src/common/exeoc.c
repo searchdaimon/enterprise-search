@@ -61,7 +61,7 @@ int exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfini
 	}	
 
 	//printf("documentfinishedbufsize %i\n",(*documentfinishedbufsize));
-	//#ifdef DEBUG
+	#ifdef DEBUG
 		printf("runing program \"%s\"\n",exeargv[0]);
 		i=0;
 		while(exeargv[i] != '\0') {
@@ -69,7 +69,7 @@ int exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfini
 
 			++i;
 		}
-	//#endif
+	#endif
 
 	pipe(pipefd);
 
