@@ -860,7 +860,7 @@ int main (int argc, char *argv[]) {
 
 
 		//sjekker om vi har nokk palss
-		if (!lotHasSufficientSpace(lotNr,10240,subname)) {
+		if (!lotHasSufficientSpace(lotNr,4240,subname)) {
 			printf("insufficient disk space\n");
 			exit(1);
 		}
