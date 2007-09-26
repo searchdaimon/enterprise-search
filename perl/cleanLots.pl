@@ -1,6 +1,20 @@
-#dublicate stdout to log what is happening
-open(STDOUT, ">>$ENV{'BOITHOHOME'}/logs/indexing") || die "Can't dup stdout";
-open(STDERR, ">>&STDOUT") || die "Can't dup stdout";
+
+use Getopt::Std;
+
+getopts('l', \%opts);
+
+
+if ($opts{l}) {
+	print "Will log all output to file\n";
+
+	#dublicate stdout to log what is happening
+	open(STDOUT, ">>$ENV{'BOITHOHOME'}/logs/indexing") || die "Can't dup stdout";
+	open(STDERR, ">>&STDOUT") || die "Can't dup stdout";
+
+}
+
+
+
 
 
 

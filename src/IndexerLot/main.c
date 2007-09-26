@@ -458,7 +458,7 @@ void *IndexerLot_workthread(void *arg) {
 					debug("can't find domain. Url \"%s\"\n",ReposetoryHeader.url);
 				}
 				else if (!find_TLD(domain,TLD,sizeof(TLD))) {
-					printf("cnat find TLD. Url \"%s\"\n",ReposetoryHeader.url);
+					printf("can't find TLD. Url \"%s\"\n",ReposetoryHeader.url);
 				}
 				else if (IndexerLot_filterOnlyTLD((*argstruct).optOnlyTLD,TLD)) {
 					debug("Filter: optOnlyTLD ekskludes \"%s\"\n",TLD);

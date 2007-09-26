@@ -173,6 +173,10 @@ int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat rev
 	unsigned int nrofDocIDsForWordID[revIndexArraySize];
 	int forekomstnr;
 
+	#ifdef DEBUG
+		printf("revindexPath \"%s\"\n",revindexPath);
+	#endif
+
 	if ((REVINDEXFH = fopen(revindexPath,"rb")) == NULL) {
 		perror(revindexPath);
 		//exit(1);
@@ -191,7 +195,8 @@ int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat rev
 		
 
 			if (fread(&revIndexArray[count].DocID,sizeof(revIndexArray[count].DocID),1,REVINDEXFH) != 1) {
-				printf("can'tt read any more data\n");
+				printf("can't read any more data\n");
+				perror("revindex");
 				break;
 			}
 			//v3
@@ -220,7 +225,7 @@ int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat rev
 			
 			//debug:  hits
 			#ifdef DEBUG
-			printf("\thits: ");
+			printf("\tread hits: ");
 			for (i=0;i<revIndexArray[count].nrOfHits;i++) {
 				printf("%hu, ",revIndexArray[count].hits[i]);
 			}
@@ -240,7 +245,12 @@ int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat rev
 		//}
 
 	}
-	--count;
+
+	printf("Documents in index: %i\n",count);
+
+	
+	//runarb: 17 aug 2007: hvorfor har vi med -- her. Ser ut til at vi da mksiter siste dokumentet. haker ut for nå
+	//--count;
 
 	fclose(REVINDEXFH);
 

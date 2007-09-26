@@ -121,21 +121,6 @@ int iintegerLoadMemArray(struct iintegerMemArrayFormat *iintegerMemArray,char in
 
 			fread(iintegerMemArray->MemArray[i],inode.st_size,1,iinteger.FH);
 
-			/*							
-			if (i == 27) {
-				int y;
-				unsigned int DocID;
-				int DocIDPlace = 0;
-				DocID = LotDocIDOfset(i);
-
-				
-				for(y=0;y<500000;y++) {
-					printf("DocID %u-%i: %ho, DocIDPlace  %i\n",DocID,rLotForDOCid(DocID),iintegerMemArray->MemArray[i][y],DocIDPlace);
-					++DocID;
-					DocIDPlace += 2;
-				}
-			}
-			*/
 			iintegerClose(&iinteger);
 		}
 

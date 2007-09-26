@@ -23,7 +23,9 @@ size_t iconv_convert(iconv_t cd,char **inbuf, size_t inbytes) {
 
         outchar = out;
 
-        printf("aa %s\n",(*inbuf));
+	#ifdef DEBUG
+        printf("iconv_convert: inn %s\n",(*inbuf));
+	#endif
 
         if ((n = iconv_simple(cd,(*inbuf),strlen((*inbuf)),&outchar,outbytes)) == -1) {
                 perror("w_iconv");

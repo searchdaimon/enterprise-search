@@ -13,3 +13,4 @@ int filterDomainLength(char domain[]);
 int filterDomainNrOfLines(char domain[]);
 int filterSameDomainID(int showabal,struct SiderFormat *CurentSider, struct SiderFormat *Sider);
 void filtersTrapedReset(struct filtersTrapedFormat *filtersTraped);
+int filterResponseCode(struct SiderFormat *CurentSider);

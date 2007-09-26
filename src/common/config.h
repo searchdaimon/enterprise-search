@@ -1,6 +1,16 @@
 #ifdef WITH_CONFIG
 
-int bconfig_init();
+#define CONFIG_CACHE_IS_OK 0
+#define CONFIG_NO_CACHE 1
+
+#define cache_time 30
+
+struct _configdataFormat {
+        char configkey[255];
+        char configvalue[255];
+};
+
+void bconfig_flush(int mode);
 const char *bconfig_getentrystr(char vantkey[]);
 int bconfig_getentryint(char vantkey[]);
 

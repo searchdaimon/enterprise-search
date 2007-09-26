@@ -130,6 +130,8 @@ int rrmdir(char dir[]) {
         struct dirent *dp;
 	char path[PATH_MAX];
 
+	printf("rrmdir: opening dir \"%s\"\n",dir);
+
 	if ((dirp = opendir( dir )) == NULL) {
 		perror(dir);
 		return 0;
@@ -143,11 +145,11 @@ int rrmdir(char dir[]) {
 		snprintf(path,sizeof(path),"%s/%s",dir,dp->d_name);
 
 		if (dp->d_type == DT_DIR) { 
-			printf("dir: %s\n",path);
+			printf("rrmdir: dir: %s\n",path);
 			rrmdir(path);
 		}
 		else {
-			printf("file: %s\n",path);
+			printf("rrmdir: file: %s\n",path);
 		}
 
 		//gjør selve slettingen

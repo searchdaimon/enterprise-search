@@ -521,8 +521,11 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
         	//RFILE = ropenlot(DocID,"rb");
 		//temp: noe bugg her som gjør at vi segfeiler. Prøver å endre fra "rb" til "r+b"
 		//RFILE = lotOpenFile(DocID,"reposetory","rb",'s',subname);
+		#ifdef BLACK_BOKS
+		RFILE = lotOpenFileNoCashe(DocID,"reposetory","rb",'n',subname);
+		#else
 		RFILE = lotOpenFileNoCashe(DocID,"reposetory","rb",'s',subname);
-
+		#endif
 		//3 nov 2006: radress64bit = radress64bit + sizeof(struct ReposetoryHeaderFormat);
 		if (RFILE == NULL) {
 			return 0;
@@ -549,6 +552,9 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 		if ( (error = uncompress((Bytef*)HtmlBuffer,(uLong *)HtmlBufferSize,(Bytef *)WorkBuff,rsize)) != 0) {
                 	printf("uncompress error. Code: %i for DocID %u-%i\n",error,DocID,rLotForDOCid(DocID));
         		
+			HtmlBuffer[0] = '\0';
+			(*HtmlBufferSize) = 0;
+
 			forreturn = 0;
 		}
 		else {
@@ -652,9 +658,9 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			#endif
 
 			
-			//#ifdef DEBUG
+			#ifdef DEBUG
 			printf("acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
-			//#endif
+			#endif
 			(*acl_allowbuffer) = malloc((*ReposetoryHeader).acl_allowSize +1);
 			if ((*ReposetoryHeader).acl_allowSize != 0) {
 				if (fread((*acl_allowbuffer),(*ReposetoryHeader).acl_allowSize,1,LotFileOpen) != 1) {
@@ -670,9 +676,9 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			#endif
 
 
-			//#ifdef DEBUG
+			#ifdef DEBUG
 			printf("acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
-			//#endif
+			#endif
 			(*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1);
 			if ((*ReposetoryHeader).acl_deniedSize != 0) {
 				if (fread((*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize,1,LotFileOpen) != 1) {

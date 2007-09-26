@@ -11,7 +11,7 @@
 #include "lot.h"
 #include "iindex.h"
 
-#define MMAP_IINDEX
+//#define MMAP_IINDEX
 
 #ifdef MMAP_IINDEX
        #include <sys/types.h>
@@ -414,8 +414,14 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
                 gettimeofday(&end_time, NULL);
                 printf("Time debug: ReadIIndexRecord total time %f\n",getTimeDifference(&start_time,&end_time));
                 #endif
+		if (DictionaryPost.SizeForTerm == 0) {
+			printf("\n###################################\nBug: DictionaryPost SizeForTerm is 0!\n###################################\n\n");
+			*Adress = -1;
+			*SizeForTerm = -1;
+			return 0;
 
-		if (fant) {
+		}
+		else if (fant) {
 			*Adress = DictionaryPost.Adress;
 			*SizeForTerm = DictionaryPost.SizeForTerm;
 			printf("disk: Adress %lu, SizeForTerm %lu\n",DictionaryPost.Adress,DictionaryPost.SizeForTerm);
@@ -477,7 +483,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	int y;
 	int Element;
 
-
+	off_t mmap_size;
 
 	int mergedn;
 	char IndexPath[255];
@@ -524,7 +530,11 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	//5: printf("%s crc32: %lu\n",WordID,WordIDcrc32);
 
 	//setter denne til 0, slik at hvis i ikke fr til å opne filen, eller hente ordboken er den 0
-	(*AntallTeff) = 0;
+	//runarb: 19 aug 2007: gjør om slik at vi kan ha elementer fra før i indeksen
+	//tror vi ikke kan nulle den ut da
+	//må sjekkes opp
+	//ser ut til at dette er antall treff i indexsen, inklysive de vi har fra før, ikke bare nye treff for denne index
+	//(*AntallTeff) = 0;
 
 	//prøver førs å lese fra minne
 	//temp:
@@ -560,6 +570,8 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				printf("Time debug: open %f\n",getTimeDifference(&start_time,&end_time));
 			#endif
 
+
+
 		#ifdef MMAP_IINDEX
 
 
@@ -574,8 +586,8 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				//Adress = 0;
 				//mmap_offset = 0;
 
-
-				if ((allindex = mmap(0,SizeForTerm + mmap_offset,PROT_READ,MAP_SHARED,fileno(fileha),Adress - mmap_offset) ) == NULL) {
+				mmap_size = SizeForTerm + mmap_offset;
+				if ((allindex = mmap(0,mmap_size,PROT_READ,MAP_SHARED,fileno(fileha),Adress - mmap_offset) ) == NULL) {
 					perror("mmap");
 				}
 
@@ -588,13 +600,14 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 				fseek(fileha,Adress,0);
 
-
+				//forhindrer at vi leser inn en for stor index, og bruker mye tid på det. Kan dog skje at vi buffer owerflover her
 				maxIIindexSize = maxIndexElements * 209;
 
 				if (SizeForTerm > maxIIindexSize) { // DocID 4b +  langnr 1b + TermAntall 4b + (100 hit * 2b)
 					printf("size it to large. Will only read first %i bytes\n",maxIIindexSize);
 					SizeForTerm = maxIIindexSize;
 				}
+
 
 
 				if ((allindex = malloc(SizeForTerm)) == NULL) {
@@ -631,7 +644,8 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		allindex += memcpyrc(&term,allindex,sizeof(unsigned long));
 		allindex += memcpyrc(&Antall,allindex,sizeof(unsigned long));
 
-		TeffArray->nrofHits = 0;
+		//fører til overskrivning av hits. Må inaliseres før vi begynner å lese fra index
+		//TeffArray->nrofHits = 0;
 
 		for (i = 0; ((i < Antall) && (y < maxIndexElements)); i++) {
 
@@ -696,6 +710,21 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				TeffArray->iindex[y].indexFiltered.subname = 0;
 			#endif
 
+			//seter disse til 0 da vi ikke altid kjører body søk, og dermed ikke inaliserer disse.
+			//dog noe uefektift og altid sette disse til 0, tar tid
+			#ifdef EXPLAIN_RANK
+                		TeffArray->iindex[y].rank_explaind.rankBody = 0;
+                		TeffArray->iindex[y].rank_explaind.rankHeadline = 0;
+                		TeffArray->iindex[y].rank_explaind.rankTittel = 0;
+                		TeffArray->iindex[y].rank_explaind.rankAthor = 0;
+
+                		TeffArray->iindex[y].rank_explaind.rankUrl_mainbody = 0;
+                		TeffArray->iindex[y].rank_explaind.rankUrl = 0;
+                		TeffArray->iindex[y].rank_explaind.nrAthorPhrase = 0;
+                		TeffArray->iindex[y].rank_explaind.nrAthor = 0;
+        		#endif
+
+
 
 			#ifndef BLACK_BOKS
 				//midlertidig bug fiks. Ignorerer hit med DocID 0.
@@ -731,90 +760,17 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		#endif
 
 		#ifdef MMAP_IINDEX
-			munmap(allindexp,SizeForTerm);
+			munmap(allindexp,mmap_size);
 		#else
 			free(allindexp);
 		#endif
-/*
-		//y=0;
-		//for (i = 0; ((i < Antall) && (i < maxIndexElements)); i++) {
-		y=(*AntallTeff);
-		for (i = 0; ((i < Antall) && (y < maxIndexElements)); i++) {
 
-			fread(&TeffArray->iindex[y].DocID,sizeof(unsigned long),1,fileha);
+		fclose(fileha);
 
-
-			//v3
-			if (isv3) {
-				fread(&TeffArray->iindex[y].langnr,sizeof(char),1,fileha);
-			}
-			//printf("lang %i\n",(int)TeffArray->iindex[y].langnr);
-       			fread(&TeffArray->iindex[y].TermAntall,sizeof(unsigned long),1,fileha);
-
-
-		
-			if (TeffArray->iindex[y].TermAntall > MaxsHitsInIndex) {
-
-				fread(&TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall,sizeof(unsigned short),fileha);
-
-				//kan våre vi får for mange hits i athor, da vi ikke eher overholt noen grense. 
-				//burde heller lagre en verdi på hvor mange hits vi har eller noe
-
-		  		//printf("error. TermAntall to large at %i\n",TeffArray->iindex[y].TermAntall);
-				for (z = 0;(z < (TeffArray->iindex[y].TermAntall - maxIndexElements)) && (z < maxIndexElements); y++) {
-					fread(&hit,sizeof(unsigned short),1,fileha);
-				}
-			}
-			else {
-				fread(&TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall,sizeof(unsigned short),fileha);
-
-			}
-
-			//
-               	        //lagger til poeng
-                        //
-                        TeffArray->iindex[y].TermRank = rank(TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall);
-			printf("TermRank: %i\n",TeffArray->iindex[y].TermRank);
-                        //
-
-			
-			//if (TeffArray->iindex[y].DocID == 5630541) {
-			//	printf("Ja, vi har 5630541, med %i - %i, rank %i\n",(int)TeffArray->iindex[y].TermAntall,MaxsHitsInIndex,(int)TeffArray->iindex[y].TermRank);
-			//	
-			//}
-			
-
-			//legger til en peker til subname
-			TeffArray->iindex[y].subname = subname;
-
-			//printf("languageFilterNr: %i, languageFilterAsNr[0]: %i, TeffArray->iindex[y].langnr: %i\n",languageFilterNr,languageFilterAsNr[0],TeffArray->iindex[y].langnr);
-			
-			//int languageFilterNr, int languageFilterAsNr
-			if (languageFilterNr == 0) {
-				++y;
-			}
-			else if (languageFilterNr == 1) {
-				if (languageFilterAsNr[0] == TeffArray->iindex[y].langnr) {
-					printf("filter hit\n");
-					++y;
-				}
-			}
-			else {
-				//søker os gjenom språkene vi skal filtrerte på
-				//int h;
-				//for(h=0;h<(languageFilterNr -1);h++) {
-				//	languageFilterAsNr[h] = TeffArray->iindex[y].langnr
-				//}
-			}
-
-		}
-
-*/				
 
 		printf("jj: i=%i,y=%i\n",i,y);
 		*AntallTeff = y;
 			
-		fclose(fileha);
 		
 
 	} // fopen
@@ -860,15 +816,15 @@ void GetNForTerm(unsigned long WordIDcrc32, char *IndexType, char *IndexSprok, i
 	        if ((fileha = fopen(IndexFile,"rb")) == NULL) {
 	    	    perror(IndexPath);
 	        }
-		fseek(fileha,Adress,0);
+			fseek(fileha,Adress,0);
 		
-		fread(&term,sizeof(unsigned long),1,fileha);
-		fread(&Antall,sizeof(unsigned long),1,fileha);
+			fread(&term,sizeof(unsigned long),1,fileha);
+			fread(&Antall,sizeof(unsigned long),1,fileha);
 																						
-										
+			fclose(fileha);							
 		
-		(*TotaltTreff) = 	Antall;												
-		//////////////////////////////////////////////
+			(*TotaltTreff) = 	Antall;												
+			//////////////////////////////////////////////
 		}
 																									
 }

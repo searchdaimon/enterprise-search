@@ -81,7 +81,15 @@ void lotlistLoad() {
 		MemoryLotlist[i].hasServer = 0;
 	}
 
-	if ((LOTLISTFH = bfopen("config/lotlist.conf","r")) == NULL) {
+        //sjekker først om vi har en env variabel kalt "BOITHOLOTLIST". Hvis vi har det så bruker vi den filen
+        //gjør det slik slik at vi kan ha lokal lotlist, på hver bbs, man fortsat ha resten likt på alle, og på read$
+        if (getenv("BOITHOLOTLIST") != NULL) {
+                if ( (LOTLISTFH = fopen(getenv("BOITHOLOTLIST"),"r")) == NULL) {
+                        perror(getenv("BOITHOLOTLIST"));
+                        exit(1);
+                }
+        }
+	else if ((LOTLISTFH = bfopen("config/lotlist.conf","r")) == NULL) {
 		perror(bfile("config/lotlist.conf"));
 		exit(1);
 	}

@@ -43,3 +43,23 @@ void getLangCode(char langcode[],int langnr) {
 		strcpy(langcode,languages[langnr -1]);
 	}
 }
+
+char *getLangCode2(int langnr) {
+
+	if (langnr == 0) {
+		//fprintf(stderr,"Got langnr 0\n");
+		//langcode[0] = '\0';
+		return NULL;
+	}
+	else if (langnr > nrOfLanguage) {
+		//fprintf(stderr,"langnr %i larger then max (%i)",langnr,nrOfLanguage);
+		//langcode[0] = '\0';
+		return NULL;
+
+	}
+	else {
+		//strcpy(langcode,languages[langnr -1]);
+		return languages[langnr -1];
+	}
+}
+

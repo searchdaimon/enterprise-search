@@ -119,7 +119,7 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
         memset(&(my_addr.sin_zero), '\0', 8); // zero the rest of the struct
 
         if (bind(sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1) {
-	    fprintf(stderr,"Canr bind to port %i\n",PORT);
+	    fprintf(stderr,"Can't bind to port %i\n",PORT);
             perror("bind");
             exit(1);
         }
@@ -131,7 +131,7 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
 
 	
 	// http://groups.google.com/groups?hl=no&lr=&c2coff=1&rls=GGLD,GGLD:2004-19,GGLD:en&selm=87iuv0b7td.fsf%40erlenstar.demon.co.uk&rnum=2
-	// bare ignorerer signalet og lar barne då hvis dette er ok. På rare platformer kan vi få problemer
+	// bare ignorerer signalet og lar barne dø hvis dette er ok. På rare platformer kan vi få problemer
 	// må i såfalt gjøre om flagget
 	#ifdef CANT_IGNORE_SIGCHLD
 		//sliter met at denne ikke fungerer. Må fikses om vi skal kjøre på andre plattformer
@@ -184,12 +184,16 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
 			printf("runing in debug mode. Wont fork. (problematik to us gdb then)\n");
                 	sh_pointer(new_fd);
 			close(new_fd);
+			printf("sconnect: socket closed\n");
+
 		#endif
 	    #else
 		#ifdef NO_FORK
-			printf("Not in debug mode, but Wont fork. (problematik to us gdb then)\n");
+			printf("Not in debug mode, but Wont fork.\n");
                         sh_pointer(new_fd);
                         close(new_fd);
+			printf("sconnect: socket closed\n");
+
 		#else 
 		    	printf("runing in normal fork mode\n");
 
@@ -403,7 +407,12 @@ int recvall(int sockfd, void *buf, int len) {
 	#endif
 
 	while(total < len) {
-		if ((n = read(sockfd, buf+total, bytesleft)) == -1) {
+
+		//runarb: 17.07.2007
+		//hum, når vi bruker bloacking i/o så skal det vel bare bli 0 hvis det uikke er mere data og lese? 
+		//read skal altid blokke til det er noe data og lese, uanset hvor lang tid det tar
+		//if ((n = read(sockfd, buf+total, bytesleft)) == -1) {
+		if ((n = read(sockfd, buf+total, bytesleft)) <= 0) {
 			return 0;
 		}
 

@@ -108,7 +108,9 @@ ACL:			{ /*printf("ACL:\n");*/			is_acl = 1;	BEGIN(DOMAIN); }
 
 char** parseacl_read_access( char *acl_code )
 {
+    #ifdef DEBUG
     printf("acl: %s\n", acl_code);
+    #endif
     user = NULL;
     abuf_pos = 0;
     dbuf_pos = 0;

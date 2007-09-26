@@ -137,7 +137,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 	 )
 {
 
-	printf("aaaaaaaa \"%s\"\n",dir_name);
+	printf("dir \"%s\"\n",dir_name);
 
     int                 dh, dirc, dirc_total;
     char                dblock[512], *dbuf, *dbuf_temp;
@@ -219,8 +219,10 @@ int smb_recursive_get( char *prefix, char *dir_name,
                     else
                         {
 			    parsed_acl = parseacl_read_access( value );
+			    #ifdef DEBUG
 			    printf("crawlsmb.c: Users allowed \t'%s'\n", parsed_acl[0]);
 			    printf("crawlsmb.c: Users denied  \t'%s'\n", parsed_acl[1]);
+			    #endif
                         }
 
                     if ( smbc_stat(full_entry_name, &file_stat) < 0 )
@@ -256,9 +258,12 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
 			cleanresourceUnixToWin(crawldocumentExist.documenturi);
 
+			#ifdef DEBUG
 			printf("times: st_atime %s ",ctime(&file_stat.st_atime));
 			printf("times: st_mtime %s ",ctime(&file_stat.st_mtime));
 			printf("times: st_ctime %s ",ctime(&file_stat.st_ctime));
+			#endif
+
 
                     	if (dirp->smbc_type == SMBC_DIR) {
 			    smb_recursive_get( prefix, entry_name, collection, documentExist, documentAdd , documentError, timefilter,no_auth);

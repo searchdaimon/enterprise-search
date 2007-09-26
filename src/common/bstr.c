@@ -366,8 +366,12 @@ void FreeSplitList(char **List) {
   int Count;
 
   Count = 0;
-  while( (List[Count] != NULL) )
+  while( (List[Count] != NULL) ) {
     free(List[Count++]);
+  }
+
+  //runarb: blir ikke lesten freed riktig??
+  free(List);
 
   return;
 } /* FreeSplitList() */

@@ -41,10 +41,13 @@ int global_bbdnport;
 int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],int *nrofcollections);
 
 int documentExist(struct collectionFormat *collection, struct crawldocumentExistFormat *crawldocumentExist) {
+	#ifdef DEBUG
 	printf("documentExist: start\n");
+	#endif
 
-
+	#ifdef DEBUG
 	printf("documentExist: end\n");
+	#endif
 
 	return 0;
 }
@@ -67,9 +70,13 @@ int documentError(int level, const char *fmt, ...) {
 }
 
 int documentAdd(struct collectionFormat *collection, struct crawldocumentAddFormat *crawldocumentAdd) {
+	#ifdef DEBUG
 	printf("documentAdd start\n");
+	#endif
 
-	printf("uri %s, title %s\n",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).title);
+	#ifdef DEBUG
+	printf("documentAdd: uri %s, title %s\n",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).title);
+	#endif
 
 	//send it inn
 	if (!bbdn_docadd((*collection).socketha,
@@ -103,8 +110,9 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 		blog(LOGACCESS,1,"crawled url: \"%s\", size: %i b, ACL: allow \"%s\", denied \"%s\"\n",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).dokument_size,(*crawldocumentAdd).acl_allow,(*crawldocumentAdd).acl_denied);
 	}
 
-
+	#ifdef DEBUG
 	printf("documentAdd end\n");
+	#endif
 
 	return 1;
 }

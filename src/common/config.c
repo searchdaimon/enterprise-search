@@ -5,20 +5,30 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "define.h"
+#include "config.h"
 
-struct _configdataFormat {
-	char configkey[255];
-	char configvalue[255];
-};
 
 struct _configdataFormat *_configdata;
 int _configdatanr;
+time_t lastConfigRead = 0;
 
-int bconfig_init() {
+//int bconfig_init(int mode) {
+void bconfig_flush(int mode) {
 
 
+
+
+
+	time_t now = time(NULL);
+
+	//sjekker om vi har den alerede
+	if ((lastConfigRead != 0) && (mode == CONFIG_CACHE_IS_OK) && ((lastConfigRead + cache_time) > now)) {
+		printf("have config in cache. Wint query db again\n");
+		return;
+	}
 	//bb har confg i mysql
         #ifdef BLACK_BOKS
 
@@ -31,13 +41,11 @@ int bconfig_init() {
         MYSQL_ROW mysqlrow;
 
  	#ifdef WITH_THREAD
-                printf("starting whth thread\n");
                 my_init();
                 if (mysql_thread_safe() == 0) {
                         printf("The MYSQL client is'en compiled at thread safe! This will broboble crash.\n");
                 }
         #else
-                printf("starting single thread version\n");
         #endif
 
 
@@ -76,6 +84,9 @@ int bconfig_init() {
 	mysql_free_result(mysqlres);
 	mysql_close(&demo_db);
         #endif
+
+	lastConfigRead = now;
+
 }
 
 

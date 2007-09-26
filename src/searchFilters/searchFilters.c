@@ -82,14 +82,19 @@ int filterSameCrc32(int showabal,struct SiderFormat *CurentSider, struct SiderFo
 	int count = 0;
 
 	for (i=0;i<showabal;i++) {
-		if (Sider[i].DocumentIndex.crc32 == (*CurentSider).DocumentIndex.crc32) {
-			#ifdef DEBUG
-			printf("crc32 is the same for Url \"%s\" == \"%s\"\n",Sider[i].DocumentIndex.Url,(*CurentSider).DocumentIndex.Url);
-			#endif
-			return 1;
 
-			++count;
-		}		
+		if (!Sider[i].deletet) {
+
+			if (Sider[i].DocumentIndex.crc32 == (*CurentSider).DocumentIndex.crc32) {
+				#ifdef DEBUG
+				printf("crc32 is the same for Url \"%s\" == \"%s\"\n",Sider[i].DocumentIndex.Url,(*CurentSider).DocumentIndex.Url);
+				#endif
+				return 1;
+
+				++count;
+			}		
+
+		}
 	}
 
 	return 0;
@@ -104,6 +109,8 @@ int filterSameDomainID(int showabal,struct SiderFormat *CurentSider, struct Side
 	for (i=0;i<showabal;i++) {
 
 		if (!Sider[i].deletet) {
+
+			printf("filterSameDomainID: showabal %i, count %iSider %hu, CurentSider %hu\n",showabal,count,Sider[i].DomainID,(*CurentSider).DomainID);
 
 			if (Sider[i].DomainID == (*CurentSider).DomainID) {
 				#ifdef DEBUG
@@ -132,15 +139,33 @@ int filterSameUrl(int showabal,char url[], struct SiderFormat *Sider) {
 	int i;
 
 	for (i=0;i<showabal;i++) {
-		if (strcmp(Sider[i].url,url) == 0) {
-			//printf("Url is the same\n");
-			return 1;
-		}		
+
+		if (!Sider[i].deletet) {
+
+			if (strcmp(Sider[i].url,url) == 0) {
+				//printf("Url is the same\n");
+				return 1;
+			}		
+
+		}
 	}
 	
 	return 0;
 }
 
+
+
+int filterResponseCode(struct SiderFormat *CurentSider) {
+	if (CurentSider->DocumentIndex.response > 302) {
+		#ifdef DEBUG
+		printf("filterResponseCode:page har bad respons code %i\n",CurentSider->DocumentIndex.response);
+		#endif
+
+		return 1;
+	}
+
+	return 0;
+}
 
 //fjerner sider med samme IPadresse
 int filterSameIp(int showabal,struct SiderFormat *CurentSider, struct SiderFormat *Sider) {
