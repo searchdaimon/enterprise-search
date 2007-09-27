@@ -10,180 +10,140 @@ BEGIN {
 use Boitho::Infoquery;
 use DBI;
 use Data::Dumper;
+use SD::SimpleLog;
+use SD::Sql::ConnSimple qw(sql_setup get_dbh sql_exec
+        sql_fetch_results sql_fetch_single);
 
-use constant RECHECK_DELAY => 300; # 5 min
+use constant RECRAWL_RATE => 300; # 5 min
+use constant GC_RATE      => 30 * 24 * 60 * 60; # 30 days
 use constant LOG_FILE          => $ENV{'BOITHOHOME'} . "/logs/crawl_watch.log";
-use constant SQL_CONFIG_FILE   => $ENV{'BOITHOHOME'} . "/config/setup.txt";
 use constant PATH_TO_INFOQUERY => $ENV{'BOITHOHOME'} . "/bin/infoquery";
+
+use constant CONF_LAST_GC    => 'last_infoquery_gc';
+use constant CONF_CRAWL_RATE => 'default_crawl_rate';
 
 use constant DEBUG => 0;
 
-my $no_logging = 0; # Setting this to true disables logging.
+my $enable_logging = 1;
+my $log = SD::SimpleLog->new(LOG_FILE, $enable_logging);
 
-while (1) { #main loop 
-	my $next_crawl = undef;
-	logwrite("Starting new crawl check.");
-	
-	my $dbh = get_db_connection();
-	my @collections = fetch_collections($dbh);
-	$next_crawl = crawl_collections(@collections);
-	$dbh->disconnect;
+my %setup = sql_setup();
+while (1) {
+    my ($next_crawl, $next_gc) = undef;
+    $log->write("Starting check.");
 
-	if (defined $next_crawl and $next_crawl < RECHECK_DELAY) {
-	    logwrite("Crawl check done. Next scheduled in in ", 
-		int($next_crawl / 60), " minutes");
+    my $dbh = get_dbh(%setup);
 
-	    sleep $next_crawl;
-	}
-	else {
-	    logwrite("Crawl check done. Next scheduled in in ", 
-		int(RECHECK_DELAY / 60), " minutes.");
-	    
-	    sleep RECHECK_DELAY;
-	}
+
+    my @collections = fetch_collections($dbh);
+    $next_crawl = crawl_collections(@collections);
+    $next_gc = garbage_collect($dbh);
+
+    $dbh->disconnect;
+
+    my $wakeup = wakeup_time($next_crawl, $next_gc);
+    $log->write("Check done, now sleeping for ", 
+        int($wakeup / 60), " minutes.");
+
+    sleep $wakeup;
 }
 
-##
-# Write to log file. Warns and disables logging on fail.
-#
-# Parameters:
-#   @data - String(s) to write.
-sub logwrite {
-    my @data = @_;
-
-    return if $no_logging;
-
-    my $success = open my $logh, ">>", LOG_FILE;
-
-    if ($success) { 
-		my $time = gmtime(time());
-		print {$logh} "$time - ";
-		print {$logh} join(q{}, @data);
-		print {$logh} "\n";
+sub wakeup_time {
+    my ($next_crawl, $next_gc) = @_;
+    
+    if ((not defined $next_crawl)
+            or ($next_crawl > RECRAWL_RATE)) {
+        $next_crawl = RECRAWL_RATE;
     }
-    else {
-	warn "Unable to write to logfile: $!. Disableing logging.";
-	$no_logging = 1;
+
+    return $next_crawl unless defined $next_gc;
+
+    return ($next_crawl < $next_gc) 
+        ? $next_crawl : $next_gc;
+}
+
+sub garbage_collect {
+    my $dbh = shift;
+    my $last_gc = bb_config_get($dbh, CONF_LAST_GC);
+    unless ($last_gc) {
+        $log->write("WARNING: ", CONF_LAST_GC, " not set. Skipping GC.");
+        return;
     }
     
-    close $logh;
-    1;
-}
+    if ($last_gc + GC_RATE < time()) {
+        my $h_last_gc = gmtime $last_gc;
+        $log->write("Garbage collecting. (last GC was at $h_last_gc)");
+        #TODO: Infoquery GC cmd.
+        $last_gc = time();
+        bb_config_set($dbh, CONF_LAST_GC, $last_gc);
+    }
 
-## 
-# Get db connection values from a config file.
-# Taken directly from Sql::Sql
-sub read_config {
-        my %settings;
-
-        open my $setup, SQL_CONFIG_FILE
-		 or croak print "Can't open config file: $!";
-        my @data = <$setup>;
-        close $setup;
-
-        foreach my $line (@data) {
-                my ($name, $value) = split(/=/, $line);
-                chomp($value) if $value;
-                $settings{$name} = $value if ($name and $value);
-        }
-
-        $settings{'port'} = 3306 unless($settings{'port'});
-
-        return ( $settings{'database'}, 
-		 $settings{'server'}, 
-		 $settings{'port'},
-		 $settings{'user'},
-		 $settings{'Password'} );
-}
-
-sub get_db_connection {
-	my ($db, $host, $port, $user, $pass) = &read_config;
-        my $dbh = DBI->connect("DBI:mysql:database=$db;host=$host;port=$port", $user, $pass)
-                or croak("$DBI::errstr");
-
-	return $dbh;
+    return $last_gc + GC_RATE;
 }
 
 ##
 # Fetches collections that need to be crawled,
-# or need to be crawled soon (soon being less than RECHECK_DELAY)
+# or need to be crawled soon (soon being less than RECRAWL_RATE)
 sub fetch_collections {
-	my $dbh = shift;
+    my $dbh = shift;
 
-	##
-	# Collections that have not been crawled yet.  my $fetch_uncrawled = sub {
-	my $fetch_uncrawled = sub {
-		my $query = "SELECT collection_name, UNIX_TIMESTAMP(last)
-			FROM shares
-			WHERE active = 1 AND
-			ISNULL(last)";
-		return fetch_results($dbh, $query);
-	};
+    ##
+    # Collections that have not been crawled yet.  my $fetch_uncrawled = sub {
+    my $fetch_uncrawled = sub {
+        my $query = "SELECT collection_name, UNIX_TIMESTAMP(last)
+            FROM shares
+            WHERE active = 1 AND
+            ISNULL(last)";
+        return sql_fetch_results($dbh, $query);
+    };
 
-	##
-	# Collections that don't have a rate set. Timeout is determined by default rate.
-	my $fetch_default_rate = sub {
-		my $default_rate = fetch_default_rate($dbh);
-		my $rate_in_sec = $default_rate * 60;
-		my $recheck = RECHECK_DELAY;
-		my $query = "" .
-		"SELECT collection_name, UNIX_TIMESTAMP(last), rate
-		 FROM shares
-		 WHERE active = 1 AND rate = 0 AND ( " . # share is active
-			"(UNIX_TIMESTAMP(last) + $rate_in_sec) <= UNIX_TIMESTAMP(NOW())" . # share needs recrawl
-			"OR " .
-			"(UNIX_TIMESTAMP(last) + $rate_in_sec) <= (UNIX_TIMESTAMP(NOW()) + $recheck)" . # share needs recrawl within RECHECK_DELAY
-		")";
+    ##
+    # Collections that don't have a rate set. Timeout is determined by default rate.
+    my $fetch_default_rate = sub {
+        my $default_rate = bb_config_get($dbh, CONF_CRAWL_RATE);
+        my $rate_in_sec = $default_rate * 60;
+        my $recrawl = RECRAWL_RATE;
+        my $query = "" .
+            "SELECT collection_name, UNIX_TIMESTAMP(last), rate
+            FROM shares
+            WHERE active = 1 AND rate = 0 AND ( " . # share is active
+                    "(UNIX_TIMESTAMP(last) + $rate_in_sec) <= UNIX_TIMESTAMP(NOW())" . # share needs recrawl
+                    "OR " .
+                    "(UNIX_TIMESTAMP(last) + $rate_in_sec) <= (UNIX_TIMESTAMP(NOW()) + $recrawl)" . # share needs recrawl within RECRAWL_RATE
+                ")";
 		
-		my @results = fetch_results($dbh, $query);
-		return add_next_crawl($dbh, @results);
-	};
+	my @results = sql_fetch_results($dbh, $query);
+	return add_next_crawl($dbh, @results);
+    };
 	
-	##
-	# Collections that have a custom rate set, which timeout is determined from.
-	my $fetch_custom_rate = sub {
-		my $recheck = RECHECK_DELAY;
-		my $query = "".
-		"SELECT collection_name, UNIX_TIMESTAMP(last), rate
-		 FROM shares
-		 WHERE active = 1 AND rate != 0 AND (". # share is active
-			"( (UNIX_TIMESTAMP(last) + (rate * 60)) <= UNIX_TIMESTAMP(NOW()) )". # share needs recrawl
-			"OR ".
-			"( (UNIX_TIMESTAMP(last) + (rate * 60)) <= (UNIX_TIMESTAMP(NOW()) + $recheck) )". # share needs recrawl within RECHECK_DELAY
-		")";
-		my @results = fetch_results($dbh, $query);
-		return add_next_crawl($dbh, @results);
-	};
+    ##
+    # Collections that have a custom rate set, which timeout is determined from.
+    my $fetch_custom_rate = sub {
+        my $recrawl = RECRAWL_RATE;
+        my $query = "".
+            "SELECT collection_name, UNIX_TIMESTAMP(last), rate
+            FROM shares
+            WHERE active = 1 AND rate != 0 AND (". # share is active
+                "( (UNIX_TIMESTAMP(last) + (rate * 60)) <= UNIX_TIMESTAMP(NOW()) )". # share needs recrawl
+                "OR ".
+                "( (UNIX_TIMESTAMP(last) + (rate * 60)) <= (UNIX_TIMESTAMP(NOW()) + $recrawl) )". # share needs recrawl within RECRAWL_RATE
+            ")";
+        my @results = sql_fetch_results($dbh, $query);
+        return add_next_crawl($dbh, @results);
+    };
 
-	my @uncrawled    = &{$fetch_uncrawled};
-	my @default_rate = &{$fetch_default_rate};
-	my @custom_rate  = &{$fetch_custom_rate};
-	
-	logwrite("Collections needing crawl, now or soon:", 
-		"\nUncrawled: ", Dumper(\@uncrawled),
-		"\nTime by default rate: ", Dumper(\@default_rate),
-		"\nTime by custom rate: ", Dumper(\@custom_rate));
+    my @uncrawled    = &{$fetch_uncrawled};
+    my @default_rate = &{$fetch_default_rate};
+    my @custom_rate  = &{$fetch_custom_rate};
 
-	my @collections = (@uncrawled, @default_rate, @custom_rate);
-	
-	return @collections;
-}
+    $log->write("Collections needing crawl, now or soon:", 
+        "\nUncrawled: ", Dumper(\@uncrawled),
+        "\nTime by default rate: ", Dumper(\@default_rate),
+        "\nTime by custom rate: ", Dumper(\@custom_rate));
 
-##
-# Fetch db results for given query and binds
-# to arrayref
-sub fetch_results {
-	my ($dbh, $query, @binds) = @_;
-	my $sth = $dbh->prepare($query)
-		or croak "prepare:", $dbh->errstr;
-	$sth->execute(@binds);
-	
-	my @results;
-	while (my $res = $sth->fetchrow_hashref) {
-		push @results, $res;
-	}
+    my @collections = (@uncrawled, @default_rate, @custom_rate);
 
-	return @results;
+    return @collections;
 }
 
 ##
@@ -191,56 +151,65 @@ sub fetch_results {
 #
 # Attributes:
 #	dbh - db handler
-#	collections - array with collection hashrefs (from fetch_results).
-#
-# See <fetch_results>
+#	collections - array with collection hashrefs
 sub add_next_crawl {
-	my $dbh = shift;
-	my @collections = @_;
-	my $default_rate = fetch_default_rate($dbh);
-	debug("add_next_crawl: default_rate ", $default_rate);
+    my $dbh = shift;
+    my @collections = @_;
+    my $default_rate = bb_config_get($dbh, CONF_CRAWL_RATE);
+    debug("add_next_crawl: default_rate ", $default_rate);
 
-	foreach my $coll_ref (@collections) {
-		my $last_crawl = $coll_ref->{'UNIX_TIMESTAMP(last)'};
-		debug("Add next to", Dumper($coll_ref));
+    foreach my $coll_ref (@collections) {
+        my $last_crawl = $coll_ref->{'UNIX_TIMESTAMP(last)'};
+        debug("Add next to", Dumper($coll_ref));
 
-		unless ($last_crawl) {
-			# coll is uncrawled.
-			debug("add_next_crawl: collection ", 
-					$coll_ref->{'collection_name'}, " uncrawled. Ignoring.");
-			next;
+        unless ($last_crawl) {
+            # coll is uncrawled.
+            debug("add_next_crawl: collection ", 
+                    $coll_ref->{'collection_name'}, " uncrawled. Ignoring.");
+            next;
 
-		}
+        }
 
-		if ($coll_ref->{'rate'}) {
-			# coll has a custom rate.
-			my $next_crawl = $last_crawl + ($coll_ref->{'rate'} * 60);
-			$coll_ref->{'next'} = $next_crawl;
-		}
+        if ($coll_ref->{'rate'}) {
+            # coll has a custom rate.
+            my $next_crawl = $last_crawl + ($coll_ref->{'rate'} * 60);
+            $coll_ref->{'next'} = $next_crawl;
+        }
 
-		else {
-			# we use default rate
-			my $next_crawl = $last_crawl + ($default_rate * 60);
-			$coll_ref->{'next'} = $next_crawl;
-		}
-		
-	}
+        else {
+            # we use default rate
+            my $next_crawl = $last_crawl + ($default_rate * 60);
+            $coll_ref->{'next'} = $next_crawl;
+        }
 
-	return @collections;
+    }
+
+    return @collections;
 }
 
 ##
-# Gets default rate from db.
-sub fetch_default_rate {
-	my $dbh = shift;
-	my $query = "SELECT configvalue FROM config
-			WHERE configkey = 'default_crawl_rate'";
-	my $sth = $dbh->prepare($query)
-		or croak "prepare" , $dbh->errstr;
-	$sth->execute;
-	my $rate = $sth->fetchrow_array;
-	carp "Default crawl rate not set" unless $rate;
-	return $rate;
+# Read configvalue from DB.
+sub bb_config_get {
+    my ($dbh, $confkey) = @_;
+    my $query = "SELECT configvalue FROM config
+                    WHERE configkey = ?";
+    my $val = sql_fetch_single($dbh, $query, $confkey);
+    $log->write("WARNING: Configkey $confkey not set in db.") 
+        unless $val;
+
+    return $val;
+}
+
+##
+# Update configvalue in db.
+sub bb_config_set {
+    my ($dbh, $confkey, $value) = @_;
+    my $query = "UPDATE config
+        SET configvalue = ? 
+        WHERE configkey = ?";
+    
+    sql_exec($dbh, $query, $value, $confkey);
+    1;
 }
 
 ## 
@@ -250,41 +219,43 @@ sub fetch_default_rate {
 # the function returns time in seconds till they should be.
 # -- If not, the function returns false.
 sub crawl_collections {
-	my @collections = @_;
-	my $now = time();
-	my $next_run = undef;
+    my @collections = @_;
+    my $now = time();
+    my $next_run = undef;
 
-	foreach my $coll_ptr (@collections) {
-		my ($collection, $next_crawl) = ($coll_ptr->{'collection_name'}, $coll_ptr->{'next'});
-		
-		unless (defined $coll_ptr->{'UNIX_TIMESTAMP(last)'}) {
-			# Not crawled yet, needs crawl.
-			debug("crawl_collections: $collection not crawled yet. Crawling.");
-			crawl($collection);
-			next;
+    foreach my $coll_ptr (@collections) {
+        my ($collection, $next_crawl) 
+            = ($coll_ptr->{'collection_name'}, $coll_ptr->{'next'});
 
-		}
+        unless (defined $coll_ptr->{'UNIX_TIMESTAMP(last)'}) {
+            # Not crawled yet, needs crawl.
+            debug("crawl_collections: $collection not crawled yet. Crawling.");
+            crawl($collection);
+            next;
 
-		if ($next_crawl <= $now) {
-			# Time to crawl it.
-			debug("crawl_collection: $collection needs a crawl.");
-			crawl($collection);
-		}
+        }
 
-		else {
-			# Should be crawled soon.
-			my $crawled_in = ($next_crawl - $now);
-			logwrite("Not crawling $collection. Shall be crawled in ", $crawled_in / 60, " minutes.");
+        if ($next_crawl <= $now) {
+            # Time to crawl it.
+            debug("crawl_collection: $collection needs a crawl.");
+            crawl($collection);
+        }
 
-			unless (defined $next_run) {
-				$next_run = $crawled_in;
-			}
-			elsif ($crawled_in < $next_run) {
-				$next_run = $crawled_in;
-			}
-		}
-	}
-	return $next_run;
+        else {
+            # Should be crawled soon.
+            my $crawled_in = ($next_crawl - $now);
+            $log->write("Not crawling $collection. Shall be crawled in ", 
+                $crawled_in / 60, " minutes.");
+
+            unless (defined $next_run) {
+                $next_run = $crawled_in;
+            }
+            elsif ($crawled_in < $next_run) {
+                $next_run = $crawled_in;
+            }
+        }
+    }
+    return $next_run;
 }
 
 ##
@@ -293,22 +264,21 @@ sub crawl_collections {
 # Attributes:
 #	collection - collection name
 sub crawl {
-	my $collection = shift;
-	my $infoquery = Boitho::Infoquery->new(PATH_TO_INFOQUERY);
-	if ($infoquery->crawlCollection($collection)) {
-		logwrite("Crawling $collection");
-	}
-	else {
-		my $error = "";
-		if ($infoquery->get_error) {
-			$error = $infoquery->get_error;
-		}
-		logwrite("Unable to crawl $collection, $error");
-	}
-	1;
+    my $collection = shift;
+    my $infoquery = Boitho::Infoquery->new(PATH_TO_INFOQUERY);
+    if ($infoquery->crawlCollection($collection)) {
+        $log->write("Crawling $collection");
+    }
+    else {
+        my $error = "";
+        if ($infoquery->get_error) {
+            $error = $infoquery->get_error;
+        }
+        $log->write("Unable to crawl $collection, $error");
+    }
+    1;
 }
 
 sub debug {
-
-	if (DEBUG) { print "DEBUG: ", join('', @_), "\n" }
+    if (DEBUG) { print "DEBUG: ", join('', @_), "\n" }
 }
