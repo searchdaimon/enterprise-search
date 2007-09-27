@@ -22,15 +22,18 @@ sub new {
     # init
     ($rpm_dir, $wrapper_path) = @_;
 
-    if (-e $rpm_dir and !(-d $rpm_dir)) {
-	croak "rpm dir $rpm_dir exists, but is not a directory. It must be a directory.";
-    }
+    if (defined $rpm_dir) {
+        if (-e $rpm_dir and !(-d $rpm_dir)) {
+            croak "rpm dir $rpm_dir exists, but is not a directory.
+                It must be a directory.";
+        }
 
-    unless (-d $rpm_dir) {
-	carp "rpm folder $rpm_dir does not exist. Making it.";
+        unless (-d $rpm_dir) {
+            carp "rpm folder $rpm_dir does not exist. Making it.";
 
-	eval    { mkpath($rpm_dir) };
-	if ($@) { croak "Unable to create rpm dir $rpm_dir: $@"	}
+            eval    { mkpath($rpm_dir) };
+            if ($@) { croak "Unable to create rpm dir $rpm_dir: $@"	}
+        }
     }
 
     croak "Wrapper path \"$wrapper_path\" provided is not executable"
@@ -115,6 +118,7 @@ sub install {
 ##
 # Lists rpm files in $rpm_dir.
 sub list_rpm_dir {
+    croak "rpm dir not defined" unless $rpm_dir;
     my @files = bsd_glob("$rpm_dir/*rpm");
     for my $f (@files) { 
 	$f = basename($f);
