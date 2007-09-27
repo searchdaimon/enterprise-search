@@ -1,15 +1,15 @@
 
 boitho-ad_name = boitho-ad
-boitho-ad_version = 0.2.3
+boitho-ad_version = 0.3.0
 
 boitho-searchdbb_name = boitho-searchdbb
-boitho-searchdbb_version = 5.4.53
+boitho-searchdbb_version = 5.5.0
 
 boitho-crawlManager_name = boitho-crawlManager
-boitho-crawlManager_version = 1.3.27
+boitho-crawlManager_version = 1.4.0
 
 boitho-boitho-bbdn_name = boitho-bbdn
-boitho-boitho-bbdn_version = 1.7.5
+boitho-boitho-bbdn_version = 1.8.0
 
 boitho-fileFilter_name = boitho-fileFilter
 boitho-fileFilter_version = 1.3.1
@@ -18,19 +18,19 @@ boitho-base_name = boitho-base
 boitho-base_version = 1.3.0
 
 boitho-bbadmin_name = boitho-bbadmin
-boitho-bbadmin_version = 2.7.30
+boitho-bbadmin_version = 2.8.1
 
 boitho-everrun_name = boitho-everrun
 boitho-everrun_version = 2.0.0
 
 boitho-infoquery_name = boitho-infoquery
-boitho-infoquery_version = 2.0.1
+boitho-infoquery_version = 2.0.2
 
 boitho-iindex_name = boitho-iindex
-boitho-iindex_version = 2.0.2
+boitho-iindex_version = 2.0.9
 
 boitho-webclient_name = boitho-webclient
-boitho-webclient_version = 6.0.13
+boitho-webclient_version = 6.0.16
 
 boithobb-setuid_name = boithobb-setuid
 boithobb-setuid_version = 1.0.3
@@ -41,8 +41,11 @@ boithobb-bbadminhtaccess_version = 1.0.0
 boithobb-crawl_watch_name = boithobb-crawl_watch
 boithobb-crawl_watch_version = 1.0.1
 
+boithobb-bbAutoUpdate_name = bbAutoUpdate
+boithobb-bbAutoUpdate_version = 1.0.0
 
-all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb
+
+all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate 
 
 setuidbb:
 	perl rpmmagic.pl $(boithobb-setuid_name) $(boithobb-setuid_version) $(BOITHOHOME) /home/boitho/boithoTools setuid
@@ -56,7 +59,7 @@ webclient:
 	rpm -bb $(boitho-webclient_name).spec
 
 iindex:
-	perl rpmmagic.pl $(boitho-iindex_name) $(boitho-iindex_version) $(BOITHOHOME) /home/boitho/boithoTools bin/IndexerLotbb bin/LotInvertetIndexMaker2 bin/mergeUserToSubname bin/mergeIIndex perl/cleanLots.pl
+	perl rpmmagic.pl $(boitho-iindex_name) $(boitho-iindex_version) $(BOITHOHOME) /home/boitho/boithoTools bin/IndexerLotbb bin/LotInvertetIndexMaker2 bin/mergeUserToSubname bin/mergeIIndex bin/readIIndex perl/cleanLots.pl
 
 	rpm -bb $(boitho-iindex_name).spec
 
@@ -82,6 +85,10 @@ crawl_watch:
 
 	rpm -bb $(boithobb-crawl_watch_name).spec
 
+bbAutoUpdate:
+	perl rpmmagic.pl --initd bbAutoUpdate $(boithobb-bbAutoUpdate_name) $(boithobb-bbAutoUpdate_version) $(BOITHOHOME) /home/boitho/boithoTools perl/bbAutoUpdate.pl
+
+	rpm -bb $(boithobb-bbAutoUpdate_name).spec
 
 everrun:
 	perl rpmmagic.pl --post "install -d -o boitho /coredumps/saved" --initd everrun $(boitho-everrun_name) $(boitho-everrun_version) $(BOITHOHOME) /home/boitho/boithoTools bin/everrun
@@ -94,7 +101,7 @@ infoquery:
 	rpm -bb $(boitho-infoquery_name).spec
 
 searchdbb:
-	perl rpmmagic.pl --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumbbb cgi-bin/ShowCache
+	perl rpmmagic.pl --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumbbb cgi-bin/ShowCache config/filetypes.eng.conf config/filetypes.nbo.conf config/dispatcher.conf
 
 	rpm -bb $(boitho-searchdbb_name).spec
 
