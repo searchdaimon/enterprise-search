@@ -12,10 +12,12 @@ if ($#ARGV == -1) {
   my $post = '';
   my $initd;
   my $verbose;
+  my $requires;
 
-  my $result = GetOptions ("pre=s" => \$pre,    # rpm pre 
-                        "post=s"   => \$post,      # rpm post
-                        "initd=s"   => \$initd,      # rpm post
+  my $result = GetOptions ("pre=s" => \$pre,    	# rpm pre 
+                        "post=s"   => \$post,      	# rpm post
+                        "initd=s"   => \$initd,      	# rpm post
+			"requires=s" => \$requires, 	# rpm requires
 			"verbose"  => \$verbose);
 
 my $name = shift @ARGV or die("please suply a name");
@@ -152,6 +154,11 @@ system($command);
 #flytter til redhat mappen
 system("mv $tarfile ~/redhat/SOURCES/");
 
+#prefikser
+if ($requires ne '') {
+	$requires = "requires: " . $requires;
+}
+
 #lager spec file
 open(INF,"defult.spec") or die("defult.spec: $!");
 
@@ -162,11 +169,15 @@ close("INF");
 my $spec = join("",@arr);
 
 
+
 $spec =~ s/#name/$name/g;
 $spec =~ s/#version/$version/g;
 $spec =~ s/#filesinstal/$filesinstal/g;
 $spec =~ s/#fileslist/$fileslist/g;
 $spec =~ s/#destdir/$dest/g;
+
+
+$spec =~ s/#requires/$requires/g;
 
 $spec =~ s/#rpm_pre/$pre/g;
 $spec =~ s/#rpm_post/$post/g;
