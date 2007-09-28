@@ -67,6 +67,7 @@
 [% IF share.host %]<input type="hidden" value="[% share.host %]" name="share.host" />[% END %]
 [% IF share.path %]<input type="hidden" value="[% share.path %]" name="share.path" />[% END %]
 [% IF share.resource %]<input type="hidden" value="[% share.resource %]" name="share.resource" />[% END %]
+[% IF share.auth_id %]<input type="hidden" value="[% share.auth_id %]" name="share.auth_id" />[% END %]
 [% IF from_scan %]<input type="hidden" value="[% from_scan %]" name="from_scan" />[% END %]
 
 <input type="submit" name="submit_first_form" value="Continue to details ->" />

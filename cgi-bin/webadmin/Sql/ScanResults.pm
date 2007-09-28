@@ -5,41 +5,36 @@ use Carp;
 use Sql::Sql;
 use Data::Dumper;
 use Sql::Connectors;
+use Sql::Abstract;
 
 my $table = "scanResults";
 my @valid = qw(connector time range result_xml done);
 my $dbh;
 
-sub new {
-	my $class = shift;
-	$dbh = shift;
-	my $self = {};
-	bless $self, $class;
-	$self->_init();
-	return $self;
-}
+our @ISA = qw(Sql::Abstract);
 
-sub _init($) {
+sub _init {
 	my $self = shift;
+        $dbh = $self->{dbh};
 	$self->{'sqlConnectors'} = Sql::Connectors->new($dbh);
 }
 
 sub insert_new_results {
-	my ($self, $connector, $range) = @_;
-	
-	$connector
-		= $self->_get_connector_id($connector);
-	
-	unless ($connector) {
-		carp "Cannot add result, unknown connector.";
-		return;
-	}
+    my ($self, $connector, $range, $auth_id) = @_;
 
-	my $query = "INSERT INTO $table (connector, range, time)	
-			VALUES (?, ?, NOW())";
+    $connector
+        = $self->_get_connector_id($connector);
 
-	Sql::Sql::simple_execute($dbh, $query, [$connector, $range]);
- 	return $dbh->{ q{mysql_insertid} };
+    unless ($connector) {
+        carp "Cannot add result, unknown connector.";
+        return;
+    }
+
+    my $query = "INSERT INTO $table (connector, range, time, authid)	
+        VALUES (?, ?, NOW(), ?)";
+
+    Sql::Sql::simple_execute($dbh, $query, [$connector, $range, $auth_id]);
+    return $dbh->{ q{mysql_insertid} };
 }
 
 sub update_results {
@@ -121,6 +116,13 @@ sub exists($$) {
 	my $query = "SELECT id FROM $table 
 			WHERE id = ?";
 	return Sql::Sql::single_fetch($dbh, $query, $id);
+}
+
+sub get_authid {
+    my ($self, $id) = @_;
+    my $query = "SELECT authid FROM $table
+        WHERE id = ?";
+    return $self->sql_single($query, $id);
 }
 
 ## For some functions, the connector needs to be an ID.

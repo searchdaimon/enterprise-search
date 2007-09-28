@@ -6,6 +6,7 @@ use Sql::Connectors;
 use Sql::CollectionAuth;
 use Sql::ShareGroups;
 use Sql::ShareUsers;
+use Sql::ScanResults;
 #use Modules::Boitho::Infoquery;
 use Boitho::Infoquery;
 use Data::Dumper;
@@ -31,12 +32,13 @@ sub new {
 
 sub _init {
 	my ($self, $dbh, $state) =  (@_);
-	$self->{'dbh'} = $dbh;
-	$self->{'state'} = $state;
-	$self->{'sqlShares'} = Sql::Shares->new($dbh);
-	$self->{'sqlConnectors'} = Sql::Connectors->new($dbh);
-	$self->{'sqlAuth'} = Sql::CollectionAuth->new($dbh);
-	$self->{'collection'} = Common::Collection->new($dbh);
+	$self->{dbh} = $dbh;
+	$self->{state} = $state;
+	$self->{sqlShares} = Sql::Shares->new($dbh);
+	$self->{sqlConnectors} = Sql::Connectors->new($dbh);
+	$self->{sqlAuth} = Sql::CollectionAuth->new($dbh);
+	$self->{collection} = Common::Collection->new($dbh);
+        $self->{sqlResults} = Sql::ScanResults->new($dbh);
 	
 }
 
@@ -59,7 +61,6 @@ sub add_share {
 sub show_first_form {
 	my ($self, $vars) = (@_);
 	my $sql = $self->{'sqlConnectors'};
-	my $template = $self->{'template'};
 
 	$vars->{'connectors'} = $sql->get_connectors();
 	return ($vars, 'add.html');
@@ -71,7 +72,6 @@ sub show_second_form {
 	my ($self, $vars, $connector) = (@_);
 	my $sqlConnectors = $self->{'sqlConnectors'};
 	my $sqlAuth = $self->{'sqlAuth'};
-	my $template = $self->{'template'};
 	my $state = $self->{'state'};
 	my $iq = new Boitho::Infoquery($CONFIG->{'infoquery'});
 	
@@ -180,22 +180,19 @@ sub submit_second_form {
 ##
 # Add template vars based on result from scan.
 sub vars_from_scan {
-	my ($self, $vars, $share) = @_;
-	
-	croak "Missing arguments path or host from scan"
-		unless $share->{host} and $share->{path};
-# 	unless ($host and $path) {
-# 		$vars->{'error_scan_missing_host_path'} = 1;
-# 		carp "Ooops! missing host path from scan";
-# 		return;
-# 	}
+    my ($self, $share, $scan_id) = @_;
 
-	my $sqlConnectors = $self->{'sqlConnectors'};
-	if ($sqlConnectors->get_name($share->{connector}) eq 'SMB') {
-		$share->{'resource'} = q{\\\\} . $share->{host} . q{\\} . $share->{path};
-	}
+    croak "Missing arguments path or host from scan"
+        unless $share->{host} and $share->{path};
 
-	return $vars;
+    $share->{auth_id} 
+        = $self->{sqlResults}->get_authid($scan_id);
+
+
+    my $sqlConnectors = $self->{'sqlConnectors'};
+    if ($sqlConnectors->get_name($share->{connector}) eq 'SMB') {
+        $share->{'resource'} = q{\\\\} . $share->{host} . q{\\} . $share->{path};
+    }
 }
 
 1;

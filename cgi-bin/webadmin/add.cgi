@@ -46,13 +46,13 @@ elsif ($state->{'submit_second_form'}) {
 }
 
 else {
-	if (defined($state->{'from_scan_result'})) {
+	if (defined($state->{from_scan_result})) {
 		# User clicked add share from a scan result (scan.cgi)
 		#carp Dumper($state);
 		my $share = $state->{share};
 		$vars->{share} = $share;
 		$vars->{from_scan} = $state->{from_scan_result};
-		$vars = $add->vars_from_scan($vars, $share);
+		$add->vars_from_scan($share, $vars->{from_scan});
 	}
 	($vars, $template_file) = $add->show_first_form($vars);
 }

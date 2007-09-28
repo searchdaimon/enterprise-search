@@ -56,11 +56,15 @@ sub run_scan {
 	# Hooks are for printing scan data as it arrives.
 	$self->_add_hooks(); 
 
+	my %auth = $self->_get_scan_auth(%{$scan_ref});
+
 	# add scan to db
 	my $result_id
-			 = $sqlResults->insert_new_results(
-				$scan_ref->{'connector'},
-				$scan_ref->{'range'});
+            = $sqlResults->insert_new_results(
+                    $scan_ref->{'connector'},
+                    $scan_ref->{'range'},
+                    $auth{id},
+                    );
 
 
 	# do (and show) the scan
@@ -69,7 +73,6 @@ sub run_scan {
 	$template->process(TPL_SCAN_HEAD);
 
 	my $connector = $sqlConnectors->get_name($scan_ref->{connector});
-	my %auth = $self->_get_scan_auth($scan_ref);
 	my $xml_result = $bScan->scan(
 				$connector,
 				$scan_ref->{range},
@@ -124,16 +127,21 @@ sub _add_hooks {
 # User may have chosen auth from list. If so, we'll have to 
 # get user pass from db.
 sub _get_scan_auth {
-	my ($self, $scan_ref) = @_;
+    my ($self, %scan) = @_;
 
-	unless ($scan_ref->{auth_id} =~ /^\d+$/) {
-		return (user => $scan_ref->{username},
-				pass => $scan_ref->{password});
-	}
+    my %auth = (
+            id => $scan{auth_id},
+            user => $scan{username},
+            pass => $scan{password},
+            );
 
-	my ($user, $pass) = $sqlAuth->get_pair_by_id($scan_ref->{auth_id});
-	return (user => $user,
-			pass => $pass);
+    if ($auth{id} =~ /^\d+$/) {
+        ($auth{user}, $auth{pass}) = $sqlAuth->get_pair_by_id($auth{id});
+        return %auth;
+    }
+
+    $auth{id} = $sqlAuth->add($auth{user}, $auth{pass});
+    return %auth;
 }
 
 1;
