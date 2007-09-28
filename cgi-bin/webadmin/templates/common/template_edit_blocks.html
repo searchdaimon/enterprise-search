@@ -47,14 +47,14 @@
 [% BLOCK authentication %]
 
 	[% IF authentication.size %]
-		<h4>Choose authentication values</h4>
+		<h4>Use stored authentication</h4>
 		<div style="margin-left : 1em;">
 		<select name="[% prefix %].auth_id">
-			<option value="">(None needed/New values)</option>
+			<option value="">(New values)</option>
 			[% FOREACH authentication %]
-				<option value="[% id %]"
+				User: <option value="[% id %]"
 					[% "selected=\"selected\"" IF share.auth_id == id %]
-					>[% username %]/[% password %]</option>
+					>[% username %]</option>
 			[% END %]
 		</select>
 		</div>
