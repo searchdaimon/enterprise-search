@@ -31,6 +31,7 @@ $CONFIG{'logfiles'} = {
 	'crawl_watch.log' => "Crawl Watch log",
 	'boithoad_access' => "ad access log",
 	'boithoad_error' => "ad error log",
+        'bb_auto_update.log' => 'bbAutoUpdate log',
 };
 
 
@@ -71,7 +72,7 @@ $CONFIG{'valid_auth_methods'} = ['msad', 'ldap', 'shadow'];
 $CONFIG{'rpm_upload_folder'} = "/tmp/rpm";
 
 # Init-services to include in webadmin
-$CONFIG{'init_services'} = ['crawlManager', 'boitho-bbdn', 'searchdbb', 'crawl_watch', 'boithoad'];
+$CONFIG{'init_services'} = ['crawlManager', 'boitho-bbdn', 'searchdbb', 'crawl_watch', 'boithoad', 'bbAutoUpdate'];
 
 # Path to init dir with bb services..
 $CONFIG->{'init_dir'} = "/etc/init.d/";
