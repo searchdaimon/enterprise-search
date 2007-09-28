@@ -31,14 +31,16 @@ sub show {
 
 	my @service_stats;
 
-	foreach my $service (@$services_ref) {
-		my ($status, $message) = $init->status($service);
+	while (my ($service, $pretty_name) = each %{$services_ref}) {
+            
+            my ($status, $message) = $init->status($service);
 
-		push @service_stats, {
-			'name' => $service,
-			'status'  => $status,
-			'message' => $message,
-		}
+            push @service_stats, {
+			'name'       => $service,
+                        'pretty_name'=> $pretty_name,
+			'status'     => $status,
+			'message'    => $message,
+		};
 	}	
 
 	$vars->{'service_stats'} = \@service_stats;

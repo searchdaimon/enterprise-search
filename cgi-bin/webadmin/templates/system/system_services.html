@@ -25,7 +25,7 @@
 				[% ELSE %]<img src="file.cgi?i=agt_action_fail" alt="fail" />
 				[% END %]
 			</td>
-			<td>[% service.name %]</td>
+			<td>[% service.pretty_name || service.name %]</td>
 			<td>[% service.message %]</td>
 			<td>
 				<ul class="button_list">
