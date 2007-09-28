@@ -14,13 +14,12 @@ void exec_and_exit(char *service, char *param);
 int is_valid_service(char *service);
 int is_valid_param(char *param);
 int str_in_list(const char *list[], char *str);
-int str_equals(const char *param, char *string);
 void show_usage();
 
 // header end
 
 const char *valid_services[] = {"crawlManager", "boitho-bbdn", 
-        "searchdbb", "crawl_watch", "boithoad", '\0'};
+        "searchdbb", "crawl_watch", "boithoad", "bbAutoUpdate", '\0'};
 const char *valid_params[] = {"start", "stop", "restart", "status", '\0'};
 
 int main(int argc, char **argv) {
@@ -109,7 +108,7 @@ int str_in_list(const char *list[], char *str) {
     int i = 0;
     while (list[i] != '\0') {
 
-	if (str_equals(list[i], str)) {
+	if (strcmp(list[i], str) == 0) {
 	    return 1;
 	}
 	i++;
@@ -117,9 +116,6 @@ int str_in_list(const char *list[], char *str) {
     return 0;
 }
 
-int str_equals(const char *param, char *string) {
-    return (strcmp(param, string) == 0);
-}
 
 /**
  * Show program usage and exit.
