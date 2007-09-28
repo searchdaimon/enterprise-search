@@ -10,7 +10,7 @@ use constant DAY  => 24 * HOUR;
 
 use constant UPDATE_RATE => 24 * HOUR;
 use constant UPDATE_PATH => "$ENV{BOITHOHOME}/setuid/yumwrapper";
-use constant LOGFILE     => "$ENV{BOITHOHOME}/logs/bb_auto_updater.log";
+use constant LOGFILE     => "$ENV{BOITHOHOME}/logs/bb_auto_update.log";
 
 BEGIN { unshift @INC, "$ENV{BOITHOHOME}/Modules" }
 use Carp;
