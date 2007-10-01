@@ -357,6 +357,11 @@ my $message;
 
 my $parsed = Email::MIME->new($message);
 
+#runarb: 01.11.07 må lage dirfilter mappen hvis vi ikke har
+if (!(-e "/tmp/dirfilter/")) {
+	mkdir("/tmp/dirfilter/") or die("mkdir /tmp/dirfilter/");
+}
+
 my $headername = "/tmp/dirfilter/".$parsed->invent_filename.".header.";
 open(my $mh, "> $headername") or die "$!: $headername";
 foreach my $hn ($parsed->header_names) {
@@ -366,7 +371,6 @@ foreach my $hn ($parsed->header_names) {
 	print $mh "\n";
 }
 close($mh);
-print ("txt" ." ".$headername."\n");
 
 my @parts = $parsed->parts;
 #print $#parts."\n";
@@ -376,8 +380,10 @@ foreach (@parts) {
 	my ($ct) = split(";", $_->content_type);
 	$fn = "/tmp/dirfilter/".$_->invent_filename;
 	print ((defined($types{$ct}) ? $types{$ct} : "dat") ." ".$fn."\n");
-	open(my $wf, "> $fn") || die "$!";
+	open(my $wf, "> $fn") || die "$fn: $!";
 	print $wf $_->body;
 	close $wf;
 }
+
+print ("txt" ." ".$headername."\n");
 
