@@ -126,6 +126,10 @@ A:active { color : blue; }
   * Global classes */
 
 /* Button list */
+.button_list li, .vertical_buttons li {
+	margin : 0.2em;
+}
+
 .button_list {
 	list-style-type: none;
 	margin : 0;
@@ -135,11 +139,7 @@ A:active { color : blue; }
 
 }
 
-.button_list li {
-	margin : 0.2em;
-}
-
-.button_list a {
+.button_list a, .vertical_buttons a {
 	color : #333333;
 	padding-left : 0.2em;
 }
@@ -153,6 +153,19 @@ A:active { color : blue; }
     padding-bottom : 0.2em;
     background-color : #E7E7F7;
 	font-size : small;
+}
+
+.vertical_buttons {
+    list-style-type : none;
+    margin-left : 0;
+    padding-left : 0;
+}
+
+.vertical_buttons li {
+    display : inline;
+    background-color : #E7E7F7;
+    padding : 0.2em 0.5em 0.2em 0.5em;
+    border : 1px solid silver;
 }
 
 

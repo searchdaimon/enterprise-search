@@ -23,15 +23,15 @@ $CONFIG{'log_path'} = $ENV{'BOITHOHOME'} . '/logs';
 # Logfiles visible to the user.
 # Syntax to add new one: 'filename' => "description",
 $CONFIG{'logfiles'} = {
-	'access_log' => "http access log",
-	'error_log' => "http error log",
-	'crawlManager_access' => "crawlManager access log",
-	'crawlManager_error' => "crawlManager error log",
-	'indexing' => "index log",
-	'crawl_watch.log' => "Crawl Watch log",
-	'boithoad_access' => "ad access log",
-	'boithoad_error' => "ad error log",
-        'bb_auto_update.log' => 'bbAutoUpdate log',
+	'access_log' => "Web Server Access",
+	'error_log' => "Web Server Error",
+	'crawlManager_access' => "Crawling Management Access",
+	'crawlManager_error' => "Crawling Management Error Log",
+	'indexing' => "Document Indexing Log",
+	'crawl_watch.log' => "Collection Management Log",
+	'boithoad_access' => "Active Directory Access Log",
+	'boithoad_error' => "Active Directory Error Log",
+        'bb_auto_update.log' => 'Blackbox Auto Update Log',
 };
 
 
@@ -78,7 +78,7 @@ $CONFIG{'init_services'} = {
     'searchdbb'    => "Search Service",
     'boithoad'     => "Active Directory",
     'bbAutoUpdate' => "Blackbox Auto Update",
-    'boitho-bbdn'  => "Crawled Document Handler",
+    'boitho-bbdn'  => "Document Management",
 };
 
 # Path to init dir with bb services..

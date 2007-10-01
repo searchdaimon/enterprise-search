@@ -20,41 +20,43 @@
 
 <form action="logs.cgi" method="get">
 [% WRAPPER 'template_table.html'
-	header = ['', 'Filename', 'Description', 'Size', ''] %]
+	header = ['', 'Description', 'Filename', 'Size', ''] %]
 
-[% i = 0 %]
-[% FOREACH logs %]
+[% i = 0 %][% Dumper.dump(loglist) %]
+[% FOREACH log IN loglist %]
 	[% color = 1 - color %]
 	[% WRAPPER 'template_table_row.html' %]
-		<td><input type="radio" name="log.name" value="[% HTML.escape(filename) %]"
-			id="log_checkbox_[% i %]"
-			[% IF logfile.filename == filename %]
-				checked="checked"
-			[% END %] /></td>
-		<td><label for="log_checkbox_[% i %]">[% HTML.escape(filename) %]</label></td>
-		<td><label for="log_checkbox_[% i %]">[% HTML.escape(description) %]</label></td>
-		<td>[% size.0 %] [% size.1 %]</td>
-		<td style="text-align: right;"><a href="download.cgi?logfile=[% filename %]">Download</a></td>
+            <td><img src="file.cgi?i=log" alt="" /></td>
+            <td>
+                <strong>
+                    [% IF filename == log.filename %]
+                        [% HTML.escape(log.filename) %]
+                    [% ELSE %]
+                        <a href="logs.cgi?log=[% log.filename %]&lines=[% lines %]">[% HTML.escape(log.description) %]</a>
+                    [% END %]
+                </strong>
+            </td>
+            <td>[% HTML.escape(log.filename) %]</td>
+            <td>[% log.size.0 %][% log.size.1 %]</td>
+            <td><a href="download.cgi?logfile=[% log.filename %]">Download</a></td>
 	[% END %]
 	[% i = i + 1 %]
 [% END %]
 [% END %]
 
 <div style="margin-top: 1em; margin-left: 1em;">
-	[% logsize = logfile.lines.size %]
-	Show the last 
-		<select name="log.lines">
-			[% FOREACH count IN [50, 100, 250, 500] %]
-			<option 
-				[% IF logsize == count 
-					or (!logsize and count == 100)
-				%]
-					selected="selected"
-				[% END %]>[% count %]</option>
-			[% END %]
-		</select> lines.<br />
-
-	<input type="submit" name="view_log" value="Show log" />
+	Lines to show:
+        <ul class="vertical_buttons" style="display : inline;">
+	    [% FOREACH count IN [50, 100, 250, 500] %]
+            <li>
+                [% IF lines == count %]
+                        [% count %] lines
+                [% ELSE %]
+                <a href="logs.cgi?log=[% logfile.filename %]&lines=[% count %]">[% count %] lines</a>
+                [% END %]
+                
+                </li>
+            [% END %]
 </div>
 
 </form>
@@ -67,23 +69,21 @@
 	[% ELSE %]
 		<h2>Showing [% logfile.filename %]</h2>
 	
-		[% IF logfile.lines.size %]
+		[% IF logfile.content.size %]
 			
 			[% WRAPPER 'template_info.html' %]
 				Showing last [% logfile.lines.size %] messages in [% logfile.filename %].
 			[% END %]
 	
-			<!--<div style="background-color : #DCE4F9; font-family : monospace; 
-					font-size : small; border : 1px solid; margin-top : 1em; margin-bottom: 1em;">-->
 
 			<div style="font-familiy : monospace; font-size : small;">
 			<ol>
-			[% FOREACH message IN logfile.lines %]
+			[% FOREACH line IN logfile.content %]
 				[% color = 1 - color %]
 				<li>
 				[% IF color %]<div>
 				[% ELSE %]<div style="background : #f2f2f2"> [% END %]
-				[% HTML.escape(message) %] </div></li>
+				[% HTML.escape(line) %] </div></li>
 				
 				
 				

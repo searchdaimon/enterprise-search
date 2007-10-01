@@ -9,37 +9,73 @@ use Sql::Search_logg;
 use config qw($CONFIG);
 my %CONFIG = %$CONFIG;
 
+use constant TPL_LOGFILE => 'logs_main.html';
+use constant DEFAULT_LOG_LINES => 250;
+use constant MAX_LOG_LINES => 500;
+
 sub new {
-	my $class = shift;
-	my $dbh = shift;
-	my $self = {};
-	bless $self, $class;
-	$self->_init($dbh);
-	return $self;
+    my ($class, $dbh, $lines) = @_;
+    my $self = {};
+    bless $self, $class;
+    $self->_init($dbh, $lines);
+    return $self;
 }
 
 sub _init {
-	my ($self, $dbh) = (@_);
-	$self->{'dbh'} = $dbh;
-	$self->{'sqlSearch'} = Sql::Search_logg->new($dbh);
+    my ($self, $dbh, $lines) = (@_);
+    $self->{dbh} = $dbh;
+    $self->{sqlSearch} = Sql::Search_logg->new($dbh);
+
+    $lines = DEFAULT_LOG_LINES unless $lines;
+    $lines = MAX_LOG_LINES if $lines > MAX_LOG_LINES;
+    $self->{lines} = $lines;
 }
 
 
-sub get_logs {
-	my $self = shift;
-	my @result = ( );
+sub show_logfiles {
+    my ($self, $vars) = @_;
+    $vars->{loglist} = [$self->_get_logs()];
+    $vars->{lines} = $self->{lines};
+    return TPL_LOGFILE;
+}
+
+sub download {
+	my $self = shift if (ref($_[0]));
+	my $filename = shift;
 	my %logfiles = %{$CONFIG{'logfiles'}};
-	while (my ($filename, $description) = each(%logfiles)) {
-		my @size = $self->_get_size($filename);
-		push @result, {
-			'filename' => $filename,
-			'description' => $description,
-			'size' => \@size
-		};
+	my $valid = grep /^$filename$/, keys (%logfiles);
+	return 0 unless($valid);
 
-	}	
+	open my $file, "$CONFIG{'log_path'}/"."\Q$filename"
+		or croak "couldn't open $CONFIG{'log_path'}/$filename";
 
-	return \@result;
+	print $_ while (<$file>);
+#	print <$file>; # This method reads the entire file into memory.
+
+	return 1;
+}
+
+sub show_search_log {
+	my ($self, $vars) = (@_);
+	my $sqlSearch = $self->{'sqlSearch'};
+	
+	$vars->{'search'} = $sqlSearch->get_log;
+
+	return ($vars, 'logs_search.html');
+}
+
+sub show_logfile_content {
+	my ($self, $vars, $filename, $lines) = @_;
+        croak "Unknown filename $filename"
+            unless grep { $filename =~ /^$_$/ } keys %{$CONFIG->{logfiles}};
+	my @content = $self->_read_log($filename, $self->{lines});
+		
+	my %logfile = (
+		'filename' => $filename,
+		'content' => \@content,
+	);
+	$vars->{'logfile'} = \%logfile;
+        return $self->show_logfiles($vars);
 }
 
 sub _get_size {
@@ -86,47 +122,26 @@ sub _read_log {
 
 	@content = reverse @content if ($command eq "head");
 
-	return \@content;
+	return @content;
 }
 
-sub download {
-	my $self = shift if (ref($_[0]));
-	my $filename = shift;
+sub _get_logs {
+	my $self = shift;
+	my @result = ( );
 	my %logfiles = %{$CONFIG{'logfiles'}};
-	my $valid = grep /^$filename$/, keys (%logfiles);
-	return 0 unless($valid);
+	while (my ($filename, $description) = each %logfiles) {
+		my @size = $self->_get_size($filename);
+		push @result, {
+			'filename' => $filename,
+			'description' => $description,
+			'size' => \@size
+		};
 
-	open my $file, "$CONFIG{'log_path'}/"."\Q$filename"
-		or croak "couldn't open $CONFIG{'log_path'}/$filename";
+	}	
 
-	print $_ while (<$file>);
-#	print <$file>; # This method reads the entire file into memory.
+        @result = sort { $a->{description} cmp $b->{description} } @result;
 
-	return 1;
+	return @result;
 }
 
-sub show_search_log($$) {
-	my ($self, $vars) = (@_);
-	my $sqlSearch = $self->{'sqlSearch'};
-	
-	$vars->{'search'} = $sqlSearch->get_log;
-
-	return ($vars, 'logs_search.html');
-}
-
-sub show_logfile_content($$) {
-	my ($self, $vars, $log) = (@_);
-	my $filename = $log->{'name'};
-	my $count = $log->{'lines'};
-	$count = 250 unless($count);
-	my $lines = $self->_read_log($filename, $count);
-		
-	my $logfile = {
-		'filename' => $filename,
-		'lines' => $lines,
-	};
-	
-	$vars->{'logfile'} = $logfile;
-	return $vars;
-}
 1;

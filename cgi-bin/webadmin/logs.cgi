@@ -16,11 +16,11 @@ print $cgi->header('text/html');
 my $vars = { };
 my $template = Template->new(
 	{INCLUDE_PATH => './templates:./templates/logs:./templates/common',});
-my $template_file = "logs_main.html";
 my $sql = Sql::Sql->new();
 my $dbh = $sql->get_connection();
 
-my $logs = Page::Logs->new($dbh);
+my $tpl_file = undef;
+my $logs = Page::Logs->new($dbh, $state->{lines});
 
 
 if (defined($state->{'view'})) {
@@ -28,21 +28,18 @@ if (defined($state->{'view'})) {
 	
 	if ($view eq 'search') {
 		# User is viewing search log
-		($vars, $template_file) = $logs->show_search_log($vars);
+		($vars, $tpl_file) = $logs->show_search_log($vars);
 	}
 }
-else {
-	# Default page. Fetch logfiles.
-	$vars->{'logs'} = $logs->get_logs;
-}
 
-if (defined($state->{'view_log'})) {
+if ($state->{'log'}) {
 	# User is viewing the content of a logfile.
-
-	my $log = $state->{'log'};
-	$vars = $logs->show_logfile_content($vars, $log);
+	$tpl_file = $logs->show_logfile_content($vars, 
+            $state->{'log'});
 }
 
+$tpl_file = $logs->show_logfiles($vars)
+    unless defined $tpl_file;
 
-$template->process($template_file, $vars)
+$template->process($tpl_file, $vars)
         or croak $template->error();
