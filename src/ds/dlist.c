@@ -28,7 +28,7 @@ inline void list_deallocate( container *C, value a )
 }
 
 
-void list_destroy( container *C )
+void _list_destroy( container *C )
 {
     list_container_priv	*LP = C->priv;
     _list_node_		*item;
@@ -320,7 +320,7 @@ container* list_container( container *C )
     L->compare = NULL;
     L->ap_allocate = list_ap_allocate;
     L->deallocate = list_deallocate;
-    L->destroy = list_destroy;
+    L->destroy = _list_destroy;
     L->clone = list_clone;
     L->priv = LP;
 
