@@ -48,6 +48,13 @@ int ldap_connect(LDAP **ld, const char ldap_host[] , int ldap_port,const char ba
       return RETURN_FAILURE;
    }
 
+   /* referrals */
+   if( ldap_set_option( (*ld), LDAP_OPT_REFERRALS, LDAP_OPT_OFF ) != LDAP_OPT_SUCCESS )
+   {
+        fprintf( stderr, "Could not set LDAP_OPT_REFERRALS off\n" );
+	exit( EXIT_FAILURE );
+   }
+
    /* set the LDAP version to be 3 */
    if (ldap_set_option((*ld), LDAP_OPT_PROTOCOL_VERSION, &desired_version) != LDAP_OPT_SUCCESS)
    {
@@ -125,6 +132,47 @@ struct tempresultsFormat {
 	char value[MAX_LDAP_ATTR_LEN];
 };
 
+static void print_reference(
+        LDAP *ld,
+        LDAPMessage *reference )
+{
+        int rc;
+        char **refs = NULL;
+        LDAPControl **ctrls;
+
+	/*
+        if( ldif < 2 ) {
+                printf(_("# search reference\n"));
+        }
+	*/
+ rc = ldap_parse_reference( ld, reference, &refs, &ctrls, 0 );
+
+
+        if( rc != LDAP_SUCCESS ) {
+ //               tool_perror( "ldap_parse_reference", rc, NULL, NULL, NULL, NULL );
+                exit( EXIT_FAILURE );
+        }
+
+	
+        if( refs ) {
+                int i;
+                for( i=0; refs[i] != NULL; i++ ) {
+                        //tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
+                        //        "ref", refs[i], strlen(refs[i]) );
+			printf("ref \"%s\", len %i\n",refs[i], strlen(refs[i]));
+                }
+                ber_memvfree( (void **) refs );
+        }
+	
+
+ if( ctrls ) {
+                //tool_print_ctrls( ld, ctrls );
+                ldap_controls_free( ctrls );
+        }
+
+}
+
+
 int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[],int *nrofresponses,const char ldap_base[]) {
 
 	char *test = malloc(4);
@@ -140,7 +188,7 @@ int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[]
 
 /*
 	//ldap kan returnere mere en en atributt. Skal ha inn en nulterminert liste med stringer. Siden dette er 
-	//en enkel søk stytter vi bare å søke på en verdi  
+	//en enkel søk støtter vi bare å søke på en verdi  
 	char **attrs;
 	attrs = malloc(2 * sizeof(char *));
 	attrs[0] = malloc(strlen(vantattrs) +1);
@@ -173,6 +221,7 @@ int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[]
 
    	BerElement* ber;
    	LDAPMessage* msg;
+   	//LDAPMessage* msg2;
    	LDAPMessage* entry;
 
 	struct tempresultsFormat *tempresults;
@@ -181,31 +230,161 @@ int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[]
    	char *dn = NULL;
    	char *attr;
    	char **vals;
-   	int msgid;
+   	//int msgid;
+	ber_int_t             msgid;
    	//struct timeval tm;
+	struct timeval ldap_time_out;
+	ldap_time_out.tv_sec 	= 10;
+	ldap_time_out.tv_usec 	= 0;
+
 
 
    	int nrOfSearcResults;
 
-   
 
-   	/* ldap_search() returns -1 if there is an error, otherwise the msgid */
-   	if ((msgid = ldap_search((*ld), ldap_base, LDAP_SCOPE_SUBTREE, filter, attrs, 0)) == -1) {
+	int rc;
+
+	printf("trying to ldap_search_ext ...\n");
+   	// ldap_search() returns -1 if there is an error, otherwise the msgid 
+   	if ((rc = ldap_search_ext((*ld), ldap_base, LDAP_SCOPE_SUBTREE, filter, attrs, 0,NULL , NULL, NULL,&ldap_time_out,&msgid)) == -1) {
    	   ldap_perror( ld, "ldap_search" );
    	   return RETURN_FAILURE;
    	}
+	printf("... ldap_search_ext done\n");
+        if( rc != LDAP_SUCCESS ) {
+                fprintf( stderr, "%s: ldap_search_ext: %s (%d)\n",
+                        __FILE__, ldap_err2string( rc ), rc );
+                return( rc );
+        }
 
-   	/* block forever */
-   	result = ldap_result((*ld), msgid, 1, NULL, &msg);
+
+
+	static char     *sortattr = NULL;
+	LDAPMessage *res;
+
+	printf("LDAP_RES_SEARCH_ENTRY %i\nLDAP_RES_SEARCH_REFERENCE %i\nLDAP_RES_EXTENDED %i\nLDAP_RES_SEARCH_RESULT %i\nLDAP_RES_INTERMEDIATE %i\n\n",LDAP_RES_SEARCH_ENTRY,LDAP_RES_SEARCH_REFERENCE,LDAP_RES_EXTENDED,LDAP_RES_SEARCH_RESULT,LDAP_RES_INTERMEDIATE);
+
+	nrOfSearcResults = 0;
+	list_init(&list,free);
+
+	res = NULL;
+	while ((rc = ldap_result( (*ld), LDAP_RES_ANY,
+                sortattr ? LDAP_MSG_ALL : LDAP_MSG_ONE,
+                NULL, &res )) > 0 )
+        {
+		printf("result\n");
+
+	
+                for ( msg = ldap_first_message( (*ld), res );
+                        msg != NULL;
+                        msg = ldap_next_message( (*ld), msg ) )
+                {
+			printf("\ttype %i\n", ldap_msgtype( msg ) );
+
+			switch( ldap_msgtype( msg ) ) {
+                        case LDAP_RES_SEARCH_ENTRY:
+                                //nentries++;
+                                //print_entry( (*ld), msg, 0 );
+
+   				/* Iterate through the returned entries */
+   				for(entry = ldap_first_entry((*ld), msg); entry != NULL; entry = ldap_next_entry((*ld), entry)) {
+
+
+      					if((dn = ldap_get_dn((*ld), entry)) != NULL) {
+						 printf("Returned dn: %s\n", dn);
+						 ldap_memfree(dn);
+      					}
+
+      					for( attr = ldap_first_attribute((*ld), entry, &ber); attr != NULL; attr = ldap_next_attribute((*ld), entry, ber)) {
+
+
+
+						//###########################
+						printf("attr adress %u\n",(unsigned int)attr);
+
+					 	if ((vals = (char **)ldap_get_values((*ld), entry, attr)) != NULL)  {
+
+
+		    					for(i = 0; vals[i] != NULL; i++) {
+	
+    					        		printf("attr: %s, vals %s\n", attr, vals[i]);
+
+								tempresults = malloc(sizeof(struct tempresultsFormat));
+								printf("tempresults adress %u\n",(unsigned int)tempresults);
+
+								strncpy((*tempresults).value,vals[i],MAX_LDAP_ATTR_LEN);
+
+								printf("tempresults adress %u\n",(unsigned int)tempresults);
+			
+								if (list_ins_next(&list,NULL,tempresults) != 0) {
+									printf("cant insert into list\n");
+									return 0;
+								}	
+
+								++count;	
+							} //for
+
+	
+
+	    						ldap_value_free(vals);
+	 					} //if
+					printf("attr adress %u\n",(unsigned int)attr);
+					ldap_memfree(attr);
+
+					//###########################
+						++nrOfSearcResults;
+
+					}
+				}
+
+                                break;
+
+                        case LDAP_RES_SEARCH_REFERENCE:
+                                //nreferences++;
+                                print_reference( (*ld), msg );
+                                break;
+
+			case LDAP_RES_SEARCH_RESULT:
+                                /* pagedResults stuff is dealt with
+                                 * in tool_print_ctrls(), called by
+                                 * print_results(). */
+                                //rc = print_result( ld, msg, 1 );
+                                //if ( ldapsync == LDAP_SYNC_REFRESH_AND_PERSIST ) {
+                                //        break;
+                                //}
+
+                                goto done;
+
+			}
+		}
+	
+	}
+
+done:
+        if ( rc == -1 ) {
+                //tool_perror( "ldap_result", rc, NULL, NULL, NULL, NULL );
+		printf("rc == -1\n");
+                return( rc );
+        }
+
+
+
+/*
+   	// block forever 
+	printf("trying to ldap_result...\n");
+   	//result = ldap_result((*ld), msgid, 1, NULL, &msg);
+   	//result = ldap_result((*ld), msgid, 1, &ldap_time_out, &msg);
+   	result = ldap_result((*ld), msgid, 0, &ldap_time_out, &msg);
+	printf("... ldap_result done\n");
 
    switch(result)
    {
       case(-1):
-	 ldap_perror((*ld), "ldap_result");
+	 ldap_perror((*ld), "ldap_result\n");
 	 return RETURN_FAILURE;
 	 break;
       case(0):
-	 printf("Timeout exceeded in ldap_result()");
+	 printf("Timeout exceeded in ldap_result()\n");
 	 return RETURN_FAILURE;
 	 break;
       case(LDAP_RES_SEARCH_RESULT):
@@ -213,20 +392,22 @@ int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[]
 	 break;
       default:
 	 printf("Unknown result : %x\n", result);
-	 return RETURN_FAILURE;
+	// return RETURN_FAILURE;
 	 break;
    }
+*/
 
-   nrOfSearcResults = (int)ldap_count_entries((*ld), msg);
-
-
-   printf("The number of entries returned was %i\n\n", nrOfSearcResults);
+//   	nrOfSearcResults = (int)ldap_count_entries((*ld), msg);
 
 
+   	printf("The number of entries returned was %i\n\n", nrOfSearcResults);
+
+
+/*
 	list_init(&list,free);
 	
 	count =0;	
-   /* Iterate through the returned entries */
+   // Iterate through the returned entries 
    for(entry = ldap_first_entry((*ld), msg); entry != NULL; entry = ldap_next_entry((*ld), entry)) {
 
 
@@ -279,6 +460,7 @@ int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[]
       printf("\n");
    }
 
+*/
 	//clean up
 	ldap_msgfree(msg);
 
@@ -293,7 +475,7 @@ int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[]
 	tempresults = NULL;
 	while(list_rem_next(&list,NULL,(void **)&tempresults) == 0) {
 		printf("tempresults adress %u\n",(unsigned int)tempresults);
-		printf("aaa \"%s\"\n",(*tempresults).value);
+		//printf("aaa \"%s\"\n",(*tempresults).value);
 
 		len = strnlen((*tempresults).value,MAX_LDAP_ATTR_LEN);
 
@@ -507,21 +689,16 @@ int getPrimaryGroupFromDnUsername (char cn[],char username[], int sizeofusername
 }
 
 
+do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
+
 //her driver vi og kaller return, men da blir ikke alt, som loggene, stenkt ned riktig. 
 //Må heller bruke goto eller continue
-void connectHandler(int socket) {
 	struct packedHedderFormat packedHedder;
 	int intresponse;
 	char user_username[64];
         char user_password[64];
 	int i;
 
-	FILE *LOGACCESS, *LOGERROR;
-
-        if (!openlogs(&LOGACCESS,&LOGERROR,"boithoad")) {
-                perror("logs");
-                exit(1);
-        }
 
 
 	printf("got new connection\n");
@@ -547,6 +724,8 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 		int nrOfSearcResults;
 		char **respons;
 		char filter[128];
+
+		bconfig_flush(CONFIG_NO_CACHE);
 		
 		//henter konfi verdier
 		const char *msad_domain 	= bconfig_getentrystr("msad_domain");
@@ -562,7 +741,7 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 
 		char ldap_base[528] = "";
 
-		if (msad_ldapbase == NULL) {
+		if ((msad_ldapbase == NULL) || (msad_ldapbase[0] == '\0')) {
 			ldap_genBaseName(ldap_base,ldap_domain);
 		}
 		else {
@@ -605,7 +784,8 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 			}
 			else if (ldap_authenticat (&ld,user_username,user_password,ldap_base,ldap_host,ldap_port)) {
 				printf("Main: user authenticated\n");
-				blog(LOGACCESS,1,"user \"%s\" successfuly authenticated.\n",user_username);
+				printf("user_username: \"%s\"\n",user_username);
+//				blog(LOGACCESS,1,"user \"%s\" successfuly authenticated.\n",user_username);
 				intresponse = ad_userauthenticated_OK;
 			}
 			else {
@@ -753,7 +933,7 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 			printf("ldap_simple_search done. Found %i groups\n",nrOfSearcResults);
 			
 			// +2:
-			// +1 for "Everyone" gruppen som alle er medlem av, men ikke finne. Windows :(
+			// +1 for "Everyone" gruppen som alle er medlem av, men ikke finnes. Windows :(
 			// +1 for primær gruppe
 			intresponse = nrOfSearcResults +2;
 
@@ -763,7 +943,12 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 			}
 
 			//sender primær gruppe
+			/*ToDo: sender at alle er med i "Users" da vi ikke klarer å finne primæer gruppe alltid.
+			se http://support.microsoft.com/kb/297951 ,og søk på: ldap primary group : får å finne mer info
 			strscpy(ldaprecord,primarygroup,sizeof(ldaprecord));
+			*/
+			strscpy(ldaprecord,"Users",sizeof(ldaprecord));
+
 			if (!sendall(socket,ldaprecord, sizeof(ldaprecord))) {
                                 perror("sendall");
                         }
@@ -843,12 +1028,28 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 	}
 
 
-	closelogs(LOGACCESS,LOGERROR);
 
 	printf("end off while\n");
 }
 
 printf("connectHandler: end\n");
+}
+
+void connectHandler(int socket) {
+
+	FILE *LOGACCESS, *LOGERROR;
+
+        if (!openlogs(&LOGACCESS,&LOGERROR,"boithoad")) {
+                perror("logs");
+                exit(1);
+        }
+
+	printf("connectHandler: calling do_request\n");
+	do_request(socket,LOGACCESS,LOGERROR);
+	printf("connectHandler: back from do_request\n");
+
+	closelogs(LOGACCESS,LOGERROR);
+	printf("closed logs\n");
 }
 
 void badldap_init() {
@@ -938,7 +1139,9 @@ main(int argc, char **argv)
 		setvbuf(stderr, NULL, _IOLBF, 0);
 	}
 
-	bconfig_init();
+   	bconfig_flush(CONFIG_NO_CACHE);
+
+	//bconfig_init();
 	gloabal_user_h = create_hashtable(16, boithoad_hashfromkey, boithoad_equalkeys);
 	badldap_init();
 	sconnect(connectHandler, BADPORT);

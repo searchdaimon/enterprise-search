@@ -261,7 +261,7 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
 			}
 		#endif
 
-        	if ((n=fread(DocumentIndexPost,sizeof(*DocumentIndexPost),1,LotFileOpen)) != 1) {
+        	if ((n=fread(DocumentIndexPost,sizeof(struct DocumentIndexFormat),1,LotFileOpen)) != 1) {
 			if (feof(LotFileOpen)) {
 				printf("hit eof for DocumentIndex\n");
 			}
