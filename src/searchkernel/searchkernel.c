@@ -145,8 +145,6 @@ int
 handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum browser_type btype, char *collection,
            char *url_out, size_t len, int sock, pthread_mutex_t *lock)
 {
-printf("handle_url_rewrite: start\n");
-
 
 #ifdef WITH_THREAD
 	pthread_mutex_lock(lock);
