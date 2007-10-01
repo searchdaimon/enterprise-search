@@ -145,8 +145,9 @@ int
 handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum browser_type btype, char *collection,
            char *url_out, size_t len, int sock, pthread_mutex_t *lock)
 {
+printf("handle_url_rewrite: start\n");
 
-#ifdef BLACK_BOX
+
 #ifdef WITH_THREAD
 	pthread_mutex_lock(lock);
 #endif
@@ -155,7 +156,6 @@ handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum br
 
 #ifdef WITH_THREAD
 	pthread_mutex_unlock(lock);
-#endif
 #endif
 
 	return 1;
@@ -1095,13 +1095,17 @@ void *generatePagesResults(void *arg)
 
 #ifdef BLACK_BOKS
 		if (!PagesResults->getRank) {
-			handle_url_rewrite(PagesResults->Sider[localshowabal].DocumentIndex.Url, sizeof(PagesResults->Sider[localshowabal].DocumentIndex.Url), ptype, btype, PagesResults->TeffArray->iindex[i].subname->subname, PagesResults->Sider[localshowabal].DocumentIndex.Url, sizeof(PagesResults->Sider[localshowabal].DocumentIndex.Url), PagesResults->cmcsocketha, 
+
+			handle_url_rewrite(side->DocumentIndex.Url, sizeof(side->DocumentIndex.Url), ptype, btype, 
+				(*PagesResults).TeffArray->iindex[i].subname->subname, side->DocumentIndex.Url, 
+				sizeof(side->DocumentIndex.Url), PagesResults->cmcsocketha, 
 #ifdef WITH_THREAD
 			&PagesResults->mutex
 #else
 			NULL
 #endif
 			);
+
 		}
 #endif
 
