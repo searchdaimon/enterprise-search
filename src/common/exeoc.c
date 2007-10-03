@@ -4,6 +4,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/select.h>
+#include <err.h>
+
 
 #define linelen 512
 
@@ -37,19 +40,9 @@ int main () {
 
 */
 
-static int alarm_got_raised;
-
-void exeoc_timeout_ha( int signo )
+int
+exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret,int alsostderr, struct timeval *timeout)
 {
-    if ( signo == SIGALRM ) {
-        printf("got alarm\n");
-        alarm_got_raised = 1;
-    }
-
-
-}
-
-int exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret,int alsostderr) {
 
 	pid_t pid;
 	int     pipefd[2];
@@ -119,18 +112,47 @@ int exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfini
 		
 	}
 	else {
+		fd_set readfds;
+		fd_set tmp;
 		//printf("perent. Child pid %i\n",(int)pid);
 		// Parent process closes up output side of pipe
                 close(pipefd[1]);
 
+		FD_ZERO(&readfds);
+		FD_SET(pipefd[0], &readfds);
 
+		i = 0;
 
+		while (1) {
+			int numfds; 
 
-		i=0;
-		while (((n = read(pipefd[0], &documentfinishedbuf[i], linelen)) > 1) 
-			&& (i + linelen < (*documentfinishedbufsize))) {
-			i += n;			
-			//printf("did read %ib, tot %i\n",n,i);
+			tmp = readfds;
+
+			numfds = select(pipefd[0]+1, &tmp, NULL, NULL, timeout);
+
+			if (numfds < 0) {
+				warn("error in select, exeoc");
+				return 0;
+			} else if (numfds == 0) {
+				warn("timeout in select, exeoc");
+				return 0;
+			}
+
+			if (!FD_ISSET(pipefd[0], &tmp)) {
+				warn("no wanted fd set in select, exeoc");
+				continue;
+			}
+
+			if (((n = read(pipefd[0], &documentfinishedbuf[i], linelen)) >= 1) 
+				&& (i + linelen < (*documentfinishedbufsize))) {
+				i += n;
+			} else {
+				if (n == 0)
+					break;
+				warn("error in read, exeoc");
+				break;
+			}
+
 		}
 		
 		close(pipefd[0]);
@@ -181,37 +203,28 @@ int exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfini
 }
 
 int exeoc_stdall(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret) {
-	return exeoc_stdselect(exeargv,documentfinishedbuf,documentfinishedbufsize,ret,1);
+	return exeoc_stdselect(exeargv,documentfinishedbuf,documentfinishedbufsize,ret,1, NULL);
 }
 int exeoc(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret) {
-	return exeoc_stdselect(exeargv,documentfinishedbuf,documentfinishedbufsize,ret,0);
+	return exeoc_stdselect(exeargv,documentfinishedbuf,documentfinishedbufsize,ret,0, NULL);
 }
 
 int exeoc_timeout(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret, int timeout) {
-
+	struct timeval tv;
 	int n;
 
-        //setter opp en alarm slik at run_html_parser blir avbrut hvis den henger seg
-	alarm_got_raised = 0;
-        signal(SIGALRM, exeoc_timeout_ha);
+	tv.tv_sec = timeout;
+	tv.tv_usec = 0;
 
-        alarm( timeout );
+	n = exeoc_stdselect(exeargv,documentfinishedbuf,documentfinishedbufsize, ret, 0, &tv);
 
-		n = exeoc(exeargv,documentfinishedbuf,documentfinishedbufsize,ret);
-
-        alarm( 0);
-
-        if(alarm_got_raised) {
-              	printf("run_html_parser did time out.\n");
+	if (tv.tv_sec == 0 && tv.tv_usec == 0) { // Timeout
+              	printf("exeoc_timeout did time out.\n");
 		return 0;
         }
 	else {
 
 		return n;
 	}
-
 }
-
-
-
 
