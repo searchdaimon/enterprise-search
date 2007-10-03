@@ -37,7 +37,8 @@ BDB = -I/usr/local/BerkeleyDB.4.5/include/ /usr/local/BerkeleyDB.4.5/lib/libdb.a
 # !! av ukjenet grunner ser dette ut til og altid må være sist hvis vi skal linke statisk
 
 #SMBCLIENT=src/3pLibs/samba-3.0.24/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.24/source/include/
-SMBCLIENT=/home/boitho/src/samba-3.0.24/source/bin/libsmbclient.a -I/home/boitho/src/samba-3.0.24/source/include/
+#SMBCLIENT=/home/boitho/src/samba-3.0.24/source/bin/libsmbclient.a -I/home/boitho/src/samba-3.0.24/source/include/
+SMBCLIENT=/home/boitho/src/samba-3.0.25b/source/bin/libsmbclient.a -I/home/boitho/src/samba-3.0.25b/source/include/
 #SMBCLIENT=-Isrc/3pLibs/samba-3.0.24/source/include/ -Lsrc/3pLibs/samba-3.0.24/source/lib/ -lsmbclient
 
 BBDOCUMENT = src/bbdocument/bbdocument.c $(BDB) -D BLACK_BOKS
@@ -64,8 +65,8 @@ MYSQL_THREAD = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient_r
 LIBXML = -I/usr/include/libxml2  -lxml2
 
 
-HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c  
-#HTMLPARSER=src/parser/libhtml_parser.a
+#HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c  
+HTMLPARSER=src/parser/libhtml_parser.a
 
 # The Dependency Rules
 # They take the form
@@ -236,8 +237,14 @@ DIconvert: src/DIconvert/main.c
 boithoad: src/boithoad/main.c
 	@echo ""
 	@echo "$@:"
-
+	#for lokalt på bb: gcc -g src/common/*.c src/boithoad/main.c src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/boithoad -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL -DWITH_OPENLDAP /usr/lib64/libcrypt.a  /usr/lib64/libssl.a -I/usr/include/mysql/ -L/usr/lib64/mysql/ -ldl   -D BLACK_BOKS -D WITH_CONFIG -DDEBUG ../../openldap-2.3.32/libraries/libldap/.libs/libldap.a ../../openldap-2.3.32/libraries/liblber/.libs/liblber.a -lmysqlclient -lsasl2
 	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -D WITH_CONFIG -DDEBUG
+
+PiToWWWDocID: src/PiToWWWDocID/main.c
+	@echo ""
+	@echo "$@:"
+	$(CC) $(CFLAGS) $(LIBS)*.c src/PiToWWWDocID/main.c src/getDocIDFromUrl/getDocIDFromUrl.c -o bin/PiToWWWDocID $(LDFLAGS)  $(MYSQL) $(BDB)
+
 
 boithoadtest: src/boithoadtest/main.c
 	@echo ""
@@ -294,12 +301,30 @@ BrankCalculate2GetPageElements: src/BrankCalculate2GetPageElements/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate2GetPageElements/main.c  -o bin/BrankCalculate2GetPageElements $(LDFLAGS)
 
+alllot: src/alllot/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/alllot/main.c  -o bin/alllot $(LDFLAGS)
+
 
 BrankCalculate2Publish: src/BrankCalculate2Publish/main.c
 	@echo ""
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate2Publish/main.c  -o bin/BrankCalculate2Publish $(LDFLAGS)
+
+BrankCalculate5Publish: src/BrankCalculate5Publish/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate5Publish/main.c  -o bin/BrankCalculate5Publish $(LDFLAGS)
+
+BrankCalculate5DocFork: src/BrankCalculate5DocFork/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate5DocFork/main.c  -o bin/BrankCalculate5DocFork $(LDFLAGS)
 
 
 vipurls: src/vipurls/main.c
@@ -422,7 +447,7 @@ addout.cgi: src/addout.cgi/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) src/addout.cgi/main.c src/cgi-util/cgi-util.c -o bin/addout.cgi $(LDFLAGS) $(MYSQL) 
+	$(CC) $(CFLAGS) src/addout.cgi/main.c src/cgi-util/cgi-util.c -o cgi-bin/addout.cgi $(LDFLAGS) $(MYSQL) 
 
 ppcXmlParserTest: src/ppcXmlParserTest/main.c
 	@echo ""
@@ -487,7 +512,7 @@ rreadbb : src/rread/rread.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/rread/rread.c -o bin/rread $(LDFLAGS) -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c src/rread/rread.c -o bin/rreadbb $(LDFLAGS) -D BLACK_BOKS
 
 
 convertReposetoryCOMAND = $(CFLAGS) $(LIBS)*.c src/convertReposetory/main.c -o bin/convertReposetory $(LDFLAGS)
@@ -609,7 +634,19 @@ BrankCalculate2: src/BrankCalculate2/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate2/*.c -o bin/BrankCalculate2 $(LDFLAGS)
 
 BrankCalculate3: src/BrankCalculate3/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate3/main.c -o bin/BrankCalculate3 $(LDFLAGS) -DDEFLOT
+	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate3/main.c src/BrankCalculate3/res.c -o bin/BrankCalculate3 $(LDFLAGS) -DDEFLOT
+
+BrankCalculate4: src/BrankCalculate4/main.c
+	$(CC) $(CFLAGS) $(LIBS)*.c src/bs/bs.c src/tq/tq.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate4/main.c src/BrankCalculate3/res.c -o bin/BrankCalculate4 -lpthread $(LDFLAGS) -DDEFLOT -DWITH_THREAD
+
+BrankCalculate5: src/BrankCalculate5/main.c
+	$(CC) $(CFLAGS) $(LIBS)*.c src/banlists/ban.c src/bs/bs.c src/tq/tq.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate5/main.c -o bin/BrankCalculate5 -lpthread $(LDFLAGS) -DDEFLOT -DWITH_THREAD
+
+BrankCalculate5Expand: src/BrankCalculate5Expand/main.c
+	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate3/res.c src/BrankCalculate5Expand/main.c -o bin/BrankCalculate5Expand $(LDFLAGS) -DDEFLOT 
+
+BrankCalculateBanning: src/BrankCalculateBanning/main.c
+	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculateBanning/main.c  -o bin/BrankCalculateBanning $(LDFLAGS) -DDEFLOT
 
 BrankMerge: src/BrankMerge/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankMerge/*.c -o bin/BrankMerge $(LDFLAGS)
@@ -623,7 +660,7 @@ SortUdfile: src/SortUdfile/main.c
 SortUdfileToNewFiles: src/SortUdfileToNewFiles/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/SortUdfileToNewFiles/main.c -o bin/SortUdfileToNewFiles $(LDFLAGS)
 
-PageInfoComand=	$(LIBS)*.c src/PageInfo/main.c src/parser/lex.bhpm.c src/parser/y.tab.c $(LDFLAGS)
+PageInfoComand=	$(LIBS)*.c src/PageInfo/main.c $(HTMLPARSER) $(LDFLAGS)
 
 PageInfo: src/PageInfo/main.c
 	@echo ""
@@ -704,6 +741,31 @@ readDocumentIndex: src/readDocumentIndex/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/readDocumentIndex/main.c -o bin/readDocumentIndex $(LDFLAGS)
+
+DIrecrawlSelect: src/DIrecrawlSelect/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/DIrecrawlSelect/main.c -o bin/DIrecrawlSelect $(LDFLAGS)
+
+gcidentify: src/gcidentify/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/banlists/ban.c src/gcidentify/main.c -o bin/gcidentify $(LDFLAGS)
+
+DIcreateUdfile: src/DIcreateUdfile/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/DIcreateUdfile/main.c -o bin/DIcreateUdfile $(LDFLAGS)
+
+
+BrankCalculatePI: src/BrankCalculatePI/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/getDocIDFromUrl/getDocIDFromUrl.c src/BrankCalculatePI/main.c -o bin/BrankCalculatePI $(BDB) $(LDFLAGS)
 
 resolveRedirects: src/resolveRedirects/main.c
 	@echo ""
