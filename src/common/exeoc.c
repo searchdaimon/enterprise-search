@@ -135,6 +135,7 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 				return 0;
 			} else if (numfds == 0) {
 				warn("timeout in select, exeoc");
+				kill(pid, SIGKILL);
 				return 0;
 			}
 
