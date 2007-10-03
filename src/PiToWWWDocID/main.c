@@ -1,4 +1,7 @@
 
+/**
+ *	CHAANGELOG:	3. oktober 2007 - Magnus: Forandret UrlToDocID-database til å bruke den nye versjonen.
+ */
 
 #include <mysql.h>
 #include <stdio.h>
@@ -7,6 +10,7 @@
 #include <time.h>
 
 #include "../common/define.h"
+#include "../UrlToDocID/search_index.h"
 
 #define PIStartDOCID 2000000000
 
@@ -38,11 +42,13 @@ int main(int argc, char *argv[]) {
         MYSQL_ROW mysqlrow;
 
       	if (argc < 3) {
-                printf("Dette programet slår opp ekte DocID for pi. \n\n\tUsage: ./PiToWWWDocID UrlToDocID_folder sql_table");
+//                printf("Dette programet slår opp ekte DocID for pi. \n\n\tUsage: ./PiToWWWDocID UrlToDocID_folder sql_table");
+                printf("Dette programet slår opp ekte DocID for pi. \n\n\tUsage: ./PiToWWWDocID UrlToDocID_db sql_table\n");
+		printf("\nMerk: Navn på index-fil er det samme som UrlToDocID_db + '.index'\n");
                exit(0);
         }
 
-        char *UrlToDocIDfolder = argv[1];
+        char *UrlToDocIDdb = argv[1];
         char *table = argv[2];
 
 
@@ -78,9 +84,14 @@ int main(int argc, char *argv[]) {
 	IdDocIDmap = malloc(sizeof(struct IdDocIDmapFormat) * _configdatanr);	
 
 	pages=0;
+
+	char		db_index[strlen(UrlToDocIDdb)+7];
+	sprintf(db_index, "%s.index", UrlToDocIDdb);
+	urldocid_data	*data = urldocid_search_init(db_index, UrlToDocIDdb);
+
         while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
 
-                if (!getDocIDFromUrl(UrlToDocIDfolder, mysqlrow[1], &DocID)) {
+                if (!getDocIDFromUrl(data, mysqlrow[1], &DocID)) {
                         //printf("Unable to find docId\n");              
 			//DocID = 0;
 			DocID = PIStartDOCID + atou(mysqlrow[0]);
@@ -98,6 +109,7 @@ int main(int argc, char *argv[]) {
 		++pages;
 	}
 
+	urldocid_search_exit(data);
 
 	for (i=0;i<pages;i++) {
 		printf("id %u => DocID %u\n",IdDocIDmap[i].id,IdDocIDmap[i].DocID);

@@ -21,5 +21,7 @@ void urldocid_search_exit(urldocid_data *data);
 // search:
 unsigned int urldocid_search_index(urldocid_data *data, unsigned char *sha1);
 
+char getDocIDFromUrl(urldocid_data *data, char *url, unsigned int *DocID);
+
 
 #endif	// _SEARCH_URLTODOCID_INDEX_

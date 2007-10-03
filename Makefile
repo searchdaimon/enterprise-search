@@ -66,7 +66,7 @@ LIBXML = -I/usr/include/libxml2  -lxml2
 
 
 #HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c  
-HTMLPARSER=src/parser/libhtml_parser.a
+HTMLPARSER=src/parser/libhtml_parser.a src/parser/libcss_parser.a
 
 # The Dependency Rules
 # They take the form
@@ -243,7 +243,7 @@ boithoad: src/boithoad/main.c
 PiToWWWDocID: src/PiToWWWDocID/main.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(CFLAGS) $(LIBS)*.c src/PiToWWWDocID/main.c src/getDocIDFromUrl/getDocIDFromUrl.c -o bin/PiToWWWDocID $(LDFLAGS)  $(MYSQL) $(BDB)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/PiToWWWDocID/main.c src/UrlToDocID/search_index.c -o bin/PiToWWWDocID $(LDFLAGS)  $(MYSQL) $(BDB)
 
 
 boithoadtest: src/boithoadtest/main.c

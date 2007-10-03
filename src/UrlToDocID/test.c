@@ -48,9 +48,11 @@ int main(int argc, char *argv[])
     // 01591abb
     urldocid_data	*data = urldocid_search_init(argv[2], argv[1]);
 //015x27a9
-    unsigned int	DocID = urldocid_search_index(data, hash);
 
-    if (DocID == 0)
+//    unsigned int	DocID = urldocid_search_index(data, hash);
+    unsigned int	DocID;
+
+    if (!getDocIDFromUrl(data, argv[3], &DocID))
 	printf("Not found\n");
     else
 	printf("DocID: %i\n", DocID);
