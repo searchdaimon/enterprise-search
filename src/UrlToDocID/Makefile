@@ -10,7 +10,7 @@ search_index:
 	$(CC) -c search_index.c
 
 test:
-	$(CC) -o url2docid test.c search_index.o ../common/sha1.o
+	$(CC) -o url2docid test.c search_index.o ../common/sha1.c
 
 clean:
 	rm -rf test search_index.o build_index
