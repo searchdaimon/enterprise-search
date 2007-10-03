@@ -223,7 +223,6 @@ int exeoc_timeout(char *exeargv[],char documentfinishedbuf[],int *documentfinish
 		return 0;
         }
 	else {
-
 		return n;
 	}
 }
