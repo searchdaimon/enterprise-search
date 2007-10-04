@@ -107,7 +107,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 
 	}
 	else {
-		blog(LOGACCESS,1,"crawled url: \"%s\", size: %i b, ACL: allow \"%s\", denied \"%s\"\n",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).dokument_size,(*crawldocumentAdd).acl_allow,(*crawldocumentAdd).acl_denied);
+		blog(LOGACCESS,1,"crawled url: \"%s\", size: %i b, ACL: allow \"%s\", denied \"%s\"",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).dokument_size,(*crawldocumentAdd).acl_allow,(*crawldocumentAdd).acl_denied);
 	}
 
 	#ifdef DEBUG
