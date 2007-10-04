@@ -27,12 +27,10 @@ unsigned char* generate_thumbnail_by_convert(const void *document, const size_t 
 
 	//tmpfilename = mktemp("/tmp/generateThumbnail_XXXXXX"); //make a unique temporary file name
 
-	unlink(documentfile);
-	unlink(imagefile);
 
 	
-	snprintf(documentfile,sizeof(documentfile),"%s-doc.%s",converttemptemplate,type);
-	snprintf(imagefile,sizeof(imagefile),"%s-image.png",converttemptemplate);
+	snprintf(documentfile,sizeof(documentfile),"%s-doc-%u.%s",converttemptemplate,(unsigned int)getpid(),type);
+	snprintf(imagefile,sizeof(imagefile),"%s-image-%u.png",converttemptemplate,(unsigned int)getpid());
 	
 	if ((fp = fopen(documentfile,"wb")) == NULL) {
 		printf(documentfile);
@@ -66,6 +64,8 @@ unsigned char* generate_thumbnail_by_convert(const void *document, const size_t 
 
 	printf("created image om size %i\n",(*new_size));
     
+	unlink(documentfile);
+	unlink(imagefile);
 
 	return image;
 	
