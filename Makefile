@@ -66,7 +66,7 @@ LIBXML = -I/usr/include/libxml2  -lxml2
 
 
 #HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c  
-HTMLPARSER=src/parser/libhtml_parser.a src/parser/libcss_parser.a
+HTMLPARSER=src/parser/libhtml_parser.a src/parser/libcss_parser.a src/ds/libds.a
 
 # The Dependency Rules
 # They take the form
