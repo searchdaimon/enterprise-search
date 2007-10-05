@@ -94,7 +94,7 @@ unsigned int urldocid_search_index(urldocid_data *data, unsigned char *sha1)
 //    printf("%.8x\n", pos);
 //    printf("sizeof(off_t) = %i\n", sizeof(off_t));
 
-    fseek(data->indexf, pos, SEEK_SET);
+    fseeko(data->indexf, pos, SEEK_SET);
     fread(adr, sizeof(off_t), 2, data->indexf);
 /*
     {
@@ -125,7 +125,7 @@ unsigned int urldocid_search_index(urldocid_data *data, unsigned char *sha1)
     block = malloc(bsize);
     bsize/= sizeof(record);
 
-    fseek(data->dbf, adr[0], SEEK_SET);
+    fseeko(data->dbf, adr[0], SEEK_SET);
     fread(block, sizeof(record), bsize, data->dbf);
 
 //    printf("ok\n");

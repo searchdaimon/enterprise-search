@@ -4,12 +4,17 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <string.h>
 
 typedef struct
 {
     FILE	*indexf, *dbf;
-    int		index_size;
-    unsigned int one_unit;
+    off_t	index_size;
+    off_t	one_unit;
 } urldocid_data;
 
 

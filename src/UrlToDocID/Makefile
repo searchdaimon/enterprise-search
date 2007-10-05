@@ -9,10 +9,13 @@ build_index:
 search_index:
 	$(CC) -c search_index.c
 
+bin_sok:
+	$(CC) -o bin_sok bin_sok.c ../common/sha1.c
+
 test:
 	$(CC) -o url2docid test.c search_index.o ../common/sha1.c
 
 clean:
 	rm -rf test search_index.o url2docid_build_index url2docid
 
-.PHONY:	all clean test
+.PHONY:	all clean test bin_sok
