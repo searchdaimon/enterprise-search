@@ -5,6 +5,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
+#include <inttypes.h>
+
+#include <asm/div64.h>
 
 #include "../common/sha1.h"
 #include "search_index.h"
@@ -40,7 +43,9 @@ urldocid_data* urldocid_search_init(char *index_filename, char *db_filename)
 
     if (data->indexf==NULL)
 	{
-	    perror("Could not open index-file.");
+	    fprintf(stderr,"urldocid_search_init: Could not open index-file \"%s\".\n",index_filename);
+	    perror(index_filename);
+
 	    free(data);
 	    return NULL;
 	}
@@ -49,7 +54,8 @@ urldocid_data* urldocid_search_init(char *index_filename, char *db_filename)
 
     if (data->dbf==NULL)
 	{
-	    perror("Could not open database.");
+	    fprintf(stderr,"urldocid_search_init: Could not open database \"%s\".",db_filename);
+	    perror("");
 	    fclose(data->indexf);
 	    free(data);
 	    return NULL;
@@ -94,6 +100,10 @@ unsigned int urldocid_search_index(urldocid_data *data, unsigned char *sha1)
 //    printf("%.8x\n", pos);
 //    printf("sizeof(off_t) = %i\n", sizeof(off_t));
 
+	#ifdef DEBUG
+		printf("urldocid_search_index: seek to %"PRId64"\n",data->indexf);
+	#endif
+
     fseeko(data->indexf, pos, SEEK_SET);
     fread(adr, sizeof(off_t), 2, data->indexf);
 /*
@@ -123,7 +133,9 @@ unsigned int urldocid_search_index(urldocid_data *data, unsigned char *sha1)
     }
 */
     block = malloc(bsize);
-    bsize/= sizeof(record);
+    //fungerer ikke på web1, se http://www.captain.at/howto-udivdi3-umoddi3.php
+    //bsize/= sizeof(record);
+    do_div(bsize,sizeof(record));
 
     fseeko(data->dbf, adr[0], SEEK_SET);
     fread(block, sizeof(record), bsize, data->dbf);
