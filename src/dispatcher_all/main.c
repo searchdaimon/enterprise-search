@@ -2,6 +2,7 @@
     #include "../common/lot.h"
     #include "../common/vid.h"
     #include "../common/stdlib.h"
+    #include "../UrlToDocID/search_index.h"
 
     #include <stdarg.h>
     #include <arpa/inet.h>
@@ -125,8 +126,9 @@ void die(int errorcode,const char *fmt, ...) {
 	printf("</errormessage>\n");
  
 	printf("</error>\n");
-	printf("<RESULT_INFO TOTAL=\"0\" QUERY=\"\" HILITE=\"\" TIME=\"0\" FILTERED=\"0\" SHOWABAL=\"0\" />\n");
+	printf("<RESULT_INFO TOTAL=\"0\" QUERY=\"\" HILITE=\"\" TIME=\"0\" FILTERED=\"0\" SHOWABAL=\"0\" BOITHOHOME=\"%s\"/>\n",bfile(""));
 	printf("</search>\n");
+
 
         //ToDo: må ha låsing her
         if ((LOGFILE = bfopen("logs/query.log","a")) == NULL) {
@@ -1676,12 +1678,25 @@ int main(int argc, char *argv[])
 		//normaliserer url. Setter for eks / på slutten
 		url_normalization(QueryData.rankUrl,sizeof(QueryData.rankUrl));
 
-		if (!getDocIDFromUrl(dispconfig.UrlToDocID, QueryData.rankUrl, &wantedDocId)) {
+        	char            db_index[strlen(dispconfig.UrlToDocID)+7];
+        	sprintf(db_index, "%s.index", dispconfig.UrlToDocID);
+	        urldocid_data   *data;
+
+		if ((data = urldocid_search_init(db_index, dispconfig.UrlToDocID)) == NULL) {
+			die(100, "Unable to open index file \"%s\".",dispconfig.UrlToDocID);
+		}
+
+
+                if (!getDocIDFromUrl(data, QueryData.rankUrl, &wantedDocId)) {
+		//if (!getDocIDFromUrl(dispconfig.UrlToDocID, QueryData.rankUrl, &wantedDocId)) {
 			die(100, "Unable to find docId");
 		} else {
 			getRank = wantedDocId;
 			queryNodeHeder.getRank = wantedDocId;
-			
+		
+			#ifdef DEBUG
+				printf("found DocID %u ( for url \"%s\" )\n",wantedDocId,QueryData.rankUrl);
+			#endif	
 		}
 	}
 	else {
