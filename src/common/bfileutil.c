@@ -152,11 +152,18 @@ int rrmdir(char dir[]) {
 			printf("rrmdir: file: %s\n",path);
 		}
 
+		
 		//gjør selve slettingen
 		if (remove(path) != 0) {
 			perror("remove");
 		}
+		
 	}	
+
+	closedir(dirp);
+
+	//sletter seg selv, frykter vi kan få problemer med . og .. her, må testes
+	//remove( dir );
 }
 
 
