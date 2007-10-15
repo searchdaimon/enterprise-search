@@ -326,7 +326,11 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 		exit(1);
 	}
 
-        RFILE = lotOpenFile((*ReposetoryHeader).DocID, reponame == NULL ? "reposetory" : reponame,"r+b",'e',subname);
+        if ((RFILE = lotOpenFile((*ReposetoryHeader).DocID, reponame == NULL ? "reposetory" : reponame,"r+b",'e',subname)) == NULL) {
+		fprintf(stderr,"Can't open reposetory for DocID %u\n",(*ReposetoryHeader).DocID);
+		perror("");
+		exit(1);
+	}
 
 
         //søker til slutten

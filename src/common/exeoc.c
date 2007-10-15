@@ -50,19 +50,19 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 	pid_t waitstatus;
 
 	if ((*documentfinishedbufsize) <= linelen) {
-		fprintf(stderr,"Error: buffer must be larger then %i\n",linelen);
+		fprintf(stderr,"Error: buffer must be larger then %i. Did get only %i\n",linelen,*documentfinishedbufsize);
 	}	
 
 	//printf("documentfinishedbufsize %i\n",(*documentfinishedbufsize));
-	#ifdef DEBUG
-		printf("runing program \"%s\"\n",exeargv[0]);
+	//#ifdef DEBUG
+		printf("exeoc: runing program \"%s\"\n",exeargv[0]);
 		i=0;
 		while(exeargv[i] != '\0') {
 			printf("arg \"%s\"\n",exeargv[i]);
 
 			++i;
 		}
-	#endif
+	//#endif
 
 	pipe(pipefd);
 
@@ -166,8 +166,8 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 		#endif
 
 		if (i==0) {
-			printf("Error: dident manage to read back any data from filfilter\n");
-			return 0;
+			printf("exeoc_stdselect: Error: dident manage to read back any data\n");
+			//return 0;
 		}
 
 
