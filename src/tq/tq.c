@@ -18,8 +18,7 @@
 #include "tq.h"
 
 
-
-void tq_init(struct tqFormat *tqh) {
+void tq_init(struct tqFormat *tqh, int qlen) {
 
 
   	/* Initialize mutex and condition variable objects */
@@ -30,14 +29,23 @@ void tq_init(struct tqFormat *tqh) {
 
      	tqh->count = 0;
 	tqh->have_data = 1;
-	
+	tqh->qlen = qlen;
+
+	printf("qlen %i\n",tqh->qlen);
+
+
+	if ((tqh->q = malloc( (sizeof(void *) * tqh->qlen) )) == NULL) {
+		perror("malloc");
+		exit(1);
+	}
+
 }
 
 int tq_get(struct tqFormat *tqh, void **data) {
 
 	int my_id = 0;
 
-  	while(tqh->have_data) {
+  	while((tqh->have_data) || (tqh->count != 0)) {
 
     		pthread_mutex_lock(&tqh->count_mutex);
 
@@ -46,7 +54,7 @@ int tq_get(struct tqFormat *tqh, void **data) {
     		reached.  Note that this occurs while mutex is locked. 
     		*/
 		//hvis vi har data, og køen er bare halfull så ber vi om mer
-    		//if ((tqh->count == ( MAX_Q / 2 )) && (tqh->have_data)) {
+    		//if ((tqh->count == ( tqh->qlen / 2 )) && (tqh->have_data)) {
     		if ((tqh->count == 0) && (tqh->have_data)) {
 			//har ikke flere elementer i kø. Vil vekke opp produsenten
       			pthread_cond_signal(&tqh->count_empty_cv);
@@ -66,12 +74,13 @@ int tq_get(struct tqFormat *tqh, void **data) {
 
 		*data = NULL;
 		// vi kan bli vekket av fler grunner. Hvis vi ikke har mer data avslutter vi
-		if (!tqh->have_data) {
-			//#ifdef DEBUG
-			printf("inc_count(): thread %d, don't have eny more data\n", my_id);
-			//#endif
-		}
-		else if (tqh->count == 0) {
+		//if (!tqh->have_data) {
+		//	//#ifdef DEBUG
+		//	printf("inc_count(): thread %d, don't have eny more data\n", my_id);
+		//	//#endif
+		//}
+		//else 
+		if (tqh->count == 0) {
 			#ifdef DEBUG
 			printf("inc_count(): thread %d, got woken up, but don't have data\n",my_id);
 			#endif
@@ -88,6 +97,12 @@ int tq_get(struct tqFormat *tqh, void **data) {
     			printf("inc_count(): thread %d, count = %d, unlocking mutex\n",  my_id, tqh->count);
 			#endif
 		}
+
+		//køen er halfull. Hvis produsenten ligger å sover så kan den begynne og jobbe igjen
+    		if ((tqh->count == ( tqh->qlen / 2 )) && (tqh->have_data)) {
+      			pthread_cond_signal(&tqh->count_empty_cv);
+		}
+
 
 		pthread_mutex_unlock(&tqh->count_mutex);
 
@@ -123,14 +138,19 @@ void tq_add(struct tqFormat *tqh, void *data) {
   	*/
   	pthread_mutex_lock(&tqh->count_mutex);
 
-  		if (tqh->count == MAX_Q) {
+  		if (tqh->count == tqh->qlen) {
 			//venter på at køen skal gå tom
 		    	pthread_cond_wait(&tqh->count_empty_cv, &tqh->count_mutex);
 			#ifdef DEBUG
     			printf("watch_count(): thread %d Condition signal received.\n", my_id);
 			#endif
    		}
-
+		
+		//hvis vi nå har 0 elementer i kø vekker vi trådene. Ingen grunn til å vekke de hver gang
+		if (tqh->count == 0) {
+			//sender signal om at vi nå har data igjen
+			pthread_cond_signal(&tqh->count_full_cv);
+		}
 		tqh->q[tqh->count] = data;
 		++tqh->count;
 
@@ -138,7 +158,7 @@ void tq_add(struct tqFormat *tqh, void *data) {
 		printf("added new data to work on. count %i\n",tqh->count);
 		#endif
 		//sender signal om at vi nå har data igjen
-		pthread_cond_signal(&tqh->count_full_cv);
+		//pthread_cond_signal(&tqh->count_full_cv);
     
 	pthread_mutex_unlock(&tqh->count_mutex);
 
@@ -151,7 +171,7 @@ void *tq_end(struct tqFormat *tqh) {
 
 	pthread_mutex_lock(&tqh->count_mutex);
 
-		tqh->count = 0;
+		//tqh->count = 0;
 
 	  	tqh->have_data = 0;
 
@@ -171,6 +191,7 @@ void *tq_end(struct tqFormat *tqh) {
 void *tq_free(struct tqFormat *tqh) {
 
 	//kan vi gjøre dette. Hva om de er i bruk??
+	//skal ikke være de, da vi bare skal kalle denne etter at vi har ventet på alle tråder
  	pthread_mutex_destroy(&tqh->count_mutex);
   	pthread_cond_destroy(&tqh->count_empty_cv);
   	pthread_cond_destroy(&tqh->count_full_cv);

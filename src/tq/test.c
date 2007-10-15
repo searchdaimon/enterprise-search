@@ -66,7 +66,7 @@ void *add_data(void *idp)
 
   	printf("Starting watch_count(): thread %d\n", my_id);
 
-	for (i=0; i<27; i++) {
+	for (i=0; i<26; i++) {
 
 		c = (char)((int)'a' + i);
 		//c = 1;
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
 
-  tq_init(tqh);
+  tq_init(tqh,3);
 
 
   for (i = 0; i < NUM_THREADS; i++) {

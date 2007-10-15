@@ -3,6 +3,9 @@ struct bs {
 	int count;
 	int max;
 	void **t;
+	#ifdef WITH_THREAD
+		pthread_mutex_t mutex;
+	#endif
 };
 
 void *bs_init(struct bs *s, int max);
