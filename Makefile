@@ -455,7 +455,7 @@ ppcXmlParserTest: src/ppcXmlParserTest/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/ppcXmlParserTest/main.c src/parse_summary/libsummary.a src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/parse_summary/libsummary.a src/httpGet/httpGet.c -o bin/ppcXmlParserTest $(LDFLAGS) $(MYSQL) $(LIBXML) $(CURLLIBS)
 
-dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c src/getDocIDFromUrl/getDocIDFromUrl.c -D EXPLAIN_RANK $(LDFLAGS) $(BDB)
+dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/UrlToDocID/search_index.c src/maincfg/maincfg.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c -D EXPLAIN_RANK $(LDFLAGS) $(BDB) -D_GNU_SOURCE
 
 dispatcher_all: src/dispatcher_all/main.c
 	@echo ""
@@ -640,7 +640,7 @@ BrankCalculate4: src/BrankCalculate4/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/bs/bs.c src/tq/tq.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate4/main.c src/BrankCalculate3/res.c -o bin/BrankCalculate4 -lpthread $(LDFLAGS) -DDEFLOT -DWITH_THREAD
 
 BrankCalculate5: src/BrankCalculate5/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/banlists/ban.c src/bs/bs.c src/tq/tq.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate5/main.c -o bin/BrankCalculate5 -lpthread $(LDFLAGS) -DDEFLOT -DWITH_THREAD
+	$(CC) $(CFLAGS) src/common/lot.c src/common/bstr.c src/common/strlcat.c src/common/bfileutil.c src/common/debug.c  src/banlists/ban.c src/bs/bs.c src/tq/tq.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate5/main.c -o bin/BrankCalculate5 -lpthread $(LDFLAGS) -DDEFLOT -DWITH_THREAD
 
 BrankCalculate5Expand: src/BrankCalculate5Expand/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate3/res.c src/BrankCalculate5Expand/main.c -o bin/BrankCalculate5Expand $(LDFLAGS) -DDEFLOT 
