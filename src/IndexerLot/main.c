@@ -937,6 +937,7 @@ int main (int argc, char *argv[]) {
 		//temp:Søker til problemområdet
 		//FileOffset = 334603785;		
 		html_parser_init();
+		css_parser_init();
 
 
 
