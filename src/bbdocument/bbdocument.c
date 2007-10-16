@@ -280,7 +280,7 @@ char *acl_normalize(char *acl[]) {
 
 }
 
-int bbdocument_convert(char filetype[],char document[],const int dokument_size,char **documentfinishedbuf,int *documentfinishedbufsize, const char titlefromadd[]) {
+int bbdocument_convert(char filetype[],char document[],const int dokument_size,char **documentfinishedbuf,int *documentfinishedbufsize, const char titlefromadd[], char *subname, char *documenturi, unsigned int lastmodified, char *acl_allow, char *acl_denied, char *doctype) {
 
 	char **splitdata;
         int TokCount;
@@ -402,9 +402,11 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		Vi har konverter. Må skrive til fil får å kunne sende den med
 	*****************************************************************************/
 
-	sprintf(filconvertetfile_real,"%s-%u.%s",filconvertetfile,(unsigned int)getpid(),filetype);
-	sprintf(filconvertetfile_out_txt,"%s-%u.txt",filconvertetfile,(unsigned int)getpid(),filetype);
-	sprintf(filconvertetfile_out_html,"%s-%u.html",filconvertetfile,(unsigned int)getpid(),filetype);
+	pid_t pid = getpid();
+
+	sprintf(filconvertetfile_real,"%s-%u.%s",filconvertetfile,(unsigned int)pid,filetype);
+	sprintf(filconvertetfile_out_txt,"%s-%u.txt",filconvertetfile,(unsigned int)pid,filetype);
+	sprintf(filconvertetfile_out_html,"%s-%u.html",filconvertetfile,(unsigned int)pid,filetype);
 
 	#ifdef DEBUG
 	printf("bbdocument_convert: filconvertetfile_real \"%s\"\n",filconvertetfile_real);
@@ -568,11 +570,15 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
 		fclose(fh);
 	}
-	else if (strcmp(fileFilter->outputformat, "dir") == 0) {
+	else if (strcmp(fileFilter->outputformat, "dir") == 0 || strcmp(fileFilter->outputformat, "diradd") == 0) {
 		char *p;
+		/* Does len do anything any more? */
 		int len, failed = 0;
 		int iter = 0;
 		char *curdocp = documentfinishedbuftmp;
+		int type; /* 1 for dir, 2 for diradd */
+
+		type = (strcmp(fileFilter->outputformat, "dir") == 0) ? 1 : 2;
 
 		len = exeocbuflen;
 		p = strdup(documentfinishedbuftmp);
@@ -584,12 +590,18 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		curdocp += strlen(*documentfinishedbuf);
 		while (*p != '\0') {
 			char *ft, *path;
+			char *part = NULL;
 
-			printf("greponthis: Iteration: %d\n", iter++);
 			ft = p;
 			for (; *p != ' '; p++)
 				len--;
 			*p = '\0';
+			if (type == 2) {
+				part = ++p;
+				for (; *p != ' '; p++)
+					len--;
+				*p = '\0';
+			}
 			path = ++p;
 			/* XXX: strchr() */
 			for (; *p != '\n'; p++)
@@ -635,42 +647,46 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 				unlink(path);
 				docbuf[docbufsize] = '\0';
 				convdocbufsize = 0;
-#if 0
-				convdocbufsize = docbufsize * 2 + 512;
-				if ((convdocbuf = malloc(convdocbufsize)) == NULL) {
-					perror("malloc");
-					failed++;
-					free(docbuf);
-					continue;
+
+				if (type == 1)  {
+					while (((curdocp - documentfinishedbuftmp) + (char *)docbufsize) >
+					    (char *)documentfinishedbufsize) {
+						char *oldptr = *documentfinishedbuf;
+						
+						*documentfinishedbufsize *= 2;
+						*documentfinishedbuf = realloc(*documentfinishedbuf, *documentfinishedbufsize);
+						curdocp = *documentfinishedbuf + (curdocp - oldptr);
+						documentfinishedbuftmp = *documentfinishedbuf;
+					}
 				}
-#endif
-				/* XXX: untested */
-				while (((curdocp - documentfinishedbuftmp) + (char *)docbufsize) > (char *)documentfinishedbufsize) {
-					char *oldptr = *documentfinishedbuf;
-					
-					printf("We had to realloc.\n");
-					*documentfinishedbufsize *= 2;
-					*documentfinishedbuf = realloc(*documentfinishedbuf, *documentfinishedbufsize);
-					curdocp = *documentfinishedbuf + (curdocp - oldptr);
-					documentfinishedbuftmp = *documentfinishedbuf;
-				}
-				if (bbdocument_convert(ft, docbuf, docbufsize, &convdocbuf, &convdocbufsize, "") == 0) {
+				if (bbdocument_convert(ft, docbuf, docbufsize, &convdocbuf, &convdocbufsize, "", subname, documenturi, lastmodified, acl_allow, acl_denied, "") == 0) {
 					fprintf(stderr, "Failed on bbdocument_convert.\n");
 					failed++;
 					free(docbuf);
 					free(convdocbuf);
 					continue;
 				}
-				printf("greponthis: %x %x %x\n", curdocp, convdocbuf, documentfinishedbuftmp);
-				memcpy(curdocp, convdocbuf, convdocbufsize);
-				curdocp += convdocbufsize;
+				if (type == 1) {
+					memcpy(curdocp, convdocbuf, convdocbufsize);
+					curdocp += convdocbufsize;
+				} else if (type == 2) {
+					char subnamenew[256];
+					//int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,const char title[], char doctype[]) {
+					snprintf(subnamenew, sizeof(subnamenew), "%s-%s", subname, part);
+					bbdocument_add(subnamenew, documenturi, "html", convdocbuf, convdocbufsize, lastmodified, acl_allow, acl_denied, titlefromadd, "");
+				}
 				
 				free(convdocbuf);
 				free(docbuf);
 			}
 		}
-		*curdocp = '\0';
-		*documentfinishedbufsize = curdocp - documentfinishedbuftmp; 
+		if (type == 1) {
+			*curdocp = '\0';
+			*documentfinishedbufsize = curdocp - documentfinishedbuftmp; 
+		} else if (type == 2) {
+			*documentfinishedbufsize = 1;
+			*documentfinishedbuf = strdup(".");
+		}
 		//printf("Got this: %d %d<<\n%s\n", strlen(*documentfinishedbuf), *documentfinishedbufsize, *documentfinishedbuf);
 		//free(p);
 	}
@@ -701,8 +717,6 @@ int bbdocument_close () {
 
 int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,const char title[], char doctype[]) {
 
-	
-
 	struct ReposetoryHeaderFormat ReposetoryHeader;
 
 	int htmlbuffersize = 0;//((dokument_size *2) +512);	//+512 da vi skal ha med div meta data, som html kode
@@ -732,7 +746,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		}
 	}
 	else {
-		documenttype_real = malloc(strlen(documenttype));
+		documenttype_real = malloc(strlen(documenttype)+1);
 		strcpy(documenttype_real,documenttype);
 	}
 	printf("dokument_size 4 %i, title %s\n",dokument_size, title);
@@ -747,7 +761,9 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	}
 	printf("dokument_size 4 %i, title %s\n",dokument_size, title);
 
-	if (!bbdocument_convert(documenttype_real,document,dokument_size,&htmlbuffer,&htmlbuffersize,title)) {
+//int bbdocument_convert(char filetype[],char document[],const int dokument_size,char **documentfinishedbuf,int *documentfinishedbufsize, const char titlefromadd[], char *subname, char *documenturi, unsigned int lastmodified, char *acl_allow, char *acl_denied, char *title, char *doctype) {
+	//if (!bbdocument_convert(documenttype_real,document,dokument_size,&htmlbuffer,&htmlbuffersize,title)) {
+	if (!bbdocument_convert(documenttype_real,document,dokument_size,&htmlbuffer,&htmlbuffersize,title,subname,documenturi, lastmodified,acl_allow, acl_denied, doctype)) {
 
 		printf("can't run bbdocument_convert\n");
 		//lager en tom html buffer
