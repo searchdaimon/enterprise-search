@@ -899,7 +899,9 @@ void copyRepToDi(struct DocumentIndexFormat *DocumentIndexPost,struct Reposetory
 
 			(*DocumentIndexPost).ResourcePointer 	= 0;
 			(*DocumentIndexPost).ResourceSize 	= 0;
-
+#ifdef BLACK_BOKS
+			DocumentIndexPost->lastSeen = ReposetoryHeader->storageTime;
+#endif
 }
 
 
