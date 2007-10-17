@@ -80,7 +80,7 @@ main(int argc, char **argv)
 
         //tester for at vi har fåt hvilken lot vi skal bruke
         if (argc < 3)
-                errx(1, "Usage: ./anchorread lotnr subname\n\n");
+                errx(1, "Usage: ./anchorMerge lotnr subname\n\n");
 
 	LotNr = atoi(argv[1]);
 	subname = argv[2];
