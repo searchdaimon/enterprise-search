@@ -53,21 +53,8 @@ int boitho_authenticat(char username_in[],char password_in[]) {
         char username[64];
         char password[64];
 
-	if (strncmp(password_in, "nopwdsid::", 10) == 0) {
-		char siduser[64];
-
-		if (!boithoad_sidToUser(password_in+10, siduser))
-			return 0;
-
-		if (strcmp(siduser, username_in) != 0)
-			return 0;
-
-		return 1;
-	}
-
         strncpy(username,username_in,sizeof(username));
         strncpy(password,password_in,sizeof(password));
-
 
         if ((socketha = cconnect("localhost", BADPORT)) == 0) {
 		perror("localhost");
