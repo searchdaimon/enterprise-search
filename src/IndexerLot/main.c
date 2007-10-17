@@ -1052,7 +1052,8 @@ int main (int argc, char *argv[]) {
 	printf("indexed %i pages\n\n\n",argstruct.pageCount);
 
 	html_parser_exit();
-	 langdetectDestroy();
+	css_parser_exit();
+	langdetectDestroy();
 	free(argstruct.DIArray);
 	free(argstruct.adult);
 
