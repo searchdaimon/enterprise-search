@@ -185,6 +185,10 @@ int main (int argc, char *argv[]) {
 		printf("time %s (%u)\n",ctime((time_t *)&DocumentIndexPost.CrawleDato),DocumentIndexPost.CrawleDato);
 		printf("crc32 %u\n",DocumentIndexPost.crc32);
 
+#ifdef BLACK_BOKS
+		printf("lastSeen: %s (%u)\n", ctime(&DocumentIndexPost.lastSeen), DocumentIndexPost.lastSeen);
+#endif
+
 		printf("SummaryPointer %u\nSummarySize %hu\n\n",DocumentIndexPost.SummaryPointer,DocumentIndexPost.SummarySize);
 		printf("nrOfOutLinks: %u\n",(unsigned int)DocumentIndexPost.nrOfOutLinks);
 		///////////////
