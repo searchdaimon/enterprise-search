@@ -14,6 +14,8 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 //    if (pos > 25) return;
 
     printf("\t%s (%i) ", word, pos);
+	
+	printf("pu %i ",pu);
 
     switch (pu)
 	{
