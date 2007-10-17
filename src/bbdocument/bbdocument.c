@@ -253,9 +253,27 @@ int bbdocument_init() {
 
 
 int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified) {
+	docid DocID;
+	unsigned int lastmodifiedForExistTest;
+
         printf("bbadocument_exist: %s, \"%s\", lastmodified %u\n",subname,documenturi,lastmodified);
 
-        return 0;
+	if (uriindex_get(documenturi,&DocID,&lastmodifiedForExistTest,subname)
+	    && (lastmodifiedForExistTest == lastmodified)) {
+		struct DocumentIndexFormat docindex;
+		printf("bbdocument_exist: Uri \"%s\" exists with DocID \"%u\" and time \"%u\"\n",
+		    documenturi, DocID, lastmodifiedForExistTest);
+		// Update DI with new existed timestamp
+
+#ifdef BLACK_BOKS
+		DIRead(&docindex, DocID, subname);
+		docindex.lastSeen = time(NULL);
+		DIWrite(&docindex, DocID, subname, NULL);
+#endif
+		return 1;
+	}
+
+	return 0;
 }
 
 char *acl_normalize(char *acl[]) {
@@ -761,8 +779,6 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	}
 	printf("dokument_size 4 %i, title %s\n",dokument_size, title);
 
-//int bbdocument_convert(char filetype[],char document[],const int dokument_size,char **documentfinishedbuf,int *documentfinishedbufsize, const char titlefromadd[], char *subname, char *documenturi, unsigned int lastmodified, char *acl_allow, char *acl_denied, char *title, char *doctype) {
-	//if (!bbdocument_convert(documenttype_real,document,dokument_size,&htmlbuffer,&htmlbuffersize,title)) {
 	if (!bbdocument_convert(documenttype_real,document,dokument_size,&htmlbuffer,&htmlbuffersize,title,subname,documenturi, lastmodified,acl_allow, acl_denied, doctype)) {
 
 		printf("can't run bbdocument_convert\n");
