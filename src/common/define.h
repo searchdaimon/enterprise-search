@@ -255,7 +255,8 @@ struct DocumentIndexFormat {
         unsigned short SummarySize;
         unsigned int crc32;
 #ifdef BLACK_BOKS
-	char reservedSpace[64]; //3 now
+	time_t lastSeen;
+	char reservedSpace[60]; //3 now
 #endif
 };
 
@@ -628,6 +629,8 @@ struct anchorRepo {
 struct anchorIndexFormat {
 	off_t offset;
 };
+
+typedef unsigned int docid;
 
 #endif //_DEFINE__H_
 
