@@ -10,7 +10,7 @@
 #include "../common/reposetory.h"
 
 /* Should probably get this from the crawler, decided depending on the recrawl time */
-#define TIMEOUT		60*60*12*1
+#define TIMEOUT		60*60*24*14 // Two weeks
 
 int
 main(int argc, char **argv)
