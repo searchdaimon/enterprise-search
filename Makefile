@@ -118,6 +118,14 @@ setuidcaller:
 		echo "################"; \
 	fi
 
+invalidateOldFiles:
+	@echo ""
+	@echo "$@:"
+
+	(cd src/invalidateOldFiles; make clean; make)
+	cp src/invalidateOldFiles/invalidateOldFiles bin/
+
+
 
 Suggest:
 	@echo ""
