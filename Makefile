@@ -66,7 +66,9 @@ LIBXML = -I/usr/include/libxml2  -lxml2
 
 
 #HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c  
-HTMLPARSER=src/parser/libhtml_parser.a src/parser/libcss_parser.a src/ds/libds.a
+#har rullet tilbake, og bruker gammel html parser for nå, så trenger dermed ikke i ha med css parseren
+#HTMLPARSER=src/parser/libhtml_parser.a src/parser/libcss_parser.a src/ds/libds.a
+HTMLPARSER=src/parser/libhtml_parser.a src/ds/libds.a
 
 # The Dependency Rules
 # They take the form
@@ -308,6 +310,13 @@ BrankCalculate2GetPageElements: src/BrankCalculate2GetPageElements/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate2GetPageElements/main.c  -o bin/BrankCalculate2GetPageElements $(LDFLAGS)
+
+
+BrankCalculateGetUrls: src/BrankCalculateGetUrls/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculateGetUrls/main.c  -o bin/BrankCalculateGetUrls $(LDFLAGS)
 
 alllot: src/alllot/main.c
 	@echo ""
@@ -648,7 +657,7 @@ BrankCalculate4: src/BrankCalculate4/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/bs/bs.c src/tq/tq.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate4/main.c src/BrankCalculate3/res.c -o bin/BrankCalculate4 -lpthread $(LDFLAGS) -DDEFLOT -DWITH_THREAD
 
 BrankCalculate5: src/BrankCalculate5/main.c
-	$(CC) $(CFLAGS) src/common/lot.c src/common/bstr.c src/common/strlcat.c src/common/bfileutil.c src/common/debug.c  src/banlists/ban.c src/bs/bs.c src/tq/tq.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate5/main.c -o bin/BrankCalculate5 -lpthread $(LDFLAGS) -DDEFLOT -DWITH_THREAD
+	$(CC) $(CFLAGS) src/common/lot.c src/common/bstr.c src/common/strlcat.c src/common/bfileutil.c src/common/debug.c  src/banlists/ban.c src/bs/bs.c src/tq/tq.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate5/main.c -o bin/BrankCalculate5 -lpthread $(LDFLAGS) -DDEFLOT
 
 BrankCalculate5Expand: src/BrankCalculate5Expand/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate3/res.c src/BrankCalculate5Expand/main.c -o bin/BrankCalculate5Expand $(LDFLAGS) -DDEFLOT 
