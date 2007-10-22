@@ -1,0 +1,88 @@
+[% INCLUDE 'header.html' title="Settings" %]
+[% PROCESS 'settings_tabs.html' selected="Crawl Manager" %]
+[% USE date %]
+
+<div id="settings">
+	
+    <h3>Collection recrawl schedule</h3>
+
+    [% IF schedule_updated %]
+        [% WRAPPER 'template_message.html' type="success" %]
+            Schedule settings have been updated.
+        [% END %]
+    [% END %]
+    [% IF schedule_update_err %]
+        [% WRAPPER 'template_message.html' type="error" %]
+            Unable to update schedule. [% schedule_update_err %]
+        [% END %]
+    [% END %]
+    
+        <form action="settings.cgi" method="post">
+            <p>
+        <label for="use_sched">
+            <input type="radio" id="use_sched" name="cm.use_schedule" value="0"
+            [% IF !config.recrawl_schedule_start 
+                        OR !config.recrawl_schedule_end %]checked="checked"[% END %]
+            /> Run recrawl at any time of the day.</label><br />
+        <label for="not_use_sched">
+            <input type="radio" id="not_use_sched" name="cm.use_schedule" value="1"
+                [% IF config.recrawl_schedule_start 
+                        AND config.recrawl_schedule_end %]checked="checked"[% END %] />             Only crawl between </label>
+                <select name="cm.schedule_start">
+                    <option></option>
+                    [% FOR i IN [1..24] %]
+                        <option value="[% i %]"
+                        [% 'selected="selected"' IF i == config.recrawl_schedule_start %]
+                        >
+                            [% FILTER format('%.2d:00') %][% i %][% END %]
+                        </option>
+                    [% END %]
+                </select>
+
+                to (and including) 
+                <select name="cm.schedule_end">
+                    <option></option>
+                    [% FOR i IN [1..24] %]
+                        <option value="[% i %]" 
+                            [% 'selected="selected"' IF i == config.recrawl_schedule_end %]>
+                            [% FILTER format('%.2d:00') %][% i %][% END %]
+                        </option>
+                    [% END %]
+                </select>.
+                </p>
+                <p><input type="submit" name="submit.cm_schedule" 
+                        value="Update schedule" />
+            </form>
+            
+	
+
+    <h3>Garbage Collection</h3>
+        [% IF gc_updated %]
+            [% WRAPPER 'template_message.html' type="success" %]
+                Garbage collection settings have been updated.
+            [% END %]
+        [% END %]
+        <form action="settings.cgi" method="post">
+        <p>
+        Run garbage collection every 
+        <select name="cm.gc_rate">
+        [% FOR i IN [1..60] %]
+            [% optvalue = i * 24 * 60 * 60 %]
+            <option value="[% optvalue %]" 
+                [% 'selected="selected"' IF 
+                    optvalue == config.gc_default_rate %]>[% i %]</option>
+        [% END %]
+        </select> days.
+        </p>
+
+        <p>Last garbage collect ran at 
+            [% date.format(gc_last_run, "%b %e %Y, %H:%M") %].</p>
+
+        <p>
+        <input type="submit" name="submit.cm_gc" value="Update setting" />
+        </p>
+        </form>
+
+    </div>
+
+[% INCLUDE 'footer.html' %]

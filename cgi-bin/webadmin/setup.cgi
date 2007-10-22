@@ -52,8 +52,8 @@ else {
         #->add($FLOW_START_FORM, \&process_login) 
         ->add(FLOW_START_FORM,  \&process_network)
         ->add('network_config', \&process_network)
-        #->add('license_valid', \&process_license)
-        #->add('manual_act', \&process_manual_act)
+        ->add('license_valid', \&process_license)
+        ->add('manual_act', \&process_manual_act)
         ->add('integration_method', \&process_integration_method)
         ->add('integration_values', \&process_integration_values);
     
@@ -69,24 +69,24 @@ $template->process($template_file, $vars)
 
 # Group: Form functions
 
-sub process_login {
-	my ($success, $status) 
-		= $pageLogin->process_login();
-
-	# login failed, show again.
-	return $pageLogin->show_login()
-		unless $success;
-
-	# login ok.
-
-	if ($status eq "FIRST_LOGIN") { #continue with wizard
-		return $pageNetwork->show_network_config($vars);	
-	}
-	else { #skip wizard
-		print CGI::redirect("overview.cgi");
-		exit 0;
-	}
-}
+#sub process_login {
+#	my ($success, $status) 
+#		= $pageLogin->process_login();
+#
+#	# login failed, show again.
+#	return $pageLogin->show_login()
+#		unless $success;
+#
+#	# login ok.
+#
+#	if ($status eq "FIRST_LOGIN") { #continue with wizard
+#		return $pageNetwork->show_network_config($vars);	
+#	}
+#	else { #skip wizard
+#		print CGI::redirect("overview.cgi");
+#		exit 0;
+#	}
+#}
 
 sub process_network {
     my ($netconf, $resolv) = ($state{netconf}, $state{resolv});

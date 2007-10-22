@@ -9,6 +9,7 @@ use Template;
 use Data::Dumper;
 use Page::Settings;
 use Page::Settings::Network;
+use Page::Settings::CrawlManager;
 use Common::Generic qw(init_root_page);
 
 my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
@@ -18,6 +19,8 @@ my %state = %{$state_ptr};
 my $template_file;
 
 my $pageNetwork = Page::Settings::Network->new($dbh);
+my $pageCM = Page::Settings::CrawlManager->new($dbh);
+
 
 # Group: User actions
 
@@ -65,6 +68,16 @@ if (defined($state{'submit'})) {
             # User is changing passwords
             $template_file = $page->update_admin_passwd($vars, $state{passwd});
         }
+
+        elsif (defined $button->{cm_gc}) {
+            # User update GC rate.
+            $template_file = $pageCM->update_gc($vars, $state{cm}{gc_rate});
+        }
+        elsif (defined $button->{cm_schedule}) {
+            $template_file = $pageCM->update_schedule(
+                $vars, $state{cm}{use_schedule}, 
+                $state{cm}{schedule_start}, $state{cm}{schedule_end});
+        }
 }
 
 elsif (defined($state{'confirm_delete'})) {
@@ -95,6 +108,10 @@ elsif (defined($state{'view'})) {
 	elsif ($view eq "network") {
 		($vars, $template_file) = $pageNetwork->show_network_config($vars);
 	}
+
+        elsif ($view eq "crawl_manager") {
+            $template_file = $pageCM->show($vars);
+        }
 }
 
 
