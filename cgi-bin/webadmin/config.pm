@@ -103,6 +103,11 @@ $CONFIG{'gdb_report_cmd'} = qq{bt};
 # URL to submit crash reports to
 $CONFIG->{'core_report_url'} = "http://dagurval.boitho.com/cgi-bin/report/submit.pl";
 
+$CONFIG{login_htpasswd_path} = $ENV{BOITHOHOME} . "/cgi-bin/webadmin/.htpasswd"; 
+    #"/home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd";
+$CONFIG{login_admin_user} = "admin";
+
+
 # Group: Network
 
 # The network device that is configurable

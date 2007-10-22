@@ -12,6 +12,16 @@ use Boitho::SettingsExport;
 use Sql::Config;
 use Sql::Shares;
 use Sql::ShareGroups;
+BEGIN {
+    eval {
+        require Apache::Htpasswd;
+    };
+    if ($@) { 
+        carp "Unable to load Apache::Htpasswd", 
+            " user won't be able to change password.";
+    }
+}
+
 my %CONFIG = %$CONFIG;
 
 # Helper class with functions used with add.cgi
@@ -157,5 +167,41 @@ sub export_settings($) {
 	return $settings->export_settings('OBFUSCATE');	
 }
 
+sub update_admin_passwd {
+    my ($self, $vars, $pass_ref) = @_;
+    my %pass = %{ $pass_ref };
+    my $htpasswd;
+    eval {
+        $htpasswd = Apache::Htpasswd->new($CONFIG{login_htpasswd_path});
+    } or $vars->{pass_update_err} = $@;
+
+    my $succs;
+    eval {
+        croak "New passwords don't match."
+            unless $pass{'new'} eq $pass{'new_rep'};
+        croak "Old password is incorrect."
+            unless $htpasswd->htCheckPassword(
+                    $CONFIG{login_admin_user}, $pass{'old'});
+        croak "No new password entered"
+            unless $pass{'new'};
+
+        $succs = $htpasswd->htpasswd(
+                $CONFIG{login_admin_user}, $pass{'new_rep'}, $pass{'old'});
+    };
+    if ($@) {
+        $vars->{pass_update_err} = $@;
+        $vars->{pass_update_err} =~ s/at .*? line \d+//g;
+        $vars->{passwd} = $pass_ref;
+    }
+    elsif ($succs) {
+        $vars->{pass_updated} = 1;
+    }
+    else {
+        $vars->{pass_update_err} = $htpasswd->error();
+        $vars->{passwd} = $pass_ref;
+    }
+    
+    return $self->show_main_settings($vars);
+}
 
 1;

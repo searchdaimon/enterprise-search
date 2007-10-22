@@ -56,7 +56,41 @@
 	</form>
 </div>
 
+<div id="settings">
+    <h3>Administration account password</h3>
 
+    [% IF pass_updated %]
+        [% WRAPPER 'template_message.html' type="success" %]
+            Password has been updated.
+        [% END %]
+    [% END %]
+    [% IF pass_update_err %]
+        [% WRAPPER 'template_message.html' type='error' %]
+            Unable to update password. [% pass_update_err %]
+        [% END %]
+    [% END %]
+
+
+    <form action="settings.cgi" method="post">
+        <table>
+            <tr>
+                <td>Old password:</td><td><input type="password" 
+                    name="passwd.old" value="[% passwd.old %]" /></td>
+            </tr>
+            <tr><td>&nbsp;</td></tr>
+            <tr><td>New password:</td>
+                <td><input type="password" name="passwd.new" value="[% passwd.new %]" /></td>
+            </tr>
+            <tr><td>New password (again):</td>
+                <td><input type="password" name="passwd.new_rep" value="[% passwd.new_rep %]" /></td>
+            </tr>
+        </table>
+        <input type="submit" name="submit.admin_pass" value="Change password" />
+    </form>
+
+</div>
+
+<!--
 <div id="settings">
 
         <h3>Update manualy</h3>
@@ -72,6 +106,6 @@
 	</form>
 
 </div>
-
+-->
 
 [% INCLUDE 'footer.html' %]

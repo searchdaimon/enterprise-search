@@ -60,6 +60,11 @@ if (defined($state{'submit'})) {
 		($vars, $template_file) 
 			= $page->select_dist_version($vars, $state{'dist'});
 	}
+
+        elsif (defined $button->{admin_pass}) {
+            # User is changing passwords
+            $template_file = $page->update_admin_passwd($vars, $state{passwd});
+        }
 }
 
 elsif (defined($state{'confirm_delete'})) {
