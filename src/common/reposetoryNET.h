@@ -10,6 +10,7 @@ int rGetNextNET(char *HostName, unsigned int LotNr,struct ReposetoryHeaderFormat
 void DIWriteNET (char *HostName, struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[]);
 
 int DIReadNET (char *HostName, struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[]);
+int DIReadNET2 ( struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[]);
 
 void closeNET ();
 

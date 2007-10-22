@@ -50,9 +50,9 @@ int conectTo(int LotNr) {
 		#endif
 
                if (strcmp(lastServer,"noone") != 0) {
-			//#ifdef DEBUG
+			#ifdef DEBUG
                         printf("closing socket to %s\n",lastServer);
-			//#endif
+			#endif
                         close(socketha);
                }
 
@@ -62,9 +62,9 @@ int conectTo(int LotNr) {
 
         }
         else {
-		//#ifdef DEBUG
+		#ifdef DEBUG
                 printf("reusing socket to %s\n",lastServer);
-		//#endif
+		#endif
         }
 
 	return socketha;
@@ -504,9 +504,30 @@ int DIReadNET (char *HostName, struct DocumentIndexFormat *DocumentIndexPost, in
 	
 
 	if (socketOpen != 1) {
-                socketha = cconnect(HostName, BLDPORT);
+                if ((socketha = cconnect(HostName, BLDPORT)) == 0) {
+			perror(HostName);
+			return 0;
+		}
                 socketOpen = 1;
         }
+
+	//sender forespørsel
+	sendpacked(socketha,C_DIRead,BLDPROTOCOLVERSION, sizeof(DocID), &DocID,subname);
+
+
+	//leser svar
+        if ((i=recv(socketha, DocumentIndexPost, sizeof(struct DocumentIndexFormat),MSG_WAITALL)) == -1) {
+              perror("recv");
+              exit(1);
+        }
+
+}
+
+int DIReadNET2 ( struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[]){
+
+	int i;
+
+	int socketha = conectTo(rLotForDOCid(DocID));
 
 	//sender forespørsel
 	sendpacked(socketha,C_DIRead,BLDPROTOCOLVERSION, sizeof(DocID), &DocID,subname);
