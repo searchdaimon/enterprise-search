@@ -66,12 +66,17 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
+	printf("Content-type: text/html\n\n");
+
+
 	//må legge til størelsen på hedderen også
 
 	htmlBufSize = (iSize * 10);
-	htmlBuf = malloc(htmlBufSize);
+	if ((htmlBuf = malloc(htmlBufSize)) == NULL) {
+		printf("can't malloc space for html buff.\n");
+		exit(1);		
+	}
 
-	printf("Content-type: text/html\n\n");
 
 	// (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,
 	// (*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&aclbuffer
