@@ -813,14 +813,11 @@ void increaseFilteredSilent(struct PagesResultsFormat *PagesResults,int *whichFi
 
 #ifdef BLACK_BOKS
 int pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection_in[], char uri_in[], char user_in[], char password_in[]) {
-
-
 	int ret = 0;
 
 	#ifdef WITH_THREAD
 		pthread_mutex_lock(&(*PagesResults).mutex);
 	#endif
-
 
 	ret = cmc_pathaccess(socketha,collection_in,uri_in,user_in,password_in);
 
@@ -943,6 +940,7 @@ void *generatePagesResults(void *arg)
 			side->DomainID = (*DomainID);
 			//printf("DomainID %ho\n",side->DomainID);
 			
+#ifndef BLACK_BOKS
 			// fornå gjør vi bare denne sjekken hvis vi kunne slå opp DomainID
                 	if (((*PagesResults).filterOn) && (filterSameDomainID(localshowabal,side,(*PagesResults).Sider))) {
 				#ifdef DEBUG
@@ -952,6 +950,7 @@ void *generatePagesResults(void *arg)
 				continue;
 			
 			}
+#endif
 		}
 
 		#endif
@@ -1169,6 +1168,7 @@ void *generatePagesResults(void *arg)
 			goto end_filter_lock;
 		}
 
+#ifndef BLACK_BOKS
 		if (((*PagesResults).filterOn) && (filterSameDomain(nrofGodPages(PagesResults),side,(*PagesResults).Sider))) {
 			//#ifdef DEBUG
 			printf("hav same domain. Domain: %s. Url %s\n",side->domain,side->DocumentIndex.Url);
@@ -1202,6 +1202,7 @@ void *generatePagesResults(void *arg)
 			treadSyncFilters = 1;
 			goto end_filter_lock;	
 		}
+#endif
 
 
 
