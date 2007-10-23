@@ -17,7 +17,8 @@ int main(int argc, char *argv[]) {
 	char *htmlBuf;
 	unsigned int htmlBufSize;
 	struct ReposetoryHeaderFormat ReposetoryHeader;
-        char *aclbuffer = NULL;
+        char *aclbuffer_allow = NULL;
+        char *aclbuffer_deny = NULL;
 
 	off_t iPointer;
 	//unsigned long int iPointer;
@@ -61,13 +62,13 @@ int main(int argc, char *argv[]) {
 
 	}
 	else {
-		printf("no query given\n");
+		printf("no query given. \nUsage: DocID Pointer Size subname\n");
 		exit(1);
 	}
 
 	//må legge til størelsen på hedderen også
 
-	htmlBufSize = (iSize * 5);
+	htmlBufSize = (iSize * 10);
 	htmlBuf = malloc(htmlBufSize);
 
 	printf("Content-type: text/html\n\n");
@@ -75,14 +76,15 @@ int main(int argc, char *argv[]) {
 	// (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,
 	// (*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&aclbuffer
 
-	if (rReadHtml(htmlBuf,&htmlBufSize,iPointer,iSize,iDocID,subname,&ReposetoryHeader,&aclbuffer) != 1) {
+	if (rReadHtml(htmlBuf,&htmlBufSize,iPointer,iSize,iDocID,subname,&ReposetoryHeader,&aclbuffer_allow,&aclbuffer_deny) != 1) {
 
-		printf("cant read cashe file\n");
+		printf("can't read cache file.\n");
 
 	}
 	else {
 		//printf(htmlBuf);
 		fwrite(htmlBuf,htmlBufSize,1,stdout);
 	}
+
 	free(htmlBuf);
 }
