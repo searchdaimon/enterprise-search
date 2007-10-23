@@ -362,6 +362,7 @@ int sendall(int s, void *buf, int len) {
 			//perror("send");
 			return 0;
 		}
+
             if (n == -1) { 
 		printf("dident manage to send all the data as %s:%f.\n",__FILE__,__LINE__);
 		//break; 
@@ -431,6 +432,8 @@ int recvall(int sockfd, void *buf, int len) {
 int sendpacked(int socket,short command, short version, int dataSize, void *data,char subname[]) {
 
         struct packedHedderFormat packedHedder;
+	char *buf;
+	size_t len;
         //int i;
         //setter sammen hedder
         packedHedder.size       = sizeof(struct packedHedderFormat) + dataSize;
@@ -438,27 +441,18 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
         packedHedder.command    = command;
 	strcpy(packedHedder.subname,subname);
 
-	//printf("sendpacked: start\n");
-
-        if (!sendall(socket, (char*)&packedHedder, sizeof(struct packedHedderFormat))) {
-		return 0;
+	if (data != NULL) {
+		len = sizeof(packedHedder) + dataSize;
+		buf = malloc(len);
+		memcpy(buf, &packedHedder, sizeof(packedHedder));
+		memcpy(buf+sizeof(packedHedder), data, dataSize);
+	} else {
+		buf = (char *)&packedHedder;
+		len = sizeof(packedHedder);
 	}
 
-        //printf("sent %i of %i packedsize: %i\n",i, sizeof(struct packedHedderFormat), packedHedder.size,packedHedder.size);
-	//printf("command: %i\n",packedHedder.command);
-
-	//hvi data er null betur det at denne vil bli sent siden, av annen kode
-        if (dataSize != 0) {
-		#ifdef DEBUG
-		printf("sendpacked: data NOT NULL. Will sendit");
-		#endif
-                if (!send(socket,data,dataSize,0)) {
-			return 0;
-		}
-        }
-
-	//printf("sendpacked: end\n");
-
+	if (!sendall(socket, buf, len)) {
+		return 0;
+	}
 	return 1;
 }
-
