@@ -9,6 +9,10 @@
 #include <sys/types.h>
 #include <dirent.h>
 
+#if 0
+#include <memcache.h>
+#endif
+
 #include "../crawl/crawl.h"
 #include "../common/define.h"
 #include "../common/bstr.h"
@@ -186,9 +190,82 @@ char *adduserprefix(struct collectionFormat *collections,char username[]) {
 	return newusername;
 }
 
+#if 0
+
+char *
+pathaccess_makekey(char *collection, char *username, char *password, char *uri, size_t *outlen)
+{
+	char *s;
+	size_t len;
+	int i;
+
+	if (password == NULL)
+		password = "";
+
+	len = strlen(collection) + strlen(username) + strlen(password) + strlen(uri) + 4;
+	*outlen = len-1;
+	s = malloc(len);
+	sprintf(s, "%s\1%s\1%s\1%s", collection, username, password, uri);
+	for (i = 0; s[i] != '\0'; i++) {
+		if (isspace(s[i]))
+			s[i] = '\2';
+	}
+
+	return s;
+}
+
+struct memcache *mc = NULL;
+
+void
+pathaccess_savecache(char *collection, char *username, char *password, char *uri, char res, char *newuri)
+{
+	char *s;
+	size_t len;
+	int ret;
+	char *add;
+
+	s = pathaccess_makekey(collection, username, password, uri, &len);
+
+	add = malloc(strlen(newuri) + 2);
+	add[0] = res;
+	strcpy(add+1, newuri);
+
+	ret = mc_add(mc, s, len, add, sizeof(add), 0, 0);
+
+	free(s);
+}
+
+int
+pathaccess_cachelookup(char *collection, char *username, char *password, char *uri)
+{
+	char *s;
+	int error;
+	size_t len;
+	char *res;
+	char ret;
+
+	s = pathaccess_makekey(collection, username, password, uri, &len);
+
+	printf("Foo\n");
+	res = mc_aget(mc, s, len);
+	printf("Foo 2\n");
+
+	free(s);
+	if (res == NULL)
+		return 0;
+	ret = res[0];
+	strcpy(uri, res+1);
+	free(res);
+
+	return ret;
+}
+#endif
+
+
 int pathAccess(struct hashtable *h, char collection[], char uri[], char username_in[], char password[]) {
+	char *origuri;
 
-
+	int cacheret;
 
 	struct collectionFormat *collections; // bare en "s" skiller collection og collections her. Ikke bra, bør finne på bedre navn
 	int nrofcollections;
@@ -248,22 +325,45 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 	gettimeofday(&start_time, NULL);
 
 	username = adduserprefix(collections,username_in);
+#if 1
 
+	origuri = strdup(uri);
 	if ((*crawlLibInfo).crawlpatAcces == NULL) {
 		printf("cralwer her ikke crawlpatAcces. returnerer tilgang. Må i fremtiden slå det opp\n");
 		forreturn = 1;
 	}
+#if 0
+	else if ((cacheret = pathaccess_cachelookup(collection, username, password, origuri)) > 0) {
+		printf("#### ##### ##### ##### Cache hit\n");
+		if (cacheret == 1)
+			forreturn = 1;
+		else if (cacheret == 2)
+			forreturn = 0;
+		else
+			forreturn = 0;
+	}
+#endif
 	else if (!(*(*crawlLibInfo).crawlpatAcces)(uri,username,password,documentError)) {
         	printf("Can't crawlLibInfo. Can by denyed or somthing else\n");
 		//overfører error
                 berror((*crawlLibInfo).strcrawlError());
 
+#if 0
+		printf("#### ##### ##### ##### Cache miss (2)\n");
+		pathaccess_savecache(collection, username, password, origuri, 2, NULL);
+#endif
 		forreturn = 0;
        	}
 	else {
+#if 0
+		printf("#### ##### ##### ##### Cache miss (1)\n");
+		pathaccess_savecache(collection, username, password, origuri, 1, uri);
+#endif
 		forreturn = 1;
 	}
+#endif
 	gettimeofday(&end_time, NULL);
+	free(origuri);
 	pathAccessTimes.crawlpatAcces = getTimeDifference(&start_time,&end_time);
 
 
@@ -954,6 +1054,7 @@ rewriteurl(char *collection, char *uri, size_t len, enum platform_type ptype, en
 	struct collectionFormat *collections;
 	int nrofcollections;
 
+#if 0
 	cm_searchForCollection(collection,&collections,&nrofcollections);
 
 	if (!cm_getCrawlLibInfo(global_h,&crawlLibInfo,collections->connector)) {
@@ -964,7 +1065,9 @@ rewriteurl(char *collection, char *uri, size_t len, enum platform_type ptype, en
 
 	if (crawlLibInfo->rewrite_url == NULL || !((*crawlLibInfo->rewrite_url)(uri, ptype, btype)))
 		return 0;
+#endif
 
+	return 0;
 	return 1;
 
 }
@@ -983,7 +1086,7 @@ void connectHandler(int socket) {
 
 	while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
 
-		gettimeofday(&start_time_all, NULL);			
+		gettimeofday(&start_time_all, NULL);
 
 	        debug("size is: %i\nversion: %i\ncommand: %i\n",packedHedder.size,packedHedder.version,packedHedder.command);
 	        packedHedder.size = packedHedder.size - sizeof(packedHedder);
@@ -1097,12 +1200,14 @@ void connectHandler(int socket) {
 
 		}
 		else if (packedHedder.command == cm_pathaccess) {
+			//char all[512+64+64+64];
 			char uri[512];
 			char username[64];
                         char password[64];
 
 			printf("cm_pathaccess: start\n");
 
+#if 1
 			gettimeofday(&start_time, NULL);
 			recvall(socket,collection,sizeof(collection));
 			gettimeofday(&end_time, NULL);
@@ -1113,12 +1218,17 @@ void connectHandler(int socket) {
 
 			recvall(socket,username,sizeof(username));
 			recvall(socket,password,sizeof(password));
+#else
+			recvall(socket,all,sizeof(all));
+#endif
 
 			printf("collection: \"%s\"\nuri: \"%s\"\nusername \"%s\"\npassword \"%s\"\n",collection,uri,username,password);
+			//printf("collection: \"%s\"\nuri: \"%s\"\nusername \"%s\"\npassword \"%s\"\n",all,all+64,all+64+512,all+64+64+512);
 
 
 			//int pathAccess(struct hashtable *h, char connector[], char uri[], char username[], char password[])
-			intresponse= pathAccess(global_h,collection,uri,username,password);
+			intresponse = pathAccess(global_h,collection,uri,username,password);
+			//intresponse = pathAccess(global_h,all,all+64,all+64+512,all+64+64+512);
 
                         sendall(socket,&intresponse, sizeof(int));
 
@@ -1163,13 +1273,10 @@ void connectHandler(int socket) {
 
 			puts("cm_rewriteurl start");
 
-	printf("Receiving data..... %d\n", sizeof(rewrite));
-	gettimeofday(&start_time2, NULL);
-			recvall(socket, &rewrite,sizeof(rewrite));
-		
-	gettimeofday(&end_time2, NULL);
-	printf("# 222 ### Time debug: sending url rewrite data %f\n",getTimeDifference(&start_time2,&end_time2));
-
+			//gettimeofday(&start_time2, NULL);
+			recvall(socket, &rewrite, sizeof(rewrite));
+			//gettimeofday(&end_time2, NULL);
+			//printf("# 222 ### Time debug: sending url rewrite data %f\n",getTimeDifference(&start_time2,&end_time2));
 	
 			rewriteurl(rewrite.collection, rewrite.uri, sizeof(rewrite.uri), rewrite.ptype, rewrite.btype);
 
@@ -1190,12 +1297,23 @@ void connectHandler(int socket) {
 	printf("end of packed\n");
 }
 
+#if 0
+void
+mc_add_servers(void)
+{
+	struct memcache_ctxt *gctxt;
+
+#if 0
+	mc_err_filter_add(MCM_ERR_LVL_WARN);
+	mc_err_filter_add(MCM_ERR_LVL_NOTICE);
+	mc_err_filter_add(MCM_ERR_LVL_INFO);
+#endif
+	mc_server_add4(mc, "localhost:11211");
+}
+#endif
 
 int main (int argc, char *argv[]) {
-
-
 	struct config_t maincfg;
-
 
 	if (!openlogs(&LOGACCESS,&LOGERROR,"crawlManager")) {
 		perror("logs");
@@ -1204,18 +1322,23 @@ int main (int argc, char *argv[]) {
 
 	printf("crawlManager: in main\n");
 
-
 	printf("crawlManager: running maincfgopen\n");
-        maincfg = maincfgopen();
+	maincfg = maincfgopen();
 
 	printf("crawlManager: running maincfg_get_int\n");
-        int crawlport = maincfg_get_int(&maincfg,"CMDPORT");
+	int crawlport = maincfg_get_int(&maincfg,"CMDPORT");
 	global_bbdnport = maincfg_get_int(&maincfg,"BLDPORT");
 	printf("crawlManager: runing cm_start\n");
 
 	cm_start(&global_h);
 
+#if 0
+//	if (!mc_err_filter_add(MCM_ERR_LVL_ERR))
+//		printf("Didn't add err level err\n");
+	mc = mc_new();
+	mc_add_servers();
+#endif
 
-      sconnect(connectHandler, crawlport);
+	sconnect(connectHandler, crawlport);
 }
 

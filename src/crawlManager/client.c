@@ -126,32 +126,38 @@ int cmc_deleteCollection(int socketha,char collection_in[]) {
 
 }
 
-int cmc_pathaccess(int socketha,char collection_in[], char uri_in[], char user_in[], char password_in[]) {
-
+int
+cmc_pathaccess(int socketha,char collection_in[], char uri_in[], char user_in[], char password_in[])
+{
 	char collection[64];
 	char uri[512];
 	char user[64];
 	char password[64];
         int intrespons;
         int i;
+	char all[64+512+64+64];
 
 	memset(collection,'\0',sizeof(collection));
 
 	//toDo bruk strSspy
-	strncpy(collection,collection_in,sizeof(collection));
-	strncpy(uri,uri_in,sizeof(uri));
+	strncpy(all,collection_in,sizeof(collection));
+	strncpy(all+64,uri_in,sizeof(uri));
 
-	strncpy(user,user_in,sizeof(user));
-	strncpy(password,password_in,sizeof(password));
+	strncpy(all+512+64,user_in,sizeof(user));
+	strncpy(all+512+64+64,password_in,sizeof(password));
 
-	sendpacked(socketha,cm_pathaccess,BLDPROTOCOLVERSION, 0, NULL,"");
+	sendpacked(socketha,cm_pathaccess,BLDPROTOCOLVERSION, sizeof(all), all, collection);
 
+#if 0
 	if(sendall(socketha,&collection, sizeof(collection)) == 0) { perror("sendall"); exit(1); }
 
 	if(sendall(socketha,&uri, sizeof(uri)) == 0) { perror("sendall"); exit(1); }
 
 	if(sendall(socketha,&user, sizeof(user)) == 0) { perror("sendall"); exit(1); }
 	if(sendall(socketha,&password, sizeof(password)) == 0) { perror("sendall"); exit(1); }
+#else 
+	//if(sendall(socketha,&all, sizeof(all)) == 0) { perror("sendall"); exit(1); }
+#endif
 
 	if ((i=recv(socketha, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
                 perror("Cant recv respons");
@@ -170,18 +176,32 @@ cmc_rewrite_url(int socketha, char *collection_in, char *uri_in, size_t inlen, e
 	struct rewriteFormat rewrite;
 	struct timeval start_time, end_time;
 
+	//memset(&rewrite, '\0', sizeof(rewrite));
+
+	/*
+	if (gettimeofday(&start_time, NULL) != 0)
+		printf("# ################################## # Error...\n");
+	*/
+				
 	strscpy(rewrite.collection, collection_in, sizeof(rewrite.collection));
 	strscpy(rewrite.uri, uri_in, sizeof(rewrite.uri));
 	rewrite.ptype = ptype;
 	rewrite.btype = btype;
 
 	sendpacked(socketha, cm_rewriteurl, BLDPROTOCOLVERSION, sizeof(rewrite), &rewrite, "");
+	//sendall(socketha, &rewrite, sizeof(rewrite));
 
 	if (recvall(socketha, uri, sizeof(uri)) == 0) {
 		perror("recvall(uri)");
 		exit(1);
 	}
 	strscpy(uri_out, uri, len);
+	/*
+	if (gettimeofday(&end_time, NULL) != 0)
+		printf("# ################################## # Error...\n");
+	printf("####### ttt time %.50f\n",getTimeDifference(&start_time,&end_time));
+	*/
+
 
 	return 1;
 }
