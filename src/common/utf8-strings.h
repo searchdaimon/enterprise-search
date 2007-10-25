@@ -8,6 +8,8 @@
  *	(C) Copyright 2007, Boitho AS (Magnus Galåen)
  */
 
+#include <stdlib.h>
+
 
 // Konverterer en tekststreng til små bokstaver:
 static inline void convert_to_lowercase( unsigned char *str )
@@ -26,6 +28,25 @@ static inline void convert_to_lowercase( unsigned char *str )
                     str[i]+= 32;
                 }
         }
+}
+
+
+// Detekterer om en string består av kun lowercase-bokstaver (altså ingen store bokstaver):
+static inline int detect_no_uppercase( unsigned char *str )
+{
+    if (str==NULL) return 1;
+
+    int         i;
+
+    for (i=0; str[i]!='\0'; i++)
+        {
+            if (str[i]>='A' && str[i]<='Z')
+                return 0;
+            else if (str[i]==0xc3 && str[i+1]>=0x80 && str[i+1]<=0x9e) //  && str[i+1]!='\0' (implicit)
+		return 0;
+        }
+
+    return 1;
 }
 
 
