@@ -341,7 +341,7 @@ BrankCalculate5DocFork: src/BrankCalculate5DocFork/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate5DocFork/main.c  -o bin/BrankCalculate5DocFork $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate5DocFork/main.c  -o bin/BrankCalculate5DocFork $(LDFLAGS) -D_GNU_SOURCE
 
 
 vipurls: src/vipurls/main.c
@@ -657,7 +657,7 @@ BrankCalculate4: src/BrankCalculate4/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/bs/bs.c src/tq/tq.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate4/main.c src/BrankCalculate3/res.c -o bin/BrankCalculate4 -lpthread $(LDFLAGS) -DDEFLOT -DWITH_THREAD
 
 BrankCalculate5: src/BrankCalculate5/main.c
-	$(CC) $(CFLAGS) src/common/lot.c src/common/bstr.c src/common/strlcat.c src/common/bfileutil.c src/common/debug.c  src/banlists/ban.c src/bs/bs.c src/tq/tq.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate5/main.c -o bin/BrankCalculate5 -lpthread $(LDFLAGS) -DDEFLOT
+	$(CC) $(CFLAGS) src/common/lot.c src/common/bstr.c src/common/strlcat.c src/common/bfileutil.c src/common/debug.c  src/banlists/ban.c src/bs/bs.c src/tq/tq.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/BrankCalculate5/main.c -o bin/BrankCalculate5 -lpthread $(LDFLAGS) -DDEFLOT
 
 BrankCalculate5Expand: src/BrankCalculate5Expand/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate3/res.c src/BrankCalculate5Expand/main.c -o bin/BrankCalculate5Expand $(LDFLAGS) -DDEFLOT 
