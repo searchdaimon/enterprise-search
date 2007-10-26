@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 {
     if (argc!=4)
 	{
-	    printf("Usage: %s <db> <index> <url>\n\n");
+	    printf("Usage: %s <db> <index> <url>\n\n",argv[0]);
 	    return -1;
 	}
 
