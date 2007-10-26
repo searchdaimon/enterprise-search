@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#if 1
+#if WITH_PATHACCESS_CACHE
 #include <libmemcached/memcached.h>
 #endif
 
