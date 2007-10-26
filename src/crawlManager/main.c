@@ -9,8 +9,8 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#if 0
-#include <memcache.h>
+#if 1
+#include <libmemcached/memcached.h>
 #endif
 
 #include "../crawl/crawl.h"
@@ -41,6 +41,9 @@ struct hashtable *global_h;
 FILE *LOGACCESS, *LOGERROR;
 int global_bbdnport;
 
+#ifdef WITH_PATHACCESS_CACHE
+void mc_add_servers(void);
+#endif
 
 int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],int *nrofcollections);
 
@@ -190,8 +193,7 @@ char *adduserprefix(struct collectionFormat *collections,char username[]) {
 	return newusername;
 }
 
-#if 0
-
+#ifdef WITH_PATHACCESS_CACHE
 char *
 pathaccess_makekey(char *collection, char *username, char *password, char *uri, size_t *outlen)
 {
@@ -202,19 +204,22 @@ pathaccess_makekey(char *collection, char *username, char *password, char *uri, 
 	if (password == NULL)
 		password = "";
 
-	len = strlen(collection) + strlen(username) + strlen(password) + strlen(uri) + 4;
+	len = 11 + strlen(collection) + strlen(username) + strlen(password) + strlen(uri) + 4;
 	*outlen = len-1;
 	s = malloc(len);
-	sprintf(s, "%s\1%s\1%s\1%s", collection, username, password, uri);
+	//sprintf(s, "pathaccess_%s\1%s\1%s\1%s", collection, username, password, uri);
+	sprintf(s, "pathaccess_%s_%s_%s_%s", collection, username, password, uri);
+	printf("Key: %s\n", s);
 	for (i = 0; s[i] != '\0'; i++) {
 		if (isspace(s[i]))
-			s[i] = '\2';
+			//s[i] = '\2';
+			s[i] = '!';
 	}
 
 	return s;
 }
 
-struct memcache *mc = NULL;
+memcached_st *mc;
 
 void
 pathaccess_savecache(char *collection, char *username, char *password, char *uri, char res, char *newuri)
@@ -223,41 +228,50 @@ pathaccess_savecache(char *collection, char *username, char *password, char *uri
 	size_t len;
 	int ret;
 	char *add;
+	size_t alen;
 
 	s = pathaccess_makekey(collection, username, password, uri, &len);
 
-	add = malloc(strlen(newuri) + 2);
+	alen = strlen(newuri) + 2;
+	add = malloc(alen);
 	add[0] = res;
 	strcpy(add+1, newuri);
 
-	ret = mc_add(mc, s, len, add, sizeof(add), 0, 0);
+	ret = memcached_add(mc, s, len, add, alen, 0, 0);
+	if (ret != MEMCACHED_SUCCESS)
+		printf("Unable to add new cache item.\n");
 
 	free(s);
 }
 
 int
-pathaccess_cachelookup(char *collection, char *username, char *password, char *uri)
+pathaccess_cachelookup(char *collection, char *username, char *password, char *uri, char *newuri)
 {
 	char *s;
 	int error;
 	size_t len;
-	char *res;
-	char ret;
+	char *ret;
+	char r;
+
+	memcached_return err;
+	uint16_t flags;
+	size_t retsize;
 
 	s = pathaccess_makekey(collection, username, password, uri, &len);
 
-	printf("Foo\n");
-	res = mc_aget(mc, s, len);
-	printf("Foo 2\n");
-
+	ret = memcached_get(mc, s, len, &retsize, &flags, &err);
 	free(s);
-	if (res == NULL)
-		return 0;
-	ret = res[0];
-	strcpy(uri, res+1);
-	free(res);
 
-	return ret;
+	if (ret == NULL) {
+		return 0;	
+	}
+
+	r = ret[0];
+	if (r == 1)
+		strcpy(newuri, ret+1);
+	free(ret);
+
+	return r;
 }
 #endif
 
@@ -325,16 +339,18 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 	gettimeofday(&start_time, NULL);
 
 	username = adduserprefix(collections,username_in);
-#if 1
 
 	origuri = strdup(uri);
+#ifdef WITH_PATHACCESS_CACHE
+        /* If zero, just keep looping */
+	mc_add_servers();
+#endif
 	if ((*crawlLibInfo).crawlpatAcces == NULL) {
 		printf("cralwer her ikke crawlpatAcces. returnerer tilgang. Må i fremtiden slå det opp\n");
 		forreturn = 1;
 	}
-#if 0
-	else if ((cacheret = pathaccess_cachelookup(collection, username, password, origuri)) > 0) {
-		printf("#### ##### ##### ##### Cache hit\n");
+#ifdef WITH_PATHACCESS_CACHE
+	else if ((cacheret = pathaccess_cachelookup(collection, username, password, origuri, uri)) > 0) {
 		if (cacheret == 1)
 			forreturn = 1;
 		else if (cacheret == 2)
@@ -348,20 +364,17 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 		//overfører error
                 berror((*crawlLibInfo).strcrawlError());
 
-#if 0
-		printf("#### ##### ##### ##### Cache miss (2)\n");
-		pathaccess_savecache(collection, username, password, origuri, 2, NULL);
+#ifdef WITH_PATHACCESS_CACHE
+		pathaccess_savecache(collection, username, password, origuri, 2, "");
 #endif
 		forreturn = 0;
        	}
 	else {
-#if 0
-		printf("#### ##### ##### ##### Cache miss (1)\n");
+#ifdef WITH_PATHACCESS_CACHE
 		pathaccess_savecache(collection, username, password, origuri, 1, uri);
 #endif
 		forreturn = 1;
 	}
-#endif
 	gettimeofday(&end_time, NULL);
 	free(origuri);
 	pathAccessTimes.crawlpatAcces = getTimeDifference(&start_time,&end_time);
@@ -1297,18 +1310,13 @@ void connectHandler(int socket) {
 	printf("end of packed\n");
 }
 
-#if 0
+#ifdef WITH_PATHACCESS_CACHE
 void
 mc_add_servers(void)
 {
-	struct memcache_ctxt *gctxt;
-
-#if 0
-	mc_err_filter_add(MCM_ERR_LVL_WARN);
-	mc_err_filter_add(MCM_ERR_LVL_NOTICE);
-	mc_err_filter_add(MCM_ERR_LVL_INFO);
-#endif
-	mc_server_add4(mc, "localhost:11211");
+	mc = memcached_create(NULL);
+	memcached_behavior_set(mc, MEMCACHED_BEHAVIOR_NO_BLOCK, NULL);
+	memcached_server_add(mc, "localhost", 11211);
 }
 #endif
 
@@ -1331,13 +1339,6 @@ int main (int argc, char *argv[]) {
 	printf("crawlManager: runing cm_start\n");
 
 	cm_start(&global_h);
-
-#if 0
-//	if (!mc_err_filter_add(MCM_ERR_LVL_ERR))
-//		printf("Didn't add err level err\n");
-	mc = mc_new();
-	mc_add_servers();
-#endif
 
 	sconnect(connectHandler, crawlport);
 }
