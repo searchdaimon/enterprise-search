@@ -36,6 +36,11 @@
 
 struct hashtable *global_h;
 
+struct {
+	char *addr;
+	int port;
+} *memcache_servers;
+
 //int crawlfirst(struct collectionFormat *collection)
 
 FILE *LOGACCESS, *LOGERROR;
@@ -237,7 +242,7 @@ pathaccess_savecache(char *collection, char *username, char *password, char *uri
 	add[0] = res;
 	strcpy(add+1, newuri);
 
-	ret = memcached_add(mc, s, len, add, alen, 0, 0);
+	ret = memcached_add(mc, s, len, add, alen, 300, 0);
 	if (ret != MEMCACHED_SUCCESS)
 		printf("Unable to add new cache item.\n");
 
@@ -342,15 +347,15 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 
 	origuri = strdup(uri);
 #ifdef WITH_PATHACCESS_CACHE
-        /* If zero, just keep looping */
-	mc_add_servers();
+	if (memcache_servers != NULL)
+		mc_add_servers();
 #endif
 	if ((*crawlLibInfo).crawlpatAcces == NULL) {
 		printf("cralwer her ikke crawlpatAcces. returnerer tilgang. Må i fremtiden slå det opp\n");
 		forreturn = 1;
 	}
 #ifdef WITH_PATHACCESS_CACHE
-	else if ((cacheret = pathaccess_cachelookup(collection, username, password, origuri, uri)) > 0) {
+	else if (memcache_servers != NULL && (cacheret = pathaccess_cachelookup(collection, username, password, origuri, uri)) > 0) {
 		if (cacheret == 1)
 			forreturn = 1;
 		else if (cacheret == 2)
@@ -365,13 +370,15 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
                 berror((*crawlLibInfo).strcrawlError());
 
 #ifdef WITH_PATHACCESS_CACHE
-		pathaccess_savecache(collection, username, password, origuri, 2, "");
+		if (memcache_servers != NULL)
+			pathaccess_savecache(collection, username, password, origuri, 2, "");
 #endif
 		forreturn = 0;
        	}
 	else {
 #ifdef WITH_PATHACCESS_CACHE
-		pathaccess_savecache(collection, username, password, origuri, 1, uri);
+		if (memcache_servers != NULL)
+			pathaccess_savecache(collection, username, password, origuri, 1, uri);
 #endif
 		forreturn = 1;
 	}
@@ -1314,14 +1321,20 @@ void connectHandler(int socket) {
 void
 mc_add_servers(void)
 {
+	int i;
+
 	mc = memcached_create(NULL);
 	memcached_behavior_set(mc, MEMCACHED_BEHAVIOR_NO_BLOCK, NULL);
-	memcached_server_add(mc, "localhost", 11211);
+	for (i = 0; memcache_servers[i].addr != NULL; i++) {
+		memcached_server_add(mc, memcache_servers[i].addr, memcache_servers[i].port);
+	}
 }
 #endif
 
 int main (int argc, char *argv[]) {
 	struct config_t maincfg;
+	struct config_t cmcfg;
+	config_setting_t *cfgarr;
 
 	if (!openlogs(&LOGACCESS,&LOGERROR,"crawlManager")) {
 		perror("logs");
@@ -1337,6 +1350,38 @@ int main (int argc, char *argv[]) {
 	int crawlport = maincfg_get_int(&maincfg,"CMDPORT");
 	global_bbdnport = maincfg_get_int(&maincfg,"BLDPORT");
 	printf("crawlManager: runing cm_start\n");
+
+
+	/* Initialize the configuration */
+        config_init(&cmcfg);
+
+	/* Load the file */
+        #ifdef DEBUG
+	        printf("loading [%s]..\n",bfile("config/crawlmanager.conf"));
+        #endif
+
+        if (!config_read_file(&cmcfg, bfile("config/crawlmanager.conf"))) {
+                printf("[%s]failed: %s at line %i\n",bfile("config/crawlmanager.conf"),config_error_text(&cmcfg),config_error_line(&cmcfg));
+        	exit(1);
+        }
+
+	cfgarr = config_lookup(&cmcfg, "memcacheservers");
+	int n_server = config_setting_length(cfgarr);
+	
+	if (n_server > 0) {
+		int i;
+		memcache_servers = calloc(n_server+1, sizeof(*memcache_servers));
+		for (i = 0; i < n_server; i++) {
+			memcache_servers[i].addr = strdup(config_setting_get_string_elem(cfgarr, i));
+			memcache_servers[i].port = 11211;
+		}
+		memcache_servers[i].addr = NULL;
+	} else {
+		printf("No memcache servers specified, disabling pathaccess caching.\n");
+		memcache_servers = NULL;
+	}
+
+	config_destroy(&cmcfg);
 
 	cm_start(&global_h);
 
