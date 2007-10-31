@@ -213,7 +213,7 @@ int main (int argc, char *argv[]) {
 			htmlBuffer = malloc(htmlBufferSize);
 			struct ReposetoryHeaderFormat ReposetoryHeader;
 
-			rReadHtml(htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer);
+			rReadHtml(htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,DocumentIndexPost.imageSize);
 
 		}
 		if (optShowhtml) {
