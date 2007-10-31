@@ -20,7 +20,7 @@ int main (int argc, char *argv[]) {
 	int err;
 
         if (argc < 2) {
-                printf("Dette programet lager en nyurlfil fra en tekst fil som er /\n separert\n\n\tUsage: ./addManuellUrlFile directory til nye filer (må slutte på /) < urlfil\n");
+                printf("Dette programet lager en nyurlfil fra en tekst fil som er \\n separert\n\n\tUsage: ./addManuellUrlFile directory til nye filer (må slutte på /) < urlfil\n");
                 exit(0);
         }
 
