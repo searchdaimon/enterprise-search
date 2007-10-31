@@ -26,6 +26,7 @@
     #include "../maincfg/maincfg.h"
 
 #define DefultMaxsHits 20
+#define QUERY_LOG_FILE "/home/boitho/logs/query.log"
     
 #ifndef BLACK_BOKS
     #include <libconfig.h>
@@ -40,6 +41,7 @@
     #include "GeoIP.h"
     #include "GeoIPCity.h"
 #endif
+
 
     //temp
     //#define NO_LOGING
@@ -131,8 +133,8 @@ void die(int errorcode,const char *fmt, ...) {
 
 
         //ToDo: må ha låsing her
-        if ((LOGFILE = bfopen("logs/query.log","a")) == NULL) {
-                perror(bfile("logs/query.log"));
+        if ((LOGFILE = fopen(QUERY_LOG_FILE,"a")) == NULL) {
+                perror(QUERY_LOG_FILE);
         }
         else {
 		
@@ -299,7 +301,7 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 			dataReceived += n;
 		}
 
-		dprintf("reciving %i of %i. SocketWait %i\n",dataReceived,datasize,socketWait);
+		dprintf("bsread: reciving %i of %i. SocketWait %i\n",dataReceived,datasize,socketWait);
 
 	}
 	//vi timet ut socketetn. Setter den som ikke tilkoblet
@@ -313,6 +315,8 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 		(*sockfd) = 0;
 		dprintf("somthing is wrong. Closeing socket\n");
 	}
+	
+	dprintf("Don geting data for this server. Did get %i of %i\n",dataReceived,datasize);
 
 	return returnstatus;
 
@@ -487,6 +491,7 @@ int brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,s
 
 	#ifdef DEBUG
 	printf("brGetPages: alreadynr %i, *pageNr %i\n",alreadynr,*pageNr);
+	
 	#endif
 
 	//sejjer om vi har fåt et midlertidig svar på at jobben har begynt
@@ -826,7 +831,7 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg)
 
 	if (cgi_getentrystr("subname") == NULL) {
 		//die(2,"Did'n receive any subname.");
-		strscpy(QueryData->subname,"www",sizeof(QueryData->subname) -1);
+		strscpy(QueryData->subname,"www,freelistning",sizeof(QueryData->subname) -1);
 	}
 	else {
 		strscpy(QueryData->subname,cgi_getentrystr("subname"),sizeof(QueryData->subname) -1);
@@ -996,7 +1001,7 @@ handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *
                struct QueryDataForamt *QueryData,
                struct SiderHederFormat *FinalSiderHeder, int fromCache, struct errorhaFormat *errorha,
                int pageNr, int nrOfServers, int nrOfPiServers, struct filtersTrapedFormat *dispatcherfiltersTraped,
-	       int *nrRespondedServers) 
+	       int *nrRespondedServers,struct queryNodeHederFormat *queryNodeHeder) 
 {
 	int AdultPages, NonAdultPages;
 	int posisjon, i;
@@ -1036,7 +1041,8 @@ handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *
 		for (i=0;i<nrOfAddServers;i++) {
 			//aaaaa
 			if (addsockfd[i] != 0) {
-				dprintf("\t<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\" servername=\"%s\"/>\n",AddSiderHeder[i].TotaltTreff,QueryData->query,AddSiderHeder[i].hiliteQuery,AddSiderHeder[i].total_usecs,AddSiderHeder[i].filtered,AddSiderHeder[i].showabal,AddSiderHeder[i].servername);
+				dprintf("\t<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\" servername=\"%s\"/>\n",AddSiderHeder[i].TotaltTreff,QueryData->query,AddSiderHeder[i].hiliteQuery,AddSiderHeder[i].total_usecs,AddSiderHeder[i].filtered,AddSiderHeder[i].
+showabal,AddSiderHeder[i].servername);
 
 			}
 			else {
@@ -1080,7 +1086,7 @@ handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *
 		//fjerner eventuelle adult sider
 		AdultPages = 0;
 		NonAdultPages = 0;
-		for(i=0;i<QueryData->MaxsHits * nrOfServers + nrOfPiServers;i++) {	
+		for(i=0;i<queryNodeHeder->MaxsHits * nrOfServers + nrOfPiServers;i++) {	
 			if (!Sider[i].deletet) {
 
 				if (Sider[i].DocumentIndex.AdultWeight > 50) {
@@ -1101,7 +1107,11 @@ handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *
 #endif
 		//sorterer resultatene
 		dprintf("mgsort: pageNr %i\n",pageNr);
+		//tmp:
+		//dette skaper problemer for blaingen på bb. Sikkert samme problmet på web, så vi må se på hva vi kan gjøre
+		#ifndef BLACK_BOKS
 		mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements);
+		#endif
 
 #ifdef DEBUG
 		gettimeofday(&end_time, NULL);
@@ -1115,7 +1125,7 @@ handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *
 		filtersTrapedReset(dispatcherfiltersTraped);
 
 		//dette er kansje ikke optimalet, da vi går gjenom alle siden. Ikke bare de som skal være med
-		for(i=0;i<QueryData->MaxsHits * nrOfServers + nrOfPiServers;i++) {
+		for(i=0;i<queryNodeHeder->MaxsHits * nrOfServers + nrOfPiServers;i++) {
 
 			dprintf("looking on url %s, deleted %i, adult %i, allrank %u, i %i, type %i\n",Sider[i].DocumentIndex.Url,Sider[i].deletet,Sider[i].DocumentIndex.AdultWeight,Sider[i].iindex.allrank,i,Sider[i].type);
 			if (!Sider[i].deletet) {
@@ -1196,7 +1206,7 @@ handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *
 
 	//why was sort here???
 	posisjon=0;
-	for(i=0;i<QueryData->MaxsHits * nrOfServers + nrOfPiServers;i++) {
+	for(i=0;i<queryNodeHeder->MaxsHits * nrOfServers + nrOfPiServers;i++) {
 		if (!Sider[i].deletet) {
 			Sider[i].posisjon = posisjon++;
 		}
@@ -1227,7 +1237,7 @@ handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *
 	/* tempaa */
 #if 0
 	FinalSiderHeder->showabal = 0;
-	for(i=0;i<QueryData->MaxsHits * nrOfServers;i++) {
+	for(i=0;i<queryNodeHeder->MaxsHits * nrOfServers;i++) {
 		if (!Sider[i].deletet) {
 			++FinalSiderHeder->showabal;
 		}
@@ -1235,9 +1245,13 @@ handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *
 #endif
 
 	FinalSiderHeder->showabal = pageNr;
-	if (FinalSiderHeder->showabal > QueryData->MaxsHits) {
-		FinalSiderHeder->showabal = QueryData->MaxsHits;
+	/*
+	runarb: 23 okt 2007: dette ser ut til å skape problemer med den nye måten og bla serp på. siden vi kan få flere en MaxsHits
+	Komenterer ut for nå
+	if (FinalSiderHeder->showabal > queryNodeHeder->MaxsHits) {
+		FinalSiderHeder->showabal = queryNodeHeder->MaxsHits;
 	}
+	*/
 }
 
 
@@ -1526,13 +1540,6 @@ int main(int argc, char *argv[])
 	//he = (struct hostent *) malloc(nrOfServers * sizeof(struct hostent));
 	//////////////////
 
-        //send out an HTTP header:
-	#ifdef DEBUG
-	        printf("Content-type: text/plain\n\n");
-	#else
-	        printf("Content-type: text/xml\n\n");
-	        //printf("Content-type: text/xml%c%c\n",13,10);
-	#endif
 
 	memset(&QueryData,'\0',sizeof(QueryData));
 
@@ -1540,20 +1547,32 @@ int main(int argc, char *argv[])
         if (getenv("QUERY_STRING") == NULL) {
 
 	        char *optRank = NULL;
+		int optStart = 1;
+		int optMaxsHits = DefultMaxsHits;
 
         	extern char *optarg;
         	extern int optind, opterr, optopt;
         	char c;
-        	while ((c=getopt(argc,argv,"pr:"))!=-1) {
+        	while ((c=getopt(argc,argv,"pr:s:m:"))!=-1) {
         	        switch (c) {
 				case 'p':
 					prequerywriteFlag = 1;
 					dispconfig.writeprequery = 1;
+					#ifdef DEBUG
 					printf("Forcing prequery write\n");
+					#endif
 					break;
         	                case 'r':
         	                        optRank = optarg;
                 	                printf("will look up rank for \"%s\"\n",optRank);
+                	                break;
+        	                case 's':
+        	                        optStart = atoi(optarg);
+                	                printf("will start at page %i\n",optStart);
+                	                break;
+        	                case 'm':
+        	                        optMaxsHits = atoi(optarg);
+                	                printf("will show max %i pages\n",optStart);
                 	                break;
                         	default:
 					printf("ukjent option\n");
@@ -1563,8 +1582,9 @@ int main(int argc, char *argv[])
         	}
         	--optind;
 
+		#ifdef DEBUG
         	printf("argc %i, optind %i\n",argc,optind);
-
+		#endif
 
 
 
@@ -1597,8 +1617,8 @@ int main(int argc, char *argv[])
 				printf("will rank \"%s\"\n",QueryData.rankUrl);
 			}
 
-			QueryData.MaxsHits = DefultMaxsHits;
-			QueryData.start = 1;
+			QueryData.MaxsHits = optMaxsHits;
+			QueryData.start = optStart;
 			QueryData.filterOn = 1;
 			QueryData.HTTP_ACCEPT_LANGUAGE[0] = '\0';
         		QueryData.HTTP_USER_AGENT[0] = '\0';
@@ -1608,29 +1628,40 @@ int main(int argc, char *argv[])
 			//v3 QueryData.languageFilter[0] = '\0';
 			QueryData.orderby[0] = '\0';
 
-                        printf("query %s, subname %s\n",QueryData.query,QueryData.subname);
+			if (!dispconfig.writeprequery) {
+                        	printf("query %s, subname %s\n",QueryData.query,QueryData.subname);
 
-			//printer ut oversikt over serverne vi skal koble til
-			printf("server(s):\n");
-			for(i=0;i<nrOfServers;i++) {
-				printf("%i %s\n",i,servers[i]);
+				//printer ut oversikt over serverne vi skal koble til
+				printf("server(s):\n");
+				for(i=0;i<nrOfServers;i++) {
+					printf("%i %s\n",i,servers[i]);
+				}
+
+				printf("piserver(s):\n");
+				for(i=0;i<nrOfPiServers;i++) {
+					printf("%i %s\n",i,piservers[i]);
+				}
+
+				printf("adserver(s):\n");
+				for(i=0;i<nrOfAddServers;i++) {
+					printf("%i %s\n",i,addservers[i]);
+				}
+
+
+				printf("\n");
 			}
-
-			printf("piserver(s):\n");
-			for(i=0;i<nrOfPiServers;i++) {
-				printf("%i %s\n",i,piservers[i]);
-			}
-
-			printf("adserver(s):\n");
-			for(i=0;i<nrOfAddServers;i++) {
-				printf("%i %s\n",i,addservers[i]);
-			}
-
-
-			printf("\n");
                 }
         }
         else {
+
+        	//send out an HTTP header:
+		#ifdef DEBUG
+	        	printf("Content-type: text/plain\n\n");
+		#else
+	        	printf("Content-type: text/xml\n\n");
+		        //printf("Content-type: text/xml%c%c\n",13,10);
+		#endif
+
 		init_cgi(&QueryData, &cfg);
 		if (QueryData.rankUrl[0] == '\0')
 			getRank = 0;
@@ -1665,39 +1696,107 @@ int main(int argc, char *argv[])
 	}
 
         //gjør om til liten case
-	//21 feb 2007: collection er case sensetiv. Bare søkeord skal gjøres om. Må gjøre dette en annen plass
-        //for(i=0;i<strlen(QueryData.query);i++) {
-        //        QueryData.query[i] = btolower(QueryData.query[i]);
-        //}
+	#ifdef BLACK_BOKS
+		//21 feb 2007: collection er case sensetiv. Bare søkeord skal gjøres om. Må gjøre dette en annen plass
+	#else
+		//må gjøres for web da både prequery og cashe er lagret på disk som lovercase. Hvis ikke vil ikke søk på Msn treffe msn
+        	for(i=0;i<strlen(QueryData.query);i++) {
+                	QueryData.query[i] = btolower(QueryData.query[i]);
+        	}
+	#endif
 
 	//nårmalisere query. 
 	//strcasesandr(QueryData.query,sizeof(QueryData.query),"."," ");
+
+	mysql_init(&demo_db);
+
+	#ifndef BLACK_BOKS
+		//if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", "boithoweb", 3306, NULL, 0)){
+		if(!mysql_real_connect(&demo_db, dispconfig.webdb_host, dispconfig.webdb_user, dispconfig.webdb_password, dispconfig.webdb_db, 3306, NULL, 0)){
+			fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
+			//exit(1);
+		}
+	#else
+		if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
+			fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
+			//exit(1);
+		}
+	#endif
+
 
 
 	if (getRank) {
 		//normaliserer url. Setter for eks / på slutten
 		url_normalization(QueryData.rankUrl,sizeof(QueryData.rankUrl));
 
-        	char            db_index[strlen(dispconfig.UrlToDocID)+7];
-        	sprintf(db_index, "%s.index", dispconfig.UrlToDocID);
-	        urldocid_data   *data;
-
-		if ((data = urldocid_search_init(db_index, dispconfig.UrlToDocID)) == NULL) {
-			die(100, "Unable to open index file \"%s\".",dispconfig.UrlToDocID);
-		}
 
 
-                if (!getDocIDFromUrl(data, QueryData.rankUrl, &wantedDocId)) {
-		//if (!getDocIDFromUrl(dispconfig.UrlToDocID, QueryData.rankUrl, &wantedDocId)) {
-			die(100, "Unable to find docId");
-		} else {
-			getRank = wantedDocId;
-			queryNodeHeder.getRank = wantedDocId;
+        		char            db_index[strlen(dispconfig.UrlToDocID)+7];
+        		sprintf(db_index, "%s.index", dispconfig.UrlToDocID);
+	        	urldocid_data   *data;
+
+			if ((data = urldocid_search_init(db_index, dispconfig.UrlToDocID)) == NULL) {
+				die(100, "Unable to open index file \"%s\".",dispconfig.UrlToDocID);
+			}
+
+
+                	if (getDocIDFromUrl(data, QueryData.rankUrl, &wantedDocId)) {
+				getRank = wantedDocId;
+				queryNodeHeder.getRank = wantedDocId;
 		
-			#ifdef DEBUG
-				printf("found DocID %u ( for url \"%s\" )\n",wantedDocId,QueryData.rankUrl);
-			#endif	
+				#ifdef DEBUG
+					printf("found DocID %u ( for url \"%s\" )\n",wantedDocId,QueryData.rankUrl);
+				#endif	
+			}
+			else {
+		
+				////////////////////
+				//mysql select for pi og freelistnings
+				////////////////////
+				char mysql_query[512];
+				int numUsers;
+				MYSQL_RES *mysqlres; // To be used to fetch information into
+
+        			snprintf(mysql_query, sizeof(mysql_query), "select WWWDocID from submission_url where url='%s' and WWWDocID <> 0 AND WWWDocID is not NULL",
+               				QueryData.rankUrl);
+
+	
+        			if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ // Make query
+        	        		printf(mysql_error(&demo_db));
+        	        		fprintf(stderr,"MySQL Error: \"%s\".\n",mysql_error(&demo_db));
+        	      		  	numUsers = 0;
+        			}
+				else {
+        				mysqlres=mysql_store_result(&demo_db); // Download result from server 
+
+        				numUsers = mysql_num_rows(mysqlres);
+				}
+
+        			if (numUsers == 1) {
+
+					if ((mysqlrow=mysql_fetch_row(mysqlres)) == NULL) {
+	        	        		fprintf(stderr,"MySQL Error: cant download results \"%s\".\n",mysql_error(&demo_db));
+						//return 0;
+					}
+					#ifdef DEBUG
+					printf("wwwDocID \"%s\"\n",mysqlrow[0]);
+					#endif
+
+            	        		getRank = atou(mysqlrow[0]);
+                        		queryNodeHeder.getRank = getRank;
+					mysql_free_result(mysqlres);
+        			}
+
+
+			else {
+				die(100, "Ranking information is not yet available for this URL. It takes 24 hours for new site submissions to be crawled, indexed and ranked. Check back later.");
+			}
+///////////////////
 		}
+
+		fprintf(stderr,"queryNodeHeder.getRank %u\n",queryNodeHeder.getRank);
+
+
 	}
 	else {
 		queryNodeHeder.getRank = 0;
@@ -1742,6 +1841,7 @@ int main(int argc, char *argv[])
 	#endif
 
 	#ifndef BLACK_BOKS
+	if (!dispconfig.writeprequery) {
 	//prøver å finne ut hvilket land ut fra ip
 	GeoIP *gi;
 	GeoIPRecord * gir;
@@ -1777,6 +1877,7 @@ int main(int argc, char *argv[])
 
 		GeoIP_delete(gi);
 	}
+	} //if(!dispconfig.writeprequery)
 	#else
 		sprintf(QueryData.GeoIPcontry,"na");
 	#endif
@@ -1812,21 +1913,32 @@ int main(int argc, char *argv[])
 	strscpy(queryNodeHeder.AmazonAssociateTag,QueryData.AmazonAssociateTag,sizeof(queryNodeHeder.AmazonAssociateTag) -1);
 	strscpy(queryNodeHeder.AmazonSubscriptionId,QueryData.AmazonSubscriptionId,sizeof(queryNodeHeder.AmazonSubscriptionId) -1);
 
-	queryNodeHeder.MaxsHits = QueryData.MaxsHits;
-	if (nrOfServers >= 3) {
-		queryNodeHeder.MaxsHits = (queryNodeHeder.MaxsHits / 2); // datane er fordelt, så hver server trenger ikke å generere mer en xx deler av den
+
+	//--QueryData.start; //maskinen begynner på 1, meneske på 0
+	//queryNodeHeder.start = QueryData.start;
+	queryNodeHeder.start = 0;
+
+	//queryNodeHeder.MaxsHits = QueryData.MaxsHits;
+	queryNodeHeder.MaxsHits = QueryData.MaxsHits * QueryData.start;
+
+	//på første side kan vi la være og hente alle treff siden dataene er fordelt, men for de neste 
+	//sidene trenger vi de. 
+	if (QueryData.start == 1) {
+		if (nrOfServers >= 3) {
+			queryNodeHeder.MaxsHits = (queryNodeHeder.MaxsHits / 2); // datane er fordelt, så hver server trenger ikke å generere mer en xx deler av den
+		}
 	}
 	queryNodeHeder.filterOn = QueryData.filterOn;
-	--QueryData.start; //maskinen begynner på 1, menske på 0
-	queryNodeHeder.start = QueryData.start;
 
 
 
-	Sider = malloc(QueryData.MaxsHits * maxServers * sizeof(struct SiderFormat));
+
+	//Sider = malloc(QueryData.MaxsHits * maxServers * sizeof(struct SiderFormat));
+	Sider = malloc(queryNodeHeder.MaxsHits * maxServers * sizeof(struct SiderFormat));
 
 	//inaliserer side arrayen
 	//aaaaaaaaa
-	for(i=0;i<(nrOfServers + nrOfPiServers) * QueryData.MaxsHits;i++) {
+	for(i=0;i<(nrOfServers + nrOfPiServers) * queryNodeHeder.MaxsHits;i++) {
         	Sider[i].iindex.allrank = 0;
         	Sider[i].deletet = 1;
 	}
@@ -1894,7 +2006,7 @@ int main(int argc, char *argv[])
 		int n;
 
 		/* XXX: Need to handle the paid inclusion servers as well? */
-		for (i = 0; i < nrOfServers; i++) {
+		for (i = 0; i < nrOfServers + nrOfPiServers; i++) {
 			if (sockfd[i] != 0) {
 				int status;
 				//motter hedderen for svaret
@@ -1914,23 +2026,26 @@ int main(int argc, char *argv[])
 					die(2, "Unable to get rank status");
 				else if (status == net_match) {
 					if (!bsread(&sockfd[i],sizeof(ranking), (char *)&ranking, 1000))//maxSocketWait_CanDo))
-						perror("recv read");
+						perror("recv rank");
 				} else if (status == net_nomatch) {
 					//return 1;
 				} else {
 					//die(1, "searchd does not support ranking?");
 				}
+
+				
+				dprintf("server %i, ranking %i\n",i,ranking);
 			}
 		}
 		if (ranking != -1) {
-			for (i = 0; i < nrOfServers; i++) {
+			for (i = 0; i < nrOfServers + nrOfPiServers; i++) {
 				if (sockfd[i] != 0) {
 					if (send(sockfd[i], &ranking, sizeof(ranking), 0) != sizeof(ranking))
 						perror("send...");
 				}
 			}
 
-			for (i = 0; i < nrOfServers; i++) {
+			for (i = 0; i < nrOfServers + nrOfPiServers; i++) {
 				if (sockfd[i] != 0) {
 					if (!bsread(&sockfd[i], sizeof(ranking), (char *)&ranking, 10000))
 						perror("endranking");
@@ -1938,11 +2053,12 @@ int main(int argc, char *argv[])
 				}
 			}
 		}
+/*
 		else {
 			die(1, "No rank found");
 		}
-
-		if (endranking < QueryData.MaxsHits) {
+*/
+		if ((endranking < queryNodeHeder.MaxsHits) || (endranking == 0)) {
 			queryNodeHeder.getRank = 0;
 
 			for (i=0;i<nrOfServers + nrOfPiServers;i++) {
@@ -1986,17 +2102,17 @@ int main(int argc, char *argv[])
 			brGetPages(addsockfd,nrOfAddServers,AddSiderHeder,Sider,&pageNr,0);
 
 			handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, (hascashe || hasprequery), &errorha, pageNr,
-				       nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers);
+				       nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers, &queryNodeHeder);
 
 			//for((x<FinalSiderHeder.showabal) && (i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)))) {
 
 
 			x = 0;
 			int printed = 0;
-			for(i=0;x < FinalSiderHeder.showabal && i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)); i++) {
+			for(i=0;x < FinalSiderHeder.showabal && i < (queryNodeHeder.MaxsHits * (nrOfServers + nrOfPiServers)); i++) {
 				if (Sider[i].deletet)
 					continue;
-				if (Sider[i].iindex.DocID == wantedDocId) {
+				if ((Sider[i].iindex.DocID == wantedDocId) || (strcmp(Sider[i].url,QueryData.rankUrl) == 0)) {
 					endranking = printed+1;
 					break;
 				}
@@ -2007,17 +2123,20 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		printf("<ranking>\n");
 
 		if (endranking == 0) {
-			printf("\t<noresult />\n");
+			//printf("\t<noresult />\n");
+			//die(1, "No rank found");
+			die(1, "That site does not rank in the top 60,000 sites for that search term");
 		} else {
+			printf("<ranking>\n");
 			printf("\t<rank>%d</rank>\n", endranking);
 			printf("\t<url>%s</url>\n", QueryData.rankUrl);
 			printf("\t<docid>%d</docid>\n", wantedDocId);
+			printf("</ranking>\n");
+
 		}
 
-		printf("</ranking>\n");
 
 		/* Free the configuration */
 		config_destroy(&cfg);
@@ -2069,10 +2188,10 @@ int main(int argc, char *argv[])
 	#endif
 
 	handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, (hascashe || hasprequery), &errorha, pageNr,
-	               nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers);
+	               nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers,&queryNodeHeder);
 
 
-	//stopper #ta tidn og kalkulerer hvor lang tid vi brukte
+	//stopper å ta tidn og kalkulerer hvor lang tid vi brukte
 	gettimeofday(&main_end_time, NULL);
 	FinalSiderHeder.total_usecs = getTimeDifference(&main_start_time,&main_end_time);
 
@@ -2085,6 +2204,11 @@ int main(int argc, char *argv[])
 
 	totlaAds = 0;
 
+	//skriver ikke ut masse data hvsi vi lager prequery
+	if (dispconfig.writeprequery) {
+		printf("query \"%s\", total %i,showabal %i, nodes %i, time %f\n",QueryData.queryhtml,FinalSiderHeder.TotaltTreff,FinalSiderHeder.showabal,nrRespondedServers,FinalSiderHeder.total_usecs);
+	}
+	else {
         //printf("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?> \n");
         printf("<?xml version=\"1.0\" encoding=\"UTF-8\" ?> \n");
         printf("<!DOCTYPE family SYSTEM \"http://www.boitho.com/xml/search.dtd\"> \n");
@@ -2142,6 +2266,7 @@ int main(int argc, char *argv[])
 				printf("\t<TOTALTIME>%f</TOTALTIME>\n",SiderHeder[i].total_usecs);
 				printf("\t<FILTERED>%i</FILTERED>\n",SiderHeder[i].filtered);
 				printf("\t<HITS>%i</HITS>\n",SiderHeder[i].TotaltTreff);
+				printf("\t<SHOWABAL>%i</SHOWABAL>\n",SiderHeder[i].showabal);
 
 #ifndef DEBUG
 				printf("\t<TIMES>\n");
@@ -2199,25 +2324,13 @@ int main(int argc, char *argv[])
 	}
 	else {
 		printf("<SEARCHNODES>\n");
-		printf("\t<NODENAME>cashe.boitho.com</NODENAME>\n");
+		printf("\t<NODENAME>cashe.exactseek.com</NODENAME>\n");
 		printf("\t<TOTALTIME>%f</TOTALTIME>\n",FinalSiderHeder.total_usecs);
 		printf("\t<FILTERED>0</FILTERED>\n");
 		printf("\t<HITS>%i</HITS>\n",FinalSiderHeder.TotaltTreff);
 		printf("</SEARCHNODES>\n");
 	}
 
-	/*
-	for (i=0;i<nrOfServers;i++) {
-                //tempaa:if (sockfd[i] != 0) {
-			printf("<SEARCHNODES>\n");
-				printf("\t<NODENAME>%s</NODENAME>\n",SiderHeder[i].servername);
-                 		printf("\t<TOTALTIME>%f</TOTALTIME>\n",SiderHeder[i].total_usecs);
-				printf("\t<FILTERED>%i</FILTERED>\n",SiderHeder[i].filtered);
-				printf("\t<HITS>%i</HITS>\n",SiderHeder[i].TotaltTreff);
-			printf("</SEARCHNODES>\n");
-		//}	
-	}
-	*/
 	//cashe eller ingen cashe. Adserverene skal vises
 	for (i=0;i<nrOfAddServers;i++) {
        	        if (addsockfd[i] != 0) {
@@ -2231,7 +2344,7 @@ int main(int argc, char *argv[])
 	}
 
 
-	//hvis vi har noen errorrs viser vi de
+	//hvis vi har noen feil viser vi de
 	for (i=0;i<errorha.nr;i++) {
 		printf("<ERROR>\n");
 		printf("  <ERRORCODE>%i</ERRORCODE>\n",errorha.errorcode[i]);
@@ -2258,32 +2371,6 @@ int main(int argc, char *argv[])
 
 		
 	}
-	/*	
-	for (i=0;i<SiderHeder[0].nrOfSubnames;i++) {
-
-		if (SiderHeder[0].subnames[i].checked) {
-			strscpy(colchecked," SELECTED=\"TRUE\"",sizeof(colchecked));
-		}
-		else {
-			strscpy(colchecked,"",sizeof(colchecked));
-		}
-
-		printf("<COLLECTION%s>\n",colchecked);
-
-		//viser bar en del av subnamet. Må tenke på hva vi skal gjør her. Hadde vært fint om brukeren kunne 
-		//bruk subname som "mail", mine filer osv, og vi mappet til til de han har tilgang til
-		if ((cpnt = strchr(SiderHeder[0].subnames[i].subname,'_')) != NULL) {
-			(*cpnt) = '\0';
-		}
-	
-		printf("<NAME>%s</NAME>\n",SiderHeder[0].subnames[i].subname);
-		printf("<TOTALRESULTSCOUNT>%i</TOTALRESULTSCOUNT>\n",SiderHeder[0].subnames[i].hits);
-
-		printf("</COLLECTION>\n");
-
-
-	}
-	*/
 
 
 	for (i=0;i<SiderHeder[0].filters.filtypes.nrof;i++) {
@@ -2305,16 +2392,6 @@ int main(int argc, char *argv[])
 					"THIS_YEAR",
 					"LAST_YEAR",
 					"TWO_YEARS_PLUS"};
-
-			/*
-        			TODAY = 1,
-        			YESTERDAY,
-        			LAST_WEEK,
-        			LAST_MONTH,
-        			THIS_YEAR,
-        			LAST_YEAR,
-        			TWO_YEARS_PLUS,
-			*/
 
 	printf("<DATES>\n");
 		printf("\t<ALL>0</ALL>\n");
@@ -2362,16 +2439,24 @@ int main(int argc, char *argv[])
 		#endif
 	#endif
 
-		//skal printe ut FinalSiderHeder.showabal sider, men noen av sidene kan være slettet
-	i=0;
-	x=0;
+	//skal printe ut FinalSiderHeder.showabal sider, men noen av sidene kan være slettet
 
+	//x=0;
+	//i=0;
+	//regner ut hvor vi skal begynne og vise treff. Eks side 2 er fra 11-20
+	//i er hvor vi skal begynne
+	i = QueryData.MaxsHits * (QueryData.start -1);
+	x = i;
+	#ifdef DEBUG	
+	printf("x: %i, MaxsHits %i, start %i, showabal %i\n",x,QueryData.MaxsHits,QueryData.start,
+		FinalSiderHeder.showabal);
+	#endif
 
-	while ((x<FinalSiderHeder.showabal) && (i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)))) {
+	while ((x<(QueryData.MaxsHits*QueryData.start)) && (x<FinalSiderHeder.showabal) && (i < (queryNodeHeder.MaxsHits * (nrOfServers + nrOfPiServers)))) {
 		
 		if (!Sider[i].deletet) {
 
-			dprintf("r %i, a: %i, bid : %f, u: %s. DocID: %u\n",Sider[i].iindex.allrank,Sider[i].DocumentIndex.AdultWeight,Sider[i].bid,Sider[i].url,Sider[i].iindex.DocID);
+			dprintf("i %i, r %i, a: %i, bid : %f, u: %s. DocID: %u\n",i,Sider[i].iindex.allrank,Sider[i].DocumentIndex.AdultWeight,Sider[i].bid,Sider[i].url,Sider[i].iindex.DocID);
 
 			//har url i <![CDATA[ ]]> paranteser nå 
 		/*
@@ -2564,7 +2649,7 @@ int main(int argc, char *argv[])
 	}
 
 	printf("</SEARCH>\n");
-
+	} // end if(dispconfig.writeprequery)
 	
 	#ifdef DEBUG
 	gettimeofday(&start_time, NULL);
@@ -2594,9 +2679,8 @@ int main(int argc, char *argv[])
 	}
 	}
 
-	//if ((LOGFILE = bfopen("logs/query.log","a")) == NULL) {
-	if ((LOGFILE = fopen("/home/boitho/var/logs/query.log","a")) == NULL) {
-		perror(bfile("logs/query.log"));
+	if ((LOGFILE = fopen(QUERY_LOG_FILE,"a")) == NULL) {
+		perror(QUERY_LOG_FILE);
 	}
 	else {
 		flock(fileno(LOGFILE),LOCK_EX);
@@ -2643,25 +2727,14 @@ int main(int argc, char *argv[])
 	/********************************************************************************************/
 	//mysql logging
 	/********************************************************************************************/
+	if (!dispconfig.writeprequery) {
 #if MYSQLFOUR
 	#ifndef NO_LOGING
 		MYSQL_STMT *logstmt, *pilogstmt;
 		dprintf("Connecting to mysql db\n");
 
-		mysql_init(&demo_db);
 
-		#ifndef BLACK_BOKS
-			if(!mysql_real_connect(&demo_db, "localhost", "boitholog", "G7J7v5L5Y7", "boitholog", 3306, NULL, 0)){
-    				fprintf(stderr,mysql_error(&demo_db));
-    				//exit(1);
-			}
-		#else
-			if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
-    				fprintf(stderr,mysql_error(&demo_db));
-    				//exit(1);
-			}
-		#endif
-		else {
+		//else {
 
 			MYSQL_BIND bind[12];
 			unsigned long len[12];
@@ -2684,7 +2757,7 @@ int main(int argc, char *argv[])
 			bind[2].buffer_type = MYSQL_TYPE_LONG; // treff
 			bind[2].buffer = &FinalSiderHeder.TotaltTreff;
 
-			bind[3].buffer_type = MYSQL_TYPE_FLOAT; // sÃketid
+			bind[3].buffer_type = MYSQL_TYPE_DOUBLE; // sÃketid
 			bind[3].buffer = &FinalSiderHeder.total_usecs;
 
 			bind[4].buffer_type = MYSQL_TYPE_STRING; // ip
@@ -2729,7 +2802,8 @@ int main(int argc, char *argv[])
 			sprintf(query,"INSERT DELAYED INTO search_logg (tid,query,search_bruker,treff,search_tid,ip_adresse,betaler_keywords_treff,HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang,spot,piDocID) VALUES(NOW(),?,?,?,?,?,?,?,?,?,?,?,?)");
 			mysql_stmt_prepare(pilogstmt, query, strlen(query));
 			mysql_stmt_bind_param(pilogstmt, bind);
-			while ((x<FinalSiderHeder.showabal) && (i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)))) {
+
+			while ((x<FinalSiderHeder.showabal) && (i < (queryNodeHeder.MaxsHits * (nrOfServers + nrOfPiServers)))) {
 		
 				if (!Sider[i].deletet) {
 					//dprintf("pi analyse. Subname \"%s\", pi \"%i\"\n",Sider[i].subname.subname, (int)Sider[i].subname.config.isPaidInclusion);
@@ -2737,7 +2811,7 @@ int main(int argc, char *argv[])
 					if (Sider[i].subname.config.isPaidInclusion) {
 						unsigned int spot;
 
-						spot = x + (QueryData.start * QueryData.MaxsHits);
+						spot = x + (QueryData.start * queryNodeHeder.MaxsHits);
 								
 						bind[10].buffer_type = MYSQL_TYPE_LONG ; // spot 
 						bind[10].buffer = &spot;
@@ -2766,37 +2840,25 @@ int main(int argc, char *argv[])
 
 			mysql_stmt_close(pilogstmt);
 
-			mysql_close(&demo_db);
-		}
+		//}
 	#endif
+
 
 #else /* MYSQLFOUR */
 
 	#ifndef NO_LOGING
 		dprintf("Connecting to mysql db\n");
 
-		mysql_init(&demo_db);
-
-		#ifndef BLACK_BOKS
-			//if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", "boithoweb", 3306, NULL, 0)){
-			if(!mysql_real_connect(&demo_db, dispconfig.webdb_host, dispconfig.webdb_user, dispconfig.webdb_password, dispconfig.webdb_db, 3306, NULL, 0)){
-    				fprintf(stderr,mysql_error(&demo_db));
-    				//exit(1);
-			}
-		#else
-			if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
-    				fprintf(stderr,mysql_error(&demo_db));
-    				//exit(1);
-			}
-		#endif
-		else {
 
 			//escaper queryet rikit
 			mysql_real_escape_string(&demo_db,queryEscaped,QueryData.query,strlen(QueryData.query));
 
+			#warning runarb: har gjort om på insert komandone, utestet
 
 			//logger til mysql
-			sprintf(query,"insert DELAYED into search_logg values(NULL,NOW(),\"%s\",\"%s\",\"%i\",\"%f\",\"%s\",\"1\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\")",
+			sprintf(query,"insert DELAYED into search_logg (id,tid,query,search_bruker,treff,search_tid,ip_adresse,side,betaler_keywords_treff,\
+				HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang,spot,piDocID) \
+				values(NULL,NOW(),\"%s\",\"%i\",\"%f\",\"%s\",\"1\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\")",
 				queryEscaped,QueryData.search_user,
 				FinalSiderHeder.TotaltTreff,
 				FinalSiderHeder.total_usecs,
@@ -2819,7 +2881,7 @@ int main(int argc, char *argv[])
 			x = 0;
 			i = 0;			
 			
-			while ((x<FinalSiderHeder.showabal) && (i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)))) {
+			while ((x<FinalSiderHeder.showabal) && (i < (queryNodeHeder.MaxsHits * (nrOfServers + nrOfPiServers)))) {
 		
 				if (!Sider[i].deletet) {
 					#ifdef DEBUG
@@ -2836,7 +2898,7 @@ int main(int argc, char *argv[])
 						strsandr(query,"$hits",bitoa(FinalSiderHeder.TotaltTreff) );
 						strsandr(query,"$time",ftoa(FinalSiderHeder.total_usecs));
 						strsandr(query,"$ipadress",QueryData.userip);
-						strsandr(query,"$spot",bitoa(x + (QueryData.start * QueryData.MaxsHits)));
+						strsandr(query,"$spot",bitoa(x + (QueryData.start * queryNodeHeder.MaxsHits)));
 
 						#ifdef DEBUG
 						printf("query \"%s\"\n",query);
@@ -2859,13 +2921,12 @@ int main(int argc, char *argv[])
 				++i;
 			}
 
-			mysql_close(&demo_db);
-		}
 	#endif
 
-
+	mysql_close(&demo_db);
 
 #endif /* MYSQLFOUR */
+	} //if (!dispconfig.writeprequery)
 
 	/********************************************************************************************/
 
@@ -2899,8 +2960,9 @@ int main(int argc, char *argv[])
 	#endif
 
 	//må vi tvinge en buffer tømming ???
-	printf("\n\n");	
-
+	if (!dispconfig.writeprequery) {
+		printf("\n\n");	
+	}
 	//#ifdef WITH_PROFILING
 	//	}
 	//#endif
