@@ -1,6 +1,3 @@
-
-/******************************/
-#include "searchkernel.h"
 #include "../common/boithohome.h"
 #include "../common/bstr.h"
 
@@ -8,10 +5,10 @@
 #include "../common/integerindex.h"
 #include "../common/adultWeight.h"
 #include "../common/daemon.h"
+#include "../common/iindex.h"
 #include "../acls/acls.h"
 #include "../boithoadClientLib/liboithoaut.h"
 #include "../common/timediff.h"
-#include <sys/time.h>
 #include "../parser/html_parser.h"
 #include "../maincfg/maincfg.h"
 
@@ -27,8 +24,13 @@
 #include <sys/uio.h>
 #include <unistd.h>
 #include <time.h>
+#include <sys/time.h>
 #include <errno.h>
+#include <signal.h>
 
+
+#include "verbose.h"
+#include "searchkernel.h"
 
 #define cfg_searchd "config/searchd.conf"
 
@@ -71,6 +73,15 @@ int isInSubname(struct subnamesFormat *subnames,int nrOfSubnames,char s[]) {
 	return 0;
 }
 
+/* The signal handler exit the program. . */
+ void
+catch_alarm (int sig)
+{
+	printf("got alarm signal. Will exit\n");
+	exit(1);
+}
+
+
 int main(int argc, char *argv[])
 {
 
@@ -81,7 +92,7 @@ int main(int argc, char *argv[])
 	socklen_t clilen;
 	struct sockaddr_in cli_addr, serv_addr;
 	FILE *LOGFILE;
-	FILE *LOCK;
+	//FILE *LOCK;
 	struct searchd_configFORMAT searchd_config;
 
 	struct config_t maincfg;
@@ -89,12 +100,13 @@ int main(int argc, char *argv[])
         int searchport = 0;
 	int optLog = 0;
 	int optMax = 0;
+	int optSingle = 0;
 	char *optrankfile = NULL;
 	
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"lp:m:b:"))!=-1) {
+        while ((c=getopt(argc,argv,"lp:m:b:vs"))!=-1) {
                 switch (c) {
                         case 'p':
                                 searchport = atoi(optarg);
@@ -109,7 +121,14 @@ int main(int argc, char *argv[])
                         case 'b':
 				optrankfile = optarg;
                                 break;
-
+                        case 'v':
+				printf("verbose output\n");
+				globalOptVerbose = 1;
+                                break;
+                        case 's':
+				printf("Won't fork for new conections\n");
+				optSingle = 1;
+                                break;
 			default:
                         	exit(1);
                 }
@@ -117,7 +136,9 @@ int main(int argc, char *argv[])
 	}
         --optind;
 
+	#ifdef DEBUG
         printf("argc %i, optind %i\n",argc,optind);
+	#endif
 
 	if (optrankfile == NULL) {
 		optrankfile = "Brank";
@@ -195,7 +216,6 @@ int main(int argc, char *argv[])
 	/***********************************************************************************/
 
 	//#ifndef BLACK_BOKS
-	config_setting_t *cfgarray;
 
   	/* Initialize the configuration */
   	config_init(&cfg);
@@ -241,17 +261,19 @@ int main(int argc, char *argv[])
 
 
 	//starter opp
+	printf("loading domainids\n");
+	iintegerLoadMemArray(&global_DomainIDs,"domainid",sizeof(unsigned short),servername, "www");
+	printf("done\n");
+
         //laster inn alle poprankene
-        printf("loding pop MemArray\n");
+        printf("loading pop MemArray\n");
         popopenMemArray(servername,"www",optrankfile); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
         printf("done\n");
 
-	printf("loding adultWeight MemArray\n");
+	printf("loading adultWeight MemArray\n");
 	adultWeightopenMemArray(servername,"www"); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
 	printf("done\n");
 
-
-	iintegerLoadMemArray(&global_DomainIDs,"domainid",sizeof(unsigned short),servername, "www");
 
 	IIndexInaliser();
 
@@ -291,6 +313,10 @@ int main(int argc, char *argv[])
 
 	signal(SIGCLD, SIG_IGN);  /* now I don't have to wait() for forked children! */
 
+	printf("|------------------------------------------------------------------------------------------------|\n");
+	printf("|%-40s | %-11s | %-11s | %-11s | %-11s|\n","query", "TotaltTreff", "showabal", "filtered", "total_usecs");
+	printf("|------------------------------------------------------------------------------------------------|\n");
+
 	for(;;)
 	{
 		clilen = sizeof(cli_addr);
@@ -302,9 +328,13 @@ int main(int argc, char *argv[])
 		}
 		else {
 
-			#ifdef DEBUG
+			if (optSingle) {
 				do_chld((void *) &searchd_config);
-
+			}
+			else {
+			#ifdef DEBUG
+				printf("is in debug mode, wont fork to new prosess\n");
+				do_chld((void *) &searchd_config);
 			#else
 				/*
 				#ifdef WITH_THREAD
@@ -316,6 +346,7 @@ int main(int argc, char *argv[])
 					do_chld((void *) &searchd_config);	
 				#endif
 				*/
+				printf("will fork of a new prossess.\n");
 				if (fork() == 0) { // this is the child process
 
 					close(sockfd); // child doesn't need the listener
@@ -331,6 +362,7 @@ int main(int argc, char *argv[])
 					close(searchd_config.newsockfd); // perent doesn't need the new socket
 				}
 			#endif
+			}
 		}
 
 		++runCount;
@@ -365,7 +397,7 @@ void *do_chld(void *arg)
 
 
 	FILE *LOGFILE;
-	char 	data[100];
+	//char 	data[100];
 	int 	i,n;
 	struct queryNodeHederFormat queryNodeHeder;
 	struct SiderFormat *Sider;
@@ -392,11 +424,18 @@ void *do_chld(void *arg)
 
 	gettimeofday(&globalstart_time, NULL);
 
+	//make a timeout
+	/* Establish a handler for SIGALRM signals. */
+       	signal (SIGALRM, catch_alarm);
+
+	/* Set an alarm to go off in a little while. */
+       	alarm (20);
+
 	
 	#ifdef WITH_THREAD
-		printf("Child thread [%d]: Socket number = %d\n", pthread_self(), mysocfd);
+		vboprintf("Child thread [%d]: Socket number = %d\n", pthread_self(), mysocfd);
 	#else
-		printf("Socket number = %d\n",mysocfd);
+		vboprintf("Socket number = %d\n",mysocfd);
 	#endif
 
 	#ifdef DEBUG
@@ -413,15 +452,14 @@ void *do_chld(void *arg)
 	net_status = net_CanDo;
 	//if ((n=sendall(mysocfd,&net_status, sizeof(net_status))) != sizeof(net_status)) {
 	if ((n=send(mysocfd,&net_status, sizeof(net_status),MSG_NOSIGNAL)) != sizeof(net_status)) {
-		printf("send only %i of %i\n",n,sizeof(net_status));
+		printf("send only %i of %i at %s:%d\n",n,sizeof(net_status),__FILE__,__LINE__);
 		perror("sendall net_status");
 	}
 
 
-	printf("MaxsHits %i\n",queryNodeHeder.MaxsHits);
-	Sider  = (struct SiderFormat *)malloc(sizeof(struct SiderFormat) * (queryNodeHeder.MaxsHits));
-
-	printf("Ranking search?\n");
+	vboprintf("MaxsHits %i\n",queryNodeHeder.MaxsHits);
+	//Sider  = (struct SiderFormat *)malloc(sizeof(struct SiderFormat) * (queryNodeHeder.MaxsHits));
+	vboprintf("Ranking search?\n");
 
 
 	//ToDo: må ha låsing her
@@ -433,7 +471,7 @@ void *do_chld(void *arg)
                 fclose(LOGFILE);
         }
 
-	printf("query:%s\n",queryNodeHeder.query);
+	printf("inncomming query:%s\n",queryNodeHeder.query);
 
 	strcpy(SiderHeder->servername,servername);
 
@@ -448,8 +486,7 @@ void *do_chld(void *arg)
 	int responsnr;
 
 	if (!userToSubname_open(&userToSubnameDb)) {
-		printf("cant open users.db\n");
-		//strcpy(queryNodeHeder.subname,"wikipedia,boithodocs");
+		printf("can't open users.db\n");
 	}
 	else {
 		char subnamebuf[maxSubnameLength];
@@ -458,6 +495,7 @@ void *do_chld(void *arg)
 		queryNodeHeder.subname[0] = '\0';
 		if (strlen(queryNodeHeder.subname) > 0)
 			strlwcat(queryNodeHeder.subname, ",", sizeof(queryNodeHeder.subname));
+		printf("queryNodeHeder.subname \"%s\"\n",queryNodeHeder.subname);
 		boithoad_groupsForUser(queryNodeHeder.search_user,&respons_list,&responsnr);
 	        printf("groups: %i\n",responsnr);
 	        for (i=0;i<responsnr;i++) {
@@ -511,7 +549,7 @@ void *do_chld(void *arg)
 	subnamesDefaultsConfig.summary = config_setting_get_string(cfgstring);
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameUrl") ) == NULL) {
-                printf("can't load \"summary\" from config\n");
+                printf("can't load \"filterSameUrl\" from config\n");
                 exit(1);
         }
 
@@ -519,7 +557,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameUrl") ) == NULL) {
-                printf("can't load \"summary\" from config\n");
+                printf("can't load \"filterSameUrl\" from config\n");
                 exit(1);
         }
 
@@ -527,7 +565,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameDomain") ) == NULL) {
-                printf("can't load \"summary\" from config\n");
+                printf("can't load \"filterSameDomain\" from config\n");
                 exit(1);
         }
 
@@ -535,7 +573,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterTLDs") ) == NULL) {
-                printf("can't load \"summary\" from config\n");
+                printf("can't load \"filterTLDs\" from config\n");
                 exit(1);
         }
 
@@ -543,7 +581,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterResponse") ) == NULL) {
-                printf("can't load \"summary\" from config\n");
+                printf("can't load \"filterResponse\" from config\n");
                 exit(1);
         }
 
@@ -551,7 +589,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameCrc32") ) == NULL) {
-                printf("can't load \"summary\" from config\n");
+                printf("can't load \"filterSameCrc32\" from config\n");
                 exit(1);
         }
 
@@ -559,7 +597,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankAthorArray") ) == NULL) {
-                printf("can't load \"summary\" from config\n");
+                printf("can't load \"rankAthorArray\" from config\n");
                 exit(1);
         }
 	
@@ -573,7 +611,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankTittelArray") ) == NULL) {
-                printf("can't load \"summary\" from config\n");
+                printf("can't load \"rankTittelArray\" from config\n");
                 exit(1);
         }
 	
@@ -587,7 +625,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankHeadlineArray") ) == NULL) {
-                printf("can't load \"summary\" from config\n");
+                printf("can't load \"rankHeadlineArray\" from config\n");
                 exit(1);
         }
 	
@@ -601,7 +639,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankBodyArray") ) == NULL) {
-                printf("can't load \"summary\" from config\n");
+                printf("can't load \"rankBodyArray\" from config\n");
                 exit(1);
         }
 	
@@ -616,7 +654,7 @@ void *do_chld(void *arg)
 	}
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankUrlArray") ) == NULL) {
-                printf("can't load \"summary\" from config\n");
+                printf("can't load \"rankUrlArray\" from config\n");
                 exit(1);
         }
 	
@@ -645,14 +683,14 @@ void *do_chld(void *arg)
 	subnamesDefaultsConfig.rankUrlMainWord = config_setting_get_int(cfgstring);
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "defaultthumbnail") ) == NULL) {
-                printf("can't load \"defaultthumbnail\" from config\n");
+                vboprintf("can't load \"defaultthumbnail\" from config\n");
         }
 	else {
 		subnamesDefaultsConfig.defaultthumbnail = config_setting_get_string(cfgstring);
 	}
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "sqlImpressionsLogQuery") ) == NULL) {
-                printf("can't load \"sqlImpressionsLogQuery\" from config\n");
+                vboprintf("can't load \"sqlImpressionsLogQuery\" from config\n");
 		subnamesDefaultsConfig.sqlImpressionsLogQuery[0] = '\0';
 
         }
@@ -670,7 +708,7 @@ void *do_chld(void *arg)
 
 	/****************/
 
-	printf("subname \"%s\"\n",queryNodeHeder.subname);
+	vboprintf("subname \"%s\"\n",queryNodeHeder.subname);
 
 	//dekoder subname
 
@@ -683,9 +721,10 @@ void *do_chld(void *arg)
 	nrOfSubnames = 0; 
 
 
-	printf("nrOfSubnames %i\n",nrOfSubnames);
-  	while( (Data[Count] != NULL) && (nrOfSubnames < MAX_COLLECTIONS)) {
-    		printf("\t\taa: %d\t\"%s\"\n", Count, Data[Count]);
+	vboprintf("nrOfSubnames %i\n",nrOfSubnames);
+  	
+	while( (Data[Count] != NULL) && (nrOfSubnames < MAX_COLLECTIONS)) {
+    		vboprintf("\t\taa: %d\t\"%s\"\n", Count, Data[Count]);
 
 		//tar ikke med tomme subnames (som bare er en \0)
 		if (Data[Count][0] == '\0') {
@@ -695,7 +734,7 @@ void *do_chld(void *arg)
 			printf("all redy have \"%s\" as a subname\n",Data[Count]);
 		} 
 		else {
-	    		printf("\t\taa: added : %d\t\"%s\" (len %i)\n", Count, Data[Count],strlen(Data[Count]));
+	    		vboprintf("\t\taa: added : %d\t\"%s\" (len %i)\n", Count, Data[Count],strlen(Data[Count]));
 
 			strscpy(subnames[nrOfSubnames].subname,Data[Count],sizeof(subnames[nrOfSubnames].subname));
 
@@ -703,7 +742,7 @@ void *do_chld(void *arg)
 			subnames[nrOfSubnames].config = subnamesDefaultsConfig;
 
 			if ((cfgcollection = config_setting_get_member(cfgcollections, subnames[nrOfSubnames].subname)) == NULL ) {
-				printf("can't load \"collections\" from config for \"%s\"\n",subnames[nrOfSubnames].subname);
+				vboprintf("can't load \"collections\" from config for \"%s\"\n",subnames[nrOfSubnames].subname);
 
 			}
 			else {
@@ -711,14 +750,14 @@ void *do_chld(void *arg)
 
 				/****************/
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "summary") ) == NULL) {
-                			printf("can't load \"summary\" from config\n");
+                			vboprintf("can't load \"summary\" from config\n");
         			}
 				else {
 				subnames[nrOfSubnames].config.summary = config_setting_get_string(cfgstring);
 				}
 
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameUrl") ) == NULL) {
-                			printf("can't load \"filterSameUrl\" from config\n");
+                			vboprintf("can't load \"filterSameUrl\" from config\n");
         			}
 				else {
 					subnames[nrOfSubnames].config.filterSameUrl = config_setting_get_bool(cfgstring);
@@ -726,28 +765,28 @@ void *do_chld(void *arg)
 
 
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameDomain") ) == NULL) {
-                			printf("can't load \"filterSameDomain\" from config\n");
+                			vboprintf("can't load \"filterSameDomain\" from config\n");
         			}
 				else {
 					subnames[nrOfSubnames].config.filterSameDomain = config_setting_get_bool(cfgstring);
 				}
 
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "filterTLDs") ) == NULL) {
-                			printf("can't load \"filterTLDs\" from config\n");
+                			vboprintf("can't load \"filterTLDs\" from config\n");
         			}
 				else {
 					subnames[nrOfSubnames].config.filterTLDs = config_setting_get_bool(cfgstring);
 				}
 
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "filterResponse") ) == NULL) {
-                			printf("can't load \"filterResponse\" from config\n");
+                			vboprintf("can't load \"filterResponse\" from config\n");
         			}
 				else {
 					subnames[nrOfSubnames].config.filterResponse = config_setting_get_bool(cfgstring);
 				}
 
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameCrc32") ) == NULL) {
-                			printf("can't load \"filterSameCrc32\" from config\n");
+                			vboprintf("can't load \"filterSameCrc32\" from config\n");
         			}
 				else {
 					subnames[nrOfSubnames].config.filterSameCrc32 = config_setting_get_bool(cfgstring);
@@ -755,7 +794,7 @@ void *do_chld(void *arg)
 
 
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankTittelFirstWord") ) == NULL) {
-                			printf("can't load \"rankTittelFirstWord\" from config\n");
+                			vboprintf("can't load \"rankTittelFirstWord\" from config\n");
         			}
 				else {
 					subnames[nrOfSubnames].config.rankTittelFirstWord = config_setting_get_int(cfgstring);
@@ -763,20 +802,20 @@ void *do_chld(void *arg)
 
 				//rankUrlMainWord
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankUrlMainWord") ) == NULL) {
-                			printf("can't load \"rankUrlMainWord\" from config\n");
+                			vboprintf("can't load \"rankUrlMainWord\" from config\n");
         			}
 				else {
 					subnames[nrOfSubnames].config.rankUrlMainWord = config_setting_get_int(cfgstring);
 				}
 
-				printf("filterSameUrl: %i\n",subnames[nrOfSubnames].config.filterSameUrl);
-				printf("filterSameDomain: %i\n",subnames[nrOfSubnames].config.filterSameDomain);
-				printf("filterTLDs: %i\n",subnames[nrOfSubnames].config.filterTLDs);
-				printf("filterResponse: %i\n",subnames[nrOfSubnames].config.filterResponse);
-				printf("filterSameCrc32: %i\n",subnames[nrOfSubnames].config.filterSameCrc32);
+				vboprintf("filterSameUrl: %i\n",subnames[nrOfSubnames].config.filterSameUrl);
+				vboprintf("filterSameDomain: %i\n",subnames[nrOfSubnames].config.filterSameDomain);
+				vboprintf("filterTLDs: %i\n",subnames[nrOfSubnames].config.filterTLDs);
+				vboprintf("filterResponse: %i\n",subnames[nrOfSubnames].config.filterResponse);
+				vboprintf("filterSameCrc32: %i\n",subnames[nrOfSubnames].config.filterSameCrc32);
 
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankAthorArray") ) == NULL) {
-                			printf("can't load \"filterSameCrc32\" from config\n");
+                			vboprintf("can't load \"rankAthorArray\" from config\n");
         			}
 				else {
 
@@ -793,7 +832,7 @@ void *do_chld(void *arg)
 
 
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankTittelArray") ) == NULL) {
-                			printf("can't load \"filterSameCrc32\" from config\n");
+                			vboprintf("can't load \"rankTittelArray\" from config\n");
         			}
 				else {
 
@@ -810,7 +849,7 @@ void *do_chld(void *arg)
 
 
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankHeadlineArray") ) == NULL) {
-                			printf("can't load \"filterSameCrc32\" from config\n");
+                			vboprintf("can't load \"rankHeadlineArray\" from config\n");
         			}
 				else {
 
@@ -827,7 +866,7 @@ void *do_chld(void *arg)
 
 
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankBodyArray") ) == NULL) {
-                			printf("can't load \"filterSameCrc32\" from config\n");
+                			vboprintf("can't load \"rankBodyArray\" from config\n");
         			}
 				else {
 
@@ -843,7 +882,7 @@ void *do_chld(void *arg)
 				}
 
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankUrlArray") ) == NULL) {
-                			printf("can't load \"filterSameCrc32\" from config\n");
+                			vboprintf("can't load \"rankUrlArray\" from config\n");
         			}
 				else {
 
@@ -860,21 +899,21 @@ void *do_chld(void *arg)
 
 
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "defaultthumbnail") ) == NULL) {
-                			printf("can't load \"defaultthumbnail\" from config\n");
+                			vboprintf("can't load \"defaultthumbnail\" from config\n");
         			}
 				else {
 					subnames[nrOfSubnames].config.defaultthumbnail = config_setting_get_string(cfgstring);
 				}
 
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "sqlImpressionsLogQuery") ) == NULL) {
-                			printf("can't load \"sqlImpressionsLogQuery\" from config\n");
+                			vboprintf("can't load \"sqlImpressionsLogQuery\" from config\n");
         			}
 				else {
 					strscpy(subnames[nrOfSubnames].config.sqlImpressionsLogQuery,config_setting_get_string(cfgstring),sizeof(subnames[nrOfSubnames].config.sqlImpressionsLogQuery));
 				}
 
 				if ( (cfgstring = config_setting_get_member(cfgcollection, "isPaidInclusion") ) == NULL) {
-                			printf("can't load \"isPaidInclusion\" from config\n");
+                			vboprintf("can't load \"isPaidInclusion\" from config\n");
         			}
 				else {
 					subnames[nrOfSubnames].config.isPaidInclusion = config_setting_get_bool(cfgstring);
@@ -886,9 +925,7 @@ void *do_chld(void *arg)
 			}
 
 			
-			printf("nrOfSubnames a %i\n",nrOfSubnames);	
 			++nrOfSubnames;
-			printf("nrOfSubnames b %i\n",nrOfSubnames);
 
 		}
 		++Count;
@@ -896,7 +933,6 @@ void *do_chld(void *arg)
 	}
 
 
-	printf("\n");
 
 
 
@@ -922,13 +958,15 @@ void *do_chld(void *arg)
 	SiderHeder->filtypesnrof = MAXFILTYPES;
 
 	SiderHeder->errorstrlen=sizeof(SiderHeder->errorstr);
-	//v3 dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,SiderHeder,SiderHeder->hiliteQuery,servername,subnames,SiderHeder->nrOfSubnames,queryNodeHeder.MaxsHits,queryNodeHeder.start, queryNodeHeder.filterOn, queryNodeHeder.languageFilter);
+	//v3 dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),&Sider,SiderHeder,SiderHeder->hiliteQuery,servername,subnames,SiderHeder->nrOfSubnames,queryNodeHeder.MaxsHits,queryNodeHeder.start, queryNodeHeder.filterOn, queryNodeHeder.languageFilter);
 
-	printf("queryNodeHeder.getRank %i\n",queryNodeHeder.getRank);
+	#ifdef DEBUG
+	printf("queryNodeHeder.getRank %u\n",queryNodeHeder.getRank);
+	#endif
 
 	if (!queryNodeHeder.getRank) {
 
-		if (!dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,SiderHeder,SiderHeder->hiliteQuery,
+		if (!dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),&Sider,SiderHeder,SiderHeder->hiliteQuery,
 			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
 			queryNodeHeder.start, queryNodeHeder.filterOn, 
 			"",queryNodeHeder.orderby,SiderHeder->dates,queryNodeHeder.search_user,
@@ -948,9 +986,9 @@ void *do_chld(void *arg)
 		}
 	}
 	else if (queryNodeHeder.getRank)  {
-		printf("########################################### Ranking document: %d\n", queryNodeHeder.getRank);
+		printf("########################################### Ranking document: %u\n", queryNodeHeder.getRank);
 
-		if (dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,SiderHeder,SiderHeder->hiliteQuery,
+		if (dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),&Sider,SiderHeder,SiderHeder->hiliteQuery,
 			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
 			queryNodeHeder.start, queryNodeHeder.filterOn, 
 			"",queryNodeHeder.orderby,SiderHeder->dates,queryNodeHeder.search_user,
@@ -966,7 +1004,7 @@ void *do_chld(void *arg)
 				status = net_nomatch;
 				printf("1 Sending: %d\n", sizeof(status));
 				if ((n=send(mysocfd, &status, sizeof(status),0)) != sizeof(status)) {
-					printf("send only %i of %i\n",n,sizeof(status));
+					printf("send only %i of %i at %s:%d\n",n,sizeof(status),__FILE__,__LINE__);
 					perror("sendall status");
 					return;
 				}
@@ -976,19 +1014,19 @@ void *do_chld(void *arg)
 				data[1] = ranking;
 #if 0
 				if ((n=send(mysocfd, &status, sizeof(status),0)) != sizeof(status)) {
-					printf("send only %i of %i\n",n,sizeof(status));
+					printf("send only %i of %i at %s:%d\n",n,sizeof(status),__FILE__,__LINE__);
 					perror("sendall status2");
 					return;
 				}
 				if ((n=send(mysocfd, &ranking, sizeof(ranking),0)) != sizeof(ranking)) {
-					printf("send only %i of %i\n",n,sizeof(ranking));
+					printf("send only %i of %i at %s:%d\n",n,sizeof(ranking),__FILE__,__LINE__);
 					perror("sendall ranking");
 					return;
 				}
 #else
 				printf("2 Sending: %d\n", sizeof(data));
 				if ((n = send(mysocfd, data, sizeof(data),0)) != sizeof(data)) {
-					printf("send only %i of %i\n",n,sizeof(data));
+					printf("send only %i of %i at %s:%d\n",n,sizeof(data),__FILE__,__LINE__);
 					perror("sendall data");
 					return;
 				}
@@ -997,12 +1035,14 @@ void *do_chld(void *arg)
 
 			printf("3 Receiving: %d\n",sizeof(ranking));
 			if (recv(mysocfd, &ranking, sizeof(ranking), 0) != sizeof(ranking)) {
-				perror("recv ranking");
+			//if (recvall(mysocfd, &ranking, sizeof(ranking))!= sizeof(ranking)) {
+				printf("recv ranking %s:%d\n",__FILE__,__LINE__);
+				perror("");
 				return;
 			}
 			printf("Received ranking: %d\n", ranking);
 
-			if (!dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),Sider,SiderHeder,SiderHeder->hiliteQuery,
+			if (!dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),&Sider,SiderHeder,SiderHeder->hiliteQuery,
 				servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
 				queryNodeHeder.start, queryNodeHeder.filterOn, 
 				"",queryNodeHeder.orderby,SiderHeder->dates,queryNodeHeder.search_user,
@@ -1022,7 +1062,7 @@ void *do_chld(void *arg)
 				printf("Ranking: %p\n", &ranking);
 #if 1
 				if ((n = send(mysocfd, &ranking2, sizeof(ranking2), 0)) != sizeof(ranking2)) {
-					printf("send only %i of %i\n", n, sizeof(ranking2));
+					printf("send only %i of %i at %s:%d\n", n, sizeof(ranking2),__FILE__,__LINE__);
 					perror("sendall ranking2");
 					return;
 				}
@@ -1054,20 +1094,30 @@ void *do_chld(void *arg)
 	for (i=0;((i<MAX_COLLECTIONS) && (i<nrOfSubnames));i++) {
 		SiderHeder->subnames[i] = subnames[i];
 	}
+
 	SiderHeder->nrOfSubnames = i--;
 
-	printf("subnames:\n");
-	for (i=0;i<SiderHeder->nrOfSubnames;i++) {
-		printf("\t%s: %i\n",SiderHeder->subnames[i].subname,SiderHeder->subnames[i].hits);
+	if (globalOptVerbose) {
+		printf("subnames:\n");
+		for (i=0;i<SiderHeder->nrOfSubnames;i++) {
+			printf("\t%s: %i\n",SiderHeder->subnames[i].subname,SiderHeder->subnames[i].hits);
+		}
+	
+		printf("\n");
 	}
-	printf("\n");
-
 	//finer først tiden vi brukte
         gettimeofday(&globalend_time, NULL);
         SiderHeder->total_usecs = getTimeDifference(&globalstart_time,&globalend_time);
 
+	
+	//printf("query \"%s\", TotaltTreff %i,showabal %i,filtered %i,total_usecs %f\n",queryNodeHeder.query,SiderHeder->TotaltTreff,SiderHeder->showabal,SiderHeder->filtered,SiderHeder->total_usecs);
 
-	printf("TotaltTreff %i,showabal %i,filtered %i,total_usecs %f\n",SiderHeder->TotaltTreff,SiderHeder->showabal,SiderHeder->filtered,SiderHeder->total_usecs);
+	printf("|%-40s | %-11i | %-11i | %-11i | %-11f|\n",
+		queryNodeHeder.query,
+		SiderHeder->TotaltTreff,
+		SiderHeder->showabal,
+		SiderHeder->filtered,
+		SiderHeder->total_usecs);
 
 	#ifdef DEBUG
 	gettimeofday(&start_time, NULL);
@@ -1076,7 +1126,7 @@ void *do_chld(void *arg)
 
 
 	if ((n=send(mysocfd,SiderHeder, sizeof(struct SiderHederFormat),MSG_NOSIGNAL)) != sizeof(struct SiderHederFormat)) {
-		printf("send only %i of %i\n",n,sizeof(struct SiderHederFormat));
+		printf("send only %i of %i at %s:%d\n",n,sizeof(struct SiderHederFormat),__FILE__,__LINE__);
 		perror("sendall SiderHeder");
 	}
 	#ifdef DEBUG
@@ -1090,8 +1140,9 @@ void *do_chld(void *arg)
 	#endif
 
 
+	//if ((n=send(mysocfd,&Sider, sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits, MSG_NOSIGNAL)) != (sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits)) {
 	if ((n=send(mysocfd,Sider, sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits, MSG_NOSIGNAL)) != (sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits)) {
-		printf("send only %i of %i\n",n,sizeof(struct SiderFormat)*queryNodeHeder.MaxsHits);
+		printf("send only %i of %i at %s:%d\n",n,sizeof(struct SiderFormat)*queryNodeHeder.MaxsHits,__FILE__,__LINE__);
 		perror("sendall");
 	}		
 	
@@ -1103,15 +1154,19 @@ void *do_chld(void *arg)
 
 	/* close the socket and exit this thread */
 	close(mysocfd);
-	//thr_exit((void *)0);
 
 	free(Sider);
 	free(subnames);
 	free(SiderHeder);
 
+	#ifdef DEBUG
 	printf("exiting\n");
+	#endif
 
 	//pthread_exit((void *)0); /* exit with status */
+
+	/* cansel alarm */
+       	alarm (0);
 
 
 /***************************************/
@@ -1125,6 +1180,7 @@ void *do_chld(void *arg)
 			}
 			printf("hav runed %i times\n",profiling_runcount);
 		#endif
+
 
 
  }

@@ -8,7 +8,7 @@ struct searchd_configFORMAT {
 };
 
 
-int dosearch(char query[], int queryLen, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
+int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct SiderHederFormat *SiderHeder,
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames,
 int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[],
 char search_user[],struct filtersFormat *filters,
@@ -17,7 +17,7 @@ char search_user[],struct filtersFormat *filters,
 #define RANK_TYPE_FIND	1
 #define RANK_TYPE_SUM	2
 
-int dorank(char query[], int queryLen, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
+int dorank(char query[], int queryLen, struct SiderFormat **Sider, struct SiderHederFormat *SiderHeder,
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames,
 int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[],
 char search_user[],struct filtersFormat *filters,

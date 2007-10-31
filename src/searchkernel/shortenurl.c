@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "verbose.h"
+
 #include "../common/bstr.h"
 
 
@@ -15,8 +17,8 @@ void shortenurl(char *url,int urllen) {
 	char slash[2];
 	int len;
 	len = strlen(url);
-	printf("inn url %s\n",url);
-
+	vboprintf("shortenurl: inn url %s\n",url);
+	
 	//tar bort http:// først
 	if (strncmp(url,"http://",7) == 0) {
 		//strcpy(url,url +7);
@@ -38,11 +40,15 @@ void shortenurl(char *url,int urllen) {
 	}
 
   	if ((TokCount = split(url, "/", &Data)) > 1) {
+		#ifdef DEBUG
 		printf("seperator: / \n");
+		#endif
 		strcpy(slash,"/");
 	}
 	else if ((TokCount = split(url, "\\", &Data)) > 1) {
+		#ifdef DEBUG
 		printf("seperator: \\ \n");
+		#endif
 		strcpy(slash,"\\");
 	}
 	else {
@@ -61,8 +67,9 @@ void shortenurl(char *url,int urllen) {
 	*/
 	--TokCount; //split ser ut til å begynner på 1, ikke på 0 
 
-
+	#ifdef DEBUG
   	printf("\tfound %d token(s):\n", TokCount);
+	#endif
 
   	Count = 0;
 
@@ -95,7 +102,9 @@ void shortenurl(char *url,int urllen) {
 
 		suburllen = strlen(Data[Count]);
 		if ((added + suburllen) < 50) {
+			#ifdef DEBUG
 			printf("candidate %s\n",Data[Count]);
+			#endif
 		}
 		else {
 			break;
