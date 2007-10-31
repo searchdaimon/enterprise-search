@@ -5,6 +5,7 @@
 
 #include "../common/url.h"
 #include "../common/lot.h"
+#include "../common/utf8-strings.h"
 
 void filtersTrapedReset(struct filtersTrapedFormat *filtersTraped) {
 
@@ -24,6 +25,36 @@ void filtersTrapedReset(struct filtersTrapedFormat *filtersTraped) {
         filtersTraped->sameDomainID 		= 0;
         filtersTraped->filterNoUrl 		= 0;
 
+}
+
+int filterSummery(char summery[]) {
+	if (summery[0] == '\0') {
+		printf("summery \"%s\" is emty\n",summery);
+		return 1;
+	}
+	else if (strnlen(summery,200) < 10) {
+		printf("summery \"%s\" is to short\n",summery);
+		return 1;
+	}
+
+	return 0;
+}
+int filterTitle(char title[]) {
+
+	if (title[0] == '\0') {
+		printf("title \"%s\" is emty\n",title);
+		return 1;
+	}
+	else if (strnlen(title,200) < 2) {
+		printf("title \"%s\" is to short\n",title);
+		return 1;
+	}
+	else if (detect_no_uppercase((unsigned char *)title)) {
+		printf("title \"%s\" is all lovercase\n",title);
+		return 1;
+	}
+
+	return 0;
 }
 
 int filterAdultWeight_bool(char AdultWeight,int adultpages,int noadultpages) {
@@ -66,7 +97,9 @@ int filterAdultWeight_value(int AdultWeight,int adultpages,int noadultpages) {
 int filterResponse(int responscode) {
 
 	//filtrerer hvis det ikke er lovlige responskoder
-	if ((responscode == 200) || (responscode == 301) || (responscode == 302) || (responscode == 0)) {
+	//runarb 25.10.2007: Jayde vil ha bare ok sider
+	//if ((responscode == 200) || (responscode == 301) || (responscode == 302) || (responscode == 0)) {
+	if ((responscode == 200) || (responscode == 203 )) {
 		return 0;
 	}
 	else {
@@ -110,7 +143,9 @@ int filterSameDomainID(int showabal,struct SiderFormat *CurentSider, struct Side
 
 		if (!Sider[i].deletet) {
 
+			#ifdef DEBUG
 			printf("filterSameDomainID: showabal %i, count %iSider %hu, CurentSider %hu\n",showabal,count,Sider[i].DomainID,(*CurentSider).DomainID);
+			#endif
 
 			if (Sider[i].DomainID == (*CurentSider).DomainID) {
 				#ifdef DEBUG
