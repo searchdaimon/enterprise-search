@@ -14,5 +14,6 @@ void saafree(char **List);
 void ntobr (char textbuff[], int texbufftsize);
 size_t strlwcat(char *dst, const char *src, size_t siz);
 char *strdupnul(char *in);
+void FreeSplitList(char **List);
 
 #endif

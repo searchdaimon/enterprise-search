@@ -78,13 +78,12 @@ void rclose ();
 
 int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radress64bit,unsigned int rsize,unsigned
 				int DocID,char subname[],struct ReposetoryHeaderFormat *ReposetoryHeader,
-				char **acl_allowbuffer,char **acl_deniedbuffer
+				char **acl_allowbuffer,char **acl_deniedbuffer, unsigned int imagesize
 				);
 
 int rGetNext (unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset, char subname[], char **acl_allowbuffer,char **acl_deniedbuffer);
 
-void runpack(struct ReposetoryFormat *ReposetoryData,char *inndata,int length);
-
+int runpack(char *ReposetoryData,uLong comprLen,char *inndata,int length);
 int rReadSummary(unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[]);
 
 //Bilde rutiner
@@ -116,6 +115,10 @@ void setLastIndexTimeForLot(int LotNr,int httpResponsCodes[],char subname[]);
 unsigned int GetLastIndexTimeForLot(int LotNr,char subname[]);
 int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
                         char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[]);
+
+int rReadPost2(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
+                        char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[],
+                        unsigned int rsize,unsigned int imagesize);
 
 off_t getImagepFromRadres(unsigned int radress64bit,unsigned int htmlbufferSize);
 unsigned int rLastDocID(char subname[]);

@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
+#include <inttypes.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -14,11 +14,20 @@
 #include "lot.h"
 #include "lotlist.h"
 
+#define MMAP_INTI
+#ifdef MMAP_INTI
+       	#include <sys/types.h>
+       	#include <sys/stat.h>
+       	#include <fcntl.h>
+	#include <sys/mman.h>
+#endif
 
 int iintegerOpenForLot(struct iintegerFormat *iinteger,char index[],int elementsize ,int lotNr, char type[],char subname[]) {
 
 	
-	if ((iinteger->FH = lotOpenFileNoCasheByLotNr(lotNr,index,type, 'e', subname)) == NULL) {
+	//if ((iinteger->FH = lotOpenFileNoCasheByLotNr(lotNr,index,type, 'e', subname)) == NULL) {
+	//jayde
+	if ((iinteger->FH = lotOpenFileNoCasheByLotNr(lotNr,index,type, 'd', subname)) == NULL) {
 		return 0;
 	}
 	
@@ -84,6 +93,7 @@ int iintegerLoadMemArray(struct iintegerMemArrayFormat *iintegerMemArray,char in
 	struct iintegerFormat iinteger;
 	struct stat inode;      // lager en struktur for fstat å returnere.
 	int size;
+	off_t totsize = 0;
 
         lotlistLoad();
         lotlistMarkLocals(servername);
@@ -100,17 +110,57 @@ int iintegerLoadMemArray(struct iintegerMemArrayFormat *iintegerMemArray,char in
 
                 if (lotlistIsLocal(i)) {
 
+			#ifdef DEBUG
 			printf("iintegerLoadMemArray: local lot %i\n",i);
-			
-			if (!iintegerOpenForLot(&iinteger,index,elementsize,i,"r",subname)) {
-				printf("don't have \"%s\" for ot %i\n",index,i);
+			#endif
+			if (!iintegerOpenForLot(&iinteger,index,elementsize,i,"r+",subname)) {
+				#ifdef DEBUG
+				printf("don't have \"%s\" for lot %i\n",index,i);
+				#endif
 				continue;
 			}
 
 			fstat(fileno(iinteger.FH),&inode);
+			#ifdef DEBUG
 			printf("File size: %i\n",inode.st_size);
+			#endif
 
+			#ifdef MMAP_INTI
 
+			if (inode.st_size < size) {
+				fprintf(stderr,"iintegerLoadMemArray: file is smaler then size. file size %"PRId64", suposed to be %i\n",inode.st_size,size);
+
+                                /*
+                                Stretch the file size to the size of the (mmapped) array of ints
+                                */
+                                if (fseek(iinteger.FH, size +1, SEEK_SET) == -1) {
+                                        perror("Error calling fseek() to 'stretch' the file");
+                                        exit(EXIT_FAILURE);
+                                }
+
+                                /* Something needs to be written at the end of the file to
+                                * have the file actually have the new size.
+                                * Just writing an empty string at the current file position will do.
+                                *
+                                * Note:
+                                *  - The current position in the file is at the end of the stretched
+                                *    file due to the call to fseek().
+                                *  - An empty string is actually a single '\0' character, so a zero-byte
+                                *    will be written at the last byte of the file.
+                                */
+                                if (fwrite("", 1, 1, iinteger.FH) != 1) {
+                                        perror("Error writing last byte of the file");
+                                        exit(EXIT_FAILURE);
+                                }
+
+			}
+
+			if ((iintegerMemArray->MemArray[i] = mmap(0,size,PROT_READ,MAP_SHARED,fileno(iinteger.FH),0) ) == NULL) {
+				fprintf(stderr,"iintegerLoadMemArray: can't mmap for lot %i\n",i);
+                        	perror("mmap");
+                        }
+			
+			#else
 			//if ((iintegerMemArray->MemArray[i] = malloc(inode.st_size)) == NULL) {
 			if ((iintegerMemArray->MemArray[i] = malloc(size) ) == NULL) {
 				perror("malloc");
@@ -120,11 +170,16 @@ int iintegerLoadMemArray(struct iintegerMemArrayFormat *iintegerMemArray,char in
 			memset(iintegerMemArray->MemArray[i],'\0',size);
 
 			fread(iintegerMemArray->MemArray[i],inode.st_size,1,iinteger.FH);
+			#endif
+
+			totsize += size;			
 
 			iintegerClose(&iinteger);
 		}
 
 	}
+
+	printf("did load a total of %"PRId64" into memory\n",totsize);
 }
 
 

@@ -9,6 +9,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#define MMAP_POP
+#ifdef MMAP_POP
+       #include <sys/types.h>
+       #include <sys/stat.h>
+       #include <fcntl.h>
+#endif
 
 #include "poprank.h"
 #include "define.h"
@@ -78,8 +84,9 @@ void popopenMemArray_oneLot(char subname[], int i) {
 				popMemArray[i] = 0;
 		        }
 			else {
-
+				#ifdef DEBUG
 				printf("loaded lot %i\n",i);
+				#endif
 
 				branksize = sizeof(unsigned char) * NrofDocIDsInLot;
 
@@ -115,6 +122,8 @@ void popopenMemArray(char servername[], char subname[], char rankfile[]) {
 	int LocalLots;
 	char LotFile[128];
 	int branksize;
+	struct stat inode;
+	off_t totsize = 0;	
 
 	lotlistLoad();
 	lotlistMarkLocals(servername);
@@ -136,10 +145,24 @@ void popopenMemArray(char servername[], char subname[], char rankfile[]) {
 				popMemArray[i] = 0;
 		        }
 			else {
-
+				#ifdef DEBUG
 				printf("loaded lot %i\n",i);
-
+				#endif
 				branksize = sizeof(unsigned char) * NrofDocIDsInLot;
+
+				#ifdef MMAP_POP
+					fstat(fileno(FH),&inode);
+
+					if (inode.st_size != branksize) {
+						fprintf(stderr,"popopenMemArray: file is smaler then size. file size %"PRId64", suposed to be %i\n",inode.st_size,branksize);
+						continue;
+					}
+
+                        		if ((popMemArray[i] = mmap(0,branksize,PROT_READ,MAP_SHARED,fileno(FH),0) ) == NULL) {
+                                		fprintf(stderr,"popopenMemArray: can't mmap for lot %i\n",i);
+                                		perror("mmap");
+                        		}
+				#else
 
 				if ((popMemArray[i] = (unsigned char*)malloc(branksize)) == NULL) {
 					printf("malloc eror for lot %i\n",i);
@@ -149,11 +172,15 @@ void popopenMemArray(char servername[], char subname[], char rankfile[]) {
 
 				fread(popMemArray[i],branksize,1,FH);
 
+				#endif
+
 				//debug: viser alle rankene vi laster
 				//for(y=0;y<branksize;y++) {
 				//	printf("DocID %i, rank %i\n",y,popMemArray[i][y]);
 				//}
 
+				totsize += branksize;
+		
 				fclose(FH);
 
 				++LocalLots;
@@ -164,8 +191,8 @@ void popopenMemArray(char servername[], char subname[], char rankfile[]) {
 			popMemArray[i] = 0;
 		}
 	}
-	printf("have %i local lots\n",LocalLots);
-
+	printf("popopenMemArray: have %i local lots\n",LocalLots);
+	printf("popopenMemArray: loaded a total of %"PRId64" bytes\n",totsize);
 
 }
 

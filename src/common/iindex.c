@@ -11,7 +11,7 @@
 #include "lot.h"
 #include "iindex.h"
 
-//#define MMAP_IINDEX
+#define MMAP_IINDEX
 
 #ifdef MMAP_IINDEX
        #include <sys/types.h>
@@ -197,9 +197,11 @@ int ReadIIndexRecordFromMemeory (int *Adress, int *SizeForTerm, unsigned long Qu
 	struct DictionaryFormat dummy;
 	iindexfile = WordIDcrc32 % AntallBarrals;
 	
+	#ifdef DEBUG
 	printf("ReadIIndexRecordFromMemeory: WordIDcrc32 %lu\n",WordIDcrc32);
 
 	printf("FromMemeory iindexfile %i elements %i\n",iindexfile,AthorDictionary[iindexfile].elements);
+	#endif
 
 	//for(i=0;i<AthorDictionary[iindexfile].elements;i++) {
         //        printf("%lu\n",AthorDictionary[iindexfile].Dictionary[i].WordID);
@@ -208,8 +210,9 @@ int ReadIIndexRecordFromMemeory (int *Adress, int *SizeForTerm, unsigned long Qu
 	dummy.WordID = WordIDcrc32;
 	if (strcmp(IndexType,"Athor") == 0) {
 		if ((DictionaryPost = bsearch(&dummy,AthorDictionary[iindexfile].Dictionary,AthorDictionary[iindexfile].elements,sizeof(struct DictionaryFormat),compare_DictionaryMemoryElements)) == NULL) {
+			#ifdef DEBUG
 			printf("fant ikke \n");
-
+			#endif
 			return 0;
 		}
 		else {
@@ -224,8 +227,9 @@ int ReadIIndexRecordFromMemeory (int *Adress, int *SizeForTerm, unsigned long Qu
 	}
 	else if (strcmp(IndexType,"Main") == 0) {
 		if ((DictionaryPost = bsearch(&dummy,MainDictionary[iindexfile].Dictionary,MainDictionary[iindexfile].elements,sizeof(struct DictionaryFormat),compare_DictionaryMemoryElements)) == NULL) {
+			#ifdef DEBUG
 			printf("fant ikke \n");
-
+			#endif
 			return 0;
 		}
 		else {
@@ -240,7 +244,9 @@ int ReadIIndexRecordFromMemeory (int *Adress, int *SizeForTerm, unsigned long Qu
 
 	}
 	else {
+		#ifdef DEBUG
 		printf("ReadIIndexRecordFromMemeory: Wrong IndexType \"%s\"\n",IndexType);
+		#endif
 		return 0;
 	}
 }
@@ -289,8 +295,9 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 	iindexfile = WordIDcrc32 % AntallBarrals;
 	GetFilePathForIDictionary(FilePath,IndexPath,iindexfile,IndexType,IndexSprok,subname);
 
+	#ifdef DEBUG
 	printf("ReadIIndexRecord: From disk iindexfile %i WordIDcrc32 %lu\n",iindexfile,WordIDcrc32);
-
+	#endif
 	//sprintf(IndexPath,"%s/iindex/%s/dictionary/%s/%i.txt",FilePath,IndexType,IndexSprok, iindexfile);
 
 	//sprintf(IndexPath,"data/iindex/%s/dictionary/%s/%i.txt",IndexType,IndexSprok, WordIDcrc32 % AntallBarrals);
@@ -300,13 +307,11 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 	#endif
 
 	if ((dictionaryha = fopen(IndexPath,"rb")) == NULL) {
-		printf("Cant read Dictionary for %s at %s:%d\n",IndexPath,__FILE__,__LINE__);
+		#ifdef DEBUG
+		//viser ikke denne da vi ofte har subname som ikke er på den serveren med i queryet
+		printf("Can't read Dictionary for index %i, path \"%s\" at %s:%d\n",iindexfile,IndexPath,__FILE__,__LINE__);
 		perror(IndexPath);
-		//exit(1);
-
-		//fik ikke til åopne filen. Setter slik at vi sier vi ikke fant noe
-		//*Adress = -1;
-                //*SizeForTerm = -1;
+		#endif
 		return 0;
 	}
 	else {
@@ -314,14 +319,17 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 
 		fstat(fileno(dictionaryha),&inode);
 
+		#ifdef DEBUG
 		printf("Stat: %u / %i\n",(unsigned int)inode.st_size,sizeof(struct DictionaryFormat));
-
+		#endif
 
 		min = 0;
 		max = inode.st_size / sizeof(struct DictionaryFormat);
 
+		#ifdef DEBUG
 		printf("min %i, max %i\n",min,max);
-	
+		#endif
+
 		//debug: Viser alle forekomstene i indeksen
 		/*
 		printf("\n####################################################\n");
@@ -349,7 +357,9 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 
 			posisjon = halvert * sizeof(struct DictionaryFormat);
 
+			#ifdef DEBUG
 			printf("\tmax: %i, min: %i, halvert: %i, (max - min): %i. posisjon %i\n",max,min,halvert,(max - min),posisjon);
+			#endif
 			//exit(1);
 			if (fseek(dictionaryha,posisjon,0) != 0) {
 				printf("can't seek to post\n");
@@ -360,8 +370,9 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 				printf("can't read post\n");
 				break;
 			}
-
+			#ifdef DEBUG
 			printf("WordID: %lu = %lu ?\n",DictionaryPost.WordID,Query_WordID);
+			#endif
 			if (Query_WordID == DictionaryPost.WordID) {
 				fant = 1;
 				//printf("Fant: WordID: %lu = %lu ?\n",DictionaryPost.WordID,Query_WordID);
@@ -389,7 +400,7 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 
 			++count;
 		}
-		printf("line 370\n");
+
 		//leser siste
 		//toDo: hvorfor kommer ikke altid siste post med når vi halverer. Skyldes det bruk av floor() lengere opp?
 		//leser manuelt får nå
@@ -415,7 +426,7 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
                 printf("Time debug: ReadIIndexRecord total time %f\n",getTimeDifference(&start_time,&end_time));
                 #endif
 		if (DictionaryPost.SizeForTerm == 0) {
-			printf("\n###################################\nBug: DictionaryPost SizeForTerm is 0!\n###################################\n\n");
+			printf("###################################\nBug: DictionaryPost SizeForTerm is 0!\n###################################\n");
 			*Adress = -1;
 			*SizeForTerm = -1;
 			return 0;
@@ -424,7 +435,9 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 		else if (fant) {
 			*Adress = DictionaryPost.Adress;
 			*SizeForTerm = DictionaryPost.SizeForTerm;
+			#ifdef DEBUG
 			printf("disk: Adress %lu, SizeForTerm %lu\n",DictionaryPost.Adress,DictionaryPost.SizeForTerm);
+			#endif
 			return 1;
 		}
 		else {
@@ -523,7 +536,10 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	}
 	#endif
 
+	#ifdef DEBUG
 	printf("languageFilterNr: %i\n",languageFilterNr);
+	#endif
+
 	//temp:
 	//isv3 = 0;
 	
@@ -551,10 +567,11 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		GetFilePathForIindex(FilePath,IndexPath,iindexfile,IndexType,IndexSprok,(*subname).subname);
 		//sprintf(IndexPath,"%s/iindex/%s/index/%s/%i.txt",FilePath,IndexType,IndexSprok, iindexfile);
 
+		#ifdef DEBUG
 		printf("Åpner index %s\n",IndexPath);
 
-
 		printf("size %i\n",SizeForTerm);
+		#endif
 
 		#ifdef TIME_DEBUG
 			gettimeofday(&start_time, NULL);
@@ -581,7 +598,9 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 				mmap_offset = Adress % getpagesize();
 
+				#ifdef DEBUG
 				printf("Adress %i, page size %i, mmap_offset %i\n",Adress,getpagesize(),mmap_offset);
+				#endif
 
 				//Adress = 0;
 				//mmap_offset = 0;
@@ -604,7 +623,9 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				maxIIindexSize = maxIndexElements * 209;
 
 				if (SizeForTerm > maxIIindexSize) { // DocID 4b +  langnr 1b + TermAntall 4b + (100 hit * 2b)
+					#ifdef DEBUG
 					printf("size it to large. Will only read first %i bytes\n",maxIIindexSize);
+					#endif
 					SizeForTerm = maxIIindexSize;
 				}
 
@@ -768,7 +789,6 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		fclose(fileha);
 
 
-		printf("jj: i=%i,y=%i\n",i,y);
 		*AntallTeff = y;
 			
 		
@@ -780,9 +800,9 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
                 gettimeofday(&end_time_total, NULL);
                 printf("Time debug: GetIndexAsArray total %f\n",getTimeDifference(&start_time_total,&end_time_total));
       	#endif
-
+	#ifdef DEBUG
 	printf("GetIndexAsArray: AntallTeff = %i\n",(*AntallTeff));
-
+	#endif
 }
 
 

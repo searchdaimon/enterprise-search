@@ -439,7 +439,7 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
         packedHedder.size       = sizeof(struct packedHedderFormat) + dataSize;
         packedHedder.version    = version;
         packedHedder.command    = command;
-	strcpy(packedHedder.subname,subname);
+	strscpy(packedHedder.subname,subname,sizeof(packedHedder.subname));
 
 	if (data != NULL) {
 		len = sizeof(packedHedder) + dataSize;

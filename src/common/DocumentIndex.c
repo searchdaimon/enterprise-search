@@ -80,7 +80,17 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 
 		//prøver først å åpne for lesing
 
-		if (type == 'r') {
+		if (type == 'c') {
+			//printf("opening file\n");
+			//temp: setter filopning til r+ for å få til å samarbeid melom DIRead og DIwrite
+			//dette gjør at søk ikke funker på web på grun av rettighter :-(
+			if ((DocumentIndexHA = fopen(FileName,"r+b")) == NULL) {
+				printf("cant open file %s\n",FileName);
+				perror(FileName);
+			    return NULL;
+			}
+		}
+		else if (type == 'r') {
 			//printf("opening file\n");
 			//temp: setter filopning til r+ for å få til å samarbeid melom DIRead og DIwrite
 			//dette gjør at søk ikke funker på web på grun av rettighter :-(
@@ -291,10 +301,8 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
         }
 }
 
-/*
-leser en post fra DocumentIndex
-*/
-int DIRead (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[]) {
+
+int DIRead_fmode (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[], char filemode) {
 
 	FILE *file;
 	int forReturn;
@@ -303,7 +311,7 @@ int DIRead (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subnam
 		printf("DIRead: reading for DocID %i, subname \"%s\"\n",DocID,subname);
 	#endif
 
-	if ((file = GetFileHandler(DocID,'r',subname, NULL)) != NULL) {
+	if ((file = GetFileHandler(DocID,filemode,subname, NULL)) != NULL) {
 
 
 		#ifdef BLACK_BOKS
@@ -344,7 +352,19 @@ int DIRead (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subnam
 
 }
 
-//stanger ned filer
+/*
+leser en post fra DocumentIndex
+
+runarb: 24.10.2007:
+Tradisjonelt så har DIRead åpnet filen r+ for å kunne samarbeide med DIWrite.
+Jeg har nå dåpt den åpningen om til c, og laget en DIRead_fmode der man kan spesifisere opningsmode selv, slik at man kan
+få en ekte read
+*/
+int DIRead (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[]) {
+	return DIRead_fmode(DocumentIndexPost,DocID,subname,'c');
+}
+
+//stenger ned filer
 void DIClose(FILE *DocumentIndexHA) {
 //	fclose(DocumentIndexHA);
 }
