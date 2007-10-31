@@ -976,10 +976,13 @@ void html_parser_init()
     tag_attr_automaton = build_automaton( tag_attr_size, (unsigned char**)tag_attr );
 //    color_names_automaton = build_automaton( color_names_size, (unsigned char**)color_names );
 //    text_containers_automaton = build_automaton( text_containers_size, (unsigned char**)text_containers );
+
+    css_parser_init();
 }
 
 void html_parser_exit()
 {
+    css_parser_exit();
 //    free_automaton(text_containers_automaton);
 //    free_automaton(color_names_automaton);
     free_automaton(tag_attr_automaton);

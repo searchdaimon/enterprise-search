@@ -58,7 +58,6 @@ int main( int argc, char *argv[] )
     int		paramnr;
 
     html_parser_init();
-    css_parser_init();
 
     for (paramnr=1; paramnr<argc; paramnr++)
 	{
@@ -104,7 +103,6 @@ int main( int argc, char *argv[] )
 	    free(body);
 	}
 
-    css_parser_exit();
     html_parser_exit();
 
     exit(0);
