@@ -1107,6 +1107,6 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
 yyerror( struct bhpm_intern_data *data, void *yyscan_t, char *s )
 {
 	#ifndef NOWARNINGS
-    		printf("parse_error: %s\n", s);
+    		printf("parse_error(html): %s\n", s);
 	#endif
 }
