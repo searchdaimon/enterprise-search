@@ -11,7 +11,7 @@ int find_domain_no_subname (const char url[],char domain[], int sizeofdomain);
 int find_domain_no_www (char url[],char domain[], int sizeofdomain);
 int find_TLD(char domain[], char TLD[],int TLDsize);
 //int find_domain (char url[],char domain[]);
-int find_domain (char url[],char domain[],int domainsize);
+int find_domain (const char url[],char domain[],const int domainsize);
 int url_normalization (char url[], int urlsize);
 int isWikiUrl(char url[]);
 int find_domain_path_len (char url[]);

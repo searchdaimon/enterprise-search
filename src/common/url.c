@@ -5,6 +5,7 @@
 #include "define.h"
 #include "debug.h"
 #include "bstr.h"
+#include "utf8-strings.h"
 
 //domener som har Country code second-level domain ccSLD domenesystem, slik som co.uk i name.co.uk
 char *SecondLevelDomain[] = {"uk","au","nz",NULL};
@@ -79,29 +80,94 @@ int isWikiUrl(char url[]) {
 
 }
 
-
+//div intresange teknikker er listet på http://en.wikipedia.org/wiki/URL_normalization
+//
+// det finnes et program src/urltest/ som unit tester dette
 int url_normalization (char url[], int urlsize) {
 
-	char domain[200];
+	char domain[urlsize];
 	char *cpnt;
-
+	int subdomains;
 
 	//prøver å finne domener uten trailing slash
         //kutter av http:// (de 7 første tegnene)
-        strscpy(domain,url + 7,sizeof(domain));
+        //strscpy(domain,url + 7,sizeof(domain));
 
+
+
+	/*
+	Removing the default port. 
+	The default port (port 80 for the .http. scheme) may be removed from (or added to) a URL. 
+
+	Example: 
+	http://www.example.com:80/bar.html . http://www.example.com/bar.html 
+	*/
+	if ((cpnt = strstr((url +7),":80/")) != NULL) {
+
+		strcasesandr (url, urlsize, ":80/", "/");
+	}
+
+	
+
+
+	/*
+	Adding trailing / Directories are indicated with a trailing slash and should be included in links. 
+
+	Example: 
+	http://www.example.com . http://www.example.com/ 
+	*/
         //søker oss til / , hvis vi ikke har har vi nokk en domene skrevet som www.boitho.com.
 	//vi ønsker da og legge på / for og få www.boitho.com/
 	// kan også være www.boitho.com?query=chat. Så hvis det er ? i den kan vi ikke bare apende en /
-        if ( ((cpnt = strchr(domain,'/')) == NULL) && ((cpnt = strchr(domain,'?')) == NULL)) {
-                //printf("bad url\n");
-                //return 0;
+        if ( ((cpnt = strchr((url +7),'/')) == NULL) && ((cpnt = strchr((url +7),'?')) == NULL)) {
 		//printf("no trailing slash. Url \"%s\"\n",url);
 		strlcat(url,"/",urlsize);
 		//printf("no trailing slash. revriten to Url \"%s\"\n",url);
 		
         }
 
+	/*
+	//har ikke /, men har ?, så det må være http://www.boitho.com?a=b
+	13% av redirect urlene har http://www.boitho.com?a=b type url, alstå uten / etter .com 
+	*/
+
+        if ( ((cpnt = strchr((url +7),'/')) == NULL) && ((cpnt = strchr((url +7),'?')) != NULL)) {
+
+		strcasesandr (url, urlsize, "?", "/?");
+		
+        }
+
+	//nå når vi har et fungerende domene kan vi prøve å finne domene
+	if (!find_domain(url,domain,urlsize) ) {
+		debug("gyldig_url: can't find domain. Url \"%s\"\n",url);
+		return 0;
+	}
+
+	//teller subdomener
+	subdomains = strchrcount(domain,'.');
+
+	/*
+	legger til www. foran en url. Dette da vi kan være rimelig sikker på at http://boitho.com og http://www.boitho.com
+	er samme side
+	*/
+	if (subdomains == 1) {
+		strcasesandr (url, urlsize, "http://", "http://www.");		
+	}
+
+	/*
+	lovercaser domenet og protokoll
+	
+	Converting the scheme and host to lower case. The scheme and host components of the URL are 
+	case-insensitive. Most normalizers will convert them to lowercase. 
+	
+	Example: 
+	HTTP://www.Example.com/ . http://www.example.com/
+	*/
+	if ((cpnt = strchr((url +7),'/')) != NULL) {
+
+		convert_to_lowercase_n((unsigned char *)url,(cpnt-url));
+		
+	}
 
 	return 1;
 }
@@ -641,7 +707,7 @@ int find_TLD(char domain[], char TLD[],int TLDsize) {
 
 
 
-int find_domain (char url[],char domain[],int domainsize) {
+int find_domain (const char url[],char domain[],const int domainsize) {
 
         char *cpnt;
 
