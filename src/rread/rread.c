@@ -19,9 +19,13 @@ main (int argc, char *argv[]) {
 	unsigned long int radress;
 
 	char htmlbuffer[524288];
+	char htmlbuffer_uncom[524288];
 	char imagebuffer[524288];
 	char *acl_allow;
 	char *acl_deny;
+
+	int StatisticsUncompressError = 0;;
+	int StatisticsUncompressOk = 0;
 
 	char uncompresshtml[50000];
 	int uncompresshtmlLength;
@@ -32,8 +36,31 @@ main (int argc, char *argv[]) {
 		exit(1);
 	}
 
-	LotNr = atoi(argv[1]);
-	char *subname = argv[2];
+	int optPrintHtml = 0;
+	int optStatistics = 0;
+        extern char *optarg;
+        extern int optind, opterr, optopt;
+        char c;
+        while ((c=getopt(argc,argv,"hs"))!=-1) {
+                switch (c) {
+                        case 'h':
+                                optPrintHtml = 1;
+                                printf("will print html\n");
+                                break;
+                        case 's':
+                                optStatistics  = 1;
+                                printf("will statistics\n");
+                                break;
+                        default:
+                                exit(1);
+                }
+
+        }
+        --optind;
+
+
+	LotNr = atoi(argv[1 + optind]);
+	char *subname = argv[2 + optind];
 
 	printf("lotnr %i\n",LotNr);
 
@@ -52,9 +79,24 @@ main (int argc, char *argv[]) {
                         continue;
                 }
 
-		printf("################################\n%s##############################\n",uncompresshtml);
+		if (optPrintHtml || optStatistics) {
+			if (runpack(htmlbuffer_uncom,sizeof(htmlbuffer_uncom),htmlbuffer,ReposetoryHeader.htmlSize)) {
+				if (optPrintHtml) {
+					printf("################################\n%s##############################\n",htmlbuffer_uncom);
+				}
+				++StatisticsUncompressOk;
+			}
+			else {
+				if (optPrintHtml) {
+					printf("rread: can't uncompress\n");
+				}
+				++StatisticsUncompressError;
+			}
+		}
 
 	}
 	
-	
+	if (optStatistics) {
+		printf("StatisticsUncompressOk %i\nStatisticsUncompressError %i\n",StatisticsUncompressOk,StatisticsUncompressError);
+	}
 }
