@@ -46,8 +46,10 @@ doStatus(docid DocID)
 	off_t offset;
 
 	offset = read_index(DocID);
-	if (offset == 0)
+	if (offset == 0) {
+		warnx("Did not find any offset for %u", DocID);
 		return;
+	}
 
 	fseeko64(f_linkdb, offset, SEEK_SET);
 	printf("Links from %u:\n", DocID);
