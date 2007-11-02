@@ -249,7 +249,6 @@ int bbdocument_init() {
 		fclose(filep);
 	}
 	closedir(dirp);
-
 }
 
 
@@ -372,6 +371,9 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		}	
 		printf("writing to unknownfiltype.log. done\n");
 		//#endif
+		unlink(filconvertetfile_real);
+		unlink(filconvertetfile_out_txt);
+		unlink(filconvertetfile_out_html);
 
 		return 0;
 	}
@@ -414,6 +416,10 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	//	printf("aa %s\n",documentfinishedbuf);
 		free(cpbuf);
 //exit(1);
+		unlink(filconvertetfile_real);
+		unlink(filconvertetfile_out_txt);
+		unlink(filconvertetfile_out_html);
+
                 return 1;
 	}
 
@@ -423,9 +429,9 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
 	pid_t pid = getpid();
 
-	sprintf(filconvertetfile_real,"%s-%u.%s",filconvertetfile,(unsigned int)pid,filetype);
-	sprintf(filconvertetfile_out_txt,"%s-%u.txt",filconvertetfile,(unsigned int)pid,filetype);
-	sprintf(filconvertetfile_out_html,"%s-%u.html",filconvertetfile,(unsigned int)pid,filetype);
+	sprintf(filconvertetfile_real,"%s-%u.%s",filconvertetfile, (unsigned int)pid,filetype);
+	sprintf(filconvertetfile_out_txt,"%s-%u.txt",filconvertetfile, (unsigned int)pid);
+	sprintf(filconvertetfile_out_html,"%s-%u.html",filconvertetfile, (unsigned int)pid);
 
 	#ifdef DEBUG
 	printf("bbdocument_convert: filconvertetfile_real \"%s\"\n",filconvertetfile_real);
@@ -531,6 +537,10 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 			perror(filconvertetfile_out_txt);
 			(*documentfinishedbufsize) = 0;
 			free(fileFilterOrginal);
+			unlink(filconvertetfile_real);
+			unlink(filconvertetfile_out_txt);
+			unlink(filconvertetfile_out_html);
+
 			return 0;
 		}		
        		fstat(fileno(fh),&inode);
@@ -571,6 +581,10 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 			printf("cant open out file \"%s\"\n",filconvertetfile_out_html);
 			perror(filconvertetfile_out_html);
 			(*documentfinishedbufsize) = 0;
+			unlink(filconvertetfile_real);
+			unlink(filconvertetfile_out_txt);
+			unlink(filconvertetfile_out_html);
+
 			return 0;
 		}		
        		fstat(fileno(fh),&inode);
@@ -595,6 +609,10 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		p = strdup(documentfinishedbuftmp);
 		if (p == NULL) {
 			free(fileFilterOrginal);
+			unlink(filconvertetfile_real);
+			unlink(filconvertetfile_out_txt);
+			unlink(filconvertetfile_out_html);
+
 			return 0;
 		}
 		sprintf(*documentfinishedbuf, html_tempelate, titlefromadd, "");
@@ -705,12 +723,19 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		printf("unknown dokument outputformat \"%s\"\n",fileFilter->outputformat);
 		(*documentfinishedbufsize) = 0;
 		free(fileFilterOrginal);
+		unlink(filconvertetfile_out_txt);
+		unlink(filconvertetfile_out_html);
+		unlink(filconvertetfile_real);
 		return 0;
 	}
 
+	unlink(filconvertetfile_real);
+	unlink(filconvertetfile_out_txt);
+	unlink(filconvertetfile_out_html);
+
 	#ifndef DEBUG
 		//runarb: 13okr2007: hvorfor ver denne komentert ut? Det hoper seg opp med filer
-		unlink(filconvertetfile_real);
+		//unlink(filconvertetfile_real);
 	#endif
 
 	//printf("documentfinishedbuf is: \n...\n%s\n...\n", documentfinishedbuf);
