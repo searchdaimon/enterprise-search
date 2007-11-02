@@ -122,7 +122,8 @@ int bbdocument_makethumb( char documenttype[],char document[],size_t dokument_si
 	#endif
 	#endif
 	
-	printf("imageSize %u at %s:%i\n",(unsigned int)(*imageSize),__FILE__,__LINE__);
+	//er bare her hvis vi ikke klarte og lage bilde, og da har vi selsakt ikke noe størelse
+	//printf("imageSize %"PRId64" at %s:%i\n",(*imageSize),__FILE__,__LINE__);
 	return 0;
 
 }
@@ -449,6 +450,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	strsandr((*fileFilter).command,"#outtxtfile",filconvertetfile_out_txt);
 	strsandr((*fileFilter).command,"#outhtmlfile",filconvertetfile_out_html);
 
+
 	//hvis vi skal lage en ny fil må vi slette den gamle
 	//sletter den etterpå i steden. Men før vi kaller return
 	//if (strcmp((*fileFilter).outputformat,"textfile") == 0) {
@@ -466,30 +468,21 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	//sender med størelsen på buferen nå. Vil få størelsen på hva vi leste tilbake
 	exeocbuflen = (*documentfinishedbufsize);
 
+
 	/*
-	if (!exeoc(splitdata,documentfinishedbuf,&exeocbuflen)) {
-		printf("can't run filter\n");
-		(*documentfinishedbufsize) = 0;
-		return 0;
-	}
-	*/
-
-	//bin/sh -c "ls -1"	
-
-	//char *shargs[] = {"/bin/sh","-c",(*fileFilter).command ,'\0'};	
-	//printf("runnig: /bin/sh -c %s\n",(*fileFilter).command);
-	//if (!exeoc_timeout(shargs,documentfinishedbuf,&exeocbuflen,&ret,60)) {
-
-	//char *shargs[] = {"/bin/sh","-c","-v",(*fileFilter).command ,'\0'};	
-	//printf("runnig: /bin/sh -c %s\n",(*fileFilter).command);
-
 	char escapetcommand[512];
 	sprintf(escapetcommand,"%s",(*fileFilter).command);
 	char *shargs[] = {"/bin/sh","-c",escapetcommand ,'\0'};	
 	printf("runnig: /bin/sh -c %s\n",escapetcommand);
-	if (!exeoc(shargs,documentfinishedbuftmp,&exeocbuflen,&ret)) {
+	*/
+        char *shargs[] = {"/bin/sh","-c", NULL ,'\0'};
+        shargs[2] = (*fileFilter).command;
 
-		printf("dident get any data from exeoc. But can be a filter that creates files, sow wil continue\n");
+
+
+	if (!exeoc_timeout(shargs,documentfinishedbuftmp,&exeocbuflen,&ret,120)) {
+
+		printf("dident get any data from exeoc. But can be a filter that creates files, sow we wil continue\n");
 		//kan ikke sette den til 0 da vi bruker den får å vite hvos stor bufferen er lengere nede
 		//(*documentfinishedbufsize) = 0;
 		documentfinishedbuftmp[0] = '\0';
@@ -716,7 +709,8 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	}
 
 	#ifndef DEBUG
-	//unlink(filconvertetfile_real);
+		//runarb: 13okr2007: hvorfor ver denne komentert ut? Det hoper seg opp med filer
+		unlink(filconvertetfile_real);
 	#endif
 
 	//printf("documentfinishedbuf is: \n...\n%s\n...\n", documentfinishedbuf);
@@ -836,7 +830,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	printf("ACL was allow \"%s\", %i bytes, denied \"%s\", %i bytes\nsubname %s\n",acl_allow,ReposetoryHeader.acl_allowSize,acl_allow,ReposetoryHeader.acl_allowSize,subname);
 	#endif
 
-	rApendPostcompress(&ReposetoryHeader,htmlbuffer,imagebuffer,subname,acl_allow,acl_denied, NULL);
+	rApendPostcompress(&ReposetoryHeader,htmlbuffer,imagebuffer,subname,acl_allow,acl_denied,NULL);
 
 	#ifdef DEBUG	
 	printf("legger til DocID \"%u\", time \"%u\"\n",ReposetoryHeader.DocID,lastmodified);
@@ -898,8 +892,12 @@ int bbdocument_deletecoll(char collection[]) {
 		GetFilePathForIindex(FilePath,IndexPath,i,"Main","aa",collection);
 		GetFilePathForIDictionary(FilePath,DictionaryPath,i,"Main","aa",collection);
 		//printf("FilePath: %s\nIndexPath: %s\nDictionaryPath: %s\n",FilePath,IndexPath,DictionaryPath);
-		unlink(IndexPath);		
-		unlink(DictionaryPath);		
+		if (remove(IndexPath) != 0) {
+                        perror("remove IndexPath");
+                }
+		if (remove(DictionaryPath) != 0) {
+                        perror("remove DictionaryPath");
+                }
 		
 	}
 

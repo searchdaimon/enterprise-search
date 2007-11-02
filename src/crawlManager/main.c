@@ -182,7 +182,7 @@ int crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 
 }
 
-char *adduserprefix(struct collectionFormat *collections,char username[]) {
+char *adduserprefix(struct collectionFormat *collections,const char username[]) {
 
 	char *newusername;
 
@@ -339,11 +339,13 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 	gettimeofday(&end_time, NULL);
 	pathAccessTimes.getCrawlLibInfo = getTimeDifference(&start_time,&end_time);
 
-	printf("wil pathAccess \"%s\"\n",uri);
+	printf("wil pathAccess \"%s\", for user \"%s\"\n",uri,username_in);
 
 	gettimeofday(&start_time, NULL);
 
 	username = adduserprefix(collections,username_in);
+
+	printf("username after adduserprefix: \"%s\"\n",username);
 
 	origuri = strdup(uri);
 #ifdef WITH_PATHACCESS_CACHE
@@ -365,7 +367,7 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 	}
 #endif
 	else if (!(*(*crawlLibInfo).crawlpatAcces)(uri,username,password,documentError)) {
-        	printf("Can't crawlLibInfo. Can by denyed or somthing else\n");
+        	printf("Can't crawlLibInfo. Can be denyed or somthing else\n");
 		//overfører error
                 berror((*crawlLibInfo).strcrawlError());
 

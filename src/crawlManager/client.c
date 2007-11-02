@@ -3,6 +3,7 @@
 
 #include "../common/define.h"
 #include "../common/daemon.h"
+#include "../common/bstr.h"
 
 
 int cmc_conect(int *socketha, char statusbuff[],int statusbufflen, int port) {
@@ -174,7 +175,6 @@ cmc_rewrite_url(int socketha, char *collection_in, char *uri_in, size_t inlen, e
 {
 	char uri[512];
 	struct rewriteFormat rewrite;
-	struct timeval start_time, end_time;
 
 	//memset(&rewrite, '\0', sizeof(rewrite));
 
@@ -242,6 +242,6 @@ int cmc_crawlcanconect (int socketha, char vantcollection[], char statusbuff[],i
 	return 1;
 
 }
-int cmc_close(int socketha) {
+void cmc_close(int socketha) {
 	close(socketha);
 }
