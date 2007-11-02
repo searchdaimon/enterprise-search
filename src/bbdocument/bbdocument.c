@@ -310,6 +310,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	int i;
 	int ret;
 	char *documentfinishedbuftmp;
+	char fileconverttemplate[1024];
 
 	printf("bbdocument_convert: dokument_size %i, title \"%s\"\n",dokument_size,titlefromadd);
 
@@ -371,9 +372,6 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		}	
 		printf("writing to unknownfiltype.log. done\n");
 		//#endif
-		unlink(filconvertetfile_real);
-		unlink(filconvertetfile_out_txt);
-		unlink(filconvertetfile_out_html);
 
 		return 0;
 	}
@@ -416,9 +414,6 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	//	printf("aa %s\n",documentfinishedbuf);
 		free(cpbuf);
 //exit(1);
-		unlink(filconvertetfile_real);
-		unlink(filconvertetfile_out_txt);
-		unlink(filconvertetfile_out_html);
 
                 return 1;
 	}
@@ -429,9 +424,10 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
 	pid_t pid = getpid();
 
-	sprintf(filconvertetfile_real,"%s-%u.%s",filconvertetfile, (unsigned int)pid,filetype);
-	sprintf(filconvertetfile_out_txt,"%s-%u.txt",filconvertetfile, (unsigned int)pid);
-	sprintf(filconvertetfile_out_html,"%s-%u.html",filconvertetfile, (unsigned int)pid);
+	sprintf(fileconverttemplate, "%s-%d", filconvertetfile, rand());
+	sprintf(filconvertetfile_real,"%s-%u.%s",fileconverttemplate, (unsigned int)pid,filetype);
+	sprintf(filconvertetfile_out_txt,"%s-%u.txt",fileconverttemplate, (unsigned int)pid);
+	sprintf(filconvertetfile_out_html,"%s-%u.html",fileconverttemplate, (unsigned int)pid);
 
 	#ifdef DEBUG
 	printf("bbdocument_convert: filconvertetfile_real \"%s\"\n",filconvertetfile_real);
