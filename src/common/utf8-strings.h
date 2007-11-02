@@ -12,6 +12,27 @@
 
 
 // Konverterer en tekststreng til små bokstaver:
+static inline void convert_to_lowercase_n( unsigned char *str, int n )
+{
+    if (str==NULL) return;
+
+	#warning runarb: 31.10.07: tar ikke hensyn til n overalt der vi har ++i. Dette kan fære til at vi går over hvis vi ar en feil i utf-8 stringen
+
+    int         i;
+
+    for (i=0; i<n; i++)
+        {
+            if (str[i]>='A' && str[i]<='Z')
+                str[i]+= 32;    // 'a' - 'A'
+            else if (str[i]==0xc3 && str[i+1]>=0x80 && str[i+1]<=0x9e) //  && str[i+1]!='\0' (implicit)
+                {
+                    i++;
+                    str[i]+= 32;
+                }
+        }
+}
+
+// Konverterer en tekststreng til små bokstaver:
 static inline void convert_to_lowercase( unsigned char *str )
 {
     if (str==NULL) return;
