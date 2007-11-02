@@ -13,7 +13,7 @@ int main (int argc, char *argv[]) {
 
 
         if (argc < 2) {
-                printf("Dette programet kopierer en lot til en annen server\n\n\t./lotcp lotnr subname\n\n");
+                printf("Dette programet leser en fil med direct i/o\n");
                exit(0);
         }
 
