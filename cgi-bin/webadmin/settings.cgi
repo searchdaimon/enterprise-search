@@ -9,7 +9,7 @@ use Template;
 use Data::Dumper;
 use Page::Settings;
 use Page::Settings::Network;
-use Page::Settings::CrawlManager;
+use Page::Settings::CollectionManager;
 use Common::Generic qw(init_root_page);
 
 my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
@@ -19,7 +19,7 @@ my %state = %{$state_ptr};
 my $template_file;
 
 my $pageNetwork = Page::Settings::Network->new($dbh);
-my $pageCM = Page::Settings::CrawlManager->new($dbh);
+my $pageCM = Page::Settings::CollectionManager->new($dbh);
 
 
 # Group: User actions
@@ -109,7 +109,7 @@ elsif (defined($state{'view'})) {
 		($vars, $template_file) = $pageNetwork->show_network_config($vars);
 	}
 
-        elsif ($view eq "crawl_manager") {
+        elsif ($view eq "collection_manager") {
             $template_file = $pageCM->show($vars);
         }
 }

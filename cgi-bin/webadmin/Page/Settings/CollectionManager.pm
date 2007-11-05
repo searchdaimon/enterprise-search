@@ -1,6 +1,6 @@
 ##
 # Page for altering configuration for crawl_watch.
-package Page::Settings::CrawlManager;
+package Page::Settings::CollectionManager;
 use strict;
 use warnings;
 use Carp;
@@ -10,7 +10,7 @@ use Sql::Config;
 
 our @ISA = qw(Page::Abstract);
 
-use constant DEFAULT_TPL => "settings_crawlmanager.html";
+use constant DEFAULT_TPL => "settings_collectionmanager.html";
 use constant CM_CONFIGKEYS => qw(
     gc_default_rate gc_last_run
     recrawl_schedule_start recrawl_schedule_end
