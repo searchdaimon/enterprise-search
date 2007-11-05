@@ -176,16 +176,12 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 	off_t imagep;
 
 	titleaa = body = metakeyw = metadesc = NULL;
-        //alloc on heap, not stack
-	//temp, må kalle fre her. Bør ha en fast, ikke kalle hele tiden
 
 	char *strpointer;
    
 	int termpos;
-	//char queryelement[MaxQueryLen];
 	int returnStatus = 0;	
-	//for (i = 0; ((i < 10) && (i < antall)); i++) {
-	//while (((*SiderHeder).showabal < PagesResults.MaxsHits) && (i < antall)) {
+
 
 
 		(*Sider).cacheLink[0] = '\0';
@@ -380,7 +376,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 					}
 					else {
 
-						debug("dont hav Summary on disk. Will hav to read html\n");	
+						debug("don't hav Summary on disk. Will hav to read html\n");	
 						if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,(*Sider).DocumentIndex.imageSize) != 1) {
 							//kune ikke lese html. Pointer owerflow ?
 							printf("error reding html for %s\n",(*Sider).DocumentIndex.Url);
@@ -554,7 +550,6 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 
 			}
 						
-		//}
 
 
 	//temp:
@@ -742,7 +737,8 @@ void increaseMemFiltered(struct PagesResultsFormat *PagesResults,int *whichFilte
 	//runarb:1 13 mars. Hvorfor var denne komentert ut???
 	//runarb:2 for de vi nå bruker subname som filter
 	//runarb:3 kan det være det er nyttig for web søket og ha rikitig tall her? 
-	--(*nrInSubname);
+	//runarb:4 Dette gjør at tallene for treff i subname minker, gjør heller slik at man viser alle, og så viser filtered meldingen
+	//--(*nrInSubname);
 
 	#ifdef BLACK_BOKS
 		(*iindex).deleted = 1;
@@ -772,7 +768,8 @@ void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTr
 	//runarb:1 13 mars. Hvorfor var denne komentert ut???
 	//runarb:2 for de vi nå bruker subname som filter
 	//runarb:3 kan det være det er nyttig for web søket og ha rikitig tall her? 
-	--(*nrInSubname);
+	//runarb:4 Dette gjør at tallene for treff i subname minker, gjør heller slik at man viser alle, og så viser filtered meldingen
+	//--(*nrInSubname);
 
 	#ifdef BLACK_BOKS
 		(*iindex).deleted = 1;
@@ -804,7 +801,8 @@ void increaseFilteredSilent(struct PagesResultsFormat *PagesResults,int *whichFi
 	//runarb:1 13 mars. Hvorfor var denne komentert ut???
 	//runarb:2 for de vi nå bruker subname som filter
 	//runarb:3 kan det være det er nyttig for web søket og ha rikitig tall her? 
-	--(*nrInSubname);
+	//runarb:4 Dette gjør at tallene for treff i subname minker, gjør heller slik at man viser alle, og så viser filtered meldingen
+	//--(*nrInSubname);
 
 	#ifdef BLACK_BOKS
 		(*iindex).deleted = 1;
@@ -897,17 +895,23 @@ void *generatePagesResults(void *arg)
 		//}
 
 		#ifdef BLACK_BOKS
-		//hvis index filter tidligere har funet ut at dette ikke er et pra treff går vi til neste
+		//hvis index filter tidligere har funet ut at dette ikke er et bra treff går vi til neste
 		if ((*PagesResults).TeffArray->iindex[i].indexFiltered.filename == 1) {
+			#ifdef DEBUG
 			printf("index filtered\n");
+			#endif
 			continue;
 		}
 		if ((*PagesResults).TeffArray->iindex[i].indexFiltered.date == 1) {
+			#ifdef DEBUG
 			printf("index filtered\n");
+			#endif
 			continue;
 		}
 		if ((*PagesResults).TeffArray->iindex[i].indexFiltered.subname == 1) {
+			#ifdef DEBUG
 			printf("index filtered\n");
+			#endif
 			continue;
 		}
 		#endif
@@ -980,7 +984,7 @@ void *generatePagesResults(void *arg)
 		//filtrerer ut dublikater fra med crc32 fra DocumentIndex
 		if (side->DocumentIndex.crc32 != 0) {
                        
-                        if (filterSameCrc32(localshowabal,side,(*PagesResults).Sider)) {
+                        if (((*PagesResults).filterOn) && (filterSameCrc32(localshowabal,side,(*PagesResults).Sider))) {
                         	vboprintf("hav same crc32. crc32 from DocumentIndex\n");
 				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_1,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
                         	continue;
@@ -1071,6 +1075,7 @@ void *generatePagesResults(void *arg)
 
 		/*
 		***************************************************************************/		
+		#ifndef BLACK_BOKS
 
 		//kvalitetsjekker på inn data.
 		if (((*PagesResults).filterOn) && (filterTitle(side->title) )) {
@@ -1084,7 +1089,7 @@ void *generatePagesResults(void *arg)
 			increaseFiltered(PagesResults,NULL,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 			continue;
 		}
-		
+		#endif		
 
 		gettimeofday(&start_time, NULL);
 		#ifdef BLACK_BOKS
@@ -1186,7 +1191,6 @@ void *generatePagesResults(void *arg)
 
 		int treadSyncFilters = 0;
 
-		#ifndef BLACK_BOKS
 
 
 		//fjerner eventuelt like urler
@@ -1198,6 +1202,9 @@ void *generatePagesResults(void *arg)
 			treadSyncFilters = 1;
 			goto end_filter_lock;
 		}
+
+		#ifndef BLACK_BOKS
+
 
 #ifndef BLACK_BOKS
 		if (((*PagesResults).filterOn) && (filterSameDomain(nrofGodPages(PagesResults),side,(*PagesResults).Sider))) {
@@ -1659,6 +1666,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		cmc_close(PagesResults.cmcsocketha);
 	#endif
 
+	gettimeofday(&popResult_end_time, NULL);
+        (*SiderHeder).queryTime.popResult = getTimeDifference(&popResult_start_time,&popResult_end_time);
+
 	/*
 	en siste sortering er nødvendig da sidene kan være i usortert rekkefølgde. Dette skjer da 
 	side nr ut til trådene sekvensielt, men det kan være at de så leser arrayen i annen rekkefølge. 
@@ -1673,27 +1683,32 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	//trekker fra de som ble filtrert ut stille, altså ikke vises til brukeren at de ble filtrert ut. Typisk 404, 500 feil og lignende, som ikke gir noen verdi for brukeren
 	(*SiderHeder).showabal -= PagesResults.filteredsilent;
 
+
 	//lager en filtered verdi
 	(*SiderHeder).filtered = PagesResults.filtered + PagesResults.memfiltered;	
 
+	//runarb: 2 nov 2007: trkker ikke fra disse tallene, da det fører til at totalt treff tallene forandres. Viser heller en filtered beskjed
+	#ifndef BLACK_BOKS
 
-	gettimeofday(&popResult_end_time, NULL);
-        (*SiderHeder).queryTime.popResult = getTimeDifference(&popResult_start_time,&popResult_end_time);
+
+
+	//fjerner filtered fra total oversikten
+	//ToDo: bør dette også gjøres for web?
+	(*SiderHeder).TotaltTreff -= (*SiderHeder).filtered;
+
+	#endif
+
 
 	
 	
 
 
 	#ifdef BLACK_BOKS
-		searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,&(*SiderHeder).queryTime);
-	
+		searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,&(*SiderHeder).queryTime);	
 	#endif
 
 
 
-	//fjerner filtered fra total oversikten
-	//ToDo: bør dette også gjøres for web?
-	(*SiderHeder).TotaltTreff = (*SiderHeder).TotaltTreff - (*SiderHeder).filtered;
 
 	//lager en liste med ordene som ingikk i queryet til hiliting
 	hiliteQuery[0] = '\0';
