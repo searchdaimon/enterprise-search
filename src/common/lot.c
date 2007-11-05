@@ -1,14 +1,16 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <string.h>
+#include <dirent.h>
+#include <err.h>
+
 #include "lot.h"
 #include "define.h"
 #include "bstr.h"
 #include "bfileutil.h"
 #include "boithohome.h"
-
-#include <stdlib.h>
-#include <fcntl.h>
-#include <string.h>
-#include <sys/types.h>
-#include <dirent.h>
 
 //hvis det er mac os :
 //#include <sys/param.h> // for statfs 
@@ -105,6 +107,63 @@ int lotHasSufficientSpace(int lot, int needSpace,char subname[]) {
 
 	return i;
 }
+
+
+
+int
+lotOpenFileNoCache_direct(unsigned int DocID, char *resource, char *type, char lock, char *subname)
+{
+	unsigned int LotNr = rLotForDOCid(DocID);
+	int i;
+	char FilePath[PATH_MAX];
+	char File [PATH_MAX];
+	int fd;
+
+	printf("subname: \"%s\", resource %s\n",subname,resource);
+	GetFilPathForLot(FilePath,LotNr,subname);
+	strcpy(File,FilePath);
+	strncat(File,resource,PATH_MAX); //var 128
+
+#ifdef DEBUG
+	printf("lotOpenFileNoCasheByLotNr: opening file \"%s\" for %s\n",File,type);
+#endif
+
+	//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
+	if ((strcmp(type,"rb") == 0) || (strcmp(type,"r") == 0)) {
+		if ((fd = open64(File, O_RDONLY|O_DIRECT|O_LARGEFILE)) == -1) {
+			warn("open64: %d", fd);
+#ifdef DEBUG
+			perror(File);
+#endif
+			return -1;
+		}
+	} else {
+		errx(1, "We can only open this for reading right now");
+	}
+
+#ifdef DEBUG
+	printf("lotOpenFile: tryint to obtain lock \"%c\"\n",lock);
+#endif
+	//honterer låsning
+	if (lock == 'e') {
+		//skal vi ha flock64() her ?
+		flock(fd, LOCK_EX);
+	}
+	else if (lock == 's') {
+		flock(fd, LOCK_SH);
+	}
+#ifdef DEBUG
+	printf("lotOpenFile: lock obtained\n");
+#endif
+
+#ifdef DEBUG
+	printf("lotOpenFileNoCasheByLotNr: finished\n");
+#endif
+	return fd;
+
+
+}
+
 
 
 FILE *lotOpenFileNoCashe(unsigned int DocID,char resource[],char type[], char lock,char subname[]) {

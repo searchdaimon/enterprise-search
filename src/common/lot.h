@@ -24,6 +24,7 @@ void GetFilePathForIDictionary(char *FilePath, char *FileName,int IndexNr,char T
 void GetFilPathForThumbnaleByDocID(char *FileName,int DocID,char subname[]);
 FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char subname[]);
 FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock,char subname[]);
+int lotOpenFileNoCache_direct(unsigned int DocID, char *resource, char *type, char lock, char *subname);
 FILE *lotOpenFileNoCashe(unsigned int DocID,char resource[],char type[], char lock,char subname[]);
 int GetStartDocIFForLot (int LotNr);
 void makePath (char path[]);
