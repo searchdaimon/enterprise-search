@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
+#include <err.h>
 
 #include "define.h"
 
@@ -10,6 +11,7 @@
 #include "reposetory.h"
 #include "sha1.h"
 #include "bstr.h"
+#include "io.h"
 //#include "define.h"
 //#include <errno.h>
 //extern int errno;
@@ -632,6 +634,8 @@ int rReadSummary(const unsigned int DocID,char **metadesc, char **title, char **
 
 }
 
+//#define DO_DIRECT
+
 //leser en post
 int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radress64bit,unsigned int 
 		rsize,unsigned int DocID,char subname[],struct ReposetoryHeaderFormat *ReposetoryHeader,
@@ -646,12 +650,16 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
         #ifdef TIME_DEBUG_L
                 gettimeofday(&tot_start_time, NULL);
         #endif
-
-	FILE *RFILE;
+	off64_t offset = radress64bit;
 	int error;
 	int forreturn = 0;
 	char WorkBuff[300000];
 	char recordseparator[5];
+#ifndef DO_DIRECT
+	FILE *RFILE;
+#else
+	int fd;
+#endif
 
 	//temp44: Bytef *WorkBuff;
 	int n;
@@ -669,6 +677,7 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 		//ToDo: dumt å realikere minne for hvergang vi trenger buffer plass
 		//temp44: WorkBuff = malloc(rsize * 5);
 
+#ifndef DO_DIRECT
 		#ifdef BLACK_BOKS
 		RFILE = lotOpenFileNoCashe(DocID,"reposetory","rb",'n',subname);
 		#else
@@ -679,16 +688,25 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 		if (RFILE == NULL) {
 			return 0;
 		}
+#else
+		fd = lotOpenFileNoCache_direct(DocID, "reposetory", "r", 's', subname);	
+#endif
 
 		//printf("fseeko64\n");
         	#ifdef TIME_DEBUG_L
         	        gettimeofday(&start_time, NULL);
 	        #endif
 
-		if (fseeko64(RFILE,(off_t)radress64bit,SEEK_SET) == -1) {
-			printf("seek problem\n");
-			perror("fseeko64");
+#ifndef DO_DIRECT
+		if (fseeko64(RFILE, offset, SEEK_SET) == -1) {
+			warn("fseeko64");
 		}		
+
+#else
+		if (lseek64(fd, offset, SEEK_SET) == -1) {
+			warn("fseeko64: %d", fd);
+		}		
+#endif
 
         	#ifdef TIME_DEBUG_L
                 	gettimeofday(&end_time, NULL);
@@ -696,10 +714,25 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 	        #endif
 
 		
+#ifndef DO_DIRECT
 		rReadPost2(RFILE,ReposetoryHeader,WorkBuff,sizeof(WorkBuff),NULL,acl_allowbuffer,acl_deniedbuffer,
-			recordseparator,rsize,imagesize);
+				recordseparator,rsize,imagesize);
 
+#else
+		rReadPost2_fd(fd,ReposetoryHeader,WorkBuff,sizeof(WorkBuff),NULL,acl_allowbuffer,acl_deniedbuffer,
+				recordseparator,rsize,imagesize);
+
+#endif
+
+
+
+
+
+#ifndef DO_DIRECT
 		fclose(RFILE);
+#else
+		close(fd);
+#endif
 
 		#ifdef DDEBUG
 		printf("acl \"%s\"\n",(*aclbuffer));
@@ -735,8 +768,6 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
         #endif
 
 	return forreturn;
-	
-
 }
 
 //copy a memory area, and return the size copyed
@@ -750,6 +781,184 @@ static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
 
         return n;
 }
+
+
+int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
+			char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[],
+			unsigned int rsize,unsigned int imagesize) {
+
+        #ifdef TIME_DEBUG_L
+                struct timeval start_time, end_time;
+		// for totalt tid i funksjonen
+                struct timeval tot_start_time, tot_end_time;
+        #endif
+
+        #ifdef TIME_DEBUG_L
+                gettimeofday(&tot_start_time, NULL);
+        #endif
+
+
+	if (htmlbufferSize < rsize) {
+		printf("htmlSize lager then buffer. %i\n",htmlbufferSize);
+		return 0;
+	}
+		
+	int n;
+
+	#ifdef BLACK_BOKS
+                unsigned int CurrentReposetoryVersionAsUInt;
+                read(fd, &CurrentReposetoryVersionAsUInt,sizeof(unsigned int));
+       	#endif
+
+	//regner ut totalt hva vi skal lese
+	int totalread;
+	char *totalpost;
+	char *totalpost_p;
+
+	totalread = sizeof(struct ReposetoryHeaderFormat) + rsize + imagesize +3;
+	if ((totalpost = malloc(totalread)) == NULL) {
+		perror("malloc");
+		return 0;
+	}
+
+	printf("totalpost: %p\n", totalpost);
+	if (io_read_align(fd, totalpost, totalread) != totalread) {
+		warn("cant read totalread %d", totalread);
+	}
+	printf("read everything... %p\n", totalpost);
+
+	totalpost_p = totalpost;
+
+	//hedder	
+	totalpost_p += memcpyrc(ReposetoryHeader,totalpost_p,sizeof(struct ReposetoryHeaderFormat));
+
+
+	if ((*ReposetoryHeader).htmlSize == 0) {
+		#ifdef DEBUG
+			printf("htmlSize is 0. Skipping to read it\n");
+		#endif
+	}
+	else if (htmlbuffer == NULL) {
+		//hvis vi ikke har en buffer å putte htmlen inn i søker vi bare over
+		//fseek(LotFileOpen,(*ReposetoryHeader).htmlSize,SEEK_CUR);
+	}
+	else {
+		totalpost_p += memcpyrc(htmlbuffer,totalpost_p,(*ReposetoryHeader).htmlSize);
+
+	}
+
+	//må ha #ifdef, slik at vi ikke kaller ftell unødvendig, når vi ikke er i debug modus
+	#ifdef DEBUG
+	//debug("image is at %u\n",(unsigned int)ftell(LotFileOpen));
+	#endif
+
+	if ((*ReposetoryHeader).imageSize == 0) {
+		//printf("imageSize is 0. Skipping to read it\n");
+	}
+	else if (imagebuffer == NULL) {
+		//hvis vi ikke har en buffer å putte bilde inn i søker vi bare over
+		//fseek(LotFileOpen,(*ReposetoryHeader).imageSize,SEEK_CUR);
+	}
+	else {
+		totalpost_p += memcpyrc(imagebuffer,totalpost_p,(*ReposetoryHeader).imageSize);
+
+	}
+
+	//leser acl
+	#ifdef BLACK_BOKS
+
+		//begrenser størelsen på en acl. Slik at en klikk ikke gjør at alt ikke fungerer. Må tenke på om 200 er nokk størelse her
+		if ((*ReposetoryHeader).acl_allowSize > 200) {
+			printf("bad acl_allowSize. size %i\n",(*ReposetoryHeader).acl_allowSize);
+			return 0;
+		}
+		#ifdef IIACL
+		if ((*ReposetoryHeader).acl_deniedSize > 200) {
+			printf("bad acl_deniedSize. size %i\n",(*ReposetoryHeader).acl_deniedSize);
+			return 0;
+		}
+		#endif
+
+			
+		#ifdef DEBUG
+		printf("acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
+		#endif
+		(*acl_allowbuffer) = malloc((*ReposetoryHeader).acl_allowSize +1);
+		if ((*ReposetoryHeader).acl_allowSize != 0) {
+			if (read(fd, (*acl_allowbuffer),(*ReposetoryHeader).acl_allowSize,) < 0) {
+				printf("cant't read acl_allow. acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
+				perror("");
+			}
+		}
+		(*acl_allowbuffer)[(*ReposetoryHeader).acl_allowSize] = '\0';
+
+		#ifdef IIACL
+		#ifdef DEBUG
+		printf("did read acl_allow %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_allowSize,(*acl_allowbuffer));
+		#endif
+
+
+		#ifdef DEBUG
+		printf("acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
+		#endif
+		(*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1);
+		if ((*ReposetoryHeader).acl_deniedSize != 0) {
+			if (read(fd, (*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize) < 0) {
+				printf("cant't read acl_denied. acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
+				perror("");
+			}
+		}
+		(*acl_deniedbuffer)[(*ReposetoryHeader).acl_deniedSize] = '\0';
+
+		#ifdef DEBUG
+		printf("did read acl_denied %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_deniedSize,(*acl_deniedbuffer));
+		#endif
+
+		#endif
+
+		if(read(fd, recordseparator,sizeof(char)*3) != 3) {
+			perror("cant read recordseperator");
+		}
+
+	#else
+		//(*aclbuffer) = NULL;
+
+		//rart, ser ikke ut til at vi faktsik sjekker om disse er riktige		
+		totalpost_p += memcpyrc(recordseparator,totalpost_p,3);
+
+	#endif
+
+
+
+
+	free(totalpost);
+
+
+	#ifdef DEBUG
+		printf("ReposetoryHeader:\n");
+		printf("\tDocID: %u\n",(*ReposetoryHeader).DocID);
+		printf("\turl: \"%s\"\n",(*ReposetoryHeader).url);
+		printf("\thtmlSize: %ho\n",(*ReposetoryHeader).htmlSize);
+		printf("\timageSize: %ho\n",(*ReposetoryHeader).imageSize);
+		printf("\n");
+	#endif
+
+	if ((*ReposetoryHeader).htmlSize != rsize) {
+		printf("htmlsize %ho != rzise %ho\n",(*ReposetoryHeader).htmlSize,rsize);
+		return 0;
+	}
+
+
+        #ifdef TIME_DEBUG_L
+                gettimeofday(&tot_end_time, NULL);
+                printf("Time debug: rReadPost2 total time %f\n\n",getTimeDifference(&tot_start_time,&tot_end_time));
+        #endif
+
+	return 1;
+}
+
+
+
 
 
 int rReadPost2(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
