@@ -293,7 +293,7 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 									r = p;
 									while (T[p]!='\0' && T[p]!=';' && (T[p]==' ' || T[p]=='\t' || T[p]=='\r' || T[p]=='\n' || T[p]=='\f')) p++;
 									T[r] = '\0';
-									j++;
+									if (j<16) j++;
 								    }
 
 								if (T[p]==';') p++;
