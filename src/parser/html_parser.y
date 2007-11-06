@@ -52,6 +52,9 @@ struct tag_info
 // Data for bison-parseren:
 struct bhpm_intern_data
 {
+    char	*url;	// DEBUG
+    char	abort;
+
     char	*page_uri, *page_path, *page_rel_path;
     int		page_url_len;
 
@@ -107,6 +110,8 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 	    {
 		struct bhpm_yy_extra	*he = bhpmget_extra(yyscanner);
 		int			hit = search_automaton(tags_automaton, (char*)$2);
+
+//		printf("tag:%s\n", (char*)$2);
 
 		if (hit>=0)
 		    {
@@ -298,7 +303,7 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 
 								if (T[p]==';') p++;
 
-								if (strlen(ident)>0 && strlen(value[0])>0)
+								if (strlen(ident)>0 && j>0 && strlen(value[0])>0)
 								    {
 									int	z;
 									int	tmp;
@@ -405,6 +410,7 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 					    if (!strcasecmp(data->attr[i], "href") && data->val[i]!=NULL)
 						{
 						    he->alink = 1;
+						    he->nlink = 1;
 //							clean(data->val[i]);
 
 						    char	*temp_link = create_full_link(data->val[i], data->page_url_len, data->page_uri, data->page_path );
@@ -433,8 +439,9 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 			    case tag_meta:
 			        {
 			        int			i;
-			        char		*content = NULL;
+			        char			*content = NULL;
 				enum parsed_unit	pu = pu_none;
+				char			http_content_type = 0;
 
 				for (i=0; i<data->num_attr; i++)
 				    {
@@ -456,6 +463,52 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 						        pu = pu_meta_redirect;
 							break;
 						}
+					else if (!strcasecmp(data->attr[i], "http-equiv") && data->val[i] != NULL)
+					    {
+						if (!strcasecmp(data->val[i], "Content-Type"))
+						    {
+							http_content_type = 1;
+						    }
+					    }
+				    }
+
+				if (http_content_type && content!=NULL)
+				    {
+					char	*ptr = strstr(content, "charset=");
+
+					if (ptr != NULL)
+					    {
+						// Husk: Oppdater j når det legges til charsets.
+						// Husk: Sjekk også startendtag.
+						int	j = 0;
+						char	charset_match = 0;
+						char	*allowed_charsets[] = {"iso-8859", "iso8859", "utf-8", "latin1", "windows-1252", "us-ascii", "macintosh"};
+
+						while (ptr[0] != '=') ptr++;
+						ptr++;
+
+						for (j=0; j<7 && !charset_match; j++)
+						    if (!strncasecmp(ptr, allowed_charsets[j], strlen(allowed_charsets[j])))
+							charset_match = 1;
+
+						if (!charset_match)
+						    {
+							printf("Error: Illegal charset (%s) [%s]\n", content, data->url);
+							data->abort = 1;
+							return 0;
+						    }
+/*
+						while (ptr[j]!='\0' && (
+						    (ptr[j]>='A' && ptr[j]<='Z')
+						    || (ptr[j]>='a' && ptr[j]<='z')
+						    || (ptr[j]>='0' && ptr[j]<='9')
+						    || ptr[j]=='-' || ptr[j]=='_'))
+						    j++;
+
+						ptr[j] = '\0';
+						printf("CHARSET IS '%s' !!!\n", ptr);
+*/
+					    }
 				    }
 
 				if (pu != pu_none && content != NULL)
@@ -584,8 +637,9 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 		else if (hit==tag_meta)
 		    {
 			int			i;
-			char		*content = NULL;
+			char			*content = NULL;
 			enum parsed_unit	pu = pu_none;
+			char			http_content_type = 0;
 
 			for (i=0; i<data->num_attr; i++)
 			    {
@@ -607,6 +661,39 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 						pu = pu_meta_redirect;
 						break;
 					}
+				else if (!strcasecmp(data->attr[i], "http-equiv") && data->val[i] != NULL)
+				    {
+					if (!strcasecmp(data->val[i], "Content-Type"))
+					    {
+						http_content_type = 1;
+					    }
+				    }
+			    }
+
+			if (http_content_type && content!=NULL)
+			    {
+				char	*ptr = strstr(content, "charset=");
+
+				if (ptr != NULL)
+				    {
+					int	j = 0;
+					char	charset_match = 0;
+					char	*allowed_charsets[] = {"iso-8859", "iso8859", "utf-8", "latin1", "windows-1252", "us-ascii", "macintosh"};
+
+					while (ptr[0] != '=') ptr++;
+					ptr++;
+
+					for (j=0; j<7 && !charset_match; j++)
+					    if (!strncasecmp(ptr, allowed_charsets[j], strlen(allowed_charsets[j])))
+						charset_match = 1;
+
+					if (!charset_match)
+					    {
+						printf("Error: Illegal charset (%s) [%s]\n", content, data->url);
+						data->abort = 1;
+						return 0;
+					    }
+				    }
 			    }
 
 			if (pu != pu_none && content != NULL)
@@ -1000,6 +1087,17 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
     struct bhpm_yy_extra	*he = malloc(sizeof(struct bhpm_yy_extra));
     struct bhpm_intern_data	*data = malloc(sizeof(struct bhpm_intern_data));
 
+    data->abort = 0;
+    data->url = strdup(url);	// DEBUG
+
+#ifdef PARSEERR
+    {
+	int i;
+	for (i=0; i<201; i++)
+	    he->last[i] = '\0';
+    }
+#endif
+
     he->slen = 0;
     he->tt = -1;
     he->stringtop = -1;
@@ -1016,6 +1114,7 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
 
     he->title = 0;
     he->alink = 0;
+    he->nlink = 0;
     he->wordcount = 0;
     he->linkcount = 0;
     he->h = 0;
@@ -1085,8 +1184,17 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
     bhpmlex_destroy( scanner );
 
 
-    *output_title = buffer_exit( he->Btitle );
-    *output_body = buffer_exit( he->Bbody );
+    if (data->abort)	// On error
+	{
+	    printf("Warning: Document included an error and was aborted.\n");
+	    *output_title = buffer_abort( he->Btitle );
+	    *output_body = buffer_abort( he->Bbody );
+	}
+    else
+	{
+	    *output_title = buffer_exit( he->Btitle );
+	    *output_body = buffer_exit( he->Bbody );
+	}
 
 //    destroy(data->font_list);
     iterator	it = list_begin(data->tag_list);
@@ -1094,6 +1202,8 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
 	{
 	    delete_tag_info(list_val(it).ptr);
 	}
+
+    free(data->url);	// DEBUG
 
     destroy(data->tag_list);
     free(data->page_uri);
@@ -1110,6 +1220,11 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
 yyerror( struct bhpm_intern_data *data, void *yyscan_t, char *s )
 {
 	#ifndef NOWARNINGS
-    		printf("parse_error(html): %s\n", s);
+    		printf("parse_error(html): %s (%s)\n", s, data->url);
+
+		#ifdef PARSE_ERR
+		struct bhpm_yy_extra	*he = bhpmget_extra(yyscan_t);
+		printf("[%s]\n", he->last);
+		#endif
 	#endif
 }
