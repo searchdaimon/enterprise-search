@@ -215,6 +215,8 @@ static inline int rankAthor_complicacy(const struct hitsFormat *hits, int nrofhi
 	nr = 0;
 	phrasenr = 0;
 
+	printf("rankAthor_complicacy: nrofhit %i\n",nrofhit);
+
 	for (i = 0;i < nrofhit; i++) {
 		if (hits[i].phrase == 1) {
 			phrasenr++;
@@ -712,7 +714,7 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 	gettimeofday(&start_time, NULL);
 	#endif
 
-	vboprintf("a nrofHits %i, b nrofHits b %i\n",a->nrofHits,b->nrofHits);
+	vboprintf("a nrofHits %i, b nrofHits %i. (c nrofHits %i)\n",a->nrofHits,b->nrofHits,c->nrofHits);
 
         while (i<alen && j<blen)
         {
@@ -768,6 +770,12 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 			//lopper gjenom alle hitene og finner de som er rett etter hverandre
 			while ((ah < a->iindex[i].TermAntall)  && (bh < b->iindex[j].TermAntall)) {
 
+				if (c->nrofHits == maxTotalIindexHits) {
+					#ifdef DEBUG
+					printf("have now maxTotalIindexHits hits in hits array\n");
+					#endif
+					break;
+				}
 
 
 				//sjekker om dette er en frase. Altså at "ord2" kommer ret etter "ord1"
@@ -879,7 +887,8 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 	printf("Time debug: andprox_merge %u\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
-	vboprintf("andprox_merge a and b of length %i %i. Into %i\n",alen,blen,(*baselen));
+	vboprintf("andprox_merge: a and b of length %i %i. Into %i\n",alen,blen,(*baselen));
+	vboprintf("andprox_merge: nrofHits: %i\n",c->nrofHits);
 
 }
 
@@ -2516,22 +2525,33 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 			dl.start = dl.end = 0;
 			getdate((*filteron).date, &dl);
 
+			int notFiltered, filtered;
 
+			notFiltered = 0;
+			filtered = 0;
 
 			for (i = 0; i < *TeffArrayElementer; i++) {
 
-				printf("start %u, end %u, element %u\n",dl.start,dl.end,TeffArray->iindex[i].date);
+				//printf("start %u, end %u, element %u\n",dl.start,dl.end,TeffArray->iindex[i].date);
 				
 				if ((TeffArray->iindex[i].date >= dl.start) && (TeffArray->iindex[i].date <= dl.end)) {
+					#ifdef DEBUG
 					printf("time hit %s",ctime(&TeffArray->iindex[i].date));
+					#endif
+					++notFiltered;
 				}
 				else {
+					#ifdef DEBUG
 					printf("not time hit %s",ctime(&TeffArray->iindex[i].date));
+					#endif
 					TeffArray->iindex[i].indexFiltered.date = 1;
 					--(*TotaltTreff);
+					++filtered;
 				}
 
 			}		
+
+			vboprintf("date filter: filtered %i, notFiltered %i\n",filtered,notFiltered);
 			
 			
 
@@ -2675,6 +2695,10 @@ int searchFilterCount(int *TeffArrayElementer,
 
 			//his dette er en slettet index element så teller vi den ikke.
 			//dette så vi ikke skal telle ting som folk ikke her tilgang til
+			//runarb: 1 now 2007: Hvorfor er denne halet ut ?? Da gjør at ting som filtreres ut i filtere i søkekjernen ikke vises riktig
+			//legger den inn
+			//runarb: 2 nov 2007: Skaper problmer med at tallene forandrer seg, gjør slik at de fortsat blir med i tallene, men ikke
+			//vises i resultatene. Gør så at brukeren kan slå av filteret ved å vise filterbeskjeden
 			/*
 			if (TeffArray->iindex[i].deleted) {
 				continue;
@@ -2815,12 +2839,16 @@ int searchFilterCount(int *TeffArrayElementer,
 
 			//his dette er en slettet index element så teller vi den ikke.
 			//dette så vi ikke skal telle ting som folk ikke her tilgang til
+			//runarb: 1 nov 2007: Hvorfor er denne halet ut ?? Da gjør at ting som filtreres ut i filtere i søkekjernen ikke vises riktig
+			//legger den inn
+			//runarb: 2 nov 2007: Skaper problmer med at tallene forandrer seg, gjør slik at de fortsat blir med i tallene, men ikke
+			//vises i resultatene. Gør så at brukeren kan slå av filteret ved å vise filterbeskjeden.
 			/*
 			if (TeffArray->iindex[i].deleted == 1) {
 				continue;
 			}
-			else
-			*/ 
+			else 
+			*/
 			if (TeffArray->iindex[i].indexFiltered.filename == 1) {
 				continue;
 			}
@@ -2929,10 +2957,15 @@ int searchFilterCount(int *TeffArrayElementer,
 		
 		printf("for all dates\n");		
 		for (i = 0; i < *TeffArrayElementer; i++) {
+			//runarb: 2 nov 2007: Skaper problmer med at tallene forandrer seg, gjør slik at de fortsat blir med i tallene, men ikke
+			//vises i resultatene. Gør så at brukeren kan slå av filteret ved å vise filterbeskjeden
+			/*
 			if (TeffArray->iindex[i].deleted == 1) {
 				continue;
 			}
-			else if (TeffArray->iindex[i].indexFiltered.filename == 1) {
+			else 
+			*/
+			if (TeffArray->iindex[i].indexFiltered.filename == 1) {
 				continue;
 			}
 			else if (TeffArray->iindex[i].indexFiltered.subname == 1) {
