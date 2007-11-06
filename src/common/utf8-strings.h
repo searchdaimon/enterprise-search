@@ -16,7 +16,7 @@ static inline void convert_to_lowercase_n( unsigned char *str, int n )
 {
     if (str==NULL) return;
 
-	#warning runarb: 31.10.07: tar ikke hensyn til n overalt der vi har ++i. Dette kan fære til at vi går over hvis vi ar en feil i utf-8 stringen
+	//toDo: runarb: 31.10.07: tar ikke hensyn til n overalt der vi har ++i. Dette kan fære til at vi går over hvis vi ar en feil i utf-8 stringen
 
     int         i;
 
