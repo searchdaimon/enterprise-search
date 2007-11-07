@@ -2462,170 +2462,137 @@ int main(int argc, char *argv[])
 		
 		if (!Sider[i].deletet) {
 
-			dprintf("i %i, r %i, a: %i, bid : %f, u: %s. DocID: %u\n",i,Sider[i].iindex.allrank,Sider[i].DocumentIndex.AdultWeight,Sider[i].bid,Sider[i].url,Sider[i].iindex.DocID);
-
-			//har url i <![CDATA[ ]]> paranteser nå 
-		/*
-			strsandr (Sider[i].url, "&", "&amp;");
-                	//filtrerer ut tegn som ikke er lov i xml
-                	while ((strpointer = strchr(Sider[i].url,'&')) != NULL) {
-                	        (*strpointer) = 'a';
-                	}
-
-			strsandr (Sider[i].uri, "&", "&amp;");
-			//kan ikke gjøre om en ppc url
-			if ((Sider[i].type != siderType_ppctop) && (Sider[i].type != siderType_ppcside)) {
-                		while ((strpointer = strchr(Sider[i].uri,'&')) != NULL) {
-                		        (*strpointer) = 'a';
-                		}
-			}
-		*/
-
-                	//while ((strpointer = strchr(Sider[i].title,'&')) != NULL) {
-                	//        (*strpointer) = 'a';
-                	//}
-                	//while ((strpointer = strchr(Sider[i].description,'&')) != NULL) {
-                	//        (*strpointer) = 'a';
-                	//}
 
 			#ifdef DEBUG
-
+				printf("i %i, r %i, a: %i, bid : %f, u: %s. DocID: %u\n",i,Sider[i].iindex.allrank,Sider[i].DocumentIndex.AdultWeight,Sider[i].bid,Sider[i].url,Sider[i].iindex.DocID);
 			#else
 
 
-		
-			if (Sider[i].type == siderType_ppctop) {
-				printf("<RESULT_PPC>\n");
-				printf("\t<BID>%f</BID>\n",Sider[i].bid);
-				++totlaAds; //ikke helt bra denne. Vi teller antall anonser vist, ikke totalt
-			}
-			else if (Sider[i].type == siderType_ppcside) {
-				printf("<RESULT_PPCSIDE>\n");
-				printf("\t<BID>%f</BID>\n",Sider[i].bid);
-				++totlaAds; //ikke helt bra denne. Vi teller antall anonser vist, ikke totalt 
-			}
-			else {
-                		printf("<RESULT>\n");
-				//printf("\t<BID></BID>\n");
-			}
-
-                	printf("\t<DOCID>%i-%i</DOCID>\n",Sider[i].iindex.DocID,rLotForDOCid(Sider[i].iindex.DocID));
-
-
-                	printf("\t<TITLE><![CDATA[%s]]></TITLE>\n",Sider[i].title);
-
-                	//DocumentIndex
-                	printf("\t<URL><![CDATA[%s]]></URL>\n",Sider[i].url);
-                	printf("\t<URI><![CDATA[%s]]></URI>\n",Sider[i].uri);
-
-			//gjør om språk fra tall til code
-			//void getLangCode(char langcode[],int langnr)
-			//printf("lang nr is %s\n",Sider[i].DocumentIndex.Sprok);
-			getLangCode(documentlangcode,atoi(Sider[i].DocumentIndex.Sprok));
-			//printf("lang is %s\n",Sider[i].DocumentIndex.Sprok);
-
-			//finner vid
-        		vid_u(vidbuf,sizeof(vidbuf),salt,Sider[i].iindex.DocID,etime,QueryData.userip);
-			printf("\t<VID>%s</VID>\n",vidbuf);
-
-
-                	printf("\t<DOCUMENTLANGUAGE>%s</DOCUMENTLANGUAGE>\n", documentlangcode);
-                	//temp: blir rare tegn her              
-			printf("\t<DOCUMENTTYPE>%s</DOCUMENTTYPE>\n", Sider[i].DocumentIndex.Dokumenttype);
-
-                	printf("\t<POSISJON>%i</POSISJON>\n",x);
-                	printf("\t<REPOSITORYSIZE>%u</REPOSITORYSIZE>\n",Sider[i].DocumentIndex.htmlSize);
-
-
-			if (!getRank) {
-				if (Sider[i].thumbnale[0] != '\0') {
-					printf("\t<THUMBNAIL>%s</THUMBNAIL>\n",Sider[i].thumbnale);
-
-					printf("\t<THUMBNAILWIDTH>%i</THUMBNAILWIDTH>\n",Sider[i].thumbnailwidth);
-					printf("\t<THUMBNAILHEIGHT>%i</THUMBNAILHEIGHT>\n",Sider[i].thumbnailheight);
+				if (Sider[i].type == siderType_ppctop) {
+					printf("<RESULT_PPC>\n");
+					printf("\t<BID>%f</BID>\n",Sider[i].bid);
+					++totlaAds; //ikke helt bra denne. Vi teller antall anonser vist, ikke totalt
+				}
+				else if (Sider[i].type == siderType_ppcside) {
+					printf("<RESULT_PPCSIDE>\n");
+					printf("\t<BID>%f</BID>\n",Sider[i].bid);
+					++totlaAds; //ikke helt bra denne. Vi teller antall anonser vist, ikke totalt 
 				}
 				else {
-					printf("\t<THUMBNAIL></THUMBNAIL>\n");
-					printf("\t<THUMBNAILWIDTH></THUMBNAILWIDTH>\n");
-					printf("\t<THUMBNAILHEIGHT></THUMBNAILHEIGHT>\n");
+                			printf("<RESULT>\n");
 				}
 
-				printf("\t<DESCRIPTION><![CDATA[%s]]></DESCRIPTION>\n",Sider[i].description);
-			}
+	                	printf("\t<DOCID>%i-%i</DOCID>\n",Sider[i].iindex.DocID,rLotForDOCid(Sider[i].iindex.DocID));
+
+
+        	        	printf("\t<TITLE><![CDATA[%s]]></TITLE>\n",Sider[i].title);
+
+                		//DocumentIndex
+                		printf("\t<URL><![CDATA[%s]]></URL>\n",Sider[i].url);
+                		printf("\t<URI><![CDATA[%s]]></URI>\n",Sider[i].uri);
+
+				//gjør om språk fra tall til code
+				getLangCode(documentlangcode,atoi(Sider[i].DocumentIndex.Sprok));
+
+				//finner vid
+        			vid_u(vidbuf,sizeof(vidbuf),salt,Sider[i].iindex.DocID,etime,QueryData.userip);
+				printf("\t<VID>%s</VID>\n",vidbuf);
+
+
+                		printf("\t<DOCUMENTLANGUAGE>%s</DOCUMENTLANGUAGE>\n", documentlangcode);
+				printf("\t<DOCUMENTTYPE>%s</DOCUMENTTYPE>\n", Sider[i].DocumentIndex.Dokumenttype);
+                		printf("\t<POSISJON>%i</POSISJON>\n",x);
+                		printf("\t<REPOSITORYSIZE>%u</REPOSITORYSIZE>\n",Sider[i].DocumentIndex.htmlSize);
+
+
+				if (!getRank) {
+					if (Sider[i].thumbnale[0] != '\0') {
+						printf("\t<THUMBNAIL>%s</THUMBNAIL>\n",Sider[i].thumbnale);
+
+						printf("\t<THUMBNAILWIDTH>%i</THUMBNAILWIDTH>\n",Sider[i].thumbnailwidth);
+						printf("\t<THUMBNAILHEIGHT>%i</THUMBNAILHEIGHT>\n",Sider[i].thumbnailheight);
+					}
+					else {
+						printf("\t<THUMBNAIL></THUMBNAIL>\n");
+						printf("\t<THUMBNAILWIDTH></THUMBNAILWIDTH>\n");
+						printf("\t<THUMBNAILHEIGHT></THUMBNAILHEIGHT>\n");
+					}
+
+					printf("\t<DESCRIPTION><![CDATA[%s]]></DESCRIPTION>\n",Sider[i].description);
+				}
 
 
 
-			printf("\t<CRC32>%u</CRC32>\n",Sider[i].DocumentIndex.crc32);
+				printf("\t<CRC32>%u</CRC32>\n",Sider[i].DocumentIndex.crc32);
+	
+				//ser ikke ut til at vi teller den
+				//printf("\t<PAGEGENERATETIME>%f</PAGEGENERATETIME>\n",Sider[i].pageGenerateTime);
 
-			//ser ikke ut til at vi teller den
-			//printf("\t<PAGEGENERATETIME>%f</PAGEGENERATETIME>\n",Sider[i].pageGenerateTime);
+               			printf("\t<TERMRANK>%i</TERMRANK>\n",Sider[i].iindex.TermRank);
 
-               		printf("\t<TERMRANK>%i</TERMRANK>\n",Sider[i].iindex.TermRank);
+               			printf("\t<POPRANK>%i</POPRANK>\n",Sider[i].iindex.PopRank);
+       	        		printf("\t<ALLRANK>%i</ALLRANK>\n",Sider[i].iindex.allrank);
 
-               		printf("\t<POPRANK>%i</POPRANK>\n",Sider[i].iindex.PopRank);
-       	        	printf("\t<ALLRANK>%i</ALLRANK>\n",Sider[i].iindex.allrank);
+                		printf("\t<NROFHITS>%i</NROFHITS>\n",Sider[i].iindex.TermAntall);
+                		//printer ut hits (hvor i dokumenetet orde befinner seg ).
+				/*
+                		printf("\t<HITS>");
+                		for (y=0; (y < Sider[i].iindex.TermAntall) && (y < MaxTermHit); y++) {
+                	        	printf("%hu ",Sider[i].iindex.hits[y]);
+                		}
+                		printf("</HITS>\n");
+				*/
 
-                	printf("\t<NROFHITS>%i</NROFHITS>\n",Sider[i].iindex.TermAntall);
-                	//printer ut hits (hvor i dokumenetet orde befinner seg ).
-			/*
-                	printf("\t<HITS>");
-                	for (y=0; (y < Sider[i].iindex.TermAntall) && (y < MaxTermHit); y++) {
-                	        printf("%hu ",Sider[i].iindex.hits[y]);
-                	}
-                	printf("</HITS>\n");
-			*/
-
-			printf("\t<RESULT_COLLECTION>%s</RESULT_COLLECTION>\n",Sider[i].subname.subname);
-
-
-			#ifdef BLACK_BOKS
-				char timebuf[26];
-				printf("\t<TIME_UNIX>%u</TIME_UNIX>\n",Sider[i].DocumentIndex.CrawleDato);
-				ctime_r((time_t *)&Sider[i].DocumentIndex.CrawleDato,timebuf);
-				timebuf[24] = '\0';
-				printf("\t<TIME_ISO>%s</TIME_ISO>\n",timebuf);
+				printf("\t<RESULT_COLLECTION>%s</RESULT_COLLECTION>\n",Sider[i].subname.subname);
 
 
-				//sender en tom cashe link. Må ha cashe link hvis ikke bryter vi designet
-	                	printf("\t<CACHE></CACHE>\n");
+				#ifdef BLACK_BOKS
+					char timebuf[26];
+					printf("\t<TIME_UNIX>%u</TIME_UNIX>\n",Sider[i].DocumentIndex.CrawleDato);
+					ctime_r((time_t *)&Sider[i].DocumentIndex.CrawleDato,timebuf);
+					timebuf[24] = '\0';
+					printf("\t<TIME_ISO>%s</TIME_ISO>\n",timebuf);
 
-			#else
+
+					//sender en tom cashe link. Må ha cashe link hvis ikke bryter vi designet
+	                		printf("\t<CACHE></CACHE>\n");
+
+				#else
 				
-	                	printf("\t<DOMAIN>%s</DOMAIN>\n",Sider[i].domain);
+	                		printf("\t<DOMAIN>%s</DOMAIN>\n",Sider[i].domain);
 
-				//finer om forige treff hadde samme domene
-				if (i>0 && (lastdomain != NULL) && (strcmp(Sider[i].domain,lastdomain) == 0)) {			
-		                	printf("\t<DOMAIN_GROUPED>TRUE</DOMAIN_GROUPED>\n");
-				}
-				else {
-		                	printf("\t<DOMAIN_GROUPED>FALSE</DOMAIN_GROUPED>\n");
+					//finer om forige treff hadde samme domene
+					if (i>0 && (lastdomain != NULL) && (strcmp(Sider[i].domain,lastdomain) == 0)) {			
+		                		printf("\t<DOMAIN_GROUPED>TRUE</DOMAIN_GROUPED>\n");
+					}
+					else {
+		                		printf("\t<DOMAIN_GROUPED>FALSE</DOMAIN_GROUPED>\n");
 
-				}
-				// ikke 100% riktig dette, da vi vil få problemer med at ppc reklame får samme side kan 
-				// være siste, og da blir treff 1 rykket inn
-				lastdomain = Sider[i].domain;
+					}
+					// ikke 100% riktig dette, da vi vil få problemer med at ppc reklame får samme side kan 
+					// være siste, og da blir treff 1 rykket inn
+					lastdomain = Sider[i].domain;
 
-				printf("\t<SERVERNAME>%s</SERVERNAME>\n",Sider[i].servername);
+					printf("\t<SERVERNAME>%s</SERVERNAME>\n",Sider[i].servername);
 
-	                	printf("\t<ADULTWEIGHT>%hu</ADULTWEIGHT>\n",Sider[i].DocumentIndex.AdultWeight);
-	                	printf("\t<METADESCRIPTION><![CDATA[]]></METADESCRIPTION>\n");
-	                	printf("\t<CATEGORY></CATEGORY>\n");
-	                	printf("\t<OFFENSIVE_CODE>FALSE</OFFENSIVE_CODE>\n");
+	                		printf("\t<ADULTWEIGHT>%hu</ADULTWEIGHT>\n",Sider[i].DocumentIndex.AdultWeight);
+	                		printf("\t<METADESCRIPTION><![CDATA[]]></METADESCRIPTION>\n");
+	                		printf("\t<CATEGORY></CATEGORY>\n");
+	                		printf("\t<OFFENSIVE_CODE>FALSE</OFFENSIVE_CODE>\n");
 
 
-				ipaddr.s_addr = Sider[i].DocumentIndex.IPAddress;
+					ipaddr.s_addr = Sider[i].DocumentIndex.IPAddress;
 
-                		printf("\t<IPADDRESS>%s</IPADDRESS>\n",inet_ntoa(ipaddr));
+                			printf("\t<IPADDRESS>%s</IPADDRESS>\n",inet_ntoa(ipaddr));
 
-                		printf("\t<RESPONSE>%hu</RESPONSE>\n",Sider[i].DocumentIndex.response);
+                			printf("\t<RESPONSE>%hu</RESPONSE>\n",Sider[i].DocumentIndex.response);
+	
+					printf("\t<CRAWLERVERSION>%f</CRAWLERVERSION>\n",Sider[i].DocumentIndex.clientVersion);
+					printf("\t<HTMLPREPARSED>%i</HTMLPREPARSED>\n",Sider[i].HtmlPreparsed);
 
-				printf("\t<CRAWLERVERSION>%f</CRAWLERVERSION>\n",Sider[i].DocumentIndex.clientVersion);
-				printf("\t<HTMLPREPARSED>%i</HTMLPREPARSED>\n",Sider[i].HtmlPreparsed);
+	                		printf("\t<CACHE>%s</CACHE>\n",Sider[i].cacheLink);
 
-	                	printf("\t<CACHE>%s</CACHE>\n",Sider[i].cacheLink);
-
-	                	//printf("\t<PATHLEN>%u</PATHLEN>\n",(unsigned int)Sider[i].pathlen);
-
+	                		printf("\t<PAID_INCLUSION>%i</PAID_INCLUSION>\n",(int)Sider[i].subname.config.isPaidInclusion);
 
 			#endif
 		
@@ -2805,40 +2772,31 @@ int main(int argc, char *argv[])
 
 			//mysql_free_result(mysqlres);
 
-			//lopper gjenom og logger Paid Inclusion
-			x = 0;
-			i = 0;			
-			//sprintf(query,"INSERT DELAYED INTO search_logg (tid,query,search_bruker,treff,search_tid,ip_adresse,betaler_keywords_treff,HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang,spot,piDocID) VALUES(NOW(),?,?,?,?,?,?,?,?,?,?,?,?)");
-			//sprintf(query,"insert into pi_search_logg (tid,query,treff,search_tid,ip_adresse,spot,piDocID ) \
-			//	select NOW(),'?',?,?,'?',?,id from pi_sider where WWWDocID=?");
-			//sprintf(query,"insert into pi_search_logg (tid,query,treff,search_tid,ip_adresse,spot,piDocID ) \
-			//	select NOW(),?,?,?,?,?,id from pi_sider where WWWDocID=22454689");
+			/************************************************************************************************
+			Logging av Paid Inclusion til sql db.
+			************************************************************************************************/
+
 			sprintf(query,"insert into pi_search_logg (tid,query,treff,search_tid,ip_adresse,spot,piDocID ) \
-				values( NOW(),?,?,?,?,?,22454689)");
+				values( NOW(),?,?,?,?,?,?)");
 
 
 			if (mysql_stmt_prepare(pilogstmt, query, strlen(query)) != 0) {
   				fprintf(stderr, " mysql_stmt_prepare(), INSERT failed\n");
   				fprintf(stderr, " %s\n", mysql_stmt_error(pilogstmt));
 			}
-		
-			if (mysql_stmt_bind_param(pilogstmt, bind) != 0) {
-				fprintf(stderr, " mysql_stmt_bind_param() failed\n");
-  				fprintf(stderr, " %s\n", mysql_stmt_error(pilogstmt));
-			}
-		
-			while ((x<FinalSiderHeder.showabal) && (i < (queryNodeHeder.MaxsHits * (nrOfServers + nrOfPiServers)))) {
-		
+
+			i = QueryData.MaxsHits * (QueryData.start -1);
+			x = i;
+
+			while ((x<(QueryData.MaxsHits*QueryData.start)) && (x<FinalSiderHeder.showabal) && (i < (queryNodeHeder.MaxsHits * (nrOfServers + nrOfPiServers)))) {
+
 				if (!Sider[i].deletet) {
 					dprintf("pi analyse. Subname \"%s\", pi \"%i\"\n",Sider[i].subname.subname, (int)Sider[i].subname.config.isPaidInclusion);
 
 					if (Sider[i].subname.config.isPaidInclusion) {
 						unsigned int spot;
 
-						spot = x + (QueryData.start * queryNodeHeder.MaxsHits);
-								
-
-						printf("sql query: %s\n",query);
+						spot = x + 1;		
 
 						memset(bind, 0, sizeof(bind));
 						memset(len, 0, sizeof(len)); // må vi ha denne?
@@ -2846,7 +2804,7 @@ int main(int argc, char *argv[])
 						bind[0].buffer_type = MYSQL_TYPE_STRING; // query
 						bind[0].buffer = QueryData.query;
 						len[0] = strlen(QueryData.query) -3;
-						bind[0].length = &(len[0]);
+						bind[0].length = &len[0];
 
 						bind[1].buffer_type = MYSQL_TYPE_LONG; // treff
 						bind[1].buffer = &FinalSiderHeder.TotaltTreff;
@@ -2858,7 +2816,7 @@ int main(int argc, char *argv[])
 						bind[3].buffer_type = MYSQL_TYPE_STRING; // ip
 						bind[3].buffer = QueryData.userip;
 						len[3] = strlen(QueryData.userip);
-						bind[3].length = &(len[3]);
+						bind[3].length = &len[3];
 
 						bind[4].buffer_type = MYSQL_TYPE_LONG ; // spot 
 						bind[4].buffer = &spot;
@@ -2868,7 +2826,11 @@ int main(int argc, char *argv[])
 						bind[5].buffer = &Sider[i].iindex.DocID;
 						bind[5].is_unsigned = 1; 
 
-						printf("login pi for %u\n",Sider[i].iindex.DocID);
+
+						if (mysql_stmt_bind_param(pilogstmt, bind) != 0) {
+							fprintf(stderr, " mysql_stmt_bind_param() failed\n");
+  							fprintf(stderr, " %s\n", mysql_stmt_error(pilogstmt));
+						}
 
 						if (mysql_stmt_execute(pilogstmt) != 0) {
 							fprintf(stderr, " mysql_stmt_execute(), 1 failed\n");
@@ -2877,12 +2839,12 @@ int main(int argc, char *argv[])
 
 						/* Get the total number of affected rows */
 						affected_rows= mysql_stmt_affected_rows(pilogstmt);
-						fprintf(stdout, " total affected rows(insert 1): %lu\n", (unsigned long) affected_rows);
 
 						if (affected_rows != 1) /* validate affected rows */
 						{
   							fprintf(stderr, " invalid affected rows by MySQL\n");
-							exit(0);
+							fprintf(stderr, " total affected rows(insert 1): %lu\n", (unsigned long) affected_rows);
+							break;
 						}
 
 					}
@@ -2900,6 +2862,9 @@ int main(int argc, char *argv[])
 			}
 
 			mysql_stmt_close(pilogstmt);
+
+			/************************************************************************************************/
+
 
 		//}
 	#endif
@@ -2940,11 +2905,14 @@ int main(int argc, char *argv[])
 			#ifdef DEBUG
 			printf("looking for Paid Inclusion\n");
 			#endif
+
+
+			
 			x = 0;
 			i = 0;			
 			
 			while ((x<FinalSiderHeder.showabal) && (i < (queryNodeHeder.MaxsHits * (nrOfServers + nrOfPiServers)))) {
-		
+			
 				if (!Sider[i].deletet) {
 					#ifdef DEBUG
 					printf("pi analyse. Subname \"%s\", pi \"%i\"\n",Sider[i].subname.subname, (int)Sider[i].subname.config.isPaidInclusion);
