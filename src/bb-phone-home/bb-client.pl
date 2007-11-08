@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use IO::Socket;
-use Config::General;
+use Config::General qw(ParseConfig);
 use Data::Dumper;
 use LWP;
 use File::stat;
