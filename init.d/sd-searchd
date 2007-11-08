@@ -117,6 +117,7 @@ case "$1" in
 	fi
 	pid2=`pidof $BOITHOHOME/bin/$B_NAME`
 	pid="$pid $pid2"
+	if [ "$pid" == " " ] ; then pid=""; fi
 	base=$B_NAME
 
 	if [ "$pid" != "" ] ; then

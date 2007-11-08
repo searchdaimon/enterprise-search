@@ -123,6 +123,7 @@ case "$1" in
 	fi
 	get_script_pids $B_SCRIPT
 	pid="$pid $Script_pids"
+	if [ "$pid" == " " ] ; then pid=""; fi
 	base=$B_NAME
 
 	if [ "$pid" != "" ] ; then
