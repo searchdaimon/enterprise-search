@@ -32,11 +32,11 @@ sub forkandexit($@) {
 
 		chdir '/';                 #or die "Can't chdir to /: $!";
 		open STDIN, '/dev/null'; #  or die "Can't read /dev/null: $!";
-		open STDOUT, '>/dev/null'; # or die "Can't write to /dev/null: $!";
-		open STDERR, '>/dev/null'; # or die "Can't write to /dev/null: $!";
+#		open STDOUT, '>/dev/null'; # or die "Can't write to /dev/null: $!";
+#		open STDERR, '>/dev/null'; # or die "Can't write to /dev/null: $!";
 #		open STDIN, '/dev/null'; #  or die "Can't read /dev/null: $!";
-#		open STDOUT, '>'.$logfile."-stdout"; # or die "Can't write to /dev/null: $!";
-#		open STDERR, '>'.$logfile."-stderr"; # or die "Can't write to /dev/null: $!";
+		open STDOUT, '>'.$logfile."-stdout"; # or die "Can't write to /dev/null: $!";
+		open STDERR, '>'.$logfile."-stderr"; # or die "Can't write to /dev/null: $!";
 #
 #		setsid                    or die "Can't start a new session: $!";
 #		umask 0;
@@ -156,6 +156,13 @@ sub get_forward_port_http() {
 	return $fwdport;
 }
 
+sub get_forward_port_random() {
+	my $first = 10111;
+	my $range = 5000;
+
+	return int(rand($range))+$first;
+}
+
 
 if ($#ARGV == -1) {
 	print STDERR "Possible arguments: start, stop, running\n";
@@ -167,6 +174,7 @@ my $arg = $ARGV[0];
 
 if ($arg eq "start") {
 	my $fwdport = get_forward_port_http();
+	#my $fwdport = get_forward_port_random();
 
 	exit 1 if (!defined($fwdport));
 	my $pid = start_forwarding($fwdport);

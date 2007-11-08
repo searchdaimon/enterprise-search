@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <err.h>
 
 
 #ifndef WEB_USER
@@ -34,6 +35,9 @@ main(int argc, char **argv, char **envp __unused)
 	char *perlenv[] = { NULL };
 	struct stat st;
 
+	if (argc < 2)
+		errx(1, "Usage: ./setuidcaller cmd");
+
 	if (stat(program, &st) == -1) {
 		fprintf(stderr, "Unable to find client script %s: ", program);
 		perror("");
@@ -50,6 +54,7 @@ main(int argc, char **argv, char **envp __unused)
 		return 81;
 	}
 	execuid = pwd->pw_uid;
+
 
 	if (uid != webuid) {
 		errno = EPERM;

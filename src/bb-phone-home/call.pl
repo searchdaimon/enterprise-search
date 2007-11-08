@@ -41,28 +41,28 @@ sub bb_phone_home_running() {
 
 # Tests
 
-use Data::Dumper;
-
-sub testoutput(@) {
-	my @hmm = shift;
-
-	print Dumper(@hmm);
-}
-
-if (1) {
-	testoutput(bb_phone_home_running());
-	print " 1<br />\n";
-	testoutput(bb_phone_home_stop());
-	print " 2<br />\n";
-	testoutput(bb_phone_home_running());
-	print " 3<br />\n";
-	testoutput(bb_phone_home_start());
-	print " 4<br />\n";
-	testoutput(bb_phone_home_running());
-	print " 5<br />\n";
-	testoutput(bb_phone_home_stop());
-	print " 6<br />\n";
-	testoutput(bb_phone_home_running());
-	print " 7<br />\n";
-}
-
+#use Data::Dumper;
+#
+#sub testoutput(@) {
+#	my @hmm = shift;
+#
+#	print Dumper(@hmm);
+#}
+#
+#if (1) {
+#	testoutput(bb_phone_home_running());
+#	print " 1<br />\n";
+#	testoutput(bb_phone_home_stop());
+#	print " 2<br />\n";
+#	testoutput(bb_phone_home_running());
+#	print " 3<br />\n";
+#	testoutput(bb_phone_home_start());
+#	print " 4<br />\n";
+#	testoutput(bb_phone_home_running());
+#	print " 5<br />\n";
+#	testoutput(bb_phone_home_stop());
+#	print " 6<br />\n";
+#	testoutput(bb_phone_home_running());
+#	print " 7<br />\n";
+#}
+#
