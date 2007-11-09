@@ -44,6 +44,9 @@ boithobb-crawl_watch_version = 1.0.3
 boithobb-bbAutoUpdate_name = bbAutoUpdate
 boithobb-bbAutoUpdate_version = 1.0.1
 
+boithobb-call-home_name = bb-call-home
+boithobb-call-home_version = 0.2
+
 
 all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate 
 
@@ -121,6 +124,14 @@ fileFilter:
 	perl rpmmagic.pl $(boitho-fileFilter_name) $(boitho-fileFilter_version) $(BOITHOHOME) /home/boitho/boithoTools fileFilter
 
 	rpm -bb $(boitho-fileFilter_name).spec
+
+
+callHome:
+	perl rpmmagic.pl $(boithobb-call-home_name) $(boithobb-call-home_version) $(BOITHOHOME) /home/boitho/boithoTools \
+	bin/setuidcaller config/bb-phone-home-client.conf
+
+	rpm -bb $(boithobb-call-home_name).spec
+ 
 
 
 base:
