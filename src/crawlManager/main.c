@@ -631,6 +631,7 @@ int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections)
                 free((*collection)[i].collection_name);
                 free((*collection)[i].query1);
                 free((*collection)[i].query2);
+		free((*collection)[i].extra);
 		#ifdef DEBUG
 			printf("freeing nr %i: end\n",i);
 		#endif
@@ -792,6 +793,7 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 
 		(*collection)[i].id = strtoul(mysqlrow[7], (char **)NULL, 10);
 		(*collection)[i].userprefix = strdupnul(mysqlrow[8]);
+		(*collection)[i].extra = NULL;
 
 
 		//fjerner ikke aski tegn, som / og space. De fører til problemer
@@ -987,7 +989,7 @@ int crawl_unlock(struct collection_lockFormat *collection_lock) {
 	return 1;
 }
 
-int crawl (struct collectionFormat *collection,int nrofcollections, int flag) {
+int crawl (struct collectionFormat *collection,int nrofcollections, int flag, char *extra) {
 
 
 	int i;
@@ -997,6 +999,9 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag) {
 	struct collection_lockFormat collection_lock;
 
 	for(i=0;i<nrofcollections;i++) {
+		if (collection[i].extra != NULL)
+			free(collection[i].extra);
+		collection[i].extra = extra;
 
 		blog(LOGACCESS,1,"Starting crawl of collection \"%s\" (id %u)\n",collection[i].collection_name,collection[i].id);
 
@@ -1115,9 +1120,11 @@ void connectHandler(int socket) {
 
 
 		if (packedHedder.command == cm_crawlcollection) {
+			char extrabuf[512];
 			printf("crawlcollection\n");
 			
 			recvall(socket,collection,sizeof(collection));
+			recvall(socket,extrabuf,sizeof(extrabuf));
 			printf("collection \"%s\"\n",collection);
 
 			struct collectionFormat *collections;
@@ -1133,7 +1140,7 @@ void connectHandler(int socket) {
 			intresponse=1;
 			sendall(socket,&intresponse, sizeof(int));
 
-			crawl(collections,nrofcollections,crawl_crawl);
+			crawl(collections,nrofcollections,crawl_crawl, extrabuf[0] != '\0' ? strdup(extrabuf) : NULL);
 
 
 	        }
@@ -1156,7 +1163,7 @@ void connectHandler(int socket) {
 			intresponse=1;
 			sendall(socket,&intresponse, sizeof(int));
 
-			crawl(collections,nrofcollections,crawl_recrawl);
+			crawl(collections,nrofcollections,crawl_recrawl, NULL);
 
 		}
 		else if (packedHedder.command == cm_deleteCollection) {

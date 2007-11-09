@@ -30,7 +30,7 @@ int main (int argc, char *argv[]) {
 		printf("collectionFor <user name> or <group name>\n");
 		printf("groupsAndCollectionForUser <user name>\n");
 
-		printf("crawlCollection <collection name>\n");
+		printf("crawlCollection <collection name> [extra]\n");
 		printf("recrawlCollection <collection name>\n");
 		printf("deleteCollection <collection name>\n");
 		printf("scan <crawlertype> <host> <username> <password>\n");
@@ -47,18 +47,26 @@ int main (int argc, char *argv[]) {
 
 	if (argc >= 3) {
 		value = argv[2];
+	} else {
+		value = NULL;
 	}
 
 	if (argc >= 4) {
 		value2 = argv[3];
+	} else {
+		value2 = NULL;
 	}
 
 	if (argc >= 5) {
 		value3 = argv[4];
+	} else {
+		value3 = NULL;
 	}
 
 	if (argc >= 6) {
 		value4 = argv[5];
+	} else {
+		value4 = NULL;
 	}
 
 	struct config_t maincfg;
@@ -176,7 +184,7 @@ int main (int argc, char *argv[]) {
 			return EXIT_FAILURE;
 		}
 		else {
-			cmc_crawl(socketha,value);
+			cmc_crawl(socketha,value, value2 == NULL ? "" : value2);
 		}
 		cmc_close(socketha);
 	}
