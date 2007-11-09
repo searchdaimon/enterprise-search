@@ -48,7 +48,7 @@ boithobb-call-home_name = bb-call-home
 boithobb-call-home_version = 0.2
 
 
-all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate 
+all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome
 
 setuidbb:
 	perl rpmmagic.pl $(boithobb-setuid_name) $(boithobb-setuid_version) $(BOITHOHOME) /home/boitho/boithoTools setuid
