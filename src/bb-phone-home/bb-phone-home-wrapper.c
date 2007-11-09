@@ -18,7 +18,7 @@
 #endif
 
 #ifndef BBCLIENT
-#define BBCLIENT "/home/eirik/Boitho/boitho/websearch/src/bb-phone-home/bb-client.pl"
+#error "Please tell me where to find the bb phone home client"
 #endif
 
 #define __unused __attribute__((__unused__))
