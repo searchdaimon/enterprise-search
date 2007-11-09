@@ -1,5 +1,3 @@
 - Nå teller ',' og '.' likeverdig, '.' bør telle mer.
 - Sørg for alltid å få med eos etter snippet dersom det eksisterer.
 - Rydde i noen funksjoner.
-
-- Mange spans (et.al) i en snippet gir minuspoeng.
