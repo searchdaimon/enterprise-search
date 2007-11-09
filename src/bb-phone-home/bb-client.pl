@@ -11,7 +11,7 @@ use File::stat;
 
 $ENV{PATH} = "/bin:/usr/bin:/usr/local/bin";
 
-my %config = ParseConfig("/etc/bb-phone-home-client.conf");
+my %config = ParseConfig($ENV{'BOITHOHOME'} . "/config/bb-phone-home-client.conf");
 
 my $name = $config{'clientname'};
 
