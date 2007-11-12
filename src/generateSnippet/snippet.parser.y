@@ -36,6 +36,14 @@ struct score_block
     int		score, start, stop, hits;
 };
 
+struct match_block
+{
+    int		bstart, bend;
+    int		hit;
+    int		wordnr;
+    int		link;
+    int		div_pos, span_pos;
+};
 
 struct bsg_intern_data
 {
@@ -43,8 +51,10 @@ struct bsg_intern_data
     char	*buf;
     int		wordnr;
     char	in_link;
-    container	*Q, *Q2, *VMatch, *VSection, *VHit, *VWordNr, *VLink, *WSentence;
-    int		VSection_start;
+    container	*Q, *Q2;//, *VMatch, *VHit, *VWordNr, *VLink, *WSentence;
+    container	*WSentence;
+    container	*Sentence;
+    container	*Match;
     automaton	*A;
     int		*q_dep;
     char	*q_stop;
@@ -64,6 +74,8 @@ struct bsg_intern_data
     int		good_sentence;
     char	parse_error;
     int		div_num;
+    int		current_div, current_span;
+    int		sentence_start, sentence_stop;
 #ifdef DEBUG_ON
     char	sbuf[2048];
     int		spos;
@@ -135,6 +147,7 @@ div	: div_start paragraph DIV_END
 div_start : DIV_START
 	    {
 		data->q_flags|= v_section_div;
+		data->current_div = data->bpos;
 		if (show) buf_printf(data, "\033[1;33m{\033[0m");
 	    }
 	;
@@ -159,6 +172,7 @@ spans	:
 span_start : SPAN_START
 	    {
 		data->q_flags|= v_section_span;
+		data->current_span = data->bpos;
 		if (show) buf_printf(data, "\033[1;35m(\033[0m");
 	    }
 	;
@@ -211,27 +225,32 @@ sentence :
 			{
 			    int		slot;
 			    int		vsize;
+			    struct match_block	*mb;
 
 			    slot = data->history_crnt;
 			    slot-= data->phrase_sizes[data->accepted[data->tilstand]];
 			    while (slot<0) slot+= data->history_size;
 
 			    // Sjekk for overlappende treff:
-			    vsize = vector_size(data->VMatch);
-			    if (vsize>0 && (data->history[slot] <= pair(vector_get(data->VMatch, vsize-1)).second.i))
-				{
-				    value	v;
+			    vsize = vector_size(data->Match);
+			    if (vsize>0) mb = vector_get(data->Match, vsize-1).ptr;
 
-				    pair(vector_get(data->VMatch, vsize-1)).second.i = data->bpos;
-				    v.i = data->accepted[data->tilstand];
-				    vector_set(data->VHit, vsize-1, v);
+			    if (vsize>0 && data->history[slot] <= mb->bend)
+				{
+				    mb->bend = data->bpos;
+				    mb->hit = data->accepted[data->tilstand];
 				}
 			    else
 				{
-				    vector_pushback(data->VMatch, data->history[slot], data->bpos);
-				    vector_pushback(data->VHit, data->accepted[data->tilstand]);
-				    vector_pushback(data->VWordNr, data->wordnr);
-				    vector_pushback(data->VLink, data->in_link);
+				    mb = malloc(sizeof(struct match_block));
+				    mb->bstart = data->history[slot];
+				    mb->bend = data->bpos;
+				    mb->hit = data->accepted[data->tilstand];
+				    mb->wordnr = data->wordnr;
+				    mb->link = data->in_link;
+				    mb->div_pos = data->current_div;
+				    mb->span_pos = data->current_span;
+				    vector_pushback(data->Match, mb);
 				}
 			}
 		}
@@ -272,8 +291,6 @@ sentence :
 	{
 	    if (bsgpget_extra(yyscanner)->space) { buf_printf(data, " "); bsgpget_extra(yyscanner)->space = 0; }
 	    buf_printf(data, "%s", (char*)$2);
-
-	    if (sentence(data)) data->good_sentence++;
 	}
 	| sentence LINK_START
 	{
@@ -301,14 +318,21 @@ static inline char ordinary( char *s )
 
 static inline char sentence( struct bsg_intern_data *data )
 {
+    data->sentence_stop = data->bpos;
+
     if (data->words_ordinary >= 6 && (data->words_ordinary + data->words_other >= 8)
 	&& data->words_other >= 1 && ((float)data->words_other / (float)data->words_ordinary <= 0.34))
 	    {
+//		printf("SENTENCE: %.100s\n", &(data->buf[data->bpos - 100]));
+		vector_pushback(data->Sentence, data->sentence_start, data->sentence_stop);
+	        data->sentence_start = data->bpos;
 	        data->words_ordinary = 0;
 		data->words_other = 0;
     		return 1;
 	    }
 
+//    printf(" %2i, %2i : %.100s\n", data->words_ordinary, data->words_other, &(data->buf[data->bpos - 100]));
+    data->sentence_start = data->bpos;
     data->words_ordinary = 0;
     data->words_other = 0;
     return 0;
@@ -370,12 +394,13 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 	    value	temp = queue_peak(Q);
 	    int		qfirst, qsize;
 	    int 	pos, flags;
-	    value	phrase;
+	    struct match_block	*mb;
 	    int		i, j;
 	    char	m;
 	    int		d_hits;
 	    int		score=0;
-	    int		hits_in_links;
+	    int		bstart;
+	    int		hits_in_links, hits_in_div, hits_in_span, hits_in_sentence;
 	    int		sentences;
 #ifdef DEBUG_ON
 	    int		_spos = 0;
@@ -423,18 +448,20 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 #endif
 
 	    qfirst = (*VMatch_start);
-	    qsize = vector_size(data->VMatch);
+	    qsize = vector_size(data->Match);
 
 //	    for (i=(*VMatch_start); i<vector_size(data->VMatch)
-	    for (i=qfirst; i<qsize
-		&& pair(vector_get(data->VMatch,i)).first.i < pos; i++);
+	    for (i=qfirst; i<qsize; i++)
+		if (((struct match_block*)(vector_get(data->Match,i).ptr))->bstart >= pos) break;
 	    (*VMatch_start) = i;
 
+	    bstart = pos;
 	    m = (i < qsize);
 
 	    if (m)
 		{
-		    phrase = vector_get(data->VMatch,i);
+		    mb = vector_get(data->Match,i).ptr;
+		    bstart = mb->bstart;
 		}
 
 	    int		treff[data->num_queries];
@@ -447,11 +474,11 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 
 	    for (k=qfirst; k<qsize; k++)
 		{
-		    int		a = vector_get(data->VHit,k).i;
-		    treff[a]++;
-		    sum_hits+= data->phrase_sizes[a];
+		    struct match_block	*a = vector_get(data->Match,k).ptr;
+		    treff[a->hit]++;
+		    sum_hits+= data->phrase_sizes[a->hit];
 
-		    if (a<32) bin_hits|= (1<<a);
+		    if ((a->hit)<32) bin_hits|= (1<<(a->hit));
 		}
 
 	    d_hits = 0;
@@ -478,8 +505,9 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 	    int		lastnr = -1;
 	    for (j = qfirst; j<qsize; j++)
 		{
-		    int		thisnr = vector_get(data->VWordNr,j).i;
-		    int		thisq = vector_get(data->VHit,j).i;
+		    struct match_block *a = vector_get(data->Match,j).ptr;
+		    int		thisnr = a->wordnr;
+		    int		thisq = a->hit;
 		    int		z;
 
 		    if (lastnr>=0)
@@ -501,11 +529,25 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 		}
 
 	    hits_in_links = 0;
+	    hits_in_div = 0;
+	    hits_in_span = 0;
+	    hits_in_sentence = 0;
+	    int	sntnc, s_end=0;
+	    for (sntnc=0; sntnc<vector_size(data->Sentence) && s_end==0; sntnc++)
+		{
+		    if (pair(vector_get(data->Sentence,sntnc)).first.i <= bstart
+			&& pair(vector_get(data->Sentence,sntnc)).second.i >= bstart)
+			s_end = pair(vector_get(data->Sentence,sntnc)).second.i;
+		}
 	    for (j = qfirst; j<qsize; j++)
 		{
-		    int		in_link = vector_get(data->VLink,j).i;
+		    struct match_block *a = vector_get(data->Match,j).ptr;
+		    int		in_link = a->link;
 
 		    if (in_link) hits_in_links++;
+		    if (a->div_pos <= bstart) hits_in_div++;
+		    if (a->span_pos <= bstart) hits_in_span++;
+		    if (a->bstart < s_end) hits_in_sentence++;
 		}
 
 	    int		bucket[4];
@@ -567,9 +609,12 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
     /**
         Algoritme for kalkulering av beste snippet:
 
-        x bit (19+)		d_hits (antall unike treff)
-	1 bit (18)		div har good sentences
-        8 bit (10-17)		closeness (avstand mellom trefford gitt flere sokeord)
+        x bit (23+)		d_hits (antall unike treff)
+	1 bit (22)		div har good sentences
+        8 bit (14-21)		closeness (avstand mellom trefford gitt flere sokeord)
+	2 bit (12-13)		antall hits i bstart-div (max 3)
+	1 bit (11)		hits i bstart-span
+	1 bit (10)		hits i bstart-sentence
         2 bit (8-9)		div and !head | div and head | !div and head | --
         2 bit (6-7)		span | sentence
 	2 bit (4-5)		antall good sentences (max 4) -1
@@ -586,13 +631,18 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
     // TODO: closeness?
 
 	    // Calculate score:
-	    score|= (d_hits<<19);
+	    score|= (d_hits<<23);
 
 	    if (sentences)
-		score|= (sentences<<18);
+		score|= (1<<22);
 
 //	    score|= (num<<16);
-	    score|= (closeness<<10);
+	    score|= (closeness<<14);
+
+	    if (hits_in_div>3) hits_in_div = 3;
+	    score|= (hits_in_div<<12);
+	    if (hits_in_span) score|= (1<<11);
+	    if (hits_in_sentence) score|= (1<<10);
 
 	    if ((flags & v_section_div) && !(flags & v_section_head))
 		score|= (1<<9) + (1<<8);
@@ -656,31 +706,38 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 	    if (verbose)
 		{
 		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<26) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<25) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<24) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<23) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<22) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<21) ? '1' : '0'));
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<20) ? '1' : '0'));
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<19) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<18) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<17) ? '1' : '0'));
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<16) ? '1' : '0'));
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<15) ? '1' : '0'));
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<14) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<13) ? '1' : '0'));
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<12) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<11) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<10) ? '1' : '0'));
 		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<10) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<9) ? '1' : '0'));
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<8) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<7) ? '1' : '0'));
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<6) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
+		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<5) ? '1' : '0'));
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<4) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<3) ? '1' : '0'));
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<2) ? '1' : '0'));
 		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<1) ? '1' : '0'));
@@ -693,27 +750,27 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 
 		    for (;pos < data->bpos; pos++)
 			{
-			    if (m && pos == pair(phrase).first.i)
+			    if (m && pos == mb->bstart)
 				{
 				    _spos+= sprintf(_sbuf+_spos, "\033[1;36m\'");
 				}
 
-			    if (m && pos == pair(phrase).second.i)
+			    if (m && pos == mb->bend)
 				{
 				    _spos+= sprintf(_sbuf+_spos, "\'\033[0m");
 
 				    i++;
-				    m = (i < vector_size(data->VMatch));
+				    m = (i < vector_size(data->Match));
 
 				    if (m)
 					{
-					    phrase = vector_get(data->VMatch,i);
+					    mb = vector_get(data->Match,i).ptr;
 					}
 				}
 
 			    _spos+= sprintf(_sbuf+_spos, "%c", data->buf[pos]);
 			}
-		    if (m && pos == pair(phrase).second.i)
+		    if (m && pos == mb->bend)
 			_spos+= sprintf(_sbuf+_spos, "\'\033[0m");
 		    _spos+= sprintf(_sbuf+_spos, "\n");
 		    _sbuf[_spos] = '\0';
@@ -760,39 +817,40 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
     int		bsize = data->snippet_size*5;
     char	buf[bsize];
     int		bpos=0;
-    value	phrase;
+    struct match_block	*mb;
     int		active_highl=0;
     char	last_was_eos=0;
 
-    for (i=0; i<vector_size(data->VMatch) && pair(vector_get(data->VMatch,i)).first.i < data->best.start; i++);
+    for (i=0; i<vector_size(data->Match); i++)
+	if (((struct match_block*)(vector_get(data->Match,i).ptr))->bstart >= data->best.start) break;
 
-    m = (i < vector_size(data->VMatch));
+    m = (i < vector_size(data->Match));
 
     if (m)
 	{
-	    phrase = vector_get(data->VMatch,i);
+	    mb = vector_get(data->Match,i).ptr;
 	}
 
 //    bpos+= sprintf(buf+bpos, "[[%i]]", data->snippet_size);
 
     for (pos=data->best.start; pos<data->best.stop; pos++)
 	{
-	    if (m && pos == pair(phrase).first.i)
+	    if (m && pos == mb->bstart)
 		{
 		    bpos+= snprintf(buf+bpos, bsize-bpos-1, b_start);
 		    active_highl++;
 		}
 
-	    if (m && pos == pair(phrase).second.i)
+	    if (m && pos == mb->bend)
 		{
 		    bpos+= snprintf(buf+bpos, bsize-bpos-1, b_end);
 		    active_highl--;
 		    i++;
-		    m = (i < vector_size(data->VMatch));
+		    m = (i < vector_size(data->Match));
 
 		    if (m)
 			{
-			    phrase = vector_get(data->VMatch,i);
+			    mb = vector_get(data->Match,i).ptr;
 			}
 		}
 
@@ -875,39 +933,40 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
 	{
 	    int		pos;
 	    char	m;
-	    value	phrase;
+	    struct match_block	*mb;
 	    int		active_highl=0;
 	    char	last_was_eos=0;
 
 //	    bpos+= sprintf(buf+bpos, "((%i))", nr);
 
-	    for (i=0; i<vector_size(data->VMatch) && pair(vector_get(data->VMatch,i)).first.i < data->q_best[nr].start; i++);
+	    for (i=0; i<vector_size(data->Match); i++)
+		if (((struct match_block*)(vector_get(data->Match,i).ptr))->bstart >= data->q_best[nr].start) break;
 
-	    m = (i < vector_size(data->VMatch));
+	    m = (i < vector_size(data->Match));
 
 	    if (m)
 		{
-		    phrase = vector_get(data->VMatch,i);
+		    mb = vector_get(data->Match,i).ptr;
 		}
 
 	    for (pos=data->q_best[nr].start; pos<data->q_best[nr].stop; pos++)
 		{
-		    if (m && pos == pair(phrase).first.i)
+		    if (m && pos == mb->bstart)
 			{
 			    bpos+= snprintf(buf+bpos, bsize-bpos-1, b_start);
 			    active_highl++;
 			}
 
-		    if (m && pos == pair(phrase).second.i)
+		    if (m && pos == mb->bend)
 			{
 			    bpos+= snprintf(buf+bpos, bsize-bpos-1, b_end);
 			    active_highl--;
 			    i++;
-			    m = (i < vector_size(data->VMatch));
+			    m = (i < vector_size(data->Match));
 
 			    if (m)
 				{
-				    phrase = vector_get(data->VMatch,i);
+				    mb = vector_get(data->Match,i).ptr;
 				}
 			}
 
@@ -979,10 +1038,8 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
     data->Q = queue_container( pair_container( int_container(), int_container() ) );
     data->Q2 = queue_container( pair_container( int_container(), int_container() ) );
     data->WSentence = vector_container( pair_container( int_container(), int_container() ) );
-    data->VMatch = vector_container( pair_container( int_container(), int_container() ) );
-    data->VHit = vector_container( int_container() );
-    data->VWordNr = vector_container( int_container() );
-    data->VLink = vector_container( int_container() );
+    data->Sentence = vector_container( pair_container( int_container(), int_container() ) );
+    data->Match = vector_container( ptr_container() );
     data->VMatch_start = 0;
     data->VMatch_start2 = 0;
     data->q_flags = v_section_sentence;
@@ -1191,6 +1248,12 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
     data->words_other = 0;
     data->good_sentence = 0;
 
+    data->sentence_start = 0;
+    data->sentence_stop = 0;
+
+    data->current_div = 0;
+    data->current_span = 0;
+
     yyscan_t	scanner;
     int		yv;
 
@@ -1231,10 +1294,11 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 	    free(data->d);
 	}
 
-    destroy(data->VLink);
-    destroy(data->VWordNr);
-    destroy(data->VHit);
-    destroy(data->VMatch);
+    for (i=0; i<vector_size(data->Match); i++)
+	free(vector_get(data->Match,i).ptr);
+
+    destroy(data->Match);
+    destroy(data->Sentence);
     destroy(data->WSentence);
     destroy(data->Q2);
     destroy(data->Q);
