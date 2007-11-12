@@ -3,6 +3,29 @@
 
 #include "define.h"
 
+FILE *revindexFilesOpenLocalPart(int lotNr,char type[],char filemode[],char subname[],int part) {
+
+        int i;
+        char lotPath[128];
+        char revfile[128];
+	FILE *revindexFilesHa;
+
+        GetFilPathForLot(lotPath,lotNr,subname);
+
+        //oppretter path
+        sprintf(revfile,"%srevindex/%s/",lotPath,type);
+        makePath(revfile);
+
+       sprintf(revfile,"%srevindex/%s/%i.txt",lotPath,type,part);
+
+       if ((revindexFilesHa = fopen(revfile,filemode)) == NULL) {
+                perror(revfile);
+       		exit(1);
+       }
+
+	return revindexFilesHa;
+}
+
 void revindexFilesOpenLocal(FILE *revindexFilesHa[],int lotNr,char type[],char filemode[],char subname[]) {
 
         int i;

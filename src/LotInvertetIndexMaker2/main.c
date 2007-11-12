@@ -7,6 +7,7 @@
 
 #include "../common/define.h"
 #include "../common/lot.h"
+#include "../common/revindex.h"
 
 //#define subname "www"
 #define revIndexArraySize 2000000
@@ -19,7 +20,9 @@ struct revIndexArrayFomat {
         unsigned short hits[MaxsHitsInIndex];
 };
 
-int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat revIndexArray[]);
+//int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat revIndexArray[]);
+int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],int lotNr,char type[],int part,char subname[]);
+
 int compare_elements (const void *p1, const void *p2);
 
 int main (int argc, char *argv[]) {
@@ -28,12 +31,9 @@ int main (int argc, char *argv[]) {
 	int lotNr;
 	int lotPart;
 	char path[256];
-	char revpath[256];
 	char iipath[256];
 	unsigned lastIndexTime;
-	char subname[maxSubnameLength];
 	int optMustBeNewerThen = 0;
-	int optUnlink = 0;
 
 	struct revIndexArrayFomat *revIndexArray; 
 	revIndexArray = malloc(sizeof(struct revIndexArrayFomat) * revIndexArraySize);
@@ -41,11 +41,8 @@ int main (int argc, char *argv[]) {
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"nu"))!=-1) {
+        while ((c=getopt(argc,argv,"n"))!=-1) {
                 switch (c) {
-			case 'u':
-				optUnlink = 1;
-				break;
                         case 'n':
                                 optMustBeNewerThen = 1;
                                 break;
@@ -59,10 +56,11 @@ int main (int argc, char *argv[]) {
 
 	printf("lot %s, %i\n",argv[1],argc);
 
+	char *type = argv[1 +optind];
+	lotNr = atoi(argv[2 +optind]);
+	char *subname = argv[3 +optind];
 
 	if ((argc -optind)== 4) {
-		lotNr = atoi(argv[2 +optind]);
-		strncpy(subname,argv[3 +optind],sizeof(subname) -1);
 
                 //finner siste indekseringstid
                 lastIndexTime =  GetLastIndexTimeForLot(lotNr,subname);
@@ -87,7 +85,6 @@ int main (int argc, char *argv[]) {
 
 			//"$revindexPath/$revindexFilNr.txt";
 			GetFilPathForLot(path,lotNr,subname);
-			sprintf(revpath,"%srevindex/%s/%i.txt",path,argv[1 +optind],lotPart);
 			//ToDo: må sette språk annen plass
 			sprintf(iipath,"%siindex/%s/index/aa/",path,argv[1 +optind]);
 
@@ -98,54 +95,45 @@ int main (int argc, char *argv[]) {
 
 			if ((optMustBeNewerThen != 0)) {
 				if (fopen(iipath,"r") != NULL) {
-					printf("we al redy hav a iindex.\n");
+					printf("we all redy have a iindex.\n");
 					continue;
 				}
 			}
 
-			Indekser(revpath,iipath,revIndexArray);	
 
-			if (optUnlink) {
-				unlink(revpath);
-			}
+			Indekser(iipath,revIndexArray,lotNr,type,lotPart,subname);	
 
-			//sletter revindex. Ingen vits i å ha den fylle opp plass
-			//remove(revpath);
+
 
 		}
 	}
 	else if ((argc - optind) == 5) {
-		lotNr = atoi(argv[2 +optind]);
-		strncpy(subname,argv[3 +optind],sizeof(subname) -1);
 		lotPart = atoi(argv[4 +optind]);
+
 		printf("indexint part %i for lot %i\n",lotPart,lotNr);
 
 		//"$revindexPath/$revindexFilNr.txt";
 		GetFilPathForLot(path,lotNr,subname);
-		sprintf(revpath,"%srevindex/%s/%i.txt",path,argv[1 +optind],lotPart);
 		//ToDo: må sette språk annen plass
 		//aa sprintf(iipath,"%siindex/%s/index/aa/%i.txt",path,argv[1 +optind],lotPart);
-                        //ToDo: må sette språk annen plass
-                        sprintf(iipath,"%siindex/%s/index/aa/",path,argv[1 +optind]);
+                //ToDo: må sette språk annen plass
+                sprintf(iipath,"%siindex/%s/index/aa/",path,argv[1 +optind]);
 
-                        //oppretter paths
-                        makePath(iipath);
+                //oppretter paths
+                makePath(iipath);
 
-                        sprintf(iipath,"%s%i.txt",iipath,lotPart);
+                sprintf(iipath,"%s%i.txt",iipath,lotPart);
 
 
-			if ((optMustBeNewerThen != 0)) {
-				if (fopen(iipath,"r") != NULL) {
-					printf("we al redy hav a iindex.\n");
-					exit(1);
-				}
+		if ((optMustBeNewerThen != 0)) {
+			if (fopen(iipath,"r") != NULL) {
+				printf("we all redy have a iindex.\n");
+				exit(1);
 			}
+		}
 
-		Indekser(revpath,iipath,revIndexArray);	
+		Indekser(iipath,revIndexArray,lotNr,type,lotPart,subname);	
 
-			if (optUnlink) {
-				unlink(revpath);
-			}
 	
 	}
 	else {
@@ -157,7 +145,7 @@ int main (int argc, char *argv[]) {
 
 }
 
-int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat revIndexArray[]) {
+int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],int lotNr,char type[],int part,char subname[]) {
 
 	int i,y;
 	int mgsort_i,mgsort_k;
@@ -177,8 +165,10 @@ int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat rev
 		printf("revindexPath \"%s\"\n",revindexPath);
 	#endif
 
-	if ((REVINDEXFH = fopen(revindexPath,"rb")) == NULL) {
-		perror(revindexPath);
+
+	//if ((REVINDEXFH = fopen(revindexPath,"rb")) == NULL) {
+	if ((REVINDEXFH = revindexFilesOpenLocalPart(lotNr,type,"rb",subname,part)) == NULL) {
+		perror("revindexFilesOpenLocalPart");
 		//exit(1);
 	}
 	else {
@@ -214,7 +204,7 @@ int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat rev
 			#endif
 
 			if (revIndexArray[count].nrOfHits > MaxsHitsInIndex) {
-				printf("nrOfHits lager then MaxsHitsInIndex. Nr was %i for %s\n",revIndexArray[count].nrOfHits,revindexPath);
+				printf("nrOfHits lager then MaxsHitsInIndex. Nr was %i\n",revIndexArray[count].nrOfHits);
 				return 0;
 			}
 
@@ -285,6 +275,7 @@ int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat rev
 			++nrofDocIDsForWordID[forekomstnr -1];
 		}
 		lastWordID = revIndexArray[i].WordID;
+
 	}
 
 	lastWordID = 0;
