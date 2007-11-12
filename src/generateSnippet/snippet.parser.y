@@ -73,7 +73,7 @@ struct bsg_intern_data
 };
 
 const int	show = 0;
-const int	v_section_div=1, v_section_head=2, v_section_span=4, v_section_sentence=8;
+const int	v_section_div=1, v_section_head=2, v_section_span=4, v_section_sentence=8, v_capital_word=16;
 
 static inline char ordinary( char *s );
 static inline char sentence( struct bsg_intern_data *data );
@@ -183,6 +183,9 @@ sentence :
 		}
 
 	    vector_pushback(data->WSentence, data->bpos, data->good_sentence);
+
+	    if (utf8_first_char_uppercase((unsigned char*)$2))
+		data->q_flags|= v_capital_word;
 
 	    queue_push(data->Q, data->bpos, data->q_flags);
 	    queue_push(data->Q2, data->bpos, data->q_flags);
@@ -411,6 +414,11 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 			_spos+= sprintf(_sbuf+_spos, "s");
 		    else
 			_spos+= sprintf(_sbuf+_spos, "_");
+
+		    if (flags & v_capital_word)
+			_spos+= sprintf(_sbuf+_spos, "C");
+		    else
+			_spos+= sprintf(_sbuf+_spos, "_");
 		}
 #endif
 
@@ -551,50 +559,68 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 		    _spos+= sprintf(_sbuf+_spos, " (%i) ", closeness);
 		    _spos+= sprintf(_sbuf+_spos, "\033[0m");
 		}
-	    _spos+= sprintf(_sbuf+_spos, "[%i] ", hits_in_links);
-	    _spos+= sprintf(_sbuf+_spos, ":%i: ", sentences);
+//	    _spos+= sprintf(_sbuf+_spos, "[%i] ", hits_in_links);
+	    _spos+= sprintf(_sbuf+_spos, "(%i) ", sentences);
 #endif
 	    }
 
     /**
         Algoritme for kalkulering av beste snippet:
 
-        x bit (22+)		d_hits (antall unike treff)
-	3 bit (19-21)		div har good sentences
-        2 bit (17-18)		3 - hits_in_links (min 0)
-        8 bit (9-16)		closeness (avstand mellom trefford gitt flere sokeord)
-        1 bit (8)		div and !head
-        1 bit (7)		div and head
-        1 bit (6)		!div and head
-        1 bit (5)		span
-        1 bit (4)		sentence
+        x bit (19+)		d_hits (antall unike treff)
+	1 bit (18)		div har good sentences
+        8 bit (10-17)		closeness (avstand mellom trefford gitt flere sokeord)
+        2 bit (8-9)		div and !head | div and head | !div and head | --
+        2 bit (6-7)		span | sentence
+	2 bit (4-5)		antall good sentences (max 4) -1
         4 bit (0-3)		sum_hits (max 15)
      */
 
-//	    sum_hits-= hits_in_links;
-	    int		num;
-	    num = 3 - hits_in_links;
-	    if (num<0) num = 0;
+	    if (sum_hits) sum_hits++;	// sum_hits er alltid minst 1 dersom det forekommer en hit,
+					// selv om alle hits er i lenker.
+	    sum_hits-= hits_in_links;	// Fjern hits i lenker.
+//	    int		num;
+//	    num = 3 - hits_in_links;
+//	    if (num<0) num = 0;
+
+    // TODO: closeness?
 
 	    // Calculate score:
-	    score|= (d_hits<<22);
+	    score|= (d_hits<<19);
 
-	    if (sentences > 7) sentences = 7;
-	    score|= (sentences<<19);
+	    if (sentences)
+		score|= (sentences<<18);
 
-	    score|= (num<<17);
-	    score|= (closeness<<9);
+//	    score|= (num<<16);
+	    score|= (closeness<<10);
 
 	    if ((flags & v_section_div) && !(flags & v_section_head))
-		score|= (1<<8);
+		score|= (1<<9) + (1<<8);
 	    if ((flags & v_section_div) && (flags & v_section_head))
-		score|= (1<<7);
+		score|= (1<<9);
 	    if (!(flags & v_section_div) && (flags & v_section_head))
-		score|= (1<<6);
+		score|= (1<<8);
+
+	    /**
+		span+C	= 3
+		span	= 2
+		sntnc+C	= 2
+		C	= 1
+	    */
 	    if ((flags & v_section_span))
-		score|= (1<<5);
-	    if ((flags & v_section_sentence))
-		score|= (1<<4);
+		{
+		    score|= (1<<7);
+		    if ((flags & v_capital_word))
+			score|= (1<<6);
+		}
+	    else if ((flags & v_section_sentence) && (flags & v_capital_word))
+		score|= (1<<7);
+	    else if ((flags & v_capital_word))
+		score|= (1<<6);
+
+	    if (sentences > 4) sentences = 4;
+	    if (sentences > 0) sentences--;
+	    score|= (sentences<<4);
 
 	    if (sum_hits > 15)
 		score|= 0x0f;
@@ -629,8 +655,40 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 #ifdef DEBUG_ON
 	    if (verbose)
 		{
+		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<22) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<21) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<20) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<19) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<18) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<17) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<16) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<15) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<14) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<13) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<12) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<11) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<10) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<9) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<8) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<7) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<6) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<5) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<4) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<3) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<2) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<1) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<0) ? '1' : '0'));
+		    _spos+= sprintf(_sbuf+_spos, "\033[0m ");
+
 		    _spos+= sprintf(_sbuf+_spos, "\033[1;31m");
-		    _spos+= sprintf(_sbuf+_spos, "%5i ", score);
+		    _spos+= sprintf(_sbuf+_spos, "%7i ", score);
 		    _spos+= sprintf(_sbuf+_spos, "\033[0m");
 
 		    for (;pos < data->bpos; pos++)
