@@ -24,7 +24,9 @@
 #include "../query/query_parser.h"
 #include "../common/integerindex.h"
 
-#include "../getdate/getdate.h"
+#ifdef BLACK_BOKS
+	#include "../getdate/getdate.h"
+#endif
 
 #include "../3pLibs/keyValueHash/hashtable.h"
 
