@@ -12,6 +12,18 @@
 #include "bfileutil.h"
 #include "boithohome.h"
 
+#include <stdlib.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/vfs.h>
+#include <dirent.h>
+#include <inttypes.h>
+
+#include <sys/stat.h>
+#include <unistd.h>
+
+
 //hvis det er mac os :
 //#include <sys/param.h> // for statfs 
 //#include <sys/mount.h> // for statfs 
@@ -251,6 +263,101 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
                 return FILEHANDLER;
 
 }
+
+int lotOpenFileNoCashel(unsigned int DocID,char resource[],char type[], char lock,char subname[]) {
+
+	return lotOpenFileNoCasheByLotNrl(rLotForDOCid(DocID),resource,type,lock,subname);
+}
+
+int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,char subname[]) {
+
+
+	int fd;
+	int i;
+	char FilePath[PATH_MAX]; 	//var 128
+	char File [PATH_MAX];	//var 128
+
+	#ifdef DEBUG
+		printf("subname: \"%s\", resource %s\n",subname,resource);
+	#endif
+
+                 GetFilPathForLot(FilePath,LotNr,subname);
+                 strcpy(File,FilePath);
+                 strncat(File,resource,PATH_MAX); //var 128
+
+		#ifdef DEBUG
+                	printf("lotOpenFileNoCasheByLotNr: opening file \"%s\" for %s\n",File,type);
+		#endif
+
+		if (strcmp(type,">>") == 0) {
+			fprintf(stderr,"lotOpenFileNoCasheByLotNrl: ikke implementert\n");
+			exit(1);
+			/*
+			//emulating perl's >>. If the file eksist is is opene for reading and writing.
+			//if not it is createt and openf for writing and reading
+			if ( (fd = open64(File,"r+")) == NULL ) {
+                        	makePath(FilePath);
+
+				if ( (fd = open64(File,"r+")) == NULL ) {
+
+                        		if ( (fd = open64(File,"w+")) == NULL ) {
+                        		        perror(File);
+                        		        //exit(0);
+                        		        return NULL;
+                        		}
+				}
+                	}
+			*/
+		}
+		//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
+		else if ((strcmp(type,"rb") == 0) || (strcmp(type,"r") == 0)) {
+			if ( (fd = open64(File,O_RDONLY)) == -1 ) {
+				#ifdef DEBUG
+				perror(File);
+				#endif
+				return -1;
+			}
+		}
+		else {
+			fprintf(stderr,"lotOpenFileNoCasheByLotNrl: ikke implementert\n");
+			exit(1);
+		/*
+                //temp: Bytte ut FilePath med filnavnet
+                if ( (fd = open64(File,type)) == NULL ) {
+                        makePath(FilePath);
+
+			//hvorfår har vi type "File" her ???, det verste er at det ser ut til å fungere også
+                        //if ( (FILEHANDLER = (FILE *)fopen64(File,"File")) == NULL ) {
+                        if ( (fd = (open64(File,type)) == NULL ) {
+                                perror(File);
+                                //exit(0);
+				return NULL;
+                        }
+                }
+		*/
+		}
+
+            	#ifdef DEBUG
+                        printf("lotOpenFile: tryint to obtain lock \"%c\"\n",lock);
+                #endif
+                //honterer låsning
+                if (lock == 'e') {
+			//skal vi ha flock64() her ?
+                        flock(fd,LOCK_EX);
+                }
+                else if (lock == 's') {
+                        flock(fd,LOCK_SH);
+                }
+		#ifdef DEBUG
+                        printf("lotOpenFile: lock obtained\n");
+                #endif
+ 
+		#ifdef DEBUG
+			printf("lotOpenFileNoCasheByLotNr: finished\n");
+		#endif
+                return fd;
+
+}
 //gir andre tilgan til lot filer. Casher opne filhandlere
 FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char subname[]) {
 
@@ -384,10 +491,27 @@ FILE *openMaplist() {
 	return MAPLIST;
 }
 
+int GetDevIdForLot(int LotNr) {
+
+	return dataDirectorys[LotNr % 64].devid;
+
+}
+
+//lager/henter ut en unik id for hver device
+int MakeMapListMap_getfsid (const char *path) {
+
+	struct stat buf;
+	int i;
+
+	stat(path, &buf);
+	i=(buf.st_dev % 63);
+
+	return i;
+}
+
 /*
 Laster mappene som ligger i maplist.conf og lager en oversikt over de.
 */
-
 void MakeMapListMap () {
 
 	FILE *MAPLIST;
@@ -397,26 +521,13 @@ void MakeMapListMap () {
 
 	MAPLIST = openMaplist();
 
-	/*
-	//lager mappe oversikt
-	i = 0;
-	while ((feof(MAPLIST) == 0) && (NrOfDataDirectorys > i)) {
-		line = fgets(buff,sizeof(buff),MAPLIST);
-		//line = gets(MAPLIST);
-		chomp(line);
-		printf("aa: -%s-\n",line);
-		//leger til linjen i oversikten over mapper
-		sprintf(dataDirectorys[i].Name,"%s",line);
-
-		i++;
-	}
-	*/
-	//bedre metode som også får med seg linje 64
 	i = 0;
 	while((fgets(buff,sizeof(buff),MAPLIST) != NULL) && (NrOfDataDirectorys > i)) {
 		chomp(buff);
 		//printf("line -%s-\n",buff);
 		sprintf(dataDirectorys[i].Name,"%s",buff);
+
+		dataDirectorys[i].devid = MakeMapListMap_getfsid(buff);
 
 		++i;
 	}
@@ -514,10 +625,17 @@ void GetFilPathForLotFile(char *FilePath,char lotfile[],int LotNr,char subname[]
 	strcat(FilePath,lotfile);
 }
 
+
+char *returnFilPathForLot(int LotNr,char subname[]) {
+	static char FilePath[512];
+	GetFilPathForLot(FilePath,LotNr,subname);
+
+	return FilePath;
+}
+
 /*
 Gir oss pats for en lot. 
 */
-
 void GetFilPathForLot(char *FilePath,int LotNr,char subname[]) {
 	//char FilePath[64];
 	int subdir;

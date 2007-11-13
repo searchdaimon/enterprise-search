@@ -16,6 +16,7 @@
 
 #endif
 //FILE *bfopen(char name[],char flags[]);
+char *returnFilPathForLot(int LotNr,char subname[]);
 void GetFilPathForLot(char *FilePath,int LotNr,char subname[]);
 void GetFilPathForLotFile(char *FilePath,char lotfile[],int LotNr,char subname[]);
 void GetFilPathForLotByDocID(char *FilePath,int DocID,char subname[]);
@@ -32,5 +33,10 @@ void lotCloseFiles();
 FILE *openMaplist();
 int lotHasSufficientSpace(int lot, int needSpace,char subname[]);
 int HasSufficientSpace(char FilePath[], int needSpace);
+
+int lotOpenFileNoCashel(unsigned int DocID,char resource[],char type[], char lock,char subname[]);
+int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,char subname[]);
+
+int GetDevIdForLot(int LotNr);
 
 #endif //_LOT__H_
