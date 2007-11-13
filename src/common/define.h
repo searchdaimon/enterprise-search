@@ -297,6 +297,7 @@ struct ReposetoryHeaderFormat {
 
 struct StorageDirectorysFormat {
 	char Name[64];
+	int devid;
 };
 //
 
