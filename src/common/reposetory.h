@@ -116,7 +116,7 @@ unsigned int GetLastIndexTimeForLot(int LotNr,char subname[]);
 int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
                         char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[]);
 
-int rReadPost2(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
+int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
                         char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[],
                         unsigned int rsize,unsigned int imagesize);
 
