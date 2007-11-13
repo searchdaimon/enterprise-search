@@ -9,6 +9,7 @@ ToDo: trenger en "close" prosedyre for filhandlerene.
 #include <stdlib.h>
 #include <string.h>
 
+#include "dp.h"
 //skrur av filcashn da vi deiver å segge feiler med den
 //#define DI_FILE_CASHE
 
@@ -311,6 +312,10 @@ int DIRead_fmode (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char 
 		printf("DIRead: reading for DocID %i, subname \"%s\"\n",DocID,subname);
 	#endif
 
+	#ifdef DISK_PROTECTOR
+		dp_lock(rLotForDOCid(DocID));
+	#endif
+
 	if ((file = GetFileHandler(DocID,filemode,subname, NULL)) != NULL) {
 
 
@@ -339,16 +344,20 @@ int DIRead_fmode (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char 
 			fclose(file);
 		#endif
 
-                return forReturn;
 		
         }
         else {
 		printf("cant get GetFileHandler\n");
-                return  0;
+		forReturn =  0;
+
         }
 
 
+	#ifdef DISK_PROTECTOR
+		dp_unlock(rLotForDOCid(DocID));
+	#endif
 
+	return forReturn;
 
 }
 
