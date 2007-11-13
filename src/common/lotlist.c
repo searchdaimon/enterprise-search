@@ -121,7 +121,7 @@ void lotlistLoad() {
 			
 			if (sscanf(buff,"%s %i\n",host,&lotNr) != 2) { 
                                 printf("bad lotlist format on line %i\n",lineCount);
-				printf("buff %s isnt in format \%s \%i\n",buff);
+				printf("buff %s isnt in format %%s %%i\n",buff);
                                 exit(1);
                         }
 			lotlistAdd(host,lotNr);
