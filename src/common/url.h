@@ -18,3 +18,4 @@ int find_domain_path_len (char url[]);
 int url_depth(char url[]);
 int url_nrOfSubDomains(char url[]);
 int find_domains_subname(const char url[],char domain[], int sizeofdomain);
+int legalUrl(char word[]);

@@ -93,7 +93,12 @@ int url_normalization (char url[], int urlsize) {
         //kutter av http:// (de 7 første tegnene)
         //strscpy(domain,url + 7,sizeof(domain));
 
-
+	/*
+		Tar bort # og alt etter i urlen. Eks http://www.boitho.com/side.html#august blir til http://www.boitho.com/side.html
+	*/
+        if ( (cpnt = strchr((url +7),'#')) != NULL) {
+		cpnt[0] = '\0';
+	}
 
 	/*
 	Removing the default port. 
@@ -172,7 +177,40 @@ int url_normalization (char url[], int urlsize) {
 	return 1;
 }
 
-int gyldig_url(char word[]) {
+
+int NotDuplicateUrl(char word[]) {
+
+		if (strstr(word,"/default") != NULL) {
+			debug("hav /default",word);
+			return 0;
+		}
+		else if (strstr(word,"/index") != NULL) {
+			debug("hav /index",word);
+			return 0;
+		}
+		else if (strstr(word,"/www1") != NULL) {
+			debug("hav /www1",word);
+			return 0;
+		}
+		else if (strstr(word,"/www2") != NULL) {
+			debug("hav /www2",word);
+			return 0;
+		}
+		else if (strstr(word,"/www3") != NULL) {
+			debug("hav /www3",word);
+			return 0;
+		}
+		else if (strstr(word,"/www4") != NULL) {
+			debug("hav /index",word);
+			return 0;
+		}
+
+
+	return 1;
+}
+
+int legalUrl(char word[]) {
+
                 static char lasturl[201] = {""};
                 int lengt;
                 char *cpnt;
@@ -259,6 +297,7 @@ int gyldig_url(char word[]) {
                         || (strcmp(filetype,".aspx") == 0)
                         || (strcmp(filetype,".do") == 0)
                         || (strcmp(filetype,".jsp") == 0)
+                        || (strcmp(filetype,".jhtml") == 0)
 			|| isWikiUrl(word)
                         )
                 ) {
@@ -311,30 +350,6 @@ int gyldig_url(char word[]) {
 			debug("hav //");
 			return 0;
 		}
-		else if (strstr(word,"/default") != NULL) {
-			debug("hav /default",word);
-			return 0;
-		}
-		else if (strstr(word,"/index") != NULL) {
-			debug("hav /index",word);
-			return 0;
-		}
-		else if (strstr(word,"/www1") != NULL) {
-			debug("hav /www1",word);
-			return 0;
-		}
-		else if (strstr(word,"/www2") != NULL) {
-			debug("hav /www2",word);
-			return 0;
-		}
-		else if (strstr(word,"/www3") != NULL) {
-			debug("hav /www3",word);
-			return 0;
-		}
-		else if (strstr(word,"/www4") != NULL) {
-			debug("hav /index",word);
-			return 0;
-		}
 		else if (strstr(word,"mailto:") != NULL) {
 			debug("hav mailto:",word);
 			return 0;
@@ -357,6 +372,17 @@ int gyldig_url(char word[]) {
 		exit(1);
 }
 
+
+int gyldig_url(char word[]) {
+
+	if (!legalUrl(word)) {
+		return 0;
+	}
+	else if(!NotDuplicateUrl(word)) {
+		return 0;
+	}
+	return 1;
+}
 
 int url_havpri1(char word[]) {
 
