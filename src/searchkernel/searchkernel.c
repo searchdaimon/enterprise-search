@@ -24,6 +24,7 @@
 #include "../query/query_parser.h"
 #include "../common/integerindex.h"
 
+
 #ifdef BLACK_BOKS
 	#include "../getdate/getdate.h"
 #endif
@@ -351,6 +352,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 			
 					//printf("cacheLink: %s\n",(*Sider).cacheLink);
 
+
 					
 					if (((*Sider).DocumentIndex.SummaryPointer != 0) && 
 							((rReadSummary(DocID,&metadesc, &titleaa,&body,(*Sider).DocumentIndex.SummaryPointer,(*Sider).DocumentIndex.SummarySize,subname) != 0))) {
@@ -418,7 +420,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 					}
 
 
-
+					
 					
 					
 					
@@ -965,6 +967,7 @@ void *generatePagesResults(void *arg)
 
 		#endif
 
+
 		//leser DI
 		if (!DIRead_fmode(&side->DocumentIndex,(*PagesResults).TeffArray->iindex[i].DocID,(*(*PagesResults).TeffArray->iindex[i].subname).subname,'r')) 
 		{
@@ -973,6 +976,7 @@ void *generatePagesResults(void *arg)
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantDIRead,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
                         continue;
                 }
+
 
 		vboprintf("[tid: %u] looking on  DocID: %u url: \"%s\"\n",(unsigned int)tid,(*PagesResults).TeffArray->iindex[i].DocID,side->DocumentIndex.Url);
 		
@@ -1562,6 +1566,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	// :temp
 
 	#ifdef WITH_THREAD
+
+	dp_init();
+
 	pthread_t threadid[NROF_GENERATEPAGES_THREADS];
 
 	//ret = pthread_mutexattr_init(&PagesResults.mutex);

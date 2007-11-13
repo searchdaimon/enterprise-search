@@ -54,7 +54,7 @@ char servername[32];
 //#endif
 
 #ifdef WITH_PROFILING
-	#define profiling_maxruncount 3
+	#define profiling_maxruncount 1
 	static int profiling_runcount = 0;
 #endif
 
