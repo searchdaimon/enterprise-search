@@ -995,6 +995,38 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg)
 
 }
 
+int pi_switch(int showabal,struct SiderFormat *CurentSider, struct SiderFormat *Sider) {
+
+        int i;
+        int count = 0;
+
+        for (i=0;i<showabal;i++) {
+
+                if (!Sider[i].deletet) {
+
+                        if (
+				(Sider[i].iindex.DocID == CurentSider->iindex.DocID) 
+				&& (CurentSider->subname.config.isPaidInclusion)
+			) {
+                                #ifdef DEBUG
+	                                printf("pi_switch: DocID is the same for Url \"%s\" == \"%s\"\n",
+						Sider[i].DocumentIndex.Url,(*CurentSider).DocumentIndex.Url);
+                                #endif
+				//bytter om slik at den beste blir pi side også, så vil vi filtrere ut denne vi har np
+				Sider[i].subname.config.isPaidInclusion = CurentSider->subname.config.isPaidInclusion;
+				strscpy(Sider[i].cacheLink,CurentSider->cacheLink,sizeof(Sider[i].cacheLink));
+
+                                return 1;
+
+                                ++count;
+                        }
+
+                }
+        }
+
+        return 0;
+
+}
 
 void
 handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
@@ -1127,11 +1159,20 @@ showabal,AddSiderHeder[i].servername);
 		//dette er kansje ikke optimalet, da vi går gjenom alle siden. Ikke bare de som skal være med
 		for(i=0;i<queryNodeHeder->MaxsHits * nrOfServers + nrOfPiServers;i++) {
 
-			dprintf("looking on url %s, deleted %i, adult %i, allrank %u, i %i, type %i\n",Sider[i].DocumentIndex.Url,Sider[i].deletet,Sider[i].DocumentIndex.AdultWeight,Sider[i].iindex.allrank,i,Sider[i].type);
-			if (!Sider[i].deletet) {
+
+			if (Sider[i].deletet) {
+				dprintf("page is deleted\n");
+			}
+			else {
+
+				dprintf("looking on url %s, adult %i, allrank %u, i %i, type %i\n",Sider[i].DocumentIndex.Url,Sider[i].DocumentIndex.AdultWeight,Sider[i].iindex.allrank,i,Sider[i].type);
+
 				//setter som slettet
 				Sider[i].deletet = 1;
 
+				// hvis dette er en pi side, må vi håntere at det kan komme versjoner av den som har bedre rank
+				// hvis det skjer skal vi bruke pi siden, og forkaste den andre
+				pi_switch(i,&Sider[i],Sider);
 
 				if ((QueryData->filterOn) && (Sider[i].subname.config.filterSameUrl) 
 						&& (filterSameUrl(i,Sider[i].url,Sider)) ) {
@@ -2775,9 +2816,11 @@ int main(int argc, char *argv[])
 			/************************************************************************************************
 			Logging av Paid Inclusion til sql db.
 			************************************************************************************************/
+//insert DELAYED into pi_search_logg (tid,query,treff,search_tid,ip_adresse,spot,piDocID ) select NOW(),'$query',$hits,$time,'$ipadress',$spot,
+//id from pi_sider where WWWDocID=$DocID
 
 			sprintf(query,"insert into pi_search_logg (tid,query,treff,search_tid,ip_adresse,spot,piDocID ) \
-				values( NOW(),?,?,?,?,?,?)");
+				select NOW(),?,?,?,?,?,id from pi_sider where WWWDocID=? ");
 
 
 			if (mysql_stmt_prepare(pilogstmt, query, strlen(query)) != 0) {
@@ -2803,7 +2846,7 @@ int main(int argc, char *argv[])
 
 						bind[0].buffer_type = MYSQL_TYPE_STRING; // query
 						bind[0].buffer = QueryData.query;
-						len[0] = strlen(QueryData.query) -3;
+						len[0] = strlen(QueryData.query);
 						bind[0].length = &len[0];
 
 						bind[1].buffer_type = MYSQL_TYPE_LONG; // treff
