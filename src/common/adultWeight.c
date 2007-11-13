@@ -8,6 +8,7 @@
 #include <string.h>
 
 #define MMAP_ADULT
+
 #ifdef MMAP_ADULT
         #include <sys/types.h>
         #include <sys/stat.h>
