@@ -158,6 +158,7 @@ handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum br
 
 	cmc_rewrite_url(sock, collection, url_in, lenin, ptype, btype, url_out, len);
 
+	printf("handle_url_rewrite: Did rewrite \"%s\" -> \"%s\"\n",url_in,url_out);
 #ifdef WITH_THREAD
 	pthread_mutex_unlock(lock);
 #endif
@@ -978,7 +979,7 @@ void *generatePagesResults(void *arg)
                 }
 
 
-		vboprintf("[tid: %u] looking on  DocID: %u url: \"%s\"\n",(unsigned int)tid,(*PagesResults).TeffArray->iindex[i].DocID,side->DocumentIndex.Url);
+		vboprintf("[tid: %u] looking on  DocID: %u url: \"%s\", subname: \"%s\"\n",(unsigned int)tid,(*PagesResults).TeffArray->iindex[i].DocID,side->DocumentIndex.Url,(*(*PagesResults).TeffArray->iindex[i].subname).subname);
 		
 		//adult fra di
 		if (((*PagesResults).filterOn) && (filterAdultWeight_value(side->DocumentIndex.AdultWeight,(*PagesResults).adultpages,(*PagesResults).noadultpages)) ) {
@@ -1071,12 +1072,13 @@ void *generatePagesResults(void *arg)
 		if (side->DocumentIndex.crc32 == 0) {
 			side->DocumentIndex.crc32 = crc32boitho(htmlBuffer);
 		
-
+			/*
 			if (((*PagesResults).filterOn) && (filterSameCrc32(localshowabal,side,(*PagesResults).Sider))) {
 	                      	vboprintf("hav same crc32\n");
 				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_2,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
                 	      	continue;
                 	}
+			*/
 		}
 
 		/*
@@ -1197,6 +1199,22 @@ void *generatePagesResults(void *arg)
 
 		int treadSyncFilters = 0;
 
+		//håntering av at vi kan ha mer en en pi.
+		if (pi_switch(nrofGodPages(PagesResults),side,(*PagesResults).Sider)) {
+			vboprintf("switch a pi \"%s\"\n",side->DocumentIndex.Url);
+			//continue;
+			treadSyncFilters = 1;
+			goto end_filter_lock;
+
+		}
+
+		if (((*PagesResults).filterOn) && (filterSameCrc32(nrofGodPages(PagesResults),side,(*PagesResults).Sider))) {
+                      	vboprintf("hav same crc32\n");
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_2,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
+               	      	//continue;
+			treadSyncFilters = 1;
+			goto end_filter_lock;
+               	}
 
 
 		//fjerner eventuelt like urler
@@ -1273,7 +1291,7 @@ void *generatePagesResults(void *arg)
 		//kopierer siden inni den globale side arrayen
 		(*PagesResults).Sider[myPageNr] = *side;
 		
-		vboprintf("did copy page \"%s\" into spot %i. (read back \"%s\")\n",side->DocumentIndex.Url,myPageNr,(*PagesResults).Sider[myPageNr].DocumentIndex.Url);
+		vboprintf("did copy page \"%s\" into spot %i. (read back \"%s\")\n",side->DocumentIndex.Url,myPageNr,side->subname.subname);
 		
 		break; //går ut av loopen. Vi har funnet at vår index hit var brukenes, vi trenger da en ny side
 	}
@@ -1488,7 +1506,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
                 printf("groups: %i\n",groups_responsnr);
                 for (i=0;i<groups_responsnr;i++) {
 
-			strsandr(groups_respons_list[i]," ","X");
+			//vi har problemer med space
+			//strsandr(groups_respons_list[i]," ","X");
+			strsandr(groups_respons_list[i]," ","_NBSP_");
 
                         printf("group: %s\n",groups_respons_list[i]);
 
@@ -1690,7 +1710,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	(*SiderHeder).showabal = PagesResults.showabal;
 
 	//trekker fra de som ble filtrert ut stille, altså ikke vises til brukeren at de ble filtrert ut. Typisk 404, 500 feil og lignende, som ikke gir noen verdi for brukeren
-	(*SiderHeder).showabal -= PagesResults.filteredsilent;
+	//runarb: 14.11.2007: 	dette ser ut til å lage showabal som negatift tall av og til. 
+	//			det er også feil, da showabal nå er faktisk telte sider
+	//(*SiderHeder).showabal -= PagesResults.filteredsilent;
 
 
 	//lager en filtered verdi
