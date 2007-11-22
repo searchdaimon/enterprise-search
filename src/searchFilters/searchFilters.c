@@ -7,6 +7,41 @@
 #include "../common/lot.h"
 #include "../common/utf8-strings.h"
 
+
+int pi_switch(int showabal,struct SiderFormat *CurentSider, struct SiderFormat *Sider) {
+
+        int i;
+        int count = 0;
+
+        for (i=0;i<showabal;i++) {
+
+                if (!Sider[i].deletet) {
+
+                        if (
+                                (CurentSider->subname.config.isPaidInclusion)
+                                && ((Sider[i].iindex.DocID == CurentSider->iindex.DocID) || (strcmp(Sider[i].DocumentIndex.Url,CurentSider->DocumentIndex.Url) == 0))
+                        ) {
+                                #ifdef DEBUG
+                                        printf("pi_switch: DocID or url is the same for Url \"%s\" DocID %u == \"%s\" DocID %u\n",
+                                                Sider[i].DocumentIndex.Url,Sider[i].iindex.DocID,CurentSider->DocumentIndex.Url,CurentSider->iindex.DocID);
+                                #endif
+                                //bytter om slik at den beste blir pi side også, så vil vi filtrere ut denne vi har np
+                                Sider[i].subname.config.isPaidInclusion = CurentSider->subname.config.isPaidInclusion;
+                                strscpy(Sider[i].cacheLink,CurentSider->cacheLink,sizeof(Sider[i].cacheLink));
+
+                                return 1;
+
+                                ++count;
+                        }
+
+                }
+        }
+
+        return 0;
+
+}
+
+
 void filtersTrapedReset(struct filtersTrapedFormat *filtersTraped) {
 
         filtersTraped->filterAdultWeight_bool	= 0;
@@ -271,7 +306,8 @@ int filterSameDomain(int showabal,struct SiderFormat *CurentSider, struct SiderF
 				#endif
 				//printf("domain is the same. %s == %s\n",(*CurentSider).domain,Sider[i].domain);
 
-				(*CurentSider).posisjon = Sider[i].posisjon;
+				//runarb: 14.11.2007: hva gjør linjen nedenfor???
+				//(*CurentSider).posisjon = Sider[i].posisjon;
 			
 				++count;
 			}	
