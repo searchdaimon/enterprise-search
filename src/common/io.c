@@ -13,7 +13,7 @@
 ssize_t
 io_read_align(int fd, void *buf, size_t count)
 {
-	off64_t offset, curoff;
+	off_t offset, curoff;
 	int pagesize;
 	char *abuf;
 	ssize_t acount;
@@ -24,14 +24,14 @@ io_read_align(int fd, void *buf, size_t count)
 	}
 
 	pagesize = getpagesize();
-	if ((offset = lseek64(fd, 0, SEEK_CUR)) == (off64_t)-1) {
+	if ((offset = lseek64(fd, 0, SEEK_CUR)) == (off_t)-1) {
 		return (ssize_t)-1;
 	}
 
 	curoff = offset;
 
 	acount = (((size_t)count+pagesize-1)/pagesize)*pagesize;
-	offset = ((off64_t)offset/pagesize)*pagesize;
+	offset = ((off_t)offset/pagesize)*pagesize;
 	if (lseek64(fd, offset, SEEK_SET) == -1) {
 		return (ssize_t)-1;
 	}
