@@ -120,11 +120,13 @@ int lotHasSufficientSpace(int lot, int needSpace,char subname[]) {
 	return i;
 }
 
-
+#ifdef DO_DIRECT
 
 int
 lotOpenFileNoCache_direct(unsigned int DocID, char *resource, char *type, char lock, char *subname)
 {
+	
+
 	unsigned int LotNr = rLotForDOCid(DocID);
 	int i;
 	char FilePath[PATH_MAX];
@@ -173,8 +175,8 @@ lotOpenFileNoCache_direct(unsigned int DocID, char *resource, char *type, char l
 #endif
 	return fd;
 
-
 }
+#endif
 
 
 
