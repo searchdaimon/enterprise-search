@@ -17,9 +17,14 @@ size_t iconv_simple(iconv_t cd,
 size_t iconv_convert(iconv_t cd,char **inbuf, size_t inbytes) {
 
         size_t outbytes = (inbytes *2);
-        char *out = malloc(outbytes);
+        char *out;
         size_t n;
         char *outchar;
+
+	if (( out = malloc(outbytes) ) == NULL) {
+		perror("malloc");
+		return -1;
+	}
 
         outchar = out;
 
@@ -32,5 +37,8 @@ size_t iconv_convert(iconv_t cd,char **inbuf, size_t inbytes) {
         }
 
         strncpy((*inbuf),out,inbytes);
+
+	free(out);
+
 }
 
