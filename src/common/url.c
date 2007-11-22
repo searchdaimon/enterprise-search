@@ -5,6 +5,7 @@
 #include "define.h"
 #include "debug.h"
 #include "bstr.h"
+#include "url.h"
 #include "utf8-strings.h"
 
 //domener som har Country code second-level domain ccSLD domenesystem, slik som co.uk i name.co.uk
@@ -692,7 +693,7 @@ int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
 
 
 //fjerner også www. i begyndelsen av en url, slik at det blir lettere å samenligne www.vg.no == vg.no
-int find_domain_no_www (char url[],char domain[], int sizeofdomain) {
+int find_domain_no_www (const char url[],char domain[], int sizeofdomain) {
 
         char *cpnt;
 

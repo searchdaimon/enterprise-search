@@ -1,3 +1,6 @@
+#ifndef _URL__H_
+#define _URL__H_
+
 
 int gyldig_url(char word[]);
 int url_havpri1(char word[]);
@@ -8,7 +11,7 @@ int url_isttl(char word[],char ttl[]);
 
 //int find_domain_no_subname (const char url[],char domain[], int sizeofdomain);
 int find_domain_no_subname (const char url[],char domain[], int sizeofdomain);
-int find_domain_no_www (char url[],char domain[], int sizeofdomain);
+int find_domain_no_www (const char url[],char domain[], int sizeofdomain);
 int find_TLD(char domain[], char TLD[],int TLDsize);
 //int find_domain (char url[],char domain[]);
 int find_domain (const char url[],char domain[],const int domainsize);
@@ -19,3 +22,5 @@ int url_depth(char url[]);
 int url_nrOfSubDomains(char url[]);
 int find_domains_subname(const char url[],char domain[], int sizeofdomain);
 int legalUrl(char word[]);
+
+#endif
