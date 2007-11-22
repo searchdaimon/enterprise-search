@@ -351,6 +351,7 @@ void bsConectAndQuery(int *sockfd,int nrOfServers, char *servers[],struct queryN
 
 	//kobler til vanlige servere
 	for (i=0;i<nrOfServers;i++) {
+		dprintf("connecting to \"%s\" as sockfd nr %i\n",servers[i],(i +alreadynr));
 		if (bsconnect (&sockfd[i +alreadynr], servers[i], port)) {
 			dprintf("can connect\n");
 		}
@@ -490,7 +491,7 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 	#endif
 
 	#ifdef DEBUG
-	printf("brGetPages: alreadynr %i, *pageNr %i\n",alreadynr,*pageNr);
+	printf("brGetPages: alreadynr %i, *pageNr %i, nrOfServers %i\n",alreadynr,*pageNr,nrOfServers);
 	
 	#endif
 
@@ -995,38 +996,6 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg)
 
 }
 
-int pi_switch(int showabal,struct SiderFormat *CurentSider, struct SiderFormat *Sider) {
-
-        int i;
-        int count = 0;
-
-        for (i=0;i<showabal;i++) {
-
-                if (!Sider[i].deletet) {
-
-                        if (
-				(Sider[i].iindex.DocID == CurentSider->iindex.DocID) 
-				&& (CurentSider->subname.config.isPaidInclusion)
-			) {
-                                #ifdef DEBUG
-	                                printf("pi_switch: DocID is the same for Url \"%s\" == \"%s\"\n",
-						Sider[i].DocumentIndex.Url,(*CurentSider).DocumentIndex.Url);
-                                #endif
-				//bytter om slik at den beste blir pi side også, så vil vi filtrere ut denne vi har np
-				Sider[i].subname.config.isPaidInclusion = CurentSider->subname.config.isPaidInclusion;
-				strscpy(Sider[i].cacheLink,CurentSider->cacheLink,sizeof(Sider[i].cacheLink));
-
-                                return 1;
-
-                                ++count;
-                        }
-
-                }
-        }
-
-        return 0;
-
-}
 
 void
 handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
@@ -1134,6 +1103,12 @@ showabal,AddSiderHeder[i].servername);
 		dprintf("AdultPages %i, NonAdultPages: %i\n",AdultPages,NonAdultPages);
 		//hvis vi har adult pages sjekker vi om vi har nokk ikke adult pages å vise, hvis ikke viser vi bare adult
 
+	} // !hascashe && !hasprequery
+	else {
+		*nrRespondedServers = 1;
+
+	}
+
 #ifdef DEBUG
 		gettimeofday(&start_time, NULL);
 #endif
@@ -1142,7 +1117,7 @@ showabal,AddSiderHeder[i].servername);
 		//tmp:
 		//dette skaper problemer for blaingen på bb. Sikkert samme problmet på web, så vi må se på hva vi kan gjøre
 		#ifndef BLACK_BOKS
-		mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements);
+			mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements);
 		#endif
 
 #ifdef DEBUG
@@ -1157,7 +1132,7 @@ showabal,AddSiderHeder[i].servername);
 		filtersTrapedReset(dispatcherfiltersTraped);
 
 		//dette er kansje ikke optimalet, da vi går gjenom alle siden. Ikke bare de som skal være med
-		for(i=0;i<queryNodeHeder->MaxsHits * nrOfServers + nrOfPiServers;i++) {
+		for(i=0;i<queryNodeHeder->MaxsHits * (nrOfServers + nrOfPiServers);i++) {
 
 
 			if (Sider[i].deletet) {
@@ -1170,9 +1145,19 @@ showabal,AddSiderHeder[i].servername);
 				//setter som slettet
 				Sider[i].deletet = 1;
 
+
+				#ifndef BLACK_BOKS
 				// hvis dette er en pi side, må vi håntere at det kan komme versjoner av den som har bedre rank
 				// hvis det skjer skal vi bruke pi siden, og forkaste den andre
-				pi_switch(i,&Sider[i],Sider);
+	
+				if (pi_switch(i,&Sider[i],Sider)) {
+					dprintf("pi switch'ed url \"%s\"\n",Sider[i].url);
+					FinalSiderHeder->filtered++;
+					--FinalSiderHeder->TotaltTreff;
+					continue;
+				}
+	
+				#endif
 
 				if ((QueryData->filterOn) && (Sider[i].subname.config.filterSameUrl) 
 						&& (filterSameUrl(i,Sider[i].url,Sider)) ) {
@@ -1239,22 +1224,36 @@ showabal,AddSiderHeder[i].servername);
 			}
 		}
 
-	} // !hascashe && !hasprequery
-	else {
-		*nrRespondedServers = 1;
-
-	}
+//	} // !hascashe && !hasprequery
+//	else {
+//		*nrRespondedServers = 1;
+//
+//	}
 
 	//why was sort here???
 	posisjon=0;
-	for(i=0;i<queryNodeHeder->MaxsHits * nrOfServers + nrOfPiServers;i++) {
+	for(i=0;i<queryNodeHeder->MaxsHits * (nrOfServers + nrOfPiServers);i++) {
 		if (!Sider[i].deletet) {
 			Sider[i].posisjon = posisjon++;
+			#ifdef DEBUG
+			printf("setting pos %i for %s\n",Sider[i].posisjon,Sider[i].url);
+			#endif
 		}
 
-		//dprintf("%s\n",Sider[i].url);
 	}	
 
+	#ifdef DEBUG
+		printf("\n");
+		printf("Sider etter filtrering:\n");
+		for(i=0;i<queryNodeHeder->MaxsHits * (nrOfServers + nrOfPiServers);i++) {
+			//if (!Sider[i].deletet) {
+
+				printf("i: %i, url: %s, rank %i, type %i pos %i, server \"%s\"\n",i,Sider[i].url,Sider[i].iindex.allrank,Sider[i].type,Sider[i].posisjon,Sider[i].servername);
+
+			//}
+		}
+		printf("\n");
+	#endif
 
 #ifdef DEBUG
 	gettimeofday(&end_time, NULL);
@@ -1995,12 +1994,18 @@ int main(int argc, char *argv[])
 	dprintf("Time debug: query copying %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
+
+	hasprequery = 0;
+	hascashe = 0;
+	pageNr = 0;
+
 	#ifdef WITH_CASHE
 
 	char cachepath[1024];
 
 	cache_path(cachepath, sizeof(cachepath), CACHE_SEARCH, QueryData.queryhtml, QueryData.start, QueryData.GeoIPcontry);
 	cache_path(prequeryfile, sizeof(cachepath), CACHE_PREQUERY, QueryData.queryhtml, QueryData.start, QueryData.GeoIPcontry);
+
 
 	if (!prequerywriteFlag && getRank == 0 && (dispconfig.useprequery) && (QueryData.filterOn) &&
 	    cache_read(prequeryfile, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, 0)) {
@@ -2013,19 +2018,9 @@ int main(int argc, char *argv[])
 	         cache_read(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, cachetimeout)) {
 		hascashe = 1;
 
-		debug("can open cashe file \"%s\"",cashefile);
-	}
-	else {
-		//fprintf(stderr,"cant aces cashe file \"%s\": %s\n",cashefile,strerror(errno));
-		hascashe = 0;
-		hasprequery = 0;
-		pageNr = 0;
-
+		debug("can open cashe file \"%s\"",cachepath);
 	}
 	#else
-		hasprequery = 0;
-		hascashe = 0;
-		pageNr = 0;
 	#endif
 
 
@@ -2033,18 +2028,21 @@ int main(int argc, char *argv[])
 	gettimeofday(&start_time, NULL);
 	#endif
 
+	//Paid inclusion
+	bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,0,searchport);
 	
 
 	//kobler til vanlige servere
 	if ((!hascashe) && (!hasprequery)) {
-		bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,0,searchport);
+		//bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,0,searchport);
+		bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,nrOfPiServers,searchport);
 	}
 
 
 	//addservere
 	bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder,0,searchport);
 	//Paid inclusion
-	bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,nrOfServers,searchport);
+	//bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,nrOfServers,searchport);
 
 	if (getRank) {
 		int endranking = 0;
@@ -2219,7 +2217,9 @@ int main(int argc, char *argv[])
 	}
 
 	//Paid inclusion
+	dprintf("starting to get pi\n");
 	brGetPages(sockfd,nrOfPiServers,SiderHeder,Sider,&pageNr,0);
+	dprintf("end get pi\n");
 
 	if ((!hascashe) && (!hasprequery)) {
 		brGetPages(sockfd,nrOfServers,SiderHeder,Sider,&pageNr,nrOfPiServers);
@@ -2601,6 +2601,7 @@ int main(int argc, char *argv[])
 				#else
 				
 	                		printf("\t<DOMAIN>%s</DOMAIN>\n",Sider[i].domain);
+	                		printf("\t<DOMAIN_ID>%hu</DOMAIN_ID>\n",Sider[i].DomainID);
 
 					//finer om forige treff hadde samme domene
 					if (i>0 && (lastdomain != NULL) && (strcmp(Sider[i].domain,lastdomain) == 0)) {			
@@ -3077,16 +3078,6 @@ int compare_elements_posisjon (const void *_p1, const void *_p2) {
 		else
 			return p1->type < p2->type;
 	}
-	/*
-	else if (p1->subname.config.isPaidInclusion || p2->subname.config.isPaidInclusion) {
-			if ( p2->subname.config.isPaidInclusion) {
-				return 1;
-			}
-			else {
-				return -1;
-			}
-	}
-	*/
 	//hvis vi har en normal side, og har forskjelig path lengde
 	else if (p1->type == siderType_normal) {
 		if (p1->posisjon == p2->posisjon ){
