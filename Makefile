@@ -253,7 +253,7 @@ boithoad: src/boithoad/main.c
 PiToWWWDocID: src/PiToWWWDocID/main.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(CFLAGS) $(LIBS)*.c src/PiToWWWDocID/main.c src/UrlToDocID/search_index.c -o bin/PiToWWWDocID $(LDFLAGS)  $(MYSQL) $(BDB)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/PiToWWWDocID/main.c src/UrlToDocID/search_index.c -o bin/PiToWWWDocID $(LDFLAGS)  $(MYSQL) $(BDB) -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 
 
 boithoadtest: src/boithoadtest/main.c
@@ -421,7 +421,7 @@ searchcl : src/searchkernel/searchcl.c
 #dropper -D WITH_MEMINDEX og -D WITH_RANK_FILTER for nå
 #SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD $(LIBCONFIG)
 #må ha -D_GNU_SOURCE for O_DIRECT
-SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/searchkernel/verbose.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/lex.query.o src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D EXPLAIN_RANK -D_GNU_SOURCE
+SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/searchkernel/verbose.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/lex.query.o src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D EXPLAIN_RANK -D DISK_PROTECTOR
 
 
 searchddep:
@@ -600,7 +600,7 @@ recoverUrlForLot: src/recoverUrlForLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/recoverUrlForLot/main.c -o bin/recoverUrlForLot $(LDFLAGS)
+	$(CC) $(CFLAGS) src/common/lotlist.c src/recoverUrlForLot/main.c -o bin/recoverUrlForLot $(LDFLAGS) -DDEFLOT -Wall
 
 removeUnnecessaryRevindex: src/removeUnnecessaryRevindex/main.c
 	@echo ""
@@ -613,6 +613,12 @@ LotInvertetIndexMaker2:	src/LotInvertetIndexMaker2/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMaker2/main.c -o bin/LotInvertetIndexMaker2 $(LDFLAGS)
+
+readRevIndex:	src/readRevIndex/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/readRevIndex/main.c -o bin/readRevIndex $(LDFLAGS)
 
 ThumbnaleDemon: src/ThumbnaleDemon/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/ThumbnaleDemon/main.c -o bin/ThumbnaleDemon $(LDFLAGS)
@@ -703,6 +709,12 @@ addManuellUrlFile: src/addManuellUrlFile/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/addManuellUrlFile/main.c  -o bin/addManuellUrlFile $(LDFLAGS)
+
+urltest: src/urltest/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/urltest/main.c  -o bin/urltest $(LDFLAGS)
 
 dumpLotAsFiles: src/dumpLotAsFiles/main.c
 	@echo ""
