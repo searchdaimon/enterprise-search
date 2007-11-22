@@ -1271,7 +1271,7 @@ int searchIndex_getnrs(char *indexType,query_array *queryParsed,struct subnamesF
 	int nterm;
 	int i, j;
 	char queryelement[128];
-	unsigned long WordIDcrc32;
+	unsigned int WordIDcrc32;
 	for (i=0; i<(*queryParsed).n; i++)
         {
             //struct text_list *t_it = (*queryParsed).elem[i];
@@ -1293,7 +1293,7 @@ int searchIndex_getnrs(char *indexType,query_array *queryParsed,struct subnamesF
 					for (j=0; j<(*queryParsed).query[i].n; j++) {
                     				vboprintf("aa_ søker på \"%s\"\n", (*queryParsed).query[i].s[j]);
                     				strncat(queryelement,(*queryParsed).query[i].s[j],sizeof(queryelement));
-                    			                			
+			
                 				vboprintf("queryelement:  %s\n", queryelement);
 
 						convert_to_lowercase((unsigned char *)queryelement);
@@ -1353,7 +1353,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 
 	int i, y, j,k,h;
 	char queryelement[128];
-	unsigned long WordIDcrc32;
+	unsigned int WordIDcrc32;
 	int baseArrayLen;
         int TmpArrayLen;
 	int TeffArrayOriginal;
@@ -1470,7 +1470,11 @@ for (i=0; i<(*queryParsed).n; i++)
 
                     				printf("aa_ søker på \"%s\"\n", (*queryParsed).query[i].s[j]);
                     				strscpy(queryelement,(*queryParsed).query[i].s[j],sizeof(queryelement));
-                    			                			
+                    			              
+						#ifdef BLACK_BOKS  			
+                    			        strsandr(queryelement,"_NBSP_"," ");
+						#endif
+
                 				printf("queryelement:  %s\n", queryelement);
 
 						// hvis vi er et kort ord så har vi ikke fåt noen ord nummer palssering, så vi skal ikke øke hits
