@@ -79,7 +79,7 @@ void IIndexLoad (char Type[], char lang[],char subname[]) {
 				fread(&DictionaryPost,sizeof(DictionaryPost),1,dictionaryha);
 
 				if (DictionaryPost.SizeForTerm > mineAthorTermSizeForMemory) {
-					//printf("%lu: %lu\n",DictionaryPost.WordID,DictionaryPost.SizeForTerm);
+					//printf("%u: %u\n",DictionaryPost.WordID,DictionaryPost.SizeForTerm);
 					++TermsForMemory;
 				}
 			}
@@ -134,7 +134,7 @@ void IIndexLoad (char Type[], char lang[],char subname[]) {
                                 fread(&DictionaryPost,sizeof(DictionaryPost),1,dictionaryha);
 
                                 if (DictionaryPost.SizeForTerm > mineMainTermSizeForMemory) {
-                                        //printf("%lu: %lu\n",DictionaryPost.WordID,DictionaryPost.SizeForTerm);
+                                        //printf("%u: %u\n",DictionaryPost.WordID,DictionaryPost.SizeForTerm);
                                         ++TermsForMemory;
                                 }
                         }
@@ -189,7 +189,7 @@ int compare_DictionaryMemoryElements (const void *p1, const void *p2) {
 }
 
 //ToDo: bruker ikke subname her enda. Må spesifisere det når vi loader
-int ReadIIndexRecordFromMemeory (int *Adress, int *SizeForTerm, unsigned long Query_WordID,char *IndexType, char *IndexSprok,unsigned long WordIDcrc32,char subname[]) {
+int ReadIIndexRecordFromMemeory (int *Adress, int *SizeForTerm, unsigned int Query_WordID,char *IndexType, char *IndexSprok,unsigned int WordIDcrc32,char subname[]) {
 
 	int iindexfile;
 	int i;
@@ -198,13 +198,13 @@ int ReadIIndexRecordFromMemeory (int *Adress, int *SizeForTerm, unsigned long Qu
 	iindexfile = WordIDcrc32 % AntallBarrals;
 	
 	#ifdef DEBUG
-	printf("ReadIIndexRecordFromMemeory: WordIDcrc32 %lu\n",WordIDcrc32);
+	printf("ReadIIndexRecordFromMemeory: WordIDcrc32 %u\n",WordIDcrc32);
 
 	printf("FromMemeory iindexfile %i elements %i\n",iindexfile,AthorDictionary[iindexfile].elements);
 	#endif
 
 	//for(i=0;i<AthorDictionary[iindexfile].elements;i++) {
-        //        printf("%lu\n",AthorDictionary[iindexfile].Dictionary[i].WordID);
+        //        printf("%u\n",AthorDictionary[iindexfile].Dictionary[i].WordID);
         //}
 
 	dummy.WordID = WordIDcrc32;
@@ -216,7 +216,7 @@ int ReadIIndexRecordFromMemeory (int *Adress, int *SizeForTerm, unsigned long Qu
 			return 0;
 		}
 		else {
-			printf("funnet!\nmem term %lu Adress %lu, SizeForTerm %lu\n",(*DictionaryPost).WordID,(*DictionaryPost).Adress,(*DictionaryPost).SizeForTerm);
+			printf("funnet!\nmem term %u Adress %u, SizeForTerm %u\n",(*DictionaryPost).WordID,(*DictionaryPost).Adress,(*DictionaryPost).SizeForTerm);
 
 	                *Adress = (*DictionaryPost).Adress;
         	        *SizeForTerm = (*DictionaryPost).SizeForTerm;
@@ -233,7 +233,7 @@ int ReadIIndexRecordFromMemeory (int *Adress, int *SizeForTerm, unsigned long Qu
 			return 0;
 		}
 		else {
-			printf("funnet!\nmem term %lu Adress %lu, SizeForTerm %lu\n",(*DictionaryPost).WordID,(*DictionaryPost).Adress,(*DictionaryPost).SizeForTerm);
+			printf("funnet!\nmem term %u Adress %u, SizeForTerm %u\n",(*DictionaryPost).WordID,(*DictionaryPost).Adress,(*DictionaryPost).SizeForTerm);
 
 	                *Adress = (*DictionaryPost).Adress;
         	        *SizeForTerm = (*DictionaryPost).SizeForTerm;
@@ -253,7 +253,7 @@ int ReadIIndexRecordFromMemeory (int *Adress, int *SizeForTerm, unsigned long Qu
 /////////////////////////////////////////////////////////////////////
 // Finner indeks adressen til en term, ved å binærsøke ordboken
 /////////////////////////////////////////////////////////////////////
-int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,char *IndexType, char *IndexSprok,unsigned long WordIDcrc32,char subname[]) {
+int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned int Query_WordID,char *IndexType, char *IndexSprok,unsigned int WordIDcrc32,char subname[]) {
 
 
 	FILE *dictionaryha;
@@ -290,13 +290,13 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 	//revindexFilNr = fmod(WordIDcrc32,AntallBarrals);
 	//revindexFilNr = WordIDcrc32 % AntallBarrals;
 
-	//printf("mod: %i WordIDcrc32 %lu AntallBarrals %i\n",revindexFilNr,WordIDcrc32,AntallBarrals);
+	//printf("mod: %i WordIDcrc32 %u AntallBarrals %i\n",revindexFilNr,WordIDcrc32,AntallBarrals);
 
 	iindexfile = WordIDcrc32 % AntallBarrals;
 	GetFilePathForIDictionary(FilePath,IndexPath,iindexfile,IndexType,IndexSprok,subname);
 
 	#ifdef DEBUG
-	printf("ReadIIndexRecord: From disk iindexfile %i WordIDcrc32 %lu\n",iindexfile,WordIDcrc32);
+	printf("ReadIIndexRecord: From disk iindexfile %i WordIDcrc32 %u\n",iindexfile,WordIDcrc32);
 	#endif
 	//sprintf(IndexPath,"%s/iindex/%s/dictionary/%s/%i.txt",FilePath,IndexType,IndexSprok, iindexfile);
 
@@ -371,11 +371,11 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 				break;
 			}
 			#ifdef DEBUG
-			printf("WordID: %lu = %lu ?\n",DictionaryPost.WordID,Query_WordID);
+			printf("WordID: %u = %u ?\n",DictionaryPost.WordID,Query_WordID);
 			#endif
 			if (Query_WordID == DictionaryPost.WordID) {
 				fant = 1;
-				//printf("Fant: WordID: %lu = %lu ?\n",DictionaryPost.WordID,Query_WordID);
+				//printf("Fant: WordID: %u = %u ?\n",DictionaryPost.WordID,Query_WordID);
 			}
 			else if (min == halvert) {
 				//hvis vi ikke her mere halveringer igjen å gkøre. Litt usikker på 
@@ -413,7 +413,7 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 			else {
 				if (Query_WordID == DictionaryPost.WordID) {
 					fant = 1;
-                		        printf("Fant: WordID: %lu = %lu ?\n",DictionaryPost.WordID,Query_WordID);			
+                		        printf("Fant: WordID: %u = %u ?\n",DictionaryPost.WordID,Query_WordID);			
 				}
 			}
 		}
@@ -436,7 +436,7 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned long Query_WordID,
 			*Adress = DictionaryPost.Adress;
 			*SizeForTerm = DictionaryPost.SizeForTerm;
 			#ifdef DEBUG
-			printf("disk: Adress %lu, SizeForTerm %lu\n",DictionaryPost.Adress,DictionaryPost.SizeForTerm);
+			printf("disk: Adress %u, SizeForTerm %u\n",DictionaryPost.Adress,DictionaryPost.SizeForTerm);
 			#endif
 			return 1;
 		}
@@ -475,7 +475,7 @@ static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
 //	int antall //antal forekomster
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray, 
-		unsigned long WordIDcrc32, char * IndexType, char *IndexSprok,
+		unsigned int WordIDcrc32, char * IndexType, char *IndexSprok,
 		struct subnamesFormat *subname, 
 		int languageFilterNr, int languageFilterAsNr[] ) {
 
@@ -490,7 +490,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	char InnBuff[8]; //1040162
 	int ReadOffsett = 0;
 	char buff[512];
-	unsigned long term;
+	unsigned int term;
 	int Antall;
 	int i,z;
 	int y;
@@ -508,8 +508,6 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	int iindexfile;
 	char FilePath[255];
 
-	//unsigned long DocID;
-	//unsigned long TermAntall;
 	unsigned short hit;
 	//void *allip;
 	char *allindex;
@@ -543,7 +541,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	//temp:
 	//isv3 = 0;
 	
-	//5: printf("%s crc32: %lu\n",WordID,WordIDcrc32);
+	//5: printf("%s crc32: %u\n",WordID,WordIDcrc32);
 
 	//setter denne til 0, slik at hvis i ikke fr til å opne filen, eller hente ordboken er den 0
 	//runarb: 19 aug 2007: gjør om slik at vi kan ha elementer fra før i indeksen
@@ -662,8 +660,8 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 		y=(*AntallTeff);
 
-		allindex += memcpyrc(&term,allindex,sizeof(unsigned long));
-		allindex += memcpyrc(&Antall,allindex,sizeof(unsigned long));
+		allindex += memcpyrc(&term,allindex,sizeof(unsigned int));
+		allindex += memcpyrc(&Antall,allindex,sizeof(unsigned int));
 
 		//fører til overskrivning av hits. Må inaliseres før vi begynner å lese fra index
 		//TeffArray->nrofHits = 0;
@@ -676,18 +674,18 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 			//v3
 			if (isv3) {
 				
-				allindex += memcpyrc(&TeffArray->iindex[y].DocID,allindex,sizeof(unsigned long));
+				allindex += memcpyrc(&TeffArray->iindex[y].DocID,allindex,sizeof(unsigned int));
 
 				// v3 har langnr
 				allindex += memcpyrc(&TeffArray->iindex[y].langnr,allindex,sizeof(char));
 
-				allindex += memcpyrc(&TeffArray->iindex[y].TermAntall,allindex,sizeof(unsigned long));
+				allindex += memcpyrc(&TeffArray->iindex[y].TermAntall,allindex,sizeof(unsigned int));
 				
 			}
 			else {
-				allindex += memcpyrc(&TeffArray->iindex[y].DocID,allindex,sizeof(unsigned long));
+				allindex += memcpyrc(&TeffArray->iindex[y].DocID,allindex,sizeof(unsigned int));
 
-				allindex += memcpyrc(&TeffArray->iindex[y].TermAntall,allindex,sizeof(unsigned long));
+				allindex += memcpyrc(&TeffArray->iindex[y].TermAntall,allindex,sizeof(unsigned int));
 
 			}
 
@@ -806,14 +804,14 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 }
 
 
-void GetNForTerm(unsigned long WordIDcrc32, char *IndexType, char *IndexSprok, int *TotaltTreff, struct subnamesFormat *subname) {
+void GetNForTerm(unsigned int WordIDcrc32, char *IndexType, char *IndexSprok, int *TotaltTreff, struct subnamesFormat *subname) {
 
 		int Adress;
         	int SizeForTerm;
 		int iindexfile;
 		char IndexPath[255],IndexFile[255];		    
-		unsigned long term;
-		unsigned long Antall;
+		unsigned int term;
+		unsigned int Antall;
 		FILE *fileha;		    
 		//////////////////////////////////////////////
 		if ((!ReadIIndexRecordFromMemeory(&Adress, &SizeForTerm,WordIDcrc32,IndexType,IndexSprok,WordIDcrc32,(*subname).subname))
@@ -838,8 +836,8 @@ void GetNForTerm(unsigned long WordIDcrc32, char *IndexType, char *IndexSprok, i
 	        }
 			fseek(fileha,Adress,0);
 		
-			fread(&term,sizeof(unsigned long),1,fileha);
-			fread(&Antall,sizeof(unsigned long),1,fileha);
+			fread(&term,sizeof(unsigned int),1,fileha);
+			fread(&Antall,sizeof(unsigned int),1,fileha);
 																						
 			fclose(fileha);							
 		
