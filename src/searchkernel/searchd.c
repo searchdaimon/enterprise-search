@@ -234,6 +234,7 @@ int main(int argc, char *argv[])
 
 	html_parser_init();
 
+	/*
 	#ifdef WITH_THREAD
 		pthread_t chld_thr;
 
@@ -241,6 +242,7 @@ int main(int argc, char *argv[])
 	#else
 		printf("starting single thread version\n");
 	#endif
+	*/
 
         if (argc < 2) {
                 printf("Inget servernavn gitt.\n");
@@ -369,9 +371,11 @@ int main(int argc, char *argv[])
 
 		if ((optMax != 0) && (runCount >= optMax)) {
 			//venter på siste trå. Ikke helt optimalt dette, da vi kan ha flere tråer som kjører i paralell
+			/*
 			#ifdef WITH_THREAD
 				pthread_join(chld_thr, NULL);
 			#endif
+			*/
 			printf("have reached Max runs. Exiting\n");
 			break;
 		}

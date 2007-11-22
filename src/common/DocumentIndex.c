@@ -9,6 +9,10 @@ ToDo: trenger en "close" prosedyre for filhandlerene.
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef WITHOUT_DIWRITE_FSYNC
+	#include <unistd.h>
+#endif
+
 #include "dp.h"
 //skrur av filcashn da vi deiver å segge feiler med den
 //#define DI_FILE_CASHE
