@@ -25,7 +25,7 @@
 #include <unistd.h>
 
 //#define MMAP_REPO
-#define TIME_DEBUG_L
+//#define TIME_DEBUG_L
 
 
 
@@ -244,7 +244,7 @@ unsigned int rLastDocID(char subname[]) {
 		fstat(fileno(DocIDFILE),&inode);
 
 		if ((n =fread(&buff,sizeof(char),inode.st_size,DocIDFILE)) != inode.st_size) {
-			printf("dident read %i char, but %i\n",inode.st_size,n);
+			printf("dident read %"PRId64" char, but %i\n",inode.st_size,n);
 			perror("fread");
 		}
 		//ToDO: støt unsigned int, ikke bare nt
@@ -277,7 +277,7 @@ unsigned int rGeneraeADocID (char subname[]) {
 		fstat(fileno(DocIDFILE),&inode);
 
 		if ((n =fread(&buff,sizeof(char),inode.st_size,DocIDFILE)) != inode.st_size) {
-			printf("dident read %i char, but %i\n",inode.st_size,n);
+			printf("dident read %"PRId64" char, but %i\n",inode.st_size,n);
 			perror("fread");
 		}
 		buff[inode.st_size] = '\0';
@@ -652,7 +652,7 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
         #endif
 
 	int fd;
-	off64_t offset = radress64bit;
+	off_t offset = radress64bit;
 	int error;
 	int forreturn = 0;
 	char WorkBuff[300000];
@@ -792,7 +792,6 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 		return 0;
 	}
 		
-	int n;
 
 	#ifdef BLACK_BOKS
                 unsigned int CurrentReposetoryVersionAsUInt;
@@ -874,7 +873,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 		#endif
 		(*acl_allowbuffer) = malloc((*ReposetoryHeader).acl_allowSize +1);
 		if ((*ReposetoryHeader).acl_allowSize != 0) {
-			if (read(fd, (*acl_allowbuffer),(*ReposetoryHeader).acl_allowSize,) < 0) {
+			if (read(fd, (*acl_allowbuffer),(*ReposetoryHeader).acl_allowSize) < 0) {
 				printf("cant't read acl_allow. acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
 				perror("");
 			}
@@ -955,7 +954,6 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 			unsigned int rsize,unsigned int imagesize) {
 
         #ifdef TIME_DEBUG_L
-                struct timeval start_time, end_time;
 		// for totalt tid i funksjonen
                 struct timeval tot_start_time, tot_end_time;
         #endif
@@ -974,7 +972,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 
 	#ifdef BLACK_BOKS
                 unsigned int CurrentReposetoryVersionAsUInt;
-                read(&CurrentReposetoryVersionAsUInt,sizeof(unsigned int),1,LotFileOpen);
+                read(LotFileOpen,&CurrentReposetoryVersionAsUInt,sizeof(unsigned int));
        	#endif
 
 	//regner ut totalt hva vi skal lese
@@ -1048,7 +1046,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		#endif
 		(*acl_allowbuffer) = malloc((*ReposetoryHeader).acl_allowSize +1);
 		if ((*ReposetoryHeader).acl_allowSize != 0) {
-			if (read((*acl_allowbuffer),(*ReposetoryHeader).acl_allowSize,1,LotFileOpen) != 1) {
+			if (read(LotFileOpen,(*acl_allowbuffer),(*ReposetoryHeader).acl_allowSize) != 1) {
 				printf("cant't read acl_allow. acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
 				perror("");
 			}
@@ -1066,7 +1064,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		#endif
 		(*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1);
 		if ((*ReposetoryHeader).acl_deniedSize != 0) {
-			if (read((*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize,1,LotFileOpen) != 1) {
+			if (read(LotFileOpen,(*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize) != 1) {
 				printf("cant't read acl_denied. acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
 				perror("");
 			}
@@ -1079,7 +1077,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 
 		#endif
 
-		if(read(recordseparator,sizeof(char),3,LotFileOpen) != 3) {
+		if(read(LotFileOpen,recordseparator,sizeof(char)) != 3) {
 			perror("cant read recordseperator");
 		}
 
