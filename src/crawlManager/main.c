@@ -53,15 +53,19 @@ void mc_add_servers(void);
 int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],int *nrofcollections);
 
 int documentExist(struct collectionFormat *collection, struct crawldocumentExistFormat *crawldocumentExist) {
+	int ret;
+
 	#ifdef DEBUG
 	printf("documentExist: start\n");
 	#endif
+
+	ret = bbdocument_exist(collection->collection_name, crawldocumentExist->documenturi, crawldocumentExist->lastmodified);
 
 	#ifdef DEBUG
 	printf("documentExist: end\n");
 	#endif
 
-	return 0;
+	return ret;
 }
 
 int documentError(int level, const char *fmt, ...) {
