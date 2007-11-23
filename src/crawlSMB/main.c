@@ -14,13 +14,15 @@
 
 
 
-int crawlpatAcces(char resource[], char username[], char password[], int (*documentError)(int level, const char *fmt, ...) ) 
+int crawlpatAcces(char resource[], const char username[], const char password[], int (*documentError)(int level, const char *fmt, ...) ) 
 {
         //tester om vi kan koble til
 	char        *prefix;
 	char	*resourcereal;
 	int status;
 	int no_auth = 0;
+
+	printf("aa username \"%s\"\n",username);
 
 	resourcereal = resource;
 
@@ -29,7 +31,8 @@ int crawlpatAcces(char resource[], char username[], char password[], int (*docum
 		resourcereal += strlen("file:");
 	}
 
-	cleanresourceWinToUnix(resourcereal);
+	//fp char bug fiks:
+	//cleanresourceWinToUnix(resourcereal);
 
         printf("crawlSMB: \n\tresourcereal: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",resourcereal,username,password);
 
@@ -148,6 +151,11 @@ int
 smb_rewrite_url(char *uri, enum platform_type ptype, enum browser_type btype)
 {
 	char *tmpuri = strdup(uri+7);
+
+	printf("smb_rewrite_url1: raw url: \"%s\"\n",uri);
+	smbc_urldecode( uri, uri, strlen(uri)+1 );
+	cleanresourceUnixToWin(uri);
+	printf("smb_rewrite_url2: raw url: \"%s\"\n",uri);
 
 	if (ptype == MAC) {
 		int i;

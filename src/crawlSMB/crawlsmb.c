@@ -98,7 +98,7 @@ boithosmbc_wholeurlencode(char * dest, char * src, int max_dest_len)
 /*
     Create prefix for smb-url from username and password ("smb://username:password@")
  */
-char* smb_mkprefix( char *username, char *passwd )
+char* smb_mkprefix( const char *username, const char *passwd )
 {
     const int	buf_size = MAX_URI_SIZE;
     char	buf[buf_size];
@@ -238,20 +238,30 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
                     context_free(context);
 
-			//crawldocumentExist.documenturi = entry_name;
-			crawldocumentExist.documenturi = malloc(strlen(entry_name) + strlen("file:") +1);
-			sprintf(crawldocumentExist.documenturi,"file:%s",entry_name);
-
-
-			char        uri[sizeof(entry_name)+1];
-
-			smbc_urldecode( uri, entry_name, sizeof(entry_name)+1 );
-        					
-			isize = (strlen(uri) *2)+ strlen("file:");
-			crawldocumentExist.documenturi = malloc(isize);
-			sprintf(crawldocumentExist.documenturi,"file:%s",uri);
-			iconv_convert(isoconp ,&crawldocumentExist.documenturi, isize);
+			//runarb: 20 nov 2007: denne er ikke komentert ut, det fører til at vi allokerer minne to ganger.
+			// er det riktig å konvertere til utf-8 her??? Fører ikke det til problemer med tegnsett?? slik det vi ser i fp nå?
+			//hva hvis vi får en iso-? inn, og konverterer den til utf, konverterer vi den rikit tilbake til iso-? da ?
+			//crawldocumentExist.documenturi = malloc(strlen(entry_name) + strlen("file:") +1);
+			//sprintf(crawldocumentExist.documenturi,"file:%s",entry_name);
+			printf("entry_name raw: \"%s\"\n",entry_name);
 			
+			char        uri[sizeof(entry_name)+1];
+			//fp char bug fiks:
+			//smbc_urldecode( uri, entry_name, sizeof(entry_name)+1 );
+        		strscpy(uri,entry_name,sizeof(uri));
+	
+			isize = (strlen(uri) *2)+ strlen("file:");
+			if ((crawldocumentExist.documenturi = malloc(isize)) == NULL) {
+				perror("malloc");
+				//runarb: 20 nov 2007: usikker på om dette er rikitg feilhontering.
+	                   	goto next_it;
+			}
+
+			sprintf(crawldocumentExist.documenturi,"file:%s",uri);
+
+			#ifdef URLDECODE
+			iconv_convert(isoconp ,&crawldocumentExist.documenturi, isize);
+			#endif
 			
 			crawldocumentExist.lastmodified = file_stat.st_mtime;
 			crawldocumentExist.dokument_size = file_stat.st_size;
@@ -281,6 +291,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 			    // Disse må være med:
 			    context = context_init(no_auth);
 
+				printf("opening full_entry_name: \"%s\"\n",full_entry_name);
 			    fd = smbc_open( full_entry_name, O_RDONLY, 0 );
 
 			    if (fd<0)
@@ -316,7 +327,11 @@ int smb_recursive_get( char *prefix, char *dir_name,
 */
 #ifndef NO_BB
 						char        uri[sizeof(entry_name)+1];
-						smbc_urldecode( uri, entry_name, sizeof(entry_name)+1 );
+						//fp char bug fiks:
+						//smbc_urldecode( uri, entry_name, sizeof(entry_name)+1 );
+						strscpy( uri, entry_name, sizeof(uri) );
+
+						printf("url after smbc_urldecode(): \"%s\"\n",uri);
         					
 						isize = (strlen(uri) *2)+ strlen("file:");
 						crawldocumentAdd.documenturi = malloc(isize);
@@ -340,11 +355,13 @@ int smb_recursive_get( char *prefix, char *dir_name,
 						#endif
 					        crawldocumentAdd.doctype	= "";
 
-						cleanresourceUnixToWin(crawldocumentAdd.documenturi);
+						//fp char bug fiks:
+						//cleanresourceUnixToWin(crawldocumentAdd.documenturi);
 
 						(*documentAdd)(collection ,&crawldocumentAdd);
 					
 						free(crawldocumentAdd.documenturi);
+						free(crawldocumentAdd.title);
 
 		    				//documentAdd(bbdh, collection, entry_name, "", fbuf, file_stat.st_size, file_stat.st_mtime, parsed_acl, dirp->name ,"");
 #endif
@@ -529,17 +546,18 @@ int smb_test_open( char *prefix, char *dir_name, int (*documentError)(int level,
 
 	//bør ha en max url lengde definert her
 	char dir_nameesc[1024];
-//tt	boithosmbc_wholeurlencode(dir_nameesc,dir_name,sizeof(dir_nameesc) -1);
+	//runarb: 21 nov 2007: hvorfor var denne utkomentert med //tt ?? Kan det føre til at det ikke fungerer i fp??
+	//fp char bug fiks:
+	//boithosmbc_wholeurlencode(dir_nameesc,dir_name,sizeof(dir_nameesc) -1);
 	strcpy(dir_nameesc,dir_name);
 
 	iconv_close(isoconp);
 
 	snprintf(uri, uri_size, "%s%s", prefixiso, dir_nameesc);
-	//char *urip = uri;
+
 	free(prefixiso);
 
 	printf("urip: \"%s\"\n",uri);
-
 
 /*
     snprintf(uri, uri_size, "%s%s", prefix, dir_name);
@@ -555,6 +573,8 @@ int smb_test_open( char *prefix, char *dir_name, int (*documentError)(int level,
 
     iconv_close(isoconp);
 */
+
+
     printf("Opening %s ... ", uri);
     fflush(stdout);
 
@@ -623,7 +643,7 @@ int context_free( SMBCCTX *context )
 {
     if (smbc_free_context(context, 0) != 0)
 	{
-	    //perror("crawlsmb.c: Error! Could not free smbc context");
+	    perror("crawlsmb.c: Error! Could not free smbc context");
 		//ToDo: returnerer free uanset. Får nemlig altid feil her
                 //hvis ikke. Er dette en minne lekasj prblem?
 	    return 1;

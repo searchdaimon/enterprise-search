@@ -7,7 +7,7 @@
 
 #include "../boitho-bbdn/bbdnclient.h"
 
-char* smb_mkprefix( char *username, char *passwd );
+char* smb_mkprefix( const char *username, const char *passwd );
 
 int smb_recursive_get( char *prefix, char *dir_name,
 	struct collectionFormat *collection,
