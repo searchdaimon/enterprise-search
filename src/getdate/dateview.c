@@ -48,7 +48,7 @@ date_info_add(dateview *dv, time_t checktime)
 	last_week = today - (7 * 24 * 60 * 60);
 	last_month = today - (31 * 24 * 60 * 60); /* Not completely correct */
 	tm.tm_mday = 1;
-	tm.tm_mon = 1;
+	tm.tm_mon = 0;
 	this_year = mktime(&tm);
 	tm.tm_year -= 1;
 	last_year = mktime(&tm);
