@@ -1081,7 +1081,6 @@ rewriteurl(char *collection, char *uri, size_t len, enum platform_type ptype, en
 	struct collectionFormat *collections;
 	int nrofcollections;
 
-#if 0
 	cm_searchForCollection(collection,&collections,&nrofcollections);
 
 	if (!cm_getCrawlLibInfo(global_h,&crawlLibInfo,collections->connector)) {
@@ -1092,9 +1091,8 @@ rewriteurl(char *collection, char *uri, size_t len, enum platform_type ptype, en
 
 	if (crawlLibInfo->rewrite_url == NULL || !((*crawlLibInfo->rewrite_url)(uri, ptype, btype)))
 		return 0;
-#endif
 
-	return 0;
+
 	return 1;
 
 }
