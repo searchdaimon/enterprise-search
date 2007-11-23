@@ -6,6 +6,9 @@
 
 #include "../common/bstr.h"
 
+#ifdef WITH_SHORTENURL_MAIN
+int globalOptVerbose = 0;
+#endif
 
 void shortenurl(char *url,int urllen) {
 
@@ -17,22 +20,24 @@ void shortenurl(char *url,int urllen) {
 	char slash[2];
 	int len;
 	len = strlen(url);
-	vboprintf("shortenurl: inn url %s\n",url);
+	vboprintf("shortenurl: inn url %s\n", url);
+	char *p;
+	char proto[128];
 	
-	//tar bort http:// først
-	if (strncmp(url,"http://",7) == 0) {
-		//strcpy(url,url +7);
-		memmove(url, url +7, len);
+	//tar bort proto:// først
+	p = strstr(url, "://");
+	printf("url: %s\n", url);
+	if (p != NULL) {
+		p += 3;
+		while (*p == '/')
+			p++;
+		strncpy(proto, url, p - url);
+		proto[p-url] = '\0';
+		len -= (p - url);
+		len += 1;
+		memmove(url, p, len);
 	}
-
-	//tar bort / sist
-	len -= 7 ;
-
-	if (url[len -1] == '/') {
-		url[len -1] = '\0';
-	}
-
-	len -= 1;
+	printf("new url: %s\n", url);
 
 	//hvis den er kort kan vi bare returnere
 	if (len < 80) {
@@ -76,7 +81,7 @@ void shortenurl(char *url,int urllen) {
 	added = 0;
 	suburllen = 0;
 	while( (Data[Count] != NULL) ) {
-		//printf("\t\t%d\t\"%s\"\n", Count, Data[Count]);
+		printf("\t\t%d\t\"%s\"\n", Count, Data[Count]);
 		suburllen = strlen(Data[Count]);
 
 		if ((added + suburllen) < 20) {
@@ -128,15 +133,21 @@ void shortenurl(char *url,int urllen) {
 	//printf("newurl %s\n",newurl);
 	FreeSplitList(Data);
 	
-	strscpy(url,newurl,urllen);
+	//strscpy(url,newurl,urllen);
+	snprintf(url, urllen, "%s", newurl);
 }
 
-/*
-int main () {
-	char *url = strdup("file://G:/fellesdata/2%20NETTVERK%20OG%20INFORMASJON/Profilh%C3%A5ndbok%20og%20logoer/Visittkort%20Outlook/Astrid.htm");
+#ifdef WITH_SHORTENURL_MAIN
 
-	shortenurl(&url,200);
+int
+main(int argc, char **argv)
+{
+	//char *url = strdup("file://G:/fellesdata/2%20NETTVERK%20OG%20INFORMASJON/Profilh%C3%A5ndbok%20og%20logoer/Visittkort%20Outlook/Astrid.htm");
+	char *url = strdup("file://///192.168.22.25\\filer\\Ringnes\\2006\\Brus.Vann\\Pepsi 2006\\Pepsi Max Gold lansering\\Pepsi Max Gold Sommerturne - kjÃ¸replan.xls");
+
+	shortenurl(url,255);
 
 	printf("url %s\n",url);
 }
-*/
+
+#endif
