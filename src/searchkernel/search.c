@@ -215,7 +215,9 @@ static inline int rankAthor_complicacy(const struct hitsFormat *hits, int nrofhi
 	nr = 0;
 	phrasenr = 0;
 
+	#ifdef DEBUG
 	printf("rankAthor_complicacy: nrofhit %i\n",nrofhit);
+	#endif
 
 	for (i = 0;i < nrofhit; i++) {
 		if (hits[i].phrase == 1) {
@@ -1369,8 +1371,9 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 	gettimeofday(&start_time, NULL);
 	#endif
 
-	//printf("######################################################################\n");
-	vboprintf("searchIndex: start\n");
+	vboprintf("######################################################################\n");
+	vboprintf("searchIndex: vil search index \"%s\"\n",indexType);
+	vboprintf("######################################################################\n");
 
 	vboprintf("\nsearchIndex \"%s\", subname \"%s\"\n",indexType,(*subname).subname);
 	TeffArrayOriginal = (*TeffArrayElementer);
@@ -1682,7 +1685,7 @@ for (i=0; i<(*queryParsed).n; i++)
 	#endif
 
 	vboprintf("searchIndex: end\n");
-	//printf("######################################################################\n");
+	vboprintf("######################################################################\n\n");
 
 }
 
