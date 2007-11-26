@@ -100,8 +100,9 @@ set_add(set *s, char *str)
 			break;
 	}
 
-	if (s->size - i > 0)
-		memmove(s->set+(i+1), s->set+i, sizeof(char *) * s->size - i);
+	if (s->size - i > 0) {
+		memmove(s->set+(i+1), s->set+i, sizeof(char *) * (s->size - i));
+	}
 	s->set[i] = str;
 	s->size++;
 	
