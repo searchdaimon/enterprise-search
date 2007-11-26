@@ -189,7 +189,7 @@ int compare_DictionaryMemoryElements (const void *p1, const void *p2) {
 }
 
 //ToDo: bruker ikke subname her enda. Må spesifisere det når vi loader
-int ReadIIndexRecordFromMemeory (int *Adress, int *SizeForTerm, unsigned int Query_WordID,char *IndexType, char *IndexSprok,unsigned int WordIDcrc32,char subname[]) {
+int ReadIIndexRecordFromMemeory (unsigned int *Adress, unsigned int *SizeForTerm, unsigned int Query_WordID,char *IndexType, char *IndexSprok,unsigned int WordIDcrc32,char subname[]) {
 
 	int iindexfile;
 	int i;
@@ -253,7 +253,7 @@ int ReadIIndexRecordFromMemeory (int *Adress, int *SizeForTerm, unsigned int Que
 /////////////////////////////////////////////////////////////////////
 // Finner indeks adressen til en term, ved å binærsøke ordboken
 /////////////////////////////////////////////////////////////////////
-int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned int Query_WordID,char *IndexType, char *IndexSprok,unsigned int WordIDcrc32,char subname[]) {
+int ReadIIndexRecord (unsigned int *Adress, unsigned int *SizeForTerm, unsigned int Query_WordID,char *IndexType, char *IndexSprok,unsigned int WordIDcrc32,char subname[]) {
 
 
 	FILE *dictionaryha;
@@ -427,8 +427,8 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned int Query_WordID,c
                 #endif
 		if (DictionaryPost.SizeForTerm == 0) {
 			printf("###################################\nBug: DictionaryPost SizeForTerm is 0!\n###################################\n");
-			*Adress = -1;
-			*SizeForTerm = -1;
+			*Adress = 0;
+			*SizeForTerm = 0;
 			return 0;
 
 		}
@@ -441,17 +441,19 @@ int ReadIIndexRecord (int *Adress, int *SizeForTerm, unsigned int Query_WordID,c
 			return 1;
 		}
 		else {
-			*Adress = -1;
-			*SizeForTerm = -1;
+			*Adress = 0;
+			*SizeForTerm = 0;
 			return 0;
 		}
 	}
-	//printf("Adress %i,SizeForTerm %i\n",*Adress ,*SizeForTerm);
+	//printf("Adress %u,SizeForTerm %i\n",*Adress ,*SizeForTerm);
 
 }
 
+//#define DEBUG_MEMCPYRC
+
 //copy a memory area, and return the size copyed
-#ifdef DEBUG
+#ifdef DEBUG_MEMCPYRC
 static size_t memcpyrc(void *s1, const void *s2, size_t n) {
 #else
 static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
@@ -502,8 +504,8 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	char IndexPath[255];
 
 
-	int Adress = 0;
-	int SizeForTerm = 0;
+	unsigned int Adress = 0;
+	unsigned int SizeForTerm = 0;
 	int maxIIindexSize;
 	int iindexfile;
 	char FilePath[255];
@@ -568,7 +570,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		#ifdef DEBUG
 		printf("Åpner index %s\n",IndexPath);
 
-		printf("size %i\n",SizeForTerm);
+		printf("size %u\n",SizeForTerm);
 		#endif
 
 		#ifdef TIME_DEBUG
@@ -604,9 +606,15 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				//mmap_offset = 0;
 
 				mmap_size = SizeForTerm + mmap_offset;
-				if ((allindex = mmap(0,mmap_size,PROT_READ,MAP_SHARED,fileno(fileha),Adress - mmap_offset) ) == NULL) {
+				if ((allindex = mmap(0,mmap_size,PROT_READ,MAP_SHARED,fileno(fileha),Adress - mmap_offset) ) == MAP_FAILED) {
+					fprintf(stderr,"can't mmap file \"%s\", Adress: %u, SizeForTerm: %u\n",IndexPath,Adress,SizeForTerm);
 					perror("mmap");
+					return;
 				}
+
+				#ifdef DEBUG
+				printf("mmap respons: %i\n",(int)allindex);
+				#endif
 
 				allindexp = allindex;
 
@@ -647,8 +655,6 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 					printf("Time debug: read all at ones %f\n",getTimeDifference(&start_time,&end_time));
 				#endif
 		#endif
-
-
 
 
 
@@ -807,7 +813,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 void GetNForTerm(unsigned int WordIDcrc32, char *IndexType, char *IndexSprok, int *TotaltTreff, struct subnamesFormat *subname) {
 
 		int Adress;
-        	int SizeForTerm;
+        	unsigned int SizeForTerm;
 		int iindexfile;
 		char IndexPath[255],IndexFile[255];		    
 		unsigned int term;
