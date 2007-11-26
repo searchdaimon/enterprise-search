@@ -2215,26 +2215,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	TmpArrayLen = 0;
 	resultArrayInit(TmpArray);
 
-	/*
-	//Athor
-	if (searchIndex_thread_arg_Athor.resultArrayLen > 0) {
-		(*TeffArrayElementer) = 0;
-		or_merge(TmpArray,&TmpArrayLen,TeffArray,(*TeffArrayElementer),
-			searchIndex_thread_arg_Athor.resultArray,searchIndex_thread_arg_Athor.resultArrayLen);
-		free(searchIndex_thread_arg_Athor.resultArray);
-		memcpy(TeffArray,TmpArray,sizeof(struct iindexFormat) * TmpArrayLen);
-		(*TeffArrayElementer) = TmpArrayLen;
-	}
-
-	//Url
-	if (searchIndex_thread_arg_Url.resultArrayLen > 0) {
-		or_merge(TmpArray,&TmpArrayLen,TeffArray,(*TeffArrayElementer),
-			searchIndex_thread_arg_Url.resultArray,searchIndex_thread_arg_Url.resultArrayLen);
-		free(searchIndex_thread_arg_Url.resultArray);
-		memcpy(TeffArray,TmpArray,sizeof(struct iindexFormat) * TmpArrayLen);
-		(*TeffArrayElementer) = TmpArrayLen;
-	}
-	*/
 	#ifdef BLACK_BOKS
 
 	#else
@@ -2369,21 +2349,19 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 
 
-/*************************************************************************************/
 
 	
 	#ifdef BLACK_BOKS
 
 		//filter
 		searchIndex_filters(queryParsed, filteron);
-/*
-        char *filetype;
-        char *language;
-        char *collection;
-        char *date;
-        char *status;
-*/
 
+
+		/*
+		*********************************************************************************************************************
+		collection
+		*********************************************************************************************************************
+		*/
 
 		if ((*filteron).collection != NULL) {
 		
@@ -2415,15 +2393,19 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		
 
 
-
-		//lager en oversikt over filformater
 		/*
+		*********************************************************************************************************************
+		filformater 
+
+		lager en oversikt over, og filtrerer på, filformater
+
 			Dette her blit en ganske komplisert sak. Vi har hash nøkler på fårmatet "subname-filtype", i en strukt.
 			
 			Vi har også med en peker til subname strukten, slik at vi kan manipulere denne direkte. Slik har vi
 			bare en gjenomgang av dataene får å legge inn filtype infoen. Så en gjenomgang av alle subname-filetype
 			som finnes for å lagge de inn i subname struktuen.
 
+		*********************************************************************************************************************
 		*/
 
 		gettimeofday(&start_time, NULL);
@@ -2477,8 +2459,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		*/
 		#endif
 
-
-
+		//
+		// filtrerer
 		if ((*filteron).filetype != NULL) {
 			printf("wil filter on filetype \"%s\"\n",(*filteron).filetype);
 
@@ -2492,15 +2474,14 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		}
 
 
-	#endif
 
-/**********************************************/
+		/*
+		*********************************************************************************************************************
+		datoer
 
-
-	// BLACK_BOKS har ikke pop rank, bare term rank
-	#ifdef BLACK_BOKS
-
-
+		lager en oversikt over, og filtrerer på, dato
+		*********************************************************************************************************************
+		*/
 		gettimeofday(&start_time, NULL);
 
 
@@ -2523,7 +2504,9 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 		gettimeofday(&start_time, NULL);
 
-		//filter on date
+		//
+		//filter på dato
+
 		if ((*filteron).date != NULL) {
 			printf("wil filter on date \"%s\"\n",(*filteron).date);
 
