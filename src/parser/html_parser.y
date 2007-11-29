@@ -1131,7 +1131,7 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
     he->css_selector_block = NULL;
 
     he->Btitle = buffer_init( 10240 );
-    he->Bbody = buffer_init( textsize*2 );
+    he->Bbody = buffer_init( 16384 + textsize*2 );
 
     data->tag_list = list_container( ptr_container() );
 
@@ -1183,6 +1183,8 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
     bhpm_delete_buffer( bs, scanner );
     bhpmlex_destroy( scanner );
 
+    if (he->Bbody->overflow)
+	data->abort = 1;
 
     if (data->abort)	// On error
 	{

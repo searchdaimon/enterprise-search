@@ -129,7 +129,11 @@ static inline void bprintf( buffer *B, const char *fmt, ... )
 
     B->pos+= len_printed;
 
-    if (B->pos >= B->maxsize-1) B->overflow = 1;
+    if (B->pos >= B->maxsize-1)
+	{
+	    printf("Error! Buffer overflow, aborting document.\n");
+	    B->overflow = 1;
+	}
 }
 
 

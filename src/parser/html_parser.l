@@ -354,12 +354,13 @@ struct htmlesc_val bhpm_hecval[191] =
 
 int	_id=0;
 
-static inline void add_to_summary( char *str, yyscan_t scanner )
+//static inline void add_to_summary( char *str, yyscan_t scanner )
+void add_to_summary( char *str, yyscan_t scanner )
 {
     struct bhpm_yy_extra	*he = bhpmget_extra(scanner);
 
 //    if (_id<25)
-//    printf("(%i,%i,%i,%i,%i,%i,%i)\n", he->newhead, he->newdiv, he->newspan, he->inhead, he->indiv, he->inspan, he->space);
+//    printf("%s (%i,%i,%i,%i,%i,%i,%i)\n", str, he->newhead, he->newdiv, he->newspan, he->inhead, he->indiv, he->inspan, he->space);
 
     if (he->title)
 	{
