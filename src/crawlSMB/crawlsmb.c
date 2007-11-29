@@ -499,88 +499,32 @@ dirp = (struct smbc_dirent*)dblock;
  */
 int smb_test_open( char *prefix, char *dir_name, int (*documentError)(int level, const char *fmt, ...))
 {
-    // Det viser seg at dersom vi koder den dekodete URI-en blir den ødelagt ('/' blir %2F).
-    // Har derfor fjernet støtte for å lagre menneskelig lesbar uri.
 
-    int		uri_size = strlen(prefix) + (strlen(dir_name) *2) + 1;
-    char	uri[uri_size];
-    int		fd;
-    SMBCCTX	*context;
-    int no_auth = 0; //kan ikke ha manglende bruker og passord her
-    iconv_t isoconp;
-
-
-    context = context_init(no_auth);
-
-/*
-	if ( (isoconp = iconv_open("ISO-8859-15","UTF-8")) ==  (iconv_t)(-1) ) {
-                perror("iconv_open");
-    }
-
-	char dir_nameesc[201];
-
-	iconv_convert(isoconp, &dir_name,200);
-
-	smbc_urlencode(dir_nameesc,dir_name,200);
-	snprintf(uri, uri_size, "%s%s", prefix, dir_nameesc);
-	char *urip = uri;
-
-	iconv_close(isoconp);
-
-*/
-
-    	if ( (isoconp = iconv_open("ISO-8859-15","UTF-8")) ==  (iconv_t)(-1) ) {
-                perror("iconv_open");
-		return 0;
-    	}
+    	// Det viser seg at dersom vi koder den dekodete URI-en blir den ødelagt ('/' blir %2F).
+    	// Har derfor fjernet støtte for å lagre menneskelig lesbar uri.
+    	int		uri_size = strlen(prefix) + (strlen(dir_name) *2) + 1;
+    	char	uri[uri_size];
+    	int		fd;
+    	SMBCCTX	*context;
+    	int no_auth = 0; //kan ikke ha manglende bruker og passord her
 
 
-//	iconv_convert(isoconp, &dir_name,uri_size);
+    	context = context_init(no_auth);
 
-	//kan denne blir lengere en hvs vi har alokert? ISO-8859-15 er vel altid bare 1 tegn, mens utf-8 kan være 
-	//flere. Så vi skal vel aldri få flere når vi går fra UTF-8 til ISO-8859-15. Andre veien deromot  ville ha skap problemer  
-	//ser dog ut til at vi ikke får til å free'e den etterpå. Lager en kopi
-	char *prefixiso = malloc(uri_size);
-	strscpy(prefixiso,prefix,uri_size);
-//	iconv_convert(isoconp, &prefixiso,uri_size);
 
-	//bør ha en max url lengde definert her
-	char dir_nameesc[1024];
-	//runarb: 21 nov 2007: hvorfor var denne utkomentert med //tt ?? Kan det føre til at det ikke fungerer i fp??
-	//fp char bug fiks:
-	//boithosmbc_wholeurlencode(dir_nameesc,dir_name,sizeof(dir_nameesc) -1);
-	strcpy(dir_nameesc,dir_name);
+	snprintf(uri, uri_size, "%s%s", prefix, dir_name);
 
-	iconv_close(isoconp);
-
-	snprintf(uri, uri_size, "%s%s", prefixiso, dir_nameesc);
-
-	free(prefixiso);
 
 	printf("urip: \"%s\"\n",uri);
 
-/*
-    snprintf(uri, uri_size, "%s%s", prefix, dir_name);
-
-    if ( (isoconp = iconv_open("ISO-8859-15","UTF-8")) ==  (iconv_t)(-1) ) {
-                perror("iconv_open");
-    }
 
 
-	char *urip = uri;
-	iconv_convert(isoconp, &urip,uri_size);
-	
+    	printf("Opening %s ... ", uri);
+    	fflush(stdout);
 
-    iconv_close(isoconp);
-*/
+    	fd = smbc_open( uri, O_RDONLY, 0 );
 
-
-    printf("Opening %s ... ", uri);
-    fflush(stdout);
-
-    fd = smbc_open( uri, O_RDONLY, 0 );
-
-    if (fd < 0)
+    	if (fd < 0)
 	{
 	    printf("failure\n");
 
@@ -593,15 +537,15 @@ int smb_test_open( char *prefix, char *dir_name, int (*documentError)(int level,
 	    return 0;
 	}
 
-    printf("success\n");
+    	printf("success\n");
 
-    smbc_close(fd);
-    if (!context_free(context)) {
-	documentError(1,"crawlsmb.c-smb_test_open: Error! Could not free smbc context at %s:%d",__FILE__,__LINE__);	
-	return 0;
-    }
+    	smbc_close(fd);
+    	if (!context_free(context)) {
+		documentError(1,"crawlsmb.c-smb_test_open: Error! Could not free smbc context at %s:%d",__FILE__,__LINE__);	
+		return 0;
+    	}
 
-    return 1;
+    	return 1;
 }
 
 

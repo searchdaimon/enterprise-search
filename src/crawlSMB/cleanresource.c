@@ -57,7 +57,8 @@ int cleanresourceWinToUnix(char resource[]) {
 
         }
 
-    utf8_hack(resource);
+	//fp char bug fiks:
+    	//utf8_hack(resource);
 }
 
 int cleanresourceUnixToWin(char resource[]) {
@@ -73,7 +74,8 @@ int cleanresourceUnixToWin(char resource[]) {
 
         }
 
-    utf8_hack(resource);
+	//fp char bug fiks:
+    	//utf8_hack(resource);
 
 	#ifdef DEBUG
 	printf("new %s\n",resource);

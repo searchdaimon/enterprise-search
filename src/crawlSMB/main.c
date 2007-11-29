@@ -32,7 +32,7 @@ int crawlpatAcces(char resource[], const char username[], const char password[],
 	}
 
 	//fp char bug fiks:
-	//cleanresourceWinToUnix(resourcereal);
+	cleanresourceWinToUnix(resourcereal);
 
         printf("crawlSMB: \n\tresourcereal: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",resourcereal,username,password);
 
