@@ -16,13 +16,16 @@
 #define userToSubnameDbFile "config/userToSubname.db"
 
 
-int userToSubname_open(struct userToSubnameDbFormat *userToSubnameDb) {
+int userToSubname_open(struct userToSubnameDbFormat *userToSubnameDb, char mode) {
 
         //DB *dbp = (DB *)(*dbpp);
 
 
         char fileName[512];
         int ret;
+
+	int filemode = 0664;
+	int flags;
 
 	#ifdef DEBUG
 		printf("opening db\n");
@@ -52,10 +55,24 @@ int userToSubname_open(struct userToSubnameDbFormat *userToSubnameDb) {
                     return(ret);
                 }
 
+		
+
+		if (mode == 'w') {
+			/* Database open flags */
+			flags = DB_CREATE;    	/* If the database does not exist, 
+                       				* create it.*/
+		}
+		else if (mode == 'r') {
+			flags = DB_RDONLY;
+		}
+		else {
+			fprintf(stderr,"userToSubname_open: flag neader read nor write\n");
+			exit(1);
+		}
 
                 /* open the database. */
-                if ((ret = (*userToSubnameDb).dbp->open((*userToSubnameDb).dbp, NULL, bfile(userToSubnameDbFile), NULL, DB_BTREE, DB_CREATE, 0664)) != 0) {
-                        (*userToSubnameDb).dbp->err((*userToSubnameDb).dbp, ret, "%s: open", userToSubnameDb);
+                if ((ret = (*userToSubnameDb).dbp->open((*userToSubnameDb).dbp, NULL, bfile(userToSubnameDbFile), NULL, DB_BTREE, flags, filemode)) != 0) {
+                        (*userToSubnameDb).dbp->err((*userToSubnameDb).dbp, ret, "%s: open", bfile(userToSubnameDbFile));
                         //goto err1;
                         return (0);
 
