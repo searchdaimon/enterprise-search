@@ -132,7 +132,7 @@ int main (int argc, char *argv[]) {
                 }
 
                 printf("groups: %i\n",responsnr);
-                if (!userToSubname_open(&userToSubnameDb)) {
+                if (!userToSubname_open(&userToSubnameDb,'r')) {
 			perror("can't open userToSubname");
 			return EXIT_FAILURE;
 		}
@@ -255,7 +255,10 @@ int main (int argc, char *argv[]) {
 		int errorbufflen = 512;
                 char errorbuff[errorbufflen];
 		char **respons_list;
-		/*
+		//runarb: 01.10.07 hvorfor var denne slåt av
+		//ser ut til at vi kan seltte ting vi ikke vil
+		//eller stamer det fra dagur problemet????
+		
 		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
                         printf("Error: %s\n",errorbuff);
                         exit(1);
@@ -264,7 +267,7 @@ int main (int argc, char *argv[]) {
 		cmc_deleteCollection(socketha,value);
 
 		cmc_close(socketha);
-		*/
+		
 	}
 	else if (strcmp(key,"getPassword") == 0) {
 		if(value == NULL) {printf("no value given.\n");exit(1);}
