@@ -27,7 +27,7 @@ int main (int argc, char *argv[]) {
 	int lotNr = atoi(argv[1]);
 	char *subname = argv[2];
 
-	if (!userToSubname_open(&userToSubnameDb)) {
+	if (!userToSubname_open(&userToSubnameDb,'w')) {
 		perror("userToSubname_open");
 		exit(1);
 	}
@@ -38,6 +38,7 @@ int main (int argc, char *argv[]) {
 	else {
 		while(fgets(username,sizeof(username),fp) != NULL) {
 			chomp(username);
+			//strsandr(username," ","_NBSP_");
 			printf("username \"%s\"\n",username);
 
 			userToSubname_add(&userToSubnameDb,username,subname);
@@ -55,6 +56,7 @@ int main (int argc, char *argv[]) {
 		printf("looping tru\n");
 		while(fgets(username,sizeof(username),fp) != NULL) {
 			chomp(username);
+			//strsandr(username," ","_NBSP_");
 			printf("username \"%s\"\n",username);
 
 			userToSubname_add(&userToSubnameDb,username,subname);
