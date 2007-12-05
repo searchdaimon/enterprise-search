@@ -14,6 +14,8 @@
 #endif
 
 #include "../crawl/crawl.h"
+
+#include "../common/collection.h"
 #include "../common/define.h"
 #include "../common/bstr.h"
 #include "../common/daemon.h"
@@ -799,17 +801,9 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 		(*collection)[i].userprefix = strdupnul(mysqlrow[8]);
 		(*collection)[i].extra = NULL;
 
+		//normaliserer collection navn, ved å fjenre ting som space og - \ / etc
+		collection_normalize_name((*collection)[i].collection_name,strlen((*collection)[i].collection_name));
 
-		//fjerner ikke aski tegn, som / og space. De fører til problemer
-		for(y=0;y<strlen((*collection)[i].collection_name);y++) {
-			if (((*collection)[i].collection_name[y] > 48) && ((*collection)[i].collection_name[y] < 122)) {
-				//er arcii
-			}
-			else {
-				debug("removed noen ascii char \"%c\" from collection_name \n",(*collection)[i].collection_name[y]);
-				(*collection)[i].collection_name[y] = 'x';
-			}
-		}
 
 		debug("resource \"%s\", connector \"%s\", collection_name \"%s\"\n",(*collection)[i].resource,(*collection)[i].connector,(*collection)[i].collection_name);
 
