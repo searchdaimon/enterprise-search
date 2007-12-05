@@ -4,6 +4,12 @@
 		Collection name is taken. You can pick another name, 
 		or leave the field blank for a random name.
 	[% END %]
+[% ELSIF error_inv_name %]
+    [% WRAPPER 'template_message.html' type = 'error' %]
+        Invalid characters in collection name. 
+        Collection names can only contain characters <i>a-z</i>, 
+        <i>numbers</i>, <i>-</i>, <i>_</i> and <i>spaces</i>.
+    [% END %]
 [% ELSIF error_missing_connector %]
 	[% WRAPPER 'template_message.html' 
 		type = 'error' %]
