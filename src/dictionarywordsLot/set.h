@@ -23,6 +23,7 @@ int set_intersects(set *, set *);
 int set_intersect(set *, set *, set *);
 int set_add(set *, char *);
 void set_free(set *);
+void set_free_all(set *);
 
 
 #endif /* _SET_H_ */

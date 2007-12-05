@@ -1,3 +1,5 @@
+#include <sys/types.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <zlib.h>
@@ -6,11 +8,13 @@
 #include <math.h>
 #include <signal.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #include "../common/lot.h"
 #include "../common/define.h"
 #include "../common/stdlib.h"
 #include "../common/bstr.h"
+#include "../common/boithohome.h"
 
 
 #include "../3pLibs/keyValueHash/hashtable.h"
@@ -70,38 +74,33 @@ int
 add_acls(char *acl, set *s)
 {
 	char **acls;
-	int i;
+	int a, i;
 
 	if (split(acl, ",", &acls) == -1)
 		return 0;
-	for (i = 0; acls[i] != NULL; i++)
-		set_add(s, acls[i]);
+	for (i = 0; acls[i] != NULL; i++) {
+		if (strcmp(acls[i], "") == 0) {
+			free(acls[i]);
+			continue;
+		}
+		if (set_add(s, acls[i]) == 2)
+			free(acls[i]);
+	}
 	free(acls);
 
 	return 1;
 }
 
-int main (int argc, char *argv[]) {
-	FILE *FH, *resultFH;
+void
+dolot(unsigned int lotNr, char *subname, struct hashtable *h)
+{
+	FILE *FH;
 	char line[512];
 	char word[maxWordlLen +1];
-	unsigned int nr;
 	char *filesKey;
-	struct hashtable *h;
-	struct hashtable_itr *itr;
-
-	if (argc != 3) {
-		printf("usage: dictionarywordsLot lotnr subname\n");
-		exit(1);
-	}
-
-	unsigned int lotNr = atou(argv[1]);
-	char *subname = argv[2];
+	unsigned int nr;
 
 	FH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords_raw","r",'r',subname);
-
-	h = create_hashtable(200, fileshashfromkey, filesequalkeys);
-
 	while(fgets(line, sizeof(line), FH) != NULL) {
 		char acl_allow[100], acl_denied[100];
 		dictcontent_t *dc;
@@ -119,7 +118,7 @@ int main (int argc, char *argv[]) {
 		if ((dc = hashtable_search(h, word)) == NULL) {
                         filesKey = strdup(word);
 			dc = malloc(sizeof(*dc));
-			dc->hits = 1;
+			dc->hits = nr;
 			set_init(&dc->acl_allow);
 			set_init(&dc->acl_denied);
 			add_acls(acl_allow, &dc->acl_allow);
@@ -134,15 +133,94 @@ int main (int argc, char *argv[]) {
                 else {
 			add_acls(acl_allow, &dc->acl_allow);
 			add_acls(acl_denied, &dc->acl_denied);
-			(dc->hits)++;
+			dc->hits += nr;
                 }
 	}
 
 	fclose(FH);
 
-	resultFH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords","w",'r',subname);
+
+}
+
+int main (int argc, char *argv[]) {
+	FILE *resultFH;
+	char *filesKey;
+	struct hashtable *h;
+	struct hashtable_itr *itr;
+	int all = 0;
+
+	if (argc >= 2 && strcmp(argv[1], "all") == 0) {
+		all = 1;
+	} else if (argc != 3) {
+		printf("usage: dictionarywordsLot lotnr subname\n");
+		printf("usage: dictionarywordsLot all\n");
+		exit(1);
+	}
+
+	h = create_hashtable(200, fileshashfromkey, filesequalkeys);
+	if (all == 0) {
+		unsigned int lotNr = atou(argv[1]);
+		char *subname = argv[2];
+
+		dolot(lotNr, subname, h);
+	} else {
+		DIR *d;
+		struct dirent *de;
+		char pathname[PATH_MAX];
+
+		if ((d = opendir(bfile("lot/"))) == NULL)
+			err(1, "opendir(lot/)");
+
+		while ((de = readdir(d))) {
+			DIR *d2;
+			struct dirent *de2;
+
+			if (de->d_name[0] == '.' || !isdigit(de->d_name[0]))
+				continue;
+
+			sprintf(pathname, "%s/%s", bfile("lot"), de->d_name);
+			if ((d2 = opendir(pathname)) == NULL)
+				err(1, "opendir(lot/x/)");
+
+			while ((de2 = readdir(d2))) {
+				DIR *d3;
+				struct dirent *de3;
+
+				if (de2->d_name[0] == '.' || !isdigit(de2->d_name[0]))
+					continue;
+
+				sprintf(pathname, "%s/%s/%s", bfile("lot"), de->d_name, de2->d_name);
+
+				if ((d3 = opendir(pathname)) == NULL)
+					err(1, "opendir(lot/x/y/)");
+
+				while ((de3 = readdir(d3))) {
+					FILE *tmpfh;
+
+					if (de3->d_name[0] == '.')
+						continue;
+
+					sprintf(pathname, "%s/%s/%s/%s/dictionarywords_raw",
+					    bfile("lot"), de->d_name, de2->d_name, de3->d_name);
+					printf("found dictionary: %s\n", pathname);
+					/* XXX: Use stat(2) instead? */
+					if ((tmpfh = fopen(pathname, "r")) != NULL) {
+						fclose(tmpfh);
+						dolot(atoi(de2->d_name), de3->d_name, h);
+					}
+				}
+				closedir(d3);
+			}
+			closedir(d2);
+		}
+		closedir(d);
+	}
+
+	//resultFH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords","w",'r',subname);
+	resultFH = fopen(bfile("var/dictionarywords"), "w");
 
 	if (hashtable_count(h) > 0) {
+		printf("Writing %d words.\n", hashtable_count(h));
                 itr = hashtable_iterator(h);
                	do {
 			char *p;
@@ -170,6 +248,8 @@ int main (int argc, char *argv[]) {
 				//printf("\t%s\n", p);
 			}
 			fprintf(resultFH, "\n");
+			set_free_all(&dc->acl_allow);
+			set_free_all(&dc->acl_denied);
                 } while (hashtable_iterator_advance(itr));
                 free(itr);
 	}

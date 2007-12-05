@@ -31,6 +31,18 @@ set_free(set *s)
 	free(s->set);
 }
 
+void
+set_free_all(set *s)
+{
+	int i;
+	char *p;
+
+	SET_FOREACH(i, s, p) {
+		free(p);
+	}
+	set_free(s);
+}
+
 int
 set_find(set *s, char *str)
 {
@@ -92,7 +104,7 @@ set_add(set *s, char *str)
 	}
 
 	if (set_exists(s, str))
-		return 1;
+		return 2;
 
 	/* XXX: Fix the linear search */
 	SET_FOREACH(i, s, p) {
