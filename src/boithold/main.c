@@ -605,6 +605,9 @@ void connectHandler(int socket) {
 
 			free(text);
 		}
+		/*
+		runarb: 06 des 2007: vi har gåt bort fra denne metoden for nå, og bruker heller index over smb. Men tar vare på den da vi kan trenge den siden
+
 		else if (packedHedder.command == C_urltodocid) {
 			char cmd;
 			int alloclen;
@@ -657,6 +660,7 @@ void connectHandler(int socket) {
 
 			free(urlbuf);
 		}
+		*/
 		else {
 			printf("unnown comand. %i\n", packedHedder.command);
 		}
