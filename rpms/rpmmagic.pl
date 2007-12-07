@@ -13,12 +13,14 @@ if ($#ARGV == -1) {
   my $initd;
   my $verbose;
   my $requires;
+  my $sql;
 
-  my $result = GetOptions ("pre=s" => \$pre,    	# rpm pre 
-                        "post=s"   => \$post,      	# rpm post
-                        "initd=s"   => \$initd,      	# rpm post
-			"requires=s" => \$requires, 	# rpm requires
-			"verbose"  => \$verbose);
+  my $result = GetOptions ("pre=s" 	=> \$pre,    	# rpm pre 
+                        "post=s"   	=> \$post,      	# rpm post
+                        "initd=s"   	=> \$initd,      	# rpm post
+			"requires=s" 	=> \$requires, 	# rpm requires
+			"sql=s" 	=> \$sql, 		# rpm sql
+			"verbose"  	=> \$verbose);
 
 my $name = shift @ARGV or die("please suply a name");
 my $version = shift @ARGV or die("please suply a version");
@@ -31,6 +33,10 @@ while ($#ARGV > -1) {
 	my $file = shift @ARGV;
 	push(@files,$file);
 	print "file: $file\n";	
+}
+#legger sql filen til som en vanlig fil
+if (defined($sql)) {
+	push(@files,$sql);
 }
 
 my $name_and_version = $name . '-' . $version;
@@ -66,10 +72,7 @@ my $fileslist = '';
 
 for my $i (@files) {
 	my $filedest = $dest . '/' . $i;
-	#$filesinstal .= "install -s -m 755 $i \$DESTDIR/$i\n";
-	#$filesinstal .= "install -D -m 755 $i \$DESTDIR/$i\n";
-	
-	#$filesinstal .= "mkdir -p \$DESTDIR\n";
+
 	$filesinstal .= "cp -r --parents $i \$DESTDIR/\n";
 
 	$fileslist .= $filedest . "\n";
@@ -78,7 +81,6 @@ if (defined($initd)) {
 	$filesinstal .= "install -D -m 755  init.d/$initd \$RPM_BUILD_ROOT/etc/init.d/$initd\n";
 	$fileslist .=  "/etc/init.d/$initd\n";
 }
-
 
 
 print "filesinstal:\n$filesinstal\n";
@@ -102,6 +104,12 @@ fi
 	sh /etc/init.d/$initd start
 
 	};
+}
+if (defined($sql)) {
+	my $filedest = $dest . '/' . $sql;
+
+
+	$post .= "mysql boithobb < $filedest\n";
 }
 
 for my $i (@files) {
