@@ -179,6 +179,8 @@ cmc_rewrite_url(int socketha, char *collection_in, char *uri_in, size_t inlen, e
 	char uri[512];
 	struct rewriteFormat rewrite;
 
+	printf("cmc_rewrite_url: will rewrite: \"%s\"\n",uri_in);
+
 	//memset(&rewrite, '\0', sizeof(rewrite));
 
 	/*
