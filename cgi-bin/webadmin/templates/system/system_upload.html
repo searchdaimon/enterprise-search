@@ -18,6 +18,15 @@
 [% END %]
 
 <h1>Software updates</h1>
+
+<h2>Installed software</h2>
+[% IF pkg_listing_error %]
+    [% WRAPPER 'template_message.html' type='error' %]
+        [% pkg_listing_error %]
+    [% END %]
+[% END %]
+[% PROCESS list_pkgs pkg_list = installed_pkgs %]
+
 <h2>Check for Black Box updates</h2>
 [% IF available_packages_error.defined %]
 	
@@ -42,22 +51,8 @@
 
 	[% ELSE %]
 	    <h4>Updates available</h4>
-		[% WRAPPER 'template_table.html'
-				header = ['', 'Software package', 'Version', 'Release'] %]
-		[% color = 0 %]
-		[% FOREACH package IN available_packages %]
+                [% PROCESS list_pkgs pkg_list = available_packages %]
 		
-			
-			[% WRAPPER 'template_table_row.html' %]
-	
-				<td style="width : 25px;"><img src="file.cgi?icon=rpm&amp;size=22x22" alt="" /></td>
-				<td>[% package.name %]</td>
-				<td>[% package.version %]</td>
-				<td>[% package.release %]</td>
-			[% color = 1 - color %]
-			[% END #row %]
-		[% END #foreach %]
-		[% END #table %]
 
 		<form action="system.cgi" method="post">
 		    <input type="submit" name="submit.software_install_available" value="Install updates" style="margin-top : 1em;" />
@@ -159,6 +154,29 @@
 		</div>
 	</form>
 [% END %]
+
+
+[%# blocks %]
+
+[% BLOCK list_pkgs %]
+    [% WRAPPER 'template_table.html'
+        header = ['', 'Software package', 'Version', 'Release'] %]
+
+	[% color = 0 %]
+	[% FOREACH package IN pkg_list %]
+	    [% WRAPPER 'template_table_row.html' %]
+		<td style="width : 25px;">
+                    <img src="file.cgi?icon=rpm&amp;size=22x22" alt="" /></td>
+                <td>[% package.name %]</td>
+		<td>[% package.version %]</td>
+		<td>[% package.release %]</td>
+		[% color = 1 - color %]
+	    [% END #row %]
+	[% END #foreach %]
+    [% END #table %]
+[% END %]
+
+
 
 
 [% INCLUDE 'footer.html' %]

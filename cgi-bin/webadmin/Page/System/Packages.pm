@@ -19,42 +19,61 @@ my $yum;
 
 sub _init {
 	my ($self) = @_;
-	$yum = Boitho::YumWrapper->new($CONFIG->{'rpm_upload_folder'}, $CONFIG->{'yum_wrapper_path'});
+	$yum = Boitho::YumWrapper->new(
+            $CONFIG->{'rpm_upload_folder'}, $CONFIG->{'yum_wrapper_path'});
 	return $self;
 }
 
 
 sub show {
-	my ($self, $vars, $show_available) = @_;
+    my ($self, $vars, $show_available) = @_;
 
-	my @uploaded = $yum->list_rpm_dir();
-	$vars->{'uploaded_packages'} = \@uploaded;
-	
-	if ($show_available) {
-		$yum->clean();
-		my ($success, @output) = $yum->check_update();
-	
-		
-		unless ($success) {
-			# something went wrong. Show the user.
-			my $errmsg;
-			if (scalar @output) {
-				$errmsg = "Error during update: " . join("<br />\n", @output);
-			}
-			else {
-				$errmsg = "Unknown error during update. The error log should contain the details.";
-			}
-			$vars->{'available_packages_error'} = $errmsg;
-		}
-		
-		else {
-			# all good, show the output.
-			$vars->{'available_packages'} = \@output;
-		}
-	}
-	
-	return ($vars, PACKAGES_TPL);
+    my @uploaded = $yum->list_rpm_dir();
+    $vars->{'uploaded_packages'} = \@uploaded;
+
+    $self->_show_installed($vars);
+    
+
+    if ($show_available) {
+        $yum->clean();
+        my ($success, @output) = $yum->check_update();
+
+
+        unless ($success) {
+            # something went wrong. Show the user.
+            my $errmsg;
+            if (scalar @output) {
+                $errmsg = "Error during update: " . join("<br />\n", @output);
+            }
+            else {
+                $errmsg = "Unknown error during update. The error log should contain the details.";
+            }
+            $vars->{'available_packages_error'} = $errmsg;
+        }
+
+        else {
+            # all good, show the output.
+            $vars->{'available_packages'} = \@output;
+        }
+    }
+
+    return ($vars, PACKAGES_TPL);
 }
+
+sub _show_installed {
+    my ($self, $vars) = @_;
+    my ($succs, @input) = $yum->list();
+    unless ($succs) {
+        $vars->{pkg_listing_error} 
+            = "Unable to list installed packages:\n" . join "\n", @input;
+        return;
+    }
+    my @pkgs = grep { $_->{release} eq 'boitho-released' } @input;
+    $vars->{installed_pkgs} = \@pkgs;
+    1;
+}
+
+
 
 
 sub upload_package {
