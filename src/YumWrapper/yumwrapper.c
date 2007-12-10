@@ -38,7 +38,7 @@ void show_usage();
 
 // header end
 
-const char *valid_actions[] = {"check-update", "update", "clean", "install", '\0'};
+const char *valid_actions[] = {"check-update", "update", "clean", "install", "list", '\0'};
 
 int main(int argc, char **argv) {
 #if DO_SUID
@@ -63,9 +63,7 @@ int main(int argc, char **argv) {
 	    show_usage();
 	}
 		
-
 	second_arg = (argc == 3) ? argv[2] : NULL;
-
 	if (str_equals(action, "install")) {
 	    if (second_arg == NULL) {
 		printf("You need to provide a package name.\n");
@@ -188,7 +186,7 @@ int str_equals(const char *param, char *string) {
  * Show program usage and exit.
  */
 void show_usage() {
-    printf("Usage: ./yumwrapper check-update|update|clean|localinstall [package]\n");
+    printf("Usage: ./yumwrapper check-update|update|clean|list|localinstall [package]\n");
     exit(1);
 }
 
