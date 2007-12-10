@@ -29,6 +29,9 @@ using namespace std;
 using namespace Libppt;
 
 
+bool textonly;
+
+
 void recursiveSearch( GroupObject* group, ofstream &out )
 {
     if (!group) return;
@@ -53,21 +56,26 @@ void recursiveSearch( GroupObject* group, ofstream &out )
 					{
 					    if (!written)
 						{
-						    if (T->type()==TextObject::Body || T->type()==TextObject::CenterBody
-							|| T->type()==TextObject::HalfBody || T->type()==TextObject::QuarterBody)
-							out << "<p>";
-						    else if (T->type()==TextObject::Title || T->type()==TextObject::CenterTitle)
-							out << "<h2>";
-						    else out << "<div>";
+						    if (!textonly)
+							{
+							    if (T->type()==TextObject::Body || T->type()==TextObject::CenterBody
+								|| T->type()==TextObject::HalfBody || T->type()==TextObject::QuarterBody)
+								out << "<p>";
+							    else if (T->type()==TextObject::Title || T->type()==TextObject::CenterTitle)
+								out << "<h2>";
+							    else out << "<div>";
+							}
 
 						    written = true;
 						}
 
-					    out << "<span>" << T->text(j).cstring().c_str() << "</span> ";
+					    if (!textonly) out << "<span>";
+					    out << T->text(j).cstring().c_str();
+					    if (!textonly) out << "</span> ";
 					}
 				}
 
-			    if (written)
+			    if (written && !textonly)
 				{
 				    if (T->type()==TextObject::Body || T->type()==TextObject::CenterBody
 					|| T->type()==TextObject::HalfBody || T->type()==TextObject::QuarterBody)
@@ -77,6 +85,8 @@ void recursiveSearch( GroupObject* group, ofstream &out )
 				    else out << "</div>";
 				    out << endl;
 				}
+			    else
+				out << endl;
 			}
     		}
 
@@ -88,15 +98,25 @@ void recursiveSearch( GroupObject* group, ofstream &out )
 
 int main( int argc, char* argv[] )
 {
-    if (argc != 3)
+    int		argnr = 1;
+
+    if (argc < 3)
 	{
-	    cerr << "Usage: " << argv[0] << " <input.ppt> <output.html>" << endl;
+	    cerr << "Usage: " << argv[0] << " [-t] <input.ppt> <output.html>" << endl;
 	    return -1;
+	}
+
+    textonly = false;
+
+    if (!strcmp(argv[argnr], "-t"))
+	{
+	    textonly = true;
+	    argnr++;
 	}
 
     Presentation	*P = new Presentation;
 
-    if (!P->load( argv[1] ))
+    if (!P->load( argv[argnr++] ))
 	{
 	    cerr << "Error: Could not load presentation." << endl;
 	    delete P;
@@ -108,7 +128,7 @@ int main( int argc, char* argv[] )
 
     cout << numSlides << " slides." << endl;
 
-    ofstream	out(argv[2]);
+    ofstream	out(argv[argnr++]);
 
     if (!out)
 	{
