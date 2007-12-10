@@ -9,7 +9,7 @@ use File::Glob qw(bsd_glob);
 use File::Basename qw(basename);
 use File::Path qw(mkpath);
 
-use constant USE_DEBUG_DATA => 0;
+use constant USE_DEBUG_DATA => 1;
 
 my $rpm_dir;
 my $wrapper_path;
@@ -43,52 +43,28 @@ sub new {
 }
 
 ##
+# List installed packages.
+sub list {
+    my $self = shift;
+    my ($succs, @input) = $self->_exec_action("list");
+    return ($succs, @input)
+        unless $succs;
+    return ($succs, $self->_parse_pkg_list(@input));
+}
+
+##
 # Lists available updates.
 #
 # Returns:
 #   List with hashrefs, format {'name' => 'Name', 'version' => 'Version', 'release' => 'Release'}
 sub check_update {
     my $self = shift;
-
-    my ($succ, @input);
-    
-    if (USE_DEBUG_DATA) {
-	$succ = 1;
-	@input = qq(Loading "installonlyn" plugin
-Setting up repositories
-Reading repository metadata in from local files
-
-audit-libs.x86_64                        1.4.2-5.fc6            updates
-audit-libs.i386                          1.4.2-5.fc6            updates
-audit-libs-python.x86_64                 1.4.2-5.fc6            updates
-boitho-crawlManager.i386                 1.3.3-1                boitho-released
-boitho-searchdbb.i386                    5.4.11-1               boitho-released
-	);
-	@input = split "\n", $input[0];
-	carp Dumper(\@input);
-    }
-    else {
-	($succ, @input) = $self->_exec_action("check-update");
-    }
-
-    unless ($succ) { 
-	return ($succ, @input);
-    }
-
-    my @packages;
-    foreach my $in (@input) {
-	chomp $in;
-	if ($in =~ m/^(\S+) \s\s+ (\S+) \s\s+ (\S+)/xs) {
-	    push @packages, {
-		'name' => $1,
-		'version' => $2,
-		'release' => $3,
-	    };
-	}
-    }
-
-    return ($succ, @packages);
+    my ($succ, @input) = $self->_exec_action("check-update");
+    return ($succ, @input)
+        unless $succ;
+    return ($succ, $self->_parse_pkg_list(@input));
 }
+
 
 ##
 # Updates every currently installed package on local machine.
@@ -129,6 +105,24 @@ sub list_rpm_dir {
 
 
 # Group: Private methods
+
+sub _parse_pkg_list {
+    my $self = shift;
+    my @input = @_;
+
+    my @pkgs;
+    foreach my $in (@input) {
+        chomp $in;
+        if ($in =~ m/^(\S+) \s\s+ (\S+) \s\s+ (\S+)/xs) {
+            push @pkgs, { 
+                'name' => $1, 
+                'version' => $2, 
+                'release' => $3, 
+            }
+        }
+    }
+    return @pkgs;
+}
 
 ##
  # Execute with wrapper.
