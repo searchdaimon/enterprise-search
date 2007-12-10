@@ -20,6 +20,12 @@ use Common::Data::Overview;
 
 use config qw($CONFIG);
 
+my $sqlShares;
+my $sqlConnectors;
+my $sqlAuth;
+my $sqlGroups;
+my $sqlUsers;
+
 sub new {
     my ($class, $dbh, $state) = @_;
 	my $self = {};
@@ -32,26 +38,19 @@ sub _init($$$) {
 	my ($self, $dbh, $state) = (@_);
 	$self->{'dbh'}		 = $dbh;
 	$self->{'state'}	 = $state;
-	$self->{'sqlShares'}	 = Sql::Shares->new($dbh);
-	$self->{'sqlConnectors'} = Sql::Connectors->new($dbh);
-	$self->{'sqlAuth'}	 = Sql::CollectionAuth->new($dbh);
-	$self->{'sqlGroups'}	 = Sql::ShareGroups->new($dbh);
-        $self->{'sqlUsers'}      = Sql::ShareUsers->new($dbh);
+	$sqlShares     = Sql::Shares->new($dbh);
+	$sqlConnectors = Sql::Connectors->new($dbh);
+	$sqlAuth = Sql::CollectionAuth->new($dbh);
+	$sqlGroups = Sql::ShareGroups->new($dbh);
+        $sqlUsers = Sql::ShareUsers->new($dbh);
 	$self->{'common'}     	 = Common::Generic->new;
 	$self->{'dataOverview'} = Common::Data::Overview->new($dbh);
 	$self->{'infoQuery'}   = Boitho::Infoquery->new($CONFIG->{'infoquery'});
-
-	#my $sqlConfig = Sql::Config->new($dbh);
-	
-	#$self->{'default_crawl_rate'} 
-	#	= $sqlConfig->get_setting('default_crawl_rate');
-	#$self->{'sqlConfig'}	 = $sqlConfig;
 }
 
 ## Sends a crawl collection request to infoquery.
 sub crawl_collection($$) {
 	my ($self, $vars, $id) = (@_);
-	my $sqlShares = $self->{'sqlShares'};
 	my $iq = $self->{'infoQuery'};
 
 	my $collection = $sqlShares->get_collection_name($id);
@@ -81,53 +80,50 @@ sub list_collections($$) {
 
 
 
-## Method for displaying a form to edit a collection.
+## 
+# Method for displaying a form to edit a collection.
 sub edit_collection {
-	my ($self, $vars, $collection) = (@_);
-	my $template_file = "overview_edit.html";
-	my $sqlShares = $self->{'sqlShares'};
-	my $sqlGroups = $self->{'sqlGroups'};
-        my $sqlUsers = $self->{'sqlUsers'};
-	
-	
-	my $state = $self->{'state'};
-	
-	my ($input_fields, $id);
-	($vars, $input_fields, $id) =
-		$self->_get_collection_data($vars, $collection);
-	
-	if (defined($state->{'share'})) {
-		# User tried to submit invalid values, showing form again.
-		my $share = $state->{'share'};
-		$share->{'connector_name'} = 
-			$sqlShares->get_connector_name($share->{'id'});
-		$vars->{'share'} = $share;
-	}
-	else {
-		# First time editing a collection.
-		unless ($sqlShares->id_exists($id)) {
-			# Show error
-			$vars->{'error_collection_not_exist'} = 1;
-		}
- 		else {
-			# Collection exists, continue.
- 			my $share =  $sqlShares->get_share($id);
- 			$share->{'group_member'} = $sqlGroups->get_groups($id)
- 			    if grep /^groups$/, @$input_fields;
-                        $share->{'user'} = [ $sqlUsers->get_users($id) ]
-                            if grep /user/, @{$input_fields};
- 			$vars->{'share'} = $share;
- 		}
-	}
+    my ($self, $vars, $collection) = (@_);
+    my $template_file = "overview_edit.html";
+    my $state = $self->{'state'};
 
-	
-	return ($vars, $template_file);
+    my ($id, @input_fields)
+        = $self->_get_collection_data($vars, $collection);
+
+    # User may not edit coll.name
+    @input_fields = grep { $_ ne 'collection' } @input_fields;
+    $vars->{input_fields} = \@input_fields;
+
+    if (defined($state->{'share'})) {
+        # User tried to submit invalid values, showing form again.
+        my $share = $state->{'share'};
+        $share->{'connector_name'} = 
+            $sqlShares->get_connector_name($share->{'id'});
+        $vars->{'share'} = $share;
+    }
+    else {
+        # First time editing a collection.
+        unless ($sqlShares->id_exists($id)) {
+            # Show error
+            $vars->{'error_collection_not_exist'} = 1;
+        }
+        else {
+            # Collection exists, continue.
+            my $share =  $sqlShares->get_share($id);
+            $share->{'group_member'} = $sqlGroups->get_groups($id)
+                if grep /^groups$/, @input_fields;
+            $share->{'user'} = [ $sqlUsers->get_users($id) ]
+                if grep /user/, @input_fields;
+            $vars->{'share'} = $share;
+        }
+    }
+
+    return ($vars, $template_file);
 }
 
 sub manage_collection {
 
 	my ($self, $vars, $id) = (@_);
-	my $sqlShares = $self->{'sqlShares'};
 	my $collection_name = $sqlShares->get_collection_name($id);
 
 	$vars->{'id'} = $id;
@@ -142,16 +138,8 @@ sub manage_collection {
 sub submit_edit {
 	my ($self, $vars, $share) = @_;
 
-	my $sqlShares     = $self->{'sqlShares'};
-	my $sqlConnectors = $self->{'sqlConnectors'};
-	my $sqlGroups     = $self->{'sqlGroups'};
-        my $sqlUsers      = $self->{'sqlUsers'};
-
-	
-
-	unless (defined $share) {
-		croak "argument share not provided";
-	}
+        croak "argument share not provided"
+            unless defined $share;
 	
 	my $dbh = $self->{'dbh'};
 	
@@ -159,9 +147,7 @@ sub submit_edit {
 	
 	# Check for errors
 	my $c_collection = Common::Collection->new($dbh);
-	my ($valid, $msg) = $c_collection->validate($share, 
-		qw(collection_name share));
-
+	my ($valid, $msg) = $c_collection->validate($share, qw(share));
 
 	unless ($valid) {
 		$vars->{'share'} = $share;
@@ -182,7 +168,6 @@ sub submit_edit {
 
 sub activate_collection($$$) {
 	my ($self, $vars, $id) = (@_);
-	my $sqlShares = $self->{'sqlShares'};
 	$vars->{'success_activate'} = 1;
 	$sqlShares->set_active($id);
 	return $vars;
@@ -193,7 +178,6 @@ sub activate_collection($$$) {
 ## Do it, and return him to the collection management form
 sub recrawl_collection($$$) {
 	my ($self, $vars, $submit_values) = (@_);
-	my $sqlShares = $self->{'sqlShares'};
 	my $iq        = $self->{'infoQuery'};
 	my $common    = $self->{'common'};
 	my $id = $common->request([$submit_values]);
@@ -214,7 +198,6 @@ sub delete_collection_confirmed {
 	my ($self, $vars, $id) = (@_);
 	croak ("The operation must be a POST request to work.") 
 		unless($ENV{'REQUEST_METHOD'} eq 'POST');
-	my $sqlShares = $self->{'sqlShares'};
 	my $infoquery = $self->{'infoQuery'};
 
 	my $collection_name = $sqlShares->get_collection_name($id);
@@ -236,7 +219,6 @@ sub delete_collection_confirmed {
 ## User wants to delete a collection. Show confirm dialog.
 sub delete_collection {
 	my ($self, $vars, $id) = (@_);
-	my $sqlShares = $self->{'sqlShares'};
 	$vars->{'collection_name'} = $sqlShares->get_collection_name($id);
 	$vars->{'id'} = $id;
 
@@ -248,29 +230,19 @@ sub delete_collection {
 
 ## Helper function for edit_collection
 ## Gets data regarding the collection.
-sub _get_collection_data($$$) {
+sub _get_collection_data {
 	my ($self, $vars, $collection) = (@_);
-	my $sqlConnectors = $self->{'sqlConnectors'};
-	my $sqlShares = $self->{'sqlShares'};
 
-	# Figure out collection id
-	my $id;
-	{;
-		my $exists;
-		($vars, $exists, $id) = $self->_find_collection_id($vars, $collection);
-		return $vars unless $exists;
-	}
-	
+	my $id = $self->_find_collection_id($vars, $collection);
+	return unless $id; #coll does not exist.
+
 	# Figure out input fields for connector
-	my $input_fields = $sqlConnectors->get_input_fields(
+	my $input_fields_ref = $sqlConnectors->get_input_fields(
 					$sqlShares->get_connector_name($id));
-	$input_fields = $self->_add_collection_field($input_fields);
-	$vars->{'input_fields'} = $input_fields;
+        # Grab other options
+	$self->_get_associated_data($vars, $input_fields_ref);
 	
-	# Grab other options
-	$vars = $self->_get_associated_data($vars, $input_fields);
-	
-	return ($vars, $input_fields, $id);
+	return ($id, @{$input_fields_ref});
 }
 
 
@@ -280,8 +252,6 @@ sub _get_collection_data($$$) {
 sub _get_associated_data($$$) {
 	my ($self, $vars, $fields) = (@_);
 	
-	my $sqlConnectors = $self->{'sqlConnectors'};
-	my $sqlAuth = $self->{'sqlAuth'};
 	my $infoquery = $self->{'infoQuery'};
 	
 	if (grep { /^authentication$/ } @$fields) {
@@ -302,10 +272,8 @@ sub _get_associated_data($$$) {
 ## to find collection id.
 sub _find_collection_id($$) {
 	my ($self, $vars, $collection) = (@_);
-	my $sqlShares = $self->{'sqlShares'};
-
 	my $id;
-	if ($collection =~ /\d+/) { 
+	if ($collection =~ /^\d+$/) { 
 		$id = $collection 
 	}
 	else { 	
@@ -314,20 +282,10 @@ sub _find_collection_id($$) {
 	
 	unless ($id) {
 		$vars->{'error_collection_not_exist'} = 1;
-		return ($vars, 0, undef);
+		return;
 	}
 	
-	return ($vars, 1, $id);
-}
-
-## Helper function for show_edit_form
-## to add the collection field unless it's added.
-sub _add_collection_field($$) {
-	my ($self, $fields) = (@_);
-	my $added = grep /^collection$/, @$fields;
-	unshift(@$fields, 'collection')
-		unless($added);
-	return $fields;
+	return $id;
 }
 
 sub _get_connectors {

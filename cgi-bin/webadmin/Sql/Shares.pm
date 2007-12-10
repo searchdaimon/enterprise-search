@@ -39,21 +39,22 @@ sub _init {
 # Returns:
 #	insert_id - Collection id for this insert.
 sub insert_share {
-	my $self = shift;
-	my $attr_val_ref = shift;
+    my $self = shift;
+    my $attr_val_ref = shift;
 
-	my ($collection_name, $auth_id) = $self->_get_collection_and_auth($attr_val_ref);
-	$attr_val_ref->{'collection_name'} = $collection_name;
-	$attr_val_ref->{'auth_id'} = $auth_id;
-	
-	my ($attr_str, $val_str, @binds) 
-		= $self->construct_insert_query($attr_val_ref, @valid);
-	
-	my $query = "INSERT INTO $table ($attr_str) values ($val_str)";
+    $attr_val_ref->{'collection_name'} 
+        = $self->_gen_coll_name($attr_val_ref);
+    $attr_val_ref->{'auth_id'} 
+        = $self->_gen_auth_id($attr_val_ref);
 
-	$self->sql_insert($query, @binds);
+    my ($attr_str, $val_str, @binds) 
+        = $self->construct_insert_query($attr_val_ref, @valid);
 
-	return $dbh->{ q{mysql_insertid} };
+    my $query = "INSERT INTO $table ($attr_str) values ($val_str)";
+
+    $self->sql_insert($query, @binds);
+
+    return $dbh->{ q{mysql_insertid} };
 }
 
 
@@ -64,24 +65,20 @@ sub insert_share {
 #	attr_val_ref -  A hash ref with db table attributes as: attribute => value.
 #					Any attributes not listed in @valid are ignored.
 sub update_share {
-	my $self = shift;
-	my $attr_val_ref = shift;
-	
-	my ($collection_name, $auth_id) 
-		= $self->_get_collection_and_auth($attr_val_ref);
+    my ($self, $attr_val_ref) = @_;
 
-	$attr_val_ref->{'collection_name'} = $collection_name;
-	$attr_val_ref->{'auth_id'} = $auth_id;
+    $attr_val_ref->{'auth_id'} 
+        = $self->_gen_auth_id($attr_val_ref);
 
-	my ($set_str, @binds) 
-		= $self->construct_update_query($attr_val_ref, @valid);
+    my ($set_str, @binds) 
+        = $self->construct_update_query($attr_val_ref, @valid);
 
-	my $query = "UPDATE $table SET $set_str WHERE id = ?";
-	push @binds, $attr_val_ref->{'id'};
-	
-	$self->sql_update($query, @binds);
-	
-	1;
+    my $query = "UPDATE $table SET $set_str WHERE id = ?";
+    push @binds, $attr_val_ref->{'id'};
+
+    $self->sql_update($query, @binds);
+
+    1;
 }
 
 ##
@@ -243,36 +240,6 @@ sub get_id {
 	croak "get_id() is deprecated.";
 }
 
-# # Returns the id for a single host/connector match.
-# # Method is somewhat misleading, as it is only used by scan to see if host already exists.
-# #
-# # If fuzzy match is true, get_id will try to mach $table.resource as a substring
-# sub get_id {
-# 	my $self = shift;
-# 	my $host = shift;
-# 	my $connector = shift;
-# 
-# 	my $query = "";
-# 	if ($connector =~ /\d+/) {
-# 		$query = "SELECT id FROM $table 
-# 			WHERE (host = ? OR $table.resource = ?) AND connector = ?";
-# 	}
-# 	else {
-# 		$query = "SELECT $table.id FROM $table, connectors
-# 			WHERE ($table.host = ? OR $table.resource = ?)
-# 			AND connectors.name = ?";
-# 	}
-# 
-# 	my $sth = $dbh->prepare($query) 
-# 		or croak ("prepare", $dbh->errstr);
-# 	$sth->execute($host, $host, $connector)
-# 		or croak ("execute: ", $dbh->errstr);
-# 	
-# 	my $id = $sth->fetchrow_array;
-# 	
-# 	return $id;
-# }
-
 ##
 # Delete all content in table.
 sub delete_all {
@@ -335,41 +302,29 @@ sub get_connector_name {
 # Generates a collection name if it's not defined.
 # Generates auth_id, if it is not defined.
 sub _get_collection_and_auth {
-	my $self = shift;
-	my $data = shift;
-	my $collection = $data->{'collection_name'};
-	my $auth_id =    $data->{'auth_id'};
-	
-	unless ($collection) {
-		 $collection = $self->_generate_random_name();
-	}
-
-	$auth_id = $common->get_auth_id($dbh,
-					$auth_id, 
-					$data->{'username'}, 
-					$data->{'password'});
-	
-	return ($collection, $auth_id);
+    croak "_get_collection_and_auth deprecated."
+        . "Use _gen_auth_id and gen_coll_name.";
 }
 
-##
-# Generate a random not-taken collection name.
-sub _generate_random_name($) {
-	my $self = shift;
-	my $name = "";
-	my $counter = 0;
-	do {
-		$name = "random_";
-		my @characters = ('a'..'z', 'A'..'Z', 0..9);
-	
-		for (1..5) {
-			$name .= $characters[rand @characters];
-		}
+sub _gen_auth_id {
+    my ($self, $data) = @_;
+    return $common->get_auth_id($dbh, 
+        $data->{auth_id}, $data->{username}, $data->{password});
 
-		$counter++;
-		carp ("_generate_random_name is using too many attempts at finding a name.") if ($counter > 4);
-	} while ($self->collection_name_exists($name));
-	return $name;
+}
+
+sub _gen_coll_name {
+    my ($self, $data) = @_;
+    return $data->{collection_name}
+        if $data->{collection_name};
+
+    my @chars = ('a'..'z', 'A'..'Z', 0..9);
+    my $name;
+    do {
+        $name = "collection_";
+        $name .= $chars[rand @chars] for 1..5;
+    } while ($self->collection_name_exists($name));
+    return $name;
 }
 
 
