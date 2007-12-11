@@ -126,7 +126,7 @@ else {
 }
 
 
-print $cgi->header(-type => 'text/html', -expires => 'now');
+print $cgi->header(-type => 'text/html', -expires => '-1h');
 
 my $template = Template->new(
 	{INCLUDE_PATH => './templates:./templates/overview:./templates/common',});
