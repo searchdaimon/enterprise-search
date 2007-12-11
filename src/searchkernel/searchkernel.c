@@ -1166,7 +1166,9 @@ void *generatePagesResults(void *arg)
 		///////////
 
 		if (1 || !PagesResults->getRank) {
+			//urI
 			strscpy(side->uri,side->DocumentIndex.Url,sizeof(side->uri));
+			//urL
 			strscpy(side->url,side->DocumentIndex.Url,sizeof(side->url));
 
 			side->pathlen = find_domain_path_len(side->uri);
@@ -1512,8 +1514,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
                         printf("group: %s\n",groups_respons_list[i]);
 
-			strlcat(groupOrQuery," |",sizeof(groupOrQuery));
+			strlcat(groupOrQuery," |\"",sizeof(groupOrQuery));
 			strlcat(groupOrQuery,groups_respons_list[i],sizeof(groupOrQuery));
+			strlcat(groupOrQuery,"\"",sizeof(groupOrQuery));
 
                 }
 
