@@ -38,9 +38,10 @@ static inline void bhpm_new_esc_to_utf8( const char* str, yyscan_t scanner, int 
 %}
 
 character	[a-z]
+legalfirst	[a-z0-9]
 legalchar	[a-z0-9'`]
 attrchar	[a-z0-9\-_]
-legaltegn	[!"#$%()*+,-./:;=?@[\\\]^{|}~]
+legaltegn	[!"#$%()*+,-./:;=?@[\\\]^{|}~'`]
 tfchars		[a-z0-9_`\-!#$%()*+,-./:;=?@[\]^{|}~]
 word		[0-9a-z'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþ]
 allemuligetegn	[!"#$%'()*+,-./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþ]
@@ -89,7 +90,7 @@ utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
  /* \303\205		{ bhpm_newstring("&Aring;", yyscanner); return ESC; } */
 ({utf-8-2b}|{utf-8-3b}|{utf-8-4b})+	{ D; if (BHPM_VISIBLE) bhpm_newstring(yytext, yyscanner, WORD); }
 \&{letteresc};?		{ D; if (BHPM_VISIBLE) bhpm_new_esc_to_utf8(yytext, yyscanner, WORD); }
-{legalchar}+		{ D; if (BHPM_VISIBLE) bhpm_newstring(yytext, yyscanner, WORD); }
+{legalfirst}{legalchar}*{legalfirst} { D; if (BHPM_VISIBLE) bhpm_newstring(yytext, yyscanner, WORD); }
 {legaltegn}+		{ D; if (BHPM_VISIBLE) bhpm_newstring(yytext, yyscanner, ESC); }
 \&{tegnesc_minus};?	{ D; if (BHPM_VISIBLE) bhpm_new_esc_to_utf8(yytext, yyscanner, ESC); }
 (\&nbsp;?)+		{ D; (bhpmget_extra(yyscanner))->space = 1; }
