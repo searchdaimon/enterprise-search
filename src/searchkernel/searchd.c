@@ -432,7 +432,7 @@ void *do_chld(void *arg)
 	/* Establish a handler for SIGALRM signals. */
        	signal (SIGALRM, catch_alarm);
 
-	/* Set an alarm to go off in a little while. */
+	/* Set an alarm to go off in a little while. This so we don't run forever if we get en ever loop */
        	alarm (20);
 
 	
@@ -489,7 +489,7 @@ void *do_chld(void *arg)
 	char **respons_list;
 	int responsnr;
 
-	if (!userToSubname_open(&userToSubnameDb)) {
+	if (!userToSubname_open(&userToSubnameDb,'r')) {
 		printf("can't open users.db\n");
 	}
 	else {
