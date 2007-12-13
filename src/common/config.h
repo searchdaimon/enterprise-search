@@ -12,6 +12,5 @@ struct _configdataFormat {
 
 void bconfig_flush(int mode);
 const char *bconfig_getentrystr(char vantkey[]);
-int bconfig_getentryint(char vantkey[]);
-
+int bconfig_getentryint(char vantkey[], int *val);
 #endif

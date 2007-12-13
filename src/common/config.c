@@ -106,8 +106,19 @@ const char *bconfig_getentrystr(char vantkey[]) {
 	return NULL;
 }
 
-int bconfig_getentryint(char vantkey[]) {
-	return atoi(bconfig_getentrystr(vantkey));
+int bconfig_getentryint(char vantkey[], int *val) {
+	const char *cp;
+
+	if ((cp = bconfig_getentrystr(vantkey)) == NULL) {
+		return 0;
+	}
+	else {
+		*val = atoi(cp);
+		return 1;
+	}
+
+
+	//return atoi(bconfig_getentrystr(vantkey));
 }
 #endif
 
