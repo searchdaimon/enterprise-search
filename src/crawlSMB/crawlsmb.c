@@ -132,6 +132,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
         int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
         int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
 	int (*documentError)(int level, const char *fmt, ...),
+	int (*documentContinue)(struct collectionFormat *collection),
 	unsigned int timefilter,
 	int no_auth
 	 )
@@ -170,7 +171,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
     dirp = (struct smbc_dirent*)dblock;
     dirc_total = 0;
 
-    while ( (dirc=smbc_getdents( dh, dirp, 512 )) != 0 )
+    while (  (dirc=smbc_getdents( dh, dirp, 512 )) != 0  )
         {
             if (dirc < 0)
                 {
@@ -192,7 +193,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
     dirp = (struct smbc_dirent*)dbuf;
 
-    while (dirc_total > 0)
+    while (documentContinue(collection) && (dirc_total > 0))
         {
             int         dsize;
 
@@ -276,7 +277,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
 
                     	if (dirp->smbc_type == SMBC_DIR) {
-			    smb_recursive_get( prefix, entry_name, collection, documentExist, documentAdd , documentError, timefilter,no_auth);
+			    smb_recursive_get( prefix, entry_name, collection, documentExist, documentAdd , documentError, documentContinue, timefilter,no_auth);
                         }
 			else if ((timefilter != 0) && (timefilter >= crawldocumentExist.lastmodified)) {
 				printf("Note: Won't download. File is to old. Timefilter %u >= lastmodified %u\n",timefilter,crawldocumentExist.lastmodified);

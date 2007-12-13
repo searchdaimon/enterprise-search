@@ -8,6 +8,7 @@
 #include <dlfcn.h>      /* defines dlopen(), etc.       */
 #include <sys/types.h>
 #include <dirent.h>
+#include <time.h> // time(), localtime()
 
 #if WITH_PATHACCESS_CACHE
 #include <libmemcached/memcached.h>
@@ -16,6 +17,7 @@
 #include "../crawl/crawl.h"
 
 #include "../common/collection.h"
+#include "../common/config.h"
 #include "../common/define.h"
 #include "../common/bstr.h"
 #include "../common/daemon.h"
@@ -53,6 +55,51 @@ void mc_add_servers(void);
 #endif
 
 int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],int *nrofcollections);
+
+int documentContinue(struct collectionFormat *collection) {
+
+	printf("documentContinue: start\n");
+
+	int recrawl_schedule_start, recrawl_schedule_end;
+	struct tm *t;
+	time_t now;
+
+	bconfig_flush(CONFIG_CACHE_IS_OK);
+
+	if (!bconfig_getentryint("recrawl_schedule_start",&recrawl_schedule_start)) {
+		recrawl_schedule_start = 0;
+	}
+	if (!bconfig_getentryint("recrawl_schedule_end",&recrawl_schedule_end)) {
+		recrawl_schedule_end = 0;
+	}
+
+	now = time(NULL);
+	t = localtime(&now);	
+
+	printf("now: %i,recrawl_schedule_start %i,recrawl_schedule_end %i\n",t->tm_hour,recrawl_schedule_start,recrawl_schedule_end);
+
+	//hvis vi ikke har noen begrensning så er det bare å crawler på
+	if ((recrawl_schedule_start == 0) || (recrawl_schedule_end == 0)) {
+		return 1;
+	}
+
+	//tar en avgjørelse om vi skal fortsette å crawle
+
+	if (t->tm_hour < recrawl_schedule_start) {
+		printf("to early, wont crawl\n");
+		return 0;
+	}
+	else if (t->tm_hour > recrawl_schedule_end) {
+		printf("to late, wont crawl\n");
+		return 0;
+	}
+
+	printf("hour is now %i, will crawl\n",t->tm_hour);
+
+	printf("documentContinue: end\n");
+
+	return 1;
+}
 
 int documentExist(struct collectionFormat *collection, struct crawldocumentExistFormat *crawldocumentExist) {
 	int ret;
@@ -175,7 +222,7 @@ int crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 
 	printf("wil crawl \"%s\"\n",(*collection).resource);
 
-	if (!(*(*crawlLibInfo).crawlfirst)(collection,documentExist,documentAdd,documentError)) {
+	if (!(*(*crawlLibInfo).crawlfirst)(collection,documentExist,documentAdd,documentError,documentContinue)) {
         	printf("problems in crawlfirst_ld\n");
 		//overfører error
                 berror((*crawlLibInfo).strcrawlError());
@@ -427,7 +474,7 @@ int crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
 
 	printf("wil crawl \"%s\"\n",(*collection).resource);
 
-	if (!(*(*crawlLibInfo).crawlupdate)(collection,documentExist,documentAdd,documentError)) {
+	if (!(*(*crawlLibInfo).crawlupdate)(collection,documentExist,documentAdd,documentError,documentContinue)) {
         	
 		//overfører error
                 berror((*crawlLibInfo).strcrawlError());

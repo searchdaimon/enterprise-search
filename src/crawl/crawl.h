@@ -51,16 +51,20 @@ struct crawldocumentAddFormat {
 struct crawlLibInfoFormat {
 	int (*crawlinit)();
 	// a pointer to a crawlfirst rutine
-	int (*crawlfirst)(struct collectionFormat *collection,
+	int (*crawlfirst)(
+		struct collectionFormat *collection,
 		int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
 	        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
-		int (*documentError)(int level, const char *fmt, ...)
+		int (*documentError)(int level, const char *fmt, ...),
+		int (*documentContinue)(struct collectionFormat *collection)
 	);
 
-	int (*crawlupdate)(struct collectionFormat *collection,
+	int (*crawlupdate)(
+		struct collectionFormat *collection,
 		int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
 	        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
-		int (*documentError)(int level, const char *fmt, ...)
+		int (*documentError)(int level, const char *fmt, ...),
+		int (*documentContinue)(struct collectionFormat *collection)
 	);
 
 	int (*crawlcanconect)(struct collectionFormat *collection,int (*documentError)(int level, const char *fmt, ...));

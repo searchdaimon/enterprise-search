@@ -80,7 +80,8 @@ int crawlcanconect( struct collectionFormat *collection,int (*documentError)(int
 int crawlfirst(struct collectionFormat *collection,
 	int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
         int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
-	int (*documentError)(int level, const char *fmt, ...)
+	int (*documentError)(int level, const char *fmt, ...),
+	int (*documentContinue)(struct collectionFormat *collection)
 	) {
 
         struct crawldocumentExistFormat crawldocumentExist;
@@ -102,7 +103,7 @@ int crawlfirst(struct collectionFormat *collection,
         printf("crawlSMB: \n\tresource: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",(*collection).resource,(*collection).user,(*collection).password);
     	prefix = smb_mkprefix( (*collection).user, (*collection).password );
 
-    	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, documentError, 0,no_auth);
+    	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, documentError, documentContinue, 0,no_auth);
 
     	free(prefix);
 
@@ -115,7 +116,8 @@ int crawlfirst(struct collectionFormat *collection,
 int crawlupdate(struct collectionFormat *collection,
 	int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
         int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
-	int (*documentError)(int level, const char *fmt, ...)
+	int (*documentError)(int level, const char *fmt, ...),
+	int (*documentContinue)(struct collectionFormat *collection)
 	) {
 
         struct crawldocumentExistFormat crawldocumentExist;
@@ -137,7 +139,7 @@ int crawlupdate(struct collectionFormat *collection,
         printf("crawlSMB: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",(*collection).resource,(*collection).user,(*collection).password);
     	prefix = smb_mkprefix( (*collection).user, (*collection).password );
 
-    	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, documentError, (*collection).lastCrawl,no_auth);
+    	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, documentError, documentContinue,(*collection).lastCrawl,no_auth);
 
     	free(prefix);
 
@@ -150,12 +152,13 @@ int crawlupdate(struct collectionFormat *collection,
 int
 smb_rewrite_url(char *uri, enum platform_type ptype, enum browser_type btype)
 {
-	char *tmpuri = strdup(uri+7);
 
 	printf("smb_rewrite_url1: raw url: \"%s\"\n",uri);
 	smbc_urldecode( uri, uri, strlen(uri)+1 );
 	cleanresourceUnixToWin(uri);
 	printf("smb_rewrite_url2: raw url: \"%s\"\n",uri);
+
+	char *tmpuri = strdup(uri+7);
 
 	if (ptype == MAC) {
 		int i;
