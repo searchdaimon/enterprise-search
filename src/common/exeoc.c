@@ -195,6 +195,7 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 
 		#ifdef DEBUG
 			printf("waitpid finished. waitstatus %i\n",waitstatus);
+			printf("dokument: \"%s\"\n",documentfinishedbuf);
 		#endif 
 
 		(*ret) = waitstatus;
@@ -218,6 +219,10 @@ int exeoc_timeout(char *exeargv[],char documentfinishedbuf[],int *documentfinish
 	tv.tv_usec = 0;
 
 	n = exeoc_stdselect(exeargv,documentfinishedbuf,documentfinishedbufsize, ret, 0, &tv);
+
+	#ifdef DEBUG
+		printf("exeoc_stdselect returned %i\n",n);
+	#endif
 
 	if (tv.tv_sec == 0 && tv.tv_usec == 0) { // Timeout
               	printf("exeoc_timeout did time out.\n");
