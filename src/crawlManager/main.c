@@ -379,7 +379,7 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 	//skal returnere 1, og bare 1, hvis ikke er det noe feil
 	if (nrofcollections != 1) {
 		printf("error looking opp collection \"%s\"\n",collection);
-		return 1;
+		return 0;
 	}
 
 
