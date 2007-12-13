@@ -18,10 +18,11 @@ struct revIndexArrayFomat {
 	unsigned char langnr;
         unsigned long nrOfHits;
         unsigned short hits[MaxsHitsInIndex];
+	char tombstone;
 };
 
 //int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat revIndexArray[]);
-int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],int lotNr,char type[],int part,char subname[]);
+int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],int lotNr,char type[],int part,char subname[], int optAllowDuplicates);
 
 int compare_elements (const void *p1, const void *p2);
 
@@ -34,6 +35,7 @@ int main (int argc, char *argv[]) {
 	char iipath[256];
 	unsigned lastIndexTime;
 	int optMustBeNewerThen = 0;
+	int optAllowDuplicates = 0;
 
 	struct revIndexArrayFomat *revIndexArray; 
 	revIndexArray = malloc(sizeof(struct revIndexArrayFomat) * revIndexArraySize);
@@ -41,10 +43,13 @@ int main (int argc, char *argv[]) {
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"n"))!=-1) {
+        while ((c=getopt(argc,argv,"nd"))!=-1) {
                 switch (c) {
                         case 'n':
                                 optMustBeNewerThen = 1;
+                                break;
+                        case 'd':
+                                optAllowDuplicates = 1;
                                 break;
                         case 'v':
                                 break;
@@ -101,7 +106,7 @@ int main (int argc, char *argv[]) {
 			}
 
 
-			Indekser(iipath,revIndexArray,lotNr,type,lotPart,subname);	
+			Indekser(iipath,revIndexArray,lotNr,type,lotPart,subname,optAllowDuplicates);	
 
 
 
@@ -124,6 +129,7 @@ int main (int argc, char *argv[]) {
 
                 sprintf(iipath,"%s%i.txt",iipath,lotPart);
 
+		printf("iipath: \"%s\n",iipath);
 
 		if ((optMustBeNewerThen != 0)) {
 			if (fopen(iipath,"r") != NULL) {
@@ -132,7 +138,7 @@ int main (int argc, char *argv[]) {
 			}
 		}
 
-		Indekser(iipath,revIndexArray,lotNr,type,lotPart,subname);	
+		Indekser(iipath,revIndexArray,lotNr,type,lotPart,subname,optAllowDuplicates);	
 
 	
 	}
@@ -145,7 +151,7 @@ int main (int argc, char *argv[]) {
 
 }
 
-int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],int lotNr,char type[],int part,char subname[]) {
+int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],int lotNr,char type[],int part,char subname[], int optAllowDuplicates) {
 
 	int i,y;
 	int mgsort_i,mgsort_k;
@@ -157,12 +163,13 @@ int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],int lot
 	char c;
         unsigned int DocID;
 	unsigned int lastWordID;
+	unsigned int lastDocID;
         //char lang[4];
 	unsigned int nrofDocIDsForWordID[revIndexArraySize];
 	int forekomstnr;
 
 	#ifdef DEBUG
-		printf("revindexPath \"%s\"\n",revindexPath);
+		//printf("revindexPath \"%s\"\n",revindexPath);
 	#endif
 
 
@@ -211,7 +218,7 @@ int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],int lot
 			//leser antal hist vi skulle ha
 			fread(&revIndexArray[count].hits,revIndexArray[count].nrOfHits * sizeof(short),1,REVINDEXFH);
 
-
+			revIndexArray[count].tombstone = 0;
 			
 			//debug:  hits
 			#ifdef DEBUG
@@ -265,23 +272,42 @@ int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],int lot
 
 	//teller forkomster av DocID's pr WordID
 	lastWordID = 0;
-	forekomstnr = 0;
+	forekomstnr = -1;
+	lastDocID = 0;
 	for(i=0;i<count;i++) {
+		#ifdef DEBUG
+		printf("WordID: %u, DocID %u\n",revIndexArray[i].WordID,revIndexArray[i].DocID);
+		#endif
+
 		if (lastWordID != revIndexArray[i].WordID) {
-			nrofDocIDsForWordID[forekomstnr] = 1;
 			++forekomstnr;			
+			nrofDocIDsForWordID[forekomstnr] = 0;
+			lastDocID = 0;
+		}
+
+		if ((optAllowDuplicates == 0) && (revIndexArray[i].DocID == lastDocID)) {
+			#ifdef DEBUG
+			printf("DocID %u is same as last\n",revIndexArray[i].DocID);
+			#endif
+
+			revIndexArray[i -1].tombstone = 1;
 		}
 		else {
-			++nrofDocIDsForWordID[forekomstnr -1];
+			++nrofDocIDsForWordID[forekomstnr];
 		}
-		lastWordID = revIndexArray[i].WordID;
 
+		lastWordID = revIndexArray[i].WordID;
+		lastDocID = revIndexArray[i].DocID;
 	}
 
 	lastWordID = 0;
 	forekomstnr = 0;
 	for(i=0;i<count;i++) {
-		
+
+		#ifdef DEBUG
+		printf("looking at  WordID %u, nr %u\n",revIndexArray[i].WordID,nrofDocIDsForWordID[forekomstnr]);
+		#endif
+
 		if (lastWordID != revIndexArray[i].WordID) {
 
 			#ifdef DEBUG
@@ -297,6 +323,13 @@ int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],int lot
 
 		//printf("\tDocID %u, nrOfHits %u\n",revIndexArray[i].DocID,revIndexArray[i].nrOfHits);
 
+		//sjekker at dette ikke er en slettet DocID
+		if (revIndexArray[i].tombstone) {
+			#ifdef DEBUG
+				printf("DocID %u is tombstoned\n",revIndexArray[i].DocID);
+			#endif
+			continue;
+		}
 		//skrive DocID og antall hit vi har
 		fwrite(&revIndexArray[i].DocID,sizeof(revIndexArray[i].DocID),1,REVINDEXFH);
 		//v3
