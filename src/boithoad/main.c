@@ -733,7 +733,8 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
    		const char *admin_password 	= bconfig_getentrystr("msad_password");
    		const char *ldap_host 		= bconfig_getentrystr("msad_ip");
    		const char *ldap_domain 	= bconfig_getentrystr("msad_domain");
-   		const int   ldap_port 		= bconfig_getentryint("msad_port");
+   		const int   ldap_port = 0; // runarb: 12 des 2007: er 0 riktig initalisering??
+	 	bconfig_getentryint("msad_port",&ldap_port);
 		const char *ldap_group 		= bconfig_getentrystr("msad_group");
 		const char *msad_ldapstring 	= bconfig_getentrystr("msad_ldapstring");
 		const char *msad_ldapbase 	= bconfig_getentrystr("msad_ldapbase");
@@ -748,7 +749,9 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 			strscpy(ldap_base,msad_ldapbase,sizeof(ldap_base));
 		}
 		if (msad_ldapstring == NULL) {
-			sprintf(adminsdistinguishedName,"cn=%s,cn=%s,%s",admin_username,ldap_group,ldap_base);
+			//sprintf(adminsdistinguishedName,"cn=%s,cn=%s,%s",admin_username,ldap_group,ldap_base);
+			//bruker brukernavn på formen user@domain.ttl
+			sprintf(adminsdistinguishedName,"%s@%s",admin_username,ldap_domain);
 		}
 		else {
 			strscpy(adminsdistinguishedName,msad_ldapstring,sizeof(adminsdistinguishedName));
@@ -932,10 +935,11 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 		        }
 			printf("ldap_simple_search done. Found %i groups\n",nrOfSearcResults);
 			
-			// +2:
+			// +3:
 			// +1 for "Everyone" gruppen som alle er medlem av, men ikke finnes. Windows :(
 			// +1 for primær gruppe
-			intresponse = nrOfSearcResults +2;
+			// +1 for "Domain Users"
+			intresponse = nrOfSearcResults +3;
 
 			//sender antall
 			if (!sendall(socket,&intresponse, sizeof(intresponse))) {
@@ -945,10 +949,14 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 			//sender primær gruppe
 			/*ToDo: sender at alle er med i "Users" da vi ikke klarer å finne primæer gruppe alltid.
 			se http://support.microsoft.com/kb/297951 ,og søk på: ldap primary group : får å finne mer info
+			20 nav 2007: er ser også ut til at vi kan ha "Domain Users", ikke bare "Users" gruppe :(
 			strscpy(ldaprecord,primarygroup,sizeof(ldaprecord));
 			*/
 			strscpy(ldaprecord,"Users",sizeof(ldaprecord));
-
+			if (!sendall(socket,ldaprecord, sizeof(ldaprecord))) {
+                                perror("sendall");
+                        }
+			strscpy(ldaprecord,"Domain Users",sizeof(ldaprecord));
 			if (!sendall(socket,ldaprecord, sizeof(ldaprecord))) {
                                 perror("sendall");
                         }
@@ -1075,7 +1083,7 @@ void badldap_init() {
         }
    	if (bconfig_getentrystr("msad_group") == NULL) {
 		printf("cant read config for msad_group\n");
-		exit(1);
+		//exit(1);
         }
 
 }
