@@ -560,10 +560,17 @@ void connectHandler(int socket) {
 				perror("recv");
 				exit(1);
 			}
+			printf("got DocID %u\n",DocID);
 			LotNr = rLotForDOCid(DocID);
+			printf("trying to read anchor\n");
+
 			len = anchorRead(LotNr, packedHedder.subname, DocID, NULL, -1);
+			printf("got anchor of length %i\n",len);
+
 			sendall(socket, &len, sizeof(len));
 			text = malloc(len+1);
+			
+			printf("readint it again\n");
 			anchorRead(LotNr, packedHedder.subname, DocID, text, len+1);
 			sendall(socket, text, len);
 		}
