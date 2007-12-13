@@ -698,7 +698,7 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 	        #endif
 
 		if (lseek64(fd,offset,SEEK_SET) == -1) {
-			warn("fseeko64: %d", fd);
+			warn("fseeko64: DocID %u, fd %d, adress off_t %"PRId64", adress given %u, rsize %u",DocID, fd,offset,radress64bit,rsize);
 			return 0;
 		}		
 
@@ -709,13 +709,13 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 	        #endif
 
 
-		#ifndef DO_DIRECT
-			rReadPost2(fd,ReposetoryHeader,WorkBuff,sizeof(WorkBuff),NULL,acl_allowbuffer,acl_deniedbuffer,
-				recordseparator,rsize,imagesize);
-		#else
+		#ifdef DO_DIRECT
 			rReadPost2_fd(fd,ReposetoryHeader,WorkBuff,sizeof(WorkBuff),NULL,acl_allowbuffer,acl_deniedbuffer,
 				recordseparator,rsize,imagesize);
 
+		#else
+			rReadPost2(fd,ReposetoryHeader,WorkBuff,sizeof(WorkBuff),NULL,acl_allowbuffer,acl_deniedbuffer,
+				recordseparator,rsize,imagesize);
 		#endif
 
 		close(fd);
@@ -874,7 +874,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 		(*acl_allowbuffer) = malloc((*ReposetoryHeader).acl_allowSize +1);
 		if ((*ReposetoryHeader).acl_allowSize != 0) {
 			if (read(fd, (*acl_allowbuffer),(*ReposetoryHeader).acl_allowSize) < 0) {
-				printf("cant't read acl_allow. acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
+				printf("cant't read acl_allow. acl_allow size %i. at %s:%d\n",(*ReposetoryHeader).acl_allowSize,__FILE__,__LINE__);
 				perror("");
 			}
 		}
@@ -892,7 +892,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 		(*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1);
 		if ((*ReposetoryHeader).acl_deniedSize != 0) {
 			if (read(fd, (*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize) < 0) {
-				printf("cant't read acl_denied. acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
+				printf("cant't read acl_denied. acl_denied size %i. At %s:%d\n",(*ReposetoryHeader).acl_deniedSize,__FILE__,__LINE__);
 				perror("");
 			}
 		}
@@ -920,6 +920,11 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 
 
 	free(totalpost);
+
+
+	if (strncmp(recordseparator,"***",3)) {
+		printf("bad record separator %c%c%c\n",recordseparator[0],recordseparator[1],recordseparator[2]);
+	}
 
 
 	#ifdef DEBUG
@@ -961,14 +966,14 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
         #ifdef TIME_DEBUG_L
                 gettimeofday(&tot_start_time, NULL);
         #endif
-
+	
+	int n;
 
 	if (htmlbufferSize < rsize) {
 		printf("htmlSize lager then buffer. %i\n",htmlbufferSize);
 		return 0;
 	}
 		
-	int n;
 
 	#ifdef BLACK_BOKS
                 unsigned int CurrentReposetoryVersionAsUInt;
@@ -981,14 +986,21 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 	char *totalpost_p;
 
 
-	totalread = sizeof(struct ReposetoryHeaderFormat) + rsize + imagesize +3;
+	totalread = sizeof(struct ReposetoryHeaderFormat) + rsize + imagesize;
+	#ifndef BLACK_BOKS //for bb skal vi lese mer, så lese record seperator
+	 	totalread += 3;
+	#endif
+	
+
 	if ((totalpost = malloc(totalread)) == NULL) {
 		perror("malloc");
 		return 0;
 	}
 
-	if (read(LotFileOpen,totalpost,totalread) != totalread) {
-		perror("cant read totalread");
+	if ((n=read(LotFileOpen,totalpost,totalread)) != totalread) {
+		fprintf(stderr,"rReadPost2: can't read totalread. Did read %i of %i\n",n,totalread);
+		perror("read");
+		free(totalpost);
 		return 0;
 	}
 
@@ -1046,8 +1058,8 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		#endif
 		(*acl_allowbuffer) = malloc((*ReposetoryHeader).acl_allowSize +1);
 		if ((*ReposetoryHeader).acl_allowSize != 0) {
-			if (read(LotFileOpen,(*acl_allowbuffer),(*ReposetoryHeader).acl_allowSize) != 1) {
-				printf("cant't read acl_allow. acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
+			if (read(LotFileOpen,(*acl_allowbuffer),(*ReposetoryHeader).acl_allowSize) != (*ReposetoryHeader).acl_allowSize) {
+				printf("cant't read acl_allow. acl_allow size %i at %s:%d\n",(*ReposetoryHeader).acl_allowSize,__FILE__,__LINE__);
 				perror("");
 			}
 		}
@@ -1064,8 +1076,8 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		#endif
 		(*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1);
 		if ((*ReposetoryHeader).acl_deniedSize != 0) {
-			if (read(LotFileOpen,(*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize) != 1) {
-				printf("cant't read acl_denied. acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
+			if (read(LotFileOpen,(*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize) != (*ReposetoryHeader).acl_deniedSize) {
+				printf("cant't read acl_denied. acl_denied size %i at %s:%d\n",(*ReposetoryHeader).acl_deniedSize,__FILE__,__LINE__);
 				perror("");
 			}
 		}
@@ -1077,8 +1089,8 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 
 		#endif
 
-		if(read(LotFileOpen,recordseparator,sizeof(char)) != 3) {
-			perror("cant read recordseperator");
+		if(read(LotFileOpen,recordseparator,sizeof(char) * 3) != 3) {
+			perror("can't read recordseperator");
 		}
 
 	#else
@@ -1093,6 +1105,13 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 
 
 	free(totalpost);
+
+
+
+	if (strncmp(recordseparator,"***",3)) {
+		printf("bad record separator %c%c%c\n",recordseparator[0],recordseparator[1],recordseparator[2]);
+	}
+
 
 
 	#ifdef DEBUG
@@ -1304,6 +1323,7 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer) {
 		if (LotOpen != -1) {
 			fclose(LotFileOpen);
 		}
+		
 		GetFilPathForLot(FileName,LotNr,subname);
 		strncat(FileName,"reposetory",128);
 
@@ -1313,6 +1333,9 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer) {
 			perror(FileName);
 			exit(1);
 		}
+		
+		//fd = lotOpenFileNoCashel(DocID,"reposetory","rb",'n',subname);
+
 		LotOpen = LotNr;
 
 		//hvis vi fikk en offset skal vi søke ditt
@@ -1571,6 +1594,10 @@ anchorIndexOpen(unsigned int DocID, char type, char *subname)
 		}
 	}
 
+	if (fp == NULL) {
+		printf("anchorIndexOpen: can't open \"%s\"\n",path);
+		perror("open()");
+	}
 	return fp;
 }
 
@@ -1867,21 +1894,39 @@ anchorRead(int LotNr, char *subname, unsigned int DocID, char *text, int len)
 	struct anchorRepo anchor;
 	off_t offset;
 
-	if (!anchorIndexRead(DocID, subname, &offset))
+	if (!anchorIndexRead(DocID, subname, &offset)) {
+		#ifdef DEBUG
+			printf("anchorRead: can't anchorIndexRead\n");
+		#endif
 		return 0;
-
+	}
 	GetFilPathForLot(path, LotNr, subname);
 	strncat(path, "anchors.new", 512);
 
-	if ((fp = fopen(path, "r")) == NULL)
-		return 0;
+	#ifdef DEBUG
+		printf("anchors.new file \"%s\"\n",path);
+	#endif
 
+	if ((fp = fopen(path, "r")) == NULL) {
+		#ifdef DEBUG
+			printf("anchorRead: can't open \"%s\"\n",path);
+		#endif
+		return 0;
+	}
 	if (fseek(fp, offset, SEEK_SET) == -1) {
 		fclose(fp);
 		return 0;
 	}
+
 	if (fread(&anchor, sizeof(anchor), 1, fp) == 1) {
+		#ifdef DEBUG
+			printf("anchorRead: got candidate DocID %u\n",anchor.DocID);
+		#endif
+
 		if (anchor.DocID != DocID) {
+			#ifdef DEBUG
+                        	printf("anchorRead: candidate DocID %u is not correct DocID %u\n",anchor.DocID,DocID);
+                	#endif
 			fclose(fp);
 			return 0;
 		}
