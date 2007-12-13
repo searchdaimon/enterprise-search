@@ -113,6 +113,7 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *);
 void setLastIndexTimeForLot(int LotNr,int httpResponsCodes[],char subname[]);
 unsigned int GetLastIndexTimeForLot(int LotNr,char subname[]);
+
 int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
                         char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[]);
 
