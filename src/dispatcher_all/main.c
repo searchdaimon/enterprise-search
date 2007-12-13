@@ -2068,7 +2068,7 @@ int main(int argc, char *argv[])
 				}
  
 				if (!bsread(&sockfd[i],sizeof(status), (char *)&status, 1000)) //maxSocketWait_CanDo))
-					die(2, "Unable to get rank status");
+					die(2, "Unable to get rank status. Server %i is not responding.",i);
 				else if (status == net_match) {
 					if (!bsread(&sockfd[i],sizeof(ranking), (char *)&ranking, 1000))//maxSocketWait_CanDo))
 						perror("recv rank");
@@ -2699,7 +2699,7 @@ int main(int argc, char *argv[])
 	}
 	else {
 		flock(fileno(LOGFILE),LOCK_EX);
-        	fprintf(LOGFILE,"%s %i %f\n",queryNodeHeder.query,FinalSiderHeder.TotaltTreff,FinalSiderHeder.total_usecs);
+        	fprintf(LOGFILE,"%s %i %f nodes: %i\n",queryNodeHeder.query,FinalSiderHeder.TotaltTreff,FinalSiderHeder.total_usecs,nrRespondedServers);
         	fclose(LOGFILE);
 	}
 
