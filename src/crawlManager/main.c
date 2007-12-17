@@ -235,6 +235,29 @@ int crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 
 }
 
+int crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
+
+	struct crawlLibInfoFormat *crawlLibInfo;
+
+	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,(*collection).connector)) {
+		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.\n");
+		exit(1);
+	}
+
+	printf("wil crawl \"%s\"\n",(*collection).resource);
+
+	if (!(*(*crawlLibInfo).crawlupdate)(collection,documentExist,documentAdd,documentError,documentContinue)) {
+        	
+		//overfører error
+                berror((*crawlLibInfo).strcrawlError());
+		blog(LOGERROR,1,"Error: problems in crawlfirst_ld.\n");
+
+		return 0;
+       	}
+
+	return 1;
+}
+
 char *adduserprefix(struct collectionFormat *collections,const char username[]) {
 
 	char *newusername;
@@ -463,28 +486,6 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 }
 
 
-int crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
-
-	struct crawlLibInfoFormat *crawlLibInfo;
-
-	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,(*collection).connector)) {
-		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.\n");
-		exit(1);
-	}
-
-	printf("wil crawl \"%s\"\n",(*collection).resource);
-
-	if (!(*(*crawlLibInfo).crawlupdate)(collection,documentExist,documentAdd,documentError,documentContinue)) {
-        	
-		//overfører error
-                berror((*crawlLibInfo).strcrawlError());
-		blog(LOGERROR,1,"Error: problems in crawlfirst_ld.\n");
-
-		return 0;
-       	}
-
-	return 1;
-}
 
 
 
