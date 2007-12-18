@@ -82,4 +82,47 @@ static inline int utf8_first_char_uppercase( unsigned char *str )
 }
 
 
+// Detekterer om første tegn i strengen er uppercase:
+static inline int utf8_first_char_uppercase( unsigned char *str )
+{
+    if (str==NULL || str[0]=='\0') return 0;
+
+    if (str[0]>='A' && str[0]<='Z') return 1;
+    if (str[0]==0xc3 && str[1]>=0x80 && str[1]<=0x9e) return 1;
+
+    return 0;
+}
+
+
+// Konverter latin-1 til utf8
+static inline unsigned char* copy_latin1_to_utf8( unsigned char *str )
+{
+    int		str_len = strlen(str);
+    char	*tempstring = malloc(str_len*4 +1);
+    char	*returnstring;
+    int		i, j;
+
+    for (i=0, j=0; str[i]!='\0' && j<str_len*4; i++)
+	{
+	    if (str[i] >= 0xc0 && (str[i+1] < 0x80 || str[i+1] > 0xbf))
+		{
+		    tempstring[j++] = 0xc0 + (str[i]>>6);
+		    tempstring[j++] = 0x80 + (str[i] & 0x3f);
+		}
+	    else
+		{
+		    tempstring[j++] = str[i];
+		}
+	}
+
+    tempstring[j++] = '\0';
+
+    returnstring = malloc(j);
+    memcpy(returnstring, tempstring, j);
+
+    free(tempstring);
+
+    return returnstring;
+}
+
 #endif	// _UTF_8_STRINGS_H_
