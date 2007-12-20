@@ -51,6 +51,21 @@ void queue_destroy( container *C )
 }
 
 
+inline void queue_clear( container *C )
+{
+    queue_container_priv	*Q = C->priv;
+
+    while (Q->num_elems>0)
+	queue_pop(C);
+
+    free(Q->elem);
+
+    Q->head = Q->tail = Q->num_elems = 0;
+    Q->size = 64;
+    Q->elem = malloc(sizeof(value) * Q->size);
+}
+
+
 void queue_push( container *C, ... )
 {
     va_list			ap;
@@ -139,6 +154,12 @@ inline container* queue_clone( container *C )
     return queue_container(N);
 }
 
+inline value queue_copy( container *C, value a )
+{
+    fprintf(stderr, "Function not implemented yet: queue_copy\n");
+    exit(-1);
+}
+
 
 container* queue_container( container *C )
 {
@@ -149,7 +170,9 @@ container* queue_container( container *C )
     QX->ap_allocate = queue_ap_allocate;
     QX->deallocate = queue_deallocate;
     QX->destroy = queue_destroy;
+    QX->clear = queue_clear;
     QX->clone = queue_clone;
+    QX->copy = queue_copy;
     QX->priv = QP;
 
     QP->C = C;

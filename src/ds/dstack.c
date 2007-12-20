@@ -47,6 +47,22 @@ void stack_destroy( container *C )
 }
 
 
+inline void stack_clear( container *C )
+{
+    stack_container_priv	*S = C->priv;
+    int				i;
+
+    for (i=0; i<S->top; i++)
+	deallocate( S->C, S->elem[i] );
+
+    free(S->elem);
+
+    S->top = 0;
+    S->size = 64;
+    S->elem = malloc(sizeof(value) * S->size);
+}
+
+
 void stack_push( container *C, ... )
 {
     va_list			ap;
@@ -133,6 +149,12 @@ inline container* stack_clone( container *C )
     return stack_container(N);
 }
 
+inline value stack_copy( container *C, value a )
+{
+    fprintf(stderr, "Function not implemented yet: stack_copy\n");
+    exit(-1);
+}
+
 
 container* stack_container( container *C )
 {
@@ -143,7 +165,9 @@ container* stack_container( container *C )
     S->ap_allocate = stack_ap_allocate;
     S->deallocate = stack_deallocate;
     S->destroy = stack_destroy;
+    S->clear = stack_clear;
     S->clone = stack_clone;
+    S->copy = stack_copy;
     S->priv = SP;
 
     SP->C = C;

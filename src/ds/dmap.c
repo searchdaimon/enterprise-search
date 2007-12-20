@@ -61,6 +61,17 @@ void map_destroy( container *C )
 }
 
 
+void map_clear( container *C )
+{
+    map_container_priv	*MP = C->priv;
+
+    if (MP->root!=NULL) map_deltree( C, MP->root );
+
+    MP->root = NULL;
+    MP->size = 0;
+}
+
+
 inline void map_insert( container *C, ... )
 {
     va_list		ap;
@@ -412,6 +423,14 @@ inline container* map_clone( container *C )
     return map_container(N,M);
 }
 
+inline value map_copy( container *C, value a )
+{
+    fprintf(stderr, "Function not implemented yet: map_copy\n");
+
+    exit(-1);
+}
+
+
 container* map_container( container *Key, container *Data )
 {
     container			*M = malloc(sizeof(container));
@@ -421,7 +440,9 @@ container* map_container( container *Key, container *Data )
     M->ap_allocate = map_ap_allocate;
     M->deallocate = map_deallocate;
     M->destroy = map_destroy;
+    M->clear = map_clear;
     M->clone = map_clone;
+    M->copy = map_copy;
     M->priv = MP;
 
     MP->Key = Key;

@@ -49,6 +49,27 @@ void _list_destroy( container *C )
 }
 
 
+void list_clear( container *C )
+{
+    list_container_priv	*LP = C->priv;
+    _list_node_		*item;
+
+    item = LP->head;
+    for (item=LP->head; item!=NULL;)
+	{
+	    _list_node_		*crnt = item;
+	    item = item->next;
+
+	    deallocate( LP->C, crnt->val );
+	    free(crnt);
+	}
+
+    LP->size = 0;
+    LP->head = NULL;
+    LP->tail = NULL;
+}
+
+
 inline void list_empty( container *C )
 {
     list_container_priv	*LP = C->priv;
@@ -305,7 +326,10 @@ inline container* list_clone( container *C )
 inline value list_copy( container *C, value a )
 {
     value	v;
-    assert(1==2);
+
+    fprintf(stderr, "Function not implemented yet: list_copy\n");
+    exit(-1);
+//    assert(1==2);
 //    container	*N = list_clone(C);
     //!!!
     return v;
@@ -321,7 +345,9 @@ container* list_container( container *C )
     L->ap_allocate = list_ap_allocate;
     L->deallocate = list_deallocate;
     L->destroy = _list_destroy;
+    L->clear = list_clear;
     L->clone = list_clone;
+    L->copy = list_copy;
     L->priv = LP;
 
     LP->C = C;

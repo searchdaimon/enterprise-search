@@ -47,6 +47,7 @@ struct container
     alloc_data	(*ap_allocate)( container *C, va_list ap );
     void	(*deallocate)( container *C, value a );
     void	(*destroy)( container *C );
+    void	(*clear)( container *C );
     container*	(*clone)( container *C );
     value	(*copy)( container *C, value a );
     void	*priv;
@@ -67,6 +68,8 @@ value allocate( container *C, ... );
 void deallocate( container *C, value v );
 
 void destroy( container *C );
+
+void clear( container *C );
 
 static inline value copy( container *C, value v )
 {

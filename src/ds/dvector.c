@@ -47,6 +47,24 @@ void vector_destroy( container *C )
     free(C);
 }
 
+
+inline void vector_clear( container *C )
+{
+
+    vector_container_priv	*VP = C->priv;
+    int				i;
+
+    for (i=0; i<VP->size; i++)
+	deallocate( VP->C, VP->elem[i] );
+
+    free(VP->elem);
+
+    VP->size = 0;
+    VP->_array_size = 8;
+    VP->elem = malloc(sizeof(value) * VP->_array_size);
+}
+
+
 inline void vector_pushback( container *C, ... )
 {
     va_list			ap;
@@ -99,6 +117,12 @@ inline container* vector_clone( container *C )
     return vector_container(N);
 }
 
+inline value vector_copy( container *C, value a )
+{
+    fprintf(stderr, "Function not implemented yet: vector_copy\n");
+    exit(-1);
+}
+
 
 container* vector_container( container *C )
 {
@@ -109,7 +133,9 @@ container* vector_container( container *C )
     V->ap_allocate = vector_ap_allocate;
     V->deallocate = vector_deallocate;
     V->destroy = vector_destroy;
+    V->clear = vector_clear;
     V->clone = vector_clone;
+    V->copy = vector_copy;
     V->priv = VP;
 
     VP->C = C;

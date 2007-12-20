@@ -82,12 +82,23 @@ void pair_destroy( container *C )
     free(C);
 }
 
+inline void pair_clear( container *C )
+{
+}
+
 inline container* pair_clone( container *C )
 {
     pair_container_priv	*LP = C->priv;
     container		*N = LP->A->clone(LP->A),
 			*M = LP->B->clone(LP->B);
     return pair_container(N,M);
+}
+
+
+inline value pair_copy( container *C, value a )
+{
+    fprintf(stderr, "Function not implemented yet: pair_copy\n");
+    exit(-1);
 }
 
 container* pair_container( container *A, container *B )
@@ -98,7 +109,9 @@ container* pair_container( container *A, container *B )
     C->ap_allocate = pair_ap_allocate;
     C->deallocate = pair_deallocate;
     C->destroy = pair_destroy;
+    C->clear = pair_clear;
     C->clone = pair_clone;
+    C->copy = pair_copy;
     C->priv = (void*)malloc(sizeof(pair_container_priv));
     ((pair_container_priv*)C->priv)->A = A;
     ((pair_container_priv*)C->priv)->B = B;

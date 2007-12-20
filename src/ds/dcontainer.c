@@ -42,6 +42,10 @@ inline void int_destroy( container *C )
     free(C);
 }
 
+inline void int_clear( container *C )
+{
+}
+
 inline container* int_clone( container *C )
 {
     return int_container();
@@ -60,6 +64,7 @@ container* int_container()
     C->ap_allocate = int_ap_allocate;
     C->deallocate = int_deallocate;
     C->destroy = int_destroy;
+    C->clear = int_clear;
     C->clone = int_clone;
     C->copy = int_copy;
     C->priv = NULL;
@@ -104,6 +109,9 @@ inline void string_destroy( container *C )
     free(C);
 }
 
+inline void string_clear( container *C )
+{
+}
 
 inline container* string_clone( container *C )
 {
@@ -125,6 +133,7 @@ container* string_container()
     C->ap_allocate = string_ap_allocate;
     C->deallocate = string_deallocate;
     C->destroy = string_destroy;
+    C->clear = string_clear;
     C->clone = string_clone;
     C->copy = string_copy;
     C->priv = NULL;
@@ -168,9 +177,18 @@ inline void ptr_destroy( container *C )
     free(C);
 }
 
+inline void ptr_clear( container *C )
+{
+}
+
 inline container* ptr_clone( container *C )
 {
     return ptr_container();
+}
+
+inline value ptr_copy( container *C, value a )
+{
+    return a;
 }
 
 container* ptr_container()
@@ -181,7 +199,9 @@ container* ptr_container()
     C->ap_allocate = ptr_ap_allocate;
     C->deallocate = ptr_deallocate;
     C->destroy = ptr_destroy;
+    C->clear = ptr_clear;
     C->clone = ptr_clone;
+    C->copy = ptr_copy;
     C->priv = NULL;
 
     return C;
@@ -267,6 +287,12 @@ void destroy( container *C )
 {
     C->destroy(C);
 }
+
+void clear( container *C )
+{
+    C->clear(C);
+}
+
 /*
 void destroy_iterator( iterator *it )
 {
