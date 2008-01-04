@@ -15,6 +15,33 @@ typedef struct
 } vector_container_priv;
 
 
+
+inline int vector_compare( container *C, value a, value b )
+{
+    int		i;
+    int		size;
+    container	*A = a.C, *B = b.C;
+
+    size = vector_size(A);
+    if (vector_size(B) < size) size = vector_size(B);
+
+    for (i=0; i<size; i++)
+	{
+	    vector_container_priv	*AP = A->priv;
+	    int		val;
+
+	    val = AP->C->compare(AP->C, vector_get(A,i), vector_get(B,i));
+
+	    if (val!=0) return val;
+	}
+
+    if (vector_size(A) > size) return 1;
+    else if (vector_size(B) > size) return -1;
+
+    return 0;
+}
+
+
 inline alloc_data vector_ap_allocate( container *C, va_list ap )
 {
     container	*N = C->clone(C);
@@ -129,7 +156,7 @@ container* vector_container( container *C )
     container			*V = malloc(sizeof(container));
     vector_container_priv	*VP = malloc(sizeof(vector_container_priv));
 
-    V->compare = NULL;
+    V->compare = vector_compare;
     V->ap_allocate = vector_ap_allocate;
     V->deallocate = vector_deallocate;
     V->destroy = vector_destroy;

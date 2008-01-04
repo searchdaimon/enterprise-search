@@ -155,10 +155,59 @@ void list_in_map_test()
 }
 
 
+void sorted_vector_test()
+{
+    container	*M = map_container( vector_container( int_container() ), string_container() );
+    container	*V1 = vector_container( int_container() ),
+		*V2 = vector_container( int_container() ),
+		*V3 = vector_container( int_container() ),
+		*V4 = vector_container( int_container() ),
+		*V5 = vector_container( int_container() );
+
+    vector_pushback(V1, 5);
+    vector_pushback(V1, 4);
+    vector_pushback(V1, 3);
+    vector_pushback(V2, 5);
+    vector_pushback(V2, 4);
+    vector_pushback(V2, 2);
+    vector_pushback(V3, 1);
+    vector_pushback(V3, 2);
+    vector_pushback(V3, 3);
+    vector_pushback(V3, 4);
+    vector_pushback(V4, 5);
+    vector_pushback(V4, 5);
+    vector_pushback(V4, 1);
+    vector_pushback(V5, 5);
+    vector_pushback(V5, 4);
+    vector_pushback(V5, 3);
+    vector_pushback(V5, 2);
+
+    map_insert_value(M, container_value(V1), string_value("en"));
+    map_insert_value(M, container_value(V2), string_value("to"));
+    map_insert_value(M, container_value(V3), string_value("tre"));
+    map_insert_value(M, container_value(V4), string_value("fire"));
+    map_insert_value(M, container_value(V5), string_value("fem"));
+
+    iterator	mit = map_begin(M);
+    for (; mit.valid; mit=map_next(mit))
+	{
+	    int		i;
+	    container	*V = map_key(mit).C;
+
+	    for (i=0; i<vector_size(V); i++)
+		printf("%i ", vector_get(V,i).i);
+	    printf("=> %s\n", (char*)map_val(mit).ptr);
+	}
+    printf("\n");
+
+    destroy(M);
+}
+
 /* main: */
 
 int main()
 {
+    sorted_vector_test();
     list_in_list_test();
     map_in_list_test();
     stack_in_vector_test();
