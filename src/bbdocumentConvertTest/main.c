@@ -42,7 +42,42 @@ main (int argc, char *argv[]) {
 	documentfinishedbufsize = ((inode.st_size *2) +512);
 	documentfinishedbuf = malloc(documentfinishedbufsize);
 
-	if (!bbdocument_convert(documenttype_real,data,inode.st_size,documentfinishedbuf,&documentfinishedbufsize,filname)) {
+
+	unsigned int lastmodified;
+	char acl_allow[] = "";
+	char acl_denied[] = "";
+
+/*
+int bbdocument_convert(
+                        char filetype[],
+                        char document[],
+                        const int dokument_size,
+                        char **documentfinishedbuf,
+                        int *documentfinishedbufsize,
+                        const char titlefromadd[],
+                        char *subname,
+                        char *documenturi,
+                        unsigned int lastmodified,
+                        char *acl_allow,
+                        char *acl_denied,
+                        char *doctype
+                );
+*/
+	if (!bbdocument_convert(
+			documenttype_real,
+			data,
+			inode.st_size,
+			&documentfinishedbuf,
+			&documentfinishedbufsize,
+			"test title",
+			"", //subname
+			filname,
+			lastmodified,
+			acl_allow,
+			acl_denied,
+			""
+			)
+		) {
 		printf("cant convert\n");
 		exit(1);
 	}
