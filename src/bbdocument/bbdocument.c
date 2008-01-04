@@ -446,8 +446,6 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	printf("command: %s\n",(*fileFilter).command);
 	#endif
 
-	//ToDo: overskriver vi den gbobale fileFilter her?? . Skal ikke det
-	// Burde ikke gjøre det nå leng.
 	strsandr((*fileFilter).command,"#file",filconvertetfile_real);
 	strsandr((*fileFilter).command,"#outtxtfile",filconvertetfile_out_txt);
 	strsandr((*fileFilter).command,"#outhtmlfile",filconvertetfile_out_html);
