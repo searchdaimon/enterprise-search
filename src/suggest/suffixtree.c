@@ -75,6 +75,8 @@ _suffixtree_delete_node(struct suffixtree *sf)
 
 	if (sf->suffix)
 		free(sf->suffix);
+	if (sf->si)
+		suggest_destroy_si(sf->si);
 
 	free(sf);
 }
@@ -227,6 +229,7 @@ suffixtree_most_used(struct suffixtree *root)
 		bookkeeping[min]++;
 	}
 	root->best[i] = NULL;
+	free(bookkeeping);
 
 	return 0;
 }
@@ -312,14 +315,11 @@ _suffixtree_find_prefix(struct suffixtree *root, char *word, unsigned int len, c
 		i = 0;
 		for (cur = root->best; *cur != NULL; cur++) {
 #ifdef WITH_ACL
-			if (acl_is_allowed((*cur)->aclallow, (*cur)->acldeny, user)) {
-				best[i] = *cur;
-			} else {
+			if (!acl_is_allowed((*cur)->aclallow, (*cur)->acldeny, user)) {
 				continue;
 			}
-#else
-			best[i] = *cur;
 #endif
+			best[i] = *cur;
 			i++;
 		}
 		best[i] = NULL;
@@ -336,3 +336,13 @@ suffixtree_find_prefix(struct suffixtree *root, char *word, char *user)
 	return _suffixtree_find_prefix(root, word, 0, user);
 }
 
+
+void
+suffixtree_destroy(struct suffixtree *root)
+{
+		struct suffixtree *sf;
+
+		forchildren(sf, root) {
+			_suffixtree_delete_node(sf);
+		}
+}

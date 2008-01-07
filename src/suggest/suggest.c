@@ -64,7 +64,19 @@ suggest_init(void)
 void
 suggest_destroy(struct suggest_data *sd)
 {
+	suffixtree_destroy(&(sd->tree));
 	free(sd);
+}
+
+void
+suggest_destroy_si(struct suggest_input *si)
+{
+	if (si->aclallow)
+		acl_destroy(si->aclallow);
+	if (si->acldeny)
+		acl_destroy(si->acldeny);
+	free(si->word);
+	free(si);
 }
 
 int
@@ -89,8 +101,12 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 		char **linedata;
 		acldeny[0] = '\0';
 
-		getline(&line, &len, fp);
-		if (line[0] == '\0') {
+		if (getline(&line, &len, fp) == -1) {
+			if (line != NULL)
+				free(line);
+			continue;
+		}
+		if (line == NULL || line[0] == '\0') {
 			free(line);
 			continue;
 		}
@@ -99,8 +115,10 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 			printf("'%s' %d\n", line, len);
 			fprintf(stderr, "Unable to read parse line %d in %s\n", linenum, wordlist);
 			linenum++;
+			free(line);
 			continue;
 		}
+		free(line);
 		strcpy(word, linedata[0]);
 		freq = atol(linedata[1]);
 		if (linedata[2])
@@ -112,6 +130,14 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 		else
 			strcpy(linedata[3], "");
 		
+		/* Free linedata */
+		{
+			int ifree;
+
+			for(ifree = 0; linedata[ifree] != NULL; ifree++)
+				free(linedata[ifree]);
+			free(linedata);
+		}
 		//printf("%s <=> %d\nGot acl allow: %s\nGot acl deny: %s\n", word, freq, aclallow, acldeny);
 		if (suggest_add_item(sd, word, freq, aclallow, acldeny) == -1) {
 			perror("suggest_add_item()");

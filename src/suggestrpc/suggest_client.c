@@ -7,6 +7,27 @@
 #include "suggest.h"
 
 void
+reread_dict(char *host)
+{
+	CLIENT *clnt;
+
+#ifndef	DEBUG
+	clnt = clnt_create (host, SUGGEST, SUGGESTVERS, "udp");
+	if (clnt == NULL) {
+		clnt_pcreateerror (host);
+		exit (1);
+	}
+#endif	/* DEBUG */
+
+	reload_dictionary_2(NULL, clnt);
+
+#ifndef	DEBUG
+	clnt_destroy (clnt);
+#endif	 /* DEBUG */
+
+}
+
+void
 suggest_1(char *host, char *arg, char *user)
 {
 	CLIENT *clnt;
@@ -62,6 +83,12 @@ main (int argc, char *argv[])
 		exit (1);
 	}
 	host = argv[1];
-	suggest_1 (host, argv[2], argv[3]);
+	if (strcmp(argv[2], "__rebuild") == 0) {
+		reread_dict(host);
+	} else {
+		suggest_1 (host, argv[2], argv[3]);
+	}
 	//_exit(0); /* avoid segfault */
+
+	return 0;
 }

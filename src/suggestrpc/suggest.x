@@ -34,6 +34,7 @@ union numbest_res switch (int _errno) {
 program SUGGEST {
 	version SUGGESTVERS {
 		numbest_res get_best_results(struct senddata) = 1;
+		void reload_dictionary() = 2;
 	} = 2;
 
 } = 0x200ff013;

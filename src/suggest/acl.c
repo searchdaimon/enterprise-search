@@ -12,6 +12,16 @@
 
 int acl_in_list(char *, char **);
 
+void
+acl_free_reslist(char **reslist, int n)
+{
+	int i;
+
+	for (i = 0; i < n; i++)
+		free(reslist[i]);
+	free(reslist);
+}
+
 int
 acl_is_allowed(char **allow, char **deny, char *group)
 {
@@ -33,10 +43,13 @@ acl_is_allowed(char **allow, char **deny, char *group)
 				gotallow = 1;
 			}
 		}
-		if (acl_in_list(groups[i], deny))
+		if (acl_in_list(groups[i], deny)) {
+			acl_free_reslist(groups, num);
 			return 0;
+		}
 	}
 
+	acl_free_reslist(groups, num);
 	return gotallow;
 }
 
@@ -90,6 +103,16 @@ acl_parse_list(char *list)
 	acls[i] = NULL;
 
 	return acls;
+}
+
+void
+acl_destroy(char **list)
+{
+	int i;
+
+	for(i = 0; list[i] != NULL; i++)
+		free(list[i]);
+	free(list);
 }
 
 #endif

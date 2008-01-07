@@ -6,6 +6,7 @@
 CC=/usr/local/bin/gcc 
 
 CLIENT = suggest_client
+CLIENTREDICT = suggest_client_redict
 SERVER = suggest_server
 
 SOURCES_CLNT.c = 
@@ -16,9 +17,11 @@ SOURCES.x = suggest.x
 
 TARGETS_SVC.c = suggest_svc.c suggest_server.c suggest_xdr.c 
 TARGETS_CLNT.c = suggest_clnt.c suggest_client.c suggest_xdr.c 
+TARGETS_CLNT_REDICT.c = suggest_clnt.c suggest_client_redict.c suggest_xdr.c 
 TARGETS = suggest.h suggest_xdr.c suggest_clnt.c suggest_svc.c
 
 OBJECTS_CLNT = $(SOURCES_CLNT.c:%.c=%.o) $(TARGETS_CLNT.c:%.c=%.o)
+OBJECTS_CLNT_REDICT = $(SOURCES_CLNT_REDICT.c:%.c=%.o) $(TARGETS_CLNT_REDICT.c:%.c=%.o)
 OBJECTS_SVC = $(SOURCES_SVC.c:%.c=%.o) $(TARGETS_SVC.c:%.c=%.o)
 # Compiler flags 
 
@@ -29,7 +32,7 @@ RPCGENFLAGS =
 
 # Targets 
 
-all : $(CLIENT) $(SERVER)
+all : $(CLIENT) $(SERVER) $(CLIENTREDICT)
 
 $(TARGETS) : $(SOURCES.x) 
 	rpcgen $(RPCGENFLAGS) $(SOURCES.x)
@@ -41,8 +44,12 @@ $(OBJECTS_SVC) : $(SOURCES_SVC.c) $(SOURCES_SVC.h) $(TARGETS_SVC.c)
 $(CLIENT) : $(OBJECTS_CLNT) 
 	$(CC) -o $(CLIENT) $(OBJECTS_CLNT) $(LDLIBS) 
 
+$(CLIENTREDICT) : $(OBJECTS_CLNT_REDICT) 
+	$(CC) -o $(CLIENTREDICT) $(OBJECTS_CLNT_REDICT) $(LDLIBS) 
+
+
 $(SERVER) : $(OBJECTS_SVC) 
-	$(CC) -o $(SERVER) $(OBJECTS_SVC) $(LDLIBS) ../boithoadClientLib/*.c
+	$(CC) -o $(SERVER) $(OBJECTS_SVC) $(LDLIBS) ../boithoadClientLib/*.c ../common/bstr.c ../common/strlcat.c ../common/debug.c
 
  clean:
 	 $(RM) core $(TARGETS) $(OBJECTS_CLNT) $(OBJECTS_SVC) $(CLIENT) $(SERVER)

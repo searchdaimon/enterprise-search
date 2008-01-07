@@ -95,7 +95,7 @@ get_best_results_2_svc(struct senddata *argp, struct svc_req *rqstp)
 	static  numbest_res result;
 	static int called = 0;
 	int i = 5;
-	struct suggest_input **si;
+	struct suggest_input **si, **si2;
 
 #if 0
 	if (pthread_mutex_lock(&mutex) != 0) {
@@ -105,18 +105,19 @@ get_best_results_2_svc(struct senddata *argp, struct svc_req *rqstp)
 #endif
 
 	if (sd == NULL) {
+		reload_dictionary_2_svc(NULL, NULL);
+#if 0
 		sd = suggest_init();
 		if (sd == NULL)
 			return &result;
-		//runarb: legger inn støtte for å heller bruke dictionarywords.txt som ordbok
-		//suggest_read_frequency(sd, "../suggest/UnikeTermerMedForekomst.ENG");
-		if (suggest_read_frequency(sd, bfile("data/dictionarywords.txt")) == -1) {
-		//if (suggest_read_frequency(sd, "/home/eirik/Boitho/boitho/websearch/src/suggest/testinput.list") == -1) {
-			perror(bfile("data/dictionarywords.txt"));
-			exit(EXIT_FAILURE);
+		if (suggest_read_frequency(sd, bfile("var/dictionarywords")) == -1) {
+			perror(bfile("var/dictionarywords"));
+			result._errno = errno;
+			return &result;
 		}
 
 		suggest_most_used(sd);
+#endif
 	}
 
 	if (called == 1) {
@@ -127,11 +128,11 @@ get_best_results_2_svc(struct senddata *argp, struct svc_req *rqstp)
 	called = 1;
 #if 1
 	nlp = &result.numbest_res_u.list;
-	for (si = suggest_find_prefix(sd, argp->word, argp->user);
+	for (si2 = si = suggest_find_prefix(sd, argp->word, argp->user);
 	     si != NULL && *si != NULL;
 	     si++) {
 		nl = *nlp = (namenode *)
-			malloc(sizeof(namenode));
+			calloc(1, sizeof(namenode));
 		if (nl == NULL) {
 			result._errno = errno;
 			return &result;
@@ -139,6 +140,8 @@ get_best_results_2_svc(struct senddata *argp, struct svc_req *rqstp)
 		nl->name = strdup((*si)->word);
 		nl->frequency = (*si)->frequency;
 		nlp = &nl->next;
+		//free((*si)->word);
+		//free((*si));
 	}
 
 	*nlp = (namelist)NULL;
@@ -148,6 +151,7 @@ get_best_results_2_svc(struct senddata *argp, struct svc_req *rqstp)
 	result->name = strdup((*si)->word);
 	result->frequency = (*si)->frequency;
 #endif
+	free(si2);
 #if 0
 	if (pthread_mutex_unlock(&mutex) != 0) {
 		result._errno = errno;
@@ -187,3 +191,21 @@ suggest_1_freeresult (SVCXPRT *transp, xdrproc_t xdr_result, caddr_t result)
 }
 #endif
 
+void *
+reload_dictionary_2_svc(void *voidptr, struct svc_req *req)
+{
+	if (sd != NULL) {
+		suggest_destroy(sd);
+	}
+	sd = suggest_init();
+	if (sd == NULL) {
+		warn("suggest_init()");
+		return;
+	}
+	if (suggest_read_frequency(sd, bfile("var/dictionarywords")) == -1) {
+		perror(bfile("var/dictionarywords"));
+	}
+	suggest_most_used(sd);
+
+	return 1; /* Tell RPC that everything is okey */
+}

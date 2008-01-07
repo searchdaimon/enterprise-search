@@ -26,6 +26,7 @@ struct suggest_input **suggest_find_prefix(struct suggest_data *, char *, char *
 struct suggest_input **suggest_find_prefix(struct suggest_data *, char *);
 #endif
 struct suggest_data *suggest_init(void);
+void suggest_destroy(struct suggest_data *);
 
 #endif
 
