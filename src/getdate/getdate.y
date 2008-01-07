@@ -14,6 +14,7 @@
 
 #define __INGETDATE
 #include "getdate.h"
+#include "dateview.h"
 
 //#define yyparse getdate_yyparse
 #define yylex datelib_yylex
@@ -398,6 +399,35 @@ fixdate(struct datelib *dl, struct tm *tmend)
 			break;
 	}
 
+}
+
+time_t
+getdate_dateview(enum dateview_output_type type)
+{
+	time_t now, test;
+	struct tm tmend;
+	struct datelib dl;
+
+	now = time(NULL);
+	gmtime_r(&now, &dl.tmstart);
+	dl.lowest = type;
+	dl.frombigbang = 0;
+	memset(&dl.modify, '\0', sizeof(dl.modify));
+	switch(type) {
+		case TODAY: dl.modify.day = 0; break;
+		case YESTERDAY: dl.modify.day = 1; break;
+		case THIS_WEEK: dl.modify.week = 0; break;
+		case THIS_MONTH: dl.modify.month= 0; break;
+		case THIS_YEAR: dl.modify.year= 0; break;
+		case LAST_YEAR: dl.modify.year = 1; break;
+		case TWO_YEARS_PLUS: dl.modify.year = 2; dl.frombigbang = 1; break;
+	}
+	fixdate(&dl, &tmend);
+	test = mktime(&dl.tmstart);
+	dl.start = dl.frombigbang ? 0 : test;
+	//test = mktime(&tmend);
+	//dl->end = test;
+	return dl.start;
 }
 
 int

@@ -17,8 +17,8 @@ typedef struct _dateview {
 enum dateview_output_type {
 	TODAY = 1,
 	YESTERDAY,
-	LAST_WEEK,
-	LAST_MONTH,
+	THIS_WEEK,
+	THIS_MONTH,
 	THIS_YEAR,
 	LAST_YEAR,
 	TWO_YEARS_PLUS,

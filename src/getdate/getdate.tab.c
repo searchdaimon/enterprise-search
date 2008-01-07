@@ -101,6 +101,7 @@
 
 #define __INGETDATE
 #include "getdate.h"
+#include "dateview.h"
 
 //#define yyparse getdate_yyparse
 #define yylex datelib_yylex
@@ -145,13 +146,13 @@ void set_lowest(struct datelib *, enum yytokentype);
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 42 "getdate.y"
+#line 43 "getdate.y"
 {
 	int number;
 	int month;
 }
-/* Line 187 of yacc.c.  */
-#line 155 "getdate.tab.c"
+/* Line 193 of yacc.c.  */
+#line 156 "getdate.tab.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -164,7 +165,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 168 "getdate.tab.c"
+#line 169 "getdate.tab.c"
 
 #ifdef short
 # undef short
@@ -450,8 +451,8 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    65,    65,    67,    70,    72,    78,    79,    82,    83,
-      84,    85,    89,    97,   105,   113
+       0,    66,    66,    68,    71,    73,    79,    80,    83,    84,
+      85,    86,    90,    98,   106,   114
 };
 #endif
 
@@ -1375,24 +1376,24 @@ yyreduce:
   switch (yyn)
     {
         case 5:
-#line 72 "getdate.y"
+#line 73 "getdate.y"
     {
 		result->frombigbang = 1;
 	;}
     break;
 
   case 6:
-#line 78 "getdate.y"
+#line 79 "getdate.y"
     { (yyval.number) = 1; ;}
     break;
 
   case 7:
-#line 79 "getdate.y"
+#line 80 "getdate.y"
     { (yyval.number) = yylval.number; ;}
     break;
 
   case 12:
-#line 89 "getdate.y"
+#line 90 "getdate.y"
     {
 			set_lowest(result, DAY);
 			result->modify.day += (yyvsp[(1) - (2)].number);
@@ -1401,7 +1402,7 @@ yyreduce:
     break;
 
   case 13:
-#line 97 "getdate.y"
+#line 98 "getdate.y"
     {
 			set_lowest(result, WEEK);
 			result->modify.week += (yyvsp[(1) - (2)].number);
@@ -1410,7 +1411,7 @@ yyreduce:
     break;
 
   case 14:
-#line 105 "getdate.y"
+#line 106 "getdate.y"
     {
 			set_lowest(result, MONTH);
 			result->modify.month += (yyvsp[(1) - (2)].number);
@@ -1419,7 +1420,7 @@ yyreduce:
     break;
 
   case 15:
-#line 113 "getdate.y"
+#line 114 "getdate.y"
     {
 			set_lowest(result, YEAR);
 			result->modify.year += (yyvsp[(1) - (2)].number);
@@ -1429,7 +1430,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1433 "getdate.tab.c"
+#line 1434 "getdate.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1643,7 +1644,7 @@ yyreturn:
 }
 
 
-#line 120 "getdate.y"
+#line 121 "getdate.y"
 
 
 
@@ -1925,6 +1926,35 @@ fixdate(struct datelib *dl, struct tm *tmend)
 			break;
 	}
 
+}
+
+time_t
+getdate_dateview(enum dateview_output_type type)
+{
+	time_t now, test;
+	struct tm tmend;
+	struct datelib dl;
+
+	now = time(NULL);
+	gmtime_r(&now, &dl.tmstart);
+	dl.lowest = type;
+	dl.frombigbang = 0;
+	memset(&dl.modify, '\0', sizeof(dl.modify));
+	switch(type) {
+		case TODAY: dl.modify.day = 0; break;
+		case YESTERDAY: dl.modify.day = 1; break;
+		case THIS_WEEK: dl.modify.week = 0; break;
+		case THIS_MONTH: dl.modify.month= 0; break;
+		case THIS_YEAR: dl.modify.year= 0; break;
+		case LAST_YEAR: dl.modify.year = 1; break;
+		case TWO_YEARS_PLUS: dl.modify.year = 2; dl.frombigbang = 1; break;
+	}
+	fixdate(&dl, &tmend);
+	test = mktime(&dl.tmstart);
+	dl.start = dl.frombigbang ? 0 : test;
+	//test = mktime(&tmend);
+	//dl->end = test;
+	return dl.start;
 }
 
 int
