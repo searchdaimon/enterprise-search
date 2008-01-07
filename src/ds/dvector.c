@@ -77,7 +77,6 @@ void vector_destroy( container *C )
 
 inline void vector_clear( container *C )
 {
-
     vector_container_priv	*VP = C->priv;
     int				i;
 
@@ -116,6 +115,26 @@ inline void vector_pushback( container *C, ... )
     VP->size++;
 
     va_end(ad.ap);
+}
+
+
+inline void vector_pushback_value( container *C, value val )
+{
+    vector_container_priv	*VP = C->priv;
+
+    if (VP->size >= VP->_array_size)
+	{
+	    value	*old_elem = VP->elem;
+	    int		old_size = VP->_array_size;
+
+	    VP->_array_size*= 2;
+	    VP->elem = malloc(sizeof(value) * VP->_array_size);
+	    memcpy( VP->elem, old_elem, sizeof(value) * old_size );
+	    free(old_elem);
+	}
+
+    VP->elem[VP->size] = val;
+    VP->size++;
 }
 
 

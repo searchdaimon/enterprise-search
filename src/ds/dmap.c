@@ -72,12 +72,13 @@ void map_clear( container *C )
 }
 
 
-inline void map_insert( container *C, ... )
+inline iterator map_insert( container *C, ... )
 {
     va_list		ap;
     alloc_data		ad;
     map_container_priv	*MP = C->priv;
     value		key, val;
+    iterator		it;
 
     va_start(ap, C);
     ad = MP->Key->ap_allocate(MP->Key, ap);
@@ -98,7 +99,10 @@ inline void map_insert( container *C, ... )
 	    MP->root->val = val;
             MP->size++;
 //            printf("map_insert: Root is %i\n", key.i);
-            return;
+
+	    it.node = MP->root;
+	    it.valid = 1;
+            return it;
         }
 
     _map_node_		*node = MP->root, *last_node = MP->root;
@@ -113,7 +117,9 @@ inline void map_insert( container *C, ... )
 		    // For now, do nothing if the key already exists.
 		    // It is possible to expand this to include multimap etc.
 //        	    printf("map_insert: Conflict with %i\n", key.i);
-                    return;
+		    it.node = NULL;
+		    it.valid = 0;
+                    return it;
                 }
 
             last_node = node;
@@ -147,6 +153,9 @@ inline void map_insert( container *C, ... )
 
     MP->size++;
 
+    it.node = node;
+    it.valid = 1;
+    return it;
 /*
     // Red-Black-Tree:
     while (node != *root && node->parent->color == Red)
@@ -157,9 +166,10 @@ inline void map_insert( container *C, ... )
 
 
 
-inline void map_insert_value( container *C, value key, value val )
+inline iterator map_insert_value( container *C, value key, value val )
 {
     map_container_priv	*MP = C->priv;
+    iterator		it;
 
     if (MP->size == 0)
         {
@@ -172,7 +182,10 @@ inline void map_insert_value( container *C, value key, value val )
 	    MP->root->val = val;
             MP->size++;
 //            printf("map_insert: Root is %i\n", key.i);
-            return;
+
+	    it.node = MP->root;
+	    it.valid = 1;
+            return it;
         }
 
     _map_node_		*node = MP->root, *last_node = MP->root;
@@ -187,7 +200,9 @@ inline void map_insert_value( container *C, value key, value val )
 		    // For now, do nothing if the key already exists.
 		    // It is possible to expand this to include multimap etc.
 //        	    printf("map_insert: Conflict with %i\n", key.i);
-                    return;
+		    it.node = NULL;
+		    it.valid = 0;
+                    return it;
                 }
 
             last_node = node;
@@ -220,6 +235,10 @@ inline void map_insert_value( container *C, value key, value val )
         }
 
     MP->size++;
+
+    it.node = node;
+    it.valid = 1;
+    return it;
 }
 
 

@@ -285,7 +285,7 @@ void deallocate( container *C, value v )
 
 void destroy( container *C )
 {
-    C->destroy(C);
+    if (C!=NULL) C->destroy(C);
 }
 
 void clear( container *C )

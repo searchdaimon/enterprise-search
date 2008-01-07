@@ -1,5 +1,5 @@
 /**
- *	(C) Copyright 2006-2007, Magnus Galåen
+ *	(C) Copyright 2006-2008, Magnus Galåen
  *
  *	dvector.h: Vector-container.
  */
@@ -17,6 +17,7 @@ container* vector_container( container *C );
 extern inline int vector_size( container *C );
 //value vector_get( container *C, int id );
 extern inline void vector_pushback( container *C, ... );
+extern inline void vector_pushback_value( container *C, value v );
 
 
 extern inline value vector_get( container *C, int id );

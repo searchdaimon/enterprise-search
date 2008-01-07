@@ -41,8 +41,8 @@ extern inline iterator map_previous( const iterator old_it );
 extern inline iterator map_find( container *C, ... );
 extern inline iterator map_find_value( container *C, value key );
 
-extern inline void map_insert( container *C, ... );
-extern inline void map_insert_value( container *C, value key, value data );
+extern inline iterator map_insert( container *C, ... );
+extern inline iterator map_insert_value( container *C, value key, value data );
 
 
 #endif	// _DMAP_H_
