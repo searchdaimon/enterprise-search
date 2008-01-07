@@ -16,12 +16,12 @@ typedef struct _dateview {
 
 enum dateview_output_type {
 	TODAY = 1,
-	YESTERDAY,
-	THIS_WEEK,
-	THIS_MONTH,
-	THIS_YEAR,
-	LAST_YEAR,
-	TWO_YEARS_PLUS,
+	YESTERDAY = 2,
+	THIS_WEEK = 3,
+	THIS_MONTH = 4,
+	THIS_YEAR = 5,
+	LAST_YEAR = 6,
+	TWO_YEARS_PLUS = 7,
 };
 
 typedef struct _dateview_output {

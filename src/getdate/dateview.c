@@ -177,8 +177,8 @@ main(void)
 #if 0
         TODAY,
         YESTERDAY,
-        LAST_WEEK,
-        LAST_MONTH,
+        THIS_WEEK,
+        THIS_MONTH,
         THIS_YEAR,
         LAST_YEAR,
         TWO_YEARS_PLUS,

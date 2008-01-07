@@ -1934,21 +1934,24 @@ getdate_dateview(enum dateview_output_type type)
 	time_t now, test;
 	struct tm tmend;
 	struct datelib dl;
+	enum yytokentype datetype;
 
 	now = time(NULL);
 	gmtime_r(&now, &dl.tmstart);
 	dl.lowest = type;
 	dl.frombigbang = 0;
 	memset(&dl.modify, '\0', sizeof(dl.modify));
+	datetype = YEAR;
 	switch(type) {
-		case TODAY: dl.modify.day = 0; break;
-		case YESTERDAY: dl.modify.day = 1; break;
-		case THIS_WEEK: dl.modify.week = 0; break;
-		case THIS_MONTH: dl.modify.month= 0; break;
-		case THIS_YEAR: dl.modify.year= 0; break;
-		case LAST_YEAR: dl.modify.year = 1; break;
-		case TWO_YEARS_PLUS: dl.modify.year = 2; dl.frombigbang = 1; break;
+		case TODAY: dl.modify.day = 0; datetype = DAY; break;
+		case YESTERDAY: dl.modify.day = 1; datetype = DAY; break;
+		case THIS_WEEK: dl.modify.week = 0; datetype = WEEK; break;
+		case THIS_MONTH: dl.modify.month= 0; datetype = MONTH; break;
+		case THIS_YEAR: dl.modify.year= 0; datetype = YEAR; break;
+		case LAST_YEAR: dl.modify.year = 1; datetype = YEAR; break;
+		case TWO_YEARS_PLUS: dl.modify.year = 2; dl.frombigbang = 1; datetype = YEAR; break;
 	}
+	dl.lowest = datetype;
 	fixdate(&dl, &tmend);
 	test = mktime(&dl.tmstart);
 	dl.start = dl.frombigbang ? 0 : test;
@@ -1964,6 +1967,7 @@ getdate(char *str, struct datelib *dl)
 	time_t now, test;
 	struct tm tmend;
 	struct nexttoken nexttoken;
+	int i;
 
 	if (input == NULL)
 		return -1;

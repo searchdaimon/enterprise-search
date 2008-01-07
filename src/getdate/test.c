@@ -76,6 +76,16 @@ main(int argc, char **argv)
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
 
+
+	sprintf(buf,"today");
+	printf("date: %s\n",buf);
+        n = getdate(buf, &dl);
+	printf("n: %i\n",n);
+        printf("%s\n", ctime(&dl.start));
+        printf("%s\n", ctime(&dl.end));
+
+
+
 /*
 	sprintf(buf,"2 years 5 days 1 week");
 	printf("date: %s\n",buf);
