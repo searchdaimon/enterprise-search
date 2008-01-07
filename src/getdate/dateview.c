@@ -30,14 +30,6 @@ date_info_add(dateview *dv, time_t checktime)
 	time_t nowtime;
 	struct tm tm;
 
-#define date_info_add_insert(_time, _timecheck, _type, _dv) \
-	do {\
-		if (_time >= _timecheck) {\
-			(_dv)->output[_type - 1] += 1;\
-			return 0;\
-		}\
-	} while (0)
-
 	time(&nowtime);
 	gmtime_r(&nowtime, &tm);
 	tm.tm_sec = 0;
@@ -53,15 +45,30 @@ date_info_add(dateview *dv, time_t checktime)
 	tm.tm_year -= 1;
 	last_year = mktime(&tm);
 
-	date_info_add_insert(checktime, today, TODAY, dv);
-	date_info_add_insert(checktime, yesterday, YESTERDAY, dv);
-	date_info_add_insert(checktime, last_week, LAST_WEEK, dv);
-	date_info_add_insert(checktime, last_month, LAST_MONTH, dv);
-	date_info_add_insert(checktime, this_year, THIS_YEAR, dv);
-	date_info_add_insert(checktime, last_year, LAST_YEAR, dv);
-	date_info_add_insert(checktime, 0, TWO_YEARS_PLUS, dv);
-
-#undef date_info_add_insert
+	if (checktime >= today) {
+		dv->output[TODAY-1] += 1;
+		dv->output[THIS_YEAR-1] += 1;
+		dv->output[LAST_MONTH-1] += 1;
+		dv->output[LAST_WEEK-1] += 1;
+	} else if (checktime >= yesterday) {
+		dv->output[YESTERDAY-1] += 1;
+		dv->output[THIS_YEAR-1] += 1;
+		dv->output[LAST_MONTH-1] += 1;
+		dv->output[LAST_WEEK-1] += 1;
+	} else if (checktime >= last_week) {
+		dv->output[LAST_WEEK-1] += 1;
+		dv->output[THIS_YEAR-1] += 1;
+		dv->output[LAST_MONTH-1] += 1;
+	} else if (checktime >= last_month) {
+		dv->output[LAST_MONTH-1] += 1;
+		dv->output[THIS_YEAR-1] += 1;
+	} else if (checktime >= this_year) {
+		dv->output[THIS_YEAR-1] += 1;
+	} else if (checktime >= last_year) {
+		dv->output[LAST_YEAR-1] += 1;
+	} else {
+		dv->output[TWO_YEARS_PLUS-1] += 1;
+	}
 
 	return 0;
 }
