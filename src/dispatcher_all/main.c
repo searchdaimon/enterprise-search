@@ -2434,8 +2434,8 @@ int main(int argc, char *argv[])
 
 	char *dateview_type_names[] = { "TODAY",
 					"YESTERDAY",
-					"LAST_WEEK",
-					"LAST_MONTH",
+					"THIS_WEEK",
+					"THIS_MONTH",
 					"THIS_YEAR",
 					"LAST_YEAR",
 					"TWO_YEARS_PLUS"};
