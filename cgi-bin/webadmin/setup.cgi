@@ -96,8 +96,10 @@ sub process_network {
         ($vars, $succs) = $pageNetwork->process_network_config(
                 $vars, $netconf, $resolv);
 
-        return $pageAuth->show_license_dialog($vars)	
-            if ($succs)
+        #return $pageAuth->show_license_dialog($vars)	
+            #if ($succs)
+        return $pageIntegration->show_integration_methods($vars)
+            if $succs;
     }
 
     return $pageNetwork->show_network_config(
