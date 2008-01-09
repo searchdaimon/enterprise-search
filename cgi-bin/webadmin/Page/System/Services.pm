@@ -85,12 +85,6 @@ sub _is_valid_param {
 	(grep { /^$param$/ } @valid_params) ? 1 : 0;
 }
 
-sub _is_valid_service {
-	my ($self, $service) = @_;
-
-	my @valid_services = @{$self->{'services'}};
-
-	(grep { /^$service$/ } @valid_services) ? 1 : 0;
-}
+sub _is_valid_service { defined $_[0]->{'services'}{$_[1]} }
 
 1;
