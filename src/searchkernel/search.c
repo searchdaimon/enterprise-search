@@ -1787,7 +1787,7 @@ void *searchIndex_thread(void *arg)
 	vboprintf("nrOfSubnames %i\n",(*searchIndex_thread_arg).nrOfSubnames);
 	for(i=0;i<(*searchIndex_thread_arg).nrOfSubnames;i++) {
 
-		#ifdef BLACK_BOKS
+		#if defined BLACK_BOKS && !defined _24SEVENOFFICE
 	
 		/*
 		searcArrayLen = 0;

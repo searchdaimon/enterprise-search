@@ -11,6 +11,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <string.h>
+#include <assert.h>
 
 #include "../common/adultWeight.h"
 #include "../common/DocumentIndex.h"
@@ -23,6 +24,7 @@
 #include "../common/bstr.h"
 #include "../query/query_parser.h"
 #include "../common/integerindex.h"
+#include "../spelling/spelling.h"
 
 
 #ifdef BLACK_BOKS
@@ -63,6 +65,8 @@
 //#include "cgi-util.h"
 
 	//struct iindexFormat *TeffArray; //[maxIndexElements];
+
+extern struct spelling *spelling;
 
 
 static unsigned int hash_domainid_fn(void *k) { /* XXX: Make a proper hash function here */
@@ -147,10 +151,12 @@ get_browser(char *useragent)
 }
 
 #ifdef BLACK_BOKS
-int
+static inline int
 handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum browser_type btype, char *collection,
            char *url_out, size_t len, int sock, pthread_mutex_t *lock)
 {
+
+#ifndef _24SEVENOFFICE
 
 #ifdef WITH_THREAD
 	pthread_mutex_lock(lock);
@@ -161,6 +167,8 @@ handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum br
 	printf("handle_url_rewrite: Did rewrite \"%s\" -> \"%s\"\n",url_in,url_out);
 #ifdef WITH_THREAD
 	pthread_mutex_unlock(lock);
+#endif
+
 #endif
 
 	return 1;
@@ -821,7 +829,9 @@ void increaseFilteredSilent(struct PagesResultsFormat *PagesResults,int *whichFi
 }
 
 #ifdef BLACK_BOKS
-int pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection_in[], char uri_in[], char user_in[], char password_in[]) {
+static inline int
+pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection_in[], char uri_in[], char user_in[], char password_in[]) {
+#ifndef _24SEVENOFFICE
 	int ret = 0;
 
 	#ifdef WITH_THREAD
@@ -838,6 +848,9 @@ int pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collec
 
 	return ret;
 
+#else
+	return 1;
+#endif
 
 }
 #endif
@@ -1363,6 +1376,46 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 	}
 
 }
+
+void
+spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa)
+{
+	int i;
+
+	if (spelling == NULL)
+		return;
+
+	for(i = 0; i < qa->n; i++) {
+		string_array *sa = &qa->query[i];
+		switch (sa->operand) {
+			case QUERY_WORD:
+			case QUERY_SUB:
+			{
+				int ret;
+				assert(sa->n == 1);
+				ret = spelling_correct(sa->s[0], spelling);
+				if (ret) {
+					printf("Spelling correct of %s\n", sa->s[0]);
+				} else {
+					char **p;
+
+					p = spelling_suggestions(sa->s[0], spelling);
+					if (p == NULL)
+						continue;
+					if (p[0] == NULL) {
+						spelling_suggestions_destroy(p);
+						continue;
+					}
+
+					printf("Found correct spelling: %s\n", p[0]);
+					spelling_suggestions_destroy(p);
+				}
+				break;
+			}
+		}
+	}
+}
+
 int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct SiderHederFormat *SiderHeder,
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames, 
 int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[], 
@@ -1478,7 +1531,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	struct DocumentIndexFormat DocumentIndexPost;
 	
 
-	#ifdef BLACK_BOKS
+	#if defined BLACK_BOKS && !defined _24SEVENOFFICE
 
 		//henter brukerens passord fra boithoad
 		gettimeofday(&start_time, NULL);
@@ -1500,11 +1553,11 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		char groupOrQuery[1024];
 
 		//boithoad_listGroups(&groups_respons_list,&groups_responsnr);
+		groupOrQuery[0] = '\0';
 		if (!boithoad_groupsForUser(PagesResults.search_user,&groups_respons_list,&groups_responsnr)) {
                         perror("Error: boithoad_groupsForUser");
                         return 0;
                 }
-		groupOrQuery[0] = '\0';
                 printf("groups: %i\n",groups_responsnr);
                 for (i=0;i<groups_responsnr;i++) {
 
@@ -1557,7 +1610,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	get_query( PagesResults.QueryData.query, queryLen, &PagesResults.QueryData.queryParsed );
 
-	#ifdef BLACK_BOKS
+	#if defined BLACK_BOKS && !defined _24SEVENOFFICE
 	get_query( groupOrQuery, strlen(groupOrQuery), &PagesResults.QueryData.search_user_as_query );
 	#endif
 
@@ -1741,8 +1794,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,&(*SiderHeder).queryTime);	
 	#endif
 
-
-
+	/* Spellcheck the query */
+	if (SiderHeder->TotaltTreff < 10 || 1) {
+		spellcheck_query(SiderHeder, &PagesResults.QueryData.queryParsed);
+	}
 
 	//lager en liste med ordene som ingikk i queryet til hiliting
 	hiliteQuery[0] = '\0';
@@ -1973,6 +2028,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		char groupOrQuery[1024];
 
 		//boithoad_listGroups(&groups_respons_list,&groups_responsnr);
+		printf("here?\n");
 		if (!boithoad_groupsForUser(PagesResults.search_user,&groups_respons_list,&groups_responsnr)) {
                         perror("Error: boithoad_groupsForUser");
                         return;

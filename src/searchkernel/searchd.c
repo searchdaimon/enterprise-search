@@ -31,6 +31,7 @@
 
 #include "verbose.h"
 #include "searchkernel.h"
+#include "../spelling/spelling.h"
 
 #define cfg_searchd "config/searchd.conf"
 
@@ -73,6 +74,17 @@ int isInSubname(struct subnamesFormat *subnames,int nrOfSubnames,char s[]) {
 	return 0;
 }
 
+
+
+struct spelling *spelling;
+
+void
+init_spelling(char *lang)
+{
+	spelling = spelling_init(lang);
+}
+
+
 /* The signal handler exit the program. . */
  void
 catch_alarm (int sig)
@@ -106,7 +118,7 @@ int main(int argc, char *argv[])
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"lp:m:b:vs"))!=-1) {
+        while ((c=getopt(argc,argv,"lp:m:b:vsL:"))!=-1) {
                 switch (c) {
                         case 'p':
                                 searchport = atoi(optarg);
@@ -129,6 +141,12 @@ int main(int argc, char *argv[])
 				printf("Won't fork for new conections\n");
 				optSingle = 1;
                                 break;
+			case 'L':
+				if (spelling == NULL)
+					init_spelling(optarg);
+				else
+					warnx("spelling already initialized");
+				break;
 			default:
                         	exit(1);
                 }
@@ -143,6 +161,9 @@ int main(int argc, char *argv[])
 	if (optrankfile == NULL) {
 		optrankfile = "Brank";
 	}
+
+	if (spelling == NULL)
+		init_spelling("bb");
 
 	strncpy(servername,argv[1 +optind],sizeof(servername) -1);
 
@@ -481,7 +502,7 @@ void *do_chld(void *arg)
 
 
 
-	#ifdef BLACK_BOKS
+	#if defined BLACK_BOKS && !defined _24SEVENOFFICE
 
 
 	printf("username is \"%s\"\n",queryNodeHeder.search_user);
@@ -495,7 +516,6 @@ void *do_chld(void *arg)
 	else {
 		char subnamebuf[maxSubnameLength];
 
-#if 1
 		queryNodeHeder.subname[0] = '\0';
 		if (strlen(queryNodeHeder.subname) > 0)
 			strlwcat(queryNodeHeder.subname, ",", sizeof(queryNodeHeder.subname));
@@ -519,7 +539,6 @@ void *do_chld(void *arg)
 		//fjerner ,
 		queryNodeHeder.subname[strlen(queryNodeHeder.subname) -1] = '\0';
 	        boithoad_respons_list_free(respons_list);
-#endif
 		userToSubname_close(&userToSubnameDb);
 	}
 
