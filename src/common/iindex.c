@@ -425,25 +425,26 @@ int ReadIIndexRecord (unsigned int *Adress, unsigned int *SizeForTerm, unsigned 
                 gettimeofday(&end_time, NULL);
                 printf("Time debug: ReadIIndexRecord total time %f\n",getTimeDifference(&start_time,&end_time));
                 #endif
-		if (DictionaryPost.SizeForTerm == 0) {
+		if (!fant) {
+			*Adress = 0;
+			*SizeForTerm = 0;
+			return 0;
+
+		}
+		else if (DictionaryPost.SizeForTerm == 0) {
 			printf("###################################\nBug: DictionaryPost SizeForTerm is 0!\n###################################\n");
 			*Adress = 0;
 			*SizeForTerm = 0;
 			return 0;
 
 		}
-		else if (fant) {
+		else {
 			*Adress = DictionaryPost.Adress;
 			*SizeForTerm = DictionaryPost.SizeForTerm;
 			#ifdef DEBUG
 			printf("disk: Adress %u, SizeForTerm %u\n",DictionaryPost.Adress,DictionaryPost.SizeForTerm);
 			#endif
 			return 1;
-		}
-		else {
-			*Adress = 0;
-			*SizeForTerm = 0;
-			return 0;
 		}
 	}
 	//printf("Adress %u,SizeForTerm %i\n",*Adress ,*SizeForTerm);
