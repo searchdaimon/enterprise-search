@@ -485,6 +485,7 @@ struct SiderHederFormat {
 	int TotaltTreff;
 	double total_usecs;
 	char hiliteQuery[MaxQueryLen];
+	char spellcheckedQuery[MaxQueryLen];
 	struct queryTimeFormat queryTime;
 	char servername[32];
 	struct subnamesFormat subnames[MAX_COLLECTIONS];
