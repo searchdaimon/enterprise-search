@@ -2263,9 +2263,12 @@ int main(int argc, char *argv[])
         printf("<SEARCH>\n");   
 	//får rare svar fra hilite. Dropper å bruke den får nå
 	FinalSiderHeder.hiliteQuery[0] = '\0';
-        printf("<RESULT_INFO TOTAL=\"%i\" QUERY=\"%s\" HILITE=\"%s\" TIME=\"%f\" FILTERED=\"%i\" SHOWABAL=\"%i\" CASHE=\"%i\" \
+	strsandr(SiderHeder->spellcheckedQuery, "\"","&quot;");
+        printf("<RESULT_INFO TOTAL=\"%i\" SPELLCHECKEDQUERY=\"%s\" QUERY=\"%s\" HILITE=\"%s\" TIME=\"%f\" FILTERED=\"%i\" \
+	        SHOWABAL=\"%i\" CASHE=\"%i\" \
 		PREQUERY=\"%i\" GEOIPCONTRY=\"%s\" SUBNAME=\"%s\" BOITHOHOME=\"%s\" NROFSEARCHNODES=\"%i\"/>\n",
 		FinalSiderHeder.TotaltTreff,
+		SiderHeder->spellcheckedQuery,
 		QueryData.queryhtml,
 		FinalSiderHeder.hiliteQuery,
 		FinalSiderHeder.total_usecs,
