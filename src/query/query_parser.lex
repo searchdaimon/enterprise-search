@@ -496,10 +496,10 @@ void sprint_query( char *s, int n, query_array *qa )
 			pos+= snprintf(s+pos, n - pos, "-");
 			break;
 		    case QUERY_PHRASE:
-			pos+= snprintf(s+pos, n - pos, "\"");
+//			pos+= snprintf(s+pos, n - pos, "");
 			break;
 		    case QUERY_SUBPHRASE:
-			pos+= snprintf(s+pos, n - pos, "-\"");
+			pos+= snprintf(s+pos, n - pos, "-");
 			break;
 		    case QUERY_FILETYPE:
 			pos+= snprintf(s+pos, n - pos, "filetype:");
@@ -521,19 +521,15 @@ void sprint_query( char *s, int n, query_array *qa )
 			break;
 		}
 
+	    if (qa->query[i].n > 1) pos+= snprintf(s+pos, n - pos, "\"");
+
 	    for (j=0; j<qa->query[i].n; j++)
 		{
 		    if (j>0) pos+= snprintf(s+pos, n - pos, " ");
 		    pos+= snprintf(s+pos, n - pos, "%s", qa->query[i].s[j]);
 		}
 
-	    switch (qa->query[i].operand)
-		{
-		    case QUERY_PHRASE:
-		    case QUERY_SUBPHRASE:
-			pos+= snprintf(s+pos, n - pos, "\"");
-			break;
-		}
+	    if (qa->query[i].n > 1) pos+= snprintf(s+pos, n - pos, "\"");
 	}
 }
 
