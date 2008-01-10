@@ -1377,14 +1377,16 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 
 }
 
-void
+int
 spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa)
 {
 	int i;
+	int fixed;
 
 	if (spelling == NULL)
 		return;
 
+	fixed = 0;
 	for(i = 0; i < qa->n; i++) {
 		string_array *sa = &qa->query[i];
 		switch (sa->operand) {
@@ -1408,12 +1410,23 @@ spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa)
 					}
 
 					printf("Found correct spelling: %s\n", p[0]);
+					free(sa->s[0]);
+					sa->s[0] = strdup(p[0]);
+					fixed++;
 					spelling_suggestions_destroy(p);
 				}
 				break;
 			}
 		}
 	}
+
+	if (fixed > 0) {
+		sprint_query(SiderHeder->spellcheckedQuery, MaxQueryLen, qa);
+	} else {
+		SiderHeder->spellcheckedQuery[0] = '\0';
+	}
+
+	return fixed;
 }
 
 int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct SiderHederFormat *SiderHeder,
@@ -1796,7 +1809,14 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	/* Spellcheck the query */
 	if (SiderHeder->TotaltTreff < 10 || 1) {
-		spellcheck_query(SiderHeder, &PagesResults.QueryData.queryParsed);
+		query_array qa;
+
+		copy_query(&qa, &PagesResults.QueryData.queryParsed);
+
+		if (spellcheck_query(SiderHeder, &qa) > 0) {
+			printf("Query corrected to: %s\n", SiderHeder->spellcheckedQuery);
+		}
+		destroy_query(&qa);
 	}
 
 	//lager en liste med ordene som ingikk i queryet til hiliting
