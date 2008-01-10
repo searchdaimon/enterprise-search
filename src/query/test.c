@@ -33,6 +33,14 @@ void testit( char *tekst )
 
     get_query( tekst, strlen(tekst), &qa);
 
+
+    char	buf[1024];
+
+    sprint_query(buf, 1023, &qa);
+
+    printf("%s\n---\n", buf);
+
+
     printf("\nquery %s\n",tekst);
 
     for (i=0; i<qa.n; i++)
@@ -48,6 +56,7 @@ void testit( char *tekst )
 	}
 
     printf("\n");
+
 /*
     query_array		qa_html;
     copy_htmlescaped_query( &qa_html, &qa );
