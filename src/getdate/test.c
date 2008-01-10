@@ -84,6 +84,14 @@ main(int argc, char **argv)
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
 
+	sprintf(buf,"this month");
+	printf("date: %s\n",buf);
+        n = getdate(buf, &dl);
+	printf("n: %i\n",n);
+        printf("%s\n", ctime(&dl.start));
+        printf("%s\n", ctime(&dl.end));
+
+
 
 
 /*
