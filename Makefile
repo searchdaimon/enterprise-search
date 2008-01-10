@@ -67,8 +67,8 @@ LIBXML = -I/usr/include/libxml2  -lxml2
 
 #HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c  
 #har rullet tilbake, og bruker gammel html parser for nå, så trenger dermed ikke i ha med css parseren
-#HTMLPARSER=src/parser/libhtml_parser.a src/parser/libcss_parser.a src/ds/libds.a
-HTMLPARSER=src/parser/libhtml_parser.a src/ds/libds.a
+HTMLPARSER=src/parser/libhtml_parser.a src/parser/libcss_parser.a src/ds/libds.a
+#HTMLPARSER=src/parser/libhtml_parser.a src/ds/libds.a
 
 # The Dependency Rules
 # They take the form
@@ -83,7 +83,7 @@ HTMLPARSER=src/parser/libhtml_parser.a src/ds/libds.a
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname bbdocumentConvertTest ShowThumbbb everrun dictionarywordsLot boithoad webadmindep
+bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest
 
 webadmindep: YumWrapper NetConfig InitServices setuidcaller
 
@@ -441,7 +441,7 @@ searchd : src/searchkernel/searchd.c
 searchdbb : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/getfiletype.o src/ds/libds.a -DIIACL
+	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/getfiletype.o src/spelling/spelling.c src/ds/libds.a -DIIACL -L/home/eirik/.root/lib -laspell -Wl,"-rpath=/home/eirik/.root/lib/" -I/home/eirik/.root/include
 
 mergeUserToSubname: src/mergeUserToSubname/main.c
 	@echo ""
@@ -957,7 +957,7 @@ crawlManager: src/crawlManager/main.c
 	@echo "$@:"
 
 	#22 feb 2007, fjerner -static
-	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c src/3pLibs/keyValueHash/hashtable.c -o bin/crawlManager /home/eirik/.root/lib/libmemcached.a $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_PATHACCESS_CACHE
+	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c src/3pLibs/keyValueHash/hashtable.c -o bin/crawlManager /home/eirik/.root/lib/libmemcached.a $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_PATHACCESS_CACHE -DWITH_CONFIG
 
 
 crawlSMB: src/crawlSMB/main.c
