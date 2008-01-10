@@ -1877,17 +1877,18 @@ fixdate(struct datelib *dl, struct tm *tmend)
 	subtract_date(&dl->tmstart, DAY, (dl->modify.week * 7));
 	/* Find start of current week */
 	if (dl->modify.week > 0 || dl->lowest == WEEK) {
-		int daysinyear = 365;
-		int dayssinces = (dl->tmstart.tm_mon)*(30)+dl->tmstart.tm_mday;
+		int dayssinces;
+		int i;
 
-		dayssinces /= 7;
-		dayssinces *= 7;
-		dayssinces -= dl->tmstart.tm_mon*30;
+		dayssinces = dl->tmstart.tm_mday;
+		for (i = 0; i < dl->tmstart.tm_mon; i++)
+			dayssinces += months[i];
+
+
+		dayssinces -= dayssinces%7;
+		for (i = 0; i < dl->tmstart.tm_mon; i++)
+			dayssinces -= months[i];
 		dl->tmstart.tm_mday = dayssinces;
-		printf("Got: %d\n", dayssinces);
-		//if (tm->tm_year % 4 == 0 && (tm->tm_year % 100 != 0 || tm->tm_year % 400 == 0) {
-		//}
-
 	}
 	subtract_date(&dl->tmstart, DAY, (dl->modify.week * 7) + dl->modify.day);
 
