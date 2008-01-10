@@ -333,7 +333,7 @@ datelib_yyerror(char **input, struct datelib *dl, struct nexttoken *nt, const ch
 	return 0;
 }
 
-void
+static inline void
 set_lowest(struct datelib *dl, enum yytokentype type)
 {
 	/* XXX: Depends on the way bison generate an enum from the tokens */
