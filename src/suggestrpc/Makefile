@@ -32,7 +32,12 @@ RPCGENFLAGS =
 
 # Targets 
 
-all : $(CLIENT) $(SERVER) $(CLIENTREDICT)
+all : $(CLIENT) $(SERVER) $(CLIENTREDICT) install
+
+install:
+	cp suggest_client_redict ../../bin
+	cp suggest_client ../../bin
+	cp suggest_server ../../bin
 
 $(TARGETS) : $(SOURCES.x) 
 	rpcgen $(RPCGENFLAGS) $(SOURCES.x)
