@@ -1860,7 +1860,7 @@ datelib_yyerror(char **input, struct datelib *dl, struct nexttoken *nt, const ch
 	return 0;
 }
 
-void
+static inline void
 set_lowest(struct datelib *dl, enum yytokentype type)
 {
 	/* XXX: Depends on the way bison generate an enum from the tokens */
@@ -1892,7 +1892,7 @@ fixdate(struct datelib *dl, struct tm *tmend)
 		dayssinces -= days;
 		dl->tmstart.tm_mday = dayssinces;
 	}
-	subtract_date(&dl->tmstart, DAY, (dl->modify.week * 7) + dl->modify.day);
+	subtract_date(&dl->tmstart, DAY, dl->modify.day);
 
 	memcpy(tmend, &dl->tmstart, sizeof *tmend);
 	switch (dl->lowest) {

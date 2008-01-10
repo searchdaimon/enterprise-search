@@ -365,7 +365,7 @@ fixdate(struct datelib *dl, struct tm *tmend)
 		dayssinces -= days;
 		dl->tmstart.tm_mday = dayssinces;
 	}
-	subtract_date(&dl->tmstart, DAY, (dl->modify.week * 7) + dl->modify.day);
+	subtract_date(&dl->tmstart, DAY, dl->modify.day);
 
 	memcpy(tmend, &dl->tmstart, sizeof *tmend);
 	switch (dl->lowest) {
