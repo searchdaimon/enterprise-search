@@ -26,18 +26,26 @@ void testit( char *tekst )
 //    char		*tekst = "-Jeg -søker etter- \"Magnus Galåen\", Lars Monrad-Krohn og -\"Lille-Jon";
 //    char		*tekst = "+hvor- \" \"  -e\"r - d'u\"\"?";
 //    char		*tekst = "boitho date:\"this week\"";
-    query_array		qa;
+    query_array		*qa = malloc(sizeof(query_array));
+    query_array		qa2;
 
 //    tekst = "espen Øxnes æøå ÆØLÅ aæødlapAWÅÆAØÅ Ã¦Ã¸Ã¥ Ã¦æÃ¸aÃB¥";
 
-    get_query( tekst, strlen(tekst), &qa);
-
+    get_query( tekst, strlen(tekst), qa);
+    copy_query( &qa2, qa );
 
     char	buf[1024];
 
-    sprint_query(buf, 1023, &qa);
-
+    sprint_query(buf, 1023, qa);
     printf("%s\n", buf);
+
+    sprint_query(buf, 1023, &qa2);
+    printf("%s\n", buf);
+
+    destroy_query( qa );
+    free(qa);
+
+    destroy_query( &qa2 );
 
 /*
     int			i,j;
@@ -74,6 +82,4 @@ void testit( char *tekst )
 	}
 
     destroy_query( &qa_html );
-*/
-    destroy_query( &qa );
-}
+*/}

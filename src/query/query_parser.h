@@ -1,14 +1,16 @@
 /*
- *	(C) Boitho 2004-2007, Written by Magnus Galåen
+ *	(C) Boitho 2004-2008, Written by Magnus Galåen
  *
  *  Støttede operatorer er som følger;
  *	+	(Pluss)
  *	-	(Minus)
  *	"	(Strofe)
  *	~	(Minus-strofe)
+ *	|	(Or)
  *
  *  CHANGELOG:
  *
+ *    10.01.2008	Lagt til funksjoner copy_query() og sprint_query().
  *    06.03.2007	Epostadresser blir nå skrevet om til fraser (med '.' og '@' som delimitere).
  *    22.02.2007	Har lagt til støtte for utf-8 unicode. Latin-1-supplement blir automatisk konvertert.
  *    23.11.2006	Har lagt til støtte for kommandoer: filetype/language/collection/date/status
@@ -55,8 +57,14 @@ void get_query( char text[], int text_size, query_array *qa );
 
 /*
  *	Frigjør og deallokerer minne i datastrukturen 'qa':
+ *	NB: selve *qa blir ikke deallokert! (se test.c)
  */
 void destroy_query( query_array *qa );
+
+/*
+ *	Kopierer og allokerer en ny qa:
+ */
+void copy_query( query_array *dest, query_array *src );
 
 /*
  *	Hent ut "ryddig" query-streng:

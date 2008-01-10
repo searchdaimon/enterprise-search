@@ -1,5 +1,5 @@
 
-CC=/usr/local/bin/gcc -g -Wall
+CC=/usr/local/bin/gcc -g -p -Wall
 all:	_query_parser _read_thesaurus
 
 _query_parser:

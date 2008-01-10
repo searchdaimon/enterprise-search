@@ -1,6 +1,6 @@
 %{
 /*
- *	(C) Boitho 2004-2007, Written by Magnus Galåen
+ *	(C) Boitho 2004-2008, Written by Magnus Galåen
  *
  *	Mai 2007: La til støtte for OR. Syntax: Skriv | foran ord eller frase som skal OR-es. OR og NOT samtidig fungerer ikke.
  */
@@ -457,6 +457,25 @@ void destroy_query( query_array *qa )
 	}
 
     _query_array_destroy( *qa );
+}
+
+
+void copy_query( query_array *dest, query_array *src )
+{
+    int		i, j;
+
+    (*dest) = _query_array_init( src->n );
+
+    for (i=0; i<src->n; i++)
+	{
+	    dest->query[i] = _string_array_init(src->query[i].n);
+	    dest->query[i].operand = src->query[i].operand;
+
+	    for (j=0; j<src->query[i].n; j++)
+		{
+		    dest->query[i].s[j] = strdup(src->query[i].s[j]);
+		}
+	}
 }
 
 

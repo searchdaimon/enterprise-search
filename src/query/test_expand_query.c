@@ -18,6 +18,8 @@
 
 int main( int argc, char *argv[] )
 {
+    cmp_count = 0;
+
     if (argc!=4)
 	{
 	    printf( "Usage: %s <stemwords> <thesaurus> <query>\n\n", argv[0] );
@@ -59,6 +61,8 @@ int main( int argc, char *argv[] )
 	}
 
     printf("done\n");
+    printf("count: %i\n", cmp_count);
+
 
 /*****/
     int			x,i,j,k;
@@ -73,7 +77,7 @@ int main( int argc, char *argv[] )
 		    container		*Q_1 = vector_container( string_container() );
 
 		    vector_pushback(Q_1, qa.query[x].s[0]);
-		    printf("%s", qa.query[x].s[0]);
+		    printf("\n[%s]:", qa.query[x].s[0]);
 
 		    container		*alt = set_container( string_container() );
 //		    printf("Inserting[a] %s... ", qa.query[x].s[0]);
@@ -160,6 +164,8 @@ int main( int argc, char *argv[] )
 	}
 
     printf("finished\n");
+    printf("count: %i\n", cmp_count);
+
 
     destroy_query( &qa );
 
@@ -167,6 +173,9 @@ int main( int argc, char *argv[] )
     destroy(W[1]);
 
 /*****/
+
+// 7276718
+// 3005
 
 /*
     container	*text = vector_container( string_container() );
@@ -194,6 +203,8 @@ int main( int argc, char *argv[] )
 */
 //    destroy_synonyms(V);
 //    destroy(T);
+
+    printf("count: %i\n", cmp_count);
 
     return 0;
 }
