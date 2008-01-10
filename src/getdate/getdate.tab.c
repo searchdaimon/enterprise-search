@@ -1884,6 +1884,11 @@ fixdate(struct datelib *dl, struct tm *tmend)
 		dayssinces = 0;
 		for (i = 0; i < dl->tmstart.tm_mon; i++)
 			dayssinces += months[i];
+		if (dl->tmstart.tm_mon > 1) {
+			if (dl->tmstart.tm_year % 4 == 0 && (dl->tmstart.tm_year % 100 != 0 || dl->tmstart.tm_year % 400 == 0))
+				dayssinces++;
+
+		}
 		days = dayssinces;
 		dayssinces += dl->tmstart.tm_mday;
 
