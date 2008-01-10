@@ -123,6 +123,19 @@ spelling_document_destroy(struct spelling_document *sd)
 int
 spelling_correct(char *word, struct spelling *s)
 {
+	if (isdigit(word[0])) {
+		int i, digit;
+
+		digit = 1;
+		for (i = 1; word[i] != '\0'; i++) {
+			if (!isdigit(word[i])) {
+				digit = 0;
+				break;
+			}
+		}
+		if (digit)
+			return 1;
+	}
 	return (aspell_speller_check(s->speller, word, -1));
 } 
 
