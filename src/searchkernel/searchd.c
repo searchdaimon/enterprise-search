@@ -93,6 +93,13 @@ catch_alarm (int sig)
 	exit(1);
 }
 
+void
+catch_sigusr1(int sig)
+{
+	printf("Caught sigusr1\n");
+	spelling_destroy(spelling);
+	init_spelling("bb");
+}
 
 int main(int argc, char *argv[])
 {
@@ -212,6 +219,7 @@ int main(int argc, char *argv[])
 	searchd_config. cmc_port = maincfg_get_int(&maincfg,"CMDPORT");
 
 	maincfgclose(&maincfg);
+	signal(SIGUSR1, catch_sigusr1);
 
 	/***********************************************************************************/
 	//prøver å få fil lock. Bare en deamon kan kjøre avgangen
