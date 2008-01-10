@@ -350,12 +350,15 @@ fixdate(struct datelib *dl, struct tm *tmend)
 	subtract_date(&dl->tmstart, DAY, (dl->modify.week * 7));
 	/* Find start of current week */
 	if (dl->modify.week > 0 || dl->lowest == WEEK) {
-		int daysinyear = 365;
-		int dayssinces = (dl->tmstart.tm_mon)*(30)+dl->tmstart.tm_mday; /* XXX: properly calculate days since year start */
+		int dayssinces;
+		int i;
 
-		dayssinces /= 7;
-		dayssinces *= 7;
-		dayssinces -= dl->tmstart.tm_mon*30;
+		dayssinces = dl->tmstart.tm_mday;
+		for (i = 0; i < dl->tmstart.tm_mon; i++)
+			dayssinces += months[i];
+
+
+		dayssinces -= dayssinces%7;
 		dl->tmstart.tm_mday = dayssinces;
 	}
 	subtract_date(&dl->tmstart, DAY, (dl->modify.week * 7) + dl->modify.day);
