@@ -351,16 +351,18 @@ fixdate(struct datelib *dl, struct tm *tmend)
 	/* Find start of current week */
 	if (dl->modify.week > 0 || dl->lowest == WEEK) {
 		int dayssinces;
+		int days;
 		int i;
 
-		dayssinces = dl->tmstart.tm_mday;
+		dayssinces = 0;
 		for (i = 0; i < dl->tmstart.tm_mon; i++)
 			dayssinces += months[i];
+		days = dayssinces;
+		dayssinces += dl->tmstart.tm_mday;
 
 
 		dayssinces -= dayssinces%7;
-		for (i = 0; i < dl->tmstart.tm_mon; i++)
-			dayssinces -= months[i];
+		dayssinces -= days;
 		dl->tmstart.tm_mday = dayssinces;
 	}
 	subtract_date(&dl->tmstart, DAY, (dl->modify.week * 7) + dl->modify.day);
