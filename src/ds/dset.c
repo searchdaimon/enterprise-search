@@ -78,13 +78,13 @@ inline iterator set_insert( container *C, ... )
     value		key;
     iterator		it;
 
+    va_start(ap, C);
+    ad = MP->Key->ap_allocate(MP->Key, ap);
+    key = ad.v;
+    va_end(ad.ap);
+
     if (MP->size == 0)
         {
-	    va_start(ap, C);
-	    ad = MP->Key->ap_allocate(MP->Key, ap);
-	    key = ad.v;
-	    va_end(ad.ap);
-
             MP->root = malloc(sizeof(_set_node_));
             MP->root->color = Black;
             MP->root->parent = NULL;
@@ -111,6 +111,8 @@ inline iterator set_insert( container *C, ... )
 		    // For now, do nothing if the key already exists.
 		    // It is possible to expand this to include multiset etc.
 //        	    printf("set_insert: Conflict with %i\n", key.i);
+
+		    MP->Key->deallocate(MP->Key, key);
 		    it.node = NULL;
 		    it.valid = 0;
                     return it;
@@ -126,11 +128,6 @@ inline iterator set_insert( container *C, ... )
                 node = node->right_child;
         }
 
-
-    va_start(ap, C);
-    ad = MP->Key->ap_allocate(MP->Key, ap);
-    key = ad.v;
-    va_end(ad.ap);
 
     node = malloc(sizeof(_set_node_));
     node->color = Red;
@@ -236,6 +233,85 @@ inline iterator set_insert_value( container *C, value key )
     it.node = node;
     it.valid = 1;
     return it;
+}
+
+
+inline void set_remove( container *C, ... )
+{
+    va_list		ap;
+    alloc_data		ad;
+    set_container_priv	*MP = C->priv;
+    value		key;
+
+
+    if (MP->size == 0) return;
+
+    va_start(ap, C);
+    ad = MP->Key->ap_allocate(MP->Key, ap);
+    key = ad.v;
+    va_end(ad.ap);
+
+    _set_node_		*node = MP->root;
+
+    while (node!=NULL)
+        {
+    	    int		cmp = MP->Key->compare( MP->Key, node->key, key );
+
+	    if (!cmp)
+                {
+		    // Remove existing key:
+
+		    _set_node_		*z, *x, *y;
+		    z = node;
+
+		    if (z->left_child == NULL || z->right_child == NULL)
+			y = node;
+		    else
+			// y = Tree-Successor(z);
+			{
+			    y = z->right_child;
+			    while (y->left_child!=NULL)
+				y = y->left_child;
+			}
+
+		    if (y->left_child != NULL)
+			x = y->left_child;
+		    else
+			x = y->right_child;
+
+		    if (x != NULL)
+			x->parent = y->parent;
+
+		    if (y->parent == NULL)
+			{
+			    MP->root = x;
+			}
+		    else
+			{
+			    if (y == y->parent->left_child)
+				y->parent->left_child = x;
+			    else
+				y->parent->right_child = x;
+			}
+
+		    if (y != z)
+			{
+			    MP->Key->deallocate(MP->Key, z->key);
+			    z->key = y->key;
+			}
+
+		    MP->size--;
+		    MP->Key->deallocate(MP->Key, key);
+                    return;
+                }
+
+            if (cmp > 0)
+                node = node->left_child;
+            else
+                node = node->right_child;
+        }
+
+    MP->Key->deallocate(MP->Key, key);
 }
 
 

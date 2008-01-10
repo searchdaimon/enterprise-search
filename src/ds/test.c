@@ -9,6 +9,7 @@
 #include "dqueue.h"
 #include "dlist.h"
 #include "dmap.h"
+#include "dset.h"
 
 
 void list_in_list_test()
@@ -203,6 +204,60 @@ void sorted_vector_test()
     destroy(M);
 }
 
+
+void print_set( container *S )
+{
+    iterator	it = set_begin(S);
+    for (; it.valid; it=set_next(it))
+	{
+	    printf("%i ", set_key(it).i);
+	}
+    printf("\n");
+}
+
+
+void set_test()
+{
+    container	*S = set_container( int_container() );
+
+    set_insert(S, 5);
+    set_insert(S, 7);
+    print_set(S);
+    set_insert(S, 2);
+    set_insert(S, 3);
+    print_set(S);
+    set_insert(S, 4);
+    set_insert(S, 1);
+    print_set(S);
+    set_insert(S, 8);
+    set_insert(S, 7);
+    print_set(S);
+
+    set_remove(S, 2);
+    print_set(S);
+
+    set_remove(S, 5);
+    print_set(S);
+
+    set_insert(S, 9);
+    set_insert(S, 0);
+    print_set(S);
+
+    set_remove(S, 0);
+    set_remove(S, 3);
+    set_remove(S, 12);
+    set_remove(S, 4);
+    set_remove(S, 4);
+    print_set(S);
+
+    set_remove(S, 1);
+    set_remove(S, 7);
+    set_remove(S, 8);
+    set_remove(S, 9);
+    print_set(S);
+}
+
+
 /* main: */
 
 int main()
@@ -212,6 +267,7 @@ int main()
     map_in_list_test();
     stack_in_vector_test();
     list_in_map_test();
+    set_test();
     exit(0);
 
     container	*M = map_container( int_container(), string_container() );

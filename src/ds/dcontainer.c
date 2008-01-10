@@ -90,7 +90,7 @@ inline alloc_data string_ap_allocate( container *C, va_list ap )
 	x.v.ptr = NULL;
     else
 	x.v.ptr = strdup(c);
-//    printf("allocated %s\n", (char*)x.v.ptr);
+//    if (SC_DEBUG) printf(" [allocated %s] ", (char*)x.v.ptr);
 
     x.ap = ap;
 

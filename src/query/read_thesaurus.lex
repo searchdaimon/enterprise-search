@@ -355,10 +355,11 @@ container* get_synonyms( container *C, container *text )
     int		i;
 
     mit = map_find_value(C, container_value(text));
-    if (!mit.valid) return NULL;
+
+    N = vector_container( vector_container( string_container() ) );
+    if (!mit.valid) return N;
 
     H = map_val(mit).C;
-    N = vector_container( vector_container( string_container() ) );
 
     for (i=0; i<vector_size(H); i++)
 	{
@@ -376,6 +377,8 @@ container* get_synonyms( container *C, container *text )
 
 void destroy_synonyms( container *C )
 {
+    if (C==NULL) return;
+
     int		i;
 
     for (i=0; i<vector_size(C); i++)

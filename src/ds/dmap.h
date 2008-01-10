@@ -19,9 +19,15 @@
 typedef struct _map_node_ _map_node_;
 typedef struct map_iterator map_iterator;
 
+#ifndef _REDBLACK_ENUM_
+#define _REDBLACK_ENUM_
+typedef enum { Red, Black } enum_redblack;
+#endif
+
+
 struct _map_node_
 {
-    enum { Red, Black } color;
+    enum_redblack	color;
     _map_node_		*parent, *left_child, *right_child;
     value		key, val;
 };

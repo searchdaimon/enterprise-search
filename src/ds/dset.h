@@ -18,9 +18,14 @@
 typedef struct _set_node_ _set_node_;
 typedef struct set_iterator set_iterator;
 
+#ifndef _REDBLACK_ENUM_
+#define _REDBLACK_ENUM_
+typedef enum { Red, Black } enum_redblack;
+#endif
+
 struct _set_node_
 {
-    enum { Red, Black } color;
+    enum_redblack	color;
     _set_node_		*parent, *left_child, *right_child;
     value		key;
 };
@@ -42,6 +47,8 @@ extern inline iterator set_find_value( container *C, value key );
 
 extern inline iterator set_insert( container *C, ... );
 extern inline iterator set_insert_value( container *C, value key );
+
+extern inline void set_remove( container *C, ... );
 
 
 #endif	// _DSET_H_

@@ -59,6 +59,7 @@ struct iterator
     int		valid;
 };
 
+
 /* fancy allocate: */
 
 int ds_compare( container *C, value a, value b );

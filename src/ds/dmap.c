@@ -117,6 +117,9 @@ inline iterator map_insert( container *C, ... )
 		    // For now, do nothing if the key already exists.
 		    // It is possible to expand this to include multimap etc.
 //        	    printf("map_insert: Conflict with %i\n", key.i);
+		    MP->Key->deallocate(MP->Key, key);
+		    MP->Data->deallocate(MP->Data, val);
+
 		    it.node = NULL;
 		    it.valid = 0;
                     return it;

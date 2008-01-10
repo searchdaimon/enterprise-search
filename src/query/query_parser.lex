@@ -459,3 +459,62 @@ void destroy_query( query_array *qa )
     _query_array_destroy( *qa );
 }
 
+
+void sprint_query( char *s, int n, query_array *qa )
+{
+    int		i, j;
+    int		pos = 0;
+
+    for (i=0; i<qa->n; i++)
+	{
+	    if (i>0) pos+= snprintf(s+pos, n - pos, " ");
+
+	    switch (qa->query[i].operand)
+		{
+		    case QUERY_WORD:
+			break;
+		    case QUERY_SUB:
+			pos+= snprintf(s+pos, n - pos, "-");
+			break;
+		    case QUERY_PHRASE:
+			pos+= snprintf(s+pos, n - pos, "\"");
+			break;
+		    case QUERY_SUBPHRASE:
+			pos+= snprintf(s+pos, n - pos, "-\"");
+			break;
+		    case QUERY_FILETYPE:
+			pos+= snprintf(s+pos, n - pos, "filetype:");
+			break;
+		    case QUERY_LANGUAGE:
+			pos+= snprintf(s+pos, n - pos, "language:");
+			break;
+		    case QUERY_COLLECTION:
+			pos+= snprintf(s+pos, n - pos, "collection:");
+			break;
+		    case QUERY_DATE:
+			pos+= snprintf(s+pos, n - pos, "date:");
+			break;
+		    case QUERY_STATUS:
+			pos+= snprintf(s+pos, n - pos, "status:");
+			break;
+		    case QUERY_OR:
+			pos+= snprintf(s+pos, n - pos, "| ");
+			break;
+		}
+
+	    for (j=0; j<qa->query[i].n; j++)
+		{
+		    if (j>0) pos+= snprintf(s+pos, n - pos, " ");
+		    pos+= snprintf(s+pos, n - pos, "%s", qa->query[i].s[j]);
+		}
+
+	    switch (qa->query[i].operand)
+		{
+		    case QUERY_PHRASE:
+		    case QUERY_SUBPHRASE:
+			pos+= snprintf(s+pos, n - pos, "\"");
+			break;
+		}
+	}
+}
+

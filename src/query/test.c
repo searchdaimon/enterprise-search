@@ -23,7 +23,6 @@ int main( int argc, char *argv[] )
 
 void testit( char *tekst )
 {
-    int			i,j;
 //    char		*tekst = "-Jeg -søker etter- \"Magnus Galåen\", Lars Monrad-Krohn og -\"Lille-Jon";
 //    char		*tekst = "+hvor- \" \"  -e\"r - d'u\"\"?";
 //    char		*tekst = "boitho date:\"this week\"";
@@ -38,9 +37,10 @@ void testit( char *tekst )
 
     sprint_query(buf, 1023, &qa);
 
-    printf("%s\n---\n", buf);
+    printf("%s\n", buf);
 
-
+/*
+    int			i,j;
     printf("\nquery %s\n",tekst);
 
     for (i=0; i<qa.n; i++)
@@ -56,7 +56,7 @@ void testit( char *tekst )
 	}
 
     printf("\n");
-
+*/
 /*
     query_array		qa_html;
     copy_htmlescaped_query( &qa_html, &qa );
