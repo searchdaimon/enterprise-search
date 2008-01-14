@@ -438,6 +438,8 @@ searchd : src/searchkernel/searchd.c
 	
 	$(CC) $(SEARCHCOMMAND) -D WITH_RANK_FILTER -D WITH_THREAD -D DEFLOT -o bin/searchd 
 
+
+# We link against libstdc++ because libaspell requires it. Remove c++ parts from libaspell?
 searchdbb : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
