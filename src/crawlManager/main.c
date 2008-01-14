@@ -1188,6 +1188,19 @@ void connectHandler(int socket) {
 
 
 	        }
+		else if (packedHedder.command == cm_collectionislocked) {
+			int response;
+			struct collection_lockFormat cl;
+			recvall(socket,collection,sizeof(collection));
+
+			if (!crawl_lock(&cl,collection)) {
+				response = 1;
+			} else {
+				response = 0;
+				crawl_unlock(&cl);
+			}
+			sendall(socket,&response, sizeof(response));
+		}
 		else if (packedHedder.command == cm_recrawlcollection) {
 			printf("recrawlcollection\n");
 			

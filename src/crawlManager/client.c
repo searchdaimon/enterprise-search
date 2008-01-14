@@ -109,6 +109,23 @@ int cmc_crawl(int socketha,char collection_inn[], char *extra_in) {
 	return 1;
 }
 
+int
+cmc_collectionislocked(int socketha, char *collection_in)
+{
+	char collection[64];
+	int r, i;
+
+	strncpy(collection, collection_in, sizeof(collection));
+	sendpacked(socketha, cm_collectionislocked, BLDPROTOCOLVERSION, 0, NULL, "");
+	sendall(socketha, &collection, sizeof(collection));
+
+	if ((i=recv(socketha, &r, sizeof(r),MSG_WAITALL)) == -1) {
+		return 0;
+	}
+
+	return r;
+}
+
 int cmc_deleteCollection(int socketha,char collection_in[]) {
 	char collection[64];
 	int intrespons;

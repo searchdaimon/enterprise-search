@@ -13,3 +13,5 @@ int cmc_pathaccess(int socketha,char collection_in[], char uri_in[], char user_i
 
 int cmc_deleteCollection(int socketha,char collection_in[]);
 
+int cmc_collectionislocked(int socketha, char *collection_in);
+
