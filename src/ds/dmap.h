@@ -33,7 +33,6 @@ struct _map_node_
 };
 
 
-
 container* map_container( container *Key, container *Data );
 
 extern inline int map_size( container *C );

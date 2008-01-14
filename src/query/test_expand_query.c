@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include "../ds/dcontainer.h"
 #include "../ds/dvector.h"
@@ -18,7 +19,9 @@
 
 int main( int argc, char *argv[] )
 {
-    cmp_count = 0;
+    struct timeval	tv_1, tv_2, tv_3, tv_4;
+    struct timezone	tz;
+//    cmp_count = 0;
 
     if (argc!=4)
 	{
@@ -29,6 +32,7 @@ int main( int argc, char *argv[] )
     int		paramnr;
     container	*W[2];
 
+    gettimeofday(&tv_1, &tz);
     printf("loading..."); fflush(stdout);
 
     for (paramnr=1; paramnr<=2; paramnr++)
@@ -60,8 +64,9 @@ int main( int argc, char *argv[] )
 	    fclose(file);
 	}
 
+    gettimeofday(&tv_2, &tz);
     printf("done\n");
-    printf("count: %i\n", cmp_count);
+//    printf("count: %i\n", cmp_count);
 
 
 /*****/
@@ -86,6 +91,8 @@ int main( int argc, char *argv[] )
 		    container		*layer1_stems = get_synonyms(W[0], Q_1);
 		    vector_pushback(layer1_stems);
 		    vector_pushback(vector_get(layer1_stems,vector_size(layer1_stems)-1).C, qa.query[x].s[0]);
+//		    printf("layer1_stems:\n");
+//		    println(layer1_stems, container_value(layer1_stems));
 
 		    for (i=0; i<vector_size(layer1_stems); i++)
 			{
@@ -102,6 +109,8 @@ int main( int argc, char *argv[] )
 				    container	*layer2_syn = get_synonyms(W[1], Q_2);
 				    vector_pushback(layer2_syn);
 				    vector_pushback(vector_get(layer2_syn,vector_size(layer2_syn)-1).C, (char*)vector_get(R_1,0).ptr);
+//				    printf("layer2_syn:\n");
+//				    println(layer2_syn, container_value(layer2_syn));
 
 				    for (j=0; j<vector_size(layer2_syn); j++)
 					{
@@ -116,6 +125,8 @@ int main( int argc, char *argv[] )
 						    container	*layer3_stems = get_synonyms(W[0], Q_3);
 						    vector_pushback(layer3_stems);
 						    vector_pushback(vector_get(layer3_stems,vector_size(layer3_stems)-1).C, (char*)vector_get(R_2,0).ptr);
+//						    printf("layer3_stems:\n");
+//						    println(layer3_stems, container_value(layer3_stems));
 
 						    for (k=0; k<vector_size(layer3_stems); k++)
 						        {
@@ -163,14 +174,20 @@ int main( int argc, char *argv[] )
 */
 	}
 
-    printf("finished\n");
-    printf("count: %i\n", cmp_count);
+//    print(W[0], container_value(W[0]));
+
+    gettimeofday(&tv_3, &tz);
+    printf("finished"); fflush(stdout);
+//    printf("count: %i\n", cmp_count);
 
 
     destroy_query( &qa );
+    printf("."); fflush(stdout);
 
     destroy(W[0]);
+    printf("."); fflush(stdout);
     destroy(W[1]);
+    printf(".\n");
 
 /*****/
 
@@ -204,7 +221,27 @@ int main( int argc, char *argv[] )
 //    destroy_synonyms(V);
 //    destroy(T);
 
-    printf("count: %i\n", cmp_count);
+//    printf("count: %i\n", cmp_count);
+    gettimeofday(&tv_4, &tz);
+
+    int		t1 = (int)(tv_2.tv_sec - tv_1.tv_sec);
+    t1*= 1000;
+    t1-= ((int)tv_1.tv_usec)/1000;
+    t1+= ((int)tv_2.tv_usec)/1000;
+
+    int		t2 = (int)(tv_3.tv_sec - tv_2.tv_sec);
+    t2*= 1000;
+    t2-= ((int)tv_2.tv_usec)/1000;
+    t2+= ((int)tv_3.tv_usec)/1000;
+
+    int		t3 = (int)(tv_4.tv_sec - tv_3.tv_sec);
+    t3*= 1000;
+    t3-= ((int)tv_3.tv_usec)/1000;
+    t3+= ((int)tv_4.tv_usec)/1000;
+
+    printf("loading: %i     (%i:%i) (%i:%i)\n", t1, (int)tv_1.tv_sec, (int)tv_1.tv_usec, (int)tv_2.tv_sec, (int)tv_2.tv_usec);
+    printf("running: %i     (%i:%i) (%i:%i)\n", t2, (int)tv_2.tv_sec, (int)tv_2.tv_usec, (int)tv_3.tv_sec, (int)tv_3.tv_usec);
+    printf("destroying: %i     (%i:%i) (%i:%i)\n", t3, (int)tv_3.tv_sec, (int)tv_3.tv_usec, (int)tv_4.tv_sec, (int)tv_4.tv_usec);
 
     return 0;
 }

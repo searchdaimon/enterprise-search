@@ -56,6 +56,11 @@ inline value int_copy( container *C, value a )
     return a;
 }
 
+inline void int_print( container *C, value a )
+{
+    printf("%i", a.i);
+}
+
 container* int_container()
 {
     container	*C = (container*)malloc(sizeof(container));
@@ -67,6 +72,7 @@ container* int_container()
     C->clear = int_clear;
     C->clone = int_clone;
     C->copy = int_copy;
+    C->print = int_print;
     C->priv = NULL;
 
     return C;
@@ -125,6 +131,11 @@ inline value string_copy( container *C, value a )
     return v;
 }
 
+inline void string_print( container *C, value a )
+{
+    printf("\"%s\"", (char*)a.ptr);
+}
+
 container* string_container()
 {
     container	*C = (container*)malloc(sizeof(container));
@@ -136,6 +147,7 @@ container* string_container()
     C->clear = string_clear;
     C->clone = string_clone;
     C->copy = string_copy;
+    C->print = string_print;
     C->priv = NULL;
 
     return C;
@@ -191,6 +203,11 @@ inline value ptr_copy( container *C, value a )
     return a;
 }
 
+inline void ptr_print( container *C, value a )
+{
+    printf("(ptr:%x)", a.i);
+}
+
 container* ptr_container()
 {
     container	*C = (container*)malloc(sizeof(container));
@@ -202,6 +219,7 @@ container* ptr_container()
     C->clear = ptr_clear;
     C->clone = ptr_clone;
     C->copy = ptr_copy;
+    C->print = ptr_print;
     C->priv = NULL;
 
     return C;
@@ -291,6 +309,17 @@ void destroy( container *C )
 void clear( container *C )
 {
     C->clear(C);
+}
+
+void print( container *C, value v )
+{
+    C->print(C, v);
+}
+
+void println( container *C, value v )
+{
+    C->print(C, v);
+    printf("\n");
 }
 
 /*

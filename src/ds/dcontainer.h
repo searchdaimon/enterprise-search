@@ -1,6 +1,6 @@
 
 /**
- *	(C) Copyright 2006-2007, Magnus Galåen
+ *	(C) Copyright 2006-2008, Magnus Galåen
  *
  *	dcontainer.h: Basic containers.
  */
@@ -50,6 +50,7 @@ struct container
     void	(*clear)( container *C );
     container*	(*clone)( container *C );
     value	(*copy)( container *C, value a );
+    void	(*print)( container *C, value a );
     void	*priv;
 };
 
@@ -71,6 +72,9 @@ void deallocate( container *C, value v );
 void destroy( container *C );
 
 void clear( container *C );
+
+void print( container *C, value v );
+void println( container *C, value v );
 
 static inline value copy( container *C, value v )
 {

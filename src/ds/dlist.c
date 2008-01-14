@@ -336,6 +336,23 @@ inline value list_copy( container *C, value a )
 }
 
 
+inline void list_print( container *C, value a )
+{
+    int		i=0;
+    iterator	it = list_begin(a.C);
+
+    printf("(");
+    for (; it.valid; it=list_next(it))
+	{
+	    if (i==0) i++;
+	    else printf(" ");
+
+	    print(((list_container_priv*)C->priv)->C, list_val(it));
+	}
+    printf(")");
+}
+
+
 container* list_container( container *C )
 {
     container			*L = malloc(sizeof(container));
@@ -348,6 +365,7 @@ container* list_container( container *C )
     L->clear = list_clear;
     L->clone = list_clone;
     L->copy = list_copy;
+    L->print = list_print;
     L->priv = LP;
 
     LP->C = C;

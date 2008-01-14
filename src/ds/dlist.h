@@ -1,5 +1,5 @@
 /**
- *	(C) Copyright 2007, Magnus Galåen
+ *	(C) Copyright 2007-2008, Magnus Galåen
  *
  *	dlist.h: List-container.
  */

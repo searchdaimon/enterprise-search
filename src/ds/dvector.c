@@ -18,25 +18,25 @@ typedef struct
 
 inline int vector_compare( container *C, value a, value b )
 {
+    vector_container_priv	*AP = a.C->priv;
+    int		val;
     int		i;
     int		size;
-    container	*A = a.C, *B = b.C;
 
-    size = vector_size(A);
-    if (vector_size(B) < size) size = vector_size(B);
+//    cmp_count++;
+
+    size = vector_size(a.C);
+    if (vector_size(b.C) < size) size = vector_size(b.C);
 
     for (i=0; i<size; i++)
 	{
-	    vector_container_priv	*AP = A->priv;
-	    int		val;
-
-	    val = AP->C->compare(AP->C, vector_get(A,i), vector_get(B,i));
+	    val = AP->C->compare(AP->C, vector_get(a.C,i), vector_get(b.C,i));
 
 	    if (val!=0) return val;
 	}
 
-    if (vector_size(A) > size) return 1;
-    else if (vector_size(B) > size) return -1;
+    if (vector_size(a.C) > size) return 1;
+    else if (vector_size(b.C) > size) return -1;
 
     return 0;
 }
@@ -169,6 +169,20 @@ inline value vector_copy( container *C, value a )
     exit(-1);
 }
 
+inline void vector_print( container *C, value a )
+{
+    int		i;
+
+    printf("[");
+    for (i=0; i<vector_size(a.C); i++)
+	{
+	    if (i>0) printf(" ");
+
+	    print(((vector_container_priv*)C->priv)->C, vector_get(a.C,i));
+	}
+    printf("]");
+}
+
 
 container* vector_container( container *C )
 {
@@ -182,6 +196,7 @@ container* vector_container( container *C )
     V->clear = vector_clear;
     V->clone = vector_clone;
     V->copy = vector_copy;
+    V->print = vector_print;
     V->priv = VP;
 
     VP->C = C;

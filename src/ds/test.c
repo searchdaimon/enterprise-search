@@ -222,39 +222,87 @@ void set_test()
 
     set_insert(S, 5);
     set_insert(S, 7);
-    print_set(S);
+    println(S, container_value(S));
     set_insert(S, 2);
     set_insert(S, 3);
-    print_set(S);
+    println(S, container_value(S));
     set_insert(S, 4);
     set_insert(S, 1);
-    print_set(S);
+    println(S, container_value(S));
     set_insert(S, 8);
     set_insert(S, 7);
-    print_set(S);
+    println(S, container_value(S));
 
     set_remove(S, 2);
-    print_set(S);
+    println(S, container_value(S));
 
     set_remove(S, 5);
-    print_set(S);
+    println(S, container_value(S));
 
     set_insert(S, 9);
     set_insert(S, 0);
-    print_set(S);
+    println(S, container_value(S));
 
     set_remove(S, 0);
     set_remove(S, 3);
     set_remove(S, 12);
     set_remove(S, 4);
     set_remove(S, 4);
-    print_set(S);
+    println(S, container_value(S));
 
     set_remove(S, 1);
     set_remove(S, 7);
     set_remove(S, 8);
     set_remove(S, 9);
-    print_set(S);
+    println(S, container_value(S));
+}
+
+
+void print_map( container *M )
+{
+    iterator	it = map_begin(M);
+    for (; it.valid; it=map_next(it))
+	{
+	    printf("%i ", map_key(it).i);
+	}
+    printf("\n");
+}
+
+
+void map_test()
+{
+    container	*M = map_container( int_container(), int_container() );
+
+    printf("---map---\n");
+
+    map_insert(M, 5, 0);
+    println(M, container_value(M));
+    map_insert(M, 7, 0);
+    println(M, container_value(M));
+    map_insert(M, 2, 0);
+    println(M, container_value(M));
+    map_insert(M, 3, 0);
+    println(M, container_value(M));
+    map_insert(M, 4, 0);
+    println(M, container_value(M));
+    map_insert(M, 1, 0);
+    println(M, container_value(M));
+    map_insert(M, 8, 0);
+    println(M, container_value(M));
+    map_insert(M, 7, 0);
+    println(M, container_value(M));
+    map_insert(M, 9, 0);
+    println(M, container_value(M));
+    map_insert(M, 0, 0);
+    println(M, container_value(M));
+    map_insert(M, 12, 0);
+    println(M, container_value(M));
+    map_insert(M, 3, 0);
+    println(M, container_value(M));
+    map_insert(M, 6, 0);
+    println(M, container_value(M));
+
+    printf("---\n");
 }
 
 
@@ -268,6 +316,7 @@ int main()
     stack_in_vector_test();
     list_in_map_test();
     set_test();
+    map_test();
     exit(0);
 
     container	*M = map_container( int_container(), string_container() );

@@ -155,6 +155,24 @@ inline value stack_copy( container *C, value a )
     exit(-1);
 }
 
+inline void stack_print( container *C, value a )
+{
+    int		i, p;
+    stack_container_priv	*S = a.C->priv;
+
+    p = 0;
+
+    printf("(");
+    for (i=0; i<S->top; i++)
+	{
+	    if (p==0) p = 1;
+	    else printf(" ");
+
+	    print(S->C, S->elem[i]);
+	}
+    printf(")");
+}
+
 
 container* stack_container( container *C )
 {
@@ -168,6 +186,7 @@ container* stack_container( container *C )
     S->clear = stack_clear;
     S->clone = stack_clone;
     S->copy = stack_copy;
+    S->print = stack_print;
     S->priv = SP;
 
     SP->C = C;

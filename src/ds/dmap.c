@@ -1,16 +1,20 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "dcontainer.h"
+#include "dpair.h"
 #include "dstack.h"
+#include "dvector.h"
 #include "dmap.h"
 
+//#define RED_BLACK
 
 typedef struct
 {
     container		*Key, *Data;
-    _map_node_            *root;
+    _map_node_		*root;
     int                 size;
 } map_container_priv;
 
@@ -36,15 +40,16 @@ inline void map_deallocate( container *C, value a )
 
 void map_deltree( container *C, _map_node_ *n )
 {
+    map_container_priv	*MP = C->priv;
+
+    deallocate(MP->Key, n->key);
+    deallocate(MP->Data, n->val);
+
     if (n->left_child != NULL)
 	map_deltree( C, n->left_child );
     if (n->right_child != NULL)
 	map_deltree( C, n->right_child );
 
-    map_container_priv	*MP = C->priv;
-
-    deallocate(MP->Key, n->key);
-    deallocate(MP->Data, n->val);
     free(n);
 }
 
@@ -71,6 +76,147 @@ void map_clear( container *C )
     MP->size = 0;
 }
 
+/*
+char* get_hash(container *hash, int v)
+{
+    int		i;
+
+    for (i=0; i<vector_size(hash); i++)
+	{
+	    int		hash_key = pair(vector_get(hash,i)).first.i;
+	    char	*hash_val = (char*)pair(vector_get(hash,i)).second.ptr;
+
+	    if (v == hash_key)
+		return hash_val;
+	}
+
+    char	*s = malloc(5);
+    sprintf(s, "%.1X", i);
+
+    vector_pushback(hash, v, s);
+    return s;
+}
+
+
+int map_verify_tree( container *C, _map_node_ *node )
+{
+    if (node == NULL) return 0;
+
+    map_container_priv *MP = C->priv;
+
+    int		cmp1, cmp2;
+
+    if (node->left_child == NULL) cmp1 = 1;
+    else cmp1 = MP->Key->compare( MP->Key, node->key, node->left_child->key );
+
+    if (node->right_child == NULL) cmp2 = -1;
+    else cmp2 = MP->Key->compare( MP->Key, node->key, node->right_child->key );
+
+    if (cmp1<=0 || cmp2>=0)
+	{
+	    printf("map: invalid tree!\n");
+	    exit(-1);
+	}
+
+    map_verify_tree(C, node->left_child);
+    map_verify_tree(C, node->right_child);
+}
+
+int map_check_tree( container *C, container *hash, _map_node_ *node )
+{
+    map_container_priv *MP = C->priv;
+
+    if (node == NULL) return 0;
+
+    printf("%s_%c ", get_hash(hash, (int)node), (node->color==Black ? 'B':'R'));
+
+    if (node->left_child == NULL) printf("(--- |");
+    else printf("(%s_%c |", get_hash(hash, (int)node->left_child), (node->left_child->color==Black ? 'B':'R') );
+
+    if (node->right_child == NULL) printf("| ---)\n");
+    else printf("| %s_%c)\n", get_hash(hash, (int)node->right_child), (node->right_child->color==Black ? 'B':'R') );
+
+    map_check_tree(C, hash, node->left_child);
+    map_check_tree(C, hash, node->right_child);
+**
+    if (node->color == Red)
+	{
+	    if ((node->left_child!=NULL && node->left_child->color!=Black)
+		|| (node->right_child!=NULL && node->right_child->color!=Black))
+		{
+		    printf("map: Red nodes should have only black children.\n");
+		    exit(-1);
+		}
+	}
+
+    if (node->left_child == NULL && node->right_child == NULL)
+	{
+	    // Leaf
+	    return 1;
+	}
+
+    int		black1, black2;
+
+    if (node->left_child == NULL) black1 = 1;
+    else black1 = map_check_tree(C, node->left_child);
+
+    if (node->right_child == NULL) black2 = 1;
+    else black2 = map_check_tree(C, node->right_child);
+
+    if (black1 != black2)
+	{
+	    printf("map: #blacks differ: %i %i\n", black1, black2);
+	    exit(-1);
+	}
+
+    if (node->color == Black)
+	return black1 + 1;
+
+    return black1;
+**
+}
+*/
+
+static inline void map_rotate_left( map_container_priv *MP, _map_node_ *x )
+{
+    _map_node_		*y;
+
+    assert(x->right_child != NULL);
+    y = x->right_child;
+    x->right_child = y->left_child;
+    if (y->left_child != NULL)
+	y->left_child->parent = x;
+    y->parent = x->parent;
+    if (x->parent == NULL)
+	MP->root = y;
+    else if (x == x->parent->left_child)
+	x->parent->left_child = y;
+    else
+	x->parent->right_child = y;
+    y->left_child = x;
+    x->parent = y;
+}
+
+static inline void map_rotate_right( map_container_priv *MP, _map_node_ *y )
+{
+    _map_node_		*x;
+
+    assert(y->left_child != NULL);
+    x = y->left_child;
+    y->left_child = x->right_child;
+    if (x->right_child != NULL)
+	x->right_child->parent = y;
+    x->parent = y->parent;
+    if (y->parent == NULL)
+	MP->root = x;
+    else if (y == y->parent->left_child)
+	y->parent->left_child = x;
+    else
+	y->parent->right_child = x;
+    x->right_child = y;
+    y->parent = x;
+}
+
 
 inline iterator map_insert( container *C, ... )
 {
@@ -79,6 +225,7 @@ inline iterator map_insert( container *C, ... )
     map_container_priv	*MP = C->priv;
     value		key, val;
     iterator		it;
+//    container		*hash = vector_container( pair_container( int_container(), string_container() ) );
 
     va_start(ap, C);
     ad = MP->Key->ap_allocate(MP->Key, ap);
@@ -155,16 +302,78 @@ inline iterator map_insert( container *C, ... )
         }
 
     MP->size++;
-
     it.node = node;
     it.valid = 1;
+
+#ifdef RED_BLACK
+    // Red-Black Tree:
+    node->color = Red;
+
+    while (node != MP->root && node->parent->color == Red)
+	{
+	    assert(node->parent->parent != NULL);
+	    if (node->parent == node->parent->parent->left_child)
+		{
+		    _map_node_		*y = node->parent->parent->right_child;
+
+//		    if (y==NULL) break;
+
+//		    if (y!=NULL && y->color == Red)
+		    if (y!=NULL && y->color == Red)
+			{
+			    node->parent->color = Black;
+			    y->color = Black;
+			    node->parent->parent->color = Red;
+			    node = node->parent->parent;
+			}
+		    else
+			{
+			    if (node == node->parent->right_child)
+				{
+				    node = node->parent;
+				    map_rotate_left(MP, node);
+				}
+
+			    node->parent->color = Black;
+			    node->parent->parent->color = Red;
+			    map_rotate_right(MP, node->parent->parent);
+			}
+		}
+	    else
+		{
+		    _map_node_		*y = node->parent->parent->left_child;
+
+		    if (y!=NULL && y->color == Red)
+			{
+			    node->parent->color = Black;
+			    y->color = Black;
+			    node->parent->parent->color = Red;
+			    node = node->parent->parent;
+			}
+		    else
+			{
+			    if (node == node->parent->left_child)
+				{
+				    node = node->parent;
+				    map_rotate_right(MP, node);
+				}
+
+			    node->parent->color = Black;
+			    node->parent->parent->color = Red;
+			    map_rotate_left(MP, node->parent->parent);
+			}
+		}
+	}
+
+    MP->root->color = Black;
+
+//    map_check_tree(C, hash, MP->root);
+//    map_verify_tree(C, MP->root);
+//    printf("."); fflush(stdout);
+//    printf("\n");
+#endif
+
     return it;
-/*
-    // Red-Black-Tree:
-    while (node != *root && node->parent->color == Red)
-        {
-        }
-*/
 }
 
 
@@ -173,6 +382,7 @@ inline iterator map_insert_value( container *C, value key, value val )
 {
     map_container_priv	*MP = C->priv;
     iterator		it;
+//    container		*hash = vector_container( pair_container( int_container(), string_container() ) );
 
     if (MP->size == 0)
         {
@@ -238,9 +448,76 @@ inline iterator map_insert_value( container *C, value key, value val )
         }
 
     MP->size++;
-
     it.node = node;
     it.valid = 1;
+
+#ifdef RED_BLACK
+    // Red-Black Tree:
+    node->color = Red;
+
+    while (node != MP->root && node->parent->color == Red)
+	{
+	    assert(node->parent->parent != NULL);
+	    if (node->parent == node->parent->parent->left_child)
+		{
+		    _map_node_		*y = node->parent->parent->right_child;
+
+//		    if (y==NULL) break;
+
+//		    if (y!=NULL && y->color == Red)
+		    if (y!=NULL && y->color == Red)
+			{
+			    node->parent->color = Black;
+			    y->color = Black;
+			    node->parent->parent->color = Red;
+			    node = node->parent->parent;
+			}
+		    else
+			{
+			    if (node == node->parent->right_child)
+				{
+				    node = node->parent;
+				    map_rotate_left(MP, node);
+				}
+
+			    node->parent->color = Black;
+			    node->parent->parent->color = Red;
+			    map_rotate_right(MP, node->parent->parent);
+			}
+		}
+	    else
+		{
+		    _map_node_		*y = node->parent->parent->left_child;
+
+		    if (y!=NULL && y->color == Red)
+			{
+			    node->parent->color = Black;
+			    y->color = Black;
+			    node->parent->parent->color = Red;
+			    node = node->parent->parent;
+			}
+		    else
+			{
+			    if (node == node->parent->left_child)
+				{
+				    node = node->parent;
+				    map_rotate_right(MP, node);
+				}
+
+			    node->parent->color = Black;
+			    node->parent->parent->color = Red;
+			    map_rotate_left(MP, node->parent->parent);
+			}
+		}
+	}
+
+    MP->root->color = Black;
+//    map_check_tree(C, hash, MP->root);
+//    map_verify_tree(C, MP->root);
+//    printf("."); fflush(stdout);
+//    printf("\n");
+#endif
+
     return it;
 }
 
@@ -452,6 +729,24 @@ inline value map_copy( container *C, value a )
     exit(-1);
 }
 
+inline void map_print( container *C, value a )
+{
+    int		i=0;
+    iterator	it = map_begin(a.C);
+
+    printf("(");
+    for (; it.valid; it=map_next(it))
+	{
+	    if (i==0) i++;
+	    else printf(" ");
+
+	    print(((map_container_priv*)C->priv)->Key, map_key(it));
+	    printf(":");
+	    print(((map_container_priv*)C->priv)->Data, map_val(it));
+	}
+    printf(")");
+}
+
 
 container* map_container( container *Key, container *Data )
 {
@@ -465,6 +760,7 @@ container* map_container( container *Key, container *Data )
     M->clear = map_clear;
     M->clone = map_clone;
     M->copy = map_copy;
+    M->print = map_print;
     M->priv = MP;
 
     MP->Key = Key;

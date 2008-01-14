@@ -1,5 +1,3 @@
-// Uferdig!!!
-
 /**
  *	(C) Copyright 2007, Magnus Galåen
  *

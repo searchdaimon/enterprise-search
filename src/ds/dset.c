@@ -522,6 +522,22 @@ inline value set_copy( container *C, value a )
     exit(-1);
 }
 
+inline void set_print( container *C, value a )
+{
+    int		i=0;
+    iterator	it = set_begin(a.C);
+
+    printf("(");
+    for (; it.valid; it=set_next(it))
+	{
+	    if (i==0) i++;
+	    else printf(" ");
+
+	    print(((set_container_priv*)C->priv)->Key, set_key(it));
+	}
+    printf(")");
+}
+
 
 container* set_container( container *Key )
 {
@@ -535,6 +551,7 @@ container* set_container( container *Key )
     M->clear = set_clear;
     M->clone = set_clone;
     M->copy = set_copy;
+    M->print = set_print;
     M->priv = MP;
 
     MP->Key = Key;

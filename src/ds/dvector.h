@@ -11,6 +11,7 @@
 
 #include "dcontainer.h"
 
+//int cmp_count;
 
 container* vector_container( container *C );
 

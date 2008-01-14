@@ -101,6 +101,15 @@ inline value pair_copy( container *C, value a )
     exit(-1);
 }
 
+inline void pair_print( container *C, value v )
+{
+    printf("(");
+    print(((pair_container_priv*)C->priv)->A, pair(v).first);
+    printf(":");
+    print(((pair_container_priv*)C->priv)->B, pair(v).second);
+    printf(")");
+}
+
 container* pair_container( container *A, container *B )
 {
     container	*C = (container*)malloc(sizeof(container));
@@ -112,6 +121,7 @@ container* pair_container( container *A, container *B )
     C->clear = pair_clear;
     C->clone = pair_clone;
     C->copy = pair_copy;
+    C->print = pair_print;
     C->priv = (void*)malloc(sizeof(pair_container_priv));
     ((pair_container_priv*)C->priv)->A = A;
     ((pair_container_priv*)C->priv)->B = B;

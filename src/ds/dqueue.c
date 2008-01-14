@@ -161,6 +161,45 @@ inline value queue_copy( container *C, value a )
 }
 
 
+inline void queue_print( container *C, value a )
+{
+    int		i, p;
+    queue_container_priv	*Q = a.C->priv;
+
+    p = 0;
+
+    printf("(");
+    if (Q->head >= Q->tail)
+	{
+	    for (i=Q->head; i<Q->tail; i++)
+		{
+		    if (p==0) p = 1;
+		    else printf(" ");
+
+		    print(Q->C, Q->elem[i]);
+		}
+	}
+    else
+	{
+	    for (i=Q->head; i<Q->size; i++)
+		{
+		    if (p==0) p = 1;
+		    else printf(" ");
+
+		    print(Q->C, Q->elem[i]);
+		}
+	    for (i=0; i<Q->tail; i++)
+		{
+		    if (p==0) p = 1;
+		    else printf(" ");
+
+		    print(Q->C, Q->elem[i]);
+		}
+	}
+    printf(")");
+}
+
+
 container* queue_container( container *C )
 {
     container			*QX = malloc(sizeof(container));
@@ -173,6 +212,7 @@ container* queue_container( container *C )
     QX->clear = queue_clear;
     QX->clone = queue_clone;
     QX->copy = queue_copy;
+    QX->print = queue_print;
     QX->priv = QP;
 
     QP->C = C;
