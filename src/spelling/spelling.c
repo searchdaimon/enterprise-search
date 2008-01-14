@@ -2,8 +2,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "spelling.h"
+#include "../common/boithohome.h"
+
+/* XXX: Remove unused bfopen warning */
+void *
+_dummy_func_spl(void)
+{
+	void *p = bfopen;
+	return p;
+}
 
 static char *
 spelling_lookup_lang(char *lang)
@@ -25,6 +35,7 @@ spelling_init(char *lang)
 	config = new_aspell_config();
 
 	aspell_config_replace(config, "lang", spelling_lookup_lang(lang));
+	aspell_config_replace(config, "dict-dir", bfile("data/dict/"));
 
 	ret = new_aspell_speller(config);
 	delete_aspell_config(config);
@@ -237,7 +248,7 @@ test2(void)
 	char *line;
 	char *some = "Hello, this is a simple tset!\n";
 
-	sd = spelling_document_init("en");
+	sd = spelling_document_init("bb");
 	if (sd == NULL) {
 		fprintf(stderr, "Unable to init document checker.\n");
 		return 1;
