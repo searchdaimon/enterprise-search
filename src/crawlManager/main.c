@@ -45,7 +45,6 @@ struct {
 	int port;
 } *memcache_servers;
 
-//int crawlfirst(struct collectionFormat *collection)
 
 FILE *LOGACCESS, *LOGERROR;
 int global_bbdnport;
@@ -73,6 +72,7 @@ int documentContinue(struct collectionFormat *collection) {
 		recrawl_schedule_end = 0;
 	}
 
+
 	now = time(NULL);
 	t = localtime(&now);	
 
@@ -84,14 +84,34 @@ int documentContinue(struct collectionFormat *collection) {
 	}
 
 	//tar en avgjørelse om vi skal fortsette å crawle
+	//vi har to scenarioer, 
+	// 1: start er større en slutt tidspungete, og er dermed i fremtiden
+	// 	start 10, end 07
+	//	kl nå 14
+	//	kl nå 06
+	//
+	// 2: start og slutt tidspungtet er etter hverandre, og derfor innen samme dag
+	//	start 10, end 12
+	//	kl nå 14
+	//
+	if ( recrawl_schedule_start > recrawl_schedule_end ) {
 
-	if (t->tm_hour < recrawl_schedule_start) {
-		printf("to early, wont crawl\n");
-		return 0;
+		if ((t->tm_hour < recrawl_schedule_start) && (t->tm_hour > recrawl_schedule_end)) {
+			printf("scenario 1: to early, wont crawl\n");
+			return 0;
+		}
+
 	}
-	else if (t->tm_hour > recrawl_schedule_end) {
-		printf("to late, wont crawl\n");
-		return 0;
+	else {
+		if (t->tm_hour < recrawl_schedule_start) {
+			printf("scenario 2: to early, wont crawl\n");
+			return 0;
+		}
+		else if (t->tm_hour > recrawl_schedule_end) {
+			printf("scenario 2: to late, wont crawl\n");
+			return 0;
+		}
+
 	}
 
 	printf("hour is now %i, will crawl\n",t->tm_hour);
@@ -230,6 +250,12 @@ int crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 
 		return 0;
        	}
+
+	if (!documentContinue(collection)) {
+                berror("Crawl is pending. Waiting for schedule time.");
+
+		return 0;
+	}
 	
 	return 1;
 
@@ -254,6 +280,12 @@ int crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
 
 		return 0;
        	}
+
+	if (!documentContinue(collection)) {
+                berror("Crawl is pending. Waiting for schedule time.");
+
+		return 0;
+	}
 
 	return 1;
 }
@@ -612,9 +644,6 @@ int cm_start(struct hashtable **h) {
 		printf("loaded \"%s\"\n",(*crawlLibInfo).shortname);
 
 
-		//if (!(*(*crawlLibInfo).crawlfirst)(collection,documentExist,documentAdd)) {
-	        //        printf("problems in crawlfirst_ld\n");
-	        //}
 
 		if ((*crawlLibInfo).crawlinit == NULL) {
 
@@ -660,7 +689,7 @@ int cm_getCrawlLibInfo(struct hashtable *h,struct crawlLibInfoFormat **crawlLibI
 	printf("wil search for \"%s\"\n",shortname);
 	if (((*crawlLibInfo) = (struct crawlLibInfoFormat *)hashtable_search(h,shortname)) == NULL) {
 	//if ((hashtable_search(h,shortname)) == NULL) {
-		berror("dont hav a crawler for \"%s\"\n",shortname);
+		berror("don't have a crawler for \"%s\"\n",shortname);
 		return 0;
         }
 	else {
@@ -1002,6 +1031,9 @@ cm_setCrawStartMsg(struct collectionFormat *collection,int nrofcollections) {
 struct collection_lockFormat {
 	char lockfile[512];
 	FILE *LOCK;	
+
+	char elementlockfile[512];
+	FILE *ELEMENTLOCK;
 };
 
 //dette bør nokk på litt sikt flyttes ut i dokument manageren
@@ -1029,9 +1061,41 @@ int crawl_lock(struct collection_lockFormat *collection_lock, char collection[])
 	}
 
 }
+
+
+int crawl_element_lock(struct collection_lockFormat *collection_lock, char connector[]) {
+
+	//oppretter var mappen hvis den ikke finnes. Dette slik at vi slipper og gjøre dette under instalsjonen
+	bmkdir_p(bfile("var/"),0755);
+
+	sprintf((*collection_lock).elementlockfile,"var/boitho-%s.lock",connector);
+
+	printf("locking lock \"%s\"\n",(*collection_lock).elementlockfile);
+
+	if (((*collection_lock).ELEMENTLOCK = bfopen((*collection_lock).elementlockfile,"w+")) == NULL) {
+		perror((*collection_lock).elementlockfile);
+		return 0;
+	}
+
+	//trying to get a lock. If we can we vil keep it as long we are crawling to rewnet dublicat crawling
+	if (flock(fileno((*collection_lock).ELEMENTLOCK),LOCK_EX | LOCK_NB) != 0) {
+		fclose((*collection_lock).ELEMENTLOCK);
+		return 0;
+	}	
+	else {
+		return 1;
+	}
+
+}
+
 int crawl_unlock(struct collection_lockFormat *collection_lock) {
 	fclose((*collection_lock).LOCK);
 	unlink((*collection_lock).lockfile);
+	return 1;
+}
+int crawl_element_unlock(struct collection_lockFormat *collection_lock) {
+	fclose((*collection_lock).ELEMENTLOCK);
+	unlink((*collection_lock).elementlockfile);
 	return 1;
 }
 
@@ -1053,12 +1117,24 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 
 		//tester at vi ikke allerede holder på å crawle denne fra før
 		if (!crawl_lock(&collection_lock,collection[i].collection_name)) {
-			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". Are all redy crawling it.\n",collection[i].collection_name);
+			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are all redy crawling it.\n",collection[i].collection_name);
+			//runarb: 14 jan 2008: ingen grun til å oppdatere beskjeden, da det som står der er med korekt
+                        //set_crawler_message(0,"Error: Can't crawl collection. We are all redy crawling it.",collection[i].id);
+
 			continue;
 		}
 
+		//tester at vi ikke driver å crawler med den crawleren fra før. Her burde vi kansje 
+		//heller satset på å begrense på server. Slik at for eks to smb servere kan crawles samtidig
+		if (!crawl_element_lock(&collection_lock,collection[i].connector)) {
+			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are all redy crawling this type/server.\n",collection[i].collection_name);
+                        set_crawler_message(0,"Error: Can't crawl collection. We are all redy crawling this type/server.",collection[i].id);
 
-		//make a conectina for add to use
+			continue;
+		}
+		
+	
+		//make a conectina to bbdn for add to use
 		if (!bbdn_conect(&collection[i].socketha,"",global_bbdnport)) {
 			berror("can't conect to bbdn (boitho backend document server)");
 			set_crawler_message(0,bstrerror(),collection[i].id);
@@ -1100,6 +1176,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
                                         set_crawler_message(1,"Ok",collection[i].id);
                                 }
 			}
+
 			closecollection(&collection[i]);
 
 			
@@ -1110,6 +1187,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 		}
 
 		crawl_unlock(&collection_lock);
+		crawl_element_unlock(&collection_lock);
 
 		blog(LOGACCESS,1,"Finished crawling of collection \"%s\" (id %u)\n",collection[i].collection_name,collection[i].id);
 
