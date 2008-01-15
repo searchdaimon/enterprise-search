@@ -18,7 +18,7 @@ use Page::Setup;
 use Page::Setup::Network;
 use Page::Setup::Auth;
 use Page::Setup::Login;
-use Page::Setup::Integration;
+#use Page::Setup::Integration;
 use Common::FormFlow qw(FLOW_START_FORM);
 use Common::Generic qw(init_root_page);
 
@@ -31,7 +31,7 @@ my $template_file;
 my $pageNetwork     = Page::Setup::Network->new($dbh);
 my $pageAuth        = Page::Setup::Auth->new($dbh);
 my $pageLogin       = Page::Setup::Login->new($dbh);
-my $pageIntegration = Page::Setup::Integration->new($dbh);
+my $pageIntegration = undef; # Page::Setup::Integration->new($dbh); Fjernet til vi begynner med lisensting
 
 if (defined $state{view}) {
     # Non-wizard pages.
