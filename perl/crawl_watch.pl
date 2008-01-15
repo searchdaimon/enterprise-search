@@ -7,11 +7,13 @@ use Carp;
 BEGIN {
 	unshift @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
+use Data::Dumper;
 use Boitho::Infoquery;
 use SD::SimpleLog;
 use SD::Sql::ConnSimple qw(sql_setup get_dbh);
 use CrawlWatch::GC;
 use CrawlWatch::Recrawl;
+use CrawlWatch::SuggestDict;
 
 use constant LOG_FILE          => $ENV{'BOITHOHOME'} . "/logs/crawl_watch.log";
 use constant PATH_TO_INFOQUERY => $ENV{'BOITHOHOME'} . "/bin/infoquery";
@@ -21,45 +23,50 @@ use constant DEFAULT_WAKEUP_RATE => 300;
 
 my $log = SD::SimpleLog->new(LOG_FILE, 1);
 my $iq = Boitho::Infoquery->new(PATH_TO_INFOQUERY);
+$| = 1;
 
-my $dbh = get_dbh(sql_setup());
+my %setup = sql_setup();
+$setup{database} = "test_" . $setup{database};
+my $dbh = get_dbh(%setup);
 
 my @services = (
-    CrawlWatch::GC->new($dbh, $iq, $log),
+    #CrawlWatch::GC->new($dbh, $iq, $log),
     CrawlWatch::Recrawl->new($dbh, $iq, $log),
+    #CrawlWatch::SuggestDict->new($dbh, $iq, $log),
 );
 
 while (1) {
     $log->write("Running...");
-    my $wakeup_time = time + DEFAULT_WAKEUP_RATE;
+    my $sleep_scnds = DEFAULT_WAKEUP_RATE;
 
     foreach my $service (@services) {
         my $next_run = $service->next_run();
+        croak "return value from next_run is not an int:", $next_run
+            unless $next_run =~ /^(-?)\d+$/;
 
-        if ((not defined $next_run)
-                or ($next_run < time)) {
-            $log->write("Running service ", $service->name());
-            $service->run();
-        
-            $next_run = $service->next_run();
+        if ($next_run == -1) {
+            $log->write("Error in service ",    
+                $service->name, ". Skipping.");
+            next;
         }
-
-        if (not defined $next_run) {
-            $log->write("WARN: ", $service->name(), " has no next_run set.");
+        if ($next_run == 0) {
+            $log->write("Running service ", $service->name);
+            $service->run();
+            redo; # to get next_run time.
+        }
+        elsif ($next_run < -1) {
+            croak "invalid return value from ", $service->name;
         }
         else {
-            $wakeup_time = $next_run
-                if $next_run < $wakeup_time;
+            $sleep_scnds = $next_run
+                unless $sleep_scnds < $next_run;
+            $log->write("Estimated run for ", $service->name, ": ", 
+                scalar gmtime time + $next_run);
         }
     }
 
-    if ($wakeup_time < time) {
-        $log->write("WARN: Can't wake up in the past ($wakeup_time). ", 
-                "Using default wakup rate instead.");
-        $wakeup_time = time + DEFAULT_WAKEUP_RATE;
-    }
-    my $gmtime = gmtime $wakeup_time;
+    my $gmtime = gmtime time + $sleep_scnds;
     $log->write("Done. Sleeping until $gmtime.");
-    sleep $wakeup_time;
+    sleep $sleep_scnds;
 }
 

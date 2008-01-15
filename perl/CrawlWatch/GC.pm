@@ -18,54 +18,47 @@ use constant DAYS => 60 * 60 * 24;
 
 use constant CONF_GC_RATE => "gc_default_rate";
 use constant CONF_LAST_GC => "gc_last_run";
-use constant DEFAULT_GC_RATE => 30 * DAYS;
 
 
-my ($dbh, $iq, $log);
-
-my $gc_rate;
-my $last_gc;
 
 sub new {
     croak "missing arguments" unless scalar @_ == 4;
     my $class = shift;
-    ($dbh, $iq, $log) = @_;
+    my %self = map { $_ => shift @_ } qw(dbh iq log);
 
-    bless {}, $class;
+    bless \%self, $class;
 }
 
-sub name { return "Garbage collection" }
+sub name { "Garbage collection" }
 
 sub run {
     my $self = shift;
-
-    #if ($iq->gc) {
-        bb_config_update($dbh, CONF_LAST_GC, time);
-    #}
-
+    bb_config_update($self->{dbh}, CONF_LAST_GC, time);
+    $self->{'log'}->write("TODO: Add GC collection.");
     1;
-}
-
-sub _fetch_conf_data {
-    $gc_rate = bb_config_get($dbh, CONF_GC_RATE);
-    $last_gc = bb_config_get($dbh, CONF_LAST_GC);
-
-    unless (defined $gc_rate and $gc_rate =~ /^\d+/) {
-        $log->write("WARN: ", CONF_GC_RATE, 
-                " not set. Asuming default value of ", DEFAULT_GC_RATE);
-        $gc_rate = DEFAULT_GC_RATE;
-    }
 }
 
 sub next_run {
     my $self = shift;
-    $self->_fetch_conf_data();
-    if (not defined $last_gc) {
-        $log->write("WARN: Unable to determine next GC run. ",
-            "Has configkey ", CONF_LAST_GC, " been created yet?");
+    my $gc_rate = bb_config_get($self->{dbh}, CONF_GC_RATE);
+    my $last_gc = bb_config_get($self->{dbh}, CONF_LAST_GC);
+    my $log = $self->{'log'};
+
+    unless (defined $gc_rate and $gc_rate =~ /^\d+$/) {
+        $log->write("WARN: db field ", CONF_GC_RATE, 
+                " not valid. Not running GC.");
+        return -1;
     }
-    return if not $last_gc; 
-    return $last_gc + $gc_rate;
+
+    
+    unless (defined $last_gc and $last_gc =~ /^\d+$/) {
+        $log->write("WARN: db field ", 
+            CONF_LAST_GC, " not valid. Not running GC.");
+        return -1;
+    }
+
+    my $next_run = ($last_gc + $gc_rate) - time;
+    ($next_run < 0) ? 0 : $next_run;
 }
 
 1;
