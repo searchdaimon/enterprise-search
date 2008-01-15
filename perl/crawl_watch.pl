@@ -26,13 +26,13 @@ my $iq = Boitho::Infoquery->new(PATH_TO_INFOQUERY);
 $| = 1;
 
 my %setup = sql_setup();
-$setup{database} = "test_" . $setup{database};
+#$setup{database} = "test_" . $setup{database};
 my $dbh = get_dbh(%setup);
 
 my @services = (
-    #CrawlWatch::GC->new($dbh, $iq, $log),
+    CrawlWatch::GC->new($dbh, $iq, $log),
     CrawlWatch::Recrawl->new($dbh, $iq, $log),
-    #CrawlWatch::SuggestDict->new($dbh, $iq, $log),
+    CrawlWatch::SuggestDict->new($dbh, $iq, $log),
 );
 
 while (1) {

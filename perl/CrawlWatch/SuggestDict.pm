@@ -27,7 +27,7 @@ sub name { "Suggest dictionary builder" }
 
 sub run {
     bb_config_update($dbh, CONF_SUGGDICT_LAST, time);
-    # fork av dict prosess?
+    # t0ffe ting legges til her
     1;
 }
 
@@ -38,8 +38,8 @@ sub next_run {
 
     unless (defined $run_hour
         and $run_hour =~ /^\d+$/    
-        and ($run_hour >= 0)
-        and ($run_hour <= 23)) {
+        and ($run_hour >= 1)
+        and ($run_hour <= 24)) {
         $log->write("WARN: invalid run hour set for ", $self->name, 
             ". db field: ", CONF_SUGGDICT_RUN);
         return -1;
