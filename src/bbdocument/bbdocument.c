@@ -682,7 +682,8 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 						documentfinishedbuftmp = *documentfinishedbuf;
 					}
 				}
-				if (bbdocument_convert(ft, docbuf, docbufsize, &convdocbuf, &convdocbufsize, "", subname, documenturi, lastmodified, acl_allow, acl_denied, "") == 0) {
+				//runarb: 18 jan 2008: har var titel "", ikke titlefromadd, som gjorde at 24so crawling mistet titler.
+				if (bbdocument_convert(ft, docbuf, docbufsize, &convdocbuf, &convdocbufsize, titlefromadd, subname, documenturi, lastmodified, acl_allow, acl_denied, "") == 0) {
 					fprintf(stderr, "Failed on bbdocument_convert.\n");
 					failed++;
 					free(docbuf);
@@ -732,7 +733,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		//unlink(filconvertetfile_real);
 	#endif
 
-	//printf("documentfinishedbuf is: \n...\n%s\n...\n", documentfinishedbuf);
+	//printf("documentfinishedbuf is: \n...\n%s\n...\n", *documentfinishedbuf);
 
 	free(fileFilterOrginal);
 
@@ -758,6 +759,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	unsigned int DocIDForExistTest;
 	unsigned int lastmodifiedForExistTest;
 
+	printf("bbdocument_add: \"%s\"\n",documenturi);
 	printf("dokument_size 4 %i, title %s\n",dokument_size, title);
 
 
@@ -790,7 +792,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	else {
 		strscpy(ReposetoryHeader.doctype,doctype,sizeof(ReposetoryHeader.doctype));
 	}
-	printf("dokument_size 4 %i, title %s\n",dokument_size, title);
+	printf("dokument_size 4 %i, title %s, doctype %s\n",dokument_size, title, ReposetoryHeader.doctype);
 
 	if (!bbdocument_convert(documenttype_real,document,dokument_size,&htmlbuffer,&htmlbuffersize,title,subname,documenturi, lastmodified,acl_allow, acl_denied, doctype)) {
 
