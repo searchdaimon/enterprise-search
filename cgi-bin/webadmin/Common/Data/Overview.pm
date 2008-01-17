@@ -46,46 +46,29 @@ sub _init {
 ##
 # Fetches all connectors and all their shares. 
 sub get_connectors_with_collections {
-	my $self = shift;
-	
-	my @connectors = $sqlConnectors->get_with_shares();
-	
-	my $conn_count = (scalar @connectors) - 1;
-	for my $c (0..($conn_count)) {
-		my $shares_ref = $connectors[$c]{'shares'};
-		next unless($shares_ref);
-		
-		my $share_count = (scalar @{$shares_ref}) - 1;
-		for my $s (0..$share_count) {
-			# Add some extra info for each share.
-			
-			# Not showing info for a disabled share,
-			# no need to get it.
-			next unless $shares_ref->[$s]{'active'};
+    my $self = shift;
 
-			my $rate = $shares_ref->[$s]{'rate'};
-			my $last = $shares_ref->[$s]{'last'};
-			my $collection_name = $shares_ref->[$s]{'collection_name'};
+    my @connectors = $sqlConnectors->get_with_shares();
+    for my $c (@connectors) {
+        my @shares = @{$c->{shares}};
+        next unless @shares;
 
-			$shares_ref->[$s]{'smart_rate'} 
-				= $self->_minutes_to_text($rate);
-			$shares_ref->[$s]{'next_crawl'}
-				= $self->_get_next_crawl($rate, $last);
-			$shares_ref->[$s]{'doc_count'}
-				= $infoQuery->documentsInCollection($collection_name);
-		}
+        for my $s (@shares) {
+            next unless $s->{active};
+            my $rate = $s->{rate} || $default_crawl_rate;
 
-		#$connectors[$c]{'shares'} = $shares;
-	}
+            $s->{smart_rate} = $self->_minutes_to_text($rate);
+            $s->{next_crawl} = $self->_get_next_crawl($rate, $s->{'last'});
+            $s->{doc_count}  = $infoQuery->documentsInCollection(
+                    $s->{collection_name});
+        }
+    }
 
-	return @connectors;
+    return @connectors;
 }
 
 # Group: Private methods
 
-## 
-# Add variable with next crawl in text.
-# Example: "Should have been crawled 10 days ago."
 sub _get_next_crawl {
 	my $self = shift;
 	my ($rate, $last) = @_;
@@ -95,7 +78,7 @@ sub _get_next_crawl {
 	unless ($last =~ /^\d+$/) {
 		$last = $self->_mysql_to_unixtime($last);
 	}
-	
+
 	my $time_ago = time - $last;
 	my $time_left = ($rate * 60) - $time_ago; # * 60 to get seconds.
 	
@@ -127,9 +110,10 @@ sub _mysql_to_unixtime {
 # Example outputs: "1 day", "5 minutes", "12 hours"
 sub _minutes_to_text {
 	my ($self, $minutes) = @_;
-	$minutes = $default_crawl_rate unless $minutes;
+        return unless defined $minutes;
+    
+        return "now" if $minutes == 0;
 
-	return unless $minutes;
 	if ($minutes < 60) { # less than an hour
 		$minutes = int $minutes;
 		return "$minutes minute" if ($minutes == 1);

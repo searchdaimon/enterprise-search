@@ -19,6 +19,7 @@ use Common::Generic;
 use Common::Data::Overview;
 
 use config qw($CONFIG);
+use constant TPL_DEFAULT => 'overview.html';
 
 my $sqlShares;
 my $sqlConnectors;
@@ -70,12 +71,12 @@ sub crawl_collection($$) {
 	return $vars;
 }
 
-sub list_collections($$) {
-	my ($self, $vars) = (@_);
-	my $dataOverview = $self->{'dataOverview'};
-	my @connectors = $dataOverview->get_connectors_with_collections();	
-	$vars->{'connectors'} = \@connectors;
-	return ($vars, 'overview.html');
+sub list_collections {
+	my ($s, $vars) = @_;
+	$vars->{connectors} 
+            = [ $s->{dataOverview}->get_connectors_with_collections() ];
+
+        TPL_DEFAULT;
 }
 
 
@@ -174,8 +175,9 @@ sub activate_collection($$$) {
 }
 
 
-## User is forcing a full recrawl of a collection.
-## Do it, and return him to the collection management form
+## 
+# Forcing a full recrawl of a collection.
+# 
 sub recrawl_collection($$$) {
 	my ($self, $vars, $submit_values) = (@_);
 	my $iq        = $self->{'infoQuery'};
@@ -193,7 +195,8 @@ sub recrawl_collection($$$) {
 	return $self->manage_collection($vars, $id);
 }
 
-## User has confirmed a delete. Delete share, and show a success message.
+##
+# User has confirmed a delete.
 sub delete_collection_confirmed {
 	my ($self, $vars, $id) = (@_);
 	croak ("The operation must be a POST request to work.") 
