@@ -746,7 +746,8 @@ cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
 
 	if (numUsers == 0) {
 		collection->users = NULL;
-		return 1;
+		//returner 1 lengder nede, så for vi også frigjort resursen
+		//return 1;
 	}
 	else {
 		debug("nrofrows %i\n", numUsers);
@@ -763,7 +764,6 @@ cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
 
 	//mysql freeing
 	mysql_free_result(mysqlres);
-	mysql_close(db);
 	
 	return 1;
 }
