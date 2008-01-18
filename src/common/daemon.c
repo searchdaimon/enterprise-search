@@ -344,7 +344,7 @@ int sendall(int s, void *buf, int len) {
 	int tosend;
 	
 	#ifdef DEBUG
-	printf("will send %i b\n",len);
+	printf("sendall: will send %i b\n",len);
 	#endif
 
         while(total < len) {
@@ -369,7 +369,8 @@ int sendall(int s, void *buf, int len) {
 		return 0;
 	    }
 	    #ifdef DEBUG
-		printf("sendall: sent %i b. %i b left.\n",n,bytesleft);		
+		//to noisy
+		//printf("sendall: sent %i b. %i b left.\n",n,bytesleft);		
 	    #endif
 
             total += n;
