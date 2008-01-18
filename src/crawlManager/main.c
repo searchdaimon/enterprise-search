@@ -760,6 +760,10 @@ cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
 		}
 		collection->users[i] = NULL;
 	}
+
+	//mysql freeing
+	mysql_free_result(mysqlres);
+	mysql_close(db);
 	
 	return 1;
 }
