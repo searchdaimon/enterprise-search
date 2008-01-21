@@ -48,24 +48,25 @@ struct crawldocumentAddFormat {
 	char *doctype;
 };
 
+//argumenter til crawlfirst()
+#define crawlfirst_args struct collectionFormat *collection, \
+		int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist), \
+	        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd), \
+		int (*documentError)(int level, const char *fmt, ...), \
+		int (*documentContinue)(struct collectionFormat *collection)
+//argumenter ter crawlupdate()
+#define crawlupdate_args struct collectionFormat *collection, \
+		int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist), \
+	        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd), \
+		int (*documentError)(int level, const char *fmt, ...), \
+		int (*documentContinue)(struct collectionFormat *collection)
+
 struct crawlLibInfoFormat {
 	int (*crawlinit)();
 	// a pointer to a crawlfirst rutine
-	int (*crawlfirst)(
-		struct collectionFormat *collection,
-		int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
-	        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
-		int (*documentError)(int level, const char *fmt, ...),
-		int (*documentContinue)(struct collectionFormat *collection)
-	);
+	int (*crawlfirst)( crawlfirst_args );
 
-	int (*crawlupdate)(
-		struct collectionFormat *collection,
-		int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
-	        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
-		int (*documentError)(int level, const char *fmt, ...),
-		int (*documentContinue)(struct collectionFormat *collection)
-	);
+	int (*crawlupdate)( crawlupdate_args );
 
 	int (*crawlcanconect)(struct collectionFormat *collection,int (*documentError)(int level, const char *fmt, ...));
 
