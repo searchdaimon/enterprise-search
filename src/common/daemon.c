@@ -344,7 +344,8 @@ int sendall(int s, void *buf, int len) {
 	int tosend;
 	
 	#ifdef DEBUG
-	printf("sendall: will send %i b\n",len);
+	//to noisy
+	//printf("sendall: will send %i b\n",len);
 	#endif
 
         while(total < len) {
@@ -381,8 +382,10 @@ int sendall(int s, void *buf, int len) {
 
         //return n==-1?-1:0; // return -1 on failure, 0 on success
 	#ifdef DEBUG
-	printf("sendall: ending. Will return that we sent %i b\n",total);
+		//to noisy
+		//printf("sendall: ending. Will return that we sent %i b\n",total);
 	#endif
+
 	return total;
 }
 
