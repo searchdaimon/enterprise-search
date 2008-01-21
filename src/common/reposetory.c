@@ -294,7 +294,7 @@ unsigned int rGeneraeADocID (char subname[]) {
 
 	DocIDFILE = lotOpenFileNoCasheByLotNr(1,"DocID","w",'e',subname);
 
-	printf("rGeneraeADocID: writing DocID %u\n",DocID);
+	printf("rGeneraeADocID: writing DocID %u, subname \"%s\"\n",DocID,subname);
 
 	fprintf(DocIDFILE,"%u",DocID);
 
@@ -318,6 +318,7 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 	
 	if ( (error = compress((Bytef *)WorkBuff,(uLongf *)&WorkBuffSize,(Bytef *)htmlbuffer,(uLongf)HtmlBufferSize)) != 0) {
                 printf("compress error. Code: %i\n",error);
+		printf("WorkBuffSize %i, HtmlBufferSize %i\n",WorkBuffSize,HtmlBufferSize );
 		return 0;
 	}
 
@@ -523,6 +524,7 @@ int rReadSummary(const unsigned int DocID,char **metadesc, char **title, char **
 	HtmlBufferSize = sizeof(HtmlBuffer);
 	if ( (nerror = uncompress((Bytef*)HtmlBuffer,(uLong *)&HtmlBufferSize,(Bytef *)WorkBuff_p,rsize)) != 0) {
         	printf("uncompress error. Code: %i for DocID %u-%i\n",nerror,DocID,rLotForDOCid(DocID));
+		printf("HtmlBufferSize %i, rsize %i",HtmlBufferSize,rsize);
 
 		//return 0;
 		goto rReadSummary_error;
@@ -1230,7 +1232,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 
 			
 			#ifdef DEBUG
-			printf("acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
+			printf("acl_deniedSize size %i\n",(*ReposetoryHeader).acl_deniedSize);
 			#endif
 			(*acl_allowbuffer) = malloc((*ReposetoryHeader).acl_allowSize +1);
 			if ((*ReposetoryHeader).acl_allowSize != 0) {
@@ -1243,13 +1245,14 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 
 			#ifdef IIACL
 			#ifdef DEBUG
-			printf("did read acl_allow %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_allowSize,(*acl_allowbuffer));
+				printf("did read acl_allow %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_allowSize,(*acl_allowbuffer));
 			#endif
 
 
 			#ifdef DEBUG
 			printf("acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
 			#endif
+
 			(*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1);
 			if ((*ReposetoryHeader).acl_deniedSize != 0) {
 				if (fread((*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize,1,LotFileOpen) != 1) {
@@ -1260,7 +1263,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			(*acl_deniedbuffer)[(*ReposetoryHeader).acl_deniedSize] = '\0';
 
 			#ifdef DEBUG
-			printf("did read acl_denied %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_deniedSize,(*acl_deniedbuffer));
+				printf("did read acl_denied %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_deniedSize,(*acl_deniedbuffer));
 			#endif
 
 			#endif
@@ -1978,6 +1981,7 @@ addResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t
 
 	if ((error = compress((Bytef *)WorkBuff,(uLongf *)&WorkBuffSize,(Bytef *)resource,(uLongf)HtmlBufferSize)) != 0) {
 		printf("compress error. Code: %i\n",error);
+		printf("WorkBuffSize %i, HtmlBufferSize %i\n",WorkBuffSize,HtmlBufferSize);
 		fclose(fp);
 		return;
 	}
