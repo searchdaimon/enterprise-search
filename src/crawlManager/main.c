@@ -1484,6 +1484,10 @@ int main (int argc, char *argv[]) {
 	struct config_t cmcfg;
 	config_setting_t *cfgarr;
 
+	#ifdef DEBUG
+		printf("Ble kompilert med -DDEBUG\n");
+	#endif
+
 	if (!openlogs(&LOGACCESS,&LOGERROR,"crawlManager")) {
 		perror("logs");
 		exit(1);
