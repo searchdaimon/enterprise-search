@@ -247,6 +247,14 @@ sub crawl {
 sub _gen_scheduled_hours {
     my ($self, $start, $end) = @_;
 
+    # If schedule ends at 24:00, we don't want 
+    # crawling to happen between 24:00 and 01:00
+    if ($end == 1) {
+        $end = 24;
+    }
+    else { $end-- }
+    
+
     if ($end > $start) {
         return ($start..$end);
     }
