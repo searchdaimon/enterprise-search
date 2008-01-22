@@ -25,7 +25,6 @@
 [% i = 0 %][% Dumper.dump(loglist) %]
 [% FOREACH log IN loglist %]
 	[% color = 1 - color %]
-        [% selected = (logfile.filename == log.filename) %]
 	[% WRAPPER 'template_table_row.html' selected = selected %]
             <td><img src="file.cgi?i=log" alt="" /></td>
             <td>
