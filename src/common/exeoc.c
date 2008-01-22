@@ -7,7 +7,6 @@
 #include <sys/select.h>
 #include <err.h>
 
-
 #define linelen 512
 
 /*
@@ -112,6 +111,7 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 		
 	}
 	else {
+		int	read_error = 0;
 		fd_set readfds;
 		fd_set tmp;
 		//printf("perent. Child pid %i\n",(int)pid);
@@ -151,6 +151,7 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 				if (n == 0)
 					break;
 				warn("error in read, exeoc");
+				read_error = 1;
 				break;
 			}
 
@@ -192,13 +193,43 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 		//waitpid(pid,&waitstatus,0);
 		waitpid(pid,&waitstatus,WUNTRACED);
 
+		#ifdef DEBUG
+		if (WIFEXITED(waitstatus)==0)
+		    {
+			printf("Child did not exit normally.\n");
+			if (WIFSIGNALED(waitstatus))
+			    {
+				printf("TERMSIG: %i\n", WTERMSIG(waitstatus));
+			    }
+
+			if (WIFSTOPPED(waitstatus))
+			    {
+				printf("STOPSIG: %i\n", WSTOPSIG(waitstatus));
+			    }
+		    }
+		#endif
+
+		(*ret) = waitstatus;
+
+		if (WIFEXITED(waitstatus)==0 || read_error)
+		    {
+			// Child has not exited normally:
+			if (WIFEXITED(waitstatus)==0)
+			    printf("Error: Child did not exit normally (segfault?).\n");
+			else
+			    printf("Error: Read error.\n");
+
+			(*documentfinishedbufsize) = 0;
+			documentfinishedbuf[0] = '\0';
+			return 0;
+		    }
+
 
 		#ifdef DEBUG
 			printf("waitpid finished. waitstatus %i\n",waitstatus);
 			printf("dokument: \"%s\"\n",documentfinishedbuf);
 		#endif 
 
-		(*ret) = waitstatus;
 		return 1;
 	}
 

@@ -97,10 +97,10 @@ static inline int utf8_first_char_uppercase( unsigned char *str )
 // Konverter latin-1 til utf8
 static inline unsigned char* copy_latin1_to_utf8( unsigned char *str )
 {
-    int		str_len = strlen(str);
-    char	*tempstring = malloc(str_len*4 +1);
-    char	*returnstring;
-    int		i, j;
+    int			str_len = strlen((const char*)str);
+    unsigned char	*tempstring = malloc(str_len*4 +1);
+    unsigned char	*returnstring;
+    int			i, j;
 
     for (i=0, j=0; str[i]!='\0' && j<str_len*4; i++)
 	{
