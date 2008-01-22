@@ -22,6 +22,8 @@ use Page::Setup::Integration;
 use Common::FormFlow qw(FLOW_START_FORM);
 use Common::Generic qw(init_root_page);
 
+die "Setup wizard fjernet til bedre testet.";
+
 # Init
 my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
 	= init_root_page('/templates/setup:./templates/common/network', 'Page::Setup');
