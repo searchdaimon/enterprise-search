@@ -86,7 +86,7 @@
 				<li>
 				[% IF color %]<div>
 				[% ELSE %]<div style="background : #f2f2f2"> [% END %]
-				[% HTML.escape(line) %] </div></li>
+				[% line.length ? HTML.escape(line) : '&nbsp;' %] </div></li>
 				
 				
 				

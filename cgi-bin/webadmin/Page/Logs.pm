@@ -118,7 +118,7 @@ sub _read_log {
 	}
 	open my $tail, "$command -n $lines $CONFIG{'log_path'}/\Q$filename\E |"
 		or croak "coulnt execute tail: $!";
-	my @content = <$tail>;
+	my @content = map { chomp; $_ } <$tail>;
 
 	@content = reverse @content if ($command eq "head");
 
