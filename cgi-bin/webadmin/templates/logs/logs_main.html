@@ -25,26 +25,28 @@
 [% i = 0 %][% Dumper.dump(loglist) %]
 [% FOREACH log IN loglist %]
 	[% color = 1 - color %]
-	[% WRAPPER 'template_table_row.html' %]
+        [% selected = (logfile.filename == log.filename) %]
+	[% WRAPPER 'template_table_row.html' selected = selected %]
             <td><img src="file.cgi?i=log" alt="" /></td>
             <td>
-                <strong>
-                    [% IF filename == log.filename %]
-                        [% HTML.escape(log.filename) %]
-                    [% ELSE %]
-                        <a href="logs.cgi?log=[% log.filename %]&lines=[% lines %]">[% HTML.escape(log.description) %]</a>
-                    [% END %]
-                </strong>
+                <strong>[% HTML.escape(log.description) %]</strong>
             </td>
             <td>[% HTML.escape(log.filename) %]</td>
             <td>[% log.size.0 %][% log.size.1 %]</td>
-            <td><a href="download.cgi?logfile=[% log.filename %]">Download</a></td>
+            <td>
+                <ul class="vertical_buttons">
+                    <li><a href="logs.cgi?log=[% log.filename %]&lines=[% lines %]">View</a></li>
+                    <li><a href="download.cgi?logfile=[% log.filename %]">Download</a></li>
+                </ul>
+                        
+            </td>
 	[% END %]
 	[% i = i + 1 %]
 [% END %]
 [% END %]
 
-<div style="margin-top: 1em; margin-left: 1em;">
+[% IF logfile %]
+    <div style="margin-top: 1em; margin-left: 1em;">
 	Lines to show:
         <ul class="vertical_buttons" style="display : inline;">
 	    [% FOREACH count IN [50, 100, 250, 500] %]
@@ -57,7 +59,8 @@
                 
                 </li>
             [% END %]
-</div>
+    </div>
+[% END %]
 
 </form>
 

@@ -1,5 +1,10 @@
+Selected: [% selected %]
 [% IF color %]
-	[% background = 'background : #d3dbef;' %]
+    [% background = 'background : #d3dbef;' %]
+[% END %]
+
+[% IF selected %]
+    [% border = 'background : #4473c4; color : white;' %]
 [% END %]
 	
 [% IF disabled %] 
@@ -8,6 +13,6 @@
 	[% text_color = 'color : gray;' %]
 [% END %]
 
-<tr class="default_table_row" style="[% background %][% text_color %][% other %]">
+<tr class="default_table_row" style="[% background %][% border %][% text_color %][% other %]">
 	[% content %]
 </tr>
