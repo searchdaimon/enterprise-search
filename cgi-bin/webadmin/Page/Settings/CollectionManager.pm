@@ -14,7 +14,7 @@ use constant DEFAULT_TPL => "settings_collectionmanager.html";
 use constant CM_CONFIGKEYS => qw(
     gc_default_rate gc_last_run
     recrawl_schedule_start recrawl_schedule_end
-    cm_crawl_recheck_rate
+    cm_crawl_recheck_rate suggdict_run_hour suggdict_last_run
 );
 
 my $sqlConf;
@@ -76,6 +76,18 @@ sub update_schedule {
     $vars->{schedule_updated} = 1;
     return $self->show($vars);
     
+}
+
+sub update_suggdict {
+    my ($self, $vars, $run_hour) = @_;
+    croak "Invalid suggdict rebuild hour"
+        unless ($run_hour =~ /^\d+$/
+            and $run_hour >= 1
+            and $run_hour <= 24);
+
+    $sqlConf->insert_setting('suggdict_run_hour', $run_hour);
+    $vars->{suggdict_updated} = 1;
+    return $self->show($vars);
 }
 
 1;

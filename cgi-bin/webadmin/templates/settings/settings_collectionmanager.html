@@ -39,7 +39,7 @@
                     [% END %]
                 </select>
 
-                to (and including) 
+                and
                 <select name="cm.schedule_end">
                     <option></option>
                     [% FOR i IN [1..24] %]
@@ -76,12 +76,38 @@
         </p>
 
         <p>Last garbage collect ran at 
-            [% date.format(gc_last_run, "%b %e %Y, %H:%M") %].</p>
+            [% date.format(config.gc_last_run, "%b %e %Y, %H:%M") %].</p>
 
         <p>
         <input type="submit" name="submit.cm_gc" value="Update setting" />
         </p>
         </form>
+[% USE Dumper %]
+    <h3>Suggest dictionary rebuild</h3>
+    [% IF suggdict_updated %]
+            [% WRAPPER 'template_message.html' type="success" %]
+                Suggest dictionary rebuild time has been updated.
+            [% END %]
+        [% END %]
+    <form action="settings.cgi" method="post">
+    Rebuild suggest dictionary between 
+        <select name="cm.suggdict_run_hour">
+        [% FOR h IN [1..24] %]
+            <option value="[% h %]" 
+                [% IF config.suggdict_run_hour == h %]selected="selected"[% END %]>
+                [% FILTER format('%.2d:00') %][% h %][% END %] 
+                and 
+                [% FILTER format('%.2d:00') %][% h == 24 ? 1 : h+1 %][% END %].
+            </option>
+        [% END %]
+        </select>
+        <p>Last dictionary rebuild ran at 
+            [% date.format(config.suggdict_last_run, "%b %e %Y, %H:%M") %].</p>
+        <p>
+        <input type="submit" name="submit.cm_suggdict" value="Update setting" />
+        </p>
+        </form>
+    
 
     </div>
 

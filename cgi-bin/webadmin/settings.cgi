@@ -16,67 +16,73 @@ my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
 	= init_root_page('/templates/settings:./templates/common/network', 'Page::Settings');
 
 my %state = %{$state_ptr};
-my $template_file;
+my $tpl_file;
 
 my $pageNetwork = Page::Settings::Network->new($dbh);
 my $pageCM = Page::Settings::CollectionManager->new($dbh);
 
 
+
 # Group: User actions
 
 if (defined($state{'submit'})) {
-	my $button = $state{'submit'};
+	my $btn = $state{'submit'};
 
 	# User submitted network conf form.
-	if (defined $button->{'network_conf'}) {
+	if (defined $btn->{'network_conf'}) {
 		$pageNetwork->process_network_config($vars, $state{'netconf'}, $state{'resolv'});
-		($vars, $template_file) = $pageNetwork->show_network_config($vars);	
+		($vars, $tpl_file) = $pageNetwork->show_network_config($vars);	
 	}
 
-	elsif (defined $button->{'reset_configuration'}) {
+	elsif (defined $btn->{'reset_configuration'}) {
 		# User wants to reset configuration. Confirm.
-		($vars, $template_file) = $page->show_confirm_dialog($vars);
+		($vars, $tpl_file) = $page->show_confirm_dialog($vars);
 	}
 
-	elsif (defined $button->{'submit_settings'}) {
+	elsif (defined $btn->{'submit_settings'}) {
 		# Update config values, show success message.
 		$vars = $page->update_settings($vars, $state{'setting'});
-		($vars, $template_file) 
+		($vars, $tpl_file) 
 			= $page->show_advanced_settings_updated($vars);
 	}
 
-	elsif (defined $button->{'export_settings'}) {
+	elsif (defined $btn->{'export_settings'}) {
 		# User is downloading exported settings
 		print $cgi->header('text/plain');
 		print $page->export_settings();
 		exit 0;
 	}
 
-	elsif (defined $button->{'import_settings'}) {
+	elsif (defined $btn->{'import_settings'}) {
 		# User is importing a file.
-		($vars, $template_file) 
+		($vars, $tpl_file) 
 			= $page->import_settings($vars, $cgi->param("import_file"));
 	}
 
-	elsif (defined $button->{'dist_select'}) {
+	elsif (defined $btn->{'dist_select'}) {
 		# User selected a different version from main settings
-		($vars, $template_file) 
+		($vars, $tpl_file) 
 			= $page->select_dist_version($vars, $state{'dist'});
 	}
 
-        elsif (defined $button->{admin_pass}) {
+        elsif (defined $btn->{admin_pass}) {
             # User is changing passwords
-            $template_file = $page->update_admin_passwd($vars, $state{passwd});
+            $tpl_file = $page->update_admin_passwd($vars, $state{passwd});
         }
 
-        elsif (defined $button->{cm_gc}) {
+        elsif (defined $btn->{cm_gc}) {
             # User update GC rate.
-            $template_file = $pageCM->update_gc($vars, $state{cm}{gc_rate});
+            $tpl_file = $pageCM->update_gc($vars, $state{cm}{gc_rate});
         }
-        elsif (defined $button->{cm_schedule}) {
-            $template_file = $pageCM->update_schedule(
+        elsif (defined $btn->{cm_schedule}) {
+            $tpl_file = $pageCM->update_schedule(
                 $vars, $state{cm}{use_schedule}, 
                 $state{cm}{schedule_start}, $state{cm}{schedule_end});
+        }
+
+
+        elsif (defined $btn->{cm_suggdict}) {
+            $tpl_file = $pageCM->update_suggdict($vars, $state{cm}{suggdict_run_hour});
         }
 }
 
@@ -85,7 +91,7 @@ elsif (defined($state{'confirm_delete'})) {
 	croak ("The operation must be a POST request to work.") 
 		unless($ENV{'REQUEST_METHOD'} eq 'POST');
 	
-	($vars, $template_file) = $page->confirmed_delete_settings($vars);
+	($vars, $tpl_file) = $page->confirmed_delete_settings($vars);
 	
 }
 
@@ -98,31 +104,31 @@ elsif (defined($state{'view'})) {
 	my $view = $state{'view'};
 	
 	if ($view eq "import_export") {
-		($vars, $template_file) = $page->show_import_export($vars);
+		($vars, $tpl_file) = $page->show_import_export($vars);
 	}
 
 	elsif ($view eq "advanced") {
-		($vars, $template_file) = $page->show_advanced_settings($vars);
+		($vars, $tpl_file) = $page->show_advanced_settings($vars);
 	}
 
 	elsif ($view eq "network") {
-		($vars, $template_file) = $pageNetwork->show_network_config($vars);
+		($vars, $tpl_file) = $pageNetwork->show_network_config($vars);
 	}
 
         elsif ($view eq "collection_manager") {
-            $template_file = $pageCM->show($vars);
+            $tpl_file = $pageCM->show($vars);
         }
 }
 
 
-unless (defined $template_file) {
+unless (defined $tpl_file) {
 	# Show main page.
-	($vars, $template_file) 
+	($vars, $tpl_file) 
 		= $page->show_main_settings($vars);
 
 }
 
 
 print $cgi->header('text/html');
-$template->process($template_file, $vars)
+$template->process($tpl_file, $vars)
         or croak $template->error() . "\n";
