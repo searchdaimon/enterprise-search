@@ -9,6 +9,8 @@ APXS = /usr/sbin/apxs
 CC = gcc
 INSTBINDIR = /usr/local/sbin
 DEFINES = -D INSTBINDIR=\\\"$(INSTBINDIR)\\\"
+NAME=`cat mod_auth_boitho.spec | sed -ne "s/^Name: //p"`
+VERSION=`cat mod_auth_boitho.spec | sed -ne "s/^Version: //p"`
 
 all:
 	@echo "make Apache1 or make Apache2"
@@ -35,4 +37,9 @@ mod_auth_boitho.soApache2: mod_auth_boitho.c
 	$(APXS) $(DEFINES) -c mod_auth_boitho.c ../boithoadClientLib/liboithoaut.a
 
 rpm:
+	mkdir $(NAME)-$(VERSION)
+	cp $(NAME).so $(NAME)-$(VERSION)
+	echo "all:" > $(NAME)-$(VERSION)/Makefile
+	tar zcvf $(HOME)/redhat/SOURCES/$(NAME)-$(VERSION).tar.gz $(NAME)-$(VERSION)/
+	rm -rf $(NAME)-$(VERSION)/
 	rpm -bb mod_auth_boitho.spec
