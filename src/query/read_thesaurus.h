@@ -8,6 +8,7 @@
 
 
 #include "../ds/dcontainer.h"
+#include "query_parser.h"
 
 
 /*

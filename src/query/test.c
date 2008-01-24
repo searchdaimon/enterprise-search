@@ -1,5 +1,5 @@
 /*
- *	(C) Boitho 2004-2007, Written by Magnus Galåen
+ *	(C) Boitho 2004-2008, Written by Magnus Galåen
  *
  *	Example for "query_parser".
  *
@@ -8,17 +8,105 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "query_parser.h"
+#include "read_thesaurus.h"
 
-void testit();
+void test_expand( char *tekst );
+void testit( char *tekst );
 
 int main( int argc, char *argv[] )
 {
     if (argc>1)
-	testit( argv[1] );
+	{
+	    testit( argv[1] );
+	    test_expand( argv[1] );
+	}
 
     return 0;
+}
+
+void test_expand( char *tekst )
+{
+    // Les inn stemwords:
+
+    printf("Opening stemwords dictionary..."); fflush(stdout);
+    FILE	*file = fopen( "./../../data/stemwords.NBO", "r" );
+    int		i, j, k;
+
+    if (!file)
+	{
+	    fprintf( stderr, "Could not open ./../../data/stemwords.NBO\n" );
+	    return;
+	}
+
+    // Get filesize:
+    struct stat	fileinfo;
+    fstat( fileno( file ), &fileinfo );
+
+    int		size = fileinfo.st_size;
+    char	*buf = (char*)malloc(sizeof(char)*size);
+
+    for (i=0; i<size;)
+	{
+	    i+= fread( (void*)&(buf[i]), sizeof(char), size-i, file );
+	}
+
+    container	*D = read_thesaurus(buf, size);	// Selve kommandoen for å parse ordboka. Dette trengs bare gjøres én gang.
+
+    free(buf);
+    fclose(file);
+    printf("done\n");
+
+    /***/
+
+    query_array		qa;
+
+    get_query( tekst, strlen(tekst), &qa );
+    expand_query( D, &qa );	// Ekspander query med stems.
+
+    char		s[1024];
+    sprint_expanded_query(s, 1023, &qa);
+    printf("%s\n", s);
+
+    /***/
+    /***/
+
+    printf("\nquery %s\n",tekst);
+
+    for (i=0; i<qa.n; i++)
+	{
+	    printf("(%c)", qa.query[i].operand );
+
+	    for (j=0; j<qa.query[i].n; j++)
+		{
+			printf(" %s", qa.query[i].s[j]);
+		}
+
+	    if (qa.query[i].alt != NULL)
+		{
+		    printf(" (");
+
+		    for (j=0; j<qa.query[i].alt_n; j++)
+			{
+			    if (j>0) printf("|");
+
+			    for (k=0; k<qa.query[i].alt[j].n; k++)
+				printf("%s", qa.query[i].alt[j].s[k]);
+			}
+
+		    printf(")");
+		}
+
+	    printf("\n");
+	}
+
+    printf("\n");
+
+    destroy_query(&qa);
+    destroy(D);	// Deallokér ordboka.
 }
 
 void testit( char *tekst )
@@ -82,4 +170,6 @@ void testit( char *tekst )
 	}
 
     destroy_query( &qa_html );
-*/}
+*/
+}
+

@@ -388,3 +388,4 @@ void destroy_synonyms( container *C )
 
     destroy(C);
 }
+

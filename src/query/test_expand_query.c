@@ -1,7 +1,7 @@
 /**
  *	(C) Copyright Boitho 2007-2008. Written by Magnus Galåen
  *
- *	In this first version, we ignore synonyms of several words length.
+ *	In this first version, we ignore multiword synonyms.
  */
 
 #include <stdio.h>
@@ -70,6 +70,10 @@ int main( int argc, char *argv[] )
 
 
 /*****/
+    int		num;
+    for (num=0; num<100; num++)
+    {
+
     int			x,i,j,k;
     query_array		qa;
 
@@ -175,14 +179,15 @@ int main( int argc, char *argv[] )
 	}
 
 //    print(W[0], container_value(W[0]));
-
-    gettimeofday(&tv_3, &tz);
-    printf("finished"); fflush(stdout);
 //    printf("count: %i\n", cmp_count);
 
 
-    destroy_query( &qa );
     printf("."); fflush(stdout);
+    destroy_query( &qa );
+    }
+
+    gettimeofday(&tv_3, &tz);
+    printf("finished"); fflush(stdout);
 
     destroy(W[0]);
     printf("."); fflush(stdout);

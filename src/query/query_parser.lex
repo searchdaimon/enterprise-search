@@ -7,7 +7,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../common/utf8-strings.h"
+#include "../ds/dvector.h"
+#include "../ds/dset.h"
 #include "query_parser.h"
+#include "read_thesaurus.h"
 
 
 static inline query_array _query_array_init( int n );
@@ -171,7 +175,7 @@ static inline query_array _query_array_init( int n )
 // Frigjør et gammelt query_array:
 static inline void _query_array_destroy( query_array qa )
 {
-    free( qa.query );
+    free(qa.query);
 }
 
 // Initialiser og alloker et nytt string_array:
@@ -181,6 +185,8 @@ static inline string_array _string_array_init( int n )
 
     sa.n = n;
     sa.s = malloc(sizeof(char*[sa.n]));
+    sa.spelled = NULL;
+    sa.alt = NULL;
 
     return sa;
 }
@@ -188,7 +194,9 @@ static inline string_array _string_array_init( int n )
 // Frigjør et gammelt string_array:
 static inline void _string_array_destroy( string_array sa )
 {
-    free( sa.s );
+    free(sa.s);
+
+    if (sa.alt != NULL) free(sa.alt);
 }
 
 // Initialiser og klargjør for innlesing av nytt ord eller strofe:
@@ -311,6 +319,8 @@ void get_query( char text[], int text_size, query_array *qa )
 
 	    qa->query[i] = _string_array_init(n);
 
+	    // Magnus: Fjernet denne, 1-ords-strofer gir plutselig mening når vi benytter oss av synonymer:
+/*
 	    // Fiks for strofer med kun et element:
 	    if (it->operand == '"' && n==1)
 		qa->query[i].operand = '+';
@@ -318,6 +328,8 @@ void get_query( char text[], int text_size, query_array *qa )
 		qa->query[i].operand = '-';
 	    else
 		qa->query[i].operand = it->operand;
+*/
+	    qa->query[i].operand = it->operand;
 
 	    n = 0;
 	    t_it = it->elem;
@@ -444,13 +456,23 @@ void copy_htmlescaped_query( query_array *qa_dest, query_array *qa_src )
 // Frigjør data i 'qa':
 void destroy_query( query_array *qa )
 {
-    int		i, j;
+    int		i, j, k;
 
     for (i=0; i<qa->n; i++)
 	{
 	    for (j=0; j<qa->query[i].n; j++)
 		{
 		    free( qa->query[i].s[j] );	// Minnet her ble allokert av strdup.
+		}
+
+	    if (qa->query[i].alt != NULL)
+		{
+		    for (j=0; j<qa->query[i].alt_n; j++)
+			{
+			    for (k=0; k<qa->query[i].alt[j].n; k++)
+				free( qa->query[i].alt[j].s[k] );
+			    free( qa->query[i].alt[j].s );
+			}
 		}
 
 	    _string_array_destroy( qa->query[i] );
@@ -496,7 +518,6 @@ void sprint_query( char *s, int n, query_array *qa )
 			pos+= snprintf(s+pos, n - pos, "-");
 			break;
 		    case QUERY_PHRASE:
-//			pos+= snprintf(s+pos, n - pos, "");
 			break;
 		    case QUERY_SUBPHRASE:
 			pos+= snprintf(s+pos, n - pos, "-");
@@ -521,7 +542,7 @@ void sprint_query( char *s, int n, query_array *qa )
 			break;
 		}
 
-	    if (qa->query[i].n > 1) pos+= snprintf(s+pos, n - pos, "\"");
+	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE) pos+= snprintf(s+pos, n - pos, "\"");
 
 	    for (j=0; j<qa->query[i].n; j++)
 		{
@@ -529,7 +550,129 @@ void sprint_query( char *s, int n, query_array *qa )
 		    pos+= snprintf(s+pos, n - pos, "%s", qa->query[i].s[j]);
 		}
 
-	    if (qa->query[i].n > 1) pos+= snprintf(s+pos, n - pos, "\"");
+	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE) pos+= snprintf(s+pos, n - pos, "\"");
 	}
 }
 
+
+
+void expand_query( container *C, query_array *qa )
+{
+    int			x,i;
+
+    for (x=0; x<qa->n; x++)
+	{
+	    if (qa->query[x].operand == QUERY_WORD)
+		{
+		    container		*S = set_container( string_container() );
+		    container		*Q = vector_container( string_container() );
+
+		    convert_to_lowercase((unsigned char*)qa->query[x].s[0]);
+		    vector_pushback(Q, qa->query[x].s[0]);
+		    set_insert(S, qa->query[x].s[0]);
+
+		    container		*stems = get_synonyms(C, Q);
+
+		    for (i=0; i<vector_size(stems); i++)
+			{
+			    container	*R = vector_get(stems,i).C;
+
+			    // Only do singleworded stems and synonyms for now:
+			    if (vector_size(R) == 1)
+				{
+				    set_insert(S, (char*)vector_get(R,0).ptr);
+			        }
+			}
+
+		    set_remove(S, qa->query[x].s[0]);
+
+		    if (set_size(S) > 0)
+			{
+			    qa->query[x].alt_n = set_size(S);
+			    qa->query[x].alt = malloc(sizeof(string_alternative) * qa->query[x].alt_n);
+
+			    iterator	sit = set_begin(S);
+			    for (i=0; sit.valid; sit=set_next(sit),i++)
+				{
+				    qa->query[x].alt[i].n = 1;
+				    qa->query[x].alt[i].s = malloc(sizeof(char*) * qa->query[x].alt[i].n);
+				    qa->query[x].alt[i].s[0] = strdup((char*)set_key(sit).ptr);
+				}
+			}
+
+		    destroy_synonyms(stems);
+		    destroy(S);
+		    destroy(Q);
+		}
+	}
+}
+
+
+void sprint_expanded_query( char *s, int n, query_array *qa )
+{
+    int		i, j, k;
+    int		pos = 0;
+
+    for (i=0; i<qa->n; i++)
+	{
+	    if (i>0) pos+= snprintf(s+pos, n - pos, " ");
+
+	    switch (qa->query[i].operand)
+		{
+		    case QUERY_WORD:
+			break;
+		    case QUERY_SUB:
+			pos+= snprintf(s+pos, n - pos, "-");
+			break;
+		    case QUERY_PHRASE:
+			break;
+		    case QUERY_SUBPHRASE:
+			pos+= snprintf(s+pos, n - pos, "-");
+			break;
+		    case QUERY_FILETYPE:
+			pos+= snprintf(s+pos, n - pos, "filetype:");
+			break;
+		    case QUERY_LANGUAGE:
+			pos+= snprintf(s+pos, n - pos, "language:");
+			break;
+		    case QUERY_COLLECTION:
+			pos+= snprintf(s+pos, n - pos, "collection:");
+			break;
+		    case QUERY_DATE:
+			pos+= snprintf(s+pos, n - pos, "date:");
+			break;
+		    case QUERY_STATUS:
+			pos+= snprintf(s+pos, n - pos, "status:");
+			break;
+		    case QUERY_OR:
+			pos+= snprintf(s+pos, n - pos, "| ");
+			break;
+		}
+
+	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE) pos+= snprintf(s+pos, n - pos, "\"");
+
+	    for (j=0; j<qa->query[i].n; j++)
+		{
+		    if (j>0) pos+= snprintf(s+pos, n - pos, " ");
+		    pos+= snprintf(s+pos, n - pos, "%s", qa->query[i].s[j]);
+		}
+
+	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE) pos+= snprintf(s+pos, n - pos, "\"");
+
+	    if (qa->query[i].alt != NULL)
+		{
+		    pos+= snprintf(s+pos, n - pos, "(");
+		    for (j=0; j<qa->query[i].alt_n; j++)
+			{
+			    if (j>0) pos+= snprintf(s+pos, n - pos, "|");
+			    if (qa->query[i].alt[j].n > 1) pos+= snprintf(s+pos, n - pos, "\"");
+
+			    for (k=0; k<qa->query[i].alt[j].n; k++)
+				pos+= snprintf(s+pos, n - pos, "%s", qa->query[i].alt[j].s[k]);
+
+			    if (qa->query[i].alt[j].n > 1) pos+= snprintf(s+pos, n - pos, "\"");
+			}
+		    pos+= snprintf(s+pos, n - pos, ")");
+		}
+	}
+}

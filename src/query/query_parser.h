@@ -10,6 +10,7 @@
  *
  *  CHANGELOG:
  *
+ *    23.01.2008	Lagt til 'string_alternaive' og expand_query()
  *    10.01.2008	Lagt til funksjoner copy_query() og sprint_query().
  *    06.03.2007	Epostadresser blir nå skrevet om til fraser (med '.' og '@' som delimitere).
  *    22.02.2007	Har lagt til støtte for utf-8 unicode. Latin-1-supplement blir automatisk konvertert.
@@ -21,6 +22,8 @@
 
 #ifndef _QUERY_PARSER_H_
 #define _QUERY_PARSER_H_
+
+#include "../ds/dcontainer.h"
 
 #define QUERY_WORD	'+'
 #define QUERY_SUB	'-'
@@ -38,9 +41,18 @@ typedef struct
 {
     int			n;
     int			stopword;
+    char		**s;
+} string_alternative;
+
+typedef struct
+{
+    int			n;
+    int			stopword;
     char		operand;
     char		**s;
     char		**spelled;
+    int			alt_n;
+    string_alternative	*alt;		// Close words and phrases (stems and/or synonyms)
 } string_array;
 
 typedef struct
@@ -70,6 +82,16 @@ void copy_query( query_array *dest, query_array *src );
  *	Hent ut "ryddig" query-streng:
  */
 void sprint_query( char *s, int n, query_array *qa );
+
+/*
+ *	D = Dictionary
+ */
+void expand_query( container *D, query_array *qa );
+
+/*
+ *	Hent ut "ryddig" query-streng:
+ */
+void sprint_expanded_query( char *s, int n, query_array *qa );
 
 /*
  *	Deprecated (vi har gått over til utf-8): Gjør om utvidede ascii-tegn til html-escapes i query-et:

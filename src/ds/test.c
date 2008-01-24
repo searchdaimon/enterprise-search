@@ -255,6 +255,8 @@ void set_test()
     set_remove(S, 8);
     set_remove(S, 9);
     println(S, container_value(S));
+
+    destroy(S);
 }
 
 
@@ -303,6 +305,7 @@ void map_test()
     println(M, container_value(M));
 
     printf("---\n");
+    destroy(M);
 }
 
 

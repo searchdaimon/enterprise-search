@@ -298,6 +298,12 @@ inline void set_remove( container *C, ... )
 			{
 			    MP->Key->deallocate(MP->Key, z->key);
 			    z->key = y->key;
+			    free(y);
+			}
+		    else
+			{
+			    MP->Key->deallocate(MP->Key, y->key);
+			    free(y);
 			}
 
 		    MP->size--;

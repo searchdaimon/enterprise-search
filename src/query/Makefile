@@ -1,5 +1,5 @@
 
-CC=/usr/local/bin/gcc -Wall
+CC=/usr/local/bin/gcc -O2 -Wall
 all:	_query_parser
 
 _query_parser:
