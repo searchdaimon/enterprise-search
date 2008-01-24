@@ -38,6 +38,7 @@ int main (int argc, char *argv[]) {
 		printf("SidToUser <sid>\n");
 		printf("AuthUser <username> <password>\n");
 		printf("GetPassword <username>\n");
+		printf("collectionLocked <collection>\n");
 		printf("\nReturns %i on success and %i on failure\n",EXIT_SUCCESS,EXIT_FAILURE);
 		exit(1);
 	}
@@ -309,6 +310,21 @@ int main (int argc, char *argv[]) {
 		} else {
 			printf("Password for %s is %s\n", value, password);
 		}
+	}
+	else if (strcmp(key, "collectionLocked") == 0) {
+		int r;
+		int socketha;
+		int errorbufflen = 512;
+                char errorbuff[errorbufflen];
+
+		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
+                        printf("Error: %s\n",errorbuff);
+                        exit(1);
+                }
+
+
+		r = cmc_collectionislocked(socketha, value);
+		printf("Collection locked: %s\n", r == 0 ? "no" : "yes");
 	}
 	else {
 		printf("unknown key %s\n",key);
