@@ -120,7 +120,7 @@ cmc_collectionislocked(int socketha, char *collection_in)
 	sendall(socketha, &collection, sizeof(collection));
 
 	if ((i=recv(socketha, &r, sizeof(r),MSG_WAITALL)) == -1) {
-		return 0;
+		return 1;
 	}
 
 	return r;
