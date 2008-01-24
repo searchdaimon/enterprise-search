@@ -205,6 +205,14 @@ int main(int argc, char *argv[])
 		setvbuf(stdout, NULL, _IOLBF, 0); 
 		setvbuf(stderr, NULL, _IOLBF, 0); 
 	}
+
+	/* Write pidfile */
+	FILE  *pidfile = fopen(bfile("var/searchd.pid"), "w");
+
+	if (pidfile != NULL) {
+		fprintf(pidfile, "%d", getpid());
+		fclose(pidfile);
+	}
 	
 	printf("starting. Time %s",ctime(&starttime));
 	fprintf(stderr,"Error test\n");
