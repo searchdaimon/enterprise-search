@@ -34,3 +34,5 @@ mod_auth_boitho.soApache1: mod_auth_boitho.c
 mod_auth_boitho.soApache2: mod_auth_boitho.c 
 	$(APXS) $(DEFINES) -c mod_auth_boitho.c ../boithoadClientLib/liboithoaut.a
 
+rpm:
+	rpm -bb mod_auth_boitho.spec
