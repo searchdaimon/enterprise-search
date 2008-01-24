@@ -29,5 +29,10 @@ container* get_synonyms( container *C, container *text );
  */
 void destroy_synonyms( container *C );
 
+/*
+ *	D = Dictionary
+ */
+void expand_query( container *D, query_array *qa );
+
 
 #endif	// _READ_THESAURUS_H_

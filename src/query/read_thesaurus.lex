@@ -16,6 +16,7 @@
 #include "../ds/dpair.h"
 #include "../ds/dvector.h"
 #include "../ds/dmap.h"
+#include "../ds/dset.h"
 #include "../common/utf8-strings.h"
 #include "read_thesaurus.h"
 
@@ -387,5 +388,57 @@ void destroy_synonyms( container *C )
 	}
 
     destroy(C);
+}
+
+
+void expand_query( container *C, query_array *qa )
+{
+    int			x,i;
+
+    for (x=0; x<qa->n; x++)
+	{
+	    if (qa->query[x].operand == QUERY_WORD)
+		{
+		    container		*S = set_container( string_container() );
+		    container		*Q = vector_container( string_container() );
+
+		    convert_to_lowercase((unsigned char*)qa->query[x].s[0]);
+		    vector_pushback(Q, qa->query[x].s[0]);
+		    set_insert(S, qa->query[x].s[0]);
+
+		    container		*stems = get_synonyms(C, Q);
+
+		    for (i=0; i<vector_size(stems); i++)
+			{
+			    container	*R = vector_get(stems,i).C;
+
+			    // Only do singleworded stems and synonyms for now:
+			    if (vector_size(R) == 1)
+				{
+				    set_insert(S, (char*)vector_get(R,0).ptr);
+			        }
+			}
+
+		    set_remove(S, qa->query[x].s[0]);
+
+		    if (set_size(S) > 0)
+			{
+			    qa->query[x].alt_n = set_size(S);
+			    qa->query[x].alt = malloc(sizeof(string_alternative) * qa->query[x].alt_n);
+
+			    iterator	sit = set_begin(S);
+			    for (i=0; sit.valid; sit=set_next(sit),i++)
+				{
+				    qa->query[x].alt[i].n = 1;
+				    qa->query[x].alt[i].s = malloc(sizeof(char*) * qa->query[x].alt[i].n);
+				    qa->query[x].alt[i].s[0] = strdup((char*)set_key(sit).ptr);
+				}
+			}
+
+		    destroy_synonyms(stems);
+		    destroy(S);
+		    destroy(Q);
+		}
+	}
 }
 

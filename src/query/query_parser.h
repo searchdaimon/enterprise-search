@@ -23,8 +23,6 @@
 #ifndef _QUERY_PARSER_H_
 #define _QUERY_PARSER_H_
 
-#include "../ds/dcontainer.h"
-
 #define QUERY_WORD	'+'
 #define QUERY_SUB	'-'
 #define QUERY_PHRASE	'"'
@@ -82,11 +80,6 @@ void copy_query( query_array *dest, query_array *src );
  *	Hent ut "ryddig" query-streng:
  */
 void sprint_query( char *s, int n, query_array *qa );
-
-/*
- *	D = Dictionary
- */
-void expand_query( container *D, query_array *qa );
 
 /*
  *	Hent ut "ryddig" query-streng:
