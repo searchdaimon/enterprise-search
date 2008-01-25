@@ -11,6 +11,7 @@ if ($#ARGV == -1) {
   my $pre = '';
   my $post = '';
   my $initd;
+  my $initdnostart;
   my $verbose;
   my $requires;
   my $sql;
@@ -19,6 +20,7 @@ if ($#ARGV == -1) {
   my $result = GetOptions ("pre=s" 	 => \$pre,    	# rpm pre 
                         "post=s"   	 => \$post,      	# rpm post
                         "initd=s"   	 => \$initd,      	# rpm post
+                        "initdnostart"   	 => \$initdnostart,      	# rpm post
 			"requires=s" 	 => \$requires, 	# rpm requires
 			"sql=s" 	 => \$sql, 		# rpm sql
 			"initdrestart=s" => \$initdrestart, 		# restarting av en init.d tjeneste
@@ -102,10 +104,16 @@ fi
 	#run chkconfig to add it to rc
 	chkconfig --add $initd
 
-	#start it
-	sh /etc/init.d/$initd start
-
 	};
+
+	if (not $initdnostart) {
+		$post .= qq{
+
+		#start it
+		sh /etc/init.d/$initd start
+
+		};
+	}
 }
 if (defined($initdrestart)) {
 	$post .= qq{

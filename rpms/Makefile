@@ -47,8 +47,10 @@ boithobb-bbAutoUpdate_version = 1.0.1
 boithobb-call-home_name = bb-call-home
 boithobb-call-home_version = 0.2
 
+boithobb-database_name = boitho-database
+boithobb-database_version = 0.1
 
-all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome
+all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase
 
 setuidbb:
 	perl rpmmagic.pl --post "chown root \$${DESTDIR}/setuid/initwrapper; chmod +s \$${DESTDIR}/setuid/initwrapper; chown root \$${DESTDIR}/setuid/yumwrapper; chmod +s \$${DESTDIR}/setuid/yumwrapper;chown root \$${DESTDIR}/setuid/configwrite; chmod +s \$${DESTDIR}/setuid/configwrite;" $(boithobb-setuid_name) $(boithobb-setuid_version) $(BOITHOHOME) /home/boitho/boithoTools setuid/initwrapper setuid/configwrite setuid/yumwrapper
@@ -132,6 +134,11 @@ callHome:
 
 	rpm -bb $(boithobb-call-home_name).spec
  
+
+sqldatabase:
+	perl rpmmagic.pl -initd boithodbsetup --initdnostart --post "chkconfig mysqld on" $(boithobb-database_name) $(boithobb-database_version) $(BOITHOHOME) /home/boitho/boithoTools \
+		blackbox/boithobb.sql blackbox/creatuser.sql blackbox/boithodbsetup
+	rpm -bb $(boithobb-database_name).spec
 
 
 base:
