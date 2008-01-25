@@ -20,6 +20,7 @@
 
 #include "../common/reposetory.h"
 #include "../common/bstr.h"
+#include "../acls/acls.h"
 
 #include "bbdocument.h"
 
