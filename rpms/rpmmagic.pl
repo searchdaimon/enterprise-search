@@ -16,6 +16,7 @@ if ($#ARGV == -1) {
   my $requires;
   my $sql;
   my $initdrestart;
+  my $defattr;
 
   my $result = GetOptions ("pre=s" 	 => \$pre,    	# rpm pre 
                         "post=s"   	 => \$post,      	# rpm post
@@ -24,6 +25,7 @@ if ($#ARGV == -1) {
 			"requires=s" 	 => \$requires, 	# rpm requires
 			"sql=s" 	 => \$sql, 		# rpm sql
 			"initdrestart=s" => \$initdrestart, 		# restarting av en init.d tjeneste
+			"defattr=s" => \$defattr,
 			"verbose"  	 => \$verbose);
 
 my $name = shift @ARGV or die("please suply a name");
@@ -216,6 +218,7 @@ $spec =~ s/#requires/$requires/g;
 
 $spec =~ s/#rpm_pre/$pre/g;
 $spec =~ s/#rpm_post/$post/g;
+$spec =~ s/#defattrfile/$defattr/g;
 
 
 

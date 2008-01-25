@@ -67,6 +67,7 @@ DESTDIR=$RPM_BUILD_ROOT#destdir
 %defattr(-,boitho,boitho)
 #/home/boitho/bin/boithoad
 
+#defattrfile
 #fileslist
 
 %doc 

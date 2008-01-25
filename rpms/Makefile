@@ -54,10 +54,10 @@ boitho-meta_name = boitho-meta
 boitho-meta_version = 0.1
 
 
-all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase
+all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta
 
 setuidbb:
-	perl rpmmagic.pl --post "chown root \$${DESTDIR}/setuid/initwrapper; chmod +s \$${DESTDIR}/setuid/initwrapper; chown root \$${DESTDIR}/setuid/yumwrapper; chmod +s \$${DESTDIR}/setuid/yumwrapper;chown root \$${DESTDIR}/setuid/configwrite; chmod +s \$${DESTDIR}/setuid/configwrite;" $(boithobb-setuid_name) $(boithobb-setuid_version) $(BOITHOHOME) /home/boitho/boithoTools setuid/initwrapper setuid/configwrite setuid/yumwrapper
+	perl rpmmagic.pl --defattr "%defattr(4755, root, -) " --post "chown root \$${DESTDIR}/setuid/initwrapper; chmod +s \$${DESTDIR}/setuid/initwrapper; chown root \$${DESTDIR}/setuid/yumwrapper; chmod +s \$${DESTDIR}/setuid/yumwrapper;chown root \$${DESTDIR}/setuid/configwrite; chmod +s \$${DESTDIR}/setuid/configwrite;" $(boithobb-setuid_name) $(boithobb-setuid_version) $(BOITHOHOME) /home/boitho/boithoTools setuid/initwrapper setuid/configwrite setuid/yumwrapper
 
 	rpm -bb $(boithobb-setuid_name).spec
 
@@ -134,7 +134,7 @@ fileFilter:
 
 callHome:
 	perl rpmmagic.pl $(boithobb-call-home_name) $(boithobb-call-home_version) $(BOITHOHOME) /home/boitho/boithoTools \
-	bin/setuidcaller config/bb-phone-home-client.conf
+	config/bb-phone-home-client.conf
 
 	rpm -bb $(boithobb-call-home_name).spec
  
@@ -163,6 +163,9 @@ meta:
 	tar -z -c -f $(boitho-meta_name)-$(boitho-meta_version).tar.gz $(boitho-meta_name)-$(boitho-meta_version)
 	mv $(boitho-meta_name)-$(boitho-meta_version).tar.gz $(HOME)/redhat/SOURCES/
 	rpm -bb $(boitho-meta_name).spec
+
+mod_boitho_auth:
+	rpm -bb boitho_mod_auth.spec
 
 clean:
 	#rm /home/boitho/redhat/SOURCES/boitho-ad-0.2.2.tar.gz $(boitho-ad_name).spec
