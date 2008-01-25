@@ -1,0 +1,209 @@
+.\" -*-nroff-*-
+.\"
+.\" With the exception of the "install-sh" script and the "getopt.c" source,
+.\" this software is released under a BSD-style license. See the LICENSE
+.\" file for details.
+.\"
+.\" Copyright (c) 2003-2006 Brian M. Clapper, bmc <at> clapper <dot> org
+.\"
+.\" $Id: daemonize.1,v 1.1 2008/01/25 14:16:52 boitho Exp $
+.\" ---------------------------------------------------------------------------
+.\"
+.ie n .ds Bu o
+.el   .ds Bu \(bu
+.\"
+.TH daemonize 1 "August 2006" Unix "User Manuals"
+.SH NAME
+.PP
+daemonize \- run a program as a Unix daemon
+.SH SYNOPSIS
+.PP
+.B daemonize
+[-a]
+[-c \fIdirectory\fP]
+[-e \fIstderr\fP]
+[-o \fIstdout\fP]
+[-p \fIpidfile\fP] 
+[-l \fIlockfile\fP]
+[-u \fIuser\fP]
+[-v]
+.I "path [arg] ..."
+.SH DESCRIPTION
+.PP
+.B daemonize
+runs a command as a Unix daemon. 
+As defined in W. Richard Stevens' 1990 book,
+.I "Unix Network Programming"
+(Addison-Wesley, 1990), a daemon is
+\*(lqa process that executes `in the background' (i.e., without an associated
+terminal or login shell) either waiting for some event to occur, or waiting
+to perform some specified task on a periodic basis.\*(rq Upon startup, a
+typical daemon program will:
+.IP \*(Bu 2
+Close all open file descriptors (especially standard input, standard
+output and standard error)
+.IP \*(Bu 2
+Change its working directory to the root filesystem, to ensure that
+it doesn't tie up another filesystem and prevent it from being unmounted
+.IP \*(Bu 2
+Reset its
+.I umask
+value
+.IP \*(Bu 2
+Run in the background (i.e.,
+.IR fork )
+.IP \*(Bu 2
+Disassociate from its process group (usually a shell), to insulate
+itself from signals (such as HUP) sent to the process group
+.IP \*(Bu 2
+Ignore all terminal I/O signals
+.IP \*(Bu 2
+Disassociate from the control terminal (and take steps not to reacquire one)
+.IP \*(Bu 2
+Handle any
+.SM SIGCLD
+signals
+.PP
+Most programs that are designed to be run as daemons do that work for
+themselves. However, you'll occasionally run across one that does not.
+When you must run a daemon program that does not properly make
+itself into a true Unix daemon, you can use 
+.B daemonize
+to force it to run as a true daemon.
+.SH OPTIONS
+.PP
+.IP -a
+Append to the output files, rather than overwriting them (which is the
+default). Only applicable if
+.I -e
+and/or
+.I -o
+are specified.
+.\"
+.IP "-c \fIdirectory\fP"
+Specifies the directory to which to change before running the program.
+Defaults to "/". The choice for this option is important. The file system
+containing the daemon's working directory cannot be unmounted while the
+daemon is running. That's why most daemons are careful to use a working
+directory on the root file system.
+.\"
+.IP "-e \fIstderr\fP"
+Redirect standard error to the specified file, instead of "/dev/null".
+.sp
+.B Warning:
+Be careful where you redirect the output! The file system containing the
+open file cannot be unmounted as long as the file is open. For best
+results, make sure that this output file is on the same file system as
+the daemon's working directory. (See the
+.I -c
+option.)
+.\"
+.IP "-o \fIstdout\fP"
+Redirect standard output to the specified file, instead of "/dev/null".
+.sp
+.B Warning:
+Be careful where you redirect the output! The file system containing the
+open file cannot be unmounted as long as the file is open. For best
+results, make sure that this output file is on the same file system as
+the daemon's working directory. (See the
+.I -c
+option.)
+.\"
+.IP "-p \fIpidfile\fP"
+Causes 
+.B daemonize
+to write the numeric process ID (PID) of the running daemon to the
+specified file. This option is useful when the program being daemonized
+doesn't create its own PID file.
+.IP "-l \fIlockfile\fP"
+Single-instance checking. Causes
+.B daemonize
+to ensure that no more than one instance of the daemon is running by
+placing an exclusive lock on given lockfile. If another process already has
+a lock on the lockfile,
+.I daemonize
+exits.
+.PP
+It 
+.I is 
+possible to use the
+.I pidfile
+as the lock file (e.g., "-p /var/run/foo -l /var/run/foo"),
+though typical daemons use separate files.
+.PP
+NOTE: If the executed program decides to close all file descriptors, 
+the single-instance locking will not work, since the lock depends on an
+open file descriptor. (The operating system kernel removes the lock once
+the process holding the lock closes the file or exits.)
+Normal processes that do not daemonize themselves do not
+usually close all file descriptors.
+.\"
+.IP "-u \fIuser\fP"
+Run the program as the specified user. This option only works if
+.B daemonize
+is invoked by the superuser.
+Note: For obvious reasons, it's very dangerous to install
+.B daemonize
+as a
+.I setuid-to-root
+executable. For that reason, 
+.B daemonize
+will refuse to run if it detects that it has been
+installed that way.
+.\"
+.IP -v
+Cause
+.B daemonize
+to write verbose messages to standard error, telling what it's doing
+as it daemonizes the program.
+.SH NOTES
+.PP
+If the host operating system provides the
+.BR daemon (3)
+library routine, 
+.B daemonize
+will use it. Otherwise,
+.B daemonize
+uses its own version of
+.BR daemon (3).
+This choice is made at compile time. (BSD 4.4-derived operating systems
+tend to provide their own
+.BR daemon (3)
+routine.)
+.PP
+FreeBSD 5.0 introduced a
+.BR daemon (1)
+command that is similar to, but less functional, than
+.BR daemonize .
+.SH LICENSE
+.PP
+This program released under a BSD-style license. For more details,
+consult the LICENSE file accompanying the source distribution, or
+visit "http://www.clapper.org/software/daemonize/LICENSE".
+.SH SEE ALSO
+.PP
+.BR daemon (3),
+.BR setsid (2),
+.BR flock(2)
+.PP
+.B daemonize
+Home Page: http://www.clapper.org/software/daemonize/
+.SH AUTHOR
+.PP
+Brian M. Clapper,
+.I "bmc <at> clapper <dot> org"
+.SH CONTRIBUTORS
+.PP
+Support for the
+.I -e
+and
+.I -o
+options is based on a patch submitted by
+Tim Starling
+.I "(tstarling <at> wikimedia <dot> org)."
+.PP
+Support for the
+.I -l
+option is based on a patch submitted by
+Yakov Lerner
+.I "(iler.ml <at> gmail <dot> com)."

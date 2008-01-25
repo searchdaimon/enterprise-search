@@ -1,0 +1,49 @@
+# Makefile.in for daemonize.
+#
+# $Id: Makefile.in,v 1.1 2008/01/25 14:16:52 boitho Exp $
+#
+# This source code is released under a BSD-style license. See the LICENSE
+# file for details.
+# ---------------------------------------------------------------------------
+
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+INSTALL_PREFIX	= @prefix@
+INSTALL		= @INSTALL@
+INSTALL_SBIN	= $(INSTALL_PREFIX)/sbin
+MISSING_SOURCES	= @LOCAL_MISSING_SOURCES@
+MISSING_OBJECTS = $(MISSING_SOURCES:.c=.o)
+CC		= @CC@
+
+.PHONY: all psman install clean distclean
+
+.c.o:
+	$(CC) -c $< -I.
+
+all: daemonize 
+
+daemonize: daemonize.o getopt.o $(MISSING_OBJECTS)
+	$(CC) -o daemonize daemonize.o getopt.o $(MISSING_OBJECTS)
+
+testdaemon: testdaemon.o
+	$(CC) -o testdaemon testdaemon.o
+ 
+psman: daemonize.ps
+
+daemonize.ps: daemonize.1
+	groff -man daemonize.1 >pstmp
+	ps2ps pstmp daemonize.ps
+	rm pstmp
+
+install:
+	mkdir -p $(INSTALL_SBIN)
+	#runarb: her endret orginalsin til å instalere som boitho. Dette da rpm ikke kan gjøre om retighetene til root under bygging. Da vi ikke bygger pakker som root.
+	#$(INSTALL) -o root -m 0755 daemonize $(INSTALL_SBIN)
+	$(INSTALL) -o boitho -m 0755 daemonize $(INSTALL_SBIN)
+
+clean:
+	rm -rf *.o daemonize testdaemon *.ps
+
+distclean:	clean
+	rm -f config.status config.log config.cache config.h Makefile autom?te.cache
+
