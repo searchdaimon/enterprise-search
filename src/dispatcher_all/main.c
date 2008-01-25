@@ -21,6 +21,7 @@
     #include <errno.h> 
     #include <time.h>
     #include <errno.h>
+    #include <locale.h>
 #include <zlib.h>
     #include "../common/boithohome.h"
     #include "../maincfg/maincfg.h"
