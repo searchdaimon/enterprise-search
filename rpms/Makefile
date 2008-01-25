@@ -141,7 +141,7 @@ base:
 	cp ../blackbox/bbdemo.boitho.com.conf $(boitho-base_name)-$(boitho-base_version)
 
 	tar -z -c -f $(boitho-base_name)-$(boitho-base_version).tar.gz $(boitho-base_name)-$(boitho-base_version)
-	mv $(boitho-base_name)-$(boitho-base_version).tar.gz /home/boitho/redhat/SOURCES/	
+	mv $(boitho-base_name)-$(boitho-base_version).tar.gz $(HOME)/redhat/SOURCES/	
 
 	rpm -bb $(boitho-base_name).spec
 
