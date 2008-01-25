@@ -155,7 +155,7 @@ base:
 clean:
 	#rm /home/boitho/redhat/SOURCES/boitho-ad-0.2.2.tar.gz $(boitho-ad_name).spec
 	#sletter buggde pakker
-	rm -f /home/boitho/redhat/RPMS/i386/boitho*.rpm
+	rm -f $(HOME)/redhat/RPMS/i386/boitho*.rpm
 
 install:
 	cp --verbose /home/boitho/redhat/RPMS/i386/boitho*.rpm ~/FedoraRepository/boitho/updates/4/i386/
