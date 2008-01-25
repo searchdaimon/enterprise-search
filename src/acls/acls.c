@@ -168,6 +168,7 @@ int userToSubname_getsubnamesAsString(struct userToSubnameDbFormat *userToSubnam
 
 }
 
+
 int userToSubname_add (struct userToSubnameDbFormat *userToSubnameDb,char username[], char subname[]) {
         DB dbpArray;
 
@@ -225,9 +226,35 @@ int userToSubname_deletecol(struct userToSubnameDbFormat *userToSubnameDb,char s
 
 	printf("userToSubname_deletecol: deleting \"%s\"\n",subname);
 
+	/* Get a cursor */
+	(*userToSubnameDb).dbp->cursor((*userToSubnameDb).dbp, NULL, &cursorp, 0);
+
+	//resetter minne
+        memset(&key, 0, sizeof(DBT));
+        memset(&data, 0, sizeof(DBT));
+
+	/* Iterate over the database, retrieving each record in turn. */
+	while ((ret = cursorp->c_get(cursorp, &key, &data, DB_NEXT)) == 0) {
+    	    /* Do interesting things with the DBTs here. */
+	    if (!strcmp(subname, data.data))
+		{
+		    printf("Deleting %s->%s (ret=%i)\n", (char*)key.data, (char*)data.data, cursorp->c_del(cursorp, 0));
+		}
+	    else
+		{
+		    printf("Keeping %s->%s\n", (char*)key.data, (char*)data.data);
+		}
+	}
+
+	/* Close the cursor */
+	if (cursorp != NULL) {
+		cursorp->c_close(cursorp);
+	}
+
 	return 1;
 
 }
+
 
 #endif
 

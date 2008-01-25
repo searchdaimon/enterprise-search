@@ -1,4 +1,8 @@
 
+/**
+ *	CHANGELOG:	25.01.2008	Magnus	La til userToSubname_deletecol() for å slette collections.
+ */
+
 #ifndef _ACLS__H_
 #define _ACLS__H_
 
