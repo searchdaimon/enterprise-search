@@ -56,6 +56,8 @@ echo "Include /etc/httpd/conf/bbdemo.boitho.com.conf" >> /etc/httpd/conf/httpd.c
 %defattr(-,boitho,boitho)
 #/home/boitho/bin/boithoad
 /etc/httpd/conf/bbdemo.boitho.com.conf
+# XXX: http://docs.fedoraproject.org/drafts/rpm-guide-en/ch-packaging-guidelines.html#id2994388
+# Skal vi lage en dummy-fil i hver av mappene i stedet?
 /home/boitho/logs/
 /home/boitho/public_html/
 /home/boitho/cgi-bin/
