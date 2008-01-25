@@ -218,5 +218,16 @@ int userToSubname_close (struct userToSubnameDbFormat *userToSubnameDb) {
         //(*dbpp) = (int *)dbp;
 }
 
+int userToSubname_deletecol(struct userToSubnameDbFormat *userToSubnameDb,char subname[]) {
+	DBC *cursorp;
+	DBT key, data;
+	int ret;
+
+	printf("userToSubname_deletecol: deleting \"%s\"\n",subname);
+
+	return 1;
+
+}
+
 #endif
 
