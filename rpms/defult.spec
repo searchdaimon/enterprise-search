@@ -49,6 +49,7 @@ echo "DESTDIR: " $DESTDIR
 #rpm_pre
 
 %post
+DESTDIR=$RPM_BUILD_ROOT#destdir
 #The %post script executes after the package has been installed. One of the most popular reasons a %post script is 
 #needed is to run ldconfig to update the list of available shared libraries after a new one has been installed. Of 
 #course, other functions can be performed in a %post script. For example, packages that install shells use the 
