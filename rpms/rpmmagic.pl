@@ -14,13 +14,15 @@ if ($#ARGV == -1) {
   my $verbose;
   my $requires;
   my $sql;
+  my $initdrestart;
 
-  my $result = GetOptions ("pre=s" 	=> \$pre,    	# rpm pre 
-                        "post=s"   	=> \$post,      	# rpm post
-                        "initd=s"   	=> \$initd,      	# rpm post
-			"requires=s" 	=> \$requires, 	# rpm requires
-			"sql=s" 	=> \$sql, 		# rpm sql
-			"verbose"  	=> \$verbose);
+  my $result = GetOptions ("pre=s" 	 => \$pre,    	# rpm pre 
+                        "post=s"   	 => \$post,      	# rpm post
+                        "initd=s"   	 => \$initd,      	# rpm post
+			"requires=s" 	 => \$requires, 	# rpm requires
+			"sql=s" 	 => \$sql, 		# rpm sql
+			"initdrestart=s" => \$initdrestart, 		# restarting av en init.d tjeneste
+			"verbose"  	 => \$verbose);
 
 my $name = shift @ARGV or die("please suply a name");
 my $version = shift @ARGV or die("please suply a version");
@@ -105,11 +107,21 @@ fi
 
 	};
 }
+if (defined($initdrestart)) {
+	$post .= qq{
+
+	#start it
+	sh /etc/init.d/$initdrestart restart
+
+	};
+
+}
+
 if (defined($sql)) {
 	my $filedest = $dest . '/' . $sql;
 
 
-	$post .= "mysql boithobb < $filedest\n";
+	$post .= "mysql --force boithobb < $filedest\n";
 }
 
 for my $i (@files) {
@@ -164,7 +176,14 @@ system("mv $tarfile ~/redhat/SOURCES/");
 
 #prefikser
 if ($requires ne '') {
-	$requires = "requires: " . $requires;
+	my $tmp = '';
+	foreach my $i (split(/ /,$requires)) {
+		$i =~ s/>=/ >= /g;
+		$i =~ s/==/ == /g;
+		$tmp .= "requires: " . $i . "\n";
+	}
+	$requires = $tmp;
+	#$requires = "requires: " . $requires;
 }
 
 #lager spec file
