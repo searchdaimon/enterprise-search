@@ -1,13 +1,13 @@
-drop table brukere;
-drop table session_id;
-drop table connectors;
-drop table connectorsCustomField;
-drop table connectorsFor;
-drop table dataSources;
-drop table groups;
-drop table groupMembership;
-drop table groupPermissions;
-drop table dataSourcesCustomField;
+drop table if exists brukere;
+drop table if exists session_id;
+drop table if exists connectors;
+drop table if exists connectorsCustomField;
+drop table if exists connectorsFor;
+drop table if exists dataSources;
+drop table if exists groups;
+drop table if exists groupMembership;
+drop table if exists groupPermissions;
+drop table if exists dataSourcesCustomField;
 --
 -- Table structure for table `brukere`
 --
