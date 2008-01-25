@@ -33,6 +33,7 @@ install -D -m 755 bbdemo.boitho.com.conf $RPM_BUILD_ROOT/etc/httpd/conf/bbdemo.b
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/logs/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/public_html/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/cgi-bin/
+mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/config/
 
 %clean
 
@@ -58,9 +59,10 @@ echo "Include /etc/httpd/conf/bbdemo.boitho.com.conf" >> /etc/httpd/conf/httpd.c
 /etc/httpd/conf/bbdemo.boitho.com.conf
 # XXX: http://docs.fedoraproject.org/drafts/rpm-guide-en/ch-packaging-guidelines.html#id2994388
 # Skal vi lage en dummy-fil i hver av mappene i stedet?
-/home/boitho/logs/
-/home/boitho/public_html/
-/home/boitho/cgi-bin/
+/home/boitho/boithoTools/logs/
+/home/boitho/boithoTools/public_html/
+/home/boitho/boithoTools/cgi-bin/
+/home/boitho/boithoTools/config/
 
 %doc 
 
