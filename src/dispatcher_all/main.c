@@ -2591,10 +2591,14 @@ int main(int argc, char *argv[])
 
 
 				#ifdef BLACK_BOKS
-					char timebuf[26];
+					char timebuf[64];
 					printf("\t<TIME_UNIX>%u</TIME_UNIX>\n",Sider[i].DocumentIndex.CrawleDato);
-					ctime_r((time_t *)&Sider[i].DocumentIndex.CrawleDato,timebuf);
-					timebuf[24] = '\0';
+					// Magnus: Konverterer til locale istedet:
+//					ctime_r((time_t *)&Sider[i].DocumentIndex.CrawleDato,timebuf);
+//					timebuf[24] = '\0';
+				        setlocale(LC_TIME, "no_NO.utf8");
+					strftime(timebuf, 63, "%A %e. %b %Y %k:%M", localtime((time_t *)&Sider[i].DocumentIndex.CrawleDato));
+					timebuf[64] = '\0';
 					printf("\t<TIME_ISO>%s</TIME_ISO>\n",timebuf);
 
 
