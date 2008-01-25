@@ -57,7 +57,7 @@ boitho-meta_version = 0.1
 all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta
 
 setuidbb:
-	perl rpmmagic.pl --defattr "%defattr(4755, root, -) " --post "chown root \$${DESTDIR}/setuid/initwrapper; chmod +s \$${DESTDIR}/setuid/initwrapper; chown root \$${DESTDIR}/setuid/yumwrapper; chmod +s \$${DESTDIR}/setuid/yumwrapper;chown root \$${DESTDIR}/setuid/configwrite; chmod +s \$${DESTDIR}/setuid/configwrite;" $(boithobb-setuid_name) $(boithobb-setuid_version) $(BOITHOHOME) /home/boitho/boithoTools setuid/initwrapper setuid/configwrite setuid/yumwrapper
+	perl rpmmagic.pl --defattr "%defattr(4755, root, -)" $(boithobb-setuid_name) $(boithobb-setuid_version) $(BOITHOHOME) /home/boitho/boithoTools setuid/initwrapper setuid/configwrite setuid/yumwrapper setuid/yumupdate
 
 	rpm -bb $(boithobb-setuid_name).spec
 
