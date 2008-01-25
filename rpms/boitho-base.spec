@@ -6,13 +6,13 @@ Summary: Boitho base system. Creates user and other things that is common for al
 Name: %{name}
 Version: %{version}
 Release: %{release}
-Source: /home/boitho/redhat/SOURCES/%{name}-%{version}.tar.gz
+Source: %{_sourcedir}/%{name}-%{version}.tar.gz
 Vendor: Search Daimon AS
 URL: http://www.searchdaimon.com/
 License: Commercial
 Group: Boitho/authentication
 Prefix: %{_prefix}
-BuildRoot: /var/tmp/%{name}-buildroot
+BuildRoot: %{_tmppath}/%{name}-buildroot
 Requires: /usr/sbin/useradd
 
 #Turn off automatic dependency generation
