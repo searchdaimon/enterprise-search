@@ -527,7 +527,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		printf("filconvertetfile_out_txt: \"%s\"\n",filconvertetfile_out_txt);
 
 		if ((fh = fopen(filconvertetfile_out_txt,"rb")) == NULL) {
-			printf("cant open out file \"%s\"\n",filconvertetfile_out_txt);
+			printf("can't open out file \"%s\"\n",filconvertetfile_out_txt);
 			perror(filconvertetfile_out_txt);
 			(*documentfinishedbufsize) = 0;
 			free(fileFilterOrginal);
@@ -572,7 +572,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		FILE *fh;
 		struct stat inode; 
 		if ((fh = fopen(filconvertetfile_out_html,"rb")) == NULL) {
-			printf("cant open out file \"%s\"\n",filconvertetfile_out_html);
+			printf("can't open out file \"%s\"\n",filconvertetfile_out_html);
 			perror(filconvertetfile_out_html);
 			(*documentfinishedbufsize) = 0;
 			unlink(filconvertetfile_real);
@@ -883,31 +883,12 @@ int bbdocument_deletecoll(char collection[]) {
 		GetFilPathForLot(FilePath,LotNr,collection);
 
 		fclose(fh);
-/*
-		
-		//toDo: Denne kan vere farlig. Man kan vel lage FilePath verdier som kan skade? 
-		sprintf(command,"rm -rf \"%s\"",FilePath);
-		printf("runing: %s\n",command);
 
-		system(command);
-*/
 		rrmdir(FilePath);
 
 		++LotNr;
 	}
 	
-	/*
-	//sletter iindexer
-	for (LotNr=0;LotNr<64;LotNr++) {
-		GetFilPathForLot(FilePath,LotNr,collection);
-
-		sprintf(command,"rm -rf \"%s\"",FilePath);
-
-		printf("runing: %s\n",command);
-
-		//system(command);
-	}
-	*/
 
 	for (i=0;i<64;i++) {
 		GetFilePathForIindex(FilePath,IndexPath,i,"Main","aa",collection);
@@ -922,18 +903,18 @@ int bbdocument_deletecoll(char collection[]) {
 		
 	}
 
-	/*
-	//temp: Hardkoder iinde slettingen midlertidig
-	//kan dette Dagures?
-	for (LotNr=0;LotNr<64;LotNr++) {
-		sprintf(command,"rm -rf /home/boitho/cvstestdata/lot/%i/iindex/%s",LotNr,collection);
 
-		printf("runing: %s\n",command);
+	//sletter i userToSubname.db
+        struct userToSubnameDbFormat userToSubnameDb;
 
-		system(command);
-	}
-	*/
+        if (!userToSubname_open(&userToSubnameDb,'r')) {
+                printf("can't open users.db\n");
+        }
+        else {
+		userToSubname_deletecol(&userToSubnameDb,collection);
 
+                userToSubname_close(&userToSubnameDb);
+        }
 }
 
 
