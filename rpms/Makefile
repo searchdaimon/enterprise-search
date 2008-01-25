@@ -50,6 +50,10 @@ boithobb-call-home_version = 0.2
 boithobb-database_name = boitho-database
 boithobb-database_version = 0.1
 
+boitho-meta_name = boitho-meta
+boitho-meta_version = 0.1
+
+
 all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase
 
 setuidbb:
@@ -151,6 +155,14 @@ base:
 	mv $(boitho-base_name)-$(boitho-base_version).tar.gz $(HOME)/redhat/SOURCES/	
 
 	rpm -bb $(boitho-base_name).spec
+
+meta:
+	rm -rf $(boitho-meta_name)-$(boitho-meta_version)
+	mkdir $(boitho-meta_name)-$(boitho-meta_version)
+	echo boitho-meta > $(boitho-meta_name)-$(boitho-meta_version)/boitho-meta
+	tar -z -c -f $(boitho-meta_name)-$(boitho-meta_version).tar.gz $(boitho-meta_name)-$(boitho-meta_version)
+	mv $(boitho-meta_name)-$(boitho-meta_version).tar.gz $(HOME)/redhat/SOURCES/
+	rpm -bb $(boitho-meta_name).spec
 
 clean:
 	#rm /home/boitho/redhat/SOURCES/boitho-ad-0.2.2.tar.gz $(boitho-ad_name).spec

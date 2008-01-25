@@ -12,7 +12,8 @@ URL: http://www.searchdaimon.com/
 License: Commercial
 Group: Boitho/authentication
 Prefix: %{_prefix}
-BuildRoot: /var/tmp/%{name}-buildroot
+BuildRoot: %{_tmppath}/%{name}-buildroot
+Provides: %{name}
 
 
 #Turn off automatic dependency generation
