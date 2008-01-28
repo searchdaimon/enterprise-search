@@ -16,7 +16,7 @@ BuildRoot: %{_tmppath}/%{name}-buildroot
 Requires: boitho-ad boitho-searchdbb boitho-crawlManager boitho-bbdn boitho-fileFilter
 Requires: boitho-base boitho-bbadmin boitho-everrun boitho-infoquery boitho-iindex boitho-webclient
 Requires: boithobb-setuid boithobb-bbadminhtaccess boithobb-crawl_watch bbAutoUpdate bb-call-home
-Requires: boitho-database daemonize mod_auth_boitho tlcd-gt14
+Requires: boitho-database daemonize mod_auth_boitho tlcd-gt14 boitho-phonehome
 
 
 #Turn off automatic dependency generation

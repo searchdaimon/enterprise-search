@@ -53,8 +53,12 @@ boithobb-database_version = 0.1
 boitho-meta_name = boitho-meta
 boitho-meta_version = 0.1
 
+boitho-phonehome_name = boitho-phonehome
+boitho-phonehome_version = 0.1
 
-all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta
+
+
+all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta phonehome
 
 setuidbb:
 	perl rpmmagic.pl --defattr "%defattr(4755, root, -)" $(boithobb-setuid_name) $(boithobb-setuid_version) $(BOITHOHOME) /home/boitho/boithoTools setuid/initwrapper setuid/configwrite setuid/yumwrapper setuid/yumupdate
@@ -163,6 +167,19 @@ meta:
 	tar -z -c -f $(boitho-meta_name)-$(boitho-meta_version).tar.gz $(boitho-meta_name)-$(boitho-meta_version)
 	mv $(boitho-meta_name)-$(boitho-meta_version).tar.gz $(HOME)/redhat/SOURCES/
 	rpm -bb $(boitho-meta_name).spec
+
+
+phonehome:
+	rm -rf $(boitho-phonehome_name)-$(boitho-phonehome_version)
+	mkdir $(boitho-phonehome_name)-$(boitho-phonehome_version)
+	cp $(BOITHOHOME)/bin/bb-client.pl $(boitho-phonehome_name)-$(boitho-phonehome_version)
+	cp $(BOITHOHOME)/config/bb-phone-home-client.conf $(boitho-phonehome_name)-$(boitho-phonehome_version)
+	cp $(BOITHOHOME)/phonehome/id_rsa $(boitho-phonehome_name)-$(boitho-phonehome_version)
+	cp $(BOITHOHOME)/phonehome/ssh_config $(boitho-phonehome_name)-$(boitho-phonehome_version)
+	tar -z -c -f $(boitho-phonehome_name)-$(boitho-phonehome_version).tar.gz $(boitho-phonehome_name)-$(boitho-phonehome_version)
+	mv $(boitho-phonehome_name)-$(boitho-phonehome_version).tar.gz $(HOME)/redhat/SOURCES/
+	rpm -bb $(boitho-phonehome_name).spec
+
 
 mod_boitho_auth:
 	rpm -bb boitho_mod_auth.spec
