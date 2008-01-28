@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <err.h>
 
@@ -17,17 +18,14 @@
 #define EXEC_USER "phonehome"
 #endif
 
-#ifndef BBCLIENT
-#error "Please tell me where to find the bb phone home client"
-#endif
-
 #define __unused __attribute__((__unused__))
 
 int
 main(int argc, char **argv, char **envp __unused)
 {
 	char *perlprog = "/usr/local/bin/perl";
-	char *program = BBCLIENT;
+	char program[1024];
+	char *boithohome;
 	int ret;
 	struct passwd *pwd;
 	uid_t webuid, execuid;
@@ -67,6 +65,12 @@ main(int argc, char **argv, char **envp __unused)
 		return 98;
 	}
 
+	boithohome = getenv("BOITHOHOME");
+	if (boithohome == NULL) {
+		err(1, "getenv(BOITHOHOME)");
+		return 105;
+	}
+	snprintf(program, sizeof(program), "%s/bin/bb-client.pl", boithohome);
 
 	if (setuid(0) != 0) {
 		perror("Could not setuid(0)");
@@ -94,7 +98,6 @@ main(int argc, char **argv, char **envp __unused)
 	}
 
 	perror("Unable to exec program");
-	
 
 	return 100;
 }
