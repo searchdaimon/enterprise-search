@@ -493,6 +493,12 @@ dispatcher_allbb: src/dispatcher_all/main.c
 
 	$(CC) $(dispatcherCOMAND) $(MYSQL) -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE)
 
+dispatcher_all247: src/dispatcher_all/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(dispatcherCOMAND) $(MYSQL) -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) -D_24SEVENOFFICE
+
 
 dispatcher: src/dispatcher/main.c
 	@echo ""
