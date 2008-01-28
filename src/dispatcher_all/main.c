@@ -789,7 +789,7 @@ cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, stru
 
 
 void
-init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg)
+init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype)
 {
 	int res;
 	config_setting_t *cfgarray;
@@ -810,6 +810,13 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg)
 	else {
 		strscpy(QueryData->query,cgi_getentrystr("query"),sizeof(QueryData->query) -1);
 	}
+
+        if (cgi_getentrystr("noDoctype") == NULL) {
+                   (*noDoctype) = 0;
+        }
+        else {
+                   (*noDoctype) = 1;
+        }
 
 
 	if (cgi_getentrystr("search_bruker") == NULL) {
@@ -1325,6 +1332,8 @@ int main(int argc, char *argv[])
 	struct SiderFormat *Sider;
 	char colchecked[20];
 
+	int noDoctype = 0;
+
         #define salt "sdjbjolQdfgkkf"
         char vidbuf[64];
         time_t etime;
@@ -1705,7 +1714,7 @@ int main(int argc, char *argv[])
 		        //printf("Content-type: text/xml%c%c\n",13,10);
 		#endif
 
-		init_cgi(&QueryData, &cfg);
+		init_cgi(&QueryData, &cfg, &noDoctype);
 		if (QueryData.rankUrl[0] == '\0')
 			getRank = 0;
 		else
@@ -2259,7 +2268,9 @@ int main(int argc, char *argv[])
 	else {
         //printf("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?> \n");
         printf("<?xml version=\"1.0\" encoding=\"UTF-8\" ?> \n");
-        printf("<!DOCTYPE family SYSTEM \"http://www.boitho.com/xml/search.dtd\"> \n");
+        if (!noDoctype) {
+	        printf("<!DOCTYPE family SYSTEM \"http://www.boitho.com/xml/search.dtd\"> \n");
+        }
 
         printf("<SEARCH>\n");   
 	//får rare svar fra hilite. Dropper å bruke den får nå
