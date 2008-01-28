@@ -46,6 +46,9 @@ mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/config/
 # and set executable bit on boitho's home
 chmod o+x /home/boitho/
 
+mkdir -p /home/boitho/boithoTools/var
+chown boitho /home/boitho/boithoTools/var
+
 
 %post
 #including bbdemo.boitho.com.conf in httpd.conf 

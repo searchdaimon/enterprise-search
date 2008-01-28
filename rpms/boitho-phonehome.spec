@@ -50,13 +50,14 @@ cp ssh_config $SSHDIR/config
 
 %pre
 
-%post
-
 /usr/sbin/useradd -s /bin/bash -d /home/phonehome -m "phonehome"
 mkdir -p /home/phonehome/.ssh
 chown phonehome /home/phonehome/.ssh
 chmod 700 /home/phonehome/.ssh
 chown phonehome /home/phonehome/.ssh/*
+
+%post
+
 
 
 %files

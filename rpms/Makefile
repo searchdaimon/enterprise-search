@@ -3,7 +3,7 @@ boitho-ad_name = boitho-ad
 boitho-ad_version = 0.3.1
 
 boitho-searchdbb_name = boitho-searchdbb
-boitho-searchdbb_version = 5.5.2
+boitho-searchdbb_version = 5.5.6
 
 boitho-crawlManager_name = boitho-crawlManager
 boitho-crawlManager_version = 1.4.4
