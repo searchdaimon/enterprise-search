@@ -68,10 +68,14 @@ int main(int argc, char *argv[]) {
 
 	printf("Content-type: text/html\n\n");
 
+	//runarb: 20 nov 2007: midlertidig fiks på at vi trenger bilde størelsen også
+	//DIRead (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[])
+	struct DocumentIndexFormat DocumentIndexPost;
+	DocumentIndexPost.imageSize = 0;
 
 	//må legge til størelsen på hedderen også
 
-	htmlBufSize = (iSize * 10);
+	htmlBufSize = (iSize * 30);
 	if ((htmlBuf = malloc(htmlBufSize)) == NULL) {
 		printf("can't malloc space for html buff.\n");
 		exit(1);		
@@ -81,7 +85,7 @@ int main(int argc, char *argv[]) {
 	// (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,
 	// (*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&aclbuffer
 
-	if (rReadHtml(htmlBuf,&htmlBufSize,iPointer,iSize,iDocID,subname,&ReposetoryHeader,&aclbuffer_allow,&aclbuffer_deny) != 1) {
+	if (rReadHtml(htmlBuf,&htmlBufSize,iPointer,iSize,iDocID,subname,&ReposetoryHeader,&aclbuffer_allow,&aclbuffer_deny,DocumentIndexPost.imageSize) != 1) {
 
 		printf("can't read cache file.\n");
 
