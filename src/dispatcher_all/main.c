@@ -840,7 +840,7 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg)
 	}
 
 
-#ifdef BLACK_BOKS
+#if defined(BLACK_BOKS) && !defined(_24SEVENOFFICE)
 	if (cgi_getentrystr("tkey") == NULL) {
 		die(2,"Did'n receive any tkey.");
 	}
