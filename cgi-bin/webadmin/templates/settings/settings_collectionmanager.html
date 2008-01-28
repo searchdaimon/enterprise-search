@@ -1,5 +1,5 @@
-[% INCLUDE 'header.html' title="Settings" %]
-[% PROCESS 'settings_tabs.html' selected="Collection Manager" %]
+[% INCLUDE 'header.html' title="Collection manager" %]
+[% PROCESS 'settings_tabs.html' selected="Collection manager" %]
 [% USE date %]
 
 <div id="settings">
@@ -56,7 +56,7 @@
             
 	
 
-    <h3>Garbage Collection</h3>
+    <h3>Garbage collection</h3>
         [% IF gc_updated %]
             [% WRAPPER 'template_message.html' type="success" %]
                 Garbage collection settings have been updated.

@@ -100,8 +100,7 @@ elsif (defined($state->{'submit_edit'})) {
 	}
 	else {
 		# We're done. Back to default page.
-		($vars, $template_file) = 
-			$overview->list_collections($vars);
+		$template_file = $overview->list_collections($vars);
 	}
 }
 
@@ -111,7 +110,7 @@ elsif (defined($state->{'confirm_delete'})) {
 	my $id = $state->{'id'};
 	$vars = $overview->delete_collection_confirmed($vars, $id);
 	
-	($vars, $template_file) = $overview->list_collections($vars);
+	$template_file = $overview->list_collections($vars);
 }
 
 elsif (defined $state->{'fetch_inner'}) {
@@ -131,4 +130,4 @@ print $cgi->header(-type => 'text/html', -expires => '-1h');
 my $template = Template->new(
 	{INCLUDE_PATH => './templates:./templates/overview:./templates/common',});
 $template->process($template_file, $vars)
-        or croak $template->error();
+        or croak $template->error(), "\n";
