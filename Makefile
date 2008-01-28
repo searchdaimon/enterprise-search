@@ -111,6 +111,7 @@ setuidcaller:
 
 	(cd src/bb-phone-home/; make)
 	cp src/bb-phone-home/bb-phone-home-client.conf config
+	cp src/bb-phone-home/bb-client.pl bin/
 	@if [ `id -u` == 0 ]; then \
 		cp -f src/bb-phone-home/setuidcaller bin/; \
 		chown root bin/setuidcaller; \
@@ -969,7 +970,7 @@ crawlManager: src/crawlManager/main.c
 	@echo "$@:"
 
 	#22 feb 2007, fjerner -static
-	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c src/3pLibs/keyValueHash/hashtable.c -o bin/crawlManager /home/eirik/.root/lib/libmemcached.a $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_PATHACCESS_CACHE -DWITH_CONFIG
+	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c src/3pLibs/keyValueHash/hashtable.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG
 
 
 crawlSMB: src/crawlSMB/main.c
