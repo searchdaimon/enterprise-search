@@ -85,6 +85,9 @@ all:
 
 bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest
 
+24sevenoffice:
+	env 24SEVENOFFICE=-D_24SEVENOFFICE make bb
+
 webadmindep: YumWrapper NetConfig InitServices setuidcaller
 
 tempFikes: IndexerLot_fik32bitbug DIconvert
@@ -107,6 +110,7 @@ setuidcaller:
 	@echo "$@:"
 
 	(cd src/bb-phone-home/; make)
+	cp src/bb-phone-home/bb-phone-home-client.conf config
 	@if [ `id -u` == 0 ]; then \
 		cp -f src/bb-phone-home/setuidcaller bin/; \
 		chown root bin/setuidcaller; \
@@ -443,7 +447,7 @@ searchd : src/searchkernel/searchd.c
 searchdbb : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/getfiletype.o src/spelling/spelling.c src/ds/libds.a -DIIACL /home/eirik/.root/lib/libaspell.a /usr/local/lib/libstdc++.a -ldl -I/home/eirik/.root/include
+	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/getfiletype.o src/spelling/spelling.c src/ds/libds.a -DIIACL /home/eirik/.root/lib/libaspell.a /usr/local/lib/libstdc++.a -ldl -I/home/eirik/.root/include $(24SEVENOFFICE)
 
 mergeUserToSubname: src/mergeUserToSubname/main.c
 	@echo ""
@@ -487,7 +491,7 @@ dispatcher_allbb: src/dispatcher_all/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) $(MYSQL) -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG)
+	$(CC) $(dispatcherCOMAND) $(MYSQL) -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE)
 
 
 dispatcher: src/dispatcher/main.c
