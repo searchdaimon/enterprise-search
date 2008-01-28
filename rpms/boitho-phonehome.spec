@@ -13,7 +13,7 @@ License: Commercial
 Group: Boitho/admin
 Prefix: %{_prefix}
 BuildRoot: %{_tmppath}/%{name}-buildroot
-Requires: boitho-base
+Provides: boitho-phonehome
 
 %description
 
