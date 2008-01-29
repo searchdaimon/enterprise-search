@@ -2942,11 +2942,29 @@ int main(int argc, char *argv[])
 			//escaper queryet rikit
 			mysql_real_escape_string(&demo_db,queryEscaped,QueryData.query,strlen(QueryData.query));
 
+			// Magnus: Kolonnene 'spot' og 'piDocID' finnes ikke. Har fjernet dem.
+/*
 			#warning runarb: har gjort om på insert komandone, utestet
 
 			//logger til mysql
 			sprintf(query,"insert DELAYED into search_logg (id,tid,query,search_bruker,treff,search_tid,ip_adresse,side,betaler_keywords_treff,\
 				HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang,spot,piDocID) \
+				values(NULL,NOW(),\"%s\",\"%s\",\"%i\",\"%f\",\"%s\",\"1\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\")",
+				queryEscaped,
+				QueryData.search_user,
+				FinalSiderHeder.TotaltTreff,
+				FinalSiderHeder.total_usecs,
+				QueryData.userip,
+				totlaAds,
+				QueryData.HTTP_ACCEPT_LANGUAGE,
+				QueryData.HTTP_USER_AGENT,
+				QueryData.HTTP_REFERER,
+				QueryData.GeoIPcontry
+			);
+*/
+			//logger til mysql
+			sprintf(query,"insert DELAYED into search_logg (id,tid,query,search_bruker,treff,search_tid,ip_adresse,side,betaler_keywords_treff,\
+				HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang) \
 				values(NULL,NOW(),\"%s\",\"%s\",\"%i\",\"%f\",\"%s\",\"1\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\")",
 				queryEscaped,
 				QueryData.search_user,
