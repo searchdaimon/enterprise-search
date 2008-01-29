@@ -34,6 +34,7 @@ mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/logs/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/public_html/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/cgi-bin/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/config/
+mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/var/
 
 %clean
 
@@ -67,6 +68,7 @@ echo "Include /etc/httpd/conf/bbdemo.boitho.com.conf" >> /etc/httpd/conf/httpd.c
 /home/boitho/boithoTools/public_html/
 /home/boitho/boithoTools/cgi-bin/
 /home/boitho/boithoTools/config/
+/home/boitho/boithoTools/var/
 
 %doc 
 

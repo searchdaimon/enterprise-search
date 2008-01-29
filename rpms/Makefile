@@ -27,7 +27,7 @@ boitho-infoquery_name = boitho-infoquery
 boitho-infoquery_version = 2.0.8
 
 boitho-iindex_name = boitho-iindex
-boitho-iindex_version = 2.0.9
+boitho-iindex_version = 2.0.15
 
 boitho-webclient_name = boitho-webclient
 boitho-webclient_version = 6.0.18
@@ -61,7 +61,7 @@ boitho-phonehome_version = 0.1
 all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta phonehome
 
 setuidbb:
-	perl rpmmagic.pl --defattr "%defattr(4755, root, -)" $(boithobb-setuid_name) $(boithobb-setuid_version) $(BOITHOHOME) /home/boitho/boithoTools setuid/initwrapper setuid/configwrite setuid/yumwrapper setuid/yumupdate
+	perl rpmmagic.pl --defattr "%defattr(4755, root, -)" $(boithobb-setuid_name) $(boithobb-setuid_version) $(BOITHOHOME) /home/boitho/boithoTools setuid/initwrapper setuid/configwrite setuid/yumwrapper setuid/yumupdate bin/setuidcaller
 
 	rpm -bb $(boithobb-setuid_name).spec
 
@@ -72,7 +72,7 @@ webclient:
 	rpm -bb $(boitho-webclient_name).spec
 
 iindex:
-	perl rpmmagic.pl $(boitho-iindex_name) $(boitho-iindex_version) $(BOITHOHOME) /home/boitho/boithoTools bin/IndexerLotbb bin/LotInvertetIndexMaker2 bin/mergeUserToSubname bin/mergeIIndex bin/readIIndex perl/cleanLots.pl
+	perl rpmmagic.pl $(boitho-iindex_name) $(boitho-iindex_version) $(BOITHOHOME) /home/boitho/boithoTools bin/IndexerLotbb bin/LotInvertetIndexMaker2 bin/mergeUserToSubname bin/mergeIIndex bin/readIIndex perl/cleanLots.pl Modules/Boitho/Lot.pm
 
 	rpm -bb $(boitho-iindex_name).spec
 

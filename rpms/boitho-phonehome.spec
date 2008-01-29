@@ -54,7 +54,7 @@ cp ssh_config $SSHDIR/config
 mkdir -p /home/phonehome/.ssh
 chown phonehome /home/phonehome/.ssh
 chmod 700 /home/phonehome/.ssh
-chown phonehome /home/phonehome/.ssh/*
+#chown phonehome /home/phonehome/.ssh/*
 
 %post
 
