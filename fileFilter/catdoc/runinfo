@@ -4,12 +4,12 @@ outputformat: text
 outputtype: stdio
 
 documentstype: xls
-command: /usr/bin/xls2csv #file
+command: /usr/bin/xls2csv -c " " #file
 outputformat: text
 outputtype: stdio
 
-documentstype: ppt
-command: ./catppt #file
-outputformat: text
-outputtype: stdio
+#documentstype: ppt
+#command: ./catppt #file
+#outputformat: text
+#outputtype: stdio
 
