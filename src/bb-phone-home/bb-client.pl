@@ -4,16 +4,35 @@ use strict;
 use warnings;
 
 use IO::Socket;
-use Config::General qw(ParseConfig);
+use AppConfig qw(:expand :argcount);
 use Data::Dumper;
 use LWP;
 use File::stat;
 
 $ENV{PATH} = "/bin:/usr/bin:/usr/local/bin";
 
-my %config = ParseConfig($ENV{'BOITHOHOME'} . "/config/bb-phone-home-client.conf");
+my $config = AppConfig->new({
+	CASE   => 1,
+	GLOBAL => {
+		DEFAULT  => "<unset>",
+		ARGCOUNT => ARGCOUNT_ONE,
+	},
+});
 
-my $name = $config{'clientname'};
+$config->define('clientname');
+$config->define('localsshhost');
+$config->define('localsshport');
+$config->define('sshhost');
+$config->define('sshuser');
+$config->define('sshlog');
+$config->define('sshpidfile');
+$config->define('forwardport_http');
+$config->define('sshidentityfile');
+$config->define('clientname');
+
+$config->file($ENV{BOITHOHOME}."/config/bb-phone-home-client.conf");
+
+my $name = $config->get('clientname');
 
 # Better error checking
 sub forkandexit($@) {
@@ -26,17 +45,17 @@ sub forkandexit($@) {
 		# Parent
 		return $pid;
 	} elsif ($pid == 0) {
-		my $logfile = $config{'sshlog'};
+		my $logfile = $config->get('sshlog');
 		$logfile =~ /(.*)/;
 		$logfile = $1;
 
 		chdir '/';                 #or die "Can't chdir to /: $!";
 		open STDIN, '/dev/null'; #  or die "Can't read /dev/null: $!";
-#		open STDOUT, '>/dev/null'; # or die "Can't write to /dev/null: $!";
-#		open STDERR, '>/dev/null'; # or die "Can't write to /dev/null: $!";
+		open STDOUT, '>/dev/null'; # or die "Can't write to /dev/null: $!";
+		open STDERR, '>/dev/null'; # or die "Can't write to /dev/null: $!";
 #		open STDIN, '/dev/null'; #  or die "Can't read /dev/null: $!";
-		open STDOUT, '>'.$logfile."-stdout"; # or die "Can't write to /dev/null: $!";
-		open STDERR, '>'.$logfile."-stderr"; # or die "Can't write to /dev/null: $!";
+#		open STDOUT, '>'.$logfile."-stdout"; # or die "Can't write to /dev/null: $!";
+#		open STDERR, '>'.$logfile."-stderr"; # or die "Can't write to /dev/null: $!";
 #
 #		setsid                    or die "Can't start a new session: $!";
 #		umask 0;
@@ -69,7 +88,8 @@ sub ping_program($) {
 
 sub write_ssh_pid_file($) {
 	my $pid = shift;
-	$config{'sshpidfile'} =~ /(.*)/;
+	my $_pidfile = $config->get('sshpidfile');
+	$_pidfile =~ /(.*)/;
 	my $pidfile = $1;
 
 	open(PIDFILE, "> $pidfile") or return undef;#$!;# die "Unable to write ssh pidfile: $!";
@@ -81,7 +101,7 @@ sub write_ssh_pid_file($) {
 
 sub read_ssh_pid_file() {
 	my $pid = undef;
-	my $pidfile = $config{'sshpidfile'};
+	my $pidfile = $config->get('sshpidfile');
 
 	open(PIDFILE, "< $pidfile") or return undef;
 	while (<PIDFILE>) {
@@ -97,16 +117,16 @@ sub read_ssh_pid_file() {
 sub start_forwarding($) {
 	my $fwdport = shift;
 
-	if (stat($config{'sshpidfile'})) {
+	if (stat($config->get('sshpidfile'))) {
 		stop_forwarding();
 	}
 
 	my $cmd = "/usr/bin/ssh";
 	stat($cmd) || die "Could not find the ssh program";
-	my @args = ("-l", $config{'sshuser'},
-	            "-i", $config{'sshidentityfile'},
-	            "-R", "$fwdport:".$config{'localsshhost'}.":".$config{'localsshport'},
-	            $config{'sshhost'}, "-N", "-4"); # Force ipv4 for now
+	my @args = ("-l", $config->get('sshuser'),
+	            "-i", $config->get('sshidentityfile'),
+	            "-R", "$fwdport:".$config->get('localsshhost').":".$config->get('localsshport'),
+	            $config->get('sshhost'), "-N", "-4"); # Force ipv4 for now
 
 	my $pid = forkandexit($cmd, @args);
 	write_ssh_pid_file($pid);
@@ -126,21 +146,22 @@ sub stop_forwarding() {
 	my $pid = read_ssh_pid_file();
 
 	stop_process $pid;
-	$config{'sshpidfile'} =~ /(.*)/;
+	$config->get('sshpidfile') =~ /(.*)/;
 	my $pidfile = $1;
 	unlink( $1 );
 }
 
 
 sub get_forward_port_http() {
-	my $url = $config{forwardport_http};
+	my $url = $config->get('forwardport_http');
 	my $lwp = LWP::UserAgent->new;
 	my $hostname = `hostname`;
 	chop($hostname);
 	$hostname.= "/". $name; # Add magic identify string
 	my $response = $lwp->get($url."?hostname=$hostname");
+	print Dumper($config->get('forwardport_http'));
 	unless ($response->is_success) {
-		print STDERR "Error: $!";
+		print STDERR "Error: lwp::useragent: $!";
 		return undef;
 	}
 
@@ -156,13 +177,6 @@ sub get_forward_port_http() {
 	return $fwdport;
 }
 
-sub get_forward_port_random() {
-	my $first = 10111;
-	my $range = 5000;
-
-	return int(rand($range))+$first;
-}
-
 
 if ($#ARGV == -1) {
 	print STDERR "Possible arguments: start, stop, running\n";
@@ -174,7 +188,6 @@ my $arg = $ARGV[0];
 
 if ($arg eq "start") {
 	my $fwdport = get_forward_port_http();
-	#my $fwdport = get_forward_port_random();
 
 	exit 1 if (!defined($fwdport));
 	my $pid = start_forwarding($fwdport);

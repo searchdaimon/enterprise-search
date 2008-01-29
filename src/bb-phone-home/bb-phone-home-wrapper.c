@@ -23,7 +23,7 @@
 int
 main(int argc, char **argv, char **envp __unused)
 {
-	char *perlprog = "/usr/local/bin/perl";
+	char *perlprog = "/usr/bin/perl";
 	char program[1024];
 	char *boithohome;
 	int ret;
@@ -36,11 +36,13 @@ main(int argc, char **argv, char **envp __unused)
 	if (argc < 2)
 		errx(1, "Usage: ./setuidcaller cmd");
 
+#if 0
 	if (stat(program, &st) == -1) {
 		fprintf(stderr, "Unable to find client script %s: ", program);
 		perror("");
 		return 82;
 	}
+#endif
 
 	if ((pwd = getpwnam(WEB_USER)) == NULL) {
 		perror("Could not find web user");
