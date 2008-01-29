@@ -112,18 +112,7 @@ setuidcaller:
 	(cd src/bb-phone-home/; make)
 	cp src/bb-phone-home/bb-phone-home-client.conf config
 	cp src/bb-phone-home/bb-client.pl bin/
-	@if [ `id -u` == 0 ]; then \
-		cp -f src/bb-phone-home/setuidcaller bin/; \
-		chown root bin/setuidcaller; \
-		chmod +s bin/setuidcaller; \
-	else \
-		echo "################"; \
-		echo "You are not root. Run these commands as root"; \
-		echo "cp src/bb-phone-home/setuidcaller bin/"; \
-		echo "chown root bin/setuidcaller"; \
-		echo "chmod +s bin/setuidcaller"; \
-		echo "################"; \
-	fi
+	cp src/bb-phone-home/setuidcaller bin/
 
 invalidateOldFiles:
 	@echo ""
