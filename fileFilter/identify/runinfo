@@ -9,7 +9,8 @@ outputformat: text
 outputtype: stdio
 
 documentstype: tif
-command: identify -format "Geometry: %wx%h, Format: %m" #file
+#command: identify -format "Geometry: %wx%h, Format: %m" #file
+command: identify -format "Format: %m" #file
 outputformat: text
 outputtype: stdio
 
@@ -38,8 +39,8 @@ command: identify -format "Geometry: %wx%h, Format: %m" #file
 outputformat: text
 outputtype: stdio
 
-documentstype: psd
-command: identify -format "Geometry: %wx%h, Format: %m" #file
-outputformat: text
-outputtype: stdio
+#documentstype: psd
+#command: identify -format "Format: %m" #file
+#outputformat: text
+#outputtype: stdio
 

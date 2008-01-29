@@ -1,0 +1,4 @@
+documentstype: ppt
+command: ./ppt2html -t #file #outtxtfile
+outputformat: textfile
+
