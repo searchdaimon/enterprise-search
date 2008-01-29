@@ -1,4 +1,9 @@
 
+BEGIN {
+	push @INC, $ENV{BOITHOHOME}."/Modules/";
+};
+
+
 use Getopt::Std;
 
 getopts('l', \%opts);
@@ -12,11 +17,6 @@ if ($opts{l}) {
 	open(STDERR, ">>&STDOUT") || die "Can't dup stdout";
 
 }
-
-
-
-
-
 
 use Boitho::Lot;
 
