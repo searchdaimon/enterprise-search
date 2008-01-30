@@ -503,7 +503,9 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
 		cpbufsize = (strlen(html_tempelate) + exeocbuflen + strlen(titlefromadd)+1);	
 		cpbuf = malloc(cpbufsize);
-		snprintf(cpbuf,cpbufsize,html_tempelate,titlefromadd,documentfinishedbuf);
+		//runarb: 30 jan 2008: hvorfor bruker vi documentfinished her, når det er documentfinishedbuf som returneres fra exeoc_timeout() ?
+		//snprintf(cpbuf,cpbufsize,html_tempelate,titlefromadd,documentfinishedbuf);
+		snprintf(cpbuf,cpbufsize,html_tempelate,titlefromadd,documentfinishedbuftmp);
 		strscpy(documentfinishedbuftmp,cpbuf,(*documentfinishedbufsize));
 		(*documentfinishedbufsize) = strlen(documentfinishedbuftmp);
 
