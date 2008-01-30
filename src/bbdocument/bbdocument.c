@@ -17,6 +17,7 @@
 #include "../common/debug.h"
 #include "../common/exeoc.h"
 #include "../common/boithohome.h"
+#include "../3pLibs/keyValueHash/hashtable.h"
 
 #include "../common/reposetory.h"
 #include "../common/bstr.h"
@@ -27,7 +28,7 @@
 #include "../common/bfileutil.h"
 #include "../common/lot.h"
 
-#include "../common/chtbl.h"
+//#include "../common/chtbl.h"
 #define PRIME_TBLSIZ 100
 
 #include "../generateThumbnail/generate_thumbnail.h"
@@ -45,10 +46,8 @@ char *supportetimages[] = {"png", "jpg", "jepg", "bmp", "tif", "tiff", "gif", "e
 
 
 //globals
-CHTbl htbl;
-
-int bbdocument_h(const void *key);
-int bbdocument_hmatch(const void *key1, const void *key2);
+//CHTbl htbl;
+struct hashtable *h_fileFilter;
 
 struct fileFilterFormat {
 	char documentstype[12];
@@ -63,6 +62,33 @@ struct uriindexFormat {
         unsigned int DocID;
         unsigned int lastmodified;
 };
+
+
+
+static unsigned int bbdocument_h( void *key) {
+
+        int ir;
+        struct fileFilterFormat *fileFilter  = (struct fileFilterFormat *) key;
+        ir = ((*fileFilter).documentstype[0] * (*fileFilter).documentstype[1] * (*fileFilter).documentstype[2]);
+
+        return ir;
+}
+static int bbdocument_hmatch(void *key1, void *key2) {
+
+        struct fileFilterFormat *fileFilter1  = (struct fileFilterFormat *) key1;
+        struct fileFilterFormat *fileFilter2  = (struct fileFilterFormat *) key2;
+
+
+        if (strcmp((*fileFilter1).documentstype,(*fileFilter2).documentstype) == 0) {
+                return 1;
+        }
+        else {
+                return 0;
+        }
+
+}
+
+
 
 
 
@@ -150,7 +176,8 @@ int bbdocument_init() {
 	char fileFilterName[] = "fileFilter";
 
 
-	chtbl_init(&htbl, PRIME_TBLSIZ, bbdocument_h, bbdocument_hmatch, free);
+	//chtbl_init(&htbl, PRIME_TBLSIZ, bbdocument_h, bbdocument_hmatch, free);
+	h_fileFilter = create_hashtable(PRIME_TBLSIZ, bbdocument_h, bbdocument_hmatch);
 
 	printf("opening %s\n",bfile(fileFilterName));
 	if ((dirp = opendir(bfile(fileFilterName))) == NULL) {
@@ -199,7 +226,12 @@ int bbdocument_init() {
 				if (fileFilter != NULL) {
 					//add to hash
 					printf("inserting %s\n",(*fileFilter).documentstype);
-					chtbl_insert(&htbl,(void *)fileFilter);
+					//chtbl_insert(&htbl,(void *)fileFilter);
+					if (!hashtable_insert(h_fileFilter,fileFilter->documentstype,fileFilter) ) {
+                        		        printf("cant insert\n");
+                		        	exit(-1);
+		                        }
+
 					printf("end inserting\n");
 				}
 				fileFilter = malloc(sizeof(struct fileFilterFormat));
@@ -244,7 +276,11 @@ int bbdocument_init() {
 		if (fileFilter != NULL) {
 			//add to hash
 			printf("inserting %s\n",(*fileFilter).documentstype);
-			chtbl_insert(&htbl,(void *)fileFilter);
+			//chtbl_insert(&htbl,(void *)fileFilter);
+			if (!hashtable_insert(h_fileFilter,fileFilter->documentstype,fileFilter) ) {
+                                printf("cant insert\n");
+                        	exit(-1);
+                        }
 			printf("end inserting\n");
 		}
 		fclose(filep);
@@ -352,11 +388,12 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
 
 	struct fileFilterFormat *fileFilter = malloc(sizeof(struct fileFilterFormat));
-	struct fileFilterFormat *fileFilterOrginal = fileFilter;
+	struct fileFilterFormat *fileFilterOrginal;
 
-	strcpy((*fileFilter).documentstype,filetype);
+	//strcpy((*fileFilter).documentstype,filetype);
 	
-	if (chtbl_lookup(&htbl,(void *)&fileFilter) != 0) { 
+	//if (chtbl_lookup(&htbl,(void *)&fileFilterOrginal) != 0) { 
+	if (NULL == (fileFilterOrginal = hashtable_search(h_fileFilter,filetype) )) {
 		printf("don't have converter for \"%s\"\n",filetype);
 		(*documentfinishedbufsize) = 0;
 
@@ -377,8 +414,8 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		return 0;
 	}
 	else {
-		memcpy(fileFilterOrginal, fileFilter, sizeof(*fileFilterOrginal));
-		fileFilter = fileFilterOrginal;
+		memcpy(fileFilter, fileFilterOrginal, sizeof(struct fileFilterFormat));
+
 		#ifdef DEBUG
 			printf("have converter for file type\n");
 		#endif
@@ -399,22 +436,14 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
 		memcpy(cpbuf,document,dokument_size);
 		cpbuf[dokument_size] = '\0';
-//	printf("cpbuf %s\n",cpbuf);
-
-		//temp: hvorfår får vi problemer med bp.txt her. Tar ikke med hele dokumentet
-//		strcasesandr(cpbuf,cpbufsize,"\n","<br>\n");
-//	printf("cpbuf %s\n",cpbuf);
 
 		printf("document %i\n",strlen(document));
 		printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
-		//legger det inn i et html dokument, med riktig tittel	
-	//printf("cpbuf %s\n",cpbuf);
+
 		snprintf(documentfinishedbuftmp,(*documentfinishedbufsize),html_tempelate,titlefromadd,cpbuf);
                 (*documentfinishedbufsize) = strlen(documentfinishedbuftmp);
-	//printf("documentfinishedbufsize %i\n",(*documentfinishedbufsize));
-	//	printf("aa %s\n",documentfinishedbuf);
+
 		free(cpbuf);
-//exit(1);
 
                 return 1;
 	}
@@ -470,12 +499,6 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	exeocbuflen = (*documentfinishedbufsize);
 
 
-	/*
-	char escapetcommand[512];
-	sprintf(escapetcommand,"%s",(*fileFilter).command);
-	char *shargs[] = {"/bin/sh","-c",escapetcommand ,'\0'};	
-	printf("runnig: /bin/sh -c %s\n",escapetcommand);
-	*/
         char *shargs[] = {"/bin/sh","-c", NULL ,'\0'};
         shargs[2] = (*fileFilter).command;
 
@@ -533,7 +556,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 			printf("can't open out file \"%s\"\n",filconvertetfile_out_txt);
 			perror(filconvertetfile_out_txt);
 			(*documentfinishedbufsize) = 0;
-			free(fileFilterOrginal);
+			free(fileFilter);
 			unlink(filconvertetfile_real);
 			unlink(filconvertetfile_out_txt);
 			unlink(filconvertetfile_out_html);
@@ -545,7 +568,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
                 if ((cpbuf = malloc(inode.st_size +1)) == NULL) {
 			perror("malloc");
-			free(fileFilterOrginal);
+			free(fileFilter);
 			return 0;
 		}
                 
@@ -605,7 +628,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		len = exeocbuflen;
 		p = strdup(documentfinishedbuftmp);
 		if (p == NULL) {
-			free(fileFilterOrginal);
+			free(fileFilter);
 			unlink(filconvertetfile_real);
 			unlink(filconvertetfile_out_txt);
 			unlink(filconvertetfile_out_html);
@@ -720,7 +743,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	else {
 		printf("unknown dokument outputformat \"%s\"\n",fileFilter->outputformat);
 		(*documentfinishedbufsize) = 0;
-		free(fileFilterOrginal);
+		free(fileFilter);
 		unlink(filconvertetfile_out_txt);
 		unlink(filconvertetfile_out_html);
 		unlink(filconvertetfile_real);
@@ -738,7 +761,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
 	//printf("documentfinishedbuf is: \n...\n%s\n...\n", *documentfinishedbuf);
 
-	free(fileFilterOrginal);
+	free(fileFilter);
 
 	return 1;
 }
@@ -926,28 +949,6 @@ unsigned int bbdocument_nrOfDocuments (char subname[]) {
 	return rLastDocID(subname);
 }
 
-int bbdocument_h(const void *key) {
-
-        int ir;
-        struct fileFilterFormat *fileFilter  = (struct fileFilterFormat *) key;
-        ir = ((*fileFilter).documentstype[0] * (*fileFilter).documentstype[1] * (*fileFilter).documentstype[2]);
-
-        return ir;
-}
-int bbdocument_hmatch(const void *key1, const void *key2) {
-
-        struct fileFilterFormat *fileFilter1  = (struct fileFilterFormat *) key1;
-        struct fileFilterFormat *fileFilter2  = (struct fileFilterFormat *) key2;
-
-
-        if (strcmp((*fileFilter1).documentstype,(*fileFilter2).documentstype) == 0) {
-                return 1;
-        }
-        else {
-                return 0;
-        }
-
-}
 
 
 int uriindex_open(DB **dbpp, char subname[]) {
