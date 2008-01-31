@@ -216,7 +216,7 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 
 		//vi får ofte at vi fikk signal 40, men uten at noe var feil. Ignorerer det for nå.
 		//bdw: hardkoding av signalnavnet er ikke lurt.		
-		if (WIFSIGNALED(waitstatus) && (WTERMSIG(waitstatus) != 40)) {
+		if (WIFSIGNALED(waitstatus) && (WTERMSIG(waitstatus) == SIGKILL)) {
 			printf("TERMSIG: %i (\"%s\")\n", WTERMSIG(waitstatus),strsignal(WTERMSIG(waitstatus)));
 			(*documentfinishedbufsize) = 0;
 			documentfinishedbuf[0] = '\0';
