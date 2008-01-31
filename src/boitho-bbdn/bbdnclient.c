@@ -12,7 +12,7 @@ int bbdn_conect(int *socketha, char tkey[], int PORT) {
 	int i;
 
 	if (((*socketha) = cconnect("127.0.0.1", PORT)) == 0) {
-		bperror("Cant cconnect");
+		bperror("Can't connect to back-end document manager");
 		return 0;
 	}
 
