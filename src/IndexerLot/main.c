@@ -1127,9 +1127,6 @@ int main (int argc, char *argv[]) {
 		free(argstruct.DIArray);
 		free(argstruct.adult);
 
-		langdetectDestroy();
-		free(argstruct.DIArray);
-		free(argstruct.adult);
 
 		if (globalIndexerLotConfig.urlfilter != NULL) {
 			FreeSplitList(globalIndexerLotConfig.urlfilter);
