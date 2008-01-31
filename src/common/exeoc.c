@@ -162,9 +162,9 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 		(*documentfinishedbufsize) = i;
 		documentfinishedbuf[(*documentfinishedbufsize)] = '\0';
 
-		#ifdef DEBUG
-			printf("documentfinishedbufsize \"%i\" at %s:%d\n",(*documentfinishedbufsize),__FILE__,__LINE__);
-		#endif
+		//#ifdef DEBUG
+			printf("exeoc_stdselect: documentfinishedbufsize \"%i\" at %s:%d\n",(*documentfinishedbufsize),__FILE__,__LINE__);
+		//#endif
 
 		if (i==0) {
 			printf("exeoc_stdselect: Error: dident manage to read back any data\n");
@@ -251,9 +251,9 @@ int exeoc_timeout(char *exeargv[],char documentfinishedbuf[],int *documentfinish
 
 	n = exeoc_stdselect(exeargv,documentfinishedbuf,documentfinishedbufsize, ret, 0, &tv);
 
-	#ifdef DEBUG
+	//#ifdef DEBUG
 		printf("exeoc_stdselect returned %i\n",n);
-	#endif
+	//#endif
 
 	if (tv.tv_sec == 0 && tv.tv_usec == 0) { // Timeout
               	printf("exeoc_timeout did time out.\n");
