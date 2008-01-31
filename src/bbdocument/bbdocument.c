@@ -236,6 +236,10 @@ int bbdocument_init() {
 				}
 				fileFilter = malloc(sizeof(struct fileFilterFormat));
 
+				//ikke alle filfiltere har sat alle opsjoner, så vi nulstiller alt, slik at det er lett og strcmp()'e
+				//etter en verdi, uten at vi må tenke på at den kansje ikke er satt.
+				memset(fileFilter,'\0',sizeof(struct fileFilterFormat));
+
 				strcpy((*fileFilter).documentstype,splitdata[1]);
 
 			}
@@ -349,7 +353,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	char *documentfinishedbuftmp;
 	char fileconverttemplate[1024];
 
-	printf("bbdocument_convert: dokument_size %i, title \"%s\"\n",dokument_size,titlefromadd);
+	printf("bbdocument_convert: dokument_size %i, title \"%s\",filetype \"%s\"\n",dokument_size,titlefromadd,filetype);
 
 	//konverterer filnavn til liten case
 	for (i=0;i < strlen(filetype);i++) {
@@ -786,7 +790,6 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	unsigned int lastmodifiedForExistTest;
 
 	printf("bbdocument_add: \"%s\"\n",documenturi);
-	printf("dokument_size 4 %i, title %s\n",dokument_size, title);
 
 
 	//tester at det ikke finnes først
@@ -796,7 +799,6 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		printf("bbdocument_add: Uri \"%s\" all redy exist with DocID \"%u\" and time \"%u\"\n",documenturi,DocIDForExistTest,lastmodifiedForExistTest);
 		return 0;
 	}
-	printf("dokument_size 2 %i\n",dokument_size);
 
 	if (documenttype[0] == '\0') {
 		if ((documenttype_real = sfindductype(documenturi)) == NULL) {
@@ -808,7 +810,6 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		documenttype_real = malloc(strlen(documenttype)+1);
 		strcpy(documenttype_real,documenttype);
 	}
-	printf("dokument_size 4 %i, title %s\n",dokument_size, title);
 
 
 	//hvis vi ikke her med noen egen doctype så bruker vi den vi har fått via documenttype
@@ -818,7 +819,6 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	else {
 		strscpy(ReposetoryHeader.doctype,doctype,sizeof(ReposetoryHeader.doctype));
 	}
-	printf("dokument_size 4 %i, title %s, doctype %s\n",dokument_size, title, ReposetoryHeader.doctype);
 
 	if (!bbdocument_convert(documenttype_real,document,dokument_size,&htmlbuffer,&htmlbuffersize,title,subname,documenturi, lastmodified,acl_allow, acl_denied, doctype)) {
 
