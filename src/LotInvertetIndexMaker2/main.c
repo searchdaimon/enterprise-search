@@ -192,8 +192,11 @@ int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],int lot
 		
 
 			if (fread(&revIndexArray[count].DocID,sizeof(revIndexArray[count].DocID),1,REVINDEXFH) != 1) {
+				#ifdef DEBUG
+				//har kommer vi til eof, det er helt normalt
 				printf("can't read any more data\n");
 				perror("revindex");
+				#endif
 				break;
 			}
 			//v3
@@ -243,8 +246,9 @@ int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],int lot
 
 	}
 
+	#ifdef DEBUG
 	printf("Documents in index: %i\n",count);
-
+	#endif
 	
 	//runarb: 17 aug 2007: hvorfor har vi med -- her. Ser ut til at vi da mksiter siste dokumentet. haker ut for nå
 	//--count;

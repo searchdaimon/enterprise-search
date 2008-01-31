@@ -39,6 +39,7 @@
 
 struct DIArrayFormat {
 	struct DocumentIndexFormat *p;
+	struct DocumentIndexFormat *oldp;
 	unsigned int DocID;
 	char haveawvalue;
 	unsigned char awvalue;
@@ -67,7 +68,11 @@ struct IndexerLot_workthreadFormat {
 	int optMaxDocuments;
 	int optPrintInfo;
 	int optMakeWordList;
+	int optHandleOld;
 	char **optOnlyTLD;
+	int optHandleOld_duplicateNochange;
+	int optHandleOld_allrediIndexed;
+	int optHandleOld_indexed;
 	struct DIArrayFormat *DIArray;
 	//struct DIArrayFormat DIArray[NrofDocIDsInLot];
 
@@ -188,8 +193,8 @@ void iiacladd(struct IndexerRes_acls *iiacl,char acl[]) {
 	Count = 0;
 	while( (Data[Count] != NULL) ) {
 
-		//gruppenavn med spacer skaper problemer. Erstater det med X i steden
-		strsandr(Data[Count]," ","X");
+		//gruppenavn med spacer skaper problemer. Erstater det med _ i steden
+		strsandr(Data[Count]," ","_");
 
 		printf("got acl \"%s\"\n",Data[Count]);
 
@@ -221,8 +226,8 @@ void alclot_add(struct alclotFormat *alclot,char acl[]) {
   	Count = 0;
   	while( (Data[Count] != NULL) ) {
 
-		//gruppenavn med spacer skaper problemer. Erstater det med X i steden
-		strsandr(Data[Count]," ","X");
+		//gruppenavn med spacer skaper problemer. Erstater det med _ i steden
+		strsandr(Data[Count]," ","_");
 
 
 		#ifdef DEBUG
@@ -429,7 +434,50 @@ void *IndexerLot_workthread(void *arg) {
 	while (getNextPage(argstruct,htmlcompressdbuffer,sizeofhtmlcompressdbuffer,imagebuffer,sizeofimagebuffer,
 		&radress,&acl_allow,&acl_denied,&ReposetoryHeader)) {
 
+
+				DocIDPlace = (ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr));
+
 				DocumentIndexPost = malloc(sizeof(struct DocumentIndexFormat));
+
+				HtmlBufferLength = sizeofHtmlBuffer;
+				if ( (nerror = uncompress((Bytef*)HtmlBuffer,(uLong *)&HtmlBufferLength,(Bytef*)htmlcompressdbuffer,ReposetoryHeader.htmlSize)) != 0) {
+					#ifdef DEBUG
+               				printf("uncompress error. Code: %i for DocID %u-%i. ReposetoryHeader.htmlSize %i,sizeofHtmlBuffer %i\n",nerror,ReposetoryHeader.DocID,rLotForDOCid(ReposetoryHeader.DocID),ReposetoryHeader.htmlSize,sizeofHtmlBuffer);
+					#endif
+               				continue;
+		                }
+
+
+				(*DocumentIndexPost).crc32 = crc32boithonl(HtmlBuffer,HtmlBufferLength);
+
+
+				if((*argstruct).optHandleOld) {
+
+					if ((*argstruct).DIArray[DocIDPlace].oldp->htmlSize != 0) {
+
+						if ((*argstruct).DIArray[DocIDPlace].oldp->RepositoryPointer == radress) {
+							#ifdef DEBUG
+							printf("have already indexed this dokument\n");
+							#endif
+							++(*argstruct).optHandleOld_allrediIndexed;
+
+							free(DocumentIndexPost);
+							continue;
+						}
+					        else if ((*argstruct).DIArray[DocIDPlace].oldp->crc32 == (*DocumentIndexPost).crc32) {
+							printf("have a duplicate dokument, but havent changed\n");
+							++(*argstruct).optHandleOld_duplicateNochange;
+
+							free(DocumentIndexPost);
+							continue;
+						}
+						else {
+							++(*argstruct).optHandleOld_indexed;
+						}
+
+					}
+				}
+
 
 				if ((*argstruct).optPrintInfo) {
 					printf("url: %s, DocID %u, respons %i\n",ReposetoryHeader.url,ReposetoryHeader.DocID,ReposetoryHeader.response);
@@ -488,6 +536,7 @@ void *IndexerLot_workthread(void *arg) {
                 	                        (*pagewords).curentUrlIsDynamic = 1;
         	                        }
 	
+					/*
 					HtmlBufferLength = sizeofHtmlBuffer;
 					if ( (nerror = uncompress((Bytef*)HtmlBuffer,(uLong *)&HtmlBufferLength,(Bytef*)htmlcompressdbuffer,ReposetoryHeader.htmlSize)) != 0) {
 						#ifdef DEBUG
@@ -495,7 +544,7 @@ void *IndexerLot_workthread(void *arg) {
 						#endif
                        				continue;
 			                }
-
+					*/
 					/*
 					if (ReposetoryHeader.DocID == 125768695) {
 						FILE *fh;
@@ -524,7 +573,6 @@ void *IndexerLot_workthread(void *arg) {
 					#endif
 
 
-					(*DocumentIndexPost).crc32 = crc32boithonl(HtmlBuffer,HtmlBufferLength);
 
 					//setter anatll utgående linker
 					//bruker en unsigned char. Kan ikke ha flere en 255 
@@ -677,7 +725,6 @@ void *IndexerLot_workthread(void *arg) {
 				#endif
 
 
-				DocIDPlace = (ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr));
 
 				(*argstruct).DIArray[DocIDPlace].DocID = ReposetoryHeader.DocID;						
 			
@@ -733,6 +780,8 @@ int main (int argc, char *argv[]) {
 	unsigned int optMaxDocuments = 0;
 	unsigned int optPrintInfo = 0;
 	unsigned int optMakeWordList = 0;
+	unsigned int optHandleOld = 0;
+
 	char **optOnlyTLD = NULL;
 
 	off_t DocIDPlace;
@@ -749,7 +798,7 @@ int main (int argc, char *argv[]) {
 	extern char *optarg;
        	extern int optind, opterr, optopt;
 	char c;
-	while ((c=getopt(argc,argv,"neu:t:m:pl:w"))!=-1) {
+	while ((c=getopt(argc,argv,"neu:t:m:pl:wo"))!=-1) {
                 switch (c) {
 			case 'l':
 				split(optarg, ",", &optOnlyTLD);
@@ -770,10 +819,10 @@ int main (int argc, char *argv[]) {
 				break;
 
                         case 'n':
-                    
-/*****************************************************************************/
-/*****************************************************************************/
-            optMustBeNewerThen = 1;
+      			        optMustBeNewerThen = 1;
+                                break;
+                        case 'o':
+      			        optHandleOld = 1;
                                 break;
                         case 'e':
                                 optrEindex = 1;
@@ -860,7 +909,7 @@ int main (int argc, char *argv[]) {
 
 
 		//sjekker om vi har nokk palss
-		if (!lotHasSufficientSpace(lotNr,4240,subname)) {
+		if (!lotHasSufficientSpace(lotNr,4096,subname)) {
 			printf("insufficient disk space\n");
 			exit(1);
 		}
@@ -937,7 +986,6 @@ int main (int argc, char *argv[]) {
 		//temp:Søker til problemområdet
 		//FileOffset = 334603785;		
 		html_parser_init();
-		css_parser_init();
 
 
 
@@ -950,6 +998,7 @@ int main (int argc, char *argv[]) {
 		argstruct.optPrintInfo		= optPrintInfo;
 		argstruct.optOnlyTLD		= optOnlyTLD;
 		argstruct.optMakeWordList 	= optMakeWordList;
+		argstruct.optHandleOld 		= optHandleOld;
 		//malloc
 		argstruct.DIArray = malloc( NrofDocIDsInLot * sizeof(struct DIArrayFormat) );
 
@@ -960,6 +1009,18 @@ int main (int argc, char *argv[]) {
 			argstruct.DIArray[i].haverankPageElements = 0;
 		}
 
+		if (optHandleOld) {
+			argstruct.optHandleOld_duplicateNochange	= 0;
+			argstruct.optHandleOld_allrediIndexed		= 0;
+			argstruct.optHandleOld_indexed			= 0;
+
+			printf("will handel old dokuments in reposetory. Loading DocumentIndex...\n");
+			for(i=0;i<NrofDocIDsInLot;i++) {
+				argstruct.DIArray[i].oldp = malloc(sizeof(struct DocumentIndexFormat));
+				DIRead(argstruct.DIArray[i].oldp,LotDocIDOfset(lotNr) + i,subname);
+			}
+			printf(".. done\n");
+		}
 		//init mutex
 		#ifdef WITH_THREAD
 
@@ -1046,21 +1107,35 @@ int main (int argc, char *argv[]) {
 		fclose(argstruct.dictionarywordsfFH);
 		#endif
 		// vi må ikke kopiere revindex filene da vi jobber på de lokale direkte
-//	}
 
 
-	printf("indexed %i pages\n\n\n",argstruct.pageCount);
+		if (optHandleOld) {
+			printf("duplicateNochange: %i\n",argstruct.optHandleOld_duplicateNochange);
+			printf("allrediIndexed: %i\n",argstruct.optHandleOld_allrediIndexed);
+			printf("optHandleOld_indexed: %i\n",argstruct.optHandleOld_indexed);
 
-	html_parser_exit();
-	langdetectDestroy();
-	free(argstruct.DIArray);
-	free(argstruct.adult);
+			for(i=0;i<NrofDocIDsInLot;i++) {
+				free(argstruct.DIArray[i].oldp);
+			}
+		}
 
-	if (globalIndexerLotConfig.urlfilter != NULL) {
-		FreeSplitList(globalIndexerLotConfig.urlfilter);
-	}
 
-	return 0;
+		printf("indexed %i pages\n\n\n",argstruct.pageCount);
+
+		html_parser_exit();
+		langdetectDestroy();
+		free(argstruct.DIArray);
+		free(argstruct.adult);
+
+		langdetectDestroy();
+		free(argstruct.DIArray);
+		free(argstruct.adult);
+
+		if (globalIndexerLotConfig.urlfilter != NULL) {
+			FreeSplitList(globalIndexerLotConfig.urlfilter);
+		}
+
+		return 0;
 }
 
 
