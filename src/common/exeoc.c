@@ -193,13 +193,13 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 		//waitpid(pid,&waitstatus,0);
 		waitpid(pid,&waitstatus,WUNTRACED);
 
-		#ifdef DEBUG
+//		#ifdef DEBUG
 		if (WIFEXITED(waitstatus)==0)
 		    {
 			printf("Child did not exit normally.\n");
 			if (WIFSIGNALED(waitstatus))
 			    {
-				printf("TERMSIG: %i\n", WTERMSIG(waitstatus));
+				printf("TERMSIG: %i (\"%s\")\n", WTERMSIG(waitstatus),strsignal(WTERMSIG(waitstatus)));
 			    }
 
 			if (WIFSTOPPED(waitstatus))
@@ -207,24 +207,30 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 				printf("STOPSIG: %i\n", WSTOPSIG(waitstatus));
 			    }
 		    }
-		#endif
+//		#endif
 
 		(*ret) = waitstatus;
 
-		if (WIFEXITED(waitstatus)==0 || read_error)
-		    {
-			// Child has not exited normally:
-			if (WIFEXITED(waitstatus)==0)
-			    printf("Error: Child did not exit normally (segfault?).\n");
-			else
-			    printf("Error: Read error.\n");
+		//printf("WIFEXITED(): %i\nWIFSIGNALED %i\nWIFSTOPPED %i\n\nread_error %i\n40 %i\n",WIFEXITED(waitstatus),WIFSIGNALED(waitstatus),WIFSTOPPED(waitstatus),read_error,SIGRTMIN + 7);
 
+
+		//vi får ofte at vi fikk signal 40, men uten at noe var feil. Ignorerer det for nå.
+		//bdw: hardkoding av signalnavnet er ikke lurt.		
+		if (WIFSIGNALED(waitstatus) && (WTERMSIG(waitstatus) != 40)) {
+			printf("TERMSIG: %i (\"%s\")\n", WTERMSIG(waitstatus),strsignal(WTERMSIG(waitstatus)));
 			(*documentfinishedbufsize) = 0;
 			documentfinishedbuf[0] = '\0';
+
 			return 0;
-		    }
+		}
+		else if (read_error) {
+			printf("Error: Read error.\n");
+			(*documentfinishedbufsize) = 0;
+			documentfinishedbuf[0] = '\0';
 
+			return 0;
 
+		}
 		#ifdef DEBUG
 			printf("waitpid finished. waitstatus %i\n",waitstatus);
 			printf("dokument: \"%s\"\n",documentfinishedbuf);
