@@ -56,6 +56,9 @@ boitho-meta_version = 0.1
 boitho-phonehome_name = boitho-phonehome
 boitho-phonehome_version = 0.1
 
+boitho-dummy_name = boitho-dummy
+boitho-dummy_version = 0.1
+
 
 
 all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta phonehome
@@ -114,7 +117,7 @@ infoquery:
 	rpm -bb $(boitho-infoquery_name).spec
 
 searchdbb:
-	perl rpmmagic.pl --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumbbb cgi-bin/ShowCache config/filetypes.eng.conf config/filetypes.nbo.conf config/dispatcher.conf config/main.conf config/maplist.conf
+	perl rpmmagic.pl --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumbbb cgi-bin/ShowCache config/filetypes.eng.conf config/filetypes.nbo.conf config/dispatcher.conf config/main.conf config/maplist.conf config/lotlist.conf
 
 	rpm -bb $(boitho-searchdbb_name).spec
 
@@ -179,6 +182,16 @@ phonehome:
 	tar -z -c -f $(boitho-phonehome_name)-$(boitho-phonehome_version).tar.gz $(boitho-phonehome_name)-$(boitho-phonehome_version)
 	mv $(boitho-phonehome_name)-$(boitho-phonehome_version).tar.gz $(HOME)/redhat/SOURCES/
 	rpm -bb $(boitho-phonehome_name).spec
+
+
+dummy:
+	rm -rf $(boitho-dummy_name)-$(boitho-dummy_version)
+	mkdir $(boitho-dummy_name)-$(boitho-dummy_version)
+	echo dummy > $(boitho-dummy_name)-$(boitho-dummy_version)/DUMMY
+	tar -z -c -f $(boitho-dummy_name)-$(boitho-dummy_version).tar.gz $(boitho-dummy_name)-$(boitho-dummy_version)
+	mv $(boitho-dummy_name)-$(boitho-dummy_version).tar.gz $(HOME)/redhat/SOURCES/
+	rpm -bb $(boitho-dummy_name).spec
+
 
 
 mod_boitho_auth:
