@@ -42,7 +42,8 @@ int openlogs(FILE **LOGACCESS, FILE **LOGERROR, char name[]) {
 	sprintf(file,"logs/%s_access",name);
 	//opener logger
 	if (((*LOGACCESS) = bfopen(file,"a")) == NULL) {
-		perror("access log");
+		fprintf(stderr,"openlogs: can't open logfile.\n");
+		perror(bfile(file));
 		return 0;
 	}
 	printf("opened log \"%s\"\n",file);
