@@ -24,7 +24,7 @@ fi
 # Byttes ut:
 #poor mans setuid. If we are root we will run the program as user boitho
 #if [ $USER == root ] ; then
-	B_RUN="/usr/local/sbin/daemonize -u boitho $BOITHOHOME/bin/everrun $BOITHOHOME/bin/searchd"
+	B_RUN="/usr/local/sbin/daemonize -u boitho $BOITHOHOME/bin/everrun $BOITHOHOME/bin/searchd -b Brank_test cx.jayde.boitho.com"
 #
 #else
 #	B_RUN="/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $BOITHOHOME/bin/searchd"
