@@ -23,13 +23,21 @@ void blog(FILE *LOG, int level, const char *fmt, ...) {
         va_start(ap, fmt);
 
 		//skriver til log
-                vfprintf(LOG, fmt,ap);
+		if (LOG == NULL) {
+                	printf("log (log filehandler is NULL, won't log to file): ");
+                	vprintf(fmt,ap);
+                	printf("\n");
 
-		//viser på skjerm
-                printf("log: ");
-                vprintf(fmt,ap);
-                printf("\n");
+		}
+		else {
+	                vfprintf(LOG, fmt,ap);
 
+			//viser på skjerm
+                	printf("log: ");
+                	vprintf(fmt,ap);
+                	printf("\n");
+		}
+		
         va_end(ap);
 }
 
@@ -42,19 +50,27 @@ int openlogs(FILE **LOGACCESS, FILE **LOGERROR, char name[]) {
 	sprintf(file,"logs/%s_access",name);
 	//opener logger
 	if (((*LOGACCESS) = bfopen(file,"a")) == NULL) {
-		fprintf(stderr,"openlogs: can't open logfile.\n");
+		fprintf(stderr,"openlogs: can't open access logfile.\n");
 		perror(bfile(file));
-		return 0;
+
+		(*LOGACCESS) = NULL;
+		//return 0;
 	}
-	printf("opened log \"%s\"\n",file);
+	else {
+		printf("opened log \"%s\"\n",file);
+	}
 
 	sprintf(file,"logs/%s_error",name);
 	if (((*LOGERROR) = bfopen(file,"a")) == NULL) {
-		perror("error log");
-		return 0;
-	}
-	printf("opened log \"%s\"\n",file);
+		fprintf(stderr,"openlogs: can't open error logfile.\n");
+		perror(bfile(file));
 
+		(*LOGERROR) = NULL;
+		//return 0;
+	}
+	else {
+		printf("opened log \"%s\"\n",file);
+	}
 	return 1;
 }
 
