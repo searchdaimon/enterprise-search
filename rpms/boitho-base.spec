@@ -49,6 +49,7 @@ chmod o+x /home/boitho/
 
 mkdir -p /home/boitho/boithoTools/var
 chown boitho /home/boitho/boithoTools/var
+chown boitho /boithoData
 
 
 %post
