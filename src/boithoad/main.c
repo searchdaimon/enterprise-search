@@ -1048,8 +1048,7 @@ void connectHandler(int socket) {
 	FILE *LOGACCESS, *LOGERROR;
 
         if (!openlogs(&LOGACCESS,&LOGERROR,"boithoad")) {
-                perror("logs");
-                exit(1);
+                fprintf(stderr,"can't open logfiles.\n");
         }
 
 	printf("connectHandler: calling do_request\n");
