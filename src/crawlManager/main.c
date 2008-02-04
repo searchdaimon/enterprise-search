@@ -38,6 +38,11 @@
 #define crawl_crawl 1
 #define crawl_recrawl 2
 
+/* MYSQL login information */
+#define MYSQL_HOST "localhost"
+#define MYSQL_USER "boitho"
+#define MYSQL_PASS "G7J7v5L5Y7"
+
 struct hashtable *global_h;
 
 struct {
@@ -782,12 +787,11 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 	mysql_init(&demo_db);
 
 	//koble til mysql
-	if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
-                printf(mysql_error(&demo_db));
-			blog(LOGERROR,1,"MySQL Error: \"%s\"\n",mysql_error(&demo_db));
-
-                exit(1);
-        }
+	if(!mysql_real_connect(&demo_db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)){
+		printf(mysql_error(&demo_db));
+		blog(LOGERROR,1,"MySQL Error: \"%s\"\n",mysql_error(&demo_db));
+		exit(1);
+	}
 
 
 
@@ -988,7 +992,7 @@ int set_crawler_message(int crawler_success  , char mrg[], unsigned int id) {
         mysql_init(&demo_db);
 
         //koble til mysql
-        if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
+        if(!mysql_real_connect(&demo_db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)){
                 printf(mysql_error(&demo_db));
 		blog(LOGERROR,1,"Mysql Error: \"%s\"\n",mysql_error(&demo_db));
                 exit(1);
@@ -1146,7 +1150,29 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 		else {
 
 			if (flag == crawl_recrawl) {
+				static MYSQL demo_db;
+
 				printf("crawl_recrawl\n");
+
+				mysql_init(&demo_db);
+
+				//koble til mysql
+				if(mysql_real_connect(&demo_db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)){
+					char querybuf[1024];
+					int querylen;
+
+					querylen = snprintf(querybuf, sizeof(querybuf), "UPDATE shares SET last = 0 WHERE id = '%d'",
+					    collection[i].id);
+					if (mysql_real_query(&demo_db, querybuf, querylen)) {
+						printf("Mysql error: %s", mysql_error(&demo_db));
+						blog(LOGERROR,1,"MySQL Error: %s: \"%s\".\n", querybuf, mysql_error(&demo_db));
+					}
+				} else {
+					printf(mysql_error(&demo_db));
+					blog(LOGERROR,1,"MySQL Error: \"%s\"\n",mysql_error(&demo_db));
+				}
+
+
 
 				//nullsetter lastCrawl, som er den verdien som viser siste crawl. 
 				//Tror ikke crawlfirst skal ta hensysn til den, men gjør det for sikkerhets skyld
