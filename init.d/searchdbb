@@ -20,7 +20,7 @@ fi
 # Byttes ut:
 
 #poor mans setuid. If we are root we will run the program as user boitho
-if [ $USER == root ] ; then
+if [ `id -u` == 0 ]; then
 	B_RUN="/usr/local/sbin/daemonize -u boitho $BOITHOHOME/bin/everrun $BOITHOHOME/bin/searchdbb localhost"
 
 else
