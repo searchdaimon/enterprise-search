@@ -481,7 +481,14 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 
 	while (i<alen && (k < maxIndexElements)){
 
-                c->iindex[k] = a->iindex[i];
+		#ifdef DEBUG_VALGRIND
+			//her kan minne overlappe. For å ungå det sjekker vi først om pekere til struktene er like
+			if (&c->iindex[k] != &a->iindex[i]) {
+		                c->iindex[k] = a->iindex[i];
+			}
+		#else
+	                c->iindex[k] = a->iindex[i];
+		#endif
 
 		++k; ++i;
 		++(*baselen);
@@ -518,13 +525,13 @@ void andNot_merge(struct iindexFormat *c, int *baselen, int *added,struct iindex
 	//printf("or_merge: merge a: %i (\"%s\"), b: %i (\"%s\")\n",a[i].DocID,(*a[i].subname).subname,b[j].DocID,(*b[i].subname).subname);
 
 		if (a->iindex[i].DocID == b->iindex[j].DocID) {
-			#ifdef DEBUG
+			#ifdef DEBUG_II
 			printf("andNot_merge: Not DocID %u\n",a->iindex[i].DocID);
 			#endif
 			++j; ++i;
 		}
  		else if( a->iindex[i].DocID < b->iindex[j].DocID ) {
-			#ifdef DEBUG
+			#ifdef DEBUG_II
 			printf("andNot_merge: DocID %u < DocID %u. Add\n",a->iindex[i].DocID,b->iindex[j].DocID);
 			#endif
                 	c->iindex[k] = a->iindex[i];
@@ -533,12 +540,12 @@ void andNot_merge(struct iindexFormat *c, int *baselen, int *added,struct iindex
 
 			//kopierer hits
 			c->iindex[k].TermAntall = 0;
-			#ifdef DEBUG
+			#ifdef DEBUG_II
 			printf("a TermAntall %i, c->nrofHits %i\n",a->iindex[i].TermAntall,c->nrofHits);
 			printf("size %i\n",sizeof(c->iindex[k]));
 			#endif
 			for(x=0;x<a->iindex[i].TermAntall;x++) {
-				#ifdef DEBUG
+				#ifdef DEBUG_II
 				printf("aaa %hu\n",a->iindex[i].hits[x].pos);
 				#endif
 				c->iindex[k].hits[c->iindex[k].TermAntall].pos = a->iindex[i].hits[x].pos;
@@ -553,7 +560,7 @@ void andNot_merge(struct iindexFormat *c, int *baselen, int *added,struct iindex
 			++(*baselen);
 		}
  		else {
-			#ifdef DEBUG
+			#ifdef DEBUG_II
 			printf("andNot_merge: DocID %u > DocID %u. Wont add\n",a->iindex[i].DocID,b->iindex[j].DocID);
 			#endif
 	                //c[k] = b[j];
@@ -630,7 +637,7 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 	while (i<alen && j<blen)
 	{
 		if (a->iindex[i].DocID == b->iindex[j].DocID) {
-			#ifdef DEBUG
+			#ifdef DEBUG_II
 			printf("\t%i == %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
 			#endif
 			//c[k] = a[i];
@@ -644,14 +651,14 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 
 
 			//copying hits
-			#ifdef DEBUG
+			#ifdef DEBUG_II
 			printf("and_merge: hist a %hu, b %hu\n",a->iindex[i].TermAntall,b->iindex[j].TermAntall);
 			#endif
 			c->iindex[k].TermAntall = 0;
 			c->iindex[k].hits = &c->hits[c->nrofHits];
 
 			for(x=0;x<a->iindex[i].TermAntall;x++) {
-				#ifdef DEBUG
+				#ifdef DEBUG_II
 				printf("aaa %hu\n",a->iindex[i].hits[x].pos);
 				#endif
 				c->iindex[k].hits[c->iindex[k].TermAntall].pos = a->iindex[i].hits[x].pos;
@@ -660,7 +667,7 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 				++c->nrofHits;
 			}
 			for(x=0;x<b->iindex[j].TermAntall;x++) {
-				#ifdef DEBUG
+				#ifdef DEBUG_II
 				printf("bbb %hu\n",b->iindex[j].hits[x].pos);
 				#endif
 				c->iindex[k].hits[c->iindex[k].TermAntall].pos = b->iindex[j].hits[x].pos;
@@ -674,14 +681,14 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 			(*baselen)++;
 		}
  		else if( a->iindex[i].DocID < b->iindex[j].DocID ) {
-			#ifdef DEBUG
+			#ifdef DEBUG_II
 				printf("\t%i < %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
 			#endif
    			//c[k++] = a[i++];
 			i++;
 		}
  		else {
-			#ifdef DEBUG	
+			#ifdef DEBUG_II	
 				printf("\t%i > %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
 			#endif
    			//c[k++] = b[j++];
@@ -1853,7 +1860,7 @@ void *searchIndex_thread(void *arg)
 				&complicacy
 			);
 
-			#ifdef DEBUG
+			#ifdef DEBUG_II
 			printf("acl_allowArrayLen %i:\n",acl_allowArrayLen);
 			for (y = 0; y < acl_allowArrayLen; y++) {
 				printf("acl_allow TeffArray: DocID %u\n",acl_allowArray->iindex[y].DocID);			
@@ -1879,7 +1886,7 @@ void *searchIndex_thread(void *arg)
 			//and_merge(Array,&ArrayLen,ArrayLen,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
 			and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
 
-			#ifdef DEBUG
+			#ifdef DEBUG_II
 			printf("after first merge:\n");
 			for (y = 0; y < ArrayLen; y++) {
 				printf("TeffArray: DocID %u\nHits (%i): \n",Array->iindex[y].DocID,Array->iindex[y].TermAntall);	
@@ -1898,7 +1905,7 @@ void *searchIndex_thread(void *arg)
 
 
 
-			#ifdef DEBUG
+			#ifdef DEBUG_II
 			printf("etter andNot_merge:\n");
 			for (y = 0; y < ArrayLen; y++) {
 				printf("TeffArray: DocID %u\nHits (%i): \n",Array->iindex[y].DocID,Array->iindex[y].TermAntall);	
@@ -2089,6 +2096,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	//Main
 	for(i=0;i<nrOfSubnames;i++) {		
 		PredictNrMain += searchIndex_getnrs("Main",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
+		printf("PredictNrMain total with \"%s\" %u\n",&subnames[i],PredictNrMain);
 	}
 
 	vboprintf("PredictNrAthor %u, PredictNrUrl %u, PredictNrMain %u\n",PredictNrAthor,PredictNrUrl,PredictNrMain);
@@ -2428,6 +2436,13 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 				// legger derfor til \0 som 5 char, slik at vi har en gyldig string
 				TeffArray->iindex[i].filetype[4] = '\0';
 
+				
+				if (strstr(TeffArray->iindex[i].filetype,"10") != NULL) {
+					printf("werd. DocID %u, subname %s\n",TeffArray->iindex[i].DocID,(*TeffArray->iindex[i].subname).subname);
+					//exit(1);
+				}
+				
+
 				#ifdef DEBUG
 				printf("file \"%c%c%c%c\"\n",TeffArray->iindex[i].filetype);
 				#endif				
@@ -2465,7 +2480,13 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 			printf("wil filter on filetype \"%s\"\n",(*filteron).filetype);
 
 			for (i = 0; i < (*TeffArrayElementer); i++) {
-				if (strcmp(TeffArray->iindex[i].filetype,(*filteron).filetype) != 0) {
+
+				if (TeffArray->iindex[i].indexFiltered.subname) {
+					#ifdef DEBUG
+						printf("is all ready filtered out\n");
+					#endif				
+				}
+				else if (strcmp(TeffArray->iindex[i].filetype,(*filteron).filetype) != 0) {
 					TeffArray->iindex[i].indexFiltered.filename = 1;
 					--(*TotaltTreff);
 				}
@@ -2482,6 +2503,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		lager en oversikt over, og filtrerer på, dato
 		*********************************************************************************************************************
 		*/
+		printf("<################################# date filter ######################################>\n");
 		gettimeofday(&start_time, NULL);
 
 
@@ -2515,6 +2537,10 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 			dl.start = dl.end = 0;
 			getdate((*filteron).date, &dl);
 
+			printf("start %u, end %u\n",dl.start,dl.end);
+			printf("start: %s",ctime(&dl.start));
+			printf("end:   %s",ctime(&dl.end));
+
 			int notFiltered, filtered;
 
 			notFiltered = 0;
@@ -2522,9 +2548,12 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 			for (i = 0; i < *TeffArrayElementer; i++) {
 
-				//printf("start %u, end %u, element %u\n",dl.start,dl.end,TeffArray->iindex[i].date);
-				
-				if ((TeffArray->iindex[i].date >= dl.start) && (TeffArray->iindex[i].date <= dl.end)) {
+				if (TeffArray->iindex[i].indexFiltered.subname || TeffArray->iindex[i].indexFiltered.filename) {
+					#ifdef DEBUG
+						printf("is al redu filtered out ");
+					#endif				
+				}
+				else if ((TeffArray->iindex[i].date >= dl.start) && (TeffArray->iindex[i].date <= dl.end)) {
 					#ifdef DEBUG
 					printf("time hit %s",ctime(&TeffArray->iindex[i].date));
 					#endif
@@ -2575,6 +2604,9 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 		gettimeofday(&end_time, NULL);
                 (*queryTime).allrankCalc = getTimeDifference(&start_time,&end_time);
+
+		printf("</################################# date filter ######################################>\n");
+
 	#else
 	//hvis vi har få traff bruker vi en annen rangering
 	//if ((*TeffArrayElementer) < 2000) {
@@ -2703,7 +2735,7 @@ int searchFilterCount(int *TeffArrayElementer,
 			}
 				
 			if (NULL == (filesValue = hashtable_search(h,TeffArray->iindex[i].filetype) )) {    
-				printf("not found!. Vil insert first");
+				printf("filtyper: not found!. Vil insert first\n");
 				filesValue = malloc(sizeof(int));
 				(*filesValue) = 1;
 				filesKey = strdup(TeffArray->iindex[i].filetype);
@@ -2741,6 +2773,8 @@ int searchFilterCount(int *TeffArrayElementer,
 			strscpy((*filters).filtypes.elements[ (*filters).filtypes.nrof ].longname,
                                 "All",
 	                        sizeof((*filters).filtypes.elements[ (*filters).filtypes.nrof ].longname));
+			(*filters).filtypes.elements[(*filters).filtypes.nrof].nrof = 0;
+
 			++(*filters).filtypes.nrof;
 
 			//itererer over hash
