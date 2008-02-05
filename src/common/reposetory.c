@@ -7,6 +7,7 @@
 #include "define.h"
 
 #include "stdlib.h"
+#include "debug.h"
 #include "lot.h"
 #include "reposetory.h"
 #include "sha1.h"
@@ -356,7 +357,10 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 
 
         //søker til slutten
-        fseek(RFILE,0,SEEK_END);
+        if (fseek(RFILE,0,SEEK_END) != 0){
+		perror("fseek");
+		return 0;
+	}
 
 	offset = ftello64(RFILE);
 
