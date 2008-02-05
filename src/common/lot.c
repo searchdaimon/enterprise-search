@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -5,12 +6,14 @@
 #include <string.h>
 #include <dirent.h>
 #include <err.h>
+#include <sys/file.h>
 
 #include "lot.h"
 #include "define.h"
 #include "bstr.h"
 #include "bfileutil.h"
 #include "boithohome.h"
+#include "strlcat.h"
 
 #include <stdlib.h>
 #include <fcntl.h>
@@ -31,10 +34,11 @@
 
 //formater på cashe over opne filhontarere
 struct OpenFilesFormat {
-        short int LotNr;
+        int LotNr;
         FILE *FILEHANDLER;
 	char subname[maxSubnameLength];
 	char type[5];
+	char filename[PATH_MAX];
 };
 
 
@@ -44,10 +48,10 @@ struct StorageDirectorysFormat dataDirectorys[NrOfDataDirectorys];
 //holder om vi har inalisert. Slik at MakeMapListMap() bare bli kalt 1 gang, nemlig første gangen vi buker denne rutinen.
 static int MapListInitialised = 0;
 
-static LotFilesInalisert = 0;
+static int LotFilesInalisert = 0;
 
-//array med opne filhonterere
-struct OpenFilesFormat OpenFiles[MaxOpenFiles];
+//array med åpne filhånterere
+static struct OpenFilesFormat OpenFiles[MaxOpenFiles];
 
 #ifndef DEFLOT
 //LotForDOCid returnerer hvilken lot DOCid skal i
@@ -399,13 +403,20 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
 		&& (strcmp(OpenFiles[i].subname,subname) == 0)
         	&& (strcmp(OpenFiles[i].type,type)==0)
 	) {
+		printf("lotOpenFile: fant en tildigere åpnet fil, returnerer den.\n");
+		printf("lotOpenFile: returnerer: i %i, subname \"%s\", type \"%s\", LotNr %i\n",i,OpenFiles[i].subname,OpenFiles[i].type,OpenFiles[i].LotNr);
+		printf("lotOpenFile: file is \"%s\"\n",OpenFiles[i].filename);
+		if (OpenFiles[i].FILEHANDLER == NULL) {
+			printf("Error: FILEHANDLER is NULL\n");
+		}
                 return OpenFiles[i].FILEHANDLER;
         }
         //hvis ikke åpner vi og returnerer
         else {
 
-		//hvis dette er en open filhonterer, må vi lukke den
+		//hvis dette er en åpen filhånterer, må vi lukke den
 		if (OpenFiles[i].LotNr != -1) {
+			printf("lotOpenFile: closeing: i %i",i);
 			fclose(OpenFiles[i].FILEHANDLER);
 			OpenFiles[i].LotNr = -1;
 			
@@ -414,11 +425,13 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
 
                  GetFilPathForLot(FilePath,LotNr,subname);
                  strcpy(File,FilePath);
-                 strncat(File,resource,128);
+                 strlcat(File,resource,128);
 
-		#ifdef DEBUG
+		strscpy(OpenFiles[i].filename,File,sizeof(OpenFiles[i].filename));
+
+		//#ifdef DEBUG
                 	printf("lotOpenFile: opening file \"%s\" for %s\n",File,type);
-		#endif
+		//#endif
 
                 //temp: Bytte ut FilePath med filnavnet
                 if ( (OpenFiles[i].FILEHANDLER = fopen(File,type)) == NULL ) {
@@ -431,8 +444,8 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
                 }
 
 		OpenFiles[i].LotNr = LotNr;
-		strcpy(OpenFiles[i].subname,subname);
-		strcpy(OpenFiles[i].type,type);
+		strscpy(OpenFiles[i].subname,subname,sizeof(OpenFiles[i].subname));
+		strscpy(OpenFiles[i].type,type,sizeof(OpenFiles[i].type));
 
 		#ifdef DEBUG
 			printf("lotOpenFile: tryint to obtain lock \"%c\"\n",lock);
