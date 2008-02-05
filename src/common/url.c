@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "bstr.h"
 #include "url.h"
+#include "strlcat.h"
 #include "utf8-strings.h"
 
 //domener som har Country code second-level domain ccSLD domenesystem, slik som co.uk i name.co.uk
@@ -489,7 +490,8 @@ int isSecondLevelDomain(char ttl[]) {
 int find_domains_subname(const char url[],char domain[], int sizeofdomain) {
 
  	char **Data;
-  	int Count, TokCount;
+
+	int TokCount;
 	int i;
 	int nrToGet;
 
@@ -500,6 +502,7 @@ int find_domains_subname(const char url[],char domain[], int sizeofdomain) {
   	TokCount = split(domain, ".", &Data);
 
 	#ifdef DEBUG
+	  	int Count;
 
 		printf("url %s\n",url);
 
@@ -560,8 +563,8 @@ int find_domains_subname(const char url[],char domain[], int sizeofdomain) {
 
 int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
 
- char **Data;
-  int Count, TokCount;
+ 	char **Data;
+  	int TokCount;
 	int i;
 	int nrToGet;
 
@@ -572,6 +575,7 @@ int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
   	TokCount = split(domain, ".", &Data);
 
 	#ifdef DEBUG
+		int Count;
 
 		printf("url %s\n",url);
 

@@ -2,10 +2,10 @@
 #include <stdlib.h>
 
 #include "define.h"
+#include "lot.h"
 
 FILE *revindexFilesOpenLocalPart(int lotNr,char type[],char filemode[],char subname[],int part) {
 
-        int i;
         char lotPath[128];
         char revfile[128];
 	FILE *revindexFilesHa;
