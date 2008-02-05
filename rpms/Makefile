@@ -107,7 +107,7 @@ bbAutoUpdate:
 	rpm -bb $(boithobb-bbAutoUpdate_name).spec
 
 everrun:
-	perl rpmmagic.pl --post "install -d -o boitho /coredumps/saved" --initd everrun $(boitho-everrun_name) $(boitho-everrun_version) $(BOITHOHOME) /home/boitho/boithoTools bin/everrun
+	perl rpmmagic.pl --post "install -d -o boitho /coredumps/saved" $(boitho-everrun_name) $(boitho-everrun_version) $(BOITHOHOME) /home/boitho/boithoTools bin/everrun
 
 	rpm -bb $(boitho-everrun_name).spec
 
@@ -204,3 +204,4 @@ clean:
 
 install:
 	cp --verbose /home/boitho/redhat/RPMS/i386/boitho*.rpm ~/FedoraRepository/boitho/updates/4/i386/
+
