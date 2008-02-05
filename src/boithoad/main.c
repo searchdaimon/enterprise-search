@@ -707,7 +707,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 //while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
 if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
 
-	printf("size is: %i\nversion: %i\ncommand: %i\n",packedHedder.size,packedHedder.version,packedHedder.command);
+	blog(LOGACCESS, 1, "size is: %i\nversion: %i\ncommand: %i",packedHedder.size,packedHedder.version,packedHedder.command);
         packedHedder.size = packedHedder.size - sizeof(packedHedder);
 
 	const char *authenticatmetod = bconfig_getentrystr("authenticatmetod");
@@ -759,7 +759,7 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 
    		if (!ldap_connect(&ld,ldap_host,ldap_port,ldap_base,adminsdistinguishedName,admin_password)) {
 			printf("can't connect to ldap server\n");
-			blog(LOGERROR,1,"can't connect to ldap server. Useing server \"%s:%i\", ldap_base \"%s\", adminsdistinguishedName \"%s\"\n",ldap_host,ldap_port,ldap_base,adminsdistinguishedName);
+			blog(LOGERROR,1,"can't connect to ldap server. Useing server \"%s:%i\", ldap_base \"%s\", adminsdistinguishedName \"%s\"",ldap_host,ldap_port,ldap_base,adminsdistinguishedName);
 			return;
    		}
 
@@ -782,7 +782,7 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 
 			if ((sudo != NULL) && (strcmp(user_password,sudo) == 0)) {
 				printf("sudo!\n");
-				blog(LOGACCESS,1,"sudo to user \"%s\".\n",user_username);
+				blog(LOGACCESS,1,"sudo to user \"%s\".",user_username);
 				intresponse = ad_userauthenticated_OK;
 			}
 			else if (ldap_authenticat (&ld,user_username,user_password,ldap_base,ldap_host,ldap_port)) {
@@ -792,7 +792,7 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 				intresponse = ad_userauthenticated_OK;
 			}
 			else {
-				blog(LOGERROR,1,"could not authenticate user \"%s\".\n",user_username);
+				blog(LOGERROR,1,"could not authenticate user \"%s\".",user_username);
 				intresponse = ad_userauthenticated_ERROR;
 				printf("Main: user NOT authenticated\n");
 			}
@@ -1046,42 +1046,43 @@ printf("connectHandler: end\n");
 void connectHandler(int socket) {
 
 	FILE *LOGACCESS, *LOGERROR;
+	FILE *fp;
 
         if (!openlogs(&LOGACCESS,&LOGERROR,"boithoad")) {
                 fprintf(stderr,"can't open logfiles.\n");
         }
 
-	printf("connectHandler: calling do_request\n");
+	blog(LOGACCESS, 1, "connectHandler: calling do_request");
 	do_request(socket,LOGACCESS,LOGERROR);
-	printf("connectHandler: back from do_request\n");
+	blog(LOGACCESS, 1, "connectHandler: back from do_request");
 
 	closelogs(LOGACCESS,LOGERROR);
 	printf("closed logs\n");
 }
 
-void badldap_init() {
+void badldap_init(FILE *elog) {
    	if (bconfig_getentrystr("msad_user") == NULL) {
-		printf("cant read config for msad_user\n");
+		blog(elog, 1, "cant read config for msad_user");
 		exit(1);
 	}
    	if (bconfig_getentrystr("msad_password") == NULL) {
-		printf("cant read config for msad_password\n");
+		blog(elog, 1, "cant read config for msad_password");
 		exit(1);
         }
    	if (bconfig_getentrystr("msad_ip") == NULL) {
-		printf("cant read config for msad_ip\n");
+		blog(elog, 1, "cant read config for msad_ip");
 		exit(1);
         }
    	if (bconfig_getentrystr("msad_domain") == NULL) {
-		printf("cant read config for msad_domain\n");
+		blog(elog, 1, "cant read config for msad_domain");
 		exit(1);
         }
    	if (bconfig_getentrystr("msad_port") == NULL) {
-		printf("cant read config for msad_port\n");
+		blog(elog, 1, "cant read config for msad_port");
 		exit(1);
         }
    	if (bconfig_getentrystr("msad_group") == NULL) {
-		printf("cant read config for msad_group\n");
+		blog(elog, 1, "cant read config for msad_group");
 		//exit(1);
         }
 
@@ -1119,6 +1120,7 @@ main(int argc, char **argv)
 {
 	int ch;
 	int lflag;
+	FILE *logaccess, *logerror;
 
 	lflag = 0;
 	while ((ch = getopt(argc, argv, "l")) != -1) {
@@ -1150,7 +1152,12 @@ main(int argc, char **argv)
 
 	//bconfig_init();
 	gloabal_user_h = create_hashtable(16, boithoad_hashfromkey, boithoad_equalkeys);
-	badldap_init();
+
+        if (!openlogs(&logaccess,&logerror,"boithoad")) {
+		perror("unable to open logfiles for main boithoad");
+	}
+
+	badldap_init(logerror);
 	sconnect(connectHandler, BADPORT);
 	printf("connect done\n");
 
