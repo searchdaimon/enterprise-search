@@ -302,7 +302,7 @@ int rSendFileByOpenHandler(FILE *FILEHANDLER, char dest[], int LotNr, char opent
 
 	//sender heder
 	if (!sendpacked(socketha,C_rSendFile,BLDPROTOCOLVERSION, 0, NULL,subname)) {
-		fprintf(stderr,"han't sendpacked\n");
+		fprintf(stderr,"Can't sendpacked()\n");
 		socketError();
 		return 0;
 	}
