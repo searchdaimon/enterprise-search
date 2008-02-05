@@ -461,7 +461,13 @@ void *do_chld(void *arg)
 
 	//struct SiderFormat Sider[MaxsHits * 2];
 
-	struct SiderHederFormat *SiderHeder = malloc(sizeof(struct SiderHederFormat));
+	struct SiderHederFormat *SiderHeder;
+
+	if ((SiderHeder  = malloc(sizeof(struct SiderHederFormat))) == NULL) {
+		perror("malloc");
+		return 0;
+	} 
+
 
 	gettimeofday(&globalstart_time, NULL);
 
@@ -533,8 +539,9 @@ void *do_chld(void *arg)
 		char subnamebuf[maxSubnameLength];
 
 		queryNodeHeder.subname[0] = '\0';
-		if (strlen(queryNodeHeder.subname) > 0)
+		if (strlen(queryNodeHeder.subname) > 0) {
 			strlwcat(queryNodeHeder.subname, ",", sizeof(queryNodeHeder.subname));
+		}
 		printf("queryNodeHeder.subname \"%s\"\n",queryNodeHeder.subname);
 		boithoad_groupsForUser(queryNodeHeder.search_user,&respons_list,&responsnr);
 	        printf("groups: %i\n",responsnr);
