@@ -2,6 +2,7 @@
     #include "../common/lot.h"
     #include "../common/vid.h"
     #include "../common/stdlib.h"
+    #include "../common/utf8-strings.h"
     #include "../UrlToDocID/search_index.h"
 
     #include <stdarg.h>
@@ -824,7 +825,7 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 		QueryData->search_user[0] = '\0';
 	}
 	else {
-		strscpy((char *)QueryData->search_user,cgi_getentrystr("search_bruker"),sizeof(QueryData->query) -1);
+		strscpy((char *)QueryData->search_user,cgi_getentrystr("search_bruker"),sizeof(QueryData->search_user) -1);
 	}
 
 
@@ -1752,9 +1753,10 @@ int main(int argc, char *argv[])
 		//21 feb 2007: collection er case sensetiv. Bare søkeord skal gjøres om. Må gjøre dette en annen plass
 	#else
 		//må gjøres for web da både prequery og cashe er lagret på disk som lovercase. Hvis ikke vil ikke søk på Msn treffe msn
-        	for(i=0;i<strlen(QueryData.query);i++) {
-                	QueryData.query[i] = btolower(QueryData.query[i]);
-        	}
+        	//for(i=0;i<strlen(QueryData.query);i++) {
+                //	QueryData.query[i] = btolower(QueryData.query[i]);
+        	//}
+		convert_to_lowercase_n(QueryData.query,sizeof(QueryData.query));
 	#endif
 
 	//nårmalisere query. 
@@ -2261,7 +2263,7 @@ int main(int argc, char *argv[])
 
 	totlaAds = 0;
 
-	//skriver ikke ut masse data hvsi vi lager prequery
+	//skriver ikke ut masse data hvis vi lager prequery
 	if (dispconfig.writeprequery) {
 		printf("query \"%s\", total %i,showabal %i, nodes %i, time %f\n",QueryData.queryhtml,FinalSiderHeder.TotaltTreff,FinalSiderHeder.showabal,nrRespondedServers,FinalSiderHeder.total_usecs);
 	}
