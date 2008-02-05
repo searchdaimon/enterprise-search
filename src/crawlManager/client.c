@@ -12,7 +12,7 @@ int cmc_conect(int *socketha, char statusbuff[],int statusbufflen, int port) {
 
 
         if (((*socketha) = cconnect("127.0.0.1", port)) == 0) {
-		snprintf(statusbuff,statusbufflen,"Cant conect to crawler manager. Useing cconnect(): %s",strerror(errno));
+		snprintf(statusbuff,statusbufflen,"Can't connect to crawler manager: %s. Is the crawler manager running?",strerror(errno));
 		return 0;
 	}
 	else {
