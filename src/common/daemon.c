@@ -436,9 +436,14 @@ int recvall(int sockfd, void *buf, int len) {
 int sendpacked(int socket,short command, short version, int dataSize, void *data,char subname[]) {
 
         struct packedHedderFormat packedHedder;
-	char *buf;
+	void *buf;
 	size_t len;
+	int forret = 0;
         //int i;
+
+	//siden vi skal sende pakken over nettet er det like gått å nullstille all data. Da slipper vi at valgring klager også.
+	memset(&packedHedder,0,sizeof(packedHedder));
+
         //setter sammen hedder
         packedHedder.size       = sizeof(struct packedHedderFormat) + dataSize;
         packedHedder.version    = version;
@@ -447,16 +452,27 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 
 	if (data != NULL) {
 		len = sizeof(packedHedder) + dataSize;
-		buf = malloc(len);
+		if ((buf = malloc(len)) == NULL) {
+			printf("sendpacked: malloc");
+			return 0;
+		}
 		memcpy(buf, &packedHedder, sizeof(packedHedder));
 		memcpy(buf+sizeof(packedHedder), data, dataSize);
 	} else {
-		buf = (char *)&packedHedder;
+		buf = &packedHedder;
 		len = sizeof(packedHedder);
 	}
 
 	if (!sendall(socket, buf, len)) {
-		return 0;
+		goto end_error;
 	}
-	return 1;
+
+	//setter at vi skal returnere 1, som er OK
+	forret =  1;
+
+	end_error:
+		if (data != NULL) {
+			free(buf);
+		}
+		return forret;
 }
