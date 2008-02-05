@@ -1361,15 +1361,27 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 				Sider[i].iindex.rank_explaind.rankBody,
 				Sider[i].iindex.rank_explaind.rankHeadline,
 				Sider[i].iindex.rank_explaind.rankTittel,
+
+				#ifdef BLACK_BOKS
+				-1,-1,-1,-1,-1,
+				#else
 				Sider[i].iindex.rank_explaind.rankAthor,
 				Sider[i].iindex.rank_explaind.nrAthor,
 				Sider[i].iindex.rank_explaind.nrAthorPhrase,
 				Sider[i].iindex.rank_explaind.rankUrl_mainbody,
 				Sider[i].iindex.rank_explaind.rankUrl,
+				#endif
+
 				Sider[i].DocumentIndex.Url,
 				Sider[i].iindex.DocID,
 				rLotForDOCid(Sider[i].iindex.DocID),
+
+				#ifdef BLACK_BOKS
+				-1,
+				#else
 				Sider[i].DomainID,
+				#endif
+
 				(*Sider[i].iindex.subname).subname
 
 				);
@@ -1476,10 +1488,11 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	PagesResults.indexnr = (start * MaxsHits);
 	PagesResults.MaxsHits = MaxsHits;
 
-	if ((*Sider  = malloc(sizeof(struct SiderFormat) * (PagesResults.MaxsHits))) == NULL) {
+	if ((*Sider  = malloc(sizeof(struct SiderFormat) * PagesResults.MaxsHits)) == NULL) {
 		perror("malloc Sider");
 		exit(1);
 	}
+
 
 	PagesResults.Sider = *Sider;
 
@@ -1546,45 +1559,58 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	#if defined BLACK_BOKS && !defined _24SEVENOFFICE
 
+		char groupOrQuery[1024];
+		groupOrQuery[0] = '\0';
+
 		//henter brukerens passord fra boithoad
 		gettimeofday(&start_time, NULL);
 		//henter inn brukerens passord
 		printf("geting pw for \"%s\"\n",PagesResults.search_user);
+		/**************************************************************************
+		Runarb: 08 Jan 2008: Gjør av vi bare hopper over å hente gruppe info hvis vi ikke
+		for det til.
+
+		Før stoppet vi opp, men det gjør at det ikke fungerer med 24so søk. 
+		**************************************************************************/
 		if (!boithoad_getPassword(PagesResults.search_user,PagesResults.password)) {
-			//printf("Can't boithoad_getPassword. Brukeren er ikke logget inn??\n");
-			(*errorLen) = snprintf(errorstr,(*errorLen),"Can't get user info from authentication backend");
-			return(0);
+			printf("Can't boithoad_getPassword. Brukeren er ikke logget inn??\n");
+			//(*errorLen) = snprintf(errorstr,(*errorLen),"Can't get user info from authentication backend");
+			//return(0);
 		}
-		//printf("got pw \"%s\" -> \"%s\"\n",PagesResults.search_user,PagesResults.password);
-		gettimeofday(&end_time, NULL);
-	        (*SiderHeder).queryTime.getUserObjekt = getTimeDifference(&start_time,&end_time);
+		else {
+			//printf("got pw \"%s\" -> \"%s\"\n",PagesResults.search_user,PagesResults.password);
+			gettimeofday(&end_time, NULL);
+	        	(*SiderHeder).queryTime.getUserObjekt = getTimeDifference(&start_time,&end_time);
+		
+			/****************************************************************/
+			//hent alle grupper
+			char **groups_respons_list;
+			int groups_responsnr;
 
-		/****************************************************************/
-		//hent alle grupper
-		char **groups_respons_list;
-		int groups_responsnr;
-		char groupOrQuery[1024];
+			//boithoad_listGroups(&groups_respons_list,&groups_responsnr);
+			if (!boithoad_groupsForUser(PagesResults.search_user,&groups_respons_list,&groups_responsnr)) {
+                	        perror("Error: boithoad_groupsForUser");
+                	        //return 0;
+                	}
+			else {
+        		        printf("groups: %i\n",groups_responsnr);
+		                for (i=0;i<groups_responsnr;i++) {
 
-		//boithoad_listGroups(&groups_respons_list,&groups_responsnr);
-		groupOrQuery[0] = '\0';
-		if (!boithoad_groupsForUser(PagesResults.search_user,&groups_respons_list,&groups_responsnr)) {
-                        perror("Error: boithoad_groupsForUser");
-                        return 0;
-                }
-                printf("groups: %i\n",groups_responsnr);
-                for (i=0;i<groups_responsnr;i++) {
+					//vi har problemer med space
+					//strsandr(groups_respons_list[i]," ","X");
+					//strsandr(groups_respons_list[i]," ","_NBSP_");
+					strsandr(groups_respons_list[i]," ","_");
 
-			//vi har problemer med space
-			//strsandr(groups_respons_list[i]," ","X");
-			strsandr(groups_respons_list[i]," ","_NBSP_");
+                        		printf("group: %s (nr %i)\n",groups_respons_list[i],i);
 
-                        printf("group: %s\n",groups_respons_list[i]);
+					strlcat(groupOrQuery," |\"",sizeof(groupOrQuery));
+					strlcat(groupOrQuery,groups_respons_list[i],sizeof(groupOrQuery));
+					strlcat(groupOrQuery,"\"",sizeof(groupOrQuery));
 
-			strlcat(groupOrQuery," |\"",sizeof(groupOrQuery));
-			strlcat(groupOrQuery,groups_respons_list[i],sizeof(groupOrQuery));
-			strlcat(groupOrQuery,"\"",sizeof(groupOrQuery));
+	                	}
+			}
 
-                }
+		}
 
 		//legger til brukernavnet
 		strlcat(groupOrQuery," |",sizeof(groupOrQuery));
@@ -1784,18 +1810,17 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	//(*SiderHeder).showabal -= PagesResults.filteredsilent;
 
 
+
+
 	//lager en filtered verdi
 	(*SiderHeder).filtered = PagesResults.filtered + PagesResults.memfiltered;	
 
 	//runarb: 2 nov 2007: trkker ikke fra disse tallene, da det fører til at totalt treff tallene forandres. Viser heller en filtered beskjed
 	#ifndef BLACK_BOKS
-
-
-
-	//fjerner filtered fra total oversikten
-	//ToDo: bør dette også gjøres for web?
-	(*SiderHeder).TotaltTreff -= (*SiderHeder).filtered;
-
+		//fjerner filtered fra total oversikten
+		//ToDo: bør dette også gjøres for web?
+		//runarb: 23 jan 2008: ser ut til at dette bare gjøres for web er ifNdef her???
+		(*SiderHeder).TotaltTreff -= (*SiderHeder).filtered;
 	#endif
 
 
