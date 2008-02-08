@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <time.h>
 
 #include "boithohome.h"
 
@@ -17,8 +18,19 @@ void bvlog(FILE *LOG, int level,const char *fmt,va_list ap) {
 
 
 void blog(FILE *LOG, int level, const char *fmt, ...) {
-
+	time_t now;
+	char buf[1024];
+	int len;
         va_list     ap;
+	struct tm tm;
+
+	/* Output time */
+	now = time(NULL);
+	localtime_r(&now, &tm);
+	len = strftime(buf, sizeof(buf), "%F %T", &tm);
+	buf[len-1] = '\0';
+	printf("%s: ", buf);
+	fprintf(LOG, "%s: ", buf);
 
         va_start(ap, fmt);
 
@@ -31,6 +43,7 @@ void blog(FILE *LOG, int level, const char *fmt, ...) {
 		}
 		else {
 	                vfprintf(LOG, fmt,ap);
+			fprintf(LOG, "\n");
 
 			//viser på skjerm
                 	printf("log: ");
