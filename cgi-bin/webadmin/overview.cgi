@@ -40,7 +40,7 @@ if (defined($state->{'action'})) {
 	if ($action eq 'crawl') {
 		$vars = $overview->crawl_collection($vars, $id);
 		
-		($vars, $template_file) = 
+		$template_file = 
 			$overview->list_collections($vars);
 	}
 	
@@ -58,7 +58,7 @@ if (defined($state->{'action'})) {
 	elsif ($action eq 'activate') {
 		# User is activating a disabled collection. Do it.
 		$vars = $overview->activate_collection($vars, $id);
-		($vars, $template_file) = 
+		$template_file = 
 			$overview->list_collections($vars);
 	}
 
