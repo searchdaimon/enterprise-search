@@ -9,6 +9,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 
 // Konverterer en tekststreng til små bokstaver:
