@@ -178,7 +178,7 @@ handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum br
 
 int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,
 	struct iindexMainElements *TeffArray,struct QueryDataForamt QueryData, char *htmlBuffer,
-	unsigned int htmlBufferSize, char servername[],char subname[], unsigned int getRank) {
+	unsigned int htmlBufferSize, char servername[],char subname[], unsigned int getRank,struct queryTimeFormat *queryTime) {
 
 	int y;
 	char        *titleaa, *body, *metakeyw, *metadesc;
@@ -186,7 +186,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 	char *acl_allowbuffer = NULL;
 	char *acl_deniedbuffer = NULL;
 	off_t imagep;
-
+	struct timeval start_time, end_time;
 	titleaa = body = metakeyw = metadesc = NULL;
 
 	char *strpointer;
@@ -288,11 +288,25 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 							(*SiderHeder).showabal++;
 							returnStatus = 0;
 						} else {
+
+							gettimeofday(&start_time, NULL);
+
 							html_parser_run( (*Sider).DocumentIndex.Url, resbuf, ressize, 
 									&titleaa, &body, fn, NULL);
 
+							gettimeofday(&end_time, NULL);
+							queryTime->html_parser_run += getTimeDifference(&start_time,&end_time);
+
+
 							(*Sider).HtmlPreparsed = 0;
+
+							gettimeofday(&start_time, NULL);
+
 							generate_snippet(QueryData.queryParsed, body, strlen(body), &snippet, "<b>", "</b>", 160);
+
+							gettimeofday(&end_time, NULL);
+							queryTime->generate_snippet += getTimeDifference(&start_time,&end_time);
+
 							strcpy(Sider->title, titleaa);
 							strcpy(Sider->description, snippet);
 							memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
@@ -408,11 +422,14 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 						//void html_parser_run( char *url, char text[], int textsize, char **output_title, 
 						//char **output_body,void (*fn), void* wordlist );
 
+						gettimeofday(&start_time, NULL);						
 
 						html_parser_run( (*Sider).DocumentIndex.Url, htmlBuffer, htmlBufferSize, 
 							&titleaa, &body, fn, NULL);
 
-						
+						gettimeofday(&end_time, NULL);
+						queryTime->html_parser_run += getTimeDifference(&start_time,&end_time);
+
 						(*Sider).HtmlPreparsed = 0;
 
                         	                /*
@@ -445,8 +462,13 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 							printf("calling generate_snippet with strlen body %i\n",strlen(body));
 						#endif
 
+						gettimeofday(&start_time, NULL);
+
 						generate_snippet( QueryData.queryParsed, body, strlen(body), &summary, "<b>", "</b>" , 160);
 					
+						gettimeofday(&end_time, NULL);
+						queryTime->generate_snippet += getTimeDifference(&start_time,&end_time);
+
 						//printf("summary len %i\nsummary:\n-%s-\n",strlen(summary),summary);
 					
 						if (strlen(summary) > (sizeof((*Sider).description) -1) ) {
@@ -600,9 +622,9 @@ struct PagesResultsFormat {
 		int memfiltered;
 
 		#ifdef WITH_THREAD
-		//pthread_mutexattr_t mutex;
-		pthread_mutex_t mutex;
-		pthread_mutex_t mutextreadSyncFilter;
+			pthread_mutex_t mutex;
+			pthread_mutex_t mutextreadSyncFilter;
+			pthread_mutex_t mutex_pathaccess;
 		#endif
 
 
@@ -835,13 +857,13 @@ pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection
 	int ret = 0;
 
 	#ifdef WITH_THREAD
-		pthread_mutex_lock(&(*PagesResults).mutex);
+		pthread_mutex_lock(&(*PagesResults).mutex_pathaccess);
 	#endif
 
 	ret = cmc_pathaccess(socketha,collection_in,uri_in,user_in,password_in);
 
 	#ifdef WITH_THREAD
-		pthread_mutex_unlock(&(*PagesResults).mutex);
+		pthread_mutex_unlock(&(*PagesResults).mutex_pathaccess);
 	#endif
 
 	printf("pathaccess: %i\n",ret);
@@ -1074,7 +1096,7 @@ void *generatePagesResults(void *arg)
 		runarb: 24.10.2007
 		her var PagesResults før	
 		*/
-		if (PagesResults->getRank == 0 && !popResult(side, (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,(*(*PagesResults).TeffArray->iindex[i].subname).subname, PagesResults->getRank)) {
+		if (PagesResults->getRank == 0 && !popResult(side, (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,(*(*PagesResults).TeffArray->iindex[i].subname).subname, PagesResults->getRank,&PagesResults->SiderHeder->queryTime)) {
                        	vboprintf("can't popResult\n");
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantpopResult,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 			continue;
@@ -1556,6 +1578,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	struct DocumentIndexFormat DocumentIndexPost;
 	
+	(*SiderHeder).queryTime.cmc_conect = 0;
+	(*SiderHeder).queryTime.crawlManager = 0;
+	(*SiderHeder).queryTime.html_parser_run = 0;
+	(*SiderHeder).queryTime.generate_snippet = 0;
 
 	#if defined BLACK_BOKS && !defined _24SEVENOFFICE
 
@@ -1636,11 +1662,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		gettimeofday(&end_time, NULL);
 	        (*SiderHeder).queryTime.cmc_conect = getTimeDifference(&start_time,&end_time);
 
-		(*SiderHeder).queryTime.crawlManager = 0;
 
-	#else
-		(*SiderHeder).queryTime.cmc_conect = 0;
-		(*SiderHeder).queryTime.crawlManager = 0;
+		
 	#endif
 
 
@@ -1688,8 +1711,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	//ret = pthread_mutexattr_init(&PagesResults.mutex);
 	ret = pthread_mutex_init(&PagesResults.mutex, NULL);
-
 	ret = pthread_mutex_init(&PagesResults.mutextreadSyncFilter, NULL);
+	ret = pthread_mutex_init(&PagesResults.mutext_pathaccess, NULL);
 
 	//låser mutex. Vi er jo enda ikke kalre til å kjøre
 	pthread_mutex_lock(&PagesResults.mutex);
@@ -1781,7 +1804,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	//free mutex'en
 	ret = pthread_mutex_destroy(&PagesResults.mutex);
-
+	ret = pthread_mutex_destroy(&PagesResults.mutextreadSyncFilter);
+	ret = pthread_mutex_destroy(&PagesResults.mutex_pathaccess);
+	
 	#else 
 		generatePagesResults(&PagesResults);		
 	#endif
@@ -1912,13 +1937,16 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	
 
 	#ifdef BLACK_BOKS
-	vboprintf("\tfiletypes %f\n",(*SiderHeder).queryTime.filetypes);
-	vboprintf("\tiintegerGetValueDate %f\n",(*SiderHeder).queryTime.iintegerGetValueDate);
-	vboprintf("\tdateview %f\n",(*SiderHeder).queryTime.dateview);
-	vboprintf("\tcrawlManager %f\n",(*SiderHeder).queryTime.crawlManager);
+	vboprintf("\t%-40s %f\n","filetypes",(*SiderHeder).queryTime.filetypes);
+	vboprintf("\t%-40s %f\n","iintegerGetValueDate",(*SiderHeder).queryTime.iintegerGetValueDate);
+	vboprintf("\t%-40s %f\n","dateview",(*SiderHeder).queryTime.dateview);
+	vboprintf("\t%-40s %f\n","crawlManager",(*SiderHeder).queryTime.crawlManager);
 
-	vboprintf("\tgetUserObjekt %f\n",(*SiderHeder).queryTime.getUserObjekt);
-	vboprintf("\tcmc_conect %f\n",(*SiderHeder).queryTime.cmc_conect);
+	vboprintf("\t%-40s %f\n","getUserObjekt",(*SiderHeder).queryTime.getUserObjekt);
+	vboprintf("\t%-40s %f\n","cmc_conect",(*SiderHeder).queryTime.cmc_conect);
+
+	vboprintf("\t%-40s %f\n","html_parser_run",(*SiderHeder).queryTime.html_parser_run);
+	vboprintf("\t%-40s %f\n","generate_snippet",(*SiderHeder).queryTime.generate_snippet);
 
 	#endif
 
@@ -2143,24 +2171,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	}
 
 
-#if 0
-	#ifdef WITH_THREAD
-	pthread_t threadid[NROF_GENERATEPAGES_THREADS];
-
-	//ret = pthread_mutexattr_init(&PagesResults.mutex);
-	ret = pthread_mutex_init(&PagesResults.mutex, NULL);
-
-	//låser mutex. Vi er jo enda ikke kalre til å kjøre
-	pthread_mutex_lock(&PagesResults.mutex);
-
-
-	//start som thread that can get the pages
-	for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
-		//pthread_create(&chld_thr, NULL, do_chld, (void *) newsockfd);
-		ret = pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults);		
-	}
-	#endif
-#endif
 
 	printf("searchSimple\n");
 	
@@ -2233,24 +2243,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 
 
-#if 0
-	#ifdef WITH_THREAD
-
-	//vi har data. Lå tårdene jobbe med det
-	pthread_mutex_unlock(&PagesResults.mutex);
-
-	//venter på trådene
-	for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
-		ret = pthread_join(threadid[i], NULL);
-	}
-
-	//free mutex'en
-	ret = pthread_mutex_destroy(&PagesResults.mutex);
-
-	#else 
-	generatePagesResults(&PagesResults);		
-	#endif
-#endif
 	#ifdef BLACK_BOKS
 		cmc_close(PagesResults.cmcsocketha);
 	#endif
