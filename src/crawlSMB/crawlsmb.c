@@ -197,8 +197,9 @@ int smb_recursive_get( char *prefix, char *dir_name,
         {
             int         dsize;
 
-            // Skip direntries named "." and ".."
-            if (strcmp(dirp->name,".") && strcmp(dirp->name,".."))
+            // Skip direntries named "." and "..". 
+	    // tar heller ikke med filer som begynner på ~ da det er temp filer i windows.
+            if ((dirp->name[0] != '.') && (dirp->name[0] != '~'))
                 {
                     int         _dname_size = strlen(dir_name) + strlen(dirp->name) + 1;
                     char        entry_name[_dname_size + 1];
