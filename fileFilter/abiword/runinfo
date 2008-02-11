@@ -10,10 +10,10 @@ outputformat: textfile
 #command: /usr/bin/abiword --to=txt #file
 #outputformat: textfile
 
-documentstype: pdf
-command: /usr/bin/abiword --to=txt #file
-#command: /usr/bin/AbiWord --to=txt #file
-outputformat: textfile
+#documentstype: pdf
+#command: /usr/bin/abiword --to=txt #file
+##command: /usr/bin/AbiWord --to=txt #file
+#outputformat: textfile
 
 documentstype: dot
 command: /usr/bin/abiword --to=txt #file
