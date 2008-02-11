@@ -433,6 +433,10 @@ struct queryTimeFormat {
 	double popRank;
 	double responseShortning;
 	double searchSimple;
+
+	//runerb: 5 feb 2008
+	double html_parser_run;
+	double generate_snippet;
 };
 
 struct filtersTrapedFormat {
