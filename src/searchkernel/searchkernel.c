@@ -302,6 +302,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 
 							gettimeofday(&start_time, NULL);
 
+
 							generate_snippet(QueryData.queryParsed, body, strlen(body), &snippet, "<b>", "</b>", 160);
 
 							gettimeofday(&end_time, NULL);
@@ -463,6 +464,13 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 						#endif
 
 						gettimeofday(&start_time, NULL);
+
+							printf("#################################################################\n");
+							printf("############################ <DEBUG> ############################\n");
+							printf("body to snipet:\n%s\n",body);
+							printf("strlen(body) %i\n",strlen(body));
+							printf("############################ </DEBUG> ###########################\n");
+							printf("#################################################################\n");
 
 						generate_snippet( QueryData.queryParsed, body, strlen(body), &summary, "<b>", "</b>" , 160);
 					
