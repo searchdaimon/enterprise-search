@@ -2182,7 +2182,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	//joiner trådene
 	#ifdef BLACK_BOKS
 		#ifdef WITH_THREAD
-			pthread_join(threadid_Acl, NULL);
+			//pthread_join(threadid_Acl, NULL);
 		#endif
 	#else
 		#ifdef WITH_THREAD
