@@ -1,5 +1,5 @@
 
-CC=/usr/local/bin/gcc -O2
+CC=/usr/local/bin/gcc -O2 -p
 
 all:
 	yacc -d -p bsgp snippet.parser.y

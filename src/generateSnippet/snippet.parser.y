@@ -45,13 +45,19 @@ struct match_block
     int		div_pos, span_pos;
 };
 
+struct calc_data
+{
+    int		Match_start;
+    int		Sstart, WSstart;
+};
+
 struct bsg_intern_data
 {
     int		bsize, bpos;
     char	*buf;
     int		wordnr;
     char	in_link;
-    container	*Q, *Q2;//, *VMatch, *VHit, *VWordNr, *VLink, *WSentence;
+    container	*Q, *Q2;
     container	*WSentence;
     container	*Sentence;
     container	*Match;
@@ -59,7 +65,8 @@ struct bsg_intern_data
     int		*q_dep;
     char	*q_stop;
     int		last_match, q_start;
-    int		VMatch_start, VMatch_start2;
+    struct calc_data	calc_data1, calc_data2;
+    char	has_hits;
     int		q_flags;
     struct score_block	best, *q_best;
     int		snippet_size;
@@ -387,28 +394,61 @@ static inline int buf_printf(struct bsg_intern_data *data, const char *fmt, ...)
 }
 
 
-static inline void calculate_snippet(struct bsg_intern_data *data, char forced, int type, container *Q, int *VMatch_start, int maxsize, char verbose)
+// calculate_snippet:
+static inline void calculate_snippet(struct bsg_intern_data *data, char forced, int type, container *Q, struct calc_data *calc_data, int maxsize, char verbose)
 {
-    while (queue_size(Q) > 0 && (((data->bpos - pair(queue_peak(Q)).first.i) > maxsize) || forced))
+    // Simple form for cache:
+    int		_queue_size_Q = queue_size(Q);
+    value	_queue_peak_Q;
+
+    if (_queue_size_Q > 0) _queue_peak_Q = queue_peak(Q);
+
+    while (_queue_size_Q > 0 && (((data->bpos - pair(_queue_peak_Q).first.i) > maxsize) || forced))
 	{
-	    value	temp = queue_peak(Q);
-	    int		qfirst, qsize;
+	    int		_vector_size_Match;
 	    int 	pos, flags;
-	    struct match_block	*mb;
 	    int		i, j;
-	    char	m;
+	    char	more;
 	    int		d_hits;
 	    int		score=0;
 	    int		bstart;
 	    int		hits_in_links, hits_in_div, hits_in_span, hits_in_sentence;
 	    int		sentences;
 #ifdef DEBUG_ON
+	    struct match_block	*mb;
 	    int		_spos = 0;
 	    char	_sbuf[2048];
 #endif
 
-	    pos = pair(temp).first.i;
-	    flags = pair(temp).second.i;
+	    pos = pair(_queue_peak_Q).first.i;
+	    flags = pair(_queue_peak_Q).second.i;
+
+
+	    _vector_size_Match = vector_size(data->Match);
+
+	    for (i=calc_data->Match_start; i<_vector_size_Match; i++)
+		if (((struct match_block*)vector_get(data->Match,i).ptr)->bstart >= pos) break;
+
+	    calc_data->Match_start = i;
+	    more = (i < _vector_size_Match);
+	    bstart = pos;
+
+	    if (more)
+		{
+#ifdef DEBUG_ON
+		    mb = vector_get(data->Match,i).ptr;
+#endif
+		    data->has_hits = 1;
+		    bstart = ((struct match_block*)vector_get(data->Match,i).ptr)->bstart;
+		}
+	    else if (data->has_hits)
+		{
+		    // Empty queue:
+		    while (queue_size(Q) > 0 && ((data->bpos - pair(_queue_peak_Q).first.i) > maxsize))
+			queue_pop(Q);
+		    return;
+		}
+
 
 #ifdef DEBUG_ON
 	    if (verbose)
@@ -418,7 +458,7 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 		    if (forced)
 			_spos+= sprintf(_sbuf+_spos, "frc ");
 		    else
-			_spos+= sprintf(_sbuf+_spos, "%i ", (data->bpos - pair(queue_peak(Q)).first.i) );
+			_spos+= sprintf(_sbuf+_spos, "%i ", (data->bpos - pos) );
 
 		    if (flags & v_section_div)
 			_spos+= sprintf(_sbuf+_spos, "D");
@@ -447,122 +487,92 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 		}
 #endif
 
-	    qfirst = (*VMatch_start);
-	    qsize = vector_size(data->Match);
-
-//	    for (i=(*VMatch_start); i<vector_size(data->VMatch)
-	    for (i=qfirst; i<qsize; i++)
-		if (((struct match_block*)(vector_get(data->Match,i).ptr))->bstart >= pos) break;
-	    (*VMatch_start) = i;
-
-	    bstart = pos;
-	    m = (i < qsize);
-
-	    if (m)
-		{
-		    mb = vector_get(data->Match,i).ptr;
-		    bstart = mb->bstart;
-		}
 
 	    int		treff[data->num_queries];
+	    int		diff[data->num_queries];
+	    int		matrix[data->num_queries][data->num_queries];
 	    int		sum_hits = 0;
 	    int		k;
 	    int		bin_hits = 0;
 
-	    for (k=0; k<data->num_queries; k++)
-		treff[k] = 0;
-
-	    for (k=qfirst; k<qsize; k++)
+	    // Initialization of arrays:
+	    for (i=0; i<data->num_queries; i++)
 		{
-		    struct match_block	*a = vector_get(data->Match,k).ptr;
-		    treff[a->hit]++;
-		    sum_hits+= data->phrase_sizes[a->hit];
+		    treff[i] = 0;
+		    diff[i] = -1;
 
-		    if ((a->hit)<32) bin_hits|= (1<<(a->hit));
+		    for (j=0; j<data->num_queries; j++)
+			matrix[i][j] = 10000;
 		}
 
 	    d_hits = 0;
-	    for (k=0; k<data->num_queries; k++)
-		if (treff[k])
-		    d_hits++;
-
-//	    printf("[%i] ", d_hits);
-
-	    int		closeness = 0;
-
-	    {
-	    int		l, n;
-	    int		diff[data->num_queries];
-	    int		matrix[data->num_queries][data->num_queries];
-
-	    for (l=0; l<data->num_queries; l++)
-		diff[l] = -1;
-
-	    for (l=0; l<data->num_queries; l++)
-		for (n=0; n<data->num_queries; n++)
-		    matrix[l][n] = 10000;
-
-	    int		lastnr = -1;
-	    for (j = qfirst; j<qsize; j++)
-		{
-		    struct match_block *a = vector_get(data->Match,j).ptr;
-		    int		thisnr = a->wordnr;
-		    int		thisq = a->hit;
-		    int		z;
-
-		    if (lastnr>=0)
-		    {
-		    for (z=0; z<data->num_queries; z++)
-		    {
-			if (diff[z] >= 0 && z!=thisq)
-			    {
-			    if (thisnr-diff[z] < matrix[thisq][z])
-				{
-				    matrix[thisq][z] = matrix[z][thisq] = thisnr-diff[z];
-				}
-			    }
-		    }
-		    }
-
-		    lastnr = thisnr;
-		    diff[thisq] = thisnr;
-		}
-
 	    hits_in_links = 0;
 	    hits_in_div = 0;
 	    hits_in_span = 0;
 	    hits_in_sentence = 0;
-	    int	sntnc, s_end=0;
-	    for (sntnc=0; sntnc<vector_size(data->Sentence) && s_end==0; sntnc++)
-		{
-		    if (pair(vector_get(data->Sentence,sntnc)).first.i <= bstart
-			&& pair(vector_get(data->Sentence,sntnc)).second.i >= bstart)
-			s_end = pair(vector_get(data->Sentence,sntnc)).second.i;
-		}
-	    for (j = qfirst; j<qsize; j++)
-		{
-		    struct match_block *a = vector_get(data->Match,j).ptr;
-		    int		in_link = a->link;
 
-		    if (in_link) hits_in_links++;
-		    if (a->div_pos <= bstart) hits_in_div++;
-		    if (a->span_pos <= bstart) hits_in_span++;
-		    if (a->bstart < s_end) hits_in_sentence++;
+	    // Find end of first sentence:
+	    int		s_end=0, Ssize=vector_size(data->Sentence);
+	    for (i=calc_data->Sstart; i<Ssize && s_end==0; i++)
+		{
+		    value	val = vector_get(data->Sentence,i);
+
+		    if (pair(val).first.i <= bstart && pair(val).second.i >= bstart)
+			s_end = pair(val).second.i;
+		}
+	    if (i>0) calc_data->Sstart = i-1;
+
+	    // For each hit:
+	    for (i=calc_data->Match_start; i<_vector_size_Match; i++)
+		{
+		    struct match_block	*B = vector_get(data->Match,i).ptr;
+
+		    // Determine number of hits:
+		    if ((treff[B->hit]++)==0) d_hits++;
+		    sum_hits+= data->phrase_sizes[B->hit];
+
+		    if ((B->hit)<32) bin_hits|= (1<<(B->hit));
+
+		    // Calculate 'diff' and 'matrix':
+		    if (i > calc_data->Match_start)
+			{
+			    for (j=0; j<data->num_queries; j++)
+			        {
+				    if (diff[j] >= 0 && j!=B->hit)
+				        {
+					    if (B->wordnr - diff[j] < matrix[B->hit][j])
+						{
+						    matrix[B->hit][j] = matrix[j][B->hit] = B->wordnr - diff[j];
+						}
+				        }
+				}
+			}
+
+		    diff[B->hit] = B->wordnr;
+
+		    // Determine various properties of the hits in the snippet:
+		    if (B->link) hits_in_links++;
+		    if (B->div_pos <= bstart) hits_in_div++;
+		    if (B->span_pos <= bstart) hits_in_span++;
+		    if (B->bstart < s_end) hits_in_sentence++;
 		}
 
+
+	    // Calculate 'closeness':
+	    int		closeness = 0;
 	    int		bucket[4];
 
-	    for (l=0; l<4; l++)
-		bucket[l] = 0;
+	    for (i=0; i<4; i++)
+		bucket[i] = 0;
 
-	    for (l=0; l<data->num_queries; l++)
-		for (n=l+1; n<data->num_queries; n++)
+	    for (i=0; i<data->num_queries; i++)
+		for (j=i+1; j<data->num_queries; j++)
 		    {
-			if (matrix[l][n] == 1)
+			if (matrix[i][j] == 1)
 			    bucket[0]++;
-			else if (matrix[l][n] == 2)
+			else if (matrix[i][j] == 2)
 			    bucket[1]++;
-			else if (matrix[l][n] <= 4)
+			else if (matrix[i][j] <= 4)
 			    bucket[2]++;
 			else
 			    bucket[3]++;
@@ -570,29 +580,33 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 
 	    int		rest = 0;
 
-	    for (l=0; l<4; l++)
+	    for (i=0; i<4; i++)
 		{
-		    bucket[l]+= rest;
-		    if (bucket[l]>3)
+		    bucket[i]+= rest;
+		    if (bucket[i]>3)
 			{
-			    rest = bucket[l]-3;
-			    bucket[l] = 3;
+			    rest = bucket[i]-3;
+			    bucket[i] = 3;
 			}
 
-		    closeness+= bucket[l]<<((3-l)*2);
+		    closeness+= bucket[i]<<((3-i)*2);
 		}
 
-	    sentences = 0;
-	    int		start_bpos = pair(queue_peak(Q)).first.i;
 
-	    for (l=0; l<vector_size(data->WSentence); l++)
+	    // Calculate number of sentences:
+	    sentences = 0;
+	    int		WSsize = vector_size(data->WSentence);
+
+	    for (i=calc_data->WSstart; i<WSsize; i++)
 		{
-		    if (pair(vector_get(data->WSentence, l)).first.i >= start_bpos)
+		    if (pair(vector_get(data->WSentence, i)).first.i >= pos)
 			break;
 		}
+	    calc_data->WSstart = i;
 
-	    sentences = pair(vector_get(data->WSentence, vector_size(data->WSentence)-1)).second.i
-		- pair(vector_get(data->WSentence, l)).second.i;
+	    sentences = pair(vector_get(data->WSentence, WSsize-1)).second.i
+		- pair(vector_get(data->WSentence, i)).second.i;
+
 
 #ifdef DEBUG_ON
 	    if (verbose)
@@ -604,7 +618,6 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 //	    _spos+= sprintf(_sbuf+_spos, "[%i] ", hits_in_links);
 	    _spos+= sprintf(_sbuf+_spos, "(%i) ", sentences);
 #endif
-	    }
 
     /**
         Algoritme for kalkulering av beste snippet:
@@ -621,12 +634,11 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
         4 bit (0-3)		sum_hits (max 15)
      */
 
+	    // Calculate score for this snippet:
+
 	    if (sum_hits) sum_hits++;	// sum_hits er alltid minst 1 dersom det forekommer en hit,
 					// selv om alle hits er i lenker.
 	    sum_hits-= hits_in_links;	// Fjern hits i lenker.
-//	    int		num;
-//	    num = 3 - hits_in_links;
-//	    if (num<0) num = 0;
 
     // TODO: closeness?
 
@@ -636,7 +648,6 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 	    if (sentences)
 		score|= (1<<22);
 
-//	    score|= (num<<16);
 	    score|= (closeness<<14);
 
 	    if (hits_in_div>3) hits_in_div = 3;
@@ -677,6 +688,7 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 	    else
 		score|= sum_hits;
 
+	    // Save score:
 	    if (type==1)
 		{
 		    if (score > data->best.score)
@@ -750,19 +762,19 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 
 		    for (;pos < data->bpos; pos++)
 			{
-			    if (m && pos == mb->bstart)
+			    if (more && pos == mb->bstart)
 				{
 				    _spos+= sprintf(_sbuf+_spos, "\033[1;36m\'");
 				}
 
-			    if (m && pos == mb->bend)
+			    if (more && pos == mb->bend)
 				{
 				    _spos+= sprintf(_sbuf+_spos, "\'\033[0m");
 
 				    i++;
-				    m = (i < vector_size(data->Match));
+				    more = (i < vector_size(data->Match));
 
-				    if (m)
+				    if (more)
 					{
 					    mb = vector_get(data->Match,i).ptr;
 					}
@@ -770,7 +782,7 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 
 			    _spos+= sprintf(_sbuf+_spos, "%c", data->buf[pos]);
 			}
-		    if (m && pos == mb->bend)
+		    if (more && pos == mb->bend)
 			_spos+= sprintf(_sbuf+_spos, "\'\033[0m");
 		    _spos+= sprintf(_sbuf+_spos, "\n");
 		    _sbuf[_spos] = '\0';
@@ -786,7 +798,10 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 
 	    queue_pop(Q);
 
-	    if (forced && queue_size(Q) > 0 &&  ((data->bpos - pair(queue_peak(Q)).first.i) < (maxsize*3/4)))
+	    _queue_size_Q = queue_size(Q);
+	    if (_queue_size_Q > 0) _queue_peak_Q = queue_peak(Q);
+
+	    if (forced && _queue_size_Q > 0 &&  ((data->bpos - pair(_queue_peak_Q).first.i) < (maxsize*3/4)))
 		break;
 	}
 }
@@ -796,15 +811,15 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 static inline void test_for_snippet(struct bsg_intern_data *data, char forced)
 {
 #ifdef DEBUG
-    calculate_snippet(data, forced, 1, data->Q, &(data->VMatch_start), data->snippet_size, 1);
+    calculate_snippet(data, forced, 1, data->Q, &(data->calc_data1), data->snippet_size, 1);
 #else
-    calculate_snippet(data, forced, 1, data->Q, &(data->VMatch_start), data->snippet_size, 0);
+    calculate_snippet(data, forced, 1, data->Q, &(data->calc_data1), data->snippet_size, 0);
 #endif
 
 #ifdef DEBUG2
-    calculate_snippet(data, forced, 2, data->Q2, &(data->VMatch_start2), data->snippet_size/2, 1);
+    calculate_snippet(data, forced, 2, data->Q2, &(data->calc_data2), data->snippet_size/2, 1);
 #else
-    calculate_snippet(data, forced, 2, data->Q2, &(data->VMatch_start2), data->snippet_size/2, 0);
+    calculate_snippet(data, forced, 2, data->Q2, &(data->calc_data2), data->snippet_size/2, 0);
 #endif
 }
 
@@ -813,20 +828,21 @@ static inline void test_for_snippet(struct bsg_intern_data *data, char forced)
 static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_start, char* b_end )
 {
     int		i, pos;
-    char	m;
+    char	more;
     int		bsize = data->snippet_size*5;
     char	buf[bsize];
     int		bpos=0;
     struct match_block	*mb;
     int		active_highl=0;
     char	last_was_eos=0;
+    int		Msize = vector_size(data->Match);
 
-    for (i=0; i<vector_size(data->Match); i++)
+    for (i=0; i<Msize; i++)
 	if (((struct match_block*)(vector_get(data->Match,i).ptr))->bstart >= data->best.start) break;
 
-    m = (i < vector_size(data->Match));
+    more = (i < Msize);
 
-    if (m)
+    if (more)
 	{
 	    mb = vector_get(data->Match,i).ptr;
 	}
@@ -835,20 +851,20 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 
     for (pos=data->best.start; pos<data->best.stop; pos++)
 	{
-	    if (m && pos == mb->bstart)
+	    if (more && pos == mb->bstart)
 		{
 		    bpos+= snprintf(buf+bpos, bsize-bpos-1, b_start);
 		    active_highl++;
 		}
 
-	    if (m && pos == mb->bend)
+	    if (more && pos == mb->bend)
 		{
 		    bpos+= snprintf(buf+bpos, bsize-bpos-1, b_end);
 		    active_highl--;
 		    i++;
-		    m = (i < vector_size(data->Match));
+		    more = (i < Msize);
 
-		    if (m)
+		    if (more)
 			{
 			    mb = vector_get(data->Match,i).ptr;
 			}
@@ -932,39 +948,40 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
     for (nr=nr1, x=0; x<2; nr=nr2, x++)
 	{
 	    int		pos;
-	    char	m;
+	    char	more;
 	    struct match_block	*mb;
 	    int		active_highl=0;
 	    char	last_was_eos=0;
+	    int		Msize = vector_size(data->Match);
 
 //	    bpos+= sprintf(buf+bpos, "((%i))", nr);
 
-	    for (i=0; i<vector_size(data->Match); i++)
+	    for (i=0; i<Msize; i++)
 		if (((struct match_block*)(vector_get(data->Match,i).ptr))->bstart >= data->q_best[nr].start) break;
 
-	    m = (i < vector_size(data->Match));
+	    more = (i < Msize);
 
-	    if (m)
+	    if (more)
 		{
 		    mb = vector_get(data->Match,i).ptr;
 		}
 
 	    for (pos=data->q_best[nr].start; pos<data->q_best[nr].stop; pos++)
 		{
-		    if (m && pos == mb->bstart)
+		    if (more && pos == mb->bstart)
 			{
 			    bpos+= snprintf(buf+bpos, bsize-bpos-1, b_start);
 			    active_highl++;
 			}
 
-		    if (m && pos == mb->bend)
+		    if (more && pos == mb->bend)
 			{
 			    bpos+= snprintf(buf+bpos, bsize-bpos-1, b_end);
 			    active_highl--;
 			    i++;
-			    m = (i < vector_size(data->Match));
+			    more = (i < Msize);
 
-			    if (m)
+			    if (more)
 				{
 				    mb = vector_get(data->Match,i).ptr;
 				}
@@ -1040,8 +1057,13 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
     data->WSentence = vector_container( pair_container( int_container(), int_container() ) );
     data->Sentence = vector_container( pair_container( int_container(), int_container() ) );
     data->Match = vector_container( ptr_container() );
-    data->VMatch_start = 0;
-    data->VMatch_start2 = 0;
+    data->calc_data1.Match_start = 0;
+    data->calc_data1.Sstart = 0;
+    data->calc_data1.WSstart = 0;
+    data->calc_data2.Match_start = 0;
+    data->calc_data2.Sstart = 0;
+    data->calc_data2.WSstart = 0;
+    data->has_hits = 0;
     data->q_flags = v_section_sentence;
 
 
@@ -1294,7 +1316,8 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 	    free(data->d);
 	}
 
-    for (i=0; i<vector_size(data->Match); i++)
+    int		Msize = vector_size(data->Match);
+    for (i=0; i<Msize; i++)
 	free(vector_get(data->Match,i).ptr);
 
     destroy(data->Match);

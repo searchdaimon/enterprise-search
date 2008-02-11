@@ -50,6 +50,7 @@ int main(int argc, char *argv[])
 
 	    int		success = generate_snippet( qa, buf, size, &snippet, "\033[1;32m", "\033[0m", 320 );
 
+	    if (paramnr>2) printf("    - - - - -\n");
 	    printf("%s\n", snippet);
 	    free(snippet);
 	    free(buf);
