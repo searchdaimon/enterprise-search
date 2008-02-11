@@ -68,7 +68,7 @@ sub _show_installed {
             = "Unable to list installed packages:\n" . join "\n", @input;
         return;
     }
-    my @pkgs = grep { $_->{release} =~ /^boitho/ } @input;
+    my @pkgs = grep { $_->{name} =~ /^boitho/ } @input;
     $vars->{installed_pkgs} = \@pkgs;
     1;
 }
