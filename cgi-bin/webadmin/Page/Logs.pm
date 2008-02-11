@@ -40,19 +40,19 @@ sub show_logfiles {
 }
 
 sub download {
-	my $self = shift if (ref($_[0]));
+	my $self = shift if ref $_[0];
 	my $filename = shift;
-	my %logfiles = %{$CONFIG{'logfiles'}};
-	my $valid = grep /^$filename$/, keys (%logfiles);
-	return 0 unless($valid);
 
-	open my $file, "$CONFIG{'log_path'}/"."\Q$filename"
-		or croak "couldn't open $CONFIG{'log_path'}/$filename";
+	return unless $CONFIG{logfiles}->{$filename}; # valid filename
 
-	print $_ while (<$file>);
-#	print <$file>; # This method reads the entire file into memory.
+        my $path = $CONFIG{log_path} . "/" . $filename;
+	open my $fh, '<', $path
+		or croak "couldn't open $path: ", $!;
 
-	return 1;
+	print while <$fh>;
+#	Avoid 'print <$file>;', it reads the entire file into memory.
+
+	1;
 }
 
 sub show_search_log {
