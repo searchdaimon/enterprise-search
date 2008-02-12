@@ -2957,13 +2957,14 @@ int searchFilterCount(int *TeffArrayElementer,
 		else {
 			for(i=0;((i<nrOfSubnames +1) && (i<MAXFILTERELEMENTS));i++) { //+1 for og få med All
 
-				if (strcmp((*filters).collections.elements[i].name,(*filteron).collection) == 0) {
+				if (strcasecmp((*filters).collections.elements[i].name,(*filteron).collection) == 0) {
 					(*filters).collections.elements[i].checked = 1;
 				}
 				
 			}
 		}
-
+		
+		printf("filtering on coll \"%s\"\n",filteron->collection);
 		for (i=0;i<(*filters).collections.nrof;i++) {
 			printf("coll \"%s\", checked %i\n",(*filters).collections.elements[i].name,(*filters).collections.elements[i].checked);
 		}
