@@ -6,6 +6,8 @@
 
 #include "../common/bstr.h"
 
+#define TARGET_VISIBLE_URL_LEN 80
+
 #ifdef WITH_SHORTENURL_MAIN
 int globalOptVerbose = 0;
 #endif
@@ -40,7 +42,7 @@ void shortenurl(char *url,int urllen) {
 	printf("new url: %s\n", url);
 
 	//hvis den er kort kan vi bare returnere
-	if (len < 80) {
+	if (len < TARGET_VISIBLE_URL_LEN) {
 		return;
 	}
 
@@ -81,10 +83,10 @@ void shortenurl(char *url,int urllen) {
 	added = 0;
 	suburllen = 0;
 	while( (Data[Count] != NULL) ) {
-		printf("\t\t%d\t\"%s\"\n", Count, Data[Count]);
+		printf("a: \t\t%d\t\"%s\"\n", Count, Data[Count]);
 		suburllen = strlen(Data[Count]);
 
-		if ((added + suburllen) < 20) {
+		if ((added + suburllen) < (TARGET_VISIBLE_URL_LEN * 0.3)) {
 			strlcat(newurl,Data[Count],sizeof(newurl));
 			strlcat(newurl,slash,sizeof(newurl));
 			
@@ -103,10 +105,10 @@ void shortenurl(char *url,int urllen) {
 	added = 0;
 	suburllen = 0;
 	while( (Count > 0) ) {
-		//printf("\t\t%d\t\"%s\"\n", Count, Data[Count]);
+		printf("b: \t\t%d\t\"%s\"\n", Count, Data[Count]);
 
 		suburllen = strlen(Data[Count]);
-		if ((added + suburllen) < 50) {
+		if ((added + suburllen) < (TARGET_VISIBLE_URL_LEN * 0.7)) {
 			#ifdef DEBUG
 			printf("candidate %s\n",Data[Count]);
 			#endif
@@ -119,18 +121,26 @@ void shortenurl(char *url,int urllen) {
 		--Count;
 	}
 
-	//printf("TokCount %i, count %i\n",TokCount,Count);
+	printf("TokCount %i, count %i\n",TokCount,Count);
 
-	//printf("addint last part:\n");
-	for (i=Count+1;i<TokCount+1;i++) {
-		//printf("\t\t%d\t\"%s\"\n", i, Data[i]);
+	//hvis også siste navn er for langt, hånterer vi det spesifikt.
+	if (TokCount == Count) {
+		strlcat(newurl,slash,sizeof(newurl));
+		strlcat(newurl,Data[Count],sizeof(newurl));		
+	}
+	else {
+		//printf("addint last part:\n");
+		for (i=Count+1;i<TokCount+1;i++) {
+			printf("c: \t\t%d\t\"%s\"\n", i, Data[i]);
 
-                strlcat(newurl,slash,sizeof(newurl));
-		strlcat(newurl,Data[i],sizeof(newurl));
+                	strlcat(newurl,slash,sizeof(newurl));
+			strlcat(newurl,Data[i],sizeof(newurl));
 
+		}
 	}
 
-	//printf("newurl %s\n",newurl);
+	printf("newurl %s\n",newurl);
+
 	FreeSplitList(Data);
 	
 	//strscpy(url,newurl,urllen);
