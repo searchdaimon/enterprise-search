@@ -1,0 +1,5 @@
+#MySQL settup
+user=boitho
+Password=G7J7v5L5Y7
+server=localhost
+database=boithobb
