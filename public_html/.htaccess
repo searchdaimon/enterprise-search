@@ -1,0 +1,5 @@
+RewriteEngine on
+RewriteRule ^$ /webclient [R]
+RewriteRule ^index.html$ /webclient [R]
+RewriteRule ^admin$ /cgi-bin/webadmin/overview.cgi [R]
+RewriteRule ^admin/$ /cgi-bin/webadmin/overview.cgi [R]
