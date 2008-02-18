@@ -300,13 +300,14 @@ int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified
         printf("bbadocument_exist: %s, \"%s\", lastmodified %u\n",subname,documenturi,lastmodified);
 
 	if (uriindex_get(documenturi,&DocID,&lastmodifiedForExistTest,subname)
-	    && (lastmodifiedForExistTest == lastmodified)) {
+	    && (((lastmodifiedForExistTest == lastmodified)
+	        || (lastmodified == 0)))) {
 		struct DocumentIndexFormat docindex;
 		printf("bbdocument_exist: Uri \"%s\" exists with DocID \"%u\" and time \"%u\"\n",
 		    documenturi, DocID, lastmodifiedForExistTest);
 		// Update DI with new existed timestamp
 
-#ifdef BLACK_BOKS
+#if defined(BLACK_BOKS) && !defined(_24SEVENOFFICE)
 		DIRead(&docindex, DocID, subname);
 		docindex.lastSeen = time(NULL);
 		DIWrite(&docindex, DocID, subname, NULL);
