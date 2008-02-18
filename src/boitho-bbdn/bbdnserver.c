@@ -137,11 +137,13 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
                     		perror("Cant read dokument_size");
                     		exit(1);
                 	}
+
+			document = malloc(dokument_size +1);
+
 			if (dokument_size == 0) {
-				document = NULL;
+				document[0] = '\0';
 			}
 			else {
-				document = malloc(dokument_size +1);
 				if ((i=recvall(socket, document, dokument_size)) == 0) {
                         	        perror("Cant read document");
                         	        exit(1);
