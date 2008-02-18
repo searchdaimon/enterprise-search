@@ -167,3 +167,32 @@ int rrmdir(char dir[]) {
 }
 
 
+// Ax:
+int readfile_into_buf( char *filename, char **buf )
+{
+    FILE	*file = fopen(filename, "r");
+    int		i;
+
+    if (!file)
+	{
+	    fprintf(stderr, "Could not open %s\n", filename);
+	    return 0;
+	}
+
+    // Get filesize:
+    struct stat	fileinfo;
+    fstat( fileno( file ), &fileinfo );
+
+    int		size = fileinfo.st_size;
+    *buf = (char*)malloc(sizeof(char)*size);
+
+    for (i=0; i<size;)
+	{
+	    i+= fread( (void*)&(buf[i]), sizeof(char), size-i, file );
+	}
+
+    fclose(file);
+
+    return size;
+}
+
