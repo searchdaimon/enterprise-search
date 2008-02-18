@@ -188,7 +188,7 @@ int readfile_into_buf( char *filename, char **buf )
 
     for (i=0; i<size;)
 	{
-	    i+= fread( (void*)&(buf[i]), sizeof(char), size-i, file );
+	    i+= fread( (void*)&((*buf)[i]), sizeof(char), size-i, file );
 	}
 
     fclose(file);
