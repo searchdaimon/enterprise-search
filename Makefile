@@ -437,7 +437,7 @@ searchd : src/searchkernel/searchd.c
 searchdbb : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/getfiletype.o src/spelling/spelling.c src/ds/libds.a -DIIACL /home/eirik/.root/lib/libaspell.a /usr/local/lib/libstdc++.a -ldl -I/home/eirik/.root/include $(24SEVENOFFICE)
+	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/getfiletype.o src/spelling/spelling.c src/ds/libds.a -DIIACL /home/eirik/.root/lib/libaspell.a /usr/local/lib/libstdc++.a -ldl -I/home/eirik/.root/include $(24SEVENOFFICE) -D WITH_SPELLING
 
 mergeUserToSubname: src/mergeUserToSubname/main.c
 	@echo ""
@@ -684,7 +684,7 @@ BrankMerge: src/BrankMerge/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankMerge/*.c -o bin/BrankMerge $(LDFLAGS)
 
 readLinkDB: src/readLinkDB/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/readLinkDB/main.c -o bin/readLinkDB $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/readLinkDB/main.c -o bin/readLinkDB $(LDFLAGS)
 
 SortUdfile: src/SortUdfile/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/SortUdfile/main.c -o bin/SortUdfile $(LDFLAGS)

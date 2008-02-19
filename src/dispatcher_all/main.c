@@ -1595,6 +1595,7 @@ int main(int argc, char *argv[])
 
 
 	memset(&QueryData,'\0',sizeof(QueryData));
+	memset(&queryNodeHeder,'\0',sizeof(queryNodeHeder));
 
         //hvis vi har argumeneter er det første et query
         if (getenv("QUERY_STRING") == NULL) {
@@ -2277,12 +2278,18 @@ int main(int argc, char *argv[])
         printf("<SEARCH>\n");   
 	//får rare svar fra hilite. Dropper å bruke den får nå
 	FinalSiderHeder.hiliteQuery[0] = '\0';
+	#ifdef WITH_SPELLING
 	strsandr(SiderHeder->spellcheckedQuery, "\"","&quot;");
+	#endif
         printf("<RESULT_INFO TOTAL=\"%i\" SPELLCHECKEDQUERY=\"%s\" QUERY=\"%s\" HILITE=\"%s\" TIME=\"%f\" FILTERED=\"%i\" \
 	        SHOWABAL=\"%i\" CASHE=\"%i\" \
 		PREQUERY=\"%i\" GEOIPCONTRY=\"%s\" SUBNAME=\"%s\" BOITHOHOME=\"%s\" NROFSEARCHNODES=\"%i\"/>\n",
 		FinalSiderHeder.TotaltTreff,
+		#ifdef WITH_SPELLING
 		SiderHeder->spellcheckedQuery,
+		#else
+		"",
+		#endif
 		QueryData.queryhtml,
 		FinalSiderHeder.hiliteQuery,
 		FinalSiderHeder.total_usecs,
@@ -2359,9 +2366,10 @@ int main(int argc, char *argv[])
 					printf("\t\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);
 					printf("\t\t<cmc_conect>%f</cmc_conect>\n",SiderHeder[i].queryTime.cmc_conect);
 #endif
+					#ifdef BLACK_BOKS
 					printf("\t\t<html_parser_run>%f</html_parser_run>\n",SiderHeder[i].queryTime.html_parser_run);
 					printf("\t\t<generate_snippet>%f</generate_snippet>\n",SiderHeder[i].queryTime.generate_snippet);
-
+					#endif
 				}
 				printf("\t</TIMES>\n");
 

@@ -434,9 +434,11 @@ struct queryTimeFormat {
 	double responseShortning;
 	double searchSimple;
 
+	#ifdef BLACK_BOKS
 	//runerb: 5 feb 2008
 	double html_parser_run;
 	double generate_snippet;
+	#endif
 };
 
 struct filtersTrapedFormat {
@@ -490,7 +492,11 @@ struct SiderHederFormat {
 	int TotaltTreff;
 	double total_usecs;
 	char hiliteQuery[MaxQueryLen];
+
+	#ifdef WITH_SPELLING
 	char spellcheckedQuery[MaxQueryLen];
+	#endif
+
 	struct queryTimeFormat queryTime;
 	char servername[32];
 	struct subnamesFormat subnames[MAX_COLLECTIONS];
