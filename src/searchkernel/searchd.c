@@ -31,7 +31,10 @@
 
 #include "verbose.h"
 #include "searchkernel.h"
-#include "../spelling/spelling.h"
+
+#ifdef WITH_SPELLING
+	#include "../spelling/spelling.h"
+#endif
 
 #define cfg_searchd "config/searchd.conf"
 
@@ -75,22 +78,13 @@ int isInSubname(struct subnamesFormat *subnames,int nrOfSubnames,char s[]) {
 }
 
 
-
+#ifdef WITH_SPELLING
 struct spelling *spelling;
 
 void
 init_spelling(char *lang)
 {
 	spelling = spelling_init(lang);
-}
-
-
-/* The signal handler exit the program. . */
- void
-catch_alarm (int sig)
-{
-	printf("got alarm signal. Will exit\n");
-	exit(1);
 }
 
 void
@@ -100,6 +94,16 @@ catch_sigusr1(int sig)
 	spelling_destroy(spelling);
 	init_spelling("bb");
 }
+#endif
+
+/* The signal handler exit the program. . */
+ void
+catch_alarm (int sig)
+{
+	printf("got alarm signal. Will exit\n");
+	exit(1);
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -148,12 +152,14 @@ int main(int argc, char *argv[])
 				printf("Won't fork for new conections\n");
 				optSingle = 1;
                                 break;
+			#ifdef WITH_SPELLING
 			case 'L':
 				if (spelling == NULL)
 					init_spelling(optarg);
 				else
 					warnx("spelling already initialized");
 				break;
+			#endif
 			default:
                         	exit(1);
                 }
@@ -169,8 +175,10 @@ int main(int argc, char *argv[])
 		optrankfile = "Brank";
 	}
 
+	#ifdef WITH_SPELLING
 	if (spelling == NULL)
 		init_spelling("bb");
+	#endif
 
 	strncpy(servername,argv[1 +optind],sizeof(servername) -1);
 
@@ -227,8 +235,10 @@ int main(int argc, char *argv[])
 	searchd_config. cmc_port = maincfg_get_int(&maincfg,"CMDPORT");
 
 	maincfgclose(&maincfg);
-	signal(SIGUSR1, catch_sigusr1);
 
+	#ifdef WITH_SPELLING
+		signal(SIGUSR1, catch_sigusr1);
+	#endif
 	/***********************************************************************************/
 	//prøver å få fil lock. Bare en deamon kan kjøre avgangen
 

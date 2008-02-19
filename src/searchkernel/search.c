@@ -2481,14 +2481,27 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 			for (i = 0; i < (*TeffArrayElementer); i++) {
 
+				/*
 				if (TeffArray->iindex[i].indexFiltered.subname) {
 					#ifdef DEBUG
 						printf("is all ready filtered out\n");
 					#endif				
 				}
-				else if (strcmp(TeffArray->iindex[i].filetype,(*filteron).filetype) != 0) {
+				else
+				*/	
+				if (strcmp(TeffArray->iindex[i].filetype,(*filteron).filetype) != 0) {
+
 					TeffArray->iindex[i].indexFiltered.filename = 1;
-					--(*TotaltTreff);
+
+					if (TeffArray->iindex[i].indexFiltered.subname) {
+						#ifdef DEBUG
+							printf("is all ready filtered out\n");
+						#endif				
+					}
+					else {
+						--(*TotaltTreff);
+					}
+
 				}
 			}
 
@@ -2548,24 +2561,43 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 			for (i = 0; i < *TeffArrayElementer; i++) {
 
+				/*
 				if (TeffArray->iindex[i].indexFiltered.subname || TeffArray->iindex[i].indexFiltered.filename) {
 					#ifdef DEBUG
 						printf("is al redu filtered out ");
 					#endif				
 				}
-				else if ((TeffArray->iindex[i].date >= dl.start) && (TeffArray->iindex[i].date <= dl.end)) {
+				else 
+				*/
+				if ((TeffArray->iindex[i].date >= dl.start) && (TeffArray->iindex[i].date <= dl.end)) {
 					#ifdef DEBUG
 					printf("time hit %s",ctime(&TeffArray->iindex[i].date));
 					#endif
-					++notFiltered;
+					if (TeffArray->iindex[i].indexFiltered.subname || TeffArray->iindex[i].indexFiltered.filename) {
+						#ifdef DEBUG
+							printf("is al redu filtered out ");
+						#endif				
+					}
+					else {
+						++notFiltered;
+					}
 				}
 				else {
 					#ifdef DEBUG
 					printf("not time hit %s",ctime(&TeffArray->iindex[i].date));
 					#endif
+
 					TeffArray->iindex[i].indexFiltered.date = 1;
-					--(*TotaltTreff);
-					++filtered;
+
+					if (TeffArray->iindex[i].indexFiltered.subname || TeffArray->iindex[i].indexFiltered.filename) {
+						#ifdef DEBUG
+							printf("is al redu filtered out ");
+						#endif				
+					}
+					else {
+						--(*TotaltTreff);
+						++filtered;
+					}
 				}
 
 			}		

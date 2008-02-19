@@ -24,8 +24,10 @@
 #include "../common/bstr.h"
 #include "../query/query_parser.h"
 #include "../common/integerindex.h"
-#include "../spelling/spelling.h"
 
+#ifdef WITH_SPELLING
+	#include "../spelling/spelling.h"
+#endif
 
 #ifdef BLACK_BOKS
 	#include "../getdate/getdate.h"
@@ -66,8 +68,9 @@
 
 	//struct iindexFormat *TeffArray; //[maxIndexElements];
 
-extern struct spelling *spelling;
-
+#ifdef WITH_SPELLING
+	extern struct spelling *spelling;
+#endif
 
 static unsigned int hash_domainid_fn(void *k) { /* XXX: Make a proper hash function here */
 	return *(unsigned short int *)k;
@@ -295,8 +298,9 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 									&titleaa, &body, fn, NULL);
 
 							gettimeofday(&end_time, NULL);
+							#ifdef BLACK_BOKS
 							queryTime->html_parser_run += getTimeDifference(&start_time,&end_time);
-
+							#endif
 
 							(*Sider).HtmlPreparsed = 0;
 
@@ -306,7 +310,9 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 							generate_snippet(QueryData.queryParsed, body, strlen(body), &snippet, "<b>", "</b>", 160);
 
 							gettimeofday(&end_time, NULL);
+							#ifdef BLACK_BOKS
 							queryTime->generate_snippet += getTimeDifference(&start_time,&end_time);
+							#endif
 
 							strcpy(Sider->title, titleaa);
 							strcpy(Sider->description, snippet);
@@ -429,7 +435,9 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 							&titleaa, &body, fn, NULL);
 
 						gettimeofday(&end_time, NULL);
+						#ifdef BLACK_BOKS
 						queryTime->html_parser_run += getTimeDifference(&start_time,&end_time);
+						#endif
 
 						(*Sider).HtmlPreparsed = 0;
 
@@ -465,17 +473,21 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 
 						gettimeofday(&start_time, NULL);
 
+						#ifdef DEBUG
 							printf("#################################################################\n");
 							printf("############################ <DEBUG> ############################\n");
 							printf("body to snipet:\n%s\n",body);
 							printf("strlen(body) %i\n",strlen(body));
 							printf("############################ </DEBUG> ###########################\n");
 							printf("#################################################################\n");
+						#endif
 
 						generate_snippet( QueryData.queryParsed, body, strlen(body), &summary, "<b>", "</b>" , 160);
 					
 						gettimeofday(&end_time, NULL);
+						#ifdef BLACK_BOKS
 						queryTime->generate_snippet += getTimeDifference(&start_time,&end_time);
+						#endif
 
 						//printf("summary len %i\nsummary:\n-%s-\n",strlen(summary),summary);
 					
@@ -1055,7 +1067,7 @@ void *generatePagesResults(void *arg)
 
 		if (side->DocumentIndex.Url[0] == '\0') {
 			vboprintf("DocumentIndex url is emty\n");
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterNoUrl,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
+			increaseFilteredSilent(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterNoUrl,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 
 			continue;
 		}
@@ -1419,6 +1431,7 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 
 }
 
+#ifdef WITH_SPELLING
 int
 spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa)
 {
@@ -1470,6 +1483,7 @@ spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa)
 
 	return fixed;
 }
+#endif
 
 int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct SiderHederFormat *SiderHeder,
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames, 
@@ -1482,6 +1496,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	struct PagesResultsFormat PagesResults;
 	struct filteronFormat filteron;
+
+	memset(&PagesResults,'\0',sizeof(PagesResults));
+
 
 	PagesResults.SiderHeder = SiderHeder;
 	PagesResults.antall = 0;
@@ -1571,9 +1588,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	//int adultpages, noadultpages;
 	//struct QueryDataForamt QueryData;
 
-	#ifdef DEBUG
-		memset(&PagesResults.QueryData,' ',sizeof(PagesResults.QueryData));
-	#endif
+	//#ifdef DEBUG
+	//#endif
 
 	struct timeval start_time, end_time;
 	struct timeval popResult_start_time, popResult_end_time;
@@ -1588,8 +1604,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	
 	(*SiderHeder).queryTime.cmc_conect = 0;
 	(*SiderHeder).queryTime.crawlManager = 0;
+	#ifdef BLACK_BOKS
 	(*SiderHeder).queryTime.html_parser_run = 0;
 	(*SiderHeder).queryTime.generate_snippet = 0;
+	#endif
 
 	#if defined BLACK_BOKS && !defined _24SEVENOFFICE
 
@@ -1720,7 +1738,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	//ret = pthread_mutexattr_init(&PagesResults.mutex);
 	ret = pthread_mutex_init(&PagesResults.mutex, NULL);
 	ret = pthread_mutex_init(&PagesResults.mutextreadSyncFilter, NULL);
+	#ifdef BLACK_BOKS
 	ret = pthread_mutex_init(&PagesResults.mutext_pathaccess, NULL);
+	#endif
 
 	//låser mutex. Vi er jo enda ikke kalre til å kjøre
 	pthread_mutex_lock(&PagesResults.mutex);
@@ -1813,8 +1833,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	//free mutex'en
 	ret = pthread_mutex_destroy(&PagesResults.mutex);
 	ret = pthread_mutex_destroy(&PagesResults.mutextreadSyncFilter);
+	#ifdef BLACK_BOKS
 	ret = pthread_mutex_destroy(&PagesResults.mutex_pathaccess);
-	
+	#endif
 	#else 
 		generatePagesResults(&PagesResults);		
 	#endif
@@ -1854,6 +1875,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		//ToDo: bør dette også gjøres for web?
 		//runarb: 23 jan 2008: ser ut til at dette bare gjøres for web er ifNdef her???
 		(*SiderHeder).TotaltTreff -= (*SiderHeder).filtered;
+		//tar også bort de som ble filtrert stille
+		(*SiderHeder).TotaltTreff -= PagesResults.filteredsilent;
 	#endif
 
 
@@ -1864,6 +1887,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#ifdef BLACK_BOKS
 		searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,&(*SiderHeder).queryTime);	
 	#endif
+
+	#ifdef WITH_SPELLING
 
 	/* Spellcheck the query */
 	if (SiderHeder->TotaltTreff < 10 || 1) {
@@ -1876,6 +1901,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		}
 		destroy_query(&qa);
 	}
+	#endif
 
 	//lager en liste med ordene som ingikk i queryet til hiliting
 	hiliteQuery[0] = '\0';
@@ -1976,6 +2002,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	vboprintf("\t%-40s %i\n","cantpopResult",(*SiderHeder).filtersTraped.cantpopResult);
 	vboprintf("\t%-40s %i\n","cmc_pathaccess",(*SiderHeder).filtersTraped.cmc_pathaccess);
 	vboprintf("\t%-40s %i\n","filterSameCrc32_2",(*SiderHeder).filtersTraped.filterSameCrc32_2);
+
+	printf("\n");
+	vboprintf("\t%-40s %i\n","filteredsilent",PagesResults.filteredsilent);
 
 	vboprintf("\n\n");
 
