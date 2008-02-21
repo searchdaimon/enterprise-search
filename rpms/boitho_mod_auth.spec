@@ -1,4 +1,4 @@
-Name: mod_auth_boitho
+Name: boitho_mod_auth
 Version: 1.1
 Release: 1
 Source: /home/eirik/redhat/SOURCES/%{name}-%{version}.tar.gz
@@ -28,5 +28,4 @@ perl -ni -le 'print unless /mod_auth_boitho/' /etc/httpd/conf/httpd.conf
 %files
 %defattr(-,root,root)
 /usr/lib/httpd/modules/mod_auth_boitho.so
-%doc CHANGES INSTALL README makefile
 
