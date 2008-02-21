@@ -52,7 +52,9 @@ sub add_share {
 	$share->{'active'} = 1 if ($share->{'active'}); # HTML form sets it to "on"
 	my $id = $sqlShares->insert_share($share);
 	$sqlGroups->set_groups($id, $share->{'group_member'});
-	$sqlUsers->set_users($id, $share->{'user'});
+
+        my @users = grep { defined $_ } @{$share->{user}};
+	$sqlUsers->set_users($id, \@users);
 	
 	return 1;
 }
