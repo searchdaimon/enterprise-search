@@ -35,7 +35,7 @@ mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/public_html/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/cgi-bin/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/config/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/var/
-install -D -m 755 boitho.repo $RPM_BUILD_ROOT/etc/yum.repos.d/boitho.repo
+#install -D -m 755 boitho.repo $RPM_BUILD_ROOT/etc/yum.repos.d/boitho.repo
 
 %clean
 
@@ -73,7 +73,7 @@ sed -e 's,^,#,' -i.orig /etc/httpd/conf.d/welcome.conf
 /home/boitho/boithoTools/cgi-bin/
 /home/boitho/boithoTools/config/
 /home/boitho/boithoTools/var/
-/etc/yum.repos.d/boitho.repo
+#/etc/yum.repos.d/boitho.repo
 
 %doc 
 
