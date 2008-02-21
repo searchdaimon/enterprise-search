@@ -493,7 +493,9 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 
 						if (!charset_match)
 						    {
+							#ifndef NOWARNINGS
 							printf("Error: Illegal charset (%s) [%s]\n", content, data->url);
+							#endif
 							data->abort = 1;
 							return 0;
 						    }
