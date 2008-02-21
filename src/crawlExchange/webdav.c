@@ -39,17 +39,15 @@ free_userpass(char *buf)
 int
 ex_write_buffer(void *buffer, size_t size, size_t nmemb, void *stream)
 {
-	int first;
 	struct ex_buffer *buf;
 
 	buf = stream;
 
 	if (buf->buf == NULL) {
-		first = 1;
 		buf->buf = malloc(size * (nmemb + 1));
 		buf->size = size * (nmemb + 1);
+		buf->buf[0] = '\0';
 	} else {
-		first = 0;
 		buf->buf = realloc(buf->buf, buf->size + (size * nmemb));
 		buf->size = buf->size + (size * nmemb);
 	}
@@ -57,11 +55,7 @@ ex_write_buffer(void *buffer, size_t size, size_t nmemb, void *stream)
 		return -1;
 
 	/* XXX: Assuming size == sizeof(char) */
-	if (first) {
-		strncpy(buf->buf, buffer, size * nmemb);
-	} else {
-		strncat(buf->buf, buffer, size * nmemb);
-	}
+	strncat(buf->buf, buffer, size * nmemb);
 	buf->buf[buf->size-1] = '\0';
 	return nmemb;
 }
