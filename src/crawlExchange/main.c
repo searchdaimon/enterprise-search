@@ -166,7 +166,7 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 				crawldocumentAdd.acl_allow = NULL;
 				p = strstr(url, "/exchange/");
 				if (p != NULL) {
-					p += strlen("/exchange/");
+					p += 10; // strlen("/exchange/");
 					p2 = strchr(p, '/');
 					if (p2 != NULL) 
 						crawldocumentAdd.acl_allow = strndup(p, p2 - p); /* XXX: Anything that should be added? */
@@ -177,11 +177,14 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 
 				printf("Adding: '%s'\n", crawldocumentAdd.title);
 				(ci->documentAdd)(ci->collection, &crawldocumentAdd);
+				if (crawldocumentAdd.title[0] != '\0')
+					free(crawldocumentAdd.title);
+				if (crawldocumentAdd.acl_allow[0] != '\0') {
+					free(crawldocumentAdd.acl_allow);
+				}
+
 			}
-			free(crawldocumentAdd.title);
 			free(crawldocumentExist.documenturi);
-			if (crawldocumentAdd.acl_allow[0] != '\0')
-				free(crawldocumentAdd.acl_allow);
 			free(mail.buf);
 		}
 	}
@@ -319,10 +322,14 @@ main(int argc, char * argv[])
 	char *listxml;
 
 	xmlGetWarningsDefaultValue = 0;
-	listxml = ex_getContent("http://129.241.50.208/exchange/rb/", USERNAME, PASSWORD);
+	//listxml = ex_getContent("http://129.241.50.208/exchange/rb/", USERNAME, PASSWORD);
+	//listxml = ex_getContent("http://213.179.58.125/exchange/en/", "en", "1234Asd");
+	//listxml = ex_getContent("http://213.179.58.125/exchange/en/", "exchangeCrawler", "1234Asd");
+	//listxml = ex_getContent("http://213.179.58.125/exchange/exchangeCrawler/", "exchangeCrawler", "1234Asd");
 	if (listxml == NULL)
 		return 1;
-	grabContent(listxml, "http://129.241.50.208/exchange/rb/", USERNAME, PASSWORD, NULL);
+	printf("Got: %s\n", listxml);
+	//grabContent(listxml, "http://129.241.50.208/exchange/rb/", USERNAME, PASSWORD, NULL);
 	free(listxml);
 
 	return 0;
