@@ -1,6 +1,6 @@
 # Makefile.in for daemonize.
 #
-# $Id: Makefile.in,v 1.1 2008/01/25 14:16:52 boitho Exp $
+# $Id: Makefile.in,v 1.2 2008/02/21 17:57:37 eirik Exp $
 #
 # This source code is released under a BSD-style license. See the LICENSE
 # file for details.
@@ -37,9 +37,7 @@ daemonize.ps: daemonize.1
 
 install:
 	mkdir -p $(INSTALL_SBIN)
-	#runarb: her endret orginalsin til å instalere som boitho. Dette da rpm ikke kan gjøre om retighetene til root under bygging. Da vi ikke bygger pakker som root.
-	#$(INSTALL) -o root -m 0755 daemonize $(INSTALL_SBIN)
-	$(INSTALL) -o boitho -m 0755 daemonize $(INSTALL_SBIN)
+	$(INSTALL) -m 0755 daemonize $(INSTALL_SBIN)
 
 clean:
 	rm -rf *.o daemonize testdaemon *.ps
