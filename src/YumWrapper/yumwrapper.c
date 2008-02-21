@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
 	}
 		
 	second_arg = (argc == 3) ? argv[2] : NULL;
-	if (str_equals(action, "install")) {
+	if (strcmp(action, "install") == 0) {
 	    if (second_arg == NULL) {
 		printf("You need to provide a package name.\n");
 		show_usage();
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
 
 	}
 
-	else if (str_equals(action, "clean")) {
+	else if (strcmp(action, "clean") == 0) {
 	    second_arg = "all";
 	}
 	    
@@ -102,8 +102,9 @@ int pkg_exists(char * rpm_path) {
  * Execute program and exit.
  */
 void exec_and_exit(int program, char *action, char *second_arg) {
-    char exeocbuf[200000];
+    char *exeocbuf;
     int  exeocbuflen;
+
 
     void *args;
 
@@ -127,20 +128,24 @@ void exec_and_exit(int program, char *action, char *second_arg) {
 	break;
 
     default:
-	fprintf(stderr, "exec_and_exec: Unknown program %d\n", program);
+	fprintf(stderr, "exec_and_exit: Unknown program %d\n", program);
 	exit(EXIT_FAILURE);
     }
 
-    exeocbuflen = sizeof(exeocbuf);
+    exeocbuflen = 1024*1024*5;
+    exeocbuf = malloc(exeocbuflen);
     //printf("kjorer %s %s %s \n", shargs[0], shargs[1], shargs[2]);
 
     int exec_return;
     if (!exeoc(args, exeocbuf, &exeocbuflen, &exec_return)) {
 	printf("Unable to execute program\n");
+        free(exeocbuf);
 	exit(EXIT_FAILURE);
     }
 
     printf(exeocbuf);
+
+    free(exeocbuf);
     exit(exec_return);
     
 }
@@ -170,7 +175,7 @@ int str_in_list(const char *list[], char *str) {
     int i = 0;
     while (list[i] != '\0') {
 
-	if (str_equals(list[i], str)) {
+	if (strcmp(list[i], str) == 0) {
 	    return 1;
 	}
 	i++;
@@ -178,9 +183,6 @@ int str_in_list(const char *list[], char *str) {
     return 0;
 }
 
-int str_equals(const char *param, char *string) {
-    return (strcmp(param, string) == 0);
-}
 
 /**
  * Show program usage and exit.
