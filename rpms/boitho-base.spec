@@ -29,12 +29,13 @@ Autoreq: 0
 
 %build
 %install
-install -D -m 755 bbdemo.boitho.com.conf $RPM_BUILD_ROOT/etc/httpd/conf/bbdemo.boitho.com.conf
+install -D -m 755 bbdemo.boitho.com.conf $RPM_BUILD_ROOT/etc/httpd/conf.d/bbdemo.boitho.com.conf
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/logs/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/public_html/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/cgi-bin/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/config/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/var/
+install -D -m 755 boitho.repo $RPM_BUILD_ROOT/etc/yum.repos.d/boitho.repo
 
 %clean
 
@@ -49,12 +50,14 @@ chmod o+x /home/boitho/
 
 mkdir -p /home/boitho/boithoTools/var
 chown boitho /home/boitho/boithoTools/var
+chown boitho /home/boitho/boithoTools/logs/
 chown boitho /boithoData
 
 
 %post
 #including bbdemo.boitho.com.conf in httpd.conf 
-echo "Include /etc/httpd/conf/bbdemo.boitho.com.conf" >> /etc/httpd/conf/httpd.conf
+sed -e 's,^,#,' -i.orig /etc/httpd/conf.d/welcome.conf
+#echo "Include /etc/httpd/conf/bbdemo.boitho.com.conf" >> /etc/httpd/conf/httpd.conf
 
 #restarting httpd
 /etc/rc.d/init.d/httpd restart
@@ -62,7 +65,7 @@ echo "Include /etc/httpd/conf/bbdemo.boitho.com.conf" >> /etc/httpd/conf/httpd.c
 %files
 %defattr(-,boitho,boitho)
 #/home/boitho/bin/boithoad
-/etc/httpd/conf/bbdemo.boitho.com.conf
+/etc/httpd/conf.d/bbdemo.boitho.com.conf
 # XXX: http://docs.fedoraproject.org/drafts/rpm-guide-en/ch-packaging-guidelines.html#id2994388
 # Skal vi lage en dummy-fil i hver av mappene i stedet?
 /home/boitho/boithoTools/logs/
@@ -70,6 +73,7 @@ echo "Include /etc/httpd/conf/bbdemo.boitho.com.conf" >> /etc/httpd/conf/httpd.c
 /home/boitho/boithoTools/cgi-bin/
 /home/boitho/boithoTools/config/
 /home/boitho/boithoTools/var/
+/etc/yum.repos.d/boitho.repo
 
 %doc 
 
