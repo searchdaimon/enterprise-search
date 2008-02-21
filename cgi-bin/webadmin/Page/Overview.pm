@@ -160,7 +160,8 @@ sub submit_edit {
 	# Continue with the submit.
 	$sqlShares->update_share($share);
 	$sqlGroups->set_groups($share->{id}, $share->{group_member});
-        $sqlUsers->set_users($share->{id}, $share->{user});
+        my @users = grep { defined $_ } @{$share->{user}};
+        $sqlUsers->set_users($share->{id}, \@users);
 
 	$vars->{'edit_success'} = 1;
 	return ($vars, $valid);
