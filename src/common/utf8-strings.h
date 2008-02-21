@@ -71,18 +71,6 @@ static inline int detect_no_uppercase( unsigned char *str )
     return 1;
 }
 
-// Detekterer om fï¿½ste tegn i strengen er uppercase:
-static inline int utf8_first_char_uppercase( unsigned char *str )
-{
-	if (str==NULL || str[0]=='\0') return 0;
-
-	if (str[0]>='A' && str[0]<='Z') return 1;
-	if (str[0]==0xc3 && str[1]>=0x80 && str[1]<=0x9e) return 1;
-
-	return 0;
-}
-
-
 // Detekterer om første tegn i strengen er uppercase:
 static inline int utf8_first_char_uppercase( unsigned char *str )
 {
