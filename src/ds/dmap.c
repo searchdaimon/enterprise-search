@@ -26,7 +26,7 @@ inline alloc_data map_ap_allocate( container *C, va_list ap )
     alloc_data	x;
 
     x.v.C = N;
-    x.ap = ap;
+    va_copy(x.ap, ap);
 
     return x;
 }
@@ -230,7 +230,7 @@ inline iterator map_insert( container *C, ... )
     va_start(ap, C);
     ad = MP->Key->ap_allocate(MP->Key, ap);
     key = ad.v;
-    ap = ad.ap;
+    va_copy(ap, ad.ap);
     ad = MP->Data->ap_allocate(MP->Data, ap);
     val = ad.v;
     va_end(ad.ap);

@@ -22,7 +22,7 @@ inline alloc_data set_ap_allocate( container *C, va_list ap )
     alloc_data	x;
 
     x.v.C = N;
-    x.ap = ap;
+    va_copy(x.ap, ap);
 
     return x;
 }

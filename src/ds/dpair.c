@@ -49,7 +49,7 @@ alloc_data pair_ap_allocate( container *C, va_list ap )
     ((pair_value*)v.ptr)->second = b;
 
     zap.v = v;
-    zap.ap = ap;
+    va_copy(zap.ap, ap);
 
     return zap;
 }

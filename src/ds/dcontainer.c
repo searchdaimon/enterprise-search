@@ -27,7 +27,7 @@ static inline alloc_data int_ap_allocate( container *C, va_list ap )
     x.v.i = va_arg(ap, int);
 //    printf("allocated %i\n", x.v.i);
 
-    x.ap = ap;
+    va_copy(x.ap, ap);
 
     return x;
 }
@@ -98,7 +98,7 @@ inline alloc_data string_ap_allocate( container *C, va_list ap )
 	x.v.ptr = strdup(c);
 //    if (SC_DEBUG) printf(" [allocated %s] ", (char*)x.v.ptr);
 
-    x.ap = ap;
+    va_copy(x.ap,ap);
 
     return x;
 }
@@ -174,7 +174,7 @@ static inline alloc_data ptr_ap_allocate( container *C, va_list ap )
     x.v.ptr = va_arg(ap, void*);
 //    printf("allocated %i\n", x.v.i);
 
-    x.ap = ap;
+    va_copy(x.ap, ap);
 
     return x;
 }
@@ -289,7 +289,7 @@ value allocate( container *C, ... )
 
     ad = C->ap_allocate( C, ap );
     v = ad.v;
-    ap = ad.ap;
+    va_copy(ap, ad.ap);
 
     va_end(ap);
 
