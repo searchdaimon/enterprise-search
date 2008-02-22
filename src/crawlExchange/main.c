@@ -15,6 +15,7 @@
 
 #include "../base64/base64.h"
 #include "../crawl/crawl.h"
+#include "../common/subject.h"
 
 struct crawlinfo {
 	int (*documentExist)(struct collectionFormat *, struct crawldocumentExistFormat *);
@@ -132,9 +133,12 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 				free(crawldocumentExist.documenturi);
 				continue;
 			}
+#if 0
 			if (ci->timefilter > 0 && ci->timefilter > crawldocumentExist.lastmodified) {
 				printf("Have the same or newer version of %s\n", cur->str);
 			} else if ((ci->documentExist)(ci->collection, &crawldocumentExist)) {
+#endif
+			if ((ci->documentExist)(ci->collection, &crawldocumentExist)) {
 				// This document already exists
 			} else {
 				char *p, *p2;
@@ -154,10 +158,12 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 					p += 8; // strlen("subject:");
 					for (p2 = p; *p2 != '\n' && *p2 != '\r' && *p2 != '\0'; p2++)
 						;
-					if (p2 - p > 0)
+					if (p2 - p > 0) {
 						crawldocumentAdd.title = strndup(p, p2 - p);
-					else
+						fix_subject(crawldocumentAdd.title, p2-p+1);
+					} else {
 						crawldocumentAdd.title = NULL;
+					}
 					if (crawldocumentAdd.title == NULL)
 						crawldocumentAdd.title = "";
 				}
