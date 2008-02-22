@@ -125,15 +125,11 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 			struct crawldocumentAddFormat crawldocumentAdd;
 
 			printf("%s\n", cur->str);
-			if (ex_getEmail((char *)cur->str, username, password, &mail) == NULL)
-				continue;
-
 			crawldocumentExist.documenturi = make_crawl_uri((char *)cur->str, cur->id);
 			crawldocumentExist.lastmodified = cur->modified;
 			if (crawldocumentExist.documenturi == NULL) {
 				(ci->documentError)(1, "Could not allocate memory for documenturi");
 				free(crawldocumentExist.documenturi);
-				free(mail.buf);
 				continue;
 			}
 			if (ci->timefilter > 0 && ci->timefilter > crawldocumentExist.lastmodified) {
@@ -142,6 +138,10 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 				// This document already exists
 			} else {
 				char *p, *p2;
+
+				if (ex_getEmail((char *)cur->str, username, password, &mail) == NULL)
+					continue;
+
 				// Let's add it
 				crawldocumentAdd.documenturi = crawldocumentExist.documenturi;
 				/* Find the subject */
@@ -149,12 +149,15 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 				if (p == NULL || *p == '\0') {
 					crawldocumentAdd.title = "";
 				} else {
-					for (p++; *p == ' '; p++)
-						;
+					//for (p++; *p == ' '; p++)
+					//	;
 					p += 8; // strlen("subject:");
 					for (p2 = p; *p2 != '\n' && *p2 != '\r' && *p2 != '\0'; p2++)
 						;
-					crawldocumentAdd.title = strndup(p, p2 - p);
+					if (p2 - p > 0)
+						crawldocumentAdd.title = strndup(p, p2 - p);
+					else
+						crawldocumentAdd.title = NULL;
 					if (crawldocumentAdd.title == NULL)
 						crawldocumentAdd.title = "";
 				}
@@ -182,10 +185,9 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 				if (crawldocumentAdd.acl_allow[0] != '\0') {
 					free(crawldocumentAdd.acl_allow);
 				}
-
+				free(mail.buf);
 			}
 			free(crawldocumentExist.documenturi);
-			free(mail.buf);
 		}
 	}
 	freeStringList(urls);
@@ -324,7 +326,7 @@ main(int argc, char * argv[])
 	xmlGetWarningsDefaultValue = 0;
 	//listxml = ex_getContent("http://129.241.50.208/exchange/rb/", USERNAME, PASSWORD);
 	//listxml = ex_getContent("http://213.179.58.125/exchange/en/", "en", "1234Asd");
-	//listxml = ex_getContent("http://213.179.58.125/exchange/en/", "exchangeCrawler", "1234Asd");
+	listxml = ex_getContent("http://213.179.58.125/exchange/en/", "exchangeCrawler", "1234Asd");
 	//listxml = ex_getContent("http://213.179.58.125/exchange/exchangeCrawler/", "exchangeCrawler", "1234Asd");
 	if (listxml == NULL)
 		return 1;
