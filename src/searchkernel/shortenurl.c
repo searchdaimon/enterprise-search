@@ -21,25 +21,23 @@ void shortenurl(char *url,int urllen) {
 	int i;
 	char slash[2];
 	int len;
-	len = strlen(url);
 	vboprintf("shortenurl: inn url %s\n", url);
 	char *p;
 	char proto[128];
 	
 	//tar bort proto:// først
 	p = strstr(url, "://");
-	printf("url: %s\n", url);
-	if (p != NULL) {
-		p += 3;
+	if (p != NULL && p > url) {
+		p += 3; /* Skip past :// */
+		strncpy(proto, url, p-url);
+		proto[p-url] = '\0';
 		while (*p == '/')
 			p++;
-		strncpy(proto, url, p - url);
-		proto[p-url] = '\0';
-		len -= (p - url);
-		len += 1;
+		len = strlen(p);
 		memmove(url, p, len);
-	}
-	printf("new url: %s\n", url);
+	} else {
+		len = strlen(url);
+	}	
 
 	//hvis den er kort kan vi bare returnere
 	if (len < TARGET_VISIBLE_URL_LEN) {
@@ -144,7 +142,7 @@ void shortenurl(char *url,int urllen) {
 	FreeSplitList(Data);
 	
 	//strscpy(url,newurl,urllen);
-	snprintf(url, urllen, "%s", newurl);
+	snprintf(url, urllen, "%s%s", proto, newurl);
 }
 
 #ifdef WITH_SHORTENURL_MAIN
