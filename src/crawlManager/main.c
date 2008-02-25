@@ -184,7 +184,9 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 
 		blog(LOGERROR,1,"can't sent to bbdn! Tryed to send doc \"%s\" Will sleep and then reconect. Wont send same doc again.\n",(*crawldocumentAdd).documenturi);
 		
-		bbdn_closecollection((*collection).socketha,(*collection).collection_name);
+		//ber om å lokke sokketen. Dette er ikke det samme som å steneg kollectionen.
+		//bbdn_closecollection((*collection).socketha,(*collection).collection_name);
+		bbdn_close((*collection).socketha);
 
 		sleep(10);
 
@@ -1123,33 +1125,10 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 
 		blog(LOGACCESS,1,"Starting crawl of collection \"%s\" (id %u)\n",collection[i].collection_name,collection[i].id);
 
-		//tester at vi ikke allerede holder på å crawle denne fra før
-		if (!crawl_lock(&collection_lock,collection[i].collection_name)) {
-			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are all redy crawling it.\n",collection[i].collection_name);
-			//runarb: 14 jan 2008: ingen grun til å oppdatere beskjeden, da det som står der er med korekt
-                        //set_crawler_message(0,"Error: Can't crawl collection. We are all redy crawling it.",collection[i].id);
+		//sletter collection. Gjør dette uavhenging om vi har lock eller ikke, slik at vi altid får slettet, så kan vi gjøre
+		// ny crawl etterpå hvis vi ikke hadde lock
+		if (flag == crawl_recrawl) {
 
-			continue;
-		}
-
-		//tester at vi ikke driver å crawler med den crawleren fra før. Her burde vi kansje 
-		//heller satset på å begrense på server. Slik at for eks to smb servere kan crawles samtidig
-		if (!crawl_element_lock(&collection_lock,collection[i].connector)) {
-			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are all redy crawling this type/server.\n",collection[i].collection_name);
-                        set_crawler_message(0,"Error: Can't crawl collection. We are all redy crawling this type/server.",collection[i].id);
-
-			continue;
-		}
-		
-	
-		//make a conectina to bbdn for add to use
-		if (!bbdn_conect(&collection[i].socketha,"",global_bbdnport)) {
-			berror("can't conect to bbdn (boitho backend document server)");
-			set_crawler_message(0,bstrerror(),collection[i].id);
-		}
-		else {
-
-			if (flag == crawl_recrawl) {
 				static MYSQL demo_db;
 
 				printf("crawl_recrawl\n");
@@ -1182,6 +1161,37 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 				bbdocument_deletecoll(collection[i].collection_name);
 
 
+		}
+
+		//tester at vi ikke allerede holder på å crawle denne fra før
+		if (!crawl_lock(&collection_lock,collection[i].collection_name)) {
+			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are all redy crawling it.\n",collection[i].collection_name);
+			//runarb: 14 jan 2008: ingen grun til å oppdatere beskjeden, da det som står der er med korekt
+                        //set_crawler_message(0,"Error: Can't crawl collection. We are all redy crawling it.",collection[i].id);
+
+			continue;
+		}
+
+		//tester at vi ikke driver å crawler med den crawleren fra før. Her burde vi kansje 
+		//heller satset på å begrense på server. Slik at for eks to smb servere kan crawles samtidig
+		if (!crawl_element_lock(&collection_lock,collection[i].connector)) {
+			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are all redy crawling this type/server.\n",collection[i].collection_name);
+                        set_crawler_message(0,"Error: Can't crawl collection. We are all redy crawling this type/server.",collection[i].id);
+
+			continue;
+		}
+		
+	
+		//make a conectina to bbdn for add to use
+		if (!bbdn_conect(&collection[i].socketha,"",global_bbdnport)) {
+			berror("can't conect to bbdn (boitho backend document server)");
+			set_crawler_message(0,bstrerror(),collection[i].id);
+		}
+		else {
+
+			if (flag == crawl_recrawl) {
+
+
 				if (!crawlfirst(global_h,&collection[i])) {
                                         set_crawler_message(0,bstrerror(),collection[i].id);
                                 }
@@ -1210,7 +1220,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 			closecollection(&collection[i]);
 
 			
-			//ber bbdn om å lukke
+			//ber bbdn om å lukke sokket
 			bbdn_close(&collection[i].socketha);
 
 
