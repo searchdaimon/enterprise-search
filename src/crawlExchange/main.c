@@ -236,6 +236,40 @@ crawlcanconect(struct collectionFormat *collection,
 	return 0;
 }
 
+static void
+normalize_url(char *res)
+{
+	size_t len, i, cur;
+	char *p;
+
+	/* Normalize the url a bit */
+	cur = i = 0;
+
+	/* Skip past the protocol */
+	if ((p = strstr(res, "://")) == NULL)
+		p = res;
+	else
+		p += 3;
+
+	/* Remove duplicate /'es */
+	while (p[i] != '\0') {
+		if (p[cur-1] == '/' && p[i] == '/') {
+			i++;
+		} else {
+			p[cur] = p[i];
+			i += 1;
+			cur += 1;
+		}
+	}
+	p[cur] = '\0';
+
+	/* Remove trailing / if any */
+	len = strlen(res);
+	if (res[len-1] == '/') {
+		res[len-1] = '\0';
+	}
+}
+
 int
 crawlGo(struct crawlinfo *ci)
 {
@@ -245,16 +279,9 @@ crawlGo(struct crawlinfo *ci)
 	char resource[PATH_MAX];
 	char *user;
 	char **users;
-#if 0
-	char *fakeusers[] = {
-		"rb",
-		"eirik",
-		"dagur",
-		NULL
-	};
-#endif
-	
-	//users = "eirik rb runarb";
+
+	normalize_url(ci->collection->resource);
+
 	if (strstr(ci->collection->resource, "://")) {
 		snprintf(origresource, sizeof(origresource), "%s/exchange", ci->collection->resource);
 	} else {
@@ -263,7 +290,6 @@ crawlGo(struct crawlinfo *ci)
 
 	err = 0;
 	for (users = ci->collection->users; users && *users; users++) {
-	//for (users = fakeusers; *users; users++) {
 		user = *users;
 
 		snprintf(resource, sizeof(resource), "%s/%s/", origresource, user);
