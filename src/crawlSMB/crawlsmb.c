@@ -8,6 +8,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <libsmbclient.h>
+#include <inttypes.h>
+
+
 #include "get_auth_data_fn.h"
 #include "cleanresource.h"
 
@@ -45,6 +48,39 @@ static void no_auth_data_fn( const char * pServer,
 
 SMBCCTX* context_init();
 int context_free( SMBCCTX *context );
+
+
+int smbc_readloop(int sockfd, void *buf, off_t len) {
+
+	printf("smbc_readloop: start\n");
+	
+        off_t total = 0;
+        off_t bytesleft = len; // how many we have left to send
+        int n;
+
+        #ifdef DEBUG
+        printf("will read %i",len);
+        #endif
+
+        while(total < len) {
+
+                if ((n = smbc_read(sockfd, buf+total, 65000)) <= 0) {
+			printf("error: can't smbc_read()\n");
+                        return 0;
+                }
+
+                //#ifdef DEBUG
+                printf("reading %i bytes. \ttotal red %"PRId64", \tleft %"PRId64", \ttotal to get %"PRId64" ( %f\% )\n",n,total,bytesleft,len,((float)total/(float)len)*100.00);
+                //#endif
+
+                total += n;
+                bytesleft -= n;
+        }
+
+	printf("smbc_readloop: end. did read %"PRId64"\n",total);
+        return total;
+
+}
 
 
 /*
@@ -268,12 +304,13 @@ int smb_recursive_get( char *prefix, char *dir_name,
 			crawldocumentExist.lastmodified = file_stat.st_mtime;
 			crawldocumentExist.dokument_size = file_stat.st_size;
 
-			cleanresourceUnixToWin(crawldocumentExist.documenturi);
+			//runarb: 26 feb. Vi kjører denne på crawldocumentExist urlen, men ikke på add. Noe som fører til at de blir forskjelige.
+			//cleanresourceUnixToWin(crawldocumentExist.documenturi);
 
 			#ifdef DEBUG
-			printf("times: st_atime %s ",ctime(&file_stat.st_atime));
-			printf("times: st_mtime %s ",ctime(&file_stat.st_mtime));
-			printf("times: st_ctime %s ",ctime(&file_stat.st_ctime));
+				printf("times: st_atime %s ",ctime(&file_stat.st_atime));
+				printf("times: st_mtime %s ",ctime(&file_stat.st_mtime));
+				printf("times: st_ctime %s ",ctime(&file_stat.st_ctime));
 			#endif
 
 
@@ -285,6 +322,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 			}
 		    	else if ((documentExist)(collection, &crawldocumentExist )) {
 				//doc exist
+				printf("Note: smb_recursive_get: document exist\n");
 			}
 			else 
 			{
@@ -310,9 +348,15 @@ int smb_recursive_get( char *prefix, char *dir_name,
 			    else
 				{
 				    int		i;
-				    char	*fbuf = (char*)malloc(file_stat.st_size+1);
+				    char	*fbuf;
 
-				    i = smbc_read( fd, fbuf, file_stat.st_size );
+				    if ((fbuf = malloc(file_stat.st_size+1)) == NULL) {
+					fprintf(stderr,"can't malloc %i bytes for file buffer\n",file_stat.st_size);
+					perror("malloc");
+						
+				    }
+
+				    i = smbc_readloop( fd, fbuf, file_stat.st_size );
 				    if (i<0)
 					{
 					    documentError(1,"crawlsmb.c: Error! Could not read %s", entry_name);
