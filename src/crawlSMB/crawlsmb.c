@@ -24,6 +24,8 @@
 #include "crawlsmb.h"
 
 #define MAX_URI_SIZE	1024
+// 100 mb
+#define MAX_FILE_SIZE 104857600
 
 static void no_auth_data_fn( const char * pServer,
                 const char * pShare,
@@ -347,32 +349,38 @@ int smb_recursive_get( char *prefix, char *dir_name,
 				}
 			    else
 				{
-				    int		i;
-				    char	*fbuf;
 
-				    if ((fbuf = malloc(file_stat.st_size+1)) == NULL) {
-					fprintf(stderr,"can't malloc %i bytes for file buffer\n",file_stat.st_size);
-					perror("malloc");
-						
-				    }
+				    	int	i;
+				    	char	*fbuf;
+					char    uri[sizeof(entry_name)+1];
 
-				    i = smbc_readloop( fd, fbuf, file_stat.st_size );
-				    if (i<0)
-					{
-					    documentError(1,"crawlsmb.c: Error! Could not read %s", entry_name);
+					//tester størelsen på filen. Hvis den er for stor dropper vi å laste den ned.
+					if (file_stat.st_size > MAX_FILE_SIZE) {
+						fprintf(stderr,"Warning: document \"%s\" is larger then maximum size of %i. Size is %"PRId64"\n",entry_name,MAX_FILE_SIZE,file_stat.st_size);
+
+						fbuf = strdup("");
+						//setter at dokumentet er 0 bytes
+						file_stat.st_size = 0;
+
 					}
-				    else
-					{
-/*
-	kodet uri => dekodet uri => kodet uri != opprinnelig kodet uri!!!
+					else {
 
-					    // The size of the decoded URI will never exceed the size of the encoded version:
-					    char	uri[sizeof(entry_name)+1];
+				    		if ((fbuf = malloc(file_stat.st_size+1)) == NULL) {
+							fprintf(stderr,"can't malloc %i bytes for file buffer\n",file_stat.st_size);
+							perror("malloc");
 
-					    smbc_urldecode( uri, entry_name, sizeof(entry_name)+1 );
-*/
-#ifndef NO_BB
-						char        uri[sizeof(entry_name)+1];
+							goto closefile;
+				    		}
+
+				    		i = smbc_readloop( fd, fbuf, file_stat.st_size );
+
+				    		if (i<0) {
+							documentError(1,"crawlsmb.c: Error! Could not read %s", entry_name);
+							goto closefile;
+				    		}
+					}
+
+					#ifndef NO_BB
 						//fp char bug fiks:
 						//smbc_urldecode( uri, entry_name, sizeof(entry_name)+1 );
 						strscpy( uri, entry_name, sizeof(uri) );
@@ -382,8 +390,9 @@ int smb_recursive_get( char *prefix, char *dir_name,
 						isize = (strlen(uri) *2)+ strlen("file:");
 						crawldocumentAdd.documenturi = malloc(isize);
 						sprintf(crawldocumentAdd.documenturi,"file:%s",uri);
+
 						#ifdef URLDECODE
-						iconv_convert(isoconp ,&crawldocumentAdd.documenturi, isize);
+							iconv_convert(isoconp ,&crawldocumentAdd.documenturi, isize);
 						#endif
 
         					crawldocumentAdd.documenttype	= "";
@@ -396,9 +405,11 @@ int smb_recursive_get( char *prefix, char *dir_name,
 						isize = ((strlen(dirp->name) *2) +1);
         					crawldocumentAdd.title	= malloc(isize);
 						smbc_urldecode( crawldocumentAdd.title, dirp->name, strlen(dirp->name) +1);
+						
 						#ifdef URLDECODE
-						iconv_convert(isoconp ,&crawldocumentAdd.title, isize);
+							iconv_convert(isoconp ,&crawldocumentAdd.title, isize);
 						#endif
+
 					        crawldocumentAdd.doctype	= "";
 
 						//fp char bug fiks:
@@ -410,14 +421,17 @@ int smb_recursive_get( char *prefix, char *dir_name,
 						free(crawldocumentAdd.title);
 
 		    				//documentAdd(bbdh, collection, entry_name, "", fbuf, file_stat.st_size, file_stat.st_mtime, parsed_acl, dirp->name ,"");
-#endif
-//					    printf("%s:\n%s\n\n", entry_name, fbuf);
-					}
+					#endif
 
-				    free(crawldocumentExist.documenturi); //usikker om dette er rikit plass
+					
 
-				    smbc_close(fd);
-				    free(fbuf);
+				    	free(crawldocumentExist.documenturi); //usikker om dette er rikit plass
+
+				    	free(fbuf);
+
+				    	closefile:
+				    	smbc_close(fd);
+
 				}
 
 			    context_free(context);
