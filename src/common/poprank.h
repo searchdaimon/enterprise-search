@@ -27,6 +27,7 @@ int popGetNext (struct popl *popha, int *Rank,unsigned int *rDocID);
 void popopenMemArray(char servername[],char subname[], char rankfile[]);
 int popRankForDocIDMemArray(unsigned int DocID);
 void popopenMemArray_oneLot(char subname[], int i);
+void popopenMemArray2(char subname[], char rankfile[]);
 
 
 int popopenMmap(struct popmemmapFormat *popmemmap,char *filname);

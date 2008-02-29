@@ -114,6 +114,91 @@ void popopenMemArray_oneLot(char subname[], int i) {
 
 }
 
+void popopenMemArray2(char subname[], char rankfile[]) {
+
+        FILE *FH;
+	int i;
+	unsigned char rank;
+	int LocalLots;
+	char LotFile[128];
+	int branksize;
+	struct stat inode;
+	off_t totsize = 0;	
+
+
+	//aloker minne for rank for de forskjelige lottene
+	LocalLots=0;
+	for (i=0;i<maxLots;i++) {
+		//sjekekr om dette er en lokal lot
+		
+			popMemArray[i] = 0;
+
+			GetFilPathForLot(LotFile,i,subname);
+			strcat(LotFile,rankfile);
+
+			// prøver å opne
+			if ( (FH = fopen(LotFile,"rb")) == NULL ) {
+                		//perror(LotFile);
+				continue;
+		        }
+
+
+			fstat(fileno(FH),&inode);
+
+			if (inode.st_size == 0) {
+				printf("file is emty\n");
+				continue;
+			}
+
+			//#ifdef DEBUG
+			printf("popopenMemArray2: loaded lot %i\n",i);
+			//#endif
+
+			branksize = sizeof(unsigned char) * NrofDocIDsInLot;
+
+
+			#ifdef MMAP_POP
+
+				if (inode.st_size != branksize) {
+					fprintf(stderr,"popopenMemArray: file is smaler then size. file size %"PRId64", suposed to be %i\n",inode.st_size,branksize);
+					continue;
+				}
+
+                        	if ((popMemArray[i] = mmap(0,branksize,PROT_READ,MAP_SHARED,fileno(FH),0) ) == NULL) {
+                               		fprintf(stderr,"popopenMemArray: can't mmap for lot %i\n",i);
+                               		perror("mmap");
+                        	}
+			#else
+
+			if ((popMemArray[i] = (unsigned char*)malloc(branksize)) == NULL) {
+				printf("malloc eror for lot %i\n",i);
+				perror("malloc");
+				exit(1);
+			}
+
+			fread(popMemArray[i],branksize,1,FH);
+
+			#endif
+
+			//debug: viser alle rankene vi laster
+			//for(y=0;y<branksize;y++) {
+			//	printf("DocID %i, rank %i\n",y,popMemArray[i][y]);
+			//}
+
+			totsize += branksize;
+		
+			fclose(FH);
+
+			++LocalLots;
+
+			
+	}
+
+	printf("popopenMemArray: have %i local lots\n",LocalLots);
+	printf("popopenMemArray: loaded a total of %"PRId64" bytes\n",totsize);
+
+}
+
 void popopenMemArray(char servername[], char subname[], char rankfile[]) {
 
         FILE *FH;
