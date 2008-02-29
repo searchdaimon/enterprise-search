@@ -157,10 +157,12 @@ int url_normalization (char url[], int urlsize) {
 	legger til www. foran en url. Dette da vi kan være rimelig sikker på at http://boitho.com og http://www.boitho.com
 	er samme side
 	*/
+	/*
+	dette brekker rankering for pi urler.
 	if (subdomains == 1) {
 		strcasesandr (url, urlsize, "http://", "http://www.");		
 	}
-
+	*/
 	/*
 	lovercaser domenet og protokoll
 	
