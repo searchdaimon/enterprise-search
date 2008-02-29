@@ -349,7 +349,7 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 		exit(1);
 	}
 
-        if ((RFILE = lotOpenFile((*ReposetoryHeader).DocID, reponame == NULL ? "reposetory" : reponame,"r+b",'e',subname)) == NULL) {
+        if ((RFILE = lotOpenFile((*ReposetoryHeader).DocID, reponame == NULL ? "reposetory" : reponame,"ab",'e',subname)) == NULL) {
 		fprintf(stderr,"Can't open reposetory for DocID %u\n",(*ReposetoryHeader).DocID);
 		perror("");
 		exit(1);
@@ -1486,6 +1486,12 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer) {
 		return 0;
 	}
 	*/
+	if (!found) {
+		printf("ferdig\n");
+		LotOpen = -1;
+		fclose(LotFileOpen);
+	}
+
 	return found;
 	
 }
