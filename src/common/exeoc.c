@@ -162,9 +162,9 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 		(*documentfinishedbufsize) = i;
 		documentfinishedbuf[(*documentfinishedbufsize)] = '\0';
 
-		//#ifdef DEBUG
+		#ifdef DEBUG
 			printf("exeoc_stdselect: documentfinishedbufsize \"%i\" at %s:%d\n",(*documentfinishedbufsize),__FILE__,__LINE__);
-		//#endif
+		#endif
 
 		if (i==0) {
 			printf("exeoc_stdselect: Error: dident manage to read back any data\n");
