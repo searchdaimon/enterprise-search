@@ -315,6 +315,8 @@ int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified
 		return 1;
 	}
 
+	printf("bbdocument_exist: dokument dosent exist\n");
+
 	return 0;
 }
 
@@ -1098,7 +1100,10 @@ int uriindex_get (char uri[], unsigned int *DocID, unsigned int *lastmodified, c
                 forreturn = 1;
         }
         else if (ret == DB_NOTFOUND) {
-                //dbp->err(dbp, ret, "DBcursor->get");
+		#ifdef DEBUG
+                	dbp->err(dbp, ret, "DBcursor->get");
+			printf("search for \"%s\", len %i\n",key.data,key.size);		
+		#endif
                 forreturn = 0;
         }
         else {
