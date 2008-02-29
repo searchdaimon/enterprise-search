@@ -35,7 +35,7 @@
             <td>[% log.size.0 %][% log.size.1 %]</td>
             <td>
                 <ul class="vertical_buttons">
-                    <li><a href="logs.cgi?log=[% log.filename %]&lines=[% lines %]">View</a></li>
+                    <li><a href="logs.cgi?log=[% log.filename %]&lines=[% lines %]#logfile">View</a></li>
                     <li><a href="download.cgi?logfile=[% log.filename %]">Download</a></li>
                 </ul>
                         
@@ -65,6 +65,7 @@
 </form>
 
 [% IF logfile %]
+<a name="logfile" />
 	[% UNLESS logfile.filename %]
 		[% WRAPPER 'template_info.html' %]
 			You forgot to select which logfile to view
@@ -81,7 +82,7 @@
 
 			<div style="font-familiy : monospace; font-size : small;">
 			<ol>
-			[% FOREACH line IN logfile.content %]
+			[% FOREACH line IN logfile.content.reverse %]
 				[% color = 1 - color %]
 				<li>
 				[% IF color %]<div>
