@@ -182,6 +182,107 @@ int iintegerLoadMemArray(struct iintegerMemArrayFormat *iintegerMemArray,char in
 	printf("did load a total of %"PRId64" into memory\n",totsize);
 }
 
+int iintegerLoadMemArray2(struct iintegerMemArrayFormat *iintegerMemArray,char index[], int elementsize,char subname[]) {
+
+	int i;
+	struct iintegerFormat iinteger;
+	struct stat inode;      // lager en struktur for fstat å returnere.
+	int size;
+	off_t totsize = 0;
+
+	
+	for (i=0;i<maxLots;i++) {
+		iintegerMemArray->MemArray[i] = NULL;
+	}
+
+	size = elementsize * NrofDocIDsInLot;
+
+	for (i=0;i<maxLots;i++) {
+                //sjekekr om dette er en lokal lot
+
+
+
+			if (!iintegerOpenForLot(&iinteger,index,elementsize,i,"r+",subname)) {
+				#ifdef DEBUG
+				printf("don't have \"%s\" for lot %i\n",index,i);
+				#endif
+				continue;
+			}
+
+			fstat(fileno(iinteger.FH),&inode);
+
+			if (inode.st_size == 0) {
+				#ifdef DEBUG
+				printf("file is emty \"%s\" for lot %i\n",index,i);
+				#endif
+				continue;
+			}
+
+			//#ifdef DEBUG
+			printf("iintegerLoadMemArray: local lot %i\n",i);
+			//#endif
+
+
+			#ifdef DEBUG
+			printf("File size: %i\n",inode.st_size);
+			#endif
+
+			#ifdef MMAP_INTI
+
+			if (inode.st_size < size) {
+				fprintf(stderr,"iintegerLoadMemArray: file is smaler then size. file size %"PRId64", suposed to be %i\n",inode.st_size,size);
+
+                                /*
+                                Stretch the file size to the size of the (mmapped) array of ints
+                                */
+                                if (fseek(iinteger.FH, size +1, SEEK_SET) == -1) {
+                                        perror("Error calling fseek() to 'stretch' the file");
+                                        exit(EXIT_FAILURE);
+                                }
+
+                                /* Something needs to be written at the end of the file to
+                                * have the file actually have the new size.
+                                * Just writing an empty string at the current file position will do.
+                                *
+                                * Note:
+                                *  - The current position in the file is at the end of the stretched
+                                *    file due to the call to fseek().
+                                *  - An empty string is actually a single '\0' character, so a zero-byte
+                                *    will be written at the last byte of the file.
+                                */
+                                if (fwrite("", 1, 1, iinteger.FH) != 1) {
+                                        perror("Error writing last byte of the file");
+                                        exit(EXIT_FAILURE);
+                                }
+
+			}
+
+			if ((iintegerMemArray->MemArray[i] = mmap(0,size,PROT_READ,MAP_SHARED,fileno(iinteger.FH),0) ) == NULL) {
+				fprintf(stderr,"iintegerLoadMemArray: can't mmap for lot %i\n",i);
+                        	perror("mmap");
+                        }
+			
+			#else
+			//if ((iintegerMemArray->MemArray[i] = malloc(inode.st_size)) == NULL) {
+			if ((iintegerMemArray->MemArray[i] = malloc(size) ) == NULL) {
+				perror("malloc");
+				continue;
+			}
+
+			memset(iintegerMemArray->MemArray[i],'\0',size);
+
+			fread(iintegerMemArray->MemArray[i],inode.st_size,1,iinteger.FH);
+			#endif
+
+			totsize += size;			
+
+			iintegerClose(&iinteger);
+
+	}
+
+	printf("did load a total of %"PRId64" into memory\n",totsize);
+}
+
 
 void iintegerSetValue(struct iintegerFormat *iinteger,void *value,int valuesize,unsigned int DocID,char subname[]) {
 
@@ -244,3 +345,28 @@ int iintegerGetValueNoCashe(void *value,int valuesize,unsigned int DocID,char in
 
 	return 1;
 }
+
+int iintegerGetValue(void *value,int valuesize,unsigned int DocID,char indexname[],char subname[]) {
+	static FILE *fh;
+	unsigned int DocIDPlace;
+
+	#ifdef DEBUG
+		printf("geting value of size %i for DocID %u for index \"%s\"\n",valuesize,DocID,indexname);
+	#endif
+
+	if ((fh = lotOpenFile(DocID,indexname,"rb",'r',subname)) == NULL) {
+		return 0;
+	}
+
+	DocIDPlace = iintegerDocIDPlace(DocID,valuesize);
+
+	#ifdef DEBUG
+		printf("iintegerGetValue: DocIDPlace %u\n",DocIDPlace);
+	#endif
+
+	fseek(fh,DocIDPlace,SEEK_SET);
+	fread(value,valuesize,1,fh);
+
+	return 1;
+}
+
