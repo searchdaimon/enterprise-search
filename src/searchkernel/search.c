@@ -280,7 +280,7 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 	int havePhrase;
         //double poengDouble;
 
-	#ifdef DEBUG
+	#ifdef DEBUG_II
 		//printer ut elementet
 		printf("rankMain: DocID %u, subname \"%s\"\n",DocID,subname->subname);
 		for (i = 0;i < nrofhit; i++) {
@@ -374,8 +374,8 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 		rank = rank * 2;
 	}
 
-	#ifdef DEBUG
-	printf("rankMain: DocID %u, nrofhit %i ,rank %i, havePhrase %i\n",DocID,nrofhit,rank,havePhrase);
+	#ifdef DEBUG_II
+		printf("rankMain: DocID %u, nrofhit %i ,rank %i, havePhrase %i\n",DocID,nrofhit,rank,havePhrase);
 	#endif
 
 	return rank;
@@ -584,7 +584,7 @@ void andNot_merge(struct iindexFormat *c, int *baselen, int *added,struct iindex
 		c->iindex[k].hits = &c->hits[c->nrofHits];
 
 		for(x=0;x<a->iindex[i].TermAntall;x++) {
-			#ifdef DEBUG
+			#ifdef DEBUG_II
 			printf("pos %hu\n",a->iindex[i].hits[x].pos);
 			#endif
 			c->iindex[k].hits[c->iindex[k].TermAntall].pos = a->iindex[i].hits[x].pos;
@@ -593,7 +593,7 @@ void andNot_merge(struct iindexFormat *c, int *baselen, int *added,struct iindex
 			++c->nrofHits;
 
 		}
-		#ifdef DEBUG
+		#ifdef DEBUG_II
 		printf("andNot_merge: overflow DocID %u\n",a->iindex[i].DocID);
 		#endif
 
@@ -601,7 +601,7 @@ void andNot_merge(struct iindexFormat *c, int *baselen, int *added,struct iindex
 		++(*baselen);
 	}
 
-	#ifdef DEBUG
+	#ifdef DEBUG_II
 	printf("andNot_merge: have:\n");
 	for(i=0;i<k;i++) {
 		printf("\tDocID: %u\n",c->iindex[i].DocID);
@@ -2426,11 +2426,15 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 			#ifdef DEBUG
 			printf("i = %i, subname \"%s\"\n",i,(*TeffArray->iindex[i].subname).subname);
 			#endif
-			if (iintegerGetValueNoCashe(&TeffArray->iindex[i].filetype,4,TeffArray->iindex[i].DocID,"filtypes",(*TeffArray->iindex[i].subname).subname) == 0) {
+			if (iintegerGetValue(&TeffArray->iindex[i].filetype,4,TeffArray->iindex[i].DocID,"filtypes",(*TeffArray->iindex[i].subname).subname) == 0) {
 				printf("woldent get integerindex\n");
 				TeffArray->iindex[i].filetype[0] = '\0';
 			}
 			else {
+				//#ifdef DEBUG
+				printf("file typs is: \"%c%c%c%c\"\n",TeffArray->iindex[i].filetype[0],TeffArray->iindex[i].filetype[1],TeffArray->iindex[i].filetype[2],TeffArray->iindex[i].filetype[3]);
+				//#endif				
+
 				// filetype kan være på opptil 4 bokstaver. Hvis det er ferre en 4 så vil 
 				// det være \0 er paddet på slutten, men hvsi det er 4 så er det ikke det.
 				// legger derfor til \0 som 5 char, slik at vi har en gyldig string
@@ -2443,9 +2447,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 				}
 				
 
-				#ifdef DEBUG
-				printf("file \"%c%c%c%c\"\n",TeffArray->iindex[i].filetype);
-				#endif				
 			}
 		}
 
@@ -2524,7 +2525,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 		//slår opp alle datoene
 		for (i = 0; i < *TeffArrayElementer; i++) {
-			iintegerGetValueNoCashe(&TeffArray->iindex[i].date,sizeof(int),TeffArray->iindex[i].DocID,"dates",(*TeffArray->iindex[i].subname).subname);
+			iintegerGetValue(&TeffArray->iindex[i].date,sizeof(int),TeffArray->iindex[i].DocID,"dates",(*TeffArray->iindex[i].subname).subname);
 			#ifdef DEBUG
 			printf("got %u\n",TeffArray->iindex[i].date);
 			#endif
@@ -3014,14 +3015,7 @@ int searchFilterCount(int *TeffArrayElementer,
 		
 		printf("for all dates\n");		
 		for (i = 0; i < *TeffArrayElementer; i++) {
-			//runarb: 2 nov 2007: Skaper problmer med at tallene forandrer seg, gjør slik at de fortsat blir med i tallene, men ikke
-			//vises i resultatene. Gør så at brukeren kan slå av filteret ved å vise filterbeskjeden
-			/*
-			if (TeffArray->iindex[i].deleted == 1) {
-				continue;
-			}
-			else 
-			*/
+
 			if (TeffArray->iindex[i].indexFiltered.filename == 1) {
 				continue;
 			}
