@@ -1842,11 +1842,12 @@ int main(int argc, char *argv[])
                         		queryNodeHeder.getRank = getRank;
 					mysql_free_result(mysqlres);
         			}
-
-
-			else {
-				die(100, "Ranking information is not yet available for this URL. It takes 24 hours for new site submissions to be crawled, indexed and ranked. Check back later.");
-			}
+				else {
+					#ifdef DEBUG
+						printf("can't get wwwDocID for url \"%s\", useing query \"%s\"\n",QueryData.rankUrl,mysql_query);
+					#endif
+					die(100, "Ranking information is not yet available for this URL. It takes 24 hours for new site submissions to be crawled, indexed and ranked. Check back later.");
+				}
 ///////////////////
 		}
 
