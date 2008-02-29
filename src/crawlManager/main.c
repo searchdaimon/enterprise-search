@@ -182,7 +182,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 			(*crawldocumentAdd).doctype)
 	) {
 
-		blog(LOGERROR,1,"can't sent to bbdn! Tryed to send doc \"%s\" Will sleep and then reconect. Wont send same doc again.\n",(*crawldocumentAdd).documenturi);
+		blog(LOGERROR,1,"can't sent to bbdn! Tryed to send doc \"%s\" Will sleep and then reconect. Wont send same doc again.",(*crawldocumentAdd).documenturi);
 		
 		//ber om å lokke sokketen. Dette er ikke det samme som å steneg kollectionen.
 		//bbdn_closecollection((*collection).socketha,(*collection).collection_name);
@@ -191,7 +191,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 		sleep(10);
 
 		if (!bbdn_conect(&(*collection).socketha,"",global_bbdnport)) {
-			blog(LOGERROR,1,"can't conect to bbdn (boitho backend document server)\n");
+			blog(LOGERROR,1,"can't conect to bbdn (boitho backend document server)");
 			return 0;
 		}
 
@@ -199,7 +199,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 
 	}
 	else {
-		blog(LOGACCESS,1,"crawled url: \"%s\", size: %i b, ACL: allow \"%s\", denied \"%s\"\n",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).dokument_size,(*crawldocumentAdd).acl_allow,(*crawldocumentAdd).acl_denied);
+		blog(LOGACCESS,1,"crawled url: \"%s\", size: %i b, ACL: allow \"%s\", denied \"%s\"",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).dokument_size,(*crawldocumentAdd).acl_allow,(*crawldocumentAdd).acl_denied);
 	}
 
 	#ifdef DEBUG
@@ -242,7 +242,7 @@ int crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 	struct crawlLibInfoFormat *crawlLibInfo;
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,(*collection).connector)) {
-		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.\n");
+		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.");
 		//exit(1);
 		return 0;
 	}
@@ -253,7 +253,7 @@ int crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
         	printf("problems in crawlfirst_ld\n");
 		//overfører error
                 berror((*crawlLibInfo).strcrawlError());
-		blog(LOGERROR,1,"Error: Problems in crawlfirst_ld.\n");
+		blog(LOGERROR,1,"Error: Problems in crawlfirst_ld.");
 
 		return 0;
        	}
@@ -273,7 +273,7 @@ int crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
 	struct crawlLibInfoFormat *crawlLibInfo;
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,(*collection).connector)) {
-		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.\n");
+		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.");
 		exit(1);
 	}
 
@@ -283,7 +283,7 @@ int crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
         	
 		//overfører error
                 berror((*crawlLibInfo).strcrawlError());
-		blog(LOGERROR,1,"Error: problems in crawlfirst_ld.\n");
+		blog(LOGERROR,1,"Error: problems in crawlfirst_ld.");
 
 		return 0;
        	}
@@ -512,10 +512,10 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 	printf("pathAccess: end\n");
 
 	if (forreturn == 1) {
-		blog(LOGACCESS,2,"pathAccess allowed url: \"%s\", user: \"%s\", time used %f s\n",uri,username,pathAccessTimes.crawlpatAcces);
+		blog(LOGACCESS,2,"pathAccess allowed url: \"%s\", user: \"%s\", time used %f s",uri,username,pathAccessTimes.crawlpatAcces);
 	}
 	else {
-		blog(LOGERROR,2,"pathAccess denyed url: \"%s\", user: \"%s\", time used %f s, Error: \"%s\"\n",uri,username,pathAccessTimes.crawlpatAcces,(*crawlLibInfo).strcrawlError());
+		blog(LOGERROR,2,"pathAccess denyed url: \"%s\", user: \"%s\", time used %f s, Error: \"%s\"",uri,username,pathAccessTimes.crawlpatAcces,(*crawlLibInfo).strcrawlError());
 	}
 
 	free(username);
@@ -562,14 +562,14 @@ int scan (struct hashtable *h,char ***shares,int *nrofshares,char crawlertype[],
 	struct crawlLibInfoFormat *crawlLibInfo;
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,crawlertype)) {
-		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.\n");
+		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.");
 
                 exit(1);
         }
 
 	if ((*crawlLibInfo).scan == NULL) {
 		printf("cant scan. Crawler dosent suport it.\n");
-		blog(LOGERROR,1,"Error: cant scan. Crawler dosent suport it.\n");
+		blog(LOGERROR,1,"Error: cant scan. Crawler dosent suport it.");
 
 		return 0;
 	}
@@ -580,7 +580,7 @@ int scan (struct hashtable *h,char ***shares,int *nrofshares,char crawlertype[],
 
 	if (!(*(*crawlLibInfo).scan)(scan_found_share,host,username,password,documentError)) {
                 printf("problems in scan\n");
-		blog(LOGERROR,1,"Error: problems in scan.\n");
+		blog(LOGERROR,1,"Error: problems in scan.");
 
 		return 0;
         }
@@ -616,7 +616,7 @@ int cm_start(struct hashtable **h) {
 
 	if ((dirp = opendir(bfile("crawlers"))) == NULL) {
 		perror(bfile("crawlers"));
-		blog(LOGERROR,1,"Error: cant open crawlers directory.\n");
+		blog(LOGERROR,1,"Error: cant open crawlers directory.");
 
 		exit(1);
 	}	
@@ -630,7 +630,7 @@ int cm_start(struct hashtable **h) {
 		printf("loading path \"%s\"\n",libpath);
 		lib_handle = dlopen(libpath, RTLD_LAZY);
 		if (!lib_handle) {
-			blog(LOGERROR,1,"Error: during dlopen(): %s. File %s.\n",dlerror(),libpath);
+			blog(LOGERROR,1,"Error: during dlopen(): %s. File %s.",dlerror(),libpath);
 		    	exit(1);
 		}
 
@@ -640,7 +640,7 @@ int cm_start(struct hashtable **h) {
 		/* check that no error occured */
 	        error_msg = dlerror();
 	        if (error_msg) {
-			blog(LOGERROR,1,"Error: Error locating '%s' - %s\n",dp->d_name, error_msg);
+			blog(LOGERROR,1,"Error: Error locating '%s' - %s.",dp->d_name, error_msg);
 
 	        
 
@@ -657,7 +657,7 @@ int cm_start(struct hashtable **h) {
 		}
 		else if (!(*crawlLibInfo).crawlinit()) {
 			printf("crawlinit dident return 1\n");
-			blog(LOGERROR,1,"Error: crawlinit dident return 1\n");
+			blog(LOGERROR,1,"Error: crawlinit dident return 1.");
 
 			exit(1);
 		}
@@ -669,7 +669,7 @@ int cm_start(struct hashtable **h) {
 
 		if (! hashtable_insert((*h),(*crawlLibInfo).shortname,crawlLibInfo) ) {
                         
-			blog(LOGERROR,1,"Error: can't hastable insert\n");
+			blog(LOGERROR,1,"Error: can't hastable insert.");
 
                 	exit(-1);
                 }
@@ -744,7 +744,7 @@ cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
 
 	if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
                	printf(mysql_error(db));
-		blog(LOGERROR,1,"MySQL Error: \"%s\".\n",mysql_error(db));
+		blog(LOGERROR,1,"MySQL Error: \"%s\".",mysql_error(db));
                	return 0;
        	}
 	mysqlres=mysql_store_result(db); /* Download result from server */
@@ -791,7 +791,7 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 	//koble til mysql
 	if(!mysql_real_connect(&demo_db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)){
 		printf(mysql_error(&demo_db));
-		blog(LOGERROR,1,"MySQL Error: \"%s\"\n",mysql_error(&demo_db));
+		blog(LOGERROR,1,"MySQL Error: \"%s\".",mysql_error(&demo_db));
 		exit(1);
 	}
 
@@ -839,7 +839,7 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 
 	if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
                	printf(mysql_error(&demo_db));
-		blog(LOGERROR,1,"MySQL Error: \"%s\".\n",mysql_error(&demo_db));
+		blog(LOGERROR,1,"MySQL Error: \"%s\".",mysql_error(&demo_db));
 		
                	exit(1);
        	}
@@ -989,14 +989,14 @@ int set_crawler_message(int crawler_success  , char mrg[], unsigned int id) {
         MYSQL_RES *mysqlres; /* To be used to fetch information into */
         MYSQL_ROW mysqlrow;
 
-	blog(LOGACCESS,2,"set_crawler_message: mesage: \"%s\", success: %i, id: %i\n",mrg,crawler_success,id);
+	blog(LOGACCESS,2,"set_crawler_message: mesage: \"%s\", success: %i, id: %i.",mrg,crawler_success,id);
 
         mysql_init(&demo_db);
 
         //koble til mysql
         if(!mysql_real_connect(&demo_db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)){
                 printf(mysql_error(&demo_db));
-		blog(LOGERROR,1,"Mysql Error: \"%s\"\n",mysql_error(&demo_db));
+		blog(LOGERROR,1,"Mysql Error: \"%s\".",mysql_error(&demo_db));
                 exit(1);
         }
 
@@ -1013,13 +1013,13 @@ int set_crawler_message(int crawler_success  , char mrg[], unsigned int id) {
 
 	}
 
-	blog(LOGACCESS,2,"mysql query: \"%s\"\n",mysql_query);
+	blog(LOGACCESS,2,"mysql query: \"%s\".",mysql_query);
 
         printf("mysql_query: %s\n",mysql_query);
 
         if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
                 //printf(mysql_error(&demo_db));
-		blog(LOGERROR,1,"Mysql Error: \"%s\"\n",mysql_error(&demo_db));
+		blog(LOGERROR,1,"Mysql Error: \"%s\".",mysql_error(&demo_db));
                 exit(1);
         }
 
@@ -1123,7 +1123,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 			free(collection[i].extra);
 		collection[i].extra = extra;
 
-		blog(LOGACCESS,1,"Starting crawl of collection \"%s\" (id %u)\n",collection[i].collection_name,collection[i].id);
+		blog(LOGACCESS,1,"Starting crawl of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
 
 		//sletter collection. Gjør dette uavhenging om vi har lock eller ikke, slik at vi altid får slettet, så kan vi gjøre
 		// ny crawl etterpå hvis vi ikke hadde lock
@@ -1144,11 +1144,11 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 					    collection[i].id);
 					if (mysql_real_query(&demo_db, querybuf, querylen)) {
 						printf("Mysql error: %s", mysql_error(&demo_db));
-						blog(LOGERROR,1,"MySQL Error: %s: \"%s\".\n", querybuf, mysql_error(&demo_db));
+						blog(LOGERROR,1,"MySQL Error: %s: \"%s\".", querybuf, mysql_error(&demo_db));
 					}
 				} else {
 					printf(mysql_error(&demo_db));
-					blog(LOGERROR,1,"MySQL Error: \"%s\"\n",mysql_error(&demo_db));
+					blog(LOGERROR,1,"MySQL Error: \"%s\".",mysql_error(&demo_db));
 				}
 
 
@@ -1165,7 +1165,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 
 		//tester at vi ikke allerede holder på å crawle denne fra før
 		if (!crawl_lock(&collection_lock,collection[i].collection_name)) {
-			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are all redy crawling it.\n",collection[i].collection_name);
+			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are all redy crawling it.",collection[i].collection_name);
 			//runarb: 14 jan 2008: ingen grun til å oppdatere beskjeden, da det som står der er med korekt
                         //set_crawler_message(0,"Error: Can't crawl collection. We are all redy crawling it.",collection[i].id);
 
@@ -1175,7 +1175,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 		//tester at vi ikke driver å crawler med den crawleren fra før. Her burde vi kansje 
 		//heller satset på å begrense på server. Slik at for eks to smb servere kan crawles samtidig
 		if (!crawl_element_lock(&collection_lock,collection[i].connector)) {
-			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are all redy crawling this type/server.\n",collection[i].collection_name);
+			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are all redy crawling this type/server.",collection[i].collection_name);
                         set_crawler_message(0,"Error: Can't crawl collection. We are all redy crawling this type/server.",collection[i].id);
 
 			continue;
@@ -1229,7 +1229,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 		crawl_unlock(&collection_lock);
 		crawl_element_unlock(&collection_lock);
 
-		blog(LOGACCESS,1,"Finished crawling of collection \"%s\" (id %u)\n",collection[i].collection_name,collection[i].id);
+		blog(LOGACCESS,1,"Finished crawling of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
 
 	}
 
@@ -1248,7 +1248,7 @@ rewriteurl(char *collection, char *uri, size_t len, enum platform_type ptype, en
 	cm_searchForCollection(collection,&collections,&nrofcollections);
 
 	if (!cm_getCrawlLibInfo(global_h,&crawlLibInfo,collections->connector)) {
-		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.\n");
+		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.");
 		//exit(1);
 		return 0;
 	}
