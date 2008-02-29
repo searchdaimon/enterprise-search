@@ -39,6 +39,7 @@ struct OpenFilesFormat {
 	char subname[maxSubnameLength];
 	char type[5];
 	char filename[PATH_MAX];
+	char resource[PATH_MAX];	
 };
 
 
@@ -225,7 +226,7 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
                 	}
 		}
 		//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
-		else if ((strcmp(type,"rb") == 0) || (strcmp(type,"r") == 0)) {
+		else if ((strcmp(type,"rb") == 0) || (strcmp(type,"r") == 0) || (strcmp(type,"r+") == 0)) {
 			if ( (FILEHANDLER = (FILE *)fopen64(File,type)) == NULL ) {
 				#ifdef DEBUG
 				perror(File);
@@ -402,10 +403,15 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
         if (OpenFiles[i].LotNr == LotNr  
 		&& (strcmp(OpenFiles[i].subname,subname) == 0)
         	&& (strcmp(OpenFiles[i].type,type)==0)
+        	&& (strcmp(OpenFiles[i].resource,resource)==0)
 	) {
+		#ifdef DEBUG
 		printf("lotOpenFile: fant en tildigere åpnet fil, returnerer den.\n");
 		printf("lotOpenFile: returnerer: i %i, subname \"%s\", type \"%s\", LotNr %i\n",i,OpenFiles[i].subname,OpenFiles[i].type,OpenFiles[i].LotNr);
 		printf("lotOpenFile: file is \"%s\"\n",OpenFiles[i].filename);
+		printf("lotOpenFile: returning file handler %p\n",OpenFiles[i].FILEHANDLER);
+		#endif
+
 		if (OpenFiles[i].FILEHANDLER == NULL) {
 			printf("Error: FILEHANDLER is NULL\n");
 		}
@@ -422,17 +428,23 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
 			
 		}
 	
+		if ((OpenFiles[i].FILEHANDLER = lotOpenFileNoCasheByLotNr( LotNr, resource,type, lock,subname)) == NULL) {
+			printf("lotOpenFileNoCashe: can't open file\n");
+			return NULL;
+		}
 
-                 GetFilPathForLot(FilePath,LotNr,subname);
-                 strcpy(File,FilePath);
-                 strlcat(File,resource,128);
+                GetFilPathForLot(FilePath,LotNr,subname);
+                strcpy(File,FilePath);
+                strlcat(File,resource,128);
 
 		strscpy(OpenFiles[i].filename,File,sizeof(OpenFiles[i].filename));
+		strscpy(OpenFiles[i].resource,resource,sizeof(OpenFiles[i].resource));
 
 		//#ifdef DEBUG
                 	printf("lotOpenFile: opening file \"%s\" for %s\n",File,type);
 		//#endif
 
+		/*
                 //temp: Bytte ut FilePath med filnavnet
                 if ( (OpenFiles[i].FILEHANDLER = fopen(File,type)) == NULL ) {
                         makePath(FilePath);
@@ -442,11 +454,13 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
                                 exit(0);
                         }
                 }
+		*/
 
 		OpenFiles[i].LotNr = LotNr;
 		strscpy(OpenFiles[i].subname,subname,sizeof(OpenFiles[i].subname));
 		strscpy(OpenFiles[i].type,type,sizeof(OpenFiles[i].type));
 
+		/*
 		#ifdef DEBUG
 			printf("lotOpenFile: tryint to obtain lock \"%c\"\n",lock);
 		#endif
@@ -459,9 +473,10 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
 		}
 		#ifdef DEBUG
 			printf("lotOpenFile: lock obtained\n");
+			printf("lotOpenFile: returning file handler %p\n",OpenFiles[i].FILEHANDLER);
 		#endif
-
-
+		*/
+	
                 return OpenFiles[i].FILEHANDLER;
 
         }
