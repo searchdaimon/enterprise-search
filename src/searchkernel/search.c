@@ -2431,9 +2431,9 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 				TeffArray->iindex[i].filetype[0] = '\0';
 			}
 			else {
-				//#ifdef DEBUG
+				#ifdef DEBUG
 				printf("file typs is: \"%c%c%c%c\"\n",TeffArray->iindex[i].filetype[0],TeffArray->iindex[i].filetype[1],TeffArray->iindex[i].filetype[2],TeffArray->iindex[i].filetype[3]);
-				//#endif				
+				#endif				
 
 				// filetype kan være på opptil 4 bokstaver. Hvis det er ferre en 4 så vil 
 				// det være \0 er paddet på slutten, men hvsi det er 4 så er det ikke det.
