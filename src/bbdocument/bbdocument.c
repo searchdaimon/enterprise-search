@@ -817,10 +817,12 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 	//hvis vi ikke her med noen egen doctype så bruker vi den vi har fått via documenttype
 	if (doctype[0] == '\0') {
-		strscpy(ReposetoryHeader.doctype,documenttype_real,sizeof(ReposetoryHeader.doctype));
+		//vi trenger ikke å ha \0 på slutten her
+		strncpy(ReposetoryHeader.doctype,documenttype_real,sizeof(ReposetoryHeader.doctype));
 	}
 	else {
-		strscpy(ReposetoryHeader.doctype,doctype,sizeof(ReposetoryHeader.doctype));
+		//vi trenger ikke å ha \0 på slutten her
+		strncpy(ReposetoryHeader.doctype,doctype,sizeof(ReposetoryHeader.doctype));
 	}
 
 	if (!bbdocument_convert(documenttype_real,document,dokument_size,&htmlbuffer,&htmlbuffersize,title,subname,documenturi, lastmodified,acl_allow, acl_denied, doctype)) {
