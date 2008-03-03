@@ -54,7 +54,7 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 
 	//printf("documentfinishedbufsize %i\n",(*documentfinishedbufsize));
 	#ifdef DEBUG
-		printf("exeoc: runing program \"%s\"\n",exeargv[0]);
+		printf("exeoc_stdselect: runing program \"%s\"\n",exeargv[0]);
 		i=0;
 		while(exeargv[i] != '\0') {
 			printf("arg \"%s\"\n",exeargv[i]);
@@ -67,7 +67,7 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 
 	if ((pid = fork()) == 0) {
 		#ifdef DEBUG
-		printf("child\n");
+			printf("child\n");
 		#endif
 
 		/* Child process closes up input side of pipe */
@@ -93,8 +93,10 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 			perror(exeargv[0]);
 			//exit(EXIT_FAILURE);
 		}
-		//fprintf(stderr,"Eror: This can't happend\n");
-		
+		#ifdef DEBUG
+			fprintf(stderr,"Eror: This can't happend. exexcv returned!\n");
+		#endif
+
 		/*******************************************
 		BUGFIKS: runarb
 		Et eller annet skjer hvis vi kaller execv med
