@@ -465,6 +465,9 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 					if (strlen(body) == 0 || getRank) {
 						(*Sider).description[0] = '\0';
 					}
+					else if (strlen(body) < 15) {
+						printf("bug: body består av under 15 tegn. Da kan det være at vi bare har <div> som tegn.\n");
+					}
 					else {
 
 						#ifdef DEBUG
