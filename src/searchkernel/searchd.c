@@ -11,6 +11,7 @@
 #include "../common/timediff.h"
 #include "../parser/html_parser.h"
 #include "../maincfg/maincfg.h"
+#include "../dp/dp.h"
 
 #define _REENTRANT
 
@@ -27,6 +28,7 @@
 #include <sys/time.h>
 #include <errno.h>
 #include <signal.h>
+
 
 
 #include "verbose.h"
@@ -309,19 +311,21 @@ int main(int argc, char *argv[])
         }
 
 
-	//starter opp
-	printf("loading domainids\n");
-	iintegerLoadMemArray(&global_DomainIDs,"domainid",sizeof(unsigned short),servername, "www");
-	printf("done\n");
+	#ifndef BLACK_BOKS
+		//starter opp
+		printf("loading domainids\n");
+		iintegerLoadMemArray2(&global_DomainIDs,"domainid",sizeof(unsigned short), "www");
+		printf("done\n");
 
-        //laster inn alle poprankene
-        printf("loading pop MemArray\n");
-        popopenMemArray(servername,"www",optrankfile); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
-        printf("done\n");
+        	//laster inn alle poprankene
+        	printf("loading pop MemArray\n");
+        	popopenMemArray2("www",optrankfile); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
+        	printf("done\n");
 
-	printf("loading adultWeight MemArray\n");
-	adultWeightopenMemArray(servername,"www"); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
-	printf("done\n");
+		printf("loading adultWeight MemArray\n");
+		adultWeightopenMemArray2("www"); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
+		printf("done\n");
+	#endif
 
 
 	IIndexInaliser();
@@ -472,6 +476,22 @@ void *do_chld(void *arg)
 	//struct SiderFormat Sider[MaxsHits * 2];
 
 	struct SiderHederFormat *SiderHeder;
+
+
+	///////////////////////
+	dp_priority_locl_start();
+
+//	int DP_LOCK;
+//	#define DP_LOCK_FILE "/tmp/dp.lock"
+//
+//      //open the lock file
+//        if ((DP_LOCK =open(DP_LOCK_FILE,O_CREAT|O_RDWR)) == -1) {
+//                perror(DP_LOCK_FILE);
+//                exit(EXIT_FAILURE);
+//        }
+//
+//	flock(DP_LOCK,LOCK_SH);
+	///////////////////////
 
 	if ((SiderHeder  = malloc(sizeof(struct SiderHederFormat))) == NULL) {
 		perror("malloc");
@@ -1014,7 +1034,6 @@ void *do_chld(void *arg)
 	SiderHeder->filtypesnrof = MAXFILTYPES;
 
 	SiderHeder->errorstrlen=sizeof(SiderHeder->errorstr);
-	//v3 dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),&Sider,SiderHeder,SiderHeder->hiliteQuery,servername,subnames,SiderHeder->nrOfSubnames,queryNodeHeder.MaxsHits,queryNodeHeder.start, queryNodeHeder.filterOn, queryNodeHeder.languageFilter);
 
 	#ifdef DEBUG
 	printf("queryNodeHeder.getRank %u\n",queryNodeHeder.getRank);
