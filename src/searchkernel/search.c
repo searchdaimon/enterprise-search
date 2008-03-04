@@ -2957,7 +2957,8 @@ int searchFilterCount(int *TeffArrayElementer,
 				//ToDo: siden vi mangler sletting av subname to username kan vi fort ende opp med masse col med 0
 				// vi tar de derfor ikke med
 				// vil dette føre til forviring blant brukere
-				if (*filesValue != 0) {
+				//runarb: 04 mars 2008
+				//if (*filesValue != 0) {
 					printf("collection \"%s\": %i\n",filesKey,*filesValue);
 
 					strscpy(
@@ -2968,7 +2969,7 @@ int searchFilterCount(int *TeffArrayElementer,
 					(*filters).collections.elements[(*filters).collections.nrof].nrof = (*filesValue);
 
 					++(*filters).collections.nrof;
-				}
+				//}
 				
        			} while ((hashtable_iterator_advance(itr)) && ((*filters).collections.nrof<MAXFILTERELEMENTS));
     			free(itr);
