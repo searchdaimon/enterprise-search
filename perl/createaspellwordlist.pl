@@ -5,8 +5,7 @@ use strict;
 
 while (<>) {
 	my @a = split;
-#	if ($a[0] >= 'a' and $a[0] <= 'z')
-	if (not substr($a[0],0,1)=~ /[^a-z]/ and not $a[0]=~ /[^a-z_\']/)
+	if (not substr($a[0],0,1)=~ /[^a-z]/ and not $a[0]=~ /[\'0-9]/)
 	    {
 		print $a[0]."\n";
 	    }
