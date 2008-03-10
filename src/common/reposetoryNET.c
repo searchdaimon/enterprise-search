@@ -106,10 +106,7 @@ off_t rGetFileSize(char source[], int LotNr,char subname[]) {
 
 	return fileBloks;
 }
-
-int rGetFileByOpenHandler(char source[],FILE *FILEHANDLER,int LotNr,char subname[]) {
-
-	int socketha;
+int rGetFileByOpenHandlerFromSocket(char source[],FILE *FILEHANDLER,int LotNr,char subname[],int socketha) {
 
 	int n;
 	int filnamelen;
@@ -119,10 +116,6 @@ int rGetFileByOpenHandler(char source[],FILE *FILEHANDLER,int LotNr,char subname
 	char *filblocbuff;
         off_t fileBloks,filerest;
 
-	//printf("rGetFileByOpenHandler\n");
-
-	//kobler til
-	socketha = conectTo(LotNr);
 
 	fseek(FILEHANDLER,SEEK_SET,0);
 
@@ -169,7 +162,10 @@ int rGetFileByOpenHandler(char source[],FILE *FILEHANDLER,int LotNr,char subname
                         	exit(1);
                 	}
 
-                	fwrite(filblocbuff,sizeof(c),rNetTrabsferBlok,FILEHANDLER);
+                	if (fwrite(filblocbuff,sizeof(c),rNetTrabsferBlok,FILEHANDLER) < 0) {
+				perror("fwrite");
+				exit(1);
+			}
         	}
 
 	}
@@ -205,6 +201,30 @@ int rGetFileByOpenHandler(char source[],FILE *FILEHANDLER,int LotNr,char subname
 	#ifdef DEBUG
 	printf("file read end\n");
 	#endif
+
+}
+int rGetFileByOpenHandlerFromHostName(char source[],FILE *FILEHANDLER,int LotNr,char subname[],char HostName[]) {
+
+	if ((socketha = cconnect(HostName, BLDPORT)) == 0) {
+		printf("can't connect to host \"%s\"\n",HostName);
+		perror(HostName);
+		return 0;
+	}
+
+	return rGetFileByOpenHandlerFromSocket(source,FILEHANDLER,LotNr,subname,socketha);
+
+}
+int rGetFileByOpenHandler(char source[],FILE *FILEHANDLER,int LotNr,char subname[]) {
+
+	int socketha;
+
+
+	//printf("rGetFileByOpenHandler\n");
+
+	//kobler til
+	socketha = conectTo(LotNr);
+
+	return rGetFileByOpenHandlerFromSocket(source,FILEHANDLER,LotNr,subname,socketha);
 }
 
 int rmkdir(char dest[], int LotNr,char subname[]) {

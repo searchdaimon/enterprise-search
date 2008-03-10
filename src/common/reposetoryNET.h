@@ -24,6 +24,7 @@ int rSendFile(char source[], char dest[], int LotNr, char opentype[],char subnam
 
 
 int rSendFileByOpenHandler(FILE *FILEHANDLER, char dest[], int LotNr, char opentype[],char subname[]);
+int rGetFileByOpenHandlerFromHostName(char source[],FILE *FILEHANDLER,int LotNr,char subname[],char HostName[]);
 
 int rGetFileByOpenHandler(char source[],FILE *FILEHANDLER,int LotNr,char subname[]);
 
