@@ -1591,8 +1591,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	//int adultpages, noadultpages;
 	//struct QueryDataForamt QueryData;
 
-	//#ifdef DEBUG
-	//#endif
 
 	struct timeval start_time, end_time;
 	struct timeval popResult_start_time, popResult_end_time;

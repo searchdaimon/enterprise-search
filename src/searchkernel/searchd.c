@@ -478,20 +478,8 @@ void *do_chld(void *arg)
 	struct SiderHederFormat *SiderHeder;
 
 
-	///////////////////////
 	dp_priority_locl_start();
 
-//	int DP_LOCK;
-//	#define DP_LOCK_FILE "/tmp/dp.lock"
-//
-//      //open the lock file
-//        if ((DP_LOCK =open(DP_LOCK_FILE,O_CREAT|O_RDWR)) == -1) {
-//                perror(DP_LOCK_FILE);
-//                exit(EXIT_FAILURE);
-//        }
-//
-//	flock(DP_LOCK,LOCK_SH);
-	///////////////////////
 
 	if ((SiderHeder  = malloc(sizeof(struct SiderHederFormat))) == NULL) {
 		perror("malloc");
