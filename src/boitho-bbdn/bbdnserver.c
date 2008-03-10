@@ -145,7 +145,8 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			}
 			else {
 				if ((i=recvall(socket, document, dokument_size)) == 0) {
-                        	        perror("Cant read document");
+                        	        fprintf(stderr,"Can't read document of size %i\n",dokument_size);
+					perror("recvall");
                         	        exit(1);
                         	}
 			}
@@ -246,6 +247,14 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 	}
 
 	++count;
+
+	#ifdef DEBUG_BBDN_BREAK_AFTER
+	if (count > DEBUG_BBDN_BREAK_AFTER) {
+		printf("exeting after %i docoments\n",count);
+		exit(1);
+	}
+	#endif
+
 
 }
 
