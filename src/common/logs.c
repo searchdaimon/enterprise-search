@@ -88,6 +88,11 @@ int openlogs(FILE **LOGACCESS, FILE **LOGERROR, char name[]) {
 }
 
 void closelogs(FILE *LOGACCESS, FILE *LOGERROR) {
-	fclose(LOGACCESS);
-	fclose(LOGERROR);
+	if (LOGACCESS != NULL) {
+		fclose(LOGACCESS);
+	}
+
+	if (LOGERROR != NULL) {
+		fclose(LOGERROR);
+	}
 }
