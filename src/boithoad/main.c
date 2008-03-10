@@ -759,7 +759,7 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 
    		if (!ldap_connect(&ld,ldap_host,ldap_port,ldap_base,adminsdistinguishedName,admin_password)) {
 			printf("can't connect to ldap server\n");
-			blog(LOGERROR,1,"can't connect to ldap server. Useing server \"%s:%i\", ldap_base \"%s\", adminsdistinguishedName \"%s\"",ldap_host,ldap_port,ldap_base,adminsdistinguishedName);
+			blog(LOGERROR,1,"can't connect to ldap server. Useing server \"%s:%i\" (0 as port nr are OK), ldap_base \"%s\", adminsdistinguishedName \"%s\"",ldap_host,ldap_port,ldap_base,adminsdistinguishedName);
 			return;
    		}
 
@@ -788,7 +788,7 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 			else if (ldap_authenticat (&ld,user_username,user_password,ldap_base,ldap_host,ldap_port)) {
 				printf("Main: user authenticated\n");
 				printf("user_username: \"%s\"\n",user_username);
-//				blog(LOGACCESS,1,"user \"%s\" successfuly authenticated.\n",user_username);
+				blog(LOGACCESS,1,"user \"%s\" successfuly authenticated.",user_username);
 				intresponse = ad_userauthenticated_OK;
 			}
 			else {
@@ -935,11 +935,12 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 		        }
 			printf("ldap_simple_search done. Found %i groups\n",nrOfSearcResults);
 			
-			// +3:
+			// +4:
 			// +1 for "Everyone" gruppen som alle er medlem av, men ikke finnes. Windows :(
 			// +1 for primær gruppe
 			// +1 for "Domain Users"
-			intresponse = nrOfSearcResults +3;
+			// +1 for brukernavnet
+			intresponse = nrOfSearcResults +4;
 
 			//sender antall
 			if (!sendall(socket,&intresponse, sizeof(intresponse))) {
@@ -957,6 +958,10 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
                                 perror("sendall");
                         }
 			strscpy(ldaprecord,"Domain Users",sizeof(ldaprecord));
+			if (!sendall(socket,ldaprecord, sizeof(ldaprecord))) {
+                                perror("sendall");
+                        }
+			strscpy(ldaprecord,user_username,sizeof(ldaprecord));
 			if (!sendall(socket,ldaprecord, sizeof(ldaprecord))) {
                                 perror("sendall");
                         }
