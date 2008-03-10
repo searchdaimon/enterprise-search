@@ -16,7 +16,7 @@ void shortenurl(char *url,int urllen) {
 
   	char **Data;
   	int Count, TokCount;
-	char newurl[201] = "";
+	char newurl[201];
 	int added, suburllen;
 	int i;
 	char slash[2];
@@ -25,6 +25,9 @@ void shortenurl(char *url,int urllen) {
 	char *p;
 	char proto[128];
 	
+	newurl[0] = '\0';
+	proto[0] = '\0';
+
 	//tar bort proto:// først
 	p = strstr(url, "://");
 	if (p != NULL && p > url) {
