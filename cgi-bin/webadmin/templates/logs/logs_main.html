@@ -50,14 +50,15 @@
 	Lines to show:
         <ul class="vertical_buttons" style="display : inline;">
 	    [% FOREACH count IN [50, 100, 250, 500] %]
-            <li>
                 [% IF lines == count %]
+                    <li style="background : #4473c4; color : white;">
                         [% count %] lines
+                    </li>
                 [% ELSE %]
-                <a href="logs.cgi?log=[% logfile.filename %]&lines=[% count %]">[% count %] lines</a>
+                    <li>
+                        <a href="logs.cgi?log=[% logfile.filename %]&lines=[% count %]">[% count %] lines</a>
+                    </li>
                 [% END %]
-                
-                </li>
             [% END %]
     </div>
 [% END %]

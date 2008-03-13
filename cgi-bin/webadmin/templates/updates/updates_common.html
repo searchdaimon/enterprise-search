@@ -1,0 +1,55 @@
+[% USE HTML %]
+[% BLOCK pretty_button %]
+    <div class="pretty_button">
+        <img src="file.cgi?i=rpm&size=64x64" />
+        <form action="updates.cgi" method="get">
+        [% IF view %]
+            <input type="hidden" name="view" value="[% view %]" />
+        [% END %]
+        <input type="submit" 
+            value="[% text %]"
+            name="btn.[% name %]" />
+        </form>
+    </div>
+[% END %]
+
+[% BLOCK list_pkgs %]
+
+    [% UNLESS empty_msg.defined %]
+        [% empty_msg = "No packages." %]
+    [% END %]
+
+    [% IF pkg_list.size %]
+        [% WRAPPER 'template_table.html'
+            header = ['', 'Software package', 'Version', 'Release'] %]
+	    [% color = 0 %]
+	    [% FOREACH package IN pkg_list %]
+	        [% WRAPPER 'template_table_row.html' %]
+		<td style="width : 25px;">
+                    <img src="file.cgi?icon=rpm&amp;size=22x22" alt="" /></td>
+                <td>[% package.name %]</td>
+		<td>[% package.version %]</td>
+		<td>[% package.release %]</td>
+		[% color = 1 - color %]
+	        [% END #row %]
+	    [% END #foreach %]
+        [% END #table %]
+    [% ELSE %]
+        <p>[% empty_msg %]</p>
+    [% END %]
+[% END %]
+
+
+[% BLOCK list_output %]
+    <ol>
+        [% FOREACH line IN output %]
+        [% color = 1 - color %]
+	    <li>
+	        [% IF color %]<div>
+		[% ELSE %]<div style="background : #f2f2f2"> [% END %]
+		[% HTML.escape(line) %]</div>
+            </li>
+        [% END %]
+    </ol>
+[% END %]
+

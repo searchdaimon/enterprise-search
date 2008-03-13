@@ -1,0 +1,24 @@
+[% INCLUDE 'header.html' title="Software updates" %]
+[% USE HTML %]
+
+[% PROCESS 'updates_tabs.html' selected="Installed software" %]
+[% PROCESS 'updates_common.html' %]
+
+[% IF listing_error %]
+    [% WRAPPER 'template_message.html' type='error' %]
+        Unable to list pacakges. <br /> [% listing_error %]
+    [% END %]
+[% END %]
+
+[% IF installed_pkgs.defined %]
+    [% PROCESS list_pkgs pkg_list = installed_pkgs %]
+[% ELSE %]
+    
+    [% PROCESS pretty_button
+        text = "List installed software"
+        name = "list_installed" %]
+   
+[% END %]
+
+
+[% INCLUDE 'footer.html' %]

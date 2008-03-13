@@ -19,7 +19,7 @@ my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
 	= init_root_page('/templates/authentication', 'Page::Authentication');
 
 my %state = %{$state_ptr};
-my $template_file;
+my $tpl_file;
 
 my $sqlAuth = Sql::CollectionAuth->new($dbh);
 my $common = Common::Generic->new($dbh);
@@ -28,7 +28,7 @@ my $common = Common::Generic->new($dbh);
 
 if (defined $state{'confirm_delete'}) {
 	# User has confirmed a delete. 
-	($vars, $template_file) = $page->delete_auth($vars, 
+	$tpl_file = $page->delete_auth($vars, 
 				   $state{'id'}, 
 				   $ENV{'REQUEST_METHOD'});
 }
@@ -36,16 +36,21 @@ if (defined $state{'confirm_delete'}) {
 if (defined $state{'submit_new_pair'}) {
 	# User submitted new pair.
 	my $auth = $state{'auth'};
-	($vars, $template_file) 
-		= $page->new_auth($vars, $auth->{'username'}, $auth->{'password'});
+	$tpl_file = $page->new_auth($vars,
+                    $auth->{username}, 
+                    $auth->{password},
+                    $auth->{comment});
 
 }
 
 if (defined $state{'submit_changes'}) {
 	# User edited a pair.
 	my $auth = $state{'auth'};
-	($vars, $template_file)
-		= $page->edit_auth($vars, $auth->{'id'}, $auth->{'username'}, $auth->{'password'});
+	$tpl_file = $page->edit_auth($vars, 
+                    $auth->{id}, 
+                    $auth->{username}, 
+                    $auth->{password},
+                    $auth->{comment});
 }
 
 
@@ -55,26 +60,26 @@ if (defined $state{'submit_changes'}) {
 if (defined $state{'add_new_pair'}) {
 	# User pressed add new pair. Show form.
 
-	($vars, $template_file) = $page->show_add_form($vars);
+	($vars, $tpl_file) = $page->show_add_form($vars);
 }
 
 
 if (my $id = $common->request($state{'delete_pair'})) {
 	# User pressed pair delete button. Show confirm delete dialog	
 
-	($vars, $template_file) = $page->show_delete_confirm($vars, $id);
+	($vars, $tpl_file) = $page->show_delete_confirm($vars, $id);
 }
 if (my $id = $common->request($state{'edit_pair'})) {
 	# User pressed edit button. Show edit form.
 
-	($vars, $template_file) = $page->show_edit_form($vars, $id);
+	($vars, $tpl_file) = $page->show_edit_form($vars, $id);
 }
 
-unless (defined $template_file) {
+unless (defined $tpl_file) {
 	# Show default page (list all auth)
-	($vars, $template_file) = $page->show_auth_list($vars);
+	$tpl_file = $page->show_auth_list($vars);
 }
 
 print $cgi->header('text/html');
-$template->process($template_file, $vars)
+$template->process($tpl_file, $vars)
         or croak $template->error();

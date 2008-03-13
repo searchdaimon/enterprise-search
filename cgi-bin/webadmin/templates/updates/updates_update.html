@@ -1,0 +1,52 @@
+[% INCLUDE 'header.html' title="Software updates" %]
+[% PROCESS 'updates_tabs.html' selected="Software updates" %]
+[% PROCESS 'updates_common.html' %]
+
+[% IF updt_succs %]
+    [% WRAPPER 'tpl_msg.html' type = "success" %]
+        Packages have been updated.
+    [% END %]
+[% END %]
+
+[% IF error_msg.defined %]
+    [% UNLESS error_msg %]
+        [% error_msg = "Check apache log for details." %]
+    [% END %]
+
+    [% WRAPPER 'template_message.html' 
+        type="error" %]
+            Error during update. <br />[% error_msg %]
+    [% END %]
+[% END %]
+
+[% IF updt_result.defined %]
+    [% IF updt_result.size %]
+	<h4>Update result:</h4>
+        [% PROCESS list_output
+            output = updt_result %]
+    [% ELSE %]
+        <p>Update log is empty.</p>
+    [% END %]
+[% END %]
+
+[% IF avail_pkgs %]
+    [% UNLESS avail_pkgs.size %]
+	<p>Your system is up to date.</p>
+
+    [% ELSE %]
+            [% PROCESS pretty_button 
+                text = "Install updates"
+                name = "install_updates"  %]
+
+            [% PROCESS list_pkgs pkg_list = avail_pkgs %]
+
+    [% END %]
+[% END %]
+
+
+[% IF !avail_pkgs.defined AND !error_msg AND !updt_succs %]
+    [% PROCESS pretty_button
+        text = "Check for updates"
+        name = "check_updates"  %]
+[% END %]
+

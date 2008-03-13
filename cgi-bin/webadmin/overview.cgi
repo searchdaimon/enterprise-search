@@ -10,6 +10,7 @@ use Sql::Shares;
 use CGI::State;
 use Page::Overview;
 use Data::Dumper;
+use Template::Stash;
 BEGIN {
 	#push @INC, "Modules";
 	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
@@ -127,6 +128,7 @@ else {
 
 print $cgi->header(-type => 'text/html', -expires => '-1h');
 
+$Template::Stash::SCALAR_OPS->{escape} = sub { "\Q$_[0]\E" };
 my $template = Template->new(
 	{INCLUDE_PATH => './templates:./templates/overview:./templates/common',});
 $template->process($template_file, $vars)

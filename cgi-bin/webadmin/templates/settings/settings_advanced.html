@@ -48,12 +48,13 @@
 [% WRAPPER 'template_table.html' 
 	header = ['Setting','Value'] %]
 
-	[% FOREACH settings %]
+	[% FOREACH key IN all_settings.keys.sort %]
 		[% color = 1 - color %]
 		[% WRAPPER 'template_table_row.html' %]
 		
-			<td style="width : 50%">[% configkey %]</td>
-			<td style="width : 50%"><input type="text" name="setting.[% configkey %]" value="[% configvalue %]" /></td>
+			<td style="width : 50%">[% key %]</td>
+			<td style="width : 50%"><input type="text" 
+                            name="setting.[% key %]" value="[% all_settings.$key %]" /></td>
 	
 		[% END %]
 	[% END %]

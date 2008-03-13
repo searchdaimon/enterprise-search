@@ -3,7 +3,7 @@
 
 [% WRAPPER 'template_message.html'
 	type = 'info' %]
-	<p>Scan the network to find collections. Leave the range field blank to scan the local subnet. See examples for ranges <a href="help.cgi?topic=ranges">here</a>.
+	<p>Scan the network to find collections. Leave the range field blank to scan the local subnet.
 	</p>
 	<p>You can specify what username/password the scanner tries to authenticate as. If you specify nothing, it will try the default anonymous login for that connector (for examples <em>guest/guest</em>) for SMB).
 	</p>
@@ -20,7 +20,7 @@
 	[% WRAPPER 'template_table_row.html' %]
 		<td style="width : 60px;"><img src="file.cgi?i=yast_nfs_32" alt="" style="0 px solid;" /></td>
 		<td> [% PROCESS connectors prefix="scan" %]</td>
-		<td><input type="text" name="scan.range" value="213.179.58.120" /></td>
+		<td><input type="text" name="scan.range" value="" /></td>
 	[% END %]
 [% END %]
 

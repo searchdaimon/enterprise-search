@@ -1,0 +1,22 @@
+[% tabs = [
+	{
+		'name'		=> 'Installed software',
+		'url'		=> 'updates.cgi',
+	},
+	{
+		'name'		=> 'Software updates',
+		'url'		=> 'updates.cgi?view=updates',
+	},
+	{
+		'name'		=> 'Advanced',
+		'url'		=> 'updates.cgi?view=advanced',
+	}
+] %]
+
+<ul id="tabs">
+[% FOREACH tabs %]
+	<li [% IF selected == name %]id="selected"[% END %]>
+		<a href="[% url %]">[% name %]</a>
+	</li>
+[% END %]
+</ul>

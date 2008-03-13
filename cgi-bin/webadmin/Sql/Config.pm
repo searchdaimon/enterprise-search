@@ -122,7 +122,8 @@ sub is_valid_authmethod($$) {
 # Return everything in the table.
 sub get_all {
 	my $query = "SELECT * FROM $table";
-	return Sql::Sql::get_hashref_array($dbh, $query);
+	return map { $_->{configkey} => $_->{configvalue} } 
+            @{Sql::Sql::get_hashref_array($dbh, $query)};
 }
 
 ##

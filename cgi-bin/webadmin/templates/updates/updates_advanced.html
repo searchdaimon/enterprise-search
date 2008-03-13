@@ -1,0 +1,104 @@
+[% INCLUDE 'header.html' title="Software updates" extra_css = "check_list" %]
+[% USE HTML %]
+[% PROCESS 'updates_tabs.html' selected="Advanced" %]
+[% PROCESS 'updates_common.html' %]
+<h3>Upload software manually</h2>
+
+[% PROCESS msgs %]
+
+<p>
+    [%# Installation output %]
+    [% IF install_output.defined %]
+        <h4>Installations:</h4>
+        [% resHTML = install_results.getList(1) %]
+        [% resHTML %]
+	<h4>Install output:</h4>
+        [% PROCESS list_output
+            output = install_output %]
+    [% END %]
+
+    [% IF new_pkgs.size %]
+        <div>
+        [% PROCESS list_new 
+            list = new_pkgs %]
+        </div>
+    [% END %]
+
+    [% IF install_output.defined %]
+        <div><img src="file.cgi?i=back&size=22x22" alt="back" /> 
+        <a href="updates.cgi?view=advanced">Back to advanced</a></div>
+    [% ELSE %]
+        [%# Upload form %]
+        <h4>Upload new package</h4>
+        <form enctype="multipart/form-data" method="post" action="updates.cgi">
+	    <div style="float : left; position : relative; margin-top : 1em; ">
+	        File: <input type="file" name="pkg_file" />
+	        <div style="position : absolute; right : 0; top : 2.5em;">
+		    <input type="submit" 
+                        name="btn.upload" 
+                        value="Upload software package" />
+	        </div>
+	    </div>
+        </form>
+    [% END %]
+
+    
+</p>
+
+[% BLOCK list_new %]
+    [% WRAPPER 'template_table.html'
+        header = ['', 'File', ''] %]
+        [% color = 1 %]
+        [% FOREACH file IN list %]
+            [% color = 1 - color %]
+            [% WRAPPER 'template_table_row.html' %]
+                <td style="width : 25px;">
+                    <img src="file.cgi?icon=rpm&amp;size=22x22" alt="" />
+                </td>
+                    <td>[% HTML.escape(file) %]</td>
+                    <td><ul class="vertical_buttons">
+                        <li>
+                            <a href="updates.cgi?btn.del_pkg=1&file=[% HTML.escape(file) %]">Remove</a>
+                        </li>
+                    </td>
+            [% END %]
+        [% END %]
+        <tr><td></td>
+            <td>
+            <form action="updates.cgi" method="post">
+            <input type="submit" 
+                    name = "btn.run_install"
+                    class="pretty_submit" 
+                    value="Run install" />
+            </form>
+            </td>
+            <td></td>
+        </tr>
+    [% END %]
+[% END %]
+
+[% BLOCK msgs %]
+    [% IF succs_upload.defined %]
+            [% WRAPPER 'tpl_msg.html' type="success" %]
+                    [% HTML.escape(succs_upload) %] has been uploaded.
+            [% END %]
+    [% END %]
+
+    [% IF error_not_rpm.defined %]
+        [% WRAPPER 'tpl_msg.html' type='error' %]
+            File [% HTML.escape(error_not_rpm) %] is not a software package.
+        [% END %]
+    [% END %]
+
+    [% IF remove_succs %]
+        [% WRAPPER 'tpl_msg.html' type='success' %]
+            Package [% HTML.escape(remove_succs) %] removed.
+        [% END %]
+    [% END %]
+
+    [% IF remove_error %]
+        [% WRAPPER 'tpl_msg.html' type='error' %]
+            Package [% HTML.escape(remove_error) %] could not be removed.
+        [% END %]
+    [% END %]
+[% END %]

@@ -104,6 +104,12 @@ sub sql_insert {
 	1;
 }
 
+sub sql_insert_returning_id {
+    my $s = shift;
+    $s->_prepare_and_execute(@_);
+    $s->{dbh}->{ q{mysql_insertid} }
+}
+
 sub sql_update {
 	my $self = shift;
 	my $query = shift;
@@ -213,6 +219,7 @@ sub _prepare_and_execute {
 	
 	my $sth = $dbh->prepare($query)
 		or croak "Pepare: ", $dbh->errstr;
+
 	
 	my $rv = $sth->execute(@binds)
 		or croak "Execute: ", $dbh->errstr;

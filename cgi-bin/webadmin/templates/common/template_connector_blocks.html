@@ -10,9 +10,9 @@
 	<div class="block_default">
 		Resource:
 		<div class="block_inner">
-			<input type="text" name="[% prefix %].resource" value="[% share.resource %]" />
+			<input type="text" name="[% prefix %].resource" value="[% share.resource %]" class="block_resource" />
 		<br  /><span class="example">
-		Example: \\samba.boitho.com\sharedFolder</span>
+		Example: \\samba.example.com\sharedFolder</span>
 		</div>
 	</div>
 [% END %]
@@ -25,7 +25,7 @@
 			<input type="text" name="[% prefix %].host" value="[% share.host %]" />
 		<br  />
 		<span class="example">
-			Example: login.boitho.com
+			Example: login.example.com
 		</span>
 		</div>
 	</div>
@@ -33,7 +33,7 @@
 	<div class="block_default">
 		Resource:
 		<div class="block_inner">
-			<input type="text" name="[% prefix %].resource" value="[% share.resource %]" />
+			<input type="text" name="[% prefix %].resource" value="[% share.resource %]" class="block_resource" />
 		<br  />
 		<span class="example">
 			Example: /home
@@ -72,10 +72,10 @@
 	<div class="block_default">
 		Webpage:
 		<div class="block_inner">
-			<input type="text" name="[% prefix %].resource" value="[% share.resource %]" />
+			<input type="text" name="[% prefix %].resource" value="[% share.resource %]" class="block_resource" />
 		<br  />
 		<span class="example">
-			Example: http://www.searchdaimon.com/blog/
+			Example: http://www.example.com/blog/
 		</span>
 		</div>
 	</div>
@@ -133,7 +133,7 @@
 	<div class="block_default">
                 Resource:
 		<div class="block_inner">
-                        <input type="text" name="[% prefix %].resource" value="[% share.resource %]" />
+                        <input type="text" name="[% prefix %].resource" value="[% share.resource %]" class="block_resource" />
                 <br  /><span class="example">
                 Example: /usr/share/documents</span>
 		</div>
@@ -144,10 +144,10 @@
 	<div class="block_default">
 		Resource:
 		<div class="block_inner">
-			<input type="text" name="[% prefix %].resource"
-					value="[% share.resource %]" />
+			<input type="text" name="[% prefix %].resource" 
+					value="[% share.resource %]" class="block_resource" />
 			<br /><span class="example">
-				Example: http://10.0.0.10/exchange/rb/
+				Example: http://example.com
 			</span>
 		</div>
 		

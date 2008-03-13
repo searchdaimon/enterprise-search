@@ -23,15 +23,15 @@ $CONFIG{'log_path'} = $ENV{'BOITHOHOME'} . '/logs';
 # Logfiles visible to the user.
 # Syntax to add new one: 'filename' => "description",
 $CONFIG{'logfiles'} = {
-	'access_log' => "Web Server Access",
-	'error_log' => "Web Server Error",
-	'crawlManager_access' => "Crawling Management Access",
-	'crawlManager_error' => "Crawling Management Error Log",
-	'indexing' => "Document Indexing Log",
-	'crawl_watch.log' => "Collection Management Log",
-	'boithoad_access' => "Active Directory Access Log",
-	'boithoad_error' => "Active Directory Error Log",
-        'bb_auto_update.log' => 'Blackbox Auto Update Log',
+	'access_log' => "Web server access",
+	'error_log' => "Web server error",
+	'crawlManager_access' => "Crawling management access",
+	'crawlManager_error' => "Crawling management error log",
+	'indexing' => "Document indexing log",
+	'crawl_watch.log' => "Collection management log",
+	'boithoad_access' => "Active directory access log",
+	'boithoad_error' => "Active directory error log",
+        'bb_auto_update.log' => 'Blackbox auto update log',
 };
 
 
@@ -106,6 +106,8 @@ $CONFIG->{'core_report_url'} = "http://dagurval.boitho.com/cgi-bin/report/submit
 $CONFIG{login_htpasswd_path} = $ENV{BOITHOHOME} . "/cgi-bin/webadmin/.htpasswd"; 
     #"/home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd";
 $CONFIG{login_admin_user} = "admin";
+
+$CONFIG{adv_starred_fields} = ['msad_password', 'ldap_password'];
 
 
 # Group: Network

@@ -6,6 +6,10 @@
 <head>
 	<title>[% title %] - Search Daimon administration panel</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        [% IF meta_refresh %]
+            <meta http-equiv="refresh" 
+                content="[% meta_refresh.seconds %];url=[% meta_refresh.url %]" />
+        [% END %]
 	<link rel="stylesheet" href="file.cgi?css=default" type="text/css" />
 	<script src="file.cgi?js=utils"></script>
 	[% FOREACH css IN extra_css %]

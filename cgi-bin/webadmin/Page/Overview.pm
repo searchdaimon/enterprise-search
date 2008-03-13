@@ -95,7 +95,7 @@ sub edit_collection {
     @input_fields = grep { $_ ne 'collection' } @input_fields;
     $vars->{input_fields} = \@input_fields;
 
-    if (defined($state->{'share'})) {
+    if (defined $state->{'share'}) {
         # User tried to submit invalid values, showing form again.
         my $share = $state->{'share'};
         $share->{'connector_name'} = 
@@ -115,6 +115,7 @@ sub edit_collection {
                 if grep /^groups$/, @input_fields;
             $share->{'user'} = [ $sqlUsers->get_users($id) ]
                 if grep /user/, @input_fields;
+
             $vars->{'share'} = $share;
         }
     }
@@ -250,9 +251,6 @@ sub _get_collection_data {
 }
 
 
-## Helper function for edit_collection
-## This is data that is not directly used by the collection
-## but needs to be listed up as options for the user.
 sub _get_associated_data($$$) {
 	my ($self, $vars, $fields) = (@_);
 	
@@ -269,6 +267,7 @@ sub _get_associated_data($$$) {
 		if grep /^groups$/, @$fields;
 	$vars->{'user_list'} = $infoquery->listUsers()
 		if grep /^exchange_user_select$/, @$fields;
+
 	return $vars;
 }
 

@@ -22,6 +22,7 @@ sub set_users {
 
 sub _insert {
 	my ($self, $share_id, $user) = @_;
+
 	
 	my $query = "INSERT INTO $table (share, name) 
 					VALUES (?, ?)";

@@ -22,18 +22,21 @@ my $table = "collectionAuth";
 # Returns:
 #	id - user/pass pair ID.
 sub add {
-	my $self = shift;
-	my ($username, $password) = (@_);
-	my $dbh = $self->{'dbh'};
+        my $s = shift;
+	my ($username, $password, $comment) = @_;
 
 	return unless $username;
 
-	my $id = $self->get_id($username, $password);
-	return $id if $id; #exists, return it.
+        # update if exists
+	my $id = $s->get_id($username, $password);
+        if (defined $id) {
+            $s->update_authentication($id, @_);
+	    return $id;
+        }
 
-	# insert it.
-	$self->insert_authentication($username, $password);
-	return $dbh->{ q{mysql_insertid} };
+	# insert if new
+	$s->insert_authentication($username, $password, $comment);
+	return $s->{dbh}->{ q{mysql_insertid} };
 
 }
 
@@ -51,26 +54,25 @@ sub get_id {
 ##
 # Inserts username/password pair.
 sub insert_authentication {
+    my ($s, $usr, $pass, $comment) = @_;
 
-	my $self = shift;
-	my ($username, $password) = (@_);
-	my $query =  "INSERT INTO $table (username, password)
-			values(?, ?)";
-	$self->sql_insert($query, $username, $password);
+    my $query =  "INSERT INTO $table (username, password, comment)
+			values(?, ?, ?)";
+    $s->sql_insert($query, $usr, $pass, $comment);
 }
 
 ##
 # Updates username/password for given pair id.
 sub update_authentication {
 	my $self = shift;
-	my ($id, $username, $password) = (@_);
+	my ($id, $username, $password, $comment) = @_;
 
 	valid_numeric({'id' => $id});
 
 	my $query = "UPDATE $table 
-			SET username = ?, password = ?
+			SET username = ?, password = ?, comment = ?
 			WHERE id = ?";
-	$self->sql_update($query, $username, $password, $id);
+	$self->sql_update($query, $username, $password, $comment, $id);
 }
 
 ##

@@ -22,6 +22,8 @@ BEGIN {
     }
 }
 
+use constant TPL_ADVANCED => "settings_advanced.html";
+
 my %CONFIG = %$CONFIG;
 
 # Helper class with functions used with add.cgi
@@ -90,20 +92,20 @@ sub show_confirm_dialog($$) {
 
 sub show_advanced_settings($$) {
 	my ($self, $vars) = @_;
-	my $sqlConfig = $self->{'sqlConfig'};
-	my $template_file = "settings_advanced.html";
-	$vars->{'settings'} = $sqlConfig->get_all(); 
-	
-	# Get default settings for setting spesified in config file.
-	my @default_settings;
-	foreach my $setting (@{$CONFIG{'default_settings'}}) {
-		$setting->{'table_value'} = 
-			$sqlConfig->get_setting($setting->{'table_key'});
-		push @default_settings, $setting;
-	}
-	$vars->{'default_settings'} = \@default_settings;
 
-	return ($vars, $template_file);
+        my %settings = $self->{sqlConfig}->get_all();
+        for my $key (@{$CONFIG{adv_starred_fields}}) {
+            $settings{$key} = "******";
+        }
+
+        my @default = @{$CONFIG{default_settings}};
+        $_->{table_value} = $settings{$_->{table_key}}
+            for @default;
+        
+        $vars->{all_settings} = \%settings;
+        $vars->{default_settings} = \@default;
+
+	return ($vars, TPL_ADVANCED);
 }
 
 sub show_advanced_settings_updated($$) {

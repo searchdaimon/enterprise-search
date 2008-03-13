@@ -50,11 +50,11 @@
 		<h4>Use stored authentication</h4>
 		<div style="margin-left : 1em;">
 		<select name="[% prefix %].auth_id">
-			<option value="">(New values)</option>
-			[% FOREACH authentication %]
-				User: <option value="[% id %]"
-					[% "selected=\"selected\"" IF share.auth_id == id %]
-					>[% username %]</option>
+			<option value="">(New values - input below)</option>
+			[% FOREACH auth IN authentication %]
+				User: <option value="[% auth.id %]"
+					[% "selected=\"selected\"" IF share.auth_id == auth.id %]
+					>[% auth.username %] [% IF auth.comment.defined %]- [% auth.comment %][% END %]</option>
 			[% END %]
 		</select>
 		</div>
@@ -191,7 +191,7 @@
 
 	<div class="block_inner" >
 		<input type="text" name="[% prefix %].userprefix" value="[% $prefix.userprefix %]" />[% optional %]
-		<br /><span class="example">Example: ad-company</span>
+		<br /><span class="example">Example: WIN-EXAMPLE-COM</span>
 	</div>
 	</div>
 [% END %]
@@ -206,7 +206,8 @@
             <label for="user[% i %]">
 					
 		<input name="share.user[[% i %]]" type="checkbox" id="user[% i %]"
-		    [% IF share.user.grep("^$user$").0 %]
+                    [% user_esc = user.escape %]
+		    [% IF share.user.grep("^$user_esc$").0 %]
                         checked="checked"
                     [% END %]
 					value="[% user %]"

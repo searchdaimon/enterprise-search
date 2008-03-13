@@ -94,7 +94,8 @@ A:active { color : blue; }
 
 #tabs {
     list-style-type : none;
-    padding : 0;
+    padding-left : 0;
+    margin-left : 0;
     margin-bottom : 1em;
     border-bottom : 3px solid;
     border-color : #044a90;
@@ -109,8 +110,8 @@ A:active { color : blue; }
 
 
 #tabs li a {
-    padding : 0.3em;
-    padding-bottom : 0em;
+    /* padding : 2.5em; 0; 2.5em; 0.5em; */
+    padding : 0.2em; padding-bottom : 0;
     text-decoration : none;
     background : #d3dbef;
     color : black; /* white; */
@@ -185,6 +186,8 @@ A:active { color : blue; }
     top : 0px;
     width : 70%;
   }
+
+.block_resource { width : 25em; }
  
 
 #settings #version_list {
@@ -269,4 +272,28 @@ A:active { color : blue; }
     display : block; 
     padding-left : 1em; 
     padding-right : 1em;
+}
+
+.pretty_button {
+    border : 1px solid;
+    background : #eff2fb;
+    border-color : #044a90;
+    padding : 0.5em;
+    height : 64px;
+    /* float : left; */
+    width : 26em;
+    margin-bottom : 0.5em;
+}
+
+.pretty_button img { float : left; }
+.pretty_button input, .pretty_submit {
+    /* background : #eff2fb; */
+    padding : 0.5em;
+    color : #111111; /* #155697;  */
+    font-weight : bolder;
+    font-size : medium;
+    width : 15em;
+}
+.pretty_button input {
+    margin-top : 0.6em;
 }

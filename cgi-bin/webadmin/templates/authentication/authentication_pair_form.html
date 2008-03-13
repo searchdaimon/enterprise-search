@@ -26,7 +26,13 @@
 	<tr>
 		<td>Username:</td><td><input type="text" name="auth.username" value="[% user %]" /></td>
 	</tr><tr>
-		<td>Password:</td><td><input type="text" name="auth.password" value="" /></td>
+		<td>Password:</td>
+                <td><input type="password" name="auth.password" value="" /></td>
+        </tr><tr>
+                <td>Short comment:</td>
+                <td><input type="text" maxlength="50" name="auth.comment" value="[% authentication.comment %]" />
+                    <span style="text-size : x-small; font-style: italic;">(for distinguishing usernames)</span>
+                </td>
 	</tr>
 </table>
 [% IF action == 'new' %]

@@ -50,14 +50,14 @@ sub delete_auth {
 # - On error, show form again.
 # - On success, show default page.
 sub new_auth {
-	my ($self, $vars, $user, $pass) = @_;
+	my ($self, $vars, $user, $pass, $comment) = @_;
 
 	unless ($user) {
 		$vars->{'error_no_username'} = 1;
-		return $self->show_add_form($vars, $user, $pass);
+		return $self->show_add_form($vars, $user, $pass, $comment);
 	}
 
-	$sqlAuth->add($user, $pass);
+	$sqlAuth->add($user, $pass, $comment);
 	$vars->{'success_insert_pair'} = 1;
 
 	return $self->show_default($vars);
@@ -69,16 +69,22 @@ sub new_auth {
 # - On error, show form again.
 # - On success, show default page.
 sub edit_auth {
-	my ($self, $vars, $id, $user, $pass) = @_;
+	my ($self, $vars, $id, $user, $pass, $comment) = @_;
 
 	valid_numeric({'id' => $id});
 
-	unless ($user) {
+	unless (length $user) {
 		$vars->{'error_no_username'} = 1;
-		return $self->show_edit_form($vars, $id, $user, $pass);
+		return $self->show_edit_form($vars, $id, $user, $pass, $comment);
 	}
 
-	$sqlAuth->update_authentication($id, $user, $pass);
+        unless (length $pass) {
+            ($pass) = map { 
+                $_->{password} 
+            } $sqlAuth->get_auth_by_id($id)
+        }
+
+	$sqlAuth->update_authentication($id, $user, $pass, $comment);
 	$vars->{'success_submit_changes'} = 1;
 
 	return $self->show_default($vars);
@@ -113,12 +119,13 @@ sub show_delete_confirm {
 ##
 # Show form for adding new auth pairs.
 sub show_add_form {
-	my ($self, $vars, $user, $pass) = @_;
+	my ($self, $vars, $user, $pass, $comment) = @_;
 
 	if (defined $user or defined $pass) {
 		$vars->{'authentication'} 
 			= { 'username' => $user,
 			    'password' => $pass,
+                            'comment'  => $comment,
 			};
 	}
 
@@ -129,7 +136,7 @@ sub show_add_form {
 ##
 # Show form for editing a auth pair.
 sub show_edit_form {
-	my ($self, $vars, $id, $user, $pass) = @_;
+	my ($self, $vars, $id, $user, $pass, $comment) = @_;
 	
 	valid_numeric({'id' => $id});	
 
@@ -137,6 +144,7 @@ sub show_edit_form {
 		$vars->{'authentication'} 
 			= { 'username' => $user,
 			    'password' => $pass,
+                            'comment' => $comment,
 			};
 	}
 	else {
@@ -157,8 +165,9 @@ sub show_auth_list {
 	my ($self, $vars) = @_;
 	my @authpairs = $sqlAuth->get_all_auth;
 	$vars->{'authentication'} = \@authpairs;
+        croak "WHAT?" if wantarray;
 
-	return ($vars, DEFAULT_TPL);
+	return DEFAULT_TPL;
 }
 
 # Group: Private methods

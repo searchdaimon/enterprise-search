@@ -7,6 +7,8 @@ BEGIN {
         push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 
+die "Wizard currently broken.";
+
 use CGI;
 use Carp;
 use CGI::State;
@@ -22,13 +24,13 @@ use Page::Setup::Integration;
 use Common::FormFlow qw(FLOW_START_FORM);
 use Common::Generic qw(init_root_page);
 
-die "Setup wizard fjernet til bedre testet.";
+#die "Setup wizard fjernet til bedre testet.";
 
 # Init
 my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
 	= init_root_page('/templates/setup:./templates/common/network', 'Page::Setup');
 my %state = %$state_ptr;
-my $template_file;
+my $tpl_file;
 
 my $pageNetwork     = Page::Setup::Network->new($dbh);
 my $pageAuth        = undef; # Page::Setup::Auth->new($dbh); fjerner til bi begynner med lisens
@@ -39,7 +41,7 @@ if (defined $state{view}) {
     # Non-wizard pages.
     my $view = $state{view};
     if ($view eq 'manual_activation') {
-        ($vars, $template_file) = $pageAuth->show_activation_dialog($vars);
+        ($vars, $tpl_file) = $pageAuth->show_activation_dialog($vars);
     }
 }
 else {
@@ -54,17 +56,18 @@ else {
         #->add($FLOW_START_FORM, \&process_login) 
         ->add(FLOW_START_FORM,  \&process_network)
         ->add('network_config', \&process_network)
-        ->add('license_valid', \&process_license)
-        ->add('manual_act', \&process_manual_act)
+        ->add('network_restart', \&network_restart)
+        #->add('license_valid', \&process_license)
+        #->add('manual_act', \&process_manual_act)
         ->add('integration_method', \&process_integration_method)
         ->add('integration_values', \&process_integration_values);
     
-    ($vars, $template_file) = $flow->process($form_submitted);
+    ($vars, $tpl_file) = $flow->process($form_submitted);
 }
 
 # print HTML
 print $cgi->header('text/html');
-$template->process($template_file, $vars)
+$template->process($tpl_file, $vars)
         or croak $template->error() . "\n";
 
 
@@ -94,14 +97,18 @@ sub process_network {
     my ($netconf, $resolv) = ($state{netconf}, $state{resolv});
 
     if (defined $netconf and defined $resolv) {
-        my $succs;
-        ($vars, $succs) = $pageNetwork->process_network_config(
-                $vars, $netconf, $resolv);
+        my ($tpl_file, $restart_id) 
+            = $pageNetwork->show_restart($vars, $netconf);
 
-        #return $pageAuth->show_license_dialog($vars)	
-            #if ($succs)
-        return $pageIntegration->show_integration_methods($vars)
-            if $succs;
+        # Page needs to be shown before network
+        # is restarted.
+        print $cgi->header('text/html');
+        $template->process($tpl_file, $vars)
+            or croak $template->error(), "\n";
+
+        $pageNetwork->network_restart($vars, $restart_id,
+            $netconf, $resolv);
+        exit;
     }
 
     return $pageNetwork->show_network_config(

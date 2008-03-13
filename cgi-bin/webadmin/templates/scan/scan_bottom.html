@@ -3,7 +3,12 @@
 </div><br />
 
 <div style="margin-top : 1em; font-size : large; font-style: bold;">
-	<a href="scan.cgi?action=process&amp;id=[% result_id %]">See the results for this scan</a>
+    
+    <form method="get" action="scan.cgi">
+        <input type="hidden" name="action" value="process" />
+        <input type="hidden" name="id" value="[% result_id %]" />
+        <input type="submit" value="Continue to search results ->" />
+    </form>
 </div>
 
 

@@ -61,36 +61,32 @@ sub show_network_config {
 
 	# Add checkList instance for error/success messages.
 	$vars->{'checkList'} = Common::TplCheckList->new();
-
-	return $vars;
+        1;
 }
 
 ##
 # Generate config files and attempt to save them.
 #
 # Attributes:
-#	vars				- Template vars
-#	netconf_user_ref    - Users netconf values.
-#	resolv_user_ref		- Users resolv values.
-sub process_network_config {
+#	vars		  - Template vars
+#	netconf_user_ref  - Users netconf values.
+#	resolv_user_ref	  - Users resolv values.
+sub update_network_settings {
 	my ($self, $vars, $netconf_user_ref, $resolv_user_ref) = @_;
 	my $restart_result;
-
-	# We always want to start the device on boot
-	$netconf_user_ref->{'ONBOOT'} = "yes";
-	
-	# Overwrite in case someone tried to change the network device
+        
+	$netconf_user_ref->{'ONBOOT'} = "yes"; # device shall start on boot.
 	$netconf_user_ref->{'DEVICE'} = $CONFIG->{'net_device'};
 	
 	# Attempt to generate and save config files.
-        $self->_clean_resolv($resolv_user_ref); # Remove empty settings.
         
-
+        $self->_clean_resolv($resolv_user_ref); # remove empty settings.
 	my ($resolv_succ, $resolv_errmsg) 
 			= $self->_save_resolv($resolv_user_ref);
-
 	my ($netconf_succ, $netconf_errmsg) 
 			= $self->_save_netconf($netconf_user_ref);
+
+                        # NESTE STEG: Lagre oppd resultat i db.
 
 	
 	# Restart the network if there was no error earlier.
@@ -114,10 +110,9 @@ sub process_network_config {
 	$vars->{'restart_message'} = $restart_message;
 
 	
-	
-	# Method returns true only if there was no error.
-	return ($netconf_succ and $resolv_succ and $restart_succ) 
-				? ($vars, 1) : ($vars, 0) ;
+	return 1 if $netconf_succ 
+            and $resolv_succ and $restart_succ;
+        return;
 }
 
 # Group: Private methods
@@ -128,18 +123,10 @@ sub process_network_config {
 # Returns:
 #	(success, message) - Where success: True/false, Message: Restart output.
 sub _restart_network {
-	my $success = 1;
-	my $message;
 	eval {
-			$message = $netConfig->restart();
+            return (1, $netConfig->restart());
 	};
-
-	if ($@) {
-		$message = $@;
-		$success = 0;
-	}
-
-	return ($success, $message);
+        return (0, $@) if $@
 }
 
 
@@ -207,9 +194,6 @@ sub _save_resolv {
 # Helper function for process_network_config
 #
 # Attributes:
-#	keywords_ref - Users resolv values.
-#
-# Returns:
 #	keywords_ref - Users resolv values.
 sub _clean_resolv {
 	my ($self, $keywords_ref) = @_;

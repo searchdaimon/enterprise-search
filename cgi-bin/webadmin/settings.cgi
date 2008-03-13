@@ -87,6 +87,8 @@ if (defined($state{'submit'})) {
 }
 
 elsif (defined($state{'confirm_delete'})) {
+        croak "Reset all settings disabled.";
+    
 	# User confirmed delete. Delete settings
 	croak ("The operation must be a POST request to work.") 
 		unless($ENV{'REQUEST_METHOD'} eq 'POST');

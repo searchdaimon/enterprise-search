@@ -14,7 +14,6 @@ use Data::Dumper;
 use Switch;
 
 use Page::System::Services;
-use Page::System::Packages;
 use Page::System::Crashes;
 use Common::Generic qw(init_root_page);
 
@@ -26,28 +25,12 @@ my $template_file;
 
 
 my $pageServices = Page::System::Services->new($dbh);
-my $pagePackages = Page::System::Packages->new($dbh);
 my $pageCrashes  = Page::System::Crashes->new($dbh);
 
 
 if (defined $state{'submit'}) { #POST actions
 	my $button = $state{'submit'};	
 	
-
-	# User wants a list of available updates..
-	if (defined $button->{'software_check_updates'}) {
-	    ($vars, $template_file) = $pagePackages->show($vars, "SHOW_AVAILABLE");
-	}
-
-	# User wants to update software on the black box.
-	if (defined $button->{'software_install_available'}) {
-		($vars, $template_file) = $pagePackages->update_packages($vars);
-	}
-
-	# User wants to install manually uploaded packages
-	if (defined $button->{'software_install_uploaded'}) {
-		($vars, $template_file) = $pagePackages->install_uploaded($vars);
-	}
 
 	# User wants to see siez for all lots.
 	if (defined $button->{'show_lot_size'}) {
@@ -65,12 +48,6 @@ elsif (defined $state{'view'}) {
 	my $view = $state{'view'};
 	
 	switch ($view) {
-		case "updates" {
-			# Show the package upload page
-		
-			($vars, $template_file) = $pagePackages->show($vars);
-		}
-
 		case "services" {
 			($vars, $template_file) = $pageServices->show($vars);
 		}
@@ -82,13 +59,8 @@ elsif (defined $state{'view'}) {
 		case "crash_report" {
 			($vars, $template_file) = $pageCrashes->show_report($vars, $state{'core'});
 		}
+                default { croak "unknown view '$view'" }
 	}
-}
-
-elsif (defined $state{'package_upload_button'}) {
-	# User is uploading a file.
-
-	($vars, $template_file) = $pagePackages->upload_package($vars, $state{'package_file'});
 }
 
 elsif (defined $state{'action'}) {
@@ -103,14 +75,6 @@ elsif (defined $state{'action'}) {
 
 
 		($vars, $template_file) = $pageServices->action($vars, $service, $params{$action});
-	}
-
-	elsif ($action eq "pkg_remove") {
-		# User wants to remove a uploaded package.
-		
-		my $pkg = $state{'pkg'};
-		($vars, $template_file)  #todo chekc if rpm
-			= $pagePackages->remove_uploaded_package($vars, $pkg);
 	}
 }
 
