@@ -137,10 +137,11 @@ sub _parse_pkg_list {
 sub _exec_action {
     my ($self, $service, $parameter) = @_;
     $parameter = "" unless defined $parameter;
-    my $exec = $wrapper_path . " $service $parameter|";
+    my $pipe_stderr = "2>&1";
+    my $exec = $wrapper_path . " $service $parameter $pipe_stderr|";
 
     open my $wraph, $exec
-	or croak "Unable to execute yum-wrapper, $?";
+	or croak "Unable to execute yum-wrapper", $!;
 
     my @output = <$wraph>;
     my $status = 1;
