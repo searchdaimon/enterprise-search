@@ -1,5 +1,5 @@
 documentstype: doc
-command: /usr/bin/catdoc #file
+command: /usr/bin/catdoc -s 8859-1 #file
 outputformat: text
 outputtype: stdio
 
