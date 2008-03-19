@@ -691,7 +691,9 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 
 					if (!charset_match)
 					    {
+						#ifndef NOWARNINGS
 						printf("Error: Illegal charset (%s) [%s]\n", content, data->url);
+						#endif
 						data->abort = 1;
 						return 0;
 					    }
@@ -1190,7 +1192,9 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
 
     if (data->abort)	// On error
 	{
+	    #ifndef NOWARNINGS
 	    printf("Warning: Document included an error and was aborted.\n");
+	    #endif
 	    *output_title = buffer_abort( he->Btitle );
 	    *output_body = buffer_abort( he->Bbody );
 	}

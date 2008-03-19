@@ -1,6 +1,6 @@
 
 #CC=/usr/local/bin/gcc -p -g -DDEBUG -DDEBUG_2
-CC=/usr/local/bin/gcc -O2 -g
+CC=/usr/local/bin/gcc -O2 -g -D NOWARNINGS
 #CC=/usr/local/bin/gcc
 # -O2 -Wall
 
