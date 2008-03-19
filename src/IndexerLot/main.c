@@ -11,6 +11,7 @@
 #include "../common/langdetect.h"
 
 #include "../common/crc32.h"
+#include "../common/gcrepo.h"
 
 #include "../IndexerRes/IndexerRes.h"
 #include "../common/integerindex.h"
@@ -448,7 +449,6 @@ void *IndexerLot_workthread(void *arg) {
 		                }
 
 
-				(*DocumentIndexPost).crc32 = crc32boithonl(HtmlBuffer,HtmlBufferLength);
 
 
 				if((*argstruct).optHandleOld) {
@@ -494,6 +494,8 @@ void *IndexerLot_workthread(void *arg) {
 
 				//begynner på en ny side
                                 wordsReset(pagewords,ReposetoryHeader.DocID);
+
+				(*DocumentIndexPost).crc32 = crc32boithonl(HtmlBuffer,HtmlBufferLength);
 
 				//printf("D: %u, R: %lu\n",ReposetoryHeader.DocID, radress);
 
@@ -781,6 +783,7 @@ int main (int argc, char *argv[]) {
 	unsigned int optPrintInfo = 0;
 	unsigned int optMakeWordList = 0;
 	unsigned int optHandleOld = 0;
+	unsigned int optRunGarbageCollection = 0;
 
 	char **optOnlyTLD = NULL;
 
@@ -798,7 +801,7 @@ int main (int argc, char *argv[]) {
 	extern char *optarg;
        	extern int optind, opterr, optopt;
 	char c;
-	while ((c=getopt(argc,argv,"neu:t:m:pl:wo"))!=-1) {
+	while ((c=getopt(argc,argv,"neu:t:m:pl:wog"))!=-1) {
                 switch (c) {
 			case 'l':
 				split(optarg, ",", &optOnlyTLD);
@@ -812,6 +815,9 @@ int main (int argc, char *argv[]) {
 				break;
 			case 'p':
 				optPrintInfo = 1;
+				break;
+			case 'g':
+				optRunGarbageCollection = 1;
 				break;
 			case 'w':
 				//lag en ordbok
@@ -1130,6 +1136,15 @@ int main (int argc, char *argv[]) {
 
 		if (globalIndexerLotConfig.urlfilter != NULL) {
 			FreeSplitList(globalIndexerLotConfig.urlfilter);
+		}
+
+
+		//run the Garbage Collection
+		if ((optRunGarbageCollection == 1) && (argstruct.pageCount > 0)) {
+			printf("running Garbage Collection..\n");
+			gcrepo(lotNr, subname);
+			printf(".. done\n");
+
 		}
 
 		return 0;
