@@ -12,7 +12,7 @@ CFLAGS = -g
 LDFLAGS = -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL
 
 #pop rank bibloteket
-LIBS = src/common/
+LIBS = src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c src/common/
 
 LIBGeoIP = -lGeoIP
 
@@ -67,8 +67,8 @@ LIBXML = -I/usr/include/libxml2  -lxml2
 
 #HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c  
 #har rullet tilbake, og bruker gammel html parser for nå, så trenger dermed ikke i ha med css parseren
-HTMLPARSER=src/parser/libhtml_parser.a src/parser/libcss_parser.a src/ds/libds.a
-#HTMLPARSER=src/parser/libhtml_parser.a src/ds/libds.a
+#HTMLPARSER=src/parser/libhtml_parser.a src/parser/libcss_parser.a src/ds/libds.a
+HTMLPARSER=src/parser/libhtml_parser.a src/ds/libds.a
 
 # The Dependency Rules
 # They take the form
@@ -145,13 +145,13 @@ IndexerLot: src/IndexerLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(IndexerLot) -lpthread -DWITH_THREAD src/banlists/ban.c src/3pLibs/keyValueHash/hashtable.c -o bin/IndexerLot
+	$(CC) $(IndexerLot) -lpthread -DWITH_THREAD src/banlists/ban.c -o bin/IndexerLot
 
 IndexerLotbb: src/IndexerLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(IndexerLot) -D BLACK_BOKS -D PRESERVE_WORDS src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/IndexerLotbb -DIIACL
+	$(CC) $(IndexerLot) -D BLACK_BOKS -D PRESERVE_WORDS -o bin/IndexerLotbb -DIIACL
 
 baddsPageAnalyser: src/baddsPageAnalyser/main.c
 	@echo ""
@@ -188,7 +188,7 @@ dictionarywordsLot: src/dictionarywordsLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/dictionarywordsLot/main.c src/dictionarywordsLot/set.c src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/dictionarywordsLot $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/dictionarywordsLot/main.c src/dictionarywordsLot/set.c   -o bin/dictionarywordsLot $(LDFLAGS)
 
 lotlistDispatcher: src/lotlistDispatcher/main.c
 	@echo ""
@@ -205,7 +205,7 @@ searchfilterTest: src/searchfilterTest/main.c
 infoquery: src/infoquery/main.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/maincfg/maincfg.c src/infoquery/main.c src/acls/acls.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c $(BBDOCUMENT) -o bin/infoquery $(LDFLAGS) $(LIBCONFIG)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/infoquery/main.c src/acls/acls.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c $(BBDOCUMENT) -o bin/infoquery $(LDFLAGS) $(LIBCONFIG)
 
 GetIndexAsArrayTest: src/GetIndexAsArrayTest/main.c
 	@echo ""
@@ -247,8 +247,8 @@ DIconvert: src/DIconvert/main.c
 boithoad: src/boithoad/main.c
 	@echo ""
 	@echo "$@:"
-	#for lokalt på bb: gcc -g src/common/*.c src/boithoad/main.c src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/boithoad -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL -DWITH_OPENLDAP /usr/lib64/libcrypt.a  /usr/lib64/libssl.a -I/usr/include/mysql/ -L/usr/lib64/mysql/ -ldl   -D BLACK_BOKS -D WITH_CONFIG -DDEBUG ../../openldap-2.3.32/libraries/libldap/.libs/libldap.a ../../openldap-2.3.32/libraries/liblber/.libs/liblber.a -lmysqlclient -lsasl2
-	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -D WITH_CONFIG -DDEBUG
+	#for lokalt på bb: gcc -g src/common/*.c src/boithoad/main.c   -o bin/boithoad -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL -DWITH_OPENLDAP /usr/lib64/libcrypt.a  /usr/lib64/libssl.a -I/usr/include/mysql/ -L/usr/lib64/mysql/ -ldl   -D BLACK_BOKS -D WITH_CONFIG -DDEBUG ../../openldap-2.3.32/libraries/libldap/.libs/libldap.a ../../openldap-2.3.32/libraries/liblber/.libs/liblber.a -lmysqlclient -lsasl2
+	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c   -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -D WITH_CONFIG -DDEBUG
 
 PiToWWWDocID: src/PiToWWWDocID/main.c
 	@echo ""
@@ -348,7 +348,7 @@ vipurls: src/vipurls/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/vipurls/main.c  -o bin/vipurls $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c  src/vipurls/main.c  -o bin/vipurls $(LDFLAGS)
 
 shortUrls: src/shortUrls/main.c
 	@echo ""
@@ -419,9 +419,9 @@ searchcl : src/searchkernel/searchcl.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/query/lex.query.o src/searchkernel/cgi-util.c src/searchkernel/parseEnv.c src/searchkernel/searchkernel.c src/searchkernel/search.c src/searchkernel/searchcl.c src/parse_summary/libsummary.a -o bin/searchcl $(LDFLAGS)
 
 #dropper -D WITH_MEMINDEX og -D WITH_RANK_FILTER for nå
-#SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD $(LIBCONFIG)
+#SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c   src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD $(LIBCONFIG)
 #må ha -D_GNU_SOURCE for O_DIRECT
-SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/dp/dp.c src/searchkernel/verbose.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/lex.query.o src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D EXPLAIN_RANK -D DISK_PROTECTOR
+SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/dp/dp.c src/searchkernel/verbose.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/lex.query.o src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D EXPLAIN_RANK -D DISK_PROTECTOR
 
 
 searchddep:
@@ -626,7 +626,7 @@ LotInvertetIndexMaker3:	src/LotInvertetIndexMaker3/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/LotInvertetIndexMaker3/main.c -o bin/LotInvertetIndexMaker3 $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c  src/LotInvertetIndexMaker3/main.c -o bin/LotInvertetIndexMaker3 $(LDFLAGS)
 
 readRevIndex:	src/readRevIndex/main.c
 	@echo ""
@@ -678,25 +678,25 @@ BrankCalculate2: src/BrankCalculate2/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate2/*.c -o bin/BrankCalculate2 $(LDFLAGS)
 
 BrankCalculate3: src/BrankCalculate3/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate3/main.c src/BrankCalculate3/res.c -o bin/BrankCalculate3 $(LDFLAGS) -DDEFLOT
+	$(CC) $(CFLAGS) $(LIBS)*.c  src/BrankCalculate3/main.c src/BrankCalculate3/res.c -o bin/BrankCalculate3 $(LDFLAGS) -DDEFLOT
 
 BrankCalculate4: src/BrankCalculate4/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/bs/bs.c src/tq/tq.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculate4/main.c src/BrankCalculate3/res.c -o bin/BrankCalculate4 -lpthread $(LDFLAGS) -DDEFLOT -DWITH_THREAD
+	$(CC) $(CFLAGS) $(LIBS)*.c src/bs/bs.c src/tq/tq.c  src/BrankCalculate4/main.c src/BrankCalculate3/res.c -o bin/BrankCalculate4 -lpthread $(LDFLAGS) -DDEFLOT -DWITH_THREAD
 
 BrankCalculate5: src/BrankCalculate5/main.c
-	$(CC) $(CFLAGS) src/common/lot.c src/common/bstr.c src/common/strlcat.c src/common/bfileutil.c src/common/debug.c  src/banlists/ban.c src/bs/bs.c src/tq/tq.c src/3pLibs/keyValueHash/hashtable.c src/3pLibs/keyValueHash/hashtable_itr.c src/BrankCalculate5/main.c -o bin/BrankCalculate5 -lpthread $(LDFLAGS) -DDEFLOT
+	$(CC) $(CFLAGS) src/common/lot.c src/common/bstr.c src/common/strlcat.c src/common/bfileutil.c src/common/debug.c  src/banlists/ban.c src/bs/bs.c src/tq/tq.c   src/BrankCalculate5/main.c -o bin/BrankCalculate5 -lpthread $(LDFLAGS) -DDEFLOT
 
 BrankCalculate5Expand: src/BrankCalculate5Expand/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate3/res.c src/BrankCalculate5Expand/main.c -o bin/BrankCalculate5Expand $(LDFLAGS) -DDEFLOT 
 
 BrankCalculateBanning: src/BrankCalculateBanning/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/BrankCalculateBanning/main.c  -o bin/BrankCalculateBanning $(LDFLAGS) -DDEFLOT
+	$(CC) $(CFLAGS) $(LIBS)*.c  src/BrankCalculateBanning/main.c  -o bin/BrankCalculateBanning $(LDFLAGS) -DDEFLOT
 
 BrankMerge: src/BrankMerge/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankMerge/*.c -o bin/BrankMerge $(LDFLAGS)
 
 readLinkDB: src/readLinkDB/main.c
-	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/readLinkDB/main.c -o bin/readLinkDB $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c  src/readLinkDB/main.c -o bin/readLinkDB $(LDFLAGS)
 
 SortUdfile: src/SortUdfile/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/SortUdfile/main.c -o bin/SortUdfile $(LDFLAGS)
@@ -746,7 +746,7 @@ boitho-bbdn: src/boitho-bbdn/bbdnserver.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c  src/acls/acls.c src/3pLibs/keyValueHash/hashtable.c src/boitho-bbdn/bbdnserver.c src/maincfg/maincfg.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE) -static $(LIBCONFIG) -DIIACL $(24SEVENOFFICE)
+	$(CC) $(CFLAGS) $(LIBS)*.c  src/acls/acls.c  src/boitho-bbdn/bbdnserver.c src/maincfg/maincfg.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE) -static $(LIBCONFIG) -DIIACL $(24SEVENOFFICE)
 
 
 boitholdTest: src/boitholdTest/main.c
@@ -808,7 +808,7 @@ gcidentify: src/gcidentify/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/3pLibs/keyValueHash/hashtable.c src/banlists/ban.c src/gcidentify/main.c -o bin/gcidentify $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c  src/banlists/ban.c src/gcidentify/main.c -o bin/gcidentify $(LDFLAGS)
 
 DIcreateUdfile: src/DIcreateUdfile/main.c
 	@echo ""
@@ -983,7 +983,7 @@ crawlManager: src/crawlManager/main.c
 	@echo "$@:"
 
 	#22 feb 2007, fjerner -static
-	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c src/3pLibs/keyValueHash/hashtable.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE)
+	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c  -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE)
 
 
 crawlSMB: src/crawlSMB/main.c
