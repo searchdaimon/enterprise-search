@@ -125,6 +125,7 @@
 #define C_anchorGet	14
 #define C_readHTML	15
 #define C_urltodocid	16
+#define C_getLotToIndex	17
 #define C_rEOF 		101
 
 #define C_DOCID_DONE	0
