@@ -38,12 +38,21 @@ void shortenurl(char *url,int urllen) {
 			p++;
 		len = strlen(p);
 		memmove(url, p, len);
+		url[len] = '\0';
 	} else {
 		len = strlen(url);
 	}	
 
+	#ifdef DEBUG
+		printf("shortenurl: after proto \"%s\"\n",url);
+	#endif
+
 	//hvis den er kort kan vi bare returnere
 	if (len < TARGET_VISIBLE_URL_LEN) {
+		#ifdef DEBUG
+ 			printf("shortenurl: url is short enough. Don't need to shorten\n");
+		#endif
+
 		return;
 	}
 
@@ -140,7 +149,7 @@ void shortenurl(char *url,int urllen) {
 		}
 	}
 
-	printf("newurl %s\n",newurl);
+	printf("shortenurl: newurl %s\n",newurl);
 
 	FreeSplitList(Data);
 	
