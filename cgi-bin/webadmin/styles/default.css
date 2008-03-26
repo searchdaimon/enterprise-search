@@ -279,21 +279,22 @@ A:active { color : blue; }
     background : #eff2fb;
     border-color : #044a90;
     padding : 0.5em;
-    height : 64px;
+    height : 32px;
     /* float : left; */
-    width : 26em;
+    width : 20em;
     margin-bottom : 0.5em;
 }
 
 .pretty_button img { float : left; }
 .pretty_button input, .pretty_submit {
     /* background : #eff2fb; */
-    padding : 0.5em;
-    color : #111111; /* #155697;  */
-    font-weight : bolder;
-    font-size : medium;
-    width : 15em;
+    padding : 0.1em;
+    margin-left : 0.5em;
+    /* color : #111111; */ /* #155697;  */
+    /* font-weight : bolder; */
+    /* font-size : small; */
+    /* width : 15em; */
 }
 .pretty_button input {
-    margin-top : 0.6em;
+     margin-top : 0.2em; 
 }
