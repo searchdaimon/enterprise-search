@@ -1,0 +1,15 @@
+documentstype: docx
+command: ./docx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
+documentstype: xlsx
+command: ./xlsx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
+documentstype: pptx
+command: ./pptx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
