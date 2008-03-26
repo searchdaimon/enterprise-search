@@ -48,7 +48,11 @@ if (defined($state{'submit'})) {
 
 	elsif (defined $btn->{'export_settings'}) {
 		# User is downloading exported settings
-		print $cgi->header('text/plain');
+                my $utime = time();
+                print "Content-Type: text/plain\n",
+                      "Content-disposition: Attachment; ",
+                      "filename=bbexport-$utime.backup\n",
+                      "\n";
 		print $page->export_settings();
 		exit 0;
 	}
