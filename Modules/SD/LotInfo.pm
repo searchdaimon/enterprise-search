@@ -10,36 +10,14 @@ use Carp;
 use File::Find;
 use Data::Dumper;
 
-# Runerb
-# er ikke instalert på bb
-#use Filesys::Df;
-#use Number::Bytes::Human qw(format_bytes);
+use Filesys::Df;
+use Number::Bytes::Human qw(format_bytes);
 
 use constant MOUNTS_INFO => "/proc/mounts";
 use constant DEBUG => 0;
 
 my $maplist_path;
 my %opt = ();
-
-
-# Runarb:
-# Filesys::Df og Number::Bytes::Human er ikke instalert på bb. Og vi får ikke 
-# cpan2rpm til å fungere, så de kan ikke bli instalert med rpm heller.
-#
-# Lager derfor noen dummy funksjoner for nå. Dette gjør at vi ikke for 500 feil. 
-# Men ting som bruker  format_bytes() og df() vil ikke fungere.
-#
-
-# Setter denne til å bare returner dataene uendret
-sub format_bytes {
-  my $bytes = shift;
-  return $bytes;
-}
- 
-# Setter denne til å bare returnere undef for nå.  
-sub df {
-	return undef;
-}
 
 ##
 # Default constructor.
