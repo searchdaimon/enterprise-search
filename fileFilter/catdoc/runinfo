@@ -4,7 +4,7 @@ outputformat: text
 outputtype: stdio
 
 documentstype: xls
-command: /usr/bin/xls2csv -c " " #file
+command: /usr/bin/xls2csv -s 8859-1 -c " " #file
 outputformat: text
 outputtype: stdio
 
