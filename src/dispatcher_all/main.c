@@ -318,7 +318,7 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 		dprintf("somthing is wrong. Closeing socket\n");
 	}
 	
-	dprintf("Don geting data for this server. Did get %i of %i\n",dataReceived,datasize);
+	dprintf("Done geting data for this server. Did get %i of %i\n",dataReceived,datasize);
 
 	return returnstatus;
 
@@ -1030,6 +1030,12 @@ handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *
 			if (sockfd[i] != 0) {
 				FinalSiderHeder->TotaltTreff += SiderHeder[i].TotaltTreff;
 				FinalSiderHeder->filtered += SiderHeder[i].filtered;
+				dprintf("response from \"%s\": totalt %i, tid %f filtered %i, showabal %i\n",
+					SiderHeder[i].servername,
+					SiderHeder[i].TotaltTreff,
+					SiderHeder[i].total_usecs,
+					SiderHeder[i].filtered,
+					SiderHeder[i].showabal);
 				/*
 				runarb: 31.08.07seg feiler her.
 				dprintf("<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\" servername=\"%s\"/>\n",
@@ -2256,10 +2262,17 @@ int main(int argc, char *argv[])
 	gettimeofday(&main_end_time, NULL);
 	FinalSiderHeder.total_usecs = getTimeDifference(&main_start_time,&main_end_time);
 
-	//Sier ikke noe om filtrerte treff hvis vi hadde mange nokk
-	if (FinalSiderHeder.TotaltTreff>100) {
-		FinalSiderHeder.filtered = 0;;
-	}
+	#ifdef BLACK_BOKS
+
+	#else 
+		//Sier ikke noe om filtrerte treff hvis vi hadde mange nokk
+		if (FinalSiderHeder.TotaltTreff > 100) {
+
+			dprintf("have more then 100 filtered results. Has %i\n",FinalSiderHeder.TotaltTreff);
+
+			FinalSiderHeder.filtered = 0;;
+		}
+	#endif
 
 
 
