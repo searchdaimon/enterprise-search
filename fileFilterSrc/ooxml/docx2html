@@ -1,0 +1,6 @@
+#!/bin/bash
+
+PREFIX=`echo "$0" | sed -e "s|[^/]*$||"`
+XSL=`echo "$PREFIX""wordml2xhtml.xsl"`
+
+unzip -p "$1" word/document.xml | xsltproc $XSL -
