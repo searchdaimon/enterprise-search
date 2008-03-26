@@ -70,6 +70,33 @@ int conectTo(int LotNr) {
 	return socketha;
 }
 
+int getLotToIndex(char subname[],char HostName[]) {
+
+	int LotNr;
+	int sock;
+	int i;
+
+	if ((sock = cconnect(HostName, BLDPORT)) == 0) {
+		perror(HostName);
+		return 0;
+	}
+
+	//sender heder
+        sendpacked(sock,C_getLotToIndex,BLDPROTOCOLVERSION, 0, NULL,subname);
+
+
+        //leser inn filstørelsen
+        if ((i=recv(sock, &LotNr, sizeof(LotNr),MSG_WAITALL)) == -1) {
+                perror("getLotToIndex: Cant recv lot");
+		return 0;
+        }
+
+	close(sock);
+
+	return LotNr;
+
+}
+
 off_t rGetFileSize(char source[], int LotNr,char subname[]) {
 
 	int socketha = conectTo(LotNr);
