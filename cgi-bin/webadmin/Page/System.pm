@@ -12,7 +12,18 @@ use config qw($CONFIG);
 use Data::Dumper;
 use Boitho::RaidStatus qw(getraidinfo);
 use Boitho::Infoquery;
-use SD::LotInfo;
+
+my $modules_missing;
+BEGIN {
+    eval {
+        require SD::LotInfo;
+    };
+    if ($@) { 
+        $modules_missing = $@;
+        warn $@;
+    }
+}
+
 use config qw($CONFIG);
 
 my $lotinfo;
@@ -29,21 +40,27 @@ sub _init($$) {
 	my ($self, $dbh) = @_;
 	$self->{'sqlConfig'} = Sql::Config->new($dbh);
 	$self->{'infoQuery'} = Boitho::Infoquery->new($CONFIG->{'infoquery'});
-	$lotinfo = SD::LotInfo->new($CONFIG->{'maplist_path'});
+        eval {
+            $lotinfo = SD::LotInfo->new($CONFIG->{'maplist_path'});
+        };
+        warn $@ if $@;
 	
 }
 
 sub show_system_diagnostics {
 	my ($self, $vars, $opt_ref) = @_;
 	my $template_file = "system_main.html";
-	my @lots = $lotinfo->lot_info($opt_ref);
+	my @lots = $lotinfo->lot_info($opt_ref)
+            if defined $lotinfo;
 
 	if (defined $opt_ref) {
 		# asume we want to see lot details if we specified options.
 		$vars->{'show_lot_details'} = 1;
 	}
 
-	$vars->{'lotinfo'}     = \@lots;
+        $vars->{modules_missing} = $modules_missing;
+	$vars->{'lotinfo'}     = \@lots
+            if @lots;
 	$vars->{'raid'} 	   = $self->_raid_status;
 	$vars->{'integration'} = $self->_integration_status;
 	

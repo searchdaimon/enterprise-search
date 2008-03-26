@@ -3,6 +3,13 @@
 
 [% PROCESS 'system_diag_tabs.html' selected='Diagnostics overview'%]
 
+[% IF modules_missing %]
+    [% WRAPPER 'tpl_msg.html' type="warning" %]
+        An error occured while loading diagnostics modules. Some diagnostics may be disabled.
+        <br /><br /><small><strong>Details</strong>: [% modules_missing %]</small>
+    [% END %]
+[% END %]
+
 <h2>Components</h2>
 <div style="margin-top : 1em;">
 [% WRAPPER 'template_table.html' 
@@ -52,46 +59,51 @@
 [% END %]
 </div>
 
-<h2 style="margin-top : 2em;">Document disk usage</h2>
+[% PROCESS doc_disk_usage IF lotinfo.defined %]
 
-<div>
-	[% WRAPPER 'template_message.html' type="info" %]
-		<p>Information about disk usage for indexed documents. You can also see usage per <em>lot</em> by using the button below. Calculation may take a while.</p>
-		<form method="get" action="system.cgi">
-		<input type="submit" name="submit.show_lot_size" value="Calculate lot sizes" />
-		</form>
-	[% END %]
-	
 
-	[% FOREACH mount IN lotinfo %]
-		<h3>Information for disk <em>[% mount.mount %]</em></h3>
-		<ul style="list-style-type : none; padding : 0; margin-left : 1em;">
-			<li>Disk usage: [% mount.used %]</li>
-			<li>Free disk space: [% mount.left %] out of [% mount.size %] ([% mount.per %]% used)</li>
-		</ul>
-		
-		[% IF show_lot_details %]	
-			[% WRAPPER 'template_table.html'
-					header = ['', 'Lot', 'Size'] %]
-			[% color = 0 %]
-	
-			
-				[% FOREACH lot IN mount.lots %]
-				
-					[% WRAPPER 'template_table_row.html' %]
-						<td style="width : 25px;"><img src="file.cgi?i=folder_blue&amp;size=22x22" alt="" /></td>
-						<td>[% lot.path %]</td>
-						
-						<td>[% IF lot.usage.defined %][% lot.usage %][% END %]</td>
-					[% END %]
-					
-					[% color = 1 - color %]
-				[% END %]
-			
-			[% END #table %]
-		[% END #if %]
-	[% END # foreach %]
-</div>
+[% BLOCK doc_disk_usage %]
+    <h2 style="margin-top : 2em;">Document disk usage</h2>
+
+    <div>
+            [% WRAPPER 'template_message.html' type="info" %]
+                    <p>Information about disk usage for indexed documents. You can also see usage per <em>lot</em> by using the button below. Calculation may take a while.</p>
+                    <form method="get" action="system.cgi">
+                    <input type="submit" name="submit.show_lot_size" value="Calculate lot sizes" />
+                    </form>
+            [% END %]
+            
+
+            [% FOREACH mount IN lotinfo %]
+                    <h3>Information for disk <em>[% mount.mount %]</em></h3>
+                    <ul style="list-style-type : none; padding : 0; margin-left : 1em;">
+                            <li>Disk usage: [% mount.used %]</li>
+                            <li>Free disk space: [% mount.left %] out of [% mount.size %] ([% mount.per %]% used)</li>
+                    </ul>
+                    
+                    [% IF show_lot_details %]	
+                            [% WRAPPER 'template_table.html'
+                                            header = ['', 'Lot', 'Size'] %]
+                            [% color = 0 %]
+            
+                            
+                                    [% FOREACH lot IN mount.lots %]
+                                    
+                                            [% WRAPPER 'template_table_row.html' %]
+                                                    <td style="width : 25px;"><img src="file.cgi?i=folder_blue&amp;size=22x22" alt="" /></td>
+                                                    <td>[% lot.path %]</td>
+                                                    
+                                                    <td>[% IF lot.usage.defined %][% lot.usage %][% END %]</td>
+                                            [% END %]
+                                            
+                                            [% color = 1 - color %]
+                                    [% END %]
+                            
+                            [% END #table %]
+                    [% END #if %]
+            [% END # foreach %]
+    </div>
+[% END %]
 
 [% BLOCK status_text %]
 	[% IF error %]
