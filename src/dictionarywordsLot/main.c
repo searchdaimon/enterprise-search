@@ -30,9 +30,14 @@ typedef struct {
 
 static unsigned int fileshashfromkey(void *ky)
 {
-    char *p = ky;
+	char *p = ky;
+	unsigned int hash = 5381;
+	int c;
 
-    return((int)p[0]);
+	while (c = *p++)
+		hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+	return hash;
 }
 
 static int filesequalkeys(void *k1, void *k2)
