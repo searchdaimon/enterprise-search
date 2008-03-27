@@ -12,6 +12,7 @@ typedef struct _dateview_item {
 typedef struct _dateview {
 	int *output;
 	time_t start, end;
+	time_t today, yesterday, this_week, this_month, this_year, last_year;
 } dateview;
 
 enum dateview_output_type {
