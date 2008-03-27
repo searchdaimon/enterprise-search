@@ -1,4 +1,4 @@
-
+CC= gcc
 CFLAGS+= -Wall -W -g -DYYDEBUG=1 -O1
 #CFLAGS+= -DTEST_GETDATE 
 
