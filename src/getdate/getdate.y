@@ -35,7 +35,7 @@ static int yylex ();
 static int yyerror (char **, struct datelib *, struct nexttoken *, const char *);
 
 void subtract_date(struct tm *, enum yytokentype, int);
-void set_lowest(struct datelib *, enum yytokentype);
+static inline void set_lowest(struct datelib *, enum yytokentype);
 
 %}
 
