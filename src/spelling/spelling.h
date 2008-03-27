@@ -1,8 +1,10 @@
 
 #include <aspell.h>
+#include <iconv.h>
 
 struct spelling {
 	AspellSpeller *speller;
+	iconv_t conv, conv_out;
 };
 
 struct spelling_document {

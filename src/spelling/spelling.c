@@ -15,6 +15,22 @@ _dummy_func_spl(void)
 	return p;
 }
 
+char *
+spelling_conv(iconv_t conv, char *str)
+{
+	char *conv_word, *conv_wordp;
+	size_t conv_in, conv_size, totsize;
+
+	totsize = conv_size = strlen(str) * 2 + 1;
+	conv_wordp = conv_word = malloc(conv_size);
+	conv_in = strlen(str)+1;
+	totsize -= iconv(conv, &str, &conv_in, &conv_word, &conv_size);
+	conv_wordp[totsize] = '\0';
+
+	return conv_wordp;
+}
+
+
 static char *
 spelling_lookup_lang(char *lang)
 {
@@ -36,6 +52,7 @@ spelling_init(char *lang)
 
 	aspell_config_replace(config, "lang", spelling_lookup_lang(lang));
 	aspell_config_replace(config, "dict-dir", bfile("data/dict/"));
+	aspell_config_replace(config, "encoding", "iso-8859-1");
 
 	ret = new_aspell_speller(config);
 	delete_aspell_config(config);
@@ -46,6 +63,9 @@ spelling_init(char *lang)
 	}
 
 	spelling->speller = to_aspell_speller(ret);
+
+	spelling->conv = iconv_open("iso-8859-1", "utf-8");
+	spelling->conv_out = iconv_open("utf-8", "iso-8859-1");
 
 	return spelling;
 }
@@ -84,12 +104,16 @@ spelling_document_init(char *lang)
 /* XXX: Not wide char safe */
 /* Remeber to free returned string */
 char *
-spelling_document_line(struct spelling_document *sd, char *line)
+spelling_document_line(struct spelling_document *sd, char *in_line)
 {
 	char *newline;
 	int diff, line_len;
-	size_t line_size;
+	size_t line_size, conv_line;
 	struct AspellToken token;
+	char *line;
+	size_t conv_in;
+
+	line = spelling_conv(sd->spelling->conv, in_line);
 
 	line_len = strlen(line);
 	line_size = line_len + (line_len/10);
@@ -97,6 +121,7 @@ spelling_document_line(struct spelling_document *sd, char *line)
 		return NULL;
 
 	strcpy(newline, line);
+	free(line);
 	aspell_document_checker_process(sd->checker, newline, line_len);
 	diff = 0;
 	while (token = aspell_document_checker_next_misspelling(sd->checker),
@@ -119,7 +144,10 @@ spelling_document_line(struct spelling_document *sd, char *line)
 		line_len += diff;
 	}
 
-	return newline;
+	line = spelling_conv(sd->spelling->conv_out, newline);
+	free(newline);
+
+	return line;
 }
 
 
@@ -134,12 +162,19 @@ spelling_document_destroy(struct spelling_document *sd)
 int
 spelling_correct(char *word, struct spelling *s)
 {
-	if (isdigit(word[0])) {
+	int ret;
+	char *conv_word;
+	char *p;
+	size_t conv_in, conv_out;
+
+	conv_word = spelling_conv(s->conv, word);
+
+	if (isdigit(conv_word[0])) {
 		int i, digit;
 
 		digit = 1;
-		for (i = 1; word[i] != '\0'; i++) {
-			if (!isdigit(word[i])) {
+		for (i = 1; conv_word[i] != '\0'; i++) {
+			if (!isdigit(conv_word[i])) {
 				digit = 0;
 				break;
 			}
@@ -147,7 +182,13 @@ spelling_correct(char *word, struct spelling *s)
 		if (digit)
 			return 1;
 	}
-	return (aspell_speller_check(s->speller, word, -1));
+
+
+	ret = aspell_speller_check(s->speller, conv_word, -1);
+
+	free(conv_word);
+
+	return ret;
 } 
 
 
@@ -159,13 +200,19 @@ spelling_suggestions(char *word, struct spelling *s)
 	AspellStringEnumeration *els;
 	char **suggestions, **p;
 	const char *sword;
+	char *conv_word;
 
-	wl = aspell_speller_suggest(s->speller, word, -1);
+	conv_word = spelling_conv(s->conv, word);
+
+	wl = aspell_speller_suggest(s->speller, conv_word, -1);
+	free(conv_word);
 	p = malloc(sizeof(char *) * (aspell_word_list_size(wl) + 1)); /* Leave room for NULL termination */
 	suggestions = p;
 	els = aspell_word_list_elements(wl);
 	while ((sword = aspell_string_enumeration_next(els)) != 0) {
-		*p = strdup(sword);
+		conv_word = spelling_conv(s->conv_out, sword);
+		*p = conv_word;
+
 		if (*p == NULL) {
 			while (p >= suggestions) {
 				free(*p);
@@ -176,6 +223,8 @@ spelling_suggestions(char *word, struct spelling *s)
 		p++;
 	}
 	*p = NULL;
+
+
 	return suggestions;
 }
 
@@ -183,6 +232,8 @@ void
 spelling_destroy(struct spelling *s)
 {
 	delete_aspell_speller(s->speller);
+	iconv_close(s->conv);
+	iconv_close(s->conv_out);
 	free(s);
 }
 
