@@ -27,6 +27,7 @@ sub name { "Suggest dictionary builder" }
 
 sub run {
     bb_config_update($dbh, CONF_SUGGDICT_LAST, time);
+    system("sh " . $ENV{'BOITHOHOME'} . "/script/eachNight.sh");
     # t0ffe ting legges til her
     1;
 }
