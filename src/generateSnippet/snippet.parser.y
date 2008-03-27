@@ -444,7 +444,7 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 	    else if (data->has_hits)
 		{
 		    // Empty queue:
-		    while (queue_size(Q) > 0 && ((data->bpos - pair(_queue_peak_Q).first.i) > maxsize))
+		    while (queue_size(Q) > 0 && ((data->bpos - pair(queue_peak(Q)).first.i) > maxsize))
 			queue_pop(Q);
 		    return;
 		}

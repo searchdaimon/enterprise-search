@@ -15,4 +15,4 @@ test:
 clean:
 	rm -rf libsnippet_generator.a *.o snippet y.tab.c lex.bsgp.c y.tab.h
 
-.PHONY:	all clean
+.PHONY:	all clean test
