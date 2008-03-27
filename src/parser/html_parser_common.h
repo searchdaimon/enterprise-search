@@ -25,19 +25,22 @@ struct bhpm_yy_extra
     char	stringcircle[32][maxNewString +1];
     char	flush;
     char	field_delimit;
+    int		nested_obj;
 
-    char	title, alink; //, script=0;	init:=0
+    char	title, alink, nlink; //, script=0;	init:=0
     int		wordcount, linkcount;	// init:=0
     int		h;	// init:=0
+    char	invisible_text;
 
     buffer	*Btitle, *Bbody;
-    char	newhead, newdiv, newspan, inhead, indiv, inspan, newendhead;
+    char	newhead, newdiv, newspan, inhead, indiv, inspan, newendhead, inlink;
 
     void	*wordlist;
     void	(*user_fn)(char*,int,enum parsed_unit,enum parsed_unit_flag,void* wordlist);
 };
 
 #define YY_EXTRA_TYPE	struct bhpm_yy_extra*
+
 
 
 static inline buffer* buffer_init( int _maxsize )
@@ -66,6 +69,18 @@ static inline char* buffer_exit( buffer *B )
     return output;
 }
 
+static inline char* buffer_abort( buffer *B )
+{
+    char	*output;
+
+    output = strdup("");
+
+    free( B->data );
+    free( B );
+
+    return output;
+}
+
 static inline void bprintf( buffer *B, const char *fmt, ... )
 {
     va_list	ap;
@@ -74,11 +89,20 @@ static inline void bprintf( buffer *B, const char *fmt, ... )
     if (B->overflow) return;
 
     va_start(ap, fmt);
+
+#ifdef SUPERDEBUG
+    len_printed = vprintf( fmt, ap );
+#else
     len_printed = vsnprintf( &(B->data[B->pos]), B->maxsize - B->pos -1, fmt, ap );
+#endif
 
     B->pos+= len_printed;
 
-    if (B->pos >= B->maxsize-1) B->overflow = 1;
+    if (B->pos >= B->maxsize-1)
+	{
+	    printf("Error! Buffer overflow, aborting document.\n");
+	    B->overflow = 1;
+	}
 }
 
 

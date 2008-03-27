@@ -1,11 +1,12 @@
 %{
 #include "html_parser_common.h"
-#include "y.tab.h"
+#include "bhpm.tab.h"
 #include "../common/search_automaton.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+
 
 /*
  * Denne lexical analyzeren støtter Latin-1, Latin-1 supplement, utf-8, samt character entities (html escapes)
@@ -18,12 +19,14 @@
  *
  * Se forøvrig http://www.w3.org/TR/html4/charset.html
  *
- * (C) Boitho AS 2004-2007, Magnus Galåen (magnusga@idi.ntnu.no)
+ * (C) Boitho AS 2004-2008, Magnus Galåen (magnusga@idi.ntnu.no)
  */
 
 static inline void bhpm_newstring( char* str, yyscan_t scanner, int tt );
 static inline void bhpm_newutf8( int val, yyscan_t scanner, int tt );
 static inline void bhpm_new_esc_to_utf8( const char* str, yyscan_t scanner, int tt );
+
+#define BHPM_VISIBLE (!(bhpmget_extra(yyscanner)->invisible_text))
 
 %}
 
@@ -31,7 +34,7 @@ character	[a-z]
 legalfirst	[a-z0-9]
 legalchar	[a-z0-9'`]
 attrchar	[a-z0-9\-_]
-legaltegn	[!"#$%()*+,-./:;=?@[\\\]^{|}~]
+legaltegn	[!"#$%()*+,-./:;=?@[\\\]^{|}~'`]
 tfchars		[a-z0-9_`\-!#$%()*+,-./:;=?@[\]^{|}~]
 word		[0-9a-z'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþ]
 allemuligetegn	[!"#$%'()*+,-./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþ]
@@ -65,7 +68,7 @@ utf-8-2b	[\300-\337][\200-\277]
 utf-8-3b	[\340-\357][\200-\277][\200-\277]
 utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
 %option	nomain noyywrap reentrant bison-bridge
-%x	TAG ENDTAG COMMENT SCRIPT STYLE SELECT TEXTAREA TAG_TF
+%x	TAG ENDTAG COMMENT SCRIPT STYLE SELECT TEXTAREA NOSCRIPT NOFRAMES OBJECT TAG_TF
 %%
  /* ({allemuligetegn}|\&{nestenalleesc}|\&{nestenalleesc};|\&\#[0-9]+;)+    { bhpm_newstring(yytext, yyscanner); return WORD; } */
  /* Midlertidig fiks for escapes uten avsluttende semikolon: */
@@ -78,37 +81,47 @@ utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
  /* \303\206		{ bhpm_newstring("&AElig;", yyscanner); return ESC; } */
  /* \303\230		{ bhpm_newstring("&Oslash;", yyscanner); return ESC; } */
  /* \303\205		{ bhpm_newstring("&Aring;", yyscanner); return ESC; } */
-({utf-8-2b}|{utf-8-3b}|{utf-8-4b})+	{ bhpm_newstring(yytext, yyscanner, WORD); }
-\&{letteresc};?		{ bhpm_new_esc_to_utf8(yytext, yyscanner, WORD); }
-{legalfirst}{legalchar}*{legalfirst} { bhpm_newstring(yytext, yyscanner, WORD); }
-{legaltegn}+		{ bhpm_newstring(yytext, yyscanner, ESC); }
-\&{tegnesc_minus};?	{ bhpm_new_esc_to_utf8(yytext, yyscanner, ESC); }
+({utf-8-2b}|{utf-8-3b}|{utf-8-4b})+	{ if (BHPM_VISIBLE) bhpm_newstring(yytext, yyscanner, WORD); }
+\&{letteresc};?		{ if (BHPM_VISIBLE) bhpm_new_esc_to_utf8(yytext, yyscanner, WORD); }
+{legalfirst}{legalchar}*{legalfirst} { if (BHPM_VISIBLE) bhpm_newstring(yytext, yyscanner, WORD); }
+{legaltegn}+		{ if (BHPM_VISIBLE) bhpm_newstring(yytext, yyscanner, ESC); }
+\&{tegnesc_minus};?	{ if (BHPM_VISIBLE) bhpm_new_esc_to_utf8(yytext, yyscanner, ESC); }
 (\&nbsp;?)+		{ (bhpmget_extra(yyscanner))->space = 1; }
 (\&#160;?)+		{ (bhpmget_extra(yyscanner))->space = 1; }
     /* quot,amp,lt og gt bør alltid sendes videre som character entities (html-escapes): */
-(\&quot;?|\&#34;?)	{ bhpm_newstring("&quot;", yyscanner, ESC); }
-(\&amp;?|\&#38;?)	{ bhpm_newstring("&amp;", yyscanner, ESC); }
-(\&lt;?|\&#60;?)	{ bhpm_newstring("&lt;", yyscanner, ESC); }
-(\&gt;?|\&#62;?)	{ bhpm_newstring("&gt;", yyscanner, ESC); }
+(\&quot;?|\&#34;?)	{ if (BHPM_VISIBLE) bhpm_newstring("&quot;", yyscanner, ESC); }
+(\&amp;?|\&#38;?)	{ if (BHPM_VISIBLE) bhpm_newstring("&amp;", yyscanner, ESC); }
+(\&lt;?|\&#60;?)	{ if (BHPM_VISIBLE) bhpm_newstring("&lt;", yyscanner, ESC); }
+(\&gt;?|\&#62;?)	{ if (BHPM_VISIBLE) bhpm_newstring("&gt;", yyscanner, ESC); }
     /* (\&quot;?|\&amp;?|\&lt;?|\&gt;?)+	{ bhpm_newstring(yytext, yyscanner, ESC); } */
     /* (\&#34;?|\&#38;?|\&#60;?|\&#62;?)+	{ bhpm_newstring(yytext, yyscanner, ESC); } */
-\&{tegnnumesc_minus};?		{ bhpm_newutf8( atoi(&(yytext[2])), yyscanner, ESC ); }
-\&#[0-9]+;		{ bhpm_newutf8( atoi(&(yytext[2])), yyscanner, WORD ); }
-\&			{ bhpm_newstring("&amp;", yyscanner, ESC); }
+\&{tegnnumesc_minus};?		{ if (BHPM_VISIBLE) bhpm_newutf8( atoi(&(yytext[2])), yyscanner, ESC ); }
+\&#[0-9]+;		{ if (BHPM_VISIBLE) bhpm_newutf8( atoi(&(yytext[2])), yyscanner, WORD ); }
+\&			{ if (BHPM_VISIBLE) bhpm_newstring("&amp;", yyscanner, ESC); }
 [\ \t\n\r\f_]+		{ (bhpmget_extra(yyscanner))->space = 1; }
-{legalfirst}|{legalchar}|{latin-sup}	{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, WORD ); }
-[\200-\377]		{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, ESC); }
-\<{blank}*script[^\>]*\> {	// Ignore characters between script-tags.
+{legalfirst}|{legalchar}|{latin-sup}	{ if (BHPM_VISIBLE) bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, WORD ); }
+[\200-\377]		{ if (BHPM_VISIBLE) bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, ESC); }
+\<{blank}*script(\>|{blank}[^\>]*\>) {	// Ignore characters between script-tags.
 			    BEGIN SCRIPT;
 			}
-\<{blank}*style[^\>]*\> {	// Ignore characters between style-tags.
+\<{blank}*style(\>|{blank}[^\>]*\>) {	// Ignore stylesheets.
 			    BEGIN STYLE;
 			}
-\<{blank}*select[^\>]*\> {	// Ignore characters between select-tags.
+\<{blank}*select(\>|{blank}[^\>]*\>) {	// Ignore characters between select-tags.
 			    BEGIN SELECT;
 			}
-\<{blank}*textarea[^\>]*\> {	// Ignore characters between textarea-tags.
+\<{blank}*textarea(\>|{blank}[^\>]*\>) {	// Ignore characters between textarea-tags.
 			    BEGIN TEXTAREA;
+			}
+\<{blank}*noscript(\>|{blank}[^\>]*\>) {
+			    BEGIN NOSCRIPT;
+			}
+\<{blank}*noframes(\>|{blank}[^\>]*\>) {
+			    BEGIN NOFRAMES;
+			}
+\<{blank}*object(\>|{blank}[^\>]*\>) {
+			    bhpmget_extra(yyscanner)->nested_obj = 1;
+			    BEGIN OBJECT;
 			}
 \<\/			{
 			    BEGIN ENDTAG;
@@ -136,14 +149,16 @@ utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
 			    bhpm_newstring(yytext, yyscanner, ATTR);
 			    return ATTR;
 			}
+<TAG>:{attrchar}+	{ } /* Ignore */
 <ENDTAG>\>		{
 			    BEGIN INITIAL;
 			    return ENDTAG_STOPP;
 			}
-<ENDTAG>{legalchar}+	{
+<ENDTAG>{attrchar}+	{
 			    bhpm_newstring(yytext, yyscanner, ATTR);
 			    return ATTR;
 			}
+<ENDTAG>:{attrchar}+	{ } /* Ignore */
 <TAG>\'			{
 			    struct bhpm_yy_extra	*he = bhpmget_extra(yyscanner);
 			    he->flush = 1;
@@ -191,11 +206,15 @@ utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
 <TAG_TF>{latin-sup}		{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, TEXTFIELD ); }
 <TAG_TF>[\200-\377]		{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, TEXTFIELD); }
 
-<COMMENT>\-\-\>		{			BEGIN INITIAL; }
-<SCRIPT>\<\/{blank}*script[^\>]*\>	{	BEGIN INITIAL; }
-<STYLE>\<\/{blank}*style[^\>]*\>	{	BEGIN INITIAL; }
-<SELECT>\<\/{blank}*select[^\>]*\>	{	BEGIN INITIAL; }
-<TEXTAREA>\<\/{blank}*textarea[^\>]*\>	{	BEGIN INITIAL; }
+<COMMENT>\-\-\>			{ BEGIN INITIAL; }
+<SCRIPT>\<\/{blank}*script(\>|{blank}[^\>]*\>)		{ BEGIN INITIAL; }
+<STYLE>\<\/{blank}*style(\>|{blank}[^\>]*\>)		{ BEGIN INITIAL; }
+<SELECT>\<\/{blank}*select(\>|{blank}[^\>]*\>)		{ BEGIN INITIAL; }
+<TEXTAREA>\<\/{blank}*textarea(\>|{blank}[^\>]*\>)	{ BEGIN INITIAL; }
+<NOSCRIPT>\<\/{blank}*noscript(\>|{blank}[^\>]*\>)	{ BEGIN INITIAL; }
+<NOFRAMES>\<\/{blank}*noframes(\>|{blank}[^\>]*\>)	{ BEGIN INITIAL; }
+<OBJECT>\<{blank}*object(\>|{blank}[^\>]*\>)		{ bhpmget_extra(yyscanner)->nested_obj++; }
+<OBJECT>\<\/{blank}*object(\>|{blank}[^\>]*\>)		{ if ((--(bhpmget_extra(yyscanner)->nested_obj))==0) BEGIN INITIAL; }
     /* Framtving at ord-bufferet tømmes: */
 <*><<EOF>>		{ bhpm_newstring("", yyscanner, -1); yyterminate(); }
 .|\n			{ (bhpmget_extra(yyscanner))->space = 1; }
@@ -297,12 +316,13 @@ struct htmlesc_val bhpm_hecval[191] =
 
 int	_id=0;
 
-static inline void add_to_summary( char *str, yyscan_t scanner )
+//static inline void add_to_summary( char *str, yyscan_t scanner )
+void add_to_summary( char *str, yyscan_t scanner )
 {
     struct bhpm_yy_extra	*he = bhpmget_extra(scanner);
 
 //    if (_id<25)
-//    printf("(%i,%i,%i,%i,%i,%i,%i)\n", he->newhead, he->newdiv, he->newspan, he->inhead, he->indiv, he->inspan, he->space);
+//    printf("%s (%i,%i,%i,%i,%i,%i,%i)\n", str, he->newhead, he->newdiv, he->newspan, he->inhead, he->indiv, he->inspan, he->space);
 
     if (he->title)
 	{
@@ -317,8 +337,15 @@ static inline void add_to_summary( char *str, yyscan_t scanner )
         }
     else
         {
+	    if (he->inlink && ((!he->alink) || (he->nlink)))
+		{
+		    bprintf(he->Bbody, "</link>");
+		    he->inlink = 0;
+		}
+
 	    if (he->newdiv)
 	        {
+//		    if (he->inlink) { bprintf(he->Bbody, "</link>"); he->inlink = 0; }
 		    if (he->inspan) bprintf(he->Bbody, "</span>\n");
 		    if (he->inhead) bprintf(he->Bbody, "  </h2>\n");
 		    if (he->indiv) bprintf(he->Bbody, "</div>\n");
@@ -337,31 +364,48 @@ static inline void add_to_summary( char *str, yyscan_t scanner )
 
 		    he->inspan = 1;
 		    he->indiv = 1;
+//		    if (he->alink) { bprintf(he->Bbody, "<link>"); he->inlink = 1; }
 		}
 	    else if (he->newhead)
 	        {
 		    // Denne viser kun headere deklarert med h[1-6]-tags, de andre ignorerer vi.
+//		    if (he->inlink) { bprintf(he->Bbody, "</link>"); he->inlink = 0; }
 		    if (he->inspan) bprintf(he->Bbody, "</span>\n");
 		    if (he->inhead) bprintf(he->Bbody, "  </h2>\n");
 		    bprintf(he->Bbody, "  <h2>\n    <span>");
 		    he->inspan = 1;
 		    he->inhead = 1;
+//		    if (he->alink) { bprintf(he->Bbody, "<link>"); he->inlink = 1; }
 		}
 	    else if (he->newendhead)
 		{
+//		    if (he->inlink) { bprintf(he->Bbody, "</link>"); he->inlink = 0; }
 		    if (he->inspan) bprintf(he->Bbody, "</span>\n");
 		    if (he->inhead) bprintf(he->Bbody, "  </h2>\n");
 		    bprintf(he->Bbody, "    <span>");
 		    he->inspan = 1;
 		    he->inhead = 0;
 		    he->h = 0;
+//		    if (he->alink) { bprintf(he->Bbody, "<link>"); he->inlink = 1; }
 		}
 	    else if (he->newspan)
 	        {
+//		    if (he->inlink) { bprintf(he->Bbody, "</link>"); he->inlink = 0; }
 		    if (he->inspan) bprintf(he->Bbody, "</span>\n");
 		    bprintf(he->Bbody, "    <span>");
 		    he->inspan = 1;
+//		    if (he->alink) { bprintf(he->Bbody, "<link>"); he->inlink = 1; }
 		}
+//	    else if (he->alink && !he->inlink)
+//		{
+//		    bprintf(he->Bbody, " <link>");
+//		    he->inlink = 1;
+//		}
+//	    else if (!he->alink && he->inlink)
+//		{
+//		    bprintf(he->Bbody, "</link> ");
+//		    he->inlink = 0;
+//		}
 	    else if (he->space)
 	        {
 		    bprintf(he->Bbody, " ");
@@ -372,6 +416,13 @@ static inline void add_to_summary( char *str, yyscan_t scanner )
 	    he->newdiv = 0;
 	    he->newspan = 0;
 	    he->newendhead = 0;
+
+	    if (he->nlink)
+		{
+		    bprintf(he->Bbody, "<link>");
+		    he->nlink = 0;
+		    he->inlink = 1;
+		}
 
 	    bprintf(he->Bbody, "%s", str);
 	}
@@ -410,6 +461,7 @@ static inline void bhpm_newstring( char *str, yyscan_t scanner, int tt )
 {
     struct bhpm_yy_extra	*he = bhpmget_extra( scanner );
 
+//    printf("(%s)", str); fflush(stdout);
 
     if (he->tt == WORD && (tt != WORD || he->space == 1 || he->flush))
 	{
