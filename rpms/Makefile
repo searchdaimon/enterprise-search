@@ -110,7 +110,7 @@ iindex:
 	rpmbuild -bb $(boitho-iindex_name).spec
 
 bbadminhtaccess:
-	perl rpmmagic.pl $(boithobb-bbadminhtaccess_name) $(boithobb-bbadminhtaccess_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/webadmin/.htaccess cgi-bin/webadmin/.htpasswd
+	perl rpmmagic.pl --post "chmod 777 /home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd" $(boithobb-bbadminhtaccess_name) $(boithobb-bbadminhtaccess_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/webadmin/.htaccess cgi-bin/webadmin/.htpasswd
 
 	rpmbuild -bb $(boithobb-bbadminhtaccess_name).spec
 
