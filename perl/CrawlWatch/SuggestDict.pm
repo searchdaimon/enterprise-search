@@ -23,7 +23,7 @@ sub new {
     bless {}, $class;
 }
 
-sub name { "Suggest dictionary builder" }
+sub name { "Suggest and spelling dictionary builder" }
 
 sub run {
     bb_config_update($dbh, CONF_SUGGDICT_LAST, time);
@@ -56,7 +56,7 @@ sub next_run {
     if ($time_now >= $last_run + ONE_DAY) {
         # a day (or more) since last run.
         
-        $run_hour = 14;
+        $run_hour = 3;
         if ($run_hour == gmtime->hour) {
             return 0; #run now.
         }
