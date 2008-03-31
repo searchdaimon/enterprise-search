@@ -178,7 +178,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
 	printf("dir \"%s\"\n",dir_name);
 
-    int                 dh, dirc, dirc_total;
+    int                 dh, dirc, dirc_total, n;
     char                dblock[512], *dbuf, *dbuf_temp;
     struct smbc_dirent  *dirp;
     char                full_name[strlen(prefix) + strlen(dir_name) + 1];
@@ -249,12 +249,34 @@ int smb_recursive_get( char *prefix, char *dir_name,
                     sprintf(entry_name, "%s/%s", dir_name, dirp->name);
                     sprintf(full_entry_name, "%s%s", prefix, entry_name);
 
-                    if ( smbc_getxattr(full_entry_name, "system.nt_sec_desc.*+", value, sizeof(value)) < 0 )
+                    if ( (n = smbc_getxattr(full_entry_name, "system.nt_sec_desc.*+", value, sizeof(value))) < 0 )
                         {
-                            documentError(1,"crawlsmb.c: Error! Could not get attributes for %s\n", entry_name);
-			    context_free(context);
-			    context = context_init(no_auth);
-                            goto next_it;
+
+				if (n == EINVAL) {
+	                            documentError(1,"crawlsmb.c: Error! Could not get attributes for %s. The client library is not properly initialized or one of the parameters is not of a correct form.\n", entry_name);
+				}
+				else if (n == ENOMEM) {
+        	                    documentError(1,"crawlsmb.c: Error! Could not get attributes for %s. No memory was available for internal needs.\n", entry_name);
+				}
+				else if (n == EEXIST) {
+                	            documentError(1,"crawlsmb.c: Error! Could not get attributes for %s. If the attribute already exists and the flag SMBC_XATTR_FLAG_CREAT was specified.\n", entry_name);
+				}
+				else if (n == ENOATTR) {
+                        	    documentError(1,"crawlsmb.c: Error! Could not get attributes for %s. If the attribute does not exist and the flag SMBC_XATTR_FLAG_REPLACE was specified.\n", entry_name);
+				}
+				else if (n == EPERM) {
+	                            documentError(1,"crawlsmb.c: Error! Could not get attributes for %s. Permission was denied.\n", entry_name);
+				}
+				else if (n == ENOTSUP) {
+	                            documentError(1,"crawlsmb.c: Error! Could not get attributes for %s. The referenced file system does not support extended attributes\n", entry_name);
+				}
+				else {
+	                            documentError(1,"crawlsmb.c: Error! Could not get attributes for %s. Unknown error code \"%i\"\n", entry_name,n);
+				}
+
+			    	context_free(context);
+			    	context = context_init(no_auth);
+                            	goto next_it;
                         }
                     else
                         {
