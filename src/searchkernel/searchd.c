@@ -93,7 +93,8 @@ void
 catch_sigusr1(int sig)
 {
 	printf("Caught sigusr1\n");
-	spelling_destroy(spelling);
+	if (spelling != NULL)
+		spelling_destroy(spelling);
 	init_spelling("bb");
 }
 #endif
