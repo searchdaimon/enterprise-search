@@ -311,6 +311,7 @@ int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified
 		DIRead(&docindex, DocID, subname);
 		docindex.lastSeen = time(NULL);
 		DIWrite(&docindex, DocID, subname, NULL);
+		printf("bbdocument_exist: satte lastSeen \"%s\"\n",ctime(&docindex.lastSeen));
 #endif
 		return 1;
 	}
@@ -877,6 +878,8 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	ReposetoryHeader.acl_deniedSize = strlen(acl_denied);
 	#endif
 	ReposetoryHeader.time = lastmodified;
+
+	ReposetoryHeader.storageTime = 0; //setes automatisk av rApendPostcompress
 
 	#ifdef DEBUG
 	printf("ACL was allow \"%s\", %i bytes, denied \"%s\", %i bytes\nsubname %s\n",acl_allow,ReposetoryHeader.acl_allowSize,acl_allow,ReposetoryHeader.acl_allowSize,subname);
