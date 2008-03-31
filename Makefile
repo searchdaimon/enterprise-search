@@ -443,7 +443,7 @@ searchd : src/searchkernel/searchd.c
 searchdbb : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/getfiletype.o src/spelling/spelling.c src/ds/libds.a -DIIACL /home/eirik/.root/lib/libaspell.a /usr/local/lib/libstdc++.a -ldl -I/home/eirik/.root/include $(24SEVENOFFICE) -D WITH_SPELLING
+	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/getfiletype.o src/spelling/spelling.c src/ds/libds.a -DIIACL -laspell $(24SEVENOFFICE) -D WITH_SPELLING
 
 mergeUserToSubname: src/mergeUserToSubname/main.c
 	@echo ""
