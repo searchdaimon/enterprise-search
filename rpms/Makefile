@@ -77,9 +77,13 @@ boitho-dummy_version = 0.1
 boitho-auth_name = boitho_mod_auth
 boitho-auth_version = 1.1
 
+boitho-scripts_name = boitho-scripts
+boitho-scripts_version = 1.0
 
+boitho-dictionary_name = boitho-dictionary
+boitho-dictionary_version = 1.0
 
-all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch bbadminhtaccess
+all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch bbadminhtaccess scripts
 
 
 sqlUpdate:
@@ -164,6 +168,14 @@ crawlManager:
 	perl rpmmagic.pl --requires "boitho-everrun boitho-bbdn boithobb-filepermissions" --initd crawlManager $(boitho-crawlManager_name) $(boitho-crawlManager_version) $(BOITHOHOME) /home/boitho/boithoTools bin/crawlManager crawlers config/crawlmanager.conf
 
 	rpmbuild -bb $(boitho-crawlManager_name).spec
+
+scripts:
+	perl rpmmagic.pl $(boitho-scripts_name) $(boitho-scripts_version) $(BOITHOHOME) /home/boitho/boithoTools script/eachNight.sh script/reloadDictionary.sh script/makebbwordlist.sh perl/createaspellwordlist.pl
+	rpmbuild -bb $(boitho-scripts_name).spec
+
+dictionary:
+	perl rpmmagic.pl $(boitho-dictionary_name) $(boitho-dictionary_version) $(BOITHOHOME) /home/boitho/boithoTools bin/dictionarywordsLot data/dict/bb.dat data/dict/bb.multi data/dict/bb.rws data/dict/iso-8859-1.cset data/dict/iso-8859-1.cmap
+	rpmbuild -bb $(boitho-dictionary_name).spec
 
 
 boitho-bbdn:
