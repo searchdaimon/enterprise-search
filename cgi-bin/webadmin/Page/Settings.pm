@@ -23,6 +23,7 @@ BEGIN {
 }
 
 use constant TPL_ADVANCED => "settings_advanced.html";
+use constant PASSWD_STARS => "******";
 
 my %CONFIG = %$CONFIG;
 
@@ -66,11 +67,18 @@ sub delete_all_settings($) {
 }
 
 
-sub update_settings($$) {
+sub update_settings {
 	my ($self, $vars, $setting) = @_;
 	my $sqlConfig = $self->{'sqlConfig'};
-	while (my ($key, $value) = each(%$setting)) {
-		$sqlConfig->update_setting($key, $value);
+        
+        my %starred = map { $_ => 1 } 
+            @{$CONFIG{adv_starred_fields}};
+
+	while (my ($key, $value) = each %{$setting}) {
+            next if $starred{$key} 
+                and $value eq PASSWD_STARS;
+
+            $sqlConfig->update_setting($key, $value);
 	}
 	
 	$vars->{'success_settings_update'} = 1;
@@ -95,7 +103,7 @@ sub show_advanced_settings($$) {
 
         my %settings = $self->{sqlConfig}->get_all();
         for my $key (@{$CONFIG{adv_starred_fields}}) {
-            $settings{$key} = "******";
+            $settings{$key} = PASSWD_STARS;
         }
 
         my @default = @{$CONFIG{default_settings}};
