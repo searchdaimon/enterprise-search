@@ -80,8 +80,8 @@ int findLotToIndex(char subname[]) {
 			goto next;
 		}
 
-		//må ikke ha blitt modifisert sise døgn
-		if (inode.st_mtime > (tloc - 86400)) {
+		//må ikke ha blitt modifisert sise 3 timer
+		if (inode.st_mtime > (tloc - (3600 * 3))) {
 			printf("to new dirty file. Lot isent stable\n");
 			
 			goto next;
@@ -213,10 +213,18 @@ unsigned int GetLastIndexTimeForLot(int LotNr,char subname[]){
         
 	FILE *RFILE;
         unsigned int now;
+	struct stat inode;      // lager en struktur for fstat å returnere.
 
         if ((RFILE = lotOpenFileNoCasheByLotNr(LotNr,"IndexTime","rb",'s',subname)) != NULL) {
 
-		fread(&now,sizeof(unsigned int),1,RFILE);
+		fstat(fileno(RFILE),&inode);
+
+		if (inode.st_size == 0) {
+			now = 0;
+		}
+		else {
+			fread(&now,sizeof(unsigned int),1,RFILE);
+		}
 
         	fclose(RFILE);
 		
@@ -398,7 +406,9 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 
 	//finner ut når dette ble gjort
 	#ifdef BLACK_BOKS
-	(*ReposetoryHeader).storageTime = time(NULL);
+	if ((*ReposetoryHeader).storageTime == 0) {
+		(*ReposetoryHeader).storageTime = time(NULL);
+	}
 	#endif
 
 	FILE *RFILE;
@@ -1387,7 +1397,7 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer) {
 
 	//tester om reposetoriet allerede er open, eller ikke
 	if (LotOpen != LotNr) {
-		//hvis den har vært open, lokker vi den. Hvi den er -1 er den ikke brukt enda, så ingen vits å å lokke den da :-)
+		//hvis den har vært open, lokker vi den. Hvis den er -1 er den ikke brukt enda, så ingen vits å å lokke den da :-)
 		if (LotOpen != -1) {
 			fclose(LotFileOpen);
 		}
@@ -1395,7 +1405,7 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer) {
 		GetFilPathForLot(FileName,LotNr,subname);
 		strncat(FileName,"reposetory",128);
 
-		//printf("Opending lot %s\n",FileName);
+		printf("rGetNext: Opending lot %s\n",FileName);
 
 		if ( (LotFileOpen = fopen(FileName,"rb")) == NULL) {
 			perror(FileName);
@@ -1548,9 +1558,11 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer) {
 	}
 	*/
 	if (!found) {
-		printf("ferdig\n");
+		printf("ferdig. lokker filen\n");
 		LotOpen = -1;
 		fclose(LotFileOpen);
+
+		printf("rGetNext: returnerer %i\n",found);
 	}
 
 	return found;
@@ -2132,6 +2144,10 @@ void addNewUrlOpen(struct addNewUrlhaFormat *addNewUrlha,int lotNr, char openmod
 	char filepath[512];
 
 	sprintf(filepath,"nyeurler.%i",nr);
+
+	#ifdef DEBUG
+		printf("addNewUrlOpen: open \"%s\"\n",filepath);
+	#endif
 
 	if (((*addNewUrlha).NYEURLER = lotOpenFileNoCasheByLotNr(lotNr,filepath,openmode,'e',subname)) == NULL) {
 		perror("nyeurler");
