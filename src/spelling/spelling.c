@@ -45,8 +45,10 @@ spelling_init(char *lang)
 	AspellCanHaveError *ret;
 	struct spelling *spelling = malloc(sizeof(struct spelling));
 
-	if (spelling == NULL)
+	if (spelling == NULL) {
+		warn("malloc(spelling)");
 		return NULL;
+	}
 
 	config = new_aspell_config();
 
@@ -56,13 +58,13 @@ spelling_init(char *lang)
 
 	ret = new_aspell_speller(config);
 	delete_aspell_config(config);
+	spelling->speller = to_aspell_speller(ret);
 
 	if (aspell_error(ret) != 0) {
+		printf("Error: %s\n", aspell_speller_error_message(spelling->speller));
 		delete_aspell_can_have_error(ret);
 		return NULL;
 	}
-
-	spelling->speller = to_aspell_speller(ret);
 
 	spelling->conv = iconv_open("iso-8859-1", "utf-8");
 	spelling->conv_out = iconv_open("utf-8", "iso-8859-1");
