@@ -7,11 +7,12 @@ BEGIN {
 	unshift @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Data::Dumper;
-use Time::gmtime;
+use Time::localtime;
 use CrawlWatch::Config qw(bb_config_get bb_config_update);
 use constant CONF_SUGGDICT_RUN => "suggdict_run_hour";
 use constant CONF_SUGGDICT_LAST => "suggdict_last_run";
-use constant ONE_DAY => 24 * 3600;
+use constant HOURS => 3600;
+use constant ONE_DAY => 24 * HOURS;
 
 my ($dbh, $iq, $log);
 
@@ -28,7 +29,6 @@ sub name { "Suggest and spelling dictionary builder" }
 sub run {
     bb_config_update($dbh, CONF_SUGGDICT_LAST, time);
     system("sh " . $ENV{'BOITHOHOME'} . "/script/eachNight.sh");
-    # t0ffe ting legges til her
     1;
 }
 
@@ -36,35 +36,56 @@ sub next_run {
     my $self = shift;
     my $run_hour = bb_config_get($dbh, CONF_SUGGDICT_RUN);
     my $last_run = bb_config_get($dbh, CONF_SUGGDICT_LAST);
+    $log->write("run hour: $run_hour, last_run: $last_run, hour now: ", localtime->hour);
 
-    unless (defined $run_hour
-        and $run_hour =~ /^\d+$/    
-        and ($run_hour >= 1)
-        and ($run_hour <= 24)) {
-        $log->write("WARN: invalid run hour set for ", $self->name, 
-            ". db field: ", CONF_SUGGDICT_RUN);
-        return -1;
-    }
+    return -1 unless valid_run_hour($run_hour) 
+                 and valid_last_run($last_run);
 
-    unless (defined $last_run and $last_run =~ /^\d+$/) {
-        $log->write("WARN: db field ", CONF_SUGGDICT_LAST, 
-            " is not set, or not unixtime.");
-        return -1;
-    }
-    
     my $time_now = time;
-    if ($time_now >= $last_run + ONE_DAY) {
-        # a day (or more) since last run.
+    if ($time_now >= ($last_run + (1 * HOURS))) {
+        # at least 1 hour since last run.
         
-        $run_hour = 3;
-        if ($run_hour == gmtime->hour) {
+        if ($run_hour == localtime->hour) {
             return 0; #run now.
         }
     }
+
+    my $wait = scnds_till_next($run_hour);
+    $wait = 1 * HOURS
+        if $wait < (1 * HOURS);
+    return $wait;
+}
+
+sub scnds_till_next {
+    my $run_hour = shift;
+    my $next = $run_hour - localtime->hour;
     
-    return $last_run ? ($last_run - time) + ONE_DAY : ONE_DAY;
+    return $next * HOURS
+        if $next >= 0;
+    return (24 - $next) * HOURS;
 }
 
 1;
 
+sub valid_run_hour {
+    my $run_hour = shift;
+    unless (defined $run_hour
+            and $run_hour =~ /^\d+$/
+            and $run_hour >= 1
+            and $run_hour <= 24) {
+    
+        $log->write("WARN: not valid run_hour. db field: ", CONF_SUGGDICT_RUN);
+        return;
+    }
+    return 1;
+}
 
+sub valid_last_run {
+    my $last_run = shift;
+    unless (defined $last_run and $last_run =~ /^\d+$/) {
+        $log->write("WARN: db field ", CONF_SUGGDICT_LAST, 
+            " is not set, or not unixtime.");
+        return;
+    }
+    return 1;
+}
