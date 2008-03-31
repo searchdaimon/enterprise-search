@@ -169,35 +169,41 @@ int main (int argc, char *argv[]) {
 
 		dolot(lotNr, subname, h);
 	} else {
-		DIR *d;
-		struct dirent *de;
 		char pathname[PATH_MAX];
+		FILE *map;
+		char *line;
+		size_t linelen;
 
-		if ((d = opendir(bfile("lot/"))) == NULL)
-			err(1, "opendir(lot/)");
+		if ((map = fopen(bfile("config/maplist.conf"), "r")) == NULL)
+			err(1, "fopen(maplist)");
 
-		while ((de = readdir(d))) {
+		line = NULL;
+		while (getline(&line, &linelen, map) > 0) {
 			DIR *d2;
 			struct dirent *de2;
 
-			if (de->d_name[0] == '.' || !isdigit(de->d_name[0]))
+			line[strlen(line)-1] = '\0';
+			strcpy(pathname, line);
+			if ((d2 = opendir(pathname)) == NULL) {
+				warn("opendir(%s)", pathname);
+				free(line);
+				line = NULL;
 				continue;
-
-			sprintf(pathname, "%s/%s", bfile("lot"), de->d_name);
-			if ((d2 = opendir(pathname)) == NULL)
-				err(1, "opendir(lot/x/)");
+			}
 
 			while ((de2 = readdir(d2))) {
 				DIR *d3;
 				struct dirent *de3;
 
-				if (de2->d_name[0] == '.' || !isdigit(de2->d_name[0]))
+				if (de2->d_name[0] == '.' || !isdigit(de2->d_name[0])) 
 					continue;
 
-				sprintf(pathname, "%s/%s/%s", bfile("lot"), de->d_name, de2->d_name);
+				sprintf(pathname, "%s/%s", line, de2->d_name);
 
-				if ((d3 = opendir(pathname)) == NULL)
-					err(1, "opendir(lot/x/y/)");
+				if ((d3 = opendir(pathname)) == NULL) {
+					warn("opendir(%s)", pathname);
+					continue;
+				}
 
 				while ((de3 = readdir(d3))) {
 					FILE *tmpfh;
@@ -205,8 +211,8 @@ int main (int argc, char *argv[]) {
 					if (de3->d_name[0] == '.')
 						continue;
 
-					sprintf(pathname, "%s/%s/%s/%s/dictionarywords_raw",
-					    bfile("lot"), de->d_name, de2->d_name, de3->d_name);
+					sprintf(pathname, "%s/%s/%s/dictionarywords_raw",
+					    line, de2->d_name, de3->d_name);
 					printf("found dictionary: %s\n", pathname);
 					/* XXX: Use stat(2) instead? */
 					if ((tmpfh = fopen(pathname, "r")) != NULL) {
@@ -217,8 +223,10 @@ int main (int argc, char *argv[]) {
 				closedir(d3);
 			}
 			closedir(d2);
+			free(line);
+			line = NULL;
 		}
-		closedir(d);
+		fclose(map);
 	}
 
 	//resultFH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords","w",'r',subname);
