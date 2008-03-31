@@ -1009,7 +1009,7 @@ crawl247:
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g -Wl,-static $(LIBS)*.c src/crawl247/crawl.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c -o src/crawl247/crawl247.so $(LDFLAGS) $(SMBCLIENT)
+	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g -Wl,-static $(LIBS)*.c src/crawl247/crawl.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawl/mailsubject.c -o src/crawl247/crawl247.so $(LDFLAGS) $(SMBCLIENT)
 	mkdir -p crawlers/crawl247/
 	cp src/crawl247/crawl247.so crawlers/crawl247/
 	@#(cd src/crawl247; make clean)
