@@ -113,27 +113,35 @@ untrain(void)
 	hashtable_destroy(h, 1);
 }
 
+void editsn(char *, char *, int *, int);
+
+static inline void
+handle_word(char *word, char *best, int *max, int levels)
+{
+	int *freq;
+
+	if ((freq = hashtable_search(words, word)) == NULL && levels == 1)
+		return;
+	if (levels > 1) {
+		editsn(word, best, max, levels-1);
+	} else if (*freq > *max) {
+		strcpy(best, word);
+		*max = *freq;
+	}
+}
+
 void
 editsn(char *word, char *best, int *max, int levels)
 {
 	int i, j;
 	char nword[LINE_MAX];
-	int *freq;
 
 #if 1
 	/* deletions */
 	for (i = 0; word[i] != '\0'; i++) {
 		strncpy(nword, word, i);
 		strcpy(nword+i, word+i+1);
-		if ((freq = hashtable_search(words, nword)) == NULL && levels == 1)
-			continue;
-		if (levels > 1) {
-			editsn(nword, best, max, levels-1);
-		} else if (*freq > *max) {
-			strcpy(best, nword);
-			*max = *freq;
-		}
-
+		handle_word(nword, best, max, levels);
 	}
 #endif
 
@@ -144,15 +152,7 @@ editsn(char *word, char *best, int *max, int levels)
 		nword[i] = word[i+1];
 		nword[i+1] = word[i];
 		strcpy(nword+i+2, word+i+2);
-		if ((freq = hashtable_search(words, nword)) == NULL && levels == 1)
-			continue;
-
-		if (levels > 1) {
-			editsn(nword, best, max, levels-1);
-		} else if (*freq > *max) {
-				strcpy(best, nword);
-				*max = *freq;
-		}
+		handle_word(nword, best, max, levels);
 	}
 
 #endif
@@ -164,14 +164,7 @@ editsn(char *word, char *best, int *max, int levels)
 			strncpy(nword, word, i);
 			nword[i] = alphabet[j];
 			strcpy(nword+i+1, word+i+1);
-			if ((freq = hashtable_search(words, nword)) == NULL && levels == 1)
-				continue;
-			if (levels > 1) {
-				editsn(nword, best, max, levels-1);
-			} else if (*freq > *max) {
-				strcpy(best, nword);
-				*max = *freq;
-			}
+			handle_word(nword, best, max, levels);
 		}
 	}
 #endif
@@ -184,14 +177,7 @@ editsn(char *word, char *best, int *max, int levels)
 			strncpy(nword, word, i);
 			nword[i] = alphabet[j];
 			strcpy(nword+i+1, word+i);
-			if ((freq = hashtable_search(words, nword)) == NULL && levels == 1)
-				continue;
-			if (levels > 1) {
-				editsn(nword, best, max, levels-1);
-			} else if (*freq > *max) {
-				strcpy(best, nword);
-				*max = *freq;
-			}
+			handle_word(nword, best, max, levels);
 		}
 	}
 #endif
@@ -229,8 +215,6 @@ check_word(char *word, int *found)
 int
 main(int argc, char **argv)
 {
-	char *w;
-	char *best;
 	int found;
 	int i;
 	time_t start, end;
