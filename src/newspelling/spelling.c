@@ -113,38 +113,25 @@ untrain(void)
 	hashtable_destroy(h, 1);
 }
 
-set *
-edits1(char *word, set *nwords, int remove_nonexistent, int makeset, char *best, int *max)
+void
+editsn(char *word, char *best, int *max, int levels)
 {
 	int i, j;
 	char nword[LINE_MAX];
-	char *addword;
 	int *freq;
-
-#if 0
-	return set([word[0:i]+word[i+1:] for i in range(n)] +                     # deletion
-			[word[0:i]+word[i+1]+word[i]+word[i+2:] for i in range(n-1)] + # transposition
-			[word[0:i]+c+word[i+1:] for i in range(n) for c in alphabet] + # alteration
-			[word[0:i]+c+word[i:] for i in range(n+1) for c in alphabet])  # insertion
-
-
-#endif
 
 #if 1
 	/* deletions */
 	for (i = 0; word[i] != '\0'; i++) {
 		strncpy(nword, word, i);
 		strcpy(nword+i, word+i+1);
-		if ((freq = hashtable_search(words, nword)) == NULL && remove_nonexistent)
+		if ((freq = hashtable_search(words, nword)) == NULL && levels == 1)
 			continue;
-		if (makeset) {
-			addword = strdup(nword);
-			set_add(nwords, addword);
-		} else if (best != NULL) {
-			if (*freq > *max) {
-				strcpy(best, nword);
-				*max = *freq;
-			}
+		if (levels > 1) {
+			editsn(nword, best, max, levels-1);
+		} else if (*freq > *max) {
+			strcpy(best, nword);
+			*max = *freq;
 		}
 
 	}
@@ -157,12 +144,11 @@ edits1(char *word, set *nwords, int remove_nonexistent, int makeset, char *best,
 		nword[i] = word[i+1];
 		nword[i+1] = word[i];
 		strcpy(nword+i+2, word+i+2);
-		if ((freq = hashtable_search(words, nword)) == NULL && remove_nonexistent)
+		if ((freq = hashtable_search(words, nword)) == NULL && levels == 1)
 			continue;
 
-		if (makeset) {
-			addword = strdup(nword);
-			set_add(nwords, addword);
+		if (levels > 1) {
+			editsn(nword, best, max, levels-1);
 		} else if (best != NULL) {
 			if (*freq > *max) {
 				strcpy(best, nword);
@@ -180,11 +166,10 @@ edits1(char *word, set *nwords, int remove_nonexistent, int makeset, char *best,
 			strncpy(nword, word, i);
 			nword[i] = alphabet[j];
 			strcpy(nword+i+1, word+i+1);
-			if ((freq = hashtable_search(words, nword)) == NULL && remove_nonexistent)
+			if ((freq = hashtable_search(words, nword)) == NULL && levels == 1)
 				continue;
-			if (makeset) {
-				addword = strdup(nword);
-				set_add(nwords, addword);
+			if (levels > 1) {
+				editsn(nword, best, max, levels-1);
 			} else if (best != NULL) {
 				if (*freq > *max) {
 					strcpy(best, nword);
@@ -204,11 +189,10 @@ edits1(char *word, set *nwords, int remove_nonexistent, int makeset, char *best,
 			strncpy(nword, word, i);
 			nword[i] = alphabet[j];
 			strcpy(nword+i+1, word+i);
-			if ((freq = hashtable_search(words, nword)) == NULL && remove_nonexistent)
+			if ((freq = hashtable_search(words, nword)) == NULL && levels == 1)
 				continue;
-			if (makeset) {
-				addword = strdup(nword);
-				set_add(nwords, addword);
+			if (levels > 1) {
+				editsn(nword, best, max, levels-1);
 			} else if (best != NULL) {
 				if (*freq > *max) {
 					strcpy(best, nword);
@@ -218,56 +202,6 @@ edits1(char *word, set *nwords, int remove_nonexistent, int makeset, char *best,
 		}
 	}
 #endif
-
-	return nwords;
-}
-
-char *
-edits2(char *word)
-{
-	set e1set;
-	set_iterator iter;
-	char *w;
-	char bestword[LINE_MAX];
-	int max = 0;
-
-	set_init(&e1set);
-
-	bestword[0] = '\0';
-
-	edits1(word, &e1set, 0, 1, NULL, NULL);
-	SET_FOREACH(iter, &e1set, w) {
-		edits1(w, NULL, 1, 0, bestword, &max);
-	}
-
-	set_free_all(&e1set);
-
-	if (max == 0)
-		return NULL;
-
-	return strdup(bestword);
-}
-
-
-char *
-maximize_from_set(set *cwords)
-{
-	set_iterator iter;
-	char *w, *mword;
-	int *freq;
-	int max;
-
-
-	SET_FOREACH(iter, cwords, w) {
-		if ((freq = hashtable_search(words, w)) == NULL)
-			continue;
-		if (*freq > max) {
-			max = *freq;
-			mword = w;
-		}
-	}
-
-	return strdup(mword);
 }
 
 int
@@ -279,14 +213,15 @@ correct_word(char *word)
 void
 check_word(char *word)
 {
-	char *best;
+	char best[LINE_MAX];
+	int max = 0;
 
 	if (words == NULL)
 		return;
 
 	if (correct_word(word))
 		return;
-	best = edits2(word);
+	editsn(word, best, &max, 2);
 	if (best != NULL) {
 		printf("Found: %s\n", best);
 		free(best);
