@@ -7,7 +7,6 @@
 #include <stdlib.h>
 
 #include "../3pLibs/keyValueHash/hashtable.h"
-#include "../dictionarywordsLot/set.h"
 
 const char alphabet[] = "abcdefghijklmnopqrstuvwxyz\xe5\xe6\xe8";
 
@@ -233,13 +232,8 @@ check_word(char *word)
 int
 main(int argc, char **argv)
 {
-	set *nwords;
-	set_iterator iter;
 	char *w;
 	char *best;
-
-	nwords = malloc(sizeof(*nwords));
-	set_init(nwords);
 
 	train("mydict");
 

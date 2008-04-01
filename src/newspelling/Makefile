@@ -8,7 +8,7 @@ PROG=	spelling
 all: $(PROG)
 
 $(PROG): $(OBJS)
-	$(CC) $(LDFLAGS) -o $(PROG) $(OBJS) ../3pLibs/keyValueHash/hashtable.c ../dictionarywordsLot/set.c
+	$(CC) $(LDFLAGS) -o $(PROG) $(OBJS) ../3pLibs/keyValueHash/hashtable.c
 
 clean:
 	rm -f $(PROG) $(OBJS)
