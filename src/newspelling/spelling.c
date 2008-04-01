@@ -202,7 +202,7 @@ check_word(char *word, int *found)
 	if (correct_word(word))
 		return NULL;
 	editsn(word, best, &max, 2);
-	if (best != NULL) {
+	if (max > 0) {
 		*found = 1;
 		printf("Found: %s\n", best);
 		return strdup(best);
@@ -223,7 +223,7 @@ main(int argc, char **argv)
 
 	start = time(NULL);
 	for (i = 0; i < 100; i++) {
-		free(check_word("niv\xe5\xe5", &found));
+		free(check_word("eppennn", &found));
 	}
 	end = time(NULL);
 
