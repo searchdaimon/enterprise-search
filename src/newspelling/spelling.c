@@ -149,11 +149,9 @@ editsn(char *word, char *best, int *max, int levels)
 
 		if (levels > 1) {
 			editsn(nword, best, max, levels-1);
-		} else if (best != NULL) {
-			if (*freq > *max) {
+		} else if (*freq > *max) {
 				strcpy(best, nword);
 				*max = *freq;
-			}
 		}
 	}
 
@@ -170,12 +168,9 @@ editsn(char *word, char *best, int *max, int levels)
 				continue;
 			if (levels > 1) {
 				editsn(nword, best, max, levels-1);
-			} else if (best != NULL) {
-				if (*freq > *max) {
-					strcpy(best, nword);
-					*max = *freq;
-				}
-
+			} else if (*freq > *max) {
+				strcpy(best, nword);
+				*max = *freq;
 			}
 		}
 	}
@@ -193,11 +188,9 @@ editsn(char *word, char *best, int *max, int levels)
 				continue;
 			if (levels > 1) {
 				editsn(nword, best, max, levels-1);
-			} else if (best != NULL) {
-				if (*freq > *max) {
-					strcpy(best, nword);
-					*max = *freq;
-				}
+			} else if (*freq > *max) {
+				strcpy(best, nword);
+				*max = *freq;
 			}
 		}
 	}
