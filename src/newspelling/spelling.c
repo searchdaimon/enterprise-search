@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "../3pLibs/keyValueHash/hashtable.h"
 
@@ -209,23 +210,26 @@ correct_word(char *word)
 	return (hashtable_search(words, word) != NULL);
 }
 
-void
-check_word(char *word)
+char *
+check_word(char *word, int *found)
 {
 	char best[LINE_MAX];
 	int max = 0;
 
 	if (words == NULL)
-		return;
+		return NULL;
 
+	*found = 0;
 	if (correct_word(word))
-		return;
+		return NULL;
 	editsn(word, best, &max, 2);
 	if (best != NULL) {
+		*found = 1;
 		printf("Found: %s\n", best);
-		free(best);
+		return strdup(best);
 	} else {
 		puts("No better spelling found.");
+		return NULL;
 	}
 }
 
@@ -234,10 +238,19 @@ main(int argc, char **argv)
 {
 	char *w;
 	char *best;
+	int found;
+	int i;
+	time_t start, end;
 
 	train("mydict");
 
-	check_word("niv\xe5\xe5");
+	start = time(NULL);
+	for (i = 0; i < 100; i++) {
+		free(check_word("niv\xe5\xe5", &found));
+	}
+	end = time(NULL);
+
+	printf("Checking took: %ld\n", end - start);
 
 	untrain();
 
