@@ -11,6 +11,8 @@
 
 const char alphabet[] = "abcdefghijklmnopqrstuvwxyz\xe5\xe6\xe8";
 
+#define MAX_EDIT_DISTANCE 2
+
 static unsigned int
 wordhashfromkey(void *ky)
 {
@@ -122,11 +124,12 @@ handle_word(char *word, char *best, int *max, int levels)
 
 	if ((freq = hashtable_search(words, word)) == NULL && levels == 1)
 		return;
-	if (levels > 1) {
-		editsn(word, best, max, levels-1);
-	} else if (*freq > *max) {
+	if (freq && *freq > *max) {
 		strcpy(best, word);
 		*max = *freq;
+	}
+	if (levels > 1) {
+		editsn(word, best, max, levels-1);
 	}
 }
 
@@ -203,7 +206,7 @@ check_word(char *word, int *found)
 		printf("Word is correct\n");
 		return NULL;
 	}
-	editsn(word, best, &max, 2);
+	editsn(word, best, &max, MAX_EDIT_DISTANCE);
 	if (max > 0) {
 		*found = 1;
 		printf("Found: %s\n", best);
