@@ -199,8 +199,10 @@ check_word(char *word, int *found)
 		return NULL;
 
 	*found = 0;
-	if (correct_word(word))
+	if (correct_word(word)) {
+		printf("Word is correct\n");
 		return NULL;
+	}
 	editsn(word, best, &max, 2);
 	if (max > 0) {
 		*found = 1;
@@ -221,13 +223,9 @@ main(int argc, char **argv)
 
 	train("mydict");
 
-	start = time(NULL);
-	for (i = 0; i < 100; i++) {
-		free(check_word("eppennn", &found));
+	for (i = 1; i < argc; i++) {
+		free(check_word(argv[i], &found));
 	}
-	end = time(NULL);
-
-	printf("Checking took: %ld\n", end - start);
 
 	untrain();
 
