@@ -1174,7 +1174,6 @@ void *do_chld(void *arg)
         SiderHeder->total_usecs = getTimeDifference(&globalstart_time,&globalend_time);
 
 	
-	//printf("query \"%s\", TotaltTreff %i,showabal %i,filtered %i,total_usecs %f\n",queryNodeHeder.query,SiderHeder->TotaltTreff,SiderHeder->showabal,SiderHeder->filtered,SiderHeder->total_usecs);
 
 	printf("|%-40s | %-11i | %-11i | %-11i | %-11f|\n",
 		queryNodeHeder.query,
