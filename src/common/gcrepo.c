@@ -8,6 +8,9 @@
 #include "lot.h"
 #include "DocumentIndex.h"
 
+//#define MaxAgeDiflastSeen 86400
+#define MaxAgeDiflastSeen 10
+
 struct DIArrayFormat {
         struct DocumentIndexFormat docindex;
         unsigned int DocID;
@@ -29,6 +32,9 @@ gcrepo(int LotNr, char *subname)
 	char path2[1024];
 	char path3[1024];
 	FILE *GCEDFH;
+	#ifdef BLACK_BOKS
+		time_t newest_document;
+	#endif
 
 	int keept = 0;
 	int gced = 0;
@@ -36,26 +42,72 @@ gcrepo(int LotNr, char *subname)
 	struct DIArrayFormat *DIArray;
 	int DocIDPlace;
 
-	DIArray = malloc(sizeof(struct DIArrayFormat) * NrofDocIDsInLot);
-	
+	if ((DIArray = malloc(sizeof(struct DIArrayFormat) * NrofDocIDsInLot)) == NULL) {
+		perror("malloc DIArray");
+		exit(1);
+	}
+
+	#ifdef BLACK_BOKS
+		newest_document = 0;	
+		printf("newest_document: %s",ctime(&newest_document));
+	#endif
+
 
 	for (i=0;i<NrofDocIDsInLot;i++) {
 		DIArray[i].DocID = 0;
 		DIArray[i].gced = 0;
+
+		if (!DIRead(&DIArray[i].docindex, LotDocIDOfset(LotNr) +i, subname)) {
+			//fprintf(stderr, "Unable to locate a DI for %d\n", LotDocIDOfset(LotNr) +i);
+			continue;
+		}
+
+		#ifdef BLACK_BOKS
+		if ((DIArray[i].docindex.lastSeen != 0) && (newest_document < DIArray[i].docindex.lastSeen)) {
+                                newest_document = DIArray[i].docindex.lastSeen;
+                }
+		#endif
+
 	}
+
+	#ifdef BLACK_BOKS
+	printf("newest_document: %s",ctime(&newest_document));
+	#endif
 
 	while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&raddress,0,0,subname,&acl_allow,&acl_deny)) {
 
 		DocIDPlace = (ReposetoryHeader.DocID - LotDocIDOfset(LotNr));
 		DIArray[DocIDPlace].DocID = ReposetoryHeader.DocID;
 
-		if (!DIRead(&DIArray[DocIDPlace].docindex, ReposetoryHeader.DocID, subname)) {
-			fprintf(stderr, "Unable to locate a DI for %d\n", ReposetoryHeader.DocID);
-			continue;
-		}
+		#ifdef DEBUG
+		#ifdef BLACK_BOKS
+		printf("dokument \"%s\", DocID %u. lastSeen: %s",
+			DIArray[DocIDPlace].docindex.Url,
+			ReposetoryHeader.DocID,
+			ctime(&DIArray[DocIDPlace].docindex.lastSeen));
+		#endif
+		#endif
 
 		//printf("%p\n", docindex.RepositoryPointer);
-		if (raddress == DIArray[DocIDPlace].docindex.RepositoryPointer) {
+		if (raddress != DIArray[DocIDPlace].docindex.RepositoryPointer) {
+			DIArray[DocIDPlace].gced = 1;
+			#ifdef DEBUG
+			printf("Garbage collecting %d at %u. docindex has %u\n", ReposetoryHeader.DocID, raddress,DIArray[DocIDPlace].docindex.RepositoryPointer);
+			#endif
+			++gced;
+		}
+		#ifdef BLACK_BOKS
+		else if ((DIArray[DocIDPlace].docindex.lastSeen != 0) && (newest_document > (DIArray[DocIDPlace].docindex.lastSeen + MaxAgeDiflastSeen))) {
+			DIArray[DocIDPlace].gced = 1;
+
+			DIArray[DocIDPlace].docindex.htmlSize = 0;
+
+			printf("dokument \"%s\" is deleted. lastSeen: %s",DIArray[DocIDPlace].docindex.Url,ctime(&DIArray[DocIDPlace].docindex.lastSeen));
+			++gced;
+		
+		} 
+		#endif
+		else {
 			unsigned long int offset;
 			offset = rApendPost(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_deny, "repo.wip");
 			DIArray[DocIDPlace].docindex.RepositoryPointer = offset;
@@ -63,17 +115,15 @@ gcrepo(int LotNr, char *subname)
 			printf("Writing DocID: %d\n", ReposetoryHeader.DocID);
 			#endif
 			++keept;
-		} else {
-			DIArray[DocIDPlace].gced = 1;
-			#ifdef DEBUG
-			printf("Garbage collecting %d at %lx\n", ReposetoryHeader.DocID, raddress);
-			#endif
-			++gced;
+
 		}
 	}
 
+	printf("keept %i\ngced %i\n",keept,gced);
+
 	printf("writing to DI..\n");
 	for (i=0;i<NrofDocIDsInLot;i++) {
+
 		if (DIArray[i].DocID != 0) {
 			DIWrite(&DIArray[i].docindex, DIArray[i].DocID, subname, "DocumentIndex.wip");
 		}
@@ -105,7 +155,9 @@ gcrepo(int LotNr, char *subname)
 	strcat(path3, "DocumentIndex");
 	rename(path, path3);
 
-	printf("keept %i\ngced %i\n",keept,gced);
+	#ifdef DI_FILE_CASHE
+		closeDICache();
+	#endif
 
 	return 0;
 }
