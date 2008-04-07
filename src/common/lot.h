@@ -40,5 +40,6 @@ int lotOpenFileNoCashel(unsigned int DocID,char resource[],char type[], char loc
 int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,char subname[]);
 
 int GetDevIdForLot(int LotNr);
+void makeLotPath(int lotNr,char folder[],char subname[]);
 
 #endif //_LOT__H_

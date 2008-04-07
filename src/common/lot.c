@@ -83,6 +83,21 @@ int LotDocIDOfset (int LotNr) {
 }
 
 #endif
+
+void makeLotPath(int lotNr,char folder[],char subname[]) {
+
+	char path[512];
+
+	GetFilPathForLot(path,lotNr,subname);
+
+	strcat(path,"/");
+	strcat(path,folder);
+	
+
+	makePath(path);	
+
+}
+
 int HasSufficientSpace(char FilePath[], int needSpace) {
 
 
