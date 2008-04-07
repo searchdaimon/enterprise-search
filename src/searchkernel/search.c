@@ -2819,15 +2819,21 @@ int searchFilterCount(int *TeffArrayElementer,
        				filesKey = hashtable_iterator_key(itr);
        				filesValue = (int *)hashtable_iterator_value(itr);
 
+				//ignorerer filnavn som er blanke, eller har % i seg
+				if ((strchr(filesKey,'%') != NULL) || (filesKey[0] == '\0')) {
+					printf("ignoring file name \"%s\" that has %i files\n",filesKey,(*filesValue));
+					continue;
+				}
+
 				printf("files \"%s\": %i\n",filesKey,*filesValue);
 
-					strscpy(
-						(*filters).filtypes.elements[ (*filters).filtypes.nrof ].name,
-						filesKey,
-						sizeof((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name));
+				strscpy(
+					(*filters).filtypes.elements[ (*filters).filtypes.nrof ].name,
+					filesKey,
+					sizeof((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name));
 
-					(*filters).filtypes.elements[(*filters).filtypes.nrof].nrof = (*filesValue);
-					++(*filters).filtypes.nrof;
+				(*filters).filtypes.elements[(*filters).filtypes.nrof].nrof = (*filesValue);
+				++(*filters).filtypes.nrof;
 				
 				
        			} while ((hashtable_iterator_advance(itr)) && ((*filters).filtypes.nrof<MAXFILTERELEMENTS));
