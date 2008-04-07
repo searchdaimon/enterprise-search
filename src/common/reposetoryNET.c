@@ -102,7 +102,7 @@ off_t rGetFileSize(char source[], int LotNr,char subname[]) {
 	int socketha = conectTo(LotNr);
 
 	#ifdef DEBUG
-		printf("rGetFileByOpenHandler\n");
+		printf("rGetFileSize\n");
 	#endif
 	int filnamelen;
 	off_t i;
@@ -167,7 +167,7 @@ int rGetFileByOpenHandlerFromSocket(char source[],FILE *FILEHANDLER,int LotNr,ch
 
         //leser inn filstørelsen
         if ((i=recv(socketha, &fileBloks, sizeof(fileBloks),MSG_WAITALL)) == -1) {
-            perror("rGetFileByOpenHandler: Cant recv fileBloks");
+            perror("rGetFileByOpenHandler: Can't recv fileBloks");
             exit(1);
         }
 
@@ -181,6 +181,7 @@ int rGetFileByOpenHandlerFromSocket(char source[],FILE *FILEHANDLER,int LotNr,ch
 	#endif
 	
         filblocbuff = (char *)malloc(rNetTrabsferBlok);
+
 	if (fileBloks > 0) {
         	for(i=0;i < fileBloks;i++) {
 
@@ -249,7 +250,10 @@ int rGetFileByOpenHandler(char source[],FILE *FILEHANDLER,int LotNr,char subname
 	//printf("rGetFileByOpenHandler\n");
 
 	//kobler til
-	socketha = conectTo(LotNr);
+	if ((socketha = conectTo(LotNr)) == 0) {
+		perror("rGetFileByOpenHandler: can't conect to storage server");
+		return 0;
+	}
 
 	return rGetFileByOpenHandlerFromSocket(source,FILEHANDLER,LotNr,subname,socketha);
 }
@@ -320,8 +324,42 @@ int rSendFile(char source[], char dest[], int LotNr, char opentype[],char subnam
 
 	fclose(FILEHANDLER);
 }
+
+int rSendFileToHostname(char source[], char dest[], int LotNr, char opentype[],char subname[], char HostName[]) {
+
+	int socketha;
+
+	if ((socketha = cconnect(HostName, BLDPORT)) == 0) {
+		printf("can't connect to host \"%s\"\n",HostName);
+		perror(HostName);
+		return 0;
+	}
+
+	FILE *FILEHANDLER;
+
+       //opner filen
+        if ( (FILEHANDLER = fopen(source,"r")) == NULL ) {
+                perror(source);
+                return 0;
+        }
+
+	
+	rSendFileByOpenHandlerBySocket(FILEHANDLER,dest,LotNr,opentype,subname,socketha);
+
+	fclose(FILEHANDLER);
+
+	close(socketha);
+}
+
 int rSendFileByOpenHandler(FILE *FILEHANDLER, char dest[], int LotNr, char opentype[],char subname[]) {
 
+	int socketha = conectTo(LotNr);
+
+	return rSendFileByOpenHandlerBySocket(FILEHANDLER, dest, LotNr, opentype, subname, socketha);
+}
+
+
+int rSendFileByOpenHandlerBySocket(FILE *FILEHANDLER, char dest[], int LotNr, char opentype[],char subname[],int socketha) {
 
 	int n,i;
 	struct stat inode;      // lager en struktur for fstat å returnere.
@@ -330,6 +368,7 @@ int rSendFileByOpenHandler(FILE *FILEHANDLER, char dest[], int LotNr, char opent
 	char *filblocbuff;
 
 	//printf("sendig lot %i to %s\n",LotNr,HostName);
+
 
 	if (strlen(opentype) != 1) {
 		printf("Error: rSendFileByOpenHandler: opentype can only be one caracter, and \"w\" or \"a\", not \"%s\"\n.",opentype);
@@ -340,7 +379,6 @@ int rSendFileByOpenHandler(FILE *FILEHANDLER, char dest[], int LotNr, char opent
 		exit(1);
 	}
 
-	int socketha = conectTo(LotNr);
 
 
 	//søker til starten
@@ -358,7 +396,7 @@ int rSendFileByOpenHandler(FILE *FILEHANDLER, char dest[], int LotNr, char opent
         sendall(socketha,&LotNr, sizeof(LotNr));
 
 	destLen = strlen(dest) +1; // \0
-	printf("destlen %i: %s\n",destLen,dest);
+	//printf("destlen %i: %s\n",destLen,dest);
 	//sender destinasjonsstring lengde
 	sendall(socketha,&destLen, sizeof(destLen));
 
@@ -379,7 +417,9 @@ int rSendFileByOpenHandler(FILE *FILEHANDLER, char dest[], int LotNr, char opent
 	sendall(socketha,&fileBloks, sizeof(fileBloks));
 	sendall(socketha,&filerest, sizeof(filerest));
 
+	#ifdef DEBUG
 	printf("fileBloks: %"PRId64", filerest: %"PRId64", size %"PRId64"\n",fileBloks,filerest,inode.st_size);
+	#endif
 
 	filblocbuff = (char *)malloc(rNetTrabsferBlok);
 	for (i=0;i<fileBloks;i++) {
@@ -398,17 +438,19 @@ int rSendFileByOpenHandler(FILE *FILEHANDLER, char dest[], int LotNr, char opent
                 //send(socketha,filblocbuff,rNetTrabsferBlok,0);
         }
 
-	//leser filen en byt av gngen, og skriver den til socketen
-	//while (!feof(FILEHANDLER)) {
 
-	if (n= (fread(filblocbuff,sizeof(char),filerest,FILEHANDLER)) == -1) {
-        	perror("read");
-		exit(1);
-        }
-	if (!sendall(socketha,filblocbuff,filerest)) {
-		printf("rSendFileByOpenHandler: can't send filerest\n");
-		socketError();
-		return 0;
+	if (filerest != 0) {
+
+		if (n= (fread(filblocbuff,sizeof(char),filerest,FILEHANDLER)) == -1) {
+        		perror("read");
+			exit(1);
+        	}
+		if (!sendall(socketha,filblocbuff,filerest)) {
+			printf("rSendFileByOpenHandler: can't send filerest\n");
+			socketError();
+			return 0;
+		}
+
 	}
 
 	free(filblocbuff);
@@ -565,8 +607,11 @@ int DIReadNET (char *HostName, struct DocumentIndexFormat *DocumentIndexPost, in
 	//leser svar
         if ((i=recv(socketha, DocumentIndexPost, sizeof(struct DocumentIndexFormat),MSG_WAITALL)) == -1) {
               perror("recv");
-              exit(1);
+		return 0;
+              //exit(1);
         }
+
+	return 1;
 
 }
 
@@ -650,7 +695,7 @@ anchorReadNET(char *hostname, char *subname, unsigned int DocID, char *text, int
 
 /* XXX: Send and receive compressed data */
 int
-readHTMLNET(char *subname, unsigned int DocID, char *text, size_t len)
+readHTMLNET(char *subname, unsigned int DocID, char *text, unsigned int len,struct ReposetoryHeaderFormat *ReposetoryHeader)
 {
 	int socketha;
 	int i;
@@ -675,6 +720,12 @@ readHTMLNET(char *subname, unsigned int DocID, char *text, size_t len)
 		text[0] = '\0';
 	} else {
 		if ((i = recv(socketha, text, len, MSG_WAITALL)) == -1) {
+			printf("%x %d\n", text, len);
+			perror("recv(text)");
+			text[0] = '\0';
+			return 0;
+		}
+		if ((i = recv(socketha, ReposetoryHeader, sizeof(struct ReposetoryHeaderFormat), MSG_WAITALL)) == -1) {
 			printf("%x %d\n", text, len);
 			perror("recv(text)");
 			text[0] = '\0';
