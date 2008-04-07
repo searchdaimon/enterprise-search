@@ -136,6 +136,9 @@ int crawlupdate(struct collectionFormat *collection,
 
 	printf("crawlupdate: start\n");
 
+	//bruker heller dokumentExist() får å avgjøre.
+	(*collection).lastCrawl = 0;
+
         printf("crawlSMB: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",(*collection).resource,(*collection).user,(*collection).password);
     	prefix = smb_mkprefix( (*collection).user, (*collection).password );
 
