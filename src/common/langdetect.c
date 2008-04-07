@@ -255,7 +255,10 @@ void langdetectInit()
 
 		    strncpy(filename, path, 31);
 		    strncat(filename, entry->d_name, 31 - strlen(filename));
+
+		    #ifdef DEBUG
 		    printf("Reading stopwords from %s\n", filename);
+		    #endif
 
 		    iso639.code[0] = entry->d_name[0];
 		    iso639.code[1] = entry->d_name[1];
@@ -281,7 +284,9 @@ void langdetectInit()
 
     // Second: Convert dictionary to array:
 
+    #ifdef DEBUG
     printf("%i unique words (%i total).\n", dictionary->size, total_num_words);
+    #endif
 
     _D = (_dict_elem*)malloc(sizeof(_dict_elem) * dictionary->size);
 
@@ -439,9 +444,11 @@ void langdetectDetect(struct wordsFormat words[],int nrofWords, char lang[])
 				    printf("langdetectDetect: [%.3s] Bra treff! Vi beholder denne og avslutter her.\n", V.data[beste_i].code);
 				    #endif
 				    //runarb:lang = (char*)strndup(V.data[beste_i].code, 3);
-				    strscpy(lang,V.data[beste_i].code,4);
-				   
-				    return;
+				    strncpy(lang,V.data[beste_i].code,3);
+				    lang[3] = '\0';
+
+				    goto langdetectDetectEnd;
+				    //return;
 				}
 			}
 		}
@@ -490,8 +497,16 @@ void langdetectDetect(struct wordsFormat words[],int nrofWords, char lang[])
 	    printf(" => %.3s (%.2f%%)\n", V.data[beste_i].code, (beste*100)/total);
 	    #endif
 	    //runarb: lang = (char*)strndup(V.data[beste_i].code, 3);
- 	    strscpy(lang,V.data[beste_i].code,4);
+ 	    strncpy(lang,V.data[beste_i].code,3);
+            lang[3] = '\0';
+
 	}
+
+
+	langdetectDetectEnd:	
+    	//runarb: 28 mars 2008
+	free(V.data);	
+
 }
 
 void langdetectDestroy()
