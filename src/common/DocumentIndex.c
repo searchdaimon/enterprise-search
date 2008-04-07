@@ -271,7 +271,9 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
 		#ifdef BLACK_BOKS
                         unsigned int CurrentDocumentIndexVersionAsUInt;
 			if ((fread(&CurrentDocumentIndexVersionAsUInt,sizeof(unsigned int),1,LotFileOpen)) != 1) {
+				#ifdef DEBUG
 				perror("CurrentDocumentIndexVersionAsUInt");
+				#endif
 				return 0;
 			}
 		#endif
@@ -326,7 +328,9 @@ int DIRead_fmode (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char 
 		#ifdef BLACK_BOKS
                         unsigned int CurrentDocumentIndexVersionAsUInt;
                         if ((fread(&CurrentDocumentIndexVersionAsUInt,sizeof(unsigned int),1,file)) != 1) {
+				#ifdef DEBUG
                                 perror("CurrentDocumentIndexVersionAsUInt");
+				#endif
                                 forReturn = 0;
                         }
                 #endif
@@ -334,8 +338,9 @@ int DIRead_fmode (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char 
 
         	//lesr posten
         	if (fread(DocumentIndexPost,sizeof(*DocumentIndexPost),1,file) != 1) {
+			#ifdef DEBUG
                 	perror("Can't reed");
-
+			#endif
 			//selv om vi ikke fikk lest fra filen må vi lokke den, så vi kan ikke kalle retun directe her
 			forReturn =  0;
         	}
