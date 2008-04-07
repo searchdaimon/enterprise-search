@@ -981,9 +981,14 @@ void *generatePagesResults(void *arg)
 
 		#ifndef BLACK_BOKS
 		//pre DIread filter
-		vboprintf("adult %u: %i\n",(*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
+		#ifdef DEBUG
+			printf("adult %u: %i\n",(*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
+		#endif
+
 		if (((*PagesResults).filterOn) && (filterAdultWeight_bool(adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID),(*PagesResults).adultpages,(*PagesResults).noadultpages) == 1)) {
-			vboprintf("%u is adult whith %i\n",(*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
+			#ifdef DEBUG
+			printf("%u is adult whith %i\n",(*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
+			#endif
 			increaseMemFiltered(PagesResults,
 				&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_bool,
 				&(*(*PagesResults).TeffArray->iindex[i].subname).hits,
@@ -1383,7 +1388,7 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 
 	int i;
 
-	printf("|%-10s|%-10s|%-10s||%-10s|%-10s|%-10s|%-25s|%-10s|%-10s|\n",
+	printf("|%-10s|%-10s|%-10s||%-10s|%-10s|%-10s|%-24s|%-10s|%-10s|%-5s|\n",
 		"AllRank",
 		"TermRank",
 		"PopRank",
@@ -1392,12 +1397,13 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 		"Tittel",
 		"Athor (nr nrp)",
 		"UrlM",
-		"Url"
+		"Url",
+		"Adult"
 		);
-	printf("|----------|----------|----------||----------|----------|----------|------------------------|----------|----------|\n");
+	printf("|----------|----------|----------||----------|----------|----------|------------------------|----------|----------|-----|\n");
 
 	for(i=0;i<showabal;i++) {
-                        printf("|%10i|%10i|%10i||%10i|%10i|%10i|%10i (%5i %5i)|%10i|%10i| %s (DocID %u-%i, DomainID %hu, s: \"%s\")\n",
+                        printf("|%10i|%10i|%10i||%10i|%10i|%10i|%10i (%5i %5i)|%10i|%10i|%5hu| %s (DocID %u-%i, DomainID %hu, s: \"%s\")\n",
 
 				Sider[i].iindex.allrank,
 				Sider[i].iindex.TermRank,
@@ -1407,14 +1413,17 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 				Sider[i].iindex.rank_explaind.rankHeadline,
 				Sider[i].iindex.rank_explaind.rankTittel,
 
+
+
 				#ifdef BLACK_BOKS
-				-1,-1,-1,-1,-1,
+				-1,-1,-1,-1,-1,-1,
 				#else
 				Sider[i].iindex.rank_explaind.rankAthor,
 				Sider[i].iindex.rank_explaind.nrAthor,
 				Sider[i].iindex.rank_explaind.nrAthorPhrase,
 				Sider[i].iindex.rank_explaind.rankUrl_mainbody,
 				Sider[i].iindex.rank_explaind.rankUrl,
+				Sider[i].DocumentIndex.AdultWeight,
 				#endif
 
 				Sider[i].DocumentIndex.Url,
@@ -1431,6 +1440,13 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 
 				);
 	}
+
+	#ifdef DEBUG
+	printf("uri:\n");
+	for(i=0;i<showabal;i++) {
+		printf("%s\n",Sider[i].uri);
+	}
+	#endif
 
 }
 
@@ -1794,7 +1810,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	//kalkulerer antall adult sier i første n resultater
 	PagesResults.noadultpages = 0;
 	PagesResults.adultpages = 0;
-	for (i=0;((i<100) && (i<PagesResults.antall));i++) {
+	for (i=0;((i<1000) && (i<PagesResults.antall));i++) {
 
 		//printf("DocID %u, aw %i\n",PagesResults.TeffArray[i].DocID,adultWeightForDocIDMemArray(PagesResults.TeffArray[i].DocID));
 		if (adultWeightForDocIDMemArray(PagesResults.TeffArray->iindex[i].DocID)) {
@@ -1805,7 +1821,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		}
 	}
 
-	vboprintf("noadultpages %i, PagesResults.adultpages %i\n",PagesResults.noadultpages,PagesResults.adultpages);
 	
 	gettimeofday(&end_time, NULL);
         (*SiderHeder).queryTime.adultcalk = getTimeDifference(&start_time,&end_time);
@@ -2006,6 +2021,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	printf("\n");
 	vboprintf("\t%-40s %i\n","filteredsilent",PagesResults.filteredsilent);
+
+	printf("\n");
+	vboprintf("\tnoadultpages %i, adultpages %i\n",PagesResults.noadultpages,PagesResults.adultpages);
 
 	vboprintf("\n\n");
 
@@ -2473,42 +2491,6 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 
 	print_explane_rank(*Sider,(*SiderHeder).showabal);
 
-/*
-	printf("|%-10s|%-10s|%-10s||%-10s|%-10s|%-10s|%-25s|%-10s|%-10s|\n",
-		"AllRank",
-		"TermRank",
-		"PopRank",
-		"Body",
-		"Headline",
-		"Tittel",
-		"Athor (nr nrp)",
-		"UrlM",
-		"Url"
-		);
-	printf("|----------|----------|----------||----------|----------|----------|------------------------|----------|----------|\n");
-
-	for(i=0;i<(*SiderHeder).showabal;i++) {
-                        printf("|%10i|%10i|%10i||%10i|%10i|%10i|%10i (%5i %5i)|%10i|%10i| %s (DocID %u-%i, s: \"%s\")\n",
-
-				Sider[i].iindex.allrank,
-				Sider[i].iindex.TermRank,
-				Sider[i].iindex.PopRank,
-
-				Sider[i].iindex.rank_explaind.rankBody,
-				Sider[i].iindex.rank_explaind.rankHeadline,
-				Sider[i].iindex.rank_explaind.rankTittel,
-				Sider[i].iindex.rank_explaind.rankAthor,
-				Sider[i].iindex.rank_explaind.nrAthor,
-				Sider[i].iindex.rank_explaind.nrAthorPhrase,
-				Sider[i].iindex.rank_explaind.rankUrl_mainbody,
-				Sider[i].iindex.rank_explaind.rankUrl,
-				Sider[i].DocumentIndex.Url,
-				Sider[i].iindex.DocID,
-				rLotForDOCid(Sider[i].iindex.DocID),
-				(*Sider[i].iindex.subname).subname
-				);
-	}
-*/
 	#endif
 
 	printf("*ranking %i\n",*ranking);
