@@ -156,6 +156,9 @@ grabContent(char *xml, char *url, const char *username, const char *password, st
 					//for (p++; *p == ' '; p++)
 					//	;
 					p += 8; // strlen("subject:");
+					while (isspace(*p)) {
+						p++;
+					}
 					for (p2 = p; *p2 != '\n' && *p2 != '\r' && *p2 != '\0'; p2++)
 						;
 					if (p2 - p > 0) {
@@ -293,6 +296,7 @@ crawlGo(struct crawlinfo *ci)
 		user = *users;
 
 		snprintf(resource, sizeof(resource), "%s/%s/", origresource, user);
+		printf("Trying %s\n", resource);
 		/* Shut up the xml parser a bit */
 		xmlGetWarningsDefaultValue = 0;
 		listxml = ex_getContent(resource, ci->collection->user, ci->collection->password);
@@ -300,6 +304,7 @@ crawlGo(struct crawlinfo *ci)
 		if (listxml == NULL) {
 			err++;
 		} else {
+			//printf("Got xml: \n%s\n", listxml);
 			if (!grabContent(listxml, resource, ci->collection->user, ci->collection->password, ci))
 				err++;
 			free(listxml);
