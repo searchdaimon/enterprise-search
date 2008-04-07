@@ -77,7 +77,7 @@
 		[% IF logfile.content.size %]
 			
 			[% WRAPPER 'template_info.html' %]
-				Showing last [% logfile.lines.size %] messages in [% logfile.filename %].
+				Showing last [% logfile.content.size %] messages in [% logfile.filename %].
 			[% END %]
 	
 
