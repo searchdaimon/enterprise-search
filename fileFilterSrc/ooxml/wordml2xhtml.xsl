@@ -25,16 +25,16 @@
 
 <xsl:template match="w:document">
 <!--  <xsl:message terminate="no">progress:w:document</xsl:message> -->
-  <html>
+<!--  <html> -->
     <xsl:apply-templates/>
-  </html>
+<!--  </html> -->
 </xsl:template>
 
 <xsl:template match="w:body">
 <!--  <xsl:message terminate="no">progress:w:body</xsl:message> -->
-  <body>
+<!--  <body> -->
     <xsl:apply-templates/>
-  </body>
+<!--  </body> -->
 </xsl:template>
 
 <xsl:template match="w:p">

@@ -6,11 +6,40 @@ WASH_TAGS=`echo "$PREFIX""wash_tags"`
 
 SLIDES=`unzip -p "$1" ppt/_rels/presentation.xml.rels | $GET_REL --slides`
 
-echo "<html><body>"
+#echo "<html><body>"
 
 for slide in $SLIDES; do
     unzip -p "$1" ppt/$slide | $WASH_TAGS | sed -e "s|</*a/*>||g" | sed -ne "2,\$p"
     echo "<hr />"
 done
 
-echo "</body></html>"
+# Embeddings:
+
+EMBEDDINGS=`unzip -p "$1" ppt/_rels/presentation.xml.rels | $GET_REL --package`
+
+TMP=`mktemp /tmp/ooxml_tools.XXXXXX`
+
+for embedding in $EMBEDDINGS; do
+    RUN=""
+
+    LEN=`echo $embedding|wc -c`
+    LEN=`expr $LEN - 5`
+    POSTFIX=`echo $embedding|cut -b $LEN-`
+    if [[ "$POSTFIX" == ".docx" ]]; then
+	RUN=`echo "$PREFIX""docx2html"`
+    elif [[ "$POSTFIX" == ".xlsx" ]]; then
+	RUN=`echo "$PREFIX""xlsx2html"`
+    elif [[ "$POSTFIX" == ".pptx" ]]; then
+	RUN=`echo "$PREFIX""pptx2html"`
+    fi
+
+    if [[ "$RUN" != "" ]]; then
+	unzip -p "$1" "ppt/$embedding" > $TMP
+	echo "<hr />"
+	$RUN $TMP
+    fi
+done
+
+rm $TMP
+
+#echo "</body></html>"
