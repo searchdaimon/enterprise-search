@@ -112,6 +112,12 @@ char *sfindductype(char filepath[]) {
                         type = malloc(strlen(cp) +1);
                         strcpy(type,cp);
                         //printf("fant type %s, cp %s\n",type,cp);
+
+			//søker oss til første % eller space for å fjerne de
+			if ( ( (cp = strchr(type,'%')) != NULL ) || ((cp = strchr(type,'%')) != NULL)) {
+				cp[0] = '\0';
+			}
+
                         return type;
                         //return cp;
                 }
@@ -130,7 +136,9 @@ int rrmdir(char dir[]) {
         struct dirent *dp;
 	char path[PATH_MAX];
 
+	#ifdef DEBUG
 	printf("rrmdir: opening dir \"%s\"\n",dir);
+	#endif
 
 	if ((dirp = opendir( dir )) == NULL) {
 		perror(dir);
@@ -144,12 +152,16 @@ int rrmdir(char dir[]) {
 
 		snprintf(path,sizeof(path),"%s/%s",dir,dp->d_name);
 
-		if (dp->d_type == DT_DIR) { 
+		if (dp->d_type == DT_DIR) {
+			#ifdef DEBUG 
 			printf("rrmdir: dir: %s\n",path);
+			#endif
 			rrmdir(path);
 		}
 		else {
+			#ifdef DEBUG
 			printf("rrmdir: file: %s\n",path);
+			#endif
 		}
 
 		
