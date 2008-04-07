@@ -198,7 +198,7 @@ cmc_rewrite_url(int socketha, char *collection_in, char *uri_in, size_t inlen, e
 
 	printf("cmc_rewrite_url: will rewrite: \"%s\"\n",uri_in);
 
-	//memset(&rewrite, '\0', sizeof(rewrite));
+	memset(&rewrite, '\0', sizeof(rewrite));
 
 	/*
 	if (gettimeofday(&start_time, NULL) != 0)
