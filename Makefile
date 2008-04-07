@@ -67,8 +67,8 @@ LIBXML = -I/usr/include/libxml2  -lxml2
 
 #HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c  
 #har rullet tilbake, og bruker gammel html parser for nå, så trenger dermed ikke i ha med css parseren
-#HTMLPARSER=src/parser/libhtml_parser.a src/parser/libcss_parser.a src/ds/libds.a
-HTMLPARSER=src/parser/libhtml_parser.a src/ds/libds.a
+HTMLPARSER=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a src/ds/libds.a
+#HTMLPARSER=src/parser/libhtml_parser.a src/ds/libds.a
 
 # The Dependency Rules
 # They take the form
@@ -139,13 +139,13 @@ Suggest:
 	cp src/suggestwebclient/suggest_webclient bin/
 
 #brukte før src/parser/libhtml_parser.a, byttet til src/parser/lex.yy.c src/parser/lex.yy.c slik at vi kan bruke gdb
-IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c $(HTMLPARSER) $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS -D WITHOUT_DIWRITE_FSYNC
+IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c $(HTMLPARSER) $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS -D WITHOUT_DIWRITE_FSYNC -D EXPLAIN_RANK
 
 IndexerLot: src/IndexerLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(IndexerLot) -lpthread -DWITH_THREAD src/banlists/ban.c -o bin/IndexerLot
+	$(CC) $(IndexerLot) src/maincfg/maincfg.c src/dispatcher_all/library.c -lpthread -DWITH_THREAD src/banlists/ban.c -o bin/IndexerLot $(LIBCONFIG)
 
 IndexerLotbb: src/IndexerLot/main.c
 	@echo ""
@@ -475,7 +475,7 @@ ppcXmlParserTest: src/ppcXmlParserTest/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/ppcXmlParserTest/main.c src/parse_summary/libsummary.a src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/parse_summary/libsummary.a src/httpGet/httpGet.c -o bin/ppcXmlParserTest $(LDFLAGS) $(MYSQL) $(LIBXML) $(CURLLIBS)
 
-dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/UrlToDocID/search_index.c src/maincfg/maincfg.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c -D EXPLAIN_RANK $(LDFLAGS) $(BDB) -D_GNU_SOURCE
+dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/UrlToDocID/search_index.c src/maincfg/maincfg.c src/dispatcher_all/library.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c -D EXPLAIN_RANK $(LDFLAGS) $(BDB) -D_GNU_SOURCE
 
 dispatcher_all: src/dispatcher_all/main.c
 	@echo ""
@@ -627,6 +627,12 @@ LotInvertetIndexMaker3:	src/LotInvertetIndexMaker3/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c  src/LotInvertetIndexMaker3/main.c -o bin/LotInvertetIndexMaker3 $(LDFLAGS)
+
+LotInvertetIndexMaker3bb:	src/LotInvertetIndexMaker3/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c  src/LotInvertetIndexMaker3/main.c -o bin/LotInvertetIndexMaker3bb $(LDFLAGS) -D BLACK_BOKS
 
 readRevIndex:	src/readRevIndex/main.c
 	@echo ""
