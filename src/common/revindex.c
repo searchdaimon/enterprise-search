@@ -52,11 +52,8 @@ void revindexFilesOpenLocal(FILE *revindexFilesHa[],int lotNr,char type[],char f
 void revindexFilesCloseLocal(FILE *revindexFilesHa[],char type[]) {
 
 	int i;
-	char revfile[128];
-	char lotPath[128];
 
         for(i=0;i<NrOfDataDirectorys;i++) {
-                sprintf(revfile,"%srevindex/%s/%i.txt",lotPath,type,i);
 
 		fclose(revindexFilesHa[i]);
         }
