@@ -81,6 +81,10 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 				char **acl_allowbuffer,char **acl_deniedbuffer, unsigned int imagesize
 				);
 
+int rGetNext_reponame (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],
+		int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,
+		char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char reponame[]);
+
 int rGetNext (unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset, char subname[], char **acl_allowbuffer,char **acl_deniedbuffer);
 
 int runpack(char *ReposetoryData,uLong comprLen,char *inndata,int length);
@@ -125,5 +129,6 @@ off_t getImagepFromRadres(unsigned int radress64bit,unsigned int htmlbufferSize)
 unsigned int rLastDocID(char subname[]);
 
 unsigned int rGeneraeADocID(char subname[]);
+int findLotToIndex(char subname[]);
 
 #endif //_REPOSETORY_H_

@@ -196,17 +196,17 @@ void setLastIndexTimeForLot(int LotNr,int httpResponsCodes[],char subname[]){
 
 	fclose(RFILE);	
 
+	if (httpResponsCodes != NULL) {
+		RFILE = lotOpenFileNoCasheByLotNr(LotNr,"HttpResponsCodes.txt","wb",'e',subname);
 
-	RFILE = lotOpenFileNoCasheByLotNr(LotNr,"HttpResponsCodes.txt","wb",'e',subname);
-
-        //skriver ut en oversikt over hvilkene http responser vi kom over
-        for(i=0;i<nrOfHttpResponsCodes;i++) {
-              if (httpResponsCodes[i] != 0) {
-                      fprintf(RFILE,"%i: %i\n",i,httpResponsCodes[i]);
-              }
-        }
-	fclose(RFILE);
-	
+        	//skriver ut en oversikt over hvilkene http responser vi kom over
+        	for(i=0;i<nrOfHttpResponsCodes;i++) {
+        	      if (httpResponsCodes[i] != 0) {
+        	              fprintf(RFILE,"%i: %i\n",i,httpResponsCodes[i]);
+        	      }
+        	}
+		fclose(RFILE);
+	}
 }
 
 unsigned int GetLastIndexTimeForLot(int LotNr,char subname[]){
@@ -402,6 +402,7 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 	#endif
 }
 unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame) {
+
 	unsigned long int offset;
 
 	//finner ut når dette ble gjort
@@ -837,12 +838,12 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 }
 
 //copy a memory area, and return the size copyed
-#ifdef DEBUG
+//#ifdef DEBUG
 static size_t memcpyrc(void *s1, const void *s2, size_t n) {
-#else
-static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
-#endif
-//size_t memcpyrc(void *s1, const void *s2, size_t n) {
+//#else
+//static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
+//#endif
+
         memcpy(s1,s2,n);
 
         return n;
@@ -1047,7 +1048,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 	int n;
 
 	if (htmlbufferSize < rsize) {
-		printf("htmlSize lager then buffer. %i\n",htmlbufferSize);
+		printf("htmlSize (%u) lager then buffer. %i\n",rsize,htmlbufferSize);
 		return 0;
 	}
 		
@@ -1251,7 +1252,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 
 
 		if (htmlbufferSize < (*ReposetoryHeader).htmlSize) {
-			printf("htmlSize lager then buffer. %i\n",htmlbufferSize);
+			printf("htmlSize (%hu) lager then buffer. %i\n",(*ReposetoryHeader).htmlSize,htmlbufferSize);
 		}
 
 
@@ -1372,9 +1373,17 @@ while (rGetNext(LotNr,ReposetoryData)) {
 
 }
 */
+
 int rGetNext (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
 int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,
 char subname[], char **acl_allowbuffer,char **acl_deniedbuffer) {
+
+	return rGetNext_reponame(LotNr,ReposetoryHeader,htmlbuffer,htmlbufferSize,imagebuffer,radress,FilterTime,FileOffset,subname,acl_allowbuffer,acl_deniedbuffer,"reposetory");
+}
+
+int rGetNext_reponame (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
+int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,
+char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char reponame[]) {
 
 	//global variabel for rGetNext
 	static FILE *LotFileOpen;
@@ -1403,16 +1412,16 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer) {
 		}
 		
 		GetFilPathForLot(FileName,LotNr,subname);
-		strncat(FileName,"reposetory",128);
+		strncat(FileName,reponame,128);
 
 		printf("rGetNext: Opending lot %s\n",FileName);
 
 		if ( (LotFileOpen = fopen(FileName,"rb")) == NULL) {
 			perror(FileName);
-			exit(1);
+			return 0;
+			//exit(1);
 		}
 		
-		//fd = lotOpenFileNoCashel(DocID,"reposetory","rb",'n',subname);
 
 		LotOpen = LotNr;
 
