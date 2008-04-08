@@ -27,6 +27,8 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 	    case pu_meta_description: printf("[meta description]"); break;
 	    case pu_meta_author: printf("[meta author]"); break;
 	    case pu_meta_redirect: printf("[meta redirect]"); break;
+	    case pu_cloaked_word: printf("[cloaked_word]"); break;
+	    case pu_cloaked_linkword: printf("[cloaked_linkword]"); break;
 	    default: printf("[...]");
 	}
 

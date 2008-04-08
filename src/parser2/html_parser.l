@@ -26,14 +26,15 @@
  *
  * Se forøvrig http://www.w3.org/TR/html4/charset.html
  *
- * (C) Boitho AS 2004-2007, Magnus Galåen (magnusga@idi.ntnu.no)
+ * (C) Boitho AS, Searchdaimon AS 2004-2008, Magnus Galåen (magnusga@idi.ntnu.no)
  */
 
 static inline void bhpm_newstring( char* str, yyscan_t scanner, int tt );
 static inline void bhpm_newutf8( int val, yyscan_t scanner, int tt );
 static inline void bhpm_new_esc_to_utf8( const char* str, yyscan_t scanner, int tt );
 
-#define BHPM_VISIBLE (!(bhpmget_extra(yyscanner)->invisible_text))
+//#define BHPM_VISIBLE (!(bhpmget_extra(yyscanner)->invisible_text))
+#define BHPM_VISIBLE 1
 
 %}
 
@@ -360,6 +361,7 @@ void add_to_summary( char *str, yyscan_t scanner )
 {
     struct bhpm_yy_extra	*he = bhpmget_extra(scanner);
 
+    if (he->invisible_text) return;
 //    if (_id<25)
 //    printf("%s (%i,%i,%i,%i,%i,%i,%i)\n", str, he->newhead, he->newdiv, he->newspan, he->inhead, he->indiv, he->inspan, he->space);
 
@@ -477,7 +479,10 @@ static inline void send_word( char *str, yyscan_t scanner )
     if (he->alink)
         {
 //	    he->user_fn( bhpm_translate((char*)$1), he->wordcount++, pu_linkword, puf_none, he->wordlist );	// [linkword]
-	    he->user_fn( str, he->wordcount++, pu_linkword, puf_none, he->wordlist );	// [linkword]
+	    if (he->invisible_text)
+		he->user_fn( str, he->wordcount++, pu_cloaked_linkword, puf_none, he->wordlist );	// [linkword]
+	    else
+		he->user_fn( str, he->wordcount++, pu_linkword, puf_none, he->wordlist );	// [linkword]
 	}
     else
         {
@@ -490,7 +495,11 @@ static inline void send_word( char *str, yyscan_t scanner )
 	    else if (he->h==5) puf = puf_h5;
 	    else if (he->h==6) puf = puf_h6;
 //	    he->user_fn( bhpm_translate((char*)$1), he->wordcount++, pu_word, puf, he->wordlist );	// new word
-	    he->user_fn( str, he->wordcount++, pu_word, puf, he->wordlist );	// new word
+
+	    if (he->invisible_text)
+		he->user_fn( str, he->wordcount++, pu_cloaked_word, puf, he->wordlist );	// new word
+	    else
+		he->user_fn( str, he->wordcount++, pu_word, puf, he->wordlist );	// new word
 	}
 }
 
