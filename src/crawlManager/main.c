@@ -237,7 +237,7 @@ int cmr_crawlcanconect(struct hashtable *h, struct collectionFormat *collection)
 	}
 
 }
-int crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
+int cm_crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 
 	struct crawlLibInfoFormat *crawlLibInfo;
 
@@ -268,7 +268,7 @@ int crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 
 }
 
-int crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
+int cm_crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
 
 	struct crawlLibInfoFormat *crawlLibInfo;
 
@@ -1192,7 +1192,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 			if (flag == crawl_recrawl) {
 
 
-				if (!crawlfirst(global_h,&collection[i])) {
+				if (!cm_crawlfirst(global_h,&collection[i])) {
                                         set_crawler_message(0,bstrerror(),collection[i].id);
                                 }
                                 else {
@@ -1201,7 +1201,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 
 			}
 			else if ((*collection).lastCrawl == 0) {
-				if (!crawlfirst(global_h,&collection[i])) {
+				if (!cm_crawlfirst(global_h,&collection[i])) {
 					set_crawler_message(0,bstrerror(),collection[i].id);	
 				}
 				else {
@@ -1209,7 +1209,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 				}
 			}
 			else {
-                                if (!crawlupdate(global_h,&collection[i])) {
+                                if (!cm_crawlupdate(global_h,&collection[i])) {
                                         set_crawler_message(0,bstrerror(),collection[i].id);
                                 }
                                 else {
