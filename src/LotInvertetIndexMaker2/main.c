@@ -22,7 +22,7 @@ struct revIndexArrayFomat {
 };
 
 //int Indekser(char revindexPath[],char iindexPath[],struct revIndexArrayFomat revIndexArray[]);
-int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],int lotNr,char type[],int part,char subname[], int optAllowDuplicates);
+static int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],int lotNr,char type[],int part,char subname[], int optAllowDuplicates);
 
 int compare_elements (const void *p1, const void *p2);
 
@@ -151,7 +151,7 @@ int main (int argc, char *argv[]) {
 
 }
 
-int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],int lotNr,char type[],int part,char subname[], int optAllowDuplicates) {
+static int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],int lotNr,char type[],int part,char subname[], int optAllowDuplicates) {
 
 	int i,y;
 	int mgsort_i,mgsort_k;
