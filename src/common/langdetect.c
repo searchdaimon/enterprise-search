@@ -334,7 +334,7 @@ void langdetectDetect(struct wordsFormat words[],int nrofWords, char lang[])
 
     for (i=0; i<nrofWords; i++)
 	{
-	    #ifdef DEBUG_ADULT
+	    #ifdef DEBUG
 //		printf("%s - ",words[i].word);
 	    #endif
 
@@ -352,8 +352,9 @@ void langdetectDetect(struct wordsFormat words[],int nrofWords, char lang[])
 		{
 		    alle_stoppord++;
 
-		    #ifdef DEBUG_ADULT
-			printf("%s - %u %u ", words[i].word, words[i].WordID, words[i].position);
+		    #ifdef DEBUG
+			//dette fungerer bare når vi har på preserv words
+			//printf("%s - %u %u ", words[i].word, words[i].WordID, words[i].position);
 			printf("( ");
 		    #endif
 
@@ -378,13 +379,13 @@ void langdetectDetect(struct wordsFormat words[],int nrofWords, char lang[])
 				    current = V.size -1;
 				}
 
-			    #ifdef DEBUG_ADULT
+			    #ifdef DEBUG
 				printf("%.3s[%i] ", ptr->iso639_code.data[j].code, V.data[current].ant);
 			    #endif
 
 			}
 
-		    #ifdef DEBUG_ADULT
+		    #ifdef DEBUG
 			printf(")\n");
 		    #endif
 
@@ -422,7 +423,7 @@ void langdetectDetect(struct wordsFormat words[],int nrofWords, char lang[])
 					}
 				}
 
-			    #ifdef DEBUG_ADULT
+			    #ifdef DEBUG
 			    for (k=0; k<V.size; k++)
 				{
 				    denne = sqr(((double)V.data[k].ant)/((double)alle_stoppord)) / total;
@@ -484,7 +485,7 @@ void langdetectDetect(struct wordsFormat words[],int nrofWords, char lang[])
 			}
 		}
 
-	    #ifdef DEBUG_ADULT
+	    #ifdef DEBUG
 	    for (k=0; k<V.size; k++)
 		{
 		    denne = sqr(((double)V.data[k].ant)/((double)alle_stoppord)) / total;
