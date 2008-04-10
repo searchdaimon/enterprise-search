@@ -25,11 +25,6 @@ struct iindexfileFormat {
 		off_t filesize;
 };
 
-//struct DictionaryFormat {
-//        unsigned long WordID;
-//        unsigned long Adress;
-//        unsigned long SizeForTerm;
-//};
 
 int compare_elements (const void *p1, const void *p2);
 int compare_elements_eof (const void *p1, const void *p2);
@@ -217,7 +212,16 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 			}
 			//debug: viser hvilkene filer vi IKKE fikk åpnet
 			//printf("can't open %s\n",iindexfile[count].PathForLotIndex);
+			continue;
                 }
+
+		fstat(fileno(iindexfile[count].fileha),&inode);
+
+		if (inode.st_size == 0) {
+			printf("File %s is emty, vill ignore it.\n",iindexfile[count].PathForLotIndex);
+			fclose(iindexfile[count].fileha);
+			iindexfile[count].fileha = NULL;
+		}
                	//leser inn første term
                	else if (fread(&iindexfile[count].lastTerm,sizeof(unsigned long),1,iindexfile[count].fileha) != 1) {
 			printf("can't read first lastTerm for %s. Ignoring it\n",iindexfile[count].PathForLotIndex);
@@ -230,7 +234,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 		else {
 
 			//finner størelsen på filen
-			fstat(fileno(iindexfile[count].fileha),&inode);
+			//fstat(fileno(iindexfile[count].fileha),&inode);
 			iindexfile[count].filesize = inode.st_size;
 
 			//debug: viser hvilkene filer vi fikk åpnet
