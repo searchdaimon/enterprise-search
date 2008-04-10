@@ -1,5 +1,6 @@
 #include "define.h"
 
+
 void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
                 unsigned int WordIDcrc32, char * IndexType, char *IndexSprok,
                 struct subnamesFormat *subname,
@@ -11,3 +12,6 @@ void IIndexLoad (char Type[], char lang[],char subname[]);
 
 void IIndexInaliser();
 
+int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicates, int optMustBeNewerThen);
+
+void Indekser_deleteGcedFile(int lotNr, char subname[]);
