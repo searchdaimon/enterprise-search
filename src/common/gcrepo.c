@@ -9,7 +9,7 @@
 #include "DocumentIndex.h"
 
 //#define MaxAgeDiflastSeen 86400
-#define MaxAgeDiflastSeen 10
+#define MaxAgeDiflastSeen 100
 
 struct DIArrayFormat {
         struct DocumentIndexFormat docindex;
