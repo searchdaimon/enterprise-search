@@ -32,14 +32,22 @@ void wordsInit(struct pagewordsFormat *pagewords) {
 void wordsEnd(struct pagewordsFormat *pagewords) {
 	free((*pagewords).outlinks);
 }
+void wordsReset_part(struct pagewordsFormatPartFormat *wordsPart) {
+
+	wordsPart->nr = 0;
+	wordsPart->revIndexnr = 0;
+	wordsPart->nextPosition = 0;	
+
+}
 void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID) {
 
-	(*pagewords).nr = 0;
-	(*pagewords).nextPosition = 0;	
-	(*pagewords).revIndexnr = 0;
-	(*pagewords).nrOfOutLinks = 0;
-	(*pagewords).lasturl[0] = '\0';
-	(*pagewords).DocID = DocID;
+	pagewords->nrOfOutLinks = 0;
+	pagewords->lasturl[0] = '\0';
+	pagewords->DocID = DocID;
+
+	wordsReset_part(&pagewords->normalWords);
+	wordsReset_part(&pagewords->linkWords);
+	wordsReset_part(&pagewords->spamWords);
 
 	#ifdef BLACK_BOKS
 		(*pagewords).acl_allow.aclnr = 0;
@@ -126,12 +134,15 @@ void acladd(struct IndexerRes_acls *acl, char word[]) {
 
 
 	convert_to_lowercase((unsigned char *)word);
+
+	#ifdef DEBUG
 	printf("acladd: got \"%s\"\n",word);
+	#endif
 
 	if ((*acl).aclnr > maxAclForPage){
         	#ifdef DEBUG
                 	printf("mor then maxAclForPage words\n");
-               #endif
+               	#endif
         }
         else {
 
@@ -162,7 +173,7 @@ void linkadd(struct pagewordsFormat *pagewords, char word[]) {
 
 			//temp: butt ut linje 1 med linje 2 når wiki bugen er reparset
 			//if (!globalIndexerLotConfig.collectUrls) {
-			if ((!globalIndexerLotConfig.collectUrls) && (!isWikiUrl(word))) {
+			if ((!globalIndexerLotConfig.collectUrls) && (strstr(url,".no/") == NULL)) {
 				//skal ikke lagge til urler
 			}
 			//else if (strcmp((*pagewords).lasturl,url) == 0) {
@@ -265,12 +276,12 @@ void linkadd(struct pagewordsFormat *pagewords, char word[]) {
 }
 
 
-void wordsAdd(struct pagewordsFormat *pagewords, char word[],enum parsed_unit_flag puf) {
+void wordsAdd(struct pagewordsFormatPartFormat *wordsPart, char word[],enum parsed_unit_flag puf) {
 
 int i;
 int wordlLength;
 int wordTypeadd;
-			if ((*pagewords).nr > maxWordForPage){
+			if (wordsPart->nr > maxWordForPage){
 				#ifdef DEBUG
 					printf("mor then maxWordForPage words\n");
 				#endif
@@ -316,29 +327,29 @@ int wordTypeadd;
 				convert_to_lowercase((unsigned char *)word);
 
 
-				//#ifdef DEBUG_ADULT
 				#ifdef PRESERVE_WORDS
-					strcpy((*pagewords).words[(*pagewords).nr].word,word);
+					strcpy(wordsPart->words[wordsPart->nr].word,word);
 				#endif
-				(*pagewords).words[(*pagewords).nr].WordID =  crc32boitho(word);
-					#ifdef DEBUG
-						printf(" (crc %s -> %u) ",word,(*pagewords).words[(*pagewords).nr].WordID);
-					#endif				
-				(*pagewords).words[(*pagewords).nr].position = ((*pagewords).nextPosition + wordTypeadd);
+				wordsPart->words[wordsPart->nr].WordID =  crc32boitho(word);
+
+				#ifdef DEBUG
+					printf(" (crc %s -> %u) ",word,wordsPart->words[wordsPart->wordsPart->nr].WordID);
+				#endif
+
+				wordsPart->words[wordsPart->nr].position = (wordsPart->nextPosition + wordTypeadd);
 				// må ha en index posisjon her. Slik at vi kan finne ord før og etter. Posisjon er kodet
-				(*pagewords).words[(*pagewords).nr].unsortetIndexPosition = (*pagewords).nr;
+				wordsPart->words[wordsPart->nr].unsortetIndexPosition = wordsPart->nr;
 
-				//printf("nextPosition %i, wordTypeadd %i, position %i\n",(*pagewords).nextPosition,wordTypeadd,(*pagewords).words[(*pagewords).nr].position);
 
-				++(*pagewords).nextPosition;
+				++wordsPart->nextPosition;
 
-				//printf("%s : %lu\n",word,(*pagewords).words[(*pagewords).nr]);
+				//printf("%s : %lu\n",word,wordsPart->words[wordsPart->nr]);
 
-				++(*pagewords).nr;		
+				++wordsPart->nr;		
 			}
 }
 
-void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* pagewords )
+void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void *pagewords )
 {
 
 
@@ -349,7 +360,7 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
         {
             case pu_word: 
 
-			wordsAdd(pagewords,word,puf);
+			wordsAdd(&((struct pagewordsFormat *)pagewords)->normalWords,word,puf);
 
 			#ifdef DEBUG
 	    			switch (puf)
@@ -374,9 +385,11 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 			//ToDo: Vi ser ut til å mangle håntering av link ord her???
 			//har det falt ut ??
 			#ifdef BLACK_BOKS
-				wordsAdd(pagewords,word,puf_none);
+				wordsAdd(&((struct pagewordsFormat *)pagewords)->normalWords,word,puf_none);
 			#else
 				linkwordadd(pagewords,word);
+				wordsAdd(&((struct pagewordsFormat *)pagewords)->linkWords,word,puf_none);
+
 			#endif
 
 			#ifdef DEBUG
@@ -411,6 +424,18 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 				printf("[meta author]");
 			#endif 
 			break;
+            case pu_cloaked_word:
+			#ifdef DEBUG 
+				printf("[pu_cloaked_word]");
+			#endif 
+				wordsAdd(&((struct pagewordsFormat *)pagewords)->spamWords,word,puf_none);
+			break;
+            case pu_cloaked_linkword:
+			#ifdef DEBUG 
+				printf("[pu_cloaked_linkword]");
+			#endif 
+				wordsAdd(&((struct pagewordsFormat *)pagewords)->spamWords,word,puf_none);
+			break;
             default: printf("fn: Unknown type of word\n");
         }
 
@@ -426,7 +451,20 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 
 
 int compare_elements_AdultFraserRecordFormat (const void *p1, const void *p2) {
-	return (strcmp(((struct AdultFraserRecordFormat *)p1)->word1,((struct AdultFraserRecordFormat *)p2)->word1));
+
+	int n;
+
+	n = strcmp(((struct AdultFraserRecordFormat *)p1)->word1,((struct AdultFraserRecordFormat *)p2)->word1);
+
+	//hvis ordene ikke er like kan vi bare returnere
+	if (n != 0) {
+		return n;
+	}
+	else {
+		//sorterer på ord 2
+		return (strcmp(((struct AdultFraserRecordFormat *)p1)->word2,((struct AdultFraserRecordFormat *)p2)->word2));
+	}
+
 }
 int compare_elements_words (const void *p1, const void *p2) {
 
@@ -459,19 +497,20 @@ static int cmp1_crc32(const void *p, const void *q)
    return *(const unsigned long *) p - *(const unsigned long *) q;
 }
 
-//void pagewordsSortOnOccurrence(){
-//	qsort(&pagewords.revIndex, pagewords.revIndexnr , sizeof(struct revIndexFomat), compare_elements_nr);
-//
-//}
 #ifdef BLACK_BOKS
 void aclsMakeRevIndex(struct IndexerRes_acls *acl) {
 
 	int i;
 	unsigned int lastWodID;
 	
+	#ifdef DEBUG
 	printf("aclsMakeRevIndex: aclns %i\n",(*acl).aclnr);
+	#endif
+
 	for(i=0;i<(*acl).aclnr;i++) {
+		#ifdef DEBUG
 		printf("aclsMakeRevIndex: crc32: %u\n",(*acl).acls[i].WordID);
+		#endif
 		(*acl).acls_sorted[i] = (*acl).acls[i];
 	}
 
@@ -487,11 +526,13 @@ void aclsMakeRevIndex(struct IndexerRes_acls *acl) {
 
 		}
 		else {
+			#ifdef DEBUG
 			printf("aclsMakeRevIndex: adding crc32: %u\n",(*acl).acls_sorted[i].WordID);
+			#endif
 
 			(*acl).aclIndex[(*acl).aclIndexnr].WordID = (*acl).acls_sorted[i].WordID;
 			(*acl).aclIndex[(*acl).aclIndexnr].nr = 0;
-			//(*acl).aclIndex[(*acl).aclIndexnr].hits[(*acl).aclIndex[(*acl).aclIndexnr].nr] = (*acl).acls_sorted[i].position;
+			//(*acl).aclIndex[(*acl).aclIndexnr].hits[ (*acl).aclIndex[(*acl).aclIndexnr].nr ].pos = (*acl).acls_sorted[i].position;
 			lastWodID = (*acl).aclIndex[(*acl).aclIndexnr].WordID;
 			++(*acl).aclIndexnr;
 		}
@@ -499,61 +540,52 @@ void aclsMakeRevIndex(struct IndexerRes_acls *acl) {
 }
 #endif
 /****************************************************/
-void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *adult,int *adultWeight, unsigned char *langnr) {
+
+void wordsMakeRevIndex_part(struct pagewordsFormatPartFormat *wordsPart,struct adultFormat *adult,int *adultWeight, unsigned char *langnr) {
 
 	int i,y,adultpos,adultFraserpos;
 	unsigned long oldcrc32;
 	int oldRevIndexnr;
 
 	//kopierer over til den word arrayn som skal være sortert
-	for(i=0;i<(*pagewords).nr;i++) {
-		//(*pagewords).words_sorted[i].WordID = (*pagewords).words[i].WordID;
-		//(*pagewords).words_sorted[i].position = (*pagewords).words[i].position;
-		(*pagewords).words_sorted[i] = (*pagewords).words[i];
-		//#ifdef DEBUG_ADULT
+	for(i=0;i<wordsPart->nr;i++) {
+
+		wordsPart->words_sorted[i] = wordsPart->words[i];
 		#ifdef PRESERVE_WORDS
-			strcpy((*pagewords).words_sorted[i].word,(*pagewords).words[i].word);
+			strcpy(wordsPart->words_sorted[i].word,wordsPart->words[i].word);
 		#endif
 	}
 
 	//sorter ordene
-	qsort(&(*pagewords).words_sorted, (*pagewords).nr , sizeof(struct wordsFormat), compare_elements_words);
+	qsort(&wordsPart->words_sorted, wordsPart->nr , sizeof(struct wordsFormat), compare_elements_words);
 
-	//finner språk
-	char lang[4];
-	langdetectDetect((*pagewords).words_sorted,(*pagewords).nr,lang);
-
-	*langnr = getLangNr(lang);
 
 	oldcrc32 = 0;	
 	adultpos = 0;
 	adultFraserpos = 0;
-	(*adultWeight) = 0;
-	(*pagewords).revIndexnr = 0;
-	for(i=0;i<(*pagewords).nr;i++) {
+	wordsPart->revIndexnr = 0;
+	for(i=0;i<wordsPart->nr;i++) {
 		
-		//printf("oo: %lu %i\n",(*pagewords).words_sorted[i].WordID,(*pagewords).words_sorted[i].position);
 
-		//printf("t%i\n",(*pagewords).revIndexnr);
-
-		if (((*pagewords).words_sorted[i].WordID != oldcrc32) || (oldcrc32 == 0)) {
+		if ((wordsPart->words_sorted[i].WordID != oldcrc32) || (oldcrc32 == 0)) {
 			// nytt ord, skal lages nytt
 			#ifdef DEBUG_ADULT
-				printf("new word. Word \"%s\"\n",(*pagewords).words_sorted[i].word);
+				//printf("new word. Word \"%s\"\n",wordsPart->words_sorted[i].word);
 			#endif
 			#ifdef DEBUG
-				printf("new word. WordID \"%u\"\n",(*pagewords).words_sorted[i].WordID);
+				printf("new word. WordID \"%u\"\n",wordsPart->words_sorted[i].WordID);
 			#endif
 
-			(*pagewords).revIndex[(*pagewords).revIndexnr].WordID = (*pagewords).words_sorted[i].WordID;
-			(*pagewords).revIndex[(*pagewords).revIndexnr].nr = 0;
-			(*pagewords).revIndex[(*pagewords).revIndexnr].hits[(*pagewords).revIndex[(*pagewords).revIndexnr].nr] = (*pagewords).words_sorted[i].position;
+			wordsPart->revIndex[wordsPart->revIndexnr].WordID = wordsPart->words_sorted[i].WordID;
+			wordsPart->revIndex[wordsPart->revIndexnr].nr = 0;
+			wordsPart->revIndex[wordsPart->revIndexnr].hits[ wordsPart->revIndex[wordsPart->revIndexnr].nr ].pos = wordsPart->words_sorted[i].position;
+			wordsPart->revIndex[wordsPart->revIndexnr].hits[ wordsPart->revIndex[wordsPart->revIndexnr].nr ].realpos = wordsPart->words_sorted[i].unsortetIndexPosition;
 
-			//#ifdef DEBUG_ADULT			
+
 			#ifdef PRESERVE_WORDS
-				strcpy((*pagewords).revIndex[(*pagewords).revIndexnr].word,(*pagewords).words_sorted[i].word);
-				(*pagewords).revIndex[(*pagewords).revIndexnr].wordnr = 1;
-				//printf("word %lu %s\n",(*pagewords).revIndex[(*pagewords).revIndexnr].WordID,(*pagewords).words_sorted[i].word);
+				strcpy(wordsPart->revIndex[wordsPart->revIndexnr].word,wordsPart->words_sorted[i].word);
+				wordsPart->revIndex[wordsPart->revIndexnr].wordnr = 1;
+				//printf("word %lu %s\n",wordsPart->revIndex[wordsPart->revIndexnr].WordID,wordsPart->words_sorted[i].word);
 			#endif
 
 
@@ -561,10 +593,11 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 			///////////////////////////
 			// adultWords
 
-
-			while (((*pagewords).revIndex[(*pagewords).revIndexnr].WordID 
-				> (*adult).AdultWords[adultpos].crc32) 
-				&& (adultpos < (*adult).adultWordnr)) {
+			//printf("adultpos %i, (*adult).adultWordnr %i\n",adultpos,(*adult).adultWordnr);
+			while ((
+				(adultpos < (*adult).adultWordnr)
+				&& wordsPart->revIndex[wordsPart->revIndexnr].WordID > (*adult).AdultWords[adultpos].crc32) 
+				) {
 				#ifdef DEBUG
 					//printf("testing for %lu %s\n",(*adult).AdultWords[adultpos].crc32,(*adult).AdultWords[adultpos].word);
 				#endif
@@ -576,7 +609,7 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 				//ToDo: vi får fortsat med siste ord her, ikke sant?
 				//printf("adultpos %i, (*adult).adultWordnr %i\n",adultpos,(*adult).adultWordnr);
 			}
-			else if ((*adult).AdultWords[adultpos].crc32 == (*pagewords).revIndex[(*pagewords).revIndexnr].WordID) {
+			else if ((*adult).AdultWords[adultpos].crc32 == wordsPart->revIndex[wordsPart->revIndexnr].WordID) {
 				#if DEBUG_ADULT
 					printf("adult hit \"%s\" %i\n",(*adult).AdultWords[adultpos].word,(*adult).AdultWords[adultpos].weight);
 				#endif
@@ -586,84 +619,179 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 
 				//exit(1);
 			}
-			///////////////////////////
-			//adult fraser
 
-			while (((*pagewords).revIndex[(*pagewords).revIndexnr].WordID > (*adult).adultFraser[adultFraserpos].crc32) && (adultFraserpos < (*adult).adultWordFrasernr)) {
-				#ifdef DEBUG
-					//printf("s %lu %s\n",(*adult).adultFraser[adultFraserpos].crc32,(*adult).adultFraser[adultFraserpos].word);
-				#endif
-				++adultFraserpos;
-			}
-			if ((*adult).adultFraser[adultFraserpos].crc32 == (*pagewords).revIndex[(*pagewords).revIndexnr].WordID) {
-				
-				//har hitt. Lopper gjenom word2'ene på jakt etter ord nr to
-				#ifdef DEBUG_ADULT
-					printf("word is first in frase %s\n",(*adult).adultFraser[adultFraserpos].word);
-					printf("word pos %i\n",(*pagewords).words_sorted[i].unsortetIndexPosition);
-					printf("bb nex word is \"%s\"\n",(*pagewords).words[((*pagewords).words_sorted[i].unsortetIndexPosition +1)].word);
-					printf("x words to try %i, pos %i\n",(*adult).adultFraser[adultFraserpos].adultWordCount,
-								adultFraserpos);
-				#endif
-
-				for(y=0;y<(*adult).adultFraser[adultFraserpos].adultWordCount;y++) {
-
-					//if ((*adult).adultFraser[adultFraserpos].adultWord[y].crc32 == (*pagewords).words[(*pagewords).words_sorted[i].position +1].WordID) {
-					if ((*adult).adultFraser[adultFraserpos].adultWord[y].crc32 == (*pagewords).words[((*pagewords).words_sorted[i].unsortetIndexPosition +1)].WordID) {
-						#ifdef DEBUG_ADULT
-							printf("frase hit \"%s %s\", weight %i\n",(*pagewords).words_sorted[i].word,(*adult).adultFraser[adultFraserpos].adultWord[y].word,(*adult).adultFraser[adultFraserpos].adultWord[y].weight);
-						#endif
-						//øker adult verdien med vekt
-						(*adultWeight) += (*adult).adultFraser[adultFraserpos].adultWord[y].weight;
-						//printf("adultWeight2 %u\n",(*adultWeight));
-						// 1 juli. Blir feil og gå ut av loopen her da vi kan ha treff på flere fraser.
-						//break;
-					}
-				}
-
-			}
-
-			///////////////////////////
 			#endif
 
-			oldRevIndexnr = (*pagewords).revIndexnr;
+			oldRevIndexnr = wordsPart->revIndexnr;
 			//har fåt et til ord i revindex
-			++(*pagewords).revIndex[(*pagewords).revIndexnr].nr;
+			++wordsPart->revIndex[wordsPart->revIndexnr].nr;
 
-			//printf("b%i\n\n",(*pagewords).revIndexnr);
-			++(*pagewords).revIndexnr;
+			//printf("b%i\n\n",wordsPart->revIndexnr);
+			++wordsPart->revIndexnr;
 		}
 		else {
 			#ifdef DEBUG
-				printf("word seen befor. Adding. WordID \"%u\"\n",(*pagewords).words_sorted[i].WordID);
+				printf("word seen befor. Adding. WordID \"%u\"\n",wordsPart->words_sorted[i].WordID);
 			#endif
 
 			#ifdef PRESERVE_WORDS
-				++(*pagewords).revIndex[oldRevIndexnr].wordnr;
+				++wordsPart->revIndex[oldRevIndexnr].wordnr;
 			#endif
 			// ord er set før, skal legges til det tidligere
 			// må passe på at vi ikke overskriver med flere hits en MaxsHits
-			if ((*pagewords).revIndex[oldRevIndexnr].nr < MaxsHitsInIndex) {
-				(*pagewords).revIndex[oldRevIndexnr].hits[(*pagewords).revIndex[oldRevIndexnr].nr] = (*pagewords).words_sorted[i].position;
-				++(*pagewords).revIndex[oldRevIndexnr].nr;
+			if (wordsPart->revIndex[oldRevIndexnr].nr < MaxsHitsInIndex) {
+				wordsPart->revIndex[oldRevIndexnr].hits[ wordsPart->revIndex[oldRevIndexnr].nr ].pos = wordsPart->words_sorted[i].position;
+				wordsPart->revIndex[oldRevIndexnr].hits[ wordsPart->revIndex[oldRevIndexnr].nr ].realpos = wordsPart->words_sorted[i].unsortetIndexPosition;
+
+				++wordsPart->revIndex[oldRevIndexnr].nr;
 			}
 			else {
 				#ifdef DEBUG
-				printf("to many hits for WordID \"%u\"\n",(*pagewords).words_sorted[i].WordID);
+				printf("to many hits for WordID \"%u\"\n",wordsPart->words_sorted[i].WordID);
 				#endif
 			}
 			//break;
 
 		}
 
-		oldcrc32 = (*pagewords).words_sorted[i].WordID;
+		oldcrc32 = wordsPart->words_sorted[i].WordID;
 
 	
 	}
 
 
+
 }
 
+#ifndef BLACK_BOKS
+void adultPhrases(struct pagewordsFormatPartFormat *wordsPart, struct adultFormat *adult,int *adultWeight, unsigned char *langnr) {
+
+	int i,y,z,adultFraserpos;
+
+	//går gjenom alle hitene og ser etter adult fraser
+	//toDo: denne er ikke helt optimal, da vi teller samme frase igjen og igjen. Så hvis vi har x z y x z, der "x z" er bannnet får vi nå to banninger, som gjør at verdien blir dobelt så stor.
+	adultFraserpos = 0;
+	for (i=0;i<wordsPart->revIndexnr;i++) {
+
+		#ifdef DEBUG_ADULT
+			//printf("word \"%s\", nr %i\n",wordsPart->revIndex[i].word,wordsPart->revIndex[i].nr);
+		#endif
+
+
+
+		while ((wordsPart->revIndex[i].WordID > (*adult).adultFraser[adultFraserpos].crc32) && (adultFraserpos < (*adult).adultWordFrasernr)) {
+			#ifdef DEBUG
+				printf("searching to next adult word, skipping: s %lu %s\n",(*adult).adultFraser[adultFraserpos].crc32,(*adult).adultFraser[adultFraserpos].word);
+			#endif
+			++adultFraserpos;
+		}
+		if ((*adult).adultFraser[adultFraserpos].crc32 == wordsPart->revIndex[i].WordID) {
+
+			
+			//har hitt. Lopper gjenom word2'ene på jakt etter ord nr to
+			#ifdef DEBUG_ADULT
+				printf("word is first in frase %s\n",(*adult).adultFraser[adultFraserpos].word);
+				//printf("bb nex word is \"%s\"\n",wordsPart->words[ wordsPart->revIndex[i].hits[y].realpos +1 ].word);
+				printf("x words to try %i, pos %i\n",(*adult).adultFraser[adultFraserpos].adultWordCount,
+							adultFraserpos);
+			#endif
+
+			//nulstiller oversikten over de ordene vi allerede har lagt til
+			for(z=0;z<(*adult).adultFraser[adultFraserpos].adultWordCount;z++) {
+				(*adult).adultFraser[adultFraserpos].adultWord[z].addedAllReady = 0;
+			}
+
+			for(y=0;y<wordsPart->revIndex[i].nr;y++) {
+
+				for(z=0;z<(*adult).adultFraser[adultFraserpos].adultWordCount;z++) {
+
+					if ((*adult).adultFraser[adultFraserpos].adultWord[z].crc32 
+						== wordsPart->words[ wordsPart->revIndex[i].hits[y].realpos +1 ].WordID) {
+						
+						//setter at vi allerede har sette dette ordet
+						++(*adult).adultFraser[adultFraserpos].adultWord[z].addedAllReady;
+						
+						if ((*adult).adultFraser[adultFraserpos].adultWord[z].addedAllReady != 1) {
+
+							#ifdef DEBUG_ADULT
+
+								printf("frase hit, but have bean added: \"%s %s\", weight %i, sean for the %i. time\n",
+									wordsPart->revIndex[i].word,
+									wordsPart->words[ wordsPart->revIndex[i].hits[y].realpos +1 ].word,
+									(*adult).adultFraser[adultFraserpos].adultWord[z].weight,
+									(*adult).adultFraser[adultFraserpos].adultWord[z].addedAllReady);
+							#endif
+
+							continue;
+						}
+
+						#ifdef DEBUG_ADULT
+							printf("frase hit: \"%s %s\", weight %i\n",
+								wordsPart->revIndex[i].word,
+								wordsPart->words[ wordsPart->revIndex[i].hits[y].realpos +1 ].word,
+								(*adult).adultFraser[adultFraserpos].adultWord[z].weight);
+						#endif
+						//øker adult verdien med vekt
+						(*adultWeight) += (*adult).adultFraser[adultFraserpos].adultWord[z].weight;
+
+					}
+					else {
+						#ifdef DEBUG_ADULT
+						//	printf("NOT frase hit \"%s %s\", weight %i\n",wordsPart->words_sorted[i].word,(*adult).adultFraser[adultFraserpos].adultWord[y].word,(*adult).adultFraser[adultFraserpos].adultWord[y].weight);
+						#endif 
+					}
+				}
+			}
+
+		}
+		
+		
+
+	}
+
+}
+#endif
+
+void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *adult,int *adultWeight, unsigned char *langnr) {
+
+	(*adultWeight) = 0;
+
+	wordsMakeRevIndex_part(&pagewords->normalWords,adult,adultWeight,langnr);
+
+
+	//finner språk
+	char lang[4];
+	langdetectDetect(pagewords->normalWords.words_sorted,pagewords->normalWords.nr,lang);
+	printf("lang: \"%s\"\n",lang);
+	*langnr = getLangNr(lang);
+
+
+	// normal words
+	#ifndef BLACK_BOKS
+	adultPhrases(&pagewords->normalWords,adult,adultWeight,langnr);
+	#endif
+
+	printf("wordsMakeRevIndex: adult after normalWords %i\n",(*adultWeight));
+
+
+	// link word
+	wordsMakeRevIndex_part(&pagewords->linkWords,adult,adultWeight,langnr);
+	#ifndef BLACK_BOKS
+	adultPhrases(&pagewords->linkWords,adult,adultWeight,langnr);
+	#endif
+
+	printf("wordsMakeRevIndex: adult after linkWords %i\n",(*adultWeight));
+
+
+	// spam word
+	wordsMakeRevIndex_part(&pagewords->spamWords,adult,adultWeight,langnr);
+	#ifndef BLACK_BOKS
+	adultPhrases(&pagewords->spamWords,adult,adultWeight,langnr);
+	#endif
+
+	printf("wordsMakeRevIndex: adult after spamWords %i\n",(*adultWeight));
+
+}
 
 
 
@@ -728,18 +856,26 @@ void adultLoad (struct adultFormat *adult) {
 			buff[x] = btolower(buff[x]);
 		}
 
+
 		//finner space, som er det som skiller
                 cpoint = strchr(buff,' ');
 		if (cpoint != NULL) {
 
-			strncpy((*adult).AdultWords[i].word,buff,cpoint - buff);
+			//strncpy((*adult).AdultWords[i].word,buff,cpoint - buff);
+			strscpy((*adult).AdultWords[i].word,buff,cpoint - buff +1);
+
+
 			//vil ikke ha men spacen. Går et hakk vidre
 			++cpoint;
 			(*adult).AdultWords[i].weight = atoi(cpoint);
-	
+			
+
 			(*adult).AdultWords[i].crc32 = crc32boitho((*adult).AdultWords[i].word);
 
 		}		
+		else {
+			printf("bad AdultWords \"%s\"\n",buff);
+		}
 
 		//(*adult).AdultWords[i].word[strlen((*adult).AdultWords[i].word) -1] = '\0';
 
@@ -795,6 +931,10 @@ void adultLoad (struct adultFormat *adult) {
 		}
 		++y;
 	}
+	if (maxAdultWords == y) {
+		printf("Adult frase list is larger then maxAdultWords (%i)\n",maxAdultWords);
+		exit(1);
+	}
 
 
 	qsort(AdultFraserRecords, y , sizeof(struct AdultFraserRecordFormat), compare_elements_AdultFraserRecordFormat);
@@ -802,9 +942,17 @@ void adultLoad (struct adultFormat *adult) {
 	i=-1;	
 	for (x=0;x<y;x++) {
 
+			if (x != 0) {
+				if ((strcmp(AdultFraserRecords[x].word1,AdultFraserRecords[x -1].word1) == 0) && (strcmp(AdultFraserRecords[x].word2,AdultFraserRecords[x -1].word2) == 0)) {
+					printf("dublicate adult frase: %i: %s %s %i\n",i,AdultFraserRecords[x].word1,AdultFraserRecords[x].word2,AdultFraserRecords[x].weight);
+					continue;
+				}
+			}
+
 			#ifdef DEBUG
-			printf("%i: %s, %s, %i\n",i,AdultFraserRecords[x].word1,AdultFraserRecords[x].word2,AdultFraserRecords[x].weight);
+				printf("adult frase: %i: %s, %s, %i\n",i,AdultFraserRecords[x].word1,AdultFraserRecords[x].word2,AdultFraserRecords[x].weight);
 			#endif	
+
 			//finner crc32 verdeien for første ord
 			crc32tmp = crc32boitho(AdultFraserRecords[x].word1);
 
@@ -900,7 +1048,11 @@ void copyRepToDi(struct DocumentIndexFormat *DocumentIndexPost,struct Reposetory
 			(*DocumentIndexPost).ResourcePointer 	= 0;
 			(*DocumentIndexPost).ResourceSize 	= 0;
 #ifdef BLACK_BOKS
-			DocumentIndexPost->lastSeen = ReposetoryHeader->storageTime;
+			//runarb: 31 mars 2008: gjør dette bare hvis vi ikke har en tid fra før. Hvis ikke risikerer 
+			//vi og tilbake datere tiden, og dermed slettes den av garbage collection.
+			//if (DocumentIndexPost->lastSeen == 0) {
+			//	DocumentIndexPost->lastSeen = ReposetoryHeader->storageTime;
+			//}
 #endif
 }
 
@@ -961,7 +1113,7 @@ void aclsMakeRevIndexBucket (struct IndexerRes_acls *acl,unsigned int DocID,unsi
 			p += memcpyrc(p,&(*acl).aclIndex[i].WordID,sizeof(unsigned long));
 			p += memcpyrc(p,&(*acl).aclIndex[i].nr,sizeof(unsigned long));
 			for(y=0;y<(*acl).aclIndex[i].nr;y++) {
-				p += memcpyrc(p,&(*acl).aclIndex[i].hits[y],sizeof(unsigned short));
+				p += memcpyrc(p,&(*acl).aclIndex[i].hits[y].pos,sizeof(unsigned short));
 			}
 
 			(*acl).nrofAclBucketElements[(*acl).aclIndex[i].bucket].p = p;
@@ -971,74 +1123,84 @@ void aclsMakeRevIndexBucket (struct IndexerRes_acls *acl,unsigned int DocID,unsi
 }
 
 #endif
-void wordsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int DocID,unsigned char *langnr) {
+void wordsMakeRevIndexBucket_part(struct pagewordsFormatPartFormat *wordsPart,unsigned int DocID,unsigned char *langnr) {
 
 	int i,y;
 
 
 	for(i=0;i<NrOfDataDirectorys;i++) {
-		(*pagewords).nrofBucketElements[i].records = 0;
-		(*pagewords).nrofBucketElements[i].hits = 0;
+		wordsPart->nrofBucketElements[i].records = 0;
+		wordsPart->nrofBucketElements[i].hits = 0;
 	}
 
-	//printf("revIndexnr %i\n",(*pagewords).revIndexnr);
-	for(i=0;i<(*pagewords).revIndexnr;i++) {
 
-		(*pagewords).revIndex[i].bucket = (*pagewords).revIndex[i].WordID % NrOfDataDirectorys;
+	for(i=0;i<wordsPart->revIndexnr;i++) {
 
-		++(*pagewords).nrofBucketElements[(*pagewords).revIndex[i].bucket].records;
-		(*pagewords).nrofBucketElements[(*pagewords).revIndex[i].bucket].hits += (*pagewords).revIndex[i].nr;
+		wordsPart->revIndex[i].bucket = wordsPart->revIndex[i].WordID % NrOfDataDirectorys;
+
+		++wordsPart->nrofBucketElements[wordsPart->revIndex[i].bucket].records;
+		wordsPart->nrofBucketElements[wordsPart->revIndex[i].bucket].hits += wordsPart->revIndex[i].nr;
 	}
 	
 	for(i=0;i<NrOfDataDirectorys;i++) {
-		(*pagewords).nrofBucketElements[i].bucketbuffsize = ((sizeof(unsigned int) + sizeof(char) + sizeof(unsigned long) + sizeof(unsigned long)) * (*pagewords).nrofBucketElements[i].records) + ((*pagewords).nrofBucketElements[i].hits * sizeof(unsigned short));
-		//printf("bucketbuffsize %i\n",(*pagewords).nrofBucketElements[i].bucketbuffsize);
+		wordsPart->nrofBucketElements[i].bucketbuffsize = ((sizeof(unsigned int) + sizeof(char) + sizeof(unsigned long) + sizeof(unsigned long)) * wordsPart->nrofBucketElements[i].records) + (wordsPart->nrofBucketElements[i].hits * sizeof(unsigned short));
 
-		(*pagewords).nrofBucketElements[i].bucketbuff = malloc((*pagewords).nrofBucketElements[i].bucketbuffsize);
+		wordsPart->nrofBucketElements[i].bucketbuff = malloc(wordsPart->nrofBucketElements[i].bucketbuffsize);
 	}
 
 	//setter pekeren til begyndelsen. Siden vil vi jo flytte denne etter hvert som vi kommer lenger ut
 	for(i=0;i<NrOfDataDirectorys;i++) {
-		(*pagewords).nrofBucketElements[i].p = (*pagewords).nrofBucketElements[i].bucketbuff;
+		wordsPart->nrofBucketElements[i].p = wordsPart->nrofBucketElements[i].bucketbuff;
 	}
 
-	//bruker en temperær p peker her som erstatning for (*pagewords).nrofBucketElements[(*pagewords).revIndex[i].bucket].p, 
+	//bruker en temperær p peker her som erstatning for wordsPart->nrofBucketElements[wordsPart->revIndex[i].bucket].p, 
 	//så koden ikke blir så uoversiktelig
 	void *p;
-	for(i=0;i<(*pagewords).revIndexnr;i++) {
+	for(i=0;i<wordsPart->revIndexnr;i++) {
 		
-			p = (*pagewords).nrofBucketElements[(*pagewords).revIndex[i].bucket].p;
+			p = wordsPart->nrofBucketElements[wordsPart->revIndex[i].bucket].p;
 
 			p += memcpyrc(p,&DocID,sizeof(unsigned int));
 			p += memcpyrc(p,langnr,sizeof(char));
-			p += memcpyrc(p,&(*pagewords).revIndex[i].WordID,sizeof(unsigned long));
-			p += memcpyrc(p,&(*pagewords).revIndex[i].nr,sizeof(unsigned long));
-			for(y=0;y<(*pagewords).revIndex[i].nr;y++) {
-				p += memcpyrc(p,&(*pagewords).revIndex[i].hits[y],sizeof(unsigned short));
+			p += memcpyrc(p,&wordsPart->revIndex[i].WordID,sizeof(unsigned long));
+			p += memcpyrc(p,&wordsPart->revIndex[i].nr,sizeof(unsigned long));
+			for(y=0;y<wordsPart->revIndex[i].nr;y++) {
+				p += memcpyrc(p,&wordsPart->revIndex[i].hits[y].pos,sizeof(unsigned short));
 			}
 
-			(*pagewords).nrofBucketElements[(*pagewords).revIndex[i].bucket].p = p;
+			wordsPart->nrofBucketElements[wordsPart->revIndex[i].bucket].p = p;
 		
 	}
 
 
 
 }
-void dictionaryWordsWrite (struct pagewordsFormat *pagewords,FILE *FH, char *acl_allow, char *acl_denied) {
+
+void wordsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int DocID,unsigned char *langnr) {
+
+	wordsMakeRevIndexBucket_part(&pagewords->normalWords,DocID,langnr);
+
+}
+
+void dictionaryWordsWrite_part (struct pagewordsFormatPartFormat *wordsPart,FILE *FH, char *acl_allow, char *acl_denied) {
 
 	int i;
 
 	#ifdef PRESERVE_WORDS
-		for(i=0;i<(*pagewords).revIndexnr;i++) {
+		for(i=0;i<wordsPart->revIndexnr;i++) {
 			#ifdef DEBUG
-			printf("word: \"%s\": %i (acl: allow: %s denied: %s)\n",(*pagewords).revIndex[i].word, 
-			       (*pagewords).revIndex[i].wordnr, acl_allow, acl_denied);
+			printf("word: \"%s\": %i (acl: allow: %s denied: %s)\n",wordsPart->revIndex[i].word, 
+			       wordsPart->revIndex[i].wordnr, acl_allow, acl_denied);
 
 			#endif
-			fprintf(FH,"%s %i %s %s\n",(*pagewords).revIndex[i].word,(*pagewords).revIndex[i].wordnr, acl_allow, acl_denied ? acl_denied : "");
+			fprintf(FH,"%s %i %s %s\n",wordsPart->revIndex[i].word,wordsPart->revIndex[i].wordnr, acl_allow, acl_denied ? acl_denied : "");
 		}
 	#endif
 
+}
+
+void dictionaryWordsWrite (struct pagewordsFormat *pagewords,FILE *FH, char *acl_allow, char *acl_denied) {
+	dictionaryWordsWrite_part(&pagewords->normalWords,FH,acl_allow,acl_denied);
 }
 
 /**************************************************************************************
@@ -1069,73 +1231,30 @@ void aclindexFilesAppendWords(struct IndexerRes_acls *acl,FILE *aclindexFilesHa[
 /**************************************************************************************
 Skriver reversert index til disk
 ***************************************************************************************/
-void revindexFilesAppendWords(struct pagewordsFormat *pagewords,FILE *revindexFilesHa[],unsigned int DocID,unsigned char *langnr) {
+void revindexFilesAppendWords_part(struct pagewordsFormatPartFormat *wordsPart,FILE *revindexFilesHa[],unsigned int DocID,unsigned char *langnr) {
 
 	int i,y;
 	int bucket;
 
-	/*	
-	//skriver først en hedder til alle filene
 	for(i=0;i<NrOfDataDirectorys;i++) {
-		fwrite(&DocID,sizeof(unsigned int),1,revindexFilesHa[i]);
-		// skriver 3 tegn av sprøket. Er det vi bruker
-		//fwrite(&lang,sizeof(char),3,revindexFilesHa[i]);
-		//temp, lattlige språkproblemer her :(
-		fprintf(revindexFilesHa[i],"aa ");
-	}
-	*/
-
-
-	for(i=0;i<NrOfDataDirectorys;i++) {
-		if ((*pagewords).nrofBucketElements[i].bucketbuffsize != 0) {
-			fwrite((*pagewords).nrofBucketElements[i].bucketbuff,(*pagewords).nrofBucketElements[i].bucketbuffsize,1,revindexFilesHa[i]);
+		if (wordsPart->nrofBucketElements[i].bucketbuffsize != 0) {
+			fwrite(wordsPart->nrofBucketElements[i].bucketbuff,wordsPart->nrofBucketElements[i].bucketbuffsize,1,revindexFilesHa[i]);
 		}
 	}
 
 
 	for(i=0;i<NrOfDataDirectorys;i++) {
-			free((*pagewords).nrofBucketElements[i].bucketbuff);
+			free(wordsPart->nrofBucketElements[i].bucketbuff);
 		
 	}
 
 
-
-/*
-	for(i=0;i<(*pagewords).revIndexnr;i++) {
-
-
-		bucket = (*pagewords).revIndex[i].WordID % NrOfDataDirectorys;
-
-		#ifdef DEBUG
-			printf("WordID %lu forekomster %i (+1). bucket %i\n",(*pagewords).revIndex[i].WordID,(*pagewords).revIndex[i].nr,bucket);
-		#endif
-
-		//++(*pagewords).revIndex[i].nr;
-		fwrite(&DocID,sizeof(unsigned int),1,revindexFilesHa[bucket]);
-		//fprintf(revindexFilesHa[bucket],"aa ");
-		fwrite(langnr,sizeof(char),1,revindexFilesHa[bucket]);
-		//printf("lang1 %i%\n",(int)*langnr);
-
-		fwrite(&(*pagewords).revIndex[i].WordID,sizeof(unsigned long),1,revindexFilesHa[bucket]);	
-		fwrite(&(*pagewords).revIndex[i].nr,sizeof(unsigned long),1,revindexFilesHa[bucket]);
-
-		for(y=0;y<(*pagewords).revIndex[i].nr;y++) {
-			//printf("\thits %i\n",(*pagewords).revIndex[i].hits[y]);
-			fwrite(&(*pagewords).revIndex[i].hits[y],sizeof(unsigned short),1,revindexFilesHa[bucket]);
-		}
-
-	}	
-*/
-	/*
-	//skriver record terminator
-	for(i=0;i<NrOfDataDirectorys;i++) {
-		//ToDo: her bruker vi \n for linefeed, men bruker \cJ i perl. På andre platformer en *nix vil det føre til problmer
-		//	erstatt \n med tegnet for linefeed
-		fprintf(revindexFilesHa[i],"**\n");
-	}
-	*/
 }
 
+void revindexFilesAppendWords(struct pagewordsFormat *pagewords,FILE *revindexFilesHa[],unsigned int DocID,unsigned char *langnr) {
+
+	revindexFilesAppendWords_part(&pagewords->normalWords,revindexFilesHa,DocID,langnr);
+}
 
 void html_parser_timout( int signo )
 {
@@ -1150,7 +1269,7 @@ void html_parser_timout( int signo )
 
 
 void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, 
-		char HtmlBuffer[],int HtmlBufferLength,struct DocumentIndexFormat *DocumentIndexPost, 
+		char HtmlBuffer[],int HtmlBufferLength, 
 		int DocID,int httpResponsCodes[], struct adultFormat *adult,
 		char **title, char **body) {
 
@@ -1182,18 +1301,6 @@ void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct Rep
 					//else {
 
 
-						/*
-						wordsMakeRevIndex(pagewords,adult,&AdultWeight,langnr);
-
-						if (AdultWeight > 255) {
-							(*DocumentIndexPost).AdultWeight = 255;
-						}
-						else {
-							(*DocumentIndexPost).AdultWeight = AdultWeight;
-						}
-
-						revindexFilesAppendWords(pagewords,revindexFilesHa,(*ReposetoryHeader).DocID,langnr);
-						*/
 					//}
 				
 

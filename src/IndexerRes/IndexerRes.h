@@ -17,7 +17,7 @@
 #include "../common/DocumentIndex.h"
 #include "../common/lot.h"
 
-#include "../parser/html_parser.h"
+#include "../parser2/html_parser.h"
 
 #define IndexerMaxLinks 4048
 
@@ -29,7 +29,7 @@
 	#define maxWordForPage 4000
 #endif
 
-#define maxAdultWords 500
+#define maxAdultWords 5000
 #define maxWordlLen 30
 #define MaxAdultWordCount 100
 
@@ -63,6 +63,12 @@ struct adultWordFormat {
 	char word[maxWordlLen +1];
 	unsigned long crc32;
 	int weight;
+	int addedAllReady;
+};
+
+struct revHitsFormat {
+	unsigned short pos;
+	unsigned short realpos;
 };
 
 struct revIndexFomat {
@@ -73,7 +79,7 @@ struct revIndexFomat {
 	#endif
         unsigned long WordID;
         unsigned long nr;
-        unsigned short hits[MaxsHitsInIndex];
+        struct revHitsFormat hits[MaxsHitsInIndex];
 	int bucket;
 
 };
@@ -129,18 +135,30 @@ struct IndexerRes_acls {
 };
 #endif
 
-struct pagewordsFormat {
+struct pagewordsFormatPartFormat{
 	int nr;
-	int nextPosition;
 	struct wordsFormat words[maxWordForPage];
 	struct wordsFormat words_sorted[maxWordForPage];
+
 	int revIndexnr;
 	struct revIndexFomat revIndex[maxWordForPage];
+
+	int nextPosition;
+
+	struct nrofBucketElementsFormat nrofBucketElements[NrOfDataDirectorys];
+
+};
+
+struct pagewordsFormat {
+
+	struct pagewordsFormatPartFormat normalWords;
+	struct pagewordsFormatPartFormat linkWords;
+	struct pagewordsFormatPartFormat spamWords;
+
 	int nrOfOutLinks;
 	char lasturl[201];
 	int curentUrlIsDynamic;
 	unsigned int curentDocID;
-	struct nrofBucketElementsFormat nrofBucketElements[NrOfDataDirectorys];
 	unsigned int DocID;
 	//struct updateFormat updatePost[IndexerMaxLinks];
 	//struct outlinksFormat outlinks[IndexerMaxLinks];
@@ -166,7 +184,7 @@ void revindexFilesAppendWords(struct pagewordsFormat *pagewords,FILE *revindexFi
 void wordsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int DocID,unsigned char *langnr) ;
 
 void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader,
-                char HtmlBuffer[],int HtmlBufferLength,struct DocumentIndexFormat *DocumentIndexPost,
+                char HtmlBuffer[],int HtmlBufferLength,
                 int DocID,int httpResponsCodes[], struct adultFormat *adult,
                 char **title, char **body);
 
