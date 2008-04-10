@@ -6,6 +6,7 @@
 
 int rGetNextNET(char *HostName, unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,char subname[]);
 
+int readHTMLNET_toHost(char *subname, unsigned int DocID, char *text, unsigned int len,struct ReposetoryHeaderFormat *ReposetoryHeader, char HostName[]);
 
 void DIWriteNET (char *HostName, struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[]);
 

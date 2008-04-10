@@ -694,19 +694,14 @@ anchorReadNET(char *hostname, char *subname, unsigned int DocID, char *text, int
 
 
 /* XXX: Send and receive compressed data */
+
 int
-readHTMLNET(char *subname, unsigned int DocID, char *text, unsigned int len,struct ReposetoryHeaderFormat *ReposetoryHeader)
+readHTMLNET_tosoc(char *subname, unsigned int DocID, char *text, unsigned int len,struct ReposetoryHeaderFormat *ReposetoryHeader, int socketha)
 {
-	int socketha;
 	int i;
 	int LotNr;
 
 	LotNr = rLotForDOCid(DocID);
-	socketha = conectTo(LotNr);
-	if (socketha == -1) {
-		text[0] = '\0';
-		return 0;
-	}
 
 	sendpacked(socketha, C_readHTML, BLDPROTOCOLVERSION, sizeof(DocID), &DocID, subname);
 
@@ -734,6 +729,42 @@ readHTMLNET(char *subname, unsigned int DocID, char *text, unsigned int len,stru
 	}
 
 	return len;
+}
+
+int
+readHTMLNET_toHost(char *subname, unsigned int DocID, char *text, unsigned int len,struct ReposetoryHeaderFormat *ReposetoryHeader, char HostName[])
+{
+
+	int ret;
+
+	socketha = cconnect(HostName, BLDPORT);
+
+	if (socketha == 0) {
+		text[0] = '\0';
+		return 0;
+	}
+
+	ret =  readHTMLNET_tosoc(subname,DocID,text,len,ReposetoryHeader,socketha);
+
+	close(socketha);
+
+
+	return ret;
+}
+int
+readHTMLNET(char *subname, unsigned int DocID, char *text, unsigned int len,struct ReposetoryHeaderFormat *ReposetoryHeader)
+{
+
+	int LotNr = rLotForDOCid(DocID);
+
+	socketha = conectTo(LotNr);
+
+	if (socketha == -1) {
+		text[0] = '\0';
+		return 0;
+	}
+
+	return readHTMLNET_tosoc(subname,DocID,text,len,ReposetoryHeader, socketha);
 }
 
 unsigned int GetLastIndexTimeForLotNET(char *HostName, int LotNr,char subname[]){
