@@ -150,7 +150,7 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
                         exit(1);
                 }
 
-	printf("bind ok. Antering accept loop\n");
+	printf("bind to port %i ok. Antering accept loop\n",PORT);
         while(1) {  // main accept() loop
             sin_size = sizeof(struct sockaddr_in);
             if ((new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size)) == -1) {
