@@ -34,7 +34,7 @@ int main (int argc, char *argv[]) {
 			fread(&updatePost,sizeof(struct updateFormat),1,nyeurler);
 
 						
-			printf("%s %s %u ",updatePost.url,updatePost.linktext,updatePost.DocID_from);
+			printf("%s \"%s\" %u ",updatePost.url,updatePost.linktext,updatePost.DocID_from);
 			//printf("%u\n",updatePost.DocID_from);
 			//debug vise sha1'en
 			for (y=0;y<20;y++) {
