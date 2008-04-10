@@ -12,42 +12,6 @@
 
 #include "../parser/html_parser.h"
 
-/*
-void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* wordlist )
-{
-    //if (pos > 25) return;
-
-    printf("\t%s (%i) ", word, pos);
-    printf("pu %i ",pu);
-
-    switch (pu)
-        {
-            case pu_word: printf("[word]"); break;
-            case pu_linkword: printf("[linkword]"); break;
-            case pu_link: printf("[link]"); break;
-            case pu_baselink: printf("[baselink]"); break;
-            case pu_meta_keywords: printf("[meta keywords]"); break;
-            case pu_meta_description: printf("[meta description]"); break;
-            case pu_meta_author: printf("[meta author]"); break;
-            case pu_meta_redirect: printf("[meta redirect]"); break;
-            default: printf("[...]");
-        }
-
-    switch (puf)
-        {
-            case puf_none: break;
-            case puf_title: printf(" +title"); break;
-            case puf_h1: printf(" +h1"); break;
-            case puf_h2: printf(" +h2"); break;
-            case puf_h3: printf(" +h3"); break;
-            case puf_h4: printf(" +h4"); break;
-            case puf_h5: printf(" +h5"); break;
-            case puf_h6: printf(" +h6"); break;
-        }
-
-    printf("\n");
-}
-*/
 
 void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* pagewords )
 {
@@ -125,17 +89,20 @@ int main (int argc, char *argv[]) {
 	char *acl_allowbuffer = NULL;
 	char *acl_deniedbuffer = NULL;
 
-	printf("%i\n",argc);
+	char timebuf[26];
 
 	int optShowhtml = 0;
 	int optShowWords = 0;
 	int optSummary = 0;
 	int optAnchor = 0;
 	int optResource = 0;
+	int optPopRank = 0;
+	int optDelete = 0;
+
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"hwsar"))!=-1) {
+        while ((c=getopt(argc,argv,"hwsarpd"))!=-1) {
                 switch (c) {
                         case 'h':
                                 optShowhtml = 1;
@@ -149,8 +116,14 @@ int main (int argc, char *argv[]) {
                         case 'a':
 				optAnchor = 1;
                                 break;
+			case 'p':
+				optPopRank = 1;
+				break;
 			case 'r':
 				optResource = 1;
+				break;
+			case 'd':
+				optDelete = 1;
 				break;
                         default:
                                           exit(1);
@@ -158,8 +131,9 @@ int main (int argc, char *argv[]) {
         }
         --optind;
 
+	#ifdef DEBUG
         printf("argc %i, optind %i\n",argc,optind);
-
+	#endif
 
         if ((argc - optind)!= 3) {
 		printf("Dette programet gir info om en DocID\n\n\tUsage PageInfo DocID collection\n");
@@ -171,37 +145,74 @@ int main (int argc, char *argv[]) {
 
 	html_parser_init();
 
-	printf("subname \"%s\", DocID %u\n",subname,DocID);
+	printf("Showing data for Collection \"%s\", DocID %u\n\n",subname,DocID);
 
-	//int DIRead (struct DocumentIndexFormat *DocumentIndexPost, int DocID)
 
-	printf("Lot %i\n",rLotForDOCid(DocID));
+	printf("Lot: %i\n",rLotForDOCid(DocID));
+
+	if (optDelete) {
+		memset(&DocumentIndexPost,'\0',sizeof(DocumentIndexPost));
+		DIWrite(&DocumentIndexPost,DocID,subname,NULL);
+		
+		return 0;
+	}
 
 	if (DIRead(&DocumentIndexPost,DocID,subname)) {
 
-		printf("Url: %s\nSprok: %s\nOffensive_code: %hu\nDokumenttype: %s\nCrawleDato: %u\nAntallFeiledeCrawl: %hu\nAdultWeight: %hu\nResourceSize: %u\nIPAddress: %u\nresponse: %hu\nhtmlSize: %i\nimageSize: %i\nuserID: %i\nclientVersion: %f\nRepositoryPointer: %u\nhtmlSize %i\n\n",DocumentIndexPost.Url, DocumentIndexPost.Sprok, DocumentIndexPost.Offensive_code, DocumentIndexPost.Dokumenttype,  DocumentIndexPost.CrawleDato, DocumentIndexPost.AntallFeiledeCrawl, DocumentIndexPost.AdultWeight, DocumentIndexPost.ResourceSize, DocumentIndexPost.IPAddress, DocumentIndexPost.response, DocumentIndexPost.htmlSize, DocumentIndexPost.imageSize,DocumentIndexPost.userID, DocumentIndexPost.clientVersion,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize);
+		printf("Url: \"%s\"\nLanguage: %s\nOffensive code: %hu\nDocument type: %s\nTime tested sins last good crawl: %hu\nAdult weight: %hu\nResource size: %u\nIPAddress: %u\nHtml size: %i\nImage size: %i\nUserID: %i\nCrawler version: %f\nRepository pointer: %u\n",
+			DocumentIndexPost.Url, 
+			DocumentIndexPost.Sprok, 
+			DocumentIndexPost.Offensive_code, 
+			DocumentIndexPost.Dokumenttype, 
+			DocumentIndexPost.AntallFeiledeCrawl, 
+			DocumentIndexPost.AdultWeight, 
+			DocumentIndexPost.ResourceSize, 
+			DocumentIndexPost.IPAddress, 
+			DocumentIndexPost.htmlSize, 
+			DocumentIndexPost.imageSize,
+			DocumentIndexPost.userID, 
+			DocumentIndexPost.clientVersion,
+			DocumentIndexPost.RepositoryPointer);
+
+		if (DocumentIndexPost.response == 200) {
+			printf("HTTP response: %hu\n",DocumentIndexPost.response);
+		}
+		else {
+			printf("HTTP response: \033[1;31m%hu\033[0m\n",DocumentIndexPost.response);
+
+		}
 
 
-		printf("time %s (%u)\n",ctime((time_t *)&DocumentIndexPost.CrawleDato),DocumentIndexPost.CrawleDato);
-		printf("crc32 %u\n",DocumentIndexPost.crc32);
+		ctime_r((time_t *)&DocumentIndexPost.CrawleDato,timebuf);
+		timebuf[24] = '\0';
+
+		printf("Last crawled time: %s\n",timebuf);
+	
+		printf("crc32: %u\n",DocumentIndexPost.crc32);
 
 #ifdef BLACK_BOKS
 		printf("lastSeen: %s (%u)\n", ctime(&DocumentIndexPost.lastSeen), DocumentIndexPost.lastSeen);
 #endif
 
-		printf("SummaryPointer %u\nSummarySize %hu\n\n",DocumentIndexPost.SummaryPointer,DocumentIndexPost.SummarySize);
-		printf("nrOfOutLinks: %u\n",(unsigned int)DocumentIndexPost.nrOfOutLinks);
-		///////////////
-		char *metadesc, *title, *body;
+		printf("Nr of out links: %u\n",(unsigned int)DocumentIndexPost.nrOfOutLinks);
 
-		if (rReadSummary(DocID,&metadesc, &title, &body,DocumentIndexPost.SummaryPointer,DocumentIndexPost.SummarySize,subname)) {
-			printf("title %s\nmetadesc %s\n",title,metadesc);
+
+		char *metadesc, *title, *body;
+		if (DocumentIndexPost.SummarySize == 0) {
+			printf("Don't have pre-parsed summery (summary size is 0)\n");
+
+		}
+		else if (rReadSummary(DocID,&metadesc, &title, &body,DocumentIndexPost.SummaryPointer,DocumentIndexPost.SummarySize,subname)) {
+			printf("\nSummary:\n");
+			printf("\tSummary pointer: %u\n\tSummary size: %hu\n",DocumentIndexPost.SummaryPointer,DocumentIndexPost.SummarySize);
+
+			printf("\tTitle from summary:  \"%s\"\n\tMeta description from summary: \"%s\"\n",title,metadesc);
 			if (optSummary) {
 				printf("sumary body\n*******************\n%s\n*******************\n\n",body);
 			}
 		}
 		else {
-			printf("dont have summery\n");
+			printf("Don't have pre-parsed summery\n");
 		}
 
 
@@ -209,7 +220,7 @@ int main (int argc, char *argv[]) {
 
 
 		if ((optShowhtml) || (optShowWords)) {
-			htmlBufferSize = 300000;
+			htmlBufferSize = 3000000;
 			htmlBuffer = malloc(htmlBufferSize);
 			struct ReposetoryHeaderFormat ReposetoryHeader;
 
@@ -266,61 +277,61 @@ int main (int argc, char *argv[]) {
 
 		#ifndef BLACK_BOKS
 
-		popopen (&popindex,"/home/boitho/config/popindex");
-		PopRanindex = popRankForDocID(&popindex,DocID);		
-		popclose(&popindex);
-		printf("popindex %i\n",PopRanindex);
-
-		if (popopen (&popextern,"/home/boitho/config/popextern")) {
-			PopRankextern =  popRankForDocID(&popextern,DocID);
-			printf("PopRankextern: %i\n",PopRankextern);
-			popclose(&popextern);
-		}
-        	if (popopen (&popintern,"/home/boitho/config/popintern")) {
-			PopRankintern =  popRankForDocID(&popintern,DocID);
-			printf("PopRankintern %i\n",PopRankintern);
-			popclose(&popintern);
-		}
-        	if (popopen (&popnoc,"/home/boitho/config/popnoc")) {
-			PopRanknoc =  popRankForDocID(&popnoc,DocID);
-			printf("PopRanknoc %i\n",PopRanknoc);
-			popclose(&popnoc);
-		}
-		if (popopen (&popindex,"/home/boitho/config/popindex")) {
+		if (optPopRank) {
+			popopen (&popindex,"/home/boitho/config/popindex");
 			PopRanindex = popRankForDocID(&popindex,DocID);		
-			printf("popindex %i\n",PopRanindex);
 			popclose(&popindex);
-		}
+			printf("popindex %i\n",PopRanindex);
 
-
-
-		printf("PopRankextern: %i\nPopRankintern %i\nPopRanknoc %i\n",PopRankextern,PopRankintern,PopRanknoc);
-		
-
-		int brank;
-		popopenMemArray_oneLot(subname,rLotForDOCid(DocID));
-		brank = popRankForDocIDMemArray(DocID);
-		printf("brank %i\n",brank);
-		//short rank
-		if ( (FH = fopen(SHORTPOPFILE,"rb")) == NULL ) {
-                	perror("open");
-        	}
-		else {
-			if ((fseek(FH,DocID* sizeof(ShortRank),SEEK_SET) == 0) && (fread(&ShortRank,sizeof(ShortRank),1,FH) != 0)){
-
-				printf("Short rank %u\n",(unsigned char)ShortRank);
+			if (popopen (&popextern,"/home/boitho/config/popextern")) {
+				PopRankextern =  popRankForDocID(&popextern,DocID);
+				printf("PopRankextern: %i\n",PopRankextern);
+				popclose(&popextern);
 			}
-			else {
-				printf("no hort rank avalibal\n");
-			};
-		
-			fclose(FH);
-		}
+        		if (popopen (&popintern,"/home/boitho/config/popintern")) {
+				PopRankintern =  popRankForDocID(&popintern,DocID);
+				printf("PopRankintern %i\n",PopRankintern);
+				popclose(&popintern);
+			}
+        		if (popopen (&popnoc,"/home/boitho/config/popnoc")) {
+				PopRanknoc =  popRankForDocID(&popnoc,DocID);
+				printf("PopRanknoc %i\n",PopRanknoc);
+				popclose(&popnoc);
+			}
+			if (popopen (&popindex,"/home/boitho/config/popindex")) {
+				PopRanindex = popRankForDocID(&popindex,DocID);		
+				printf("popindex %i\n",PopRanindex);
+				popclose(&popindex);
+			}
 
+
+
+			printf("PopRankextern: %i\nPopRankintern %i\nPopRanknoc %i\n",PopRankextern,PopRankintern,PopRanknoc);
+		
+
+			int brank;
+			popopenMemArray_oneLot(subname,rLotForDOCid(DocID));
+			brank = popRankForDocIDMemArray(DocID);
+			printf("brank %i\n",brank);
+			//short rank
+			if ( (FH = fopen(SHORTPOPFILE,"rb")) == NULL ) {
+                		perror("open");
+        		}
+			else {
+				if ((fseek(FH,DocID* sizeof(ShortRank),SEEK_SET) == 0) && (fread(&ShortRank,sizeof(ShortRank),1,FH) != 0)){
+	
+					printf("Short rank %u\n",(unsigned char)ShortRank);
+				}
+				else {
+					printf("no hort rank avalibal\n");
+				};
+		
+				fclose(FH);
+			}
+		} // if optPopRank
 		#endif
 
 
-		printf("done\n");
 }
 
 
