@@ -1049,10 +1049,10 @@ void copyRepToDi(struct DocumentIndexFormat *DocumentIndexPost,struct Reposetory
 			(*DocumentIndexPost).ResourceSize 	= 0;
 #ifdef BLACK_BOKS
 			//runarb: 31 mars 2008: gjør dette bare hvis vi ikke har en tid fra før. Hvis ikke risikerer 
-			//vi og tilbake datere tiden, og dermed slettes den av garbage collection.
-			//if (DocumentIndexPost->lastSeen == 0) {
-			//	DocumentIndexPost->lastSeen = ReposetoryHeader->storageTime;
-			//}
+			//vi og tilbakedatere tiden, og dermed slettes den av garbage collection.
+			if (DocumentIndexPost->lastSeen == 0) {
+				DocumentIndexPost->lastSeen = ReposetoryHeader->storageTime;
+			}
 #endif
 }
 
