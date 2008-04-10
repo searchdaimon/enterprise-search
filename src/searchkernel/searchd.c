@@ -226,7 +226,6 @@ int main(int argc, char *argv[])
 	}
 	
 	printf("starting. Time %s",ctime(&starttime));
-	fprintf(stderr,"Error test\n");
 	#endif
 
         maincfg = maincfgopen();
