@@ -6,10 +6,18 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <sys/types.h>
 
 #include "define.h"
 #include "lot.h"
 #include "iindex.h"
+#include "mgsort.h"
+#include "revindex.h"
+
+#include "../3pLibs/keyValueHash/hashtable.h"
+
+#define MaxRevIndexArraySize 2000000
+
 
 #define MMAP_IINDEX
 
@@ -28,9 +36,20 @@ struct DictionaryMemoryFormat {
 	int elements;
 };
 
+struct revIndexArrayFomat {
+	unsigned int DocID;
+        unsigned long WordID;
+	unsigned char langnr;
+        unsigned long nrOfHits;
+        unsigned short hits[MaxsHitsInIndex];
+	char tombstone;
+};
+
 struct DictionaryMemoryFormat AthorDictionary[64];
 struct DictionaryMemoryFormat MainDictionary[64];
 
+struct hashtable * loadGced(int lotNr, char subname[]);
+int Indekser_compare_elements (const void *p1, const void *p2);
 int compare_DictionaryMemoryElements (const void *p1, const void *p2);
 
 void IIndexInaliser() {
@@ -568,11 +587,11 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		GetFilePathForIindex(FilePath,IndexPath,iindexfile,IndexType,IndexSprok,(*subname).subname);
 		//sprintf(IndexPath,"%s/iindex/%s/index/%s/%i.txt",FilePath,IndexType,IndexSprok, iindexfile);
 
-		#ifdef DEBUG
+		//#ifdef DEBUG
 		printf("Åpner index %s\n",IndexPath);
 
 		printf("size %u\n",SizeForTerm);
-		#endif
+		//#endif
 
 		#ifdef TIME_DEBUG
 			gettimeofday(&start_time, NULL);
@@ -855,4 +874,482 @@ void GetNForTerm(unsigned int WordIDcrc32, char *IndexType, char *IndexSprok, in
 }
 
 
+
+
+static unsigned int Indekser_hashfromkey(void *ky)
+{
+        return(*(unsigned int *)ky);
+}
+
+static int Indekser_equalkeys(void *k1, void *k2)
+{
+    return (*(unsigned int *)k1 == *(unsigned int *)k2);
+}
+
+
+
+
+void Indekser_deleteGcedFile(int lotNr, char subname[]) {
+	FILE *GCEDFH;
+
+	if ((GCEDFH =  lotOpenFileNoCasheByLotNr(lotNr,"gced","w", 'e',subname)) == NULL) {
+		perror("can't open gced file");
+		return;
+	}
+
+	if (ftruncate(fileno(GCEDFH), 0) != 0) {
+		perror("can't truncate gced index");
+	}
+
+}
+
+struct hashtable * loadGced(int lotNr, char subname[]) {
+
+	unsigned int *gcedArray;
+	int nrofGced;
+	struct stat inode;      // lager en struktur for fstat å returnere.
+	FILE *GCEDFH;
+	int i, y;
+
+	struct hashtable *h;
+	unsigned int *filesKey;
+	int *filesValue;
+
+	h = create_hashtable(200, Indekser_hashfromkey, Indekser_equalkeys);
+
+	//get the list of garbage collected pages.
+	if ((GCEDFH =  lotOpenFileNoCasheByLotNr(lotNr,"gced","r", 'e',subname)) == NULL) {
+		perror("can't open gced file");
+		return h;
+	}
+
+	fstat(fileno(GCEDFH),&inode);
+
+	nrofGced = (inode.st_size / sizeof(unsigned int));
+
+	if (nrofGced != 0) {
+		printf("have %u gced DocID's\n",nrofGced);
+
+		if ((gcedArray = malloc(inode.st_size)) == NULL) {
+			perror("malloc");
+			return;
+		}
+
+		fread(gcedArray,inode.st_size,1,GCEDFH);
+
+
+
+		for(i=0;i<nrofGced;i++) {
+			#ifdef DEBUG
+			printf("gced %u\n",gcedArray[i]);
+			#endif
+	                if (NULL == (filesValue = hashtable_search(h,&gcedArray[i]) )) {
+                                #ifdef DEBUG
+				printf("filtyper: not found!. Vil insert first\n");
+				#endif
+
+                                filesValue = malloc(sizeof(int));
+                                (*filesValue) = 1;
+
+				filesKey = malloc(sizeof(gcedArray[i]));
+				*filesKey = gcedArray[i];
+
+                                if (! hashtable_insert(h,filesKey,filesValue) ) {
+                                        printf("cant insert\n");
+                                        exit(-1);
+                                }
+
+                        }
+		}
+
+
+	
+
+		free(gcedArray);
+	}
+
+	fclose(GCEDFH);
+
+	return h;
+}
+
+int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicates, int optMustBeNewerThen) {
+
+	struct hashtable *h;
+	int i,y;
+	int mgsort_i,mgsort_k;
+	FILE *REVINDEXFH;
+	FILE *IINDEXFH;
+	unsigned int nrOfHits;
+	unsigned short hit;
+	char recordSeperator[4];
+	char iindexPath[512];
+	int count;
+	char c;
+        unsigned int DocID;
+	unsigned int lastWordID;
+	unsigned int lastDocID;
+        //char lang[4];
+	int forekomstnr;
+	struct stat inode;      // lager en struktur for fstat å returnere.
+	char path[256];
+	unsigned int *nrofDocIDsForWordID;
+	struct revIndexArrayFomat *revIndexArray; 
+
+        unsigned long term;
+        unsigned long Antall;
+        unsigned char langnr;
+	int revIndexArraySize;
+
+	#ifdef DEBUG
+		printf("starting on an new index of part %i\n",part);
+	#endif
+
+	h = loadGced(lotNr, subname);
+
+
+//
+	//"$revindexPath/$revindexFilNr.txt";
+	GetFilPathForLot(path,lotNr,subname);
+	//ToDo: må sette språk annen plass
+	sprintf(iindexPath,"%siindex/%s/index/aa/",path,type);
+
+	//oppretter paths
+	makePath(iindexPath);			
+
+	sprintf(iindexPath,"%s%i.txt",iindexPath,part);
+
+	if ((optMustBeNewerThen != 0)) {
+		if (fopen(iindexPath,"r") != NULL) {
+			printf("we all redy have a iindex.\n");
+			return;
+		}
+	}
+//
+	revIndexArraySize = 0;
+
+
+	if ((REVINDEXFH = revindexFilesOpenLocalPart(lotNr,type,"r+b",subname,part)) == NULL) {
+		perror("revindexFilesOpenLocalPart");
+		//exit(1);
+		return 0;
+	}
+
+	fstat(fileno(REVINDEXFH),&inode);
+
+	//ToDo: runarb 29.03.2008
+	//veldig usikker på om dette er ret, antall DocId'er må være en del mindre en størelsen. Kansje 1/3 ?
+	//må etterforske
+	revIndexArraySize += (inode.st_size / 2);
+
+
+	if ((IINDEXFH = fopen(iindexPath,"rb")) == NULL) {
+		perror(iindexPath);
+	}
+	else {
+		fstat(fileno(IINDEXFH),&inode);
+
+		revIndexArraySize += (inode.st_size / 2);
+	}
+
+	if (revIndexArraySize > MaxRevIndexArraySize) {
+		revIndexArraySize = MaxRevIndexArraySize;
+	}
+
+	if ((revIndexArray = malloc(sizeof(struct revIndexArrayFomat) * revIndexArraySize)) == NULL) {
+		perror("malloc revIndexArray");
+		exit(1);
+	}
+
+	
+	if ((nrofDocIDsForWordID = malloc(sizeof(unsigned int) * revIndexArraySize)) == NULL) {
+		perror("malloc nrofDocIDsForWordID");
+		exit(1);
+	}
+
+	/*
+	vi må fortsatt kjøre garbarge collection. En ytelsesforbedring i frmtiden vi være å bare gjøre det når det er 
+	DocID'er i gced filen
+
+	//kjører 
+	if (inode.st_size == 0) {
+		printf("rev index is emty. We dont have to do any thing.");
+		return 0;
+	}
+	*/
+
+	count = 0;
+
+	//last iindex
+	if (IINDEXFH == NULL) {
+	
+	}
+	else {
+		while ((!feof(IINDEXFH)) && (count < revIndexArraySize)) {
+        	        //wordid hedder
+                	if (fread(&term,sizeof(unsigned long),1,IINDEXFH) != 1) {
+                        	printf("can't read term\n");
+                        	perror(iindexPath);
+                        	//continue;
+				break;
+                	}
+			fread(&Antall,sizeof(unsigned long),1,IINDEXFH);
+
+			#ifdef DEBUG
+			printf("term: %u antall: %u\n",term,Antall);
+			#endif
+
+			for (i=0;i<Antall;i++) {
+
+				revIndexArray[count].WordID = term;
+
+				if (fread(&revIndexArray[count].DocID,sizeof(unsigned long),1,IINDEXFH) != 1) {
+                        	        printf("can't read DocID for nr %i\n",i);
+                        	        perror("");
+                        	        continue;
+                        	}
+
+				fread(&revIndexArray[count].langnr,sizeof(char),1,IINDEXFH);
+                        	fread(&revIndexArray[count].nrOfHits,sizeof(unsigned long),1,IINDEXFH);
+
+				revIndexArray[count].tombstone = 0;
+
+				#ifdef DEBUG
+					printf("\tcount: %i\n",count);
+					printf("\tDocID %u lang %i\n",revIndexArray[count].DocID,(int)revIndexArray[count].langnr);
+					printf("\tread WordID: %u, nrOfHits %u\n",revIndexArray[count].WordID,revIndexArray[count].nrOfHits);
+				#endif
+
+				for (y = 0;y < revIndexArray[count].nrOfHits; y++) {
+                                        if (fread(&revIndexArray[count].hits[y],sizeof(unsigned short),1,IINDEXFH) != 1) {
+						perror("reading hit");
+						return 0;
+					}
+                        	}
+
+
+				if (NULL == hashtable_search(h,&revIndexArray[count].DocID) ) {
+					++count;
+				}
+				else {
+					//#ifdef DEBUG
+					printf("bbbbbb DocID %u is deleted\n",revIndexArray[count].DocID);
+					//#endif
+				}
+
+			}
+		}
+
+
+	}
+
+	if (IINDEXFH != NULL) {
+		fclose(IINDEXFH);
+	}
+
+	printf("got %i good index elements from before\n",count);
+
+
+
+	while ((!feof(REVINDEXFH)) && (count < revIndexArraySize)) {
+	
+
+
+		
+		
+
+		if (fread(&revIndexArray[count].DocID,sizeof(revIndexArray[count].DocID),1,REVINDEXFH) != 1) {
+			#ifdef DEBUG
+			//har kommer vi til eof, det er helt normalt
+			printf("can't read any more data\n");
+			perror("revindex");
+			#endif
+			break;
+		}
+
+
+		//v3
+		fread(&revIndexArray[count].langnr,sizeof(char),1,REVINDEXFH);
+		//printf("lang1 %i\n",(int)revIndexArray[count].langnr);
+
+
+		fread(&revIndexArray[count].WordID,sizeof(revIndexArray[count].WordID),1,REVINDEXFH);
+		fread(&revIndexArray[count].nrOfHits,sizeof(revIndexArray[count].nrOfHits),1,REVINDEXFH);
+
+		#ifdef DEBUG
+			printf("%i\n",count);
+			printf("\tDocID %u lang %i\n",revIndexArray[count].DocID,(int)revIndexArray[count].langnr);
+			printf("\tread WordID: %u, nrOfHits %u\n",revIndexArray[count].WordID,revIndexArray[count].nrOfHits);
+		#endif
+
+		if (revIndexArray[count].nrOfHits > MaxsHitsInIndex) {
+			printf("nrOfHits lager then MaxsHitsInIndex. Nr was %i\n",revIndexArray[count].nrOfHits);
+			return 0;
+		}
+
+		//leser antal hist vi skulle ha
+		fread(&revIndexArray[count].hits,revIndexArray[count].nrOfHits * sizeof(short),1,REVINDEXFH);
+
+		revIndexArray[count].tombstone = 0;
+			
+		//debug:  hits
+		#ifdef DEBUG
+			printf("\tread hits: ");
+			for (i=0;i<revIndexArray[count].nrOfHits;i++) {
+				printf("%hu, ",revIndexArray[count].hits[i]);
+			}
+			printf("\n");
+		#endif
+
+		//garbare collection
+		if (NULL == hashtable_search(h,&revIndexArray[count].DocID) ) {
+			++count;
+		}
+		else {
+			//#ifdef DEBUG
+			printf("aaaaaaa: DocID %u is deleted\n",revIndexArray[count].DocID);
+			//#endif
+		}
+
+	}
+
+	#ifdef DEBUG
+	printf("Documents in index: %i\n",count);
+	#endif
+	
+	//runarb: 17 aug 2007: hvorfor har vi med -- her. Ser ut til at vi da mksiter siste dokumentet. haker ut for nå
+	//--count;
+
+
+	mgsort(revIndexArray, count , sizeof(struct revIndexArrayFomat),Indekser_compare_elements);
+
+
+	if ((IINDEXFH = fopen(iindexPath,"wb")) == NULL) {
+		fprintf(stderr,"can't open iindex for wb\n");
+		perror(iindexPath);
+		return;
+	}
+
+	//teller forkomster av DocID's pr WordID
+	lastWordID = 0;
+	forekomstnr = -1;
+	lastDocID = 0;
+	for(i=0;i<count;i++) {
+		#ifdef DEBUG
+		printf("WordID: %u, DocID %u\n",revIndexArray[i].WordID,revIndexArray[i].DocID);
+		#endif
+
+		if (lastWordID != revIndexArray[i].WordID) {
+			++forekomstnr;			
+			nrofDocIDsForWordID[forekomstnr] = 0;
+			lastDocID = 0;
+		}
+
+		if ((optAllowDuplicates == 0) && (revIndexArray[i].DocID == lastDocID)) {
+			#ifdef DEBUG
+			printf("DocID %u is same as last\n",revIndexArray[i].DocID);
+			#endif
+
+			revIndexArray[i -1].tombstone = 1;
+		}
+		else {
+			++nrofDocIDsForWordID[forekomstnr];
+		}
+
+		lastWordID = revIndexArray[i].WordID;
+		lastDocID = revIndexArray[i].DocID;
+	}
+
+	lastWordID = 0;
+	forekomstnr = 0;
+	for(i=0;i<count;i++) {
+
+		#ifdef DEBUG
+		printf("looking at  WordID %u, nr %u\n",revIndexArray[i].WordID,nrofDocIDsForWordID[forekomstnr]);
+		#endif
+
+		if (lastWordID != revIndexArray[i].WordID) {
+
+			#ifdef DEBUG
+				printf("write WordID %u, nr %u\n",revIndexArray[i].WordID,nrofDocIDsForWordID[forekomstnr]);
+			#endif
+		
+			fwrite(&revIndexArray[i].WordID,sizeof(revIndexArray[i].WordID),1,IINDEXFH);
+			fwrite(&nrofDocIDsForWordID[forekomstnr],sizeof(int),1,IINDEXFH);
+
+			++forekomstnr;
+		}
+		lastWordID = revIndexArray[i].WordID;
+
+		//printf("\tDocID %u, nrOfHits %u\n",revIndexArray[i].DocID,revIndexArray[i].nrOfHits);
+
+		//sjekker at dette ikke er en slettet DocID
+		if (revIndexArray[i].tombstone) {
+			#ifdef DEBUG
+				printf("DocID %u is tombstoned\n",revIndexArray[i].DocID);
+			#endif
+			//toDo kan vi bare kalle continue her. Blir det ikke fil i noe antall?
+			continue;
+		}
+		//skrive DocID og antall hit vi har
+		fwrite(&revIndexArray[i].DocID,sizeof(revIndexArray[i].DocID),1,IINDEXFH);
+		//v3
+		fwrite(&revIndexArray[i].langnr,sizeof(char),1,IINDEXFH);
+
+		fwrite(&revIndexArray[i].nrOfHits,sizeof(revIndexArray[i].nrOfHits),1,IINDEXFH);
+
+		//skriver alle hittene		
+		for(y=0;y<revIndexArray[i].nrOfHits;y++) {
+			#ifdef DEBUG		
+				printf("\t\thit %hu\n",revIndexArray[i].hits[y]);
+			#endif
+			fwrite(&revIndexArray[i].hits[y],sizeof(short),1,IINDEXFH);
+		}
+		#ifdef DEBUG
+		printf("write: DocID %u, WordID: %u, %u\n",revIndexArray[i].DocID,revIndexArray[i].WordID,revIndexArray[i].nrOfHits);		
+		#endif
+	}
+
+	fclose(IINDEXFH);
+
+	//trunkerer rev index. i LotInvertetIndexMaker3 er det bare en oppdateringsfil
+	if (ftruncate(fileno(REVINDEXFH), 0) != 0) {
+		perror("can't truncate rev index");
+	}
+
+	fclose(REVINDEXFH);
+
+	free(revIndexArray);
+	free(nrofDocIDsForWordID);
+
+	hashtable_destroy(h,1);
+
+}
+
+//sortere først på WordID, så DocID
+//krever en stabil algoritme
+int Indekser_compare_elements (const void *p1, const void *p2) {
+
+//        struct iindexFormat *t1 = (struct iindexFormat*)p1;
+//        struct iindexFormat *t2 = (struct iindexFormat*)p2;
+
+	
+	if (((struct revIndexArrayFomat*)p1)->WordID == ((struct revIndexArrayFomat*)p2)->WordID) {
+
+		if (((struct revIndexArrayFomat*)p1)->DocID < ((struct revIndexArrayFomat*)p2)->DocID) {
+        	        return -1;
+        	}
+        	else {
+        	        return ((struct revIndexArrayFomat*)p1)->DocID > ((struct revIndexArrayFomat*)p2)->DocID;
+	        }
+
+
+	}
+        else if (((struct revIndexArrayFomat*)p1)->WordID < ((struct revIndexArrayFomat*)p2)->WordID) {
+                return -1;
+	}
+        else {
+                return ((struct revIndexArrayFomat*)p1)->WordID > ((struct revIndexArrayFomat*)p2)->WordID;
+	}
+}
 
