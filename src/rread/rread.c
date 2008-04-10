@@ -38,10 +38,11 @@ main (int argc, char *argv[]) {
 
 	int optPrintHtml = 0;
 	int optStatistics = 0;
+	char *optReponame = NULL;
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"hs"))!=-1) {
+        while ((c=getopt(argc,argv,"hsr:"))!=-1) {
                 switch (c) {
                         case 'h':
                                 optPrintHtml = 1;
@@ -51,6 +52,9 @@ main (int argc, char *argv[]) {
                                 optStatistics  = 1;
                                 printf("will statistics\n");
                                 break;
+                        case 'r':
+				optReponame = optarg;
+				break;
                         default:
                                 exit(1);
                 }
@@ -62,6 +66,10 @@ main (int argc, char *argv[]) {
 	LotNr = atoi(argv[1 + optind]);
 	char *subname = argv[2 + optind];
 
+	if (optReponame == NULL) {
+		optReponame = strdup("reposetory");
+	}
+
 	printf("lotnr %i\n",LotNr);
 
 	GetFilPathForLot(lotPath,LotNr,subname);
@@ -69,9 +77,9 @@ main (int argc, char *argv[]) {
 
 
 	//loppergjenom alle
-	while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&radress,0,0,subname,&acl_allow,&acl_deny)) {
+	while (rGetNext_reponame(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&radress,0,0,subname,&acl_allow,&acl_deny,optReponame)) {
 
-		printf("DocId: %i url: %s res %hi htmls %hi time %lu\n",ReposetoryHeader.DocID,ReposetoryHeader.url,ReposetoryHeader.response,ReposetoryHeader.htmlSize,ReposetoryHeader.time);
+		printf("DocId: %i url: %s res %hi htmlsize %hi time %lu, radress %lu\n",ReposetoryHeader.DocID,ReposetoryHeader.url,ReposetoryHeader.response,ReposetoryHeader.htmlSize,ReposetoryHeader.time,radress);
 		uncompresshtmlLength = sizeof(uncompresshtml);
 		if ( (nerror = uncompress((Bytef*)uncompresshtml,(uLong *)&uncompresshtmlLength,(Bytef*)htmlbuffer,ReposetoryHeader.htmlSize)) != 0) {
                 	printf("uncompress error. Code: %i\n",nerror);
@@ -84,6 +92,10 @@ main (int argc, char *argv[]) {
 				if (optPrintHtml) {
 					printf("################################\n%s##############################\n",htmlbuffer_uncom);
 				}
+
+				printf("acl_allow: \"%s\"\n",acl_allow);
+				printf("acl_deny: \"%s\"\n",acl_deny);
+
 				++StatisticsUncompressOk;
 			}
 			else {
