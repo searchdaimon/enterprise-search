@@ -49,15 +49,6 @@ foreach my $lot (0 .. 4096) {
 				#print "runing $command\n";
                                 #system($command);
 
-				$command = $ENV{'BOITHOHOME'} . "/bin/LotInvertetIndexMaker2 acl_allow $lot \"$subname\"";
-				print "runing $command\n";
-                                system($command);
-
-				$command = $ENV{'BOITHOHOME'} . "/bin/LotInvertetIndexMaker2 acl_denied $lot \"$subname\"";
-				print "runing $command\n";
-                                system($command);
-
-
 				$command = $ENV{'BOITHOHOME'} . "/bin/mergeUserToSubname $lot \"$subname\"";
 				print "runing $command\n";
                                 system($command);

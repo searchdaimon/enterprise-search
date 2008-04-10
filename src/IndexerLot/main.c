@@ -1380,11 +1380,20 @@ void run(int lotNr, char subname[], struct optFormat opt, char reponame[]) {
 			printf("runing Indekser\n");
 
                 	for (lotPart=0;lotPart<64;lotPart++) {
-                	        //printf("indexint part %i for lot %i\n",lotPart,lotNr);
-
+                	        //printf("indexint part %i for lot %i of type Main\n",lotPart,lotNr);
                 	        Indekser(lotNr,"Main",lotPart,subname,0,0);
-
                 	}
+			#ifdef BLACK_BOKS		
+                	for (lotPart=0;lotPart<64;lotPart++) {
+                	        //printf("indexint part %i for lot %i of type acl_allow\n",lotPart,lotNr);
+                	        Indekser(lotNr,"acl_allow",lotPart,subname,0,0);
+                	}
+                	for (lotPart=0;lotPart<64;lotPart++) {
+                	        //printf("indexint part %i for lot %i of type acl_denied\n",lotPart,lotNr);
+                	        Indekser(lotNr,"acl_denied",lotPart,subname,0,0);
+                	}
+
+			#endif
 
                 	//siden vi nå har lagt til alle andringer fra rev index kan vi nå slettet gced filen også
                 	Indekser_deleteGcedFile(lotNr, subname);
