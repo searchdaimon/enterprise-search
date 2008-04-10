@@ -1,4 +1,4 @@
-//#include "../common/define.h"
+#include "../common/define.h"
 #include "../common/lot.h"
 #include "../common/reposetory.h"
 
