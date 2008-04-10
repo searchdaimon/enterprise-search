@@ -21,7 +21,7 @@ struct tqFormat {
 void tq_init(struct tqFormat *tqh, int qlen);
 int tq_get(struct tqFormat *tqh, void **data);
 void tq_add(struct tqFormat *tqh, void *data);
-void *tq_end(struct tqFormat *tqh);
-void *tq_free(struct tqFormat *tqh);
+void tq_end(struct tqFormat *tqh);
+void tq_free(struct tqFormat *tqh);
 
 #endif

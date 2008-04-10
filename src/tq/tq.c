@@ -127,7 +127,9 @@ int tq_get(struct tqFormat *tqh, void **data) {
 
 void tq_add(struct tqFormat *tqh, void *data) {
 
-	int my_id = 0;
+	#ifdef DEBUG
+		int my_id = 0;
+	#endif
 
   	/*
   	Lock mutex and wait for signal.  Note that the pthread_cond_wait routine
@@ -164,10 +166,11 @@ void tq_add(struct tqFormat *tqh, void *data) {
 
 }
 
-void *tq_end(struct tqFormat *tqh) {
+void tq_end(struct tqFormat *tqh) {
 
+	#ifdef DEBUG
 	int my_id = 0;
-
+	#endif
 
 	pthread_mutex_lock(&tqh->count_mutex);
 
@@ -188,7 +191,7 @@ void *tq_end(struct tqFormat *tqh) {
 
 }
 
-void *tq_free(struct tqFormat *tqh) {
+void tq_free(struct tqFormat *tqh) {
 
 	//kan vi gjøre dette. Hva om de er i bruk??
 	//skal ikke være de, da vi bare skal kalle denne etter at vi har ventet på alle tråder

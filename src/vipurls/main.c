@@ -13,8 +13,16 @@
 
 static unsigned int fileshashfromkey(void *ky)
 {
-    char *k = (char *)ky;
-        return((int)k[0]);
+    	char *k = (char *)ky;
+	int i = 0;
+	unsigned int val = 0;
+
+	while (k[i] != '\0') {
+		val += (unsigned int)k[i];
+		++i;
+	}
+	//printf("hash: s \"%s\", h %u\n",k,val);
+        return val;
 }
 
 static int filesequalkeys(void *k1, void *k2)
@@ -62,7 +70,9 @@ int main (int argc, char *argv[]) {
 
 		find_domain_no_subname(line,domain,sizeof(domain));
 
+		#ifdef DEBUG
 		printf("line: \"%s\", domain: \"%s\"\n",line,domain);
+		#endif
 
 		filesValue = malloc(sizeof(int));
                 (*filesValue) = 1;
@@ -70,7 +80,7 @@ int main (int argc, char *argv[]) {
 
 		if (! hashtable_insert(h,filesKey,filesValue) ) {
                         printf("cant insert\n");
-                	exit(-1);
+                	//exit(-1);
                 }
 	}
 
@@ -85,6 +95,18 @@ int main (int argc, char *argv[]) {
 	flock(fileno(UDFILE),LOCK_EX);
 
 
+        if ((VIPFILE = fopen(vipprefix,"wb")) == NULL) {
+                perror(vipprefix);
+                exit(1);
+        }
+
+        if ((PLANEFILE = fopen(planeprefix,"wb")) == NULL) {
+                perror(planeprefix);
+                exit(1);
+        }
+
+
+
         while(!feof(UDFILE)) {
 
 
@@ -93,8 +115,6 @@ int main (int argc, char *argv[]) {
 
 		find_domain_no_subname(udfilePost.url,domain,sizeof(domain));
 
-
-		//printf("url \"%s\", domain: \"%s\"\n",udfilePost.url,domain);
 
 		if (NULL != (filesValue = hashtable_search(h,domain) )) {
 			//vip
@@ -120,6 +140,10 @@ int main (int argc, char *argv[]) {
 	}
 
         hashtable_destroy(h,1);
+
+	fclose(PLANEFILE);
+	fclose(VIPFILE);
+	fclose(UDFILE);
 
 }
 
