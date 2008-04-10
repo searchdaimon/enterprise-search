@@ -156,6 +156,7 @@ int filterSameCrc32(int showabal,struct SiderFormat *CurentSider, struct SiderFo
 			if (Sider[i].DocumentIndex.crc32 == (*CurentSider).DocumentIndex.crc32) {
 				#ifdef DEBUG
 				printf("crc32 is the same for Url \"%s\" == \"%s\"\n",Sider[i].DocumentIndex.Url,(*CurentSider).DocumentIndex.Url);
+				printf("crc32: %u == %u\n",Sider[i].DocumentIndex.crc32,(*CurentSider).DocumentIndex.crc32);
 				#endif
 				return 1;
 
@@ -226,7 +227,8 @@ int filterSameUrl(int showabal,char url[], struct SiderFormat *Sider) {
 
 
 int filterResponseCode(struct SiderFormat *CurentSider) {
-	if (CurentSider->DocumentIndex.response > 302) {
+	if (CurentSider->DocumentIndex.response > 204) {
+	//if (CurentSider->DocumentIndex.response > 302) {
 		#ifdef DEBUG
 		printf("filterResponseCode:page har bad respons code %i\n",CurentSider->DocumentIndex.response);
 		#endif
