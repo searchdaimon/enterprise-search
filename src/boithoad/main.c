@@ -588,7 +588,7 @@ int ldap_authenticat (LDAP **ld,char user_username[],char user_password[],const 
    	return RETURN_SUCCESS;
 }
 /**********************************************************************
-  Henter ut grippe fra en ldap distinguishedName "objectClass: group"
+  Henter ut gruppe fra en ldap distinguishedName "objectClass: group"
   Er på formatet "CN=Domain Admins,CN=Users,DC=bbtest,DC=searchdaimon,DC=com"
   der Domain Admins er verdien vi vil ha
 ***********************************************************************/
@@ -642,7 +642,7 @@ int getGroupFromDnGroup (char cn[],char groupname[], int sizeofgroupname) {
 }
 
 /**********************************************************************
-  Henter ut primær grupe fra en cn. Den er på formatet
+  Henter ut primær gruppe fra en cn. Den er på formatet
   CN=Runar Buvik,CN=Users,DC=bbtest,DC=searchdaimon,DC=com
   der "Runar Buvik" er brukeren og "Users" er primær gruppe.
 ***********************************************************************/
@@ -1066,6 +1066,7 @@ void connectHandler(int socket) {
 }
 
 void badldap_init(FILE *elog) {
+
    	if (bconfig_getentrystr("msad_user") == NULL) {
 		blog(elog, 1, "cant read config for msad_user");
 		exit(1);
