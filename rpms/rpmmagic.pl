@@ -17,11 +17,13 @@ if ($#ARGV == -1) {
   my $sql;
   my $initdrestart;
   my $defattr;
+  my $restartsw;
 
   my $result = GetOptions ("pre=s" 	 => \$pre,    	# rpm pre 
                         "post=s"   	 => \$post,      	# rpm post
                         "initd=s"   	 => \$initd,      	# rpm post
                         "initdnostart"   	 => \$initdnostart,      	# rpm post
+                        "restartsw"   	 => \$restartsw,      	# rpm post
 			"requires=s" 	 => \$requires, 	# rpm requires
 			"sql=s" 	 => \$sql, 		# rpm sql
 			"initdrestart=s" => \$initdrestart, 		# restarting av en init.d tjeneste
@@ -43,6 +45,10 @@ while ($#ARGV > -1) {
 #legger sql filen til som en vanlig fil
 if (defined($sql)) {
 	push(@files,$sql);
+}
+#legger til init.d funksjonsfilen, som init.d trenger
+if (defined($initd)) {
+	push(@files,"init.d/functions");
 }
 
 my $name_and_version = $name . '-' . $version;
@@ -116,6 +122,28 @@ fi
 
 		};
 	}
+}
+if (defined($restartsw)) {
+$post .= qq{
+
+#restarter all sd programer
+if [ -f /etc/init.d/boithoad ] ; then
+        sh /etc/init.d/boithoad restart
+fi
+
+if [ -f /etc/init.d/boitho-bbdn ] ; then
+        sh /etc/init.d/boitho-bbdn restart
+fi
+
+if [ -f /etc/init.d/crawlManager ] ; then
+        sh /etc/init.d/crawlManager restart
+fi
+
+if [ -f /etc/init.d/searchdbb ] ; then
+        sh /etc/init.d/searchdbb restart
+fi
+
+}
 }
 if (defined($initdrestart)) {
 	$post .= qq{
