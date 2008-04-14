@@ -582,7 +582,7 @@ void *IndexerLot_workthread(void *arg) {
 
 				#ifndef BLACK_BOKS
 				if (isIpBan(ReposetoryHeader.IPAddress)) {
-					printf("ip adrsess %u is on ban list. Url \"%s\"\n",ReposetoryHeader.IPAddress,ReposetoryHeader.url);
+					debug("ip adrsess %u is on ban list. Url \"%s\"\n",ReposetoryHeader.IPAddress,ReposetoryHeader.url);
 					DocumentIndexPost->RepositoryPointer = 0;
 					DocumentIndexPost->htmlSize = 0;					
 					DocumentIndexPost->response = 0;					
@@ -953,7 +953,7 @@ void netlot_end (int lotNr,char subname[], char server[]) {
 /*******************************************************
 rutine for å hente en fil på lagringserver
 *******************************************************/
-void netlot_start_get_file(int lotNr,char subname[],char file[], char server[]) {
+int netlot_start_get_file(int lotNr,char subname[],char file[], char server[]) {
 
 	FILE *FH;
 
@@ -966,7 +966,7 @@ void netlot_start_get_file(int lotNr,char subname[],char file[], char server[]) 
 
 	if(!rGetFileByOpenHandlerFromHostName(file, FH, lotNr, subname, server)) {
 		perror("file on server");
-		exit(1);
+		return 0;
 	}
 
 	fclose(FH);
@@ -975,13 +975,15 @@ void netlot_start_get_file(int lotNr,char subname[],char file[], char server[]) 
 	printf("netlotStart: done\n");
 	#endif
 
+	return 1;
+
 }
 
 
 /*******************************************************
 rutine for å hente det vi trnger på lagringserver.
 *******************************************************/
-void netlot_start(int lotNr,char subname[], int optrEindex, char server[]) {
+int netlot_start(int lotNr,char subname[], int optrEindex, char server[]) {
 
 	
 	int i;
@@ -989,13 +991,30 @@ void netlot_start(int lotNr,char subname[], int optrEindex, char server[]) {
 
 
 
-	netlot_start_get_file(lotNr,subname,"IndexTime",server);
-	netlot_start_get_file(lotNr,subname,"reposetory",server);
-
-	netlot_start_get_file(lotNr,subname,"DocumentIndex",server);
-	netlot_start_get_file(lotNr,subname,"summary",server);
-	netlot_start_get_file(lotNr,subname,"domainid",server);
-	netlot_start_get_file(lotNr,subname,"brankPageElements",server);
+	if (!netlot_start_get_file(lotNr,subname,"IndexTime",server)) {
+		printf("can't get file \"IndexTime\"\n");
+		return 0;
+	}
+	if (!netlot_start_get_file(lotNr,subname,"reposetory",server)) {
+                printf("can't get file \"reposetory\"\n");
+		return 0;
+        }
+	if (!netlot_start_get_file(lotNr,subname,"DocumentIndex",server)) {
+                printf("can't get file \"DocumentIndex\"\n");
+		return 0;
+        }
+	if (!netlot_start_get_file(lotNr,subname,"summary",server)) {
+                printf("can't get file \"summary\"\n");
+		return 0;
+        }
+	if (!netlot_start_get_file(lotNr,subname,"domainid",server)) {
+                printf("can't get file \"domainid\"\n");
+		return 0;
+        }
+	if (!netlot_start_get_file(lotNr,subname,"brankPageElements",server)) {
+                printf("can't get file \"brankPageElements\"\n");
+		return 0;
+        }
 
 
 	if (optrEindex == 0) {
@@ -1003,10 +1022,15 @@ void netlot_start(int lotNr,char subname[], int optrEindex, char server[]) {
 
 		for(i=0;i<=63;i++) {
 			sprintf(iindexPath,"iindex/Main/index/aa/%i.txt",i);
-			netlot_start_get_file(lotNr,subname,iindexPath,server);
+			if (!netlot_start_get_file(lotNr,subname,iindexPath,server)) {
+                		printf("can't get file \"%s\"\n",iindexPath);
+				return 0;
+        		}
 		
 		}
 	}
+
+	return 1;
 
 }
 
@@ -1072,7 +1096,10 @@ void run(int lotNr, char subname[], struct optFormat opt, char reponame[]) {
 
 		//netlot: Vi henter det vi trenger
 		if ((opt.NetLot != NULL) && (opt.Query == NULL)) {
-			netlot_start(lotNr,subname,opt.rEindex,opt.NetLot);
+			if (!netlot_start(lotNr,subname,opt.rEindex,opt.NetLot)) {
+				printf("can't netLot for lot nr %i!\n",lotNr);
+				return;
+			}
 		}
 
 		//finner siste indekseringstid
