@@ -17,7 +17,7 @@ Requires: boitho-ad boitho-searchdbb boitho-crawlManager boitho-bbdn boitho-file
 Requires: boitho-base boitho-bbadmin boitho-everrun boitho-infoquery boitho-iindex boitho-webclient
 Requires: boithobb-setuid boithobb-bbadminhtaccess boithobb-crawl_watch bbAutoUpdate bb-call-home
 Requires: boitho-database daemonize mod_auth_boitho tlcd-gt14 boitho-phonehome boitho-configfiles
-Requires: boitho-scripts boitho-dictionary
+Requires: boitho-scripts boitho-dictionary boitho-repomod
 
 
 #Turn off automatic dependency generation

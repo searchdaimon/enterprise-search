@@ -83,7 +83,11 @@ boitho-scripts_version = 1.0
 boitho-dictionary_name = boitho-dictionary
 boitho-dictionary_version = 1.0
 
-all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch bbadminhtaccess scripts
+boitho-repomod_name= boitho-repomod
+boitho-repomod_version = 1.0
+
+
+all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch bbadminhtaccess scripts repomod
 
 
 sqlUpdate:
@@ -223,6 +227,11 @@ sqldatabase:
 		blackbox/boithobb.sql blackbox/creatuser.sql blackbox/boithodbsetup
 	rpmbuild -bb $(boithobb-database_name).spec
 
+repomod:
+	perl rpmmagic.pl $(boitho-repomod_name) $(boitho-repomod_version) $(BOITHOHOME) /home/boitho/boithoTools perl/repomod.pl
+
+	rpmbuild -bb $(boitho-repomod_name).spec
+ 
 
 base:
 	rm -rf $(boitho-base_name)-$(boitho-base_version)
