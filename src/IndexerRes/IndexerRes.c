@@ -762,17 +762,20 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 	//finner språk
 	char lang[4];
 	langdetectDetect(pagewords->normalWords.words_sorted,pagewords->normalWords.nr,lang);
-	printf("lang: \"%s\"\n",lang);
 	*langnr = getLangNr(lang);
 
+	#ifdef DEBUG
+	printf("lang: \"%s\"\n",lang);
+	#endif
 
 	// normal words
 	#ifndef BLACK_BOKS
 	adultPhrases(&pagewords->normalWords,adult,adultWeight,langnr);
 	#endif
 
+	#ifdef DEBUG
 	printf("wordsMakeRevIndex: adult after normalWords %i\n",(*adultWeight));
-
+	#endif
 
 	// link word
 	wordsMakeRevIndex_part(&pagewords->linkWords,adult,adultWeight,langnr);
@@ -780,8 +783,9 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 	adultPhrases(&pagewords->linkWords,adult,adultWeight,langnr);
 	#endif
 
+	#ifdef DEBUG
 	printf("wordsMakeRevIndex: adult after linkWords %i\n",(*adultWeight));
-
+	#endif
 
 	// spam word
 	wordsMakeRevIndex_part(&pagewords->spamWords,adult,adultWeight,langnr);
@@ -789,7 +793,9 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 	adultPhrases(&pagewords->spamWords,adult,adultWeight,langnr);
 	#endif
 
+	#ifdef DEBUG
 	printf("wordsMakeRevIndex: adult after spamWords %i\n",(*adultWeight));
+	#endif
 
 }
 
