@@ -40,7 +40,7 @@ sid_b64totext(char *buf, size_t len)
 	/* Auth */
 	auth = 0;
 	for (i = 0; i < 6; i++)
-		auth = ((auth << 8) & 0xffffffffff00) | (*p++ & 0xff);
+		auth = ((auth << 8) & 0xffffffffff00ll) | (*p++ & 0xff);
 	printf("auth: %lld\n", auth);
 
 	unsigned int subauth[subcount];
