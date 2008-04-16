@@ -220,8 +220,6 @@ static inline void free_automaton( automaton* A )
 {
     int		i;
 
-    fprintf(stderr, "search_automaton: free_automaton()\n");
-
     for (i=0; i<256; i++)
 	{
 	    if (A->next[i] != NULL)
