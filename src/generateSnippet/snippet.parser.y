@@ -604,8 +604,9 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 		}
 	    calc_data->WSstart = i;
 
-	    sentences = pair(vector_get(data->WSentence, WSsize-1)).second.i
-		- pair(vector_get(data->WSentence, i)).second.i;
+	    if (WSsize > 0 && i < (WSsize-1))
+	        sentences = pair(vector_get(data->WSentence, WSsize-1)).second.i
+		    - pair(vector_get(data->WSentence, i)).second.i;
 
 
 #ifdef DEBUG_ON
@@ -1029,6 +1030,8 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
 
 int generate_snippet( query_array qa, char text[], int text_size, char **output_text, char* b_start, char* b_end, int _snippet_size )
 {
+    fprintf(stderr, "snippet.parser: generate_snippet()\n");
+
     struct bsgp_yy_extra	*he = malloc(sizeof(struct bsgp_yy_extra));
     struct bsg_intern_data	*data = malloc(sizeof(struct bsg_intern_data));
     int				i, j, k, found, qw_size=0, num_qw, longest_phrase=0, sigma_size;
@@ -1332,13 +1335,21 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
     free(data);
     free(he);
 
+    if (!success)
+	{
+	    fprintf(stderr, "snippet.parser: Document error!\n");
+	    fprintf(stderr, "snippet.parser: --- Content ---\n");
+	    fprintf(stderr, "%s\n", text);
+	    fprintf(stderr, "snippet.parser: --- End ---\n");
+	}
+
     return success;
 }
 
 
 bsgperror( struct bsg_intern_data *data, yyscan_t scanner, char *s )
 {
-    fprintf(stderr, "Parse error: %s\n", s);
+    fprintf(stderr, "snippet.parser: Parse error! %s\n", s);
     data->parse_error = 1;
 }
 
