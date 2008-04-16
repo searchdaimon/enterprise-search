@@ -11,7 +11,7 @@
 #include "config.h"
 
 
-struct _configdataFormat *_configdata;
+struct _configdataFormat *_configdata = NULL;
 int _configdatanr;
 time_t lastConfigRead = 0;
 
@@ -69,7 +69,9 @@ void bconfig_flush(int mode) {
 	_configdatanr = (int)mysql_num_rows(mysqlres);
 
 	printf("nrofrows %i\n",_configdatanr);
-	
+
+	if (_configdata != NULL)
+		free(_configdata);
 	_configdata = malloc(sizeof(struct _configdataFormat) * _configdatanr);
 
 	i=0;
