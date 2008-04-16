@@ -14,34 +14,29 @@
 */
 
 char *
-sid_b64totext(char *buf, size_t len)
+sid_btotext(char *buf)
 {
-	char *p;
-	size_t outlen;
-	char sid[1024], out[1024];
-	char data[1024];
 	unsigned int rev;
 	unsigned int subcount;
 	unsigned long long int auth;
+	char sid[MAX_SID_LEN];
 	int i;
 	size_t wlen;
-
-	len = base64_decode(out, buf, sizeof(out));
-	p = out;
+	char *p = buf;
 
 	/* Rev */
 	rev = *p++;
-	printf("rev: %d\n", rev);
+	//printf("rev: %d\n", rev);
 
 	/* Subcount */
 	subcount = *p++;
-	printf("subcount: %d\n", subcount);
+	//printf("subcount: %d\n", subcount);
 
 	/* Auth */
 	auth = 0;
 	for (i = 0; i < 6; i++)
 		auth = ((auth << 8) & 0xffffffffff00ll) | (*p++ & 0xff);
-	printf("auth: %lld\n", auth);
+	//printf("auth: %lld\n", auth);
 
 	unsigned int subauth[subcount];
 	wlen = snprintf(sid, sizeof(sid), "S-%d-%lld", rev, auth);
@@ -56,7 +51,7 @@ sid_b64totext(char *buf, size_t len)
 		for (j = 0; j < 4; j++) {
 			n[j] = *p++;
 		}
-		printf("subauth[%d]: %u\n", i, subauth[i]);
+		//printf("subauth[%d]: %u\n", i, subauth[i]);
 		wlen += snprintf(sid+wlen, sizeof(sid)-wlen, "-%u", subauth[i]);
 	}
 
@@ -65,6 +60,20 @@ sid_b64totext(char *buf, size_t len)
 	strcpy(p, sid);
 
 	return p;
+
+}
+
+char *
+sid_b64totext(char *buf, size_t len)
+{
+	char *p;
+	size_t outlen;
+	char out[1024];
+	
+	len = base64_decode(out, buf, sizeof(out));
+	p = out;
+
+	return sid_btotext(p);
 }
 
 int
