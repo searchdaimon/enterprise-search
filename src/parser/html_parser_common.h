@@ -100,7 +100,7 @@ static inline void bprintf( buffer *B, const char *fmt, ... )
 
     if (B->pos >= B->maxsize-1)
 	{
-	    printf("Error! Buffer overflow, aborting document.\n");
+	    fprintf(stderr, "html_parser: Warning! Buffer overflow, skipping document.\n");
 	    B->overflow = 1;
 	}
 }

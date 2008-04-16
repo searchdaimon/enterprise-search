@@ -129,6 +129,8 @@ static inline automaton* build_automaton( int num_args, unsigned char **words )
     automaton	*base = new_automaton();
     int		i, j;
 
+    fprintf(stderr, "search_automaton: build_automaton()\n");
+
     convert_to_lowercase(words[0]);
     base->str = (unsigned char*)strdup( (char*)words[0] );
 //    printf("Adding %s\n", (char*)words[0]);
@@ -217,6 +219,8 @@ static inline automaton* build_automaton( int num_args, unsigned char **words )
 static inline void free_automaton( automaton* A )
 {
     int		i;
+
+    fprintf(stderr, "search_automaton: free_automaton()\n");
 
     for (i=0; i<256; i++)
 	{

@@ -5,7 +5,7 @@
 /**
  *	Bibliotek for å behandle strenger kodet med utf-8, med særskilt vekt på de europeiske tegnene.
  *
- *	(C) Copyright 2007, Boitho AS (Magnus Galåen)
+ *	(C) Copyright 2007-2008, Boitho AS (Magnus Galåen)
  */
 
 #include <stdlib.h>
@@ -87,7 +87,7 @@ static inline int utf8_first_char_uppercase( unsigned char *str )
 static inline unsigned char* copy_latin1_to_utf8( unsigned char *str )
 {
     int			str_len = strlen((const char*)str);
-    unsigned char	*tempstring = malloc(str_len*4 +1);
+    unsigned char	*tempstring = (unsigned char*)malloc(str_len*4 +1);
     unsigned char	*returnstring;
     int			i, j;
 
@@ -106,12 +106,42 @@ static inline unsigned char* copy_latin1_to_utf8( unsigned char *str )
 
     tempstring[j++] = '\0';
 
-    returnstring = malloc(j);
+    returnstring = (unsigned char*)malloc(j);
     memcpy(returnstring, tempstring, j);
 
     free(tempstring);
 
     return returnstring;
 }
+
+
+// Valid kun med 8859-1-kompatible tegn
+static inline int utf8_strcasecmp( const unsigned char *s1, const unsigned char *s2 )
+{
+    int		i;
+
+    for (i=0; s1[i]!='\0'; i++)
+	{
+	    unsigned char	a=s1[i], b=s2[i];
+
+	    if (a==b) continue;
+
+	    if (a>='A' && a<='Z') a+= 32;	// 'a' - 'A'
+	    if (b>='A' && b<='Z') b+= 32;
+
+	    if (i>0)
+		{
+		    if (s1[i-1]==0xc3 && a>=0x80 && a<=0x9e) a+= 32;
+		    if (s1[i-1]==0xc3 && b>=0x80 && b<=0x9e) b+= 32;
+		}
+
+	    if (a<b) return -1;
+	    if (a>b) return +1;
+	}
+
+    if (s2[i]=='\0') return 0;
+    return -1;	// len(s1) < len(s2)
+}
+
 
 #endif	// _UTF_8_STRINGS_H_

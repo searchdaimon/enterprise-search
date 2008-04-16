@@ -182,9 +182,9 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 
 						if (!charset_match)
 						    {
-							#ifndef NOWARNINGS
-							printf("Error: Illegal charset (%s) [%s]\n", content, data->url);
-							#endif
+//							#ifndef NOWARNINGS
+							fprintf(stderr, "html_parser: Warning! Illegal charset (%s), skipping document.\n", content);
+//							#endif
 							data->abort = 1;
 							return 0;
 						    }
@@ -324,9 +324,9 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 
 					if (!charset_match)
 					    {
-						#ifndef NOWARNINGS
-						printf("Error: Illegal charset (%s) [%s]\n", content, data->url);
-						#endif
+//						#ifndef NOWARNINGS
+						fprintf(stderr, "html_parser: Warning! Illegal charset (%s), skipping document.\n", content);
+//						#endif
 						data->abort = 1;
 						return 0;
 					    }
@@ -481,7 +481,8 @@ char* create_full_link( char *url, int page_url_len, char *page_uri, char *page_
     // hvis det mangler)
     if (page_uri == NULL) {
 	#ifndef NOWARNINGS
-	printf("page_uri is NULL!\n");
+//	printf("page_uri is NULL!\n");
+	fprintf(stderr, "html_parser: Warning! page_uri==NULL\n");
 	#endif
 	new_url[0] = '\0';
 	return new_url;
@@ -559,6 +560,7 @@ char* create_full_link( char *url, int page_url_len, char *page_uri, char *page_
 
 void html_parser_init()
 {
+    fprintf(stderr, "html_parser: init()\n");
     // Removed elements: noframes, noscript, script, style, select, textarea, object
 
     tags_automaton = build_automaton( tags_size, (unsigned char**)tags );
@@ -567,6 +569,8 @@ void html_parser_init()
 
 void html_parser_exit()
 {
+    fprintf(stderr, "html_parser: exit()\n");
+
     free_automaton(meta_attr_automaton);
     free_automaton(tags_automaton);
 }
@@ -576,6 +580,7 @@ void html_parser_exit()
 void html_parser_run( char *url, char text[], int textsize, char **output_title, char **output_body,
     void (*fn)(char*,int,enum parsed_unit,enum parsed_unit_flag,void* wordlist), void* wordlist )
 {
+    fprintf(stderr, "html_parser: run(\"%s\")\n", url);
     assert(tags_automaton!=NULL);	// Gir feilmelding dersom man har glemt å kjøre html_parser_init().
 
     struct bhpm_yy_extra	*he = malloc(sizeof(struct bhpm_yy_extra));
@@ -583,14 +588,6 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
 
     data->abort = 0;
     data->url = strdup(url);	// DEBUG
-
-#ifdef PARSEERR
-    {
-	int i;
-	for (i=0; i<201; i++)
-	    he->last[i] = '\0';
-    }
-#endif
 
     he->slen = 0;
     he->tt = -1;
@@ -658,7 +655,11 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
     if (data->abort)	// On error
 	{
 	    #ifndef NOWARNINGS
-	    printf("Warning: Document included an error and was aborted.\n");
+//	    printf("Warning: Document included an error and was aborted.\n");
+	    fprintf(stderr, "html_parser: Document error, content was:\n");
+	    fprintf(stderr, "html_parser: --- Content begin ---\n");
+	    fprintf(stderr, "%s\n", text);
+	    fprintf(stderr, "html_parser: --- Content end ---\n");
 	    #endif
 	    *output_title = buffer_abort( he->Btitle );
 	    *output_body = buffer_abort( he->Bbody );
@@ -683,11 +684,7 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
 yyerror( struct bhpm_intern_data *data, void *yyscan_t, char *s )
 {
 	#ifndef NOWARNINGS
-    		printf("parse_error(html): %s (%s)\n", s, data->url);
-
-		#ifdef PARSE_ERR
-		struct bhpm_yy_extra	*he = bhpmget_extra(yyscan_t);
-		printf("[%s]\n", he->last);
-		#endif
+	    fprintf(stderr, "html_parser: Parse error! %s\n", s);
+//    		printf("parse_error(html): %s (%s)\n", s, data->url);
 	#endif
 }
