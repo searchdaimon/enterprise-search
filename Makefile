@@ -248,7 +248,7 @@ boithoad: src/boithoad/main.c
 	@echo ""
 	@echo "$@:"
 	#for lokalt på bb: gcc -g src/common/*.c src/boithoad/main.c   -o bin/boithoad -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL -DWITH_OPENLDAP /usr/lib64/libcrypt.a  /usr/lib64/libssl.a -I/usr/include/mysql/ -L/usr/lib64/mysql/ -ldl   -D BLACK_BOKS -D WITH_CONFIG -DDEBUG ../../openldap-2.3.32/libraries/libldap/.libs/libldap.a ../../openldap-2.3.32/libraries/liblber/.libs/liblber.a -lmysqlclient -lsasl2
-	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c   -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -D WITH_CONFIG -DDEBUG
+	$(CC) $(CFLAGS) $(LIBS)*.c src/base64/base64.c src/boithoad/main.c   -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -D WITH_CONFIG -DDEBUG
 
 PiToWWWDocID: src/PiToWWWDocID/main.c
 	@echo ""
