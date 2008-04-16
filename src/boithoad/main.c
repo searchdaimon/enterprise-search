@@ -17,10 +17,12 @@
 #include "../common/bstr.h"
 #include "../common/logs.h"
 #include "../common/boithohome.h"
+#include "../common/sid.h"
 #include "userobjekt.h"
 
 #include "../common/list.h"
 #include "../3pLibs/keyValueHash/hashtable.h"
+#include "../3pLibs/keyValueHash/hashtable_itr.h"
 
 #define RETURN_SUCCESS 1
 #define RETURN_FAILURE 0
@@ -28,6 +30,24 @@
 #define MAX_LDAP_ATTR_LEN 512
 
 static struct hashtable  *gloabal_user_h = NULL;
+
+static unsigned int boithoad_hashfromkey(void *ky)
+{
+    char *k = (char *)ky;
+
+    //printf("hashfromkey: \"%s\"\n",k);
+
+    return (crc32boitho(k));
+}
+
+static int boithoad_equalkeys(void *k1, void *k2)
+{
+	//printf("equalkeys: \"%s\" ? \"%s\"\n",k1,k2);
+
+	return (0 == strcmp(k1,k2));
+}
+
+
 
 
 void connectHandler(int socket);
@@ -159,7 +179,7 @@ static void print_reference(
                 for( i=0; refs[i] != NULL; i++ ) {
                         //tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
                         //        "ref", refs[i], strlen(refs[i]) );
-			printf("ref \"%s\", len %i\n",refs[i], strlen(refs[i]));
+			//printf("ref \"%s\", len %i\n",refs[i], strlen(refs[i]));
                 }
                 ber_memvfree( (void **) refs );
         }
@@ -174,9 +194,6 @@ static void print_reference(
 
 
 int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[],int *nrofresponses,const char ldap_base[]) {
-
-	char *test = malloc(4);
-
 	printf("ldap_simple_search: start\n");
 
 
@@ -306,21 +323,30 @@ int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[]
 
 
 		    					for(i = 0; vals[i] != NULL; i++) {
-	
-    					        		printf("attr: %s, vals %s\n", attr, vals[i]);
+								if (strcasecmp(attr, "objectSid") == 0) {
+									char *p = sid_btotext(vals[i]);
+									tempresults = malloc(sizeof(struct tempresultsFormat));
+									strncpy((*tempresults).value,p,MAX_LDAP_ATTR_LEN);
+									if (list_ins_next(&list, NULL, tempresults) != 0) {
+										printf("can't insert objectSid into list\n");
+										return 0;
+									}
+									free(p);
+								} else {
+									printf("attr: %s, vals %s\n", attr, vals[i]);
 
-								tempresults = malloc(sizeof(struct tempresultsFormat));
-								printf("tempresults adress %u\n",(unsigned int)tempresults);
+									tempresults = malloc(sizeof(struct tempresultsFormat));
+									printf("tempresults adress %u\n",(unsigned int)tempresults);
 
-								strncpy((*tempresults).value,vals[i],MAX_LDAP_ATTR_LEN);
+									strncpy((*tempresults).value,vals[i],MAX_LDAP_ATTR_LEN);
 
-								printf("tempresults adress %u\n",(unsigned int)tempresults);
-			
-								if (list_ins_next(&list,NULL,tempresults) != 0) {
-									printf("cant insert into list\n");
-									return 0;
-								}	
-
+									printf("tempresults adress %u\n",(unsigned int)tempresults);
+				
+									if (list_ins_next(&list,NULL,tempresults) != 0) {
+										printf("cant insert into list\n");
+										return 0;
+									}	
+								}
 								++count;	
 							} //for
 
@@ -328,13 +354,14 @@ int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[]
 
 	    						ldap_value_free(vals);
 	 					} //if
-					printf("attr adress %u\n",(unsigned int)attr);
+					//printf("attr adress %u\n",(unsigned int)attr);
 					ldap_memfree(attr);
 
 					//###########################
 						++nrOfSearcResults;
 
 					}
+					ber_free(ber, 0);
 				}
 
                                 break;
@@ -357,7 +384,7 @@ int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[]
 
 			}
 		}
-	
+		ldap_msgfree(res);
 	}
 
 done:
@@ -400,7 +427,7 @@ done:
 //   	nrOfSearcResults = (int)ldap_count_entries((*ld), msg);
 
 
-   	printf("The number of entries returned was %i\n\n", nrOfSearcResults);
+   	//printf("The number of entries returned was %i\n\n", nrOfSearcResults);
 
 
 /*
@@ -475,7 +502,7 @@ done:
 	tempresults = NULL;
 	while(list_rem_next(&list,NULL,(void **)&tempresults) == 0) {
 		printf("tempresults adress %u\n",(unsigned int)tempresults);
-		//printf("aaa \"%s\"\n",(*tempresults).value);
+		printf("aaa \"%s\"\n",(*tempresults).value);
 
 		len = strnlen((*tempresults).value,MAX_LDAP_ATTR_LEN);
 
@@ -508,8 +535,9 @@ for {
 
 	printf("nr of results for return is %i\n",(*nrofresponses));
 
-	printf("ldap_simple_search: end\n");
+	//printf("ldap_simple_search: end\n");
 
+	return 1;
 }
 
 int ldap_getcnForUser(LDAP **ld,char cn[],char user_username[],const char ldap_base[]) {
@@ -688,6 +716,76 @@ int getPrimaryGroupFromDnUsername (char cn[],char username[], int sizeofusername
 
 }
 
+void
+send_failure(int sock)
+{
+	int data = 0;
+	sendall(sock, &data, sizeof(data));
+}
+
+int
+insert_group(struct hashtable *grouphash, char *id)
+{
+	if (hashtable_search(grouphash, id) != NULL)
+		return 0;
+	hashtable_insert(grouphash, id, (void *)1);
+
+	return 1;
+}
+
+void
+gather_groups(struct hashtable *grouphash, LDAP **ld, char *ldap_base, char *sid)
+{
+	char filter[128];
+	char **respons;
+	int nrOfSearcResults;
+	int i;
+
+
+	/* XXX: hack */
+	if (strncasecmp(sid, "S-", 2) == 0) {
+		sprintf(filter, "(objectSid=%s)", sid);
+		if (!ldap_simple_search(ld, filter, "sAMAccountName", &respons, &nrOfSearcResults, ldap_base)) {
+			printf("Unable to get sAMAccountName from objectSid\n");
+			printf("Filter: %s, attributes: %s\n", filter, "sAMAccountName");
+		} else {
+			char *id;
+			printf( "We got something like: %s from %s\n", respons[0], sid);
+
+			id = strdup(respons[0]);
+			if (insert_group(grouphash, id))
+				gather_groups(grouphash, ld, ldap_base, id);
+			else
+				free(id);
+			ldap_simple_free(respons);
+		}
+	} else  {
+		sprintf(filter, "(sAMAccountName=%s)", sid);
+	}
+	if (!ldap_simple_search(ld, filter, "memberOf", &respons, &nrOfSearcResults, ldap_base)) {
+		printf("Unable to get memberOf\n");
+		return;
+	}
+	for (i = 0; i < nrOfSearcResults; i++) {
+		int n_results;
+		char **respons2;
+		char *id;
+
+		if (!ldap_simple_search(ld, NULL, "objectSid", &respons2, &n_results, respons[i])) {
+			printf("Unable to get memberOf\n");
+			return;
+		}
+		printf("Results: %d\n", n_results);
+
+		id = strdup(respons2[0]);
+		if (insert_group(grouphash, id))
+			gather_groups(grouphash, ld, ldap_base, id);
+		else
+			free(id);
+		ldap_simple_free(respons2);
+	}
+	ldap_simple_free(respons);			
+}
 
 do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 
@@ -703,7 +801,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 
 	printf("got new connection\n");
 
-//temp: ser ikke ut til at apcahe lokker sin enne riktig
+//temp: ser ikke ut til at Apache lukker sin ende riktig
 //while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
 if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
 
@@ -905,7 +1003,89 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 			}
 		}
 		else if (packedHedder.command == bad_groupsForUser) {
-			printf("listUsers\n");
+			struct hashtable *grouphash;
+			char primarygroup[64];
+			char *sid;
+			char *groupsid;
+			char *id;
+			struct hashtable_itr *itr;
+
+			recvall(socket,user_username,sizeof(user_username));
+
+			printf("groupsForUser\n");
+			printf("user_username %s\n",user_username);
+
+			/* Make hash table to temporarily hold all group info */
+			grouphash = create_hashtable(7, boithoad_hashfromkey, boithoad_equalkeys);
+
+			/* First figure out the primary group */
+			/* 1. Get User SID */
+			sprintf(filter, "(sAMAccountName=%s)", user_username);
+			if (!ldap_simple_search(&ld, filter, "primaryGroupID,objectSid", &respons, &nrOfSearcResults, ldap_base)) {
+				printf("Unable to get userSID and primaryGroup\n");
+				printf("Filter: %s, attributes: %s\n", filter, "primaryGroupID,objectSid");
+				send_failure(socket);
+				return;
+			}
+
+			sid = malloc(strlen(respons[*respons[0] == 'S' ? 0 : 1]) + 16);
+			strcpy(sid, respons[*respons[0] == 'S' ? 0 : 1]);
+			printf("Sid: %s\n", sid);
+			if (!insert_group(grouphash, sid))
+				free(sid);
+			else
+				gather_groups(grouphash, &ld, ldap_base, sid);
+			/* 2. Replace last element */
+			groupsid = strdup(sid);
+			sid_replacelast(groupsid, respons[*respons[0] == 'S' ? 1 : 0]);
+			if (!insert_group(grouphash, groupsid))
+				free(groupsid);
+			else
+				gather_groups(grouphash, &ld, ldap_base, groupsid);
+			printf("Primary group: %s\n", groupsid);
+			printf("%p\n", respons);
+			ldap_simple_free(respons);			
+
+			/* 3. Get group name */
+			sprintf(filter, "(objectSid=%s)", groupsid);
+			if (!ldap_simple_search(&ld, filter, "sAMAccountName", &respons, &nrOfSearcResults, ldap_base)) {
+				printf("Unable to get userSID and primaryGroup");
+				send_failure(socket);
+				return;
+			}
+			id = strdup(respons[0]);
+			if (!insert_group(grouphash, id))
+				free(id);
+			ldap_simple_free(respons);			
+
+			/* Add Everyone and the username for the user */
+			id = strdup("Everyone");
+			if (!insert_group(grouphash, id))
+				free(id);
+			id = strdup(user_username);
+			if (!insert_group(grouphash, id))
+				free(id);
+
+			/* Send all the groups */
+			intresponse = hashtable_count(grouphash);
+			if (!sendall(socket,&intresponse, sizeof(intresponse))) {
+				perror("sendall() groups for users, count");
+			}
+			itr = hashtable_iterator(grouphash);
+			do {
+				//printf("Foo: %s %d\n", (char *)hashtable_iterator_key(itr), (int)hashtable_iterator_value(itr));
+				strscpy(ldaprecord, hashtable_iterator_key(itr), sizeof(ldaprecord));
+				if (!sendall(socket,ldaprecord, sizeof(ldaprecord))) {
+					perror("sendall");
+				}
+
+			} while (hashtable_iterator_advance(itr));
+
+			free(itr);
+			hashtable_destroy(grouphash, 0);
+
+#if 0
+			printf("groupsForUser\n");
 			char primarygroup[64];
 
 			recvall(socket,user_username,sizeof(user_username));
@@ -986,7 +1166,7 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 
 			}
 			ldap_simple_free(respons);			
-			
+#endif
 		}
 		else if (packedHedder.command == bad_getPassword) {
 			printf("bad_getPassword: start\n");
@@ -1092,22 +1272,6 @@ void badldap_init(FILE *elog) {
 		//exit(1);
         }
 
-}
-
-static unsigned int boithoad_hashfromkey(void *ky)
-{
-    char *k = (char *)ky;
-
-    printf("hashfromkey: \"%s\"\n",k);
-
-    return (crc32boitho(k));
-}
-
-static int boithoad_equalkeys(void *k1, void *k2)
-{
-	printf("equalkeys: \"%s\" ? \"%s\"\n",k1,k2);
-
-	return (0 == strcmp(k1,k2));
 }
 
 
