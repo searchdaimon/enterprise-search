@@ -954,6 +954,8 @@ void iindexArrayCopy(struct iindexFormat *a, struct iindexFormat *b, int blen) {
 
 void iindexArrayCopy2(struct iindexFormat *c, int *baselen,int Originallen, struct iindexFormat *a, int alen) {
 
+	fprintf(stderr, "search: iindexArrayCopy2() Warning! This function has not been tested.\n");
+
 	int x;
         int i=0,j=0;
 	int k=Originallen;
@@ -1175,6 +1177,8 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 
 
 void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filteron) {
+	fprintf(stderr, "search: searchIndex_filters()\n");
+
 	int i,len,j;
 	//dagur:
 	(*filteron).filetype	= NULL;
@@ -1359,6 +1363,8 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 		query_array *queryParsed,struct iindexFormat *TmpArray,struct subnamesFormat *subname, 
 		int languageFilterNr, 
 		int languageFilterAsNr[], int *complicacy){
+
+	fprintf(stderr, "search: searchIndex()\n");
 
 	int i, y, j,k,h;
 	char queryelement[128];
@@ -1711,6 +1717,7 @@ struct searchIndex_thread_argFormat {
 
 void *searchIndex_thread(void *arg)
 {
+	fprintf(stderr, "search: searchIndex_thread()\n");
 
         struct searchIndex_thread_argFormat *searchIndex_thread_arg = (struct searchIndex_thread_argFormat *)arg;
 	int i,y,x;
@@ -2014,6 +2021,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		query_array *search_user_as_query,
 		int ranking
 		) {
+
+	fprintf(stderr, "search: searchSimple()\n");
 
 	int i,y,n;
 	//int x=0,j=0,k=0;
@@ -2716,6 +2725,8 @@ void searchFilterInit(struct filtersFormat *filters, int dates[]) {
 
 	int i;
 
+	fprintf(stderr, "search: searchFilterInit()\n");
+
 	(*filters).filtypes.nrof 	= 0;
 	(*filters).collections.nrof 	= 0;
 
@@ -2743,6 +2754,8 @@ int searchFilterCount(int *TeffArrayElementer,
 		/***********************************************************************************************
 		teller filtyper
 		***********************************************************************************************/
+
+		fprintf(stderr, "search: searchFilterCount()\n");
 
 		h = create_hashtable(200, fileshashfromkey, filesequalkeys);
 
@@ -2866,6 +2879,7 @@ int searchFilterCount(int *TeffArrayElementer,
 		}
 
 		getfiletype_destroy(fti);
+		fti = NULL;
 
 		/***********************************************************************************************
 		 collections

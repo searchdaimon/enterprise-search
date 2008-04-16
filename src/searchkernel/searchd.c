@@ -51,7 +51,7 @@ void *do_chld(void *);
 //mutex_t lock;
 int	service_count;
 
-//gloal variabel for å holde servernavn
+//global variabel for å holde servernavn
 char servername[32];
 
 //#ifndef BLACK_BOKS
@@ -86,15 +86,15 @@ struct spelling *spelling;
 void
 init_spelling(char *lang)
 {
+	fprintf(stderr, "searchd: init_spelling()\n");
 	spelling = spelling_init(lang);
 }
 
 void
 catch_sigusr1(int sig)
 {
-	printf("Caught sigusr1\n");
-	if (spelling != NULL)
-		spelling_destroy(spelling);
+	fprintf(stderr, "searchd: Warning! Caught sigusr1. Reinitializing spelling.\n");
+	spelling_destroy(spelling);
 	init_spelling("bb");
 }
 #endif
@@ -103,14 +103,14 @@ catch_sigusr1(int sig)
  void
 catch_alarm (int sig)
 {
-	printf("got alarm signal. Will exit\n");
+	fprintf(stderr, "searchd: Warning! Recieved alarm signal. Exiting.\n");
 	exit(1);
 }
 
 
 int main(int argc, char *argv[])
 {
-
+	fprintf(stderr, "searchd: Initializing...\n");
 
 	int 	sockfd;
 	int runCount;
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
                 switch (c) {
                         case 'p':
                                 searchport = atoi(optarg);
-				printf("will use port %i\n",searchport);
+				fprintf(stderr, "searchd: Option -p: Using port %i.\n",searchport);
                                 break;
                         case 'l':
 				optLog = 1;
@@ -148,11 +148,11 @@ int main(int argc, char *argv[])
 				optrankfile = optarg;
                                 break;
                         case 'v':
-				printf("verbose output\n");
+				fprintf(stderr, "searchd: Option -v: Verbose output.\n");
 				globalOptVerbose = 1;
                                 break;
                         case 's':
-				printf("Won't fork for new conections\n");
+				fprintf(stderr, "searchd: Option -s: Won't fork for new connections\n");
 				optSingle = 1;
                                 break;
 			#ifdef WITH_SPELLING
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
         --optind;
 
 	#ifdef DEBUG
-        printf("argc %i, optind %i\n",argc,optind);
+        fprintf(stderr, "searchd: Debug: argc %i, optind %i\n",argc,optind);
 	#endif
 
 	if (optrankfile == NULL) {
@@ -187,6 +187,8 @@ int main(int argc, char *argv[])
 
 
 	#ifdef BLACK_BOKS
+	fprintf(stderr, "searchd: Blackboxmode (searchdbb).\n");
+
 	time_t starttime;
 
 	time(&starttime);
@@ -197,14 +199,14 @@ int main(int argc, char *argv[])
 	#define stderrlog "logs/searchdbb_stderr"
 
 	if (optLog) {
-		printf("opening log \"%s\"\n",bfile(stdoutlog));
+		fprintf(stderr, "searchd: Opening log \"%s\"\n",bfile(stdoutlog));
 	
 		if ((FH = freopen (bfile(stdoutlog), "a+", stdout)) == NULL) {
 			perror(bfile(stdoutlog));
 
 		}
 
-		printf("opening log \"%s\"\n",bfile(stderrlog));
+		fprintf(stderr, "searchd: Opening log \"%s\"\n",bfile(stderrlog));
 	
 		if ((FH = freopen (bfile(stderrlog), "a+", stderr)) == NULL) {
 			perror(bfile(stderrlog));
@@ -224,8 +226,8 @@ int main(int argc, char *argv[])
 		fprintf(pidfile, "%d", getpid());
 		fclose(pidfile);
 	}
-	
-	printf("starting. Time %s",ctime(&starttime));
+
+	fprintf(stderr, "searchd: Starting. Time is %s",ctime(&starttime));
 	#endif
 
         maincfg = maincfgopen();
@@ -272,11 +274,11 @@ int main(int argc, char *argv[])
 
   	/* Load the file */
 	#ifdef DEBUG
-  	printf("loading [%s]..\n",bfile(cfg_searchd));
+  	fprintf(stderr, "searchd: Debug: Loading [%s] ...\n",bfile(cfg_searchd));
 	#endif
 
   	if (!config_read_file(&cfg, bfile(cfg_searchd))) {
-    		printf("[%s]failed: %s at line %i\n",bfile(cfg_searchd),config_error_text(&cfg),config_error_line(&cfg));
+    		fprintf(stderr, "searchd: Error! [%s] failed: %s at line %i\n",bfile(cfg_searchd),config_error_text(&cfg),config_error_line(&cfg));
 		exit(1);
 	}
 	//#endif	
@@ -294,12 +296,12 @@ int main(int argc, char *argv[])
 	*/
 
         if (argc < 2) {
-                printf("Inget servernavn gitt.\n");
+                fprintf(stderr, "searchd: Error! No servername given.\n");
                 exit(0);
         }
 
 
-	printf("servername %s\n",servername);
+	fprintf(stderr, "searchd: Servername %s\n",servername);
 
 	//ToDo: må ha låsing her
         if ((LOGFILE = bfopen("config/query.log","a")) == NULL) {
@@ -313,18 +315,18 @@ int main(int argc, char *argv[])
 
 	#ifndef BLACK_BOKS
 		//starter opp
-		printf("loading domainids\n");
+		fprintf(stderr, "searchd: Loading domain-ids..."); fflush(stderr);
 		iintegerLoadMemArray2(&global_DomainIDs,"domainid",sizeof(unsigned short), "www");
-		printf("done\n");
+		fprintf(stderr, "done\n");
 
         	//laster inn alle poprankene
-        	printf("loading pop MemArray\n");
+        	fprintf(stderr, "searchd: Loading pop MemArray..."); fflush(stderr);
         	popopenMemArray2("www",optrankfile); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
-        	printf("done\n");
+        	fprintf(stderr, "done\n");
 
-		printf("loading adultWeight MemArray\n");
+		fprintf(stderr, "searchd: Loading adultWeight MemArray..."); fflush(stderr);
 		adultWeightopenMemArray2("www"); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
-		printf("done\n");
+		fprintf(stderr, "done\n");
 	#endif
 
 
@@ -335,7 +337,7 @@ int main(int argc, char *argv[])
 	#endif
 
 	if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-		fprintf(stderr,"server: can't open stream socket\n"), exit(0);
+		fprintf(stderr,"searchd: Server error! Can't open stream socket.\n"), exit(0);
 
 
 
@@ -344,7 +346,7 @@ int main(int argc, char *argv[])
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_addr.sin_port = htons(searchport);
-	printf("will bind to port %i\n",searchport);
+	fprintf(stderr, "searchd: Will bind to port %i\n",searchport);
 	//seter at sokket kan rebrukes
         int yes=1;
         if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
@@ -353,7 +355,7 @@ int main(int argc, char *argv[])
         }
 	
 	if(bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-		fprintf(stderr,"server: can't bind local address. Port %i\n",searchport);
+		fprintf(stderr,"searchd: Server error! Can't bind local address. Port %i\n",searchport);
 		exit(0);
 	}	
 
@@ -377,7 +379,7 @@ int main(int argc, char *argv[])
 
 		if(searchd_config.newsockfd < 0) {
 
-			fprintf(stderr,"server: accept error\n");
+			fprintf(stderr,"searchd: Server warning! Accept error\n");
 		}
 		else {
 
@@ -386,7 +388,7 @@ int main(int argc, char *argv[])
 			}
 			else {
 			#ifdef DEBUG
-				printf("is in debug mode, wont fork to new prosess\n");
+				fprintf(stderr, "searchd: Debug mode; will not fork to new prosess.\n");
 				do_chld((void *) &searchd_config);
 			#else
 				/*
@@ -399,7 +401,7 @@ int main(int argc, char *argv[])
 					do_chld((void *) &searchd_config);	
 				#endif
 				*/
-				printf("will fork of a new prossess.\n");
+				fprintf(stderr, "searchd: Forking new prosess.\n");
 				if (fork() == 0) { // this is the child process
 
 					close(sockfd); // child doesn't need the listener
@@ -408,6 +410,7 @@ int main(int argc, char *argv[])
 				 
 
 					close(searchd_config.newsockfd);
+					fprintf(stderr, "searchd: Terminating child.\n");
 		
 					exit(0);
 				}
@@ -427,7 +430,7 @@ int main(int argc, char *argv[])
 				pthread_join(chld_thr, NULL);
 			#endif
 			*/
-			printf("have reached Max runs. Exiting\n");
+			fprintf(stderr, "searchd: have reached Max runs. Exiting\n");
 			break;
 		}
 
@@ -444,6 +447,7 @@ int main(int argc, char *argv[])
 */
 void *do_chld(void *arg)
 {
+	fprintf(stderr, "searchd_child: Starting new thread.\n");
 	//int 	mysocfd = (int) arg;
 	struct searchd_configFORMAT *searchd_config = arg;
 	int   mysocfd = (*searchd_config).newsockfd;
@@ -517,7 +521,7 @@ void *do_chld(void *arg)
 	net_status = net_CanDo;
 	//if ((n=sendall(mysocfd,&net_status, sizeof(net_status))) != sizeof(net_status)) {
 	if ((n=send(mysocfd,&net_status, sizeof(net_status),MSG_NOSIGNAL)) != sizeof(net_status)) {
-		printf("send only %i of %i at %s:%d\n",n,sizeof(net_status),__FILE__,__LINE__);
+		fprintf(stderr, "searchd_child: Warning! Sent only %i of %i bytes at %s:%d\n",n,sizeof(net_status),__FILE__,__LINE__);
 		perror("sendall net_status");
 	}
 
@@ -536,7 +540,7 @@ void *do_chld(void *arg)
                 fclose(LOGFILE);
         }
 
-	printf("inncomming query:%s\n",queryNodeHeder.query);
+	fprintf(stderr, "searchd_child: Incoming query: %s\n",queryNodeHeder.query);
 
 	strcpy(SiderHeder->servername,servername);
 
@@ -545,13 +549,13 @@ void *do_chld(void *arg)
 	#if defined BLACK_BOKS && !defined _24SEVENOFFICE
 
 
-	printf("username is \"%s\"\n",queryNodeHeder.search_user);
+	fprintf(stderr, "searchd_child: Username is \"%s\"\n",queryNodeHeder.search_user);
 	struct userToSubnameDbFormat userToSubnameDb;
 	char **respons_list;
 	int responsnr;
 
 	if (!userToSubname_open(&userToSubnameDb,'r')) {
-		printf("can't open users.db\n");
+		fprintf(stderr, "searchd_child: Warning! Can't open users.db\n");
 	}
 	else {
 		char subnamebuf[maxSubnameLength];
@@ -560,18 +564,18 @@ void *do_chld(void *arg)
 		if (strlen(queryNodeHeder.subname) > 0) {
 			strlwcat(queryNodeHeder.subname, ",", sizeof(queryNodeHeder.subname));
 		}
-		printf("queryNodeHeder.subname \"%s\"\n",queryNodeHeder.subname);
+		fprintf(stderr, "searchd_child: queryNodeHeder.subname \"%s\"\n",queryNodeHeder.subname);
 		boithoad_groupsForUser(queryNodeHeder.search_user,&respons_list,&responsnr);
-	        printf("groups: %i\n",responsnr);
+	        fprintf(stderr, "searchd_child: groups: %i\n",responsnr);
 	        for (i=0;i<responsnr;i++) {
-			printf("i= %i, responsnr = %i\n",i,responsnr);
-	        	printf("group: \"%s\"\n",respons_list[i]);
+			fprintf(stderr, "searchd_child: i= %i, responsnr = %i\n",i,responsnr);
+	        	fprintf(stderr, "searchd_child: group: \"%s\"\n",respons_list[i]);
 
 			if (!userToSubname_getsubnamesAsString(&userToSubnameDb,respons_list[i],subnamebuf,sizeof(subnamebuf))) {
-				printf("dosent apare to hav a subname for \"%s\"\n",respons_list[i]);
+				fprintf(stderr, "searchd_child: doesn't appear to have a subname for \"%s\"\n",respons_list[i]);
 			}
 			else {
-				printf("godt subname from getsubnamesAsString as \"%s\"\n",subnamebuf);
+				fprintf(stderr, "searchd_child: got subname from getsubnamesAsString as \"%s\"\n",subnamebuf);
 				strlwcat(queryNodeHeder.subname,subnamebuf,sizeof(queryNodeHeder.subname));
 				strlwcat(queryNodeHeder.subname,",",sizeof(queryNodeHeder.subname));
 			}
@@ -593,12 +597,12 @@ void *do_chld(void *arg)
 
 	if ((cfgcollections = config_lookup(&cfg, "collections")) == NULL) {
 		
-		printf("can't load \"collections\" from config\n");
+		fprintf(stderr, "searchd_child: Error! Can't load \"collections\" from config\n");
 		exit(1);
 	}
 
 	if ((cfgcollection = config_setting_get_member(cfgcollections, "defaults")) == NULL ) {
-		printf("can't load \"collections defaults\" from config\n");
+		fprintf(stderr, "searchd_child: Error! Can't load \"collections defaults\" from config\n");
 		exit(1);
 
 	}
@@ -606,14 +610,14 @@ void *do_chld(void *arg)
 
 	/****************/
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "summary") ) == NULL) {
-                printf("can't load \"summary\" from config\n");
+                fprintf(stderr, "searchd_child: Error! Can't load \"summary\" from config\n");
                 exit(1);
         }
 
 	subnamesDefaultsConfig.summary = config_setting_get_string(cfgstring);
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameUrl") ) == NULL) {
-                printf("can't load \"filterSameUrl\" from config\n");
+                fprintf(stderr, "searchd_child: Error! Can't load \"filterSameUrl\" from config\n");
                 exit(1);
         }
 
@@ -621,7 +625,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameUrl") ) == NULL) {
-                printf("can't load \"filterSameUrl\" from config\n");
+                fprintf(stderr, "searchd_child: Error! Can't load \"filterSameUrl\" from config\n");
                 exit(1);
         }
 
@@ -629,7 +633,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameDomain") ) == NULL) {
-                printf("can't load \"filterSameDomain\" from config\n");
+                fprintf(stderr, "searchd_child: Error! Can't load \"filterSameDomain\" from config\n");
                 exit(1);
         }
 
@@ -637,7 +641,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterTLDs") ) == NULL) {
-                printf("can't load \"filterTLDs\" from config\n");
+                fprintf(stderr, "searchd_child: Error! Can't load \"filterTLDs\" from config\n");
                 exit(1);
         }
 
@@ -645,7 +649,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterResponse") ) == NULL) {
-                printf("can't load \"filterResponse\" from config\n");
+                fprintf(stderr, "searchd_child: Error! Can't load \"filterResponse\" from config\n");
                 exit(1);
         }
 
@@ -653,7 +657,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameCrc32") ) == NULL) {
-                printf("can't load \"filterSameCrc32\" from config\n");
+                fprintf(stderr, "searchd_child: Error! Can't load \"filterSameCrc32\" from config\n");
                 exit(1);
         }
 
@@ -661,7 +665,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankAthorArray") ) == NULL) {
-                printf("can't load \"rankAthorArray\" from config\n");
+                fprintf(stderr, "searchd_child: Error! Can't load \"rankAthorArray\" from config\n");
                 exit(1);
         }
 	
@@ -675,7 +679,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankTittelArray") ) == NULL) {
-                printf("can't load \"rankTittelArray\" from config\n");
+                fprintf(stderr, "searchd_child: Error! Can't load \"rankTittelArray\" from config\n");
                 exit(1);
         }
 	
@@ -689,7 +693,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankHeadlineArray") ) == NULL) {
-                printf("can't load \"rankHeadlineArray\" from config\n");
+                fprintf(stderr, "searchd_child: Error! Can't load \"rankHeadlineArray\" from config\n");
                 exit(1);
         }
 	
@@ -703,7 +707,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankBodyArray") ) == NULL) {
-                printf("can't load \"rankBodyArray\" from config\n");
+                fprintf(stderr, "searchd_child: Error! Can't load \"rankBodyArray\" from config\n");
                 exit(1);
         }
 	
@@ -718,7 +722,7 @@ void *do_chld(void *arg)
 	}
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankUrlArray") ) == NULL) {
-                printf("can't load \"rankUrlArray\" from config\n");
+                fprintf(stderr, "searchd_child: Error! Can't load \"rankUrlArray\" from config\n");
                 exit(1);
         }
 	
@@ -732,7 +736,7 @@ void *do_chld(void *arg)
 
 	//rankTittelFirstWord
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankTittelFirstWord") ) == NULL) {
-                printf("can't load \"rankTittelFirstWord\" from config\n");
+                fprintf(stderr, "searchd_child: Error! Can't load \"rankTittelFirstWord\" from config\n");
                 exit(1);
         }
 
@@ -740,7 +744,7 @@ void *do_chld(void *arg)
 
 	//rankUrlMainWord
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankUrlMainWord") ) == NULL) {
-                printf("can't load \"rankUrlMainWord\" from config\n");
+                fprintf(stderr, "searchd_child: Error! Can't load \"rankUrlMainWord\" from config\n");
                 exit(1);
         }
 
@@ -764,7 +768,7 @@ void *do_chld(void *arg)
 
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "isPaidInclusion") ) == NULL) {
-                printf("can't load \"isPaidInclusion\" from config\n");
+                fprintf(stderr, "searchd_child: Error! Can't load \"isPaidInclusion\" from config\n");
                 exit(1);
         }
 
@@ -795,7 +799,7 @@ void *do_chld(void *arg)
 
 		}
 		else if (isInSubname(subnames,nrOfSubnames,Data[Count])) {
-			printf("all redy have \"%s\" as a subname\n",Data[Count]);
+			fprintf(stderr, "searchd_child: all redy have \"%s\" as a subname\n",Data[Count]);
 		} 
 		else {
 	    		vboprintf("\t\taa: added : %d\t\"%s\" (len %i)\n", Count, Data[Count],strlen(Data[Count]));
@@ -1011,12 +1015,12 @@ void *do_chld(void *arg)
 */
 
 	#ifdef DEBUG
-	printf("\n##########################################################\n");
-	printf("subnames:\nTotal of %i\n",nrOfSubnames);
+	fprintf(stderr, "searchd_child: \n##########################################################\n");
+	fprintf(stderr, "searchd_child: subnames:\nTotal of %i\n",nrOfSubnames);
 	for (i=0;i<nrOfSubnames;i++) {
-		printf("subname nr %i: \"%s\"\n",i,subnames[i].subname);
+		fprintf(stderr, "searchd_child: subname nr %i: \"%s\"\n",i,subnames[i].subname);
 	}
-	printf("##########################################################\n\n");
+	fprintf(stderr, "searchd_child: ##########################################################\n\n");
 	#endif
 
 	SiderHeder->filtypesnrof = MAXFILTYPES;
@@ -1024,7 +1028,7 @@ void *do_chld(void *arg)
 	SiderHeder->errorstrlen=sizeof(SiderHeder->errorstr);
 
 	#ifdef DEBUG
-	printf("queryNodeHeder.getRank %u\n",queryNodeHeder.getRank);
+	fprintf(stderr, "searchd_child: queryNodeHeder.getRank %u\n",queryNodeHeder.getRank);
 	#endif
 
 	if (!queryNodeHeder.getRank) {
@@ -1039,17 +1043,17 @@ void *do_chld(void *arg)
 			&global_DomainIDs, queryNodeHeder.HTTP_USER_AGENT
 			)) 
 		{
-			printf("dosearch did not return 1\n");
+			fprintf(stderr, "searchd_child: dosearch did not return 1\n");
 			SiderHeder->responstype 	= searchd_responstype_error;
 			//setter at vi ikke hadde noen svar
 			SiderHeder->TotaltTreff 	= 0;
 			SiderHeder->showabal		= 0;
 
-			printf("Error: cand do dosearch: \"%s\"\n",SiderHeder->errorstr);
+			fprintf(stderr, "searchd_child: Error: cand do dosearch: \"%s\"\n",SiderHeder->errorstr);
 		}
 	}
 	else if (queryNodeHeder.getRank)  {
-		printf("########################################### Ranking document: %u\n", queryNodeHeder.getRank);
+		fprintf(stderr, "searchd_child: ########################################### Ranking document: %u\n", queryNodeHeder.getRank);
 
 		if (dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),&Sider,SiderHeder,SiderHeder->hiliteQuery,
 			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
@@ -1065,9 +1069,9 @@ void *do_chld(void *arg)
 			
 			if (ranking == -1) {
 				status = net_nomatch;
-				printf("1 Sending: %d\n", sizeof(status));
+				fprintf(stderr, "searchd_child: 1 Sending: %d\n", sizeof(status));
 				if ((n=send(mysocfd, &status, sizeof(status),0)) != sizeof(status)) {
-					printf("send only %i of %i at %s:%d\n",n,sizeof(status),__FILE__,__LINE__);
+					fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(status),__FILE__,__LINE__);
 					perror("sendall status");
 					return;
 				}
@@ -1077,33 +1081,33 @@ void *do_chld(void *arg)
 				data[1] = ranking;
 #if 0
 				if ((n=send(mysocfd, &status, sizeof(status),0)) != sizeof(status)) {
-					printf("send only %i of %i at %s:%d\n",n,sizeof(status),__FILE__,__LINE__);
+					fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(status),__FILE__,__LINE__);
 					perror("sendall status2");
 					return;
 				}
 				if ((n=send(mysocfd, &ranking, sizeof(ranking),0)) != sizeof(ranking)) {
-					printf("send only %i of %i at %s:%d\n",n,sizeof(ranking),__FILE__,__LINE__);
+					fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(ranking),__FILE__,__LINE__);
 					perror("sendall ranking");
 					return;
 				}
 #else
-				printf("2 Sending: %d\n", sizeof(data));
+				fprintf(stderr, "searchd_child: 2 Sending: %d\n", sizeof(data));
 				if ((n = send(mysocfd, data, sizeof(data),0)) != sizeof(data)) {
-					printf("send only %i of %i at %s:%d\n",n,sizeof(data),__FILE__,__LINE__);
+					fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(data),__FILE__,__LINE__);
 					perror("sendall data");
 					return;
 				}
 #endif
 			}
 
-			printf("3 Receiving: %d\n",sizeof(ranking));
+			fprintf(stderr, "searchd_child: 3 Receiving: %d\n",sizeof(ranking));
 			if (recv(mysocfd, &ranking, sizeof(ranking), 0) != sizeof(ranking)) {
 			//if (recvall(mysocfd, &ranking, sizeof(ranking))!= sizeof(ranking)) {
-				printf("recv ranking %s:%d\n",__FILE__,__LINE__);
+				fprintf(stderr, "searchd_child: recv ranking %s:%d\n",__FILE__,__LINE__);
 				perror("");
 				return;
 			}
-			printf("Received ranking: %d\n", ranking);
+			fprintf(stderr, "searchd_child: Received ranking: %d\n", ranking);
 
 			if (!dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),&Sider,SiderHeder,SiderHeder->hiliteQuery,
 				servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
@@ -1118,19 +1122,19 @@ void *do_chld(void *arg)
 				return;
 			} else {
 				int ranking2;
-				printf("Let us see how this ranking went: %d\n", ranking);
+				fprintf(stderr, "searchd_child: Let us see how this ranking went: %d\n", ranking);
 				ranking2 = ranking;
 				status = 0xabdedd0f;
-				printf("4 Sending: %d %d\n", sizeof(ranking), ranking);
-				printf("Ranking: %p\n", &ranking);
+				fprintf(stderr, "searchd_child: 4 Sending: %d %d\n", sizeof(ranking), ranking);
+				fprintf(stderr, "searchd_child: Ranking: %p\n", &ranking);
 #if 1
 				if ((n = send(mysocfd, &ranking2, sizeof(ranking2), 0)) != sizeof(ranking2)) {
-					printf("send only %i of %i at %s:%d\n", n, sizeof(ranking2),__FILE__,__LINE__);
+					fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n", n, sizeof(ranking2),__FILE__,__LINE__);
 					perror("sendall ranking2");
 					return;
 				}
 #endif
-				printf("Sent: %d %d\n", ranking, n);
+				fprintf(stderr, "searchd_child: Sent: %d %d\n", ranking, n);
 				sleep(5);
 			}
 
@@ -1144,7 +1148,7 @@ void *do_chld(void *arg)
 		}
 
 
-		printf("doRank()\n");
+		fprintf(stderr, "searchd_child: doRank()\n");
 		//setter at vi ikke hadde noen svar
 	}
 	else {
@@ -1161,20 +1165,21 @@ void *do_chld(void *arg)
 	SiderHeder->nrOfSubnames = i--;
 
 	if (globalOptVerbose) {
-		printf("subnames:\n");
+		fprintf(stderr, "searchd_child: subnames:\n");
 		for (i=0;i<SiderHeder->nrOfSubnames;i++) {
-			printf("\t%s: %i\n",SiderHeder->subnames[i].subname,SiderHeder->subnames[i].hits);
+			fprintf(stderr, "searchd_child: \t%s: %i\n",SiderHeder->subnames[i].subname,SiderHeder->subnames[i].hits);
 		}
 	
-		printf("\n");
+		fprintf(stderr, "searchd_child: \n");
 	}
 	//finer først tiden vi brukte
         gettimeofday(&globalend_time, NULL);
         SiderHeder->total_usecs = getTimeDifference(&globalstart_time,&globalend_time);
 
 	
+	//printf("query \"%s\", TotaltTreff %i,showabal %i,filtered %i,total_usecs %f\n",queryNodeHeder.query,SiderHeder->TotaltTreff,SiderHeder->showabal,SiderHeder->filtered,SiderHeder->total_usecs);
 
-	printf("|%-40s | %-11i | %-11i | %-11i | %-11f|\n",
+	fprintf(stderr, "searchd_child: |%-40s | %-11i | %-11i | %-11i | %-11f|\n",
 		queryNodeHeder.query,
 		SiderHeder->TotaltTreff,
 		SiderHeder->showabal,
@@ -1188,12 +1193,12 @@ void *do_chld(void *arg)
 
 
 	if ((n=send(mysocfd,SiderHeder, sizeof(struct SiderHederFormat),MSG_NOSIGNAL)) != sizeof(struct SiderHederFormat)) {
-		printf("send only %i of %i at %s:%d\n",n,sizeof(struct SiderHederFormat),__FILE__,__LINE__);
+		fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(struct SiderHederFormat),__FILE__,__LINE__);
 		perror("sendall SiderHeder");
 	}
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	printf("Time debug: sending SiderHeder %f\n",getTimeDifference(&start_time,&end_time));
+	fprintf(stderr, "searchd_child: Time debug: sending SiderHeder %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 	
 
@@ -1204,13 +1209,13 @@ void *do_chld(void *arg)
 
 	//if ((n=send(mysocfd,&Sider, sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits, MSG_NOSIGNAL)) != (sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits)) {
 	if ((n=send(mysocfd,Sider, sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits, MSG_NOSIGNAL)) != (sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits)) {
-		printf("send only %i of %i at %s:%d\n",n,sizeof(struct SiderFormat)*queryNodeHeder.MaxsHits,__FILE__,__LINE__);
+		fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(struct SiderFormat)*queryNodeHeder.MaxsHits,__FILE__,__LINE__);
 		perror("sendall");
 	}		
 	
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	printf("Time debug: sendig sider %f\n",getTimeDifference(&start_time,&end_time));
+	fprintf(stderr, "searchd_child: Time debug: sendig sider %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
 
@@ -1222,7 +1227,7 @@ void *do_chld(void *arg)
 	free(SiderHeder);
 
 	#ifdef DEBUG
-	printf("exiting\n");
+	fprintf(stderr, "searchd_child: exiting\n");
 	#endif
 
 	//pthread_exit((void *)0); /* exit with status */
@@ -1236,11 +1241,11 @@ void *do_chld(void *arg)
 			++profiling_runcount;
 
 			if (profiling_runcount >= profiling_maxruncount) {
-				printf("exiting to do profiling. Hav done %i runs\n",profiling_runcount);
+				fprintf(stderr, "searchd_child: exiting to do profiling. Have done %i runs\n",profiling_runcount);
 				sleep(1);
 				exit(1);
 			}
-			printf("hav runed %i times\n",profiling_runcount);
+			fprintf(stderr, "searchd_child: Has runned %i times\n",profiling_runcount);
 		#endif
 
 

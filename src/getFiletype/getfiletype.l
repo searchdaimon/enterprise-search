@@ -40,6 +40,8 @@ extchar		[a-z0-9_]
 
 filetypes_info* getfiletype_init(char *lang_file)
 {
+    fprintf(stderr, "getfiletype: getfiletype_init()\n");
+
     FILE	*fyyin = fopen(lang_file, "r");
 
     if (fyyin==NULL)
@@ -122,6 +124,7 @@ char* getfiletype(filetypes_info *fti, char *extension)
 
 void getfiletype_destroy(filetypes_info *fti)
 {
+    fprintf(stderr, "getfiletype: getfiletype_destroy()\n");
     if (fti==NULL)
 	return;
 
