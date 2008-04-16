@@ -12,7 +12,7 @@ CFLAGS = -g
 LDFLAGS = -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL
 
 #pop rank bibloteket
-LIBS = src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c src/common/
+LIBS = src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c src/base64/base64.c src/common/
 
 LIBGeoIP = -lGeoIP
 
@@ -67,8 +67,8 @@ LIBXML = -I/usr/include/libxml2  -lxml2
 
 #HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c  
 #har rullet tilbake, og bruker gammel html parser for nå, så trenger dermed ikke i ha med css parseren
-HTMLPARSER=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a src/ds/libds.a
-#HTMLPARSER=src/parser/libhtml_parser.a src/ds/libds.a
+#HTMLPARSER=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a src/ds/libds.a
+HTMLPARSER=src/parser/libhtml_parser.a src/ds/libds.a
 
 # The Dependency Rules
 # They take the form
@@ -217,7 +217,7 @@ bbdocumentWebAdd: src/bbdocumentWebAdd/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/bbdocumentWebAdd/main.c src/base64/base64.c -o bin/bbdocumentWebAdd $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c src/bbdocumentWebAdd/main.c -o bin/bbdocumentWebAdd $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS
 
 bbdocumentMakeLotUrlsdb: src/bbdocumentMakeLotUrlsdb/main.c
 	@echo ""
@@ -248,7 +248,7 @@ boithoad: src/boithoad/main.c
 	@echo ""
 	@echo "$@:"
 	#for lokalt på bb: gcc -g src/common/*.c src/boithoad/main.c   -o bin/boithoad -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL -DWITH_OPENLDAP /usr/lib64/libcrypt.a  /usr/lib64/libssl.a -I/usr/include/mysql/ -L/usr/lib64/mysql/ -ldl   -D BLACK_BOKS -D WITH_CONFIG -DDEBUG ../../openldap-2.3.32/libraries/libldap/.libs/libldap.a ../../openldap-2.3.32/libraries/liblber/.libs/liblber.a -lmysqlclient -lsasl2
-	$(CC) $(CFLAGS) $(LIBS)*.c src/base64/base64.c src/boithoad/main.c   -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -D WITH_CONFIG -DDEBUG
+	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c   -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -D WITH_CONFIG -DDEBUG
 
 PiToWWWDocID: src/PiToWWWDocID/main.c
 	@echo ""
@@ -989,7 +989,7 @@ crawlManager: src/crawlManager/main.c
 	@echo "$@:"
 
 	#22 feb 2007, fjerner -static
-	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c  -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) -rdynamic
+	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) -rdynamic
 
 crawlManager2: src/crawlManager2/main.c
 	@echo ""
