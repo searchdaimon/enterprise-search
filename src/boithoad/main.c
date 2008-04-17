@@ -1062,6 +1062,9 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 			id = strdup("Everyone");
 			if (!insert_group(grouphash, id))
 				free(id);
+			id = strdup("S-1-1-0"); /* The SID for Everyone */
+			if (!insert_group(grouphash, id))
+				free(id);
 			id = strdup(user_username);
 			if (!insert_group(grouphash, id))
 				free(id);
