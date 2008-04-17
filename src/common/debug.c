@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "debug.h"
 
 void debug(const char *fmt, ...) {
 
@@ -49,5 +50,3 @@ void bwarn(const char *fmt, ...) {
         #endif
 
 }
-
-
