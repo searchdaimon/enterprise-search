@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "../common/bfileutil.h"
 #include "query_parser.h"
 #include "read_thesaurus.h"
 
@@ -31,34 +32,16 @@ int main( int argc, char *argv[] )
 void test_expand( char *tekst )
 {
     // Les inn stemwords:
+    char	*buf;
+    int		size;
 
-    printf("Opening stemwords dictionary..."); fflush(stdout);
-    FILE	*file = fopen( "./../../data/stemwords.NBO", "r" );
-    int		i, j, k;
-
-    if (!file)
-	{
-	    fprintf( stderr, "Could not open ./../../data/stemwords.NBO\n" );
-	    return;
-	}
-
-    // Get filesize:
-    struct stat	fileinfo;
-    fstat( fileno( file ), &fileinfo );
-
-    int		size = fileinfo.st_size;
-    char	*buf = (char*)malloc(sizeof(char)*size);
-
-    for (i=0; i<size;)
-	{
-	    i+= fread( (void*)&(buf[i]), sizeof(char), size-i, file );
-	}
-
+    size = readfile_into_buf("./../../data/stemwords.NBO", &buf);
+//    printf("opening file: "); fflush(stdout);
+//    size = readfile_into_buf("thesaurus.NBO", &buf);
+//    printf("done\nparsing: "); fflush(stdout);
     container	*D = read_thesaurus(buf, size);	// Selve kommandoen for å parse ordboka. Dette trengs bare gjøres én gang.
-
+//    printf("done\n");
     free(buf);
-    fclose(file);
-    printf("done\n");
 
     /***/
 
@@ -74,6 +57,7 @@ void test_expand( char *tekst )
     /***/
     /***/
 
+    int		i, j, k;
     printf("\nquery %s\n",tekst);
 
     for (i=0; i<qa.n; i++)

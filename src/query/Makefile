@@ -8,7 +8,7 @@ _query_parser:
 	flex -8 -f -Pthesaurus -i read_thesaurus.lex
 	$(CC) -c lex.thesaurus.c
 	$(CC) -c test.c
-	$(CC) -o query_parser test.o lex.thesaurus.o lex.query.o ../ds/libds.a
+	$(CC) -o query_parser test.o lex.thesaurus.o lex.query.o ../ds/libds.a ../common/bfileutil.c
 
 #_read_thesaurus:
 #	flex -8 -f -Pthesaurus -i read_thesaurus.lex

@@ -270,6 +270,8 @@ void get_query( char text[], int text_size, query_array *qa )
     struct _qp_yy_extra		*qe = malloc(sizeof(struct _qp_yy_extra));
     int				i;
 
+    fprintf(stderr, "query.parser: get_query(\"%s\")\n", text);
+
     qe->is_prefix = 1;
     qe->is_accepting = 0;
     qe->or_is_on = 0;
