@@ -135,6 +135,12 @@ value stack_peak( container *C )
     return S->elem[S->top -1];
 }
 
+/****/
+inline value stack_get( container *C, int id )
+{
+    return ((stack_container_priv*)C->priv)->elem[id];
+}
+/****/
 
 int stack_size( container *C )
 {
