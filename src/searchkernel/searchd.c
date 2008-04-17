@@ -448,6 +448,7 @@ int main(int argc, char *argv[])
 void *do_chld(void *arg)
 {
 	fprintf(stderr, "searchd_child: Starting new thread.\n");
+	fprintf(stderr, "searchd: do_chld()\n");
 	//int 	mysocfd = (int) arg;
 	struct searchd_configFORMAT *searchd_config = arg;
 	int   mysocfd = (*searchd_config).newsockfd;
@@ -487,6 +488,7 @@ void *do_chld(void *arg)
 
 	if ((SiderHeder  = malloc(sizeof(struct SiderHederFormat))) == NULL) {
 		perror("malloc");
+		fprintf(stderr, "searchd: ~do_chld()\n");
 		return 0;
 	} 
 
@@ -1073,6 +1075,7 @@ void *do_chld(void *arg)
 				if ((n=send(mysocfd, &status, sizeof(status),0)) != sizeof(status)) {
 					fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(status),__FILE__,__LINE__);
 					perror("sendall status");
+					fprintf(stderr, "searchd: ~do_chld()\n");
 					return;
 				}
 			} else {
@@ -1083,11 +1086,13 @@ void *do_chld(void *arg)
 				if ((n=send(mysocfd, &status, sizeof(status),0)) != sizeof(status)) {
 					fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(status),__FILE__,__LINE__);
 					perror("sendall status2");
+					fprintf(stderr, "searchd: ~do_chld()\n");
 					return;
 				}
 				if ((n=send(mysocfd, &ranking, sizeof(ranking),0)) != sizeof(ranking)) {
 					fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(ranking),__FILE__,__LINE__);
 					perror("sendall ranking");
+					fprintf(stderr, "searchd: ~do_chld()\n");
 					return;
 				}
 #else
@@ -1095,6 +1100,7 @@ void *do_chld(void *arg)
 				if ((n = send(mysocfd, data, sizeof(data),0)) != sizeof(data)) {
 					fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(data),__FILE__,__LINE__);
 					perror("sendall data");
+					fprintf(stderr, "searchd: ~do_chld()\n");
 					return;
 				}
 #endif
@@ -1105,6 +1111,7 @@ void *do_chld(void *arg)
 			//if (recvall(mysocfd, &ranking, sizeof(ranking))!= sizeof(ranking)) {
 				fprintf(stderr, "searchd_child: recv ranking %s:%d\n",__FILE__,__LINE__);
 				perror("");
+				fprintf(stderr, "searchd: ~do_chld()\n");
 				return;
 			}
 			fprintf(stderr, "searchd_child: Received ranking: %d\n", ranking);
@@ -1119,6 +1126,7 @@ void *do_chld(void *arg)
 				&global_DomainIDs, RANK_TYPE_SUM, 0/*queryNodeHeder.getRank*/, &ranking)) {
 
 				perror("Got some kind of an error?");
+				fprintf(stderr, "searchd: ~do_chld()\n");
 				return;
 			} else {
 				int ranking2;
@@ -1131,6 +1139,7 @@ void *do_chld(void *arg)
 				if ((n = send(mysocfd, &ranking2, sizeof(ranking2), 0)) != sizeof(ranking2)) {
 					fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n", n, sizeof(ranking2),__FILE__,__LINE__);
 					perror("sendall ranking2");
+					fprintf(stderr, "searchd: ~do_chld()\n");
 					return;
 				}
 #endif
@@ -1140,6 +1149,7 @@ void *do_chld(void *arg)
 
 			SiderHeder->responstype = searchd_responstype_ranking;
 			close(mysocfd);
+			fprintf(stderr, "searchd: ~do_chld()\n");
 			return;
 		} else {
 			SiderHeder->responstype = searchd_responstype_error;
@@ -1249,5 +1259,6 @@ void *do_chld(void *arg)
 		#endif
 
 
-
- }
+    fprintf(stderr, "searchd: Normal exit.\n");
+    fprintf(stderr, "searchd: ~do_chld()\n");
+}

@@ -1177,8 +1177,6 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 
 
 void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filteron) {
-	fprintf(stderr, "search: searchIndex_filters()\n");
-
 	int i,len,j;
 	//dagur:
 	(*filteron).filetype	= NULL;
@@ -1700,6 +1698,7 @@ for (i=0; i<(*queryParsed).n; i++)
 	vboprintf("searchIndex: end\n");
 	vboprintf("######################################################################\n\n");
 
+	fprintf(stderr, "search: ~searchIndex()\n");
 }
 
 struct searchIndex_thread_argFormat {
@@ -1785,7 +1784,8 @@ void *searchIndex_thread(void *arg)
 		rank = rankMainArray;
 	}
 	else {
-		printf("unknown index type \"%s\"\n",(*searchIndex_thread_arg).indexType);
+		fprintf(stderr, "search: Error! Unknown index type \"%s\"\n",(*searchIndex_thread_arg).indexType);
+		fprintf(stderr, "search: ~searchIndex_thread()\n");
 		return;
 	}
 	#ifdef WITH_THREAD
@@ -2010,6 +2010,8 @@ void *searchIndex_thread(void *arg)
 	vboprintf("searchtime %f\n",(*searchIndex_thread_arg).searchtime);
 
 	vboprintf("######################################################################\n");
+
+	fprintf(stderr, "search: ~searchIndex_thread()\n");
 }
 
 void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *TotaltTreff, 
@@ -2717,6 +2719,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		//qsort(TeffArray, 30 , sizeof(struct iindexFormat), compare_elements);
 		/********************************************************************************/
 
+	fprintf(stderr, "search: ~searchSimple()\n");
 }
 
 #ifdef BLACK_BOKS
@@ -3071,6 +3074,7 @@ int searchFilterCount(int *TeffArrayElementer,
 		gettimeofday(&end_time, NULL);
 		(*queryTime).dateview = getTimeDifference(&start_time,&end_time);
 
+		fprintf(stderr, "search: ~searchFilterCount()\n");
 
 }
 #endif

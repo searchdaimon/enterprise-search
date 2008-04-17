@@ -27,6 +27,7 @@ int socketsendsaa(int socketha,char **respons_list[],int nrofresponses) {
 
 	int i,len;	
 
+	fprintf(stderr, "daemon: socketsendsaa(socket=%i)\n", socketha);
 	printf("socketsendsaa: nr %i\n",nrofresponses);
 
 	sendall(socketha,&nrofresponses, sizeof(int));
@@ -51,6 +52,7 @@ int socketsendsaa(int socketha,char **respons_list[],int nrofresponses) {
 //motar en enkel respons liste. Den begynner med en int som sier hov lang den er
 int socketgetsaa(int socketha,char **respons_list[],int *nrofresponses) {
 
+	fprintf(stderr, "daemon: socketgetsaa(socket=%i)\n", socketha);
         //char ldaprecord[MAX_LDAP_ATTR_LEN];
         int intresponse,i,len;
 
@@ -98,6 +100,8 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
         socklen_t sin_size;
         struct sigaction sa;
         int yes=1;
+
+	fprintf(stderr, "daemon: sconnect(port=%i)\n", PORT);
 
         if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
             perror("socket");
@@ -217,6 +221,7 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
 	    #endif
         }
 
+	fprintf(stderr, "daemon: ~sconnect()\n");
         return 0;
     } 
 
@@ -230,6 +235,8 @@ int cconnect (char *hostname, int PORT) {
 	int Conectet;
         struct hostent *he;
         struct sockaddr_in their_addr; // connector's address information 
+
+	fprintf(stderr, "daemon: cconnect(hostname=\"%s\", port=%i)\n", hostname, PORT);
 
 	#ifdef DEBUG
 	//extern int errno;
@@ -247,11 +254,13 @@ int cconnect (char *hostname, int PORT) {
 
         if ((he=gethostbyname(hostname)) == NULL) {  // get the host info 
             perror("gethostbyname");
+	    fprintf(stderr, "daemon: ~cconnect()\n");
             return(0);
         }
 
         if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
             perror("socket");
+	    fprintf(stderr, "daemon: ~cconnect()\n");
             return(0);
         }
 
@@ -297,6 +306,7 @@ int cconnect (char *hostname, int PORT) {
 			#endif
 			//close(sockfd); 
 			//sleep(5);
+	        	fprintf(stderr, "daemon: ~cconnect()\n");
 			return 0;
 		}
     		// Can use getpeername() here instead of connect(). 
@@ -308,6 +318,7 @@ int cconnect (char *hostname, int PORT) {
 			#endif
 			//close(sockfd); 
 			//sleep(5);
+			fprintf(stderr, "daemon: ~cconnect()\n");
 			return 0;
 		}
 		else {
@@ -332,6 +343,7 @@ int cconnect (char *hostname, int PORT) {
         //printf("Received: %s",buf);
 
         //close(sockfd);
+        fprintf(stderr, "daemon: ~cconnect(socket=%i)\n", sockfd);
 	return sockfd;
         //return 0;
 } 

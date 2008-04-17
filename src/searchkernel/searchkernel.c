@@ -183,6 +183,8 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 	struct iindexMainElements *TeffArray,struct QueryDataForamt QueryData, char *htmlBuffer,
 	unsigned int htmlBufferSize, char servername[],char subname[], unsigned int getRank,struct queryTimeFormat *queryTime) {
 
+	fprintf(stderr, "searchkernel: popResult(antall=%i, DocID=%i)\n", antall, DocID);
+
 	int y;
 	char        *titleaa, *body, *metakeyw, *metadesc;
 	struct ReposetoryHeaderFormat ReposetoryHeader;
@@ -418,6 +420,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 							(*Sider).title[0] = '\0';
 							(*SiderHeder).showabal++;
 							returnStatus = 1;
+							fprintf(stderr, "searchkernel: ~popResult()\n");
 							return 0;
 
 						}
@@ -614,6 +617,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 	if (acl_allowbuffer != NULL) {free(acl_allowbuffer);}		
 	if (acl_deniedbuffer != NULL) {free(acl_deniedbuffer);}		
 
+	fprintf(stderr, "searchkernel: ~popResult()\n");
 	return returnStatus;
 }
 struct PagesResultsFormat {
@@ -657,6 +661,7 @@ struct PagesResultsFormat {
 
 int nextIndex(struct PagesResultsFormat *PagesResults) {
 
+	fprintf(stderr, "searchkernel: nextIndex()\n");
 	int forreturn;
 
 	#ifdef WITH_THREAD
@@ -688,11 +693,13 @@ int nextIndex(struct PagesResultsFormat *PagesResults) {
 	//printf("nextIndex: waiting for UNlock: end\n");
 	#endif
 
+	fprintf(stderr, "searchkernel: ~nextIndex()\n");
 	return forreturn;
 }
 
 int nextPage(struct PagesResultsFormat *PagesResults) {
 
+	fprintf(stderr, "searchkernel: nextPage()\n");
 	int forreturn;
 
 	#ifdef WITH_THREAD
@@ -728,6 +735,7 @@ int nextPage(struct PagesResultsFormat *PagesResults) {
 
 	#endif
 
+	fprintf(stderr, "searchkernel: ~nextPage()\n");
 	return forreturn;
 
 }
@@ -906,6 +914,7 @@ pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection
 void *generatePagesResults(void *arg) 
 {
 
+	fprintf(stderr, "searchkernel: generatePagesResults()\n");
 	struct PagesResultsFormat *PagesResults = (struct PagesResultsFormat *)arg;
 
 	int i,y;
@@ -935,6 +944,7 @@ void *generatePagesResults(void *arg)
 
 	if ((htmlBuffer = malloc(htmlBufferSize)) == NULL) {
 		perror("can't malloc");
+		fprintf(stderr, "searchkernel: ~generatePagesResults()\n");
 		return;
 	}
 
@@ -1371,6 +1381,7 @@ void *generatePagesResults(void *arg)
 	pthread_exit(NULL);
 	#endif
 
+	fprintf(stderr, "searchkernel: ~generatePagesResults()\n");
 	//return 1;
 }
 
@@ -1512,7 +1523,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	) { 
 
 
-
+	fprintf(stderr, "searchkernel: dosearch(query=\"%s\")\n", query);
 	struct PagesResultsFormat PagesResults;
 	struct filteronFormat filteron;
 
@@ -1700,6 +1711,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
                         //printf("Error: %s:%i\n",errorbuff,(*searchd_config).cmc_port);
 			(*errorLen) = snprintf(errorstr,(*errorLen),"Can't connect to crawler manager: \"%s\", port %i",errorbuff,(*searchd_config).cmc_port);
 
+			fprintf(stderr, "searchkernel: ~dosearch()\n");
                         return(0);
 	        }
 		gettimeofday(&end_time, NULL);
@@ -2039,6 +2051,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	destroy_query( &PagesResults.QueryData.queryParsed );
 
+	fprintf(stderr, "searchkernel: ~dosearch()\n");
 	return 1;
 }
 
@@ -2051,6 +2064,8 @@ int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int 
 char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *searchd_config, char *errorstr,int *errorLen,
 	struct iintegerMemArrayFormat *DomainIDs, int rankType, unsigned int rankDocId, int *ranking)
 { 
+	fprintf(stderr, "searchkernel: dorank(\"%s\")\n", query);
+
 	struct PagesResultsFormat PagesResults;
 	struct filteronFormat filteron;
 
@@ -2144,6 +2159,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		if (!boithoad_getPassword(PagesResults.search_user,PagesResults.password)) {
 			//printf("Can't boithoad_getPassword. Brukeren er ikke logget inn??\n");
 			(*errorLen) = snprintf(errorstr,(*errorLen),"Can't get user info from authentication backend");
+			fprintf(stderr, "searchkernel: ~dorank()\n");
 			return(0);
 		}
 		//printf("got pw \"%s\" -> \"%s\"\n",PagesResults.search_user,PagesResults.password);
@@ -2160,6 +2176,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		printf("here?\n");
 		if (!boithoad_groupsForUser(PagesResults.search_user,&groups_respons_list,&groups_responsnr)) {
                         perror("Error: boithoad_groupsForUser");
+			fprintf(stderr, "searchkernel: ~dorank()\n");
                         return;
                 }
 		groupOrQuery[0] = '\0';
@@ -2188,6 +2205,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
                         //printf("Error: %s:%i\n",errorbuff,(*searchd_config).cmc_port);
 			(*errorLen) = snprintf(errorstr,(*errorLen),"Can't connect to crawler manager: \"%s\", port %i",errorbuff,(*searchd_config).cmc_port);
 
+			fprintf(stderr, "searchkernel: ~dorank()\n");
                         return(0);
 	        }
 		gettimeofday(&end_time, NULL);
@@ -2495,6 +2513,7 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 
 	printf("*ranking %i\n",*ranking);
 
+	fprintf(stderr, "searchkernel: ~dorank()\n");
 	return 1;
 }
 
