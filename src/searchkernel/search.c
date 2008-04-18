@@ -2783,8 +2783,8 @@ int searchFilterCount(int *TeffArrayElementer,
 				continue;
 			}
 				
-			if (NULL == (filesValue = hashtable_search(h,TeffArray->iindex[i].filetype) )) {    
-				printf("filtyper: not found!. Vil insert first\n");
+			if (NULL == (filesValue = hashtable_search(h,TeffArray->iindex[i].filetype) )) {
+				fprintf(stderr, "search: Hash does not contain filetype '%s'. Adding filetype.\n", TeffArray->iindex[i].filetype);
 				filesValue = malloc(sizeof(int));
 				(*filesValue) = 1;
 				filesKey = strdup(TeffArray->iindex[i].filetype);
