@@ -1181,7 +1181,7 @@ void *generatePagesResults(void *arg)
 			printf("pathaccess: have sodo password. Won't do pathaccess\n");
 		}
 		else if (!pathaccess(PagesResults, (*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray->iindex[i].subname).subname,side->DocumentIndex.Url,(*PagesResults).search_user,(*PagesResults).password)) {
-			printf("dident hav acces to that one\n");
+			fprintf(stderr, "searchkernel: Access denied for file \"%s\" in %s\n", side->DocumentIndex.Url, (*(*PagesResults).TeffArray->iindex[i].subname).subname);
 
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 
