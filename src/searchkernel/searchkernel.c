@@ -1433,7 +1433,7 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 				Sider[i].iindex.rank_explaind.nrAthor,
 				Sider[i].iindex.rank_explaind.nrAthorPhrase,
 				Sider[i].iindex.rank_explaind.rankUrl_mainbody,
-				Sider[i].iindex.rank_explaind.rankUrl,
+				Sider[i].iindex.rank_explaind.rankUrlDomain + Sider[i].iindex.rank_explaind.rankUrlSub,
 				Sider[i].DocumentIndex.AdultWeight,
 				#endif
 

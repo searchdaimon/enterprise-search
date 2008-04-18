@@ -797,6 +797,27 @@ showabal,AddSiderHeder[i].servername);
 }
 
 
+void print_explain_rank( struct SiderFormat *Side, char query[]) {
+
+	printf("\t<EXPLAIN_RANK>Rb=%hu;%hu;%hu&amp;Rh=%hu;%hu;%hu&amp;Rt=%hu;%hu;%hu&amp;Ra=%hu;%hu;%hu&amp;Rum=%hu;%hu;%hu&amp;Rud=%hu;%hu;%hu&amp;Rus=%hu;%hu;%hu&amp;AllRank=%i&amp;TermRank=%i&amp;PopRank=%i&amp;DocID=%i-%i&amp;Url=%s&amp;Query=%s</EXPLAIN_RANK>\n",
+		Side->iindex.rank_explaind.rankBody,Side->iindex.rank_explaind.nrBody,Side->iindex.rank_explaind.maxBody,
+		Side->iindex.rank_explaind.rankHeadline,Side->iindex.rank_explaind.nrHeadline,Side->iindex.rank_explaind.maxHeadline,
+		Side->iindex.rank_explaind.rankTittel,Side->iindex.rank_explaind.nrTittel,Side->iindex.rank_explaind.maxTittel,
+		Side->iindex.rank_explaind.rankAthor,Side->iindex.rank_explaind.nrAthor,Side->iindex.rank_explaind.maxAthor,
+		Side->iindex.rank_explaind.rankUrl_mainbody,Side->iindex.rank_explaind.nrUrl_mainbody,Side->iindex.rank_explaind.maxUrl_mainbody,
+		Side->iindex.rank_explaind.rankUrlDomain,Side->iindex.rank_explaind.nrUrlDomain,Side->iindex.rank_explaind.maxUrlDomain,
+		Side->iindex.rank_explaind.rankUrlSub,Side->iindex.rank_explaind.nrUrlSub,Side->iindex.rank_explaind.maxUrlSub,
+		Side->iindex.allrank,
+                Side->iindex.TermRank,
+                Side->iindex.PopRank,
+		Side->iindex.DocID,rLotForDOCid(Side->iindex.DocID),
+		Side->url,
+		query
+
+	);
+
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -2169,6 +2190,10 @@ int main(int argc, char *argv[])
 
 	                		printf("\t<PAID_INCLUSION>%i</PAID_INCLUSION>\n",(int)Sider[i].subname.config.isPaidInclusion);
 
+			#endif
+
+			#ifdef EXPLAIN_RANK
+				print_explain_rank(&Sider[i],QueryData.queryhtml);
 			#endif
 		
 			if (Sider[i].type == siderType_ppctop ) {

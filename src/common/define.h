@@ -158,8 +158,8 @@
 #define poengForBody 1	
 #define poengForHeadline 4
 #define poengForTittel 15
-#define poengForUrlSub 2
-#define poengForUrlMain 30 //temp. til vi har url filtrering i dispatsjer
+//#define poengForUrlSub 2
+//#define poengForUrlMain 30 //temp. til vi har url filtrering i dispatsjer
 
 
 #define maxPoengBody 5
@@ -230,6 +230,7 @@ struct brankPageElementsFormat {
 	unsigned int IPAddress;
 	unsigned char nrOfOutLinks;
 	unsigned short response;
+	unsigned int DomainDI;
 };
 
 //formatet på dokumenet indeks posten
@@ -323,10 +324,27 @@ struct rank_explaindFormat {
 	unsigned short rankTittel;
 	unsigned short rankAthor;
 	unsigned short rankUrl_mainbody;
-	unsigned short rankUrl;
+	unsigned short rankUrlDomain;
+	unsigned short rankUrlSub;
 
 	unsigned short nrAthorPhrase;
 	unsigned short nrAthor;	
+
+	//15 april 2008
+	unsigned short nrBody;
+	unsigned short nrHeadline;
+	unsigned short nrTittel;
+	unsigned short nrUrl_mainbody;
+	unsigned short nrUrlDomain;
+	unsigned short nrUrlSub;
+
+	unsigned short maxBody;
+	unsigned short maxHeadline;
+	unsigned short maxTittel;
+	unsigned short maxUrl_mainbody;
+	unsigned short maxUrlDomain;
+	unsigned short maxUrlSub;
+	unsigned short maxAthor;
 };
 
 struct hitsFormat {

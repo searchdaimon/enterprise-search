@@ -164,30 +164,62 @@ int resultArrayInit(struct iindexFormat *array) {
 	array->phrasenr = 0;
 }
 
-static inline int rankUrl(const struct hitsFormat *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexMainElements *TeffArray, int complicacy) {
-	int rank, i;
+static inline int rank_calc(int nr, char *rankArray,char rankArrayLen) {
 
-	rank = 0;
+	if (nr == 0) {
+		return 0;
+	}
+	else if (nr >= rankArrayLen) {
+		//printf("to large. rankArrayLen %i, nr %i, returning %i\n",rankArrayLen,nr,rankArray[rankArrayLen -1]);
+		return rankArray[rankArrayLen -1];
+	}
+	else {
+		//printf("in range. rankArrayLen  %i. nr %i, value %i\n",rankArrayLen,nr,rankArray[nr -1]);
+		return rankArray[nr -1];
+	}
+}
+
+static inline int rankUrl(const struct hitsFormat *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexMainElements *TeffArray, int complicacy) {
+	int rankDomain, nrDomain , rankSub, nrSub, rank, i;
+
+	nrDomain = 0;
+	nrSub = 0;
+	rankDomain = 0;
+	rankSub = 0;
+
 	for (i = 0;i < nrofhit; i++) {
 	
 		if (hits[i].pos == 2) {
-        		rank =+ poengForUrlMain;
+        		nrDomain =+ 1;
         	}
         	else {
-        		rank =+ poengForUrlSub;
+        		nrSub =+ 1;
+
         	}
 	}
+
+	if (nrDomain != 0) {
+		rankDomain = (*subname).config.rankUrlMainWord;
+	}
+	rankSub = rank_calc(nrSub,(*subname).config.rankUrlArray,(*subname).config.rankUrlArrayLen);
+
+	rank = rankDomain + rankSub;
 
 	//printf("rankUrl: DocID %u, rank %i\n",DocID,rank);
 
 	#ifdef EXPLAIN_RANK
-		TeffArray->rank_explaind.rankUrl = rank;
+		TeffArray->rank_explaind.rankUrlDomain = rankDomain;
+		TeffArray->rank_explaind.rankUrlSub = rankSub;
+
+		TeffArray->rank_explaind.nrUrlDomain = nrDomain;
+		TeffArray->rank_explaind.nrUrlSub = nrSub;
 	#endif
 
 	return rank;
 }
 
 #define logrank(v,r,d) ((log((v * d) +1) * r)) 
+
 
 static inline int rankAthor(const struct hitsFormat *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexMainElements *TeffArray, int complicacy) {
 	int rank, i;
@@ -252,20 +284,6 @@ static inline int rankAthor_complicacy(const struct hitsFormat *hits, int nrofhi
 	return rank;
 }
 
-static inline int rank_calc(int nr, char *rankArray,char rankArrayLen) {
-
-	if (nr == 0) {
-		return 0;
-	}
-	else if (nr >= rankArrayLen) {
-		//printf("to large. rankArrayLen %i, nr %i, returning %i\n",rankArrayLen,nr,rankArray[rankArrayLen -1]);
-		return rankArray[rankArrayLen -1];
-	}
-	else {
-		//printf("in range. rankArrayLen  %i. nr %i, value %i\n",rankArrayLen,nr,rankArray[nr -1]);
-		return rankArray[nr -1];
-	}
-}
 
 static inline int rankAcl(const struct hitsFormat *hits, int nrofhit,const unsigned int DocID,
 		struct subnamesFormat *subname,struct iindexMainElements *TeffArray, int complicacy) {
@@ -276,7 +294,7 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 
 
 	int i;
-        int nrBody, nrHeadline, nrTittel, nrUrl, TittelFirstWord;
+        int nrBody, nrHeadline, nrTittel, nrUrl, TittelFirstWord, nrTittelFirst;
 	int havePhrase;
         //double poengDouble;
 
@@ -295,6 +313,7 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 	nrUrl		 = 0;
 	TittelFirstWord  = 0;
 	havePhrase	 = 0;
+	nrTittelFirst	 = 0;
 
 	//poengDouble 	 = 0;
 	int rank;
@@ -325,6 +344,7 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 				#ifdef DEBUG
 				printf("rank title hit. add %i, TittelFirstWord %i, subname \"%s\", DocID %u\n",(*subname).config.rankTittelFirstWord,TittelFirstWord,(*subname).subname,DocID);
 				#endif
+				++nrTittelFirst;
 			}
 			//starter på 100, så det mø være under. For eks under 106 gir til 6
 			else if (hits[i].pos < 106) {
@@ -358,7 +378,12 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 		TeffArray->rank_explaind.rankTittel = rank_calc(nrTittel,(*subname).config.rankTittelArray,(*subname).config.rankTittelArrayLen) + TittelFirstWord;
 		TeffArray->rank_explaind.rankUrl_mainbody = rank_calc(nrUrl,(*subname).config.rankUrlArray,(*subname).config.rankUrlArrayLen);
 
-		
+		TeffArray->rank_explaind.nrBody = nrBody;
+		TeffArray->rank_explaind.nrHeadline = nrHeadline;
+		TeffArray->rank_explaind.nrTittel = nrTittel + nrTittelFirst;
+		TeffArray->rank_explaind.nrUrl_mainbody = nrUrl;
+
+
 		rank += TeffArray->rank_explaind.rankBody + TeffArray->rank_explaind.rankHeadline + TeffArray->rank_explaind.rankTittel + TeffArray->rank_explaind.rankUrl_mainbody;
 
 
@@ -385,16 +410,47 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 
 #ifdef EXPLAIN_RANK
 
-static inline void rank_explaindSumm(struct rank_explaindFormat *t, struct rank_explaindFormat *a, struct rank_explaindFormat *b) {
+static inline void rank_explaindSumm(struct rank_explaindFormat *t, struct rank_explaindFormat *a, struct rank_explaindFormat *b, int or) {
          t->rankBody		= a->rankBody + b->rankBody;
          t->rankHeadline	= a->rankHeadline + b->rankHeadline;
          t->rankTittel		= a->rankTittel + b->rankTittel;
          t->rankAthor		= a->rankAthor + b->rankAthor;
          t->rankUrl_mainbody	= a->rankUrl_mainbody + b->rankUrl_mainbody;
-         t->rankUrl		= a->rankUrl + b->rankUrl;
+         t->rankUrlDomain		= a->rankUrlDomain + b->rankUrlDomain;
+         t->rankUrlSub		= a->rankUrlSub + b->rankUrlSub;
+
 
          t->nrAthorPhrase	= a->nrAthorPhrase + b->nrAthorPhrase;
          t->nrAthor		= a->nrAthor + b->nrAthor;
+
+         t->nrBody		= a->nrBody + b->nrBody;
+         t->nrHeadline		= a->nrHeadline + b->nrHeadline;
+         t->nrTittel		= a->nrTittel + b->nrTittel;
+         t->nrUrl_mainbody	= a->nrUrl_mainbody + b->nrUrl_mainbody;
+         t->nrUrlDomain		= a->nrUrlDomain + b->nrUrlDomain;
+         t->nrUrlSub		= a->nrUrlSub + b->nrUrlSub;
+
+	//dette er egentlig en hurti fiks, da vi kan kansje kan få mer en maks for querys med fler en et ord 
+	if (or) {
+         t->maxBody		= a->maxBody;
+         t->maxHeadline		= a->maxHeadline;
+         t->maxTittel		= a->maxTittel;
+         t->maxUrl_mainbody	= a->maxUrl_mainbody;
+         t->maxUrlDomain	= a->maxUrlDomain;
+         t->maxUrlSub		= a->maxUrlSub;
+         t->maxAthor		= a->maxAthor;
+	}
+	else {
+         t->maxBody		= a->maxBody + b->maxBody;
+         t->maxHeadline		= a->maxHeadline + b->maxHeadline;
+         t->maxTittel		= a->maxTittel + b->maxTittel;
+         t->maxUrl_mainbody	= a->maxUrl_mainbody + b->maxUrl_mainbody;
+         t->maxUrlDomain	= a->maxUrlDomain + b->maxUrlDomain;
+         t->maxUrlSub		= a->maxUrlSub + b->maxUrlSub;
+         t->maxAthor		= a->maxAthor + b->maxAthor;
+
+	}
+
 
 }
 #endif
@@ -449,7 +505,7 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 			c->iindex[k].phraseMatch = a->iindex[i].phraseMatch + b->iindex[j].phraseMatch;
 
 			#ifdef EXPLAIN_RANK
-			rank_explaindSumm(&c->iindex[k].rank_explaind,&a->iindex[i].rank_explaind,&b->iindex[j].rank_explaind);
+			rank_explaindSumm(&c->iindex[k].rank_explaind,&a->iindex[i].rank_explaind,&b->iindex[j].rank_explaind,1);
 			#endif
 
 			++k; ++j; ++i;
@@ -757,7 +813,7 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 			c->iindex[k].phraseMatch = 0;
 
 			#ifdef EXPLAIN_RANK
-				rank_explaindSumm(&c->iindex[k].rank_explaind,&a->iindex[i].rank_explaind,&b->iindex[j].rank_explaind);
+				rank_explaindSumm(&c->iindex[k].rank_explaind,&a->iindex[i].rank_explaind,&b->iindex[j].rank_explaind,0);
 			#endif
 
 
@@ -1271,6 +1327,30 @@ void rankMainArray(int TeffArrayElementer, struct iindexFormat *TeffArray, int c
 	}
 }
 
+void explain_max_rankArray(int TeffArrayElementer, struct iindexFormat *TeffArray, int complicacy) {
+	int y;
+
+	for (y=0; y<TeffArrayElementer; y++) {
+		if (complicacy == 1) {
+			TeffArray->iindex[y].rank_explaind.maxAthor 	= complicacy_maxPoengAthorPhraserank + complicacy_maxPoengAthorSimple;
+		} else {
+			TeffArray->iindex[y].rank_explaind.maxAthor 	= maxPoengAthor;
+		}
+
+		TeffArray->iindex[y].rank_explaind.maxBody = TeffArray->iindex[y].subname->config.rankBodyArray[TeffArray->iindex[y].subname->config.rankBodyArrayLen -1];
+		TeffArray->iindex[y].rank_explaind.maxHeadline = TeffArray->iindex[y].subname->config.rankHeadlineArray[TeffArray->iindex[y].subname->config.rankHeadlineArrayLen -1];
+		TeffArray->iindex[y].rank_explaind.maxTittel = TeffArray->iindex[y].subname->config.rankTittelArray[TeffArray->iindex[y].subname->config.rankTittelArrayLen -1] + TeffArray->iindex[y].subname->config.rankTittelFirstWord;
+		TeffArray->iindex[y].rank_explaind.maxUrl_mainbody = TeffArray->iindex[y].subname->config.rankUrlArray[TeffArray->iindex[y].subname->config.rankUrlArrayLen -1];
+		TeffArray->iindex[y].rank_explaind.maxUrlDomain = TeffArray->iindex[y].subname->config.rankUrlMainWord;
+		TeffArray->iindex[y].rank_explaind.maxUrlSub = TeffArray->iindex[y].subname->config.rankUrlArray[TeffArray->iindex[y].subname->config.rankUrlArrayLen -1];
+
+
+
+
+		//TeffArray->iindex[y].TermRank = rankMain(TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall,
+		//	TeffArray->iindex[y].DocID,TeffArray->iindex[y].subname,&TeffArray->iindex[y],complicacy);
+	}
+}
 int searchIndex_getnrs(char *indexType,query_array *queryParsed,struct subnamesFormat *subname,int languageFilterNr,
                 int languageFilterAsNr[]) {
 	int nr;
@@ -2000,6 +2080,7 @@ void *searchIndex_thread(void *arg)
 	//rank(ArrayLen,Array,&(*searchIndex_thread_arg).subnames[i],complicacy);
 
 	rank(ArrayLen,Array,complicacy);
+	explain_max_rankArray(ArrayLen,Array,complicacy);
 
 
 	(*searchIndex_thread_arg).resultArrayLen = ArrayLen;

@@ -764,9 +764,27 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
                 		TeffArray->iindex[y].rank_explaind.rankAthor = 0;
 
                 		TeffArray->iindex[y].rank_explaind.rankUrl_mainbody = 0;
-                		TeffArray->iindex[y].rank_explaind.rankUrl = 0;
+                		TeffArray->iindex[y].rank_explaind.rankUrlDomain = 0;
+                		TeffArray->iindex[y].rank_explaind.rankUrlSub = 0;
+
                 		TeffArray->iindex[y].rank_explaind.nrAthorPhrase = 0;
                 		TeffArray->iindex[y].rank_explaind.nrAthor = 0;
+
+                		TeffArray->iindex[y].rank_explaind.nrBody = 0;
+                		TeffArray->iindex[y].rank_explaind.nrHeadline = 0;
+                		TeffArray->iindex[y].rank_explaind.nrTittel = 0;
+                		TeffArray->iindex[y].rank_explaind.nrUrl_mainbody = 0;
+                		TeffArray->iindex[y].rank_explaind.nrUrlDomain = 0;
+                		TeffArray->iindex[y].rank_explaind.nrUrlSub = 0;
+
+                		TeffArray->iindex[y].rank_explaind.maxBody = 0;
+                		TeffArray->iindex[y].rank_explaind.maxHeadline = 0;
+                		TeffArray->iindex[y].rank_explaind.maxTittel = 0;
+                		TeffArray->iindex[y].rank_explaind.maxAthor = 0;
+                		TeffArray->iindex[y].rank_explaind.maxUrl_mainbody = 0;
+                		TeffArray->iindex[y].rank_explaind.maxUrlDomain = 0;
+                		TeffArray->iindex[y].rank_explaind.maxUrlSub = 0;
+
         		#endif
 
 
