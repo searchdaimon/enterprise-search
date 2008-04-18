@@ -1,5 +1,5 @@
 /*
- *	(C) Boitho 2004-2008, Written by Magnus Galåen
+ *	(C) Searchdaimon 2004-2008, Written by Magnus Galåen (mg@searchdaimon.com)
  *
  *	Example for "query_parser".
  *
@@ -11,9 +11,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "../common/bfileutil.h"
+//#include "../common/bfileutil.h"
 #include "query_parser.h"
-#include "read_thesaurus.h"
+#include "stemmer.h"
+
 
 void test_expand( char *tekst );
 void testit( char *tekst );
@@ -29,6 +30,37 @@ int main( int argc, char *argv[] )
     return 0;
 }
 
+void test_expand( char *tekst )
+{
+    printf("Loading thesaurus..."); fflush(stdout);
+
+    thesaurus		*T = thesaurus_init("../../data/thesaurus.text", "../../data/thesaurus.id");
+
+    printf("done\n");
+
+    query_array		qa;
+
+    get_query( tekst, strlen(tekst), &qa);
+
+    container	*V = thesaurus_get_synonyms(T, qa.query[0].s[0]);
+    int		i;
+
+    if (V==NULL)
+	{
+	    printf("No synonyms.\n");
+	}
+    else
+	{
+	    printf("Synonyms:");
+	    for (i=0; i<vector_size(V); i++)
+		printf(" %s", (char*)vector_get(V,i).ptr);
+	    printf("\n");
+	}
+
+    thesaurus_destroy(T);
+}
+
+#if 0
 void test_expand( char *tekst )
 {
     // Les inn stemwords:
@@ -92,6 +124,7 @@ void test_expand( char *tekst )
     destroy_query(&qa);
     destroy(D);	// Deallokér ordboka.
 }
+#endif
 
 void testit( char *tekst )
 {
