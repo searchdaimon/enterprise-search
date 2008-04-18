@@ -29,14 +29,22 @@ int main (int argc, char *argv[]) {
 
 	while (!feof(fileha)) {
 		//wordid hedder
-        	fread(&term,sizeof(unsigned long),1,fileha);
+        	if (fread(&term,sizeof(unsigned long),1,fileha) != 1) {
+			printf("can't read term\n");
+			perror("");
+			continue;
+		}
         	fread(&Antall,sizeof(unsigned long),1,fileha);
 
 		printf("term: %u antall: %u\n",term,Antall);
 
 		for (i=0;i<Antall;i++) {
 			//side hedder
-			fread(&DocID,sizeof(unsigned long),1,fileha);
+			if (fread(&DocID,sizeof(unsigned long),1,fileha) != 1) {
+				printf("can't read DocID for nr %i\n",i);
+				perror("");
+				continue;
+			}
 			fread(&langnr,sizeof(char),1,fileha);
         		fread(&TermAntall,sizeof(unsigned long),1,fileha);
 
