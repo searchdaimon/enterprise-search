@@ -1,6 +1,6 @@
 
-CC=/usr/local/bin/gcc -O2 -Wall
-CPP=/usr/local/bin/g++ -O2 -Wall
+CC=/usr/local/bin/gcc -O2 -Wall -g
+CPP=/usr/local/bin/g++ -O2 -Wall -g
 all:	_query_parser build_thesaurus
 
 _query_parser:

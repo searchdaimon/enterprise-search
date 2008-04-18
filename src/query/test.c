@@ -11,7 +11,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-//#include "../common/bfileutil.h"
 #include "query_parser.h"
 #include "stemmer.h"
 
@@ -42,89 +41,20 @@ void test_expand( char *tekst )
 
     get_query( tekst, strlen(tekst), &qa);
 
-    container	*V = thesaurus_get_synonyms(T, qa.query[0].s[0]);
-    int		i;
+    thesaurus_expand_query(T, &qa);
 
-    if (V==NULL)
-	{
-	    printf("No synonyms.\n");
-	}
-    else
-	{
-	    printf("Synonyms:");
-	    for (i=0; i<vector_size(V); i++)
-		printf(" %s", (char*)vector_get(V,i).ptr);
-	    printf("\n");
-	}
+    char	buf[1024];
+    sprint_expanded_query(buf, 1023, &qa);
+
+    printf("Expanded query: %s\n", buf);
+
+    destroy_query(&qa);
 
     thesaurus_destroy(T);
 }
 
-#if 0
-void test_expand( char *tekst )
-{
-    // Les inn stemwords:
-    char	*buf;
-    int		size;
 
-    size = readfile_into_buf("./../../data/stemwords.NBO", &buf);
-//    printf("opening file: "); fflush(stdout);
-//    size = readfile_into_buf("thesaurus.NBO", &buf);
-//    printf("done\nparsing: "); fflush(stdout);
-    container	*D = read_thesaurus(buf, size);	// Selve kommandoen for å parse ordboka. Dette trengs bare gjøres én gang.
-//    printf("done\n");
-    free(buf);
 
-    /***/
-
-    query_array		qa;
-
-    get_query( tekst, strlen(tekst), &qa );
-    expand_query( D, &qa );	// Ekspander query med stems.
-
-    char		s[1024];
-    sprint_expanded_query(s, 1023, &qa);
-    printf("%s\n", s);
-
-    /***/
-    /***/
-
-    int		i, j, k;
-    printf("\nquery %s\n",tekst);
-
-    for (i=0; i<qa.n; i++)
-	{
-	    printf("(%c)", qa.query[i].operand );
-
-	    for (j=0; j<qa.query[i].n; j++)
-		{
-			printf(" %s", qa.query[i].s[j]);
-		}
-
-	    if (qa.query[i].alt != NULL)
-		{
-		    printf(" (");
-
-		    for (j=0; j<qa.query[i].alt_n; j++)
-			{
-			    if (j>0) printf("|");
-
-			    for (k=0; k<qa.query[i].alt[j].n; k++)
-				printf("%s", qa.query[i].alt[j].s[k]);
-			}
-
-		    printf(")");
-		}
-
-	    printf("\n");
-	}
-
-    printf("\n");
-
-    destroy_query(&qa);
-    destroy(D);	// Deallokér ordboka.
-}
-#endif
 
 void testit( char *tekst )
 {
