@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <limits.h>
 
+#include "../common/exeoc.h"
+
 #define convertpath "/usr/bin/convert"
 #define compositepath "/usr/bin/composite"
 
@@ -13,6 +15,7 @@
 #define backgroundpng "/home/boitho/boithoTools/data/100x100.png"
 #define gspath "/usr/bin/gs"
 
+#define exeocbuflen 2048
 
 unsigned char* generate_thumbnail_by_convert(const void *document, const size_t size, size_t *new_size, char type[]) {
 
@@ -23,7 +26,10 @@ unsigned char* generate_thumbnail_by_convert(const void *document, const size_t 
 	char documentfile[PATH_MAX];
 	char imagefile[PATH_MAX];
 	struct stat inode;      // lager en struktur for fstat å returnere.
-	int n;
+	//int n;
+	int exeocbuflenret;
+	char exeocbuf[exeocbuflen];
+	int ret;
 
 	//tmpfilename = mktemp("/tmp/generateThumbnail_XXXXXX"); //make a unique temporary file name
 
@@ -42,13 +48,26 @@ unsigned char* generate_thumbnail_by_convert(const void *document, const size_t 
 	snprintf(command,sizeof(command),"%s %s -resize 98x98 -bordercolor black -border 1x1 %s",convertpath,documentfile,imagefile);
 
 	printf("runing %s\n",command);
-	system(command);
+
+	//system(command);
+        char *shargs[] = {"/bin/sh","-c",NULL ,'\0'};
+	shargs[2] = command;
+        printf("generate_thumbnail_by_convert: runnig: /bin/sh -c %s\n",command);
+	exeocbuflenret = exeocbuflen;
+        exeoc_timeout(shargs,exeocbuf,&exeocbuflenret,&ret,120);
+
 
 	//composite -gravity center /home/boitho/public_html/div/test.png /home/boitho/boithoTools/data/100x100.png /home/boitho/public_html/div/test2.png
 	snprintf(command,sizeof(command),"%s -gravity center  %s %s %s",compositepath,imagefile,backgroundpng,imagefile);
 	printf("runing %s\n",command);
-	n = system(command);
-	printf("generate_thumbnail_by_convert: n = %i\n",n);
+	//n = system(command);
+
+	shargs[2] = command;
+        printf("generate_thumbnail_by_convert: runnig: /bin/sh -c %s\n",command);
+	exeocbuflenret = exeocbuflen;
+        exeoc_timeout(shargs,exeocbuf,&exeocbuflenret,&ret,120);
+
+
 
 	if ((fp = fopen(imagefile,"rb")) == NULL) {
                 printf(imagefile);
@@ -84,6 +103,11 @@ unsigned char* generate_pdf_thumbnail_by_convert( const void *document, const si
 	char imagefile[PATH_MAX];
 	struct stat inode;      // lager en struktur for fstat å returnere.
 
+	int exeocbuflenret;
+	char exeocbuf[exeocbuflen];
+	int ret;
+        char *shargs[] = {"/bin/sh","-c",command ,'\0'};
+
 	//tmpfilename = mktemp("/tmp/generateThumbnail_XXXXXX"); //make a unique temporary file name
 
 
@@ -101,17 +125,26 @@ unsigned char* generate_pdf_thumbnail_by_convert( const void *document, const si
 	snprintf(command,sizeof(command),"%s -dBATCH -dFirstPage=1 -dLastPage=1 -sDEVICE=png256 -dNOPAUSE -dSAFER -sOutputFile=%s %s",gspath,imagefile,documentfile);
 
 	printf("runing %s\n",command);
-	system(command);
+	//system(command);
+	shargs[2] = command;
+	exeocbuflenret = exeocbuflen;
+        exeoc_timeout(shargs,exeocbuf,&exeocbuflenret,&ret,120);
 
 	snprintf(command,sizeof(command),"%s %s -resize 98x98 -bordercolor black -border 1x1 %s",convertpath,imagefile,imagefile);
 
 	printf("runing %s\n",command);
-	system(command);
+	//system(command);
+	shargs[2] = command;
+	exeocbuflenret = exeocbuflen;
+        exeoc_timeout(shargs,exeocbuf,&exeocbuflenret,&ret,120);
 
 
 	snprintf(command,sizeof(command),"%s -gravity center  %s %s %s",compositepath,imagefile,backgroundpng,imagefile);
 	printf("runing %s\n",command);
-	system(command);
+	//system(command);
+	shargs[2] = command;
+	exeocbuflenret = exeocbuflen;
+        exeoc_timeout(shargs,exeocbuf,&exeocbuflenret,&ret,120);
 
 
 	if ((fp = fopen(imagefile,"rb")) == NULL) {

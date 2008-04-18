@@ -3,6 +3,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "../common/mgsort.h"
+
 	// 8 bytes
 	struct linkdb_block
         {
@@ -52,7 +54,11 @@ int main (int argc, char *argv[]) {
         }
 
 	fstat(fileno(OLDLINKDBFILE),&inode);	
-	linkdbArray = malloc(inode.st_size);
+	if ((linkdbArray = malloc(inode.st_size)) == NULL) {
+		perror("malloc");
+		exit(1);
+	}
+
 	i =0;
 	while (!feof(OLDLINKDBFILE)) {
 		fread(&linkdbArray[i],sizeof(linkdbPost),1,OLDLINKDBFILE);
@@ -61,7 +67,8 @@ int main (int argc, char *argv[]) {
 		++i;	
 	}	
 
-	qsort(linkdbArray, i , sizeof(struct linkdb_block), compare_elements);
+	//qsort(linkdbArray, i , sizeof(struct linkdb_block), compare_elements);
+	mgsort(linkdbArray, i , sizeof(struct linkdb_block), compare_elements);
 
 	for(y=0;y<i;y++) {
 		fwrite(&linkdbArray[y],sizeof(linkdbPost),1,NEWLINKDBFILE);
@@ -78,11 +85,22 @@ int compare_elements (const void *p1, const void *p2) {
         struct linkdb_block *t1 = (struct linkdb_block*)p1;
        	struct linkdb_block *t2 = (struct linkdb_block*)p2;
 
-        if (t2->DocID_to > t1->DocID_to)
-                return -1;
-        else
-                return t2->DocID_to < t1->DocID_to;
+	if (t2->DocID_to == t1->DocID_to) {
+        	if (t2->DocID_from > t1->DocID_from) {
+        	        return -1;
+		}
+        	else {
+        	        return t2->DocID_from < t1->DocID_from;
+		}
 
+	} else {
+        	if (t2->DocID_to > t1->DocID_to) {
+        	        return -1;
+		}
+        	else {
+        	        return t2->DocID_to < t1->DocID_to;
+		}
+	}
 }
 
 
