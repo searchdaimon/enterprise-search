@@ -208,3 +208,46 @@ int readfile_into_buf( char *filename, char **buf )
     return size;
 }
 
+FILE *stretchfile(FILE *FH,char mode[],char file[], off_t branksize) {
+
+        //stenger ned filen
+        fclose(FH);
+
+        //åpner for skriving også
+        if ( (FH = fopen(file,"r+b")) == NULL ) {
+                return NULL;
+        }
+
+
+        //Stretch the file size to the size.
+        if (fseek(FH, branksize +1, SEEK_SET) == -1) {
+                perror("Error calling fseek() to 'stretch' the file");
+                exit(EXIT_FAILURE);
+        }
+
+        /* Something needs to be written at the end of the file to
+        * have the file actually have the new size.
+        * Just writing an empty string at the current file position will do.
+        *
+        * Note:
+        *  - The current position in the file is at the end of the stretched
+        *    file due to the call to lseek().
+        *  - An empty string is actually a single '\0' character, so a zero-byte
+        *    will be written at the last byte of the file.
+        */
+        if (fwrite("", 1, 1, FH) != 1) {
+                perror("Error writing last byte of the file");
+                exit(EXIT_FAILURE);
+        }
+
+        fclose(FH);
+
+        //åpner med ønsket mode
+        if ( (FH = fopen(file,mode)) == NULL ) {
+                return NULL;
+        }
+
+        return FH;
+
+}
+
