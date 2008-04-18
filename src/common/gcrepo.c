@@ -8,8 +8,8 @@
 #include "lot.h"
 #include "DocumentIndex.h"
 
-//#define MaxAgeDiflastSeen 86400
-#define MaxAgeDiflastSeen 100
+#define MaxAgeDiflastSeen 86400
+//#define MaxAgeDiflastSeen 100
 
 struct DIArrayFormat {
         struct DocumentIndexFormat docindex;
@@ -43,7 +43,7 @@ gcrepo(int LotNr, char *subname)
 	int DocIDPlace;
 
 	if ((DIArray = malloc(sizeof(struct DIArrayFormat) * NrofDocIDsInLot)) == NULL) {
-		perror("malloc DIArray");
+		perror("gcrepo: malloc DIArray");
 		exit(1);
 	}
 
@@ -142,6 +142,7 @@ gcrepo(int LotNr, char *subname)
 	}
 
 	fclose(GCEDFH);
+	free(DIArray);
 
 	/* And we have a race... */
 	GetFilPathForLot(path, LotNr, subname);
@@ -158,6 +159,7 @@ gcrepo(int LotNr, char *subname)
 	#ifdef DI_FILE_CASHE
 		closeDICache();
 	#endif
+
 
 	return 0;
 }
