@@ -846,7 +846,7 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 		else {
 			strscpy(ldap_base,msad_ldapbase,sizeof(ldap_base));
 		}
-		if (msad_ldapstring == NULL) {
+		if ((msad_ldapstring == NULL) || (msad_ldapstring[0] == '\0')) {
 			//sprintf(adminsdistinguishedName,"cn=%s,cn=%s,%s",admin_username,ldap_group,ldap_base);
 			//bruker brukernavn på formen user@domain.ttl
 			sprintf(adminsdistinguishedName,"%s@%s",admin_username,ldap_domain);
