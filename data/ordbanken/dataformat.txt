@@ -1,0 +1,76 @@
+Generelt
+-----------------------------------------------------
+
+Datafilene er eksport av databasene til Norsk ordbank. Filene er
+eksportert i iso-8859-1, med windows-linjeskift (cr/lf). Datafeltene 
+er skilt med tabulator.
+
+
+Kort forklaring til dataene i fullform_bm.txt
+-----------------------------------------------------
+
+Første kolonne: unikt identifikasjonsnummer
+Andre kolonne:  grunnform av ordet
+Tredje kolonne: fullform av ordet
+Fjerde kolonne: morfologisk beskrivelse
+Femte kolonne:  paradigmekode
+Sjette kolonne: nummer i paradigme
+
+Fullformen i kolonne tre er generert på grunnlag av paradigmekoden i kolonne fem og 
+nummer i paradigme i kolonne seks. Den morfologiske beskrivelsen i kolonne fire 
+kommer også fra paradigmekoden. Paradigmekodene finnes i fila paradigme_bm.txt.
+
+Vær oppmerksom på følgende:
+
+- Ordklasser og morfologiske beskrivelser følger Norsk Referansegrammatikk 
+  (red. Jan Terje Faarlund, Svein Lie og Kjell Ivar Vannebo 1997) 
+- Hvis et ord kan bøyes på flere måter, får det flere bøyingskoder. 
+  Dette kan generere flere identiske fullformer
+- Adjektiv og substantiv har full bøying, alle verb skal ha attributive 
+  former (også meningsløsheter som ”optimistiskere” ”gåtte” eller ”mjølker”)
+- Norsk ordbank er foreløpig ikke oppdatert iht rettskrivingsendringene i 
+  Bokmålsordboka (2005) og Nynorskordboka (2006). Norsk ordbank inneholder 
+  også ord eller ordformer som er unormert iht til tidligere rettskrivning. 
+  Disse ordene er merket ”unormert” i fjerde kolonne
+
+Eksempel fra fullform_bm.txt:
+85475   AIDS-pasient    AIDS-pasient    subst mask appell ent ub        700     1
+85475   AIDS-pasient    AIDS-pasienten  subst mask appell ent be        700     2
+85475   AIDS-pasient    AIDS-pasienter  subst mask appell fl ub 700     3
+85475   AIDS-pasient    AIDS-pasientene subst mask appell fl be 700     4
+
+
+Kort forklaring til dataene i paradigme_bm.txt
+---------------------------------------------------------
+
+Første kolonne:  paradigmekode
+Andre kolonne:   ordklasse + eventuelt del av morfologisk beskrivelse
+Tredje kolonne:  eventuell beskrivelse av paradigme
+Fjerde kolonne:  om bøyingsparadigmet er fullstendig eller f.eks bare har entall eller flertall
+Femte kolonne:   eksempel på ord med paradigmet
+Sjette kolonne:  nummer i bøyingsparadigme
+Sjuende kolonne: morfologisk beskrivelse
+Åttende kolonne: faktisk bøying/bøyingsendelse som tillegges stammen av ordet ved bøying
+
+Paradigmene er noe ulikt beskrevet mht kolonne tre, fire og fem. Paradigmene for bokmål 
+er gjennomgått og korrigert, mens disse kolonnene for nynorsk foreløpig kan inneholde feil. 
+
+
+Eksempler fra paradigme_bm.txt 
+700     subst mask appell               fullst  bil     1       ent ub
+700     subst mask appell               fullst  bil     2       ent be  en
+700     subst mask appell               fullst  bil     3       fl ub   er
+700     subst mask appell               fullst  bil     4       fl be   ene
+001	verb	pret_suffiks pret_A	fullst	kaste -	1	inf	e
+001	verb	pret_suffiks pret_A	fullst	kaste -	2	pres	er
+001	verb	pret_suffiks pret_A	fullst	kaste -	3	inf pres pass	es
+001	verb	pret_suffiks pret_A	fullst	kaste -	4	pret	a
+001	verb	pret_suffiks pret_A	fullst	kaste -	5	perf-part	a
+001	verb	pret_suffiks pret_A	fullst	kaste -	6	adj <perf-part> nøyt ub ent	a
+001	verb	pret_suffiks pret_A	fullst	kaste -	7	adj <perf-part> m/f ub ent	a
+001	verb	pret_suffiks pret_A	fullst	kaste -	8	adj <perf-part> be ent	a
+001	verb	pret_suffiks pret_A	fullst	kaste -	9	adj <perf-part> fl	a
+001	verb	pret_suffiks pret_A	fullst	kaste -	10	adj <pres-part>	ende
+001	verb	pret_suffiks pret_A	fullst	kaste -	11	imp	
+
+

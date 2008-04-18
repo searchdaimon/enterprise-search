@@ -1,0 +1,25 @@
+************************************************************************
+*                                                                      *
+* Denne fila er en del av en eksport av data fra Norsk ordbank.        *                                            *
+*                                                                      *
+* Norsk ordbank er en database over norske ord, utviklet og            *
+* vedlikeholdt av Universitetet i Oslo.                                *
+*                                                                      *
+* Ordbanken kan kontaktes på e-post: ordbanken@iln.uio.no              *
+*                                                                      *
+* Innholdet i databasen og i denne eksporten er underlagt normale      *
+* opphavsrettslige begrensninger.                                      *
+*                                                                      *
+* Dataene kan fritt brukes, distribueres og endres i henhold til       *
+* innholdet i GNU General Public License, publisert av the Free        *
+* Software Foundation, versjon 2.                                      *
+*                                                                      *
+* Dataene er distribuert i håp om at de vil være til nytte, men uten   *
+* noen form for garanti.                                               *
+*                                                                      *
+* Sammen med disse dataene skal du ha mottatt en kopi av GNU General   *
+* Public License. Har du ikke det, skriv til The Free Software         *
+* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,           *
+* MA 02110-1301 USA.                                                   *
+*                                                                      *
+************************************************************************
