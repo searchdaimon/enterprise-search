@@ -14,7 +14,7 @@
         #include <sys/stat.h>
         #include <fcntl.h>
         #include <sys/mman.h>
-
+	#include <sys/resource.h>
 #endif
 
 #include "define.h"
@@ -27,12 +27,25 @@ unsigned char *adultWeightMemArray[maxLots];
 void adultWeightopenMemArray2(char subname[]) {
 
         FILE *FH;
-        int i;
+        int i, y ,z;
         int LocalLots;
         char LotFile[128];
         int branksize;
 	off_t totsize = 0;
 	struct stat inode;
+
+        int locklimit;
+
+        //finner grensen på antal sider vi kan låse i minne
+        struct rlimit rlim;
+
+        if (getrlimit(RLIMIT_MEMLOCK, &rlim) < 0) {
+                printf("Warning: Cannot raise RLIMIT_MEMLOCK limits.");
+                locklimit = 0;
+        }
+        else {
+                locklimit = rlim.rlim_cur;
+        }
 
 
         //aloker minne for rank for de forskjelige lottene
@@ -101,6 +114,21 @@ void adultWeightopenMemArray2(char subname[]) {
                                	fprintf(stderr,"adultWeightopenMemArray: can't mmap for lot %i\n",i);
                                	perror("mmap");
                        	}
+
+                        //hvis vi kan låse uendelig med minne gjør vi det
+                        if (locklimit == -1) {
+                        	//laster all rankerings dataen fra minne, slik ad det går fort å leste den inn siden
+                                z = 0;
+                                for(y=0;y<NrofDocIDsInLot;y++) {
+                                	z += adultWeightMemArray[i][y];
+                                }
+                                //låser minne
+                                if (mlock(adultWeightMemArray[i],branksize) != 0) {
+                                	perror("mlock");
+                                        exit(1);
+                               	}
+                        }
+
 
 			#else
                         if ((adultWeightMemArray[i] = (unsigned char*)malloc(branksize)) == NULL) {

@@ -11,9 +11,10 @@
 
 #define MMAP_POP
 #ifdef MMAP_POP
-       #include <sys/types.h>
-       #include <sys/stat.h>
-       #include <fcntl.h>
+       	#include <sys/types.h>
+       	#include <sys/stat.h>
+	#include <fcntl.h>
+	#include <sys/resource.h>
 #endif
 
 #include "poprank.h"
@@ -117,7 +118,7 @@ void popopenMemArray_oneLot(char subname[], int i) {
 void popopenMemArray2(char subname[], char rankfile[]) {
 
         FILE *FH;
-	int i;
+	int i, y, z;
 	unsigned char rank;
 	int LocalLots;
 	char LotFile[128];
@@ -125,6 +126,18 @@ void popopenMemArray2(char subname[], char rankfile[]) {
 	struct stat inode;
 	off_t totsize = 0;	
 
+	int locklimit;
+
+	//finner grensen på antal sider vi kan låse i minne
+	struct rlimit rlim;
+	
+        if (getrlimit(RLIMIT_MEMLOCK, &rlim) < 0) {
+                printf("Warning: Cannot raise RLIMIT_MEMLOCK limits.");
+		locklimit = 0;
+        }
+	else {
+		locklimit = rlim.rlim_cur;
+	}
 
 	//aloker minne for rank for de forskjelige lottene
 	LocalLots=0;
@@ -156,18 +169,48 @@ void popopenMemArray2(char subname[], char rankfile[]) {
 
 			branksize = sizeof(unsigned char) * NrofDocIDsInLot;
 
+			printf("branksize offset: %i\n",branksize % getpagesize());
+
 
 			#ifdef MMAP_POP
+
+				//vi må aligne dette med pagesize
+				//branksize += branksize % getpagesize();
 
 				if (inode.st_size != branksize) {
 					fprintf(stderr,"popopenMemArray: file is smaler then size. file size %"PRId64", suposed to be %i\n",inode.st_size,branksize);
 					continue;
 				}
+				
+				//MAP_LOCKED (since Linux 2.5.37) 
+				//	Lock the pages of the mapped region into memory in the manner of mlock(). This flag is ignored in older kernels. 
 
-                        	if ((popMemArray[i] = mmap(0,branksize,PROT_READ,MAP_SHARED,fileno(FH),0) ) == NULL) {
+                        	if ((popMemArray[i] = mmap(0,branksize,PROT_READ,MAP_SHARED,fileno(FH),0) ) == MAP_FAILED) {
                                		fprintf(stderr,"popopenMemArray: can't mmap for lot %i\n",i);
                                		perror("mmap");
                         	}
+
+				//if (madvise(popMemArray[i],branksize,MADV_RANDOM) != 0) {
+				//	perror("madvise");
+				//}
+
+				//hvis vi kan låse uendelig med minne gjør vi det
+				if (locklimit == -1) {
+					//laster all rankerings dataen fra minne, slik ad det går fort å leste den inn siden
+					z = 0;
+					for(y=0;y<NrofDocIDsInLot;y++) {
+						z += popMemArray[i][y];	
+					}
+					//låser minne
+					if (mlock(popMemArray[i],branksize) != 0) {
+						perror("mlock");
+						exit(1);
+					}
+				}
+				//if (mlockall(MCL_CURRENT) == ) {
+				//	perror("mlockall");
+				//}
+				
 			#else
 
 			if ((popMemArray[i] = (unsigned char*)malloc(branksize)) == NULL) {
@@ -191,7 +234,6 @@ void popopenMemArray2(char subname[], char rankfile[]) {
 
 			++LocalLots;
 
-			
 	}
 
 	printf("popopenMemArray: have %i local lots\n",LocalLots);
@@ -285,7 +327,7 @@ int popRankForDocIDMemArray(unsigned int DocID) {
 	int LotNr,DocIDPlace;
 
 
-        //printf("DocID %i\n",DocID);
+        //printf("popRankForDocIDMemArray: DocID %i\n",DocID);
         //fohindrer at vi ber om en docid som er størrre en minne område og segfeiler.
         //burde nokk had noe felles vasking i iindex.c i steden for her. Andre liter sikkert med det samme
         //if ((DocID < ShortPopIndexSize) && (DocID > 0)) {
@@ -304,6 +346,7 @@ int popRankForDocIDMemArray(unsigned int DocID) {
                 LotNr = rLotForDOCid(DocID);
                 DocIDPlace = (DocID - LotDocIDOfset(LotNr));
 
+		//printf("DocID %u-%i, DocIDPlace %i\n",DocID,LotNr,DocIDPlace);
 
 		if (popMemArray[LotNr] != 0) {
 			//printf("have rank %u, i:%i, y:%i\n",(unsigned int)popMemArray[LotNr][DocIDPlace],LotNr,DocIDPlace);

@@ -20,6 +20,7 @@
        	#include <sys/stat.h>
        	#include <fcntl.h>
 	#include <sys/mman.h>
+	#include <sys/resource.h>
 #endif
 
 int iintegerOpenForLot(struct iintegerFormat *iinteger,char index[],int elementsize ,int lotNr, char type[],char subname[]) {
@@ -184,11 +185,25 @@ int iintegerLoadMemArray(struct iintegerMemArrayFormat *iintegerMemArray,char in
 
 int iintegerLoadMemArray2(struct iintegerMemArrayFormat *iintegerMemArray,char index[], int elementsize,char subname[]) {
 
-	int i;
+	int i, y ,z;
 	struct iintegerFormat iinteger;
 	struct stat inode;      // lager en struktur for fstat å returnere.
 	int size;
 	off_t totsize = 0;
+
+        int locklimit;
+
+        //finner grensen på antal sider vi kan låse i minne
+        struct rlimit rlim;
+
+        if (getrlimit(RLIMIT_MEMLOCK, &rlim) < 0) {
+                printf("Warning: Cannot raise RLIMIT_MEMLOCK limits.");
+                locklimit = 0;
+        }
+        else {
+                locklimit = rlim.rlim_cur;
+        }
+
 
 	
 	for (i=0;i<maxLots;i++) {
@@ -261,7 +276,21 @@ int iintegerLoadMemArray2(struct iintegerMemArrayFormat *iintegerMemArray,char i
 				fprintf(stderr,"iintegerLoadMemArray: can't mmap for lot %i\n",i);
                         	perror("mmap");
                         }
-			
+
+                        //hvis vi kan låse uendelig med minne gjør vi det
+                        if (locklimit == -1) {
+                        	//laster all rankerings dataen fra minne, slik ad det går fort å leste den inn siden
+                                z = 0;
+                                for(y=0;y<NrofDocIDsInLot;y++) {
+                                	z += iintegerMemArray->MemArray[i][y];
+                               	}
+                                //låser minne
+                                if (mlock(iintegerMemArray->MemArray[i],size) != 0) {
+                                	perror("mlock");
+                                        exit(1);
+                                }
+                        }
+
 			#else
 			//if ((iintegerMemArray->MemArray[i] = malloc(inode.st_size)) == NULL) {
 			if ((iintegerMemArray->MemArray[i] = malloc(size) ) == NULL) {
