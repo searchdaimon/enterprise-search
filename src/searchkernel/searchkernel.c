@@ -1680,6 +1680,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 					//strsandr(groups_respons_list[i]," ","X");
 					//strsandr(groups_respons_list[i]," ","_NBSP_");
 					strsandr(groups_respons_list[i]," ","_");
+					strsandr(groups_respons_list[i],"-","_");
 
                         		printf("group: %s (nr %i)\n",groups_respons_list[i],i);
 

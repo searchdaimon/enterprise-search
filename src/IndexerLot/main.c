@@ -228,6 +228,7 @@ void iiacladd(struct IndexerRes_acls *iiacl,char acl[]) {
 
 		//gruppenavn med spacer skaper problemer. Erstater det med _ i steden
 		strsandr(Data[Count]," ","_");
+		strsandr(Data[Count],"-","_");
 
 		#ifdef DEBUG
 		printf("got acl \"%s\"\n",Data[Count]);
@@ -265,6 +266,7 @@ void alclot_add(struct alclotFormat *alclot,char acl[]) {
 
 		//gruppenavn med spacer skaper problemer. Erstater det med _ i steden
 		strsandr(Data[Count]," ","_");
+		strsandr(Data[Count],"-","_");
 
 
 		#ifdef DEBUG
