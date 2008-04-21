@@ -3,7 +3,52 @@ command: ./docx2html #file | ./html2text
 outputformat: text
 outputtype: stdio
 
+documentstype: docm
+command: ./docx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
+documentstype: dotx
+command: ./docx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
+documentstype: dotm
+command: ./docx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
 documentstype: xlsx
+command: ./xlsx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
+documentstype: xlsm
+command: ./xlsx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
+documentstype: xlsx
+command: ./xlsx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
+documentstype: xltx
+command: ./xlsx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
+documentstype: xltm
+command: ./xlsx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
+documentstype: xlsb
+command: ./xlsx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
+documentstype: xlam
 command: ./xlsx2html #file | ./html2text
 outputformat: text
 outputtype: stdio
@@ -13,3 +58,32 @@ command: ./pptx2html #file | ./html2text
 outputformat: text
 outputtype: stdio
 
+documentstype: pptm
+command: ./pptx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
+documentstype: potx
+command: ./pptx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
+documentstype: potm
+command: ./pptx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
+documentstype: ppam
+command: ./pptx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
+documentstype: ppsx
+command: ./pptx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
+
+documentstype: ppsm
+command: ./pptx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
