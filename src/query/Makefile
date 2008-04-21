@@ -11,6 +11,8 @@ _query_parser:
 	$(CC) -o query_parser test.o lex.query.o stemmer.o ../ds/libds.a
 
 build_thesaurus:
+# Kjør 'src/query/build_thesaurus_from_ordbanken data/ordbanken/fullform_bm.txt data/thesaurus.text data/thesaurus.id'
+# når thesaurus-en skal bygges.
 	$(CPP) -o build_thesaurus_from_ordbanken build_thesaurus_from_ordbanken.cpp
 
 clean:

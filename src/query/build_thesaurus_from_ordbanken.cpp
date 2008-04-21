@@ -118,7 +118,7 @@ int main( int argc, char *argv[] )
 	    temp = (char*)copy_latin1_to_utf8((unsigned char*)buf);
 
 	    // Hvis fullform eller grunnform inneholder ugyldige tegn, hopp over ordet.
-	    if (!valid_word((unsigned char*)temp))
+	    if (temp[0]=='-' || !valid_word((unsigned char*)temp))
 		{
 		    free(temp);
 		    continue;
@@ -131,7 +131,7 @@ int main( int argc, char *argv[] )
 	    temp = (char*)copy_latin1_to_utf8((unsigned char*)buf);
 
 	    // Hvis fullform eller grunnform inneholder ugyldige tegn, hopp over ordet.
-	    if (!valid_word((unsigned char*)temp))
+	    if (temp[0]=='-' || !valid_word((unsigned char*)temp))
 		{
 		    free(temp);
 		    continue;
