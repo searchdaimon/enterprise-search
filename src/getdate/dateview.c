@@ -37,24 +37,6 @@ date_info_add(dateview *dv, time_t checktime)
 {
 	struct tm tm;
 
-#if 0
-	time(&nowtime);
-	gmtime_r(&nowtime, &tm);
-	tm.tm_sec = 0;
-	tm.tm_min = 0;
-	tm.tm_hour = 0;
-	today = mktime(&tm);
-	yesterday = today - (24 * 60 * 60);
-	last_week = today - (7 * 24 * 60 * 60);
-	last_month = today - (31 * 24 * 60 * 60); /* Not completely correct */
-	tm.tm_mday = 1;
-	tm.tm_mon = 0;
-	this_year = mktime(&tm);
-	tm.tm_year -= 1;
-	last_year = mktime(&tm);
-#else
-#endif
-
 	if (checktime >= dv->today) {
 		dv->output[TODAY-1] += 1;
 		dv->output[THIS_YEAR-1] += 1;
