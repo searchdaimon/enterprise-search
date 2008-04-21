@@ -28,7 +28,9 @@ if (not exists($repos{$repo})) {
 my $config = Config::Tiny->new();
 
 # Open the config
-$config = Config::Tiny->read('/etc/yum.repos.d/searchdaimon.repo');
+$config = Config::Tiny->read('/etc/yum.repos.d/searchdaimon.repo')
+    or die "error opening config: ", $!;
+
 
 # Set repos
 foreach my $_repo (keys %repos) {

@@ -202,6 +202,7 @@ sub _show_installed {
 
 sub _show_available {
     my ($s, $vars) = @_;
+    $yum->clean();
     my ($succs, @output) = $yum->check_update();
 
     unless ($succs) {
