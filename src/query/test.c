@@ -33,20 +33,67 @@ void test_expand( char *tekst )
 {
     printf("Loading thesaurus..."); fflush(stdout);
 
+    // Initialiser thesaurus med ouput-filene fra 'build_thesaurus_*':
     thesaurus		*T = thesaurus_init("../../data/thesaurus.text", "../../data/thesaurus.id");
 
     printf("done\n");
 
     query_array		qa;
 
+    // Parse query:
     get_query( tekst, strlen(tekst), &qa);
 
+    // Kjør stemming på query:
     thesaurus_expand_query(T, &qa);
 
+    // Print query med innebygd print-funksjon:
     char	buf[1024];
     sprint_expanded_query(buf, 1023, &qa);
+    printf("\nExpanded query: %s\n\n", buf);
 
-    printf("Expanded query: %s\n", buf);
+    // --- Eksempel på iterering av expanded query:
+
+    int		i, j, k;
+
+    for (i=0; i<qa.n; i++)
+	{
+	    printf(" %c:", qa.query[i].operand);
+
+	    // Brukerens query:
+	    if (qa.query[i].n > 1 || qa.query[i].operand == QUERY_PHRASE) printf("\"");
+
+	    for (j=0; j<qa.query[i].n; j++)
+		{
+		    if (j>0) printf(" ");
+		    printf("%s", qa.query[i].s[j]);
+		}
+
+	    if (qa.query[i].n > 1 || qa.query[i].operand == QUERY_PHRASE) printf("\"");
+
+	    // Expanded query (fra stemming og synonymer):
+	    if (qa.query[i].alt != NULL)
+		{
+		    printf("(");
+		    for (j=0; j<qa.query[i].alt_n; j++)
+			{
+			    if (j>0) printf("|");
+			    if (qa.query[i].alt[j].n > 1) printf("\"");
+
+			    for (k=0; k<qa.query[i].alt[j].n; k++)
+				{
+				    if (k>0) printf(" ");
+				    printf("%s", qa.query[i].alt[j].s[k]);
+				}
+
+			    if (qa.query[i].alt[j].n > 1) printf("\"");
+			}
+		    printf(")");
+		}
+	}
+
+    printf("\n");
+
+    // ---
 
     destroy_query(&qa);
 

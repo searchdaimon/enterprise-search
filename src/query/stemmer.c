@@ -7,12 +7,16 @@
  *	Slår opp stems og bøyninger av ord.
  *
  *	TODO: utnytte endinger (ord som begynner med '-').
+ *	Støtter ikke bøyninger av f.eks "world cup" (flerordsbøyninger),
+ *	men støtter motsatt vei "tv2" blir "tv 2". Bør forandre query-struct'en
+ *	for å få med disse.
  */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "../common/utf8-strings.h"
 #include "stemmer.h"
 
 
@@ -48,8 +52,13 @@ thesaurus* thesaurus_init( char *fname_text, char *fname_id )
 
 	    fscanf(f_id, "%i;", &id);
 	    fscanf(f_id, "%i;", &flags);
-	    do { word[pos++] = fgetc(f_id); } while (pos<1024 && word[pos-1]!='\n');
+	    for (; pos<1024 && word[pos-1]!='\n'; pos++)
+		{
+		    word[pos] = fgetc(f_id);
+		    if (word[pos] == '-') word[pos] = ' ';
+		}
 	    word[pos-1] = '\0';
+	    convert_to_lowercase((unsigned char*)word);
 
 	    T->Id[i].id = id;
 	    T->Id[i].text = strdup(word);
@@ -62,8 +71,14 @@ thesaurus* thesaurus_init( char *fname_text, char *fname_id )
 	    char	word[1024];
 	    int		pos=0;
 
-	    do { word[pos++] = fgetc(f_text); } while (pos<1024 && word[pos-1]!=';');
+//	    do { word[pos++] = fgetc(f_text); } while (pos<1024 && word[pos-1]!=';');
+	    for (; pos<1024 && word[pos-1]!=';'; pos++)
+		{
+		    word[pos] = fgetc(f_text);
+		    if (word[pos] == '-') word[pos] = ' ';
+		}
 	    word[pos-1] = '\0';
+	    convert_to_lowercase((unsigned char*)word);
 	    fscanf(f_text, "%i;", &flags);
 	    fscanf(f_text, "%i\n", &id);
 
@@ -148,8 +163,11 @@ container* thesaurus_get_words_from_id(thesaurus *T, int id)
 }
 
 
-container* thesaurus_get_synonyms(thesaurus *T, char *word)
+container* thesaurus_get_synonyms(thesaurus *T, char *_word)
 {
+    char	*word = strdup(_word);
+    convert_to_lowercase((unsigned char*)word);
+
     tword	*match = (tword*)bsearch((const void*)word, T->W, T->W_size, sizeof(tword), tword_compare_text);
 
     if (match==NULL)
@@ -157,6 +175,7 @@ container* thesaurus_get_synonyms(thesaurus *T, char *word)
 	    #ifdef DEBUG
 	    fprintf(stderr, "stemmer: No match for word \"%s\".\n", word);
 	    #endif
+	    free(word);
 	    return NULL;
 	}
     else
@@ -197,6 +216,7 @@ container* thesaurus_get_synonyms(thesaurus *T, char *word)
 		vector_pushback(V, set_key(it).ptr);
 	    destroy(S);
 
+	    free(word);
 	    return V;
 	}
 }
@@ -223,10 +243,36 @@ void thesaurus_expand_query( thesaurus *T, query_array *qa )
 
 			    for (j=0; j<n; j++)
 				{
-				    int		m = 1;
+				    int		m = 0;
+				    char	*str = strdup((char*)vector_get(V,j).ptr);
+				    char	delim = 1;
+
+				    for (k=0; str[k]!='\0'; k++)
+					{
+					    if (str[k]!=' ' && delim)
+						{
+						    m++;
+						    delim = 0;
+						}
+					    else if (str[k]==' ' && !delim)
+						{
+						    delim = 1;
+						}
+					}
+
 				    qa->query[i].alt[j].n = m;
 				    qa->query[i].alt[j].s = malloc(sizeof(char*)*m);
-				    qa->query[i].alt[j].s[0] = strdup((char*)vector_get(V,j).ptr);
+
+				    char	*ptrptr, *token;
+				    token = strtok_r(str, " ", &ptrptr);
+
+				    for (k=0; token!=NULL; k++)
+					{
+					    qa->query[i].alt[j].s[k] = strdup(token);
+					    token = strtok_r(NULL, " ", &ptrptr);
+					}
+
+				    free(str);
 				}
 
 			    destroy(V);

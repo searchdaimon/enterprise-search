@@ -613,7 +613,10 @@ void sprint_expanded_query( char *s, int n, query_array *qa )
 			    if (qa->query[i].alt[j].n > 1) pos+= snprintf(s+pos, n - pos, "\"");
 
 			    for (k=0; k<qa->query[i].alt[j].n; k++)
-				pos+= snprintf(s+pos, n - pos, "%s", qa->query[i].alt[j].s[k]);
+				{
+				    if (k>0) pos+= snprintf(s+pos, n - pos, " ");
+				    pos+= snprintf(s+pos, n - pos, "%s", qa->query[i].alt[j].s[k]);
+				}
 
 			    if (qa->query[i].alt[j].n > 1) pos+= snprintf(s+pos, n - pos, "\"");
 			}
