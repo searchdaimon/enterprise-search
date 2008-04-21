@@ -26,7 +26,8 @@ A:active { color : blue; }
 #left_menu {
 	float : left;
 	font-family : 'sans-serif';
-	width : 15%;
+	width : 20%;
+        margin-top : 1em;
 }
 
 #left_menu h4 {
@@ -129,7 +130,7 @@ A:active { color : blue; }
 
 /* Button list */
 .button_list li, .vertical_buttons li {
-	margin : 0.2em;
+	margin : 0 0.2em 0.2em 0.2em;
 }
 
 .button_list {
@@ -161,6 +162,9 @@ A:active { color : blue; }
     list-style-type : none;
     margin-left : 0;
     padding-left : 0;
+    padding-top : 0.2em;
+    margin-top : 0.2em;
+    margin-bottom : 0.5em;
 }
 
 .vertical_buttons li {

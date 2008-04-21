@@ -9,18 +9,23 @@ use config qw(%CONFIG);
 
 my $cgi = CGI->new;
 my $state = CGI::State->state($cgi);
+my $header_tpl = "Content-Type: text/plain\n"
+          . "Content-disposition: Attachment; "
+          . "filename=%s\n"
+          . "\n";
 
+my $utime = time();
 if (my $filename = $state->{'logfile'}) {
     croak "Invalid logfile"
         unless $CONFIG{logfiles}->{$filename};
 
-    my $utime = time();
-    print "Content-Type: text/plain\n",
-          "Content-disposition: Attachment; ",
-          "filename=$filename-$utime.log\n",
-          "\n";
+    print sprintf $header_tpl, "$filename-$utime.log";
 
     Page::Logs::download($filename);
+}
+elsif ($state->{logs_compressed}) {
+    print sprintf $header_tpl, "logs-$utime.zip";
+    Page::Logs::downl_all_zip();
 }
 else {
 	print "No logfile selected.";

@@ -6,6 +6,7 @@ use File::stat;
 use Data::Dumper;
 use Sql::Sql;
 use Sql::Search_logg;
+use File::Temp qw(tempfile);
 use config qw($CONFIG);
 my %CONFIG = %$CONFIG;
 
@@ -54,6 +55,38 @@ sub download {
 
 	1;
 }
+sub downl_all_zip {
+    my $s = shift if ref $_[0];
+    
+    my $logs_str;
+    for my $file (keys %{$CONFIG{logfiles}}) {
+        my $path = $CONFIG{log_path} . "/" . $file;
+        next unless -e $path;
+        $logs_str .= "\Q$path\E ";
+    }
+
+    # create zip for all logs.
+    my (undef, $filename) = tempfile(SUFFIX => ".zip", OPEN => 0);
+    my $exec_str = "zip -1 \Q$filename\E $logs_str 2>&1 |";
+    open my $ziph, $exec_str
+        or croak "Unable to run zip", $!;
+
+    my $output = join q{}, <$ziph>;
+    warn $output if $output;
+    close $ziph or croak "error running zip: $output";
+
+    # read the zip.
+    open my $fh, "<", $filename
+        or croak "Unable to open '$filename'" , $!;
+    
+    print while <$fh>;
+    close $fh;
+    unlink $filename;
+    1;
+}
+
+
+
 
 sub show_search_log {
 	my ($self, $vars) = (@_);
