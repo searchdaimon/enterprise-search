@@ -1519,7 +1519,7 @@ int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct Side
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames, 
 int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[], 
 char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *searchd_config, char *errorstr,int *errorLen,
-	struct iintegerMemArrayFormat *DomainIDs, char *useragent
+	struct iintegerMemArrayFormat *DomainIDs, char *useragent, char groupOrQuery[]
 	) { 
 
 
@@ -1639,8 +1639,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	#if defined BLACK_BOKS && !defined _24SEVENOFFICE
 
-		char groupOrQuery[1024];
-		groupOrQuery[0] = '\0';
 
 		//henter brukerens passord fra boithoad
 		gettimeofday(&start_time, NULL);
@@ -1662,40 +1660,36 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			gettimeofday(&end_time, NULL);
 	        	(*SiderHeder).queryTime.getUserObjekt = getTimeDifference(&start_time,&end_time);
 		
+			//runarb: 21 april 2008: henter dette sammen med at vi finner ut hvilkene collection vi skal crawle
 			/****************************************************************/
 			//hent alle grupper
-			char **groups_respons_list;
-			int groups_responsnr;
-
+			//char **groups_respons_list;
+			//int groups_responsnr;
+			//
 			//boithoad_listGroups(&groups_respons_list,&groups_responsnr);
-			if (!boithoad_groupsForUser(PagesResults.search_user,&groups_respons_list,&groups_responsnr)) {
-                	        perror("Error: boithoad_groupsForUser");
-                	        //return 0;
-                	}
-			else {
-        		        printf("groups: %i\n",groups_responsnr);
-		                for (i=0;i<groups_responsnr;i++) {
-
-					//vi har problemer med space
-					//strsandr(groups_respons_list[i]," ","X");
-					//strsandr(groups_respons_list[i]," ","_NBSP_");
-					strsandr(groups_respons_list[i]," ","_");
-					strsandr(groups_respons_list[i],"-","_");
-
-                        		printf("group: %s (nr %i)\n",groups_respons_list[i],i);
-
-					strlcat(groupOrQuery," |\"",sizeof(groupOrQuery));
-					strlcat(groupOrQuery,groups_respons_list[i],sizeof(groupOrQuery));
-					strlcat(groupOrQuery,"\"",sizeof(groupOrQuery));
-
-	                	}
-			}
+			//if (!boithoad_groupsForUser(PagesResults.search_user,&groups_respons_list,&groups_responsnr)) {
+                	//        perror("Error: boithoad_groupsForUser");
+                	//        //return 0;
+                	//}
+			//else {
+        		//        printf("groups: %i\n",groups_responsnr);
+		        //        for (i=0;i<groups_responsnr;i++) {
+			//
+			//		//vi har problemer med space
+			//		strsandr(groups_respons_list[i]," ","_");
+			//		strsandr(groups_respons_list[i],"-","_");
+			//
+                        //		printf("group: %s (nr %i)\n",groups_respons_list[i],i);
+			//
+			//		strlcat(groupOrQuery," |\"",sizeof(groupOrQuery));
+			//		strlcat(groupOrQuery,groups_respons_list[i],sizeof(groupOrQuery));
+			//		strlcat(groupOrQuery,"\"",sizeof(groupOrQuery));
+			//
+	                //	}
+			//}
 
 		}
 
-		//legger til brukernavnet
-		strlcat(groupOrQuery," |",sizeof(groupOrQuery));
-		strlcat(groupOrQuery,PagesResults.search_user,sizeof(groupOrQuery));
 
 		printf("groupOrQuery \"%s\"\n",groupOrQuery);
 

@@ -478,6 +478,12 @@ void *do_chld(void *arg)
 	char **Data;
         int Count;
 
+	
+        char groupOrQuery[1024];
+        groupOrQuery[0] = '\0';
+
+
+
 	//struct SiderFormat Sider[MaxsHits * 2];
 
 	struct SiderHederFormat *SiderHeder;
@@ -569,7 +575,13 @@ void *do_chld(void *arg)
 		fprintf(stderr, "searchd_child: queryNodeHeder.subname \"%s\"\n",queryNodeHeder.subname);
 		boithoad_groupsForUser(queryNodeHeder.search_user,&respons_list,&responsnr);
 	        fprintf(stderr, "searchd_child: groups: %i\n",responsnr);
+
 	        for (i=0;i<responsnr;i++) {
+
+			//vi har problemer med space
+                        strsandr(respons_list[i]," ","_");
+                        strsandr(respons_list[i],"-","_");
+
 			fprintf(stderr, "searchd_child: i= %i, responsnr = %i\n",i,responsnr);
 	        	fprintf(stderr, "searchd_child: group: \"%s\"\n",respons_list[i]);
 
@@ -582,12 +594,20 @@ void *do_chld(void *arg)
 				strlwcat(queryNodeHeder.subname,",",sizeof(queryNodeHeder.subname));
 			}
 
+			//legger det inn i gruppe query
+			strlcat(groupOrQuery," |\"",sizeof(groupOrQuery));
+                        strlcat(groupOrQuery,respons_list[i],sizeof(groupOrQuery));
+                        strlcat(groupOrQuery,"\"",sizeof(groupOrQuery));
+
+
 	        }
 		//fjerner ,
 		queryNodeHeder.subname[strlen(queryNodeHeder.subname) -1] = '\0';
 	        boithoad_respons_list_free(respons_list);
 		userToSubname_close(&userToSubnameDb);
 	}
+
+	printf("groupOrQuery \"%s\"\n",groupOrQuery);
 
 	#endif
 
@@ -1042,7 +1062,8 @@ void *do_chld(void *arg)
 			&SiderHeder->filters,
 			searchd_config,
 			SiderHeder->errorstr, &SiderHeder->errorstrlen,
-			&global_DomainIDs, queryNodeHeder.HTTP_USER_AGENT
+			&global_DomainIDs, queryNodeHeder.HTTP_USER_AGENT,
+			groupOrQuery
 			)) 
 		{
 			fprintf(stderr, "searchd_child: dosearch did not return 1\n");
