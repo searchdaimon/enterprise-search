@@ -249,7 +249,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
                     sprintf(entry_name, "%s/%s", dir_name, dirp->name);
                     sprintf(full_entry_name, "%s%s", prefix, entry_name);
 
-                    if ( (n = smbc_getxattr(full_entry_name, "system.nt_sec_desc.*+", value, sizeof(value))) < 0 )
+                    if ( (n = smbc_getxattr(full_entry_name, "system.nt_sec_desc.*", value, sizeof(value))) < 0 )
                         {
 
 				if (n == EINVAL) {
