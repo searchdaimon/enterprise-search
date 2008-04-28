@@ -22,6 +22,8 @@
 
 #include "set.h"
 
+#define DICT_ACL_LENGTH 1024
+
 typedef struct {
 	int hits;
 	set acl_allow;
@@ -63,10 +65,10 @@ int dictionarywordLineSplit(char line[], char word[], unsigned int *nr, char *ac
 	free(data[0]);
 	*nr = atou(data[1]);
 	free(data[1]);
-	strlcpy(acl_allow, data[2], 1024); /* Check size with dolot */
+	strlcpy(acl_allow, data[2], DICT_ACL_LENGTH);
 	free(data[2]);
 	if (splits == 4) {
-		strlcpy(acl_denied, data[3], 1024) /* Check size with dolot */;
+		strlcpy(acl_denied, data[3], DICT_ACL_LENGTH);
 		free(data[3]);
 	} else if (splits == 3) {
 		acl_denied[0] = '\0';
@@ -110,7 +112,7 @@ dolot(unsigned int lotNr, char *subname, struct hashtable *h)
 	if ((FH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords_raw","r",'r',subname)) == NULL)
 		return;
 	while(fgets(line, sizeof(line), FH) != NULL) {
-		char acl_allow[1024], acl_denied[1024];
+		char acl_allow[DICT_ACL_LENGTH], acl_denied[DICT_ACL_LENGTH];
 		dictcontent_t *dc;
 
 
