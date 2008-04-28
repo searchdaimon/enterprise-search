@@ -54,19 +54,21 @@ int dictionarywordLineSplit(char line[], char word[], unsigned int *nr, char *ac
 	int splits;
 	char **data;
 
-	if ((splits = split(line, " ", &data)) < 3)
+	if ((splits = split(line, " ", &data)) < 3) {
+		saafree(data);
 		return 0;
+	}
 
-	strcpy(word, data[0]);
+	strlcpy(word, data[0], maxWordlLen);
 	free(data[0]);
 	*nr = atou(data[1]);
 	free(data[1]);
-	strcpy(acl_allow, data[2]);
+	strlcpy(acl_allow, data[2], 1024); /* Check size with dolot */
 	free(data[2]);
 	if (splits == 4) {
-		strcpy(acl_denied, data[3]);
+		strlcpy(acl_denied, data[3], 1024) /* Check size with dolot */;
 		free(data[3]);
-	} else {
+	} else if (splits == 3) {
 		acl_denied[0] = '\0';
 	}
 
@@ -105,10 +107,12 @@ dolot(unsigned int lotNr, char *subname, struct hashtable *h)
 	char *filesKey;
 	unsigned int nr;
 
-	FH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords_raw","r",'r',subname);
+	if ((FH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords_raw","r",'r',subname)) == NULL)
+		return;
 	while(fgets(line, sizeof(line), FH) != NULL) {
-		char acl_allow[100], acl_denied[100];
+		char acl_allow[1024], acl_denied[1024];
 		dictcontent_t *dc;
+
 
 		chomp(line);
 		//printf("line \"%s\"\n",line);
@@ -143,8 +147,6 @@ dolot(unsigned int lotNr, char *subname, struct hashtable *h)
 	}
 
 	fclose(FH);
-
-
 }
 
 int main (int argc, char *argv[]) {
