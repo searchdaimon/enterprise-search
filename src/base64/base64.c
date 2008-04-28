@@ -104,7 +104,7 @@ int base64_decode(char *out, const char *in, int maxlen) {
 	while (str < end) {
 	    int i = 0;
             do {
-		unsigned char uc = index_64[NATIVE_TO_ASCII(*str++)];
+		unsigned char uc = index_64[(int)NATIVE_TO_ASCII(*str++)];
 		if (uc != INVALID)
 		    c[i++] = uc;
 
