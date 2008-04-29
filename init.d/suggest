@@ -32,7 +32,7 @@ start() {
 	echo -n $"Starting Boitho Daemon "$B_NAME"."
 	daemon $B_RUN
 	sleep 1 # Wait for the daemon to start
-	$BOITHOHOME/bin/suggest_client_redict
+	$BOITHOHOME/bin/suggest_client_redict localhost
 	RETVAL=$?
 	echo
 	return $RETVAL
