@@ -86,8 +86,11 @@ boitho-dictionary_version = 1.0
 boitho-repomod_name= boitho-repomod
 boitho-repomod_version = 1.0
 
+boitho-suggest_name = boitho-suggest
+boitho-suggest_version = 1.0
 
-all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch bbadminhtaccess scripts repomod
+
+all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch bbadminhtaccess scripts repomod suggest
 
 
 sqlUpdate:
@@ -283,6 +286,13 @@ mod_boitho_auth:
 	tar -z -c -f $(boitho-auth_name)-$(boitho-auth_version).tar.gz $(boitho-auth_name)-$(boitho-auth_version)
 	mv $(boitho-auth_name)-$(boitho-auth_version).tar.gz $(HOME)/redhat/SOURCES/
 	rpmbuild -bb $(boitho-auth_name).spec
+
+suggest:
+	perl rpmmagic.pl --requires "boitho-everrun boitho-dictionary" --initd suggest $(boitho-suggest_name) $(boitho-suggest_version) $(BOITHOHOME) /home/boitho/boithoTools bin/suggest_server cgi-bin/suggest_webclient bin/suggest_client_redict
+
+	rpmbuild -bb $(boitho-crawlManager_name).spec
+
+
 
 clean:
 	#rm /home/boitho/redhat/SOURCES/boitho-ad-0.2.2.tar.gz $(boitho-ad_name).spec
