@@ -1,0 +1,31 @@
+[% USE HTML %]
+[% USE Dumper %]
+[% INCLUDE 'header.html' 
+	title = 'Network restart'
+	simple_header = 1
+	extra_css = ['check_list']
+        meta_refresh = post_restart ? 0 :  { url => return_url, seconds => 10 }
+%]
+[% PROCESS 'network_restart.html' %]
+
+<div id="wizard_block">
+    <img id="logo" src="file.cgi?i=logo_mini2&amp;size=other" alt="" />
+
+    [% IF post_restart %]
+        [% PROCESS post_restart
+            buttons_block = 'settings_buttons' %]
+    [% ELSE %]
+        [% PROCESS restart %]
+    [% END %]
+</div>
+
+[% BLOCK settings_buttons %]
+    <div>
+            <form action="settings.cgi" method="post">
+                <input type="hidden" name="view" value="network" />
+		<input type="submit" value="Return to settings" />
+            </form>
+	</div>
+[% END %]
+
+[% INCLUDE 'footer.html' %]

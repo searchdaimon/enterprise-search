@@ -1,4 +1,3 @@
-
 package Page::Abstract::Network;
 use strict;
 use warnings;
@@ -6,197 +5,171 @@ use Carp;
 use Data::Dumper;
 use Page::Abstract;
 use Common::TplCheckList;
+use Sql::SessionData;
 use Net::IP qw(ip_is_ipv4 ip_is_ipv6);
+use XML::Simple qw(XMLout XMLin);
 our @ISA = qw(Page::Abstract);
 use config qw($CONFIG);
 BEGIN {
-	#push @INC, "Modules";
 	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Boitho::NetConfig;
 
-my $netConfig;
-
 # Method: _init (protected)
 # Initialize variables
 sub _init {
-	my $self = shift;
+    my $s = shift;
 
-	$netConfig = Boitho::NetConfig
-		->new($CONFIG->{'net_ifcfg'}, $CONFIG->{'netscript_dir'}, 
-			  $CONFIG->{'configwrite_path'}, $CONFIG->{'resolv_path'});
+    $s->{netConfig} = Boitho::NetConfig
+        ->new($CONFIG->{'net_ifcfg'}, 
+                $CONFIG->{'netscript_dir'}, 
+                $CONFIG->{'configwrite_path'}, 
+                $CONFIG->{'resolv_path'});
+
+    $s->{sessData} = Sql::SessionData->new($s->{dbh});
 }
 
 ##
-# Add variables into $vars that are needed to show network config dialog.
+# Add variables into $vars that are 
+# needed to show network config dialog.
 #
-# Attributes:
-#	vars             - Template vars
-#	netconf_user_ref - (Optional) user network settings to overwrite defaults with.
-#   resolv_user_ref  - (Optional) resolv settings to overwrite defaults with.
-#
-# Returns:
-#	vars - Template vars
+# netconf_user_ref and resolv_user_ref are optional 
+# params that overwrite the deaults.
 sub show_network_config {
-	my ($self, $vars, $netconf_user_ref, $resolv_user_ref) = @_;
+	my ($s, $vars, $netconf_usr_ref, $resolv_usr_ref) = @_;
 
 	# get defaults
-	my $netconf_defaults_ref = $netConfig->parse_netconf();
-	my $resolv_defaults_ref  = $netConfig->parse_resolv();
+	my $netconf_ref = $s->{netConfig}->parse_netconf();
+	my $resolv_ref  = $s->{netConfig}->parse_resolv();
 	
 	
 	# overwrite defaults with user values
-		#netconf
-	while (my ($key, $value) = each %{$netconf_user_ref}) {
-		$netconf_defaults_ref->{$key} = $value;
+	while (my ($key, $value) = each %{$netconf_usr_ref}) {
+		$netconf_ref->{$key} = $value;
 	}
-		#resolv
-	while (my ($key, $value) = each %{$resolv_user_ref}) {
-		$resolv_user_ref->{$key} = $value;
+	while (my ($key, $value) = each %{$resolv_usr_ref}) {
+		$resolv_ref->{$key} = $value;
 	}
 
 	# show values.
-	$vars->{'netconf'} = $netconf_defaults_ref;
-	$vars->{'resolv'}  = $resolv_defaults_ref;
+	$vars->{'netconf'} = $netconf_ref;
+	$vars->{'resolv'}  = $resolv_ref;
 
 	# Add checkList instance for error/success messages.
 	$vars->{'checkList'} = Common::TplCheckList->new();
         1;
 }
 
-##
-# Generate config files and attempt to save them.
-#
-# Attributes:
-#	vars		  - Template vars
-#	netconf_user_ref  - Users netconf values.
-#	resolv_user_ref	  - Users resolv values.
-sub update_network_settings {
-	my ($self, $vars, $netconf_user_ref, $resolv_user_ref) = @_;
-	my $restart_result;
-        
-	$netconf_user_ref->{'ONBOOT'} = "yes"; # device shall start on boot.
-	$netconf_user_ref->{'DEVICE'} = $CONFIG->{'net_device'};
-	
-	# Attempt to generate and save config files.
-        
-        $self->_clean_resolv($resolv_user_ref); # remove empty settings.
-	my ($resolv_succ, $resolv_errmsg) 
-			= $self->_save_resolv($resolv_user_ref);
-	my ($netconf_succ, $netconf_errmsg) 
-			= $self->_save_netconf($netconf_user_ref);
 
-                        # NESTE STEG: Lagre oppd resultat i db.
 
-	
-	# Restart the network if there was no error earlier.
-	my ($restart_succ, $restart_message);
-	if ($netconf_succ and $resolv_succ) {
-		($restart_succ, $restart_message) = $self->_restart_network();
-	}
-	else {
-		$restart_succ = 0;
-		$restart_message = "Network not restarted due to earlier errors.";
-	}
+sub run_updates {
+    my ($s, $restart_id, $netconf, $resolv) = @_;
+    my @res;
 
-	# Store in template vars.
-	$vars->{'netconf_succ'}  = $netconf_succ; 
-	$vars->{'netconf_error'} = $netconf_errmsg;
-	
-	$vars->{'resolv_succ'}   = $resolv_succ;
-	$vars->{'resolv_error'}  = $resolv_errmsg;
+    eval {
+        $s->save_resolv($resolv);
+        push @res, ["DNS settings saved", 1];
 
-	$vars->{'restart_succ'}  = $restart_succ;
-	$vars->{'restart_message'} = $restart_message;
-
-	
-	return 1 if $netconf_succ 
-            and $resolv_succ and $restart_succ;
+        $s->save_netconf($netconf);
+        push @res, ["IP settings saved.", 1];
+    };
+    if ($@) {
+        push @res, ["Error updating settings: " . $@, 0];
         return;
+    }
+
+    my $output;
+    eval {
+        $output = $s->{netConfig}->restart();
+        push @res, ["Network restarted", 1];
+    };
+    if ($@) {   
+        push @res, ["Error during network restart: " . $@, 0];
+        return;
+    }
+    $s->upd_net_results($restart_id, $output, @res);
 }
 
-# Group: Private methods
-##
-# Method to restart network.
-# Helper method for process_network_config.
-#
-# Returns:
-#	(success, message) - Where success: True/false, Message: Restart output.
-sub _restart_network {
-	eval {
-            return (1, $netConfig->restart());
-	};
-        return (0, $@) if $@
+
+sub get_restart_data {
+    my ($s, $restart_id) = @_;
+    croak "restart_id missing"
+        unless defined $restart_id and $restart_id =~ /^\d+$/;
+   
+    my %nfo =  $s->{sessData}->get($restart_id);
+    my %result = $nfo{data} ? %{XMLin($nfo{data})} : ();
+
+    my $succs = 1;
+    my $list = Common::TplCheckList->new();
+    for my $r (@{$result{res}}) {
+        $list->add($r->{msg}, $r->{succs});
+        $succs = 0 if not $r->{succs};
+    }
+    return (
+            update_succs => $succs,
+            update_list => $list,
+            restart_output => $result{restart_output},
+    )
+
 }
+#
+
+
 
 
 ##
-# Attempt to generate and save netconf config file.
-# Helper method for process_network_config
-#
 # Attributes:
 #	settings_ref    - Users netconf values.
-#
-# Returns:
-#	(success, error) - List with true/false on success, and error message (if any).
-sub _save_netconf {
-	my ($self, $settings_ref) = @_;
+# 
+# Croaks on error.
+sub save_netconf {
+    my ($s, $settings_ref) = @_;
 
-	# Set BOOTPROTO to static, if user selected method: static.
-	my $method = $settings_ref->{'method'};
-	$settings_ref->{'BOOTPROTO'} = "static"
-		if defined $method and ($method eq "static");
+    # Set BOOTPROTO to static, if user selected method: static.
+    my $method = $settings_ref->{'method'};
+    $settings_ref->{'BOOTPROTO'} = "static"
+        if defined $method and ($method eq "static");
 
-	# Remove key method, it's a not a valid netconf, but rather
-	# a helper key for the user form.
-	delete $settings_ref->{'method'};
-	
-	# Generate config file, and attempt to save it.
-	eval {
-		$netConfig->generate_netconf($settings_ref);
-	};
+    $settings_ref->{'ONBOOT'} = "yes"; # start on boot - always.
+    $settings_ref->{'DEVICE'} = $CONFIG->{'net_device'};
 
-	return (0, $@) if $@; # Don't save if generate failed.
+    # 'method' is not used in netconf,
+    # only in the UI.
+    delete $settings_ref->{'method'};
 
-	eval {
-		$netConfig->save_netconf();
-	};
-
-	return ($@) ? (0, $@) : 1;
+    $s->{netConfig}->generate_netconf($settings_ref);
+    $s->{netConfig}->save_netconf();
+    1;
 }
 
 ##
-# Attempt to generate and save resolv config file.
-# Helper method for process_network_config
-#
 # Attributes:
 #	keywords_ref - Users resolv values.
 #
-# Returns:
-#	(success, error) - List with true/false on success, and error message (if any).
-sub _save_resolv {
-	my ($self, $keywords_ref) = @_;
-	
-	eval {
-		$netConfig->generate_resolv($keywords_ref);
-	};
-	return (0, $@) if $@; # Don't resplace resolv.conf if generate failed..
-	
-	eval {
-		$netConfig->save_resolv();
-	};
-	return ($@) ? (0, $@) : 1;
-	
+# Croaks on error.
+sub save_resolv {
+    my ($s, $keywords_ref) = @_;
+    $s->_clean_resolv($keywords_ref);
+    $s->{netConfig}->generate_resolv($keywords_ref);
+    $s->{netConfig}->save_resolv();
 }
 
+sub upd_net_results {
+    my ($s, $restart_id, $restart_output, @res) = @_;
+    @res = map { { msg => $_->[0],  succs => $_->[1] } } @res;
+    $s->{sessData}->update($restart_id,
+        data => XMLout({ 
+            res => \@res, 
+            restart_output => $restart_output,
+        }, RootName => "results", NoAttr => 1)
+    );
+}
+sub new_net_results { $_[0]->{sessData}->insert((type => "network")) }
+
 ##
-# Remove blank values from keys.
-# Helper function for process_network_config
-#
-# Attributes:
-#	keywords_ref - Users resolv values.
+# Remove blank values from resolv keys.
 sub _clean_resolv {
-	my ($self, $keywords_ref) = @_;
+	my ($s, $keywords_ref) = @_;
 
 	foreach my $value_ref (values %{$keywords_ref}) {
 

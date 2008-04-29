@@ -1,0 +1,31 @@
+
+[% BLOCK restart %]
+        <h1 style="margin-top : 1em;">Restarting network...</h1>
+        
+        <em>
+            Network restart may take a while.
+           <a href="[% return_url %]">Click here</a>
+            if nothing happens after 20 seconds.
+        </em>
+[% END %]
+
+[% BLOCK post_restart %]
+    [% IF update_succs %]
+        <h1>Configuration complete</h1>
+    [% ELSE %]
+        <h1>Configuration failed</h1>
+    [% END %]
+
+    [% listHTML = update_list.getList(1) %]
+    [% listHTML %]
+
+    [% PROCESS $buttons_block %]
+
+	    <h4>Restart output:</h4>
+    <pre style="background-color : #DCE4F9;">
+        [% restart_output.replace("\n\n", "\n") %]
+    </pre>
+
+[% END %]
+
+

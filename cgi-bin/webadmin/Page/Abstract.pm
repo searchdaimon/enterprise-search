@@ -11,11 +11,14 @@ use Carp;
 #	dbh - Database handler
 #	@ - Anything, sent to the childclass' _init function.
 sub new {
-	my ($class, $dbh) = @_;
-	my $self = {};
-	bless $self, $class;
-	$self->{'dbh'} = $dbh;
-	if ($self->can("_init")) { 
+    my $class = shift;
+    my $dbh = shift;
+    
+    my $self = {};
+    bless $self, $class;
+
+    $self->{'dbh'} = $dbh;
+    if ($self->can("_init")) { 
 		# initialize if supported
 		$self->_init(@_);
 	}

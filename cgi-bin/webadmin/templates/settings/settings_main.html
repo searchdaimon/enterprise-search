@@ -11,7 +11,7 @@
 		'title' => 'Testing',
 	},
 	{
-		'value'  => 'development',
+		'value'  => 'devel',
 		'title' => 'Development',
 	}
 ] %]
@@ -20,11 +20,23 @@
 	
 	<h3>Select version</h3>
 	
-	[% IF selected_new.defined %]
+	[% IF dist_succs.defined %]
 		[% WRAPPER 'template_message.html' type='success' %]
-		Version preference changed to [% selected_new %]
+		Version preference changed to [% dist_succs %].
 		[% END %]
-	[% ELSE %]
+	[% ELSIF dist_downgrade_err %]
+            [% WRAPPER 'template_message.html' type='error' %]
+            It's not possible to downgrade the system. 
+            Can't go from <em>[% dist_downgrade_err.prev %]</em> 
+            to <em>[% dist_downgrade_err.new %]</em>.
+            [% END %]
+
+        [% ELSIF dist_err %]
+            [% WRAPPER 'template_message.html' type='error' %]
+                Unable to update version preference. [% dist_err %] 
+            [% END %]
+
+        [% ELSE %]
 		[% WRAPPER 'template_message.html'
 			type='info' %]
 			Select what version of search daimon software you want to run.

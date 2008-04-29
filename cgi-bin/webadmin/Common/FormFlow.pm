@@ -52,15 +52,28 @@ sub process {
 	my @flow = @{$self->{'flow'}};
 
 	my $process_method;
+        my $i = 0;
         foreach my $flow_ref (@flow) {
-            last if ($process_method 
-                    = $self->_find_method($form, $flow_ref));
+            if ($process_method 
+                    = $self->_find_method($form, $flow_ref)) {
+                $self->{next_form} = $flow[$i + 1]->[0];
+                last;
+            }
+            $i++;
         }
 
 	croak qq{FormFlow: Form "$form" not found}
             unless $process_method;
 
 	return &$process_method();
+}
+
+##
+# Process next form in list. 
+# Useful when user skips a form.
+sub process_next {
+    my $s = shift;
+    return $s->process($s->{next_form});
 }
 
 ##

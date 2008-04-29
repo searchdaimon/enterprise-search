@@ -11,7 +11,10 @@ use Carp;
 use Page::Abstract;
 use Sql::Config;
 use Boitho::Infoquery;
+use Data::Dumper;
 our @ISA = qw(Page::Abstract);
+
+use constant TPL_INTEGRATION => "setup_integration_method.html";
 
 ##
 # Init.
@@ -24,11 +27,10 @@ sub _init {
 	return $self;
 }
 
-sub show_integration_methods($$) {
+sub show {
 	my ($self, $vars) = @_;
-	my $template_file = "setup_integration_method.html";
-	my $sqlConfig = $self->{'sqlConfig'};
-	return ($vars, $template_file);
+	#my $sqlConfig = $self->{'sqlConfig'};
+	return TPL_INTEGRATION;
 }
 
 
@@ -50,7 +52,7 @@ sub process_integration {
 		($valid, $error) = (0, "Integration method has not been set.")
 			unless $method;
 		
-		($valid, $error) = $infoQuery->authTest(@args)
+		($valid, $error) = $infoQuery->authTest($method, @args)
 			unless not $valid;
 		
 		unless ($valid) {

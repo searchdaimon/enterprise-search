@@ -246,7 +246,7 @@ sub _save_file {
 	or $success = 0;
 	
     unless ($success) {
-	die "Configwriter was unable to write to configfile. (See apache error log for details)";
+	croak "Configwriter was unable to write to configfile. (See apache error log for details)";
     }
     1;
 
@@ -271,7 +271,7 @@ sub restart {
 	
 	my $input = join "\n", @input_raw;
 	
-	die "Unable to restart network: $input\n"
+	croak "Unable to restart network: $input\n"
 		unless $success;
 		
 	return $input;

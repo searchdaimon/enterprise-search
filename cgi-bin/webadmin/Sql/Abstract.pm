@@ -12,7 +12,7 @@ use Carp;
 #
 # Attributes:
 #	dbh - Database handler (connection)
-sub new($$) {
+sub new {
 	my $class = shift;
 	my $dbh   = shift;
 
@@ -216,7 +216,6 @@ sub _prepare_and_execute {
 	my $query = shift;
 	my @binds = @_;
 	my $dbh = $self->{'dbh'};
-	
 	my $sth = $dbh->prepare($query)
 		or croak "Pepare: ", $dbh->errstr;
 

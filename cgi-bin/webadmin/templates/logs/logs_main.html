@@ -22,9 +22,8 @@
 [% WRAPPER 'template_table.html'
 	header = ['', 'Description', 'Filename', 'Size', ''] %]
 
-[% i = 0 %][% Dumper.dump(loglist) %]
+[% color = 1 %]
 [% FOREACH log IN loglist %]
-	[% color = 1 - color %]
         [% row_selected = (log.filename == logfile.filename) %]
 	[% WRAPPER 'template_table_row.html' selected = selected %]
             <td><img src="file.cgi?i=log" alt="" /></td>
@@ -41,7 +40,14 @@
                         
             </td>
 	[% END %]
-	[% i = i + 1 %]
+        [% color = 1 - color %]
+[% END %]
+[% WRAPPER 'template_table_row.html' %]
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td><ul class="vertical_buttons"><li><a href="download.cgi?logs_compressed=1">Download all logs</a></li></ul></td>
 [% END %]
 [% END %]
 

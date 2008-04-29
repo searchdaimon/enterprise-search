@@ -65,6 +65,8 @@ $CONFIG{'default_settings'} = [
 
 # Valid authentication methods for integration
 $CONFIG{'valid_auth_methods'} = ['msad', 'ldap', 'shadow'];
+$CONFIG{repomod_path} = $ENV{BOITHOHOME} . "/perl/repomod.pl";
+$CONFIG{dist_versions} = { production => 1, testing => 2, devel => 3 };
 
 
 # Group: System
@@ -91,7 +93,7 @@ $CONFIG->{'init_dir'} = "/etc/init.d/";
 $CONFIG{'init_wrapper_path'} = $ENV{'BOITHOHOME'} . "/setuid/initwrapper";
 
 # Path to yum wrapper
-$CONFIG{'yum_wrapper_path'}  = $ENV{'BOITHOHOME'} . "/setuid/yumwrapper";
+$CONFIG{'yum_wrapper_path'}  = '/home/dagurval/list.txt'; #$ENV{'BOITHOHOME'} . "/setuid/yumwrapper";
 
 # Path to maplist.conf file.
 $CONFIG{'maplist_path'} = $ENV{'BOITHOHOME'} . "/config/maplist.conf";

@@ -24,9 +24,9 @@ BEGIN {
 
 use constant TPL_ADVANCED => "settings_advanced.html";
 use constant PASSWD_STARS => "******";
+use constant CFG_DIST_VERSION => 'dist_preference';
 
 my %CONFIG = %$CONFIG;
-
 # Helper class with functions used with add.cgi
 # Function used to add shares.
 #
@@ -47,6 +47,9 @@ sub _init {
 	$self->{'dbh'} = $dbh;
 	$self->{'sqlConfig'} = Sql::Config->new($dbh);
 	$self->{'settings'} = Boitho::SettingsExport->new($dbh);
+
+        croak "Repomod is not executable"
+            unless -x $CONFIG{repomod_path};
 }
 
 ## Delete all settings.
@@ -157,19 +160,45 @@ sub show_main_settings($$) {
 	return ($vars, $template_file);
 }
 
-## Update preferred dist version.
-sub select_dist_version($$) {
-	my ($self, $vars, $selected) = @_;
-	my $sqlConfig = $self->{'sqlConfig'};	
+sub select_dist_version {
+    my ($s, $vars, $dist) = @_;
 
-	croak "Unknown version \"$selected\" selected"
-		unless grep /^$selected$/, ('production', 'testing', 'development');
+    my $versions = $CONFIG{dist_versions};
+    croak "Invalid dist version '$dist'"
+        unless $CONFIG{dist_versions}->{$dist};
 
-	$sqlConfig->update_setting('dist_preference', $selected);
-	$vars->{'selected_new'} = $selected;
+    my $prev_dist = $s->{sqlConfig}->get_setting(CFG_DIST_VERSION);
+    if ($versions->{$dist} < $versions->{$prev_dist}) {
+        # Can't downgrade versions
+        $vars->{dist_downgrade_err} = { prev => $prev_dist, 'new' => $dist };
+    }
+    else {
+        my ($succs, $output) = $s->_run_repomod($dist);
+        if ($succs) {
+            $s->{sqlConfig}->update_setting(CFG_DIST_VERSION, $dist);
+            $vars->{dist_succs} = $dist;
+        }
+        else {
+            $vars->{dist_err} = $output;
+        }
+    }
 
-	return $self->show_main_settings($vars);
+    return $s->show_main_settings($vars);
 }
+
+sub _run_repomod {
+    my ($s, $repo) = @_;
+    my $exec_str = "$CONFIG{repomod_path} $repo 2>&1 |";
+    open my $rh, $exec_str
+        or croak $!;
+
+    my $output = join q{}, <$rh>;
+    my $succs = 1;
+    close $rh or $succs = 0;
+
+    return wantarray ? ($succs, $output) : $succs;
+}
+
 
 sub export_settings($) {
 	my $self = shift;

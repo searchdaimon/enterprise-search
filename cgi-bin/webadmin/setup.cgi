@@ -7,7 +7,6 @@ BEGIN {
         push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 
-die "Wizard currently broken.";
 
 use CGI;
 use Carp;
@@ -24,7 +23,6 @@ use Page::Setup::Integration;
 use Common::FormFlow qw(FLOW_START_FORM);
 use Common::Generic qw(init_root_page);
 
-#die "Setup wizard fjernet til bedre testet.";
 
 # Init
 my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
@@ -32,23 +30,31 @@ my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
 my %state = %$state_ptr;
 my $tpl_file;
 
-my $pageNetwork     = Page::Setup::Network->new($dbh);
+my $pageNet     = Page::Setup::Network->new($dbh);
 my $pageAuth        = undef; # Page::Setup::Auth->new($dbh); fjerner til bi begynner med lisens
 my $pageLogin       = Page::Setup::Login->new($dbh);
-my $pageIntegration = Page::Setup::Integration->new($dbh);
+my $pageIntegr = Page::Setup::Integration->new($dbh);
+    
+my $flow = Common::FormFlow->new();
 
 if (defined $state{view}) {
     # Non-wizard pages.
     my $view = $state{view};
     if ($view eq 'manual_activation') {
-        ($vars, $tpl_file) = $pageAuth->show_activation_dialog($vars);
+        ($vars, $tpl_file) 
+            = $pageAuth->show_activation_dialog($vars);
+    }
+    elsif ($view eq 'network_restart') {
+        $tpl_file = $pageNet->show_post_restart($vars, $state{id});
+    }
+    elsif ($view eq 'network_cfg') {
+        $tpl_file = process_network();
     }
 }
 else {
     # Show wizard.
     my $form_submitted = $state{form_id} ||= FLOW_START_FORM;
 
-    my $flow = Common::FormFlow->new();
 
     # The setup flow.
     # Add takes 'id for form submitted' => 'what function to run'
@@ -56,13 +62,12 @@ else {
         #->add($FLOW_START_FORM, \&process_login) 
         ->add(FLOW_START_FORM,  \&process_network)
         ->add('network_config', \&process_network)
-        ->add('network_restart', \&network_restart)
+        ->add('network_restarted', sub { $pageIntegr->show() })
         #->add('license_valid', \&process_license)
         #->add('manual_act', \&process_manual_act)
         ->add('integration_method', \&process_integration_method)
         ->add('integration_values', \&process_integration_values);
-    
-    ($vars, $tpl_file) = $flow->process($form_submitted);
+    $tpl_file = $flow->process($form_submitted);
 }
 
 # print HTML
@@ -85,20 +90,22 @@ $template->process($tpl_file, $vars)
 #	# login ok.
 #
 #	if ($status eq "FIRST_LOGIN") { #continue with wizard
-#		return $pageNetwork->show_network_config($vars);	
+#		return $pageNet->show_network_config($vars);	
 #	}
 #	else { #skip wizard
 #		print CGI::redirect("overview.cgi");
 #		exit 0;
 #	}
 #}
-
 sub process_network {
     my ($netconf, $resolv) = ($state{netconf}, $state{resolv});
 
+    return $flow->process_next()
+        if $state{skip};
+
     if (defined $netconf and defined $resolv) {
         my ($tpl_file, $restart_id) 
-            = $pageNetwork->show_restart($vars, $netconf);
+            = $pageNet->show_restart($vars, $netconf);
 
         # Page needs to be shown before network
         # is restarted.
@@ -106,12 +113,12 @@ sub process_network {
         $template->process($tpl_file, $vars)
             or croak $template->error(), "\n";
 
-        $pageNetwork->network_restart($vars, $restart_id,
+        $pageNet->run_updates($restart_id,
             $netconf, $resolv);
         exit;
     }
 
-    return $pageNetwork->show_network_config(
+    return $pageNet->show_network_config(
         $vars, $netconf, $resolv);
 }
 
@@ -121,7 +128,7 @@ sub process_license {
 		$pageAuth->process_license($vars, $state{'license'});
 
 	if ($success) {
-		return $pageIntegration->show_integration_methods($vars);
+		return $pageIntegr->show_integration_methods($vars);
 	}
 	else {
 		return $pageAuth->show_license_dialog($vars, $state{'license'});
@@ -134,7 +141,7 @@ sub process_manual_act {
 											$state{'hardware'}, $state{'signature'});
 
 	if ($success) {
-		return $pageIntegration->show_integration_methods($vars);
+		return $pageIntegr->show_integration_methods($vars);
 	}
 	else {
 		return $pageAuth->show_activation_dialog($vars, $state{'license'}, $state{'signature'});
@@ -150,30 +157,30 @@ sub process_integration_method {
 		exit 0;
 	}
 	else {
-		return $pageIntegration
+		return $pageIntegr
 				->show_integration_values($vars, $state{'auth_method'});
 	}
 }
 
 sub process_integration_values {
-	my ($vars, $success) 
-		= $pageIntegration->process_integration($vars, {
- 						'domain'		=> $state{'domain'}, 
- 						'user'			=> $state{'user'},
- 						'password'		=> $state{'password'},
- 						'ip'			=> $state{'ip'},
- 						#'port'			=> $state{'port'},
- 						'auth_method'	=> $state{'auth_method'}
-				});
+    my ($vars, $success) 
+        = $pageIntegr->process_integration($vars, {
+                'domain'		=> $state{'domain'}, 
+                'user'			=> $state{'user'},
+                'password'		=> $state{'password'},
+                'ip'			=> $state{'ip'},
+                #'port'			=> $state{'port'},
+                'auth_method'	=> $state{'auth_method'}
+                });
 
-	if ($success) {
-		print CGI::redirect("overview.cgi");
-		exit 0;
-	}
-	else {
-		return $pageIntegration
-					->show_integration_values($vars, $state{'auth_method'}, 1);
-	}
+    if ($success) {
+        print CGI::redirect("overview.cgi");
+        exit 0;
+    }
+    else {
+        return $pageIntegr
+            ->show_integration_values($vars, $state{'auth_method'}, 1);
+    }
 
 }
 

@@ -7,8 +7,8 @@ use warnings;
 use Carp;
 use CGI;
 
-use constant SUCCESS => "success";
-use constant FAILED  => "failed";
+use constant SUCCESS => 1;
+use constant FAILED  => 0;
 
 my @messages;
 my $succ_icon = "file.cgi?i=agt_action_success";
@@ -31,13 +31,10 @@ sub new {
 #	url  - URL to icon image.
 sub set_icon {
 	my ($self, $icon, $url) = @_;
-	
-	if ($icon eq SUCCESS) {
-			$succ_icon = $url;
-	}
-	elsif ($icon eq FAILED) {
-			$fail_icon = $url;
-	}
+        $succ_icon = $url
+	    if $icon == SUCCESS;
+        $fail_icon = $url
+            if $icon == FAILED;
 	return;
 }
 
@@ -49,19 +46,17 @@ sub set_icon {
 #	state   - Check state (success, failed etc).
 #			  Supported states have been defined as constant.
 sub add {
-	my ($self, $message, $state) = @_;
+    my ($self, $message, $state) = @_;
 
-	if (	($state eq SUCCESS)
-		 or ($state eq FAILED)) {
-		push @messages, {
-			'msg'   => $message,
-			'state' => $state,
-		}
-	}
-	else {
-		croak "TplCheckList unknown state: $state";
-	}
-	return;
+    if (($state == SUCCESS)       # explicit check for 
+         or ($state == FAILED)) { # value 1 or 0 due to backwards compatibility.
+        push @messages, {
+            'msg'   => $message,
+            'state' => $state,
+        };
+    }
+    else { croak "TplCheckList unknown state: $state"; }
+    return;
 }
 
 ##

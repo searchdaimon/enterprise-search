@@ -18,7 +18,7 @@ my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
 my %state = %{$state_ptr};
 my $tpl_file;
 
-my $pageNetwork = Page::Settings::Network->new($dbh);
+my $pageNet = Page::Settings::Network->new($dbh);
 my $pageCM = Page::Settings::CollectionManager->new($dbh);
 
 
@@ -28,11 +28,17 @@ my $pageCM = Page::Settings::CollectionManager->new($dbh);
 if (defined($state{'submit'})) {
 	my $btn = $state{'submit'};
 
-	# User submitted network conf form.
 	if (defined $btn->{'network_conf'}) {
-		$pageNetwork->process_network_config($vars, $state{'netconf'}, $state{'resolv'});
-		($vars, $tpl_file) = $pageNetwork->show_network_config($vars);	
-	}
+            my ($tpl_file, $restart_id) 
+                = $pageNet->show_restart($vars, $state{netconf});
+   
+            print $cgi->header('text/html');
+            $template->process($tpl_file, $vars)
+            or croak $template->error(), "\n";
+
+            $pageNet->run_updates($restart_id, $state{netconf}, $state{resolv});
+            exit;
+        }
 
 	elsif (defined $btn->{'reset_configuration'}) {
 		# User wants to reset configuration. Confirm.
@@ -106,7 +112,7 @@ elsif (defined($state{'confirm_delete'})) {
 
 # Group: Views
 
-elsif (defined($state{'view'})) {
+elsif (defined $state{'view'}) {
 	my $view = $state{'view'};
 	
 	if ($view eq "import_export") {
@@ -117,8 +123,12 @@ elsif (defined($state{'view'})) {
 		($vars, $tpl_file) = $page->show_advanced_settings($vars);
 	}
 
+        elsif ($view eq "network_restart") {
+            $tpl_file = $pageNet->show_post_restart($vars, $state{restart});
+        }
+
 	elsif ($view eq "network") {
-		($vars, $tpl_file) = $pageNetwork->show_network_config($vars);
+		$tpl_file = $pageNet->show_network_config($vars);
 	}
 
         elsif ($view eq "collection_manager") {
