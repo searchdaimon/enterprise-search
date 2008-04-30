@@ -49,7 +49,7 @@ void revindexFilesOpenLocal(FILE *revindexFilesHa[],int lotNr,char type[],char f
 }
 
 
-void revindexFilesCloseLocal(FILE *revindexFilesHa[],char type[]) {
+void revindexFilesCloseLocal(FILE *revindexFilesHa[],char type[] __attribute__((unused))) {
 
 	int i;
 
