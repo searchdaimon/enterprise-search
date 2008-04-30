@@ -50,7 +50,7 @@
 
 #define CurrentReposetoryVersion 4
 
-int findLotToIndex(char subname[]) {
+int findLotToIndex(char subname[], int dirty) {
 
 	FILE *FH;
 	struct stat inode;      // lager en struktur for fstat å returnere.
@@ -61,21 +61,47 @@ int findLotToIndex(char subname[]) {
 
 	for (lotNr=1;lotNr<maxLots;lotNr++) {
 
-		if ((FH = lotOpenFileNoCasheByLotNr(lotNr,"dirty","r", 's',subname)) == NULL) {
-                	#ifdef DEBUG
-			perror("local dirty");
-			#endif
+		if (dirty == -1) {
+			//hvis dirty er -1 skal vi indeksere selv om vi ikke har noen dirty fil, så vi sjekker om det er et reposetory isteden. 
+			// men bare hvis vi ikke har noen dirty fil
+			if ((FH = lotOpenFileNoCasheByLotNr(lotNr,"dirty","r", 's',subname)) != NULL) {
 
-			continue;
-        	}
+			}
+			else if ((FH = lotOpenFileNoCasheByLotNr(lotNr,"reposetory","r", 's',subname)) != NULL) {
 
+			}
+			else {
+	                	#ifdef DEBUG
+				perror("local dirty");
+				#endif
+	
+				continue;
+        		}
+
+		}
+		else {
+
+			if ((FH = lotOpenFileNoCasheByLotNr(lotNr,"dirty","r", 's',subname)) == NULL) {
+	                	#ifdef DEBUG
+				perror("local dirty");
+				#endif
+	
+				continue;
+        		}
+		}
 
 		fstat(fileno(FH),&inode);
 
                 printf("dirty file for lotNr %i is of size %"PRId64"\n",lotNr,inode.st_size);
 
-		if (inode.st_size <= 0) {
+		if (inode.st_size == 0) {
 			printf("dirty file is emty. Skipping\n");
+
+			goto next;
+		}
+
+		if (inode.st_size < dirty) {
+			printf("Lot is't dirty enough\n");
 
 			goto next;
 		}
@@ -92,11 +118,12 @@ int findLotToIndex(char subname[]) {
 		//tester at det er nokk plass
 	        if (!lotHasSufficientSpace(lotNr,4096,subname)) {
 	                printf("insufficient disk space\n");
-			continue;
+			goto next;
                 }
 
 
 		//vi har en lot som er klar for indeksering
+		fclose(FH);
 		return lotNr;
 
 

@@ -129,6 +129,6 @@ off_t getImagepFromRadres(unsigned int radress64bit,unsigned int htmlbufferSize)
 unsigned int rLastDocID(char subname[]);
 
 unsigned int rGeneraeADocID(char subname[]);
-int findLotToIndex(char subname[]);
+int findLotToIndex(char subname[], int dirty);
 
 #endif //_REPOSETORY_H_
