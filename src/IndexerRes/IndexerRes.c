@@ -883,11 +883,9 @@ void adultLoad (struct adultFormat *adult) {
 			printf("bad AdultWords \"%s\"\n",buff);
 		}
 
-		//(*adult).AdultWords[i].word[strlen((*adult).AdultWords[i].word) -1] = '\0';
-
-		//printf("%i: -%s- %lu %i\n",i,(*adult).AdultWords[i].word,(*adult).AdultWords[i].crc32,(*adult).AdultWords[i].weight);
 		++i;
 	}
+
 	if (maxAdultWords == i) {
 		printf("Adult list is larger then maxAdultWords (%i)\n",maxAdultWords);
 		exit(1);
@@ -903,6 +901,16 @@ void adultLoad (struct adultFormat *adult) {
 //	for(y=0;y<i;y++) {
 //		printf("%i: -%s- %lu %i\n",y,(*adult).AdultWords[y].word,(*adult).AdultWords[y].crc32,(*adult).AdultWords[y].weight);
 //	}
+
+
+	crc32tmp = 0;	
+	for(y=0;y<i;y++) {
+		if ( ((*adult).AdultWords[y].crc32 == crc32tmp) && (crc32tmp != 0) ) {
+			printf("Dublicate adult word: %s\n",(*adult).AdultWords[y].word);
+		}
+
+		crc32tmp = (*adult).AdultWords[y].crc32;
+	}
 
 	for(i=0;i<maxAdultWords;i++) {
 		(*adult).adultFraser[i].adultWordCount = 0;

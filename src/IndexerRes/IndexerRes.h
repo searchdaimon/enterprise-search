@@ -31,7 +31,7 @@
 
 #define maxAdultWords 5000
 #define maxWordlLen 30
-#define MaxAdultWordCount 100
+#define MaxAdultWordCount 250
 
 
 //#define subname "www"
