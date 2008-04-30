@@ -13,7 +13,7 @@
 
 /*
 ripped from http://www.opensource.apple.com/darwinsource/tarballs/other/distcc-31.0.81.tar.gz
-eks use: mkdir_p("/tmp/aaa/bb/",755) 
+eks use: mkdir_p("/tmp/aaa/bb/",0755) 
 */
 /* -*- c-file-style: "java"; indent-tabs-mode: nil; fill-column: 78 -*-
  *
