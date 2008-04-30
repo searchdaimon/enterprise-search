@@ -4,6 +4,8 @@
 #include <iconv.h>
 #include <stdlib.h>
 
+#include "../common/strlcpy.h"
+
 
 int Base64Index[128] = {
 	-1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
