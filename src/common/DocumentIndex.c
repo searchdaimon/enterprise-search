@@ -105,6 +105,16 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 			    return NULL;
 			}
 		}
+		else if (type == 's') {
+			//printf("opening file\n");
+			//en ekte r read
+			if ((DocumentIndexHA = fopen(FileName,"rb")) == NULL) {
+				printf("cant open file %s\n",FileName);
+				perror(FileName);
+			    return NULL;
+			}
+		}
+
 		else if (type == 'w'){
 			//printf("opening file\n");
 			if ((DocumentIndexHA = fopen(FileName,"r+b")) == NULL) {
