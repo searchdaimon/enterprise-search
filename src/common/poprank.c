@@ -204,7 +204,7 @@ void popopenMemArray2(char subname[], char rankfile[]) {
 					//låser minne
 					if (mlock(popMemArray[i],branksize) != 0) {
 						perror("mlock");
-						exit(1);
+						//exit(1);
 					}
 				}
 				//if (mlockall(MCL_CURRENT) == ) {

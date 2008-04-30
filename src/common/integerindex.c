@@ -286,8 +286,8 @@ int iintegerLoadMemArray2(struct iintegerMemArrayFormat *iintegerMemArray,char i
                                	}
                                 //låser minne
                                 if (mlock(iintegerMemArray->MemArray[i],size) != 0) {
-                                	perror("mlock");
-                                        exit(1);
+                                	perror("iintegerLoadMemArray2: mlock array");
+                                        //exit(1);
                                 }
                         }
 

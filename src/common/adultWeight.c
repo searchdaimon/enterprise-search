@@ -125,7 +125,7 @@ void adultWeightopenMemArray2(char subname[]) {
                                 //låser minne
                                 if (mlock(adultWeightMemArray[i],branksize) != 0) {
                                 	perror("mlock");
-                                        exit(1);
+                                        //exit(1);
                                	}
                         }
 
