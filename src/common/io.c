@@ -1,4 +1,5 @@
 #define _XOPEN_SOURCE 600
+#define _LARGEFILE64_SOURCE
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -17,7 +18,7 @@ io_read_align(int fd, void *buf, size_t count)
 	off_t offset, curoff;
 	int pagesize;
 	char *abuf;
-	ssize_t acount;
+	size_t acount;
 
 	if (buf == NULL) {
 		errno = EINVAL;
@@ -42,7 +43,7 @@ io_read_align(int fd, void *buf, size_t count)
 	}
 
 
-	if ((acount = read(fd, abuf, acount)) == -1) {
+	if ((acount = read(fd, abuf, acount)) == (size_t)-1) {
 		free(abuf);
 		return (ssize_t)-1;
 	}
@@ -55,9 +56,9 @@ io_read_align(int fd, void *buf, size_t count)
 }
 
 
-size_t fread_all(const void *buf, size_t size, FILE *stream, int redlen) {
+size_t fread_all(const void *buf, size_t size, FILE *stream, int readlen) {
 
-        off_t total = 0;        // how many bytes we've sent
+        size_t total = 0;        // how many bytes we've sent
         off_t bytesleft = size;  // how many we have left to send
         off_t n;
         int toread;
@@ -65,8 +66,8 @@ size_t fread_all(const void *buf, size_t size, FILE *stream, int redlen) {
 
         while(total < size) {
 
-            if (bytesleft > redlen) {
-                toread = redlen;
+            if (bytesleft > readlen) {
+                toread = readlen;
             }
             else {
                 toread = bytesleft;
@@ -75,7 +76,7 @@ size_t fread_all(const void *buf, size_t size, FILE *stream, int redlen) {
 
 
             if ((n = fread((void *)buf+total, 1, toread,  stream)) == -1) {
-	                printf("dident manage to fread all the data as %s:%f.\n",__FILE__,__LINE__);
+	                printf("dident manage to fread all the data as %s:%d.\n",__FILE__,__LINE__);
                         return 0;
             }
 
@@ -86,6 +87,7 @@ size_t fread_all(const void *buf, size_t size, FILE *stream, int redlen) {
             bytesleft -= n;
         }
 
+	return total;
 }
 
 
