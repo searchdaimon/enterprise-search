@@ -236,7 +236,9 @@ int cconnect (char *hostname, int PORT) {
         struct hostent *he;
         struct sockaddr_in their_addr; // connector's address information 
 
+	#ifdef DEBUG
 	fprintf(stderr, "daemon: cconnect(hostname=\"%s\", port=%i)\n", hostname, PORT);
+	#endif
 
 	#ifdef DEBUG
 	//extern int errno;
@@ -343,7 +345,10 @@ int cconnect (char *hostname, int PORT) {
         //printf("Received: %s",buf);
 
         //close(sockfd);
+	#ifdef DEBUG
         fprintf(stderr, "daemon: ~cconnect(socket=%i)\n", sockfd);
+	#endif
+
 	return sockfd;
         //return 0;
 } 
