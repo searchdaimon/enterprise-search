@@ -120,7 +120,7 @@ struct optFormat {
 	char **OnlyTLD;
 	unsigned int NrofWorkThreads;	
 	char *Query;
-
+	int dirty;
 };
 
 
@@ -470,13 +470,8 @@ void *IndexerLot_workthread(void *arg) {
 	#ifdef BLACK_BOKS
 		int i;
 	#endif
-//dagur:	struct ReposetoryHeaderFormat 
 
-/************************************************************************/
 	struct ReposetoryHeaderFormat ReposetoryHeader;
-/************************************************************************/
-
-//dagur: ReposetoryHeader;
 	struct DocumentIndexFormat *DocumentIndexPost;
 
 
@@ -490,7 +485,7 @@ void *IndexerLot_workthread(void *arg) {
                			title = NULL;
 		                body = NULL;
 				metadesc = NULL;
-
+				DocumentIndexPost = NULL;
 				SummaryBuffer = NULL;
 
 				DocIDPlace = (ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr));
@@ -501,36 +496,34 @@ void *IndexerLot_workthread(void *arg) {
 					exit(1);
 				}
 
+				memset(DocumentIndexPost,0, sizeof(struct DocumentIndexFormat));
 
 				if((argstruct->optHandleOld) && ((*argstruct).DIArray[DocIDPlace].oldp != NULL)) {
 					memcpy(DocumentIndexPost,(*argstruct).DIArray[DocIDPlace].oldp,sizeof(struct DocumentIndexFormat));
 				}
 				else if (argstruct->optQuery != NULL) {
 
-					memset(DocumentIndexPost,0, sizeof(struct DocumentIndexFormat));
 
 					if (!DIReadNET(argstruct->optNetLot,DocumentIndexPost,ReposetoryHeader.DocID,argstruct->subname)) {
 						printf("can't DIReadNET\n");
-						continue;
+						goto pageDone;
 					}
 					if (strcmp(DocumentIndexPost->Url,ReposetoryHeader.url) != 0) {
 						printf("Error: urls is not the same: did DIReadNET DocID %u for url \"%s\" == \"%s\" ?\n",ReposetoryHeader.DocID,DocumentIndexPost->Url,ReposetoryHeader.url);
-						continue;
+						goto pageDone;
 					}
 					printf("did DIReadNET DocID %u for url \"%s\" == \"%s\" ?\n",ReposetoryHeader.DocID,DocumentIndexPost->Url,ReposetoryHeader.url);				
 
 
 				}
-				else {
-					memset(DocumentIndexPost,0, sizeof(struct DocumentIndexFormat));
-				}
+
 
 				HtmlBufferLength = sizeofHtmlBuffer;
 				if ( (nerror = uncompress((Bytef*)HtmlBuffer,(uLong *)&HtmlBufferLength,(Bytef*)htmlcompressdbuffer,ReposetoryHeader.htmlSize)) != 0) {
 					#ifdef DEBUG
                				printf("uncompress error. Code: %i for DocID %u-%i. ReposetoryHeader.htmlSize %i,sizeofHtmlBuffer %i\n",nerror,ReposetoryHeader.DocID,rLotForDOCid(ReposetoryHeader.DocID),ReposetoryHeader.htmlSize,sizeofHtmlBuffer);
 					#endif
-               				continue;
+               				goto pageDone;
 		                }
 
 				//printf("HtmlBuffer:\n##############\n%s\n#####################\n",HtmlBuffer);
@@ -548,15 +541,15 @@ void *IndexerLot_workthread(void *arg) {
 							#endif
 							++(*argstruct).optHandleOld_allrediIndexed;
 
-							free(DocumentIndexPost);
-							continue;
+							//free(DocumentIndexPost);
+							goto pageDone;
 						}
 					        else if (DocumentIndexPost->crc32 == crc32) {
 							printf("have a duplicate dokument, but havent changed\n");
 							++(*argstruct).optHandleOld_duplicateNochange;
 
-							free(DocumentIndexPost);
-							continue;
+							//free(DocumentIndexPost);
+							goto pageDone;
 						}
 						else {
 							++(*argstruct).optHandleOld_indexed;
@@ -830,6 +823,7 @@ void *IndexerLot_workthread(void *arg) {
 					
 
 				pageDone:
+
 				if (SummaryBuffer != NULL) {
 					free(SummaryBuffer);
 				}
@@ -837,10 +831,14 @@ void *IndexerLot_workthread(void *arg) {
        					free(body);
 				}
 				if (title != NULL) {
-       					free(title);
+   					free(title);
 				}
 				if (metadesc != NULL) {
 					free(metadesc);
+				}
+				//hvis vi ikke har peket til DocumentIndexPost, men har allokert den, kan vi slette den
+				if ((argstruct->DIArray[DocIDPlace].p == NULL) && (DocumentIndexPost != NULL)) {
+					free(DocumentIndexPost);
 				}
 
 		}		
@@ -901,7 +899,9 @@ void netlot_end_recursiveDir (char lotpath[],char lotinternpath[],unsigned int l
 			printf("file %s, %u %s\n",filname,lotNr,lotinternfilname);	
 			#endif
 
-			rSendFileToHostname(filname,lotinternfilname,lotNr, "w",subname,server);
+			if (!rSendFileToHostname(filname,lotinternfilname,lotNr, "w",subname,server)) {
+				printf("can't send file %s\n",filname);	
+			}
 			
 		}
 		else {
@@ -919,7 +919,7 @@ void netlot_end_recursiveDir (char lotpath[],char lotinternpath[],unsigned int l
 /*******************************************************
 rutine for å hente date tilbake til lagringserver.
 *******************************************************/
-void netlot_end (int lotNr,char subname[], char server[]) {
+void netlot_end (int lotNr,char subname[], char server[], struct optFormat *opt) {
 
 	char lotpath[512];
 	char reposetuoypath[512];
@@ -938,6 +938,12 @@ void netlot_end (int lotNr,char subname[], char server[]) {
 	printf("lotpath %s\n",lotpath);
 
 	//sletter reposetor. Vi skal ikke trenge og skrive tilbake det.
+	//temp: vi kan ikke slette reposetory når vi også kjører gc
+	// da må rApendPost lokke tilkoblingen under gc
+	if (opt->RunGarbageCollection == 1) {
+		printf("\n##############################\ntemp: remember to delete reposetory before this movs to production\n##############################\n\n");
+	}
+
 	sprintf(reposetuoypath,"%s%s",lotpath,"reposetory");
 	printf("unlinking %s\n",reposetuoypath);
 
@@ -945,7 +951,6 @@ void netlot_end (int lotNr,char subname[], char server[]) {
 		perror(reposetuoypath);
 		exit(1);
 	}
-
 	netlot_end_recursiveDir(lotpath,"",lotNr,subname, server);
 
 	//sletter loten
@@ -968,6 +973,7 @@ int netlot_start_get_file(int lotNr,char subname[],char file[], char server[]) {
 
 	if(!rGetFileByOpenHandlerFromHostName(file, FH, lotNr, subname, server)) {
 		perror("file on server");
+		fclose(FH);
 		return 0;
 	}
 
@@ -1037,7 +1043,7 @@ int netlot_start(int lotNr,char subname[], int optrEindex, char server[]) {
 }
 
 
-void run(int lotNr, char subname[], struct optFormat opt, char reponame[]) {
+void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 	struct IndexerLot_workthreadFormat *argstruct;
 
@@ -1097,8 +1103,8 @@ void run(int lotNr, char subname[], struct optFormat opt, char reponame[]) {
 		}
 
 		//netlot: Vi henter det vi trenger
-		if ((opt.NetLot != NULL) && (opt.Query == NULL)) {
-			if (!netlot_start(lotNr,subname,opt.rEindex,opt.NetLot)) {
+		if ((opt->NetLot != NULL) && (opt->Query == NULL)) {
+			if (!netlot_start(lotNr,subname,opt->rEindex,opt->NetLot)) {
 				printf("can't netLot for lot nr %i!\n",lotNr);
 				return;
 			}
@@ -1109,7 +1115,7 @@ void run(int lotNr, char subname[], struct optFormat opt, char reponame[]) {
 
 		printf("lastIndexTime %s",ctime((time_t *)&lastIndexTime));
 
-		if (opt.rEindex == 1) {
+		if (opt->rEindex == 1) {
 			FiltetTime = 0;
 			//opner får skriving (vil overskrive eventuelle gamle filer). 
 			strcpy(openmode,"wb");
@@ -1120,7 +1126,7 @@ void run(int lotNr, char subname[], struct optFormat opt, char reponame[]) {
 			//opner får skriving (vil overskrive eventuelle gamle filer). 
 			strcpy(openmode,"wb");
 		}
-		else if (opt.MustBeNewerThen != 0) {
+		else if (opt->MustBeNewerThen != 0) {
 			//regner ut hvor ny den må være
 			printf("Isnet new. Last indexed %s",ctime((time_t *)&lastIndexTime));
 			exit(1);
@@ -1157,7 +1163,7 @@ void run(int lotNr, char subname[], struct optFormat opt, char reponame[]) {
 				exit(1);
 			}
 
-			if (opt.Query == NULL) {
+			if (opt->Query == NULL) {
 				if ((argstruct->SFH = lotOpenFileNoCasheByLotNr(lotNr,"summary",openmode,'r',subname)) == NULL) {
 					perror("open summary");
 					exit(1);
@@ -1191,13 +1197,13 @@ void run(int lotNr, char subname[], struct optFormat opt, char reponame[]) {
 		argstruct->subname 		= subname;
         	argstruct->FiltetTime 		= FiltetTime;
         	argstruct->FileOffset 		= FileOffset;
-		argstruct->optMaxDocuments	= opt.MaxDocuments;
-		argstruct->optPrintInfo		= opt.PrintInfo;
-		argstruct->optOnlyTLD		= opt.OnlyTLD;
-		argstruct->optMakeWordList 	= opt.MakeWordList;
-		argstruct->optHandleOld		= opt.HandleOld;
-		argstruct->optQuery		= opt.Query;
-		argstruct->optNetLot		= opt.NetLot;
+		argstruct->optMaxDocuments	= opt->MaxDocuments;
+		argstruct->optPrintInfo		= opt->PrintInfo;
+		argstruct->optOnlyTLD		= opt->OnlyTLD;
+		argstruct->optMakeWordList 	= opt->MakeWordList;
+		argstruct->optHandleOld		= opt->HandleOld;
+		argstruct->optQuery		= opt->Query;
+		argstruct->optNetLot		= opt->NetLot;
 		argstruct->reponame		= reponame;
 
 		//malloc
@@ -1213,7 +1219,7 @@ void run(int lotNr, char subname[], struct optFormat opt, char reponame[]) {
 			argstruct->DIArray[i].haverankPageElements = 0;
 		}
 
-		if (opt.HandleOld) {
+		if (opt->HandleOld) {
 			argstruct->optHandleOld_duplicateNochange	= 0;
 			argstruct->optHandleOld_allrediIndexed		= 0;
 			argstruct->optHandleOld_indexed			= 0;
@@ -1231,28 +1237,33 @@ void run(int lotNr, char subname[], struct optFormat opt, char reponame[]) {
 			pthread_mutex_init(&argstruct->reposetorymutex, NULL);
 			pthread_mutex_init(&argstruct->restmutex, NULL);
 
-			if (opt.NrofWorkThreads == 0) {
+			if (opt->NrofWorkThreads == 0) {
 				printf("won't use threads\n");
 				IndexerLot_workthread(argstruct);
 			}
 			else {
-				debug("wil use %i threads\n",opt.NrofWorkThreads);
+				debug("wil use %i threads\n",opt->NrofWorkThreads);
 				
 				pthread_t *threadid;
 
-				if ((threadid = malloc(sizeof(pthread_t) * opt.NrofWorkThreads)) == NULL) {
+				if ((threadid = malloc(sizeof(pthread_t) * opt->NrofWorkThreads)) == NULL) {
 					perror("malloc threadid");
 					exit(1);
 				}
 
-				for(i=0;i<opt.NrofWorkThreads;i++) {
+				//startet tråder
+				for(i=0;i<opt->NrofWorkThreads;i++) {
 					debug("starting tread nr %i\n",i);
-					n = pthread_create(&threadid[i], NULL, IndexerLot_workthread, argstruct);
+					if ((n = pthread_create(&threadid[i], NULL, IndexerLot_workthread, argstruct)) != 0) {
+						perror("pthread_create");
+					}
 				}
 
 				//venter på trådene
-        			for (i=0;i<opt.NrofWorkThreads;i++) {
-                			n = pthread_join(threadid[i], NULL);
+        			for (i=0;i<opt->NrofWorkThreads;i++) {
+                			if ((n = pthread_join(threadid[i], NULL)) != 0) {
+						perror("pthread_join");
+					}
         			}
 				
 				free(threadid);
@@ -1272,12 +1283,12 @@ void run(int lotNr, char subname[], struct optFormat opt, char reponame[]) {
 		#endif
 
 
-		if (opt.Query != NULL) {
+		if (opt->Query != NULL) {
 			for(i=0;i<NrofDocIDsInLot;i++) {
 
 				if (argstruct->DIArray[i].p != NULL) {
 					printf("DocID %u, adult value %hu, url \"%s\"\n",argstruct->DIArray[i].DocID,argstruct->DIArray[i].p->AdultWeight,argstruct->DIArray[i].p->Url);
-					DIWriteNET (opt.NetLot , argstruct->DIArray[i].p, argstruct->DIArray[i].DocID, argstruct->subname);
+					DIWriteNET (opt->NetLot , argstruct->DIArray[i].p, argstruct->DIArray[i].DocID, argstruct->subname);
 
 					free(argstruct->DIArray[i].p);
 
@@ -1352,7 +1363,7 @@ void run(int lotNr, char subname[], struct optFormat opt, char reponame[]) {
 			alclot_close(argstruct->alclot);
 		#else
 			fclose(argstruct->ADULTWEIGHTFH);
-			if (opt.Query == NULL) {
+			if (opt->Query == NULL) {
 				fclose(argstruct->SFH);
 			}
 			iintegerClose(&iinteger);
@@ -1370,7 +1381,7 @@ void run(int lotNr, char subname[], struct optFormat opt, char reponame[]) {
 		// vi må ikke kopiere revindex filene da vi jobber på de lokale direkte
 
 
-		if (opt.HandleOld) {
+		if (opt->HandleOld) {
 			printf("duplicateNochange: %i\n",argstruct->optHandleOld_duplicateNochange);
 			printf("allrediIndexed: %i\n",argstruct->optHandleOld_allrediIndexed);
 			printf("optHandleOld_indexed: %i\n",argstruct->optHandleOld_indexed);
@@ -1394,9 +1405,9 @@ void run(int lotNr, char subname[], struct optFormat opt, char reponame[]) {
 
 		//run the Garbage Collection
 		#ifdef BLACK_BOKS
-		if ((opt.RunGarbageCollection == 1) && (1)) {
+		if ((opt->RunGarbageCollection == 1) && (1)) {
 		#else
-		if ((opt.RunGarbageCollection == 1) && (argstruct->pageCount > 0)) {
+		if ((opt->RunGarbageCollection == 1) && (argstruct->pageCount > 0)) {
 		#endif
 			printf("running Garbage Collection..\n");
 			gcrepo(lotNr, subname);
@@ -1404,7 +1415,7 @@ void run(int lotNr, char subname[], struct optFormat opt, char reponame[]) {
 
 		}
 
-		if (opt.RunIndekser == 1) {
+		if (opt->RunIndekser == 1) {
 
 			printf("runing Indekser\n");
 
@@ -1429,8 +1440,11 @@ void run(int lotNr, char subname[], struct optFormat opt, char reponame[]) {
 		}
 	
 		//netlot: Vi sender det vi har laget
-		if ((opt.NetLot != NULL) && (opt.Query == NULL)) {
-			netlot_end(lotNr,subname,opt.NetLot);
+		if ((opt->NetLot != NULL) && (opt->Query == NULL)) {
+			//lokker eventuelt åpne filer, som etter gced.
+			lotCloseFiles();
+			
+			netlot_end(lotNr,subname,opt->NetLot, opt);
 		}
 
 		#ifndef BLACK_BOKS
@@ -1473,6 +1487,7 @@ int main (int argc, char *argv[]) {
 	opt.OnlyTLD = NULL;
 	opt.NrofWorkThreads = 0;	
 	opt.Query = NULL;
+	opt.dirty = 0;
 
 	#ifdef BLACK_BOKS
 		opt.HandleOld = 1;
@@ -1490,7 +1505,7 @@ int main (int argc, char *argv[]) {
 	extern char *optarg;
        	extern int optind, opterr, optopt;
 	char c;
-	while ((c=getopt(argc,argv,"neu:t:m:pl:wogh:iq:"))!=-1) {
+	while ((c=getopt(argc,argv,"neu:t:m:pl:wogh:iq:d:"))!=-1) {
                 switch (c) {
 			case 'l':
 				split(optarg, ",", &opt.OnlyTLD);
@@ -1530,6 +1545,9 @@ int main (int argc, char *argv[]) {
                                 break;
                         case 't':
                                 opt.NrofWorkThreads = atoi(optarg);
+                                break;
+                        case 'd':
+                                opt.dirty = atoi(optarg);
                                 break;
                         case 'm':
                                 opt.MaxDocuments = atoi(optarg);
@@ -1653,7 +1671,7 @@ int main (int argc, char *argv[]) {
 
 		for (i=0;i<maxLots;i++) {
 			if (dirtylots[i]) {
-				run (i,subname,opt,"repo.test");
+				run (i,subname,&opt,"repo.test");
 			}
 		}
 
@@ -1663,15 +1681,16 @@ int main (int argc, char *argv[]) {
 	else if ((opt.NetLot != NULL) && (lotNr == 0)) {
 
 		//henter lot nr fra server
-		while ((lotNr = getLotToIndex(subname,opt.NetLot)) != 0) {
+		while ((lotNr = getLotToIndex(subname,opt.NetLot, opt.dirty)) != 0) {
 			printf("starting indexing of lot %i\n",lotNr);
-			run (lotNr,subname,opt,"reposetory");
+			run (lotNr,subname,&opt,"reposetory");
 			printf("done indexing lot %i\n",lotNr);
 		}
+		printf("main: Have no more lot's to index\n");
 
 	}
 	else {
-		run (lotNr,subname,opt,"reposetory");
+		run (lotNr,subname,&opt,"reposetory");
 	}
 
 
