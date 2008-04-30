@@ -181,6 +181,8 @@ int iintegerLoadMemArray(struct iintegerMemArrayFormat *iintegerMemArray,char in
 	}
 
 	printf("did load a total of %"PRId64" into memory\n",totsize);
+
+	return 1;
 }
 
 int iintegerLoadMemArray2(struct iintegerMemArrayFormat *iintegerMemArray,char index[], int elementsize,char subname[]) {
@@ -310,10 +312,12 @@ int iintegerLoadMemArray2(struct iintegerMemArrayFormat *iintegerMemArray,char i
 	}
 
 	printf("did load a total of %"PRId64" into memory\n",totsize);
+
+	return 1;
 }
 
 
-void iintegerSetValue(struct iintegerFormat *iinteger,void *value,int valuesize,unsigned int DocID,char subname[]) {
+void iintegerSetValue(struct iintegerFormat *iinteger,void *value,int valuesize,unsigned int DocID,char subname[] __unused) {
 
 	unsigned int DocIDPlace;
 
@@ -351,6 +355,8 @@ int iintegerSetValueNoCashe(void *value,int valuesize,unsigned int DocID,char in
 
 
 	fclose(fh);
+
+	return 1;
 }
 
 int iintegerGetValueNoCashe(void *value,int valuesize,unsigned int DocID,char indexname[],char subname[]) {
