@@ -119,6 +119,9 @@ gcrepo(int LotNr, char *subname)
 		}
 	}
 
+	//lokker filen repo.wip
+	lotCloseFiles();
+
 	printf("keept %i\ngced %i\n",keept,gced);
 
 	printf("writing to DI..\n");
