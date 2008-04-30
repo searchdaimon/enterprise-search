@@ -379,9 +379,12 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 				}
 				else if ((*Sider).DocumentIndex.response == 200) {
 			
-					
-					sprintf((*Sider).cacheLink,"http://%s/cgi-bin/ShowCache?D=%i&amp;P=%u&amp;S=%i&amp;subname=%s",servername,DocID,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,subname);
-			
+					#ifdef BLACK_BOKS
+						sprintf((*Sider).cacheLink,"http://%s/cgi-bin/ShowCache?D=%i&amp;P=%u&amp;S=%i&amp;subname=%s",servername,DocID,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,subname);
+					#else
+						sprintf((*Sider).cacheLink,"http://%s/cgi-bin/ShowCache2?D=%i&amp;subname=%s",servername,DocID,subname);
+					#endif
+
 					//printf("cacheLink: %s\n",(*Sider).cacheLink);
 
 
