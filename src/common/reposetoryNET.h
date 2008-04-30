@@ -43,7 +43,7 @@ int readHTMLNET(char *subname, unsigned int DocID, char *text, unsigned int len,
 int openUrlTODocIDNET(char *hostname);
 int getUrlTODOcIDNET(int sock, char *url, unsigned int *DocID);
 void closeUrlTODocIDNET(int sock);
-int getLotToIndex(char subname[],char HostName[]);
+int getLotToIndex(char subname[],char HostName[], int dirty);
 int rSendFileToHostname(char source[], char dest[], int LotNr, char opentype[],char subname[], char HostName[]);
 
 #endif //_REPOSETORYNET_H_
