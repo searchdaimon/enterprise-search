@@ -941,7 +941,7 @@ int bbdocument_deletecoll(char collection[]) {
 	//sletter i userToSubname.db
         struct userToSubnameDbFormat userToSubnameDb;
 
-        if (!userToSubname_open(&userToSubnameDb,'r')) {
+        if (!userToSubname_open(&userToSubnameDb,'w')) {
                 printf("can't open users.db\n");
         }
         else {
