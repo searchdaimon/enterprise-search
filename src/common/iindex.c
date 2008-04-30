@@ -919,6 +919,8 @@ void Indekser_deleteGcedFile(int lotNr, char subname[]) {
 		perror("can't truncate gced index");
 	}
 
+	fclose(GCEDFH);
+
 }
 
 struct hashtable * loadGced(int lotNr, char subname[]) {
@@ -1224,9 +1226,9 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 			++count;
 		}
 		else {
-			//#ifdef DEBUG
+			#ifdef DEBUG
 			printf("aaaaaaa: DocID %u is deleted\n",revIndexArray[count].DocID);
-			//#endif
+			#endif
 		}
 
 	}
