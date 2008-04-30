@@ -17,17 +17,19 @@ ToDo: trenger en "close" prosedyre for filhandlerene.
 //skrur av filcashn da vi deiver å segge feiler med den
 //#define DI_FILE_CASHE
 
-static int openDocumentIndex = -1;
 #ifdef DI_FILE_CASHE
-                FILE *DocumentIndexHA;
 
-void closeDICache(void)
-{
-	if (openDocumentIndex != -1) {
-		openDocumentIndex = -1;
-		fclose(DocumentIndexHA);
+	static int openDocumentIndex = -1;
+
+	FILE *DocumentIndexHA;
+
+	void closeDICache(void)
+	{
+		if (openDocumentIndex != -1) {
+			openDocumentIndex = -1;
+			fclose(DocumentIndexHA);
+		}
 	}
-}
 #endif
 
 
@@ -35,12 +37,13 @@ void closeDICache(void)
 
 
 /*
-finner riktif fil og Søker seg frem til riktig adresse, slik at man bare kan lese/skrive
+finner riktig fil og Søker seg frem til riktig adresse, slik at man bare kan lese/skrive
 */
 FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname) {
 
 	#ifndef DI_FILE_CASHE
 		FILE *DocumentIndexHA;
+		int openDocumentIndex = -1;
 	#endif
 	int LotNr;
 
