@@ -850,7 +850,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 void GetNForTerm(unsigned int WordIDcrc32, char *IndexType, char *IndexSprok, int *TotaltTreff, struct subnamesFormat *subname) {
 
-		int Adress;
+		unsigned int Adress;
         	unsigned int SizeForTerm;
 		int iindexfile;
 		char IndexPath[255],IndexFile[255];		    
