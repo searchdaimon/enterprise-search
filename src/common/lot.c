@@ -510,6 +510,8 @@ void lotCloseFiles() {
 			}
 		}
 	}
+
+	LotFilesInalisert = 0;
 }
 
 //fjerner \n på slutten av strenger
@@ -533,6 +535,7 @@ FILE *openMaplist() {
                 exit(1);
         }
 
+
 	return MAPLIST;
 }
 
@@ -548,8 +551,15 @@ int MakeMapListMap_getfsid (const char *path) {
 	struct stat buf;
 	int i;
 
-	stat(path, &buf);
-	i=(buf.st_dev % 63);
+	if (stat(path, &buf) != 0) {
+		//Er ikke sikkert at mappen er oppretttet enda, det er helt normalt.
+		#ifdef DEBUG
+			perror(path);
+		#endif
+		return 0;
+	}
+
+	i = (buf.st_dev % 63);
 
 	return i;
 }
@@ -576,6 +586,8 @@ void MakeMapListMap () {
 
 		++i;
 	}
+
+	fclose(MAPLIST);
 }
 
 
