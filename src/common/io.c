@@ -7,8 +7,9 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <errno.h>
-
+#include <inttypes.h>
 
 ssize_t
 io_read_align(int fd, void *buf, size_t count)
@@ -52,4 +53,39 @@ io_read_align(int fd, void *buf, size_t count)
 
 	return count;
 }
+
+
+size_t fread_all(const void *buf, size_t size, FILE *stream, int redlen) {
+
+        off_t total = 0;        // how many bytes we've sent
+        off_t bytesleft = size;  // how many we have left to send
+        off_t n;
+        int toread;
+
+
+        while(total < size) {
+
+            if (bytesleft > redlen) {
+                toread = redlen;
+            }
+            else {
+                toread = bytesleft;
+            }
+
+
+
+            if ((n = fread((void *)buf+total, 1, toread,  stream)) == -1) {
+	                printf("dident manage to fread all the data as %s:%f.\n",__FILE__,__LINE__);
+                        return 0;
+            }
+
+	 //	   printf("total %"PRId64" of %"PRId64": n %"PRId64", left %"PRId64"\n",total,size,n,bytesleft);
+
+
+            total += n;
+            bytesleft -= n;
+        }
+
+}
+
 
