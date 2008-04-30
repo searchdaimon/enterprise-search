@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "../common/bstr.h"
+
 #define CANT_IGNORE_SIGCHLD 1;
 
 const int TIMEOUT = 15; /* or whatever... */ 
@@ -13,7 +15,7 @@ const int TIMEOUT = 15; /* or whatever... */
     */
 
 
-void sigchld_handler(int sig) {
+void sigchld_handler(int sig __attribute__((unused))) {
         //while(wait(NULL) > 0){
 	//	printf("waiting\n");
 	//};
@@ -382,7 +384,7 @@ int sendall(int s, void *buf, int len) {
 		}
 
             if (n == -1) { 
-		printf("dident manage to send all the data as %s:%f.\n",__FILE__,__LINE__);
+		printf("dident manage to send all the data as %s:%d.\n",__FILE__,__LINE__);
 		//break; 
 		return 0;
 	    }
