@@ -333,139 +333,138 @@ int ReadIIndexRecord (unsigned int *Adress, unsigned int *SizeForTerm, unsigned 
 		#endif
 		return 0;
 	}
-	else {
 
 
-		fstat(fileno(dictionaryha),&inode);
+	fstat(fileno(dictionaryha),&inode);
 
-		#ifdef DEBUG
-		printf("Stat: %u / %i\n",(unsigned int)inode.st_size,sizeof(struct DictionaryFormat));
-		#endif
+	#ifdef DEBUG
+	printf("Stat: %u / %i\n",(unsigned int)inode.st_size,sizeof(struct DictionaryFormat));
+	#endif
 
-		min = 0;
-		max = inode.st_size / sizeof(struct DictionaryFormat);
+	min = 0;
+	max = inode.st_size / sizeof(struct DictionaryFormat);
 
-		#ifdef DEBUG
-		printf("min %i, max %i\n",min,max);
-		#endif
+	#ifdef DEBUG
+	printf("min %i, max %i\n",min,max);
+	#endif
 
-		//debug: Viser alle forekomstene i indeksen
-		/*
-		printf("\n####################################################\n");
-		printf("alle Dictionary forekomster:\n");
-		int i;
-		for (i=0;i<max;i++) {
-			fread(&DictionaryPost,sizeof(struct DictionaryFormat),1,dictionaryha);
-			printf("did read %u\n",DictionaryPost.WordID);
-		}
+	//debug: Viser alle forekomstene i indeksen
+	/*
+	printf("\n####################################################\n");
+	printf("alle Dictionary forekomster:\n");
+	int i;
+	for (i=0;i<max;i++) {
+		fread(&DictionaryPost,sizeof(struct DictionaryFormat),1,dictionaryha);
+		printf("did read %u\n",DictionaryPost.WordID);
+	}
 		
-		printf("\n####################################################\n");
-		*/
-		//	
+	printf("\n####################################################\n");
+	*/
+	//	
 
-		//binersøker
-		fant = 0;
-		//to do. er >0 riktig her? Synes vi har fåt problem med forever looping før
-		//while (((max - min) > 1) && (!fant)) { 
-		count = 0;
-		while (((max - min) > 0) && (!fant)) { 
-			halvert = floor((((max - min) / 2) + min));
-			//halvert = (int)((((max - min) / 2) + min) * 0.5);
-			//halvert = (int)((((max - min) / 2)) * 0.5);
+	//binersøker
+	fant = 0;
+	halvert = 0;
+	//to do. er >0 riktig her? Synes vi har fåt problem med forever looping før
+	//while (((max - min) > 1) && (!fant)) { 
+	count = 0;
+	while (((max - min) > 0) && (!fant)) { 
+		halvert = floor((((max - min) / 2) + min));
+		//halvert = (int)((((max - min) / 2) + min) * 0.5);
+		//halvert = (int)((((max - min) / 2)) * 0.5);
 
+		posisjon = halvert * sizeof(struct DictionaryFormat);
 
-			posisjon = halvert * sizeof(struct DictionaryFormat);
-
-			#ifdef DEBUG
-			printf("\tmax: %i, min: %i, halvert: %i, (max - min): %i. posisjon %i\n",max,min,halvert,(max - min),posisjon);
-			#endif
-			//exit(1);
-			if (fseek(dictionaryha,posisjon,0) != 0) {
-				printf("can't seek to post\n");
-				break;
-			}
+		#ifdef DEBUG
+		printf("\tmax: %i, min: %i, halvert: %i, (max - min): %i. posisjon %i\n",max,min,halvert,(max - min),posisjon);
+		#endif
+		//exit(1);
+		if (fseek(dictionaryha,posisjon,0) != 0) {
+			printf("can't seek to post\n");
+			break;
+		}
 	
-			if (fread(&DictionaryPost,sizeof(struct DictionaryFormat),1,dictionaryha) != 1) {
-				printf("can't read post\n");
-				break;
-			}
-			#ifdef DEBUG
-			printf("WordID: %u = %u ?\n",DictionaryPost.WordID,Query_WordID);
-			#endif
-			if (Query_WordID == DictionaryPost.WordID) {
-				fant = 1;
-				//printf("Fant: WordID: %u = %u ?\n",DictionaryPost.WordID,Query_WordID);
-			}
-			else if (min == halvert) {
-				//hvis vi ikke her mere halveringer igjen å gkøre. Litt usikker på 
-				//hvorfår vi må ha dette, og den under. Men (max - min) blir aldri mindre en 1, hvis vi ikke finner
-				//recorden, og vi evverlooper
-				break;
-			}
-			else if (max == halvert) {
-				break;
-			}
-			else if (Query_WordID > DictionaryPost.WordID) {
-				min = halvert;
-			}
-			else if (Query_WordID < DictionaryPost.WordID) {
-				max = halvert;
-			}
-			//temp:
-			//if (count > 10) {
-			//	exit(1);
-			//}
-			//v14 14 nov
-
-			++count;
+		if (fread(&DictionaryPost,sizeof(struct DictionaryFormat),1,dictionaryha) != 1) {
+			printf("can't read post\n");
+			break;
 		}
-
-		//leser siste
-		//toDo: hvorfor kommer ikke altid siste post med når vi halverer. Skyldes det bruk av floor() lengere opp?
-		//leser manuelt får nå
-		if (!fant) {
-			posisjon = (halvert -1) * sizeof(struct DictionaryFormat);
-			fseek(dictionaryha,posisjon,0);
-			if (fread(&DictionaryPost,sizeof(struct DictionaryFormat),1,dictionaryha) != 1) {
-				printf("can't read last post\n");
-			}
-			else {
-				if (Query_WordID == DictionaryPost.WordID) {
-					fant = 1;
-                		        printf("Fant: WordID: %u = %u ?\n",DictionaryPost.WordID,Query_WordID);			
-				}
-			}
+		#ifdef DEBUG
+		printf("WordID: %u = %u ?\n",DictionaryPost.WordID,Query_WordID);
+		#endif
+		if (Query_WordID == DictionaryPost.WordID) {
+			fant = 1;
+			//printf("Fant: WordID: %u = %u ?\n",DictionaryPost.WordID,Query_WordID);
 		}
-
-
-		fclose(dictionaryha);
-
-                #ifdef TIME_DEBUG
-                gettimeofday(&end_time, NULL);
-                printf("Time debug: ReadIIndexRecord total time %f\n",getTimeDifference(&start_time,&end_time));
-                #endif
-		if (!fant) {
-			*Adress = 0;
-			*SizeForTerm = 0;
-			return 0;
-
+		else if (min == halvert) {
+			//hvis vi ikke her mere halveringer igjen å kjøre. Litt usikker på 
+			//hvorfår vi må ha dette, og den under. Men (max - min) blir aldri mindre en 1, hvis vi ikke finner
+			//recorden, og vi evverlooper
+			break;
 		}
-		else if (DictionaryPost.SizeForTerm == 0) {
-			printf("###################################\nBug: DictionaryPost SizeForTerm is 0!\n###################################\n");
-			*Adress = 0;
-			*SizeForTerm = 0;
-			return 0;
+		else if (max == halvert) {
+			break;
+		}
+		else if (Query_WordID > DictionaryPost.WordID) {
+			min = halvert;
+		}
+		else if (Query_WordID < DictionaryPost.WordID) {
+			max = halvert;
+		}
+		//temp:
+		//if (count > 10) {
+		//	exit(1);
+		//}
+		//v14 14 nov
 
+		++count;
+	}
+
+	//leser siste
+	//toDo: hvorfor kommer ikke altid siste post med når vi halverer. Skyldes det bruk av floor() lengere opp?
+	//leser manuelt får nå
+	if (!fant) {
+		posisjon = (halvert -1) * sizeof(struct DictionaryFormat);
+		fseek(dictionaryha,posisjon,0);
+		if (fread(&DictionaryPost,sizeof(struct DictionaryFormat),1,dictionaryha) != 1) {
+			printf("can't read last post\n");
 		}
 		else {
-			*Adress = DictionaryPost.Adress;
-			*SizeForTerm = DictionaryPost.SizeForTerm;
-			#ifdef DEBUG
-			printf("disk: Adress %u, SizeForTerm %u\n",DictionaryPost.Adress,DictionaryPost.SizeForTerm);
-			#endif
-			return 1;
+			if (Query_WordID == DictionaryPost.WordID) {
+				fant = 1;
+               		        printf("Fant: WordID: %u = %u ?\n",DictionaryPost.WordID,Query_WordID);			
+			}
 		}
 	}
+
+
+	fclose(dictionaryha);
+
+        #ifdef TIME_DEBUG
+               gettimeofday(&end_time, NULL);
+                printf("Time debug: ReadIIndexRecord total time %f\n",getTimeDifference(&start_time,&end_time));
+        #endif
+	if (!fant) {
+		*Adress = 0;
+		*SizeForTerm = 0;
+		return 0;
+
+	}
+	else if (DictionaryPost.SizeForTerm == 0) {
+		printf("###################################\nBug: DictionaryPost SizeForTerm is 0!\n###################################\n");
+		*Adress = 0;
+		*SizeForTerm = 0;
+		return 0;
+
+	}
+	else {
+		*Adress = DictionaryPost.Adress;
+		*SizeForTerm = DictionaryPost.SizeForTerm;
+		#ifdef DEBUG
+		printf("disk: Adress %u, SizeForTerm %u\n",DictionaryPost.Adress,DictionaryPost.SizeForTerm);
+		#endif
+		return 1;
+	}
+
 	//printf("Adress %u,SizeForTerm %i\n",*Adress ,*SizeForTerm);
 
 }
@@ -952,7 +951,7 @@ struct hashtable * loadGced(int lotNr, char subname[]) {
 
 		if ((gcedArray = malloc(inode.st_size)) == NULL) {
 			perror("malloc");
-			return;
+			return NULL;
 		}
 
 		fread(gcedArray,inode.st_size,1,GCEDFH);
@@ -997,6 +996,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 
 	struct hashtable *h;
 	int i,y;
+	unsigned int u, uy;
 	int mgsort_i,mgsort_k;
 	FILE *REVINDEXFH;
 	FILE *IINDEXFH;
@@ -1025,7 +1025,10 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 		printf("starting on an new index of part %i\n",part);
 	#endif
 
-	h = loadGced(lotNr, subname);
+	if ((h = loadGced(lotNr, subname)) == NULL) {
+		perror("loadGced");
+		return 0;
+	}
 
 
 //
@@ -1042,7 +1045,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 	if ((optMustBeNewerThen != 0)) {
 		if (fopen(iindexPath,"r") != NULL) {
 			printf("we all redy have a iindex.\n");
-			return;
+			return 0;
 		}
 	}
 //
@@ -1119,12 +1122,12 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 			printf("term: %u antall: %u\n",term,Antall);
 			#endif
 
-			for (i=0;i<Antall;i++) {
+			for (u=0;u<Antall;u++) {
 
 				revIndexArray[count].WordID = term;
 
 				if (fread(&revIndexArray[count].DocID,sizeof(unsigned long),1,IINDEXFH) != 1) {
-                        	        printf("can't read DocID for nr %i\n",i);
+                        	        printf("can't read DocID for nr %i\n",u);
                         	        perror("");
                         	        continue;
                         	}
@@ -1140,8 +1143,8 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 					printf("\tread WordID: %u, nrOfHits %u\n",revIndexArray[count].WordID,revIndexArray[count].nrOfHits);
 				#endif
 
-				for (y = 0;y < revIndexArray[count].nrOfHits; y++) {
-                                        if (fread(&revIndexArray[count].hits[y],sizeof(unsigned short),1,IINDEXFH) != 1) {
+				for (uy = 0;uy < revIndexArray[count].nrOfHits; uy++) {
+                                        if (fread(&revIndexArray[count].hits[uy],sizeof(unsigned short),1,IINDEXFH) != 1) {
 						perror("reading hit");
 						return 0;
 					}
@@ -1247,7 +1250,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 	if ((IINDEXFH = fopen(iindexPath,"wb")) == NULL) {
 		fprintf(stderr,"can't open iindex for wb\n");
 		perror(iindexPath);
-		return;
+		return 0;
 	}
 
 	//teller forkomster av DocID's pr WordID
@@ -1319,11 +1322,11 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 		fwrite(&revIndexArray[i].nrOfHits,sizeof(revIndexArray[i].nrOfHits),1,IINDEXFH);
 
 		//skriver alle hittene		
-		for(y=0;y<revIndexArray[i].nrOfHits;y++) {
+		for(uy=0;uy<revIndexArray[i].nrOfHits;uy++) {
 			#ifdef DEBUG		
-				printf("\t\thit %hu\n",revIndexArray[i].hits[y]);
+				printf("\t\thit %hu\n",revIndexArray[i].hits[uy]);
 			#endif
-			fwrite(&revIndexArray[i].hits[y],sizeof(short),1,IINDEXFH);
+			fwrite(&revIndexArray[i].hits[uy],sizeof(short),1,IINDEXFH);
 		}
 		#ifdef DEBUG
 		printf("write: DocID %u, WordID: %u, %u\n",revIndexArray[i].DocID,revIndexArray[i].WordID,revIndexArray[i].nrOfHits);		
@@ -1344,6 +1347,8 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 
 	hashtable_destroy(h,1);
 
+
+	return 1;
 }
 
 //sortere først på WordID, så DocID
