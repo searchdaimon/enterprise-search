@@ -29,3 +29,4 @@ char *ftoa(double val) {
 unsigned int atou(char buf[]) {
 	return strtoul(buf, (char **)NULL, 10);
 }
+
