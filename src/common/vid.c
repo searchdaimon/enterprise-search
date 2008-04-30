@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "../common/crc32.h"
+
 
 void vid_u (char buf[], int bufsize,char salt[], unsigned int value, time_t etime, char ip[]) {
 
