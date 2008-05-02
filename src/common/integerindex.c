@@ -317,7 +317,7 @@ int iintegerLoadMemArray2(struct iintegerMemArrayFormat *iintegerMemArray,char i
 }
 
 
-void iintegerSetValue(struct iintegerFormat *iinteger,void *value,int valuesize,unsigned int DocID,char subname[] __unused) {
+void iintegerSetValue(struct iintegerFormat *iinteger,void *value,int valuesize,unsigned int DocID,char subname[] __bunused) {
 
 	unsigned int DocIDPlace;
 

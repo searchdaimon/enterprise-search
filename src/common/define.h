@@ -664,7 +664,7 @@ struct anchorIndexFormat {
 
 typedef unsigned int docid;
 
-#define __unused __attribute__((unused))
+#define __bunused __attribute__((unused))
 
 #endif //_DEFINE__H_
 
