@@ -123,11 +123,11 @@ int main(int argc, char *argv[])
 
 	struct config_t maincfg;
 
-        int searchport = 0;
-	int optLog = 0;
-	int optMax = 0;
-	int optSingle = 0;
-	char *optrankfile = NULL;
+        searchd_config.searchport = 0;
+	searchd_config.optLog = 0;
+	searchd_config.optMax = 0;
+	searchd_config.optSingle = 0;
+	searchd_config.optrankfile = NULL;
 	
         extern char *optarg;
         extern int optind, opterr, optopt;
@@ -135,17 +135,17 @@ int main(int argc, char *argv[])
         while ((c=getopt(argc,argv,"lp:m:b:vsL:"))!=-1) {
                 switch (c) {
                         case 'p':
-                                searchport = atoi(optarg);
-				fprintf(stderr, "searchd: Option -p: Using port %i.\n",searchport);
+                                searchd_config.searchport = atoi(optarg);
+				fprintf(stderr, "searchd: Option -p: Using port %i.\n",searchd_config.searchport);
                                 break;
                         case 'l':
-				optLog = 1;
+				searchd_config.optLog = 1;
                                 break;
                         case 'm':
-				optMax = atoi(optarg);
+				searchd_config.optMax = atoi(optarg);
                                 break;
                         case 'b':
-				optrankfile = optarg;
+				searchd_config.optrankfile = optarg;
                                 break;
                         case 'v':
 				fprintf(stderr, "searchd: Option -v: Verbose output.\n");
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
                                 break;
                         case 's':
 				fprintf(stderr, "searchd: Option -s: Won't fork for new connections\n");
-				optSingle = 1;
+				searchd_config.optSingle = 1;
                                 break;
 			#ifdef WITH_SPELLING
 			case 'L':
@@ -174,8 +174,8 @@ int main(int argc, char *argv[])
         fprintf(stderr, "searchd: Debug: argc %i, optind %i\n",argc,optind);
 	#endif
 
-	if (optrankfile == NULL) {
-		optrankfile = "Brank";
+	if (searchd_config.optrankfile == NULL) {
+		searchd_config.optrankfile = "Brank";
 	}
 
 	#ifdef WITH_SPELLING
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
 	#define stdoutlog "logs/searchdbb_stdout"
 	#define stderrlog "logs/searchdbb_stderr"
 
-	if (optLog) {
+	if (searchd_config.optLog) {
 		fprintf(stderr, "searchd: Opening log \"%s\"\n",bfile(stdoutlog));
 	
 		if ((FH = freopen (bfile(stdoutlog), "a+", stdout)) == NULL) {
@@ -232,11 +232,11 @@ int main(int argc, char *argv[])
 
         maincfg = maincfgopen();
 
-	if (searchport == 0) {
-        	searchport = maincfg_get_int(&maincfg,"BSDPORT");
+	if (searchd_config.searchport == 0) {
+        	searchd_config.searchport = maincfg_get_int(&maincfg,"BSDPORT");
 	}
 
-	searchd_config. cmc_port = maincfg_get_int(&maincfg,"CMDPORT");
+	searchd_config.cmc_port = maincfg_get_int(&maincfg,"CMDPORT");
 
 	maincfgclose(&maincfg);
 
@@ -321,7 +321,7 @@ int main(int argc, char *argv[])
 
         	//laster inn alle poprankene
         	fprintf(stderr, "searchd: Loading pop MemArray..."); fflush(stderr);
-        	popopenMemArray2("www",optrankfile); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
+        	popopenMemArray2("www",searchd_config.optrankfile); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
         	fprintf(stderr, "done\n");
 
 		fprintf(stderr, "searchd: Loading adultWeight MemArray..."); fflush(stderr);
@@ -345,8 +345,8 @@ int main(int argc, char *argv[])
 	memset((char *) &serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	serv_addr.sin_port = htons(searchport);
-	fprintf(stderr, "searchd: Will bind to port %i\n",searchport);
+	serv_addr.sin_port = htons(searchd_config.searchport);
+	fprintf(stderr, "searchd: Will bind to port %i\n",searchd_config.searchport);
 	//seter at sokket kan rebrukes
         int yes=1;
         if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
@@ -355,7 +355,7 @@ int main(int argc, char *argv[])
         }
 	
 	if(bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-		fprintf(stderr,"searchd: Server error! Can't bind local address. Port %i\n",searchport);
+		fprintf(stderr,"searchd: Server error! Can't bind local address. Port %i\n",searchd_config.searchport);
 		exit(0);
 	}	
 
@@ -383,7 +383,7 @@ int main(int argc, char *argv[])
 		}
 		else {
 
-			if (optSingle) {
+			if (searchd_config.optSingle) {
 				do_chld((void *) &searchd_config);
 			}
 			else {
@@ -423,7 +423,7 @@ int main(int argc, char *argv[])
 
 		++runCount;
 
-		if ((optMax != 0) && (runCount >= optMax)) {
+		if ((searchd_config.optMax != 0) && (runCount >= searchd_config.optMax)) {
 			//venter på siste trå. Ikke helt optimalt dette, da vi kan ha flere tråer som kjører i paralell
 			/*
 			#ifdef WITH_THREAD

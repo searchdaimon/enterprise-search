@@ -1044,7 +1044,7 @@ void *generatePagesResults(void *arg)
 
 		#endif
 
-
+		printf("readin di for %u\n",(*PagesResults).TeffArray->iindex[i].DocID);
 		//leser DI
 		if (!DIRead_fmode(&side->DocumentIndex,(*PagesResults).TeffArray->iindex[i].DocID,(*(*PagesResults).TeffArray->iindex[i].subname).subname,'r')) 
 		{
@@ -1381,11 +1381,13 @@ void *generatePagesResults(void *arg)
 
 	#ifdef WITH_THREAD
 	//må man kelle denne?
-	pthread_exit(NULL);
+	//pthread_exit(NULL);
 	#endif
 
 	fprintf(stderr, "searchkernel: ~generatePagesResults()\n");
 	//return 1;
+
+	return NULL;
 }
 
 int sider_allrank_sort (const void *p1, const void *p2) {
@@ -1758,24 +1760,30 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	#ifdef WITH_THREAD
 
-	dp_init();
-
 	pthread_t threadid[NROF_GENERATEPAGES_THREADS];
+
+	dp_init();
 
 	//ret = pthread_mutexattr_init(&PagesResults.mutex);
 	ret = pthread_mutex_init(&PagesResults.mutex, NULL);
 	ret = pthread_mutex_init(&PagesResults.mutextreadSyncFilter, NULL);
+
 	#ifdef BLACK_BOKS
-	ret = pthread_mutex_init(&PagesResults.mutext_pathaccess, NULL);
+		ret = pthread_mutex_init(&PagesResults.mutext_pathaccess, NULL);
 	#endif
 
 	//låser mutex. Vi er jo enda ikke kalre til å kjøre
 	pthread_mutex_lock(&PagesResults.mutex);
 
-	//start som thread that can get the pages
-	for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
+	if (searchd_config->optSingle) {
 
-		ret = pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults);		
+	}
+	else {
+		//start som thread that can get the pages
+		for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
+			ret = pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults);		
+		}
+
 	}
 	#endif
 
@@ -1848,20 +1856,30 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	#ifdef WITH_THREAD
 
-	//vi har data. Lå tårdene jobbe med det
-	pthread_mutex_unlock(&PagesResults.mutex);
+		//vi har data. Lå tårdene jobbe med det
+		pthread_mutex_unlock(&PagesResults.mutex);
 
-	//venter på trådene
-	for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
-		ret = pthread_join(threadid[i], NULL);
-	}
+		//av gjør om vi skal starte tråder eller kjøre det selv
+		if (searchd_config->optSingle) {
+			generatePagesResults(&PagesResults);
+		}
+		else {
 
-	//free mutex'en
-	ret = pthread_mutex_destroy(&PagesResults.mutex);
-	ret = pthread_mutex_destroy(&PagesResults.mutextreadSyncFilter);
-	#ifdef BLACK_BOKS
-	ret = pthread_mutex_destroy(&PagesResults.mutex_pathaccess);
-	#endif
+
+			//venter på trådene
+			for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
+				ret = pthread_join(threadid[i], NULL);
+			}
+
+			//free mutex'en
+			ret = pthread_mutex_destroy(&PagesResults.mutex);
+			ret = pthread_mutex_destroy(&PagesResults.mutextreadSyncFilter);
+
+			#ifdef BLACK_BOKS
+				ret = pthread_mutex_destroy(&PagesResults.mutex_pathaccess);
+			#endif
+
+		}
 	#else 
 		generatePagesResults(&PagesResults);		
 	#endif

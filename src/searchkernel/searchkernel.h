@@ -5,6 +5,11 @@
 struct searchd_configFORMAT {
         int     newsockfd;
 	int cmc_port;
+        int searchport;
+        int optLog;
+        int optMax;
+        int optSingle;
+        char *optrankfile;
 };
 
 
