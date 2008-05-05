@@ -1,4 +1,5 @@
 #include "../query/query_parser.h"
+#include "../query/stemmer.h"
 #include "../common/define.h"
 #include "../common/integerindex.h"
 
@@ -10,6 +11,7 @@ struct searchd_configFORMAT {
         int optMax;
         int optSingle;
         char *optrankfile;
+	thesaurus           *thesaurusp;
 };
 
 

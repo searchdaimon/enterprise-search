@@ -23,6 +23,7 @@
 #include "../common/timediff.h"
 #include "../common/bstr.h"
 #include "../query/query_parser.h"
+#include "../query/stemmer.h"
 #include "../common/integerindex.h"
 
 #ifdef WITH_SPELLING
@@ -1474,7 +1475,7 @@ spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa)
 	int fixed;
 
 	if (spelling == NULL)
-		return;
+		return 0;
 
 	fixed = 0;
 	for(i = 0; i < qa->n; i++) {
@@ -1727,8 +1728,20 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	get_query( PagesResults.QueryData.query, queryLen, &PagesResults.QueryData.queryParsed );
 
+
 	#if defined BLACK_BOKS && !defined _24SEVENOFFICE
-	get_query( groupOrQuery, strlen(groupOrQuery), &PagesResults.QueryData.search_user_as_query );
+
+		get_query( groupOrQuery, strlen(groupOrQuery), &PagesResults.QueryData.search_user_as_query );
+
+
+		// Kjør stemming på query:
+    		thesaurus_expand_query(searchd_config->thesaurusp, &PagesResults.QueryData.queryParsed);
+	
+   		// Print query med innebygd print-funksjon:
+    		char        buf[1024];
+    		sprint_expanded_query(buf, 1023, &PagesResults.QueryData.queryParsed);
+    		printf("\nExpanded query: %s\n\n", buf);
+
 	#endif
 
 	#ifdef DEBUG

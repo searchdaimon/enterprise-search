@@ -12,6 +12,8 @@
 #include "../parser/html_parser.h"
 #include "../maincfg/maincfg.h"
 #include "../dp/dp.h"
+#include "../query/query_parser.h"
+#include "../query/stemmer.h"
 
 #define _REENTRANT
 
@@ -313,7 +315,14 @@ int main(int argc, char *argv[])
         }
 
 
-	#ifndef BLACK_BOKS
+	#ifdef BLACK_BOKS
+		// Initialiser thesaurus med ouput-filene fra 'build_thesaurus_*':
+		printf("init thesaurus\n");
+    		searchd_config.thesaurusp = thesaurus_init(bfile("data/thesaurus.text"), bfile2("data/thesaurus.id"));
+		printf("init thesaurus done\n");
+
+	#else
+
 		//starter opp
 		fprintf(stderr, "searchd: Loading domain-ids..."); fflush(stderr);
 		iintegerLoadMemArray2(&global_DomainIDs,"domainid",sizeof(unsigned short), "www");
