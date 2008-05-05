@@ -470,7 +470,7 @@ int rSendFileByOpenHandlerBySocket(FILE *FILEHANDLER, char dest[], int LotNr, ch
 	return 1;
 }
 
-int rGetNextNET(char *HostName, unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffebuffer[] __bunused, unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset __unused,char subname[]) {
+int rGetNextNET(char *HostName, unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffebuffer[] __bunused, unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset __bunused,char subname[]) {
 
 
 	static int socketha;
