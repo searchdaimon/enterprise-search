@@ -35,24 +35,55 @@ static FILE *bfopen(char name[],char flags[]) {
 	return NULL;
 }
 
-static char *bfile(char name[]) {
+static char *sbfile(char fulname[] ,char name[]) {
 	char *cptr;
-	//må legge til trå støtte her
-	static char fulname[512];
 
 	if ((cptr = getenv("BOITHOHOME")) == NULL) {
                 fprintf(stderr,"Error: Can't get environment value \"BOITHOHOME\"\n");
-                exit(1);
+                return NULL;
         }
         else if (name[0] == '/') {
                 fprintf(stderr,"Error: name starts with a /. Yoy must use virtual adressing\n");
-        }
-        else {
-                sprintf(fulname,"%s/%s",cptr,name);
-                return fulname;
+		return NULL;
         }
 
-	return NULL;
+        sprintf(fulname,"%s/%s",cptr,name);
+        return fulname;
 }
+
+static char *bfile(char name[]) {
+
+	//må legge til trå støtte her
+	static char fulname[512];
+
+	if (sbfile(fulname,name) == NULL) {
+		return NULL;
+	}
+
+	return fulname;
+}
+static char *bfile2(char name[]) {
+
+	//må legge til trå støtte her
+	static char fulname[512];
+
+	if (sbfile(fulname,name) == NULL) {
+		return NULL;
+	}
+
+	return fulname;
+}
+static char *bfile3(char name[]) {
+
+	//må legge til trå støtte her
+	static char fulname[512];
+
+	if (sbfile(fulname,name) == NULL) {
+		return NULL;
+	}
+
+	return fulname;
+}
+
 
 #endif
