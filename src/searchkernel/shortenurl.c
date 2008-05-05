@@ -24,6 +24,7 @@ void shortenurl(char *url,int urllen) {
 	vboprintf("shortenurl: inn url %s\n", url);
 	char *p;
 	char proto[128];
+	char origurl[urllen+1];
 	
 	newurl[0] = '\0';
 	proto[0] = '\0';
@@ -42,6 +43,7 @@ void shortenurl(char *url,int urllen) {
 	} else {
 		len = strlen(url);
 	}	
+	strcpy(origurl, url);
 
 	#ifdef DEBUG
 		printf("shortenurl: after proto \"%s\"\n",url);
@@ -53,6 +55,7 @@ void shortenurl(char *url,int urllen) {
  			printf("shortenurl: url is short enough. Don't need to shorten\n");
 		#endif
 
+		snprintf(url, urllen, "%s%s", proto, origurl);
 		return;
 	}
 
@@ -70,6 +73,7 @@ void shortenurl(char *url,int urllen) {
 	}
 	else {
 		printf("can't split\n");
+		snprintf(url, urllen, "%s%s", proto, origurl);
 		return;
 	}
 
