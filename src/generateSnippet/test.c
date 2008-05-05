@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "../query/query_parser.h"
+#include "../query/stemmer.h"
 #include "snippet.parser.h"
 
 int main(int argc, char *argv[])
@@ -23,6 +24,16 @@ int main(int argc, char *argv[])
     query_array	qa;
 
     get_query(sok, strlen(sok), &qa);
+
+    thesaurus		*T = thesaurus_init("../../data/thesaurus.text", "../../data/thesaurus.id");
+
+    // Kjør stemming på query:
+    thesaurus_expand_query(T, &qa);
+
+    // Print query med innebygd print-funksjon:
+    char	buf[1024];
+    sprint_expanded_query(buf, 1023, &qa);
+    printf("\nExpanded query: %s\n\n", buf);
 
     for (paramnr = 2; paramnr<argc; paramnr++)
 	{
@@ -62,4 +73,5 @@ int main(int argc, char *argv[])
 	}
 
     destroy_query(&qa);
+    thesaurus_destroy(T);
 }

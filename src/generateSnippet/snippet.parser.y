@@ -13,6 +13,9 @@
 #include "../ds/dqueue.h"
 #include "snippet.parser.common.h"
 
+
+#define STEMMING
+
 // --- fra flex:
 typedef void* yyscan_t;
 typedef struct bsgp_buffer_state *YY_BUFFER_STATE;
@@ -1034,7 +1037,7 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 
     struct bsgp_yy_extra	*he = malloc(sizeof(struct bsgp_yy_extra));
     struct bsg_intern_data	*data = malloc(sizeof(struct bsg_intern_data));
-    int				i, j, k, found, qw_size=0, num_qw, longest_phrase=0, sigma_size;
+    int				i, j, k, m, found, qw_size=0, num_qw, longest_phrase=0, sigma_size;
     unsigned char		**qw;
     int				*sigma;
 
@@ -1075,7 +1078,21 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
     if (data->num_queries > 0)
 	{
 	    for (i=0; i<qa.n; i++)
-		qw_size+= qa.query[i].n;
+		{
+		    qw_size+= qa.query[i].n;
+#ifdef STEMMING
+		    if (qa.query[i].alt != NULL)
+			{
+			    data->num_queries+= qa.query[i].alt_n;
+			    for (j=0; j<qa.query[i].alt_n; j++)
+				{
+				    qw_size+= qa.query[i].alt[j].n;
+				}
+			}
+#endif
+		}
+
+	    data->phrase_sizes = malloc(sizeof(int)*data->num_queries);
 
 	    qw = malloc(sizeof(char*)*qw_size);
 	    sigma = malloc(sizeof(int)*qw_size);
@@ -1090,6 +1107,8 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 		{
 		    if (qa.query[i].n > longest_phrase)
 			longest_phrase = qa.query[i].n;
+
+		    data->phrase_sizes[num_qw] = qa.query[i].n;
 
 		    for (j=0; j<qa.query[i].n; j++)
 			{
@@ -1121,12 +1140,55 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 				    qw[sigma_size++] = (unsigned char*)qa.query[i].s[j];
 				}
 			}
+
+#ifdef STEMMING
+		    if (qa.query[i].alt != NULL)
+			{
+			    if (qa.query[i].alt_n > longest_phrase)
+				longest_phrase = qa.query[i].alt_n;
+
+			    for (m=0; m<qa.query[i].alt_n; m++)
+				{
+				    data->phrase_sizes[num_qw] = qa.query[i].alt[m].n;
+
+				    for (j=0; j<qa.query[i].alt[m].n; j++)
+					{
+					    if (j==0)
+						data->q_dep[sigma_size] = -1;
+					    else
+						data->q_dep[sigma_size] = sigma_size-1;
+
+					    if (j==(qa.query[i].alt[m].n-1))
+						data->q_stop[sigma_size] = 1;
+					    else
+						data->q_stop[sigma_size] = 0;
+
+					    found = -1;
+					    for (k=0; k<sigma_size; k++)
+						if (!strcmp(qa.query[i].alt[m].s[j], (char*)qw[k]))
+						    {
+							found = k;
+							break;
+						    }
+
+					    if (found>=0)
+						{
+						    sigma[num_qw++] = found;
+						}
+					    else
+						{
+						    sigma[num_qw++] = sigma_size;
+						    qw[sigma_size++] = (unsigned char*)qa.query[i].alt[m].s[j];
+						}
+					}
+				}
+			}
+#endif
 		}
 
 	    int		state, num_states=1;
 	    int		P[num_qw+1][longest_phrase+1];
 
-	    data->phrase_sizes = malloc(sizeof(int)*qa.n);
 	    data->history = malloc(sizeof(int)*longest_phrase);
 	    data->history_crnt = 0;
 	    data->history_size = longest_phrase;
@@ -1144,11 +1206,11 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 		}
 
 	    P[0][0] = -1;
-	    for (i=0,num_qw=0; i<qa.n; i++)
+	    for (i=0,num_qw=0; i<data->num_queries; i++)
 		{
 		    state = 0;
 
-		    for (j=0; j<qa.query[i].n; j++)
+		    for (j=0; j<data->phrase_sizes[i]; j++)
 			{
 			    int		last_state = state;
 
@@ -1176,7 +1238,6 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 			}
 
 		    data->accepted[state] = i;
-		    data->phrase_sizes[i] = qa.query[i].n;
 		}
 /*
 	    printf("%i %i\n", num_states, num_qw);
