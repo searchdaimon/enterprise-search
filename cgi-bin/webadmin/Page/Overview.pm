@@ -206,17 +206,18 @@ sub delete_collection_confirmed {
 	my $infoquery = $self->{'infoQuery'};
 
 	my $collection_name = $sqlShares->get_collection_name($id);
-	
+
+        my $success = 1;
 	## Infoquery kommentert ut. Set tilbake når bug er fikset
 	
 	#my $success = $infoquery->deleteCollection($collection_name);
 	
-	#$vars->{'delete_request'} = $success;
 	#$vars->{'delete_error'} = $infoquery->error
 	#	unless $success;
 	
+	$vars->{'delete_request'} = $success;
 	$sqlShares->delete_share($id)
-		if 1; #$success;
+		if $success;
 	
 	return $vars;
 }
