@@ -4,26 +4,21 @@
  * June, 2007
  */
 
+#define _GNU_SOURCE 1
 #include <sys/param.h>
 
 #include <stdio.h>
-#define _GNU_SOURCE 1
 #include <string.h>
+#include <ctype.h>
 
 #include "xml.h"
 #include "webdav.h"
+#include "excrawler.h"
 
 #include "../base64/base64.h"
 #include "../crawl/crawl.h"
 #include "../common/subject.h"
-
-struct crawlinfo {
-	int (*documentExist)(struct collectionFormat *, struct crawldocumentExistFormat *);
-	int (*documentAdd)(struct collectionFormat *, struct crawldocumentAddFormat *);
-	int (*documentError)(int, const char *, ...);
-	struct collectionFormat *collection;
-	unsigned int timefilter;
-};
+#include "../dictionarywordsLot/set.h"
 
 int crawlcanconect(struct collectionFormat *collection,
                    int (*documentError)(int, const char *, ...) __attribute__((unused)));
@@ -95,111 +90,101 @@ make_crawl_uri(char *uri, char *id)
 	return p;
 }
 
+void
+grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char *sid, size_t contentlen, time_t lastmodified)
+{
+	size_t len;
+
+	/* Is it the parent? */
+	struct ex_buffer mail;
+	struct crawldocumentExistFormat crawldocumentExist;
+	struct crawldocumentAddFormat crawldocumentAdd;
+
+	len = strlen(url);
+
+	//printf("%s\n", cur->str);
+	crawldocumentExist.documenturi = make_crawl_uri(url, sid);
+	crawldocumentExist.lastmodified = lastmodified;
+	if (crawldocumentExist.documenturi == NULL) {
+		(ci->documentError)(1, "Could not allocate memory for documenturi");
+		return;
+	}
+	if ((ci->documentExist)(ci->collection, &crawldocumentExist)) {
+		// This document already exists
+	} else {
+		char *p, *p2;
+
+		if (ex_getEmail(url, ci->collection->user, ci->collection->password, &mail) == NULL) {
+			free(crawldocumentExist.documenturi);
+			return;
+		}
+
+		// Let's add it
+		crawldocumentAdd.documenturi = crawldocumentExist.documenturi;
+		/* Find the subject */
+		p = strcasestr(mail.buf, "subject:");
+		if (p == NULL || *p == '\0') {
+			crawldocumentAdd.title = "";
+		} else {
+			//for (p++; *p == ' '; p++)
+			//	;
+			p += 8; // strlen("subject:");
+			while (isspace(*p)) {
+				p++;
+			}
+			for (p2 = p; *p2 != '\n' && *p2 != '\r' && *p2 != '\0'; p2++)
+				;
+			if (p2 - p > 0) {
+				crawldocumentAdd.title = strndup(p, p2 - p);
+				fix_subject(crawldocumentAdd.title, p2-p+1);
+			} else {
+				crawldocumentAdd.title = NULL;
+			}
+			if (crawldocumentAdd.title == NULL)
+				crawldocumentAdd.title = "";
+		}
+		crawldocumentAdd.documenttype = "eml";
+		crawldocumentAdd.doctype = "";
+		crawldocumentAdd.document = mail.buf;
+		crawldocumentAdd.dokument_size = mail.size-1; // Last byte is string null terminator
+		crawldocumentAdd.lastmodified = lastmodified;
+		crawldocumentAdd.acl_allow = set_to_string(acl_allow, ",");
+		crawldocumentAdd.acl_denied = set_to_string(acl_deny, ",");
+
+		if (crawldocumentAdd.acl_allow == NULL)
+			crawldocumentAdd.acl_allow = "";
+		if (crawldocumentAdd.acl_denied == NULL)
+			crawldocumentAdd.acl_denied = "";
+
+		printf("Adding: '%s'\n", crawldocumentAdd.title);
+		(ci->documentAdd)(ci->collection, &crawldocumentAdd);
+		if (crawldocumentAdd.title[0] != '\0')
+			free(crawldocumentAdd.title);
+		if (crawldocumentAdd.acl_allow[0] != '\0') {
+			free(crawldocumentAdd.acl_allow);
+		}
+		if (crawldocumentAdd.acl_denied[0] != '\0') {
+			free(crawldocumentAdd.acl_denied);
+		}
+
+		free(mail.buf);
+	}
+	free(crawldocumentExist.documenturi);
+}
+
 /* Does not detect loops, but they should not happen anyway */
 int
-grabContent(char *xml, char *url, const char *username, const char *password, struct crawlinfo *ci)
+grabContent(char *xml, char *url, struct crawlinfo *ci, set *acl_allow, set *acl_deny)
 {
-	stringListElement *urls, *cur;
-	
-	urls = getEmailUrls(xml);
-	if (urls == NULL)
-		return -1;
-	//printf("Xml: \n%s\n", xml);
-	for (cur = urls; cur; cur = cur->next) {
-		size_t len;
-
-		/* Is it the parent? */
-		if (strcmp((char *)cur->str, url) == 0)
-			continue;
-		len = strlen((char *)cur->str);
-		if (cur->str[len - 1] == '/') { /* A directory */
-			char *listxml;
-
-			listxml = ex_getContent((char *)cur->str, username, password);
-			if (listxml == NULL)
-				continue;
-			grabContent(listxml, (char *)cur->str, username, password, ci);
-			free(listxml);
-		} else if (len > 4 && strcasecmp((char *)cur->str + (len-4), ".eml") == 0) { /* A mail */
-			struct ex_buffer mail;
-			struct crawldocumentExistFormat crawldocumentExist;
-			struct crawldocumentAddFormat crawldocumentAdd;
-
-			printf("%s\n", cur->str);
-			crawldocumentExist.documenturi = make_crawl_uri((char *)cur->str, cur->id);
-			crawldocumentExist.lastmodified = cur->modified;
-			if (crawldocumentExist.documenturi == NULL) {
-				(ci->documentError)(1, "Could not allocate memory for documenturi");
-				free(crawldocumentExist.documenturi);
-				continue;
-			}
-#if 0
-			if (ci->timefilter > 0 && ci->timefilter > crawldocumentExist.lastmodified) {
-				printf("Have the same or newer version of %s\n", cur->str);
-			} else if ((ci->documentExist)(ci->collection, &crawldocumentExist)) {
-#endif
-			if ((ci->documentExist)(ci->collection, &crawldocumentExist)) {
-				// This document already exists
-			} else {
-				char *p, *p2;
-
-				if (ex_getEmail((char *)cur->str, username, password, &mail) == NULL)
-					continue;
-
-				// Let's add it
-				crawldocumentAdd.documenturi = crawldocumentExist.documenturi;
-				/* Find the subject */
-				p = strcasestr(mail.buf, "subject:");
-				if (p == NULL || *p == '\0') {
-					crawldocumentAdd.title = "";
-				} else {
-					//for (p++; *p == ' '; p++)
-					//	;
-					p += 8; // strlen("subject:");
-					while (isspace(*p)) {
-						p++;
-					}
-					for (p2 = p; *p2 != '\n' && *p2 != '\r' && *p2 != '\0'; p2++)
-						;
-					if (p2 - p > 0) {
-						crawldocumentAdd.title = strndup(p, p2 - p);
-						fix_subject(crawldocumentAdd.title, p2-p+1);
-					} else {
-						crawldocumentAdd.title = NULL;
-					}
-					if (crawldocumentAdd.title == NULL)
-						crawldocumentAdd.title = "";
-				}
-				crawldocumentAdd.documenttype = "eml";
-				crawldocumentAdd.doctype = "";
-				crawldocumentAdd.document = mail.buf;
-				crawldocumentAdd.dokument_size = mail.size-1; // Last byte is string null terminator
-				crawldocumentAdd.lastmodified = cur->modified;
-				crawldocumentAdd.acl_allow = NULL;
-				p = strstr(url, "/exchange/");
-				if (p != NULL) {
-					p += 10; // strlen("/exchange/");
-					p2 = strchr(p, '/');
-					if (p2 != NULL) 
-						crawldocumentAdd.acl_allow = strndup(p, p2 - p); /* XXX: Anything that should be added? */
-				}
-				if (crawldocumentAdd.acl_allow == NULL)
-					crawldocumentAdd.acl_allow = "";
-				crawldocumentAdd.acl_denied = "";
-
-				printf("Adding: '%s'\n", crawldocumentAdd.title);
-				(ci->documentAdd)(ci->collection, &crawldocumentAdd);
-				if (crawldocumentAdd.title[0] != '\0')
-					free(crawldocumentAdd.title);
-				if (crawldocumentAdd.acl_allow[0] != '\0') {
-					free(crawldocumentAdd.acl_allow);
-				}
-				free(mail.buf);
-			}
-			free(crawldocumentExist.documenturi);
-		}
-	}
-	freeStringList(urls);
+	acl_allow = malloc(sizeof(*acl_allow));
+	acl_deny = malloc(sizeof(*acl_deny));
+	set_init(acl_allow);
+	set_init(acl_deny);
+	getEmailUrls(xml, ci, url, acl_allow, acl_deny);
+	set_free_all(acl_allow);
+	set_free_all(acl_deny);
+	free(acl_allow);
+	free(acl_deny);
 
 	return 1;
 }
@@ -282,7 +267,8 @@ crawlGo(struct crawlinfo *ci)
 	char resource[PATH_MAX];
 	char *user;
 	char **users;
-
+	set *acl_allow, *acl_deny;
+	
 	normalize_url(ci->collection->resource);
 
 	if (strstr(ci->collection->resource, "://")) {
@@ -305,8 +291,17 @@ crawlGo(struct crawlinfo *ci)
 			err++;
 		} else {
 			//printf("Got xml: \n%s\n", listxml);
-			if (!grabContent(listxml, resource, ci->collection->user, ci->collection->password, ci))
+			// Set up ACL lists
+			acl_allow = malloc(sizeof(*acl_allow));
+			acl_deny = malloc(sizeof(*acl_deny));
+			set_init(acl_allow);
+			set_init(acl_deny);
+			if (!grabContent(listxml, resource, ci, acl_allow, acl_deny))
 				err++;
+			set_free_all(acl_allow);
+			set_free_all(acl_deny);
+			free(acl_allow);
+			free(acl_deny);
 			free(listxml);
 		}
 	}

@@ -4,6 +4,7 @@
  * June, 2007
  */
 
+#define _XOPEN_SOURCE
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
@@ -15,103 +16,190 @@
 #include <time.h>
 
 #include "xml.h"
+#include "webdav.h"
+#include "excrawler.h"
+
+#include "../dictionarywordsLot/set.h"
+#include "../crawl/crawl.h"
 
 /*
  * XXX:
  * Will most probably segfault on a malformed xml structure
  */
 
-unsigned int
-ex_parsetime(xmlChar *time)
+time_t
+ex_parsetime(char *time)
 {
 	struct tm tm;
 
 	/* XXX: Does not handle time zones */
-	strptime((char *)time, "%Y-%m-%dT%H:%M:%S.", &tm);
+	if (strptime(time, "%Y-%m-%dT%H:%M:%S.", &tm) == NULL)
+		warn("strptime");
 	
 	return mktime(&tm);
 }
 
-xmlChar *
-getInfo(const xmlDocPtr doc, xmlNodePtr cur, unsigned int *modified, int *size, char *id)
+#if 0
+void
+dumptree(xmlNodePtr n, int indent)
 {
-	xmlChar *ahref = NULL;
+	int i;
+        xmlNodePtr cur;
 
-	for (cur = cur->xmlChildrenNode; cur; cur = cur->next) {
-		if (xmlStrcmp(cur->name, (const xmlChar *)"href") == 0) {
-			ahref = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-		} else if (xmlStrcmp(cur->name, (const xmlChar *)"propstat") == 0) {
-			xmlNodePtr props;
+        for (i = 0; i < indent; i++)
+                printf("  ");
 
-			for (props = cur->xmlChildrenNode; props; props = props->next) {
-				xmlNodePtr props2;
-				if (xmlStrcmp(props->name, (xmlChar *)"prop") == 0) {
-					for (props2 = props->xmlChildrenNode; props2; props2 = props2->next) {
-						if (xmlStrcmp(props2->name, (xmlChar *)"getlastmodified") == 0)
-							*modified = ex_parsetime(xmlNodeListGetString(doc, props2->xmlChildrenNode, 1));
-						if (xmlStrcmp(props2->name, (xmlChar *)"getcontentlength") == 0)
-							*size = atoi((char *)xmlNodeListGetString(doc, props2->xmlChildrenNode, 1));
-						if (xmlStrcmp(props2->name, (xmlChar *)"xfff0102") == 0)
-							strcpy(id, (char *)xmlNodeListGetString(doc, props2->xmlChildrenNode, 1));
+        printf("%s\n", n->name);
 
-					}
-				}
+        for (cur = n->xmlChildrenNode; cur; cur = cur->next) {
+
+                if (cur->xmlChildrenNode)
+                        dumptree(cur, indent+1);
+        }
+
+}
+#endif
+
+xmlNodePtr
+xml_find_child(xmlNodePtr parent, char *name)
+{
+	xmlNodePtr cur;
+
+	for (cur = parent->xmlChildrenNode; cur; cur = cur->next) {
+		if (strcmp((char *)cur->name, name) == 0)
+			return cur;
+	}
+
+	return NULL;
+}
+
+void
+handle_acllist(const xmlDocPtr doc, xmlNodePtr acls, set *acl_allow, set *acl_deny)
+{
+	xmlNodePtr cur;
+
+	/* Find owner */
+	if ((cur = xml_find_child(acls, "owner"))) {
+		if ((cur = xml_find_child(cur, "sid"))) {
+			if ((cur = xml_find_child(cur, "string_sid"))) {
+				char *sid = (char*)xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+				printf("Found owner: %s\n", sid);
+				set_add(acl_allow, sid);
 			}
 		}
 	}
-	return ahref;
 }
 
-stringListElement *
-getEmailUrls(const char *data)
+void
+handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, char *parent, set *acl_allow, set *acl_deny)
+{
+	xmlNodePtr href, propstat, cur;
+	char *url;
+	size_t hreflen;
+	set *acl_allow2, *acl_deny2;
+	char *newxml;
+
+	if (!(href = xml_find_child(response, "href"))) {
+		printf("Unable to find href...\n");
+		return;
+	}
+	if (!(propstat = xml_find_child(response, "propstat"))) {
+		printf("Unable to find propstat...\n");
+		return;
+	}
+
+	url = (char *)xmlNodeListGetString(doc, href->xmlChildrenNode, 1);
+	if (strcmp(url, parent) == 0) {
+		printf("Found parent, skiping...\n");
+		free(url);
+		return;
+	}
+	hreflen = strlen(url);
+
+	acl_allow2 = set_clone(acl_allow);
+	acl_deny2 = set_clone(acl_deny);
+
+	/* Update acl lists */
+	if ((cur = xml_find_child(propstat, "prop"))) {
+		if ((cur = xml_find_child(cur, "descriptor"))) {
+			if ((cur = xml_find_child(cur, "security_descriptor"))) {
+				handle_acllist(doc, cur, acl_allow2, acl_deny2);
+			}
+		}
+	}
+
+	/* Directory perhaps? */
+	if (url[hreflen-1] == '/') {
+		newxml = ex_getContent(url, ci->collection->user, ci->collection->password);
+		grabContent(newxml, (char *)url, ci, acl_allow2, acl_deny2);
+		free(newxml);
+	} else {
+		char *sid = NULL;
+		time_t lastmodified = 0;
+		size_t contentlen = 0;
+		xmlNodePtr props;
+
+		if ((props = xml_find_child(propstat, "prop"))) {
+			if ((cur = xml_find_child(props, "getlastmodified"))) {
+				char *str;
+
+				str = (char *)xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+				lastmodified = ex_parsetime(str);
+				free(str);
+			}
+			if ((cur = xml_find_child(props, "getcontentlength"))) {
+				char *str;
+
+				str = (char *)xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+				contentlen = atoi(str);
+				free(str);
+			}
+			if ((cur = xml_find_child(props, "xfff0102"))) {
+				sid = (char *)xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+				printf("Hmpf: %s\n", sid);
+			}
+		}
+
+		if (sid == NULL || lastmodified == 0) {
+			printf("Missing email information, skiping.\n");
+		} else {
+			grab_email(ci, acl_allow2, acl_deny2, url, sid, contentlen, lastmodified);
+		}
+		free(sid);
+	}
+
+	set_free_all(acl_allow2);
+	free(acl_allow2);
+	set_free_all(acl_deny2);
+	free(acl_deny2);
+	free(url);
+}
+
+int
+getEmailUrls(const char *data, struct crawlinfo *ci, char *parent, set *acl_allow, set *acl_deny)
 {
 	xmlDocPtr doc;
 	xmlNodePtr cur;
-	xmlChar * str;
-	stringListElement * head = NULL, * tail = NULL;
+
 	doc = xmlParseMemory(data, strlen(data));
 	if (!doc) {
 		fprintf(stderr, "Parse error!\n");
-		return NULL;
+		return 0;
 	}
 	cur = xmlDocGetRootElement(doc);
 	if (!cur) {
 		fprintf(stderr, "Empty document\n");
 		xmlFreeDoc(doc);
-		return NULL;
+		return 0;
 	}
 	//printf("Root node: %s\n", cur->name);
 	for (cur = cur->xmlChildrenNode; cur; cur = cur->next) {
 		if (xmlStrcmp(cur->name, (const xmlChar *)"response") == 0) {
-			unsigned int modified;
-			int size;
-			char id[1024];
-
-			str = getInfo(doc, cur, &modified, &size, id);
-			if (str) {
-				if (tail) {
-					tail->next = malloc(sizeof(stringListElement));
-					tail = tail->next;
-					tail->next = NULL;
-					tail->str = str;
-					tail->modified = modified;
-					tail->contentlen = size;
-					strcpy(tail->id, id);
-				}
-				else {
-					head = malloc(sizeof(stringListElement));
-					head->next = NULL;
-					head->str = str;
-					head->modified = modified;
-					head->contentlen = size;
-					strcpy(head->id, id);
-					tail = head;
-				}
-			}
+			handle_response(doc, cur, ci, parent, acl_allow, acl_deny);
 		}
 	}
 	xmlFreeDoc(doc);
-	return head;
+	return 1;
 }
 
 void

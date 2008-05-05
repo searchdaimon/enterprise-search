@@ -8,7 +8,7 @@ CC=		/usr/local/bin/gcc
 # Hack to get common lib files from boitho
 COMMONDIR=	../common
 
-VPATH=		.:$(COMMONDIR):$(COMMONDIR)/../crawl/
+VPATH=		.:$(COMMONDIR):$(COMMONDIR)/../crawl/:../dictionarywordsLot/
 
 OBJS=		xml.o webdav.o main.o
 COMMONSOBJ=	adultWeight.o chtbl.o debug.o iconv.o ir.o logs.o poprank.o sha1.o timediff.o \
@@ -17,7 +17,7 @@ COMMONSOBJ=	adultWeight.o chtbl.o debug.o iconv.o ir.o logs.o poprank.o sha1.o t
 		bstr.o daemon.o exeoc.o ipdb.o list.o mgsort.o revindex.o strlcpy.o io.o
 
 OBJS+=		$(COMMONSOBJ)
-OBJS+=		crawl.o ../base64/base64.o ../crawl/mailsubject.o
+OBJS+=		crawl.o ../base64/base64.o ../crawl/mailsubject.o set.o
 
 
 all: $(PROG)

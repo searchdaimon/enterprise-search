@@ -127,21 +127,26 @@ ex_getContent(const char *url, const char *username, const char *password)
 	//curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS,
 		"<?xml version=\"1.0\"?>"
-		"<d:propfind xmlns:d='DAV:' xmlns:c='urn:schemas:httpmail:' xmlns:p='http://schemas.microsoft.com/mapi/proptag/'>"
+		"<d:propfind xmlns:d='DAV:' xmlns:c='urn:schemas:httpmail:' xmlns:p='http://schemas.microsoft.com/mapi/proptag/' xmlns:ex='http://schemas.microsoft.com/exchange/security/'>"
 			"<d:prop>"
-			"<d:displayname/>"
-			"<d:getcontentlength/>"
-			"<d:getlastmodified/>"
-			"<c:subject/>"
-			"<p:xfff0102/>"
-		"</d:prop>"
+				"<d:displayname/>"
+				"<d:getcontentlength/>"
+				"<d:getlastmodified/>"
+//				"<c:normalizedsubject/>"
+				"<p:xfff0102/>"
+				"<ex:descriptor/>"
+			"</d:prop>"
 		"</d:propfind>"
 	);
+
+//http://schemas.microsoft.com/mapi/proptag/0x0E1D001E
 
 	result = curl_easy_perform(curl);
 	curl_slist_free_all(headers);
 	curl_easy_cleanup(curl);
 	free_userpass(userpass);
+
+	printf("Mail\n\n%s\n\n", buf.buf);
 
 	return buf.buf;
 }
