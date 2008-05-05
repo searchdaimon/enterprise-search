@@ -24,6 +24,9 @@ int set_intersect(set *, set *, set *);
 int set_add(set *, char *);
 void set_free(set *);
 void set_free_all(set *);
+set *set_clone(set *);
+
+char *set_to_string(set *, char *);
 
 
 #endif /* _SET_H_ */

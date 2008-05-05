@@ -169,6 +169,57 @@ set_intersect(set *s1, set *s2, set *s)
 	return 1;
 }
 
+
+set *
+set_clone(set *orig)
+{
+	set *new;
+	set_iterator si;
+	char *p;
+
+	new = malloc(sizeof(*new));
+	if (new == NULL)
+		return NULL;
+	if (!set_init(new))
+		return NULL;
+
+	SET_FOREACH(si, orig, p) {
+		set_add(new, strdup(p));
+	}
+
+	return new;
+}
+
+char *
+set_to_string(set *s, char *sep)
+{
+	set_iterator si;
+	char *str = NULL, *p, *endp;
+	size_t len, seplen;
+
+	len = 0;
+	seplen = strlen(sep);
+
+	SET_FOREACH(si, s, p) {
+		if (str == NULL) {
+			str = strdup(p);
+			len = strlen(p);
+			endp = str + len;
+		} else {
+			len += seplen;
+			len += strlen(p);
+			str = realloc(str, len+1);
+			strcpy(endp, sep);
+			strcpy(endp+seplen, p);
+			endp = str + len;
+		}
+	}
+	if (str == NULL)
+		return strdup("");
+
+	return str;
+}
+
 #ifdef TEST_SET
 
 int
