@@ -319,6 +319,10 @@ int main(int argc, char *argv[])
 		// Initialiser thesaurus med ouput-filene fra 'build_thesaurus_*':
 		printf("init thesaurus\n");
     		searchd_config.thesaurusp = thesaurus_init(bfile("data/thesaurus.text"), bfile2("data/thesaurus.id"));
+		if (searchd_config.thesaurusp == NULL) {
+			printf("Unable to open thesaurus");
+			exit(1);
+		}
 		printf("init thesaurus done\n");
 
 	#else
