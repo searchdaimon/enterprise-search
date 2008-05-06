@@ -28,6 +28,7 @@ struct bhpm_yy_extra
     int		nested_obj;
 
     char	title, alink, nlink; //, script=0;	init:=0
+    int		title_nr;
     int		wordcount, linkcount;	// init:=0
     int		h;	// init:=0
     char	invisible_text;

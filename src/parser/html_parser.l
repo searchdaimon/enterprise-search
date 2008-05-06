@@ -324,7 +324,7 @@ void add_to_summary( char *str, yyscan_t scanner )
 //    if (_id<25)
 //    printf("%s (%i,%i,%i,%i,%i,%i,%i)\n", str, he->newhead, he->newdiv, he->newspan, he->inhead, he->indiv, he->inspan, he->space);
 
-    if (he->title)
+    if (he->title && he->title_nr==1)
 	{
 	    if (he->Btitle->pos > 0 && he->space)
 		{

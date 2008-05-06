@@ -212,6 +212,7 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 			    case tag_title:
 //				printf("\n\033[0;7mtitle\033[0m\n");
 			        he->title = 1;
+				he->title_nr++;
 			        break;
 			}
 
@@ -604,6 +605,7 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
     he->user_fn = fn;
 
     he->title = 0;
+    he->title_nr = 0;
     he->alink = 0;
     he->nlink = 0;
     he->wordcount = 0;
