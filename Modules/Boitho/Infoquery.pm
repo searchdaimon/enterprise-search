@@ -96,6 +96,11 @@ sub listUsers {
 	return $self->_getList('listUsers', 'user');
 }
 
+sub listMailUsers {
+	my $self = shift;
+	return $self->_getList('listMailUsers', 'user');
+}
+
 sub listGroups {
 	my $self = shift;
 	return $self->_getList('listGroups', 'group');
