@@ -266,8 +266,11 @@ sub _get_associated_data($$$) {
 		if grep /^connector$/, @$fields;
 	$vars->{'group_list'} = $infoquery->listGroups
 		if grep /^groups$/, @$fields;
-	$vars->{'user_list'} = $infoquery->listUsers()
+#	$vars->{'user_list'} = $infoquery->listUsers()
+#		if grep /^exchange_user_select$/, @$fields;
+	$vars->{'user_list'} = $infoquery->listMailUsers()
 		if grep /^exchange_user_select$/, @$fields;
+
 
 	return $vars;
 }
