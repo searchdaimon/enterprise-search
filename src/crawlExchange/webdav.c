@@ -40,22 +40,28 @@ int
 ex_write_buffer(void *buffer, size_t size, size_t nmemb, void *stream)
 {
 	struct ex_buffer *buf;
+	size_t origsize;
 
+	if (size != 1)
+		fprintf(stderr, "ex_write_buffer(): size not equal to one!\n");
 	buf = stream;
 
+	origsize = 0;
 	if (buf->buf == NULL) {
 		buf->buf = malloc(size * (nmemb + 1));
 		buf->size = size * (nmemb + 1);
 		buf->buf[0] = '\0';
 	} else {
-		buf->buf = realloc(buf->buf, buf->size + (size * nmemb));
-		buf->size = buf->size + (size * nmemb);
+		origsize = buf->size;
+		buf->size += (size * nmemb);
+		buf->buf = realloc(buf->buf, buf->size);
 	}
 	if (buf->buf == NULL)
 		return -1;
 
 	/* XXX: Assuming size == sizeof(char) */
-	strncat(buf->buf, buffer, size * nmemb);
+	//strncat(buf->buf, buffer, size * nmemb);
+	strncpy(buf->buf + origsize - (origsize == 0 ? 0 : size), buffer, (size * nmemb)+1);
 	buf->buf[buf->size-1] = '\0';
 	return nmemb;
 }
@@ -109,6 +115,7 @@ ex_getContent(const char *url, const char *username, const char *password)
 
 	curl = curl_easy_init();
 	buf.buf = NULL;
+	buf.size = 0;
 	if (curl == NULL)
 		return NULL;
 
@@ -146,7 +153,7 @@ ex_getContent(const char *url, const char *username, const char *password)
 	curl_easy_cleanup(curl);
 	free_userpass(userpass);
 
-	printf("Mail\n\n%s\n\n", buf.buf);
+	//printf("Mail\n\n%s\n\n", buf.buf);
 
 	return buf.buf;
 }
