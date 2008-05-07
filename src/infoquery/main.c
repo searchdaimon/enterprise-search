@@ -26,6 +26,7 @@ int main (int argc, char *argv[]) {
 		printf("./usage key [value]\n\n");
 		printf("groupsForUser <user name>\n");
 		printf("listUsers\n");
+		printf("listMailUsers\n");
 		printf("listGroups\n");
 		printf("collectionFor <user name> or <group name>\n");
 		printf("groupsAndCollectionForUser <user name>\n");
@@ -87,6 +88,17 @@ int main (int argc, char *argv[]) {
 	}
 	if (strcmp(key,"listUsers") == 0) {
 		if(!boithoad_listUsers(&respons_list,&responsnr)) {
+			perror("Error:Can't conect to boithoad");
+		}
+		else {
+			printf("users: %i\n",responsnr);
+                	for (i=0;i<responsnr;i++) {
+                	        printf("user: %s\n",respons_list[i]);
+                	}
+		}
+	}
+	if (strcmp(key,"listMailUsers") == 0) {
+		if(!boithoad_listMailUsers(&respons_list,&responsnr)) {
 			perror("Error:Can't conect to boithoad");
 		}
 		else {

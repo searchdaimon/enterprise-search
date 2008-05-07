@@ -133,6 +133,32 @@ int boithoad_listUsers(char **respons_list[],int *nrofresponses){
 	return 1;
 }
 
+int boithoad_listMailUsers(char **respons_list[],int *nrofresponses){
+
+	int socketha;
+
+	if ((socketha = cconnect("localhost", BADPORT)) == 0) {
+		#ifdef DEBUG
+			printf("cant connect to boithobd at %s:%d\n",__FILE__,__LINE__);
+		#endif
+		return 0;
+	} 
+
+	sendpacked(socketha,bad_listMailUsers,BADPROTOCOLVERSION, 0, NULL,"");
+
+
+	if (!boithoa_getLdapResponsList(socketha,respons_list,nrofresponses)) {
+		return 0;
+	}
+
+	close(socketha);
+
+
+	return 1;
+}
+
+
+
 void boithoad_respons_list_free(char *respons_list[]) {
 	int i = 0;
         while(respons_list[i] != '\0') {

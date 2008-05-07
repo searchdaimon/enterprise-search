@@ -977,6 +977,30 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 				ldap_simple_free(respons);
 			}
 		}
+		else if (packedHedder.command == bad_listMailUsers) {
+			sprintf(filter,"(objectClass=user)");			
+			if (!ldap_simple_search(&ld,filter,"mailNickname",&respons,&nrOfSearcResults,ldap_base)) {
+                                printf("can't ldap search\n");
+                                intresponse = 0;
+                                sendall(socket,&intresponse, sizeof(intresponse));
+                                //return;
+                        }
+			else {
+				//sender antal
+                        	sendall(socket,&nrOfSearcResults, sizeof(nrOfSearcResults));
+
+                        	printf("found %i mail users\n",nrOfSearcResults);
+                        	for(i=0;i<nrOfSearcResults;i++) {
+                        	        printf("mail user \"%s\"\n",respons[i]);
+                        	        strscpy(ldaprecord,respons[i],sizeof(ldaprecord));
+                        	        sendall(socket,ldaprecord, sizeof(ldaprecord));
+
+                        	}
+
+				ldap_simple_free(respons);
+			}
+		}
+
 		else if (packedHedder.command == bad_sidToUser) {
 			char objectSid[512];
 
