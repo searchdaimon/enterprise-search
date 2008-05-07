@@ -156,7 +156,6 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 			}
 			if ((cur = xml_find_child(props, "xfff0102"))) {
 				sid = (char *)xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-				printf("Hmpf: %s\n", sid);
 			}
 		}
 
