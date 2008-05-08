@@ -12,6 +12,17 @@
 int globalOptVerbose = 0;
 #endif
 
+void
+shortenurl_outlook(char *url, int urllen)
+{
+	if (urllen > 43) {
+		url[40] = '.';
+		url[41] = '.';
+		url[42] = '.';
+		url[43] = '\0';
+	}
+}
+
 void shortenurl(char *url,int urllen) {
 
   	char **Data;
@@ -40,6 +51,9 @@ void shortenurl(char *url,int urllen) {
 		len = strlen(p);
 		memmove(url, p, len);
 		url[len] = '\0';
+	} else if (strncmp(url, "outlook:", 8) == 0) {
+		shortenurl_outlook(url, urllen);
+		return;
 	} else {
 		len = strlen(url);
 	}	
