@@ -17,8 +17,18 @@ suggest_1(char *host, char *arg, char *user)
 	CLIENT *clnt;
 	numbest_res *result_1;
 	struct senddata args;
+	char first[1024];
+	char suggeston[1024];
+	char **wordlist;
+	int splitn;
 
-	args.word = arg;
+	splitn = split(arg, " ", &wordlist);
+
+        printf("Content-type: text/plain\n\n");
+	if (splitn < 1)
+		return;
+
+	args.word = wordlist[splitn-1];
 	args.user = user;
 
 #ifndef	DEBUG
@@ -31,7 +41,6 @@ suggest_1(char *host, char *arg, char *user)
 
 	/* XXX: set lower timeout */
 	result_1 = get_best_results_2(&args, clnt);
-        printf("Content-type: text/plain\n\n");
 	if (!result_1) {
 #if 1
 		//clnt_perror (clnt, "call failed");
@@ -45,10 +54,15 @@ suggest_1(char *host, char *arg, char *user)
 			for (nl = result_1->numbest_res_u.list;
 			     nl != NULL;
 			     nl = nl->next) {
+				int i;
+				for (i = 0; i < splitn-1; i++)
+					printf("%s ", wordlist[i]);
 				printf("%s\n", nl->name);
                         }
 		}
 	}
+
+	FreeSplitList(wordlist);
 
 #ifndef	DEBUG
 	clnt_destroy (clnt);
