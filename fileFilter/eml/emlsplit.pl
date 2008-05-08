@@ -345,6 +345,8 @@ my %types =
 
 my $fileemail;
 
+my $dirfiltername = "/tmp/dirfilter-" . $<;
+
 $fileemail = shift @ARGV or die "Usage: ./emlsplit.pl emlfile" ;
 system("cp $fileemail /tmp/someemail.eml");
 
@@ -358,11 +360,11 @@ my $message;
 my $parsed = Email::MIME->new($message);
 
 #runarb: 01.11.07 må lage dirfilter mappen hvis vi ikke har
-if (!(-e "/tmp/dirfilter/")) {
-	mkdir("/tmp/dirfilter/") or die("mkdir /tmp/dirfilter/");
+if (!(-e "$dirfiltername")) {
+	mkdir("$dirfiltername") or die("mkdir $dirfiltername");
 }
 
-my $headername = "/tmp/dirfilter/".$parsed->invent_filename.".header.";
+my $headername = "$dirfiltername".$parsed->invent_filename.".header.";
 open(my $mh, "> $headername") or die "$!: $headername";
 foreach my $hn ($parsed->header_names) {
 	my @values = $parsed->header($hn);
@@ -378,7 +380,7 @@ foreach (@parts) {
 	my $fn;
 	next if $_->content_type =~ /^multipart\//;
 	my ($ct) = split(";", $_->content_type);
-	$fn = "/tmp/dirfilter/".$_->invent_filename;
+	$fn = "$dirfiltername".$_->invent_filename;
 	print ((defined($types{$ct}) ? $types{$ct} : "dat") ." ".$fn."\n");
 	open(my $wf, "> $fn") || die "$fn: $!";
 	print $wf $_->body;
