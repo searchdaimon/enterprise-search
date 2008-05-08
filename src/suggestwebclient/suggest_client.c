@@ -31,9 +31,9 @@ suggest_1(char *host, char *arg, char *user)
 
 	/* XXX: set lower timeout */
 	result_1 = get_best_results_2(&args, clnt);
+        printf("Content-type: text/plain\n\n");
 	if (!result_1) {
 #if 1
-		printf("Content-type: text/html\n\n");
 		//clnt_perror (clnt, "call failed");
 #endif
 	}
@@ -42,24 +42,11 @@ suggest_1(char *host, char *arg, char *user)
 			namelist nl;
 			//int i = 0;
 			//printf("Content-type: text/html\n\n");
-			printf("Content-type: text/xml\n\n");
-			printf("<suggestions>\n");
 			for (nl = result_1->numbest_res_u.list;
 			     nl != NULL;
 			     nl = nl->next) {
-				printf("<suggestion freq=\"%d\">%s</suggestion>\n", nl->frequency, nl->name);
-				//printf("<div class=\"internalsuggest\" id=\"is%d\""
-				//" onmouseover=\"highlightobj(this);\""
-				//">\n",
-				//i++);
-				//printf("%s\n",
-				       //nl->name);//, nl->frequency);
-				//printf("</div>\n");
-			}
-			printf("</suggestions>");
-		}
-		else {
-			printf("Content-type: text/html\n\n");
+				printf("%s\n", nl->name);
+                        }
 		}
 	}
 
@@ -84,13 +71,13 @@ main (int argc, char *argv[])
 			fprintf(stderr, "Error # %d: %s.\n", ret, cgi_strerror(ret));
 			exit(0);
 		}
-		if ((prefix = cgi_getentrystr("prefix")) == NULL) {
+		if ((prefix = cgi_getentrystr("q")) == NULL) {
 			fprintf(stderr, "Did not find a prefix.\n");
 			exit(0);
 		}
 		user = getenv("REMOTE_USER");
 		if (user == NULL) {
-			printf("Content-type: text/xml\n\n");
+			printf("Content-type: text/plain\n\n");
 			printf("Not logged in.\n");
 			exit(0);
 		}
