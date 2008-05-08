@@ -18,6 +18,7 @@
 #include "../base64/base64.h"
 #include "../crawl/crawl.h"
 #include "../common/subject.h"
+#include "../common/sid.h"
 #include "../dictionarywordsLot/set.h"
 
 int crawlcanconect(struct collectionFormat *collection,
@@ -76,15 +77,6 @@ make_crawl_uri(char *uri, char *id)
 	}
 
 	sprintf(out, "outlook:%s", outlookid);
-/*
-	i = strlen(crawlLibInfo.shortname);
-	len = strlen(uri) + i + 1 + 1;
-	p = malloc(len);
-	strcpy(p, crawlLibInfo.shortname);
-	strcpy(p + i, "|");
-	strcpy(p + i + 1, uri);
-	*/
-	//p = strdup(uri);
 	p = strdup(out);
 
 	return p;
@@ -151,21 +143,12 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 		crawldocumentAdd.acl_allow = set_to_string(acl_allow, ",");
 		crawldocumentAdd.acl_denied = set_to_string(acl_deny, ",");
 
-		if (crawldocumentAdd.acl_allow == NULL)
-			crawldocumentAdd.acl_allow = "";
-		if (crawldocumentAdd.acl_denied == NULL)
-			crawldocumentAdd.acl_denied = "";
-
 		printf("Adding: '%s'\n", crawldocumentAdd.title);
 		(ci->documentAdd)(ci->collection, &crawldocumentAdd);
 		if (crawldocumentAdd.title[0] != '\0')
 			free(crawldocumentAdd.title);
-		if (crawldocumentAdd.acl_allow[0] != '\0') {
-			free(crawldocumentAdd.acl_allow);
-		}
-		if (crawldocumentAdd.acl_denied[0] != '\0') {
-			free(crawldocumentAdd.acl_denied);
-		}
+		free(crawldocumentAdd.acl_allow);
+		free(crawldocumentAdd.acl_denied);
 
 		free(mail.buf);
 	}
