@@ -25,7 +25,7 @@ suggest_1(char *host, char *arg, char *user)
 	splitn = split(arg, " ", &wordlist);
 
         printf("Content-type: text/plain\n\n");
-	if (splitn < 1)
+	if (splitn == 0)
 		return;
 
 	args.word = wordlist[splitn-1];
@@ -49,16 +49,21 @@ suggest_1(char *host, char *arg, char *user)
 	else {
 		if (result_1->_errno == 0) {
 			namelist nl;
-			//int i = 0;
-			//printf("Content-type: text/html\n\n");
-			for (nl = result_1->numbest_res_u.list;
-			     nl != NULL;
-			     nl = nl->next) {
-				int i;
+			int i;
+
+			if (strlen(args.word) > 0) {
+				for (nl = result_1->numbest_res_u.list;
+				     nl != NULL;
+				     nl = nl->next) {
+					for (i = 0; i < splitn-1; i++)
+						printf("%s ", wordlist[i]);
+					printf("%s\n", nl->name);
+				}
+			} else {		
 				for (i = 0; i < splitn-1; i++)
 					printf("%s ", wordlist[i]);
-				printf("%s\n", nl->name);
-                        }
+				puts("");
+			}
 		}
 	}
 
