@@ -1,4 +1,3 @@
-
 BEGIN {
 	push @INC, $ENV{BOITHOHOME}."/Modules/";
 };
@@ -41,7 +40,7 @@ foreach my $lot (0 .. 4096) {
 				print "name $dirtyfile\n";
 				print "lot $lot, subname $subname\n";
 
-				$command = $ENV{'BOITHOHOME'} . "/bin/IndexerLotbb -i -g $lot \"$subname\"";
+				$command = $ENV{'BOITHOHOME'} . "/bin/IndexerLotbb -i $lot \"$subname\"";
 				print "runing $command\n";
 				system($command);
 
@@ -84,5 +83,13 @@ foreach my $key (keys %hiestinlot) {
 	$command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} acl_denied aa \"$key\"";
 	print "runing $command\n";
 	system($command);
+
+
+	#garbarge collection.
+	$command = $ENV{'BOITHOHOME'} . "/bin/gcRepobb \"$key\"";
+	print "runing $command\n";
+	system($command);
+
+
 }
 
