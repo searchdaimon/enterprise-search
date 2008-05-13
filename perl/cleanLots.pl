@@ -85,7 +85,7 @@ foreach my $key (keys %hiestinlot) {
 	system($command);
 
 
-	#garbarge collection.
+	#kjører garbage collection.
 	$command = $ENV{'BOITHOHOME'} . "/bin/gcRepobb \"$key\"";
 	print "runing $command\n";
 	system($command);
