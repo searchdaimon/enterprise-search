@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include "../suggestrpc/suggest.h"
+#include "../common/utf8-strings.h"
 
 #include "../cgi-util/cgi-util.h"
 
@@ -29,6 +30,7 @@ suggest_1(char *host, char *arg, char *user)
 		return;
 
 	args.word = wordlist[splitn-1];
+	convert_to_lowercase(args.word);
 	args.user = user;
 
 #ifndef	DEBUG
