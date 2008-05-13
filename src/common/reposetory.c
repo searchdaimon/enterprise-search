@@ -501,7 +501,7 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 	return offset;
 }
 
-int rReadSummary(const unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[]) {
+int rReadSummary_post(const unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[], 	int fd) {
 
         #ifdef TIME_DEBUG_L
                 struct timeval start_time, end_time;
@@ -513,8 +513,12 @@ int rReadSummary(const unsigned int DocID,char **metadesc, char **title, char **
                 gettimeofday(&tot_start_time, NULL);
         #endif
 
+	if (fd == -1) {
+		printf("rReadSummary_l: fd is -1\n");
+		return 0;
+	}
+
 	//FILE *SFILE;
-	int fd;
 	char *WorkBuff_p;
 	char HtmlBuffer[300000];
 	char *cptr, *HtmlBufferPtr;
@@ -525,19 +529,10 @@ int rReadSummary(const unsigned int DocID,char **metadesc, char **title, char **
 	unsigned int HtmlBufferSize;
 	int n, nerror;
 
-
-        #ifdef TIME_DEBUG_L
-                gettimeofday(&start_time, NULL);
+        #ifdef DISK_PROTECTOR
+                dp_lock(rLotForDOCid(DocID));
         #endif
 
-	if ((fd = lotOpenFileNoCashel(DocID,"summary","rb",'s',subname)) == -1) {
-		return 0;
-	}
-
-        #ifdef TIME_DEBUG_L
-                gettimeofday(&end_time, NULL);
-                printf("Time debug: rReadSummary disk open %f for DocID %u\n",getTimeDifference(&start_time,&end_time),DocID);
-        #endif
 
 	#ifdef MMAP_REPO
         	#ifdef TIME_DEBUG_L
@@ -607,10 +602,12 @@ int rReadSummary(const unsigned int DocID,char **metadesc, char **title, char **
         	#endif
 	#endif
 
-	//vi er ferdig med å lese, frigjør filen så for som mulig slik at andre kan bruke den. Dette skal også funger med mmap
-	close(fd);
+        #ifdef DISK_PROTECTOR
+                dp_unlock(rLotForDOCid(DocID));
+        #endif
 
 	memcpy(&DocID_infile,WorkBuff_p,sizeof(DocID_infile));
+
 	WorkBuff_p += sizeof(DocID_infile);
 
 	if (DocID_infile != DocID) {
@@ -714,17 +711,19 @@ int rReadSummary(const unsigned int DocID,char **metadesc, char **title, char **
 
         #ifdef TIME_DEBUG_L
                 gettimeofday(&end_time, NULL);
-                printf("Time debug: rReadSummary tail time %f for DocID %u\n",getTimeDifference(&start_time,&end_time),DocID);
+                printf("Time debug: rReadSummary unmarshall time %f for DocID %u\n",getTimeDifference(&start_time,&end_time),DocID);
         #endif
+
+
+	#ifdef MMAP_REPO
+		munmap(WorkBuff,mmap_size);
+	#endif
+
 
         #ifdef TIME_DEBUG_L
                 gettimeofday(&tot_end_time, NULL);
         	printf("Time debug: rReadSummary total time %f for DocID %u-%i, size %i (file: \"%s\")\n",getTimeDifference(&tot_start_time,&tot_end_time),DocID,rLotForDOCid(DocID),rsize + sizeof(DocID_infile),returnFilPathForLot(rLotForDOCid(DocID),subname));
         #endif
-
-	#ifdef MMAP_REPO
-		munmap(WorkBuff,mmap_size);
-	#endif
 
 	return 1;
 
@@ -738,6 +737,36 @@ int rReadSummary(const unsigned int DocID,char **metadesc, char **title, char **
 	return 0;
 
 }
+
+int rReadSummary(const unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[]) {
+
+	int ret = 0;
+	int fd;
+
+	if ((fd = lotOpenFileNoCashel(DocID,"summary","rb",'s',subname)) == -1) {
+		return 0;
+	}
+	ret = rReadSummary_post(DocID,metadesc,title,body,radress64bit,rsize,subname,fd);
+
+	close(fd);
+
+	return ret;
+}
+int rReadSummary_l(const unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[], 	int fd) {
+
+	int ret = 0;
+
+	if (fd == -1) {
+		printf("rReadSummary_l: fil was'n open, wil open it myself.\n");
+		ret = rReadSummary(DocID,metadesc,title,body,radress64bit,rsize,subname);
+	}
+	else {
+		ret = rReadSummary_post(DocID,metadesc,title,body,radress64bit,rsize,subname,fd);
+	}
+
+	return ret;
+}
+
 
 //#define DO_DIRECT
 
@@ -774,87 +803,95 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 		printf("rsize is 0\n");
 		return 0;
 	}
-	else {
 
 
-		#ifdef DISK_PROTECTOR
-			dp_lock(rLotForDOCid(DocID));
-		#endif
+	#ifdef DISK_PROTECTOR
+		dp_lock(rLotForDOCid(DocID));
+	#endif
 
 #ifndef DO_DIRECT
-		#ifdef BLACK_BOKS
-		fd = lotOpenFileNoCashel(DocID,"reposetory","rb",'n',subname);
-		#else
-		//og s
-		fd = lotOpenFileNoCashel(DocID,"reposetory","rb",'s',subname);
-		#endif
+	#ifdef BLACK_BOKS
+	fd = lotOpenFileNoCashel(DocID,"reposetory","rb",'n',subname);
+	#else
+	//og s
+	fd = lotOpenFileNoCashel(DocID,"reposetory","rb",'s',subname);
+	#endif
 
-		//3 nov 2006: radress64bit = radress64bit + sizeof(struct ReposetoryHeaderFormat);
-		if (fd == -1) {
-			return 0;
-		}
-#else
-		fd = lotOpenFileNoCache_direct(DocID, "reposetory", "r", 's', subname);	
-#endif
-
-		//printf("fseeko64\n");
-        	#ifdef TIME_DEBUG_L
-        	        gettimeofday(&start_time, NULL);
-	        #endif
-
-		if (lseek64(fd,offset,SEEK_SET) == -1) {
-			warn("fseeko64: DocID %u, fd %d, adress off_t %"PRId64", adress given %u, rsize %u",DocID, fd,offset,radress64bit,rsize);
-			return 0;
-		}		
-
-
-        	#ifdef TIME_DEBUG_L
-                	gettimeofday(&end_time, NULL);
-        	        printf("Time debug: rReadHtml disk seek time %f for DocID %u\n",getTimeDifference(&start_time,&end_time),DocID);
-	        #endif
-
-
-		#ifdef DO_DIRECT
-			rReadPost2_fd(fd,ReposetoryHeader,WorkBuff,sizeof(WorkBuff),NULL,acl_allowbuffer,acl_deniedbuffer,
-				recordseparator,rsize,imagesize);
-
-		#else
-			rReadPost2(fd,ReposetoryHeader,WorkBuff,sizeof(WorkBuff),NULL,acl_allowbuffer,acl_deniedbuffer,
-				recordseparator,rsize,imagesize);
-		#endif
-
-		close(fd);
-
-		#ifdef DISK_PROTECTOR
-			dp_unlock(rLotForDOCid(DocID));
-		#endif
-
-		#ifdef DDEBUG
-		printf("acl \"%s\"\n",(*aclbuffer));
-		#endif
-
-	
-		if ( (error = uncompress((Bytef*)HtmlBuffer,(uLong *)HtmlBufferSize,(Bytef *)WorkBuff,rsize)) != 0) {
-                	printf("uncompress error. Code: %i for DocID %u-%i\n",error,DocID,rLotForDOCid(DocID));
-        		
-			HtmlBuffer[0] = '\0';
-			(*HtmlBufferSize) = 0;
-
-			forreturn = 0;
-		}
-		else {
-
-			//er det ikke \0 med i buferren ??
-			HtmlBuffer[(*HtmlBufferSize)] = '\0';
-
-			forreturn = 1;
-		}
-			//temp44: free(WorkBuff);
-
-		//printf("returning %i\n",forreturn);
-
+	//3 nov 2006: radress64bit = radress64bit + sizeof(struct ReposetoryHeaderFormat);
+	if (fd == -1) {
+		//return 0;
+ 
+		forreturn = 0;
+		goto rReadHtml_end;
 
 	}
+#else
+	fd = lotOpenFileNoCache_direct(DocID, "reposetory", "r", 's', subname);	
+#endif
+
+	//printf("fseeko64\n");
+       	#ifdef TIME_DEBUG_L
+       	        gettimeofday(&start_time, NULL);
+        #endif
+
+	if (lseek64(fd,offset,SEEK_SET) == -1) {
+		warn("fseeko64: DocID %u, fd %d, adress off_t %"PRId64", adress given %u, rsize %u",DocID, fd,offset,radress64bit,rsize);
+		//return 0;
+		forreturn = 0;
+		goto rReadHtml_end;
+	}		
+
+
+       	#ifdef TIME_DEBUG_L
+               	gettimeofday(&end_time, NULL);
+       	        printf("Time debug: rReadHtml disk seek time %f for DocID %u\n",getTimeDifference(&start_time,&end_time),DocID);
+        #endif
+
+
+	#ifdef DO_DIRECT
+		rReadPost2_fd(fd,ReposetoryHeader,WorkBuff,sizeof(WorkBuff),NULL,acl_allowbuffer,acl_deniedbuffer,
+			recordseparator,rsize,imagesize);
+
+	#else
+		rReadPost2(fd,ReposetoryHeader,WorkBuff,sizeof(WorkBuff),NULL,acl_allowbuffer,acl_deniedbuffer,
+			recordseparator,rsize,imagesize);
+	#endif
+
+
+
+	#ifdef DDEBUG
+	printf("acl \"%s\"\n",(*aclbuffer));
+	#endif
+
+	
+	if ( (error = uncompress((Bytef*)HtmlBuffer,(uLong *)HtmlBufferSize,(Bytef *)WorkBuff,rsize)) != 0) {
+               	printf("uncompress error. Code: %i for DocID %u-%i\n",error,DocID,rLotForDOCid(DocID));
+        		
+		HtmlBuffer[0] = '\0';
+		(*HtmlBufferSize) = 0;
+
+		forreturn = 0;
+	}
+	else {
+
+		//er det ikke \0 med i buferren ??
+		HtmlBuffer[(*HtmlBufferSize)] = '\0';
+
+		forreturn = 1;
+	}
+		//temp44: free(WorkBuff);
+
+
+
+	rReadHtml_end:				
+	if (fd != -1) {
+		close(fd);
+	}
+
+	#ifdef DISK_PROTECTOR
+		dp_unlock(rLotForDOCid(DocID));
+	#endif
+
 
         #ifdef TIME_DEBUG_L
                 gettimeofday(&tot_end_time, NULL);
@@ -865,11 +902,11 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 }
 
 //copy a memory area, and return the size copyed
-//#ifdef DEBUG
-static size_t memcpyrc(void *s1, const void *s2, size_t n) {
-//#else
-//static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
-//#endif
+#ifdef DEBUG
+	static size_t memcpyrc(void *s1, const void *s2, size_t n) {
+#else
+	static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
+#endif
 
         memcpy(s1,s2,n);
 
@@ -1049,7 +1086,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 
         #ifdef TIME_DEBUG_L
                 gettimeofday(&tot_end_time, NULL);
-                printf("Time debug: rReadPost2 total time %f\n\n",getTimeDifference(&tot_start_time,&tot_end_time));
+                printf("Time debug: rReadPost2 total time %f\n",getTimeDifference(&tot_start_time,&tot_end_time));
         #endif
 
 	return 1;
@@ -1927,23 +1964,17 @@ int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsi
                 //inaliserer med lengden på buff, slik at vi ikke får en buffer overflow
                 
 		//leser DocID
-		fread(DocID,sizeof(unsigned int),1,LotFileOpen);
+		if (fread(DocID,sizeof(unsigned int),1,LotFileOpen) != 1) {
+			perror("anchorGetNext can't read DocID");
+			return 0;
+		}
 
 		
 		//poper av teksten
                 fpop(text,&textlength,LotFileOpen,'*',3);
 
-                //printf("buff: %s\nbufflength: %i\n",buff,bufflength);
 
-
-                //ReposetoryData.url[0] = 'd';
-
-                //runpack(ReposetoryData,buff,bufflength);
-
-                //printf("url: %s\n",ReposetoryData.url);
-
-
-                //finner adressen på denne recorden
+                //finner adressen for denne recorden
                 *radress = ((ftell(LotFileOpen) - bufflength) -3);
                 *rsize = bufflength;
 
