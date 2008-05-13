@@ -134,14 +134,14 @@ ex_getContent(const char *url, const char *username, const char *password)
 	//curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS,
 		"<?xml version=\"1.0\"?>"
-		"<d:propfind xmlns:d='DAV:' xmlns:c='urn:schemas:httpmail:' xmlns:p='http://schemas.microsoft.com/mapi/proptag/' xmlns:ex='http://schemas.microsoft.com/exchange/security/'>"
+		"<d:propfind xmlns:d='DAV:' xmlns:c='urn:schemas:httpmail:' xmlns:m='urn:schemas:mailheader:' xmlns:p='http://schemas.microsoft.com/mapi/proptag/' xmlns:ex='http://schemas.microsoft.com/exchange/security/'>"
 			"<d:prop>"
 				"<d:displayname/>"
 				"<d:getcontentlength/>"
 				"<d:getlastmodified/>"
-//				"<c:normalizedsubject/>"
 				"<p:xfff0102/>"
 				"<ex:descriptor/>"
+				"<p:x1A001E/>"
 			"</d:prop>"
 		"</d:propfind>"
 	);

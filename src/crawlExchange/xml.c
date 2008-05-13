@@ -21,6 +21,7 @@
 
 #include "../dictionarywordsLot/set.h"
 #include "../crawl/crawl.h"
+#include "../base64/base64.h"
 
 /*
  * XXX:
@@ -140,6 +141,23 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 		xmlNodePtr props;
 
 		if ((props = xml_find_child(propstat, "prop"))) {
+			if ((cur = xml_find_child(props, "x1A001E"))) { /* item type */
+				char *type;
+
+				type = (char *)xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+				/*
+				 * In exchange 2003 an IPM.Note seems to be a mail, and a IPM.Stickynote a note.
+				 *
+				 * - eirik
+				 */
+				if (strcmp(type, "IPM.Note") == 0) {
+					free(type);
+				} else {
+					fprintf(stderr, "Found item of type: '%s', not grabing\n", type);
+					free(type);
+					goto err1;
+				}
+			}
 			if ((cur = xml_find_child(props, "getlastmodified"))) {
 				char *str;
 
@@ -154,7 +172,7 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 				contentlen = atoi(str);
 				free(str);
 			}
-			if ((cur = xml_find_child(props, "xfff0102"))) {
+			if ((cur = xml_find_child(props, "xfff0102"))) { /* entryid */
 				sid = (char *)xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
 			}
 		}
@@ -167,6 +185,7 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 		free(sid);
 	}
 
+ err1:
 	set_free_all(acl_allow2);
 	free(acl_allow2);
 	set_free_all(acl_deny2);
