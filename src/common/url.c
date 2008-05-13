@@ -25,6 +25,85 @@ int strchrcount(char s[], char c) {
 	return count;
 }
 
+/**********************************************************************************************
+
+Rutine for å finne urler som er rekursive av natur, noe sombetyr at de har to like mapper, for eksempel:
+
+http://www.swindon.gov.uk/atozlistingsbyletterdisplay/socialcare/signpost/socialcare/signpost/community/roadstransport/feedbackcomments.htm
+
+**********************************************************************************************/
+int urlMayBeRecursive(const char url[]) {
+
+	#define _MAX_DIRS 10
+	#define _MAX_DIR_LEN 50
+
+	const char *p, *last;
+	char directories[_MAX_DIRS ][_MAX_DIR_LEN];
+	int i, y, z, len;
+
+	#ifdef DEBUG	
+		printf("urlMayBeRecursive: url: \"%s\"\n",url);
+	#endif
+
+	p = url;
+	
+	//søker os til protokoll
+	if ((p = strstr(p,"//")) == NULL) {
+		printf("urlMayBeRecursive: bad formated url \"%s\".\n",url);
+		return 1;
+	}
+	++p;++p;
+
+	//søker oss til slutten av domene
+	if ((p = strchr(p,'/')) == NULL) {
+		printf("urlMayBeRecursive: bad formated url \"%s\".\n",url);
+		return 1;
+	}
+	++p;
+
+	i = 0;	
+	last = p;
+	while ( ((p = strchr(p,'/')) != NULL) && (i < _MAX_DIRS) ) {
+
+		len = p - last;
+		#ifdef DEBUG
+		printf("urlMayBeRecursive: p \"%s\", len %i\n",last, len );
+		#endif
+
+		if (len > _MAX_DIR_LEN) {
+			len = _MAX_DIR_LEN;
+		}
+
+		strncpy(directories[i],last,len);
+		directories[i][len] = '\0';
+
+		++p;
+		++i;
+		last = p;
+
+	}	
+
+	for (y=0;y<i;y++) {
+		#ifdef DEBUG
+		printf("urlMayBeRecursive: dirs \"%s\"\n",directories[y]);
+		#endif
+		//samenligner med alle andre
+		for (z=0;z<i;z++) {
+			//samenligner ikke med seg selv
+			if (y != z) {
+				if (strcmp(directories[y],directories[z]) == 0) {
+					printf("urlMayBeRecursive: url \"%s\" have recursive folder \"%s\", nr %i == \"%s\", nr %i\n",url,directories[y],y,directories[z],z);
+					return 1;
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+
+
 int url_depth(char url[]) {
 
 	int len;
@@ -358,6 +437,10 @@ int legalUrl(char word[]) {
 			debug("hav mailto:",word);
 			return 0;
 		}
+		else if ((char *)strcasestr(word,"javascript:") != NULL) {
+			debug("hav mailto:",word);
+			return 0;
+		}
 		else if (strstr(word,"//:") != NULL) {
 			debug("hav //:",word);
 			return 0;
@@ -383,6 +466,9 @@ int gyldig_url(char word[]) {
 		return 0;
 	}
 	else if(!NotDuplicateUrl(word)) {
+		return 0;
+	}
+	else if (urlMayBeRecursive(word)) {
 		return 0;
 	}
 	return 1;
@@ -782,4 +868,5 @@ int url_nrOfSubDomains(char url[]) {
 
 	return subdomains;
 }
+
 
