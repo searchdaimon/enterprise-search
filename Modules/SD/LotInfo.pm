@@ -10,7 +10,7 @@ use Carp;
 use File::Find;
 use Data::Dumper;
 
-use Filesys::Df;
+use SD::Df;
 use Number::Bytes::Human qw(format_bytes);
 
 use constant MOUNTS_INFO => "/proc/mounts";
@@ -165,13 +165,14 @@ sub _get_mount_df {
 
 	if (DEBUG) { print "getting df info for mount $mount_path\n" }
 	my $df_ref = df($mount_path, 1);
+        my %df = %{$df_ref} if defined $df_ref;
 
 
-	if (defined $df_ref) {
-		$size         = format_bytes($df_ref->{'blocks'});
-		$used         = format_bytes($df_ref->{'used'});
-		$left	      = format_bytes($df_ref->{'bfree'});
-		$percent_full = format_bytes($df_ref->{'per'});
+	if (%df) {
+		$size         = format_bytes($df{size});
+		$used         = format_bytes($df{used});
+		$left	      = format_bytes($df{size} - $df{used});
+		$percent_full = format_bytes($df{useper});
 	}
 	else {
 		carp "Unable to get disk usage for mount $mount_path";
