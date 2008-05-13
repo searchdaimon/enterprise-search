@@ -15,12 +15,16 @@ int globalOptVerbose = 0;
 void
 shortenurl_outlook(char *url, int urllen)
 {
+#if 0
 	if (urllen > 43) {
 		url[40] = '.';
 		url[41] = '.';
 		url[42] = '.';
 		url[43] = '\0';
 	}
+#else
+	strcpy(url, "Exchange");
+#endif
 }
 
 void shortenurl(char *url,int urllen) {
