@@ -1058,6 +1058,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 	unsigned int lastIndexTime;
 	char openmode[4];
 	FILE *brankPageElementsFH;
+	struct IndekserOptFormat IndekserOpt;
 
 	if ((argstruct = malloc(sizeof(struct IndexerLot_workthreadFormat))) == NULL) {
 		perror("malloc argstruct");
@@ -1419,18 +1420,24 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 			printf("runing Indekser\n");
 
+			IndekserOpt.optMustBeNewerThen = 0;
+        		IndekserOpt.optAllowDuplicates = 0;
+        		IndekserOpt.optValidDocIDs = NULL;
+        		IndekserOpt.sequenceMode =1;
+		        IndekserOpt.garbareCollection = 1;
+
                 	for (lotPart=0;lotPart<64;lotPart++) {
                 	        //printf("indexint part %i for lot %i of type Main\n",lotPart,lotNr);
-                	        Indekser(lotNr,"Main",lotPart,subname,0,0);
+                	        Indekser(lotNr,"Main",lotPart,subname,&IndekserOpt);
                 	}
 			#ifdef BLACK_BOKS		
                 	for (lotPart=0;lotPart<64;lotPart++) {
                 	        //printf("indexint part %i for lot %i of type acl_allow\n",lotPart,lotNr);
-                	        Indekser(lotNr,"acl_allow",lotPart,subname,0,0);
+                	        Indekser(lotNr,"acl_allow",lotPart,subname,&IndekserOpt);
                 	}
                 	for (lotPart=0;lotPart<64;lotPart++) {
                 	        //printf("indexint part %i for lot %i of type acl_denied\n",lotPart,lotNr);
-                	        Indekser(lotNr,"acl_denied",lotPart,subname,0,0);
+                	        Indekser(lotNr,"acl_denied",lotPart,subname,&IndekserOpt);
                 	}
 
 			#endif
