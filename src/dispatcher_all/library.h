@@ -41,10 +41,13 @@
                 const char *webdb_user;
                 const char *webdb_password;
                 const char *webdb_db;
+
+		char **bannedwords;
+		int bannedwordsnr;
         };
 
 
-void die(int errorcode,const char *fmt, ...);
+void die(int errorcode,char query[] ,const char *fmt, ...);
 void bsConectAndQuery(int *sockfd,int nrOfServers, char *servers[],struct queryNodeHederFormat *queryNodeHeder,int alreadynr, int port);
 int bsConectAndQueryOneServer(char server[], int searchport, char query[], char subname[], int maxHits, int start,
         struct SiderFormat **Sider, int *pageNr);

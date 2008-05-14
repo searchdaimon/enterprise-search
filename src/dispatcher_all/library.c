@@ -53,7 +53,7 @@
 
 
 
-void die(int errorcode,const char *fmt, ...) {
+void die(int errorcode,char query[] ,const char *fmt, ...) {
 	FILE *LOGFILE;
 
 	va_list     ap;
@@ -68,7 +68,7 @@ void die(int errorcode,const char *fmt, ...) {
 	printf("</errormessage>\n");
  
 	printf("</error>\n");
-	printf("<RESULT_INFO TOTAL=\"0\" QUERY=\"\" HILITE=\"\" TIME=\"0\" FILTERED=\"0\" SHOWABAL=\"0\" BOITHOHOME=\"%s\"/>\n",bfile(""));
+	printf("<RESULT_INFO TOTAL=\"0\" QUERY=\"%s\" HILITE=\"\" TIME=\"0\" FILTERED=\"0\" SHOWABAL=\"0\" BOITHOHOME=\"%s\"/>\n",query,bfile(""));
 	printf("</search>\n");
 
 
@@ -102,7 +102,7 @@ void addError(struct errorhaFormat *errorha, int errorcode,char errormessage[]) 
 			++(*errorha).nr;
 		}
 		else {
-			die(10,"to many errors occurd");
+			die(10,"","to many errors occurd");
 		}
 }
 
@@ -120,12 +120,12 @@ int bsconnect (int *sockfd, char server[], int port) {
 
 	if ((he = gethostbyname(server)) == NULL) {  // get the host info 
 		perror("gethostbyname");
-		die(6,"Gethostbyname error.");
+		die(6,"","Gethostbyname error.");
 	}
 
 	if (((*sockfd) = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		perror("socket");
-		die(7,"Socket error.");
+		die(7,"","Socket error.");
 	}
 	fcntl((*sockfd), F_SETFL, O_NONBLOCK);
 

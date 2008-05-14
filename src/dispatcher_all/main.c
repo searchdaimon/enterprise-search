@@ -33,9 +33,9 @@
     
 #ifndef BLACK_BOKS
     #include <libconfig.h>
-
-    #define cashedir "cashedir"
-    #define prequerydir "prequerydir"
+    #define CACHE_STRUCT_VERSION "1.7"
+    //#define cashedir "cashedir"
+    //#define prequerydir "prequerydir"
 #endif
 
     #define cfg_dispatcher "config/dispatcher.conf"
@@ -118,10 +118,10 @@ cache_path(char *path, size_t len, enum cache_type type, char *query, int start,
 
 	switch (type) {
 	case CACHE_PREQUERY:
-		cache = "var/cache/prequery";
+		cache = "var/cache/prequery_v_" CACHE_STRUCT_VERSION;
 		break;
 	case CACHE_SEARCH:
-		cache = "var/cache/search";
+		cache = "var/cache/search_v_" CACHE_STRUCT_VERSION;
 		break;
 	}
 
@@ -229,6 +229,12 @@ cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, stru
 	gzFile *cache;
 	int fd, i, ret;
 
+	//temp jayde 
+	//final_sider->TotaltTreff = 20;
+	//final_sider->showabal = 20;
+	//sider_len = 20;
+	//*page_nr = 20;
+
 	if ((fd = open(path, O_CREAT|O_WRONLY|O_EXCL, 0644)) == -1) {
 		return 0;
 	}
@@ -289,11 +295,11 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 	// Was there an error initializing the CGI???
 	if (res != CGIERR_NONE) {
 		printf("Error # %d: %s<p>\n", res, cgi_strerror(res));
-		die(1,"Cgi-lib error.");
+		die(1,"","Cgi-lib error.");
 	}
 
 	if (cgi_getentrystr("query") == NULL) {
-		die(2,"Did'n receive any query.");
+		die(2,"","Did'n receive any query.");
 	}
 	else {
 		strscpy(QueryData->query,cgi_getentrystr("query"),sizeof(QueryData->query) -1);
@@ -337,17 +343,17 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 
 #if defined(BLACK_BOKS) && !defined(_24SEVENOFFICE)
 	if (cgi_getentrystr("tkey") == NULL) {
-		die(2,"Did'n receive any tkey.");
+		die(2,"","Did'n receive any tkey.");
 	}
 	else if (strlen(cgi_getentrystr("tkey")) != 32) {
-		die(2,"tkey isent 32 bytes long\n");
+		die(2,"","tkey isent 32 bytes long\n");
 	}
 	else {
 		strscpy(QueryData->tkey,cgi_getentrystr("tkey"),sizeof(QueryData->tkey));
 
 		//sjek tkey
 		if (!tkeyisok(QueryData->tkey)) {
-			die(2,"Wrong tkey.");
+			die(2,"","Wrong tkey.");
 		}
 	}
 #endif
@@ -482,7 +488,7 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 		}
 	}
 	if (hasaccess == 0)
-		die(1, "Not allowed to handle request from ip address \"%s\".",remoteaddr);
+		die(1,"", "Not allowed to handle request from ip address \"%s\".",remoteaddr);
 #ifdef DEBUG
 	gettimeofday(&end_time, NULL);
 	dprintf("Time debug: access %f\n",getTimeDifference(&start_time,&end_time));
@@ -571,7 +577,7 @@ showabal,AddSiderHeder[i].servername);
 
 		//hvis vi ikke fikk svar fra noen
 		if(*nrRespondedServers == 0) {
-			die(16,"Couldnt contact the Boitho search system. Please try again later.");
+			die(16,"","Couldnt contact the Boitho search system. Please try again later.");
 		}
 		//genererer feil om at ikke alle server svarte på queryet
 		if (*nrRespondedServers != (nrOfServers + nrOfPiServers)) {
@@ -799,7 +805,7 @@ showabal,AddSiderHeder[i].servername);
 
 void print_explain_rank( struct SiderFormat *Side, char query[]) {
 
-	printf("\t<EXPLAIN_RANK>Rb=%hu;%hu;%hu&amp;Rh=%hu;%hu;%hu&amp;Rt=%hu;%hu;%hu&amp;Ra=%hu;%hu;%hu&amp;Rum=%hu;%hu;%hu&amp;Rud=%hu;%hu;%hu&amp;Rus=%hu;%hu;%hu&amp;AllRank=%i&amp;TermRank=%i&amp;PopRank=%i&amp;DocID=%i-%i&amp;Url=%s&amp;Query=%s</EXPLAIN_RANK>\n",
+	printf("\t<EXPLAIN_RANK><![CDATA[Rb=%hu;%hu;%hu&amp;Rh=%hu;%hu;%hu&amp;Rt=%hu;%hu;%hu&amp;Ra=%hu;%hu;%hu&amp;Rum=%hu;%hu;%hu&amp;Rud=%hu;%hu;%hu&amp;Rus=%hu;%hu;%hu&amp;AllRank=%i&amp;TermRank=%i&amp;PopRank=%i&amp;DocID=%i-%i&amp;Url=%s&amp;Query=%s]]></EXPLAIN_RANK>\n",
 		Side->iindex.rank_explaind.rankBody,Side->iindex.rank_explaind.nrBody,Side->iindex.rank_explaind.maxBody,
 		Side->iindex.rank_explaind.rankHeadline,Side->iindex.rank_explaind.nrHeadline,Side->iindex.rank_explaind.maxHeadline,
 		Side->iindex.rank_explaind.rankTittel,Side->iindex.rank_explaind.nrTittel,Side->iindex.rank_explaind.maxTittel,
@@ -816,6 +822,82 @@ void print_explain_rank( struct SiderFormat *Side, char query[]) {
 
 	);
 
+}
+
+unsigned int getDocIDFromSqlRun (MYSQL *demo_db, char mysql_query[], char rankUrl[]) {
+
+	unsigned int retDocID = 0;
+
+
+	int numUsers;
+	MYSQL_RES *mysqlres; // To be used to fetch information into
+	MYSQL_ROW mysqlrow;
+
+
+	if(mysql_real_query(demo_db, mysql_query, strlen(mysql_query))){ // Make query
+       		printf(mysql_error(demo_db));
+       		fprintf(stderr,"MySQL Error: \"%s\".\n",mysql_error(demo_db));
+	  	numUsers = 0;
+	}
+	else {
+		mysqlres=mysql_store_result(demo_db); // Download result from server 
+
+		numUsers = mysql_num_rows(mysqlres);
+	}
+
+	if (numUsers == 1) {
+
+		if ((mysqlrow=mysql_fetch_row(mysqlres)) == NULL) {
+        		fprintf(stderr,"MySQL Error: cant download results \"%s\".\n",mysql_error(demo_db));
+			//return 0;
+		}
+		#ifdef DEBUG
+			printf("wwwDocID \"%s\"\n",mysqlrow[0]);
+		#endif
+
+		retDocID = atou(mysqlrow[0]);
+
+		mysql_free_result(mysqlres);
+
+		return retDocID;
+       	}
+	else {
+		return 0;
+	}
+}
+
+unsigned int getDocIDFromSql (MYSQL *demo_db, char rankUrl[]) {
+
+
+	unsigned int retDocID = 0;
+		
+	////////////////////
+	//mysql select for pi og freelistnings
+	////////////////////
+	char mysql_query[512];
+
+	snprintf(mysql_query, sizeof(mysql_query), "select WWWDocID from submission_url where url='%s' and WWWDocID <> 0 AND WWWDocID is not NULL",
+			rankUrl);
+
+	
+	retDocID = getDocIDFromSqlRun(demo_db, mysql_query, rankUrl);
+	if (retDocID != 0) {
+		return retDocID;
+	}
+
+	
+	//hvis den ikke var i over, å vi søke i neste db
+	snprintf(mysql_query, sizeof(mysql_query), "select WWWDocID from pi_sider where url='%s' and WWWDocID <> 0 AND WWWDocID is not NULL",
+			rankUrl);
+
+	
+	retDocID = getDocIDFromSqlRun(demo_db, mysql_query, rankUrl);
+	if (retDocID != 0) {
+		return retDocID;
+	}
+	
+
+	return 0;
 }
 
 int main(int argc, char *argv[])
@@ -932,6 +1014,8 @@ int main(int argc, char *argv[])
 		cachetimeout = config_setting_get_int(cfgstring);
 	}
 
+	dispconfig.bannedwordsnr = 0;
+
   	#ifdef BLACK_BOKS
 		dispconfig.writeprequery = 0;
 	#else
@@ -1004,13 +1088,32 @@ int main(int argc, char *argv[])
 
         	dispconfig.webdb_db = config_setting_get_string(cfgstring);
 
+
+		//load banned words array from config    
+	    	if ( (cfgarray = config_lookup(&cfg, "bannedwords") ) == NULL) {
+			fprintf(stderr,"can't load \"bannedwords\" from config\n");
+	  	}
+		else {
+			//finner antall ord
+			dispconfig.bannedwordsnr = config_setting_length(cfgarray);
+
+			if ((dispconfig.bannedwords = malloc(sizeof(char *) * (dispconfig.bannedwordsnr))) == NULL) {
+				perror("malloc dispconfig.bannedwords");
+				exit(-1);
+			}
+
+			for(i=0;i<dispconfig.bannedwordsnr;i++) {
+				dispconfig.bannedwords[i] = strdup(config_setting_get_string_elem(cfgarray,i));
+				dprintf("banned: %s\n",dispconfig.bannedwords[i]);
+			}
+		}
+
 	#endif
 	
 	char query [2048];
-	static MYSQL demo_db;
 
 	//MYSQL_RES *mysqlres; /* To be used to fetch information into */
-	MYSQL_ROW mysqlrow;
+	static MYSQL demo_db;
 
 	//////////////////
 	//for nå angir vi bare servere slik. Må skilles u i egen fil siden
@@ -1247,20 +1350,26 @@ int main(int argc, char *argv[])
 	#endif
 
         if (strlen(QueryData.query) > MaxQueryLen -1) {
-                die(3,"Query to long.");
+                die(3,QueryData.query,"Query to long.");
         }
+
+	for(i=0;i<dispconfig.bannedwordsnr;i++) {
+		if (strstr(QueryData.query,dispconfig.bannedwords[i]) != NULL) {
+			die(3,QueryData.query,"Sorry, the word '%s' is banned.",dispconfig.bannedwords[i]);
+		}
+	}
 
 	#ifdef BLACK_BOKS
 
 	#else
 		//hvis vi har : i seg må vi avslutte da vi ikke støtter dette
 		if(strchr(QueryData.query,':') != NULL) {
-			die(4,"Command not yet implemented.");
+			die(4,QueryData.query,"Command not yet implemented.");
 		}
 	#endif
 	//hvis vi har et for kort query
 	if(strlen(QueryData.query) < 2) {
-		die(5,"Query to short.");
+		die(5,QueryData.query,"Query to short.");
 	}
 
         //gjør om til liten case
@@ -1296,74 +1405,41 @@ int main(int argc, char *argv[])
 	#ifndef BLACK_BOKS
 
 	if (getRank) {
+
 		//normaliserer url. Setter for eks / på slutten
 		url_normalization(QueryData.rankUrl,sizeof(QueryData.rankUrl));
 
 
 
-        		char            db_index[strlen(dispconfig.UrlToDocID)+7];
-        		sprintf(db_index, "%s.index", dispconfig.UrlToDocID);
-	        	urldocid_data   *data;
+        	char            db_index[strlen(dispconfig.UrlToDocID)+7];
+        	sprintf(db_index, "%s.index", dispconfig.UrlToDocID);
+	        urldocid_data   *data;
 
-			if ((data = urldocid_search_init(db_index, dispconfig.UrlToDocID)) == NULL) {
-				die(100, "Unable to open index file \"%s\".",dispconfig.UrlToDocID);
-			}
-
-
-                	if (getDocIDFromUrl(data, QueryData.rankUrl, &wantedDocId)) {
-				getRank = wantedDocId;
-				queryNodeHeder.getRank = wantedDocId;
-		
-				#ifdef DEBUG
-					printf("found DocID %u ( for url \"%s\" )\n",wantedDocId,QueryData.rankUrl);
-				#endif	
-			}
-			else {
-		
-				////////////////////
-				//mysql select for pi og freelistnings
-				////////////////////
-				char mysql_query[512];
-				int numUsers;
-				MYSQL_RES *mysqlres; // To be used to fetch information into
-
-        			snprintf(mysql_query, sizeof(mysql_query), "select WWWDocID from submission_url where url='%s' and WWWDocID <> 0 AND WWWDocID is not NULL",
-               				QueryData.rankUrl);
-
-	
-        			if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ // Make query
-        	        		printf(mysql_error(&demo_db));
-        	        		fprintf(stderr,"MySQL Error: \"%s\".\n",mysql_error(&demo_db));
-        	      		  	numUsers = 0;
-        			}
-				else {
-        				mysqlres=mysql_store_result(&demo_db); // Download result from server 
-
-        				numUsers = mysql_num_rows(mysqlres);
-				}
-
-        			if (numUsers == 1) {
-
-					if ((mysqlrow=mysql_fetch_row(mysqlres)) == NULL) {
-	        	        		fprintf(stderr,"MySQL Error: cant download results \"%s\".\n",mysql_error(&demo_db));
-						//return 0;
-					}
-					#ifdef DEBUG
-					printf("wwwDocID \"%s\"\n",mysqlrow[0]);
-					#endif
-
-            	        		getRank = atou(mysqlrow[0]);
-                        		queryNodeHeder.getRank = getRank;
-					mysql_free_result(mysqlres);
-        			}
-				else {
-					#ifdef DEBUG
-						printf("can't get wwwDocID for url \"%s\", useing query \"%s\"\n",QueryData.rankUrl,mysql_query);
-					#endif
-					die(100, "Ranking information is not yet available for this URL. It takes 24 hours for new site submissions to be crawled, indexed and ranked. Check back later.");
-				}
-///////////////////
+		if ((data = urldocid_search_init(db_index, dispconfig.UrlToDocID)) == NULL) {
+			die(100, QueryData.query,"Unable to open index file \"%s\".",dispconfig.UrlToDocID);
 		}
+
+
+                if (getDocIDFromUrl(data, QueryData.rankUrl, &wantedDocId)) {
+			getRank = wantedDocId;
+			queryNodeHeder.getRank = wantedDocId;
+		
+			#ifdef DEBUG
+				printf("found DocID %u ( for url \"%s\" )\n",wantedDocId,QueryData.rankUrl);
+			#endif	
+		}
+		else {
+
+    	        	getRank = getDocIDFromSql(&demo_db, QueryData.rankUrl);
+                     	queryNodeHeder.getRank = getRank;
+
+			if (getRank == 0) {
+				die(100,QueryData.query, "Ranking information is not yet available for this URL. It takes 24 hours for new site submissions to be crawled, indexed and ranked. Check back later.");
+			}
+
+		}
+
+			
 
 		fprintf(stderr,"queryNodeHeder.getRank %u\n",queryNodeHeder.getRank);
 
@@ -1380,6 +1456,11 @@ int main(int argc, char *argv[])
 
 		// 92: \, 32: space, 34: ", 43: +
 
+		if (QueryData.query[i] == ';') {
+			sprintf(errormessage,"Illegal character in query. \"%c\" ascii value: %u",QueryData.query[i],(unsigned int)QueryData.query[i]);
+			die(15,QueryData.query,errormessage);
+		}
+		/*
 		if(
 		(isalnum(QueryData.query[i])) 
                 || (43 == (unsigned int)QueryData.query[i])
@@ -1396,8 +1477,10 @@ int main(int argc, char *argv[])
 		}
 		else {
 			sprintf(errormessage,"Illegal character in query. \"%c\" ascii value: %u",QueryData.query[i],(unsigned int)QueryData.query[i]);
-			die(15,errormessage);
+			die(15,QueryData.query,errormessage);
+
 		}
+		*/
 
 	}
 
@@ -1596,14 +1679,14 @@ int main(int argc, char *argv[])
 				}
  
 				if (!bsread(&sockfd[i],sizeof(status), (char *)&status, 1000)) //maxSocketWait_CanDo))
-					die(2, "Unable to get rank status. Server %i is not responding.",i);
+					die(2,QueryData.query, "Unable to get rank status. Server %i is not responding.",i);
 				else if (status == net_match) {
 					if (!bsread(&sockfd[i],sizeof(ranking), (char *)&ranking, 1000))//maxSocketWait_CanDo))
 						perror("recv rank");
 				} else if (status == net_nomatch) {
 					//return 1;
 				} else {
-					//die(1, "searchd does not support ranking?");
+					//die(1,QueryData.query, "searchd does not support ranking?");
 				}
 
 				
@@ -1622,17 +1705,22 @@ int main(int argc, char *argv[])
 				if (sockfd[i] != 0) {
 					if (!bsread(&sockfd[i], sizeof(ranking), (char *)&ranking, 10000))
 						perror("endranking");
-					endranking += ranking;
+					endranking += ranking; 
 				}
 			}
 		}
 /*
 		else {
-			die(1, "No rank found");
+			die(1,QueryData.query, "No rank found");
 		}
 */
+		dprintf("endranking %i, queryNodeHeder.MaxsHits %i\n",endranking,queryNodeHeder.MaxsHits);
+
 		if ((endranking < queryNodeHeder.MaxsHits) || (endranking == 0)) {
 			queryNodeHeder.getRank = 0;
+
+			//enten skal vi være i top, og dermed være med, hvis ikke skal vi ikke være telt med. Uanset er tidligere verdi potensielt feil.
+			endranking = 0;
 
 			for (i=0;i<nrOfServers + nrOfPiServers;i++) {
 				if (sockfd[i] != 0) {
@@ -1686,6 +1774,7 @@ int main(int argc, char *argv[])
 				if (Sider[i].deletet)
 					continue;
 				if ((Sider[i].iindex.DocID == wantedDocId) || (strcmp(Sider[i].url,QueryData.rankUrl) == 0)) {
+					dprintf("did find pi pages as nr %i, url %s\n",i,Sider[i].url);
 					endranking = printed+1;
 					break;
 				}
@@ -1699,8 +1788,8 @@ int main(int argc, char *argv[])
 
 		if (endranking == 0) {
 			//printf("\t<noresult />\n");
-			//die(1, "No rank found");
-			die(1, "That site does not rank in the top 60,000 sites for that search term");
+			//die(1,QueryData.query, "No rank found");
+			die(1,QueryData.query, "That site does not rank in the top 60,000 sites for that search term");
 		} else {
 			printf("<ranking>\n");
 			printf("\t<rank>%d</rank>\n", endranking);
@@ -2011,12 +2100,13 @@ int main(int argc, char *argv[])
                 	"Tittel",
                 	"Athor (nr)",
                 	"UrlM",
-                	"Url"
+                	"UrlDom",
+                	"UrlSub"
                 );
-        	printf("|----------|----------|----------||----------|----------|----------|------------------|----------|----------|\n");
+        	printf("|----------|----------|----------||----------|----------|----------|------------------|----------|----------|----------|\n");
 
                 for(i=0;i<FinalSiderHeder.showabal;i++) {
-                        printf("|%10i|%10i|%10i||%10i|%10i|%10i|%10i (%5i)|%10i|%10i| %s\n",
+                        printf("|%10i|%10i|%10i||%10i|%10i|%10i|%10i (%5i)|%10i|%10i|%10i| %s\n",
 
 				Sider[i].iindex.allrank,
                                 Sider[i].iindex.TermRank,
@@ -2028,7 +2118,9 @@ int main(int argc, char *argv[])
                                 Sider[i].iindex.rank_explaind.rankAthor,
                                 Sider[i].iindex.rank_explaind.nrAthor,
                                 Sider[i].iindex.rank_explaind.rankUrl_mainbody,
-                                Sider[i].iindex.rank_explaind.rankUrl,
+                                Sider[i].iindex.rank_explaind.rankUrlDomain,
+                                Sider[i].iindex.rank_explaind.rankUrlSub,
+
                                 Sider[i].DocumentIndex.Url
                                 );
                 }
