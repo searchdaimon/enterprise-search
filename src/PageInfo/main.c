@@ -11,7 +11,7 @@
 #include "../common/search_automaton.h"
 
 #include "../parser/html_parser.h"
-
+#include "../IndexerRes/IndexerRes.h"
 
 void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* pagewords )
 {
@@ -98,14 +98,19 @@ int main (int argc, char *argv[]) {
 	int optResource = 0;
 	int optPopRank = 0;
 	int optDelete = 0;
+	int optAdult = 0;
+
 
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"hwsarpd"))!=-1) {
+        while ((c=getopt(argc,argv,"hwsarpdu"))!=-1) {
                 switch (c) {
                         case 'h':
                                 optShowhtml = 1;
+                                break;
+                        case 'u':
+                                optAdult = 1;
                                 break;
                         case 'w':
 				optShowWords = 1;
@@ -219,14 +224,14 @@ int main (int argc, char *argv[]) {
 		///////////////
 
 
-		if ((optShowhtml) || (optShowWords)) {
+//		if ((optShowhtml) || (optShowWords) || (optAdult)) {
 			htmlBufferSize = 3000000;
 			htmlBuffer = malloc(htmlBufferSize);
 			struct ReposetoryHeaderFormat ReposetoryHeader;
 
 			rReadHtml(htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,DocumentIndexPost.imageSize);
 
-		}
+//		}
 		if (optShowhtml) {
 
 			printf("html uncompresed size %i\n",htmlBufferSize);
@@ -255,6 +260,32 @@ int main (int argc, char *argv[]) {
 				printf("%s\n", buf);
 			}
 		}
+		if (optAdult) {
+		int httpResponsCodes[nrOfHttpResponsCodes];
+	        	//char *title;
+	        	//char *body;
+			struct adultFormat *adult;
+			struct pagewordsFormat *pagewords = malloc(sizeof(struct pagewordsFormat));
+			int AdultWeight;
+			int langnr;
+        		if ((adult = malloc(sizeof(struct adultFormat))) == NULL) {
+        		        perror("malloc argstruct.adult");
+        		        exit(1);
+	        	}
+
+			wordsInit(pagewords);
+      			langdetectInit();
+		        adultLoad(adult);
+
+			AdultWeight -1;
+
+			handelPage(pagewords,rLotForDOCid(DocID),&ReposetoryHeader,htmlBuffer,htmlBufferSize,DocID,httpResponsCodes,adult,&title,&body);
+
+			wordsMakeRevIndex(pagewords,adult,&AdultWeight,&langnr);
+
+			printf("adult %i\n",AdultWeight);
+		}
+
 	}
 	else {
 		printf("Cant read post\n");
