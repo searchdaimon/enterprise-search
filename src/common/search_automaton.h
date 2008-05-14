@@ -129,7 +129,9 @@ static inline automaton* build_automaton( int num_args, unsigned char **words )
     automaton	*base = new_automaton();
     int		i, j;
 
-    fprintf(stderr, "search_automaton: build_automaton()\n");
+    #ifdef DEBUG
+	    fprintf(stderr, "search_automaton: build_automaton()\n");
+    #endif
 
     convert_to_lowercase(words[0]);
     base->str = (unsigned char*)strdup( (char*)words[0] );
