@@ -67,8 +67,8 @@ LIBXML = -I/usr/include/libxml2  -lxml2
 
 #HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c  
 #har rullet tilbake, og bruker gammel html parser for nå, så trenger dermed ikke i ha med css parseren
-#HTMLPARSER=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a src/ds/libds.a
-HTMLPARSER=src/parser/libhtml_parser.a src/ds/libds.a
+HTMLPARSER1=src/parser/libhtml_parser.a src/ds/libds.a
+HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a src/ds/libds.a
 
 # The Dependency Rules
 # They take the form
@@ -83,7 +83,7 @@ HTMLPARSER=src/parser/libhtml_parser.a src/ds/libds.a
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest
+bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb
 
 dppreload:
 	$(CC) -shared -fPIC src/dp/preload.c src/common/timediff.c -o bin/dppreload.so -ldl -Wall $(LDFLAGS)
@@ -139,19 +139,19 @@ Suggest:
 	cp src/suggestwebclient/suggest_webclient cgi-bin/
 
 #brukte før src/parser/libhtml_parser.a, byttet til src/parser/lex.yy.c src/parser/lex.yy.c slik at vi kan bruke gdb
-IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c $(HTMLPARSER) $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS -D WITHOUT_DIWRITE_FSYNC -D EXPLAIN_RANK
+IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c  $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS -D WITHOUT_DIWRITE_FSYNC -D EXPLAIN_RANK
 
 IndexerLot: src/IndexerLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(IndexerLot) src/maincfg/maincfg.c src/dispatcher_all/library.c -lpthread -DWITH_THREAD src/banlists/ban.c -o bin/IndexerLot $(LIBCONFIG)
+	$(CC) $(IndexerLot) $(HTMLPARSER2) src/maincfg/maincfg.c src/dispatcher_all/library.c -lpthread -DWITH_THREAD src/banlists/ban.c -o bin/IndexerLot $(LIBCONFIG)
 
 IndexerLotbb: src/IndexerLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(IndexerLot) -D BLACK_BOKS -D PRESERVE_WORDS -o bin/IndexerLotbb -DIIACL
+	$(CC) $(IndexerLot) $(HTMLPARSER1) -D BLACK_BOKS -D PRESERVE_WORDS -o bin/IndexerLotbb -DIIACL
 
 baddsPageAnalyser: src/baddsPageAnalyser/main.c
 	@echo ""
@@ -421,7 +421,7 @@ searchcl : src/searchkernel/searchcl.c
 #dropper -D WITH_MEMINDEX og -D WITH_RANK_FILTER for nå
 #SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c   src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD $(LIBCONFIG)
 #må ha -D_GNU_SOURCE for O_DIRECT
-SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/dp/dp.c src/searchkernel/verbose.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/stemmer.o src/query/lex.query.o src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D EXPLAIN_RANK -D DISK_PROTECTOR
+SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/dp/dp.c src/searchkernel/verbose.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/stemmer.o src/query/lex.query.o src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER1) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D EXPLAIN_RANK -D DISK_PROTECTOR
 
 
 searchddep:
@@ -482,6 +482,12 @@ dispatcher_all: src/dispatcher_all/main.c
 	@echo "$@:"
 
 	$(CC) $(dispatcherCOMAND) $(MYSQL4) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG)
+
+dispatcher_allsql3: src/dispatcher_all/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(dispatcherCOMAND) $(MYSQL) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG)
 
 dispatcher_allbb: src/dispatcher_all/main.c
 	@echo ""
@@ -598,6 +604,12 @@ LotInvertetIndexMaker: src/LotInvertetIndexMaker/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMaker/main.c -o bin/LotInvertetIndexMaker $(LDFLAGS)
 
+gcRepobb: src/gcRepo/gcrepo.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/gcRepo/gcrepo.c -o bin/gcRepobb $(LDFLAGS) -D BLACK_BOKS
+
 LotInvertetIndexMakerSplice: src/LotInvertetIndexMakerSplice/main.c
 	@echo ""
 	@echo "$@:"
@@ -632,7 +644,7 @@ LotInvertetIndexMaker3:	src/LotInvertetIndexMaker3/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c  src/LotInvertetIndexMaker3/main.c -o bin/LotInvertetIndexMaker3 $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c  src/searchFilters/searchFilters.c src/LotInvertetIndexMaker3/main.c -o bin/LotInvertetIndexMaker3 $(LDFLAGS)
 
 LotInvertetIndexMaker3bb:	src/LotInvertetIndexMaker3/main.c
 	@echo ""
@@ -660,6 +672,9 @@ addanchors: src/addanchors/main.c
 
 IndexerLotAnchors: src/IndexerLotAnchors/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLotAnchors/main.c -o bin/IndexerLotAnchors $(LDFLAGS)
+
+IndexerLotAnchors2: src/IndexerLotAnchors2/main.c
+	$(CC) $(CFLAGS) $(LIBS)*.c src/IndexerLotAnchors2/main.c -o bin/IndexerLotAnchors2 $(LDFLAGS)
 
 readNyeUrlerFil: src/readNyeUrlerFil/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/readNyeUrlerFil/main.c  -o bin/readNyeUrlerFil $(LDFLAGS)
@@ -696,7 +711,7 @@ BrankCalculate4: src/BrankCalculate4/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/bs/bs.c src/tq/tq.c  src/BrankCalculate4/main.c src/BrankCalculate3/res.c -o bin/BrankCalculate4 -lpthread $(LDFLAGS) -DDEFLOT -DWITH_THREAD
 
 BrankCalculate5: src/BrankCalculate5/main.c
-	$(CC) $(CFLAGS) src/common/lot.c src/common/bstr.c src/common/strlcat.c src/common/bfileutil.c src/common/debug.c  src/banlists/ban.c src/bs/bs.c src/tq/tq.c   src/BrankCalculate5/main.c -o bin/BrankCalculate5 -lpthread $(LDFLAGS) -DDEFLOT
+	$(CC) $(CFLAGS) src/3pLibs/keyValueHash/hashtable_itr.c src/common/daemon.c src/common/lotlist.c src/3pLibs/keyValueHash/hashtable.c src/common/reposetoryNET.c src/common/stdlib.c src/common/lot.c src/common/bstr.c src/common/strlcat.c src/common/bfileutil.c src/common/debug.c  src/banlists/ban.c src/bs/bs.c src/tq/tq.c   src/BrankCalculate5/main.c -o bin/BrankCalculate5 -lpthread $(LDFLAGS) -DDEFLOT -D_LARGEFILE64_SOURCE
 
 BrankCalculate5Expand: src/BrankCalculate5Expand/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/BrankCalculate3/res.c src/BrankCalculate5Expand/main.c -o bin/BrankCalculate5Expand $(LDFLAGS) -DDEFLOT 
@@ -716,7 +731,7 @@ SortUdfile: src/SortUdfile/main.c
 SortUdfileToNewFiles: src/SortUdfileToNewFiles/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/SortUdfileToNewFiles/main.c -o bin/SortUdfileToNewFiles $(LDFLAGS)
 
-PageInfoComand=	$(LIBS)*.c src/PageInfo/main.c $(HTMLPARSER) $(LDFLAGS)
+PageInfoComand=	$(LIBS)*.c src/PageInfo/main.c $(HTMLPARSER1) $(LDFLAGS) src/IndexerRes/IndexerRes.c
 
 PageInfo: src/PageInfo/main.c
 	@echo ""
@@ -809,6 +824,12 @@ readbrankPageElements: src/readbrankPageElements/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/readbrankPageElements/main.c -o bin/readbrankPageElements $(LDFLAGS)
+
+makeBrankPageElements: src/makeBrankPageElements/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/makeBrankPageElements/main.c -o bin/makeBrankPageElements $(LDFLAGS)
 
 DIrecrawlSelect: src/DIrecrawlSelect/main.c
 	@echo ""
@@ -922,6 +943,14 @@ ShowThumbbb: src/ShowThumb/main.c
 
 	$(CC) $(SHOWTHUMBCMANDS) -o cgi-bin/ShowThumbbb -D BLACK_BOKS
 
+ShowCacheCOMMAND2 = $(CFLAGS) $(LIBS)*.c src/ShowCache2/main.c src/cgi-util/cgi-util.c $(LDFLAGS) -o cgi-bin/ShowCache2
+
+ShowCache2: src/ShowCache/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(ShowCacheCOMMAND2)
+
 ShowCacheCOMMAND = $(CFLAGS) $(LIBS)*.c src/ShowCache/main.c src/cgi-util/cgi-util.c $(LDFLAGS) -o cgi-bin/ShowCache
 
 ShowCache: src/ShowCache/main.c
@@ -1001,9 +1030,15 @@ crawlManager2: src/crawlManager2/main.c
 	@echo ""
 	@echo "$@:"
 
-
-
 	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/crawlManager2/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
+
+crawlManager2perltest: src/crawlManager2/perltest.c
+	@echo ""
+	@echo "$@:"
+
+
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/crawlManager2/perlxsi.c src/crawlManager2/perlcrawl.c src/crawlManager2/perltest.c src/crawl/crawl.c -o bin/crawlManager2perltest $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -DIIACL -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
 
 
 crawlSMB: src/crawlSMB/main.c
