@@ -35,12 +35,22 @@ gcrepo(int LotNr, char *subname)
 	#ifdef BLACK_BOKS
 		time_t newest_document;
 	#endif
+	FILE *DOCINDEXFH;
 
 	int keept = 0;
 	int gced = 0;
 
 	struct DIArrayFormat *DIArray;
 	int DocIDPlace;
+
+        if ( (DOCINDEXFH = lotOpenFileNoCasheByLotNr(LotNr,"DocumentIndex","rb", 's',subname)) == NULL) {
+		#ifdef DEBUG
+                	printf("lot dont have a DocumentIndex file\n");
+		#endif
+
+                return 0;
+        }
+	fclose(DOCINDEXFH);
 
 	if ((DIArray = malloc(sizeof(struct DIArrayFormat) * NrofDocIDsInLot)) == NULL) {
 		perror("gcrepo: malloc DIArray");
