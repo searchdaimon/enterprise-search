@@ -6,7 +6,11 @@
 
 #include "../common/bstr.h"
 
-#define TARGET_VISIBLE_URL_LEN 80
+#ifdef BLACK_BOKS
+	#define TARGET_VISIBLE_URL_LEN 80
+#else
+	#define TARGET_VISIBLE_URL_LEN 60
+#endif
 
 #ifdef WITH_SHORTENURL_MAIN
 int globalOptVerbose = 0;
@@ -31,7 +35,11 @@ void shortenurl(char *url,int urllen) {
 
   	char **Data;
   	int Count, TokCount;
-	char newurl[201];
+	#ifdef BLACK_BOKS
+		char newurl[80];
+	#else
+		char newurl[201];
+	#endif
 	int added, suburllen;
 	int i;
 	char slash[2];
@@ -115,7 +123,7 @@ void shortenurl(char *url,int urllen) {
 	added = 0;
 	suburllen = 0;
 	while( (Data[Count] != NULL) ) {
-		printf("a: \t\t%d\t\"%s\"\n", Count, Data[Count]);
+		vboprintf("a: \t\t%d\t\"%s\"\n", Count, Data[Count]);
 		suburllen = strlen(Data[Count]);
 
 		if ((added + suburllen) < (TARGET_VISIBLE_URL_LEN * 0.3)) {
@@ -137,7 +145,7 @@ void shortenurl(char *url,int urllen) {
 	added = 0;
 	suburllen = 0;
 	while( (Count > 0) ) {
-		printf("b: \t\t%d\t\"%s\"\n", Count, Data[Count]);
+		vboprintf("b: \t\t%d\t\"%s\"\n", Count, Data[Count]);
 
 		suburllen = strlen(Data[Count]);
 		if ((added + suburllen) < (TARGET_VISIBLE_URL_LEN * 0.7)) {
@@ -153,7 +161,7 @@ void shortenurl(char *url,int urllen) {
 		--Count;
 	}
 
-	printf("TokCount %i, count %i\n",TokCount,Count);
+	vboprintf("TokCount %i, count %i\n",TokCount,Count);
 
 	//hvis også siste navn er for langt, hånterer vi det spesifikt.
 	if (TokCount == Count) {
@@ -163,7 +171,7 @@ void shortenurl(char *url,int urllen) {
 	else {
 		//printf("addint last part:\n");
 		for (i=Count+1;i<TokCount+1;i++) {
-			printf("c: \t\t%d\t\"%s\"\n", i, Data[i]);
+			vboprintf("c: \t\t%d\t\"%s\"\n", i, Data[i]);
 
                 	strlcat(newurl,slash,sizeof(newurl));
 			strlcat(newurl,Data[i],sizeof(newurl));
@@ -171,7 +179,7 @@ void shortenurl(char *url,int urllen) {
 		}
 	}
 
-	printf("shortenurl: newurl %s\n",newurl);
+	vboprintf("shortenurl: newurl %s\n",newurl);
 
 	FreeSplitList(Data);
 	
@@ -184,8 +192,8 @@ void shortenurl(char *url,int urllen) {
 int
 main(int argc, char **argv)
 {
-	//char *url = strdup("file://G:/fellesdata/2%20NETTVERK%20OG%20INFORMASJON/Profilh%C3%A5ndbok%20og%20logoer/Visittkort%20Outlook/Astrid.htm");
-	char *url = strdup("file://///192.168.22.25\\filer\\Ringnes\\2006\\Brus.Vann\\Pepsi 2006\\Pepsi Max Gold lansering\\Pepsi Max Gold Sommerturne - kjÃ¸replan.xls");
+	char *url = strdup("http://www.jewishbookmall.com/shop/asinsearch_0345369793/");
+	//char *url = strdup("file://///192.168.22.25\\filer\\Ringnes\\2006\\Brus.Vann\\Pepsi 2006\\Pepsi Max Gold lansering\\Pepsi Max Gold Sommerturne - kjÃ¸replan.xls");
 
 	shortenurl(url,255);
 
