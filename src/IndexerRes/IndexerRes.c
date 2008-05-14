@@ -349,7 +349,7 @@ int wordTypeadd;
 			}
 }
 
-void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void *pagewords )
+void IndexerRes_fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void *pagewords )
 {
 
 
@@ -1305,8 +1305,8 @@ void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct Rep
 					//parser htmlen
 					//printf("html: %s\n\nUrl \"%s\"\nHtmlBufferLength %i\n",HtmlBuffer,(*ReposetoryHeader).url,HtmlBufferLength);
 					//run_html_parser( (*ReposetoryHeader).url, HtmlBuffer, HtmlBufferLength, fn );
-					//html_parser_run( "http://YAHOOgroups.com/svada/index.html", buf, size, &title, &body, fn, NULL );
-					html_parser_run((*ReposetoryHeader).url,HtmlBuffer, HtmlBufferLength,title, body,fn,pagewords );
+					//html_parser_run( "http://YAHOOgroups.com/svada/index.html", buf, size, &title, &body, IndexerRes_fn, NULL );
+					html_parser_run((*ReposetoryHeader).url,HtmlBuffer, HtmlBufferLength,title, body,IndexerRes_fn,pagewords );
 					//printf("title %s\n",(*title));
 					//alarm( 0);
 					//if(alarm_got_raised) {
