@@ -336,23 +336,33 @@ int split(const char *Input, char *Delim, char ***List)
       return -1;
     }
 
-  *List = (char **)malloc(MaxFound * sizeof(char *));
+
+  if ((*List = (char **)malloc(MaxFound * sizeof(char *))) == NULL) {
+	perror("malloc List");
+	return -1;
+  }
 
   while ((Position = strstr(Remain, Delim)) != NULL)
     {
       Length = Position - Remain;
-      ((*List)[Found]) = (char *)malloc(sizeof(char)*(Length+1));
+      if((((*List)[Found]) = (char *)malloc(sizeof(char)*(Length+1))) == NULL) {
+		perror("split: malloc list element");
+		return -1;
+	}
       strncpy(((*List)[Found]), Remain, Length);
-      ((*List)[Found++])[Length] = 0;
+      ((*List)[Found])[Length] = 0;
+
+      Found++;
       Remain = Position + DelimLen;
-      if (Found > MaxFound)
+      if (Found == MaxFound)
         {
           MaxFound += 10;
           *List = (char **)realloc(*List, MaxFound * sizeof(char *));
         }
     }
 
- if (Found+1 > MaxFound)
+
+ if (Found+1 == MaxFound)
     {
       MaxFound += 2;
       *List = (char **)realloc(*List, MaxFound * sizeof(char *));
@@ -360,7 +370,9 @@ int split(const char *Input, char *Delim, char ***List)
   Length = strlen(Remain);
   ((*List)[Found]) = (char *)malloc(sizeof(char)*(Length+1));
   strncpy(((*List)[Found]), Remain, Length);
-  ((*List)[Found++])[Length] = 0;
+  ((*List)[Found])[Length] = 0;
+
+  Found++;
   ((*List)[Found]) = NULL;
 
   return Found;
