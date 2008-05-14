@@ -13,7 +13,7 @@ void DIWrite (struct DocumentIndexFormat *DocumentIndexPost, unsigned int DocID,
 int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned int *DocID,char subname[]);
 void DIClose(FILE *DocumentIndexHA);
 void closeDICache(void);
-
+int DIRead_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[], FILE *file);
 
 
 #endif //_DOCUMENTINDEX_H_

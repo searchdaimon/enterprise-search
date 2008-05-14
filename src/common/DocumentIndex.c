@@ -35,7 +35,27 @@ ToDo: trenger en "close" prosedyre for filhandlerene.
 
 #define CurrentDocumentIndexVersion 4
 
+int DIPostAdress(unsigned int DocID) {
 
+	int adress = -1;
+
+	int LotNr;
+
+	//finner lot for denne DocIDen
+	LotNr = rLotForDOCid(DocID);
+
+	#ifdef BLACK_BOKS
+		adress = (sizeof(struct DocumentIndexFormat) + sizeof(unsigned int))* (DocID - LotDocIDOfset(LotNr));
+	#else
+		adress = sizeof(struct DocumentIndexFormat) * (DocID - LotDocIDOfset(LotNr));
+	#endif
+	//printf("tell: %i\n",ftell(DocumentIndexHA));
+	
+
+	return adress;
+
+
+}
 /*
 finner riktig fil og Søker seg frem til riktig adresse, slik at man bare kan lese/skrive
 */
@@ -134,17 +154,8 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 		openDocumentIndex = LotNr;
 	}
 
-	#ifdef BLACK_BOKS
-		adress = (sizeof(struct DocumentIndexFormat) + sizeof(unsigned int))* (DocID - LotDocIDOfset(LotNr));
-	#else
-		adress = sizeof(struct DocumentIndexFormat) * (DocID - LotDocIDOfset(LotNr));
-	#endif
-	//printf("tell: %i\n",ftell(DocumentIndexHA));
-	
-
-
 	//søker til riktig post
-	if (fseek(DocumentIndexHA,adress,0) != 0) {
+	if (fseek(DocumentIndexHA,DIPostAdress(DocID),0) != 0) {
 		perror("Can't seek");
 		exit(1);
 	}
@@ -321,22 +332,9 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
         }
 }
 
+int DIRead_post(struct DocumentIndexFormat *DocumentIndexPost, int DocID, FILE *file) {
 
-int DIRead_fmode (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[], char filemode) {
-
-	FILE *file;
-	int forReturn;
-
-	#ifdef DEBUG
-		printf("DIRead: reading for DocID %i, subname \"%s\"\n",DocID,subname);
-	#endif
-
-	#ifdef DISK_PROTECTOR
-		dp_lock(rLotForDOCid(DocID));
-	#endif
-
-	if ((file = GetFileHandler(DocID,filemode,subname, NULL)) != NULL) {
-
+	int forReturn = 0;
 
 		#ifdef BLACK_BOKS
                         unsigned int CurrentDocumentIndexVersionAsUInt;
@@ -360,19 +358,40 @@ int DIRead_fmode (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char 
 		else {
 			forReturn  = 1;
 		}
+
+	return forReturn;
 		
-		//hvis vi ikke har på DI_FILE_CASHE må vi lokke filen
-		#ifndef DI_FILE_CASHE
-			fclose(file);
-		#endif
+}
+
+int DIRead_fmode (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[], char filemode) {
+
+	FILE *file;
+	int forReturn = 0;
+
+	#ifdef DEBUG
+		printf("DIRead: reading for DocID %i, subname \"%s\"\n",DocID,subname);
+	#endif
+
+	#ifdef DISK_PROTECTOR
+		dp_lock(rLotForDOCid(DocID));
+	#endif
+
+	if ((file = GetFileHandler(DocID,filemode,subname, NULL)) != NULL) {
+
+		if (DIRead_post(DocumentIndexPost,DocID,file)) {
+			forReturn = 1;
+		}
 
 		
         }
         else {
 		printf("cant get GetFileHandler\n");
-		forReturn =  0;
-
         }
+
+	//hvis vi ikke har på DI_FILE_CASHE må vi lokke filen
+	#ifndef DI_FILE_CASHE
+		fclose(file);
+	#endif
 
 
 	#ifdef DISK_PROTECTOR
@@ -381,6 +400,41 @@ int DIRead_fmode (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char 
 
 	return forReturn;
 
+}
+
+int DIRead_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[], FILE *file) {
+
+	int forReturn = 0;
+
+
+	if (file == NULL) {
+		printf("DIRead_fh: file isent open.\n");
+		forReturn = DIRead_fmode(DocumentIndexPost,DocID,subname,'r');
+	}
+	else {
+		#ifdef DISK_PROTECTOR
+			dp_lock(rLotForDOCid(DocID));
+		#endif
+
+		
+
+		//søker til riktig post
+		if (fseek(file,DIPostAdress(DocID),0) != 0) {
+			perror("Can't seek");
+			exit(1);
+		}
+
+		if (DIRead_post(DocumentIndexPost,DocID,file)) {
+			forReturn = 1;
+		}
+		#ifdef DISK_PROTECTOR
+			dp_unlock(rLotForDOCid(DocID));
+		#endif
+
+	}
+
+
+	return forReturn;
 }
 
 /*
