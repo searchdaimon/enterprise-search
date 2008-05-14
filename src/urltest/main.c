@@ -1,3 +1,6 @@
+#ifndef _GNU_SOURCE
+        #define _GNU_SOURCE
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -26,19 +29,23 @@ char *A[][2] = {
 		{"http://www.boitho.com/side.html#august","http://www.boitho.com/side.html"},
 
 		// ikke gyldige, men normaliseres OK
-		{"http://www.boitho.comindex.html?a=b","http://www.boitho.com/index.html?a=b"}
+		{"http://www.boitho.comindex.html?a=b","http://www.boitho.com/index.html?a=b"},
+		//feil
+		{"http://www.boitho.com/div/javascript:openchild('/product-popup.pl?pcode=10136136');",""},
+		{"http://www.boitho.com/div/JavaScript:openchild('/product-popup.pl?pcode=10136136');",""},
+		{"http://www.swindon.gov.uk/atozlistingsbyletterdisplay/socialcare/signpost/socialcare/signpost/community/roadstransport/feedbackcomments.htm",""}
 
 	};
 int Asize = sizeof(A) / (sizeof(char *) * 2);
 
 int i;
-char url[200];
+char url[202];
 
 
 for(i=0;i<Asize;i++) {
 
 	//printf("%s %s\n",A[i][0],A[i][1]);
-	strcpy(url,A[i][0]);
+	strscpy(url,A[i][0]);
 
 	//normaliser
 	if (!url_normalization(url,sizeof(url))) {
