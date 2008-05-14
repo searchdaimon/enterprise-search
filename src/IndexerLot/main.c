@@ -1227,8 +1227,16 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 			printf("will handel old dokuments in reposetory. Loading DocumentIndex...\n");
 			for(i=0;i<NrofDocIDsInLot;i++) {
-				argstruct->DIArray[i].oldp = malloc(sizeof(struct DocumentIndexFormat));
-				DIRead(argstruct->DIArray[i].oldp,LotDocIDOfset(lotNr) + i,subname);
+				struct DocumentIndexFormat DocumentIndexPost;
+
+				if(!DIRead(&DocumentIndexPost,LotDocIDOfset(lotNr) + i,subname)) {
+					argstruct->DIArray[i].oldp = NULL;
+				}
+				else {
+					argstruct->DIArray[i].oldp = malloc(sizeof(struct DocumentIndexFormat));
+
+					memcpy(argstruct->DIArray[i].oldp,&DocumentIndexPost,sizeof(struct DocumentIndexFormat));
+				}
 			}
 			printf(".. done\n");
 		}
