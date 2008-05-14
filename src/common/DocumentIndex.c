@@ -382,16 +382,16 @@ int DIRead_fmode (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char 
 			forReturn = 1;
 		}
 
+		//hvis vi ikke har på DI_FILE_CASHE må vi lokke filen
+		#ifndef DI_FILE_CASHE
+			fclose(file);
+		#endif
 		
         }
         else {
-		printf("cant get GetFileHandler\n");
+		printf("can't open DocumentIndexPost for DocID %u.\n",DocID);
         }
 
-	//hvis vi ikke har på DI_FILE_CASHE må vi lokke filen
-	#ifndef DI_FILE_CASHE
-		fclose(file);
-	#endif
 
 
 	#ifdef DISK_PROTECTOR
