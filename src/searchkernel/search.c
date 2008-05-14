@@ -487,6 +487,7 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 	printf("or_merge(alen %i, blen %i)\n",alen,blen);
 	
 	//debug: print ot verdiene før de merges
+	/*
 	x=0;
 	printf("a array:\n");
 	while (x<alen){
@@ -500,7 +501,7 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
                 printf("\t%u\n",b->iindex[x].DocID);
 		++x;
 	}
-	
+	*/
 	while ((i<alen) && (j<blen) && (k < maxIndexElements))
 	{
 
