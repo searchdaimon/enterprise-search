@@ -586,11 +586,10 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		GetFilePathForIindex(FilePath,IndexPath,iindexfile,IndexType,IndexSprok,(*subname).subname);
 		//sprintf(IndexPath,"%s/iindex/%s/index/%s/%i.txt",FilePath,IndexType,IndexSprok, iindexfile);
 
-		//#ifdef DEBUG
-		printf("Åpner index %s\n",IndexPath);
-
-		printf("size %u\n",SizeForTerm);
-		//#endif
+		#ifdef DEBUG
+			printf("Åpner index %s\n",IndexPath);
+			printf("size %u\n",SizeForTerm);
+		#endif
 
 		#ifdef TIME_DEBUG
 			gettimeofday(&start_time, NULL);
@@ -992,7 +991,8 @@ struct hashtable * loadGced(int lotNr, char subname[]) {
 	return h;
 }
 
-int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicates, int optMustBeNewerThen) {
+
+int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFormat *IndekserOpt) {
 
 	struct hashtable *h;
 	int i,y;
@@ -1006,7 +1006,6 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 	char iindexPath[512];
 	int count;
 	char c;
-        unsigned int DocID;
 	unsigned int lastWordID;
 	unsigned int lastDocID;
         //char lang[4];
@@ -1025,13 +1024,16 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 		printf("starting on an new index of part %i\n",part);
 	#endif
 
-	if ((h = loadGced(lotNr, subname)) == NULL) {
-		perror("loadGced");
-		return 0;
+	if (IndekserOpt->garbareCollection) {
+		h = loadGced(lotNr, subname);
+		if ((h = loadGced(lotNr, subname)) == NULL) {
+			perror("loadGced");
+			return 0;
+		}
+
 	}
 
 
-//
 	//"$revindexPath/$revindexFilNr.txt";
 	GetFilPathForLot(path,lotNr,subname);
 	//ToDo: må sette språk annen plass
@@ -1042,13 +1044,13 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 
 	sprintf(iindexPath,"%s%i.txt",iindexPath,part);
 
-	if ((optMustBeNewerThen != 0)) {
+	if ((IndekserOpt->optMustBeNewerThen != 0)) {
 		if (fopen(iindexPath,"r") != NULL) {
 			printf("we all redy have a iindex.\n");
 			return 0;
 		}
 	}
-//
+
 	revIndexArraySize = 0;
 
 
@@ -1067,7 +1069,9 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 
 
 	if ((IINDEXFH = fopen(iindexPath,"rb")) == NULL) {
-		perror(iindexPath);
+		#ifdef DEBUG
+			perror(iindexPath);
+		#endif
 	}
 	else {
 		fstat(fileno(IINDEXFH),&inode);
@@ -1105,7 +1109,10 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 
 	//last iindex
 	if (IINDEXFH == NULL) {
-	
+		//ingen vits å å gjøre noe hvis vi ikke fikk til å åpne filen	
+	}
+	else if (!IndekserOpt->sequenceMode) {
+
 	}
 	else {
 		while ((!feof(IINDEXFH)) && (count < revIndexArraySize)) {
@@ -1155,14 +1162,15 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 					++count;
 				}
 				else {
-					//#ifdef DEBUG
-					printf("bbbbbb DocID %u is deleted\n",revIndexArray[count].DocID);
-					//#endif
+					#ifdef DEBUG
+						printf("bbbbbb DocID %u is deleted\n",revIndexArray[count].DocID);
+					#endif
 				}
 
 			}
 		}
 
+		printf("got %i good index elements from before\n",count);
 
 	}
 
@@ -1170,7 +1178,6 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 		fclose(IINDEXFH);
 	}
 
-	printf("got %i good index elements from before\n",count);
 
 
 
@@ -1225,13 +1232,21 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 		#endif
 
 		//garbare collection
-		if (NULL == hashtable_search(h,&revIndexArray[count].DocID) ) {
-			++count;
-		}
-		else {
+		if ((IndekserOpt->garbareCollection) && (NULL != hashtable_search(h,&revIndexArray[count].DocID)) ) {
 			#ifdef DEBUG
 			printf("aaaaaaa: DocID %u is deleted\n",revIndexArray[count].DocID);
 			#endif
+
+		}
+		else if ((IndekserOpt->optValidDocIDs != NULL) && (IndekserOpt->optValidDocIDs[(revIndexArray[count].DocID - LotDocIDOfset(lotNr))] != 1)) {
+			//#ifdef DEBUG
+				printf("aaaaaaa: DocID %u is not in valid list\n",revIndexArray[count].DocID);
+			//#endif
+
+		}
+		else {
+			++count;
+
 		}
 
 	}
@@ -1268,7 +1283,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 			lastDocID = 0;
 		}
 
-		if ((optAllowDuplicates == 0) && (revIndexArray[i].DocID == lastDocID)) {
+		if ((IndekserOpt->optAllowDuplicates == 0) && (revIndexArray[i].DocID == lastDocID)) {
 			#ifdef DEBUG
 			printf("DocID %u is same as last\n",revIndexArray[i].DocID);
 			#endif
@@ -1335,9 +1350,11 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 
 	fclose(IINDEXFH);
 
-	//trunkerer rev index. i LotInvertetIndexMaker3 er det bare en oppdateringsfil
-	if (ftruncate(fileno(REVINDEXFH), 0) != 0) {
-		perror("can't truncate rev index");
+	if (IndekserOpt->sequenceMode) {
+		//trunkerer rev index. i LotInvertetIndexMaker3 er det bare en oppdateringsfil
+		if (ftruncate(fileno(REVINDEXFH), 0) != 0) {
+			perror("can't truncate rev index");
+		}
 	}
 
 	fclose(REVINDEXFH);
@@ -1345,7 +1362,9 @@ int Indekser(int lotNr,char type[],int part,char subname[], int optAllowDuplicat
 	free(revIndexArray);
 	free(nrofDocIDsForWordID);
 
-	hashtable_destroy(h,1);
+	if (IndekserOpt->garbareCollection) {
+		hashtable_destroy(h,1);
+	}
 
 
 	return 1;
