@@ -27,7 +27,7 @@ int dp_lock(int lot) {
 
 	#ifdef WITH_THREAD
 		#ifdef DEBUG
-		printf("looking lot %i, dev %i\n",lot,dev);
+			printf("looking lot %i, dev %i\n",lot,dev);
 		#endif
 
         	pthread_mutex_lock(&locks[dev]);
@@ -42,7 +42,7 @@ int dp_unlock(int lot) {
 
 	#ifdef WITH_THREAD
 		#ifdef DEBUG
-		printf("UNlooking lot %i, dev %i\n",lot,dev);
+			printf("UNlooking lot %i, dev %i\n",lot,dev);
 		#endif
 
         	pthread_mutex_unlock(&locks[dev]);
