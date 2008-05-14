@@ -1606,7 +1606,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 		int languageFilterNr, 
 		int languageFilterAsNr[], int *complicacy){
 
-	fprintf(stderr, "search: searchIndex()\n");
+	vboprintf("search: searchIndex()\n");
 
 	int i, y, j,k,h;
 	char queryelement[128];
@@ -1937,7 +1937,7 @@ for (i=0; i<(*queryParsed).n; i++)
 	vboprintf("searchIndex: end\n");
 	vboprintf("######################################################################\n\n");
 
-	fprintf(stderr, "search: ~searchIndex()\n");
+	vboprintf("search: ~searchIndex()\n");
 }
 
 struct searchIndex_thread_argFormat {
@@ -1955,7 +1955,7 @@ struct searchIndex_thread_argFormat {
 
 void *searchIndex_thread(void *arg)
 {
-	fprintf(stderr, "search: searchIndex_thread()\n");
+	vboprintf("search: searchIndex_thread()\n");
 
         struct searchIndex_thread_argFormat *searchIndex_thread_arg = (struct searchIndex_thread_argFormat *)arg;
 	int i,y,x;
@@ -2252,7 +2252,7 @@ void *searchIndex_thread(void *arg)
 
 	vboprintf("######################################################################\n");
 
-	fprintf(stderr, "search: ~searchIndex_thread()\n");
+	vboprintf("search: ~searchIndex_thread()\n");
 }
 
 void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *TotaltTreff, 
@@ -2348,7 +2348,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	//Main
 	for(i=0;i<nrOfSubnames;i++) {		
 		PredictNrMain += searchIndex_getnrs("Main",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
-		printf("PredictNrMain total with \"%s\" %u\n",&subnames[i],PredictNrMain);
+		vboprintf("PredictNrMain total with \"%s\" %u\n",&subnames[i],PredictNrMain);
 	}
 
 	vboprintf("PredictNrAthor %u, PredictNrUrl %u, PredictNrMain %u\n",PredictNrAthor,PredictNrUrl,PredictNrMain);
@@ -2960,7 +2960,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		//qsort(TeffArray, 30 , sizeof(struct iindexFormat), compare_elements);
 		/********************************************************************************/
 
-	fprintf(stderr, "search: ~searchSimple()\n");
+	vboprintf("search: ~searchSimple()\n");
 }
 
 #ifdef BLACK_BOKS

@@ -73,6 +73,75 @@
 	extern struct spelling *spelling;
 #endif
 
+#ifdef DEBUG_TIME
+struct popResultTimesFormat {
+        double time;
+        int nr;
+};
+
+struct popResultBreakDownTimeFormat {
+
+        struct popResultTimesFormat DocumentIndex;
+        struct popResultTimesFormat ReadSummary;
+        struct popResultTimesFormat html_parser_run;
+        struct popResultTimesFormat generate_snippet;
+        struct popResultTimesFormat ReadHtml;
+        struct popResultTimesFormat memGetDomainID;
+        struct popResultTimesFormat totalpopResult;
+        struct popResultTimesFormat makecrc32;
+        struct popResultTimesFormat treadSyncFilter;
+
+        struct popResultTimesFormat titleClean;
+        struct popResultTimesFormat bodyClean;
+        struct popResultTimesFormat iindexMemcpy;
+        struct popResultTimesFormat popResultFree;
+
+};
+#endif
+
+struct PagesResultsFormat {
+		struct SiderFormat *Sider;
+		struct SiderHederFormat *SiderHeder;
+		int antall;
+		struct iindexFormat *TeffArray;
+		int showabal;
+		int nextPage;
+		int filterOn;
+		int adultpages;
+		int noadultpages;
+		struct QueryDataForamt QueryData;
+		char *servername;
+		//int godPages;
+		int MaxsHits;
+		int start;
+		int indexnr;
+		int cmcsocketha;
+		char search_user[64];
+		char password[64];
+		char useragent[64];
+		struct iintegerMemArrayFormat *DomainIDs;
+		int getRank;
+
+		int filtered;
+		int filteredsilent;
+
+		int memfiltered;
+
+		#ifdef WITH_THREAD
+			pthread_mutex_t mutex;
+			pthread_mutex_t mutextreadSyncFilter;
+			pthread_mutex_t mutex_pathaccess;
+		#endif
+
+		struct searchd_configFORMAT *searchd_config;
+		//struct filtypesFormat *filtypes;
+		//int filtypesnrof;
+		#ifdef DEBUG_TIME
+		struct popResultBreakDownTimeFormat popResultBreakDownTime;
+		#endif
+};
+
+
 static unsigned int hash_domainid_fn(void *k) { /* XXX: Make a proper hash function here */
 	return *(unsigned short int *)k;
 }
@@ -182,9 +251,10 @@ handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum br
 
 int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,
 	struct iindexMainElements *TeffArray,struct QueryDataForamt QueryData, char *htmlBuffer,
-	unsigned int htmlBufferSize, char servername[],char subname[], unsigned int getRank,struct queryTimeFormat *queryTime) {
+	unsigned int htmlBufferSize, char servername[],char subname[], unsigned int getRank,struct queryTimeFormat *queryTime, int summaryFH,
+	struct PagesResultsFormat *PagesResults) {
 
-	fprintf(stderr, "searchkernel: popResult(antall=%i, DocID=%i)\n", antall, DocID);
+	vboprintf("searchkernel: popResult(antall=%i, DocID=%i)\n", antall, DocID);
 
 	int y;
 	char        *titleaa, *body, *metakeyw, *metadesc;
@@ -261,7 +331,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 				
 				//(*Sider).thumbnale[0] = '\0';
 				//printf("teter for inhole: %i rank: %i, i= %i showabal= %i\n",DocID,allrank,i,(*SiderHeder).showabal);
-				memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
+				//memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
 				
 				(*SiderHeder).showabal++;
 				returnStatus = 1;
@@ -301,8 +371,9 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 									&titleaa, &body, fn, NULL);
 
 							gettimeofday(&end_time, NULL);
-							#ifdef BLACK_BOKS
-							queryTime->html_parser_run += getTimeDifference(&start_time,&end_time);
+							#ifdef DEBUG_TIME
+								PagesResults->popResultBreakDownTime.html_parser_run.time += getTimeDifference(&start_time,&end_time);
+								++PagesResults->popResultBreakDownTime.html_parser_run.nr;
 							#endif
 
 							(*Sider).HtmlPreparsed = 0;
@@ -319,7 +390,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 
 							strcpy(Sider->title, titleaa);
 							strcpy(Sider->description, snippet);
-							memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
+							//memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
 
 							(*SiderHeder).showabal++;
 							returnStatus = 1;
@@ -371,7 +442,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 							//sprintf((*Sider).description,"i %i",htmlBufferSize);
 							(*Sider).description[0] = '\0';
 						}
-						memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
+						//memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
 						
 
 						(*SiderHeder).showabal++;
@@ -386,33 +457,23 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 						sprintf((*Sider).cacheLink,"http://%s/cgi-bin/ShowCache2?D=%i&amp;subname=%s",servername,DocID,subname);
 					#endif
 
-					//printf("cacheLink: %s\n",(*Sider).cacheLink);
+	
+					gettimeofday(&start_time, NULL);						
 
 
-					
 					if (((*Sider).DocumentIndex.SummaryPointer != 0) && 
-							((rReadSummary(DocID,&metadesc, &titleaa,&body,(*Sider).DocumentIndex.SummaryPointer,(*Sider).DocumentIndex.SummarySize,subname) != 0))) {
+							((rReadSummary_l(DocID,&metadesc, &titleaa,&body,(*Sider).DocumentIndex.SummaryPointer,(*Sider).DocumentIndex.SummarySize,subname,summaryFH) != 0))) {
 
 							vboprintf("hav Summary on disk\n");
 	
-							//ToDo minne kopiering er kansje ikke det raskeste her
-							//strcpy(htmlBuffer,body);
-							//htmlBufferSize = strlen(htmlBuffer);
-							//printf("titleaa %s\n",titleaa);
-						
-							//må være med når No title buggen er fikset. Slett dette og hakk ut det over
-							//ToDo minne kopiering er kansje ikke det raskeste her
-							/*
-							//vi bruker ikke html buffer engdernede, men body
-							strcpy(htmlBuffer,body);
-							htmlBufferSize = strlen(htmlBuffer);
-							*/
-							//printf("titleaa %s\n",titleaa);
-
 							(*Sider).HtmlPreparsed = 1;
 
-					
-						///////////////////////////////////////
+							gettimeofday(&end_time, NULL);				
+							#ifdef DEBUG_TIME
+								PagesResults->popResultBreakDownTime.ReadSummary.time += getTimeDifference(&start_time,&end_time);
+								++PagesResults->popResultBreakDownTime.ReadSummary.nr;					
+							#endif
+
 					}
 					else {
 
@@ -424,17 +485,17 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 							(*Sider).title[0] = '\0';
 							(*SiderHeder).showabal++;
 							returnStatus = 1;
-							fprintf(stderr, "searchkernel: ~popResult()\n");
+							vboprintf("searchkernel: ~popResult()\n");
 							return 0;
 
 						}
 						
+						gettimeofday(&end_time, NULL);				
+						#ifdef DEBUG_TIME
+							PagesResults->popResultBreakDownTime.ReadHtml.time += getTimeDifference(&start_time,&end_time);
+							++PagesResults->popResultBreakDownTime.ReadHtml.nr;					
+						#endif
 
-						//generate_summary( htmlBuffer, htmlBufferSize, &titleaa, &body, 
-						//		&metakeyw, &metadesc );
-
-						//void html_parser_run( char *url, char text[], int textsize, char **output_title, 
-						//char **output_body,void (*fn), void* wordlist );
 
 						gettimeofday(&start_time, NULL);						
 
@@ -442,8 +503,9 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 							&titleaa, &body, fn, NULL);
 
 						gettimeofday(&end_time, NULL);
-						#ifdef BLACK_BOKS
-						queryTime->html_parser_run += getTimeDifference(&start_time,&end_time);
+						#ifdef DEBUG_TIME
+							PagesResults->popResultBreakDownTime.html_parser_run.time += getTimeDifference(&start_time,&end_time);
+							++PagesResults->popResultBreakDownTime.html_parser_run.nr;
 						#endif
 
 						(*Sider).HtmlPreparsed = 0;
@@ -481,7 +543,9 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 							printf("calling generate_snippet with strlen body %i\n",strlen(body));
 						#endif
 
-						gettimeofday(&start_time, NULL);
+						#ifdef DEBUG_TIME
+							gettimeofday(&start_time, NULL);
+						#endif
 
 						#ifdef DEBUG
 							printf("#################################################################\n");
@@ -494,12 +558,17 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 
 						generate_snippet( QueryData.queryParsed, body, strlen(body), &summary, "<b>", "</b>" , 160);
 					
-						gettimeofday(&end_time, NULL);
-						#ifdef BLACK_BOKS
-						queryTime->generate_snippet += getTimeDifference(&start_time,&end_time);
+						#ifdef DEBUG_TIME
+							gettimeofday(&end_time, NULL);
+							PagesResults->popResultBreakDownTime.generate_snippet.time += getTimeDifference(&start_time,&end_time);
+							++PagesResults->popResultBreakDownTime.generate_snippet.nr;
 						#endif
 
 						//printf("summary len %i\nsummary:\n-%s-\n",strlen(summary),summary);
+
+						#ifdef DEBUG_TIME
+							gettimeofday(&start_time, NULL);
+						#endif
 					
 						if (strlen(summary) > (sizeof((*Sider).description) -1) ) {
 							sprintf((*Sider).description,"Error: Sumary to large. Was %i but only space for %i.",strlen(summary),sizeof((*Sider).description) -1);
@@ -520,10 +589,20 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 						}
 
 						free(summary);
+
+						#ifdef DEBUG_TIME
+							gettimeofday(&end_time, NULL);
+							PagesResults->popResultBreakDownTime.bodyClean.time += getTimeDifference(&start_time,&end_time);
+							++PagesResults->popResultBreakDownTime.bodyClean.nr;
+						#endif
+
 					}
 
 					debug("%u -%s-, len %i\n",DocID,titleaa,strlen(titleaa));
 
+                                        #ifdef DEBUG_TIME
+                                               gettimeofday(&start_time, NULL);
+                                        #endif
 
 
 					if (titleaa[0] == '\0') {
@@ -532,20 +611,9 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 					else if (strlen(titleaa) > (sizeof((*Sider).title) -1)) {
 					    
 					    int copylen = (sizeof((*Sider).title) -4);
-
-					    
+   
 					    strscpy(&((*Sider).title[0]),titleaa,copylen);
 					    
-					    //ToDo, underlig nokk finker ikke strncpy her, men kopierer mer en n. 
-					    //Nå kopiere manuelt.
-					    //har nå begynt å virke ???
-					    //magnus forelså &((*Sider).title[0]) i steden for (*Sider).title 
-					    //for (y=0;y<copylen;y++) {
-					    //	(*Sider).title[y] = titleaa[y];
-					    //}
-					    //(*Sider).title[y] = '\0';
-					    
-
 
 					    //søker oss til siste space , eller ; og avslutter der
 					    if ((strpointer = strrchr((*Sider).title,' ')) != NULL) {
@@ -571,32 +639,33 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 					}
 					else {
 					    strscpy((*Sider).title,titleaa,sizeof((*Sider).title) -1);
-					}
-					
-								
-                                        /*
-					//Debug: får å sette vedier riktig hvis man skal hake ut sumery og hilitning
-					metadesc = metakeyw = body = NULL;
-	
-					titleaa = malloc(512);
-					titleaa[0] = '\0';
-					sprintf((*Sider).description,"aaaaaaaaaaa");
-					*/
+					}													
 
+					#ifdef DEBUG_TIME
+						gettimeofday(&end_time, NULL);
+						PagesResults->popResultBreakDownTime.titleClean.time += getTimeDifference(&start_time,&end_time);
+						++PagesResults->popResultBreakDownTime.titleClean.nr;
+					#endif
 
-					//frigjør minne
-					//printf("frinng buffers from parsers\n");
+                                        #ifdef DEBUG_TIME
+                                               gettimeofday(&start_time, NULL);
+                                        #endif
 					
-					//temp: ser ut til at vi får problemer her hvis vi har starus "Html error. Can't read"
+					//temp: ser ut til at vi får problemer her hvis vi har status "Html error. Can't read"
 					if (titleaa != NULL) free(titleaa);
 					if (body != NULL) free(body);
 					if (metakeyw != NULL) free(metakeyw);
 					if (metadesc != NULL) free(metadesc);
 
-					//printf("TermRank %i\n",*TeffArray.TermRank);
-					memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));					
 					(*SiderHeder).showabal++;
 					returnStatus = 1;
+
+					#ifdef DEBUG_TIME
+						gettimeofday(&end_time, NULL);
+						PagesResults->popResultBreakDownTime.popResultFree.time += getTimeDifference(&start_time,&end_time);
+						++PagesResults->popResultBreakDownTime.popResultFree.nr;
+					#endif
+
 
 				}
 				else {
@@ -621,51 +690,14 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 	if (acl_allowbuffer != NULL) {free(acl_allowbuffer);}		
 	if (acl_deniedbuffer != NULL) {free(acl_deniedbuffer);}		
 
-	fprintf(stderr, "searchkernel: ~popResult()\n");
+	vboprintf("searchkernel: ~popResult()\n");
 	return returnStatus;
 }
-struct PagesResultsFormat {
-		struct SiderFormat *Sider;
-		struct SiderHederFormat *SiderHeder;
-		int antall;
-		struct iindexFormat *TeffArray;
-		int showabal;
-		int nextPage;
-		int filterOn;
-		int adultpages;
-		int noadultpages;
-		struct QueryDataForamt QueryData;
-		char *servername;
-		//int godPages;
-		int MaxsHits;
-		int start;
-		int indexnr;
-		int cmcsocketha;
-		char search_user[64];
-		char password[64];
-		char useragent[64];
-		struct iintegerMemArrayFormat *DomainIDs;
-		int getRank;
 
-		int filtered;
-		int filteredsilent;
-
-		int memfiltered;
-
-		#ifdef WITH_THREAD
-			pthread_mutex_t mutex;
-			pthread_mutex_t mutextreadSyncFilter;
-			pthread_mutex_t mutex_pathaccess;
-		#endif
-
-
-		//struct filtypesFormat *filtypes;
-		//int filtypesnrof;
-};
 
 int nextIndex(struct PagesResultsFormat *PagesResults) {
 
-	fprintf(stderr, "searchkernel: nextIndex()\n");
+	vboprintf("searchkernel: nextIndex()\n");
 	int forreturn;
 
 	#ifdef WITH_THREAD
@@ -697,13 +729,13 @@ int nextIndex(struct PagesResultsFormat *PagesResults) {
 	//printf("nextIndex: waiting for UNlock: end\n");
 	#endif
 
-	fprintf(stderr, "searchkernel: ~nextIndex()\n");
+	vboprintf("searchkernel: ~nextIndex()\n");
 	return forreturn;
 }
 
 int nextPage(struct PagesResultsFormat *PagesResults) {
 
-	fprintf(stderr, "searchkernel: nextPage()\n");
+	vboprintf("searchkernel: nextPage()\n");
 	int forreturn;
 
 	#ifdef WITH_THREAD
@@ -739,7 +771,7 @@ int nextPage(struct PagesResultsFormat *PagesResults) {
 
 	#endif
 
-	fprintf(stderr, "searchkernel: ~nextPage()\n");
+	vboprintf("searchkernel: ~nextPage()\n");
 	return forreturn;
 
 }
@@ -911,6 +943,28 @@ pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection
 
 }
 #endif
+
+//rutine som gjør en vanlig DIRead, og tar tiden
+int time_DIRead_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[], FILE *file, struct PagesResultsFormat *PagesResults) {
+
+	int ret;
+
+	#ifdef DEBUG_TIME
+		struct timeval start_time, end_time;
+		gettimeofday(&start_time, NULL);
+	#endif
+
+	ret = DIRead_fh(DocumentIndexPost,DocID,subname,file);
+
+	#ifdef DEBUG_TIME
+		gettimeofday(&end_time, NULL);
+		PagesResults->popResultBreakDownTime.DocumentIndex.time += getTimeDifference(&start_time,&end_time);
+		++PagesResults->popResultBreakDownTime.DocumentIndex.nr;
+	#endif
+
+	return ret;
+}
+
 //int generatePagesResults( struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall, 
 //struct iindexFormat *TeffArray, int showabal, int filterOn, int adultpages, int noadultpages,struct 
 //QueryDataForamt QueryData, char servername[],int godPages,int MaxsHits,int start) 
@@ -918,7 +972,7 @@ pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection
 void *generatePagesResults(void *arg) 
 {
 
-	fprintf(stderr, "searchkernel: generatePagesResults()\n");
+	vboprintf("searchkernel: generatePagesResults()\n");
 	struct PagesResultsFormat *PagesResults = (struct PagesResultsFormat *)arg;
 
 	int i,y;
@@ -948,7 +1002,7 @@ void *generatePagesResults(void *arg)
 
 	if ((htmlBuffer = malloc(htmlBufferSize)) == NULL) {
 		perror("can't malloc");
-		fprintf(stderr, "searchkernel: ~generatePagesResults()\n");
+		vboprintf("searchkernel: ~generatePagesResults()\n");
 		return;
 	}
 
@@ -1010,6 +1064,9 @@ void *generatePagesResults(void *arg)
 			continue;
 		}
 
+		#ifdef DEBUG_TIME
+		gettimeofday(&start_time, NULL);
+		#endif
 		//uanset om vi har filter eller ikke så slår vi opp domainid. Men hvis vi har filter på så teller vi også
 		if (!iintegerMemArrayGet ((*PagesResults).DomainIDs,&DomainID,sizeof(*DomainID),(*PagesResults).TeffArray->iindex[i].DocID) ) {
 			#ifdef DEBUG
@@ -1042,12 +1099,17 @@ void *generatePagesResults(void *arg)
 			}
 #endif
 		}
+		#ifdef DEBUG_TIME
+		        gettimeofday(&end_time, NULL);
+        	        PagesResults->popResultBreakDownTime.memGetDomainID.time += getTimeDifference(&start_time,&end_time);
+	                ++PagesResults->popResultBreakDownTime.memGetDomainID.nr;
+		#endif
 
 		#endif
 
-		printf("readin di for %u\n",(*PagesResults).TeffArray->iindex[i].DocID);
+		vboprintf("readin di for %u\n",(*PagesResults).TeffArray->iindex[i].DocID);
 		//leser DI
-		if (!DIRead_fmode(&side->DocumentIndex,(*PagesResults).TeffArray->iindex[i].DocID,(*(*PagesResults).TeffArray->iindex[i].subname).subname,'r')) 
+		if (!time_DIRead_fh(&side->DocumentIndex,(*PagesResults).TeffArray->iindex[i].DocID,(*(*PagesResults).TeffArray->iindex[i].subname).subname,PagesResults->searchd_config->lotPreOpen.DocumentIndex[rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID)], PagesResults)) 
 		{
                         //hvis vi av en eller annen grun ikke kunne gjøre det kalger vi
                         vboprintf("Can't read post for %u-%i\n",(*PagesResults).TeffArray->iindex[i].DocID,rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID));
@@ -1060,9 +1122,13 @@ void *generatePagesResults(void *arg)
 		
 		//adult fra di
 		if (((*PagesResults).filterOn) && (filterAdultWeight_value(side->DocumentIndex.AdultWeight,(*PagesResults).adultpages,(*PagesResults).noadultpages)) ) {
-			vboprintf("Hav seen url befor. Url \"%s\"\n",side->DocumentIndex.Url);
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_value,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
-                        continue;
+			vboprintf("Filter: filtered adult. DocID %u, adult value %i, adult bool value %i\n",
+				(*PagesResults).TeffArray->iindex[i].DocID, 
+				(int)side->DocumentIndex.AdultWeight ,(
+				int)adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID) );
+
+				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_value,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
+	                        continue;
 		}
 
 		//filtrerer ut dublikater fra med crc32 fra DocumentIndex
@@ -1077,7 +1143,7 @@ void *generatePagesResults(void *arg)
 
 		//filtrere silent
 		if (filterResponseCode(side)) {
-			vboprintf("page har bad respons code\n");
+			vboprintf("filter: page har bad respons code\n");
 			increaseFilteredSilent(PagesResults,NULL,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 
 			continue;
@@ -1088,7 +1154,7 @@ void *generatePagesResults(void *arg)
 		#ifndef BLACK_BOKS
 
 		if (side->DocumentIndex.Url[0] == '\0') {
-			vboprintf("DocumentIndex url is emty\n");
+			vboprintf("filter: DocumentIndex url is emty. DocID %u\n",(*PagesResults).TeffArray->iindex[i].DocID);
 			increaseFilteredSilent(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterNoUrl,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 
 			continue;
@@ -1123,7 +1189,7 @@ void *generatePagesResults(void *arg)
 		#ifndef BLACK_BOKS
 		//DI filtere
 		if (((*PagesResults).filterOn) && (filterResponse(side->DocumentIndex.response) )) {
-			vboprintf("bad respons kode %i\n",side->DocumentIndex.response);
+			vboprintf("bad respons kode %i for %u.\n",side->DocumentIndex.response,(*PagesResults).TeffArray->iindex[i].DocID);
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterResponse,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 			continue;
 		}
@@ -1138,13 +1204,35 @@ void *generatePagesResults(void *arg)
 		runarb: 24.10.2007
 		her var PagesResults før	
 		*/
-		if (PagesResults->getRank == 0 && !popResult(side, (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,(*(*PagesResults).TeffArray->iindex[i].subname).subname, PagesResults->getRank,&PagesResults->SiderHeder->queryTime)) {
+		#ifdef DEBUG_TIME
+			gettimeofday(&start_time, NULL);
+		#endif
+		if (PagesResults->getRank == 0 && !popResult(side, (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,(*(*PagesResults).TeffArray->iindex[i].subname).subname, PagesResults->getRank,&PagesResults->SiderHeder->queryTime,PagesResults->searchd_config->lotPreOpen.Summary[rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID)],PagesResults)) {
                        	vboprintf("can't popResult\n");
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantpopResult,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 			continue;
 
 		}
+		#ifdef DEBUG_TIME
+		        gettimeofday(&end_time, NULL);
+        	        PagesResults->popResultBreakDownTime.totalpopResult.time += getTimeDifference(&start_time,&end_time);
+	                ++PagesResults->popResultBreakDownTime.totalpopResult.nr;
+		#endif
 
+		#ifdef DEBUG_TIME
+			gettimeofday(&start_time, NULL);
+		#endif
+		memcpy(&side->iindex,&PagesResults->TeffArray->iindex[i],sizeof(PagesResults->TeffArray->iindex[i]));					    
+		#ifdef DEBUG_TIME
+		        gettimeofday(&end_time, NULL);
+        	        PagesResults->popResultBreakDownTime.iindexMemcpy.time += getTimeDifference(&start_time,&end_time);
+	                ++PagesResults->popResultBreakDownTime.iindexMemcpy.nr;
+		#endif
+
+
+		#ifdef DEBUG_TIME
+			gettimeofday(&start_time, NULL);
+		#endif
 		//Så lenge vi ikke har crc32 for alle domener
 		if (side->DocumentIndex.crc32 == 0) {
 			side->DocumentIndex.crc32 = crc32boitho(htmlBuffer);
@@ -1157,6 +1245,12 @@ void *generatePagesResults(void *arg)
                 	}
 			*/
 		}
+		#ifdef DEBUG_TIME
+		        gettimeofday(&end_time, NULL);
+        	        PagesResults->popResultBreakDownTime.makecrc32.time += getTimeDifference(&start_time,&end_time);
+	                ++PagesResults->popResultBreakDownTime.makecrc32.nr;
+
+		#endif
 
 		/*
 		***************************************************************************/		
@@ -1180,27 +1274,27 @@ void *generatePagesResults(void *arg)
 		#ifdef BLACK_BOKS
 
 		printf("pathaccess: start\n");
-		//temp: kortslutter får å implementere sudo. Må implementeres skikkelig, men å spørre boithoad
-		if (strcmp((*PagesResults).password,"water66") == 0) {
-			printf("pathaccess: have sodo password. Won't do pathaccess\n");
-		}
-		else if (!pathaccess(PagesResults, (*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray->iindex[i].subname).subname,side->DocumentIndex.Url,(*PagesResults).search_user,(*PagesResults).password)) {
-			fprintf(stderr, "searchkernel: Access denied for file \"%s\" in %s\n", side->DocumentIndex.Url, (*(*PagesResults).TeffArray->iindex[i].subname).subname);
+			//temp: kortslutter får å implementere sudo. Må implementeres skikkelig, men å spørre boithoad
+			if (strcmp((*PagesResults).password,"water66") == 0) {
+				printf("pathaccess: have sodo password. Won't do pathaccess\n");
+			}
+			else if (!pathaccess(PagesResults, (*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray->iindex[i].subname).subname,side->DocumentIndex.Url,(*PagesResults).search_user,(*PagesResults).password)) {
+				fprintf(stderr, "searchkernel: Access denied for file \"%s\" in %s\n", side->DocumentIndex.Url, (*(*PagesResults).TeffArray->iindex[i].subname).subname);
 
-			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
+				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 
-			//temp:
-			//strcpy(side->title,"Access denied!");
-			//strcpy(side->description,"");
-			continue;
+				//temp:
+				//strcpy(side->title,"Access denied!");
+				//strcpy(side->description,"");
+				continue;
 
-		}
-		#ifdef DEBUG
-		printf("pathaccess: done\n");
-		#endif
+			}
+			#ifdef DEBUG
+			printf("pathaccess: done\n");
+			#endif
 
-		#ifdef DEBUG
-		printf("url rewrite: start\n");
+			#ifdef DEBUG
+			printf("url rewrite: start\n");
 		#endif
 
 #ifdef BLACK_BOKS
@@ -1227,20 +1321,6 @@ void *generatePagesResults(void *arg)
 		gettimeofday(&end_time, NULL);
 		(*(*PagesResults).SiderHeder).queryTime.crawlManager += getTimeDifference(&start_time,&end_time);
 
-		/*
-		//Så lenge vi ikke har crc32 for alle domener
-		if (side->DocumentIndex.crc32 == 0) {
-			side->DocumentIndex.crc32 = crc32boitho(htmlBuffer);
-		
-
-			if (((*PagesResults).filterOn) && (filterSameCrc32(localshowabal,side,(*PagesResults).Sider))) {
-	                      	vboprintf("hav same crc32\n");
-				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_2,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
-                	      	continue;
-                	}
-		}
-		*/		
-		///////////
 
 		if (1 || !PagesResults->getRank) {
 			//urI
@@ -1267,6 +1347,8 @@ void *generatePagesResults(void *arg)
 		side->type = siderType_normal;
 		
 		side->deletet = 0;
+	
+
 
 		/*******************************************************************************************
 		filtere som krever minne trå synkronisering
@@ -1276,11 +1358,15 @@ void *generatePagesResults(void *arg)
 		pthread_mutex_lock(&(*PagesResults).mutextreadSyncFilter);
 		#endif
 
+		#ifdef DEBUG_TIME
+			gettimeofday(&start_time, NULL);
+		#endif
+
 		int treadSyncFilters = 0;
 
 		//håntering av at vi kan ha mer en en pi.
 		if (pi_switch(nrofGodPages(PagesResults),side,(*PagesResults).Sider)) {
-			vboprintf("switch a pi \"%s\"\n",side->DocumentIndex.Url);
+			vboprintf("filter (treadSyncFilter): switch a pi \"%s\"\n",side->DocumentIndex.Url);
 			//continue;
 			treadSyncFilters = 1;
 			goto end_filter_lock;
@@ -1288,7 +1374,7 @@ void *generatePagesResults(void *arg)
 		}
 
 		if (((*PagesResults).filterOn) && (filterSameCrc32(nrofGodPages(PagesResults),side,(*PagesResults).Sider))) {
-                      	vboprintf("hav same crc32\n");
+                      	vboprintf("filter (treadSyncFilter): hav same crc32\n");
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameCrc32_2,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
                	      	//continue;
 			treadSyncFilters = 1;
@@ -1298,7 +1384,7 @@ void *generatePagesResults(void *arg)
 
 		//fjerner eventuelt like urler
 		if (((*PagesResults).filterOn) && (filterSameUrl(nrofGodPages(PagesResults),side->DocumentIndex.Url,(*PagesResults).Sider)) ) {
-			vboprintf("Hav seen url befor. Url \"%s\"\n",side->DocumentIndex.Url);
+			vboprintf("filter (treadSyncFilter): Hav seen url befor. Url \"%s\"\n",side->DocumentIndex.Url);
 			
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameUrl,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
                         //continue;
@@ -1312,7 +1398,7 @@ void *generatePagesResults(void *arg)
 #ifndef BLACK_BOKS
 		if (((*PagesResults).filterOn) && (filterSameDomain(nrofGodPages(PagesResults),side,(*PagesResults).Sider))) {
 
-			vboprintf("hav same domain. Domain: %s. Url %s\n",side->domain,side->DocumentIndex.Url);
+			vboprintf("filter (treadSyncFilter): hav same domain. Domain: \"%s\", domain id %ho. Url %s\n",side->domain,side->DomainID,side->DocumentIndex.Url);
 
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameDomain,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 			//continue;	
@@ -1328,7 +1414,7 @@ void *generatePagesResults(void *arg)
 
                         		if ((strcmp(side->domain,(*PagesResults).Sider[y].domain)) == 0 && ((*PagesResults).Sider[y].iindex.allrank < side->iindex.allrank)) {
 
-						vboprintf("have same domain, but page \"%s\" is higher ranked then \"%s\". swaping it\n",side->DocumentIndex.Url,(*PagesResults).Sider[y].DocumentIndex.Url);
+						vboprintf("filter (treadSyncFilter): have same domain, but page \"%s\" is higher ranked then \"%s\". swaping it\n",side->DocumentIndex.Url,(*PagesResults).Sider[y].DocumentIndex.Url);
 						
 						(*PagesResults).Sider[y] = *side;
 
@@ -1350,12 +1436,19 @@ void *generatePagesResults(void *arg)
 
 		end_filter_lock:
 
+		#ifdef DEBUG_TIME
+		        gettimeofday(&end_time, NULL);
+        	        PagesResults->popResultBreakDownTime.treadSyncFilter.time += getTimeDifference(&start_time,&end_time);
+	                ++PagesResults->popResultBreakDownTime.treadSyncFilter.nr;
+
+		#endif
+
 		#ifdef WITH_THREAD
 			pthread_mutex_unlock(&(*PagesResults).mutextreadSyncFilter);
 		#endif
 		
 		if (treadSyncFilters == 1) {
-			vboprintf("Page did get filtered in treadSyncFilter");
+			vboprintf("Page did get filtered in treadSyncFilter\n");
 			continue;
 		}
 
@@ -1385,7 +1478,7 @@ void *generatePagesResults(void *arg)
 	//pthread_exit(NULL);
 	#endif
 
-	fprintf(stderr, "searchkernel: ~generatePagesResults()\n");
+	vboprintf("searchkernel: ~generatePagesResults()\n");
 	//return 1;
 
 	return NULL;
@@ -1529,7 +1622,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	) { 
 
 
-	fprintf(stderr, "searchkernel: dosearch(query=\"%s\")\n", query);
+	vboprintf("searchkernel: dosearch(query=\"%s\")\n", query);
 	struct PagesResultsFormat PagesResults;
 	struct filteronFormat filteron;
 
@@ -1547,7 +1640,49 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	PagesResults.servername = servername;
 	//PagesResults.godPages
 	PagesResults.start = start;
+	PagesResults.searchd_config = searchd_config;
 
+	#ifdef DEBUG_TIME
+		PagesResults.popResultBreakDownTime.DocumentIndex.nr = 0;
+		PagesResults.popResultBreakDownTime.DocumentIndex.time = 0;
+
+		PagesResults.popResultBreakDownTime.ReadSummary.nr = 0;
+		PagesResults.popResultBreakDownTime.ReadSummary.time = 0;
+
+		PagesResults.popResultBreakDownTime.generate_snippet.nr = 0;
+		PagesResults.popResultBreakDownTime.generate_snippet.time = 0;
+
+		PagesResults.popResultBreakDownTime.html_parser_run.nr = 0;
+		PagesResults.popResultBreakDownTime.html_parser_run.time = 0;
+
+		PagesResults.popResultBreakDownTime.ReadHtml.nr = 0;
+		PagesResults.popResultBreakDownTime.ReadHtml.time = 0;
+
+
+		PagesResults.popResultBreakDownTime.memGetDomainID.nr = 0;
+		PagesResults.popResultBreakDownTime.memGetDomainID.time = 0;
+
+		PagesResults.popResultBreakDownTime.totalpopResult.nr = 0;
+		PagesResults.popResultBreakDownTime.totalpopResult.time = 0;
+
+		PagesResults.popResultBreakDownTime.makecrc32.nr = 0;
+		PagesResults.popResultBreakDownTime.makecrc32.time = 0;
+
+		PagesResults.popResultBreakDownTime.treadSyncFilter.nr = 0;
+		PagesResults.popResultBreakDownTime.treadSyncFilter.time = 0;
+
+		PagesResults.popResultBreakDownTime.bodyClean.nr = 0;
+		PagesResults.popResultBreakDownTime.bodyClean.time = 0;
+
+		PagesResults.popResultBreakDownTime.titleClean.nr = 0;
+		PagesResults.popResultBreakDownTime.titleClean.time = 0;
+
+		PagesResults.popResultBreakDownTime.iindexMemcpy.nr = 0;
+		PagesResults.popResultBreakDownTime.iindexMemcpy.time = 0;
+
+		PagesResults.popResultBreakDownTime.popResultFree.nr = 0;
+		PagesResults.popResultBreakDownTime.popResultFree.time = 0;
+	#endif
 
 	//hvr vi skal begynne. Vå bruker dog navn som 1, 2 osv til brukeren, men starter på 0 internt 
 	//dette har dog dispatsher_all allerede håntert, ved å trekke fra en
@@ -2025,7 +2160,26 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	vboprintf("\t%-40s %f\n","popResult",(*SiderHeder).queryTime.popResult);
 	vboprintf("\t%-40s %f\n","adultcalk",(*SiderHeder).queryTime.adultcalk);
 
-	
+	#ifdef DEBUG_TIME
+		printf("\npopResult:\n");
+		printf("\t%-40s %i, %f\n","DocumentIndex",PagesResults.popResultBreakDownTime.DocumentIndex.nr,PagesResults.popResultBreakDownTime.DocumentIndex.time);
+		printf("\t%-40s %i, %f\n","ReadSummary",PagesResults.popResultBreakDownTime.ReadSummary.nr,PagesResults.popResultBreakDownTime.ReadSummary.time);
+
+		printf("\t%-40s %i, %f\n","generate_snippet",PagesResults.popResultBreakDownTime.generate_snippet.nr,PagesResults.popResultBreakDownTime.generate_snippet.time);
+		printf("\t%-40s %i, %f\n","html_parser_run",PagesResults.popResultBreakDownTime.html_parser_run.nr,PagesResults.popResultBreakDownTime.html_parser_run.time);
+		printf("\t%-40s %i, %f\n","ReadHtml",PagesResults.popResultBreakDownTime.ReadHtml.nr,PagesResults.popResultBreakDownTime.ReadHtml.time);
+
+		printf("\t%-40s %i, %f\n","memGetDomainID",PagesResults.popResultBreakDownTime.memGetDomainID.nr,PagesResults.popResultBreakDownTime.memGetDomainID.time);
+		printf("\t%-40s %i, %f\n","totalpopResult",PagesResults.popResultBreakDownTime.totalpopResult.nr,PagesResults.popResultBreakDownTime.totalpopResult.time);
+		printf("\t%-40s %i, %f\n","makecrc32",PagesResults.popResultBreakDownTime.makecrc32.nr,PagesResults.popResultBreakDownTime.makecrc32.time);
+		printf("\t%-40s %i, %f\n","treadSyncFilter",PagesResults.popResultBreakDownTime.treadSyncFilter.nr,PagesResults.popResultBreakDownTime.treadSyncFilter.time);
+		printf("\t%-40s %i, %f\n","titleClean",PagesResults.popResultBreakDownTime.titleClean.nr,PagesResults.popResultBreakDownTime.titleClean.time);
+		printf("\t%-40s %i, %f\n","bodyClean",PagesResults.popResultBreakDownTime.bodyClean.nr,PagesResults.popResultBreakDownTime.bodyClean.time);
+		printf("\t%-40s %i, %f\n","iindexMemcpy",PagesResults.popResultBreakDownTime.iindexMemcpy.nr,PagesResults.popResultBreakDownTime.iindexMemcpy.time);
+		printf("\t%-40s %i, %f\n","popResultFree",PagesResults.popResultBreakDownTime.popResultFree.nr,PagesResults.popResultBreakDownTime.popResultFree.time);
+
+	#endif
+
 
 	#ifdef BLACK_BOKS
 	vboprintf("\t%-40s %f\n","filetypes",(*SiderHeder).queryTime.filetypes);
@@ -2036,8 +2190,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	vboprintf("\t%-40s %f\n","getUserObjekt",(*SiderHeder).queryTime.getUserObjekt);
 	vboprintf("\t%-40s %f\n","cmc_conect",(*SiderHeder).queryTime.cmc_conect);
 
-	vboprintf("\t%-40s %f\n","html_parser_run",(*SiderHeder).queryTime.html_parser_run);
-	vboprintf("\t%-40s %f\n","generate_snippet",(*SiderHeder).queryTime.generate_snippet);
 
 	#endif
 
@@ -2060,10 +2212,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	vboprintf("\t%-40s %i\n","cmc_pathaccess",(*SiderHeder).filtersTraped.cmc_pathaccess);
 	vboprintf("\t%-40s %i\n","filterSameCrc32_2",(*SiderHeder).filtersTraped.filterSameCrc32_2);
 
-	printf("\n");
+	vboprintf("\n");
 	vboprintf("\t%-40s %i\n","filteredsilent",PagesResults.filteredsilent);
 
-	printf("\n");
+	vboprintf("\n");
 	vboprintf("\tnoadultpages %i, adultpages %i\n",PagesResults.noadultpages,PagesResults.adultpages);
 
 	vboprintf("\n\n");
@@ -2080,7 +2232,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	destroy_query( &PagesResults.QueryData.queryParsed );
 
-	fprintf(stderr, "searchkernel: ~dosearch()\n");
+	vboprintf("searchkernel: ~dosearch()\n");
 	return 1;
 }
 
@@ -2483,22 +2635,22 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 
 
 	//printer ut info om brukt tid
-	printf("Time\n");
+	vboprintf("Time\n");
 	//printf("\tAthorSearch %f\n",(*SiderHeder).queryTime.AthorSearch);
-	printf("\t%-40s %f\n","AthorSearch",(*SiderHeder).queryTime.AthorSearch);
+	vboprintf("\t%-40s %f\n","AthorSearch",(*SiderHeder).queryTime.AthorSearch);
 	//printf("\t%-40s %f\n","AthorRank",(*SiderHeder).queryTime.AthorRank);
-	printf("\t%-40s %f\n","UrlSearch",(*SiderHeder).queryTime.UrlSearch);
-	printf("\t%-40s %f\n","MainSearch",(*SiderHeder).queryTime.MainSearch);
+	vboprintf("\t%-40s %f\n","UrlSearch",(*SiderHeder).queryTime.UrlSearch);
+	vboprintf("\t%-40s %f\n","MainSearch",(*SiderHeder).queryTime.MainSearch);
 	//printf("\t%-40s %f\n","MainRank",(*SiderHeder).queryTime.MainRank);
-	printf("\t%-40s %f\n","MainAthorMerge",(*SiderHeder).queryTime.MainAthorMerge);
-	printf("\n");
-	printf("\t%-40s %f\n","popRank",(*SiderHeder).queryTime.popRank);
-	printf("\t%-40s %f\n","responseShortning",(*SiderHeder).queryTime.responseShortning);
-	printf("\n");
-	printf("\t%-40s %f\n","allrankCalc",(*SiderHeder).queryTime.allrankCalc);
-	printf("\t%-40s %f\n","indexSort",(*SiderHeder).queryTime.indexSort);
-	printf("\t%-40s %f\n","popResult",(*SiderHeder).queryTime.popResult);
-	printf("\t%-40s %f\n","adultcalk",(*SiderHeder).queryTime.adultcalk);
+	vboprintf("\t%-40s %f\n","MainAthorMerge",(*SiderHeder).queryTime.MainAthorMerge);
+	vboprintf("\n");
+	vboprintf("\t%-40s %f\n","popRank",(*SiderHeder).queryTime.popRank);
+	vboprintf("\t%-40s %f\n","responseShortning",(*SiderHeder).queryTime.responseShortning);
+	vboprintf("\n");
+	vboprintf("\t%-40s %f\n","allrankCalc",(*SiderHeder).queryTime.allrankCalc);
+	vboprintf("\t%-40s %f\n","indexSort",(*SiderHeder).queryTime.indexSort);
+	vboprintf("\t%-40s %f\n","popResult",(*SiderHeder).queryTime.popResult);
+	vboprintf("\t%-40s %f\n","adultcalk",(*SiderHeder).queryTime.adultcalk);
 
 	
 

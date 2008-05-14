@@ -1,3 +1,9 @@
+#define _XOPEN_SOURCE 600
+
+//preopen
+#include "../common/lot.h"
+
+
 #include "../common/boithohome.h"
 #include "../common/bstr.h"
 
@@ -109,6 +115,63 @@ catch_alarm (int sig)
 	exit(1);
 }
 
+void lotPreOpenStart(FILE **preOpen[], char filename[], char subname[], int use) {
+
+	int i;
+	char buf[1];
+
+	if ((*preOpen = malloc(sizeof(FILE *) * maxLots)) == NULL) {
+		perror("malloc preOpen");
+		exit(-1);
+	}
+
+	for (i=0;i<maxLots;i++) {
+		if (use) {
+			(*preOpen)[i] = lotOpenFileNoCasheByLotNr(i,filename,"rb", 'r',subname);
+
+
+			if ((*preOpen)[i] != NULL) {
+				fread(&buf,sizeof(buf),1,(*preOpen)[i]);
+				printf("opening %i, as %p\n",i,(*preOpen)[i]);
+			}
+		}
+		else {
+			(*preOpen)[i] = NULL;
+		}
+		//(*preOpen)[i] = NULL;
+	}
+
+}
+
+void lotPreOpenStartl(int *preOpen[], char filename[], char subname[], int use) {
+
+	int i, n;
+	char buf[1];
+
+	if ((*preOpen = malloc(sizeof(int) * maxLots)) == NULL) {
+		perror("malloc preOpen");
+		exit(-1);
+	}
+
+	for (i=0;i<maxLots;i++) {
+		if (use) {
+			(*preOpen)[i] = lotOpenFileNoCasheByLotNrl(i,filename,"rb", 'r',subname);
+			if ((*preOpen)[i] != -1) {
+
+				if ((n=posix_fadvise((*preOpen)[i], 0,0,POSIX_FADV_RANDOM)) == 0) {
+
+				} 
+
+				read((*preOpen)[i],&buf,sizeof(buf));
+				printf("opening %i, as %i\n",i,(*preOpen)[i]);
+			}
+		}
+		else {
+			(*preOpen)[i] = -1;
+		}
+	}
+
+}
 
 int main(int argc, char *argv[])
 {
@@ -130,11 +193,12 @@ int main(int argc, char *argv[])
 	searchd_config.optMax = 0;
 	searchd_config.optSingle = 0;
 	searchd_config.optrankfile = NULL;
-	
+	searchd_config.optPreOpen = 0;
+
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"lp:m:b:vsL:"))!=-1) {
+        while ((c=getopt(argc,argv,"lp:m:b:vsL:o"))!=-1) {
                 switch (c) {
                         case 'p':
                                 searchd_config.searchport = atoi(optarg);
@@ -142,6 +206,9 @@ int main(int argc, char *argv[])
                                 break;
                         case 'l':
 				searchd_config.optLog = 1;
+                                break;
+                        case 'o':
+				searchd_config.optPreOpen = 1;
                                 break;
                         case 'm':
 				searchd_config.optMax = atoi(optarg);
@@ -186,6 +253,10 @@ int main(int argc, char *argv[])
 	#endif
 
 	strncpy(servername,argv[1 +optind],sizeof(servername) -1);
+
+
+	lotPreOpenStart(&searchd_config.lotPreOpen.DocumentIndex,"DocumentIndex","www",searchd_config.optPreOpen);
+	lotPreOpenStartl(&searchd_config.lotPreOpen.Summary,"summary","www",searchd_config.optPreOpen);
 
 
 	#ifdef BLACK_BOKS
@@ -414,7 +485,7 @@ int main(int argc, char *argv[])
 					do_chld((void *) &searchd_config);	
 				#endif
 				*/
-				fprintf(stderr, "searchd: Forking new prosess.\n");
+				vboprintf("searchd: Forking new prosess.\n");
 				if (fork() == 0) { // this is the child process
 
 					close(sockfd); // child doesn't need the listener
@@ -423,7 +494,7 @@ int main(int argc, char *argv[])
 				 
 
 					close(searchd_config.newsockfd);
-					fprintf(stderr, "searchd: Terminating child.\n");
+					vboprintf("searchd: Terminating child.\n");
 		
 					exit(0);
 				}
@@ -460,8 +531,8 @@ int main(int argc, char *argv[])
 */
 void *do_chld(void *arg)
 {
-	fprintf(stderr, "searchd_child: Starting new thread.\n");
-	fprintf(stderr, "searchd: do_chld()\n");
+	vboprintf("searchd_child: Starting new thread.\n");
+	vboprintf("searchd: do_chld()\n");
 	//int 	mysocfd = (int) arg;
 	struct searchd_configFORMAT *searchd_config = arg;
 	int   mysocfd = (*searchd_config).newsockfd;
@@ -487,7 +558,6 @@ void *do_chld(void *arg)
 	config_setting_t *cfgcollections;
 
 	struct subnamesConfigFormat subnamesDefaultsConfig;
-/***************************************/
 	char **Data;
         int Count;
 
@@ -561,7 +631,7 @@ void *do_chld(void *arg)
                 fclose(LOGFILE);
         }
 
-	fprintf(stderr, "searchd_child: Incoming query: %s\n",queryNodeHeder.query);
+	vboprintf("searchd_child: Incoming query: %s\n",queryNodeHeder.query);
 
 	strcpy(SiderHeder->servername,servername);
 
@@ -1293,6 +1363,6 @@ void *do_chld(void *arg)
 		#endif
 
 
-    fprintf(stderr, "searchd: Normal exit.\n");
-    fprintf(stderr, "searchd: ~do_chld()\n");
+    vboprintf("searchd: Normal exit.\n");
+    vboprintf("searchd: ~do_chld()\n");
 }

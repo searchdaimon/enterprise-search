@@ -3,6 +3,12 @@
 #include "../common/define.h"
 #include "../common/integerindex.h"
 
+struct lotPreOpenFormat {
+
+	FILE **DocumentIndex;
+	int *Summary;
+};
+
 struct searchd_configFORMAT {
         int     newsockfd;
 	int cmc_port;
@@ -11,6 +17,9 @@ struct searchd_configFORMAT {
         int optMax;
         int optSingle;
         char *optrankfile;
+
+	int optPreOpen;
+	struct lotPreOpenFormat lotPreOpen;
 	thesaurus           *thesaurusp;
 };
 
