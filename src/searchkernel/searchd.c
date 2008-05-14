@@ -1,4 +1,9 @@
-#define _XOPEN_SOURCE 600
+#ifndef BLACK_BOKS
+	// runarb, 14 mai 2008:
+	// for posix_fadvise()
+	// dette kan skape problemer i andre header filer!!!!!
+	#define _XOPEN_SOURCE 600
+#endif
 
 //preopen
 #include "../common/lot.h"
@@ -126,19 +131,20 @@ void lotPreOpenStart(FILE **preOpen[], char filename[], char subname[], int use)
 	}
 
 	for (i=0;i<maxLots;i++) {
-		if (use) {
-			(*preOpen)[i] = lotOpenFileNoCasheByLotNr(i,filename,"rb", 'r',subname);
+
+		(*preOpen)[i] = NULL;
+
+		#ifndef BLACK_BOKS
+			if (use) {
+				(*preOpen)[i] = lotOpenFileNoCasheByLotNr(i,filename,"rb", 'r',subname);
 
 
-			if ((*preOpen)[i] != NULL) {
-				fread(&buf,sizeof(buf),1,(*preOpen)[i]);
-				printf("opening %i, as %p\n",i,(*preOpen)[i]);
+				if ((*preOpen)[i] != NULL) {
+					fread(&buf,sizeof(buf),1,(*preOpen)[i]);
+					printf("opening %i, as %p\n",i,(*preOpen)[i]);
+				}
 			}
-		}
-		else {
-			(*preOpen)[i] = NULL;
-		}
-		//(*preOpen)[i] = NULL;
+		#endif
 	}
 
 }
@@ -154,21 +160,24 @@ void lotPreOpenStartl(int *preOpen[], char filename[], char subname[], int use) 
 	}
 
 	for (i=0;i<maxLots;i++) {
-		if (use) {
-			(*preOpen)[i] = lotOpenFileNoCasheByLotNrl(i,filename,"rb", 'r',subname);
-			if ((*preOpen)[i] != -1) {
 
-				if ((n=posix_fadvise((*preOpen)[i], 0,0,POSIX_FADV_RANDOM)) == 0) {
+		(*preOpen)[i] = -1;
 
-				} 
+		#ifndef BLACK_BOKS
+			if (use) {
+				(*preOpen)[i] = lotOpenFileNoCasheByLotNrl(i,filename,"rb", 'r',subname);
+				if ((*preOpen)[i] != -1) {
 
-				read((*preOpen)[i],&buf,sizeof(buf));
-				printf("opening %i, as %i\n",i,(*preOpen)[i]);
+					if ((n=posix_fadvise((*preOpen)[i], 0,0,POSIX_FADV_RANDOM)) == 0) {
+	
+					} 
+
+					read((*preOpen)[i],&buf,sizeof(buf));
+					printf("opening %i, as %i\n",i,(*preOpen)[i]);
+				}
 			}
-		}
-		else {
-			(*preOpen)[i] = -1;
-		}
+		#endif
+		
 	}
 
 }
