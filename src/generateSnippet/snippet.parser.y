@@ -14,7 +14,7 @@
 #include "snippet.parser.common.h"
 
 
-#define STEMMING
+//#define STEMMING
 
 // --- fra flex:
 typedef void* yyscan_t;
@@ -1077,6 +1077,8 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 
     if (data->num_queries > 0)
 	{
+	    int		phrase_nr=0;
+
 	    for (i=0; i<qa.n; i++)
 		{
 		    qw_size+= qa.query[i].n;
@@ -1093,6 +1095,7 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 		}
 
 	    data->phrase_sizes = malloc(sizeof(int)*data->num_queries);
+	    printf("data->num_queries = %i\n", data->num_queries);
 
 	    qw = malloc(sizeof(char*)*qw_size);
 	    sigma = malloc(sizeof(int)*qw_size);
@@ -1108,7 +1111,8 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 		    if (qa.query[i].n > longest_phrase)
 			longest_phrase = qa.query[i].n;
 
-		    data->phrase_sizes[num_qw] = qa.query[i].n;
+		    printf("num_qw(1) = %i\n", phrase_nr);
+		    data->phrase_sizes[phrase_nr++] = qa.query[i].n;
 
 		    for (j=0; j<qa.query[i].n; j++)
 			{
@@ -1149,7 +1153,8 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 
 			    for (m=0; m<qa.query[i].alt_n; m++)
 				{
-				    data->phrase_sizes[num_qw] = qa.query[i].alt[m].n;
+				    printf("num_qw(2) = %i\n", phrase_nr);
+				    data->phrase_sizes[phrase_nr++] = qa.query[i].alt[m].n;
 
 				    for (j=0; j<qa.query[i].alt[m].n; j++)
 					{

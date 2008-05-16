@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
     get_query(sok, strlen(sok), &qa);
 
     thesaurus		*T = thesaurus_init("../../data/thesaurus.text", "../../data/thesaurus.id");
+//    thesaurus		*T = thesaurus_init("../../data/mini.thesaurus.text", "../../data/mini.thesaurus.id");
 
     // Kjør stemming på query:
     thesaurus_expand_query(T, &qa);
@@ -33,7 +34,8 @@ int main(int argc, char *argv[])
     // Print query med innebygd print-funksjon:
     char	buf[1024];
     sprint_expanded_query(buf, 1023, &qa);
-    printf("\nExpanded query: %s\n\n", buf);
+//    sprint_query(buf, 1023, &qa);
+    printf("\nQuery: %s\n\n", buf);
 
     for (paramnr = 2; paramnr<argc; paramnr++)
 	{
