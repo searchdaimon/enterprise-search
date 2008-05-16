@@ -14,7 +14,7 @@
 #include "snippet.parser.common.h"
 
 
-//#define STEMMING
+#define STEMMING
 
 // --- fra flex:
 typedef void* yyscan_t;
