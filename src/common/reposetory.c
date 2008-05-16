@@ -464,29 +464,44 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 	//skriver verson
 	#ifdef BLACK_BOKS
 		unsigned int CurrentReposetoryVersionAsUInt = CurrentReposetoryVersion;
-		fwrite(&CurrentReposetoryVersionAsUInt,sizeof(unsigned int),1,RFILE);
+		if(fwrite(&CurrentReposetoryVersionAsUInt,sizeof(unsigned int),1,RFILE) < 0) {
+                	perror("rApendPost: can't write CurrentReposetoryVersionAsUInt");
+        	}
 	#endif
 
 	//skriver hedder
-	fwrite(ReposetoryHeader,sizeof(struct ReposetoryHeaderFormat),1,RFILE);
+	if(fwrite(ReposetoryHeader,sizeof(struct ReposetoryHeaderFormat),1,RFILE) < 0) {
+		perror("rApendPost: can't write ReposetoryHeader");
+	}
 
 	//skriver html
-	fwrite(htmlbuffer,(*ReposetoryHeader).htmlSize,1,RFILE);
+	if(fwrite(htmlbuffer,(*ReposetoryHeader).htmlSize,1,RFILE) < 0) {
+                perror("rApendPost: can't write html");
+        }
 
 	//skriver bilde
-	fwrite(imagebuffer,(*ReposetoryHeader).imageSize,1,RFILE);
+	if(fwrite(imagebuffer,(*ReposetoryHeader).imageSize,1,RFILE) < 0) {
+       	        perror("rApendPost: can't write image");
+       	}
 	debug("did write image of %i bytes",(*ReposetoryHeader).imageSize);
 
 	//skriver acl
 	#ifdef BLACK_BOKS
-		fwrite(acl_allow,(*ReposetoryHeader).acl_allowSize,1,RFILE);
+		if(fwrite(acl_allow,(*ReposetoryHeader).acl_allowSize,1,RFILE) < 0) {
+        	        perror("rApendPost: can't write acl_allow");
+        	}
 		#ifdef IIACL
-		fwrite(acl_denied,(*ReposetoryHeader).acl_deniedSize,1,RFILE);
+		if(fwrite(acl_denied,(*ReposetoryHeader).acl_deniedSize,1,RFILE) < 0) {
+                	perror("rApendPost: can't write acl_denied");
+        	}
+		
 		#endif
 	#endif
 
         //skriver record seperator
-        fwrite("***",sizeof(char),3,RFILE);
+        if(fwrite("***",sizeof(char),3,RFILE) < 0) {
+                perror("rApendPost: can't write record seperator");
+        }
 
 	//#ifdef BLACK_BOKS
 	if ((reponame == NULL) || (strcmp(reponame,"reposetory") == 0)) {
@@ -497,7 +512,10 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 		fclose(dirtfh);
 	}
 	//#endif
-	
+
+	printf("rApendPost: did append %u, url: \"%s\", into subname \"%s\"\n",(*ReposetoryHeader).DocID,(*ReposetoryHeader).url,subname);
+	printf("rApendPost: acl_allow: \"%s\"\n",acl_allow);	
+	printf("rApendPost: acl_denied:  \"%s\"\n",acl_denied);	
 	return offset;
 }
 
