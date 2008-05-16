@@ -33,7 +33,7 @@ int bbdn_conect(int *socketha, char tkey[], int PORT) {
         }
 	
 	if (intrespons == bbc_authenticate_ok) {
-		printf("bbc authenticate ok\n");
+		fprintf(stderr, "bbc authenticate ok\n");
 		return 1;
 	}
 	else if (intrespons == bbc_authenticate_feiled) {
@@ -53,6 +53,7 @@ int bbdn_close(int socketha) {
 		perror("close");
 	}
 
+	return 1;
 }
 
 int bbdn_docadd(int socketha,char subname[],char documenturi[],char documenttype[],char document[],
@@ -117,6 +118,7 @@ int bbdn_docadd(int socketha,char subname[],char documenturi[],char documenttype
         if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall doctype len"); return 0; }
         if(sendall(socketha,doctype, len) == 0) { perror("sendall doctype"); return 0; }
 
+	return 1;
 }
 
 int bbdn_docexist(int socketha,char subname[],char documenturi[],unsigned int lastmodified) {
@@ -137,4 +139,5 @@ int bbdn_closecollection(int socketha, char subname[]) {
 
 	printf("bbdn_closecollection end\n");
 		
+	return 1;
 }
