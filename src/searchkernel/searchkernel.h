@@ -5,7 +5,7 @@
 
 struct lotPreOpenFormat {
 
-	FILE **DocumentIndex;
+	int *DocumentIndex;
 	int *Summary;
 };
 
