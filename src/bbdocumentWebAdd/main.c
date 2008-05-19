@@ -4,68 +4,185 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <err.h>
 
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 
 #include "../base64/base64.h"
 #include "../bbdocument/bbdocument.h"
+#include "../boitho-bbdn/bbdnclient.h"
+#include "../cgi-util/cgi-util.h"
 
-#define rootNodeName "BBDOCUMENT"
+#define ROOT_NODE_NAME "sddocument"
+#define BBDNPORT 5490
 
 struct xmldocumentFormat {
-	char *TITLE;
-	char *COLLECTION;
-	char *URI;
-	char *BODY;
-	char *DOCUMENTFORMAT;
-	int BODY_SIZE;
-	unsigned int LASTMODIFIED;
-	char *ACL;
-	char *DOCUMENTTYPE;
+	char *title;
+	char *collection;
+	char *uri;
+	char *body;
+	char *documentformat;
+	char *documenttype;
+	size_t bodysize;
+	unsigned int lastmodified;
+	char *aclallow;
+	char *acldeny;
 };
 
-int main(int argc, char *argv[]) {
+int version;
 
-	printf("Content-type: text/html\n\n");
+xmlNodePtr
+xml_find_child(xmlNodePtr parent, char *name)
+{
+	xmlNodePtr cur;
 
-	#ifdef DEBUG
-		printf("is in debug mode. Will dump data to log.\n");
+	for (cur = parent->xmlChildrenNode; cur; cur = cur->next) {
+		if (strcmp((char *)cur->name, name) == 0)
+			return cur;
+	}
 
-	        FILE *fh;
+	return NULL;
+}
 
-	        if ((fh = fopen("/tmp/bbdocumentWebAdd.log","ab")) == NULL) {
-	                perror("logfile");
-	        }
 
-	        if (dup2(fileno(fh),fileno(stdout)) == -1) {
-	                perror("dup2");
-	        }
+void
+sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
+{
+	struct xmldocumentFormat xmldoc;
+	xmlNodePtr n;
 
-	#endif
+#define getxmlnodestr(name) if ((n = xml_find_child(top, #name)) == NULL) { \
+		goto err; \
+	} else { \
+		xmldoc.name = (char*)xmlNodeListGetString(doc, n->xmlChildrenNode, 1); \
+		if (xmldoc.name == NULL) goto err; \
+	}
 
+	memset(&xmldoc, '\0', sizeof(xmldoc));
+	fprintf(stderr, "Going to add something! %s\n", top->name);
+
+	getxmlnodestr(title);
+	getxmlnodestr(uri);
+	getxmlnodestr(documenttype);
+	getxmlnodestr(documentformat);
+	getxmlnodestr(collection);
+	getxmlnodestr(aclallow);
+	getxmlnodestr(acldeny);
+
+	if ((n = xml_find_child(top, "lastmodified")) == NULL) {
+		fprintf(stderr, "Err 9\n");
+		goto err;
+	} else {
+		char *p;
+		p = (char*)xmlNodeListGetString(doc, n->xmlChildrenNode, 1);
+		if (p == NULL) {
+			fprintf(stderr, "Err 10\n");
+			goto err;
+		}
+		xmldoc.lastmodified = atol(p);
+	}
+
+	if ((n = xml_find_child(top, "body")) == NULL) {
+		goto err;
+	} else {
+		char *p;
+		xmlChar *encodetype;
+
+		encodetype = xmlGetProp(n, (xmlChar*)"encoding");
+		if (encodetype == NULL || xmlStrcmp(encodetype, (xmlChar*)"base64") != 0) {
+			goto err;
+		}
+		p = (char*)xmlNodeListGetString(doc, n->xmlChildrenNode, 1);
+		if (p == NULL) {
+			goto err;
+		}
+		if ((xmldoc.body = malloc(strlen(p))) == NULL) {
+			goto err;
+		}
+		
+		xmldoc.bodysize = base64_decode(xmldoc.body, p, strlen(p));
+	}
+
+	bbdn_docadd(sock, xmldoc.collection, xmldoc.uri, xmldoc.documenttype, xmldoc.body, xmldoc.bodysize,
+	    xmldoc.lastmodified, xmldoc.aclallow, xmldoc.acldeny, xmldoc.title, xmldoc.documentformat);
+
+ err:
+	free(xmldoc.title);
+	free(xmldoc.collection);
+	free(xmldoc.uri);
+	free(xmldoc.documenttype);
+	free(xmldoc.documentformat);
+	free(xmldoc.body);
+	free(xmldoc.aclallow);
+	free(xmldoc.acldeny);
+	free(xmldoc.title);
+#undef getxmlnodestr
+}
+
+
+void
+sd_add(int sock, xmlDocPtr doc, xmlNodePtr top)
+{
+	xmlNodePtr n;
+
+	printf("name: %s\n", top->name);
+	if ((top = xml_find_child(top, "documents")) == NULL) {
+		return;
+	}
+	printf("name: %s\n", top->name);
+	for (n = top->xmlChildrenNode; n != NULL; n = n->next) {
+		if (xmlStrcmp(n->name, (xmlChar*)"document") == 0)
+			sd_add_one(sock, doc, n);
+	}
+}
+
+
+
+void
+sd_close(int sock, xmlDocPtr doc, xmlNodePtr top)
+{
+	xmlNodePtr n;
+
+	fprintf(stderr, "Going to close something!\n");
+
+	for (n = top->xmlChildrenNode; n != NULL; n = n->next) {
+		xmlChar *p;
+
+		if (xmlStrcmp(n->name, (xmlChar*)"collection") != 0)
+			continue;
+		if ((p = xmlNodeListGetString(doc, n->xmlChildrenNode, 1)) == NULL)
+			continue;
+
+		bbdn_closecollection(sock, (char *)p);
+
+		xmlFree(p);
+	}
+
+}
+
+
+int
+main(int argc, char **argv)
+{
 	int postsize;
 	char *xmldata;
-	struct xmldocumentFormat xmldocument;
-
-	//libxml
+	char *keystr;
 	xmlDocPtr doc;
-        xmlNodePtr cur;
-	xmlNodePtr cur_sub;
-	xmlChar *value;
+        xmlNodePtr cur, anode;
+	int bbdnsock;
 
-	//inaliserer:
-	xmldocument.TITLE = NULL;
-	xmldocument.COLLECTION = NULL;
-	xmldocument.URI = NULL;
-	xmldocument.BODY = NULL;
-	xmldocument.DOCUMENTTYPE = NULL;
+	if (!bbdn_conect(&bbdnsock, "", BBDNPORT))
+		errx(1, "Unable to connect to document manager");
 
-	//enten kalles vi fra komandolinjen, og skal ha en fil inn, eller så kalles vi via web, og 
-	//skal ha post dtaa
+	/*
+	 * Either called from command line, and then we want a file.
+	 * Or we are handling a web request, and getting the data from stdin.
+	 */
 	if (argc == 2) {
-		printf("reading file %s\n",argv[1]);
 		FILE *fp;
+
+		fprintf(stderr, "reading file %s\n",argv[1]);
 		if ((fp = fopen(argv[1],"rb")) == NULL) {
 			perror(argv[1]);
 			exit(1);
@@ -79,149 +196,80 @@ int main(int argc, char *argv[]) {
 		fread(xmldata,1,postsize,fp);
 
 		fclose(fp);
-	}
-	else if (getenv("CONTENT_LENGTH") != NULL) {
-
-
-		//post data
+	} else if (getenv("CONTENT_LENGTH") != NULL) {
+		printf("Content-type: text/xml\n\n");
+		// Get data length
 		postsize = atoi(getenv("CONTENT_LENGTH"));
-
-		xmldata = malloc(postsize +1);	
-	
-		//post data leses fra stdin, og er CONTENT_LENGTH lang
-		fread(xmldata,1,postsize,stdin);
-
-	}
-	else {
-
-		printf("Dident receive any data.\n");
-
-		exit(1);		
+		xmldata = malloc(postsize + 1);	
+		// Read data
+		fread(xmldata, 1, postsize, stdin);
+	} else {
+		errx(1, "Didn't receive any data.");
 	}
 
-	bbdocument_init();
+#ifdef DEBUG
+	FILE *fhtmp;
+	fhtmp = fopen("/tmp/posttest2.txt","wb");
+	fprintf(fhtmp,"size: %i\nxmldata: %s\n\n\n",postsize,xmldata);
+	fclose(fhtmp);
+#endif
 
-	//#ifdef DEBUG
-		FILE *fhtmp;
-		fhtmp = fopen("/tmp/posttest2.txt","wb");
-		fprintf(fhtmp,"size: %i\nxmldata: %s\n\n\n",postsize,xmldata);
-		fclose(fhtmp);
-	//#endif
-
-	printf("receiveed %ib ok.\n",postsize);
+	fprintf(stderr, "Received %i bytes.\n", postsize);
 
 	//parsing xml
-	//doc = xmlParseFile("revenuepilot.xml");
-        doc = xmlParseDoc((unsigned char *)xmldata);
+        doc = xmlParseDoc((xmlChar*)xmldata);
 
-        if (doc == NULL ) {
-                fprintf(stderr,"Document not parsed successfully. \n");
-                return;
-        }
+        if (doc == NULL)
+		errx(1, "Unable to parse document");
 
         cur = xmlDocGetRootElement(doc);
 
         if (cur == NULL) {
-                fprintf(stderr,"empty document\n");
                 xmlFreeDoc(doc);
-                return;
+                errx(1, "empty document");
         }
 
-        if (xmlStrcmp(cur->name, (const xmlChar *) rootNodeName)) {
-                fprintf(stderr,"document of the wrong type, root node != %s, but %s\n",rootNodeName,cur->name);
+	// Some document checking
+        if (xmlStrcmp(cur->name, (const xmlChar *)ROOT_NODE_NAME)) {
                 xmlFreeDoc(doc);
-                return;
+                errx(1, "document of the wrong type, root node != %s, but %s\n", ROOT_NODE_NAME, cur->name);
         }
 
-        cur = cur->xmlChildrenNode;
+	if ((anode = xml_find_child(cur, "key")) != NULL) {
+		fprintf(stderr, "Got a key\n");
+	} else {
+		errx(1, "Did not receive a key");
+	}
+	if ((anode = xml_find_child(cur, "version")) != NULL) {
+		xmlChar *p;
 
-	while (cur != NULL) {
+		p = xmlNodeListGetString(doc, anode->xmlChildrenNode, 1);
+		version = atoi((char*)p);
+		fprintf(stderr, "Got a version: %d\n", version);
 
-
-		//printf("node cur->name %s\n",cur->name);
-
-		if ((!xmlStrcmp(cur->name, (const xmlChar *) "text"))){
-
-		}
-		else if ((!xmlStrcmp(cur->name, (const xmlChar *) "DOCUMENTFORMAT"))){
-			xmldocument.DOCUMENTFORMAT = (char *)xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-		}
-		else if ((!xmlStrcmp(cur->name, (const xmlChar *) "DOCUMENTTYPE"))){
-			xmldocument.DOCUMENTTYPE = (char *)xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-		}
-		else if ((!xmlStrcmp(cur->name, (const xmlChar *) "KEY"))){
-
-
-                                
-
-                }
-		else if ((!xmlStrcmp(cur->name, (const xmlChar *) "DOCUMENT"))){
-			cur_sub = cur->xmlChildrenNode;
-
-			while (cur_sub != NULL) {
-
-				if ((!xmlStrcmp(cur_sub->name, (const xmlChar *) "text"))) {
-					//do noting
-				}
-				else if ((!xmlStrcmp(cur_sub->name, (const xmlChar *) "TITLE"))) {
-					xmldocument.TITLE = (char *)xmlNodeListGetString(doc, cur_sub->xmlChildrenNode, 1);
-				}
-				else if ((!xmlStrcmp(cur_sub->name, (const xmlChar *) "LASTMODIFIED"))) {
-					xmldocument.LASTMODIFIED = strtoul((char *)xmlNodeListGetString(doc, cur_sub->xmlChildrenNode, 1), (char **)NULL, 10);
-				}
-				else if ((!xmlStrcmp(cur_sub->name, (const xmlChar *) "COLLECTION"))) {
-					xmldocument.COLLECTION = (char *)xmlNodeListGetString(doc, cur_sub->xmlChildrenNode, 1);
-				}
-				else if ((!xmlStrcmp(cur_sub->name, (const xmlChar *) "URI"))) {
-					xmldocument.URI = (char *)xmlNodeListGetString(doc, cur_sub->xmlChildrenNode, 1);
-				}
-				else if ((!xmlStrcmp(cur_sub->name, (const xmlChar *) "ACL"))) {
-					xmldocument.ACL = (char *)xmlNodeListGetString(doc, cur_sub->xmlChildrenNode, 1);
-				}
-				else if ((!xmlStrcmp(cur_sub->name, (const xmlChar *) "BODY_BASE64"))) {
-					
-					value = xmlNodeListGetString(doc, cur_sub->xmlChildrenNode, 1);
-
-					//printf("base64 vas \n\"%s\"\n\n",value);
-
-					int sourcelen = strlen((char *)value);
-
-					
-					int maxlen = sourcelen * 3 / 4;
-					xmldocument.BODY = (char*) malloc(maxlen);
-
-					xmldocument.BODY_SIZE = base64_decode(xmldocument.BODY,(char *)value,maxlen);
-					if (xmldocument.BODY_SIZE<0) {
-						fprintf(stderr,"cant't bas64 decode. Error code %i\n",xmldocument.BODY_SIZE);
-					}
-					//printf("resultat %i b:\"%s\"\n",n,xmldocument.BODY);
-
-					xmlFree(value);
-					
-				}
-				else {
-					printf("unknown xml subnode \"%s\".\n",cur_sub->name);
-				}
-
-				cur_sub = cur_sub->next;
-
-			}
-		}
-              	else {
-			printf("unknown xml node \"%s\"\n",cur->name);
-		}
-		cur = cur->next;
-
+		xmlFree(p);
+	} else {
+		errx(1, "Did not receive a version number");
 	}
 
-	//add to Boitho
-	//int xmldocument_exist(char subname[],char documenturi[],unsigned int lastmodified);
-        //opne og les filen. Sende den så inn med xmldocument_add();
-        bbdocument_add(xmldocument.COLLECTION,xmldocument.URI,xmldocument.DOCUMENTFORMAT,xmldocument.BODY,
-		xmldocument.BODY_SIZE,xmldocument.LASTMODIFIED,xmldocument.ACL,xmldocument.TITLE,xmldocument.DOCUMENTTYPE);
+	for (cur = cur->xmlChildrenNode; cur != NULL; cur = cur->next) {
+		if ((!xmlStrcmp(cur->name, (const xmlChar *) "key"))){
+			// Ignore
+		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "version"))){
+			// Ignore
+		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "add"))){
+			sd_add(bbdnsock, doc, cur);
+		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "close"))) {
+			sd_close(bbdnsock, doc, cur);
+		} else if ((!xmlStrcmp(cur->name, (xmlChar*)"text"))) {
+			//fprintf(stderr, "Got text: %s\n", xmlNodeListGetString(doc, cur, 1));
+			// Ignore for now
+		} else {
+			warnx("Unknown xml node '%s'", cur->name);
+		}
+	}
 
-
-
+#if 0
 	xmlFree(xmldocument.TITLE);
 	xmlFree(xmldocument.COLLECTION);
 	xmlFree(xmldocument.URI);
@@ -229,4 +277,7 @@ int main(int argc, char *argv[]) {
 	xmlFree(xmldocument.DOCUMENTFORMAT);
 	xmlFreeDoc(doc);
 	free(xmldocument.BODY);
+#endif
+
+	return 0;
 }
