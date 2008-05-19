@@ -2024,8 +2024,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		//sorterer top treffene etter hvilken disk de ligger på, slik at vi kan jobbe mest mulig i paralell
 		char diskAcces[NrOfDataDirectorys];
 		int toSort = PagesResults.antall;
-		if (toSort > 20) {
-			toSort = 20;
+		if (toSort > PagesResults.MaxsHits) {
+			toSort = PagesResults.MaxsHits;
 		}
 
 		for (i=0;i<NrOfDataDirectorys;i++) {
