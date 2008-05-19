@@ -628,6 +628,7 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 
 	vboprintf("i %i, alen %i, j %i, blen %i. k %i\n",i,alen,j,blen,k);
 
+	//runarb: 14 mai
 	while (i<alen && (k < maxIndexElements)){
 
 		#ifdef DEBUG_VALGRIND
@@ -646,7 +647,9 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 			c->iindex[k].TermAntall = 0;
 			c->iindex[k].hits = &c->hits[c->nrofHits];
 
-			iindexArrayHitsCopy(c,k,b,j);
+			//runarb: 14 mai
+			//iindexArrayHitsCopy(c,k,b,j);
+			iindexArrayHitsCopy(c,k,a,i);
 			/*
 			for(x=0;x<b->iindex[j].TermAntall;x++) {
 				#ifdef DEBUG_II
@@ -663,6 +666,7 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 		++(*baselen);
 	}
 	
+	//runarb: 14 mai
 	while (j<blen && (k < maxIndexElements)) {
 
                 c->iindex[k] = b->iindex[j];
@@ -670,7 +674,9 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 			c->iindex[k].TermAntall = 0;
 			c->iindex[k].hits = &c->hits[c->nrofHits];
 
-			iindexArrayHitsCopy(c,k,a,i);
+			//runarb: 14 mai
+			//iindexArrayHitsCopy(c,k,a,i);
+			iindexArrayHitsCopy(c,k,b,j);
 			/*
 			for(x=0;x<a->iindex[i].TermAntall;x++) {
 				#ifdef DEBUG_II
