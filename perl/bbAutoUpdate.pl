@@ -6,7 +6,7 @@ use strict;
 use warnings;
 
 use constant HOUR => 3600;
-use constant DAY  => 24 * HOUR;
+use constant DAY  => 1 * HOUR;
 
 use constant UPDATE_RATE => 24 * HOUR;
 use constant UPDATE_PATH => "$ENV{BOITHOHOME}/setuid/yumwrapper";
