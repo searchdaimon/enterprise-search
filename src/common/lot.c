@@ -541,7 +541,11 @@ FILE *openMaplist() {
 
 int GetDevIdForLot(int LotNr) {
 
-	return dataDirectorys[LotNr % 64].devid;
+	#ifdef DEBUG
+		printf("GetDevIdForLot: path %s, id %i\n",dataDirectorys[LotNr % NrOfDataDirectorys].Name,dataDirectorys[LotNr % NrOfDataDirectorys].devid);
+	#endif
+
+	return dataDirectorys[LotNr % NrOfDataDirectorys].devid;
 
 }
 
@@ -559,7 +563,7 @@ int MakeMapListMap_getfsid (const char *path) {
 		return 0;
 	}
 
-	i = (buf.st_dev % 63);
+	i = (buf.st_dev % NrOfDataDirectorys);
 
 	return i;
 }
