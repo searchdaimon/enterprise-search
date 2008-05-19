@@ -131,8 +131,9 @@ struct PagesResultsFormat {
 			pthread_mutex_t mutex;
 			pthread_mutex_t mutextreadSyncFilter;
 			pthread_mutex_t mutex_pathaccess;
-			int activetreads;
 		#endif
+
+		int activetreads;
 
 		struct searchd_configFORMAT *searchd_config;
 		//struct filtypesFormat *filtypes;
@@ -1926,33 +1927,35 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	// :temp
 
 	#ifdef WITH_THREAD
-	PagesResults.activetreads = NROF_GENERATEPAGES_THREADS;
+		PagesResults.activetreads = NROF_GENERATEPAGES_THREADS;
 
-	pthread_t threadid[NROF_GENERATEPAGES_THREADS];
+		pthread_t threadid[NROF_GENERATEPAGES_THREADS];
 
-	dp_init();
+		dp_init();
 
-	//ret = pthread_mutexattr_init(&PagesResults.mutex);
-	ret = pthread_mutex_init(&PagesResults.mutex, NULL);
-	ret = pthread_mutex_init(&PagesResults.mutextreadSyncFilter, NULL);
+		//ret = pthread_mutexattr_init(&PagesResults.mutex);
+		ret = pthread_mutex_init(&PagesResults.mutex, NULL);
+		ret = pthread_mutex_init(&PagesResults.mutextreadSyncFilter, NULL);
 
-	#ifdef BLACK_BOKS
-		ret = pthread_mutex_init(&PagesResults.mutext_pathaccess, NULL);
-	#endif
+		#ifdef BLACK_BOKS
+			ret = pthread_mutex_init(&PagesResults.mutext_pathaccess, NULL);
+		#endif
 
-	//låser mutex. Vi er jo enda ikke kalre til å kjøre
-	pthread_mutex_lock(&PagesResults.mutex);
+		//låser mutex. Vi er jo enda ikke kalre til å kjøre
+		pthread_mutex_lock(&PagesResults.mutex);
 
-	if (searchd_config->optSingle) {
+		if (searchd_config->optSingle) {
 
-	}
-	else {
-		//start som thread that can get the pages
-		for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
-			ret = pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults);		
 		}
+		else {
+			//start som thread that can get the pages
+			for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
+				ret = pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults);		
+			}
 
-	}
+		}
+	#else
+		PagesResults.activetreads = 1;
 	#endif
 
 	#ifdef DEBUG
