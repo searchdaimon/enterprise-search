@@ -290,7 +290,7 @@ mod_boitho_auth:
 suggest:
 	perl rpmmagic.pl --requires "boitho-everrun boitho-dictionary" --initd suggest $(boitho-suggest_name) $(boitho-suggest_version) $(BOITHOHOME) /home/boitho/boithoTools bin/suggest_server cgi-bin/suggest_webclient bin/suggest_client_redict
 
-	rpmbuild -bb $(boitho-crawlManager_name).spec
+	rpmbuild -bb $(boitho-suggest_name).spec
 
 
 
