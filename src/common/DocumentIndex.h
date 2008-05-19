@@ -14,6 +14,6 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
 void DIClose(FILE *DocumentIndexHA);
 void closeDICache(void);
 int DIRead_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[], FILE *file);
-
+int DIRead_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[], int file);
 
 #endif //_DOCUMENTINDEX_H_
