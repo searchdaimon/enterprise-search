@@ -2,7 +2,7 @@ package common;
 require Exporter;
 @common::ISA = qw(Exporter);
 @common::EXPORT = qw();
-@common::EXPORT_OK = qw(fin_domene MakePath count_handler gyldig_url GetImageLocation MAKE_PATH GetAllLotPaths);
+@common::EXPORT_OK = qw(fin_domene MakePath count_handler gyldig_url GetImageLocation MAKE_PATH GetAllLotPaths find_domain_no_subname);
 
 use strict;
 
@@ -21,6 +21,22 @@ sub fin_domene {
 	
 	return $domene;
 }
+############################################################################################################################
+# finner domene for en url uten subname
+############################################################################################################################
+sub find_domain_no_subname {
+        my($domene) = @_;
+
+        $domene =~ s/http:\/\///;
+
+        $domene =~ s/\/.*//g;
+
+        $domene =~ s/([^.]+\.[^.]+$)//;
+        $domene = $1;
+
+        return $domene;
+}
+
 
 ############################################################################################################################
 # oppretter de nødvendige mappene
