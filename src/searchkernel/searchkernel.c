@@ -43,8 +43,8 @@
 
 #ifdef WITH_THREAD
         #include <pthread.h>
-	//#define NROF_GENERATEPAGES_THREADS 5
-	#define NROF_GENERATEPAGES_THREADS 3
+	#define NROF_GENERATEPAGES_THREADS 5
+	//#define NROF_GENERATEPAGES_THREADS 3
 
 #endif
 
@@ -131,6 +131,7 @@ struct PagesResultsFormat {
 			pthread_mutex_t mutex;
 			pthread_mutex_t mutextreadSyncFilter;
 			pthread_mutex_t mutex_pathaccess;
+			int activetreads;
 		#endif
 
 		struct searchd_configFORMAT *searchd_config;
@@ -555,7 +556,8 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 							printf("############################ </DEBUG> ###########################\n");
 							printf("#################################################################\n");
 						#endif
-
+						
+						//printf("calling generate_snippet, body \"%s\", length %i\n",body, strlen(body));
 						generate_snippet( QueryData.queryParsed, body, strlen(body), &summary, "<b>", "</b>" , 160);
 					
 						#ifdef DEBUG_TIME
@@ -744,8 +746,12 @@ int nextPage(struct PagesResultsFormat *PagesResults) {
 	//printf("nextPage: waiting for lock: end\n");
 	#endif
 
-	//tread lock
-	if ((*PagesResults).nextPage >= (*PagesResults).MaxsHits) {
+	if (((*PagesResults).activetreads > 2) && ((*PagesResults).MaxsHits - (*PagesResults).nextPage) < 3) {
+		printf("we have %i pages, and %i activetreads. This tread can die.\n",(*PagesResults).nextPage,(*PagesResults).activetreads);
+		--(*PagesResults).activetreads;
+		forreturn = -1;
+	}
+	else if ((*PagesResults).nextPage >= (*PagesResults).MaxsHits) {
 		debug("nextPage: nextPage (%i) >= MaxsHits (%i)",(*PagesResults).nextPage,(*PagesResults).MaxsHits);
 
 		forreturn = -1;
@@ -945,7 +951,7 @@ pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection
 #endif
 
 //rutine som gjør en vanlig DIRead, og tar tiden
-int time_DIRead_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[], FILE *file, struct PagesResultsFormat *PagesResults) {
+int time_DIRead_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[], int file, struct PagesResultsFormat *PagesResults) {
 
 	int ret;
 
@@ -954,10 +960,13 @@ int time_DIRead_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char
 		gettimeofday(&start_time, NULL);
 	#endif
 
-	ret = DIRead_fh(DocumentIndexPost,DocID,subname,file);
+
+	ret = DIRead_i(DocumentIndexPost,DocID,subname,file);
 
 	#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
+		printf("time_DIRead_fh: reading for DocID %u, dev: %i, time %f\n",DocID,GetDevIdForLot(rLotForDOCid(DocID)),getTimeDifference(&start_time,&end_time));
+
 		PagesResults->popResultBreakDownTime.DocumentIndex.time += getTimeDifference(&start_time,&end_time);
 		++PagesResults->popResultBreakDownTime.DocumentIndex.nr;
 	#endif
@@ -1109,7 +1118,7 @@ void *generatePagesResults(void *arg)
 
 		vboprintf("readin di for %u\n",(*PagesResults).TeffArray->iindex[i].DocID);
 		//leser DI
-		if (!time_DIRead_fh(&side->DocumentIndex,(*PagesResults).TeffArray->iindex[i].DocID,(*(*PagesResults).TeffArray->iindex[i].subname).subname,PagesResults->searchd_config->lotPreOpen.DocumentIndex[rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID)], PagesResults)) 
+		if (!time_DIRead_i(&side->DocumentIndex,(*PagesResults).TeffArray->iindex[i].DocID,(*(*PagesResults).TeffArray->iindex[i].subname).subname,PagesResults->searchd_config->lotPreOpen.DocumentIndex[rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID)], PagesResults)) 
 		{
                         //hvis vi av en eller annen grun ikke kunne gjøre det kalger vi
                         vboprintf("Can't read post for %u-%i\n",(*PagesResults).TeffArray->iindex[i].DocID,rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID));
@@ -1491,6 +1500,16 @@ int sider_allrank_sort (const void *p1, const void *p2) {
 	}
 	else {
 		return (((struct SiderFormat *)p1)->iindex.allrank < ((struct SiderFormat *)p2)->iindex.allrank);
+	}
+}
+
+int sider_device_sort (const void *p1, const void *p2) {
+	
+	if (((struct iindexMainElements *)p1)->phraseMatch < ((struct iindexMainElements *)p2)->phraseMatch) {
+		 return -1;
+	}
+	else {
+		return (((struct iindexMainElements *)p1)->phraseMatch > ((struct iindexMainElements *)p2)->phraseMatch);
 	}
 }
 
@@ -1907,6 +1926,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	// :temp
 
 	#ifdef WITH_THREAD
+	PagesResults.activetreads = NROF_GENERATEPAGES_THREADS;
 
 	pthread_t threadid[NROF_GENERATEPAGES_THREADS];
 
@@ -2000,6 +2020,52 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 //cuted
 	gettimeofday(&popResult_start_time, NULL);
 
+	#ifndef BLACK_BOKS
+		//sorterer top treffene etter hvilken disk de ligger på, slik at vi kan jobbe mest mulig i paralell
+		char diskAcces[NrOfDataDirectorys];
+		int toSort = PagesResults.antall;
+		if (toSort > 20) {
+			toSort = 20;
+		}
+
+		for (i=0;i<NrOfDataDirectorys;i++) {
+			diskAcces[i] = 0;
+		}
+
+		/*
+		Runarb: 14 mai 2008:
+		Lager en oversikt over antall disk akesser til hver device. Så hvis vi har device a og b, men følgende access 
+		rekkefølge:
+			a a a b b b
+		for vi da 
+			a 1
+			a 2
+			a 3
+			b 1
+			b 2
+			b 3
+		og vi kan så sortere på antal for å få
+			a 1
+			b 1
+			a 2
+			b 2
+			a 3
+			b 3
+		*/
+
+		for(i=0;i<toSort;i++) {
+			//temp: nå rebruker vi hraseMatch til dette. Vi må ha et egent felt siden
+			PagesResults.TeffArray->iindex[i].phraseMatch = diskAcces[GetDevIdForLot(rLotForDOCid(PagesResults.TeffArray->iindex[i].DocID))]++;
+		}
+
+		qsort(PagesResults.TeffArray->iindex,toSort,sizeof(struct iindexMainElements),sider_device_sort);
+
+		printf("devise sort:\n");
+		for(i=0;i<toSort;i++) {
+			printf("DocID %u, device %i, nr %i\n",PagesResults.TeffArray->iindex[i].DocID,GetDevIdForLot(rLotForDOCid(PagesResults.TeffArray->iindex[i].DocID)),(int)PagesResults.TeffArray->iindex[i].phraseMatch);
+		}				
+
+	#endif
 
 
 	#ifdef WITH_THREAD

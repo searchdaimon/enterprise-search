@@ -120,34 +120,6 @@ catch_alarm (int sig)
 	exit(1);
 }
 
-void lotPreOpenStart(FILE **preOpen[], char filename[], char subname[], int use) {
-
-	int i;
-	char buf[1];
-
-	if ((*preOpen = malloc(sizeof(FILE *) * maxLots)) == NULL) {
-		perror("malloc preOpen");
-		exit(-1);
-	}
-
-	for (i=0;i<maxLots;i++) {
-
-		(*preOpen)[i] = NULL;
-
-		#ifndef BLACK_BOKS
-			if (use) {
-				(*preOpen)[i] = lotOpenFileNoCasheByLotNr(i,filename,"rb", 'r',subname);
-
-
-				if ((*preOpen)[i] != NULL) {
-					fread(&buf,sizeof(buf),1,(*preOpen)[i]);
-					printf("opening %i, as %p\n",i,(*preOpen)[i]);
-				}
-			}
-		#endif
-	}
-
-}
 
 void lotPreOpenStartl(int *preOpen[], char filename[], char subname[], int use) {
 
@@ -264,7 +236,7 @@ int main(int argc, char *argv[])
 	strncpy(servername,argv[1 +optind],sizeof(servername) -1);
 
 
-	lotPreOpenStart(&searchd_config.lotPreOpen.DocumentIndex,"DocumentIndex","www",searchd_config.optPreOpen);
+	lotPreOpenStartl(&searchd_config.lotPreOpen.DocumentIndex,"DocumentIndex","www",searchd_config.optPreOpen);
 	lotPreOpenStartl(&searchd_config.lotPreOpen.Summary,"summary","www",searchd_config.optPreOpen);
 
 
