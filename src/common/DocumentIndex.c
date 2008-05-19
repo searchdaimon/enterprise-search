@@ -332,7 +332,38 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
         }
 }
 
-int DIRead_post(struct DocumentIndexFormat *DocumentIndexPost, int DocID, FILE *file) {
+int DIRead_post_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID, int file) {
+
+	int forReturn = 0;
+
+		#ifdef BLACK_BOKS
+                        unsigned int CurrentDocumentIndexVersionAsUInt;
+                        if ((read(file,&CurrentDocumentIndexVersionAsUInt,sizeof(unsigned int))) < 0) {
+				#ifdef DEBUG
+                                perror("CurrentDocumentIndexVersionAsUInt");
+				#endif
+                                forReturn = 0;
+                        }
+                #endif
+
+
+        	//lesr posten
+        	if (read(file,DocumentIndexPost,sizeof(*DocumentIndexPost)) < 0) {
+			#ifdef DEBUG
+                	perror("Can't reed");
+			#endif
+			//selv om vi ikke fikk lest fra filen må vi lokke den, så vi kan ikke kalle retun directe her
+			forReturn =  0;
+        	}
+		else {
+			forReturn  = 1;
+		}
+
+	return forReturn;
+		
+}
+
+int DIRead_post_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID, FILE *file) {
 
 	int forReturn = 0;
 
@@ -378,7 +409,7 @@ int DIRead_fmode (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char 
 
 	if ((file = GetFileHandler(DocID,filemode,subname, NULL)) != NULL) {
 
-		if (DIRead_post(DocumentIndexPost,DocID,file)) {
+		if (DIRead_post_fh(DocumentIndexPost,DocID,file)) {
 			forReturn = 1;
 		}
 
@@ -424,7 +455,41 @@ int DIRead_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subn
 			exit(1);
 		}
 
-		if (DIRead_post(DocumentIndexPost,DocID,file)) {
+		if (DIRead_post_fh(DocumentIndexPost,DocID,file)) {
+			forReturn = 1;
+		}
+		#ifdef DISK_PROTECTOR
+			dp_unlock(rLotForDOCid(DocID));
+		#endif
+
+	}
+
+
+	return forReturn;
+}
+
+int DIRead_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[], int file) {
+
+	int forReturn = 0;
+
+
+	if (file == -1) {
+		printf("DIRead_fh: file isent open.\n");
+		forReturn = DIRead_fmode(DocumentIndexPost,DocID,subname,'r');
+	}
+	else {
+		#ifdef DISK_PROTECTOR
+			dp_lock(rLotForDOCid(DocID));
+		#endif
+
+		
+
+		//søker til riktig post
+		if (lseek(file,DIPostAdress(DocID),SEEK_SET) < 0) {
+			perror("Can't lseek");
+			forReturn = 0;
+		}
+		else if (DIRead_post_i(DocumentIndexPost,DocID,file)) {
 			forReturn = 1;
 		}
 		#ifdef DISK_PROTECTOR
