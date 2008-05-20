@@ -27,6 +27,8 @@ struct collectionFormat {
 	char *userprefix;
 	char **users;
 	char *extra;
+	char *perlcode;
+	char *test_file_prefix;
 };
 
 struct crawldocumentExistFormat {
@@ -78,6 +80,16 @@ struct crawlLibInfoFormat {
 	int crawl_security;
 	char *shortname;
 	char *(*strcrawlError)();
+};
+
+struct cargsF {
+
+        struct collectionFormat *collection;
+        int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist);
+        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd);
+        int (*documentError)(int level, const char *fmt, ...);
+        int (*documentContinue)(struct collectionFormat *collection);
+
 };
 
 
