@@ -94,7 +94,7 @@ all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager 
 
 
 sqlUpdate:
-	perl rpmmagic.pl --sql sql/update0.1.6.sql --requires "boithobb-sqlUpdate>=0.5.3-1" $(boithobb-sqlUpdate_name) $(boithobb-sqlUpdate_version) $(BOITHOHOME) /home/boitho/boithoTools 
+	perl rpmmagic.pl --sql sql/update0.1.6.sql --requires "boithobb-sqlUpdate>=0.5.3-1 boitho-database" $(boithobb-sqlUpdate_name) $(boithobb-sqlUpdate_version) $(BOITHOHOME) /home/boitho/boithoTools 
 
 	rpmbuild -bb $(boithobb-sqlUpdate_name).spec
 
