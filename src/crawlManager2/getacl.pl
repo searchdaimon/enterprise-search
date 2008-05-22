@@ -21,7 +21,7 @@ sub crawlupdate {
 
     $soap_client = new SOAP::Lite
     uri => 'http://schemas.microsoft.com/sharepoint/soap/directory',
-    proxy => 'http://administrator:Ju12brzz@search/_vti_bin/Permissions.asmx'
+    proxy => 'http://www.xsolive.com/_vti_bin/Permissions.asmx'
   ;
 $soap_client->on_action(sub {
 #print Dumper(\@_);
@@ -29,14 +29,9 @@ $soap_client->on_action(sub {
    });
 
 
-#Namespace must end with /
-$soap_client->ns("http://schemas.microsoft.com/sharepoint/soap/directory/","tns");
-$objectName = SOAP::Data->type("xsd:string")->name("tns:objectName" => 'http://search/');
-$objectType = SOAP::Data->type("xsd:string")->name("tns:objectType" => 'web');
-#$objectType = SOAP::Data->type("xsd:string")->name("tns:objectType" => 'list'); for sharepoint lists
-my $xml = $soap_client->GetPermissionCollection($objectName, $objectType);    
-my $xp = XML::XPath->new(xml => $xml);  
-my $nodeset =  $xp->findnodes('//Permission/@UserLogin');
+   my $xml = $soap_client->GetAllUserCollectionFromWeb();   
+   my $xp = XML::XPath->new(xml => $xml);  
+   my $nodeset =  $xp->findnodes('//User/@Sid');
     
 foreach my $node ($nodeset->get_nodelist) {
    #put in a list and use join instead when more usernames available
@@ -45,11 +40,12 @@ foreach my $node ($nodeset->get_nodelist) {
    $usr = substr($usr,0,length($usr)-1);
    $acl = $acl.$usr.',';
 }
+if (length($acl)) {
+   $acl = substr($acl, 0, length($acl)-1);
+}
 
-
-SD::sdCrawl::Init($pointer, "sdbot/0.1", "email\@email.com", $acl, "search\\administrator", "Ju12brzz");
-#SD::sdCrawl::process_starting_urls("http://en.wikipedia.org/wiki/Web_crawler", "http://en.wikipedia.org/");
-SD::sdCrawl::process_starting_urls("http://search");
+SD::sdCrawl::Init($pointer, "sdbot/0.1", "email\@email.com", $acl, "demo\\test", "Xsolive2007");
+SD::sdCrawl::process_starting_urls("http://www.xsolive.com");
 SD::sdCrawl::Start();
 }
 

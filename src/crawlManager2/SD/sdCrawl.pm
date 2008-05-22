@@ -145,7 +145,7 @@ sub init_robot {
   $robot->timeout($timeout);
   #$robot->requests_redirectable([]); # uncomment this line to disallow redirects
   $robot->protocols_allowed(['http','https']);  # disabling all others
-  say("$bot_name ($bot_email) starting at ", scalar(localtime), "\n");
+   say("$bot_name ($bot_email) starting at ", scalar(localtime), "\n");
   return;
 }
  
@@ -285,18 +285,14 @@ sub process_near_url {
   my $req = HTTP::Request->new(HEAD => $url);
 
   if ($user) { 
-     mutter("Autorizing ".$user." with password ".$passw."\n");
-     $req->authorization_basic($user, $passw); 
+      mutter("Autorizing ".$user." with password ".$passw."\n");
+      $req->authorization_basic($user, $passw); 
   }
+
   my $response = $robot->request($req);
 
   mutter("  That was hit #$hit_count\n");
   return unless consider_response($response);
-
-  if($response->content_type ne 'text/html') {
-    mutter("  HEAD-response says it's not HTML!  Skipping ",$response->content_type, "\n");
-    return;
-  }
 
   if(length ${ $response->content_ref }) {
     mutter("  Hm, that had content!  Using it...\n" );
@@ -306,11 +302,8 @@ sub process_near_url {
     say("Getting $url\n");
     ++$hit_count;
   }
-  print "Content :".$response->content_type."\n";
-  if($response->content_type eq 'text/html') {
  
-    mutter("  Getting and scanning the HTML...\n");
-    $req = HTTP::Request->new(GET => $url);
+      $req = HTTP::Request->new(GET => $url);
 
     if ($user) { 
        mutter("Autorizing ".$user." with password ".$passw."\n");
@@ -326,13 +319,11 @@ sub process_near_url {
  
     mutter("  That was hit #$hit_count\n");
     return unless consider_response($response);
-    print $response->as_string;
-    extract_links_from_response($response);  
-
-    } else {
-    mutter("  Skipping the gotten non-HTML (",$response->content_type, ") content.\n");
-  }
-  return;
+    #print $response->as_string;
+    if($response->content_type eq 'text/html') {
+       extract_links_from_response($response);     
+    }
+     return;
 }
 
 
