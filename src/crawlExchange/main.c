@@ -114,12 +114,18 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 		// Let's add it
 		crawldocumentAdd.documenturi = crawldocumentExist.documenturi;
 		/* Find the subject */
-		p = strcasestr(mail.buf, "subject:");
-		if (p == NULL || *p == '\0') {
+		p = NULL;
+		if (strcasecmp(mail.buf, "subject:") == 0) {
+			p = mail.buf;
+		} else if ((p = strcasestr(mail.buf, "\nsubject:")) != NULL) {
+			p++;
+		} else if ((p = strcasestr(mail.buf, "\rsubject:")) != NULL) {
+			p++;
+		} 
+		
+		if (p == NULL) {
 			crawldocumentAdd.title = "";
 		} else {
-			//for (p++; *p == ' '; p++)
-			//	;
 			p += 8; // strlen("subject:");
 			while (isspace(*p)) {
 				p++;
