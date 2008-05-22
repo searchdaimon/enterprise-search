@@ -348,7 +348,6 @@ my $fileemail;
 my $dirfiltername = "/tmp/dirfilter-" . $<;
 
 $fileemail = shift @ARGV or die "Usage: ./emlsplit.pl emlfile" ;
-system("cp $fileemail /tmp/someemail.eml");
 
 my $message;
 {
