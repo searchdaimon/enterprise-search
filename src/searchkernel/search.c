@@ -481,27 +481,27 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 	int i=0;
 	int j=0;
 	int k=0;
-
 	(*baselen) = 0;
 
 	printf("or_merge(alen %i, blen %i)\n",alen,blen);
 	
 	//debug: print ot verdiene før de merges
-	/*
+	#ifdef DEBUG_II	
 	x=0;
-	printf("a array:\n");
-	while (x<alen){
+	printf("a array (100 max):\n");
+	while (x<alen && x<100){
                 printf("\t%u\n",a->iindex[x].DocID);
 		++x;
 	}
 	
 	x=0;
-	printf("b array:\n");
-	while (x<blen) {
+	printf("b array (100 max):\n");
+	while (x<blen && x<100) {
                 printf("\t%u\n",b->iindex[x].DocID);
 		++x;
 	}
-	*/
+	#endif
+
 	while ((i<alen) && (j<blen) && (k < maxIndexElements))
 	{
 
@@ -512,7 +512,9 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 	//	printf("b TermAntall %i\n",b[j].TermAntall);
 	//}
 		if (a->iindex[i].DocID == b->iindex[j].DocID) {
-			//printf("or_merge: %i == %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
+			#ifdef DEBUG_II
+				printf("or_merge: %i == %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
+			#endif
 			//c[k] = a[i];
 
 			//c[k].TermRank = a[i].TermRank + b[j].TermRank;		
@@ -566,10 +568,14 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 		}
  		else if( a->iindex[i].DocID < b->iindex[j].DocID ) {
 
-			//printf("or_merge: %i < %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
 
-                	c->iindex[k] = a->iindex[i];
+			#ifdef DEBUG_II
+				printf("or_merge: a: %i < b: %i = copy a\n",a->iindex[i].DocID,b->iindex[j].DocID);
+			#endif
 
+			if (&c->iindex[k] != &a->iindex[i]) {
+                		c->iindex[k] = a->iindex[i];
+			}
 			//copying hits
 			#ifdef DEBUG_II
 			printf("or_merge: hist a %hu, b %hu\n",a->iindex[i].TermAntall,b->iindex[j].TermAntall);
@@ -596,11 +602,13 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 			++(*baselen);
 		}
  		else {
+			#ifdef DEBUG_II
+				printf("or_merge: a: %i > b: %i = copy b\n",a->iindex[i].DocID,b->iindex[j].DocID);
+			#endif
 
-			//printf("or_merge: %i > %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
-
-	                c->iindex[k] = b->iindex[j];
-
+			if (&c->iindex[k] != &b->iindex[j]) {
+	                	c->iindex[k] = b->iindex[j];
+			}
 			//copying hits
 			#ifdef DEBUG_II
 			printf("or_merge: hist a %hu, b %hu\n",a->iindex[i].TermAntall,b->iindex[j].TermAntall);
@@ -631,14 +639,14 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 	//runarb: 14 mai
 	while (i<alen && (k < maxIndexElements)){
 
-		#ifdef DEBUG_VALGRIND
+		//#ifdef DEBUG_VALGRIND
 			//her kan minne overlappe. For å ungå det sjekker vi først om pekere til struktene er like
 			if (&c->iindex[k] != &a->iindex[i]) {
 		                c->iindex[k] = a->iindex[i];
 			}
-		#else
-	                c->iindex[k] = a->iindex[i];
-		#endif
+		//#else
+	        //        c->iindex[k] = a->iindex[i];
+		//#endif
 
 			//copying hits
 			#ifdef DEBUG_II
@@ -669,8 +677,9 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 	//runarb: 14 mai
 	while (j<blen && (k < maxIndexElements)) {
 
-                c->iindex[k] = b->iindex[j];
-
+			if (&c->iindex[k] != &b->iindex[j]) {
+	                	c->iindex[k] = b->iindex[j];
+			}
 			c->iindex[k].TermAntall = 0;
 			c->iindex[k].hits = &c->hits[c->nrofHits];
 
@@ -694,8 +703,9 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 	}
 
 	#ifdef DEBUG_II
-	printf("result:\n");
-	while (x<(*baselen)) {
+	printf("or_merge result (100 max):\n");
+	x=0;
+	while ((x<(*baselen)) && (x<100)) {
                 printf("\t%u\n",c->iindex[x].DocID);
 		++x;
 	}
@@ -827,6 +837,13 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 	//(*baselen) = 0;
 	(*baselen) = originalLen;
 
+	printf("and_merge(originalLen=%i, alen=%i, blen=%i)\n",originalLen,alen,blen);
+
+	printf("b, first hits:\n");
+	for(x=0;x<blen && x<100;x++) {
+		printf("\t%u\n",b->iindex[x].DocID);
+	}
+
 	#ifdef DEBUG
 	printf("and_merge: start\n");
 	printf("and_merge:  originalLen %i\n",originalLen);
@@ -835,9 +852,9 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 	while (i<alen && j<blen)
 	{
 		if (a->iindex[i].DocID == b->iindex[j].DocID) {
-			#ifdef DEBUG_II
+			//#ifdef DEBUG_II
 			printf("\t%i == %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
-			#endif
+			//#endif
 			//c[k] = a[i];
 
 			//c[k].TermRank = a[i].TermRank + b[j].TermRank;		
@@ -1567,7 +1584,8 @@ void GetIndexAsArray_thesaurus (int *AntallTeff, struct iindexFormat *TeffArray,
 
 	printf("alt_n %i, lat %p\n",alt_n, alt);
 	struct iindexFormat *TmpArray = (struct iindexFormat *)malloc(sizeof(struct iindexFormat));
-
+	struct iindexFormat *tmpAnser = (struct iindexFormat *)malloc(sizeof(struct iindexFormat));
+	
 	if (alt == NULL) {
 		GetIndexAsArray(AntallTeff,TeffArray,WordIDcrc32,IndexType,IndexSprok,subname,languageFilterNr,languageFilterAsNr);
 	}
@@ -1592,7 +1610,9 @@ void GetIndexAsArray_thesaurus (int *AntallTeff, struct iindexFormat *TeffArray,
 
                                 printf("%s (%i)\n", alt[j].s[k],TmpArrayLen);
 				if (TmpArrayLen != 0) {									
-					or_merge(TeffArray,AntallTeff,TeffArray,(*AntallTeff),TmpArray,TmpArrayLen);
+					or_merge(tmpAnser,AntallTeff,TeffArray,(*AntallTeff),TmpArray,TmpArrayLen);
+					iindexArrayCopy2(TeffArray,AntallTeff,0,tmpAnser,(*AntallTeff));							
+
 				}
                         }
                         
@@ -1603,6 +1623,7 @@ void GetIndexAsArray_thesaurus (int *AntallTeff, struct iindexFormat *TeffArray,
 	}
 
 	free(TmpArray);
+	free(tmpAnser);
 
 #endif
 
