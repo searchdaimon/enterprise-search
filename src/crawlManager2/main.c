@@ -898,6 +898,11 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 
 	(*collection) = malloc(sizeof(struct collectionFormat) * (*nrofcollections));
 
+	//resetter minne
+	for (i=0;i<(*nrofcollections);i++) {
+		collectionReset (collection[i]);
+	}
+
         i=0;
         while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
         	debug("\tdata resource: %s, connector: %s, collection_name: %s, lastCrawl: %s, userprefix: %s\n",mysqlrow[0],mysqlrow[1],mysqlrow[2],mysqlrow[3],mysqlrow[8]);
