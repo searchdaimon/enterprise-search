@@ -72,6 +72,11 @@ int documentError(int level, const char *fmt, ...) {
 void usage() {
 	printf("usage:\n");
 	printf("\tcrawlManager2perltest folder prefix\n\n");
+	printf("\n");
+	printf("Options:\n");
+	printf("\t-u user\n");
+	printf("\t-p password\n");
+	printf("\t-r resource\n");
 	printf("Folder must have the main perl file named main.pm\n");
 }
 
@@ -83,14 +88,21 @@ int main(int argc, char *argv[]) {
         FILE *FH;
         struct stat inode;      // lager en struktur for fstat å returnere.
 
+	collectionReset (&collection);
 
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"p:"))!=-1) {
+        while ((c=getopt(argc,argv,"p:u:r:"))!=-1) {
 		switch (c) {
                         case 'p':
-                                //optMax = atoi(optarg);
+                                collection.password = optarg;
+                                break;
+                        case 'u':
+                                collection.user = optarg;
+                                break;
+                        case 'r':
+                                collection.resource = optarg;
                                 break;
                         default:
 				usage();

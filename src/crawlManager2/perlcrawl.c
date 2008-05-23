@@ -42,6 +42,57 @@ void preprocess_crawlupdate(struct collectionFormat *collection,
 
 	XPUSHs(sv_2mortal(newSViv(PTR2IV(cargs))));
 
+	//lager en ny perl hash
+	HV *hv = newHV();
+	//hv_store(hv, "key1", 4, sv_2mortal(newSVpv("test", 0)), 0);
+
+	//sendes altid med
+	hv_store(hv, "lastCrawl", strlen("lastCrawl"), sv_2mortal(newSVuv(collection->lastCrawl)), 0);
+
+	//sendes bare med hvis vi har verdi
+	if (collection->resource != NULL)
+		hv_store(hv, "resource", strlen("resource"), sv_2mortal(newSVpv(collection->resource, 0)), 0);
+	if (collection->connector != NULL)
+		hv_store(hv, "connector", strlen("connector"), sv_2mortal(newSVpv(collection->connector, 0)), 0);
+	if (collection->password != NULL)
+		hv_store(hv, "password", strlen("password"), sv_2mortal(newSVpv(collection->password, 0)), 0);
+	if (collection->query1 != NULL)
+		hv_store(hv, "query1", strlen("query1"), sv_2mortal(newSVpv(collection->query1, 0)), 0);
+	if (collection->query2 != NULL)
+		hv_store(hv, "query2", strlen("query2"), sv_2mortal(newSVpv(collection->query2, 0)), 0);
+	if (collection->collection_name != NULL)
+		hv_store(hv, "collection_name", strlen("collection_name"), sv_2mortal(newSVpv(collection->collection_name, 0)), 0);
+	if (collection->user != NULL)
+		hv_store(hv, "user", strlen("user"), sv_2mortal(newSVpv(collection->user, 0)), 0);
+	if (collection->userprefix != NULL)
+		hv_store(hv, "userprefix", strlen("userprefix"), sv_2mortal(newSVpv(collection->userprefix, 0)), 0);
+	if (collection->extra != NULL)
+		hv_store(hv, "extra", strlen("extra"), sv_2mortal(newSVpv(collection->extra, 0)), 0);
+	if (collection->test_file_prefix != NULL)
+		hv_store(hv, "test_file_prefix", strlen("test_file_prefix"), sv_2mortal(newSVpv(collection->test_file_prefix, 0)), 0);
+
+/*
+ char *resource;
+ char *connector;
+ char *password;
+ char *query1;
+ char *query2;
+ char *collection_name;
+ char *user;
+ int socketha;
+ unsigned int lastCrawl;
+ char *host;
+ int auth_id;
+ unsigned int id;
+ char *userprefix;
+ char **users;
+ char *extra;
+ char *test_file_prefix;
+ struct crawlLibInfoFormat *crawlLibInfo;
+*/
+	//push the option has inn as a subrutine arg.
+	XPUSHs(sv_2mortal(newRV((SV *)hv)));
+
 
 	PUTBACK;
 
@@ -73,7 +124,7 @@ int perlcm_crawlupdate(struct collectionFormat *collection,
 
         char *perl_args[] = { "", "-Mblib=/home/boitho/boitho/websearch/perlxs/SD-Crawl",  "-I", collection->crawlLibInfo->resourcepath, perlfile, NULL };
 
-	printf("useing perl file \"%S\"\n",collection->crawlLibInfo->resourcepath);
+	printf("useing perl file \"%s\"\n",collection->crawlLibInfo->resourcepath);
 
 	int perl_argsc = 4;
 	

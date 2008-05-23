@@ -8,14 +8,20 @@ use DBI; #bruker DBI databse interfase
 
 sub crawlupdate {
 	
-	my ($pointer ) = @_;	
+	my ($pointer, $opt ) = @_;	
+
+	print "options:\n";
+	foreach my $k (keys %{ $opt }) {
+		print "$k: $opt->{$k}\n";
+	}
 
 	####################################################################
 	# Settup
 	####################################################################
-	my $user = "boitho";
-	my $Password = "G7J7v5L5Y7";
-	my $server = "localhost";
+	my $user = $opt->{"user"};
+	my $Password = $opt->{"password"};
+	my $server = $opt->{"resource"};
+
 	my $database = "sirdf_com";
 	my $forumurl = "http://www.sirdf.com/forum";
 	####################################################################

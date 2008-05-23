@@ -103,5 +103,5 @@ struct cargsF {
 
 };
 
-
+void *collectionReset (struct collectionFormat *collection);
 #endif // _CRAWL__H_
