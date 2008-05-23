@@ -1029,91 +1029,89 @@ void *generatePagesResults(void *arg)
 	debug("localshowabal %i",localshowabal);
 
 	while ((i=nextIndex(PagesResults)) != -1) {
-	debug("i %i, DocID %u\n",i,(*PagesResults).TeffArray->iindex[i].DocID);
+		debug("i %i, DocID %u\n",i,(*PagesResults).TeffArray->iindex[i].DocID);
 
 		//if ((*SiderHeder).filtered > 300) {
 		//	(*PagesResults).filterOn = 0;
 		//}
 
 		#ifdef BLACK_BOKS
-		//hvis index filter tidligere har funet ut at dette ikke er et bra treff går vi til neste
-		if ((*PagesResults).TeffArray->iindex[i].indexFiltered.filename == 1) {
-			#ifdef DEBUG
-			printf("index filtered\n");
-			#endif
-			continue;
-		}
-		if ((*PagesResults).TeffArray->iindex[i].indexFiltered.date == 1) {
-			#ifdef DEBUG
-			printf("index filtered\n");
-			#endif
-			continue;
-		}
-		if ((*PagesResults).TeffArray->iindex[i].indexFiltered.subname == 1) {
-			#ifdef DEBUG
-			printf("index filtered\n");
-			#endif
-			continue;
-		}
+			//hvis index filter tidligere har funet ut at dette ikke er et bra treff går vi til neste
+			if ((*PagesResults).TeffArray->iindex[i].indexFiltered.filename == 1) {
+				#ifdef DEBUG
+				printf("filter: index filtered (filename)\n");
+				#endif
+				continue;
+			}
+			if ((*PagesResults).TeffArray->iindex[i].indexFiltered.date == 1) {
+				#ifdef DEBUG
+				printf("filter: index filtered (date)\n");
+				#endif
+				continue;
+			}
+			if ((*PagesResults).TeffArray->iindex[i].indexFiltered.subname == 1) {
+				#ifdef DEBUG
+				printf("filter: index filtered (subname)\n");
+				#endif
+				continue;
+			}
 		#endif
 
 		#ifndef BLACK_BOKS
-		//pre DIread filter
-		#ifdef DEBUG
-			printf("adult %u: %i\n",(*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
-		#endif
-
-		if (((*PagesResults).filterOn) && (filterAdultWeight_bool(adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID),(*PagesResults).adultpages,(*PagesResults).noadultpages) == 1)) {
+			//pre DIread filter
 			#ifdef DEBUG
-			printf("%u is adult whith %i\n",(*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
+				printf("adult %u: %i\n",(*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
 			#endif
-			increaseMemFiltered(PagesResults,
-				&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_bool,
-				&(*(*PagesResults).TeffArray->iindex[i].subname).hits,
-				&(*PagesResults).TeffArray->iindex[i]);
-			continue;
-		}
 
-		#ifdef DEBUG_TIME
-		gettimeofday(&start_time, NULL);
-		#endif
-		//uanset om vi har filter eller ikke så slår vi opp domainid. Men hvis vi har filter på så teller vi også
-		if (!iintegerMemArrayGet ((*PagesResults).DomainIDs,&DomainID,sizeof(*DomainID),(*PagesResults).TeffArray->iindex[i].DocID) ) {
-			#ifdef DEBUG
-			printf("can't lookup DomainID\n");
-			#endif
-			side->DomainID = 0;
-
-			//filtrerer ikke ut domener som vi ikke kunne slå opp domene id for, da 
-			//dette kansje ikke er www. Får heller lage en domene id etter ig ha lest DI
-			//if (((*PagesResults).filterOn)) {
-			//	increaseMemFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.getingDomainID,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
-			//
-			//	continue;
-			//}
-		}
-		else {
-
-			side->DomainID = (*DomainID);
-			//printf("DomainID %ho\n",side->DomainID);
-			
-#ifndef BLACK_BOKS
-			// fornå gjør vi bare denne sjekken hvis vi kunne slå opp DomainID
-                	if (((*PagesResults).filterOn) && (filterSameDomainID(localshowabal,side,(*PagesResults).Sider))) {
+			if (((*PagesResults).filterOn) && (filterAdultWeight_bool(adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID),(*PagesResults).adultpages,(*PagesResults).noadultpages) == 1)) {
 				#ifdef DEBUG
-				printf("Have same DomainID\n");
+				printf("%u is adult whith %i\n",(*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
 				#endif
-				increaseMemFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.sameDomainID,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
+				increaseMemFiltered(PagesResults,
+					&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_bool,
+					&(*(*PagesResults).TeffArray->iindex[i].subname).hits,
+					&(*PagesResults).TeffArray->iindex[i]);
 				continue;
-			
 			}
-#endif
-		}
-		#ifdef DEBUG_TIME
-		        gettimeofday(&end_time, NULL);
-        	        PagesResults->popResultBreakDownTime.memGetDomainID.time += getTimeDifference(&start_time,&end_time);
-	                ++PagesResults->popResultBreakDownTime.memGetDomainID.nr;
-		#endif
+
+			#ifdef DEBUG_TIME
+			gettimeofday(&start_time, NULL);
+			#endif
+			//uanset om vi har filter eller ikke så slår vi opp domainid. Men hvis vi har filter på så teller vi også
+			if (!iintegerMemArrayGet ((*PagesResults).DomainIDs,&DomainID,sizeof(*DomainID),(*PagesResults).TeffArray->iindex[i].DocID) ) {
+				#ifdef DEBUG
+				printf("can't lookup DomainID\n");
+				#endif
+				side->DomainID = 0;
+
+				//filtrerer ikke ut domener som vi ikke kunne slå opp domene id for, da 
+				//dette kansje ikke er www. Får heller lage en domene id etter ig ha lest DI
+				//if (((*PagesResults).filterOn)) {
+				//	increaseMemFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.getingDomainID,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
+				//
+				//	continue;
+				//}
+			}
+			else {
+
+				side->DomainID = (*DomainID);
+				//printf("DomainID %ho\n",side->DomainID);
+			
+				// fornå gjør vi bare denne sjekken hvis vi kunne slå opp DomainID
+                		if (((*PagesResults).filterOn) && (filterSameDomainID(localshowabal,side,(*PagesResults).Sider))) {
+					#ifdef DEBUG
+					printf("Have same DomainID\n");
+					#endif
+					increaseMemFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.sameDomainID,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
+					continue;
+				
+				}
+			}
+			#ifdef DEBUG_TIME
+			        gettimeofday(&end_time, NULL);
+        		        PagesResults->popResultBreakDownTime.memGetDomainID.time += getTimeDifference(&start_time,&end_time);
+	        	        ++PagesResults->popResultBreakDownTime.memGetDomainID.nr;
+			#endif
 
 		#endif
 
