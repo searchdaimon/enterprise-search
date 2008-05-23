@@ -1,6 +1,8 @@
 #ifndef _CRAWL__H_
 #define _CRAWL__H_
 
+#include <limits.h>
+
 #include "../common/define.h"
 
 void crawlperror(const char *fmt, ...);
@@ -10,6 +12,9 @@ char *strcrawlError();
 
 #define crawl_security_acl 1
 #define crawl_security_none 1
+
+
+struct crawlLibInfoFormat;
 
 struct collectionFormat {
 	char *resource;
@@ -27,8 +32,8 @@ struct collectionFormat {
 	char *userprefix;
 	char **users;
 	char *extra;
-	char *perlcode;
 	char *test_file_prefix;
+	struct crawlLibInfoFormat *crawlLibInfo;
 };
 
 struct crawldocumentExistFormat {
@@ -63,6 +68,7 @@ struct crawldocumentAddFormat {
 		int (*documentError)(int level, const char *fmt, ...), \
 		int (*documentContinue)(struct collectionFormat *collection)
 
+
 struct crawlLibInfoFormat {
 	int (*crawlinit)();
 	// a pointer to a crawlfirst rutine
@@ -78,9 +84,14 @@ struct crawlLibInfoFormat {
 	int (*rewrite_url)(char *, enum platform_type, enum browser_type);
 
 	int crawl_security;
-	char *shortname;
+	//char *shortname;
+	//22 mai 2008;
+	char shortname[50];
 	char *(*strcrawlError)();
+
+	char resourcepath[PATH_MAX];
 };
+
 
 struct cargsF {
 
