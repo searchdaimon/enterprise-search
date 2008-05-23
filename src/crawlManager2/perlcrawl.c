@@ -67,10 +67,15 @@ int perlcm_crawlupdate(struct collectionFormat *collection,
         int (*documentContinue)(struct collectionFormat *collection)) {
 
 
-        //char *perl_args[] = { "", "-Mblib=/home/boitho/boitho/websearch/perlxs/SD-Crawl", "/home/boitho/boitho/websearch/src/crawlManager2/Hermes.pl", NULL };
-        //char *perl_args[] = { "", "-Mblib=/home/boitho/boitho/websearch/perlxs/SD-Crawl", "-e", "0", NULL };
-        char *perl_args[] = { "", "-Mblib=/home/boitho/boitho/websearch/perlxs/SD-Crawl", "-e", collection->perlcode, NULL };
-	int perl_argsc = 3;
+	char perlfile[PATH_MAX];
+	snprintf(perlfile,sizeof(perlfile),"%s/main.pm",collection->crawlLibInfo->resourcepath);
+
+
+        char *perl_args[] = { "", "-Mblib=/home/boitho/boitho/websearch/perlxs/SD-Crawl",  "-I", collection->crawlLibInfo->resourcepath, perlfile, NULL };
+
+	printf("useing perl file \"%S\"\n",collection->crawlLibInfo->resourcepath);
+
+	int perl_argsc = 4;
 	
 
 	extern char **environ;
@@ -85,7 +90,7 @@ int perlcm_crawlupdate(struct collectionFormat *collection,
         PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 
 	//hvis vi ikke sender med perl coden med -e må den kjøres her, men da får i mindre feil melidinger
-	eval_pv(collection->perlcode, FALSE);
+	//eval_pv(collection->perlcode, FALSE);
 
 
         /*** skipping perl_run() ***/
@@ -120,10 +125,13 @@ int perlcm_crawlfirst(struct collectionFormat *collection,
 
 
 
-struct crawlLibInfoFormat *perlCrawlStart() {
+struct crawlLibInfoFormat *perlCrawlStart(char perlpath[], char name[]) {
 
 
-	static struct crawlLibInfoFormat crawlLibInfo = {
+	struct crawlLibInfoFormat *crawlLibInfo;
+
+	/*
+	struct crawlLibInfoFormat crawlLibInfoInit = {
 		NULL,
         	perlcm_crawlfirst,
 		perlcm_crawlupdate,
@@ -132,13 +140,34 @@ struct crawlLibInfoFormat *perlCrawlStart() {
 		NULL,
 		NULL,
         	NULL,
-        	"PerlCrawl",
+        	name,
 		strcrawlError
 	};
+	*/
+	printf("perlCrawlStart(perlpath=%s, name=%s)\n",perlpath, name);
 
-	printf("perlCrawlStart\n");
 
-	return &crawlLibInfo;
+	if((crawlLibInfo = malloc(sizeof(struct crawlLibInfoFormat))) == NULL) {
+		perror("malloc crawlLibInfo");
+		return NULL;
+	}
+
+	crawlLibInfo->crawlinit 	= NULL;
+	crawlLibInfo->crawlfirst 	= perlcm_crawlfirst;
+	crawlLibInfo->crawlupdate 	= perlcm_crawlupdate;
+	crawlLibInfo->crawlcanconect 	= perlcm_crawlcanconect;
+	crawlLibInfo->crawlpatAcces 	= NULL;
+	crawlLibInfo->scan 		= NULL;
+	crawlLibInfo->rewrite_url 	= NULL;
+	crawlLibInfo->crawl_security 	= 0;
+	strcpy(crawlLibInfo->shortname,name);
+	crawlLibInfo->strcrawlError 	= strcrawlError;
+	strcpy(crawlLibInfo->resourcepath,perlpath);
+
+
+	return crawlLibInfo;
+
+
 }
 
 

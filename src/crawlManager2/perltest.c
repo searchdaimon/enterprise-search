@@ -40,7 +40,12 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 
 	fprintf(FH,"uri: %s\n",crawldocumentAdd->documenturi);
 	fprintf(FH,"title: %s\n",crawldocumentAdd->title);
-	fprintf(FH,"Document:\n\n%s\n",crawldocumentAdd->document);
+	fprintf(FH,"doctype: %s\n",crawldocumentAdd->doctype);
+	fprintf(FH,"Type: %s\n",crawldocumentAdd->documenttype);
+	fprintf(FH,"acl_allow: %s\n",crawldocumentAdd->acl_allow);
+	fprintf(FH,"acl_denied: %s\n",crawldocumentAdd->acl_denied);
+	fprintf(FH,"\n\n");
+	fprintf(FH,"Document: %s\n",crawldocumentAdd->document);
 
 	fclose(FH);
 	
@@ -66,7 +71,8 @@ int documentError(int level, const char *fmt, ...) {
 
 void usage() {
 	printf("usage:\n");
-	printf("\tcrawlManager2perltest lib.pm prefix\n\n");
+	printf("\tcrawlManager2perltest folder prefix\n\n");
+	printf("Folder must have the main perl file named main.pm\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -77,7 +83,6 @@ int main(int argc, char *argv[]) {
         FILE *FH;
         struct stat inode;      // lager en struktur for fstat å returnere.
 
-	crawlLibInfo = perlCrawlStart();
 
         extern char *optarg;
         extern int optind, opterr, optopt;
@@ -103,21 +108,10 @@ int main(int argc, char *argv[]) {
 	char *perlfile = argv[1 +optind];
 	collection.test_file_prefix = argv[2 +optind];
 
-
-        if ((FH = fopen(perlfile,"r"))== NULL) {
-		perror(perlfile);
-		exit(-1);
-	}
-
-        fstat(fileno(FH),&inode);
-
-        collection.perlcode = malloc(inode.st_size +1);
-        fread(collection.perlcode,inode.st_size,1,FH);
-        collection.perlcode[inode.st_size] = '\0';;
-
-        fclose(FH);
+	crawlLibInfo = perlCrawlStart(perlfile,"");
 
 
+	collection.crawlLibInfo = crawlLibInfo;
 
 	if (!(*(*crawlLibInfo).crawlfirst)(&collection,documentExist,documentAdd,documentError,documentContinue)) {
                 printf("problems in crawlfirst_ld\n");
