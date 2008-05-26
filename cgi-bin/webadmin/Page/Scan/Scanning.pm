@@ -52,6 +52,8 @@ sub show {
 
 sub run_scan {
 	my ($self, $vars, $template, $scan_ref) = @_;
+
+        $scan_ref->{range} =~ s/^\s+|\s+$//g;
 	
 	# Hooks are for printing scan data as it arrives.
 	$self->_add_hooks(); 
@@ -73,25 +75,35 @@ sub run_scan {
 	$template->process(TPL_SCAN_HEAD);
 
 	my $connector = $sqlConnectors->get_name($scan_ref->{connector});
-	my $xml_result = $bScan->scan(
+        my $xml_result;
+        eval {
+	    $xml_result = $bScan->scan(
 				$connector,
 				$scan_ref->{range},
 				$auth{user},
 				$auth{pass},
 				$scan_ref->{use_ping_scan});
-	
-	$vars->{result_id} = $result_id;
-	$template->process(TPL_SCAN_FOOTER, $vars);
-	$| = $old_buffer_val;
-
-	# update db with results
-	my $data = {
+        };
+        if ($@) {
+            $vars->{error} = ($@ =~ /Genip exited/)
+                ? "Range '$scan_ref->{range}' is invalid." 
+                : "Error: $@";
+            $sqlResults->delete_result($result_id);
+        }
+        else {
+            $vars->{result_id} = $result_id;
+            my $data = {
 		'result_xml' => $xml_result,
 		'connector' => $scan_ref->{'connector'},
 		'done' => 1 };
-	$sqlResults->update_results($result_id, $data);
+            $sqlResults->update_results($result_id, $data);
+        }
+        $template->process(TPL_SCAN_FOOTER, $vars)
+            or croak $template->error(), "\n";
+	$| = $old_buffer_val;
 
-	1;
+	# update db with results
+        1;
 }
 
 sub _add_hooks {

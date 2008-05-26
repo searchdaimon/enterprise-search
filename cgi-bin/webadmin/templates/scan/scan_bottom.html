@@ -1,15 +1,24 @@
+[% USE Dumper %]
 </pre>
 <div style="margin-top : 1em;">
 </div><br />
 
-<div style="margin-top : 1em; font-size : large; font-style: bold;">
+[% IF error %]
+    [% WRAPPER 'tpl_msg.html' type = 'error' %]
+        Error during scan: <br />[% error %]
+    [% END %]
+
+    <img src="file.cgi?i=back&size=22x22" alt="back" /><a href="scan.cgi">Return to scan</a>
+[% ELSE %]
+    <div style="margin-top : 1em; font-size : large; font-style: bold;">
     
-    <form method="get" action="scan.cgi">
-        <input type="hidden" name="action" value="process" />
-        <input type="hidden" name="id" value="[% result_id %]" />
-        <input type="submit" value="Continue to search results ->" />
-    </form>
-</div>
+        <form method="get" action="scan.cgi">
+            <input type="hidden" name="action" value="process" />
+            <input type="hidden" name="id" value="[% result_id %]" />
+            <input type="submit" value="Continue to search results ->" />
+        </form>
+    </div>
+[% END %]
 
 
 [% INCLUDE 'footer.html' %]
