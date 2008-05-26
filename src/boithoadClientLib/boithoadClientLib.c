@@ -43,6 +43,7 @@ int boithoa_getLdapResponsList(int socketha,char **respons_list[],int *nrofrespo
 
 	(*respons_list)[(*nrofresponses)] = '\0';
 
+	return 1;
 }
 
 
