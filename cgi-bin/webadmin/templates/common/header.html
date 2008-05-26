@@ -2,7 +2,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 
-
 <head>
 	<title>[% title %] - Search Daimon administration panel</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -11,12 +10,12 @@
                 content="[% meta_refresh.seconds %];url=[% meta_refresh.url %]" />
         [% END %]
 	<link rel="stylesheet" href="file.cgi?css=default" type="text/css" />
-	<script src="file.cgi?js=utils"></script>
+	<script src="file.cgi?js=utils" type="text/javascript"></script>
 	[% FOREACH css IN extra_css %]
 		<link rel="stylesheet" href="file.cgi?css=[% css %]" type="text/css" />
 	[% END %]
 	[% FOREACH js IN extra_js %]
-		<script src="file.cgi?js=[% js %]"></script>
+		<script src="file.cgi?js=[% js %]" type="text/javascript"></script>
 	[% END %]
 </head>
 <body [% IF onload %] onload="[% onload %]"[% END %]>

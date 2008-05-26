@@ -19,8 +19,6 @@ use Template;
 my $cgi = CGI->new;
 my $state = CGI::State->state($cgi);
 
-
-
 my $sql = Sql::Sql->new();
 my $dbh = $sql->get_connection();
 

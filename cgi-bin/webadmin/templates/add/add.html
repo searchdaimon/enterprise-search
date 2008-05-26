@@ -14,7 +14,6 @@
 		
 	[% END %]
 [% END %]
-<h2>
 [% IF success %]
 	<h2>Add a new collection (part 1 of 2)</h2>
 [% ELSIF from_scan %]
@@ -27,7 +26,7 @@
 	type = 'info'%]
 	There are two parts in adding a new share. 
 	<ol>
-		<li>Specify what type of connector the collection uses, name the collection.<br />
+		<li>Specify what type of connector the collection uses, name the collection.<br /></li>
 			<!-- <div style="text-size : x-small;">
 			<ul>
 				<li><a href="help.cgi?topic=connectors">What are the different connectors?</a></li>
@@ -70,7 +69,8 @@
 [% IF share.auth_id %]<input type="hidden" value="[% share.auth_id %]" name="share.auth_id" />[% END %]
 [% IF from_scan %]<input type="hidden" value="[% from_scan %]" name="from_scan" />[% END %]
 
-<input type="submit" name="submit_first_form" value="Continue to details ->" />
+<input type="hidden" name="submit_first_form" value="1" />
+<input type="submit" value="Continue to details ->" />
 </div>
 </form>
 [% INCLUDE 'footer.html' %]
