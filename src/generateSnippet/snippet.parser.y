@@ -1073,15 +1073,17 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
     data->q_flags = v_section_sentence;
 
 
-    data->num_queries = qa.n;
+    data->num_queries = 0;
 
-    if (data->num_queries > 0)
+    if (qa.n > 0)
 	{
 	    int		phrase_nr=0;
 
 	    for (i=0; i<qa.n; i++)
 		{
+		    switch (qa.query[i].operand) { case QUERY_WORD: case QUERY_PHRASE: case QUERY_OR: break; default: continue; }
 		    qw_size+= qa.query[i].n;
+		    data->num_queries++;
 #ifdef STEMMING
 		    if (qa.query[i].alt != NULL)
 			{
@@ -1093,6 +1095,8 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 			}
 #endif
 		}
+
+	    if (data->num_queries == 0) goto empty_query;
 
 	    data->phrase_sizes = malloc(sizeof(int)*data->num_queries);
 	    printf("data->num_queries = %i\n", data->num_queries);
@@ -1108,6 +1112,8 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 
 	    for (i=0,sigma_size=0,num_qw=0; i<qa.n; i++)
 		{
+		    switch (qa.query[i].operand) { case QUERY_WORD: case QUERY_PHRASE: case QUERY_OR: break; default: continue; }
+
 		    if (qa.query[i].n > longest_phrase)
 			longest_phrase = qa.query[i].n;
 
@@ -1329,6 +1335,8 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 //		    data->old_q[i].score = 0;
 		}
 	}
+
+empty_query:
 
     data->best.score = 0;
     data->best.start = 0;
