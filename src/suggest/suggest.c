@@ -119,14 +119,14 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 			continue;
 		}
 		free(line);
-		strcpy(word, linedata[0]);
+		strscpy(word, linedata[0],sizeof(word));
 		freq = atol(linedata[1]);
 		if (linedata[2])
-			strcpy(aclallow, linedata[2]);
+			strscpy(aclallow, linedata[2],sizeof(aclallow));
 		else
 			strcpy(linedata[2], "");
 		if (linedata[2] && linedata[3])
-			strcpy(acldeny, linedata[3]);
+			strscpy(acldeny, linedata[3],sizeof(acldeny));
 		else
 			strcpy(linedata[3], "");
 		
