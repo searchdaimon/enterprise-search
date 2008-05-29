@@ -13,6 +13,8 @@ use HTML::TokeParser;
 use URI;
 use SD::Crawl;
 use sdMimeMap;
+use LWP::RobotUA;
+
 
 =pod 
 # Switch processing:
@@ -77,7 +79,7 @@ my $passw;
 my $bot_name = 'sdbot/0.1';
 my $timeout = 100;
 my $delay = 2;
-my $bot_email;
+my $bot_email = "email\@email.com";
 
 my $hit_count = 0;
 my $robot;  # the user-agent itself
@@ -140,7 +142,8 @@ sub init_logging {
 }
  
 sub init_robot {
-  use LWP::RobotUA;
+
+  print "Name : ". $bot_name."    mail :".$bot_email."\n";
   $robot = LWP::RobotUA->new($bot_name, $bot_email);
   $robot->delay(2/60); # "/60" to do seconds->minutes
   $robot->timeout($timeout);
@@ -315,13 +318,13 @@ sub process_near_url {
     my $ct = mapMimeType($response->content_type);
 
     my $title = "";
-    if($response->content_type != 'text/html') {
+    if($response->content_type ne  'text/html') {
        $title = substr($url, rindex($url, "/")+1);
    }
 
    if (not SD::Crawl::pdocumentExist($pointer, $url, 0, length($response->as_string ) )) {
       # pdocumentAdd( x, url, lastmodified, dokument_size, document, title, acl_allow, acl_denied )
-      SD::Crawl::pdocumentAdd($pointer, $url, 0 ,length($response->as_string ), $response->as_string, $title, $ct, $acl, "");		
+      SD::Crawl::pdocumentAdd($pointer, $url, 0 ,length($response->as_string ), $response->as_string, $title, $ct, $acl, "","");		
    }
  
     mutter("  That was hit #$hit_count\n");

@@ -82,7 +82,7 @@ if (length($acl)) {
    $acl = substr($acl, 0, length($acl)-1);
 }
 
-SD::sdCrawl::Init($pointer, $bot_name, , "Everyone", $user, $passw);
+SD::sdCrawl::Init($pointer, $bot_name, , "email\@email.com", $acl, $user, $passw);
 SD::sdCrawl::process_starting_urls("http://".$server);
 SD::sdCrawl::Start();
 }
