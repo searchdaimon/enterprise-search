@@ -10,6 +10,7 @@
 #include "../crawl/crawl.h"
 
 #include "../common/bstr.h"
+#include "../common/boithohome.h"
 
 static PerlInterpreter *my_perl;
 
@@ -185,20 +186,6 @@ struct crawlLibInfoFormat *perlCrawlStart(char perlpath[], char name[]) {
 
 	struct crawlLibInfoFormat *crawlLibInfo;
 
-	/*
-	struct crawlLibInfoFormat crawlLibInfoInit = {
-		NULL,
-        	perlcm_crawlfirst,
-		perlcm_crawlupdate,
-        	perlcm_crawlcanconect,
-		NULL,
-		NULL,
-		NULL,
-        	NULL,
-        	name,
-		strcrawlError
-	};
-	*/
 	printf("perlCrawlStart(perlpath=%s, name=%s)\n",perlpath, name);
 
 
@@ -219,8 +206,9 @@ struct crawlLibInfoFormat *perlCrawlStart(char perlpath[], char name[]) {
 	crawlLibInfo->strcrawlError 	= strcrawlError;
 	strcpy(crawlLibInfo->resourcepath,perlpath);
 
+
         //char *perl_args[] = { "", "-Mblib=/home/boitho/boitho/websearch/perlxs/SD-Crawl",  "-I", collection->crawlLibInfo->resourcepath, perlfile, NULL };
-        char *perl_args[] = { "", "-Mblib=/home/boitho/boitho/websearch/perlxs/SD-Crawl",  "persistent.pl", NULL };
+        char *perl_args[] = { "", "-Mblib=/home/boitho/boitho/websearch/perlxs/SD-Crawl",  bfile("perl/persistent.pl"), NULL };
 
 
 	int perl_argsc = 2;
