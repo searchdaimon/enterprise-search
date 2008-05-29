@@ -457,6 +457,8 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 		printf("cant get CrawlLibInfo\n");
 		return 0;
 	}
+	collections[0].crawlLibInfo = crawlLibInfo;
+
 	gettimeofday(&end_time, NULL);
 	pathAccessTimes.getCrawlLibInfo = getTimeDifference(&start_time,&end_time);
 
@@ -487,7 +489,7 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 			forreturn = 0;
 	}
 #endif
-	else if (!(*(*crawlLibInfo).crawlpatAcces)(uri,username,password,documentError)) {
+	else if (!(*(*crawlLibInfo).crawlpatAcces)(uri,username,password,documentError,&collections[0])) {
         	printf("Can't crawlLibInfo. Can be denyed or somthing else\n");
 		//overfører error
                 berror((*crawlLibInfo).strcrawlError());

@@ -78,7 +78,7 @@ struct crawlLibInfoFormat {
 
 	int (*crawlcanconect)(struct collectionFormat *collection,int (*documentError)(int level, const char *fmt, ...));
 
-	int (*crawlpatAcces)(char resource[], char username[], char password[],int (*documentError)(int level, const char *fmt, ...));
+	int (*crawlpatAcces)(char resource[], char username[], char password[],int (*documentError)(int level, const char *fmt, ...), struct collectionFormat *collection);
 
 	int (*scan)(int (*scan_found_share)(char share[]),char host[],char username[], char password[],int (*documentError)(int level, const char *fmt, ...));
 	int (*rewrite_url)(char *, enum platform_type, enum browser_type);
