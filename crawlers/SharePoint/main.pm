@@ -17,7 +17,7 @@ my $soap_client;
 
 
 sub crawlupdate {	
- 	my ($pointer, $opt ) = @_;	
+ 	my ($self, $pointer, $opt ) = @_;	
 
 	my $user = $opt->{"user"};
 	my $Password = $opt->{"password"};
@@ -57,3 +57,8 @@ SD::sdCrawl::Start();
 
 
 
+sub crawlpatAcces {
+        my ($self, $pointer, $opt ) = @_;
+
+	return 1;
+}
