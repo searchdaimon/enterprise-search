@@ -142,7 +142,7 @@ sub init_logging {
 sub init_robot {
   use LWP::RobotUA;
   $robot = LWP::RobotUA->new($bot_name, $bot_email);
-  $robot->delay($2/60); # "/60" to do seconds->minutes
+  $robot->delay(2/60); # "/60" to do seconds->minutes
   $robot->timeout($timeout);
   #$robot->requests_redirectable([]); # uncomment this line to disallow redirects
   $robot->protocols_allowed(['http','https']);  # disabling all others
