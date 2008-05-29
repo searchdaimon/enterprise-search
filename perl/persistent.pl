@@ -77,6 +77,7 @@
 		print "inc:\n";
 		print join("\n", @INC);
 		print "\n";
+		$package->handler();
 
 		$ret = $package->$execute($pointer, $opt);
 	};
