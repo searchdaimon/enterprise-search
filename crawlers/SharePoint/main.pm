@@ -12,7 +12,6 @@ use LWP::RobotUA;
  
 
 #use Data::Dumper;
-my $acl;
 my $pointer; 
 my $soap_client;
 my $robot;
@@ -53,19 +52,20 @@ sub crawlupdate {
  	my ($self, $pointer, $opt ) = @_;	
 
 	my $user = $opt->{"user"};
-        print "************".$user."*************\n";
 	my $passw = $opt->{"password"};
 	my $server = $opt->{"resource"};
 
     $soap_client = new SOAP::Lite
     uri => 'http://schemas.microsoft.com/sharepoint/soap/directory',
     proxy =>"http://".$user.":".$passw."@".$server."/_vti_bin/UserGroup.asmx"
-  ;
+   ;
+
    $soap_client->on_action(sub {
    #print Dumper(\@_);
 	return $_[0].$_[1];
    });
 
+   my $acl = "";
 
    my $xml = $soap_client->GetAllUserCollectionFromWeb();   
    my $xp = XML::XPath->new(xml => $xml);  
@@ -81,7 +81,7 @@ foreach my $node ($nodeset->get_nodelist) {
 if (length($acl)) {
    $acl = substr($acl, 0, length($acl)-1);
 }
-
+print "*******************Acl :".$acl."\n";
 SD::sdCrawl::Init($pointer, $bot_name, , "email\@email.com", $acl, $user, $passw);
 SD::sdCrawl::process_starting_urls("http://".$server);
 SD::sdCrawl::Start();
