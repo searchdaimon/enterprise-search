@@ -17,7 +17,11 @@ my $soap_client;
 
 
 sub crawlupdate {	
-   ($pointer ) = @_;	
+ 	my ($pointer, $opt ) = @_;	
+
+	my $user = $opt->{"user"};
+	my $Password = $opt->{"password"};
+	my $server = $opt->{"resource"};
 
     $soap_client = new SOAP::Lite
     uri => 'http://schemas.microsoft.com/sharepoint/soap/directory',
@@ -44,8 +48,8 @@ if (length($acl)) {
    $acl = substr($acl, 0, length($acl)-1);
 }
 
-SD::sdCrawl::Init($pointer, "sdbot/0.1", "email\@email.com", "Everyone", "demo\\test", "Xsolive2007");
-SD::sdCrawl::process_starting_urls("http://www.xsolive.com");
+SD::sdCrawl::Init($pointer, "sdbot/0.1", "email\@email.com", "Everyone", $user, $Password);
+SD::sdCrawl::process_starting_urls($server);
 SD::sdCrawl::Start();
 }
 
