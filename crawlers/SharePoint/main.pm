@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-
+use strict;
 package Perlcrawl;
 use SD::Crawl;
 
@@ -7,6 +7,7 @@ use SD::Crawl;
 use SOAP::Lite(readable => 1, outputxml => 1, );
 use XML::XPath;
 use SD::sdCrawl;
+use LWP::RobotUA;
  
  
 
@@ -14,21 +15,54 @@ use SD::sdCrawl;
 my $acl;
 my $pointer; 
 my $soap_client;
+my $robot;
+my $bot_name = "sdbot/0.1";
+my $bot_email = "bs\@searchdaimon.com";
 
+sub init_robot { 
+   my $timeout = 4;
+ 
+   $robot = LWP::RobotUA->new($bot_name, $bot_email);
+   $robot->delay(0); # "/60" to do seconds->minutes
+   $robot->timeout($timeout);
+   $robot->requests_redirectable([]); # comment this line to allow redirects
+   $robot->protocols_allowed(['http','https']);  # disabling all others
+}
+
+sub crawlpatAcces  {
+    my ($self, $pointer, $opt ) = @_;
+    my $user = $opt->{'user'};
+    my $passw  => $opt->{'password'};
+    my $url = $opt->{"resource"};
+
+    if (!defined($robot)) { init_robot() ; }
+
+    my $req = HTTP::Request->new(HEAD => $url);
+
+    if ($user) { 
+      mutter("Autorizing ".$user." with password ".$passw."\n");
+      $req->authorization_basic($user, $passw); 
+    }
+
+    my $response = $robot->request($req);
+    if (!$response->is_success) { return 0; }
+    return 1;
+}
 
 sub crawlupdate {	
  	my ($self, $pointer, $opt ) = @_;	
 
 	my $user = $opt->{"user"};
-	my $Password = $opt->{"password"};
+        print "************".$user."*************\n";
+	my $passw = $opt->{"password"};
 	my $server = $opt->{"resource"};
 
     $soap_client = new SOAP::Lite
     uri => 'http://schemas.microsoft.com/sharepoint/soap/directory',
-    proxy => 'http://www.xsolive.com/_vti_bin/Permissions.asmx'
+    proxy =>"http://".$user.":".$passw."@".$server."/_vti_bin/UserGroup.asmx"
   ;
-$soap_client->on_action(sub {
-#print Dumper(\@_);
+   $soap_client->on_action(sub {
+   #print Dumper(\@_);
 	return $_[0].$_[1];
    });
 
@@ -48,8 +82,8 @@ if (length($acl)) {
    $acl = substr($acl, 0, length($acl)-1);
 }
 
-SD::sdCrawl::Init($pointer, "sdbot/0.1", "email\@email.com", "Everyone", $user, $Password);
-SD::sdCrawl::process_starting_urls($server);
+SD::sdCrawl::Init($pointer, $bot_name, , "Everyone", $user, $passw);
+SD::sdCrawl::process_starting_urls("http://".$server);
 SD::sdCrawl::Start();
 }
 
@@ -57,8 +91,3 @@ SD::sdCrawl::Start();
 
 
 
-sub crawlpatAcces {
-        my ($self, $pointer, $opt ) = @_;
-
-	return 1;
-}

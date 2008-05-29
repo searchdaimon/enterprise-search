@@ -96,9 +96,9 @@ my $pointer;
 sub Init {
    ($pointer, $bot_name, $bot_email, $acl, $user, $passw) = @_;
     init_logging( );
-    init_robot( );
+    my $robot = init_robot( );
     init_signals( );
-
+    return $robot;
 }
 
 sub Start {
@@ -147,7 +147,7 @@ sub init_robot {
   #$robot->requests_redirectable([]); # uncomment this line to disallow redirects
   $robot->protocols_allowed(['http','https']);  # disabling all others
    say("$bot_name ($bot_email) starting at ", scalar(localtime), "\n");
-  return;
+  return $robot;
 }
  
 sub init_signals {  # catch control-C's
