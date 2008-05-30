@@ -267,6 +267,18 @@ sub consider_response {
   return 0;
 }
 
+sub checkCategory {
+   my $data = @_;
+
+   if ($data =~ /new DiscussionBoard/) { return "Discussion"; }
+   if ($data =~ /Tasks list to keep track of work related to this area/) { return "Calendar"; }
+   if ($data =~ /Provides a place to store documents for this area/) { return "DocumentLibrary"; }
+   if ($data =~ /L_DefaultContactsLink_Text/) { return "Contacts"; }
+   if ($data =~ /L_ExportToContactsApp/) { return "Contacts"; }
+
+  return "";
+}
+
 sub process_far_url {
   my $url = $_[0];
   say("HEADing far $url\n");
@@ -327,10 +339,12 @@ sub process_near_url {
     if($response->content_type ne  'text/html') {
        $title = substr($url, rindex($url, "/")+1);
    }
+   
+   my $category = checkCategory($response->as_string);
 
    if (not SD::Crawl::pdocumentExist($pointer, $url, 0, length($response->as_string ) )) {
       # pdocumentAdd( x, url, lastmodified, dokument_size, document, title, acl_allow, acl_denied )
-      SD::Crawl::pdocumentAdd($pointer, $url, 0 ,length($response->as_string ), $response->as_string, $title, $ct, $acl, "","");		
+      SD::Crawl::pdocumentAdd($pointer, $url, 0 ,length($response->as_string ), $response->as_string, $title, $ct, $acl, "",$category);		
    }
  
     mutter("  That was hit #$hit_count\n");
