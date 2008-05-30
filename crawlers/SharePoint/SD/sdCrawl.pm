@@ -1,3 +1,4 @@
+
 #!/usr/bin/perl
 # sdCrawl.pm
 
@@ -103,19 +104,20 @@ sub Init {
     return $robot;
 }
 
+sub setDelay {
+   ($delay) = @_;
+}
+
 sub Start {
+   my $url;
+  ($url) = @_;
+   schedule($url);
+
    main_loop( );
    report( ) if $hit_count;
    say("Quitting.\n");
 }
  
-sub initialize {
-  init_logging( );
-  init_robot( );
-  init_signals( );
-  return;
-}
-
 sub main_loop {
   while(
     schedule_count( )
@@ -145,7 +147,7 @@ sub init_robot {
 
   print "Name : ". $bot_name."    mail :".$bot_email."\n";
   $robot = LWP::RobotUA->new($bot_name, $bot_email);
-  $robot->delay(2/60); # "/60" to do seconds->minutes
+  $robot->delay($delay/60); 
   $robot->timeout($timeout);
   #$robot->requests_redirectable([]); # uncomment this line to disallow redirects
   $robot->protocols_allowed(['http','https']);  # disabling all others
@@ -182,17 +184,19 @@ sub mutter {
 
 sub process_url {
   my $url = $_[0];
-  if( near_url($url) )   { process_near_url($url) }
+   if( near_url($url) )   { process_near_url($url) }
   else                   { process_far_url($url) }
   return;
 }
 
 sub near_url {   # Is the given URL "near"?
-  my $url = $_[0];
+  #my $url = $_[0];
+  my $url = URI->new($_[0]);
   foreach my $starting_url (@starting_urls) {
-     if( substr($url, 0, length($starting_url))
-     eq $starting_url
-     # We assume that all URLs are in canonical form!
+     my $starting_uri =URI->new($starting_url);
+     #if( substr($url, 0, length($starting_url))
+     #eq $starting_url
+    if( $url->host() eq  $starting_uri->host()
     ) {
       mutter("  So $url is near\n");
       return 1;
@@ -202,13 +206,14 @@ sub near_url {   # Is the given URL "near"?
   return 0;
 }
 
+
 sub process_starting_urls {
   foreach my $url (@_) {
     my $u = URI->new($url)->canonical;
-    push @starting_urls, $u;
+     push @starting_urls, $u;
   }
-  schedule($starting_urls[0]);
-  return;
+   #schedule($starting_urls[0]);
+   #return;
 }
 
 sub refer {
@@ -280,8 +285,9 @@ sub authorize {
 }
 
 sub process_near_url {
-  my $url = $_[0];
-  my $htmlcontent;
+   my $url = $_[0];
+
+   my $htmlcontent;
   my $refurl = refer($url); # can be user for courtesy like $robot->request($req, $refurl);
   mutter("HEADing near $url\n");
   ++$hit_count;
@@ -292,7 +298,7 @@ sub process_near_url {
       mutter("Autorizing ".$user." with password ".$passw."\n");
       $req->authorization_basic($user, $passw); 
   }
-
+  print "Visiting : ", $url, "\n";
   my $response = $robot->request($req);
 
   mutter("  That was hit #$hit_count\n");
@@ -339,7 +345,6 @@ sub process_near_url {
 
 sub extract_links_from_response {
   my $response = $_[0];
-
   my $base = URI->new( $response->base )->canonical;
     # "canonical" returns it in the one "official" tidy form
 
@@ -351,13 +356,13 @@ sub extract_links_from_response {
   my($tag, $link_url);
   while( $tag = $stream->get_tag('a') ) {
     next unless defined($link_url = $tag->[1]{'href'});
-    next if $link_url =~ m/\s/; # If it's got whitespace, it's a bad URL.
+    #next if $link_url =~ m/\s/; # If it's got whitespace, it's a bad URL.
     next unless length $link_url; # sanity check!
-  
     $link_url = URI->new_abs($link_url, $base)->canonical;
     next unless $link_url->scheme eq 'http'; # sanity
   
-    $link_url->fragment(undef); # chop off any "#foo" part
+    #$link_url->fragment(undef); # chop off any "#foo" part
+
     note_link_to($page_url => $link_url)
       unless $link_url->eq($page_url); # Don't note links to itself!
   }
@@ -368,12 +373,12 @@ sub note_link_to {
   my($from_url => $to_url) = @_;
   $points_to{ $to_url }{ $from_url } = 1;
   mutter("Noting link\n  from $from_url\n    to $to_url\n");
-  schedule($to_url);
+   schedule($to_url);
   return;
 }
 
 sub next_scheduled_url {
-  my $url = splice @schedule, rand(@schedule), 1;
+   my $url = splice @schedule, rand(@schedule), 1;
   mutter("\nPulling from schedule: ", $url || "[nil]","\n  with ", scalar(@schedule)," items left in schedule.\n");
   return $url;
 }
@@ -383,13 +388,13 @@ sub schedule_count     { return scalar @schedule }
 sub schedule {
   # Add these URLs to the schedule
   foreach my $url (@_) {
-    my $u = ref($url) ? $url : URI->new($url);
-    $u = $u->canonical;  # force canonical form
-    next unless 'http' eq ($u->scheme || '') or 'http' eq ($u->scheme || '');
-    next if defined $u->query;
-    next if defined $u->userinfo;
+     my $u = ref($url) ? $url : URI->new($url);
+     $u = $u->canonical;  # force canonical form
+     next unless 'http' eq ($u->scheme || '') or 'http' eq ($u->scheme || '');
+     #next if defined $u->query; do if far urls
+     #next if defined $u->userinfo; do if far urls
+     $u->host( regularize_hostname( $u->host( ) ) );
 
-    $u->host( regularize_hostname( $u->host( ) ) );
     #return unless $u->host( ) =~ m/\./;
  
     #next if url_path_count($u) > 6;

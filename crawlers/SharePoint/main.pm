@@ -8,6 +8,7 @@ use SOAP::Lite(readable => 1, outputxml => 1, );
 use XML::XPath;
 use SD::sdCrawl;
 use LWP::RobotUA;
+use URI;
  
  
 
@@ -39,52 +40,59 @@ sub crawlpatAcces  {
     my $req = HTTP::Request->new(HEAD => $url);
 
     if ($user) { 
-      mutter("Autorizing ".$user." with password ".$passw."\n");
-      $req->authorization_basic($user, $passw); 
+        $req->authorization_basic($user, $passw); 
     }
 
     my $response = $robot->request($req);
-    if (!$response->is_success) { return 0; }
-    return 1;
+    if (!$response->is_success) { return 1; }
+    return 0;
 }
 
 sub crawlupdate {	
- 	my ($self, $pointer, $opt ) = @_;	
+   my ($self, $pointer, $opt ) = @_;	
 
-	my $user = $opt->{"user"};
-	my $passw = $opt->{"password"};
-	my $server = $opt->{"resource"};
+    my $user = $opt->{"user"};
+    my $passw = $opt->{"password"};
+    my $Urls = $opt->{"resource"};
+    my $starting_url;
+    my @urlList = split /;/, $Urls;
 
-    $soap_client = new SOAP::Lite
-    uri => 'http://schemas.microsoft.com/sharepoint/soap/directory',
-    proxy =>"http://".$user.":".$passw."@".$server."/_vti_bin/UserGroup.asmx"
-   ;
+    SD::sdCrawl::process_starting_urls(@urlList);
+    SD::sdCrawl::setDelay(0.1);
 
-   $soap_client->on_action(sub {
-   #print Dumper(\@_);
-	return $_[0].$_[1];
-   });
-
-   my $acl = "";
-
-   my $xml = $soap_client->GetAllUserCollectionFromWeb();   
-   my $xp = XML::XPath->new(xml => $xml);  
-   my $nodeset =  $xp->findnodes('//User/@Sid');
+    foreach $starting_url(@urlList) {
+       my $url = URI->new(@urlList[0]);
+       my $host = $url->host();
     
-foreach my $node ($nodeset->get_nodelist) {
-   #put in a list and use join instead when more usernames available
-   my $usr = XML::XPath::XMLParser::as_string($node);
-   $usr = substr($usr,index($usr,"\"")+1);
-   $usr = substr($usr,0,length($usr)-1);
-   $acl = $acl.$usr.',';
-}
-if (length($acl)) {
-   $acl = substr($acl, 0, length($acl)-1);
-}
-print "*******************Acl :".$acl."\n";
-SD::sdCrawl::Init($pointer, $bot_name, , "email\@email.com", $acl, $user, $passw);
-SD::sdCrawl::process_starting_urls("http://".$server);
-SD::sdCrawl::Start();
+       $soap_client = new SOAP::Lite
+       uri => 'http://schemas.microsoft.com/sharepoint/soap/directory',
+       proxy =>"http://".$user.":".$passw."@".$host."/_vti_bin/UserGroup.asmx";
+
+      $soap_client->on_action(sub {
+         #print Dumper(\@_);
+	 return $_[0]."/". $_[1];
+      });
+
+      my $acl = "";
+
+      my $xml = $soap_client->GetAllUserCollectionFromWeb();   
+      my $xp = XML::XPath->new(xml => $xml);  
+      my $nodeset =  $xp->findnodes('//User/@Sid');
+    
+      foreach my $node ($nodeset->get_nodelist) {
+         #put in a list and use join instead when more usernames available
+         my $usr = XML::XPath::XMLParser::as_string($node);
+         $usr = substr($usr,index($usr,"\"")+1);
+         $usr = substr($usr,0,length($usr)-1);
+         $acl = $acl.$usr.',';
+      }
+
+      if (length($acl)) {
+         $acl = substr($acl, 0, length($acl)-1);
+      }
+      SD::sdCrawl::Init($pointer, $bot_name, , "email\@email.com", $acl, $user, $passw);
+      SD::sdCrawl::Start($starting_url);
+   }
 }
 
 
