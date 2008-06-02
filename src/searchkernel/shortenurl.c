@@ -36,10 +36,11 @@ void shortenurl(char *url,int urllen) {
   	char **Data;
   	int Count, TokCount;
 	#ifdef BLACK_BOKS
-		char newurl[80];
+		unsigned char newurl[80];
 	#else
-		char newurl[201];
+		unsigned char newurl[201];
 	#endif
+
 	int added, suburllen;
 	int i;
 	char slash[2];
@@ -165,21 +166,40 @@ void shortenurl(char *url,int urllen) {
 
 	//hvis også siste navn er for langt, hånterer vi det spesifikt.
 	if (TokCount == Count) {
+		printf("bb\n");
 		strlcat(newurl,slash,sizeof(newurl));
 		strlcat(newurl,Data[Count],sizeof(newurl));		
+
 	}
 	else {
+		printf("aa\n");
 		//printf("addint last part:\n");
 		for (i=Count+1;i<TokCount+1;i++) {
 			vboprintf("c: \t\t%d\t\"%s\"\n", i, Data[i]);
 
+			printf("newurl: len %i, \"%s\"\n",strlen(newurl),newurl);
+
                 	strlcat(newurl,slash,sizeof(newurl));
 			strlcat(newurl,Data[i],sizeof(newurl));
-
 		}
 	}
 
-	vboprintf("shortenurl: newurl %s\n",newurl);
+	vboprintf("shortenurl 1: newurl \"%s\"\n",newurl);
+	//runarb 27 mai
+	//Hvis den har et utf 8 tegn der vi slutter å kopierer for vi med bare halve tegnet, og bryter da xml'en
+	printf("strlen %i, size %i\n",strlen(newurl),sizeof(newurl));
+	i = strlen(newurl) -1;
+	while(i!=0 && newurl[i] > 127) {
+		printf("removing char %c\n",newurl[i]);
+		newurl[i] = '\0';
+		--i;
+	}
+	//if ((strlen(newurl) == (sizeof(newurl) -1) ) 
+	//	// && ( (newurl[sizeof(newurl) -1] > 127) || (newurl[sizeof(newurl) -1] < 10)) 
+	//	) {
+	//	newurl[sizeof(newurl) -1] = 'X';
+	//}	
+	vboprintf("shortenurl 2: newurl \"%s\"\n",newurl);
 
 	FreeSplitList(Data);
 	
@@ -192,8 +212,9 @@ void shortenurl(char *url,int urllen) {
 int
 main(int argc, char **argv)
 {
-	char *url = strdup("http://www.jewishbookmall.com/shop/asinsearch_0345369793/");
-	//char *url = strdup("file://///192.168.22.25\\filer\\Ringnes\\2006\\Brus.Vann\\Pepsi 2006\\Pepsi Max Gold lansering\\Pepsi Max Gold Sommerturne - kjÃ¸replan.xls");
+	char *url = strdup("file:\\\\192.168.22.25\\filer\\Kunder_Norge_Sverige\\Ringnes\\2002\\Brus\\Pepsi\\Gammelt\\Tester\\Pepsi spÃ¸rreund..ppt");
+
+	globalOptVerbose = 1;
 
 	shortenurl(url,255);
 
