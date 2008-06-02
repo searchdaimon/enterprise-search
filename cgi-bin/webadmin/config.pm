@@ -84,6 +84,7 @@ $CONFIG{'init_services'} = {
     'boithoad'     => "Active Directory",
     'bbAutoUpdate' => "Blackbox Auto Update",
     'boitho-bbdn'  => "Document Management",
+    'suggest'  => "Suggest",
 };
 
 # Path to init dir with bb services..
