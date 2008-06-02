@@ -97,7 +97,7 @@ all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager 
 
 
 sqlUpdate:
-	perl rpmmagic.pl --sql sql/update1.7.1.sql --requires "boithobb-sqlUpdate>=0.5.3-1" $(boithobb-sqlUpdate_name) $(boithobb-sqlUpdate_version) $(BOITHOHOME) /home/boitho/boithoTools 
+	perl rpmmagic.pl --sql sql/update-cur.sql --requires "boitho-database" $(boithobb-sqlUpdate_name) $(boithobb-sqlUpdate_version) $(BOITHOHOME) /home/boitho/boithoTools 
 
 	rpmbuild -bb $(boithobb-sqlUpdate_name).spec
 
@@ -229,7 +229,7 @@ callHome:
  
 
 sqldatabase:
-	perl rpmmagic.pl -initd boithodbsetup --initdnostart --post "chkconfig mysqld on" $(boithobb-database_name) $(boithobb-database_version) $(BOITHOHOME) /home/boitho/boithoTools \
+	perl rpmmagic.pl --pre "/etc/init.d/mysqld start" --post "chkconfig mysqld on; sh /home/boitho/boithoTools/blackbox/boithodbsetup" $(boithobb-database_name) $(boithobb-database_version) $(BOITHOHOME) /home/boitho/boithoTools \
 		blackbox/boithobb.sql blackbox/creatuser.sql blackbox/boithodbsetup
 	rpmbuild -bb $(boithobb-database_name).spec
 
