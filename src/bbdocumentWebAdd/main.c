@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <err.h>
+#include <libconfig.h>
 
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
@@ -13,9 +14,9 @@
 #include "../bbdocument/bbdocument.h"
 #include "../boitho-bbdn/bbdnclient.h"
 #include "../cgi-util/cgi-util.h"
+#include "../maincfg/maincfg.h"
 
 #define ROOT_NODE_NAME "sddocument"
-#define BBDNPORT 5490
 
 struct xmldocumentFormat {
 	char *title;
@@ -171,8 +172,15 @@ main(int argc, char **argv)
 	xmlDocPtr doc;
         xmlNodePtr cur, anode;
 	int bbdnsock;
+	int bbdnport;
+	struct config_t maincfg;
 
-	if (!bbdn_conect(&bbdnsock, "", BBDNPORT))
+	/* Read in config file */
+	maincfg = maincfgopen();
+	bbdnport = maincfg_get_int(&maincfg, "BLDPORT");
+	maincfgclose(&maincfg);
+
+	if (!bbdn_conect(&bbdnsock, "", bbdnport))
 		errx(1, "Unable to connect to document manager");
 
 	/*
