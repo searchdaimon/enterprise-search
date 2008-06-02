@@ -839,12 +839,14 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 
 	printf("and_merge(originalLen=%i, alen=%i, blen=%i)\n",originalLen,alen,blen);
 
+	#ifdef DEBUG_II
 	printf("b, first hits:\n");
 	for(x=0;x<blen && x<100;x++) {
 		printf("\t%u\n",b->iindex[x].DocID);
 	}
+	#endif
 
-	#ifdef DEBUG
+	#ifdef DEBUG_II
 	printf("and_merge: start\n");
 	printf("and_merge:  originalLen %i\n",originalLen);
 	#endif
@@ -852,9 +854,9 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 	while (i<alen && j<blen)
 	{
 		if (a->iindex[i].DocID == b->iindex[j].DocID) {
-			//#ifdef DEBUG_II
-			printf("\t%i == %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
-			//#endif
+			#ifdef DEBUG_II
+				printf("\t%i == %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
+			#endif
 			//c[k] = a[i];
 
 			//c[k].TermRank = a[i].TermRank + b[j].TermRank;		
@@ -1162,7 +1164,7 @@ void iindexArrayCopy2(struct iindexFormat *c, int *baselen,int Originallen, stru
 		c->iindex[k].hits = &c->hits[c->nrofHits];
 
 		for(x=0;x<a->iindex[i].TermAntall;x++) {
-			#ifdef DEBUG
+			#ifdef DEBUG_II
 			printf("aaa %hu\n",a->iindex[i].hits[x].pos);
 			#endif
 			c->iindex[k].hits[c->iindex[k].TermAntall].pos = a->iindex[i].hits[x].pos;
