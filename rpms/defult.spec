@@ -12,6 +12,7 @@ URL: http://www.searchdaimon.com/
 License: Commercial
 Group: Boitho/authentication
 Prefix: %{_prefix}
+#requires
 BuildRoot: %{_tmppath}/%{name}-buildroot
 Provides: %{name}
 
