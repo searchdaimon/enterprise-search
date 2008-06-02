@@ -1,9 +1,11 @@
 #!/bin/sh
 
+export BOITHOHOME=/home/boitho/boithoTools
+
 # Initialize database
 mysql < $BOITHOHOME/blackbox/creatuser.sql
 # Username and password must match information in createuser.sql
 mysql -uboitho -pG7J7v5L5Y7 boithobb < $BOITHOHOME/blackbox/boithobb.sql
 
 # And remove it from the boot process
-chkconfig --del boithodbsetup
+#chkconfig --del boithodbsetup
