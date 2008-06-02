@@ -352,11 +352,11 @@ my %types =
 
 sub mapMimeType {
    my $mt = $_[0];
-   #if (defined  $types{$mt}) {
+   if (defined  $types{$mt}) {
       return $types{$mt};
-  #} else {
-  #   return "dat";
- # }
+  } else {
+     return "dat";
+  }
 }
 
 

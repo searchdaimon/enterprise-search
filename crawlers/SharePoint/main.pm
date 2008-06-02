@@ -1,3 +1,5 @@
+
+
 #!/usr/bin/perl
 use strict;
 package Perlcrawl;
@@ -58,34 +60,35 @@ sub crawlupdate {
     my @urlList = split /;/, $Urls;
 
     SD::sdCrawl::process_starting_urls(@urlList);
-    SD::sdCrawl::setDelay(0.1);
+    SD::sdCrawl::setDelay(2);
+    SD::sdCrawl::doFarUrls();
 
     foreach $starting_url(@urlList) {
        my $url = URI->new(@urlList[0]);
        my $host = $url->host();
     
-       $soap_client = new SOAP::Lite
-       uri => 'http://schemas.microsoft.com/sharepoint/soap/directory',
-       proxy =>"http://".$user.":".$passw."@".$host."/_vti_bin/UserGroup.asmx";
+       #$soap_client = new SOAP::Lite
+       #uri => 'http://schemas.microsoft.com/sharepoint/soap/directory',
+       #proxy =>"http://".$user.":".$passw."@".$host."/_vti_bin/UserGroup.asmx";
 
-      $soap_client->on_action(sub {
-         #print Dumper(\@_);
-	 return $_[0]."/". $_[1];
-      });
+      #$soap_client->on_action(sub {
+      #   #print Dumper(\@_);
+      # return $_[0]."/". $_[1];
+      #});
 
       my $acl = "";
 
-      my $xml = $soap_client->GetAllUserCollectionFromWeb();   
-      my $xp = XML::XPath->new(xml => $xml);  
-      my $nodeset =  $xp->findnodes('//User/@Sid');
+      #my $xml = $soap_client->GetAllUserCollectionFromWeb();   
+      #my $xp = XML::XPath->new(xml => $xml);  
+      #my $nodeset =  $xp->findnodes('//User/@Sid');
     
-      foreach my $node ($nodeset->get_nodelist) {
-         #put in a list and use join instead when more usernames available
-         my $usr = XML::XPath::XMLParser::as_string($node);
-         $usr = substr($usr,index($usr,"\"")+1);
-         $usr = substr($usr,0,length($usr)-1);
-         $acl = $acl.$usr.',';
-      }
+      #foreach my $node ($nodeset->get_nodelist) {
+      #   #put in a list and use join instead when more usernames available
+      #   my $usr = XML::XPath::XMLParser::as_string($node);
+      #   $usr = substr($usr,index($usr,"\"")+1);
+      #   $usr = substr($usr,0,length($usr)-1);
+      #   $acl = $acl.$usr.',';
+      #}
 
       if (length($acl)) {
          $acl = substr($acl, 0, length($acl)-1);

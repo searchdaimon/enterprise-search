@@ -94,6 +94,11 @@ my %notable_url_error;  # URL => error message
 my %seen_url_before;
 my $acl;
 my $pointer;
+my $allow_far_urls = 0;
+my @ip_start;
+my @ip_end;
+my @ip_country2;
+ 
 
 
 sub Init {
@@ -101,7 +106,14 @@ sub Init {
     init_logging( );
     my $robot = init_robot( );
     init_signals( );
+    if ( $allow_far_urls ) {
+       InitCountry();
+    }
     return $robot;
+}
+
+sub doFarUrls {
+   $allow_far_urls = 1;
 }
 
 sub setDelay {
@@ -129,6 +141,55 @@ sub main_loop {
   }
   return;
 }
+
+sub InitCountry {
+   open (theFile,"ip2country.txt") || die("Could not open file!");
+   my $i=0;
+   while (<theFile>) {
+      chomp;
+      my @ips = split (",");
+      $ip_start[$i] = $ips[0];
+      $ip_end[$i] = $ips[1];
+      $ip_country2[$i] = $ips[2];
+      $i++;
+   }
+   close theFile;
+}
+
+
+sub getCountry {
+   my $url = URI->new(@_);
+   my $host = $url->host();
+   $host = "nslookup ".$host;
+   my $ip_address;
+   my @lookup = `$host`;
+   my $line;
+
+   foreach $line ( @lookup ) {
+      if ($line =~ /Address/) {
+         my @address = split / /, $line;
+         $ip_address =  $address[1];
+      }
+   }
+
+   my @ipp = split (/\./,$ip_address);
+   my $ip_number = $ipp[0]*256*256*256+$ipp[1]*256*256+$ipp[2]*256+$ipp[3];
+
+   my $j = 0;
+   while ($ip_number > $ip_end[$j]) {
+      $j++;
+   }
+
+   my $country;
+
+   if ($ip_number > $ip_start[$j]) {
+      $country = $ip_country2[$j];
+   } else {
+      $country = "NA";
+   }
+   return $country;
+}
+
  
 sub init_logging {
   my $selected = select(STDERR);
@@ -217,7 +278,6 @@ sub process_starting_urls {
 }
 
 sub refer {
-  # Generate a good Referer header for requesting this URL.
   my $url = $_[0];
   my $links_to_it = $points_to{$url};
    # the set (hash) of all things that link to $url
@@ -283,9 +343,35 @@ sub process_far_url {
   my $url = $_[0];
   say("HEADing far $url\n");
   ++$hit_count;
-  my $response = $robot->head($url, refer($url));
   mutter("  That was hit #$hit_count\n");
-  consider_response($response);  # set switch to configure for far urls!
+
+   if (!$allow_far_urls) { return; }
+
+   return unless (getCountry($url) eq "NO");
+
+   my $req = HTTP::Request->new(GET => $url);
+
+   my $response = $robot->request($req);
+   my $ct = mapMimeType($response->content_type);
+
+    my $title = "";
+    if($ct ne  'text/html') {
+       $title = substr($url, rindex($url, "/")+1);
+     }
+   
+  
+   if (not SD::Crawl::pdocumentExist($pointer, $url, 0, length($response->as_string ) )) {
+      # pdocumentAdd( x, url, lastmodified, dokument_size, document, title, acl_allow, acl_denied )
+      SD::Crawl::pdocumentAdd($pointer, $url, 0 ,length($response->as_string ), $response->as_string, $title, $ct, $acl, "","");		
+   }
+ 
+    mutter("  That was hit #$hit_count\n");
+    return unless consider_response($response);
+ 
+    if($ct eq 'text/html') {
+       extract_links_from_response($response);     
+    }
+     return;
 }
 
 sub authorize {
@@ -370,13 +456,14 @@ sub extract_links_from_response {
   my($tag, $link_url);
   while( $tag = $stream->get_tag('a') ) {
     next unless defined($link_url = $tag->[1]{'href'});
-    #next if $link_url =~ m/\s/; # If it's got whitespace, it's a bad URL.
     next unless length $link_url; # sanity check!
     $link_url = URI->new_abs($link_url, $base)->canonical;
     next unless $link_url->scheme eq 'http'; # sanity
   
-    #$link_url->fragment(undef); # chop off any "#foo" part
-
+    if ($allow_far_urls) {
+       $link_url->fragment(undef); # chop off any "#foo" part
+       next if $link_url =~ m/\s/; # If it's got whitespace, it's a bad URL.
+    }
     note_link_to($page_url => $link_url)
       unless $link_url->eq($page_url); # Don't note links to itself!
   }
@@ -405,16 +492,19 @@ sub schedule {
      my $u = ref($url) ? $url : URI->new($url);
      $u = $u->canonical;  # force canonical form
      next unless 'http' eq ($u->scheme || '') or 'http' eq ($u->scheme || '');
-     #next if defined $u->query; do if far urls
-     #next if defined $u->userinfo; do if far urls
-     $u->host( regularize_hostname( $u->host( ) ) );
+     
+    $u->host( regularize_hostname( $u->host( ) ) );
 
-    #return unless $u->host( ) =~ m/\./;
+    if ($allow_far_urls) {
+       next if defined $u->query; 
+       next if defined $u->userinfo; 
+       return unless $u->host( ) =~ m/\./; 
+       next if url_path_count($u) > 6;
+       next if $u->path =~ m<//> or $u->path =~ m</\.+(/|$)>;
+       $u->fragment(undef);
  
-    #next if url_path_count($u) > 6;
-    #next if $u->path =~ m<//> or $u->path =~ m</\.+(/|$)>;
+    }
 
-    $u->fragment(undef);
     if( $seen_url_before{ $u->as_string }++ ) {
       mutter("  Skipping the already-seen $u\n");
     } else {
