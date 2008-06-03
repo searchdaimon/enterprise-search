@@ -19,7 +19,9 @@ use Common::Generic;
 use Common::Data::Overview;
 
 use config qw($CONFIG);
-use constant TPL_DEFAULT => 'overview.html';
+use constant TPL_DEFAULT     => 'overview.html';
+use constant TPL_EDIT        => 'overview_edit.html';
+use constant TPL_DELETE_COLL => 'overview_delete_share.html';
 
 my $sqlShares;
 my $sqlConnectors;
@@ -50,7 +52,7 @@ sub _init($$$) {
 }
 
 ## Sends a crawl collection request to infoquery.
-sub crawl_collection($$) {
+sub crawl_collection {
 	my ($self, $vars, $id) = (@_);
 	my $iq = $self->{'infoQuery'};
 
@@ -81,46 +83,33 @@ sub list_collections {
 
 
 
+
+
 ## 
 # Method for displaying a form to edit a collection.
 sub edit_collection {
-    my ($self, $vars, $collection) = (@_);
-    my $template_file = "overview_edit.html";
-    my $state = $self->{'state'};
+    my ($s, $vars, $coll_id) = (@_);
+    croak "not a valid 'coll_id'"
+        unless $coll_id and $coll_id =~ /^\d+$/;
 
-    my ($id, @input_fields)
-        = $self->_get_collection_data($vars, $collection);
-
-    # User may not edit coll.name
-    @input_fields = grep { $_ ne 'collection' } @input_fields;
-    $vars->{input_fields} = \@input_fields;
-
-    if (defined $state->{'share'}) {
-        # User tried to submit invalid values, showing form again.
-        my $share = $state->{'share'};
-        $share->{'connector_name'} = 
-            $sqlShares->get_connector_name($share->{'id'});
-        $vars->{'share'} = $share;
+    unless ($sqlShares->id_exists($coll_id)) {
+        $vars->{'error_collection_not_exist'} = 1;
+        return TPL_EDIT;
     }
-    else {
-        # First time editing a collection.
-        unless ($sqlShares->id_exists($id)) {
-            # Show error
-            $vars->{'error_collection_not_exist'} = 1;
-        }
-        else {
-            # Collection exists, continue.
-            my $share =  $sqlShares->get_share($id);
-            $share->{'group_member'} = $sqlGroups->get_groups($id)
-                if grep /^groups$/, @input_fields;
-            $share->{'user'} = [ $sqlUsers->get_users($id) ]
-                if grep /user/, @input_fields;
+    
+    my @input_fields = @{$sqlConnectors->get_input_fields(
+            $sqlShares->get_connector_name($coll_id))};
 
-            $vars->{'share'} = $share;
-        }
+    my $c_coll = Common::Collection->new($s->{dbh});
+    my %form_data = $c_coll->coll_form_data(@input_fields);
+    my %coll_data = $c_coll->coll_data($coll_id, @input_fields);
+
+    while (my ($k, $v) = each %form_data) {
+        $vars->{$k} = $v;
     }
+    $vars->{share} = \%coll_data;
 
-    return ($vars, $template_file);
+    return TPL_EDIT;
 }
 
 sub manage_collection {
@@ -171,16 +160,15 @@ sub submit_edit {
 
 sub activate_collection($$$) {
 	my ($self, $vars, $id) = (@_);
-	$vars->{'success_activate'} = 1;
 	$sqlShares->set_active($id);
+	$vars->{'success_activate'} = 1;
 	return $vars;
 }
 
 
 ## 
 # Forcing a full recrawl of a collection.
-# 
-sub recrawl_collection($$$) {
+sub recrawl_collection {
 	my ($self, $vars, $submit_values) = (@_);
 	my $iq        = $self->{'infoQuery'};
 	my $common    = $self->{'common'};
@@ -228,72 +216,15 @@ sub delete_collection {
 	$vars->{'collection_name'} = $sqlShares->get_collection_name($id);
 	$vars->{'id'} = $id;
 
- 	my $template_file = "overview_delete_share.html";
- 	return ($vars, $template_file);
+ 	return TPL_DELETE_COLL;
 }
 
+sub _get_form_data { croak "Use Common::Collection instead" }
 
 
-## Helper function for edit_collection
-## Gets data regarding the collection.
-sub _get_collection_data {
-	my ($self, $vars, $collection) = (@_);
+sub _get_coll_data {
+croak "use Common::Collection instead" }
 
-	my $id = $self->_find_collection_id($vars, $collection);
-	return unless $id; #coll does not exist.
-
-	# Figure out input fields for connector
-	my $input_fields_ref = $sqlConnectors->get_input_fields(
-					$sqlShares->get_connector_name($id));
-        # Grab other options
-	$self->_get_associated_data($vars, $input_fields_ref);
-	
-	return ($id, @{$input_fields_ref});
-}
-
-
-sub _get_associated_data($$$) {
-	my ($self, $vars, $fields) = (@_);
-	
-	my $infoquery = $self->{'infoQuery'};
-	
-	if (grep { /^authentication$/ } @$fields) {
-		my @authdata = $sqlAuth->get_all_auth();
-		$vars->{'authentication'} = \@authdata;
-	}
-
-	$vars->{'connectors'} = $sqlConnectors->get_connectors()
-		if grep /^connector$/, @$fields;
-	$vars->{'group_list'} = $infoquery->listGroups
-		if grep /^groups$/, @$fields;
-#	$vars->{'user_list'} = $infoquery->listUsers()
-#		if grep /^exchange_user_select$/, @$fields;
-	$vars->{'user_list'} = $infoquery->listMailUsers()
-		if grep /^exchange_user_select$/, @$fields;
-
-
-	return $vars;
-}
-
-## Helper function for edit_collection
-## to find collection id.
-sub _find_collection_id($$) {
-	my ($self, $vars, $collection) = (@_);
-	my $id;
-	if ($collection =~ /^\d+$/) { 
-		$id = $collection 
-	}
-	else { 	
-		$id = $sqlShares->get_id_by_collection($collection);  
-	}
-	
-	unless ($id) {
-		$vars->{'error_collection_not_exist'} = 1;
-		return;
-	}
-	
-	return $id;
-}
 
 sub _get_connectors {
 	croak "_get_connectors() is deprecated. Use method in class Common::Data::Overview";

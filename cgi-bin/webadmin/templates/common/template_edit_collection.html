@@ -34,11 +34,21 @@
 		%]
 
 	[% ELSIF field == 'connector' %]
+            
+            [% TRY %]
 		[% PROCESS sub_fields
 			header = 'What to crawl'
 			blocks = [share.connector_name]
 			icon = 'yast_nfs_32'
 		%]
+            [% CATCH %]
+                <span style="color : red;">
+                    Error: Unable to show field for connector
+                '[% share.connector_name %]' &mdash; [% error.info %]
+                </span>
+                [% STOP %]
+            [% END %]
+
 	[% ELSIF field == 'crawling' %]
 		[% PROCESS sub_fields
 			header = 'Crawling behaviour'

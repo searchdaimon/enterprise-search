@@ -48,12 +48,12 @@ if (defined($state->{'action'})) {
 	elsif ($action eq 'edit') {
 		# User wants to edit a collection. Show form.
 		$vars->{'return_to'} = 'overview';
-		($vars, $template_file) = $overview->edit_collection($vars, $id);
+		$template_file = $overview->edit_collection($vars, $id);
 	}
 	
 	elsif ($action eq 'delete') {
 		# User wants to delete a collection. Confirm.
-		($vars, $template_file) = $overview->delete_collection($vars, $id);
+		$template_file = $overview->delete_collection($vars, $id);
 	}
 	
 	elsif ($action eq 'activate') {
@@ -85,7 +85,7 @@ elsif(defined($state->{'advanced'})) {
 elsif (defined($state->{'edit'})) {
 	# Show edit share form.
 	my $collection = $state->{'edit'};
- 	($vars, $template_file) = $overview->edit_collection($vars, $collection);
+ 	$template_file = $overview->edit_collection($vars, $collection);
 }
 
 elsif (defined($state->{'submit_edit'})) {
@@ -97,7 +97,7 @@ elsif (defined($state->{'submit_edit'})) {
 	unless ($valid) {
 		# Something wrong. Show edit form again.
 		my $id = $vars->{'share'}{'id'};
-		($vars, $template_file) = $overview->edit_collection($vars, $id);
+		$template_file = $overview->edit_collection($vars, $id);
 	}
 	else {
 		# We're done. Back to default page.

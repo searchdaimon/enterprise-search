@@ -72,23 +72,27 @@ sub show_first_form {
 # Print the html for the second form used when adding a share.
 sub show_second_form {
 	my ($self, $vars, $connector) = (@_);
-	my $sqlConnectors = $self->{'sqlConnectors'};
-	my $sqlAuth = $self->{'sqlAuth'};
-	my $state = $self->{'state'};
-	my $iq = new Boitho::Infoquery($CONFIG->{'infoquery'});
-	
+	my $sqlConnectors = $self->{sqlConnectors};
+	my $sqlAuth = $self->{sqlAuth};
+	my $state = $self->{state};
+	my $iq = new Boitho::Infoquery($CONFIG->{infoquery});
+
 	my $share = $state->{'share'};
-	if (!$share->{'connector_name'}) {
-		$share->{'connector_name'} = $sqlConnectors->get_name($connector)
+	if (!$share->{connector_name}) {
+		$share->{connector_name} = $sqlConnectors->get_name($connector)
 	}
+        $vars->{share} = $share;
 
 	my @auth_data = $sqlAuth->get_all_auth();
 
-	$vars->{'share'} = $share;	
-	$vars->{'authentication'} = \@auth_data;
-	$vars->{'group_list'} = $iq->listGroups();
-	$vars->{'user_list'}  = $iq->listUsers();
-	$vars->{'input_fields'} = $sqlConnectors->get_input_fields($connector);
+        my @input_fields = @{$sqlConnectors->get_input_fields($connector)};
+        my %form_data = $self->{collection}->coll_form_data(@input_fields);
+        #die Dumper(\%form_data);
+
+        while (my ($k, $v) = each %form_data) {
+            $vars->{$k} = $v;
+        }
+
 	$vars->{'from_scan'} = $state->{'from_scan'}
 		if $state->{'from_scan'}; # Coming from scan result. Contain's id.
 	

@@ -73,6 +73,7 @@ sub _get_next_crawl {
 	my $self = shift;
 	my ($rate, $last) = @_;
 	return unless $last; # Need last to find next.
+        return if $last eq '0000-00-00 00:00:00';
 	
 	#make $last into unixtime, if it isn't.
 	unless ($last =~ /^\d+$/) {

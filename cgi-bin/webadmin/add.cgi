@@ -58,5 +58,6 @@ else {
 my $template  =  Template->new(
 	{INCLUDE_PATH => './templates:./templates/add:./templates/common'});
 print $cgi->header('text/html');
+#croak Dumper($vars);
 $template->process($template_file, $vars)
 		or croak ("template: ", $template->error());

@@ -3,12 +3,15 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Sql::Shares;
+use Sql::CollectionAuth;
+use Sql::ShareGroups;
+use Sql::ShareUsers;
 use Carp;
+use config qw(%CONFIG);
 
 my @VALID_COLL_CHRS 
     = ('a'..'z', 'A'..'Z', 0..9, '-', q{ }, '_');
 
-my $sqlShares;
 
 sub new {
     my $class = shift;
@@ -20,7 +23,53 @@ sub new {
 
 sub _init {
     my ($self, $dbh) = @_;
-    $sqlShares = Sql::Shares->new($dbh);
+    $self->{sqlShares} = Sql::Shares->new($dbh);
+    $self->{dbh} = $dbh;
+}
+
+##
+# Data needed in a form 
+# for editing/managing a collection.
+sub coll_form_data {
+    my ($s, @input_fields) = @_;
+
+    my $iq = new Boitho::Infoquery($CONFIG{infoquery});
+    my $sqlAuth = Sql::CollectionAuth->new($s->{dbh});
+    my $sqlConnectors = Sql::Connectors->new($s->{dbh});
+
+    my %form_data = (input_fields => \@input_fields);
+    my %fields = map { $_ => 1 } @input_fields;
+    $form_data{connectors} = $sqlConnectors->get_connectors()
+        if $fields{connectors};
+    $form_data{group_list} = $iq->listGroups()
+        if $fields{groups};
+    $form_data{user_list} = $iq->listMailUsers()
+        if $fields{exchange_user_select};
+    $form_data{authentication} = [ $sqlAuth->get_all_auth() ]
+        if $fields{authentication};
+
+    $form_data{input_fields} = \@input_fields;
+
+    return %form_data;
+}
+
+##
+# Data for a collection needed in a
+# form for deiting/managing.
+sub coll_data {
+    my ($s, $id, @input_fields) = @_;
+    my %fields = map { $_ => 1 } @input_fields;
+
+    my $sqlGroups = Sql::ShareGroups->new($s->{dbh});
+    my $sqlUsers  = Sql::ShareUsers->new($s->{dbh});
+    my %coll_data = %{ $s->{sqlShares}->get_share($id) };
+   
+    $coll_data{group_member} = $sqlGroups->get_groups($id)
+        if $fields{group};
+    $coll_data{user} = [$sqlUsers->get_users($id)]
+        if $fields{exchange_user_select};
+
+    return %coll_data;
 }
 
 ##
@@ -29,7 +78,7 @@ sub _init {
 #   valid - true/false
 #   err   - reason for error
 sub validate {
-    my ($self, $share, @checks) = @_;
+    my ($s, $share, @checks) = @_;
 
     unless (@checks) { # default checks
         @checks = ('host', 'collection_name', 'connector');
@@ -42,15 +91,6 @@ sub validate {
             next if ($share->{'resource'});
             return (0, 'error_missing_share');
         }
-# 		if ($check eq 'host') {
-# 			return (0, 'error_missing_host') 
-# 				unless ($share->{'host'});
-# 		} 
-# 		
-# 		elsif ($check eq 'resource') {
-# 			return (0, 'error_missing_resource')
-# 				unless ($share->{'resource'});
-# 		} 
 
         elsif ($check eq 'connector') {
             return (0, 'error_missing_connector')
@@ -66,8 +106,8 @@ sub validate {
                     unless grep { "$c" eq "$_" } @VALID_COLL_CHRS;
             }
 
-            if ($sqlShares->get_id_by_collection($name)) {
-                unless ($id and $sqlShares->get_collection_name($id) eq $name) {
+            if ($s->{sqlShares}->get_id_by_collection($name)) {
+                unless ($id and $s->{sqlShares}->get_collection_name($id) eq $name) {
                     return (0, 'error_collection_exists');
                 }
             }
