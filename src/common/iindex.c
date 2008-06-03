@@ -1231,6 +1231,8 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 			printf("\n");
 		#endif
 
+		/*
+		Runarb 3 juni 2008: Dette er ikke rikig, vi skal slette gamle forekomster, men ikke nye, som har oppstått i ettertid.
 		//garbare collection
 		if ((IndekserOpt->garbareCollection) && (NULL != hashtable_search(h,&revIndexArray[count].DocID)) ) {
 			#ifdef DEBUG
@@ -1238,7 +1240,9 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 			#endif
 
 		}
-		else if ((IndekserOpt->optValidDocIDs != NULL) && (IndekserOpt->optValidDocIDs[(revIndexArray[count].DocID - LotDocIDOfset(lotNr))] != 1)) {
+		else 
+		*/
+		if ((IndekserOpt->optValidDocIDs != NULL) && (IndekserOpt->optValidDocIDs[(revIndexArray[count].DocID - LotDocIDOfset(lotNr))] != 1)) {
 			//#ifdef DEBUG
 				printf("aaaaaaa: DocID %u is not in valid list\n",revIndexArray[count].DocID);
 			//#endif
