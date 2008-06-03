@@ -333,7 +333,7 @@ int wordTypeadd;
 				wordsPart->words[wordsPart->nr].WordID =  crc32boitho(word);
 
 				#ifdef DEBUG
-					printf(" (crc %s -> %u) ",word,wordsPart->words[wordsPart->wordsPart->nr].WordID);
+					printf(" (crc %s -> %u) ",word,wordsPart->words[wordsPart->nr].WordID);
 				#endif
 
 				wordsPart->words[wordsPart->nr].position = (wordsPart->nextPosition + wordTypeadd);
