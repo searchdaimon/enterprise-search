@@ -95,7 +95,6 @@ boitho-suggest_version = 1.1
 
 all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch bbadminhtaccess scripts repomod suggest
 
-
 sqlUpdate:
 	perl rpmmagic.pl --sql sql/update-cur.sql --requires "boitho-database" $(boithobb-sqlUpdate_name) $(boithobb-sqlUpdate_version) $(BOITHOHOME) /home/boitho/boithoTools 
 
@@ -303,7 +302,7 @@ mod_boitho_auth:
 	rpmbuild -bb $(boitho-auth_name).spec
 
 suggest:
-	perl rpmmagic.pl --requires "boitho-apaceconf>=1.0.0 boitho-everrun boitho-dictionary" --initd suggest $(boitho-suggest_name) $(boitho-suggest_version) $(BOITHOHOME) /home/boitho/boithoTools bin/suggest_server cgi-bin/suggest_webclient bin/suggest_client_redict
+	perl rpmmagic.pl --sysconfig "rpcbind" --requires "boitho-apaceconf>=1.0.0 boitho-everrun boitho-dictionary" --initd suggest $(boitho-suggest_name) $(boitho-suggest_version) $(BOITHOHOME) /home/boitho/boithoTools bin/suggest_server cgi-bin/suggest_webclient bin/suggest_client_redict
 
 	rpmbuild -bb $(boitho-suggest_name).spec
 
