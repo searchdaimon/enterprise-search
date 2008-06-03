@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 // Konverterer en tekststreng til små bokstaver:
 static inline void convert_to_lowercase_n( unsigned char *str, int n )
 {

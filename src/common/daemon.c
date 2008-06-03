@@ -225,7 +225,7 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
 
 	fprintf(stderr, "daemon: ~sconnect()\n");
         return 0;
-    } 
+} 
 
 
 

@@ -4,6 +4,7 @@
 
 #include <stddef.h>
 
+
 void strsandr (char text[], char find[], char replace[]);
 void strcasesandr (char textbuff[], int texbufftsize,char find[], char replace[]);
 void strscpy(char *dest, const char *src, size_t n);
