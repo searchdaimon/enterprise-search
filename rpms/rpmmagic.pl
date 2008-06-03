@@ -18,6 +18,7 @@ if ($#ARGV == -1) {
   my $initdrestart;
   my $defattr;
   my $restartsw;
+  my $sysconfig;
 
   my $result = GetOptions ("pre=s" 	 => \$pre,    	# rpm pre 
                         "post=s"   	 => \$post,      	# rpm post
@@ -28,6 +29,7 @@ if ($#ARGV == -1) {
 			"sql=s" 	 => \$sql, 		# rpm sql
 			"initdrestart=s" => \$initdrestart, 		# restarting av en init.d tjeneste
 			"defattr=s" => \$defattr,
+			"sysconfig=s" => \$sysconfig,
 			"verbose"  	 => \$verbose);
 
 my $name = shift @ARGV or die("please suply a name");
@@ -49,6 +51,10 @@ if (defined($sql)) {
 #legger til init.d funksjonsfilen, som init.d trenger
 if (defined($initd)) {
 	push(@files,"init.d/functions");
+}
+
+if (defined($sysconfig)) {
+	push(@files, "sysconfig/rpcbind");
 }
 
 my $name_and_version = $name . '-' . $version;
@@ -92,6 +98,11 @@ for my $i (@files) {
 if (defined($initd)) {
 	$filesinstal .= "install -D -m 755  init.d/$initd \$RPM_BUILD_ROOT/etc/init.d/$initd\n";
 	$fileslist .=  "/etc/init.d/$initd\n";
+}
+
+if (defined($sysconfig)) {
+	$filesinstal .= "install -D -m 755  sysconfig/$sysconfig \$RPM_BUILD_ROOT/etc/sysconfig/$sysconfig\n";
+	$fileslist .=  "/etc/sysconfig/$sysconfig\n";
 }
 
 
