@@ -1315,7 +1315,9 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 
 		#ifdef BLACK_BOKS
 	                unsigned int CurrentReposetoryVersionAsUInt;
-	                fread(&CurrentReposetoryVersionAsUInt,sizeof(unsigned int),1,LotFileOpen);
+	                if (fread(&CurrentReposetoryVersionAsUInt,sizeof(unsigned int),1,LotFileOpen) != 1) {
+				perror("can't read CurrentReposetoryVersionAsUInt");
+			}
         	#endif
 
 		//leser hedder
