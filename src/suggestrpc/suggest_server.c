@@ -195,7 +195,8 @@ void *
 reload_dictionary_2_svc(void *voidptr, struct svc_req *req)
 {
 	if (sd != NULL) {
-		suggest_destroy(sd);
+		//suggest_destroy(sd);
+		return 1;
 	}
 	sd = suggest_init();
 	if (sd == NULL) {
