@@ -16,7 +16,7 @@
 # Tabellstruktur for tabell `collectionAuth`
 #
 
-DROP TABLE IF EXISTS `collectionAuth`;
+#DROP TABLE IF EXISTS `collectionAuth`;
 CREATE TABLE `collectionAuth` (
   `id` int(11) NOT NULL auto_increment,
   `username` varchar(50) NOT NULL default '',
@@ -36,7 +36,7 @@ CREATE TABLE `collectionAuth` (
 # Tabellstruktur for tabell `config`
 #
 
-DROP TABLE IF EXISTS `config`;
+#DROP TABLE IF EXISTS `config`;
 CREATE TABLE `config` (
   `configkey` varchar(255) NOT NULL default '',
   `configvalue` varchar(255) NOT NULL default '',
@@ -78,7 +78,7 @@ INSERT INTO `config` VALUES ('recrawl_recheck_rate', '1440');
 # Tabellstruktur for tabell `connectors`
 #
 
-DROP TABLE IF EXISTS `connectors`;
+#DROP TABLE IF EXISTS `connectors`;
 CREATE TABLE `connectors` (
   `id` int(7) unsigned NOT NULL auto_increment,
   `name` varchar(255) NOT NULL default '',
@@ -104,7 +104,7 @@ INSERT INTO `connectors` VALUES (1, 'SMB', 'SMB (Server Message Block). Protocol
 # Tabellstruktur for tabell `connectorsFor`
 #
 
-DROP TABLE IF EXISTS `connectorsFor`;
+#DROP TABLE IF EXISTS `connectorsFor`;
 CREATE TABLE `connectorsFor` (
   `id` int(7) unsigned NOT NULL auto_increment,
   `connectorsId` int(7) unsigned NOT NULL default '0',
@@ -124,7 +124,7 @@ INSERT INTO `connectorsFor` VALUES (1, 1, 'Shared files from Microsoft Windows')
 # Tabellstruktur for tabell `scanResults`
 #
 
-DROP TABLE IF EXISTS `scanResults`;
+#DROP TABLE IF EXISTS `scanResults`;
 CREATE TABLE `scanResults` (
   `id` int(11) NOT NULL auto_increment,
   `connector` int(11) NOT NULL default '0',
@@ -147,7 +147,7 @@ CREATE TABLE `scanResults` (
 # Tabellstruktur for tabell `search_logg`
 #
 
-DROP TABLE IF EXISTS `search_logg`;
+#DROP TABLE IF EXISTS `search_logg`;
 CREATE TABLE `search_logg` (
   `id` int(6) NOT NULL auto_increment,
   `tid` datetime NOT NULL default '0000-00-00 00:00:00',
@@ -176,7 +176,7 @@ CREATE TABLE `search_logg` (
 # Tabellstruktur for tabell `session_id`
 #
 
-DROP TABLE IF EXISTS `session_id`;
+#DROP TABLE IF EXISTS `session_id`;
 CREATE TABLE `session_id` (
   `Id` int(9) unsigned NOT NULL default '0',
   `User_Name` char(100) NOT NULL default '',
@@ -195,7 +195,7 @@ CREATE TABLE `session_id` (
 # Tabellstruktur for tabell `shareGroups`
 #
 
-DROP TABLE IF EXISTS `shareGroups`;
+#DROP TABLE IF EXISTS `shareGroups`;
 CREATE TABLE `shareGroups` (
   `name` varchar(50) NOT NULL default '',
   `share` int(11) NOT NULL default '0',
@@ -212,7 +212,7 @@ CREATE TABLE `shareGroups` (
 # Tabellstruktur for tabell `shareUsers`
 #
 
-DROP TABLE IF EXISTS `shareUsers`;
+#DROP TABLE IF EXISTS `shareUsers`;
 CREATE TABLE `shareUsers` (
   `name` varchar(255) NOT NULL default '',
   `share` int(11) NOT NULL default '0',
@@ -230,7 +230,7 @@ CREATE TABLE `shareUsers` (
 # Tabellstruktur for tabell `shares`
 #
 
-DROP TABLE IF EXISTS `shares`;
+#DROP TABLE IF EXISTS `shares`;
 CREATE TABLE `shares` (
   `id` int(11) NOT NULL auto_increment,
   `host` varchar(32) NOT NULL default '',
