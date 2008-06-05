@@ -98,6 +98,8 @@ my $allow_far_urls = 0;
 my @ip_start;
 my @ip_end;
 my @ip_country2;
+my @exclusionsUrlParts;
+my $iisspecial = 0;
  
 
 
@@ -118,6 +120,14 @@ sub doFarUrls {
 
 sub setDelay {
    ($delay) = @_;
+}
+
+sub setExclusionUrlParts {
+   @exclusionsUrlParts = @_;
+}
+
+sub setIISpecial {
+   $iisspecial = 1;
 }
 
 sub Start {
@@ -330,11 +340,11 @@ sub consider_response {
 sub checkCategory {
    my $data = @_;
 
-   if ($data =~ /new DiscussionBoard/) { return "Discussion"; }
-   if ($data =~ /Tasks list to keep track of work related to this area/) { return "Calendar"; }
-   if ($data =~ /Provides a place to store documents for this area/) { return "DocumentLibrary"; }
-   if ($data =~ /L_DefaultContactsLink_Text/) { return "Contacts"; }
-   if ($data =~ /L_ExportToContactsApp/) { return "Contacts"; }
+   #if ($data =~ /new DiscussionBoard/) { return "Discussion"; }
+   #if ($data =~ /Tasks list to keep track of work related to this area/) { return "Calendar"; }
+   #if ($data =~ /Provides a place to store documents for this area/) { return "DocumentLibrary"; }
+   #if ($data =~ /L_DefaultContactsLink_Text/) { return "Contacts"; }
+   #if ($data =~ /L_ExportToContactsApp/) { return "Contacts"; }
 
   return "";
 }
@@ -361,8 +371,8 @@ sub process_far_url {
    
   
    if (not SD::Crawl::pdocumentExist($pointer, $url, 0, length($response->as_string ) )) {
-      # pdocumentAdd( x, url, lastmodified, dokument_size, document, title, acl_allow, acl_denied )
-      SD::Crawl::pdocumentAdd($pointer, $url, 0 ,length($response->as_string ), $response->as_string, $title, $ct, $acl, "","");		
+     $url = SD::Crawl::htttp_url_normalization($url);
+     SD::Crawl::pdocumentAdd($pointer, $url, 0 ,length($response->as_string ), $response->as_string, $title, $ct, $acl, "","");		
    }
  
     mutter("  That was hit #$hit_count\n");
@@ -380,6 +390,19 @@ sub authorize {
      mutter("Autorizing ".$user." with password ".$passw."\n");
      return $req->authorization_basic($user, $passw); 
   }
+}
+
+sub addOk {
+   my $url;
+   my  $restricted;
+   ($url) = @_;
+   my $uri = URI->new($url);
+    foreach $restricted (@exclusionsUrlParts) {
+      if ($uri->path() =~ /$restricted/) {
+         return 0;
+       }
+     }
+   return 1;
 }
 
 sub process_near_url {
@@ -429,8 +452,10 @@ sub process_near_url {
    my $category = checkCategory($response->as_string);
 
    if (not SD::Crawl::pdocumentExist($pointer, $url, 0, length($response->as_string ) )) {
-      # pdocumentAdd( x, url, lastmodified, dokument_size, document, title, acl_allow, acl_denied )
-      SD::Crawl::pdocumentAdd($pointer, $url, 0 ,length($response->as_string ), $response->as_string, $title, $ct, $acl, "",$category);		
+      $url = SD::Crawl::htttp_url_normalization($url);
+      if (addOk($url)) {
+         SD::Crawl::pdocumentAdd($pointer, $url, 0 ,length($response->as_string ), $response->as_string, $title, $ct, $acl, "",$category);	
+      }	
    }
  
     mutter("  That was hit #$hit_count\n");
@@ -505,10 +530,20 @@ sub schedule {
  
     }
 
+    if (lc($u->as_string) =~ "default.aspx") {
+       $u = URI->new(substr($u->as_string, 0, rindex(lc($u->as_string), "default.aspx")));
+    }
+
     if( $seen_url_before{ $u->as_string }++ ) {
       mutter("  Skipping the already-seen $u\n");
     } else {
       mutter("  Scheduling $u\n");
+      if ($iisspecial) {
+         my $qs = $u->query();
+         my $lc_url = lc($u);
+         $u = URI->new($lc_url);
+         $u->query($qs);
+      }
       push @schedule, $u;
     }
   }

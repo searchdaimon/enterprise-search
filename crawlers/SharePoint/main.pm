@@ -20,7 +20,6 @@ my $soap_client;
 my $robot;
 my $bot_name = "sdbot/0.1";
 my $bot_email = "bs\@searchdaimon.com";
-
 sub init_robot { 
    my $timeout = 4;
  
@@ -34,19 +33,22 @@ sub init_robot {
 sub crawlpatAcces  {
     my ($self, $pointer, $opt ) = @_;
     my $user = $opt->{'user'};
-    my $passw  => $opt->{'password'};
+    my $passw  = $opt->{'password'};
     my $url = $opt->{"resource"};
+     if (!defined($robot)) { init_robot() ; }
 
-    if (!defined($robot)) { init_robot() ; }
-
-    my $req = HTTP::Request->new(HEAD => $url);
-
+   my $req = HTTP::Request->new(HEAD => $url);
+   print "Authenticating :  ", $user, "  password  ",  $passw, " at ", $url , "\n";
+ 
     if ($user) { 
         $req->authorization_basic($user, $passw); 
     }
 
     my $response = $robot->request($req);
-    if (!$response->is_success) { return 1; }
+  
+    if ($response->is_success) { return 1; }
+
+    print "Not authenticated :  ", $user, "  password  ", $passw, " at ", $url , "\n";
     return 0;
 }
 
@@ -58,37 +60,41 @@ sub crawlupdate {
     my $Urls = $opt->{"resource"};
     my $starting_url;
     my @urlList = split /;/, $Urls;
+    my @exclusionsUrlPart = qw (editform.aspx newform.aspx /forms/allitems.aspx /contacts/allitems.aspx /tasks/allitems.aspx /tasks/active.aspx /tasks/byowner.aspx);
 
     SD::sdCrawl::process_starting_urls(@urlList);
-    SD::sdCrawl::setDelay(2);
-    SD::sdCrawl::doFarUrls();
+    SD::sdCrawl::setDelay(0.1);
+    SD::sdCrawl::setExclusionUrlParts(@exclusionsUrlPart);
+    SD::sdCrawl::setIISpecial();
+    #SD::sdCrawl::doFarUrls();
 
     foreach $starting_url(@urlList) {
        my $url = URI->new(@urlList[0]);
        my $host = $url->host();
     
-       #$soap_client = new SOAP::Lite
-       #uri => 'http://schemas.microsoft.com/sharepoint/soap/directory',
-       #proxy =>"http://".$user.":".$passw."@".$host."/_vti_bin/UserGroup.asmx";
+       $soap_client = new SOAP::Lite
+       uri => 'http://schemas.microsoft.com/sharepoint/soap/directory',
+       proxy =>"http://".$user.":".$passw."@".$host."/_vti_bin/UserGroup.asmx";
 
-      #$soap_client->on_action(sub {
-      #   #print Dumper(\@_);
-      # return $_[0]."/". $_[1];
-      #});
+      $soap_client->on_action(sub {
+         #print Dumper(\@_);
+       return $_[0]."/". $_[1];
+      });
 
       my $acl = "";
 
-      #my $xml = $soap_client->GetAllUserCollectionFromWeb();   
-      #my $xp = XML::XPath->new(xml => $xml);  
-      #my $nodeset =  $xp->findnodes('//User/@Sid');
+      my $xml = $soap_client->GetAllUserCollectionFromWeb();   
+      print $xml;
+      my $xp = XML::XPath->new(xml => $xml);  
+      my $nodeset =  $xp->findnodes('//User/@Sid');
     
-      #foreach my $node ($nodeset->get_nodelist) {
-      #   #put in a list and use join instead when more usernames available
-      #   my $usr = XML::XPath::XMLParser::as_string($node);
-      #   $usr = substr($usr,index($usr,"\"")+1);
-      #   $usr = substr($usr,0,length($usr)-1);
-      #   $acl = $acl.$usr.',';
-      #}
+      foreach my $node ($nodeset->get_nodelist) {
+         #put in a list and use join instead when more usernames available
+         my $usr = XML::XPath::XMLParser::as_string($node);
+         $usr = substr($usr,index($usr,"\"")+1);
+         $usr = substr($usr,0,length($usr)-1);
+         $acl = $acl.$usr.',';
+      }
 
       if (length($acl)) {
          $acl = substr($acl, 0, length($acl)-1);
