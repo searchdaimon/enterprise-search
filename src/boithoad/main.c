@@ -659,6 +659,7 @@ gather_groups(struct hashtable *grouphash, LDAP **ld, char *ldap_base, char *sid
 	ldap_simple_free(respons);			
 }
 
+int
 do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 
 //her driver vi og kaller return, men da blir ikke alt, som loggene, stenkt ned riktig. 
@@ -669,378 +670,376 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
         char user_password[64];
 	int i;
 
-
-
 	printf("got new connection\n");
 
-//temp: ser ikke ut til at Apache lukker sin ende riktig
-//while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
-if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
+	//temp: ser ikke ut til at Apache lukker sin ende riktig
+	//while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
+	if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
 
-	blog(LOGACCESS, 1, "size is: %i\nversion: %i\ncommand: %i",packedHedder.size,packedHedder.version,packedHedder.command);
-        packedHedder.size = packedHedder.size - sizeof(packedHedder);
+		blog(LOGACCESS, 1, "size is: %i\nversion: %i\ncommand: %i",packedHedder.size,packedHedder.version,packedHedder.command);
+		packedHedder.size = packedHedder.size - sizeof(packedHedder);
 
-	const char *authenticatmetod = bconfig_getentrystr("authenticatmetod");
+		const char *authenticatmetod = bconfig_getentrystr("authenticatmetod");
 
-	if (strcmp(authenticatmetod,"msad") == 0) {
+		if (strcmp(authenticatmetod,"msad") == 0) {
 
-	   	LDAP *ld;
-	   	char adminsdistinguishedName[512]; 
-		char cn[MAX_LDAP_ATTR_LEN];
-		char ldaprecord[MAX_LDAP_ATTR_LEN];
-		struct AuthenticatedUserFormat *userobjekt;
-		char *k;
+			LDAP *ld;
+			char adminsdistinguishedName[512]; 
+			char cn[MAX_LDAP_ATTR_LEN];
+			char ldaprecord[MAX_LDAP_ATTR_LEN];
+			struct AuthenticatedUserFormat *userobjekt;
+			char *k;
 
-		int nrOfSearcResults;
-		char **respons;
-		char filter[128];
+			int nrOfSearcResults;
+			char **respons;
+			char filter[128];
 
-		bconfig_flush(CONFIG_NO_CACHE);
-		
-		//henter konfi verdier
-		const char *msad_domain 	= bconfig_getentrystr("msad_domain");
-   		const char *admin_username 	= bconfig_getentrystr("msad_user");
-   		const char *admin_password 	= bconfig_getentrystr("msad_password");
-   		const char *ldap_host 		= bconfig_getentrystr("msad_ip");
-   		const char *ldap_domain 	= bconfig_getentrystr("msad_domain");
-   		const int   ldap_port = 0; // runarb: 12 des 2007: er 0 riktig initalisering??
-	 	bconfig_getentryint("msad_port",&ldap_port);
-		const char *ldap_group 		= bconfig_getentrystr("msad_group");
-		const char *msad_ldapstring 	= bconfig_getentrystr("msad_ldapstring");
-		const char *msad_ldapbase 	= bconfig_getentrystr("msad_ldapbase");
-		const char *sudo		= bconfig_getentrystr("sudo");
+			bconfig_flush(CONFIG_NO_CACHE);
 
-		char ldap_base[528] = "";
+			//henter konfi verdier
+			const char *msad_domain 	= bconfig_getentrystr("msad_domain");
+			const char *admin_username 	= bconfig_getentrystr("msad_user");
+			const char *admin_password 	= bconfig_getentrystr("msad_password");
+			const char *ldap_host 		= bconfig_getentrystr("msad_ip");
+			const char *ldap_domain 	= bconfig_getentrystr("msad_domain");
+			const int   ldap_port = 0; // runarb: 12 des 2007: er 0 riktig initalisering??
+			bconfig_getentryint("msad_port",&ldap_port);
+			const char *ldap_group 		= bconfig_getentrystr("msad_group");
+			const char *msad_ldapstring 	= bconfig_getentrystr("msad_ldapstring");
+			const char *msad_ldapbase 	= bconfig_getentrystr("msad_ldapbase");
+			const char *sudo		= bconfig_getentrystr("sudo");
 
-		if ((msad_ldapbase == NULL) || (msad_ldapbase[0] == '\0')) {
-			ldap_genBaseName(ldap_base,ldap_domain);
-		}
-		else {
-			strscpy(ldap_base,msad_ldapbase,sizeof(ldap_base));
-		}
-		if ((msad_ldapstring == NULL) || (msad_ldapstring[0] == '\0')) {
-			//sprintf(adminsdistinguishedName,"cn=%s,cn=%s,%s",admin_username,ldap_group,ldap_base);
-			//bruker brukernavn på formen user@domain.ttl
-			sprintf(adminsdistinguishedName,"%s@%s",admin_username,ldap_domain);
-		}
-		else {
-			strscpy(adminsdistinguishedName,msad_ldapstring,sizeof(adminsdistinguishedName));
-		}
+			char ldap_base[528] = "";
 
-   		if (!ldap_connect(&ld,ldap_host,ldap_port,ldap_base,adminsdistinguishedName,admin_password)) {
-			printf("can't connect to ldap server\n");
-			blog(LOGERROR,1,"can't connect to ldap server. Useing server \"%s:%i\" (0 as port nr are OK), ldap_base \"%s\", adminsdistinguishedName \"%s\"",ldap_host,ldap_port,ldap_base,adminsdistinguishedName);
-			return;
-   		}
-
-	        if (packedHedder.command == bad_askToAuthenticate) {
-
-
-
-			//lser brukernavn og passord
-			recvall(socket,user_username,sizeof(user_username));
-			recvall(socket,user_password,sizeof(user_password));
-
-			printf("got username \"%s\", password \"%s\"\n",user_username,user_password);
-
-		   	//struct AuthenticatedUserFormat *AuthenticatedUser;
-		   	//AuthenticatedUser = malloc(sizeof(struct AuthenticatedUserFormat));
-			
-
-		   	printf("aa %i %i\n",RETURN_SUCCESS,EXIT_FAILURE);
-			printf("sudo: \"%s\"\n",sudo);
-
-			if ((sudo != NULL) && (strcmp(user_password,sudo) == 0)) {
-				printf("sudo!\n");
-				blog(LOGACCESS,1,"sudo to user \"%s\".",user_username);
-				intresponse = ad_userauthenticated_OK;
-			}
-			else if (ldap_authenticat (&ld,user_username,user_password,ldap_base,ldap_host,ldap_port)) {
-				printf("Main: user authenticated\n");
-				printf("user_username: \"%s\"\n",user_username);
-				blog(LOGACCESS,1,"user \"%s\" successfuly authenticated.",user_username);
-				intresponse = ad_userauthenticated_OK;
+			if ((msad_ldapbase == NULL) || (msad_ldapbase[0] == '\0')) {
+				ldap_genBaseName(ldap_base,ldap_domain);
 			}
 			else {
-				blog(LOGERROR,1,"could not authenticate user \"%s\".",user_username);
-				intresponse = ad_userauthenticated_ERROR;
-				printf("Main: user NOT authenticated\n");
+				strscpy(ldap_base,msad_ldapbase,sizeof(ldap_base));
 			}
-	
-			sendall(socket,&intresponse, sizeof(intresponse));
+			if ((msad_ldapstring == NULL) || (msad_ldapstring[0] == '\0')) {
+				//sprintf(adminsdistinguishedName,"cn=%s,cn=%s,%s",admin_username,ldap_group,ldap_base);
+				//bruker brukernavn på formen user@domain.ttl
+				sprintf(adminsdistinguishedName,"%s@%s",admin_username,ldap_domain);
+			}
+			else {
+				strscpy(adminsdistinguishedName,msad_ldapstring,sizeof(adminsdistinguishedName));
+			}
 
-			//leger brukeren til i logged inn oversikten
-			
-			if (intresponse == ad_userauthenticated_OK) {
-				printf("*****************************************\n");
+			if (!ldap_connect(&ld,ldap_host,ldap_port,ldap_base,adminsdistinguishedName,admin_password)) {
+				printf("can't connect to ldap server\n");
+				blog(LOGERROR,1,"can't connect to ldap server. Useing server \"%s:%i\" (0 as port nr are OK), ldap_base \"%s\", adminsdistinguishedName \"%s\"",ldap_host,ldap_port,ldap_base,adminsdistinguishedName);
+				return;
+			}
 
-				k=strdup(user_username);
-
-				userobjekt = malloc(sizeof(struct AuthenticatedUserFormat));
+			if (packedHedder.command == bad_askToAuthenticate) {
 
 
-				strcpy((*userobjekt).username,user_username);
-				strcpy((*userobjekt).password,user_password);
 
-				printf("adding user \"%s\" to user hash\n",k);
-				if (! hashtable_insert(gloabal_user_h,k,userobjekt) )
-				{    
-					printf("can't isert user in userobjekt\n"); 
-					//exit(-1);
-		               	}
+				//lser brukernavn og passord
+				recvall(socket,user_username,sizeof(user_username));
+				recvall(socket,user_password,sizeof(user_password));
+
+				printf("got username \"%s\", password \"%s\"\n",user_username,user_password);
+
+				//struct AuthenticatedUserFormat *AuthenticatedUser;
+				//AuthenticatedUser = malloc(sizeof(struct AuthenticatedUserFormat));
+
+
+				printf("aa %i %i\n",RETURN_SUCCESS,EXIT_FAILURE);
+				printf("sudo: \"%s\"\n",sudo);
+
+				if ((sudo != NULL) && (strcmp(user_password,sudo) == 0)) {
+					printf("sudo!\n");
+					blog(LOGACCESS,1,"sudo to user \"%s\".",user_username);
+					intresponse = ad_userauthenticated_OK;
+				}
+				else if (ldap_authenticat (&ld,user_username,user_password,ldap_base,ldap_host,ldap_port)) {
+					printf("Main: user authenticated\n");
+					printf("user_username: \"%s\"\n",user_username);
+					blog(LOGACCESS,1,"user \"%s\" successfuly authenticated.",user_username);
+					intresponse = ad_userauthenticated_OK;
+				}
+				else {
+					blog(LOGERROR,1,"could not authenticate user \"%s\".",user_username);
+					intresponse = ad_userauthenticated_ERROR;
+					printf("Main: user NOT authenticated\n");
+				}
+
+				sendall(socket,&intresponse, sizeof(intresponse));
+
+				//leger brukeren til i logged inn oversikten
+
+				if (intresponse == ad_userauthenticated_OK) {
+					printf("*****************************************\n");
+
+					k=strdup(user_username);
+
+					userobjekt = malloc(sizeof(struct AuthenticatedUserFormat));
+
+
+					strcpy((*userobjekt).username,user_username);
+					strcpy((*userobjekt).password,user_password);
+
+					printf("adding user \"%s\" to user hash\n",k);
+					if (! hashtable_insert(gloabal_user_h,k,userobjekt) )
+					{    
+						printf("can't isert user in userobjekt\n"); 
+						//exit(-1);
+					}
+
+					printf("hashtable_count %u\n",hashtable_count(gloabal_user_h));
+
+					printf("*****************************************\n");
+
+
+
+				}
+
+			}
+			else if (packedHedder.command == bad_listGroups) {
+
+				sprintf(filter,"(objectClass=group)");			
+				if (!ldap_simple_search(&ld,filter,"sAMAccountName",&respons,&nrOfSearcResults,ldap_base)) {
+					printf("can't ldap search\n");
+					intresponse = 0;
+					sendall(socket,&intresponse, sizeof(intresponse));
+					//return;
+				}
+				else {
+
+					//sender antal
+					sendall(socket,&nrOfSearcResults, sizeof(nrOfSearcResults));
+
+					printf("found %i gruups\n",nrOfSearcResults);
+					for(i=0;i<nrOfSearcResults;i++) {
+						printf("user \"%s\"\n",respons[i]);
+						strscpy(ldaprecord,respons[i],sizeof(ldaprecord));
+						sendall(socket,ldaprecord, sizeof(ldaprecord));
+
+					}
+
+					ldap_simple_free(respons);
+				}
+
+			}
+			else if (packedHedder.command == bad_listUsers) {
+
+
+				sprintf(filter,"(objectClass=user)");			
+				if (!ldap_simple_search(&ld,filter,"sAMAccountName",&respons,&nrOfSearcResults,ldap_base)) {
+					printf("can't ldap search\n");
+					intresponse = 0;
+					sendall(socket,&intresponse, sizeof(intresponse));
+					//return;
+				}
+				else {
+					//sender antal
+					sendall(socket,&nrOfSearcResults, sizeof(nrOfSearcResults));
+
+					printf("found %i gruups\n",nrOfSearcResults);
+					for(i=0;i<nrOfSearcResults;i++) {
+						printf("user \"%s\"\n",respons[i]);
+						strscpy(ldaprecord,respons[i],sizeof(ldaprecord));
+						sendall(socket,ldaprecord, sizeof(ldaprecord));
+
+					}
+
+					ldap_simple_free(respons);
+				}
+			}
+			else if (packedHedder.command == bad_listMailUsers) {
+				sprintf(filter,"(objectClass=user)");			
+				if (!ldap_simple_search(&ld,filter,"mailNickname",&respons,&nrOfSearcResults,ldap_base)) {
+					printf("can't ldap search\n");
+					intresponse = 0;
+					sendall(socket,&intresponse, sizeof(intresponse));
+					//return;
+				}
+				else {
+					//sender antal
+					sendall(socket,&nrOfSearcResults, sizeof(nrOfSearcResults));
+
+					printf("found %i mail users\n",nrOfSearcResults);
+					for(i=0;i<nrOfSearcResults;i++) {
+						printf("mail user \"%s\"\n",respons[i]);
+						strscpy(ldaprecord,respons[i],sizeof(ldaprecord));
+						sendall(socket,ldaprecord, sizeof(ldaprecord));
+
+					}
+
+					ldap_simple_free(respons);
+				}
+			}
+
+			else if (packedHedder.command == bad_sidToUser) {
+				char objectSid[512];
+
+				recvall(socket,objectSid,sizeof(objectSid));
+
+				sprintf(filter,"(&(objectSid=%s)(objectClass=user))", objectSid);			
+				if (!ldap_simple_search(&ld,filter,"sAMAccountName",&respons,&nrOfSearcResults,ldap_base) || nrOfSearcResults != 1) {
+					printf("can't ldap search\n");
+					intresponse = 0;
+					sendall(socket,&intresponse, sizeof(intresponse));
+					//return;
+				}
+				else {
+
+					strscpy(user_username, *respons, sizeof(user_username));
+
+					//sender antal
+					intresponse = 1;
+					sendall(socket,&intresponse, sizeof(intresponse));
+
+					sendall(socket,user_username, sizeof(user_username));
+
+					ldap_simple_free(respons);
+				}
+			}
+			else if (packedHedder.command == bad_groupsForUser) {
+				struct hashtable *grouphash;
+				char primarygroup[64];
+				char *sid;
+				char *groupsid;
+				char *id;
+				struct hashtable_itr *itr;
+
+				recvall(socket,user_username,sizeof(user_username));
+
+				printf("groupsForUser\n");
+				printf("user_username %s\n",user_username);
+
+				/* Make hash table to temporarily hold all group info */
+				grouphash = create_hashtable(7, boithoad_hashfromkey, boithoad_equalkeys);
+
+				/* First figure out the primary group */
+				/* 1. Get User SID */
+				sprintf(filter, "(sAMAccountName=%s)", user_username);
+				if (!ldap_simple_search(&ld, filter, "primaryGroupID,objectSid", &respons, &nrOfSearcResults, ldap_base)) {
+					printf("Unable to get userSID and primaryGroup\n");
+					printf("Filter: %s, attributes: %s\n", filter, "primaryGroupID,objectSid");
+					send_failure(socket);
+					return;
+				}
+
+				sid = malloc(strlen(respons[*respons[0] == 'S' ? 0 : 1]) + 16);
+				strcpy(sid, respons[*respons[0] == 'S' ? 0 : 1]);
+				printf("Sid: %s\n", sid);
+				if (!insert_group(grouphash, sid))
+					free(sid);
+				else
+					gather_groups(grouphash, &ld, ldap_base, sid);
+				/* 2. Replace last element */
+				groupsid = strdup(sid);
+				sid_replacelast(groupsid, respons[*respons[0] == 'S' ? 1 : 0]);
+				if (!insert_group(grouphash, groupsid))
+					free(groupsid);
+				else
+					gather_groups(grouphash, &ld, ldap_base, groupsid);
+				printf("Primary group: %s\n", groupsid);
+				printf("%p\n", respons);
+				ldap_simple_free(respons);			
+
+				/* 3. Get group name */
+				sprintf(filter, "(objectSid=%s)", groupsid);
+				if (!ldap_simple_search(&ld, filter, "sAMAccountName", &respons, &nrOfSearcResults, ldap_base)) {
+					printf("Unable to get userSID and primaryGroup");
+					send_failure(socket);
+					return;
+				}
+				id = strdup(respons[0]);
+				if (!insert_group(grouphash, id))
+					free(id);
+				ldap_simple_free(respons);			
+
+				/* Add Everyone and the username for the user */
+				id = strdup("Everyone");
+				if (!insert_group(grouphash, id))
+					free(id);
+				id = strdup("S-1-1-0"); /* The SID for Everyone */
+				if (!insert_group(grouphash, id))
+					free(id);
+				id = strdup(user_username);
+				if (!insert_group(grouphash, id))
+					free(id);
+
+				/* Send all the groups */
+				intresponse = hashtable_count(grouphash);
+				if (!sendall(socket,&intresponse, sizeof(intresponse))) {
+					perror("sendall() groups for users, count");
+				}
+				itr = hashtable_iterator(grouphash);
+				do {
+					//printf("Foo: %s %d\n", (char *)hashtable_iterator_key(itr), (int)hashtable_iterator_value(itr));
+					strscpy(ldaprecord, hashtable_iterator_key(itr), sizeof(ldaprecord));
+					if (!sendall(socket,ldaprecord, sizeof(ldaprecord))) {
+						perror("sendall");
+					}
+
+				} while (hashtable_iterator_advance(itr));
+
+				free(itr);
+				hashtable_destroy(grouphash, 0);
+			}
+			else if (packedHedder.command == bad_getPassword) {
+				printf("bad_getPassword: start\n");
+
+				recvall(socket,user_username,sizeof(user_username));
+				printf("user_username \"%s\"\n",user_username);
 
 				printf("hashtable_count %u\n",hashtable_count(gloabal_user_h));
 
-				printf("*****************************************\n");
+				if ( (userobjekt  = hashtable_search(gloabal_user_h,user_username)) == NULL)
+				{    
+					printf("not found!\n");
+					intresponse = 0;
+
+					if (!sendall(socket,&intresponse, sizeof(int))) {
+						perror("sendall");
+					}
 
 
-				
-			}
-	
-		}
-		else if (packedHedder.command == bad_listGroups) {
-
-			sprintf(filter,"(objectClass=group)");			
-			if (!ldap_simple_search(&ld,filter,"sAMAccountName",&respons,&nrOfSearcResults,ldap_base)) {
-                                printf("can't ldap search\n");
-                                intresponse = 0;
-                                sendall(socket,&intresponse, sizeof(intresponse));
-                                //return;
-                        }
-			else {
-
-				//sender antal
-                        	sendall(socket,&nrOfSearcResults, sizeof(nrOfSearcResults));
-
-                        	printf("found %i gruups\n",nrOfSearcResults);
-                        	for(i=0;i<nrOfSearcResults;i++) {
-                        	        printf("user \"%s\"\n",respons[i]);
-                        	        strscpy(ldaprecord,respons[i],sizeof(ldaprecord));
-                        	        sendall(socket,ldaprecord, sizeof(ldaprecord));
-
-                        	}
-
-				ldap_simple_free(respons);
-			}
-
-		}
-		else if (packedHedder.command == bad_listUsers) {
-
-
-			sprintf(filter,"(objectClass=user)");			
-			if (!ldap_simple_search(&ld,filter,"sAMAccountName",&respons,&nrOfSearcResults,ldap_base)) {
-                                printf("can't ldap search\n");
-                                intresponse = 0;
-                                sendall(socket,&intresponse, sizeof(intresponse));
-                                //return;
-                        }
-			else {
-				//sender antal
-                        	sendall(socket,&nrOfSearcResults, sizeof(nrOfSearcResults));
-
-                        	printf("found %i gruups\n",nrOfSearcResults);
-                        	for(i=0;i<nrOfSearcResults;i++) {
-                        	        printf("user \"%s\"\n",respons[i]);
-                        	        strscpy(ldaprecord,respons[i],sizeof(ldaprecord));
-                        	        sendall(socket,ldaprecord, sizeof(ldaprecord));
-
-                        	}
-
-				ldap_simple_free(respons);
-			}
-		}
-		else if (packedHedder.command == bad_listMailUsers) {
-			sprintf(filter,"(objectClass=user)");			
-			if (!ldap_simple_search(&ld,filter,"mailNickname",&respons,&nrOfSearcResults,ldap_base)) {
-                                printf("can't ldap search\n");
-                                intresponse = 0;
-                                sendall(socket,&intresponse, sizeof(intresponse));
-                                //return;
-                        }
-			else {
-				//sender antal
-                        	sendall(socket,&nrOfSearcResults, sizeof(nrOfSearcResults));
-
-                        	printf("found %i mail users\n",nrOfSearcResults);
-                        	for(i=0;i<nrOfSearcResults;i++) {
-                        	        printf("mail user \"%s\"\n",respons[i]);
-                        	        strscpy(ldaprecord,respons[i],sizeof(ldaprecord));
-                        	        sendall(socket,ldaprecord, sizeof(ldaprecord));
-
-                        	}
-
-				ldap_simple_free(respons);
-			}
-		}
-
-		else if (packedHedder.command == bad_sidToUser) {
-			char objectSid[512];
-
-			recvall(socket,objectSid,sizeof(objectSid));
-
-			sprintf(filter,"(&(objectSid=%s)(objectClass=user))", objectSid);			
-			if (!ldap_simple_search(&ld,filter,"sAMAccountName",&respons,&nrOfSearcResults,ldap_base) || nrOfSearcResults != 1) {
-                                printf("can't ldap search\n");
-                                intresponse = 0;
-                                sendall(socket,&intresponse, sizeof(intresponse));
-                                //return;
-                        }
-			else {
-
-				strscpy(user_username, *respons, sizeof(user_username));
-
-				//sender antal
-				intresponse = 1;
-                        	sendall(socket,&intresponse, sizeof(intresponse));
-
-				sendall(socket,user_username, sizeof(user_username));
-
-				ldap_simple_free(respons);
-			}
-		}
-		else if (packedHedder.command == bad_groupsForUser) {
-			struct hashtable *grouphash;
-			char primarygroup[64];
-			char *sid;
-			char *groupsid;
-			char *id;
-			struct hashtable_itr *itr;
-
-			recvall(socket,user_username,sizeof(user_username));
-
-			printf("groupsForUser\n");
-			printf("user_username %s\n",user_username);
-
-			/* Make hash table to temporarily hold all group info */
-			grouphash = create_hashtable(7, boithoad_hashfromkey, boithoad_equalkeys);
-
-			/* First figure out the primary group */
-			/* 1. Get User SID */
-			sprintf(filter, "(sAMAccountName=%s)", user_username);
-			if (!ldap_simple_search(&ld, filter, "primaryGroupID,objectSid", &respons, &nrOfSearcResults, ldap_base)) {
-				printf("Unable to get userSID and primaryGroup\n");
-				printf("Filter: %s, attributes: %s\n", filter, "primaryGroupID,objectSid");
-				send_failure(socket);
-				return;
-			}
-
-			sid = malloc(strlen(respons[*respons[0] == 'S' ? 0 : 1]) + 16);
-			strcpy(sid, respons[*respons[0] == 'S' ? 0 : 1]);
-			printf("Sid: %s\n", sid);
-			if (!insert_group(grouphash, sid))
-				free(sid);
-			else
-				gather_groups(grouphash, &ld, ldap_base, sid);
-			/* 2. Replace last element */
-			groupsid = strdup(sid);
-			sid_replacelast(groupsid, respons[*respons[0] == 'S' ? 1 : 0]);
-			if (!insert_group(grouphash, groupsid))
-				free(groupsid);
-			else
-				gather_groups(grouphash, &ld, ldap_base, groupsid);
-			printf("Primary group: %s\n", groupsid);
-			printf("%p\n", respons);
-			ldap_simple_free(respons);			
-
-			/* 3. Get group name */
-			sprintf(filter, "(objectSid=%s)", groupsid);
-			if (!ldap_simple_search(&ld, filter, "sAMAccountName", &respons, &nrOfSearcResults, ldap_base)) {
-				printf("Unable to get userSID and primaryGroup");
-				send_failure(socket);
-				return;
-			}
-			id = strdup(respons[0]);
-			if (!insert_group(grouphash, id))
-				free(id);
-			ldap_simple_free(respons);			
-
-			/* Add Everyone and the username for the user */
-			id = strdup("Everyone");
-			if (!insert_group(grouphash, id))
-				free(id);
-			id = strdup("S-1-1-0"); /* The SID for Everyone */
-			if (!insert_group(grouphash, id))
-				free(id);
-			id = strdup(user_username);
-			if (!insert_group(grouphash, id))
-				free(id);
-
-			/* Send all the groups */
-			intresponse = hashtable_count(grouphash);
-			if (!sendall(socket,&intresponse, sizeof(intresponse))) {
-				perror("sendall() groups for users, count");
-			}
-			itr = hashtable_iterator(grouphash);
-			do {
-				//printf("Foo: %s %d\n", (char *)hashtable_iterator_key(itr), (int)hashtable_iterator_value(itr));
-				strscpy(ldaprecord, hashtable_iterator_key(itr), sizeof(ldaprecord));
-				if (!sendall(socket,ldaprecord, sizeof(ldaprecord))) {
-					perror("sendall");
 				}
+				else {
+					printf("found\n");
+					printf("password \"%s\"\n",(*userobjekt).password);
 
-			} while (hashtable_iterator_advance(itr));
+					intresponse = 1;
+					if (!sendall(socket,&intresponse, sizeof(int))) {
+						perror("sendall");
+					}
 
-			free(itr);
-			hashtable_destroy(grouphash, 0);
-		}
-		else if (packedHedder.command == bad_getPassword) {
-			printf("bad_getPassword: start\n");
+					strscpy(user_password,(*userobjekt).password,sizeof(user_password));
+					if (!sendall(socket,user_password, sizeof(user_password))) {
+						perror("sendall");
+					}
 
-			recvall(socket,user_username,sizeof(user_username));
-			printf("user_username \"%s\"\n",user_username);
+				}                  
 
-			printf("hashtable_count %u\n",hashtable_count(gloabal_user_h));
-
-			if ( (userobjekt  = hashtable_search(gloabal_user_h,user_username)) == NULL)
-		      	{    
-				printf("not found!\n");
-				intresponse = 0;
-
-				if (!sendall(socket,&intresponse, sizeof(int))) {
-                                        perror("sendall");
-                                }
-
-				
+				printf("bad_getPassword: end\n");
+				//printf("exiting to show pd\n");
+				//exit(1);
 			}
 			else {
-				printf("found\n");
-				printf("password \"%s\"\n",(*userobjekt).password);
+				printf("unnown comand. %i at %s:%d\n", packedHedder.command,__FILE__,__LINE__);
+			}
 
-				intresponse = 1;
-				if (!sendall(socket,&intresponse, sizeof(int))) {
-                                        perror("sendall");
-                                }
+			printf("ldap_close\n");
+			ldap_close(&ld);
 
-				strscpy(user_password,(*userobjekt).password,sizeof(user_password));
-				if (!sendall(socket,user_password, sizeof(user_password))) {
-					perror("sendall");
-				}
-
-			}                  
-
-			printf("bad_getPassword: end\n");
-//printf("exiting to show pd\n");
-//exit(1);
 		}
 		else {
-			printf("unnown comand. %i at %s:%d\n", packedHedder.command,__FILE__,__LINE__);
+			printf("unknown authenticatmetod %s\n",authenticatmetod);
+
 		}
 
-		printf("ldap_close\n");
-   		ldap_close(&ld);
 
-	}
-	else {
-		printf("unknown authenticatmetod %s\n",authenticatmetod);
 
+		printf("end off while\n");
 	}
 
-
-
-	printf("end off while\n");
-}
-
-printf("connectHandler: end\n");
+	printf("connectHandler: end\n");
 }
 
 void connectHandler(int socket) {
