@@ -152,9 +152,7 @@ struct tempresultsFormat {
 	char value[MAX_LDAP_ATTR_LEN];
 };
 
-static void print_reference(
-        LDAP *ld,
-        LDAPMessage *reference )
+static void print_reference(LDAP *ld, LDAPMessage *reference)
 {
         int rc;
         char **refs = NULL;
@@ -165,7 +163,7 @@ static void print_reference(
                 printf(_("# search reference\n"));
         }
 	*/
- rc = ldap_parse_reference( ld, reference, &refs, &ctrls, 0 );
+	rc = ldap_parse_reference( ld, reference, &refs, &ctrls, 0 );
 
 
         if( rc != LDAP_SUCCESS ) {
@@ -185,7 +183,7 @@ static void print_reference(
         }
 	
 
- if( ctrls ) {
+	if( ctrls ) {
                 //tool_print_ctrls( ld, ctrls );
                 ldap_controls_free( ctrls );
         }
@@ -203,24 +201,6 @@ int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[]
 	int i,len,count;
 	List list;
 
-/*
-	//ldap kan returnere mere en en atributt. Skal ha inn en nulterminert liste med stringer. Siden dette er 
-	//en enkel søk støtter vi bare å søke på en verdi  
-	char **attrs;
-	attrs = malloc(2 * sizeof(char *));
-	attrs[0] = malloc(strlen(vantattrs) +1);
-	strcpy(attrs[0],vantattrs);
-	attrs[1] = '\0';
-
-
-	printf("vantattrs search\n");
-	i = 0;
-	while(attrs[i] != '\0') {
-		printf("search for \"%s\"\n",attrs[i]);
-		++i;
-	}
-	printf("vantattrs search end\n");
-*/
   	char **attrs;
   	int TokCount;
 
@@ -394,100 +374,6 @@ done:
                 return( rc );
         }
 
-
-
-/*
-   	// block forever 
-	printf("trying to ldap_result...\n");
-   	//result = ldap_result((*ld), msgid, 1, NULL, &msg);
-   	//result = ldap_result((*ld), msgid, 1, &ldap_time_out, &msg);
-   	result = ldap_result((*ld), msgid, 0, &ldap_time_out, &msg);
-	printf("... ldap_result done\n");
-
-   switch(result)
-   {
-      case(-1):
-	 ldap_perror((*ld), "ldap_result\n");
-	 return RETURN_FAILURE;
-	 break;
-      case(0):
-	 printf("Timeout exceeded in ldap_result()\n");
-	 return RETURN_FAILURE;
-	 break;
-      case(LDAP_RES_SEARCH_RESULT):
-	 printf("Search result returned\n");
-	 break;
-      default:
-	 printf("Unknown result : %x\n", result);
-	// return RETURN_FAILURE;
-	 break;
-   }
-*/
-
-//   	nrOfSearcResults = (int)ldap_count_entries((*ld), msg);
-
-
-   	//printf("The number of entries returned was %i\n\n", nrOfSearcResults);
-
-
-/*
-	list_init(&list,free);
-	
-	count =0;	
-   // Iterate through the returned entries 
-   for(entry = ldap_first_entry((*ld), msg); entry != NULL; entry = ldap_next_entry((*ld), entry)) {
-
-
-      if((dn = ldap_get_dn((*ld), entry)) != NULL) {
-	 printf("Returned dn: %s\n", dn);
-	 ldap_memfree(dn);
-      }
-
-      for( attr = ldap_first_attribute((*ld), entry, &ber); attr != NULL; attr = ldap_next_attribute((*ld), entry, ber)) {
-
-
-	printf("attr adress %u\n",(unsigned int)attr);
-
-	 	if ((vals = (char **)ldap_get_values((*ld), entry, attr)) != NULL)  {
-
-
-	    		for(i = 0; vals[i] != NULL; i++) {
-
-    	        		printf("attr: %s, vals %s\n", attr, vals[i]);
-
-				tempresults = malloc(sizeof(struct tempresultsFormat));
-				printf("tempresults adress %u\n",(unsigned int)tempresults);
-
-				strncpy((*tempresults).value,vals[i],MAX_LDAP_ATTR_LEN);
-
-				printf("tempresults adress %u\n",(unsigned int)tempresults);
-			
-				if (list_ins_next(&list,NULL,tempresults) != 0) {
-					printf("cant insert into list\n");
-					return 0;
-				}	
-
-				++count;	
-			} //for
-
-	
-
-	    		ldap_value_free(vals);
-	 	} //if
-	printf("attr adress %u\n",(unsigned int)attr);
-	ldap_memfree(attr);
-	
-      } //for
-
-
-      if (ber != NULL) {
-	 ber_free(ber,0);
-      }
-
-      printf("\n");
-   }
-
-*/
 	//clean up
 	ldap_msgfree(msg);
 
@@ -518,20 +404,6 @@ done:
 	(*respons)[(*nrofresponses)] = '\0';
 
 	list_destroy(&list);
-
-/*
-(*respons) = malloc((sizeof(char *) * nrOfSearcResults) +1);
-(*nrofresponses) = 0;
-for {
-				(*respons)[(*nrofresponses)] = malloc(len +1);
-				strscpy((*respons)[(*nrofresponses)],vals[i],len +1);
-
-}
-
-	(*respons)[(*nrofresponses)] = '\0';
-
-*/
-
 
 	printf("nr of results for return is %i\n",(*nrofresponses));
 
@@ -1110,90 +982,6 @@ if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL
 
 			free(itr);
 			hashtable_destroy(grouphash, 0);
-
-#if 0
-			printf("groupsForUser\n");
-			char primarygroup[64];
-
-			recvall(socket,user_username,sizeof(user_username));
-
-			printf("user_username %s\n",user_username);
-
-			if (!ldap_getcnForUser(&ld,cn,user_username,ldap_base)) {
-                		printf("canr look up cn\n");
-				intresponse = 0;
-				sendall(socket,&intresponse, sizeof(intresponse));
-				return;
-        		}
-			
-			//finner hovedgruppe fra cn
-			if (!getPrimaryGroupFromDnUsername (cn,primarygroup,sizeof(primarygroup))) {
-				printf("cnat fins group name.\n");
-			}
-			printf("group %s\n",primarygroup);
-
-		        sprintf(filter,"(distinguishedName=%s)",cn);
-
-			if (!ldap_simple_search(&ld,filter,"memberOf",&respons,&nrOfSearcResults,ldap_base)) {
-                		printf("can't ldap search\n");
-				intresponse = 0;
-				sendall(socket,&intresponse, sizeof(intresponse));
-				return;
-		        }
-			printf("ldap_simple_search done. Found %i groups\n",nrOfSearcResults);
-			
-			// +4:
-			// +1 for "Everyone" gruppen som alle er medlem av, men ikke finnes. Windows :(
-			// +1 for primær gruppe
-			// +1 for "Domain Users"
-			// +1 for brukernavnet
-			intresponse = nrOfSearcResults +4;
-
-			//sender antall
-			if (!sendall(socket,&intresponse, sizeof(intresponse))) {
-				perror("sendall");
-			}
-
-			//sender primær gruppe
-			/*ToDo: sender at alle er med i "Users" da vi ikke klarer å finne primæer gruppe alltid.
-			se http://support.microsoft.com/kb/297951 ,og søk på: ldap primary group : får å finne mer info
-			20 nav 2007: er ser også ut til at vi kan ha "Domain Users", ikke bare "Users" gruppe :(
-			strscpy(ldaprecord,primarygroup,sizeof(ldaprecord));
-			*/
-			strscpy(ldaprecord,"Users",sizeof(ldaprecord));
-			if (!sendall(socket,ldaprecord, sizeof(ldaprecord))) {
-                                perror("sendall");
-                        }
-			strscpy(ldaprecord,"Domain Users",sizeof(ldaprecord));
-			if (!sendall(socket,ldaprecord, sizeof(ldaprecord))) {
-                                perror("sendall");
-                        }
-			strscpy(ldaprecord,user_username,sizeof(ldaprecord));
-			if (!sendall(socket,ldaprecord, sizeof(ldaprecord))) {
-                                perror("sendall");
-                        }
-
-			//sender Everyone
-			strscpy(ldaprecord,"Everyone",sizeof(ldaprecord));
-
-			if (!sendall(socket,ldaprecord, sizeof(ldaprecord))) {
-				perror("sendall");
-			}
-
-
-			printf("found %i gruups\n",nrOfSearcResults);
-			for(i=0;i<nrOfSearcResults;i++) {
-				printf("gruup \"%s\"\n",respons[i]);
-				strscpy(ldaprecord,respons[i],sizeof(ldaprecord));
-				//gjør om til gruppe navn, ikke ldap navn
-				getGroupFromDnGroup(ldaprecord,ldaprecord,sizeof(ldaprecord));
-				if (!sendall(socket,ldaprecord, sizeof(ldaprecord))) {
-					perror("sendall");
-				}
-
-			}
-			ldap_simple_free(respons);			
-#endif
 		}
 		else if (packedHedder.command == bad_getPassword) {
 			printf("bad_getPassword: start\n");
