@@ -644,7 +644,7 @@ gather_groups(struct hashtable *grouphash, LDAP **ld, char *ldap_base, char *sid
 		char *id;
 
 		if (!ldap_simple_search(ld, NULL, "objectSid", &respons2, &n_results, respons[i])) {
-			printf("Unable to get memberOf\n");
+			printf("Unable to get objectSid\n");
 			return;
 		}
 		printf("Results: %d\n", n_results);
