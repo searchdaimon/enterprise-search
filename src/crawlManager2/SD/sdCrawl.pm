@@ -12,6 +12,7 @@ use LWP;
 use HTML::TokeParser;
 use URI;
 use SD::Crawl;
+use sdMimeMap;
 
 =pod 
 # Switch processing:
@@ -311,10 +312,11 @@ sub process_near_url {
     }
 
     $response = $robot->request($req);
+    my $ct = mapMimeType($response->content_type);
    
    if (not SD::Crawl::pdocumentExist($pointer, $url, 0, length($response->as_string ) )) {
       # pdocumentAdd( x, url, lastmodified, dokument_size, document, title, acl_allow, acl_denied )
-      SD::Crawl::pdocumentAdd($pointer, $url, 0 ,length($response->as_string ), $response->as_string, "", "html", $acl, "");		
+      SD::Crawl::pdocumentAdd($pointer, $url, 0 ,length($response->as_string ), $response->as_string, "", $ct, $acl, "");		
    }
  
     mutter("  That was hit #$hit_count\n");

@@ -208,10 +208,10 @@ struct crawlLibInfoFormat *perlCrawlStart(char perlpath[], char name[]) {
 
 
         //char *perl_args[] = { "", "-Mblib=/home/boitho/boitho/websearch/perlxs/SD-Crawl",  "-I", collection->crawlLibInfo->resourcepath, perlfile, NULL };
-        char *perl_args[] = { "", "-Mblib=/home/boitho/boitho/websearch/perlxs/SD-Crawl",  bfile("perl/persistent.pl"), NULL };
+        char *perl_args[] = { "", "-Mblib=/home/boitho/boitho/websearch/perlxs/SD-Crawl",  "-I", bfile("crawlers/Modules/SD/sdCrawl.pm"), bfile("perl/persistent.pl"), NULL };
 
 
-	int perl_argsc = 2;
+	int perl_argsc = 4;
 	
 
 	extern char **environ;
