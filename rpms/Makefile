@@ -150,7 +150,7 @@ bbAutoUpdate:
 	rpmbuild -bb $(boithobb-bbAutoUpdate_name).spec
 
 everrun:
-	perl rpmmagic.pl --post "install -d -o boitho /coredumps/saved; chown -R boitho /coredumps" --requires "boithobb-filepermissions" --initd "everrun" $(boitho-everrun_name) $(boitho-everrun_version) $(BOITHOHOME) /home/boitho/boithoTools bin/everrun
+	perl rpmmagic.pl --post "install -d -o boitho /coredumps/saved; chown -R boitho /coredumps" --requires "boithobb-filepermissions gdb" --initd "everrun" $(boitho-everrun_name) $(boitho-everrun_version) $(BOITHOHOME) /home/boitho/boithoTools bin/everrun
 
 	rpmbuild -bb $(boitho-everrun_name).spec
 
