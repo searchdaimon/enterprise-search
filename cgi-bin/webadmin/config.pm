@@ -100,8 +100,7 @@ $CONFIG{'yum_wrapper_path'}  = $ENV{'BOITHOHOME'} . "/setuid/yumwrapper";
 $CONFIG{'maplist_path'} = $ENV{'BOITHOHOME'} . "/config/maplist.conf";
 
 # Core dump directory
-#$CONFIG{'cores_path'}   = "/coredumps/saved";
-$CONFIG{'cores_path'}    = "/tmp/cores2";
+$CONFIG{'cores_path'}   = "/coredumps/saved";
 
 # Commands to execute in gdb when generating a crash report
 $CONFIG{'gdb_report_cmd'} = qq{bt};
