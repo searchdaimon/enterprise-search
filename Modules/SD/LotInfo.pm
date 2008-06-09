@@ -11,13 +11,34 @@ use File::Find;
 use Data::Dumper;
 
 use SD::Df;
-use Number::Bytes::Human qw(format_bytes);
+#use Number::Bytes::Human qw(format_bytes);
 
 use constant MOUNTS_INFO => "/proc/mounts";
 use constant DEBUG => 0;
 
 my $maplist_path;
 my %opt = ();
+
+sub _round {
+    my($number) = shift;
+    return int($number + .5);
+}
+
+sub format_bytes {
+        my $bytes = shift;
+        return undef unless defined $bytes;
+
+        my $ret = "";
+
+        if ($bytes < 2**30) {
+                $ret = _round($bytes / 2**20) . "M";
+        }
+        else {
+                $ret = _round($bytes / 2**30) . "G";
+        }
+
+        return $ret;
+}
 
 ##
 # Default constructor.
