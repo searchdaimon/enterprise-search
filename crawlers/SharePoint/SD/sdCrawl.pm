@@ -100,6 +100,8 @@ my @ip_end;
 my @ip_country2;
 my @exclusionsUrlParts;
 my $iisspecial = 0;
+my $countries = "";
+my $skipQuery;
  
 
 
@@ -138,6 +140,14 @@ sub Start {
    main_loop( );
    report( ) if $hit_count;
    say("Quitting.\n");
+}
+
+sub setCountries {
+   $countries = @_;
+}
+
+sub setSkipQuery {
+    $skipQuery = @_;
 }
  
 sub main_loop {
@@ -357,7 +367,7 @@ sub process_far_url {
 
    if (!$allow_far_urls) { return; }
 
-   return unless (getCountry($url) eq "NO");
+   return unless (getCountry($url) =~ "NO");
 
    my $req = HTTP::Request->new(GET => $url);
 
@@ -398,8 +408,9 @@ sub addOk {
    ($url) = @_;
    my $uri = URI->new($url);
     foreach $restricted (@exclusionsUrlParts) {
+       $uri->path();
       if ($uri->path() =~ /$restricted/) {
-         return 0;
+          return 0;
        }
      }
    return 1;
@@ -539,7 +550,23 @@ sub schedule {
     } else {
       mutter("  Scheduling $u\n");
       if ($iisspecial) {
-         my $qs = $u->query();
+         my $qs = $u->query();  #move query stuff to main
+
+         if ( $qs and $qs =~ /Source/) {
+            $qs = substr($qs, 0, index($qs,"&")); 
+         }
+         if ( $qs and $qs =~ /^List=/) {
+            $qs = substr($qs, index($qs,"&")); 
+         }
+
+        if ( $qs and $qs =~ /&RootFolder/) {
+            $qs = substr($qs, 0, index($qs,"&RootFolder")); 
+         }
+
+       if ( $qs and $qs =~ /^RootFolder=http/) {
+            $qs = undef;
+         }
+
          my $lc_url = lc($u);
          $u = URI->new($lc_url);
          $u->query($qs);

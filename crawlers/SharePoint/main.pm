@@ -60,7 +60,8 @@ sub crawlupdate {
     my $Urls = $opt->{"resource"};
     my $starting_url;
     my @urlList = split /;/, $Urls;
-    my @exclusionsUrlPart = qw (editform.aspx newform.aspx /forms/allitems.aspx /contacts/allitems.aspx /tasks/allitems.aspx /tasks/active.aspx /tasks/byowner.aspx);
+    #my @exclusionsUrlPart = qw (editform.aspx newform.aspx /forms/allitems.aspx /contacts/allitems.aspx /tasks/allitems.aspx /tasks/active.aspx /tasks/byowner.aspx);
+    my @exclusionsUrlPart = qw (editform.aspx newform.aspx /forms/allitems.aspx /contacts/allitems.aspx /tasks/allitems.aspx /tasks/active.aspx /tasks/byowner.aspx orms/recentchanges.aspx forms/allpages.aspx backlinks.aspx /calendar.aspx /_layouts/ );
 
     SD::sdCrawl::process_starting_urls(@urlList);
     SD::sdCrawl::setDelay(0.1);
