@@ -193,7 +193,14 @@ sub _get_mount_df {
 		$size         = format_bytes($df{size});
 		$used         = format_bytes($df{used});
 		$left	      = format_bytes($df{size} - $df{used});
-		$percent_full = format_bytes($df{useper});
+
+		$percent_full = $df{useper};
+		if ($percent_full != 0) {
+			$percent_full = _round($df{useper});
+			if ($percent_full == 0) {
+				$percent_full = "< 1";
+			}
+		}
 	}
 	else {
 		carp "Unable to get disk usage for mount $mount_path";
