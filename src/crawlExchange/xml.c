@@ -111,6 +111,14 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 
 	url = (char *)xmlNodeListGetString(doc, href->xmlChildrenNode, 1);
 	if (strcmp(url, parent) == 0) {
+		/* Update acl lists */
+		if ((cur = xml_find_child(propstat, "prop"))) {
+			if ((cur = xml_find_child(cur, "descriptor"))) {
+				if ((cur = xml_find_child(cur, "security_descriptor"))) {
+					handle_acllist(doc, cur, acl_allow, acl_deny);
+				}
+			}
+		}
 		printf("Found parent, skiping...\n");
 		free(url);
 		return;
@@ -130,6 +138,7 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 	}
 
 	/* Directory perhaps? */
+	printf("Pathname: %s\n", url);
 	if (url[hreflen-1] == '/') {
 		newxml = ex_getContent(url, ci->collection->user, ci->collection->password);
 		grabContent(newxml, (char *)url, ci, acl_allow2, acl_deny2);
