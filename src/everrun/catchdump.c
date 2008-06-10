@@ -122,6 +122,7 @@ dup_file(char *from, char *to)
 
 	close(fdfrom);
 	close(fdto);
+	chmod(to, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
 	
 	return 0;
 }
