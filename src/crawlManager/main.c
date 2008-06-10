@@ -481,7 +481,7 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 			forreturn = 0;
 	}
 #endif
-	else if (!(*(*crawlLibInfo).crawlpatAcces)(uri,username,password,documentError)) {
+	else if (!(*(*crawlLibInfo).crawlpatAcces)(uri,username,password,documentError, &collections[0])) {
         	printf("Can't crawlLibInfo. Can be denyed or somthing else\n");
 		//overfører error
                 berror((*crawlLibInfo).strcrawlError());
@@ -631,7 +631,7 @@ int cm_start(struct hashtable **h) {
 		lib_handle = dlopen(libpath, RTLD_LAZY);
 		if (!lib_handle) {
 			blog(LOGERROR,1,"Error: during dlopen(): %s. File %s.",dlerror(),libpath);
-		    	exit(1);
+			continue;
 		}
 
 	
@@ -1052,7 +1052,7 @@ int crawl_lock(struct collection_lockFormat *collection_lock, char collection[])
 	//oppretter var mappen hvis den ikke finnes. Dette slik at vi slipper og gjøre dette under instalsjonen
 	bmkdir_p(bfile("var/"),0755);
 
-	sprintf((*collection_lock).lockfile,"var/boitho-%s.lock",collection);
+	sprintf((*collection_lock).lockfile,"var/boitho-collections-%s.lock",collection);
 
 	printf("locking lock \"%s\"\n",(*collection_lock).lockfile);
 
@@ -1078,7 +1078,7 @@ int crawl_element_lock(struct collection_lockFormat *collection_lock, char conne
 	//oppretter var mappen hvis den ikke finnes. Dette slik at vi slipper og gjøre dette under instalsjonen
 	bmkdir_p(bfile("var/"),0755);
 
-	sprintf((*collection_lock).elementlockfile,"var/boitho-%s.lock",connector);
+	sprintf((*collection_lock).elementlockfile,"var/boitho-element-%s.lock",connector);
 
 	printf("locking lock \"%s\"\n",(*collection_lock).elementlockfile);
 
