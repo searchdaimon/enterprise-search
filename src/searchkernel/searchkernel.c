@@ -1612,9 +1612,12 @@ spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa)
 					}
 
 					printf("Found correct spelling: %s\n", p[0]);
-					free(sa->s[0]);
-					sa->s[0] = strdup(p[0]);
-					fixed++;
+					if (strcmp(sa->s[0], p[0]) != 0) {
+						free(sa->s[0]);
+						sa->s[0] = strdup(p[0]);
+						fixed++;
+					}
+
 					spelling_suggestions_destroy(p);
 				}
 				break;
