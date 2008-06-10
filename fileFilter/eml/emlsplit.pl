@@ -349,6 +349,8 @@ my $dirfiltername = "/tmp/dirfilter-" . $<;
 
 $fileemail = shift @ARGV or die "Usage: ./emlsplit.pl emlfile" ;
 
+#system("cp $fileemail /tmp/dirfilter-en-tmp/");
+
 my $message;
 {
 	local(*FH);
@@ -373,18 +375,31 @@ foreach my $hn ($parsed->header_names) {
 }
 close($mh);
 
-my @parts = $parsed->parts;
-#print $#parts."\n";
-foreach (@parts) {
-	my $fn;
-	next if $_->content_type =~ /^multipart\//;
-	my ($ct) = split(";", $_->content_type);
-	$fn = "$dirfiltername".$_->invent_filename;
-	print ((defined($types{$ct}) ? $types{$ct} : "dat") ." ".$fn."\n");
-	open(my $wf, "> $fn") || die "$fn: $!";
-	print $wf $_->body;
-	close $wf;
+sub writemail {
+	my ($p) = @_;
+
+	my @parts = $p->parts;
+
+	foreach (@parts) {
+		my $fn;
+		if ($_->content_type =~ /^multipart\//) {
+			my @sub = $_->subparts;
+			foreach my $subp (@sub) {
+				writemail($subp);
+			}
+			next;	
+		}
+		
+		my ($ct) = split(";", $_->content_type);
+		$fn = "$dirfiltername".$_->invent_filename;
+		print ((defined($types{$ct}) ? $types{$ct} : "dat") ." ".$fn."\n");
+		open(my $wf, "> $fn") || die "$fn: $!";
+		print $wf $_->body;
+		close $wf;
+	}
 }
+
+writemail($parsed);
 
 print ("txt" ." ".$headername."\n");
 
