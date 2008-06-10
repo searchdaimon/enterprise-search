@@ -98,8 +98,8 @@ w		[ \t\r\n\f]*
 				    ce->in_function = 0;
 				    return FUNCTION_END;
 				}
-			    else
-				printf("INVALID: )\n");
+//			    else
+//				printf("INVALID: )\n");
 			}
 <INITIAL>\#{ident}	{
 			    savestring(yytext, yyscanner);
@@ -159,7 +159,7 @@ w		[ \t\r\n\f]*
 <BLOCK>\/\*		{ ((struct bcpm_yy_extra*)yyget_extra(yyscanner))->state = BLOCK; BEGIN COMMENT; }
 <COMMENT>\*\/		{ BEGIN ((struct bcpm_yy_extra*)yyget_extra(yyscanner))->state; }
 <COMMENT>.|\n		{}
-.|\n			{ /*printf("INVALID: %s\n", yytext);*/ }
+<*>.|\n			{ /*printf("INVALID: %s\n", yytext);*/ }
 %%
 
 
