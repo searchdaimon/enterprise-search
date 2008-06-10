@@ -47,7 +47,7 @@ gcsummary(int LotNr, char *subname)
 		unsigned int len, sDocID;
 
 		len = docindex.SummarySize;
-		if (docindex.SummaryPointer == NULL && DocID != firstDocID) {
+		if ((char *)docindex.SummaryPointer == NULL && DocID != firstDocID) {
 			#ifdef DEBUG
 				printf("skiping...\n");
 			#endif
@@ -68,7 +68,7 @@ gcsummary(int LotNr, char *subname)
 			++gced;
 			continue;
 		}
-		if (sDocID != DocID && docindex.SummaryPointer != NULL) {
+		if (sDocID != DocID && (char *)docindex.SummaryPointer != NULL) {
 			warnx("Did not read the same DocID as was requested");
 			++gced;
 			continue;
