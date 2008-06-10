@@ -180,8 +180,10 @@ set_clone(set *orig)
 	new = malloc(sizeof(*new));
 	if (new == NULL)
 		return NULL;
-	if (!set_init(new))
+	if (!set_init(new)) {
+		free(new);
 		return NULL;
+	}
 
 	SET_FOREACH(si, orig, p) {
 		set_add(new, strdup(p));
@@ -204,14 +206,16 @@ set_to_string(set *s, char *sep)
 		if (str == NULL) {
 			str = strdup(p);
 			len = strlen(p);
-			endp = str + len;
 		} else {
+			size_t tmplen;
+
+			tmplen = len;
 			len += seplen;
 			len += strlen(p);
 			str = realloc(str, len+1);
+			endp = str + tmplen;
 			strcpy(endp, sep);
 			strcpy(endp+seplen, p);
-			endp = str + len;
 		}
 	}
 	if (str == NULL)
