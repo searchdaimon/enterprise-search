@@ -299,7 +299,7 @@ crawlGo(struct crawlinfo *ci)
 		}
 	}
 
-	return 0;
+	return 1;
 	//return err == 0 ? 0 : 1;
 }
 
