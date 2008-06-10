@@ -112,6 +112,7 @@ ex_getContent(const char *url, const char *username, const char *password)
 	struct curl_slist *headers = NULL;
 	struct ex_buffer buf;
 	char *userpass;
+	long code;
 
 	curl = curl_easy_init();
 	buf.buf = NULL;
@@ -149,11 +150,16 @@ ex_getContent(const char *url, const char *username, const char *password)
 //http://schemas.microsoft.com/mapi/proptag/0x0E1D001E
 
 	result = curl_easy_perform(curl);
+	result = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
 	curl_slist_free_all(headers);
 	curl_easy_cleanup(curl);
 	free_userpass(userpass);
 
 	//printf("Mail\n\n%s\n\n", buf.buf);
+	if (code == 401) {
+		free(buf.buf);
+		return NULL;
+	}
 
 	return buf.buf;
 }

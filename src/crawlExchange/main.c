@@ -21,7 +21,7 @@
 #include "../common/sid.h"
 #include "../dictionarywordsLot/set.h"
 
-int crawlcanconect(struct collectionFormat *collection,
+int crawlcanconnect(struct collectionFormat *collection,
                    int (*documentError)(int, const char *, ...) __attribute__((unused)));
 int crawlfirst(struct collectionFormat *collection,
 		int (*documentExist)(struct collectionFormat *, struct crawldocumentExistFormat *),
@@ -36,9 +36,6 @@ int crawlupdate(struct collectionFormat *collection,
 int 
 ex_rewrite_url(char *uri, enum platform_type ptype, enum browser_type btype)
 {
-
-	//sprintf(uri, "%s", uri);
-
 	return 1;
 }
 
@@ -47,7 +44,7 @@ struct crawlLibInfoFormat crawlLibInfo = {
 	NULL,
 	crawlfirst,
 	crawlupdate,
-	crawlcanconect,
+	crawlcanconnect,
 	NULL,
 	NULL,
 	NULL,
@@ -180,7 +177,7 @@ grabContent(char *xml, char *url, struct crawlinfo *ci, set *acl_allow, set *acl
 
 
 int
-crawlcanconect(struct collectionFormat *collection,
+crawlcanconnect(struct collectionFormat *collection,
                    int (*documentError)(int, const char *, ...) __attribute__((unused)))
 {
 	char *listxml;
@@ -188,7 +185,7 @@ crawlcanconect(struct collectionFormat *collection,
 	char resource[PATH_MAX];
 	char *user;
 	char **users;
-	
+
 	if (strstr(collection->resource, "://")) {
 		snprintf(origresource, sizeof(origresource), "%s/exchange", collection->resource);
 	} else {
@@ -204,11 +201,18 @@ crawlcanconect(struct collectionFormat *collection,
 		xmlGetWarningsDefaultValue = 0;
 		listxml = ex_getContent(resource, collection->user, collection->password);
 		//listxml = NULL;
+		//printf("%s\n", listxml);
 		if (listxml != NULL) {
+			if (strcmp(listxml, "<html><head><title>Error</title></head><body>Error: Access is Denied.</body></html>") == 0) {
+				free(listxml);
+				continue;
+			}
 			free(listxml);
 			return 1;
 		}
 	}
+
+	documentError(1, "Unable to connect to: %s\n", origresource);
 
 	return 0;
 }
