@@ -680,6 +680,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 				FILE *fp;
 
 				if (stat(path, &st) == -1) { /* Unable to access file, move on to the next */
+					fprintf(stderr, "File: %s\n", path);
 					perror("stat");
 					failed++;
 					continue;
