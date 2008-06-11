@@ -89,14 +89,11 @@ boitho-dictionary_version = 1.3
 boitho-repomod_name= boitho-repomod
 boitho-repomod_version = 1.1
 
-boitho-repomodwrap_name= boitho-repomodwrap
-boitho-repomodwrap_version = 1.1
-
 boitho-suggest_name = boitho-suggest
 boitho-suggest_version = 1.1
 
 
-all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch bbadminhtaccess scripts repomod suggest repomodwrap
+all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch bbadminhtaccess scripts repomod suggest
 
 sqlUpdate:
 	perl rpmmagic.pl --sql sql/update-cur.sql --requires "boitho-database" $(boithobb-sqlUpdate_name) $(boithobb-sqlUpdate_version) $(BOITHOHOME) /home/boitho/boithoTools 
@@ -110,7 +107,7 @@ filepermissions:
 
 
 setuidbb:
-	perl rpmmagic.pl --defattr "%defattr(4755, root, -)" $(boithobb-setuid_name) $(boithobb-setuid_version) $(BOITHOHOME) /home/boitho/boithoTools setuid/initwrapper setuid/configwrite setuid/yumwrapper setuid/yumupdate bin/setuidcaller
+	perl rpmmagic.pl --DEfattr "%defattr(4755, root, -)" $(boithobb-setuid_name) $(boithobb-setuid_version) $(BOITHOHOME) /home/boitho/boithoTools setuid/initwrapper setuid/configwrite setuid/yumwrapper setuid/yumupdate bin/setuidcaller setuid/repomodwrap
 
 	rpmbuild -bb $(boithobb-setuid_name).spec
 
@@ -240,12 +237,6 @@ repomod:
 
 	rpmbuild -bb $(boitho-repomod_name).spec
  
-repomodwrap:
-	perl rpmmagic.pl $(boitho-repomodwrap_name) $(boitho-repomodwrap_version) $(BOITHOHOME) /home/boitho/boithoTools setuid/repomodwrap
-
-	rpmbuild -bb $(boitho-repomodwrap_name).spec
- 
-
 base:
 	rm -rf $(boitho-base_name)-$(boitho-base_version)
 	mkdir $(boitho-base_name)-$(boitho-base_version)
