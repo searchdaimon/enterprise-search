@@ -89,11 +89,14 @@ boitho-dictionary_version = 1.3
 boitho-repomod_name= boitho-repomod
 boitho-repomod_version = 1.1
 
+boitho-repomodwrap_name= boitho-repomodwrap
+boitho-repomodwrap_version = 1.1
+
 boitho-suggest_name = boitho-suggest
 boitho-suggest_version = 1.1
 
 
-all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch bbadminhtaccess scripts repomod suggest
+all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch bbadminhtaccess scripts repomod suggest repomodwrap
 
 sqlUpdate:
 	perl rpmmagic.pl --sql sql/update-cur.sql --requires "boitho-database" $(boithobb-sqlUpdate_name) $(boithobb-sqlUpdate_version) $(BOITHOHOME) /home/boitho/boithoTools 
@@ -233,9 +236,14 @@ sqldatabase:
 	rpmbuild -bb $(boithobb-database_name).spec
 
 repomod:
-	perl rpmmagic.pl $(boitho-repomod_name) $(boitho-repomod_version) $(BOITHOHOME) /home/boitho/boithoTools perl/repomod.pl
+	perl rpmmagic.pl --requires "repomodwrap" $(boitho-repomod_name) $(boitho-repomod_version) $(BOITHOHOME) /home/boitho/boithoTools perl/repomod.pl
 
 	rpmbuild -bb $(boitho-repomod_name).spec
+ 
+repomodwrap:
+	perl rpmmagic.pl $(boitho-repomodwrap_name) $(boitho-repomodwrap_version) $(BOITHOHOME) /home/boitho/boithoTools setuid/repomodwrap
+
+	rpmbuild -bb $(boitho-repomodwrap_name).spec
  
 
 base:
