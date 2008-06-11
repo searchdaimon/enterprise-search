@@ -233,7 +233,7 @@ sqldatabase:
 	rpmbuild -bb $(boithobb-database_name).spec
 
 repomod:
-	perl rpmmagic.pl --requires "repomodwrap" $(boitho-repomod_name) $(boitho-repomod_version) $(BOITHOHOME) /home/boitho/boithoTools perl/repomod.pl
+	perl rpmmagic.pl --requires "boithobb-setuid" $(boitho-repomod_name) $(boitho-repomod_version) $(BOITHOHOME) /home/boitho/boithoTools perl/repomod.pl
 
 	rpmbuild -bb $(boitho-repomod_name).spec
  
