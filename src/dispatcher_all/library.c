@@ -15,6 +15,8 @@
 */
     #include "../common/boithohome.h"
     #include "../common/timediff.h"   
+    #include "../common/bstr.h"   
+    #include "../common/daemon.h"   
 
     #include <stdarg.h>
     #include <stdio.h>
@@ -32,6 +34,7 @@
     #include <locale.h>
     #include <fcntl.h>
     #include <zlib.h>
+    #include <sys/file.h>
 
     #include "library.h"
 
@@ -190,7 +193,8 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
         struct timespec timeout;
         struct timespec time;
         int socketWait;
-	int n,i;
+	int n;
+	//int i;
 	int returnstatus = 1;
 
 	//hvsi vi fikk en sokket som ikke har noen verdi. Sikkert da den har blit kanselert før
@@ -539,7 +543,7 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 }
 
 
-int bsConectAndQueryOneServer(char server[], int searchport, char query[], char subname[], int maxHits, int start, 
+void bsConectAndQueryOneServer(char server[], int searchport, char query[], char subname[], int maxHits, int start, 
 	struct SiderFormat **Sider, int *pageNr) {
 
 
@@ -653,4 +657,212 @@ int bsConectAndQueryOneServer(char server[], int searchport, char query[], char 
 
 	free(SiderHeder);
 }
+
+
+#ifdef WITH_CASHE
+
+/* Probably very weak */
+unsigned int
+cache_hash(char *query, int start, char *country)
+{
+	unsigned int hash = 0xf23c203;
+	char *p;
+
+	hash *= start;
+	for(p = query; *p; p++)
+		hash += *p * 38;
+	for(p = country; *p; p++)
+		hash += *p * 39;
+	
+	return hash;
+}
+
+
+char *
+cache_path(char *path, size_t len, enum cache_type type, char *query, int start, char *country)
+{
+	char tmppath[PATH_MAX];
+	char modquery[PATH_MAX];
+	unsigned int hash;
+	char *p;
+	char *cache;
+
+	switch (type) {
+	case CACHE_PREQUERY:
+		cache = "var/cache/prequery_v_" CACHE_STRUCT_VERSION;
+		break;
+	case CACHE_SEARCH:
+		cache = "var/cache/search_v_" CACHE_STRUCT_VERSION;
+		break;
+	}
+
+	/* XXX: Base 64 encode the query */
+	strcpy(modquery, query);
+	for (p = modquery; *p; p++) {
+		if (*p == '/')
+			*p = '-';
+		else if (*p == ' ')
+			*p = '#';
+	}
+	hash = cache_hash(modquery, start, country);
+	p = (char *)&hash;
+	strncpy(path, bfile(cache), len);
+	mkdir(path, 0755);
+	snprintf(tmppath, sizeof(tmppath), "/%x%x", *p & 0xF, (*p >> 4) & 0xF);
+	strncat(path, tmppath, len);
+	mkdir(path, 0755);
+	p++;
+	snprintf(tmppath, sizeof(tmppath), "/%x%x", *p & 0xF, (*p >> 4) & 0xF);
+	strncat(path, tmppath, len);
+	mkdir(path, 0755);
+	snprintf(tmppath, sizeof(tmppath), "/%s.%d.%s", modquery, start, country);
+	strncat(path, tmppath, len);
+
+	return path;
+}
+
+
+int
+cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
+           size_t sider_header_len, struct SiderFormat *sider, int cachetimeout, size_t max_sizer)
+{
+	gzFile *cache;
+	int fd, i, ret;
+	struct stat st;
+
+	if ((fd = open(path, O_RDONLY)) == -1) {
+		perror(path);
+		return 0;
+	}
+	flock(fd, LOCK_SH);
+
+	/* Invalidate cache ? */
+	if (cachetimeout > 0 && fstat(fd, &st) != -1) {
+		time_t now;
+
+		now = time(NULL);
+
+		if (now - st.st_mtime > cachetimeout) {
+			fprintf(stderr, "Cache too old, invalidating\n");
+			unlink(path);
+			flock(fd, LOCK_UN);
+			close(fd);
+			return 0;
+		}
+	}	
+
+	if ((cache = gzdopen(fd, "r")) == NULL) {
+		fprintf(stderr, "can't gzopen().\n");
+		perror("gzopen");
+		flock(fd, LOCK_UN);
+		close(fd);
+		return 0;
+	}
+
+	ret = 1;
+	if (gzread(cache, page_nr, sizeof(*page_nr)) != sizeof(*page_nr)) {
+		perror("gzread(page_nr)");
+		goto err;
+	}
+
+	if (gzread(cache, final_sider, sizeof(*final_sider)) != sizeof(*final_sider)) {
+		perror("gzread(final_sider)");
+		goto err;
+	}
+
+	if (gzread(cache, sider_header, sizeof(*sider_header)*sider_header_len) != sizeof(*sider_header)*sider_header_len) {
+		perror("gzread(final_sider)");
+		goto err;
+	}
+
+	//ser ut til at vi av og til kan ha flere sider en vi har plass til i bufferen
+	if (*page_nr > max_sizer) {
+		fprintf(stderr, "Bug?: cache_read: have more pages in cache then space in buffer! nr of pages was %i\n",*page_nr);
+		*page_nr = max_sizer;
+	}
+	//fprintf(stderr, "Got %d cached pages\n", *page_nr);
+	for (i = 0; i < *page_nr; i++) {
+		if (gzread(cache, &sider[i], sizeof(*sider)) != sizeof(*sider)) {
+			perror("Unable to read cache");
+			goto err;
+		}
+
+		//fprintf(stderr, "cache: read: %s\n", sider[i].uri);
+	}
+	
+
+	goto out;
+ err:
+	//Runarb: 20 may 2008: hvorfor ble denne satt til 1 hvis den returnerte ok? Da returnerer den altid 1, selv på feil som kaller goto  err. 
+	ret = 0;
+ out:
+	gzclose(cache);
+	//Runarb: 20 may 2008: LOCK_UN før close er vel ikke nødvendig for read, da close låser opp.  
+	//flock(fd, LOCK_UN);
+	close(fd);
+	return ret;
+}
+
+int
+cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
+            size_t sider_header_len, struct SiderFormat *sider, size_t sider_len)
+{
+	gzFile *cache;
+	int fd, i, ret;
+
+	//temp jayde 
+	//final_sider->TotaltTreff = 20;
+	//final_sider->showabal = 20;
+	//sider_len = 20;
+	//*page_nr = 20;
+
+	if ((fd = open(path, O_CREAT|O_WRONLY|O_EXCL, 0644)) == -1) {
+		fprintf(stderr,"cache_write: can't open cache file\n");
+		perror(path);
+		return 0;
+	}
+	flock(fd, LOCK_EX);
+	if ((cache = gzdopen(fd, "w")) == NULL) {
+		fprintf(stderr,"cache_write: can't gzdopen\n");
+		return 0;
+	}
+
+	ret = 1;
+	if (gzwrite(cache, page_nr, sizeof(*page_nr)) != sizeof(*page_nr)) {
+		perror("gzwrite(page_nr)");
+		goto err;
+	}
+
+	if (gzwrite(cache, final_sider, sizeof(*final_sider)) != sizeof(*final_sider)) {
+		perror("gzwrite(final_sider)");
+		goto err;
+	}
+
+	if (gzwrite(cache, sider_header, sizeof(*sider_header)*sider_header_len) != sizeof(*sider_header)*sider_header_len) {
+		perror("gzwrite(final_sider)");
+		goto err;
+	}
+
+	for (i = 0; i < sider_len; i++) {
+		if (gzwrite(cache, &sider[i], sizeof(*sider)) != sizeof(*sider)) {
+			perror("Unable to write cache");
+			goto err;
+		}
+		//fprintf(stderr, "cache: wrote: %s\n", sider[i].uri);
+	}
+	
+
+	goto out;
+ err:
+	ret = 0;
+	unlink(path);
+ out:
+	gzclose(cache);
+	flock(fd, LOCK_UN);
+	close(fd);
+	return ret;
+}
+
+#endif
+
 

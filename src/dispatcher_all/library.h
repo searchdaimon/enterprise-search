@@ -49,5 +49,31 @@
 
 void die(int errorcode,char query[] ,const char *fmt, ...);
 void bsConectAndQuery(int *sockfd,int nrOfServers, char *servers[],struct queryNodeHederFormat *queryNodeHeder,int alreadynr, int port);
-int bsConectAndQueryOneServer(char server[], int searchport, char query[], char subname[], int maxHits, int start,
+void bsConectAndQueryOneServer(char server[], int searchport, char query[], char subname[], int maxHits, int start,
         struct SiderFormat **Sider, int *pageNr);
+
+
+#ifdef WITH_CASHE
+
+#define CACHE_STRUCT_VERSION "1.7"
+
+enum cache_type {
+        CACHE_PREQUERY,
+        CACHE_SEARCH
+};
+
+
+unsigned int
+cache_hash(char *query, int start, char *country);
+
+char *
+cache_path(char *path, size_t len, enum cache_type type, char *query, int start, char *country);
+
+int
+cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
+           size_t sider_header_len, struct SiderFormat *sider, int cachetimeout, size_t max_sizer);
+
+int
+cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
+            size_t sider_header_len, struct SiderFormat *sider, size_t sider_len);
+#endif
