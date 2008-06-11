@@ -376,8 +376,9 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	//hvis vi har et html dokument kan vi bruke dette direkte
 	//er dog noe uefektist her, ved at vi gjør minnekopiering
 	if ((strcmp(filetype,"htm") == 0) || (strcmp(filetype,"html") == 0 )) {
-		memcpy(documentfinishedbuftmp,document,dokument_size +1);
-                (*documentfinishedbufsize) = strlen(documentfinishedbuftmp);
+		memcpy(documentfinishedbuftmp,document,dokument_size);
+                (*documentfinishedbufsize) = dokument_size;
+		documentfinishedbuftmp[(*documentfinishedbufsize) +1] = '\0';
 		return 1;
 	}
 	else if (strcmp(filetype,"hnxt") == 0) {
@@ -980,7 +981,7 @@ int uriindex_open(DB **dbpp, char subname[]) {
                 if ((ret = db_create(&dbp, NULL, 0)) != 0) {
                         fprintf(stderr,
                             "%s: db_create: %s\n", "bbdocument", db_strerror(ret));
-                        return (EXIT_FAILURE);
+                        return 0;
                 }
 
 		//#define dbCashe 314572800       //300 mb
@@ -995,6 +996,7 @@ int uriindex_open(DB **dbpp, char subname[]) {
                 if ((ret = dbp->open(dbp, NULL, fileName, NULL, DB_BTREE, DB_CREATE, 0664)) != 0) {
                         dbp->err(dbp, ret, "%s: open", fileName);
                         //goto err1;
+			return 0;
                 }
 
         /********************************************************************/
@@ -1005,6 +1007,7 @@ int uriindex_open(DB **dbpp, char subname[]) {
 
 	(*dbpp) = dbp;
 
+	return 1;
 }
 
 int uriindex_close (DB **dbpp) {
@@ -1088,7 +1091,10 @@ int uriindex_get (char uri[], unsigned int *DocID, unsigned int *lastmodified, c
 	int forreturn = 1;
 	struct uriindexFormat uriindex;
 
-        uriindex_open(&dbp,subname);
+        if (!uriindex_open(&dbp,subname)) {
+		fprintf(stderr,"can't open uriindex\n");
+		return 0;
+	}
 
 
         //resetter minne
