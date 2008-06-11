@@ -1,3 +1,5 @@
+#include <string.h>
+
 int tkeyisok (char tkey[]) {
 
 	if (strcmp(tkey,"zdlPehvkuthSLH2345uhKSJe5lgk6ktn") == 0) {
