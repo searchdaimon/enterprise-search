@@ -211,6 +211,7 @@ getEmailUrls(const char *data, struct crawlinfo *ci, char *parent, set *acl_allo
 	xmlDocPtr doc;
 	xmlNodePtr cur;
 
+	printf("aaaaa \n########################%s\n########################\n",data);
 	doc = xmlParseMemory(data, strlen(data));
 	if (!doc) {
 		fprintf(stderr, "Parse error!\n");

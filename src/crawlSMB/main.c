@@ -14,7 +14,7 @@
 
 
 
-int crawlpatAcces(char resource[], const char username[], const char password[], int (*documentError)(int level, const char *fmt, ...) ) 
+int crawlpatAcces   (char resource[], char username[], char password[], int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...) , struct collectionFormat *collection) 
 {
         //tester om vi kan koble til
 	char        *prefix;
@@ -39,7 +39,7 @@ int crawlpatAcces(char resource[], const char username[], const char password[],
 
 	prefix = smb_mkprefix( username, password );
 
-	status =  smb_test_open( prefix, resourcereal,documentError);
+	status =  smb_test_open(collection,  prefix, resourcereal,documentError);
 
 	free(prefix);
 
@@ -53,7 +53,7 @@ int crawlpatAcces(char resource[], const char username[], const char password[],
 	return status;
 }
 
-int crawlcanconect( struct collectionFormat *collection,int (*documentError)(int level, const char *fmt, ...)) 
+int crawlcanconect( struct collectionFormat *collection,int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...)) 
 {
         //tester om vi kan koble til
 	char        *prefix;
@@ -70,7 +70,7 @@ int crawlcanconect( struct collectionFormat *collection,int (*documentError)(int
 
 	prefix = smb_mkprefix( (*collection).user, (*collection).password );
 
-	status =  smb_test_conect( prefix, (*collection).resource,no_auth , documentError);
+	status =  smb_test_conect(collection,  prefix, (*collection).resource,no_auth , documentError);
 
 	free(prefix);
 
@@ -80,7 +80,7 @@ int crawlcanconect( struct collectionFormat *collection,int (*documentError)(int
 int crawlfirst(struct collectionFormat *collection,
 	int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
         int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
-	int (*documentError)(int level, const char *fmt, ...),
+	int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...),
 	int (*documentContinue)(struct collectionFormat *collection)
 	) {
 
@@ -116,7 +116,7 @@ int crawlfirst(struct collectionFormat *collection,
 int crawlupdate(struct collectionFormat *collection,
 	int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
         int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
-	int (*documentError)(int level, const char *fmt, ...),
+	int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...),
 	int (*documentContinue)(struct collectionFormat *collection)
 	) {
 
@@ -189,8 +189,7 @@ struct crawlLibInfoFormat crawlLibInfo = {
 	scanSMB,
 	smb_rewrite_url,
         crawl_security_acl,
-        "SMB",
-	strcrawlError
+        "SMB"
 };
 
 

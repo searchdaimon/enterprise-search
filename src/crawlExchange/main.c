@@ -22,15 +22,15 @@
 #include "../dictionarywordsLot/set.h"
 
 int crawlcanconnect(struct collectionFormat *collection,
-                   int (*documentError)(int, const char *, ...) __attribute__((unused)));
+                   int (*documentError)(struct collectionFormat *collection, int, const char *, ...) __attribute__((unused)));
 int crawlfirst(struct collectionFormat *collection,
 		int (*documentExist)(struct collectionFormat *, struct crawldocumentExistFormat *),
 		int (*documentAdd)(struct collectionFormat *, struct crawldocumentAddFormat *),
-		int (*documentError)(int, const char *, ...));
+		int (*documentError)(struct collectionFormat *collection, int, const char *, ...));
 int crawlupdate(struct collectionFormat *collection,
 		int (*documentExist)(struct collectionFormat *, struct crawldocumentExistFormat *),
 		int (*documentAdd)(struct collectionFormat *, struct crawldocumentAddFormat *),
-		int (*documentError)(int, const char *, ...));
+		int (*documentError)(struct collectionFormat *collection, int, const char *, ...));
 
 
 int 
@@ -49,8 +49,7 @@ struct crawlLibInfoFormat crawlLibInfo = {
 	NULL,
 	NULL,
 	crawl_security_none,
-	"Exchange",
-	strcrawlError
+	"Exchange"
 };
 
 
@@ -95,7 +94,7 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 	crawldocumentExist.documenturi = make_crawl_uri(url, sid);
 	crawldocumentExist.lastmodified = lastmodified;
 	if (crawldocumentExist.documenturi == NULL) {
-		(ci->documentError)(1, "Could not allocate memory for documenturi");
+		(ci->documentError)(ci->collection ,1, "Could not allocate memory for documenturi");
 		return;
 	}
 	if ((ci->documentExist)(ci->collection, &crawldocumentExist)) {
@@ -178,7 +177,7 @@ grabContent(char *xml, char *url, struct crawlinfo *ci, set *acl_allow, set *acl
 
 int
 crawlcanconnect(struct collectionFormat *collection,
-                   int (*documentError)(int, const char *, ...) __attribute__((unused)))
+                   int (*documentError)(struct collectionFormat *,int, const char *, ...) __attribute__((unused)))
 {
 	char *listxml;
 	char origresource[PATH_MAX];
@@ -212,7 +211,7 @@ crawlcanconnect(struct collectionFormat *collection,
 		}
 	}
 
-	documentError(1, "Unable to connect to: %s\n", origresource);
+	documentError(collection, 1, "Unable to connect to: %s\n", origresource);
 
 	return 0;
 }
@@ -307,7 +306,7 @@ int
 crawlfirst(struct collectionFormat *collection,
 		int (*documentExist)(struct collectionFormat *, struct crawldocumentExistFormat *),
 		int (*documentAdd)(struct collectionFormat *, struct crawldocumentAddFormat *),
-		int (*documentError)(int, const char *, ...))
+		int (*documentError)(struct collectionFormat *collection, int, const char *, ...))
 {
 
 	struct crawlinfo ci;
@@ -327,7 +326,7 @@ int
 crawlupdate(struct collectionFormat *collection,
 		int (*documentExist)(struct collectionFormat *, struct crawldocumentExistFormat *),
 		int (*documentAdd)(struct collectionFormat *, struct crawldocumentAddFormat *),
-		int (*documentError)(int, const char *, ...))
+		int (*documentError)(struct collectionFormat *collection, int, const char *, ...))
 {
 	struct crawlinfo ci;
 

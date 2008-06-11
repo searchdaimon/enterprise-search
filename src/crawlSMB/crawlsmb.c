@@ -169,7 +169,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 	struct collectionFormat *collection,
         int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
         int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
-	int (*documentError)(int level, const char *fmt, ...),
+	int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...),
 	int (*documentContinue)(struct collectionFormat *collection),
 	unsigned int timefilter,
 	int no_auth
@@ -199,7 +199,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
     dh = smbc_opendir( full_name );
     if (dh < 0)
         {
-            documentError(1,"crawlsmb.c: Error! Could not open directory %s for dir \"%s\" at %s:%d", dir_name,dir_name,__FILE__,__LINE__);
+            documentError(collection, 1,"crawlsmb.c: Error! Could not open directory %s for dir \"%s\" at %s:%d", dir_name,dir_name,__FILE__,__LINE__);
 	    context_free(context);
             return 0;
         }
@@ -213,7 +213,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
         {
             if (dirc < 0)
                 {
-                    documentError(1,"crawlsmb.c: Error! Could not get directory entries from %s\n", dir_name);
+                    documentError(collection, 1,"crawlsmb.c: Error! Could not get directory entries from %s\n", dir_name);
 		    context_free(context);
                     return 0;
                 }
@@ -253,25 +253,25 @@ int smb_recursive_get( char *prefix, char *dir_name,
                         {
 
 				if (n == EINVAL) {
-	                            documentError(1,"crawlsmb.c: Error! Could not get attributes for %s. The client library is not properly initialized or one of the parameters is not of a correct form.\n", entry_name);
+	                            documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. The client library is not properly initialized or one of the parameters is not of a correct form.\n", entry_name);
 				}
 				else if (n == ENOMEM) {
-        	                    documentError(1,"crawlsmb.c: Error! Could not get attributes for %s. No memory was available for internal needs.\n", entry_name);
+        	                    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. No memory was available for internal needs.\n", entry_name);
 				}
 				else if (n == EEXIST) {
-                	            documentError(1,"crawlsmb.c: Error! Could not get attributes for %s. If the attribute already exists and the flag SMBC_XATTR_FLAG_CREAT was specified.\n", entry_name);
+                	            documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. If the attribute already exists and the flag SMBC_XATTR_FLAG_CREAT was specified.\n", entry_name);
 				}
 				else if (n == ENOATTR) {
-                        	    documentError(1,"crawlsmb.c: Error! Could not get attributes for %s. If the attribute does not exist and the flag SMBC_XATTR_FLAG_REPLACE was specified.\n", entry_name);
+                        	    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. If the attribute does not exist and the flag SMBC_XATTR_FLAG_REPLACE was specified.\n", entry_name);
 				}
 				else if (n == EPERM) {
-	                            documentError(1,"crawlsmb.c: Error! Could not get attributes for %s. Permission was denied.\n", entry_name);
+	                            documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. Permission was denied.\n", entry_name);
 				}
 				else if (n == ENOTSUP) {
-	                            documentError(1,"crawlsmb.c: Error! Could not get attributes for %s. The referenced file system does not support extended attributes\n", entry_name);
+	                            documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. The referenced file system does not support extended attributes\n", entry_name);
 				}
 				else {
-	                            documentError(1,"crawlsmb.c: Error! Could not get attributes for %s. Unknown error code \"%i\"\n", entry_name,n);
+	                            documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. Unknown error code \"%i\"\n", entry_name,n);
 				}
 
 			    	context_free(context);
@@ -289,7 +289,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
                     if ( smbc_stat(full_entry_name, &file_stat) < 0 )
                         {
-                            documentError(1,"crawlsmb.c: Error! Could not get stat for %s", entry_name);
+                            documentError(collection, 1,"crawlsmb.c: Error! Could not get stat for %s", entry_name);
 			    free(parsed_acl[0]);
 			    free(parsed_acl[1]);
                             free(parsed_acl);
@@ -362,11 +362,11 @@ int smb_recursive_get( char *prefix, char *dir_name,
 				{
 				    if (errno == EACCES)
 					{
-					    documentError(1,"crawlsmb.c: Error! We don't have access to %s.\n", entry_name);
+					    documentError(collection, 1,"crawlsmb.c: Error! We don't have access to %s.\n", entry_name);
 					}
 				    else
 					{
-					    documentError(1,"crawlsmb.c: Error! Could not open %s\n", entry_name);
+					    documentError(collection, 1,"crawlsmb.c: Error! Could not open %s\n", entry_name);
 					}
 				}
 			    else
@@ -397,7 +397,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 				    		i = smbc_readloop( fd, fbuf, file_stat.st_size );
 
 				    		if (i<0) {
-							documentError(1,"crawlsmb.c: Error! Could not read %s", entry_name);
+							documentError(collection, 1,"crawlsmb.c: Error! Could not read %s", entry_name);
 							goto closefile;
 				    		}
 					}
@@ -475,7 +475,7 @@ next_it:
 
     //context_free(context);
     if (!context_free(context)) {
-      	documentError(1,"crawlsmb.c-smb_recursive_get: Error! Could not free smbc context at %s:%d",__FILE__,__LINE__);
+      	documentError(collection, 1,"crawlsmb.c-smb_recursive_get: Error! Could not free smbc context at %s:%d",__FILE__,__LINE__);
         return 0;
     }
 
@@ -491,7 +491,7 @@ next_it:
     Returns 0 if error.
     Returns 1 if we has access.
  */
-int smb_test_conect( char *prefix, char *dir_name , int no_auth, int (*documentError)(int level, const char *fmt, ...))
+int smb_test_conect(struct collectionFormat *collection, char *prefix, char *dir_name , int no_auth, int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...))
 {
     // Det viser seg at dersom vi koder den dekodete URI-en blir den ødelagt ('/' blir %2F).
     // Har derfor fjernet støtte for å lagre menneskelig lesbar uri.
@@ -499,6 +499,8 @@ int smb_test_conect( char *prefix, char *dir_name , int no_auth, int (*documentE
     char        full_name[strlen(prefix) + strlen(dir_name) + 1];
     int		dh;
     SMBCCTX	*context;
+
+    printf("smb_test_conect(prefix=%s, dir_name=%s)\n",prefix,dir_name);
 
     context = context_init(no_auth);
 
@@ -508,7 +510,7 @@ int smb_test_conect( char *prefix, char *dir_name , int no_auth, int (*documentE
 
     if (dh < 0)
         {
-            documentError(1,"crawlsmb.c: Error! Could not open directory %s: for dir \"%s\" at %s:%d", dir_name, dir_name,__FILE__,__LINE__);
+            documentError(collection, 1,"crawlsmb.c: Error! Could not open directory %s: for dir \"%s\" at %s:%d", dir_name, dir_name,__FILE__,__LINE__);
 	    context_free(context);
             return 0;
         }
@@ -529,7 +531,7 @@ int smb_test_conect( char *prefix, char *dir_name , int no_auth, int (*documentE
 
 	    if (errno != EACCES)
 		{
-		    documentError(1,"crawlsmb.c: Error! Could not open %s", dir_name);
+		    documentError(collection, 1,"crawlsmb.c: Error! Could not open %s", dir_name);
 		}
 
 	    context_free(context);
@@ -549,7 +551,7 @@ dirp = (struct smbc_dirent*)dblock;
 	{
 		if (dirc < 0)
                 {
-                    documentError(1,"crawlsmb.c: Error! Could not get directory entries from %s", dir_name);
+                    documentError(collection, 1,"crawlsmb.c: Error! Could not get directory entries from %s", dir_name);
                     context_free(context);
                     return 0;
                 }
@@ -561,11 +563,11 @@ dirp = (struct smbc_dirent*)dblock;
 
 
     	if (smbc_closedir(dh) != 0) {
-		documentError(1,"crawlsmb.c-smb_test_conect: Error! Could not close dir");
+		documentError(collection, 1,"crawlsmb.c-smb_test_conect: Error! Could not close dir");
 	}
 
 	if (!context_free(context)) {
-		documentError(1,"crawlsmb.c-smb_test_conect: Error! Could not free smbc context at %s:%d",__FILE__,__LINE__);	
+		documentError(collection, 1,"crawlsmb.c-smb_test_conect: Error! Could not free smbc context at %s:%d",__FILE__,__LINE__);	
 		return 0;
     	}
 
@@ -579,7 +581,7 @@ dirp = (struct smbc_dirent*)dblock;
     Returns 0 if error or the user doesn't have access to the file.
     Returns 1 if the user has access.
  */
-int smb_test_open( char *prefix, char *dir_name, int (*documentError)(int level, const char *fmt, ...))
+int smb_test_open(struct collectionFormat *collection,  char *prefix, char *dir_name, int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...))
 {
 
     	// Det viser seg at dersom vi koder den dekodete URI-en blir den ødelagt ('/' blir %2F).
@@ -612,7 +614,7 @@ int smb_test_open( char *prefix, char *dir_name, int (*documentError)(int level,
 
 	    if (errno != EACCES)
 		{
-		    documentError(1,"crawlsmb.c: Error! Could not open \"%s\": %s", uri,strerror(errno));
+		    documentError(collection, 1,"crawlsmb.c: Error! Could not open \"%s\": %s", uri,strerror(errno));
 		}
 
 	    context_free(context);
@@ -623,7 +625,7 @@ int smb_test_open( char *prefix, char *dir_name, int (*documentError)(int level,
 
     	smbc_close(fd);
     	if (!context_free(context)) {
-		documentError(1,"crawlsmb.c-smb_test_open: Error! Could not free smbc context at %s:%d",__FILE__,__LINE__);	
+		documentError(collection, 1,"crawlsmb.c-smb_test_open: Error! Could not free smbc context at %s:%d",__FILE__,__LINE__);	
 		return 0;
     	}
 

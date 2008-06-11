@@ -5,10 +5,10 @@
 
 #include "../common/define.h"
 
-void crawlperror(const char *fmt, ...);
+//void crawlperror(const char *fmt, ...);
 void crawlWarn(const char *fmt, ...);
 char *strcrawlWarn();
-char *strcrawlError();
+//char *strcrawlError();
 
 #define crawl_security_acl 1
 #define crawl_security_none 1
@@ -34,6 +34,10 @@ struct collectionFormat {
 	char *extra;
 	char *test_file_prefix;
 	struct crawlLibInfoFormat *crawlLibInfo;
+
+	//10 juni 2008
+	char errormsg[512];
+
 };
 
 struct crawldocumentExistFormat {
@@ -59,13 +63,13 @@ struct crawldocumentAddFormat {
 #define crawlfirst_args struct collectionFormat *collection, \
 		int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist), \
 	        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd), \
-		int (*documentError)(int level, const char *fmt, ...), \
+		int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...), \
 		int (*documentContinue)(struct collectionFormat *collection)
 //argumenter ter crawlupdate()
 #define crawlupdate_args struct collectionFormat *collection, \
 		int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist), \
 	        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd), \
-		int (*documentError)(int level, const char *fmt, ...), \
+		int (*documentError)(struct collectionFormat *collection,int level, const char *fmt, ...), \
 		int (*documentContinue)(struct collectionFormat *collection)
 
 
@@ -76,20 +80,21 @@ struct crawlLibInfoFormat {
 
 	int (*crawlupdate)( crawlupdate_args );
 
-	int (*crawlcanconect)(struct collectionFormat *collection,int (*documentError)(int level, const char *fmt, ...));
+	int (*crawlcanconect)(struct collectionFormat *collection,int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...));
 
-	int (*crawlpatAcces)(char resource[], char username[], char password[],int (*documentError)(int level, const char *fmt, ...), struct collectionFormat *collection);
+	int (*crawlpatAcces)(char resource[], char username[], char password[],int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...), struct collectionFormat *collection);
 
-	int (*scan)(int (*scan_found_share)(char share[]),char host[],char username[], char password[],int (*documentError)(int level, const char *fmt, ...));
+	int (*scan)(int (*scan_found_share)(char share[]),char host[],char username[], char password[], int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...));
 	int (*rewrite_url)(char *, enum platform_type, enum browser_type);
 
 	int crawl_security;
 	//char *shortname;
 	//22 mai 2008;
 	char shortname[50];
-	char *(*strcrawlError)();
+	//char *(*strcrawlError)();
 
 	char resourcepath[PATH_MAX];
+
 };
 
 
@@ -98,7 +103,7 @@ struct cargsF {
         struct collectionFormat *collection;
         int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist);
         int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd);
-        int (*documentError)(int level, const char *fmt, ...);
+        int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...);
         int (*documentContinue)(struct collectionFormat *collection);
 
 };

@@ -9,6 +9,8 @@
 #include <libsmbclient.h>
 #include "get_auth_data_fn.h"
 
+#include "../crawl/crawl.h"
+
 static void
 no_auth_data_fn(const char * pServer,
                 const char * pShare,
@@ -32,7 +34,8 @@ get_auth_data_with_context_fn(SMBCCTX * context,
                               char * pPassword,
                               int maxLenPassword);
 
-int scanSMB(int (*scan_found_share)(char share[]),char host[],char username[], char password[])
+
+int scanSMB(int (*scan_found_share)(char share[]),char host[],char username[], char password[], int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...))
 {
     int                         debug = 0;
     int                         debug_stderr = 0;

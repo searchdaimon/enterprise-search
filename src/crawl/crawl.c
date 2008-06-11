@@ -10,10 +10,10 @@
 
 #ifdef WITH_THREAD
         __thread static char _warnmsg[512] = { "" };
-        __thread static char _errormsg[512] = { "" };
+        //__thread static char _errormsg[512] = { "" };
 #else
         static char _warnmsg[512] = { "" };
-        static char _errormsg[512] = { "" };
+        //static char _errormsg[512] = { "" };
 #endif
 
 void crawlWarn(const char *fmt, ...) {
@@ -40,7 +40,7 @@ void crawlWarn(const char *fmt, ...) {
 char *strcrawlWarn() {
         return _warnmsg;
 }
-
+/*
 void crawlperror(const char *fmt, ...) {
 
 	//extern int errno;
@@ -66,10 +66,10 @@ void crawlperror(const char *fmt, ...) {
 
 
 }
-
 char *strcrawlError() {
         return _errormsg;
 }
+*/
 
 void *collectionReset (struct collectionFormat *collection) {
 

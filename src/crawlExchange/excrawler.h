@@ -7,7 +7,7 @@
 struct crawlinfo {
 	int (*documentExist)(struct collectionFormat *, struct crawldocumentExistFormat *);
 	int (*documentAdd)(struct collectionFormat *, struct crawldocumentAddFormat *);
-	int (*documentError)(int, const char *, ...);
+	int (*documentError)(struct collectionFormat *, int, const char *, ...);
 	struct collectionFormat *collection;
 	unsigned int timefilter;
 };
