@@ -17,24 +17,30 @@ int boithoa_getLdapResponsList(int socketha,char **respons_list[],int *nrofrespo
 		return 0;
 	}
 
-	//#ifdef DEBUG
+	#ifdef DEBUG
 	printf("nr %i\n",intresponse);
-	//#endif
+	#endif
 
-	(*respons_list) = malloc((sizeof(char *) * intresponse) +1);
+	//void *, ikke +1 da vi setter pekeren til \0, ikke bare en char 
+	if (( (*respons_list) = malloc((sizeof(char *) * intresponse) +sizeof(void *))) == NULL ) {
+		perror("boithoa_getLdapResponsList: can't malloc respons array");
+		return 0;
+	}
         (*nrofresponses) = 0;
 
 	for (i=0;i<intresponse;i++) {
 		if (!recvall(socketha,ldaprecord,sizeof(ldaprecord))) {
+			fprintf(stderr,"can't recvall() ldaprecord\n");
 			return 0;
 		}
 
-		//#ifdef DEBUG
-		printf("record \"%s\"\n",ldaprecord);
-		//#endif
+		#ifdef DEBUG
+		printf("record \"%s\", len %i\n",ldaprecord,strlen(ldaprecord));
+		#endif
 
 		len = strnlen(ldaprecord,MAX_LDAP_ATTR_LEN);
-                (*respons_list)[(*nrofresponses)] = malloc(len +1);
+                (*respons_list)[(*nrofresponses)] = malloc(len +1); 
+
 		//ToDO: strscpy
                 strncpy((*respons_list)[(*nrofresponses)],ldaprecord,len +1);
 
@@ -47,7 +53,7 @@ int boithoa_getLdapResponsList(int socketha,char **respons_list[],int *nrofrespo
 }
 
 
-int boitho_authenticat(char username_in[],char password_in[]) {
+int boitho_authenticat(const char username_in[],char password_in[]) {
         int socketha;
         int response;
 
@@ -169,7 +175,7 @@ void boithoad_respons_list_free(char *respons_list[]) {
         free(respons_list);
 }
 
-int boithoad_groupsForUser(char username_in[],char **respons_list[],int *nrofresponses) {
+int boithoad_groupsForUser(const char username_in[],char **respons_list[],int *nrofresponses) {
 
 	int socketha;
 	int intresponse;
@@ -179,6 +185,7 @@ int boithoad_groupsForUser(char username_in[],char **respons_list[],int *nrofres
 	strncpy(username,username_in,sizeof(username));
 
         if ((socketha = cconnect("localhost", BADPORT)) == 0) {
+		printf("boithoad_groupsForUser: can't connect\n");
 		return 0;
 	}
 
@@ -187,15 +194,25 @@ int boithoad_groupsForUser(char username_in[],char **respons_list[],int *nrofres
 	sendall(socketha,username, sizeof(username));
 	
 	if (!boithoa_getLdapResponsList(socketha,respons_list,nrofresponses)) {
+		printf("boithoad_groupsForUser: can't getLdapResponsList for user \"%s\"\n",username);
 		return 0;
 	}
 
 	close(socketha);
 
+	#ifdef DEBUG
+		int i_debug;
+		printf("debug: have %i groups\n",*nrofresponses);
+
+		for (i_debug=0;i_debug<*nrofresponses;i_debug++) {
+			printf("debug: group name \"%s\", nr %i\n",(*respons_list)[i_debug],i_debug);
+		}
+	#endif
+
 	return 1;
 }
 
-int boithoad_getPassword(char username_in[], char password_in[]) {
+int boithoad_getPassword(const char username_in[], char password_in[]) {
 
 	int socketha;
 	int intresponse;
