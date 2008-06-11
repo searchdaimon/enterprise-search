@@ -13,6 +13,16 @@
 	static char _errormsg[512] = { "" };
 #endif
 
+
+void bverror(const char *fmt,va_list     ap) {
+
+	printf("bverror: ");	
+	vprintf(fmt,ap);
+	printf("\n");
+
+	vsprintf(_errormsg,fmt,ap);
+}
+
 void berror(const char *fmt, ...) {
 
 
@@ -21,7 +31,6 @@ void berror(const char *fmt, ...) {
 
     	va_start(ap, fmt);
 
-	printf("in berror\n");
 
 	//#ifdef DEBUG	
 		printf("berror: ");	
