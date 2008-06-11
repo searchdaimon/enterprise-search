@@ -328,7 +328,9 @@ unsigned int rLastDocID(char subname[]) {
 	unsigned int DocID;
 	int n;
 
-	DocIDFILE = lotOpenFileNoCasheByLotNr(1,"DocID","r",'e',subname);
+	if ((DocIDFILE = lotOpenFileNoCasheByLotNr(1,"DocID","r",'e',subname)) == NULL) {
+		return 0;
+	}
 
 
 	if (DocIDFILE == 0) {
@@ -342,8 +344,13 @@ unsigned int rLastDocID(char subname[]) {
 			printf("dident read %"PRId64" char, but %i\n",inode.st_size,n);
 			perror("fread");
 		}
-		//ToDO: støt unsigned int, ikke bare nt
-		DocID = atoi(buff);
+		buff[inode.st_size] = '\0';
+	
+		#ifdef DEBUG
+			printf("DocID is \"%s\"\n",buff);
+		#endif
+
+		DocID = atou(buff);
 		//printf("new docid %u = %s\n",DocID,buff);
 
 		fclose(DocIDFILE);
@@ -512,10 +519,16 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 		fclose(dirtfh);
 	}
 	//#endif
-
+	
+	#ifdef DEBUG
 	printf("rApendPost: did append %u, url: \"%s\", into subname \"%s\"\n",(*ReposetoryHeader).DocID,(*ReposetoryHeader).url,subname);
-	printf("rApendPost: acl_allow: \"%s\"\n",acl_allow);	
-	printf("rApendPost: acl_denied:  \"%s\"\n",acl_denied);	
+	#endif
+
+	#ifdef BLACK_BOKS
+		printf("rApendPost: acl_allow: \"%s\"\n",acl_allow);	
+		printf("rApendPost: acl_denied:  \"%s\"\n",acl_denied);	
+	#endif
+
 	return offset;
 }
 
@@ -2289,5 +2302,4 @@ void addNewUrl (struct addNewUrlhaFormat *addNewUrlha, struct updateFormat *upda
                 fwrite(updatePost,sizeof(struct updateFormat),1,(*addNewUrlha).NYEURLER);
 
 }
-
 
