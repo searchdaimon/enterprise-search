@@ -6,6 +6,7 @@
 #include "../common/url.h"
 #include "../common/lot.h"
 #include "../common/utf8-strings.h"
+#include "../common/bstr.h"
 
 
 int pi_switch(int showabal,struct SiderFormat *CurentSider, struct SiderFormat *Sider) {
@@ -115,6 +116,7 @@ int filterAdultWeight_value(int AdultWeight,int adultpages,int noadultpages) {
 	if (noadultpages > 10) {
 		//hvis vi har mange nokk sider, viser vi ikke en side hvis den er adult
 		if (AdultWeight >= AdultWeightForXXX) {
+			printf("filterAdultWeight_value: filtered %i\n",AdultWeight);
 			return 1;
 		}
 		else {
