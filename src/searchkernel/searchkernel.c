@@ -2508,15 +2508,15 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	printf("end searchSimple\n");
 
-	printf("rankDocId: %d\n", rankDocId);
+	printf("trying to determen rank for DocID rankDocId: %u\n", rankDocId);
 	if (rankType == RANK_TYPE_FIND) {
 		*ranking = -1;
 		//printf("Some document: %u\n", PagesResults.TeffArray->iindex[i].DocID);
 		for (i = 0; i < PagesResults.antall; i++) {
-			//printf("Found document: %d\n", PagesResults.TeffArray->iindex[i].DocID);
 			if (rankDocId == PagesResults.TeffArray->iindex[i].DocID) {
+				printf("Found document: %u\n", PagesResults.TeffArray->iindex[i].DocID);
 				*ranking = PagesResults.TeffArray->iindex[i].allrank;
-				printf("This is actually what we wanted rank is: %d\n", PagesResults.TeffArray->iindex[i].allrank);
+				printf("This is actually what we wanted rank is: %d. Nr was %i\n", PagesResults.TeffArray->iindex[i].allrank, i);
 				break;
 			}
 		}
