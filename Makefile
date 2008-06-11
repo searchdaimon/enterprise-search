@@ -5,7 +5,7 @@ CC = gcc
 
 # Arguments passed to the compiler: -g causes the compiler to insert
 # debugging info into the executable and -Wall turns on all warnings
-CFLAGS = -g
+CFLAGS = -g -Wmissing-noreturn
 
 # The dynamic libraries that the executable needs to be linked to
 # fjerner -ldb -static. Må legge dette til der de skal være
@@ -142,7 +142,7 @@ Suggest:
 	cp src/suggestwebclient/suggest_webclient cgi-bin/
 
 #brukte før src/parser/libhtml_parser.a, byttet til src/parser/lex.yy.c src/parser/lex.yy.c slik at vi kan bruke gdb
-IndexerLot= $(CFLAGS) $(LIBS)*.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c  $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS -D WITHOUT_DIWRITE_FSYNC -D EXPLAIN_RANK
+IndexerLot= $(CFLAGS) $(LIBS)*.c src/acls/acls.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c  $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS -D WITHOUT_DIWRITE_FSYNC -D EXPLAIN_RANK
 
 IndexerLot: src/IndexerLot/main.c
 	@echo ""
@@ -154,7 +154,7 @@ IndexerLotbb: src/IndexerLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(IndexerLot) $(HTMLPARSER1) -D BLACK_BOKS -D PRESERVE_WORDS -o bin/IndexerLotbb -DIIACL
+	$(CC) $(IndexerLot) $(HTMLPARSER1) $(BDB) -D BLACK_BOKS -D PRESERVE_WORDS -o bin/IndexerLotbb -DIIACL
 
 baddsPageAnalyser: src/baddsPageAnalyser/main.c
 	@echo ""
@@ -409,6 +409,12 @@ testGetNextLotForIndex: src/testGetNextLotForIndex/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/testGetNextLotForIndex/main.c  -o bin/testGetNextLotForIndex $(LDFLAGS)
 
+shortenurl: src/searchkernel/shortenurl.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/searchkernel/shortenurl.c  -o bin/shortenurl $(LDFLAGS) -D WITH_SHORTENURL_MAIN
+
 everrun: src/everrun/catchdump.c
 	@echo ""
 	@echo "$@:"
@@ -478,7 +484,11 @@ ppcXmlParserTest: src/ppcXmlParserTest/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/ppcXmlParserTest/main.c src/parse_summary/libsummary.a src/ppcXmlParser/cleanString.c src/ppcXmlParser/ppcXmlProviders.c src/ppcXmlParser/ppcXmlParserAmazon.c src/ppcXmlParser/ppcXmlParser.c src/searchFilters/searchFilters.c src/parse_summary/libsummary.a src/httpGet/httpGet.c -o bin/ppcXmlParserTest $(LDFLAGS) $(MYSQL) $(LIBXML) $(CURLLIBS)
 
-dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/UrlToDocID/search_index.c src/maincfg/maincfg.c src/dispatcher_all/library.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c -D EXPLAIN_RANK $(LDFLAGS) $(BDB) -D_GNU_SOURCE
+deleteDocIDFormCache:
+	$(CC) $(CFLAGS) $(LIBS)*.c src/dispatcher_all/library.c src/deleteDocIDFormCache/main.c -o bin/deleteDocIDFormCache $(LDFLAGS) -D WITH_CASHE -D EXPLAIN_RANK
+
+
+dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/banlists/ban.c src/UrlToDocID/search_index.c src/maincfg/maincfg.c src/dispatcher_all/library.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c -D EXPLAIN_RANK $(LDFLAGS) $(BDB) -D_GNU_SOURCE
 
 dispatcher_all: src/dispatcher_all/main.c
 	@echo ""
@@ -612,6 +622,12 @@ gcRepobb: src/gcRepo/gcrepo.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/gcRepo/gcrepo.c -o bin/gcRepobb $(LDFLAGS) -D BLACK_BOKS
+
+gcSummary: src/gcSummary/gcsummary.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/gcSummary/gcsummary.c -o bin/gcSummary $(LDFLAGS) -D DI_FILE_CASHE
 
 LotInvertetIndexMakerSplice: src/LotInvertetIndexMakerSplice/main.c
 	@echo ""
