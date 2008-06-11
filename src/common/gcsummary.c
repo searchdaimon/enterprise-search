@@ -119,15 +119,10 @@ gcsummary(int LotNr, char *subname)
 			++gced;
 			continue;
 		}
-<<<<<<< gcsummary.c
-		if (sDocID != d[i].DocID && d[i].docindex.SummaryPointer != NULL) {
+		if (sDocID != d[i].DocID && (char *)d[i].docindex.SummaryPointer != NULL) {
 			#ifdef DEBUG
 				warnx("Did not read the same DocID as was requested");
 			#endif
-=======
-		if (sDocID != DocID && (char *)docindex.SummaryPointer != NULL) {
-			warnx("Did not read the same DocID as was requested");
->>>>>>> 1.2
 			++gced;
 			continue;
 		}
