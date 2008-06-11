@@ -29,6 +29,7 @@
 #include "../common/bfileutil.h"
 
 #include "../banlists/ban.h"
+#include "../acls/acls.h"
 
 #ifdef BLACK_BOKS
 
