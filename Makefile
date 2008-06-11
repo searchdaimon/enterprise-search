@@ -83,7 +83,7 @@ HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a src/ds/libd
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb
+bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap
 
 dppreload:
 	$(CC) -shared -fPIC src/dp/preload.c src/common/timediff.c -o bin/dppreload.so -ldl -Wall $(LDFLAGS)
@@ -108,8 +108,11 @@ getFiletype:
 
 	(cd src/getFiletype; make)
 
+repomodwrap:
+	@echo ""
+	@echo "$@:"
 
-
+	$(CC) -Wall -o setuid/repomodwrap src/repomodsetuid/repomodwrap.c -O2
 
 setuidcaller:
 	@echo ""
