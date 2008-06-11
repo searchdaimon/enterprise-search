@@ -15,6 +15,7 @@
 
 #include "../common/crc32.h"
 #include "../common/gcrepo.h"
+#include "../common/gcsummary.h"
 
 #include "../IndexerRes/IndexerRes.h"
 #include "../common/integerindex.h"
@@ -227,8 +228,9 @@ void iiacladd(struct IndexerRes_acls *iiacl,char acl[]) {
 	while( (Data[Count] != NULL) ) {
 
 		//gruppenavn med spacer skaper problemer. Erstater det med _ i steden
-		strsandr(Data[Count]," ","_");
-		strsandr(Data[Count],"-","_");
+		//strsandr(Data[Count]," ","_");
+		//strsandr(Data[Count],"-","_");
+		aclElementNormalize(Data[Count]);
 
 		#ifdef DEBUG
 		printf("got acl \"%s\"\n",Data[Count]);
@@ -265,8 +267,9 @@ void alclot_add(struct alclotFormat *alclot,char acl[]) {
   	while( (Data[Count] != NULL) ) {
 
 		//gruppenavn med spacer skaper problemer. Erstater det med _ i steden
-		strsandr(Data[Count]," ","_");
-		strsandr(Data[Count],"-","_");
+		//strsandr(Data[Count]," ","_");
+		//strsandr(Data[Count],"-","_");
+		aclElementNormalize(Data[Count]);
 
 
 		#ifdef DEBUG
@@ -872,7 +875,9 @@ void netlot_end_recursiveDir (char lotpath[],char lotinternpath[],unsigned int l
 	while ((dp = readdir(DIRH)) != NULL) {
 
 		if ((dp->d_type == DT_DIR) && ((strcmp(dp->d_name,".") == 0) || (strcmp(dp->d_name,"..") == 0))) {
-			printf(". domain\n");
+			#ifdef DEBUG
+			printf(". file/folder/link\n");
+			#endif
 		}
 		else if (strncmp(dp->d_name,"Brank",5) == 0) {
 			printf("ignoring file \"%s\"\n",dp->d_name);
@@ -937,6 +942,8 @@ void netlot_end (int lotNr,char subname[], char server[], struct optFormat *opt)
 
 	printf("lotpath %s\n",lotpath);
 
+/*
+
 	//sletter reposetor. Vi skal ikke trenge og skrive tilbake det.
 	//temp: vi kan ikke slette reposetory når vi også kjører gc
 	// da må rApendPost lokke tilkoblingen under gc
@@ -951,6 +958,7 @@ void netlot_end (int lotNr,char subname[], char server[], struct optFormat *opt)
 		perror(reposetuoypath);
 		exit(1);
 	}
+*/
 	netlot_end_recursiveDir(lotpath,"",lotNr,subname, server);
 
 	//sletter loten
@@ -1418,8 +1426,12 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		#else
 		if ((opt->RunGarbageCollection == 1) && (argstruct->pageCount > 0)) {
 		#endif
-			printf("running Garbage Collection..\n");
+			printf("running repo Garbage Collection..\n");
 			gcrepo(lotNr, subname);
+
+			printf("running summary Garbage Collection..\n");
+		        gcsummary(lotNr, subname);
+
 			printf(".. done\n");
 
 		}

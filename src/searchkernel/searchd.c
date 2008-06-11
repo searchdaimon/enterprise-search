@@ -643,8 +643,8 @@ void *do_chld(void *arg)
 	        for (i=0;i<responsnr;i++) {
 
 			//vi har problemer med space
-                        strsandr(respons_list[i]," ","_");
-                        strsandr(respons_list[i],"-","_");
+                        //strsandr(respons_list[i]," ","_");
+                        //strsandr(respons_list[i],"-","_");
 
 			fprintf(stderr, "searchd_child: i= %i, responsnr = %i\n",i,responsnr);
 	        	fprintf(stderr, "searchd_child: group: \"%s\"\n",respons_list[i]);

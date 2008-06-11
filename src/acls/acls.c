@@ -11,9 +11,16 @@
 
 #include "../common/lot.h"
 #include "../common/define.h"
-
+#include "../common/bstr.h"
 
 #define userToSubnameDbFile "config/userToSubname.db"
+
+void aclElementNormalize (char acl[]) {
+
+        strsandr(acl," ","_");
+        strsandr(acl,"-","_");
+
+}
 
 
 int userToSubname_open(struct userToSubnameDbFormat *userToSubnameDb, char mode) {
@@ -115,6 +122,7 @@ int userToSubname_getsubnamesAsString(struct userToSubnameDbFormat *userToSubnam
 	DBT key, data;
 	int ret;
 
+	aclElementNormalize(username);
 
 	//resetter minne
         memset(&key, 0, sizeof(DBT));
@@ -189,6 +197,7 @@ int userToSubname_add (struct userToSubnameDbFormat *userToSubnameDb,char userna
 
 	//legger til i databasen
         if  ((ret = (*userToSubnameDb).dbp->put((*userToSubnameDb).dbp, NULL, &key, &data, 0)) != 0) {
+		printf("can't add \"%s/%s\"\n",key.data,data.data);
                 (*userToSubnameDb).dbp->err((*userToSubnameDb).dbp, ret, "DB->put");
                 //kan ikke returnere her for da blir den aldr lukket.
                 //return (EXIT_FAILURE);

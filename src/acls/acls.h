@@ -20,6 +20,7 @@ int userToSubname_getsubnamesAsString(struct userToSubnameDbFormat *userToSubnam
 int userToSubname_getsubnamesAsSaa(struct userToSubnameDbFormat *userToSubnameDb,char username[],char ***subnames, int *nr);
 int userToSubname_close (struct userToSubnameDbFormat *userToSubnameDb);
 int userToSubname_deletecol(struct userToSubnameDbFormat *userToSubnameDb,char subname[]);
+void aclElementNormalize (char acl[]);
 #endif
 
 #endif // _ACLS__H_
