@@ -244,7 +244,15 @@ main(int argc, char **argv)
 	train("mydict.utf8");
 
 	for (i = 1; i < argc; i++) {
-		free(check_word(argv[i], &found));
+		char *p;
+
+		p = check_word(argv[i], &found);
+		if (p != NULL) {
+			printf("Corrected '%s' to '%s'\n", argv[i], p);
+			free(p);
+		} else {
+			printf("No better word found\n");
+		}
 	}
 
 	untrain();
