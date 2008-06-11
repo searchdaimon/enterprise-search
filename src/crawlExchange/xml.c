@@ -128,6 +128,8 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 	acl_allow2 = set_clone(acl_allow);
 	acl_deny2 = set_clone(acl_deny);
 
+	/* XXX: Getting people that do not have access to the mailbox */
+#if 0
 	/* Update acl lists */
 	if ((cur = xml_find_child(propstat, "prop"))) {
 		if ((cur = xml_find_child(cur, "descriptor"))) {
@@ -136,6 +138,7 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 			}
 		}
 	}
+#endif
 
 	/* Directory perhaps? */
 	printf("Pathname: %s\n", url);
