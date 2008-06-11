@@ -65,7 +65,7 @@ $CONFIG{'default_settings'} = [
 
 # Valid authentication methods for integration
 $CONFIG{'valid_auth_methods'} = ['msad', 'ldap', 'shadow'];
-$CONFIG{repomod_path} = $ENV{BOITHOHOME} . "/perl/repomod.pl";
+$CONFIG{repomod_path} = $ENV{BOITHOHOME} . "/setuid/repomodwrap";
 $CONFIG{dist_versions} = { production => 1, testing => 2, devel => 3 };
 
 
