@@ -1100,7 +1100,7 @@ int crawl_lock(struct collection_lockFormat *collection_lock, char collection[])
 	//oppretter var mappen hvis den ikke finnes. Dette slik at vi slipper og gjøre dette under instalsjonen
 	bmkdir_p(bfile("var/"),0755);
 
-	sprintf((*collection_lock).lockfile,"var/boitho-%s.lock",collection);
+	sprintf((*collection_lock).lockfile,"var/boitho-collections-%s.lock",collection);
 
 	printf("locking lock \"%s\"\n",(*collection_lock).lockfile);
 
@@ -1126,7 +1126,7 @@ int crawl_element_lock(struct collection_lockFormat *collection_lock, char conne
 	//oppretter var mappen hvis den ikke finnes. Dette slik at vi slipper og gjøre dette under instalsjonen
 	bmkdir_p(bfile("var/"),0755);
 
-	sprintf((*collection_lock).elementlockfile,"var/boitho-%s.lock",connector);
+	sprintf((*collection_lock).elementlockfile,"var/boitho-element-%s.lock",connector);
 
 	printf("locking lock \"%s\"\n",(*collection_lock).elementlockfile);
 
