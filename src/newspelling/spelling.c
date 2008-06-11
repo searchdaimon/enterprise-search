@@ -6,36 +6,14 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 
 #include "../3pLibs/keyValueHash/hashtable.h"
+#include "../common/ht.h"
 
-const char alphabet[] = "abcdefghijklmnopqrstuvwxyz\xe5\xe6\xe8";
+const char alphabet[] = "abcdefghijklmnopqrstuvwxyz" "\xe5\xe6\xe8" "0123456789";
 
 #define MAX_EDIT_DISTANCE 2
-
-static unsigned int
-wordhashfromkey(void *ky)
-{
-	char *p = ky;
-	unsigned int hash = 5381;
-	int c;
-
-	while ((c = *p++))
-		hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-
-	return hash;
-}
-
-static int
-wordequalkeys(void *k1, void *k2)
-{
-	char *c1, *c2;
-
-	c1 = k1;
-	c2 = k2;
-
-	return (strcmp(c1, c2) == 0);
-}
 
 
 struct spelling {
@@ -54,13 +32,12 @@ train(const char *dict)
 	size_t len;
 	unsigned int *frequency;
 
-
 	if ((fp = fopen(dict, "r")) == NULL) {
 		warn("fopen(dict)");
 		return;
 	}
 
-	words = create_hashtable(5000, wordhashfromkey, wordequalkeys);
+	words = create_hashtable(5000, ht_stringhash, ht_stringcmp);
 
 	line = NULL;
 	while (getline(&line, &len, fp) > 0) {
@@ -71,9 +48,9 @@ train(const char *dict)
 		while (!isspace(*p))
 			p++;
 		word = strndup(line, p - line);
-		/* Only accept a-z for now */
+		/* Only accept a-z, ae, oe, aa and 0-9 for now */
 		for (i = 0; word[i] != '\0'; i++) {
-			if (!isalpha(word[i]) && word[i] != '\xe5' && word[i] != '\xe6' && word[i] != '\xe8') {
+			if (!isalnum(word[i]) && word[i] != '\xe5' && word[i] != '\xe6' && word[i] != '\xe8') {
 				free(word);
 				goto word_end;
 			}
@@ -117,6 +94,17 @@ untrain(void)
 
 void editsn(char *, char *, int *, int);
 
+static inline int
+normalizefreq(unsigned int freq, int distance)
+{
+	double val;
+
+	val = pow(distance-1, 1.5);
+	val += log(freq);
+
+	return (int)val;
+}
+
 static inline void
 handle_word(char *word, char *best, int *max, int levels)
 {
@@ -124,12 +112,20 @@ handle_word(char *word, char *best, int *max, int levels)
 
 	if ((freq = hashtable_search(words, word)) == NULL && levels == 1)
 		return;
+#if 1
+	if (freq && (normalizefreq(*freq, levels) > *max)) {
+		strcpy(best, word);
+		*max = normalizefreq(*freq, levels);
+	}
+#else
 	if (freq && *freq > *max) {
 		strcpy(best, word);
 		*max = *freq;
 	}
+#endif
 	if (levels > 1) {
 		editsn(word, best, max, levels-1);
+		return;
 	}
 }
 
@@ -157,7 +153,6 @@ editsn(char *word, char *best, int *max, int levels)
 		strcpy(nword+i+2, word+i+2);
 		handle_word(nword, best, max, levels);
 	}
-
 #endif
 
 #if 1
@@ -222,7 +217,7 @@ main(int argc, char **argv)
 {
 	int found;
 	int i;
-	time_t start, end;
+	//time_t start, end;
 
 	train("mydict");
 
