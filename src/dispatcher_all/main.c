@@ -7,6 +7,8 @@
     #include "../common/utf8-strings.h"
     #include "../UrlToDocID/search_index.h"
 
+    #include "../banlists/ban.h"
+
     #include "library.h"
 
     #include <stdarg.h>
@@ -84,202 +86,6 @@ int prequerywriteFlag = 0;
 
 // sprintf(cashefile,"%s/%s.%i.%s","/home/boitho/var/cashedir",QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
 
-#ifdef WITH_CASHE
-
-/* Probably very weak */
-unsigned int
-cache_hash(char *query, int start, char *country)
-{
-	unsigned int hash = 0xf23c203;
-	char *p;
-
-	hash *= start;
-	for(p = query; *p; p++)
-		hash += *p * 38;
-	for(p = country; *p; p++)
-		hash += *p * 39;
-	
-	return hash;
-}
-
-enum cache_type {
-	CACHE_PREQUERY,
-	CACHE_SEARCH
-};
-
-char *
-cache_path(char *path, size_t len, enum cache_type type, char *query, int start, char *country)
-{
-	char tmppath[PATH_MAX];
-	char modquery[PATH_MAX];
-	unsigned int hash;
-	char *p;
-	char *cache;
-
-	switch (type) {
-	case CACHE_PREQUERY:
-		cache = "var/cache/prequery_v_" CACHE_STRUCT_VERSION;
-		break;
-	case CACHE_SEARCH:
-		cache = "var/cache/search_v_" CACHE_STRUCT_VERSION;
-		break;
-	}
-
-	/* XXX: Base 64 encode the query */
-	strcpy(modquery, query);
-	for (p = modquery; *p; p++) {
-		if (*p == '/')
-			*p = '-';
-		else if (*p == ' ')
-			*p = '#';
-	}
-	hash = cache_hash(modquery, start, country);
-	p = (char *)&hash;
-	strncpy(path, bfile(cache), len);
-	mkdir(path, 0755);
-	snprintf(tmppath, sizeof(tmppath), "/%x%x", *p & 0xF, (*p >> 4) & 0xF);
-	strncat(path, tmppath, len);
-	mkdir(path, 0755);
-	p++;
-	snprintf(tmppath, sizeof(tmppath), "/%x%x", *p & 0xF, (*p >> 4) & 0xF);
-	strncat(path, tmppath, len);
-	mkdir(path, 0755);
-	snprintf(tmppath, sizeof(tmppath), "/%s.%d.%s", modquery, start, country);
-	strncat(path, tmppath, len);
-
-	return path;
-}
-
-
-int
-cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
-           size_t sider_header_len, struct SiderFormat *sider, int cachetimeout)
-{
-	gzFile *cache;
-	int fd, i, ret;
-	struct stat st;
-
-	if ((fd = open(path, O_RDONLY)) == -1) {
-		return 0;
-	}
-	flock(fd, LOCK_SH);
-
-	/* Invalidate cache ? */
-	if (cachetimeout > 0 && fstat(fd, &st) != -1) {
-		time_t now;
-
-		now = time(NULL);
-
-		if (now - st.st_mtime > cachetimeout) {
-			fprintf(stderr, "Cache too old, invalidating\n");
-			unlink(path);
-			flock(fd, LOCK_UN);
-			close(fd);
-			return 0;
-		}
-	}	
-
-	if ((cache = gzdopen(fd, "r")) == NULL) {
-		flock(fd, LOCK_UN);
-		close(fd);
-		return 0;
-	}
-
-	ret = 1;
-	if (gzread(cache, page_nr, sizeof(*page_nr)) != sizeof(*page_nr)) {
-		perror("gzread(page_nr)");
-		goto err;
-	}
-
-	if (gzread(cache, final_sider, sizeof(*final_sider)) != sizeof(*final_sider)) {
-		perror("gzread(final_sider)");
-		goto err;
-	}
-
-	if (gzread(cache, sider_header, sizeof(*sider_header)*sider_header_len) != sizeof(*sider_header)*sider_header_len) {
-		perror("gzread(final_sider)");
-		goto err;
-	}
-
-	//fprintf(stderr, "Got %d cached pages\n", *page_nr);
-	for (i = 0; i < *page_nr; i++) {
-		if (gzread(cache, &sider[i], sizeof(*sider)) != sizeof(*sider)) {
-			perror("Unable to read cache");
-			goto err;
-		}
-
-		//fprintf(stderr, "cache: read: %s\n", sider[i].uri);
-	}
-	
-
-	goto out;
- err:
-	ret = 1;
- out:
-	gzclose(cache);
-	flock(fd, LOCK_UN);
-	close(fd);
-	return ret;
-}
-
-int
-cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
-            size_t sider_header_len, struct SiderFormat *sider, size_t sider_len)
-{
-	gzFile *cache;
-	int fd, i, ret;
-
-	//temp jayde 
-	//final_sider->TotaltTreff = 20;
-	//final_sider->showabal = 20;
-	//sider_len = 20;
-	//*page_nr = 20;
-
-	if ((fd = open(path, O_CREAT|O_WRONLY|O_EXCL, 0644)) == -1) {
-		return 0;
-	}
-	flock(fd, LOCK_EX);
-	if ((cache = gzdopen(fd, "w")) == NULL) {
-		return 0;
-	}
-
-	ret = 1;
-	if (gzwrite(cache, page_nr, sizeof(*page_nr)) != sizeof(*page_nr)) {
-		perror("gzwrite(page_nr)");
-		goto err;
-	}
-
-	if (gzwrite(cache, final_sider, sizeof(*final_sider)) != sizeof(*final_sider)) {
-		perror("gzwrite(final_sider)");
-		goto err;
-	}
-
-	if (gzwrite(cache, sider_header, sizeof(*sider_header)*sider_header_len) != sizeof(*sider_header)*sider_header_len) {
-		perror("gzwrite(final_sider)");
-		goto err;
-	}
-
-	for (i = 0; i < sider_len; i++) {
-		if (gzwrite(cache, &sider[i], sizeof(*sider)) != sizeof(*sider)) {
-			perror("Unable to write cache");
-			goto err;
-		}
-		//fprintf(stderr, "cache: wrote: %s\n", sider[i].uri);
-	}
-	
-
-	goto out;
- err:
-	ret = 0;
-	unlink(path);
- out:
-	gzclose(cache);
-	flock(fd, LOCK_UN);
-	close(fd);
-	return ret;
-}
-
-#endif
 
 
 void
@@ -334,7 +140,9 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 
 	if (cgi_getentrystr("subname") == NULL) {
 		//die(2,"Did'n receive any subname.");
-		strscpy(QueryData->subname,"www,freelistning",sizeof(QueryData->subname) -1);
+		//temp: quick fix, for www problemet.
+		//strscpy(QueryData->subname,"www,freelistning,paidinclusion",sizeof(QueryData->subname) -1);
+		strscpy(QueryData->subname,"paidinclusion,freelistning,www",sizeof(QueryData->subname) -1);
 	}
 	else {
 		strscpy(QueryData->subname,cgi_getentrystr("subname"),sizeof(QueryData->subname) -1);
@@ -724,6 +532,20 @@ showabal,AddSiderHeder[i].servername);
 				}
 #endif
 #endif
+				#ifndef BLACK_BOKS
+				if(isDomainBan(Sider[i].domain)) {
+
+					dprintf("hav baned domain \"%s\"\n",Sider[i].domain);
+					//(*SiderHeder).filtered++;
+					//filtrerer stille
+					//FinalSiderHeder->filtered++;
+					--FinalSiderHeder->TotaltTreff;
+					//++dispatcherfiltersTraped->filterBannedDomain;
+
+					continue;
+
+				}
+				#endif
 
 				//printf("url %s\n",Sider[i].DocumentIndex.Url);
 
@@ -942,7 +764,7 @@ int main(int argc, char *argv[])
         struct SiderHederFormat *SiderHeder = malloc(sizeof(struct SiderHederFormat) * maxServers);
         struct SiderHederFormat *AddSiderHeder = malloc(sizeof(struct SiderHederFormat) * maxServers);
 
-
+	off_t maxSider;
 	struct SiderHederFormat FinalSiderHeder;
 	//char buff[4096]; //generell buffer
 	struct in_addr ipaddr;
@@ -968,7 +790,7 @@ int main(int argc, char *argv[])
 	char *cpnt;
 	char *lastdomain = NULL;
 
-	unsigned int getRank; /* Set if we are looking for the rank of a specific query on a url */
+	unsigned int getRank = 0; /* Set if we are looking for the rank of a specific query on a url */
 
 	unsigned int wantedDocId;
 	struct queryNodeHederFormat queryNodeHeder;
@@ -990,8 +812,11 @@ int main(int argc, char *argv[])
 
 	maincfg = maincfgopen();
 
-	int searchport = maincfg_get_int(&maincfg,"BSDPORT");
+	#ifndef BLACK_BOKS
+		domainLoad();
+	#endif
 
+	int searchport = 0;
 	//config
 	config_setting_t *cfgarray;
 	struct config_t cfg;
@@ -1224,7 +1049,7 @@ int main(int argc, char *argv[])
         	extern char *optarg;
         	extern int optind, opterr, optopt;
         	char c;
-        	while ((c=getopt(argc,argv,"pr:s:m:"))!=-1) {
+        	while ((c=getopt(argc,argv,"pr:s:m:o:"))!=-1) {
         	        switch (c) {
 				case 'p':
 					prequerywriteFlag = 1;
@@ -1240,6 +1065,10 @@ int main(int argc, char *argv[])
         	                case 's':
         	                        optStart = atoi(optarg);
                 	                printf("will start at page %i\n",optStart);
+                	                break;
+        	                case 'o':
+        	                        searchport = atoi(optarg);
+                	                printf("will use prot %i\n",searchport);
                 	                break;
         	                case 'm':
         	                        optMaxsHits = atoi(optarg);
@@ -1349,6 +1178,10 @@ int main(int argc, char *argv[])
 	gettimeofday(&start_time, NULL);
 	#endif
 
+	if (searchport == 0) {
+		searchport  = maincfg_get_int(&maincfg,"BSDPORT");
+	}
+
         if (strlen(QueryData.query) > MaxQueryLen -1) {
                 die(3,QueryData.query,"Query to long.");
         }
@@ -1425,7 +1258,7 @@ int main(int argc, char *argv[])
 			queryNodeHeder.getRank = wantedDocId;
 		
 			#ifdef DEBUG
-				printf("found DocID %u ( for url \"%s\" )\n",wantedDocId,QueryData.rankUrl);
+				printf("getRank: found DocID %u ( for url \"%s\" )\n",wantedDocId,QueryData.rankUrl);
 			#endif	
 		}
 		else {
@@ -1441,7 +1274,7 @@ int main(int argc, char *argv[])
 
 			
 
-		fprintf(stderr,"queryNodeHeder.getRank %u\n",queryNodeHeder.getRank);
+		fprintf(stderr,"getRank: queryNodeHeder.getRank %u\n",queryNodeHeder.getRank);
 
 
 	}
@@ -1591,7 +1424,9 @@ int main(int argc, char *argv[])
 
 
 	//Sider = malloc(QueryData.MaxsHits * maxServers * sizeof(struct SiderFormat));
-	Sider = malloc(queryNodeHeder.MaxsHits * maxServers * sizeof(struct SiderFormat));
+	maxSider = queryNodeHeder.MaxsHits * maxServers * sizeof(struct SiderFormat);
+
+	Sider = malloc(maxSider);
 
 	//inaliserer side arrayen
 	//aaaaaaaaa
@@ -1619,18 +1454,32 @@ int main(int argc, char *argv[])
 
 
 	if (!prequerywriteFlag && getRank == 0 && (dispconfig.useprequery) && (QueryData.filterOn) &&
-	    cache_read(prequeryfile, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, 0)) {
+	    cache_read(prequeryfile, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, 0, maxSider)) {
 		hasprequery = 1;
 
 		debug("can open prequeryfile file \"%s\"",prequeryfile);
 
 	}
 	else if (!prequerywriteFlag && getRank == 0 && (dispconfig.usecashe) && (QueryData.filterOn) &&
-	         cache_read(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, cachetimeout)) {
+	         cache_read(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, cachetimeout, maxSider)) {
 		hascashe = 1;
 
 		debug("can open cashe file \"%s\"",cachepath);
 	}
+
+	#ifdef DEBUG
+		printf("cache and prequery info:\n");
+		printf("\tcachepath: \"%s\"\n",cachepath);
+		printf("\tprequeryfile: \"%s\"\n",prequeryfile);
+
+		printf("\tuseprequery: %i\n",dispconfig.useprequery);
+		printf("\tuseprequery: %i\n",dispconfig.useprequery);
+		printf("\tfilterOn: %i\n",QueryData.filterOn);
+
+		printf("\thasprequery: %i\n",hasprequery);
+		printf("\thascashe: %i\n",hascashe);
+	#endif
+
 	#else
 	#endif
 
@@ -1654,184 +1503,186 @@ int main(int argc, char *argv[])
 	bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder,0,searchport);
 	//Paid inclusion
 	//bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,nrOfServers,searchport);
+	
+	#ifndef BLACK_BOKS
 
-	if (getRank) {
-		int endranking = 0;
-		int ranking = -1;
-		int net_status;
-		int n;
+		if (getRank) {
+			int endranking = 0;
+			int ranking = -1;
+			int net_status;
+			int n;
 
-		/* XXX: Need to handle the paid inclusion servers as well? */
-		for (i = 0; i < nrOfServers + nrOfPiServers; i++) {
-			if (sockfd[i] != 0) {
-				int status;
-				//motter hedderen for svaret
-				if (bsread (&sockfd[i],sizeof(net_status), (char *)&net_status, maxSocketWait_CanDo)) {
-					if (net_status != net_CanDo) {
-						fprintf(stderr, "net_status wasn't net_CanDo but %i\n",net_status);
+			/* XXX: Need to handle the paid inclusion servers as well? */
+			for (i = 0; i < nrOfServers + nrOfPiServers; i++) {
+				if (sockfd[i] != 0) {
+					int status;
+					//motter hedderen for svaret
+					if (bsread (&sockfd[i],sizeof(net_status), (char *)&net_status, maxSocketWait_CanDo)) {
+						if (net_status != net_CanDo) {
+							fprintf(stderr, "net_status wasn't net_CanDo but %i\n",net_status);
+							sockfd[i] = 0;
+							continue;
+						}
+					} else {
+						perror("initial protocol read failed");
 						sockfd[i] = 0;
 						continue;
 					}
-				} else {
-					perror("initial protocol read failed");
-					sockfd[i] = 0;
-					continue;
-				}
  
-				if (!bsread(&sockfd[i],sizeof(status), (char *)&status, 1000)) //maxSocketWait_CanDo))
-					die(2,QueryData.query, "Unable to get rank status. Server %i is not responding.",i);
-				else if (status == net_match) {
-					if (!bsread(&sockfd[i],sizeof(ranking), (char *)&ranking, 1000))//maxSocketWait_CanDo))
-						perror("recv rank");
-				} else if (status == net_nomatch) {
-					//return 1;
-				} else {
-					//die(1,QueryData.query, "searchd does not support ranking?");
-				}
+					if (!bsread(&sockfd[i],sizeof(status), (char *)&status, 1000)) //maxSocketWait_CanDo))
+						die(2,QueryData.query, "Unable to get rank status. Server %i is not responding.",i);
+					else if (status == net_match) {
+						if (!bsread(&sockfd[i],sizeof(ranking), (char *)&ranking, 1000))//maxSocketWait_CanDo))
+							perror("recv rank");
+					} else if (status == net_nomatch) {
+						//return 1;
+					} else {
+						//die(1,QueryData.query, "searchd does not support ranking?");
+					}
 
 				
-				dprintf("server %i, ranking %i\n",i,ranking);
-			}
-		}
-		if (ranking != -1) {
-			for (i = 0; i < nrOfServers + nrOfPiServers; i++) {
-				if (sockfd[i] != 0) {
-					if (send(sockfd[i], &ranking, sizeof(ranking), 0) != sizeof(ranking))
-						perror("send...");
+					dprintf("getRank: server %i, ranking %i\n",i,ranking);
 				}
 			}
+			if (ranking != -1) {
+				for (i = 0; i < nrOfServers + nrOfPiServers; i++) {
+					if (sockfd[i] != 0) {
+						if (send(sockfd[i], &ranking, sizeof(ranking), 0) != sizeof(ranking))
+							perror("send...");
+					}
+				}
 
-			for (i = 0; i < nrOfServers + nrOfPiServers; i++) {
-				if (sockfd[i] != 0) {
-					if (!bsread(&sockfd[i], sizeof(ranking), (char *)&ranking, 10000))
-						perror("endranking");
-					endranking += ranking; 
+				for (i = 0; i < nrOfServers + nrOfPiServers; i++) {
+					if (sockfd[i] != 0) {
+						if (!bsread(&sockfd[i], sizeof(ranking), (char *)&ranking, 10000))
+							perror("endranking");
+						endranking += ranking; 
+					}
 				}
 			}
-		}
 /*
-		else {
-			die(1,QueryData.query, "No rank found");
-		}
+			else {
+				die(1,QueryData.query, "No rank found");
+			}
 */
-		dprintf("endranking %i, queryNodeHeder.MaxsHits %i\n",endranking,queryNodeHeder.MaxsHits);
+			dprintf("getRank: endranking %i, queryNodeHeder.MaxsHits %i\n",endranking,queryNodeHeder.MaxsHits);
 
-		if ((endranking < queryNodeHeder.MaxsHits) || (endranking == 0)) {
-			queryNodeHeder.getRank = 0;
+			if ((endranking < queryNodeHeder.MaxsHits) || (endranking == 0)) {
+				queryNodeHeder.getRank = 0;
 
-			//enten skal vi være i top, og dermed være med, hvis ikke skal vi ikke være telt med. Uanset er tidligere verdi potensielt feil.
-			endranking = 0;
+				//enten skal vi være i top, og dermed være med, hvis ikke skal vi ikke være telt med. Uanset er tidligere verdi potensielt feil.
+				endranking = 0;
 
-			for (i=0;i<nrOfServers + nrOfPiServers;i++) {
-				if (sockfd[i] != 0) {
-					bsQuery(&sockfd[i], &queryNodeHeder);
+				for (i=0;i<nrOfServers + nrOfPiServers;i++) {
+					if (sockfd[i] != 0) {
+						bsQuery(&sockfd[i], &queryNodeHeder);
+					}
+				}
+
+				for (i=0;i<nrOfServers + nrOfPiServers;i++) {
+					if (sockfd[i] != 0) {
+						close(sockfd[i]);
+					}
+				}
+//
+//				brGetPages(sockfd,nrOfPiServers,SiderHeder,Sider,&pageNr,nrOfServers);
+//				if ((!hascashe) && (!hasprequery)) {
+//					brGetPages(sockfd,nrOfServers,SiderHeder,Sider,&pageNr,0);
+//				}
+//
+
+
+				//kobler til vanlige servere
+				if ((!hascashe) && (!hasprequery)) {
+					bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,0,searchport);
+				}
+
+				//addservere
+				bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder,0,searchport);
+				//Paid inclusion
+				bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,nrOfServers,searchport);
+
+				//Paid inclusion
+				brGetPages(sockfd,nrOfPiServers,SiderHeder,Sider,&pageNr,0);
+
+				if ((!hascashe) && (!hasprequery)) {
+					brGetPages(sockfd,nrOfServers,SiderHeder,Sider,&pageNr,nrOfPiServers);
+				}
+
+				//addservere
+				//addserver bruker som regel mest tid, så tar den sist slik at vi ikke trenger å vente unødvendig
+				brGetPages(addsockfd,nrOfAddServers,AddSiderHeder,Sider,&pageNr,0);
+
+				handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, (hascashe || hasprequery), &errorha, pageNr,
+					       nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers, &queryNodeHeder);
+
+				//for((x<FinalSiderHeder.showabal) && (i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)))) {
+
+
+				x = 0;
+				int printed = 0;
+				for(i=0;x < FinalSiderHeder.showabal && i < (queryNodeHeder.MaxsHits * (nrOfServers + nrOfPiServers)); i++) {
+					if (Sider[i].deletet)
+						continue;
+					if ((Sider[i].iindex.DocID == wantedDocId) || (strcmp(Sider[i].url,QueryData.rankUrl) == 0)) {
+						dprintf("did find pi pages as nr %i, url %s\n",i,Sider[i].url);
+						endranking = printed+1;
+						break;
+					}
+					if (Sider[i].type == siderType_normal) {
+						x++;
+					}
+					printed++;
 				}
 			}
+
+
+			if (endranking == 0) {
+				//printf("\t<noresult />\n");
+				//die(1,QueryData.query, "No rank found");
+				die(1,QueryData.query, "That site does not rank in the top 60,000 sites for that search term");
+			} else {
+				printf("<ranking>\n");
+				printf("\t<rank>%d</rank>\n", endranking);
+				printf("\t<url>%s</url>\n", QueryData.rankUrl);
+				printf("\t<docid>%d</docid>\n", wantedDocId);
+				printf("</ranking>\n");
+
+			}
+
+			/* Free the configuration */
+			config_destroy(&cfg);
+			maincfgclose(&maincfg);
+
+			free(SiderHeder);
+			free(AddSiderHeder);
+			free(Sider);
 
 			for (i=0;i<nrOfServers + nrOfPiServers;i++) {
 				if (sockfd[i] != 0) {
 					close(sockfd[i]);
 				}
 			}
-//
-//			brGetPages(sockfd,nrOfPiServers,SiderHeder,Sider,&pageNr,nrOfServers);
-//			if ((!hascashe) && (!hasprequery)) {
-//				brGetPages(sockfd,nrOfServers,SiderHeder,Sider,&pageNr,0);
-//			}
-//
-
-
-			//kobler til vanlige servere
-			if ((!hascashe) && (!hasprequery)) {
-				bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,0,searchport);
-			}
-
-			//addservere
-			bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder,0,searchport);
-			//Paid inclusion
-			bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,nrOfServers,searchport);
-
-			//Paid inclusion
-			brGetPages(sockfd,nrOfPiServers,SiderHeder,Sider,&pageNr,0);
-
-			if ((!hascashe) && (!hasprequery)) {
-				brGetPages(sockfd,nrOfServers,SiderHeder,Sider,&pageNr,nrOfPiServers);
-			}
-
-			//addservere
-			//addserver bruker som regel mest tid, så tar den sist slik at vi ikke trenger å vente unødvendig
-			brGetPages(addsockfd,nrOfAddServers,AddSiderHeder,Sider,&pageNr,0);
-
-			handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, (hascashe || hasprequery), &errorha, pageNr,
-				       nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers, &queryNodeHeder);
-
-			//for((x<FinalSiderHeder.showabal) && (i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)))) {
-
-
-			x = 0;
-			int printed = 0;
-			for(i=0;x < FinalSiderHeder.showabal && i < (queryNodeHeder.MaxsHits * (nrOfServers + nrOfPiServers)); i++) {
-				if (Sider[i].deletet)
-					continue;
-				if ((Sider[i].iindex.DocID == wantedDocId) || (strcmp(Sider[i].url,QueryData.rankUrl) == 0)) {
-					dprintf("did find pi pages as nr %i, url %s\n",i,Sider[i].url);
-					endranking = printed+1;
-					break;
-				}
-				if (Sider[i].type == siderType_normal) {
-					x++;
-				}
-				printed++;
-			}
-		}
-
-
-		if (endranking == 0) {
-			//printf("\t<noresult />\n");
-			//die(1,QueryData.query, "No rank found");
-			die(1,QueryData.query, "That site does not rank in the top 60,000 sites for that search term");
-		} else {
-			printf("<ranking>\n");
-			printf("\t<rank>%d</rank>\n", endranking);
-			printf("\t<url>%s</url>\n", QueryData.rankUrl);
-			printf("\t<docid>%d</docid>\n", wantedDocId);
-			printf("</ranking>\n");
-
-		}
-
-
-		/* Free the configuration */
-		config_destroy(&cfg);
-		maincfgclose(&maincfg);
-
-		free(SiderHeder);
-		free(AddSiderHeder);
-		free(Sider);
-
-		for (i=0;i<nrOfServers + nrOfPiServers;i++) {
-			if (sockfd[i] != 0) {
-				close(sockfd[i]);
-			}
-		}
 
 #ifndef BLACK_BOKS
-		for(i=0;i<nrOfServers;i++) {
-			free(servers[i]);
-		}
-		for(i=0;i<nrOfPiServers;i++) {
-			free(piservers[i]);
-		}
-		for(i=0;i<nrOfAddServers;i++) {
-			free(addservers[i]);
-		}
+			for(i=0;i<nrOfServers;i++) {
+				free(servers[i]);
+			}
+			for(i=0;i<nrOfPiServers;i++) {
+				free(piservers[i]);
+			}
+			for(i=0;i<nrOfAddServers;i++) {
+				free(addservers[i]);
+			}
 
-		free(servers);
-		free(piservers);
-		free(addservers);
+			free(servers);
+			free(piservers);
+			free(addservers);
 #endif
 
-		return 0;
-	}
+			return 0;
+		}
+	#endif
 
 	//Paid inclusion
 	dprintf("starting to get pi\n");
@@ -2201,6 +2052,8 @@ int main(int argc, char *argv[])
 						printf("\t<THUMBNAILHEIGHT></THUMBNAILHEIGHT>\n");
 					}
 
+					printf("\t<DESCRIPTION_LENGTH>%i</DESCRIPTION_LENGTH>\n",strlen(Sider[i].description));
+					printf("\t<DESCRIPTION_MAX>%i</DESCRIPTION_MAX>\n",sizeof(Sider[i].description));
 					printf("\t<DESCRIPTION><![CDATA[%s]]></DESCRIPTION>\n",Sider[i].description);
 				}
 
