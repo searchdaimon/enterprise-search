@@ -22,15 +22,9 @@
 #include "../dictionarywordsLot/set.h"
 
 int crawlcanconnect(struct collectionFormat *collection,
-                   int (*documentError)(struct collectionFormat *collection, int, const char *, ...) __attribute__((unused)));
-int crawlfirst(struct collectionFormat *collection,
-		int (*documentExist)(struct collectionFormat *, struct crawldocumentExistFormat *),
-		int (*documentAdd)(struct collectionFormat *, struct crawldocumentAddFormat *),
-		int (*documentError)(struct collectionFormat *collection, int, const char *, ...));
-int crawlupdate(struct collectionFormat *collection,
-		int (*documentExist)(struct collectionFormat *, struct crawldocumentExistFormat *),
-		int (*documentAdd)(struct collectionFormat *, struct crawldocumentAddFormat *),
-		int (*documentError)(struct collectionFormat *collection, int, const char *, ...));
+                   int (*documentError)(struct collectionFormat *, int, const char *, ...) __attribute__((unused)));
+int crawlfirst(crawlfirst_args);
+int crawlupdate(crawlupdate_args);
 
 
 int 
@@ -49,7 +43,8 @@ struct crawlLibInfoFormat crawlLibInfo = {
 	NULL,
 	NULL,
 	crawl_security_none,
-	"Exchange"
+	"Exchange",
+	"",
 };
 
 
@@ -58,7 +53,6 @@ char *
 make_crawl_uri(char *uri, char *id)
 {
 	int len;
-	int i;
 	char *p;
 	char out[1024], some[5];
 	char outlookid[1024];
@@ -177,7 +171,7 @@ grabContent(char *xml, char *url, struct crawlinfo *ci, set *acl_allow, set *acl
 
 int
 crawlcanconnect(struct collectionFormat *collection,
-                   int (*documentError)(struct collectionFormat *,int, const char *, ...) __attribute__((unused)))
+                   int (*documentError)(struct collectionFormat *, int, const char *, ...) __attribute__((unused)))
 {
 	char *listxml;
 	char origresource[PATH_MAX];
@@ -273,6 +267,9 @@ crawlGo(struct crawlinfo *ci)
 	for (users = ci->collection->users; users && *users; users++) {
 		user = *users;
 
+		if (!ci->documentContinue(ci->collection))
+			break;
+
 		snprintf(resource, sizeof(resource), "%s/%s/", origresource, user);
 		printf("Trying %s\n", resource);
 		/* Shut up the xml parser a bit */
@@ -303,10 +300,7 @@ crawlGo(struct crawlinfo *ci)
 }
 
 int
-crawlfirst(struct collectionFormat *collection,
-		int (*documentExist)(struct collectionFormat *, struct crawldocumentExistFormat *),
-		int (*documentAdd)(struct collectionFormat *, struct crawldocumentAddFormat *),
-		int (*documentError)(struct collectionFormat *collection, int, const char *, ...))
+crawlfirst(crawlfirst_args)
 {
 
 	struct crawlinfo ci;
@@ -314,6 +308,7 @@ crawlfirst(struct collectionFormat *collection,
 	ci.documentExist = documentExist;
 	ci.documentAdd = documentAdd;
 	ci.documentError = documentError;
+	ci.documentContinue = documentContinue;
 	ci.collection = collection;
 	ci.timefilter = 0;
 	printf("crawlEXCHANGE: %s\n", collection->resource);
@@ -323,16 +318,14 @@ crawlfirst(struct collectionFormat *collection,
 
 
 int
-crawlupdate(struct collectionFormat *collection,
-		int (*documentExist)(struct collectionFormat *, struct crawldocumentExistFormat *),
-		int (*documentAdd)(struct collectionFormat *, struct crawldocumentAddFormat *),
-		int (*documentError)(struct collectionFormat *collection, int, const char *, ...))
+crawlupdate(crawlupdate_args)
 {
 	struct crawlinfo ci;
 
 	ci.documentExist = documentExist;
 	ci.documentAdd = documentAdd;
 	ci.documentError = documentError;
+	ci.documentContinue = documentContinue;
 	ci.collection = collection;
 	ci.timefilter = collection->lastCrawl;
 

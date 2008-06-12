@@ -14,6 +14,7 @@
 
 #include <string.h>
 #include <time.h>
+#include <err.h>
 
 #include "xml.h"
 #include "webdav.h"
@@ -99,6 +100,9 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 	size_t hreflen;
 	set *acl_allow2, *acl_deny2;
 	char *newxml;
+
+	if (!ci->documentContinue(ci->collection))
+		return;
 
 	if (!(href = xml_find_child(response, "href"))) {
 		printf("Unable to find href...\n");
