@@ -127,7 +127,7 @@ sub _get_core_list {
 		push @core_list, $info_ref;
 	}
 	
-	return @core_list;
+	return sort { $b->{mtime} <=> $a->{mtime} } @core_list;
 }
 
 sub _get_core_info {
@@ -141,7 +141,8 @@ sub _get_core_info {
 	
 	return {
 		'core_file' => basename($file),
-		'time'      => $human_time, 
+		'time'      => $human_time,
+                'mtime'     => $time,
 		};
 }
 
