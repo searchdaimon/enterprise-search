@@ -125,7 +125,7 @@ int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, 
 int perlcm_crawlupdate(struct collectionFormat *collection,
         int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
         int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
-        int (*documentError)(int level, const char *fmt, ...),
+        int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...),
         int (*documentContinue)(struct collectionFormat *collection)) {
 
 	struct cargsF cargs;
@@ -145,7 +145,7 @@ int perlcm_crawlupdate(struct collectionFormat *collection,
 
 
 
-int perlcm_crawlcanconect( struct collectionFormat *collection,int (*documentError)(int level, const char *fmt, ...)) 
+int perlcm_crawlcanconect( struct collectionFormat *collection,int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...)) 
 {
 	return 1;
 }
@@ -153,13 +153,13 @@ int perlcm_crawlcanconect( struct collectionFormat *collection,int (*documentErr
 int perlcm_crawlfirst(struct collectionFormat *collection,
 	int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
         int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
-	int (*documentError)(int level, const char *fmt, ...),
+	int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...),
 	int (*documentContinue)(struct collectionFormat *collection)
 	) {
 
 	return perlcm_crawlupdate(collection,documentExist,documentAdd,documentError,documentContinue);
 }
-int perlcm_crawlpatAcces(char resource[], char username[], char password[], int (*documentError)(int level, const char *fmt, ...), struct collectionFormat *collection)
+int perlcm_crawlpatAcces(char resource[], char username[], char password[], int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...), struct collectionFormat *collection)
 {
 
 	struct cargsF cargs;
@@ -203,7 +203,6 @@ struct crawlLibInfoFormat *perlCrawlStart(char perlpath[], char name[]) {
 	crawlLibInfo->rewrite_url 	= NULL;
 	crawlLibInfo->crawl_security 	= 0;
 	strcpy(crawlLibInfo->shortname,name);
-	crawlLibInfo->strcrawlError 	= strcrawlError;
 	strcpy(crawlLibInfo->resourcepath,perlpath);
 
 

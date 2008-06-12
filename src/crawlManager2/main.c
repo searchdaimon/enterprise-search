@@ -14,8 +14,6 @@
 #include <libmemcached/memcached.h>
 #endif
 
-#include "perlcrawl.h"
-
 #include "../crawl/crawl.h"
 
 #include "../common/collection.h"
@@ -59,6 +57,8 @@ int global_bbdnport;
 #ifdef WITH_PATHACCESS_CACHE
 void mc_add_servers(void);
 #endif
+
+
 
 int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],int *nrofcollections);
 
@@ -144,7 +144,13 @@ int documentExist(struct collectionFormat *collection, struct crawldocumentExist
 	return ret;
 }
 
-int documentError(int level, const char *fmt, ...) {
+
+char *documentErrorGetlast(struct collectionFormat *collection) {
+        return collection->errormsg;
+}
+
+
+int documentError(struct collectionFormat *collection,int level, const char *fmt, ...) {
 
 
 
@@ -156,6 +162,8 @@ int documentError(int level, const char *fmt, ...) {
         vprintf(fmt,ap);
 
 	bvlog(LOGERROR,level,fmt,ap);
+
+	vsprintf(collection->errormsg ,fmt,ap);
 
         va_end(ap);
 
@@ -231,7 +239,7 @@ int cmr_crawlcanconect(struct hashtable *h, struct collectionFormat *collection)
 
 	if (!(*(*crawlLibInfo).crawlcanconect)(collection,documentError)) {
 		//overfører error
-		berror((*crawlLibInfo).strcrawlError());
+		berror(documentErrorGetlast(collection));
         	 return 0;
        	}
 	else {
@@ -242,6 +250,11 @@ int cmr_crawlcanconect(struct hashtable *h, struct collectionFormat *collection)
 int cm_crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 
 	struct crawlLibInfoFormat *crawlLibInfo;
+
+	if (!documentContinue(collection)) {
+                berror("Crawl is pending. Waiting for schedule time.");
+		return 0;
+	}
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,(*collection).connector)) {
 		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.");
@@ -256,7 +269,7 @@ int cm_crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 	if (!(*(*crawlLibInfo).crawlfirst)(collection,documentExist,documentAdd,documentError,documentContinue)) {
         	printf("problems in crawlfirst_ld\n");
 		//overfører error
-                berror((*crawlLibInfo).strcrawlError());
+                berror( documentErrorGetlast(collection) );
 		blog(LOGERROR,1,"Error: Problems in crawlfirst_ld.");
 
 		return 0;
@@ -264,7 +277,6 @@ int cm_crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 
 	if (!documentContinue(collection)) {
                 berror("Crawl is pending. Waiting for schedule time.");
-
 		return 0;
 	}
 	
@@ -275,6 +287,11 @@ int cm_crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 int cm_crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
 
 	struct crawlLibInfoFormat *crawlLibInfo;
+
+	if (!documentContinue(collection)) {
+                berror("Crawl is pending. Waiting for schedule time.");
+		return 0;
+	}
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,(*collection).connector)) {
 		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.");
@@ -288,7 +305,7 @@ int cm_crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
 	if (!(*(*crawlLibInfo).crawlupdate)(collection,documentExist,documentAdd,documentError,documentContinue)) {
         	
 		//overfører error
-                berror((*crawlLibInfo).strcrawlError());
+                berror( documentErrorGetlast(collection) );
 		blog(LOGERROR,1,"Error: problems in crawlfirst_ld.");
 
 		return 0;
@@ -296,7 +313,6 @@ int cm_crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
 
 	if (!documentContinue(collection)) {
                 berror("Crawl is pending. Waiting for schedule time.");
-
 		return 0;
 	}
 
@@ -492,7 +508,7 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 	else if (!(*(*crawlLibInfo).crawlpatAcces)(uri,username,password,documentError,&collections[0])) {
         	printf("Can't crawlLibInfo. Can be denyed or somthing else\n");
 		//overfører error
-                berror((*crawlLibInfo).strcrawlError());
+                berror( documentErrorGetlast( &collections[0]) );
 
 #ifdef WITH_PATHACCESS_CACHE
 		if (memcache_servers != NULL)
@@ -523,7 +539,7 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 		blog(LOGACCESS,2,"pathAccess allowed url: \"%s\", user: \"%s\", time used %f s",uri,username,pathAccessTimes.crawlpatAcces);
 	}
 	else {
-		blog(LOGERROR,2,"pathAccess denyed url: \"%s\", user: \"%s\", time used %f s, Error: \"%s\"",uri,username,pathAccessTimes.crawlpatAcces,(*crawlLibInfo).strcrawlError());
+		blog(LOGERROR,2,"pathAccess denyed url: \"%s\", user: \"%s\", time used %f s, Error: \"%s\"",uri,username,pathAccessTimes.crawlpatAcces, documentErrorGetlast( &collections[0]) );
 	}
 
 	free(username);
@@ -724,8 +740,6 @@ int cm_start(struct hashtable **h) {
 	}
 
 	closedir(dirp);
-
-
 
 	printf("cm_start end\n");
 
@@ -978,6 +992,11 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 
         mysql_free_result(mysqlres);
 
+	//inaliserer andre ting
+	for (i=0;i<(*nrofcollections);i++) {
+		(*collection)[i].errormsg[0] = '\0';
+	}
+
 	/***********************************************************************/
 
 	}
@@ -990,13 +1009,14 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 	
 }
 
-int crawlcanconect (char cvalue[]) {
+int cm_handle_crawlcanconect(char cvalue[]) {
 
 	struct collectionFormat *collection;
 	int nrofcollections;
 	int i;
 
-	printf("crawlcanconect: cm_searchForCollection start\n");
+	printf("cm_handle_crawlcanconect (%s)\n",cvalue);
+
 	cm_searchForCollection(cvalue,&collection,&nrofcollections);
 	printf("crawlcanconect: cm_searchForCollection done\n");
 	if (nrofcollections == 1) {
@@ -1493,9 +1513,9 @@ void connectHandler(int socket) {
 
 			recvall(socket,collection,sizeof(collection));
 
-			printf("got %s name to crawl\n",collection);
+			printf("got collection name \"%s\" to crawl\n",collection);
 
-			if (!crawlcanconect(collection)) {
+			if (!cm_handle_crawlcanconect(collection)) {
 
 				berrorbuf = bstrerror();	
 
@@ -1623,5 +1643,4 @@ int main (int argc, char *argv[]) {
 
 	sconnect(connectHandler, crawlport);
 }
-
 
