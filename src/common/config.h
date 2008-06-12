@@ -10,7 +10,7 @@ struct _configdataFormat {
         char configvalue[255];
 };
 
-void bconfig_flush(int mode);
+int bconfig_flush(int mode);
 const char *bconfig_getentrystr(char vantkey[]);
 int bconfig_getentryint(char vantkey[], int *val);
 #endif
