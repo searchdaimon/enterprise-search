@@ -2,6 +2,7 @@
 #include "daemon.h"
 #include <unistd.h>
 #include <fcntl.h>
+#include <pthread.h>
 
 #include "../common/bstr.h"
 
@@ -228,6 +229,81 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
 } 
 
 
+#ifdef WITH_DAEMON_THREAD
+#if 1
+
+//rutine som binder seg til PORT og kaller sh_pointer hver gang det kommer en ny tilkobling
+// Threaded
+int
+sconnect_thread(void (*sh_pointer)(int), int port)
+{
+	int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
+	struct sockaddr_in my_addr;    // my address information
+	struct sockaddr_in their_addr; // connector's address information
+	socklen_t sin_size;
+	int yes=1;
+
+	fprintf(stderr, "daemon: sconnect_thread(port=%i)\n", port);
+
+	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+		perror("socket");
+		exit(1);
+	}
+
+	if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
+		perror("setsockopt");
+		exit(1);
+	}
+
+#ifdef DEBUG
+	printf("will listen on port %i\n", port);
+#endif
+
+	my_addr.sin_family = AF_INET;         // host byte order
+	my_addr.sin_port = htons(port);     // short, network byte order
+	my_addr.sin_addr.s_addr = INADDR_ANY; // automatically fill with my IP
+	memset(&(my_addr.sin_zero), '\0', 8); // zero the rest of the struct
+
+	if (bind(sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1) {
+		fprintf(stderr,"Can't bind to port %i\n", port);
+		perror("bind");
+		exit(1);
+	}
+
+	if (listen(sockfd, BACKLOG) == -1) {
+		perror("listen");
+		exit(1);
+	}
+
+	printf("Bound to port %d ok. Antering accept loop\n", port);
+	for (;;) {
+		sin_size = sizeof(struct sockaddr_in);
+		if ((new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size)) == -1) {
+			perror("accept");
+			continue;
+		}
+		printf("server: got connection from %s\n", inet_ntoa(their_addr.sin_addr));
+#ifdef DEBUG
+		printf("runing in debug mode\n");
+		printf("runing in debug mode. Will not split out in several threads.\n");
+		sh_pointer(new_fd);
+		printf("sconnect: socket closed\n");
+#else
+		pthread_t thread;
+		printf("runing in normal thread mode\n");
+
+		pthread_create(&thread, NULL, sh_pointer, (void *)new_fd);
+		printf("Thread spawned...\n");
+		pthread_detach(thread);
+#endif
+	}
+
+	fprintf(stderr, "daemon: ~sconnect()\n");
+	return 0;
+} 
+
+#endif
+#endif
 
 int cconnect (char *hostname, int PORT) {
 
