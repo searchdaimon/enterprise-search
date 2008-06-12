@@ -59,10 +59,6 @@ boithobb-sqlUpdate_version = 1.7.4
 boithobb-filepermissions_name = boithobb-filepermissions
 boithobb-filepermissions_version = 0.5.5
 
-
-boithobb-call-home_name = bb-call-home
-boithobb-call-home_version = 0.2
-
 boithobb-database_name = boitho-database
 boithobb-database_version = 0.2
 
@@ -91,7 +87,7 @@ boitho-suggest_name = boitho-suggest
 boitho-suggest_version = 1.4
 
 
-all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate callHome sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch scripts repomod suggest
+all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch scripts repomod suggest
 
 sqlUpdate:
 	perl rpmmagic.pl --sql sql/update-cur.sql --requires "boitho-database" $(boithobb-sqlUpdate_name) $(boithobb-sqlUpdate_version) $(BOITHOHOME) /home/boitho/boithoTools 
@@ -214,12 +210,6 @@ daemonize:
 
 	rpmbuild -bb boitho-daemonize.spec
 
-callHome:
-	perl rpmmagic.pl $(boithobb-call-home_name) $(boithobb-call-home_version) $(BOITHOHOME) /home/boitho/boithoTools \
-	config/bb-phone-home-client.conf
-
-	rpmbuild -bb $(boithobb-call-home_name).spec
- 
 
 sqldatabase:
 	perl rpmmagic.pl --pre "/etc/init.d/mysqld start" --post "chkconfig mysqld on; sh /home/boitho/boithoTools/blackbox/boithodbsetup" $(boithobb-database_name) $(boithobb-database_version) $(BOITHOHOME) /home/boitho/boithoTools \
