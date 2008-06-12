@@ -508,24 +508,18 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 	FILE *fileha;
 
-	char InnBuff[8]; //1040162
-	int ReadOffsett = 0;
-	char buff[512];
 	unsigned int term;
 	int Antall;
 	int i,z;
 	int y;
-	int Element;
 
 	off_t mmap_size;
 
-	int mergedn;
 	char IndexPath[255];
 
 
 	unsigned int Adress = 0;
 	unsigned int SizeForTerm = 0;
-	int maxIIindexSize;
 	int iindexfile;
 	char FilePath[255];
 
