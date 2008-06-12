@@ -14,6 +14,7 @@
 #include "bstr.h"
 #include "io.h"
 #include "dp.h"
+#include "DocumentIndex.h"
 //#include "define.h"
 //#include <errno.h>
 //extern int errno;
@@ -434,6 +435,8 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 	#ifdef DEBUG
 		printf("rApendPostcompress: finished\n");
 	#endif
+
+	return 1;
 }
 unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame) {
 
@@ -822,12 +825,6 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 	int forreturn = 0;
 	char WorkBuff[300000];
 	char recordseparator[5];
-
-	//temp44: Bytef *WorkBuff;
-	int n;
-	//64bitadress;
-	//off_t radress64bit;
-
 
 	//kontrolerer at vi ikke blir bett om å lese 0 bytes
 	if (rsize == 0) {
@@ -1456,7 +1453,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
                 printf("Time debug: rReadPost total time %f\n\n",getTimeDifference(&tot_start_time,&tot_end_time));
         #endif
 
-
+	return 1;
 }
 
 /*
@@ -1491,13 +1488,8 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char reponame[])
 	char c;
 	int i;
 	struct stat inode;      // lager en struktur for fstat å returnere.
-
-	
 	char recordseparator[5];
-
-
 	char FileName[128];
-	int error;
 
 	//hvis vi tidligere har indikert at dette er siste run, stopper vi her
 
@@ -1862,9 +1854,7 @@ void
 anchoraddnew(unsigned int DocID, char *text, size_t textsize, char *subname, char *filename)
 {
         FILE *ANCHORFILE;
-        int i;
 	struct anchorRepo anchor;
-	struct DocumentIndexFormat docindex;
 	off_t offset;
 	char *newtext;
 	char *p;
@@ -2026,7 +2016,6 @@ int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsi
 int anchorGetNextnew(int LotNr,unsigned int *DocID,char *text,int textlength, unsigned int *radress,unsigned int *rsize,char *subname, off_t *offset) {
 	static FILE *LotFileOpen;
 	static int LotOpen = -1;
-	int bufflength;
 	char FileName[128];
 	struct anchorRepo anchor;
 	//char buff[sizeof(*ReposetoryData)];
@@ -2074,7 +2063,6 @@ int anchorGetNextnew(int LotNr,unsigned int *DocID,char *text,int textlength, un
 int
 anchorRead(int LotNr, char *subname, unsigned int DocID, char *text, int len)
 {
-	struct DocumentIndexFormat docindex;
 	FILE *fp;
 	char path[512];
 	struct anchorRepo anchor;
@@ -2198,7 +2186,6 @@ getResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t
 	struct DocumentIndexFormat docindex;
 	unsigned int rDocID;
 	size_t len, clen;
-	unsigned int HtmlBufferSize;
 	char *workbuf;
 	int error;
 
@@ -2256,15 +2243,7 @@ void addNewUrlOpen(struct addNewUrlhaFormat *addNewUrlha,int lotNr, char openmod
 }
 
 void addNewUrl (struct addNewUrlhaFormat *addNewUrlha, struct updateFormat *updatePost) {
-
-
-       
-        
-	int y;
         SHA1Context sha;
-        char FilePath[512];
-        int LotNr;
-     	char LotPath[512];
 	int err;
 
 
