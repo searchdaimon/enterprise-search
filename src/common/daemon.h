@@ -28,6 +28,7 @@ struct packedHedderFormat {
 //
 
 int sconnect (void (*sh_pointer) (int), int PORT);
+int sconnect_thread(void (*sh_pointer) (int), int port);
 
 int cconnect (char *hostname, int PORT);
 
