@@ -13,19 +13,14 @@
 #include "../3pLibs/keyValueHash/hashtable.h"
 #include "../common/ht.h"
 
+#include "spelling.h"
+
 wchar_t alphabet[] = L"abcdefghijklmnopqrstuvwxyz" L"0123456789" L"\xf8\xe5\xe6";
 
 #define MAX_EDIT_DISTANCE 2
 
-
-struct spelling {
-	struct hashtable *words;
-};
-
-struct hashtable *words;
-
-void
-train(const char *dict)
+int
+train(spelling_t *s, const char *dict)
 {
 	FILE *fp;
 	char *word;
@@ -36,10 +31,10 @@ train(const char *dict)
 
 	if ((fp = fopen(dict, "r")) == NULL) {
 		warn("fopen(dict)");
-		return;
+		return 0;
 	}
 
-	words = create_hashtable(5000, ht_wstringhash, ht_wstringcmp);
+	s->words = create_hashtable(5000, ht_wstringhash, ht_wstringcmp);
 
 	line = NULL;
 	while (getline(&line, &len, fp) > 0) {
@@ -67,13 +62,13 @@ train(const char *dict)
 		}
 		free(word);
 
-		frequency = hashtable_search(words, wcword);
+		frequency = hashtable_search(s->words, wcword);
 
 		if (frequency == NULL) {
 			frequency = malloc(sizeof(*frequency));
 			*frequency = strtol(p, NULL, 10);
 
-			if (!hashtable_insert(words, wcword, frequency)) {
+			if (!hashtable_insert(s->words, wcword, frequency)) {
 				warn("hashtable_insert()");
 				free(frequency);
 				free(word);
@@ -86,22 +81,26 @@ train(const char *dict)
 		line = NULL;
 	}
 
-	//printf("Collected %d words\n", hashtable_count(words));
+	//printf("Collected %d words\n", hashtable_count(s->words));
 
 	fclose(fp);
+	s->inited = 1;
+
+	return 1;
 }
 
 void
-untrain(void)
+untrain(spelling_t *s)
 {
 	struct hashtable *h;
 
-	h = words;
-	words = NULL;
+	s->inited = 0;
+	h = s->words;
+	s->words = NULL;
 	hashtable_destroy(h, 1);
 }
 
-void editsn(wchar_t *, wchar_t *, int *, int);
+void editsn(spelling_t *, wchar_t *, wchar_t *, int *, int);
 
 static inline int
 normalizefreq(unsigned int freq, int distance)
@@ -115,11 +114,11 @@ normalizefreq(unsigned int freq, int distance)
 }
 
 static inline void
-handle_word(wchar_t *word, wchar_t *best, int *max, int levels)
+handle_word(spelling_t *s, wchar_t *word, wchar_t *best, int *max, int levels)
 {
 	int *freq;
 
-	if ((freq = hashtable_search(words, word)) == NULL && levels == 1)
+	if ((freq = hashtable_search(s->words, word)) == NULL && levels == 1)
 		return;
 #if 1
 	if (freq && (normalizefreq(*freq, levels) > *max)) {
@@ -133,13 +132,13 @@ handle_word(wchar_t *word, wchar_t *best, int *max, int levels)
 	}
 #endif
 	if (levels > 1) {
-		editsn(word, best, max, levels-1);
+		editsn(s, word, best, max, levels-1);
 		return;
 	}
 }
 
 void
-editsn(wchar_t *word, wchar_t *best, int *max, int levels)
+editsn(spelling_t *s, wchar_t *word, wchar_t *best, int *max, int levels)
 {
 	int i, j;
 	wchar_t nword[LINE_MAX];
@@ -149,7 +148,7 @@ editsn(wchar_t *word, wchar_t *best, int *max, int levels)
 	for (i = 0; word[i] != '\0'; i++) {
 		wcsncpy(nword, word, i);
 		wcscpy(nword+i, word+i+1);
-		handle_word(nword, best, max, levels);
+		handle_word(s, nword, best, max, levels);
 	}
 #endif
 
@@ -160,7 +159,7 @@ editsn(wchar_t *word, wchar_t *best, int *max, int levels)
 		nword[i] = word[i+1];
 		nword[i+1] = word[i];
 		wcscpy(nword+i+2, word+i+2);
-		handle_word(nword, best, max, levels);
+		handle_word(s, nword, best, max, levels);
 	}
 #endif
 
@@ -171,7 +170,7 @@ editsn(wchar_t *word, wchar_t *best, int *max, int levels)
 			wcsncpy(nword, word, i);
 			nword[i] = alphabet[j];
 			wcscpy(nword+i+1, word+i+1);
-			handle_word(nword, best, max, levels);
+			handle_word(s, nword, best, max, levels);
 		}
 	}
 #endif
@@ -184,42 +183,45 @@ editsn(wchar_t *word, wchar_t *best, int *max, int levels)
 			wcsncpy(nword, word, i);
 			nword[i] = alphabet[j];
 			wcscpy(nword+i+1, word+i);
-			handle_word(nword, best, max, levels);
+			handle_word(s, nword, best, max, levels);
 		}
 	}
 #endif
 }
 
 int
-correct_word(wchar_t *word)
+correct_word(spelling_t *s, wchar_t *word)
 {
-	return (hashtable_search(words, word) != NULL);
+	return (hashtable_search(s->words, word) != NULL);
 }
 
 char *
-check_word(char *word, int *found)
+check_word(spelling_t *s, char *word, int *found)
 {
 	wchar_t best[LINE_MAX];
 	char u8best[LINE_MAX];
 	int max = 0;
 	wchar_t *wword;
 
+	*found = 0;
+	if (!s->inited)
+		return NULL;
+
 	wword = malloc((strlen(word)+1)*sizeof(wchar_t));
 	if (wword == NULL)
 		return NULL;
 	mbstowcs(wword, word, strlen(word)+1);
 
-	if (words == NULL) {
+	if (s->words == NULL) {
 		free(wword);
 		return NULL;
 	}
 
-	*found = 0;
-	if (correct_word(wword)) {
+	if (correct_word(s, wword)) {
 		free(wword);
 		return NULL;
 	}
-	editsn(wword, best, &max, MAX_EDIT_DISTANCE);
+	editsn(s, wword, best, &max, MAX_EDIT_DISTANCE);
 	if (max > 0) {
 		*found = 1;
 		free(wword);
@@ -237,16 +239,17 @@ main(int argc, char **argv)
 {
 	int found;
 	int i;
+	spelling_t s;
 	//time_t start, end;
 
 	setlocale(LC_ALL, "en_US.UTF-8");
 
-	train("mydict.utf8");
+	train(&s, "/home/eirik/Boitho/boitho/websearch/var/dictionarywords");
 
 	for (i = 1; i < argc; i++) {
 		char *p;
 
-		p = check_word(argv[i], &found);
+		p = check_word(&s, argv[i], &found);
 		if (p != NULL) {
 			printf("Corrected '%s' to '%s'\n", argv[i], p);
 			free(p);
@@ -255,7 +258,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	untrain();
+	untrain(&s);
 
 	return 0;
 }
