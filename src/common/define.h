@@ -487,7 +487,7 @@ struct filtypesFormat {
 
 struct filterinfoElementsFormat {
 	char name[20];
-	char longname[20];
+	char longname[50];
 	char query[MaxQueryLen];
 	int nrof;
 	char checked; //bool
