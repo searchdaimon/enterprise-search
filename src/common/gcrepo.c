@@ -32,10 +32,6 @@ gcrepo(int LotNr, char *subname)
 	char path[1024];
 	char path2[1024];
 	char path3[1024];
-	FILE *GCEDFH;
-	#ifdef BLACK_BOKS
-		time_t newest_document;
-	#endif
 	FILE *DOCINDEXFH;
 
 	int keept = 0;
@@ -58,10 +54,6 @@ gcrepo(int LotNr, char *subname)
 		exit(1);
 	}
 
-	#ifdef BLACK_BOKS
-		newest_document = 0;	
-		printf("newest_document: %s",ctime(&newest_document));
-	#endif
 
 
 	for (i=0;i<NrofDocIDsInLot;i++) {
@@ -73,17 +65,9 @@ gcrepo(int LotNr, char *subname)
 			continue;
 		}
 
-		#ifdef BLACK_BOKS
-		if ((DIArray[i].docindex.lastSeen != 0) && (newest_document < DIArray[i].docindex.lastSeen)) {
-                                newest_document = DIArray[i].docindex.lastSeen;
-                }
-		#endif
 
 	}
 
-	#ifdef BLACK_BOKS
-	printf("newest_document: %s",ctime(&newest_document));
-	#endif
 
 	while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&raddress,0,0,subname,&acl_allow,&acl_deny, &url)) {
 
@@ -91,12 +75,9 @@ gcrepo(int LotNr, char *subname)
 		DIArray[DocIDPlace].DocID = ReposetoryHeader.DocID;
 
 		#ifdef DEBUG
-		#ifdef BLACK_BOKS
-		printf("dokument \"%s\", DocID %u. lastSeen: %s",
+		printf("dokument \"%s\", DocID %u.\n",
 			DIArray[DocIDPlace].docindex.Url,
-			ReposetoryHeader.DocID,
-			ctime(&DIArray[DocIDPlace].docindex.lastSeen));
-		#endif
+			ReposetoryHeader.DocID);
 		#endif
 
 		//printf("%p\n", docindex.RepositoryPointer);
@@ -107,17 +88,6 @@ gcrepo(int LotNr, char *subname)
 			#endif
 			++gced;
 		}
-		#ifdef BLACK_BOKS
-		else if ((DIArray[DocIDPlace].docindex.lastSeen != 0) && (newest_document > (DIArray[DocIDPlace].docindex.lastSeen + MaxAgeDiflastSeen))) {
-			DIArray[DocIDPlace].gced = 1;
-
-			DIArray[DocIDPlace].docindex.htmlSize = 0;
-
-			printf("dokument \"%s\" is deleted. lastSeen: %s",DIArray[DocIDPlace].docindex.Url,ctime(&DIArray[DocIDPlace].docindex.lastSeen));
-			++gced;
-		
-		} 
-		#endif
 		else {
 			unsigned long int offset;
 			offset = rApendPost(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_deny, "repo.wip", url);
@@ -144,18 +114,6 @@ gcrepo(int LotNr, char *subname)
 	}
 	printf("..done\n");
 
-	//lagrer hvilkene filer vi har slettet
-	GCEDFH =  lotOpenFileNoCasheByLotNr(LotNr,"gced","a", 'e',subname);
-
-	for (i=0;i<NrofDocIDsInLot;i++) {
-		if ((DIArray[i].DocID != 0) && (DIArray[i].gced)) {
-			if (fwrite(&DIArray[i].DocID,sizeof(DIArray[i].DocID),1,GCEDFH) != 1) {
-				perror("can't write gc file");
-			}
-		}
-	}
-
-	fclose(GCEDFH);
 	free(DIArray);
 
 	/* And we have a race... */
