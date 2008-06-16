@@ -129,6 +129,7 @@ int perlcm_crawlupdate(struct collectionFormat *collection,
         int (*documentContinue)(struct collectionFormat *collection)) {
 
 	struct cargsF cargs;
+	int ret;
 
 	cargs.collection 	= collection;
 	cargs.documentExist 	= documentExist;
@@ -137,8 +138,15 @@ int perlcm_crawlupdate(struct collectionFormat *collection,
 	cargs.documentContinue = documentContinue;
 
 
-	return preprocessAndRun(collection,&cargs,"Perlcrawl::crawlupdate");
+	ret = preprocessAndRun(collection,&cargs,"Perlcrawl::crawlupdate");
 
+	//hvis vi fik 0 som retur verdi, er alt ok, og vi returnerer 1
+	if (ret == 0) {
+		return 1;
+	}
+	else {
+		return ret;
+	}
 }
 
 
