@@ -258,7 +258,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 
 	vboprintf("searchkernel: popResult(antall=%i, DocID=%i)\n", antall, DocID);
 
-	char *url;
+	char *url = NULL;
 	int y;
 	char        *titleaa, *body, *metakeyw, *metadesc;
 	struct ReposetoryHeaderFormat ReposetoryHeader;
@@ -494,6 +494,8 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 							return 0;
 
 						}
+						strlcpy(Sider->uri, url, sizeof(Sider->uri));
+						strlcpy(Sider->url, url, sizeof(Sider->uri));
 						
 						gettimeofday(&end_time, NULL);				
 						#ifdef DEBUG_TIME
@@ -504,8 +506,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 
 						gettimeofday(&start_time, NULL);						
 
-						html_parser_run( (*Sider).DocumentIndex.Url, htmlBuffer, htmlBufferSize, 
-							&titleaa, &body, fn, NULL);
+						html_parser_run(url, htmlBuffer, htmlBufferSize, &titleaa, &body, fn, NULL);
 
 						gettimeofday(&end_time, NULL);
 						#ifdef DEBUG_TIME
@@ -527,10 +528,6 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 						*/
 
 					}
-
-
-					
-					
 					
 					
 					char        *summary;
@@ -1311,13 +1308,13 @@ void *generatePagesResults(void *arg)
 #ifdef BLACK_BOKS
 		if (!PagesResults->getRank) {
 
-			handle_url_rewrite(side->DocumentIndex.Url, sizeof(side->DocumentIndex.Url), ptype, btype, 
-				(*PagesResults).TeffArray->iindex[i].subname->subname, side->DocumentIndex.Url, 
-				sizeof(side->DocumentIndex.Url), PagesResults->cmcsocketha, 
+			handle_url_rewrite(side->url, sizeof(side->url), ptype, btype, 
+				(*PagesResults).TeffArray->iindex[i].subname->subname, side->url, 
+				sizeof(side->url), PagesResults->cmcsocketha, 
 #ifdef WITH_THREAD
-			&PagesResults->mutex
+				&PagesResults->mutex
 #else
-			NULL
+				NULL
 #endif
 			);
 
@@ -1335,9 +1332,9 @@ void *generatePagesResults(void *arg)
 
 		if (1 || !PagesResults->getRank) {
 			//urI
-			strscpy(side->uri,side->DocumentIndex.Url,sizeof(side->uri));
+			strscpy(side->uri, side->url, sizeof(side->uri));
 			//urL
-			strscpy(side->url,side->DocumentIndex.Url,sizeof(side->url));
+			//strscpy(side->url,side->DocumentIndex.Url,sizeof(side->url));
 
 			side->pathlen = find_domain_path_len(side->uri);
 
