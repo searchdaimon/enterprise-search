@@ -1188,7 +1188,6 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 
 
 		if (CurrentReposetoryVersionAsUInt > 4) {
-			printf("new format\n");
 			(*url) = malloc(ReposetoryHeader->urllen+1);
 			if (ReposetoryHeader->urllen != 0) {
 				if (read(LotFileOpen, *url, ReposetoryHeader->urllen) != ReposetoryHeader->urllen) {
@@ -1198,7 +1197,6 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 			}
 			(*url)[ReposetoryHeader->urllen] = '\0';
 		} else {
-			printf("Getting old url thing!\n");
 			*url = malloc(strlen(ReposetoryHeader->url)+1);
 			strcpy(*url, ReposetoryHeader->url);
 		}
@@ -1213,6 +1211,8 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		//rart, ser ikke ut til at vi faktsik sjekker om disse er riktige		
 		totalpost_p += memcpyrc(recordseparator,totalpost_p,3);
 
+		*url = malloc(strlen(ReposetoryHeader->url)+1);
+		strcpy(*url, ReposetoryHeader->url);
 	#endif
 
 	free(totalpost);
