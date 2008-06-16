@@ -27,6 +27,7 @@ gcrepo(int LotNr, char *subname)
 	char imagebuffer[524288];
 	char *acl_allow;
 	char *acl_deny;
+	char *url;
 	unsigned long int raddress;
 	char path[1024];
 	char path2[1024];
@@ -84,7 +85,7 @@ gcrepo(int LotNr, char *subname)
 	printf("newest_document: %s",ctime(&newest_document));
 	#endif
 
-	while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&raddress,0,0,subname,&acl_allow,&acl_deny)) {
+	while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&raddress,0,0,subname,&acl_allow,&acl_deny, &url)) {
 
 		DocIDPlace = (ReposetoryHeader.DocID - LotDocIDOfset(LotNr));
 		DIArray[DocIDPlace].DocID = ReposetoryHeader.DocID;
@@ -119,7 +120,7 @@ gcrepo(int LotNr, char *subname)
 		#endif
 		else {
 			unsigned long int offset;
-			offset = rApendPost(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_deny, "repo.wip");
+			offset = rApendPost(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_deny, "repo.wip", url);
 			DIArray[DocIDPlace].docindex.RepositoryPointer = offset;
 			#ifdef DEBUG
 			printf("Writing DocID: %d\n", ReposetoryHeader.DocID);

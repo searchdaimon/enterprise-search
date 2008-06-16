@@ -887,7 +887,8 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	printf("ACL was allow \"%s\", %i bytes, denied \"%s\", %i bytes\nsubname %s\n",acl_allow,ReposetoryHeader.acl_allowSize,acl_allow,ReposetoryHeader.acl_allowSize,subname);
 	#endif
 
-	rApendPostcompress(&ReposetoryHeader,htmlbuffer,imagebuffer,subname,acl_allow,acl_denied,NULL);
+	ReposetoryHeader.urllen = strlen(documenturi);
+	rApendPostcompress(&ReposetoryHeader,htmlbuffer,imagebuffer,subname,acl_allow,acl_denied,NULL, documenturi);
 
 	#ifdef DEBUG	
 	printf("legger til DocID \"%u\", time \"%u\"\n",ReposetoryHeader.DocID,lastmodified);

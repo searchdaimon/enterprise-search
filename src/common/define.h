@@ -265,36 +265,28 @@ struct DocumentIndexFormat {
 
 #define MaxReposetoryContent 30000
 
-struct ReposetoryFormat {
-        int DocID;
-        char url[201];
-        char content_type[7];
-        char content[MaxReposetoryContent];
-	unsigned int IPAddress;
-	unsigned short response;
-};
-
 struct ReposetoryHeaderFormat {
 	unsigned int DocID;
-        char url[200];
-        char content_type[4];
-        unsigned int IPAddress;
-        unsigned short response;
+	char url[200];
+	char content_type[4];
+	unsigned int IPAddress;
+	unsigned short response;
 	unsigned short htmlSize;
 	unsigned short imageSize;
 	unsigned int time;
 	unsigned short userID;
 	double clientVersion;
-	#ifdef BLACK_BOKS
-		//int aclSize;
-		int acl_allowSize;
-		#ifdef IIACL
-		int acl_deniedSize;
-		#endif
-		time_t storageTime; //3 now
-		char doctype[4]; //3 now
-		char reservedSpace[64]; //3 now
-	#endif
+#ifdef BLACK_BOKS
+	//int aclSize;
+	int acl_allowSize;
+#ifdef IIACL
+	int acl_deniedSize;
+#endif
+	time_t storageTime; //3 now
+	char doctype[4]; //3 now
+	unsigned short urllen;
+	char reservedSpace[62]; //3 now
+#endif
 };
 
 

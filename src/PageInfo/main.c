@@ -228,8 +228,10 @@ int main (int argc, char *argv[]) {
 			htmlBufferSize = 3000000;
 			htmlBuffer = malloc(htmlBufferSize);
 			struct ReposetoryHeaderFormat ReposetoryHeader;
+			char *url;
 
-			rReadHtml(htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,DocumentIndexPost.imageSize);
+			rReadHtml(htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,DocumentIndexPost.imageSize, &url);
+			printf("Entire url: %s\n", url);
 
 //		}
 		if (optShowhtml) {

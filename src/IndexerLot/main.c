@@ -356,7 +356,7 @@ void makePreParsedSummary(const char body[], int bodylen,const  char title[],int
 
 
 int getNextPage(struct IndexerLot_workthreadFormat *argstruct,char htmlcompressdbuffer[],int htmlcompressdbuffer_size, 
-	char imagebuffer[],int imagebuffer_size,unsigned long int *radress, char **acl_allow, char **acl_denied,struct ReposetoryHeaderFormat *ReposetoryHeader) {
+	char imagebuffer[],int imagebuffer_size,unsigned long int *radress, char **acl_allow, char **acl_denied,struct ReposetoryHeaderFormat *ReposetoryHeader, char **url) {
 	//lock
 	int forreturn;
 	//må holde status om rGetNext() har sakt at dette er siste. Hvis ikke hamrer vi bortenfor eof
@@ -380,7 +380,7 @@ int getNextPage(struct IndexerLot_workthreadFormat *argstruct,char htmlcompressd
 		 forreturn = 0;
 	}
 	else if (rGetNext_reponame((*argstruct).lotNr,ReposetoryHeader,htmlcompressdbuffer,htmlcompressdbuffer_size,
-			imagebuffer,radress,(*argstruct).FiltetTime,(*argstruct).FileOffset,(*argstruct).subname,acl_allow,acl_denied,argstruct->reponame)) {
+			imagebuffer,radress,(*argstruct).FiltetTime,(*argstruct).FileOffset,(*argstruct).subname,acl_allow,acl_denied,argstruct->reponame, url)) {
 
 
 		++(*argstruct).pageCount;
@@ -466,6 +466,7 @@ void *IndexerLot_workthread(void *arg) {
 	char *title;
         char *body;
 	char *metadesc;
+	char *url;
 	unsigned int crc32;
 
 	Bytef *SummaryBuffer;
@@ -483,7 +484,7 @@ void *IndexerLot_workthread(void *arg) {
 
 
 	while (getNextPage(argstruct,htmlcompressdbuffer,sizeofhtmlcompressdbuffer,imagebuffer,sizeofimagebuffer,
-		&radress,&acl_allow,&acl_denied,&ReposetoryHeader)) {
+		&radress,&acl_allow,&acl_denied,&ReposetoryHeader, &url)) {
 
        				awvalue = 0;
                			title = NULL;

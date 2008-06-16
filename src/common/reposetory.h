@@ -71,21 +71,19 @@ struct ReposetoryOpenFilesFormat OpenReposetoryFiles[MaxOpenReposetoryFiles];
 
 
 
-//public subrutiner
-void rapend (struct ReposetoryFormat ReposetoryData, long int radress);
 //void ropen ();
 void rclose ();
 
 int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radress64bit,unsigned int rsize,unsigned
 				int DocID,char subname[],struct ReposetoryHeaderFormat *ReposetoryHeader,
-				char **acl_allowbuffer,char **acl_deniedbuffer, unsigned int imagesize
+				char **acl_allowbuffer,char **acl_deniedbuffer, unsigned int imagesize, char **url
 				);
 
 int rGetNext_reponame (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],
 		int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,
-		char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char reponame[]);
+		char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, char **url);
 
-int rGetNext (unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset, char subname[], char **acl_allowbuffer,char **acl_deniedbuffer);
+int rGetNext (unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset, char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char **url);
 
 int runpack(char *ReposetoryData,uLong comprLen,char *inndata,int length);
 int rReadSummary(unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[]);
@@ -113,17 +111,17 @@ size_t getResource(int LotNr, char *subname, unsigned int DocID, char *resource,
 
 
 
-unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *);
-int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *);
+unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url);
+int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url);
 void setLastIndexTimeForLot(int LotNr,int httpResponsCodes[],char subname[]);
 unsigned int GetLastIndexTimeForLot(int LotNr,char subname[]);
 
 int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
-                        char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[]);
+                        char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[], char **url);
 
 int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
                         char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[],
-                        unsigned int rsize,unsigned int imagesize);
+                        unsigned int rsize,unsigned int imagesize, char **url);
 
 off_t getImagepFromRadres(unsigned int radress64bit,unsigned int htmlbufferSize);
 unsigned int rLastDocID(char subname[]);

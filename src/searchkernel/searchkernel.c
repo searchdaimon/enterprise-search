@@ -258,6 +258,7 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 
 	vboprintf("searchkernel: popResult(antall=%i, DocID=%i)\n", antall, DocID);
 
+	char *url;
 	int y;
 	char        *titleaa, *body, *metakeyw, *metadesc;
 	struct ReposetoryHeaderFormat ReposetoryHeader;
@@ -402,8 +403,9 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 							free(snippet);
 						}
 						free(resbuf);
-					} else if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,(*Sider).DocumentIndex.imageSize) != 1) {
+					} else if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,(*Sider).DocumentIndex.imageSize, &url) != 1) {
 						//kune ikke lese html. Pointer owerflow ?
+						//printf("Fii faa foo: %s\n", url);
 						printf("error reding html for %s\n",(*Sider).DocumentIndex.Url);
 						sprintf((*Sider).description,"Html error. Can't read html");
 						(*Sider).title[0] = '\0';
@@ -480,7 +482,8 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 					else {
 
 						debug("don't hav Summary on disk. Will hav to read html\n");	
-						if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,(*Sider).DocumentIndex.imageSize) != 1) {
+						if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,(*Sider).DocumentIndex.imageSize, &url) != 1) {
+							//printf("Fii faa foo: %s\n", url);
 							//kune ikke lese html. Pointer owerflow ?
 							printf("error reding html for %s\n",(*Sider).DocumentIndex.Url);
 							sprintf((*Sider).description,"Html error. Can't read html");
