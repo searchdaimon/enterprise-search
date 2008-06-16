@@ -23,6 +23,7 @@ main (int argc, char *argv[]) {
 	char imagebuffer[524288];
 	char *acl_allow;
 	char *acl_deny;
+	char *url;
 
 	int StatisticsUncompressError = 0;;
 	int StatisticsUncompressOk = 0;
@@ -77,7 +78,7 @@ main (int argc, char *argv[]) {
 
 
 	//loppergjenom alle
-	while (rGetNext_reponame(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&radress,0,0,subname,&acl_allow,&acl_deny,optReponame)) {
+	while (rGetNext_reponame(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&radress,0,0,subname,&acl_allow,&acl_deny,optReponame, &url)) {
 
 		printf("DocId: %i url: %s res %hi htmlsize %hi time %lu, radress %lu\n",ReposetoryHeader.DocID,ReposetoryHeader.url,ReposetoryHeader.response,ReposetoryHeader.htmlSize,ReposetoryHeader.time,radress);
 		uncompresshtmlLength = sizeof(uncompresshtml);
