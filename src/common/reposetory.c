@@ -1378,8 +1378,8 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			if (CurrentReposetoryVersionAsUInt > 4) {
 				(*url) = malloc(ReposetoryHeader->urllen+1);
 				if (ReposetoryHeader->urllen != 0) {
-					if (fread(*url, ReposetoryHeader->urllen, 1, LotFileOpen) != ReposetoryHeader->urllen) {
-						printf("cant't read url. urllen is %i at %s:%d\n", ReposetoryHeader->urllen, __FILE__, __LINE__);
+					if ((n=fread(*url, 1, ReposetoryHeader->urllen, LotFileOpen)) != ReposetoryHeader->urllen) {
+						printf("cant't read url. urllen is %i, but we did only read %i at %s:%d\n", ReposetoryHeader->urllen ,n , __FILE__, __LINE__);
 						perror("");
 					}
 				}
@@ -1391,7 +1391,8 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 
 
 		#else
-			//(*aclbuffer) = NULL;
+			*url = malloc(strlen(ReposetoryHeader->url)+1);
+			strcpy(*url, ReposetoryHeader->url);
 		#endif
 		
 	
