@@ -30,6 +30,24 @@ int crawlupdate(crawlupdate_args);
 int 
 ex_rewrite_url(char *uri, enum platform_type ptype, enum browser_type btype)
 {
+	char *p;
+
+	printf("We got: %s\n", uri);
+	p = strchr(uri, '\x10');
+	if (p == NULL)
+		return 0;
+	if (ptype == WINDOWS) {
+		printf("Wiiiindows!\n");
+		*p = '\0';
+	} else {
+		size_t len;
+		printf("Something else!!\n");
+		p++;
+		len = strlen(p);
+		memmove(uri, p, strlen(p));
+		uri[len] = '\0';
+	}
+	printf("pushing out: %s\n", uri);
 	return 1;
 }
 
@@ -41,7 +59,7 @@ struct crawlLibInfoFormat crawlLibInfo = {
 	crawlcanconnect,
 	NULL,
 	NULL,
-	NULL,
+	ex_rewrite_url,
 	crawl_security_none,
 	"Exchange",
 	"",
@@ -57,6 +75,7 @@ make_crawl_uri(char *uri, char *id)
 	char out[1024], some[5];
 	char outlookid[1024];
 
+#if 1
 	len = base64_decode(out, id, 1024);
 	p = out;
 	outlookid[0] = '\0';
@@ -65,8 +84,10 @@ make_crawl_uri(char *uri, char *id)
 		strcat(outlookid, some);
 		p++;
 	}
+#endif
 
-	sprintf(out, "outlook:%s", outlookid);
+	sprintf(out, "outlook:%s\x10%s", outlookid, uri);
+	//sprintf(out, "%s\x10%s", id, uri);
 	p = strdup(out);
 
 	return p;
