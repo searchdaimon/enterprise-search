@@ -9,6 +9,7 @@ use Sql::CollectionAuth;
 use Sql::ShareGroups;
 use Sql::ShareUsers;
 use Sql::Config;
+use Page::Abstract;
 BEGIN {
 	#push @INC, 'Modules';
 	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
@@ -17,6 +18,8 @@ use Boitho::Infoquery;
 use Common::Collection;
 use Common::Generic;
 use Common::Data::Overview;
+
+our @ISA = qw(Page::Abstract);
 
 use config qw($CONFIG);
 use constant TPL_DEFAULT     => 'overview.html';
@@ -29,18 +32,9 @@ my $sqlAuth;
 my $sqlGroups;
 my $sqlUsers;
 
-sub new {
-    my ($class, $dbh, $state) = @_;
-	my $self = {};
-	bless $self, $class;
-	$self->_init($dbh, $state);
-	return $self;
-}
-
-sub _init($$$) {
-	my ($self, $dbh, $state) = (@_);
-	$self->{'dbh'}		 = $dbh;
-	$self->{'state'}	 = $state;
+sub _init {
+	my $self = shift;
+        my $dbh = $self->{dbh};
 	$sqlShares     = Sql::Shares->new($dbh);
 	$sqlConnectors = Sql::Connectors->new($dbh);
 	$sqlAuth = Sql::CollectionAuth->new($dbh);

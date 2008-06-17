@@ -1,41 +1,40 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use Template;
 use CGI;
 use Carp;
-use Sql::Sql;
-use Sql::Connectors;
-use Sql::Shares;
-use CGI::State;
-use Page::Overview;
 use Data::Dumper;
-use Template::Stash;
+use Sql::Config;
+use Page::Overview;
 BEGIN {
 	#push @INC, "Modules";
 	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
-use Boitho::Infoquery;
-
-my $cgi = CGI->new;
-my $state = CGI::State->state($cgi);
 
 
 my $vars = { };
 
-my $sql = Sql::Sql->new();
-my $dbh = $sql->get_connection();
-my $overview = Page::Overview->new($dbh, $state);
+my $overview = Page::Overview->new();
+my %state = $overview->get_state();
 
-my $sqlConnectors = Sql::Connectors->new($dbh);
+{ # Redirect to setup wizard if first timer.
+    my $cfg = Sql::Config->new($overview->get_dbh);
+    if (not defined $state{fetch_inner} and
+        not $cfg->get_setting("setup_firstime")) {
+
+        print "Location: setup.cgi\n\n";
+        $cfg->insert_setting("setup_firstime", 1);
+        exit;
+    }
+}
+
 
 my $template_file = 'overview.html';
 
 
-
-if (defined($state->{'action'})) {
-	my $action = $state->{'action'};
-	my $id = $state->{'id'};
+if (defined $state{action}) {
+	my $action = $state{action};
+	my $id = $state{id};
 	
 	# User requested share to be crawled
 	if ($action eq 'crawl') {
@@ -69,34 +68,34 @@ if (defined($state->{'action'})) {
 	}
 }
 
-elsif(defined($state->{'advanced'})) {
-	my @action = keys(%{$state->{'advanced'}});
-	my $id = $state->{'id'};
+elsif (defined $state{advanced}) {
+	my @action = keys %{$state{advanced}};
+	my $id = $state{id};
 
 	if ($action[0] eq 'full_recrawl') {
 		# User is forcing a full recrawl from management.
 		my $submit_values = 
-			$state->{'advanced'}{'full_recrawl'};
+			$state{advanced}{full_recrawl};
 		($vars, $template_file) = 
 			$overview->recrawl_collection($vars, $submit_values);
 	}
 }
 
-elsif (defined($state->{'edit'})) {
+elsif (defined $state{edit}) {
 	# Show edit share form.
-	my $collection = $state->{'edit'};
+	my $collection = $state{edit};
  	$template_file = $overview->edit_collection($vars, $collection);
 }
 
-elsif (defined($state->{'submit_edit'})) {
+elsif (defined $state{submit_edit}) {
 	# User submits modification for a collection;
 	
 	my $valid;
-	($vars, $valid) = $overview->submit_edit($vars, $state->{'share'});
+	($vars, $valid) = $overview->submit_edit($vars, $state{share});
 		
 	unless ($valid) {
 		# Something wrong. Show edit form again.
-		my $id = $vars->{'share'}{'id'};
+		my $id = $vars->{share}{id};
 		$template_file = $overview->edit_collection($vars, $id);
 	}
 	else {
@@ -107,16 +106,16 @@ elsif (defined($state->{'submit_edit'})) {
 
 
 
-elsif (defined($state->{'confirm_delete'})) {
-	my $id = $state->{'id'};
+elsif (defined $state{confirm_delete}) {
+	my $id = $state{id};
 	$vars = $overview->delete_collection_confirmed($vars, $id);
 	
 	$template_file = $overview->list_collections($vars);
 }
 
-elsif (defined $state->{'fetch_inner'}) {
+elsif (defined $state{fetch_inner}) {
 	$template_file = $overview->list_collections($vars);
-	$vars->{'show_only_inner'} = 1;
+	$vars->{show_only_inner} = 1;
 }
 
 else {
@@ -126,10 +125,10 @@ else {
 }
 
 
-print $cgi->header(-type => 'text/html', -expires => '-1h');
+print CGI::header(-type => 'text/html', -expires => '-1h', -charset => "UTF-8");
+$overview->process_tpl($template_file, $vars, ( 
+    ANYCASE => 0, # tpl system chokes on 'share.last', thinking last is token LAST
+    tpl_folders => 'overview', 
+    no_header => 1,
+));
 
-$Template::Stash::SCALAR_OPS->{escape} = sub { "\Q$_[0]\E" };
-my $template = Template->new(
-	{INCLUDE_PATH => './templates:./templates/overview:./templates/common',});
-$template->process($template_file, $vars)
-        or croak $template->error(), "\n";

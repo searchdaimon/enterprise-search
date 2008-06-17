@@ -1,5 +1,4 @@
 ## Boitho Administration configuration file
-# Namespace: config
 # Configuration file for bbadmin.
 package config;
 use strict;
@@ -9,6 +8,13 @@ our @ISA = qw(Exporter);
 our @EXPORT_OK = qw($CONFIG %CONFIG);
 our %CONFIG;
 our $CONFIG = \%CONFIG; #backwards compatible..
+
+# Group: Extra connectors
+$CONFIG{conn_base_dir} = "/tmp/conn";
+
+# Group: Template
+# Tmp path for compiled templates, etc.
+$CONFIG{tpl_tmp} = $ENV{BOITHOHOME} . "/var/webadmin_tmp";
 
 # Group: MySQL configuration
 
