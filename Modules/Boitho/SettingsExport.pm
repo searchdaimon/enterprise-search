@@ -36,6 +36,7 @@ sub export_settings($$) {
 	);
 
 	my $command = "mysqldump ".
+                "--complete-insert " .
 		"--no-create-info ".
 		"--password=\Q$pass\E ".
 		"--user=\Q$user\E ".
