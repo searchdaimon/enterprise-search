@@ -119,7 +119,7 @@ $CONFIG{login_htpasswd_path} = $ENV{BOITHOHOME} . "/cgi-bin/webadmin/.htpasswd";
     #"/home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd";
 $CONFIG{login_admin_user} = "admin";
 
-$CONFIG{adv_starred_fields} = ['msad_password', 'ldap_password'];
+$CONFIG{adv_starred_fields} = ['msad_password', 'ldap_password', 'sudo'];
 
 
 # Group: Network
