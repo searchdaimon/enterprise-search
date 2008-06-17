@@ -34,6 +34,7 @@ $CONFIG{'logfiles'} = {
         'bb_auto_update.log' => 'Blackbox auto update log',
         'searchdbb_stderr' => 'Search Error Log',
         'searchdbb_stdout' => 'Search Access Log',
+	'gc' => 'Garbage Collection',
 
 };
 
