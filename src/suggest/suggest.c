@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "../common/bstr.h"
 
@@ -71,10 +72,12 @@ suggest_destroy(struct suggest_data *sd)
 void
 suggest_destroy_si(struct suggest_input *si)
 {
+#ifdef WITH_ACL
 	if (si->aclallow)
 		acl_destroy(si->aclallow);
 	if (si->acldeny)
 		acl_destroy(si->acldeny);
+#endif
 	free(si->word);
 	free(si);
 }
@@ -159,12 +162,14 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 void
 suggest_most_used(struct suggest_data *sd)
 {
+	printf("Gathering most used...\n");
 	suffixtree_most_used(&sd->tree);
+	printf("Done collecting.\n");
 }
 
 struct suggest_input **
 #ifdef WITH_ACL
-suggest_find_prefix(struct suggest_data *sd, char *prefix, char *user)
+suggest_find_prefix(struct suggest_data *sd, char *prefix, char *user, char ***groups, int *num)
 #else
 suggest_find_prefix(struct suggest_data *sd, char *prefix)
 #endif
@@ -172,7 +177,7 @@ suggest_find_prefix(struct suggest_data *sd, char *prefix)
 #ifndef WITH_ACL
 	char *user = NULL;
 #endif 
-	return suffixtree_find_prefix(&sd->tree, prefix, user);
+	return suffixtree_find_prefix(&sd->tree, prefix, user, groups, num);
 }
 
 
@@ -193,7 +198,9 @@ main(int argc, char **argv)
 		fprintf(stderr, "Could not initialize suggest\n");
 		return 1;
 	}
-	printf("%d\n", suggest_read_frequency(sd, "/home/eirik/Boitho/boitho/websearch/lot/1/1/Exchangetest/dictionarywords"));
+	//printf("%d\n", suggest_read_frequency(sd, "/home/eirik/Boitho/boitho/websearch/lot/1/1/Exchangetest/dictionarywords"));
+	//printf("%d\n", suggest_read_frequency(sd, "/home/sdtest/src/boitho/websearch/var/somewords"));
+	printf("%d\n", suggest_read_frequency(sd, "/home/sdtest/src/boitho/websearch/var/dictionarywords"));
 	//printf("%d\n", suggest_read_frequency(sd, "testinput.list"));
 	//printf("%d\n", suggest_read_frequency(sd, "UnikeTermerMedForekomst.ENG"));
 	//printf("%d\n", suggest_read_frequency(sd, "liten.list"));
@@ -243,6 +250,8 @@ main(int argc, char **argv)
 	}
 #endif
 
+#if 0
+
 	//printf("Count %d\n", suffixtree_scan(&(sd->tree), 0));
 	{
 		struct suffixtree *sf = &(sd->tree);
@@ -283,6 +292,35 @@ main(int argc, char **argv)
 		}
 		free(buf);
 	} while(1);
+#endif
+
+	time_t  t0, t1; /* time_t is defined on <time.h> and <sys/types.h> as long */
+	clock_t c0, c1; /* clock_t is defined on <time.h> and <sys/types.h> as int */
+
+	printf ("using UNIX function time to measure wallclock time ... \n");
+	printf ("using UNIX function clock to measure CPU time ... \n");
+
+	t0 = time(NULL);
+	c0 = clock();
+
+	printf ("\tbegin (wall):            %ld\n", (long) t0);
+	printf ("\tbegin (CPU):             %d\n", (int) c0);
+
+	char *foo = strdup("a");
+	for (int i = 0; i < 1000; i++) {
+		suggest_find_prefix(sd, foo, "en");
+		foo[0]++;
+		if (foo[0] > 'z')
+			foo[0] = 'a';
+	}
+
+	t1 = time(NULL);
+	c1 = clock();
+
+	printf ("\tend (wall):              %ld\n", (long) t1);
+	printf ("\tend (CPU);               %d\n", (int) c1);
+	printf ("\telapsed wall clock time: %ld\n", (long) (t1 - t0));
+	printf ("\telapsed CPU time:        %f\n", (float) (c1 - c0)/CLOCKS_PER_SEC);
 
 	return 0;
 }

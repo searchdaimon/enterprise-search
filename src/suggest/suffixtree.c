@@ -285,23 +285,23 @@ suffixtree_find_word(struct suffixtree *root, char *word)
 	return _suffixtree_find_word(root, word, 0);
 }
 
-struct suggest_input **_suffixtree_find_prefix(struct suffixtree *, char *, unsigned int, char *);
+struct suggest_input **_suffixtree_find_prefix(struct suffixtree *, char *, unsigned int, char *, char ***, int *);
 
 static struct suggest_input **
-_suffixtree_find_prefix_children(struct suffixtree *root, char *word, unsigned int len, char *user)
+_suffixtree_find_prefix_children(struct suffixtree *root, char *word, unsigned int len, char *user, char ***groups, int *num)
 {
 	struct suffixtree *sf;
 
 	forchildren(sf, root) {
 		if ((unsigned int)find_common_substr(word+len, sf->suffix) > 0)
 			return _suffixtree_find_prefix(sf, word,
-			                               len + strlen(sf->suffix), user);
+			                               len + strlen(sf->suffix), user, groups, num);
 	}
 	return NULL;
 }
 
 struct suggest_input **
-_suffixtree_find_prefix(struct suffixtree *root, char *word, unsigned int len, char *user)
+_suffixtree_find_prefix(struct suffixtree *root, char *word, unsigned int len, char *user, char ***groups, int *num)
 {
 	struct suggest_input **best;
 
@@ -315,7 +315,7 @@ _suffixtree_find_prefix(struct suffixtree *root, char *word, unsigned int len, c
 		i = 0;
 		for (cur = root->best; *cur != NULL; cur++) {
 #ifdef WITH_ACL
-			if (!acl_is_allowed((*cur)->aclallow, (*cur)->acldeny, user)) {
+			if (!acl_is_allowed((*cur)->aclallow, (*cur)->acldeny, user, groups, num)) {
 				continue;
 			}
 #endif
@@ -326,14 +326,14 @@ _suffixtree_find_prefix(struct suffixtree *root, char *word, unsigned int len, c
 		return best;
 	}
 	else {
-		return _suffixtree_find_prefix_children(root, word, len, user);
+		return _suffixtree_find_prefix_children(root, word, len, user, groups, num);
 	}
 }
 
 struct suggest_input **
-suffixtree_find_prefix(struct suffixtree *root, char *word, char *user)
+suffixtree_find_prefix(struct suffixtree *root, char *word, char *user, char ***groups, int *num)
 {
-	return _suffixtree_find_prefix(root, word, 0, user);
+	return _suffixtree_find_prefix(root, word, 0, user, groups, num);
 }
 
 

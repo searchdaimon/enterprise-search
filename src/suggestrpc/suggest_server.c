@@ -96,6 +96,8 @@ get_best_results_2_svc(struct senddata *argp, struct svc_req *rqstp)
 	static int called = 0;
 	int i = 5;
 	struct suggest_input **si, **si2;
+	char **groups;
+	int num;
 
 #if 0
 	if (pthread_mutex_lock(&mutex) != 0) {
@@ -126,15 +128,17 @@ get_best_results_2_svc(struct senddata *argp, struct svc_req *rqstp)
 
 	printf("Argument: %s\n", *argp);
 	called = 1;
+	groups = NULL;
 #if 1
 	nlp = &result.numbest_res_u.list;
-	for (si2 = si = suggest_find_prefix(sd, argp->word, argp->user);
+	for (si2 = si = suggest_find_prefix(sd, argp->word, argp->user, &groups, &num);
 	     si != NULL && *si != NULL;
 	     si++) {
 		nl = *nlp = (namenode *)
 			calloc(1, sizeof(namenode));
 		if (nl == NULL) {
 			result._errno = errno;
+			acl_free_reslist(groups, num);
 			return &result;
 		}
 		nl->name = strdup((*si)->word);
@@ -143,6 +147,7 @@ get_best_results_2_svc(struct senddata *argp, struct svc_req *rqstp)
 		//free((*si)->word);
 		//free((*si));
 	}
+	acl_free_reslist(groups, num);
 
 	*nlp = (namelist)NULL;
 	result._errno = 0;

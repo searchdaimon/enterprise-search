@@ -21,7 +21,7 @@ struct suggest_input {
 void suggest_most_used(struct suggest_data *);
 int suggest_read_frequency(struct suggest_data *, char *);
 #ifdef WITH_ACL
-struct suggest_input **suggest_find_prefix(struct suggest_data *, char *, char *);
+struct suggest_input **suggest_find_prefix(struct suggest_data *, char *, char *, char ***, int *);
 #else
 struct suggest_input **suggest_find_prefix(struct suggest_data *, char *);
 #endif

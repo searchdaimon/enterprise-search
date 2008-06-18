@@ -8,7 +8,7 @@
 #include "acl.h"
 #include "../boithoadClientLib/liboithoaut.h"
 
-#define MIN(x,y) (x > y ? y : x)
+#define MIN(x,y) ((x) > (y) ? (y) : (x))
 
 int acl_in_list(char *, char **);
 
@@ -23,33 +23,34 @@ acl_free_reslist(char **reslist, int n)
 }
 
 int
-acl_is_allowed(char **allow, char **deny, char *group)
+acl_is_allowed(char **allow, char **deny, char *group, char ***groups, int *num)
 {
-	int num;
 	int i;
-	char **groups;
 	int gotallow = 0;
+
+	printf("Looking up: %s\n", group);
 
 	if (acl_in_list(group, deny))
 		return 0;
 	if (acl_in_list(group, allow))
 		gotallow = 1;
-	if (!boithoad_groupsForUser(group, &groups, &num))
-		return 0;
 
-	for (i = 0; i < num; i++) {
+	if (*groups == NULL)
+		if (!boithoad_groupsForUser(group, groups, num))
+			return 0;
+
+	for (i = 0; i < *num; i++) {
 		if (!gotallow) {
-			if (acl_in_list(groups[i], allow)) {
+			if (acl_in_list((*groups)[i], allow)) {
 				gotallow = 1;
 			}
 		}
-		if (acl_in_list(groups[i], deny)) {
-			acl_free_reslist(groups, num);
+		if (acl_in_list((*groups)[i], deny)) {
 			return 0;
 		}
 	}
 
-	acl_free_reslist(groups, num);
+	//acl_free_reslist(groups, num);
 	return gotallow;
 }
 
