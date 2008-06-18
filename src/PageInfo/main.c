@@ -249,7 +249,7 @@ int main (int argc, char *argv[]) {
 			printf("words:\n");
 			//run_html_parser( DocumentIndexPost.Url, htmlBuffer, htmlBufferSize, fn );
 			char *title, *body;
-			html_parser_run(DocumentIndexPost.Url,htmlBuffer, htmlBufferSize,&title, &body,fn,NULL );
+			html_parser_run(url,htmlBuffer, htmlBufferSize,&title, &body,fn,NULL );
 		}
 		if (optResource) {
 			char buf[500000];
@@ -287,7 +287,9 @@ int main (int argc, char *argv[]) {
 
 			printf("adult %i\n",AdultWeight);
 		}
-
+		free(url);
+		free(acl_allowbuffer);
+		free(acl_deniedbuffer);
 	}
 	else {
 		printf("Cant read post\n");
