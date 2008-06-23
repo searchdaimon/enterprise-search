@@ -17,7 +17,7 @@
 void
 usage(void)
 {
-	errx(1, "%s repository", "reponame");
+	errx(1, "Usage: %s repository", "reporead");
 }
 
 /* Repository read functions */
