@@ -120,6 +120,7 @@ int ldap_genBaseName(char ldap_base[],const char ldap_domain[]) {
   printf("\tfound %d token(s):\n", TokCount);
 
   Count = 0;
+  ldap_base[0] = '\0';
   while( (Data[Count] != NULL) ) {
     printf("\t\t%d\t\"%s\"\n", Count, Data[Count]);
 	sprintf(buff,"dc=%s,",Data[Count]);
@@ -917,7 +918,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 				recvall(socket,user_username,sizeof(user_username));
 				/* We do not care about the specified ldap base when looking for groups */
 				/* XXX: Is this correct? */
-				ldap_genBaseName(ldapbasegroup,ldap_domain);
+				ldap_genBaseName(ldapbasegroup, ldap_domain);
 
 				printf("groupsForUser\n");
 				printf("user_username %s\n",user_username);
