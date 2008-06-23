@@ -8,9 +8,9 @@ main(void)
 {
 	RepositoryHeader_t h;
 	char *p, *p2;
-#define PRINT_OFFSET(name) p = &h.name; printf("%s offset is: %d and has size: %d\n", #name, p - p2, sizeof(h.name));
+#define PRINT_OFFSET(name) p = (char *)&h.name; printf("%s offset is: %d and has size: %d\n", #name, p - p2, sizeof(h.name));
 
-	p2 = &h;
+	p2 = (char *)&h;
 	PRINT_OFFSET(DocID);
 	PRINT_OFFSET(url);
 	PRINT_OFFSET(content_type);
