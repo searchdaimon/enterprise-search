@@ -21,6 +21,12 @@ usage(void)
 }
 
 /* Repository read functions */
+/* Return values:
+ *  0: Unrecoverable error
+ *  1: All OK
+ *  2: End of data
+ *  3: Hopfully recoverable error
+ */
 int
 repo_read_entry(FILE *fp, RepositoryHeader_t *header, char **data, size_t *datalen, char **image, size_t *imagelen)
 {
