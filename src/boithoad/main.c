@@ -609,7 +609,7 @@ void
 gather_groups(struct hashtable *grouphash, LDAP **ld, char *ldap_base, char *sid)
 {
 	char filter[128];
-	char **respons;
+	char **response;
 	int nrOfSearcResults;
 	int i;
 
@@ -617,46 +617,54 @@ gather_groups(struct hashtable *grouphash, LDAP **ld, char *ldap_base, char *sid
 	/* XXX: hack */
 	if (strncasecmp(sid, "S-", 2) == 0) {
 		sprintf(filter, "(objectSid=%s)", sid);
-		if (!ldap_simple_search(ld, filter, "sAMAccountName", &respons, &nrOfSearcResults, ldap_base)) {
+		if (!ldap_simple_search(ld, filter, "sAMAccountName", &response, &nrOfSearcResults, ldap_base)) {
 			printf("Unable to get sAMAccountName from objectSid\n");
 			printf("Filter: %s, attributes: %s\n", filter, "sAMAccountName");
 		} else {
 			char *id;
-			printf( "We got something like: %s from %s\n", respons[0], sid);
+			printf( "We got something like: %s from %s\n", response[0], sid);
 
-			id = strdup(respons[0]);
-			if (insert_group(grouphash, id))
-				gather_groups(grouphash, ld, ldap_base, id);
-			else
-				free(id);
-			ldap_simple_free(respons);
+			if (nrOfSearcResults > 0) {
+				id = strdup(response[0]);
+				if (insert_group(grouphash, id))
+					gather_groups(grouphash, ld, ldap_base, id);
+				else
+					free(id);
+				fprintf(stderr, "Foop: %s\n", sid);
+			} else {
+				fprintf(stderr, "Unable to get account name from: %s\n", sid);
+			}
+			ldap_simple_free(response);
 		}
 	} else  {
 		sprintf(filter, "(sAMAccountName=%s)", sid);
 	}
-	if (!ldap_simple_search(ld, filter, "memberOf", &respons, &nrOfSearcResults, ldap_base)) {
+	if (!ldap_simple_search(ld, filter, "memberOf", &response, &nrOfSearcResults, ldap_base)) {
 		printf("Unable to get memberOf\n");
 		return;
 	}
 	for (i = 0; i < nrOfSearcResults; i++) {
 		int n_results;
-		char **respons2;
+		char **response2;
 		char *id;
 
-		if (!ldap_simple_search(ld, NULL, "objectSid", &respons2, &n_results, respons[i])) {
+		if (!ldap_simple_search(ld, NULL, "objectSid", &response2, &n_results, response[i])) {
 			printf("Unable to get objectSid\n");
 			return;
 		}
-		printf("Results: %d\n", n_results);
 
-		id = strdup(respons2[0]);
-		if (insert_group(grouphash, id))
-			gather_groups(grouphash, ld, ldap_base, id);
-		else
-			free(id);
-		ldap_simple_free(respons2);
+		if (n_results > 0) {
+			id = strdup(response2[0]);
+			if (insert_group(grouphash, id))
+				gather_groups(grouphash, ld, ldap_base, id);
+			else
+				free(id);
+		} else {
+			fprintf(stderr, "Unable to get sid from: %s\n", response[i]);
+		}
+		ldap_simple_free(response2);
 	}
-	ldap_simple_free(respons);			
+	ldap_simple_free(response);			
 }
 
 int
@@ -948,9 +956,13 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 					send_failure(socket);
 					return;
 				}
-				id = strdup(respons[0]);
-				if (!insert_group(grouphash, id))
-					free(id);
+				if (nrOfSearcResults > 0) {
+					id = strdup(respons[0]);
+					if (!insert_group(grouphash, id))
+						free(id);
+				} else {
+					fprintf(stderr, "Could not resolve primaryGroup name: %s\n", groupsid);
+				}
 				ldap_simple_free(respons);			
 
 				/* Add Everyone and the username for the user */
