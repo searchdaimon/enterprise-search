@@ -8,12 +8,14 @@ use DBI; #bruker DBI databse interfase
 
 sub crawlupdate {
 	
-	my ($pointer, $opt ) = @_;	
+	my ($self, $pointer, $opt ) = @_;	
 
 	print "options:\n";
 	foreach my $k (keys %{ $opt }) {
 		print "$k: $opt->{$k}\n";
 	}
+
+	print "inc: \n", join(", ", @INC), "\n";
 
 	####################################################################
 	# Settup
@@ -62,4 +64,9 @@ sub crawlupdate {
 	print "Thank you for using SD Perl Crawler. Going away now.\n";
 
 	SD::Crawl::pdocumentError($pointer,"aaa test");
+}
+
+sub crawlpatAcces {
+        my ($self, $pointer, $opt ) = @_;
+
 }
