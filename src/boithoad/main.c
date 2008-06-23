@@ -908,12 +908,16 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 			else if (packedHedder.command == bad_groupsForUser) {
 				struct hashtable *grouphash;
 				char primarygroup[64];
+				char ldapbasegroup[128];
 				char *sid;
 				char *groupsid;
 				char *id;
 				struct hashtable_itr *itr;
 
 				recvall(socket,user_username,sizeof(user_username));
+				/* We do not care about the specified ldap base when looking for groups */
+				/* XXX: Is this correct? */
+				ldap_genBaseName(ldapbasegroup,ldap_domain);
 
 				printf("groupsForUser\n");
 				printf("user_username %s\n",user_username);
@@ -937,21 +941,21 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 				if (!insert_group(grouphash, sid))
 					free(sid);
 				else
-					gather_groups(grouphash, &ld, ldap_base, sid);
+					gather_groups(grouphash, &ld, ldapbasegroup, sid);
 				/* 2. Replace last element */
 				groupsid = strdup(sid);
 				sid_replacelast(groupsid, respons[*respons[0] == 'S' ? 1 : 0]);
 				if (!insert_group(grouphash, groupsid))
 					free(groupsid);
 				else
-					gather_groups(grouphash, &ld, ldap_base, groupsid);
+					gather_groups(grouphash, &ld, ldapbasegroup, groupsid);
 				printf("Primary group: %s\n", groupsid);
 				printf("%p\n", respons);
 				ldap_simple_free(respons);			
 
 				/* 3. Get group name */
 				sprintf(filter, "(objectSid=%s)", groupsid);
-				if (!ldap_simple_search(&ld, filter, "sAMAccountName", &respons, &nrOfSearcResults, ldap_base)) {
+				if (!ldap_simple_search(&ld, filter, "sAMAccountName", &respons, &nrOfSearcResults, ldapbasegroup)) {
 					printf("Unable to get userSID and primaryGroup");
 					send_failure(socket);
 					return;
