@@ -71,6 +71,7 @@ INSERT INTO `config` VALUES ('recrawl_schedule_end', '7');
 INSERT INTO `config` VALUES ('suggdict_run_hour', '10');
 INSERT INTO `config` VALUES ('suggdict_last_run', '1199975440');
 INSERT INTO `config` VALUES ('recrawl_recheck_rate', '1440');
+INSERT INTO `config` VALUES ('setup_wizard_done', '0');
 
 # --------------------------------------------------------
 
