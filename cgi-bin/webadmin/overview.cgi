@@ -96,7 +96,6 @@ elsif (defined $state{submit_edit}) {
        ($vars, $valid) = $overview->submit_edit($vars, $state{share});
 
 	
-	my $valid = $overview->submit_edit($vars, $state{share});
 		
 	unless ($valid) {
 		# Something wrong. Show edit form again.
