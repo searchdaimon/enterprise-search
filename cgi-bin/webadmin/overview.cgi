@@ -19,11 +19,13 @@ my %state = $overview->get_state();
 
 { # Redirect to setup wizard if first timer.
     my $cfg = Sql::Config->new($overview->get_dbh);
-    if (not defined $state{fetch_inner} and
-        not $cfg->get_setting("setup_firstime")) {
+    my $setup_done = $cfg->get_setting("setup_wizard_done");
+    if (not defined $state{fetch_inner}
+        and defined $setup_done # backwards compat: not defined => old installation
+        and not $setup_done) {
 
         print "Location: setup.cgi\n\n";
-        $cfg->insert_setting("setup_firstime", 1);
+        $cfg->insert_setting("setup_wizard_done", 1);
         exit;
     }
 }
@@ -89,9 +91,12 @@ elsif (defined $state{edit}) {
 
 elsif (defined $state{submit_edit}) {
 	# User submits modification for a collection;
+
+       my $valid;
+       ($vars, $valid) = $overview->submit_edit($vars, $state{share});
+
 	
-	my $valid;
-	($vars, $valid) = $overview->submit_edit($vars, $state{share});
+	my $valid = $overview->submit_edit($vars, $state{share});
 		
 	unless ($valid) {
 		# Something wrong. Show edit form again.
