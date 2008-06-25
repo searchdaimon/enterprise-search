@@ -8,7 +8,7 @@
     [% WRAPPER 'template_message.html' type = 'error' %]
         Invalid characters in collection name. 
         Collection names can only contain characters <i>a-z</i>, 
-        <i>numbers</i>, <i>-</i>, <i>_</i> and <i>spaces</i>.
+        <i>numbers</i>, <i>-</i>, and <i>_</i>.
     [% END %]
 [% ELSIF error_missing_connector %]
 	[% WRAPPER 'template_message.html' 
