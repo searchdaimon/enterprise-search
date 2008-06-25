@@ -8,7 +8,7 @@ tlcd-gt14_name = tlcd-gt14
 tlcd-gt14_version = 0.0.2
 
 boitho-ad_name = boitho-ad
-boitho-ad_version = 0.3.12
+boitho-ad_version = 0.3.13
 
 boitho-searchdbb_name = boitho-searchdbb
 boitho-searchdbb_version = 5.5.31
@@ -29,7 +29,7 @@ boitho-apaceconf_name = boitho-apaceconf
 boitho-apaceconf_version = 1.3.0
 
 boitho-bbadmin_name = boitho-bbadmin
-boitho-bbadmin_version = 2.8.28
+boitho-bbadmin_version = 2.8.29
 
 boitho-everrun_name = boitho-everrun
 boitho-everrun_version = 2.0.3
@@ -44,17 +44,17 @@ boitho-webclient_name = boitho-webclient
 boitho-webclient_version = 6.0.38
 
 boithobb-setuid_name = boithobb-setuid
-boithobb-setuid_version = 1.0.14
+boithobb-setuid_version = 1.0.15
 
 
 boithobb-crawl_watch_name = boithobb-crawl_watch
 boithobb-crawl_watch_version = 1.0.12
 
 boithobb-bbAutoUpdate_name = bbAutoUpdate
-boithobb-bbAutoUpdate_version = 1.0.2
+boithobb-bbAutoUpdate_version = 1.0.3
 
 boithobb-sqlUpdate_name = boithobb-sqlUpdate
-boithobb-sqlUpdate_version = 1.7.4
+boithobb-sqlUpdate_version = 1.7.5
 
 boithobb-filepermissions_name = boithobb-filepermissions
 boithobb-filepermissions_version = 0.5.5
@@ -66,7 +66,7 @@ boitho-meta_name = boitho-meta
 boitho-meta_version = 0.2
 
 boitho-phonehome_name = boitho-phonehome
-boitho-phonehome_version = 0.2
+boitho-phonehome_version = 0.5
 
 boitho-dummy_name = boitho-dummy
 boitho-dummy_version = 0.1
@@ -75,7 +75,7 @@ boitho-auth_name = boitho_mod_auth
 boitho-auth_version = 1.1
 
 boitho-scripts_name = boitho-scripts
-boitho-scripts_version = 1.0
+boitho-scripts_version = 1.1
 
 boitho-dictionary_name = boitho-dictionary
 boitho-dictionary_version = 1.4
@@ -120,7 +120,7 @@ iindex:
 bbadmin:
 	echo BOITHOHOME
 	echo $(BOITHOHOME)
-	perl rpmmagic.pl --requires "perl-Config-Tiny perl-XML-Simple boitho-repomod perl-Apache-Htpasswd mysql mysql-server boitho-infoquery boithobb-setuid boithobb-sqlUpdate==1.6.2 bbAutoUpdate" --post "chown apache:apache /home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd" $(boitho-bbadmin_name) $(boitho-bbadmin_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/webadmin Modules config/setup.txt
+	perl rpmmagic.pl --pre "mkdir --parents --mode=777 /home/boitho/boithoTools/var/webadmin_tmp/" --requires "perl-Config-Tiny perl-XML-Simple boitho-repomod perl-Apache-Htpasswd mysql mysql-server boitho-infoquery boithobb-setuid boithobb-sqlUpdate==1.6.2 bbAutoUpdate" --post "chown apache:apache /home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd" $(boitho-bbadmin_name) $(boitho-bbadmin_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/webadmin Modules config/setup.txt
 
 	rpmbuild -bb $(boitho-bbadmin_name).spec
 
