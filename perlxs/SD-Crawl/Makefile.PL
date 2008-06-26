@@ -14,4 +14,14 @@ WriteMakefile(
     INC               => '-I.', # e.g., '-I. -I/usr/include/other'
 	# Un-comment this if you add C files to link with later:
     # OBJECT            => '$(O_FILES)', # link all the C files too
+	'MYEXTLIB' => 'clib/libmylib$(LIB_EXT)'
 );
+
+
+sub MY::postamble {
+'
+$(MYEXTLIB): clib/Makefile
+	cd clib && $(MAKE) $(PASSTHRU)
+';
+}
+

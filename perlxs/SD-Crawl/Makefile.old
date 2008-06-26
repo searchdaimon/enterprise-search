@@ -15,6 +15,7 @@
 #     DEFINE => q[]
 #     INC => q[-I.]
 #     LIBS => [q[]]
+#     MYEXTLIB => q[clib/libmylib$(LIB_EXT)]
 #     NAME => q[SD::Crawl]
 #     PREREQ_PM => {  }
 #     VERSION_FROM => q[lib/SD/Crawl.pm]
@@ -112,6 +113,7 @@ DESTINSTALLVENDORMAN3DIR = $(DESTDIR)$(INSTALLVENDORMAN3DIR)
 PERL_LIB = /usr/local/lib/perl5/5.8.3
 PERL_ARCHLIB = /usr/local/lib/perl5/5.8.3/i686-linux-thread-multi-64int
 LIBPERL_A = libperl.a
+MYEXTLIB = clib/libmylib$(LIB_EXT)
 FIRST_MAKEFILE = Makefile
 MAKEFILE_OLD = $(FIRST_MAKEFILE).old
 MAKE_APERL_FILE = $(FIRST_MAKEFILE).aperl
@@ -458,6 +460,7 @@ static :: $(FIRST_MAKEFILE) $(INST_STATIC)
 
 $(INST_STATIC): $(OBJECT) $(MYEXTLIB) $(INST_ARCHAUTODIR)$(DIRFILESEP).exists
 	$(RM_RF) $@
+	$(CP) $(MYEXTLIB) $@
 	$(FULL_AR) $(AR_STATIC_ARGS) $@ $(OBJECT) && $(RANLIB) $@
 	$(CHMOD) $(PERM_RWX) $@
 	$(NOECHO) $(ECHO) "$(EXTRALIBS)" > $(INST_ARCHAUTODIR)/extralibs.ld
@@ -487,11 +490,17 @@ manifypods : pure_all  \
 
 # --- MakeMaker subdirs section:
 
-# none
+# The default clean, realclean and test targets in this Makefile
+# have automatically been given entries for each subdir.
+
+
+subdirs ::
+	$(NOECHO)cd clib && $(MAKE) -f $(FIRST_MAKEFILE) all $(PASTHRU)
+
 
 # --- MakeMaker clean_subdirs section:
 clean_subdirs :
-	$(NOECHO) $(NOOP)
+	-cd clib && $(TEST_F) $(FIRST_MAKEFILE) && $(MAKE) clean
 
 
 # --- MakeMaker clean section:
@@ -506,7 +515,8 @@ clean :: clean_subdirs
 
 # --- MakeMaker realclean_subdirs section:
 realclean_subdirs :
-	$(NOECHO) $(NOOP)
+	-cd clib && $(TEST_F) $(MAKEFILE_OLD) && $(MAKE) -f $(MAKEFILE_OLD) realclean
+	-cd clib && $(TEST_F) $(FIRST_MAKEFILE) && $(MAKE) realclean
 
 
 # --- MakeMaker realclean section:
@@ -811,7 +821,7 @@ $(MAP_TARGET) :: static $(MAKE_APERL_FILE)
 $(MAKE_APERL_FILE) : $(FIRST_MAKEFILE)
 	$(NOECHO) $(ECHO) Writing \"$(MAKE_APERL_FILE)\" for this $(MAP_TARGET)
 	$(NOECHO) $(PERLRUNINST) \
-		Makefile.PL DIR= \
+		Makefile.PL DIR=clib \
 		MAKEFILE=$(MAKE_APERL_FILE) LINKTYPE=static \
 		MAKEAPERL=1 NORECURS=1 CCCDLFLAGS=
 
@@ -827,6 +837,7 @@ TESTDB_SW = -d
 testdb :: testdb_$(LINKTYPE)
 
 test :: $(TEST_TYPE)
+	$(NOECHO) cd clib && $(TEST_F) $(FIRST_MAKEFILE) && $(MAKE) test $(PASTHRU)
 
 test_dynamic :: pure_all
 	PERL_DL_NONLAZY=1 $(FULLPERLRUN) "-MExtUtils::Command::MM" "-e" "test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')" $(TEST_FILES)
@@ -868,8 +879,209 @@ pm_to_blib: $(TO_INST_PM)
 
 # --- MakeMaker selfdocument section:
 
+# Full list of MakeMaker attribute values:
+# ABSPERL => q[$(PERL)]
+# ABSPERLRUN => q[$(ABSPERL)]
+# ABSPERLRUNINST => q[$(ABSPERLRUN) "-I$(INST_ARCHLIB)" "-I$(INST_LIB)"]
+# ABSTRACT => q[Perl extension for blah blah blah]
+# ABSTRACT_FROM => q[lib/SD/Crawl.pm]
+# AR => q[ar]
+# ARGS => { NAME=>q[SD::Crawl], AUTHOR=>q[A. U. Thor <boitho@boitho.com>], LIBS=>[q[]], INC=>q[-I.], DEFINE=>q[], MYEXTLIB=>q[clib/libmylib$(LIB_EXT)], VERSION_FROM=>q[lib/SD/Crawl.pm], ABSTRACT_FROM=>q[lib/SD/Crawl.pm], PREREQ_PM=>{  } }
+# AR_STATIC_ARGS => q[cr]
+# AUTHOR => q[A. U. Thor <boitho@boitho.com>]
+# BASEEXT => q[Crawl]
+# BOOTDEP => q[]
+# C => [q[Crawl.c]]
+# CC => q[cc]
+# CCCDLFLAGS => q[-fpic]
+# CCDLFLAGS => q[-rdynamic]
+# CCFLAGS => q[-D_REENTRANT -D_GNU_SOURCE -DTHREADS_HAVE_PIDS -fno-strict-aliasing -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I/usr/include/gdbm]
+# CFLAGS => q[ CCFLAGS = -D_REENTRANT -D_GNU_SOURCE -DTHREADS_HAVE_PIDS -fno-strict-aliasing -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I/usr/include/gdbm OPTIMIZE = -O3 PERLTYPE =  MPOLLUTE =  ]
+# CHILDREN => { PACK002=>PACK002=HASH(...) }
+# CHMOD => q[chmod]
+# CI => q[ci -u]
+# COMPRESS => q[gzip --best]
+# CONFIG => [q[ar], q[cc], q[cccdlflags], q[ccdlflags], q[dlext], q[dlsrc], q[ld], q[lddlflags], q[ldflags], q[libc], q[lib_ext], q[obj_ext], q[osname], q[osvers], q[ranlib], q[sitelibexp], q[sitearchexp], q[so], q[exe_ext], q[full_ar], q[vendorarchexp], q[vendorlibexp]]
+# CONST_CCCMD => q[CCCMD = $(CC) -c $(PASTHRU_INC) $(INC) \ 	$(CCFLAGS) $(OPTIMIZE) \ 	$(PERLTYPE) $(MPOLLUTE) $(DEFINE_VERSION) \ 	$(XS_DEFINE_VERSION)]
+# CP => q[cp]
+# DEFINE => q[]
+# DEFINE_VERSION => q[-D$(VERSION_MACRO)=\"$(VERSION)\"]
+# DESTDIR => q[]
+# DESTINSTALLARCHLIB => q[$(DESTDIR)$(INSTALLARCHLIB)]
+# DESTINSTALLBIN => q[$(DESTDIR)$(INSTALLBIN)]
+# DESTINSTALLMAN1DIR => q[$(DESTDIR)$(INSTALLMAN1DIR)]
+# DESTINSTALLMAN3DIR => q[$(DESTDIR)$(INSTALLMAN3DIR)]
+# DESTINSTALLPRIVLIB => q[$(DESTDIR)$(INSTALLPRIVLIB)]
+# DESTINSTALLSCRIPT => q[$(DESTDIR)$(INSTALLSCRIPT)]
+# DESTINSTALLSITEARCH => q[$(DESTDIR)$(INSTALLSITEARCH)]
+# DESTINSTALLSITEBIN => q[$(DESTDIR)$(INSTALLSITEBIN)]
+# DESTINSTALLSITELIB => q[$(DESTDIR)$(INSTALLSITELIB)]
+# DESTINSTALLSITEMAN1DIR => q[$(DESTDIR)$(INSTALLSITEMAN1DIR)]
+# DESTINSTALLSITEMAN3DIR => q[$(DESTDIR)$(INSTALLSITEMAN3DIR)]
+# DESTINSTALLVENDORARCH => q[$(DESTDIR)$(INSTALLVENDORARCH)]
+# DESTINSTALLVENDORBIN => q[$(DESTDIR)$(INSTALLVENDORBIN)]
+# DESTINSTALLVENDORLIB => q[$(DESTDIR)$(INSTALLVENDORLIB)]
+# DESTINSTALLVENDORMAN1DIR => q[$(DESTDIR)$(INSTALLVENDORMAN1DIR)]
+# DESTINSTALLVENDORMAN3DIR => q[$(DESTDIR)$(INSTALLVENDORMAN3DIR)]
+# DEV_NULL => q[> /dev/null 2>&1]
+# DIR => [q[clib]]
+# DIRFILESEP => q[/]
+# DIR_TARGET => { PACK001=HASH(...)=>{ $(INST_ARCHAUTODIR)=>q[3], $(INST_LIBDIR)=>q[1], $(INST_AUTODIR)=>q[1], $(INST_MAN3DIR)=>q[1] } }
+# DISTNAME => q[SD-Crawl]
+# DISTVNAME => q[SD-Crawl-0.01]
+# DIST_CP => q[best]
+# DIST_DEFAULT => q[tardist]
+# DLBASE => q[$(BASEEXT)]
+# DLEXT => q[so]
+# DLSRC => q[dl_dlopen.xs]
+# DOC_INSTALL => q[$(PERLRUN) "-MExtUtils::Command::MM" -e perllocal_install]
+# ECHO => q[echo]
+# ECHO_N => q[echo -n]
+# EQUALIZE_TIMESTAMP => q[$(PERLRUN) "-MExtUtils::Command" -e eqtime]
+# EXE_EXT => q[]
+# EXPORT_LIST => q[]
+# FIRST_MAKEFILE => q[Makefile]
+# FULLEXT => q[SD/Crawl]
+# FULLPERL => q[/usr/local/bin/perl]
+# FULLPERLRUN => q[$(FULLPERL)]
+# FULLPERLRUNINST => q[$(FULLPERLRUN) "-I$(INST_ARCHLIB)" "-I$(INST_LIB)"]
+# FULL_AR => q[/usr/bin/ar]
+# H => [q[ppport.h]]
+# HAS_LINK_CODE => q[1]
+# INC => q[-I.]
+# INSTALLARCHLIB => q[$(PERLPREFIX)/lib/perl5/5.8.3/i686-linux-thread-multi-64int]
+# INSTALLBIN => q[$(PERLPREFIX)/bin]
+# INSTALLDIRS => q[site]
+# INSTALLMAN1DIR => q[$(PERLPREFIX)/share/man/man1]
+# INSTALLMAN3DIR => q[$(PERLPREFIX)/share/man/man3]
+# INSTALLPRIVLIB => q[$(PERLPREFIX)/lib/perl5/5.8.3]
+# INSTALLSCRIPT => q[$(PERLPREFIX)/bin]
+# INSTALLSITEARCH => q[$(SITEPREFIX)/lib/perl5/site_perl/5.8.3/i686-linux-thread-multi-64int]
+# INSTALLSITEBIN => q[$(SITEPREFIX)/bin]
+# INSTALLSITELIB => q[$(SITEPREFIX)/lib/perl5/site_perl/5.8.3]
+# INSTALLSITEMAN1DIR => q[$(SITEPREFIX)/share/man/man1]
+# INSTALLSITEMAN3DIR => q[$(SITEPREFIX)/share/man/man3]
+# INSTALLVENDORARCH => q[]
+# INSTALLVENDORBIN => q[]
+# INSTALLVENDORLIB => q[]
+# INSTALLVENDORMAN1DIR => q[]
+# INSTALLVENDORMAN3DIR => q[]
+# INST_ARCHAUTODIR => q[$(INST_ARCHLIB)/auto/$(FULLEXT)]
+# INST_ARCHLIB => q[blib/arch]
+# INST_ARCHLIBDIR => q[$(INST_ARCHLIB)/SD]
+# INST_AUTODIR => q[$(INST_LIB)/auto/$(FULLEXT)]
+# INST_BIN => q[blib/bin]
+# INST_BOOT => q[$(INST_ARCHAUTODIR)/$(BASEEXT).bs]
+# INST_DYNAMIC => q[$(INST_ARCHAUTODIR)/$(DLBASE).$(DLEXT)]
+# INST_LIB => q[blib/lib]
+# INST_LIBDIR => q[$(INST_LIB)/SD]
+# INST_MAN1DIR => q[blib/man1]
+# INST_MAN3DIR => q[blib/man3]
+# INST_SCRIPT => q[blib/script]
+# INST_STATIC => q[$(INST_ARCHAUTODIR)/$(BASEEXT)$(LIB_EXT)]
+# LD => q[cc]
+# LDDLFLAGS => q[-shared -L/usr/local/lib]
+# LDFLAGS => q[ -L/usr/local/lib]
+# LDFROM => q[$(OBJECT)]
+# LD_RUN_PATH => q[]
+# LIBC => q[/lib/libc-2.2.5.so]
+# LIBPERL_A => q[libperl.a]
+# LIBS => [q[]]
+# LIB_EXT => q[.a]
+# LINKTYPE => q[dynamic]
+# MAKEFILE => q[Makefile]
+# MAKEFILE_OLD => q[$(FIRST_MAKEFILE).old]
+# MAKEMAKER => q[/usr/local/lib/perl5/5.8.3/ExtUtils/MakeMaker.pm]
+# MAKE_APERL_FILE => q[$(FIRST_MAKEFILE).aperl]
+# MAN1EXT => q[1]
+# MAN1PODS => {  }
+# MAN3EXT => q[3]
+# MAN3PODS => { lib/SD/Crawl.pm=>q[$(INST_MAN3DIR)/SD::Crawl.$(MAN3EXT)] }
+# MAP_TARGET => q[perl]
+# MKPATH => q[$(PERLRUN) "-MExtUtils::Command" -e mkpath]
+# MM_REVISION => q[1.133]
+# MM_Unix_VERSION => q[1.42]
+# MM_VERSION => q[6.17]
+# MOD_INSTALL => q[$(PERLRUN) -MExtUtils::Install -e 'install({@ARGV}, '\''$(VERBINST)'\'', 0, '\''$(UNINST)'\'');']
+# MV => q[mv]
+# MYEXTLIB => q[clib/libmylib$(LIB_EXT)]
+# NAME => q[SD::Crawl]
+# NAME_SYM => q[SD_Crawl]
+# NEEDS_LINKING => q[1]
+# NOECHO => q[@]
+# NOOP => q[$(SHELL) -c true]
+# OBJECT => q[$(BASEEXT)$(OBJ_EXT)]
+# OBJ_EXT => q[.o]
+# OPTIMIZE => q[-O3]
+# OSNAME => q[linux]
+# OSVERS => q[2.4.22-pre6]
+# O_FILES => [q[Crawl.o]]
+# PARENT_NAME => q[SD]
+# PERL => q[/usr/local/bin/perl]
+# PERLMAINCC => q[$(CC)]
+# PERLPREFIX => q[/usr/local]
+# PERLRUN => q[$(PERL)]
+# PERLRUNINST => q[$(PERLRUN) "-I$(INST_ARCHLIB)" "-I$(INST_LIB)"]
+# PERLTYPE => q[]
+# PERL_ARCHIVE => q[]
+# PERL_ARCHIVE_AFTER => q[]
+# PERL_ARCHLIB => q[/usr/local/lib/perl5/5.8.3/i686-linux-thread-multi-64int]
+# PERL_CORE => q[0]
+# PERL_INC => q[/usr/local/lib/perl5/5.8.3/i686-linux-thread-multi-64int/CORE]
+# PERL_LIB => q[/usr/local/lib/perl5/5.8.3]
+# PERL_MALLOC_DEF => q[-DPERL_EXTMALLOC_DEF -Dmalloc=Perl_malloc -Dfree=Perl_mfree -Drealloc=Perl_realloc -Dcalloc=Perl_calloc]
+# PERL_SRC => undef
+# PERM_RW => q[644]
+# PERM_RWX => q[755]
+# PL_FILES => {  }
+# PM => { lib/SD/Crawl.pm=>q[blib/lib/SD/Crawl.pm] }
+# PMLIBDIRS => [q[lib]]
+# POSTOP => q[$(NOECHO) $(NOOP)]
+# PREFIX => q[]
+# PREOP => q[$(NOECHO) $(NOOP)]
+# PREREQ_PM => {  }
+# RANLIB => q[:]
+# RCS_LABEL => q[rcs -Nv$(VERSION_SYM): -q]
+# RM_F => q[rm -f]
+# RM_RF => q[rm -rf]
+# SHAR => q[shar]
+# SHELL => q[/bin/sh]
+# SITEARCHEXP => q[/usr/local/lib/perl5/site_perl/5.8.3/i686-linux-thread-multi-64int]
+# SITELIBEXP => q[/usr/local/lib/perl5/site_perl/5.8.3]
+# SITEPREFIX => q[/usr/local]
+# SKIPHASH => {  }
+# SO => q[so]
+# SUFFIX => q[.gz]
+# TAR => q[tar]
+# TARFLAGS => q[cvf]
+# TEST_F => q[test -f]
+# TOUCH => q[touch]
+# TO_UNIX => q[$(NOECHO) $(NOOP)]
+# UMASK_NULL => q[umask 0]
+# UNINST => q[0]
+# UNINSTALL => q[$(PERLRUN) "-MExtUtils::Command::MM" -e uninstall]
+# VENDORARCHEXP => q[]
+# VENDORLIBEXP => q[]
+# VENDORPREFIX => q[]
+# VERBINST => q[0]
+# VERSION => q[0.01]
+# VERSION_FROM => q[lib/SD/Crawl.pm]
+# VERSION_MACRO => q[VERSION]
+# VERSION_SYM => q[0_01]
+# WARN_IF_OLD_PACKLIST => q[$(PERLRUN) "-MExtUtils::Command::MM" -e warn_if_old_packlist]
+# XS => { Crawl.xs=>q[Crawl.c] }
+# XSPROTOARG => q[]
+# XS_DEFINE_VERSION => q[-D$(XS_VERSION_MACRO)=\"$(XS_VERSION)\"]
+# XS_VERSION => q[0.01]
+# XS_VERSION_MACRO => q[XS_VERSION]
+# ZIP => q[zip]
+# ZIPFLAGS => q[-r]
+# _MAX_EXEC_LEN => q[131072]
 
 # --- MakeMaker postamble section:
+
+$(MYEXTLIB): clib/Makefile
+	cd clib && $(MAKE) $(PASSTHRU)
 
 
 # End.

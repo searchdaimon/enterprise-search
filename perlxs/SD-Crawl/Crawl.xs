@@ -5,11 +5,17 @@
 #include "ppport.h"
 
 #include "../../src/crawl/crawl.h"
-
+#include "clib/url.h"
+#include "clib/bstr.h"
 
 #include <stdio.h>
 
 int pdocumentContinue(struct cargsF *cargs) {
+
+	if (cargs == NULL) {
+		fprintf(stderr,"pdocumentExist: pointer is NULL!\n");
+		exit(1);
+	}
 
 	return cargs->documentContinue(cargs->collection);	
 
@@ -18,6 +24,11 @@ int pdocumentContinue(struct cargsF *cargs) {
 
 int pdocumentError(struct cargsF *cargs, char error[]) {
 
+	if (cargs == NULL) {
+		fprintf(stderr,"pdocumentExist: pointer is NULL!\n");
+		exit(1);
+	}
+
 	return cargs->documentError(1,error);
 
 }
@@ -25,8 +36,18 @@ int pdocumentError(struct cargsF *cargs, char error[]) {
 
 void pdocumentExist(struct cargsF *cargs, char * url, int lastmodified, int dokument_size) {
 
+	printf("pdocumentExist\n");
+	printf("pdocumentExist cargs %p\n",cargs);
 
-	//printf("pdocumentExist: url: \"%s\"\n",url);
+	if (cargs == NULL) {
+		fprintf(stderr,"pdocumentExist: pointer is NULL!\n");
+		exit(1);
+	}
+
+	printf("pdocumentExist cargs->documentExist %p\n",cargs->documentExist);
+	
+	printf("pdocumentExist: url: \"%s\", carg p to documentExist %p\n",url, cargs->documentExist);
+
 	struct crawldocumentExistFormat *crawldocumentExist;
 
 	if ((crawldocumentExist = malloc(sizeof(struct crawldocumentExistFormat))) == NULL) {
@@ -45,9 +66,14 @@ void pdocumentExist(struct cargsF *cargs, char * url, int lastmodified, int doku
 	free(crawldocumentExist);
 }
 
-void pdocumentAdd(struct cargsF *cargs, char * url, int lastmodified, int dokument_size, char document[], char title[], char type[], char acl_allow[], char acl_denied[]) {
+void pdocumentAdd(struct cargsF *cargs, char * url, int lastmodified, int dokument_size, char document[], char title[], char type[], char acl_allow[], char acl_denied[], char attributes[]) {
 
 	struct crawldocumentAddFormat *crawldocumentAdd;
+
+	if (cargs == NULL) {
+		fprintf(stderr,"pdocumentExist: pointer is NULL!\n");
+		exit(1);
+	}
 
 	if ((crawldocumentAdd = malloc(sizeof(struct crawldocumentAddFormat))) == NULL) {
                 perror("malloc crawldocumentAdd");
@@ -72,7 +98,7 @@ void pdocumentAdd(struct cargsF *cargs, char * url, int lastmodified, int dokume
 MODULE = SD::Crawl		PACKAGE = SD::Crawl		
 
 void
-pdocumentAdd( x , url , lastmodified, dokument_size, document, title, type, acl_allow, acl_denied)
+pdocumentAdd( x , url , lastmodified, dokument_size, document, title, type, acl_allow, acl_denied, attributes)
 	int * x
 	char * url
 	int lastmodified
@@ -82,6 +108,7 @@ pdocumentAdd( x , url , lastmodified, dokument_size, document, title, type, acl_
 	char * type
 	char * acl_allow
 	char * acl_denied
+	char * attributes
 
 void
 pdocumentExist( x , url , lastmodified, dokument_size)
@@ -112,3 +139,17 @@ pdocumentError(x, errorstring)
 
 	int * x
 	char * errorstring
+
+
+void
+htttp_url_normalization(url) 
+	char * url
+
+	INIT:
+		char urlout[512];
+
+	PPCODE:
+		strscpy(urlout,url,sizeof(urlout));
+		url_normalization(urlout,sizeof(urlout));
+
+		XPUSHs(sv_2mortal(newSVpv(urlout,0)));
