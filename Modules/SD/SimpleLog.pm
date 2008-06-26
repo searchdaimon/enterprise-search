@@ -2,36 +2,38 @@ package SD::SimpleLog;
 use strict;
 use warnings;
 
-my $logfile_path;
-my $enabled;
-
 sub new { 
     my ($class, $logfile, $enabl) = @_;
+    $enabl = 1 unless defined $enabl;
 
-    ($logfile_path, $enabled) = ($logfile, $enabl);
-    bless {}, $class;
+    my $succs = open my $logh, ">>", $logfile;
+    if (!$succs) {
+        warn "Unable to write to logfile: $!. Logging disabled.";
+        $enabl = 0;
+    }
+
+    bless { 
+        to_stdout => 0,
+        enabled => $enabl,
+        logh => $logh,
+    }, $class;
 }
 
 sub write {
-    my ($self, @data) = @_;
+    my ($s, @data) = @_;
 
-    return unless $enabled;
+    return unless $s->{enabled};
 
-    my $success = open my $logh, ">>", $logfile_path;
-
-    if ($success) {
-        my $time = gmtime(time());
-        print {$logh} "$time - ";
-        print {$logh} join(q{}, @data);
-        print {$logh} "\n";
-    }
-    else {
-        warn "Unable to write to logfile: $!. Disabling logging.";
-        $enabled = 0;
-    }
-
-    close $logh;
+    my $time = gmtime(time);    
+    my $msg = "$time - " . join (q{}, @data) . "\n";
+    print $msg if $s->{to_stdout};
+    print {$s->{logh}} $msg;
     1;
+}
+
+sub show_in_stdout { 
+    my ($s, $on) = @_;
+    $s->{to_stdout} = $on 
 }
 
 1;
