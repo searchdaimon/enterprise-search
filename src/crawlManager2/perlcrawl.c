@@ -193,6 +193,7 @@ struct crawlLibInfoFormat *perlCrawlStart(char perlpath[], char name[]) {
 
 
 	struct crawlLibInfoFormat *crawlLibInfo;
+	char blib[512];
 
 	printf("perlCrawlStart(perlpath=%s, name=%s)\n",perlpath, name);
 
@@ -213,9 +214,11 @@ struct crawlLibInfoFormat *perlCrawlStart(char perlpath[], char name[]) {
 	strcpy(crawlLibInfo->shortname,name);
 	strcpy(crawlLibInfo->resourcepath,perlpath);
 
+	snprintf( blib,sizeof(blib),"-Mblib=%s",bfile("perlxs/SD-Crawl") );
 
         //char *perl_args[] = { "", "-Mblib=/home/boitho/boitho/websearch/perlxs/SD-Crawl",  "-I", collection->crawlLibInfo->resourcepath, perlfile, NULL };
-        char *perl_args[] = { "", "-Mblib=/home/boitho/boitho/websearch/perlxs/SD-Crawl",  "-I", bfile("crawlers/Modules/"), bfile2("perl/persistent.pl"), NULL };
+        //char *perl_args[] = { "", "-Mblib=/home/boitho/boitho/websearch/perlxs/SD-Crawl",  "-I", bfile("crawlers/Modules/"), bfile2("perl/persistent.pl"), NULL };
+        char *perl_args[] = { "", blib,  "-I", bfile("crawlers/Modules/"), bfile2("perl/persistent.pl"), NULL };
 
 
 	int perl_argsc = 4;
