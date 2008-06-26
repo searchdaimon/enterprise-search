@@ -23,3 +23,5 @@ void IIndexInaliser();
 int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFormat *IndekserOpt);
 
 void Indekser_deleteGcedFile(int lotNr, char subname[]);
+
+int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char *subname, int *DocIDcount);
