@@ -29,7 +29,7 @@ int pdocumentError(struct cargsF *cargs, char error[]) {
 		exit(1);
 	}
 
-	return cargs->documentError(1,error);
+	return cargs->documentError(cargs->collection, 1,error);
 
 }
 
