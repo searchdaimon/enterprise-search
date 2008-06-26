@@ -953,7 +953,7 @@ struct hashtable * loadGced(int lotNr, char subname[]) {
 
 		for(i=0;i<nrofGced;i++) {
 			#ifdef DEBUG
-			printf("gced %u\n",gcedArray[i]);
+			printf("gced DocID: %u\n",gcedArray[i]);
 			#endif
 	                if (NULL == (filesValue = hashtable_search(h,&gcedArray[i]) )) {
                                 #ifdef DEBUG
@@ -1019,7 +1019,6 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 	#endif
 
 	if (IndekserOpt->garbareCollection) {
-		h = loadGced(lotNr, subname);
 		if ((h = loadGced(lotNr, subname)) == NULL) {
 			perror("loadGced");
 			return 0;
@@ -1225,18 +1224,19 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 			printf("\n");
 		#endif
 
-		/*
-		Runarb 3 juni 2008: Dette er ikke rikig, vi skal slette gamle forekomster, men ikke nye, som har oppstått i ettertid.
+		
+		//Runarb  3 juni 2008: 	Dette er ikke rikig, vi skal slette gamle forekomster, men ikke nye, som har oppstått i ettertid.
+		//Runarb 16 juni 2008: 	Vi bytter om, slik at vi bare analyserer DocumentIndex for å finne gcede sider. Hvis den er slettet der, så er den pr deg slettet. 
+		//			Slik hånterer vi at det kan ligge nydata1->nydata2->nydata3 i reposetoriet, og v1 er ok, v2 er ok, men siste, v3 er ikke ok, og skal lsettes
+		//			Da sakl de ut av alle indekser.
 		//garbare collection
 		if ((IndekserOpt->garbareCollection) && (NULL != hashtable_search(h,&revIndexArray[count].DocID)) ) {
 			#ifdef DEBUG
-			printf("aaaaaaa: DocID %u is deleted\n",revIndexArray[count].DocID);
+			printf("DocID %u is deleted\n",revIndexArray[count].DocID);
 			#endif
 
 		}
-		else 
-		*/
-		if ((IndekserOpt->optValidDocIDs != NULL) && (IndekserOpt->optValidDocIDs[(revIndexArray[count].DocID - LotDocIDOfset(lotNr))] != 1)) {
+		else if ((IndekserOpt->optValidDocIDs != NULL) && (IndekserOpt->optValidDocIDs[(revIndexArray[count].DocID - LotDocIDOfset(lotNr))] != 1)) {
 			//#ifdef DEBUG
 				printf("aaaaaaa: DocID %u is not in valid list\n",revIndexArray[count].DocID);
 			//#endif
