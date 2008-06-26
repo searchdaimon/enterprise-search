@@ -360,7 +360,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 
                         	for (z = 0;z < TermAntall; z++) {
 					if ((n=fread(&hit,sizeof(unsigned short),1,iindexfile[i].fileha)) != 1) {
-						printf("can't read hit for %s. z: %i, TermAntall: %i\n",iindexfile[i].PathForLotIndex,z,TermAntall);
+						printf("can't read hit for %s. z: %i, TermAntall: %i. DocID %u\n",iindexfile[i].PathForLotIndex,z,TermAntall, DocID);
 		                       		perror(iindexfile[i].PathForLotIndex);
                                         	exit(1);
                                 	}
