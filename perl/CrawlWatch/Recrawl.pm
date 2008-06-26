@@ -17,10 +17,18 @@ use constant CONF_RECHECK_RATE         => 'recrawl_recheck_rate';
 use constant CONF_DEFAULT_CRAWL_RATE   => 'default_crawl_rate';
 use constant CONF_SCHEDULE_START       => 'recrawl_schedule_start';
 use constant CONF_SCHEDULE_END         => 'recrawl_schedule_end';
-use constant ONE_DAY => 24 * 3600;
+
+# Ignore schedule if coll rate is < this (in minutes)
+use constant IGNORE_SCHED_LIMIT => 60 * 24 ;
+
+use constant MINUTES => 60;
+use constant ONE_DAY => 24 * 60 * MINUTES;
+
+use constant DEBUG => 1;
 
 
-use constant DEBUG => 0;
+my $COLL_LAST = "UNIX_TIMESTAMP(last)";
+my $COLL_NOW  = "UNIX_TIMESTAMP(NOW())";
 
 my %schedule;
 
@@ -34,8 +42,9 @@ sub name { "Collections recrawl" }
 sub new {
     my $class = shift;
     ($dbh, $iq, $log) = @_;
+    $log->show_in_stdout(1) if DEBUG;
 
-    bless {}, $class;
+    bless { run_toggle => 0 }, $class;
 }
 
 sub run {
@@ -45,28 +54,27 @@ sub run {
     1;
 }
 
-sub next_run {
+
+sub is_within_schedule {
     my $s = shift;
-    eval { $s->fetch_conf_data() };
-    if ($@) {
-        $log->write("WARN: ", $@);
-        return -1;
-    }
-    # Check schedule.
-    if (%schedule) {
-        my @scheduled_hours = $s->_gen_scheduled_hours(
-            $schedule{start}, $schedule{end});
-
-        my $hour_now = gmtime->hour();
-        if (grep { $_ == $hour_now } @scheduled_hours) {
-            return $s->calc_next_crawl();
-        }
-        else {
-            return $s->calc_schedl_start($schedule{start});
-        }
+    if (not %schedule) {
+        print "no schedule\n" if DEBUG;
+        return 1 if not %schedule;
     }
 
-    return $s->calc_next_crawl();
+    my @scheduled_hours =  $s->_gen_scheduled_hours(
+        $schedule{start}, $schedule{end});
+
+    my $hour_now = gmtime->hour;
+    return grep { $_ == $hour_now } @scheduled_hours;
+    
+}
+##
+# Check every 5 minutes
+sub next_run { 
+    my $s = shift;
+    $s->{run_toggle} = 1 - $s->{run_toggle};
+    return $s->{run_toggle} ? 0 : 5 * MINUTES;
 }
 
 sub calc_schedl_start {
@@ -116,8 +124,6 @@ sub valid_int_field {
     1;
 }
 
-my $COLL_LAST = "UNIX_TIMESTAMP(last)";
-my $COLL_NOW  = "UNIX_TIMESTAMP(NOW())";
 
 ##
 # Create SQL query for fetching collections based on rate.
@@ -125,7 +131,7 @@ sub coll_create_sql {
     my ($s, $fetch_all, $limit, $next, $rate) = @_;
 
     my $q = "
-    SELECT collection_name,
+    SELECT collection_name, rate,
         $COLL_LAST AS last,
         $COLL_NOW  AS now,
         $next AS next
@@ -177,7 +183,7 @@ sub coll_custom_rate {
 # Fetch uncrawled collections.
 sub coll_uncrawled {
     my ($s, $limit) = @_;
-    my $q = "SELECT collection_name FROM shares
+    my $q = "SELECT collection_name, rate FROM shares
         WHERE active = 1 AND (last = 0 OR ISNULL(last))";
     $q .= " LIMIT 0, $limit" 
         if defined $limit;
@@ -185,36 +191,44 @@ sub coll_uncrawled {
     return sql_fetch_results($dbh, $q);
 }
 
-## 
-# Calculate time to next crawl.
-sub calc_next_crawl {
-    my $s = shift;
-
-    return 0 if $s->coll_uncrawled();
-
-    my @coll = ($s->coll_def_rate(1, 1), $s->coll_custom_rate(1, 1));
-    return ONE_DAY unless @coll;
-
-    @coll = sort { $a->{'next'} <=> $b->{'next'} } @coll;
-    my $next_crawl = $coll[0]->{'next'} - $coll[0]->{'now'};
-    return ($next_crawl < 0) ? 0 : $next_crawl;
-}
-
 ##
 # Crawl all collections in need of recrawl.
 sub crawl_collections {
     my $s = shift;
 
-    my @uncrawled    = map { $_->{collection_name} } $s->coll_uncrawled();
-    my @default_rate = map { $_->{collection_name} } $s->coll_def_rate();
-    my @custom_rate  = map { $_->{collection_name} } $s->coll_custom_rate();
+    my @uncrawled    = $s->coll_uncrawled();
+    my @default_rate = $s->coll_def_rate();
+    my @custom_rate  = $s->coll_custom_rate();
 
-    $log->write("Collections needing crawl: ",
-        "\nUncrawled: ", Dumper(\@uncrawled),
-        "\nTime by default rate: ", Dumper(\@default_rate),
-        "\nTime by custom rate: ", Dumper(\@custom_rate));
 
-    $s->crawl($_) for @uncrawled, @default_rate, @custom_rate;
+#    $log->write("Collections needing crawl: ",
+#        "\nUncrawled: ", Dumper(\@uncrawled),
+#        "\nTime by default rate: ", Dumper(\@default_rate),
+#        "\nTime by custom rate: ", Dumper(\@custom_rate));
+#   
+    my $within_schedule = $s->is_within_schedule();
+
+    for my $coll (@uncrawled, @default_rate, @custom_rate) {
+        my $rate = !$coll->{rate}
+            ? $default_crawl_rate 
+            : $coll->{rate};
+
+        if ($rate < IGNORE_SCHED_LIMIT) {
+            $log->write("Ignoring sched for $coll->{collection_name} (rate $coll->{rate})");
+            $s->crawl($coll->{collection_name});
+            next;
+        }
+
+        if (!$within_schedule) {
+            $log->write(sprintf "Not crawling %s. Waiting for schedule time.", 
+                $coll->{collection_name});
+            next;
+        }
+
+        $s->crawl($coll->{collection_name});
+    }
+
+    #$s->crawl($_) for @uncrawled, @default_rate, @custom_rate;
     $s;
 }
 
@@ -254,9 +268,11 @@ sub _gen_scheduled_hours {
     }
     else { $end-- }
     
-
     if ($end > $start) {
         return ($start..$end);
+    }
+    elsif ($end == $start) {
+        return $end;
     }
     else {
         my @hours = ($start..24);
