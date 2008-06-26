@@ -213,13 +213,12 @@ sub crawl_collections {
             ? $default_crawl_rate 
             : $coll->{rate};
 
-        if ($rate < IGNORE_SCHED_LIMIT) {
+        if (!$within_schedule and ($rate < IGNORE_SCHED_LIMIT)) {
             $log->write("Ignoring sched for $coll->{collection_name} (rate $coll->{rate})");
             $s->crawl($coll->{collection_name});
             next;
         }
-
-        if (!$within_schedule) {
+        elsif (!$within_schedule) {
             $log->write(sprintf "Not crawling %s. Waiting for schedule time.", 
                 $coll->{collection_name});
             next;
