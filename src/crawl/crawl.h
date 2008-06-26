@@ -35,9 +35,10 @@ struct collectionFormat {
 	char *test_file_prefix;
 	struct crawlLibInfoFormat *crawlLibInfo;
 
-	//10 juni 2008
+	//10 juni 2008:
 	char errormsg[512];
-
+	//26 juni 2008:
+	unsigned int rate;
 };
 
 struct crawldocumentExistFormat {
