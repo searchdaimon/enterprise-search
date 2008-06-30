@@ -29,12 +29,21 @@ Autoreq: 0
 
 %build
 %install
-install -D -m 755 bbdemo.boitho.com.conf $RPM_BUILD_ROOT/etc/httpd/conf.d/bbdemo.boitho.com.conf
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/logs/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/public_html/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/cgi-bin/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/config/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/var/
+mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/script/
+mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/data/
+mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/blackbox/
+mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/perl/
+mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/init.d/
+mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/sql/
+mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/sysconfig/
+mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/bin/
+
+
 #install -D -m 755 boitho.repo $RPM_BUILD_ROOT/etc/yum.repos.d/boitho.repo
 
 %clean
@@ -55,17 +64,10 @@ chown boitho /boithoData
 
 
 %post
-#including bbdemo.boitho.com.conf in httpd.conf 
-sed -e 's,^,#,' -i.orig /etc/httpd/conf.d/welcome.conf
-#echo "Include /etc/httpd/conf/bbdemo.boitho.com.conf" >> /etc/httpd/conf/httpd.conf
-
-#restarting httpd
-/etc/rc.d/init.d/httpd restart
 
 %files
 %defattr(-,boitho,boitho)
 #/home/boitho/bin/boithoad
-/etc/httpd/conf.d/bbdemo.boitho.com.conf
 # XXX: http://docs.fedoraproject.org/drafts/rpm-guide-en/ch-packaging-guidelines.html#id2994388
 # Skal vi lage en dummy-fil i hver av mappene i stedet?
 /home/boitho/boithoTools/logs/
@@ -73,6 +75,15 @@ sed -e 's,^,#,' -i.orig /etc/httpd/conf.d/welcome.conf
 /home/boitho/boithoTools/cgi-bin/
 /home/boitho/boithoTools/config/
 /home/boitho/boithoTools/var/
+/home/boitho/boithoTools/script
+/home/boitho/boithoTools/data
+/home/boitho/boithoTools/blackbox
+/home/boitho/boithoTools/perl
+/home/boitho/boithoTools/init.d
+/home/boitho/boithoTools/sql
+/home/boitho/boithoTools/sysconfig
+/home/boitho/boithoTools/bin
+
 #/etc/yum.repos.d/boitho.repo
 
 %doc 
