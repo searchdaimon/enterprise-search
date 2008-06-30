@@ -5,7 +5,9 @@
 
 
 # Source function library.
-if [ -f /etc/init.d/functions ] ; then
+if [ -f $BOITHOHOME/init.d/functions ] ; then
+  . $BOITHOHOME/init.d/functions
+elif [ -f /etc/init.d/functions ] ; then
   . /etc/init.d/functions
 elif [ -f /etc/rc.d/init.d/functions ] ; then
   . /etc/rc.d/init.d/functions

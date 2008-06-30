@@ -20,11 +20,18 @@ fi
 if [ "$BOITHOHOME" == "" ]; then
     export BOITHOHOME=/home/boitho/boithoTools
 fi
+
 # Byttes ut:
 B_SCRIPT="$BOITHOHOME/perl/crawl_watch.pl"
-B_RUN="/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $B_SCRIPT"
 B_NAME=crawl_watch
 RETVAL=0
+
+#poor mans setuid. If we are root we will run the program as user boitho
+if [ `id -u` == 0 ]; then
+        B_RUN="/usr/local/sbin/daemonize -c $BOITHOHOME/perl/ -u boitho $BOITHOHOME/bin/everrun $B_SCRIPT"
+else
+        B_RUN="/usr/local/sbin/daemonize -c $BOITHOHOME/perl/ $BOITHOHOME/bin/everrun $B_SCRIPT"
+fi
 
 
 Script_pids= # global var for last return of get_script_pids()
