@@ -32,7 +32,7 @@ gcrepo(int LotNr, char *subname)
 	char path[1024];
 	char path2[1024];
 	char path3[1024];
-	FILE *DOCINDEXFH;
+	FILE *DOCINDEXFH, *FNREPO;
 
 	int keept = 0;
 	int gced = 0;
@@ -48,6 +48,8 @@ gcrepo(int LotNr, char *subname)
                 return 0;
         }
 	fclose(DOCINDEXFH);
+
+
 
 	if ((DIArray = malloc(sizeof(struct DIArrayFormat) * NrofDocIDsInLot)) == NULL) {
 		perror("gcrepo: malloc DIArray");
@@ -69,7 +71,16 @@ gcrepo(int LotNr, char *subname)
 	}
 
 
-	while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&raddress,0,0,subname,&acl_allow,&acl_deny, &url)) {
+        if ( (FNREPO = lotOpenFileNoCasheByLotNr(LotNr,"reposetory","rb", 's',subname)) == NULL) {
+		#ifdef DEBUG
+                	printf("lot dont have a reposetory file\n");
+		#endif
+
+                return 0;
+        }
+
+
+	while (rGetNext_fh(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&raddress,0,0,subname,&acl_allow,&acl_deny, FNREPO ,&url)) {
 
 		DocIDPlace = (ReposetoryHeader.DocID - LotDocIDOfset(LotNr));
 		DIArray[DocIDPlace].DocID = ReposetoryHeader.DocID;
@@ -99,6 +110,7 @@ gcrepo(int LotNr, char *subname)
 
 		}
 	}
+	fclose(FNREPO);
 
 	//lokker filen repo.wip
 	lotCloseFiles();
