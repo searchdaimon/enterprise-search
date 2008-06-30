@@ -131,16 +131,15 @@ char *sfindductype(char filepath[]) {
 	kunne da en dagur og gi den "xx / yy", og den sletter /
 */
 int rrmdir(char dir[]) {
-
         DIR *dirp;
         struct dirent *dp;
 	char path[PATH_MAX];
 
-	#ifdef DEBUG
+#ifdef DEBUG
 	printf("rrmdir: opening dir \"%s\"\n",dir);
-	#endif
+#endif
 
-	if ((dirp = opendir( dir )) == NULL) {
+	if ((dirp = opendir(dir)) == NULL) {
 		perror(dir);
 		return 0;
 	}
@@ -153,29 +152,30 @@ int rrmdir(char dir[]) {
 		snprintf(path,sizeof(path),"%s/%s",dir,dp->d_name);
 
 		if (dp->d_type == DT_DIR) {
-			#ifdef DEBUG 
+#ifdef DEBUG 
 			printf("rrmdir: dir: %s\n",path);
-			#endif
+#endif
 			rrmdir(path);
-		}
-		else {
-			#ifdef DEBUG
+		} else {
+#ifdef DEBUG
 			printf("rrmdir: file: %s\n",path);
-			#endif
+#endif
 		}
 
-		
-		//gjør selve slettingen
+		/* Slett barnet */
 		if (remove(path) != 0) {
 			perror("remove");
 		}
-		
+
 	}	
 
 	closedir(dirp);
 
+
 	//sletter seg selv, frykter vi kan få problemer med . og .. her, må testes
 	//remove( dir );
+
+	return 1;
 }
 
 
