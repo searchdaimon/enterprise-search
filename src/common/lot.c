@@ -312,24 +312,17 @@ int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,
 		#endif
 
 		if (strcmp(type,">>") == 0) {
-			fprintf(stderr,"lotOpenFileNoCasheByLotNrl: ikke implementert\n");
-			exit(1);
-			/*
 			//emulating perl's >>. If the file eksist is is opene for reading and writing.
 			//if not it is createt and openf for writing and reading
-			if ( (fd = open64(File,"r+")) == NULL ) {
+			if ( (fd = open64(File,O_CREAT|O_RDWR,0664)) == -1 ) {
                         	makePath(FilePath);
 
-				if ( (fd = open64(File,"r+")) == NULL ) {
-
-                        		if ( (fd = open64(File,"w+")) == NULL ) {
-                        		        perror(File);
-                        		        //exit(0);
-                        		        return NULL;
-                        		}
+				if ( (fd = open64(File,O_CREAT|O_RDWR,0664)) == -1 ) {
+                       		        perror(File);
+                       		        return -1;                        		
 				}
                 	}
-			*/
+			
 		}
 		//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
 		else if ((strcmp(type,"rb") == 0) || (strcmp(type,"r") == 0)) {
@@ -819,3 +812,44 @@ void makePath (char path[]) {
 
 }
 
+
+DIR *listAllColl_start() {
+
+        DIR *dp;
+ 	char FilePath[PATH_MAX];
+
+
+	//hvis vi ikke har inlisert mapplisten enda gjør vi det.
+	if (!MapListInitialised) {
+		MakeMapListMap();
+		MapListInitialised = 1;
+	}
+
+	sprintf(FilePath,"%s/%i/",dataDirectorys[1 % 64].Name,1);
+	
+
+        return opendir(FilePath);
+}
+
+char *listAllColl_next(DIR * ll) {
+
+	static char subname[PATH_MAX];
+	struct dirent *dp;
+
+        while ((dp = readdir(ll)) != NULL) {
+		if (dp->d_name[0] == '.') {
+
+                }
+               	else if (dp->d_type == DT_DIR) {
+			strscpy(subname,dp->d_name,sizeof(subname));
+			return subname;
+		}
+	}
+
+	return NULL;
+
+}
+
+void listAllColl_close(DIR * ll) {
+	closedir(ll);
+}

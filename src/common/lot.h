@@ -3,6 +3,9 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <sys/types.h>
+#include <dirent.h>
+
 #include "define.h"
 
 #define MaxOpenFiles  10
@@ -42,4 +45,11 @@ int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,
 int GetDevIdForLot(int LotNr);
 void makeLotPath(int lotNr,char folder[],char subname[]);
 
+//rutiner for å lsite ut alle lokale subnames
+DIR *listAllColl_start();
+char *listAllColl_next(DIR * ll);
+void listAllColl_close(DIR * ll);
+
 #endif //_LOT__H_
+
+
