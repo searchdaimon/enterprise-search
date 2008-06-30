@@ -15,6 +15,10 @@ void DIClose(FILE *DocumentIndexHA);
 int DIRead_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[], FILE *file);
 int DIRead_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[], int file);
 
+void DIS_delete(struct DocumentIndexFormat *DocumentIndexPost);
+int DIS_isDeleted(struct DocumentIndexFormat *DocumentIndexPost);
+
+
 #ifdef DI_FILE_CASHE
 	void closeDICache(void);
 #endif

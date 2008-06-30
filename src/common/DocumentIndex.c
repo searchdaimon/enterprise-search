@@ -20,6 +20,7 @@ ToDo: trenger en "close" prosedyre for filhandlerene.
 #ifdef DI_FILE_CASHE
 
 	static int openDocumentIndex = -1;
+	static char openName[64] = {'\0'};
 
 	FILE *DocumentIndexHA;
 
@@ -35,6 +36,34 @@ ToDo: trenger en "close" prosedyre for filhandlerene.
 
 #define CurrentDocumentIndexVersion 4
 
+// DocumentIndex strukt, er rutiner som jobber på en di struct
+void DIS_delete(struct DocumentIndexFormat *DocumentIndexPost) {
+	DocumentIndexPost->htmlSize = 0;
+	DocumentIndexPost->imageSize = 0;
+	DocumentIndexPost->RepositoryPointer = 0;
+	DocumentIndexPost->ResourcePointer = 0;
+	DocumentIndexPost->SummaryPointer = 0;
+	DocumentIndexPost->SummarySize = 0;
+
+}
+
+int DIS_isDeleted(struct DocumentIndexFormat *DocumentIndexPost) {
+
+	//dokumentet er slettet hvis alle følgende pekere og størelse er 0
+	if (
+	   (DocumentIndexPost->htmlSize == 0)
+	&& (DocumentIndexPost->imageSize == 0)
+	&& (DocumentIndexPost->RepositoryPointer == 0)
+	&& (DocumentIndexPost->ResourcePointer == 0)
+	&& (DocumentIndexPost->SummaryPointer == 0)
+	&& (DocumentIndexPost->SummarySize == 0)
+	) {
+		return 1;
+	}
+	else {
+		return 0;
+	}
+}
 int DIPostAdress(unsigned int DocID) {
 
 	int adress = -1;
@@ -63,7 +92,6 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 
 	#ifndef DI_FILE_CASHE
 		FILE *DocumentIndexHA;
-		int openDocumentIndex = -1;
 	#endif
 	int LotNr;
 
@@ -81,27 +109,38 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 	//hvis filen ikke er open åpner vi den
 	//segfeiler en skjelden gang
 	#ifdef DI_FILE_CASHE
-	if (LotNr != openDocumentIndex) {
+	if ((LotNr == openDocumentIndex) && (diname == NULL || strcmp(openName,diname) == 0)) {
+
+	}
 	#else
-	if(1) {
-	#endif		
-		#ifdef DI_FILE_CASHE
-		//hvis vi har en open fil lukkes denne
-		if (openDocumentIndex != -1) {
-			//segfeiler her for searchkernel
-			//18,okt segefeiler her igjen ????
-			printf("open file for lot %i\n",openDocumentIndex);
-			fclose(DocumentIndexHA);
-		}
-		#endif
-				
-		
-	
+	if(0) {
+
+	}
+	#endif
+	else {		
 
 		GetFilPathForLot(FilePath,LotNr,subname);
 		
 		strncpy(FileName,FilePath,128);
 		strncat(FileName,diname == NULL ? "DocumentIndex" : diname,128);
+
+		#ifdef DI_FILE_CASHE
+			printf("openig di file \"%s\"\n",FileName);
+		#endif
+
+		#ifdef DI_FILE_CASHE
+
+			//hvis vi har en open fil lukkes denne
+			if (openDocumentIndex != -1) {
+				//segfeiler her for searchkernel
+				//18,okt segefeiler her igjen ????
+				fclose(DocumentIndexHA);
+			}
+		#endif
+				
+		
+	
+
 
 		//debug:viser hvpathen til loten
 		//printf("path: %s\n",FileName);
@@ -151,7 +190,10 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 			}
 		}
 
-		openDocumentIndex = LotNr;
+		#ifdef DI_FILE_CASHE
+			openDocumentIndex = LotNr;
+			strscpy(openName,diname == NULL ? "DocumentIndex" : diname,sizeof(openName));
+		#endif
 	}
 
 	//søker til riktig post
@@ -400,7 +442,7 @@ int DIRead_fmode (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char 
 	int forReturn = 0;
 
 	#ifdef DEBUG
-		printf("DIRead: reading for DocID %i, subname \"%s\"\n",DocID,subname);
+		printf("DIRead_fmode: reading for DocID %i, subname \"%s\"\n",DocID,subname);
 	#endif
 
 	#ifdef DISK_PROTECTOR
