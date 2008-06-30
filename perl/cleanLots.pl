@@ -86,9 +86,9 @@ foreach my $key (keys %hiestinlot) {
 
 
 	#kjører garbage collection.
-	$command = $ENV{'BOITHOHOME'} . "/bin/gcRepobb \"$key\"";
-	print "runing $command\n";
-	system($command);
+#	$command = $ENV{'BOITHOHOME'} . "/bin/gcRepobb \"$key\"";
+#	print "runing $command\n";
+#	system($command);
 
 
 }
