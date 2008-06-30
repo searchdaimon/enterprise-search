@@ -440,7 +440,6 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
                 perror("rApendPost: can't write record seperator");
         }
 
-	//#ifdef BLACK_BOKS
 	if ((reponame == NULL) || (strcmp(reponame,"reposetory") == 0)) {
 		//markerer at den er skitten
 		FILE *dirtfh;
@@ -448,7 +447,6 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 		fwrite("1",1,1,dirtfh); 
 		fclose(dirtfh);
 	}
-	//#endif
 	
 	#ifdef DEBUG
 	printf("rApendPost: did append %u, url: \"%s\", into subname \"%s\"\n",(*ReposetoryHeader).DocID,(*ReposetoryHeader).url,subname);
@@ -1422,20 +1420,11 @@ while (rGetNext(LotNr,ReposetoryData)) {
 }
 */
 
-int rGetNext (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
+int rGetNext_fh (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
 int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,
-char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char **url) {
-
-	return rGetNext_reponame(LotNr,ReposetoryHeader,htmlbuffer,htmlbufferSize,imagebuffer,radress,FilterTime,FileOffset,subname,acl_allowbuffer,acl_deniedbuffer,"reposetory", url);
-}
-
-int rGetNext_reponame (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
-int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,
-char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, char **url) {
+char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url) {
 
 	//global variabel for rGetNext
-	static FILE *LotFileOpen;
-	static int LotOpen = -1;
 	unsigned int startOffset,stoppOffset;
 	int rscount;
 	int found = 0;	
@@ -1443,36 +1432,9 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, 
 	int i;
 	struct stat inode;      // lager en struktur for fstat å returnere.
 	char recordseparator[5];
-	char FileName[128];
 
 	//hvis vi tidligere har indikert at dette er siste run, stopper vi her
 
-	//tester om reposetoriet allerede er open, eller ikke
-	if (LotOpen != LotNr) {
-		//hvis den har vært open, lokker vi den. Hvis den er -1 er den ikke brukt enda, så ingen vits å å lokke den da :-)
-		if (LotOpen != -1) {
-			fclose(LotFileOpen);
-		}
-		
-		GetFilPathForLot(FileName,LotNr,subname);
-		strncat(FileName,reponame,128);
-
-		printf("rGetNext: Opending lot %s\n",FileName);
-
-		if ( (LotFileOpen = fopen(FileName,"rb")) == NULL) {
-			perror(FileName);
-			return 0;
-			//exit(1);
-		}
-		
-
-		LotOpen = LotNr;
-
-		//hvis vi fikk en offset skal vi søke ditt
-		if (FileOffset != 0) {
-			fseek(LotFileOpen,FileOffset,SEEK_SET);
-		}
-	}
 
 	/************************************/
 	//ToDo: hvorfor får vi ikke eof lenger nede når vi når eof? Men må sjkke her??
@@ -1609,6 +1571,50 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, 
 		return 0;
 	}
 	*/
+
+	return found;
+	
+}
+
+int rGetNext_reponame (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
+int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,
+char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, char **url) {
+
+	static FILE *LotFileOpen;
+	static int LotOpen = -1;
+	int found = 0;	
+	char FileName[128];
+
+	//tester om reposetoriet allerede er open, eller ikke
+	if (LotOpen != LotNr) {
+		//hvis den har vært open, lokker vi den. Hvis den er -1 er den ikke brukt enda, så ingen vits å å lokke den da :-)
+		if (LotOpen != -1) {
+			fclose(LotFileOpen);
+		}
+		
+		GetFilPathForLot(FileName,LotNr,subname);
+		strncat(FileName,reponame,128);
+
+		printf("rGetNext: Opending lot %s\n",FileName);
+
+		if ( (LotFileOpen = fopen(FileName,"rb")) == NULL) {
+			perror(FileName);
+			return 0;
+			//exit(1);
+		}
+		
+
+		LotOpen = LotNr;
+
+		//hvis vi fikk en offset skal vi søke ditt
+		if (FileOffset != 0) {
+			fseek(LotFileOpen,FileOffset,SEEK_SET);
+		}
+	}
+
+	found = rGetNext_fh(LotNr, ReposetoryHeader, htmlbuffer, htmlbufferSize, imagebuffer, radress, FilterTime, FileOffset, subname, acl_allowbuffer, acl_deniedbuffer, LotFileOpen, url);	
+
+
 	if (!found) {
 		printf("ferdig. lokker filen\n");
 		LotOpen = -1;
@@ -1618,8 +1624,18 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, 
 	}
 
 	return found;
-	
+
 }
+
+
+int rGetNext (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
+int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,
+char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char **url) {
+
+	return rGetNext_reponame(LotNr,ReposetoryHeader,htmlbuffer,htmlbufferSize,imagebuffer,radress,FilterTime,FileOffset,subname,acl_allowbuffer,acl_deniedbuffer,"reposetory", url);
+}
+
+
 int runpack(char *ReposetoryData,uLong comprLen,char *inndata,int length) {
 
 	
