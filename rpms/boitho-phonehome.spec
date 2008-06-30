@@ -1,5 +1,5 @@
 %define name boitho-phonehome
-%define version 0.1
+%define version 0.5
 %define release 1
 
 Summary: Boitho phone home, includes ssh keys for password less login and config files.
