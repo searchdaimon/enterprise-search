@@ -1,6 +1,6 @@
 %define name boitho-meta
 %define version 0.1
-%define release 1
+%define release 2
 
 Summary: Boitho meta packages, depend on all the other boitho packages.
 Name: %{name}
@@ -15,9 +15,9 @@ Prefix: %{_prefix}
 BuildRoot: %{_tmppath}/%{name}-buildroot
 Requires: boitho-ad boitho-searchdbb boitho-crawlManager boitho-bbdn boitho-fileFilter
 Requires: boitho-base boitho-bbadmin boitho-everrun boitho-infoquery boitho-iindex boitho-webclient
-Requires: boithobb-setuid boithobb-bbadminhtaccess boithobb-crawl_watch bbAutoUpdate bb-call-home
+Requires: boithobb-setuid boithobb-crawl_watch bbAutoUpdate
 Requires: boitho-database daemonize mod_auth_boitho boitho-phonehome boitho-configfiles
-Requires: boitho-scripts boitho-dictionary
+Requires: boitho-scripts boitho-dictionary boitho-apaceconf
 
 
 #Turn off automatic dependency generation
