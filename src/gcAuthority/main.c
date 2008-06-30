@@ -3,23 +3,23 @@
 #include <stdio.h>
 #include <err.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 #include "../common/define.h"
 #include "../common/reposetory.h"
 #include "../common/lot.h"
-#include "../common/DocumentIndex.h"
+#include "../common/re.h"
 #include "../common/boithohome.h"
 #include "../common/logs.h"
 #include "../common/time.h"
 
+#include "../common/iindex.h"
+#include "../common/gc.h"
 
 
 
-//struct DIArrayFormat {
-//        struct DocumentIndexFormat docindex;
-//        unsigned int DocID;
-//	char gced;
-//};
+
 
 struct gcaoptFormat {
 	unsigned int MaxAgeDiflastSeen;
@@ -34,11 +34,8 @@ int
 gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt)
 {
 	int i;
-
-	char path[1024];
-	char path3[1024];
-	FILE *GCEDFH;
-	unsigned int DocID;
+	
+	struct reformat *re;
 
 	#ifdef BLACK_BOKS
 		time_t newest_document;
@@ -46,7 +43,6 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt)
 	FILE *DOCINDEXFH;
 
 
-	struct DocumentIndexFormat *DIArray;
 
 
 	//åpner dokument indeks får å teste at vi har en, hvis ikke kan vi bare avslutte.
@@ -61,38 +57,28 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt)
 
 	blog(gcaopt->log,1,"Runing gc for collection \"%s\", lot nr %i",subname,LotNr);
 
-	if ((DIArray = malloc(sizeof(struct DocumentIndexFormat) * NrofDocIDsInLot)) == NULL) {
-		perror("gcrepo: malloc DIArray");
+	if((re = reopen(LotNr, sizeof(struct DocumentIndexFormat), "DocumentIndex", subname, RE_COPYONCLOSE|RE_HAVE_4_BYTES_VERSION_PREFIX)) == NULL) {
+		perror("can't reopen()");
 		exit(1);
 	}
 
+
 	#ifdef BLACK_BOKS
 		newest_document = 0;	
-		printf("newest_document: %s\n",ctime_s(&newest_document));
 	#endif
 
-	//leser inn hele
+	//finner nyeste dokument 
 	for (i=0;i<NrofDocIDsInLot;i++) {
-		//DIArray[i].DocID = 0;
-		//DIArray[i].gced = 0;
-
-		if (!DIRead(&DIArray[i], LotDocIDOfset(LotNr) +i, subname)) {
-			#ifdef DEBUG
-				fprintf(stderr, "Unable to locate a DI for %u\n", LotDocIDOfset(LotNr) +i);
-			#endif
-			continue;
-		}
 
 		#ifdef BLACK_BOKS
-		if ((DIArray[i].lastSeen != 0) && (newest_document < DIArray[i].lastSeen)) {
-                                newest_document = DIArray[i].lastSeen;
-                }
+			if ((REN_DocumentIndex(re, i)->lastSeen != 0) && (newest_document < REN_DocumentIndex(re, i)->lastSeen)) {
+        	                newest_document = REN_DocumentIndex(re, i)->lastSeen;
+				//printf("newest_document: i: %i, url \"%s\", time %s\n",i,REN_DocumentIndex(re, i)->Url, ctime_s(&REN_DocumentIndex(re, i)->lastSeen));
+
+                	}
 		#endif
 
-		//DIArray[i].DocID = LotDocIDOfset(LotNr) +i;
-
 	}
-
 	#ifdef BLACK_BOKS
 		blog(gcaopt->log,1,"Newest document: %s",ctime_s(&newest_document));
 	#endif
@@ -102,31 +88,27 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt)
 	//går gjenom alle på jakt etter de som kan slettes
 	for (i=0;i<NrofDocIDsInLot;i++) {
 
-		//if (DIArray[i].DocID == 0) {
-		//	continue;
-		//}
 	
-		if (DIS_isDeleted(&DIArray[i])) {
+		if (DIS_isDeleted(REN_DocumentIndex(re, i))) {
 			continue;
 		}
 
 		#ifdef DEBUG
 			#ifdef BLACK_BOKS
 				printf("dokument \"%s\", lastSeen: %s",
-					DIArray[i].Url,
-					ctime_s(&DIArray[i].lastSeen));
+					REN_DocumentIndex(re, i)->Url,
+					ctime_s(&REN_DocumentIndex(re, i)->lastSeen));
 			#endif
 		#endif
 
 		#ifdef BLACK_BOKS
-		if ((DIArray[i].lastSeen != 0) && (newest_document > (DIArray[i].lastSeen + gcaopt->MaxAgeDiflastSeen))) {
-			//DIArray[i].gced = 1;
+		if ((REN_DocumentIndex(re, i)->lastSeen != 0) && (newest_document > (REN_DocumentIndex(re, i)->lastSeen + gcaopt->MaxAgeDiflastSeen))) {
 
 
 			//sletter
-			DIS_delete(&DIArray[i]);
+			DIS_delete(REN_DocumentIndex(re, i));
 
-			blog(gcaopt->log,1,"dokument \"%s\" can be deleted. Last seen: %s, DocID %u",DIArray[i].Url,ctime_s(&DIArray[i].lastSeen),LotDocIDOfset(LotNr) +i);
+			blog(gcaopt->log,1,"dokument \"%s\" can be deleted. Last seen: %s, DocID %u",REN_DocumentIndex(re, i)->Url,ctime_s(&REN_DocumentIndex(re, i)->lastSeen),LotDocIDOfset(LotNr) +i);
 			++gcaopt->gced;
 		
 		} 
@@ -136,68 +118,60 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt)
 		#endif
 	}
 
-	//lokker filen repo.wip
-	lotCloseFiles();
+	//markerer hva vi kan slette.
+	gc_reduce(re, LotNr, subname);
 
+	//vasker iindex
+        struct IndekserOptFormat IndekserOpt;
+        IndekserOpt.optMustBeNewerThen = 0;
+        IndekserOpt.optAllowDuplicates = 0;
+        IndekserOpt.optValidDocIDs = NULL;
+        IndekserOpt.sequenceMode =1;
+        IndekserOpt.garbareCollection = 1;
 
-	printf("writing to DI..\n");
-	for (i=0;i<NrofDocIDsInLot;i++) {
-
-		//if (DIArray[i].DocID != 0) {
-			DIWrite(&DIArray[i], LotDocIDOfset(LotNr) +i, subname, "DocumentIndex.wip");
-		//}
-	}
-	printf("..done\n");
-
-	//lagrer hvilkene filer vi har slettet
-	GCEDFH =  lotOpenFileNoCasheByLotNr(LotNr,"gced","a", 'e',subname);
-
-	for (i=0;i<NrofDocIDsInLot;i++) {
-		//ToDo:
-		//dette betyr vel at vi bare tar bort dokumenter vi selv sletter fra iindex. Hva hvis IndexerLot har beordret sleting?.
-		//skulle vi heller ha brukt DIS_isDeleted her?
-		//if ((DIArray[i].DocID != 0) && (DIArray[i].gced)) {
-		if (DIS_isDeleted(&DIArray[i])) {
-			DocID = LotDocIDOfset(LotNr) +i;
-			if (fwrite(&DocID,sizeof(DocID),1,GCEDFH) != 1) {
-				perror("can't write gc file");
-			}
-		}
-	}
-	#ifdef DI_FILE_CASHE
-		closeDICache();
-	#endif
-
-	fclose(GCEDFH);
-	free(DIArray);
-
-
-
-	/* And we have a race... */
-	GetFilPathForLot(path, LotNr, subname);
-	GetFilPathForLot(path3, LotNr, subname);
-
-	strcat(path, "DocumentIndex.wip");
-	strcat(path3, "DocumentIndex");
-
-	if (gcaopt->dryRun != 1) {
-		printf("renaming %s -> %s\n",path,path3);
-		if (rename(path, path3) != 0) {
-			perror("can't rename di");
-		}
+	for (i=0;i<64;i++) {
+		Indekser(LotNr,"Main",i,subname,&IndekserOpt);
 	}
 
 
+	//siden vi nå har lagt til alle andringer fra rev index kan vi nå slettet gced filen også
+	Indekser_deleteGcedFile(LotNr, subname);
+
+	reclose(re);
 
 	return 0;
 }
 
 
+void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
+
+	int LotNr, i;
+	unsigned int DocIDcount = 0;
+
+	for(LotNr=1;LotNr<maxLots;LotNr++) {
+		gcdecide(LotNr,subname, gcaopt);
+	}
+
+	/***************************/
+	//merger indexene
+        //skal lage for alle bøttene
+        for (i=0;i<NrOfDataDirectorys;i++) {
+        	printf("bucket: %i\n",i);
+		 mergei(i,0,0,"Main","aa",subname,&DocIDcount);
+        }
+
+        printf("DocIDcount: %i (/64)\n",DocIDcount);
+
+	/***************************/
+	blog(gcaopt->log,1,"gc'ed \"%s\". Keept %i, gced %i",subname,gcaopt->keept,gcaopt->gced);
+
+}
+
 int
 main(int argc, char **argv)
 {
 
-	int LotNr;
+	int LotNr, i;
 	char *subname;
 	struct gcaoptFormat gcaopt;
 
@@ -230,11 +204,8 @@ main(int argc, char **argv)
 	gcaopt.keept = 0;
 	gcaopt.gced = 0;
 
-	
-	if (argc < 2)
-		errx(1, "Usage: ./gcrepo subname [ lotnr ]");
+	DIR *ll;
 
-	subname = argv[1 +optind];
 
 	#ifndef BLACK_BOKS
 		fprintf("dette fungerer bare med black boks for nå\n");
@@ -244,15 +215,36 @@ main(int argc, char **argv)
 	if ((argc -optind) == 3) {
 		LotNr = atoi(argv[2 +optind]);
 		gcdecide(LotNr,subname, &gcaopt);
+
+		blog(gcaopt.log,1,"gc'ed \"%s\". Keept %i, gced %i",subname,gcaopt.keept,gcaopt.gced);
+
+	}
+	else if ((argc -optind) == 2) {
+		subname = argv[1 +optind];
+
+		gc_coll(subname, &gcaopt);
+
+
+	}
+	else if ((argc -optind) == 1) {
+
+		ll = listAllColl_start();
+
+		while((subname = listAllColl_next(ll)) != NULL) {
+			printf("indexing collection \"%s\"\n",subname);
+
+			gc_coll(subname, &gcaopt);
+
+		}
+
+		listAllColl_close(ll);
+
 	}
 	else {
-		for(LotNr=1;LotNr<maxLots;LotNr++) {
-			gcdecide(LotNr,subname, &gcaopt);
-		}
+		errx(1, "Usage: ./gcrepo subname [ lotnr ]");
 	}
 
 
-	blog(gcaopt.log,1,"keept %i, gced %i",gcaopt.keept,gcaopt.gced);
 
 	return 0;
 }
