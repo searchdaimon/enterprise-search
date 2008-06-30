@@ -20,7 +20,7 @@ FILE *revindexFilesOpenLocalPart(int lotNr,char type[],char filemode[],char subn
 
        if ((revindexFilesHa = fopen(revfile,filemode)) == NULL) {
                 perror(revfile);
-       		exit(1);
+		return NULL;
        }
 
 	return revindexFilesHa;
