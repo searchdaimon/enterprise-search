@@ -27,6 +27,7 @@
 #include "../common/iindex.h"
 #include "../common/revindex.h"
 #include "../common/bfileutil.h"
+#include "../common/re.h"
 
 #include "../banlists/ban.h"
 #include "../acls/acls.h"
@@ -63,6 +64,20 @@ struct DIArrayFormat {
 	unsigned short int DomainDI;
 };
 
+struct relocal {
+	struct reformat *DocumentIndexFormat;
+};
+
+struct filteredf {
+                int isIpBan;
+                int find_domain_no_subname;
+                int find_TLD;
+                int IndexerLot_filterOnlyTLD;
+                int filterDomainNrOfLines;
+                int filterDomainLength;
+                int filterTLDs;
+                int notHttp200;
+};
 struct IndexerLot_workthreadFormat {
 	int lotNr;
 	char *subname;
@@ -89,6 +104,7 @@ struct IndexerLot_workthreadFormat {
 	int optHandleOld_indexed;
 	char *optQuery;
 	char *optNetLot;
+	int rEindex;
 	struct DIArrayFormat *DIArray;
 	//struct DIArrayFormat DIArray[NrofDocIDsInLot];
 	char *reponame;
@@ -106,6 +122,10 @@ struct IndexerLot_workthreadFormat {
 	#ifdef PRESERVE_WORDS
 		FILE *dictionarywordsfFH;
 	#endif
+
+	struct relocal re;
+	struct filteredf filtered;
+	FILE *FNREPO;
 };
 
 struct optFormat {
@@ -379,8 +399,8 @@ int getNextPage(struct IndexerLot_workthreadFormat *argstruct,char htmlcompressd
 	else if (lastpage) {
 		 forreturn = 0;
 	}
-	else if (rGetNext_reponame((*argstruct).lotNr,ReposetoryHeader,htmlcompressdbuffer,htmlcompressdbuffer_size,
-			imagebuffer,radress,(*argstruct).FiltetTime,(*argstruct).FileOffset,(*argstruct).subname,acl_allow,acl_denied,argstruct->reponame, url)) {
+	else if (rGetNext_fh((*argstruct).lotNr,ReposetoryHeader,htmlcompressdbuffer,htmlcompressdbuffer_size,
+			imagebuffer,radress,(*argstruct).FiltetTime,(*argstruct).FileOffset,(*argstruct).subname,acl_allow,acl_denied,argstruct->FNREPO, url)) {
 
 
 		++(*argstruct).pageCount;
@@ -503,12 +523,12 @@ void *IndexerLot_workthread(void *arg) {
 
 				memset(DocumentIndexPost,0, sizeof(struct DocumentIndexFormat));
 
-				if((argstruct->optHandleOld) && ((*argstruct).DIArray[DocIDPlace].oldp != NULL)) {
+				if( (argstruct->optHandleOld) && ((*argstruct).DIArray[DocIDPlace].oldp != NULL) ) {
 					memcpy(DocumentIndexPost,(*argstruct).DIArray[DocIDPlace].oldp,sizeof(struct DocumentIndexFormat));
 				}
 				else if (argstruct->optQuery != NULL) {
 
-
+					// for query indexing
 					if (!DIReadNET(argstruct->optNetLot,DocumentIndexPost,ReposetoryHeader.DocID,argstruct->subname)) {
 						printf("can't DIReadNET\n");
 						goto pageDone;
@@ -522,6 +542,14 @@ void *IndexerLot_workthread(void *arg) {
 
 				}
 
+				//hvis dette er samme dokumens som vi har fra før kan vi ignorere det.
+				if ( (argstruct->rEindex == 0) && (DocumentIndexPost->RepositoryPointer == radress) ) {
+					#ifdef DEBUG
+						printf("have already indexed this dokument\n");
+					#endif
+					++(*argstruct).optHandleOld_allrediIndexed;
+					goto pageDone;
+				}
 
 				HtmlBufferLength = sizeofHtmlBuffer;
 				if ( (nerror = uncompress((Bytef*)HtmlBuffer,(uLong *)&HtmlBufferLength,(Bytef*)htmlcompressdbuffer,ReposetoryHeader.htmlSize)) != 0) {
@@ -540,17 +568,10 @@ void *IndexerLot_workthread(void *arg) {
 
 					if (DocumentIndexPost->htmlSize != 0) {
 
-						if (DocumentIndexPost->RepositoryPointer == radress) {
+					        if ( (argstruct->rEindex == 0) && (DocumentIndexPost->crc32 == crc32) ) {
 							#ifdef DEBUG
-							printf("have already indexed this dokument\n");
+								printf("have a duplicate dokument, but havent changed\n");
 							#endif
-							++(*argstruct).optHandleOld_allrediIndexed;
-
-							//free(DocumentIndexPost);
-							goto pageDone;
-						}
-					        else if (DocumentIndexPost->crc32 == crc32) {
-							printf("have a duplicate dokument, but havent changed\n");
 							++(*argstruct).optHandleOld_duplicateNochange;
 
 							//free(DocumentIndexPost);
@@ -583,27 +604,46 @@ void *IndexerLot_workthread(void *arg) {
 				#ifndef BLACK_BOKS
 				if (isIpBan(ReposetoryHeader.IPAddress)) {
 					debug("ip adrsess %u is on ban list. Url \"%s\"\n",ReposetoryHeader.IPAddress,ReposetoryHeader.url);
-					DocumentIndexPost->RepositoryPointer = 0;
-					DocumentIndexPost->htmlSize = 0;					
-					DocumentIndexPost->response = 0;					
+					DIS_delete(DocumentIndexPost);
+					++argstruct->filtered.isIpBan;
+					goto pageDone;
 				}
 				else if (!find_domain_no_subname(ReposetoryHeader.url,domain,sizeof(domain)) ) {
 					debug("can't find domain. Url \"%s\"\n",ReposetoryHeader.url);
+					DIS_delete(DocumentIndexPost);
+					++argstruct->filtered.find_domain_no_subname;
+					goto pageDone;
 				}
 				else if (!find_TLD(domain,TLD,sizeof(TLD))) {
 					printf("can't find TLD. Url \"%s\"\n",ReposetoryHeader.url);
+					DIS_delete(DocumentIndexPost);
+					++argstruct->filtered.find_TLD;
+					goto pageDone;
 				}
 				else if (IndexerLot_filterOnlyTLD((*argstruct).optOnlyTLD,TLD)) {
 					debug("Filter: optOnlyTLD ekskludes \"%s\"\n",TLD);
+					DIS_delete(DocumentIndexPost);
+					++argstruct->filtered.IndexerLot_filterOnlyTLD;
+					goto pageDone;
 				}
 				else if (filterDomainNrOfLines(domain)) {
 					debug("To many lines in domaine. Domain \"%s\"\n",domain);
+					DIS_delete(DocumentIndexPost);
+					++argstruct->filtered.filterDomainNrOfLines;
+					goto pageDone;
 				}
 				else if (filterDomainLength(domain)) {
 					debug("To long domaine. Domain \"%s\"\n",domain);
+					DIS_delete(DocumentIndexPost);
+					++argstruct->filtered.filterDomainLength;
+					goto pageDone;
 				}
 				else if (filterTLDs(domain)) {
 					debug("bannet TLD. Domain \"%s\"\n",domain);
+					DIS_delete(DocumentIndexPost);
+					++argstruct->filtered.filterTLDs;
+					goto pageDone;
+
 				}
 				#else
 				if(0) {
@@ -666,11 +706,6 @@ void *IndexerLot_workthread(void *arg) {
 
 					
 
-
-/************************************************************************/
-//denne er gammel, må finne ny
-//dagur: la til //
-//er adult vekt
                				if ((*DocumentIndexPost).AdultWeight >= AdultWeightForXXX) {
                        				//printf("DocID: %u, %hu, url: %s\n",DocID,DocumentIndexPost.AdultWeight,DocumentIndexPost.Url);
                        				//mark as adult
@@ -690,6 +725,11 @@ void *IndexerLot_workthread(void *arg) {
 					//ikke 200->299 side
 					//egentlig ukjent
 					awvalue = 0;
+					DIS_delete(DocumentIndexPost);
+					++argstruct->filtered.notHttp200;
+
+					goto pageDone;
+
 				}
 
 
@@ -1059,7 +1099,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 	int i,n;
 	int lotPart;
-
+	int flags;
         unsigned int FiltetTime;
         unsigned int FileOffset;
 	//char lotServer[64];
@@ -1099,7 +1139,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		argstruct->httpResponsCodes[i] = 0;
 	}
 
-	//temp: må hente dette fra slot server eller fil
+	//temp: må hente dette fra lot server eller fil
 	FileOffset = 0;
 
 
@@ -1107,7 +1147,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 
 
-		//sjekker om vi har nokk palss
+		//sjekker om vi har nokk plass
 		if (!lotHasSufficientSpace(lotNr,4096,subname)) {
 			printf("insufficient disk space\n");
 			exit(1);
@@ -1123,6 +1163,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 		//finner siste indekseringstid
 		lastIndexTime =  GetLastIndexTimeForLot(lotNr,subname);
+		
 
 		printf("lastIndexTime %s",ctime((time_t *)&lastIndexTime));
 
@@ -1144,7 +1185,10 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		}		
 		else if(lastIndexTime != 0) {
 			printf("lastIndexTime is not 0, but %i\n",lastIndexTime);
-			FiltetTime = lastIndexTime;
+			//23 jul 2008: Vi bruker ikke dette langere. Det skaper problemer for gc.
+			// i steden sjekker vi om crc32 og pekere er det samme. Sikkert litt mer overhead, men da fungerer gc :)
+			//FiltetTime = lastIndexTime;
+			FiltetTime = 0;
 
 			//opner for appending
 			strcpy(openmode,"ab");
@@ -1198,10 +1242,6 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		#endif
 
 
-		//temp:Søker til problemområdet
-		//FileOffset = 334603785;		
-
-
 
 		//main work
 		argstruct->lotNr 		= lotNr;
@@ -1215,7 +1255,31 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		argstruct->optHandleOld		= opt->HandleOld;
 		argstruct->optQuery		= opt->Query;
 		argstruct->optNetLot		= opt->NetLot;
+		argstruct->rEindex		= opt->rEindex;
 		argstruct->reponame		= reponame;
+
+
+                argstruct->filtered.isIpBan 			= 0;
+                argstruct->filtered.find_domain_no_subname 	= 0;
+                argstruct->filtered.find_TLD 			= 0;
+                argstruct->filtered.IndexerLot_filterOnlyTLD 	= 0;
+                argstruct->filtered.filterDomainNrOfLines 	= 0;
+                argstruct->filtered.filterDomainLength 		= 0;
+                argstruct->filtered.filterTLDs 			= 0;
+                argstruct->filtered.notHttp200 			= 0;
+
+
+		#ifdef BLACK_BOKS
+			flags = RE_HAVE_4_BYTES_VERSION_PREFIX;
+		#else
+			flags = 0;
+		#endif
+        	if((argstruct->re.DocumentIndexFormat = reopen(lotNr, sizeof(struct DocumentIndexFormat), "DocumentIndex", subname, flags )) == NULL) {
+        	        perror("can't reopen()");
+        	        exit(1);
+	        }
+
+
 
 		//malloc
 		if ((argstruct->DIArray = malloc( NrofDocIDsInLot * sizeof(struct DIArrayFormat) )) == NULL) {
@@ -1250,9 +1314,19 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			}
 			printf(".. done\n");
 		}
-		//init mutex
+
+
+        	if ( (argstruct->FNREPO = lotOpenFileNoCasheByLotNr(argstruct->lotNr,argstruct->reponame,"rb", 's',argstruct->subname)) == NULL) {
+        	        #ifdef DEBUG
+        	                printf("lot dont have a reposetory file\n");
+        	        #endif
+
+        	        return;
+	        }
+
 		#ifdef WITH_THREAD
 
+			//init mutex
 			pthread_mutex_init(&argstruct->reposetorymutex, NULL);
 			pthread_mutex_init(&argstruct->restmutex, NULL);
 
@@ -1293,6 +1367,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 		#endif
 
+		fclose(argstruct->FNREPO);
 
 		revindexFilesCloseLocal(argstruct->revindexFilesHa,"Main"); 
 
@@ -1390,7 +1465,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 		#endif
 
-		//skriver riktig indexstide til lotten
+		//skriver riktig indexs tid til lotten
 		setLastIndexTimeForLot(lotNr,argstruct->httpResponsCodes,subname);
 		
 		
@@ -1410,8 +1485,18 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			}
 		}
 
+		printf("filters:\n");
+                printf("\tisIpBan: %i\n",argstruct->filtered.isIpBan);
+                printf("\tfind_domain_no_subname: %i\n",argstruct->filtered.find_domain_no_subname);
+                printf("\tfind_TLD: %i\n",argstruct->filtered.find_TLD);
+                printf("\tIndexerLot_filterOnlyTLD: %i\n",argstruct->filtered.IndexerLot_filterOnlyTLD);
+                printf("\tfilterDomainNrOfLines: %i\n",argstruct->filtered.filterDomainNrOfLines);
+                printf("\tfilterDomainLength: %i\n",argstruct->filtered.filterDomainLength);
+                printf("\tfilterTLDs: %i\n",argstruct->filtered.filterTLDs);
+                printf("\tnotHttp200: %i\n",argstruct->filtered.notHttp200);
 
-		printf("indexed %i pages\n\n\n",argstruct->pageCount);
+
+		printf("\nindexed %i pages\n\n\n",argstruct->pageCount);
 
 		free(argstruct->DIArray);
 		free(argstruct->adult);
@@ -1421,7 +1506,6 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			FreeSplitList(globalIndexerLotConfig.urlfilter);
 		}
 
-
 		//run the Garbage Collection
 		#ifdef BLACK_BOKS
 		if ((opt->RunGarbageCollection == 1) && (1)) {
@@ -1429,11 +1513,15 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		if ((opt->RunGarbageCollection == 1) && (argstruct->pageCount > 0)) {
 		#endif
 			printf("running repo Garbage Collection..\n");
-			gcrepo(lotNr, subname);
+				gcrepo(lotNr, subname);
+			printf(".. done\n");
 
 			printf("running summary Garbage Collection..\n");
-		        gcsummary(lotNr, subname);
+			        gcsummary(lotNr, subname);
+			printf(".. done\n");
 
+			printf("running reduce Garbage Collection..\n");
+				gc_reduce(argstruct->re.DocumentIndexFormat, lotNr, subname);
 			printf(".. done\n");
 
 		}
@@ -1467,6 +1555,9 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
                 	//siden vi nå har lagt til alle andringer fra rev index kan vi nå slettet gced filen også
                 	Indekser_deleteGcedFile(lotNr, subname);
 		}
+
+
+		reclose(argstruct->re.DocumentIndexFormat);
 	
 		//netlot: Vi sender det vi har laget
 		if ((opt->NetLot != NULL) && (opt->Query == NULL)) {
@@ -1521,7 +1612,7 @@ int main (int argc, char *argv[]) {
 	#ifdef BLACK_BOKS
 		opt.HandleOld = 1;
 	#else
-		opt.HandleOld = 0;
+		opt.HandleOld = 1;
 	#endif
 
 	#ifdef WITH_THREAD
@@ -1687,7 +1778,7 @@ int main (int argc, char *argv[]) {
 
 				ReposetoryHeader.htmlSize = strlen(text);
 
-				rApendPostcompress(&ReposetoryHeader,text,image,subname,NULL,NULL,"repo.test");
+				rApendPostcompress(&ReposetoryHeader,text,image,subname,NULL,NULL,"repo.test", NULL);
 
 
 				dirtylots[rLotForDOCid(Sider[i].iindex.DocID)] = 1;
