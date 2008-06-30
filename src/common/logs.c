@@ -24,14 +24,6 @@ void blog(FILE *LOG, int level, const char *fmt, ...) {
         va_list     ap;
 	struct tm tm;
 
-	/* Output time */
-	now = time(NULL);
-	localtime_r(&now, &tm);
-	len = strftime(buf, sizeof(buf), "%F %T", &tm);
-	buf[len-1] = '\0';
-	printf("%s: ", buf);
-	fprintf(LOG, "%s: ", buf);
-
         va_start(ap, fmt);
 
 		//skriver til log
@@ -42,14 +34,25 @@ void blog(FILE *LOG, int level, const char *fmt, ...) {
 
 		}
 		else {
+
+			/* Output time */
+			now = time(NULL);
+			localtime_r(&now, &tm);
+			len = strftime(buf, sizeof(buf), "%F %T", &tm);
+			buf[len-1] = '\0';
+			printf("%s: ", buf);
+			fprintf(LOG, "%s: ", buf);
+
+			//skriver beskjeden til log fil
 	                vfprintf(LOG, fmt,ap);
 			fprintf(LOG, "\n");
 
-			//viser på skjerm
-                	printf("log: ");
-                	vprintf(fmt,ap);
-                	printf("\n");
 		}
+
+		//viser på skjerm
+               	printf("log: ");
+               	vprintf(fmt,ap);
+          	printf("\n");
 		
         va_end(ap);
 }
