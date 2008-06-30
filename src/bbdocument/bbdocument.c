@@ -905,7 +905,6 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 int bbdocument_deletecoll(char collection[]) {
 	char command[512];
-
 	int LotNr;
 	int i;
 	char FilePath[512];
@@ -913,7 +912,7 @@ int bbdocument_deletecoll(char collection[]) {
 	char DictionaryPath[512];
 	FILE *fh;
 
-	printf("remowing \"%s\"\n",collection);
+	printf("Deleting collection: \"%s\"\n",collection);
 
 	LotNr = 1;
 	while((fh =lotOpenFileNoCasheByLotNr(LotNr,"reposetory","r",'s',collection)) != NULL) {
@@ -925,9 +924,8 @@ int bbdocument_deletecoll(char collection[]) {
 
 		++LotNr;
 	}
-	
 
-	for (i=0;i<64;i++) {
+	for (i=0; i < 64; i++) {
 		GetFilePathForIindex(FilePath,IndexPath,i,"Main","aa",collection);
 		GetFilePathForIDictionary(FilePath,DictionaryPath,i,"Main","aa",collection);
 		//printf("FilePath: %s\nIndexPath: %s\nDictionaryPath: %s\n",FilePath,IndexPath,DictionaryPath);
@@ -937,9 +935,7 @@ int bbdocument_deletecoll(char collection[]) {
 		if (remove(DictionaryPath) != 0) {
                         perror("remove DictionaryPath");
                 }
-		
 	}
-
 
 	//sletter i userToSubname.db
         struct userToSubnameDbFormat userToSubnameDb;
@@ -952,6 +948,8 @@ int bbdocument_deletecoll(char collection[]) {
 
                 userToSubname_close(&userToSubnameDb);
         }
+
+	return 1;
 }
 
 
