@@ -83,7 +83,7 @@ HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a src/ds/libd
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap
+bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthority
 
 dppreload:
 	$(CC) -shared -fPIC src/dp/preload.c src/common/timediff.c -o bin/dppreload.so -ldl -Wall $(LDFLAGS)
@@ -623,6 +623,12 @@ gcRepobb: src/gcRepo/gcrepo.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/gcRepo/gcrepo.c -o bin/gcRepobb $(LDFLAGS) -D BLACK_BOKS
 
+gcAuthoritybb: src/gcAuthority/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/gcAuthority/main.c -o bin/gcAuthoritybb $(LDFLAGS) -D BLACK_BOKS
+
 gcSummary: src/gcSummary/gcsummary.c
 	@echo ""
 	@echo "$@:"
@@ -837,6 +843,18 @@ readDocumentIndex: src/readDocumentIndex/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/readDocumentIndex/main.c -o bin/readDocumentIndex $(LDFLAGS)
+
+readDocumentIndexByRe: src/readDocumentIndexByRe/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/readDocumentIndexByRe/main.c -o bin/readDocumentIndexByRe $(LDFLAGS)
+
+readDocumentIndexbb: src/readDocumentIndex/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/readDocumentIndex/main.c -o bin/readDocumentIndexbb $(LDFLAGS) -D BLACK_BOKS
 
 readbrankPageElements: src/readbrankPageElements/main.c
 	@echo ""
