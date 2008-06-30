@@ -12,3 +12,11 @@ CREATE TABLE `shareUsers` (
   PRIMARY KEY  (`name`,`share`)
 ) TYPE=MyISAM;
 
+CREATE TABLE `sessionData` (
+  `id` int(10) unsigned NOT NULL auto_increment,
+  `success` enum('0','1') default NULL,
+  `type` varchar(30) default NULL,
+  `data` text,
+  PRIMARY KEY  (`id`)
+) TYPE=MyISAM;
+
