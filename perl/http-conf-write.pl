@@ -6,8 +6,29 @@ use strict;
 my $authtype = $ARGV[0] || "msad";
 
 
-sub write_authdata($) {
+sub write_authdata {
+	my ($auth, $serveralias, $realm) = @_;
 
+	if ($auth eq 'msad') {
+		print <<EOF;
+		AuthName modBoitho
+		AuthBoitho on
+		AuthType Basic
+		require valid-user
+EOF
+	} elsif ($auth eq 'msadsso') {
+		print <<EOF;
+		AuthType kerberos
+		AuthName "Blackbox Login"
+		KrbServiceName HTTP/$serveralias\@$realm
+		KrbMethodNegotiate On
+		KrbSaveCredentials On
+		KrbMethodK5Passwd Off
+		KrbAuthRealms $realm
+		Krb5KeyTab /home/boitho/boithoTools/var/http.keytab
+		require valid-user
+EOF
+	}
 }
 
 # Blackbox host header
@@ -29,7 +50,15 @@ print <<EOF;
 EOF
 
 my $serveralias = $ARGV[1];
-
+my $realm = $ARGV[2];
+if (!defined($serveralias) && $authtype eq 'msadsso') {
+	print STDERR "No server alias specified, defaulting to 'blackbox.local'\n";
+	$serveralias = 'blackbox.local';
+}
+if (!defined($realm) && $authtype eq 'msadsso') {
+	print STDERR "No realm specified, defaulting to 'BLACKBOX.LOCAL'\n";
+	$realm = 'BLACKBOX.LOCAL';
+}
 if (defined($serveralias)) {
 	print "\tServerAlias $serveralias\n\n";
 }
@@ -42,36 +71,22 @@ print <<EOF;
 
 EOF
 
-
-if ($authtype eq 'msad') {
-	print <<EOF;
+print <<EOF;
 	<Directory "/home/boitho/boithoTools/public_html">
 		AllowOverride all 
 	</Directory>
 EOF
-} elsif ($authtype eq 'msadsso') {
-	my $realm = $ARGV[2];
-	if (!defined($serveralias)) {
-		$serveralias = 'blackbox.local';
-	}
-	if (!defined($realm)) {
-		$realm = 'BLACKBOX.LOCAL';
-	}
-	print <<EOF;
-	<Directory "/home/boitho/boithoTools/public_html">
-		AuthType kerberos
-		AuthName "Blackbox login"
-		KrbServiceName HTTP/$serveralias\@$realm
-		KrbMethodNegotiate On
-		KrbSaveCredentials On
-		KrbMethodK5Passwd Off
-		KrbAuthRealms $realm
-		Krb5KeyTab /home/boitho/boithoTools/var/http.keytab
 
-		require valid-user
+
+
+
+print <<EOF;
+	<Directory "/home/boitho/boithoTools/public_html/webclient">
+EOF
+write_authdata($authtype, $serveralias, $realm);
+print <<EOF;
 	</Directory>
 EOF
-}
 
 # Blackbox host footer
 print <<EOF;
