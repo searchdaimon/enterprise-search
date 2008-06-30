@@ -1005,6 +1005,8 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 	unsigned short hit;
 	char recordSeperator[4];
 	char iindexPath[512];
+	char iindexPathNew[512];
+	char iindexPathOld[512];
 	int count;
 	char c;
 	unsigned int lastWordID;
@@ -1042,10 +1044,11 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 	//oppretter paths
 	makePath(iindexPath);			
 
-	sprintf(iindexPath,"%s%i.txt",iindexPath,part);
+	sprintf(iindexPathOld,"%s%i.txt",iindexPath,part);
+	sprintf(iindexPathNew,"%s%i.txt.new",iindexPath,part);
 
 	if ((IndekserOpt->optMustBeNewerThen != 0)) {
-		if (fopen(iindexPath,"r") != NULL) {
+		if (fopen(iindexPathOld,"r") != NULL) {
 			printf("we all redy have a iindex.\n");
 			return 0;
 		}
@@ -1068,9 +1071,9 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 	revIndexArraySize += (inode.st_size / 2);
 
 
-	if ((IINDEXFH = fopen(iindexPath,"rb")) == NULL) {
+	if ((IINDEXFH = fopen(iindexPathOld,"rb")) == NULL) {
 		#ifdef DEBUG
-			perror(iindexPath);
+			perror(iindexPathOld);
 		#endif
 	}
 	else {
@@ -1119,7 +1122,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
         	        //wordid hedder
                 	if (fread(&term,sizeof(unsigned long),1,IINDEXFH) != 1) {
                         	printf("can't read term\n");
-                        	perror(iindexPath);
+                        	perror(iindexPathOld);
                         	//continue;
 				break;
                 	}
@@ -1218,7 +1221,10 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		}
 
 		//leser antal hist vi skulle ha
-		fread(&revIndexArray[count].hits,revIndexArray[count].nrOfHits * sizeof(short),1,REVINDEXFH);
+		if (fread(&revIndexArray[count].hits,1,revIndexArray[count].nrOfHits * sizeof(short),REVINDEXFH) != (revIndexArray[count].nrOfHits * sizeof(short)) ) {
+			perror("read hits");
+			exit(-1);
+		}
 
 		revIndexArray[count].tombstone = 0;
 			
@@ -1267,9 +1273,9 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 	mgsort(revIndexArray, count , sizeof(struct revIndexArrayFomat),Indekser_compare_elements);
 
 
-	if ((IINDEXFH = fopen(iindexPath,"wb")) == NULL) {
+	if ((IINDEXFH = fopen(iindexPathNew,"wb")) == NULL) {
 		fprintf(stderr,"can't open iindex for wb\n");
-		perror(iindexPath);
+		perror(iindexPathNew);
 		return 0;
 	}
 
@@ -1366,6 +1372,12 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 	free(revIndexArray);
 	free(nrofDocIDsForWordID);
+
+
+	if (rename(iindexPathNew,iindexPathOld) != 0) {
+		fprintf(stderr,"rename(\"%s\", \"%s\")\n",iindexPathNew,iindexPathOld);
+		perror("rename");
+	}
 
 	if (IndekserOpt->garbareCollection) {
 		hashtable_destroy(h,1);
@@ -1464,6 +1476,12 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 	char PathForIindex[128];
 	char PathForLotIndex[128];
 
+	if (startIndex == 0) {
+		startIndex = 1;
+	}
+	if (stoppIndex == 0) {
+		stoppIndex = maxLots;
+	}
 
 	#ifdef DEBUG
 		printf("Merge index %i\n",bucket);
@@ -1519,7 +1537,6 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
         count=0;
 	for (i=startIndex;i<stoppIndex;i++) {
 		iindexfile[count].fileha = NULL;
-
 		++count;
 	}
 
@@ -1568,7 +1585,6 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 		else {
 
 			//finner størelsen på filen
-			//fstat(fileno(iindexfile[count].fileha),&inode);
 			iindexfile[count].filesize = inode.st_size;
 
 			//debug: viser hvilkene filer vi fikk åpnet
@@ -1654,7 +1670,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
                         	//side hedder
 
 				//if (iindexfile[i].lastAntall > 100000) {
-				//	printf("trying to read from %i, open %i, file %s\n",iindexfile[i].nr,iindexfile[i].open,iindexfile[i].PathForLotIndex);
+ 				//	printf("trying to read from %i, open %i, file %s\n",iindexfile[i].nr,iindexfile[i].open,iindexfile[i].PathForLotIndex);
 				//}
 
 				if ((n=fread(&DocID,sizeof(DocID),1,iindexfile[i].fileha)) != 1) {
