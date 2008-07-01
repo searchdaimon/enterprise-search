@@ -46,6 +46,8 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	lastmodified,char *acl_allow, char *acl_denied, const char title[],char doctype[]);
 
 
+struct hashtable; /* so everyone who include bbdocument.h does not have to include hashtable.h */
+
 //int bbdocument_convert(char filetype[],char document[],const int dokument_size,char **documentfinishedbuf,int *documentfinishedbufsize
 //	, const char titlefromadd[]);
 int bbdocument_convert(
@@ -60,7 +62,8 @@ int bbdocument_convert(
 			unsigned int lastmodified, 
 			char *acl_allow, 
 			char *acl_denied, 
-			char *doctype
+			char *doctype,
+			struct hashtable **metahash
 		);
 
 

@@ -17,7 +17,9 @@
 #include "../common/debug.h"
 #include "../common/exeoc.h"
 #include "../common/boithohome.h"
+#include "../common/ht.h"
 #include "../3pLibs/keyValueHash/hashtable.h"
+#include "../3pLibs/keyValueHash/hashtable_itr.h"
 
 #include "../common/reposetory.h"
 #include "../common/bstr.h"
@@ -343,7 +345,7 @@ char *acl_normalize(char *acl[]) {
 
 }
 
-int bbdocument_convert(char filetype[],char document[],const int dokument_size,char **documentfinishedbuf,int *documentfinishedbufsize, const char titlefromadd[], char *subname, char *documenturi, unsigned int lastmodified, char *acl_allow, char *acl_denied, char *doctype) {
+int bbdocument_convert(char filetype[],char document[],const int dokument_size,char **documentfinishedbuf,int *documentfinishedbufsize, const char titlefromadd[], char *subname, char *documenturi, unsigned int lastmodified, char *acl_allow, char *acl_denied, char *doctype, struct hashtable **metahash) {
 
 	char **splitdata;
         int TokCount;
@@ -508,10 +510,16 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	exeocbuflen = (*documentfinishedbufsize);
 
 
-        char *shargs[] = {"/bin/sh","-c", NULL ,'\0'};
-        shargs[2] = (*fileFilter).command;
-
-
+	
+	char envpairtemplate[] = "tmp/converter-metadata-XXXXXX";
+	char *envpairpath = strdup(bfile(envpairtemplate));
+	mktemp(envpairpath);
+	char envpair[PATH_MAX];
+	sprintf(envpair, "SDMETAFILE=%s", envpairpath);
+	free(envpairpath);
+	envpairpath = envpair + strlen("SDMETAFILE=");
+        char *shargs[] = { "/usr/bin/env", envpair, "/bin/sh", "-c", NULL, NULL, };
+        shargs[4] = (*fileFilter).command;
 
 	if (!exeoc_timeout(shargs,documentfinishedbuftmp,&exeocbuflen,&ret,120)) {
 
@@ -522,9 +530,55 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		//return 0;
 
 	}
-	#ifdef DEBUG
+
+	if (metahash) {
+		FILE *metafp;
+
+		*metahash = create_hashtable(3, ht_stringhash, ht_stringcmp);
+
+		if ((metafp = fopen(envpairpath, "r")) != NULL) {
+			char *key, *value, line[2048];
+
+			printf("Fooop\n");
+			while (fgets(line, sizeof(line), metafp)) {
+				char *p, *p2;
+
+				/* Comment */
+				if (line[0] == '#')
+					continue;
+
+				key = line;
+				p = strchr(key, '=');
+				if (p == NULL) {
+					fprintf(stderr, "Invalid format on meta spec file: %s\n", line);
+					continue;
+				}
+				p2 = p;
+				while (isspace(*(p2-1)))
+					p2--;
+				*p2 = '\0';
+				p++; /* Skip past = */
+				while (isspace(*p))
+					p++;
+				value = p;
+				while (isspace(*key))
+					key++;
+
+				if (value[strlen(value)-1] == '\n')
+					value[strlen(value)-1] = '\0';
+				printf("Got pair: %s = %s\n", key, value);
+				hashtable_insert(*metahash, strdup(key), strdup(value));
+			}
+			fclose(metafp);
+			unlink(envpairpath);
+		} else {
+			printf("Couldn't open %s\n", envpairpath);
+		}
+	}
+
+#ifdef DEBUG
 	printf("did convert to %i bytes (strlen %i)\n",exeocbuflen,strlen(documentfinishedbuftmp));
-	#endif
+#endif
 
 	if (strcmp((*fileFilter).outputformat,"text") == 0) {
 		//hvis dette er text skal det inn i et html dokument.
@@ -719,7 +773,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 					}
 				}
 				//runarb: 18 jan 2008: har var titel "", ikke titlefromadd, som gjorde at 24so crawling mistet titler.
-				if (bbdocument_convert(ft, docbuf, docbufsize, &convdocbuf, &convdocbufsize, titlefromadd, subname, documenturi, lastmodified, acl_allow, acl_denied, "") == 0) {
+				if (bbdocument_convert(ft, docbuf, docbufsize, &convdocbuf, &convdocbufsize, titlefromadd, subname, documenturi, lastmodified, acl_allow, acl_denied, "", NULL) == 0) {
 					fprintf(stderr, "Failed on bbdocument_convert.\n");
 					failed++;
 					free(docbuf);
@@ -794,6 +848,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	size_t imageSize;
 	unsigned int DocIDForExistTest;
 	unsigned int lastmodifiedForExistTest;
+	struct hashtable *metahash;
 
 	printf("bbdocument_add: \"%s\"\n",documenturi);
 
@@ -828,7 +883,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		strncpy(ReposetoryHeader.doctype,doctype,sizeof(ReposetoryHeader.doctype));
 	}
 
-	if (!bbdocument_convert(documenttype_real,document,dokument_size,&htmlbuffer,&htmlbuffersize,title,subname,documenturi, lastmodified,acl_allow, acl_denied, doctype)) {
+	if (!bbdocument_convert(documenttype_real,document,dokument_size,&htmlbuffer,&htmlbuffersize,title,subname,documenturi, lastmodified,acl_allow, acl_denied, doctype, &metahash)) {
 
 		printf("can't run bbdocument_convert\n");
 		//lager en tom html buffer
@@ -839,6 +894,27 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		htmlbuffersize = strlen(htmlbuffer);
 		printf("useing title \"%s\" as title\n",title);
 		printf("htmlbuffersize %i\n",htmlbuffersize);
+	}
+
+	if (metahash) {
+		struct hashtable_itr *itr;
+
+		if (hashtable_count(metahash) > 0) {
+			itr = hashtable_iterator(metahash);
+			do {
+				char *key, *value;
+
+				key = hashtable_iterator_key(itr);
+				value = hashtable_iterator_value(itr);
+
+				printf("Key: %s Value: %s\n", key, value);
+
+				if (strcmp(key, "lastmodified") == 0) {
+					lastmodified = atol(value);
+				}
+			} while (hashtable_iterator_advance(itr));
+		}
+		hashtable_destroy(metahash, 1);
 	}
 
 	//printf("document (size %i)\"%s\"\n",htmlbuffersize,htmlbuffer);
@@ -857,47 +933,42 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 
 	ReposetoryHeader.htmlSize = htmlbuffersize;
-
 	ReposetoryHeader.clientVersion = 2.14;
-
 
 
 	strncpy(ReposetoryHeader.url,documenturi,sizeof(ReposetoryHeader.url));
 	//hvis vi har DocID 0 har vi et system som ikke tar vare på docider. For eks bb eller bdisk.
 	ReposetoryHeader.DocID = rGeneraeADocID(subname);
 		
-	#ifdef DEBUG
+#ifdef DEBUG
 	printf("Dident have a known DocID for document. Did generet on. DOcID is now %u\n",ReposetoryHeader.DocID);
-	#endif
-
-
+#endif
 
 	ReposetoryHeader.response = 200;
 	strcpy(ReposetoryHeader.content_type,"htm");
 
 	ReposetoryHeader.acl_allowSize = strlen(acl_allow);
-	#ifdef IIACL
+#ifdef IIACL
 	ReposetoryHeader.acl_deniedSize = strlen(acl_denied);
-	#endif
+#endif
 	ReposetoryHeader.time = lastmodified;
 
 	ReposetoryHeader.storageTime = 0; //setes automatisk av rApendPostcompress
 
-	#ifdef DEBUG
+#ifdef DEBUG
 	printf("ACL was allow \"%s\", %i bytes, denied \"%s\", %i bytes\nsubname %s\n",acl_allow,ReposetoryHeader.acl_allowSize,acl_allow,ReposetoryHeader.acl_allowSize,subname);
-	#endif
+#endif
 
 	ReposetoryHeader.urllen = strlen(documenturi);
 	rApendPostcompress(&ReposetoryHeader,htmlbuffer,imagebuffer,subname,acl_allow,acl_denied,NULL, documenturi);
 
-	#ifdef DEBUG	
+#ifdef DEBUG	
 	printf("legger til DocID \"%u\", time \"%u\"\n",ReposetoryHeader.DocID,lastmodified);
 	printf("htmlSize %ho, imageSize %ho\n",ReposetoryHeader.htmlSize,ReposetoryHeader.imageSize);
 	printf("html: -%s-\n",htmlbuffer);
-	#endif
+#endif
 
 	uriindex_add(ReposetoryHeader.url,ReposetoryHeader.DocID,lastmodified,subname);
-	
 
 	free(htmlbuffer);
 	free(documenttype_real);
