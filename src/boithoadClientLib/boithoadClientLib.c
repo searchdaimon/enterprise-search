@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,12 +22,11 @@ int boithoa_getLdapResponsList(int socketha,char **respons_list[],int *nrofrespo
 	printf("nr %i\n",intresponse);
 	#endif
 
-	//void *, ikke +1 da vi setter pekeren til \0, ikke bare en char 
-	if (( (*respons_list) = malloc((sizeof(char *) * intresponse) +sizeof(void *))) == NULL ) {
+	if (((*respons_list) = malloc((sizeof(char *) * (intresponse+1)))) == NULL) {
 		perror("boithoa_getLdapResponsList: can't malloc respons array");
 		return 0;
 	}
-        (*nrofresponses) = 0;
+        *nrofresponses = 0;
 
 	for (i=0;i<intresponse;i++) {
 		if (!recvall(socketha,ldaprecord,sizeof(ldaprecord))) {
@@ -39,15 +39,15 @@ int boithoa_getLdapResponsList(int socketha,char **respons_list[],int *nrofrespo
 		#endif
 
 		len = strnlen(ldaprecord,MAX_LDAP_ATTR_LEN);
-                (*respons_list)[(*nrofresponses)] = malloc(len +1); 
+                (*respons_list)[*nrofresponses] = malloc(len+1); 
 
 		//ToDO: strscpy
-                strncpy((*respons_list)[(*nrofresponses)],ldaprecord,len +1);
+                strncpy((*respons_list)[*nrofresponses], ldaprecord, len+1);
 
-		++(*nrofresponses);
+		(*nrofresponses)++;
 	}
 
-	(*respons_list)[(*nrofresponses)] = '\0';
+	(*respons_list)[*nrofresponses] = NULL;
 
 	return 1;
 }
@@ -178,7 +178,6 @@ void boithoad_respons_list_free(char *respons_list[]) {
 int boithoad_groupsForUser(const char username_in[],char **respons_list[],int *nrofresponses) {
 
 	int socketha;
-	int intresponse;
 	char username[64];
      
 	//ToDo: strscpy
