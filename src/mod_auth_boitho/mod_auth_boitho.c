@@ -60,6 +60,7 @@
 #include <sys/wait.h>
 #include <pwd.h>
 #include <grp.h>
+#include <ctype.h>
 
 #ifndef INSTBINDIR
 #error INSTBINDIR should be defined as the location of the validate executable
@@ -216,6 +217,57 @@ static int auth_boitho_authorize(const char *user, const char* pw,
     }
 }
 
+int
+ishexdigit(int c)
+{
+	if (isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))
+		return 1;
+	return 0;
+}
+
+#define MAX_STRING_FIX (MAX_USERNAME_LENGTH > MAX_PW_LENGTH ? MAX_USERNAME_LENGTH : MAX_PW_LENGTH)
+
+/* converts username and passwords from latin1 to utf-8 */
+void
+cleanstring(char *str, void *r)
+{
+	int i, j;
+	char s[MAX_STRING_FIX + 1];
+
+	for (i = 0, j = 0; str[i] != '\0' && j < MAX_STRING_FIX-1; i++) {
+		if (str[i] == '\xe6') {
+			ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "1");
+			s[j++] = '\xc3';
+			s[j++] = '\xa6';
+		} else if (str[i] == '\xf8') {
+			ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "2");
+			s[j++] = '\xc3';
+			s[j++] = '\xb8';
+		} else if (str[i] == '\xe5') {
+			ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "3");
+			s[j++] = '\xc3';
+			s[j++] = '\xa5';
+		} else if (str[i] == '\xc6') {
+			ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "4");
+			s[j++] = '\xc3';
+			s[j++] = '\x86';
+		} else if (str[i] == '\xd8') {
+			ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "5");
+			s[j++] = '\xc3';
+			s[j++] = '\x98';
+		} else if (str[i] == '\xc5') {
+			ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "6");
+			s[j++] = '\xc3';
+			s[j++] = '\x85';
+		} else {
+			ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "7");
+			s[j++] = str[i];
+		}
+	}
+	s[j] = '\0';
+	strcpy(str, s);
+}
+
 /*
  * auth_boitho_handler
  *
@@ -246,7 +298,7 @@ static int auth_boitho_handler(request_rec *r)
      if (s->auth_boitho_flag != 1)
         { return DECLINED; }            
 
-	#ifdef APACHE_V13
+#ifdef APACHE_V13
 	conn_rec *c = r->connection;
      if(!(strtrue(c->user) && strtrue(sent_pw))) {
          ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
@@ -267,7 +319,7 @@ static int auth_boitho_handler(request_rec *r)
      strncpy(passwd,sent_pw,n); /* Copy to passwd[0..n-1] */
      passwd[n] = '\0';
 
-	#else
+#else
      if(!(strtrue(r->user) && strtrue(sent_pw))) {
          ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, 
 		"Both a username and password must be provided for %s", 
@@ -286,8 +338,10 @@ static int auth_boitho_handler(request_rec *r)
      if (n > MAX_PW_LENGTH) n=MAX_PW_LENGTH;
      strncpy(passwd,sent_pw,n); /* Copy to passwd[0..n-1] */
      passwd[n] = '\0';
+#endif
 
-	#endif
+     cleanstring(user, r);
+     cleanstring(passwd, r);
 
      ret = auth_boitho_authorize(user,passwd,r);
      if (ret==-1)
