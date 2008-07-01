@@ -236,31 +236,24 @@ cleanstring(char *str, void *r)
 
 	for (i = 0, j = 0; str[i] != '\0' && j < MAX_STRING_FIX-1; i++) {
 		if (str[i] == '\xe6') {
-			ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "1");
 			s[j++] = '\xc3';
 			s[j++] = '\xa6';
 		} else if (str[i] == '\xf8') {
-			ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "2");
 			s[j++] = '\xc3';
 			s[j++] = '\xb8';
 		} else if (str[i] == '\xe5') {
-			ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "3");
 			s[j++] = '\xc3';
 			s[j++] = '\xa5';
 		} else if (str[i] == '\xc6') {
-			ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "4");
 			s[j++] = '\xc3';
 			s[j++] = '\x86';
 		} else if (str[i] == '\xd8') {
-			ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "5");
 			s[j++] = '\xc3';
 			s[j++] = '\x98';
 		} else if (str[i] == '\xc5') {
-			ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "6");
 			s[j++] = '\xc3';
 			s[j++] = '\x85';
 		} else {
-			ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "7");
 			s[j++] = str[i];
 		}
 	}
