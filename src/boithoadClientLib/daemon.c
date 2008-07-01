@@ -1,3 +1,4 @@
+#include <sys/select.h>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -150,7 +151,7 @@ int sendall(int s, void *buf, int len) {
 			return 0;
 		}
             if (n == -1) { 
-		printf("dident manage to send all the data as %s:%f.\n",__FILE__,__LINE__);
+		printf("dident manage to send all the data as %s:%d.\n",__FILE__,__LINE__);
 		//break; 
 		return 0;
 	    }
@@ -237,6 +238,6 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 
 	//printf("sendpacked: end\n");
 
-
+	return 1;
 }
 
