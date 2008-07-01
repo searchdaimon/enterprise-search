@@ -235,22 +235,22 @@ cleanstring(char *str, void *r)
 	char s[MAX_STRING_FIX + 1];
 
 	for (i = 0, j = 0; str[i] != '\0' && j < MAX_STRING_FIX-1; i++) {
-		if (str[i] == '\xe6') {
+		if (str[i] == '\xe6') { /* aelig */
 			s[j++] = '\xc3';
 			s[j++] = '\xa6';
-		} else if (str[i] == '\xf8') {
+		} else if (str[i] == '\xf8') { /* oslash */
 			s[j++] = '\xc3';
 			s[j++] = '\xb8';
-		} else if (str[i] == '\xe5') {
+		} else if (str[i] == '\xe5') { /* aring */
 			s[j++] = '\xc3';
 			s[j++] = '\xa5';
-		} else if (str[i] == '\xc6') {
+		} else if (str[i] == '\xc6') { /* AELIG */
 			s[j++] = '\xc3';
 			s[j++] = '\x86';
-		} else if (str[i] == '\xd8') {
+		} else if (str[i] == '\xd8') { /* OSLASH */
 			s[j++] = '\xc3';
 			s[j++] = '\x98';
-		} else if (str[i] == '\xc5') {
+		} else if (str[i] == '\xc5') { /* ARING */
 			s[j++] = '\xc3';
 			s[j++] = '\x85';
 		} else {
