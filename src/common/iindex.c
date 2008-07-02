@@ -1181,15 +1181,12 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		fclose(IINDEXFH);
 	}
 
-
-
+	#ifdef DEBUG
+	printf("rev index:\n");
+	#endif
 
 	while ((!feof(REVINDEXFH)) && (count < revIndexArraySize)) {
 	
-
-
-		
-		
 
 		if (fread(&revIndexArray[count].DocID,sizeof(revIndexArray[count].DocID),1,REVINDEXFH) != 1) {
 			#ifdef DEBUG
@@ -1202,25 +1199,35 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 
 		//v3
-		fread(&revIndexArray[count].langnr,sizeof(char),1,REVINDEXFH);
+		if (fread(&revIndexArray[count].langnr,sizeof(char),1,REVINDEXFH) != 1) {
+			printf("fread langnr");
+			return 0;
+		}
 		//printf("lang1 %i\n",(int)revIndexArray[count].langnr);
 
 
-		fread(&revIndexArray[count].WordID,sizeof(revIndexArray[count].WordID),1,REVINDEXFH);
-		fread(&revIndexArray[count].nrOfHits,sizeof(revIndexArray[count].nrOfHits),1,REVINDEXFH);
+		if (fread(&revIndexArray[count].WordID,sizeof(revIndexArray[count].WordID),1,REVINDEXFH) != 1) {
+			printf("fread WordID");
+			return 0;
 
-		#ifdef DEBUG
-			printf("%i\n",count);
-			printf("\tDocID %u lang %i\n",revIndexArray[count].DocID,(int)revIndexArray[count].langnr);
-			printf("\tread WordID: %u, nrOfHits %u\n",revIndexArray[count].WordID,revIndexArray[count].nrOfHits);
-		#endif
-
-		if (revIndexArray[count].nrOfHits > MaxsHitsInIndex) {
-			printf("nrOfHits lager then MaxsHitsInIndex. Nr was %i\n",revIndexArray[count].nrOfHits);
+		}
+		if (fread(&revIndexArray[count].nrOfHits,sizeof(revIndexArray[count].nrOfHits),1,REVINDEXFH) != 1) {
+			printf("fread nrOfHits");
 			return 0;
 		}
 
-		//leser antal hist vi skulle ha
+		#ifdef DEBUG
+			printf("%i\n",count);
+			printf("\tread WordID: %u, nrOfHits %u\n",revIndexArray[count].WordID,revIndexArray[count].nrOfHits);
+			printf("\tDocID %u lang %i\n",revIndexArray[count].DocID,(int)revIndexArray[count].langnr);
+		#endif
+
+		if (revIndexArray[count].nrOfHits > MaxsHitsInIndex) {
+			printf("nrOfHits lager then MaxsHitsInIndex (%i). Nr was %i\n",MaxsHitsInIndex ,revIndexArray[count].nrOfHits );
+			return 0;
+		}
+
+		//leser antall hist vi skulle ha
 		if (fread(&revIndexArray[count].hits,1,revIndexArray[count].nrOfHits * sizeof(short),REVINDEXFH) != (revIndexArray[count].nrOfHits * sizeof(short)) ) {
 			perror("read hits");
 			exit(-1);
@@ -1338,6 +1345,8 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 				printf("DocID %u is tombstoned\n",revIndexArray[i].DocID);
 			#endif
 			//toDo kan vi bare kalle continue her. Blir det ikke fil i noe antall?
+			//Runarb: 1 juli 2008: ser ut til at vi henter antallet fra 
+			//nrofDocIDsForWordID[forekomstnr], så det går bra
 			continue;
 		}
 		//skrive DocID og antall hit vi har
@@ -1528,8 +1537,11 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 
 	//nrOffIindexFiles = argc -2;
 
-
-	iindexfile = malloc((stoppIndex - startIndex) * sizeof(struct iindexfileFormat));
+	printf("mallocing iindexfile of size %i\n", ((stoppIndex - startIndex) * sizeof(struct iindexfileFormat)) );
+	if ((iindexfile = malloc((stoppIndex - startIndex) * sizeof(struct iindexfileFormat))) == NULL) {
+		perror("malloc iindexfile");
+		exit(-1);
+	}
 
 	//printf("out file %s\nnrOffIindexFiles %i\n",FinalIindexFileName,nrOffIindexFiles);
 
@@ -1537,6 +1549,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
         count=0;
 	for (i=startIndex;i<stoppIndex;i++) {
 		iindexfile[count].fileha = NULL;
+		iindexfile[count].lastTerm = 0;
 		++count;
 	}
 
@@ -1780,6 +1793,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 		++count;
 	}
 
+	free(iindexfile);
 
 }
 
