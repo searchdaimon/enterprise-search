@@ -627,7 +627,7 @@ gcAuthoritybb: src/gcAuthority/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/gcAuthority/main.c -o bin/gcAuthoritybb $(LDFLAGS) -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c src/bbdocument/bbdocument.c src/gcAuthority/main.c -o bin/gcAuthoritybb $(LDFLAGS) -D BLACK_BOKS $(BDB)
 
 gcSummary: src/gcSummary/gcsummary.c
 	@echo ""
