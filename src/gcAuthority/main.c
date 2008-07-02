@@ -16,6 +16,7 @@
 
 #include "../common/iindex.h"
 #include "../common/gc.h"
+#include "../bbdocument/bbdocument.h"
 
 
 
@@ -108,6 +109,9 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt)
 			//sletter
 			DIS_delete(REN_DocumentIndex(re, i));
 
+			//sletter dokumentet i bb spesefike ting.
+			bbdocument_delete (REN_DocumentIndex(re, i)->Url, subname);
+
 			blog(gcaopt->log,1,"dokument \"%s\" can be deleted. Last seen: %s, DocID %u",REN_DocumentIndex(re, i)->Url,ctime_s(&REN_DocumentIndex(re, i)->lastSeen),LotDocIDOfset(LotNr) +i);
 			++gcaopt->gced;
 		
@@ -131,6 +135,8 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt)
 
 	for (i=0;i<64;i++) {
 		Indekser(LotNr,"Main",i,subname,&IndekserOpt);
+		Indekser(LotNr,"acl_allow",i,subname,&IndekserOpt);
+		Indekser(LotNr,"acl_denied",i,subname,&IndekserOpt);
 	}
 
 
@@ -158,6 +164,8 @@ void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
         for (i=0;i<NrOfDataDirectorys;i++) {
         	printf("bucket: %i\n",i);
 		 mergei(i,0,0,"Main","aa",subname,&DocIDcount);
+		 mergei(i,0,0,"acl_allow","aa",subname,&DocIDcount);
+		 mergei(i,0,0,"acl_denied","aa",subname,&DocIDcount);
         }
 
         printf("DocIDcount: %i (/64)\n",DocIDcount);
