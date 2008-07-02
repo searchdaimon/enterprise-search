@@ -174,6 +174,11 @@ int url_normalization (char url[], int urlsize) {
         //kutter av http:// (de 7 første tegnene)
         //strscpy(domain,url + 7,sizeof(domain));
 
+	if (strnlen(url,urlsize) < 10) {
+		fprintf(stderr,"bad url \"%s\"\n",url);
+		return 0;
+	}
+
 	/*
 		Tar bort # og alt etter i urlen. Eks http://www.boitho.com/side.html#august blir til http://www.boitho.com/side.html
 	*/
