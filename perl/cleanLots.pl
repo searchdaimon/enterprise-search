@@ -70,7 +70,7 @@ foreach my $lot (0 .. 4096) {
 print "\nmergeIIndex:\n";
 
 foreach my $key (keys %hiestinlot) {
-	print "key $key, value $hiestinlot{$key}\n";
+	print "key $key, value \"$hiestinlot{$key}\"\n";
 
 	$command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} Main aa \"$key\"";
 	print "runing $command\n";
