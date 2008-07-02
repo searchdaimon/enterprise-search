@@ -294,6 +294,12 @@ int bbdocument_init() {
 	closedir(dirp);
 }
 
+int bbdocument_delete (char uri[], char subname[]) {
+	
+	uriindex_delete (uri, subname);
+
+	return 1;
+}
 
 int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified) {
 	docid DocID;
@@ -1187,6 +1193,44 @@ int uriindex_get (char uri[], unsigned int *DocID, unsigned int *lastmodified, c
 			printf("search for \"%s\", len %i\n",key.data,key.size);		
 		#endif
                 forreturn = 0;
+        }
+        else {
+                dbp->err(dbp, ret, "DBcursor->get");
+                forreturn = 0;
+        }
+
+	uriindex_close(&dbp);
+
+	return forreturn;
+
+}
+
+
+int uriindex_delete (char uri[], char subname[]) {
+        DB dbpArray;
+
+        DB *dbp = NULL;
+
+        DBT key;
+        int ret;
+	int forreturn = 1;
+	struct uriindexFormat uriindex;
+
+        if (!uriindex_open(&dbp,subname)) {
+		fprintf(stderr,"can't open uriindex\n");
+		return 0;
+	}
+
+
+        //resetter minne
+        memset(&key, 0, sizeof(DBT));
+
+	//legger inn datane i bdb strukturen
+        key.data = uri;
+        key.size = strlen(uri);
+
+        if ((ret = dbp->del(dbp, NULL, &key, 0)) == 0) {
+		forreturn = 1;
         }
         else {
                 dbp->err(dbp, ret, "DBcursor->get");
