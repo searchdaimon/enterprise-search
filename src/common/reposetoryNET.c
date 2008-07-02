@@ -333,6 +333,8 @@ int rSendFileToHostname(char source[], char dest[], int LotNr, char opentype[],c
 
 	int socketha;
 
+	printf("rSendFileToHostname(source=%s, dest=%s, opentype=%s, subname=%s, HostName=%s)\n",source,dest,opentype,subname,HostName);
+
 	if ((socketha = cconnect(HostName, BLDPORT)) == 0) {
 		printf("can't connect to host \"%s\"\n",HostName);
 		perror(HostName);
@@ -355,6 +357,8 @@ int rSendFileToHostname(char source[], char dest[], int LotNr, char opentype[],c
 	fclose(FILEHANDLER);
 
 	close(socketha);
+
+	printf("~rSendFileToHostname\n");
 
 	return 1;
 }
@@ -395,7 +399,7 @@ int rSendFileByOpenHandlerBySocket(FILE *FILEHANDLER, char dest[], int LotNr, ch
 
 	//sender heder
 	if (!sendpacked(socketha,C_rSendFile,BLDPROTOCOLVERSION, 0, NULL,subname)) {
-		fprintf(stderr,"Can't sendpacked()\n");
+		fprintf(stderr,"Can't sendpacked() on header\n");
 		socketError();
 		return 0;
 	}
