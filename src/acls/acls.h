@@ -8,6 +8,8 @@
 
 #ifdef BLACK_BOKS
 
+#include <inttypes.h>
+
 #include <db.h>
 
 struct userToSubnameDbFormat {
