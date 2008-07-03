@@ -49,3 +49,21 @@ ht_wstringcmp(void *k1, void *k2)
 	return (wcscmp(c1, c2) == 0);
 }
 
+
+unsigned int
+ht_integerhash(void *ky)
+{
+	return *((int *)ky);
+}
+
+int
+ht_integercmp(void *k1, void *k2)
+{
+	int *c1, *c2;
+
+	c1 = k1;
+	c2 = k2;
+
+	return (*c1 == *c2);
+}
+
