@@ -5,7 +5,7 @@ CC = gcc
 
 # Arguments passed to the compiler: -g causes the compiler to insert
 # debugging info into the executable and -Wall turns on all warnings
-CFLAGS = -g -Wmissing-noreturn
+CFLAGS = -g
 
 # The dynamic libraries that the executable needs to be linked to
 # fjerner -ldb -static. Må legge dette til der de skal være
