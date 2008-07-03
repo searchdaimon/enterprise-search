@@ -68,7 +68,7 @@ static const unsigned char index_64[256] = {
     XX,XX,XX,XX, XX,XX,XX,XX, XX,XX,XX,XX, XX,XX,XX,XX,
 };
 
-int base64_decode(char *out, const char *in, int maxlen) {
+int base64_decode(char *out, const char *in, int maxlen __attribute((unused))) {
 
 	/*
 	SV* sv
