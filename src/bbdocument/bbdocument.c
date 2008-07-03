@@ -519,13 +519,14 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	
 	char envpairtemplate[] = "tmp/converter-metadata-XXXXXX";
 	char *envpairpath = strdup(bfile(envpairtemplate));
-	mktemp(envpairpath);
 	char envpair[PATH_MAX];
+	mktemp(envpairpath);
 	sprintf(envpair, "SDMETAFILE=%s", envpairpath);
 	free(envpairpath);
 	envpairpath = envpair + strlen("SDMETAFILE=");
-        char *shargs[] = { "/usr/bin/env", envpair, "/bin/sh", "-c", NULL, NULL, };
-        shargs[4] = (*fileFilter).command;
+        char *shargs[] = { "/usr/bin/env", NULL, "/bin/sh", "-c", NULL, NULL, };
+	shargs[1] = envpair;
+        shargs[4] = fileFilter->command;
 
 	if (!exeoc_timeout(shargs,documentfinishedbuftmp,&exeocbuflen,&ret,120)) {
 
