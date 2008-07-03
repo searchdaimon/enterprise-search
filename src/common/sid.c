@@ -67,7 +67,6 @@ char *
 sid_b64totext(char *buf, size_t len)
 {
 	char *p;
-	size_t outlen;
 	char out[1024];
 	
 	len = base64_decode(out, buf, sizeof(out));
