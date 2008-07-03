@@ -53,7 +53,7 @@ my $serveralias = $ARGV[1];
 my $realm = $ARGV[2];
 if (!defined($serveralias) && $authtype eq 'msadsso') {
 	print STDERR "No server alias specified, defaulting to 'blackbox.local'\n";
-	$serveralias = 'blackbox.local';
+	$serveralias = 'www.blackbox.local';
 }
 if (!defined($realm) && $authtype eq 'msadsso') {
 	print STDERR "No realm specified, defaulting to 'BLACKBOX.LOCAL'\n";
