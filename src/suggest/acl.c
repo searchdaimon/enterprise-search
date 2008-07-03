@@ -28,8 +28,6 @@ acl_is_allowed(char **allow, char **deny, char *group, char ***groups, int *num)
 	int i;
 	int gotallow = 0;
 
-	printf("Looking up: %s\n", group);
-
 	if (acl_in_list(group, deny))
 		return 0;
 	if (acl_in_list(group, allow))
