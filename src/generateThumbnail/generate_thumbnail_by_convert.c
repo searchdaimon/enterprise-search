@@ -17,7 +17,7 @@
 
 #define exeocbuflen 2048
 
-unsigned char* generate_thumbnail_by_convert(const void *document, const size_t size, size_t *new_size, char type[]) {
+char *generate_thumbnail_by_convert(const void *document, const size_t size, size_t *new_size, char type[]) {
 
 	void *image;
 	void *thumbnail;
@@ -87,13 +87,12 @@ unsigned char* generate_thumbnail_by_convert(const void *document, const size_t 
 	unlink(imagefile);
 
 	return image;
-	
 }
 
 
 
 
-unsigned char* generate_pdf_thumbnail_by_convert( const void *document, const size_t size, size_t *new_size ) {
+char *generate_pdf_thumbnail_by_convert( const void *document, const size_t size, size_t *new_size ) {
 
 	void *image;
 	void *thumbnail;
