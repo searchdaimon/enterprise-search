@@ -171,7 +171,6 @@ int smb_recursive_get( char *prefix, char *dir_name,
         int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
 	int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...),
 	int (*documentContinue)(struct collectionFormat *collection),
-	unsigned int timefilter,
 	int no_auth
 	 )
 {
@@ -328,7 +327,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 			crawldocumentExist.lastmodified = file_stat.st_mtime;
 			crawldocumentExist.dokument_size = file_stat.st_size;
 
-			//runarb: 26 feb. Vi kjører denne på crawldocumentExist urlen, men ikke på add. Noe som fører til at de blir forskjelige.
+			//runarb: 26 feb. Vi kjører denne på crawldocumentExist ~urlen, men ikke på add. Noe som fører til at de blir forskjelige.
 			//cleanresourceUnixToWin(crawldocumentExist.documenturi);
 
 			#ifdef DEBUG
@@ -339,11 +338,8 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
 
                     	if (dirp->smbc_type == SMBC_DIR) {
-			    smb_recursive_get( prefix, entry_name, collection, documentExist, documentAdd , documentError, documentContinue, timefilter,no_auth);
+			    smb_recursive_get( prefix, entry_name, collection, documentExist, documentAdd , documentError, documentContinue, no_auth);
                         }
-			else if ((timefilter != 0) && (timefilter >= crawldocumentExist.lastmodified)) {
-				printf("Note: Won't download. File is to old. Timefilter %u >= lastmodified %u\n",timefilter,crawldocumentExist.lastmodified);
-			}
 		    	else if ((documentExist)(collection, &crawldocumentExist )) {
 				//doc exist
 				printf("Note: smb_recursive_get: document exist\n");
@@ -421,8 +417,8 @@ int smb_recursive_get( char *prefix, char *dir_name,
         					crawldocumentAdd.document	= fbuf;
         					crawldocumentAdd.dokument_size	= file_stat.st_size;
         					crawldocumentAdd.lastmodified	= file_stat.st_mtime;
-        					crawldocumentAdd.acl_allow 		= parsed_acl[0];
-						crawldocumentAdd.acl_denied 		= parsed_acl[1];
+        					crawldocumentAdd.acl_allow 	= parsed_acl[0];
+						crawldocumentAdd.acl_denied 	= parsed_acl[1];
 
 						isize = ((strlen(dirp->name) *2) +1);
         					crawldocumentAdd.title	= malloc(isize);

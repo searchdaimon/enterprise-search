@@ -15,7 +15,6 @@ int smb_recursive_get( char *prefix, char *dir_name,
 	int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
 	int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...),
 	int (*documentContinue)(struct collectionFormat *collection),
-	unsigned int timefilter,
 	int no_auth
 	 );
 

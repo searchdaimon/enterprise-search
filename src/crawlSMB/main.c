@@ -103,7 +103,7 @@ int crawlfirst(struct collectionFormat *collection,
         printf("crawlSMB: \n\tresource: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",(*collection).resource,(*collection).user,(*collection).password);
     	prefix = smb_mkprefix( (*collection).user, (*collection).password );
 
-    	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, documentError, documentContinue, 0,no_auth);
+    	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, documentError, documentContinue, no_auth);
 
     	free(prefix);
 
@@ -136,13 +136,10 @@ int crawlupdate(struct collectionFormat *collection,
 
 	printf("crawlupdate: start\n");
 
-	//bruker heller dokumentExist() får å avgjøre.
-	(*collection).lastCrawl = 0;
-
         printf("crawlSMB: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",(*collection).resource,(*collection).user,(*collection).password);
     	prefix = smb_mkprefix( (*collection).user, (*collection).password );
 
-    	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, documentError, documentContinue,(*collection).lastCrawl,no_auth);
+    	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, documentError, documentContinue,no_auth);
 
     	free(prefix);
 
