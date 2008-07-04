@@ -532,9 +532,9 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 			#endif
 
 			//copying hits
-			#ifdef DEBUG_II
-			printf("or_merge: hist a %hu, b %hu\n",a->iindex[i].TermAntall,b->iindex[j].TermAntall);
-			#endif
+			//#ifdef DEBUG_II
+			//printf("or_merge: hits a nr %hu, b nr %hu\n",a->iindex[i].TermAntall,b->iindex[j].TermAntall);
+			//#endif
 
 			c->iindex[k].TermAntall = 0;
 			c->iindex[k].hits = &c->hits[c->nrofHits];
@@ -577,9 +577,9 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
                 		c->iindex[k] = a->iindex[i];
 			}
 			//copying hits
-			#ifdef DEBUG_II
-			printf("or_merge: hist a %hu, b %hu\n",a->iindex[i].TermAntall,b->iindex[j].TermAntall);
-			#endif
+			//#ifdef DEBUG_II
+			//printf("or_merge: hist a %hu, b %hu\n",a->iindex[i].TermAntall,b->iindex[j].TermAntall);
+			//#endif
 			c->iindex[k].TermAntall = 0;
 			c->iindex[k].hits = &c->hits[c->nrofHits];
 
@@ -610,9 +610,9 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 	                	c->iindex[k] = b->iindex[j];
 			}
 			//copying hits
-			#ifdef DEBUG_II
-			printf("or_merge: hist a %hu, b %hu\n",a->iindex[i].TermAntall,b->iindex[j].TermAntall);
-			#endif
+			//#ifdef DEBUG_II
+			//printf("or_merge: hits a nr %hu, b nr %hu\n",a->iindex[i].TermAntall,b->iindex[j].TermAntall);
+			//#endif
 			c->iindex[k].TermAntall = 0;
 			c->iindex[k].hits = &c->hits[c->nrofHits];
 
@@ -649,9 +649,9 @@ void or_merge(struct iindexFormat *c, int *baselen, struct iindexFormat *a, int 
 		//#endif
 
 			//copying hits
-			#ifdef DEBUG_II
-			printf("or_merge: hist a %hu, b %hu\n",a->iindex[i].TermAntall,b->iindex[j].TermAntall);
-			#endif
+			//#ifdef DEBUG_II
+			//printf("or_merge: hits a nr %hu, b nr %hu\n",a->iindex[i].TermAntall,b->iindex[j].TermAntall);
+			//#endif
 			c->iindex[k].TermAntall = 0;
 			c->iindex[k].hits = &c->hits[c->nrofHits];
 
@@ -840,7 +840,11 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 	printf("and_merge(originalLen=%i, alen=%i, blen=%i)\n",originalLen,alen,blen);
 
 	#ifdef DEBUG_II
-	printf("b, first hits:\n");
+	printf("a, first hits (of %i total):\n",alen);
+	for(x=0;x<alen && x<100;x++) {
+		printf("\t%u\n",a->iindex[x].DocID);
+	}
+	printf("b, first hits (of %i total):\n",blen);
 	for(x=0;x<blen && x<100;x++) {
 		printf("\t%u\n",b->iindex[x].DocID);
 	}
@@ -1656,6 +1660,9 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 	gettimeofday(&start_time, NULL);
 	#endif
 
+	struct iindexFormat *tmpResult = (struct iindexFormat *)malloc(sizeof(struct iindexFormat));
+	int tmpResultElementer;
+
 	vboprintf("######################################################################\n");
 	vboprintf("searchIndex: vil search index \"%s\"\n",indexType);
 	vboprintf("######################################################################\n");
@@ -1792,8 +1799,18 @@ for (i=0; i<(*queryParsed).n; i++)
 							//rank(TmpArrayLen,TmpArray,subname,(*complicacy));
 
 							printf("did find %i pages\n",TmpArrayLen);
+
+							resultArrayInit(tmpResult);
+							tmpResultElementer = 0;
 												
-							or_merge(TeffArray,&baseArrayLen,TeffArray,(*TeffArrayElementer),TmpArray,TmpArrayLen);
+							//merger først til en tempurar array, for så å kopiere inn denne.
+							int ti;
+							or_merge(tmpResult,&tmpResultElementer,TeffArray,(*TeffArrayElementer),TmpArray,TmpArrayLen);
+							iindexArrayCopy2(TeffArray,&ti,TeffArrayOriginal,tmpResult,tmpResultElementer);
+
+							vboprintf("tmpResultElementer %i\n",tmpResultElementer);
+							baseArrayLen = ti;
+
 							printf("baseArrayLen %i\n",baseArrayLen);
 							(*TeffArrayElementer) = baseArrayLen;
 
@@ -1816,9 +1833,8 @@ for (i=0; i<(*queryParsed).n; i++)
 					}
 
 					//Vi må først frasesøke de ordene vi skal, og lagre dete i en temp array. Så merge dette med resten
-					struct iindexFormat *tmpResult = (struct iindexFormat *)malloc(sizeof(struct iindexFormat));
 					resultArrayInit(tmpResult);
-					int tmpResultElementer = 0;
+					tmpResultElementer = 0;
 
 					//struct iindexFormat *tmpAnser = (struct iindexFormat *)malloc(sizeof(struct iindexFormat));
 					//int tmpAnserElementer = 0;
@@ -1940,7 +1956,6 @@ for (i=0; i<(*queryParsed).n; i++)
 						(*TeffArrayElementer) = baseArrayLen;
 					}
 
-					free(tmpResult);
 
 
                                 break;
@@ -1957,6 +1972,8 @@ for (i=0; i<(*queryParsed).n; i++)
 	(*TeffArrayElementer) = (*TeffArrayElementer) + TeffArrayOriginal;
 	TeffArrayOriginal = (*TeffArrayElementer);
 	vboprintf("new len is %i\n",(*TeffArrayElementer));
+
+	free(tmpResult);
 
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
