@@ -25,7 +25,6 @@ my %state = $overview->get_state();
         and not $setup_done) {
 
         print "Location: setup.cgi\n\n";
-        $cfg->insert_setting("setup_wizard_done", 1);
         exit;
     }
 }
