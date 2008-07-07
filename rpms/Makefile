@@ -71,8 +71,8 @@ boitho-phonehome_version = 0.5
 boitho-dummy_name = boitho-dummy
 boitho-dummy_version = 0.1
 
-boitho-auth_name = boitho_mod_auth
-boitho-auth_version = 1.1
+boitho-auth_name = mod_auth_boitho
+boitho-auth_version = 1.2
 
 boitho-scripts_name = boitho-scripts
 boitho-scripts_version = 1.1
