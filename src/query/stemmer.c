@@ -52,7 +52,7 @@ thesaurus* thesaurus_init( char *fname_text, char *fname_id )
 
 	    fscanf(f_id, "%i;", &id);
 	    fscanf(f_id, "%i;", &flags);
-	    for (; pos<1024 && word[pos-1]!='\n'; pos++)
+	    for (; pos<1024 && (pos==0 || word[pos-1]!='\n'); pos++)
 		{
 		    word[pos] = fgetc(f_id);
 		    if (word[pos] == '-') word[pos] = ' ';
@@ -72,7 +72,7 @@ thesaurus* thesaurus_init( char *fname_text, char *fname_id )
 	    int		pos=0;
 
 //	    do { word[pos++] = fgetc(f_text); } while (pos<1024 && word[pos-1]!=';');
-	    for (; pos<1024 && word[pos-1]!=';'; pos++)
+	    for (; pos<1024 && (pos==0 || word[pos-1]!=';'); pos++)
 		{
 		    word[pos] = fgetc(f_text);
 		    if (word[pos] == '-') word[pos] = ' ';
@@ -165,6 +165,8 @@ container* thesaurus_get_words_from_id(thesaurus *T, int id)
 
 container* thesaurus_get_synonyms(thesaurus *T, char *_word)
 {
+    if (T==NULL) return NULL;
+
     char	*word = strdup(_word);
     convert_to_lowercase((unsigned char*)word);
 
