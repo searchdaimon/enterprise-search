@@ -19,7 +19,7 @@ install mod_auth_boitho.so $RPM_BUILD_ROOT/usr/lib/httpd/modules
 
 %post
 ( echo 'LoadModule auth_boitho_module /usr/lib/httpd/modules/mod_auth_boitho.so'
-  ) >>/etc/httpd/conf.d/mod_boitho_auth.conf
+  ) >/etc/httpd/conf.d/mod_boitho_auth.conf
 
 %preun
 perl -ni -le 'print unless /mod_auth_boitho/' /etc/httpd/conf/httpd.conf
