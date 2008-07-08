@@ -4,12 +4,52 @@
 
 #include "dcontainer.h"
 #include "dpair.h"
+#include "dtuple.h"
 #include "dvector.h"
 #include "dstack.h"
 #include "dqueue.h"
 #include "dlist.h"
 #include "dmap.h"
+#include "dmultimap.h"
 #include "dset.h"
+
+
+
+void tuple_test()
+{
+    container	*V = vector_container( tuple_container(3, int_container(), int_container(), string_container()) );
+
+    vector_pushback(V, 1, 2, "1+2");
+    vector_pushback(V, 2, 3, "2+3");
+    vector_pushback(V, 3, 4, "3+4");
+    vector_pushback(V, 4, 5, "4+5");
+    vector_pushback(V, 5, 6, "5+6");
+    vector_pushback(V, 6, 7, "6+7");
+    vector_pushback(V, 7, 8, "7+8");
+    vector_pushback(V, 8, 9, "8+9");
+
+    println(V, container_value(V));
+
+    destroy(V);
+}
+
+void multimap_test()
+{
+    container	*M = multimap_container( int_container(), string_container() );
+
+    multimap_insert(M, 3, "f");
+    multimap_insert(M, 3, "g");
+    multimap_insert(M, 2, "c");
+    multimap_insert(M, 1, "a");
+    multimap_insert(M, 2, "d");
+    multimap_insert(M, 1, "b");
+    multimap_insert(M, 2, "e");
+    multimap_insert(M, 3, "h");
+
+    println(M, container_value(M));
+
+    destroy(M);
+}
 
 
 void list_in_list_test()
@@ -313,6 +353,8 @@ void map_test()
 
 int main()
 {
+    tuple_test();
+    multimap_test();
     sorted_vector_test();
     list_in_list_test();
     map_in_list_test();
