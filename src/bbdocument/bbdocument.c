@@ -942,8 +942,8 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	ReposetoryHeader.htmlSize = htmlbuffersize;
 	ReposetoryHeader.clientVersion = 2.14;
 
-
-	strncpy(ReposetoryHeader.url,documenturi,sizeof(ReposetoryHeader.url));
+	//runarb: 8 juli 2008: tar bort bruken av ReposetoryHeader's url
+	//strncpy(ReposetoryHeader.url,documenturi,sizeof(ReposetoryHeader.url));
 	//hvis vi har DocID 0 har vi et system som ikke tar vare på docider. For eks bb eller bdisk.
 	ReposetoryHeader.DocID = rGeneraeADocID(subname);
 		
@@ -975,7 +975,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	printf("html: -%s-\n",htmlbuffer);
 #endif
 
-	uriindex_add(ReposetoryHeader.url,ReposetoryHeader.DocID,lastmodified,subname);
+	uriindex_add(documenturi,ReposetoryHeader.DocID,lastmodified,subname);
 
 	free(htmlbuffer);
 	free(documenttype_real);
