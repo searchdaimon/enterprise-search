@@ -192,7 +192,7 @@ sub delete_collection_confirmed {
         ## my $success = 1;
 	## Infoquery kommentert ut. Set tilbake nÃ¥r bug er fikset
 	## Runarb: 09.07.2008: Tilater dette igjen. Både jeg og Eirik har gått over koden, og vi skal ikke ha noen rm -rf'er der nå.
-	my $success = $infoquery->deleteCollection($collection_name);
+	my ($success) = $infoquery->deleteCollection($collection_name);
 	
 	$vars->{'delete_error'} = $infoquery->error
 		unless $success;
