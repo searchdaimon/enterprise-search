@@ -28,7 +28,7 @@ int main (int argc, char *argv[]) {
 		if (REN_DocumentIndex(redi, i)->Url[0] == '\0') {
 			continue;
 		}
-		printf("url: \"%s\"\n",REN_DocumentIndex(redi, i)->Url);
+		printf("url: \"%s\", CrawleDato %u\n",REN_DocumentIndex(redi, i)->Url, REN_DocumentIndex(redi, i)->CrawleDato);
 	}
 
 
