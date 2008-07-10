@@ -226,6 +226,10 @@ struct subnamesFormat {
 	//struct subnamesFiltypesFormat filtypes[MAXFILTYPES];
 };
 
+struct brank {
+	unsigned char rank;
+}
+
 struct brankPageElementsFormat {
 	unsigned int IPAddress;
 	unsigned char nrOfOutLinks;
@@ -267,7 +271,11 @@ struct DocumentIndexFormat {
 
 struct ReposetoryHeaderFormat {
 	unsigned int DocID;
-	char url[200];
+	#ifdef BLACK_BOKS
+		char url[200] __attribute__((deprecated));
+	#else
+		char url[200];
+	#endif
 	char content_type[4];
 	unsigned int IPAddress;
 	unsigned short response;
