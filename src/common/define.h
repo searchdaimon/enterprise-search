@@ -228,7 +228,7 @@ struct subnamesFormat {
 
 struct brank {
 	unsigned char rank;
-}
+};
 
 struct brankPageElementsFormat {
 	unsigned int IPAddress;
