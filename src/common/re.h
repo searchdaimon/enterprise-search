@@ -45,5 +45,8 @@ void *renget(struct reformat *re, size_t nr);
 #define RE_DocumentIndex(re, DocID) ((struct DocumentIndexFormat *)reget(re, DocID))
 #define REN_DocumentIndex(re, nr) ((struct DocumentIndexFormat *)renget(re, nr))
 
+#define RE_Brank(re, DocID) ((unsigned char *)reget(re, DocID))
+#define REN_Brank(re, nr) ((unsigned char *)renget(re, nr))
+
 
 #endif // _RE__H_
