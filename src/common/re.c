@@ -21,6 +21,8 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 
 	struct stat inode;
 	struct reformat *re;
+	char openmode[4];
+	int mmapmode;
 
 	printf("reopen(lotNr=%i, structsize=%d, file=%s, subname=%s, flags=%i)\n",lotNr,structsize,file,subname,flags);
 
@@ -35,6 +37,15 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 		printf("reopen: have RE_HAVE_4_BYTES_VERSION_PREFIX\n");
 		#endif
 		structsize += 4;
+	}
+
+	if ((re->flags & RE_READ_ONLY) == RE_READ_ONLY) {
+		strcpy(openmode,"rb");
+		mmapmode = PROT_READ;
+	}
+	else {
+		strcpy(openmode,">>");
+		mmapmode = PROT_READ|PROT_WRITE;
 	}
 
 	re->lotNr = lotNr;
@@ -60,7 +71,7 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 
 	}
 	else {
-		if((re->fd = lotOpenFileNoCasheByLotNrl(lotNr, re->mainfile, ">>", 'r', subname)) == -1) {
+		if((re->fd = lotOpenFileNoCasheByLotNrl(lotNr, re->mainfile, openmode, 'r', subname)) == -1) {
 			return NULL;
 		}
 	}
@@ -93,7 +104,7 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 
 	}
 
-        if ((re->mem = mmap(0,re->maxsize,PROT_READ|PROT_WRITE,MAP_SHARED,re->fd,0) ) == MAP_FAILED) {
+        if ((re->mem = mmap(0,re->maxsize,mmapmode,MAP_SHARED,re->fd,0) ) == MAP_FAILED) {
 	        perror("mmap");
 		//nullsetter dene, slik at det er lettere og se at det er en feil under debugging.
 		re->mem = NULL;

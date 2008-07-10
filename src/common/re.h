@@ -19,6 +19,7 @@
 */
 #define RE_COPYONCLOSE 0x1
 #define RE_HAVE_4_BYTES_VERSION_PREFIX 0x2
+#define RE_READ_ONLY 0x4
 
 
 struct reformat {
