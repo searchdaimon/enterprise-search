@@ -10,6 +10,7 @@
  *
  *  CHANGELOG:
  *
+ *    11.07.2008	Lagt til kommandoer sort og group.
  *    23.01.2008	Lagt til 'string_alternaive' og expand_query()
  *    10.01.2008	Lagt til funksjoner copy_query() og sprint_query().
  *    06.03.2007	Epostadresser blir nå skrevet om til fraser (med '.' og '@' som delimitere).
@@ -33,6 +34,8 @@
 #define QUERY_DATE	'd'
 #define QUERY_STATUS	's'
 #define QUERY_OR	'|'
+#define QUERY_SORT	'k'
+#define QUERY_GROUP	'g'
 
 
 typedef struct
