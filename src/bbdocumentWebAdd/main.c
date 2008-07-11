@@ -29,6 +29,7 @@ struct xmldocumentFormat {
 	unsigned int lastmodified;
 	char *aclallow;
 	char *acldeny;
+	char *attributes;
 };
 
 int version;
@@ -54,10 +55,17 @@ sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 	xmlNodePtr n;
 
 #define getxmlnodestr(name) if ((n = xml_find_child(top, #name)) == NULL) { \
+		fprintf(stderr, "Missing: %s\n", #name); \
 		goto err; \
 	} else { \
 		xmldoc.name = (char*)xmlNodeListGetString(doc, n->xmlChildrenNode, 1); \
-		if (xmldoc.name == NULL) goto err; \
+		if (xmldoc.name == NULL) {\
+			xmldoc.name = strdup(""); \
+			if (0) { \
+				fprintf(stderr, "Couldn't fetch content: %s\n", #name); \
+				goto err; \
+			} \
+		} \
 	}
 
 	memset(&xmldoc, '\0', sizeof(xmldoc));
@@ -70,6 +78,10 @@ sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 	getxmlnodestr(collection);
 	getxmlnodestr(aclallow);
 	getxmlnodestr(acldeny);
+	//getxmlnodestr(attributes);
+
+	xmldoc.attributes = strdup("hei=ho");
+
 
 	if ((n = xml_find_child(top, "lastmodified")) == NULL) {
 		fprintf(stderr, "Err 9\n");
@@ -85,6 +97,7 @@ sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 	}
 
 	if ((n = xml_find_child(top, "body")) == NULL) {
+		fprintf(stderr, "Err 13\n");
 		goto err;
 	} else {
 		char *p;
@@ -92,21 +105,25 @@ sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 
 		encodetype = xmlGetProp(n, (xmlChar*)"encoding");
 		if (encodetype == NULL || xmlStrcmp(encodetype, (xmlChar*)"base64") != 0) {
+			fprintf(stderr, "Err 16\n");
 			goto err;
 		}
 		p = (char*)xmlNodeListGetString(doc, n->xmlChildrenNode, 1);
 		if (p == NULL) {
+			fprintf(stderr, "Err 17\n");
 			goto err;
 		}
 		if ((xmldoc.body = malloc(strlen(p))) == NULL) {
+			fprintf(stderr, "Err 18\n");
 			goto err;
 		}
 		
 		xmldoc.bodysize = base64_decode(xmldoc.body, p, strlen(p));
 	}
 
+	fprintf(stderr, "Adding: %s\n", xmldoc.body);
 	bbdn_docadd(sock, xmldoc.collection, xmldoc.uri, xmldoc.documenttype, xmldoc.body, xmldoc.bodysize,
-	    xmldoc.lastmodified, xmldoc.aclallow, xmldoc.acldeny, xmldoc.title, xmldoc.documentformat);
+	    xmldoc.lastmodified, xmldoc.aclallow, xmldoc.acldeny, xmldoc.title, xmldoc.documentformat, xmldoc.attributes);
 
  err:
 	free(xmldoc.title);
@@ -159,7 +176,6 @@ sd_close(int sock, xmlDocPtr doc, xmlNodePtr top)
 
 		xmlFree(p);
 	}
-
 }
 
 

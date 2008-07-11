@@ -2,7 +2,7 @@ CC=	gcc
 VPATH= .:../boitho-bbdn/:../common/:../base64/:../maincfg/
 
 LDFLAGS=	 -lxml2 -lconfig
-CFLAGS=	-g -Wall -O2 -I/usr/include/libxml2/
+CFLAGS=	-g -Wall -O2 -I/usr/include/libxml2/ -DDEBUG
 
 
 OBJS=	main.o bbdnclient.o daemon.o debug.o error.o bstr.o strlcat.o base64.o maincfg.o
