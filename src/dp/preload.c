@@ -19,11 +19,14 @@
 #define DP_LOCK_FILE "var/dp.lock"
 
 /* Original pthread function */
+//file
 static size_t (*fread_orig)(void *ptr, size_t size, size_t nmemb, FILE *stream) = NULL;
 static size_t (*fwrite_orig)(const void *ptr, size_t size, size_t nmemb, FILE *stream) = NULL;
 static int (*fclose_orig)(FILE *stream) = NULL;
 static FILE * (*fopen_orig)(const char *path, const char *mode) = NULL;
 
+//net
+static int (*send_orig)(int s, const void *msg, size_t len, int flags) = NULL;
 
 static int DP_LOCK;
 
@@ -43,10 +46,10 @@ static inline void dp_disklock() {
 			was_locked = 1;
 		}
 	#endif
-	//wait to noone ellse want to use the disk
+	//wait to none else want to use the disk
 	flock(DP_LOCK,LOCK_EX);
 
-	//release the lock so noone els have to wait for me
+	//release the lock so no one else have to wait for me
 	flock(DP_LOCK,LOCK_UN);
 
 	#ifdef DEBUG_TIME
@@ -127,6 +130,22 @@ void wooinit(void) {
         	exit(EXIT_FAILURE);
     	}
 
+
+	//foepn
+ 	send_orig = dlsym(RTLD_NEXT, "send");
+
+    	if(send_orig == NULL)
+    	{
+        	char *error = dlerror();
+        	if(error == NULL)
+        	{
+        	    error = "send is NULL";
+        	}
+        	fprintf(stderr, "%s\n", error);
+        	exit(EXIT_FAILURE);
+    	}
+
+
     	fprintf(stderr, "pthreads: using write hooks\n");
 
 }
@@ -177,3 +196,13 @@ FILE *fopen(const char *path, const char *mode) {
 	return(fopen_orig(path,mode));
 }
 
+int send(int s, const void *msg, size_t len, int flags) {
+
+	dp_disklock();
+
+	#ifdef DEBUG
+  	printf("send is called\n");    
+ 	#endif
+
+	return (send_orig(s, msg, len, flags));
+}
