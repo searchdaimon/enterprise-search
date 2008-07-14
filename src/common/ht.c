@@ -53,7 +53,15 @@ ht_wstringcmp(void *k1, void *k2)
 unsigned int
 ht_integerhash(void *ky)
 {
-	return *((int *)ky);
+	unsigned int a = *((int *)ky);
+	a = (a+0x7ed55d16) + (a<<12);
+	a = (a^0xc761c23c) ^ (a>>19);
+	a = (a+0x165667b1) + (a<<5);
+	a = (a+0xd3a2646c) ^ (a<<9);
+	a = (a+0xfd7046c5) + (a<<3);
+	a = (a^0xb55a4f09) ^ (a>>16);
+
+	return a;
 }
 
 int
@@ -67,3 +75,13 @@ ht_integercmp(void *k1, void *k2)
 	return (*c1 == *c2);
 }
 
+unsigned int *
+uinttouintp(unsigned int a)
+{
+	unsigned int *p;
+
+	p = malloc(sizeof(*p));
+	*p = a;
+
+	return p;
+}

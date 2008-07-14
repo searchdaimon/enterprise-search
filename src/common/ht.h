@@ -10,5 +10,9 @@ int ht_wstringcmp(void *k1, void *k2);
 unsigned int ht_integerhash(void *ky);
 int ht_integercmp(void *k1, void *k2);
 
+
+/* Helper functions */
+unsigned int *uinttouintp(unsigned int a);
+
 	
 #endif /* _HT_H_ */
