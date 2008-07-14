@@ -1,3 +1,10 @@
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <zlib.h>
+#include <sys/file.h>
+
+
 #include "../common/define.h"
 #include "../common/reposetoryNET.h"
 
