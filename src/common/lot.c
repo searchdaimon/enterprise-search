@@ -14,6 +14,8 @@
 #include "bfileutil.h"
 #include "boithohome.h"
 #include "strlcat.h"
+#include "atomicallyio.h"
+#include "getpath.h"
 
 #include <stdlib.h>
 #include <fcntl.h>
@@ -86,7 +88,7 @@ int LotDocIDOfset (int LotNr) {
 
 void makeLotPath(int lotNr,char folder[],char subname[]) {
 
-	char path[512];
+	char path[PATH_MAX];
 
 	GetFilPathForLot(path,lotNr,subname);
 
@@ -153,7 +155,7 @@ lotOpenFileNoCache_direct(unsigned int DocID, char *resource, char *type, char l
 	char File [PATH_MAX];
 	int fd;
 
-	printf("subname: \"%s\", resource %s\n",subname,resource);
+	printf("lotOpenFileNoCache_direct(subname: \"%s\", resource %s)\n",subname,resource);
 	GetFilPathForLot(FilePath,LotNr,subname);
 	strcpy(File,FilePath);
 	strncat(File,resource,PATH_MAX); //var 128
@@ -213,12 +215,12 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
 	char File [PATH_MAX];	//var 128
 
 	#ifdef DEBUG
-		printf("subname: \"%s\", resource %s\n",subname,resource);
+		printf("lotOpenFileNoCasheByLotNr(LotNr=%i, resource= \"%s\", type=\"%s\", lock=\"%c\", subname=\"%s\")\n",LotNr,resource,type,lock,subname);
 	#endif
 
-                 GetFilPathForLot(FilePath,LotNr,subname);
-                 strcpy(File,FilePath);
-                 strncat(File,resource,PATH_MAX); //var 128
+		GetFilPathForLotFile(File,resource,LotNr,subname);
+		//finer hvilken mappe vi skal i, tar også hensyn til sub mapper i lotten.
+		strscpy(FilePath,getpath(File)->fil_path,sizeof(FilePath));
 
 		#ifdef DEBUG
                 	printf("lotOpenFileNoCasheByLotNr: opening file \"%s\" for %s\n",File,type);
@@ -246,6 +248,14 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
 				#ifdef DEBUG
 				perror(File);
 				#endif
+				return NULL;
+			}
+		}
+		else if ((strcmp(type,"wb") == 0) || (strcmp(type,"w") == 0) ) {
+			printf("making path \"%s\"\n",FilePath);
+                        makePath(FilePath);
+			if ((FILEHANDLER = batomicallyopen(File,type)) == NULL) {
+				perror(File);
 				return NULL;
 			}
 		}
@@ -300,7 +310,7 @@ int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,
 	char File [PATH_MAX];	//var 128
 
 	#ifdef DEBUG
-		printf("subname: \"%s\", resource %s\n",subname,resource);
+		printf("lotOpenFileNoCasheByLotNrl(LotNr=%i, subname=\"%s\", resource=\"%s\")\n",LotNr,subname,resource);
 	#endif
 
                  GetFilPathForLot(FilePath,LotNr,subname);
@@ -443,7 +453,7 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
 
                 GetFilPathForLot(FilePath,LotNr,subname);
                 strcpy(File,FilePath);
-                strlcat(File,resource,128);
+                strlcat(File,resource,sizeof(File));
 
 		strscpy(OpenFiles[i].filename,File,sizeof(OpenFiles[i].filename));
 		strscpy(OpenFiles[i].resource,resource,sizeof(OpenFiles[i].resource));
@@ -681,7 +691,7 @@ void GetFilPathForLotFile(char *FilePath,char lotfile[],int LotNr,char subname[]
 
 
 char *returnFilPathForLot(int LotNr,char subname[]) {
-	static char FilePath[512];
+	static char FilePath[PATH_MAX];
 	GetFilPathForLot(FilePath,LotNr,subname);
 
 	return FilePath;
