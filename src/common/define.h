@@ -181,9 +181,9 @@ struct subnamesFiltypesFormat {
 
 struct filteronFormat {
 
-	char *filetype;
-	char *collection;
-	char *date;
+	char filetype[1024];
+	char collection[1024];
+	char date[1024];
 };
 
 struct subnamesConfigFormat {
@@ -616,6 +616,8 @@ struct QueryDataForamt {
 	int MaxsHits;
 	int start;
 	int filterOn;
+	int opensearch;
+	double version;
 	char GeoIPcontry[3];
 	char search_user[21];
 	char HTTP_ACCEPT_LANGUAGE[12];
