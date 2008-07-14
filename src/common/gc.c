@@ -22,7 +22,9 @@ void gc_reduce(struct reformat *re, int LotNr, char subname[]) {
         for (i=0;i<NrofDocIDsInLot;i++) {
 
                 if ((REN_DocumentIndex(re, i)->Url[0] != '\0') && DIS_isDeleted(REN_DocumentIndex(re, i))) {
-                        printf("Adding url \"%s\" to gc file\n",REN_DocumentIndex(re, i)->Url);
+			#ifdef DEBUG
+	                        printf("Adding url \"%s\" to gc file\n",REN_DocumentIndex(re, i)->Url);
+			#endif
 
                         DocID = LotDocIDOfset(LotNr) +i;
                         if (fwrite(&DocID,sizeof(DocID),1,GCEDFH) != 1) {
