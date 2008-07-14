@@ -21,9 +21,10 @@ int main (int argc, char *argv[]) {
 	char *subname = argv[2];
 	DocID = 0;
 
+	printf("DocumentIndexPost size: %i\n",sizeof(DocumentIndexPost));
 
 	while (DIGetNext (&DocumentIndexPost,LotNr,&DocID,subname)) {
-		printf("DocID: %u, url: %s\n",DocID,DocumentIndexPost.Url);
+		printf("DocID: %u, url: %s, RepositoryPointer %u\n",DocID,DocumentIndexPost.Url,DocumentIndexPost.RepositoryPointer);
 	}
 
 
