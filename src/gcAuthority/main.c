@@ -21,14 +21,14 @@
 
 
 
-
 struct gcaoptFormat {
 	unsigned int MaxAgeDiflastSeen;
 	int dryRun;
 	FILE *log;
+	FILE *logSummary;
 	int keept;
 	int gced;
-
+	int lastSeenHack;
 };
 
 int
@@ -103,7 +103,9 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt)
 		#endif
 
 		#ifdef BLACK_BOKS
-		if ((REN_DocumentIndex(re, i)->lastSeen != 0) && (newest_document > (REN_DocumentIndex(re, i)->lastSeen + gcaopt->MaxAgeDiflastSeen))) {
+		if (	( (gcaopt->lastSeenHack == 1) && (REN_DocumentIndex(re, i)->lastSeen == 0) )
+			|| ( (REN_DocumentIndex(re, i)->lastSeen != 0) && (newest_document > (REN_DocumentIndex(re, i)->lastSeen + gcaopt->MaxAgeDiflastSeen)) )
+		) {
 
 
 			//sletter
@@ -135,10 +137,13 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt)
 
 	for (i=0;i<64;i++) {
 		Indekser(LotNr,"Main",i,subname,&IndekserOpt);
+	}
+	for (i=0;i<64;i++) {
 		Indekser(LotNr,"acl_allow",i,subname,&IndekserOpt);
+	}
+	for (i=0;i<64;i++) {
 		Indekser(LotNr,"acl_denied",i,subname,&IndekserOpt);
 	}
-
 
 	//siden vi nå har lagt til alle andringer fra rev index kan vi nå slettet gced filen også
 	Indekser_deleteGcedFile(LotNr, subname);
@@ -149,10 +154,48 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt)
 }
 
 
+FILE *lockcoll(char subname[]) {
+
+	char lockfile[512];
+	FILE *LOCK;
+
+        //oppretter var mappen hvis den ikke finnes. Dette slik at vi slipper og gjøre dette under instalsjonen
+        bmkdir_p(bfile("var/"),0755);
+
+        sprintf(lockfile,"var/boitho-collections-%s.lock",subname);
+
+        printf("locking lock \"%s\"\n",lockfile);
+
+        if ((LOCK = bfopen(lockfile,"w+")) == NULL) {
+                perror(lockfile);
+                return NULL;
+        }
+
+        //geting the lock. 
+        if (flock(fileno(LOCK),LOCK_EX) != 0) {
+                fclose(LOCK);
+                return NULL;
+        }
+
+
+	return LOCK;
+        
+
+}
+
 void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 
 	int LotNr, i;
 	unsigned int DocIDcount = 0;
+	FILE *LOCK;
+
+	gcaopt->keept = 0;
+	gcaopt->gced = 0;
+
+	if ((LOCK = lockcoll(subname)) == NULL) {
+		fprintf(stderr,"Can't lock lockfile!\n");
+		exit(-1);
+	}
 
 	for(LotNr=1;LotNr<maxLots;LotNr++) {
 		gcdecide(LotNr,subname, gcaopt);
@@ -162,17 +205,27 @@ void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 	//merger indexene
         //skal lage for alle bøttene
         for (i=0;i<NrOfDataDirectorys;i++) {
-        	printf("bucket: %i\n",i);
-		 mergei(i,0,0,"Main","aa",subname,&DocIDcount);
-		 mergei(i,0,0,"acl_allow","aa",subname,&DocIDcount);
-		 mergei(i,0,0,"acl_denied","aa",subname,&DocIDcount);
+        	printf("gc_coll: bucket: %i\n",i);
+		mergei(i,0,0,"Main","aa",subname,&DocIDcount);
         }
+
+        for (i=0;i<NrOfDataDirectorys;i++) {
+        	printf("gc_coll: bucket: %i\n",i);
+		mergei(i,0,0,"acl_allow","aa",subname,&DocIDcount);
+	}
+
+        for (i=0;i<NrOfDataDirectorys;i++) {
+        	printf("gc_coll: bucket: %i\n",i);
+		mergei(i,0,0,"acl_denied","aa",subname,&DocIDcount);
+	}
 
         printf("DocIDcount: %i (/64)\n",DocIDcount);
 
 	/***************************/
 	blog(gcaopt->log,1,"gc'ed \"%s\". Keept %i, gced %i",subname,gcaopt->keept,gcaopt->gced);
+	blog(gcaopt->logSummary,1,"gc'ed \"%s\". Keept %i, gced %i",subname,gcaopt->keept,gcaopt->gced);
 
+	fclose(LOCK);
 }
 
 int
@@ -186,11 +239,13 @@ main(int argc, char **argv)
 	gcaopt.MaxAgeDiflastSeen  = 86400;
 	gcaopt.dryRun  = 0;
 	gcaopt.log = NULL;
+	gcaopt.logSummary = NULL;
+	gcaopt.lastSeenHack = 0;
 
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"t:dl"))!=-1) {
+        while ((c=getopt(argc,argv,"t:dls"))!=-1) {
                 switch (c) {
                         case 't':
                                 gcaopt.MaxAgeDiflastSeen  = atou(optarg);
@@ -200,6 +255,10 @@ main(int argc, char **argv)
 				break;
 			case 'l':
 				gcaopt.log = fopen(bfile("logs/gc"),"ab");
+				gcaopt.logSummary = fopen(bfile("logs/gcSummary"),"ab");
+				break;
+			case 's':
+				gcaopt.lastSeenHack = 1;
 				break;
                         default:
                                 exit(1);
@@ -209,8 +268,6 @@ main(int argc, char **argv)
         --optind;
 
 
-	gcaopt.keept = 0;
-	gcaopt.gced = 0;
 
 	DIR *ll;
 
@@ -222,9 +279,17 @@ main(int argc, char **argv)
 
 	if ((argc -optind) == 3) {
 		LotNr = atoi(argv[2 +optind]);
+
+		fprintf(stderr, "Støtest ikke for nå. Mangler subname og lock file\n");
+		exit(-1);
+
+		gcaopt.keept = 0;
+		gcaopt.gced = 0;
+
 		gcdecide(LotNr,subname, &gcaopt);
 
 		blog(gcaopt.log,1,"gc'ed \"%s\". Keept %i, gced %i",subname,gcaopt.keept,gcaopt.gced);
+		blog(gcaopt.logSummary,1,"gc'ed \"%s\". Keept %i, gced %i",subname,gcaopt.keept,gcaopt.gced);
 
 	}
 	else if ((argc -optind) == 2) {
