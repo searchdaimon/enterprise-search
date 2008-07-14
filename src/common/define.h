@@ -486,7 +486,7 @@ struct filtypesFormat {
 #define MAXFILTERELEMENTS 30
 
 struct filterinfoElementsFormat {
-	char name[20];
+	char name[50];
 	char longname[50];
 	char query[MaxQueryLen];
 	int nrof;
