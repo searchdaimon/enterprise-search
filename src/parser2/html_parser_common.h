@@ -37,9 +37,10 @@ struct bhpm_yy_extra
     css_selector_block	*css_selector_block;
 
     char	title, alink, nlink; //, script=0;	init:=0
+    int		title_nr;
     int		wordcount, linkcount;	// init:=0
     int		h;	// init:=0
-    char	invisible_text;
+    char	invisible_text, illegal_charset;
 
     buffer	*Btitle, *Bbody;
     char	newhead, newdiv, newspan, inhead, indiv, inspan, newendhead, inlink;
@@ -112,6 +113,7 @@ static inline char* buffer_abort( buffer *B )
     return output;
 }
 
+
 static inline void bprintf( buffer *B, const char *fmt, ... )
 {
     va_list	ap;
@@ -131,7 +133,7 @@ static inline void bprintf( buffer *B, const char *fmt, ... )
 
     if (B->pos >= B->maxsize-1)
 	{
-	    printf("Error! Buffer overflow, aborting document.\n");
+	    fprintf(stderr, "html_parser: Warning! Buffer overflow, skipping document.\n");
 	    B->overflow = 1;
 	}
 }

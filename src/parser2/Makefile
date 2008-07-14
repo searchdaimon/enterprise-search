@@ -13,7 +13,7 @@ html:
 	$(CC) -c lex.bhpm.c bhpm.tab.c
 	ar rc libhtml_parser.a lex.bhpm.o bhpm.tab.o
 	ranlib libhtml_parser.a
-	$(CC) -o html_parser test.c libhtml_parser.a libcss_parser.a ../ds/libds.a
+	$(CC) -o html_parser test.c libhtml_parser.a libcss_parser.a ../ds/libds.a ../common/utf8-strings.c
 
 css:
 	yacc -d -b bcpm -p bcpm css_parser.y

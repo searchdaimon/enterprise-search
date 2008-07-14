@@ -1,8 +1,11 @@
 %{
-// (C) Copyright Boitho 2004-2007, Magnus Galåen (magnusga@idi.ntnu.no)
+// (C) Copyright Boitho 2004-2008, Magnus Galåen (magnusga@idi.ntnu.no)
 
 /*
 Changelog
+
+Juli 2008 (Magnus):
+    Fjerner ugyldig charsets, men sparer det som er gyldig.
 
 August 2007 (Magnus):
     Parser nå css og detekterer cloaking.
@@ -493,11 +496,13 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 
 						if (!charset_match)
 						    {
-							#ifndef NOWARNINGS
-							printf("Error: Illegal charset (%s) [%s]\n", content, data->url);
-							#endif
-							data->abort = 1;
-							return 0;
+							fprintf(stderr, "html_parser: Warning! Illegal charset (%s), skipping text.\n", content);
+							he->illegal_charset = 1;
+						    }
+						else
+						    {
+//							fprintf(stderr, "html_parser: Charset %s.\n", content);
+							he->illegal_charset = 0;
 						    }
 /*
 						while (ptr[j]!='\0' && (
@@ -523,6 +528,7 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 			    case tag_title:
 //				printf("\n\033[0;7mtitle\033[0m\n");
 			        he->title = 1;
+				he->title_nr++;
 			        break;
 			}
 
@@ -691,11 +697,13 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 
 					if (!charset_match)
 					    {
-						#ifndef NOWARNINGS
-						printf("Error: Illegal charset (%s) [%s]\n", content, data->url);
-						#endif
-						data->abort = 1;
-						return 0;
+						fprintf(stderr, "html_parser: Warning! Illegal charset (%s), skipping text.\n", content);
+						he->illegal_charset = 1;
+					    }
+					else
+					    {
+//						fprintf(stderr, "html_parser: Charset %s.\n", content);
+						he->illegal_charset = 0;
 					    }
 				    }
 			    }
@@ -981,9 +989,7 @@ char* create_full_link( char *url, int page_url_len, char *page_uri, char *page_
     // begynner på http:// ?. url_split splitt ser vel etter http:// og setter den til NULL
     // hvis det mangler)
     if (page_uri == NULL) {
-	#ifndef NOWARNINGS
-	printf("page_uri is NULL!\n");
-	#endif
+	fprintf(stderr, "html_parser: Warning! page_uri==NULL\n");
 	new_url[0] = '\0';
 	return new_url;
     }
@@ -1060,6 +1066,7 @@ char* create_full_link( char *url, int page_url_len, char *page_uri, char *page_
 
 void html_parser_init()
 {
+    fprintf(stderr, "html_parser: init()\n");
     // Removed elements: noframes, noscript, script, style, select, textarea, object
 
     tags_automaton = build_automaton( tags_size, (unsigned char**)tags );
@@ -1073,6 +1080,7 @@ void html_parser_init()
 
 void html_parser_exit()
 {
+    fprintf(stderr, "html_parser: exit()\n");
     css_parser_exit();
 //    free_automaton(text_containers_automaton);
 //    free_automaton(color_names_automaton);
@@ -1086,6 +1094,7 @@ void html_parser_exit()
 void html_parser_run( char *url, char text[], int textsize, char **output_title, char **output_body,
     void (*fn)(char*,int,enum parsed_unit,enum parsed_unit_flag,void* wordlist), void* wordlist )
 {
+    fprintf(stderr, "html_parser: run(\"%s\")\n", url);
     assert(tags_automaton!=NULL);	// Gir feilmelding dersom man har glemt å kjøre html_parser_init().
 
     struct bhpm_yy_extra	*he = malloc(sizeof(struct bhpm_yy_extra));
@@ -1117,6 +1126,7 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
     he->user_fn = fn;
 
     he->title = 0;
+    he->title_nr = 0;
     he->alink = 0;
     he->nlink = 0;
     he->wordcount = 0;
@@ -1192,11 +1202,15 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
 
     if (data->abort)	// On error
 	{
-	    #ifndef NOWARNINGS
-	    printf("Warning: Document included an error and was aborted.\n");
-	    #endif
-	    *output_title = buffer_abort( he->Btitle );
-	    *output_body = buffer_abort( he->Bbody );
+            #ifndef NOWARNINGS
+            fprintf(stderr, "html_parser: Document error, content was:\n");
+            fprintf(stderr, "html_parser: --- Content begin ---\n");
+            fprintf(stderr, "%s\n", text);
+            fprintf(stderr, "html_parser: --- Content end ---\n");
+            #endif
+	    // Magnus: Fjernet buffer_abort(). Den teksten som allerede har blitt indeksert, bÃ¸r finnes.
+	    *output_title = buffer_exit( he->Btitle );
+	    *output_body = buffer_exit( he->Bbody );
 	}
     else
 	{
@@ -1228,11 +1242,6 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
 yyerror( struct bhpm_intern_data *data, void *yyscan_t, char *s )
 {
 	#ifndef NOWARNINGS
-    		printf("parse_error(html): %s (%s)\n", s, data->url);
-
-		#ifdef PARSE_ERR
-		struct bhpm_yy_extra	*he = bhpmget_extra(yyscan_t);
-		printf("[%s]\n", he->last);
-		#endif
+    		fprintf(stderr, "html_parser: Parse error! %s\n", s);
 	#endif
 }
