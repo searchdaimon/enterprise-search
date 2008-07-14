@@ -272,7 +272,9 @@ struct DocumentIndexFormat {
 struct ReposetoryHeaderFormat {
 	unsigned int DocID;
 	#ifdef BLACK_BOKS
-		char url[200] __attribute__((deprecated));
+		//Runerb: denne kan settes til deprecated slik når vi skal fase den ut:
+		//char url[200] __attribute__((deprecated));
+		char url[200];
 	#else
 		char url[200];
 	#endif
