@@ -5,6 +5,8 @@
  our %Cache;
  use Symbol qw(delete_package);
  use Devel::Symdump;
+ use Carp;
+ BEGIN { unshift @INC, $ENV{BOITHOHOME} . "/Modules" }
 
  sub valid_package_name {
      my($string) = @_;
@@ -29,18 +31,18 @@
      return 0;
  }
  sub eval_file {
-     my($filename,$folder,$delete, $execute, $pointer, $opt) = @_;
+     my($filename, $folder, $delete, $execute, $pointer, $opt) = @_;
      my $package = valid_package_name($filename);
      my $mtime = -M $filename;
      my $ret = 0;
 
-     print "eval_file( filename=$filename, delete=$delete, execute=$execute, pointer=$pointer )\n";
-
-     print "options:\n";
-     foreach my $k (keys %{ $opt }) {
- 	     print "$k: $opt->{$k}\n";
-     }
-
+#     print "eval_file( filename=$filename, delete=$delete, execute=$execute, pointer=$pointer )\n";
+#
+#     print "options:\n";
+#     foreach my $k (keys %{ $opt }) {
+# 	     print "$k: $opt->{$k}\n";
+#     }
+    
      if (!inArray($folder,@INC)) {
 		push @INC, $folder;
      }
@@ -54,14 +56,16 @@
         print STDERR "already compiled $package->handler\n";
      }
      else {
-        local *FH;
-        open FH, $filename or die "open '$filename' $!";
-        local($/) = undef;
-        my $sub = <FH>;
-        close FH;
+
+        local $/ = undef;
+
+        open my $srch, $filename
+            or die "open '$filename'", $!;
+        my $sub = <$srch>;
+        close $srch;
 
         #wrap the code into a subroutine inside our unique package
-        my $eval = qq{package $package; sub handler { $sub; }};
+        my $eval = qq|package $package; sub handler {  $sub; } |;
         {
             # hide our variables within this block
             my($filename,$mtime,$package,$sub);
@@ -74,12 +78,8 @@
      }
 
      eval { 
-		print "inc:\n";
-		print join("\n", @INC);
-		print "\n";
 		$package->handler();
-
-		$ret = $package->$execute($pointer, $opt);
+                $ret = $package->$execute(bless({ ptr => $pointer }, 'Perlcrawl'), $opt);
 	};
 
      die $@ if $@;
@@ -89,7 +89,7 @@
      #take a look if you want
      #print Devel::Symdump->rnew($package)->as_string, $/;
  
-     print "eval_file: rutine return value $ret\n";
+     #print "eval_file: rutine return value $ret\n";
      return $ret;
  }
 

@@ -7,6 +7,7 @@
 #include "../../src/crawl/crawl.h"
 #include "clib/url.h"
 #include "clib/bstr.h"
+#include "../../src/common/debug.h"
 
 #include <stdio.h>
 
@@ -36,17 +37,17 @@ int pdocumentError(struct cargsF *cargs, char error[]) {
 
 void pdocumentExist(struct cargsF *cargs, char * url, int lastmodified, int dokument_size) {
 
-	printf("pdocumentExist\n");
-	printf("pdocumentExist cargs %p\n",cargs);
+	debug("pdocumentExist");
+	debug("pdocumentExist cargs %p",cargs);
 
 	if (cargs == NULL) {
 		fprintf(stderr,"pdocumentExist: pointer is NULL!\n");
 		exit(1);
 	}
 
-	printf("pdocumentExist cargs->documentExist %p\n",cargs->documentExist);
+	debug("pdocumentExist cargs->documentExist %p",cargs->documentExist);
 	
-	printf("pdocumentExist: url: \"%s\", carg p to documentExist %p\n",url, cargs->documentExist);
+	debug("pdocumentExist: url: \"%s\", carg p to documentExist %p",url, cargs->documentExist);
 
 	struct crawldocumentExistFormat *crawldocumentExist;
 
@@ -57,7 +58,7 @@ void pdocumentExist(struct cargsF *cargs, char * url, int lastmodified, int doku
 
 	crawldocumentExist->documenturi = strdup(url);
 
-	printf("to send \"%s\"\n",crawldocumentExist->documenturi);
+	debug("to send \"%s\"",crawldocumentExist->documenturi);
 	crawldocumentExist->lastmodified = lastmodified;
 	crawldocumentExist->dokument_size = dokument_size;
 
@@ -66,9 +67,10 @@ void pdocumentExist(struct cargsF *cargs, char * url, int lastmodified, int doku
 	free(crawldocumentExist);
 }
 
-void pdocumentAdd(struct cargsF *cargs, char * url, int lastmodified, int dokument_size, char document[], char title[], char type[], char acl_allow[], char acl_denied[], char attributes[]) {
+void pdocumentAdd(struct cargsF *cargs, char * url, int lastmodified, char document[], char title[], char type[], char acl_allow[], char acl_denied[], char attributes[]) {
 
 	struct crawldocumentAddFormat *crawldocumentAdd;
+        int document_size = (int) strlen(document);
 
 	if (cargs == NULL) {
 		fprintf(stderr,"pdocumentExist: pointer is NULL!\n");
@@ -80,10 +82,11 @@ void pdocumentAdd(struct cargsF *cargs, char * url, int lastmodified, int dokume
                 return;
         }
 
+
 	crawldocumentAdd->documenturi 	 = url;
 	crawldocumentAdd->documenttype   = type;
         crawldocumentAdd->document       = document;
-        crawldocumentAdd->dokument_size  = dokument_size;
+        crawldocumentAdd->dokument_size  = document_size;
         crawldocumentAdd->lastmodified   = lastmodified;
         crawldocumentAdd->acl_allow      = acl_allow;
         crawldocumentAdd->acl_denied     = acl_denied;
@@ -98,11 +101,10 @@ void pdocumentAdd(struct cargsF *cargs, char * url, int lastmodified, int dokume
 MODULE = SD::Crawl		PACKAGE = SD::Crawl		
 
 void
-pdocumentAdd( x , url , lastmodified, dokument_size, document, title, type, acl_allow, acl_denied, attributes)
+pdocumentAdd( x , url , lastmodified, document, title, type, acl_allow, acl_denied, attributes)
 	int * x
 	char * url
 	int lastmodified
-	int dokument_size
 	char * document
 	char * title
 	char * type

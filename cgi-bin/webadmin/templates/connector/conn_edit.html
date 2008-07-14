@@ -39,6 +39,11 @@
                 connid : connid
             };
             params['success'] = function(resp) {
+				if (resp['error']) {
+					setError(resp['error']);
+					return;
+				}
+				setError(null);
                 $('#connHeading').fadeOut(100).html("Connector " + new_name).fadeIn(100);
             };
             $.ajax(params);
