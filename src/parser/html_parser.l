@@ -11,96 +11,66 @@
 /*
  * Denne lexical analyzeren støtter Latin-1, Latin-1 supplement, utf-8, samt character entities (html escapes)
  * i alle dokumenter. Den ser ikke på hva som er definert character encoding, men antar at en eller flere av
- * disse brukes. Alt (med unntak av quot,amp,lt og gt) oversettes til utf-8. Vi har dog følgende mangler (todo):
+ * disse brukes. Alt (med unntak av quot,amp,lt og gt) oversettes til utf-8. Vi har følgende mangler (todo):
  *
- * - Støtter ikke hexadecimale character entities "&#(x|X)[0-9a-fA-F]+;"
  * - Ingen støtte for andre charsets.
- * - Hva er tegn og hva er bokstaver? Akkurat nå er det litt ymse. Bør ryddes opp i.
  *
  * Se forøvrig http://www.w3.org/TR/html4/charset.html
  *
- * (C) Boitho AS 2004-2008, Magnus Galåen (magnusga@idi.ntnu.no)
+ * (C) SearchDaimon AS 2004-2008, Magnus Galåen (magnusga@idi.ntnu.no)
+ *
+ * CHANGELOG:
+ *
+ *	juni-2008 (Magnus):	Full støtte for unicode/utf-8-bokstaver.
  */
 
 static inline void bhpm_newstring( char* str, yyscan_t scanner, int tt );
 static inline void bhpm_newutf8( int val, yyscan_t scanner, int tt );
 static inline void bhpm_new_esc_to_utf8( const char* str, yyscan_t scanner, int tt );
-
-#define BHPM_VISIBLE (!(bhpmget_extra(yyscanner)->invisible_text))
+static inline void bhpm_newunicode( int val, yyscan_t scanner );
 
 %}
 
 character	[a-z]
-legalfirst	[a-z0-9]
-legalchar	[a-z0-9'`]
+legalchar	[a-z0-9_']
 attrchar	[a-z0-9\-_]
-legaltegn	[!"#$%()*+,-./:;=?@[\\\]^{|}~'`]
-tfchars		[a-z0-9_`\-!#$%()*+,-./:;=?@[\]^{|}~]
-word		[0-9a-z'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþ]
-allemuligetegn	[!"#$%'()*+,-./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþ]
+legaltegn	[!"#$%()*+,\-_./:;=?@[\\\]^{|}~]
+tfchars		[a-z0-9_`!#$%()*+,\-./:;=?@[\]^{|}~]
 url		[0-9a-z&-.:/\\?=]
-blank		[ \t\n_]
-tillatesc	(aacute|acirc|aelig|agrave|aring|atilde|auml|ccedil|eacute|ecirc|egrave|eth|euml|iacute|icirc|igrave|iuml|ntilde|oacute|ocirc|ograve|oslash|otilde|ouml|sup1|sup2|sup3|szlig|thorn|uacute|ucirc|ugrave|uuml|yacute|yuml)
-tillatnumesc	(#178|#179|#185|#192|#193|#194|#195|#196|#197|#198|#199|#200|#201|#202|#203|#204|#205|#206|#207|#208|#209|#210|#211|#212|#213|#214|#216|#217|#218|#219|#220|#221|#222|#223|#224|#225|#226|#227|#228|#229|#230|#231|#232|#233|#234|#235|#236|#237|#238|#239|#240|#241|#242|#243|#244|#245|#246|#248|#249|#250|#251|#252|#253|#254|#255)
-nestenalleesc	(iexcl|cent|pound|curren|yen|brvbar|sect|uml|copy|ordf|laquo|not|shy|reg|macr|deg|plusmn|sup2|sup3|acute|micro|para|middot|cedil|sup1|ordm|raquo|frac14|frac12|frac34|iquest|Agrave|Aacute|Acirc|Atilde|Auml|Aring|AElig|Ccedil|Egrave|Eacute|Ecirc|Euml|Igrave|Iacute|Icirc|Iuml|ETH|Ntilde|Ograve|Oacute|Ocirc|Otilde|Ouml|times|Oslash|Ugrave|Uacute|Ucirc|Uuml|Yacute|THORN|szlig|agrave|aacute|acirc|atilde|auml|aring|aelig|ccedil|egrave|eacute|ecirc|euml|igrave|iacute|icirc|iuml|eth|ntilde|ograve|oacute|ocirc|otilde|ouml|divide|oslash|ugrave|uacute|ucirc|uuml|yacute|thorn|yuml|fnof|Alpha|Beta|Gamma|Delta|Epsilon|Zeta|Eta|Theta|Iota|Kappa|Lambda|Mu|Nu|Xi|Omicron|Pi|Rho|Sigma|Tau|Upsilon|Phi|Chi|Psi|Omega|alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigmaf|sigma|tau|upsilon|phi|chi|psi|omega|thetasym|upsih|piv|bull|hellip|prime|Prime|oline|frasl|weierp|image|real|trade|alefsym|larr|uarr|rarr|darr|harr|crarr|lArr|uArr|rArr|dArr|hArr|forall|part|exist|empty|nabla|isin|notin|ni|prod|sum|minus|lowast|radic|prop|infin|ang|and|or|cap|cup|int|there4|sim|cong|asymp|ne|equiv|le|ge|sub|sup|nsub|sube|supe|oplus|otimes|perp|sdot|lceil|rceil|lfloor|rfloor|lang|rang|loz|spades|clubs|hearts|diams|quot|amp|lt|gt|OElig|oelig|Scaron|scaron|Yuml|circ|tilde|ensp|emsp|thinsp|zwnj|zwj|lrm|rlm|ndash|mdash|lsquo|rsquo|sbquo|ldquo|rdquo|bdquo|dagger|Dagger|permil|lsaquo|rsaquo|euro)
-letter		[A-Za-z0-9_'´ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ]
-  /* letteresc	(AElig|Aacute|Acirc|Agrave|Aring|Atilde|Auml|Ccedil|ETH|Eacute|Ecirc|Egrave|Euml|Iacute|Icirc|Igrave|Iuml|Ntilde|Oacute|Ocirc|Ograve|Oslash|Otilde|Ouml|THORN|Uacute|Ucirc|Ugrave|Uuml|Yacute|aacute|acirc|aelig|agrave|aring|atilde|auml|ccedil|eacute|ecirc|egrave|eth|euml|iacute|icirc|igrave|iuml|ntilde|oacute|ocirc|ograve|oslash|otilde|ouml|szlig|thorn|uacute|ucirc|ugrave|uuml|yacute|yuml) */
-  /* letternumesc	(#192|#193|#194|#195|#196|#197|#198|#199|#200|#201|#202|#203|#204|#205|#206|#207|#208|#209|#210|#211|#212|#213|#214|#216|#217|#218|#219|#220|#221|#222|#223|#224|#225|#226|#227|#228|#229|#230|#231|#232|#233|#234|#235|#236|#237|#238|#239|#240|#241|#242|#243|#244|#245|#246|#248|#249|#250|#251|#252|#253|#254|#255) */
-ikkeletter	[!"#$%()*+,-./:;=?@[\]^{|}~¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿×÷]
-ikkeletteresc	(iexcl|cent|pound|curren|yen|brvbar|sect|uml|copy|ordf|laquo|not|shy|reg|macr|deg|plusmn|sup2|sup3|acute|micro|para|middot|cedil|sup1|ordm|raquo|frac14|frac12|frac34|iquest|times|divide|fnof|Alpha|Beta|Gamma|Delta|Epsilon|Zeta|Eta|Theta|Iota|Kappa|Lambda|Mu|Nu|Xi|Omicron|Pi|Rho|Sigma|Tau|Upsilon|Phi|Chi|Psi|Omega|alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigmaf|sigma|tau|upsilon|phi|chi|psi|omega|thetasym|upsih|piv|bull|hellip|prime|Prime|oline|frasl|weierp|image|real|trade|alefsym|larr|uarr|rarr|darr|harr|crarr|lArr|uArr|rArr|dArr|hArr|forall|part|exist|empty|nabla|isin|notin|ni|prod|sum|minus|lowast|radic|prop|infin|ang|and|or|cap|cup|int|there4|sim|cong|asymp|ne|equiv|le|ge|sub|sup|nsub|sube|supe|oplus|otimes|perp|sdot|lceil|rceil|lfloor|rfloor|lang|rang|loz|spades|clubs|hearts|diams|quot|amp|lt|gt|OElig|oelig|Scaron|scaron|Yuml|circ|tilde|ensp|emsp|thinsp|zwnj|zwj|lrm|rlm|ndash|mdash|lsquo|rsquo|sbquo|ldquo|rdquo|bdquo|dagger|Dagger|permil|lsaquo|rsaquo|euro)
-egentligesc	[²³¹ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ]
+blank		[ \t\n\r\f]
 latin-sup	[ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ]
-alletegnutenesc	[\\!"#$%'()*+,\-\./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡¢£¤¥¦§¨©ª«¬­®¯°±´µ¶·¸º»¼½¾¿×÷]
-    /* Alle tegn uten html-escapes og utf-8 flerbytekoder: */
-nestenalletegn	[\\!"#$%'()*+,\-\./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡¢£¤¥¦§¨©ª«¬­®¯°±´µ¶·¸º»¼½¾¿]
-    /* Det er ingen html-escapes som ikke er med i disse (252 tilsammen): */
-allenumesc	(#161|#162|#163|#164|#165|#166|#167|#168|#169|#170|#171|#172|#173|#174|#175|#176|#177|#178|#179|#180|#181|#182|#183|#184|#185|#186|#187|#188|#189|#190|#191|#192|#193|#194|#195|#196|#197|#198|#199|#200|#201|#202|#203|#204|#205|#206|#207|#208|#209|#210|#211|#212|#213|#214|#215|#216|#217|#218|#219|#220|#221|#222|#223|#224|#225|#226|#227|#228|#229|#230|#231|#232|#233|#234|#235|#236|#237|#238|#239|#240|#241|#242|#243|#244|#245|#246|#247|#248|#249|#250|#251|#252|#253|#254|#255|#402|#913|#914|#915|#916|#917|#918|#919|#920|#921|#922|#923|#924|#925|#926|#927|#928|#929|#931|#932|#933|#934|#935|#936|#937|#945|#946|#947|#948|#949|#950|#951|#952|#953|#954|#955|#956|#957|#958|#959|#960|#961|#962|#963|#964|#965|#966|#967|#968|#969|#977|#978|#982|#8226|#8230|#8242|#8243|#8254|#8260|#8472|#8465|#8476|#8482|#8501|#8592|#8593|#8594|#8595|#8596|#8629|#8656|#8657|#8658|#8659|#8660|#8704|#8706|#8707|#8709|#8711|#8712|#8713|#8715|#8719|#8721|#8722|#8727|#8730|#8733|#8734|#8736|#8743|#8744|#8745|#8746|#8747|#8756|#8764|#8773|#8776|#8800|#8801|#8804|#8805|#8834|#8835|#8836|#8838|#8839|#8853|#8855|#8869|#8901|#8968|#8969|#8970|#8971|#9001|#9002|#9674|#9824|#9827|#9829|#9830|#34|#38|#60|#62|#338|#339|#352|#353|#376|#710|#732|#8194|#8195|#8201|#8204|#8205|#8206|#8207|#8211|#8212|#8216|#8217|#8218|#8220|#8221|#8222|#8224|#8225|#8240|#8249|#8250|#8364)
-alleesc		(nbsp|iexcl|cent|pound|curren|yen|brvbar|sect|uml|copy|ordf|laquo|not|shy|reg|macr|deg|plusmn|sup2|sup3|acute|micro|para|middot|cedil|sup1|ordm|raquo|frac14|frac12|frac34|iquest|Agrave|Aacute|Acirc|Atilde|Auml|Aring|AElig|Ccedil|Egrave|Eacute|Ecirc|Euml|Igrave|Iacute|Icirc|Iuml|ETH|Ntilde|Ograve|Oacute|Ocirc|Otilde|Ouml|times|Oslash|Ugrave|Uacute|Ucirc|Uuml|Yacute|THORN|szlig|agrave|aacute|acirc|atilde|auml|aring|aelig|ccedil|egrave|eacute|ecirc|euml|igrave|iacute|icirc|iuml|eth|ntilde|ograve|oacute|ocirc|otilde|ouml|divide|oslash|ugrave|uacute|ucirc|uuml|yacute|thorn|yuml|fnof|Alpha|Beta|Gamma|Delta|Epsilon|Zeta|Eta|Theta|Iota|Kappa|Lambda|Mu|Nu|Xi|Omicron|Pi|Rho|Sigma|Tau|Upsilon|Phi|Chi|Psi|Omega|alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigmaf|sigma|tau|upsilon|phi|chi|psi|omega|thetasym|upsih|piv|bull|hellip|prime|Prime|oline|frasl|weierp|image|real|trade|alefsym|larr|uarr|rarr|darr|harr|crarr|lArr|uArr|rArr|dArr|hArr|forall|part|exist|empty|nabla|isin|notin|ni|prod|sum|minus|lowast|radic|prop|infin|ang|and|or|cap|cup|int|there4|sim|cong|asymp|ne|equiv|le|ge|sub|sup|nsub|sube|supe|oplus|otimes|perp|sdot|lceil|rceil|lfloor|rfloor|lang|rang|loz|spades|clubs|hearts|diams|quot|amp|lt|gt|OElig|oelig|Scaron|scaron|Yuml|circ|tilde|ensp|emsp|thinsp|zwnj|zwj|lrm|rlm|ndash|mdash|lsquo|rsquo|sbquo|ldquo|rdquo|bdquo|dagger|Dagger|permil|lsaquo|rsaquo|euro)
-alleesc_minus_nbsp (iexcl|cent|pound|curren|yen|brvbar|sect|uml|copy|ordf|laquo|not|shy|reg|macr|deg|plusmn|sup2|sup3|acute|micro|para|middot|cedil|sup1|ordm|raquo|frac14|frac12|frac34|iquest|Agrave|Aacute|Acirc|Atilde|Auml|Aring|AElig|Ccedil|Egrave|Eacute|Ecirc|Euml|Igrave|Iacute|Icirc|Iuml|ETH|Ntilde|Ograve|Oacute|Ocirc|Otilde|Ouml|times|Oslash|Ugrave|Uacute|Ucirc|Uuml|Yacute|THORN|szlig|agrave|aacute|acirc|atilde|auml|aring|aelig|ccedil|egrave|eacute|ecirc|euml|igrave|iacute|icirc|iuml|eth|ntilde|ograve|oacute|ocirc|otilde|ouml|divide|oslash|ugrave|uacute|ucirc|uuml|yacute|thorn|yuml|fnof|Alpha|Beta|Gamma|Delta|Epsilon|Zeta|Eta|Theta|Iota|Kappa|Lambda|Mu|Nu|Xi|Omicron|Pi|Rho|Sigma|Tau|Upsilon|Phi|Chi|Psi|Omega|alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigmaf|sigma|tau|upsilon|phi|chi|psi|omega|thetasym|upsih|piv|bull|hellip|prime|Prime|oline|frasl|weierp|image|real|trade|alefsym|larr|uarr|rarr|darr|harr|crarr|lArr|uArr|rArr|dArr|hArr|forall|part|exist|empty|nabla|isin|notin|ni|prod|sum|minus|lowast|radic|prop|infin|ang|and|or|cap|cup|int|there4|sim|cong|asymp|ne|equiv|le|ge|sub|sup|nsub|sube|supe|oplus|otimes|perp|sdot|lceil|rceil|lfloor|rfloor|lang|rang|loz|spades|clubs|hearts|diams|quot|amp|lt|gt|OElig|oelig|Scaron|scaron|Yuml|circ|tilde|ensp|emsp|thinsp|zwnj|zwj|lrm|rlm|ndash|mdash|lsquo|rsquo|sbquo|ldquo|rdquo|bdquo|dagger|Dagger|permil|lsaquo|rsaquo|euro)
-letteresc	(Agrave|Aacute|Acirc|Atilde|Auml|Aring|AElig|Ccedil|Egrave|Eacute|Ecirc|Euml|Igrave|Iacute|Icirc|Iuml|ETH|Ntilde|Ograve|Oacute|Ocirc|Otilde|Ouml|Oslash|Ugrave|Uacute|Ucirc|Uuml|Yacute|THORN|szlig|agrave|aacute|acirc|atilde|auml|aring|aelig|ccedil|egrave|eacute|ecirc|euml|igrave|iacute|icirc|iuml|eth|ntilde|ograve|oacute|ocirc|otilde|ouml|oslash|ugrave|uacute|ucirc|uuml|yacute|thorn|yuml)
-letternumesc	(#192|#193|#194|#195|#196|#197|#198|#199|#200|#201|#202|#203|#204|#205|#206|#207|#208|#209|#210|#211|#212|#213|#214|#216|#217|#218|#219|#220|#221|#222|#223|#224|#225|#226|#227|#228|#229|#230|#231|#232|#233|#234|#235|#236|#237|#238|#239|#240|#241|#242|#243|#244|#245|#246|#248|#249|#250|#251|#252|#253|#254|#255)
-tegnesc_u_nbsp		(iexcl|cent|pound|curren|yen|brvbar|sect|uml|copy|ordf|laquo|not|shy|reg|macr|deg|plusmn|sup2|sup3|acute|micro|para|middot|cedil|sup1|ordm|raquo|frac14|frac12|frac34|iquest|times|divide|fnof|Alpha|Beta|Gamma|Delta|Epsilon|Zeta|Eta|Theta|Iota|Kappa|Lambda|Mu|Nu|Xi|Omicron|Pi|Rho|Sigma|Tau|Upsilon|Phi|Chi|Psi|Omega|alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigmaf|sigma|tau|upsilon|phi|chi|psi|omega|thetasym|upsih|piv|bull|hellip|prime|Prime|oline|frasl|weierp|image|real|trade|alefsym|larr|uarr|rarr|darr|harr|crarr|lArr|uArr|rArr|dArr|hArr|forall|part|exist|empty|nabla|isin|notin|ni|prod|sum|minus|lowast|radic|prop|infin|ang|and|or|cap|cup|int|there4|sim|cong|asymp|ne|equiv|le|ge|sub|sup|nsub|sube|supe|oplus|otimes|perp|sdot|lceil|rceil|lfloor|rfloor|lang|rang|loz|spades|clubs|hearts|diams|quot|amp|lt|gt|OElig|oelig|Scaron|scaron|Yuml|circ|tilde|ensp|emsp|thinsp|zwnj|zwj|lrm|rlm|ndash|mdash|lsquo|rsquo|sbquo|ldquo|rdquo|bdquo|dagger|Dagger|permil|lsaquo|rsaquo|euro)
-tegnnumesc_u_nbsp	(#161|#162|#163|#164|#165|#166|#167|#168|#169|#170|#171|#172|#173|#174|#175|#176|#177|#178|#179|#180|#181|#182|#183|#184|#185|#186|#187|#188|#189|#190|#191|#215|#247|#402|#913|#914|#915|#916|#917|#918|#919|#920|#921|#922|#923|#924|#925|#926|#927|#928|#929|#931|#932|#933|#934|#935|#936|#937|#945|#946|#947|#948|#949|#950|#951|#952|#953|#954|#955|#956|#957|#958|#959|#960|#961|#962|#963|#964|#965|#966|#967|#968|#969|#977|#978|#982|#8226|#8230|#8242|#8243|#8254|#8260|#8472|#8465|#8476|#8482|#8501|#8592|#8593|#8594|#8595|#8596|#8629|#8656|#8657|#8658|#8659|#8660|#8704|#8706|#8707|#8709|#8711|#8712|#8713|#8715|#8719|#8721|#8722|#8727|#8730|#8733|#8734|#8736|#8743|#8744|#8745|#8746|#8747|#8756|#8764|#8773|#8776|#8800|#8801|#8804|#8805|#8834|#8835|#8836|#8838|#8839|#8853|#8855|#8869|#8901|#8968|#8969|#8970|#8971|#9001|#9002|#9674|#9824|#9827|#9829|#9830|#34|#38|#60|#62|#338|#339|#352|#353|#376|#710|#732|#8194|#8195|#8201|#8204|#8205|#8206|#8207|#8211|#8212|#8216|#8217|#8218|#8220|#8221|#8222|#8224|#8225|#8240|#8249|#8250|#8364)
     /* Her har vi fjernet noen html-spesifikke tegn (lt,gt,amp,quot, samt nbsp): */
-tegnesc_minus		(iexcl|cent|pound|curren|yen|brvbar|sect|uml|copy|ordf|laquo|not|shy|reg|macr|deg|plusmn|sup2|sup3|acute|micro|para|middot|cedil|sup1|ordm|raquo|frac14|frac12|frac34|iquest|times|divide|fnof|Alpha|Beta|Gamma|Delta|Epsilon|Zeta|Eta|Theta|Iota|Kappa|Lambda|Mu|Nu|Xi|Omicron|Pi|Rho|Sigma|Tau|Upsilon|Phi|Chi|Psi|Omega|alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigmaf|sigma|tau|upsilon|phi|chi|psi|omega|thetasym|upsih|piv|bull|hellip|prime|Prime|oline|frasl|weierp|image|real|trade|alefsym|larr|uarr|rarr|darr|harr|crarr|lArr|uArr|rArr|dArr|hArr|forall|part|exist|empty|nabla|isin|notin|ni|prod|sum|minus|lowast|radic|prop|infin|ang|and|or|cap|cup|int|there4|sim|cong|asymp|ne|equiv|le|ge|sub|sup|nsub|sube|supe|oplus|otimes|perp|sdot|lceil|rceil|lfloor|rfloor|lang|rang|loz|spades|clubs|hearts|diams|OElig|oelig|Scaron|scaron|Yuml|circ|tilde|ensp|emsp|thinsp|zwnj|zwj|lrm|rlm|ndash|mdash|lsquo|rsquo|sbquo|ldquo|rdquo|bdquo|dagger|Dagger|permil|lsaquo|rsaquo|euro)
-tegnnumesc_minus	(#33|#34|#35|#36|#37|#40|#41|#42|#43|#44|#45|#46|#47|#58|#59|#61|#63|#64|#91|#92|#93|#94|#123|#124|#125|#126|#161|#162|#163|#164|#165|#166|#167|#168|#169|#170|#171|#172|#173|#174|#175|#176|#177|#178|#179|#180|#181|#182|#183|#184|#185|#186|#187|#188|#189|#190|#191|#215|#247|#402|#913|#914|#915|#916|#917|#918|#919|#920|#921|#922|#923|#924|#925|#926|#927|#928|#929|#931|#932|#933|#934|#935|#936|#937|#945|#946|#947|#948|#949|#950|#951|#952|#953|#954|#955|#956|#957|#958|#959|#960|#961|#962|#963|#964|#965|#966|#967|#968|#969|#977|#978|#982|#8226|#8230|#8242|#8243|#8254|#8260|#8472|#8465|#8476|#8482|#8501|#8592|#8593|#8594|#8595|#8596|#8629|#8656|#8657|#8658|#8659|#8660|#8704|#8706|#8707|#8709|#8711|#8712|#8713|#8715|#8719|#8721|#8722|#8727|#8730|#8733|#8734|#8736|#8743|#8744|#8745|#8746|#8747|#8756|#8764|#8773|#8776|#8800|#8801|#8804|#8805|#8834|#8835|#8836|#8838|#8839|#8853|#8855|#8869|#8901|#8968|#8969|#8970|#8971|#9001|#9002|#9674|#9824|#9827|#9829|#9830|#338|#339|#352|#353|#376|#710|#732|#8194|#8195|#8201|#8204|#8205|#8206|#8207|#8211|#8212|#8216|#8217|#8218|#8220|#8221|#8222|#8224|#8225|#8240|#8249|#8250|#8364)
-utf-8-2b	[\300-\337][\200-\277]
-utf-8-3b	[\340-\357][\200-\277][\200-\277]
-utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
+letteresc	(Agrave|Aacute|Acirc|Atilde|Auml|Aring|AElig|Ccedil|Egrave|Eacute|Ecirc|Euml|Igrave|Iacute|Icirc|Iuml|ETH|Ntilde|Ograve|Oacute|Ocirc|Otilde|Ouml|Oslash|Ugrave|Uacute|Ucirc|Uuml|Yacute|THORN|szlig|agrave|aacute|acirc|atilde|auml|aring|aelig|ccedil|egrave|eacute|ecirc|euml|igrave|iacute|icirc|iuml|eth|ntilde|ograve|oacute|ocirc|otilde|ouml|oslash|ugrave|uacute|ucirc|uuml|yacute|thorn|yuml)
+tegnesc_minus	(iexcl|cent|pound|curren|yen|brvbar|sect|uml|copy|ordf|laquo|not|shy|reg|macr|deg|plusmn|sup2|sup3|acute|micro|para|middot|cedil|sup1|ordm|raquo|frac14|frac12|frac34|iquest|times|divide|fnof|Alpha|Beta|Gamma|Delta|Epsilon|Zeta|Eta|Theta|Iota|Kappa|Lambda|Mu|Nu|Xi|Omicron|Pi|Rho|Sigma|Tau|Upsilon|Phi|Chi|Psi|Omega|alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigmaf|sigma|tau|upsilon|phi|chi|psi|omega|thetasym|upsih|piv|bull|hellip|prime|Prime|oline|frasl|weierp|image|real|trade|alefsym|larr|uarr|rarr|darr|harr|crarr|lArr|uArr|rArr|dArr|hArr|forall|part|exist|empty|nabla|isin|notin|ni|prod|sum|minus|lowast|radic|prop|infin|ang|and|or|cap|cup|int|there4|sim|cong|asymp|ne|equiv|le|ge|sub|sup|nsub|sube|supe|oplus|otimes|perp|sdot|lceil|rceil|lfloor|rfloor|lang|rang|loz|spades|clubs|hearts|diams|OElig|oelig|Scaron|scaron|Yuml|circ|tilde|ensp|emsp|thinsp|zwnj|zwj|lrm|rlm|ndash|mdash|lsquo|rsquo|sbquo|ldquo|rdquo|bdquo|dagger|Dagger|permil|lsaquo|rsaquo|euro)
+utf8-a		([\101-\132]|[\141-\172]|\302\252|\302\265|\302\272|\303[\200-\226]|\303[\230-\266]|\303[\270-\277]|[\304-\312][\200-\277]|\313[\200-\201]|\313[\206-\221]|\313[\240-\244]|\313\254|\313\256|\315\205|\315[\260-\264]|\315[\266-\267]|\315[\272-\275]|\316\206|\316[\210-\212]|\316\214|\316[\216-\241]|\316[\243-\277]|\317[\200-\265]|\317[\267-\277]|[\320-\321][\200-\277]|\322[\200-\201]|\322[\212-\277]|\324[\200-\243]|\324[\261-\277]|\325[\200-\226]|\325\231|\325[\241-\277]|\326[\200-\207]|\326[\260-\275]|\326\277|\327[\201-\202]|\327[\204-\205]|\327\207|\327[\220-\252]|\327[\260-\262]|\330[\220-\232]|\330[\241-\277]|\331[\200-\227]|\331[\231-\236]|\331[\256-\277]|\333[\200-\223]|\333[\225-\234]|\333[\241-\250]|\333[\255-\257]|\333[\272-\274]|\333\277|\334[\220-\277]|\335[\215-\277]|\336[\200-\261]|\337[\212-\252]|\337[\264-\265]|\337\272|\340\244[\201-\271]|\340\244[\275-\277]|\340\245[\200-\214]|\340\245\220|\340\245[\230-\243]|\340\245[\261-\262]|\340\245[\273-\277]|\340\246[\201-\203]|\340\246[\205-\214]|\340\246[\217-\220]|\340\246[\223-\250]|\340\246[\252-\260]|\340\246\262|\340\246[\266-\271]|\340\246[\275-\277]|\340\247[\200-\204]|\340\247[\207-\210]|\340\247[\213-\214]|\340\247\216|\340\247\227|\340\247[\234-\235]|\340\247[\237-\243]|\340\247[\260-\261]|\340\250[\201-\203]|\340\250[\205-\212]|\340\250[\217-\220]|\340\250[\223-\250]|\340\250[\252-\260]|\340\250[\262-\263]|\340\250[\265-\266]|\340\250[\270-\271]|\340\250[\276-\277]|\340\251[\200-\202]|\340\251[\207-\210]|\340\251[\213-\214]|\340\251\221|\340\251[\231-\234]|\340\251\236|\340\251[\260-\265]|\340\252[\201-\203]|\340\252[\205-\215]|\340\252[\217-\221]|\340\252[\223-\250]|\340\252[\252-\260]|\340\252[\262-\263]|\340\252[\265-\271]|\340\252[\275-\277]|\340\253[\200-\205]|\340\253[\207-\211]|\340\253[\213-\214]|\340\253\220|\340\253[\240-\243]|\340\254[\201-\203]|\340\254[\205-\214]|\340\254[\217-\220]|\340\254[\223-\250]|\340\254[\252-\260]|\340\254[\262-\263]|\340\254[\265-\271]|\340\254[\275-\277]|\340\255[\200-\204]|\340\255[\207-\210])
+utf8-b		(\340\255[\213-\214]|\340\255[\226-\227]|\340\255[\234-\235]|\340\255[\237-\243]|\340\255\261|\340\256[\202-\203]|\340\256[\205-\212]|\340\256[\216-\220]|\340\256[\222-\225]|\340\256[\231-\232]|\340\256\234|\340\256[\236-\237]|\340\256[\243-\244]|\340\256[\250-\252]|\340\256[\256-\271]|\340\256[\276-\277]|\340\257[\200-\202]|\340\257[\206-\210]|\340\257[\212-\214]|\340\257\220|\340\257\227|\340\260[\201-\203]|\340\260[\205-\214]|\340\260[\216-\220]|\340\260[\222-\250]|\340\260[\252-\263]|\340\260[\265-\271]|\340\260[\275-\277]|\340\261[\200-\204]|\340\261[\206-\210]|\340\261[\212-\214]|\340\261[\225-\226]|\340\261[\230-\231]|\340\261[\240-\243]|\340\262[\202-\203]|\340\262[\205-\214]|\340\262[\216-\220]|\340\262[\222-\250]|\340\262[\252-\263]|\340\262[\265-\271]|\340\262[\275-\277]|\340\263[\200-\204]|\340\263[\206-\210]|\340\263[\212-\214]|\340\263[\225-\226]|\340\263\236|\340\263[\240-\243]|\340\264[\202-\203]|\340\264[\205-\214]|\340\264[\216-\220]|\340\264[\222-\250]|\340\264[\252-\271]|\340\264[\275-\277]|\340\265[\200-\204]|\340\265[\206-\210]|\340\265[\212-\214]|\340\265\227|\340\265[\240-\243]|\340\265[\272-\277]|\340\266[\202-\203]|\340\266[\205-\226]|\340\266[\232-\261]|\340\266[\263-\273]|\340\266\275|\340\267[\200-\206]|\340\267[\217-\224]|\340\267\226|\340\267[\230-\237]|\340\267[\262-\263]|\340\270[\201-\272]|\340\271[\200-\206]|\340\271\215|\340\272[\201-\202]|\340\272\204|\340\272[\207-\210]|\340\272\212|\340\272\215|\340\272[\224-\227]|\340\272[\231-\237]|\340\272[\241-\243]|\340\272\245|\340\272\247|\340\272[\252-\253]|\340\272[\255-\271]|\340\272[\273-\275]|\340\273[\200-\204]|\340\273\206|\340\273\215|\340\273[\234-\235]|\340\274\200|\340\275[\200-\207]|\340\275[\211-\254]|\340\275[\261-\277]|\340\276[\200-\201]|\340\276[\210-\213]|\340\276[\220-\227]|\340\276[\231-\274]|\341\200[\200-\266]|\341\200\270|\341\200[\273-\277]|\341\201[\220-\242]|\341\201[\245-\250]|\341\201[\256-\277]|\341\202[\200-\206]|\341\202\216|\341\202[\240-\277]|\341\203[\200-\205]|\341\203[\220-\272])
+utf8-c		(\341\203\274|\341\204[\200-\277]|\341\205[\200-\231]|\341\205[\237-\277]|\341\206[\200-\242]|\341\206[\250-\277]|\341\207[\200-\271]|\341\210[\200-\277]|\341\211[\200-\210]|\341\211[\212-\215]|\341\211[\220-\226]|\341\211\230|\341\211[\232-\235]|\341\211[\240-\277]|\341\212[\200-\210]|\341\212[\212-\215]|\341\212[\220-\260]|\341\212[\262-\265]|\341\212[\270-\276]|\341\213\200|\341\213[\202-\205]|\341\213[\210-\226]|\341\213[\230-\277]|\341\214[\200-\220]|\341\214[\222-\225]|\341\214[\230-\277]|\341\215[\200-\232]|\341\215\237|\341\216[\200-\217]|\341\216[\240-\277]|\341\217[\200-\264]|\341\220[\201-\277]|\341[\221-\230][\200-\277]|\341\231[\200-\254]|\341\231[\257-\266]|\341\232[\201-\232]|\341\232[\240-\277]|\341\233[\200-\252]|\341\233[\256-\260]|\341\234[\200-\214]|\341\234[\216-\223]|\341\234[\240-\263]|\341\235[\200-\223]|\341\235[\240-\254]|\341\235[\256-\260]|\341\235[\262-\263]|\341\236[\200-\263]|\341\236[\266-\277]|\341\237[\200-\210]|\341\237\227|\341\237\234|\341\240[\240-\277]|\341\241[\200-\267]|\341\242[\200-\252]|\341\244[\200-\234]|\341\244[\240-\253]|\341\244[\260-\270]|\341\245[\220-\255]|\341\245[\260-\264]|\341\246[\200-\251]|\341\246[\260-\277]|\341\247[\200-\211]|\341\250[\200-\233]|\341\254[\200-\263]|\341\254[\265-\277]|\341\255[\200-\203]|\341\255[\205-\213]|\341\256[\200-\251]|\341\256[\256-\257]|\341\260[\200-\265]|\341\261[\215-\217]|\341\261[\232-\275]|\341[\264-\266][\200-\277]|\341\270[\200-\277]|\341[\271-\273][\200-\277]|\341\274[\200-\225]|\341\274[\230-\235]|\341\274[\240-\277]|\341\275[\200-\205]|\341\275[\210-\215]|\341\275[\220-\227]|\341\275\231|\341\275\233|\341\275\235|\341\275[\237-\275]|\341\276[\200-\264]|\341\276[\266-\274]|\341\276\276|\341\277[\202-\204]|\341\277[\206-\214]|\341\277[\220-\223]|\341\277[\226-\233]|\341\277[\240-\254]|\341\277[\262-\264]|\341\277[\266-\274]|\342\201\261|\342\201\277|\342\202[\220-\224]|\342\204\202|\342\204\207|\342\204[\212-\223]|\342\204\225|\342\204[\231-\235]|\342\204\244|\342\204\246|\342\204\250|\342\204[\252-\255])
+utf8-d		(\342\204[\257-\271]|\342\204[\274-\277]|\342\205[\205-\211]|\342\205\216|\342\205[\240-\277]|\342\206[\200-\210]|\342\222[\266-\277]|\342\223[\200-\251]|\342\260[\200-\256]|\342\260[\260-\277]|\342\261[\200-\236]|\342\261[\240-\257]|\342\261[\261-\275]|\342\262[\200-\277]|\342\263[\200-\244]|\342\264[\200-\245]|\342\264[\260-\277]|\342\265[\200-\245]|\342\265\257|\342\266[\200-\226]|\342\266[\240-\246]|\342\266[\250-\256]|\342\266[\260-\266]|\342\266[\270-\276]|\342\267[\200-\206]|\342\267[\210-\216]|\342\267[\220-\226]|\342\267[\230-\236]|\342\267[\240-\277]|\342\270\257|\343\200[\205-\207]|\343\200[\241-\251]|\343\200[\261-\265]|\343\200[\270-\274]|\343\201[\201-\277]|\343\202[\200-\226]|\343\202[\235-\237]|\343\202[\241-\277]|\343\203[\200-\272]|\343\203[\274-\277]|\343\204[\205-\255]|\343\204[\261-\277]|\343\206[\200-\216]|\343\206[\240-\267]|\343\207[\260-\277]|\343[\220-\277][\200-\277]|\344[\200-\265][\200-\277]|\344\266[\200-\265]|\344[\270-\277][\200-\277]|[\345-\350][\200-\277][\200-\277]|\351[\200-\276][\200-\277]|\351\277[\200-\203]|\352[\200-\221][\200-\277]|\352\222[\200-\214]|\352\224[\200-\277]|\352[\225-\227][\200-\277]|\352\230[\200-\214]|\352\230[\220-\237]|\352\230[\252-\253]|\352\231[\200-\237]|\352\231[\242-\256]|\352\231[\277-\277]|\352\232[\200-\227]|\352\234[\227-\237]|\352\234[\242-\277]|\352\236[\200-\210]|\352\236[\213-\214]|\352\237[\273-\277]|\352\240[\200-\201]|\352\240[\203-\205]|\352\240[\207-\212]|\352\240[\214-\247]|\352\241[\200-\263]|\352\242[\200-\277]|\352\243[\200-\203]|\352\244[\212-\252]|\352\244[\260-\277]|\352\245[\200-\222]|\352\250[\200-\266]|\352\251[\200-\215]|\352[\260-\277][\200-\277]|[\353-\354][\200-\277][\200-\277]|\355[\200-\235][\200-\277]|\355\236[\200-\243]|\357\244[\200-\277]|\357[\245-\247][\200-\277]|\357\250[\200-\255]|\357\250[\260-\277]|\357\251[\200-\252]|\357\251[\260-\277]|\357\253[\200-\231]|\357\254[\200-\206]|\357\254[\223-\227]|\357\254[\235-\250]|\357\254[\252-\266]|\357\254[\270-\274]|\357\254\276|\357\255[\200-\201]|\357\255[\203-\204])
+utf8-e		(\357\255[\206-\277]|\357\256[\200-\261]|\357\257[\223-\277]|\357[\260-\263][\200-\277]|\357\264[\200-\275]|\357\265[\220-\277]|\357\266[\200-\217]|\357\266[\222-\277]|\357\267[\200-\207]|\357\267[\260-\273]|\357\271[\260-\264]|\357\271[\266-\277]|\357\273[\200-\274]|\357\274[\241-\272]|\357\275[\201-\232]|\357\275[\246-\277]|\357\276[\200-\276]|\357\277[\202-\207]|\357\277[\212-\217]|\357\277[\222-\227]|\357\277[\232-\234]|\360\220\200[\200-\213]|\360\220\200[\215-\246]|\360\220\200[\250-\272]|\360\220\200[\274-\275]|\360\220\200\277|\360\220\201[\200-\215]|\360\220\201[\220-\235]|\360\220\202[\200-\277]|\360\220\203[\200-\272]|\360\220\205[\200-\264]|\360\220\212[\200-\234]|\360\220\212[\240-\277]|\360\220\213[\200-\220]|\360\220\214[\200-\236]|\360\220\214[\260-\277]|\360\220\215[\200-\212]|\360\220\216[\200-\235]|\360\220\216[\240-\277]|\360\220\217[\200-\203]|\360\220\217[\210-\217]|\360\220\217[\221-\225]|\360\220\220[\200-\277]|\360\220\222[\200-\235]|\360\220\240[\200-\205]|\360\220\240\210|\360\220\240[\212-\265]|\360\220\240[\267-\270]|\360\220\240\274|\360\220\240\277|\360\220\244[\200-\225]|\360\220\244[\240-\271]|\360\220\250[\200-\203]|\360\220\250[\205-\206]|\360\220\250[\214-\223]|\360\220\250[\225-\227]|\360\220\250[\231-\263]|\360\222[\200-\214][\200-\277]|\360\222\215[\200-\256]|\360\222\220[\200-\277]|\360\222\221[\200-\242]|\360\235\220[\200-\277]|\360\235\221[\200-\224]|\360\235\221[\226-\277]|\360\235\222[\200-\234]|\360\235\222[\236-\237]|\360\235\222\242|\360\235\222[\245-\246]|\360\235\222[\251-\254]|\360\235\222[\256-\271]|\360\235\222\273|\360\235\222[\275-\277]|\360\235\223[\200-\203]|\360\235\223[\205-\277]|\360\235\224[\200-\205]|\360\235\224[\207-\212]|\360\235\224[\215-\224]|\360\235\224[\226-\234]|\360\235\224[\236-\271]|\360\235\224[\273-\276]|\360\235\225[\200-\204]|\360\235\225\206|\360\235\225[\212-\220]|\360\235\225[\222-\277]|\360\235[\226-\231][\200-\277]|\360\235\232[\200-\245]|\360\235\232[\250-\277]|\360\235\233[\200-\200]|\360\235\233[\202-\232])
+utf8-f		(\360\235\233[\234-\272]|\360\235\233[\274-\277]|\360\235\234[\200-\224]|\360\235\234[\226-\264]|\360\235\234[\266-\277]|\360\235\235[\200-\216]|\360\235\235[\220-\256]|\360\235\235[\260-\277]|\360\235\236[\200-\210]|\360\235\236[\212-\250]|\360\235\236[\252-\277]|\360\235\237[\200-\202]|\360\235\237[\204-\213]|\360[\240-\251][\200-\277][\200-\277]|\360\252[\200-\232][\200-\277]|\360\252\233[\200-\226]|\360\257\240[\200-\277]|\360\257[\241-\247][\200-\277]|\360\257\250[\200-\235])
+utf8-all	([\300-\337][\200-\277]|[\340-\357][\200-\277][\200-\277]|[\360-\367][\200-\277][\200-\277][\200-\277])
 %option	nomain noyywrap reentrant bison-bridge
 %x	TAG ENDTAG COMMENT SCRIPT STYLE SELECT TEXTAREA NOSCRIPT NOFRAMES OBJECT TAG_TF
 %%
- /* ({allemuligetegn}|\&{nestenalleesc}|\&{nestenalleesc};|\&\#[0-9]+;)+    { bhpm_newstring(yytext, yyscanner); return WORD; } */
- /* Midlertidig fiks for escapes uten avsluttende semikolon: */
- /* ({allemuligetegn}|\&{nestenalleesc};|\&\#[0-9]+;)+    { bhpm_newstring(yytext, yyscanner); return WORD; } */
- /* \&[^; ]*;		{} // Ignore other escapes. */
- /* \&			{ bhpm_newstring("&amp;", yyscanner); return WORD; } // Send ampersands not valid escapes as &amp; */
- /* \303\246		{ bhpm_newstring("&aelig;", yyscanner); return ESC; } */
- /* \303\270		{ bhpm_newstring("&oslash;", yyscanner); return ESC; } */
- /* \303\245		{ bhpm_newstring("&aring;", yyscanner); return ESC; } */
- /* \303\206		{ bhpm_newstring("&AElig;", yyscanner); return ESC; } */
- /* \303\230		{ bhpm_newstring("&Oslash;", yyscanner); return ESC; } */
- /* \303\205		{ bhpm_newstring("&Aring;", yyscanner); return ESC; } */
-({utf-8-2b}|{utf-8-3b}|{utf-8-4b})+	{ if (BHPM_VISIBLE) bhpm_newstring(yytext, yyscanner, WORD); }
-\&{letteresc};?		{ if (BHPM_VISIBLE) bhpm_new_esc_to_utf8(yytext, yyscanner, WORD); }
-{legalfirst}{legalchar}*{legalfirst} { if (BHPM_VISIBLE) bhpm_newstring(yytext, yyscanner, WORD); }
-{legaltegn}+		{ if (BHPM_VISIBLE) bhpm_newstring(yytext, yyscanner, ESC); }
-\&{tegnesc_minus};?	{ if (BHPM_VISIBLE) bhpm_new_esc_to_utf8(yytext, yyscanner, ESC); }
-(\&nbsp;?)+		{ (bhpmget_extra(yyscanner))->space = 1; }
-(\&#160;?)+		{ (bhpmget_extra(yyscanner))->space = 1; }
+    /* Pga av begrensning på maks linjelengde i lex, må utf8-bokstavene spesifiseres over flere character classes: */
+({utf8-a}|{utf8-b}|{utf8-c}|{utf8-d}|{utf8-e}|{utf8-f})+	{ bhpm_newstring(yytext, yyscanner, WORD); }
+{utf8-all}		{ bhpm_newstring(yytext, yyscanner, ESC); }
+\`			{ bhpm_newstring("'", yyscanner, WORD); }
+{legalchar}+		{ bhpm_newstring(yytext, yyscanner, WORD); }
+{latin-sup}		{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, WORD ); }
+{legaltegn}+		{ bhpm_newstring(yytext, yyscanner, ESC); }
+[\200-\377]		{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, ESC ); }
+\&{letteresc};?		{ bhpm_new_esc_to_utf8(yytext, yyscanner, WORD); }
+\&{tegnesc_minus};?	{ bhpm_new_esc_to_utf8(yytext, yyscanner, ESC); }
     /* quot,amp,lt og gt bør alltid sendes videre som character entities (html-escapes): */
-(\&quot;?|\&#34;?)	{ if (BHPM_VISIBLE) bhpm_newstring("&quot;", yyscanner, ESC); }
-(\&amp;?|\&#38;?)	{ if (BHPM_VISIBLE) bhpm_newstring("&amp;", yyscanner, ESC); }
-(\&lt;?|\&#60;?)	{ if (BHPM_VISIBLE) bhpm_newstring("&lt;", yyscanner, ESC); }
-(\&gt;?|\&#62;?)	{ if (BHPM_VISIBLE) bhpm_newstring("&gt;", yyscanner, ESC); }
-    /* (\&quot;?|\&amp;?|\&lt;?|\&gt;?)+	{ bhpm_newstring(yytext, yyscanner, ESC); } */
-    /* (\&#34;?|\&#38;?|\&#60;?|\&#62;?)+	{ bhpm_newstring(yytext, yyscanner, ESC); } */
-\&{tegnnumesc_minus};?		{ if (BHPM_VISIBLE) bhpm_newutf8( atoi(&(yytext[2])), yyscanner, ESC ); }
-\&#[0-9]+;		{ if (BHPM_VISIBLE) bhpm_newutf8( atoi(&(yytext[2])), yyscanner, WORD ); }
-\&			{ if (BHPM_VISIBLE) bhpm_newstring("&amp;", yyscanner, ESC); }
-[\ \t\n\r\f_]+		{ (bhpmget_extra(yyscanner))->space = 1; }
-{legalfirst}|{legalchar}|{latin-sup}	{ if (BHPM_VISIBLE) bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, WORD ); }
-[\200-\377]		{ if (BHPM_VISIBLE) bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, ESC); }
+(\&quot;?|\&#34;?)	{ bhpm_newstring("&quot;", yyscanner, ESC); }
+(\&amp;?|\&#38;?)	{ bhpm_newstring("&amp;", yyscanner, ESC); }
+(\&lt;?|\&#60;?)	{ bhpm_newstring("&lt;", yyscanner, ESC); }
+(\&gt;?|\&#62;?)	{ bhpm_newstring("&gt;", yyscanner, ESC); }
+\&nbsp;?		{ /* ignore */ }
+\&#[0-9]+;		{ bhpm_newunicode( atoi(&(yytext[2])), yyscanner ); }
+\&#(x|X)[0-9a-fA-F]+;	{ bhpm_newunicode( strtol(&(yytext[3]), NULL, 16), yyscanner ); }
+\&			{ bhpm_newstring("&amp;", yyscanner, ESC); }
 \<{blank}*script(\>|{blank}[^\>]*\>) {	// Ignore characters between script-tags.
 			    BEGIN SCRIPT;
 			}
@@ -189,22 +159,19 @@ utf-8-4b	[\360-\367][\200-\277][\200-\277][\200-\277]
 				}
 			    else bhpm_newstring("\'", yyscanner, TEXTFIELD);
 			}
-
-<TAG_TF>\\		{}
-<TAG_TF>({utf-8-2b}|{utf-8-3b}|{utf-8-4b})+	{ bhpm_newstring(yytext, yyscanner, TEXTFIELD); }
-<TAG_TF>\&{letteresc};?		{ bhpm_new_esc_to_utf8(yytext, yyscanner, TEXTFIELD); }
-<TAG_TF>{tfchars}+		{ bhpm_newstring(yytext, yyscanner, TEXTFIELD); }
-<TAG_TF>\&{tegnesc_minus};?	{ bhpm_new_esc_to_utf8(yytext, yyscanner, TEXTFIELD); }
-<TAG_TF>(\&nbsp;?)+		{ bhpm_newstring(" ", yyscanner, TEXTFIELD); }
-<TAG_TF>(\&#160;?)+		{ bhpm_newstring(" ", yyscanner, TEXTFIELD); }
-<TAG_TF>(\&quot;?|\&amp;?|\&lt;?|\&gt;?)+	{ bhpm_newstring(yytext, yyscanner, TEXTFIELD); }
-<TAG_TF>(\&#34;?|\&#38;?|\&#60;?|\&#62;?)+	{ bhpm_newstring(yytext, yyscanner, TEXTFIELD); }
-<TAG_TF>\&{tegnnumesc_minus};?		{ bhpm_newutf8( atoi(&(yytext[2])), yyscanner, TEXTFIELD ); }
-<TAG_TF>\&#[0-9]+;		{ bhpm_newutf8( atoi(&(yytext[2])), yyscanner, TEXTFIELD ); }
-<TAG_TF>\&			{ bhpm_newstring("&amp;", yyscanner, TEXTFIELD); }
-<TAG_TF>[\ \t\n\r\f]+		{ bhpm_newstring(" ", yyscanner, TEXTFIELD); }
+    /* Tatt fra toppen: */
+<TAG_TF>\\			{ /* ignore */ }
+<TAG_TF>({utf8-all}|{tfchars})+	{ bhpm_newstring(yytext, yyscanner, TEXTFIELD); }
 <TAG_TF>{latin-sup}		{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, TEXTFIELD ); }
-<TAG_TF>[\200-\377]		{ bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, TEXTFIELD); }
+<TAG_TF>\&({letteresc}|{tegnesc_minus});?	{ bhpm_new_esc_to_utf8(yytext, yyscanner, TEXTFIELD); }
+<TAG_TF>(\&(nbsp|#160);?|{blank})+	{ bhpm_newstring(" ", yyscanner, TEXTFIELD); }
+<TAG_TF>(\&(quot|#34);?)	{ bhpm_newstring("&quot;", yyscanner, TEXTFIELD); }
+<TAG_TF>(\&(amp|#38);?)		{ bhpm_newstring("&amp;", yyscanner, TEXTFIELD); }
+<TAG_TF>(\&(lt|#60);?)		{ bhpm_newstring("&lt;", yyscanner, TEXTFIELD); }
+<TAG_TF>(\&(gt|#62);?)		{ bhpm_newstring("&gt;", yyscanner, TEXTFIELD); }
+<TAG_TF>\&#[0-9]+;		{ bhpm_newutf8( atoi(&(yytext[2])), yyscanner, TEXTFIELD ); }
+<TAG_TF>\&#(x|X)[0-9a-fA-F]+;	{ bhpm_newutf8( strtol(&(yytext[3]), NULL, 16), yyscanner, TEXTFIELD ); }
+<TAG_TF>\&			{ bhpm_newstring("&amp;", yyscanner, TEXTFIELD); }
 
 <COMMENT>\-\-\>			{ BEGIN INITIAL; }
 <SCRIPT>\<\/{blank}*script(\>|{blank}[^\>]*\>)		{ BEGIN INITIAL; }
@@ -431,7 +398,19 @@ void add_to_summary( char *str, yyscan_t scanner )
 
 static inline void send_word( char *str, yyscan_t scanner )
 {
-    if (strlen(str) < 2) return;
+    // Fjern alle ' som pre/postfix. Skal kun være infix.
+    while (str[0]=='\'') str++;
+
+    int		end = strlen(str)-1;
+    while (end>=0 && str[end]=='\'')
+	{
+	    str[end] = '\0';
+	    end--;
+	}
+
+    if (utf8_strlen((utf8_byte*)str) < 2) return;
+
+    utf8_strtolower((utf8_byte*)str);
 
     struct bhpm_yy_extra	*he = bhpmget_extra(scanner);
 
@@ -599,3 +578,25 @@ static inline void bhpm_new_esc_to_utf8( const char* str, yyscan_t scanner, int 
     // escape skal ikke kunne være null, ettersom str allerede er verifisert å skulle eksistere.
     bhpm_newutf8( escape->val, scanner, tt );
 }
+
+
+/*
+ *  Sjekker om unicode-verdi er bokstav, og sender videre til utf-8-funksjonen.
+ */
+static inline void bhpm_newunicode( int val, yyscan_t scanner )
+{
+    if (U_isletter(val))
+	{
+	    bhpm_newutf8( val, scanner, WORD );
+	}
+    else
+	{
+	    bhpm_newutf8( val, scanner, ESC );
+	}
+}
+
+
+
+
+
+

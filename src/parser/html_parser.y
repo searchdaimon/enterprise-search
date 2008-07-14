@@ -1,11 +1,11 @@
 %{
-// (C) Copyright Boitho 2004-2008, Magnus Galåen (magnusga@idi.ntnu.no)
+// (C) Copyright SearchDaimon AS 2004-2008, Magnus Galåen (magnusga@idi.ntnu.no)
 
 /*
 Changelog
 
 Mars 2008 (Magnus):
-    Versjon uten cloaking-tiltak.
+    Parser forkes i to versjoner. Denne er uten cloaking-tiltak.
 
 Januar 2007 (Magnus):
     Kildekoden er oppgradert til reentrant, og spytter i tillegg ut tekst-summary.
@@ -178,7 +178,7 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 
 						for (j=0; j<7 && !charset_match; j++)
 						    if (!strncasecmp(ptr, allowed_charsets[j], strlen(allowed_charsets[j])))
-							charset_match = 1;
+							charset_match = j+1;
 
 						if (!charset_match)
 						    {
@@ -188,6 +188,7 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 							data->abort = 1;
 							return 0;
 						    }
+						else fprintf(stderr, "html_parser: Charset %s.\n", allowed_charsets[charset_match-1]);
 /*
 						while (ptr[j]!='\0' && (
 						    (ptr[j]>='A' && ptr[j]<='Z')
@@ -321,7 +322,7 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 
 					for (j=0; j<7 && !charset_match; j++)
 					    if (!strncasecmp(ptr, allowed_charsets[j], strlen(allowed_charsets[j])))
-						charset_match = 1;
+						charset_match = j+1;
 
 					if (!charset_match)
 					    {
@@ -331,6 +332,7 @@ startendtag	: TAG_START ATTR attrlist TAG_ENDTAG_STOPP
 						data->abort = 1;
 						return 0;
 					    }
+					else fprintf(stderr, "html_parser: Charset %s.\n", allowed_charsets[charset_match-1]);
 				    }
 			    }
 
@@ -601,7 +603,7 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
     url_split( url, &data->page_uri, &data->page_path, &data->page_rel_path );
     data->page_url_len = strlen(url);
 
-    // Set variables for yacc-er:
+    // Set variables for yacc:
     he->user_fn = fn;
 
     he->title = 0;
@@ -623,8 +625,6 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
 
     he->Btitle = buffer_init( 10240 );
     he->Bbody = buffer_init( 16384 + textsize*2 );
-
-    he->invisible_text = 0;
 
     // Run parser:
     yyscan_t	scanner;

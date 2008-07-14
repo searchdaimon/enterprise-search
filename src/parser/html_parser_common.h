@@ -31,7 +31,6 @@ struct bhpm_yy_extra
     int		title_nr;
     int		wordcount, linkcount;	// init:=0
     int		h;	// init:=0
-    char	invisible_text;
 
     buffer	*Btitle, *Bbody;
     char	newhead, newdiv, newspan, inhead, indiv, inspan, newendhead, inlink;
