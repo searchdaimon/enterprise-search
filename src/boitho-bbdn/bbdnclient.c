@@ -33,7 +33,7 @@ int bbdn_conect(int *socketha, char tkey[], int PORT) {
         }
 	
 	if (intrespons == bbc_authenticate_ok) {
-		fprintf(stderr, "bbc authenticate ok\n");
+		debug("bbc authenticate ok\n");
 		return 1;
 	}
 	else if (intrespons == bbc_authenticate_feiled) {
@@ -130,14 +130,14 @@ int bbdn_closecollection(int socketha, char subname[]) {
 
 	int len;
 	
-	printf("bbdn_closecollection start\n");
+	debug("bbdn_closecollection start");
 	sendpacked(socketha,bbc_closecollection,BLDPROTOCOLVERSION, 0, NULL,"");
 
        	len = strlen(subname) +1;
         if(sendall(socketha,&len, sizeof(int)) == -1) { perror("sendall"); exit(1); }
         if(sendall(socketha,subname, len) == -1) { perror("sendall"); exit(1); }
 
-	printf("bbdn_closecollection end\n");
+	debug("bbdn_closecollection end");
 		
 	return 1;
 }
