@@ -11,7 +11,6 @@ sub add_document {
     # set defaults
     $params{acl_denied} ||= "";
     if (!$params{last_modified}) {
-        warn "last_modified not provided, defaulting to 0";
         $params{last_modified} = 0;
     }
     $params{type} = q{}
@@ -50,6 +49,11 @@ sub document_exists {
         if $last_modified !~ /^\d+$/ || $last_modified < 0;
 
     return SD::Crawl::pdocumentExist($self->{ptr}, $url, $last_modified, $size_bytes);
+}
+
+sub normalize_http_url {
+	my ($self, $url) = @_;
+	return SD::Crawl::htttp_url_normalization($url);
 }
 
 1;
