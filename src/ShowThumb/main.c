@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
 	//printf("path %s\n",FilePath);
 
 	if ((REPOSETORY = (FILE *)fopen64(FilePath,"rb")) == NULL) {
-		fprintf(stderr,"Cant read udfile \"%s\".\n",FilePath);
+		fprintf(stderr,"Can't read udfile \"%s\".\n",FilePath);
                 perror(FilePath);
                 exit(1);
         }
