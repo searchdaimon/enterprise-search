@@ -1068,7 +1068,7 @@ cm_setCrawStartMsg(struct collectionFormat *collection,int nrofcollections) {
 	int i;
 
 	for(i=0;i<nrofcollections;i++) {
-		set_crawler_message(0,"Crawling it now. Click \"Overview\" again to see progression.",collection[i].id);
+		set_crawler_message(0,"Crawling it now.",collection[i].id);
 	}
 }
 
