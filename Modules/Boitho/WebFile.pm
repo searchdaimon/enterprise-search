@@ -22,9 +22,10 @@ my %state = %$state_ptr;
 my $css_dir = "styles";
 my $img_dir = "icon";
 my $js_dir  = "javascript";
+my $swf_dir = "swf";
 
 my @default_valid_size = qw(16x16 22x22 32x32 48x48 64x64 128x128 other);
-my @default_valid_ext  = qw(png jpg jpeg);
+my @default_valid_ext  = qw(png jpg jpeg swf);
 
 
 ##
@@ -36,11 +37,12 @@ sub get {
     my ($use_ptr, $valid_size_ptr, $valid_ext_ptr) = @_;
     
     # Initialize
-    my ($use_images, $use_css, $use_js);
+    my ($use_images, $use_css, $use_js, $use_swf);
     foreach my $use (@$use_ptr) {
 	$use_images = 1 if $use eq 'image';
 	$use_css    = 1 if $use eq 'css';
 	$use_js     = 1 if $use eq 'javascript';
+        $use_swf    = 1 if $use eq 'swf';
     }
 
     my @valid_size = (defined $valid_size_ptr) ? @$valid_size_ptr : @default_valid_size;
@@ -49,11 +51,11 @@ sub get {
 	# default values
     my $size = '32x32' if grep /^32x32$/, @valid_size;
     my $ext  = 'png'   if grep /^png$/, @valid_ext;
-    my ($icon, $css, $js);
+    my ($icon, $css, $js, $swf);
 
     # Start
 
-    ($size, $ext, $icon, $css, $js) = fetch_input(\@valid_size, \@valid_ext, $size, $ext, $icon, $css, $js);
+    ($size, $ext, $icon, $css, $js, $swf) = fetch_input(\@valid_size, \@valid_ext, $size, $ext, $icon, $css, $js, $swf);
 
     if (defined $icon) {
 	croak "Missing size, ext or icon" 
@@ -65,6 +67,9 @@ sub get {
     }
     elsif (defined $js) {
 	print_js($js) if $use_js;
+    }
+    elsif (defined $swf) {
+        print_swf($swf) if $use_swf;
     }
     else {
 	croak "Wrong parameters provided";
@@ -121,6 +126,12 @@ sub print_js {
     print_file_contents($path, "js");
 }
 
+sub print_swf {
+    my $s = shift;
+    print $cgi->header("application/x-shockwave-flash");
+    print_file_contents("$swf_dir/$s.swf");
+}
+
 ##
 # Print all contents in a file.
 #
@@ -159,7 +170,7 @@ sub print_file_contents {
 # Returns:
 #   @params = ($size, $ext, $icon, $css)
 sub fetch_input {
-	my ($valid_size_ptr, $valid_ext_ptr, $size, $ext, $icon, $css, $js) = @_;
+	my ($valid_size_ptr, $valid_ext_ptr, $size, $ext, $icon, $css, $js, $swf) = @_;
 
 	if (defined $state{'size'}) {
 		my $s = $state{'size'};
@@ -190,8 +201,12 @@ sub fetch_input {
 	    my $j = $state{'js'};   
 	    $js = $j if valid_filename($j);
 	}
-
-	return ($size, $ext, $icon, $css, $js);
+        if (defined $state{swf}) {
+            $swf = $state{swf}
+                if valid_filename($state{swf});
+        }
+            
+	return ($size, $ext, $icon, $css, $js, $swf);
 }
 
 ##
@@ -199,16 +214,16 @@ sub fetch_input {
 #
 # Attributes:
 #   name - filename
+my %valid = map { $_ => 1 } ('a'..'z', 0..9, '_', '.');
 sub valid_filename($) {
 	my $name = shift;
-	my @valid = ('a'..'z', 0..9, '_');
 
 	die "Illigal character, . in icon name."
-		if $name =~ /\./;
+		if $name =~ /\.\./;
 
 	foreach my $char (split '', $name) {
 		die "Illigal character, $char in icon name."
-			unless grep /^$char$/, @valid;
+			unless $valid{lc $char};
 	}
 	1;
 }

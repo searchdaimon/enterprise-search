@@ -16,6 +16,9 @@ use Data::Dumper;
 use constant HOOK_SCAN_START  => "scan start";
 use constant HOOK_SCAN_DONE   => "scan done";
 use constant HOOK_SHARE_FOUND => "share found";
+
+use constant MAX_RANGE_SIZE => 256 * 256;
+
 my @scan_start_hooks;
 my @scan_done_hooks;
 my @share_found_hooks;
@@ -274,7 +277,12 @@ sub _get_hosts_in_range {
 	open my $geniph, "$exec |"
 		or croak "Unable to execute genip, $!";
 
+        my $range_size = 0;
 	while (my $ip = <$geniph>) {
+           
+                croak "IP-range is too large.\n"
+                    if $range_size++ > MAX_RANGE_SIZE;
+
 		chomp $ip;
 		push @hosts, $ip;
 	}
@@ -293,6 +301,15 @@ sub _get_hosts_in_range {
 #	hosts - List of hosts that responded to ping-scan
 sub _nmap_icmp_scan {
 	my ($self, $range) = @_;
+
+        # slooow way of checking if range is too large.
+        open my $geniph, "$genip_path \Q$range\E|"  
+            or croak "Unable to execute genip, $!";
+        my $size = 0;
+        while (<$geniph>) {
+            croak "IP-range is too large.\n" if $size++ > MAX_RANGE_SIZE;
+        }
+
 
 	my @hosts;
 
@@ -343,8 +360,8 @@ sub _feed_hooks {
 }
 
 sub debug {
-	return unless DEBUG;
-	print "DEBUG: ", join(" ", @_), "\n";
+	print "DEBUG: ", join(" ", @_), "\n"
+            if DEBUG;
 }
 
 use constant test => 0;

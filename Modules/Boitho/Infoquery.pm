@@ -29,19 +29,18 @@ sub get_error {
 }
 sub error { $_[0]->get_error; } #alias
 
-sub crawlCollection($$) {
-	my $self = shift;
-	my $collection = shift;
+sub crawlCollection  {
+    my ($self, $collection, %opt) = @_;
 
-	unless($collection) {
-		$error = "Didn't get a collection to crawl.";
-		return undef;
-	}
+    unless($collection) {
+        $error = "Didn't get a collection to crawl.";
+        return;
+    }
+    my $exec = "crawlCollection \Q$collection\E";
+    $exec .= " \Q$opt{logfile}\E" 
+        if defined $opt{logfile};
 
-	my ($retval, $output) =
-		$self->_infoquery_exec("crawlCollection \Q$collection\E");
-
-	return $retval;
+    return $self->_infoquery_exec($exec, $opt{callb});
 }
 
 
@@ -69,13 +68,10 @@ sub recrawlCollection($$) {
 
 	unless($collection) {
 		$error = "Didn't get a collection to crawl.";
-		return 0;
+		return;
 	}
 
-	my ($retval, $output) =
-		$self->_infoquery_exec("recrawlCollection \Q$collection\E");
-
-	return $retval;
+	return $self->_infoquery_exec("recrawlCollection \Q$collection\E");
 }
 
 
@@ -122,6 +118,11 @@ sub scan($$$$$) {
 
 		
 	return $self->_getList($param, 'share');
+}
+
+sub killCrawl {
+    my ($s, $pid) = @_;
+    return $s->_infoquery_exec("killCrawl \Q$pid\E");
 }
 
 # Returns groups and collections of a given username.
@@ -182,33 +183,34 @@ sub documentsInCollection($$) {
 	}
 }
 
+##
 # Execute infoquery, fetch the error if there is one.
-# Returns: (success, @output). On error, get it with $iq->get_error;
+# Get error with $iq->get_error;
 #
 # Important: This method does not escape
 # its parameters. They must be escaped in the method
 # calling this one.
-sub _infoquery_exec($$) {
-	my ($self, $parameters) = (@_);
-	my $success = 1;
+sub _infoquery_exec {
+    my ($self, $parameters, $callb) = (@_);
+    my $success = 1;
 
-	croak  "Infoquery path not defined. Provide path when 
-		creating an instance (new->(PATH)) or use a config file."
-		unless $infoquery_path;
+    my $exec_string = "$infoquery_path $parameters";
+    open my $iq, "$exec_string |"
+        or carp "Unable to execute infoquery, $!";
 
-	my $exec_string = "$infoquery_path $parameters";
-	#carp "Kjorer infoquery slik: $exec_string";
-	open my $iq, "$exec_string |"
-		or carp "Unable to execute infoquery, $!";
-	my @output = <$iq> if $iq;
-	close $iq or $success = 0;
-	unless ($success) {
-		$error = $output[0];
-		return 0;
-	}
+    my @output;
+    while (my $o = <$iq>) {
+        $callb ? &$callb($o) : push @output, $o;
+    }
+    close $iq or $success = 0;
+    unless ($success) {
+        $error = join "\n", @output;
+        return;
+    }
 
-	return (1, @output);
+    return wantarray ? (1, @output) : 1;
 }
+
 
 
 # Helper method to parse simple lists from infoquery.

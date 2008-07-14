@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 ##
 # Class SD::LotInfo
 # Fetches info about searchdaimon indexed lots.
@@ -47,10 +48,10 @@ sub format_bytes {
 #   maplist_path - Path to maplist config file.
 sub new {
 	my $class = shift;
-	$maplist_path = shift;
+	$maplist_path = shift || $ENV{BOITHOHOME} . "/config/maplist.conf";
 
-	croak "argument maplist_path was not provided."
-		unless defined $maplist_path;
+	#croak "argument maplist_path was not provided."
+		#unless defined $maplist_path;
 
 	croak "Provided maplist config ($maplist_path) is not readable."
 		unless -r $maplist_path; #is readable
