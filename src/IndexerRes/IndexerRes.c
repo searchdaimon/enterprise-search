@@ -1047,7 +1047,7 @@ void revindexFilesSendNET(FILE *revindexFilesHa[],int lotNr) {
 }
 
 void copyRepToDi(struct DocumentIndexFormat *DocumentIndexPost,struct ReposetoryHeaderFormat *ReposetoryHeader) {
-			strcpy((*DocumentIndexPost).Url,(*ReposetoryHeader).url);
+			strscpy((*DocumentIndexPost).Url,(*ReposetoryHeader).url,sizeof((*DocumentIndexPost).Url));
 			
 			strcpy((*DocumentIndexPost).Dokumenttype,(*ReposetoryHeader).content_type);
 
@@ -1159,7 +1159,10 @@ void wordsMakeRevIndexBucket_part(struct pagewordsFormatPartFormat *wordsPart,un
 	for(i=0;i<NrOfDataDirectorys;i++) {
 		wordsPart->nrofBucketElements[i].bucketbuffsize = ((sizeof(unsigned int) + sizeof(char) + sizeof(unsigned long) + sizeof(unsigned long)) * wordsPart->nrofBucketElements[i].records) + (wordsPart->nrofBucketElements[i].hits * sizeof(unsigned short));
 
-		wordsPart->nrofBucketElements[i].bucketbuff = malloc(wordsPart->nrofBucketElements[i].bucketbuffsize);
+		if((wordsPart->nrofBucketElements[i].bucketbuff = malloc(wordsPart->nrofBucketElements[i].bucketbuffsize)) == NULL) {
+			perror("malloc nrofBucketElements");
+			exit(-1);
+		}
 	}
 
 	//setter pekeren til begyndelsen. Siden vil vi jo flytte denne etter hvert som vi kommer lenger ut
@@ -1171,7 +1174,16 @@ void wordsMakeRevIndexBucket_part(struct pagewordsFormatPartFormat *wordsPart,un
 	//så koden ikke blir så uoversiktelig
 	void *p;
 	for(i=0;i<wordsPart->revIndexnr;i++) {
-		
+
+			if(wordsPart->revIndex[i].nr > MaxsHitsInIndex) {
+				fprintf(stderr,"have more then MaxsHitsInIndex (%i). Have %i\n",MaxsHitsInIndex,wordsPart->revIndex[i].nr);
+				exit(-1);
+			}
+
+			if (wordsPart->revIndex[i].nr == 0) {
+				fprintf(stderr,"Number of hits for DocID is 0.\n");
+			}
+
 			p = wordsPart->nrofBucketElements[wordsPart->revIndex[i].bucket].p;
 
 			p += memcpyrc(p,&DocID,sizeof(unsigned int));
