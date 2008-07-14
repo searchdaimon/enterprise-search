@@ -2,10 +2,6 @@
 #!/usr/bin/perl
 # sdCrawl.pm
 
-package Perlcrawl;
-use SD::Crawl;
-use Crawler;
-our @ISA = qw(Crawler);
 package SD::sdCrawl;
 
 use strict;

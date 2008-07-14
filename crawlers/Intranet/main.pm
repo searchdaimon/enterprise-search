@@ -1,7 +1,8 @@
 #!/usr/bin/perl
 use strict;
 package Perlcrawl;
-use SD::Crawl;
+use Crawler;
+our @ISA = qw(Crawler);
 
 #use SOAP::Lite(  +trace => 'all', readable => 1, outputxml => 1, );
 #use SOAP::Lite(readable => 1, outputxml => 1, );
@@ -29,7 +30,7 @@ sub init_robot {
 }
 
 sub path_access  {
-    my ($self, $pointer, $opt ) = @_;
+	my (undef, $self, $opt) = @_;
     my $user = $opt->{'user'};
     my $passw  = $opt->{'password'};
     my $url = $opt->{"resource"};
