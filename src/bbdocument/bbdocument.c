@@ -855,7 +855,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	size_t imageSize;
 	unsigned int DocIDForExistTest;
 	unsigned int lastmodifiedForExistTest;
-	struct hashtable *metahash;
+	struct hashtable *metahash = NULL;
 
 	printf("bbdocument_add: \"%s\"\n",documenturi);
 
@@ -942,8 +942,9 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	ReposetoryHeader.htmlSize = htmlbuffersize;
 	ReposetoryHeader.clientVersion = 2.14;
 
-	//runarb: 8 juli 2008: tar bort bruken av ReposetoryHeader's url
-	//strncpy(ReposetoryHeader.url,documenturi,sizeof(ReposetoryHeader.url));
+	//runarb:  8 juli 2008: tar bort bruken av ReposetoryHeader's url
+	//runarb: 11 juli 2008: kan ikke gjøre dette, da vi kopierer den inn i DocumentIndex fra ReposetoryHeader 
+	strncpy(ReposetoryHeader.url,documenturi,sizeof(ReposetoryHeader.url));
 	//hvis vi har DocID 0 har vi et system som ikke tar vare på docider. For eks bb eller bdisk.
 	ReposetoryHeader.DocID = rGeneraeADocID(subname);
 		
