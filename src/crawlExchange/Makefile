@@ -1,6 +1,6 @@
 #gcc xml.c url.c main.c -I/usr/include/libxml2/ -L/usr/lib -lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl && ./a.out
 CFLAGS=		-I/usr/include/libxml2/ -L/usr/lib -I/home/eirik/.root/include
-CFLAGS+=	-W -Wall -O0 -g
+CFLAGS+=	-W -Wall -O0 -g -DBLACK_BOKS
 LDFLAGS=	-lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl -L/home/eirik/.root/lib
 PROG=		crawlExchange.so
 CC=		/usr/local/bin/gcc
