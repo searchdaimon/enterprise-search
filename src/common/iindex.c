@@ -1230,7 +1230,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		//leser antall hist vi skulle ha
 		if (fread(&revIndexArray[count].hits,1,revIndexArray[count].nrOfHits * sizeof(short),REVINDEXFH) != (revIndexArray[count].nrOfHits * sizeof(short)) ) {
 			perror("read hits");
-			exit(-1);
+			return 0;
 		}
 
 		revIndexArray[count].tombstone = 0;
