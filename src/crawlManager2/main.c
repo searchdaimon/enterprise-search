@@ -132,9 +132,9 @@ int documentContinue(struct collectionFormat *collection) {
 
 	}
 
-	printf("hour is now %i, will crawl\n",t->tm_hour);
+	debug("hour is now %i, will crawl\n",t->tm_hour);
 
-	printf("documentContinue: end");
+	debug("documentContinue: end\n");
 
 	return 1;
 }
