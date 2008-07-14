@@ -296,8 +296,11 @@ void alclot_add(struct alclotFormat *alclot,char acl[]) {
 		#ifdef DEBUG
 		printf("god user \"%s\"\n",Data[Count]);
 		#endif
-
-		struct aclusernameFormat *aclusername = malloc(sizeof(struct aclusernameFormat));
+		struct aclusernameFormat *aclusername;
+		if ((aclusername = malloc(sizeof(struct aclusernameFormat))) == NULL) {
+			perror("malloc aclusername");
+			exit(-1);
+		}
 
 		(*aclusername).len = strnlen(Data[Count],MAX_USER_NAME_LEN);
 		strscpy((*aclusername).username,Data[Count],MAX_USER_NAME_LEN);
@@ -566,7 +569,7 @@ void *IndexerLot_workthread(void *arg) {
 
 				if((*argstruct).optHandleOld) {
 
-					if (DocumentIndexPost->htmlSize != 0) {
+					//if (DocumentIndexPost->htmlSize != 0) {
 
 					        if ( (argstruct->rEindex == 0) && (DocumentIndexPost->crc32 == crc32) ) {
 							#ifdef DEBUG
@@ -581,7 +584,7 @@ void *IndexerLot_workthread(void *arg) {
 							++(*argstruct).optHandleOld_indexed;
 						}
 
-					}
+					//}
 
 				}
 
@@ -886,6 +889,8 @@ void *IndexerLot_workthread(void *arg) {
 					free(DocumentIndexPost);
 				}
 
+				free(url);
+
 		}		
 
 
@@ -964,7 +969,7 @@ void netlot_end_recursiveDir (char lotpath[],char lotinternpath[],unsigned int l
 
 
 /*******************************************************
-rutine for å hente date tilbake til lagringserver.
+rutine for å sende date tilbake til lagringserver.
 *******************************************************/
 void netlot_end (int lotNr,char subname[], char server[], struct optFormat *opt) {
 
@@ -1045,7 +1050,7 @@ int netlot_start(int lotNr,char subname[], int optrEindex, char server[]) {
 
 	
 	int i;
-	char iindexPath[512];
+	char filePath[512];
 
 
 
@@ -1073,15 +1078,28 @@ int netlot_start(int lotNr,char subname[], int optrEindex, char server[]) {
                 printf("can't get file \"brankPageElements\"\n");
 		return 0;
         }
+	if (!netlot_start_get_file(lotNr,subname,"AdultWeight",server)) {
+                printf("can't get file \"AdultWeight\"\n");
+		return 0;
+        }
+
+	for (i=0;i<NEWURLFILES_NR;i++) {
+		sprintf(filePath,"nyeurler.%i",i);
+		if (!netlot_start_get_file(lotNr,subname,filePath,server)) {
+               		printf("can't get file \"%s\"\n",filePath);
+			return 0;
+       		}
+		
+	}
 
 
 	if (optrEindex == 0) {
 		makeLotPath(lotNr,"iindex/Main/index/aa/",subname);
 
 		for(i=0;i<=63;i++) {
-			sprintf(iindexPath,"iindex/Main/index/aa/%i.txt",i);
-			if (!netlot_start_get_file(lotNr,subname,iindexPath,server)) {
-                		printf("can't get file \"%s\"\n",iindexPath);
+			sprintf(filePath,"iindex/Main/index/aa/%i.txt",i);
+			if (!netlot_start_get_file(lotNr,subname,filePath,server)) {
+                		printf("can't get file \"%s\"\n",filePath);
 				return 0;
         		}
 		
@@ -1199,21 +1217,27 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		}
 		printf("openmode\"%s\"\n",openmode);
 
-
-		revindexFilesOpenLocal(argstruct->revindexFilesHa,lotNr,"Main",openmode,subname);
+		//støtter ikke å apande revindexer langere. Det betyr at vi må lage ny iindex hver gang, hvis ikke blir
+		//det overskreved.
+		//revindexFilesOpenLocal(argstruct->revindexFilesHa,lotNr,"Main",openmode,subname);
+		revindexFilesOpenLocal(argstruct->revindexFilesHa,lotNr,"Main","wb",subname);
 
 		#ifdef BLACK_BOKS		
 
 			#ifdef IIACL
-				revindexFilesOpenLocal(argstruct->acl_allowindexFilesHa,lotNr,"acl_allow",openmode,subname);
-				revindexFilesOpenLocal(argstruct->acl_deniedindexFilesHa,lotNr,"acl_denied",openmode,subname);
+				//støtter ikke å apande revindexer langere. Det betyr at vi må lage ny iindex hver gang, hvis ikke blir
+				//det overskreved.
+				//revindexFilesOpenLocal(argstruct->acl_allowindexFilesHa,lotNr,"acl_allow",openmode,subname);
+				//revindexFilesOpenLocal(argstruct->acl_deniedindexFilesHa,lotNr,"acl_denied",openmode,subname);
+				revindexFilesOpenLocal(argstruct->acl_allowindexFilesHa,lotNr,"acl_allow","wb",subname);
+				revindexFilesOpenLocal(argstruct->acl_deniedindexFilesHa,lotNr,"acl_denied","wb",subname);
 			#endif
 
 			alclot_init(&argstruct->alclot,subname,openmode,lotNr);
 		#else
 
 
-			if ((argstruct->ADULTWEIGHTFH = lotOpenFileNoCasheByLotNr(lotNr,"AdultWeight",openmode, 'e',subname)) == NULL) {
+			if ((argstruct->ADULTWEIGHTFH = lotOpenFileNoCasheByLotNr(lotNr,"AdultWeight",">>", 'e',subname)) == NULL) {
 				perror("open AdultWeight");
 				exit(1);
 			}
@@ -1407,7 +1431,9 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 					DocIDPlace = ((argstruct->DIArray[i].DocID - LotDocIDOfset(argstruct->lotNr)) * sizeof(unsigned char));
 
 					//printf("DocID %u, DocIDPlace %i\n",argstruct->DIArray[i].DocID,DocIDPlace);
-					fseek(argstruct->ADULTWEIGHTFH,DocIDPlace,SEEK_SET);	
+					if(fseek(argstruct->ADULTWEIGHTFH,DocIDPlace,SEEK_SET) != 0) {
+						perror("fseek adultweight");
+					}	
                				fwrite(&argstruct->DIArray[i].awvalue,sizeof(unsigned char),1,argstruct->ADULTWEIGHTFH);
 
 					iintegerSetValue(&iinteger,&argstruct->DIArray[i].DomainDI,sizeof(argstruct->DIArray[i].DomainDI),argstruct->DIArray[i].DocID,subname);
@@ -1422,7 +1448,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 		#ifndef BLACK_BOKS
 
-			if ((brankPageElementsFH = lotOpenFileNoCasheByLotNr(lotNr,"brankPageElements",openmode,'r',subname)) == NULL) {
+			if ((brankPageElementsFH = lotOpenFileNoCasheByLotNr(lotNr,"brankPageElements",">>",'r',subname)) == NULL) {
 				perror("open brankPageElements");
 				exit(1);
 			}
