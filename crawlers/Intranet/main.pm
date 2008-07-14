@@ -9,7 +9,7 @@ use XML::XPath;
 use SD::sdCrawl;
 use LWP::RobotUA;
 use URI;
- 
+use Data::Dumper;
  
 
 #use Data::Dumper;
@@ -28,7 +28,7 @@ sub init_robot {
    $robot->protocols_allowed(['http','https']);  # disabling all others
 }
 
-sub crawlpatAcces  {
+sub path_access  {
     my ($self, $pointer, $opt ) = @_;
     my $user = $opt->{'user'};
     my $passw  = $opt->{'password'};
@@ -50,12 +50,13 @@ sub crawlpatAcces  {
     return 0;
 }
 
-sub crawlupdate {	
-   my ($self, $pointer, $opt ) = @_;	
-
+sub crawl_update {	
+    my (undef, $self, $opt) = @_;	
+print Dumper($self);
+print Dumper($opt);
     my $user = $opt->{"user"};
     my $passw = $opt->{"password"};
-    my $Urls = $opt->{"resource"};
+    my $Urls = $opt->{"url"};
     my $starting_url;
   
     my @urlList = split /;/, $Urls;
@@ -74,10 +75,10 @@ sub crawlupdate {
        my $url = URI->new(@urlList[0]);
        my $acl = "Everyone";
 
-      SD::sdCrawl::Init($pointer, $bot_name, , "email\@email.com", $acl, $user, $passw);
+      SD::sdCrawl::Init($self, $bot_name, , "email\@email.com", $acl, $user, $passw);
       SD::sdCrawl::Start($starting_url);
    }
 }
 
-
+1;
 
