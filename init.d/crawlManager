@@ -26,9 +26,9 @@ fi
 # Byttes ut:
 #poor mans setuid. If we are root we will run the program as user boitho
 if [ `id -u` == 0 ]; then
-	B_RUN="/usr/local/sbin/daemonize -u boitho $BOITHOHOME/bin/everrun $BOITHOHOME/bin/crawlManager"
+	B_RUN="/usr/local/sbin/daemonize -u boitho $BOITHOHOME/bin/everrun $BOITHOHOME/bin/crawlManager2"
 else
-	B_RUN="/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $BOITHOHOME/bin/crawlManager"
+	B_RUN="/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $BOITHOHOME/bin/crawlManager2"
 fi
 
 B_NAME=crawlManager
