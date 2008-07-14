@@ -8,7 +8,7 @@
 	#include <pthread.h>
 #endif
 
-void *bs_init(struct bs *s, int max) {
+void bs_init(struct bs *s, int max) {
 
 	s->count = 0;
 	s->max = max;

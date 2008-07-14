@@ -8,6 +8,6 @@ struct bs {
 	#endif
 };
 
-void *bs_init(struct bs *s, int max);
+void bs_init(struct bs *s, int max);
 int bs_add(struct bs *s, void *data);
 int bs_get(struct bs *s, void **data);
