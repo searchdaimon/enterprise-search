@@ -792,7 +792,7 @@ boithold: src/boithold/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/boithold/getpath.c src/boithold/main.c -o bin/boithold $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/boithold/main.c -o bin/boithold $(LDFLAGS)
 
 boitho-bbdn: src/boitho-bbdn/bbdnserver.c
 	@echo ""
