@@ -52,14 +52,13 @@ sub path_access  {
 
 sub crawl_update {	
     my (undef, $self, $opt) = @_;	
-print Dumper($self);
-print Dumper($opt);
+
     my $user = $opt->{"user"};
     my $passw = $opt->{"password"};
-    my $Urls = $opt->{"url"};
+    my $urls = $opt->{"url"};
     my $starting_url;
   
-    my @urlList = split /;/, $Urls;
+    my @urlList = split /;/, $urls;
     my @exclusionsUrlPart = qw ( );  # See Sharpoint crawler on how to use this
     my @exclusionQueryPart = qw(); # See Sharpoint crawler on how to use this
     my @allowedCountries = qw();

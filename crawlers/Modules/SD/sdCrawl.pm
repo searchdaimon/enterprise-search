@@ -4,6 +4,8 @@
 
 package Perlcrawl;
 use SD::Crawl;
+use Crawler;
+our @ISA = qw(Crawler);
 package SD::sdCrawl;
 
 use strict;
@@ -94,7 +96,6 @@ my %points_to;
 my %notable_url_error;  # URL => error message
 my %seen_url_before;
 my $acl;
-my $pointer;
 my $allow_far_urls = 0;
 my @ip_start;
 my @ip_end;
@@ -104,11 +105,13 @@ my $iisspecial = 0;
 my $countries = "";
 my @exclusionQueryParts;
 my @allowCountries;
+
+my $crawler;
  
 
 
 sub Init {
-   ($pointer, $bot_name, $bot_email, $acl, $user, $passw) = @_;
+   ($crawler, $bot_name, $bot_email, $acl, $user, $passw) = @_;
     init_logging( );
     my $robot = init_robot( );
     init_signals( );
@@ -401,9 +404,14 @@ sub process_far_url {
      }
    
   
-   if (not SD::Crawl::pdocumentExist($pointer, $url, 0, length($response->as_string ) )) {
-     $url = SD::Crawl::htttp_url_normalization($url);
-     SD::Crawl::pdocumentAdd($pointer, $url, 0 ,length($response->as_string ), $response->as_string, $title, $ct, $acl, "","");		
+   if (not $crawler->document_exists($url, 0, length($response->as_string))) {
+     $url = $crawler->normalize_http_url($url);
+	 $crawler->add_document(
+	 	url     => $url,
+		title   => $title,
+		content => $response->as_string,
+		type    => $ct,
+		acl_allow => $acl);
    }
  
     mutter("  That was hit #$hit_count\n");
@@ -482,10 +490,16 @@ sub process_near_url {
    }
    
    my $category = checkCategory($response->as_string);
-    if (not SD::Crawl::pdocumentExist($pointer, $url, 0, length($response->as_string ) )) {
-      $url = SD::Crawl::htttp_url_normalization($url);
+    if (not $crawler->document_exists($url, 0, length($response->as_string ) )) {
+	  $url = $crawler->normalize_http_url($url);
        if (addOk($url)) {
-           SD::Crawl::pdocumentAdd($pointer, $url, 0 ,length($response->as_string), $response->as_string, $title, $ct, $acl, "",$category);	
+           $crawler->add_document(
+			url     => $url,
+			title   => $title,
+			content => $response->as_string,
+			type    => $ct,
+			acl_allow => $acl,
+			attributes => $category);
       }	
    }
     mutter("  That was hit #$hit_count\n");
