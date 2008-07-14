@@ -12,14 +12,18 @@
 
 #include "../common/reposetory.h"
 
+#define DEBUG
+
 int main (int argc, char *argv[]) {
 
 	int lotNr;
 	int i;
 	unsigned int DocID;
-	char text[16384];
+	char text[50];
 	unsigned int radress;
 	unsigned int rsize;
+	char **Data;
+  	int Count, TokCount;
 	unsigned short hits;
 	unsigned long WordID;
 	int bucket;
@@ -36,16 +40,16 @@ int main (int argc, char *argv[]) {
 		//begynner på 2000 så det skal være lett og skille de visuelt fra andre hits
 		nrOfLinkWordsToDocID[i] = 2000;
 	}
-	//tester for at vi har fåt hvilken lot vi skal bruke
-	if (argc < 3) {
-		printf("Usage: ./IndexerLotAnchors lotnr subname\n\n");
+        //tester for at vi har fåt hvilken lot vi skal bruke
+        if (argc < 3) {
+                printf("Usage: ./anchorread lotnr subname\n\n");
 		exit(1);
-	}
+        }
 
 	lotNr = atoi(argv[1]);
 	char *subname = argv[2];
 
-	if ( (FH = lotOpenFileNoCasheByLotNr(lotNr,"anchors.new","rb", 's',subname)) == NULL) {
+	if ( (FH = lotOpenFileNoCasheByLotNr(lotNr,"anchors","rb", 's',subname)) == NULL) {
 		printf("lot dont have a anchors file\n");
 		exit(1);
 	}	
@@ -54,69 +58,75 @@ int main (int argc, char *argv[]) {
 	revindexFilesOpenLocal(revindexFilesHa,lotNr,"Athor","wb",subname);
 
 	//int anchorGetNext (int LotNr,unsigned int *DocID,char *text,unsigned int *radress,unsigned int *rsize)
-	while (anchorGetNextnew(lotNr,&DocID,text,sizeof(text),&radress,&rsize,subname, NULL) ) {	
-		char **Data, **DataNewline;
-		int TokCountNewline, TokCount;
-		int j;
+	while (anchorGetNext(lotNr,&DocID,text,sizeof(text),&radress,&rsize,subname) ) {	
+
+			DocIDPlace = (DocID - LotDocIDOfset(rLotForDOCid(DocID)));	
+			++nrOfLinkWordsToDocID[DocIDPlace];
 
 
-		DocIDPlace = (DocID - LotDocIDOfset(rLotForDOCid(DocID)));	
-		++nrOfLinkWordsToDocID[DocIDPlace];
 
-		convert_to_lowercase((unsigned char *)text);
+			convert_to_lowercase((unsigned char *)text);
 
 
-#ifdef DEBUG
-		if (DocID == 125502594) {
-			printf("DocID %i, text: \"%s\", DocIDPlace %i, nrOfLinkWordsToDocID %i\n",DocID,text,DocIDPlace,nrOfLinkWordsToDocID[DocIDPlace]);
-		}
-#endif
+			#ifdef DEBUG
+			if (DocID == 4999999) {
+				printf("DocID %i, text: \"%s\", DocIDPlace %i, nrOfLinkWordsToDocID %i\n",DocID,text,DocIDPlace,nrOfLinkWordsToDocID[DocIDPlace]);
+			}
+			#endif
 
-		TokCountNewline = split(text, "\n", &DataNewline);
+  			if ((TokCount = split(text, " ", &Data)) == -1) {
+				printf("canæt splitt \"%s\"\n",text);
+			}
 
-		for (j=0; DataNewline[j] != NULL; j++) {
-			TokCount = split(DataNewline[j], " ", &Data);
-
+			//for (i=(TokCount-1);i>=0;i--) {
 			i=0;
 			while (Data[i] != NULL) {
 
-#ifdef DEBUG
+				/*
 				if (nrOfLinkWordsToDocID[DocIDPlace] > 65505) {
-					if (DocID == 125502594) {
-						printf("reach max nr of words for DocID %u. Hav %i+ words\n",DocID,nrOfLinkWordsToDocID[DocIDPlace]);
-					}
+					#ifdef DEBUG
+						if (DocID == 4999999) {
+							printf("reach max nr of words for DocID %u. Hav %i+ words\n",DocID,nrOfLinkWordsToDocID[DocIDPlace]);
+						}
+					#endif
 					break;
 				}
-#endif
+				*/
 
 				if (Data[i][0] == '\0') {
-#ifdef DEBUG
-					if (DocID == 125502594) {
+					#ifdef DEBUG
+						if (DocID == 4999999) {
 
-						printf("emty data element\n");
-					}
-#endif
+							printf("emty data element\n");
+						}
+					#endif
 				} 
 				else if (strcmp(Data[i],"www") == 0) {
-#ifdef DEBUG
-					if (DocID == 125502594) {
-						printf("www\n");
-					}
-#endif
+					#ifdef DEBUG
+						if (DocID == 4999999) {
+							printf("www\n");
+						}
+					#endif
 					++nrOfLinkWordsToDocID[DocIDPlace];
 				} 
 				else if (isStoppWord(Data[i])) {
-#ifdef DEBUG
-					if (DocID == 125502594) {
-						printf("stopword \"%s\"\n",Data[i]);
-					}
-#endif
+					#ifdef DEBUG
+						if (DocID == 4999999) {
+							printf("stopword \"%s\"\n",Data[i]);
+						}
+					#endif
 					//++nrOfLinkWordsToDocID[DocIDPlace];
 				}
 				else {
-#ifdef DEBUG
-					//printf("\t\"%s\" %i\n",Data[i],nrOfLinkWordsToDocID[DocIDPlace]);
-#endif
+				
+					#ifdef DEBUG
+						if (DocID == 4999999) {
+							printf("\t\"%s\" %i\n",Data[i],nrOfLinkWordsToDocID[DocIDPlace]);
+						}
+					#endif
+
+
+			
 
 					WordID = crc32boitho(Data[i]);
 
@@ -124,53 +134,74 @@ int main (int argc, char *argv[]) {
 						printf("got 0 as word id for \"%s\". Somthing may be wrong.\n",Data[i]);
 					}
 
-					bucket = WordID % NrOfDataDirectorys;
-
-
-					fwrite(&DocID,sizeof(unsigned int),1,revindexFilesHa[bucket]);
-					//runarb: 13 mai 2007. vi har byttet til å bruke et tal for språk.
-					//burde da dette fra DocumentIndex hvis det finnes, men lagres ikke der
-					//må si i IndexRes på hvordan vi gjør det der
-					//fprintf(revindexFilesHa[bucket],"aa ");
-					lang = 0;
-					nr = 1;
-					fwrite(&lang,sizeof(unsigned char),1,revindexFilesHa[bucket]);
-
-					fwrite(&WordID,sizeof(unsigned long),1,revindexFilesHa[bucket]);
-					fwrite(&nr,sizeof(unsigned long),1,revindexFilesHa[bucket]);
+                			bucket = WordID % NrOfDataDirectorys;
 
 					if (nrOfLinkWordsToDocID[DocIDPlace] > 65535) {
 						hits = 65535;
 					}
 					else {
 						hits = nrOfLinkWordsToDocID[DocIDPlace];
+
 					}
 
-#ifdef DEBUG
-					if (DocID == 125502594) {
-						printf("\thits \"%s\": %hu, bucket %i\n",Data[i],hits,bucket);
-					}
-#endif
-					fwrite(&hits,sizeof(unsigned short),1,revindexFilesHa[bucket]);
+					#ifdef DEBUG
+						if (DocID == 4999999) {
+	    		       				printf("\thits %i: \"%s\": %hu, bucket %i\n",i,Data[i],hits,bucket);
+						}
+					#endif
 
-					++nrOfLinkWordsToDocID[DocIDPlace];
+                
+        	        		if (fwrite(&DocID,sizeof(unsigned int),1,revindexFilesHa[bucket]) != 1) {
+						perror("fwrite DocID");
+					}
+					//runarb: 13 mai 2007. vi har byttet til å bruke et tal for språk.
+					//burde da dette fra DocumentIndex hvis det finnes, men lagres ikke der
+					//må si i IndexRes på hvordan vi gjør det der
+        	        		//fprintf(revindexFilesHa[bucket],"aa ");
+					lang = 0;
+					nr = 1;
+					if(fwrite(&lang,sizeof(unsigned char),1,revindexFilesHa[bucket]) != 1) {
+						perror("fwrite lang");
+					}
+
+
+        	        		if(fwrite(&WordID,sizeof(unsigned long),1,revindexFilesHa[bucket]) != 1) {
+						perror("fwrite WordID");
+					}
+
+        	        		if(fwrite(&nr,sizeof(unsigned long),1,revindexFilesHa[bucket]) != 1) {
+						perror("fwrite nr");
+					}
+
+
+        		        	if(fwrite(&hits,sizeof(unsigned short),1,revindexFilesHa[bucket]) != 1) {
+						perror("fwrite hits");
+					}
+
+			                
+        	        		++nrOfLinkWordsToDocID[DocIDPlace];
+				
+			
 				}
+
 
 				++i;
 			}
-			FreeSplitList(Data);
+  			FreeSplitList(Data);
 
-#ifdef DEBUG
-			if (DocID == 125502594) {
+
+			#ifdef DEBUG
+				if (DocID == 4999999) {
 				printf("\n");
-			}
-#endif
-		}
-		FreeSplitList(DataNewline);
+				}
+			#endif
 	}
 
 	free(nrOfLinkWordsToDocID);
 
-	return 0;
 }
 
+/*
+
+
+*/

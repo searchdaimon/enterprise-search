@@ -8,7 +8,6 @@
 #include "../common/url.h"
 #include "../common/bstr.h"
 
-#define subname "www"
 
 
 int main (int argc, char *argv[]) {
@@ -30,18 +29,27 @@ int main (int argc, char *argv[]) {
 	unsigned char lang;
 	char **Data;
   	int Count, TokCount;
+	int indexedNr;
+	FILE *FH;
 
-        if (argc < 2) {
-                printf("Dette programet leser en DocumentIndex. Gi det et lot nr. \n\n\tUsage: ./readDocumentIndex 1");
+        if (argc < 3) {
+                printf("Dette programet leser en DocumentIndex. Gi det et lot nr. \n\n\tUsage: ./readDocumentIndex 1 www");
                exit(0);
         }
 
 	lotNr = atoi(argv[1]);
+	char *subname = argv[2];
 	DocID = 0;
+
+	if ((FH = lotOpenFileNoCasheByLotNr(lotNr,"DocumentIndex","r",'r',subname)) == NULL) {
+                perror("DocumentIndex");
+        	exit(1);
+        }
+	fclose(FH);
 
 	revindexFilesOpenLocal(revindexFilesHa,lotNr,"Url","wb",subname);
 
-
+	indexedNr = 0;
 	while (DIGetNext (&DocumentIndexPost,lotNr,&DocID,subname)) {
 
 
@@ -111,7 +119,7 @@ int main (int argc, char *argv[]) {
 					++hits;
 				}
 
-
+				++indexedNr;
 			}
   			FreeSplitList(Data);
 
@@ -122,6 +130,6 @@ int main (int argc, char *argv[]) {
 
 	//DIClose();
 
-
+	printf("indexed %i\n",indexedNr);
 }
 

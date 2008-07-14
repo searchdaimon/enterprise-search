@@ -6,7 +6,8 @@
 #include "../common/ir.h"
 #include "../common/revindex.h"
 #include "../common/url.h"
-#include "../common/bstr.h"
+#include "../common/integerindex.h"
+#include "../common/ir.h"
 
 #define subname "www"
 
@@ -15,9 +16,9 @@ int main (int argc, char *argv[]) {
 
 	struct DocumentIndexFormat DocumentIndexPost;
 	int lotNr;
-	int i;
 	unsigned int DocID;
-	char domain[64];
+	char domain[650];
+	FILE *DIFH;
 
         if (argc < 2) {
                 printf("Dette programet leser en DocumentIndex. Gi det et lot nr. \n\n\tUsage: ./readDocumentIndex 1");
@@ -27,8 +28,22 @@ int main (int argc, char *argv[]) {
 	lotNr = atoi(argv[1]);
 	DocID = 0;
 
-	revindexFilesOpenLocal(revindexFilesHa,lotNr,"Url","wb",subname);
+	unsigned short int DomainDI;
 
+	struct iintegerFormat iinteger;
+
+	if ((DIFH = lotOpenFileNoCasheByLotNr(lotNr,"DocumentIndex","r", 's', subname)) == NULL) {
+		printf("don't have a DocumentIndex\n");
+		exit(1);
+	}
+
+	fclose(DIFH);
+
+
+	if (!iintegerOpenForLot(&iinteger,"domainid",lotNr, "w", subname)) {
+		perror("iintegerOpenForLot");
+		exit(1);
+	}
 
 	while (DIGetNext (&DocumentIndexPost,lotNr,&DocID,subname)) {
 
@@ -39,19 +54,29 @@ int main (int argc, char *argv[]) {
 		else if (strncmp(DocumentIndexPost.Url,"http://",7) != 0) {
 			//printf("no http: %s\n",DocumentIndexPost.Url);
 		}
-		else if (!find_domain(DocumentIndexPost.Url,domain,sizeof(domain))) {
-			//printf("!find_domain %s\n",DocumentIndexPost.Url);
+		else if (!find_domain_no_subname2(DocumentIndexPost.Url,domain,sizeof(domain))) {
+		//else if (!find_domain(DocumentIndexPost.Url,domain,sizeof(domain))) {
+			#ifdef DEBUG
+			printf("!find_domain %s\n",DocumentIndexPost.Url);
+			#endif
 		}
 		else {
 			//printf("DocID: %u, url: %s\n",DocID,DocumentIndexPost.Url);
 
-			//#ifdef DEBUG
-			printf("url: \"%s\", DocID %u\n",DocumentIndexPost.Url,DocID);
-			printf("dd: %s\n",domain);
-			//#endif
 
 
-			}
+			DomainDI = calcDomainID(domain);
+
+
+			#ifdef DEBUG
+			printf("url: \"%s\", DocID %u, Domain %s, DomainDI %ho\n",DocumentIndexPost.Url,DocID,domain,DomainDI);
+			#endif
+
+			iintegerSetValue(&iinteger,&DomainDI,sizeof(DomainDI),DocID,subname);
+
+
+
+			
 
 			
 		}
@@ -60,6 +85,8 @@ int main (int argc, char *argv[]) {
 
 	//DIClose();
 
+	iintegerClose(&iinteger);
 
+	return 1;
 }
 
