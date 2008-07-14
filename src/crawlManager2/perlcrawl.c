@@ -11,10 +11,37 @@
 
 #include "../common/bstr.h"
 #include "../common/boithohome.h"
+#include "../common/debug.h"
+
+#include "../3pLibs/keyValueHash/hashtable_itr.h"
+#include "../3pLibs/keyValueHash/hashtable.h"
 
 static PerlInterpreter *my_perl;
 
 
+void params_to_perlhash(HV *perl_ht, struct hashtable *params) {
+    if (!hashtable_count(params)) return;
+
+    struct hashtable_itr *itr;
+    itr = hashtable_iterator(params);
+
+
+    do {
+        char *param = hashtable_iterator_key(itr);
+        char *value = hashtable_iterator_value(itr);
+        
+        // check if key already exists
+        if (hv_exists(perl_ht, param, strlen(param))) {
+            fprintf(stderr, "Parameter '%s' is already defined. Ignoring.\n", param);
+            continue;
+        }
+
+        hv_store(perl_ht, param, strlen(param),
+            sv_2mortal(newSVpv(value, 0)), 0);
+        
+    } while (hashtable_iterator_advance(itr));
+    free(itr);
+}
 
 int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, char execute[]) {
 
@@ -28,7 +55,7 @@ int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, 
 
 	snprintf(perlfile,sizeof(perlfile),"%s/main.pm",collection->crawlLibInfo->resourcepath);
 
-	printf("cargs %p\n",cargs);
+	debug("cargs %p\n",cargs);
 
 
 	#ifdef DEBUG
@@ -61,8 +88,9 @@ int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, 
 	HV *hv = newHV();
 	//hv_store(hv, "key1", 4, sv_2mortal(newSVpv("test", 0)), 0);
 
+
 	//sendes altid med
-	hv_store(hv, "lastCrawl", strlen("lastCrawl"), sv_2mortal(newSVuv(collection->lastCrawl)), 0);
+	hv_store(hv, "last_crawl", strlen("last_crawl"), sv_2mortal(newSVuv(collection->lastCrawl)), 0);
 
 	//sendes bare med hvis vi har verdi
 	if (collection->resource != NULL)
@@ -86,9 +114,12 @@ int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, 
 	if (collection->test_file_prefix != NULL)
 		hv_store(hv, "test_file_prefix", strlen("test_file_prefix"), sv_2mortal(newSVpv(collection->test_file_prefix, 0)), 0);
 
+
+        // Add custom params to hash.
+        params_to_perlhash(hv, collection->params);
+
 	//push the option has inn as a subrutine arg.
 	XPUSHs(sv_2mortal(newRV((SV *)hv)));
-
 
 	PUTBACK;
 
@@ -112,7 +143,7 @@ int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, 
 		fprintf(stderr,"Did return %i valus, but we are supposed to only return 1!\n", retn);
 	}
 
-	printf("preprocessAndRun: return nr %i, returning value %i\n",retn,success);
+	debug("preprocessAndRun: return nr %i, returning value %i\n",retn,success);
 
 	FREETMPS;
 	LEAVE;
@@ -138,7 +169,7 @@ int perlcm_crawlupdate(struct collectionFormat *collection,
 	cargs.documentContinue = documentContinue;
 
 
-	ret = preprocessAndRun(collection,&cargs,"Perlcrawl::crawlupdate");
+	ret = preprocessAndRun(collection,&cargs,"Perlcrawl::crawl_update");
 
 	//hvis vi fik 0 som retur verdi, er alt ok, og vi returnerer 1
 	if (ret == 0) {
@@ -185,7 +216,7 @@ int perlcm_crawlpatAcces(char resource[], char username[], char password[], int 
 	collectionWithUserData.resource = resource;
 
 
-	return preprocessAndRun(&collectionWithUserData,&cargs,"Perlcrawl::crawlpatAcces");
+	return preprocessAndRun(&collectionWithUserData,&cargs,"Perlcrawl::path_access");
 
 }
 

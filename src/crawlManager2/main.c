@@ -9,6 +9,8 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <time.h> // time(), localtime()
+#include <unistd.h> // getpid()
+#include <signal.h> // kill()
 
 #if WITH_PATHACCESS_CACHE
 #include <libmemcached/memcached.h>
@@ -43,6 +45,8 @@
 #define MYSQL_USER "boitho"
 #define MYSQL_PASS "G7J7v5L5Y7"
 
+#define TEST_COLL_NAME "_%s_TestCollection" // %s is connector name.
+
 struct hashtable *global_h;
 
 struct {
@@ -64,7 +68,7 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 
 int documentContinue(struct collectionFormat *collection) {
 
-	printf("documentContinue: start\n");
+	debug("documentContinue: start");
 
 	int recrawl_schedule_start, recrawl_schedule_end;
 	struct tm *t;
@@ -90,7 +94,7 @@ int documentContinue(struct collectionFormat *collection) {
 	now = time(NULL);
 	t = localtime(&now);	
 
-	printf("now: %i,recrawl_schedule_start %i,recrawl_schedule_end %i\n",t->tm_hour,recrawl_schedule_start,recrawl_schedule_end);
+	debug("now: %i,recrawl_schedule_start %i,recrawl_schedule_end %i\n",t->tm_hour,recrawl_schedule_start,recrawl_schedule_end);
 
 	//hvis vi ikke har noen begrensning så er det bare å crawler på
 	if ((recrawl_schedule_start == 0) || (recrawl_schedule_end == 0)) {
@@ -130,7 +134,7 @@ int documentContinue(struct collectionFormat *collection) {
 
 	printf("hour is now %i, will crawl\n",t->tm_hour);
 
-	printf("documentContinue: end\n");
+	printf("documentContinue: end");
 
 	return 1;
 }
@@ -227,9 +231,9 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 }
 
 int closecollection(struct collectionFormat *collection) {
-	printf("closecollection start\n");
+	debug("closecollection start\n");
 	bbdn_closecollection((*collection).socketha,(*collection).collection_name);
-	printf("closecollection end\n");
+	debug("closecollection end\n");
 
 }
 
@@ -242,7 +246,7 @@ int cmr_crawlcanconect(struct hashtable *h, struct collectionFormat *collection)
 		return 0;
 	}
 
-	printf("wil crawl \"%s\"\n",(*collection).resource);
+	debug("wil crawl \"%s\"",(*collection).resource);
 
 	if (!(*(*crawlLibInfo).crawlcanconect)(collection,documentError)) {
 		//overfører error
@@ -271,7 +275,7 @@ int cm_crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 
 	collection->crawlLibInfo = crawlLibInfo;
 
-	printf("wil crawl \"%s\"\n",(*collection).resource);
+	debug("wil crawl \"%s\"",(*collection).resource);
 
 	if (!(*(*crawlLibInfo).crawlfirst)(collection,documentExist,documentAdd,documentError,documentContinue)) {
         	printf("problems in crawlfirst_ld\n");
@@ -307,7 +311,7 @@ int cm_crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
 
 	collection->crawlLibInfo = crawlLibInfo;
 
-	printf("wil crawl \"%s\"\n",(*collection).resource);
+	debug("wil crawl \"%s\"",(*collection).resource);
 
 	if (!(*(*crawlLibInfo).crawlupdate)(collection,documentExist,documentAdd,documentError,documentContinue)) {
         	
@@ -758,8 +762,8 @@ int cm_start(struct hashtable **h) {
 /************************************************************/
 
 int cm_getCrawlLibInfo(struct hashtable *h,struct crawlLibInfoFormat **crawlLibInfo,char shortname[]) {
-	printf("cm_getCrawlLibInfo: start\n");
-	printf("wil search for \"%s\"\n",shortname);
+	debug("cm_getCrawlLibInfo: start");
+	debug("wil search for \"%s\"",shortname);
 	if (((*crawlLibInfo) = (struct crawlLibInfoFormat *)hashtable_search(h,shortname)) == NULL) {
 		berror("don't have a crawler for \"%s\"\n",shortname);
 		return 0;
@@ -790,6 +794,8 @@ int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections)
 		#ifdef DEBUG
 			printf("freeing nr %i: end\n",i);
 		#endif
+
+                hashtable_destroy((*collection)[i].params, 1);
 	}
 
 	//toDo: hvorfor segfeiler vi her ????
@@ -840,6 +846,35 @@ cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
 	return 1;
 }
 
+void 
+sql_fetch_params(struct hashtable ** h, MYSQL *db, unsigned int coll_id)  {
+    char mysql_query[512];
+    MYSQL_ROW row;
+    (*h) = create_hashtable(7, cm_hashfromkey, cm_equalkeys);
+
+    snprintf(mysql_query, sizeof mysql_query, "\
+        SELECT shareParam.value, param.param \
+        FROM shareParam, param \
+        WHERE shareParam.param = param.id \
+        AND shareParam.share = %d", coll_id);
+
+    if (mysql_real_query(db, mysql_query, strlen(mysql_query))) {
+        printf(mysql_error(db));
+	blog(LOGERROR,1,"MySQL Error: \"%s\".",mysql_error(db));
+        exit(1);
+    }
+
+    MYSQL_RES * res = mysql_store_result(db);
+    while ((row = mysql_fetch_row(res)) != NULL) {
+        if (!hashtable_insert(*h, strdup(row[1]), strdup(row[0]))) {
+            printf("can't insert param into ht");
+            exit(1);
+        }
+    }
+    mysql_free_result(res);
+}
+
+
 int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],int *nrofcollections) {
 
         char mysql_query [2048];
@@ -860,10 +895,10 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 		exit(1);
 	}
 
-
-
 	if (cvalue != NULL) {
-		sprintf(mysql_query, "\
+            char cvalue_esc[128];
+            mysql_real_escape_string(&demo_db, cvalue_esc, cvalue, strlen(cvalue));
+	    sprintf(mysql_query, "\
 					select \
 						resource, \
 						connectors.name, \
@@ -880,7 +915,7 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 					where \
 						connectors.ID = shares.connector \
 						AND collection_name='%s' \
-					",cvalue);
+					",cvalue_esc);
 	}
 	else {
 		sprintf(mysql_query, "\
@@ -969,6 +1004,7 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 		debug("resource \"%s\", connector \"%s\", collection_name \"%s\"\n",(*collection)[i].resource,(*collection)[i].connector,(*collection)[i].collection_name);
 
 		cm_collectionFetchUsers(collection[i], &demo_db);
+                sql_fetch_params(&(*collection)[i].params, &demo_db, (*collection)[i].id);
 
 		//crawler ny
                 ++i;
@@ -1069,7 +1105,7 @@ int set_crawler_message(int crawler_success  , char mrg[], unsigned int id) {
         MYSQL_RES *mysqlres; /* To be used to fetch information into */
         MYSQL_ROW mysqlrow;
 
-	blog(LOGACCESS,2,"set_crawler_message: mesage: \"%s\", success: %i, id: %i.",mrg,crawler_success,id);
+	blog(LOGACCESS, 2, "Status: set_crawler_message: mesage: \"%s\", success: %i, id: %i.",mrg,crawler_success,id);
 
         mysql_init(&demo_db);
 
@@ -1083,7 +1119,7 @@ int set_crawler_message(int crawler_success  , char mrg[], unsigned int id) {
 	//escaper queryet rikit
         mysql_real_escape_string(&demo_db,messageEscaped,mrg,strlen(mrg));
 
-	printf("mysql_queryEscaped \"%s\"\n",messageEscaped);
+	//printf("mysql_queryEscaped \"%s\"\n",messageEscaped);
 
 	if (crawler_success  == 0) {
         	sprintf(mysql_query, "UPDATE shares SET crawler_success = \"%i\", crawler_message = \"%s\" WHERE id  = \"%u\"",crawler_success ,messageEscaped,id);
@@ -1093,9 +1129,9 @@ int set_crawler_message(int crawler_success  , char mrg[], unsigned int id) {
 
 	}
 
-	blog(LOGACCESS,2,"mysql query: \"%s\".",mysql_query);
+	blog(LOGACCESS,2,"Status: \"%s\".",mysql_query);
 
-        printf("mysql_query: %s\n",mysql_query);
+        //debug("mysql_query: %s\n",mysql_query);
 
         if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
                 //printf(mysql_error(&demo_db));
@@ -1134,7 +1170,7 @@ int crawl_lock(struct collection_lockFormat *collection_lock, char collection[])
 
 	sprintf((*collection_lock).lockfile,"var/boitho-collections-%s.lock",collection);
 
-	printf("locking lock \"%s\"\n",(*collection_lock).lockfile);
+	debug("locking lock \"%s\"",(*collection_lock).lockfile);
 
 	if (((*collection_lock).LOCK = bfopen((*collection_lock).lockfile,"w+")) == NULL) {
 		perror((*collection_lock).lockfile);
@@ -1160,7 +1196,7 @@ int crawl_element_lock(struct collection_lockFormat *collection_lock, char conne
 
 	sprintf((*collection_lock).elementlockfile,"var/boitho-element-%s.lock",connector);
 
-	printf("locking lock \"%s\"\n",(*collection_lock).elementlockfile);
+	debug("locking lock \"%s\"",(*collection_lock).elementlockfile);
 
 	if (((*collection_lock).ELEMENTLOCK = bfopen((*collection_lock).elementlockfile,"w+")) == NULL) {
 		perror((*collection_lock).elementlockfile);
@@ -1189,13 +1225,42 @@ int crawl_element_unlock(struct collection_lockFormat *collection_lock) {
 	return 1;
 }
 
-int crawl (struct collectionFormat *collection,int nrofcollections, int flag, char *extra) {
+int is_test_collection(struct collectionFormat * coll) {
+    
+    char test_coll[512];
+    snprintf(test_coll, sizeof test_coll, TEST_COLL_NAME, coll->connector);
+    collection_normalize_name(test_coll, strlen(test_coll));
 
+    return strcmp(coll->collection_name, test_coll) == 0;
+}
+
+/**
+* Redirect stderr, stdout to file */
+int redirect_stdoutput(char * file) {
+    if (file == NULL) {
+        blog(LOGERROR, 1, "No output file for test coll");
+        return 0;
+    }
+
+    if (file_exist(file)) {
+        blog(LOGERROR, 1, "Test output file already exists '%s' exists.", file);
+        return 0;
+    }
+
+    printf("tc: redirecting std[out,err] to %s.", file);
+    if ((freopen(file, "a+", stdout)) == NULL
+            || freopen(file, "a+", stderr) == NULL) {
+        perror(file);
+        return 0;
+    }
+    return 1;
+}
+
+int crawl (struct collectionFormat *collection,int nrofcollections, int flag, char *extra) {
 
 	int i;
 	FILE *LOCK;
 
-	//if (nrofcollections == 1) {
 	struct collection_lockFormat collection_lock;
 
 	for(i=0;i<nrofcollections;i++) {
@@ -1204,6 +1269,22 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 		collection[i].extra = extra;
 
 		blog(LOGACCESS,1,"Starting crawl of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
+
+                int output_redirected = 0;
+                if (is_test_collection(&collection[i])) {
+                    if (!redirect_stdoutput(collection[i].extra)) {
+                        blog(LOGERROR, 1, "test collection error, skipping.");
+                        continue;
+                    }
+                    
+                    // a lock implies that a crawl is still running
+                    flock(fileno(stdout), LOCK_SH); 
+                    setvbuf(stdout, NULL, _IOLBF, 0); // line buffered
+                    setvbuf(stderr, NULL, _IOLBF, 0);
+                    output_redirected = 1;
+                    
+                    printf("pid:%d\n", getpid());
+                }
 
 		//sletter collection. Gjør dette uavhenging om vi har lock eller ikke, slik at vi altid får slettet, så kan vi gjøre
 		// ny crawl etterpå hvis vi ikke hadde lock
@@ -1302,9 +1383,13 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 			
 			//ber bbdn om å lukke sokket
 			bbdn_close(&collection[i].socketha);
-
-
-		}
+   
+    		}
+                
+                if (output_redirected) {
+                    fclose(stderr); 
+                    fclose(stdout);
+                }
 
 		crawl_unlock(&collection_lock);
 		crawl_element_unlock(&collection_lock);
@@ -1570,6 +1655,17 @@ void connectHandler(int socket) {
 
 			puts("cm_rewriteurl end");
 	        }
+                else if (packedHedder.command == cm_killcrawl) {
+                    int pid, ok;
+                    char errmsg[256];
+                    recvall(socket, &pid, sizeof pid);
+
+                    // TODO: check if pid is a crawlerManager process?
+                    ok = (pid > 0 && kill(pid, SIGKILL) != -1);
+        	    sendall(socket, &ok, sizeof ok);
+
+                    printf("cm_killcraw: killed pid %d: %s\n", pid, ok ? "yes" : "no");
+                }
 		else {
 			 printf("unknown command. %i\n", packedHedder.command);
 	        }
@@ -1655,4 +1751,3 @@ int main (int argc, char *argv[]) {
 
 	sconnect(connectHandler, crawlport);
 }
-
