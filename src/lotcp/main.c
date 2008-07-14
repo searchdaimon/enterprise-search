@@ -11,7 +11,7 @@
 #include "../common/reposetoryNET.h"
 
 
-void recursiveDir (char lotpath[],char lotinternpath[],unsigned int lotNr, char subname[]);
+void recursiveDir (char lotpath[],char lotinternpath[],unsigned int lotNr, char subname[], char server[]);
 
 main (int argc, char *argv[]) {
 
@@ -19,36 +19,58 @@ main (int argc, char *argv[]) {
 	int lotNr;
 	char file[512];
 
-	if (argc < 3) {
-               printf("Dette programet kopierer en lot til en annen server\n\n\t./lotcp lotnr subname [file]\n\n");
-               exit(0);
+	char *optHost = NULL;
+
+        extern char *optarg;
+        extern int optind, opterr, optopt;
+        char c;
+        while ((c=getopt(argc,argv,"h:"))!=-1) {
+                switch (c) {
+                        case 'h':
+                                optHost = optarg;
+                                fprintf(stderr, "Will send to host %s\n",optHost);
+
+                                break;
+                        default:
+                                exit(1);
+                }
+
+        }
+        --optind;
+
+
+
+	if (argc -optind < 3) {
+               	printf("Dette programet kopierer en lot til en annen server\n\n\t./lotcp lotnr subname [file]\n\n");
+		printf("Options:\n\t-h host\n\n");
+               	exit(0);
         }
 
 	printf("argc: %i\n",argc);
 
-	lotNr = atol(argv[1]);
-	char *subname = argv[2];
-
+	lotNr = atol(argv[1 +optind]);
+	char *subname = argv[2 +optind];
+	
 	//int rmkdir(char dest[], int LotNr,char subname[]);
 	rmkdir("",lotNr,subname);
 
 
 	//void GetFilPathForLot(char *FilePath,int LotNr,char subname[]);		
-	GetFilPathForLot(lotpath,lotNr,argv[2]);
+	GetFilPathForLot(lotpath,lotNr,argv[2 +optind]);
 
 	printf("lotpath %s\n",lotpath);
 
-	if (argc == 3) {
-		recursiveDir(lotpath,"",lotNr,subname);
+	if ((argc -optind) == 3) {
+		recursiveDir(lotpath,"",lotNr,subname,optHost);
 	}
-	else if (argc == 4) {
-		strcpy(file,argv[3]);
+	else if ((argc -optind) == 4) {
+		strcpy(file,argv[3 +optind]);
 		//hvis vi er en mappe må vi slutte på /. Hvis vi ikke her det legger vi til en /
 		if((strchr(file,'/') != NULL) && (file[strlen(file) -1] != '/')) {
 			printf("adding a / to \"%s\"\n",file);
 			strcat(file,"/");
 		}
-		recursiveDir(lotpath,file,lotNr,subname);
+		recursiveDir(lotpath,file,lotNr,subname,optHost);
 	}
 	else {
 		fprintf(stderr,"wrong argc count.\n");
@@ -57,7 +79,7 @@ main (int argc, char *argv[]) {
 
 
 
-void recursiveDir (char lotpath[],char lotinternpath[],unsigned int lotNr,char subname[]) {
+void recursiveDir (char lotpath[],char lotinternpath[],unsigned int lotNr,char subname[], char server[]) {
 
 	DIR *DIRH;
 	struct dirent *dp;
@@ -77,8 +99,15 @@ void recursiveDir (char lotpath[],char lotinternpath[],unsigned int lotNr,char s
 
 	if (S_ISREG(inode.st_mode)) {
 		printf("sending file \"%s\" as \"%s\"\n",dirname,lotinternpath);
-		rSendFile(dirname,lotinternpath,lotNr, "w",subname);
-
+		if (server != NULL) {
+			if (!rSendFileToHostname(dirname,lotinternpath,lotNr, "w", subname, server)) {
+                                printf("can't send file %s\n",filname);
+				exit(-1);
+        		}			
+		}
+		else {
+			rSendFile(dirname,lotinternpath,lotNr, "w",subname);
+		}
 	}
 	else if (S_ISDIR(inode.st_mode)) {
 
@@ -103,7 +132,7 @@ void recursiveDir (char lotpath[],char lotinternpath[],unsigned int lotNr,char s
 			rmkdir(nextdirname,lotNr,subname);
 
 			//kaller seg selv rekurift
-			recursiveDir(lotpath,nextdirname,lotNr,subname);
+			recursiveDir(lotpath,nextdirname,lotNr,subname,server);
 		}
 		else if (dp->d_type == DT_REG) {
 			printf("file - ");
@@ -111,8 +140,14 @@ void recursiveDir (char lotpath[],char lotinternpath[],unsigned int lotNr,char s
 			sprintf(lotinternfilname,"%s%s",lotinternpath,dp->d_name);
 			printf("file %s, %u %s\n",filname,lotNr,lotinternfilname);	
 
-			rSendFile(filname,lotinternfilname,lotNr, "w",subname);
-			
+			if (server != NULL) {
+				if (!rSendFileToHostname(filname,lotinternfilname,lotNr, "w",subname, server)) {
+                	                printf("can't send file %s\n",filname);
+        	                }			
+			}
+			else {
+				rSendFile(filname,lotinternfilname,lotNr, "w",subname);
+			}
 		}
 		else {
 			printf("unknown type %i\n",dp->d_type);

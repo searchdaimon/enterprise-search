@@ -10,8 +10,9 @@
 #include "../common/define.h"
 #include "../common/daemon.h"
 #include "../common/DocumentIndex.h"
+#include "../common/reposetory.h"
 
-#include "getpath.h"
+#include "../common/getpath.h"
 
 #define PROTOCOLVERSION 1
 
@@ -148,6 +149,24 @@ void connectHandler(int socket) {
 			system(dest);
 
 		}
+		else if (packedHedder.command == C_getLotToIndex) {
+			printf("fikk C_getLotToIndex\n");
+
+			int dirty;
+
+			if ((i=recv(socket, &dirty, sizeof(dirty),MSG_WAITALL)) == -1) {
+				perror("Cant read dirty");
+				exit(1);
+			}
+
+			printf("dirty: %i\n",dirty);
+
+			LotNr = findLotToIndex(packedHedder.subname,dirty);
+
+			printf("sending respons\n");
+			sendall(socket,&LotNr, sizeof(LotNr));
+
+		}
 		else if (packedHedder.command == C_rGetSize) {
 			printf("fikk C_rGetSize\n");
 
@@ -225,7 +244,7 @@ void connectHandler(int socket) {
 
 			if ((FH = lotOpenFileNoCasheByLotNr(LotNr,buf,"rb",'s',packedHedder.subname)) == NULL) {
 				perror(buf);
-				//sending that he fil is emty
+				//sending that the fil is emty
 				fileBloks = 0;
 				filerest = 0;
 
@@ -234,7 +253,7 @@ void connectHandler(int socket) {
 
 			}
 			else {
-				//finner og sender il størelse
+				//finner og sender fil størelse
 				fstat(fileno(FH),&inode);
 				//filesize = inode.st_size;
 				//sendall(socket,&filesize, sizeof(filesize));
@@ -251,7 +270,9 @@ void connectHandler(int socket) {
 				filblocbuff = (char *)malloc(rNetTrabsferBlok);
 				for(i=0;i < fileBloks;i++) {
 
-					fread(filblocbuff,sizeof(c),rNetTrabsferBlok,FH);
+					//fread(filblocbuff,sizeof(c),rNetTrabsferBlok,FH);
+					//fread_all(const void *buf, size_t size, FILE *stream)
+					fread_all(filblocbuff,rNetTrabsferBlok,FH, 4096);
 
 					if ((n=sendall(socket, filblocbuff, rNetTrabsferBlok)) == -1) {
 						perror("Cant recv dest");
@@ -289,7 +310,9 @@ void connectHandler(int socket) {
 		else if (packedHedder.command == C_rGetNext) {
 			printf("fikk C_rGetNext\n");
 
-
+	printf("støttes ikke lengere");
+	exit(1);
+	/*
 			//leser data. Det skal væren en unigned int som sier hvilken lot vi vil ha
 			//har deklarert den som int her ???
 			if ((i=read(socket, &LotNr, sizeof(LotNr))) == -1) {
@@ -330,6 +353,7 @@ void connectHandler(int socket) {
 				sendpacked(socket,C_rEOF,PROTOCOLVERSION, 0, NULL,packedHedder.subname);
 				printf("ferdig\n");
 			}
+	*/
 		}
 		else if (packedHedder.command == C_DIWrite) {
 
@@ -354,7 +378,7 @@ void connectHandler(int socket) {
 			int DocID;
 			struct DocumentIndexFormat DocumentIndexPost;	
 
-			//printf("got commane C_DIRead. sise %i hsize %i ds %i\n",packedHedder.size, sizeof(packedHedder), sizeof(DocID));
+			printf("got commane C_DIRead. sise %i hsize %i ds %i\n",packedHedder.size, sizeof(packedHedder), sizeof(DocID));
 
 			if ((i=recv(socket, &DocID, sizeof(DocID),0)) == -1) {
 				perror("recv");
@@ -377,7 +401,7 @@ void connectHandler(int socket) {
 				exit(1);
 			}
 
-			IndexTime = GetLastIndexTimeForLot(LotNr);
+			IndexTime = GetLastIndexTimeForLot(LotNr,packedHedder.subname);
 
 			sendall(socket,&IndexTime, sizeof(IndexTime));
 
@@ -390,12 +414,12 @@ void connectHandler(int socket) {
 				exit(1);
 			}
 
-			setLastIndexTimeForLot(LotNr);
+			setLastIndexTimeForLot(LotNr,NULL,packedHedder.subname);
 
 		}
 		else if (packedHedder.command == C_rSendFile) {
 			//skal mota en fil for lagring i reposetoryet
-			char FilePath[156];
+			//char FilePath[156];
 			FILE *FILEHANDLER;
 			char c;
 			path_t *file_path;
@@ -437,10 +461,10 @@ void connectHandler(int socket) {
 			printf("opentype \"%s\"\n",opentype);
 
 
-			GetFilPathForLot(FilePath,LotNr,packedHedder.subname);
+			//GetFilPathForLot(FilePath,LotNr,packedHedder.subname);
 
 			//legger til filnavnet
-			strncat(FilePath,dest,sizeof(FilePath));
+			//strncat(FilePath,dest,sizeof(FilePath));
 
 			//leser inn filstørelsen
 			if ((i=recv(socket, &fileBloks, sizeof(fileBloks),MSG_WAITALL)) == -1) {
@@ -453,24 +477,11 @@ void connectHandler(int socket) {
 				exit(1);
 			}
 
-			printf("store in %s, fileBloks: %" PRId64 ", filerest: %" PRId64 "\n",FilePath,fileBloks,filerest);
+			printf("fileBloks: %" PRId64 ", filerest: %" PRId64 "\n",fileBloks,filerest);
 
-			//opner filen
-			//22.okt.2005: var appand her før. Byttet til at vi kan spesifisere selv
-			if ( (FILEHANDLER = fopen(FilePath,opentype)) == NULL ) {
-				perror(FilePath);
-
-				//hvis vi ikke fikk opnet filen er det for at pathen kansje ikke fins? Prøver å lage en.
-				printf("no path? for %s. Wil try to make\n",FilePath);
-
-				file_path = getpath(FilePath);
-				printf("making file path %s\n",file_path->fil_path);
-				exit(1);
-				makePath(file_path->fil_path);
-
-				if ( (FILEHANDLER = fopen(FilePath,opentype)) == NULL ) {
-					perror(FilePath);
-				}
+			//åpner filen
+			if ((FILEHANDLER = lotOpenFileNoCasheByLotNr(LotNr,dest,opentype,'e',packedHedder.subname)) == NULL) {
+				perror(dest);
 			}
 
 			filblocbuff = (char *)malloc(rNetTrabsferBlok);
@@ -575,9 +586,9 @@ void connectHandler(int socket) {
 			sendall(socket, text, len);
 		}
 		else if (packedHedder.command == C_readHTML) {
+			/*
 			unsigned int DocID;
-			size_t len;
-			size_t rlen;
+			unsigned int len;
 			char *text;
 			char *acla, *acld;
 			struct DocumentIndexFormat DocIndex;
@@ -589,10 +600,11 @@ void connectHandler(int socket) {
 			}
 
 			if ((i = recv(socket, &len, sizeof(len), MSG_WAITALL)) == -1) {
+
 				perror("recv(len)");
 				exit(1);
 			}
-			rlen = len;
+			printf("len %u\n",len);
 			text = malloc(len);
 
 			if (text == NULL)
@@ -600,17 +612,33 @@ void connectHandler(int socket) {
 
 			DIRead(&DocIndex, DocID, packedHedder.subname);
 
-			if (!rReadHtml(text, &len, DocIndex.RepositoryPointer, rlen, DocID, packedHedder.subname, &ReposetoryHeader,
-					&acla, &acld)) {
+
+			if (!rReadHtml(
+					text, 
+					&len, 
+					DocIndex.RepositoryPointer, 
+					DocIndex.htmlSize,
+					DocID, 
+					packedHedder.subname, 
+					&ReposetoryHeader,
+					&acla, 
+					&acld, 
+					DocIndex.imageSize)) {
 				len = 0;
 				sendall(socket, &len, sizeof(len));
 			} else {
-				//printf("Got: (%d) %s\n", rlen, text);
+				++len; // \0
+				#ifdef DEBUG
+				printf("docID %u\n",DocID);
+				printf("Got: (len %i, real %i) ########################\n%s\n#####################\n", len, strlen(text), text);
+				#endif
 				sendall(socket, &len, sizeof(len));
 				sendall(socket, text, len);
+				sendall(socket, &ReposetoryHeader,sizeof(ReposetoryHeader));
 			}
 
 			free(text);
+			*/
 		}
 		/*
 		runarb: 06 des 2007: vi har gåt bort fra denne metoden for nå, og bruker heller index over smb. Men tar vare på den da vi kan trenge den siden
