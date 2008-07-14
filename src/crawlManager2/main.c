@@ -70,6 +70,13 @@ int documentContinue(struct collectionFormat *collection) {
 	struct tm *t;
 	time_t now;
 
+	//hvis vi skal crawl oftere en hvert dågn bruker vi ikke schedule time, men tilater å crawl hele tiden.
+	if ( (collection->rate != 0) && (collection->rate < 1440)) {
+		printf("documentContinue: Collection is set to be recrawled every %i min, ignoring schedule time\n",collection->rate);
+		return 1;
+	}
+
+
 	bconfig_flush(CONFIG_CACHE_IS_OK);
 
 	if (!bconfig_getentryint("recrawl_schedule_start",&recrawl_schedule_start)) {
@@ -667,6 +674,7 @@ int cm_start(struct hashtable **h) {
 		sprintf(perlpath,"%s/%s/main.pm",bfile("crawlers"),dp->d_name);	
 		sprintf(folderpath,"%s/%s/",bfile("crawlers"),dp->d_name);	
 
+
 		if (file_exist(libpath)) {
 			printf("loading path \"%s\"\n",libpath);
 			lib_handle = dlopen(libpath, RTLD_LAZY);
@@ -865,7 +873,8 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 						query2, \
 						auth_id, \
 						shares.id, \
-						shares.userprefix \
+						shares.userprefix, \
+						shares.rate \
 					from \
 						shares,connectors \
 					where \
@@ -884,7 +893,8 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 						query2, \
 						auth_id, \
 						shares.id, \
-						shares.userprefix \
+						shares.userprefix, \
+						shares.rate \
 					from \
 						shares,connectors \
 					where \
@@ -948,6 +958,8 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 
 		(*collection)[i].id = strtoul(mysqlrow[7], (char **)NULL, 10);
 		(*collection)[i].userprefix = strdupnul(mysqlrow[8]);
+		(*collection)[i].rate = strtoul(mysqlrow[9], (char **)NULL, 10);
+
 		(*collection)[i].extra = NULL;
 
 		//normaliserer collection navn, ved å fjenre ting som space og - \ / etc
@@ -1101,7 +1113,7 @@ cm_setCrawStartMsg(struct collectionFormat *collection,int nrofcollections) {
 	int i;
 
 	for(i=0;i<nrofcollections;i++) {
-		set_crawler_message(0,"Crawling it now. Click \"Overview\" again to see progression.",collection[i].id);
+		set_crawler_message(0,"Crawling it now.",collection[i].id);
 	}
 }
 
