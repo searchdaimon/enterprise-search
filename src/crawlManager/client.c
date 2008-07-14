@@ -263,6 +263,22 @@ int cmc_crawlcanconect (int socketha, char vantcollection[], char statusbuff[],i
 	return 1;
 
 }
+
+int cmc_killcrawl(int socketha, int port) {
+    int resp;
+    sendpacked(socketha, cm_killcrawl, BLDPROTOCOLVERSION, 0, NULL, "");
+    if (sendall(socketha, &port, sizeof port) == 0) {
+        perror("killcrawl sendall");
+        exit(1);
+    }
+
+    if (recv(socketha, &resp, sizeof resp, MSG_WAITALL) == -1) {
+        perror("killcrawl recv");
+        return 0;
+    }
+    return resp;
+}
+
 void cmc_close(int socketha) {
 	close(socketha);
 }

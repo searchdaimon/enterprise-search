@@ -40,6 +40,7 @@ int main (int argc, char *argv[]) {
 		printf("AuthUser <username> <password>\n");
 		printf("GetPassword <username>\n");
 		printf("collectionLocked <collection>\n");
+                printf("killCrawl <pid>");
 		printf("\nReturns %i on success and %i on failure\n",EXIT_SUCCESS,EXIT_FAILURE);
 		exit(1);
 	}
@@ -97,7 +98,7 @@ int main (int argc, char *argv[]) {
                 	}
 		}
 	}
-	if (strcmp(key,"listMailUsers") == 0) {
+	else if (strcmp(key,"listMailUsers") == 0) {
 		if(!boithoad_listMailUsers(&respons_list,&responsnr)) {
 			perror("Error:Can't conect to boithoad");
 		}
@@ -338,6 +339,40 @@ int main (int argc, char *argv[]) {
 		r = cmc_collectionislocked(socketha, value);
 		printf("Collection locked: %s\n", r == 0 ? "no" : "yes");
 	}
+        else if (strcmp(key, "killCrawl") == 0) {
+            // parse param
+            if (value == NULL) { 
+                puts("pid not provided"); exit(1); 
+                exit(1);
+            }
+            int i = 0;
+            for (; value[i] != '\0'; i++) {
+                if (!isdigit(value[i])) {
+                    puts("pid must be a number");
+                    exit(1);
+                }
+            }
+                
+            int pid = atoi(value);
+           
+            // send
+            int socketha, errorbufflen = 512;
+            char errorbuff[errorbufflen];
+		
+	    if (!cmc_conect(&socketha, errorbuff, errorbufflen, cmc_port)) {
+                printf("Connect error: %s\n", errorbuff);
+                exit(1);
+            }
+
+	    int ok = cmc_killcrawl(socketha, pid);
+	    cmc_close(socketha);
+    
+            if (!ok) {
+                puts("Unable to kill crawl.");
+                exit(1);
+            }
+            puts("Crawl killed.");
+        }
 	else {
 		printf("unknown key %s\n",key);
 	}
