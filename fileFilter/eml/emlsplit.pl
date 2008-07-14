@@ -6,7 +6,6 @@ use strict;
 #use Email::Simple;
 use Email::MIME;
 
-
 # A bit modified list stolen from mime.types in ubuntu
 my %types = 
 (	"application/andrew-inset" => "ez",
@@ -367,8 +366,9 @@ if (!(-e "$dirfiltername")) {
 
 my $headername = "$dirfiltername".$parsed->invent_filename.".header.";
 open(my $mh, "> $headername") or die "$!: $headername";
-foreach my $hn ($parsed->header_names) {
+foreach my $hn (qw(Subject From To Cc Bcc Reply-to)) {
 	my @values = $parsed->header($hn);
+	next if (length(@values) == 0);
 	print $mh "$hn:";
 	print $mh join(", ", @values);
 	print $mh "\n";
@@ -403,3 +403,13 @@ writemail($parsed);
 
 print ("txt" ." ".$headername."\n");
 
+use Date::Parse;
+
+# Write some data to the metaspec file
+my $metafile = $ENV{SDMETAFILE};
+open(FH, "> $metafile");
+my @values = $parsed->header("Date");
+if (length(@values) > 0) {
+	print FH "lastmodified = " . str2time($values[0]) . "\n";
+}
+close(FH);
