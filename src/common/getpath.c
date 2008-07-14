@@ -26,6 +26,7 @@
 
 #include "getpath.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,6 +57,7 @@
  *                                              *
  * Bugs:                                        *
  *      Does not check for legal filename       *
+ *      Is broken                               *
  *                                              *
  *                                              *
  * Author:      David O. Tinker                 *
@@ -74,8 +76,8 @@ char *filename;
              *curr_path;                /* current working directory        */
         int i, j = 0, k, name_len, no_of_dirs = 0;
         BOOLEAN path_p = FALSE;
-        char *directory[10],       /* 10 subdirectories ought be enough ! */
-             buff[13];             /* buffer to hold file & directory names */
+        char *directory[128],       /* 10 subdirectories ought be enough ! */
+             buff[PATH_MAX];             /* buffer to hold file & directory names */
         void error();
 
         name_len = strlen(filename);
