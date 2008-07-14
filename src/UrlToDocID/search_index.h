@@ -19,7 +19,7 @@ typedef struct
 
 
 // init:
-urldocid_data* urldocid_search_init(char *index_filename, char *db_filename);
+urldocid_data* urldocid_search_init(char *index_filename, const char *db_filename);
 // exit:
 void urldocid_search_exit(urldocid_data *data);
 

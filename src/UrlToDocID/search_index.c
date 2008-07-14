@@ -35,7 +35,7 @@ static inline unsigned int turn( unsigned int a )
 }
 
 
-urldocid_data* urldocid_search_init(char *index_filename, char *db_filename)
+urldocid_data* urldocid_search_init(char *index_filename, const char *db_filename)
 {
     urldocid_data	*data = malloc(sizeof(urldocid_data));
 
