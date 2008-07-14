@@ -151,11 +151,15 @@ int rGetFileByOpenHandlerFromSocket(char source[],FILE *FILEHANDLER,int LotNr,ch
 	fseek(FILEHANDLER,SEEK_SET,0);
 
 	//trunkerer filen til 0 bytes
+	//Runarb: 11 juli 2008: dette skaper problemer med atonmisk writes
+	/*
 	if (ftruncate( fileno(FILEHANDLER),0) != 0) {
-		perror("ftruncate");
-		return 0;
+		perror("rGetFileByOpenHandlerFromSocket: ftruncate");
+		//return 0;
+		exit(1);
 	}
-	
+	*/
+
 	//sender heder
         sendpacked(socketha,C_rGetFile,BLDPROTOCOLVERSION, 0, NULL,subname);
 
