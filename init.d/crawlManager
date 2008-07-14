@@ -1,8 +1,8 @@
 #!/bin/sh
 #
 # chkconfig: 345 99 10
-# description: Starts and stops the Boitho Daemon crawlManager.
-# processname: crawlManager
+# description: Starts and stops the Boitho Daemon crawlManager2.
+# processname: crawlManager2
 
 
 if [ "$BOITHOHOME" == "" ]; then
@@ -31,7 +31,7 @@ else
 	B_RUN="/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $BOITHOHOME/bin/crawlManager2"
 fi
 
-B_NAME=crawlManager
+B_NAME=crawlManager2
 RETVAL=0
 
 start() {
