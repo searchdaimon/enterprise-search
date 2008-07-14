@@ -22,10 +22,9 @@
 [% END %]
 
 <h2>Existing authentication</h2>
-	<form action="authentication.cgi" method="post">
 	<p><input type="submit" value="Add a new username" name="add_new_pair" /></p>
 [% IF authentication.size %]
-	[% WRAPPER 'template_table.html' style = 'width : 40%;'
+	[% WRAPPER 'template_table.html' style = 'width : 70%;'
 		header = ['', 'Username', 'Comment', ''] %]
 		[% i = 0 %]
 		[% FOREACH pair IN authentication %]
@@ -37,10 +36,10 @@
 			<td>[% pair.username %]</td>
                         <td>[% pair.comment %]</td>
 			<td style="text-align : right;">
-				<input type="submit" value="Edit"     name="edit_pair[[% i %]].submit" />
-				<input type="hidden" value="[% pair.id %]" name="edit_pair[[% i %]].id" />
-				<input type="submit" value="Delete"   name="delete_pair[[% i %]].submit" />
-				<input type="hidden" value="[% pair.id %]" name="delete_pair[[% i %]].id" />
+                            <ul class="vertical_buttons">
+                                <li><a href="authentication.cgi?show=edit&id=[% pair.id %]">Edit</a></li>
+                                <li><a href="authentication.cgi?show=delete&id=[% pair.id %]">Delete</a></li>
+                            </ul>
 			</td>
 			
 			[% END %]
@@ -52,5 +51,4 @@
 		You've yet to create a username and password pair.
 	[% END %]
 [% END %]
-</form>
 [% INCLUDE 'footer.html' %]

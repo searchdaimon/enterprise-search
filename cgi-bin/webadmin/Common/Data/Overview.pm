@@ -12,11 +12,12 @@ use Boitho::Infoquery;
 use Common::Data::Abstract;
 use Sql::Connectors;
 use Sql::Config;
+use Sql::Shares;
 
 use Carp;
 use Data::Dumper;
 use Time::Local qw(timelocal);
-use config qw($CONFIG);
+use config qw(%CONFIG);
 
 BEGIN {
 	push @INC, $ENV{'BOITHOHOME'} . "Modules";
@@ -40,27 +41,33 @@ sub _init {
 	$default_crawl_rate
 		= $sqlConfig->get_setting('default_crawl_rate');
 
-	$infoQuery = Boitho::Infoquery->new($CONFIG->{'infoquery'});
+	$infoQuery = Boitho::Infoquery->new($CONFIG{'infoquery'});
 }
 
 ##
 # Fetches all connectors and all their shares. 
 sub get_connectors_with_collections {
     my $self = shift;
+    my $sqlShares = Sql::Shares->new($self->{dbh});
 
-    my @connectors = $sqlConnectors->get_with_shares();
+    my @connectors = $sqlConnectors->get({ active => 1 });
     for my $c (@connectors) {
-        my @shares = @{$c->{shares}};
-        next unless @shares;
+        my $test_coll = sprintf $CONFIG{test_coll_name}, $c->{name};
+        my @collections = $sqlShares->get({ 
+            connector => $c->{id},  
+            collection_name => {"!=", $test_coll }, # Ignore test collection.
+        });
+        $c->{shares} = \@collections;
+        next unless @collections;
 
-        for my $s (@shares) {
-            next unless $s->{active};
-            my $rate = $s->{rate} || $default_crawl_rate;
+        for my $coll (@collections) {
+            next unless $coll->{active};
+            my $rate = $coll->{rate} || $default_crawl_rate;
 
-            $s->{smart_rate} = $self->_minutes_to_text($rate);
-            $s->{next_crawl} = $self->_get_next_crawl($rate, $s->{'last'});
-            $s->{doc_count}  = $infoQuery->documentsInCollection(
-                    $s->{collection_name});
+            $coll->{smart_rate} = $self->_minutes_to_text($rate);
+            $coll->{next_crawl} = $self->_get_next_crawl($rate, $coll->{'last'});
+            $coll->{doc_count}  = $infoQuery->documentsInCollection(
+                    $coll->{collection_name});
         }
     }
 

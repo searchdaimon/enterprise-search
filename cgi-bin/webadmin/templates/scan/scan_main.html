@@ -8,8 +8,8 @@
 [% END %]
 
 <h2>Scan results</h2>
-<div style="margin-bottom : 1em; font-size : large;">
-<img src="file.cgi?size=22x22&amp;i=edit_add" alt="new" style="border : 0px solid;" /> <strong><a href="scan.cgi?action=new">Start a new scan</a></strong>
+<div class="textNewLarge">
+<img src="file.cgi?size=22x22&amp;i=edit_add" alt="new" /> <a href="scan.cgi?action=new">Start a new scan</a>
 </div>
 
 [% i = 0 %]
@@ -53,9 +53,9 @@
 
 				<td>	
 					[% IF done %]
-					<input type="submit" name="submit.delete_result[[% i %]].submit" value="Delete" />
-					<input type="hidden" name="submit.delete_result[[% i %]].id" value="[% id %]" />
-					
+                                        <ul class="button_list">
+                                            <li><div><a href="scan.cgi?action=del_result&amp;id=[% id %]">Delete</a></div></li>
+                                        </ul>
 					[% END %]
 				</td>
 			[% END %]

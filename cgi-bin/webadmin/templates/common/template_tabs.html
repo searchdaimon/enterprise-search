@@ -1,6 +1,6 @@
-<ul id="tabs">
+<ul class="ui-tabs-nav">
 [% FOREACH tabs %]
-	<li [% IF selected %]id="selected"[% END %]>
+	<li [% IF selected == name %]class="ui-tabs-selected"[% END %]>
 		<a href="[% url %]">[% name %]</a>
 	</li>
 [% END %]

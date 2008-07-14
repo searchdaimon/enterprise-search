@@ -10,6 +10,7 @@
 
 #include "define.h"
 #include "config.h"
+#include "debug.h"
 
 
 struct _configdataFormat *_configdata = NULL;
@@ -28,7 +29,7 @@ bconfig_flush(int mode) {
 
 	//sjekker om vi har den alerede
 	if ((lastConfigRead != 0) && (mode == CONFIG_CACHE_IS_OK) && ((lastConfigRead + cache_time) > now)) {
-		printf("have config in cache. Wint query db again\n");
+		debug("have config in cache. Wint query db again\n");
 		return 0;
 	}
 
@@ -84,7 +85,7 @@ bconfig_flush(int mode) {
         mysqlres=mysql_store_result(&demo_db); /* Download result from server */
 	_configdatanr = (int)mysql_num_rows(mysqlres);
 
-	printf("nrofrows %i\n",_configdatanr);
+	debug("nrofrows %i\n",_configdatanr);
 
 	if (_configdata != NULL)
 		free(_configdata);
@@ -92,7 +93,7 @@ bconfig_flush(int mode) {
 
 	i=0;
         while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
-                        printf("\tconfig %s => \"%s\"\n",mysqlrow[0],mysqlrow[1]);
+                        debug("\tconfig %s => \"%s\"\n",mysqlrow[0],mysqlrow[1]);
 			strcpy(_configdata[i].configkey,mysqlrow[0]);
 			strcpy(_configdata[i].configvalue,mysqlrow[1]);
 		++i;

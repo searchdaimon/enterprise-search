@@ -5,17 +5,16 @@ use Carp;
 use DBI;
 use Sql::CollectionAuth;
 use Data::Dumper;
-use Common::Generic;
-use Sql::Abstract;
+use Sql::Webadmin;
+use Params::Validate qw(validate_pos);
 
-our @ISA = qw(Sql::Abstract);
+our @ISA = qw(Sql::Webadmin);
 
 my $table = "shares";
 my $dbh;
-my $common;
 my $sqlAuth;
 
-##
+#
 # Valid fileds in db table shares.
 my @valid = qw(host connector active success
 		last rate query1 query2
@@ -24,7 +23,6 @@ my @valid = qw(host connector active success
 sub _init {
 	my $self = shift;
 	$dbh = $self->{'dbh'};
-	$common = Common::Generic->new($dbh);
 	$sqlAuth = Sql::CollectionAuth->new($dbh);
 }
 
@@ -44,8 +42,6 @@ sub insert_share {
 
     $attr_val_ref->{'collection_name'} 
         = $self->_gen_coll_name($attr_val_ref);
-    $attr_val_ref->{'auth_id'} 
-        = $self->_gen_auth_id($attr_val_ref);
 
     my ($attr_str, $val_str, @binds) 
         = $self->construct_insert_query($attr_val_ref, @valid);
@@ -66,9 +62,6 @@ sub insert_share {
 #					Any attributes not listed in @valid are ignored.
 sub update_share {
     my ($self, $attr_val_ref) = @_;
-
-    $attr_val_ref->{'auth_id'} 
-        = $self->_gen_auth_id($attr_val_ref);
 
     my ($set_str, @binds) 
         = $self->construct_update_query($attr_val_ref, @valid);
@@ -124,20 +117,20 @@ sub get_shares {
 #
 # Attributes:
 #	connector - Connector name.
-sub get_all_by_connector {
-	my ($self, $connector) = @_;
-	
-	my $query;
-	
-	$query = "SELECT shares.*
-			FROM shares, connectors
-			WHERE shares.connector = connectors.id
-			AND connectors.name = ?";
-	
-	$query .= " ORDER BY shares.active DESC, shares.collection_name ASC";
-
-	return $self->sql_hashref($query, $connector);
-}
+#sub get_all_by_connector {
+#	my ($self, $connector) = @_;
+#	
+#	my $query;
+#	
+#	$query = "SELECT shares.*
+#			FROM shares, connectors
+#			WHERE shares.connector = connectors.id
+#			AND connectors.name = ?";
+#	
+#	$query .= " ORDER BY shares.active DESC, shares.collection_name ASC";
+#
+#	return $self->sql_hashref($query, $connector);
+#}
 
 ##
 # Returns a given share.
@@ -198,10 +191,6 @@ sub set_active {
 		WHERE id = ?";
 	
 	return $self->sql_update($query, 1, $id);
-}
-
-sub exists {
-	croak "exists() is deprecated. Use collection_name_exists() instead.";
 }
 
 ##
@@ -298,21 +287,6 @@ sub get_connector_name {
 
 # Group : Private methods
 
-##
-# Generates a collection name if it's not defined.
-# Generates auth_id, if it is not defined.
-sub _get_collection_and_auth {
-    croak "_get_collection_and_auth deprecated."
-        . "Use _gen_auth_id and gen_coll_name.";
-}
-
-sub _gen_auth_id {
-    my ($self, $data) = @_;
-    return $common->get_auth_id($dbh, 
-        $data->{auth_id}, $data->{username}, $data->{password});
-
-}
-
 sub _gen_coll_name {
     my ($self, $data) = @_;
     return $data->{collection_name}
@@ -327,5 +301,16 @@ sub _gen_coll_name {
     return $name;
 }
 
+sub get_connector {
+    validate_pos(@_, 1, { regex => qr(^\d+$) });
+    my ($s, $id) = @_;
+    return $s->get({ id => $id }, 'connector')->{connector};
+}
+
+sub exists { shift->SUPER::exists($table, 'id', @_) }
+sub get { shift->SUPER::get($table, @_) }
+sub insert { shift->SUPER::insert($table, @_) }
+sub update { shift->SUPER::update($table, @_) }
+sub delete { shift->SUPER::delete($table, @_) }
 
 1;

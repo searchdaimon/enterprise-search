@@ -4,29 +4,26 @@ use warnings;
 use Carp;
 use File::stat;
 use Data::Dumper;
-use Sql::Sql;
 use Sql::Search_logg;
 use File::Temp qw(tempfile);
 use config qw($CONFIG);
+use Page::Abstract;
+
 my %CONFIG = %$CONFIG;
+our @ISA = qw(Page::Abstract);
 
 use constant TPL_LOGFILE => 'logs_main.html';
 use constant DEFAULT_LOG_LINES => 250;
 use constant MAX_LOG_LINES => 500;
 
-sub new {
-    my ($class, $dbh, $lines) = @_;
-    my $self = {};
-    bless $self, $class;
-    $self->_init($dbh, $lines);
-    return $self;
-}
+
 
 sub _init {
-    my ($self, $dbh, $lines) = (@_);
-    $self->{dbh} = $dbh;
+    my $self = shift;
+    my $dbh = $self->{dbh};
     $self->{sqlSearch} = Sql::Search_logg->new($dbh);
 
+    my $lines = $self->{state}{lines};
     $lines = DEFAULT_LOG_LINES unless $lines;
     $lines = MAX_LOG_LINES if $lines > MAX_LOG_LINES;
     $self->{lines} = $lines;
@@ -57,12 +54,13 @@ sub download {
 }
 sub downl_all_zip {
     my $s = shift if ref $_[0];
-    
+   
+    chdir $CONFIG{log_path};
+
     my $logs_str;
     for my $file (keys %{$CONFIG{logfiles}}) {
-        my $path = $CONFIG{log_path} . "/" . $file;
-        next unless -e $path;
-        $logs_str .= "\Q$path\E ";
+        next unless -e $file;
+        $logs_str .= "\Q$file\E ";
     }
 
     # create zip for all logs.

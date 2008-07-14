@@ -3,9 +3,8 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Carp;
-use config (qw($CONFIG));
+use config qw(%CONFIG);
 BEGIN {
-	#push @INC, "Modules";
 	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Boitho::SettingsExport;
@@ -21,38 +20,25 @@ BEGIN {
             " user won't be able to change password.";
     }
 }
+use Page::Abstract;
+our @ISA = qw(Page::Abstract);
 
 use constant TPL_ADVANCED => "settings_advanced.html";
 use constant PASSWD_STARS => "******";
 use constant CFG_DIST_VERSION => 'dist_preference';
 
-my %CONFIG = %$CONFIG;
-# Helper class with functions used with add.cgi
-# Function used to add shares.
-#
-
-sub new {
-	my $class = shift;
-	my $dbh = shift;
-	my $self = {};
-	bless $self, $class;
-	
-	$self->_init($dbh);
-
-	return $self;
-}
-
 sub _init {
-	my ($self, $dbh, $state) =  (@_);
-	$self->{'dbh'} = $dbh;
-	$self->{'sqlConfig'} = Sql::Config->new($dbh);
-	$self->{'settings'} = Boitho::SettingsExport->new($dbh);
+	my $self = shift;
+	my $dbh = $self->{dbh};
+	$self->{sqlConfig} = Sql::Config->new($dbh);
+	$self->{settings} = Boitho::SettingsExport->new($dbh);
 
         croak "Repomod is not executable"
             unless -x $CONFIG{repomod_path};
 }
 
-## Delete all settings.
+## 
+# Delete all settings.
 sub delete_all_settings($) {
 	my $self = shift;
 	my $keep_configkeys = shift;

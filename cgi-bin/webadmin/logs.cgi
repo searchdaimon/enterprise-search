@@ -1,30 +1,20 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
-use CGI;
 use Carp;
-use CGI::State;
-use Template;
 use Data::Dumper;
 use Page::Logs;
-use Sql::Sql;
-
-my $cgi = CGI->new;
-my $state = CGI::State->state($cgi);
-print $cgi->header('text/html');
+use Benchmark qw(:all :hireswallclock);
 
 my $vars = { };
-my $template = Template->new(
-	{INCLUDE_PATH => './templates:./templates/logs:./templates/common',});
-my $sql = Sql::Sql->new();
-my $dbh = $sql->get_connection();
 
 my $tpl_file = undef;
-my $logs = Page::Logs->new($dbh, $state->{lines});
+my $logs = Page::Logs->new();
+my %state = $logs->get_state();
 
 
-if (defined($state->{'view'})) {
-	my $view = $state->{'view'};
+if (defined($state{view})) {
+	my $view = $state{view};
 	
 	if ($view eq 'search') {
 		# User is viewing search log
@@ -32,14 +22,13 @@ if (defined($state->{'view'})) {
 	}
 }
 
-if ($state->{'log'}) {
+if ($state{'log'}) {
 	# User is viewing the content of a logfile.
 	$tpl_file = $logs->show_logfile_content($vars, 
-            $state->{'log'});
+            $state{'log'});
 }
 
 $tpl_file = $logs->show_logfiles($vars)
     unless defined $tpl_file;
 
-$template->process($tpl_file, $vars)
-        or croak $template->error();
+$logs->process_tpl($tpl_file, $vars, (tpl_folders => 'logs'));

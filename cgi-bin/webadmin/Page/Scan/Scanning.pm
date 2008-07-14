@@ -51,7 +51,7 @@ sub show {
 
 
 sub run_scan {
-	my ($self, $vars, $template, $scan_ref) = @_;
+	my ($self, $vars, $tpl_sub, $scan_ref) = @_;
 
         $scan_ref->{range} =~ s/^\s+|\s+$//g;
 	
@@ -72,7 +72,8 @@ sub run_scan {
 	# do (and show) the scan
 	my $old_buffer_val = $|;
 	$| = 1; # don't buffer stdout
-	$template->process(TPL_SCAN_HEAD);
+        &$tpl_sub(TPL_SCAN_HEAD);
+	#$template->process(TPL_SCAN_HEAD);
 
 	my $connector = $sqlConnectors->get_name($scan_ref->{connector});
         my $xml_result;
@@ -98,8 +99,7 @@ sub run_scan {
 		'done' => 1 };
             $sqlResults->update_results($result_id, $data);
         }
-        $template->process(TPL_SCAN_FOOTER, $vars)
-            or croak $template->error(), "\n";
+        &$tpl_sub(TPL_SCAN_FOOTER, $vars);
 	$| = $old_buffer_val;
 
 	# update db with results

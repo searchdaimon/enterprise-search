@@ -1,0 +1,557 @@
+[% WRAPPER 'header.html' 
+    title = 'Connector extension - Modify and test' 
+    extra_css = ['connector'] 
+    extra_js = ['jquery', 'ui.core', 'ui.tabs', 'connector'] 
+%]
+
+[% USE HTML %]
+[% USE Dumper %]
+    
+    <script type="text/javascript">
+    //<![CDATA[
+
+    connid = [% conn.id || "null" %];
+    selected_tab = [% selected_tab || 0 %]
+    test_id = null;
+    
+        
+    $(document).ready(function() { 
+        colorParamTable(); 
+        loadCfgHTML();
+    
+        /**
+        * Edit -> Save source
+        */
+        $('#sourceBtn').click(function () { saveSource(this) });
+        $('#sourceRunBtn').click(function () {
+            saveSource(this);
+            // TODO: Move to run tab, click run btn
+            $('#connContainer > ul').tabs("select", 4);
+            $('#runBtn').click();
+        });
+        
+        $('#saveNameBtn').click(function() {
+            var params = getDefaultParams();
+            var new_name = $('#saveName').val();
+            params['data'] = { 
+                api : 'save_name', 
+                'save.name' : new_name,
+                connid : connid
+            };
+            params['success'] = function(resp) {
+                $('#connHeading').fadeOut(100).html("Connector " + new_name).fadeIn(100);
+            };
+            $.ajax(params);
+        });
+
+        /**
+        * Save: Save `tready for use' and 'input field' options.
+        */
+        $('.saveTrigger').click(function() {
+            var params = getDefaultParams();
+            var toggle_checkbox = function(elem) {
+                if ($(elem).is(':checked')) 
+                    $(elem).removeAttr('checked');
+                else 
+                    $(elem).attr('checked', 'checked');
+            }
+
+            params['data'] = {
+                'save.active'   : $("#saveActive:checked").val() == null ? 0 : 1,
+                api      : 'save_attr',
+                connid   : connid
+            };
+            $.each($('[@name^="field"]:checked'), function(index, obj) {
+                params['data']['save.' + $(obj).attr('name')] = 1;
+            });
+            params['success'] = null;
+            params['complete'] = function(x) {
+                loadCfgHTML();
+                completeFunc(x);
+            };
+            var elem = $(this);
+            params['success'] = function(resp) {
+                if (resp['error']) {
+                    setError(resp['error']);
+                    toggle_checkbox(elem);
+                }
+            };
+            params['error'] = function() {
+                toggle_checkbox(elem);
+                                errorFunc();
+            };
+                
+            $.ajax(params);
+        });
+
+        /**
+        * Save -> Add parameter
+        */
+        $('#addParamBtn').click(function () {
+            var param = $('#newParamName').val();
+            var example = $('#newParamExample').val();
+
+            if (!param.length) {
+                setError("Parameter value missing");
+                return;
+            }
+            $(this).attr("disabled", "disabled").html("Adding...");
+
+            var ajax_params = getDefaultParams();
+            ajax_params['data'] = {
+                api : 'param_add',
+                'param.param' : param,
+                'param.example' : example,
+                connid : connid
+            };
+            ajax_params['success'] = function (resp) {
+                if (resp['error']) {
+                    setError(resp['error']);
+                    return;
+                }
+                setError(null);
+                setSuccs(null);
+                $('#newParamName').val('');
+                $('#newParamExample').val('');
+                var id = resp['param_id'];
+
+                // Update table
+                var row_id = "param_row_" + id;
+                var tbl = $('#paramTable');
+                tbl.show();
+                tbl.append('<tr style="display : none;" id="' + row_id + '">' +
+                    '<td>' + param + '</td>' +
+                    '<td><em>' + example + '</em></td>' +
+                    '<td style="text-align : right;"><button ' +
+                        'onclick="return delParam(' + id + ')">Remove' +
+                        '</button>' +
+                    '</td></tr>');
+                $('#' + row_id).fadeIn(200, function() { colorParamTable() });
+                loadCfgHTML();
+            };
+            ajax_params['complete'] = function(x) {
+                $('#addParamBtn').removeAttr("disabled").html("Add parameters");
+                completeFunc(x);
+            };
+            $.ajax(ajax_params);
+        });
+
+    });
+
+
+    function saveSource(btn) {
+            var origHTML = $(btn).html();
+            $(btn).attr("disabled", "disabled").html("Saving..");
+
+            var params = getDefaultParams();
+            params['type'] = "POST";
+            params['data'] = { 
+                    api : 'edit', 
+                    connid : connid, 
+                    'edit.source' : $("#editCode").val()
+            };
+            params['complete'] = function(x) {
+                $(btn).removeAttr("disabled").html(origHTML);
+                completeFunc(x);
+            }
+                
+            $.ajax(params);
+    };
+
+
+
+    /**
+    * Save -> Parameter remove
+    */
+    function delParam(id) {
+        $(this).attr("disabled", "disabled").html("Removing...");
+
+        var params = getDefaultParams();
+        params['data'] = {
+            api        : 'param_del',
+            'param.id' : id,
+            connid : connid
+        };
+        params['success'] = function(resp) {
+            if (resp['error']) {
+                setError(resp['error']);
+                return;
+            }
+            setError(null);
+            setSuccs(null);
+
+            $("#param_row_" + id).fadeOut(200, function() { 
+                $(this).remove(); 
+                colorParamTable();
+            });
+            loadCfgHTML();
+        };
+
+        $.ajax(params);
+    }
+
+    function colorParamTable() {
+        $("#paramTable tbody tr:odd").addClass("odd");
+        $("#paramTable tbody tr:even").removeClass("odd");
+    }
+
+
+
+    // Testing
+        $(document).ready(function() { 
+
+        /**
+        * Test -> Run test
+        */
+        $('#runBtn').click(function() {
+            $(this).attr("disabled", "disabled").html("Running...");
+            hideMsgs();
+
+            $('.testrunInner').html('<pre></pre>'); 
+
+            data = {
+                api : 'test_run',
+                connid : connid
+            };
+            $.each($('.testParam'), function (index, obj) {
+                data['test.param.' + index] = $(obj).val();
+            });
+
+            var params = getDefaultParams();
+            params['data'] = data;
+            params['error'] = function() { 
+                errorFunc(); 
+            };
+
+            params['success'] = function(resp) { 
+                if (resp['error'] || !resp['test_id']) {
+                    setError(resp['error'] || "Got no 'test_id");
+                    $('#runBtn').removeAttr("disabled").html("Run test");
+                }
+                else {
+                    test_id = resp['test_id'];
+                    $('#refreshBtn').removeAttr("disabled");
+                    $('#killBtn').removeAttr("disabled");
+                    startRefreshInterv();
+                }
+            };
+            params['error'] = function() { 
+                $('#runBtn').removeAttr("disabled").html("Run test");
+                errorFunc();
+            };
+                
+
+            $.ajax(params);
+        });
+
+        /**
+        * Refresh run output
+        */
+        $('#refreshBtn').click(function() {
+            refreshOutput();
+        });
+
+        /**
+        * Kill crawl
+        */
+        $('#killBtn').click(function() {
+            $('#killBtn').attr("disabled", "disabled");
+
+            var params = getDefaultParams();
+            params['data'] = {
+                api : 'test_kill',
+                connid : connid,
+                test_id : test_id
+            };
+            params['complete'] = function(x) { 
+                $('#killBtn').removeAttr("disabled");
+                completeFunc(x);
+            };
+
+            $.ajax(params);
+        });
+    });
+
+function refreshOutput() {
+    var params = getDefaultParams();
+    params['data'] = {
+        api : 'test_output',
+        test_id : test_id,
+        connid : connid
+    };
+
+    var refreshErrorFunc = function(errmsg) {
+        clearInterval(refreshInterval);
+        setError(errmsg);
+        $('#runBtn').removeAttr("disabled");
+        $('#runStatus').html("");
+    }
+
+
+    params['success'] = function(resp) {
+        if (resp['error']) { 
+            refreshErrorFunc(resp['error']);
+        }
+        else {
+
+            // ie didn't want to replace pre contents directly.
+            $('.testrunInner').html('<pre>' + resp['output']  + '</pre>'); 
+
+            if (resp['crawl_done']) {
+                clearInterval(refreshInterval);
+                $('#refreshBtn').attr("disabled", "disabled");
+                $('#killBtn').attr("disabled", "disabled");
+                $('#runBtn').removeAttr("disabled").html("Run test");
+                $('#runStatus').html("Crawl is not running.");
+            }
+            else {
+                $('#runStatus').html("Crawl is running..");
+                $('#refreshBtn').removeAttr("disabled");
+            }
+        }
+    };
+
+    params['error'] = function() { refreshErrorFunc(null); }
+    $.ajax(params);
+}
+
+
+var refreshInterval;
+function startRefreshInterv() {
+    var sec = 3 * 1000;
+    refreshInterval = window.setInterval(refreshOutput, sec);
+}
+
+function loadCfgHTML() {
+    var params = getDefaultParams();
+    $('#cfgLoading').show();
+    $('#configureInner').html('');
+
+    params['data'] = { 
+        api : 'test_cfg_html', 
+        connid : connid 
+    };
+    params['success'] = function(resp) { 
+        $('#configureInner').hide().html(resp['html']).fadeIn(200);
+        activateApplyBtn();
+    };
+    params['beforeSend'] = null;
+    params['complete'] =  function(x) {
+        $('#cfgLoading').hide();
+    };
+    $.ajax(params);
+}
+
+function activateApplyBtn() {
+        $('#applyBtn').click(function() {
+                $(this).attr("disabled", "disabled").html("Saving..");
+
+                var coll_data = { };
+
+                // text fields
+                $.each($('[@name^="share"]:text'), function (index, obj) { 
+                    //alert($(obj).attr('name') + " - " + $(obj).val());
+                    coll_data[$(obj).attr('name')] = $(obj).val();
+                });
+
+                // radio buttons
+                $.each($('[@name^="share"]:radio:checked'), function (index, obj) {
+                    coll_data[$(obj).attr('name')] = $(obj).val();
+
+                });
+
+                // checkboxes
+                $.each($('[@name^="share"]:checkbox:checked'), function (index, obj) {
+                    coll_data[$(obj).attr('name')] = $(obj).val();
+                });
+
+                var auth_id = $('[@name="share.auth_id"]').val();
+                if (auth_id) 
+                    coll_data['share.auth_id'] = auth_id;
+
+
+
+                var params = getDefaultParams();
+                params['data'] = coll_data;
+                params['data']['api'] = 'test_apply';
+                params['data']['connid'] = connid;
+                
+                params['complete'] = function(x) {
+                    $('#applyBtn').removeAttr("disabled").html("Apply configuration");
+                    completeFunc(x);
+                }
+                $.ajax(params);
+
+            });
+    }
+
+
+//]]>
+
+</script>
+
+[% END %]
+
+[%# PROCESS jstest %]
+
+[% PROCESS 'tpl_msg.html' type="error" id="errorBox" style="display : none" %]
+[% PROCESS 'tpl_msg.html' type="success" id="succsBox" style="display : none" %]
+
+    <h1 id="connHeading">Connector [% conn.name %]</h1>
+
+<div id="connContainer">
+    <ul>
+        <li><a href="#upload"><span>Upload source</span></a></li>
+        <li><a href="#edit"><span>Edit source</span></a></li>
+        <li><a href="#save"><span>Settings and parameters</span></a></li>
+        <li>&nbsp;&nbsp;</li>
+        <li><a href="#configure"><span>Configure test collection</span></a></li>
+        <li><a href="#run"><span>Run test</span></a></li>
+    </ul>
+    <img src="file.cgi?i=jqueryloader&amp;ext=gif&amp;size=other" alt="loading" id="loading" />
+
+    [% process upload %]
+    [% process edit %]
+    [% process save %]
+    [% process configure %]
+    [% process test_run %]
+
+</div>
+
+[% include 'footer.html' %]
+
+
+[% block upload %]
+<div class="connectorBlock" id="upload">
+    <h3>Upload</h3>
+    <form method="post" enctype="multipart/form-data" action="connector.cgi">
+    <p>
+        <input type="hidden" name="act" value="upload" />
+        <input type="hidden" name="connid" value="[% conn.id %]" />
+        <input type="file" name="upload.file" />
+        <input type="submit" value="Upload" />
+    </p>
+    </form>
+
+</div>
+[% end %]
+
+[% block edit %]
+
+<div class="connectorBlock" id="edit">
+    <h3>Edit</h3>
+    <p>
+        <textarea id="editCode" rows="15" cols="80" style="width : 100%; height : 30em;">[% conn.source %]</textarea>
+    </p>
+    <p>
+        <button id="sourceBtn">Save</button>&nbsp;
+        <button id="sourceRunBtn">Save and run</button>
+    </p>
+</div>
+
+[% end %]
+
+[% block save %]
+
+    [% dont_show => { crawling => 1, connector => 1, collection => 1, custom_parameters => 1, advanced => 1 } %]
+
+<div class="connectorBlock" id="save">
+
+    <h3>Settings</h3>
+    <table class="inputTable">
+    <tr>
+        <td>Name</td>
+        <td><input type="text" id="saveName" value="[% HTML.escape(conn.name) %]" />&nbsp;<button id="saveNameBtn">Update</button></td>
+    </tr>
+    <tr>
+        <td>Ready for use?</td>
+        <td><input type="checkbox" id="saveActive" [% if conn.active %]checked="checked"[% end %] class="saveTrigger" /></td>
+    </tr>
+    </table>
+
+    [% PROCESS 'template_edit_collection.html' fields = undef %]
+    <div>
+        Input fields:
+        <div class="checklist_outer" style="margin-top : 0.5em;">
+	<div class="checklist_inner" id="userList">
+	[% FOREACH field IN field_list.keys.sort # from template_edit_collection %]
+            [% NEXT if dont_show.$field %]
+            <label for="field_[% field %]">
+					
+                [% SET field_esc = field.escape %]
+		<input name="field.[% field %]" type="checkbox" id="field_[% field %]" class="saveTrigger"
+		    [% IF conn.input_fields.grep("^$field_esc$").0 %]
+                        checked="checked"
+                    [% END %]
+					value="[% field %]"
+		/> [% field %]
+	    </label>
+	[% END %]
+	</div>
+        </div>
+    </div>
+
+
+
+    <h3 style="margin-top : 3em;">Parameters</h3>
+    <div style="margin-bottom : 1em;">
+    <table class="inputTable">
+    <tr>
+        <td>Parameter name</td>
+        <td><input id="newParamName" style="width : 120px;" type="text" /></td>
+    </tr>
+    <tr>
+        <td>Example text</td>
+        <td><input id="newParamExample" style="width : 230px;" type="text" /></td>
+    </tr>
+    </table>
+    <button id="addParamBtn">Add parameter</button>
+    </div>
+    
+
+    <table id="paramTable" class="default_table" [% IF !params.size %]style="display : none;"[% END %] >
+        <tr><th>Parameter</th><th>Example</th><th></th></tr>
+    [% foreach p in params %]
+        <tr id="param_row_[% p.id %]">
+            <td>[% HTML.escape(p.param) %]</td>
+            <td><em>[% HTML.escape(p.example) %]</em></td>
+            <td style="text-align : right;">
+                <button 
+                        onclick="return delParam([% HTML.escape(p.id) %])">
+                        Remove
+                </button>
+            </td>
+        </tr>
+    [% end %]
+    </table>
+
+    </div>
+[% end %]
+
+[% block configure %]
+<div class="connectorBlock" id="configure">
+    <img src="file.cgi?i=jqueryloader&amp;ext=gif&amp;size=other" alt="loading" id="cfgLoading" />
+    <div id="configureInner"></div>
+</div>
+[% end %]
+
+[% block test_run %]
+<div class="connectorBlock" id="run">
+    <h3>Test</h3>
+    <p>
+        <button id="runBtn">Run test</button>
+        <button id="refreshBtn" disabled="disabled">Refresh output</button>
+        <button id="killBtn" disabled="disabled">Kill test</button>
+    </p>
+    <p id="runStatus"></p>
+    <h3>Output</h3>
+
+    <div class="testrunOuter">
+        <div class="testrunInner">
+            <pre>Output from run will be visible here.</pre></div>
+    </div>
+</div>
+[% end %]
+
+
+

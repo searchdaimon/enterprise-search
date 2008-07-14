@@ -4,9 +4,9 @@ use warnings;
 use Carp;
 use DBI;
 use Data::Dumper;
-use Sql::Abstract;
+use Sql::Webadmin;
 
-our @ISA = qw(Sql::Abstract);
+our @ISA = qw(Sql::Webadmin);
 my $table = "shareUsers";
 
 sub set_users {
@@ -43,5 +43,10 @@ sub get_users {
     my $query = "SELECT name FROM $table WHERE share = ?";
     return $self->sql_array($query, $share_id);
 }
+
+sub get { shift->SUPER::get($table, @_) }
+sub insert { shift->SUPER::insert($table, @_) }
+sub update { shift->SUPER::update($table, @_) }
+sub delete { shift->SUPER::delete($table, @_) }
 
 1;

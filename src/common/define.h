@@ -153,6 +153,7 @@
 #define cm_collectionislocked   11
 #define cm_deleteCollection	50
 #define cm_rewriteurl		60
+#define cm_killcrawl            70
 
 //verdier av forskjelige term posisjoner
 #define poengForBody 1	

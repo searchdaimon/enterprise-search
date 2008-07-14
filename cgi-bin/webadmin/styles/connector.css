@@ -1,0 +1,28 @@
+.connectorBlock input {
+
+}
+
+.connectorBlock > fieldset {
+    width : 70%;
+}
+
+#paramTable {
+    border-collapse : collapse;
+    width : 600px;
+}
+#paramTable .odd { background : #D3DBEF; }
+.inputTable { text-align : left; }
+.inputTable td { width : 20em; }
+
+
+#loading {
+    float : right; 
+    padding : 1em; 
+    display : none; 
+}
+
+#connContainer {
+    float : left; 
+    width : 80%;
+}
+

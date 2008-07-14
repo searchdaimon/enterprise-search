@@ -1,5 +1,5 @@
 # Class: Sql::Sql
-# TODO: Deprecate. Replace with Sql::Abstract that everything inherits.
+# TODO: Deprecate. Replace with Sql::Webadmin that everything inherits.
 package Sql::Sql;
 use DBI;
 use strict;
@@ -204,7 +204,7 @@ sub read_config($) {
 	my $self = shift;
 	my %settings = ();
 
-	open my $setup, $CONFIG->{'config_path'} or die "Can't open setup from $CONFIG->{'config_path'}: $!";
+	open my $setup, $CONFIG->{'config_path'} or croak "Can't open setup from $CONFIG->{'config_path'}: $!";
 	my @data = <$setup>;
 	close $setup;
 	

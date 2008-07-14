@@ -8,9 +8,10 @@ use Sql::ShareGroups;
 use Sql::ShareUsers;
 use Carp;
 use config qw(%CONFIG);
+use Readonly;
 
-my @VALID_COLL_CHRS 
-    = ('a'..'z', 'A'..'Z', 0..9, '-', q{ }, '_');
+Readonly::Hash my %VALID_COLL_CHRS 
+    => map { $_ => 1 } ('a'..'z', 'A'..'Z', 0..9, '-', q{ }, '_');
 
 
 sub new {
@@ -25,51 +26,6 @@ sub _init {
     my ($self, $dbh) = @_;
     $self->{sqlShares} = Sql::Shares->new($dbh);
     $self->{dbh} = $dbh;
-}
-
-##
-# Data needed in a form 
-# for editing/managing a collection.
-sub coll_form_data {
-    my ($s, @input_fields) = @_;
-
-    my $iq = new Boitho::Infoquery($CONFIG{infoquery});
-    my $sqlAuth = Sql::CollectionAuth->new($s->{dbh});
-    my $sqlConnectors = Sql::Connectors->new($s->{dbh});
-
-    my %form_data = (input_fields => \@input_fields);
-    my %fields = map { $_ => 1 } @input_fields;
-    $form_data{connectors} = $sqlConnectors->get_connectors()
-        if $fields{connectors};
-    $form_data{group_list} = $iq->listGroups()
-        if $fields{groups};
-    $form_data{user_list} = $iq->listMailUsers()
-        if $fields{exchange_user_select};
-    $form_data{authentication} = [ $sqlAuth->get_all_auth() ]
-        if $fields{authentication};
-
-    $form_data{input_fields} = \@input_fields;
-
-    return %form_data;
-}
-
-##
-# Data for a collection needed in a
-# form for deiting/managing.
-sub coll_data {
-    my ($s, $id, @input_fields) = @_;
-    my %fields = map { $_ => 1 } @input_fields;
-
-    my $sqlGroups = Sql::ShareGroups->new($s->{dbh});
-    my $sqlUsers  = Sql::ShareUsers->new($s->{dbh});
-    my %coll_data = %{ $s->{sqlShares}->get_share($id) };
-   
-    $coll_data{group_member} = $sqlGroups->get_groups($id)
-        if $fields{group};
-    $coll_data{user} = [$sqlUsers->get_users($id)]
-        if $fields{exchange_user_select};
-
-    return %coll_data;
 }
 
 ##
@@ -101,11 +57,9 @@ sub validate {
             my $name = $share->{'collection_name'};
             my $id = $share->{'id'};
 
-            foreach my $c (split '', $name) {
-                return (0, 'error_inv_name')
-                    unless grep { "$c" eq "$_" } @VALID_COLL_CHRS;
-            }
-
+            return (0, 'error_inv_name')
+                    unless $s->valid_name($name);
+    
             if ($s->{sqlShares}->get_id_by_collection($name)) {
                 unless ($id and $s->{sqlShares}->get_collection_name($id) eq $name) {
                     return (0, 'error_collection_exists');
@@ -118,6 +72,14 @@ sub validate {
         }
     }
     return (1, 'valid');
+}
+
+sub valid_name { 
+    my ($s, $name) = @_;
+    for my $c (split q{}, $name) {
+        return unless $VALID_COLL_CHRS{$c};
+    }
+    return 1;
 }
 
 1;

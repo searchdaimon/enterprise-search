@@ -12,6 +12,8 @@ use config qw($CONFIG);
 use Data::Dumper;
 use Boitho::RaidStatus qw(getraidinfo);
 use Boitho::Infoquery;
+use Page::Abstract;
+our @ISA = qw(Page::Abstract);
 
 my $modules_missing;
 BEGIN {
@@ -28,23 +30,14 @@ use config qw($CONFIG);
 
 my $lotinfo;
 
-sub new($) {
-	my $class = shift;
-	my $self = {};
-	bless $self, $class;
-	$self->_init(@_);
-	$self;
-}
-
-sub _init($$) {
-	my ($self, $dbh) = @_;
-	$self->{'sqlConfig'} = Sql::Config->new($dbh);
-	$self->{'infoQuery'} = Boitho::Infoquery->new($CONFIG->{'infoquery'});
+sub _init {
+	my $s = shift;
+	$s->{'sqlConfig'} = Sql::Config->new($s->{dbh});
+	$s->{'infoQuery'} = Boitho::Infoquery->new($CONFIG->{'infoquery'});
         eval {
             $lotinfo = SD::LotInfo->new($CONFIG->{'maplist_path'});
         };
         warn $@ if $@;
-	
 }
 
 sub show_system_diagnostics {

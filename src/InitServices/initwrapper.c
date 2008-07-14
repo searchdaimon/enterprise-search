@@ -65,8 +65,8 @@ int main(int argc, char **argv) {
  *	param   - parameter to service
  */
 void exec_and_exit(char *service, char *param) {
-    char exeocbuf[200000];
-    int exeocbuflen;
+    int exeocbuflen = 1024*1024*5;
+    char * exeocbuf = malloc(exeocbuflen);
 
 
     char exec_string[512];
@@ -76,17 +76,18 @@ void exec_and_exit(char *service, char *param) {
     //runarb: gjør om slik at vi bruker /bin/sh direkte, uten -c    
     //char *shargs[] = {"/bin/sh", "-c", exec_string, '\0'};
     char *shargs[] = {"/bin/sh", exec_string, param, '\0'};
-    exeocbuflen = sizeof(exeocbuf);
 
     //printf("kjorer %s %s %s \n", shargs[0], shargs[1], shargs[2]);
 
     int exec_return;
     if (!exeoc(shargs, exeocbuf, &exeocbuflen, &exec_return)) {
 	printf("Unable to execute service\n");
+        free(exeocbuf);
 	exit(EXIT_FAILURE);
     }
 
     printf(exeocbuf);
+    free(exeocbuf);
     exit(exec_return);
     
 }

@@ -1,94 +1,74 @@
-[%	# Template for editing or inputting data regarding a collection.
-	# Input fileds avaiable are: collection, authentication, groups, share, exchange_user_select and crawling. %]
-
-[% 
-
-	# NOTE!!: Share MUST contain the key connector_name and a 
-	# valid connector value. If it does not, you will get the cryptic
-	# error "template: file error - : not found"
-	# This might not be true if you don't use the field share.
-
-%]
-
 [% PROCESS 'template_connector_blocks.html' %]
 [% PROCESS 'template_edit_blocks.html' %]
+[% USE HTML %]
 
-[% FOREACH field IN fields %]
-	[% IF field == 'collection' %]
-		[% PROCESS sub_fields
-			header = 'Collection'
-			blocks = ['collection']
-			icon = 'mimetypes'
-		%]
-	[% ELSIF field == 'authentication' %]
-		[% PROCESS sub_fields 
-			header = 'Authentication'
-			blocks = ['authentication']
-			icon = 'personal'
-		%]
-	[% ELSIF field == 'groups' %]
-		[% PROCESS sub_fields
-			header = 'Groups'
-			blocks = ['groups']
-			icon = 'kdmconfig'
-		%]
+[% 
+    field_list = {
+        collection => {
+            header => 'Collection',
+            blocks => ['collection'],
+            icon => 'mimetypes'
+        },
+        authentication => {
+            header => 'Authentication',
+            blocks => ['authentication'],
+            icon => 'personal',
+        },
+        groups => {
+            header => 'Groups',
+            blocks => ['groups'],
+            icon => 'kdmconfig',
+        },
+        connector => {
+            header => 'What to crawl',
+            blocks => [share.connector_name],
+            icon   => 'yast_nfs_32',
+        },
+        crawling => {
+            header => 'Crawling behaviour',
+            blocks => ['active', 'rate'],
+            icon   => 'configure'
+        },
+        advanced => {
+            header => 'Advanced management',
+            blocks => ['advanced'],
+            icon   => 'configure'
+        },
+        exchange_user_select => {
+            header => 'Users to index',
+            blocks => ['user_select'],
+            icon   => 'kdmconfig'
+        },
+        user_prefix => {
+            header => 'User prefix',
+	    blocks = ['user_prefix'],
+	    icon = 'xedit'
+        },
+        custom_parameters => {
+            header => 'Custom parameters',
+            blocks => ['parameters'],
+            icon   => 'kdmconfig'
+        }
+    }
+%]
 
-	[% ELSIF field == 'connector' %]
-            
-            [% TRY %]
-		[% PROCESS sub_fields
-			header = 'What to crawl'
-			blocks = [share.connector_name]
-			icon = 'yast_nfs_32'
-		%]
-            [% CATCH %]
-                <span style="color : red;">
-                    Error: Unable to show field for connector
-                '[% share.connector_name %]' &mdash; [% error.info %]
-                </span>
-                [% STOP %]
-            [% END %]
-
-	[% ELSIF field == 'crawling' %]
-		[% PROCESS sub_fields
-			header = 'Crawling behaviour'
-			blocks = ['active', 'rate']
-			icon = 'configure'
-		%]
-	
-	[% ELSIF field == 'advanced' %]
-		[% PROCESS sub_fields
-			header = 'Advanced management'
-			blocks = ['advanced']
-			icon = 'configure'
-		%]
-
-        [% ELSIF field == 'exchange_user_select' %]
+[% IF fields %]
+    [% FOREACH field IN fields %]
+        [% TRY %]
             [% PROCESS sub_fields
-                header = 'Users to index'
-                blocks = ['user_select']
-                icon = 'kdmconfig'
+                header = field_list.$field.header
+                blocks = field_list.$field.blocks
+                icon   = field_list.$field.icon
             %]
+        [% CATCH %]
 
-	[% ELSIF field == 'user_prefix' %]
-
-
-	[% ELSE %]
-		Warning: unknown field [% field %].
-	[% END %]
+            <span style="color : red;">
+                Error: Unable to show field '[% HTML.escape(field) %]' &mdash; [% HTML.escape(error.info) %]
+            </span>
+            [% STOP %]
+        [% END %]
+    [% END %]
 [% END %]
-	
-
-[% ## HACK - La user_prefix alltid vises til
-#	  vi har en maate aa oppdatere hvilken felt som skal vises i databasen.
-#	  skal egentlig vaere i for-lokken ovenfor. 7/5/2007 %]
-[% #ELSIF field == 'user_prefix' %]
-		[% PROCESS sub_fields
-			header = 'User prefix'
-			blocks = ['user_prefix']
-			icon = 'xedit'
-		%]
-
 
 
 [% BLOCK sub_fields %]
@@ -97,8 +77,8 @@
 	<img src="file.cgi?i=[% icon %]" alt="" />
 	<div class="connector_block_inner">
 	
-	[% FOREACH block IN blocks %]
-		[% PROCESS $block
+	[% FOREACH b IN blocks %]
+		[% PROCESS $b
 			prefix = 'share'
 			share = share %]
 	[% END %]

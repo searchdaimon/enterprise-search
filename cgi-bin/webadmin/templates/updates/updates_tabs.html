@@ -12,11 +12,4 @@
 		'url'		=> 'updates.cgi?view=advanced',
 	}
 ] %]
-
-<ul id="tabs">
-[% FOREACH tabs %]
-	<li [% IF selected == name %]id="selected"[% END %]>
-		<a href="[% url %]">[% name %]</a>
-	</li>
-[% END %]
-</ul>
+[% PROCESS 'template_tabs.html' %]

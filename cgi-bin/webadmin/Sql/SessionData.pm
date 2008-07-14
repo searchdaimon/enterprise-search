@@ -3,15 +3,12 @@ use strict;
 use warnings;
 use Carp;
 use Data::Dumper;
-use Sql::Abstract;
-our @ISA = qw(Sql::Abstract);
+use Sql::Webadmin;
+our @ISA = qw(Sql::Webadmin);
 
 my $tbl = "sessionData";
 my @valid = qw(id success type data);
 
-sub _init {
-    my $self = shift;
-}
 
 sub insert {
     my ($s, %data) = @_;
@@ -50,5 +47,10 @@ sub get {
     return %{$res} if $res;
     return;
 }
+
+sub exists { shift->SUPER::exists($tbl, 'id', @_) }
+sub delete { shift->SUPER::delete($tbl, @_) }
+
+
 
 1;

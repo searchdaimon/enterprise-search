@@ -5,59 +5,43 @@ BEGIN {
         push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 
-use CGI;
 use Carp;
-use Sql::Sql;
-use Sql::Shares;
-use Sql::Connectors;
-use CGI::State;
 use Data::Dumper;
 use Page::Add;
 use Template;
 
-
-my $cgi = CGI->new;
-my $state = CGI::State->state($cgi);
-
-my $sql = Sql::Sql->new();
-my $dbh = $sql->get_connection();
-
-my $add = Page::Add->new($dbh, $state);
-my $vars = {};
-my $template_file = "";
+my $page = Page::Add->new();
+my %state = $page->get_state();
+my $tpl_vars;
+my $tpl_file = "";
 
 my %misc_opts;
-$misc_opts{from_scan} = $state->{from_scan};
-if ($state->{'submit_first_form'}) {
+$misc_opts{from_scan} = $state{from_scan};
+if ($state{submit_first_form}) {
 	#User submittet the first form.
 	
-	my $share = $state->{'share'};
-	($vars, $template_file) = 
-		$add->submit_first_form($vars, $share, %misc_opts);
+	my $share = $state{share};
+	($tpl_vars, $tpl_file) = 
+		$page->submit_first_form($tpl_vars, $share, %misc_opts);
 }
 
-elsif ($state->{'submit_second_form'}) {
+elsif ($state{submit_second_form}) {
 	# Form "wizard" complete, add to database.
 	
-	my $share = $state->{'share'};
-	($vars, $template_file) = $add->submit_second_form($vars, $share, %misc_opts);
+	my $share = $state{share};
+	($tpl_vars, $tpl_file) = $page->submit_second_form($tpl_vars, $share, %misc_opts);
 }
 
 else {
-	if (defined($state->{from_scan_result})) {
+	if (defined $state{from_scan_result}) {
 		# User clicked add share from a scan result (scan.cgi)
 		#carp Dumper($state);
-		my $share = $state->{share};
-		$vars->{share} = $share;
-		$vars->{from_scan} = $state->{from_scan_result};
-		$add->vars_from_scan($share, $vars->{from_scan});
+		my $share = $state{share};
+		$tpl_vars->{share} = $share;
+		$tpl_vars->{from_scan} = $state{from_scan_result};
+		$page->vars_from_scan($share, $tpl_vars->{from_scan});
 	}
-	($vars, $template_file) = $add->show_first_form($vars);
+	($tpl_vars, $tpl_file) = $page->show_first_form($tpl_vars);
 }
 
-my $template  =  Template->new(
-	{INCLUDE_PATH => './templates:./templates/add:./templates/common'});
-print $cgi->header('text/html');
-#croak Dumper($vars);
-$template->process($template_file, $vars)
-		or croak ("template: ", $template->error());
+$page->process_tpl($tpl_file, $tpl_vars, (tpl_folders => "add"));

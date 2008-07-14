@@ -1,23 +1,25 @@
 package Page::Overview;
 use strict;
 use warnings;
+
 use Carp;
 use Data::Dumper;
+
 use Sql::Shares;
 use Sql::Connectors;
 use Sql::CollectionAuth;
 use Sql::ShareGroups;
 use Sql::ShareUsers;
 use Sql::Config;
+use Data::Collection;
 use Page::Abstract;
 BEGIN {
-	#push @INC, 'Modules';
-	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
+    push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Boitho::Infoquery;
 use Common::Collection;
-use Common::Generic;
 use Common::Data::Overview;
+use Params::Validate;
 
 our @ISA = qw(Page::Abstract);
 
@@ -40,7 +42,6 @@ sub _init {
 	$sqlAuth = Sql::CollectionAuth->new($dbh);
 	$sqlGroups = Sql::ShareGroups->new($dbh);
         $sqlUsers = Sql::ShareUsers->new($dbh);
-	$self->{'common'}     	 = Common::Generic->new;
 	$self->{'dataOverview'} = Common::Data::Overview->new($dbh);
 	$self->{'infoQuery'}   = Boitho::Infoquery->new($CONFIG->{'infoquery'});
 }
@@ -90,13 +91,10 @@ sub edit_collection {
         $vars->{'error_collection_not_exist'} = 1;
         return TPL_EDIT;
     }
-    
-    my @input_fields = @{$sqlConnectors->get_input_fields(
-            $sqlShares->get_connector_name($coll_id))};
 
-    my $c_coll = Common::Collection->new($s->{dbh});
-    my %form_data = $c_coll->coll_form_data(@input_fields);
-    my %coll_data = $c_coll->coll_data($coll_id, @input_fields);
+    my $dataColl = Data::Collection->new($s->{dbh}, { id => $coll_id });
+    my %form_data = $dataColl->form_data();
+    my %coll_data = $dataColl->coll_data();
 
     while (my ($k, $v) = each %form_data) {
         $vars->{$k} = $v;
@@ -121,35 +119,37 @@ sub manage_collection {
 }
 
 sub submit_edit {
-	my ($self, $vars, $share) = @_;
+    validate_pos(@_, 1, 1, 1);
+    my ($s, $vars, $share) = @_;
 
-        croak "argument share not provided"
-            unless defined $share;
-	
-	my $dbh = $self->{'dbh'};
-	
-	my $connector = $sqlShares->get_connector_name($share->{'id'});
-	
-	# Check for errors
-	my $c_collection = Common::Collection->new($dbh);
-	my ($valid, $msg) = $c_collection->validate($share, qw(share));
+    my @users = grep { defined $_ } @{$share->{user}};
+    my %attr;
+    for my $key (%COLLECTION_ATTR) {
+        if (defined $share->{$key}) {
+            $attr{$key} = $share->{$key};
+        }
+    }
+    $attr{users} = \@users;
+    my $dataColl = Data::Collection->new($s->{dbh}, \%attr);
 
-	unless ($valid) {
-		$vars->{'share'} = $share;
-		$vars->{'input_fields'} = $sqlConnectors->get_input_fields($connector);
-		$vars->{$msg} = 1;
-		return ($vars, $valid);
-	}
-	
-	# Continue with the submit.
-	$sqlShares->update_share($share);
-	$sqlGroups->set_groups($share->{id}, $share->{group_member});
-        my @users = grep { defined $_ } @{$share->{user}};
-        $sqlUsers->set_users($share->{id}, \@users);
+    if (not $attr{auth_id}) {
+        $dataColl->set_auth($share->{username}, $share->{password});
+    }
 
-	$vars->{'edit_success'} = 1;
-	return ($vars, $valid);
+    	
+    # Check for errors
+    unless ($attr{resource} || $attr{host}) {
+	$vars->{error_missing_share} = 1;
+	$vars->{share} = $share;
+	$vars->{input_fields} = {$dataColl->get_attr}->{input_fields};
+	return;
+    }
 	
+    # Continue with the submit.
+    $dataColl->update();
+
+    $vars->{edit_success} = 1;
+    return 1;
 }
 
 sub activate_collection($$$) {
@@ -163,20 +163,17 @@ sub activate_collection($$$) {
 ## 
 # Forcing a full recrawl of a collection.
 sub recrawl_collection {
-	my ($self, $vars, $submit_values) = (@_);
-	my $iq        = $self->{'infoQuery'};
-	my $common    = $self->{'common'};
-	my $id = $common->request([$submit_values]);
+	my ($s, $vars, $id) = @_;
 	my $collection_name = 
 		$sqlShares->get_collection_name($id);
 
-	$vars->{'recrawl_request'} =
-		$iq->recrawlCollection($collection_name);
-	$vars->{'recrawl_error'} = $iq->error
-		unless $vars->{'recrawl_request'};
-	$vars->{'id'} = $id;
+	$vars->{recrawl_request} =
+		$s->{infoQuery}->recrawlCollection($collection_name);
+	$vars->{recrawl_error} = $s->{infoQuery}->error
+		unless $vars->{recrawl_request};
+	$vars->{id} = $id;
 
-	return $self->manage_collection($vars, $id);
+	return $s->manage_collection($vars, $id);
 }
 
 ##
@@ -189,17 +186,16 @@ sub delete_collection_confirmed {
 
 	my $collection_name = $sqlShares->get_collection_name($id);
 
-        ## my $success = 1;
-	## Infoquery kommentert ut. Set tilbake nÃ¥r bug er fikset
-	## Runarb: 09.07.2008: Tilater dette igjen. Både jeg og Eirik har gått over koden, og vi skal ikke ha noen rm -rf'er der nå.
 	my ($success) = $infoquery->deleteCollection($collection_name);
 	
 	$vars->{'delete_error'} = $infoquery->error
 		unless $success;
 	
 	$vars->{'delete_request'} = $success;
-	$sqlShares->delete_share($id)
-		if $success;
+        if ($success) {
+            my $coll = Data::Collection->new($self->{dbh}, { id => $id });
+            $coll->delete();
+        }
 	
 	return $vars;
 }
@@ -212,18 +208,6 @@ sub delete_collection {
 
  	return TPL_DELETE_COLL;
 }
-
-sub _get_form_data { croak "Use Common::Collection instead" }
-
-
-sub _get_coll_data {
-croak "use Common::Collection instead" }
-
-
-sub _get_connectors {
-	croak "_get_connectors() is deprecated. Use method in class Common::Data::Overview";
-}
-
 
 
 1;

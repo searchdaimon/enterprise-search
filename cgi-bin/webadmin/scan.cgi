@@ -5,76 +5,76 @@ BEGIN {
         push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 
-use Template;
-use CGI;
 use Carp;
-use CGI::State;
 use Data::Dumper;
-use Common::Generic qw(init_root_page);
 use Page::Scan;
 use Page::Scan::Scanning;
 use Page::Scan::Process;
 use Switch;
 
-my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
-	= init_root_page('/templates/scan:./templates/common', 'Page::Scan');
-my %state = %$state_ptr;
-my $template_file;
-my $common = Common::Generic->new();
+my $page = Page::Scan->new();
+my %state = $page->get_state();
 
-my $pageScanning = Page::Scan::Scanning->new($dbh);
-my $pageProcess  = Page::Scan::Process->new($dbh);
+my $tpl_file;
+my $vars = {};
 
-#carp Dumper($state_ptr);
-
+my $pageScanning = Page::Scan::Scanning->new($page->get_dbh);
+my $pageProcess  = Page::Scan::Process->new($page->get_dbh);
 
 if (defined $state{'action'}) {
 	my $action = $state{'action'};
 
 	switch ($action) {
 		case "new" {
-			# starting new scan
-			($vars, $template_file) = $pageScanning->show($vars);
+		    # starting new scan
+		    ($vars, $tpl_file) = $pageScanning->show($vars);
 		}
 
-		case "process" {
-			# process results from a scan
-			my $scan_id = $state{'id'};
-			($vars, $template_file) = $pageProcess->show($vars, $scan_id, $state{scan_added});
-		}
+                case "process" {
+                    # process results from a scan
+                    my $scan_id = $state{'id'};
+                    ($vars, $tpl_file) = $pageProcess->show(
+                            $vars, 
+                            $scan_id, 
+                            $state{scan_added});
+                }
+
+                case "del_result" {
+                    my $scan_id = $state{id};
+                    $pageProcess->delete_result($vars, $scan_id);
+                    $tpl_file = $page->show($vars);
+                }
 
 		else {
-			croak "unknown action $action";
+		    croak "unknown action $action";
 		}
 	}
 }
 
 
 if (defined $state{submit}) {
-	my $button = $state{submit};
+    my $button = $state{submit};
 
-	# user is deleting scan result
-	if ($button->{delete_result}) {
-		my $scan_id = $common->request($button->{delete_result});
-		$vars = $pageProcess->delete_result($vars, $scan_id);
-		($vars, $template_file) = $page->show($vars);
-	}
 
-	# user is running a scan.
-	elsif ($button->{start_scan}) {
-		# This process differs from normal page views.
-		# Scan result has to be shown during scan, so we'll be printing html as we go.	
+    # user is running a scan.
+    if ($button->{start_scan}) {
+        # This process differs from normal page views.
+        # Scan result has to be shown during scan, so we'll be printing html as we go.	
+        my $tpl_processing = sub { 
+            my ($file, $vars) = @_;
+            $page->process_tpl($file, $vars, ( 
+                        no_header => 1, 
+                        tpl_folders => 'scan'
+                        ));
+        };
 
-		print $cgi->header("text/html");
-		$pageScanning->run_scan($vars, $template, $state{scan});
+        print CGI::header("text/html");
+        $pageScanning->run_scan($vars, $tpl_processing, $state{scan});
 
-		exit();
-	}
+        exit();
+    }
 }
-($vars, $template_file) = $page->show($vars)
-	unless defined $template_file;
+$tpl_file = $page->show($vars)
+	unless defined $tpl_file;
 
-print $cgi->header("text/html");
-
-$template->process($template_file, $vars)
- 		or croak $template->error();
+$page->process_tpl($tpl_file, $vars, (tpl_folders => 'scan'));

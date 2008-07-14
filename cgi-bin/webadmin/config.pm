@@ -9,8 +9,10 @@ our @EXPORT_OK = qw($CONFIG %CONFIG);
 our %CONFIG;
 our $CONFIG = \%CONFIG; #backwards compatible..
 
+
 # Group: Extra connectors
-$CONFIG{conn_base_dir} = "/tmp/conn";
+$CONFIG{conn_base_dir} = $ENV{BOITHOHOME} . "/crawlers";
+$CONFIG{test_coll_name} = "_%s_TestCollection"; # %s is connector name.
 
 # Group: Template
 # Tmp path for compiled templates, etc.
@@ -164,6 +166,54 @@ $CONFIG{'license_file'}   = $ENV{'BOITHOHOME'} . "/config/bb_license";
 $CONFIG{'signature_file'} = $ENV{'BOITHOHOME'} . "/config/bb_signature";
 
 
+$CONFIG{connector_src_skeleton} = q|
+package Perlcrawl;
+use Carp;
+use Data::Dumper;
+use strict;
+use warnings;
 
+##
+# Main loop for a crawl update.
+# This is where a resource is crawled, and documents added.
+sub crawl_update {
+    my (undef, $self, $opt) = @_;
+
+    croak "TODO: Implement.\n Options received: ", Dumper($opt);
+
+    #TODO: Fetch data needed to check if document exists, and add it.
+    my ($content, $title, $url, $last_modified);
+    if (not $self->document_exists($url, $last_modified)) {
+        
+        $self->add_document((
+            content   => $content,
+            title     => $title,
+            url       => $url,
+            acl_allow => "Everyone", # permissions
+            last_modified => time(), # unixtime
+        ));
+    }
+
+};
+
+sub path_access {
+    my ($undef, $self, $opt) = @_;
+    
+    # During a user search, `path access' is called against the search results 
+    # before they are shown to the user. This is to check if the user still has
+    # access to the results.
+    #
+    # If this is irrelevant to you, just return 1.
+
+    # You'll want to return 0 when:
+    # * The document doesn't exist anymore
+    # * The user has lost priviledges to read the document
+    # * .. when you want the document to be filtered from a user search in general.
+
+    return 1;
+}
+
+1;
+|;
 
 1;

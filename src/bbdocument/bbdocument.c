@@ -305,13 +305,13 @@ int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified
 	docid DocID;
 	unsigned int lastmodifiedForExistTest;
 
-        printf("bbadocument_exist: %s, \"%s\", lastmodified %u\n",subname,documenturi,lastmodified);
+        debug("bbadocument_exist: %s, \"%s\", lastmodified %u",subname,documenturi,lastmodified);
 
 	if (uriindex_get(documenturi,&DocID,&lastmodifiedForExistTest,subname)
 	    && (((lastmodifiedForExistTest == lastmodified)
 	        || (lastmodified == 0)))) {
 		struct DocumentIndexFormat docindex;
-		printf("bbdocument_exist: Uri \"%s\" exists with DocID \"%u\" and time \"%u\"\n",
+		debug("bbdocument_exist: Uri \"%s\" exists with DocID \"%u\" and time \"%u\"\n",
 		    documenturi, DocID, lastmodifiedForExistTest);
 		// Update DI with new existed timestamp
 
@@ -319,12 +319,12 @@ int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified
 		DIRead(&docindex, DocID, subname);
 		docindex.lastSeen = time(NULL);
 		DIWrite(&docindex, DocID, subname, NULL);
-		printf("bbdocument_exist: satte lastSeen \"%s\"\n",ctime(&docindex.lastSeen));
+		debug("bbdocument_exist: satte lastSeen \"%s\"",ctime(&docindex.lastSeen));
 #endif
 		return 1;
 	}
 
-	printf("bbdocument_exist: dokument dosent exist\n");
+	debug("bbdocument_exist: dokument dosent exist");
 
 	return 0;
 }

@@ -21,13 +21,13 @@ use Page::Setup::Network;
 use Page::Setup::Login;
 use Page::Setup::Integration;
 use Common::FormFlow qw(FLOW_START_FORM);
-use Common::Generic qw(init_root_page);
 
 
 # Init
-my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
-	= init_root_page('/templates/setup:./templates/common/network', 'Page::Setup');
-my %state = %$state_ptr;
+my $vars = { };
+my $page = Page::Setup->new();
+my %state = $page->get_state();
+my $dbh = $page->get_dbh();
 my $tpl_file;
 
 my $pageNet     = Page::Setup::Network->new($dbh);
@@ -36,6 +36,7 @@ my $pageLogin       = Page::Setup::Login->new($dbh);
 my $pageIntegr = Page::Setup::Integration->new($dbh);
     
 my $flow = Common::FormFlow->new();
+my $tpl_folders = ['setup', 'common/network'];
 
 if (defined $state{view}) {
     # Non-wizard pages.
@@ -70,11 +71,8 @@ else {
     $tpl_file = $flow->process($form_submitted);
 }
 
-# print HTML
-print $cgi->header('text/html');
-$template->process($tpl_file, $vars)
-        or croak $template->error() . "\n";
-
+$page->process_tpl($tpl_file, $vars, 
+    tpl_folders => $tpl_folders);
 
 
 # Group: Form functions
@@ -109,9 +107,7 @@ sub process_network {
 
         # Page needs to be shown before network
         # is restarted.
-        print $cgi->header('text/html');
-        $template->process($tpl_file, $vars)
-            or croak $template->error(), "\n";
+        $page->process_tpl($tpl_file, $vars, tpl_folders => $tpl_folders);
 
         $pageNet->run_updates($restart_id,
             $netconf, $resolv);

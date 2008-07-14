@@ -76,7 +76,7 @@ elsif (defined $state{advanced}) {
 	if ($action[0] eq 'full_recrawl') {
 		# User is forcing a full recrawl from management.
 		my $submit_values = 
-			$state{advanced}{full_recrawl};
+			$state{advanced}{full_recrawl}{id};
 		($vars, $template_file) = 
 			$overview->recrawl_collection($vars, $submit_values);
 	}
@@ -90,11 +90,9 @@ elsif (defined $state{edit}) {
 
 elsif (defined $state{submit_edit}) {
 	# User submits modification for a collection;
-
-       my $valid;
-       ($vars, $valid) = $overview->submit_edit($vars, $state{share});
-
+#
 	
+	my $valid = $overview->submit_edit($vars, $state{share});
 		
 	unless ($valid) {
 		# Something wrong. Show edit form again.

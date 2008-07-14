@@ -39,6 +39,8 @@ struct collectionFormat {
 	char errormsg[512];
 	//26 juni 2008:
 	unsigned int rate;
+        // 30 juni 2008
+        struct hashtable * params;
 };
 
 struct crawldocumentExistFormat {

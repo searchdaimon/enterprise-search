@@ -5,15 +5,14 @@ use Carp;
 use Sql::Sql;
 use Data::Dumper;
 
+use Sql::Webadmin;
+our @ISA = qw(Sql::Webadmin);
 my $table = "shareGroups";
 my $dbh;
 
-sub new {
-	my $class = shift;
-	$dbh = shift;
-	my $self = {};
-	bless $self, $class;
-	return $self;
+sub _init {
+    my $s = shift;
+    $dbh = $s->{dbh};
 }
 
 sub set_groups($$$) {
@@ -67,6 +66,10 @@ sub _insert {
 	return Sql::Sql::simple_execute($dbh, $query, [$group, $share]);
 }
 
+sub get { shift->SUPER::get($table, @_) }
+sub insert { shift->SUPER::insert($table, @_) }
+sub update { shift->SUPER::update($table, @_) }
+sub delete { shift->SUPER::delete($table, @_) }
 
 
 1;

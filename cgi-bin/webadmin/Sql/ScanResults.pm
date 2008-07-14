@@ -5,13 +5,13 @@ use Carp;
 use Sql::Sql;
 use Data::Dumper;
 use Sql::Connectors;
-use Sql::Abstract;
+use Sql::Webadmin;
 
 my $table = "scanResults";
 my @valid = qw(connector time range result_xml done);
 my $dbh;
 
-our @ISA = qw(Sql::Abstract);
+our @ISA = qw(Sql::Webadmin);
 
 sub _init {
 	my $self = shift;

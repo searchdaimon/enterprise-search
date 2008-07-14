@@ -6,14 +6,13 @@
 	{
 		'name' => 'Log files',
 		'url' => 'logs.cgi'
-		'selected' => 1
 	},
 	{
 		'name' => 'Search log',
 		'url' => 'logs.cgi?view=search',
-		'selected' => 0,
 		
 	}]
+        selected => 'Log files'
 %]
 
 <h2>View logs</h2>
@@ -34,7 +33,7 @@
             <td>[% log.size.0 %][% log.size.1 %]</td>
             <td>
                 <ul class="vertical_buttons">
-                    <li><a href="logs.cgi?log=[% log.filename %]&lines=[% lines %]#logfile">View</a></li>
+                    <li><a href="logs.cgi?log=[% log.filename %]&amp;lines=[% lines %]#logfile">View</a></li>
                     <li><a href="download.cgi?logfile=[% log.filename %]">Download</a></li>
                 </ul>
                         
@@ -62,10 +61,11 @@
                     </li>
                 [% ELSE %]
                     <li>
-                        <a href="logs.cgi?log=[% logfile.filename %]&lines=[% count %]">[% count %] lines</a>
+                        <a href="logs.cgi?log=[% logfile.filename %]&amp;lines=[% count %]">[% count %] lines</a>
                     </li>
                 [% END %]
             [% END %]
+        </ul>
     </div>
 [% END %]
 

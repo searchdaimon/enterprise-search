@@ -1,31 +1,36 @@
 package Sql::Connectors;
 use strict;
 use warnings;
+
 use Carp;
-use Sql::Sql;
-use Sql::Shares;
 use Data::Dumper;
+use SQL::Abstract;
+use Readonly;
+use Params::Validate;
 
-my $table = "connectors";
+use Sql::Webadmin;
+use Sql::Sql;
+
+our @ISA = qw(Sql::Webadmin);
+
+Readonly::Scalar our $TBL => "connectors";
+
 my $dbh;
+my $abstr = SQL::Abstract->new();
 
-sub new {
-	my $class = shift;
-	$dbh = shift;
-	my $self = {};
-	bless $self, $class;
-	return $self;
-}
+sub _init { $dbh = $_[0]->{dbh} }
+
+sub get_active {my $s = shift; $s->get({ active => 1 }); }
 
 sub get_all_ids {
-	my $query = "SELECT id FROM $table";
+	my $query = "SELECT id FROM $TBL";
 	return Sql::Sql::multi_row_fetch($dbh, $query);
 }
 
 sub get_all_names {
 	my $self = shift;
 	
-	my $query = "SELECT name FROM $table";
+	my $query = "SELECT name FROM $TBL";
 	my $sth = $dbh->prepare($query)
 		or croak "pepare: ", $dbh->errstr;
 	my $rv = $sth->execute()
@@ -41,18 +46,25 @@ sub get_all_names {
 }
 
 sub get_name {
-	my $self = shift;
-	my $id = shift;
-	my $query = "SELECT name FROM $table
-			WHERE id = ?";
-	
-	my $sth = $dbh->prepare($query)
-		or croak "pepare: ", $dbh->errstr;
-	my $rv = $sth->execute($id)
-		or croak "execute: ", $dbh->errstr;
-		
-	return $sth->fetchrow_array;
+    validate_pos(@_, 1, { regex => qr(^\d+$) });
+    my ($s, $id) = @_;
+    return $s->get({ id => $id }, 'name')->{name};
 }
+
+#	my $self = shift;
+#	my $id = shift;
+#
+
+	#my $query = "SELECT name FROM $TBL
+	#		WHERE id = ?";
+	#
+	#my $sth = $dbh->prepare($query)
+	#	or croak "pepare: ", $dbh->errstr;
+	#my $rv = $sth->execute($id)
+	#	or croak "execute: ", $dbh->errstr;
+	#	
+	#return $sth->fetchrow_array;
+#}
 
 ## Get ID for a given name.
 ## Names are unique, so there will
@@ -60,45 +72,38 @@ sub get_name {
 sub get_id($$) {
 	my $self = shift;
 	my $id   = shift;
-	my $query = "SELECT id FROM $table
+	my $query = "SELECT id FROM $TBL
 					WHERE name = ?";
 	return Sql::Sql::single_fetch($dbh, $query, $id);
 }
 
-sub get_connectors {
-	my $self = shift;
-	my $query = "SELECT * FROM $table";
-	return Sql::Sql::get_hashref_array($dbh, $query);
-}
+#sub get_connectors {
+#	my $self = shift;
+#	my $query = "SELECT * FROM $TBL";
+#	return Sql::Sql::get_hashref_array($dbh, $query);
+#}
+#
 
-
-sub get_with_shares {
-	my $self = shift;
-	my $sqlShares = Sql::Shares->new($dbh);
-	my $only_active = shift;
-	my @connector_list;
-
- 	foreach my $connector (@{$self->get_connectors}) {
-		my @shares;
-		if ($only_active) {
- 			@shares = $sqlShares->get_active_shares($connector->{'name'});
-		}
-		else {
-			@shares = $sqlShares->get_all_by_connector($connector->{'name'});
-		}
-		push (@connector_list, {
-			'name' => $connector->{'name'},
-			'comment' => $connector->{'comment'},
-			'shares' => \@shares });
- 	}
-	return @connector_list;
-
-}
-
+#sub get_with_shares {
+#	my $self = shift;
+#	my $sqlShares = Sql::Shares->new($dbh);
+#	my @connector_list;
+#
+# 	foreach my $connector (@{$self->get_connectors}) {
+#		my @shares = $sqlShares->get_all_by_connector($connector->{'name'});
+#		push (@connector_list, {
+#			'name' => $connector->{'name'},
+#			'comment' => $connector->{'comment'},
+#			'shares' => \@shares });
+# 	}
+#	return @connector_list;
+#
+#}
+#
 
 sub get_connectors_with_scantool {
 	my $self = shift;
-	my $query = "SELECT * FROM $table
+	my $query = "SELECT * FROM $TBL
 		WHERE scantoolAvailable = ?";
 	return Sql::Sql::get_hashref_array($dbh, $query, 1);
 
@@ -113,10 +118,10 @@ sub get_input_fields($$) {
 		return;
 	}
 	if ($connector =~ /\d+/) { # id
-		$query = "SELECT inputFields FROM $table
+		$query = "SELECT inputFields FROM $TBL
 				WHERE id = ?";
 	} else {
-		$query = "SELECT inputFields FROM $table
+		$query = "SELECT inputFields FROM $TBL
 				WHERE name = ?";
 	}
 	
@@ -132,4 +137,13 @@ sub get_input_fields($$) {
 
 	return \@fields;
 }
+
+sub is_extension { shift->exists({ id => shift, extension => 1 }) }
+
+sub exists { shift->SUPER::exists($TBL, 'id', @_) }
+sub get { shift->SUPER::get($TBL, @_) }
+sub insert { shift->SUPER::insert($TBL, @_) }
+sub update { shift->SUPER::update($TBL, @_) }
+sub delete { shift->SUPER::delete($TBL, @_) }
+
 1;

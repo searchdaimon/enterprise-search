@@ -1,11 +1,13 @@
-# Class: Sql::Abstract
+# Class: Sql::Webadmin
 # Abstract class with method common for all Sql classes. Should not be
 # used directly, but raher inhereted.
 #
-package Sql::Abstract;
+package Sql::Webadmin;
 use strict;
 use warnings;
 use Data::Dumper;
+use SQL::Abstract;
+use Params::Validate qw(validate_pos SCALAR HASHREF);
 use Carp;
 
 # Constructor: new
@@ -86,7 +88,7 @@ sub sql_hashref {
 	while (my $r = $sth->fetchrow_hashref) {
 		push @results, $r;
 	}
-	return @results;
+	return wantarray ? @results : shift @results;
 }
 
 ##
@@ -223,6 +225,38 @@ sub _prepare_and_execute {
 	my $rv = $sth->execute(@binds)
 		or croak "Execute: ", $dbh->errstr;
 	return $sth;
+}
+
+# Generic functions to subclass.
+my $abstr = SQL::Abstract->new;
+sub exists {
+    validate_pos(@_, 1, 1, {type => SCALAR }, { type => HASHREF });
+    my ($s, $tbl, $column, $where) = @_;
+    return defined $s->sql_single($abstr->select($tbl, $column, $where));
+}
+sub get {
+    validate_pos(@_, 1, { type => SCALAR }, { type => HASHREF }, 0, 0);
+    my ($s, $tbl, $where, $what, $order) = @_;
+    $what ||= '*';
+    $s->sql_hashref(
+        $abstr->select($tbl, $what, $where, $order));
+}
+sub insert {
+    validate_pos(@_, 1, { type => SCALAR }, { type => HASHREF }, 0);
+    my ($s, $tbl, $val, $return_id) = @_;
+    my ($q, @binds) = $abstr->insert($tbl, $val);
+    $return_id  ? $s->sql_insert_returning_id($q, @binds) 
+                : $s->sql_insert($q, @binds);
+}
+sub delete {
+    validate_pos(@_, 1, 1, { type => HASHREF });
+    my ($s, $tbl, $where) = @_;
+    $s->sql_delete($abstr->delete($tbl, $where));
+}
+sub update {
+    validate_pos(@_, 1, { type => SCALAR }, { type => HASHREF }, 0);
+    my ($s, $tbl, $val, $where) = @_;
+    $s->sql_update($abstr->update($tbl, $val, $where));
 }
 
 1;

@@ -12,13 +12,8 @@
 		
 			[% FOREACH share IN shares %]
 				[% color = 1 - color %]
-				[% IF share.active;
-					disabled = 0;
-				ELSE;
-					disabled = 1; 
-				END %]
 				[% WRAPPER 'template_table_row.html' 
-					disabled = disabled
+					disabled = !share.active
 					other = 'padding-top : 1em; padding-bottom : 1em;' %]
 					<td style="width : 64px;">
 						[% IF share.active %]

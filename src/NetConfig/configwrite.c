@@ -16,8 +16,9 @@
 #define NET_IFCFG	   "ifcfg-eth1"
 #define NETSCRIPT_DIR	   "/etc/sysconfig/network-scripts"
 
-#define RESOLV_PATH	   "/etc/resolv.conf"
-#define INIT_NETWORK_PATH  "/etc/init.d/network restart"
+//#define RESOLV_PATH	   "/etc/resolv.conf"
+#define RESOLV_PATH	   "/tmp/resolv.conf"
+#define INIT_NETWORK_PATH  "/etc/init.d/network"
 #define RUN_SUID	   1
 #define SUID_USER	   0
 
@@ -200,20 +201,22 @@ bool valid_key(const char *keys[], char *key) {
 */
 
 int restart_network(void) {
-	char exeocbuf[200000];
-	int  exeocbuflen;
-	int  return_value;
+    int exeocbuflen = 1024*1024*5;
+    char * exeocbuf = malloc(exeocbuflen);
+    int  return_value;
 
-	char *netargs[] = {"/bin/sh", "-c", INIT_NETWORK_PATH, '\0'};
+    char *netargs[] = {"/bin/sh", INIT_NETWORK_PATH, "restart", '\0'};
+    
 
-	exeocbuflen = sizeof(exeocbuf);
-	if (!exeoc(netargs, exeocbuf, &exeocbuflen, &return_value)) {
-	    fprintf(stderr, "Could not execute network restart procedure\n");
-	    exit(10);
-	}
-	
-	printf("%s\n", exeocbuf);
-	return return_value;
+    if (!exeoc(netargs, exeocbuf, &exeocbuflen, &return_value)) {
+        fprintf(stderr, "Could not execute network restart procedure\n");
+        free(exeocbuf);
+        exit(10);
+    }
+
+    printf(exeocbuf);
+    free(exeocbuf);
+    return return_value;
 }
 
 

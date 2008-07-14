@@ -14,23 +14,15 @@ BEGIN {
 }
 use Boitho::Infoquery;
 use config qw(%CONFIG);
+use Page::Abstract;
+our @ISA = qw(Page::Abstract);
 
 use constant DEBUG => 1;
 
 #TODO: Move all the methods in more suited classes, and deprecate this class.
-
-sub new {
-	my $class = shift;
-	my $dbh = shift;
-	my $self = {};
-	bless $self, $class;
-	$self->_init($dbh);
-	return $self;
-}
-
 sub _init {
-	my ($self, $dbh) = (@_);
-	$self->{'dbh'} = $dbh;
+	my $self = shift;
+        my $dbh = $self->{dbh};
 	$self->{'sqlConnectors'} = Sql::Connectors->new($dbh);
 	$self->{'sqlShares'} 	 = Sql::Shares->new($dbh);
 	$self->{'sqlConfig'}	 = Sql::Config->new($dbh);

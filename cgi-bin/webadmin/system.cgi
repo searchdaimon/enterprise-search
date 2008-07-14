@@ -15,17 +15,15 @@ use Switch;
 
 use Page::System::Services;
 use Page::System::Crashes;
-use Common::Generic qw(init_root_page);
 
-my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
-	= init_root_page('/templates/system:./templates/common/network', 'Page::System');
-
-my %state = %{$state_ptr};
+my $vars = { };
+my $page = Page::System->new();
+my %state = $page->get_state();
 my $template_file;
 
 
-my $pageServices = Page::System::Services->new($dbh);
-my $pageCrashes  = Page::System::Crashes->new($dbh);
+my $pageServices = Page::System::Services->new($page->get_dbh);
+my $pageCrashes  = Page::System::Crashes->new($page->get_dbh);
 
 
 if (defined $state{'submit'}) { #POST actions
@@ -82,7 +80,6 @@ elsif (defined $state{'action'}) {
 else {
 	($vars, $template_file) = $page->show_system_diagnostics($vars);
 }
- 	
-print $cgi->header('text/html');
-$template->process($template_file, $vars)
-        or croak $template->error() . "\n";
+
+$page->process_tpl($template_file, $vars, 
+    tpl_folders => ['system', 'common/network']);

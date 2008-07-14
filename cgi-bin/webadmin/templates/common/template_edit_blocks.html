@@ -3,7 +3,7 @@
 	# a helper template for template_edit_collection
 %]
 
-
+[% USE HTML %]
 [% rates = [
 	{ 'Every 5 minutes' => '5' },
 	{ 'Every 15 minutes' => '15' },
@@ -52,7 +52,7 @@
 		<select name="[% prefix %].auth_id">
 			<option value="">(New values - input below)</option>
 			[% FOREACH auth IN authentication %]
-				User: <option value="[% auth.id %]"
+				<option value="[% auth.id %]"
 					[% "selected=\"selected\"" IF share.auth_id == auth.id %]
 					>[% auth.username %] [% IF auth.comment.defined %]- [% auth.comment %][% END %]</option>
 			[% END %]
@@ -95,9 +95,9 @@
 			[% FOREACH group IN group_list %]				
 				<label for="group[% i %]">
 					
-				<input name="share.group_member[[% i %]]" type="checkbox" id="group[% i %]"
+				<input name="share.groups[[% i %]]" type="checkbox" id="group[% i %]"
 						value="[% group %]"
-						[% IF share.group_member.grep("^$group$").0 %]
+						[% IF share.groups.grep("^$group$").0 %]
 							[% # Check if share is a member of this group %]
 							checked="checked"
 						[% END %]
@@ -205,9 +205,9 @@
 	[% FOREACH user IN user_list %]				
             <label for="user[% i %]">
 					
-		<input name="share.user[[% i %]]" type="checkbox" id="user[% i %]"
+		<input name="share.users[[% i %]]" type="checkbox" id="user[% i %]"
                     [% user_esc = user.escape %]
-		    [% IF share.user.grep("^$user_esc$").0 %]
+		    [% IF share.users.grep("^$user_esc$").0 %]
                         checked="checked"
                     [% END %]
 					value="[% user %]"
@@ -219,6 +219,27 @@
 	</div></div>
         <a href="javascript:void" onclick="set_checked('user', true)">select all</a> &nbsp;
         <a href="javascript:void" onclick="set_checked('user', false)">unselect all</a>
+        </div>
     </div>
 [% END %]
 
+[% BLOCK parameters %]
+    [% IF parameters.size %]
+        [% FOREACH p IN parameters %]
+        
+        <div class="block_default" style="margin-top : 0.5em;">
+            [% SET param = p.param %]
+            [% HTML.escape(param) %]
+            <div class="block_inner">
+                <input type="text" name="share.params.[% HTML.escape(param) %]"
+                    value="[% HTML.escape(share.params.$param) %]" />
+                [% IF p.example %]
+                    <span class="example">Example: [% p.example %]</span>
+                [% END %]
+            </div>
+        </div>
+        [% END %]
+    [% ELSE %]
+        No custom parameter defined.
+    [% END %]
+[% END %]

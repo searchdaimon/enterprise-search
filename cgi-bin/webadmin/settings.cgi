@@ -10,17 +10,15 @@ use Data::Dumper;
 use Page::Settings;
 use Page::Settings::Network;
 use Page::Settings::CollectionManager;
-use Common::Generic qw(init_root_page);
 
-my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
-	= init_root_page('/templates/settings:./templates/common/network', 'Page::Settings');
-
-my %state = %{$state_ptr};
+my $page = Page::Settings->new;
+my $tpl_folders = ['common/network', 'settings'];
+my %state = $page->get_state();
 my $tpl_file;
+my $vars = {};
 
-my $pageNet = Page::Settings::Network->new($dbh);
-my $pageCM = Page::Settings::CollectionManager->new($dbh);
-
+my $pageNet = Page::Settings::Network->new($page->get_dbh);
+my $pageCM = Page::Settings::CollectionManager->new($page->get_dbh);
 
 
 # Group: User actions
@@ -32,10 +30,7 @@ if (defined($state{'submit'})) {
             my ($tpl_file, $restart_id) 
                 = $pageNet->show_restart($vars, $state{netconf});
    
-            print $cgi->header('text/html');
-            $template->process($tpl_file, $vars)
-            or croak $template->error(), "\n";
-
+            $page->process_tpl($tpl_file, $vars, tpl_folders => $tpl_folders);
             $pageNet->run_updates($restart_id, $state{netconf}, $state{resolv});
             exit;
         }
@@ -66,7 +61,7 @@ if (defined($state{'submit'})) {
 	elsif (defined $btn->{'import_settings'}) {
 		# User is importing a file.
 		($vars, $tpl_file) 
-			= $page->import_settings($vars, $cgi->param("import_file"));
+			= $page->import_settings($vars, $state{import_file});
 	}
 
 	elsif (defined $btn->{'dist_select'}) {
@@ -138,13 +133,11 @@ elsif (defined $state{'view'}) {
 
 
 unless (defined $tpl_file) {
-	# Show main page.
-	($vars, $tpl_file) 
-		= $page->show_main_settings($vars);
+# Show main page.
+    ($vars, $tpl_file) 
+        = $page->show_main_settings($vars);
 
 }
 
-
-print $cgi->header('text/html');
-$template->process($tpl_file, $vars)
-        or croak $template->error() . "\n";
+$page->process_tpl($tpl_file, $vars, 
+    tpl_folders => $tpl_folders);

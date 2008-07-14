@@ -1,0 +1,28 @@
+[% INCLUDE 'header.html' title='Delete connector' %] 
+
+[% IF delete_block %]
+    [% IF delete_block == 'in_use' %]
+        [% WRAPPER 'tpl_msg.html' type = 'error' %]
+            Connector is still in use. Please delete all collections using this connector first.
+           
+            <p>
+            <ul>
+                <li>Go to <a href="overview.cgi">overview</a> to delete collections?</li>
+                <li>Return to <a href="connector.cgi">connector extensions</a>?</li>
+            </ul>
+            </p>
+        [% END %]
+    [% END %]
+
+[% ELSE %]
+
+    [% WRAPPER 'template_delete.html' 
+	it = "connector $conn.name"
+	form = 'connector.cgi' 
+	id = conn.id
+	%]
+	Are you sure you want to delete connector <em>[% conn.name %]</em>?
+    [% END %]
+[% END %]
+
+[% INCLUDE 'footer.html' %]

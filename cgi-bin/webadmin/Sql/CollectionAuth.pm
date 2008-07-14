@@ -4,9 +4,9 @@ use warnings;
 use Carp;
 use Sql::Sql;
 use Data::Dumper;
-use Sql::Abstract;
+use Sql::Webadmin;
 use Common::Validate;
-our @ISA = qw(Sql::Abstract);
+our @ISA = qw(Sql::Webadmin);
 
 my $table = "collectionAuth";
 

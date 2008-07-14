@@ -79,11 +79,19 @@ sub process_tpl {
     # Print html.
     my $no_header = $opt{no_header} and delete $opt{no_header};
 
+    my $output = $opt{html_output};
+    delete $opt{html_output};
 
+    my @tpl_params = ($tpl_file, $vars_ref);
     my $tpl = Template->new(%opt);
-    print header(-type => "text/html", -charset => "UTF-8")
-        unless $no_header;
-    $tpl->process($tpl_file, $vars_ref)
+    if (defined $output) {
+        push @tpl_params, $output;
+    }
+    else {
+        print header(-type => "text/html", -charset => "UTF-8")
+            unless $no_header;
+    }
+    $tpl->process(@tpl_params)
         or croak "Template '$tpl_file' error: ", $tpl->error();
     
     1;

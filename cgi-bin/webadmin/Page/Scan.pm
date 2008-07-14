@@ -27,7 +27,7 @@ sub show_overview {
 	
 	my @results = sort by_scan_date @{$results_ref};
 	$vars->{results} = \@results;
-	return ($vars, TPL_SCAN_OVERVIEW);
+	return TPL_SCAN_OVERVIEW;
 }
 
 sub by_scan_date {

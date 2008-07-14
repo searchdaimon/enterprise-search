@@ -93,38 +93,6 @@ A:active { color : blue; }
 
 
 
-#tabs {
-    list-style-type : none;
-    padding-left : 0;
-    margin-left : 0;
-    margin-bottom : 1em;
-    border-bottom : 3px solid;
-    border-color : #044a90;
-    font-size : small;
-
-  }
-
-
-#tabs li {
-    display : inline;
-  }
-
-
-#tabs li a {
-    /* padding : 2.5em; 0; 2.5em; 0.5em; */
-    padding : 0.2em; padding-bottom : 0;
-    text-decoration : none;
-    background : #d3dbef;
-    color : black; /* white; */
-  }
-
-
-#tabs #selected a {
-    background : #044a90;
-    color : white;
-     font-weight : bolder; 
-  }
-
 /**
   * Global classes */
 
@@ -136,8 +104,8 @@ A:active { color : blue; }
 .button_list {
 	list-style-type: none;
 	margin : 0;
-	padding : 0;
-	float : right;
+	padding : 1em;
+	float : right; 
 	min-width : 100px;
 
 }
@@ -259,15 +227,20 @@ A:active { color : blue; }
 }
 
 .checklist_outer {
-    background : white; 
     max-width : 80%; 
+}
+    
+.checklist_outer, .testrunOuter {
+    background : white; 
     border : 1px solid;
 }
 
-.checklist_inner {
+.checklist_inner { max-height : 12em; }
+.testrunInner    { max-height : 30em; font-size : medium; }
+
+.checklist_inner, .testrunInner {
     overflow:auto; 
     min-height : 5em; 
-    max-height : 12em; 
     margin-bottom : 1em: 
     margin-top : 1em;
 }
@@ -302,3 +275,58 @@ A:active { color : blue; }
 .pretty_button input {
      margin-top : 0.2em; 
 }
+
+.textNewLarge {
+    margin-bottom : 1em;
+    font-size : large;
+    font-weight : bolder;
+}
+.textNewLarge img {
+    border : 0px solid;
+}
+
+/**
+ * Tabs
+ * See http://docs.jquery.com/UI/Tabs/Theming for the javascript tabs.
+ */
+
+.ui-tabs-nav {
+    list-style-type : none;
+    padding-left : 0;
+    margin-left : 0;
+    margin-bottom : 1em;
+    border-bottom : 3px solid;
+    border-color : #044a90;
+}
+
+
+.ui-tabs-nav li {
+    display : inline;
+    font-family: "Trebuchet MS", Trebuchet, Verdana, Helvetica, Arial, sans-serif;
+    font-size : 14px;
+
+}
+.ui-tabs-nav li {
+    margin 0; 
+}
+
+
+.ui-tabs-nav li a {
+    padding : 0.2em; 
+    padding-bottom : 0;
+    text-decoration : none;
+    background : #d3dbef;
+    color : black;
+    text-decoration : none; 
+    outline : 0; /* prevent firefox dotted frame */
+    color : black;
+  }
+
+.ui-tabs-selected a {
+    background : #044a90 !important;
+    color : white !important;
+    font-weight : bolder; 
+}
+
+.ui-tabs-hide { display : none; }
+

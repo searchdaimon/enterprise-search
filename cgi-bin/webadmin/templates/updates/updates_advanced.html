@@ -47,7 +47,7 @@
 
 [% BLOCK list_new %]
     [% WRAPPER 'template_table.html'
-        header = ['', 'File', ''] %]
+        header = ['', 'File', ''] style="width : 80%" %]
         [% color = 1 %]
         [% FOREACH file IN list %]
             [% color = 1 - color %]
@@ -56,7 +56,7 @@
                     <img src="file.cgi?icon=rpm&amp;size=22x22" alt="" />
                 </td>
                     <td>[% HTML.escape(file) %]</td>
-                    <td><ul class="vertical_buttons">
+                    <td><ul class="vertical_buttons" style="text-align : right;">
                         <li>
                             <a href="updates.cgi?btn.del_pkg=1&file=[% HTML.escape(file) %]">Remove</a>
                         </li>

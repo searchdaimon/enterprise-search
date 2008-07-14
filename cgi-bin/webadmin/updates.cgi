@@ -5,21 +5,16 @@ BEGIN {
         push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 
-use CGI;
 use Carp;
-use CGI::State;
-use Template;
 use Page::Updates;
 use Data::Dumper;
 use Switch;
 
-use Common::Generic qw(init_root_page);
+my $page = Page::Updates->new();
 
-my ($cgi, $state_ptr, $vars, $template, $dbh, $page)
-	= init_root_page('/templates/updates:./templates/common/network', 'Page::Updates');
-
-my %state = %{$state_ptr};
+my %state = $page->get_state();
 my $tpl_file;
+my $vars = { };
 
 # Actions
 if (defined $state{btn}) {
@@ -61,8 +56,9 @@ if ($state{view}) {
 $tpl_file = $page->show_list($vars, 0)
     unless $tpl_file;
 
-print $cgi->header('text/html');
-$template->process($tpl_file, $vars)
-        or croak $template->error() . "\n";
+$page->process_tpl($tpl_file, $vars, 
+    tpl_folders => ['updates', 'common/network'],
+    ANYCASE => 0
+);
 
 

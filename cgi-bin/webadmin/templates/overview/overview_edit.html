@@ -10,14 +10,13 @@
 		{
 			'name' => 'Edit collection',
 			'url' => "overview.cgi?action=edit&amp;id=$share.id"
-			'selected' => 1
 		},
 		{
 			'name' => 'Advanced management',
 			'url' => "overview.cgi?action=manage&amp;id=$share.id",
-			'selected' => 0
 			
 		}]
+                selected = 'Edit collection'
 	%]
 	
 	<h2>Edit settings for [% HTML.escape(share.collection_name) %]</h2>
