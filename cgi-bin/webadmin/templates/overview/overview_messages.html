@@ -43,3 +43,11 @@
 		Collection has been activated
 	[% END %]
 [% END %]
+
+[% IF error %]
+	[% PROCESS 'tpl_msg.html' type="error" content=error %]
+[% END %]
+[% IF success %]
+	[% PROCESS 'tpl_msg.html' type="success" content=success %]
+[% END %]
+

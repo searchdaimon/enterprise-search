@@ -67,7 +67,7 @@ sub crawl_collection {
 		unless($success);
 	return $vars;
 }
-
+sub show { shift->list_collections(@_) }
 sub list_collections {
 	my ($s, $vars) = @_;
 	$vars->{connectors} 
@@ -209,5 +209,24 @@ sub delete_collection {
  	return TPL_DELETE_COLL;
 }
 
+sub stop_crawl {
+	validate_pos(@_, 1, 1, { regex => qr(^\d+$) });
+	my ($s, $vars, $id) = @_;
+	my $pid = $sqlShares->get({ id => $id }, 'crawl_pid')->{crawl_pid};
+	
+	if (!$pid) {
+		$vars->{error} = "Collection is not being crawled.";
+		return $s->show();
+	}
+
+	if (!$s->{infoQuery}->killCrawl($pid)) {
+		$vars->{error} = "Unable to stop crawl. Asuming it's not running.";
+	}
+	else {
+		$vars->{success} = "Crawl has been stopped.";
+	}
+	$sqlShares->update({ crawl_pid => undef }, { id => $id });
+	return $s->show();
+}
 
 1;

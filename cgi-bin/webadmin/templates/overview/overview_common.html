@@ -67,9 +67,15 @@
 						<ul class="button_list">
 						[% IF share.active %]
 						<li>
+							[% IF share.crawl_pid %]
+							<div style="background : #ffb2b2; ">
+								<a  href="overview.cgi?action=stop_crawl&amp;id=[% share.id %]">Stop&nbsp;crawl</a>
+							</div>
+							[% ELSE %]
 							<div>
 								<a href="overview.cgi?action=crawl&amp;id=[% share.id %]">Crawl&nbsp;now</a>
 							</div>
+							[% END %]
 						</li>
 						[% ELSE %]
 						<li>

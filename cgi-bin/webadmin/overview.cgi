@@ -30,7 +30,7 @@ my %state = $overview->get_state();
 }
 
 
-my $template_file = 'overview.html';
+my $tpl_file = 'overview.html';
 
 
 if (defined $state{action}) {
@@ -41,32 +41,37 @@ if (defined $state{action}) {
 	if ($action eq 'crawl') {
 		$vars = $overview->crawl_collection($vars, $id);
 		
-		$template_file = 
+		$tpl_file = 
 			$overview->list_collections($vars);
 	}
 	
 	elsif ($action eq 'edit') {
 		# User wants to edit a collection. Show form.
 		$vars->{'return_to'} = 'overview';
-		$template_file = $overview->edit_collection($vars, $id);
+		$tpl_file = $overview->edit_collection($vars, $id);
 	}
 	
 	elsif ($action eq 'delete') {
 		# User wants to delete a collection. Confirm.
-		$template_file = $overview->delete_collection($vars, $id);
+		$tpl_file = $overview->delete_collection($vars, $id);
 	}
 	
 	elsif ($action eq 'activate') {
 		# User is activating a disabled collection. Do it.
 		$vars = $overview->activate_collection($vars, $id);
-		$template_file = 
+		$tpl_file = 
 			$overview->list_collections($vars);
 	}
 
 	elsif ($action eq 'manage') {
 		# User is in the advanced management tab.
-		($vars, $template_file) = $overview->manage_collection($vars, $id);
+		($vars, $tpl_file) = $overview->manage_collection($vars, $id);
 	}
+
+	elsif ($action eq 'stop_crawl') {
+		$tpl_file = $overview->stop_crawl($vars, $id);
+	}
+	else { croak "Unknown action '$action'" }
 }
 
 elsif (defined $state{advanced}) {
@@ -77,7 +82,7 @@ elsif (defined $state{advanced}) {
 		# User is forcing a full recrawl from management.
 		my $submit_values = 
 			$state{advanced}{full_recrawl}{id};
-		($vars, $template_file) = 
+		($vars, $tpl_file) = 
 			$overview->recrawl_collection($vars, $submit_values);
 	}
 }
@@ -85,7 +90,7 @@ elsif (defined $state{advanced}) {
 elsif (defined $state{edit}) {
 	# Show edit share form.
 	my $collection = $state{edit};
- 	$template_file = $overview->edit_collection($vars, $collection);
+ 	$tpl_file = $overview->edit_collection($vars, $collection);
 }
 
 elsif (defined $state{submit_edit}) {
@@ -97,11 +102,11 @@ elsif (defined $state{submit_edit}) {
 	unless ($valid) {
 		# Something wrong. Show edit form again.
 		my $id = $vars->{share}{id};
-		$template_file = $overview->edit_collection($vars, $id);
+		$tpl_file = $overview->edit_collection($vars, $id);
 	}
 	else {
 		# We're done. Back to default page.
-		$template_file = $overview->list_collections($vars);
+		$tpl_file = $overview->list_collections($vars);
 	}
 }
 
@@ -111,23 +116,23 @@ elsif (defined $state{confirm_delete}) {
 	my $id = $state{id};
 	$vars = $overview->delete_collection_confirmed($vars, $id);
 	
-	$template_file = $overview->list_collections($vars);
+	$tpl_file = $overview->list_collections($vars);
 }
 
 elsif (defined $state{fetch_inner}) {
-	$template_file = $overview->list_collections($vars);
+	$tpl_file = $overview->list_collections($vars);
 	$vars->{show_only_inner} = 1;
 }
 
 else {
 	# Show default page (list of collections)
-	$template_file
+	$tpl_file
 	    = $overview->list_collections($vars);
 }
 
 
 print CGI::header(-type => 'text/html', -expires => '-1h', -charset => "UTF-8");
-$overview->process_tpl($template_file, $vars, ( 
+$overview->process_tpl($tpl_file, $vars, ( 
     ANYCASE => 0, # tpl system chokes on 'share.last', thinking last is token LAST
     tpl_folders => 'overview', 
     no_header => 1,
