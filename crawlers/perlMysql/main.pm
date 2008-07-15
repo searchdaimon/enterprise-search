@@ -2,6 +2,7 @@ use strict;
 
 package Perlcrawl;
 use SD::Crawl;
+use Data::Dumper;
 
 use DBI; #bruker DBI databse interfase
 
@@ -10,7 +11,9 @@ sub crawlupdate {
 	
 	my ($self, $pointer, $opt ) = @_;	
 
+	print Dumper($opt);
 	print "options:\n";
+
 	foreach my $k (keys %{ $opt }) {
 		print "$k: $opt->{$k}\n";
 	}
@@ -55,7 +58,7 @@ sub crawlupdate {
 			#dokumentet finnes ikke, så vi legger det til
 			# pdocumentAdd() har format:
 			# pdocumentAdd( x, url, lastmodified, dokument_size, document, title, acl_allow, acl_denied )
-			SD::Crawl::pdocumentAdd($pointer, $sd_url, 0 ,$sd_size, $sd_doc, $sd_title, $sd_type, $sd_acl_allow, $sd_acl_denied);		
+			SD::Crawl::pdocumentAdd($pointer, $sd_url, 0 ,$sd_size, $sd_doc, $sd_title, $sd_type, $sd_acl_allow, $sd_acl_denied, "");		
 
 		}
 
