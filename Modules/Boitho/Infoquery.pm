@@ -29,19 +29,9 @@ sub get_error {
 }
 sub error { $_[0]->get_error; } #alias
 
-sub crawlCollection  {
-    my ($self, $collection, %opt) = @_;
+sub crawlCollection { shift->_crawl("crawlCollection", @_)  }
+sub recrawlCollection { shift->_crawl("recrawlCollection", @_)  }
 
-    unless($collection) {
-        $error = "Didn't get a collection to crawl.";
-        return;
-    }
-    my $exec = "crawlCollection \Q$collection\E";
-    $exec .= " \Q$opt{logfile}\E" 
-        if defined $opt{logfile};
-
-    return $self->_infoquery_exec($exec, $opt{callb});
-}
 
 
 sub authTest($$) {
@@ -62,17 +52,6 @@ sub authTest($$) {
 }
 
 
-sub recrawlCollection($$) {
-	my $self = shift;
-	my $collection = shift;
-
-	unless($collection) {
-		$error = "Didn't get a collection to crawl.";
-		return;
-	}
-
-	return $self->_infoquery_exec("recrawlCollection \Q$collection\E");
-}
 
 
 sub deleteCollection($$) {
@@ -181,6 +160,20 @@ sub documentsInCollection($$) {
 	else {
 		return $doc_count_ref->[0];
 	}
+}
+
+sub _crawl  {
+    my ($self, $crawl_cmd, $collection, %opt) = @_;
+
+    unless ($collection) {
+        $error = "Didn't get a collection to crawl.";
+        return;
+    }
+    my $exec = "$crawl_cmd \Q$collection\E";
+    $exec .= " \Q$opt{logfile}\E" 
+        if defined $opt{logfile};
+
+    return $self->_infoquery_exec($exec, $opt{callb});
 }
 
 ##
