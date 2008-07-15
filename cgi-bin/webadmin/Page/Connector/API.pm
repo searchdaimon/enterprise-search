@@ -290,7 +290,6 @@ sub test_output {
         $done = flock $fh, LOCK_EX | LOCK_NB;
         $api_vars->{crawl_done} = $done;
    
-        $s->read_pid($fh); # skip pid.
         $api_vars->{output} = escapeHTML(join q{}, <$fh>);
     };
     unless ($s->api_error($api_vars, $@)) {
@@ -316,13 +315,12 @@ sub test_kill {
     my $output_path = { $sessData->get($test_id) }->{data};
 
     eval {
-        croak "Crawl data does not exist."
-            unless defined $output_path && -e $output_path;
-        
-        open my $fh, "<", $output_path
-            or croak $!;
+        my $pid = $s->{sql_shares}->get(
+			{ id => $s->{coll}{id} }, 'crawl_pid')->{crawl_pid};
 
-        my $pid = $s->read_pid($fh);
+		croak "Crawl is not running."
+			unless defined $pid;
+
         $iq->killCrawl($pid)
             or croak $iq->error();
     };
@@ -346,11 +344,6 @@ sub api_error {
     return;
 }
 
-sub read_pid {
-    my ($s, $fh) = @_;
-    scalar <$fh> =~ /^pid:(\d+)$/;
-    return $1;
-}
 
 ##
 # Fetches the id of the test collection.

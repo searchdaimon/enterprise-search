@@ -1341,8 +1341,6 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
             setvbuf(stdout, NULL, _IOLBF, 0); // line buffered
             setvbuf(stderr, NULL, _IOLBF, 0);
             output_redirected = 1;
-            
-            printf("pid:%d\n", getpid()); // TODO: Fetch pid from db instead.
         }
 
 		//sletter collection. Gjør dette uavhenging om vi har lock eller ikke, slik at vi altid får slettet, så kan vi gjøre
