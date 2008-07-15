@@ -795,7 +795,7 @@ int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections)
 			printf("freeing nr %i: end\n",i);
 		#endif
 
-                hashtable_destroy((*collection)[i].params, 1);
+        hashtable_destroy((*collection)[i].params, 1);
 	}
 
 	//toDo: hvorfor segfeiler vi her ????
@@ -1270,21 +1270,21 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 
 		blog(LOGACCESS,1,"Starting crawl of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
 
-                int output_redirected = 0;
-                if (is_test_collection(&collection[i])) {
-                    if (!redirect_stdoutput(collection[i].extra)) {
-                        blog(LOGERROR, 1, "test collection error, skipping.");
-                        continue;
-                    }
-                    
-                    // a lock implies that a crawl is still running
-                    flock(fileno(stdout), LOCK_SH); 
-                    setvbuf(stdout, NULL, _IOLBF, 0); // line buffered
-                    setvbuf(stderr, NULL, _IOLBF, 0);
-                    output_redirected = 1;
-                    
-                    printf("pid:%d\n", getpid());
-                }
+        int output_redirected = 0;
+        if (is_test_collection(&collection[i])) {
+            if (!redirect_stdoutput(collection[i].extra)) {
+                blog(LOGERROR, 1, "test collection error, skipping.");
+                continue;
+            }
+            
+            // a lock implies that a crawl is still running
+            flock(fileno(stdout), LOCK_SH); 
+            setvbuf(stdout, NULL, _IOLBF, 0); // line buffered
+            setvbuf(stderr, NULL, _IOLBF, 0);
+            output_redirected = 1;
+            
+            printf("pid:%d\n", getpid());
+        }
 
 		//sletter collection. Gjør dette uavhenging om vi har lock eller ikke, slik at vi altid får slettet, så kan vi gjøre
 		// ny crawl etterpå hvis vi ikke hadde lock
@@ -1292,7 +1292,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 
 				static MYSQL demo_db;
 
-				printf("crawl_recrawl\n");
+				debug("crawl_recrawl");
 
 				mysql_init(&demo_db);
 
@@ -1485,9 +1485,11 @@ void connectHandler(int socket) {
 			sendall(socket,&response, sizeof(response));
 		}
 		else if (packedHedder.command == cm_recrawlcollection) {
+			char extrabuf[512];
 			printf("recrawlcollection\n");
 			
 			recvall(socket,collection,sizeof(collection));
+			recvall(socket,extrabuf,sizeof extrabuf);
 			printf("collection \"%s\"\n",collection);
 
 			struct collectionFormat *collections;
@@ -1503,7 +1505,7 @@ void connectHandler(int socket) {
 			intresponse=1;
 			sendall(socket,&intresponse, sizeof(int));
 
-			crawl(collections,nrofcollections,crawl_recrawl, NULL);
+			crawl(collections,nrofcollections,crawl_recrawl, extrabuf[0] != '\0' ? strdup(extrabuf) : NULL);
 
 		}
 		else if (packedHedder.command == cm_deleteCollection) {

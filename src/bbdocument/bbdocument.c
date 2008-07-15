@@ -991,7 +991,7 @@ int bbdocument_deletecoll(char collection[]) {
 	char DictionaryPath[512];
 	FILE *fh;
 
-	printf("Deleting collection: \"%s\"\n",collection);
+	debug("Deleting collection: \"%s\"\n",collection);
 
 	LotNr = 1;
 	while((fh =lotOpenFileNoCasheByLotNr(LotNr,"reposetory","r",'s',collection)) != NULL) {

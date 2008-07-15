@@ -12,6 +12,7 @@
 #include "../common/lot.h"
 #include "../common/define.h"
 #include "../common/bstr.h"
+#include "../common/debug.h"
 
 #define userToSubnameDbFile "config/userToSubname.db"
 
@@ -233,7 +234,7 @@ int userToSubname_deletecol(struct userToSubnameDbFormat *userToSubnameDb,char s
 	DBT key, data;
 	int ret;
 
-	printf("userToSubname_deletecol: deleting \"%s\"\n",subname);
+	debug("userToSubname_deletecol: deleting \"%s\"", subname);
 
 	/* Get a cursor */
 	(*userToSubnameDb).dbp->cursor((*userToSubnameDb).dbp, NULL, &cursorp, 0);
@@ -247,11 +248,11 @@ int userToSubname_deletecol(struct userToSubnameDbFormat *userToSubnameDb,char s
     	    /* Do interesting things with the DBTs here. */
 	    if (!strcmp(subname, data.data))
 		{
-		    printf("Deleting %s->%s (ret=%i)\n", (char*)key.data, (char*)data.data, cursorp->c_del(cursorp, 0));
+		    debug("Deleting %s->%s (ret=%i)", (char*)key.data, (char*)data.data, cursorp->c_del(cursorp, 0));
 		}
 	    else
 		{
-		    printf("Keeping %s->%s\n", (char*)key.data, (char*)data.data);
+		    debug("Keeping %s->%s", (char*)key.data, (char*)data.data);
 		}
 	}
 

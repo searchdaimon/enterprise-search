@@ -66,17 +66,20 @@ int cmc_scan(int socketha,char **respons_list[],int *nrofresponses,char **errorm
 	return 1;
 }
 
-int cmc_recrawl(int socketha,char collection_inn[]) {
+int cmc_recrawl(int socketha,char collection_inn[], char *extra_in) {
 	char collection[64];
+	char extrabuf[512];
 	int intrespons;
 	int i;
 
 	//toDo bruk strSspy
 	strncpy(collection,collection_inn,sizeof(collection));
+	strncpy(extrabuf, extra_in, sizeof extrabuf);
 
 	sendpacked(socketha,cm_recrawlcollection,BLDPROTOCOLVERSION, 0, NULL,"");
 
 	if(sendall(socketha,&collection, sizeof(collection)) == 0) { perror("sendall"); exit(1); }
+	if (!sendall(socketha, &extrabuf, sizeof extrabuf)) { perror("sendall"); exit(1); }
 
 	if ((i=recv(socketha, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
             	perror("Cant recv respons");

@@ -32,7 +32,7 @@ int main (int argc, char *argv[]) {
 		printf("groupsAndCollectionForUser <user name>\n");
 
 		printf("crawlCollection <collection name> [extra]\n");
-		printf("recrawlCollection <collection name>\n");
+		printf("recrawlCollection <collection name> [extra]\n");
 		printf("deleteCollection <collection name>\n");
 		printf("scan <crawlertype> <host> <username> <password>\n");
 		printf("documentsInCollection <collection name>\n");
@@ -217,7 +217,7 @@ int main (int argc, char *argv[]) {
 			return EXIT_FAILURE;
 		}
 		else {
-			cmc_recrawl(socketha,value);
+			cmc_recrawl(socketha,value, value2 == NULL ? "" : value2);
 		}
 		cmc_close(socketha);
 
