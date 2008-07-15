@@ -257,7 +257,7 @@ sub test_run {
     );
     $api_vars->{test_id} = $id;
 
-    my $ok = $iq->crawlCollection(
+    my $ok = $iq->recrawlCollection(
         $s->{coll}{name}, logfile => $output_file);
     
     if (!$ok) {
