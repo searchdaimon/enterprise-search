@@ -1,6 +1,6 @@
 CC=	gcc
 LDFLAGS= -lm 
-CFLAGS=	-g -Wall -DTESTMAIN -std=c99 -O2
+CFLAGS=	-g -Wall -DTESTMAIN -std=c99# -O2
 
 OBJS=	spelling.o dmetaphone.o levenshtein.o
 PROG=	spelling

@@ -41,6 +41,7 @@ train(spelling_t *s, const char *dict)
 	char *p;
 	char *line;
 	size_t len;
+	struct hashtable *soundslikelookup;
 
 	if ((fp = fopen(dict, "r")) == NULL) {
 		warn("fopen(dict)");
@@ -49,6 +50,7 @@ train(spelling_t *s, const char *dict)
 
 	s->words = create_hashtable(5000, ht_wstringhash, ht_wstringcmp);
 	s->soundslike = create_hashtable(5000, ht_wstringhash, ht_wstringcmp);
+	soundslikelookup = create_hashtable(5000, ht_wstringhash, ht_wstringcmp);
 
 	line = NULL;
 	while (getline(&line, &len, fp) > 0) {
@@ -84,12 +86,6 @@ train(spelling_t *s, const char *dict)
 			we->frequency = strtol(p, NULL, 10);
 			we->word = wcword;
 			we->soundslike = dmetaphone(wcword);
-			//printf("Sounds like: %s\n", we->soundslike);
-
-#if 0
-			for (i = 0; we->soundslike[i] != 0; i++)
-				we->soundslike[i] = _tolower(we->soundslike[i]);
-#endif
 
 			if (!hashtable_insert(s->words, wcword, we)) {
 				warn("hashtable_insert()");
@@ -98,9 +94,17 @@ train(spelling_t *s, const char *dict)
 			/* And add the sounds like */
 			list = hashtable_search(s->soundslike, we->soundslike);
 			if (list == NULL) {
+				wchar_t *sl = wcsdup(we->soundslike);
 				list = list_container(ptr_container());
 				if (!hashtable_insert(s->soundslike, we->soundslike, list))
 					warn("hashtable_insert(soundslike)");
+				if (!hashtable_insert(soundslikelookup, sl, we->soundslike))
+					warn("hashtable_insert(soundslikelookup)");
+			} else {
+				wchar_t *sl = hashtable_search(soundslikelookup, we->soundslike);
+
+				free(we->soundslike);
+				we->soundslike = sl;
 			}
 			list_pushback(list, we);
 		} else {
@@ -110,11 +114,14 @@ train(spelling_t *s, const char *dict)
 		free(line);
 		line = NULL;
 	}
+	free(line);
 
 	//printf("Collected %d words\n", hashtable_count(s->words));
 
 	fclose(fp);
 	s->inited = 1;
+
+	hashtable_destroy(soundslikelookup, 0);
 
 	return 1;
 }
@@ -123,11 +130,23 @@ void
 untrain(spelling_t *s)
 {
 	struct hashtable *h;
+	struct hashtable_itr *itr;
 
 	s->inited = 0;
+	h = s->soundslike;
+	s->soundslike = NULL;
+	itr = hashtable_iterator(h);
+	do {
+		container *list = hashtable_iterator_value(itr);
+
+		destroy(list);
+	} while (hashtable_iterator_advance(itr));
+	free(itr);
+	hashtable_destroy(h, 0);
 	h = s->words;
 	s->words = NULL;
 	hashtable_destroy(h, 1);
+
 }
 
 void editsn(spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int levels);
@@ -429,6 +448,7 @@ main(int argc, char **argv)
 		if (p != NULL) {
 			printf("%s\n", p);
 			//printf("Corrected '%s' to '%s'\n", argv[i], p);
+			free(p);
 		} else {
 			printf("-----------\n");
 			//printf("No better word found\n");

@@ -82,12 +82,7 @@ dmetaphone(wchar_t *word)
 
 	w = _w + 4;
 	wcscpy(w, word);
-#if 0
-	w[len+1] = '\0';
-	w[len+2] = '\0';
-	w[len+3] = '\0';
-	w[len+4] = '\0';
-#endif
+
 	for (int i = 0; w[i]; i++)
 		w[i] = toupper(w[i]);
 
@@ -817,6 +812,8 @@ dmetaphone(wchar_t *word)
 
 
 	DMPAdd(p2, '\0');
+
+	free(_w);
 
 	return p;
 }
