@@ -79,7 +79,7 @@ int cmc_recrawl(int socketha,char collection_inn[], char *extra_in) {
 	sendpacked(socketha,cm_recrawlcollection,BLDPROTOCOLVERSION, 0, NULL,"");
 
 	if(sendall(socketha,&collection, sizeof(collection)) == 0) { perror("sendall"); exit(1); }
-	if (!sendall(socketha, &extrabuf, sizeof extrabuf)) { perror("sendall"); exit(1); }
+	if (sendall(socketha, &extrabuf, sizeof extrabuf) == 0) { perror("sendall"); exit(1); }
 
 	if ((i=recv(socketha, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
             	perror("Cant recv respons");
