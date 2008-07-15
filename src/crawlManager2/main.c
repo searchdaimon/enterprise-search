@@ -847,7 +847,7 @@ cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
 }
 
 void 
-sql_fetch_params(struct hashtable ** h, MYSQL *db, unsigned int coll_id)  {
+sql_fetch_params(MYSQL *db, struct hashtable ** h, unsigned int coll_id)  {
     char mysql_query[512];
     MYSQL_ROW row;
     (*h) = create_hashtable(7, cm_hashfromkey, cm_equalkeys);
@@ -872,6 +872,22 @@ sql_fetch_params(struct hashtable ** h, MYSQL *db, unsigned int coll_id)  {
         }
     }
     mysql_free_result(res);
+}
+
+void
+sql_set_crawl_pid(MYSQL *db , int *pid, unsigned int coll_id) {
+	char query[1024];
+	char pid_str[64];
+	if (pid == NULL) 
+		sprintf(pid_str, "NULL");
+	else
+		snprintf(pid_str, sizeof pid_str, "'%d'", *pid);
+
+	snprintf(query, sizeof query, "UPDATE shares SET crawl_pid = %s WHERE id = '%d'",
+		pid_str, coll_id);
+
+	if (mysql_real_query(db, query, strlen(query)))
+		blog(LOGERROR,1,"mysql Error: %s", mysql_error(db));
 }
 
 
@@ -1004,7 +1020,7 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 		debug("resource \"%s\", connector \"%s\", collection_name \"%s\"\n",(*collection)[i].resource,(*collection)[i].connector,(*collection)[i].collection_name);
 
 		cm_collectionFetchUsers(collection[i], &demo_db);
-                sql_fetch_params(&(*collection)[i].params, &demo_db, (*collection)[i].id);
+                sql_fetch_params(&demo_db, &(*collection)[i].params, (*collection)[i].id);
 
 		//crawler ny
                 ++i;
@@ -1258,6 +1274,17 @@ int redirect_stdoutput(char * file) {
 
 int crawl (struct collectionFormat *collection,int nrofcollections, int flag, char *extra) {
 
+	static MYSQL demo_db;
+	mysql_init(&demo_db);
+	if(!mysql_real_connect(&demo_db, MYSQL_HOST, MYSQL_USER, 
+			MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)) {
+
+		printf(mysql_error(&demo_db));
+		blog(LOGERROR,1,"MySQL Error: '%s'. Quitting.",mysql_error(&demo_db));
+		exit(1);
+	}
+
+
 	int i;
 	FILE *LOCK;
 
@@ -1269,6 +1296,9 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 		collection[i].extra = extra;
 
 		blog(LOGACCESS,1,"Starting crawl of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
+
+		int crawl_pid = getpid();
+		sql_set_crawl_pid(&demo_db, &crawl_pid, collection[i].id);
 
         int output_redirected = 0;
         if (is_test_collection(&collection[i])) {
@@ -1283,45 +1313,31 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
             setvbuf(stderr, NULL, _IOLBF, 0);
             output_redirected = 1;
             
-            printf("pid:%d\n", getpid());
+            printf("pid:%d\n", crawl_pid); // TODO? Fetch pid from db instead.
         }
 
 		//sletter collection. Gjør dette uavhenging om vi har lock eller ikke, slik at vi altid får slettet, så kan vi gjøre
 		// ny crawl etterpå hvis vi ikke hadde lock
 		if (flag == crawl_recrawl) {
+			debug("crawl_recrawl");
 
-				static MYSQL demo_db;
 
-				debug("crawl_recrawl");
+			char querybuf[1024];
+			int querylen;
 
-				mysql_init(&demo_db);
-
-				//koble til mysql
-				if(mysql_real_connect(&demo_db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)){
-					char querybuf[1024];
-					int querylen;
-
-					querylen = snprintf(querybuf, sizeof(querybuf), "UPDATE shares SET last = 0 WHERE id = '%d'",
+			querylen = snprintf(querybuf, sizeof(querybuf), "UPDATE shares SET last = 0 WHERE id = '%d'",
 					    collection[i].id);
-					if (mysql_real_query(&demo_db, querybuf, querylen)) {
-						printf("Mysql error: %s", mysql_error(&demo_db));
-						blog(LOGERROR,1,"MySQL Error: %s: \"%s\".", querybuf, mysql_error(&demo_db));
-					}
-				} else {
-					printf(mysql_error(&demo_db));
-					blog(LOGERROR,1,"MySQL Error: \"%s\".",mysql_error(&demo_db));
-				}
+			if (mysql_real_query(&demo_db, querybuf, querylen)) {
+				printf("Mysql error: %s", mysql_error(&demo_db));
+				blog(LOGERROR,1,"MySQL Error: %s: \"%s\".", querybuf, mysql_error(&demo_db));
+			}
 
+			//nullsetter lastCrawl, som er den verdien som viser siste crawl. 
+			//Tror ikke crawlfirst skal ta hensysn til den, men gjør det for sikkerhets skyld
+			(*collection).lastCrawl = 0;
 
-
-				//nullsetter lastCrawl, som er den verdien som viser siste crawl. 
-				//Tror ikke crawlfirst skal ta hensysn til den, men gjør det for sikkerhets skyld
-				(*collection).lastCrawl = 0;
-
-				//beordrer en sletting. Burde kansje vært gjort vi bbdn, ikke direkte, men skit au
-				bbdocument_deletecoll(collection[i].collection_name);
-
-
+			//beordrer en sletting. Burde kansje vært gjort vi bbdn, ikke direkte, men skit au
+			bbdocument_deletecoll(collection[i].collection_name);
 		}
 
 		//tester at vi ikke allerede holder på å crawle denne fra før
@@ -1337,7 +1353,8 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 		//heller satset på å begrense på server. Slik at for eks to smb servere kan crawles samtidig
 		if (!crawl_element_lock(&collection_lock,collection[i].connector)) {
 			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are all redy crawling this type/server.",collection[i].collection_name);
-                        set_crawler_message(0,"Error: Can't crawl collection. We are all redy crawling this type/server.",collection[i].id);
+            set_crawler_message(0,"Error: Can't crawl collection. We are all redy crawling this type/server.",collection[i].id);
+			sql_set_crawl_pid(&demo_db, NULL, collection[i].id);
 
 			continue;
 		}
@@ -1347,6 +1364,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 		if (!bbdn_conect(&collection[i].socketha,"",global_bbdnport)) {
 			berror("can't conect to bbdn (boitho backend document server)");
 			set_crawler_message(0,bstrerror(),collection[i].id);
+			sql_set_crawl_pid(&demo_db, NULL, collection[i].id);
 		}
 		else {
 
@@ -1354,27 +1372,33 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 
 
 				if (!cm_crawlfirst(global_h,&collection[i])) {
-                                        set_crawler_message(0,bstrerror(),collection[i].id);
-                                }
-                                else {
-                                        set_crawler_message(1,"Ok",collection[i].id);
-                                }
+                	set_crawler_message(0,bstrerror(),collection[i].id);
+					sql_set_crawl_pid(&demo_db, NULL, collection[i].id);
+                }
+                else {
+                	set_crawler_message(1,"Ok",collection[i].id);
+					sql_set_crawl_pid(&demo_db, NULL, collection[i].id);
+                }
 
 			}
 			else if ((*collection).lastCrawl == 0) {
 				if (!cm_crawlfirst(global_h,&collection[i])) {
 					set_crawler_message(0,bstrerror(),collection[i].id);	
+					sql_set_crawl_pid(&demo_db, NULL, collection[i].id);
 				}
 				else {
 					set_crawler_message(1,"Ok",collection[i].id);
+					sql_set_crawl_pid(&demo_db, NULL, collection[i].id);
 				}
 			}
 			else {
                                 if (!cm_crawlupdate(global_h,&collection[i])) {
                                         set_crawler_message(0,bstrerror(),collection[i].id);
+										sql_set_crawl_pid(&demo_db, NULL, collection[i].id);
                                 }
                                 else {
                                         set_crawler_message(1,"Ok",collection[i].id);
+										sql_set_crawl_pid(&demo_db, NULL, collection[i].id);
                                 }
 			}
 
