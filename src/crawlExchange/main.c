@@ -72,8 +72,8 @@ make_crawl_uri(char *uri, char *id)
 {
 	int len;
 	char *p;
-	char out[1024], some[5];
-	char outlookid[1024];
+	char out[2048], some[5];
+	char outlookid[2048];
 
 #if 1
 	len = base64_decode(out, id, 1024);
@@ -86,7 +86,7 @@ make_crawl_uri(char *uri, char *id)
 	}
 #endif
 
-	sprintf(out, "outlook:%s\x10%s", outlookid, uri);
+	snprintf(out, sizeof(out), "outlook:%s\x10%s", outlookid, uri);
 	//sprintf(out, "%s\x10%s", id, uri);
 	p = strdup(out);
 
@@ -132,7 +132,7 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 			p++;
 		} else if ((p = strcasestr(mail.buf, "\rsubject:")) != NULL) {
 			p++;
-		} 
+		}
 		
 		if (p == NULL) {
 			crawldocumentAdd.title = "";
@@ -159,6 +159,7 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 		crawldocumentAdd.lastmodified = lastmodified;
 		crawldocumentAdd.acl_allow = set_to_string(acl_allow, ",");
 		crawldocumentAdd.acl_denied = set_to_string(acl_deny, ",");
+		//crawldocumentAdd.attributes = "source=email";
 
 		printf("Adding: '%s'\n", crawldocumentAdd.title);
 		(ci->documentAdd)(ci->collection, &crawldocumentAdd);
