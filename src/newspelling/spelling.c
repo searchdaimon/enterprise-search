@@ -150,7 +150,6 @@ static inline void
 //handle_word(spelling_t *s, wchar_t *word, wchar_t *best, int *max, int levels)
 handle_word(spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int phase)
 {
-	int *freq;
 	wchar_t *like;
 
 	like = dmetaphone(word);
@@ -233,33 +232,19 @@ editsn(spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best
 #endif
 }
 
-
 static inline void
 handle_soundslike(scache_t *c, int dist, int frequency, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int phase)
 {
 	if (dist < *mindist) {
-		//printf("Hmpf %ls\n", we->word);
 		*mindist = dist;
 		*best = word;
 		*maxfreq = frequency;
 	} else if (dist == *mindist && *maxfreq < frequency) {
-		//printf("Hmpf2 %ls\n", we->word);
-//		if (dist >= 3) {
-//			if (*best)
-//				return;
-//		}
 		*maxfreq = frequency;
 		*best = word;
 	}
 
 	hashtable_insert(c, wcsdup(word), (void*)1);
-
-#if 0
-	if (levels > 1) {
-		editsn(s, word, best, max, levels-1);
-		return;
-	}
-#endif
 }
 
 
@@ -359,6 +344,7 @@ check_word(spelling_t *s, char *word, int *found)
 	wchar_t *wword;
 	wchar_t *like;
 	scache_t *cache;
+	char u8word[LINE_MAX];
 
 	*found = 0;
 	if (!s->inited)
@@ -401,12 +387,14 @@ check_word(spelling_t *s, char *word, int *found)
 
 	hashtable_destroy(cache, 0);
 
+	free(wword);
 	if (bestw != NULL) {
-		//printf("Phase 1: Best match: %ls, freq: %d\n", bestw, maxfreq);
-		return bestw;
+		*found = 1;
+		wcstombs(u8word, bestw, LINE_MAX);
+		return strdup(u8word);
+	} else {
+		return NULL;
 	}
-
-	return NULL;
 }
 
 #if 0
@@ -479,11 +467,11 @@ main(int argc, char **argv)
 #endif
 
 	for (i = 1; i < argc; i++) {
-		wchar_t *p;
+		char *p;
 
 		p = check_word(&s, argv[i], &found);
 		if (p != NULL) {
-			printf("%ls\n", p);
+			printf("%s\n", p);
 			//printf("Corrected '%s' to '%s'\n", argv[i], p);
 		} else {
 			printf("-----------\n");
