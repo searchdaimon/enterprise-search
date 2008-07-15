@@ -174,29 +174,6 @@ handle_word(spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t *
 	like = dmetaphone(word);
 	check_soundslike(s, c, wword, like, best, mindist, maxfreq, phase);
 	free(like);
-
-#if 0
-	if ((freq = hashtable_search(s->words, word)) == NULL && levels == 1)
-		return;
-
-#if 1
-	if (freq && (normalizefreq(*freq, levels) > *max)) {
-		wcscpy(best, word);
-		*max = normalizefreq(*freq, levels);
-	}
-#else
-	if (freq && *freq > *max) {
-		wcscpy(best, word);
-		*max = *freq;
-	}
-#endif
-#if 0
-	if (levels > 1) {
-		editsn(s, word, best, max, levels-1);
-		return;
-	}
-#endif
-#endif
 }
 
 void
@@ -345,8 +322,6 @@ check_soundslike(spelling_t *s, scache_t *c,  wchar_t *wword, wchar_t *like, wch
 		dist = levenshteindistance(wword, we->word);
 		handle_soundslike(c, dist, we->frequency, we->word, bestw, mindist, maxfreq, phase);
 
-		//handle_soundslike(s, wword, word, best, mindist, maxfreq, levels);
-
 		//printf("\t%ls (%d): %d\n", we->word, we->frequency, dist);
 	}
 	hashtable_insert(c, wcsdup(like), (void*)1);
@@ -382,14 +357,6 @@ check_word(spelling_t *s, char *word, int *found)
 		free(wword);
 		return NULL;
 	}
-
-#if 0
-	if (correct_word(s, wword)) {
-		printf("Good as it gets\n");
-		//free(wword);
-		//return NULL;
-	}
-#endif
 
 	// Phase 1, sounds like words
 	like = dmetaphone(wword);
