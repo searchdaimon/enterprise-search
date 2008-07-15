@@ -366,13 +366,18 @@ int main (int argc, char *argv[]) {
 
 	    int ok = cmc_killcrawl(socketha, pid);
 	    cmc_close(socketha);
-    
-            if (!ok) {
-                puts("Unable to kill crawl.");
-                exit(1);
-            }
-            puts("Crawl killed.");
+
+        if (ok == 0) {
+           puts("Unable to kill crawl.");
+           exit(1);
         }
+		if (ok != 1) {
+			printf("Unexpected response %d\n", ok);
+			exit(1);
+		}
+
+        puts("Crawl killed.");
+    }
 	else {
 		printf("unknown key %s\n",key);
 	}
