@@ -1688,7 +1688,10 @@ void connectHandler(int socket) {
 
                     // TODO: check if pid is a crawlerManager process?
                     ok = (pid > 0 && kill(pid, SIGKILL) != -1);
-        	    sendall(socket, &ok, sizeof ok);
+        	    	sendall(socket, &ok, sizeof ok);
+
+					//TODO: Update crawl_pid in db share tbl
+					//TODO: Update status for share.
 
                     printf("cm_killcraw: killed pid %d: %s\n", pid, ok ? "yes" : "no");
                 }
