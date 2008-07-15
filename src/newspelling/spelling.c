@@ -395,48 +395,6 @@ check_word(spelling_t *s, char *word, int *found)
 	}
 }
 
-#if 0
-
-char *
-check_word(spelling_t *s, char *word, int *found)
-{
-	wchar_t best[LINE_MAX];
-	char u8best[LINE_MAX];
-	int max = 0;
-	wchar_t *wword;
-
-	*found = 0;
-	if (!s->inited)
-		return NULL;
-
-	wword = malloc((strlen(word)+1)*sizeof(wchar_t));
-	if (wword == NULL)
-		return NULL;
-	mbstowcs(wword, word, strlen(word)+1);
-
-	if (s->words == NULL) {
-		free(wword);
-		return NULL;
-	}
-
-	if (correct_word(s, wword)) {
-		free(wword);
-		return NULL;
-	}
-	editsn(s, wword, best, &max, MAX_EDIT_DISTANCE);
-	if (max > 0) {
-		*found = 1;
-		free(wword);
-		wcstombs(u8best, best, LINE_MAX);
-		return strdup(u8best);
-	} else {
-		free(wword);
-		return NULL;
-	}
-}
-
-#endif
-
 #ifdef TESTMAIN
 int
 main(int argc, char **argv)
