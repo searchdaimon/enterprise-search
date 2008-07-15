@@ -62,11 +62,12 @@ sub crawl_collection {
 	
 	# Submit crawl request.
 	my $success = $iq->crawlCollection($collection);
-	$vars->{'crawl_request'} = $success;
+	$vars->{'crawl_request'} = $success ? 1 : 0;
 	$vars->{'crawl_error'} = $iq->get_error
 		unless($success);
 	return $vars;
 }
+
 sub show { shift->list_collections(@_) }
 sub list_collections {
 	my ($s, $vars) = @_;
@@ -221,11 +222,11 @@ sub stop_crawl {
 
 	if (!$s->{infoQuery}->killCrawl($pid)) {
 		$vars->{error} = "Unable to stop crawl. Asuming it's not running.";
+		$sqlShares->update({ crawl_pid => undef }, { id => $id });
 	}
 	else {
 		$vars->{success} = "Crawl has been stopped.";
 	}
-	$sqlShares->update({ crawl_pid => undef }, { id => $id });
 	return $s->show();
 }
 
