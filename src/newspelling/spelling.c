@@ -243,8 +243,6 @@ handle_soundslike(scache_t *c, int dist, int frequency, wchar_t *word, wchar_t *
 		*maxfreq = frequency;
 		*best = word;
 	}
-
-	hashtable_insert(c, wcsdup(word), (void*)1);
 }
 
 
