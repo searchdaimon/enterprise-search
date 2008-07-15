@@ -45,6 +45,10 @@
 #define MYSQL_USER "boitho"
 #define MYSQL_PASS "G7J7v5L5Y7"
 
+#define CRAWL_CRAWLING 1
+#define CRAWL_DONE     2
+#define CRAWL_ERROR    3
+
 #define TEST_COLL_NAME "_%s_TestCollection" // %s is connector name.
 
 struct hashtable *global_h;
@@ -64,7 +68,7 @@ void mc_add_servers(void);
 
 
 
-int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],int *nrofcollections);
+int cm_searchForCollection (MYSQL *db, char cvalue[],struct collectionFormat *collection[],int *nrofcollections);
 
 int documentContinue(struct collectionFormat *collection) {
 
@@ -429,7 +433,7 @@ pathaccess_cachelookup(char *collection, char *username, char *password, char *u
 #endif
 
 
-int pathAccess(struct hashtable *h, char collection[], char uri[], char username_in[], char password[]) {
+int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], char username_in[], char password[]) {
 	char *origuri;
 
 	int cacheret;
@@ -464,7 +468,7 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 
 	gettimeofday(&start_time, NULL);
 	debug("cm_searchForCollection");
-	if (!cm_searchForCollection(collection,&collections,&nrofcollections)) {
+	if (!cm_searchForCollection(db, collection,&collections,&nrofcollections)) {
 		printf("cant't find Collection \"%s\"in db at %s:%d\n",collection,__FILE__,__LINE__);
 		return 0;
 	}
@@ -890,30 +894,41 @@ sql_set_crawl_pid(MYSQL *db , int *pid, unsigned int coll_id) {
 		blog(LOGERROR,1,"mysql Error: %s", mysql_error(db));
 }
 
+int
+sql_coll_by_pid(MYSQL *db, int crawl_pid) {
+	char query[1024];
+	int coll_id;
 
-int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],int *nrofcollections) {
+	snprintf(query, sizeof query, 
+		"SELECT id FROM shares WHERE crawl_pid = '%d'",
+		crawl_pid);
+    
+	MYSQL_ROW row;
+	if (mysql_real_query(db, query, strlen(query))) {
+		blog(LOGERROR, 1, "mysql error: '%s'", mysql_error(db));
+        exit(1);
+    }
+    MYSQL_RES * res = mysql_store_result(db);
+
+	row = mysql_fetch_row(res);
+	coll_id = (row == NULL) ? -1 : atoi(row[0]);
+	mysql_free_result(res);
+
+	return coll_id;
+}
+
+
+int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *collection[],int *nrofcollections) {
 
         char mysql_query [2048];
-        static MYSQL demo_db;
 	MYSQL_RES *mysqlres; /* To be used to fetch information into */
         MYSQL_ROW mysqlrow;
 
         int i,y;
-
-
-
-	mysql_init(&demo_db);
-
-	//koble til mysql
-	if(!mysql_real_connect(&demo_db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)){
-		printf(mysql_error(&demo_db));
-		blog(LOGERROR,1,"MySQL Error: \"%s\".",mysql_error(&demo_db));
-		exit(1);
-	}
-
+	
 	if (cvalue != NULL) {
             char cvalue_esc[128];
-            mysql_real_escape_string(&demo_db, cvalue_esc, cvalue, strlen(cvalue));
+            mysql_real_escape_string(db, cvalue_esc, cvalue, strlen(cvalue));
 	    sprintf(mysql_query, "\
 					select \
 						resource, \
@@ -955,13 +970,13 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 
 	debug("mysql_query: %s\n",mysql_query);
 
-	if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
-               	printf(mysql_error(&demo_db));
-		blog(LOGERROR,1,"MySQL Error: \"%s\".",mysql_error(&demo_db));
+	if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
+               	printf(mysql_error(db));
+		blog(LOGERROR,1,"MySQL Error: \"%s\".",mysql_error(db));
 		
                	exit(1);
        	}
-	mysqlres=mysql_store_result(&demo_db); /* Download result from server */
+	mysqlres=mysql_store_result(db); /* Download result from server */
 
 	(*nrofcollections) = (int)mysql_num_rows(mysqlres);
 
@@ -1019,8 +1034,8 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 
 		debug("resource \"%s\", connector \"%s\", collection_name \"%s\"\n",(*collection)[i].resource,(*collection)[i].connector,(*collection)[i].collection_name);
 
-		cm_collectionFetchUsers(collection[i], &demo_db);
-                sql_fetch_params(&demo_db, &(*collection)[i].params, (*collection)[i].id);
+		cm_collectionFetchUsers(collection[i], db);
+                sql_fetch_params(db, &(*collection)[i].params, (*collection)[i].id);
 
 		//crawler ny
                 ++i;
@@ -1037,11 +1052,11 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 
 		debug("mysql_query: %s\n",mysql_query);
 
-		if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
-	               	printf(mysql_error(&demo_db));
+		if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
+	               	printf(mysql_error(db));
 	               	exit(1);
 	       	}
-		mysqlres=mysql_store_result(&demo_db); /* Download result from server */
+		mysqlres=mysql_store_result(db); /* Download result from server */
 
 		(*collection)[i].user = NULL;
 		(*collection)[i].password = NULL;
@@ -1065,15 +1080,13 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 
 	}
 
-	mysql_close(&demo_db);
-
-	return 1;
 
 	debug("cm_searchForCollection: end\n");
+	return 1;
 	
 }
 
-int cm_handle_crawlcanconect(char cvalue[]) {
+int cm_handle_crawlcanconect(MYSQL *db, char cvalue[]) {
 
 	struct collectionFormat *collection;
 	int nrofcollections;
@@ -1081,7 +1094,7 @@ int cm_handle_crawlcanconect(char cvalue[]) {
 
 	printf("cm_handle_crawlcanconect (%s)\n",cvalue);
 
-	cm_searchForCollection(cvalue,&collection,&nrofcollections);
+	cm_searchForCollection(db, cvalue,&collection,&nrofcollections);
 	printf("crawlcanconect: cm_searchForCollection done\n");
 	if (nrofcollections == 1) {
 		
@@ -1112,28 +1125,45 @@ int cm_handle_crawlcanconect(char cvalue[]) {
 	return 1;
 }
 
+void set_crawl_state(MYSQL *db, int state, unsigned int coll_id, char * msg) {
+	
+	switch (state) {
+		case CRAWL_CRAWLING:
+			sql_set_crawler_message(db, 0, "Crawling it now.", coll_id);
+			
+			int pid = getpid();
+			sql_set_crawl_pid(db, &pid, coll_id);
+			break;
+
+		case CRAWL_DONE:
+			sql_set_crawler_message(db, 1, "OK.", coll_id);
+			sql_set_crawl_pid(db, NULL, coll_id);
+			break;
+
+		case CRAWL_ERROR:
+			sql_set_crawler_message(db, 0, msg, coll_id);
+			sql_set_crawl_pid(db, NULL, coll_id);
+			break;
+
+		default:
+			fprintf(stderr, "Unknown crawl state %d line: %s file: %s", 
+				state, __LINE__, __FILE__);
+			exit(1);
+	}
+}
+
 //crawler_success  skal være 0 hvis vi feilet, og 1 hvis vi ikke feilet
-int set_crawler_message(int crawler_success  , char mrg[], unsigned int id) {
+int sql_set_crawler_message(MYSQL *db, int crawler_success  , char mrg[], unsigned int id) {
 
         char mysql_query [2048];
 	char messageEscaped[2048];
-        static MYSQL demo_db;
         MYSQL_RES *mysqlres; /* To be used to fetch information into */
         MYSQL_ROW mysqlrow;
 
 	blog(LOGACCESS, 2, "Status: set_crawler_message: mesage: \"%s\", success: %i, id: %i.",mrg,crawler_success,id);
 
-        mysql_init(&demo_db);
-
-        //koble til mysql
-        if(!mysql_real_connect(&demo_db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)){
-                printf(mysql_error(&demo_db));
-		blog(LOGERROR,1,"Mysql Error: \"%s\".",mysql_error(&demo_db));
-                exit(1);
-        }
-
 	//escaper queryet rikit
-        mysql_real_escape_string(&demo_db,messageEscaped,mrg,strlen(mrg));
+    mysql_real_escape_string(db,messageEscaped,mrg,strlen(mrg));
 
 	//printf("mysql_queryEscaped \"%s\"\n",messageEscaped);
 
@@ -1149,23 +1179,22 @@ int set_crawler_message(int crawler_success  , char mrg[], unsigned int id) {
 
         //debug("mysql_query: %s\n",mysql_query);
 
-        if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
+        if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
                 //printf(mysql_error(&demo_db));
-		blog(LOGERROR,1,"Mysql Error: \"%s\".",mysql_error(&demo_db));
+		blog(LOGERROR,1,"Mysql Error: \"%s\".",mysql_error(db));
                 exit(1);
         }
 
 
-	mysql_close(&demo_db);
 
 }
 
 //setter at vi har begynt og cralwe
-cm_setCrawStartMsg(struct collectionFormat *collection,int nrofcollections) {
+cm_setCrawStartMsg(MYSQL *db, struct collectionFormat *collection,int nrofcollections) {
 	int i;
 
 	for(i=0;i<nrofcollections;i++) {
-		set_crawler_message(0,"Crawling it now.",collection[i].id);
+		set_crawl_state(db, CRAWL_CRAWLING, collection[i].id, NULL);
 	}
 }
 
@@ -1272,18 +1301,21 @@ int redirect_stdoutput(char * file) {
     return 1;
 }
 
-int crawl (struct collectionFormat *collection,int nrofcollections, int flag, char *extra) {
-
-	static MYSQL demo_db;
-	mysql_init(&demo_db);
-	if(!mysql_real_connect(&demo_db, MYSQL_HOST, MYSQL_USER, 
-			MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)) {
-
-		printf(mysql_error(&demo_db));
-		blog(LOGERROR,1,"MySQL Error: '%s'. Quitting.",mysql_error(&demo_db));
+void sql_connect(MYSQL *db) {
+	if (!mysql_init(db)) {
+		blog(LOGERROR, 1, "mysql_init, out of memory");
 		exit(1);
 	}
 
+	if (!mysql_real_connect(db, MYSQL_HOST, MYSQL_USER, 
+			MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)) {
+		printf(mysql_error(db));
+		blog(LOGERROR, 1, "Mysql connect error: '%s'. Exiting.", mysql_error(db));
+		exit(1);
+	}
+}
+
+int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, int flag, char *extra) {
 
 	int i;
 	FILE *LOCK;
@@ -1296,9 +1328,6 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 		collection[i].extra = extra;
 
 		blog(LOGACCESS,1,"Starting crawl of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
-
-		int crawl_pid = getpid();
-		sql_set_crawl_pid(&demo_db, &crawl_pid, collection[i].id);
 
         int output_redirected = 0;
         if (is_test_collection(&collection[i])) {
@@ -1313,7 +1342,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
             setvbuf(stderr, NULL, _IOLBF, 0);
             output_redirected = 1;
             
-            printf("pid:%d\n", crawl_pid); // TODO? Fetch pid from db instead.
+            printf("pid:%d\n", getpid()); // TODO: Fetch pid from db instead.
         }
 
 		//sletter collection. Gjør dette uavhenging om vi har lock eller ikke, slik at vi altid får slettet, så kan vi gjøre
@@ -1327,9 +1356,9 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 
 			querylen = snprintf(querybuf, sizeof(querybuf), "UPDATE shares SET last = 0 WHERE id = '%d'",
 					    collection[i].id);
-			if (mysql_real_query(&demo_db, querybuf, querylen)) {
-				printf("Mysql error: %s", mysql_error(&demo_db));
-				blog(LOGERROR,1,"MySQL Error: %s: \"%s\".", querybuf, mysql_error(&demo_db));
+			if (mysql_real_query(db, querybuf, querylen)) {
+				printf("Mysql error: %s", mysql_error(db));
+				blog(LOGERROR,1,"MySQL Error: %s: \"%s\".", querybuf, mysql_error(db));
 			}
 
 			//nullsetter lastCrawl, som er den verdien som viser siste crawl. 
@@ -1353,8 +1382,8 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 		//heller satset på å begrense på server. Slik at for eks to smb servere kan crawles samtidig
 		if (!crawl_element_lock(&collection_lock,collection[i].connector)) {
 			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are all redy crawling this type/server.",collection[i].collection_name);
-            set_crawler_message(0,"Error: Can't crawl collection. We are all redy crawling this type/server.",collection[i].id);
-			sql_set_crawl_pid(&demo_db, NULL, collection[i].id);
+			set_crawl_state(db, CRAWL_ERROR, collection[i].id,
+				"Can't crawl collection. We are all redy crawling this type/server.");
 
 			continue;
 		}
@@ -1363,57 +1392,33 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 		//make a conectina to bbdn for add to use
 		if (!bbdn_conect(&collection[i].socketha,"",global_bbdnport)) {
 			berror("can't conect to bbdn (boitho backend document server)");
-			set_crawler_message(0,bstrerror(),collection[i].id);
-			sql_set_crawl_pid(&demo_db, NULL, collection[i].id);
+			set_crawl_state(db, CRAWL_ERROR, collection[i].id, bstrerror());
 		}
 		else {
 
-			if (flag == crawl_recrawl) {
+			if (flag == crawl_recrawl || (*collection).lastCrawl == 0) {
+				cm_crawlfirst(global_h,&collection[i]) 
+					? set_crawl_state(db, CRAWL_DONE, collection[i].id, NULL)
+					: set_crawl_state(db, CRAWL_ERROR, collection[i].id, bstrerror());
 
-
-				if (!cm_crawlfirst(global_h,&collection[i])) {
-                	set_crawler_message(0,bstrerror(),collection[i].id);
-					sql_set_crawl_pid(&demo_db, NULL, collection[i].id);
-                }
-                else {
-                	set_crawler_message(1,"Ok",collection[i].id);
-					sql_set_crawl_pid(&demo_db, NULL, collection[i].id);
-                }
-
-			}
-			else if ((*collection).lastCrawl == 0) {
-				if (!cm_crawlfirst(global_h,&collection[i])) {
-					set_crawler_message(0,bstrerror(),collection[i].id);	
-					sql_set_crawl_pid(&demo_db, NULL, collection[i].id);
-				}
-				else {
-					set_crawler_message(1,"Ok",collection[i].id);
-					sql_set_crawl_pid(&demo_db, NULL, collection[i].id);
-				}
 			}
 			else {
-                                if (!cm_crawlupdate(global_h,&collection[i])) {
-                                        set_crawler_message(0,bstrerror(),collection[i].id);
-										sql_set_crawl_pid(&demo_db, NULL, collection[i].id);
-                                }
-                                else {
-                                        set_crawler_message(1,"Ok",collection[i].id);
-										sql_set_crawl_pid(&demo_db, NULL, collection[i].id);
-                                }
+            	cm_crawlupdate(global_h,&collection[i])
+					? set_crawl_state(db, CRAWL_DONE, collection[i].id, NULL)
+					: set_crawl_state(db, CRAWL_ERROR, collection[i].id, bstrerror());
 			}
 
 			closecollection(&collection[i]);
 
-			
 			//ber bbdn om å lukke sokket
 			bbdn_close(&collection[i].socketha);
    
-    		}
+    	}
                 
-                if (output_redirected) {
-                    fclose(stderr); 
-                    fclose(stdout);
-                }
+		if (output_redirected) {
+			fclose(stderr); 
+			fclose(stdout);
+        }
 
 		crawl_unlock(&collection_lock);
 		crawl_element_unlock(&collection_lock);
@@ -1428,13 +1433,13 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 }
 
 int
-rewriteurl(char *collection, char *uri, size_t len, enum platform_type ptype, enum browser_type btype) {
+rewriteurl(MYSQL *db, char *collection, char *uri, size_t len, enum platform_type ptype, enum browser_type btype) {
 
 	struct crawlLibInfoFormat *crawlLibInfo;
 	struct collectionFormat *collections;
 	int nrofcollections;
 
-	cm_searchForCollection(collection,&collections,&nrofcollections);
+	cm_searchForCollection(db, collection,&collections,&nrofcollections);
 
 	if (!cm_getCrawlLibInfo(global_h,&crawlLibInfo,collections->connector)) {
 		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.");
@@ -1481,9 +1486,12 @@ void connectHandler(int socket) {
 			struct collectionFormat *collections;
 			int nrofcollections;
 
-			cm_searchForCollection(collection,&collections,&nrofcollections);
 
-			cm_setCrawStartMsg(collections,nrofcollections);
+			MYSQL db;
+			sql_connect(&db);
+
+			cm_searchForCollection(&db, collection,&collections,&nrofcollections);
+			cm_setCrawStartMsg(&db, collections,nrofcollections);
 
 			//ikke mye nyttig som skjer her egentlig. Tvinger klienten bare til 
 			//å vente her, slik at vi får satt noen statusmeldinger i databasen om 
@@ -1491,8 +1499,8 @@ void connectHandler(int socket) {
 			intresponse=1;
 			sendall(socket,&intresponse, sizeof(int));
 
-			crawl(collections,nrofcollections,crawl_crawl, extrabuf[0] != '\0' ? strdup(extrabuf) : NULL);
-
+			crawl(&db, collections,nrofcollections,crawl_crawl, extrabuf[0] != '\0' ? strdup(extrabuf) : NULL);
+			mysql_close(&db);
 
 	        }
 		else if (packedHedder.command == cm_collectionislocked) {
@@ -1519,9 +1527,11 @@ void connectHandler(int socket) {
 			struct collectionFormat *collections;
 			int nrofcollections;
 
-			cm_searchForCollection(collection,&collections,&nrofcollections);
+			MYSQL db;
+			sql_connect(&db);
+			cm_searchForCollection(&db, collection,&collections,&nrofcollections);
 
-			cm_setCrawStartMsg(collections,nrofcollections);
+			cm_setCrawStartMsg(&db, collections,nrofcollections);
 
 			//ikke mye nyttig som skjer her egentlig. Tvinger klienten bare til 
 			//å vente her, slik at vi får satt noen statusmeldinger i databasen om 
@@ -1529,7 +1539,9 @@ void connectHandler(int socket) {
 			intresponse=1;
 			sendall(socket,&intresponse, sizeof(int));
 
-			crawl(collections,nrofcollections,crawl_recrawl, extrabuf[0] != '\0' ? strdup(extrabuf) : NULL);
+
+			crawl(&db, collections,nrofcollections,crawl_recrawl, extrabuf[0] != '\0' ? strdup(extrabuf) : NULL);
+			mysql_close(&db);
 
 		}
 		else if (packedHedder.command == cm_deleteCollection) {
@@ -1620,12 +1632,15 @@ void connectHandler(int socket) {
 			printf("collection: \"%s\"\nuri: \"%s\"\nusername \"%s\"\npassword \"%s\"\n",collection,uri,username,password);
 			//printf("collection: \"%s\"\nuri: \"%s\"\nusername \"%s\"\npassword \"%s\"\n",all,all+64,all+64+512,all+64+64+512);
 
+			MYSQL db;
+			sql_connect(&db);
 
 			//int pathAccess(struct hashtable *h, char connector[], char uri[], char username[], char password[])
-			intresponse = pathAccess(global_h,collection,uri,username,password);
+			intresponse = pathAccess(&db, global_h,collection,uri,username,password);
 			//intresponse = pathAccess(global_h,all,all+64,all+64+512,all+64+64+512);
 
-                        sendall(socket,&intresponse, sizeof(int));
+			mysql_close(&db);
+            sendall(socket,&intresponse, sizeof(int));
 
 
 
@@ -1638,7 +1653,9 @@ void connectHandler(int socket) {
 
 			printf("got collection name \"%s\" to crawl\n",collection);
 
-			if (!cm_handle_crawlcanconect(collection)) {
+			MYSQL db;
+			sql_connect(&db);
+			if (!cm_handle_crawlcanconect(&db, collection)) {
 
 				berrorbuf = bstrerror();	
 
@@ -1659,6 +1676,7 @@ void connectHandler(int socket) {
 
 				free(berrorbuf);
 			}
+			mysql_close(&db);
 			printf("crawlcanconect: done");
 			
 		}
@@ -1673,28 +1691,38 @@ void connectHandler(int socket) {
 			//gettimeofday(&end_time2, NULL);
 			//printf("# 222 ### Time debug: sending url rewrite data %f\n",getTimeDifference(&start_time2,&end_time2));
 	
-			rewriteurl(rewrite.collection, rewrite.uri, sizeof(rewrite.uri), rewrite.ptype, rewrite.btype);
+			MYSQL db;
+			sql_connect(&db);
+			rewriteurl(&db, rewrite.collection, rewrite.uri, sizeof(rewrite.uri), rewrite.ptype, rewrite.btype);
 
 			if (sendall(socket, rewrite.uri, sizeof(rewrite.uri)) == 0) {
 				perror("sendall(uri)");
 			}
+			mysql_close(&db);
 
 			puts("cm_rewriteurl end");
-	        }
-                else if (packedHedder.command == cm_killcrawl) {
-                    int pid, ok;
-                    char errmsg[256];
-                    recvall(socket, &pid, sizeof pid);
+	     }
+         else if (packedHedder.command == cm_killcrawl) {
+            int pid;
+            char errmsg[256];
+            recvall(socket, &pid, sizeof pid);
+			
+			MYSQL db;
+			sql_connect(&db);
+			int coll_id = sql_coll_by_pid(&db, pid);
+			int ok = 0;
+			if (coll_id != -1) {
+            	ok = (pid > 0 && kill(pid, SIGKILL) != -1);
+				set_crawl_state(&db, CRAWL_ERROR, coll_id, "User stopped crawl.");
+			}
+			else {
+				blog(LOGACCESS, 1, "cm_killcrawl: no collection has pid %d, ignoring request.", pid);
+			}
+        	sendall(socket, &ok, sizeof ok);
+			mysql_close(&db);
 
-                    // TODO: check if pid is a crawlerManager process?
-                    ok = (pid > 0 && kill(pid, SIGKILL) != -1);
-        	    	sendall(socket, &ok, sizeof ok);
-
-					//TODO: Update crawl_pid in db share tbl
-					//TODO: Update status for share.
-
-                    printf("cm_killcraw: killed pid %d: %s\n", pid, ok ? "yes" : "no");
-                }
+            printf("cm_killcraw: killed pid %d: %s\n", pid, ok ? "yes" : "no");
+        }
 		else {
 			 printf("unknown command. %i\n", packedHedder.command);
 	        }
