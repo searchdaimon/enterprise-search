@@ -224,16 +224,16 @@ int main (int argc, char *argv[]) {
 		///////////////
 
 
-//		if ((optShowhtml) || (optShowWords) || (optAdult)) {
-			htmlBufferSize = 3000000;
-			htmlBuffer = malloc(htmlBufferSize);
-			struct ReposetoryHeaderFormat ReposetoryHeader;
-			char *url;
+		htmlBufferSize = 3000000;
+		htmlBuffer = malloc(htmlBufferSize);
+		struct ReposetoryHeaderFormat ReposetoryHeader;
+		char *url, *attributes;
 
-			rReadHtml(htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,DocumentIndexPost.imageSize, &url);
-			printf("Entire url: %s\n", url);
-
-//		}
+		if (rReadHtml(htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,DocumentIndexPost.imageSize, &url, &attributes)) {
+			printf("returned true!\n");
+		}
+		warn("rreadhtml()");
+		printf("Entire url: %s\n", url);
 		if (optShowhtml) {
 
 			printf("html uncompresed size %i\n",htmlBufferSize);
@@ -288,6 +288,7 @@ int main (int argc, char *argv[]) {
 			printf("adult %i\n",AdultWeight);
 		}
 		free(url);
+		free(attributes);
 		free(acl_allowbuffer);
 		free(acl_deniedbuffer);
 	}
