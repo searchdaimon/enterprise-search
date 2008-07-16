@@ -11,13 +11,13 @@ boitho-ad_name = boitho-ad
 boitho-ad_version = 0.3.13
 
 boitho-searchdbb_name = boitho-searchdbb
-boitho-searchdbb_version = 5.5.31
+boitho-searchdbb_version = 5.5.34
 
 boitho-crawlManager_name = boitho-crawlManager
-boitho-crawlManager_version = 1.4.34
+boitho-crawlManager_version = 1.4.37
 
 boitho-boitho-bbdn_name = boitho-bbdn
-boitho-boitho-bbdn_version = 1.8.9
+boitho-boitho-bbdn_version = 1.8.13
 
 boitho-fileFilter_name = boitho-fileFilter
 boitho-fileFilter_version = 1.3.10
@@ -29,7 +29,7 @@ boitho-apaceconf_name = boitho-apaceconf
 boitho-apaceconf_version = 1.3.0
 
 boitho-bbadmin_name = boitho-bbadmin
-boitho-bbadmin_version = 2.8.29
+boitho-bbadmin_version = 2.8.33
 
 boitho-everrun_name = boitho-everrun
 boitho-everrun_version = 2.0.3
@@ -38,7 +38,7 @@ boitho-infoquery_name = boitho-infoquery
 boitho-infoquery_version = 2.0.15
 
 boitho-iindex_name = boitho-iindex
-boitho-iindex_version = 2.0.18
+boitho-iindex_version = 2.0.20
 
 boitho-webclient_name = boitho-webclient
 boitho-webclient_version = 6.0.38
@@ -48,7 +48,7 @@ boithobb-setuid_version = 1.0.15
 
 
 boithobb-crawl_watch_name = boithobb-crawl_watch
-boithobb-crawl_watch_version = 1.0.12
+boithobb-crawl_watch_version = 1.0.13
 
 boithobb-bbAutoUpdate_name = bbAutoUpdate
 boithobb-bbAutoUpdate_version = 1.0.3
@@ -85,6 +85,9 @@ boitho-repomod_version = 1.2
 
 boitho-suggest_name = boitho-suggest
 boitho-suggest_version = 1.4
+
+boitho-gc_name = boitho-garbage-collection
+boitho-gc_version = 1.1
 
 
 all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch scripts repomod suggest
@@ -129,8 +132,13 @@ boithoad:
 
 	rpmbuild -bb $(boitho-ad_name).spec
 
+gc:
+	perl rpmmagic.pl $(boitho-gc_name) $(boitho-gc_version) $(BOITHOHOME) /home/boitho/boithoTools bin/gcAuthoritybb
+
+	rpmbuild -bb $(boitho-gc_name).spec
+
 crawl_watch:
-	perl rpmmagic.pl --pre "rm -f /home/boitho/boithoTools/logs/crawl_watch.log" --requires "boithobb-sqlUpdate>=0.5.3-1 boitho-crawlManager>=1.4.12-1 boithobb-filepermissions" --initd crawl_watch $(boithobb-crawl_watch_name) $(boithobb-crawl_watch_version) $(BOITHOHOME) /home/boitho/boithoTools perl/crawl_watch.pl perl/CrawlWatch
+	perl rpmmagic.pl --pre "rm -f /home/boitho/boithoTools/logs/crawl_watch.log" --requires "boitho-garbage-collection boithobb-sqlUpdate>=0.5.3-1 boitho-crawlManager>=1.4.12-1 boithobb-filepermissions" --initd crawl_watch $(boithobb-crawl_watch_name) $(boithobb-crawl_watch_version) $(BOITHOHOME) /home/boitho/boithoTools perl/crawl_watch.pl perl/CrawlWatch
 
 	rpmbuild -bb $(boithobb-crawl_watch_name).spec
 
