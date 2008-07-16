@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <inttypes.h>
 #include <dirent.h>
+#include <err.h>
 
 #include "../common/define.h"
 #include "../common/langdetect.h"
@@ -66,6 +67,7 @@ struct DIArrayFormat {
 
 struct relocal {
 	struct reformat *DocumentIndexFormat;
+	struct reformat *crc32map;
 };
 
 struct filteredf {
@@ -379,7 +381,7 @@ void makePreParsedSummary(const char body[], int bodylen,const  char title[],int
 
 
 int getNextPage(struct IndexerLot_workthreadFormat *argstruct,char htmlcompressdbuffer[],int htmlcompressdbuffer_size, 
-	char imagebuffer[],int imagebuffer_size,unsigned long int *radress, char **acl_allow, char **acl_denied,struct ReposetoryHeaderFormat *ReposetoryHeader, char **url) {
+	char imagebuffer[],int imagebuffer_size,unsigned long int *radress, char **acl_allow, char **acl_denied,struct ReposetoryHeaderFormat *ReposetoryHeader, char **url, char **attributes) {
 	//lock
 	int forreturn;
 	//må holde status om rGetNext() har sakt at dette er siste. Hvis ikke hamrer vi bortenfor eof
@@ -403,7 +405,7 @@ int getNextPage(struct IndexerLot_workthreadFormat *argstruct,char htmlcompressd
 		 forreturn = 0;
 	}
 	else if (rGetNext_fh((*argstruct).lotNr,ReposetoryHeader,htmlcompressdbuffer,htmlcompressdbuffer_size,
-			imagebuffer,radress,(*argstruct).FiltetTime,(*argstruct).FileOffset,(*argstruct).subname,acl_allow,acl_denied,argstruct->FNREPO, url)) {
+			imagebuffer,radress,(*argstruct).FiltetTime,(*argstruct).FileOffset,(*argstruct).subname,acl_allow,acl_denied,argstruct->FNREPO, url, attributes)) {
 
 
 		++(*argstruct).pageCount;
@@ -489,7 +491,7 @@ void *IndexerLot_workthread(void *arg) {
 	char *title;
         char *body;
 	char *metadesc;
-	char *url;
+	char *url, *attributes;
 	unsigned int crc32;
 
 	Bytef *SummaryBuffer;
@@ -505,9 +507,8 @@ void *IndexerLot_workthread(void *arg) {
 
 	wordsInit(pagewords);
 
-
 	while (getNextPage(argstruct,htmlcompressdbuffer,sizeofhtmlcompressdbuffer,imagebuffer,sizeofimagebuffer,
-		&radress,&acl_allow,&acl_denied,&ReposetoryHeader, &url)) {
+		&radress,&acl_allow,&acl_denied,&ReposetoryHeader, &url, &attributes)) {
 
        				awvalue = 0;
                			title = NULL;
@@ -517,6 +518,9 @@ void *IndexerLot_workthread(void *arg) {
 				SummaryBuffer = NULL;
 
 				DocIDPlace = (ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr));
+				if (ReposetoryHeader.DocID == 1) {
+					printf("Docid: 1\n");
+				}
 
 
 				if ((DocumentIndexPost = malloc(sizeof(struct DocumentIndexFormat))) == NULL) {
@@ -546,7 +550,7 @@ void *IndexerLot_workthread(void *arg) {
 				}
 
 				//hvis dette er samme dokumens som vi har fra før kan vi ignorere det.
-				if ( (argstruct->rEindex == 0) && (DocumentIndexPost->RepositoryPointer == radress) ) {
+				if (ReposetoryHeader.DocID != 1 && (argstruct->rEindex == 0) && (DocumentIndexPost->RepositoryPointer == radress) ) {
 					#ifdef DEBUG
 						printf("have already indexed this dokument\n");
 					#endif
@@ -565,7 +569,6 @@ void *IndexerLot_workthread(void *arg) {
 				//printf("HtmlBuffer:\n##############\n%s\n#####################\n",HtmlBuffer);
 
 				crc32 = crc32boithonl(HtmlBuffer,HtmlBufferLength);
-
 
 				if((*argstruct).optHandleOld) {
 
@@ -841,9 +844,7 @@ void *IndexerLot_workthread(void *arg) {
 					//DIWrite(DocumentIndexPost,ReposetoryHeader.DocID,(*argstruct).subname);
 
 
-
-
-
+			
 
 				#ifdef WITH_THREAD
 					pthread_mutex_unlock(&(*argstruct).restmutex);
@@ -854,6 +855,7 @@ void *IndexerLot_workthread(void *arg) {
 				(*argstruct).DIArray[DocIDPlace].DocID = ReposetoryHeader.DocID;						
 
 				DocumentIndexPost->crc32 = crc32;
+				*RE_Uint(argstruct->re.crc32map, ReposetoryHeader.DocID) = crc32;
 			
 				(*argstruct).DIArray[DocIDPlace].p = DocumentIndexPost;
 			
@@ -872,6 +874,7 @@ void *IndexerLot_workthread(void *arg) {
 
 				pageDone:
 
+
 				if (SummaryBuffer != NULL) {
 					free(SummaryBuffer);
 				}
@@ -884,15 +887,16 @@ void *IndexerLot_workthread(void *arg) {
 				if (metadesc != NULL) {
 					free(metadesc);
 				}
+				if (url != NULL)
+					free(url);
+				if (attributes != NULL)
+					free(attributes);
 				//hvis vi ikke har peket til DocumentIndexPost, men har allokert den, kan vi slette den
 				if ((argstruct->DIArray[DocIDPlace].p == NULL) && (DocumentIndexPost != NULL)) {
 					free(DocumentIndexPost);
 				}
 
-				free(url);
-
-		}		
-
+		}
 
 	wordsEnd(pagewords);
 
@@ -1299,10 +1303,11 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			flags = 0;
 		#endif
         	if((argstruct->re.DocumentIndexFormat = reopen(lotNr, sizeof(struct DocumentIndexFormat), "DocumentIndex", subname, flags )) == NULL) {
-        	        perror("can't reopen()");
-        	        exit(1);
+        	        err(1, "can't reopen(DocumentIndex)");
 	        }
-
+        	if((argstruct->re.crc32map = reopen(lotNr, sizeof(unsigned int), "crc32map", subname, 0)) == NULL) {
+        	        err(1, "can't reopen(crc32map)");
+	        }
 
 
 		//malloc
@@ -1584,6 +1589,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 
 		reclose(argstruct->re.DocumentIndexFormat);
+		reclose(argstruct->re.crc32map);
 	
 		//netlot: Vi sender det vi har laget
 		if ((opt->NetLot != NULL) && (opt->Query == NULL)) {
