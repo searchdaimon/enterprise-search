@@ -14,6 +14,12 @@
 #include "../3pLibs/keyValueHash/hashtable.h"
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
 #include "../common/utf8-strings.h"
+#include "../common/ht.h"
+#include "../common/re.h"
+#include "../ds/dcontainer.h"
+#include "../ds/dlist.h"
+#include "../ds/dpair.h"
+
 
 #ifdef BLACK_BOKS
 
@@ -2314,7 +2320,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		struct filtersFormat *filters,
 		struct filteronFormat *filteron,
 		query_array *search_user_as_query,
-		int ranking
+		int ranking, struct hashtable **crc32maphash
 		) {
 
 	fprintf(stderr, "search: searchSimple()\n");
@@ -2323,6 +2329,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	//int x=0,j=0,k=0;
 	unsigned char PopRank;
 	int responseShortTo;
+	struct reformat *crc32map;
 
 	int rankcount[256]; // rank går fra 0-252 (unsigned char)
 	//int M,N;
@@ -2573,21 +2580,43 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 	gettimeofday(&start_time, NULL);
 
+	// Loop over all results and do duplicate checking...
+	//struct hashtable *crc32maphash;
+	if (crc32maphash != NULL)
+		*crc32maphash = create_hashtable(41, ht_integerhash, ht_integercmp);
 
-	//y=0;
+	y=0;
        	for (i = 0; i < (*TeffArrayElementer); i++) {
-       	        //PopRank = popRankForDocIDMemArray(TeffArray[i].DocID);
-		//neste linje må fjeres hvis vi skal ha forkorting
-		//TeffArray[i].PopRank = PopRank;
 		TeffArray->iindex[i].PopRank = popRankForDocIDMemArray(TeffArray->iindex[i].DocID);
+#if 1
+		if (crc32maphash == NULL)
+			continue;
 
-		//her kan vi ha forkortning av array
-		//if (PopRank > 0) {
-               	//	TeffArray[y] = TeffArray[i];
-                //        TeffArray[y].PopRank = PopRank;
-                //	++y;
-		//}
+		/* XXX: Don't reopen all the time */
+		if ((crc32map = reopen(rLotForDOCid(TeffArray->iindex[i].DocID), sizeof(unsigned int), "crc32map", TeffArray->iindex[i].subname->subname, 0)) == NULL)
+			err(1, "reopen(crc32map)");
+
+		unsigned int crc32;
+		crc32 = *RE_Uint(crc32map, TeffArray->iindex[i].DocID);
+		printf("Got hash value: %x\n", crc32);
+		reclose(crc32map);
+
+		container *list = hashtable_search(*crc32maphash, &crc32);
+		if (list == NULL) {
+			list = list_container(pair_container(int_container(), string_container()));
+			hashtable_insert(*crc32maphash, uinttouintp(crc32), list);
+
+			list_pushback(list, TeffArray->iindex[i].DocID, TeffArray->iindex[i].subname->subname);
+			/* Remove duplicated */
+			memmove(&TeffArray->iindex[y], &TeffArray->iindex[i], sizeof(&TeffArray->iindex[i]));
+			y++;
+		} else {
+			list_pushback(list, TeffArray->iindex[i].DocID, TeffArray->iindex[i].subname->subname);
+		}
+#endif
 	}
+	//reclose_cache();
+	*TeffArrayElementer = y;
 
         gettimeofday(&end_time, NULL);
         (*queryTime).popRank = getTimeDifference(&start_time,&end_time);
@@ -2595,7 +2624,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	//kutter ned på treff errayen, basert på rank. Slik at vå får ferre elemeneter å sortere
 
 	//totalt treff. Vi vil så korte ned TeffArray
-	(*TotaltTreff) = (*TeffArrayElementer);
+	*TotaltTreff = *TeffArrayElementer;
 
 	gettimeofday(&start_time, NULL);
 

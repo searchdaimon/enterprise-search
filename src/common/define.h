@@ -289,15 +289,15 @@ struct ReposetoryHeaderFormat {
 	unsigned short userID;
 	double clientVersion;
 #ifdef BLACK_BOKS
-	//int aclSize;
 	int acl_allowSize;
 #ifdef IIACL
 	int acl_deniedSize;
 #endif
-	time_t storageTime; //3 now
-	char doctype[4]; //3 now
+	time_t storageTime;
+	char doctype[4];
 	unsigned short urllen;
-	char reservedSpace[62]; //3 now
+	unsigned int attributeslen;
+	char reservedSpace[58];
 #endif
 };
 
@@ -430,8 +430,16 @@ struct SiderFormat {
 
 	unsigned short DomainID;
 
+	unsigned int n_urls;
+	struct {
+		char *url;
+		char *uri;
+		char subname[64];
+	} *urls;
+	char *attributes;
+
 	//buffering som gjør at vi kan lagre den på fil, og fortsatt bruke gammel data
-	char reserved[40];
+	char reserved[28];
 };
 
 struct queryTimeFormat {

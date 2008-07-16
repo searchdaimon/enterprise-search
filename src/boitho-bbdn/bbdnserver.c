@@ -95,6 +95,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			#endif
 
 			char *subname,*documenturi,*documenttype,*document,*acl_allow,*acl_denied,*title,*doctype;
+			char *attributes;
 			int dokument_size;
 			unsigned int lastmodified;
 
@@ -200,9 +201,16 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
                                 exit(1);
                         }
 
-			printf("got subname \"%s\": title \"%s\". Nr %i, dokument_size %i\n",subname,title,count,dokument_size);
+			// Attribute list
+			if ((i = recvall(socket, &intrespons, sizeof(intrespons))) == 0)
+				err(1, "Can't receive attribute list len");
+			attributes = malloc(intrespons +1);
+			if ((i=recvall(socket, attributes, intrespons)) == 0)
+				err(1, "Can't receive attribute list");
 
-			bbdocument_add(subname,documenturi,documenttype,document,dokument_size,lastmodified,acl_allow,acl_denied,title,doctype);
+			printf("got subname \"%s\": title \"%s\". Nr %i, dokument_size %i attrib: %s\n",subname,title,count,dokument_size, attributes);
+
+			bbdocument_add(subname,documenturi,documenttype,document,dokument_size,lastmodified,acl_allow,acl_denied,title,doctype, attributes);
 
 			free(subname);
 			free(documenturi);
@@ -212,6 +220,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			free(acl_denied);
 			free(title);
 			free(doctype);
+			free(attributes);
 		}
 		else if (packedHedder.command == bbc_closecollection) {
 			printf("closecollection\n");

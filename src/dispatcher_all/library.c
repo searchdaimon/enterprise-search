@@ -508,6 +508,7 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 		
 
 			if (sockfd[i] != 0) {
+				int j;
 
 				/*
 				for(y=0;y<SiderHeder[i].showabal;y++) {
@@ -522,15 +523,43 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 					printf("brGetPages: trying to read %i bytes from server %i\n",sizeof(struct SiderFormat) * SiderHeder[i].showabal,i);
 					printf("have %i pages\n",SiderHeder[i].showabal);
 				#endif
-						
-				if ((n=bsread (&sockfd[i],sizeof(struct SiderFormat) * SiderHeder[i].showabal,(char *)&Sider[(*pageNr)],maxSocketWait_SiderHeder))) {
-					(*pageNr) += SiderHeder[i].showabal;
+
+				for (j = 0; j < SiderHeder[i].showabal; j++) {
+					if ((n=bsread (&sockfd[i],sizeof(struct SiderFormat), &Sider[(*pageNr)],maxSocketWait_SiderHeder))) {
+						size_t len;
+						int k;
+						/* Get urls ... */
+						Sider[*pageNr].urls = calloc(Sider[*pageNr].n_urls, sizeof(*(Sider->urls)));
+
+						for (k = 0; k < Sider[*pageNr].n_urls; k++) {
+
+							bsread(&sockfd[i], sizeof(len), &len, maxSocketWait_SiderHeder);
+							Sider[*pageNr].urls[k].url = malloc(len+1);
+							bsread(&sockfd[i], len, Sider[*pageNr].urls[k].url, maxSocketWait_SiderHeder);
+							Sider[*pageNr].urls[k].url[len] = '\0';
+
+							bsread(&sockfd[i], sizeof(len), &len, maxSocketWait_SiderHeder);
+							Sider[*pageNr].urls[k].uri = malloc(len+1);
+							bsread(&sockfd[i], len, Sider[*pageNr].urls[k].uri, maxSocketWait_SiderHeder);
+							Sider[*pageNr].urls[k].uri[len] = '\0';
+
+							//bsread(&sockfd[i], 64, Sider[*pageNr].urls[k].subname, maxSocketWait_SiderHeder);
+
+						}
+
+						bsread(&sockfd[i], sizeof(len), &len, maxSocketWait_SiderHeder);
+						Sider[*pageNr].attributes = malloc(len+1);
+						bsread(&sockfd[i], len, Sider[*pageNr].attributes, maxSocketWait_SiderHeder);
+						Sider[*pageNr].attributes[len] = '\0';
+						//printf("Len: %d str: %s\n", len, Sider[*pageNr].attributes);
+
+						(*pageNr) += 1;
+					}
 				}
 
 				#ifdef DEBUG
 					printf("brGetPages: did read %i element\n",n);
 				#endif
-
 			}
 	}
 
@@ -539,7 +568,6 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 	gettimeofday(&end_time, NULL);
 	dprintf("Time debug: brGetPages.reading pages %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
-
 }
 
 

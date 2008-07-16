@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <string.h>
 #include <sys/uio.h>
 #include <unistd.h>
@@ -528,6 +529,7 @@ void *do_chld(void *arg)
 	struct SiderFormat *Sider;
 	int net_status;
 	int ranking;
+	struct hashtable *crc32hashmap;
 
 	//struct SiderFormat Sid
 
@@ -1285,7 +1287,9 @@ void *do_chld(void *arg)
 	gettimeofday(&start_time, NULL);
 	#endif
 
-
+	/* Disable tcp delay */
+	int nodelayflag = 1;
+	setsockopt(mysocfd, IPPROTO_TCP, TCP_NODELAY, &nodelayflag, sizeof(int));
 
 	if ((n=send(mysocfd,SiderHeder, sizeof(struct SiderHederFormat),MSG_NOSIGNAL)) != sizeof(struct SiderHederFormat)) {
 		fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(struct SiderHederFormat),__FILE__,__LINE__);
@@ -1302,11 +1306,36 @@ void *do_chld(void *arg)
 	#endif
 
 
-	//if ((n=send(mysocfd,&Sider, sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits, MSG_NOSIGNAL)) != (sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits)) {
-	if ((n=send(mysocfd,Sider, sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits, MSG_NOSIGNAL)) != (sizeof(struct SiderFormat) * queryNodeHeder.MaxsHits)) {
-		fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(struct SiderFormat)*queryNodeHeder.MaxsHits,__FILE__,__LINE__);
-		perror("sendall");
-	}		
+	for (i = 0; i < queryNodeHeder.MaxsHits; i++) {
+		int j;
+		struct SiderFormat *s = Sider+i;
+		size_t len;
+
+		//printf("N_urls: %d\n", s->n_urls);
+		if ((n=send(mysocfd, s, sizeof(struct SiderFormat), MSG_NOSIGNAL)) != (sizeof(struct SiderFormat))) {
+			fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(struct SiderFormat),__FILE__,__LINE__);
+			break;
+		}
+		/* Send duplicate urls */
+		for (j = 0; j < s->n_urls; j++) {
+			len = strlen(s->urls[j].url);
+			send(mysocfd, &len, sizeof(len), MSG_NOSIGNAL);
+			send(mysocfd, s->urls[j].url, len, MSG_NOSIGNAL);
+			len = strlen(s->urls[j].uri);
+			send(mysocfd, &len, sizeof(len), MSG_NOSIGNAL);
+			send(mysocfd, s->urls[j].uri, len, MSG_NOSIGNAL);
+
+			//printf("sending url: %s\n", s->urls[j].uri);
+
+			//send(mysocfd, s->urls[j].subname, sizeof(s->urls[j].subname), MSG_NOSIGNAL);
+		}
+
+		/* Send attributes */
+		//printf("### Send attributes: %s\n", s->attributes);
+		len = strlen(s->attributes);
+		send(mysocfd, &len, sizeof(len), MSG_NOSIGNAL);
+		send(mysocfd, s->attributes, len, MSG_NOSIGNAL);
+	}
 	
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);

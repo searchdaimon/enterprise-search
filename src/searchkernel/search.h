@@ -1,4 +1,5 @@
-//void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *TotaltTreff, query_array *queryParsed,struct queryTimeFormat *queryTime,struct subnamesFormat subnames[], int nrOfSubnames, int languageFilterNr, int languageFilterAsNr[],char orderby[],int dates[]);
+struct hashtable;
+
 void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *TotaltTreff,
                 query_array *queryParsed, struct queryTimeFormat *queryTime,
                 struct subnamesFormat subnames[], int nrOfSubnames,int languageFilterNr,
@@ -6,7 +7,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
                 struct filtersFormat *filters,
 		struct filteronFormat *filteron,
 		query_array *search_user_as_query,
-		int
+		int ranking, struct hashtable **crc32maphash
 		);
 
 #ifdef BLACK_BOKS

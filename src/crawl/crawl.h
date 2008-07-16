@@ -60,6 +60,7 @@ struct crawldocumentAddFormat {
 	char *acl_denied;
 	char *title;
 	char *doctype;
+	char *attributes;
 };
 
 //argumenter til crawlfirst()

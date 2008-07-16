@@ -49,7 +49,7 @@
 //temp77
 #include <locale.h>
 
-#define CurrentReposetoryVersion 5
+#define CurrentReposetoryVersion 6
 
 int findLotToIndex(char subname[], int dirty) {
 
@@ -330,7 +330,7 @@ unsigned int rGeneraeADocID (char subname[]) {
 	return DocID;
 }
 
-int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url) {
+int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes) {
 	int error;
 	int WorkBuffSize = (*ReposetoryHeader).htmlSize;
 	char *WorkBuff;
@@ -351,7 +351,7 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 
 	(*ReposetoryHeader).htmlSize = WorkBuffSize;
 
-	rApendPost(ReposetoryHeader,WorkBuff,imagebuffer,subname,acl_allow,acl_denied, reponame, url);
+	rApendPost(ReposetoryHeader,WorkBuff,imagebuffer,subname,acl_allow,acl_denied, reponame, url, attributes);
 
 	free(WorkBuff);
 
@@ -361,7 +361,7 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 
 	return 1;
 }
-unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url) {
+unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes) {
 
 	unsigned long int offset;
 
@@ -433,6 +433,7 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 
 #ifdef BLACK_BOKS
 	fwrite(url, ReposetoryHeader->urllen, 1, RFILE);
+	fwrite(attributes, ReposetoryHeader->attributeslen, 1, RFILE);
 #endif
 
         //skriver record seperator
@@ -732,7 +733,7 @@ int rReadSummary_l(const unsigned int DocID,char **metadesc, char **title, char 
 //leser en post
 int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radress64bit,unsigned int 
 		rsize,unsigned int DocID,char subname[],struct ReposetoryHeaderFormat *ReposetoryHeader,
-		char **acl_allowbuffer,char **acl_deniedbuffer, unsigned int imagesize, char **url) {
+		char **acl_allowbuffer,char **acl_deniedbuffer, unsigned int imagesize, char **url, char **attributes) {
 
         #ifdef TIME_DEBUG_L
                 struct timeval start_time, end_time;
@@ -807,7 +808,7 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 
 	#else
 		rReadPost2(fd,ReposetoryHeader,WorkBuff,sizeof(WorkBuff),NULL,acl_allowbuffer,acl_deniedbuffer,
-			recordseparator,rsize,imagesize, url);
+			recordseparator,rsize,imagesize, url, attributes);
 	#endif
 
 
@@ -1051,7 +1052,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 
 int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
 			char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[],
-			unsigned int rsize,unsigned int imagesize, char **url) {
+			unsigned int rsize,unsigned int imagesize, char **url, char **attributes) {
 
         #ifdef TIME_DEBUG_L
 		// for totalt tid i funksjonen
@@ -1104,32 +1105,24 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 	//hedder	
 	totalpost_p += memcpyrc(ReposetoryHeader,totalpost_p,sizeof(struct ReposetoryHeaderFormat));
 
-
-
 	if ((*ReposetoryHeader).htmlSize == 0) {
-		#ifdef DEBUG
-			printf("htmlSize is 0. Skipping to read it\n");
-		#endif
-	}
-	else if (htmlbuffer == NULL) {
+#ifdef DEBUG
+		printf("htmlSize is 0. Skipping to read it\n");
+#endif
+	} else if (htmlbuffer == NULL) {
 		//hvis vi ikke har en buffer å putte htmlen inn i søker vi bare over
 		//fseek(LotFileOpen,(*ReposetoryHeader).htmlSize,SEEK_CUR);
-	}
-	else {
+	} else {
 		totalpost_p += memcpyrc(htmlbuffer,totalpost_p,(*ReposetoryHeader).htmlSize);
-
 	}
 
 	if ((*ReposetoryHeader).imageSize == 0) {
 		//printf("imageSize is 0. Skipping to read it\n");
-	}
-	else if (imagebuffer == NULL) {
+	} else if (imagebuffer == NULL) {
 		//hvis vi ikke har en buffer å putte bilde inn i søker vi bare over
 		//fseek(LotFileOpen,(*ReposetoryHeader).imageSize,SEEK_CUR);
-	}
-	else {
+	} else {
 		totalpost_p += memcpyrc(imagebuffer,totalpost_p,(*ReposetoryHeader).imageSize);
-
 	}
 
 	//leser acl
@@ -1185,6 +1178,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		#endif
 
 
+		/* We have variable length url */
 		if (CurrentReposetoryVersionAsUInt > 4) {
 			(*url) = malloc(ReposetoryHeader->urllen+1);
 			if (ReposetoryHeader->urllen != 0) {
@@ -1199,6 +1193,23 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 			strcpy(*url, ReposetoryHeader->url);
 		}
 
+		/* We have attributes */
+		if (CurrentReposetoryVersionAsUInt > 5) {
+			(*attributes) = malloc(ReposetoryHeader->attributeslen+1);
+			if (ReposetoryHeader->attributeslen != 0) {
+				int n;
+				if ((n = read(LotFileOpen, *attributes, ReposetoryHeader->attributeslen)) == -1) {
+					printf("%d\n", n);
+					printf("cant't read attributes. attributeslen is %i at %s:%d\n",
+					    ReposetoryHeader->attributeslen, __FILE__, __LINE__);
+					perror("");
+				}
+			}
+			(*attributes)[ReposetoryHeader->attributeslen] = '\0';
+		} else {
+			*attributes = NULL;
+		}
+
 		if(read(LotFileOpen,recordseparator,sizeof(char) * 3) != 3) {
 			perror("can't read recordseperator");
 		}
@@ -1211,6 +1222,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 
 		*url = malloc(strlen(ReposetoryHeader->url)+1);
 		strcpy(*url, ReposetoryHeader->url);
+		*attributes = strdup("");
 	#endif
 
 	free(totalpost);
@@ -1243,7 +1255,8 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 }
 
 int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
-			char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[], char **url) {
+			char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[], char **url,
+			char **attributes) {
 
         #ifdef TIME_DEBUG_L
                 struct timeval start_time, end_time;
@@ -1373,6 +1386,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 
 #endif
 
+			/* We have variables length url */
 			if (CurrentReposetoryVersionAsUInt > 4) {
 				(*url) = malloc(ReposetoryHeader->urllen+1);
 				if (ReposetoryHeader->urllen != 0) {
@@ -1386,11 +1400,27 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 				*url = malloc(strlen(ReposetoryHeader->url)+1);
 				strcpy(*url, ReposetoryHeader->url);
 			}
+			/* We have attributes */
+			if (CurrentReposetoryVersionAsUInt > 5) {
+				(*attributes) = malloc(ReposetoryHeader->attributeslen+1);
+				if (ReposetoryHeader->attributeslen!= 0) {
+					if (fread(*attributes, 1, ReposetoryHeader->attributeslen, LotFileOpen) !=
+					    ReposetoryHeader->attributeslen) {
+						printf("cant't read attributes. attributeslen is %i at %s:%d\n",
+						    ReposetoryHeader->attributeslen, __FILE__, __LINE__);
+						perror("");
+					}
+				}
+				(*attributes)[ReposetoryHeader->attributeslen] = '\0';
+			} else {
+				*attributes = NULL;
+			}
 
 
 		#else
 			*url = malloc(strlen(ReposetoryHeader->url)+1);
 			strcpy(*url, ReposetoryHeader->url);
+			*attributes = strdup("");
 		#endif
 		
 	
@@ -1422,7 +1452,7 @@ while (rGetNext(LotNr,ReposetoryData)) {
 
 int rGetNext_fh (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
 int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,
-char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url) {
+char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, char **attributes) {
 
 	//global variabel for rGetNext
 	unsigned int startOffset,stoppOffset;
@@ -1460,7 +1490,7 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpe
                 //        char imagebuffer[],char **aclbuffer,char recordseparator[])
 
 
-		rReadPost(LotFileOpen,ReposetoryHeader,htmlbuffer,htmlbufferSize,imagebuffer,acl_allowbuffer,acl_deniedbuffer,recordseparator, url);
+		rReadPost(LotFileOpen,ReposetoryHeader,htmlbuffer,htmlbufferSize,imagebuffer,acl_allowbuffer,acl_deniedbuffer,recordseparator, url, attributes);
 
 		//runpack(ReposetoryData,buff,bufflength);
 		
@@ -1578,7 +1608,7 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpe
 
 int rGetNext_reponame (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
 int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,
-char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, char **url) {
+char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, char **url, char **attributes) {
 
 	static FILE *LotFileOpen;
 	static int LotOpen = -1;
@@ -1612,7 +1642,7 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, 
 		}
 	}
 
-	found = rGetNext_fh(LotNr, ReposetoryHeader, htmlbuffer, htmlbufferSize, imagebuffer, radress, FilterTime, FileOffset, subname, acl_allowbuffer, acl_deniedbuffer, LotFileOpen, url);	
+	found = rGetNext_fh(LotNr, ReposetoryHeader, htmlbuffer, htmlbufferSize, imagebuffer, radress, FilterTime, FileOffset, subname, acl_allowbuffer, acl_deniedbuffer, LotFileOpen, url, attributes);
 
 
 	if (!found) {
@@ -1630,9 +1660,9 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, 
 
 int rGetNext (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
 int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,
-char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char **url) {
+char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char **url, char **attributes) {
 
-	return rGetNext_reponame(LotNr,ReposetoryHeader,htmlbuffer,htmlbufferSize,imagebuffer,radress,FilterTime,FileOffset,subname,acl_allowbuffer,acl_deniedbuffer,"reposetory", url);
+	return rGetNext_reponame(LotNr,ReposetoryHeader,htmlbuffer,htmlbufferSize,imagebuffer,radress,FilterTime,FileOffset,subname,acl_allowbuffer,acl_deniedbuffer,"reposetory", url, attributes);
 }
 
 

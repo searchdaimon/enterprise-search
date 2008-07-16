@@ -5,13 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
-
-
 main (int argc, char *argv[]) {
-	
-
 	int LotNr;
 	char lotPath[255];
 
@@ -23,7 +17,7 @@ main (int argc, char *argv[]) {
 	char imagebuffer[524288];
 	char *acl_allow;
 	char *acl_deny;
-	char *url;
+	char *url, *attributes;
 
 	int StatisticsUncompressError = 0;;
 	int StatisticsUncompressOk = 0;
@@ -78,7 +72,7 @@ main (int argc, char *argv[]) {
 
 
 	//loppergjenom alle
-	while (rGetNext_reponame(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&radress,0,0,subname,&acl_allow,&acl_deny,optReponame, &url)) {
+	while (rGetNext_reponame(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&radress,0,0,subname,&acl_allow,&acl_deny,optReponame, &url, &attributes)) {
 
 		printf("DocId: %i url: %s res %hi htmlsize %hi time %lu, radress %lu\n",ReposetoryHeader.DocID,ReposetoryHeader.url,ReposetoryHeader.response,ReposetoryHeader.htmlSize,ReposetoryHeader.time,radress);
 		uncompresshtmlLength = sizeof(uncompresshtml);
@@ -105,6 +99,7 @@ main (int argc, char *argv[]) {
 				}
 				++StatisticsUncompressError;
 			}
+			printf("Attributes: %s\n", attributes);
 		}
 
 	}

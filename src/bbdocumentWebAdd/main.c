@@ -123,7 +123,7 @@ sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 
 	fprintf(stderr, "Adding: %s\n", xmldoc.body);
 	bbdn_docadd(sock, xmldoc.collection, xmldoc.uri, xmldoc.documenttype, xmldoc.body, xmldoc.bodysize,
-	    xmldoc.lastmodified, xmldoc.aclallow, xmldoc.acldeny, xmldoc.title, xmldoc.documentformat);//, xmldoc.attributes);
+	    xmldoc.lastmodified, xmldoc.aclallow, xmldoc.acldeny, xmldoc.title, xmldoc.documentformat, xmldoc.attributes);
 
  err:
 	free(xmldoc.title);

@@ -26,6 +26,8 @@
 #include "../query/stemmer.h"
 #include "../common/integerindex.h"
 
+#include "../common/ht.h"
+
 #ifdef WITH_SPELLING
 	#include "../spelling/spelling.h"
 #endif
@@ -66,6 +68,10 @@
 //#include "../common/define.h"
 
 //#include "cgi-util.h"
+
+#include "../ds/dcontainer.h"
+#include "../ds/dlist.h"
+#include "../ds/dpair.h"
 
 	//struct iindexFormat *TeffArray; //[maxIndexElements];
 
@@ -141,6 +147,9 @@ struct PagesResultsFormat {
 		#ifdef DEBUG_TIME
 		struct popResultBreakDownTimeFormat popResultBreakDownTime;
 		#endif
+		struct hashtable *crc32maphash;
+		enum platform_type ptype; 
+		enum browser_type btype; 
 };
 
 
@@ -251,14 +260,16 @@ handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum br
 #endif
 
 
-int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,
+int
+popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,
 	struct iindexMainElements *TeffArray,struct QueryDataForamt QueryData, char *htmlBuffer,
-	unsigned int htmlBufferSize, char servername[],char subname[], unsigned int getRank,struct queryTimeFormat *queryTime, int summaryFH,
-	struct PagesResultsFormat *PagesResults) {
+	unsigned int htmlBufferSize, char servername[],char subname[], unsigned int getRank,
+	struct queryTimeFormat *queryTime, int summaryFH, struct PagesResultsFormat *PagesResults)
+{
 
 	vboprintf("searchkernel: popResult(antall=%i, DocID=%i)\n", antall, DocID);
 
-	char *url = NULL;
+	char *url = NULL, *attributes = NULL;
 	int y;
 	char        *titleaa, *body, *metakeyw, *metadesc;
 	struct ReposetoryHeaderFormat ReposetoryHeader;
@@ -269,154 +280,154 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 	titleaa = body = metakeyw = metadesc = NULL;
 
 	char *strpointer;
-   
+
 	int termpos;
 	int returnStatus = 0;	
 
 
 
-		(*Sider).cacheLink[0] = '\0';
+	(*Sider).cacheLink[0] = '\0';
+
+
+	htmlBuffer[0] = '\0';
+
+
+	//printf("DocID: %i, url: \"%s\"\n",DocID,(*Sider).DocumentIndex.Url);
+
+	//ser om vi har bilde, og at det ikke er på 65535 bytes. (65535  er maks støresle 
+	//for unsigned short. Er bilde så stort skyldes det en feil)
+	if (((*Sider).DocumentIndex.imageSize != 0) && ((*Sider).DocumentIndex.imageSize != 65535)) {
+
+		imagep =  getImagepFromRadres((*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize);
+		printf("imakep %u\n",(unsigned int)imagep);
+#ifdef BLACK_BOKS
+		sprintf((*Sider).thumbnale,"/cgi-bin/ShowThumbbb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",
+				rLotForDOCid(DocID),
+				(unsigned int)imagep,
+				(*Sider).DocumentIndex.imageSize,
+				subname);
+
+#else
+		sprintf((*Sider).thumbnale,"http://%s/cgi-bin/ShowThumb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",
+				servername,
+				rLotForDOCid(DocID),
+				(unsigned int)imagep,
+				(*Sider).DocumentIndex.imageSize,
+				subname);
+#endif
+		//sprintf((*Sider).thumbnale,"http://%s/cgi-bin/ShowThumb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",servername,rLotForDOCid(DocID),4 + sizeof(struct ReposetoryHeaderFormat) + ((*Sider).DocumentIndex.RepositoryPointer + (*Sider).DocumentIndex.htmlSize),(*Sider).DocumentIndex.imageSize,subname);
+		(*Sider).thumbnailwidth = 100;
+		(*Sider).thumbnailheight = 100;
+	}
+	else {
+		//sprintf((*Sider).thumbnale,"http://www.boitho.com/images/spacer.jpg");
+		(*Sider).thumbnale[0] = '\0';
+	}
+
+	//tester om vi har en url
+	if ((*Sider).DocumentIndex.Url[0] == '\0') {
+		printf("Cant read url for %i-%i\n",DocID,rLotForDOCid(DocID));
+		//temp: blie denne kalt også ved popresult sjekken i dosearch?
+		//(*SiderHeder).filtered++;
+		returnStatus = 0;
+	}
+	//tester om vi har noe innhold
+	else if ((*Sider).DocumentIndex.htmlSize == 0) {
+		//har ingen reposetroy data, ikke kravlet anda?
+		//(*SiderHeder).filtered++;
+
+		//setter utlen som title
+
+		strscpy((*Sider).title,(*Sider).DocumentIndex.Url,sizeof((*Sider).title));
+		(*Sider).DocumentIndex.AdultWeight = 0;
+
+		(*Sider).description[0] = '\0'; 
+
+		//(*Sider).thumbnale[0] = '\0';
+		//printf("teter for inhole: %i rank: %i, i= %i showabal= %i\n",DocID,allrank,i,(*SiderHeder).showabal);
+		//memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
+
+		(*SiderHeder).showabal++;
+		returnStatus = 1;
+	}
+	else {
+		//int rread (struct ReposetoryFormat *ReposetoryData,unsigned int *radress,unsigned int *rsize,unsigned long DocID)			
 
 
 		htmlBuffer[0] = '\0';
 
-			
-			//printf("DocID: %i, url: \"%s\"\n",DocID,(*Sider).DocumentIndex.Url);
+		if ((*Sider).DocumentIndex.response == 404) {
+			//404 sider kan dukke opp i athor indeksen, da den som kjent er basert på data som ikke ser på om siden er crawlet
+			printf("Page has 404 status %i-%i\n",DocID,rLotForDOCid(DocID));
+			(*SiderHeder).filtered++;
+			returnStatus = 0;
+		}
+		else if (((*Sider).DocumentIndex.response == 302) || ((*Sider).DocumentIndex.response == 301)) {
+			if (Sider->DocumentIndex.ResourceSize != 0) {
+				char *resbuf;
+				size_t ressize;
+				int LotNr;
+				char *snippet;
 
-			//ser om vi har bilde, og at det ikke er på 65535 bytes. (65535  er maks støresle 
-			//for unsigned short. Er bilde så stort skyldes det en feil)
-			if (((*Sider).DocumentIndex.imageSize != 0) && ((*Sider).DocumentIndex.imageSize != 65535)) {
-				
-				imagep =  getImagepFromRadres((*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize);
-				printf("imakep %u\n",(unsigned int)imagep);
-				#ifdef BLACK_BOKS
-			sprintf((*Sider).thumbnale,"/cgi-bin/ShowThumbbb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",
-						rLotForDOCid(DocID),
-						(unsigned int)imagep,
-						(*Sider).DocumentIndex.imageSize,
-						subname);
+				LotNr = rLotForDOCid(DocID);
+				ressize = getResource(LotNr, "www", DocID, NULL, -1);
+				resbuf = malloc(ressize+1);
+				if (getResource(LotNr, "www", DocID, resbuf, ressize+1) == 0) {
+					fprintf(stderr, "Unable to get resource for %d\n", DocID);
+					(*Sider).title[0] = '\0';
+					(*SiderHeder).showabal++;
+					returnStatus = 0;
+				} else {
 
-				#else
-			sprintf((*Sider).thumbnale,"http://%s/cgi-bin/ShowThumb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",
-						servername,
-						rLotForDOCid(DocID),
-						(unsigned int)imagep,
-						(*Sider).DocumentIndex.imageSize,
-						subname);
-				#endif
-				//sprintf((*Sider).thumbnale,"http://%s/cgi-bin/ShowThumb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",servername,rLotForDOCid(DocID),4 + sizeof(struct ReposetoryHeaderFormat) + ((*Sider).DocumentIndex.RepositoryPointer + (*Sider).DocumentIndex.htmlSize),(*Sider).DocumentIndex.imageSize,subname);
-				(*Sider).thumbnailwidth = 100;
-				(*Sider).thumbnailheight = 100;
-			}
-			else {
-				//sprintf((*Sider).thumbnale,"http://www.boitho.com/images/spacer.jpg");
-				(*Sider).thumbnale[0] = '\0';
-			}
+					gettimeofday(&start_time, NULL);
 
-			//tester om vi har en url
-			if ((*Sider).DocumentIndex.Url[0] == '\0') {
-				printf("Cant read url for %i-%i\n",DocID,rLotForDOCid(DocID));
-				//temp: blie denne kalt også ved popresult sjekken i dosearch?
-				//(*SiderHeder).filtered++;
+					html_parser_run( (*Sider).DocumentIndex.Url, resbuf, ressize, 
+							&titleaa, &body, fn, NULL);
+
+					gettimeofday(&end_time, NULL);
+#ifdef DEBUG_TIME
+					PagesResults->popResultBreakDownTime.html_parser_run.time += getTimeDifference(&start_time,&end_time);
+					++PagesResults->popResultBreakDownTime.html_parser_run.nr;
+#endif
+
+					(*Sider).HtmlPreparsed = 0;
+
+					gettimeofday(&start_time, NULL);
+
+
+					generate_snippet(QueryData.queryParsed, body, strlen(body), &snippet, "<b>", "</b>", 160);
+
+					gettimeofday(&end_time, NULL);
+#ifdef BLACK_BOKS
+					queryTime->generate_snippet += getTimeDifference(&start_time,&end_time);
+#endif
+
+					strcpy(Sider->title, titleaa);
+					strcpy(Sider->description, snippet);
+					//memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
+
+					(*SiderHeder).showabal++;
+					returnStatus = 1;
+
+					if (titleaa != NULL) free(titleaa);
+					if (body != NULL) free(body);
+					free(snippet);
+				}
+				free(resbuf);
+			} else if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
+				//kune ikke lese html. Pointer owerflow ?
+				//printf("Fii faa foo: %s\n", url);
+				printf("error reding html for %s\n",(*Sider).DocumentIndex.Url);
+				sprintf((*Sider).description,"Html error. Can't read html");
+				(*Sider).title[0] = '\0';
+				(*SiderHeder).showabal++;
 				returnStatus = 0;
 			}
-			//tester om vi har noe innhold
-			else if ((*Sider).DocumentIndex.htmlSize == 0) {
-				//har ingen reposetroy data, ikke kravlet anda?
-				//(*SiderHeder).filtered++;
-				
-				//setter utlen som title
-				
-				strscpy((*Sider).title,(*Sider).DocumentIndex.Url,sizeof((*Sider).title));
-				(*Sider).DocumentIndex.AdultWeight = 0;
-		
-				(*Sider).description[0] = '\0'; 
-				
-				//(*Sider).thumbnale[0] = '\0';
-				//printf("teter for inhole: %i rank: %i, i= %i showabal= %i\n",DocID,allrank,i,(*SiderHeder).showabal);
-				//memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
-				
-				(*SiderHeder).showabal++;
-				returnStatus = 1;
-			}
 			else {
-				//int rread (struct ReposetoryFormat *ReposetoryData,unsigned int *radress,unsigned int *rsize,unsigned long DocID)			
 
-											
-				htmlBuffer[0] = '\0';
-		
-				if ((*Sider).DocumentIndex.response == 404) {
-					//404 sider kan dukke opp i athor indeksen, da den som kjent er basert på data som ikke ser på om siden er crawlet
-					printf("Page has 404 status %i-%i\n",DocID,rLotForDOCid(DocID));
-					(*SiderHeder).filtered++;
-					returnStatus = 0;
-				}
-				else if (((*Sider).DocumentIndex.response == 302) || ((*Sider).DocumentIndex.response == 301)) {
-					if (Sider->DocumentIndex.ResourceSize != 0) {
-						char *resbuf;
-						size_t ressize;
-						int LotNr;
-						char *snippet;
-
-						LotNr = rLotForDOCid(DocID);
-						ressize = getResource(LotNr, "www", DocID, NULL, -1);
-						resbuf = malloc(ressize+1);
-						if (getResource(LotNr, "www", DocID, resbuf, ressize+1) == 0) {
-							fprintf(stderr, "Unable to get resource for %d\n", DocID);
-							(*Sider).title[0] = '\0';
-							(*SiderHeder).showabal++;
-							returnStatus = 0;
-						} else {
-
-							gettimeofday(&start_time, NULL);
-
-							html_parser_run( (*Sider).DocumentIndex.Url, resbuf, ressize, 
-									&titleaa, &body, fn, NULL);
-
-							gettimeofday(&end_time, NULL);
-							#ifdef DEBUG_TIME
-								PagesResults->popResultBreakDownTime.html_parser_run.time += getTimeDifference(&start_time,&end_time);
-								++PagesResults->popResultBreakDownTime.html_parser_run.nr;
-							#endif
-
-							(*Sider).HtmlPreparsed = 0;
-
-							gettimeofday(&start_time, NULL);
-
-
-							generate_snippet(QueryData.queryParsed, body, strlen(body), &snippet, "<b>", "</b>", 160);
-
-							gettimeofday(&end_time, NULL);
-							#ifdef BLACK_BOKS
-							queryTime->generate_snippet += getTimeDifference(&start_time,&end_time);
-							#endif
-
-							strcpy(Sider->title, titleaa);
-							strcpy(Sider->description, snippet);
-							//memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
-
-							(*SiderHeder).showabal++;
-							returnStatus = 1;
-
-							if (titleaa != NULL) free(titleaa);
-							if (body != NULL) free(body);
-							free(snippet);
-						}
-						free(resbuf);
-					} else if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,(*Sider).DocumentIndex.imageSize, &url) != 1) {
-						//kune ikke lese html. Pointer owerflow ?
-						//printf("Fii faa foo: %s\n", url);
-						printf("error reding html for %s\n",(*Sider).DocumentIndex.Url);
-						sprintf((*Sider).description,"Html error. Can't read html");
-						(*Sider).title[0] = '\0';
-						(*SiderHeder).showabal++;
-						returnStatus = 0;
-					}
-					else {
-										
-						for(y=0;y<htmlBufferSize;y++) {
-							//printf("1 y: %i of %i\n",y,strlen(htmlBuffer));
-							if (!(
+				for(y=0;y<htmlBufferSize;y++) {
+					//printf("1 y: %i of %i\n",y,strlen(htmlBuffer));
+					if (!(
 								isalnum(htmlBuffer[y])  
 								|| (47 ==(int)htmlBuffer[y]) 
 								|| (46 ==(int)htmlBuffer[y])
@@ -424,274 +435,334 @@ int popResult (struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,in
 								|| (63 ==(int)htmlBuffer[y]) // ?
 								|| (61 ==(int)htmlBuffer[y]) // =
 								|| (58 ==(int)htmlBuffer[y]))) {
-								
-								htmlBuffer[y] = 'r';
-							}
-						}
-						
-						if ((*Sider).DocumentIndex.response == 302) {
-							sprintf((*Sider).title,"302 temporarily redirect.");
-						}
-						else {
-							sprintf((*Sider).title,"301 Permanent redirect.");
-						}
-						//temp: er sider som gir binørutput her, må filtreres
-					
-						//hvis det er forholdsvis få tegn her så er det nokk en url. Hvis det 
-						//er mange er det nokk binær støy
-						if (strlen(htmlBuffer) < 100) {
-							sprintf((*Sider).description,"Redirecting to %200s",htmlBuffer);
-						}
-						else {
-							//sprintf((*Sider).description,"i %i",htmlBufferSize);
-							(*Sider).description[0] = '\0';
-						}
-						//memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
-						
 
-						(*SiderHeder).showabal++;
-						returnStatus = 1;
+						htmlBuffer[y] = 'r';
 					}
 				}
-				else if ((*Sider).DocumentIndex.response == 200) {
-			
-					#ifdef BLACK_BOKS
-						sprintf((*Sider).cacheLink,"http://%s/cgi-bin/ShowCache?D=%i&amp;P=%u&amp;S=%i&amp;subname=%s",servername,DocID,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,subname);
-					#else
-						sprintf((*Sider).cacheLink,"http://%s/cgi-bin/ShowCache2?D=%i&amp;subname=%s",servername,DocID,subname);
-					#endif
 
-	
-					gettimeofday(&start_time, NULL);						
-
-
-					if (((*Sider).DocumentIndex.SummaryPointer != 0) && 
-							((rReadSummary_l(DocID,&metadesc, &titleaa,&body,(*Sider).DocumentIndex.SummaryPointer,(*Sider).DocumentIndex.SummarySize,subname,summaryFH) != 0))) {
-
-							vboprintf("hav Summary on disk\n");
-	
-							(*Sider).HtmlPreparsed = 1;
-
-							gettimeofday(&end_time, NULL);				
-							#ifdef DEBUG_TIME
-								PagesResults->popResultBreakDownTime.ReadSummary.time += getTimeDifference(&start_time,&end_time);
-								++PagesResults->popResultBreakDownTime.ReadSummary.nr;					
-							#endif
-
-					}
-					else {
-
-						debug("don't hav Summary on disk. Will hav to read html\n");	
-						if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,(*Sider).DocumentIndex.imageSize, &url) != 1) {
-							//printf("Fii faa foo: %s\n", url);
-							//kune ikke lese html. Pointer owerflow ?
-							printf("error reding html for %s\n",(*Sider).DocumentIndex.Url);
-							sprintf((*Sider).description,"Html error. Can't read html");
-							(*Sider).title[0] = '\0';
-							(*SiderHeder).showabal++;
-							returnStatus = 1;
-							vboprintf("searchkernel: ~popResult()\n");
-							return 0;
-
-						}
-						strlcpy(Sider->uri, url, sizeof(Sider->uri));
-						strlcpy(Sider->url, url, sizeof(Sider->uri));
-						
-						gettimeofday(&end_time, NULL);				
-						#ifdef DEBUG_TIME
-							PagesResults->popResultBreakDownTime.ReadHtml.time += getTimeDifference(&start_time,&end_time);
-							++PagesResults->popResultBreakDownTime.ReadHtml.nr;					
-						#endif
-
-
-						gettimeofday(&start_time, NULL);						
-
-						html_parser_run(url, htmlBuffer, htmlBufferSize, &titleaa, &body, fn, NULL);
-
-						gettimeofday(&end_time, NULL);
-						#ifdef DEBUG_TIME
-							PagesResults->popResultBreakDownTime.html_parser_run.time += getTimeDifference(&start_time,&end_time);
-							++PagesResults->popResultBreakDownTime.html_parser_run.nr;
-						#endif
-
-						(*Sider).HtmlPreparsed = 0;
-
-                        	                /*
-						//Debug: får å sette vedier riktig hvis man skal hake ut sumery og hilitning
-						metadesc = metakeyw = NULL;
-	
-						titleaa = malloc(512);
-						titleaa[0] = '\0';
-
-						body = malloc(512);
-						sprintf(body,"aaaaaaaaaa");;						
-						*/
-
-					}
-					
-					
-					char        *summary;
-			                //generate_highlighting( QueryData.queryParsed, body, strlen(body)+1, &summary );
-					//temp: bug generate_snippet er ikke ut til å takle og ha en tom body
-					if (strlen(body) == 0 || getRank) {
-						(*Sider).description[0] = '\0';
-					}
-					else if (strlen(body) < 15) {
-						printf("bug: body består av under 15 tegn. Da kan det være at vi bare har <div> som tegn.\n");
-					}
-					else {
-
-						#ifdef DEBUG
-							printf("calling generate_snippet with strlen body %i\n",strlen(body));
-						#endif
-
-						#ifdef DEBUG_TIME
-							gettimeofday(&start_time, NULL);
-						#endif
-
-						#ifdef DEBUG
-							printf("#################################################################\n");
-							printf("############################ <DEBUG> ############################\n");
-							printf("body to snipet:\n%s\n",body);
-							printf("strlen(body) %i\n",strlen(body));
-							printf("############################ </DEBUG> ###########################\n");
-							printf("#################################################################\n");
-						#endif
-						
-						//printf("calling generate_snippet, body \"%s\", length %i\n",body, strlen(body));
-						generate_snippet( QueryData.queryParsed, body, strlen(body), &summary, "<b>", "</b>" , 160);
-					
-						#ifdef DEBUG_TIME
-							gettimeofday(&end_time, NULL);
-							PagesResults->popResultBreakDownTime.generate_snippet.time += getTimeDifference(&start_time,&end_time);
-							++PagesResults->popResultBreakDownTime.generate_snippet.nr;
-						#endif
-
-						//printf("summary len %i\nsummary:\n-%s-\n",strlen(summary),summary);
-
-						#ifdef DEBUG_TIME
-							gettimeofday(&start_time, NULL);
-						#endif
-					
-						if (strlen(summary) > (sizeof((*Sider).description) -1) ) {
-							sprintf((*Sider).description,"Error: Sumary to large. Was %i but only space for %i.",strlen(summary),sizeof((*Sider).description) -1);
-						}
-						else {
-							strscpy((*Sider).description,summary,sizeof((*Sider).description));
-						}
-					
-						utfclean((*Sider).description,sizeof((*Sider).description));
-
-						//sjekker om vi har en & på slutten. Hvis vi har skal det også være en ;. Dette får å ungå at
-						//vi har klart å kappe av før ; en kommer, eks: v Frp&rsquo ...
-						char *andcp;
-						if ((andcp = strrchr((*Sider).description,'&')) != NULL) {
-							if (strchr(andcp,';') == NULL) {
-								andcp[0] = '\0';
-							}
-						}
-
-						free(summary);
-
-						#ifdef DEBUG_TIME
-							gettimeofday(&end_time, NULL);
-							PagesResults->popResultBreakDownTime.bodyClean.time += getTimeDifference(&start_time,&end_time);
-							++PagesResults->popResultBreakDownTime.bodyClean.nr;
-						#endif
-
-					}
-
-					debug("%u -%s-, len %i\n",DocID,titleaa,strlen(titleaa));
-
-                                        #ifdef DEBUG_TIME
-                                               gettimeofday(&start_time, NULL);
-                                        #endif
-
-
-					if (titleaa[0] == '\0') {
-						sprintf((*Sider).title,"No title");
-					}
-					else if (strlen(titleaa) > (sizeof((*Sider).title) -1)) {
-					    
-					    int copylen = (sizeof((*Sider).title) -4);
-   
-					    strscpy(&((*Sider).title[0]),titleaa,copylen);
-					    
-
-					    //søker oss til siste space , eller ; og avslutter der
-					    if ((strpointer = strrchr((*Sider).title,' ')) != NULL) {
-						vboprintf("aa strpointer %u\n",(unsigned int)strpointer);
-						//midlertidg fiks på at title altid begynner med space på bb.
-						//vil dermed altidd føre til treff i første tegn, og
-						// dermed bare vise ".." som title
-						if ( ((int)(*Sider).title - (int)strpointer) > 10) {
-							strpointer[0] = '\0';
-						}
-						vboprintf("fant space at %i\n",((int)(*Sider).title - (int)strpointer));
-					    }						
-					    else if ((strpointer = strrchr((*Sider).title,';')) != NULL) {
-						++strpointer; //pekeren peker på semikolonet. SKal ha det med, så må legge il en
-						strpointer[0] = '\0';
-						
-						vboprintf("fant semi colon at %i\n",((int)(*Sider).title - (int)strpointer));
-					    }
-					    strncat((*Sider).title,"..",2);    
-
-    					    vboprintf("title to long choped. now %i len. size %i\n",strlen((*Sider).title),sizeof((*Sider).title));
-
-					}
-					else {
-					    strscpy((*Sider).title,titleaa,sizeof((*Sider).title) -1);
-					}													
-
-					#ifdef DEBUG_TIME
-						gettimeofday(&end_time, NULL);
-						PagesResults->popResultBreakDownTime.titleClean.time += getTimeDifference(&start_time,&end_time);
-						++PagesResults->popResultBreakDownTime.titleClean.nr;
-					#endif
-
-                                        #ifdef DEBUG_TIME
-                                               gettimeofday(&start_time, NULL);
-                                        #endif
-					
-					//temp: ser ut til at vi får problemer her hvis vi har status "Html error. Can't read"
-					if (titleaa != NULL) free(titleaa);
-					if (body != NULL) free(body);
-					if (metakeyw != NULL) free(metakeyw);
-					if (metadesc != NULL) free(metadesc);
-
-					(*SiderHeder).showabal++;
-					returnStatus = 1;
-
-					#ifdef DEBUG_TIME
-						gettimeofday(&end_time, NULL);
-						PagesResults->popResultBreakDownTime.popResultFree.time += getTimeDifference(&start_time,&end_time);
-						++PagesResults->popResultBreakDownTime.popResultFree.nr;
-					#endif
-
-
+				if ((*Sider).DocumentIndex.response == 302) {
+					sprintf((*Sider).title,"302 temporarily redirect.");
 				}
 				else {
-					//ved 601 og andre feil der vi ikke har crawlet
-					printf("Status error for page %i-%i. Status %i\n",DocID,rLotForDOCid(DocID),(*Sider).DocumentIndex.response);
-					sprintf((*Sider).title,"%i error.",(*Sider).DocumentIndex.response);
-					returnStatus = 0;
+					sprintf((*Sider).title,"301 Permanent redirect.");
 				}
+				//temp: er sider som gir binørutput her, må filtreres
+
+				//hvis det er forholdsvis få tegn her så er det nokk en url. Hvis det 
+				//er mange er det nokk binær støy
+				if (strlen(htmlBuffer) < 100) {
+					sprintf((*Sider).description,"Redirecting to %200s",htmlBuffer);
+				}
+				else {
+					//sprintf((*Sider).description,"i %i",htmlBufferSize);
+					(*Sider).description[0] = '\0';
+				}
+				//memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
 
 
+				(*SiderHeder).showabal++;
+				returnStatus = 1;
+			}
+		}
+		else if ((*Sider).DocumentIndex.response == 200) {
 
-					//temp:
-					//printf("legger til DocID: %i rank: %i, i= %i showabal= %i\n",DocID,allrank,i,(*SiderHeder).showabal);
-					//memcpy(&(*Sider).iindex,&TeffArray,sizeof(TeffArray));
-				
+#ifdef BLACK_BOKS
+			sprintf((*Sider).cacheLink,"http://%s/cgi-bin/ShowCache?D=%i&amp;P=%u&amp;S=%i&amp;subname=%s",servername,DocID,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,subname);
+#else
+			sprintf((*Sider).cacheLink,"http://%s/cgi-bin/ShowCache2?D=%i&amp;subname=%s",servername,DocID,subname);
+#endif
+
+
+			gettimeofday(&start_time, NULL);						
+
+
+			if (((*Sider).DocumentIndex.SummaryPointer != 0) && 
+					((rReadSummary_l(DocID,&metadesc, &titleaa,&body,(*Sider).DocumentIndex.SummaryPointer,(*Sider).DocumentIndex.SummarySize,subname,summaryFH) != 0))) {
+
+				vboprintf("hav Summary on disk\n");
+
+				(*Sider).HtmlPreparsed = 1;
+
+				gettimeofday(&end_time, NULL);				
+#ifdef DEBUG_TIME
+				PagesResults->popResultBreakDownTime.ReadSummary.time += getTimeDifference(&start_time,&end_time);
+				++PagesResults->popResultBreakDownTime.ReadSummary.nr;					
+#endif
 
 			}
-						
+			else {
 
+				debug("don't hav Summary on disk. Will hav to read html\n");	
+				if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
+					//printf("Fii faa foo: %s\n", url);
+					//kune ikke lese html. Pointer owerflow ?
+					printf("error reding html for %s\n",(*Sider).DocumentIndex.Url);
+					sprintf((*Sider).description,"Html error. Can't read html");
+					(*Sider).title[0] = '\0';
+					(*SiderHeder).showabal++;
+					returnStatus = 1;
+					vboprintf("searchkernel: ~popResult()\n");
+					return 0;
+
+				}
+				strlcpy(Sider->uri, url, sizeof(Sider->uri));
+				strlcpy(Sider->url, url, sizeof(Sider->uri));
+
+				gettimeofday(&end_time, NULL);				
+#ifdef DEBUG_TIME
+				PagesResults->popResultBreakDownTime.ReadHtml.time += getTimeDifference(&start_time,&end_time);
+				++PagesResults->popResultBreakDownTime.ReadHtml.nr;					
+#endif
+
+
+				gettimeofday(&start_time, NULL);						
+
+				html_parser_run(url, htmlBuffer, htmlBufferSize, &titleaa, &body, fn, NULL);
+
+				gettimeofday(&end_time, NULL);
+#ifdef DEBUG_TIME
+				PagesResults->popResultBreakDownTime.html_parser_run.time += getTimeDifference(&start_time,&end_time);
+				++PagesResults->popResultBreakDownTime.html_parser_run.nr;
+#endif
+
+				(*Sider).HtmlPreparsed = 0;
+
+				/*
+				//Debug: får å sette vedier riktig hvis man skal hake ut sumery og hilitning
+				metadesc = metakeyw = NULL;
+
+				titleaa = malloc(512);
+				titleaa[0] = '\0';
+
+				body = malloc(512);
+				sprintf(body,"aaaaaaaaaa");;						
+				 */
+
+			}
+
+
+			char        *summary;
+			//generate_highlighting( QueryData.queryParsed, body, strlen(body)+1, &summary );
+			//temp: bug generate_snippet er ikke ut til å takle og ha en tom body
+			if (strlen(body) == 0 || getRank) {
+				(*Sider).description[0] = '\0';
+			}
+			else if (strlen(body) < 15) {
+				printf("bug: body består av under 15 tegn. Da kan det være at vi bare har <div> som tegn.\n");
+			}
+			else {
+
+#ifdef DEBUG
+				printf("calling generate_snippet with strlen body %i\n",strlen(body));
+#endif
+
+#ifdef DEBUG_TIME
+				gettimeofday(&start_time, NULL);
+#endif
+
+#ifdef DEBUG
+				printf("#################################################################\n");
+				printf("############################ <DEBUG> ############################\n");
+				printf("body to snipet:\n%s\n",body);
+				printf("strlen(body) %i\n",strlen(body));
+				printf("############################ </DEBUG> ###########################\n");
+				printf("#################################################################\n");
+#endif
+
+				//printf("calling generate_snippet, body \"%s\", length %i\n",body, strlen(body));
+				generate_snippet( QueryData.queryParsed, body, strlen(body), &summary, "<b>", "</b>" , 160);
+
+#ifdef DEBUG_TIME
+				gettimeofday(&end_time, NULL);
+				PagesResults->popResultBreakDownTime.generate_snippet.time += getTimeDifference(&start_time,&end_time);
+				++PagesResults->popResultBreakDownTime.generate_snippet.nr;
+#endif
+
+				//printf("summary len %i\nsummary:\n-%s-\n",strlen(summary),summary);
+
+#ifdef DEBUG_TIME
+				gettimeofday(&start_time, NULL);
+#endif
+
+				if (strlen(summary) > (sizeof((*Sider).description) -1) ) {
+					sprintf((*Sider).description,"Error: Sumary to large. Was %i but only space for %i.",strlen(summary),sizeof((*Sider).description) -1);
+				}
+				else {
+					strscpy((*Sider).description,summary,sizeof((*Sider).description));
+				}
+
+				utfclean((*Sider).description,sizeof((*Sider).description));
+
+				//sjekker om vi har en & på slutten. Hvis vi har skal det også være en ;. Dette får å ungå at
+				//vi har klart å kappe av før ; en kommer, eks: v Frp&rsquo ...
+				char *andcp;
+				if ((andcp = strrchr((*Sider).description,'&')) != NULL) {
+					if (strchr(andcp,';') == NULL) {
+						andcp[0] = '\0';
+					}
+				}
+
+				free(summary);
+
+#ifdef DEBUG_TIME
+				gettimeofday(&end_time, NULL);
+				PagesResults->popResultBreakDownTime.bodyClean.time += getTimeDifference(&start_time,&end_time);
+				++PagesResults->popResultBreakDownTime.bodyClean.nr;
+#endif
+
+
+			}
+
+			debug("%u -%s-, len %i\n",DocID,titleaa,strlen(titleaa));
+
+#ifdef DEBUG_TIME
+			gettimeofday(&start_time, NULL);
+#endif
+
+
+			if (titleaa[0] == '\0') {
+				sprintf((*Sider).title,"No title");
+			}
+			else if (strlen(titleaa) > (sizeof((*Sider).title) -1)) {
+
+				int copylen = (sizeof((*Sider).title) -4);
+
+				strscpy(&((*Sider).title[0]),titleaa,copylen);
+
+
+				//søker oss til siste space , eller ; og avslutter der
+				if ((strpointer = strrchr((*Sider).title,' ')) != NULL) {
+					vboprintf("aa strpointer %u\n",(unsigned int)strpointer);
+					//midlertidg fiks på at title altid begynner med space på bb.
+					//vil dermed altidd føre til treff i første tegn, og
+					// dermed bare vise ".." som title
+					if ( ((int)(*Sider).title - (int)strpointer) > 10) {
+						strpointer[0] = '\0';
+					}
+					vboprintf("fant space at %i\n",((int)(*Sider).title - (int)strpointer));
+				}						
+				else if ((strpointer = strrchr((*Sider).title,';')) != NULL) {
+					++strpointer; //pekeren peker på semikolonet. SKal ha det med, så må legge il en
+					strpointer[0] = '\0';
+
+					vboprintf("fant semi colon at %i\n",((int)(*Sider).title - (int)strpointer));
+				}
+				strncat((*Sider).title,"..",2);    
+
+				vboprintf("title to long choped. now %i len. size %i\n",strlen((*Sider).title),sizeof((*Sider).title));
+
+			}
+			else {
+				strscpy((*Sider).title,titleaa,sizeof((*Sider).title) -1);
+			}													
+
+#ifdef DEBUG_TIME
+			gettimeofday(&end_time, NULL);
+			PagesResults->popResultBreakDownTime.titleClean.time += getTimeDifference(&start_time,&end_time);
+			++PagesResults->popResultBreakDownTime.titleClean.nr;
+#endif
+
+#ifdef DEBUG_TIME
+			gettimeofday(&start_time, NULL);
+#endif
+
+			//temp: ser ut til at vi får problemer her hvis vi har status "Html error. Can't read"
+			if (titleaa != NULL) free(titleaa);
+			if (body != NULL) free(body);
+			if (metakeyw != NULL) free(metakeyw);
+			if (metadesc != NULL) free(metadesc);
+
+			(*SiderHeder).showabal++;
+			returnStatus = 1;
+
+#ifdef DEBUG_TIME
+			gettimeofday(&end_time, NULL);
+			PagesResults->popResultBreakDownTime.popResultFree.time += getTimeDifference(&start_time,&end_time);
+			++PagesResults->popResultBreakDownTime.popResultFree.nr;
+#endif
+
+			/* Duplicates? */
+			container *list = hashtable_search(PagesResults->crc32maphash, &Sider->DocumentIndex.crc32);
+			if (list != NULL) {
+				int k;
+				printf("############################\n");
+				Sider->n_urls = list_size(list)-1;
+				Sider->urls = calloc(Sider->n_urls, sizeof(*(Sider->urls)));
+				iterator itr = list_begin(list);
+				itr = list_next(itr);
+				for (k = 0; itr.valid; itr = list_next(itr), k++) {
+					char htmlbuf[1024*1024 * 5], imagebuf[1<<16];
+					unsigned int htmllen = sizeof(htmlbuf);
+					unsigned int imagelen = sizeof(imagelen);
+					char *url, *acla, *acld, *attributes;
+					struct DocumentIndexFormat di;
+					struct ReposetoryHeaderFormat repohdr;
+					unsigned int docid = pair(list_val(itr)).first.i;
+					char *subname = pair(list_val(itr)).second.str;
+					char tmpurl[1024];
+					//printf("Woop subname!!!: %p %s\n", subname, subname);
+
+					acld = acla = attributes = url = NULL;
+					if (!DIRead(&di, docid, subname)) {
+						warn("DIRead()");
+						continue;
+					}
+					rReadHtml(htmlbuf, &htmllen, di.RepositoryPointer, di.htmlSize, docid,
+							subname, &repohdr, &acla, &acld, di.imageSize,
+							&url, &attributes);
+
+					strlcpy(tmpurl, url, sizeof(tmpurl));
+					//printf("Dup url: %s -- %s\n", url, tmpurl);
+					handle_url_rewrite(tmpurl, sizeof(tmpurl), PagesResults->ptype,
+							PagesResults->btype,
+							subname, tmpurl,
+							sizeof(tmpurl), PagesResults->cmcsocketha,
+#ifdef WITH_THREAD
+							&PagesResults->mutex
+#else
+							NULL
+#endif
+							);
+					//printf("tmpurl: %s\n", tmpurl);
+					Sider->urls[k].url = strdup(tmpurl);
+					Sider->urls[k].uri = strdup(tmpurl);
+					shortenurl(Sider->urls[k].uri, strlen(Sider->urls[k].uri));
+					//strcpy(Sider->urls[k].url, subname);
+					free(attributes);
+					free(acla);
+					free(acld);
+					free(url);
+				}
+			} else {
+				Sider->n_urls = 0;
+				Sider->urls = NULL;
+			}
+			// destroy(list);
+			// hashtable_destroy(PagesResults->crc32maphash);
+
+			/* Make attribute lists */
+			Sider->attributes = strdup(attributes);
+		}
+		else {
+			//ved 601 og andre feil der vi ikke har crawlet
+			printf("Status error for page %i-%i. Status %i\n",DocID,rLotForDOCid(DocID),(*Sider).DocumentIndex.response);
+			sprintf((*Sider).title,"%i error.",(*Sider).DocumentIndex.response);
+			returnStatus = 0;
+		}
+		//temp:
+		//printf("legger til DocID: %i rank: %i, i= %i showabal= %i\n",DocID,allrank,i,(*SiderHeder).showabal);
+		//memcpy(&(*Sider).iindex,&TeffArray,sizeof(TeffArray));
+	}
 
 	//temp:
-	if (acl_allowbuffer != NULL) {free(acl_allowbuffer);}		
-	if (acl_deniedbuffer != NULL) {free(acl_deniedbuffer);}		
+	if (acl_allowbuffer != NULL)
+		free(acl_allowbuffer);
+	if (acl_deniedbuffer != NULL)
+		free(acl_deniedbuffer);
+	if (url != NULL)
+		free(url);
+	if (attributes != NULL)
+		free(attributes);
 
 	vboprintf("searchkernel: ~popResult()\n");
 	return returnStatus;
@@ -999,15 +1070,10 @@ void *generatePagesResults(void *arg)
 	struct SiderFormat *side = malloc(sizeof(struct SiderFormat));
 
 #if BLACK_BOKS
-
-	enum platform_type ptype; 
-	enum browser_type btype; 
-
 	if (!PagesResults->getRank) {
-		ptype = get_platform(PagesResults->useragent);
-		btype = get_browser(PagesResults->useragent);
+		PagesResults->ptype = get_platform(PagesResults->useragent);
+		PagesResults->btype = get_browser(PagesResults->useragent);
 	}
-
 #endif
 
 	if ((htmlBuffer = malloc(htmlBufferSize)) == NULL) {
@@ -1025,6 +1091,7 @@ void *generatePagesResults(void *arg)
 		unsigned int tid=0;
 	#endif
 	//for (i=0;(i<(*PagesResults).antall) && ((*(*PagesResults).SiderHeder).filtered < 300);i++) {
+	// XXX: Use pthread_cond instead ?
 	while ( (localshowabal = nextPage(PagesResults)) != -1 ) {
 	debug("localshowabal %i",localshowabal);
 
@@ -1308,7 +1375,7 @@ void *generatePagesResults(void *arg)
 #ifdef BLACK_BOKS
 		if (!PagesResults->getRank) {
 
-			handle_url_rewrite(side->url, sizeof(side->url), ptype, btype, 
+			handle_url_rewrite(side->url, sizeof(side->url), PagesResults->ptype, PagesResults->btype, 
 				(*PagesResults).TeffArray->iindex[i].subname->subname, side->url, 
 				sizeof(side->url), PagesResults->cmcsocketha, 
 #ifdef WITH_THREAD
@@ -1646,6 +1713,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	vboprintf("searchkernel: dosearch(query=\"%s\")\n", query);
 	struct PagesResultsFormat PagesResults;
 	struct filteronFormat filteron;
+	struct hashtable *crc32maphash;
 
 	memset(&PagesResults,'\0',sizeof(PagesResults));
 
@@ -1927,6 +1995,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#endif
 	// :temp
 
+
 	#ifdef WITH_THREAD
 		PagesResults.activetreads = NROF_GENERATEPAGES_THREADS;
 
@@ -1967,11 +2036,13 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
-			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 0);
+			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 0, &crc32maphash);
+	PagesResults.crc32maphash = crc32maphash;
 
 	#ifdef DEBUG
 	printf("end searchSimple\n");
 	#endif
+
 
 	//intresnag debug info
 	#ifdef BLACK_BOKS
@@ -2497,13 +2568,14 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 
 
-	printf("searchSimple\n");
+	printf("searchSimple: rank\n");
 	
 	searchSimple(&PagesResults.antall,PagesResults.TeffArray,&SiderHeder->TotaltTreff,
 			&PagesResults.QueryData.queryParsed,&SiderHeder->queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
-			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 1);
+			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 1, NULL);
+	// XXX: eirik, we should not discard the duplicate tests
 	//&rankDocId);
 
 	printf("end searchSimple\n");

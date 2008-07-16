@@ -794,7 +794,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 					char subnamenew[256];
 					//int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,const char title[], char doctype[]) {
 					snprintf(subnamenew, sizeof(subnamenew), "%s-%s", subname, part);
-					bbdocument_add(subnamenew, documenturi, "html", convdocbuf, convdocbufsize, lastmodified, acl_allow, acl_denied, titlefromadd, "");
+					bbdocument_add(subnamenew, documenturi, "html", convdocbuf, convdocbufsize, lastmodified, acl_allow, acl_denied, titlefromadd, "", "");
 				}
 				
 				free(convdocbuf);
@@ -844,7 +844,7 @@ int bbdocument_close () {
 
 }
 
-int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,const char title[], char doctype[]) {
+int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,const char title[], char doctype[], char *attributes) {
 
 	struct ReposetoryHeaderFormat ReposetoryHeader;
 
@@ -968,7 +968,8 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 #endif
 
 	ReposetoryHeader.urllen = strlen(documenturi);
-	rApendPostcompress(&ReposetoryHeader,htmlbuffer,imagebuffer,subname,acl_allow,acl_denied,NULL, documenturi);
+	ReposetoryHeader.attributeslen = strlen(attributes);
+	rApendPostcompress(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_denied, NULL, documenturi, attributes);
 
 #ifdef DEBUG	
 	printf("legger til DocID \"%u\", time \"%u\"\n",ReposetoryHeader.DocID,lastmodified);
