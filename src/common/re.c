@@ -1,8 +1,14 @@
-
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <err.h>
 
 #include "lot.h"
 #include "define.h"
 #include "re.h"
+#include "ht.h"
+
+#include "../3pLibs/keyValueHash/hashtable.h"
 
 
 void _filecpy(int into, int from) {
@@ -127,6 +133,49 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 
 }
 
+static struct hashtable *lots_cache;
+
+struct reformat *reopen_cache(int lotNr, size_t structsize, char file[], char subname[], int flags) {
+	struct hashtable *files = NULL;
+	char lotfile[PATH_MAX];
+	struct reformat *re;
+
+	sprintf(lotfile, "%s\x10%s\x10%d", subname, file, lotNr);
+	if (lots_cache == NULL) {
+		lots_cache = create_hashtable(3, ht_stringhash, ht_stringcmp);
+		if (lots_cache == NULL)
+			err(1, "hashtable_create(reopen_cache)");
+#if 0
+	} else {
+		files = hashtable_search(lots_cache, lotfile);
+	}
+
+	if (files == NULL) {
+		files = create_hashtable(1, ht_integerhash, ht_integercmp);
+		if (files == NULL)
+			err(1, "hashtable_create(reopen_cache 2)");
+		hashtable_insert(lots_cache, strdup(lotfile), files);
+#endif
+	} else {
+		re = hashtable_search(lots_cache, lotfile);
+		if (re != NULL)
+			return re;
+	}
+	printf("Cache miss for %s:%s lot %d\n", subname, file, lotNr);
+	re = reopen(lotNr, structsize, file, subname, flags);
+
+	hashtable_insert(lots_cache, uinttouintp(lotNr), re);
+	//hashtable_insert(files, uinttouintp(lotNr), re);
+
+	return re;
+}
+
+void
+reclose_cache(void)
+{
+	return; // XXX
+}
+
 void reclose(struct reformat *re) {
 	munmap(re->mem,re->maxsize);
 
@@ -209,7 +258,7 @@ void *renget(struct reformat *re, size_t nr) {
 	size_t position = (re->structsize * nr);
 
 	#ifdef DEBUG	
-	printf("regetp: nr %u, position %u\n",nr, position);
+	printf("rengetp: nr %u, position %u\n",nr, position);
 	#endif
 	
 	return reposread(re,position);;

@@ -38,12 +38,17 @@ struct reformat {
 
 
 struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[], int flags);
+struct reformat *reopen_cache(int lotNr, size_t structsize, char file[], char subname[], int flags);
 void reclose(struct reformat *re);
+void reclose_cache(void);
 void *reget(struct reformat *re, unsigned int DocID);
 void *renget(struct reformat *re, size_t nr);
 
 #define RE_DocumentIndex(re, DocID) ((struct DocumentIndexFormat *)reget(re, DocID))
 #define REN_DocumentIndex(re, nr) ((struct DocumentIndexFormat *)renget(re, nr))
+#define RE_Uint(re, DocID) ((unsigned int *)reget(re, DocID))
+#define REN_Uint(re, nr) ((unsigned int *)renget(re, nr))
+
 
 #define RE_Brank(re, DocID) ((struct brank *)reget(re, DocID))
 #define REN_Brank(re, nr) ((struct brank *)renget(re, nr))
