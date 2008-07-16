@@ -71,6 +71,7 @@ dmetaphone(wchar_t *word)
 	wchar_t *p2 = p;
 	int offset = 0;
 	int last = len - 1;
+	int i;
 
 	int GetAt(int i) {
 		return w[i];
@@ -83,7 +84,7 @@ dmetaphone(wchar_t *word)
 	w = _w + 4;
 	wcscpy(w, word);
 
-	for (int i = 0; w[i]; i++)
+	for (i = 0; w[i]; i++)
 		w[i] = toupper(w[i]);
 
 	/* Skip GN, KN, PN, WR, PS when they start a word */
@@ -834,7 +835,9 @@ dmp_test(wchar_t *a)
 int
 main(int argc, char **argv)
 {
-	for (int i = 1; i < argc; i++) {
+	int i;
+
+	for (i = 1; i < argc; i++) {
 		dmp_test(argv[i]);
 	}
 

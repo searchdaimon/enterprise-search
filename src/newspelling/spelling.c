@@ -295,9 +295,28 @@ editsn_soundslike(spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wch
 }
 
 int
-correct_word(spelling_t *s, wchar_t *word)
+correct_word(spelling_t *s, char *word)
 {
-	return (hashtable_search(s->words, word) != NULL);
+	wchar_t *wword;
+	void *p;
+
+	wword = malloc((strlen(word)+1)*sizeof(wchar_t));
+	if (wword == NULL)
+		return 1;
+	mbstowcs(wword, word, strlen(word)+1);
+
+	if (s->words == NULL) {
+		free(wword);
+		return 1;
+	}
+
+	p = hashtable_search(s->words, wword);
+
+	free(wword);
+
+	if (p == NULL)
+		return 0;
+	return 1;
 }
 
 void

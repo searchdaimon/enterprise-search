@@ -9,7 +9,7 @@ typedef struct {
 
 int train(spelling_t *s, const char *dict);
 void untrain(spelling_t *s);
-int correct_word(spelling_t *s, wchar_t *word);
+int correct_word(spelling_t *s, char *word);
 char *check_word(spelling_t *s, char *word, int *found);
 
 #endif /* _SPELLING_H_ */
