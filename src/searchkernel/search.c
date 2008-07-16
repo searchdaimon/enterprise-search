@@ -1375,6 +1375,7 @@ void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filter
 	(*filteron).filetype	= NULL;
 	(*filteron).collection	= NULL;
 	(*filteron).date	= NULL;
+	(*filteron).sort	= NULL;
 
 	for (i=0; i<(*queryParsed).n; i++)
         {
@@ -1391,6 +1392,10 @@ void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filter
 			break;
 			case 'f':
 				(*filteron).filetype = (*queryParsed).query[i].s[0];
+				vboprintf("wil filter on filetype: \"%s\"\n",(*filteron).filetype);
+			break;
+			case 'k':
+				(*filteron).sort = (*queryParsed).query[i].s[0];
 				vboprintf("wil filter on filetype: \"%s\"\n",(*filteron).filetype);
 			break;
 			case 'd':
@@ -2910,13 +2915,14 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 		printf("order by \"%s\"\n",orderby);
 
-		if (strcmp(orderby,"ddesc") == 0) {
+		if (((*filteron).sort != NULL) && (strcmp((*filteron).sort,"newest") == 0)) {
+			printf("will do newest sort\n");
 			for (i = 0; i < *TeffArrayElementer; i++) {
 				TeffArray->iindex[i].allrank = TeffArray->iindex[i].date;
 			}
 		}
-		else if (strcmp(orderby,"dasc") == 0) {
-			printf("do dasc sort\n");
+		else if ( ((*filteron).sort != NULL) && (strcmp((*filteron).sort,"oldest") == 0) ) {
+			printf("will do oldest sort\n");
 			for (i = 0; i < *TeffArrayElementer; i++) {
 				//4294967295 unsigned int (long) max
 				TeffArray->iindex[i].allrank = ULONG_MAX - TeffArray->iindex[i].date;

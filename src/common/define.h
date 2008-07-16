@@ -181,9 +181,10 @@ struct subnamesFiltypesFormat {
 
 struct filteronFormat {
 
-	char filetype[1024];
-	char collection[1024];
-	char date[1024];
+	char *filetype;
+	char *collection;
+	char *date;
+	char *sort;
 };
 
 struct subnamesConfigFormat {
