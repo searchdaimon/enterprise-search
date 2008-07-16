@@ -42,6 +42,7 @@
 #include <sys/time.h>
 #include <errno.h>
 #include <signal.h>
+#include <locale.h>
 
 
 
@@ -49,7 +50,7 @@
 #include "searchkernel.h"
 
 #ifdef WITH_SPELLING
-	#include "../spelling/spelling.h"
+	#include "../newspelling/spelling.h"
 #endif
 
 #define cfg_searchd "config/searchd.conf"
@@ -95,26 +96,27 @@ int isInSubname(struct subnamesFormat *subnames,int nrOfSubnames,char s[]) {
 
 
 #ifdef WITH_SPELLING
-struct spelling *spelling;
+spelling_t spelling;
 
 void
-init_spelling(char *lang)
+init_spelling(char *dict)
 {
 	fprintf(stderr, "searchd: init_spelling()\n");
-	spelling = spelling_init(lang);
+	//spelling = spelling_init(lang);
+	train(&spelling, bfile(dict));
 }
 
 void
 catch_sigusr1(int sig)
 {
 	fprintf(stderr, "searchd: Warning! Caught sigusr1. Reinitializing spelling.\n");
-	spelling_destroy(spelling);
-	init_spelling("bb");
+	untrain(&spelling);
+	init_spelling("var/dictionarywords");
 }
 #endif
 
 /* The signal handler exit the program. . */
- void
+void
 catch_alarm (int sig)
 {
 	fprintf(stderr, "searchd: Warning! Recieved alarm signal. Exiting.\n");
@@ -176,11 +178,14 @@ int main(int argc, char *argv[])
 	searchd_config.optSingle = 0;
 	searchd_config.optrankfile = NULL;
 	searchd_config.optPreOpen = 0;
+	
+	// Needed for the speller to properly convert utf8 to wchar_t
+	setlocale(LC_ALL, "en_US.UTF-8");
 
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"lp:m:b:vsL:o"))!=-1) {
+        while ((c=getopt(argc,argv,"lp:m:b:vs:o"))!=-1) {
                 switch (c) {
                         case 'p':
                                 searchd_config.searchport = atoi(optarg);
@@ -206,14 +211,6 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "searchd: Option -s: Won't fork for new connections\n");
 				searchd_config.optSingle = 1;
                                 break;
-			#ifdef WITH_SPELLING
-			case 'L':
-				if (spelling == NULL)
-					init_spelling(optarg);
-				else
-					warnx("spelling already initialized");
-				break;
-			#endif
 			default:
                         	exit(1);
                 }
@@ -230,8 +227,7 @@ int main(int argc, char *argv[])
 	}
 
 	#ifdef WITH_SPELLING
-	if (spelling == NULL)
-		init_spelling("bb");
+	init_spelling("var/dictionarywords");
 	#endif
 
 	strncpy(servername,argv[1 +optind],sizeof(servername) -1);

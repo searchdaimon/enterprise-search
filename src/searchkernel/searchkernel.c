@@ -29,7 +29,7 @@
 #include "../common/ht.h"
 
 #ifdef WITH_SPELLING
-	#include "../spelling/spelling.h"
+#include "../newspelling/spelling.h"
 #endif
 
 #ifdef BLACK_BOKS
@@ -76,7 +76,7 @@
 	//struct iindexFormat *TeffArray; //[maxIndexElements];
 
 #ifdef WITH_SPELLING
-	extern struct spelling *spelling;
+	extern spelling_t spelling;
 #endif
 
 #ifdef DEBUG_TIME
@@ -1652,9 +1652,6 @@ spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa)
 	int i;
 	int fixed;
 
-	if (spelling == NULL)
-		return 0;
-
 	fixed = 0;
 	for(i = 0; i < qa->n; i++) {
 		string_array *sa = &qa->query[i];
@@ -1662,31 +1659,20 @@ spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa)
 			case QUERY_WORD:
 			case QUERY_SUB:
 			{
-				int ret;
-				assert(sa->n == 1);
-				ret = spelling_correct(sa->s[0], spelling);
-				if (ret) {
-					printf("Spelling correct of %s\n", sa->s[0]);
-				} else {
-					char **p;
+				char *p;
+				int found;
 
-					p = spelling_suggestions(sa->s[0], spelling);
-					if (p == NULL)
-						continue;
-					if (p[0] == NULL) {
-						spelling_suggestions_destroy(p);
-						continue;
-					}
+				if (correct_word(&spelling, sa->s[0]))
+					continue;
 
-					printf("Found correct spelling: %s\n", p[0]);
-					if (strcmp(sa->s[0], p[0]) != 0) {
-						free(sa->s[0]);
-						sa->s[0] = strdup(p[0]);
-						fixed++;
-					}
+				p = check_word(&spelling, sa->s[0], &found);
+				if (p == NULL)
+					continue;
 
-					spelling_suggestions_destroy(p);
-				}
+				printf("Found correct spelling: %s\n", p);
+				free(sa->s[0]);
+				sa->s[0] = p;
+				fixed++;
 				break;
 			}
 		}
