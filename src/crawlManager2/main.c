@@ -194,19 +194,19 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 	#endif
 
 	//send it inn
-	if (!bbdn_docadd((*collection).socketha,
-			(*collection).collection_name,
-			(*crawldocumentAdd).documenturi,
-			(*crawldocumentAdd).documenttype,
-			(*crawldocumentAdd).document,
-			(*crawldocumentAdd).dokument_size,
-			(*crawldocumentAdd).lastmodified,
-			(*crawldocumentAdd).acl_allow,
-			(*crawldocumentAdd).acl_denied,
-			(*crawldocumentAdd).title,
-			(*crawldocumentAdd).doctype)
-	) {
-
+	if (!bbdn_docadd(collection->socketha,
+				collection->collection_name,
+				crawldocumentAdd->documenturi,
+				crawldocumentAdd->documenttype,
+				crawldocumentAdd->document,
+				crawldocumentAdd->dokument_size,
+				crawldocumentAdd->lastmodified,
+				crawldocumentAdd->acl_allow,
+				crawldocumentAdd->acl_denied,
+				crawldocumentAdd->title,
+				crawldocumentAdd->doctype,
+				crawldocumentAdd->attributes)
+	   ) {
 		blog(LOGERROR,1,"can't sent to bbdn! Tryed to send doc \"%s\" Will sleep and then reconect. Wont send same doc again.",(*crawldocumentAdd).documenturi);
 		
 		//ber om å lokke sokketen. Dette er ikke det samme som å steneg kollectionen.
