@@ -55,15 +55,14 @@ sub authTest($$) {
 
 
 sub deleteCollection($$) {
- 	return 1; # Until Infoquery is fixed.
-#	my ($self, $collection) = @_;
-# 	
-# 	unless($collection) {
-# 		$error = "Didn't get a collection to crawl.";
-# 		return 0;
-# 	}
-# 	
-#	return $self->_infoquery_exec("deleteCollection \Q$collection\E");
+	my ($self, $collection) = @_;
+ 	
+ 	unless($collection) {
+ 		$error = "Didn't get a collection to delete.";
+ 		return 0;
+ 	}
+ 	
+	return $self->_infoquery_exec("deleteCollection \Q$collection\E");
 }
 
 sub listUsers {
