@@ -1,5 +1,5 @@
 %define name boitho-meta
-%define version 0.1
+%define version 0.2
 %define release 2
 
 Summary: Boitho meta packages, depend on all the other boitho packages.
