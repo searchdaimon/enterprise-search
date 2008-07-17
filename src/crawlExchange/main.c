@@ -200,6 +200,7 @@ crawlcanconnect(struct collectionFormat *collection,
 	char resource[PATH_MAX];
 	char *user;
 	char **users;
+	int n_users = 0;
 
 	if (strstr(collection->resource, "://")) {
 		snprintf(origresource, sizeof(origresource), "%s/exchange", collection->resource);
@@ -208,6 +209,7 @@ crawlcanconnect(struct collectionFormat *collection,
 	}
 
 	for (users = collection->users; users && *users; users++) {
+		n_users++;
 		user = *users;
 
 		snprintf(resource, sizeof(resource), "%s/%s/", origresource, user);
@@ -227,6 +229,8 @@ crawlcanconnect(struct collectionFormat *collection,
 		}
 	}
 
+	if (n_users == 0)
+		return 1;
 	documentError(collection, 1, "Unable to connect to: %s\n", origresource);
 
 	return 0;
