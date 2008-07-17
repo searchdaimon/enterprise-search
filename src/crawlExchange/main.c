@@ -159,7 +159,7 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 		crawldocumentAdd.lastmodified = lastmodified;
 		crawldocumentAdd.acl_allow = set_to_string(acl_allow, ",");
 		crawldocumentAdd.acl_denied = set_to_string(acl_deny, ",");
-		crawldocumentAdd.attributes = "source=mail";
+		crawldocumentAdd.attributes = "";
 
 		printf("Adding: '%s'\n", crawldocumentAdd.title);
 		(ci->documentAdd)(ci->collection, &crawldocumentAdd);
