@@ -28,6 +28,12 @@
 	#include "../getdate/getdate.h"
 	#include "../acls/acls.c"
 	#include "../getFiletype/getfiletype.h"
+	#include "../ds/dcontainer.h"
+	#include "../ds/dpair.h"
+	#include "../ds/dtuple.h"
+	#include "../ds/dmap.h"
+	#include "../ds/dmultimap.h"
+	#include "../getFiletype/identify_extension.h"
 #endif
 
 #include <string.h>
@@ -1378,10 +1384,12 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filteron) {
 	int i,len,j;
 	//dagur:
-	(*filteron).filetype	= NULL;
-	(*filteron).collection	= NULL;
-	(*filteron).date	= NULL;
-	(*filteron).sort	= NULL;
+	// Ax: kjører disse med statisk størrelse da de ikke blir frigjort (free()) noen plass.
+	// NB: Disse er gjort om i neste versjon som ikke er lagt ut pÃ¥ cvs enda.
+	(*filteron).filetype[0] = '\0';
+	(*filteron).collection[0] = '\0';
+	(*filteron).date[0] = '\0';
+	(*filteron).sort[0]	= '\0';
 
 	for (i=0; i<(*queryParsed).n; i++)
         {
@@ -1389,24 +1397,36 @@ void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filter
 
             vboprintf("Search type %c\n", (*queryParsed).query[i].operand );
 
+	    char	buf[1024];
+	    int	len;
+
+	    len = snprintf(buf, 1023, "%s", (*queryParsed).query[i].s[0]);
+	    for (j=1; j<(*queryParsed).query[i].n; j++)
+		len+= snprintf(&(buf[len]), 1023-len, " %s", (*queryParsed).query[i].s[j]);
+	    buf[len] = '\0';
+
 
 		switch ((*queryParsed).query[i].operand) {
 
 			case 'c':
-				(*filteron).collection = (*queryParsed).query[i].s[0];
+				strscpy((*filteron).collection, buf, sizeof((*filteron).collection));
 				vboprintf("wil filter on collection: \"%s\"\n",(*filteron).collection);
 			break;
 			case 'f':
-				(*filteron).filetype = (*queryParsed).query[i].s[0];
+//				(*filteron).filetype = (*queryParsed).query[i].s[0];
+				strscpy((*filteron).filetype, buf, sizeof((*filteron).filetype));
 				vboprintf("wil filter on filetype: \"%s\"\n",(*filteron).filetype);
 			break;
 			case 'k':
-				(*filteron).sort = (*queryParsed).query[i].s[0];
-				vboprintf("wil filter on filetype: \"%s\"\n",(*filteron).filetype);
+//				(*filteron).sort = (*queryParsed).query[i].s[0];
+				strscpy((*filteron).sort, buf, sizeof((*filteron).sort));
+				vboprintf("wil filter on sort: \"%s\"\n",(*filteron).sort);
 			break;
 			case 'd':
-				(*filteron).date = (*queryParsed).query[i].s[0];
-				vboprintf("wil filter on filetype: \"%s\"\n",(*filteron).date);
+//				(*filteron).date = (*queryParsed).query[i].s[0];
+				strscpy((*filteron).date, buf, sizeof((*filteron).date));
+				vboprintf("wil filter on date: \"%s\"\n",(*filteron).date);
+/*
 					len = 0;
 					for (j=0; j<(*queryParsed).query[i].n; j++) {
 						len += strlen((*queryParsed).query[i].s[j]) +1;
@@ -1422,6 +1442,7 @@ void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filter
 					(*filteron).date[len -1] = '\0'; // -1 da vi har en space på slutten. Er denne vi vil ha bort
 					vboprintf("date \"%s\", len %i\n",(*filteron).date,len);
 					//exit(1);
+*/
 			break;
 
 
@@ -2704,7 +2725,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		*********************************************************************************************************************
 		*/
 
-		if ((*filteron).collection != NULL) {
+		if ((*filteron).collection[0] != '\0') {
 		
 
 			printf("will filter on collection \"%s\"\n",(*filteron).collection);
@@ -2808,9 +2829,11 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		*/
 		#endif
 
+	        struct fte_data	*fdata = fte_init("config/file_extensions.conf");		// @ax+
+
 		//
 		// filtrerer
-		if ((*filteron).filetype != NULL) {
+		if ((*filteron).filetype[0] != '\0') {
 			printf("wil filter on filetype \"%s\"\n",(*filteron).filetype);
 
 			for (i = 0; i < (*TeffArrayElementer); i++) {
@@ -2823,24 +2846,40 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 				}
 				else
 				*/	
-				if (strcmp(TeffArray->iindex[i].filetype,(*filteron).filetype) != 0) {
 
-					TeffArray->iindex[i].indexFiltered.filename = 1;
+				char		**ptr1, **ptr2, **ptr_i;
 
-					if (TeffArray->iindex[i].indexFiltered.subname) {
-						#ifdef DEBUG
+		    		if (fte_getextension(fdata, "nbo", (*filteron).filetype, &ptr1, &ptr2))
+				    {
+					char	match=0;
+
+				        for (ptr_i=ptr1; ptr_i<ptr2 && !match; ptr_i++)
+					    {
+						if (!strcmp(TeffArray->iindex[i].filetype, *ptr_i))
+						    match = 1;
+					    }
+
+					if (!match)
+					    {
+			    		        TeffArray->iindex[i].indexFiltered.filename = 1;
+
+					        if (TeffArray->iindex[i].indexFiltered.subname) {
+						    #ifdef DEBUG
 							printf("is all ready filtered out\n");
-						#endif				
-					}
-					else {
-						--(*TotaltTreff);
-					}
+						    #endif				
+					        }
+					        else {
+						    --(*TotaltTreff);
+						}
+					    }
+				    }
 
-				}
+
 			}
 
 		}
 
+		fte_destroy(fdata); // @ax+
 
 
 		/*
@@ -2876,7 +2915,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		//
 		//filter på dato
 
-		if ((*filteron).date != NULL) {
+		if ((*filteron).date[0] != '\0') {
 			printf("wil filter on date \"%s\"\n",(*filteron).date);
 
 			struct datelib dl;
@@ -2944,13 +2983,13 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 		printf("order by \"%s\"\n",orderby);
 
-		if (((*filteron).sort != NULL) && (strcmp((*filteron).sort,"newest") == 0)) {
+		if (((*filteron).sort[0] != '\0') && (strcmp((*filteron).sort,"newest") == 0)) {
 			printf("will do newest sort\n");
 			for (i = 0; i < *TeffArrayElementer; i++) {
 				TeffArray->iindex[i].allrank = TeffArray->iindex[i].date;
 			}
 		}
-		else if ( ((*filteron).sort != NULL) && (strcmp((*filteron).sort,"oldest") == 0) ) {
+		else if ( ((*filteron).sort[0] != '\0') && (strcmp((*filteron).sort,"oldest") == 0) ) {
 			printf("will do oldest sort\n");
 			for (i = 0; i < *TeffArrayElementer; i++) {
 				//4294967295 unsigned int (long) max
@@ -3179,17 +3218,99 @@ int searchFilterCount(int *TeffArrayElementer,
     			free(itr);
 
 			//sorterer på forekomst
-			qsort((*filters).filtypes.elements,(*filters).filtypes.nrof,sizeof(struct filterinfoElementsFormat),compare_filetypes);
+//@ax-			qsort((*filters).filtypes.elements,(*filters).filtypes.nrof,sizeof(struct filterinfoElementsFormat),compare_filetypes);
 
 		}
 
 		hashtable_destroy(h,1); 
 
 
-		filetypes_info      *fti = getfiletype_init(bfile("config/filetypes.eng.conf"));
+	        struct fte_data	*fdata = fte_init("config/file_extensions.conf");		// @ax+
+				// key==group_id, value=={group, size}:
+		container	*G = map_container( int_container(), pair_container( string_container(), int_container() ) );	// @ax+
+				// key==descr_id, value=={descr, size, group_id, postfix}:
+		container	*D = map_container( int_container(),
+		    tuple_container( 4, string_container(), int_container(), int_container(), string_container() ) );	// @ax+
+//		filetypes_info      *fti = getfiletype_init(bfile("config/filetypes.eng.conf"));
 		char *cpnt;
 
+		// @ax++
+		for (i=1; i<(*filters).filtypes.nrof; i++)
+		    {
+		        char		*group, *descr;
+			int		ret;
+			ret = fte_getdescription(fdata, "nbo", (*filters).filtypes.elements[i].name, &group, &descr);
 
+//			printf("  %s:%s\t%i = [%i|%i]\n", group, descr, ret, ret/256, ret%256);
+
+			iterator	mit = map_find(G, ret%256);
+			if (mit.valid)
+			    pair(map_val(mit)).second.i+= (*filters).filtypes.elements[i].nrof;
+			else
+			    map_insert(G, ret%256, group, (*filters).filtypes.elements[i].nrof);
+
+			mit = map_find(D, ret/256);
+			if (mit.valid)
+			    tuple(map_val(mit)).element[1].i+= (*filters).filtypes.elements[i].nrof;
+			else
+			    {
+				char	**ptr1, **ptr2;
+				if (fte_getext_from_ext(fdata, (*filters).filtypes.elements[i].name, &ptr1, &ptr2))
+				    {
+					ptr2--;
+					map_insert(D, ret/256, descr, (*filters).filtypes.elements[i].nrof, ret%256, *ptr2);
+				    }
+				else
+				    {
+					map_insert(D, ret/256, descr, (*filters).filtypes.elements[i].nrof, ret%256,
+					    (*filters).filtypes.elements[i].name);
+				    }
+			    }
+		    }
+
+				// key==size, value=={group, group_id}:
+		container	*G2 = multimap_container( int_container(), pair_container( string_container(), int_container() ) );
+				// key=={group_id, size}, value=={descr, postfix}:
+		container	*D2 = multimap_container( pair_container(int_container(), int_container()), pair_container( string_container(), string_container() ) );
+
+		iterator	git = map_begin(G);
+		for (; git.valid; git=map_next(git))
+		    multimap_insert(G2, pair(map_val(git)).second.i, pair(map_val(git)).first.ptr, map_key(git).i);
+
+		iterator	dit = map_begin(D);
+		for (; dit.valid; dit=map_next(dit))
+		    multimap_insert(D2, tuple(map_val(dit)).element[2].i, tuple(map_val(dit)).element[1].i, tuple(map_val(dit)).element[0].ptr, tuple(map_val(dit)).element[3].ptr);
+
+		if ((*filters).filtypes.nrof > 0)
+		    {
+			(*filters).filtypes.nrof = 1;
+			git = multimap_end(G2);
+			for (; git.valid; git=multimap_previous(git))
+			    {
+				printf("  %s (%i)\n", pair(multimap_val(git)).first.ptr, multimap_key(git).i);
+
+				i = (*filters).filtypes.nrof;
+
+				dit = multimap_end(D2);
+				for (; dit.valid; dit=multimap_previous(dit))
+				    if (pair(multimap_key(dit)).first.i == pair(multimap_val(git)).second.i)
+					{
+					    strscpy( (*filters).filtypes.elements[i].name, pair(multimap_val(dit)).second.ptr, sizeof((*filters).filtypes.elements[i].name) );
+					    printf("    [%s] %s (%i)\n", pair(multimap_val(dit)).second.ptr, pair(multimap_val(dit)).first.ptr, pair(multimap_key(dit)).second.i);
+					}
+
+				strscpy( (*filters).filtypes.elements[i].longname, pair(multimap_val(git)).first.ptr, sizeof((*filters).filtypes.elements[i].longname) );
+				(*filters).filtypes.elements[i].nrof = multimap_key(git).i;
+				(*filters).filtypes.nrof++;
+			    }
+		    }
+		else
+		    {
+			(*filters).filtypes.nrof = 0;
+		    }
+
+		// ++@ax
+/*
 		printf("filtypesnrof: %i\n",(*filters).filtypes.nrof);
 		for (i=0;i<(*filters).filtypes.nrof;i++) {
 			printf("file \"%s\": %i\n",(*filters).filtypes.elements[i].name,(*filters).filtypes.elements[i].nrof);
@@ -3203,9 +3324,15 @@ int searchFilterCount(int *TeffArrayElementer,
 			}
 
 		}
-
-		getfiletype_destroy(fti);
-		fti = NULL;
+*/
+//		getfiletype_destroy(fti);
+//		fti = NULL;
+		destroy(G);	// @ax+
+		destroy(D);	// @ax+
+		destroy(G2);	// @ax+
+		destroy(D2);	// @ax+
+		fte_destroy(fdata);	// @ax+
+		fdata = NULL;		// @ax+
 
 		/***********************************************************************************************
 		 collections
@@ -3331,7 +3458,7 @@ int searchFilterCount(int *TeffArrayElementer,
 		//hvis vi ikke har trykket på noen så markerer vi All, som er nr 0.
 		//hvis ikke skal vi søke oss gjenom og finne den som er trykket på
 
-		if ((*filteron).collection == NULL) {
+		if ((*filteron).collection[0] == '\0') {
 			(*filters).collections.elements[0].checked = 1;
 		}
 		else {
