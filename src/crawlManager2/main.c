@@ -1369,7 +1369,7 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 
 		//tester at vi ikke allerede holder på å crawle denne fra før
 		if (!crawl_lock(&collection_lock,collection[i].collection_name)) {
-			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are all redy crawling it.",collection[i].collection_name);
+			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are already crawling it.",collection[i].collection_name);
 			//runarb: 14 jan 2008: ingen grun til å oppdatere beskjeden, da det som står der er med korekt
                         //set_crawler_message(0,"Error: Can't crawl collection. We are all redy crawling it.",collection[i].id);
 
@@ -1379,9 +1379,9 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 		//tester at vi ikke driver å crawler med den crawleren fra før. Her burde vi kansje 
 		//heller satset på å begrense på server. Slik at for eks to smb servere kan crawles samtidig
 		if (!crawl_element_lock(&collection_lock,collection[i].connector)) {
-			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are all redy crawling this type/server.",collection[i].collection_name);
+			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are already crawling this type/server.",collection[i].collection_name);
 			set_crawl_state(db, CRAWL_ERROR, collection[i].id,
-				"Can't crawl collection. We are all redy crawling this type/server.");
+				"Can't crawl collection. We are already crawling this type/server.");
 
 			continue;
 		}
@@ -1389,7 +1389,7 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 	
 		//make a conectina to bbdn for add to use
 		if (!bbdn_conect(&collection[i].socketha,"",global_bbdnport)) {
-			berror("can't conect to bbdn (boitho backend document server)");
+			berror("can't connect to bbdn (boitho backend document server)");
 			set_crawl_state(db, CRAWL_ERROR, collection[i].id, bstrerror());
 		}
 		else {
