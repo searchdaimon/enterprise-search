@@ -83,7 +83,7 @@ HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a src/ds/libd
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb perlxs-sdcrawl
+bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb perlxs-sdcrawl bbdocumentWebAdd
 
 dppreload:
 	$(CC) -shared -fPIC src/dp/preload.c src/common/timediff.c -o bin/dppreload.so -ldl -Wall $(LDFLAGS)
@@ -135,6 +135,13 @@ perlxs-sdcrawl:
 	@echo "$@:"
 
 	(cd perlxs/SD-Crawl; make clean; perl Makefile.PL; make)
+
+bbdocumentWebAdd:
+	@echo ""
+	@echo "$@:"
+
+	(cd src/bbdocumentWebAdd/; make clean; make)
+	cp src/bbdocumentWebAdd/bbdocumentWebAdd cgi-bin
 
 
 Suggest:
@@ -220,12 +227,6 @@ GetIndexAsArrayTest: src/GetIndexAsArrayTest/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/GetIndexAsArrayTest/main.c -o bin/GetIndexAsArrayTest $(LDFLAGS)
-
-bbdocumentWebAdd: src/bbdocumentWebAdd/main.c
-	@echo ""
-	@echo "$@:"
-
-	$(CC) $(CFLAGS) $(LIBS)*.c src/bbdocumentWebAdd/main.c -o bin/bbdocumentWebAdd $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS
 
 bbdocumentMakeLotUrlsdb: src/bbdocumentMakeLotUrlsdb/main.c
 	@echo ""
