@@ -24,27 +24,26 @@ void bverror(const char *fmt,va_list     ap) {
 }
 
 void berror(const char *fmt, ...) {
-
-
-
 	va_list     ap;
-
     	va_start(ap, fmt);
 
-
-	//#ifdef DEBUG	
-		printf("berror: ");	
-		vprintf(fmt,ap);
-		printf("\n");
-	//#endif
+//#ifdef DEBUG	
+	printf("berror: ");	
+	vprintf(fmt,ap);
+	printf("\n");
+//#endif
 
 	vsprintf(_errormsg,fmt,ap);
-	
-
-
 	va_end(ap);
-
 }
+void berror_safe(const char *str) {
+//#ifdef DEBUG	
+	printf("berror: %s\n", str);	
+//#endif
+	sprintf(_errormsg, "%s", str);
+}
+
+
 
 void bperror(const char *fmt, ...) {
 

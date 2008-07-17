@@ -510,7 +510,7 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 	else if (!(*(*crawlLibInfo).crawlpatAcces)(uri,username,password,documentError, &collections[0])) {
         	printf("Can't crawlLibInfo. Can be denyed or somthing else\n");
 		//overfører error
-                berror( documentErrorGetlast( &collections[0]) );
+                berror_safe(documentErrorGetlast(&collections[0]));
 
 #ifdef WITH_PATHACCESS_CACHE
 		if (memcache_servers != NULL)
@@ -962,6 +962,7 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 
 	//inaliserer andre ting
 	for (i=0;i<(*nrofcollections);i++) {
+		printf("Ptr %d: %p\n", i, (*collection)[i].errormsg);
 		(*collection)[i].errormsg[0] = '\0';
 	}
 
