@@ -191,7 +191,7 @@ boitho-bbdn:
 	rpmbuild -bb $(boitho-boitho-bbdn_name).spec
 
 fileFilter:
-	perl rpmmagic.pl --initdrestart "boitho-bbdn" --requires "perl-Email-MIME" $(boitho-fileFilter_name) $(boitho-fileFilter_version) $(BOITHOHOME) /home/boitho/boithoTools fileFilter
+	perl rpmmagic.pl --initdrestart "boitho-bbdn" --requires "perl-Email-MIME perl-TimeDate" $(boitho-fileFilter_name) $(boitho-fileFilter_version) $(BOITHOHOME) /home/boitho/boithoTools fileFilter
 
 	rpmbuild -bb $(boitho-fileFilter_name).spec
 
