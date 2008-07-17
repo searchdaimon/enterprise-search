@@ -63,7 +63,7 @@ boithobb-database_name = boitho-database
 boithobb-database_version = 0.2
 
 boitho-meta_name = boitho-meta
-boitho-meta_version = 0.2
+boitho-meta_version = 0.3
 
 boitho-phonehome_name = boitho-phonehome
 boitho-phonehome_version = 0.5
@@ -92,7 +92,10 @@ boitho-gc_version = 1.1
 boitho-perlxs-sdcrawl_name = boitho-perlxs-sdcrawl
 boitho-perlxs-sdcrawl_version = 0.1
 
-all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch scripts repomod suggest perlxs-sdcrawl
+boitho-webadd_name = boitho-bbdocumentwebadd
+boitho-webadd_version = 0.1
+
+all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch scripts repomod suggest perlxs-sdcrawl webadd
 
 sqlUpdate:
 	perl rpmmagic.pl --sql sql/update-cur.sql --requires "boitho-database" $(boithobb-sqlUpdate_name) $(boithobb-sqlUpdate_version) $(BOITHOHOME) /home/boitho/boithoTools 
@@ -111,10 +114,12 @@ setuidbb:
 	rpmbuild -bb $(boithobb-setuid_name).spec
 
 webclient:
-
 	perl rpmmagic.pl $(boitho-webclient_name) $(boitho-webclient_version) $(BOITHOHOME) /home/boitho/boithoTools public_html/webclient public_html/.htaccess
-
 	rpmbuild -bb $(boitho-webclient_name).spec
+
+webadd:
+	perl rpmmagic.pl $(boitho-webadd_name) $(boitho-webadd_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/bbdocumentWebAdd
+	rpmbuild -bb $(boitho-webadd_name).spec
 
 perlxs-sdcrawl:
 	perl rpmmagic.pl $(boitho-perlxs-sdcrawl_name) $(boitho-perlxs-sdcrawl_version) $(BOITHOHOME) /home/boitho/boithoTools perlxs/SD-Crawl/blib/
