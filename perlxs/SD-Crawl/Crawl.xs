@@ -92,6 +92,7 @@ void pdocumentAdd(struct cargsF *cargs, char * url, int lastmodified, char docum
         crawldocumentAdd->acl_denied     = acl_denied;
 	crawldocumentAdd->title		 = title;
 	crawldocumentAdd->doctype        = "";
+	crawldocumentAdd->attributes = attributes;
 
 	cargs->documentAdd(cargs->collection ,crawldocumentAdd);
 
