@@ -18,4 +18,4 @@ test:
 	$(CC) -o getfiletype test.c getfiletype.o ../ds/libds.a libfte.a
 
 clean:
-	rm -rf getfiletype getfiletype.o lex.getfiletype.c fte.tab.[ch] lex.fte.c fte_test fte.output
+	rm -rf getfiletype getfiletype.o lex.getfiletype.c fte.tab.[ch] lex.fte.c fte_test fte.output *.o libfte.a
