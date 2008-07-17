@@ -14,7 +14,7 @@ boitho-searchdbb_name = boitho-searchdbb
 boitho-searchdbb_version = 5.5.34
 
 boitho-crawlManager_name = boitho-crawlManager
-boitho-crawlManager_version = 1.4.37
+boitho-crawlManager_version = 1.4.38
 
 boitho-boitho-bbdn_name = boitho-bbdn
 boitho-boitho-bbdn_version = 1.8.13
