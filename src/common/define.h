@@ -180,11 +180,17 @@ struct subnamesFiltypesFormat {
 };
 
 struct filteronFormat {
-
-	char *filetype;
-	char *collection;
-	char *date;
-	char *sort;
+/* Neste versjon (som ikke er lagt ut på cvs enda):
+    char	*group;
+//	char *filetype;
+    char	*collection;
+    char	*date;
+    char	*sort;
+*/
+	char filetype[1024];
+	char collection[1024];
+	char date[1024];
+	char sort[1024];
 };
 
 struct subnamesConfigFormat {
