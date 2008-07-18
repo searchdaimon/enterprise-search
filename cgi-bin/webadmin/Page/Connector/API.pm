@@ -364,4 +364,4 @@ sub init_test_collection {
     return { $coll->get_attr() }->{id};
 }
 
-
+1;
