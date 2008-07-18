@@ -9,4 +9,5 @@ chown -R boitho:boitho /boithoData/lot/
 
 chown boitho:boitho /home/boitho/boithoTools/data/dict/
 chown apache:apache /home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd
+chown apache:apache /home/boitho/boithoTools/crawlers
 
