@@ -2030,8 +2030,8 @@ int main(int argc, char *argv[])
 
 					for (j = 0; j < Sider[i].n_urls; j++) {
 						printf("\t<DUPLICATESURLS>\n");
-							printf("\t\t<URL2><![CDATA[%s]]></URL2>\n",Sider[i].urls[j].url);
-							printf("\t\t<URI2><![CDATA[%s]]></URI2>\n",Sider[i].urls[j].uri);
+							printf("\t\t<URL><![CDATA[%s]]></URL>\n",Sider[i].urls[j].url);
+							printf("\t\t<URI><![CDATA[%s]]></URI>\n",Sider[i].urls[j].uri);
 						printf("\t</DUPLICATESURLS>\n");
 					}
 				}
