@@ -458,7 +458,7 @@ searchdbb : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
 #	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/getfiletype.o src/getFiletype/libfte.a src/attributes/libshow_attr.a src/spelling/spelling.c src/ds/libds.a -DIIACL -laspell $(24SEVENOFFICE) -D WITH_SPELLING
-	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/getfiletype.o src/getFiletype/libfte.a src/newspelling/spelling.c src/newspelling/dmetaphone.c src/newspelling/levenshtein.c src/ds/libds.a -DIIACL $(24SEVENOFFICE) -DWITH_SPELLING
+	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/libfte.a src/newspelling/spelling.c src/newspelling/dmetaphone.c src/newspelling/levenshtein.c src/ds/libds.a -DIIACL $(24SEVENOFFICE) -DWITH_SPELLING
 
 mergeUserToSubname: src/mergeUserToSubname/main.c
 	@echo ""

@@ -139,12 +139,12 @@ container* thesaurus_get_words_from_id(thesaurus *T, int id)
 	    container	*S = set_container( string_container() );
 	    tword	*prev = match;
 
-	    //printf("  %s: %s\n", (match->flags&1?"stem":"word"), match->text);
+	    //fprintf(stderr, "  %s: %s\n", (match->flags&1?"stem":"word"), match->text);
 	    set_insert(S, match->text);
 
 	    while (prev!=&(T->W[0]) && (--prev)->id == id)
 		{
-		    //printf(" -%s: %s\n", (prev->flags&1?"stem":"word"), prev->text);
+		    //fprintf(stderr, " -%s: %s\n", (prev->flags&1?"stem":"word"), prev->text);
 		    set_insert(S, prev->text);
 		}
 
@@ -152,7 +152,7 @@ container* thesaurus_get_words_from_id(thesaurus *T, int id)
 
 	    while (prev!=&(T->W[T->W_size-1]) && (++prev)->id == id)
 		{
-		    //printf(" +%s: %s\n", (prev->flags&1?"stem":"word"), prev->text);
+		    //fprintf(stderr, " +%s: %s\n", (prev->flags&1?"stem":"word"), prev->text);
 		    set_insert(S, prev->text);
 		}
 
@@ -186,12 +186,12 @@ container* thesaurus_get_synonyms(thesaurus *T, char *_word)
 	    container	*S = set_container( string_container() );
 	    tword	*prev = match;
 
-	    //printf(" id: %i flags: %i word: %s\n", match->id, match->flags, match->text);
+	    //fprintf(stderr, " id: %i flags: %i word: %s\n", match->id, match->flags, match->text);
 	    S = thesaurus_get_words_from_id(T, match->id);
 
 	    while (prev!=&(T->W[0]) && !strcmp((--prev)->text, word))
 		{
-		    //printf("-id: %i flags: %i word: %s\n", prev->id, prev->flags, prev->text);
+		    //fprintf(stderr, "-id: %i flags: %i word: %s\n", prev->id, prev->flags, prev->text);
 		    container	*s = thesaurus_get_words_from_id(T, prev->id);
 		    if (s==NULL) continue;
 		    iterator	it = set_begin(s);
@@ -204,7 +204,7 @@ container* thesaurus_get_synonyms(thesaurus *T, char *_word)
 
 	    while (prev!=&(T->W[T->W_size-1]) && !strcmp((++prev)->text, word))
 		{
-		    //printf("+id: %i flags: %i word: %s\n", prev->id, prev->flags, prev->text);
+		    //fprintf(stderr, "+id: %i flags: %i word: %s\n", prev->id, prev->flags, prev->text);
 		    container	*s = thesaurus_get_words_from_id(T, prev->id);
 		    if (s==NULL) continue;
 		    iterator	it = set_begin(s);
