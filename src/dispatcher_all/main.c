@@ -253,6 +253,20 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 		QueryData->MaxsHits = cgi_getentryint("maxshits");			
 	}
 
+	if (cgi_getentryint("opensearch") == 0) {
+		QueryData->opensearch = 0;
+	}
+	else {
+		QueryData->opensearch = cgi_getentryint("opensearch");
+	}
+
+	if (cgi_getentrydouble("version") == 0) {
+		QueryData->version = 2.0;
+	}
+	else {
+		QueryData->version = cgi_getentrydouble("version");
+	}
+
 
 	//Runarb: Dette er vel bare aktuelt for black boks. For web trnger eksterne klienter å kalle dispatcher_all direkte?
 #ifdef BLACK_BOKS
@@ -286,7 +300,7 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 			if (strcmp(p, remoteaddr) == 0 || strcmp(p, "all") == 0) {
 				char *key;
 
-				if ((key = cgi_getentrystr("secret")) != NULL) {
+				if ((key = (char*)cgi_getentrystr("secret")) != NULL) {
 					if (strcmp(key, p2) == 0) {
 						hasaccess = 1;
 					}
@@ -627,7 +641,7 @@ showabal,AddSiderHeder[i].servername);
 
 void print_explain_rank( struct SiderFormat *Side, char query[]) {
 
-	printf("\t<EXPLAIN_RANK><![CDATA[Rb=%hu;%hu;%hu&amp;Rh=%hu;%hu;%hu&amp;Rt=%hu;%hu;%hu&amp;Ra=%hu;%hu;%hu&amp;Rum=%hu;%hu;%hu&amp;Rud=%hu;%hu;%hu&amp;Rus=%hu;%hu;%hu&amp;AllRank=%i&amp;TermRank=%i&amp;PopRank=%i&amp;DocID=%i-%i&amp;Url=%s&amp;Query=%s]]></EXPLAIN_RANK>\n",
+	printf("<![CDATA[Rb=%hu;%hu;%hu&amp;Rh=%hu;%hu;%hu&amp;Rt=%hu;%hu;%hu&amp;Ra=%hu;%hu;%hu&amp;Rum=%hu;%hu;%hu&amp;Rud=%hu;%hu;%hu&amp;Rus=%hu;%hu;%hu&amp;AllRank=%i&amp;TermRank=%i&amp;PopRank=%i&amp;DocID=%i-%i&amp;Url=%s&amp;Query=%s]]>\n",
 		Side->iindex.rank_explaind.rankBody,Side->iindex.rank_explaind.nrBody,Side->iindex.rank_explaind.maxBody,
 		Side->iindex.rank_explaind.rankHeadline,Side->iindex.rank_explaind.nrHeadline,Side->iindex.rank_explaind.maxHeadline,
 		Side->iindex.rank_explaind.rankTittel,Side->iindex.rank_explaind.nrTittel,Side->iindex.rank_explaind.maxTittel,
@@ -1730,20 +1744,490 @@ int main(int argc, char *argv[])
 	if (dispconfig.writeprequery) {
 		printf("query \"%s\", total %i,showabal %i, nodes %i, time %f\n",QueryData.queryhtml,FinalSiderHeder.TotaltTreff,FinalSiderHeder.showabal,nrRespondedServers,FinalSiderHeder.total_usecs);
 	}
-	else {
-        //printf("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?> \n");
-        printf("<?xml version=\"1.0\" encoding=\"UTF-8\" ?> \n");
-        if (!noDoctype) {
-	        printf("<!DOCTYPE family SYSTEM \"http://www.boitho.com/xml/search.dtd\"> \n");
-        }
+	else if (QueryData.opensearch) {
+	    // Opensearch rss-data (ax):
+    	    printf("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
+	    printf("<rss version=\"2.0\" xmlns:opensearch=\"http://a9.com/-/spec/opensearch/1.1/\" xmlns:atom=\"http://www.w3.org/2005/Atom\">\n");
+	    printf("  <channel>\n");
+	    printf("    <title>Searchdaimon</title>\n");
+//	    printf("    <link>http://ax.boitho.com/</link>\n");
+	    printf("    <description>Searchresults from Searchdaimon.</description>\n");
+	    printf("    <opensearch:totalResults>%i</opensearch:totalResults>\n", FinalSiderHeder.showabal);
+	    printf("    <opensearch:startIndex>%i</opensearch:startIndex>\n", QueryData.start);
+	    printf("    <opensearch:itemsPerPage>%i</opensearch:itemsPerPage>\n", QueryData.MaxsHits);
+	    printf("    <atom:link rel=\"search\" type=\"application/opensearchdescription+xml\" href=\"http://%s/webclient/opensearchdescription.xml\"/>\n",
+		getenv("HTTP_HOST"));
+//	    printf("    <opensearch:Query role=\"request\" searchTerms=\"New York History\" startPage=\"1\" />\n");
 
-        printf("<SEARCH>\n");   
-	//får rare svar fra hilite. Dropper å bruke den får nå
-	FinalSiderHeder.hiliteQuery[0] = '\0';
-	#ifdef WITH_SPELLING
-	strsandr(SiderHeder->spellcheckedQuery, "\"","&quot;");
+	    i = QueryData.MaxsHits * (QueryData.start -1);
+	    x = i;
+
+	    while ((x<(QueryData.MaxsHits*QueryData.start)) && (x<FinalSiderHeder.showabal) && (i < (queryNodeHeder.MaxsHits * (nrOfServers + nrOfPiServers)))) {
+		
+		if (!Sider[i].deletet) {
+            			printf("<item>\n");
+	                	printf("\t<docid>%i-%i</docid>\n",Sider[i].iindex.DocID,rLotForDOCid(Sider[i].iindex.DocID));
+        	        	printf("\t<title><![CDATA[%s]]></title>\n",Sider[i].title);
+                		//DocumentIndex
+                		printf("\t<link><![CDATA[%s]]></link>\n",Sider[i].url);
+
+				printf("\t<description><![CDATA[%s]]></description>\n",Sider[i].description);
+                		printf("</item>\n");
+
+    			//teller bare normale sider
+			if (Sider[i].type == siderType_normal) {
+				++x;
+			}
+			}
+		++i;
+	    }
+
+	    printf("  </channel>\n</rss>\n");
+	}
+	else if (QueryData.version >= 2.1) { // ax++
+    	    printf("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
+    	    if (!noDoctype)
+	        printf("<!DOCTYPE searchresults SYSTEM \"http://www.boitho.com/xml/search.dtd\">\n");
+
+    	    printf("<search>\n");
+	    //får rare svar fra hilite. Dropper å bruke den for nå
+	    FinalSiderHeder.hiliteQuery[0] = '\0';
+	    #ifdef WITH_SPELLING
+	    strsandr(SiderHeder->spellcheckedQuery, "\"","&quot;");
+	    #endif
+    	    printf("<result_info query=\"%s\" spellcheckedquery=\"%s\" filtered=\"%i\" \
+	        shown=\"%i\" total=\"%i\" cache=\"%i\" \
+		prequery=\"%i\" time=\"%f\" geoipcountry=\"%s\" subname=\"%s\" boithohome=\"%s\" nrofsearchnodes=\"%i\"/>\n",
+		QueryData.queryhtml,
+		#ifdef WITH_SPELLING
+		SiderHeder->spellcheckedQuery,
+		#else
+		"",
+		#endif
+		FinalSiderHeder.filtered,
+		FinalSiderHeder.showabal,
+		FinalSiderHeder.TotaltTreff,
+		hascashe,
+		hasprequery,
+		FinalSiderHeder.total_usecs,
+		QueryData.GeoIPcontry,
+		QueryData.subname,
+		bfile(""),
+		nrRespondedServers
+	    );
+	
+	    //viser info om dispatcher_all
+	    printf("<dispatcher_info>\n");
+	    printf("\t<filters>\n"); // ax: filter som har blitt utlÃ¸st
+	    {
+		printf("\t\t<filterAdultWeight_bool>%i</filterAdultWeight_bool>\n",dispatcherfiltersTraped.filterAdultWeight_bool);
+		printf("\t\t<filterAdultWeight_value>%i</filterAdultWeight_value>\n",dispatcherfiltersTraped.filterAdultWeight_value);
+		printf("\t\t<filterSameCrc32_1>%i</filterSameCrc32_1>\n",dispatcherfiltersTraped.filterSameCrc32_1);
+		printf("\t\t<filterSameUrl>%i</filterSameUrl>\n",dispatcherfiltersTraped.filterSameUrl);
+		printf("\t\t<filterNoUrl>%i</filterNoUrl>\n",dispatcherfiltersTraped.filterNoUrl);
+		printf("\t\t<find_domain_no_subname>%i</find_domain_no_subname>\n",dispatcherfiltersTraped.find_domain_no_subname);
+		printf("\t\t<filterSameDomain>%i</filterSameDomain>\n",dispatcherfiltersTraped.filterSameDomain);
+		printf("\t\t<filterTLDs>%i</filterTLDs>\n",dispatcherfiltersTraped.filterTLDs);
+		printf("\t\t<filterResponse>%i</filterResponse>\n",dispatcherfiltersTraped.filterResponse);
+		printf("\t\t<cantpopResult>%i</cantpopResult>\n",dispatcherfiltersTraped.cantpopResult);
+		printf("\t\t<cmc_pathaccess>%i</cmc_pathaccess>\n",dispatcherfiltersTraped.cmc_pathaccess);
+		printf("\t\t<filterSameCrc32_2>%i</filterSameCrc32_2>\n",dispatcherfiltersTraped.filterSameCrc32_2);
+	    }
+	    printf("\t</filters>\n");
+	    printf("</dispatcher_info>\n");
+
+
+	    if ((!hascashe) && (!hasprequery)) {
+
+		//viser info om serverne som svarte
+		//printf("<SEARCHNODES_INFO NROFSEARCHNODES=\"%i\" />\n",nrRespondedServers);
+
+		for (i=0;i<nrOfServers + nrOfPiServers;i++) {
+			if (sockfd[i] != 0) {
+				printf("<searchnode>\n");
+				printf("\t<nodename>%s</nodename>\n",SiderHeder[i].servername);
+				printf("\t<totaltime>%f</totaltime>\n",SiderHeder[i].total_usecs);
+				printf("\t<hits>%i</hits>\n",SiderHeder[i].TotaltTreff);
+				printf("\t<filtered>%i</filtered>\n",SiderHeder[i].filtered);
+				printf("\t<shown>%i</shown>\n",SiderHeder[i].showabal);
+
+#ifndef DEBUG
+				printf("\t<time_profile>\n");
+				{
+					printf("\t\t<AuthorSearch>%f</AuthorSearch>\n",SiderHeder[i].queryTime.AthorSearch);
+					//printf("\t\t<AthorRank>%f</AthorRank>\n",SiderHeder[i].queryTime.AthorRank);
+					printf("\t\t<UrlSearch>%f</UrlSearch>\n",SiderHeder[i].queryTime.UrlSearch);
+					printf("\t\t<MainSearch>%f</MainSearch>\n",SiderHeder[i].queryTime.MainSearch);
+					//printf("\t\t<MainRank>%f</MainRank>\n",SiderHeder[i].queryTime.MainRank);
+					printf("\t\t<MainAuthorMerge>%f</MainAuthorMerge>\n",SiderHeder[i].queryTime.MainAthorMerge);
+					printf("\t\t<popRank>%f</popRank>\n",SiderHeder[i].queryTime.popRank);
+					printf("\t\t<responseShortening>%f</responseShortening>\n",SiderHeder[i].queryTime.responseShortning);
+
+					printf("\t\t<allrankCalc>%f</allrankCalc>\n",SiderHeder[i].queryTime.allrankCalc);
+					printf("\t\t<indexSort>%f</indexSort>\n",SiderHeder[i].queryTime.indexSort);
+					printf("\t\t<searchSimple>%f</searchSimple>\n",SiderHeder[i].queryTime.searchSimple);
+
+					printf("\t\t<popResult>%f</popResult>\n",SiderHeder[i].queryTime.popResult);
+					printf("\t\t<adultcalc>%f</adultcalc>\n",SiderHeder[i].queryTime.adultcalk);
+
+#ifdef BLACK_BOKS
+					printf("\t\t<filetypes>%f</filetypes>\n",SiderHeder[i].queryTime.filetypes);
+					printf("\t\t<iintegerGetValueDate>%f</iintegerGetValueDate>\n",SiderHeder[i].queryTime.iintegerGetValueDate);
+					printf("\t\t<dateview>%f</dateview>\n",SiderHeder[i].queryTime.dateview);
+					printf("\t\t<crawlManager>%f</crawlManager>\n",SiderHeder[i].queryTime.crawlManager);
+					printf("\t\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);
+					printf("\t\t<cmc_connect>%f</cmc_connect>\n",SiderHeder[i].queryTime.cmc_conect);
+#endif
+					#ifdef BLACK_BOKS
+					printf("\t\t<html_parser_run>%f</html_parser_run>\n",SiderHeder[i].queryTime.html_parser_run);
+					printf("\t\t<generate_snippet>%f</generate_snippet>\n",SiderHeder[i].queryTime.generate_snippet);
+					#endif
+				}
+				printf("\t</time_profile>\n");
+
+				printf("\t<filters>\n");
+				{
+					printf("\t\t<filterAdultWeight_bool>%i</filterAdultWeight_bool>\n",SiderHeder[i].filtersTraped.filterAdultWeight_bool);
+					printf("\t\t<filterAdultWeight_value>%i</filterAdultWeight_value>\n",SiderHeder[i].filtersTraped.filterAdultWeight_value);
+					printf("\t\t<filterSameCrc32_1>%i</filterSameCrc32_1>\n",SiderHeder[i].filtersTraped.filterSameCrc32_1);
+					printf("\t\t<filterSameUrl>%i</filterSameUrl>\n",SiderHeder[i].filtersTraped.filterSameUrl);
+					printf("\t\t<filterNoUrl>%i</filterNoUrl>\n",SiderHeder[i].filtersTraped.filterNoUrl);
+					printf("\t\t<find_domain_no_subname>%i</find_domain_no_subname>\n",SiderHeder[i].filtersTraped.find_domain_no_subname);
+					printf("\t\t<filterSameDomain>%i</filterSameDomain>\n",SiderHeder[i].filtersTraped.filterSameDomain);
+					printf("\t\t<filterTLDs>%i</filterTLDs>\n",SiderHeder[i].filtersTraped.filterTLDs);
+					printf("\t\t<filterResponse>%i</filterResponse>\n",SiderHeder[i].filtersTraped.filterResponse);
+					printf("\t\t<cantpopResult>%i</cantpopResult>\n",SiderHeder[i].filtersTraped.cantpopResult);
+					printf("\t\t<cmc_pathaccess>%i</cmc_pathaccess>\n",SiderHeder[i].filtersTraped.cmc_pathaccess);
+					printf("\t\t<filterSameCrc32_2>%i</filterSameCrc32_2>\n",SiderHeder[i].filtersTraped.filterSameCrc32_2);
+				}
+				printf("\t</filters>\n");
+#endif
+
+				printf("</searchnode>\n");
+
+
+			}	
+		}
+	    }
+	    else {
+		printf("<searchnode>\n");
+		printf("\t<nodename>cache.exactseek.com</nodename>\n");
+		printf("\t<totaltime>%f</totaltime>\n",FinalSiderHeder.total_usecs);
+		printf("\t<hits>%i</hits>\n",FinalSiderHeder.TotaltTreff);
+		printf("\t<filtered>0</filtered>\n");
+		printf("</searchnode>\n");
+	    }
+
+	    //cashe eller ingen cashe. Adserverene skal vises
+	    for (i=0;i<nrOfAddServers;i++) {
+       	        if (addsockfd[i] != 0) {
+			printf("<searchnode>\n");
+				printf("\t<nodename>%s</nodename>\n",AddSiderHeder[i].servername);
+       	         		printf("\t<totaltime>%f</totaltime>\n",AddSiderHeder[i].total_usecs);
+				printf("\t<hits>%i</hits>\n",AddSiderHeder[i].TotaltTreff);
+				printf("\t<filtered>%i</filtered>\n",AddSiderHeder[i].filtered);
+			printf("</searchnode>\n");
+		}	
+	    }
+
+
+	    //hvis vi har noen feil viser vi dem
+	    for (i=0;i<errorha.nr;i++) {
+		printf("<error>\n");
+		printf("  <errorcode>%i</errorcode>\n",errorha.errorcode[i]);
+        	printf("  <errormessage>%s</errormessage>\n",errorha.errormessage[i]);
+        	printf("</error>\n");
+	    }
+
+	    #ifdef BLACK_BOKS
+
+	    for(i=0;i<SiderHeder[0].filters.collections.nrof;i++) {
+
+		if (SiderHeder[0].filters.collections.elements[i].checked) {
+			strscpy(colchecked," selected=\"true\"",sizeof(colchecked));
+		}
+		else {
+			strscpy(colchecked,"",sizeof(colchecked));
+		}
+
+		printf("<collection%s>\n",colchecked);
+		printf("\t<name>%s</name>\n",SiderHeder[0].filters.collections.elements[i].name);
+		printf("\t<totalresultscount>%i</totalresultscount>\n",SiderHeder[0].filters.collections.elements[i].nrof);
+
+		printf("</collection>\n");
+
+		
+	    }
+
+
+	    for (i=0;i<SiderHeder[0].filters.filtypes.nrof;i++) {
+		printf("<filetype>\n");
+
+		printf("<filename>%s</filename>\n<filelongname>%s</filelongname>\n<filenr>%i</filenr>",
+				SiderHeder[0].filters.filtypes.elements[i].name,
+				SiderHeder[0].filters.filtypes.elements[i].longname,
+				SiderHeder[0].filters.filtypes.elements[i].nrof);
+		
+		printf("</filetype>\n");
+
+	    }		
+
+	    char *dateview_type_names[] = { "today",
+					"yesterday",
+					"this_week",
+					"this_month",
+					"this_year",
+					"last_year",
+					"two_years_plus"};
+
+	    printf("<dates>\n");
+		printf("\t<all>0</all>\n");
+		for (y=0;y<7;y++) {
+			if (SiderHeder[0].dates > 0) {
+				printf("\t<%s>%i</%s>\n",dateview_type_names[y],SiderHeder[0].dates[y],dateview_type_names[y]);
+			}
+		}
+	    printf("</dates>\n");
+
+	    #else
+
+		#ifdef DEBUG
+        	printf("|%-10s|%-10s|%-10s||%-10s|%-10s|%-10s|%-18s|%-10s|%-10s|\n",
+                	"AllRank",
+                	"TermRank",
+                	"PopRank",
+                	"Body",
+                	"Headline",
+                	"Tittel",
+                	"Athor (nr)",
+                	"UrlM",
+                	"UrlDom",
+                	"UrlSub"
+                );
+        	printf("|----------|----------|----------||----------|----------|----------|------------------|----------|----------|----------|\n");
+
+                for(i=0;i<FinalSiderHeder.showabal;i++) {
+                        printf("|%10i|%10i|%10i||%10i|%10i|%10i|%10i (%5i)|%10i|%10i|%10i| %s\n",
+
+				Sider[i].iindex.allrank,
+                                Sider[i].iindex.TermRank,
+                                Sider[i].iindex.PopRank,
+
+                                Sider[i].iindex.rank_explaind.rankBody,
+                                Sider[i].iindex.rank_explaind.rankHeadline,
+                                Sider[i].iindex.rank_explaind.rankTittel,
+                                Sider[i].iindex.rank_explaind.rankAthor,
+                                Sider[i].iindex.rank_explaind.nrAthor,
+                                Sider[i].iindex.rank_explaind.rankUrl_mainbody,
+                                Sider[i].iindex.rank_explaind.rankUrlDomain,
+                                Sider[i].iindex.rank_explaind.rankUrlSub,
+
+                                Sider[i].DocumentIndex.Url
+                                );
+                }
+
+		#endif
 	#endif
-        printf("<RESULT_INFO TOTAL=\"%i\" SPELLCHECKEDQUERY=\"%s\" QUERY=\"%s\" HILITE=\"%s\" TIME=\"%f\" FILTERED=\"%i\" \
+
+	    //skal printe ut FinalSiderHeder.showabal sider, men noen av sidene kan være slettet
+
+	    //x=0;
+	    //i=0;
+	    //regner ut hvor vi skal begynne og vise treff. Eks side 2 er fra 11-20
+	    //i er hvor vi skal begynne
+	    i = QueryData.MaxsHits * (QueryData.start -1);
+	    x = i;
+	    #ifdef DEBUG	
+	    printf("x: %i, MaxsHits %i, start %i, showabal %i\n",x,QueryData.MaxsHits,QueryData.start,
+		FinalSiderHeder.showabal);
+	    #endif
+
+	    while ((x<(QueryData.MaxsHits*QueryData.start)) && (x<FinalSiderHeder.showabal) && (i < (queryNodeHeder.MaxsHits * (nrOfServers + nrOfPiServers)))) {
+		
+		if (!Sider[i].deletet) {
+
+
+			#ifdef DEBUG
+				printf("i %i, r %i, a: %i, bid : %f, u: %s. DocID: %u\n",i,Sider[i].iindex.allrank,Sider[i].DocumentIndex.AdultWeight,Sider[i].bid,Sider[i].url,Sider[i].iindex.DocID);
+			#else
+
+
+				if (Sider[i].type == siderType_ppctop) {
+					printf("<result_ppc>\n");
+					printf("\t<bid>%f</bid>\n",Sider[i].bid);
+					++totlaAds; //ikke helt bra denne. Vi teller antall anonser vist, ikke totalt
+				}
+				else if (Sider[i].type == siderType_ppcside) {
+					printf("<result_ppcpage>\n");
+					printf("\t<bid>%f</bid>\n",Sider[i].bid);
+					++totlaAds; //ikke helt bra denne. Vi teller antall anonser vist, ikke totalt 
+				}
+				else {
+                			printf("<result>\n");
+				}
+
+	                	printf("\t<docid>%i-%i</docid>\n",Sider[i].iindex.DocID,rLotForDOCid(Sider[i].iindex.DocID));
+
+
+        	        	printf("\t<title><![CDATA[%s]]></title>\n",Sider[i].title);
+
+                		//DocumentIndex
+                		printf("\t<url><![CDATA[%s]]></url>\n",Sider[i].url);
+                		printf("\t<uri><![CDATA[%s]]></uri>\n",Sider[i].uri);
+
+				//gjør om språk fra tall til code
+				getLangCode(documentlangcode,atoi(Sider[i].DocumentIndex.Sprok));
+
+				//finner vid
+        			vid_u(vidbuf,sizeof(vidbuf),salt,Sider[i].iindex.DocID,etime,QueryData.userip);
+				printf("\t<vid>%s</vid>\n",vidbuf);
+
+
+                		printf("\t<documentlanguage>%s</documentlanguage>\n", documentlangcode);
+				printf("\t<documenttype>%s</documenttype>\n", Sider[i].DocumentIndex.Dokumenttype);
+                		printf("\t<position>%i</position>\n",x);
+                		printf("\t<repositorysize>%u</repositorysize>\n",Sider[i].DocumentIndex.htmlSize);
+
+
+				if (!getRank) {
+					if (Sider[i].thumbnale[0] != '\0') {
+						printf("\t<thumbnail width=\"%i\" height=\"%i\">%s</THUMBNAIL>\n",
+						Sider[i].thumbnailwidth, Sider[i].thumbnailheight, Sider[i].thumbnale);
+					}
+					else {
+						printf("\t<thumbnail></thumbnail>\n");
+					}
+
+					printf("\t<description><![CDATA[%s]]></description>\n",Sider[i].description);
+				}
+
+
+
+				printf("\t<crc32>%u</crc32>\n",Sider[i].DocumentIndex.crc32);
+	
+				//ser ikke ut til at vi teller den
+				//printf("\t<PAGEGENERATETIME>%f</PAGEGENERATETIME>\n",Sider[i].pageGenerateTime);
+
+               			printf("\t<termrank>%i</termrank>\n",Sider[i].iindex.TermRank);
+
+               			printf("\t<poprank>%i</poprank>\n",Sider[i].iindex.PopRank);
+       	        		printf("\t<allrank>%i</allrank>\n",Sider[i].iindex.allrank);
+
+                		printf("\t<nrofhits>%i</nrofhits>\n",Sider[i].iindex.TermAntall);
+                		//printer ut hits (hvor i dokumenetet orde befinner seg ).
+				/*
+                		printf("\t<HITS>");
+                		for (y=0; (y < Sider[i].iindex.TermAntall) && (y < MaxTermHit); y++) {
+                	        	printf("%hu ",Sider[i].iindex.hits[y]);
+                		}
+                		printf("</HITS>\n");
+				*/
+
+				printf("\t<result_collection>%s</result_collection>\n",Sider[i].subname.subname);
+
+
+				#ifdef BLACK_BOKS
+					char timebuf[64];
+					printf("\t<time_unix>%u</time_unix>\n",Sider[i].DocumentIndex.CrawleDato);
+					// Magnus: Konverterer til locale istedet:
+//					ctime_r((time_t *)&Sider[i].DocumentIndex.CrawleDato,timebuf);
+//					timebuf[24] = '\0';
+				        setlocale(LC_TIME, "no_NO.utf8");
+					strftime(timebuf, 63, "%A %e. %b %Y %k:%M", localtime((time_t *)&Sider[i].DocumentIndex.CrawleDato));
+					timebuf[64] = '\0';
+					printf("\t<time_iso>%s</time_iso>\n",timebuf);
+
+
+					//sender en tom cashe link. Må ha cashe link hvis ikke bryter vi designet
+	                		printf("\t<cache></cache>\n");
+
+				#else
+				
+	                		printf("\t<domain>%s</domain>\n",Sider[i].domain);
+	                		printf("\t<domain_id>%hu</domain_id>\n",Sider[i].DomainID);
+
+					//finer om forige treff hadde samme domene
+					if (i>0 && (lastdomain != NULL) && (strcmp(Sider[i].domain,lastdomain) == 0)) {			
+		                		printf("\t<domain_grouped>true</domain_grouped>\n");
+					}
+					else {
+		                		printf("\t<domain_grouped>false</domain_grouped>\n");
+
+					}
+					// ikke 100% riktig dette, da vi vil få problemer med at ppc reklame får samme side kan 
+					// være siste, og da blir treff 1 rykket inn
+					lastdomain = Sider[i].domain;
+
+					printf("\t<servername>%s</servername>\n",Sider[i].servername);
+
+	                		printf("\t<adultweight>%hu</adultweight>\n",Sider[i].DocumentIndex.AdultWeight);
+	                		printf("\t<metadescription><![CDATA[]]></metadescription>\n");
+	                		printf("\t<category></category>\n");
+	                		printf("\t<offensive_code>false</offensive_code>\n");
+
+
+					ipaddr.s_addr = Sider[i].DocumentIndex.IPAddress;
+
+                			printf("\t<ipaddress>%s</ipaddress>\n",inet_ntoa(ipaddr));
+
+                			printf("\t<response>%hu</response>\n",Sider[i].DocumentIndex.response);
+	
+					printf("\t<crawlerversion>%f</crawlerversion>\n",Sider[i].DocumentIndex.clientVersion);
+					printf("\t<htmlpreparsed>%i</htmlpreparsed>\n",Sider[i].HtmlPreparsed);
+
+	                		printf("\t<cache>%s</cache>\n",Sider[i].cacheLink);
+
+	                		printf("\t<paid_inclusion>%i</paid_inclusion>\n",(int)Sider[i].subname.config.isPaidInclusion);
+
+			#endif
+
+			#ifdef EXPLAIN_RANK
+				printf("\t<explain_rank>");
+				print_explain_rank(&Sider[i],QueryData.queryhtml);
+				printf("</explain_rank>\n");
+			#endif
+		
+			if (Sider[i].type == siderType_ppctop ) {
+				printf("</result_ppc>\n");
+			}
+			else if (Sider[i].type == siderType_ppcside ) {
+				printf("</result_ppcpage>\n");
+			}
+			else {
+                		printf("</result>\n");
+			}
+		
+                
+			#endif
+
+			//teller bare normale sider
+			if (Sider[i].type == siderType_normal) {
+				++x;
+			}
+		}
+		else{ 
+			dprintf("nr %i er deletet. Rank %i\n",i,Sider[i].iindex.allrank);
+		}
+		
+		++i;
+	    }
+
+	    printf("</search>\n");
+	} // ++ax
+	else {
+    	    //printf("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?> \n");
+    	    printf("<?xml version=\"1.0\" encoding=\"UTF-8\" ?> \n");
+    	    if (!noDoctype) {
+	        printf("<!DOCTYPE family SYSTEM \"http://www.boitho.com/xml/search.dtd\"> \n");
+    	    }
+
+    	    printf("<SEARCH>\n");   
+	    //får rare svar fra hilite. Dropper å bruke den får nå
+	    FinalSiderHeder.hiliteQuery[0] = '\0';
+	    #ifdef WITH_SPELLING
+	    strsandr(SiderHeder->spellcheckedQuery, "\"","&quot;");
+	    #endif
+    	    printf("<RESULT_INFO TOTAL=\"%i\" SPELLCHECKEDQUERY=\"%s\" QUERY=\"%s\" HILITE=\"%s\" TIME=\"%f\" FILTERED=\"%i\" \
 	        SHOWABAL=\"%i\" CASHE=\"%i\" \
 		PREQUERY=\"%i\" GEOIPCONTRY=\"%s\" SUBNAME=\"%s\" BOITHOHOME=\"%s\" NROFSEARCHNODES=\"%i\"/>\n",
 		FinalSiderHeder.TotaltTreff,
@@ -1763,13 +2247,13 @@ int main(int argc, char *argv[])
 		QueryData.subname,
 		bfile(""),
 		nrRespondedServers
-	);
+	    );
 
 	
-	//viser info om dispatcher_all
-	printf("<DISPATCHER_INFO>\n");
-	printf("\t<FILTERTRAPP>\n");
-	{
+	    //viser info om dispatcher_all
+	    printf("<DISPATCHER_INFO>\n");
+	    printf("\t<FILTERTRAPP>\n");
+	    {
 		printf("\t\t<filterAdultWeight_bool>%i</filterAdultWeight_bool>\n",dispatcherfiltersTraped.filterAdultWeight_bool);
 		printf("\t\t<filterAdultWeight_value>%i</filterAdultWeight_value>\n",dispatcherfiltersTraped.filterAdultWeight_value);
 		printf("\t\t<filterSameCrc32_1>%i</filterSameCrc32_1>\n",dispatcherfiltersTraped.filterSameCrc32_1);
@@ -1782,12 +2266,12 @@ int main(int argc, char *argv[])
 		printf("\t\t<cantpopResult>%i</cantpopResult>\n",dispatcherfiltersTraped.cantpopResult);
 		printf("\t\t<cmc_pathaccess>%i</cmc_pathaccess>\n",dispatcherfiltersTraped.cmc_pathaccess);
 		printf("\t\t<filterSameCrc32_2>%i</filterSameCrc32_2>\n",dispatcherfiltersTraped.filterSameCrc32_2);
-	}
-	printf("\t</FILTERTRAPP>\n");
-	printf("</DISPATCHER_INFO>\n");
+	    }
+	    printf("\t</FILTERTRAPP>\n");
+	    printf("</DISPATCHER_INFO>\n");
 
 
-	if ((!hascashe) && (!hasprequery)) {
+	    if ((!hascashe) && (!hasprequery)) {
 
 		//viser info om serverne som svarte
 		//printf("<SEARCHNODES_INFO NROFSEARCHNODES=\"%i\" />\n",nrRespondedServers);
@@ -1858,18 +2342,18 @@ int main(int argc, char *argv[])
 
 			}	
 		}
-	}
-	else {
+	    }
+	    else {
 		printf("<SEARCHNODES>\n");
 		printf("\t<NODENAME>cashe.exactseek.com</NODENAME>\n");
 		printf("\t<TOTALTIME>%f</TOTALTIME>\n",FinalSiderHeder.total_usecs);
 		printf("\t<FILTERED>0</FILTERED>\n");
 		printf("\t<HITS>%i</HITS>\n",FinalSiderHeder.TotaltTreff);
 		printf("</SEARCHNODES>\n");
-	}
+	    }
 
-	//cashe eller ingen cashe. Adserverene skal vises
-	for (i=0;i<nrOfAddServers;i++) {
+	    //cashe eller ingen cashe. Adserverene skal vises
+	    for (i=0;i<nrOfAddServers;i++) {
        	        if (addsockfd[i] != 0) {
 			printf("<SEARCHNODES>\n");
 				printf("\t<NODENAME>%s</NODENAME>\n",AddSiderHeder[i].servername);
@@ -1878,20 +2362,20 @@ int main(int argc, char *argv[])
 				printf("\t<HITS>%i</HITS>\n",AddSiderHeder[i].TotaltTreff);
 			printf("</SEARCHNODES>\n");
 		}	
-	}
+	    }
 
 
-	//hvis vi har noen feil viser vi de
-	for (i=0;i<errorha.nr;i++) {
+	    //hvis vi har noen feil viser vi de
+	    for (i=0;i<errorha.nr;i++) {
 		printf("<ERROR>\n");
 		printf("  <ERRORCODE>%i</ERRORCODE>\n",errorha.errorcode[i]);
         	printf("  <ERRORMESSAGE>%s</ERRORMESSAGE>\n",errorha.errormessage[i]);
         	printf("</ERROR>\n");
-	}
+	    }
 
-	#ifdef BLACK_BOKS
+	    #ifdef BLACK_BOKS
 
-	for(i=0;i<SiderHeder[0].filters.collections.nrof;i++) {
+	    for(i=0;i<SiderHeder[0].filters.collections.nrof;i++) {
 
 		if (SiderHeder[0].filters.collections.elements[i].checked) {
 			strscpy(colchecked," SELECTED=\"TRUE\"",sizeof(colchecked));
@@ -1907,10 +2391,10 @@ int main(int argc, char *argv[])
 		printf("</COLLECTION>\n");
 
 		
-	}
+	    }
 
 
-	for (i=0;i<SiderHeder[0].filters.filtypes.nrof;i++) {
+	    for (i=0;i<SiderHeder[0].filters.filtypes.nrof;i++) {
 		printf("<FILETYPE>\n");
 
 		printf("<FILENAME>%s</FILENAME>\n<FILELONGNAME>%s</FILELONGNAME>\n<FILENR>%i</FILENR>",
@@ -1920,9 +2404,9 @@ int main(int argc, char *argv[])
 		
 		printf("</FILETYPE>\n");
 
-	}		
+	    }		
 
-	char *dateview_type_names[] = { "TODAY",
+	    char *dateview_type_names[] = { "TODAY",
 					"YESTERDAY",
 					"THIS_WEEK",
 					"THIS_MONTH",
@@ -1930,16 +2414,16 @@ int main(int argc, char *argv[])
 					"LAST_YEAR",
 					"TWO_YEARS_PLUS"};
 
-	printf("<DATES>\n");
+	    printf("<DATES>\n");
 		printf("\t<ALL>0</ALL>\n");
 		for (y=0;y<7;y++) {
 			if (SiderHeder[0].dates > 0) {
 				printf("\t<%s>%i</%s>\n",dateview_type_names[y],SiderHeder[0].dates[y],dateview_type_names[y]);
 			}
 		}
-	printf("</DATES>\n");
+	    printf("</DATES>\n");
 
-	#else
+	    #else
 
 		#ifdef DEBUG
         	printf("|%-10s|%-10s|%-10s||%-10s|%-10s|%-10s|%-18s|%-10s|%-10s|\n",
@@ -1979,20 +2463,20 @@ int main(int argc, char *argv[])
 		#endif
 	#endif
 
-	//skal printe ut FinalSiderHeder.showabal sider, men noen av sidene kan være slettet
+	    //skal printe ut FinalSiderHeder.showabal sider, men noen av sidene kan være slettet
 
-	//x=0;
-	//i=0;
-	//regner ut hvor vi skal begynne og vise treff. Eks side 2 er fra 11-20
-	//i er hvor vi skal begynne
-	i = QueryData.MaxsHits * (QueryData.start -1);
-	x = i;
-	#ifdef DEBUG	
-	printf("x: %i, MaxsHits %i, start %i, showabal %i\n",x,QueryData.MaxsHits,QueryData.start,
+	    //x=0;
+	    //i=0;
+	    //regner ut hvor vi skal begynne og vise treff. Eks side 2 er fra 11-20
+	    //i er hvor vi skal begynne
+	    i = QueryData.MaxsHits * (QueryData.start -1);
+	    x = i;
+	    #ifdef DEBUG	
+	    printf("x: %i, MaxsHits %i, start %i, showabal %i\n",x,QueryData.MaxsHits,QueryData.start,
 		FinalSiderHeder.showabal);
-	#endif
+	    #endif
 
-	while ((x<(QueryData.MaxsHits*QueryData.start)) && (x<FinalSiderHeder.showabal) && (i < (queryNodeHeder.MaxsHits * (nrOfServers + nrOfPiServers)))) {
+	    while ((x<(QueryData.MaxsHits*QueryData.start)) && (x<FinalSiderHeder.showabal) && (i < (queryNodeHeder.MaxsHits * (nrOfServers + nrOfPiServers)))) {
 		
 		if (!Sider[i].deletet) {
 
@@ -2159,7 +2643,9 @@ int main(int argc, char *argv[])
 			#endif
 
 			#ifdef EXPLAIN_RANK
+				printf("\t<EXPLAIN_RANK>");
 				print_explain_rank(&Sider[i],QueryData.queryhtml);
+				printf("</EXPLAIN_RANK>\n");
 			#endif
 		
 			if (Sider[i].type == siderType_ppctop ) {
@@ -2185,9 +2671,9 @@ int main(int argc, char *argv[])
 		}
 		
 		++i;
-	}
+	    }
 
-	printf("</SEARCH>\n");
+	    printf("</SEARCH>\n");
 	} // end if(dispconfig.writeprequery)
 	
 	#ifdef DEBUG
