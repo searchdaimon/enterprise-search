@@ -23,6 +23,7 @@ LIBGeoIP = -lGeoIP
 CURLLIBS = `curl-config --libs`
 
 #LIBCONFIG= -lconfig
+#LIBCONFIG=  /usr/local/lib/libconfig.a
 LIBCONFIG=  /usr/local/lib/libconfig.a
 
 IM = /home/eirik/.root/lib/libMagick.a /home/eirik/.root/lib/libWand.a -I/home/eirik/.root/include
@@ -30,7 +31,8 @@ IM = /home/eirik/.root/lib/libMagick.a /home/eirik/.root/lib/libWand.a -I/home/e
 #IM = /home/eirik/.root/lib/libMagick.a -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
 
 #BDB = -I/usr/local/BerkeleyDB.4.5/include/ -L/usr/local/BerkeleyDB.4.5/lib/ -ldb
-BDB = -I/usr/local/BerkeleyDB.4.5/include/ /usr/local/BerkeleyDB.4.5/lib/libdb.a
+#BDB = -I/usr/local/BerkeleyDB.4.5/include/ /usr/local/BerkeleyDB.4.5/lib/libdb.a
+BDB = -ldb
 
 #SMBCLIENT=-lsmbclient
 #skrur dette på igjen. Brukte det og segfeile når vi hadde det med statisk?
@@ -52,18 +54,19 @@ BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail_by_convert.c -DBBDOC
 #LDAP = -DWITH_OPENLDAP /usr/lib/libldap.so.2 /usr/lib/liblber.so.2
 #LDAP = -DWITH_OPENLDAP /usr/lib/libldap.a /usr/lib/liblber.a /usr/lib/libsasl.a /usr/lib/libcrypto.a -lssl
 #LDAP = -DWITH_OPENLDAP /usr/lib/libldap.a /usr/lib/liblber.a /usr/lib/libsasl.a src/3pLibs/openssl-0.9.8d/libssl.a src/3pLibs/openssl-0.9.8d/libcrypto.a -ldl 
-LDAP = -DWITH_OPENLDAP /usr/lib/libldap.a /usr/lib/liblber.a /usr/lib/libsasl.a /usr/local/lib/libssl.a /usr/local/lib/libcrypto.a -ldl 
+#LDAP = -DWITH_OPENLDAP /usr/lib/libldap.a /usr/lib/liblber.a /usr/lib/libsasl.a /usr/local/lib/libssl.a /usr/local/lib/libcrypto.a -ldl 
+LDAP = -DWITH_OPENLDAP -lldap 
 
 #flag for å inkludere mysql
 #MYSQL = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
-MYSQL = -I/usr/include/mysql /usr/lib/mysql/libmysqlclient.a
-MYSQL4 = -I/home/eirik/.root/include/mysql -L/home/eirik/.root/lib/mysql/ -lmysqlclient -DMYSQLFOUR
+#MYSQL = -I/usr/include/mysql /usr/lib/mysql/libmysqlclient.a
+MYSQL = -lmysqlclient -I/usr/include/mysql/ -L/usr/lib/mysql
+#MYSQL4 = -I/home/eirik/.root/include/mysql -L/home/eirik/.root/lib/mysql/ -lmysqlclient -DMYSQLFOUR
 
 MYSQL_THREAD = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient_r
 
 #LIBXML = -I/usr/include/libxml2 -L/usr/lib -lxml2
 LIBXML = -I/usr/include/libxml2  -lxml2
-
 
 #HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c  
 #har rullet tilbake, og bruker gammel html parser for nå, så trenger dermed ikke i ha med css parseren
@@ -1074,6 +1077,11 @@ crawlManager2: src/crawlManager2/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/crawlManager2/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
+
+# XXX
+crawlManager2bb: src/crawlManager2/main.c
+	$(CC) -D__USE_BSD -std=c99 -m32 -D_REENTRANT -D_GNU_SOURCE -fno-strict-aliasing -pipe -Wdeclaration-after-statement -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I/usr/include/gdbm  -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -D_REENTRANT -D_GNU_SOURCE -fno-strict-aliasing -pipe -Wdeclaration-after-statement -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I/usr/include/gdbm  -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/crawlManager2/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) -rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE  /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl -lresolv -lnsl -ldl -lm -lcrypt -lutil -lpthread -lc 
+ 
 
 crawlManager2perltest: src/crawlManager2/perltest.c
 	@echo ""
