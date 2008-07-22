@@ -43,9 +43,9 @@ int main()
 		{
 		    printf("Ext(%s):", test_groups[i]);
 		    for (ptr_i=ptr1; ptr_i<ptr2; ptr_i++) printf(" %s", *ptr_i);
-		    printf("\n");
 		}
-	    else printf("Ext(%s): <none>\n", test_groups[i]);
+	    else printf("Ext(%s): <none>", test_groups[i]);
+	    printf(" (%i)\n", fte_groupid(fdata, "nbo", test_groups[i]));
 	}
 
 
@@ -59,9 +59,9 @@ int main()
 		{
 		    printf("Ext(%s):", test_ext2[i]);
 		    for (ptr_i=ptr1; ptr_i<ptr2; ptr_i++) printf(" %s", *ptr_i);
-		    printf("\n");
 		}
-	    else printf("Ext(%s): <none>\n", test_ext2[i]);
+	    else printf("Ext(%s): <none>", test_ext2[i]);
+	    printf(" (%i)\n", fte_extid(fdata, test_ext2[i]));
 	}
 
     fte_destroy(fdata);

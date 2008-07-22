@@ -551,7 +551,29 @@ int fte_groupid(struct fte_data *fdata, char *lang, char *group)
 	    lang_no = 0;
 	}
 
-    return fte_find(fdata->group[lang_no], fdata->group_size, group);
+    if ((fdata->default_group[lang_no] == NULL && !strcmp(group, fdata->default_group[0]))
+	|| (!strcmp(group, fdata->default_group[lang_no])))
+	return -1;
+
+    int		i;
+
+    for (i=0; i<fdata->group_size; i++)
+	if (fdata->group[lang_no][i]==NULL)
+	    {
+		if (!strcmp(fdata->group[0][i], group))
+		    {
+			return i;
+		    }
+	    }
+	else
+	    {
+	        if (!strcmp(fdata->group[lang_no][i], group))
+		    {
+			return i;
+		    }
+	    }
+
+    return -2;
 }
 
 
