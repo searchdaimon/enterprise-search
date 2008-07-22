@@ -31,8 +31,8 @@ IM = /home/eirik/.root/lib/libMagick.a /home/eirik/.root/lib/libWand.a -I/home/e
 #IM = /home/eirik/.root/lib/libMagick.a -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
 
 #BDB = -I/usr/local/BerkeleyDB.4.5/include/ -L/usr/local/BerkeleyDB.4.5/lib/ -ldb
-#BDB = -I/usr/local/BerkeleyDB.4.5/include/ /usr/local/BerkeleyDB.4.5/lib/libdb.a
-BDB = -ldb
+BDB = -I/usr/local/BerkeleyDB.4.5/include/ /usr/local/BerkeleyDB.4.5/lib/libdb.a
+#BDB = -ldb
 
 #SMBCLIENT=-lsmbclient
 #skrur dette på igjen. Brukte det og segfeile når vi hadde det med statisk?
@@ -59,8 +59,8 @@ LDAP = -DWITH_OPENLDAP -lldap
 
 #flag for å inkludere mysql
 #MYSQL = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
-#MYSQL = -I/usr/include/mysql /usr/lib/mysql/libmysqlclient.a
-MYSQL = -lmysqlclient -I/usr/include/mysql/ -L/usr/lib/mysql
+MYSQL = -I/usr/include/mysql /usr/lib/mysql/libmysqlclient.a
+#MYSQL = -lmysqlclient -I/usr/include/mysql/ -L/usr/lib/mysql
 #MYSQL4 = -I/home/eirik/.root/include/mysql -L/home/eirik/.root/lib/mysql/ -lmysqlclient -DMYSQLFOUR
 
 MYSQL_THREAD = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient_r
