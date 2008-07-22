@@ -143,7 +143,7 @@ bbdocumentWebAdd:
 	@echo ""
 	@echo "$@:"
 
-	(cd src/bbdocumentWebAdd/; make clean; make)
+	(rm src/base64/base64.o; cd src/bbdocumentWebAdd/; make clean; make)
 	cp src/bbdocumentWebAdd/bbdocumentWebAdd cgi-bin
 
 
@@ -515,7 +515,7 @@ dispatcher_allbb: src/dispatcher_all/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) $(MYSQL) -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) -DWITH_SPELLING
+	$(CC) $(dispatcherCOMAND) $(MYSQL) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) -DWITH_SPELLING $(BDB)
 
 dispatcher_all247: src/dispatcher_all/main.c
 	@echo ""
