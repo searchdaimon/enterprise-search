@@ -2829,7 +2829,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		*/
 		#endif
 
-	        struct fte_data	*fdata = fte_init("config/file_extensions.conf");		// @ax+
+	        struct fte_data	*fdata = fte_init(bfile("config/file_extensions.conf"));
 
 		//
 		// filtrerer
@@ -3225,7 +3225,7 @@ int searchFilterCount(int *TeffArrayElementer,
 		hashtable_destroy(h,1); 
 
 
-	        struct fte_data	*fdata = fte_init("config/file_extensions.conf");		// @ax+
+	        struct fte_data	*fdata = fte_init(bfile("config/file_extensions.conf"));
 				// key==group_id, value=={group, size}:
 		container	*G = map_container( int_container(), pair_container( string_container(), int_container() ) );	// @ax+
 				// key==descr_id, value=={descr, size, group_id, postfix}:
