@@ -33,13 +33,13 @@ int main()
 	    printf("Group(%s): %s, Description: %s\t(%i)\n", test_ext[i], group, descr, ret);
 	}
 
-    char	*test_groups[] = {"Bilde","Word","Document","Other"};
+    char	*test_groups[] = {"Bilde","Word","Document","Annet"};
 
     for (i=0; i<4; i++)
 	{
 	    char		**ptr1, **ptr2, **ptr_i;
 
-	    if (fte_getextension(fdata, "xxx", test_groups[i], &ptr1, &ptr2))
+	    if (fte_getextension(fdata, "nbo", test_groups[i], &ptr1, &ptr2))
 		{
 		    printf("Ext(%s):", test_groups[i]);
 		    for (ptr_i=ptr1; ptr_i<ptr2; ptr_i++) printf(" %s", *ptr_i);

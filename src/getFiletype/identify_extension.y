@@ -232,6 +232,12 @@ string_list : STRING_ID
 %%
 
 
+int ext_compar(const void *a, const void *b)
+{
+    return strcmp((const char*)a, (const char*)b);
+}
+
+
 struct fte_data* fte_init( char *conf_file )
 {
     FILE	*fyyin = fopen(conf_file, "r");
@@ -278,6 +284,7 @@ struct fte_data
 
     fdata->lang = malloc(sizeof(char*) * fdata->lang_size);
     fdata->ext = malloc(sizeof(char*) * fdata->ext_size);
+    fdata->ext_sorted = malloc(sizeof(char*) * fdata->ext_size);
     fdata->ext2descr = malloc(sizeof(int) * fdata->ext_size);
     fdata->ext2group = malloc(sizeof(int) * fdata->ext_size);
     fdata->version = malloc(sizeof(char*) * fdata->descr_size);
@@ -299,11 +306,14 @@ struct fte_data
 	    struct fte_ext	*fext = vector_get(data->ext,i).ptr;
 
 	    fdata->ext[i] = fext->ext;
+	    fdata->ext_sorted[i] = fext->ext;
 	    fdata->ext2descr[i] = fext->descr;
 	    fdata->ext2group[i] = fext->group;
 
 	    free(fext);
 	}
+
+    qsort(fdata->ext_sorted, fdata->ext_size, sizeof(char*), ext_compar);
 
     for (i=0; i<fdata->descr_size; i++)
 	{
@@ -404,6 +414,7 @@ void fte_destroy(struct fte_data *fdata)
     free(fdata->lang);
     free(fdata->version);
     free(fdata->ext);
+    free(fdata->ext_sorted);
     free(fdata->ext2descr);
     free(fdata->ext2group);
     free(fdata->descr);
@@ -529,6 +540,25 @@ int fte_getext_from_ext(struct fte_data *fdata, char *ext, char ***ptr1, char **
 }
 
 
+
+int fte_groupid(struct fte_data *fdata, char *lang, char *group)
+{
+    int		lang_no = fte_find(fdata->lang, fdata->lang_size, lang);
+
+    if (lang_no<0)
+	{
+	    fprintf(stderr, "getfiletype: Warning! Unknown language \"%s\". Using default language \"%s\" instead.\n", lang, fdata->lang[0]);
+	    lang_no = 0;
+	}
+
+    return fte_find(fdata->group[lang_no], fdata->group_size, group);
+}
+
+
+int fte_extid(struct fte_data *fdata, char *ext)
+{
+    return fte_find(fdata->ext, fdata->ext_size, ext);
+}
 
 
 

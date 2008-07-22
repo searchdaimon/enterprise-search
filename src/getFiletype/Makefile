@@ -15,7 +15,8 @@ all_old:
 	$(CC) -c -o getfiletype.o lex.getfiletype.c
 
 test:
-	$(CC) -o getfiletype test.c getfiletype.o ../ds/libds.a libfte.a
+#	$(CC) -o getfiletype test.c getfiletype.o ../ds/libds.a libfte.a
+	$(CC) -o fte_test test.c libfte.a ../ds/libds.a
 
 clean:
 	rm -rf getfiletype getfiletype.o lex.getfiletype.c fte.tab.[ch] lex.fte.c fte_test fte.output *.o libfte.a

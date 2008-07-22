@@ -6,7 +6,7 @@
 struct fte_data
 {
     int		lang_size, group_size, descr_size, ext_size;
-    char	**lang, **ext, **version;
+    char	**lang, **ext, **version, **ext_sorted;
     int		*ext2descr, *ext2group;
     char	***group, ***descr;
     char	**default_group, **default_descr;
@@ -19,5 +19,7 @@ void fte_destroy(struct fte_data *fdata);
 int fte_getdescription(struct fte_data *fdata, char *lang, char *ext, char **group, char **descr);
 int fte_getextension(struct fte_data *fdata, char *lang, char *group, char ***ptr1, char ***ptr2);
 int fte_getext_from_ext(struct fte_data *fdata, char *ext, char ***ptr1, char ***ptr2);
+int fte_groupid(struct fte_data *fdata, char *lang, char *group);
+int fte_extid(struct fte_data *fdata, char *ext);
 
 #endif	// IDENTIFY_EXTENSION_H
