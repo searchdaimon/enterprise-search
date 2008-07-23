@@ -852,7 +852,8 @@ void GetNForTerm(unsigned int WordIDcrc32, char *IndexType, char *IndexSprok, in
 		unsigned int Adress;
         	unsigned int SizeForTerm;
 		int iindexfile;
-		char IndexPath[255],IndexFile[255];		    
+		char IndexPath[256],IndexFile[255];		    
+		char tmpPath[256];
 		unsigned int term;
 		unsigned int Antall;
 		FILE *fileha;		    
@@ -871,7 +872,10 @@ void GetNForTerm(unsigned int WordIDcrc32, char *IndexType, char *IndexSprok, in
 				    
 		iindexfile = WordIDcrc32 % AntallBarrals;
 		GetFilePathForIindex(IndexPath,IndexFile,iindexfile,IndexType,IndexSprok,subname->subname);
-		sprintf(IndexPath,"%s/iindex/%s/index/%s/%i.txt",IndexPath,IndexType,IndexSprok, iindexfile);
+		snprintf(tmpPath,sizeof(tmpPath)-1,"%s/iindex/%s/index/%s/%i.txt",IndexPath,IndexType,IndexSprok, iindexfile);
+		tmpPath[sizeof(IndexPath)-1] = '\0';
+		strcpy(IndexPath, tmpPath);
+
 		    
 										    
 	        if ((fileha = fopen(IndexFile,"rb")) == NULL) {
