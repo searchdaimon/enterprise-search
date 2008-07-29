@@ -1302,7 +1302,7 @@ void *do_chld(void *arg)
 	#endif
 
 
-	for (i = 0; i < queryNodeHeder.MaxsHits; i++) {
+	for (i = 0; i < SiderHeder->showabal; i++) {
 		int j;
 		struct SiderFormat *s = Sider+i;
 		size_t len;
