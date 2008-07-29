@@ -1810,7 +1810,7 @@ int main (int argc, char *argv[]) {
 
 				ReposetoryHeader.htmlSize = strlen(text);
 
-				rApendPostcompress(&ReposetoryHeader,text,image,subname,NULL,NULL,"repo.test", NULL);
+				rApendPostcompress(&ReposetoryHeader,text,image,subname,NULL,NULL,"repo.test", ReposetoryHeader.url , "");
 
 
 				dirtylots[rLotForDOCid(Sider[i].iindex.DocID)] = 1;
