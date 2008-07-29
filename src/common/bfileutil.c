@@ -172,8 +172,8 @@ int rrmdir(char dir[]) {
 	closedir(dirp);
 
 
-	//sletter seg selv, frykter vi kan få problemer med . og .. her, må testes
-	//remove( dir );
+	//sletter seg selv
+	remove( dir );
 
 	return 1;
 }
