@@ -80,7 +80,6 @@ static SMBCCTX* context_init(int no_auth)
 
 static int context_free( SMBCCTX *context )
 {
-    printf("#####################\nFreeing context...\n");
     if (smbc_free_context(context, 0) != 0)
 	{
 	    perror("crawlsmb.c: Error! Could not free smbc context");
