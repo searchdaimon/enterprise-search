@@ -48,9 +48,50 @@ static void no_auth_data_fn( const char * pServer,
     return;
 }
 
-SMBCCTX* context_init();
-int context_free( SMBCCTX *context );
+static SMBCCTX* context_init(int no_auth)
+{
+    SMBCCTX	*context;
 
+    context = smbc_new_context();
+    if (!context)
+        {
+            crawlperror("crawlsmb.c: Error! Could not allocate new smbc context");
+            exit(1);
+        }
+
+    // debug-level:
+    context->debug = 0;
+    //context->callbacks.auth_fn = no_auth_data_fn;
+    context->callbacks.auth_fn = (no_auth ? no_auth_data_fn : get_auth_data_fn);
+    context->options.urlencode_readdir_entries = 1;		// Sørg for at alle url-er er kodet.
+    smbc_option_set(context, "debug_stderr", (void*)1);
+
+    if (!smbc_init_context(context))
+        {
+            crawlperror("crawlsmb.c: Error! Could not initialize smbc context");
+            exit(1);
+        }
+
+    smbc_set_context(context);
+
+    return context;
+}
+
+
+static int context_free( SMBCCTX *context )
+{
+    printf("#####################\nFreeing context...\n");
+    if (smbc_free_context(context, 0) != 0)
+	{
+	    perror("crawlsmb.c: Error! Could not free smbc context");
+		//ToDo: returnerer free uanset. Får nemlig altid feil her
+                //hvis ikke. Er dette en minne lekasj prblem?
+	    return 1;
+
+	}
+
+	return 1;
+}
 
 int smbc_readloop(int sockfd, void *buf, off_t len) {
 
@@ -429,6 +470,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 						#endif
 
 					        crawldocumentAdd.doctype	= "";
+					        crawldocumentAdd.attributes	= "";
 
 						//fp char bug fiks:
 						//cleanresourceUnixToWin(crawldocumentAdd.documenturi);
@@ -627,54 +669,3 @@ int smb_test_open(struct collectionFormat *collection,  char *prefix, char *dir_
 
     	return 1;
 }
-
-
-
-
-
-
-SMBCCTX* context_init(int no_auth)
-{
-    SMBCCTX	*context;
-
-    context = smbc_new_context();
-    if (!context)
-        {
-            crawlperror("crawlsmb.c: Error! Could not allocate new smbc context");
-            exit(1);
-        }
-
-    // debug-level:
-    context->debug = 0;
-    //context->callbacks.auth_fn = no_auth_data_fn;
-    context->callbacks.auth_fn = (no_auth ? no_auth_data_fn : get_auth_data_fn);
-    context->options.urlencode_readdir_entries = 1;		// Sørg for at alle url-er er kodet.
-    smbc_option_set(context, "debug_stderr", (void*)1);
-
-    if (!smbc_init_context(context))
-        {
-            crawlperror("crawlsmb.c: Error! Could not initialize smbc context");
-            exit(1);
-        }
-
-    smbc_set_context(context);
-
-    return context;
-}
-
-
-int context_free( SMBCCTX *context )
-{
-    if (smbc_free_context(context, 0) != 0)
-	{
-	    perror("crawlsmb.c: Error! Could not free smbc context");
-		//ToDo: returnerer free uanset. Får nemlig altid feil her
-                //hvis ikke. Er dette en minne lekasj prblem?
-	    return 1;
-
-	}
-
-	return 1;
-}
-
-
