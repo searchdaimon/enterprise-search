@@ -80,7 +80,7 @@ sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 	getxmlnodestr(acldeny);
 	//getxmlnodestr(attributes);
 
-	xmldoc.attributes = strdup("hei=ho");
+	xmldoc.attributes = strdup("");
 
 
 	if ((n = xml_find_child(top, "lastmodified")) == NULL) {
@@ -119,9 +119,11 @@ sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 		}
 		
 		xmldoc.bodysize = base64_decode(xmldoc.body, p, strlen(p));
+		fprintf(stderr, "We are %d long\n", xmldoc.bodysize);
 	}
 
 	fprintf(stderr, "Adding: %s\n", xmldoc.body);
+
 	bbdn_docadd(sock, xmldoc.collection, xmldoc.uri, xmldoc.documenttype, xmldoc.body, xmldoc.bodysize,
 	    xmldoc.lastmodified, xmldoc.aclallow, xmldoc.acldeny, xmldoc.title, xmldoc.documentformat, xmldoc.attributes);
 
@@ -134,7 +136,6 @@ sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 	free(xmldoc.body);
 	free(xmldoc.aclallow);
 	free(xmldoc.acldeny);
-	free(xmldoc.title);
 #undef getxmlnodestr
 }
 
@@ -144,11 +145,9 @@ sd_add(int sock, xmlDocPtr doc, xmlNodePtr top)
 {
 	xmlNodePtr n;
 
-	printf("name: %s\n", top->name);
 	if ((top = xml_find_child(top, "documents")) == NULL) {
 		return;
 	}
-	printf("name: %s\n", top->name);
 	for (n = top->xmlChildrenNode; n != NULL; n = n->next) {
 		if (xmlStrcmp(n->name, (xmlChar*)"document") == 0)
 			sd_add_one(sock, doc, n);
@@ -191,6 +190,7 @@ main(int argc, char **argv)
 	int bbdnport;
 	struct config_t maincfg;
 
+	printf("Content-type: text/txt\n\n");
 	/* Read in config file */
 	maincfg = maincfgopen();
 	bbdnport = maincfg_get_int(&maincfg, "BLDPORT");
@@ -221,24 +221,25 @@ main(int argc, char **argv)
 
 		fclose(fp);
 	} else if (getenv("CONTENT_LENGTH") != NULL) {
-		printf("Content-type: text/xml\n\n");
 		// Get data length
 		postsize = atoi(getenv("CONTENT_LENGTH"));
 		xmldata = malloc(postsize + 1);	
 		// Read data
 		fread(xmldata, 1, postsize, stdin);
+		xmldata[postsize] = '\0';
 	} else {
 		errx(1, "Didn't receive any data.");
 	}
 
-#ifdef DEBUG
+#ifdef DEBUG2
 	FILE *fhtmp;
 	fhtmp = fopen("/tmp/posttest2.txt","wb");
 	fprintf(fhtmp,"size: %i\nxmldata: %s\n\n\n",postsize,xmldata);
 	fclose(fhtmp);
 #endif
 
-	fprintf(stderr, "Received %i bytes.\n", postsize);
+	//fprintf(stderr, "Received %i bytes.\n", postsize);
+	//fprintf(stderr, "Got document:\n%s\n", xmldata);
 
 	//parsing xml
         doc = xmlParseDoc((xmlChar*)xmldata);

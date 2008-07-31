@@ -1,7 +1,7 @@
 CC=	gcc
 VPATH= .:../boitho-bbdn/:../common/:../base64/:../maincfg/
 
-LDFLAGS=	 -lxml2 -lconfig
+LDFLAGS=	 -lxml2
 CFLAGS=	-g -Wall -O2 -I/usr/include/libxml2/ -DDEBUG
 
 
@@ -11,7 +11,7 @@ PROG=	bbdocumentWebAdd
 all: $(PROG)
 
 $(PROG): $(OBJS)
-	$(CC) $(LDFLAGS) -o $(PROG) $(OBJS)
+	$(CC) $(LDFLAGS) -o $(PROG) $(OBJS) /usr/local/lib/libconfig.a
 
 clean:
 	rm -f $(PROG) $(OBJS)
