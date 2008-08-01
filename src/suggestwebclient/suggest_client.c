@@ -25,7 +25,6 @@ suggest_1(char *host, char *arg, char *user)
 
 	splitn = split(arg, " ", &wordlist);
 
-        printf("Content-type: text/plain\n\n");
 	if (splitn == 0)
 		return;
 
@@ -86,6 +85,8 @@ main (int argc, char *argv[])
 	char *user;
 	int ret;
 
+	printf("Cache-control: no-cache\n");
+	printf("Content-type: text/plain\n\n");
 	if (getenv("QUERY_STRING")) {
 		// We are in CGI mode
 		if ((ret = cgi_init()) != CGIERR_NONE) {
@@ -98,8 +99,7 @@ main (int argc, char *argv[])
 		}
 		user = getenv("REMOTE_USER");
 		if (user == NULL) {
-			printf("Content-type: text/plain\n\n");
-			printf("Not logged in.\n");
+			fprintf(stderr, "Not logged in.\n");
 			exit(0);
 		}
 	}
