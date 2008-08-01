@@ -2830,6 +2830,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		#endif
 
 	        struct fte_data	*fdata = fte_init(bfile("config/file_extensions.conf"));
+		int	group_id = fte_groupid(fdata, "nbo", (*filteron).filetype);
 
 		//
 		// filtrerer
@@ -2847,30 +2848,49 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 				else
 				*/	
 
-				char		**ptr1, **ptr2, **ptr_i;
-
-		    		if (fte_getextension(fdata, "nbo", (*filteron).filetype, &ptr1, &ptr2))
+				if (group_id == -1) // Gruppe "Annet" eller "Other":
 				    {
-					char	match=0;
-
-				        for (ptr_i=ptr1; ptr_i<ptr2 && !match; ptr_i++)
-					    {
-						if (!strcmp(TeffArray->iindex[i].filetype, *ptr_i))
-						    match = 1;
-					    }
-
-					if (!match)
+					if (fte_extid(fdata, TeffArray->iindex[i].filetype) >= 0)
 					    {
 			    		        TeffArray->iindex[i].indexFiltered.filename = 1;
 
 					        if (TeffArray->iindex[i].indexFiltered.subname) {
 						    #ifdef DEBUG
-							printf("is all ready filtered out\n");
-						    #endif				
+							printf("is already filtered out\n");
+						    #endif
 					        }
 					        else {
 						    --(*TotaltTreff);
 						}
+					    }
+				    }
+				else // Vanlig gruppe:
+				    {
+					char		**ptr1, **ptr2, **ptr_i;
+
+			    		if (fte_getextension(fdata, "nbo", (*filteron).filetype, &ptr1, &ptr2))
+					    {
+						char	match=0;
+
+					        for (ptr_i=ptr1; ptr_i<ptr2 && !match; ptr_i++)
+						    {
+							if (!strcmp(TeffArray->iindex[i].filetype, *ptr_i))
+							    match = 1;
+						    }
+
+						if (!match)
+						    {
+				    		        TeffArray->iindex[i].indexFiltered.filename = 1;
+
+						        if (TeffArray->iindex[i].indexFiltered.subname) {
+							    #ifdef DEBUG
+								printf("is already filtered out\n");
+							    #endif				
+						        }
+						        else {
+							    --(*TotaltTreff);
+							}
+						    }
 					    }
 				    }
 
