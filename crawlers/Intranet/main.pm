@@ -34,6 +34,13 @@ sub path_access  {
     my $user = $opt->{'user'};
     my $passw  = $opt->{'password'};
     my $url = $opt->{"resource"};
+
+
+    if ($opt->{'passwordisPasswordProtected'} == 0 ) {
+        print "passwordisPasswordProtected\n";
+        return 1;
+    }
+
      if (!defined($robot)) { init_robot() ; }
 
    my $req = HTTP::Request->new(HEAD => $url);
