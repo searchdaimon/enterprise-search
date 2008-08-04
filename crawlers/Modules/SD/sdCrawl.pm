@@ -455,7 +455,7 @@ sub process_near_url {
       mutter("Autorizing ".$user." with password ".$passw."\n");
       $req->authorization_basic($user, $passw); 
   }
-  print "Visiting : ", $url, "\n";
+  print "Examine : ", $url, "\n";
   my $response = $robot->request($req);
 
   mutter("  That was hit #$hit_count\n");
