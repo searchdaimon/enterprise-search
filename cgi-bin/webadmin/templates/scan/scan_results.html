@@ -48,10 +48,10 @@
 
 	<form action="scan.cgi" method="post">
 	<div style="margin-top : 1em;">
-		
-		<input type="submit" name="submit.delete_result[0].submit" 
-			value="I'm done, delete results." />
-		<input type="hidden" name="submit.delete_result[0].id" value="[% id %]" />
+	
+	<input type="hidden" name="id" value="[% id %]">
+	<input type="hidden" name="action" value="del_result" />
+	<input type="submit" value="I'm done, delete results." />
 	</div>
 	</form>
 	
