@@ -235,7 +235,7 @@ sub init_robot {
   $robot = LWP::RobotUA->new($bot_name, $bot_email);
   $robot->delay($delay/60); 
   $robot->timeout($timeout);
-  #$robot->requests_redirectable([]); # uncomment this line to disallow redirects
+  $robot->requests_redirectable([]); # uncomment this line to disallow redirects
   $robot->protocols_allowed(['http','https']);  # disabling all others
    say("$bot_name ($bot_email) starting at ", scalar(localtime), "\n");
   return $robot;
