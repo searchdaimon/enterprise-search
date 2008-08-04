@@ -22,9 +22,13 @@
 [% END %]
 
 <h2>Existing authentication</h2>
-	<p><input type="submit" value="Add a new username" name="add_new_pair" /></p>
+	<p>
+	<form method="get" action="authentication.cgi">
+		<input type="submit" value="Add a new username" name="add_new_pair" />
+	</form>
+	</p>
 [% IF authentication.size %]
-	[% WRAPPER 'template_table.html' style = 'width : 70%;'
+	[% WRAPPER 'template_table.html' style = 'width : 70%; margin-top : 1em;'
 		header = ['', 'Username', 'Comment', ''] %]
 		[% i = 0 %]
 		[% FOREACH pair IN authentication %]
