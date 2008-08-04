@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"lp:m:b:vs:o"))!=-1) {
+        while ((c=getopt(argc,argv,"lp:m:b:vso"))!=-1) {
                 switch (c) {
                         case 'p':
                                 searchd_config.searchport = atoi(optarg);
