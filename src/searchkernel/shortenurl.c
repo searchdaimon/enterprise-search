@@ -36,7 +36,7 @@ void shortenurl(char *url,int urllen) {
   	char **Data;
   	int Count, TokCount;
 	#ifdef BLACK_BOKS
-		unsigned char newurl[80];
+		unsigned char newurl[128];
 	#else
 		unsigned char newurl[201];
 	#endif
