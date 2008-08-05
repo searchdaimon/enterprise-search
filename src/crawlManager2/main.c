@@ -35,6 +35,7 @@
 #include "../bbdocument/bbdocument.h"
 
 #include "../3pLibs/keyValueHash/hashtable.h"
+#include "../common/pidfile.h"
 
 
 #define crawl_crawl 1
@@ -1746,6 +1747,14 @@ mc_add_servers(void)
 }
 #endif
 
+void
+catch_sigusr2(int sig)
+{
+	closelogs(LOGACCESS, LOGERROR);
+	wait_loglock("crawlManager");
+	openlogs(&LOGACCESS,&LOGERROR,"crawlManager");
+}
+
 int main (int argc, char *argv[]) {
 	struct config_t maincfg;
 	struct config_t cmcfg;
@@ -1759,6 +1768,8 @@ int main (int argc, char *argv[]) {
 		perror("logs");
 		exit(1);
 	}
+	signal(SIGUSR2, catch_sigusr2);
+	write_gpidfile("crawlManager");
 
 	printf("crawlManager: in main\n");
 
