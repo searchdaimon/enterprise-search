@@ -33,7 +33,7 @@
 #include "../bbdocument/bbdocument.h"
 
 #include "../3pLibs/keyValueHash/hashtable.h"
-
+#include "../common/pidfile.h"
 
 #define crawl_crawl 1
 #define crawl_recrawl 2
@@ -209,7 +209,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 		sleep(10);
 
 		if (!bbdn_conect(&(*collection).socketha,"",global_bbdnport)) {
-			blog(LOGERROR,1,"can't conect to bbdn (boitho backend document server)");
+			blog(LOGERROR,1,"can't connect to bbdn (boitho backend document server)");
 			return 0;
 		}
 
@@ -239,7 +239,7 @@ int cmr_crawlcanconect(struct hashtable *h, struct collectionFormat *collection)
 	struct crawlLibInfoFormat *crawlLibInfo;
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,(*collection).connector)) {
-		printf("cant get CrawlLibInfo\n");
+		printf("can't get CrawlLibInfo\n");
 		return 0;
 	}
 
@@ -474,7 +474,7 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 	gettimeofday(&start_time, NULL);
 	debug("cm_getCrawlLibInfo");
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,collections[0].connector)) {
-		printf("cant get CrawlLibInfo\n");
+		printf("can't get CrawlLibInfo\n");
 		return 0;
 	}
 	gettimeofday(&end_time, NULL);
@@ -594,8 +594,8 @@ int scan (struct hashtable *h,char ***shares,int *nrofshares,char crawlertype[],
         }
 
 	if ((*crawlLibInfo).scan == NULL) {
-		printf("cant scan. Crawler dosent suport it.\n");
-		blog(LOGERROR,1,"Error: cant scan. Crawler dosent suport it.");
+		printf("can't scan. Crawler dosen't support it.\n");
+		blog(LOGERROR,1,"Error: can't scan. Crawler dosent suport it.");
 
 		return 0;
 	}
@@ -642,7 +642,7 @@ int cm_start(struct hashtable **h) {
 
 	if ((dirp = opendir(bfile("crawlers"))) == NULL) {
 		perror(bfile("crawlers"));
-		blog(LOGERROR,1,"Error: cant open crawlers directory.");
+		blog(LOGERROR,1,"Error: can't open crawlers directory.");
 
 		exit(1);
 	}	
@@ -984,7 +984,7 @@ int cm_handle_crawlcanconect(char cvalue[]) {
 	int nrofcollections;
 	int i;
 
-	printf("cm_handle_crawlcanconect (%s)\n",cvalue);
+	printf("cm_handle_crawlcanconnect (%s)\n",cvalue);
 
 	cm_searchForCollection(cvalue,&collection,&nrofcollections);
 	printf("crawlcanconect: cm_searchForCollection done\n");
@@ -1416,7 +1416,7 @@ void connectHandler(int socket) {
 			printf("gor scan job:\ncrawlertype %s\nhost %s\nusername %s\npassword %s\n",crawlertype,host,username,password);
 
 			if (!scan (global_h,&shares,&nrofshares,crawlertype,host,username,password)) {
-				printf("aa cant scan\n");
+				printf("aa can't scan\n");
 				socketsendsaa(socket,&shares,0);
 				printf("bb\n");
 				sprintf(errormsg,"Can't scan.");
@@ -1488,7 +1488,7 @@ void connectHandler(int socket) {
 
 				berrorbuf = bstrerror();	
 
-				printf("cant conect! berrorbuf \"%s\"\n",berrorbuf);
+				printf("can't connect! error: \"%s\"\n",berrorbuf);
 
 
 				len = strlen(berrorbuf) +1;
@@ -1552,6 +1552,15 @@ mc_add_servers(void)
 }
 #endif
 
+void
+catch_sigusr2(int sig)
+{
+	closelogs(LOGACCESS, LOGERROR);
+	wait_loglock("crawlManager");
+	openlogs(&LOGACCESS,&LOGERROR,"crawlManager");
+}
+
+
 int main (int argc, char *argv[]) {
 	struct config_t maincfg;
 	struct config_t cmcfg;
@@ -1565,6 +1574,8 @@ int main (int argc, char *argv[]) {
 		perror("logs");
 		exit(1);
 	}
+	signal(SIGUSR2, catch_sigusr2);
+	write_gpidfile("crawlManager");
 
 	printf("crawlManager: in main\n");
 
