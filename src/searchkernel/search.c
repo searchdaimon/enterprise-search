@@ -2615,12 +2615,15 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 	gettimeofday(&start_time, NULL);
 
+	//totalt treff. Vi vil så korte ned TeffArray
+	*TotaltTreff = *TeffArrayElementer;
+
+
 	// Loop over all results and do duplicate checking...
 	//struct hashtable *crc32maphash;
 	if (crc32maphash != NULL)
 		*crc32maphash = create_hashtable(41, ht_integerhash, ht_integercmp);
 
-	y=0;
        	for (i = 0; i < (*TeffArrayElementer); i++) {
 		TeffArray->iindex[i].PopRank = popRankForDocIDMemArray(TeffArray->iindex[i].DocID);
 #if 1
@@ -2642,19 +2645,19 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 			hashtable_insert(*crc32maphash, uinttouintp(crc32), list);
 
 			list_pushback(list, TeffArray->iindex[i].DocID, TeffArray->iindex[i].subname->subname);
-			/* Remove duplicated */
-			//memmove(&TeffArray->iindex[y], &TeffArray->iindex[i], sizeof(&TeffArray->iindex[i]));
+
 			TeffArray->iindex[i].indexFiltered.duplicate = 0;
-			y++;
+
 		} else {
+			/* Remove duplicated */
 			list_pushback(list, TeffArray->iindex[i].DocID, TeffArray->iindex[i].subname->subname);
 			TeffArray->iindex[i].indexFiltered.duplicate = 1;
+			--(*TotaltTreff);
 
 		}
 #endif
 	}
 	//reclose_cache();
-	*TeffArrayElementer = y;
 
         gettimeofday(&end_time, NULL);
         (*queryTime).popRank = getTimeDifference(&start_time,&end_time);
@@ -2662,8 +2665,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 	//kutter ned på treff errayen, basert på rank. Slik at vå får ferre elemeneter å sortere
 
-	//totalt treff. Vi vil så korte ned TeffArray
-	*TotaltTreff = *TeffArrayElementer;
 
 	gettimeofday(&start_time, NULL);
 
@@ -3200,6 +3201,9 @@ int searchFilterCount(int *TeffArrayElementer,
 			else if (TeffArray->iindex[i].indexFiltered.subname == 1) {
 				continue;
 			}
+			else if (TeffArray->iindex[i].indexFiltered.duplicate == 1) {
+				continue;
+			}
 				
 			if (NULL == (filesValue = hashtable_search(h,TeffArray->iindex[i].filetype) )) {
 				fprintf(stderr, "search: Hash does not contain filetype '%s'. Adding filetype.\n", TeffArray->iindex[i].filetype);
@@ -3441,6 +3445,9 @@ int searchFilterCount(int *TeffArrayElementer,
 			else if (TeffArray->iindex[i].indexFiltered.date == 1) {
 				continue;
 			}
+			else if (TeffArray->iindex[i].indexFiltered.duplicate == 1) {
+				continue;
+			}
 				
 			if (NULL == (filesValue = hashtable_search(h,(*TeffArray->iindex[i].subname).subname) )) {    
 				printf("not found!. Vil insert first \"%s\"\n",(*TeffArray->iindex[i].subname).subname);
@@ -3550,6 +3557,9 @@ int searchFilterCount(int *TeffArrayElementer,
 				continue;
 			}
 			else if (TeffArray->iindex[i].indexFiltered.subname == 1) {
+				continue;
+			}
+			else if (TeffArray->iindex[i].indexFiltered.duplicate == 1) {
 				continue;
 			}
 
