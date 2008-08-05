@@ -1122,6 +1122,12 @@ void *generatePagesResults(void *arg)
 				#endif
 				continue;
 			}
+			if ((*PagesResults).TeffArray->iindex[i].indexFiltered.duplicate == 1) {
+				#ifdef DEBUG
+				printf("filter: index filtered (duplicate)\n");
+				#endif
+				continue;
+			}
 		#endif
 
 		#ifndef BLACK_BOKS

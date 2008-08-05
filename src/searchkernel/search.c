@@ -2598,6 +2598,20 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
         gettimeofday(&end_time, NULL);
         (*queryTime).MainAthorMerge = getTimeDifference(&start_time,&end_time);
 
+	//debug: printer ut alle treff, og litt om de.
+	#ifdef DEBUG_II
+		printf("hits befoe filters:\n\n");
+		printf("\t| %-5s | %-20s |\n","DocID", "Subname");
+		for (i = 0; (i < (*TeffArrayElementer)) && (i < 100); i++) {
+			printf("\t| %-5u | %-20s |\n",
+				TeffArray->iindex[i].DocID,
+				(*TeffArray->iindex[i].subname).subname
+			);
+		}
+		printf("\n");
+	#endif
+
+
 
 	gettimeofday(&start_time, NULL);
 
@@ -2629,10 +2643,13 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 			list_pushback(list, TeffArray->iindex[i].DocID, TeffArray->iindex[i].subname->subname);
 			/* Remove duplicated */
-			memmove(&TeffArray->iindex[y], &TeffArray->iindex[i], sizeof(&TeffArray->iindex[i]));
+			//memmove(&TeffArray->iindex[y], &TeffArray->iindex[i], sizeof(&TeffArray->iindex[i]));
+			TeffArray->iindex[i].indexFiltered.duplicate = 0;
 			y++;
 		} else {
 			list_pushback(list, TeffArray->iindex[i].DocID, TeffArray->iindex[i].subname->subname);
+			TeffArray->iindex[i].indexFiltered.duplicate = 1;
+
 		}
 #endif
 	}
@@ -2641,6 +2658,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
         gettimeofday(&end_time, NULL);
         (*queryTime).popRank = getTimeDifference(&start_time,&end_time);
+
 
 	//kutter ned på treff errayen, basert på rank. Slik at vå får ferre elemeneter å sortere
 
@@ -3000,6 +3018,24 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 			
 
 		}
+
+		//debug: printer ut alle treff, og litt om de.
+		#ifdef DEBUG_II
+			printf("hits after duplicate checking:\n\n");
+			printf("\t| %-5s | %-20s | %-8s | %-8s | %-8s | %-8s |\n", "DocId", "Subanme", "Date", "Subname", "Type", "dup");
+			for (i = 0; (i < (*TeffArrayElementer)) && (i < 100); i++) {
+				printf("\t| %-5u | %-20s | %-8d | %-8d | %-8d | %-8d |\n",
+					TeffArray->iindex[i].DocID,
+					(*TeffArray->iindex[i].subname).subname,
+					TeffArray->iindex[i].indexFiltered.date,
+					TeffArray->iindex[i].indexFiltered.subname,
+					TeffArray->iindex[i].indexFiltered.filename,
+					TeffArray->iindex[i].indexFiltered.duplicate
+				);
+			}
+			printf("\n");
+		#endif
+
 
 		printf("order by \"%s\"\n",orderby);
 

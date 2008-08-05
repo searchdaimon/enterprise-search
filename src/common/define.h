@@ -326,6 +326,7 @@ struct indexFilteredFormat {
 	char filename; //bool
 	char date;
 	char subname;
+	char duplicate;
 };
 
 struct rank_explaindFormat {
