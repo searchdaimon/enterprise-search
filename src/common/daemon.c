@@ -1,10 +1,13 @@
+#include <sys/types.h>
 
 #include "daemon.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <err.h>
 
 #include "../common/bstr.h"
+#include "boithohome.h"
 
 #define CANT_IGNORE_SIGCHLD 1;
 
@@ -103,6 +106,12 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
         socklen_t sin_size;
         struct sigaction sa;
         int yes=1;
+	pid_t session;
+	pid_t leader;
+
+	leader = getpid();
+	session = getpgrp();
+	printf("We are: %d\n", session);
 
 	fprintf(stderr, "daemon: sconnect(port=%i)\n", PORT);
 
@@ -205,6 +214,8 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
 		    	printf("runing in normal fork mode\n");
 
         	    	if (!fork()) { // this is the child process
+				if (setpgid(getpid(), session) == -1)
+					warn("setpgid");
 				printf("Forket to new prosses\n");
 
         		        close(sockfd); // child doesn't need the listener
@@ -570,4 +581,20 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 			free(buf);
 		}
 		return forret;
+}
+
+void
+wait_loglock(char *name)
+{
+	int fdlock;
+	char *path;
+
+	asprintf(&path, "%s/%s.log.lock", bfile("var/"), name);
+	fdlock = open(path, O_RDONLY);
+	free(path);
+	if (fdlock == -1)
+		return;
+	flock(fdlock, LOCK_SH); // Block until exclusive lock is released
+	flock(fdlock, LOCK_UN);	
+	close(fdlock);
 }

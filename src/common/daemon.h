@@ -42,4 +42,5 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 int socketsendsaa(int socketha,char **respons_list[],int nrofresponses);
 int socketgetsaa(int socketha,char **respons_list[],int *nrofresponses);
 
+void wait_loglock(char *name);
 
