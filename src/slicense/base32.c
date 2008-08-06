@@ -132,6 +132,7 @@ base32_decode(char *in, char **out, size_t len)
 	char *buf;
 
 	buf = malloc(len * 8); // XXX: Way too big
+	memset(buf, '\0', len*8);
 
 	bitnum = 0;
 	for (i = 0; len > i; i++) {

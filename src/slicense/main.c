@@ -121,7 +121,8 @@ inc_serial(void)
 	fclose(fp);
 	free(a);
 }
-
+ 
+#ifdef WITH_MAKE_LICENSE
 /*
  * Make a serial that has a maximum of n users.
  */
@@ -162,6 +163,7 @@ make_license(unsigned short int users)
 
 	return hb64;
 }
+#endif
 
 void
 normalize_key(char *k)
