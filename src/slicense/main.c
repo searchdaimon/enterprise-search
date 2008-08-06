@@ -119,6 +119,7 @@ inc_serial(void)
 	if (fwrite(a, sizeof(unsigned int), SERIAL_LEN, fp) != SERIAL_LEN)
 		err(1, "fwrite()");
 	fclose(fp);
+	free(a);
 }
 
 /*
@@ -156,6 +157,8 @@ make_license(unsigned short int users)
 	f[j] = '\0';
 
 	base32_encode(f, &hb64, j);//(seriallen+4)*2);
+	free(serial);
+	free(h);
 
 	return hb64;
 }
@@ -173,8 +176,8 @@ normalize_key(char *k)
 	k[j] = '\0';
 }
 
-void
-get_licenseinfo(char *s)
+int
+get_licenseinfo(char *s, unsigned int *_serial, unsigned short int *_users)
 {
 	size_t len;
 	char *buf;
@@ -201,14 +204,20 @@ get_licenseinfo(char *s)
 	for (i = 0; check_indexes[i] != -1; i++) {
 		int idx = check_indexes[i];
 
-		if (hash[idx] != h[idx])
-			errx(1, "Invalid license key");
+		if ((hash[idx]&0xff) != (h[idx]&0xff)) {
+			free(h);
+			return 0;
+		}
 	}
 
 	serial = (unsigned int *)data;
 	users = (unsigned short int *)(data+4);
+	*_serial = *serial;
+	*_users = *users;
+	free(h);
+	free(buf);
 
-	printf("Serial: %d number of licensed users: %d\n", *serial, *users);
+	return 1;
 }
 
 char *
@@ -237,11 +246,15 @@ int
 main(int argc, char **argv)
 {
 	char *key;
+	unsigned short int users;
+	unsigned int serial;
 
 	key = make_license(1000);
 	key = human_readable_key(key);
 	printf("We have a key: %s\n", key);
-	get_licenseinfo(key);
+	if (!get_licenseinfo(key, &serial, &users))
+		errx(1, "Invalid license key");
+	printf("%d %d\n", serial, users);
 	free(key);
 
 	return 0;
