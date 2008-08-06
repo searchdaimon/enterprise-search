@@ -1654,7 +1654,8 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 		mergeTerm = iindexfile[0].lastTerm;
 		i = 0;
 		totaltAntall = 0;
-		while (mergeTerm == iindexfile[i].lastTerm) {
+		while ((mergeTerm == iindexfile[i].lastTerm) && (i<stoppIndex)) {
+			//printf("mergeTerm=%d, lastTerm=%d, stoppIndex=%d, i=%d\n",mergeTerm,iindexfile[i].lastTerm,stoppIndex,i);
 			totaltAntall += iindexfile[i].lastAntall;
 			i++;
 		}
@@ -1674,7 +1675,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 
 		
 		i = 0;
-		while ((mergeTerm == iindexfile[i].lastTerm)) {
+		while ( (mergeTerm == iindexfile[i].lastTerm) && (i<stoppIndex) ) {
 		//kjører gjenom alle filene og skriver ut de som har index
 		//for (i=0;i<nrOffIindexFiles;i++) {
 
@@ -1734,9 +1735,6 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 
 					//skriver til final index
 					fwrite(&hit,sizeof(unsigned short),1,FinalIindexFileFA);
-
-
-                                        //printf("%i,",hit);
 
                         	}
                 	}
