@@ -29,6 +29,19 @@
 
 #define MAX_LDAP_ATTR_LEN 512
 
+/*
+The sizelimit argument returns the number of matched entries specified for a search operation. When sizelimit 
+is set to 50, for example, no more than 50 entries are returned. When sizelimit is set to 0, all matched 
+entries are returned. The LDAP server can be configured to send a maximum number of entries, different from 
+the size limit specified. If 5000 entries are matched in the database of a server configured to send a maximum 
+number of 500 entries, no more than 500 entries are returned even when sizelimit is set to 0.
+
+- http://docs.sun.com/app/docs/doc/816-5170/ldap-search-ext-3ldap?a=view
+*/
+#define ldap_sizelimit 0
+//timout for ldap kall, i sekkunder
+#define ldap_timeout 60
+
 static struct hashtable  *gloabal_user_h = NULL;
 
 static unsigned int boithoad_hashfromkey(void *ky)
@@ -232,9 +245,8 @@ int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[]
 	ber_int_t             msgid;
    	//struct timeval tm;
 	struct timeval ldap_time_out;
-	ldap_time_out.tv_sec 	= 10;
+	ldap_time_out.tv_sec 	= ldap_timeout;
 	ldap_time_out.tv_usec 	= 0;
-
 
 
    	int nrOfSearcResults;
@@ -244,7 +256,7 @@ int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[]
 
 	printf("trying to ldap_search_ext ...\n");
    	// ldap_search() returns -1 if there is an error, otherwise the msgid 
-   	if ((rc = ldap_search_ext((*ld), ldap_base, LDAP_SCOPE_SUBTREE, filter, attrs, 0,NULL , NULL, NULL,&ldap_time_out,&msgid)) == -1) {
+   	if ((rc = ldap_search_ext((*ld), ldap_base, LDAP_SCOPE_SUBTREE, filter, attrs, 0, NULL , NULL,&ldap_time_out, ldap_sizelimit,&msgid)) == -1) {
    	   ldap_perror( ld, "ldap_search" );
    	   return RETURN_FAILURE;
    	}
@@ -407,6 +419,13 @@ done:
 	list_destroy(&list);
 
 	printf("nr of results for return is %i\n",(*nrofresponses));
+
+	/*
+	if ((*nrofresponses) == 0) {
+		printf("dident find any results, returning 0\n"); 
+		return 0;
+	}
+	*/
 
 	//printf("ldap_simple_search: end\n");
 
