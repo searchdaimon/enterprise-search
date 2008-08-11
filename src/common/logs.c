@@ -50,10 +50,11 @@ void blog(FILE *LOG, int level, const char *fmt, ...) {
 		}
 
 		//viser på skjerm
-               	printf("log: ");
-               	vprintf(fmt,ap);
-          	printf("\n");
-		
+		if (level <= 1) {
+               		printf("log: ");
+               		vprintf(fmt,ap);
+          		printf("\n");
+		}
         va_end(ap);
 }
 
