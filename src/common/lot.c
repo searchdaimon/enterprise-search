@@ -220,7 +220,7 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
 
 		GetFilPathForLotFile(File,resource,LotNr,subname);
 		//finer hvilken mappe vi skal i, tar også hensyn til sub mapper i lotten.
-		strscpy(FilePath,getpath(File)->fil_path,sizeof(FilePath));
+		strscpy(FilePath,getpath(File),sizeof(FilePath));
 
 		#ifdef DEBUG
                 	printf("lotOpenFileNoCasheByLotNr: opening file \"%s\" for %s\n",File,type);
