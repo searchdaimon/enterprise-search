@@ -32,15 +32,12 @@ struct gcaoptFormat {
 };
 
 int
-gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt)
+gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt, time_t newest_document)
 {
 	int i;
 	
 	struct reformat *re;
 
-	#ifdef BLACK_BOKS
-		time_t newest_document;
-	#endif
 	FILE *DOCINDEXFH;
 
 
@@ -62,27 +59,6 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt)
 		perror("can't reopen()");
 		exit(1);
 	}
-
-
-	#ifdef BLACK_BOKS
-		newest_document = 0;	
-	#endif
-
-	//finner nyeste dokument 
-	for (i=0;i<NrofDocIDsInLot;i++) {
-
-		#ifdef BLACK_BOKS
-			if ((REN_DocumentIndex(re, i)->lastSeen != 0) && (newest_document < REN_DocumentIndex(re, i)->lastSeen)) {
-        	                newest_document = REN_DocumentIndex(re, i)->lastSeen;
-				//printf("newest_document: i: %i, url \"%s\", time %s\n",i,REN_DocumentIndex(re, i)->Url, ctime_s(&REN_DocumentIndex(re, i)->lastSeen));
-
-                	}
-		#endif
-
-	}
-	#ifdef BLACK_BOKS
-		blog(gcaopt->log,1,"Newest document: %s",ctime_s(&newest_document));
-	#endif
 
 
 
@@ -114,7 +90,7 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt)
 			//sletter dokumentet i bb spesefike ting.
 			bbdocument_delete (REN_DocumentIndex(re, i)->Url, subname);
 
-			blog(gcaopt->log,1,"dokument \"%s\" can be deleted. Last seen: %s, DocID %u",REN_DocumentIndex(re, i)->Url,ctime_s(&REN_DocumentIndex(re, i)->lastSeen),LotDocIDOfset(LotNr) +i);
+			blog(gcaopt->log,2,"dokument \"%s\" can be deleted. Last seen: %s, DocID %u",REN_DocumentIndex(re, i)->Url,ctime_s(&REN_DocumentIndex(re, i)->lastSeen),LotDocIDOfset(LotNr) +i);
 			++gcaopt->gced;
 		
 		} 
@@ -188,6 +164,10 @@ void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 	int LotNr, i;
 	unsigned int DocIDcount = 0;
 	FILE *LOCK;
+	struct reformat *re;
+
+	
+	time_t newest_document = 0;
 
 	gcaopt->keept = 0;
 	gcaopt->gced = 0;
@@ -197,25 +177,70 @@ void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 		exit(-1);
 	}
 
+	#ifdef BLACK_BOKS
+
+		for(LotNr=1;LotNr<maxLots;LotNr++) {
+
+
+			if((re = reopen(LotNr, sizeof(struct DocumentIndexFormat), "DocumentIndex", subname, RE_READ_ONLY|RE_HAVE_4_BYTES_VERSION_PREFIX)) == NULL) {
+				continue;
+			}
+
+			//finner nyeste dokument 
+			for (i=0;i<NrofDocIDsInLot;i++) {
+
+				if ((REN_DocumentIndex(re, i)->lastSeen != 0) && (newest_document < REN_DocumentIndex(re, i)->lastSeen)) {
+       			                newest_document = REN_DocumentIndex(re, i)->lastSeen;
+					//printf("newest_document: i: %i, url \"%s\", time %s\n",i,REN_DocumentIndex(re, i)->Url, ctime_s(&REN_DocumentIndex(re, i)->lastSeen));
+        		       	}
+
+			}
+
+			reclose(re);
+
+		}
+
+	#endif
+
+
+	//hack: setter datoen til i dag. Forutsetter at vi nettopp har kjørt crawling.
+	//printf("\n<######################## with runarb newest_document hack###################>\n");
+	//newest_document = time(NULL);
+	//printf("</######################## with runarb newest_document hack###################>\n\n");
+
+	#ifdef BLACK_BOKS
+		blog(gcaopt->log,1,"Newest document: %s",ctime_s(&newest_document));
+	#endif
+
+
 	for(LotNr=1;LotNr<maxLots;LotNr++) {
-		gcdecide(LotNr,subname, gcaopt);
+		gcdecide(LotNr,subname, gcaopt, newest_document);
 	}
 
 	/***************************/
 	//merger indexene
         //skal lage for alle bøttene
+	printf("merging Main\n");
         for (i=0;i<NrOfDataDirectorys;i++) {
+		#ifdef DEBUG
         	printf("gc_coll: bucket: %i\n",i);
+		#endif
 		mergei(i,0,0,"Main","aa",subname,&DocIDcount);
         }
 
+	printf("merging acl_allow\n");
         for (i=0;i<NrOfDataDirectorys;i++) {
+		#ifdef DEBUG
         	printf("gc_coll: bucket: %i\n",i);
+		#endif
 		mergei(i,0,0,"acl_allow","aa",subname,&DocIDcount);
 	}
 
+	printf("merging acl_denied\n");
         for (i=0;i<NrOfDataDirectorys;i++) {
+		#ifdef DEBUG
         	printf("gc_coll: bucket: %i\n",i);
+		#endif
 		mergei(i,0,0,"acl_denied","aa",subname,&DocIDcount);
 	}
 
@@ -254,8 +279,15 @@ main(int argc, char **argv)
 				gcaopt.dryRun = 1;
 				break;
 			case 'l':
-				gcaopt.log = fopen(bfile("logs/gc"),"ab");
-				gcaopt.logSummary = fopen(bfile("logs/gcSummary"),"ab");
+				if ((gcaopt.log = fopen(bfile("logs/gc"),"ab")) == NULL) {
+					perror("logs/gc");
+					exit(-1);
+				}
+				if ((gcaopt.logSummary = fopen(bfile("logs/gcSummary"),"ab")) == NULL) {
+					perror("logs/gcSummary");
+					exit(-1);
+				}
+
 				break;
 			case 's':
 				gcaopt.lastSeenHack = 1;
@@ -277,22 +309,7 @@ main(int argc, char **argv)
 		exit(1);
 	#endif
 
-	if ((argc -optind) == 3) {
-		LotNr = atoi(argv[2 +optind]);
-
-		fprintf(stderr, "Støtest ikke for nå. Mangler subname og lock file\n");
-		exit(-1);
-
-		gcaopt.keept = 0;
-		gcaopt.gced = 0;
-
-		gcdecide(LotNr,subname, &gcaopt);
-
-		blog(gcaopt.log,1,"gc'ed \"%s\". Keept %i, gced %i",subname,gcaopt.keept,gcaopt.gced);
-		blog(gcaopt.logSummary,1,"gc'ed \"%s\". Keept %i, gced %i",subname,gcaopt.keept,gcaopt.gced);
-
-	}
-	else if ((argc -optind) == 2) {
+	if ((argc -optind) == 2) {
 		subname = argv[1 +optind];
 
 		gc_coll(subname, &gcaopt);
