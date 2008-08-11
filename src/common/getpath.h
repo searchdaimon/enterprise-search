@@ -42,14 +42,6 @@ char *getcwd(), *strcat();
  
  /* structure to hold path data for current file */
 
-struct path_primitive
-        {
-                char *fil_disk;
-                char *fil_path;
-                char *fil_name;
-                char *fil_ext;
-        };
 
-typedef struct  path_primitive  path_t;
-path_t *getpath();
+char *getpath();
 

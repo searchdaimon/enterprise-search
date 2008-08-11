@@ -64,10 +64,11 @@
  *                                              *
  ***********************************************/
 
-path_t *getpath(filename)
+#define _MAX_DIR 128
+
+char *getpath(filename)
 char *filename;
 {
-        path_t *new;                    /* structure to hold data           */
         char *file_disk,                /* disk location of active file     */
              *path,                     /* path to active file              */
              *file_name,                /* name of active file (no .ext)    */
@@ -76,9 +77,15 @@ char *filename;
              *curr_path;                /* current working directory        */
         int i, j = 0, k, name_len, no_of_dirs = 0;
         BOOLEAN path_p = FALSE;
-        char *directory[128],       /* 10 subdirectories ought be enough ! */
+        char *directory[_MAX_DIR],       /* 10 subdirectories ought be enough ! */
              buff[PATH_MAX];             /* buffer to hold file & directory names */
         void error();
+
+	static char pathRet[PATH_MAX];
+
+	for (i=0;i<_MAX_DIR;i++) {
+		directory[i] = NULL;
+	}
 
         name_len = strlen(filename);
 
@@ -179,19 +186,23 @@ char *filename;
 
         free((char *)curr_path);
         
-        if((new = MALLOC(path_t)) == NULL) {
-                error("Can't instantiate Path");
-                return(NULL);
-        }
+	for (i=0;i<_MAX_DIR;i++) {
+		free(directory[i]);
+	}
 
-        else {
-                new->fil_disk = file_disk;
-                new->fil_path = path;
-                new->fil_name = file_name;
-                new->fil_ext = file_ext;
-                return(new);
-        }
-        /* all done */
+
+
+
+	strcpy(pathRet,path);
+        
+        
+	free(file_disk);
+	free(path);
+	free(file_name);
+	free(file_ext);
+
+
+	return pathRet;        
 }
 
 
@@ -205,4 +216,5 @@ char *string;
         printf("ERROR : %s\n", string);
         exit(1);
 }
+
 
