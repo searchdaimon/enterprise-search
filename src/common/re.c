@@ -30,7 +30,9 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 	char openmode[4];
 	int mmapmode;
 
+	#ifdef DEBUG
 	printf("reopen(lotNr=%i, structsize=%d, file=%s, subname=%s, flags=%i)\n",lotNr,structsize,file,subname,flags);
+	#endif
 
 	if ((re = malloc(sizeof(struct reformat))) == NULL) {
 		return NULL;
