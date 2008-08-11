@@ -71,6 +71,8 @@ int bcleaner (void *cookie) {
 		}
 	}
 
+	//frigjør cookie
+	free(cookie);
 
 	return 0;
 }
