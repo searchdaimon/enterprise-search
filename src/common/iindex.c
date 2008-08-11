@@ -951,7 +951,9 @@ struct hashtable * loadGced(int lotNr, char subname[]) {
 	nrofGced = (inode.st_size / sizeof(unsigned int));
 
 	if (nrofGced != 0) {
+		#ifdef DEBUG
 		printf("have %u gced DocID's\n",nrofGced);
+		#endif
 
 		if ((gcedArray = malloc(inode.st_size)) == NULL) {
 			perror("malloc");
@@ -999,12 +1001,12 @@ struct hashtable * loadGced(int lotNr, char subname[]) {
 
 int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFormat *IndekserOpt) {
 
-	struct hashtable *h;
+	struct hashtable *h = NULL;
 	int i,y;
 	unsigned int u, uy;
 	int mgsort_i,mgsort_k;
-	FILE *REVINDEXFH;
-	FILE *IINDEXFH;
+	FILE *REVINDEXFH = NULL;
+	FILE *IINDEXFH = NULL;
 	unsigned int nrOfHits;
 	unsigned short hit;
 	char recordSeperator[4];
@@ -1053,7 +1055,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 	if ((IndekserOpt->optMustBeNewerThen != 0)) {
 		if (fopen(iindexPathOld,"r") != NULL) {
-			printf("we all redy have a iindex.\n");
+			printf("we all ready have a iindex.\n");
 			return 0;
 		}
 	}
@@ -1125,8 +1127,11 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		while ((!feof(IINDEXFH)) && (count < revIndexArraySize)) {
         	        //wordid hedder
                 	if (fread(&term,sizeof(unsigned long),1,IINDEXFH) != 1) {
-                        	printf("can't read term\n");
-                        	perror(iindexPathOld);
+				//skriver ut feilmelding hvis vi fik en feil, men ikke eof
+				if (!feof(IINDEXFH)) {
+                        		printf("can't read term\n");
+                        		perror(iindexPathOld);
+				}
                         	//continue;
 				break;
                 	}
@@ -1159,8 +1164,9 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 				for (uy = 0;uy < revIndexArray[count].nrOfHits; uy++) {
                                         if (fread(&revIndexArray[count].hits[uy],sizeof(unsigned short),1,IINDEXFH) != 1) {
-						perror("reading hit");
-						return 0;
+						fprintf(stderr,"Can't read hit. DocID %u, nr of hits %d\n",revIndexArray[count].DocID,revIndexArray[count].nrOfHits);
+						perror(iindexPathOld);
+						goto IndekserError;
 					}
                         	}
 
@@ -1177,12 +1183,14 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 			}
 		}
 
+		#ifdef DEBUG
 		printf("got %i good index elements from before\n",count);
-
+		#endif
 	}
 
 	if (IINDEXFH != NULL) {
 		fclose(IINDEXFH);
+		IINDEXFH = NULL;
 	}
 
 	#ifdef DEBUG
@@ -1205,19 +1213,19 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		//v3
 		if (fread(&revIndexArray[count].langnr,sizeof(char),1,REVINDEXFH) != 1) {
 			printf("fread langnr");
-			return 0;
+			goto IndekserError;
 		}
 		//printf("lang1 %i\n",(int)revIndexArray[count].langnr);
 
 
 		if (fread(&revIndexArray[count].WordID,sizeof(revIndexArray[count].WordID),1,REVINDEXFH) != 1) {
 			printf("fread WordID");
-			return 0;
+			goto IndekserError;
 
 		}
 		if (fread(&revIndexArray[count].nrOfHits,sizeof(revIndexArray[count].nrOfHits),1,REVINDEXFH) != 1) {
 			printf("fread nrOfHits");
-			return 0;
+			goto IndekserError;
 		}
 
 		#ifdef DEBUG
@@ -1228,13 +1236,13 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 		if (revIndexArray[count].nrOfHits > MaxsHitsInIndex) {
 			printf("nrOfHits lager then MaxsHitsInIndex (%i). Nr was %i\n",MaxsHitsInIndex ,revIndexArray[count].nrOfHits );
-			return 0;
+			goto IndekserError;			
 		}
 
 		//leser antall hist vi skulle ha
 		if (fread(&revIndexArray[count].hits,1,revIndexArray[count].nrOfHits * sizeof(short),REVINDEXFH) != (revIndexArray[count].nrOfHits * sizeof(short)) ) {
 			perror("read hits");
-			return 0;
+			goto IndekserError;
 		}
 
 		revIndexArray[count].tombstone = 0;
@@ -1287,7 +1295,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 	if ((IINDEXFH = fopen(iindexPathNew,"wb")) == NULL) {
 		fprintf(stderr,"can't open iindex for wb\n");
 		perror(iindexPathNew);
-		return 0;
+		goto IndekserError;		
 	}
 
 	//teller forkomster av DocID's pr WordID
@@ -1328,6 +1336,17 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		printf("looking at  WordID %u, nr %u\n",revIndexArray[i].WordID,nrofDocIDsForWordID[forekomstnr]);
 		#endif
 
+		//sjekker at dette ikke er en slettet DocID
+		if (revIndexArray[i].tombstone) {
+			//#ifdef DEBUG
+				fprintf(stderr,"DocID %u is tombstoned.\n",revIndexArray[i].DocID);
+			//#endif
+			//toDo kan vi bare kalle continue her. Blir det ikke fil i noe antall?
+			//Runarb: 1 juli 2008: ser ut til at vi henter antallet fra 
+			//nrofDocIDsForWordID[forekomstnr], så det går bra
+			continue;
+		}
+
 		if (lastWordID != revIndexArray[i].WordID) {
 
 			#ifdef DEBUG
@@ -1343,16 +1362,6 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 		//printf("\tDocID %u, nrOfHits %u\n",revIndexArray[i].DocID,revIndexArray[i].nrOfHits);
 
-		//sjekker at dette ikke er en slettet DocID
-		if (revIndexArray[i].tombstone) {
-			#ifdef DEBUG
-				printf("DocID %u is tombstoned\n",revIndexArray[i].DocID);
-			#endif
-			//toDo kan vi bare kalle continue her. Blir det ikke fil i noe antall?
-			//Runarb: 1 juli 2008: ser ut til at vi henter antallet fra 
-			//nrofDocIDsForWordID[forekomstnr], så det går bra
-			continue;
-		}
 		//skrive DocID og antall hit vi har
 		fwrite(&revIndexArray[i].DocID,sizeof(revIndexArray[i].DocID),1,IINDEXFH);
 		//v3
@@ -1373,6 +1382,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 	}
 
 	fclose(IINDEXFH);
+	IINDEXFH = NULL;
 
 	if (IndekserOpt->sequenceMode) {
 		//trunkerer rev index. i LotInvertetIndexMaker3 er det bare en oppdateringsfil
@@ -1382,6 +1392,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 	}
 
 	fclose(REVINDEXFH);
+	REVINDEXFH = NULL;
 
 	free(revIndexArray);
 	free(nrofDocIDsForWordID);
@@ -1396,8 +1407,23 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		hashtable_destroy(h,1);
 	}
 
-
 	return 1;
+
+	//hvis vi ikke fik til å indeksere skal vi free gi resursene våre, så returnere 0
+	IndekserError:
+		free(revIndexArray);
+		free(nrofDocIDsForWordID);
+		if (h != NULL) {
+			hashtable_destroy(h,1);
+		}
+		if (REVINDEXFH != NULL) {
+			fclose(REVINDEXFH);
+		}
+		if (IINDEXFH != NULL) {
+			fclose(IINDEXFH);
+		}
+		return 0;
+
 }
 
 //sortere først på WordID, så DocID
@@ -1461,7 +1487,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
         unsigned long DocID;
 
         unsigned long TermAntall;
-        unsigned short hit;
+        unsigned short hits[MaxsHitsInIndex];
 
 	unsigned long currentTerm;
 
@@ -1537,11 +1563,14 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 		exit(1);
         }
 
+	#ifdef DEBUG
 	printf("FinalDictionaryFileName \"%s\"\n",FinalDictionaryFileName);
+	#endif
 
-	//nrOffIindexFiles = argc -2;
-
+	#ifdef DEBUG
 	printf("mallocing iindexfile of size %i\n", ((stoppIndex - startIndex) * sizeof(struct iindexfileFormat)) );
+	#endif
+
 	if ((iindexfile = malloc((stoppIndex - startIndex) * sizeof(struct iindexfileFormat))) == NULL) {
 		perror("malloc iindexfile");
 		exit(-1);
@@ -1586,7 +1615,9 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 		fstat(fileno(iindexfile[count].fileha),&inode);
 
 		if (inode.st_size == 0) {
+			#ifdef DEBUG
 			printf("File %s is emty, vill ignore it.\n",iindexfile[count].PathForLotIndex);
+			#endif
 			fclose(iindexfile[count].fileha);
 			iindexfile[count].fileha = NULL;
 		}
@@ -1692,7 +1723,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 				//}
 
 				if ((n=fread(&DocID,sizeof(DocID),1,iindexfile[i].fileha)) != 1) {
-					printf("cant read DocID for %s\n",iindexfile[i].PathForLotIndex);
+					printf("can't read DocID for %s\n",iindexfile[i].PathForLotIndex);
 					printf("iindex eof %i\n",iindexfile[i].eof);
 					printf("i: %i\n",i);
 					printf("nrOffIindexFiles %i\n",nrOffIindexFiles);
@@ -1720,23 +1751,31 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 				//}
 
 
+				if (TermAntall > MaxsHitsInIndex) {
+					fprintf(stderr,"TermAntall %d is lager then MaxsHitsInIndex %d. file \"%s\"\n",TermAntall,MaxsHitsInIndex,iindexfile[i].PathForLotIndex);
+					goto iindexfileReadError;
+				}
+
+                        	for (z = 0;z < TermAntall; z++) {
+					if ((n=fread(&hits[z],sizeof(unsigned short),1,iindexfile[i].fileha)) != 1) {
+						fprintf(stderr,"can't read hit for %s. z: %i, TermAntall: %i. DocID %u\n",iindexfile[i].PathForLotIndex,z,TermAntall, DocID);
+		                       		perror(iindexfile[i].PathForLotIndex);
+                                        	//exit(1);
+						//ToDo: dette er ikke 100% lurt, break her går ut av den første for loppen, men ikke den viktige hoved loopen
+						goto iindexfileReadError;
+                                	}
+                        	}
+
 				//skriver til final index
 				fwrite(&DocID,sizeof(unsigned long),1,FinalIindexFileFA);
 				fwrite(&langnr,sizeof(char),1,FinalIindexFileFA);
 				fwrite(&TermAntall,sizeof(unsigned long),1,FinalIindexFileFA);
 
-
+				//skriver hits
                         	for (z = 0;z < TermAntall; z++) {
-					if ((n=fread(&hit,sizeof(unsigned short),1,iindexfile[i].fileha)) != 1) {
-						printf("can't read hit for %s. z: %i, TermAntall: %i. DocID %u\n",iindexfile[i].PathForLotIndex,z,TermAntall, DocID);
-		                       		perror(iindexfile[i].PathForLotIndex);
-                                        	exit(1);
-                                	}
-
 					//skriver til final index
-					fwrite(&hit,sizeof(unsigned short),1,FinalIindexFileFA);
-
-                        	}
+					fwrite(&hits[z],sizeof(unsigned short),1,FinalIindexFileFA);
+				}
                 	}
 
 
@@ -1744,9 +1783,12 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 						
 			if (feof(iindexfile[i].fileha)) {
 				//printf("got eof %s\n",iindexfile[i].PathForLotIndex);
-				iindexfile[i].eof = 1;
-				++gotEof;
-				nrOffIindexFiles--;
+				//error hånterer som eof
+				iindexfileReadError:	
+		
+					iindexfile[i].eof = 1;
+					++gotEof;
+					nrOffIindexFiles--;
 			}
 			else if (iindexfile[i].filesize == ftell(iindexfile[i].fileha)) {
 				//printf("is at end without eof\n");
@@ -1767,7 +1809,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
                                 	exit(1);
 				}
 			}
-			
+
 			i++;
 		}
 
