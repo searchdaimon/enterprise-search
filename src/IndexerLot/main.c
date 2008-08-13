@@ -9,6 +9,7 @@
 #include <inttypes.h>
 #include <dirent.h>
 #include <err.h>
+#include <time.h>
 
 #include "../common/define.h"
 #include "../common/langdetect.h"
@@ -119,6 +120,7 @@ struct IndexerLot_workthreadFormat {
 	#ifdef WITH_THREAD
         	pthread_mutex_t reposetorymutex;
         	pthread_mutex_t restmutex;
+        	pthread_mutex_t countmutex;
        	#endif
 
 	#ifdef PRESERVE_WORDS
@@ -127,6 +129,7 @@ struct IndexerLot_workthreadFormat {
 
 	struct relocal re;
 	struct filteredf filtered;
+	int n_new, n_recrawled, n_untouched;
 	FILE *FNREPO;
 };
 
@@ -454,7 +457,6 @@ int IndexerLot_filterOnlyTLD (char **optOnlyTLD,char TLD[]) {
 void *IndexerLot_workthread(void *arg) {
 
 	struct IndexerLot_workthreadFormat *argstruct = (struct IndexerLot_workthreadFormat *)arg;
-//void *IndexerLot_workthread(struct IndexerLot_workthreadFormat *argstruct) {
 
 	int sizeofhtmlcompressdbuffer = 524288 * 2;
 
@@ -493,6 +495,7 @@ void *IndexerLot_workthread(void *arg) {
 	char *metadesc;
 	char *url, *attributes;
 	unsigned int crc32;
+	int isnew, isrecrawled, isuntouched;
 
 	Bytef *SummaryBuffer;
 	uLong SummaryBufferSize;
@@ -507,8 +510,10 @@ void *IndexerLot_workthread(void *arg) {
 
 	wordsInit(pagewords);
 
+	isnew = isrecrawled = isuntouched = 0;
 	while (getNextPage(argstruct,htmlcompressdbuffer,sizeofhtmlcompressdbuffer,imagebuffer,sizeofimagebuffer,
 		&radress,&acl_allow,&acl_denied,&ReposetoryHeader, &url, &attributes)) {
+			int documentUpdate = 0;
 
        				awvalue = 0;
                			title = NULL;
@@ -518,10 +523,6 @@ void *IndexerLot_workthread(void *arg) {
 				SummaryBuffer = NULL;
 
 				DocIDPlace = (ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr));
-				if (ReposetoryHeader.DocID == 1) {
-					printf("Docid: 1\n");
-				}
-
 
 				if ((DocumentIndexPost = malloc(sizeof(struct DocumentIndexFormat))) == NULL) {
 					perror("malloc DocumentIndexPost");
@@ -549,13 +550,16 @@ void *IndexerLot_workthread(void *arg) {
 
 				}
 
-				//hvis dette er samme dokumens som vi har fra før kan vi ignorere det.
+				//hvis dette er samme dokument som vi har fra før kan vi ignorere det.
 				if (ReposetoryHeader.DocID != 1 && (argstruct->rEindex == 0) && (DocumentIndexPost->RepositoryPointer == radress) ) {
 					#ifdef DEBUG
 						printf("have already indexed this dokument\n");
 					#endif
+					isuntouched++;
 					++(*argstruct).optHandleOld_allrediIndexed;
 					goto pageDone;
+				} else if (DocumentIndexPost->RepositoryPointer != radress && DocumentIndexPost->RepositoryPointer != 0) {
+					documentUpdate = 1;
 				}
 
 				HtmlBufferLength = sizeofHtmlBuffer;
@@ -575,10 +579,12 @@ void *IndexerLot_workthread(void *arg) {
 					//if (DocumentIndexPost->htmlSize != 0) {
 
 					        if ( (argstruct->rEindex == 0) && (DocumentIndexPost->crc32 == crc32) ) {
+
 							#ifdef DEBUG
 								printf("have a duplicate dokument, but havent changed\n");
 							#endif
 							++(*argstruct).optHandleOld_duplicateNochange;
+							isuntouched++;
 
 							//free(DocumentIndexPost);
 							goto pageDone;
@@ -721,7 +727,6 @@ void *IndexerLot_workthread(void *arg) {
                        				//not adult
                        				awvalue = 0;
                				}
-
 				}
 				else if (argstruct->optQuery != NULL) {
 					//ignorerer bare ikke 200 sider 
@@ -843,8 +848,10 @@ void *IndexerLot_workthread(void *arg) {
 					//skiver til DocumentIndex
 					//DIWrite(DocumentIndexPost,ReposetoryHeader.DocID,(*argstruct).subname);
 
-
-			
+				if (documentUpdate)
+					isrecrawled++;
+				else
+					isnew++;
 
 				#ifdef WITH_THREAD
 					pthread_mutex_unlock(&(*argstruct).restmutex);
@@ -870,10 +877,8 @@ void *IndexerLot_workthread(void *arg) {
 				(*argstruct).DIArray[DocIDPlace].haverankPageElements = 1;
 
 				(*argstruct).DIArray[DocIDPlace].DomainDI = DomainDI;
-					
 
-				pageDone:
-
+pageDone:
 
 				if (SummaryBuffer != NULL) {
 					free(SummaryBuffer);
@@ -897,6 +902,17 @@ void *IndexerLot_workthread(void *arg) {
 				}
 
 		}
+
+#ifdef WITH_THREAD
+				pthread_mutex_lock(&argstruct->countmutex);
+#endif
+				argstruct->n_new += isnew;
+				argstruct->n_recrawled += isrecrawled;
+				argstruct->n_untouched += isuntouched;
+#ifdef WITH_THREAD
+				pthread_mutex_unlock(&argstruct->countmutex);
+#endif
+
 
 	wordsEnd(pagewords);
 
@@ -1216,7 +1232,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			strcpy(openmode,"ab");
 		}
 		else {
-			printf("sholden happend!\n");
+			printf("This should not happen!\n");
 			exit(1);
 		}
 		printf("openmode\"%s\"\n",openmode);
@@ -1358,6 +1374,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			//init mutex
 			pthread_mutex_init(&argstruct->reposetorymutex, NULL);
 			pthread_mutex_init(&argstruct->restmutex, NULL);
+			pthread_mutex_init(&argstruct->countmutex, NULL);
 
 			if (opt->NrofWorkThreads == 0) {
 				printf("won't use threads\n");
@@ -1605,6 +1622,20 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		}	
 		#endif
 
+
+		{
+			FILE *indexlog;
+
+			if ((indexlog = lotOpenFileNoCasheByLotNr(lotNr,"indexlog.txt","a",'e',subname)) == NULL) {
+				warn("Unable to write index log");
+			} else {
+				fprintf(indexlog, "%d new=%d,recrawled=%d,untouched=%d\n", time(NULL),
+				    argstruct->n_new, argstruct->n_recrawled, argstruct->n_untouched);
+				fclose(indexlog);
+			}
+		}
+		printf("New: %d\nRecrawled: %d\nUntouched: %d\n", argstruct->n_new, argstruct->n_recrawled, argstruct->n_untouched);
+
 		free(argstruct);
 
 		html_parser_exit();
@@ -1844,7 +1875,6 @@ int main (int argc, char *argv[]) {
 	else {
 		run (lotNr,subname,&opt,"reposetory");
 	}
-
 
 
 	return 0;
