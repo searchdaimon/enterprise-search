@@ -243,22 +243,3 @@ human_readable_key(char *k)
 	return b;
 }
 
-#ifdef TESTMAIN
-int
-main(int argc, char **argv)
-{
-	char *key;
-	unsigned short int users;
-	unsigned int serial;
-
-	key = make_license(1000);
-	key = human_readable_key(key);
-	printf("We have a key: %s\n", key);
-	if (!get_licenseinfo(key, &serial, &users))
-		errx(1, "Invalid license key");
-	printf("%d %d\n", serial, users);
-	free(key);
-
-	return 0;
-}
-#endif
