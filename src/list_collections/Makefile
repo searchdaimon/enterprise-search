@@ -1,0 +1,11 @@
+CC = /usr/local/bin/gcc
+CFLAGS = -std=c99 -O2 -g -W -Wall
+LDFLAGS = -lz -lm
+LIBS = ../3pLibs/keyValueHash/hashtable_itr.c ../3pLibs/keyValueHash/hashtable.c ../base64/base64.c 
+OBJS= list_collections.o
+
+list_collections: $(OBJS)
+	$(CC) $(LDFLAGS) $^ -o $@ ../common/*.c $(LIBS)
+
+clean:
+	rm -rf *.o list_collections
