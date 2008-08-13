@@ -204,8 +204,11 @@ static void print_reference(LDAP *ld, LDAPMessage *reference)
 
 }
 
-
 int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[],int *nrofresponses,const char ldap_base[]) {
+	return ldap_simple_search_count(ld, filter, vantattrs, respons, nrofresponses, ldap_base, -1, NULL);
+}
+
+int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **respons[],int *nrofresponses,const char ldap_base[], int maxcount, const char *valfilter) {
 	printf("ldap_simple_search: start\n");
 
 
@@ -306,16 +309,20 @@ int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[]
       					}
 
       					for( attr = ldap_first_attribute((*ld), entry, &ber); attr != NULL; attr = ldap_next_attribute((*ld), entry, ber)) {
-
-
+						int counter;
 
 						//###########################
 						printf("attr adress %u\n",(unsigned int)attr);
 
 					 	if ((vals = (char **)ldap_get_values((*ld), entry, attr)) != NULL)  {
-
+							counter = 0;
 
 		    					for(i = 0; vals[i] != NULL; i++) {
+								counter++;
+								if (valfilter && strncasecmp(vals[i], valfilter, strlen(valfilter)) != 0) {
+									printf("Skiping: %s %s\n", vals[i], valfilter);
+									continue;
+								}
 								if (strcasecmp(attr, "objectSid") == 0) {
 									char *p = sid_btotext(vals[i]);
 									tempresults = malloc(sizeof(struct tempresultsFormat));
@@ -329,18 +336,17 @@ int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[]
 									printf("attr: %s, vals %s\n", attr, vals[i]);
 
 									tempresults = malloc(sizeof(struct tempresultsFormat));
-									printf("tempresults adress %u\n",(unsigned int)tempresults);
 
 									strncpy((*tempresults).value,vals[i],MAX_LDAP_ATTR_LEN);
 
-									printf("tempresults adress %u\n",(unsigned int)tempresults);
-				
 									if (list_ins_next(&list,NULL,tempresults) != 0) {
 										printf("cant insert into list\n");
 										return 0;
 									}	
 								}
 								++count;	
+								if (count >= maxcount) /* We got what we want... */
+									break;
 							} //for
 
 	
@@ -400,7 +406,6 @@ done:
 	(*nrofresponses) = 0;
 	tempresults = NULL;
 	while(list_rem_next(&list,NULL,(void **)&tempresults) == 0) {
-		printf("tempresults adress %u\n",(unsigned int)tempresults);
 		printf("aaa \"%s\"\n",(*tempresults).value);
 
 		len = strnlen((*tempresults).value,MAX_LDAP_ATTR_LEN);
@@ -877,21 +882,34 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 				}
 			}
 			else if (packedHedder.command == bad_listMailUsers) {
-				sprintf(filter,"(objectClass=user)");			
-				if (!ldap_simple_search(&ld,filter,"mailNickname",&respons,&nrOfSearcResults,ldap_base)) {
+				sprintf(filter,"(&(objectClass=user)(mailNickname=*))");			
+				if (!ldap_simple_search_count(&ld,filter,"proxyAddresses",&respons,&nrOfSearcResults,ldap_base, 1, "smtp:")) {
 					printf("can't ldap search\n");
 					intresponse = 0;
 					sendall(socket,&intresponse, sizeof(intresponse));
 					//return;
 				}
 				else {
-					//sender antal
+					//sender antall
 					sendall(socket,&nrOfSearcResults, sizeof(nrOfSearcResults));
 
 					printf("found %i mail users\n",nrOfSearcResults);
 					for(i=0;i<nrOfSearcResults;i++) {
-						printf("mail user \"%s\"\n",respons[i]);
-						strscpy(ldaprecord,respons[i],sizeof(ldaprecord));
+						char *p;
+						p = strchr(respons[i], ':');
+						if (p) {
+						} else {
+							fprintf(stderr, "Invalid smtp address: %s\n", respons[i]);
+						}
+						p++;
+						strlcpy(ldaprecord, p, sizeof(ldaprecord));
+						printf("mail user \"%s\"\n",ldaprecord);
+						p = strchr(ldaprecord, '@');
+						if (p) {
+							*p = '\0';
+						}
+						printf("mail user \"%s\"\n",ldaprecord);
+						//strscpy(ldaprecord,respons[i],sizeof(ldaprecord));
 						sendall(socket,ldaprecord, sizeof(ldaprecord));
 
 					}
