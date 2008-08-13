@@ -162,7 +162,7 @@ FILE *lockcoll(char subname[]) {
 void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 
 	int LotNr, i;
-	unsigned int DocIDcount = 0;
+	int DocIDcount = 0;
 	FILE *LOCK;
 	struct reformat *re;
 
