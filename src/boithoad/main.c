@@ -204,15 +204,20 @@ static void print_reference(LDAP *ld, LDAPMessage *reference)
 
 }
 
+int compare_ldap_vals (const void *p1, const void *p2) {
+	#ifdef DEBUG
+	printf("compare_ldap_vals (p1=\"%s\", p2\"%s\")\n",(*(char **)p1), (*(char **)p2));
+	#endif
+	return (strcmp((*(char **)p1),(*(char **)p2)) == 0);
+}
+
 int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[],int *nrofresponses,const char ldap_base[]) {
 	return ldap_simple_search_count(ld, filter, vantattrs, respons, nrofresponses, ldap_base, -1, NULL);
 }
 
 int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **respons[],int *nrofresponses,const char ldap_base[], int maxcount, const char *valfilter) {
-	printf("ldap_simple_search: start\n");
 
-
-	printf("ldap_base \"%s\", filter \"%s\", vantattrs \"%s\"\n",ldap_base,filter,vantattrs);
+	printf("ldap_simple_search_count( filter=\"%s\", vantattrs=\"%s\", ldap_base=\"%s\", maxcount=%i ,valfilter=\"%s\" )\n",filter,vantattrs,ldap_base,maxcount,valfilter);
 
    	int  result;
 	int i,len,count;
@@ -285,7 +290,7 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
                 sortattr ? LDAP_MSG_ALL : LDAP_MSG_ONE,
                 NULL, &res )) > 0 )
         {
-		printf("result\n");
+		printf("result:\n");
 
 	
                 for ( msg = ldap_first_message( (*ld), res );
@@ -312,15 +317,20 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
 						int counter;
 
 						//###########################
-						printf("attr adress %u\n",(unsigned int)attr);
 
 					 	if ((vals = (char **)ldap_get_values((*ld), entry, attr)) != NULL)  {
 							counter = 0;
 
+							printf("rbrb: got %i values\n",ldap_count_values(vals));
+							//det ser ut som om ad sender verdiene i fårskjelige rekkefølge
+							//sorterer de derfor
+							qsort(vals,ldap_count_values(vals),sizeof(char *),compare_ldap_vals);
+							
+
 		    					for(i = 0; vals[i] != NULL; i++) {
 								counter++;
 								if (valfilter && strncasecmp(vals[i], valfilter, strlen(valfilter)) != 0) {
-									printf("Skiping: %s %s\n", vals[i], valfilter);
+									printf("Skiping: valus \"%s\" thats not in filter \"%s\"\n", vals[i], valfilter);
 									continue;
 								}
 								if (strcasecmp(attr, "objectSid") == 0) {
@@ -345,8 +355,11 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
 									}	
 								}
 								++count;	
-								if (count >= maxcount) /* We got what we want... */
+								
+								if ( (maxcount != -1) && (count >= maxcount) ) {/* We got what we want... */
+									printf("Hit max count. count=%i, maxcount=%i\n",count,maxcount);
 									break;
+								}
 							} //for
 
 	
@@ -378,8 +391,9 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
                                 //if ( ldapsync == LDAP_SYNC_REFRESH_AND_PERSIST ) {
                                 //        break;
                                 //}
-
+				printf("got LDAP_RES_SEARCH_RESULT!\n");
                                 goto done;
+				
 
 			}
 		}
@@ -630,6 +644,7 @@ insert_group(struct hashtable *grouphash, char *id)
 	return 1;
 }
 
+
 void
 gather_groups(struct hashtable *grouphash, LDAP **ld, char *ldap_base, char *sid)
 {
@@ -726,6 +741,9 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 			int nrOfSearcResults;
 			char **respons;
 			char filter[128];
+
+			//nulstiller mine, slik at valgrind ikke klager når vi sender det.
+			memset(&ldaprecord,'\0',MAX_LDAP_ATTR_LEN);
 
 			bconfig_flush(CONFIG_NO_CACHE);
 
@@ -883,7 +901,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 			}
 			else if (packedHedder.command == bad_listMailUsers) {
 				sprintf(filter,"(&(objectClass=user)(mailNickname=*))");			
-				if (!ldap_simple_search_count(&ld,filter,"proxyAddresses",&respons,&nrOfSearcResults,ldap_base, 1, "smtp:")) {
+				if (!ldap_simple_search_count(&ld,filter,"proxyAddresses,objectSid",&respons,&nrOfSearcResults,ldap_base, 1, "smtp:")) {
 					printf("can't ldap search\n");
 					intresponse = 0;
 					sendall(socket,&intresponse, sizeof(intresponse));
@@ -903,7 +921,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 						}
 						p++;
 						strlcpy(ldaprecord, p, sizeof(ldaprecord));
-						printf("mail user \"%s\"\n",ldaprecord);
+						printf("mail adress \"%s\"\n",ldaprecord);
 						p = strchr(ldaprecord, '@');
 						if (p) {
 							*p = '\0';
@@ -1023,9 +1041,10 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 				if (!sendall(socket,&intresponse, sizeof(intresponse))) {
 					perror("sendall() groups for users, count");
 				}
+				printf("have %i groups:\n",intresponse);
 				itr = hashtable_iterator(grouphash);
 				do {
-					//printf("Foo: %s %d\n", (char *)hashtable_iterator_key(itr), (int)hashtable_iterator_value(itr));
+					printf("\t%s %d\n", (char *)hashtable_iterator_key(itr), (int)hashtable_iterator_value(itr));
 					strscpy(ldaprecord, hashtable_iterator_key(itr), sizeof(ldaprecord));
 					if (!sendall(socket,ldaprecord, sizeof(ldaprecord))) {
 						perror("sendall");
