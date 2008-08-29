@@ -31,7 +31,7 @@ sub crawl_update {
 
     my $user = $opt->{"user"};
     my $passw = $opt->{"password"};
-    my $urls = $opt->{"resource"};
+    my $urls = $opt->{"url"};
     my $starting_url;
 
     my @urlList = split /;/, $urls;
@@ -96,9 +96,9 @@ sub init_robot {
 sub path_access {
     my ($undef, $self, $opt) = @_;
 # print Data::Dumper->Dump([$opt]);
-    my $user = $opt->{'user'};
-    my $passw  = $opt->{'password'};
-    my $url = $opt->{'resource'};
+    my $user = $opt->{"user"};
+    my $passw  = $opt->{"password"};
+    my $url = $opt->{"resource"};
 
     if (!defined($robot)) { init_robot() ; }
 
