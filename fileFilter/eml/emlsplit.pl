@@ -344,7 +344,7 @@ my %types =
 
 my $fileemail;
 
-my $dirfiltername = "/tmp/dirfilter-" . $<;
+my $dirfiltername = "/tmp/dirfilter-" . $< . "/";
 
 $fileemail = shift @ARGV or die "Usage: ./emlsplit.pl emlfile" ;
 
@@ -391,8 +391,17 @@ sub writemail {
 		}
 		
 		my ($ct) = split(";", $_->content_type);
-		$fn = "$dirfiltername".$_->invent_filename;
-		print ((defined($types{$ct}) ? $types{$ct} : "dat") ." ".$fn."\n");
+		$fn = "$dirfiltername".$_->invent_filename($ct);
+		my $suffix;
+		$suffix = defined($types{$ct}) ? $types{$ct} : "dat";
+		if ($ct eq 'application/octet-stream') {
+			if (defined($_->{ct}) && defined($_->{ct}->{attributes}) &&
+			    defined($_->{ct}->{attributes}{name}) && $_->{ct}->{attributes}{name} =~ /\.(\w+)$/) {
+				$suffix = $1;
+				$fn .= ".$suffix";
+			}
+		}
+		print ($suffix ." ".$fn."\n");
 		open(my $wf, "> $fn") || die "$fn: $!";
 		print $wf $_->body;
 		close $wf;
@@ -405,11 +414,13 @@ print ("txt" ." ".$headername."\n");
 
 use Date::Parse;
 
-# Write some data to the metaspec file
-my $metafile = $ENV{SDMETAFILE};
-open(FH, "> $metafile");
-my @values = $parsed->header("Date");
-if (length(@values) > 0) {
-	print FH "lastmodified = " . str2time($values[0]) . "\n";
+if (defined($ENV{SDMETAFILE}))  {
+	# Write some data to the metaspec file
+	my $metafile = $ENV{SDMETAFILE};
+	open(FH, "> $metafile");
+	my @values = $parsed->header("Date");
+	if (length(@values) > 0) {
+		print FH "lastmodified = " . str2time($values[0]) . "\n";
+	}
+	close(FH);
 }
-close(FH);
