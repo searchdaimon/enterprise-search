@@ -1,6 +1,34 @@
-use Compress::Zlib;
+####################################################################
+#settup
+#####
+#MySQL settup
+$user = "boitho";
+$Password = "G7J7v5L5Y7";
+#$server = "localhost";
+$server = "web1.jayde.boitho.com";
+$database = "boithoweb";
 
+
+
+#$tabel = "submission_url";
+#
+#my $subname = 'freelistning';
+
+use constant DEBUG => 1;
+
+my $urlAtATime = 250;
+
+my $orderby = 'order by rand()';
+#my $orderby = 'order by id';
+
+
+use IR qw(ResulveUrl);
+
+use DBI; #bruker DBI databse interfase
+use Compress::Zlib;
 use Boitho::Reposetory;
+use Boitho::Lot;
+
 
 
 require LWP::Parallel::UserAgent;
@@ -14,17 +42,16 @@ require LWP::Parallel::UserAgent;
   # establish persistant robot rules cache. See WWW::RobotRules for
   # non-permanent version. you should probably adjust the agentname
   # and cache filename.
-  my $rules = new WWW::RobotRules::AnyDBM_File 'ParallelUA', 'cache';
+  my $rules = new WWW::RobotRules::AnyDBM_File 'ParallelUA', '/tmp/boitho_robottxt_cache';
 
 
-my $subname = 'freelistning';
 
-my $DABUG = 0;
-my $urlAtATime = 250;
-
-use constant UrlQueuePostLength => 204;
 
 use Time::HiRes;
+
+my $tabel = shift(@ARGV) or usage ("You must specify table");
+my $subname = shift(@ARGV) or usage ("You must specify subname");
+
 
 my $lasttime = Time::HiRes::time;
 print "\n\nStarter å beansmarke\n";
@@ -33,28 +60,48 @@ my $count = 0;
 my @reqs;
 #my $DocID;
 
-  		#laster inn urler
-		open(INF,"submission_url.crawl") or die("Can't open inn.test: $!");
+		# dette kjøres hver gang mymod.pm kalles
+		my $dbh = DBI->connect("DBI:mysql:database=$database;host=$server;port=3306",						#Kobler til databasen
+                             $user, $Password) or warn("Can`t connect: $DBI::errstr");	#
+							 
+		
+		if ($subname eq 'freelistning') {
+			$sth = $dbh->prepare("select WWWDocID,url,id from $tabel WHERE WWWDocID is not NULL AND (last_indexed = 0 OR last_indexed is NULL) limit 500000") or dienice("Can`t prepare statment: ", $dbh->errstr);
+			#$sth = $dbh->prepare("select WWWDocID,url,id from $tabel WHERE WWWDocID is not NULL limit 500000") or dienice("Can`t prepare statment: ", $dbh->errstr);
+			$rv = $sth->execute;
+		}
+		else {
+			$sth = $dbh->prepare("select WWWDocID,url,id from $tabel WHERE WWWDocID is not NULL limit 500000") or dienice("Can`t prepare statment: ", $dbh->errstr);
+			$rv = $sth->execute;
+		}
 
-		#foreach $line (@ary) {
 
-   		#	chomp($line);
+		while (($DocID,$url,$id) = $sth->fetchrow_array) {
 
-		while (read(INF,$post,UrlQueuePostLength)) {
 
-                        my ($url,$DocID) = unpack('A200,I',$post);
+			#bug: skal vi gjøre dette her, eller under innlegelsen?
+			$url = ResulveUrl("http://www.boitho.com/addurl.html",$url);
 
+
+			if ($subname eq 'freelistning') {
+        	                $rv = $dbh->do(qq{
+                                        update $tabel set last_indexed=NOW() where id="$id"
+	                        }) or warn("can´t do statment: ",$dbh->errstr);	
+			}
+			else {
+        	                $rv = $dbh->do(qq{
+                                        update $tabel set crawler_fetched=NOW() where id="$id"
+	                        }) or warn("can´t do statment: ",$dbh->errstr);	
+			}
 
 	    		print "$url, nr $count\n";
-			if ($url eq '') {
-				print "emty url in file\n";
-				next;
-			}
 
 
 			my %element;
 			$element{'url'} = $url;			
 			$element{'DocID'} = $DocID;			
+			$element{'ID'} = $id;			
+		
 			#$DocID++;
 
 			push(@reqs,\%element);
@@ -62,7 +109,15 @@ my @reqs;
 			if ($count > $urlAtATime) {
 				print "last. count $count\n";
 				#last;
-				crawlSomeUrls($rules,\@reqs);
+				eval {
+					crawlSomeUrls($rules,\@reqs);
+				}; #else eval/alarm
+				if ($@) {
+        				warn;   # propagate unexpected errors
+				}
+
+
+
 
 				@reqs = ();
 				$count = 0;
@@ -72,14 +127,18 @@ my @reqs;
 
 		}
 
+		#og siste
+		crawlSomeUrls($rules,\@reqs);
+
 		#/laster inn urler
 
-		close(INF);
 
   print "done loading\n";
 
 
   print "Ferdig: " . (Time::HiRes::time - $lasttime) . "\n";
+
+
 
 
 sub crawlSomeUrls {
@@ -92,16 +151,16 @@ sub crawlSomeUrls {
 	my $curentTime = time;
 
   	# create new UserAgent (actually, a Robot)
-  	my $pua = new LWP::Parallel::RobotUA ("boitho.com-robot/3.1 ( http://www.boitho.com/bot.html )", 'abuse@boitho.com', $rules);
+  	my $pua = new LWP::Parallel::RobotUA ("boitho.com-robot/3.2 ( http://www.boitho.com/bot.html )", 'abuse@boitho.com', $rules);
 
-  	$pua->timeout   (5);  # in seconds
-  	$pua->delay    ( 0);  # in seconds
-  	$pua->max_req  ( 1);  # max parallel requests per server
-  	$pua->max_hosts(20);  # max parallel servers accessed
-  	$pua->redirect  (0);	#tilater ikke redirekts
- 
-  
-  
+
+       	$pua->timeout   (5);  # in seconds
+       	$pua->delay    ( 0);  # in seconds
+       	$pua->max_req  ( 1);  # max parallel requests per server
+       	$pua->max_hosts(20);  # max parallel servers accessed
+       	$pua->redirect  (10);   #tilater ikke redirekts
+
+
   	# for our own print statements that follow below:
   	local($\) = ""; # ensure standard $OUTPUT_RECORD_SEPARATOR
 
@@ -111,7 +170,7 @@ sub crawlSomeUrls {
 		$req = new HTTP::Request(GET => %{ $element }->{'url'});
 		$DocIDToUrlHash{%{ $element }->{'url'}} = %{ $element }->{'DocID'};
 
-  		print "Registering '".$req->url."'\n";
+  		print "Registering '".$req->url."', DocID: ",$DocIDToUrlHash{%{ $element }->{'url'}},"\n";
   		$pua->register ($req , \&handle_answer);
   		#  Each request, even if it failed to # register properly, will
   		#  show up in the final list of # requests returned by $pua->wait,
@@ -123,6 +182,8 @@ sub crawlSomeUrls {
   	# an '$entry' for each request made, sorted by its url. (as returned
   	# by $request->url->as_string)
   	my $entries = $pua->wait(); # give another timeout here, 25 seconds
+
+	print "back from pua->wait()\n";
 
 	# let's see what we got back (see also callback function!!)
 	foreach (keys %$entries) {
@@ -162,20 +223,46 @@ sub crawlSomeUrls {
 
 			my $html_compressed = compress($res->content);
 
-my $ipaddress = "0.0.0.0";
-my $clientapplicationversion = "0.1";
-my $userID = "internal";
-my $image = '';
+			my $ipaddress = "0.0.0.0";
+			my $clientapplicationversion = "0.1";
+			my $userID = "internal";
+			my $image = '';
 
-Boitho::Reposetory::rApendPost($DocIDToUrlHash{$res->request->url},$res->request->url,'htm',
-$res->code,$ipaddress,$curentTime,$clientapplicationversion,$userID,$html_compressed,
-length($html_compressed),$image,length($image),$subname);
+			my $DocID = $DocIDToUrlHash{$res->request->url};
+			my $response = $res->code;
+
+			#hvis vi ikke har urlen i db sjekker vi om vi har url som er lik, men med en / . Kan ha blitt lagt på en /, uten at det er en redirect
+			if ((!exists($DocIDToUrlHash{$res->request->url}) ) && ( exists($DocIDToUrlHash{$res->request->url . '/'}) ) ) {
+				$DocIDToUrlHash{$res->request->url} .= '/';
+			}
+
+			if (!exists($DocIDToUrlHash{$res->request->url})) {
+				print "don't have a DocID for ",$res->request->url,"\n";
+				#exit;
+			}
+
+			print "appening DocID: ", $DocIDToUrlHash{$res->request->url}, ", url: ", $res->request->url, ", res: $response\n";
+
+			Boitho::Reposetory::rApendPost($DocIDToUrlHash{$res->request->url},$res->request->url,'htm',
+				$res->code,$ipaddress,$curentTime,$clientapplicationversion,$userID,$html_compressed,
+				length($html_compressed),$image,length($image),$subname);
+
+				if ($subname eq 'freelistning') {
+				}
+				else {
+        	        	        $rv = $dbh->do(qq{
+                	                        update $tabel set  http_response="$response" where WWWDocID="$DocID"
+		                        }) or warn("can´t do statment: ",$dbh->errstr);	
+				}
+
 			
 		}
 		
 	    	# print redirection history, in case we got redirected
 	    	foreach (@redirects) {
 			print "\t",$_->request->url, "\t", $_->code,": ", $_->message,"\n";
+			print "        content_type: ". $res->content_type . "\n";
+			print          $res->content . "\n";
 	    	}
   	
 	}
@@ -189,9 +276,10 @@ length($html_compressed),$image,length($image),$subname);
 sub handle_answer {
     my ($content, $response, $protocol, $entry) = @_;
 
-	if ($DEBUG) {
-    print "Handling partial answer from '",$response->request->url,": ", length($content), " bytes, Code ", $response->code, ", ", $response->message,"\n";
-	}	
+	if (DEBUG) {
+    		print "Handling partial answer from '",$response->request->url,": ", length($content), " bytes, Code ", $response->code, ", ", $response->message,"\n";
+	}
+	
     if (length ($content) ) {
 	# just store content if it comes in
 	$response->add_content($content);
@@ -225,4 +313,17 @@ sub handle_answer {
 }
 
 
+
+
+
+
+sub usage {
+	my $message = shift;
+
+	print "\n", $message, "\n";
+	print "Usage: picrawl.pl table subname\n\n";
+	print "eks picrawl.pl submission_url freelistning\n";
+	print "eks picrawl.pl pi_sider paidinclusion\n";
+	exit;
+}
 
