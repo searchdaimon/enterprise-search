@@ -348,7 +348,8 @@ my $dirfiltername = "/tmp/dirfilter-" . $< . "/";
 
 $fileemail = shift @ARGV or die "Usage: ./emlsplit.pl emlfile" ;
 
-#system("cp $fileemail /tmp/dirfilter-en-tmp/");
+#debug: lagrer filen slik at vi har .eml filene.
+#system("cp $fileemail /tmp/dirfilter-rb-tmp/");
 
 my $message;
 {
