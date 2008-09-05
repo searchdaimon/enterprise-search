@@ -1,4 +1,9 @@
 use String::CRC32;
 
-$mod = crc32($ARGV[0]) % 64;
-print "$mod\n";
+my $word = shift(@ARGV) or die("usage: queryToIndexid.pl word");
+
+my $WordID = crc32($word);
+
+$mod = $WordID % 64;
+
+print "WordID: $WordID\nIndex: $mod\n";
