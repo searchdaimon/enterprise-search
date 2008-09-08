@@ -367,7 +367,7 @@ if (!(-e "$dirfiltername")) {
 
 my $headername = "$dirfiltername".$parsed->invent_filename.".header.";
 open(my $mh, "> $headername") or die "$!: $headername";
-foreach my $hn (qw(Subject From To Cc Bcc Reply-to)) {
+foreach my $hn (qw(Subject From To Cc Bcc Reply-to Date)) {
 	my @values = $parsed->header($hn);
 	next if (length(@values) == 0);
 	print $mh "$hn:";
