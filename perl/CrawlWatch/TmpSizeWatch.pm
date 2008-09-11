@@ -41,7 +41,7 @@ sub run {
                 my ($fdev,$fino,$fmode,$fnlink,$fuid,$fgid,$frdev,$fsize,
                         $fatime,$fmtime,$fctime,$fblksize,$fblocks) = stat($file);
 
-		# get user info
+		# get user info. Bur være nåverdende bruker, ikke boitho her.
 		my ($uname, $upass, $uuid, $ugid, $uquota, $ucomment, $ugcos,
 			 $udir, $ushell, $uexpire) = getpwnam('boitho');
 
