@@ -14,6 +14,7 @@ use SD::Sql::ConnSimple qw(sql_setup get_dbh);
 use CrawlWatch::GC;
 use CrawlWatch::Recrawl;
 use CrawlWatch::SuggestDict;
+use CrawlWatch::TmpSizeWatch;
 
 use constant LOG_FILE          => $ENV{'BOITHOHOME'} . "/logs/crawl_watch.log";
 use constant PATH_TO_INFOQUERY => $ENV{'BOITHOHOME'} . "/bin/infoquery";
@@ -33,6 +34,7 @@ my @services = (
     CrawlWatch::GC->new($dbh, $iq, $log),
     CrawlWatch::Recrawl->new($dbh, $iq, $log),
     CrawlWatch::SuggestDict->new($dbh, $iq, $log),
+    CrawlWatch::TmpSizeWatch->new($dbh, $iq, $log),
 );
 
 while (1) {
