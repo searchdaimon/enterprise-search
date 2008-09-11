@@ -45,6 +45,7 @@ sub next_run {
     my $gc_rate = bb_config_get($self->{dbh}, CONF_GC_RATE);
     my $last_gc = bb_config_get($self->{dbh}, CONF_LAST_GC);
     my $log = $self->{'log'};
+    $log->write("INFO: GC last crawl: $last_gc, GC crawl rate: $gc_rate");
 
     unless (defined $gc_rate and $gc_rate =~ /^\d+$/) {
         $log->write("WARN: db field ", CONF_GC_RATE, 

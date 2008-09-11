@@ -23,6 +23,8 @@ use constant DEBUG => 0;
 use constant DEFAULT_WAKEUP_RATE => 300;
 
 my $log = SD::SimpleLog->new(LOG_FILE, 1);
+$log->show_in_stdout(1);
+
 my $iq = Boitho::Infoquery->new(PATH_TO_INFOQUERY);
 $| = 1;
 
@@ -57,7 +59,7 @@ while (1) {
             redo; # to get next_run time.
         }
         elsif ($next_run < -1) {
-            croak "invalid return value from ", $service->name;
+            croak "invalid return value '$next_run' from ", $service->name;
         }
         else {
             $sleep_scnds = $next_run

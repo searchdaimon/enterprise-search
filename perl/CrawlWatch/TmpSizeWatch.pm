@@ -14,7 +14,7 @@ use SD::Sql::ConnSimple qw(sql_exec
         sql_fetch_results sql_fetch_single);
 use CrawlWatch::Config qw(bb_config_get bb_config_update);
 
-my $last_run = 0;
+my $last_run;
 
 sub new {
     croak "missing arguments" unless scalar @_ == 4;
@@ -24,7 +24,7 @@ sub new {
     bless \%self, $class;
 }
 
-sub name { "Garbage collection" }
+sub name { "TmpSizeWatch" }
 
 sub run {
     	my $self = shift;
@@ -64,26 +64,22 @@ sub run {
 use constant MIN => 60;
 
 sub next_run {
-    my $self = shift;
-    my $time_now = time;
-    my $ret = $time_now * (5 * MIN);
+	my $s = shift;
+	my $time_now = time;
 
-    #if først run, run at ones
-    if ($last_run == 0) {
-	return 0;
-    }
+	#if først run, run at ones
+	unless (defined $last_run) {
+		$last_run = $time_now;
+		return 0;
+	}
 
-    if ($time_now >= ($last_run + (5 * MIN))) {
-        # at least 5 min since last run.
-            $ret = 0; #run now
-    }
+	if ($time_now >= ($last_run + (5 * MIN))) {
+		# at least 5 min since last run.
+		$last_run = $time_now;
+		return 0;
+	}
 
-    $last_run = $time_now;
-
-    print "TmpSizeWatch run: $ret\n";
-    sleep(50);
-
-    return $ret;
+	return $last_run + (5 * MIN) - $time_now;
 }
 
 sub getCandidates {
