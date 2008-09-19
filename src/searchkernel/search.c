@@ -1159,7 +1159,7 @@ void frase_stopword(struct iindexFormat *c, int clen) {
 
 void iindexArrayCopy2(struct iindexFormat *c, int *baselen,int Originallen, struct iindexFormat *a, int alen) {
 
-	fprintf(stderr, "search: iindexArrayCopy2() Warning! This function has not been tested.\n");
+	//fprintf(stderr, "search: iindexArrayCopy2() Warning! This function has not been tested.\n");
 
 	int x;
         int i=0,j=0;
@@ -1696,7 +1696,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 	int tmpResultElementer;
 
 	vboprintf("######################################################################\n");
-	vboprintf("searchIndex: vil search index \"%s\"\n",indexType);
+	vboprintf("searchIndex: will search index \"%s\"\n",indexType);
 	vboprintf("######################################################################\n");
 
 	vboprintf("\nsearchIndex \"%s\", subname \"%s\"\n",indexType,(*subname).subname);
@@ -1704,8 +1704,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 	vboprintf("searchIndex: got that we have %i elements in array from before\n",TeffArrayOriginal);
 
 //for (i=0; i<(*queryParsed).size; i++)
-for (i=0; i<(*queryParsed).n; i++)
-        {
+	for (i=0; i<(*queryParsed).n; i++) {
             //struct text_list *t_it = (*queryParsed).elem[i];
 
             vboprintf("Search type %c\n", (*queryParsed).query[i].operand );
@@ -1750,7 +1749,11 @@ for (i=0; i<(*queryParsed).n; i++)
 						if (i == 0) {
 							
 							TmpArrayLen = (*TeffArrayElementer);
+#ifndef WITHOUT_THESAURUS
 							GetIndexAsArray_thesaurus(TeffArrayElementer,TeffArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, (*queryParsed).query[i].alt, (*queryParsed).query[i].alt_n);
+#else
+							GetIndexAsArray(TeffArrayElementer,TeffArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
+#endif
 							//rank((*TeffArrayElementer),TeffArray,subname,(*complicacy));
 							vboprintf("oooooo: (*TeffArrayElementer) %i,TmpArrayLen %i\n",(*TeffArrayElementer),TmpArrayLen);
 
@@ -1764,7 +1767,13 @@ for (i=0; i<(*queryParsed).n; i++)
 						else {
 							TmpArrayLen = 0;
 							TmpArray->nrofHits = 0;
+#ifndef WITHOUT_THESAURUS
+							//GetIndexAsArray_thesaurus(TeffArrayElementer,TeffArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, (*queryParsed).query[i].alt, (*queryParsed).query[i].alt_n);
 							GetIndexAsArray_thesaurus(&TmpArrayLen,TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, (*queryParsed).query[i].alt, (*queryParsed).query[i].alt_n);
+#else
+							GetIndexAsArray(TeffArrayElementer,TeffArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
+#endif
+
 
 							vboprintf("did find %i pages\n",TmpArrayLen);
 																									
