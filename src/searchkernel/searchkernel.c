@@ -685,7 +685,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 			container *list = hashtable_search(PagesResults->crc32maphash, &Sider->DocumentIndex.crc32);
 			if (list != NULL) {
 				int k;
-				printf("############################\n");
+//				printf("############################\n");
 				Sider->n_urls = list_size(list)-1;
 				Sider->urls = calloc(Sider->n_urls, sizeof(*(Sider->urls)));
 				iterator itr = list_begin(list);
@@ -1881,43 +1881,12 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			//printf("got pw \"%s\" -> \"%s\"\n",PagesResults.search_user,PagesResults.password);
 			gettimeofday(&end_time, NULL);
 	        	(*SiderHeder).queryTime.getUserObjekt = getTimeDifference(&start_time,&end_time);
-		
-			//runarb: 21 april 2008: henter dette sammen med at vi finner ut hvilkene collection vi skal crawle
-			/****************************************************************/
-			//hent alle grupper
-			//char **groups_respons_list;
-			//int groups_responsnr;
-			//
-			//boithoad_listGroups(&groups_respons_list,&groups_responsnr);
-			//if (!boithoad_groupsForUser(PagesResults.search_user,&groups_respons_list,&groups_responsnr)) {
-                	//        perror("Error: boithoad_groupsForUser");
-                	//        //return 0;
-                	//}
-			//else {
-        		//        printf("groups: %i\n",groups_responsnr);
-		        //        for (i=0;i<groups_responsnr;i++) {
-			//
-			//		//vi har problemer med space
-			//		strsandr(groups_respons_list[i]," ","_");
-			//		strsandr(groups_respons_list[i],"-","_");
-			//
-                        //		printf("group: %s (nr %i)\n",groups_respons_list[i],i);
-			//
-			//		strlcat(groupOrQuery," |\"",sizeof(groupOrQuery));
-			//		strlcat(groupOrQuery,groups_respons_list[i],sizeof(groupOrQuery));
-			//		strlcat(groupOrQuery,"\"",sizeof(groupOrQuery));
-			//
-	                //	}
-			//}
-
 		}
-
 
 		printf("groupOrQuery \"%s\"\n",groupOrQuery);
 
 
 		/****************************************************************/
-
 
 		gettimeofday(&start_time, NULL);
 		//int socketha;
@@ -2320,7 +2289,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	vboprintf("\t%-40s %f\n","dateview",(*SiderHeder).queryTime.dateview);
 	vboprintf("\t%-40s %f\n","crawlManager",(*SiderHeder).queryTime.crawlManager);
 
+#ifndef _24SEVENOFFICE
 	vboprintf("\t%-40s %f\n","getUserObjekt",(*SiderHeder).queryTime.getUserObjekt);
+#endif
 	vboprintf("\t%-40s %f\n","cmc_conect",(*SiderHeder).queryTime.cmc_conect);
 
 
