@@ -399,7 +399,7 @@ showabal,AddSiderHeder[i].servername);
 
 		//hvis vi ikke fikk svar fra noen
 		if(*nrRespondedServers == 0) {
-			die(16,"","Couldnt contact the Boitho search system. Please try again later.");
+			die(16,"","Couldn't contact the search system. Please try again later.");
 		}
 		//genererer feil om at ikke alle server svarte på queryet
 		if (*nrRespondedServers != (nrOfServers + nrOfPiServers)) {
