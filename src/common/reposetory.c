@@ -339,7 +339,12 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 	printf("rApendPostcompress: starting\n");
 #endif
 
-	WorkBuff = malloc(WorkBuffSize);
+	if ((WorkBuff = malloc(WorkBuffSize)) == NULL) {
+		fprintf(stderr,"can't malloc WorkBuff of size %d\n",WorkBuffSize);
+		perror("malloc WorkBuff");
+		return 0;
+	}
+
 	int HtmlBufferSize = (*ReposetoryHeader).htmlSize;	
 
 	
