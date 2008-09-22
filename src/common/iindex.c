@@ -1338,9 +1338,9 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 		//sjekker at dette ikke er en slettet DocID
 		if (revIndexArray[i].tombstone) {
-			//#ifdef DEBUG
+			#ifdef DEBUG
 				fprintf(stderr,"DocID %u is tombstoned.\n",revIndexArray[i].DocID);
-			//#endif
+			#endif
 			//toDo kan vi bare kalle continue her. Blir det ikke fil i noe antall?
 			//Runarb: 1 juli 2008: ser ut til at vi henter antallet fra 
 			//nrofDocIDsForWordID[forekomstnr], så det går bra
