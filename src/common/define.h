@@ -304,7 +304,7 @@ struct ReposetoryHeaderFormat {
 	char doctype[4];
 	unsigned short urllen;
 	unsigned int attributeslen;
-	char reservedSpace[58];
+	char reservedSpace[54];
 #endif
 };
 
