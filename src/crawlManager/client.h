@@ -11,7 +11,7 @@ int cmc_scan(int socketha,char **respons_list[],int *nrofresponses,char **errorm
 
 int cmc_pathaccess(int socketha,char collection_in[], char uri_in[], char user_in[], char password_in[]);
 
-int cmc_deleteCollection(int socketha,char collection_in[]);
+int cmc_deleteCollection(int socketha,char collection_in[], char **errormsgp);
 
 int cmc_collectionislocked(int socketha, char *collection_in);
 

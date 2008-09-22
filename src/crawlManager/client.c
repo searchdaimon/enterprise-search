@@ -129,10 +129,11 @@ cmc_collectionislocked(int socketha, char *collection_in)
 	return r;
 }
 
-int cmc_deleteCollection(int socketha,char collection_in[]) {
+int cmc_deleteCollection(int socketha,char collection_in[], char **errormsgp) {
 	char collection[64];
 	int intrespons;
-	int i;
+	int i, len;
+	static char errormsg[512];
 
 	//toDo bruk strSspy
 	strncpy(collection,collection_in,sizeof(collection));
@@ -145,6 +146,23 @@ int cmc_deleteCollection(int socketha,char collection_in[]) {
             	perror("Cant recv respons");
             	return 0;
         }
+	if (intrespons == 0) {
+
+                if ((i=recv(socketha, &len, sizeof(len),MSG_WAITALL)) == -1) {
+                        perror("Cant recv respons");
+                        return 0;
+                }
+
+                if ((i=recv(socketha, errormsg, len,MSG_WAITALL)) == -1) {
+                        perror("Cant read respons");
+                        return 0;
+                }
+
+                (*errormsgp) = errormsg;
+
+                return 0;
+        }
+
 
 	return 1;
 
