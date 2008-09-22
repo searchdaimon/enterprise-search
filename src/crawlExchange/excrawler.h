@@ -13,8 +13,8 @@ struct crawlinfo {
 	unsigned int timefilter;
 };
 
-int grabContent(char *xml, char *url, struct crawlinfo *ci, set *acl_allow, set *acl_deny);
-void grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char *sid, size_t contentlen, time_t lastmodified);
+int grabContent(char *xml, char *url, struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *usersid);
+void grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char *sid, size_t contentlen, time_t lastmodified, char *usersid);
 
 
 

@@ -94,7 +94,7 @@ make_crawl_uri(char *uri, char *id)
 }
 
 void
-grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char *sid, size_t contentlen, time_t lastmodified)
+grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char *sid, size_t contentlen, time_t lastmodified, char *usersid)
 {
 	size_t len;
 
@@ -157,8 +157,17 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 		crawldocumentAdd.document = mail.buf;
 		crawldocumentAdd.dokument_size = mail.size-1; // Last byte is string null terminator
 		crawldocumentAdd.lastmodified = lastmodified;
-		crawldocumentAdd.acl_allow = set_to_string(acl_allow, ",");
-		crawldocumentAdd.acl_denied = set_to_string(acl_deny, ",");
+
+		//hvis vi har blitt sent en user sid så bruker vi den som acl.
+		if (usersid == NULL) {
+			crawldocumentAdd.acl_allow = set_to_string(acl_allow, ",");
+			crawldocumentAdd.acl_denied = set_to_string(acl_deny, ",");
+		}
+		else {
+			crawldocumentAdd.acl_allow = strdup(usersid);
+			crawldocumentAdd.acl_denied = strdup("");
+		}
+
 		crawldocumentAdd.attributes = "";
 
 		printf("Adding: '%s'\n", crawldocumentAdd.title);
@@ -175,13 +184,13 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 
 /* Does not detect loops, but they should not happen anyway */
 int
-grabContent(char *xml, char *url, struct crawlinfo *ci, set *acl_allow, set *acl_deny)
+grabContent(char *xml, char *url, struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *usersid)
 {
 	acl_allow = malloc(sizeof(*acl_allow));
 	acl_deny = malloc(sizeof(*acl_deny));
 	set_init(acl_allow);
 	set_init(acl_deny);
-	getEmailUrls(xml, ci, url, acl_allow, acl_deny);
+	getEmailUrls(xml, ci, url, acl_allow, acl_deny, usersid);
 	set_free_all(acl_allow);
 	set_free_all(acl_deny);
 	free(acl_allow);
@@ -190,6 +199,25 @@ grabContent(char *xml, char *url, struct crawlinfo *ci, set *acl_allow, set *acl
 	return 1;
 }
 
+void splitUserString(char *userString,  char **user, char **usersid) {
+
+	char *p;
+	printf("userString %s\n",userString);
+
+	p = strchr(userString,':');
+	if (p == NULL) {
+		*user = userString;
+		*usersid = NULL;
+	}
+	else {
+		p[0] = '\0';
+		++p;
+		*user = userString;
+		*usersid = p;
+	}
+	
+	printf("user \"%s\"\nusersid \"%s\"\n",*user,*usersid);
+}
 
 int
 crawlcanconnect(struct collectionFormat *collection,
@@ -198,7 +226,8 @@ crawlcanconnect(struct collectionFormat *collection,
 	char *listxml;
 	char origresource[PATH_MAX];
 	char resource[PATH_MAX];
-	char *user;
+	char *userString;
+	char *user, *usersid;
 	char **users;
 	int n_users = 0;
 
@@ -209,7 +238,7 @@ crawlcanconnect(struct collectionFormat *collection,
 	}
 
 	for (users = collection->users; users && *users; users++) {
-		n_users++;
+		splitUserString(*users,&user, &usersid);
 		user = *users;
 
 		snprintf(resource, sizeof(resource), "%s/%s/", origresource, user);
@@ -231,7 +260,10 @@ crawlcanconnect(struct collectionFormat *collection,
 
 	if (n_users == 0)
 		return 1;
+
 	documentError(collection, 1, "Unable to connect to: %s\n", origresource);
+	documentError(collection, 1, "Html error: %s\n", listxml);
+
 
 	return 0;
 }
@@ -277,8 +309,8 @@ crawlGo(struct crawlinfo *ci)
 	int err;
 	char origresource[PATH_MAX];
 	char resource[PATH_MAX];
-	char *user;
 	char **users;
+	char *user, *usersid;
 	set *acl_allow, *acl_deny;
 	
 	normalize_url(ci->collection->resource);
@@ -291,7 +323,8 @@ crawlGo(struct crawlinfo *ci)
 
 	err = 0;
 	for (users = ci->collection->users; users && *users; users++) {
-		user = *users;
+		//user = *users;
+		splitUserString(*users,&user, &usersid);
 
 		if (!ci->documentContinue(ci->collection))
 			break;
@@ -311,7 +344,7 @@ crawlGo(struct crawlinfo *ci)
 			acl_deny = malloc(sizeof(*acl_deny));
 			set_init(acl_allow);
 			set_init(acl_deny);
-			if (!grabContent(listxml, resource, ci, acl_allow, acl_deny))
+			if (!grabContent(listxml, resource, ci, acl_allow, acl_deny, usersid))
 				err++;
 			set_free_all(acl_allow);
 			set_free_all(acl_deny);
@@ -369,7 +402,7 @@ main(int argc, char * argv[])
 	xmlGetWarningsDefaultValue = 0;
 	//listxml = ex_getContent("http://129.241.50.208/exchange/rb/", USERNAME, PASSWORD);
 	//listxml = ex_getContent("http://213.179.58.125/exchange/en/", "en", "1234Asd");
-	listxml = ex_getContent("http://213.179.58.125/exchange/en/", "exchangeCrawler", "1234Asd");
+	listxml = ex_getContent("http://213.179.58.125/exchange/en/", "exchangeCrawler", "1234Asd" );
 	//listxml = ex_getContent("http://213.179.58.125/exchange/exchangeCrawler/", "exchangeCrawler", "1234Asd");
 	if (listxml == NULL)
 		return 1;

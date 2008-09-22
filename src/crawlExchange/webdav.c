@@ -114,6 +114,11 @@ ex_getContent(const char *url, const char *username, const char *password)
 	char *userpass;
 	long code;
 
+	#ifdef DEBUG
+		//warn: skriver ut passord i klartekst.
+		//printf("ex_getContent(url=%s, username=%s, password=%s)\n",url,username,password);
+	#endif
+
 	curl = curl_easy_init();
 	buf.buf = NULL;
 	buf.size = 0;
@@ -156,6 +161,8 @@ ex_getContent(const char *url, const char *username, const char *password)
 	free_userpass(userpass);
 
 	//printf("Mail\n\n%s\n\n", buf.buf);
+	printf("response code %d\n",code);
+
 	if (code == 401) {
 		free(buf.buf);
 		return NULL;

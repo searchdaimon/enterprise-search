@@ -34,10 +34,12 @@ ex_parsetime(char *time)
 {
 	struct tm tm;
 
+	printf("ex_parsetime(time=\"%s\")\n",time);
+
 	/* XXX: Does not handle time zones */
 	if (strptime(time, "%Y-%m-%dT%H:%M:%S.", &tm) == NULL)
 		warn("strptime");
-	
+
 	return mktime(&tm);
 }
 
@@ -93,7 +95,7 @@ handle_acllist(const xmlDocPtr doc, xmlNodePtr acls, set *acl_allow, set *acl_de
 }
 
 void
-handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, char *parent, set *acl_allow, set *acl_deny)
+handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, char *parent, set *acl_allow, set *acl_deny, char *usersid)
 {
 	xmlNodePtr href, propstat, cur;
 	char *url;
@@ -148,7 +150,7 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 	printf("Pathname: %s\n", url);
 	if (url[hreflen-1] == '/') {
 		newxml = ex_getContent(url, ci->collection->user, ci->collection->password);
-		grabContent(newxml, (char *)url, ci, acl_allow2, acl_deny2);
+		grabContent(newxml, (char *)url, ci, acl_allow2, acl_deny2, usersid);
 		free(newxml);
 	} else {
 		char *sid = NULL;
@@ -196,7 +198,7 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 		if (sid == NULL || lastmodified == 0) {
 			printf("Missing email information, skiping.\n");
 		} else {
-			grab_email(ci, acl_allow2, acl_deny2, url, sid, contentlen, lastmodified);
+			grab_email(ci, acl_allow2, acl_deny2, url, sid, contentlen, lastmodified, usersid);
 		}
 		free(sid);
 	}
@@ -210,7 +212,7 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 }
 
 int
-getEmailUrls(const char *data, struct crawlinfo *ci, char *parent, set *acl_allow, set *acl_deny)
+getEmailUrls(const char *data, struct crawlinfo *ci, char *parent, set *acl_allow, set *acl_deny, char *usersid)
 {
 	xmlDocPtr doc;
 	xmlNodePtr cur;
@@ -230,7 +232,7 @@ getEmailUrls(const char *data, struct crawlinfo *ci, char *parent, set *acl_allo
 	//printf("Root node: %s\n", cur->name);
 	for (cur = cur->xmlChildrenNode; cur; cur = cur->next) {
 		if (xmlStrcmp(cur->name, (const xmlChar *)"response") == 0) {
-			handle_response(doc, cur, ci, parent, acl_allow, acl_deny);
+			handle_response(doc, cur, ci, parent, acl_allow, acl_deny, usersid);
 		}
 	}
 	xmlFreeDoc(doc);
