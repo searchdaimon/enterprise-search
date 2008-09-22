@@ -209,7 +209,7 @@ int main (int argc, char *argv[]) {
 		char errorbuff[errorbufflen];
 		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
 			printf("Error: %s\n",errorbuff);
-			exit(1);
+			return EXIT_FAILURE;
 		}
 
 		if (!cmc_crawlcanconect(socketha,value,errorbuff,errorbufflen)) {
@@ -269,6 +269,8 @@ int main (int argc, char *argv[]) {
 		int errorbufflen = 512;
                 char errorbuff[errorbufflen];
 		char **respons_list;
+		char *errormsg;
+
 		//runarb: 01.10.07 hvorfor var denne slåt av
 		//ser ut til at vi kan seltte ting vi ikke vil
 		//eller stamer det fra dagur problemet????
@@ -278,7 +280,10 @@ int main (int argc, char *argv[]) {
                         exit(1);
                 }
 
-		cmc_deleteCollection(socketha,value);
+		if (!cmc_deleteCollection(socketha,value,&errormsg)) {
+			printf("Error: %s\n",errormsg);
+			return EXIT_FAILURE;
+		}
 
 		cmc_close(socketha);
 		
