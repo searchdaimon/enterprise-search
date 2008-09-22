@@ -36,7 +36,7 @@ int main (void) {
 
         printf("conek ferdig \n");
 
-        exit(0);
+        return 0;
 }
 
 void connectHandler(int socket) {
@@ -257,12 +257,12 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 
 	++count;
 
-	#ifdef DEBUG_BBDN_BREAK_AFTER
-	if (count > DEBUG_BBDN_BREAK_AFTER) {
-		printf("exeting after %i docoments\n",count);
-		exit(1);
-	}
-	#endif
+//	#ifdef DEBUG_BREAK_AFTER
+//	if (count >= DEBUG_BREAK_AFTER) {
+//		printf("exeting after %i docoments\n",count);
+//		exit(1);
+//	}
+//	#endif
 
 
 }
