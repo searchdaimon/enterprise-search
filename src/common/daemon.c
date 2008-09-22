@@ -108,6 +108,9 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
         int yes=1;
 	pid_t session;
 	pid_t leader;
+	#ifdef DEBUG_BREAK_AFTER
+		static count = 0;
+	#endif
 
 	leader = getpid();
 	session = getpgrp();
@@ -120,10 +123,12 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
             exit(1);
         }
 
-        if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
-            perror("setsockopt");
-            exit(1);
-        }
+	#ifndef NO_REUSEADDR
+        	if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
+        	    perror("setsockopt");
+        	    exit(1);
+        	}
+	#endif
 
 	#ifdef DEBUG
 	printf("will listen on port %i\n",PORT);
@@ -233,6 +238,15 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
 	    		close(new_fd);  // parent doesn't need this
 		#endif
 	    #endif
+
+		#ifdef DEBUG_BREAK_AFTER
+			++count;
+	
+        		if (count >= DEBUG_BREAK_AFTER) {
+				printf("exeting after %i connects\n",count);
+				break;
+			}
+		#endif
         }
 
 	fprintf(stderr, "daemon: ~sconnect()\n");
@@ -345,13 +359,17 @@ int cconnect (char *hostname, int PORT) {
 
         if ((he=gethostbyname(hostname)) == NULL) {  // get the host info 
             perror("gethostbyname");
-	    fprintf(stderr, "daemon: ~cconnect()\n");
+	    #ifdef DEBUG
+	    	fprintf(stderr, "daemon: ~cconnect()\n");
+	    #endif
             return(0);
         }
 
         if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
             perror("socket");
-	    fprintf(stderr, "daemon: ~cconnect()\n");
+	    #ifdef DEBUG
+	    	fprintf(stderr, "daemon: ~cconnect()\n");
+	    #endif
             return(0);
         }
 
@@ -397,7 +415,9 @@ int cconnect (char *hostname, int PORT) {
 			#endif
 			//close(sockfd); 
 			//sleep(5);
-	        	fprintf(stderr, "daemon: ~cconnect()\n");
+			#ifdef DEBUG
+		        	fprintf(stderr, "daemon: ~cconnect()\n");
+			#endif
 			return 0;
 		}
     		// Can use getpeername() here instead of connect(). 
@@ -409,7 +429,9 @@ int cconnect (char *hostname, int PORT) {
 			#endif
 			//close(sockfd); 
 			//sleep(5);
+			#ifdef DEBUG
 			fprintf(stderr, "daemon: ~cconnect()\n");
+			#endif
 			return 0;
 		}
 		else {
