@@ -148,6 +148,7 @@ struct optFormat {
 	unsigned int NrofWorkThreads;	
 	char *Query;
 	int dirty;
+	int LotMax;
 };
 
 
@@ -550,8 +551,10 @@ void *IndexerLot_workthread(void *arg) {
 
 				}
 
-				//hvis dette er samme dokument som vi har fra før kan vi ignorere det.
-				if (ReposetoryHeader.DocID != 1 && (argstruct->rEindex == 0) && (DocumentIndexPost->RepositoryPointer == radress) ) {
+				//hvis dette er samme dokumens som vi har fra før kan vi ignorere det.
+				//runarb: 28 aug 2008. Legger til en sjekk på at dokumentet ikke er 0 bytes stort. Vi
+				//kan ikke ha indeksert det hvis vi ikke her størelsen, men RepositoryPointer == radress == 0 er lov, og skjer for første dokument
+				if ( (argstruct->rEindex == 0) && (DocumentIndexPost->RepositoryPointer == radress) && (DocumentIndexPost->htmlSize != 0)) {
 					#ifdef DEBUG
 						printf("have already indexed this dokument\n");
 					#endif
@@ -1072,7 +1075,10 @@ int netlot_start(int lotNr,char subname[], int optrEindex, char server[]) {
 	int i;
 	char filePath[512];
 
-
+	if (!lotHasSufficientSpaceNetToHostname(lotNr, 4096,  subname, server)) {
+		fprintf(stderr,"Lot %i has insufficient space. Skipping.\n",lotNr);
+		return 0;
+	}
 
 	if (!netlot_start_get_file(lotNr,subname,"IndexTime",server)) {
 		printf("can't get file \"IndexTime\"\n");
@@ -1185,7 +1191,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 
 
-		//sjekker om vi har nokk plass
+		//sjekker om vi har nokk plass lokalt
 		if (!lotHasSufficientSpace(lotNr,4096,subname)) {
 			printf("insufficient disk space\n");
 			exit(1);
@@ -1670,7 +1676,8 @@ int main (int argc, char *argv[]) {
 	opt.OnlyTLD = NULL;
 	opt.NrofWorkThreads = 0;	
 	opt.Query = NULL;
-	opt.dirty = 0;
+	opt.dirty = 10000;
+	opt.LotMax = 0;
 
 	#ifdef BLACK_BOKS
 		opt.HandleOld = 1;
@@ -1688,7 +1695,7 @@ int main (int argc, char *argv[]) {
 	extern char *optarg;
        	extern int optind, opterr, optopt;
 	char c;
-	while ((c=getopt(argc,argv,"neu:t:m:pl:wogh:iq:d:"))!=-1) {
+	while ((c=getopt(argc,argv,"neu:t:m:pl:wogh:iq:d:z:"))!=-1) {
                 switch (c) {
 			case 'l':
 				split(optarg, ",", &opt.OnlyTLD);
@@ -1735,7 +1742,9 @@ int main (int argc, char *argv[]) {
                         case 'm':
                                 opt.MaxDocuments = atoi(optarg);
                                 break;
-
+                        case 'z':
+                                opt.LotMax = atoi(optarg);
+                                break;
                         case 'u':
 				printf("optopt \"%s\"\n",optarg);
 				globalIndexerLotConfig.collectUrls = 1;
@@ -1864,10 +1873,12 @@ int main (int argc, char *argv[]) {
 	else if ((opt.NetLot != NULL) && (lotNr == 0)) {
 
 		//henter lot nr fra server
-		while ((lotNr = getLotToIndex(subname,opt.NetLot, opt.dirty)) != 0) {
-			printf("starting indexing of lot %i\n",lotNr);
+		i = 0;
+		while (((lotNr = getLotToIndex(subname,opt.NetLot, opt.dirty)) != 0) && (opt.LotMax == 0 || opt.LotMax > i)) {
+			printf("starting indexing of lot %i. nr %i\n",lotNr,i);
 			run (lotNr,subname,&opt,"reposetory");
 			printf("done indexing lot %i\n",lotNr);
+			++i;
 		}
 		printf("main: Have no more lot's to index\n");
 
