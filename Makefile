@@ -88,7 +88,8 @@ HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a src/ds/libd
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb perlxs-sdcrawl bbdocumentWebAdd
+
+bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb perlxs-sdcrawl readUserToSubname bbdocumentWebAdd
 
 dppreload:
 	$(CC) -shared -fPIC src/dp/preload.c src/common/timediff.c -o bin/dppreload.so -ldl -Wall $(LDFLAGS)
@@ -471,6 +472,12 @@ mergeUserToSubname: src/mergeUserToSubname/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/mergeUserToSubname/main.c src/acls/acls.c -o bin/mergeUserToSubname $(LDFLAGS) -DBLACK_BOKS $(BDB)
 
+readUserToSubname: src/readUserToSubname/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/readUserToSubname/main.c src/acls/acls.c -o bin/readUserToSubname $(LDFLAGS) -DBLACK_BOKS $(BDB)
+
 boithoads: src/boithoads/main.c
 	@echo ""
 	@echo "$@:"
@@ -809,7 +816,7 @@ boitho-bbdn: src/boitho-bbdn/bbdnserver.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c  src/acls/acls.c  src/boitho-bbdn/bbdnserver.c src/maincfg/maincfg.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE) -static $(LIBCONFIG) -DIIACL $(24SEVENOFFICE)
+	$(CC) $(CFLAGS) $(LIBS)*.c  src/acls/acls.c  src/boitho-bbdn/bbdnserver.c src/maincfg/maincfg.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE) -static $(LIBCONFIG) -DIIACL $(24SEVENOFFICE) -D NO_REUSEADDR
 
 
 boitholdTest: src/boitholdTest/main.c
