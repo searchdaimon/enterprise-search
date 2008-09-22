@@ -2219,6 +2219,7 @@ void *searchIndex_thread(void *arg)
 	
 			//merger får å bare ta med de vi har en acl_allow til
 			//and_merge(Array,&ArrayLen,ArrayLen,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
+			printf("merging TmpArrayLen AND acl_allowArray\n");
 			and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
 
 			#ifdef DEBUG_II
@@ -2236,6 +2237,7 @@ void *searchIndex_thread(void *arg)
 			//andNot_merge(Array,&ArrayLen,&hits,Array,ArrayLen,acl_deniedArray,acl_deniedArrayLen);
 			//andNot_merge(TmpArray,&TmpArrayLen,&hits,Array,ArrayLen,acl_deniedArray,acl_deniedArrayLen);
 
+			printf("merging TmpArrayLen AND NOT acl_allowArray\n");
 			andNot_merge(Array,&ArrayLen,&hits,TmpArray,TmpArrayLen,acl_deniedArray,acl_deniedArrayLen);
 
 
