@@ -350,6 +350,19 @@ char *acl_normalize(char *acl[]) {
 	return cal_buf;
 
 }
+ 
+//stripper < og > tegn, da html parseren vil tro det er html tagger.
+//de er jo som kjent på formater < og >
+void stripTags(char *cpbuf, int cplength) {
+
+	int i;
+
+	for (i=0;i<cplength;i++) {
+		if ((cpbuf[i] == '<') || (cpbuf[i] == '>')) {
+			cpbuf[i] = ' ';
+		}
+	}
+}
 
 int bbdocument_convert(char filetype[],char document[],const int dokument_size,char **documentfinishedbuf,int *documentfinishedbufsize, const char titlefromadd[], char *subname, char *documenturi, unsigned int lastmodified, char *acl_allow, char *acl_denied, char *doctype, struct hashtable **metahash) {
 
@@ -453,6 +466,10 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
 		memcpy(cpbuf,document,dokument_size);
 		cpbuf[dokument_size] = '\0';
+
+		//stripper < og > tegn, da html parseren vil tro det er html tagger.
+		//de er jo som kjent på formater < og >
+		stripTags(cpbuf,dokument_size);
 
 		printf("document %i\n",strlen(document));
 		printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
@@ -1075,6 +1092,8 @@ int uriindex_open(DB **dbpp, char subname[]) {
                 if ((ret = dbp->open(dbp, NULL, fileName, NULL, DB_BTREE, DB_CREATE, 0664)) != 0) {
                         dbp->err(dbp, ret, "%s: open", fileName);
                         //goto err1;
+			printf("can't dbp->open(), but db_create() was sucessful!\n");
+			//hvis vi ikke fikk til dette, men db_create() har vi en veldig merkelig bug...
 			return 0;
                 }
 
