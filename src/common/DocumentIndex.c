@@ -407,6 +407,10 @@ int DIRead_post_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID, int 
 
 int DIRead_post_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID, FILE *file) {
 
+	#ifdef DEBUG
+		printf("DIRead_post_fh(DocID=%i)\n",DocID);
+	#endif
+
 	int forReturn = 0;
 
 		#ifdef BLACK_BOKS
@@ -442,7 +446,7 @@ int DIRead_fmode (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char 
 	int forReturn = 0;
 
 	#ifdef DEBUG
-		printf("DIRead_fmode: reading for DocID %i, subname \"%s\"\n",DocID,subname);
+		printf("DIRead_fmode(DocID=%i, subname=\"%s\")\n",DocID,subname);
 	#endif
 
 	#ifdef DISK_PROTECTOR
