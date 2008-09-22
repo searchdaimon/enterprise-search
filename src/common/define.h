@@ -109,24 +109,25 @@
 #define AntallBarrals 64
 
 //komandoer
-#define C_rGetNext 	1
-#define C_rLotData 	2
-#define C_DIWrite	3
-#define C_DIRead	4
-#define C_DIGetIp	5
-#define C_rGetIndexTime	6
-#define C_rSetIndexTime 7
-#define C_rSendFile	8
-#define C_rGetFile	9
-#define C_rmkdir	10
-#define C_rComand	11
-#define C_rGetSize	12
-#define C_anchorAdd	13
-#define C_anchorGet	14
-#define C_readHTML	15
-#define C_urltodocid	16
-#define C_getLotToIndex	17
-#define C_rEOF 		101
+#define C_rGetNext 			1
+#define C_rLotData 			2
+#define C_DIWrite			3
+#define C_DIRead			4
+#define C_DIGetIp			5
+#define C_rGetIndexTime			6
+#define C_rSetIndexTime 		7
+#define C_rSendFile			8
+#define C_rGetFile			9
+#define C_rmkdir			10
+#define C_rComand			11
+#define C_rGetSize			12
+#define C_anchorAdd			13
+#define C_anchorGet			14
+#define C_readHTML			15
+#define C_urltodocid			16
+#define C_getLotToIndex			17
+#define C_getlotHasSufficientSpace 	18
+#define C_rEOF 				101
 
 #define C_DOCID_DONE	0
 #define C_DOCID_NEXT	1
