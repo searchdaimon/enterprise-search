@@ -46,4 +46,8 @@ void closeUrlTODocIDNET(int sock);
 int getLotToIndex(char subname[],char HostName[], int dirty);
 int rSendFileToHostname(char source[], char dest[], int LotNr, char opentype[],char subname[], char HostName[]);
 
+
+int lotHasSufficientSpaceNetToHostname(int LotNr, int needSpace, char subname[], char server[]);
+
+
 #endif //_REPOSETORYNET_H_

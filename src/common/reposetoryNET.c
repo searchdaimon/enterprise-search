@@ -32,6 +32,7 @@ int socketError () {
 	return 1;
 }
 
+
 int conectTo(int LotNr) {
 
 
@@ -70,6 +71,39 @@ int conectTo(int LotNr) {
 
 	return socketha;
 }
+
+
+int lotHasSufficientSpaceNetToHostname(int LotNr, int needSpace, char subname[], char server[]) {
+
+
+	int response;
+	int sock;
+	int i;
+
+	if ((sock = cconnect(server, BLDPORT)) == 0) {
+		perror(server);
+		return 0;
+	}
+
+	//sender heder
+        sendpacked(sock,C_getlotHasSufficientSpace,BLDPROTOCOLVERSION, 0, NULL,subname);
+
+	//sender needSpace og lotnr
+        sendall(sock,&LotNr, sizeof(LotNr));	
+        sendall(sock,&needSpace, sizeof(needSpace));	
+
+        //leser inn svar
+        if ((i=recv(sock, &response, sizeof(response),MSG_WAITALL)) == -1) {
+                perror("lotHasSufficientSpaceNetToHostname: Cant recv response");
+		return 0;
+        }
+
+	close(sock);
+
+	return response;
+
+}
+
 
 int getLotToIndex(char subname[],char HostName[], int dirty) {
 
