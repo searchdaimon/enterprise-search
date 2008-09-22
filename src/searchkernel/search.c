@@ -2948,7 +2948,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 					#endif
 					if (TeffArray->iindex[i].indexFiltered.subname || TeffArray->iindex[i].indexFiltered.filename) {
 						#ifdef DEBUG
-							printf("is al redu filtered out ");
+							printf("is al redy filtered out\n");
 						#endif				
 					}
 					else {
@@ -2995,14 +2995,20 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 			*crc32maphash = create_hashtable(41, ht_integerhash, ht_integercmp);
 
 	       	for (i = 0; i < (*TeffArrayElementer); i++) {
-			TeffArray->iindex[i].PopRank = popRankForDocIDMemArray(TeffArray->iindex[i].DocID);
+			//runarb 22 sept 2008: hvorfor er denne her? Brukes bare på websøk
+			//TeffArray->iindex[i].PopRank = popRankForDocIDMemArray(TeffArray->iindex[i].DocID);
 #if 1
 			if (crc32maphash == NULL)
 				continue;
 
+			TeffArray->iindex[i].indexFiltered.duplicate = 0;
+
+
 			/* XXX: Don't reopen all the time */
-			if ((crc32map = reopen(rLotForDOCid(TeffArray->iindex[i].DocID), sizeof(unsigned int), "crc32map", TeffArray->iindex[i].subname->subname, 0)) == NULL)
-				err(1, "reopen(crc32map)");
+			if ((crc32map = reopen(rLotForDOCid(TeffArray->iindex[i].DocID), sizeof(unsigned int), "crc32map", TeffArray->iindex[i].subname->subname, RE_READ_ONLY)) == NULL) {
+				debug("reopen(crc32map)\n");
+				continue;
+			}
 
 			unsigned int crc32;
 			crc32 = *RE_Uint(crc32map, TeffArray->iindex[i].DocID);
@@ -3016,7 +3022,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 				list_pushback(list, TeffArray->iindex[i].DocID, TeffArray->iindex[i].subname->subname);
 
-				TeffArray->iindex[i].indexFiltered.duplicate = 0;
 
 			} else {
 				list_pushback(list, TeffArray->iindex[i].DocID, TeffArray->iindex[i].subname->subname);
