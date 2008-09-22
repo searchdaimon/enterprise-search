@@ -741,7 +741,12 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 			// hashtable_destroy(PagesResults->crc32maphash);
 
 			/* Make attribute lists */
-			Sider->attributes = strdup(attributes);
+			if (attributes == NULL) {
+				Sider->attributes = NULL;
+			}
+			else {
+				Sider->attributes = strdup(attributes);
+			}
 		}
 		else {
 			//ved 601 og andre feil der vi ikke har crawlet

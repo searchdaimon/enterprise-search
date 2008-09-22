@@ -1328,7 +1328,12 @@ void *do_chld(void *arg)
 
 		/* Send attributes */
 		//printf("### Send attributes: %s\n", s->attributes);
-		len = strlen(s->attributes);
+		if (s->attributes == NULL) {
+			len = 0;
+		}
+		else {
+			len = strlen(s->attributes);
+		}
 		send(mysocfd, &len, sizeof(len), MSG_NOSIGNAL);
 		send(mysocfd, s->attributes, len, MSG_NOSIGNAL);
 	}
