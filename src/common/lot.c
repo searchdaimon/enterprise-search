@@ -383,6 +383,34 @@ int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,
                 return fd;
 
 }
+
+//stenger ned filer (og frigjør låser)
+void lotCloseFiles() {
+	int i;
+
+	printf("lotCloseFiles\n");
+	if (LotFilesInalisert) {
+		for(i=0; i < MaxOpenFiles; i++) {
+
+                	if (OpenFiles[i].LotNr != -1) {
+				printf("closing lot fil nr %i for lot %i. fh %p. file \"%s\"\n",
+					i,
+					OpenFiles[i].LotNr,
+					OpenFiles[i].FILEHANDLER,
+					OpenFiles[i].filename
+				);
+
+   				if (fclose(OpenFiles[i].FILEHANDLER) != 0) {
+					perror(OpenFiles[i].filename);
+				}
+			}
+		}
+	}
+
+	LotFilesInalisert = 0;
+}
+
+
 //gir andre tilgan til lot filer. Casher opne filhandlere
 FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char subname[]) {
 
@@ -432,6 +460,9 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
 
 		if (OpenFiles[i].FILEHANDLER == NULL) {
 			printf("Error: FILEHANDLER is NULL\n");
+			#ifdef DEBUG
+				exit(-1);
+			#endif
 		}
                 return OpenFiles[i].FILEHANDLER;
         }
@@ -440,7 +471,7 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
 
 		//hvis dette er en åpen filhånterer, må vi lukke den
 		if (OpenFiles[i].LotNr != -1) {
-			printf("lotOpenFile: closeing: i %i",i);
+			printf("lotOpenFile: closeing: i %i\n",i);
 			fclose(OpenFiles[i].FILEHANDLER);
 			OpenFiles[i].LotNr = -1;
 			
@@ -452,70 +483,28 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
 		}
 
                 GetFilPathForLot(FilePath,LotNr,subname);
-                strcpy(File,FilePath);
+                strscpy(File,FilePath,sizeof(File));
                 strlcat(File,resource,sizeof(File));
 
 		strscpy(OpenFiles[i].filename,File,sizeof(OpenFiles[i].filename));
 		strscpy(OpenFiles[i].resource,resource,sizeof(OpenFiles[i].resource));
+		strscpy(OpenFiles[i].subname,subname,sizeof(OpenFiles[i].subname));
+		strscpy(OpenFiles[i].type,type,sizeof(OpenFiles[i].type));
 
 		//#ifdef DEBUG
                 	printf("lotOpenFile: opening file \"%s\" for %s\n",File,type);
 		//#endif
 
-		/*
-                //temp: Bytte ut FilePath med filnavnet
-                if ( (OpenFiles[i].FILEHANDLER = fopen(File,type)) == NULL ) {
-                        makePath(FilePath);
 
-                        if ( (OpenFiles[i].FILEHANDLER = fopen(File,"a+b")) == NULL ) {
-                                perror(File);
-                                exit(0);
-                        }
-                }
-		*/
 
 		OpenFiles[i].LotNr = LotNr;
-		strscpy(OpenFiles[i].subname,subname,sizeof(OpenFiles[i].subname));
-		strscpy(OpenFiles[i].type,type,sizeof(OpenFiles[i].type));
 
-		/*
-		#ifdef DEBUG
-			printf("lotOpenFile: tryint to obtain lock \"%c\"\n",lock);
-		#endif
-		//honterer låsning
-		if (lock == 'e') {
-			flock(fileno(OpenFiles[i].FILEHANDLER),LOCK_EX);
-		}
-		else if (lock == 's') {
-			flock(fileno(OpenFiles[i].FILEHANDLER),LOCK_SH);
-		}
-		#ifdef DEBUG
-			printf("lotOpenFile: lock obtained\n");
-			printf("lotOpenFile: returning file handler %p\n",OpenFiles[i].FILEHANDLER);
-		#endif
-		*/
-	
                 return OpenFiles[i].FILEHANDLER;
 
         }
 	
 }
 
-//stenger ned filer (og frigjør låser)
-void lotCloseFiles() {
-	int i;
-
-	printf("lotCloseFiles\n");
-	if (LotFilesInalisert) {
-		for(i=0; i < MaxOpenFiles; i++) {
-                	if (OpenFiles[i].LotNr != -1) {
-   				fclose(OpenFiles[i].FILEHANDLER);
-			}
-		}
-	}
-
-	LotFilesInalisert = 0;
-}
 
 //fjerner \n på slutten av strenger
 
