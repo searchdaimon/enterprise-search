@@ -196,8 +196,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 			crawldocumentAdd->acl_allow,
 			crawldocumentAdd->acl_denied,
 			crawldocumentAdd->title,
-			crawldocumentAdd->doctype,
-			crawldocumentAdd->attributes)
+			crawldocumentAdd->doctype)
 	) {
 
 		blog(LOGERROR,1,"can't sent to bbdn! Tryed to send doc \"%s\" Will sleep and then reconect. Wont send same doc again.",(*crawldocumentAdd).documenturi);
@@ -225,6 +224,35 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 	#endif
 
 	return 1;
+}
+
+
+int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections) {
+
+	int i;
+
+	for (i=0;i<nrofcollections;i++) {
+		#ifdef DEBUG
+		printf("freeing nr %i: start\n",i);
+		#endif
+		free((*collection)[i].resource);
+                free((*collection)[i].user);
+                free((*collection)[i].password);
+                free((*collection)[i].connector);
+                free((*collection)[i].collection_name);
+                free((*collection)[i].query1);
+                free((*collection)[i].query2);
+		free((*collection)[i].extra);
+		free((*collection)[i].userprefix);
+		#ifdef DEBUG
+			printf("freeing nr %i: end\n",i);
+		#endif
+	}
+
+	//toDo: hvorfor segfeiler vi her ????
+	if ((*collection)) {
+		free(*collection);
+	}
 }
 
 int closecollection(struct collectionFormat *collection) {
@@ -545,6 +573,7 @@ int pathAccess(struct hashtable *h, char collection[], char uri[], char username
 	}
 
 	free(username);
+	sm_collectionfree(&collections,nrofcollections);
 	
 	return forreturn;
 
@@ -732,30 +761,6 @@ int cm_getCrawlLibInfo(struct hashtable *h,struct crawlLibInfoFormat **crawlLibI
 
 
 
-int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections) {
-
-	int i;
-
-	for (i=0;i<nrofcollections;i++) {
-		#ifdef DEBUG
-		printf("freeing nr %i: start\n",i);
-		#endif
-		free((*collection)[i].resource);
-                free((*collection)[i].user);
-                free((*collection)[i].password);
-                free((*collection)[i].connector);
-                free((*collection)[i].collection_name);
-                free((*collection)[i].query1);
-                free((*collection)[i].query2);
-		free((*collection)[i].extra);
-		#ifdef DEBUG
-			printf("freeing nr %i: end\n",i);
-		#endif
-	}
-
-	//toDo: hvorfor segfeiler vi her ????
-	//free(collection);
-}
 
 int
 cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
@@ -877,7 +882,7 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 
 	if ((*nrofcollections) == 0) {
 		printf("dident find any rows\n");
-		
+		(*collection) = NULL;		
 	}
 	else {
 
@@ -980,31 +985,31 @@ int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],
 
 int cm_handle_crawlcanconect(char cvalue[]) {
 
-	struct collectionFormat *collection;
+	struct collectionFormat *collections = NULL;
 	int nrofcollections;
 	int i;
 
 	printf("cm_handle_crawlcanconnect (%s)\n",cvalue);
 
-	cm_searchForCollection(cvalue,&collection,&nrofcollections);
+	cm_searchForCollection(cvalue,&collections,&nrofcollections);
 	printf("crawlcanconect: cm_searchForCollection done\n");
 	if (nrofcollections == 1) {
 		
 		#ifndef DEBUG
 		//Temp: funger ikke når vi kompilerer debug. Må også compilere crawlManager debug
 		//make a conectina for add to use
-		if (!bbdn_conect(&collection[0].socketha,"",global_bbdnport)) {
+		if (!bbdn_conect(&collections[0].socketha,"",global_bbdnport)) {
 			//berror("can't conect to bbdn (boitho backend document server)\n");
 			return 0;
 		}
 
-		if (!cmr_crawlcanconect(global_h,&collection[0])) {
+		if (!cmr_crawlcanconect(global_h,&collections[0])) {
 			return 0;
 		}
 
 		//ber bbdn om å lukke
 		printf("closeing bbdn con\n");
-                bbdn_close(&collection[0].socketha);
+                bbdn_close(&collections[0].socketha);
 		#endif
 	}
 	else {
@@ -1012,7 +1017,8 @@ int cm_handle_crawlcanconect(char cvalue[]) {
 	}
 
 
-	sm_collectionfree(&collection,nrofcollections);
+	sm_collectionfree(&collections,nrofcollections);
+
 
 	return 1;
 }
@@ -1281,20 +1287,22 @@ rewriteurl(char *collection, char *uri, size_t len, enum platform_type ptype, en
 	struct crawlLibInfoFormat *crawlLibInfo;
 	struct collectionFormat *collections;
 	int nrofcollections;
+	int forret = 1;
 
 	cm_searchForCollection(collection,&collections,&nrofcollections);
 
 	if (!cm_getCrawlLibInfo(global_h,&crawlLibInfo,collections->connector)) {
 		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.");
 		//exit(1);
-		return 0;
+		forret = 0;
+	}
+	else if (crawlLibInfo->rewrite_url == NULL || !((*crawlLibInfo->rewrite_url)(uri, ptype, btype))) {
+		forret = 0;
 	}
 
-	if (crawlLibInfo->rewrite_url == NULL || !((*crawlLibInfo->rewrite_url)(uri, ptype, btype)))
-		return 0;
+	sm_collectionfree(&collections,nrofcollections);
 
-
-	return 1;
+	return forret;
 
 }
 
@@ -1307,6 +1315,7 @@ void connectHandler(int socket) {
 	char *berrorbuf;
 	struct timeval start_time_all, end_time_all;
 	struct timeval start_time, end_time;
+	int count = 0;
 	
         printf("got new connection\n");
 
@@ -1377,6 +1386,7 @@ void connectHandler(int socket) {
 
 			crawl(collections,nrofcollections,crawl_recrawl, NULL);
 
+
 		}
 		else if (packedHedder.command == cm_deleteCollection) {
 			printf("cm_deleteCollection\n");
@@ -1386,15 +1396,36 @@ void connectHandler(int socket) {
 
 			struct collectionFormat *collections;
 			int nrofcollections;
+			struct collection_lockFormat collection_lock;
 
+			//Tester om noen har en lås på collectionen. Hvis de har de må vi la være i slette den, 
+			//hvis ikke vil bbdn opprette den på ny
+			if (!crawl_lock(&collection_lock,collection)) {
+				intresponse=0;
+				sendall(socket,&intresponse, sizeof(int));
+				char errormsg[] = { "Can't delete collection, it's being crawled." };
 
-			//ikke mye nyttig som skjer her egentlig. Tvinger klienten bare til 
-			//å vente her, slik at vi får satt noen statusmeldinger i databasen om 
-			//at ting er på gang
-			intresponse=1;
-			sendall(socket,&intresponse, sizeof(int));
+				len = (strlen(errormsg) +1);
+				sendall(socket,&len, sizeof(int));			
+				sendall(socket,&errormsg, len);		
+				
 
-			bbdocument_deletecoll(collection);
+			}
+			else {
+
+				//ikke mye nyttig som skjer her egentlig. Tvinger klienten bare til 
+				//å vente her, slik at vi får satt noen statusmeldinger i databasen om 
+				//at ting er på gang
+				intresponse=1;
+				sendall(socket,&intresponse, sizeof(int));
+
+				bbdocument_deletecoll(collection);
+
+				crawl_unlock(&collection_lock);
+
+			}
+
+			
 
 
 		}
@@ -1536,6 +1567,10 @@ void connectHandler(int socket) {
 
 	}
 	printf("end of packed\n");
+
+        ++count;
+
+
 }
 
 #ifdef WITH_PATHACCESS_CACHE
@@ -1622,5 +1657,9 @@ int main (int argc, char *argv[]) {
 	cm_start(&global_h);
 
 	sconnect(connectHandler, crawlport);
+
+
+	maincfgclose(&maincfg);
+
 }
 
