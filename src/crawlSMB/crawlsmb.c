@@ -270,14 +270,13 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
     dirp = (struct smbc_dirent*)dbuf;
 
-    while (documentContinue(collection) && (dirc_total > 0))
-        {
+    while (documentContinue(collection) && (dirc_total > 0)) {
             int         dsize;
 
             // Skip direntries named "." and "..". 
 	    // tar heller ikke med filer som begynner på ~ da det er temp filer i windows.
-            if ((dirp->name[0] != '.') && (dirp->name[0] != '~'))
-                {
+            if ((dirp->name[0] != '.') && (dirp->name[0] != '~')) {
+
                     int         _dname_size = strlen(dir_name) + strlen(dirp->name) + 1;
                     char        entry_name[_dname_size + 1];
                     char        full_entry_name[strlen(prefix) + _dname_size + 1];
@@ -288,8 +287,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
                     sprintf(entry_name, "%s/%s", dir_name, dirp->name);
                     sprintf(full_entry_name, "%s%s", prefix, entry_name);
 
-                    if ( (n = smbc_getxattr(full_entry_name, "system.nt_sec_desc.*", value, sizeof(value))) < 0 )
-                        {
+                    	if ( (n = smbc_getxattr(full_entry_name, "system.nt_sec_desc.*", value, sizeof(value))) < 0 ) {
 
 				if (n == EINVAL) {
 	                            documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. The client library is not properly initialized or one of the parameters is not of a correct form.\n", entry_name);
@@ -317,27 +315,25 @@ int smb_recursive_get( char *prefix, char *dir_name,
 			    	context = context_init(no_auth);
                             	goto next_it;
                         }
-                    else
-                        {
-			    parsed_acl = parseacl_read_access( value );
-			    #ifdef DEBUG
-			    printf("crawlsmb.c: Users allowed \t'%s'\n", parsed_acl[0]);
-			    printf("crawlsmb.c: Users denied  \t'%s'\n", parsed_acl[1]);
-			    #endif
+                    	else {
+			    	parsed_acl = parseacl_read_access( value );
+			    	#ifdef DEBUG
+			    		printf("crawlsmb.c: Users allowed \t'%s'\n", parsed_acl[0]);
+			    		printf("crawlsmb.c: Users denied  \t'%s'\n", parsed_acl[1]);
+			    	#endif
                         }
 
-                    if ( smbc_stat(full_entry_name, &file_stat) < 0 )
-                        {
-                            documentError(collection, 1,"crawlsmb.c: Error! Could not get stat for %s", entry_name);
-			    free(parsed_acl[0]);
-			    free(parsed_acl[1]);
-                            free(parsed_acl);
-			    context_free(context);
-			    context = context_init(no_auth);
-			    goto next_it;
+                    	if ( smbc_stat(full_entry_name, &file_stat) < 0 ) {
+                            	documentError(collection, 1,"crawlsmb.c: Error! Could not get stat for %s", entry_name);
+			    	free(parsed_acl[0]);
+			    	free(parsed_acl[1]);
+                            	free(parsed_acl);
+			    	context_free(context);
+			    	context = context_init(no_auth);
+			    	goto next_it;
                         }
 
-                    context_free(context);
+                    	context_free(context);
 
 			//runarb: 20 nov 2007: denne er ikke komentert ut, det fører til at vi allokerer minne to ganger.
 			// er det riktig å konvertere til utf-8 her??? Fører ikke det til problemer med tegnsett?? slik det vi ser i fp nå?
@@ -483,23 +479,22 @@ int smb_recursive_get( char *prefix, char *dir_name,
 					#endif
 
 					
-
-				    	free(crawldocumentExist.documenturi); //usikker om dette er rikit plass
-
 				    	free(fbuf);
 
 				    	closefile:
 				    	smbc_close(fd);
 
 				}
-
-			    context_free(context);
+	
+	         		context_free(context);
 			}
 
-		    free(parsed_acl[0]);
-		    free(parsed_acl[1]);
-		    free(parsed_acl);
-		    context = context_init(no_auth);
+	    	    	free(crawldocumentExist.documenturi); //usikker om dette er rikit plass
+		    	free(parsed_acl[0]);
+		    	free(parsed_acl[1]);
+		    	free(parsed_acl);
+
+		    	context = context_init(no_auth);
                 }
 
 next_it:

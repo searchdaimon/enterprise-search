@@ -172,6 +172,8 @@ smb_rewrite_url(char *uri, enum platform_type ptype, enum browser_type btype)
 		sprintf(uri, "file://///%s", tmpuri);
 	}
 
+	free(tmpuri);
+
 	return 1;
 }
 
