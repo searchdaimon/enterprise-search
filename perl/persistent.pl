@@ -76,7 +76,11 @@
         #cache it unless we're cleaning out each time
         $Cache{$package}{mtime} = $mtime unless $delete;
      }
-
+	#debug: printer ut inc1
+	#print "inc1:\n";
+	#print join("\n", @INC);
+	#print "\n";
+		
      eval { 
 		$package->handler();
                 $ret = $package->$execute(bless({ ptr => $pointer }, 'Perlcrawl'), $opt);
