@@ -196,7 +196,9 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 			crawldocumentAdd->acl_allow,
 			crawldocumentAdd->acl_denied,
 			crawldocumentAdd->title,
-			crawldocumentAdd->doctype)
+			crawldocumentAdd->doctype,
+			crawldocumentAdd->attributes
+			)
 	) {
 
 		blog(LOGERROR,1,"can't sent to bbdn! Tryed to send doc \"%s\" Will sleep and then reconect. Wont send same doc again.",(*crawldocumentAdd).documenturi);
