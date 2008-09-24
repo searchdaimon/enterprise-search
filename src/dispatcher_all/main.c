@@ -2128,14 +2128,14 @@ int main(int argc, char *argv[])
 
 				#ifdef BLACK_BOKS
 					char timebuf[64];
-					printf("\t<time_unix>%u</time_unix>\n",Sider[i].DocumentIndex.CrawleDato);
-					// Magnus: Konverterer til locale istedet:
-//					ctime_r((time_t *)&Sider[i].DocumentIndex.CrawleDato,timebuf);
-//					timebuf[24] = '\0';
-				        setlocale(LC_TIME, "no_NO.utf8");
-					strftime(timebuf, 63, "%A %e. %b %Y %k:%M", localtime((time_t *)&Sider[i].DocumentIndex.CrawleDato));
-					timebuf[64] = '\0';
-					printf("\t<time_iso>%s</time_iso>\n",timebuf);
+					if (Sider[i].DocumentIndex.CrawleDato != 0) {
+						printf("\t<time_unix>%u</time_unix>\n",Sider[i].DocumentIndex.CrawleDato);
+						// Magnus: Konverterer til locale:
+				        	setlocale(LC_TIME, "no_NO.utf8");
+						strftime(timebuf, 63, "%A %e. %b %Y %k:%M", localtime((time_t *)&Sider[i].DocumentIndex.CrawleDato));
+						timebuf[64] = '\0';
+						printf("\t<time_iso>%s</time_iso>\n",timebuf);
+					}
 
 
 					//sender en tom cashe link. Må ha cashe link hvis ikke bryter vi designet
@@ -2590,15 +2590,14 @@ int main(int argc, char *argv[])
 
 				#ifdef BLACK_BOKS
 					char timebuf[64];
-					printf("\t<TIME_UNIX>%u</TIME_UNIX>\n",Sider[i].DocumentIndex.CrawleDato);
-					// Magnus: Konverterer til locale istedet:
-//					ctime_r((time_t *)&Sider[i].DocumentIndex.CrawleDato,timebuf);
-//					timebuf[24] = '\0';
-				        setlocale(LC_TIME, "no_NO.utf8");
-					strftime(timebuf, 63, "%A %e. %b %Y %k:%M", localtime((time_t *)&Sider[i].DocumentIndex.CrawleDato));
-					timebuf[64] = '\0';
-					printf("\t<TIME_ISO>%s</TIME_ISO>\n",timebuf);
-
+					if (Sider[i].DocumentIndex.CrawleDato != 0) {
+						printf("\t<TIME_UNIX>%u</TIME_UNIX>\n",Sider[i].DocumentIndex.CrawleDato);
+						// Magnus: Konverterer til locale:
+				        	setlocale(LC_TIME, "no_NO.utf8");
+						strftime(timebuf, 63, "%A %e. %b %Y %k:%M", localtime((time_t *)&Sider[i].DocumentIndex.CrawleDato));
+						timebuf[64] = '\0';
+						printf("\t<TIME_ISO>%s</TIME_ISO>\n",timebuf);
+					}
 					//sender en tom cashe link. Må ha cashe link hvis ikke bryter vi designet
 	                		printf("\t<CACHE></CACHE>\n");
 
