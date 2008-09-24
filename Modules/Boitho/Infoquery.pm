@@ -197,6 +197,7 @@ sub _infoquery_exec {
     close $iq or $success = 0;
     unless ($success) {
         $error = join "\n", @output;
+	warn("was unable to succesfuly execute infoquery: \"$exec_string\"\nGot error: $error");
         return;
     }
 
