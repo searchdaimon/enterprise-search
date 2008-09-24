@@ -124,6 +124,9 @@ void testit( char *tekst )
     sprint_query(buf, 1023, &qa2);
     printf("%s\n", buf);
 
+    sprint_query_array(buf, 1023, qa);
+    printf("%s\n", buf);
+
     destroy_query( qa );
     free(qa);
 

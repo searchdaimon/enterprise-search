@@ -529,3 +529,41 @@ void sprint_expanded_query( char *s, int n, query_array *qa )
 		}
 	}
 }
+
+
+void sprint_query_array( char *s, int n, query_array *qa )
+{
+    int		i, j, k;
+    int		pos = 0;
+
+    for (i=0; i<qa->n; i++)
+	{
+	    pos+= snprintf(s+pos, n - pos, "(%c):", qa->query[i].operand);
+
+	    for (j=0; j<qa->query[i].n; j++)
+		{
+		    pos+= snprintf(s+pos, n - pos, " [%s]", qa->query[i].s[j]);
+		}
+
+	    if (qa->query[i].alt != NULL)
+		{
+		    pos+= snprintf(s+pos, n - pos, "alt:(");
+		    for (j=0; j<qa->query[i].alt_n; j++)
+			{
+			    if (j>0) pos+= snprintf(s+pos, n - pos, "|");
+			    if (qa->query[i].alt[j].n > 1) pos+= snprintf(s+pos, n - pos, "\"");
+
+			    for (k=0; k<qa->query[i].alt[j].n; k++)
+				{
+				    if (k>0) pos+= snprintf(s+pos, n - pos, " ");
+				    pos+= snprintf(s+pos, n - pos, "%s", qa->query[i].alt[j].s[k]);
+				}
+
+			    if (qa->query[i].alt[j].n > 1) pos+= snprintf(s+pos, n - pos, "\"");
+			}
+		    pos+= snprintf(s+pos, n - pos, ")");
+		}
+
+	    pos+= snprintf(s+pos, n - pos, "\n");
+	}
+}

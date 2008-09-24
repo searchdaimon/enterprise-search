@@ -90,6 +90,11 @@ void sprint_query( char *s, int n, query_array *qa );
 void sprint_expanded_query( char *s, int n, query_array *qa );
 
 /*
+ *	Skriv ut query_array:
+ */
+void sprint_query_array( char *s, int n, query_array *qa );
+
+/*
  *	Deprecated (vi har gått over til utf-8): Gjør om utvidede ascii-tegn til html-escapes i query-et:
  */
 void copy_htmlescaped_query( query_array *qa_dest, query_array *qa_src );
