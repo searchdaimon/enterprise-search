@@ -16,7 +16,7 @@ sub sql_setup {
     my %settings;
 
     open my $setup, SQL_CONFIG_FILE
-        or croak print "Can't open config file: $!";
+        or croak print "Can't open config file ". SQL_CONFIG_FILE .": $!";
     my @data = <$setup>;
     close $setup;
 
