@@ -8,19 +8,19 @@ tlcd-gt14_name = tlcd-gt14
 tlcd-gt14_version = 0.0.2
 
 boitho-ad_name = boitho-ad
-boitho-ad_version = 0.3.13
+boitho-ad_version = 0.3.14
 
 boitho-searchdbb_name = boitho-searchdbb
 boitho-searchdbb_version = 5.5.34
 
 boitho-crawlManager_name = boitho-crawlManager
-boitho-crawlManager_version = 1.4.38
+boitho-crawlManager_version = 1.4.40
 
 boitho-boitho-bbdn_name = boitho-bbdn
-boitho-boitho-bbdn_version = 1.8.13
+boitho-boitho-bbdn_version = 1.8.14
 
 boitho-fileFilter_name = boitho-fileFilter
-boitho-fileFilter_version = 1.3.10
+boitho-fileFilter_version = 1.3.11
 
 boitho-base_name = boitho-base
 boitho-base_version = 1.3.0
@@ -35,10 +35,10 @@ boitho-everrun_name = boitho-everrun
 boitho-everrun_version = 2.0.3
 
 boitho-infoquery_name = boitho-infoquery
-boitho-infoquery_version = 2.0.15
+boitho-infoquery_version = 2.0.16
 
 boitho-iindex_name = boitho-iindex
-boitho-iindex_version = 2.0.20
+boitho-iindex_version = 2.0.22
 
 boitho-webclient_name = boitho-webclient
 boitho-webclient_version = 6.0.38
@@ -48,7 +48,7 @@ boithobb-setuid_version = 1.0.15
 
 
 boithobb-crawl_watch_name = boithobb-crawl_watch
-boithobb-crawl_watch_version = 1.0.13
+boithobb-crawl_watch_version = 1.0.14
 
 boithobb-bbAutoUpdate_name = bbAutoUpdate
 boithobb-bbAutoUpdate_version = 1.0.3
@@ -87,7 +87,7 @@ boitho-suggest_name = boitho-suggest
 boitho-suggest_version = 1.4
 
 boitho-gc_name = boitho-garbage-collection
-boitho-gc_version = 1.1
+boitho-gc_version = 1.3
 
 boitho-perlxs-sdcrawl_name = boitho-perlxs-sdcrawl
 boitho-perlxs-sdcrawl_version = 0.1
@@ -126,7 +126,7 @@ perlxs-sdcrawl:
 	rpmbuild -bb $(boitho-perlxs-sdcrawl_name).spec
 
 iindex:
-	perl rpmmagic.pl $(boitho-iindex_name) $(boitho-iindex_version) $(BOITHOHOME) /home/boitho/boithoTools bin/IndexerLotbb bin/LotInvertetIndexMaker3bb bin/mergeUserToSubname bin/mergeIIndex bin/readIIndex perl/cleanLots.pl Modules/Boitho/Lot.pm
+	perl rpmmagic.pl $(boitho-iindex_name) $(boitho-iindex_version) $(BOITHOHOME) /home/boitho/boithoTools bin/IndexerLotbb bin/LotInvertetIndexMaker3bb bin/mergeUserToSubname bin/mergeIIndex bin/readIIndex bin/PageInfobb bin/rreadbb bin/readDocumentIndexbb perl/cleanLots.pl Modules/Boitho/Lot.pm
 
 	rpmbuild -bb $(boitho-iindex_name).spec
 
@@ -177,12 +177,17 @@ searchdbb:
 	#temp v.0.5.2
 	#temp: perl rpmmagic.pl --requires "boitho-everrun boithobb-filepermissions" --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumbbb cgi-bin/ShowCache config/filetypes.eng.conf config/filetypes.nbo.conf config/dispatcher.conf
 	#temp: v0.5.3
-	perl rpmmagic.pl --requires "boitho-suggest perl-Text-Iconv boitho-dictionary boitho-configfiles boitho-everrun boithobb-filepermissions" --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumbbb cgi-bin/ShowCache config/filetypes.eng.conf config/filetypes.nbo.conf config/dispatcher.conf  data/thesaurus.id data/thesaurus.text
+	perl rpmmagic.pl --requires "boitho-suggest perl-Text-Iconv boitho-dictionary boitho-configfiles boitho-everrun boithobb-filepermissions" --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumbbb cgi-bin/ShowCache config/filetypes.eng.conf config/filetypes.nbo.conf config/dispatcher.conf  data/thesaurus.id data/thesaurus.text config/file_extensions.conf
 
 	rpmbuild -bb $(boitho-searchdbb_name).spec
 
 
 crawlManager:
+	perl rpmmagic.pl --requires "boitho-everrun boitho-bbdn boithobb-filepermissions" --initd crawlManager $(boitho-crawlManager_name) $(boitho-crawlManager_version) $(BOITHOHOME) /home/boitho/boithoTools bin/crawlManager crawlers/crawlSMB crawlers/crawlExchange config/crawlmanager.conf 
+
+	rpmbuild -bb $(boitho-crawlManager_name).spec
+
+crawlManager2:
 	perl rpmmagic.pl --requires "boitho-everrun boitho-bbdn boithobb-filepermissions" --initd crawlManager $(boitho-crawlManager_name) $(boitho-crawlManager_version) $(BOITHOHOME) /home/boitho/boithoTools bin/crawlManager2 crawlers crawlers/crawlSMB crawlers/crawlExchange crawlers/Intranet config/crawlmanager.conf perl/persistent.pl
 
 	rpmbuild -bb $(boitho-crawlManager_name).spec
