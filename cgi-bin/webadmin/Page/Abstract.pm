@@ -54,6 +54,8 @@ sub process_tpl {
     croak "No tpl_file provided"
         unless defined $tpl_file;
 
+    warn("tpl_file: $tpl_file\nvars_ref:\n" . Dumper(  $vars_ref  ) . "opt:\n" . Dumper(\%opt));
+
     # Init tpl
     while (my ($key, $val) = each %DEF_TPL_OPT) {
         $opt{$key} = $val 
