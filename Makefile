@@ -172,7 +172,7 @@ IndexerLotbb: src/IndexerLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(IndexerLot) $(HTMLPARSER1) $(BDB) -D BLACK_BOKS -D PRESERVE_WORDS -o bin/IndexerLotbb -DIIACL
+	$(CC) $(IndexerLot) $(HTMLPARSER2) $(BDB) -D BLACK_BOKS -D PRESERVE_WORDS -o bin/IndexerLotbb -DIIACL
 
 baddsPageAnalyser: src/baddsPageAnalyser/main.c
 	@echo ""
@@ -442,14 +442,14 @@ searchcl : src/searchkernel/searchcl.c
 #dropper -D WITH_MEMINDEX og -D WITH_RANK_FILTER for nå
 #SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c   src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD $(LIBCONFIG)
 #må ha -D_GNU_SOURCE for O_DIRECT
-SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/dp/dp.c src/searchkernel/verbose.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/stemmer.o src/query/lex.query.o src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER1) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D EXPLAIN_RANK -D DISK_PROTECTOR
+SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/dp/dp.c src/searchkernel/verbose.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/stemmer.o src/query/lex.query.o src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER2) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D EXPLAIN_RANK -D DISK_PROTECTOR
 
 
 searchddep:
 	#ting searchd trenger
 	@echo ""
 	@echo "$@:"
-	for i in src/query src/parser src/generateSnippet src/ds src/utf8-filter src/getdate src/parser2; do\
+	for i in src/query src/parser src/generateSnippet src/ds src/utf8-filter src/getdate src/parser2 src/newspelling src/getFiletype; do\
            (cd $$i; $(MAKE) all);\
         done
 
@@ -774,7 +774,7 @@ SortUdfile: src/SortUdfile/main.c
 SortUdfileToNewFiles: src/SortUdfileToNewFiles/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/SortUdfileToNewFiles/main.c -o bin/SortUdfileToNewFiles $(LDFLAGS)
 
-PageInfoComand=	$(LIBS)*.c src/PageInfo/main.c $(HTMLPARSER1) $(LDFLAGS) src/IndexerRes/IndexerRes.c
+PageInfoComand=	$(LIBS)*.c src/PageInfo/main.c $(HTMLPARSER2) $(LDFLAGS) src/IndexerRes/IndexerRes.c
 
 PageInfo: src/PageInfo/main.c
 	@echo ""
