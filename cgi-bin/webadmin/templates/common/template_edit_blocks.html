@@ -198,25 +198,29 @@
 
 [% BLOCK user_select %]
     <div class="block_default">
-	<div style="block_inner" >
-	<div class="checklist_outer">
-	<div class="checklist_inner" id="userList">
-	[% i = 0 %]
-	[% FOREACH user IN user_list %]				
+        <div style="block_inner" >
+        <div class="checklist_outer">
+        <div class="checklist_inner" id="userList">
+        [% i = 0 %]
+        [% FOREACH user IN user_list %]
+
+             [% SET regex_user = user.escape %]
+             [% # remove SID
+                SET display_user = user.remove(':S(-\d+)+$') %]
             <label for="user[% i %]">
-					
-		<input name="share.users[[% i %]]" type="checkbox" id="user[% i %]"
-                    [% user_esc = user.escape %]
-		    [% IF share.users.grep("^$user_esc$").0 %]
+
+
+                <input name="share.users[[% i %]]" type="checkbox" id="user[% i %]"
+                    [% IF share.users.grep("^$regex_user$").0 %]
                         checked="checked"
                     [% END %]
-					value="[% user %]"
-		/> [% user %]
-						
-	    </label>
-	    [% i = i + 1 %]
-	[% END %]
-	</div></div>
+                                        value="[% HTML.escape(user) %]"
+                /> [% HTML.escape(display_user) %]
+
+            </label>
+            [% i = i + 1 %]
+        [% END %]
+        </div></div>
         <a href="javascript:void" onclick="set_checked('user', true)">select all</a> &nbsp;
         <a href="javascript:void" onclick="set_checked('user', false)">unselect all</a>
         </div>
