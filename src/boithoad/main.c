@@ -206,7 +206,7 @@ static void print_reference(LDAP *ld, LDAPMessage *reference)
 
 int compare_ldap_vals (const void *p1, const void *p2) {
 	#ifdef DEBUG
-	printf("compare_ldap_vals (p1=\"%s\", p2\"%s\")\n",(*(char **)p1), (*(char **)p2));
+	//printf("compare_ldap_vals (p1=\"%s\", p2\"%s\")\n",(*(char **)p1), (*(char **)p2));
 	#endif
 	return (strcmp((*(char **)p1),(*(char **)p2)) == 0);
 }
@@ -316,6 +316,8 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
       					for( attr = ldap_first_attribute((*ld), entry, &ber); attr != NULL; attr = ldap_next_attribute((*ld), entry, ber)) {
 						int counter;
 
+						printf("attr: %s\n",attr);
+
 						//###########################
 
 					 	if ((vals = (char **)ldap_get_values((*ld), entry, attr)) != NULL)  {
@@ -328,15 +330,15 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
 							
 
 		    					for(i = 0; vals[i] != NULL; i++) {
-								counter++;
 								if (valfilter && strncasecmp(vals[i], valfilter, strlen(valfilter)) != 0) {
-									printf("Skiping: valus \"%s\" thats not in filter \"%s\"\n", vals[i], valfilter);
+									printf("Skiping: value \"%s\" thats not in filter \"%s\" for att %s\n", vals[i], valfilter,attr);
 									continue;
 								}
 								if (strcasecmp(attr, "objectSid") == 0) {
 									char *p = sid_btotext(vals[i]);
 									tempresults = malloc(sizeof(struct tempresultsFormat));
 									strncpy((*tempresults).value,p,MAX_LDAP_ATTR_LEN);
+									strncpy((*tempresults).key,attr,MAX_LDAP_ATTR_LEN);
 									if (list_ins_next(&list, NULL, tempresults) != 0) {
 										printf("can't insert objectSid into list\n");
 										return 0;
@@ -348,16 +350,17 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
 									tempresults = malloc(sizeof(struct tempresultsFormat));
 
 									strncpy((*tempresults).value,vals[i],MAX_LDAP_ATTR_LEN);
-
+									strncpy((*tempresults).key,attr,MAX_LDAP_ATTR_LEN);
 									if (list_ins_next(&list,NULL,tempresults) != 0) {
 										printf("cant insert into list\n");
 										return 0;
 									}	
 								}
 								++count;	
-								
-								if ( (maxcount != -1) && (count >= maxcount) ) {/* We got what we want... */
-									printf("Hit max count. count=%i, maxcount=%i\n",count,maxcount);
+								counter++;
+
+								if ( (maxcount != -1) && (counter >= maxcount) ) {/* We got what we want... */
+									printf("Hit max count. counter=%i, maxcount=%i\n",counter,maxcount);
 									break;
 								}
 							} //for
@@ -420,7 +423,7 @@ done:
 	(*nrofresponses) = 0;
 	tempresults = NULL;
 	while(list_rem_next(&list,NULL,(void **)&tempresults) == 0) {
-		printf("aaa \"%s\"\n",(*tempresults).value);
+		printf("aaa \"%s\":\"%s\"\n",(*tempresults).key,(*tempresults).value);
 
 		len = strnlen((*tempresults).value,MAX_LDAP_ATTR_LEN);
 
@@ -900,34 +903,49 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 				}
 			}
 			else if (packedHedder.command == bad_listMailUsers) {
+
+				/*
+					Lister mail brukere.
+					Runarb: 22 aug 2008.
+					Desverre her dette blitt ganske hårete. Vi må hente ut både proxyAddresses og objectSid 
+					med det kan være mer en en proxyAddresses. Nå kommer objectSid som elemenrt 1, så proxyAddresses som nr 2.
+				*/
 				sprintf(filter,"(&(objectClass=user)(mailNickname=*))");			
-				if (!ldap_simple_search_count(&ld,filter,"proxyAddresses,objectSid",&respons,&nrOfSearcResults,ldap_base, 1, "smtp:")) {
+				if (!ldap_simple_search_count(&ld,filter,"proxyAddresses,objectSid",&respons,&nrOfSearcResults,ldap_base, 1, NULL)) {
 					printf("can't ldap search\n");
 					intresponse = 0;
 					sendall(socket,&intresponse, sizeof(intresponse));
 					//return;
 				}
 				else {
+					intresponse = nrOfSearcResults / 2;
 					//sender antall
-					sendall(socket,&nrOfSearcResults, sizeof(nrOfSearcResults));
+					sendall(socket,&intresponse, sizeof(intresponse));
 
 					printf("found %i mail users\n",nrOfSearcResults);
-					for(i=0;i<nrOfSearcResults;i++) {
+					for(i=0;i<nrOfSearcResults;i+=2) {
+						char *objectSid		= respons[i];
+						char *proxyAddresses 	= respons[i +1];
+
+						printf("proxyAddresses=%s\nobjectSid=%s\n",proxyAddresses,objectSid);
+
 						char *p;
-						p = strchr(respons[i], ':');
+						p = strchr(proxyAddresses, ':');
 						if (p) {
 						} else {
-							fprintf(stderr, "Invalid smtp address: %s\n", respons[i]);
+							fprintf(stderr, "Invalid smtp address: %s\n", proxyAddresses);
 						}
-						p++;
-						strlcpy(ldaprecord, p, sizeof(ldaprecord));
-						printf("mail adress \"%s\"\n",ldaprecord);
-						p = strchr(ldaprecord, '@');
-						if (p) {
-							*p = '\0';
+							p++;
+							strlcpy(ldaprecord, p, sizeof(ldaprecord));
+							printf("mail adress \"%s\"\n",ldaprecord);
+							p = strchr(ldaprecord, '@');
+							if (p) {
+								*p = '\0';
 						}
+						strlcat(ldaprecord,":",sizeof(ldaprecord));
+						strlcat(ldaprecord,objectSid,sizeof(ldaprecord));
+
 						printf("mail user \"%s\"\n",ldaprecord);
-						//strscpy(ldaprecord,respons[i],sizeof(ldaprecord));
 						sendall(socket,ldaprecord, sizeof(ldaprecord));
 
 					}
