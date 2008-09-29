@@ -26,7 +26,7 @@ void _filecpy(int into, int from) {
 struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[], int flags) {
 
 	struct stat inode;
-	struct reformat *re;
+	struct reformat *re = NULL;
 	char openmode[4];
 	int mmapmode;
 
@@ -69,10 +69,10 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 		//åpner en temperer fil
 		sprintf(re->tmpfile,"%s_retmp",re->mainfile);
 		if((re->fd = lotOpenFileNoCasheByLotNrl(lotNr, re->tmpfile, ">>", 'w', subname)) == -1) {
-			return NULL;
+			goto reopen_error;
 		}
 		if ((re->fd_tmp = lotOpenFileNoCasheByLotNrl(lotNr, re->mainfile, ">>", 'r', subname)) == -1) {
-			return NULL;
+			goto reopen_error;
 		}
 
 		_filecpy(re->fd, re->fd_tmp);
@@ -80,7 +80,7 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 	}
 	else {
 		if((re->fd = lotOpenFileNoCasheByLotNrl(lotNr, re->mainfile, openmode, 'r', subname)) == -1) {
-			return NULL;
+			goto reopen_error;
 		}
 	}
 
@@ -92,7 +92,7 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
                                 */
                                 if (lseek(re->fd, re->maxsize -1, SEEK_SET) == -1) {
                                         perror("Error calling fseek() to 'stretch' the file");
-					return NULL;
+					goto reopen_error;
                                 }
 
                                 /* Something needs to be written at the end of the file to
@@ -107,7 +107,7 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
                                 */
                                 if (write(re->fd, "", 1) != 1) {
                                         perror("Error writing last byte of the file");
-					return NULL;
+					goto reopen_error;
                                 }
 
 	}
@@ -116,7 +116,7 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 	        perror("mmap");
 		//nullsetter dene, slik at det er lettere og se at det er en feil under debugging.
 		re->mem = NULL;
-		return NULL;
+		goto reopen_error;
         }
 
 	/*
@@ -133,6 +133,11 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 
 	return re;
 
+	reopen_error:
+		if (re != NULL) {
+			free(re);
+		}
+		return NULL;
 }
 
 static struct hashtable *lots_cache;
