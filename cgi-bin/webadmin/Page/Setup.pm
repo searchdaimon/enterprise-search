@@ -17,7 +17,7 @@ use config qw(%CONFIG);
 use Page::Abstract;
 our @ISA = qw(Page::Abstract);
 
-use constant DEBUG => 1;
+use constant DEBUG => 0;
 
 #TODO: Move all the methods in more suited classes, and deprecate this class.
 sub _init {
