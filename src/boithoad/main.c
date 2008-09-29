@@ -211,11 +211,20 @@ int compare_ldap_vals (const void *p1, const void *p2) {
 	return (strcmp((*(char **)p1),(*(char **)p2)) == 0);
 }
 
+/* 
+ * ldap simple search flags
+ */
+#define LS_NONE
+// Don't filter object sids
+#define LS_WANT_OBJECTSID 0x1
+
+
 int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[],int *nrofresponses,const char ldap_base[]) {
-	return ldap_simple_search_count(ld, filter, vantattrs, respons, nrofresponses, ldap_base, -1, NULL);
+	return ldap_simple_search_count(ld, filter, vantattrs, respons, nrofresponses, ldap_base, -1, NULL, 0);
 }
 
-int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **respons[],int *nrofresponses,const char ldap_base[], int maxcount, const char *valfilter) {
+
+int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **respons[],int *nrofresponses,const char ldap_base[], int maxcount, const char *valfilter, int flags) {
 
 	printf("ldap_simple_search_count( filter=\"%s\", vantattrs=\"%s\", ldap_base=\"%s\", maxcount=%i ,valfilter=\"%s\" )\n",filter,vantattrs,ldap_base,maxcount,valfilter);
 
@@ -330,7 +339,9 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
 							
 
 		    					for(i = 0; vals[i] != NULL; i++) {
-								if (valfilter && strncasecmp(vals[i], valfilter, strlen(valfilter)) != 0) {
+								if (valfilter &&
+								    !((strcmp(attr, "objectSid") == 0) && (flags & LS_WANT_OBJECTSID)) &&
+								    strncmp(vals[i], valfilter, strlen(valfilter)) != 0) {
 									printf("Skiping: value \"%s\" thats not in filter \"%s\" for att %s\n", vals[i], valfilter,attr);
 									continue;
 								}
@@ -908,10 +919,11 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 					Lister mail brukere.
 					Runarb: 22 aug 2008.
 					Desverre her dette blitt ganske hårete. Vi må hente ut både proxyAddresses og objectSid 
-					med det kan være mer en en proxyAddresses. Nå kommer objectSid som elemenrt 1, så proxyAddresses som nr 2.
+					med det kan være mer en en proxyAddresses. Nå kommer objectSid som elemenrt 1, så 
+					proxyAddresses som nr 2.
 				*/
 				sprintf(filter,"(&(objectClass=user)(mailNickname=*))");			
-				if (!ldap_simple_search_count(&ld,filter,"proxyAddresses,objectSid",&respons,&nrOfSearcResults,ldap_base, 1, NULL)) {
+				if (!ldap_simple_search_count(&ld,filter,"proxyAddresses,objectSid",&respons,&nrOfSearcResults,ldap_base, 1, "SMTP:", LS_WANT_OBJECTSID)) {
 					printf("can't ldap search\n");
 					intresponse = 0;
 					sendall(socket,&intresponse, sizeof(intresponse));
@@ -932,16 +944,16 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 						char *p;
 						p = strchr(proxyAddresses, ':');
 						if (p) {
+							p++;
+
 						} else {
 							fprintf(stderr, "Invalid smtp address: %s\n", proxyAddresses);
+							p=proxyAddresses;
 						}
-							p++;
-							strlcpy(ldaprecord, p, sizeof(ldaprecord));
-							printf("mail adress \"%s\"\n",ldaprecord);
-							p = strchr(ldaprecord, '@');
-							if (p) {
-								*p = '\0';
-						}
+
+						strlcpy(ldaprecord, p, sizeof(ldaprecord));
+						printf("mail adress \"%s\"\n",ldaprecord);
+						
 						strlcat(ldaprecord,":",sizeof(ldaprecord));
 						strlcat(ldaprecord,objectSid,sizeof(ldaprecord));
 
