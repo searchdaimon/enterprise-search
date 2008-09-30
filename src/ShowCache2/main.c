@@ -20,6 +20,8 @@ int main(int argc, char *argv[]) {
 	struct ReposetoryHeaderFormat ReposetoryHeader;
         char *aclbuffer_allow = NULL;
         char *aclbuffer_deny = NULL;
+	char *attributes;
+	char *url;
 
 	int iDocID;
 	char subname[maxSubnameLength];
@@ -76,7 +78,7 @@ int main(int argc, char *argv[]) {
 	// (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,
 	// (*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&aclbuffer
 
-	if (rReadHtml(htmlBuf,&htmlBufSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize,iDocID,subname,&ReposetoryHeader,&aclbuffer_allow,&aclbuffer_deny,DocumentIndexPost.imageSize) != 1) {
+	if (rReadHtml(htmlBuf,&htmlBufSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize,iDocID,subname,&ReposetoryHeader,&aclbuffer_allow,&aclbuffer_deny,DocumentIndexPost.imageSize, &url, &attributes) != 1) {
 
 		printf("can't read cache file.\n");
 
