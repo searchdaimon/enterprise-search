@@ -88,8 +88,7 @@ HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a src/ds/libd
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-
-bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb perlxs-sdcrawl readUserToSubname bbdocumentWebAdd
+bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb perlxs-sdcrawl readUserToSubname bbdocumentWebAdd list_collections slicense_info
 
 dppreload:
 	$(CC) -shared -fPIC src/dp/preload.c src/common/timediff.c -o bin/dppreload.so -ldl -Wall $(LDFLAGS)
@@ -512,7 +511,8 @@ dispatcher_all: src/dispatcher_all/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) $(MYSQL4) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG)
+	#$(CC) $(dispatcherCOMAND) $(MYSQL4) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG)
+	$(CC) $(dispatcherCOMAND) $(MYSQL) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG)
 
 dispatcher_allsql3: src/dispatcher_all/main.c
 	@echo ""
@@ -524,7 +524,7 @@ dispatcher_allbb: src/dispatcher_all/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) $(MYSQL) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) -DWITH_SPELLING $(BDB)
+	$(CC) $(dispatcherCOMAND) $(MYSQL) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) -DWITH_SPELLING $(BDB) 
 
 dispatcher_all247: src/dispatcher_all/main.c
 	@echo ""
@@ -1140,6 +1140,24 @@ crawlSFTP: src/crawlSFTP/crawlsftp.c
 	$(CC) $(CFLAGS) -fPIC -shared -o src/crawlSFTP/crawlSFTP.so src/crawlSFTP/crawlsftp.c src/crawlSFTP/rutines.c src/crawl/crawl.c src/3pLibs/libssh2/src/*.o -g -O2 -I/usr/include -I/usr/include -Isrc/3pLibs/libssh2/include/ -L/usr/lib -lcrypto -L/usr/lib -lz
 	mkdir -p crawlers/crawlSFTP
 	cp src/crawlSFTP/crawlSFTP.so crawlers/crawlSFTP/
+
+
+list_collections: 
+	@echo ""
+	@echo "$@:"
+
+	(cd src/list_collections; make clean)
+	(cd src/list_collections; make)
+	cp src/list_collections/list_collections bin/list_collections
+
+slicense_info:
+	@echo ""
+	@echo "$@:"
+
+	(cd src/slicense; make clean)
+	(cd src/slicense; make slicense_info)
+	cp src/slicense/slicense_info bin/slicense_info
+
 
 
 #kopierer filer slik at de blir tilgjengelig fra web
