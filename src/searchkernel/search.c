@@ -3015,6 +3015,11 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 			printf("Got hash value: %x\n", crc32);
 			reclose(crc32map);
 
+			if (crc32 == 0) {
+				debug("don't have crc32 value for DocID");
+				continue;
+			}
+
 			container *list = hashtable_search(*crc32maphash, &crc32);
 			if (list == NULL) {
 				list = list_container(pair_container(int_container(), string_container()));
