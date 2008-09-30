@@ -1925,8 +1925,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 
 		// Kjør stemming på query:
-    		thesaurus_expand_query(searchd_config->thesaurusp, &PagesResults.QueryData.queryParsed);
-	
+		if (searchd_config->thesaurusp != NULL) {
+    			thesaurus_expand_query(searchd_config->thesaurusp, &PagesResults.QueryData.queryParsed);
+		}
    		// Print query med innebygd print-funksjon:
     		char        buf[1024];
     		sprint_expanded_query(buf, 1023, &PagesResults.QueryData.queryParsed);
@@ -2189,16 +2190,19 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	#ifdef WITH_SPELLING
 
-	/* Spellcheck the query */
-	if (SiderHeder->TotaltTreff < 10 || 1) {
-		query_array qa;
+	if (searchd_config->optFastStartup != 1) {
 
-		copy_query(&qa, &PagesResults.QueryData.queryParsed);
+		/* Spellcheck the query */
+		if (SiderHeder->TotaltTreff < 10 || 1) {
+			query_array qa;
 
-		if (spellcheck_query(SiderHeder, &qa) > 0) {
-			printf("Query corrected to: %s\n", SiderHeder->spellcheckedQuery);
+			copy_query(&qa, &PagesResults.QueryData.queryParsed);
+
+			if (spellcheck_query(SiderHeder, &qa) > 0) {
+				printf("Query corrected to: %s\n", SiderHeder->spellcheckedQuery);
+			}
+			destroy_query(&qa);
 		}
-		destroy_query(&qa);
 	}
 	#endif
 

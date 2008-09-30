@@ -178,6 +178,7 @@ int main(int argc, char *argv[])
 	searchd_config.optSingle = 0;
 	searchd_config.optrankfile = NULL;
 	searchd_config.optPreOpen = 0;
+	searchd_config.optFastStartup = 0;
 	
 	// Needed for the speller to properly convert utf8 to wchar_t
 	setlocale(LC_ALL, "en_US.UTF-8");
@@ -185,7 +186,7 @@ int main(int argc, char *argv[])
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"lp:m:b:vso"))!=-1) {
+        while ((c=getopt(argc,argv,"lp:m:b:vsof"))!=-1) {
                 switch (c) {
                         case 'p':
                                 searchd_config.searchport = atoi(optarg);
@@ -211,6 +212,9 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "searchd: Option -s: Won't fork for new connections\n");
 				searchd_config.optSingle = 1;
                                 break;
+			case 'f':
+				searchd_config.optFastStartup = 1;
+				break;
 			default:
                         	exit(1);
                 }
@@ -227,7 +231,9 @@ int main(int argc, char *argv[])
 	}
 
 	#ifdef WITH_SPELLING
-	init_spelling("var/dictionarywords");
+	if (searchd_config.optFastStartup != 1) {
+		init_spelling("var/dictionarywords");
+	}
 	#endif
 
 	strncpy(servername,argv[1 +optind],sizeof(servername) -1);
@@ -367,10 +373,14 @@ int main(int argc, char *argv[])
 	#ifdef BLACK_BOKS
 		// Initialiser thesaurus med ouput-filene fra 'build_thesaurus_*':
 		printf("init thesaurus\n");
-    		searchd_config.thesaurusp = thesaurus_init(bfile("data/thesaurus.text"), bfile2("data/thesaurus.id"));
-		if (searchd_config.thesaurusp == NULL) {
-			printf("Unable to open thesaurus");
-			exit(1);
+		searchd_config.thesaurusp = NULL;
+
+		if (searchd_config.optFastStartup != 1) {
+    			searchd_config.thesaurusp = thesaurus_init(bfile("data/thesaurus.text"), bfile2("data/thesaurus.id"));
+			if (searchd_config.thesaurusp == NULL) {
+				printf("Unable to open thesaurus");
+				exit(1);
+			}
 		}
 		printf("init thesaurus done\n");
 

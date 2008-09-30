@@ -21,6 +21,7 @@ struct searchd_configFORMAT {
 	int optPreOpen;
 	struct lotPreOpenFormat lotPreOpen;
 	thesaurus           *thesaurusp;
+	int optFastStartup;
 };
 
 int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct SiderHederFormat *SiderHeder,
