@@ -36,6 +36,7 @@
 
 #include "../3pLibs/keyValueHash/hashtable.h"
 #include "../common/pidfile.h"
+#include "perlcrawl.h"
 
 
 #define crawl_crawl 1
@@ -119,7 +120,7 @@ int documentContinue(struct collectionFormat *collection) {
 	//
 	if ( recrawl_schedule_start > recrawl_schedule_end ) {
 
-		if ((t->tm_hour < recrawl_schedule_start) && (t->tm_hour > recrawl_schedule_end)) {
+		if ((t->tm_hour < recrawl_schedule_start) && (t->tm_hour >= recrawl_schedule_end)) {
 			printf("scenario 1: to early, wont crawl\n");
 			return 0;
 		}
@@ -130,7 +131,7 @@ int documentContinue(struct collectionFormat *collection) {
 			printf("scenario 2: to early, wont crawl\n");
 			return 0;
 		}
-		else if (t->tm_hour > recrawl_schedule_end) {
+		else if (t->tm_hour >= recrawl_schedule_end) {
 			printf("scenario 2: to late, wont crawl\n");
 			return 0;
 		}
@@ -208,6 +209,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 				crawldocumentAdd->doctype,
 				crawldocumentAdd->attributes)
 	   ) {
+
 		blog(LOGERROR,1,"can't sent to bbdn! Tryed to send doc \"%s\" Will sleep and then reconect. Wont send same doc again.",(*crawldocumentAdd).documenturi);
 		
 		//ber om å lokke sokketen. Dette er ikke det samme som å steneg kollectionen.
@@ -217,7 +219,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 		sleep(10);
 
 		if (!bbdn_conect(&(*collection).socketha,"",global_bbdnport)) {
-			blog(LOGERROR,1,"can't conect to bbdn (boitho backend document server)");
+			blog(LOGERROR,1,"can't connect to bbdn (boitho backend document server)");
 			return 0;
 		}
 
@@ -235,6 +237,34 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 	return 1;
 }
 
+
+int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections) {
+
+	int i;
+
+	for (i=0;i<nrofcollections;i++) {
+		#ifdef DEBUG
+		printf("freeing nr %i: start\n",i);
+		#endif
+		free((*collection)[i].resource);
+                free((*collection)[i].user);
+                free((*collection)[i].password);
+                free((*collection)[i].connector);
+                free((*collection)[i].collection_name);
+                free((*collection)[i].query1);
+                free((*collection)[i].query2);
+		free((*collection)[i].extra);
+		free((*collection)[i].userprefix);
+		#ifdef DEBUG
+			printf("freeing nr %i: end\n",i);
+		#endif
+	}
+
+	if ((*collection)) {
+		free(*collection);
+	}
+}
+
 int closecollection(struct collectionFormat *collection) {
 	debug("closecollection start\n");
 	bbdn_closecollection((*collection).socketha,(*collection).collection_name);
@@ -247,7 +277,7 @@ int cmr_crawlcanconect(struct hashtable *h, struct collectionFormat *collection)
 	struct crawlLibInfoFormat *crawlLibInfo;
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,(*collection).connector)) {
-		printf("cant get CrawlLibInfo\n");
+		printf("can't get CrawlLibInfo\n");
 		return 0;
 	}
 
@@ -486,7 +516,7 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 	gettimeofday(&start_time, NULL);
 	debug("cm_getCrawlLibInfo");
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,collections[0].connector)) {
-		printf("cant get CrawlLibInfo\n");
+		printf("can't get CrawlLibInfo\n");
 		return 0;
 	}
 	collections[0].crawlLibInfo = crawlLibInfo;
@@ -524,7 +554,12 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 	else if (!(*(*crawlLibInfo).crawlpatAcces)(uri,username,password,documentError,&collections[0])) {
         	printf("Can't crawlLibInfo. Can be denyed or somthing else\n");
 		//overfører error
-                berror( documentErrorGetlast( &collections[0]) );
+//ToDo: Spør Eirik om hva som er riktig her. Conflikt som oppstod når jeg merget endringer i cm 1 inn i cm 2
+//<<<<<<< src/crawlManager2/main.c
+//                berror( documentErrorGetlast( &collections[0]) );
+//=======
+                berror_safe(documentErrorGetlast(&collections[0]));
+//>>>>>>> src/crawlManager/main.c
 
 #ifdef WITH_PATHACCESS_CACHE
 		if (memcache_servers != NULL)
@@ -559,6 +594,7 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 	}
 
 	free(username);
+	sm_collectionfree(&collections,nrofcollections);
 	
 	return forreturn;
 
@@ -608,8 +644,8 @@ int scan (struct hashtable *h,char ***shares,int *nrofshares,char crawlertype[],
         }
 
 	if ((*crawlLibInfo).scan == NULL) {
-		printf("cant scan. Crawler dosent suport it.\n");
-		blog(LOGERROR,1,"Error: cant scan. Crawler dosent suport it.");
+		printf("can't scan. Crawler dosen't support it.\n");
+		blog(LOGERROR,1,"Error: can't scan. Crawler dosent suport it.");
 
 		return 0;
 	}
@@ -670,7 +706,7 @@ int cm_start(struct hashtable **h) {
 
 	if ((dirp = opendir(bfile("crawlers"))) == NULL) {
 		perror(bfile("crawlers"));
-		blog(LOGERROR,1,"Error: cant open crawlers directory.");
+		blog(LOGERROR,1,"Error: can't open crawlers directory.");
 
 		exit(1);
 	}	
@@ -778,34 +814,6 @@ int cm_getCrawlLibInfo(struct hashtable *h,struct crawlLibInfoFormat **crawlLibI
 	}
 }
 
-
-
-int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections) {
-
-	int i;
-
-	for (i=0;i<nrofcollections;i++) {
-		#ifdef DEBUG
-		printf("freeing nr %i: start\n",i);
-		#endif
-		free((*collection)[i].resource);
-                free((*collection)[i].user);
-                free((*collection)[i].password);
-                free((*collection)[i].connector);
-                free((*collection)[i].collection_name);
-                free((*collection)[i].query1);
-                free((*collection)[i].query2);
-		free((*collection)[i].extra);
-		#ifdef DEBUG
-			printf("freeing nr %i: end\n",i);
-		#endif
-
-        hashtable_destroy((*collection)[i].params, 1);
-	}
-
-	//toDo: hvorfor segfeiler vi her ????
-	//free(collection);
-}
 
 int
 cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
@@ -983,7 +991,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 
 	if ((*nrofcollections) == 0) {
 		printf("dident find any rows\n");
-		
+		(*collection) = NULL;		
 	}
 	else {
 
@@ -1089,31 +1097,32 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 
 int cm_handle_crawlcanconect(MYSQL *db, char cvalue[]) {
 
-	struct collectionFormat *collection;
+	struct collectionFormat *collections = NULL;
 	int nrofcollections;
 	int i;
 
 	printf("cm_handle_crawlcanconect (%s)\n",cvalue);
 
-	cm_searchForCollection(db, cvalue,&collection,&nrofcollections);
+	cm_searchForCollection(db, cvalue,&collections,&nrofcollections);
+
 	printf("crawlcanconect: cm_searchForCollection done\n");
 	if (nrofcollections == 1) {
 		
 		#ifndef DEBUG
 		//Temp: funger ikke når vi kompilerer debug. Må også compilere crawlManager debug
 		//make a conectina for add to use
-		if (!bbdn_conect(&collection[0].socketha,"",global_bbdnport)) {
+		if (!bbdn_conect(&collections[0].socketha,"",global_bbdnport)) {
 			//berror("can't conect to bbdn (boitho backend document server)\n");
 			return 0;
 		}
 
-		if (!cmr_crawlcanconect(global_h,&collection[0])) {
+		if (!cmr_crawlcanconect(global_h,&collections[0])) {
 			return 0;
 		}
 
 		//ber bbdn om å lukke
 		printf("closeing bbdn con\n");
-                bbdn_close(&collection[0].socketha);
+                bbdn_close(&collections[0].socketha);
 		#endif
 	}
 	else {
@@ -1121,7 +1130,7 @@ int cm_handle_crawlcanconect(MYSQL *db, char cvalue[]) {
 	}
 
 
-	sm_collectionfree(&collection,nrofcollections);
+	sm_collectionfree(&collections,nrofcollections);
 
 	return 1;
 }
@@ -1437,20 +1446,22 @@ rewriteurl(MYSQL *db, char *collection, char *uri, size_t len, enum platform_typ
 	struct crawlLibInfoFormat *crawlLibInfo;
 	struct collectionFormat *collections;
 	int nrofcollections;
+	int forret = 1;
 
 	cm_searchForCollection(db, collection,&collections,&nrofcollections);
 
 	if (!cm_getCrawlLibInfo(global_h,&crawlLibInfo,collections->connector)) {
 		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.");
 		//exit(1);
-		return 0;
+		forret = 0;
+	}
+	else if (crawlLibInfo->rewrite_url == NULL || !((*crawlLibInfo->rewrite_url)(uri, ptype, btype))) {
+		forret = 0;
 	}
 
-	if (crawlLibInfo->rewrite_url == NULL || !((*crawlLibInfo->rewrite_url)(uri, ptype, btype)))
-		return 0;
+	sm_collectionfree(&collections,nrofcollections);
 
-
-	return 1;
+	return forret;
 
 }
 
@@ -1463,6 +1474,7 @@ void connectHandler(int socket) {
 	char *berrorbuf;
 	struct timeval start_time_all, end_time_all;
 	struct timeval start_time, end_time;
+	int count = 0;
 	
         printf("got new connection\n");
 
@@ -1551,15 +1563,36 @@ void connectHandler(int socket) {
 
 			struct collectionFormat *collections;
 			int nrofcollections;
+			struct collection_lockFormat collection_lock;
 
+			//Tester om noen har en lås på collectionen. Hvis de har de må vi la være i slette den, 
+			//hvis ikke vil bbdn opprette den på ny
+			if (!crawl_lock(&collection_lock,collection)) {
+				intresponse=0;
+				sendall(socket,&intresponse, sizeof(int));
+				char errormsg[] = { "Can't delete collection, it's being crawled." };
 
-			//ikke mye nyttig som skjer her egentlig. Tvinger klienten bare til 
-			//å vente her, slik at vi får satt noen statusmeldinger i databasen om 
-			//at ting er på gang
-			intresponse=1;
-			sendall(socket,&intresponse, sizeof(int));
+				len = (strlen(errormsg) +1);
+				sendall(socket,&len, sizeof(int));			
+				sendall(socket,&errormsg, len);		
+				
 
-			bbdocument_deletecoll(collection);
+			}
+			else {
+
+				//ikke mye nyttig som skjer her egentlig. Tvinger klienten bare til 
+				//å vente her, slik at vi får satt noen statusmeldinger i databasen om 
+				//at ting er på gang
+				intresponse=1;
+				sendall(socket,&intresponse, sizeof(int));
+
+				bbdocument_deletecoll(collection);
+
+				crawl_unlock(&collection_lock);
+
+			}
+
+			
 
 
 		}
@@ -1581,7 +1614,7 @@ void connectHandler(int socket) {
 			printf("gor scan job:\ncrawlertype %s\nhost %s\nusername %s\npassword %s\n",crawlertype,host,username,password);
 
 			if (!scan (global_h,&shares,&nrofshares,crawlertype,host,username,password)) {
-				printf("aa cant scan\n");
+				printf("aa can't scan\n");
 				socketsendsaa(socket,&shares,0);
 				printf("bb\n");
 				sprintf(errormsg,"Can't scan.");
@@ -1658,7 +1691,7 @@ void connectHandler(int socket) {
 
 				berrorbuf = bstrerror();	
 
-				printf("cant conect! berrorbuf \"%s\"\n",berrorbuf);
+				printf("can't connect! error: \"%s\"\n",berrorbuf);
 
 
 				len = strlen(berrorbuf) +1;
@@ -1731,6 +1764,10 @@ void connectHandler(int socket) {
 
 	}
 	printf("end of packed\n");
+
+        ++count;
+
+
 }
 
 #ifdef WITH_PATHACCESS_CACHE
@@ -1816,4 +1853,9 @@ int main (int argc, char *argv[]) {
 	cm_start(&global_h);
 
 	sconnect(connectHandler, crawlport);
+
+
+	maincfgclose(&maincfg);
+
 }
+
