@@ -11,7 +11,8 @@ SERVER = suggest_server
 
 SOURCES_CLNT.c = 
 SOURCES_CLNT.h = 
-SOURCES_SVC.c = ../suggest/suggest.c ../suggest/suffixtree.c ../suggest/acl.c
+SOURCES_SVC.c = ../suggest/suggest.c ../suggest/suffixtree.c ../suggest/acl.c ../3pLibs/keyValueHash/hashtable.c \
+	../common/ht.c
 SOURCES_SVC.h = 
 SOURCES.x = suggest.x
 
@@ -27,7 +28,7 @@ OBJECTS_SVC = $(SOURCES_SVC.c:%.c=%.o) $(TARGETS_SVC.c:%.c=%.o)
 
 CPPFLAGS += -D_REENTRANT
 CFLAGS += -g  -DWITH_ACL
-LDLIBS += -lnsl -lpthread 
+LDLIBS += -lnsl -lpthread -lm
 RPCGENFLAGS = 
 
 # Targets 

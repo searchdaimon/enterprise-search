@@ -15,6 +15,7 @@
 #include "../common/stdlib.h"
 #include "../common/bstr.h"
 #include "../common/boithohome.h"
+#include "../common/ht.h"
 
 
 #include "../3pLibs/keyValueHash/hashtable.h"
@@ -80,7 +81,7 @@ int dictionarywordLineSplit(char line[], char word[], unsigned int *nr, char *ac
 }
 
 int
-add_acls(char *acl, set *s)
+add_acls(char *acl, set *s, struct hashtable *aclshash)
 {
 	char **acls;
 	int a, i;
@@ -88,12 +89,19 @@ add_acls(char *acl, set *s)
 	if (split(acl, ",", &acls) == -1)
 		return 0;
 	for (i = 0; acls[i] != NULL; i++) {
+		char *entry;
 		if (strcmp(acls[i], "") == 0) {
 			free(acls[i]);
 			continue;
 		}
-		if (set_add(s, acls[i]) == 2)
+		if ((entry = hashtable_search(aclshash, acls[i])) == NULL) {
+			entry = acls[i];
+			hashtable_insert(aclshash, acls[i], acls[i]);
+		} else {
 			free(acls[i]);
+		}
+		if (set_add(s, entry) == 2)
+			;
 	}
 	free(acls);
 
@@ -101,13 +109,14 @@ add_acls(char *acl, set *s)
 }
 
 void
-dolot(unsigned int lotNr, char *subname, struct hashtable *h)
+dolot(unsigned int lotNr, char *subname, struct hashtable *h, struct hashtable *aclshash)
 {
 	FILE *FH;
 	char line[512];
 	char word[maxWordlLen +1];
 	char *filesKey;
 	unsigned int nr;
+
 
 	if ((FH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords_raw","r",'r',subname)) == NULL)
 		return;
@@ -132,8 +141,8 @@ dolot(unsigned int lotNr, char *subname, struct hashtable *h)
 			dc->hits = nr;
 			set_init(&dc->acl_allow);
 			set_init(&dc->acl_denied);
-			add_acls(acl_allow, &dc->acl_allow);
-			add_acls(acl_denied, &dc->acl_denied);
+			add_acls(acl_allow, &dc->acl_allow, aclshash);
+			add_acls(acl_denied, &dc->acl_denied, aclshash);
 
                         if (!hashtable_insert(h, filesKey, dc)) {
                         	printf("cant insert\n");
@@ -142,8 +151,8 @@ dolot(unsigned int lotNr, char *subname, struct hashtable *h)
 
                 }
                 else {
-			add_acls(acl_allow, &dc->acl_allow);
-			add_acls(acl_denied, &dc->acl_denied);
+			add_acls(acl_allow, &dc->acl_allow, aclshash);
+			add_acls(acl_denied, &dc->acl_denied, aclshash);
 			dc->hits += nr;
                 }
 	}
@@ -157,6 +166,8 @@ int main (int argc, char *argv[]) {
 	struct hashtable *h;
 	struct hashtable_itr *itr;
 	int all = 0;
+	struct hashtable *aclshash;
+
 
 	if (argc >= 2 && strcmp(argv[1], "all") == 0) {
 		all = 1;
@@ -167,11 +178,12 @@ int main (int argc, char *argv[]) {
 	}
 
 	h = create_hashtable(200, fileshashfromkey, filesequalkeys);
+	aclshash = create_hashtable(101, ht_stringhash, ht_stringcmp);
 	if (all == 0) {
 		unsigned int lotNr = atou(argv[1]);
 		char *subname = argv[2];
 
-		dolot(lotNr, subname, h);
+		dolot(lotNr, subname, h, aclshash);
 	} else {
 		char pathname[PATH_MAX];
 		FILE *map;
@@ -221,7 +233,7 @@ int main (int argc, char *argv[]) {
 					/* XXX: Use stat(2) instead? */
 					if ((tmpfh = fopen(pathname, "r")) != NULL) {
 						fclose(tmpfh);
-						dolot(atoi(de2->d_name), de3->d_name, h);
+						dolot(atoi(de2->d_name), de3->d_name, h, aclshash);
 					}
 				}
 				closedir(d3);
@@ -254,6 +266,7 @@ int main (int argc, char *argv[]) {
 				if (i > 0)
 					fprintf(resultFH, ",");
 				fprintf(resultFH, "%s", p);
+				//printf("Got soemthing here: %s\n", p);
 				//printf("\t%s\n", p);
 			}
 			fprintf(resultFH, " ");
@@ -265,8 +278,8 @@ int main (int argc, char *argv[]) {
 				//printf("\t%s\n", p);
 			}
 			fprintf(resultFH, "\n");
-			set_free_all(&dc->acl_allow);
-			set_free_all(&dc->acl_denied);
+			//set_free_all(&dc->acl_allow);
+			//set_free_all(&dc->acl_denied);
                 } while (hashtable_iterator_advance(itr));
                 free(itr);
 	}

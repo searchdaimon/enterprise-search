@@ -9,6 +9,8 @@
 #include <time.h>
 
 #include "../common/bstr.h"
+#include "../3pLibs/keyValueHash/hashtable.h"
+#include "../common/ht.h"
 
 #include "suggest.h"
 #include "suffixtree.h"
@@ -16,7 +18,7 @@
 
 
 int
-suggest_add_item(struct suggest_data *sd, char *word, int freq, char *aclallow, char *acldeny)
+suggest_add_item(struct suggest_data *sd, char *word, int freq, char *aclallow, char *acldeny, struct hashtable *acls)
 {
 	struct suggest_input *si;
 
@@ -31,12 +33,12 @@ suggest_add_item(struct suggest_data *sd, char *word, int freq, char *aclallow, 
 	}
 	si->frequency = freq;
 #ifdef WITH_ACL
-	si->aclallow = acl_parse_list(aclallow);
+	si->aclallow = acl_parse_list(aclallow, acls);
 	if (si->aclallow == NULL) {
 		perror("acl_parse_list(aclallow)");
 		return -1;
 	}
-	si->acldeny = acl_parse_list(acldeny);
+	si->acldeny = acl_parse_list(acldeny, acls);
 	if (si->acldeny == NULL) {
 		perror("acl_parse_list(acldeny)");
 		return -1;
@@ -91,6 +93,9 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 	char word[1024];
 	char aclallow[1024];
 	char acldeny[1024];
+	struct hashtable *acls;
+
+	acls = create_hashtable(101, ht_stringhash, ht_stringcmp);
 
 	if ((fp = fopen(wordlist, "r")) == NULL)
 		return -1;
@@ -142,7 +147,7 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 			free(linedata);
 		}
 		//printf("%s <=> %d\nGot acl allow: %s\nGot acl deny: %s\n", word, freq, aclallow, acldeny);
-		if (suggest_add_item(sd, word, freq, aclallow, acldeny) == -1) {
+		if (suggest_add_item(sd, word, freq, aclallow, acldeny, acls) == -1) {
 			perror("suggest_add_item()");
 		}
 

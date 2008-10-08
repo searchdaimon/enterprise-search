@@ -7,6 +7,7 @@
 
 #include "acl.h"
 #include "../boithoadClientLib/liboithoaut.h"
+#include "../3pLibs/keyValueHash/hashtable.h"
 
 #define MIN(x,y) ((x) > (y) ? (y) : (x))
 
@@ -67,7 +68,7 @@ acl_in_list(char *group, char **list)
 }
 
 char **
-acl_parse_list(char *list)
+acl_parse_list(char *list, struct hashtable *aclshash)
 {
 	char *p, *p2;
 	char **acls;
@@ -78,6 +79,7 @@ acl_parse_list(char *list)
 	acls = NULL;
 	for (p = list, i = 0; p != NULL; p = p2+1, i++) {
 		unsigned int len;
+		char *aclentry, *newentry;
 
 		if (aclsize < i+1) {
 			if (aclsize == 0)
@@ -90,7 +92,14 @@ acl_parse_list(char *list)
 		}
 		p2 = strchr(p, ',');
 		len = p2 == NULL ? strlen(p) : (unsigned int)(p2 - p);
-		acls[i] = strndup(p, len);
+		aclentry = strndup(p, len);
+		if ((newentry = hashtable_search(aclshash, aclentry)) == NULL) {
+			newentry = aclentry;
+			hashtable_insert(aclshash, newentry, newentry);
+		} else {
+			free(aclentry);
+		}
+		acls[i] = newentry;
 
 		if (p2 == NULL) {
 			i++;
