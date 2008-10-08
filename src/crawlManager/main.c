@@ -110,7 +110,7 @@ int documentContinue(struct collectionFormat *collection) {
 	//
 	if ( recrawl_schedule_start > recrawl_schedule_end ) {
 
-		if ((t->tm_hour < recrawl_schedule_start) && (t->tm_hour > recrawl_schedule_end)) {
+		if ((t->tm_hour < recrawl_schedule_start) && (t->tm_hour >= recrawl_schedule_end)) {
 			printf("scenario 1: to early, wont crawl\n");
 			return 0;
 		}
@@ -121,7 +121,7 @@ int documentContinue(struct collectionFormat *collection) {
 			printf("scenario 2: to early, wont crawl\n");
 			return 0;
 		}
-		else if (t->tm_hour > recrawl_schedule_end) {
+		else if (t->tm_hour >= recrawl_schedule_end) {
 			printf("scenario 2: to late, wont crawl\n");
 			return 0;
 		}
