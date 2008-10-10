@@ -41,6 +41,8 @@ struct collectionFormat {
 	unsigned int rate;
         // 30 juni 2008
         struct hashtable * params;
+	//9okt 2008
+	void *timeusage;
 };
 
 struct crawldocumentExistFormat {

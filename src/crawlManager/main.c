@@ -62,19 +62,85 @@ void mc_add_servers(void);
 
 int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],int *nrofcollections);
 
+struct cm_timeusageElementFormat {
+	int count;
+	double time;
+	struct timeval lastStartTime;
+	struct timeval lastEndTime;
+};
+
+struct cm_timeusageFormat {
+	struct cm_timeusageElementFormat documentContinuet;
+	struct cm_timeusageElementFormat documentExistt;
+	struct cm_timeusageElementFormat documentAddt;
+	struct timeval StartTime;
+	struct timeval EndTime;
+};
+
+void cm_timeusageElementTimeStart(struct cm_timeusageElementFormat *cm_timeusageElement) {
+
+	++cm_timeusageElement->count;
+	gettimeofday(&cm_timeusageElement->lastStartTime, NULL);
+}
+void cm_timeusageElementTimeEnd(struct cm_timeusageElementFormat *cm_timeusageElement) {
+	gettimeofday(&cm_timeusageElement->lastEndTime, NULL);
+	cm_timeusageElement->time += getTimeDifference(&cm_timeusageElement->lastStartTime,&cm_timeusageElement->lastEndTime);
+}
+
+struct cm_timeusageFormat * cm_timeusage_start() {
+	struct cm_timeusageFormat *cm_timeusage;
+
+	cm_timeusage = malloc(sizeof(struct cm_timeusageFormat));
+
+	cm_timeusage->documentContinuet.count = 0;
+	cm_timeusage->documentContinuet.time = 0;
+
+	cm_timeusage->documentExistt.count = 0;
+	cm_timeusage->documentExistt.time = 0;
+
+	cm_timeusage->documentAddt.count = 0;
+	cm_timeusage->documentAddt.time = 0;
+
+	gettimeofday(&cm_timeusage->StartTime, NULL);
+
+	return cm_timeusage;
+}
+void cm_timeusage_free(struct cm_timeusageFormat *cm_timeusage) {
+
+	double alltime;
+
+	gettimeofday(&cm_timeusage->EndTime, NULL);
+	alltime = getTimeDifference(&cm_timeusage->StartTime,&cm_timeusage->EndTime);
+
+
+	printf("\tdocumentContinue.count %i\n",cm_timeusage->documentContinuet.count);
+	printf("\tdocumentContinue.time %f\n",cm_timeusage->documentContinuet.time);
+
+	printf("\tdocumentExist.count %i\n",cm_timeusage->documentExistt.count);
+	printf("\tdocumentExist.time %f\n",cm_timeusage->documentExistt.time);
+
+	printf("\tdocumentAdd.count %i\n",cm_timeusage->documentAddt.count);
+	printf("\tdocumentAdd.time %f\n",cm_timeusage->documentAddt.time);
+
+	printf("Total time usage %f\n",alltime);
+
+	free(cm_timeusage);
+}
+
+
 int documentContinue(struct collectionFormat *collection) {
 
+	cm_timeusageElementTimeStart( &(*(struct cm_timeusageFormat *)collection->timeusage).documentContinuet);
+
+	#ifdef DEBUG
 	printf("documentContinue: start\n");
+	#endif
 
 	int recrawl_schedule_start, recrawl_schedule_end;
 	struct tm *t;
 	time_t now;
+	int forret = 1;
 
-	//hvis vi skal crawl oftere en hvert dågn bruker vi ikke schedule time, men tilater å crawl hele tiden.
-	if ( (collection->rate != 0) && (collection->rate < 1440)) {
-		printf("documentContinue: Collection is set to be recrawled every %i min, ignoring schedule time\n",collection->rate);
-		return 1;
-	}
 
 
 	bconfig_flush(CONFIG_CACHE_IS_OK);
@@ -90,13 +156,19 @@ int documentContinue(struct collectionFormat *collection) {
 	now = time(NULL);
 	t = localtime(&now);	
 
+	#ifdef DEBUG
 	printf("now: %i,recrawl_schedule_start %i,recrawl_schedule_end %i\n",t->tm_hour,recrawl_schedule_start,recrawl_schedule_end);
+	#endif
 
-	//hvis vi ikke har noen begrensning så er det bare å crawler på
-	if ((recrawl_schedule_start == 0) || (recrawl_schedule_end == 0)) {
-		return 1;
+	//hvis vi skal crawl oftere en hvert dågn bruker vi ikke schedule time, men tilater å crawl hele tiden.
+	if ( (collection->rate != 0) && (collection->rate < 1440)) {
+		printf("documentContinue: Collection is set to be recrawled every %i min, ignoring schedule time\n",collection->rate);
+		forret = 1;
 	}
-
+	//hvis vi ikke har noen begrensning så er det bare å crawler på
+	else if ((recrawl_schedule_start == 0) || (recrawl_schedule_end == 0)) {
+		forret = 1;
+	}
 	//tar en avgjørelse om vi skal fortsette å crawle
 	//vi har to scenarioer, 
 	// 1: start er større en slutt tidspungete, og er dermed i fremtiden
@@ -108,35 +180,42 @@ int documentContinue(struct collectionFormat *collection) {
 	//	start 10, end 12
 	//	kl nå 14
 	//
-	if ( recrawl_schedule_start > recrawl_schedule_end ) {
+	else if ( recrawl_schedule_start > recrawl_schedule_end ) {
 
 		if ((t->tm_hour < recrawl_schedule_start) && (t->tm_hour >= recrawl_schedule_end)) {
 			printf("scenario 1: to early, wont crawl\n");
-			return 0;
+			forret = 0;
 		}
 
 	}
 	else {
 		if (t->tm_hour < recrawl_schedule_start) {
 			printf("scenario 2: to early, wont crawl\n");
-			return 0;
+			forret = 0;
 		}
 		else if (t->tm_hour >= recrawl_schedule_end) {
 			printf("scenario 2: to late, wont crawl\n");
-			return 0;
+			forret =  0;
 		}
 
 	}
 
+	#ifdef DEBUG
 	printf("hour is now %i, will crawl\n",t->tm_hour);
-
 	printf("documentContinue: end\n");
 
-	return 1;
+	#endif
+
+
+	cm_timeusageElementTimeEnd( &(*(struct cm_timeusageFormat *)collection->timeusage).documentContinuet);
+
+	return forret;
 }
 
 int documentExist(struct collectionFormat *collection, struct crawldocumentExistFormat *crawldocumentExist) {
 	int ret;
+
+	cm_timeusageElementTimeStart( &(*(struct cm_timeusageFormat *)collection->timeusage).documentExistt);
 
 	#ifdef DEBUG
 	printf("documentExist: start\n");
@@ -147,6 +226,8 @@ int documentExist(struct collectionFormat *collection, struct crawldocumentExist
 	#ifdef DEBUG
 	printf("documentExist: end\n");
 	#endif
+
+	cm_timeusageElementTimeEnd( &(*(struct cm_timeusageFormat *)collection->timeusage).documentExistt);
 
 	return ret;
 }
@@ -177,6 +258,9 @@ int documentError(struct collectionFormat *collection,int level, const char *fmt
 }
 
 int documentAdd(struct collectionFormat *collection, struct crawldocumentAddFormat *crawldocumentAdd) {
+
+	cm_timeusageElementTimeStart( &(*(struct cm_timeusageFormat *)collection->timeusage).documentAddt);
+
 	#ifdef DEBUG
 	printf("documentAdd start\n");
 	#endif
@@ -224,6 +308,8 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 	#ifdef DEBUG
 	printf("documentAdd end\n");
 	#endif
+
+	cm_timeusageElementTimeEnd( &(*(struct cm_timeusageFormat *)collection->timeusage).documentAddt);
 
 	return 1;
 }
@@ -1154,6 +1240,7 @@ int crawl_element_unlock(struct collection_lockFormat *collection_lock) {
 	return 1;
 }
 
+
 int crawl (struct collectionFormat *collection,int nrofcollections, int flag, char *extra) {
 
 
@@ -1225,7 +1312,12 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 
 			continue;
 		}
-		
+
+
+		//inialiserer strukturen som viser hvor lang tid vi bruker;
+		collection[i].timeusage = cm_timeusage_start();
+
+
 	
 		//make a conectina to bbdn for add to use
 		if (!bbdn_conect(&collection[i].socketha,"",global_bbdnport)) {
@@ -1275,6 +1367,8 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 		crawl_element_unlock(&collection_lock);
 
 		blog(LOGACCESS,1,"Finished crawling of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
+
+		cm_timeusage_free(collection[i].timeusage);
 
 	}
 
