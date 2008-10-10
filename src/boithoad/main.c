@@ -78,19 +78,38 @@ int ldap_connect(LDAP **ld, const char ldap_host[] , int ldap_port,const char ba
    int desired_version = LDAP_VERSION3;
    //char root_dn[512]; 
 	
-   printf("host %s, user %s, base %s\n",ldap_host,distinguishedName,base);
+   printf("ldap_connect(host=%s, user=%s, base=%s)\n",ldap_host,distinguishedName,base);
+
+   #ifdef DEBUG
+   //setter at ldap også skal vise debug info
+   int debug = 1;
+   if( ber_set_option( NULL, LBER_OPT_DEBUG_LEVEL, &debug ) != LBER_OPT_SUCCESS ) {
+                fprintf( stderr, "Could not set LBER_OPT_DEBUG_LEVEL %d\n", debug );
+		exit(-1);
+   }
+   if( ldap_set_option( NULL, LDAP_OPT_DEBUG_LEVEL, &debug )
+                        != LDAP_OPT_SUCCESS )
+   {
+   	fprintf( stderr, "Could not set LDAP_OPT_DEBUG_LEVEL %d\n", debug );
+	exit(-1);
+   }
+   #endif
+
 
    if (((*ld) = (LDAP *)ldap_init(ldap_host, ldap_port)) == NULL) {
       perror("ldap_init failed");
       return RETURN_FAILURE;
    }
 
+
+   printf("~ldap_init\n");
    /* referrals */
    if( ldap_set_option( (*ld), LDAP_OPT_REFERRALS, LDAP_OPT_OFF ) != LDAP_OPT_SUCCESS )
    {
         fprintf( stderr, "Could not set LDAP_OPT_REFERRALS off\n" );
 	exit( EXIT_FAILURE );
    }
+   printf("~ldap_set_option\n");
 
    /* set the LDAP version to be 3 */
    if (ldap_set_option((*ld), LDAP_OPT_PROTOCOL_VERSION, &desired_version) != LDAP_OPT_SUCCESS)
@@ -98,15 +117,33 @@ int ldap_connect(LDAP **ld, const char ldap_host[] , int ldap_port,const char ba
       ldap_perror((*ld), "ldap_set_option");
 	return RETURN_FAILURE;
    }
+   printf("~ldap_set_option\n");
 
+   //hvis vi vil bruke sasl tilkobling. Tror det er en type secure layer tilkobling, men er ikke sikker.
+   #if 0
+   struct berval cred;
+   cred.bv_val = password;
+   cred.bv_len = strlen(password);
+   struct berval *msgidp=NULL;
+
+
+   if (ldap_sasl_bind_s((*ld), distinguishedName, LDAP_SASL_SIMPLE, &cred, NULL, NULL,&msgidp) != LDAP_SUCCESS ) {
+	fprintf(stderr,"Can't conect. Tryed to bind ldap server at %s:%i\n",ldap_host,ldap_port);
+      ldap_perror( (*ld), "ldap_bind" );
+    	return RETURN_FAILURE;
+   }
+   #else
    if (ldap_bind_s((*ld), distinguishedName, password, auth_method) != LDAP_SUCCESS ) {
 	fprintf(stderr,"Can't conect. Tryed to bind ldap server at %s:%i\n",ldap_host,ldap_port);
       ldap_perror( (*ld), "ldap_bind" );
     	return RETURN_FAILURE;
    }
+   #endif
+   printf("~ldap_bind_s\n");
 
+   printf("~/ldap_connect\n");
 	//alt er vel. Ingen ting her feilet
-	return RETURN_SUCCESS;
+   return RETURN_SUCCESS;
 
 }
 
@@ -239,18 +276,26 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
   	char **attrs;
   	int TokCount;
 
+	#ifdef DEBUG
   	printf("Splitting: \"%s\" on \"%s\"\n", vantattrs, ",");
+	#endif
 
   	TokCount = split(vantattrs, ",", &attrs);
+
+	#ifdef DEBUG
   	printf("\tfound %d token(s):\n", TokCount);
+	#endif
 
   	count = 0;
   	while( (attrs[count] != NULL) ) {
+		#ifdef DEBUG
     		printf("\t\t%d\t\"%s\"\n", count, attrs[count]);
+		#endif
 		count++;
 	}
+	#ifdef DEBUG
 	printf("\n");
-
+	#endif
 
    	BerElement* ber;
    	LDAPMessage* msg = NULL;
@@ -275,13 +320,19 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
 
 	int rc;
 
+	#ifdef DEBUG
 	printf("trying to ldap_search_ext ...\n");
+	#endif
    	// ldap_search() returns -1 if there is an error, otherwise the msgid 
    	if ((rc = ldap_search_ext((*ld), ldap_base, LDAP_SCOPE_SUBTREE, filter, attrs, 0, NULL , NULL,&ldap_time_out, ldap_sizelimit,&msgid)) == -1) {
    	   ldap_perror( ld, "ldap_search" );
    	   return RETURN_FAILURE;
    	}
+
+	#ifdef DEBUG
 	printf("... ldap_search_ext done\n");
+	#endif
+
         if( rc != LDAP_SUCCESS ) {
                 fprintf( stderr, "%s: ldap_search_ext: %s (%d)\n",
                         __FILE__, ldap_err2string( rc ), rc );
@@ -293,7 +344,7 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
 	static char     *sortattr = NULL;
 	LDAPMessage *res;
 
-	printf("LDAP_RES_SEARCH_ENTRY %i\nLDAP_RES_SEARCH_REFERENCE %i\nLDAP_RES_EXTENDED %i\nLDAP_RES_SEARCH_RESULT %i\nLDAP_RES_INTERMEDIATE %i\n\n",LDAP_RES_SEARCH_ENTRY,LDAP_RES_SEARCH_REFERENCE,LDAP_RES_EXTENDED,LDAP_RES_SEARCH_RESULT,LDAP_RES_INTERMEDIATE);
+	//printf("LDAP_RES_SEARCH_ENTRY %i\nLDAP_RES_SEARCH_REFERENCE %i\nLDAP_RES_EXTENDED %i\nLDAP_RES_SEARCH_RESULT %i\nLDAP_RES_INTERMEDIATE %i\n\n",LDAP_RES_SEARCH_ENTRY,LDAP_RES_SEARCH_REFERENCE,LDAP_RES_EXTENDED,LDAP_RES_SEARCH_RESULT,LDAP_RES_INTERMEDIATE);
 
 	nrOfSearcResults = 0;
 	list_init(&list,free);
@@ -303,14 +354,17 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
                 sortattr ? LDAP_MSG_ALL : LDAP_MSG_ONE,
                 NULL, &res )) > 0 )
         {
+		#ifdef DEBUG
 		printf("result:\n");
-
+		#endif
 	
                 for ( msg = ldap_first_message( (*ld), res );
                         msg != NULL;
                         msg = ldap_next_message( (*ld), msg ) )
                 {
+			#ifdef DEBUG
 			printf("\ttype %i\n", ldap_msgtype( msg ) );
+			#endif
 
 			switch( ldap_msgtype( msg ) ) {
                         case LDAP_RES_SEARCH_ENTRY:
@@ -436,7 +490,7 @@ done:
 	(*nrofresponses) = 0;
 	tempresults = NULL;
 	while(list_rem_next(&list,NULL,(void **)&tempresults) == 0) {
-		printf("aaa \"%s\":\"%s\"\n",(*tempresults).key,(*tempresults).value);
+		//printf("aaa \"%s\":\"%s\"\n",(*tempresults).key,(*tempresults).value);
 
 		len = strnlen((*tempresults).value,MAX_LDAP_ATTR_LEN);
 
@@ -444,7 +498,7 @@ done:
 
 		strscpy((*respons)[(*nrofresponses)],(*tempresults).value,len +1);
 
-		printf("into \"%s\"\n",(*respons)[(*nrofresponses)]);
+		//printf("into \"%s\"\n",(*respons)[(*nrofresponses)]);
 
 		free(tempresults);
 		++(*nrofresponses);
@@ -665,12 +719,14 @@ insert_group(struct hashtable *grouphash, char *id)
 
 
 void
-gather_groups(struct hashtable *grouphash, LDAP **ld, char *ldap_base, char *sid)
+gather_groups(struct hashtable *grouphash, LDAP **ld, const char *ldap_base, char *sid)
 {
 	char filter[128];
 	char **response;
 	int nrOfSearcResults;
 	int i;
+
+	printf("gather_groups(ldap_base=%s, sid=%s)\n",ldap_base,sid);
 
 
 	/* XXX: hack */
@@ -723,7 +779,141 @@ gather_groups(struct hashtable *grouphash, LDAP **ld, char *ldap_base, char *sid
 		}
 		ldap_simple_free(response2);
 	}
-	ldap_simple_free(response);			
+	ldap_simple_free(response);		
+
+	printf("~gather_groups()\n");	
+}
+
+
+
+int getAllGroupsForUser(struct hashtable **grouphash, LDAP *ld, char *user_username, const char *msad_ldapgroupstring, const char *ldap_domain, const char *ldap_base ) {
+
+	int nrOfSearcResults;
+	char **respons;
+	char filter[128];
+
+
+	printf("getAllGroupsForUser(user_username=%s, msad_ldapgroupstrin=%s, ldap_domain=%s, ldap_base=%s)\n",user_username,msad_ldapgroupstring,ldap_domain,ldap_base);
+
+	char primarygroup[64];
+	char ldapbasegroup[128];
+	char *sid;
+	char *groupsid;
+	char *id;
+
+	/* We do not care about the specified ldap base when looking for groups */
+	/* XXX: Is this correct? */
+	if ((msad_ldapgroupstring == NULL) || (msad_ldapgroupstring[0] == '\0')) {
+		ldap_genBaseName(ldapbasegroup, ldap_domain);
+	}
+	else {
+		strscpy(ldapbasegroup, msad_ldapgroupstring,sizeof(ldapbasegroup));
+	}
+
+	printf("ldapbasegroup: %s\n",ldapbasegroup);
+	printf("groupsForUser\n");
+	printf("user_username %s\n",user_username);
+
+	fprintf(stderr, "Writing the cache\n");
+
+	/* Make hash table to temporarily hold all group info */
+	*grouphash = create_hashtable(7, boithoad_hashfromkey, boithoad_equalkeys);
+
+	/* First figure out the primary group */
+	/* 1. Get User SID */
+	sprintf(filter, "(sAMAccountName=%s)", user_username);
+	if (!ldap_simple_search(&ld, filter, "primaryGroupID,objectSid", &respons, &nrOfSearcResults, ldap_base)) {
+		printf("Unable to get userSID and primaryGroup\n");
+		printf("Filter: %s, attributes: %s\n", filter, "primaryGroupID,objectSid");
+		return 0;
+	}
+
+	sid = malloc(strlen(respons[*respons[0] == 'S' ? 0 : 1]) + 16);
+	strcpy(sid, respons[*respons[0] == 'S' ? 0 : 1]);
+	//printf("Sid: %s\n", sid);
+	if (!insert_group(*grouphash, sid)) {
+		free(sid);
+	}
+	else {
+		printf("calling gather_groups() ldapbasegroup=%s, sid=%s\n",ldapbasegroup, sid);
+		gather_groups(*grouphash, &ld, ldapbasegroup, sid);
+	}
+	/* 2. Replace last element */
+	groupsid = strdup(sid);
+	sid_replacelast(groupsid, respons[*respons[0] == 'S' ? 1 : 0]);
+	if (!insert_group(*grouphash, groupsid)) {
+		free(groupsid);
+	}
+	else {
+		printf("calling gather_groups() ldapbasegroup=%s, groupsid=%s\n",ldapbasegroup, groupsid);
+		gather_groups(*grouphash, &ld, ldapbasegroup, groupsid);
+	}
+	printf("Primary group: %s\n", groupsid);
+	printf("%p\n", respons);
+	ldap_simple_free(respons);			
+
+	/* 3. Get group name */
+	sprintf(filter, "(objectSid=%s)", groupsid);
+	if (!ldap_simple_search(&ld, filter, "sAMAccountName", &respons, &nrOfSearcResults, ldapbasegroup)) {
+		printf("Unable to get userSID and primaryGroup");
+		return 0;
+	}
+	if (nrOfSearcResults > 0) {
+		id = strdup(respons[0]);
+		if (!insert_group(*grouphash, id))
+			free(id);
+	} else {
+		fprintf(stderr, "Could not resolve primaryGroup name: %s\n", groupsid);
+	}
+	ldap_simple_free(respons);			
+
+	/* Add Everyone and the username for the user */
+	id = strdup("Everyone");
+	if (!insert_group(*grouphash, id))
+		free(id);
+	id = strdup("S-1-1-0"); /* The SID for Everyone */
+	if (!insert_group(*grouphash, id))
+		free(id);
+	id = strdup(user_username);
+	if (!insert_group(*grouphash, id))
+		free(id);
+
+
+	return 1;
+}
+
+int userIsLogedIn (char *user_username, const char *user_password, int time_out) {
+
+	int intresponse = 0;
+	struct AuthenticatedUserFormat *userobjekt;
+	time_t now = time(NULL);
+	
+	printf("userIsLogedIn(user_username=%s, user_password=%s)\n",user_username,user_password);
+
+	pthread_mutex_lock(&global_user_lock);
+		if ( (userobjekt  = hashtable_search(gloabal_user_h,user_username)) == NULL) {    
+			printf("not found!\n");
+			intresponse = 0;
+
+		}
+		else if ((now - userobjekt->ctime) >= time_out) {
+			printf("User objekt was to old. Was %u\n",now - userobjekt->ctime);
+			intresponse = 0;
+		}
+		else if ((strcmp(userobjekt->username,user_username) != 0) || ((strcmp(userobjekt->password,user_password)))) {
+			printf("user was already loged in, but pw og username was wrong!\n");
+			intresponse = 0;
+		}
+		else {
+	
+			intresponse = 1;
+
+		}                  
+	pthread_mutex_unlock(&global_user_lock);
+
+	printf("~userIsLogedIn, ret=%i\n",intresponse);
+
+	return intresponse;
 }
 
 int
@@ -736,6 +926,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 	char user_username[64];
         char user_password[64];
 	int i;
+	unsigned int authentication_timeout;
 
 	printf("got new connection\n");
 
@@ -745,11 +936,19 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 		blog(LOGACCESS, 1, "size is: %i\nversion: %i\ncommand: %i",packedHedder.size,packedHedder.version,packedHedder.command);
 		packedHedder.size = packedHedder.size - sizeof(packedHedder);
 
+		bconfig_flush(CONFIG_CACHE_IS_OK);
+
 		const char *authenticatmetod = bconfig_getentrystr("authenticatmetod");
+
+		//henter timeout. Hvis den er 0 så skal vi ikke cache.
+		if (bconfig_getentryuint("authentication_timeout", &authentication_timeout) == 0) {
+			authentication_timeout = 0;
+		}
+		//printf("resetting authentication timeout to %u\n",authentication_timeout);
+		cache_settimeout(cache, authentication_timeout);
 
 		if (strcmp(authenticatmetod,"msad") == 0) {
 			LDAP *ld = NULL;
-			char adminsdistinguishedName[512]; 
 			char ldaprecord[MAX_LDAP_ATTR_LEN];
 			struct AuthenticatedUserFormat *userobjekt;
 			char *k;
@@ -761,66 +960,68 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 			//nulstiller mine, slik at valgrind ikke klager når vi sender det.
 			memset(&ldaprecord,'\0',MAX_LDAP_ATTR_LEN);
 
-			//henter konfi verdier
-			//const char *msad_domain 	= bconfig_getentrystr("msad_domain");
-
+			//henter konfig verdier
 			const char *admin_username 	= bconfig_getentrystr("msad_user");
 			const char *admin_password 	= bconfig_getentrystr("msad_password");
 			const char *ldap_host 		= bconfig_getentrystr("msad_ip");
 			const char *ldap_domain 	= bconfig_getentrystr("msad_domain");
 			const int   ldap_port = 0; // runarb: 12 des 2007: er 0 riktig initalisering??
 			//bconfig_getentryint("msad_port",&ldap_port);
-			//const char *ldap_group 		= bconfig_getentrystr("msad_group");
+			//const char *ldap_group 	= bconfig_getentrystr("msad_group");
 			const char *msad_ldapstring 	= bconfig_getentrystr("msad_ldapstring");
+			const char *msad_ldapgroupstring = bconfig_getentrystr("msad_ldapgroupstring");
 			const char *msad_ldapbase 	= bconfig_getentrystr("msad_ldapbase");
 			const char *sudo		= bconfig_getentrystr("sudo");
 			char ldap_base[528] = "";
 
-			/* Flush config file and connect to ldap server */
-			int bad_ldap_connect(void) {
-				if (bconfig_flush(CONFIG_NO_CACHE) == 0) {
-					return 0;
-				}
 
-				if ((msad_ldapbase == NULL) || (msad_ldapbase[0] == '\0')) {
-					ldap_genBaseName(ldap_base,ldap_domain);
-				}
-				else {
-					strscpy(ldap_base,msad_ldapbase,sizeof(ldap_base));
-				}
-				if ((msad_ldapstring == NULL) || (msad_ldapstring[0] == '\0')) {
-					//sprintf(adminsdistinguishedName,"cn=%s,cn=%s,%s",admin_username,ldap_group,ldap_base);
-					//bruker brukernavn på formen user@domain.ttl
-					sprintf(adminsdistinguishedName,"%s@%s",admin_username,ldap_domain);
-				}
-				else {
-					strscpy(adminsdistinguishedName,msad_ldapstring,sizeof(adminsdistinguishedName));
-				}
+                        /* Flush config file and connect to ldap server */
+                        int bad_ldap_connect(void) {
 
-				if (!ldap_connect(&ld,ldap_host,ldap_port,ldap_base,adminsdistinguishedName,admin_password)) {
-					printf("can't connect to ldap server\n");
+				char adminsdistinguishedName[512];
+
+                                if ((msad_ldapbase == NULL) || (msad_ldapbase[0] == '\0')) {
+                                        ldap_genBaseName(ldap_base,ldap_domain);
+                                }
+                                else {
+                                        strscpy(ldap_base,msad_ldapbase,sizeof(ldap_base));
+                                }
+                                if ((msad_ldapstring == NULL) || (msad_ldapstring[0] == '\0')) {
+                                        //sprintf(adminsdistinguishedName,"cn=%s,cn=%s,%s",admin_username,ldap_group,ldap_base);
+                                        //bruker brukernavn på formen user@domain.ttl
+                                        sprintf(adminsdistinguishedName,"%s@%s",admin_username,ldap_domain);
+                                }
+                                else {
+                                        strscpy(adminsdistinguishedName,msad_ldapstring,sizeof(adminsdistinguishedName));
+                                }
+
+                                if (!ldap_connect(&ld,ldap_host,ldap_port,ldap_base,adminsdistinguishedName,admin_password)) {
+                                        printf("can't connect to ldap server\n");
 					blog(LOGERROR,1,"can't connect to ldap server. Useing server \"%s:%i\" (0 as port nr are OK), ldap_base \"%s\", adminsdistinguishedName \"%s\"",ldap_host,ldap_port,ldap_base,adminsdistinguishedName);
-					return 0;
-				}
+                                        return 0;
+                                }
 
-				return 1;
-			}
+                                return 1;
+                        }
+			
 
-			if (packedHedder.command != bad_groupsForUser && !bad_ldap_connect())
+			if ((packedHedder.command != bad_getPassword) && (packedHedder.command != bad_groupsForUser) && (packedHedder.command != bad_askToAuthenticate) && (!bad_ldap_connect()))
 				return 0;
 
 			if (packedHedder.command == bad_askToAuthenticate) {
+
+				int firstOkLogin = 0;
+				struct hashtable *grouphash;
+
+				intresponse = ad_userauthenticated_ERROR;
+
 				//lser brukernavn og passord
 				recvall(socket,user_username,sizeof(user_username));
 				recvall(socket,user_password,sizeof(user_password));
 
 				printf("got username \"%s\", password \"%s\"\n",user_username,user_password);
 
-				//struct AuthenticatedUserFormat *AuthenticatedUser;
-				//AuthenticatedUser = malloc(sizeof(struct AuthenticatedUserFormat));
 
-
-				printf("aa %i %i\n",RETURN_SUCCESS,EXIT_FAILURE);
 				printf("sudo: \"%s\"\n",sudo);
 
 				if ((sudo != NULL) && (strcmp(user_password,sudo) == 0)) {
@@ -828,37 +1029,75 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 					blog(LOGACCESS,1,"sudo to user \"%s\".",user_username);
 					intresponse = ad_userauthenticated_OK;
 				}
-				else if (ldap_authenticat (&ld,user_username,user_password,ldap_base,ldap_host,ldap_port)) {
-					printf("Main: user authenticated\n");
-					printf("user_username: \"%s\"\n",user_username);
-					blog(LOGACCESS,1,"user \"%s\" successfuly authenticated.",user_username);
+				else if (userIsLogedIn(user_username, user_password, authentication_timeout)) {
+					printf("user is already loged in. Returning ok\n");
 					intresponse = ad_userauthenticated_OK;
 				}
-				else {
-					blog(LOGERROR,1,"could not authenticate user \"%s\".",user_username);
-					intresponse = ad_userauthenticated_ERROR;
-					printf("Main: user NOT authenticated\n");
-				}
-
-				sendall(socket,&intresponse, sizeof(intresponse));
-
-				//leger brukeren til i logged inn oversikten
-
+				
+				//hvis vi her en ok respons allerede så trenger vi ikke å gjøre noe mer
 				if (intresponse == ad_userauthenticated_OK) {
-					k = strdup(user_username);
-					userobjekt = malloc(sizeof(struct AuthenticatedUserFormat));
-					strcpy((*userobjekt).username,user_username);
-					strcpy((*userobjekt).password,user_password);
-
-					printf("adding user \"%s\" to user hash\n",k);
-					pthread_mutex_lock(&global_user_lock);
-					if (!hashtable_insert(gloabal_user_h,k,userobjekt)) {    
-						pthread_mutex_unlock(&global_user_lock);
-						printf("can't isert user in userobjekt\n"); 
-						return 0;
-					}
-					pthread_mutex_unlock(&global_user_lock);
+					sendall(socket,&intresponse, sizeof(intresponse));
+					return 1;
 				}
+				else {
+
+					//vi må spørre ldap. Kobler til
+					if (!bad_ldap_connect())
+						return 0;
+
+
+					if (ldap_authenticat (&ld,user_username,user_password,ldap_base,ldap_host,ldap_port)) {
+						printf("Main: user authenticated\n");
+						printf("user_username: \"%s\"\n",user_username);
+						blog(LOGACCESS,1,"user \"%s\" successfuly authenticated.",user_username);
+						intresponse = ad_userauthenticated_OK;
+						firstOkLogin = 1;
+					}
+					else {
+						blog(LOGERROR,1,"could not authenticate user \"%s\".",user_username);
+						intresponse = ad_userauthenticated_ERROR;
+						printf("Main: user NOT authenticated\n");
+					}
+
+					sendall(socket,&intresponse, sizeof(intresponse));
+
+					//leger brukeren til i logged inn oversikten
+					if (firstOkLogin == 1) {
+						k = strdup(user_username);
+						userobjekt = malloc(sizeof(struct AuthenticatedUserFormat));
+						strcpy(userobjekt->username,user_username);
+						strcpy(userobjekt->password,user_password);
+						userobjekt->ctime = time(NULL);
+
+						printf("adding user \"%s\" to user hash\n",k);
+						pthread_mutex_lock(&global_user_lock);
+							//fjerner eventuelt gammelt brukerobjekt.
+							struct AuthenticatedUserFormat *v;
+							v = hashtable_remove(gloabal_user_h, k);
+							if (v != NULL)
+								free(v);
+	
+							//setter inn nyt btukerobjekt
+							if (!hashtable_insert(gloabal_user_h,k,userobjekt)) {    
+								pthread_mutex_unlock(&global_user_lock);
+								printf("can't isert user in userobjekt\n"); 
+								return 0;
+							}
+						pthread_mutex_unlock(&global_user_lock);
+					}
+
+					//finner brukerens grupper, og cacher disse
+					if ((firstOkLogin == 1) && (authentication_timeout != 0)) {
+						
+						if (!getAllGroupsForUser(&grouphash, ld, user_username, msad_ldapgroupstring, ldap_domain, ldap_base)) {
+							printf("can't find group info for user \"%s\"\n",user_username);
+						}
+						else {
+							cache_add(cache, "groupsforuser", user_username, grouphash);
+						}
+					}
+				}
+
 
 			}
 			else if (packedHedder.command == bad_listGroups) {
@@ -890,7 +1129,8 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 			else if (packedHedder.command == bad_listUsers) {
 
 
-				sprintf(filter,"(objectClass=user)");			
+				//sprintf(filter,"(objectClass=user)");			
+				sprintf(filter,"(&(objectCategory=person)(objectClass=user))");			
 				if (!ldap_simple_search(&ld,filter,"sAMAccountName",&respons,&nrOfSearcResults,ldap_base)) {
 					printf("can't ldap search\n");
 					intresponse = 0;
@@ -964,11 +1204,12 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 					ldap_simple_free(respons);
 				}
 			}
-
 			else if (packedHedder.command == bad_sidToUser) {
 				char objectSid[512];
 
 				recvall(socket,objectSid,sizeof(objectSid));
+
+				printf("runing bad_sidToUser(objectSid=\"%s\")\n",objectSid);
 
 				sprintf(filter,"(&(objectSid=%s)(objectClass=user))", objectSid);			
 				if (!ldap_simple_search(&ld,filter,"sAMAccountName",&respons,&nrOfSearcResults,ldap_base) || nrOfSearcResults != 1) {
@@ -988,16 +1229,41 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 					ldap_simple_free(respons);
 				}
 			}
+			else if (packedHedder.command == bad_sidToGroup) {
+
+				char objectSid[512];
+
+				recvall(socket,objectSid,sizeof(objectSid));
+
+				printf("runing bad_sidToGroup(objectSid=\"%s\")\n",objectSid);
+
+
+				//sprintf(filter,"(&(objectSid=%s)(objectClass=group))", objectSid);			
+				sprintf(filter,"(&(objectSid=%s))", objectSid);			
+				if (!ldap_simple_search(&ld,filter,"sAMAccountName",&respons,&nrOfSearcResults,ldap_base) || nrOfSearcResults != 1) {
+					printf("can't ldap search\n");
+					intresponse = 0;
+					sendall(socket,&intresponse, sizeof(intresponse));
+					//return;
+				}
+				else {
+					strscpy(user_username, *respons, sizeof(user_username));
+
+					//sender antal
+					intresponse = 1;
+					sendall(socket,&intresponse, sizeof(intresponse));
+					sendall(socket,user_username, sizeof(user_username));
+
+					ldap_simple_free(respons);
+				}
+			}
 			else if (packedHedder.command == bad_groupsForUser) {
 				struct hashtable *grouphash;
-				char primarygroup[64];
-				char ldapbasegroup[128];
-				char *sid;
-				char *groupsid;
-				char *id;
-				struct hashtable_itr *itr;
 
 				int sendgroups(struct hashtable *grouphash) {
+
+					struct hashtable_itr *itr;
+
 					/* Send all the groups */
 					intresponse = hashtable_count(grouphash);
 					if (!sendall(socket,&intresponse, sizeof(intresponse))) {
@@ -1022,12 +1288,6 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 				}
 
 				recvall(socket,user_username,sizeof(user_username));
-				/* We do not care about the specified ldap base when looking for groups */
-				/* XXX: Is this correct? */
-				ldap_genBaseName(ldapbasegroup, ldap_domain);
-
-				printf("groupsForUser\n");
-				printf("user_username %s\n",user_username);
 
 				/* Look at the cache */
 				grouphash = cache_fetch(cache, "groupsforuser", user_username);
@@ -1038,66 +1298,13 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 				}
 
 				if (!bad_ldap_connect())
-					goto ldap_end;
-				fprintf(stderr, "Writing the cache\n");
+					return 0;
 
-				/* Make hash table to temporarily hold all group info */
-				grouphash = create_hashtable(7, boithoad_hashfromkey, boithoad_equalkeys);
 
-				/* First figure out the primary group */
-				/* 1. Get User SID */
-				sprintf(filter, "(sAMAccountName=%s)", user_username);
-				if (!ldap_simple_search(&ld, filter, "primaryGroupID,objectSid", &respons, &nrOfSearcResults, ldap_base)) {
-					printf("Unable to get userSID and primaryGroup\n");
-					printf("Filter: %s, attributes: %s\n", filter, "primaryGroupID,objectSid");
+				if (!getAllGroupsForUser(&grouphash, ld, user_username, msad_ldapgroupstring, ldap_domain, ldap_base)) {
 					send_failure(socket);
 					goto ldap_end;
 				}
-
-				sid = malloc(strlen(respons[*respons[0] == 'S' ? 0 : 1]) + 16);
-				strcpy(sid, respons[*respons[0] == 'S' ? 0 : 1]);
-				//printf("Sid: %s\n", sid);
-				if (!insert_group(grouphash, sid))
-					free(sid);
-				else
-					gather_groups(grouphash, &ld, ldapbasegroup, sid);
-				/* 2. Replace last element */
-				groupsid = strdup(sid);
-				sid_replacelast(groupsid, respons[*respons[0] == 'S' ? 1 : 0]);
-				if (!insert_group(grouphash, groupsid))
-					free(groupsid);
-				else
-					gather_groups(grouphash, &ld, ldapbasegroup, groupsid);
-				printf("Primary group: %s\n", groupsid);
-				printf("%p\n", respons);
-				ldap_simple_free(respons);			
-
-				/* 3. Get group name */
-				sprintf(filter, "(objectSid=%s)", groupsid);
-				if (!ldap_simple_search(&ld, filter, "sAMAccountName", &respons, &nrOfSearcResults, ldapbasegroup)) {
-					printf("Unable to get userSID and primaryGroup");
-					send_failure(socket);
-					return;
-				}
-				if (nrOfSearcResults > 0) {
-					id = strdup(respons[0]);
-					if (!insert_group(grouphash, id))
-						free(id);
-				} else {
-					fprintf(stderr, "Could not resolve primaryGroup name: %s\n", groupsid);
-				}
-				ldap_simple_free(respons);			
-
-				/* Add Everyone and the username for the user */
-				id = strdup("Everyone");
-				if (!insert_group(grouphash, id))
-					free(id);
-				id = strdup("S-1-1-0"); /* The SID for Everyone */
-				if (!insert_group(grouphash, id))
-					free(id);
-				id = strdup(user_username);
-				if (!insert_group(grouphash, id))
-					free(id);
 
 				sendgroups(grouphash);
 				cache_add(cache, "groupsforuser", user_username, grouphash);
@@ -1228,6 +1435,7 @@ main(int argc, char **argv)
 	int ch;
 	int lflag;
 	FILE *logaccess, *logerror;
+	unsigned int authentication_timeout;
 
 	lflag = 0;
 	while ((ch = getopt(argc, argv, "l")) != -1) {
@@ -1257,8 +1465,13 @@ main(int argc, char **argv)
 
    	bconfig_flush(CONFIG_NO_CACHE);
 
+	//henter timeout. Hvis den er 0 så skal vi ikke cache.
+	if (bconfig_getentryuint("authentication_timeout", &authentication_timeout) == 0) {
+		authentication_timeout = 0;
+	}
+
 	cache = malloc(sizeof(*cache));
-	cache_init(cache, my_freevalue, 600); // 10 minutes timeout
+	cache_init(cache, my_freevalue, authentication_timeout); 
 
 	//bconfig_init();
 	gloabal_user_h = create_hashtable(16, boithoad_hashfromkey, boithoad_equalkeys);

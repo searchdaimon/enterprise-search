@@ -3,5 +3,6 @@ struct AuthenticatedUserFormat {
         char userid[128];
         char *memberOfgroups;
 	char password[64];
+	time_t ctime;
 };
 
