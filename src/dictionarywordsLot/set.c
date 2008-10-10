@@ -44,7 +44,7 @@ set_free_all(set *s)
 }
 
 int
-set_find(set *s, char *str)
+_set_find(set *s, char *str)
 {
 	int low, high, cur;
 
@@ -75,7 +75,7 @@ set_find(set *s, char *str)
 int
 set_exists(set *s, char *str)
 {
-	return (set_find(s, str) != -1);
+	return (_set_find(s, str) != -1);
 }
 
 int
