@@ -1026,10 +1026,10 @@ int bbdocument_deletecoll(char collection[]) {
 		GetFilePathForIindex(FilePath,IndexPath,i,"Main","aa",collection);
 		GetFilePathForIDictionary(FilePath,DictionaryPath,i,"Main","aa",collection);
 		//printf("FilePath: %s\nIndexPath: %s\nDictionaryPath: %s\n",FilePath,IndexPath,DictionaryPath);
-		if (remove(IndexPath) != 0) {
+		if (rrmdir(IndexPath) != 1) {
                         perror("remove IndexPath");
                 }
-		if (remove(DictionaryPath) != 0) {
+		if (rrmdir(DictionaryPath) != 1) {
                         perror("remove DictionaryPath");
                 }
 	}
@@ -1092,8 +1092,11 @@ int uriindex_open(DB **dbpp, char subname[]) {
                 if ((ret = dbp->open(dbp, NULL, fileName, NULL, DB_BTREE, DB_CREATE, 0664)) != 0) {
                         dbp->err(dbp, ret, "%s: open", fileName);
                         //goto err1;
+			//dette skjer nor collection mappen ikke er opprettet enda, typisk forde vi ikke har lagret et dokument der enda
+			#ifdef DEBUG
 			printf("can't dbp->open(), but db_create() was sucessful!\n");
-			//hvis vi ikke fikk til dette, men db_create() har vi en veldig merkelig bug...
+			#endif
+
 			return 0;
                 }
 
@@ -1190,7 +1193,9 @@ int uriindex_get (char uri[], unsigned int *DocID, unsigned int *lastmodified, c
 	struct uriindexFormat uriindex;
 
         if (!uriindex_open(&dbp,subname)) {
-		fprintf(stderr,"can't open uriindex\n");
+		#ifdef DEBUG
+			fprintf(stderr,"can't open uriindex\n");
+		#endif
 		return 0;
 	}
 
