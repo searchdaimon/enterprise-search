@@ -1,3 +1,7 @@
+//asprintf
+#define _GNU_SOURCE
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -225,7 +229,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
     struct crawldocumentExistFormat crawldocumentExist;
     struct crawldocumentAddFormat crawldocumentAdd;
-    int isize;
+
     iconv_t isoconp;
     if ( (isoconp = iconv_open("UTF-8","ISO-8859-15")) ==  (iconv_t)(-1) ) {
                 perror("iconv_open");
@@ -237,11 +241,11 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
     dh = smbc_opendir( full_name );
     if (dh < 0)
-        {
+    {
             documentError(collection, 1,"crawlsmb.c: Error! Could not open directory %s for dir \"%s\" at %s:%d", dir_name,dir_name,__FILE__,__LINE__);
 	    context_free(context);
             return 0;
-        }
+    }
 
     dbuf_temp = NULL;
     dbuf = NULL;
@@ -249,13 +253,14 @@ int smb_recursive_get( char *prefix, char *dir_name,
     dirc_total = 0;
 
     while (  (dirc=smbc_getdents( dh, dirp, 512 )) != 0  )
-        {
+    {
             if (dirc < 0)
-                {
+            {
                     documentError(collection, 1,"crawlsmb.c: Error! Could not get directory entries from %s\n", dir_name);
+		    smbc_closedir(dh);
 		    context_free(context);
                     return 0;
-                }
+            }
 
             dbuf_temp = dbuf;
             dbuf = (char*)malloc(dirc_total + dirc);
@@ -264,7 +269,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
             if (dbuf_temp!=NULL) free(dbuf_temp);
 
             dirc_total+= dirc;
-        }
+    }
 
     smbc_closedir(dh);
 
@@ -272,99 +277,63 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
     while (documentContinue(collection) && (dirc_total > 0)) {
             int         dsize;
+            int         _dname_size = strlen(dir_name) + strlen(dirp->name) + 1;
+
+            char        *entry_name;
+            char        *full_entry_name;
+	    char 	*uri;
+
+            asprintf(&entry_name, "%s/%s", dir_name, dirp->name);
+            asprintf(&full_entry_name, "%s%s", prefix, entry_name);
+            asprintf(&uri, "file:%s",entry_name);
+
+	    printf("entry_name raw: \"%s\"\n",entry_name);
 
             // Skip direntries named "." and "..". 
 	    // tar heller ikke med filer som begynner på ~ da det er temp filer i windows.
-            if ((dirp->name[0] != '.') && (dirp->name[0] != '~')) {
+            if ((dirp->name[0] == '.') || (dirp->name[0] == '~')) {
 
-                    int         _dname_size = strlen(dir_name) + strlen(dirp->name) + 1;
-                    char        entry_name[_dname_size + 1];
-                    char        full_entry_name[strlen(prefix) + _dname_size + 1];
-                    char        value[1024];
-                    struct stat file_stat;
-		    char	**parsed_acl;
+	    }
+       	    else if (dirp->smbc_type == SMBC_DIR) {
+	   	smb_recursive_get( prefix, entry_name, collection, documentExist, documentAdd , documentError, documentContinue, no_auth);
+            }
+            else {
 
-                    sprintf(entry_name, "%s/%s", dir_name, dirp->name);
-                    sprintf(full_entry_name, "%s%s", prefix, entry_name);
+                    	char        value[1024];
+                    	struct stat file_stat;
+		    	char	**parsed_acl;
+			
+	
+			crawldocumentExist.documenturi = uri;
 
-                    	if ( (n = smbc_getxattr(full_entry_name, "system.nt_sec_desc.*", value, sizeof(value))) < 0 ) {
+			//kaller documentExist første gang, men indikerer at vi ikke her noe ide om lastmodified eller dokument_size
+			//documentExist vil da avgjøre om vi skal gå videre eller ikke.
+			crawldocumentExist.lastmodified = 0;
+			crawldocumentExist.dokument_size = 0;
 
-				if (n == EINVAL) {
-	                            documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. The client library is not properly initialized or one of the parameters is not of a correct form.\n", entry_name);
-				}
-				else if (n == ENOMEM) {
-        	                    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. No memory was available for internal needs.\n", entry_name);
-				}
-				else if (n == EEXIST) {
-                	            documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. If the attribute already exists and the flag SMBC_XATTR_FLAG_CREAT was specified.\n", entry_name);
-				}
-				else if (n == ENOATTR) {
-                        	    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. If the attribute does not exist and the flag SMBC_XATTR_FLAG_REPLACE was specified.\n", entry_name);
-				}
-				else if (n == EPERM) {
-	                            documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. Permission was denied.\n", entry_name);
-				}
-				else if (n == ENOTSUP) {
-	                            documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. The referenced file system does not support extended attributes\n", entry_name);
-				}
-				else {
-	                            documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. Unknown error code \"%i\"\n", entry_name,n);
-				}
-
-			    	context_free(context);
-			    	context = context_init(no_auth);
-                            	goto next_it;
-                        }
-                    	else {
-			    	parsed_acl = parseacl_read_access( value );
-			    	#ifdef DEBUG
-			    		printf("crawlsmb.c: Users allowed \t'%s'\n", parsed_acl[0]);
-			    		printf("crawlsmb.c: Users denied  \t'%s'\n", parsed_acl[1]);
-			    	#endif
-                        }
+		    	if ((documentExist)(collection, &crawldocumentExist )) {
+				goto next_it;
+			}
 
                     	if ( smbc_stat(full_entry_name, &file_stat) < 0 ) {
                             	documentError(collection, 1,"crawlsmb.c: Error! Could not get stat for %s", entry_name);
-			    	free(parsed_acl[0]);
-			    	free(parsed_acl[1]);
-                            	free(parsed_acl);
+			    	//free(parsed_acl[0]);
+			    	//free(parsed_acl[1]);
+                            	//free(parsed_acl);
 			    	context_free(context);
 			    	context = context_init(no_auth);
 			    	goto next_it;
                         }
-
-                    	context_free(context);
-
-			//runarb: 20 nov 2007: denne er ikke komentert ut, det fører til at vi allokerer minne to ganger.
-			// er det riktig å konvertere til utf-8 her??? Fører ikke det til problemer med tegnsett?? slik det vi ser i fp nå?
-			//hva hvis vi får en iso-? inn, og konverterer den til utf, konverterer vi den rikit tilbake til iso-? da ?
-			//crawldocumentExist.documenturi = malloc(strlen(entry_name) + strlen("file:") +1);
-			//sprintf(crawldocumentExist.documenturi,"file:%s",entry_name);
-			printf("entry_name raw: \"%s\"\n",entry_name);
 			
-			char        uri[sizeof(entry_name)+1];
-			//fp char bug fiks:
-			//smbc_urldecode( uri, entry_name, sizeof(entry_name)+1 );
-        		strscpy(uri,entry_name,sizeof(uri));
-	
-			isize = (strlen(uri) *2)+ strlen("file:");
-			if ((crawldocumentExist.documenturi = malloc(isize)) == NULL) {
-				perror("malloc");
-				//runarb: 20 nov 2007: usikker på om dette er rikitg feilhontering.
-	                   	goto next_it;
-			}
 
-			sprintf(crawldocumentExist.documenturi,"file:%s",uri);
 
-			#ifdef URLDECODE
-			iconv_convert(isoconp ,&crawldocumentExist.documenturi, isize);
-			#endif
-			
+			//kaller documentExist andre gang
 			crawldocumentExist.lastmodified = file_stat.st_mtime;
 			crawldocumentExist.dokument_size = file_stat.st_size;
+		    	if ((documentExist)(collection, &crawldocumentExist )) {
+				goto next_it;
+			}
 
-			//runarb: 26 feb. Vi kjører denne på crawldocumentExist ~urlen, men ikke på add. Noe som fører til at de blir forskjelige.
-			//cleanresourceUnixToWin(crawldocumentExist.documenturi);
 
 			#ifdef DEBUG
 				printf("times: st_atime %s ",ctime(&file_stat.st_atime));
@@ -373,18 +342,10 @@ int smb_recursive_get( char *prefix, char *dir_name,
 			#endif
 
 
-                    	if (dirp->smbc_type == SMBC_DIR) {
-			    smb_recursive_get( prefix, entry_name, collection, documentExist, documentAdd , documentError, documentContinue, no_auth);
-                        }
-		    	else if ((documentExist)(collection, &crawldocumentExist )) {
-				//doc exist
-				printf("Note: smb_recursive_get: document exist\n");
-			}
-			else 
-			{
 			    int		fd;
 
 			    // Disse må være med:
+                    	    context_free(context);
 			    context = context_init(no_auth);
 
 				printf("opening full_entry_name: \"%s\"\n",full_entry_name);
@@ -406,7 +367,6 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
 				    	int	i;
 				    	char	*fbuf;
-					char    uri[sizeof(entry_name)+1];
 
 					//tester størelsen på filen. Hvis den er for stor dropper vi å laste den ned.
 					if (file_stat.st_size > MAX_FILE_SIZE) {
@@ -435,19 +395,47 @@ int smb_recursive_get( char *prefix, char *dir_name,
 					}
 
 					#ifndef NO_BB
-						//fp char bug fiks:
-						//smbc_urldecode( uri, entry_name, sizeof(entry_name)+1 );
-						strscpy( uri, entry_name, sizeof(uri) );
 
-						printf("url after smbc_urldecode(): \"%s\"\n",uri);
+			                    	if ( (n = smbc_getxattr(full_entry_name, "system.nt_sec_desc.*", value, sizeof(value))) < 0 ) {
+
+							if (n == EINVAL) {
+	                			            documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. The client library is not properly initialized or one of the parameters is not of a correct form.\n", entry_name);
+							}
+							else if (n == ENOMEM) {
+        	                			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. No memory was available for internal needs.\n", entry_name);
+							}
+							else if (n == EEXIST) {
+                	        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. If the attribute already exists and the flag SMBC_XATTR_FLAG_CREAT was specified.\n", entry_name);
+							}
+							else if (n == ENOATTR) {
+                        				    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. If the attribute does not exist and the flag SMBC_XATTR_FLAG_REPLACE was specified.\n", entry_name);
+							}
+							else if (n == EPERM) {
+	                        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. Permission was denied.\n", entry_name);
+							}
+							else if (n == ENOTSUP) {
+	                        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. The referenced file system does not support extended attributes\n", entry_name);
+							}
+							else {
+	                        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. Unknown error code \"%i\"\n", entry_name,n);
+							}
+
+			    				context_free(context);
+			    				context = context_init(no_auth);
+                            				goto next_it;
+                        			}
+                    				else {
+			    				parsed_acl = parseacl_read_access( value );
+			    				#ifdef DEBUG
+			    				printf("crawlsmb.c: Users allowed \t'%s'\n", parsed_acl[0]);
+			    				printf("crawlsmb.c: Users denied  \t'%s'\n", parsed_acl[1]);
+			    				#endif
+                        			}
+
+
         					
-						isize = (strlen(uri) *2)+ strlen("file:");
-						crawldocumentAdd.documenturi = malloc(isize);
-						sprintf(crawldocumentAdd.documenturi,"file:%s",uri);
+						crawldocumentAdd.documenturi = uri;
 
-						#ifdef URLDECODE
-							iconv_convert(isoconp ,&crawldocumentAdd.documenturi, isize);
-						#endif
 
         					crawldocumentAdd.documenttype	= "";
         					crawldocumentAdd.document	= fbuf;
@@ -456,23 +444,16 @@ int smb_recursive_get( char *prefix, char *dir_name,
         					crawldocumentAdd.acl_allow 	= parsed_acl[0];
 						crawldocumentAdd.acl_denied 	= parsed_acl[1];
 
-						isize = ((strlen(dirp->name) *2) +1);
-        					crawldocumentAdd.title	= malloc(isize);
+        					crawldocumentAdd.title	= malloc((strlen(dirp->name) *2) +1);
 						smbc_urldecode( crawldocumentAdd.title, dirp->name, strlen(dirp->name) +1);
 						
-						#ifdef URLDECODE
-							iconv_convert(isoconp ,&crawldocumentAdd.title, isize);
-						#endif
 
 					        crawldocumentAdd.doctype	= "";
 					        crawldocumentAdd.attributes	= "";
 
-						//fp char bug fiks:
-						//cleanresourceUnixToWin(crawldocumentAdd.documenturi);
 
 						(*documentAdd)(collection ,&crawldocumentAdd);
 					
-						free(crawldocumentAdd.documenturi);
 						free(crawldocumentAdd.title);
 
 		    				//documentAdd(bbdh, collection, entry_name, "", fbuf, file_stat.st_size, file_stat.st_mtime, parsed_acl, dirp->name ,"");
@@ -486,18 +467,22 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
 				}
 	
+
+			    	free(parsed_acl[0]);
+			    	free(parsed_acl[1]);
+			    	free(parsed_acl);
+
+
+
 	         		context_free(context);
-			}
-
-	    	    	free(crawldocumentExist.documenturi); //usikker om dette er rikit plass
-		    	free(parsed_acl[0]);
-		    	free(parsed_acl[1]);
-		    	free(parsed_acl);
-
-		    	context = context_init(no_auth);
+		    		context = context_init(no_auth);
                 }
 
 next_it:
+	    free(uri);
+	    free(entry_name);
+	    free(full_entry_name);
+
             dsize = dirp->dirlen;
             dirp = (struct smbc_dirent*)(((char*)dirp) + dsize);
             dirc_total-= dsize;
