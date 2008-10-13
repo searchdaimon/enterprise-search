@@ -31,7 +31,7 @@ sub alivep {
 }
 
 sub check_state {
-	print "Checking state...\n";
+	print "Checking state... ";
 
 	my $state = read_line($statefile);
 	return undef if !defined($state);
@@ -40,22 +40,26 @@ sub check_state {
 
 	if ($state eq 'alive') {
 		# Check that phonehome is up, start it if not.
+
+		print "alive.\n";
 		
 		# We are running, as we should be
 		return 0 if ($alive == 1);
 
 		print "Starting phonehome client.\n";
-#		`perl $phonehomeclient start`;
+		`perl $phonehomeclient start`;
 
 		return 1;
 	} else {
 		# phone home should no longer be alive
 
+		print "dead.\n";
+
 		# We are dead, as we should be
 		return 0 if ($alive == 0);
 
 		print "Trying to kill phonehome client.\n";
-#		`perl $phonehomeclient stop`;
+		`perl $phonehomeclient stop`;
 		return 1;
 	}
 }

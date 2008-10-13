@@ -92,9 +92,9 @@ main(int argc, char **argv, char **envp __unused)
 	}
 
 	if (strcmp(argv[1], "start") == 0) {
-		ret = execlp(perlprog, "perl", program, "start", NULL, perlenv, NULL);
+		ret = execlp(perlprog, "perl", program, "start2", NULL, perlenv, NULL);
 	} else if (strcmp(argv[1], "stop") == 0) {
-		ret = execlp(perlprog, "perl", program, "stop", NULL, perlenv, NULL);
+		ret = execlp(perlprog, "perl", program, "stop2", NULL, perlenv, NULL);
 	} else {
 		ret = execlp(perlprog, "perl", program, "running", NULL, perlenv, NULL);
 	}

@@ -9,6 +9,10 @@ use Data::Dumper;
 use LWP;
 use File::stat;
 
+# Keep alive daemon files
+my $dstatefile = $ENV{BOITHOHOME} . '/var/phonehome.state';
+my $dpidfile = $ENV{BOITHOHOME} . '/var/bb-phone-home-keepalive-pid-file';
+
 $ENV{PATH} = "/bin:/usr/bin:/usr/local/bin";
 
 my $config = AppConfig->new({
@@ -177,6 +181,23 @@ sub get_forward_port_http() {
 	return $fwdport;
 }
 
+sub writedstate {
+	my ($newstate) = @_;
+
+	open (my $fh, "> $dstatefile");
+	print $fh "$newstate\n";
+	close($fh);
+}
+
+sub getdpid {
+	open (my $fh, "< $dpidfile");
+	my $pid = <$fh>;
+	close($fh);
+	chomp($pid);
+
+	return $pid;
+}
+
 
 if ($#ARGV == -1) {
 	print STDERR "Possible arguments: start, stop, running\n";
@@ -217,7 +238,15 @@ elsif ($arg eq 'running') {
 	print "$pid\n" if $ret;
 	exit ($ret == 1 ? 0 : 1);
 }
-else {
+elsif ($arg eq 'start2') {
+	writedstate("alive");
+	kill("USR1", getdpid());
+}
+elsif ($arg eq 'stop2') {
+	writedstate("dead");
+	kill("USR1", getdpid());
+}
+else{
 	print STDERR "Unknown command.\n";
 	exit 2;
 }
