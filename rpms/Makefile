@@ -11,7 +11,7 @@ boitho-ad_name = boitho-ad
 boitho-ad_version = 0.3.14
 
 boitho-searchdbb_name = boitho-searchdbb
-boitho-searchdbb_version = 5.5.34
+boitho-searchdbb_version = 5.5.61
 
 boitho-crawlManager_name = boitho-crawlManager
 boitho-crawlManager_version = 1.4.40
@@ -66,7 +66,7 @@ boitho-meta_name = boitho-meta
 boitho-meta_version = 0.3
 
 boitho-phonehome_name = boitho-phonehome
-boitho-phonehome_version = 0.5
+boitho-phonehome_version = 0.6
 
 boitho-dummy_name = boitho-dummy
 boitho-dummy_version = 0.1
@@ -281,9 +281,12 @@ phonehome:
 	rm -rf $(boitho-phonehome_name)-$(boitho-phonehome_version)
 	mkdir $(boitho-phonehome_name)-$(boitho-phonehome_version)
 	cp $(BOITHOHOME)/bin/bb-client.pl $(boitho-phonehome_name)-$(boitho-phonehome_version)
+	cp $(BOITHOHOME)/bin/bbph-keep-alive.pl $(boitho-phonehome_name)-$(boitho-phonehome_version)
 	cp $(BOITHOHOME)/config/bb-phone-home-client.conf $(boitho-phonehome_name)-$(boitho-phonehome_version)
 	cp $(BOITHOHOME)/phonehome/id_rsa $(boitho-phonehome_name)-$(boitho-phonehome_version)
 	cp $(BOITHOHOME)/phonehome/ssh_config $(boitho-phonehome_name)-$(boitho-phonehome_version)
+	mkdir $(boitho-phonehome_name)-$(boitho-phonehome_version)/init.d
+	cp $(BOITHOHOME)/init.d/phonehome $(boitho-phonehome_name)-$(boitho-phonehome_version)/init.d
 	tar -z -c -f $(boitho-phonehome_name)-$(boitho-phonehome_version).tar.gz $(boitho-phonehome_name)-$(boitho-phonehome_version)
 	mv $(boitho-phonehome_name)-$(boitho-phonehome_version).tar.gz $(HOME)/redhat/SOURCES/
 	rpmbuild -bb $(boitho-phonehome_name).spec

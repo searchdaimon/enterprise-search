@@ -1,5 +1,5 @@
 %define name boitho-phonehome
-%define version 0.5
+%define version 0.6
 %define release 1
 
 Summary: Boitho phone home, includes ssh keys for password less login and config files.
@@ -38,7 +38,9 @@ mkdir -p $SSHDIR
 echo "RPM_BUILD_ROOT: " $RPM_BUILD_ROOT
 echo "DESTDIR: " $DESTDIR
 cp bb-client.pl $DESTDIR/bin/
+cp bbph-keep-alive.pl $DESTDIR/bin/
 cp bb-phone-home-client.conf $DESTDIR/config/
+install -D -m 755  init.d/phonehome $RPM_BUILD_ROOT/etc/init.d/phonehome
 
 cp id_rsa $SSHDIR
 cp ssh_config $SSHDIR/config
@@ -50,21 +52,38 @@ cp ssh_config $SSHDIR/config
 
 %pre
 
+if [ -f /etc/init.d/phonehome ] ; then
+	sh /etc/init.d/phonehome stop
+fi
+
 /usr/sbin/useradd -s /bin/bash -d /home/phonehome -m "phonehome"
 mkdir -p /home/phonehome/.ssh
 chown phonehome /home/phonehome/.ssh
 chmod 700 /home/phonehome/.ssh
 #chown phonehome /home/phonehome/.ssh/*
 
+
 %post
 
+if [ ! -f /home/boitho/boithoTools/var/phonehome.state ]; then
+	echo dead > /home/boitho/boithoTools/var/phonehome.state
+	chown phonehome /home/boitho/boithoTools/var/phonehome.state
+fi
+
+touch /home/boitho/boithoTools/var/bb-phone-home-keepalive-pid-file
+chown phonehome /home/boitho/boithoTools/var/bb-phone-home-keepalive-pid-file
+
+chkconfig --add phonehome
+sh /etc/init.d/phonehome start
 
 
 %files
 %defattr(-,boitho,boitho)
 
 /home/boitho/boithoTools/bin/bb-client.pl
+/home/boitho/boithoTools/bin/bbph-keep-alive.pl
 /home/boitho/boithoTools/config/bb-phone-home-client.conf
+/etc/init.d/phonehome
 
 %attr(600, phonehome, phonehome) /home/phonehome/.ssh/id_rsa
 %attr(600, phonehome, phonehome) /home/phonehome/.ssh/config
