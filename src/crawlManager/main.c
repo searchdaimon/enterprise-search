@@ -22,12 +22,11 @@
 #include "../common/bstr.h"
 #include "../common/daemon.h"
 #include "../common/error.h"
-#include "../common/timediff.h"
 #include "../common/boithohome.h"
 #include "../common/logs.h"
 #include "../maincfg/maincfg.h"
 #include "../boitho-bbdn/bbdnclient.h"
-
+#include "../common/timediff.h"
 #include "../common/boithohome.h"
 
 #include "../bbdocument/bbdocument.h"
@@ -62,6 +61,7 @@ void mc_add_servers(void);
 
 int cm_searchForCollection (char cvalue[],struct collectionFormat *collection[],int *nrofcollections);
 
+#ifdef DEBUG_TIME
 struct cm_timeusageElementFormat {
 	int count;
 	double time;
@@ -126,11 +126,13 @@ void cm_timeusage_free(struct cm_timeusageFormat *cm_timeusage) {
 
 	free(cm_timeusage);
 }
-
+#endif
 
 int documentContinue(struct collectionFormat *collection) {
 
+	#ifdef DEBUG_TIME
 	cm_timeusageElementTimeStart( &(*(struct cm_timeusageFormat *)collection->timeusage).documentContinuet);
+	#endif
 
 	#ifdef DEBUG
 	printf("documentContinue: start\n");
@@ -206,8 +208,9 @@ int documentContinue(struct collectionFormat *collection) {
 
 	#endif
 
-
+	#ifdef DEBUG_TIME
 	cm_timeusageElementTimeEnd( &(*(struct cm_timeusageFormat *)collection->timeusage).documentContinuet);
+	#endif
 
 	return forret;
 }
@@ -215,7 +218,9 @@ int documentContinue(struct collectionFormat *collection) {
 int documentExist(struct collectionFormat *collection, struct crawldocumentExistFormat *crawldocumentExist) {
 	int ret;
 
+	#ifdef DEBUG_TIME
 	cm_timeusageElementTimeStart( &(*(struct cm_timeusageFormat *)collection->timeusage).documentExistt);
+	#endif
 
 	#ifdef DEBUG
 	printf("documentExist: start\n");
@@ -227,7 +232,9 @@ int documentExist(struct collectionFormat *collection, struct crawldocumentExist
 	printf("documentExist: end\n");
 	#endif
 
+	#ifdef DEBUG_TIME
 	cm_timeusageElementTimeEnd( &(*(struct cm_timeusageFormat *)collection->timeusage).documentExistt);
+	#endif
 
 	return ret;
 }
@@ -259,7 +266,9 @@ int documentError(struct collectionFormat *collection,int level, const char *fmt
 
 int documentAdd(struct collectionFormat *collection, struct crawldocumentAddFormat *crawldocumentAdd) {
 
+	#ifdef DEBUG_TIME
 	cm_timeusageElementTimeStart( &(*(struct cm_timeusageFormat *)collection->timeusage).documentAddt);
+	#endif
 
 	#ifdef DEBUG
 	printf("documentAdd start\n");
@@ -309,7 +318,9 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 	printf("documentAdd end\n");
 	#endif
 
+	#ifdef DEBUG_TIME
 	cm_timeusageElementTimeEnd( &(*(struct cm_timeusageFormat *)collection->timeusage).documentAddt);
+	#endif
 
 	return 1;
 }
@@ -1313,10 +1324,10 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 			continue;
 		}
 
-
+		#ifdef DEBUG_TIME
 		//inialiserer strukturen som viser hvor lang tid vi bruker;
 		collection[i].timeusage = cm_timeusage_start();
-
+		#endif
 
 	
 		//make a conectina to bbdn for add to use
@@ -1368,8 +1379,9 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 
 		blog(LOGACCESS,1,"Finished crawling of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
 
+		#ifdef DEBUG_TIME
 		cm_timeusage_free(collection[i].timeusage);
-
+		#endif
 	}
 
 	sm_collectionfree(&collection,nrofcollections);
