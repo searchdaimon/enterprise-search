@@ -1358,7 +1358,7 @@ int crawl (struct collectionFormat *collection,int nrofcollections, int flag, ch
 
 			
 			//ber bbdn om å lukke sokket
-			bbdn_close(&collection[i].socketha);
+			bbdn_close(collection[i].socketha);
 
 
 		}
@@ -1757,5 +1757,6 @@ int main (int argc, char *argv[]) {
 
 	maincfgclose(&maincfg);
 
+	return 0;
 }
 
