@@ -887,8 +887,9 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 	if (documenttype[0] == '\0') {
 		if ((documenttype_real = sfindductype(documenturi)) == NULL) {
-			printf("can't add type because I cant decide format. File name isent dos type (8.3).\n");
-			return 0;
+			printf("Will use .none because I can't decide format. File name isent dos type (8.3): %s\n", documenturi);
+			documenttype_real = strdup("none");
+			
 		}
 	}
 	else {
@@ -1096,6 +1097,8 @@ int uriindex_open(DB **dbpp, char subname[]) {
 			#ifdef DEBUG
 			printf("can't dbp->open(), but db_create() was sucessful!\n");
 			#endif
+
+			dbp->close(dbp, 0);
 
 			return 0;
                 }
