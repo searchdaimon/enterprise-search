@@ -14,7 +14,7 @@ use SD::Crawl;
 use sdMimeMap;
 use LWP::RobotUA;
 use HTML::LinkExtor;
-
+use Date::Parse;
 
 =pod 
 # Switch processing:
@@ -405,9 +405,11 @@ sub process_far_url {
 	 $crawler->add_document(
 	 	url     => $url,
 		title   => $title,
-		content => $response->as_string,
 		type    => $ct,
-		acl_allow => $acl);
+		acl_allow => $acl,
+		content => $response->content,
+		last_modified => str2time($response->header('Last-Modified'))
+		);
    }
  
     mutter("  That was hit #$hit_count\n");
@@ -492,7 +494,8 @@ sub process_near_url {
            $crawler->add_document(
 			url     => $url,
 			title   => $title,
-			content => $response->as_string,
+			content => $response->content,
+			last_modified => str2time($response->header('Last-Modified')),
 			type    => $ct,
 			acl_allow => $acl,
 			attributes => $category);
