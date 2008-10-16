@@ -25,7 +25,7 @@ fi
 
 #poor mans setuid. If we are root we will run the program as user boitho
 if [ `id -u` == 0 ]; then
-	B_RUN="/usr/local/sbin/daemonize -u boitho $BOITHOHOME/bin/everrun perl $BOITHOHOME/bin/bbph-keep-alive.pl"
+	B_RUN="/usr/local/sbin/daemonize -u phonehome $BOITHOHOME/bin/everrun perl $BOITHOHOME/bin/bbph-keep-alive.pl"
 
 else
 	B_RUN="/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun perl $BOITHOHOME/bin/bbph-keep-alive.pl"
@@ -58,7 +58,7 @@ stop() {
 	else
 	    pid=`ps -o pid,args -w -p $pids|grep $B_NAME|awk '{ printf("%s ", $1); }'`
 	fi
-	pid2=`pidof $BOITHOHOME/bin/$B_NAME`
+	pid2=`ps ax -o pid,args | grep perl | grep $B_NAME | awk '{print $1}'`
 	pid="$pid $pid2"
 
         # Kill it.
