@@ -7,8 +7,8 @@ use warnings;
 
 my $statefile = $ENV{BOITHOHOME} . '/var/phonehome.state';
 my $pidfile = $ENV{BOITHOHOME} . '/var/bb-phone-home-keepalive-pid-file';
-#my $phonehomeclient = $ENV{BOITHOHOME} . '/bin/bb-client.pl';
-my $phonehomeclient = 'bb-client.pl';
+my $phonehomeclient = $ENV{BOITHOHOME} . '/bin/bb-client.pl';
+#my $phonehomeclient = 'bb-client.pl';
 
 sub read_line($) {
 	my ($file) = @_;
