@@ -65,11 +65,11 @@ while (1) {
             $sleep_scnds = $next_run
                 unless $sleep_scnds < $next_run;
             $log->write("Estimated run for ", $service->name, ": ", 
-                scalar gmtime time + $next_run);
+                scalar localtime time + $next_run);
         }
     }
 
-    my $gmtime = gmtime time + $sleep_scnds;
+    my $gmtime = localtime time + $sleep_scnds;
     $log->write("Done. Sleeping until $gmtime.");
     sleep $sleep_scnds;
 }

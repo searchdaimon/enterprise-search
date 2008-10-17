@@ -6,7 +6,7 @@ use Carp;
 BEGIN {
 	unshift @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
-use Time::gmtime;
+use Time::localtime;
 use Data::Dumper;
 use SD::Sql::ConnSimple qw(sql_setup get_dbh sql_exec
         sql_fetch_results sql_fetch_single);
@@ -65,7 +65,7 @@ sub is_within_schedule {
     my @scheduled_hours =  $s->_gen_scheduled_hours(
         $schedule{start}, $schedule{end});
 
-    my $hour_now = gmtime->hour;
+    my $hour_now = localtime->hour;
     return grep { $_ == $hour_now } @scheduled_hours;
     
 }
@@ -80,7 +80,7 @@ sub next_run {
 sub calc_schedl_start {
     my ($s, $start) = @_;
 
-    my $hour_now = gmtime->hour();
+    my $hour_now = localtime->hour();
     if ($start < $hour_now) {
         return ((24 - $hour_now) + $start) * 60; #60 seconds;
     }
