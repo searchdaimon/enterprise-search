@@ -24,7 +24,7 @@ sub write {
 
     return unless $s->{enabled};
 
-    my $time = gmtime(time);    
+    my $time = localtime(time);    
     my $msg = "$time - " . join (q{}, @data) . "\n";
     print $msg if $s->{to_stdout};
     print {$s->{logh}} $msg;
@@ -33,7 +33,8 @@ sub write {
 
 sub show_in_stdout { 
     my ($s, $on) = @_;
-    $s->{to_stdout} = $on 
+    $s->{to_stdout} = $on;
+    $s;
 }
 
 1;
