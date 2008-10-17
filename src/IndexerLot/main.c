@@ -1152,6 +1152,8 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 	unsigned int lastIndexTime;
 	char openmode[4];
 	FILE *brankPageElementsFH;
+	FILE *INDEXLOCK;
+
 	struct IndekserOptFormat IndekserOpt;
 
 	if ((argstruct = malloc(sizeof(struct IndexerLot_workthreadFormat))) == NULL) {
@@ -1204,6 +1206,14 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 				return;
 			}
 		}
+
+
+		//vi tilater bare at en og en jobber med filen samtidig.
+        	if ( (INDEXLOCK = lotOpenFileNoCasheByLotNr(argstruct->lotNr,"index.lock","wb", 'e',argstruct->subname)) == NULL) {
+			printf("can't loct tje index lock\n");
+			exit(-1);
+		}
+		flock(fileno(INDEXLOCK),LOCK_EX);
 
 		//finner siste indekseringstid
 		lastIndexTime =  GetLastIndexTimeForLot(lotNr,subname);
@@ -1318,6 +1328,9 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
                 argstruct->filtered.filterTLDs 			= 0;
                 argstruct->filtered.notHttp200 			= 0;
 
+		argstruct->n_new				= 0;
+		argstruct->n_recrawled				= 0;
+		argstruct->n_untouched				= 0;
 
 		#ifdef BLACK_BOKS
 			flags = RE_HAVE_4_BYTES_VERSION_PREFIX;
@@ -1421,11 +1434,11 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 		fclose(argstruct->FNREPO);
 
-		revindexFilesCloseLocal(argstruct->revindexFilesHa,"Main"); 
+		revindexFilesCloseLocal(argstruct->revindexFilesHa); 
 
 		#ifdef BLACK_BOKS		
-			revindexFilesCloseLocal(argstruct->acl_allowindexFilesHa,"Main"); 
-			revindexFilesCloseLocal(argstruct->acl_deniedindexFilesHa,"Main"); 
+			revindexFilesCloseLocal(argstruct->acl_allowindexFilesHa); 
+			revindexFilesCloseLocal(argstruct->acl_deniedindexFilesHa); 
 		#endif
 
 
@@ -1651,6 +1664,8 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			ipbanEnd();
 		#endif
 
+
+		fclose(INDEXLOCK);
 }
 
 
