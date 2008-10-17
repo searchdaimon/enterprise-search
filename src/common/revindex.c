@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/file.h>
 
 #include "define.h"
 #include "lot.h"
@@ -16,12 +17,14 @@ FILE *revindexFilesOpenLocalPart(int lotNr,char type[],char filemode[],char subn
         sprintf(revfile,"%srevindex/%s/",lotPath,type);
         makePath(revfile);
 
-       sprintf(revfile,"%srevindex/%s/%i.txt",lotPath,type,part);
+       	sprintf(revfile,"%srevindex/%s/%i.txt",lotPath,type,part);
 
-       if ((revindexFilesHa = fopen(revfile,filemode)) == NULL) {
-                perror(revfile);
+       	if ((revindexFilesHa = fopen(revfile,filemode)) == NULL) {
+        	perror(revfile);
 		return NULL;
-       }
+       	}
+
+	flock(fileno(revindexFilesHa),LOCK_EX);
 
 	return revindexFilesHa;
 }
@@ -39,17 +42,14 @@ void revindexFilesOpenLocal(FILE *revindexFilesHa[],int lotNr,char type[],char f
         makePath(revfile);
 
         for(i=0;i<NrOfDataDirectorys;i++) {
-                sprintf(revfile,"%srevindex/%s/%i.txt",lotPath,type,i);
-
-                if ((revindexFilesHa[i] = fopen(revfile,filemode)) == NULL) {
-                        perror(revfile);
+		if ((revindexFilesHa[i] = revindexFilesOpenLocalPart(lotNr,type,filemode,subname,i)) == NULL ) {
                         exit(1);
                 }
         }
 }
 
 
-void revindexFilesCloseLocal(FILE *revindexFilesHa[],char type[] __attribute__((unused))) {
+void revindexFilesCloseLocal(FILE *revindexFilesHa[]) {
 
 	int i;
 
