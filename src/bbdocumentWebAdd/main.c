@@ -109,6 +109,7 @@ sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 		goto err;
 	} else {
 		char *p;
+		char *body;
 		xmlChar *encodetype;
 
 		encodetype = xmlGetProp(n, (xmlChar*)"encoding");
@@ -127,7 +128,13 @@ sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 		}
 		
 		xmldoc.bodysize = base64_decode(xmldoc.body, p, strlen(p));
+		body = malloc(xmldoc.bodysize+1);
+		memcpy(body, xmldoc.body, xmldoc.bodysize);
+		body[xmldoc.bodysize] = '\0';
+		xmldoc.bodysize++;
 		fprintf(stderr, "We are %d long\n", xmldoc.bodysize);
+		free(xmldoc.body);
+		xmldoc.body = body;
 	}
 
 	fprintf(stderr, "Adding: %s\n", xmldoc.body);
@@ -320,13 +327,6 @@ main(int argc, char **argv)
 		errx(1, "Didn't receive any data.");
 	}
 
-#ifdef DEBUG2
-	FILE *fhtmp;
-	fhtmp = fopen("/tmp/posttest2.txt","wb");
-	fprintf(fhtmp,"size: %i\nxmldata: %s\n\n\n",postsize,xmldata);
-	fclose(fhtmp);
-#endif
-
 	//fprintf(stderr, "Received %i bytes.\n", postsize);
 	//fprintf(stderr, "Got document:\n%s\n", xmldata);
 
@@ -384,16 +384,6 @@ main(int argc, char **argv)
 			warnx("Unknown xml node '%s'", cur->name);
 		}
 	}
-
-#if 0
-	xmlFree(xmldocument.TITLE);
-	xmlFree(xmldocument.COLLECTION);
-	xmlFree(xmldocument.URI);
-	xmlFree(xmldocument.ACL);
-	xmlFree(xmldocument.DOCUMENTFORMAT);
-	xmlFreeDoc(doc);
-	free(xmldocument.BODY);
-#endif
 
 	return 0;
 }
