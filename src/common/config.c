@@ -29,7 +29,7 @@ bconfig_flush(int mode) {
 
 	//sjekker om vi har den alerede
 	if ((lastConfigRead != 0) && (mode == CONFIG_CACHE_IS_OK) && ((lastConfigRead + cache_time) > now)) {
-		debug("have config in cache. Wint query db again\n");
+		debug("have config in cache. Won't query db again\n");
 		return 0;
 	}
 
@@ -137,6 +137,20 @@ int bconfig_getentryint(char vantkey[], int *val) {
 	}
 	else {
 		*val = atoi(cp);
+		return 1;
+	}
+
+
+	//return atoi(bconfig_getentrystr(vantkey));
+}
+int bconfig_getentryuint(char vantkey[], unsigned int *val) {
+	const char *cp;
+
+	if ((cp = bconfig_getentrystr(vantkey)) == NULL) {
+		return 0;
+	}
+	else {
+		*val = atou(cp);
 		return 1;
 	}
 
