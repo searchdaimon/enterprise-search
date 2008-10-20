@@ -15,6 +15,7 @@
 #define bad_groupsForUser       20
 #define bad_getPassword         30
 #define bad_sidToUser		40
+#define bad_sidToGroup		41
 
 #define ad_userauthenticated_OK  111
 #define ad_userauthenticated_ERROR  000

@@ -297,3 +297,47 @@ int boithoad_sidToUser(char sid_in[], char username_in[]) {
 	return forreturn;
 
 }
+
+int boithoad_sidToGroup(char sid_in[], char username_in[]) {
+
+	int socketha;
+	int intresponse;
+	char username[64];
+	char sid[512];
+     	int forreturn = 0;
+
+	//ToDo: strscpy
+	strncpy(sid,sid_in,sizeof(sid));
+
+        if ((socketha = cconnect("localhost", BADPORT)) == 0) {
+		return 0;
+	}
+
+        sendpacked(socketha,bad_sidToGroup,BADPROTOCOLVERSION, 0, NULL,"");
+
+	sendall(socketha, sid, sizeof(sid));
+	
+	//read respons
+        if (!recvall(socketha,&intresponse,sizeof(intresponse))) {
+                return 0;
+        }
+
+	if (intresponse == 1) {
+		if (!recvall(socketha,username,sizeof(username))) {
+                	return 0;
+        	}
+		strcpy(username_in, username);
+		forreturn = 1;
+	}
+	else {
+		printf("didn't have a group at %s:%d\n",__FILE__,__LINE__);
+		strcpy(username_in,"");
+		forreturn = 0;
+	}
+
+	close(socketha);
+
+	return forreturn;
+
+}
+
