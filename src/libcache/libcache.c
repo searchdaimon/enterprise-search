@@ -28,6 +28,10 @@ cache_init(cache_t *c, void (*freevalue)(void *value), unsigned int timeout)
 	return 1;
 }
 
+void cache_settimeout(cache_t *c, unsigned int timeout) {
+	c->c_timeout = timeout;
+}
+
 #define KEY_SEPARATOR 0x10
 
 static char *
@@ -94,9 +98,15 @@ cache_add(cache_t *c, char *prefix, char *key, void *value)
 void *
 cache_fetch(cache_t *c, char *prefix, char *key)
 {
+
+	if (c->c_timeout == 0) {
+		return NULL;
+	}
+
 	char *k = gen_key(prefix, key);
 	cache_value_t *v;
 	time_t now;
+
 
 	pthread_mutex_lock(&c->c_lock);
 	v = hashtable_search(c->c_data, k);

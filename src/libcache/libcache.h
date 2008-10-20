@@ -13,6 +13,7 @@ typedef struct {
 	unsigned int c_timeout;
 } cache_t;
 
+void cache_settimeout(cache_t *c, unsigned int timeout);
 int cache_init(cache_t *c, void (*freevalue)(void *value), unsigned int timeout);
 int cache_add(cache_t *c, char *prefix, char *key, void *value);
 void *cache_fetch(cache_t *c, char *prefix, char *key);
