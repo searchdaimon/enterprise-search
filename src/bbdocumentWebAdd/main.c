@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <err.h>
 #include <libconfig.h>
+#include <mysql.h>
 
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
@@ -15,8 +16,15 @@
 #include "../boitho-bbdn/bbdnclient.h"
 #include "../cgi-util/cgi-util.h"
 #include "../maincfg/maincfg.h"
+#include "../crawlManager/client.h"
+#include "../common/define.h"
 
 #define ROOT_NODE_NAME "sddocument"
+
+/* MYSQL login information */
+#define MYSQL_HOST "localhost"
+#define MYSQL_USER "boitho"
+#define MYSQL_PASS "G7J7v5L5Y7"
 
 struct xmldocumentFormat {
 	char *title;
@@ -166,10 +174,14 @@ sd_close(int sock, xmlDocPtr doc, xmlNodePtr top)
 	for (n = top->xmlChildrenNode; n != NULL; n = n->next) {
 		xmlChar *p;
 
-		if (xmlStrcmp(n->name, (xmlChar*)"collection") != 0)
+		if (xmlStrcmp(n->name, (xmlChar*)"collection") != 0) {
+			fprintf(stderr, "Unknown node(close) name: %s\n", (char *)n->name);
 			continue;
-		if ((p = xmlNodeListGetString(doc, n->xmlChildrenNode, 1)) == NULL)
+		}
+		if ((p = xmlNodeListGetString(doc, n->xmlChildrenNode, 1)) == NULL) {
+			fprintf(stderr, "Unable to get collection name to close.\n");
 			continue;
+		}
 
 		bbdn_closecollection(sock, (char *)p);
 
@@ -177,6 +189,83 @@ sd_close(int sock, xmlDocPtr doc, xmlNodePtr top)
 	}
 }
 
+void
+sd_users_user(MYSQL *db, unsigned int usersystem, xmlDocPtr doc, xmlNodePtr top)
+{
+	xmlNodePtr cur;
+	char *username;
+	char user[512];
+	
+	username = (char *)xmlGetProp(top, (xmlChar *)"username");
+
+	mysql_real_escape_string(db, user, username, strlen(username));
+	free(username);
+
+	for (cur = top->xmlChildrenNode; cur != NULL; cur = cur->next) {
+		if (xmlStrcmp(cur->name, (xmlChar *)"group") == 0) {
+			char *groupname;
+			char query[1024];
+			char group[512];
+			size_t querylen;
+
+			groupname = (char *)xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+			mysql_real_escape_string(db, group, groupname, strlen(groupname));
+			free(groupname);
+			querylen = snprintf(query, sizeof(query), "INSERT INTO foreignUserSystem (usersystem, username, groupname) "
+			    "VALUES(%d, '%s', '%s')", usersystem, user, group);
+			fprintf(stderr, "Query: %s\n", query);
+			if (mysql_real_query(db, query, querylen)) {
+				fprintf(stderr, "Failed to insert row, Error: %s\n", mysql_error(db));
+				continue;
+			}
+
+		} else {
+			// What???
+		}
+	}
+}
+
+void
+sd_users(xmlDocPtr doc, xmlNodePtr top)
+{
+	xmlNodePtr cur;
+	MYSQL db;
+	unsigned int usersystem;
+
+	if (mysql_init(&db) == NULL) {
+		fprintf(stderr, "Unable to init mysql.\n");
+		return;
+	}
+	if (!mysql_real_connect(&db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)) {
+		fprintf(stderr, "Unable to connect to database: %s\n", mysql_error(&db));
+		return ;
+	}
+
+	// Get usersystem id
+	usersystem = atoi((char *)xmlGetProp(top, (xmlChar *)"usersystem"));
+	fprintf(stderr, "Got a usersystem: %d\n", usersystem);
+
+	for (cur = top->xmlChildrenNode; cur != NULL; cur = cur->next) {
+		if (xmlStrcmp(cur->name, (xmlChar *)"user") == 0) {
+			sd_users_user(&db, usersystem, doc, cur);
+		} else if (xmlStrcmp(cur->name, (xmlChar *)"dropusers") == 0) {
+			char query[1024];
+			size_t querylen;
+
+			querylen = snprintf(query, sizeof(query), "DELETE FROM foreignUserSystem WHERE usersystem = %d", usersystem);
+			fprintf(stderr, "Deleting old usersystem rows: %s\n", query);
+			if (mysql_real_query(&db, query, querylen)) {
+				fprintf(stderr, "Failed to remove rows, Error: %s\n", mysql_error(&db));
+				continue;
+			}
+		} else {
+			fprintf(stderr, "Unknown node in users: %s\n", (char *)cur->name);
+			continue;
+		}
+	}
+
+	mysql_close(&db);
+}
 
 int
 main(int argc, char **argv)
@@ -286,6 +375,8 @@ main(int argc, char **argv)
 			sd_add(bbdnsock, doc, cur);
 		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "close"))) {
 			sd_close(bbdnsock, doc, cur);
+		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "users"))) {
+			sd_users(doc, cur);
 		} else if ((!xmlStrcmp(cur->name, (xmlChar*)"text"))) {
 			//fprintf(stderr, "Got text: %s\n", xmlNodeListGetString(doc, cur, 1));
 			// Ignore for now
