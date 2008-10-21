@@ -95,7 +95,7 @@ handle_acllist(const xmlDocPtr doc, xmlNodePtr acls, set *acl_allow, set *acl_de
 }
 
 void
-handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, char *parent, set *acl_allow, set *acl_deny, char *usersid)
+handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, char *parent, set *acl_allow, set *acl_deny, char *usersid, CURL *curl)
 {
 	xmlNodePtr href, propstat, cur;
 	char *url;
@@ -149,8 +149,8 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 	/* Directory perhaps? */
 	printf("Pathname: %s\n", url);
 	if (url[hreflen-1] == '/') {
-		newxml = ex_getContent(url, ci->collection->user, ci->collection->password);
-		grabContent(newxml, (char *)url, ci, acl_allow2, acl_deny2, usersid);
+		newxml = ex_getContent(url, curl);
+		grabContent(newxml, (char *)url, ci, acl_allow2, acl_deny2, usersid, curl);
 		free(newxml);
 	} else {
 		char *sid = NULL;
@@ -198,7 +198,7 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 		if (sid == NULL || lastmodified == 0) {
 			printf("Missing email information, skiping.\n");
 		} else {
-			grab_email(ci, acl_allow2, acl_deny2, url, sid, contentlen, lastmodified, usersid);
+			grab_email(ci, acl_allow2, acl_deny2, url, sid, contentlen, lastmodified, usersid, curl);
 		}
 		free(sid);
 	}
@@ -212,7 +212,7 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 }
 
 int
-getEmailUrls(const char *data, struct crawlinfo *ci, char *parent, set *acl_allow, set *acl_deny, char *usersid)
+getEmailUrls(const char *data, struct crawlinfo *ci, char *parent, set *acl_allow, set *acl_deny, char *usersid, CURL *curl)
 {
 	xmlDocPtr doc;
 	xmlNodePtr cur;
@@ -232,7 +232,7 @@ getEmailUrls(const char *data, struct crawlinfo *ci, char *parent, set *acl_allo
 	//printf("Root node: %s\n", cur->name);
 	for (cur = cur->xmlChildrenNode; cur; cur = cur->next) {
 		if (xmlStrcmp(cur->name, (const xmlChar *)"response") == 0) {
-			handle_response(doc, cur, ci, parent, acl_allow, acl_deny, usersid);
+			handle_response(doc, cur, ci, parent, acl_allow, acl_deny, usersid, curl);
 		}
 	}
 	xmlFreeDoc(doc);

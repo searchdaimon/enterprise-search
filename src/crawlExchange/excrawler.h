@@ -3,6 +3,7 @@
 
 #include "../dictionarywordsLot/set.h"
 #include "../crawl/crawl.h"
+#include "webdav.h"
 
 struct crawlinfo {
 	int (*documentExist)(struct collectionFormat *, struct crawldocumentExistFormat *);
@@ -13,8 +14,8 @@ struct crawlinfo {
 	unsigned int timefilter;
 };
 
-int grabContent(char *xml, char *url, struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *usersid);
-void grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char *sid, size_t contentlen, time_t lastmodified, char *usersid);
+int grabContent(char *xml, char *url, struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *usersid, CURL *curl);
+void grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char *sid, size_t contentlen, time_t lastmodified, char *usersi, CURL *curl);
 
 
 

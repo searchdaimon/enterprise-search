@@ -1,7 +1,7 @@
 #gcc xml.c url.c main.c -I/usr/include/libxml2/ -L/usr/lib -lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl && ./a.out
-CFLAGS=		-I/usr/include/libxml2/ -L/usr/lib -I/home/eirik/.root/include
-CFLAGS+=	-W -Wall -O0 -g -DBLACK_BOKS
-LDFLAGS=	-lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl -L/home/eirik/.root/lib
+CFLAGS=		-I/usr/include/libxml2/ -L/usr/lib -I/home/boitho/.root/include 
+CFLAGS+=	-O0 -g -DBLACK_BOKS
+LDFLAGS=	-lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl -L/home/boitho/.root/lib
 PROG=		crawlExchange.so
 CC=		/usr/local/bin/gcc
 
@@ -24,7 +24,7 @@ all: $(PROG)
 
 $(PROG): $(OBJS)
 	libtool $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOKS -g -static
-	-mkdir ../..//crawlers/crawlExchange
+	-mkdir -p ../..//crawlers/crawlExchange
 	cp $(PROG) ../..//crawlers/crawlExchange
 
 clean:

@@ -5,10 +5,8 @@
  */
 
 #include <sys/types.h>
+#include <string.h>
 
-#include <curl/curl.h>
-#include <curl/types.h>
-#include <curl/easy.h>
 
 #include <string.h>
 #include <stdarg.h>
@@ -68,14 +66,14 @@ ex_write_buffer(void *buffer, size_t size, size_t nmemb, void *stream)
 
 /* Free the returned value */
 char *
-ex_getEmail(const char *url, const char *username, const char *password, struct ex_buffer *buf)
+ex_getEmail(const char *url, struct ex_buffer *buf, CURL * curl)
 {
-	CURL * curl;
 	CURLcode result;
 	struct curl_slist *headers = NULL;
-	char *userpass;
 
-	curl = curl_easy_init();
+	printf("ex_getEmail(url=%s)\n",url);
+
+	//curl = curl_easy_init();
 	if (curl == NULL)
 		return NULL;
 
@@ -86,9 +84,6 @@ ex_getEmail(const char *url, const char *username, const char *password, struct 
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
-	if ((userpass = make_userpass(username, password)) == NULL)
-		return NULL;
-	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
 	//curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, my_fwrite);
 	//curl_easy_setopt(curl, CURLOPT_WRITEDATA, NULL);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, ex_write_buffer);
@@ -97,43 +92,180 @@ ex_getEmail(const char *url, const char *username, const char *password, struct 
 	//curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 	result = curl_easy_perform(curl);
 	curl_slist_free_all(headers);
-	curl_easy_cleanup(curl);
-	free_userpass(userpass);
 
 	return buf->buf;
 }
 
+void ex_logOff(CURL *curl) {
+
+	curl_easy_cleanup(curl);
+}
+CURL *ex_logOn(const char *mailboxurl, const char *Exchangeurl ,const char *username, const char *password, char **errorm) {
+
+	CURL *curl;
+	CURLcode result;
+	char *userpass;
+	long code;
+	char *redirecttarget;
+	char *owaauth;
+	char owaauthpath[PATH_MAX];
+	*errorm = NULL;
+	
+	
+	printf("ex_logOn(mailboxurl=%s, Exchangeurl=%s, username=%s)\n", mailboxurl, Exchangeurl, username);
+
+	curl = curl_easy_init();
+
+
+	if (curl == NULL) {
+		asprintf(errorm,"Can't init curl_easy_init()");		
+		return NULL;
+	}
+
+	#ifdef DEBUG
+    	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+	#endif
+
+	if (strstr(mailboxurl,"https://") != NULL) {
+    		//tilater bugy serfikater.
+    		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+	}
+
+	//vi prøver førs å gjøre et vanlig kall til urlen for å se hva som skjer. 
+    	curl_easy_setopt(curl, CURLOPT_URL, mailboxurl);
+
+	result = curl_easy_perform(curl);
+	result = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+
+	#ifdef DEBUG
+		//curl skriver av og til ut data uten \n på slutten. 
+		printf("\n");
+	#endif
+
+	printf("code %i\n",code);
+
+	//hvis vi fikke en redirect finner vi ut til hvor
+	if (code == 302) {
+    		result = curl_easy_getinfo(curl, CURLINFO_REDIRECT_URL , &redirecttarget);
+    		printf("res %d\n",result);
+	    	printf("redirect's to \"%s\"\n",redirecttarget);
+	}
+
+	if (code == 302 && (strstr(redirecttarget,"exchweb/bin/auth/owalogon.asp") != NULL)) {
+
+		printf("we have form based login!\n");
+
+		char *destination;
+		char *postData;
+
+	    	/* First set the URL that is about to receive our POST. This URL can
+	       	just as well be a https:// URL if that is what should receive the
+	       	data. */
+		snprintf(owaauthpath,sizeof(owaauthpath),"%s/exchweb/bin/auth/owaauth.dll",Exchangeurl);
+	    	curl_easy_setopt(curl, CURLOPT_URL, owaauthpath);
+
+	    	//bruke cookies
+	    	curl_easy_setopt(curl, CURLOPT_COOKIEJAR, "-");
+
+	    	//curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION , 0);
+
+		//url enkoder destination feltet
+		destination = curl_easy_escape(curl, mailboxurl, 0);
+
+		//bygger port datane
+		// skal være av slik: destination=https%3A%2F%2Fsbs.searchdaimon.com%2FExchange%2Feo&flags=0&username=eo&password=1234Asd&SubmitCreds=Log+On&trusted=0
+
+		asprintf(&postData,"destination=%s&flags=0&username=%s&password=%s&SubmitCreds=Log+On&trusted=0",destination, username, password);
+
+		printf("postData new: %s\n\n",postData);
+
+	    	/* Now specify the POST data */
+	    	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData);
+
+
+
+	    	/* Perform the request, res will get the return code */
+	    	result = curl_easy_perform(curl);
+
+	    	//res = curl_easy_getinfo(curl, CURLINFO_REDIRECT_URL , &redirecttarget);
+	    	//printf("res %d\n");
+	    	//printf("red to \"%s\"\n",redirecttarget);
+
+	    	result = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+	    	printf("res %d, code %d\n",result,code);
+
+		curl_free(destination);
+		free(postData);
+		
+	}
+	else if (code == 401) {
+		if ((userpass = make_userpass(username, password)) == NULL)
+			return NULL;
+		curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+
+		//usikker om vi kan gjøre dette. Kan være at curl trenger datene siden.
+		free_userpass(userpass);
+
+		//etter at vi har satt bruker/pass prøver vi å logge på.
+    		curl_easy_setopt(curl, CURLOPT_URL, mailboxurl);
+	
+		result = curl_easy_perform(curl);
+		result = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+
+		printf("code %i\n",code);
+		if (code == 200) {
+
+		}
+		else if (code == 401) {
+			asprintf(errorm,"Wrong username or passord");
+			return NULL;
+		}
+		else {
+			asprintf(errorm,"Http error code %i\n",code);
+			return NULL;
+		}
+
+    	}
+	else if ((code == 302) && (strstr(mailboxurl,"http://") != NULL) && (strstr(redirecttarget,"https://") != NULL)) {
+		asprintf(errorm,"Got redirected to an httpS page. If your server only supports https please use an https url as the resource for Exchange.\n");		
+		return NULL;
+	}
+	else {
+		asprintf(errorm,"Can't decide login type.\n");
+		return NULL;		
+	}
+
+
+	return curl;
+}
+
 /* Free the returned value */
 char *
-ex_getContent(const char *url, const char *username, const char *password)
+ex_getContent(const char *url, CURL *curl)
 {
-	CURL * curl;
 	CURLcode result;
 	struct curl_slist *headers = NULL;
 	struct ex_buffer buf;
-	char *userpass;
 	long code;
 
 	#ifdef DEBUG
 		//warn: skriver ut passord i klartekst.
-		//printf("ex_getContent(url=%s, username=%s, password=%s)\n",url,username,password);
+		printf("ex_getContent(url=%s)\n",url);
 	#endif
 
-	curl = curl_easy_init();
 	buf.buf = NULL;
 	buf.size = 0;
-	if (curl == NULL)
-		return NULL;
+
 
 	headers = curl_slist_append(headers, "Translate: f");
 	headers = curl_slist_append(headers, "Content-type: text/xml");
 	headers = curl_slist_append(headers, "Depth: 1");
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PROPFIND");
-	if ((userpass = make_userpass(username, password)) == NULL)
-		return NULL;
-	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, ex_write_buffer);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buf);
 	//curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
@@ -157,8 +289,6 @@ ex_getContent(const char *url, const char *username, const char *password)
 	result = curl_easy_perform(curl);
 	result = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
 	curl_slist_free_all(headers);
-	curl_easy_cleanup(curl);
-	free_userpass(userpass);
 
 	//printf("Mail\n\n%s\n\n", buf.buf);
 	printf("response code %d\n",code);
@@ -167,6 +297,10 @@ ex_getContent(const char *url, const char *username, const char *password)
 		free(buf.buf);
 		return NULL;
 	}
+
+	#ifdef DEBUG
+	printf("buf.buf: \"%s\"\n",buf.buf);
+	#endif
 
 	return buf.buf;
 }

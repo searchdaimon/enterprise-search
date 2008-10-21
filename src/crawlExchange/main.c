@@ -94,7 +94,7 @@ make_crawl_uri(char *uri, char *id)
 }
 
 void
-grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char *sid, size_t contentlen, time_t lastmodified, char *usersid)
+grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char *sid, size_t contentlen, time_t lastmodified, char *usersid, CURL *curl)
 {
 	size_t len;
 
@@ -117,7 +117,7 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 	} else {
 		char *p, *p2;
 
-		if (ex_getEmail(url, ci->collection->user, ci->collection->password, &mail) == NULL) {
+		if (ex_getEmail(url, &mail, curl) == NULL) {
 			free(crawldocumentExist.documenturi);
 			return;
 		}
@@ -184,13 +184,13 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 
 /* Does not detect loops, but they should not happen anyway */
 int
-grabContent(char *xml, char *url, struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *usersid)
+grabContent(char *xml, char *url, struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *usersid, CURL *curl)
 {
 	acl_allow = malloc(sizeof(*acl_allow));
 	acl_deny = malloc(sizeof(*acl_deny));
 	set_init(acl_allow);
 	set_init(acl_deny);
-	getEmailUrls(xml, ci, url, acl_allow, acl_deny, usersid);
+	getEmailUrls(xml, ci, url, acl_allow, acl_deny, usersid, curl);
 	set_free_all(acl_allow);
 	set_free_all(acl_deny);
 	free(acl_allow);
@@ -229,23 +229,31 @@ crawlcanconnect(struct collectionFormat *collection,
 	char *userString;
 	char *user, *usersid;
 	char **users;
+	char *eerror;
+	CURL * curl;
+
 	int n_users = 0;
 
 	if (strstr(collection->resource, "://")) {
-		snprintf(origresource, sizeof(origresource), "%s/exchange", collection->resource);
+		snprintf(origresource, sizeof(origresource), "%s", collection->resource);
 	} else {
-		snprintf(origresource, sizeof(origresource), "http://%s/exchange", collection->resource);
+		snprintf(origresource, sizeof(origresource), "http://%s", collection->resource);
 	}
 
 	for (users = collection->users; users && *users; users++) {
 		splitUserString(*users,&user, &usersid);
 		user = *users;
 
-		snprintf(resource, sizeof(resource), "%s/%s/", origresource, user);
+		snprintf(resource, sizeof(resource), "%s/exchange/%s/", origresource, user);
 		printf("Resource: %s\n", resource);
 		/* Shut up the xml parser a bit */
 		xmlGetWarningsDefaultValue = 0;
-		listxml = ex_getContent(resource, collection->user, collection->password);
+		if ((curl = ex_logOn(resource, origresource, collection->user, collection->password, &eerror)) == NULL) {
+			documentError(collection, 1, "Unable to connect to %s: %s\n", origresource, eerror);
+			return 0;
+
+		}
+		listxml = ex_getContent(resource, curl);
 		//listxml = NULL;
 		//printf("%s\n", listxml);
 		if (listxml != NULL) {
@@ -254,8 +262,11 @@ crawlcanconnect(struct collectionFormat *collection,
 				continue;
 			}
 			free(listxml);
+			ex_logOff(curl);
 			return 1;
 		}
+
+		ex_logOff(curl);
 	}
 
 	if (n_users == 0)
@@ -311,14 +322,16 @@ crawlGo(struct crawlinfo *ci)
 	char resource[PATH_MAX];
 	char **users;
 	char *user, *usersid;
+	char *eerror;
 	set *acl_allow, *acl_deny;
-	
+	CURL *curl;
+
 	normalize_url(ci->collection->resource);
 
 	if (strstr(ci->collection->resource, "://")) {
-		snprintf(origresource, sizeof(origresource), "%s/exchange", ci->collection->resource);
+		snprintf(origresource, sizeof(origresource), "%s", ci->collection->resource);
 	} else {
-		snprintf(origresource, sizeof(origresource), "http://%s/exchange", ci->collection->resource);
+		snprintf(origresource, sizeof(origresource), "http://%s", ci->collection->resource);
 	}
 
 	err = 0;
@@ -329,11 +342,15 @@ crawlGo(struct crawlinfo *ci)
 		if (!ci->documentContinue(ci->collection))
 			break;
 
-		snprintf(resource, sizeof(resource), "%s/%s/", origresource, user);
+		snprintf(resource, sizeof(resource), "%s/exchange/%s/", origresource, user);
 		printf("Trying %s\n", resource);
 		/* Shut up the xml parser a bit */
 		xmlGetWarningsDefaultValue = 0;
-		listxml = ex_getContent(resource, ci->collection->user, ci->collection->password);
+		if ((curl = ex_logOn(resource, origresource, ci->collection->user, ci->collection->password, &eerror)) == NULL) {
+			fprintf(stderr,"Can't connect to %s: %s\n",resource,eerror);
+			continue;
+		}
+		listxml = ex_getContent(resource, curl);
 		//listxml = NULL;
 		if (listxml == NULL) {
 			err++;
@@ -344,7 +361,7 @@ crawlGo(struct crawlinfo *ci)
 			acl_deny = malloc(sizeof(*acl_deny));
 			set_init(acl_allow);
 			set_init(acl_deny);
-			if (!grabContent(listxml, resource, ci, acl_allow, acl_deny, usersid))
+			if (!grabContent(listxml, resource, ci, acl_allow, acl_deny, usersid, curl))
 				err++;
 			set_free_all(acl_allow);
 			set_free_all(acl_deny);
@@ -352,6 +369,8 @@ crawlGo(struct crawlinfo *ci)
 			free(acl_deny);
 			free(listxml);
 		}
+
+		ex_logOff(curl);
 	}
 
 	return 1;
