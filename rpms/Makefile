@@ -8,7 +8,7 @@ tlcd-gt14_name = tlcd-gt14
 tlcd-gt14_version = 0.0.2
 
 boitho-ad_name = boitho-ad
-boitho-ad_version = 0.3.18
+boitho-ad_version = 0.3.19
 
 boitho-searchdbb_name = boitho-searchdbb
 boitho-searchdbb_version = 5.5.61
@@ -44,11 +44,11 @@ boitho-webclient_name = boitho-webclient
 boitho-webclient_version = 6.0.40
 
 boithobb-setuid_name = boithobb-setuid
-boithobb-setuid_version = 1.0.15
+boithobb-setuid_version = 1.0.16
 
 
 boithobb-crawl_watch_name = boithobb-crawl_watch
-boithobb-crawl_watch_version = 1.0.14
+boithobb-crawl_watch_version = 1.0.15
 
 boithobb-bbAutoUpdate_name = bbAutoUpdate
 boithobb-bbAutoUpdate_version = 1.0.3
@@ -66,7 +66,7 @@ boitho-meta_name = boitho-meta
 boitho-meta_version = 0.3
 
 boitho-phonehome_name = boitho-phonehome
-boitho-phonehome_version = 0.6
+boitho-phonehome_version = 0.9
 
 boitho-dummy_name = boitho-dummy
 boitho-dummy_version = 0.1
