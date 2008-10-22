@@ -54,7 +54,7 @@ boithobb-bbAutoUpdate_name = bbAutoUpdate
 boithobb-bbAutoUpdate_version = 1.0.3
 
 boithobb-sqlUpdate_name = boithobb-sqlUpdate
-boithobb-sqlUpdate_version = 1.7.6
+boithobb-sqlUpdate_version = 1.7.8
 
 boithobb-filepermissions_name = boithobb-filepermissions
 boithobb-filepermissions_version = 0.5.7
