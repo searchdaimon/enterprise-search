@@ -1209,7 +1209,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 
 		//vi tilater bare at en og en jobber med filen samtidig.
-        	if ( (INDEXLOCK = lotOpenFileNoCasheByLotNr(argstruct->lotNr,"index.lock","wb", 'e',argstruct->subname)) == NULL) {
+        	if ( (INDEXLOCK = lotOpenFileNoCasheByLotNr(lotNr,"index.lock","wb", 'e',subname)) == NULL) {
 			printf("can't loct tje index lock\n");
 			exit(-1);
 		}
