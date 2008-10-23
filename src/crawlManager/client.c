@@ -1,9 +1,14 @@
 #include <errno.h>
+#include <netinet/tcp.h>
+
+#include <sys/time.h>
 
 
 #include "../common/define.h"
 #include "../common/daemon.h"
 #include "../common/bstr.h"
+#include "../common/timediff.h"
+#include "../boithoadClientLib/boithoad.h"
 
 
 int cmc_conect(int *socketha, char statusbuff[],int statusbufflen, int port) {
@@ -16,6 +21,8 @@ int cmc_conect(int *socketha, char statusbuff[],int statusbufflen, int port) {
 		return 0;
 	}
 	else {
+		int nodelayflag = 1;
+		setsockopt(*socketha, IPPROTO_TCP, TCP_NODELAY, &nodelayflag, sizeof(int));
 		return 1;
 	}
 }
@@ -298,6 +305,95 @@ int cmc_killcrawl(int socketha, int port) {
         return 0;
     }
     return resp;
+}
+
+int cmc_groupsforuserfromusersystem(int socketha, char *_user, unsigned int us, char ***_groups) {
+	char user[512];
+	int i, n;
+	char **groups;
+	struct timeval ts, te;
+
+	strncpy(user, _user, sizeof(user));
+	sendpacked(socketha, cm_groupsforuserfromusersystem, BLDPROTOCOLVERSION, sizeof(user), user, "");
+
+	sendall(socketha, &us, sizeof(us));
+
+	if (recv(socketha, &n, sizeof n, MSG_WAITALL) == -1) {
+		perror("groupsbyuserforcoll recv");
+		return 0;
+	}
+
+	gettimeofday(&ts, NULL);
+	if (n > 0) {
+		groups = calloc(n, MAX_LDAP_ATTR_LEN);
+		if (recv(socketha, groups, n * MAX_LDAP_ATTR_LEN, MSG_WAITALL) == -1) {
+			perror("groupsbyuserforcoll recv");
+			return 0;
+		}	
+		*_groups = groups;
+	} else {
+		*_groups = NULL;
+	}
+	gettimeofday(&te, NULL);
+	printf("grepme cmc_groupsforuserfromusersystem took: %f\n", getTimeDifference(&ts, &te));
+
+	return n;
+}
+
+int
+cmc_collectionsforuser(int sock, char *_user, char **_collections)
+{
+	char user[512];
+	int n;
+	char *collections;
+
+	strncpy(user, _user, sizeof(user));
+	sendpacked(sock, cm_collectionsforuser, BLDPROTOCOLVERSION, sizeof(user), user, "");
+
+	recv(sock, &n, sizeof(n), MSG_WAITALL);
+	printf("#groups: %d\n", n);
+	if (n == 0) {
+		collections = strdup("");
+	} else {
+		printf("Allocating: %d %d\n", n, maxSubnameLength+1);
+		collections = calloc(n, maxSubnameLength+1);
+		recv(sock, collections, (maxSubnameLength+1)*n, MSG_WAITALL);
+	}
+	printf("got collections: %s\n", collections);
+	*_collections = collections;
+	
+	return n;
+}
+
+int
+cmc_usersystemfromcollection(int sock, char *collection)
+{
+	int n;
+
+	sendpacked(sock, cm_usersystemfromcollection, BLDPROTOCOLVERSION, 0, NULL, collection);
+	recv(sock, &n, sizeof(n), MSG_WAITALL);
+
+	return n;
+}
+
+int
+cmc_listusersus(int sock, int usersystem, char ***users)
+{
+	int n_users;
+	int i;
+	char user[MAX_LDAP_ATTR_LEN];
+
+	sendpacked(sock, cm_listusersus, BLDPROTOCOLVERSION, 0, NULL, "");
+	sendall(sock, &usersystem, sizeof(usersystem));
+	recv(sock, &n_users, sizeof(n_users), 0);
+	*users = malloc((n_users+1) * sizeof(char *));
+	for (i = 0; i < n_users; i++) {
+		recv(sock, user, sizeof(user), 0);
+		(*users)[i] = strdup(user);
+	}
+	(*users)[n_users] = NULL;
+
+	return n_users;
 }
 
 void cmc_close(int socketha) {
