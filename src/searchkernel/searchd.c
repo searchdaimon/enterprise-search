@@ -736,7 +736,7 @@ void *do_chld(void *arg)
 	fprintf(stderr, "Took this much time for collectionstuff: %f\n", getTimeDifference(&groupstuffstart, &groupstuffend));
 
 	cmc_close(cmc_sock);
-	strcpy(groupOrQuery, "group|group2");
+	strcpy(groupOrQuery, "");
 #endif
 
 
