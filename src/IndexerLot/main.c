@@ -34,6 +34,11 @@
 
 #include "../banlists/ban.h"
 #include "../acls/acls.h"
+#include "../common/ht.h"
+#include "../3pLibs/keyValueHash/hashtable.h"
+#include "../3pLibs/keyValueHash/hashtable_itr.h"
+#include "../dictionarywordsLot/set.h"
+#include "../dictionarywordsLot/acl.h"
 
 #include "../ds/dcontainer.h"
 #include "../ds/dpair.h"
@@ -125,6 +130,9 @@ struct IndexerLot_workthreadFormat {
 	struct DIArrayFormat *DIArray;
 	//struct DIArrayFormat DIArray[NrofDocIDsInLot];
 	char *reponame;
+	struct hashtable *words;
+	struct hashtable *acls;
+	
 
 	#ifndef BLACK_BOKS
 		struct addNewUrlhaFormat addNewUrlha[NEWURLFILES_NR];
@@ -135,6 +143,7 @@ struct IndexerLot_workthreadFormat {
         	pthread_mutex_t reposetorymutex;
         	pthread_mutex_t restmutex;
         	pthread_mutex_t countmutex;
+		pthread_mutex_t wordsmutex;
        	#endif
 
 	#ifdef PRESERVE_WORDS
@@ -607,6 +616,58 @@ int IndexerLot_filterOnlyTLD (char **optOnlyTLD,char TLD[]) {
 	return 1;
 }
 
+typedef struct {
+	int hits;
+	set acl_allow;
+	set acl_denied;
+} dictcontent_t;
+
+
+void
+savewords(struct pagewordsFormat *pagewords, pthread_mutex_t *wordsmutex, struct hashtable *words, struct hashtable *acls,
+    char *acl_allow, char *acl_denied)
+{
+	struct pagewordsFormatPartFormat *wordsPart;
+	int i;
+	char *filesKey;
+
+	wordsPart = &pagewords->normalWords;
+
+#ifdef WITH_THREAD
+	pthread_mutex_lock(wordsmutex);
+#endif
+
+	for (i = 0; i < wordsPart->revIndexnr; i++) {
+		dictcontent_t *dc;
+
+		if ((dc = hashtable_search(words, wordsPart->revIndex[i].word)) == NULL) {
+			filesKey = strdup(wordsPart->revIndex[i].word);
+			dc = malloc(sizeof(*dc));
+			dc->hits = wordsPart->revIndex[i].wordnr;
+			set_init(&dc->acl_allow);
+			set_init(&dc->acl_denied);
+			add_acls(acl_allow, &dc->acl_allow, acls);
+			add_acls(acl_denied, &dc->acl_denied, acls);
+
+			if (!hashtable_insert(words, filesKey, dc)) {
+				printf("cant insert\n");
+				exit(-1);
+			}
+
+		}
+		else {
+			add_acls(acl_allow, &dc->acl_allow, acls);
+			add_acls(acl_denied, &dc->acl_denied, acls);
+			dc->hits += wordsPart->revIndex[i].wordnr;
+		}
+	}
+
+
+#ifdef WITH_THREAD
+	pthread_mutex_unlock(wordsmutex);
+#endif
+}
+
 
 void *IndexerLot_workthread(void *arg) {
 
@@ -1007,7 +1068,13 @@ void *IndexerLot_workthread(void *arg) {
 						#endif
 
 						#ifdef PRESERVE_WORDS
-							dictionaryWordsWrite(pagewords,(*argstruct).dictionarywordsfFH, acl_allow, acl_denied);
+							savewords(pagewords,
+#ifdef WITH_THREAD
+							&argstruct->wordsmutex,
+#else
+							NULL,
+#endif
+							argstruct->words, argstruct->acls, acl_allow, acl_denied);
 					
 						#endif
 						//DocIDPlace = ((ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr)) * sizeof(unsigned char));
@@ -1343,7 +1410,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 	html_parser_init();
 
 
-	printf("run: indexing lot %i\n",lotNr);
+	printf("run: indexing lot %i %s\n",lotNr, subname);
 
 	#ifndef BLACK_BOKS		
 		if (!ipbanLoad()) {
@@ -1617,11 +1684,6 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 		#endif
 
-		#ifdef PRESERVE_WORDS
-			argstruct->dictionarywordsfFH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords_raw",openmode,'r',subname);
-		#endif
-
-
 
 		//main work
 		argstruct->lotNr 		= lotNr;
@@ -1708,12 +1770,70 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
         	        return;
 	        }
 
+#ifdef PRESERVE_WORDS
+		argstruct->words = create_hashtable(1337, ht_stringhash, ht_stringcmp);
+		argstruct->acls = create_hashtable(1337, ht_stringhash, ht_stringcmp);
+
+		/* Partial indexing */
+		if (strchr(openmode, 'a') != NULL) {
+			FILE *FH;
+			char line[2048];
+			char *filesKey, word[1024];
+
+			FH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords_raw","r",'r',subname);
+
+			while(fgets(line, sizeof(line), FH) != NULL) {
+				char acl_allow[DICT_ACL_LENGTH], acl_denied[DICT_ACL_LENGTH];
+				dictcontent_t *dc;
+				unsigned int nr;
+
+
+				chomp(line);
+				//printf("line \"%s\"\n",line);
+
+				if (!dictionarywordLineSplit(line, word, &nr, acl_allow, acl_denied)) {
+					puts("Error");
+					continue;
+				}
+
+				//printf("word \"%s\", nr %u\n",word,nr);
+
+				if ((dc = hashtable_search(argstruct->words, word)) == NULL) {
+					filesKey = strdup(word);
+					dc = malloc(sizeof(*dc));
+					dc->hits = nr;
+					set_init(&dc->acl_allow);
+					set_init(&dc->acl_denied);
+					add_acls(acl_allow, &dc->acl_allow, argstruct->acls);
+					add_acls(acl_denied, &dc->acl_denied, argstruct->acls);
+
+					if (!hashtable_insert(argstruct->words, filesKey, dc)) {
+						printf("cant insert\n");
+						exit(-1);
+					}
+
+				}
+				else {
+					add_acls(acl_allow, &dc->acl_allow, argstruct->acls);
+					add_acls(acl_denied, &dc->acl_denied, argstruct->acls);
+					dc->hits += nr;
+				}
+			}
+
+			fclose(FH);
+
+		}
+		
+#endif
+
+
 		#ifdef WITH_THREAD
 
 			//init mutex
 			pthread_mutex_init(&argstruct->reposetorymutex, NULL);
 			pthread_mutex_init(&argstruct->restmutex, NULL);
 			pthread_mutex_init(&argstruct->countmutex, NULL);
+			pthread_mutex_init(&argstruct->wordsmutex, NULL);
 
 			if (opt->NrofWorkThreads == 0) {
 				printf("won't use threads\n");
@@ -1870,9 +1990,56 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 		//skriver riktig indexs tid til lotten
 		setLastIndexTimeForLot(lotNr,argstruct->httpResponsCodes,subname);
-		
-		
+
 		#ifdef PRESERVE_WORDS
+		argstruct->dictionarywordsfFH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords_raw", "w",'r',subname);
+
+		// Loop over and write all words here...
+		{
+			FILE *resultFH = argstruct->dictionarywordsfFH;
+
+			printf("Got words: %d\n", hashtable_count(argstruct->words));
+
+			if (hashtable_count(argstruct->words) > 0) {
+				struct hashtable_itr *itr;
+
+				itr = hashtable_iterator(argstruct->words);
+				do {
+					char *p;
+					int i;
+					char *filesKey;
+					dictcontent_t *dc;
+
+					filesKey = hashtable_iterator_key(itr);
+					dc = hashtable_iterator_value(itr);
+
+					printf("Adding: %s\n", filesKey);
+
+					//printf("\"%s\": %i\n",filesKey,dc->hits);
+					fprintf(resultFH,"%s %u ",filesKey,dc->hits);
+					//printf("acl allow:\n");
+					SET_FOREACH(i, &dc->acl_allow, p) {
+						if (i > 0)
+							fprintf(resultFH, ",");
+						fprintf(resultFH, "%s", p);
+						//printf("Got soemthing here: %s\n", p);
+						//printf("\t%s\n", p);
+					}
+					fprintf(resultFH, " ");
+					//printf("acl denied:\n");
+					SET_FOREACH(i, &dc->acl_denied, p) {
+						if (i > 0)
+							fprintf(resultFH, ",");
+						fprintf(resultFH, "%s", p);
+						//printf("\t%s\n", p);
+					}
+					fprintf(resultFH, "\n");
+
+				} while (hashtable_iterator_advance(itr) != 0);
+				free(itr);
+			}
+		}
+
 		fclose(argstruct->dictionarywordsfFH);
 		#endif
 		// vi må ikke kopiere revindex filene da vi jobber på de lokale direkte
