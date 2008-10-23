@@ -185,6 +185,9 @@
 #define complicacy_maxPoengAthorPhraserank 260
 #define complicacy_maxPoengAthorSimple 6
 
+#define SUMMARY_START   1
+#define SUMMARY_SNIPPET 2
+
 //Lengden på en okument post lengde
 //#define DocumentIndexPOSTLENGTH 253
 
@@ -202,39 +205,41 @@ struct filteronFormat {
 };
 
 struct subnamesConfigFormat {
-        const char *summary;
-     char filterSameUrl; //bool
-     char filterSameDomain;
-     char filterTLDs;
-     char filterResponse;
-     char filterSameCrc32;
+		char summary; // 23.07.2008 - summary til char (fra const char *), dj
+		char filterSameUrl; //bool
+		char filterSameDomain;
+		char filterTLDs;
+		char filterResponse;
+		char filterSameCrc32;
 
-        char rankAthorArray[BMAX_RANKARRAY];
-     char rankAthorArrayLen;
+		char rankAthorArray[BMAX_RANKARRAY];
+		char rankAthorArrayLen;
 
-        char rankTittelArray[BMAX_RANKARRAY];
-     char rankTittelArrayLen;
-        char rankTittelFirstWord;
+		char rankTittelArray[BMAX_RANKARRAY];
+		char rankTittelArrayLen;
+		char rankTittelFirstWord;
 
-        char rankHeadlineArray[BMAX_RANKARRAY];
-     char rankHeadlineArrayLen;
+		char rankHeadlineArray[BMAX_RANKARRAY];
+		char rankHeadlineArrayLen;
 
-        char rankBodyArray[BMAX_RANKARRAY];
-     char rankBodyArrayLen;
+		char rankBodyArray[BMAX_RANKARRAY];
+		char rankBodyArrayLen;
 
-        char rankUrlArray[BMAX_RANKARRAY];
-     char rankUrlArrayLen;
-        char rankUrlMainWord;
+		char rankUrlArray[BMAX_RANKARRAY];
+		char rankUrlArrayLen;
+		char rankUrlMainWord;
 
-     const char *defaultthumbnail;
+		const char *defaultthumbnail;
 
-     char isPaidInclusion; //bool
+		char isPaidInclusion; //bool
 
-	//sql query som vil bli utført hver gang vi ser en side i denne subnamet
-	char sqlImpressionsLogQuery[252];
+		//sql query som vil bli utført hver gang vi ser en side i denne subnamet
+		char sqlImpressionsLogQuery[252];
+
+		char cache_link; // 30.09.2008 - show cache link, dj
 };
 struct subnamesFormat {
-	char subname[64];
+	char subname[maxSubnameLength]; // 23.07.08 - fra 64 til maxSubnameLength
 	int hits;
 	struct subnamesConfigFormat config;
 	//28 mai 2007: tar bort, ser ikke ut til å være brukt lengde, etter at vi implementerete filtyper som filter
