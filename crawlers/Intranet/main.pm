@@ -6,7 +6,7 @@ our @ISA = qw(Crawler);
 
 #use SOAP::Lite(  +trace => 'all', readable => 1, outputxml => 1, );
 #use SOAP::Lite(readable => 1, outputxml => 1, );
-use XML::XPath;
+#use XML::XPath;
 use SD::sdCrawl;
 use LWP::RobotUA;
 use URI;
@@ -34,12 +34,6 @@ sub path_access  {
     my $user = $opt->{'user'};
     my $passw  = $opt->{'password'};
     my $url = $opt->{"resource"};
-
-
-    if ($opt->{'passwordisPasswordProtected'} == 0 ) {
-        print "passwordisPasswordProtected\n";
-        return 1;
-    }
 
      if (!defined($robot)) { init_robot() ; }
 
