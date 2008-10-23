@@ -35,8 +35,10 @@
     #include <fcntl.h>
     #include <zlib.h>
     #include <sys/file.h>
+#include <err.h>
 
     #include "library.h"
+#include "../common/debug.h"
 
     #define MAXDATASIZE 100 // max number of bytes we can get at once 
 
@@ -190,7 +192,7 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 	int y = 0;
 //      struct timeval timeout;
 //      struct timeval time;
-        struct timespec timeout;
+        //struct timespec timeout;
         struct timespec time;
         int socketWait;
 	int n;
@@ -267,12 +269,12 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 }
 
 int
-bsQuery(int *sock, struct queryNodeHederFormat *queryNodeHeder)
-{
+bsQuery(int *sock, void *data, size_t data_size) {
+	//printf("Sending %d\n", data_size);
 	if (sock == 0)
 		return 0;
 
-	if (sendall(*sock, queryNodeHeder, sizeof(*queryNodeHeder)) != sizeof(*queryNodeHeder)) {
+	if (sendall(*sock, data, data_size) != data_size) {
 		perror("sendall");
 		*sock = 0;
 		return 0;
@@ -281,35 +283,61 @@ bsQuery(int *sock, struct queryNodeHederFormat *queryNodeHeder)
 	return 1;
 }
 
+int bsMultiConnect(int *sockfd, int server_cnt, char **servers, int port, int offset) {
+	int i;
+	for (i = 0; i < server_cnt; i++) {
+		dprintf("connecting to \"%s\" as sockfd nr %i\n",servers[i],(i +alreadynr));
 
-void bsConectAndQuery(int *sockfd,int nrOfServers, char *servers[],struct queryNodeHederFormat *queryNodeHeder,int alreadynr, int port) {
+		if (bsconnect(&sockfd[i + offset], servers[i], port)) {
+			dprintf("can connect\n");
+		}
+		else {
+			dprintf("can NOT connect\n");
+			sockfd[i] = 0;
+			return 0;
+		}
+	}
+	return 1;
+}
+
+void bsConnectAndQuery(int *sockfd,int server_cnt, char **servers, 
+	struct queryNodeHederFormat *header, 
+	struct subnamesFormat *colls, int colls_cnt,
+	int offset, int port) {
+	
+	
+	bsMultiConnect(sockfd, server_cnt, servers, port, offset);
+	
+	// send data.
+	int i;
+	for (i = 0; i < server_cnt; i++) {
+		if (!sockfd[i + offset]) 
+			continue;
+		if (!bsQuery(&sockfd[i + offset], header, sizeof *header)
+		 || !bsQuery(&sockfd[i + offset], &colls_cnt, sizeof colls_cnt)
+		 || !bsQuery(&sockfd[i + offset], colls, 
+		 	sizeof(struct subnamesFormat) * colls_cnt)) {
+			warnx("Can't send. Server %s:%i", servers[i], port);
+		}
+	}
+}
+
+/*void bsConectAndQuery(int *sockfd,int nrOfServers, char *servers[],struct queryNodeHederFormat *queryNodeHeder,int alreadynr, int port) {
 
 	int i;
 #ifdef DEBUG
 	struct timeval start_time, end_time;
 	gettimeofday(&start_time, NULL);
 #endif
-
-#ifdef DEBUG
-#endif
-
-	//kobler til vanlige servere
-	for (i=0;i<nrOfServers;i++) {
-		dprintf("connecting to \"%s\" as sockfd nr %i\n",servers[i],(i +alreadynr));
-		if (bsconnect (&sockfd[i +alreadynr], servers[i], port)) {
-			dprintf("can connect\n");
-		}
-		else {
-			dprintf("can NOT connect\n");
-			sockfd[i] = 0;
-		}
-	}	
+	
+	bsMultiConnect(sockfd, nrOfServers, servers, port, alreadynr);
+		
 	//sender ut forespørsel
 	for (i=0;i<nrOfServers;i++) {
 		//sender forespørsel
 
 		if (sockfd[i+alreadynr] != 0) {
-			if (!bsQuery(&sockfd[i+alreadynr], queryNodeHeder))
+			if (!bsQuery(&sockfd[i+alreadynr], queryNodeHeder, sizeof *queryNodeHeder))
 				fprintf(stderr,"Error: Can't connect. Server %s:%i\n",servers[i], port);
 		}
 		dprintf("sending of queryNodeHeder end\n");
@@ -321,7 +349,7 @@ void bsConectAndQuery(int *sockfd,int nrOfServers, char *servers[],struct queryN
 	printf("Time debug: bsConectAndQuery %f\n",getTimeDifference(&start_time,&end_time));
 
 #endif
-}
+}*/
 
 int bdread_continue(int sockfd[], int nrof,int bytesleft[], int lastgoodread[], int readsdone, int maxSocketWait) {
 
@@ -426,7 +454,7 @@ void bdread(int sockfd[],int nrof,int datasize, void *result, int maxSocketWait)
 void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,struct SiderFormat *Sider, 
 	int *pageNr,int alreadynr) {
 
-	int i,y,n;
+	int i,n;
 	int net_status;
 
 	#ifdef DEBUG
@@ -533,11 +561,13 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 				#endif
 
 				for (j = 0; j < SiderHeder[i].showabal; j++) {
-					if ((n=bsread (&sockfd[i],sizeof(struct SiderFormat), &Sider[(*pageNr)],maxSocketWait_SiderHeder))) {
+					if ((n=bsread(&sockfd[i],sizeof(struct SiderFormat), &Sider[(*pageNr)],maxSocketWait_SiderHeder))) {
 						size_t len;
 						int k;
 						/* Get urls ... */
 						Sider[*pageNr].urls = calloc(Sider[*pageNr].n_urls, sizeof(*(Sider->urls)));
+						if (Sider[*pageNr].url == NULL)
+							err(1, "calloc(urls)");
 
 						for (k = 0; k < Sider[*pageNr].n_urls; k++) {
 
@@ -559,7 +589,6 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 						Sider[*pageNr].attributes = malloc(len+1);
 						bsread(&sockfd[i], len, Sider[*pageNr].attributes, maxSocketWait_SiderHeder);
 						Sider[*pageNr].attributes[len] = '\0';
-						//printf("Len: %d str: %s\n", len, Sider[*pageNr].attributes);
 
 						(*pageNr) += 1;
 					}
@@ -582,6 +611,8 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 void bsConectAndQueryOneServer(char server[], int searchport, char query[], char subname[], int maxHits, int start, 
 	struct SiderFormat **Sider, int *pageNr) {
 
+	errx(1, "bsConectAndQueryOneServer() is broken. %s, line %d", __FILE__, __LINE__);
+
 
 	int i;
 
@@ -590,7 +621,7 @@ void bsConectAndQueryOneServer(char server[], int searchport, char query[], char
         int nrOfAddServers;
 	int SiderSize;
         int sockfd[maxServers];
-        int addsockfd[maxServers];
+        //int addsockfd[maxServers];
 
 	struct QueryDataForamt QueryData;
 	struct queryNodeHederFormat queryNodeHeder;
@@ -685,7 +716,8 @@ void bsConectAndQueryOneServer(char server[], int searchport, char query[], char
 
 	printf("trying to get %i hist from server \"%s\", starting on %i\n",QueryData.MaxsHits,server,QueryData.start);
 
-	bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,nrOfPiServers,searchport);
+	//TODO: Unbreak querying
+	//bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,nrOfPiServers,searchport);
 
 	*pageNr = 0;
 	brGetPages(sockfd,nrOfServers,SiderHeder,*Sider,pageNr,0);

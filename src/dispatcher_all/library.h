@@ -48,9 +48,15 @@
 
 
 void die(int errorcode,char query[] ,const char *fmt, ...);
-void bsConectAndQuery(int *sockfd,int nrOfServers, char *servers[],struct queryNodeHederFormat *queryNodeHeder,int alreadynr, int port);
+void bsConnectAndQuery(int *sockfd,int server_cnt, char **servers, 
+	struct queryNodeHederFormat *header, 
+	struct subnamesFormat *colls, int colls_cnt,
+	int offset, int port);
+	
 void bsConectAndQueryOneServer(char server[], int searchport, char query[], char subname[], int maxHits, int start,
         struct SiderFormat **Sider, int *pageNr);
+void addError(struct errorhaFormat *errorha, int errorcode,char errormessage[]);
+void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,struct SiderFormat *Sider, int *pageNr,int alreadynr);
 
 
 #ifdef WITH_CASHE

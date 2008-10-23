@@ -1,40 +1,48 @@
+#include "../common/define.h"
+#include "../common/lot.h"
+#include "../common/vid.h"
+#include "../common/stdlib.h"
+#include "../common/utf8-strings.h"
+#include "../UrlToDocID/search_index.h"
 
+#include "../banlists/ban.h"
 
-    #include "../common/define.h"
-    #include "../common/lot.h"
-    #include "../common/vid.h"
-    #include "../common/stdlib.h"
-    #include "../common/utf8-strings.h"
-    #include "../UrlToDocID/search_index.h"
+#include "library.h"
 
-    #include "../banlists/ban.h"
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/time.h> // gettimeofday
+#include <sys/file.h> // flock
+#include <unistd.h>
+#include <errno.h> 
+#include <time.h>
+#include <errno.h>
+#include <locale.h>
+#include <fcntl.h>
+#include <zlib.h>
+#include <err.h>
 
-    #include "library.h"
+#include "../common/boithohome.h"
+#include "../common/langToNr.h" // getLangCode
+#include "../common/attributes.h" // next_attribute
+#include "../maincfg/maincfg.h"
+
+#include <libconfig.h>
+#define CFG_SEARCHD "config/searchd.conf"
+
 
     #include "../ds/dcontainer.h"
     #include "../ds/dset.h"
     #include "../query/query_parser.h"
     #include "../common/bprint.h"
 
-    #include <stdarg.h>
-    #include <stdio.h>
-    #include <stdlib.h>
-    #include <unistd.h>
-    #include <errno.h>
-    #include <string.h>
-    #include <netdb.h>
-    #include <sys/types.h>
-    #include <sys/stat.h>
-    #include <unistd.h>
-    #include <errno.h> 
-    #include <time.h>
-    #include <errno.h>
-    #include <locale.h>
-    #include <fcntl.h>
-    #include <zlib.h>
-
-    #include "../common/boithohome.h"
-    #include "../maincfg/maincfg.h"
 
 #define DefultMaxsHits 20
     
@@ -45,7 +53,7 @@
     //#define prequerydir "prequerydir"
 #endif
 
-    #define cfg_dispatcher "config/dispatcher.conf"
+    #define CFG_DISPATCHER "config/dispatcher.conf"
 
 #ifndef BLACK_BOKS
     #include "GeoIP.h"
@@ -67,6 +75,11 @@
 
     //#define PORT 6500 // the port client will be connecting to 
 
+#ifdef BLACK_BOKS
+ 	// get user groups
+	#include "../acls/acls.h"
+	#include "../boithoadClientLib/liboithoaut.h"
+#endif
 
 #ifdef DEBUG
 #define dprintf(str, args...) printf(str, ##args)
@@ -74,6 +87,9 @@
 #define dprintf(str, args...) 
 #endif
 
+
+void read_collection_cfg(struct subnamesConfigFormat * dst);
+void read_dispatcher_cfg(struct config_t * cfg, struct dispconfigFormat * dispconfig, int *cachetimeout);
 
 /* Set if you want to write prequery data */
 int prequerywriteFlag = 0;
@@ -84,7 +100,150 @@ int prequerywriteFlag = 0;
     int compare_elements (const void *p1, const void *p2);
     int compare_elements_posisjon (const void *p1, const void *p2);
 
+#ifdef BLACK_BOKS
+int has_coll(struct subnamesFormat *colls, int num, char *subname) {
+	int i;
+	for (i = 0; i < num; i++) {
+		if (strcmp(colls[i].subname, subname) == 0)
+			return 1;
+	}
+	return 0;
+}
 
+struct subnamesFormat *get_usr_coll(char *usr, int *n_colls) {
+	struct userToSubnameDbFormat db;
+
+	int num_colls = 0, i, j;
+	*n_colls = 0;
+	struct subnamesFormat *usr_colls = NULL;
+
+	if (!userToSubname_open(&db, 'r'))
+		errx(1, "read_collections: Can't open users db\n");
+	
+	// fetch user groups
+	char **ad_groups;
+	int  num_groups;
+	if (!boithoad_groupsForUser(usr, &ad_groups, &num_groups)) {
+		userToSubname_close(&db);
+		return NULL;
+	}
+
+	for (i = 0; i < num_groups; i++) {
+		// fetch colls in each group
+		int num;
+		char **group_colls = userToSubname_getsubnamesList(&db, ad_groups[i], &num);
+		if (group_colls == NULL)
+			continue;
+	
+		for (j = 0;j < num; j++) {
+			// add coll to usr_colls
+			if (has_coll(usr_colls, num_colls, group_colls[j]))
+				continue;
+			num_colls++;
+			usr_colls = realloc(usr_colls, 
+				sizeof(struct subnamesFormat) * num_colls);
+			strncpy(
+				usr_colls[num_colls-1].subname, 
+				group_colls[j],
+				sizeof usr_colls[num_colls-1].subname
+			);
+		}
+		userToSubname_freesubnamesList(group_colls, num);
+	}
+	*n_colls = num_colls;
+	boithoad_respons_list_free(ad_groups);
+	userToSubname_close(&db);
+
+	return usr_colls;
+}
+
+
+int cfg_parse_array(char * dst, const char * arraystr) {
+	char **data;
+	int tokens = split(arraystr, ",", &data);
+
+	int len = 0;
+	int i;
+	for (i = 0; i < tokens; i++) {
+		if (i > BMAX_RANKARRAY) {
+			warnx("cfg array parse: Array string too large, ignoring");
+			continue;
+		}
+
+		int score = strtol(data[i], NULL, 10);
+
+		dst[i] = (char) score;
+		len++;
+	}
+	FreeSplitList(data);
+	return len;
+}
+
+
+int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg) {
+	const char query_tpl[] = "SELECT  \
+		summary, filter_same_url, filter_same_domain, \
+		filter_TLDs, filter_response, filter_same_crc32, \
+		rank_author_array, rank_title_array, rank_title_first_word, \
+		rank_headline_array, rank_body_array, rank_url_array, \
+		rank_url_main_word, cache_link \
+		FROM shareResults, shares \
+		WHERE \
+			shares.collection_name = '%s' \
+			AND shares.id = shareResults.share ";
+	char name_esc[maxSubnameLength * 2];
+	mysql_real_escape_string(db, name_esc, coll_name, strlen(coll_name));
+	
+	char query[1024];
+	snprintf(query, sizeof query, query_tpl, name_esc);
+	
+	if (mysql_real_query(db, query, strlen(query)) != 0) {
+		warnx("Mysql error (%s line %d): %s\n", 
+			__FILE__, __LINE__, mysql_error(db));
+		return 0;
+	}
+	
+	MYSQL_RES *res = mysql_store_result(db);
+	MYSQL_ROW row = mysql_fetch_row(res);
+	if (row == NULL) {
+		warnx("No config data for collection %s\n", coll_name);
+		return 0;
+	}
+
+	if (strcmp(row[0], "start") == 0)
+		cfg->summary = SUMMARY_START;
+	else if (strcmp(row[0], "snippet") == 0)
+		cfg->summary = SUMMARY_SNIPPET;
+	else { 
+		warnx("Unknown 'summary' format %s\n", row[0]);
+		cfg->summary = SUMMARY_SNIPPET;
+	}
+
+	cfg->filterSameUrl    = row[1][0] == '1' ? 1 : 0;
+	cfg->filterSameDomain = row[2][0] == '1' ? 1 : 0;
+	cfg->filterTLDs       = row[3][0] == '1' ? 1 : 0;
+	cfg->filterResponse   = row[4][0] == '1' ? 1 : 0;
+	cfg->filterSameCrc32  = row[5][0] == '1' ? 1 : 0;
+
+	cfg->rankAthorArrayLen    = cfg_parse_array(cfg->rankAthorArray, row[6]);
+	cfg->rankTittelArrayLen   = cfg_parse_array(cfg->rankTittelArray, row[7]);
+	cfg->rankTittelFirstWord = (char) strtol(row[8], NULL, 10);
+	cfg->rankHeadlineArrayLen = cfg_parse_array(cfg->rankHeadlineArray, row[9]);
+	cfg->rankBodyArrayLen     = cfg_parse_array(cfg->rankBodyArray, row[10]);
+	cfg->rankUrlArrayLen      = cfg_parse_array(cfg->rankUrlArray, row[11]);
+
+	cfg->rankUrlMainWord = (char) strtol(row[12], NULL, 10);
+
+	cfg->defaultthumbnail = NULL;
+	cfg->isPaidInclusion = 0;
+	cfg->sqlImpressionsLogQuery[0] = '\0';
+
+	cfg->cache_link = row[13][0] == '1' ? 1 : 0;
+
+	mysql_free_result(res);
+	return 1;
+}
+#endif
 
 
 /* Cache helper functions */
@@ -98,7 +257,9 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 {
 	int res;
 	config_setting_t *cfgarray;
+#ifdef DEBUG
 	struct timeval start_time, end_time;
+#endif
 
 	// Initialize the CGI lib
 	res = cgi_init();
@@ -336,7 +497,9 @@ handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *
 	int AdultPages, NonAdultPages;
 	int posisjon, i;
 	int funnet;
+#ifdef DEBUG
 	struct timeval start_time, end_time;
+#endif
 
 
 	*nrRespondedServers = 0;
@@ -741,6 +904,7 @@ unsigned int getDocIDFromSql (MYSQL *demo_db, char rankUrl[]) {
 	return 0;
 }
 
+
 int main(int argc, char *argv[])
 {
 
@@ -753,15 +917,15 @@ int main(int argc, char *argv[])
 
         int sockfd[maxServers];
         int addsockfd[maxServers];
-	int i,y,n,x;
+	int i,y,x;
 	int pageNr;
 	char documentlangcode[4];
 	int totlaAds;
-	char *strpointer;  
-	int net_status;
-	int res;
-	int nerror;
-	int dataReceived[maxServers];
+	//char *strpointer;  
+	//int net_status;
+	//int res;
+	//int nerror;
+	//int dataReceived[maxServers];
 	//int siderDataReceived[maxServers];
         //char buf[MAXDATASIZE];
         //struct hostent *he[maxServers];
@@ -786,37 +950,46 @@ int main(int argc, char *argv[])
 	off_t maxSider;
 	struct SiderHederFormat FinalSiderHeder;
 	//char buff[4096]; //generell buffer
+#ifndef BLACK_BOKS
 	struct in_addr ipaddr;
+#endif
         struct QueryDataForamt QueryData;
 	//int connected[maxServers];
 	//int NonAdultPages,AdultPages;
 	struct timeval main_start_time, main_end_time;
+#ifdef DEBUG
 	struct timeval start_time, end_time;
+#endif
 	int nrRespondedServers;
 	char errormessage[maxerrorlen];
 	struct errorhaFormat errorha;
 	errorha.nr = 0;
 	//int posisjon;
-	struct timeval timeout;
-	struct timeval time;
-	int socketWait;	
+	//struct timeval timeout;
+	//struct timeval time;
+	//int socketWait;	
 	int hascashe;
         int hasprequery;
+#ifdef WITH_CASHE	
 	char prequeryfile[512];
 	char cashefile[512];
+#endif
 	struct filtersTrapedFormat dispatcherfiltersTraped;
 
-	char *cpnt;
+	//char *cpnt;
+#ifndef BLACK_BOKS
 	char *lastdomain = NULL;
+#endif
 
 	unsigned int getRank = 0; /* Set if we are looking for the rank of a specific query on a url */
 
+#ifndef BLACK_BOKS
 	unsigned int wantedDocId;
+#endif
 	struct queryNodeHederFormat queryNodeHeder;
 
 	struct dispconfigFormat dispconfig;
 	int cachetimeout;
-	config_setting_t *cfgstring;
 
 	#ifdef DEBUG
 	gettimeofday(&start_time, NULL);
@@ -836,128 +1009,32 @@ int main(int argc, char *argv[])
 	#endif
 
 	int searchport = 0;
-	//config
-	config_setting_t *cfgarray;
+
 	struct config_t cfg;
+	// TODO: Also read servers witin function (so we can remove cfg from main() )
+	read_dispatcher_cfg(&cfg, &dispconfig, &cachetimeout); 
 
-
-	/* Initialize the configuration */
-	config_init(&cfg);
-
-	/* Load the file */
-	dprintf("loading [%s]..\n", bfile(cfg_dispatcher) );
-
-	if (!config_read_file(&cfg, bfile(cfg_dispatcher) )) {
-		printf("[%s]failed: %s at line %i\n",bfile(cfg_dispatcher),config_error_text(&cfg),config_error_line(&cfg));
-		exit(1);
-	}
-
-	if ((cfgstring = config_lookup(&cfg, "cachetimeout")) == NULL) {
-		cachetimeout = 0;
-	} else {
-		cachetimeout = config_setting_get_int(cfgstring);
-	}
-
-	dispconfig.bannedwordsnr = 0;
-
-  	#ifdef BLACK_BOKS
-		dispconfig.writeprequery = 0;
-	#else
-
-	    	if ( (cfgarray = config_lookup(&cfg, "usecashe") ) == NULL) {
-			printf("can't load \"usecashe\" from config\n");
-			exit(1);
-	  	}
-
-		dispconfig.usecashe = config_setting_get_bool(cfgarray);
-
-	    	if ( (cfgarray = config_lookup(&cfg, "useprequery") ) == NULL) {
-			printf("can't load \"useprequery\" from config\n");
-			exit(1);
-	  	}
-
-		dispconfig.useprequery = config_setting_get_bool(cfgarray);
-
-	    	if ( (cfgarray = config_lookup(&cfg, "writeprequery") ) == NULL) {
-			printf("can't load \"writeprequery\" from config\n");
-			exit(1);
-	  	}
-
-		dispconfig.writeprequery = config_setting_get_bool(cfgarray);
-
-	    	if ( (cfgarray = config_lookup(&cfg, "UrlToDocID") ) == NULL) {
-			printf("can't load \"UrlToDocID\" from config\n");
-			exit(1);
-	  	}
-
-		dispconfig.UrlToDocID = config_setting_get_string(cfgarray);
-
-
-		// mysql web db config
-	        if ((cfgarray = config_lookup(&cfg, "mysql_webdb")) == NULL) {
-	
-        	        printf("can't load \"mysql_webdb\" from config\n");
-                	exit(1);
-        	}
-
-
-        	if ( (cfgstring = config_setting_get_member(cfgarray, "host") ) == NULL) {
-                	printf("can't load \"host\" from config\n");
-                	exit(1);
-        	}
-
-        	dispconfig.webdb_host = config_setting_get_string(cfgstring);
-
-
-        	if ( (cfgstring = config_setting_get_member(cfgarray, "user") ) == NULL) {
-                	printf("can't load \"user\" from config\n");
-                	exit(1);
-        	}
-
-        	dispconfig.webdb_user = config_setting_get_string(cfgstring);
-
-
-        	if ( (cfgstring = config_setting_get_member(cfgarray, "password") ) == NULL) {
-                	printf("can't load \"password\" from config\n");
-                	exit(1);
-        	}
-
-        	dispconfig.webdb_password = config_setting_get_string(cfgstring);
-
-
-        	if ( (cfgstring = config_setting_get_member(cfgarray, "db") ) == NULL) {
-                	printf("can't load \"db\" from config\n");
-                	exit(1);
-        	}
-
-        	dispconfig.webdb_db = config_setting_get_string(cfgstring);
-
-
-		//load banned words array from config    
-	    	if ( (cfgarray = config_lookup(&cfg, "bannedwords") ) == NULL) {
-			fprintf(stderr,"can't load \"bannedwords\" from config\n");
-	  	}
-		else {
-			//finner antall ord
-			dispconfig.bannedwordsnr = config_setting_length(cfgarray);
-
-			if ((dispconfig.bannedwords = malloc(sizeof(char *) * (dispconfig.bannedwordsnr))) == NULL) {
-				perror("malloc dispconfig.bannedwords");
-				exit(-1);
-			}
-
-			for(i=0;i<dispconfig.bannedwordsnr;i++) {
-				dispconfig.bannedwords[i] = strdup(config_setting_get_string_elem(cfgarray,i));
-				dprintf("banned: %s\n",dispconfig.bannedwords[i]);
-			}
-		}
-
-	#endif
-	
 	char query [2048];
 
 	//MYSQL_RES *mysqlres; /* To be used to fetch information into */
 	static MYSQL demo_db;
+
+	mysql_init(&demo_db);
+
+#ifndef BLACK_BOKS
+	//if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", "boithoweb", 3306, NULL, 0)){
+	if(!mysql_real_connect(&demo_db, dispconfig.webdb_host, dispconfig.webdb_user, dispconfig.webdb_password, dispconfig.webdb_db, 3306, NULL, 0)){
+		fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
+		//exit(1);
+	}
+#else
+	if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
+		fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
+		//exit(1);
+	}
+#endif
+
+
 
 	//////////////////
 	//for nå angir vi bare servere slik. Må skilles u i egen fil siden
@@ -981,6 +1058,7 @@ int main(int argc, char *argv[])
 
 	#else 
 
+		config_setting_t *cfgarray;
 		char **servers;
 		char **piservers;
 		char **addservers;
@@ -1122,6 +1200,7 @@ int main(int argc, char *argv[])
 			strcpy(QueryData.subname,argv[2 +optind]);
 			#ifdef BLACK_BOKS
 				strcpy(QueryData.search_user,argv[3 +optind]);
+
 			#else
 				QueryData.search_user[0] = '\0';
 			#endif
@@ -1188,6 +1267,29 @@ int main(int argc, char *argv[])
 			getRank = 1;
         }
 
+
+	struct subnamesConfigFormat default_cfg;
+	read_collection_cfg(&default_cfg);
+		
+#if BLACK_BOKS
+	int num_colls;
+	struct subnamesFormat *collections = get_usr_coll(QueryData.search_user, &num_colls);
+
+	for (i = 0; i < num_colls; i++) {
+		if (!fetch_coll_cfg(&demo_db, collections[i].subname, &collections[i].config)) {
+			collections[i].config = default_cfg;
+		}
+		collections[i].hits = -1;
+	}
+
+#else
+	int num_colls = 1;
+	struct subnamesFormat *collections = malloc(sizeof(struct subnamesFormat));
+	snprintf(collections[0].subname, sizeof collections[0].subname, QueryData.subname);
+	collections[0].config = default_cfg;
+	collections[0].hits = - 1;
+#endif
+
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
 	dprintf("Time debug: init %f\n",getTimeDifference(&start_time,&end_time));
@@ -1238,22 +1340,7 @@ int main(int argc, char *argv[])
 	//nårmalisere query. 
 	//strcasesandr(QueryData.query,sizeof(QueryData.query),"."," ");
 
-	mysql_init(&demo_db);
-
-	#ifndef BLACK_BOKS
-		//if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", "boithoweb", 3306, NULL, 0)){
-		if(!mysql_real_connect(&demo_db, dispconfig.webdb_host, dispconfig.webdb_user, dispconfig.webdb_password, dispconfig.webdb_db, 3306, NULL, 0)){
-			fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
-			//exit(1);
-		}
-	#else
-		if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
-			fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
-			//exit(1);
-		}
-	#endif
-
-
+	
 	#ifndef BLACK_BOKS
 
 	if (getRank) {
@@ -1339,6 +1426,10 @@ int main(int argc, char *argv[])
         //fjerner tegn. " blir til &quot;
 	strcpy(QueryData.queryhtml,QueryData.query);
 	strsandr(QueryData.queryhtml,"\"","&quot;");
+	strsandr(QueryData.queryhtml, ">", "&gt;");
+	strsandr(QueryData.queryhtml, "<", "&lt;");
+	strsandr(QueryData.queryhtml, "&", "&amp;");
+
 	//printf("query behandlet %s\n",QueryData.queryhtml);
 	#ifdef DEBUG
 		gettimeofday(&end_time, NULL);
@@ -1399,7 +1490,7 @@ int main(int argc, char *argv[])
 	#ifdef DEBUG
 	gettimeofday(&start_time, NULL);
 	#endif
-		
+
 	//kopierer inn query	
 	strscpy(queryNodeHeder.query,QueryData.query,sizeof(queryNodeHeder.query) -1);
 	strscpy(queryNodeHeder.subname,QueryData.subname,sizeof(queryNodeHeder.subname) -1);
@@ -1508,18 +1599,22 @@ int main(int argc, char *argv[])
 	#endif
 
 	//Paid inclusion
-	bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,0,searchport);
-	
+	//bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,0,searchport);
+	bsConnectAndQuery(sockfd, nrOfPiServers, piservers,
+		&queryNodeHeder, collections, num_colls, 0, searchport);
 
 	//kobler til vanlige servere
-	if ((!hascashe) && (!hasprequery)) {
-		//bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,0,searchport);
-		bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,nrOfPiServers,searchport);
+	if (!(hascashe || hasprequery)) {
+		bsConnectAndQuery(sockfd, nrOfServers, servers,
+			&queryNodeHeder, collections, num_colls, nrOfPiServers, searchport);
 	}
 
 
 	//addservere
-	bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder,0,searchport);
+	//bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder,0,searchport);
+	bsConnectAndQuery(addsockfd, nrOfAddServers, addservers,
+		&queryNodeHeder, collections, num_colls, 0, searchport);
+
 	//Paid inclusion
 	//bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,nrOfServers,searchport);
 	
@@ -1613,13 +1708,20 @@ int main(int argc, char *argv[])
 
 				//kobler til vanlige servere
 				if ((!hascashe) && (!hasprequery)) {
-					bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,0,searchport);
+					//bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,0,searchport);
+					bsConnectAndQuery(sockfd, nrOfServers, servers,
+						&queryNodeHeder, collections, num_colls, 0, searchport);
 				}
 
 				//addservere
-				bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder,0,searchport);
+				//bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder,0,searchport);
+				bsConnectAndQuery(addsockfd, nrOfAddServers, addservers,
+						&queryNodeHeder, collections, num_colls, 0, searchport);
+
 				//Paid inclusion
-				bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,nrOfServers,searchport);
+				//bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,nrOfServers,searchport);
+				bsConnectAndQuery(sockfd, nrOfPiServers, piservers,
+					&queryNodeHeder, collections, num_colls, nrOfServers, searchport);
 
 				//Paid inclusion
 				brGetPages(sockfd,nrOfPiServers,SiderHeder,Sider,&pageNr,0);
@@ -1702,6 +1804,7 @@ int main(int argc, char *argv[])
 			return 0;
 		}
 	#endif
+	free(collections);
 
 	//Paid inclusion
 	dprintf("starting to get pi\n");
@@ -2716,8 +2819,15 @@ int main(int argc, char *argv[])
 						timebuf[64] = '\0';
 						printf("\t<TIME_ISO>%s</TIME_ISO>\n",timebuf);
 					}
-					//sender en tom cashe link. Må ha cashe link hvis ikke bryter vi designet
-	                		printf("\t<CACHE></CACHE>\n");
+					// Sender med cache link hvis 
+					// collection er konfigurert til aa vise cache.
+					if ((int) Sider[i].subname.config.cache_link)
+	                			printf("\t<CACHE>%s</CACHE>\n", Sider[i].cacheLink);
+					else 
+						printf("\t<CACHE></CACHE>\n");
+					printf("\t<WHAT>%d</WHAT>\n", Sider[i].subname.config.cache_link);
+					
+					printf("\t<PAID_INCLUSION>%i</PAID_INCLUSION>\n",(int)Sider[i].subname.config.isPaidInclusion);
 
 				#else
 				
@@ -3283,4 +3393,338 @@ int compare_elements_posisjon (const void *_p1, const void *_p2) {
 	}
 }
 
+void read_collection_cfg(struct subnamesConfigFormat * dst) {
+	
+	struct config_t cfg;
+
+  	config_init(&cfg);
+  	if (!config_read_file(&cfg, bfile(CFG_SEARCHD))) {
+		errx(1, "Failed to load config '%s', '%s' line %d\n",
+			bfile(CFG_SEARCHD),
+			config_error_text(&cfg),
+			config_error_line(&cfg));
+	}
+
+	struct subnamesConfigFormat subnamesDefaultsConfig;
+	subnamesDefaultsConfig.cache_link = 1;
+
+	config_setting_t *cfgstring;
+	config_setting_t *cfgcollections;
+	config_setting_t *cfgcollection;
+	if ((cfgcollections = config_lookup(&cfg, "collections")) == NULL) {
+		
+		fprintf(stderr, "searchd_child: Error! Can't load \"collections\" from config\n");
+		exit(1);
+	}
+
+	if ((cfgcollection = config_setting_get_member(cfgcollections, "defaults")) == NULL ) {
+		fprintf(stderr, "searchd_child: Error! Can't load \"collections defaults\" from config\n");
+		exit(1);
+
+	}
+
+
+	/****************/
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "summary") ) == NULL) {
+                fprintf(stderr, "searchd_child: Error! Can't load \"summary\" from config\n");
+                exit(1);
+        }
+	
+	const char *summarystr = config_setting_get_string(cfgstring);
+	if (strcmp(summarystr, "start") == 0) {
+		subnamesDefaultsConfig.summary = SUMMARY_START;
+	}
+	else if (strcmp(summarystr, "snippet") == 0) {
+		subnamesDefaultsConfig.summary = SUMMARY_SNIPPET;
+	}
+	else {
+		errx(1, "Invalid summary in config: %s\n", summarystr);
+	}
+	free((void *) summarystr);
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameUrl") ) == NULL) {
+                fprintf(stderr, "searchd_child: Error! Can't load \"filterSameUrl\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.filterSameUrl = config_setting_get_bool(cfgstring);
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameUrl") ) == NULL) {
+                fprintf(stderr, "searchd_child: Error! Can't load \"filterSameUrl\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.filterSameUrl = config_setting_get_bool(cfgstring);
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameDomain") ) == NULL) {
+                fprintf(stderr, "searchd_child: Error! Can't load \"filterSameDomain\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.filterSameDomain = config_setting_get_bool(cfgstring);
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterTLDs") ) == NULL) {
+                fprintf(stderr, "searchd_child: Error! Can't load \"filterTLDs\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.filterTLDs = config_setting_get_bool(cfgstring);
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterResponse") ) == NULL) {
+                fprintf(stderr, "searchd_child: Error! Can't load \"filterResponse\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.filterResponse = config_setting_get_bool(cfgstring);
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameCrc32") ) == NULL) {
+                fprintf(stderr, "searchd_child: Error! Can't load \"filterSameCrc32\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.filterSameCrc32 = config_setting_get_bool(cfgstring);
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankAthorArray") ) == NULL) {
+                fprintf(stderr, "searchd_child: Error! Can't load \"rankAthorArray\" from config\n");
+                exit(1);
+        }
+	
+	subnamesDefaultsConfig.rankAthorArrayLen = config_setting_length(cfgstring);
+	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankAthorArrayLen) {
+		subnamesDefaultsConfig.rankAthorArrayLen = BMAX_RANKARRAY;
+	}
+	int i;
+	for(i=0;i<subnamesDefaultsConfig.rankAthorArrayLen;i++) {
+		subnamesDefaultsConfig.rankAthorArray[i] = config_setting_get_int_elem(cfgstring,i);
+	}
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankTittelArray") ) == NULL) {
+                fprintf(stderr, "searchd_child: Error! Can't load \"rankTittelArray\" from config\n");
+                exit(1);
+        }
+	
+	subnamesDefaultsConfig.rankTittelArrayLen = config_setting_length(cfgstring);
+	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankTittelArrayLen) {
+		subnamesDefaultsConfig.rankTittelArrayLen = BMAX_RANKARRAY;
+	}
+	for(i=0;i<subnamesDefaultsConfig.rankTittelArrayLen;i++) {
+		subnamesDefaultsConfig.rankTittelArray[i] = config_setting_get_int_elem(cfgstring,i);
+	}
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankHeadlineArray") ) == NULL) {
+                fprintf(stderr, "searchd_child: Error! Can't load \"rankHeadlineArray\" from config\n");
+                exit(1);
+        }
+	
+	subnamesDefaultsConfig.rankHeadlineArrayLen = config_setting_length(cfgstring);
+	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankHeadlineArrayLen) {
+		subnamesDefaultsConfig.rankHeadlineArrayLen = BMAX_RANKARRAY;
+	}
+	for(i=0;i<subnamesDefaultsConfig.rankHeadlineArrayLen;i++) {
+		subnamesDefaultsConfig.rankHeadlineArray[i] = config_setting_get_int_elem(cfgstring,i);
+	}
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankBodyArray") ) == NULL) {
+                fprintf(stderr, "searchd_child: Error! Can't load \"rankBodyArray\" from config\n");
+                exit(1);
+        }
+	
+	subnamesDefaultsConfig.rankBodyArrayLen = config_setting_length(cfgstring);
+	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankBodyArrayLen) {
+		subnamesDefaultsConfig.rankBodyArrayLen = BMAX_RANKARRAY;
+	}
+	for(i=0;i<subnamesDefaultsConfig.rankBodyArrayLen;i++) {
+
+
+		subnamesDefaultsConfig.rankBodyArray[i] = config_setting_get_int_elem(cfgstring,i);
+	}
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankUrlArray") ) == NULL) {
+                fprintf(stderr, "searchd_child: Error! Can't load \"rankUrlArray\" from config\n");
+                exit(1);
+        }
+	
+	subnamesDefaultsConfig.rankUrlArrayLen = config_setting_length(cfgstring);
+	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankUrlArrayLen) {
+		subnamesDefaultsConfig.rankUrlArrayLen = BMAX_RANKARRAY;
+	}
+	for(i=0;i<subnamesDefaultsConfig.rankUrlArrayLen;i++) {
+		subnamesDefaultsConfig.rankUrlArray[i] = config_setting_get_int_elem(cfgstring,i);
+	}
+
+	//rankTittelFirstWord
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankTittelFirstWord") ) == NULL) {
+                fprintf(stderr, "searchd_child: Error! Can't load \"rankTittelFirstWord\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.rankTittelFirstWord = config_setting_get_int(cfgstring);
+
+	//rankUrlMainWord
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankUrlMainWord") ) == NULL) {
+                fprintf(stderr, "searchd_child: Error! Can't load \"rankUrlMainWord\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.rankUrlMainWord = config_setting_get_int(cfgstring);
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "defaultthumbnail") ) == NULL) {
+		warnx("can't load \"defaultthumbnail\" from config\n");
+		subnamesDefaultsConfig.defaultthumbnail = NULL;
+        }
+	else {
+		subnamesDefaultsConfig.defaultthumbnail = config_setting_get_string(cfgstring);
+	}
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "sqlImpressionsLogQuery") ) == NULL) {
+                warnx("can't load \"sqlImpressionsLogQuery\" from config\n");
+		subnamesDefaultsConfig.sqlImpressionsLogQuery[0] = '\0';
+        }
+	else {
+		strscpy(subnamesDefaultsConfig.sqlImpressionsLogQuery,config_setting_get_string(cfgstring),sizeof(subnamesDefaultsConfig.sqlImpressionsLogQuery));
+	}
+
+
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "isPaidInclusion") ) == NULL) {
+                fprintf(stderr, "searchd_child: Error! Can't load \"isPaidInclusion\" from config\n");
+                exit(1);
+        }
+
+	subnamesDefaultsConfig.isPaidInclusion = config_setting_get_bool(cfgstring);
+
+	(*dst) = subnamesDefaultsConfig;
+}
+
+
+void read_dispatcher_cfg(struct config_t * cfg, struct dispconfigFormat * dispconfig, int *cachetimeout) {
+	/* Initialize the configuration */
+	config_setting_t *cfgstring;
+	config_init(cfg);
+
+	/* Load the file */
+	dprintf("loading [%s]..\n", bfile(CFG_DISPATCHER) );
+
+	if (!config_read_file(cfg, bfile(CFG_DISPATCHER) )) {
+		printf("[%s]failed: %s at line %i\n",bfile(CFG_DISPATCHER),config_error_text(cfg),config_error_line(cfg));
+		exit(1);
+	}
+
+	if ((cfgstring = config_lookup(cfg, "cachetimeout")) == NULL) {
+		*cachetimeout = 0;
+	} else {
+		*cachetimeout = config_setting_get_int(cfgstring);
+	}
+
+	dispconfig->bannedwordsnr = 0;
+
+  	#ifdef BLACK_BOKS
+		dispconfig->writeprequery = 0;
+	#else
+	
+	config_setting_t *cfgarray;
+
+	    	if ( (cfgarray = config_lookup(cfg, "usecashe") ) == NULL) {
+			printf("can't load \"usecashe\" from config\n");
+			exit(1);
+	  	}
+
+		dispconfig->usecashe = config_setting_get_bool(cfgarray);
+
+	    	if ( (cfgarray = config_lookup(cfg, "useprequery") ) == NULL) {
+			printf("can't load \"useprequery\" from config\n");
+			exit(1);
+	  	}
+
+		dispconfig->useprequery = config_setting_get_bool(cfgarray);
+
+	    	if ( (cfgarray = config_lookup(cfg, "writeprequery") ) == NULL) {
+			printf("can't load \"writeprequery\" from config\n");
+			exit(1);
+	  	}
+
+		dispconfig->writeprequery = config_setting_get_bool(cfgarray);
+
+	    	if ( (cfgarray = config_lookup(cfg, "UrlToDocID") ) == NULL) {
+			printf("can't load \"UrlToDocID\" from config\n");
+			exit(1);
+	  	}
+
+		dispconfig->UrlToDocID = config_setting_get_string(cfgarray);
+
+
+		// mysql web db config
+	        if ((cfgarray = config_lookup(cfg, "mysql_webdb")) == NULL) {
+	
+        	        printf("can't load \"mysql_webdb\" from config\n");
+                	exit(1);
+        	}
+
+
+        	if ( (cfgstring = config_setting_get_member(cfgarray, "host") ) == NULL) {
+                	printf("can't load \"host\" from config\n");
+                	exit(1);
+        	}
+
+        	dispconfig->webdb_host = config_setting_get_string(cfgstring);
+
+
+        	if ( (cfgstring = config_setting_get_member(cfgarray, "user") ) == NULL) {
+                	printf("can't load \"user\" from config\n");
+                	exit(1);
+        	}
+
+        	dispconfig->webdb_user = config_setting_get_string(cfgstring);
+
+
+        	if ( (cfgstring = config_setting_get_member(cfgarray, "password") ) == NULL) {
+                	printf("can't load \"password\" from config\n");
+                	exit(1);
+        	}
+
+        	dispconfig->webdb_password = config_setting_get_string(cfgstring);
+
+
+        	if ( (cfgstring = config_setting_get_member(cfgarray, "db") ) == NULL) {
+                	printf("can't load \"db\" from config\n");
+                	exit(1);
+        	}
+
+        	dispconfig->webdb_db = config_setting_get_string(cfgstring);
+
+
+		//load banned words array from config    
+	    	if ( (cfgarray = config_lookup(cfg, "bannedwords") ) == NULL) {
+			fprintf(stderr,"can't load \"bannedwords\" from config\n");
+	  	}
+		else {
+			//finner antall ord
+			dispconfig->bannedwordsnr = config_setting_length(cfgarray);
+
+			if ((dispconfig->bannedwords = malloc(sizeof(char *) * (dispconfig->bannedwordsnr))) == NULL) {
+				perror("malloc dispconfig.bannedwords");
+				exit(-1);
+			}
+
+			int i;
+			for(i=0;i<dispconfig->bannedwordsnr;i++) {
+				dispconfig->bannedwords[i] = strdup(config_setting_get_string_elem(cfgarray,i));
+				dprintf("banned: %s\n",dispconfig->bannedwords[i]);
+			}
+		}
+
+	#endif
+	
+
+
+
+}
 
