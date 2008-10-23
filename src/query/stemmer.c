@@ -132,6 +132,7 @@ int tword_compare_text(const void *_a, const void *_b)
 
 container* thesaurus_get_words_from_id(thesaurus *T, int id)
 {
+    if (T==NULL) return NULL;
     tword	*match = (tword*)bsearch((const void*)&id, T->Id, T->Id_size, sizeof(tword), tword_compare_id);
 
     if (match!=NULL)
@@ -226,6 +227,7 @@ container* thesaurus_get_synonyms(thesaurus *T, char *_word)
 
 void thesaurus_expand_query( thesaurus *T, query_array *qa )
 {
+    if (T==NULL) return;
     fprintf(stderr, "stemmer: thesaurus_expand_query()\n");
 
     int		i, j, k;

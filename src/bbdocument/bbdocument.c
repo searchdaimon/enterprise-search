@@ -30,6 +30,8 @@
 #include "../common/bfileutil.h"
 #include "../common/lot.h"
 
+#include "../ds/dcontainer.h"
+
 //#include "../common/chtbl.h"
 #define PRIME_TBLSIZ 100
 
@@ -43,7 +45,8 @@
 //muligens bare convert:
 // ai
 //bugger "psd"
-char *supportetimages[] = {"png", "jpg", "jepg", "bmp", "tif", "tiff", "gif", "eps", "ai", '\0'};
+// Magnus: Det heter altså "jpeg", ikke "jepg" ;)
+char *supportetimages[] = {"png", "jpg", "jpeg", "bmp", "tif", "tiff", "gif", "eps", "ai", '\0'};
 
 
 
@@ -163,7 +166,7 @@ int bbdocument_freethumb(char *imagebuffer) {
 	#endif
 }
 
-int bbdocument_init() {
+int bbdocument_init(container **attrkeys) {
 
 	DIR *dirp;
 	FILE *filep;
@@ -292,6 +295,8 @@ int bbdocument_init() {
 		fclose(filep);
 	}
 	closedir(dirp);
+
+    if (attrkeys!=NULL) *attrkeys = ropen();
 }
 
 int bbdocument_delete (char uri[], char subname[]) {
@@ -811,7 +816,8 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 					char subnamenew[256];
 					//int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,const char title[], char doctype[]) {
 					snprintf(subnamenew, sizeof(subnamenew), "%s-%s", subname, part);
-					bbdocument_add(subnamenew, documenturi, "html", convdocbuf, convdocbufsize, lastmodified, acl_allow, acl_denied, titlefromadd, "", "");
+					printf("bbdocument_convert: _add(%s)\n", documenturi);
+					bbdocument_add(subnamenew, documenturi, "html", convdocbuf, convdocbufsize, lastmodified, acl_allow, acl_denied, titlefromadd, "", "", NULL);
 				}
 				
 				free(convdocbuf);
@@ -856,12 +862,12 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
 
 //stenger ned alle åpne filer
-int bbdocument_close () {
-	rclose();
+int bbdocument_close (container *attrkeys) {
+	rclose(attrkeys);
 
 }
 
-int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,const char title[], char doctype[], char *attributes) {
+int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,const char title[], char doctype[], char *attributes, container *attrkeys) {
 
 	struct ReposetoryHeaderFormat ReposetoryHeader;
 
@@ -875,6 +881,10 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	struct hashtable *metahash = NULL;
 
 	printf("bbdocument_add: \"%s\"\n",documenturi);
+
+	printf("bbdocument_add: Attributes = \"%s\" (", attributes);
+	if (attrkeys!=NULL) printf("+)\n");
+	else printf(" )\n");
 
 
 	//tester at det ikke finnes først
@@ -987,7 +997,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 	ReposetoryHeader.urllen = strlen(documenturi);
 	ReposetoryHeader.attributeslen = strlen(attributes);
-	rApendPostcompress(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_denied, NULL, documenturi, attributes);
+	rApendPostcompress(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_denied, NULL, documenturi, attributes, attrkeys);
 
 #ifdef DEBUG	
 	printf("legger til DocID \"%u\", time \"%u\"\n",ReposetoryHeader.DocID,lastmodified);

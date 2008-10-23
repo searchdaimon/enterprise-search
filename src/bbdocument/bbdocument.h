@@ -3,9 +3,11 @@
 
 #ifdef BLACK_BOKS
 
+#include "../ds/dcontainer.h"
+
 
 //rutine for å inalisere.
-int bbdocument_init();
+int bbdocument_init(container **attrkeys);
 
 /*
  bbdocument_exist()
@@ -43,7 +45,7 @@ int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified
 */
 //rutine for å legge til et dokument
 int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int 
-	lastmodified,char *acl_allow, char *acl_denied, const char title[],char doctype[], char *attributes);
+	lastmodified,char *acl_allow, char *acl_denied, const char title[],char doctype[], char *attributes, container *attrkeys);
 
 
 struct hashtable; /* so everyone who include bbdocument.h does not have to include hashtable.h */
@@ -68,7 +70,7 @@ int bbdocument_convert(
 
 
 
-int bbdocument_close ();
+int bbdocument_close (container *attrkeys);
 int bbdocument_delete (char uri[], char subname[]);
 
 int uriindex_add (char uri[], unsigned int DocID, unsigned int lastmodified, char subname[]);

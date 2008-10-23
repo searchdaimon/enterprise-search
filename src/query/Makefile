@@ -1,7 +1,7 @@
 
 CC=/usr/local/bin/gcc -O2 -Wall -g
 CPP=/usr/local/bin/g++ -O2 -Wall -g
-all:	_query_parser build_thesaurus
+all:	_query_parser
 
 _query_parser:
 	flex -8 -f -Pquery -i query_parser.lex

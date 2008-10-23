@@ -339,10 +339,7 @@ struct fte_data
 			{
 			    if (fdata->version[j] != NULL)
 				{
-				    char	buf[1024];
-				    snprintf(buf, 1023, "%s %s", ptr, fdata->version[j]);
-				    buf[1023] = '\0';
-				    fdata->descr[i][j] = strdup(buf);
+				    asprintf(&fdata->descr[i][j], "%s (%s)", ptr, fdata->version[j]);
 				}
 			    else
 				{
@@ -424,6 +421,46 @@ void fte_destroy(struct fte_data *fdata)
     free(fdata);
 }
 
+
+char* fte_getdefaultgroup(struct fte_data *fdata, char *lang)
+{
+    int		lang_no = fte_find(fdata->lang, fdata->lang_size, lang);
+
+    if (lang_no<0)
+	{
+	    fprintf(stderr, "getfiletype: Warning! Unknown language \"%s\". Using default language \"%s\" instead.\n", lang, fdata->lang[0]);
+	    lang_no = 0;
+	}
+
+    if (fdata->default_group[lang_no] == NULL) return fdata->default_group[0];
+    else return fdata->default_group[lang_no];
+}
+
+
+char fte_belongs_to_group(struct fte_data *fdata, char *lang, char *ext, char *group)
+{
+    int		lang_no = fte_find(fdata->lang, fdata->lang_size, lang);
+
+    if (lang_no<0)
+	{
+	    fprintf(stderr, "getfiletype: Warning! Unknown language \"%s\". Using default language \"%s\" instead.\n", lang, fdata->lang[0]);
+	    lang_no = 0;
+	}
+
+    int		ext_no = fte_find(fdata->ext, fdata->ext_size, ext);
+
+    if (ext_no<0)
+	{
+	    if (fdata->default_group[lang_no] == NULL) return !strcasecmp(fdata->default_group[0], group);
+	    else return !strcasecmp(fdata->default_group[lang_no], group);
+	}
+
+    int		id;
+
+    id = fdata->ext2group[ext_no];
+    if (fdata->group[lang_no][id] == NULL) return !strcasecmp(fdata->group[0][id], group);
+    else return !strcasecmp(fdata->group[lang_no][id], group);
+}
 
 int fte_getdescription(struct fte_data *fdata, char *lang, char *ext, char **group, char **descr)
 {

@@ -46,6 +46,7 @@ void connectHandler(int socket) {
 	int i,n;
 	int intrespons;
 	int count = 0;
+	container *attrkeys;
 
 
 while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
@@ -65,7 +66,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			printf("authenticated\n");
 			intrespons = bbc_authenticate_ok;
 
-			bbdocument_init();
+			bbdocument_init(&attrkeys);
 
 			isAuthenticated = 1;
 		}
@@ -210,7 +211,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 
 			printf("got subname \"%s\": title \"%s\". Nr %i, dokument_size %i attrib: %s\n",subname,title,count,dokument_size, attributes);
 
-			bbdocument_add(subname,documenturi,documenttype,document,dokument_size,lastmodified,acl_allow,acl_denied,title,doctype, attributes);
+			bbdocument_add(subname,documenturi,documenttype,document,dokument_size,lastmodified,acl_allow,acl_denied,title,doctype, attributes, attrkeys);
 
 			free(subname);
 			free(documenturi);
@@ -236,7 +237,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
                                 exit(1);
                         }
 
-			bbdocument_close();
+			bbdocument_close(attrkeys);
 
 			//toDo må bruke subname, og C ikke perl her
 			printf("cleanin lots start\n");

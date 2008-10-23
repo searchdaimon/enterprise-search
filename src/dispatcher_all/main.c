@@ -11,6 +11,11 @@
 
     #include "library.h"
 
+    #include "../ds/dcontainer.h"
+    #include "../ds/dset.h"
+    #include "../query/query_parser.h"
+    #include "../common/bprint.h"
+
     #include <stdarg.h>
     #include <stdio.h>
     #include <stdlib.h>
@@ -1970,8 +1975,62 @@ int main(int argc, char *argv[])
 		
 		printf("</filetype>\n");
 
-	    }		
+	    }
 
+	    #ifdef ATTRIBUTES
+	    printf("%s\n", SiderHeder[0].navigation_xml);
+	    #endif
+
+	    {
+
+	    char *dateview_type_names[] = {
+					"I dag",
+					"I går",
+					"Denne uken",
+					"Denne måneden",
+					"I år",
+					"Sist år",
+					"Eldre enn to år"};
+
+	    char *dateview_type_query[] = {
+					" date:\"today\"",
+					" date:\"yesterday\"",
+					" date:\"this week\"",
+					" date:\"this month\"",
+					" date:\"this year\"",
+					" date:\"last year\"",
+					" date:\"two years plus\""};
+
+	    // B�r gj�res sammen med attributter?
+	    query_array	qa;
+	    get_query(QueryData.query, strlen(QueryData.query), &qa);
+	    container	*remove = set_container( int_container() );
+	    buffer	*B = buffer_init(-1);
+
+	    for (i=0; i<qa.n; i++)
+		if (qa.query[i].operand == QUERY_DATE)
+		    set_insert(remove, i);
+
+	    bsprint_query_with_remove(B, remove, &qa);
+	    char	*basedatequery = buffer_exit(B);
+
+	    printf("<group name=\"Dato\" query=\'%s\' expanded=\"true\">\n", basedatequery);
+		for (y=0;y<7;y++) {
+		    printf("\t<item name=\'%s\' query=\'%s%s\' hits=\'%i\' />\n",
+			dateview_type_names[y],
+			basedatequery,
+			dateview_type_query[y],
+			SiderHeder[0].dates[y]);
+		}
+	    printf("</group>\n");
+	    printf("</navigation>\n");
+
+	    destroy(remove);
+	    destroy_query(&qa);
+
+	    }
+
+	    /*
 	    char *dateview_type_names[] = { "today",
 					"yesterday",
 					"this_week",
@@ -1979,7 +2038,8 @@ int main(int argc, char *argv[])
 					"this_year",
 					"last_year",
 					"two_years_plus"};
-
+	    */
+	    /*
 	    printf("<dates>\n");
 		printf("\t<all>0</all>\n");
 		for (y=0;y<7;y++) {
@@ -1988,6 +2048,7 @@ int main(int argc, char *argv[])
 			}
 		}
 	    printf("</dates>\n");
+	    */
 
 	    #else
 
@@ -2406,6 +2467,60 @@ int main(int argc, char *argv[])
 
 	    }		
 
+	    #ifdef ATTRIBUTES
+	    printf("%s\n", SiderHeder[0].navigation_xml);
+	    #endif
+
+	    {
+
+	    char *dateview_type_names[] = {
+					"I dag",
+					"I går",
+					"Denne uken",
+					"Denne måneden",
+					"I år",
+					"Sist år",
+					"Eldre enn to år"};
+
+	    char *dateview_type_query[] = {
+					" date:\"today\"",
+					" date:\"yesterday\"",
+					" date:\"this week\"",
+					" date:\"this month\"",
+					" date:\"this year\"",
+					" date:\"last year\"",
+					" date:\"two years plus\""};
+
+	    // B�r gj�res sammen med attributter?
+	    query_array	qa;
+	    get_query(QueryData.query, strlen(QueryData.query), &qa);
+	    container	*remove = set_container( int_container() );
+	    buffer	*B = buffer_init(-1);
+
+	    for (i=0; i<qa.n; i++)
+		if (qa.query[i].operand == QUERY_DATE)
+		    set_insert(remove, i);
+
+	    bsprint_query_with_remove(B, remove, &qa);
+	    char	*basedatequery = buffer_exit(B);
+
+	    printf("<group name=\"Dato\" query=\'%s\' expanded=\"true\">\n", basedatequery);
+		for (y=0;y<7;y++) {
+		    printf("\t<item name=\'%s\' query=\'%s%s\' hits=\'%i\' />\n",
+			dateview_type_names[y],
+			basedatequery,
+			dateview_type_query[y],
+			SiderHeder[0].dates[y]);
+		}
+	    printf("</group>\n");
+	    printf("</navigation>\n");
+
+	    destroy(remove);
+	    destroy_query(&qa);
+
+	    }
+
+	    /*
 	    char *dateview_type_names[] = { "TODAY",
 					"YESTERDAY",
 					"THIS_WEEK",
@@ -2422,6 +2537,7 @@ int main(int argc, char *argv[])
 			}
 		}
 	    printf("</DATES>\n");
+	    */
 
 	    #else
 
@@ -2520,16 +2636,18 @@ int main(int argc, char *argv[])
 					}
 				}
 
+				#ifdef ATTRIBUTES
 				{
 					char *o = NULL;
-					char key[1024], value[1024];
+					char key[MAX_ATTRIB_LEN], value[MAX_ATTRIB_LEN], keyvalue[MAX_ATTRIB_LEN];
 
-					printf("\t<ATTRIBUTES>\n");
-					while (next_attribute(Sider[i].attributes, &o, key, value)) {
-						printf("\t<ATTRIBUTE key=\"%s\" value=\"%s\" />\n", key, value);
+					printf("\t<attributes>\n");
+					while (next_attribute(Sider[i].attributes, &o, key, value, keyvalue)) {
+						printf("\t<attribute key=\"%s\" value=\"%s\" />\n", key, value);
 					}
-					printf("\t</ATTRIBUTES>\n");
+					printf("\t</attributes>\n");
 				}
+				#endif
 
 				//gj�r om spr�k fra tall til code
 				getLangCode(documentlangcode,atoi(Sider[i].DocumentIndex.Sprok));
@@ -3039,6 +3157,9 @@ int main(int argc, char *argv[])
 
 //	fprintf(stderr,"dispatcher_all: done\n");
 
+	#ifdef ATTRIBUTES
+	free(SiderHeder[0].navigation_xml);
+	#endif
 	free(SiderHeder);
 	free(AddSiderHeder);
 

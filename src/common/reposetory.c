@@ -26,6 +26,14 @@
 #include <dirent.h>
 #include <unistd.h>
 
+//#ifdef BLACK_BOKS
+#include "attributes.h"
+#include "../ds/dcontainer.h"
+#include "../ds/dpair.h"
+#include "../ds/dset.h"
+#include "../ds/dmap.h"
+//#endif
+
 //#define MMAP_REPO
 //#define TIME_DEBUG_L
 
@@ -187,11 +195,45 @@ void fpop(char *buff,int *length,FILE *file,char separator,int nrOfseparators) {
 
 }
 
-void
-rclose(void)
+container* ropen()
 {
-	lotCloseFiles();
+    return map_container( pair_container( string_container(), string_container() ), set_container( string_container() ) );
 }
+
+void rclose(container *attrkeys)
+{
+    printf("rclose: attrkeys = ");
+    if (attrkeys!=NULL)
+	{
+	    println(attrkeys);
+
+	    iterator	it_m1 = map_begin(attrkeys);
+	    for (; it_m1.valid; it_m1=map_next(it_m1))
+		{
+		    char	path[128], *filename;
+		    GetFilPathForLot(path, 1, (char*)pair(map_key(it_m1)).first.ptr);
+		    asprintf(&filename, "%s%s.new_attribute_keys", path, (char*)pair(map_key(it_m1)).second.ptr);
+		    printf("rclose: Writing new attributes to %s\n", filename);
+		    FILE	*f_attrkeys = fopen(filename, "a");
+
+		    iterator	it_s1 = set_begin(map_val(it_m1).C);
+		    for (; it_s1.valid; it_s1=set_next(it_s1))
+			fprintf(f_attrkeys, "%s\n", (char*)set_key(it_s1).ptr);
+
+		    free(filename);
+		    fclose(f_attrkeys);
+		}
+
+	    destroy(attrkeys);
+	}
+    else
+	{
+	    printf("<empty>\n");
+	}
+
+    lotCloseFiles();
+}
+
 
 void setLastIndexTimeForLot(int LotNr,int httpResponsCodes[],char subname[]){
 	FILE *RFILE;
@@ -330,7 +372,7 @@ unsigned int rGeneraeADocID (char subname[]) {
 	return DocID;
 }
 
-int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes) {
+int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys) {
 	int error;
 	int WorkBuffSize = (*ReposetoryHeader).htmlSize;
 	char *WorkBuff;
@@ -356,7 +398,7 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 
 	(*ReposetoryHeader).htmlSize = WorkBuffSize;
 
-	rApendPost(ReposetoryHeader,WorkBuff,imagebuffer,subname,acl_allow,acl_denied, reponame, url, attributes);
+	rApendPost(ReposetoryHeader,WorkBuff,imagebuffer,subname,acl_allow,acl_denied, reponame, url, attributes, attrkeys);
 
 	free(WorkBuff);
 
@@ -366,7 +408,7 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 
 	return 1;
 }
-unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes) {
+unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys) {
 
 	unsigned long int offset;
 
@@ -384,7 +426,9 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 		exit(1);
 	}
 
-        if ((RFILE = lotOpenFile((*ReposetoryHeader).DocID, reponame == NULL ? "reposetory" : reponame,"ab",'e',subname)) == NULL) {
+	if (reponame == NULL) reponame = "reposetory";
+
+        if ((RFILE = lotOpenFile((*ReposetoryHeader).DocID, reponame,"ab",'e',subname)) == NULL) {
 		fprintf(stderr,"Can't open reposetory for DocID %u\n",(*ReposetoryHeader).DocID);
 		perror("");
 		exit(1);
@@ -438,7 +482,32 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 
 #ifdef BLACK_BOKS
 	fwrite(url, ReposetoryHeader->urllen, 1, RFILE);
-	fwrite(attributes, ReposetoryHeader->attributeslen, 1, RFILE);
+
+	if (attributes!=NULL && attrkeys!=NULL)
+	    {
+		// Keep a record over all different attribute keys:
+		char key[MAX_ATTRIB_LEN], value[MAX_ATTRIB_LEN], keyval[MAX_ATTRIB_LEN];
+		char	*o = NULL;
+
+		iterator	it = map_find(attrkeys, subname, reponame);
+		if (!it.valid)
+		    {
+			map_insert(attrkeys, subname, reponame);
+			it = map_find(attrkeys, subname, reponame);
+		    }
+
+		container	*S = map_val(it).C;
+
+		while (next_attribute(attributes, &o, key, value, keyval))
+		    {
+			set_insert(S, key);
+		    }
+	    }
+
+	if (fwrite(attributes, ReposetoryHeader->attributeslen, 1, RFILE) < 0)
+	    {
+		perror("rApendPost: can't write attributes");
+	    }
 #endif
 
         //skriver record seperator
@@ -446,7 +515,7 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
                 perror("rApendPost: can't write record seperator");
         }
 
-	if ((reponame == NULL) || (strcmp(reponame,"reposetory") == 0)) {
+	if (!strcmp(reponame,"reposetory")) {
 		//markerer at den er skitten
 		FILE *dirtfh;
 		dirtfh = lotOpenFileNoCashe((*ReposetoryHeader).DocID,"dirty","ab",'e',subname);

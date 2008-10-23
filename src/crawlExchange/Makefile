@@ -20,12 +20,16 @@ OBJS+=		$(COMMONSOBJ)
 OBJS+=		crawl.o ../base64/base64.o ../crawl/mailsubject.o set.o
 
 
-all: $(PROG)
+all: mail_analyze $(PROG)
+
+mail_analyze:
+	flex -8 -f -Panalyze_header -i analyze_header.l
+	$(CC) -c lex.analyze_header.c
 
 $(PROG): $(OBJS)
-	libtool $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOKS -g -static
+	libtool $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) lex.analyze_header.o ../ds/libds.a -fPIC -shared -D BLACK_BOKS -g -static
 	-mkdir -p ../..//crawlers/crawlExchange
 	cp $(PROG) ../..//crawlers/crawlExchange
 
 clean:
-	rm -f ${OBJS} ${PROG}
+	rm -f ${OBJS} ${PROG} lex.analyze_header.[co]

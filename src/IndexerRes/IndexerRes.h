@@ -25,6 +25,7 @@
 #ifdef BLACK_BOKS
 	#define maxWordForPage 40000
 	#define maxAclForPage 10
+	#define maxAttribForPage 20
 #else
 	#define maxWordForPage 4000
 #endif
@@ -133,6 +134,15 @@ struct IndexerRes_acls {
         struct revIndexFomat aclIndex[maxAclForPage];
 	struct nrofBucketElementsFormat nrofAclBucketElements[NrOfDataDirectorys];
 };
+
+struct IndexerRes_attrib {
+	int attribnr;
+	struct wordsFormat attrib[maxAttribForPage];
+	struct wordsFormat attrib_sorted[maxAttribForPage];
+	int attribIndexnr;
+        struct revIndexFomat attribIndex[maxAttribForPage];
+	struct nrofBucketElementsFormat nrofAttribBucketElements[NrOfDataDirectorys];
+};
 #endif
 
 struct pagewordsFormatPartFormat{
@@ -169,6 +179,7 @@ struct pagewordsFormat {
 		#ifdef IIACL
 		struct IndexerRes_acls acl_denied;
 		#endif
+		struct IndexerRes_attrib attrib;
 	#endif
 };
 
@@ -203,5 +214,12 @@ void acladd(struct IndexerRes_acls *acl, char word[]);
 void aclsMakeRevIndex(struct IndexerRes_acls *acl);
 void aclsMakeRevIndexBucket (struct IndexerRes_acls *acl,unsigned int DocID,unsigned char *langnr);
 void aclindexFilesAppendWords(struct IndexerRes_acls *acl,FILE *aclindexFilesHa[],unsigned int DocID,unsigned char *langnr);
+
+#ifdef ATTRIBUTE
+void attribadd(struct IndexerRes_attrib *attrib, char word[]);
+void attribMakeRevIndex(struct IndexerRes_attrib *attrib);
+void attribMakeRevIndexBucket (struct IndexerRes_attrib *attrib,unsigned int DocID,unsigned char *langnr);
+void attribindexFilesAppendWords(struct IndexerRes_attrib *attrib,FILE *attribindexFilesHa[]);
+#endif
 
 #endif

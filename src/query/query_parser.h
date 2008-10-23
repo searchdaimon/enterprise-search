@@ -36,7 +36,10 @@
 #define QUERY_OR	'|'
 #define QUERY_SORT	'k'
 #define QUERY_GROUP	'g'
+#define QUERY_ATTRIBUTE	'a'
 
+#include "../ds/dcontainer.h"
+#include "../common/bprint.h"
 
 typedef struct
 {
@@ -69,6 +72,11 @@ typedef struct
 void get_query( char text[], int text_size, query_array *qa );
 
 /*
+ *	Lager query_array fra vector< pair< int, vector<string> > >:
+ */
+void make_query_array( container *query, query_array *qa );
+
+/*
  *	Frigjør og deallokerer minne i datastrukturen 'qa':
  *	NB: selve *qa blir ikke deallokert! (se test.c)
  */
@@ -83,6 +91,8 @@ void copy_query( query_array *dest, query_array *src );
  *	Hent ut "ryddig" query-streng:
  */
 void sprint_query( char *s, int n, query_array *qa );
+char* asprint_query( query_array *qa );
+int bsprint_query_with_remove( buffer *B, container *remove, query_array *qa );
 
 /*
  *	Hent ut "ryddig" query-streng:

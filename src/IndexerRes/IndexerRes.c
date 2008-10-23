@@ -15,6 +15,7 @@
 #include "../common/utf8-strings.h"
 
 #include "../common/boithohome.h"
+#include "../common/attributes.h"
 
 struct AdultFraserRecordFormat {
 	char word1[128];
@@ -50,11 +51,18 @@ void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID) {
 	wordsReset_part(&pagewords->spamWords);
 
 	#ifdef BLACK_BOKS
-		(*pagewords).acl_allow.aclnr = 0;
 		#ifdef IIACL
-		(*pagewords).acl_denied.aclnr = 0;
+			(*pagewords).acl_allow.aclnr = 0;
+			(*pagewords).acl_denied.aclnr = 0;
 		#endif
+
+		#ifdef ATTRIBUTES 
+			(*pagewords).attrib.attribnr = 0;
+		#endif
+
 	#endif
+
+
 }
 
 void linksWrite(struct pagewordsFormat *pagewords,struct addNewUrlhaFormat addNewUrlha[]) {
@@ -150,6 +158,28 @@ void acladd(struct IndexerRes_acls *acl, char word[]) {
 		(*acl).acls[(*acl).aclnr].position = 0;
 
 		++(*acl).aclnr;
+	}
+}
+
+void attribadd(struct IndexerRes_attrib *attrib, char word[]) {
+
+	convert_to_lowercase((unsigned char *)word);
+
+	#ifdef DEBUG
+	printf("attribadd: got \"%s\"\n",word);
+	#endif
+
+	if ((*attrib).attribnr > maxAttribForPage){
+        	#ifdef DEBUG
+                	printf("more than maxAttribForPage words\n");
+               	#endif
+        }
+        else {
+
+		(*attrib).attrib[(*attrib).attribnr].WordID =  crc32boitho(word);
+		(*attrib).attrib[(*attrib).attribnr].position = 0;
+
+		++(*attrib).attribnr;
 	}
 }
 #endif
@@ -535,6 +565,48 @@ void aclsMakeRevIndex(struct IndexerRes_acls *acl) {
 			//(*acl).aclIndex[(*acl).aclIndexnr].hits[ (*acl).aclIndex[(*acl).aclIndexnr].nr ].pos = (*acl).acls_sorted[i].position;
 			lastWodID = (*acl).aclIndex[(*acl).aclIndexnr].WordID;
 			++(*acl).aclIndexnr;
+		}
+	}
+}
+
+
+void attribMakeRevIndex(struct IndexerRes_attrib *attrib) {
+
+	int i;
+	unsigned int lastWordID;
+	
+	#ifdef DEBUG
+	printf("attribMakeRevIndex: attribnr %i\n",(*attrib).attribnr);
+	#endif
+
+	for(i=0;i<(*attrib).attribnr;i++) {
+		#ifdef DEBUG
+		printf("attribMakeRevIndex: crc32: %u\n",(*attrib).attrib[i].WordID);
+		#endif
+		(*attrib).attrib_sorted[i] = (*attrib).attrib[i];
+	}
+
+	//sorter ordene
+	qsort(&(*attrib).attrib_sorted, (*attrib).attribnr , sizeof(struct wordsFormat), compare_elements_words);
+
+	(*attrib).attribIndexnr = 0;
+	lastWordID = 0;
+	for(i=0;i<(*attrib).attribnr;i++) {
+
+		if (lastWordID == (*attrib).attrib_sorted[i].WordID) {
+			printf("attribMakeRevIndex: is the same as last WordId: %u\n",(*attrib).attrib_sorted[i].WordID);
+
+		}
+		else {
+			#ifdef DEBUG
+			printf("attribMakeRevIndex: adding crc32: %u\n",(*attrib).attrib_sorted[i].WordID);
+			#endif
+
+			(*attrib).attribIndex[(*attrib).attribIndexnr].WordID = (*attrib).attrib_sorted[i].WordID;
+			(*attrib).attribIndex[(*attrib).attribIndexnr].nr = 0;
+			//(*attrib).attribIndex[(*attrib).attribIndexnr].hits[ (*attrib).attribIndex[(*attrib).attribIndexnr].nr ].pos = (*attrib).attrib_sorted[i].position;
+			lastWordID = (*attrib).attribIndex[(*attrib).attribIndexnr].WordID;
+			++(*attrib).attribIndexnr;
 		}
 	}
 }
@@ -1136,6 +1208,60 @@ void aclsMakeRevIndexBucket (struct IndexerRes_acls *acl,unsigned int DocID,unsi
 
 }
 
+
+void attribMakeRevIndexBucket (struct IndexerRes_attrib *attrib,unsigned int DocID,unsigned char *langnr) {
+
+
+
+	int i,y;
+
+	for(i=0;i<NrOfDataDirectorys;i++) {
+		(*attrib).nrofAttribBucketElements[i].records = 0;
+		(*attrib).nrofAttribBucketElements[i].hits = 0;
+	}
+
+	//printf("attribIndexnr %i\n",(*attrib).attribIndexnr);
+	for(i=0;i<(*attrib).attribIndexnr;i++) {
+
+		(*attrib).attribIndex[i].bucket = (*attrib).attribIndex[i].WordID % NrOfDataDirectorys;
+
+		++(*attrib).nrofAttribBucketElements[(*attrib).attribIndex[i].bucket].records;
+		(*attrib).nrofAttribBucketElements[(*attrib).attribIndex[i].bucket].hits += (*attrib).attribIndex[i].nr;
+	}
+
+	for(i=0;i<NrOfDataDirectorys;i++) {
+		(*attrib).nrofAttribBucketElements[i].bucketbuffsize = ((sizeof(unsigned int) + sizeof(char) + sizeof(unsigned long) + sizeof(unsigned long)) * (*attrib).nrofAttribBucketElements[i].records) + ((*attrib).nrofAttribBucketElements[i].hits * sizeof(unsigned short));
+		//printf("bucketbuffsize %i\n",(*attrib).nrofattribBucketElements[i].bucketbuffsize);
+
+		(*attrib).nrofAttribBucketElements[i].bucketbuff = malloc((*attrib).nrofAttribBucketElements[i].bucketbuffsize);
+	}
+
+	//setter pekeren til begyndelsen. Siden vil vi jo flytte denne etter hvert som vi kommer lenger ut
+	for(i=0;i<NrOfDataDirectorys;i++) {
+		(*attrib).nrofAttribBucketElements[i].p = (*attrib).nrofAttribBucketElements[i].bucketbuff;
+	}
+
+	//bruker en temperær p peker her som erstatning for (*attrib).nrofattribBucketElements[(*attrib).attribIndex[i].bucket].p, 
+	//så koden ikke blir så uoversiktelig
+	void *p;
+	for(i=0;i<(*attrib).attribIndexnr;i++) {
+		
+			p = (*attrib).nrofAttribBucketElements[(*attrib).attribIndex[i].bucket].p;
+
+			p += memcpyrc(p,&DocID,sizeof(unsigned int));
+			p += memcpyrc(p,langnr,sizeof(char));
+			p += memcpyrc(p,&(*attrib).attribIndex[i].WordID,sizeof(unsigned long));
+			p += memcpyrc(p,&(*attrib).attribIndex[i].nr,sizeof(unsigned long));
+			for(y=0;y<(*attrib).attribIndex[i].nr;y++) {
+				p += memcpyrc(p,&(*attrib).attribIndex[i].hits[y].pos,sizeof(unsigned short));
+			}
+
+			(*attrib).nrofAttribBucketElements[(*attrib).attribIndex[i].bucket].p = p;
+		
+	}
+
+}
+
 #endif
 void wordsMakeRevIndexBucket_part(struct pagewordsFormatPartFormat *wordsPart,unsigned int DocID,unsigned char *langnr) {
 
@@ -1249,6 +1375,27 @@ void aclindexFilesAppendWords(struct IndexerRes_acls *acl,FILE *aclindexFilesHa[
 
 	for(i=0;i<NrOfDataDirectorys;i++) {
 			free((*acl).nrofAclBucketElements[i].bucketbuff);
+		
+	}
+
+}
+
+void attribindexFilesAppendWords(struct IndexerRes_attrib *attrib,FILE *attribindexFilesHa[]) {
+
+
+	int i,y;
+	int bucket;
+
+
+	for(i=0;i<NrOfDataDirectorys;i++) {
+		if ((*attrib).nrofAttribBucketElements[i].bucketbuffsize != 0) {
+			fwrite((*attrib).nrofAttribBucketElements[i].bucketbuff,(*attrib).nrofAttribBucketElements[i].bucketbuffsize,1,attribindexFilesHa[i]);
+		}
+	}
+
+
+	for(i=0;i<NrOfDataDirectorys;i++) {
+			free((*attrib).nrofAttribBucketElements[i].bucketbuff);
 		
 	}
 

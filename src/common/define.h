@@ -4,6 +4,7 @@
 
 #include <time.h>
 #include <sys/types.h>
+#include "../ds/dcontainer.h"
 
 //#include "DocumentIndex.h"
 //#include "lot.h"
@@ -48,6 +49,8 @@
 
 #define MAX_USER_NAME_LEN 64
 
+#define MAX_ATTRIB_LEN	128
+
 #define maxWordlLen 30
 
 #define rNetTrabsferBlok 65536
@@ -84,7 +87,11 @@
 #define MaxsHitsInIndex 20
 
 
-#define MaxQueryLen 100
+#ifdef BLACK_BOKS
+    #define MaxQueryLen 256
+#else
+    #define MaxQueryLen 100
+#endif
 
 
 #define BLDPROTOCOLVERSION 1
@@ -93,6 +100,8 @@
 
 #define mineAthorTermSizeForMemory 100
 #define mineMainTermSizeForMemory 100
+
+#define MAX_ATTRIBUTES_IN_QUERY	10
 
 //#define URLTODOCIDINDEX "/home/boitho/boithoTools/indexses/UrlToDocID/"
 #define URLTODOCIDINDEX "/mnt/hda4/UrlToDocID/"
@@ -181,17 +190,11 @@ struct subnamesFiltypesFormat {
 };
 
 struct filteronFormat {
-/* Neste versjon (som ikke er lagt ut pÃ¥ cvs enda):
-    char	*group;
-//	char *filetype;
+//    char	*group, *filetype; DEPRECATED
+    container	*attributes;
     char	*collection;
     char	*date;
     char	*sort;
-*/
-	char filetype[1024];
-	char collection[1024];
-	char date[1024];
-	char sort[1024];
 };
 
 struct subnamesConfigFormat {
@@ -324,10 +327,13 @@ struct DictionaryFormat {
 
 struct indexFilteredFormat {
 
+	char is_filtered; // alle for en
 	char filename; //bool
 	char date;
 	char subname;
 	char duplicate;
+	char attribute;
+	char attrib[MAX_ATTRIBUTES_IN_QUERY]; // en for hver attributt
 };
 
 struct rank_explaindFormat {
@@ -397,6 +403,7 @@ struct iindexFormat {
 	//unsigned short hits[maxTotalIindexHits];
 	struct hitsFormat hits[maxTotalIindexHits];
 	int nrofHits;
+	int attrib_count;
 	struct iindexMainElements iindex[maxIndexElements];
 	int phrasenr;
 };
@@ -549,6 +556,10 @@ struct SiderHederFormat {
         int errorstrlen;
 	int responstype;
 	struct filtersFormat filters;
+	#ifdef ATTRIBUTES
+	int	navigation_xml_len;
+	char	*navigation_xml;
+	#endif
 };
 
 //formatet på anchor filer

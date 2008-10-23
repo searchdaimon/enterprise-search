@@ -1,3 +1,7 @@
+/**
+ *	Record Engine
+ */
+
 #ifndef _RE__H_
 #define _RE__H_
 

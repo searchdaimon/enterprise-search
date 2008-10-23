@@ -2,6 +2,7 @@
  * Exchange crawler
  *
  * June, 2007
+ * Oktober, 2008:	Registrerer attributter.
  */
 
 #define _GNU_SOURCE 1
@@ -14,12 +15,16 @@
 #include "xml.h"
 #include "webdav.h"
 #include "excrawler.h"
+#include "analyze_header.h"
 
 #include "../base64/base64.h"
 #include "../crawl/crawl.h"
 #include "../common/subject.h"
 #include "../common/sid.h"
+#include "../common/bprint.h"
 #include "../dictionarywordsLot/set.h"
+#include "../ds/dcontainer.h"
+#include "../ds/dmultimap.h"
 
 int crawlcanconnect(struct collectionFormat *collection,
                    int (*documentError)(struct collectionFormat *, int, const char *, ...) __attribute__((unused)));
@@ -125,6 +130,17 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 		// Let's add it
 		crawldocumentAdd.documenturi = crawldocumentExist.documenturi;
 		/* Find the subject */
+		//printf("RAW EMAIL:\n%.4096s\n", mail.buf);
+		//printf("ANALYZE ON!!\n\n");
+		container	*M_header = mail_analyze_header(mail.buf, mail.size-1);
+		//iterator	it = multimap_begin(M_header);
+		//for (; it.valid; it=multimap_next(it))
+		//    {
+		//	printf("KEY( %s ): VALUE( %s )\n", (char*)multimap_key(it).ptr, (char*)multimap_val(it).ptr);
+		//    }
+		//printf("\nANALYZE OFF!!\n");
+		//destroy(M_header);
+		/*
 		p = NULL;
 		if (strcasecmp(mail.buf, "subject:") == 0) {
 			p = mail.buf;
@@ -133,11 +149,22 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 		} else if ((p = strcasestr(mail.buf, "\rsubject:")) != NULL) {
 			p++;
 		}
+		*/
+		iterator	it = multimap_begin(M_header);
+		p = NULL;
+		crawldocumentAdd.attributes = "";
+		for (; it.valid; it=multimap_next(it))
+		    {
+			if (!strcmp("subject", (char*)multimap_key(it).ptr))
+			    p = (char*)multimap_val(it).ptr;
+			else if (!strcmp("from", (char*)multimap_key(it).ptr))
+			    asprintf(&crawldocumentAdd.attributes, "from=%s",(char*)multimap_val(it).ptr);
+		    }
 		
 		if (p == NULL) {
 			crawldocumentAdd.title = "";
 		} else {
-			p += 8; // strlen("subject:");
+			//p += 8; // strlen("subject:");
 			while (isspace(*p)) {
 				p++;
 			}
@@ -158,7 +185,7 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 		crawldocumentAdd.dokument_size = mail.size-1; // Last byte is string null terminator
 		crawldocumentAdd.lastmodified = lastmodified;
 
-		//hvis vi har blitt sent en user sid så bruker vi den som acl.
+		//hvis vi har blitt sendt en user sid så bruker vi den som acl.
 		if (usersid == NULL) {
 			crawldocumentAdd.acl_allow = set_to_string(acl_allow, ",");
 			crawldocumentAdd.acl_denied = set_to_string(acl_deny, ",");
@@ -167,8 +194,21 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 			crawldocumentAdd.acl_allow = strdup(usersid);
 			crawldocumentAdd.acl_denied = strdup("");
 		}
+/*
+		buffer		*B = buffer_init(-1);
+		int		to_i=1, from_i=1;
+		it = multimap_begin(M_header);
+		for (; it.valid; it=multimap_next(it))
+		    {
+			if (!strcmp("from", (char*)multimap_key(it).ptr) && from_i<=4)
+			    bprintf(B, "from_%i=%s,", from_i++, multimap_val(it).ptr);
+			else if (!strcmp("to", (char*)multimap_key(it).ptr) && to_i<=4)
+			    bprintf(B, "to_%i=%s,", to_i++, multimap_val(it).ptr);
+		    }
 
-		crawldocumentAdd.attributes = "";
+		crawldocumentAdd.attributes = buffer_exit(B);
+*/
+		destroy(M_header);
 
 		printf("Adding: '%s'\n", crawldocumentAdd.title);
 		(ci->documentAdd)(ci->collection, &crawldocumentAdd);

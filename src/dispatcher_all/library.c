@@ -480,6 +480,14 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 			if (bsread (&sockfd[i],sizeof(struct SiderHederFormat),(char *)&SiderHeder[i],maxSocketWait_SiderHeder)) {
 
 			}
+
+			#ifdef ATTRIBUTES
+			SiderHeder[i].navigation_xml = malloc(sizeof(char) * (SiderHeder[i].navigation_xml_len +1));
+			if (bsread (&sockfd[i], SiderHeder[i].navigation_xml_len, SiderHeder[i].navigation_xml, maxSocketWait_SiderHeder))
+			    {
+			    }
+			SiderHeder[i].navigation_xml[SiderHeder[i].navigation_xml_len] = '\0';
+			#endif
 		}
 	}
 

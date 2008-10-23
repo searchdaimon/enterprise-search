@@ -14,6 +14,9 @@
 #include "../ds/dcontainer.h"
 #include "../ds/dpair.h"
 #include "../ds/dvector.h"
+#include "../ds/dset.h"
+
+#include "../common/bprint.h"
 
 #include "query_parser.h"
 
@@ -44,6 +47,7 @@ struct _qp_yy_extra
 
 letter		[0-9a-zA-Z_ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ]
 infix		['`]
+literal_infix	[\-\ \=\.,@\\]
 phrase_cat	[\.,@]
 space		[\ \t]
 eletter		[0-9a-zA-Z\-_]
@@ -54,7 +58,7 @@ u8d		(\342\204[\257-\271]|\342\204[\274-\277]|\342\205[\205-\211]|\342\205\216|\
 u8e		(\357\255[\206-\277]|\357\256[\200-\261]|\357\257[\223-\277]|\357[\260-\263][\200-\277]|\357\264[\200-\275]|\357\265[\220-\277]|\357\266[\200-\217]|\357\266[\222-\277]|\357\267[\200-\207]|\357\267[\260-\273]|\357\271[\260-\264]|\357\271[\266-\277]|\357\273[\200-\274]|\357\274[\241-\272]|\357\275[\201-\232]|\357\275[\246-\277]|\357\276[\200-\276]|\357\277[\202-\207]|\357\277[\212-\217]|\357\277[\222-\227]|\357\277[\232-\234]|\360\220\200[\200-\213]|\360\220\200[\215-\246]|\360\220\200[\250-\272]|\360\220\200[\274-\275]|\360\220\200\277|\360\220\201[\200-\215]|\360\220\201[\220-\235]|\360\220\202[\200-\277]|\360\220\203[\200-\272]|\360\220\205[\200-\264]|\360\220\212[\200-\234]|\360\220\212[\240-\277]|\360\220\213[\200-\220]|\360\220\214[\200-\236]|\360\220\214[\260-\277]|\360\220\215[\200-\212]|\360\220\216[\200-\235]|\360\220\216[\240-\277]|\360\220\217[\200-\203]|\360\220\217[\210-\217]|\360\220\217[\221-\225]|\360\220\220[\200-\277]|\360\220\222[\200-\235]|\360\220\240[\200-\205]|\360\220\240\210|\360\220\240[\212-\265]|\360\220\240[\267-\270]|\360\220\240\274|\360\220\240\277|\360\220\244[\200-\225]|\360\220\244[\240-\271]|\360\220\250[\200-\203]|\360\220\250[\205-\206]|\360\220\250[\214-\223]|\360\220\250[\225-\227]|\360\220\250[\231-\263]|\360\222[\200-\214][\200-\277]|\360\222\215[\200-\256]|\360\222\220[\200-\277]|\360\222\221[\200-\242]|\360\235\220[\200-\277]|\360\235\221[\200-\224]|\360\235\221[\226-\277]|\360\235\222[\200-\234]|\360\235\222[\236-\237]|\360\235\222\242|\360\235\222[\245-\246]|\360\235\222[\251-\254]|\360\235\222[\256-\271]|\360\235\222\273|\360\235\222[\275-\277]|\360\235\223[\200-\203]|\360\235\223[\205-\277]|\360\235\224[\200-\205]|\360\235\224[\207-\212]|\360\235\224[\215-\224]|\360\235\224[\226-\234]|\360\235\224[\236-\271]|\360\235\224[\273-\276]|\360\235\225[\200-\204]|\360\235\225\206|\360\235\225[\212-\220]|\360\235\225[\222-\277]|\360\235[\226-\231][\200-\277]|\360\235\232[\200-\245]|\360\235\232[\250-\277]|\360\235\233[\200-\200]|\360\235\233[\202-\232])
 u8f		(\360\235\233[\234-\272]|\360\235\233[\274-\277]|\360\235\234[\200-\224]|\360\235\234[\226-\264]|\360\235\234[\266-\277]|\360\235\235[\200-\216]|\360\235\235[\220-\256]|\360\235\235[\260-\277]|\360\235\236[\200-\210]|\360\235\236[\212-\250]|\360\235\236[\252-\277]|\360\235\237[\200-\202]|\360\235\237[\204-\213]|\360[\240-\251][\200-\277][\200-\277]|\360\252[\200-\232][\200-\277]|\360\252\233[\200-\226]|\360\257\240[\200-\277]|\360\257[\241-\247][\200-\277]|\360\257\250[\200-\235])
 %option	noyywrap reentrant
-%x PHRASE CMD CMD_PHRASE
+%x PHRASE CMD CMD_PHRASE LITERAL_CMD LITERAL_CMD_PHRASE
 %%
 \+?[dD][aA][tT][eE]{space}*:	{ yyget_extra(yyscanner)->operand = 'd'; BEGIN CMD; }
 \+?[sS][tT][aA][tT][uU][sS]{space}*:	{ yyget_extra(yyscanner)->operand = 's'; BEGIN CMD; }
@@ -62,7 +66,8 @@ u8f		(\360\235\233[\234-\272]|\360\235\233[\274-\277]|\360\235\234[\200-\224]|\3
 \+?[lL][aA][nN][gG][uU][aA][gG][eE]{space}*:	{ yyget_extra(yyscanner)->operand = 'l'; BEGIN CMD; }
 \+?[cC][oO][lL][lL][eE][cC][tT][iI][oO][nN]{space}*:	{ yyget_extra(yyscanner)->operand = 'c'; BEGIN CMD; }
 \+?[sS][oO][rR][tT]{space}*: { yyget_extra(yyscanner)->operand = 'k'; BEGIN CMD; }
-\+?[gG][rR][oO][uU][pP]{space}*: { yyget_extra(yyscanner)->operand = 'g'; BEGIN CMD; }
+\+?[gG][rR][oO][uU][pP]{space}*: { yyget_extra(yyscanner)->operand = 'g'; BEGIN LITERAL_CMD; }
+\+?[aA][tT][tT][rR][iI][bB][uU][tT][eE]{space}*: { yyget_extra(yyscanner)->operand = 'a'; BEGIN LITERAL_CMD; }
 \+			{ yyget_extra(yyscanner)->operand = '+'; }
 \-			{
 			    struct _qp_yy_extra		*qe = yyget_extra( yyscanner );
@@ -89,7 +94,18 @@ u8f		(\360\235\233[\234-\272]|\360\235\233[\274-\277]|\360\235\234[\200-\224]|\3
 
 			    BEGIN CMD_PHRASE;
 			}
-<PHRASE,CMD_PHRASE>\"	{
+<LITERAL_CMD>\"		{
+			    struct _qp_yy_extra		*qe = yyget_extra( yyscanner );
+
+			    if (_qp_next_(yyscanner))
+				{
+				    qe->operand = '+';
+				    BEGIN INITIAL;
+				}
+
+			    BEGIN LITERAL_CMD_PHRASE;
+			}
+<PHRASE,CMD_PHRASE,LITERAL_CMD_PHRASE>\"	{
 			    struct _qp_yy_extra		*qe = yyget_extra( yyscanner );
 
 			    _qp_next_(yyscanner);
@@ -98,7 +114,7 @@ u8f		(\360\235\233[\234-\272]|\360\235\233[\274-\277]|\360\235\234[\200-\224]|\3
 			    qe->space = 1;
 			    BEGIN INITIAL;
 			}
-<CMD>({letter}|{u8a}|{u8b}|{u8c}|{u8d}|{u8e}|{u8f})({letter}|{u8a}|{u8b}|{u8c}|{u8d}|{u8e}|{u8f}|{infix}|\-)*({letter}|{u8a}|{u8b}|{u8c}|{u8d}|{u8e}|{u8f})		{
+<CMD,LITERAL_CMD>({letter}|{u8a}|{u8b}|{u8c}|{u8d}|{u8e}|{u8f})({letter}|{u8a}|{u8b}|{u8c}|{u8d}|{u8e}|{u8f}|{infix}|\-)*({letter}|{u8a}|{u8b}|{u8c}|{u8d}|{u8e}|{u8f})		{
 			    struct _qp_yy_extra		*qe = yyget_extra( yyscanner );
 
 			    vector_pushback(qe->sequence, yytext);
@@ -107,6 +123,13 @@ u8f		(\360\235\233[\234-\272]|\360\235\233[\274-\277]|\360\235\234[\200-\224]|\3
 			    BEGIN INITIAL;
 			}
 <CMD_PHRASE>({letter}|{u8a}|{u8b}|{u8c}|{u8d}|{u8e}|{u8f})({letter}|{u8a}|{u8b}|{u8c}|{u8d}|{u8e}|{u8f}|{infix}|\-)*({letter}|{u8a}|{u8b}|{u8c}|{u8d}|{u8e}|{u8f})		{
+			    struct _qp_yy_extra		*qe = yyget_extra( yyscanner );
+
+			    vector_pushback(qe->sequence, yytext);
+
+			    qe->space = 0;
+			}
+<LITERAL_CMD_PHRASE>({letter}|{u8a}|{u8b}|{u8c}|{u8d}|{u8e}|{u8f})({letter}|{u8a}|{u8b}|{u8c}|{u8d}|{u8e}|{u8f}|{infix}|{literal_infix})*({letter}|{u8a}|{u8b}|{u8c}|{u8d}|{u8e}|{u8f})		{
 			    struct _qp_yy_extra		*qe = yyget_extra( yyscanner );
 
 			    vector_pushback(qe->sequence, yytext);
@@ -232,6 +255,8 @@ void get_query( char text[], int text_size, query_array *qa )
 	    qa->query[i] = _string_array_init( vector_size(crnt) );
 
 	    qa->query[i].operand = pair(vector_get(qe->big, i)).first.i;
+	    qa->query[i].alt = NULL;
+	    qa->query[i].alt_n = 0;
 
 	    for (j=0; j<vector_size(crnt); j++)
 	        {
@@ -242,6 +267,33 @@ void get_query( char text[], int text_size, query_array *qa )
     destroy(qe->big);
     free(qe);
 }
+
+
+// Lager query_array av vector< pair< int, vector<string> > >:
+void make_query_array( container *big, query_array *qa )
+{
+    int		i, j;
+    // Gjør om querydata til en mer praktisk struktur (for direkteoppslag):
+
+    (*qa) = _query_array_init( vector_size(big) );
+
+    for (i=0; i<vector_size(big); i++)
+	{
+	    container	*crnt = pair(vector_get(big, i)).second.C;
+
+	    qa->query[i] = _string_array_init( vector_size(crnt) );
+
+	    qa->query[i].operand = pair(vector_get(big, i)).first.i;
+	    qa->query[i].alt = NULL;
+	    qa->query[i].alt_n = 0;
+
+	    for (j=0; j<vector_size(crnt); j++)
+	        {
+	            qa->query[i].s[j] = strdup(vector_get(crnt,j).ptr);
+	        }
+	}
+}
+
 
 /******************************************/
 
@@ -437,9 +489,14 @@ void sprint_query( char *s, int n, query_array *qa )
 		    case QUERY_GROUP:
 			pos+= snprintf(s+pos, n - pos, "group:");
 			break;
+		    case QUERY_ATTRIBUTE:
+			pos+= snprintf(s+pos, n - pos, "attribute:");
+			break;
 		}
 
-	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE) pos+= snprintf(s+pos, n - pos, "\"");
+	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE
+		|| qa->query[i].operand == QUERY_GROUP
+		|| qa->query[i].operand == QUERY_ATTRIBUTE) pos+= snprintf(s+pos, n - pos, "\"");
 
 	    for (j=0; j<qa->query[i].n; j++)
 		{
@@ -447,8 +504,165 @@ void sprint_query( char *s, int n, query_array *qa )
 		    pos+= snprintf(s+pos, n - pos, "%s", qa->query[i].s[j]);
 		}
 
-	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE) pos+= snprintf(s+pos, n - pos, "\"");
+	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE
+		|| qa->query[i].operand == QUERY_GROUP
+		|| qa->query[i].operand == QUERY_ATTRIBUTE) pos+= snprintf(s+pos, n - pos, "\"");
 	}
+
+    if (pos < n) s[pos] = '\0';
+    else s[n-1] = '\0';
+}
+
+
+char* asprint_query( query_array *qa )
+{
+    int		i, j;
+    buffer	*B = buffer_init(-1);
+
+    for (i=0; i<qa->n; i++)
+	{
+	    if (i>0) bprintf(B, " ");
+
+	    switch (qa->query[i].operand)
+		{
+		    case QUERY_WORD:
+			break;
+		    case QUERY_SUB:
+			bprintf(B, "-");
+			break;
+		    case QUERY_PHRASE:
+			break;
+		    case QUERY_SUBPHRASE:
+			bprintf(B, "-");
+			break;
+		    case QUERY_FILETYPE:
+			bprintf(B, "filetype:");
+			break;
+		    case QUERY_LANGUAGE:
+			bprintf(B, "language:");
+			break;
+		    case QUERY_COLLECTION:
+			bprintf(B, "collection:");
+			break;
+		    case QUERY_DATE:
+			bprintf(B, "date:");
+			break;
+		    case QUERY_STATUS:
+			bprintf(B, "status:");
+			break;
+		    case QUERY_OR:
+			bprintf(B, "| ");
+			break;
+		    case QUERY_SORT:
+			bprintf(B, "sort:");
+			break;
+		    case QUERY_GROUP:
+			bprintf(B, "group:");
+			break;
+		    case QUERY_ATTRIBUTE:
+			bprintf(B, "attribute:");
+			break;
+		}
+
+	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE
+		|| qa->query[i].operand == QUERY_GROUP
+		|| qa->query[i].operand == QUERY_ATTRIBUTE) bprintf(B, "\"");
+
+	    for (j=0; j<qa->query[i].n; j++)
+		{
+		    if (j>0) bprintf(B, " ");
+		    bprintf(B, "%s", qa->query[i].s[j]);
+		}
+
+	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE
+		|| qa->query[i].operand == QUERY_GROUP
+		|| qa->query[i].operand == QUERY_ATTRIBUTE) bprintf(B, "\"");
+	}
+
+    return buffer_exit(B);
+}
+
+
+int bsprint_query_with_remove( buffer *B, container *remove, query_array *qa )
+{
+    int		i, j;
+    iterator	it;
+    char	all_gone = 1;
+
+    if (remove==NULL) it.valid = 0;
+    else it = set_begin(remove);
+
+    if (it.valid && set_key(it).i == -1)
+	it = set_next(it);
+
+    for (i=0; i<qa->n; i++)
+	{
+	    if (it.valid && set_key(it).i == i)
+		{
+		    it = set_next(it);
+		    continue;
+		}
+	    else all_gone = 0;
+
+	    if (i>0) bprintf(B, " ");
+
+	    switch (qa->query[i].operand)
+		{
+		    case QUERY_WORD:
+			break;
+		    case QUERY_SUB:
+			bprintf(B, "-");
+			break;
+		    case QUERY_PHRASE:
+			break;
+		    case QUERY_SUBPHRASE:
+			bprintf(B, "-");
+			break;
+		    case QUERY_FILETYPE:
+			bprintf(B, "filetype:");
+			break;
+		    case QUERY_LANGUAGE:
+			bprintf(B, "language:");
+			break;
+		    case QUERY_COLLECTION:
+			bprintf(B, "collection:");
+			break;
+		    case QUERY_DATE:
+			bprintf(B, "date:");
+			break;
+		    case QUERY_STATUS:
+			bprintf(B, "status:");
+			break;
+		    case QUERY_OR:
+			bprintf(B, "| ");
+			break;
+		    case QUERY_SORT:
+			bprintf(B, "sort:");
+			break;
+		    case QUERY_GROUP:
+			bprintf(B, "group:");
+			break;
+		    case QUERY_ATTRIBUTE:
+			bprintf(B, "attribute:");
+			break;
+		}
+
+	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE
+		|| qa->query[i].operand == QUERY_GROUP
+		|| qa->query[i].operand == QUERY_ATTRIBUTE) bprintf(B, "\"");
+
+	    for (j=0; j<qa->query[i].n; j++)
+		{
+		    if (j>0) bprintf(B, " ");
+		    bprintf(B, "%s", qa->query[i].s[j]);
+		}
+
+	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE
+		|| qa->query[i].operand == QUERY_GROUP
+		|| qa->query[i].operand == QUERY_ATTRIBUTE) bprintf(B, "\"");
+	}
+
+    return !all_gone;
 }
 
 
@@ -497,9 +711,14 @@ void sprint_expanded_query( char *s, int n, query_array *qa )
 		    case QUERY_GROUP:
 			pos+= snprintf(s+pos, n - pos, "group:");
 			break;
+		    case QUERY_ATTRIBUTE:
+			pos+= snprintf(s+pos, n - pos, "attribute:");
+			break;
 		}
 
-	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE) pos+= snprintf(s+pos, n - pos, "\"");
+	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE
+		|| qa->query[i].operand == QUERY_GROUP
+		|| qa->query[i].operand == QUERY_ATTRIBUTE) pos+= snprintf(s+pos, n - pos, "\"");
 
 	    for (j=0; j<qa->query[i].n; j++)
 		{
@@ -507,7 +726,9 @@ void sprint_expanded_query( char *s, int n, query_array *qa )
 		    pos+= snprintf(s+pos, n - pos, "%s", qa->query[i].s[j]);
 		}
 
-	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE) pos+= snprintf(s+pos, n - pos, "\"");
+	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE
+		|| qa->query[i].operand == QUERY_GROUP
+		|| qa->query[i].operand == QUERY_ATTRIBUTE) pos+= snprintf(s+pos, n - pos, "\"");
 
 	    if (qa->query[i].alt != NULL)
 		{
@@ -528,6 +749,9 @@ void sprint_expanded_query( char *s, int n, query_array *qa )
 		    pos+= snprintf(s+pos, n - pos, ")");
 		}
 	}
+
+    if (pos < n) s[pos] = '\0';
+    else s[n-1] = '\0';
 }
 
 
@@ -566,4 +790,7 @@ void sprint_query_array( char *s, int n, query_array *qa )
 
 	    pos+= snprintf(s+pos, n - pos, "\n");
 	}
+
+    if (pos < n) s[pos] = '\0';
+    else s[n-1] = '\0';
 }

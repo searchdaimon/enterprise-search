@@ -37,6 +37,8 @@ gcrepo(int LotNr, char *subname)
 	int keept = 0;
 	int gced = 0;
 
+	container *attrkeys = ropen();
+
 	struct DIArrayFormat *DIArray;
 	int DocIDPlace;
 
@@ -102,7 +104,7 @@ gcrepo(int LotNr, char *subname)
 		else {
 			unsigned long int offset;
 			offset = rApendPost(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_deny, "repo.wip", url,
-			    attributes);
+			    attributes, attrkeys);
 			DIArray[DocIDPlace].docindex.RepositoryPointer = offset;
 			#ifdef DEBUG
 			printf("Writing DocID: %d\n", ReposetoryHeader.DocID);
@@ -114,7 +116,8 @@ gcrepo(int LotNr, char *subname)
 	fclose(FNREPO);
 
 	//lokker filen repo.wip
-	lotCloseFiles();
+	//lotCloseFiles();
+	rclose(attrkeys);
 
 	printf("keept %i\ngced %i\n",keept,gced);
 
