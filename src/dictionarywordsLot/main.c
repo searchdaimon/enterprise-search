@@ -22,6 +22,7 @@
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
 
 #include "set.h"
+#include "acl.h"
 
 typedef struct {
 	int hits;
