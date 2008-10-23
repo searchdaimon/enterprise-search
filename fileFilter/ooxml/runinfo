@@ -87,3 +87,8 @@ documentstype: ppsm
 command: ./pptx2html #file | ./html2text
 outputformat: text
 outputtype: stdio
+
+documentstype: sldx
+command: ./pptx2html #file | ./html2text
+outputformat: text
+outputtype: stdio
