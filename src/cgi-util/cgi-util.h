@@ -58,7 +58,8 @@ enum {
   CGIERR_NO_COOKIES,
   CGIERR_COOKIE_NOT_FOUND,
   CGIERR_N_OUT_OF_BOUNDS,
-  CGIERR_NUM_ERRS
+  CGIERR_NUM_ERRS,
+  CGIERR_NOT_UNSIGNED_INTEGER
 };
 
 extern char * cgi_error_strings[CGIERR_NUM_ERRS];
@@ -164,6 +165,8 @@ int cgi_getentryint(const char *field_name);
 int cgi_getnentryint(const char *field_name, int n);
 
 
+unsigned int cgi_getentryunsignedint(const char *field_name);
+unsigned int cgi_getnentryunsignedint(const char *field_name, int n);
 
 /*
   Searches for an entry (name) and returns its value or 0.0.

@@ -915,6 +915,36 @@ int cgi_getentryint(const char *field_name)
 }
 
 
+/* Grab a value and return it as an unsigned integer: */
+
+unsigned int cgi_getentryunsignedint(const char *field_name)
+{
+  return cgi_getnentryunsignedint(field_name, 0);
+}
+
+
+/* Grab a value and return it as an integer: */
+
+unsigned int cgi_getnentryunsignedint(const char *field_name, int n)
+{
+  unsigned int v;
+  
+  v = 0;
+  
+  if (cgi_getentrystr(field_name) != NULL)
+    {
+      if (sscanf(cgi_getnentrystr(field_name, 0), "%u", &v) != 1)
+	cgi_errno = CGIERR_NOT_UNSIGNED_INTEGER;
+    }
+  else
+    cgi_errno = CGIERR_NOT_UNSIGNED_INTEGER;
+  
+  return(v);
+}
+
+
+
+
 /* Grab a value and return it as an integer: */
 
 int cgi_getnentryint(const char *field_name, int n)
