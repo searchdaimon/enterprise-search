@@ -11,7 +11,7 @@ struct set {
 };
 
 typedef struct set set;
-typedef int set_iterator;
+typedef int set_iterator_t;
 
 #define SET_FOREACH(si, s, p) for (si = 0, p = si < (s)->size ? (s)->set[si] : NULL; \
                                    si < (s)->size; \

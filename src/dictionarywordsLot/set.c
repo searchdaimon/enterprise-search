@@ -174,7 +174,7 @@ set *
 set_clone(set *orig)
 {
 	set *new;
-	set_iterator si;
+	set_iterator_t si;
 	char *p;
 
 	new = malloc(sizeof(*new));
@@ -195,7 +195,7 @@ set_clone(set *orig)
 char *
 set_to_string(set *s, char *sep)
 {
-	set_iterator si;
+	set_iterator_t si;
 	char *str = NULL, *p, *endp;
 	size_t len, seplen;
 
