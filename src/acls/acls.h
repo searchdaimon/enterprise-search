@@ -18,6 +18,9 @@ struct userToSubnameDbFormat {
 
 // mode : fil retighet, r for read, w for write
 int userToSubname_open(struct userToSubnameDbFormat *userToSubnameDb, char mode);
+
+char **userToSubname_getsubnamesList(struct userToSubnameDbFormat *db, char group[], int *num_colls);
+void userToSubname_freesubnamesList(char ** subnames, int num_subnames);
 int userToSubname_getsubnamesAsString(struct userToSubnameDbFormat *userToSubnameDb,char username[],char subnames[],int subnameslen);
 int userToSubname_getsubnamesAsSaa(struct userToSubnameDbFormat *userToSubnameDb,char username[],char ***subnames, int *nr);
 int userToSubname_close (struct userToSubnameDbFormat *userToSubnameDb);

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 
 #include <db.h>
 
@@ -24,72 +25,39 @@ void aclElementNormalize (char acl[]) {
 }
 
 
-int userToSubname_open(struct userToSubnameDbFormat *userToSubnameDb, char mode) {
+int userToSubname_open(struct userToSubnameDbFormat * userToSubnameDb, char mode) {
+		unsigned int flags;
+		int ret;
+		int filemode;
+		DB * db;
 
-        //DB *dbp = (DB *)(*dbpp);
+		debug("Using DB version %s\n", DB_VERSION_STRING);
 
-
-        char fileName[512];
-        int ret;
-
-	int filemode = 0664;
-	int flags;
-
-	#ifdef DEBUG
-		printf("opening db\n");
-	#endif
-
-
-        /********************************************************************
-        * Opening nrOfFiles to stor the data in
-        ********************************************************************/
-                /* Create and initialize database object */
-                if ((ret = db_create(&(*userToSubnameDb).dbp, NULL, 0)) != 0) {
-                        fprintf(stderr,
-                            "%s: db_create: %s\n", "bbdocument", db_strerror(ret));
-                        return (0);
-                }
-
-
-                /*
-                 * Configure the database for sorted duplicates
-                 */
-
-
-                ret = (*userToSubnameDb).dbp->set_flags((*userToSubnameDb).dbp, DB_DUPSORT);
-                if (ret != 0) {
-                    (*userToSubnameDb).dbp->err((*userToSubnameDb).dbp, ret, "Attempt to set DUPSORT flag failed.");
-                    (*userToSubnameDb).dbp->close((*userToSubnameDb).dbp, 0);
-                    return(ret);
-                }
-
-		
-
-		if (mode == 'w') {
-			/* Database open flags */
-			flags = DB_CREATE;    	/* If the database does not exist, 
-                       				* create it.*/
-		}
-		else if (mode == 'r') {
-			flags = DB_RDONLY;
-		}
-		else {
-			fprintf(stderr,"userToSubname_open: flag neader read nor write\n");
-			exit(1);
+		switch (mode) {
+			case 'w':
+				flags = DB_CREATE;    	/* If the database does not exist, * create it.*/
+				filemode = 0664;
+				break;
+			case 'r':
+				flags = DB_RDONLY; break;
+				filemode = 0;
+			default:
+				errx(1, "%s %d Unknown open mode '%d'", __FILE__, __LINE__, mode);
 		}
 
-                /* open the database. */
-                if ((ret = (*userToSubnameDb).dbp->open((*userToSubnameDb).dbp, NULL, bfile(userToSubnameDbFile), NULL, DB_BTREE, flags, filemode)) != 0) {
-                        (*userToSubnameDb).dbp->err((*userToSubnameDb).dbp, ret, "%s: open", bfile(userToSubnameDbFile));
-                        //goto err1;
-                        return (0);
+		if ((ret = db_create(&db, NULL, 0)) != 0)
+			errx(1, "%s db_create: %s\n", __FILE__, db_strerror(ret));
 
-                }
+		if ((ret = db->set_flags(db, DB_DUPSORT)) != 0)
+			errx(1, "set dupsort flags, %s\n", db_strerror(ret));
 
-        /********************************************************************/
+		ret = db->open(db, NULL, bfile(userToSubnameDbFile), NULL, DB_BTREE, flags, filemode);
+		if (ret != 0)
+			errx(1, "db open error %s\n", db_strerror(ret));
+	
+		(*userToSubnameDb).dbp = db;
 
-        //(*dbpp) = (int *)dbp;
-	return 1;
+		return 1;
 }
 
 /***************************************************************************************************
@@ -99,7 +67,7 @@ int userToSubname_getsubnamesAsSaa(struct userToSubnameDbFormat *userToSubnameDb
 
 	char buf[512];
 
-	if (!userToSubname_getsubnamesAsString(userToSubnameDb,username,buf,sizeof(buf))) {
+	if (!userToSubname_getsubnamesAsString(userToSubnameDb,username,buf,sizeof buf)) {
 		#ifdef DEBUG
 		fprintf(stderr,"cant run userToSubname_getsubnamesAsString\n");
 		#endif
@@ -116,62 +84,86 @@ int userToSubname_getsubnamesAsSaa(struct userToSubnameDbFormat *userToSubnameDb
 	return 1;
 }
 
+char **userToSubname_getsubnamesList(struct userToSubnameDbFormat *db, char group[], int *num_colls) {
+		DBC *cursorp;
+		DBT key, data;
+		int ret, i = 0;
+
+		*num_colls = 0;
+
+		aclElementNormalize(group);
+
+		//resetter minne
+		memset(&key, 0, sizeof(DBT));
+		memset(&data, 0, sizeof(DBT));
+
+		// Get a cursor
+		db->dbp->cursor(db->dbp, NULL, &cursorp, 0);
+
+		/* Set up our DBTs */
+		key.data = group;
+		key.size = strlen(group) +1;
+
+		/*
+		 * Position the cursor to the first record in the database whose
+		 * key and data begin with the correct strings.	
+		 */	
+		ret = cursorp->c_get(cursorp, &key, &data, DB_SET);
+
+
+		//fant ingen
+		if (ret == DB_NOTFOUND) {
+				debug("DB_NOTFOUND for key \"%s\"\n",key.data);
+				return NULL;
+		}
+
+		char **subnames = NULL;
+		while (ret != DB_NOTFOUND) {
+			i++;
+			subnames = realloc(subnames, i * sizeof(char *));
+			subnames[i-1] = strdup(data.data);
+			ret = cursorp->c_get(cursorp, &key, &data, DB_NEXT_DUP);
+			(*num_colls)++;
+		}
+
+		// Close the cursor 
+		if (cursorp != NULL)
+				cursorp->c_close(cursorp);
+
+		return subnames;
+}
+
+void userToSubname_freesubnamesList(char ** subnames, int num_colls) {
+	if (subnames == NULL) {
+		warn("null var passed to freesubnamesList %d %s\n", 	
+			__LINE__, __FILE__);
+		return;
+	}
+	int i = 0;
+	for (; i < num_colls; i++) {
+		free(subnames[i]);
+	}
+	free(subnames);
+}
+
 int userToSubname_getsubnamesAsString(struct userToSubnameDbFormat *userToSubnameDb,char username[],char subnames[], int subnameslen) {
-
-	//DB *dbp = (DB *)(*dbpp);
-	DBC *cursorp;
-	DBT key, data;
-	int ret;
-
-	aclElementNormalize(username);
-
-	//resetter minne
-        memset(&key, 0, sizeof(DBT));
-        memset(&data, 0, sizeof(DBT));
-
-	/* Get a cursor */
-	(*userToSubnameDb).dbp->cursor((*userToSubnameDb).dbp, NULL, &cursorp, 0);
-
-	/* Set up our DBTs */
-	key.data = username;
-	key.size = strlen(username) +1;
 
 	subnames[0] = '\0';
 
-
-
-	/*
-	 * Position the cursor to the first record in the database whose
-	 * key and data begin with the correct strings.	
-	 */	
-	ret = cursorp->c_get(cursorp, &key, &data, DB_SET);
-
-
-	//fant ingen
-	if (ret == DB_NOTFOUND) {
-		printf("DB_NOTFOUND for key \"%s\"\n",key.data);
+	int num_colls;
+	char **names_list = userToSubname_getsubnamesList(userToSubnameDb, username, &num_colls);
+	if (names_list == NULL)
 		return 0;
-	}
 
-	while (ret != DB_NOTFOUND) {
-		//printf("found collection \"%c%c%c%c\", size %i\n",(char *)data.data,data.size);
-		//printf("key: %s, data: %s\n", (char *)key.data, (char *)data.data);
-		strlwcat(subnames,(char *)data.data,subnameslen);
+	int i = 0;
+	for (; i < num_colls; i++) {
+		strlwcat(subnames, names_list[i], subnameslen);
 		strlwcat(subnames,",",subnameslen);
-
-		ret = cursorp->c_get(cursorp, &key, &data, DB_NEXT_DUP);
 	}
-
-	/* Close the cursor */
-	if (cursorp != NULL) {
-		cursorp->c_close(cursorp);
-	}
+	userToSubname_freesubnamesList(names_list, num_colls);
 
 	//fjernes siste ,
 	subnames[strlen(subnames) -1] = '\0';
-
-
-	//(*dbpp) = (int *)dbp;
 
 	return 1;
 
