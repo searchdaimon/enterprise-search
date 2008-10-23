@@ -33,6 +33,7 @@ struct collectionFormat {
 	char **users;
 	char *extra;
 	char *test_file_prefix;
+	unsigned int usersystem;
 	struct crawlLibInfoFormat *crawlLibInfo;
 
 	//10 juni 2008:

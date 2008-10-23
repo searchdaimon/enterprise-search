@@ -7,6 +7,8 @@
 #include <string.h>
 
 #include "crawl.h"
+#include "../boithoadClientLib/liboithoaut.h"
+#include "../boithoadClientLib/boithoad.h"
 
 #ifdef WITH_THREAD
         __thread static char _warnmsg[512] = { "" };
@@ -88,4 +90,6 @@ void *collectionReset (struct collectionFormat *collection) {
  //char **users;
  collection->extra 		= NULL;
  collection->test_file_prefix 	= NULL;
+
+  return NULL;
 }
