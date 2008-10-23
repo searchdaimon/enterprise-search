@@ -159,6 +159,10 @@
 #define cm_crawlcanconect	2
 #define cm_scan			3
 #define cm_pathaccess		4
+#define cm_groupsforuserfromusersystem 5
+#define cm_collectionsforuser	6
+#define cm_usersystemfromcollection 7
+#define cm_listusersus		8
 #define cm_recrawlcollection	10
 #define cm_collectionislocked   11
 #define cm_deleteCollection	50
@@ -538,11 +542,7 @@ struct SiderHederFormat {
 	int TotaltTreff;
 	double total_usecs;
 	char hiliteQuery[MaxQueryLen];
-
-	#ifdef WITH_SPELLING
 	char spellcheckedQuery[MaxQueryLen];
-	#endif
-
 	struct queryTimeFormat queryTime;
 	char servername[32];
 	struct subnamesFormat subnames[MAX_COLLECTIONS];
