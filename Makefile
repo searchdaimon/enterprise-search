@@ -32,10 +32,10 @@ IM = /home/eirik/.root/lib/libMagick.a /home/eirik/.root/lib/libWand.a -I/home/e
 #IM = -L/home/eirik/.root/lib -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
 #IM = /home/eirik/.root/lib/libMagick.a -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
 
-#BDB = -I/usr/local/BerkeleyDB.4.5/include/ -L/usr/local/BerkeleyDB.4.5/lib/ -ldb
-#BDB = -I/usr/local/BerkeleyDB.4.5/include/ -L/usr/local/BerkeleyDB.4.5/lib/
-BDB = -I/usr/include/db4 /usr/lib/libdb-4.6.a
-#BDB = -ldb
+#bbh1:
+BDB = -I/usr/local/BerkeleyDB.4.5/include/ -L/usr/local/BerkeleyDB.4.5/lib/
+#bbh2
+#BDB = -I/usr/include/db4 /usr/lib/libdb-4.6.a
 
 #SMBCLIENT=-lsmbclient
 #skrur dette på igjen. Brukte det og segfeile når vi hadde det med statisk?
