@@ -451,7 +451,7 @@ searchddep:
 	#ting searchd trenger
 	@echo ""
 	@echo "$@:"
-	for i in src/query src/parser src/generateSnippet src/ds src/utf8-filter src/getdate src/parser2 src/newspelling src/getFiletype; do\
+	for i in src/query src/parser src/generateSnippet src/ds src/utf8-filter src/getdate src/parser2 src/newspelling src/getFiletype src/attributes/; do\
            (cd $$i; $(MAKE) all);\
         done
 
