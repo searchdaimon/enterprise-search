@@ -86,9 +86,9 @@ sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 	getxmlnodestr(collection);
 	getxmlnodestr(aclallow);
 	getxmlnodestr(acldeny);
-	//getxmlnodestr(attributes);
+	getxmlnodestr(attributes);
 
-	xmldoc.attributes = strdup("");
+	//xmldoc.attributes = strdup("");
 
 
 	if ((n = xml_find_child(top, "lastmodified")) == NULL) {
