@@ -1,3 +1,4 @@
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -7,6 +8,7 @@
 #include "../crawlManager/client.h"
 
 #include "../boithoadClientLib/liboithoaut.h"
+#include "../boithoadClientLib/boithoad.h"
 
 #include "../bbdocument/bbdocument.h"
 #include "../maincfg/maincfg.h"
@@ -26,10 +28,12 @@ int main (int argc, char *argv[]) {
 		printf("./usage key [value]\n\n");
 		printf("groupsForUser <user name>\n");
 		printf("listUsers\n");
+		printf("listUsersUS usersystem\n");
 		printf("listMailUsers\n");
 		printf("listGroups\n");
 		printf("collectionFor <user name> or <group name>\n");
 		printf("groupsAndCollectionForUser <user name>\n");
+		puts("collectionsforuser <user>");
 
 		printf("crawlCollection <collection name> [extra]\n");
 		printf("recrawlCollection <collection name> [extra]\n");
@@ -40,7 +44,8 @@ int main (int argc, char *argv[]) {
 		printf("AuthUser <username> <password>\n");
 		printf("GetPassword <username>\n");
 		printf("collectionLocked <collection>\n");
-                printf("killCrawl <pid>");
+                printf("killCrawl <pid>\n");
+		puts("groupsforuserfromusersystem user usersystem");
 		printf("\nReturns %i on success and %i on failure\n",EXIT_SUCCESS,EXIT_FAILURE);
 		exit(1);
 	}
@@ -190,7 +195,7 @@ int main (int argc, char *argv[]) {
 		char errorbuff[errorbufflen];
 		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
 			printf("Error: %s\n",errorbuff);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 
 		if (!cmc_crawlcanconect(socketha,value,errorbuff,errorbufflen)) {
@@ -343,6 +348,77 @@ int main (int argc, char *argv[]) {
 
 		r = cmc_collectionislocked(socketha, value);
 		printf("Collection locked: %s\n", r == 0 ? "no" : "yes");
+	}
+	else if (strcmp(key, "groupsforuserfromusersystem") == 0) {
+		int r;
+		int socketha;
+		int errorbufflen = 512;
+                char errorbuff[errorbufflen];
+		char **groups;
+
+		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
+                        printf("Error: %s\n",errorbuff);
+                        exit(1);
+                }
+
+		if (value == NULL || value2 == NULL)
+			errx(1, "infoquery groupsbyuserfromcollection user collection");
+
+		r = cmc_groupsforuserfromusersystem(socketha, value, atoi(value2), &groups);
+		printf("Got %d users.\n", r);
+		if (groups != NULL) {
+			int i;
+			char *group;
+
+			group = (char *)groups;
+			for (i = 0; i < r; i++) {
+				printf("> %s\n", group);
+				group += MAX_LDAP_ATTR_LEN;
+			}
+		}
+		//printf("Collection locked: %s\n", r == 0 ? "no" : "yes");
+	}
+	else if (strcmp(key, "collectionsforuser") == 0) {
+		int r;
+		int socketha;
+		int errorbufflen = 512;
+                char errorbuff[errorbufflen];
+		char *groups;
+
+		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
+                        printf("Error: %s\n",errorbuff);
+                        exit(1);
+                }
+
+		if (value == NULL)
+			errx(1, "infoquery collectionsforuser user");
+
+		r = cmc_collectionsforuser(socketha, value, &groups);
+		//printf("Collection locked: %s\n", r == 0 ? "no" : "yes");
+	}
+	else if (strcmp(key, "listUsersUS") == 0) {
+		int r;
+		int i;
+		int socketha;
+		int errorbufflen = 512;
+                char errorbuff[errorbufflen];
+		char **users;
+
+		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
+                        printf("Error: %s\n",errorbuff);
+                        exit(1);
+                }
+
+		if (value == NULL)
+			errx(1, "infoquery collectionsforuser user");
+
+		r = cmc_listusersus(socketha, atoi(value), &users);
+
+		for (i = 0; i < r; i++) {
+			printf("User: %s\n", users[i]);
+			free(users[i]);
+		}
+		free(users);
 	}
         else if (strcmp(key, "killCrawl") == 0) {
             // parse param
