@@ -162,6 +162,12 @@ int documentContinue(struct collectionFormat *collection) {
 
 	debug("documentContinue: start");
 
+	if (collection->docsRemaining == 0) {
+		snprintf(collection->errormsg, sizeof collection->errormsg, 
+			"User specified document limit reached.");
+		return 0;
+	}
+
 	int recrawl_schedule_start, recrawl_schedule_end;
 	struct tm *t;
 	time_t now;
@@ -204,24 +210,29 @@ int documentContinue(struct collectionFormat *collection) {
 	//	start 10, end 12
 	//	kl nå 14
 	//
+	int sched_cont = 1;
 	if ( recrawl_schedule_start > recrawl_schedule_end ) {
 
 		if ((t->tm_hour < recrawl_schedule_start) && (t->tm_hour >= recrawl_schedule_end)) {
 			printf("scenario 1: to early, wont crawl\n");
-			return 0;
+			sched_cont = 0;
 		}
 
 	}
 	else {
 		if (t->tm_hour < recrawl_schedule_start) {
 			printf("scenario 2: to early, wont crawl\n");
-			return 0;
+			sched_cont = 0;
 		}
 		else if (t->tm_hour >= recrawl_schedule_end) {
 			printf("scenario 2: to late, wont crawl\n");
-			return 0;
+			sched_cont = 0;
 		}
-
+	}
+	if (!sched_cont) {
+		snprintf(collection->errormsg, sizeof collection->errormsg,
+			"Crawl is pending. Waiting for schedule time.");
+		return 0;
 	}
 
 	debug("hour is now %i, will crawl\n",t->tm_hour);
@@ -280,6 +291,9 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 	#ifdef DEBUG
 	printf("documentAdd: uri %s, title %s\n",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).title);
 	#endif
+
+	if (collection->docsRemaining != -1)
+		collection->docsRemaining--;
 
 	//send it inn
 	if (!bbdn_docadd(collection->socketha,
@@ -491,7 +505,7 @@ int cm_crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 	struct crawlLibInfoFormat *crawlLibInfo;
 
 	if (!documentContinue(collection)) {
-                berror("Crawl is pending. Waiting for schedule time.");
+                berror(collection->errormsg);
 		return 0;
 	}
 
@@ -515,7 +529,7 @@ int cm_crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
        	}
 
 	if (!documentContinue(collection)) {
-                berror("Crawl is pending. Waiting for schedule time.");
+                berror(collection->errormsg);
 		return 0;
 	}
 	
@@ -528,7 +542,7 @@ int cm_crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
 	struct crawlLibInfoFormat *crawlLibInfo;
 
 	if (!documentContinue(collection)) {
-                berror("Crawl is pending. Waiting for schedule time.");
+                berror(collection->errormsg);
 		return 0;
 	}
 
@@ -551,7 +565,7 @@ int cm_crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
        	}
 
 	if (!documentContinue(collection)) {
-                berror("Crawl is pending. Waiting for schedule time.");
+                berror(collection->errormsg);
 		return 0;
 	}
 
@@ -656,6 +670,9 @@ pathaccess_cachelookup(char *collection, char *username, char *password, char *u
 }
 #endif
 
+int requires_path_access(struct collectionFormat * coll) {
+	return !(coll->user == NULL && coll->password == NULL);
+}
 
 int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], char username_in[], char password[]) {
 	char *origuri;
@@ -696,14 +713,20 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 		printf("cant't find Collection \"%s\"in db at %s:%d\n",collection,__FILE__,__LINE__);
 		return 0;
 	}
-	gettimeofday(&end_time, NULL);
-	pathAccessTimes.searchForCollection = getTimeDifference(&start_time,&end_time);
 
 	//skal returnere 1, og bare 1, hvis ikke er det noe feil
 	if (nrofcollections != 1) {
 		printf("error looking opp collection \"%s\"\n",collection);
 		return 0;
 	}
+
+	if (!requires_path_access(&collections[0])) {
+		printf("Collection '%s' requires no path access.", collection);
+		return 1;
+	}
+
+	gettimeofday(&end_time, NULL);
+	pathAccessTimes.searchForCollection = getTimeDifference(&start_time,&end_time);
 
 
 	gettimeofday(&start_time, NULL);
@@ -1330,6 +1353,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 	//inaliserer andre ting
 	for (i=0;i<(*nrofcollections);i++) {
 		(*collection)[i].errormsg[0] = '\0';
+		(*collection)[i].docsRemaining = -1;
 	}
 
 	/***********************************************************************/
@@ -1572,7 +1596,7 @@ void sql_connect(MYSQL *db) {
 	}
 }
 
-int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, int flag, char *extra) {
+int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, int flag, int docsRemaining, char *extra) {
 
 	int i;
 	FILE *LOCK;
@@ -1583,6 +1607,7 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 		if (collection[i].extra != NULL)
 			free(collection[i].extra);
 		collection[i].extra = extra;
+		collection[i].docsRemaining = docsRemaining;
 
 		blog(LOGACCESS,1,"Starting crawl of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
 
@@ -1605,11 +1630,10 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 		if (flag == crawl_recrawl) {
 			debug("crawl_recrawl");
 
-
 			char querybuf[1024];
 			int querylen;
 
-			querylen = snprintf(querybuf, sizeof(querybuf), "UPDATE shares SET last = 0 WHERE id = '%d'",
+			querylen = snprintf(querybuf, sizeof(querybuf), "UPDATE shares SET last = NULL WHERE id = '%d'",
 					    collection[i].id);
 			if (mysql_real_query(db, querybuf, querylen)) {
 				printf("Mysql error: %s", mysql_error(db));
@@ -1757,7 +1781,8 @@ void connectHandler(int socket) {
 			intresponse=1;
 			sendall(socket,&intresponse, sizeof(int));
 
-			crawl(&db, collections,nrofcollections,crawl_crawl, extrabuf[0] != '\0' ? strdup(extrabuf) : NULL);
+			crawl(&db, collections, nrofcollections, crawl_crawl, 
+				-1, extrabuf[0] != '\0' ? strdup(extrabuf) : NULL);
 			mysql_close(&db);
 
 	        }
@@ -1776,9 +1801,11 @@ void connectHandler(int socket) {
 		}
 		else if (packedHedder.command == cm_recrawlcollection) {
 			char extrabuf[512];
+			int docsRemaining;
 			printf("recrawlcollection\n");
 			
 			recvall(socket,collection,sizeof(collection));
+			recvall(socket, &docsRemaining, sizeof docsRemaining);
 			recvall(socket,extrabuf,sizeof extrabuf);
 			printf("collection \"%s\"\n",collection);
 
@@ -1798,7 +1825,8 @@ void connectHandler(int socket) {
 			sendall(socket,&intresponse, sizeof(int));
 
 
-			crawl(&db, collections,nrofcollections,crawl_recrawl, extrabuf[0] != '\0' ? strdup(extrabuf) : NULL);
+			crawl(&db, collections,nrofcollections,crawl_recrawl, docsRemaining, 
+				extrabuf[0] != '\0' ? strdup(extrabuf) : NULL);
 			mysql_close(&db);
 
 		}
@@ -1930,7 +1958,7 @@ void connectHandler(int socket) {
 
 			recvall(socket,collection,sizeof(collection));
 
-			printf("got collection name \"%s\" to crawl\n",collection);
+			printf("got collection name '%s' to crawl", collection);
 
 			MYSQL db;
 			sql_connect(&db);
