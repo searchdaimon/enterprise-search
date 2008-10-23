@@ -2013,8 +2013,6 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 					filesKey = hashtable_iterator_key(itr);
 					dc = hashtable_iterator_value(itr);
 
-					printf("Adding: %s\n", filesKey);
-
 					//printf("\"%s\": %i\n",filesKey,dc->hits);
 					fprintf(resultFH,"%s %u ",filesKey,dc->hits);
 					//printf("acl allow:\n");
