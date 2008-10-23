@@ -352,15 +352,12 @@ cmc_collectionsforuser(int sock, char *_user, char **_collections)
 	sendpacked(sock, cm_collectionsforuser, BLDPROTOCOLVERSION, sizeof(user), user, "");
 
 	recv(sock, &n, sizeof(n), MSG_WAITALL);
-	printf("#groups: %d\n", n);
 	if (n == 0) {
 		collections = strdup("");
 	} else {
-		printf("Allocating: %d %d\n", n, maxSubnameLength+1);
 		collections = calloc(n, maxSubnameLength+1);
 		recv(sock, collections, (maxSubnameLength+1)*n, MSG_WAITALL);
 	}
-	printf("got collections: %s\n", collections);
 	*_collections = collections;
 	
 	return n;
