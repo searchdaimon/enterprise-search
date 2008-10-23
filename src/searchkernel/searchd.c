@@ -564,7 +564,6 @@ void *do_chld(void *arg)
 	//struct SiderFormat Sid
 
 	int nrOfSubnames;
-        struct subnamesFormat *subnames;
 
 	config_setting_t *cfgstring;
 	config_setting_t *cfgcollection;
@@ -620,6 +619,16 @@ void *do_chld(void *arg)
 	if ((i=recv(mysocfd, &queryNodeHeder, sizeof(queryNodeHeder),MSG_WAITALL)) == -1) {
 		perror("recv");
 	}
+
+	// Read collections /w cfg.
+	if ((recv(mysocfd, &nrOfSubnames, sizeof nrOfSubnames, MSG_WAITALL)) == -1)
+		perror("recv nrOfSubnames");
+
+	struct subnamesFormat subnames[nrOfSubnames];
+	if ((recv(mysocfd, &subnames, sizeof subnames, MSG_WAITALL)) == -1)
+		perror("recv subnames");
+
+
 
 	//sender svar med en gang at vi kan gjøre dette
 	net_status = net_CanDo;
@@ -718,6 +727,7 @@ void *do_chld(void *arg)
 	}
 #endif
 
+#if 0
 	struct timeval groupstuffstart, groupstuffend;
 	char cmc_status_buf[1024];
 	int cmc_sock;
@@ -737,425 +747,19 @@ void *do_chld(void *arg)
 
 	cmc_close(cmc_sock);
 	strcpy(groupOrQuery, "");
+#else
+#endif
 #endif
 
 
 
 /***************************************/
-	 
-
-
-	if ((cfgcollections = config_lookup(&cfg, "collections")) == NULL) {
-		
-		fprintf(stderr, "searchd_child: Error! Can't load \"collections\" from config\n");
-		exit(1);
-	}
-
-	if ((cfgcollection = config_setting_get_member(cfgcollections, "defaults")) == NULL ) {
-		fprintf(stderr, "searchd_child: Error! Can't load \"collections defaults\" from config\n");
-		exit(1);
-
-	}
-
-
-	/****************/
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "summary") ) == NULL) {
-                fprintf(stderr, "searchd_child: Error! Can't load \"summary\" from config\n");
-                exit(1);
-        }
-
-	subnamesDefaultsConfig.summary = config_setting_get_string(cfgstring);
-
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameUrl") ) == NULL) {
-                fprintf(stderr, "searchd_child: Error! Can't load \"filterSameUrl\" from config\n");
-                exit(1);
-        }
-
-	subnamesDefaultsConfig.filterSameUrl = config_setting_get_bool(cfgstring);
-
-
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameUrl") ) == NULL) {
-                fprintf(stderr, "searchd_child: Error! Can't load \"filterSameUrl\" from config\n");
-                exit(1);
-        }
-
-	subnamesDefaultsConfig.filterSameUrl = config_setting_get_bool(cfgstring);
-
-
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameDomain") ) == NULL) {
-                fprintf(stderr, "searchd_child: Error! Can't load \"filterSameDomain\" from config\n");
-                exit(1);
-        }
-
-	subnamesDefaultsConfig.filterSameDomain = config_setting_get_bool(cfgstring);
-
-
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterTLDs") ) == NULL) {
-                fprintf(stderr, "searchd_child: Error! Can't load \"filterTLDs\" from config\n");
-                exit(1);
-        }
-
-	subnamesDefaultsConfig.filterTLDs = config_setting_get_bool(cfgstring);
-
-
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterResponse") ) == NULL) {
-                fprintf(stderr, "searchd_child: Error! Can't load \"filterResponse\" from config\n");
-                exit(1);
-        }
-
-	subnamesDefaultsConfig.filterResponse = config_setting_get_bool(cfgstring);
-
-
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameCrc32") ) == NULL) {
-                fprintf(stderr, "searchd_child: Error! Can't load \"filterSameCrc32\" from config\n");
-                exit(1);
-        }
-
-	subnamesDefaultsConfig.filterSameCrc32 = config_setting_get_bool(cfgstring);
-
-
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankAthorArray") ) == NULL) {
-                fprintf(stderr, "searchd_child: Error! Can't load \"rankAthorArray\" from config\n");
-                exit(1);
-        }
-	
-	subnamesDefaultsConfig.rankAthorArrayLen = config_setting_length(cfgstring);
-	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankAthorArrayLen) {
-		subnamesDefaultsConfig.rankAthorArrayLen = BMAX_RANKARRAY;
-	}
-	for(i=0;i<subnamesDefaultsConfig.rankAthorArrayLen;i++) {
-		subnamesDefaultsConfig.rankAthorArray[i] = config_setting_get_int_elem(cfgstring,i);
-	}
-
-
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankTittelArray") ) == NULL) {
-                fprintf(stderr, "searchd_child: Error! Can't load \"rankTittelArray\" from config\n");
-                exit(1);
-        }
-	
-	subnamesDefaultsConfig.rankTittelArrayLen = config_setting_length(cfgstring);
-	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankTittelArrayLen) {
-		subnamesDefaultsConfig.rankTittelArrayLen = BMAX_RANKARRAY;
-	}
-	for(i=0;i<subnamesDefaultsConfig.rankTittelArrayLen;i++) {
-		subnamesDefaultsConfig.rankTittelArray[i] = config_setting_get_int_elem(cfgstring,i);
-	}
-
-
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankHeadlineArray") ) == NULL) {
-                fprintf(stderr, "searchd_child: Error! Can't load \"rankHeadlineArray\" from config\n");
-                exit(1);
-        }
-	
-	subnamesDefaultsConfig.rankHeadlineArrayLen = config_setting_length(cfgstring);
-	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankHeadlineArrayLen) {
-		subnamesDefaultsConfig.rankHeadlineArrayLen = BMAX_RANKARRAY;
-	}
-	for(i=0;i<subnamesDefaultsConfig.rankHeadlineArrayLen;i++) {
-		subnamesDefaultsConfig.rankHeadlineArray[i] = config_setting_get_int_elem(cfgstring,i);
-	}
-
-
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankBodyArray") ) == NULL) {
-                fprintf(stderr, "searchd_child: Error! Can't load \"rankBodyArray\" from config\n");
-                exit(1);
-        }
-	
-	subnamesDefaultsConfig.rankBodyArrayLen = config_setting_length(cfgstring);
-	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankBodyArrayLen) {
-		subnamesDefaultsConfig.rankBodyArrayLen = BMAX_RANKARRAY;
-	}
-	for(i=0;i<subnamesDefaultsConfig.rankBodyArrayLen;i++) {
-
-
-		subnamesDefaultsConfig.rankBodyArray[i] = config_setting_get_int_elem(cfgstring,i);
-	}
-
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankUrlArray") ) == NULL) {
-                fprintf(stderr, "searchd_child: Error! Can't load \"rankUrlArray\" from config\n");
-                exit(1);
-        }
-	
-	subnamesDefaultsConfig.rankUrlArrayLen = config_setting_length(cfgstring);
-	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankUrlArrayLen) {
-		subnamesDefaultsConfig.rankUrlArrayLen = BMAX_RANKARRAY;
-	}
-	for(i=0;i<subnamesDefaultsConfig.rankUrlArrayLen;i++) {
-		subnamesDefaultsConfig.rankUrlArray[i] = config_setting_get_int_elem(cfgstring,i);
-	}
-
-	//rankTittelFirstWord
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankTittelFirstWord") ) == NULL) {
-                fprintf(stderr, "searchd_child: Error! Can't load \"rankTittelFirstWord\" from config\n");
-                exit(1);
-        }
-
-	subnamesDefaultsConfig.rankTittelFirstWord = config_setting_get_int(cfgstring);
-
-	//rankUrlMainWord
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankUrlMainWord") ) == NULL) {
-                fprintf(stderr, "searchd_child: Error! Can't load \"rankUrlMainWord\" from config\n");
-                exit(1);
-        }
-
-	subnamesDefaultsConfig.rankUrlMainWord = config_setting_get_int(cfgstring);
-
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "defaultthumbnail") ) == NULL) {
-                vboprintf("can't load \"defaultthumbnail\" from config\n");
-        }
-	else {
-		subnamesDefaultsConfig.defaultthumbnail = config_setting_get_string(cfgstring);
-	}
-
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "sqlImpressionsLogQuery") ) == NULL) {
-                vboprintf("can't load \"sqlImpressionsLogQuery\" from config\n");
-		subnamesDefaultsConfig.sqlImpressionsLogQuery[0] = '\0';
-
-        }
-	else {
-		strscpy(subnamesDefaultsConfig.sqlImpressionsLogQuery,config_setting_get_string(cfgstring),sizeof(subnamesDefaultsConfig.sqlImpressionsLogQuery));
-	}
-
-
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "isPaidInclusion") ) == NULL) {
-                fprintf(stderr, "searchd_child: Error! Can't load \"isPaidInclusion\" from config\n");
-                exit(1);
-        }
-
-	subnamesDefaultsConfig.isPaidInclusion = config_setting_get_bool(cfgstring);
-
-	/****************/
-
-	vboprintf("subname \"%s\"\n",queryNodeHeder.subname);
+	 	/****************/
 
 	//dekoder subname
 
-	Count = split(queryNodeHeder.subname, ",", &Data);
-
-	subnames = calloc(Count, sizeof(struct subnamesFormat)); 
-	
-
-  	Count = 0;
-	nrOfSubnames = 0; 
-
-
 	vboprintf("nrOfSubnames %i\n",nrOfSubnames);
   	
-	while( (Data[Count] != NULL) && (nrOfSubnames < MAX_COLLECTIONS)) {
-    		vboprintf("\t\taa: %d\t\"%s\"\n", Count, Data[Count]);
-
-		//tar ikke med tomme subnames (som bare er en \0)
-		if (Data[Count][0] == '\0') {
-
-		}
-		else if (isInSubname(subnames,nrOfSubnames,Data[Count])) {
-			fprintf(stderr, "searchd_child: all redy have \"%s\" as a subname\n",Data[Count]);
-		} 
-		else {
-	    		vboprintf("\t\taa: added : %d\t\"%s\" (len %i)\n", Count, Data[Count],strlen(Data[Count]));
-
-			strscpy(subnames[nrOfSubnames].subname,Data[Count],sizeof(subnames[nrOfSubnames].subname));
-
-			//setter at vi først skal bruke defult config
-			subnames[nrOfSubnames].config = subnamesDefaultsConfig;
-
-			if ((cfgcollection = config_setting_get_member(cfgcollections, subnames[nrOfSubnames].subname)) == NULL ) {
-				vboprintf("can't load \"collections\" from config for \"%s\"\n",subnames[nrOfSubnames].subname);
-
-			}
-			else {
-
-
-				/****************/
-				if ( (cfgstring = config_setting_get_member(cfgcollection, "summary") ) == NULL) {
-                			vboprintf("can't load \"summary\" from config\n");
-        			}
-				else {
-				subnames[nrOfSubnames].config.summary = config_setting_get_string(cfgstring);
-				}
-
-				if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameUrl") ) == NULL) {
-                			vboprintf("can't load \"filterSameUrl\" from config\n");
-        			}
-				else {
-					subnames[nrOfSubnames].config.filterSameUrl = config_setting_get_bool(cfgstring);
-				}
-
-
-				if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameDomain") ) == NULL) {
-                			vboprintf("can't load \"filterSameDomain\" from config\n");
-        			}
-				else {
-					subnames[nrOfSubnames].config.filterSameDomain = config_setting_get_bool(cfgstring);
-				}
-
-				if ( (cfgstring = config_setting_get_member(cfgcollection, "filterTLDs") ) == NULL) {
-                			vboprintf("can't load \"filterTLDs\" from config\n");
-        			}
-				else {
-					subnames[nrOfSubnames].config.filterTLDs = config_setting_get_bool(cfgstring);
-				}
-
-				if ( (cfgstring = config_setting_get_member(cfgcollection, "filterResponse") ) == NULL) {
-                			vboprintf("can't load \"filterResponse\" from config\n");
-        			}
-				else {
-					subnames[nrOfSubnames].config.filterResponse = config_setting_get_bool(cfgstring);
-				}
-
-				if ( (cfgstring = config_setting_get_member(cfgcollection, "filterSameCrc32") ) == NULL) {
-                			vboprintf("can't load \"filterSameCrc32\" from config\n");
-        			}
-				else {
-					subnames[nrOfSubnames].config.filterSameCrc32 = config_setting_get_bool(cfgstring);
-				}
-
-
-				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankTittelFirstWord") ) == NULL) {
-                			vboprintf("can't load \"rankTittelFirstWord\" from config\n");
-        			}
-				else {
-					subnames[nrOfSubnames].config.rankTittelFirstWord = config_setting_get_int(cfgstring);
-				}
-
-				//rankUrlMainWord
-				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankUrlMainWord") ) == NULL) {
-                			vboprintf("can't load \"rankUrlMainWord\" from config\n");
-        			}
-				else {
-					subnames[nrOfSubnames].config.rankUrlMainWord = config_setting_get_int(cfgstring);
-				}
-
-				vboprintf("filterSameUrl: %i\n",subnames[nrOfSubnames].config.filterSameUrl);
-				vboprintf("filterSameDomain: %i\n",subnames[nrOfSubnames].config.filterSameDomain);
-				vboprintf("filterTLDs: %i\n",subnames[nrOfSubnames].config.filterTLDs);
-				vboprintf("filterResponse: %i\n",subnames[nrOfSubnames].config.filterResponse);
-				vboprintf("filterSameCrc32: %i\n",subnames[nrOfSubnames].config.filterSameCrc32);
-
-				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankAthorArray") ) == NULL) {
-                			vboprintf("can't load \"rankAthorArray\" from config\n");
-        			}
-				else {
-
-					subnames[nrOfSubnames].config.rankAthorArrayLen = config_setting_length(cfgstring);
-					if (BMAX_RANKARRAY < subnames[nrOfSubnames].config.rankAthorArrayLen) {
-						subnames[nrOfSubnames].config.rankAthorArrayLen = BMAX_RANKARRAY;
-					}
-
-					for(i=0;i<subnames[nrOfSubnames].config.rankAthorArrayLen;i++) {
-						subnames[nrOfSubnames].config.rankAthorArray[i] = config_setting_get_int_elem(cfgstring,i);
-					}
-
-				}
-
-
-				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankTittelArray") ) == NULL) {
-                			vboprintf("can't load \"rankTittelArray\" from config\n");
-        			}
-				else {
-
-					subnames[nrOfSubnames].config.rankTittelArrayLen = config_setting_length(cfgstring);
-					if (BMAX_RANKARRAY < subnames[nrOfSubnames].config.rankTittelArrayLen) {
-						subnames[nrOfSubnames].config.rankTittelArrayLen = BMAX_RANKARRAY;
-					}
-
-					for(i=0;i<subnames[nrOfSubnames].config.rankTittelArrayLen;i++) {
-						subnames[nrOfSubnames].config.rankTittelArray[i] = config_setting_get_int_elem(cfgstring,i);
-					}
-
-				}
-
-
-				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankHeadlineArray") ) == NULL) {
-                			vboprintf("can't load \"rankHeadlineArray\" from config\n");
-        			}
-				else {
-
-					subnames[nrOfSubnames].config.rankHeadlineArrayLen = config_setting_length(cfgstring);
-					if (BMAX_RANKARRAY < subnames[nrOfSubnames].config.rankHeadlineArrayLen) {
-						subnames[nrOfSubnames].config.rankHeadlineArrayLen = BMAX_RANKARRAY;
-					}
-
-					for(i=0;i<subnames[nrOfSubnames].config.rankHeadlineArrayLen;i++) {
-						subnames[nrOfSubnames].config.rankHeadlineArray[i] = config_setting_get_int_elem(cfgstring,i);
-					}
-
-				}
-
-
-				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankBodyArray") ) == NULL) {
-                			vboprintf("can't load \"rankBodyArray\" from config\n");
-        			}
-				else {
-
-					subnames[nrOfSubnames].config.rankBodyArrayLen = config_setting_length(cfgstring);
-					if (BMAX_RANKARRAY < subnames[nrOfSubnames].config.rankBodyArrayLen) {
-						subnames[nrOfSubnames].config.rankBodyArrayLen = BMAX_RANKARRAY;
-					}
-
-					for(i=0;i<subnames[nrOfSubnames].config.rankBodyArrayLen;i++) {
-						subnames[nrOfSubnames].config.rankBodyArray[i] = config_setting_get_int_elem(cfgstring,i);
-					}
-
-				}
-
-				if ( (cfgstring = config_setting_get_member(cfgcollection, "rankUrlArray") ) == NULL) {
-                			vboprintf("can't load \"rankUrlArray\" from config\n");
-        			}
-				else {
-
-					subnames[nrOfSubnames].config.rankUrlArrayLen = config_setting_length(cfgstring);
-					if (BMAX_RANKARRAY < subnames[nrOfSubnames].config.rankUrlArrayLen) {
-						subnames[nrOfSubnames].config.rankUrlArrayLen = BMAX_RANKARRAY;
-					}
-
-					for(i=0;i<subnames[nrOfSubnames].config.rankUrlArrayLen;i++) {
-						subnames[nrOfSubnames].config.rankUrlArray[i] = config_setting_get_int_elem(cfgstring,i);
-					}
-
-				}
-
-
-				if ( (cfgstring = config_setting_get_member(cfgcollection, "defaultthumbnail") ) == NULL) {
-                			vboprintf("can't load \"defaultthumbnail\" from config\n");
-        			}
-				else {
-					subnames[nrOfSubnames].config.defaultthumbnail = config_setting_get_string(cfgstring);
-				}
-
-				if ( (cfgstring = config_setting_get_member(cfgcollection, "sqlImpressionsLogQuery") ) == NULL) {
-                			vboprintf("can't load \"sqlImpressionsLogQuery\" from config\n");
-        			}
-				else {
-					strscpy(subnames[nrOfSubnames].config.sqlImpressionsLogQuery,config_setting_get_string(cfgstring),sizeof(subnames[nrOfSubnames].config.sqlImpressionsLogQuery));
-				}
-
-				if ( (cfgstring = config_setting_get_member(cfgcollection, "isPaidInclusion") ) == NULL) {
-                			vboprintf("can't load \"isPaidInclusion\" from config\n");
-        			}
-				else {
-					subnames[nrOfSubnames].config.isPaidInclusion = config_setting_get_bool(cfgstring);
-				}
-
-
-				/****************/
-			
-			}
-
-			
-			++nrOfSubnames;
-
-		}
-		++Count;
-
-	}
-
-
-
-
-
-	FreeSplitList(Data);
-
 /*
 	nrOfSubnames = 1;
 
@@ -1428,7 +1032,6 @@ void *do_chld(void *arg)
 	close(mysocfd);
 
 	free(Sider);
-	free(subnames);
 	free(SiderHeder);
 
 	#ifdef DEBUG
