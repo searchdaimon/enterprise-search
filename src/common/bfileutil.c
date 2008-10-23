@@ -10,6 +10,8 @@
 
 //#include "bfileutil.h"
 
+#include "boithohome.h"
+
 
 /*
 ripped from http://www.opensource.apple.com/darwinsource/tarballs/other/distcc-31.0.81.tar.gz
