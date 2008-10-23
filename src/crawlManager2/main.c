@@ -27,6 +27,7 @@
 #include "../common/timediff.h"
 #include "../common/boithohome.h"
 #include "../common/logs.h"
+#include "../common/ht.h"
 #include "../maincfg/maincfg.h"
 #include "../boitho-bbdn/bbdnclient.h"
 
@@ -35,8 +36,13 @@
 #include "../bbdocument/bbdocument.h"
 
 #include "../3pLibs/keyValueHash/hashtable.h"
+#include "../3pLibs/keyValueHash/hashtable_itr.h"
 #include "../common/pidfile.h"
+#include "../boithoadClientLib/boithoad.h"
+
+#include "../acls/acls.h"
 #include "perlcrawl.h"
+#include "usersystem.h"
 
 
 #define crawl_crawl 1
@@ -53,7 +59,7 @@
 
 #define TEST_COLL_NAME "_%s_TestCollection" // %s is connector name.
 
-struct hashtable *global_h;
+struct hashtable *global_h, *usersystemshash;
 
 struct {
 	char *addr;
@@ -71,6 +77,86 @@ void mc_add_servers(void);
 
 
 int cm_searchForCollection (MYSQL *db, char cvalue[],struct collectionFormat *collection[],int *nrofcollections);
+
+usersystem_t *
+get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
+{
+	MYSQL_RES *res, *resparam;
+	MYSQL_ROW row, rowparam;
+	char query[1024], *p;
+	size_t querylen;
+	int n;
+	struct hashtable *collections;
+	struct hashtable_itr *itr;
+	struct userToSubnameDbFormat userToSubnameDb;
+	usersystem_t *us;
+
+	querylen = snprintf(query, sizeof(query), "SELECT ip, user, password, is_primary, connector FROM system WHERE id = %d", id);
+
+	if (mysql_real_query(db, query, querylen)) {
+		blog(LOGERROR, 1, "Mysql error: %s", mysql_error(db));
+		return NULL;
+	}
+
+	res = mysql_store_result(db);
+	n = mysql_num_rows(res);
+	if (n == 0) {
+		mysql_free_result(res);
+		return NULL;
+	}
+
+	row = mysql_fetch_row(res);
+	if (row == NULL) {
+		blog(LOGERROR, 1, "Unable to fetch mysql row");
+		mysql_free_result(res);
+		return NULL;
+	}
+
+	data->type = atoi(row[4]);
+	us = hashtable_search(usersystemshash, &data->type);
+	if (us == NULL) {
+		blog(LOGERROR, 1, "No usersystem module for this type: %d", data->type);
+		return NULL;
+	}
+
+	data->id = id;
+	data->hostname = strdup(row[0]);
+	data->username = strdup(row[1]);
+	data->password = strdup(row[2]);
+	data->is_primary = atoi(row[3]);
+	
+	data->parameters = create_hashtable(3, ht_stringhash, ht_stringcmp);
+
+	printf("%d: %s %s:%s\n", id, data->hostname, data->username, data->password);
+
+	querylen = snprintf(query, sizeof(query), "SELECT param, value FROM systemParamValue WHERE system = %d", data->id);
+	if (mysql_real_query(db, query, querylen)) {
+		blog(LOGERROR, 1, "Mysql error: %s", mysql_error(db));
+		return NULL;
+	}
+
+	resparam = mysql_store_result(db);
+	n = mysql_num_rows(resparam);
+	
+	while ((rowparam = mysql_fetch_row(resparam)) != NULL) {
+		printf("Param: %s => %s\n", rowparam[0], rowparam[1]);
+		hashtable_insert(data->parameters, strdup(rowparam[0]), strdup(rowparam[1]));
+	}
+
+	mysql_free_result(res);
+	mysql_free_result(resparam);
+
+	return us;
+}
+
+void
+free_usersystem_data(usersystem_data_t *data)
+{
+	free(data->hostname);
+	free(data->username);
+	free(data->password);
+	hashtable_destroy(data->parameters, 1);
+}
 
 int documentContinue(struct collectionFormat *collection) {
 
@@ -237,6 +323,112 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 	return 1;
 }
 
+int
+collectionsforuser_collection(struct hashtable *collections, char *user, struct userToSubnameDbFormat *usertosubname)
+{
+	char subnamebuf[maxSubnameLength];
+	int n_collections, i;
+	char **list;
+
+	if (!userToSubname_getsubnamesAsString(usertosubname, user, subnamebuf, sizeof(subnamebuf)))
+		return 0;
+
+	n_collections = split(subnamebuf, ",", &list);
+
+	for (i = 0; i < n_collections; i++) {
+		if (!hashtable_search(collections, list[i]))
+			hashtable_insert(collections, strdup(list[i]), (void*)0x1);
+	}
+
+	FreeSplitList(list);
+
+	return 0;
+}
+
+int
+collectionsforuser(char *user, char **_collections, MYSQL *db)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	char query[1024], *p;
+	size_t querylen;
+	int n;
+	struct hashtable *collections;
+	struct hashtable_itr *itr;
+	struct userToSubnameDbFormat userToSubnameDb;
+
+	querylen = snprintf(query, sizeof(query), "SELECT secnd_usr, system FROM systemMapping WHERE prim_usr = '%s'", user);
+
+	if (mysql_real_query(db, query, querylen)) {
+		blog(LOGERROR, 1, "Mysql error: %s", mysql_error(db));
+		return 0;
+	}
+
+	res = mysql_store_result(db);
+	n = mysql_num_rows(res);
+	if (n == 0) {
+		mysql_free_result(res);
+		return 0;
+	}
+
+	collections = create_hashtable(13, ht_stringhash, ht_stringcmp);
+	if (!userToSubname_open(&userToSubnameDb,'r')) {
+		fprintf(stderr, "searchd_child: Warning! Can't open users.db\n");
+		return 0;
+	}
+	
+	while ((row = mysql_fetch_row(res)) != NULL) {
+		char **groups;
+		int nrofcolls, n_groups, i;
+		usersystem_t *us;
+		usersystem_data_t data;
+
+		if ((us = get_usersystem(db, atoi(row[1]), &data)) == NULL) {
+			fprintf(stderr, "No usersystem: %s %s\n", row[0], row[1]);
+			continue;
+		}
+		if (!(us->us_listGroupsForUser)(&data, row[0], &groups, &n_groups)) {
+			fprintf(stderr, "foooop\n");
+			continue;
+		}
+		printf("Got %d groups for %s\n", n_groups, row[0]);
+
+		collectionsforuser_collection(collections, row[1], &userToSubnameDb);
+		for (i = 0; i < n_groups; i++)
+			collectionsforuser_collection(collections, groups[i], &userToSubnameDb);
+		boithoad_respons_list_free(groups);
+		free_usersystem_data(&data);
+	}
+
+	mysql_free_result(res);
+
+	userToSubname_close(&userToSubnameDb);
+
+	n = hashtable_count(collections);
+	if (n == 0)
+		return 0;
+	p = *_collections = calloc(n, maxSubnameLength+1/*, and null terminator*/);
+
+	// Get all collections...
+	itr = hashtable_iterator(collections);
+	do {
+		char *name = hashtable_iterator_key(itr);
+		size_t len;
+
+		strcpy(p, name);
+		len = strlen(name);
+		p[len] = ',';
+		p += len+1;
+		printf("Collection: %s\n", hashtable_iterator_key(itr));
+	} while (hashtable_iterator_advance(itr));
+	free(itr);
+	p--;
+	*p = '\0';
+	
+	hashtable_destroy(collections, 0);
+
+	return n;
+}
 
 int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections) {
 
@@ -255,6 +447,7 @@ int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections)
                 free((*collection)[i].query2);
 		free((*collection)[i].extra);
 		free((*collection)[i].userprefix);
+		hashtable_destroy((*collection)[i].params, 1);
 		#ifdef DEBUG
 			printf("freeing nr %i: end\n",i);
 		#endif
@@ -554,12 +747,7 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 	else if (!(*(*crawlLibInfo).crawlpatAcces)(uri,username,password,documentError,&collections[0])) {
         	printf("Can't crawlLibInfo. Can be denyed or somthing else\n");
 		//overfører error
-//ToDo: Spør Eirik om hva som er riktig her. Conflikt som oppstod når jeg merget endringer i cm 1 inn i cm 2
-//<<<<<<< src/crawlManager2/main.c
-//                berror( documentErrorGetlast( &collections[0]) );
-//=======
-                berror_safe(documentErrorGetlast(&collections[0]));
-//>>>>>>> src/crawlManager/main.c
+                berror("%s", documentErrorGetlast(&collections[0]));
 
 #ifdef WITH_PATHACCESS_CACHE
 		if (memcache_servers != NULL)
@@ -689,7 +877,61 @@ int file_exist (char file[]) {
 	return 1;
 }
 
-int cm_start(struct hashtable **h) {
+void
+load_usersystems(struct hashtable **usersystems)
+{
+	DIR *dirp;
+	struct dirent *dp;
+
+	printf("Looking for users systems...\n");
+	(*usersystems) = create_hashtable(21, ht_integerhash, ht_integercmp);
+	if (*usersystems == NULL)
+		err(1, "Unable to create usersystem hashtable");
+
+	if ((dirp = opendir(bfile("usersystems"))) == NULL)
+		err(1, "No usersystems available: %s", bfile("usersystems"));
+
+	while ((dp = readdir(dirp)) != NULL) {
+		char libpath[PATH_MAX], folderpath[PATH_MAX];
+
+		if (dp->d_name[0] == '.')
+			continue;
+
+		sprintf(folderpath, "%s/%s", bfile("usersystems"), dp->d_name);
+		sprintf(libpath, "%s/%s.so", folderpath, dp->d_name);
+
+		if (file_exist(libpath)) {
+			void *libhandle;
+			usersystem_t *usersystem;
+			char *error;
+
+			libhandle = dlopen(libpath, RTLD_LAZY);
+			if (libhandle == NULL) {
+				warn("Unable to load crawler: %s", dp->d_name);
+				continue;
+			}
+
+			usersystem = dlsym(libhandle, "usersystem_info");
+			if ((error = dlerror()) != NULL) {
+				warnx("Unable to get usersystem_info for %s: %s", dp->d_name, error);
+				dlclose(libhandle);
+				continue;
+			}
+
+			if (hashtable_search(*usersystems, &usersystem->type) != NULL) {
+				warnx("We already have a usersystem with id: %s: %d", dp->d_name, usersystem->type);
+				dlclose(libhandle);
+				continue;
+			}
+			hashtable_insert(*usersystems, uinttouintp(usersystem->type), usersystem);
+			printf("Loaded %s(%d)\n", dp->d_name, usersystem->type);
+		}
+	}
+
+	closedir(dirp);
+}
+
+int cm_start(struct hashtable **h, struct hashtable **usersystems) {
 
 	printf("cm_start start\n");
 	void* lib_handle;       /* handle of the opened library */
@@ -793,6 +1035,8 @@ int cm_start(struct hashtable **h) {
 	}
 
 	closedir(dirp);
+
+	load_usersystems(usersystems);
 
 	printf("cm_start end\n");
 
@@ -949,7 +1193,8 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 						auth_id, \
 						shares.id, \
 						shares.userprefix, \
-						shares.rate \
+						shares.rate, \
+						shares.system \
 					from \
 						shares,connectors \
 					where \
@@ -969,7 +1214,8 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 						auth_id, \
 						shares.id, \
 						shares.userprefix, \
-						shares.rate \
+						shares.rate, \
+						shares.system \
 					from \
 						shares,connectors \
 					where \
@@ -981,7 +1227,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 
 	if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
                	printf(mysql_error(db));
-		blog(LOGERROR,1,"MySQL Error: \"%s\".",mysql_error(db));
+		blog(LOGERROR,1,"MySQL Error: \"%s\" '''%s'''.",mysql_error(db), mysql_query);
 		
                	exit(1);
        	}
@@ -1034,6 +1280,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 		(*collection)[i].id = strtoul(mysqlrow[7], (char **)NULL, 10);
 		(*collection)[i].userprefix = strdupnul(mysqlrow[8]);
 		(*collection)[i].rate = strtoul(mysqlrow[9], (char **)NULL, 10);
+		(*collection)[i].usersystem = strtoul(mysqlrow[10], (char **)NULL, 10);
 
 		(*collection)[i].extra = NULL;
 
@@ -1733,31 +1980,160 @@ void connectHandler(int socket) {
 			mysql_close(&db);
 
 			puts("cm_rewriteurl end");
-	     }
-         else if (packedHedder.command == cm_killcrawl) {
-            int pid;
-            char errmsg[256];
-            recvall(socket, &pid, sizeof pid);
-			
+		}
+		else if (packedHedder.command == cm_killcrawl) {
+			int pid;
+			char errmsg[256];
+			recvall(socket, &pid, sizeof pid);
+
 			MYSQL db;
 			sql_connect(&db);
 			int coll_id = sql_coll_by_pid(&db, pid);
 			int ok = 0;
 			if (coll_id != -1) {
-            	ok = (pid > 0 && kill(pid, SIGKILL) != -1);
+				ok = (pid > 0 && kill(pid, SIGKILL) != -1);
 				set_crawl_state(&db, CRAWL_ERROR, coll_id, "User stopped crawl.");
 			}
 			else {
 				blog(LOGACCESS, 1, "cm_killcrawl: no collection has pid %d, ignoring request.", pid);
 			}
-        	sendall(socket, &ok, sizeof ok);
+			sendall(socket, &ok, sizeof ok);
 			mysql_close(&db);
 
-            printf("cm_killcraw: killed pid %d: %s\n", pid, ok ? "yes" : "no");
-        }
+			printf("cm_killcraw: killed pid %d: %s\n", pid, ok ? "yes" : "no");
+		}
+		else if (packedHedder.command == cm_listusersus) {
+			unsigned int usersystem;
+			MYSQL db;
+			usersystem_t *us;
+			usersystem_data_t data;
+			int n_users, j;
+			char **users;
+
+			sql_connect(&db);
+			recv(socket, &usersystem, sizeof(usersystem), 0);
+			if ((us = get_usersystem(&db, usersystem, &data)) == NULL) {
+				blog(LOGERROR, 1, "Unable to get usersystem");
+				n_users = 0;
+			} else {
+				(us->us_listUsers)(&data, &users, &n_users);
+			}
+
+			sendall(socket, &n_users, sizeof(n_users));
+			if (n_users > 0) {
+				char *userbuf = malloc(n_users * MAX_LDAP_ATTR_LEN);
+				for (j = 0; j < n_users; j++) {
+					strlcpy(userbuf + (j * MAX_LDAP_ATTR_LEN), users[j], MAX_LDAP_ATTR_LEN);
+				}
+				sendall(socket, userbuf, n_users * MAX_LDAP_ATTR_LEN);
+				free(userbuf);
+				boithoad_respons_list_free(users);
+			}
+			
+			mysql_close(&db);
+		}
+		else if (packedHedder.command == cm_groupsforuserfromusersystem) {
+			char user[512];
+			char **groups, group[MAX_LDAP_ATTR_LEN]; //[MAX_LDAP_ATTR_LEN];
+			int n_groups, j;
+			struct collectionFormat *collections;
+			int nrofcollections;
+			struct crawlLibInfoFormat *crawlLibInfo;
+			unsigned int usersystem;
+			MYSQL db;
+			usersystem_t *us;
+			usersystem_data_t data;
+			struct timeval ts, te;
+
+			gettimeofday(&ts, NULL);
+			printf("groupsforuserfromusersystem\n");
+
+			recvall(socket, user, sizeof(user));
+			recvall(socket, &usersystem, sizeof(usersystem));
+
+			printf("usersystem \"%d\", user \"%s\"\n", usersystem, user);
+
+			sql_connect(&db);
+			us = get_usersystem(&db, usersystem, &data);
+			if (us != NULL) {
+				n_groups = 0;
+				(us->us_listGroupsForUser)(&data, user, &groups, &n_groups);
+				printf("Got %d groups for user %s\n", n_groups, user);
+			} else {
+				n_groups = 0;
+			}
+			gettimeofday(&te, NULL);
+			printf("grepme Took: %f\n", getTimeDifference(&ts, &te));
+			gettimeofday(&ts, NULL);
+			sendall(socket, &n_groups, sizeof(int));
+			if (n_groups > 0) {
+				char *groupbuf = malloc(n_groups * sizeof(group));
+				for (j = 0; j < n_groups; j++) {
+					strlcpy(groupbuf + (j * sizeof(group)), groups[j], sizeof(group));
+				}
+				sendall(socket, groupbuf, n_groups * sizeof(group));
+				free(groupbuf);
+				boithoad_respons_list_free(groups);
+			}
+			gettimeofday(&te, NULL);
+			printf("grepme Took2: %f\n", getTimeDifference(&ts, &te));
+			free_usersystem_data(&data);
+			
+			mysql_close(&db);
+		}
+		else if (packedHedder.command == cm_usersystemfromcollection) {
+			char collection[512];
+			MYSQL db;
+			int n;
+			MYSQL_RES *res;
+			MYSQL_ROW row;
+			char query[1024];
+			size_t querylen;
+
+			sql_connect(&db);
+			querylen = snprintf(query, sizeof(query), "SELECT system FROM shares WHERE collection_name = '%s'",
+			     packedHedder.subname);
+
+			if (mysql_real_query(&db, query, querylen)) {
+				blog(LOGERROR, 1, "Mysql error: %s", mysql_error(&db));
+			}
+
+			res = mysql_store_result(&db);
+			row = mysql_fetch_row(res);
+			if (row == NULL) {
+				blog(LOGERROR, 1, "Unable to fetch mysql row");
+				mysql_free_result(res);
+			}
+
+			n = atoi(row[0]);
+			printf("Usersystem: %d\n", n);
+
+			mysql_free_result(res);
+			mysql_close(&db);
+			sendall(socket, &n, sizeof(n));
+		}
+		else if (packedHedder.command == cm_collectionsforuser) {
+			char user[512];
+			char *collections;
+			MYSQL db;
+			int n;
+
+			recvall(socket, user, sizeof(user));
+			sql_connect(&db);
+
+			printf("Collections for user: %s\n", user);
+			n = collectionsforuser(user, &collections, &db);
+			mysql_close(&db);
+
+			sendall(socket, &n, sizeof(n));
+			if (n > 0) {
+				sendall(socket, collections, (maxSubnameLength+1)*n);
+				free(collections);
+			}
+		}
 		else {
-			 printf("unknown command. %i\n", packedHedder.command);
-	        }
+			printf("unknown command. %i\n", packedHedder.command);
+		}
 
 		gettimeofday(&end_time_all, NULL);
 		printf("cm time %f\n",getTimeDifference(&start_time_all,&end_time_all));
@@ -1766,8 +2142,6 @@ void connectHandler(int socket) {
 	printf("end of packed\n");
 
         ++count;
-
-
 }
 
 #ifdef WITH_PATHACCESS_CACHE
@@ -1850,7 +2224,7 @@ int main (int argc, char *argv[]) {
 
 	config_destroy(&cmcfg);
 
-	cm_start(&global_h);
+	cm_start(&global_h, &usersystemshash);
 
 	sconnect(connectHandler, crawlport);
 
