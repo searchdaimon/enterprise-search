@@ -18,7 +18,7 @@ sqlbb_list_users(usersystem_data_t *data, char ***users, int *n_users)
 	int i;
 
 	sql_connect(&db);
-	querylen = snprintf(query, sizeof(query), "SELECT UNIQUE username FROM foreignUserSystem WHERE usersystem = %d",
+	querylen = snprintf(query, sizeof(query), "SELECT DISTINCT username FROM foreignUserSystem WHERE usersystem = %d",
 			data->id);
 	if (mysql_real_query(&db, query, querylen)) {
 		fprintf(stderr, "Failed to remove rows, Error: %s\n", mysql_error(&db));
