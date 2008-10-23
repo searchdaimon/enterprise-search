@@ -91,7 +91,7 @@ HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a src/ds/libd
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb perlxs-sdcrawl readUserToSubname bbdocumentWebAdd list_collections slicense_info
+bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb boitho-bbdn IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb perlxs-sdcrawl readUserToSubname bbdocumentWebAdd list_collections slicense_info usSQLBB usAD
 
 dppreload:
 	$(CC) -shared -fPIC src/dp/preload.c src/common/timediff.c -o bin/dppreload.so -ldl -Wall $(LDFLAGS)
@@ -130,6 +130,7 @@ setuidcaller:
 	cp src/bb-phone-home/bb-phone-home-client.conf config
 	cp src/bb-phone-home/bb-client.pl bin/
 	cp src/bb-phone-home/setuidcaller bin/
+	cp src/bb-phone-home/bbph-keep-alive.pl bin/
 
 invalidateOldFiles:
 	@echo ""
@@ -162,7 +163,7 @@ Suggest:
 	cp src/suggestwebclient/suggest_webclient cgi-bin/
 
 #brukte før src/parser/libhtml_parser.a, byttet til src/parser/lex.yy.c src/parser/lex.yy.c slik at vi kan bruke gdb
-IndexerLot= $(CFLAGS) $(LIBS)*.c src/acls/acls.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c src/ds/libds.a $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS -D WITHOUT_DIWRITE_FSYNC -D EXPLAIN_RANK
+IndexerLot= $(CFLAGS) $(LIBS)*.c src/dictionarywordsLot/set.c src/dictionarywordsLot/acl.c src/acls/acls.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c src/ds/libds.a $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS -D WITHOUT_DIWRITE_FSYNC -D EXPLAIN_RANK
 
 IndexerLot: src/IndexerLot/main.c
 	@echo ""
@@ -1088,7 +1089,7 @@ crawlManager2: src/crawlManager2/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/crawlManager2/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
+	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/crawlManager2/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
 
 # XXX
 crawlManager2bb: src/crawlManager2/main.c
@@ -1122,6 +1123,22 @@ crawlExchange:
 
 	(cd src/crawlExchange; make clean)
 	(cd src/crawlExchange; make)
+
+
+usAD:
+	@echo ""
+	@echo "$@:"
+
+	(cd src/us_ad; make clean)
+	(cd src/us_ad; make)
+
+usSQLBB:
+	@echo ""
+	@echo "$@:"
+
+	(cd src/us_sqlbb; make clean)
+	(cd src/us_sqlbb; make)
+
 
 
 crawl247:
