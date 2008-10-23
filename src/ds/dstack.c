@@ -174,7 +174,7 @@ inline void stack_print( container *C, value a )
 	    if (p==0) p = 1;
 	    else printf(" ");
 
-	    print(S->C, S->elem[i]);
+	    printv(S->C, S->elem[i]);
 	}
     printf(")");
 }

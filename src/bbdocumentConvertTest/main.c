@@ -23,7 +23,7 @@ main (int argc, char *argv[]) {
 	}
 
 	char *filname = argv[1];
-	bbdocument_init();
+	bbdocument_init(NULL);
 
 	if ((fh = fopen(filname,"rb")) == NULL){
 		perror(filname);

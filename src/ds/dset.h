@@ -52,5 +52,4 @@ extern inline iterator set_insert_value( container *C, value key );
 
 extern inline void set_remove( container *C, ... );
 
-
 #endif	// _DSET_H_

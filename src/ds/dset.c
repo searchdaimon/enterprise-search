@@ -523,7 +523,7 @@ inline int set_size( container *C )
 }
 
 
-inline container* set_clone( container *C )
+inline container* _set_clone( container *C )
 {
     set_container_priv	*LP = C->priv;
     container		*N = LP->Key->clone(LP->Key);
@@ -549,7 +549,7 @@ inline void set_print( container *C, value a )
 	    if (i==0) i++;
 	    else printf(" ");
 
-	    print(((set_container_priv*)C->priv)->Key, set_key(it));
+	    printv(((set_container_priv*)C->priv)->Key, set_key(it));
 	}
     printf(")");
 }
@@ -565,7 +565,7 @@ container* set_container( container *Key )
     M->deallocate = set_deallocate;
     M->destroy = set_destroy;
     M->clear = set_clear;
-    M->clone = set_clone;
+    M->clone = _set_clone;
     M->copy = set_copy;
     M->print = set_print;
     M->priv = MP;

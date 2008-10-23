@@ -111,7 +111,7 @@ inline void tuple_print( container *C, value v )
     for (i=0; i<((tuple_container_priv*)C->priv)->n; i++)
 	{
 	    if (i>0) printf(":");
-	    print(((tuple_container_priv*)C->priv)->C[i], tuple(v).element[i]);
+	    printv(((tuple_container_priv*)C->priv)->C[i], tuple(v).element[i]);
 	}
     printf(")");
 }

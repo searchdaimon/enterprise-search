@@ -347,7 +347,7 @@ inline void list_print( container *C, value a )
 	    if (i==0) i++;
 	    else printf(" ");
 
-	    print(((list_container_priv*)C->priv)->C, list_val(it));
+	    printv(((list_container_priv*)C->priv)->C, list_val(it));
 	}
     printf(")");
 }

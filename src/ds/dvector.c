@@ -138,6 +138,18 @@ inline void vector_pushback_value( container *C, value val )
 }
 
 
+inline void vector_remove_last( container *C )
+{
+    vector_container_priv	*VP = C->priv;
+
+    if (VP->size > 0)
+	{
+	    deallocate( VP->C, VP->elem[VP->size-1] );
+	    VP->size--;
+	}
+}
+
+
 inline value vector_get( container *C, int id )
 {
     return ((vector_container_priv*)C->priv)->elem[id];
@@ -178,7 +190,7 @@ inline void vector_print( container *C, value a )
 	{
 	    if (i>0) printf(" ");
 
-	    print(((vector_container_priv*)C->priv)->C, vector_get(a.C,i));
+	    printv(((vector_container_priv*)C->priv)->C, vector_get(a.C,i));
 	}
     printf("]");
 }

@@ -740,9 +740,9 @@ inline void map_print( container *C, value a )
 	    if (i==0) i++;
 	    else printf(" ");
 
-	    print(((map_container_priv*)C->priv)->Key, map_key(it));
+	    printv(((map_container_priv*)C->priv)->Key, map_key(it));
 	    printf(":");
-	    print(((map_container_priv*)C->priv)->Data, map_val(it));
+	    printv(((map_container_priv*)C->priv)->Data, map_val(it));
 	}
     printf(")");
 }

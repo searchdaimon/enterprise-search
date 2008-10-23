@@ -73,8 +73,9 @@ void destroy( container *C );
 
 void clear( container *C );
 
-void print( container *C, value v );
-void println( container *C, value v );
+void print( container *C );
+void println( container *C );
+void printv( container *C, value v );
 
 static inline value copy( container *C, value v )
 {

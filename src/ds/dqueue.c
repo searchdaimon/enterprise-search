@@ -176,7 +176,7 @@ inline void queue_print( container *C, value a )
 		    if (p==0) p = 1;
 		    else printf(" ");
 
-		    print(Q->C, Q->elem[i]);
+		    printv(Q->C, Q->elem[i]);
 		}
 	}
     else
@@ -186,14 +186,14 @@ inline void queue_print( container *C, value a )
 		    if (p==0) p = 1;
 		    else printf(" ");
 
-		    print(Q->C, Q->elem[i]);
+		    printv(Q->C, Q->elem[i]);
 		}
 	    for (i=0; i<Q->tail; i++)
 		{
 		    if (p==0) p = 1;
 		    else printf(" ");
 
-		    print(Q->C, Q->elem[i]);
+		    printv(Q->C, Q->elem[i]);
 		}
 	}
     printf(")");

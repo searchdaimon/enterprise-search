@@ -5,11 +5,12 @@ CC = gcc
 
 # Arguments passed to the compiler: -g causes the compiler to insert
 # debugging info into the executable and -Wall turns on all warnings
-CFLAGS = -g
+CFLAGS = -g -DATTRIBUTES
+# -DDEBUG
 
 # The dynamic libraries that the executable needs to be linked to
 # fjerner -ldb -static. Må legge dette til der de skal være
-LDFLAGS = -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL
+LDFLAGS = -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL src/ds/libds.a
 
 #pop rank bibloteket
 LIBS = src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c src/base64/base64.c src/common/
@@ -32,7 +33,8 @@ IM = /home/eirik/.root/lib/libMagick.a /home/eirik/.root/lib/libWand.a -I/home/e
 #IM = /home/eirik/.root/lib/libMagick.a -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
 
 #BDB = -I/usr/local/BerkeleyDB.4.5/include/ -L/usr/local/BerkeleyDB.4.5/lib/ -ldb
-BDB = -I/usr/local/BerkeleyDB.4.5/include/ /usr/local/BerkeleyDB.4.5/lib/libdb.a
+#BDB = -I/usr/local/BerkeleyDB.4.5/include/ -L/usr/local/BerkeleyDB.4.5/lib/
+BDB = -I/usr/include/db4 /usr/lib/libdb-4.6.a
 #BDB = -ldb
 
 #SMBCLIENT=-lsmbclient
@@ -44,7 +46,7 @@ BDB = -I/usr/local/BerkeleyDB.4.5/include/ /usr/local/BerkeleyDB.4.5/lib/libdb.a
 SMBCLIENT=/home/boitho/src/samba-3.0.25b/source/bin/libsmbclient.a -I/home/boitho/src/samba-3.0.25b/source/include/
 #SMBCLIENT=-Isrc/3pLibs/samba-3.0.24/source/include/ -Lsrc/3pLibs/samba-3.0.24/source/lib/ -lsmbclient
 
-BBDOCUMENT = src/bbdocument/bbdocument.c $(BDB) -D BLACK_BOKS
+BBDOCUMENT = src/bbdocument/bbdocument.c src/ds/libds.a $(BDB) -D BLACK_BOKS
 #BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail.c -DBBDOCUMENT_IMAGE $(IM)
 BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail_by_convert.c -DBBDOCUMENT_IMAGE_BY_CONVERT
 
@@ -160,7 +162,7 @@ Suggest:
 	cp src/suggestwebclient/suggest_webclient cgi-bin/
 
 #brukte før src/parser/libhtml_parser.a, byttet til src/parser/lex.yy.c src/parser/lex.yy.c slik at vi kan bruke gdb
-IndexerLot= $(CFLAGS) $(LIBS)*.c src/acls/acls.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c  $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS -D WITHOUT_DIWRITE_FSYNC -D EXPLAIN_RANK
+IndexerLot= $(CFLAGS) $(LIBS)*.c src/acls/acls.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c src/ds/libds.a $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS -D WITHOUT_DIWRITE_FSYNC -D EXPLAIN_RANK
 
 IndexerLot: src/IndexerLot/main.c
 	@echo ""
@@ -464,7 +466,7 @@ searchdbb : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
 #	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/getfiletype.o src/getFiletype/libfte.a src/attributes/libshow_attr.a src/spelling/spelling.c src/ds/libds.a -DIIACL -laspell $(24SEVENOFFICE) -D WITH_SPELLING
-	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/libfte.a src/newspelling/spelling.c src/newspelling/dmetaphone.c src/newspelling/levenshtein.c src/ds/libds.a -DIIACL $(24SEVENOFFICE) -DWITH_SPELLING
+	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/libfte.a src/newspelling/spelling.c src/newspelling/dmetaphone.c src/newspelling/levenshtein.c src/getFiletype/libfte.a src/attributes/libshow_attr.a src/ds/libds.a -DIIACL $(24SEVENOFFICE) -DWITH_SPELLING
 
 mergeUserToSubname: src/mergeUserToSubname/main.c
 	@echo ""
@@ -525,20 +527,20 @@ dispatcher_allbb: src/dispatcher_all/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) $(MYSQL) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) -DWITH_SPELLING $(BDB) 
+	$(CC) $(dispatcherCOMAND) $(MYSQL) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c src/query/lex.query.o src/ds/libds.a -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) -DWITH_SPELLING $(BDB)
 
 dispatcher_all247: src/dispatcher_all/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) $(MYSQL) -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) -D_24SEVENOFFICE
+	$(CC) $(dispatcherCOMAND) $(MYSQL) -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) src/ds/libds.a -D_24SEVENOFFICE
 
 
 dispatcher: src/dispatcher/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/dispatcher/main.c src/cgi-util/cgi-util.c -o bin/dispatcher $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/dispatcher/main.c src/cgi-util/cgi-util.c src/ds/libds.a -o bin/dispatcher $(LDFLAGS)
 
 putFilesIntoFileTree: src/putFilesIntoFileTree/main.c
 	@echo ""
@@ -634,7 +636,7 @@ LotInvertetIndexMaker: src/LotInvertetIndexMaker/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMaker/main.c -o bin/LotInvertetIndexMaker $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMaker/main.c src/ds/libds.a -o bin/LotInvertetIndexMaker $(LDFLAGS)
 
 gcRepobb: src/gcRepo/gcrepo.c
 	@echo ""
@@ -682,7 +684,7 @@ LotInvertetIndexMaker2:	src/LotInvertetIndexMaker2/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMaker2/main.c -o bin/LotInvertetIndexMaker2 $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMaker2/main.c src/ds/libds.a -o bin/LotInvertetIndexMaker2 $(LDFLAGS)
 
 LotInvertetIndexMaker3:	src/LotInvertetIndexMaker3/main.c
 	@echo ""
@@ -1080,13 +1082,13 @@ crawlManager: src/crawlManager/main.c
 	@echo "$@:"
 
 	#22 feb 2007, fjerner -static
-	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) -rdynamic
+	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a -rdynamic
 
 crawlManager2: src/crawlManager2/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/crawlManager2/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
+	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/crawlManager2/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
 
 # XXX
 crawlManager2bb: src/crawlManager2/main.c

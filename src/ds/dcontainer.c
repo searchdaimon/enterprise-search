@@ -311,14 +311,19 @@ void clear( container *C )
     C->clear(C);
 }
 
-void print( container *C, value v )
+inline void print( container *C )
+{
+    C->print(C, container_value(C));
+}
+
+inline void printv( container *C, value v )
 {
     C->print(C, v);
 }
 
-void println( container *C, value v )
+inline void println( container *C )
 {
-    C->print(C, v);
+    C->print(C, container_value(C));
     printf("\n");
 }
 

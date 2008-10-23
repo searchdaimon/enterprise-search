@@ -20,6 +20,7 @@ extern inline int vector_size( container *C );
 extern inline void vector_pushback( container *C, ... );
 extern inline void vector_pushback_value( container *C, value v );
 
+extern inline void vector_remove_last( container *C );
 
 extern inline value vector_get( container *C, int id );
 

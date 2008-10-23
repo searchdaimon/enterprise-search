@@ -601,9 +601,9 @@ inline void multimap_print( container *C, value a )
 	    if (i==0) i++;
 	    else printf(" ");
 
-	    print(((multimap_container_priv*)C->priv)->Key, multimap_key(it));
+	    printv(((multimap_container_priv*)C->priv)->Key, multimap_key(it));
 	    printf(":");
-	    print(((multimap_container_priv*)C->priv)->Data, multimap_val(it));
+	    printv(((multimap_container_priv*)C->priv)->Data, multimap_val(it));
 	}
     printf(")");
 }

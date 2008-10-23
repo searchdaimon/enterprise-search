@@ -14,6 +14,30 @@
 #include "dset.h"
 
 
+void another_test()
+{
+    container	*V = vector_container( pair_container( int_container(), vector_container( string_container() ) ) );
+    vector_pushback(V, 1);
+    vector_pushback(V, 2);
+    vector_pushback(V, 3);
+    vector_pushback(V, 4);
+    vector_pushback(V, 5);
+    vector_pushback(V, 6);
+    vector_pushback(V, 7);
+    vector_pushback(V, 8);
+    vector_pushback(pair(vector_get(V,0)).second.C, "en");
+    vector_pushback(pair(vector_get(V,1)).second.C, "to");
+    vector_pushback(pair(vector_get(V,2)).second.C, "tre");
+    vector_pushback(pair(vector_get(V,3)).second.C, "fire");
+    vector_pushback(pair(vector_get(V,4)).second.C, "fem");
+    vector_pushback(pair(vector_get(V,4)).second.C, "fem(2)");
+    vector_pushback(pair(vector_get(V,6)).second.C, "sju");
+    vector_pushback(pair(vector_get(V,vector_size(V)-1)).second.C, "åtte");
+
+    println(V);
+    destroy(V);
+}
+
 
 void tuple_test()
 {
@@ -22,13 +46,15 @@ void tuple_test()
     vector_pushback(V, 1, 2, "1+2");
     vector_pushback(V, 2, 3, "2+3");
     vector_pushback(V, 3, 4, "3+4");
+    vector_remove_last(V);
     vector_pushback(V, 4, 5, "4+5");
     vector_pushback(V, 5, 6, "5+6");
     vector_pushback(V, 6, 7, "6+7");
     vector_pushback(V, 7, 8, "7+8");
+    vector_remove_last(V);
     vector_pushback(V, 8, 9, "8+9");
 
-    println(V, container_value(V));
+    println(V);
 
     destroy(V);
 }
@@ -46,7 +72,7 @@ void multimap_test()
     multimap_insert(M, 2, "e");
     multimap_insert(M, 3, "h");
 
-    println(M, container_value(M));
+    println(M);
 
     destroy(M);
 }
@@ -262,39 +288,39 @@ void set_test()
 
     set_insert(S, 5);
     set_insert(S, 7);
-    println(S, container_value(S));
+    println(S);
     set_insert(S, 2);
     set_insert(S, 3);
-    println(S, container_value(S));
+    println(S);
     set_insert(S, 4);
     set_insert(S, 1);
-    println(S, container_value(S));
+    println(S);
     set_insert(S, 8);
     set_insert(S, 7);
-    println(S, container_value(S));
+    println(S);
 
     set_remove(S, 2);
-    println(S, container_value(S));
+    println(S);
 
     set_remove(S, 5);
-    println(S, container_value(S));
+    println(S);
 
     set_insert(S, 9);
     set_insert(S, 0);
-    println(S, container_value(S));
+    println(S);
 
     set_remove(S, 0);
     set_remove(S, 3);
     set_remove(S, 12);
     set_remove(S, 4);
     set_remove(S, 4);
-    println(S, container_value(S));
+    println(S);
 
     set_remove(S, 1);
     set_remove(S, 7);
     set_remove(S, 8);
     set_remove(S, 9);
-    println(S, container_value(S));
+    println(S);
 
     destroy(S);
 }
@@ -318,31 +344,31 @@ void map_test()
     printf("---map---\n");
 
     map_insert(M, 5, 0);
-    println(M, container_value(M));
+    println(M);
     map_insert(M, 7, 0);
-    println(M, container_value(M));
+    println(M);
     map_insert(M, 2, 0);
-    println(M, container_value(M));
+    println(M);
     map_insert(M, 3, 0);
-    println(M, container_value(M));
+    println(M);
     map_insert(M, 4, 0);
-    println(M, container_value(M));
+    println(M);
     map_insert(M, 1, 0);
-    println(M, container_value(M));
+    println(M);
     map_insert(M, 8, 0);
-    println(M, container_value(M));
+    println(M);
     map_insert(M, 7, 0);
-    println(M, container_value(M));
+    println(M);
     map_insert(M, 9, 0);
-    println(M, container_value(M));
+    println(M);
     map_insert(M, 0, 0);
-    println(M, container_value(M));
+    println(M);
     map_insert(M, 12, 0);
-    println(M, container_value(M));
+    println(M);
     map_insert(M, 3, 0);
-    println(M, container_value(M));
+    println(M);
     map_insert(M, 6, 0);
-    println(M, container_value(M));
+    println(M);
 
     printf("---\n");
     destroy(M);
@@ -353,6 +379,7 @@ void map_test()
 
 int main()
 {
+    another_test();
     tuple_test();
     multimap_test();
     sorted_vector_test();

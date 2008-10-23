@@ -104,9 +104,9 @@ inline value pair_copy( container *C, value a )
 inline void pair_print( container *C, value v )
 {
     printf("(");
-    print(((pair_container_priv*)C->priv)->A, pair(v).first);
+    printv(((pair_container_priv*)C->priv)->A, pair(v).first);
     printf(":");
-    print(((pair_container_priv*)C->priv)->B, pair(v).second);
+    printv(((pair_container_priv*)C->priv)->B, pair(v).second);
     printf(")");
 }
 

@@ -1,7 +1,7 @@
 CC = /usr/local/bin/gcc
 CFLAGS = -std=c99 -O2 -g -W -Wall
 LDFLAGS = -lz -lm
-LIBS = ../3pLibs/keyValueHash/hashtable_itr.c ../3pLibs/keyValueHash/hashtable.c ../base64/base64.c 
+LIBS = ../3pLibs/keyValueHash/hashtable_itr.c ../3pLibs/keyValueHash/hashtable.c ../base64/base64.c ../ds/libds.a
 OBJS= list_collections.o
 
 list_collections: $(OBJS)
