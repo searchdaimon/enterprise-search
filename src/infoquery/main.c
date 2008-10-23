@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <err.h>
 
 #include "../common/boithohome.h"
 #include "../acls/acls.h"
@@ -12,6 +13,18 @@
 
 #include "../bbdocument/bbdocument.h"
 #include "../maincfg/maincfg.h"
+
+int str_is_nmbr(char * str) {
+	int i;
+	for (i = 0; str[i] != '\0'; i++) {
+		if (i == 0 && (str[i] == '-'))
+			continue;
+		if (!isdigit(str[i])) 
+		return 0;
+	}
+	return 1;
+}
+
 
 int main (int argc, char *argv[]) {
 
@@ -36,7 +49,7 @@ int main (int argc, char *argv[]) {
 		puts("collectionsforuser <user>");
 
 		printf("crawlCollection <collection name> [extra]\n");
-		printf("recrawlCollection <collection name> [extra]\n");
+		printf("recrawlCollection <collection name> [document to crawl|-1] [extra]\n");
 		printf("deleteCollection <collection name>\n");
 		printf("scan <crawlertype> <host> <username> <password>\n");
 		printf("documentsInCollection <collection name>\n");
@@ -211,6 +224,15 @@ int main (int argc, char *argv[]) {
 		if(value == NULL) {printf("no value given.\n");exit(1);}
 		int socketha;
 		int errorbufflen = 512;
+		int docsRemaining = -1;
+		if (value2 != NULL) {
+			if (!str_is_nmbr(value2) || strcmp(value2, "") == 0)
+				errx(1, "documents to crawl should be a number, not '%s'", value2);
+
+			docsRemaining = atoi(value2);
+			if (docsRemaining < -1)
+				errx(1, "invalid documents to crawl '%d'", docsRemaining);
+		}
 		char errorbuff[errorbufflen];
 		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
 			printf("Error: %s\n",errorbuff);
@@ -222,10 +244,9 @@ int main (int argc, char *argv[]) {
 			return EXIT_FAILURE;
 		}
 		else {
-			cmc_recrawl(socketha,value, value2 == NULL ? "" : value2);
+			cmc_recrawl(socketha,value, docsRemaining, value3 == NULL ? "" : value3);
 		}
 		cmc_close(socketha);
-
 	}
 	else if (strcmp(key,"documentsInCollection") == 0) {
 		if(value == NULL) {printf("no value given.\n");exit(1);}
@@ -427,14 +448,14 @@ int main (int argc, char *argv[]) {
                 exit(1);
             }
             int i = 0;
-            for (; value[i] != '\0'; i++) {
-                if (!isdigit(value[i])) {
-                    puts("pid must be a number");
+	    if (!str_is_nmbr(value)) {
+		    puts("pid must be a number");
                     exit(1);
-                }
-            }
-                
+	    }
+                            
             int pid = atoi(value);
+	    if (pid < 0)
+		    errx(1, "Invalid pid '%d'", pid);
            
             // send
             int socketha, errorbufflen = 512;

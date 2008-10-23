@@ -73,7 +73,7 @@ int cmc_scan(int socketha,char **respons_list[],int *nrofresponses,char **errorm
 	return 1;
 }
 
-int cmc_recrawl(int socketha,char collection_inn[], char *extra_in) {
+int cmc_recrawl(int socketha,char collection_inn[], int docsRemaining, char *extra_in) {
 	char collection[64];
 	char extrabuf[512];
 	int intrespons;
@@ -86,6 +86,7 @@ int cmc_recrawl(int socketha,char collection_inn[], char *extra_in) {
 	sendpacked(socketha,cm_recrawlcollection,BLDPROTOCOLVERSION, 0, NULL,"");
 
 	if(sendall(socketha,&collection, sizeof(collection)) == 0) { perror("sendall"); exit(1); }
+	if (sendall(socketha,&docsRemaining, sizeof docsRemaining) == 0) { perror("sendall"); exit(1); }
 	if (sendall(socketha, &extrabuf, sizeof extrabuf) == 0) { perror("sendall"); exit(1); }
 
 	if ((i=recv(socketha, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
