@@ -32,7 +32,9 @@
 #include "../common/boithohome.h"
 #include "../common/langToNr.h" // getLangCode
 #include "../common/attributes.h" // next_attribute
+#include "../common/bstr.h"
 #include "../maincfg/maincfg.h"
+#include "../crawlManager/client.h"
 
 #include <libconfig.h>
 #define CFG_SEARCHD "config/searchd.conf"
@@ -101,58 +103,27 @@ int prequerywriteFlag = 0;
     int compare_elements_posisjon (const void *p1, const void *p2);
 
 #ifdef BLACK_BOKS
-int has_coll(struct subnamesFormat *colls, int num, char *subname) {
-	int i;
-	for (i = 0; i < num; i++) {
-		if (strcmp(colls[i].subname, subname) == 0)
-			return 1;
-	}
-	return 0;
-}
-
-struct subnamesFormat *get_usr_coll(char *usr, int *n_colls) {
-	struct userToSubnameDbFormat db;
-
-	int num_colls = 0, i, j;
-	*n_colls = 0;
+struct subnamesFormat *get_usr_coll(char *usr, int *n_colls, int cmc_port) {
+	char **colls;
+	char *collections;
 	struct subnamesFormat *usr_colls = NULL;
+	int sock, i;
+	char buf[1024];
 
-	if (!userToSubname_open(&db, 'r'))
-		errx(1, "read_collections: Can't open users db\n");
-	
-	// fetch user groups
-	char **ad_groups;
-	int  num_groups;
-	if (!boithoad_groupsForUser(usr, &ad_groups, &num_groups)) {
-		userToSubname_close(&db);
-		return NULL;
+	if (cmc_conect(&sock, buf, sizeof(buf), cmc_port) == 0)
+		errx(1, "Unable to connect to crawlManager: %s", buf);
+	cmc_collectionsforuser(sock, usr, &collections);
+	cmc_close(sock);
+
+	*n_colls = split(collections, ",", &colls);
+	free(collections);
+
+	usr_colls = malloc(sizeof(struct subnamesFormat) * *n_colls);
+	for (i = 0; i < *n_colls; i++) {
+		strncpy(usr_colls[i].subname, colls[i], sizeof(usr_colls[i].subname));
 	}
 
-	for (i = 0; i < num_groups; i++) {
-		// fetch colls in each group
-		int num;
-		char **group_colls = userToSubname_getsubnamesList(&db, ad_groups[i], &num);
-		if (group_colls == NULL)
-			continue;
-	
-		for (j = 0;j < num; j++) {
-			// add coll to usr_colls
-			if (has_coll(usr_colls, num_colls, group_colls[j]))
-				continue;
-			num_colls++;
-			usr_colls = realloc(usr_colls, 
-				sizeof(struct subnamesFormat) * num_colls);
-			strncpy(
-				usr_colls[num_colls-1].subname, 
-				group_colls[j],
-				sizeof usr_colls[num_colls-1].subname
-			);
-		}
-		userToSubname_freesubnamesList(group_colls, num);
-	}
-	*n_colls = num_colls;
-	boithoad_respons_list_free(ad_groups);
-	userToSubname_close(&db);
+	FreeSplitList(colls);
 
 	return usr_colls;
 }
@@ -915,6 +886,7 @@ int main(int argc, char *argv[])
 
 	char queryEscaped[MaxQueryLen*2+1];
 
+	int cmc_port = 0;
         int sockfd[maxServers];
         int addsockfd[maxServers];
 	int i,y,x;
@@ -1272,8 +1244,14 @@ int main(int argc, char *argv[])
 	read_collection_cfg(&default_cfg);
 		
 #if BLACK_BOKS
+
+	if (cmc_port == 0) {
+		cmc_port = maincfg_get_int(&maincfg,"CMDPORT");
+	}
+
+
 	int num_colls;
-	struct subnamesFormat *collections = get_usr_coll(QueryData.search_user, &num_colls);
+	struct subnamesFormat *collections = get_usr_coll(QueryData.search_user, &num_colls, cmc_port);
 
 	for (i = 0; i < num_colls; i++) {
 		if (!fetch_coll_cfg(&demo_db, collections[i].subname, &collections[i].config)) {
@@ -1302,6 +1280,7 @@ int main(int argc, char *argv[])
 	if (searchport == 0) {
 		searchport  = maincfg_get_int(&maincfg,"BSDPORT");
 	}
+
 
         if (strlen(QueryData.query) > MaxQueryLen -1) {
                 die(3,QueryData.query,"Query to long.");
