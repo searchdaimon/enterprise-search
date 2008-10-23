@@ -364,57 +364,62 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 {
 	MYSQL_RES *res;
 	MYSQL_ROW row;
-	char query[1024], *p;
-	size_t querylen;
+	char query[2][1024], *p;
+	size_t querylen[2];
 	int n;
 	struct hashtable *collections;
 	struct hashtable_itr *itr;
 	struct userToSubnameDbFormat userToSubnameDb;
+	int i;
 
-	querylen = snprintf(query, sizeof(query), "SELECT secnd_usr, system FROM systemMapping WHERE prim_usr = '%s'", user);
+	/* XXX: In lack of union select */
+	querylen[0] = snprintf(query[0], sizeof(query[0]), "SELECT secnd_usr, system FROM systemMapping WHERE prim_usr = '%s'", user);
+	querylen[1] = snprintf(query[1], sizeof(query[1]), "SELECT '%s' AS secnd_usr, id AS 'system' FROM system WHERE is_primary = 1", user);
 
-	if (mysql_real_query(db, query, querylen)) {
-		blog(LOGERROR, 1, "Mysql error: %s", mysql_error(db));
-		return 0;
-	}
+	for (i = 0; i < 2; i++) {
+		if (mysql_real_query(db, query[i], querylen[i])) {
+			blog(LOGERROR, 1, "Mysql error: %s", mysql_error(db));
+			return 0;
+		}
 
-	res = mysql_store_result(db);
-	n = mysql_num_rows(res);
-	if (n == 0) {
+		res = mysql_store_result(db);
+		n = mysql_num_rows(res);
+		if (n == 0) {
+			mysql_free_result(res);
+			return 0;
+		}
+
+		collections = create_hashtable(13, ht_stringhash, ht_stringcmp);
+		if (!userToSubname_open(&userToSubnameDb,'r')) {
+			fprintf(stderr, "searchd_child: Warning! Can't open users.db\n");
+			return 0;
+		}
+		
+		while ((row = mysql_fetch_row(res)) != NULL) {
+			char **groups;
+			int nrofcolls, n_groups, i;
+			usersystem_t *us;
+			usersystem_data_t data;
+
+			if ((us = get_usersystem(db, atoi(row[1]), &data)) == NULL) {
+				fprintf(stderr, "No usersystem: %s %s\n", row[0], row[1]);
+				continue;
+			}
+			if (!(us->us_listGroupsForUser)(&data, row[0], &groups, &n_groups)) {
+				fprintf(stderr, "foooop\n");
+				continue;
+			}
+			printf("Got %d groups for %s\n", n_groups, row[0]);
+
+			collectionsforuser_collection(collections, row[1], &userToSubnameDb);
+			for (i = 0; i < n_groups; i++)
+				collectionsforuser_collection(collections, groups[i], &userToSubnameDb);
+			boithoad_respons_list_free(groups);
+			free_usersystem_data(&data);
+		}
+
 		mysql_free_result(res);
-		return 0;
 	}
-
-	collections = create_hashtable(13, ht_stringhash, ht_stringcmp);
-	if (!userToSubname_open(&userToSubnameDb,'r')) {
-		fprintf(stderr, "searchd_child: Warning! Can't open users.db\n");
-		return 0;
-	}
-	
-	while ((row = mysql_fetch_row(res)) != NULL) {
-		char **groups;
-		int nrofcolls, n_groups, i;
-		usersystem_t *us;
-		usersystem_data_t data;
-
-		if ((us = get_usersystem(db, atoi(row[1]), &data)) == NULL) {
-			fprintf(stderr, "No usersystem: %s %s\n", row[0], row[1]);
-			continue;
-		}
-		if (!(us->us_listGroupsForUser)(&data, row[0], &groups, &n_groups)) {
-			fprintf(stderr, "foooop\n");
-			continue;
-		}
-		printf("Got %d groups for %s\n", n_groups, row[0]);
-
-		collectionsforuser_collection(collections, row[1], &userToSubnameDb);
-		for (i = 0; i < n_groups; i++)
-			collectionsforuser_collection(collections, groups[i], &userToSubnameDb);
-		boithoad_respons_list_free(groups);
-		free_usersystem_data(&data);
-	}
-
-	mysql_free_result(res);
 
 	userToSubname_close(&userToSubnameDb);
 
@@ -2061,7 +2066,7 @@ void connectHandler(int socket) {
 			mysql_close(&db);
 		}
 		else if (packedHedder.command == cm_groupsforuserfromusersystem) {
-			char user[512];
+			char user[512], secnduser[512];
 			char **groups, group[MAX_LDAP_ATTR_LEN]; //[MAX_LDAP_ATTR_LEN];
 			int n_groups, j;
 			struct collectionFormat *collections;
@@ -2069,6 +2074,8 @@ void connectHandler(int socket) {
 			struct crawlLibInfoFormat *crawlLibInfo;
 			unsigned int usersystem;
 			MYSQL db;
+			MYSQL_ROW row;
+			MYSQL_RES *res;
 			usersystem_t *us;
 			usersystem_data_t data;
 			struct timeval ts, te;
@@ -2083,9 +2090,38 @@ void connectHandler(int socket) {
 
 			sql_connect(&db);
 			us = get_usersystem(&db, usersystem, &data);
+
+			printf("Is primary: %d\n", data.is_primary);
+
+			if (!data.is_primary)  {
+				char query[1024];
+				size_t querylen;
+
+				sql_connect(&db);
+				querylen = snprintf(query, sizeof(query),
+				    "SELECT secnd_usr FROM systemMapping WHERE system = %d AND prim_usr = '%s'",
+				    usersystem, user);
+
+				if (mysql_real_query(&db, query, querylen)) {
+					blog(LOGERROR, 1, "Mysql error: %s", mysql_error(&db));
+				}
+
+				res = mysql_store_result(&db);
+				row = mysql_fetch_row(res);
+				if (row == NULL) {
+					blog(LOGERROR, 1, "Unable to fetch mysql row");
+					mysql_free_result(res);
+				}
+
+				strlcpy(secnduser, row[0], sizeof(secnduser));
+				mysql_free_result(res);
+			} else {
+				strlcpy(secnduser, user, sizeof(secnduser));
+			}
+
 			if (us != NULL) {
 				n_groups = 0;
-				(us->us_listGroupsForUser)(&data, user, &groups, &n_groups);
+				(us->us_listGroupsForUser)(&data, secnduser, &groups, &n_groups);
 				printf("Got %d groups for user %s\n", n_groups, user);
 			} else {
 				n_groups = 0;
