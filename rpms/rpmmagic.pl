@@ -19,6 +19,8 @@ if ($#ARGV == -1) {
   my $defattr;
   my $restartsw;
   my $sysconfig;
+  my $defines = '';
+  my $nostrip;
 
   my $result = GetOptions ("pre=s" 	 => \$pre,    	# rpm pre 
                         "post=s"   	 => \$post,      	# rpm post
@@ -30,6 +32,7 @@ if ($#ARGV == -1) {
 			"initdrestart=s" => \$initdrestart, 		# restarting av en init.d tjeneste
 			"defattr=s" => \$defattr,
 			"sysconfig=s" => \$sysconfig,
+			"nostrip"	=> \$nostrip,
 			"verbose"  	 => \$verbose);
 
 my $name = shift @ARGV or die("please suply a name");
@@ -108,6 +111,13 @@ if (defined($sysconfig)) {
 
 print "filesinstal:\n$filesinstal\n";
 print "fileslist:\n$fileslist\n";
+
+if (defined($nostrip)) {
+	$defines .= qq {
+# Disable rpm from stripping XFree86's modules, etc...
+%define __spec_install_post /usr/lib/rpm/brp-compress
+	};
+}
 
 if (defined($initd)) {
 
@@ -256,6 +266,7 @@ $spec =~ s/#destdir/$dest/g;
 $spec =~ s/#requires/$requires/g;
 
 $spec =~ s/#rpm_pre/$pre/g;
+$spec =~ s/#defines/$defines/g;
 $spec =~ s/#rpm_post/$post/g;
 $spec =~ s/#defattrfile/$defattr/g;
 
