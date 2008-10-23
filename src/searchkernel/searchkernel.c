@@ -1934,10 +1934,12 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		get_query( groupOrQuery, strlen(groupOrQuery), &PagesResults.QueryData.search_user_as_query );
 
 
+#ifndef WITHOUT_THESAURUS
 		// Kjør stemming på query:
 		if (searchd_config->thesaurusp != NULL) {
     			thesaurus_expand_query(searchd_config->thesaurusp, &PagesResults.QueryData.queryParsed);
 		}
+#endif
    		// Print query med innebygd print-funksjon:
     		char        buf[1024];
     		sprint_expanded_query(buf, 1023, &PagesResults.QueryData.queryParsed);
@@ -2017,7 +2019,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
-			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 0, &crc32maphash);
+			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 0, &crc32maphash, search_user, searchd_config->cmc_port);
 	PagesResults.crc32maphash = crc32maphash;
 
 	#ifdef DEBUG
@@ -2591,7 +2593,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			&PagesResults.QueryData.queryParsed,&SiderHeder->queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
-			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 1, NULL);
+			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 1, NULL, search_user, searchd_config->cmc_port);
 	// XXX: eirik, we should not discard the duplicate tests
 	//&rankDocId);
 

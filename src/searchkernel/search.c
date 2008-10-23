@@ -8,6 +8,7 @@
 #include "verbose.h"
 
 //#include "../common/define.h"
+#include "../boithoadClientLib/boithoad.h"
 #include "../common/poprank.h"
 #include "../common/iindex.h"
 #include "../common/debug.h"
@@ -25,6 +26,7 @@
 #include "../ds/dcontainer.h"
 #include "../ds/dvector.h"
 #include "../ds/dpair.h"
+#include "../crawlManager/client.h"
 
 
 #ifdef BLACK_BOKS
@@ -2051,6 +2053,8 @@ struct searchIndex_thread_argFormat {
 	int resultArrayLen;
 	struct iindexFormat *resultArray;
 	double searchtime;
+	char *search_user;
+	int cmc_port;
 };
 
 void *searchIndex_thread(void *arg)
@@ -2167,35 +2171,22 @@ void *searchIndex_thread(void *arg)
         vboprintf("is thread id %u. Wil search \"%s\"\n",(unsigned int)tid,(*searchIndex_thread_arg).indexType);
 	#endif
 
-
+	int cmc_sock;
+	char cmc_statusbuf[1024];
+	cmc_conect(&cmc_sock, cmc_statusbuf, sizeof(cmc_statusbuf), searchIndex_thread_arg->cmc_port);
+	struct hashtable *groupqueries = create_hashtable(3, ht_integerhash, ht_integercmp);
 
 	ArrayLen = 0;
 	
 	vboprintf("nrOfSubnames %i\n",(*searchIndex_thread_arg).nrOfSubnames);
+	printf("Search user: %s\n", searchIndex_thread_arg->search_user);
 	for(i=0;i<(*searchIndex_thread_arg).nrOfSubnames;i++) {
+		query_array *groupquery;
+		struct timeval starttime, endtime;
+		printf("Checking subname: %s\n", searchIndex_thread_arg->subnames[i].subname);
 
 		#if defined BLACK_BOKS && !defined _24SEVENOFFICE
 	
-		/*
-		searcArrayLen = 0;
-		hits = ArrayLen;
-	
-		searchIndex((*searchIndex_thread_arg).indexType,
-			&searcArrayLen,
-			searcArray,
-			(*searchIndex_thread_arg).queryParsed,
-			TmpArray,
-			&(*searchIndex_thread_arg).subnames[i],
-			(*searchIndex_thread_arg).languageFilterNr, 
-			(*searchIndex_thread_arg).languageFilterAsNr,
-			&complicacy
-		);
-		*/
-
-		//for (y = 0; y < ArrayLen; y++) {
-		//	printf("acc TeffArray: \"%s\" (i %i)\n",(*Array[y].subname).subname,y);			
-		//}
-
 		#ifdef IIACL
 
 			searcArrayLen = 0;
@@ -2212,16 +2203,59 @@ void *searchIndex_thread(void *arg)
 				&complicacy
 			);
 
-
 			//acl_allow sjekk
 			acl_allowArrayLen = 0;
 			acl_deniedArrayLen = 0;
+
+			unsigned int system = cmc_usersystemfromcollection(cmc_sock, searchIndex_thread_arg->subnames[i].subname);
+			if ((groupquery = hashtable_search(groupqueries, &system)) == NULL) {
+				char **groups;
+				int n_groups, j;
+
+				fprintf(stderr, "Getting mappings for system %d\n", system);
+				gettimeofday(&starttime, NULL);
+				n_groups = cmc_groupsforuserfromusersystem(cmc_sock, searchIndex_thread_arg->search_user,
+				    system, &groups);
+				gettimeofday(&endtime, NULL);
+				fprintf(stderr, "Took this much time: %f\n", getTimeDifference(&starttime, &endtime));
+
+				size_t grouplistsize = n_groups * (MAX_LDAP_ATTR_LEN+5);
+				printf("n_groups: %d\n", n_groups);
+				char *grouplist;
+				
+				if (n_groups > 0) {
+					grouplist = malloc(grouplistsize);
+					grouplist[0] = '\0';
+				} else {
+					grouplist = strdup("");
+				}
+
+
+				size_t grouplistlen = 0;
+				for (j = 0; j < n_groups; j++) {
+					strcpy(grouplist+grouplistlen," |\"");
+					grouplistlen += 3;
+					aclElementNormalize((char*)groups + j*MAX_LDAP_ATTR_LEN);
+					strcpy(grouplist+grouplistlen, (char*)groups + j*MAX_LDAP_ATTR_LEN);
+					grouplistlen += strlen((char*)groups + j*MAX_LDAP_ATTR_LEN);
+					strcpy(grouplist+grouplistlen,"\"");
+					grouplistlen += 1;
+				}
+				printf("grouplist: %s\n", grouplist);
+				groupquery = malloc(sizeof(*groupquery));
+				get_query(grouplist, strlen(grouplist), groupquery);
+				free(groups);
+				free(grouplist);
+				hashtable_insert(groupqueries, uinttouintp(system), groupquery);
+			} else {
+				fprintf(stderr, "Reusing system mapping: %d\n", system);
+			}
 
 
 			searchIndex("acl_allow",
 				&acl_allowArrayLen,
 				acl_allowArray,
-				(*searchIndex_thread_arg).search_user_as_query,
+				groupquery,
 				TmpArray,
 				&(*searchIndex_thread_arg).subnames[i],
 				(*searchIndex_thread_arg).languageFilterNr, 
@@ -2232,7 +2266,7 @@ void *searchIndex_thread(void *arg)
 			searchIndex("acl_denied",
 				&acl_deniedArrayLen,
 				acl_deniedArray,
-				(*searchIndex_thread_arg).search_user_as_query,
+				groupquery,
 				TmpArray,
 				&(*searchIndex_thread_arg).subnames[i],
 				(*searchIndex_thread_arg).languageFilterNr, 
@@ -2487,6 +2521,16 @@ void *searchIndex_thread(void *arg)
 
 		
 	}
+	cmc_close(cmc_sock);
+	{
+		struct hashtable_itr *itr;
+
+		itr = hashtable_iterator(groupqueries);
+		do {
+			destroy_query(hashtable_iterator_value(itr));
+		} while (hashtable_iterator_advance(itr) != 0);
+	}
+	hashtable_destroy(groupqueries, 1);
 
 	free(TmpArray);
 	free(TmpArray2);
@@ -2531,7 +2575,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		struct filtersFormat *filters,
 		struct filteronFormat *filteron,
 		query_array *search_user_as_query,
-		int ranking, struct hashtable **crc32maphash
+		int ranking, struct hashtable **crc32maphash,
+		char *search_user, int cmc_port
 		) {
 
 	fprintf(stderr, "search: searchSimple()\n");
@@ -2702,6 +2747,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		searchIndex_thread_arg_Main.search_user_as_query = search_user_as_query;
 		searchIndex_thread_arg_Main.languageFilterNr = languageFilterNr;
 		searchIndex_thread_arg_Main.languageFilterAsNr = languageFilterAsNr;
+		searchIndex_thread_arg_Main.search_user = search_user;
+		searchIndex_thread_arg_Main.cmc_port = cmc_port;
 
 	#ifdef ATTRIBUTES
 		int	attributes_count = 0;

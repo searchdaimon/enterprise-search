@@ -372,18 +372,21 @@ int main(int argc, char *argv[])
 
 	#ifdef BLACK_BOKS
 		// Initialiser thesaurus med ouput-filene fra 'build_thesaurus_*':
-		fprintf(stderr, "searchd: init thesaurus\n");
-
 		searchd_config.thesaurusp = NULL;
+#ifndef WITHOUT_THESAURUS
+		printf("init thesaurus\n");
+
 		if (searchd_config.optFastStartup != 1) {
     			searchd_config.thesaurusp = thesaurus_init(bfile("data/thesaurus.text"), bfile2("data/thesaurus.id"));
 		}
+		printf("init thesaurus done\n");
 
 		if (searchd_config.thesaurusp == NULL)
 		    {
 			fprintf(stderr, "searchd: ERROR!! Unable to open thesaurus. Disabling stemming.\n");
 		    }
 
+#endif
 		fprintf(stderr, "searchd: init file-extensions\n");
 		searchd_config.getfiletypep = fte_init(bfile("config/file_extensions.conf"));
 		if (searchd_config.getfiletypep == NULL)
@@ -647,9 +650,10 @@ void *do_chld(void *arg)
 
 
 
-	#if defined BLACK_BOKS && !defined _24SEVENOFFICE
+#if defined BLACK_BOKS && !defined _24SEVENOFFICE
+#if 0
 
-
+	gettimeofday(&groupstuffstart, NULL);
 	fprintf(stderr, "searchd_child: Username is \"%s\"\n",queryNodeHeder.search_user);
 	struct userToSubnameDbFormat userToSubnameDb;
 	char **respons_list;
@@ -662,12 +666,25 @@ void *do_chld(void *arg)
 		char subnamebuf[maxSubnameLength];
 
 		queryNodeHeder.subname[0] = '\0';
-		if (strlen(queryNodeHeder.subname) > 0) {
-			strlwcat(queryNodeHeder.subname, ",", sizeof(queryNodeHeder.subname));
-		}
 		fprintf(stderr, "searchd_child: queryNodeHeder.subname \"%s\"\n",queryNodeHeder.subname);
-		boithoad_groupsForUser(queryNodeHeder.search_user,&respons_list,&responsnr);
-	        fprintf(stderr, "searchd_child: groups: %i\n",responsnr);
+		if (!queryNodeHeder.anonymous) {
+			boithoad_groupsForUser(queryNodeHeder.search_user,&respons_list,&responsnr);
+			fprintf(stderr, "searchd_child: groups: %i\n",responsnr);
+		} else {
+			if (!userToSubname_getsubnamesAsString(&userToSubnameDb,queryNodeHeder.search_user,subnamebuf,
+			    sizeof(subnamebuf))) {
+				fprintf(stderr, "searchd_child: doesn't appear to have a subname for \"%s\"\n",queryNodeHeder.search_user);
+			}
+			else {
+				fprintf(stderr, "searchd_child: got subname from getsubnamesAsString as \"%s\"\n",subnamebuf);
+				strlwcat(queryNodeHeder.subname,subnamebuf,sizeof(queryNodeHeder.subname));
+				strlwcat(queryNodeHeder.subname,",",sizeof(queryNodeHeder.subname));
+			}
+
+			strlcpy(groupOrQuery, queryNodeHeder.search_user, sizeof(groupOrQuery));
+
+			responsnr = 0;
+		}
 
 	        for (i=0;i<responsnr;i++) {
 
@@ -691,18 +708,36 @@ void *do_chld(void *arg)
 			strlcat(groupOrQuery," |\"",sizeof(groupOrQuery));
                         strlcat(groupOrQuery,respons_list[i],sizeof(groupOrQuery));
                         strlcat(groupOrQuery,"\"",sizeof(groupOrQuery));
-
-
 	        }
-		//fjerner ,
-		queryNodeHeder.subname[strlen(queryNodeHeder.subname) -1] = '\0';
-	        boithoad_respons_list_free(respons_list);
+		if (!queryNodeHeder.anonymous) {
+			//fjerner ,
+			queryNodeHeder.subname[strlen(queryNodeHeder.subname) -1] = '\0';
+			boithoad_respons_list_free(respons_list);
+		}
 		userToSubname_close(&userToSubnameDb);
 	}
+#endif
 
-	printf("groupOrQuery \"%s\"\n",groupOrQuery);
+	struct timeval groupstuffstart, groupstuffend;
+	char cmc_status_buf[1024];
+	int cmc_sock;
+	gettimeofday(&groupstuffstart, NULL);
+	if (!cmc_conect(&cmc_sock, cmc_status_buf, sizeof(cmc_status_buf), searchd_config->cmc_port)) {
+		fprintf(stderr, "Unable to connect to crawlManager: %s\n", cmc_status_buf);
+		exit(1);
+	}
+	
+	char *collectionsfromuser;
+	cmc_collectionsforuser(cmc_sock, queryNodeHeder.search_user, &collectionsfromuser);
+	strcpy(queryNodeHeder.subname, collectionsfromuser);
+	free(collectionsfromuser);
+	printf("Collections: %s\n", queryNodeHeder.subname);
+	gettimeofday(&groupstuffend, NULL);
+	fprintf(stderr, "Took this much time for collectionstuff: %f\n", getTimeDifference(&groupstuffstart, &groupstuffend));
 
-	#endif
+	cmc_close(cmc_sock);
+	strcpy(groupOrQuery, "group|group2");
+#endif
 
 
 
@@ -897,7 +932,7 @@ void *do_chld(void *arg)
 
 	Count = split(queryNodeHeder.subname, ",", &Data);
 
-	subnames = malloc(sizeof(struct subnamesFormat) * Count ); 
+	subnames = calloc(Count, sizeof(struct subnamesFormat)); 
 	
 
   	Count = 0;
@@ -1316,7 +1351,7 @@ void *do_chld(void *arg)
 
 	/* Disable tcp delay */
 	int nodelayflag = 1;
-	setsockopt(mysocfd, IPPROTO_TCP, TCP_NODELAY, &nodelayflag, sizeof(int));
+	//setsockopt(mysocfd, IPPROTO_TCP, TCP_NODELAY, &nodelayflag, sizeof(int));
 
 	if ((n=send(mysocfd,SiderHeder, sizeof(struct SiderHederFormat),MSG_NOSIGNAL)) != sizeof(struct SiderHederFormat)) {
 		fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(struct SiderHederFormat),__FILE__,__LINE__);
