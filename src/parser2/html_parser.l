@@ -329,16 +329,19 @@ void add_to_summary( char *str, yyscan_t scanner )
 //    if (_id<25)
 //    printf("%s (%i,%i,%i,%i,%i,%i,%i)\n", str, he->newhead, he->newdiv, he->newspan, he->inhead, he->indiv, he->inspan, he->space);
 
-    if (he->title && he->title_nr==1)
+    if (he->title)
 	{
-	    if (he->Btitle->pos > 0 && he->space)
+	    if (he->title_nr==1)
 		{
-		    bprintf(he->Btitle, " ");
+		    if (he->Btitle->pos > 0 && he->space)
+			{
+			    bprintf(he->Btitle, " ");
+			}
+
+    		    he->space = 0;
+
+		    bprintf(he->Btitle, "%s", str);
 		}
-
-    	    he->space = 0;
-
-	    bprintf(he->Btitle, "%s", str);
         }
     else
         {

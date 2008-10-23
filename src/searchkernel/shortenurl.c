@@ -177,7 +177,7 @@ void shortenurl(char *url,int urllen) {
 		for (i=Count+1;i<TokCount+1;i++) {
 			vboprintf("c: \t\t%d\t\"%s\"\n", i, Data[i]);
 
-			printf("newurl: len %i, \"%s\"\n",strlen(newurl),newurl);
+			printf("newurl: len %i, \"%s\"\n",strlen((char*)newurl),newurl);
 
                 	strlcat(newurl,slash,sizeof(newurl));
 			strlcat(newurl,Data[i],sizeof(newurl));
@@ -187,8 +187,8 @@ void shortenurl(char *url,int urllen) {
 	vboprintf("shortenurl 1: newurl \"%s\"\n",newurl);
 	//runarb 27 mai
 	//Hvis den har et utf 8 tegn der vi slutter å kopierer for vi med bare halve tegnet, og bryter da xml'en
-	printf("strlen %i, size %i\n",strlen(newurl),sizeof(newurl));
-	i = strlen(newurl) -1;
+	printf("strlen %i, size %i\n",strlen((char*)newurl),sizeof(newurl));
+	i = strlen((char*)newurl) -1;
 	while(i!=0 && newurl[i] > 127) {
 		printf("removing char %c\n",newurl[i]);
 		newurl[i] = '\0';

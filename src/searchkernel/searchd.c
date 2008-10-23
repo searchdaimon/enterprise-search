@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
 	time_t starttime;
 
 	time(&starttime);
-	
+
 	FILE *FH;
 
 	#define stdoutlog "logs/searchdbb_stdout"
@@ -372,17 +372,38 @@ int main(int argc, char *argv[])
 
 	#ifdef BLACK_BOKS
 		// Initialiser thesaurus med ouput-filene fra 'build_thesaurus_*':
-		printf("init thesaurus\n");
-		searchd_config.thesaurusp = NULL;
+		fprintf(stderr, "searchd: init thesaurus\n");
 
+		searchd_config.thesaurusp = NULL;
 		if (searchd_config.optFastStartup != 1) {
     			searchd_config.thesaurusp = thesaurus_init(bfile("data/thesaurus.text"), bfile2("data/thesaurus.id"));
-			if (searchd_config.thesaurusp == NULL) {
-				printf("Unable to open thesaurus");
-				exit(1);
-			}
 		}
-		printf("init thesaurus done\n");
+
+		if (searchd_config.thesaurusp == NULL)
+		    {
+			fprintf(stderr, "searchd: ERROR!! Unable to open thesaurus. Disabling stemming.\n");
+		    }
+
+		fprintf(stderr, "searchd: init file-extensions\n");
+		searchd_config.getfiletypep = fte_init(bfile("config/file_extensions.conf"));
+		if (searchd_config.getfiletypep == NULL)
+		    {
+			fprintf(stderr, "searchd: ERROR!! Unable to open file-extensions configuration file. Disabling file-extensions.\n");
+		    }
+
+		fprintf(stderr, "searchd: init show-attributes\n");
+		char	*warnings;
+		searchd_config.showattrp = show_attributes_init(bfile("config/show_attributes.conf"), &warnings);
+		if (searchd_config.getfiletypep == NULL)
+		    {
+			fprintf(stderr, "searchd: ERROR!! Unable to open show-attributes configuration file. Disabling attributes.\n");
+		    }
+		else if (warnings[0]!='\0')
+		    {
+			fprintf(stderr, "searchd: ******************* Warnings reading show-attributes config: ********************\n");
+			fprintf(stderr, "%s", warnings);
+			fprintf(stderr, "searchd: *********************************************************************************\n");
+		    }
 
 	#else
 
@@ -460,7 +481,7 @@ int main(int argc, char *argv[])
 			}
 			else {
 			#ifdef DEBUG
-				fprintf(stderr, "searchd: Debug mode; will not fork to new prosess.\n");
+				fprintf(stderr, "searchd: Debug mode; will not fork to new process.\n");
 				do_chld((void *) &searchd_config);
 			#else
 				/*
@@ -568,7 +589,7 @@ void *do_chld(void *arg)
 		perror("malloc");
 		fprintf(stderr, "searchd: ~do_chld()\n");
 		return 0;
-	} 
+	}
 
 
 	gettimeofday(&globalstart_time, NULL);
@@ -1301,6 +1322,20 @@ void *do_chld(void *arg)
 		fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(struct SiderHederFormat),__FILE__,__LINE__);
 		perror("sendall SiderHeder");
 	}
+
+	#ifdef ATTRIBUTES
+	if (SiderHeder->navigation_xml_len > 0)
+	    {
+		if ((n=send(mysocfd, SiderHeder->navigation_xml, SiderHeder->navigation_xml_len, MSG_NOSIGNAL)) != SiderHeder->navigation_xml_len)
+		    {
+			fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,SiderHeder->navigation_xml_len,__FILE__,__LINE__);
+		        perror("sendall navigation_xml");
+		    }
+	    }
+
+	free(SiderHeder->navigation_xml);
+	#endif
+
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
 	fprintf(stderr, "searchd_child: Time debug: sending SiderHeder %f\n",getTimeDifference(&start_time,&end_time));

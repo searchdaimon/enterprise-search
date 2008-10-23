@@ -25,6 +25,7 @@
 #include "../query/query_parser.h"
 #include "../query/stemmer.h"
 #include "../common/integerindex.h"
+#include "../ds/dcontainer.h"
 
 #include "../common/ht.h"
 
@@ -37,7 +38,7 @@
 #endif
 
 #include "../3pLibs/keyValueHash/hashtable.h"
-
+#include "../3pLibs/keyValueHash/hashtable_itr.h"
 
 #include "shortenurl.h"
 
@@ -70,7 +71,7 @@
 //#include "cgi-util.h"
 
 #include "../ds/dcontainer.h"
-#include "../ds/dlist.h"
+#include "../ds/dvector.h"
 #include "../ds/dpair.h"
 
 	//struct iindexFormat *TeffArray; //[maxIndexElements];
@@ -682,23 +683,25 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 #endif
 
 			/* Duplicates? */
-			container *list = hashtable_search(PagesResults->crc32maphash, &Sider->DocumentIndex.crc32);
-			if (list != NULL) {
+			// Byttet fra list til vector da vector er mye raskere (ax):
+			container *V = hashtable_search(PagesResults->crc32maphash, &Sider->DocumentIndex.crc32);
+			if (V != NULL) {
 				int k;
 //				printf("############################\n");
-				Sider->n_urls = list_size(list)-1;
+				Sider->n_urls = vector_size(V)-1;
 				Sider->urls = calloc(Sider->n_urls, sizeof(*(Sider->urls)));
-				iterator itr = list_begin(list);
-				itr = list_next(itr);
-				for (k = 0; itr.valid; itr = list_next(itr), k++) {
+				//iterator itr = list_begin(list);
+				//itr = list_next(itr);
+				//for (k = 0; itr.valid; itr = list_next(itr), k++) {
+				for (k = 0; k<vector_size(V)-1; k++) {
 					char htmlbuf[1024*1024 * 5], imagebuf[1<<16];
 					unsigned int htmllen = sizeof(htmlbuf);
 					unsigned int imagelen = sizeof(imagelen);
 					char *url, *acla, *acld, *attributes;
 					struct DocumentIndexFormat di;
 					struct ReposetoryHeaderFormat repohdr;
-					unsigned int docid = pair(list_val(itr)).first.i;
-					char *subname = pair(list_val(itr)).second.str;
+					unsigned int docid = pair(vector_get(V,k+1)).first.i;
+					char *subname = pair(vector_get(V,k+1)).second.str;
 					char tmpurl[1024];
 					//printf("Woop subname!!!: %p %s\n", subname, subname);
 
@@ -1101,7 +1104,7 @@ void *generatePagesResults(void *arg)
 	debug("localshowabal %i",localshowabal);
 
 	while ((i=nextIndex(PagesResults)) != -1) {
-		debug("i %i, DocID %u\n",i,(*PagesResults).TeffArray->iindex[i].DocID);
+		debug("generatePagesResults: i %i, DocID %u\n",i,(*PagesResults).TeffArray->iindex[i].DocID);
 
 		//if ((*SiderHeder).filtered > 300) {
 		//	(*PagesResults).filterOn = 0;
@@ -1133,6 +1136,12 @@ void *generatePagesResults(void *arg)
 				#endif
 				continue;
 			}
+			if ((*PagesResults).TeffArray->iindex[i].indexFiltered.is_filtered == 1) {
+				#ifdef DEBUG
+				printf("filter: index filtered (is_filtered)\n");
+				#endif
+				continue;
+			}
 		#endif
 
 		#ifndef BLACK_BOKS
@@ -1156,7 +1165,7 @@ void *generatePagesResults(void *arg)
 			gettimeofday(&start_time, NULL);
 			#endif
 			//uanset om vi har filter eller ikke så slår vi opp domainid. Men hvis vi har filter på så teller vi også
-			if (!iintegerMemArrayGet ((*PagesResults).DomainIDs,&DomainID,sizeof(*DomainID),(*PagesResults).TeffArray->iindex[i].DocID) ) {
+			if (!iintegerMemArrayGet ((*PagesResults).DomainIDs,(void**)&DomainID,sizeof(*DomainID),(*PagesResults).TeffArray->iindex[i].DocID) ) {
 				#ifdef DEBUG
 				printf("can't lookup DomainID\n");
 				#endif
@@ -1841,6 +1850,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	int x;
 
 	PagesResults.TeffArray = malloc(sizeof(struct iindexFormat));
+	PagesResults.TeffArray->nrofHits = 0;
 
 	//int adultpages, noadultpages;
 	//struct QueryDataForamt QueryData;
@@ -1999,7 +2009,11 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	printf("searchSimple\n");
 	#endif
 
+//	struct iindexFormat *unfilteredTeffArray;
+//	int unfilteredTeffArrayElementer;
+
 	searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTreff,
+//			&unfilteredTeffArrayElementer, unfilteredTeffArray,
 			&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
@@ -2185,7 +2199,17 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 
 	#ifdef BLACK_BOKS
-		searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,&(*SiderHeder).queryTime);	
+		//char	*querystr = asprint_query(&PagesResults.QueryData.queryParsed);
+		(*SiderHeder).navigation_xml = searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,
+		    &(*SiderHeder).queryTime, searchd_config->getfiletypep, searchd_config->showattrp, &PagesResults.QueryData.queryParsed);
+
+		(*SiderHeder).navigation_xml_len = strlen((*SiderHeder).navigation_xml);
+
+		//free(querystr);
+		destroy(filteron.attributes);
+		free(filteron.collection);
+		free(filteron.date);
+		free(filteron.sort);
 	#endif
 
 	#ifdef WITH_SPELLING
@@ -2204,6 +2228,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			destroy_query(&qa);
 		}
 	}
+	else SiderHeder->spellcheckedQuery[0] = '\0';
 	#endif
 
 	//lager en liste med ordene som ingikk i queryet til hiliting
@@ -2340,10 +2365,26 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	}
 	#endif
 
-	vboprintf("free TeffArray\n");
+	// Frigjør minne:
+	vboprintf("free memory\n");
+
 	free(PagesResults.TeffArray);
 
+	// Slett innholdet i crc32maphash:
+	struct hashtable_itr *itr = hashtable_iterator(PagesResults.crc32maphash);
+
+	while (itr->e!=NULL)
+	    {
+		destroy((container*)hashtable_iterator_value(itr));
+		hashtable_iterator_advance(itr);
+	    }
+
+	free(itr);
+
+	hashtable_destroy(PagesResults.crc32maphash,0);
+
 	destroy_query( &PagesResults.QueryData.queryParsed );
+	destroy_query( &PagesResults.QueryData.search_user_as_query );
 
 	vboprintf("searchkernel: ~dosearch()\n");
 	return 1;
@@ -2542,7 +2583,11 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	printf("searchSimple: rank\n");
 	
+//	struct iindexFormat *unfilteredTeffArray;
+//	int unfilteredTeffArrayElementer;
+
 	searchSimple(&PagesResults.antall,PagesResults.TeffArray,&SiderHeder->TotaltTreff,
+//			&unfilteredTeffArrayElementer, unfilteredTeffArray,
 			&PagesResults.QueryData.queryParsed,&SiderHeder->queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
@@ -2649,7 +2694,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			}
 
 			//slår opp DomainID
-			if (!iintegerMemArrayGet (PagesResults.DomainIDs,&DomainID,sizeof(*DomainID),PagesResults.TeffArray->iindex[i].DocID) ) {
+			if (!iintegerMemArrayGet (PagesResults.DomainIDs,(void**)&DomainID,sizeof(*DomainID),PagesResults.TeffArray->iindex[i].DocID) ) {
 				#ifdef DEBUG
 				printf("can't lookup DomainID\n");
 				#endif
@@ -2725,8 +2770,17 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	*/
 
 	#ifdef BLACK_BOKS
-		searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,&(*SiderHeder).queryTime);
-	
+		//char	*querystr = asprint_query(&PagesResults.QueryData.queryParsed);
+		(*SiderHeder).navigation_xml = searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,
+		    &(*SiderHeder).queryTime, searchd_config->getfiletypep, searchd_config->showattrp, &PagesResults.QueryData.queryParsed);
+
+		(*SiderHeder).navigation_xml_len = strlen((*SiderHeder).navigation_xml);
+
+		//free(querystr);
+		destroy(filteron.attributes);
+		free(filteron.collection);
+		free(filteron.date);
+		free(filteron.sort);
 	#endif
 
 

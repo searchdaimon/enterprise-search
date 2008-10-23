@@ -1,6 +1,7 @@
 struct hashtable;
 
 void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *TotaltTreff,
+//		int *unfilteredTeffArrayElementer, struct iindexFormat *unfilteredTeffArray,
                 query_array *queryParsed, struct queryTimeFormat *queryTime,
                 struct subnamesFormat subnames[], int nrOfSubnames,int languageFilterNr,
                 int languageFilterAsNr[], char orderby[],
@@ -11,14 +12,17 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		);
 
 #ifdef BLACK_BOKS
-int searchFilterCount(int *TeffArrayElementer, 
+char* searchFilterCount(int *TeffArrayElementer, 
 			struct iindexFormat *TeffArray, 
 			struct filtersFormat *filters,
 			struct subnamesFormat subnames[], 
 			int nrOfSubnames,
 			struct filteronFormat *filteron,
 			int dates[],
-			struct queryTimeFormat *queryTime
+			struct queryTimeFormat *queryTime,
+			struct fte_data *getfiletypep,
+			attr_conf *showattrp,
+			query_array *qa
 		);
 
 void searchFilterInit(struct filtersFormat *filters,int dates[]);

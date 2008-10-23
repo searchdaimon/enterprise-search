@@ -1171,6 +1171,7 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
 //    data->crnt_txtcol = 0x000000;
 //    data->crnt_bgcol = 0xffffff;
     he->invisible_text = 0;
+    he->illegal_charset = 0;
 
     // Run parser:
     yyscan_t	scanner;

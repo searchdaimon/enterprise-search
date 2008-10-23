@@ -30,9 +30,15 @@
 #include "../common/revindex.h"
 #include "../common/bfileutil.h"
 #include "../common/re.h"
+#include "../common/attributes.h"
 
 #include "../banlists/ban.h"
 #include "../acls/acls.h"
+
+#include "../ds/dcontainer.h"
+#include "../ds/dpair.h"
+#include "../ds/dset.h"
+#include "../ds/dmap.h"
 
 #ifdef BLACK_BOKS
 
@@ -69,6 +75,8 @@ struct DIArrayFormat {
 struct relocal {
 	struct reformat *DocumentIndexFormat;
 	struct reformat *crc32map;
+	struct reformat	*attributeIndex;
+	container	*attributeKeys;
 };
 
 struct filteredf {
@@ -91,10 +99,16 @@ struct IndexerLot_workthreadFormat {
 	FILE *acl_allowindexFilesHa[NrOfDataDirectorys];
 	FILE *acl_deniedindexFilesHa[NrOfDataDirectorys];
 	#endif
+	#ifdef ATTRIBUTES
+	FILE *attribindexFilesHa[NrOfDataDirectorys];
+	#endif
 	struct adultFormat *adult;
 	FILE *ADULTWEIGHTFH;
 	FILE *SFH;
-	struct alclotFormat *alclot;
+	struct acllotFormat *acllot;
+	#ifdef ATTRIBUTES
+	struct attriblotFormat *attriblot;
+	#endif
 	int pageCount;
 	int httpResponsCodes[nrOfHttpResponsCodes];
 	int optMaxDocuments;
@@ -159,11 +173,18 @@ struct optFormat {
 
 
 
-struct alclotFormat {
+struct acllotFormat {
 	char subname[maxSubnameLength];
 	char openmode[4];
 	int lotNr;
 	int *h;
+};
+
+struct attriblotFormat {
+	char subname[maxSubnameLength];
+	char openmode[4];
+	container *words;
+	// Alt gÃ¥r i lot 1.
 };
 
 
@@ -175,13 +196,14 @@ struct aclusernameFormat {
 
 
 
-static unsigned int alclot_hashfromkey(void *ky)
+
+static unsigned int acllot_hashfromkey(void *ky)
 {
     struct aclusernameFormat *k = (struct aclusernameFormat *)ky;
     return crc32boithonl((*k).username,(*k).len);
 }
 
-static int alclot_equalkeys(void *k1, void *k2)
+static int acllot_equalkeys(void *k1, void *k2)
 {
 	//hvis di ikke her samme lengde er de ikke like
 	if ((*(struct aclusernameFormat *)k1).len != (*(struct aclusernameFormat *)k2).len) {
@@ -194,35 +216,35 @@ static int alclot_equalkeys(void *k1, void *k2)
 }
 
 
-void alclot_init(struct alclotFormat **alclot,char subname[],char openmode[],int lotNr) {
+void acllot_init(struct acllotFormat **acllot,char subname[],char openmode[],int lotNr) {
 
-	(*alclot) = malloc(sizeof(struct alclotFormat));
-	strcpy((**alclot).subname,subname);
-	strcpy((**alclot).openmode,openmode);
-	(**alclot).lotNr = lotNr;
+	(*acllot) = malloc(sizeof(struct acllotFormat));
+	strcpy((**acllot).subname,subname);
+	strcpy((**acllot).openmode,openmode);
+	(**acllot).lotNr = lotNr;
 
 	//struct hashtable *h;
-	(**alclot).h = (int *)create_hashtable(200, alclot_hashfromkey, alclot_equalkeys);
+	(**acllot).h = (int *)create_hashtable(200, acllot_hashfromkey, acllot_equalkeys);
 
 
 
 }
-void alclot_close(struct alclotFormat *alclot) {
+void acllot_close(struct acllotFormat *acllot) {
 
 	FILE *fp;
 
-	fp = lotOpenFileNoCasheByLotNr((*alclot).lotNr,"acllist",(*alclot).openmode, 'e',(*alclot).subname);
+	fp = lotOpenFileNoCasheByLotNr((*acllot).lotNr,"acllist",(*acllot).openmode, 'e',(*acllot).subname);
 
 	//struct hashtable **h; //temp
 
 	struct aclusernameFormat *aclusername;
 	int *value;
 	printf("acls for lot:\n");
-	if (hashtable_count((struct hashtable *)(*alclot).h) > 0)
+	if (hashtable_count((struct hashtable *)(*acllot).h) > 0)
         {
         	struct hashtable_itr *itr;
 
-                itr = hashtable_iterator((struct hashtable *)(*alclot).h);
+                itr = hashtable_iterator((struct hashtable *)(*acllot).h);
                 do {
                 	aclusername 	= (struct aclusernameFormat *)hashtable_iterator_key(itr);
                         value 		= (int *)hashtable_iterator_value(itr);
@@ -237,9 +259,9 @@ void alclot_close(struct alclotFormat *alclot) {
     	}
 	printf("acl list end\n");
 	fclose(fp);
-        hashtable_destroy((struct hashtable *)(*alclot).h,1);
+        hashtable_destroy((struct hashtable *)(*acllot).h,1);
 
-	free(alclot);
+	free(acllot);
 }
 
 void iiacladd(struct IndexerRes_acls *iiacl,char acl[]) {
@@ -277,7 +299,7 @@ void iiacladd(struct IndexerRes_acls *iiacl,char acl[]) {
   	FreeSplitList(Data);
 
 }
-void alclot_add(struct alclotFormat *alclot,char acl[]) {
+void acllot_add(struct acllotFormat *acllot,char acl[]) {
 
 
 	struct hashtable **h; //temp
@@ -311,12 +333,12 @@ void alclot_add(struct alclotFormat *alclot,char acl[]) {
 		(*aclusername).len = strnlen(Data[Count],MAX_USER_NAME_LEN);
 		strscpy((*aclusername).username,Data[Count],MAX_USER_NAME_LEN);
 
-		if (NULL == (oldvalue = hashtable_search((struct hashtable *)(*alclot).h,aclusername) )) {
+		if (NULL == (oldvalue = hashtable_search((struct hashtable *)(*acllot).h,aclusername) )) {
 			//printf("not found!. Vil insert first");
 			value = malloc(sizeof(int));
 			(*value) = 1;
 
-			if (! hashtable_insert((struct hashtable *)(*alclot).h,aclusername,value) ) {
+			if (! hashtable_insert((struct hashtable *)(*acllot).h,aclusername,value) ) {
 	                        printf("cant insert!\n");
 	                	exit(-1);
 	                }
@@ -332,6 +354,137 @@ void alclot_add(struct alclotFormat *alclot,char acl[]) {
   	FreeSplitList(Data);
 
 }
+
+
+#ifdef ATTRIBUTES
+/**
+ *	Attributter:
+ */
+
+// InitialisÃ©r mapping-fil mellom crc32 og attributter:
+void attriblot_init(struct attriblotFormat **attriblot, char *subname, char *openmode)
+{
+    (*attriblot) = malloc(sizeof(struct attriblotFormat));
+    strcpy((*attriblot)->subname, subname);
+    strcpy((*attriblot)->openmode, openmode);
+
+    (*attriblot)->words = set_container( string_container() );
+}
+
+// Skriv mapping mellom crc32 og attributter til disk:
+void attriblot_close(struct attriblotFormat *attriblot)
+{
+    FILE	*fp = lotOpenFileNoCasheByLotNr(1, "crc32attr.map", attriblot->openmode, 'e', attriblot->subname);
+    iterator	it = set_begin(attriblot->words);
+    container	*mapping = map_container( int_container(), string_container() );
+
+    printf("IndexerLot: Attributes for lot:\n");
+
+    for (; it.valid; it=set_next(it))
+	{
+	    char	*attribute = (char*)set_key(it).ptr;
+
+	    map_insert(mapping, crc32boithonl(attribute, strlen(attribute)), attribute);
+
+	    printf("%s\n", attribute);
+       	}
+
+    printf("IndexerLot: Attributes end.\n");
+
+    it = map_begin(mapping);
+
+    for (; it.valid; it=map_next(it))
+	{
+	    char	attribute[MAX_ATTRIB_LEN];
+	    memset(attribute, 0, MAX_ATTRIB_LEN);
+	    strcpy(attribute, (char*)map_val(it).ptr);	// Lengden vil aldri overstige MAX_ATTRIB_LEN.
+	    unsigned int crc32 = map_key(it).i;
+
+	    fwrite(&crc32, sizeof(unsigned int), 1, fp);
+	    fwrite(attribute, sizeof(char), MAX_ATTRIB_LEN, fp);
+//	    printf("%i %x %s\n", crc32, crc32, attribute);
+       	}
+
+    fclose(fp);
+
+    destroy((*attriblot).words);
+    free(attriblot);
+}
+
+// Legg til attributter til crc32-mappingen:
+void attriblot_add(struct attriblotFormat *attriblot, char *attributes)
+{
+    char k[MAX_ATTRIB_LEN], v[MAX_ATTRIB_LEN], kv[MAX_ATTRIB_LEN];
+    char *o = NULL;
+
+    while (next_attribute(attributes, &o, k, v, kv))
+        {
+//	    attribElementNormalize(k);
+//	    attribElementNormalize(v);
+//	    attribElementNormalize(kv);
+	    set_insert(attriblot->words, k);
+	    set_insert(attriblot->words, v);
+	    set_insert(attriblot->words, kv);
+	}
+}
+
+// Legg til attributter i egen invertert index:
+void iiattribadd(struct IndexerRes_attrib *iiattrib, char *attributes)
+{
+    char k[MAX_ATTRIB_LEN], v[MAX_ATTRIB_LEN], kv[MAX_ATTRIB_LEN];
+    char *o = NULL;
+
+    while (next_attribute(attributes, &o, k, v, kv))
+        {
+	    if (k[0] != '\0')
+		{
+//		    attribElementNormalize(k);
+//		    attribElementNormalize(v);
+//		    attribElementNormalize(kv);
+		    attribadd(iiattrib, kv);
+		    attribadd(iiattrib, k);
+		    attribadd(iiattrib, v);
+		}
+	}
+}
+
+// Legg til attributter per dokument i en egen forward index:
+void attributeIndexAdd(struct relocal re, unsigned int DocID, char *attributes)
+{
+    if (re.attributeIndex==NULL) return;
+
+    fprintf(stderr, "IndexerLot: attributeIndexAdd( DocID=%i, attributes=%s )\n", DocID, attributes);
+
+    char k[MAX_ATTRIB_LEN], v[MAX_ATTRIB_LEN], kv[MAX_ATTRIB_LEN];
+    char *o = NULL;
+    container	*M = map_container( string_container(), string_container() );
+
+    while (next_attribute(attributes, &o, k, v, kv))
+        {
+	    map_insert(M, k, v);
+	}
+
+    unsigned int *val = reget(re.attributeIndex, DocID);
+    iterator	it_s1 = set_begin(re.attributeKeys),
+		it_m1 = map_begin(M);
+
+    for (; it_s1.valid; it_s1=set_next(it_s1))
+	{
+	    if (it_m1.valid && !strcmp((const char*)map_key(it_m1).ptr, (const char*)set_key(it_s1).ptr))
+		{
+		    *val = crc32boithonl((char*)map_val(it_m1).ptr, strlen((char*)map_val(it_m1).ptr));
+		    it_m1 = map_next(it_m1);
+		}
+	    else
+		{
+		    *val = 0;
+		}
+
+	    val++;
+	}
+}
+
+#endif // ATTRIBUTES
 
 #endif
 
@@ -773,7 +926,7 @@ void *IndexerLot_workthread(void *arg) {
 					#ifdef BLACK_BOKS
 						//handel acl
 						//trenger dette acl greiene å være her, kan di ikke være lenger opp, der vi ikke har trå lås ?
-						alclot_add((*argstruct).alclot,acl_allow);
+						acllot_add((*argstruct).acllot,acl_allow);
 						
 						#ifdef IIACL
 						iiacladd(&(*pagewords).acl_allow,acl_allow);
@@ -784,6 +937,20 @@ void *IndexerLot_workthread(void *arg) {
 
 						aclsMakeRevIndexBucket (&(*pagewords).acl_allow,ReposetoryHeader.DocID,&langnr);
 						aclsMakeRevIndexBucket (&(*pagewords).acl_denied,ReposetoryHeader.DocID,&langnr);
+						#endif
+
+						#ifdef ATTRIBUTES
+						// attributes:
+						attriblot_add((*argstruct).attriblot, attributes);
+
+						iiattribadd(&(*pagewords).attrib, attributes);
+
+						attribMakeRevIndex(&(*pagewords).attrib);
+
+						attribMakeRevIndexBucket(&(*pagewords).attrib, ReposetoryHeader.DocID, &langnr);
+
+						attributeIndexAdd(argstruct->re, ReposetoryHeader.DocID, attributes);
+						// end attributes.
 						#endif
 
 						debug("time %u\n",ReposetoryHeader.time);
@@ -832,6 +999,10 @@ void *IndexerLot_workthread(void *arg) {
 							#ifdef IIACL
 							aclindexFilesAppendWords(&(*pagewords).acl_allow,(*argstruct).acl_allowindexFilesHa,ReposetoryHeader.DocID,&langnr);
 							aclindexFilesAppendWords(&(*pagewords).acl_denied,(*argstruct).acl_deniedindexFilesHa,ReposetoryHeader.DocID,&langnr);
+							#endif
+							#ifdef ATTRIBUTES
+//							attribindexFilesAppendWords(&(*pagewords).attrib,(*argstruct).attribindexFilesHa,ReposetoryHeader.DocID,&langnr);
+							attribindexFilesAppendWords(&(*pagewords).attrib,(*argstruct).attribindexFilesHa);
 							#endif
 						#endif
 
@@ -1269,7 +1440,156 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 				revindexFilesOpenLocal(argstruct->acl_deniedindexFilesHa,lotNr,"acl_denied","wb",subname);
 			#endif
 
-			alclot_init(&argstruct->alclot,subname,openmode,lotNr);
+			acllot_init(&argstruct->acllot,subname,openmode,lotNr);
+
+			#ifdef ATTRIBUTES
+			// Åpne reversert index:
+			revindexFilesOpenLocal(argstruct->attribindexFilesHa,lotNr,"attributes","wb",subname);
+			attriblot_init(&argstruct->attriblot,subname,openmode);
+
+			// Initialiser og åpne vanlig index:
+
+			char		*attrkeys_filename, *attrcols_filename;
+			container	*new_keys = set_container( string_container() ),
+					*old_keys = set_container( string_container() );
+
+			asprintf(&attrkeys_filename, "%s.new_attribute_keys", reponame);
+			FILE	*f_attrkeys = lotOpenFileNoCasheByLotNr(1, attrkeys_filename, "r", 's', subname);
+
+			// Sjekk for nye attributter:
+			if (f_attrkeys!=NULL)
+			    {
+				char		key[MAX_ATTRIB_LEN];
+
+				while (fgets(key, MAX_ATTRIB_LEN, f_attrkeys) != NULL)
+				    {
+					key[strlen(key)-1] = '\0';
+					set_insert(new_keys, key);
+				    }
+
+				fclose(f_attrkeys);
+
+				char		attrkeys_fullpath[PATH_MAX];
+				GetFilPathForLotFile(attrkeys_fullpath, attrkeys_filename, 1, subname);
+				unlink(attrkeys_fullpath);	// Slett fila etter den er lest.
+			    }
+
+			asprintf(&attrcols_filename, "%s.attribute_columns", reponame);
+			FILE	*f_attrcols = lotOpenFileNoCasheByLotNr(1, attrcols_filename, "r", 's', subname);
+
+			// Sjekk for gamle attributter:
+			if (f_attrcols!=NULL)
+			    {
+				char		key[MAX_ATTRIB_LEN];
+
+				while (fgets(key, MAX_ATTRIB_LEN, f_attrcols) != NULL)
+				    {
+					key[strlen(key)-1] = '\0';
+					set_insert(old_keys, key);
+				    }
+
+				fclose(f_attrcols);
+			    }
+
+
+			if (set_size(new_keys)>0)
+			    {
+				if (set_size(old_keys)>0)
+				    {
+					iterator	it_s2 = set_begin(old_keys);
+
+					for (; it_s2.valid; it_s2=set_next(it_s2))
+					    {
+						set_insert(new_keys, (char*)set_key(it_s2).ptr);
+					    }
+
+					if (set_size(new_keys) > set_size(old_keys))
+					    {
+						// Merge gamle og nye attributter i index:
+						fprintf(stderr, "**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n");
+						fprintf(stderr, "Utvider attributt-indeksen...\n");
+						fprintf(stderr, "*ADVARSEL* utestet!\n");
+						struct reformat *oldIndex = reopen(lotNr, sizeof(unsigned int)*set_size(old_keys), "attributeIndex", subname, 0);
+						struct reformat	*newIndex = reopen(lotNr, sizeof(unsigned int)*set_size(new_keys), "attributeIndex.tmp", subname, 0);
+
+						for (i=0; i<oldIndex->maxsize; i++)
+						    {
+						        unsigned int *oval = reget(oldIndex, i),
+								    *nval = reget(newIndex, i);
+						        iterator	it_sn = set_begin(new_keys),
+									it_so = set_begin(old_keys);
+
+						        for (; it_sn.valid; it_sn=set_next(it_sn))
+							    {
+								if (it_so.valid && !strcmp((const char*)set_key(it_so).ptr, (const char*)set_key(it_sn).ptr))
+								    {
+									*nval = *oval;
+									oval++;
+									it_so = set_next(it_so);
+								    }
+								else
+								    {
+									*nval = 0;
+								    }
+
+								nval++;
+							    }
+						    }
+
+						char	indx_fullpath[PATH_MAX], tmpindx_fullpath[PATH_MAX];
+						GetFilPathForLotFile(indx_fullpath, "attributeIndex", lotNr, subname);
+						GetFilPathForLotFile(tmpindx_fullpath, "attributeIndex.tmp", lotNr, subname);
+						fprintf(stderr, "Deleting '%s'...\n", indx_fullpath);
+						unlink(indx_fullpath);
+						fprintf(stderr, "Inserting '%s' instead.\n", tmpindx_fullpath);
+						rename(tmpindx_fullpath, indx_fullpath);
+						fprintf(stderr, "...ferdig\n");
+						fprintf(stderr, "**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n");
+					    }
+				    }
+
+				destroy(old_keys);
+			    }
+			else	// Ingen nye attributter:
+			    {
+				destroy(new_keys);
+				new_keys = old_keys;
+			    }
+
+
+			if (set_size(new_keys) == 0)
+			    {
+				fprintf(stderr, "IndexerLot.run: No attributes\n");
+				argstruct->re.attributeIndex = NULL;
+			    }
+			else if ((argstruct->re.attributeIndex = reopen(lotNr, sizeof(unsigned int)*set_size(new_keys), "attributeIndex", subname, 0)) != NULL)
+			    {
+				// Skriv attributter til fil, samt lagre rekkefølgen i minnet.
+				argstruct->re.attributeKeys = new_keys;
+				new_keys = NULL;
+
+				f_attrcols = lotOpenFileNoCasheByLotNr(1, attrcols_filename, "w", 'e', subname);
+				iterator	it_s1 = set_begin(argstruct->re.attributeKeys);
+
+				for (i=0; it_s1.valid; it_s1=set_next(it_s1),i++)
+				    {
+					fprintf(f_attrcols, "%s\n", (char*)set_key(it_s1).ptr);
+				    }
+
+				fclose(f_attrcols);
+			    }
+			else
+			    {
+				err(1, "Can't reopen(attributeIndex)");
+			    }
+
+			destroy(new_keys);
+			free(attrkeys_filename);
+			free(attrcols_filename);
+
+			// @@TODO: Fjerning (og detektering) av tomme kolonner. (Garbage collection)
+
+			#endif	// ATTRIBUTES
 		#else
 
 
@@ -1437,8 +1757,21 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		revindexFilesCloseLocal(argstruct->revindexFilesHa); 
 
 		#ifdef BLACK_BOKS		
+/*
+<<<<<<< main.c
+			revindexFilesCloseLocal(argstruct->acl_allowindexFilesHa,"Main"); 
+			revindexFilesCloseLocal(argstruct->acl_deniedindexFilesHa,"Main"); 
+			#ifdef ATTRIBUTES
+			revindexFilesCloseLocal(argstruct->attribindexFilesHa,"Main"); 
+			#endif
+=======
+*/
 			revindexFilesCloseLocal(argstruct->acl_allowindexFilesHa); 
 			revindexFilesCloseLocal(argstruct->acl_deniedindexFilesHa); 
+			#ifdef ATTRIBUTES
+			revindexFilesCloseLocal(argstruct->attribindexFilesHa); 
+			#endif
+//>>>>>>> 1.43
 		#endif
 
 
@@ -1521,7 +1854,10 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		#endif
 
 		#ifdef BLACK_BOKS
-			alclot_close(argstruct->alclot);
+			acllot_close(argstruct->acllot);
+			#ifdef ATTRIBUTES
+			attriblot_close(argstruct->attriblot);
+			#endif
 		#else
 			fclose(argstruct->ADULTWEIGHTFH);
 			if (opt->Query == NULL) {
@@ -1617,6 +1953,13 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
                 	        Indekser(lotNr,"acl_denied",lotPart,subname,&IndekserOpt);
                 	}
 
+			#ifdef ATTRIBUTES
+                	for (lotPart=0;lotPart<64;lotPart++) {
+                	        //printf("indexint part %i for lot %i of type attributes\n",lotPart,lotNr);
+                	        Indekser(lotNr,"attributes",lotPart,subname,&IndekserOpt);
+                	}
+			#endif
+
 			#endif
 
                 	//siden vi nå har lagt til alle andringer fra rev index kan vi nå slettet gced filen også
@@ -1626,6 +1969,14 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 		reclose(argstruct->re.DocumentIndexFormat);
 		reclose(argstruct->re.crc32map);
+
+		#ifdef ATTRIBUTES
+		if (argstruct->re.attributeIndex!=NULL)
+		    {
+			reclose(argstruct->re.attributeIndex);
+			destroy(argstruct->re.attributeKeys);
+		    }
+		#endif
 	
 		//netlot: Vi sender det vi har laget
 		if ((opt->NetLot != NULL) && (opt->Query == NULL)) {
@@ -1865,7 +2216,7 @@ int main (int argc, char *argv[]) {
 
 				ReposetoryHeader.htmlSize = strlen(text);
 
-				rApendPostcompress(&ReposetoryHeader,text,image,subname,NULL,NULL,"repo.test", ReposetoryHeader.url , "");
+				rApendPostcompress(&ReposetoryHeader,text,image,subname,NULL,NULL,"repo.test", ReposetoryHeader.url , "", NULL);
 
 
 				dirtylots[rLotForDOCid(Sider[i].iindex.DocID)] = 1;

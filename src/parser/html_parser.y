@@ -592,12 +592,6 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
     data->abort = 0;
     data->url = strdup(url);	// DEBUG
 
-    he->slen = 0;
-    he->tt = -1;
-    he->stringtop = -1;
-    he->flush = 0;
-
-    he->wordlist = wordlist;
 
     // Save URL of current document:
     url_split( url, &data->page_uri, &data->page_path, &data->page_rel_path );
@@ -605,6 +599,12 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
 
     // Set variables for yacc:
     he->user_fn = fn;
+
+    he->space = 0;
+    he->slen = 0;
+    he->tt = -1;
+    he->stringtop = -1;
+    he->flush = 0;
 
     he->title = 0;
     he->title_nr = 0;
@@ -623,8 +623,12 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
     he->newendhead = 0;
     he->inlink = 0;
 
-    he->Btitle = buffer_init( 10240 );
-    he->Bbody = buffer_init( 16384 + textsize*2 );
+    he->wordlist = wordlist;
+
+//    he->Btitle = buffer_init( 10240 );
+    he->Btitle = buffer_init(-1);
+//    he->Bbody = buffer_init( 16384 + textsize*2 );
+    he->Bbody = buffer_init(-1);
 
     // Run parser:
     yyscan_t	scanner;
@@ -635,7 +639,6 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
 
     YY_BUFFER_STATE	bs = bhpm_scan_bytes( text, textsize, scanner );
 
-    he->space = 0;
     while ((yv = bhpmparse(data, scanner)) != 0)
 	{
 //	    printf("."); fflush(stdout);

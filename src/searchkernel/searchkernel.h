@@ -1,5 +1,7 @@
 #include "../query/query_parser.h"
 #include "../query/stemmer.h"
+#include "../getFiletype/identify_extension.h"
+#include "../attributes/show_attributes.h"
 #include "../common/define.h"
 #include "../common/integerindex.h"
 
@@ -21,6 +23,8 @@ struct searchd_configFORMAT {
 	int optPreOpen;
 	struct lotPreOpenFormat lotPreOpen;
 	thesaurus           *thesaurusp;
+	struct fte_data	*getfiletypep;
+	attr_conf	*showattrp;
 	int optFastStartup;
 };
 
