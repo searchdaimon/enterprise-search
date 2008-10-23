@@ -219,7 +219,11 @@ int smb_recursive_get( char *prefix, char *dir_name,
 	 )
 {
 
-	printf("dir \"%s\"\n",dir_name);
+    #ifdef DEBUG
+    printf("dir \"%s\"\n",dir_name);
+    #endif
+
+    static int count = 0;
 
     int                 dh, dirc, dirc_total, n;
     char                dblock[512], *dbuf, *dbuf_temp;
@@ -230,10 +234,6 @@ int smb_recursive_get( char *prefix, char *dir_name,
     struct crawldocumentExistFormat crawldocumentExist;
     struct crawldocumentAddFormat crawldocumentAdd;
 
-    iconv_t isoconp;
-    if ( (isoconp = iconv_open("UTF-8","ISO-8859-15")) ==  (iconv_t)(-1) ) {
-                perror("iconv_open");
-    }
 
     context = context_init(no_auth);
 
@@ -287,7 +287,9 @@ int smb_recursive_get( char *prefix, char *dir_name,
             asprintf(&full_entry_name, "%s%s", prefix, entry_name);
             asprintf(&uri, "file:%s",entry_name);
 
+	    #ifdef DEBUG
 	    printf("entry_name raw: \"%s\"\n",entry_name);
+	    #endif
 
             // Skip direntries named "." and "..". 
 	    // tar heller ikke med filer som begynner på ~ da det er temp filer i windows.
@@ -315,6 +317,11 @@ int smb_recursive_get( char *prefix, char *dir_name,
 				goto next_it;
 			}
 
+			//på grunn av en bug i smblib må vi kalle dette før hver opperasjon
+                    	context_free(context);
+			context = context_init(no_auth);
+
+			printf("stating \"%s\"\n",full_entry_name);
                     	if ( smbc_stat(full_entry_name, &file_stat) < 0 ) {
                             	documentError(collection, 1,"crawlsmb.c: Error! Could not get stat for %s", entry_name);
 			    	//free(parsed_acl[0]);
@@ -344,7 +351,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
 			    int		fd;
 
-			    // Disse må være med:
+			    //på grunn av en bug i smblib må vi kalle dette før hver opperasjon
                     	    context_free(context);
 			    context = context_init(no_auth);
 
@@ -359,7 +366,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 					}
 				    else
 					{
-					    documentError(collection, 1,"crawlsmb.c: Error! Could not open %s\n", entry_name);
+					    documentError(collection, 1,"crawlsmb.c: Error! Could not open file %s. Error code %i\n", entry_name, errno);
 					}
 				}
 			    else
@@ -395,6 +402,10 @@ int smb_recursive_get( char *prefix, char *dir_name,
 					}
 
 					#ifndef NO_BB
+					        //på grunn av en bug i smblib må vi kalle dette før hver opperasjon
+                		    		//context_free(context);
+					        //context = context_init(no_auth);
+
 
 			                    	if ( (n = smbc_getxattr(full_entry_name, "system.nt_sec_desc.*", value, sizeof(value))) < 0 ) {
 
@@ -424,13 +435,13 @@ int smb_recursive_get( char *prefix, char *dir_name,
 			    				context = context_init(no_auth);
                             				goto next_it;
                         			}
-                    				else {
-			    				parsed_acl = parseacl_read_access( value );
-			    				#ifdef DEBUG
+                    				
+			    			parsed_acl = parseacl_read_access( value );
+			    			#ifdef DEBUG
 			    				printf("crawlsmb.c: Users allowed \t'%s'\n", parsed_acl[0]);
 			    				printf("crawlsmb.c: Users denied  \t'%s'\n", parsed_acl[1]);
-			    				#endif
-                        			}
+			    			#endif
+                        			
 
 
         					
@@ -457,6 +468,12 @@ int smb_recursive_get( char *prefix, char *dir_name,
 						free(crawldocumentAdd.title);
 
 		    				//documentAdd(bbdh, collection, entry_name, "", fbuf, file_stat.st_size, file_stat.st_mtime, parsed_acl, dirp->name ,"");
+
+
+			    			free(parsed_acl[0]);
+					    	free(parsed_acl[1]);
+					    	free(parsed_acl);
+
 					#endif
 
 					
@@ -468,14 +485,10 @@ int smb_recursive_get( char *prefix, char *dir_name,
 				}
 	
 
-			    	free(parsed_acl[0]);
-			    	free(parsed_acl[1]);
-			    	free(parsed_acl);
 
 
-
-	         		context_free(context);
-		    		context = context_init(no_auth);
+	         		//context_free(context);
+		    		//context = context_init(no_auth);
                 }
 
 next_it:
@@ -486,6 +499,11 @@ next_it:
             dsize = dirp->dirlen;
             dirp = (struct smbc_dirent*)(((char*)dirp) + dsize);
             dirc_total-= dsize;
+
+	    ++count;
+	    if ((count % 1000) == 0) {
+		printf("progres %i\n",count);
+	    }
         }
 
     free(dbuf);
@@ -496,7 +514,6 @@ next_it:
         return 0;
     }
 
-    iconv_close(isoconp);
 
     return 1;
 }
@@ -540,7 +557,6 @@ int smb_test_conect(struct collectionFormat *collection, char *prefix, char *dir
     dh = smbc_opendir( full_name );
 
 
-    //fd = smbc_open( uri, O_RDONLY, 0 );
 
     if (dh < 0)
 	{
