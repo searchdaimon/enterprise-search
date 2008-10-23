@@ -18,10 +18,14 @@ void collection_normalize_name(char collection_name[], int length) {
 			else if (collection_name[y] == 45) {
 				// -
 			}
-                        else {
-                                debug("removed noen ascii char \"%c\" from collection_name \n",collection_name[y]);
-                                collection_name[y] = 'X';
-                        }
-                }
+			else if (y != 0 && collection_name[y] == '.') {
+				// .
+			}
+            else {
+            	debug("removed noen ascii char \"%c\" from collection_name \n",
+					collection_name[y]);
 
+                collection_name[y] = 'X';
+           }
+     }
 }
