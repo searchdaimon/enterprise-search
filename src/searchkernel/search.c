@@ -3050,46 +3050,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 	gettimeofday(&start_time, NULL);
 
-/*
-	// Loop over all results and do duplicate checking...
-	//struct hashtable *crc32maphash;
-	if (crc32maphash != NULL)
-		*crc32maphash = create_hashtable(41, ht_integerhash, ht_integercmp);
-
-	y=0;
-       	for (i = 0; i < (*TeffArrayElementer); i++) {
-		TeffArray->iindex[i].PopRank = popRankForDocIDMemArray(TeffArray->iindex[i].DocID);
-//#if 1
-		if (crc32maphash == NULL)
-			continue;
-
-		// XXX: Don't reopen all the time
-		if ((crc32map = reopen(rLotForDOCid(TeffArray->iindex[i].DocID), sizeof(unsigned int), "crc32map", TeffArray->iindex[i].subname->subname, 0)) == NULL)
-			err(1, "reopen(crc32map)");
-
-		unsigned int crc32;
-		crc32 = *RE_Uint(crc32map, TeffArray->iindex[i].DocID);
-		printf("Got hash value: %x\n", crc32);
-		reclose(crc32map);
-
-		container *list = hashtable_search(*crc32maphash, &crc32);
-		if (list == NULL) {
-			list = list_container(pair_container(int_container(), string_container()));
-			hashtable_insert(*crc32maphash, uinttouintp(crc32), list);
-
-			list_pushback(list, TeffArray->iindex[i].DocID, TeffArray->iindex[i].subname->subname);
-			// Remove duplicated
-			memmove(&TeffArray->iindex[y], &TeffArray->iindex[i], sizeof(&TeffArray->iindex[i]));
-			y++;
-		} else {
-			list_pushback(list, TeffArray->iindex[i].DocID, TeffArray->iindex[i].subname->subname);
-		}
-//#endif
-	}
-	//reclose_cache();
-	*TeffArrayElementer = y;
-*/
-
         gettimeofday(&end_time, NULL);
         (*queryTime).popRank = getTimeDifference(&start_time,&end_time);
 
@@ -3587,7 +3547,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		printf("<################################# duplicate checking ######################################>\n");
 
 		// Loop over all results and do duplicate checking...
-		//struct hashtable *crc32maphash;
 		if (crc32maphash != NULL)
 			*crc32maphash = create_hashtable(41, ht_integerhash, ht_integercmp);
 
@@ -3596,6 +3555,10 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 			//TeffArray->iindex[i].PopRank = popRankForDocIDMemArray(TeffArray->iindex[i].DocID);
 #if 1
 			if (crc32maphash == NULL)
+				continue;
+
+			// This document is filtered out, don't even think about it.
+			if (TeffArray->iindex[i].indexFiltered.is_filtered == 1)
 				continue;
 
 			TeffArray->iindex[i].indexFiltered.duplicate = 0;
