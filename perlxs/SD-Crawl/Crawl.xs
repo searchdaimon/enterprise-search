@@ -67,10 +67,12 @@ void pdocumentExist(struct cargsF *cargs, char * url, int lastmodified, int doku
 	free(crawldocumentExist);
 }
 
-void pdocumentAdd(struct cargsF *cargs, char * url, int lastmodified, char document[], char title[], char type[], char acl_allow[], char acl_denied[], char attributes[]) {
+void pdocumentAdd(struct cargsF *cargs, char * url, int lastmodified, char * document, char title[], 
+	char type[], char acl_allow[], char acl_denied[], char attributes[], int doc_size) {
 
 	struct crawldocumentAddFormat *crawldocumentAdd;
-        int document_size = (int) strlen(document);
+
+	//printf("Adding in XS. Doc size: %d\n", doc_size);
 
 	if (cargs == NULL) {
 		fprintf(stderr,"pdocumentExist: pointer is NULL!\n");
@@ -86,7 +88,7 @@ void pdocumentAdd(struct cargsF *cargs, char * url, int lastmodified, char docum
 	crawldocumentAdd->documenturi 	 = url;
 	crawldocumentAdd->documenttype   = type;
         crawldocumentAdd->document       = document;
-        crawldocumentAdd->dokument_size  = document_size;
+        crawldocumentAdd->dokument_size  = doc_size;
         crawldocumentAdd->lastmodified   = lastmodified;
         crawldocumentAdd->acl_allow      = acl_allow;
         crawldocumentAdd->acl_denied     = acl_denied;
@@ -103,15 +105,21 @@ MODULE = SD::Crawl		PACKAGE = SD::Crawl
 
 void
 pdocumentAdd( x , url , lastmodified, document, title, type, acl_allow, acl_denied, attributes)
-	int * x
-	char * url
-	int lastmodified
-	char * document
-	char * title
-	char * type
-	char * acl_allow
-	char * acl_denied
-	char * attributes
+		int * x
+		char * url
+		int lastmodified
+		SV * document
+		char * title
+		char * type
+		char * acl_allow
+		char * acl_denied
+		char * attributes
+	CODE:
+		//int doc_size = SvLEN(document) - 1; // perl adds \0 ?
+		int doc_size;
+		char * doc_str = SvPV(document, doc_size);
+		pdocumentAdd( x , url , lastmodified, doc_str, title, type, acl_allow, acl_denied, attributes, doc_size);
+	
 
 void
 pdocumentExist( x , url , lastmodified, dokument_size)
