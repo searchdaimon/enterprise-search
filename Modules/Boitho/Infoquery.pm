@@ -162,17 +162,24 @@ sub documentsInCollection($$) {
 }
 
 sub _crawl  {
-    my ($self, $crawl_cmd, $collection, %opt) = @_;
+	my ($self, $crawl_cmd, $collection, %opt) = @_;
 
-    unless ($collection) {
-        $error = "Didn't get a collection to crawl.";
-        return;
-    }
-    my $exec = "$crawl_cmd \Q$collection\E";
-    $exec .= " \Q$opt{logfile}\E" 
-        if defined $opt{logfile};
+	unless ($collection) {
+		$error = "Didn't get a collection to crawl.";
+		return;
+	}
+	my $exec = "$crawl_cmd \Q$collection\E";
+	
+	if ($crawl_cmd eq 'recrawlCollection') {
+		my $num_docs = $opt{documents_to_crawl} 
+			? $opt{documents_to_crawl} : -1;
+		$exec .= " \Q$num_docs\E";
+	}
 
-    return $self->_infoquery_exec($exec, $opt{callb});
+	$exec .= " \Q$opt{logfile}\E" 
+		if defined $opt{logfile};
+
+	return $self->_infoquery_exec($exec, $opt{callb});
 }
 
 ##
