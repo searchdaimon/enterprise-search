@@ -107,7 +107,7 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 
 	row = mysql_fetch_row(res);
 	if (row == NULL) {
-		blog(LOGERROR, 1, "Unable to fetch mysql row");
+		blog(LOGERROR, 1, "Unable to fetch mysql row ar %s:%d",__FILE__,__LINE__);
 		mysql_free_result(res);
 		return NULL;
 	}
@@ -2109,7 +2109,7 @@ void connectHandler(int socket) {
 				res = mysql_store_result(&db);
 				row = mysql_fetch_row(res);
 				if (row == NULL) {
-					blog(LOGERROR, 1, "Unable to fetch mysql row");
+					blog(LOGERROR, 1, "Unable to fetch mysql row at %s:%d",__FILE__,__LINE__);
 					mysql_free_result(res);
 				}
 
@@ -2165,7 +2165,7 @@ void connectHandler(int socket) {
 			res = mysql_store_result(&db);
 			row = mysql_fetch_row(res);
 			if (row == NULL) {
-				blog(LOGERROR, 1, "Unable to fetch mysql row");
+				blog(LOGERROR, 1, "Unable to fetch mysql row at %s:%d",__FILE__,__LINE__);
 				mysql_free_result(res);
 			}
 
