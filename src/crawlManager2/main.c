@@ -379,20 +379,20 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 	for (i = 0; i < 2; i++) {
 		if (mysql_real_query(db, query[i], querylen[i])) {
 			blog(LOGERROR, 1, "Mysql error: %s", mysql_error(db));
-			return 0;
+			continue;
 		}
 
 		res = mysql_store_result(db);
 		n = mysql_num_rows(res);
 		if (n == 0) {
 			mysql_free_result(res);
-			return 0;
+			continue;
 		}
 
 		collections = create_hashtable(13, ht_stringhash, ht_stringcmp);
 		if (!userToSubname_open(&userToSubnameDb,'r')) {
 			fprintf(stderr, "searchd_child: Warning! Can't open users.db\n");
-			return 0;
+			continue;
 		}
 		
 		while ((row = mysql_fetch_row(res)) != NULL) {
@@ -443,7 +443,7 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 	free(itr);
 	p--;
 	*p = '\0';
-	
+
 	hashtable_destroy(collections, 0);
 
 	return n;
