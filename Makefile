@@ -528,7 +528,7 @@ dispatcher_allbb: src/dispatcher_all/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) $(MYSQL) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c src/query/lex.query.o src/ds/libds.a -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) -DWITH_SPELLING $(BDB)
+	$(CC) $(dispatcherCOMAND) $(MYSQL) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c src/crawlManager/client.c src/query/lex.query.o src/ds/libds.a -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) -DWITH_SPELLING $(BDB)
 
 dispatcher_all247: src/dispatcher_all/main.c
 	@echo ""
