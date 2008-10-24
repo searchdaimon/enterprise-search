@@ -15,60 +15,11 @@ use sdMimeMap;
 use LWP::RobotUA;
 use HTML::LinkExtor;
 use Date::Parse;
+use Carp;
+use Data::Dumper;
+use Readonly;
 
-=pod 
-# Switch processing:
-my %option;
-use Getopt::Std;
-getopts('m:n:t:l:e:n:t:d:u:p:hv', \%option) || usage_quit(1);
-usage_quit(0) if $option{'h'} or not @ARGV;
- 
-sub usage_quit {
-  # Emit usage message, then exit with given error code.
-  print <<"END_OF_MESSAGE"; exit($_[0] || 0);
-Usage:
-$0  [switches]  [urls]
-  This will spider for links and report bad ones starting at the given URLs.
-   
-Switches:
- -h        display this help message
- -v        be verbose in messages to STDOUT  (default off)
- -m 123    run for at most 123 minutes.  (default 20)
- -n 456    cause at most 456 network hits.  (default 500)
- -d 7      delay for 7 seconds between hits.  (default 2)
- -l x.log  log to text file x.log. (default is to not log)
- -e y\@a.b  set bot admin address to y\@a.b  (no default!)
- -b Xyz    set bot name to Xyz.  (default: sdbot/0.1)  
- -t 34     set request timeout to 34 seconds.  (default 15)
- -u        set username
- -p        set password
- 
-END_OF_MESSAGE
-}
- 
-my $expiration = ($option{'m'} ||  20) * 60 + time( );
-my $hit_limit  =  $option{'n'} || 500;
-my $log        =  $option{'l'};
-my $verbose    =  $option{'v'};
-my $bot_name   =  $option{'b'} || 'sdbot/0.1';
-my $bot_email  =  $option{'e'} || 'bs@searchdaimon.com';
-my $timeout    =  $option{'t'} || 15;
-my $delay      =  $option{'d'} || 2;
-my $user       =  $option{'u'};
-my $passw      =  $option{'p'};
-
-die "Specify your email address with -e\n" unless $bot_email and $bot_email =~ m/\@/;
- 
-
-
-
-initialize( );
-process_starting_urls(@ARGV);
-main_loop( );
-report( ) if $hit_count;
-say("Quitting.\n");
-exit;
-=cut
+Readonly::Hash my %LINK_IGNORE => map { $_ => 1 } qw(td script table form head);
 
 my $log; 
 my $expiration = 20 * 60 + time( );
@@ -101,6 +52,7 @@ my $iisspecial = 0;
 my $countries = "";
 my @exclusionQueryParts;
 my @allowCountries;
+my $download_images = 0;
 
 my $crawler;
  
@@ -115,6 +67,10 @@ sub Init {
        InitCountry();
     }
     return $robot;
+}
+
+sub set_download_images {
+	$download_images = shift;
 }
 
 sub doFarUrls {
@@ -381,11 +337,12 @@ sub country_ok {
 
 sub process_far_url {
   my $url = $_[0];
+   if (!$allow_far_urls) { return; }
   say("HEADing far $url\n");
   ++$hit_count;
   mutter("  That was hit #$hit_count\n");
 
-   if (!$allow_far_urls) { return; }
+
 
    return unless country_ok(getCountry($url));
 
@@ -398,6 +355,7 @@ sub process_far_url {
     if($ct ne  'text/html') {
        $title = substr($url, rindex($url, "/")+1);
      }
+   
    
   
    if (not $crawler->document_exists($url, 0, length($response->as_string))) {
@@ -444,70 +402,51 @@ sub addOk {
 }
 
 sub process_near_url {
-   my $url = $_[0];
+	my $url = shift;
 
-   my $htmlcontent;
-  my $refurl = refer($url); # can be user for courtesy like $robot->request($req, $refurl);
-  mutter("HEADing near $url\n");
-  ++$hit_count;
+	my $url_normalized = $crawler->normalize_http_url($url);
+	my $keep_doc = addOk($url_normalized);
 
-  my $req = HTTP::Request->new(HEAD => $url);
+	say("Fetching ..." . substr($url, -80) . "\n");
 
-  if ($user) { 
-      mutter("Autorizing ".$user." with password ".$passw."\n");
-      $req->authorization_basic($user, $passw); 
-  }
-  print "Examine : ", $url, "\n";
-  my $response = $robot->request($req);
+	my $req = HTTP::Request->new(GET => $url);
+	$req->authorization_basic($user, $passw)
+		if $user;
 
-  mutter("  That was hit #$hit_count\n");
-  return unless consider_response($response);
+	my $response = $robot->request($req);
+	return unless consider_response($response);
 
-  if(length ${ $response->content_ref }) {
-    mutter("  Hm, that had content!  Using it...\n" );
-    say("Using head-gotten $url\n");
-  } else {
-    mutter("It's HTML!\n");
-    say("Getting $url\n");
-    ++$hit_count;
-  }
- 
-      $req = HTTP::Request->new(GET => $url);
+	if (!addOk($url_normalized)) {
+		my $ct = mapMimeType($response->content_type);
+		extract_links_from_response($response)
+			if $response->content_type eq 'text/html';
+		return;
+	}
 
-    if ($user) { 
-       mutter("Autorizing ".$user." with password ".$passw."\n");
-       $req->authorization_basic($user, $passw); 
-    }
+	my $ct = mapMimeType($response->content_type);
 
-    $response = $robot->request($req);
-    my $ct = mapMimeType($response->content_type);
+	my $title = "";
+	if($response->content_type ne  'text/html') {
+		$title = substr($url, rindex($url, "/")+1);
+	}
 
-    my $title = "";
-    if($response->content_type ne  'text/html') {
-       $title = substr($url, rindex($url, "/")+1);
-   }
-   
-   my $category = checkCategory($response->as_string);
-    if (not $crawler->document_exists($url, 0, length($response->as_string ) )) {
-	  $url = $crawler->normalize_http_url($url);
-       if (addOk($url)) {
-           $crawler->add_document(
-			url     => $url,
-			title   => $title,
-			content => $response->content,
-			last_modified => str2time($response->header('Last-Modified')),
-			type    => $ct,
-			acl_allow => $acl,
-			attributes => $category);
-      }	
-   }
-    mutter("  That was hit #$hit_count\n");
-    return unless consider_response($response);
-    #print $response->as_string;
-    if($response->content_type eq 'text/html') {
-       extract_links_from_response($response);     
-    }
-     return;
+
+	my $category = checkCategory($response->as_string);
+	if (!$crawler->document_exists($url, 0, length($response->content))) {
+		$crawler->add_document(
+				url     => $url_normalized,
+				title   => $title,
+				content => $response->content,
+				last_modified => str2time($response->header('Last-Modified')),
+				type    => $ct,
+				acl_allow => $acl,
+				attributes => $category);
+		#print "Length ", length($response->content);
+	}	
+
+	extract_links_from_response($response)
+		if $response->content_type eq 'text/html';
+	1;
 }
 
 
@@ -541,24 +480,34 @@ sub process_near_url {
 #}
 
 sub extract_links_from_response {
-  my $response = $_[0];
-  my $base = URI->new( $response->base )->canonical;
+	my $response = $_[0];
+	my $base = URI->new( $response->base )->canonical;
 
-  my $page_url = URI->new( $response->request->uri );
- 
+	my $page_url = URI->new( $response->request->uri );
 
-   my $page_parser = HTML::LinkExtor->new(undef, $base);
-   $page_parser->parse($response->as_string)->eof;
-   my @links = $page_parser->links;
-   my  $link;
-	foreach $link (@links) {
-           if ($$link[1] eq "href") {
-              note_link_to($page_url => $$link[2])
-            }
-         }
 
- return;
+	my $page_parser = HTML::LinkExtor->new(undef, $base);
+	$page_parser->parse($response->as_string)->eof;
+	my @links = $page_parser->links;
+	for my $l (@links) {
+		next if $LINK_IGNORE{$l->[0]};
+
+		if ($l->[1] eq 'href') {
+			note_link_to($page_url, $l->[2]);
+		}
+		elsif ($l->[0] eq 'img' && $l->[1] eq 'src') {
+			note_link_to($page_url, $l->[2])
+				if $download_images;
+		}
+		elsif ($l->[0] eq 'iframe') {
+			note_link_to($page_url, $l->[2]);
+		}
+		else {
+			print "INFO: Unknown link type ignored: ", Dumper($l);
+		}
+	}
 }
+
 
 
 sub note_link_to {
@@ -626,7 +575,7 @@ sub schedule {
        next if defined $u->userinfo; 
        return unless $u->host( ) =~ m/\./; 
        next if url_path_count($u) > 6;
-       next if $u->path =~ m<//> or $u->path =~ m</\.+(/|$)>;
+       next if $u->path =~ m<//> or $u->path =~ m{/\.+(/|$)};
        $u->fragment(undef);
  
     }

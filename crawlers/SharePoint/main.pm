@@ -18,66 +18,70 @@ use XML::XPath;
 use SD::sdCrawl;
 use LWP::RobotUA;
 use URI;
+use Readonly;
 
+Readonly::Array my @EXCLUDE_URLS_HAVING =>  (
+	'editform.aspx', 'newform.aspx', '/forms/allitems.aspx',
+	'/contacts/allitems.aspx', '/tasks/allitems.aspx', 
+	'/tasks/active.aspx', '/tasks/byowner.aspx', 'orms/recentchanges.aspx', 
+	'forms/allpages.aspx', 'backlinks.aspx', '/calendar.aspx', '/_layouts/' 
+);
 
-my $bot_name = "sdbot/0.1";
-my $bot_email = "email\@email.com";
+Readonly::Scalar my $SD_BOT_NAME => "SharePoint sdbot/0.1";
+Readonly::Scalar my $SD_BOT_EMAIL => "-";
 
 ##
 # Main loop for a crawl update.
 # This is where a resource is crawled, and documents added.
 sub crawl_update {
-    my (undef, $self, $opt) = @_;
+	my (undef, $self, $opt) = @_;
 
-    my $user = $opt->{"user"};
-    my $passw = $opt->{"password"};
-    my $urls = $opt->{"url"};
-    my $starting_url;
+	my $user = $opt->{"user"};
+	my $passw = $opt->{"password"};
+	my $urls = $opt->{"url"};
 
-    my @urlList = split /;/, $urls;
-    my @exclusionsUrlPart = qw (editform.aspx newform.aspx /forms/allitems.aspx /contacts/allitems.aspx /tasks/allitems.aspx /tasks/active.aspx /tasks/byowner.aspx orms/recentchanges.aspx forms/allpages.aspx backlinks.aspx /calendar.aspx /_layouts/ );
+	my @urlList = split /;/, $urls;
+	SD::sdCrawl::process_starting_urls(@urlList);
+	SD::sdCrawl::setDelay($opt->{delay});
+	SD::sdCrawl::set_download_images($opt->{download_images});
+	SD::sdCrawl::setExclusionUrlParts(@EXCLUDE_URLS_HAVING);
+	SD::sdCrawl::setIISpecial();
 
-    SD::sdCrawl::process_starting_urls(@urlList);
-    SD::sdCrawl::setDelay(0.1);
-    SD::sdCrawl::setExclusionUrlParts(@exclusionsUrlPart);
-    SD::sdCrawl::setIISpecial();
+	foreach my $starting_url (@urlList) {
+		my $url = URI->new(@urlList[0]);
+		print "Current url is " . $url . "\n";
+		my $host = $url->host();
 
-    foreach $starting_url(@urlList) {
-       my $url = URI->new(@urlList[0]);
-       print "Current url is " . $url . "\n";
-       my $host = $url->host();
+		my $soap_client = new SOAP::Lite
+			uri => 'http://schemas.microsoft.com/sharepoint/soap/directory',
+			    proxy =>"http://".$user.":".$passw."@".$host."/_vti_bin/UserGroup.asmx";
 
-       my $soap_client = new SOAP::Lite
-       uri => 'http://schemas.microsoft.com/sharepoint/soap/directory',
-       proxy =>"http://".$user.":".$passw."@".$host."/_vti_bin/UserGroup.asmx";
+		$soap_client->on_action(sub {
+				return $_[0]."/". $_[1];
+				});
 
-      $soap_client->on_action(sub {
-         #print Dumper(\@_);
-       return $_[0]."/". $_[1];
-      });
+		my $acl = "";
 
-      my $acl = "";
+		my $xml = $soap_client->GetAllUserCollectionFromWeb();
+		print $xml;
+		my $xp = XML::XPath->new(xml => $xml);
+		my $nodeset =  $xp->findnodes('//User/@Sid');
 
-      my $xml = $soap_client->GetAllUserCollectionFromWeb();
-      print $xml;
-      my $xp = XML::XPath->new(xml => $xml);
-      my $nodeset =  $xp->findnodes('//User/@Sid');
+		foreach my $node ($nodeset->get_nodelist) {
+			#put in a list and use join instead when more usernames available
+			my $usr = XML::XPath::XMLParser::as_string($node);
+			$usr = substr($usr,index($usr,"\"")+1);
+			$usr = substr($usr,0,length($usr)-1);
+			$acl = $acl.$usr.',';
+		}
 
-      foreach my $node ($nodeset->get_nodelist) {
-         #put in a list and use join instead when more usernames available
-         my $usr = XML::XPath::XMLParser::as_string($node);
-         $usr = substr($usr,index($usr,"\"")+1);
-         $usr = substr($usr,0,length($usr)-1);
-         $acl = $acl.$usr.',';
-      }
-
-      if (length($acl)) {
-         $acl = substr($acl, 0, length($acl)-1);
-      }
-#      $acl = "Everyone";
-      SD::sdCrawl::Init($self, $bot_name, , $bot_email, $acl, $user, $passw);
-      SD::sdCrawl::Start($starting_url);
-   }
+		if (length($acl)) {
+			$acl = substr($acl, 0, length($acl)-1);
+		}
+		#      $acl = "Everyone";
+		SD::sdCrawl::Init($self, $SD_BOT_NAME, , $SD_BOT_EMAIL, $acl, $user, $passw);
+		SD::sdCrawl::Start($starting_url);
+	}
 
 };
 
@@ -86,7 +90,7 @@ my $robot;
 sub init_robot {
    my $timeout = 4;
 
-   $robot = LWP::RobotUA->new($bot_name, $bot_email);
+   $robot = LWP::RobotUA->new($SD_BOT_NAME, $SD_BOT_EMAIL);
    $robot->delay(0); # "/60" to do seconds->minutes
    $robot->timeout($timeout);
    $robot->requests_redirectable([]); # comment this line to allow redirects

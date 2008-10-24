@@ -66,11 +66,12 @@ sub crawl_update {
     my @allowedCountries = qw();
 
     SD::sdCrawl::process_starting_urls(@urlList);
-    SD::sdCrawl::setDelay(1);
+    SD::sdCrawl::setDelay($opt->{delay} || 0);
     #SD::sdCrawl::doFarUrls();
     SD::sdCrawl::setAllowedCountries(@allowedCountries);
     #SD::sdCrawl::setExclusionUrlParts(@exclusionsUrlPart);
     #SD::sdCrawl::setIISpecial(); Consider using this if crawling windows machines
+    SD::sdCrawl::set_download_images($opt->{download_images});
  
     foreach $starting_url(@urlList) {
        my $url = URI->new(@urlList[0]);
