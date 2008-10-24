@@ -2525,10 +2525,12 @@ void *searchIndex_thread(void *arg)
 	{
 		struct hashtable_itr *itr;
 
-		itr = hashtable_iterator(groupqueries);
-		do {
-			destroy_query(hashtable_iterator_value(itr));
-		} while (hashtable_iterator_advance(itr) != 0);
+		if (hashtable_count(groupqueries) > 0) {
+			itr = hashtable_iterator(groupqueries);
+			do {
+				destroy_query(hashtable_iterator_value(itr));
+			} while (hashtable_iterator_advance(itr) != 0);
+		}
 	}
 	hashtable_destroy(groupqueries, 1);
 
