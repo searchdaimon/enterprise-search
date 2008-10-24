@@ -1987,7 +1987,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		ret = pthread_mutex_init(&PagesResults.mutextreadSyncFilter, NULL);
 
 		#ifdef BLACK_BOKS
-			ret = pthread_mutex_init(&PagesResults.mutext_pathaccess, NULL);
+			ret = pthread_mutex_init(&PagesResults.mutex_pathaccess, NULL);
 		#endif
 
 		//låser mutex. Vi er jo enda ikke kalre til å kjøre
