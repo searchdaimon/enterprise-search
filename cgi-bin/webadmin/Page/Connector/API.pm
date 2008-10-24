@@ -47,6 +47,8 @@ sub save_cfg_attr {
     eval {
         croak "Connector extension does not exist"
             unless $s->{sql_conn}->is_extension($s->{conn}{id});
+	croak "Connector extension is read only"
+		if $s->{sql_conn}->is_readonly($s->{conn}{id});
 
         my %data = (
             modified => ['NOW()'],
@@ -78,11 +80,13 @@ sub save_cfg_name {
     my $f = sub {
         croak "Connector extension does not exist"
             unless $s->{sql_conn}->is_extension($s->{conn}{id});
+	croak "Connector extension is read only"
+		if $s->{sql_conn}->is_readonly($s->{conn}{id});
         
         croak "Connector name is cannot be blank."
             if $new_name eq q{}; # `0' is an valid name
 
-        unless ($new_name =~ /^[a-zA-Z0-9_]+$/) {
+        unless ($new_name =~ /^[a-zA-Z0-9_]+$/) { # TODO: Use same check as Add collection
             croak "Invalid connector name. Valid characters",
                   " are letters, numbers and '_'. (no space)";
         }
@@ -124,6 +128,8 @@ sub add_param {
     my ($s, $api_vars, $param, $example) = @_;
     my $param_id;
     eval {
+	croak "Connector extension is read only"
+		if $s->{sql_conn}->is_readonly($s->{conn}{id});
         croak "No parameter provided"
             unless $param;
         croak "Parameter '$param' exists"
@@ -145,6 +151,9 @@ sub add_param {
 sub del_param {
     my ($s, $api_vars, $param_id) = @_;
     eval {
+	croak "Connector extension is read only"
+		if $s->{sql_conn}->is_readonly($s->{conn}{id});
+
         croak "Parameter doesn't exist"
             unless $s->{sql_param}->exists({ id => $param_id });
 
@@ -168,6 +177,8 @@ sub save_source {
     eval {
         croak "Connector extension '$s->{conn}{id}' is not valid"
             unless $s->{sql_conn}->exists({id => $s->{conn}{id}, extension => 1});
+	croak "Connector extension is read only"
+		if $s->{sql_conn}->is_readonly($s->{conn}{id});
 
         my %conn = % { $s->{sql_conn}->get({id => $s->{conn}{id}}) };
 

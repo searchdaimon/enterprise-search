@@ -38,7 +38,7 @@ if (defined $state{btn}) {
     elsif ($btn->{del_pkg}) {
         $tpl_file = $page->del_pkg($vars, $state{file});
     }
-    else { croak "Unknown button" }
+    else { croak "Unknown button '$state{btn}'" }
 }
 
 # Views

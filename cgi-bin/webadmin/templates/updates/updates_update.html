@@ -1,6 +1,7 @@
 [% INCLUDE 'header.html' title="Software updates" %]
 [% PROCESS 'updates_tabs.html' selected="Software updates" %]
 [% PROCESS 'updates_common.html' %]
+[% PROCESS 'common_widgets.html' %]
 
 [% IF updt_succs %]
     [% WRAPPER 'tpl_msg.html' type = "success" %]
@@ -35,8 +36,10 @@
 
     [% ELSE %]
             [% PROCESS pretty_button 
+		icon = "rpm"
+		action = "updates.cgi"
                 text = "Install updates"
-                name = "install_updates"  %]
+                name = "btn.install_updates"  %]
 
             [% PROCESS list_pkgs pkg_list = avail_pkgs %]
 
@@ -47,6 +50,8 @@
 [% IF !avail_pkgs.defined AND !error_msg AND !updt_succs %]
     [% PROCESS pretty_button
         text = "Check for updates"
-        name = "check_updates"  %]
+	icon = "rpm"
+	action = "updates.cgi"
+        name = "btn.check_updates"  %]
 [% END %]
 

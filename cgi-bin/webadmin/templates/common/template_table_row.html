@@ -1,17 +1,7 @@
-[% IF color %]
-    [% background = 'background : #d3dbef;' %]
-[% END %]
 
-[% IF row_selected %]
-    [% border = 'background : #4473c4; color : white;' %]
-[% END %]
-	
-[% IF disabled %] 
-	[% background = 'background : #F0F0F0;' %]
-	[% # alternative: background = 'background : #F5F5F5;' %]
-	[% text_color = 'color : gray;' %]
-[% END %]
 
-<tr class="default_table_row" style="[% background %][% border %][% text_color %][% other %]">
+<tr class="[% 'odd ' IF color %]
+           [% 'selected ' IF row_selected %]
+	   [% 'disabled ' IF disabled %]" style="[% other %]">
 	[% content %]
 </tr>

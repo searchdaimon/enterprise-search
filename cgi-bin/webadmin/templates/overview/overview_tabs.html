@@ -1,0 +1,17 @@
+[% 
+tabs = [
+	{
+		'name' => 'Edit collection',
+		'url' => "overview.cgi?action=edit&amp;id=$id"
+	},
+	{
+		'name' => 'Advanced management',
+		'url' => "overview.cgi?action=manage&amp;id=$id",
+		
+	},
+	{
+		'name' => "Result customization",
+		'url'    => "overview.cgi?action=customize&amp;id=$id",
+	},
+	] %]
+[% PROCESS 'template_tabs.html' %]

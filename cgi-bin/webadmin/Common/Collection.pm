@@ -10,8 +10,8 @@ use Carp;
 use config qw(%CONFIG);
 use Readonly;
 
-Readonly::Hash my %VALID_COLL_CHRS 
-    => map { $_ => 1 } ('a'..'z', 'A'..'Z', 0..9, '-', q{ }, '_');
+#Readonly::Hash my %VALID_COLL_CHRS 
+    #=> map { $_ => 1 } ('a'..'z', 'A'..'Z', 0..9, '-', '_');
 
 
 sub new {
@@ -42,13 +42,8 @@ sub validate {
 
     while (my $check = shift(@checks)) {
 
-        if ($check eq 'share') {
-            next if ($share->{'host'});
-            next if ($share->{'resource'});
-            return (0, 'error_missing_share');
-        }
 
-        elsif ($check eq 'connector') {
+        if ($check eq 'connector') {
             return (0, 'error_missing_connector')
                 unless ($share->{'connector'});
         } 
@@ -76,10 +71,11 @@ sub validate {
 
 sub valid_name { 
     my ($s, $name) = @_;
-    for my $c (split q{}, $name) {
-        return unless $VALID_COLL_CHRS{$c};
-    }
-    return 1;
+	return $name =~ /^([a-zA-Z0-9]|\.|_|-|)+$/;
+#    for my $c (split q{}, $name) {
+#        return unless $VALID_COLL_CHRS{$c};
+#    }
+#    return 1;
 }
 
 1;

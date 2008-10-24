@@ -1,23 +1,26 @@
 [% USE HTML %]
+[% USE date %]
 
 [% BLOCK list_connectors %]
 	[% i = 0 %]
-	[% FOREACH connectors %]
-		<h3>[% name %]</h3>
+	[% FOREACH conn IN connectors %]
+		<h3>[% conn.name %]</h3>
 		[% color = 0 %]
-		[% IF shares.size %]
+		[% IF conn.collections.size %]
 		
 			[% WRAPPER 'template_table.html'
 			header = ['Status', 'Collection', 'Last crawl', 'Next crawl', 'Collection size' ''] %]
 		
-			[% FOREACH share IN shares %]
+			[% FOREACH c IN conn.collections %]
 				[% color = 1 - color %]
 				[% WRAPPER 'template_table_row.html' 
-					disabled = !share.active
+					disabled = !c.active && !c.is_pushed
 					other = 'padding-top : 1em; padding-bottom : 1em;' %]
 					<td style="width : 64px;">
-						[% IF share.active %]
-							[% IF share.crawler_success %] 
+						[% IF c.is_pushed %]
+							<img src="file.cgi?i=mimetypes" alt="Pushed" />
+						[% ELSIF c.active %]
+							[% IF c.crawler_success %] 
 								<img src="file.cgi?i=agt_action_success" alt="ok" />
 							[% ELSE %] 
 								<img src="file.cgi?i=agt_action_fail" alt="fail" />
@@ -28,72 +31,79 @@
 					</td>
 		
 					<td style="width : 15%">
-						[% HTML.escape(share.collection_name) %]
+						[% HTML.escape(c.collection_name) %]
 					</td>
 			
 					<td style="width : 15%">
-						[% IF share.active %]
-							[% IF share.last %]
-								[% HTML.escape(share.last) %]
+						[% IF c.active %]
+							[% IF c.last_crawl %]
+								[% date.format(c.last_crawl, "%a %b %e, %H:%M") %]
 							[% ELSE %]
 								Not fully crawled
 							[% END %]
 		
-							[% IF share.crawler_message %]
-								<div style="font-size : xx-small;">Status: [% HTML.escape(share.crawler_message) %]</div>
+							[% IF c.warn %]
+								<div style="float : left; margin-top : 1em; 
+									font-size : x-small; background : #ffb2b2">[% HTML.escape(c.warn) %]</div>
 							[% END %]
 						[% END %]
 					</td>
 					<td style="width : 30%">
-						[% IF share.active %]
-							[% IF share.next_crawl %]
-								[% share.next_crawl %]. <br />
+						[% IF c.active %]
+							[% IF c.next_crawl %]
+								[% c.next_crawl %]. <br />
 							[% END %]
 							
-							[% IF share.rate %]
-								Crawled every [% share.smart_rate %].
+							[% IF c.rate %]
+								Crawled every [% c.smart_rate %].
 							[% ELSE %]
-								Every [% share.smart_rate %] (default)
+								Every [% c.smart_rate %] (default)
 							[% END %]
 						[% END %]
 					</td>
 					<td>
-						[% IF share.active %]
-							[% share.doc_count %]&nbsp;documents
+						[% IF c.active || c.is_pushed %]
+							[% c.doc_count %]&nbsp;documents
 						[% END %]
 					</td>
 					<td>
 	
 						<ul class="button_list">
-						[% IF share.active %]
-						<li>
-							[% IF share.crawl_pid %]
-							<div style="background : #ffb2b2; ">
-								<a  href="overview.cgi?action=stop_crawl&amp;id=[% share.id %]">Stop&nbsp;crawl</a>
-							</div>
-							[% ELSE %]
-							<div>
-								<a href="overview.cgi?action=crawl&amp;id=[% share.id %]">Crawl&nbsp;now</a>
-							</div>
-							[% END %]
-						</li>
+						[% IF c.is_pushed %]
+							<li><div>
+								<a href="overview.cgi?action=push_del&coll=[% HTML.escape(c.collection_name) %]">Delete</a>
+							</div></li>
 						[% ELSE %]
-						<li>
-							<div>
-								<a href="overview.cgi?action=activate&amp;id=[% share.id %]">Activate</a>
-							</div>
-						</li>
+							[% IF c.active %]
+							<li>
+								[% IF c.crawl_pid %]
+								<div style="background : #ffb2b2; ">
+									<a  href="overview.cgi?action=stop_crawl&amp;id=[% c.id %]">Stop&nbsp;crawl</a>
+								</div>
+								[% ELSE %]
+								<div>
+									<a href="overview.cgi?action=crawl&amp;id=[% c.id %]">Crawl&nbsp;now</a>
+								</div>
+								[% END %]
+							</li>
+							[% ELSE %]
+							<li>
+								<div>
+									<a href="overview.cgi?action=activate&amp;id=[% c.id %]">Activate</a>
+								</div>
+							</li>
+							[% END %]
+							<li>
+								<div>
+									<a href="overview.cgi?action=edit&amp;id=[% c.id %]">Manage</a>
+								</div>
+							</li>
+							<li>
+								<div>
+									<a href="overview.cgi?action=delete&amp;id=[% c.id %]">Delete</a>
+								</div>
+							</li>
 						[% END %]
-						<li>
-							<div>
-								<a href="overview.cgi?action=edit&amp;id=[% share.id %]">Manage</a>
-							</div>
-						</li>
-						<li>
-							<div>
-								<a href="overview.cgi?action=delete&amp;id=[% share.id %]">Delete</a>
-							</div>
-						</li>
 						</ul>
 					</td>
 				[% END #row %]

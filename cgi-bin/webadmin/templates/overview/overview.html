@@ -2,12 +2,14 @@
 
 [% IF show_only_inner %]
 	[% ##
-	   # Show only connectors and tables. %]
+	   # Show only connectors and tables. 
+	 %]
 
 	[% PROCESS list_connectors %]
 [% ELSE %]
 	[% ##
-	   # Normal view. %]
+	   # Normal view. 
+	  %]
 	
 	[% INCLUDE 'header.html' 
 		title = 'Collections overview'

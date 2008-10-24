@@ -55,17 +55,17 @@ sub download {
 sub downl_all_zip {
     my $s = shift if ref $_[0];
    
-    chdir $CONFIG{log_path};
-
     my $logs_str;
     for my $file (keys %{$CONFIG{logfiles}}) {
-        next unless -e $file;
-        $logs_str .= "\Q$file\E ";
+	my $path = $CONFIG{log_path} . "/$file";
+	warn $path;
+        next unless -e $path;
+        $logs_str .= "\Q$path\E ";
     }
 
     # create zip for all logs.
     my (undef, $filename) = tempfile(SUFFIX => ".zip", OPEN => 0);
-    my $exec_str = "zip -1 \Q$filename\E $logs_str 2>&1 |";
+    my $exec_str = "zip -j -1 \Q$filename\E $logs_str 2>&1 |";
     open my $ziph, $exec_str
         or croak "Unable to run zip", $!;
 

@@ -3,6 +3,7 @@
 
 [% PROCESS 'updates_tabs.html' selected="Installed software" %]
 [% PROCESS 'updates_common.html' %]
+[% PROCESS 'common_widgets.html' %]
 
 [% IF listing_error %]
     [% WRAPPER 'template_message.html' type='error' %]
@@ -16,7 +17,10 @@
     
     [% PROCESS pretty_button
         text = "List installed software"
-        name = "list_installed" %]
+        name = "btn.list_installed" 
+	icon = "rpm"
+	action = "updates.cgi"
+   %]
    
 [% END %]
 

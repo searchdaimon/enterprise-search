@@ -1,0 +1,46 @@
+[% INCLUDE 'header.html' title = 'User systems' %]
+[% USE Dumper %]
+
+
+<h1>User system integration</h1>
+
+[% IF systems.size %]
+	[% PROCESS system_table
+		systems = systems %]
+[% ELSE %]
+	<p>No user system integrated.</p>
+[% END %]
+
+[% INCLUDE 'footer.html' %]
+
+[% BLOCK system_table %]
+	[% WRAPPER 'template_table.html'
+		header = ['', 'System', 'Type', '', ''] style='width : 60%' %]
+
+		[% SET color = 0 %]
+		[% FOREACH s IN systems %]
+			[% WRAPPER 'template_table_row.html' %]
+				[% PROCESS list_row
+					system = s %]
+			[% END %]
+			[% color = 1 - color %]
+		[% END %]
+	[% END %]
+
+[% END %]
+
+[% BLOCK list_row %]
+	[% SET conn = system.connector %]
+	<td style="width : 40px;"><img src="file.cgi?i=agt_family" alt="" /></td>
+	<td>#[% system.id | html %]</td>
+	<td>[% user_systems.$conn | html %]</td>
+	<td><a href="usersys.cgi?edit=[% system.id %]">Edit</a></td>
+	<td>
+	[% IF system.is_primary %]
+		<strong>Primary system</strong>
+	[% ELSE %]
+		<a href="usersys.cgi?map=[% system.id %]">Map to primary</a>
+	[% END %]
+	</td>
+[% END %]
+

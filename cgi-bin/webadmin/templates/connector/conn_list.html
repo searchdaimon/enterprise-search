@@ -1,10 +1,10 @@
-[% include 'header.html' title = 'Connector extensions' %]
+[% INCLUDE 'header.html' title = 'Connector extensions' %]
 [% USE Dumper %]
 [% USE HTML %]
 
 <h2>Connector extensions</h2>
 [% IF error %]
-    [% WRAPPER 'tpl_msg.html' type="error" %][% error %][% end %]
+    [% WRAPPER 'tpl_msg.html' type="error" %][% error %][% END %]
 [% END %]
 [% IF delete_ok %]
     [% WRAPPER 'tpl_msg.html' type="success" %]
@@ -17,29 +17,62 @@
     <a href="connector.cgi?act=new">Create a new connector</a>
 </div>
 
-[% PROCESS connector_list IF connectors.size %]
-[% include 'footer.html' %]
+<h2>Local connectors</h2>
+[% IF local_connectors.size %]
+	[% PROCESS connector_list
+		connectors = local_connectors
+		buttons = [ 
+			{ show   => 'edit', name => 'Modify' },
+			{ act => 'clone', name => 'Clone' },
+			{ show   => 'del', name => 'Delete' },
+		] 
+	%]
+[% ELSE %]
+	<p>No local connectors created</p>
+[% END %]
+
+<h2>SD Connectors</h2>
+[% IF sd_connectors.size %]
+	[% PROCESS connector_list 
+		connectors = sd_connectors
+		buttons = [
+			{ show => 'edit', name => 'View' },
+			{ act => 'clone', name => 'Clone' }
+		]
+	%]
+[% ELSE %]
+	<p>No Searchdaimon connectors installed.</p>
+[% END %]
+
+
+[% INCLUDE 'footer.html' %]
 
 [% BLOCK connector_list %]
-    [% wrapper 'template_table.html' style = 'width : 80%;'
+    [% WRAPPER 'template_table.html' style = 'width : 80%;'
             header = ['', 'Name', 'Last modified', '', ''] %]
         [% color = 1 %]
-        [% foreach c in connectors %]
-            [% wrapper 'template_table_row.html' %]
+        [% FOREACH c IN connectors %]
+            [% WRAPPER 'template_table_row.html' %]
                 <td><img src="file.cgi?i=[% IF c.active %]connect_creating[% ELSE %]connect_no[% END %]&amp;size=32x32" alt="" /></td>
                 <td>[% HTML.escape(c.name) %]</td>
                 <td>[% c.modified %]</td>
                 <td>[% IF c.active; "Active"; ELSE; "Disabled"; END %]</td>
                 <td>
-                    <ul class="button_list">
-                        <li><div><a href="connector.cgi?show=edit&connid=[% c.id %]">Modify</a></div></li>
-                        <li><div><a href="connector.cgi?show=del&connid=[% c.id %]">Delete</a></div></li>
-                    </ul>
+   			<ul class="button_list">
+			[% FOREACH b IN buttons %]
+				[% IF b.show %]
+					[% SET param = "show=$b.show" %]
+				[% ELSE %]
+					[% SET param = "act=$b.act" %]
+				[% END %]
+                        	<li><div><a href="connector.cgi?[% param %]&connid=[% c.id %]">[% b.name %]</a></div></li>
+			[% END %]
+                	</ul>
                 </td>
-            [% end %]
+            [% END %]
             [% color = 1 - color %]
-        [% end %]
+        [% END %]
 
-    [% end %]
+    [% END %]
 [% END %]
 

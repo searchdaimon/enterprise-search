@@ -1,0 +1,33 @@
+[% INCLUDE 'header.html' title = 'Result customization' %]
+[% USE HTML %]
+
+[% IF error_collection_not_exist %]
+	[% PROCESS 'template_collection_warnings.html' %]
+	[% STOP %]
+[% END %]
+
+[% PROCESS 'overview_tabs.html' selected="Result customization" %]
+<h2>Customize results for [% HTML.escape(share.collection_name) %]</h2>
+
+[% IF errors %]
+	[% WRAPPER 'tpl_msg.html' type="error" %]
+		<ul>
+		[% FOREACH e IN errors %]
+			<li>[% e %]</li>
+		[% END %]
+		</ul>
+	[% END %]
+[% END %]
+
+<form method="post" action="overview.cgi">
+	<div>
+	<input type="hidden" name="id" value="[% id %]" />
+	[% PROCESS 'template_edit_collection.html'
+		fields = ['customize_summary', 'customize_cache', 'customize_filters', 'customize_ranking'] %]
+	</div>
+	<div>
+	<input type="submit" name="upd_customization" value="Submit customizations" />
+	</div>
+</form>
+
+[% INCLUDE 'footer.html' %]

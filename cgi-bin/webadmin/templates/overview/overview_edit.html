@@ -4,20 +4,7 @@
 [% PROCESS 'template_collection_warnings.html' %]
 
 [% UNLESS error_collection_not_exist %]
-
-	[% PROCESS 'template_tabs.html' 
-		tabs = [
-		{
-			'name' => 'Edit collection',
-			'url' => "overview.cgi?action=edit&amp;id=$share.id"
-		},
-		{
-			'name' => 'Advanced management',
-			'url' => "overview.cgi?action=manage&amp;id=$share.id",
-			
-		}]
-                selected = 'Edit collection'
-	%]
+[% PROCESS 'overview_tabs.html' selected="Edit collection" id = share.id %]
 	
 	<h2>Edit settings for [% HTML.escape(share.collection_name) %]</h2>
 	<form method="post" action="overview.cgi">
@@ -31,6 +18,7 @@
 	</div>
 		
 	</form>
+
 
 [% END %]
 [% INCLUDE 'footer.html' %]

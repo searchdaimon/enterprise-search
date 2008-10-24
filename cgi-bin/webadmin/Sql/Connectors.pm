@@ -51,21 +51,6 @@ sub get_name {
     return $s->get({ id => $id }, 'name')->{name};
 }
 
-#	my $self = shift;
-#	my $id = shift;
-#
-
-	#my $query = "SELECT name FROM $TBL
-	#		WHERE id = ?";
-	#
-	#my $sth = $dbh->prepare($query)
-	#	or croak "pepare: ", $dbh->errstr;
-	#my $rv = $sth->execute($id)
-	#	or croak "execute: ", $dbh->errstr;
-	#	
-	#return $sth->fetchrow_array;
-#}
-
 ## Get ID for a given name.
 ## Names are unique, so there will
 ## only be one result.
@@ -76,30 +61,6 @@ sub get_id($$) {
 					WHERE name = ?";
 	return Sql::Sql::single_fetch($dbh, $query, $id);
 }
-
-#sub get_connectors {
-#	my $self = shift;
-#	my $query = "SELECT * FROM $TBL";
-#	return Sql::Sql::get_hashref_array($dbh, $query);
-#}
-#
-
-#sub get_with_shares {
-#	my $self = shift;
-#	my $sqlShares = Sql::Shares->new($dbh);
-#	my @connector_list;
-#
-# 	foreach my $connector (@{$self->get_connectors}) {
-#		my @shares = $sqlShares->get_all_by_connector($connector->{'name'});
-#		push (@connector_list, {
-#			'name' => $connector->{'name'},
-#			'comment' => $connector->{'comment'},
-#			'shares' => \@shares });
-# 	}
-#	return @connector_list;
-#
-#}
-#
 
 sub get_connectors_with_scantool {
 	my $self = shift;
@@ -139,6 +100,7 @@ sub get_input_fields($$) {
 }
 
 sub is_extension { shift->exists({ id => shift, extension => 1 }) }
+sub is_readonly { shift->exists({ id => shift, read_only => 1 }) }
 
 sub exists { shift->SUPER::exists($TBL, 'id', @_) }
 sub get { shift->SUPER::get($TBL, @_) }

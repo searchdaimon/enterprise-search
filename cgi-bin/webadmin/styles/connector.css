@@ -7,10 +7,8 @@
 }
 
 #paramTable {
-    border-collapse : collapse;
     width : 600px;
 }
-#paramTable .odd { background : #D3DBEF; }
 .inputTable { text-align : left; }
 .inputTable td { width : 20em; }
 

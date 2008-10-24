@@ -2,42 +2,26 @@
 use strict;
 use warnings;
 
-BEGIN {
-        push @INC, $ENV{'BOITHOHOME'} . '/Modules';
-}
-use CGI;
-use CGI::State;
-use Carp;
-use Template;
-#use Modules::Boitho::Infoquery;
-use Boitho::Infoquery;
 use Data::Dumper;
-use config qw($CONFIG);
 
-my $cgi = CGI->new;
-my $state = CGI::State->state($cgi);
-print $cgi->header('text/html');
+use Page::Users;
 
+my $page = Page::Users->new();
+my %state = $page->get_state();
+
+my $tpl_file;
 my $vars = { };
-my $template = Template->new({INCLUDE_PATH => './templates:./templates/users:./templates/common',});
 
-my $template_file = 'users_main.html';
-
-#my $users = Class::Users->new;
-my $iq = Boitho::Infoquery->new($CONFIG->{'infoquery'});
-my $username = $state->{'user'};
+my $username = $state{'user'};
 if ($username) {
-	# Show details for user
-	$vars->{'username'} = $username;
-	$vars->{'groups'} = $iq->groupsAndCollectionForUser($username);
-	$template_file = 'users_details.html';
+	$tpl_file = $page->show_usr_details($vars, $username);
+}
+elsif ($state{upd_usr_access}) {
+	$tpl_file = $page->upd_usr_access($vars, $state{users});
 }
 else {
-	# List all users
-
-	$vars->{'users'} = $iq->listUsers;
-
-
+	$tpl_file = $page->show_usr_list($vars);
 }
-$template->process($template_file, $vars)
-        or croak $template->error();
+
+$page->process_tpl($tpl_file, $vars, 
+	tpl_folders => ['users', 'common']);

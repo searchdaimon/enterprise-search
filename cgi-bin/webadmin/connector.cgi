@@ -27,6 +27,7 @@ if (my $form = $state{show}) {
     elsif ($form eq 'del') {
         $tpl_file = $pageForm->show_delete(\%tpl_vars, $state{connid});
     }
+
     else { croak "Unknown form '$form'" }
 }
 
@@ -45,6 +46,11 @@ elsif (my $act = $state{act}) {
         my $conn_id = $pageForm->create_new();
         $tpl_file = $pageForm->show_edit(\%tpl_vars, $conn_id);
     }
+    elsif ($act eq 'clone') {
+	my $conn_id = $pageForm->clone($state{connid});
+	$tpl_file = $pageForm->show_edit(\%tpl_vars, $conn_id);
+    }
+    else { croak "Unknown action '$act'" }
 
 }
 elsif (my $api = $state{api}) {

@@ -80,7 +80,6 @@ sub _get_next_crawl {
 	my $self = shift;
 	my ($rate, $last) = @_;
 	return unless $last; # Need last to find next.
-        return if $last eq '0000-00-00 00:00:00';
 	
 	#make $last into unixtime, if it isn't.
 	unless ($last =~ /^\d+$/) {
@@ -98,11 +97,11 @@ sub _get_next_crawl {
 
 ##
 # Change to mysql time string to unixstamp
+# TODO: Deprecate, fetch with MySQL function UNIX_TIMESTAMP
 sub _mysql_to_unixtime {
 	my $self = shift;
 	my $mysql_time = shift;
 	return unless $mysql_time;
-	#/(\d\d\d\d)-?(\d\d)-?(\d\d) ?(\d\d):?(\d\d):?(\d\d)/;
 	my ($year, $month, $day, $hour, $minute, $second) 
 		= $mysql_time 
 		=~ /(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/;

@@ -1,17 +1,4 @@
 [% USE HTML %]
-[% BLOCK pretty_button %]
-    <div class="pretty_button">
-        <img src="file.cgi?i=rpm&size=32x32" />
-        <form action="updates.cgi" method="get">
-        [% IF view %]
-            <input type="hidden" name="view" value="[% view %]" />
-        [% END %]
-        <input type="submit" 
-            value="[% text %]"
-            name="btn.[% name %]" />
-        </form>
-    </div>
-[% END %]
 
 [% BLOCK list_pkgs %]
 

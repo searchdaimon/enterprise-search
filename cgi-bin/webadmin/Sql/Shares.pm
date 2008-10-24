@@ -217,16 +217,23 @@ sub id_exists {
 
 ##
 # Get collection id for a given name.
+my $id_by_coll_sth;
 sub get_id_by_collection {
-	my ($self, $collection_name) = @_;
-	my $query = "SELECT id FROM shares
-			WHERE collection_name = ?";
-	
-	return $self->sql_single($query, $collection_name);
-}
+	my ($s, $collection_name) = @_;
+	my $dbh = $s->{dbh};
 
-sub get_id {
-	croak "get_id() is deprecated.";
+	if (!$id_by_coll_sth) {
+		$id_by_coll_sth = $dbh->prepare(
+			"SELECT id FROM shares
+			WHERE collection_name = ?")
+			or croak "prepare: ", $dbh->errstr;
+	}
+	$id_by_coll_sth->execute($collection_name)
+		or croak "exec: ", $dbh->errstr;
+
+	my @res = $id_by_coll_sth->fetchrow_array();
+	return shift @res if @res;
+	return;
 }
 
 ##

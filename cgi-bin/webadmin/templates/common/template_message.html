@@ -1,8 +1,4 @@
-[%	# Default template to showing messages.
-	# Icon, header and background color depends on the type of message.
-	# The different types are: info, help, error, warning and success.
-	# Provide type through the variable type.
-	
+[%	#TODO: Move coloring to css.
 %]
 [% background = "#dce4f9" %]
 [% IF type == 'info' %]
@@ -33,7 +29,7 @@
 
 
 
-<div class="message_box" id="[% id %]" style="background: [%background%]; [% style %]">
+<div class="message_box" [% IF id %] id="[% id %]" [% END %] style="background: [%background%]; [% style %]">
 
 	[% UNLESS discreet %]
 		<table>

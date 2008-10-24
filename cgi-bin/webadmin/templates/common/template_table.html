@@ -1,5 +1,5 @@
-[% # Template to get the standard table. Use together with template_table_row.html %]
-<table class="default_table" [% IF style %] style="[% style %]" [% END %]>
+[%# Template to get the standard table. Use together with template_table_row.html %]
+<table [% IF style %]style="[% style %]"[% END %] [% IF id %]id="[% id %]"[% END %]>
 		<tr>
 		[% FOREACH h IN header %]
 			<th>[% h %]</th>

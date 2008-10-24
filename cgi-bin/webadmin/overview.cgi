@@ -53,7 +53,7 @@ if (defined $state{action}) {
 	
 	elsif ($action eq 'delete') {
 		# User wants to delete a collection. Confirm.
-		$tpl_file = $overview->delete_collection($vars, $id);
+		$tpl_file = $overview->del_confirm($vars, id => $id);
 	}
 	
 	elsif ($action eq 'activate') {
@@ -65,26 +65,31 @@ if (defined $state{action}) {
 
 	elsif ($action eq 'manage') {
 		# User is in the advanced management tab.
-		($vars, $tpl_file) = $overview->manage_collection($vars, $id);
+		$tpl_file = $overview->manage_collection($vars, $id);
 	}
-
+	elsif ($action eq 'customize') {
+		$tpl_file = $overview->show_customize($vars, $id);
+	}
 	elsif ($action eq 'stop_crawl') {
 		$tpl_file = $overview->stop_crawl($vars, $id);
+	}
+	elsif ($action eq 'recrawl') {
+		$tpl_file = $overview->recrawl_collection($vars, $id);
+	}
+	elsif ($action eq 'test_crawl') {
+		$tpl_file = $overview->test_crawl_coll($vars, $id, $state{num_docs});
+	}
+	elsif ($action eq 'push_del') {
+		$tpl_file = $overview->del_confirm($vars, 
+			pushed => 1, name => $state{coll});
 	}
 	else { croak "Unknown action '$action'" }
 }
 
 elsif (defined $state{advanced}) {
 	my @action = keys %{$state{advanced}};
+	croak Dumper(\@action);
 	my $id = $state{id};
-
-	if ($action[0] eq 'full_recrawl') {
-		# User is forcing a full recrawl from management.
-		my $submit_values = 
-			$state{advanced}{full_recrawl}{id};
-		($vars, $tpl_file) = 
-			$overview->recrawl_collection($vars, $submit_values);
-	}
 }
 
 elsif (defined $state{edit}) {
@@ -112,16 +117,22 @@ elsif (defined $state{submit_edit}) {
 
 
 
-elsif (defined $state{confirm_delete}) {
-	my $id = $state{id};
-	$vars = $overview->delete_collection_confirmed($vars, $id);
-	
+elsif (defined $state{confirm_delete}
+    || defined $state{confirm_push_del}) {
+	$state{confirm_delete} 
+		? $overview->del_collection($vars, id => $state{id})
+		: $overview->del_collection($vars, pushed => 1, coll => $state{coll});
 	$tpl_file = $overview->list_collections($vars);
 }
+
 
 elsif (defined $state{fetch_inner}) {
 	$tpl_file = $overview->list_collections($vars);
 	$vars->{show_only_inner} = 1;
+}
+
+elsif (defined $state{upd_customization}) {
+	$tpl_file = $overview->upd_customization($vars, $state{id}, %{$state{share}});
 }
 
 else {

@@ -24,10 +24,10 @@ A:active { color : blue; }
 
 
 #left_menu {
-	float : left;
+	position : absolute;
 	font-family : 'sans-serif';
 	width : 20%;
-        margin-top : 1em;
+	top : 1em;
 }
 
 #left_menu h4 {
@@ -60,23 +60,31 @@ A:active { color : blue; }
 }
 
 
-
-.default_table {
-    border-collapse : collapse;
+/**
+ * Default table style
+ */
+table {
     width : 100%;
+    border-collapse : collapse;
     border : 1px solid;
     border-color : silver;
-  }
+}
 
-.default_table th {
+table th {
 	text-align : left;
 	background-color : #f2f2f2;
 }
 
-
-.default_row {
-    background : #D3DBEF;
-  }
+/* row colors */
+table .odd { background : #D3DBEF; }
+table .selected { 
+	background : #4473c4 !important; 
+	color : white !important;
+}
+table .disabled {
+	background : #F0F0F0 !important;
+	color : gray !important;
+}
 
 
 .info_dashed {
@@ -156,7 +164,6 @@ A:active { color : blue; }
     position : absolute;
     left : 30%;
     top : 0px;
-    width : 70%;
   }
 
 .block_resource { width : 25em; }
@@ -166,6 +173,10 @@ A:active { color : blue; }
 	list-style-type : none;
 	margin : 0 0 1em 1em;
 	padding : 0;
+}
+
+.message_box table { 
+	border : 0;
 }
 
 .message_box {
@@ -204,12 +215,12 @@ A:active { color : blue; }
 	margin-top : 1em; 
 	margin-bottom : 1em;
 	padding-bottom:1em;
+	width : 80%;
 }
 
 .connector_block h3 {
 	padding-left : 1em;
 	background-color : #f2f2f2;
-	width : 100%;
 }
 
 .connector_block img {
@@ -330,3 +341,16 @@ A:active { color : blue; }
 
 .ui-tabs-hide { display : none; }
 
+
+.defaultForm {
+	padding-left : 1em; 
+	background : #D3DBEF;
+	float : left;
+	width : 60%;
+	padding : 1em;
+	border : 1px solid silver;
+}
+.defaultForm input { margin-top : 0.2em; }
+.defaultForm table { 
+	border : 0 
+} 

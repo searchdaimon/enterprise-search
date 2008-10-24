@@ -25,29 +25,20 @@
 	[% END %]
 [% END %]
 
-[% PROCESS 'template_tabs.html' 
-	tabs = [
-	{
-		'name' => 'Edit collection',
-		'url' => "overview.cgi?action=edit&amp;id=$id"
-	},
-	{
-		'name' => 'Advanced management',
-		'url' => "overview.cgi?action=manage&amp;id=$id",
-		
-	}]
-        selected = "Advanced management"
-%]
-
+[% PROCESS 'overview_tabs.html'
+	selected = "Advanced management" %]
 [% UNLESS error_collection_not_exist %]
 	<h2>Management for [% HTML.escape(share.collection_name) %]</h2>
 	
 	
 	<form method="post" action="overview.cgi">
-	[% WRAPPER 'template_edit_collection.html'
+	[% PROCESS 'template_edit_collection.html' 
 		fields = ['advanced'] %]
-	[% END %]	
 	</form>
+
+	<form method="post" action="overview.cgi">
+	[% PROCESS 'template_edit_collection.html' 
+		fields = ['test_crawl'] %]
 [% END %]
 [% INCLUDE 'footer.html' %]
 

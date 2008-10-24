@@ -1,0 +1,107 @@
+[% WRAPPER 'header.html' title = 'User systems - mapping' 
+	extra_js = ['jquery', 'usersys'] 
+	extra_css = ['usersys'] %]
+<script type="text/javascript">
+
+/**
+ * NOTE: Only use function calls to manipulate userMapping.
+ */ 
+userMapping = {
+	[% FOREACH m IN mapping %]
+		'[% m.prim_usr | html %]' : '[% m.secnd_usr | html %]' 
+			[% "," UNLESS loop.last %]
+	[% END %]
+};
+
+
+// Constants
+PRIM_RADIO_NAME = "prim_users";
+SEC_RADIO_NAME  = "sec_users";
+
+PRIM_RADIO_PREFIX = "field_prim_users_";
+SEC_RADIO_PREFIX  = "field_sec_users_";
+
+PRIM_SYS = 10;
+SEC_SYS = 11;
+
+SEC_SYSTEM_ID = [% sec_sys_id || 'null' %];
+
+
+</script>
+[% END %]
+[% USE Dumper %]
+<h1>Map user system</h1>
+
+<div style="position : relative;">
+<div id="apiMsg">
+   	<img src="file.cgi?i=jqueryloader&amp;ext=gif&amp;size=other" alt="loading" id="loading" />
+	<span></span>
+</div>
+<h2>Unmapped users</h2>
+<p id="msg">Select the same user from both systems to complete mapping</p>
+</div>
+<div id="userListings" style="position : relative; height : 320px;">
+[% PROCESS list_users 
+	user_list = prim.users
+	primary = 1
+	mapped = prim.mapped
+	position = "top : 0; left : 0;"%]
+
+[% PROCESS list_users 
+	user_list = sec.users
+	primary = 0
+	mapped = sec.mapped
+	position = "top : 0; left : 23em;" %]
+
+</div>
+<ul id="actBtnList">
+	<li><input type="button" id="automapBtn" value="Automap users" /></li>
+	<li><input type="button" id="saveBtn" value="Save changes" disabled="disabled" /></li>
+</ul>
+
+
+
+<h3>Mapped users</h3>
+<table id="mapList" class="default_table" style="width : 60%;">
+<tr><th>Primary system</th><th>Secondary system</th><th></th></tr>
+</table>
+
+
+[% INCLUDE 'footer.html' %]
+
+
+
+[% BLOCK list_users %]
+[% IF primary;
+	SET input_name = "prim_users";
+  ELSE;
+  	SET input_name = "sec_users";
+  END
+%]
+
+<div class="userList" 
+	[% IF primary %]id="primaryList"[% END %] style="[% position %]">
+	<h3>[% IF primary; 
+			"Primary system"; 
+		ELSE; 
+			"User system #$sec_sys_id"; 
+		END %]</h3>
+<div class="checklist_outer" style="max-width : 100%;">
+<div class="checklist_inner
+[% IF primary;
+	" prim";
+   ELSE;
+   	" sec";
+   END; %]
+" style="min-height : 300px; max-height : 300px; width : 20em;">
+
+[% FOREACH usr IN user_list %]
+	<label for="field_[% input_name %]_[% usr | html %]" [% IF mapped.$usr %]style="display : none;"[% END %]>
+	<input type="radio" id="field_[% input_name %]_[% usr | html %]"
+		name="[% input_name %]" value="[% usr | html %]" />[% usr | html %]
+	</label>
+[% END %]
+	</div>
+</div>
+</div>
+[% END %]

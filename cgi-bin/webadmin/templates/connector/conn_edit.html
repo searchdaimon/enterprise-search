@@ -1,7 +1,7 @@
 [% WRAPPER 'header.html' 
     title = 'Connector extension - Modify and test' 
     extra_css = ['connector'] 
-    extra_js = ['jquery', 'ui.core', 'ui.tabs', 'connector'] 
+    extra_js = ['jquery', 'ui.core', 'ui.tabs', 'connector', 'utils'] 
 %]
 
 [% USE HTML %]
@@ -195,11 +195,7 @@
         $.ajax(params);
     }
 
-    function colorParamTable() {
-        $("#paramTable tbody tr:odd").addClass("odd");
-        $("#paramTable tbody tr:even").removeClass("odd");
-    }
-
+    function colorParamTable() { colorTable('paramTable'); }
 
 
     // Testing
@@ -359,6 +355,11 @@ function activateApplyBtn() {
                     coll_data[$(obj).attr('name')] = $(obj).val();
                 });
 
+		// password fields
+                $.each($('[@name^="share"]:password'), function (index, obj) { 
+                    coll_data[$(obj).attr('name')] = $(obj).val();
+                });
+
                 // radio buttons
                 $.each($('[@name^="share"]:radio:checked'), function (index, obj) {
                     coll_data[$(obj).attr('name')] = $(obj).val();
@@ -402,12 +403,14 @@ function activateApplyBtn() {
 [% PROCESS 'tpl_msg.html' type="error" id="errorBox" style="display : none" %]
 [% PROCESS 'tpl_msg.html' type="success" id="succsBox" style="display : none" %]
 
-    <h1 id="connHeading">Connector [% conn.name %]</h1>
+    <h1 id="connHeading">Connector [% conn.name %] [% '(read only)' IF conn.read_only %]</h1>
 
 <div id="connContainer">
     <ul>
+	[% UNLESS conn.read_only %]
         <li><a href="#upload"><span>Upload source</span></a></li>
-        <li><a href="#edit"><span>Edit source</span></a></li>
+	[% END %]
+        <li><a href="#edit"><span>[% IF conn.read_only; 'View'; ELSE; 'Edit'; END %] source</span></a></li>
         <li><a href="#save"><span>Settings and parameters</span></a></li>
         <li>&nbsp;&nbsp;</li>
         <li><a href="#configure"><span>Configure test collection</span></a></li>
@@ -415,18 +418,18 @@ function activateApplyBtn() {
     </ul>
     <img src="file.cgi?i=jqueryloader&amp;ext=gif&amp;size=other" alt="loading" id="loading" />
 
-    [% process upload %]
-    [% process edit %]
-    [% process save %]
-    [% process configure %]
-    [% process test_run %]
+    [% PROCESS upload UNLESS conn.read_only %]
+    [% PROCESS edit %]
+    [% PROCESS save %]
+    [% PROCESS configure %]
+    [% PROCESS test_run %]
 
 </div>
 
-[% include 'footer.html' %]
+[% INCLUDE 'footer.html' %]
 
 
-[% block upload %]
+[% BLOCK upload %]
 <div class="connectorBlock" id="upload">
     <h3>Upload</h3>
     <form method="post" enctype="multipart/form-data" action="connector.cgi">
@@ -439,26 +442,33 @@ function activateApplyBtn() {
     </form>
 
 </div>
-[% end %]
+[% END %]
 
-[% block edit %]
+[% BLOCK edit %]
 
 <div class="connectorBlock" id="edit">
-    <h3>Edit</h3>
+    	<h3>
+		[% IF conn.read_only; 'View'; ELSE; 'Edit'; END %] source
+	</h3>
     <p>
         <textarea id="editCode" rows="15" cols="80" style="width : 100%; height : 30em;">[% conn.source %]</textarea>
     </p>
+    [% UNLESS conn.read_only %]
     <p>
         <button id="sourceBtn">Save</button>&nbsp;
         <button id="sourceRunBtn">Save and run</button>
     </p>
+    [% END %]
 </div>
 
-[% end %]
+[% END %]
 
-[% block save %]
+[% BLOCK save %]
 
-    [% dont_show => { crawling => 1, connector => 1, collection => 1, custom_parameters => 1, advanced => 1 } %]
+    [% dont_show => { 	
+			crawling => 1, connector => 1, collection => 1, custom_parameters => 1, 
+			advanced => 1, customize_filters => 1, customize_ranking => 1, customize_summary => 1,
+			test_crawl => 1} %]
 
 <div class="connectorBlock" id="save">
 
@@ -466,11 +476,13 @@ function activateApplyBtn() {
     <table class="inputTable">
     <tr>
         <td>Name</td>
-        <td><input type="text" id="saveName" value="[% HTML.escape(conn.name) %]" />&nbsp;<button id="saveNameBtn">Update</button></td>
+        <td><input type="text" id="saveName" value="[% HTML.escape(conn.name) %]" [% 'disabled="disabled"' IF conn.read_only %]
+		/>[% UNLESS conn.read_only %]&nbsp;<button id="saveNameBtn">Update</button>[% END %]</td>
     </tr>
     <tr>
         <td>Ready for use?</td>
-        <td><input type="checkbox" id="saveActive" [% if conn.active %]checked="checked"[% end %] class="saveTrigger" /></td>
+        <td><input type="checkbox" id="saveActive" [% IF conn.active %]checked="checked"[% END %] class="saveTrigger" 
+		[% IF conn.read_only %] disabled="disabled" [% END %]/></td>
     </tr>
     </table>
 
@@ -479,15 +491,16 @@ function activateApplyBtn() {
         Input fields:
         <div class="checklist_outer" style="margin-top : 0.5em;">
 	<div class="checklist_inner" id="userList">
-	[% FOREACH field IN field_list.keys.sort # from template_edit_collection %]
-            [% NEXT if dont_show.$field %]
+	[% # from template_edit_collection
+	   FOREACH field IN field_list.keys.sort %]
+            [% NEXT IF dont_show.$field %]
             <label for="field_[% field %]">
 					
                 [% SET field_esc = field.escape %]
 		<input name="field.[% field %]" type="checkbox" id="field_[% field %]" class="saveTrigger"
-		    [% IF conn.input_fields.grep("^$field_esc$").0 %]
-                        checked="checked"
-                    [% END %]
+		    [% 'checked="checked"' IF conn.input_fields.grep("^$field_esc$").0 %]
+		    [% 'disabled="disabled"' IF conn.read_only %]
+
 					value="[% field %]"
 		/> [% field %]
 	    </label>
@@ -503,44 +516,52 @@ function activateApplyBtn() {
     <table class="inputTable">
     <tr>
         <td>Parameter name</td>
-        <td><input id="newParamName" style="width : 120px;" type="text" /></td>
+        <td><input id="newParamName" style="width : 120px;" type="text" 
+		    [% 'disabled="disabled"' IF conn.read_only %]
+		/></td>
     </tr>
     <tr>
         <td>Example text</td>
-        <td><input id="newParamExample" style="width : 230px;" type="text" /></td>
+        <td><input id="newParamExample" style="width : 230px;" type="text" 
+		    [% 'disabled="disabled"' IF conn.read_only %]
+	/></td>
     </tr>
     </table>
-    <button id="addParamBtn">Add parameter</button>
+    <button id="addParamBtn" 
+		    [% 'disabled="disabled"' IF conn.read_only %]
+    	>Add parameter</button>
     </div>
     
 
     <table id="paramTable" class="default_table" [% IF !params.size %]style="display : none;"[% END %] >
         <tr><th>Parameter</th><th>Example</th><th></th></tr>
-    [% foreach p in params %]
+    [% FOREACH p IN params %]
         <tr id="param_row_[% p.id %]">
             <td>[% HTML.escape(p.param) %]</td>
             <td><em>[% HTML.escape(p.example) %]</em></td>
             <td style="text-align : right;">
                 <button 
-                        onclick="return delParam([% HTML.escape(p.id) %])">
+                        onclick="return delParam([% HTML.escape(p.id) %])"
+		   	[% 'disabled="disabled"' IF conn.read_only %]
+			>
                         Remove
                 </button>
             </td>
         </tr>
-    [% end %]
+    [% END %]
     </table>
 
     </div>
-[% end %]
+[% END %]
 
-[% block configure %]
+[% BLOCK configure %]
 <div class="connectorBlock" id="configure">
     <img src="file.cgi?i=jqueryloader&amp;ext=gif&amp;size=other" alt="loading" id="cfgLoading" />
     <div id="configureInner"></div>
 </div>
-[% end %]
+[% END %]
 
-[% block test_run %]
+[% BLOCK test_run %]
 <div class="connectorBlock" id="run">
     <h3>Test</h3>
     <p>
@@ -556,7 +577,7 @@ function activateApplyBtn() {
             <pre>Output from run will be visible here.</pre></div>
     </div>
 </div>
-[% end %]
+[% END %]
 
 
 

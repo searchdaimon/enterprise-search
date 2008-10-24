@@ -59,6 +59,12 @@ $CONFIG{'phone_home_path'} = $ENV{'BOITHOHOME'} . "/bin/setuidcaller";
 # Scan, to generate ip list from ranges (not a SD developed utility)
 $CONFIG{'genip_path'} = $ENV{BOITHOHOME} . "/Modules/Boitho/Scan/genip/genip";
 
+# Lists all collections (also those not in db)
+$CONFIG{list_collections_path} = $ENV{BOITHOHOME} . "/bin/list_collections";
+
+# Fetch info from license key.
+$CONFIG{slicense_info_path} = $ENV{BOITHOHOME} . "/bin/slicense_info";
+
 # Group: Settings
 
 # Values that are shown as "default values" under advanced settings.
@@ -164,6 +170,14 @@ $CONFIG{'activate_url'} = "http://dagurval.boitho.com/cgi-bin/license_auth/custo
 # File to store license in
 $CONFIG{'license_file'}   = $ENV{'BOITHOHOME'} . "/config/bb_license";
 $CONFIG{'signature_file'} = $ENV{'BOITHOHOME'} . "/config/bb_signature";
+
+
+# Group: User systems
+$CONFIG{user_systems} = {
+	1 => "Active Directory",
+	2 => "Super Office",
+	3 => "Lightweight Directory Access Protocol (LDAP)"
+};
 
 
 $CONFIG{connector_src_skeleton} = q|

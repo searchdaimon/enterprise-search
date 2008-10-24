@@ -6,7 +6,7 @@ use Carp;
 use Readonly;
 use File::Path qw(rmtree mkpath);
 use Data::Dumper;
-use Params::Validate qw(validate_pos OBJECT);
+use Params::Validate qw(validate_pos OBJECT SCALAR ARRAYREF);
 
 use Page::Connector;
 our @ISA = qw(Page::Connector);
@@ -20,13 +20,17 @@ Readonly::Array my @CHRS
 Readonly::Scalar my $TPL_LIST => 'conn_list.html';
 Readonly::Scalar my $TPL_EDIT => 'conn_edit.html';
 Readonly::Scalar my $TPL_DEL  => 'conn_del.html';
+Readonly::Scalar my $CONN_CLONE_TPL => "Copy_%d_of_%s";
 
 ##
 # Show list of connectors
 sub show_list {
     my ($s, $tpl_vars) = @_;
-    $tpl_vars->{connectors} = 
-        [ $s->{sql_conn}->get({extension => 1}, '*', 'name') ];
+    $tpl_vars->{sd_connectors}
+        = [ $s->{sql_conn}->get({extension => 1, read_only => 1}, '*', 'name') ];
+
+    $tpl_vars->{local_connectors}
+        = [ $s->{sql_conn}->get({extension => 1, read_only => 0}, '*', 'name') ];
     
     $TPL_LIST;
 }
@@ -37,6 +41,8 @@ sub show_delete {
     my ($s, $tpl_vars, $id) = @_;
     $s->{sql_conn}->is_extension($id)
         or croak "'$id' is not a connector extension";
+    not $s->{sql_conn}->is_readonly($id)
+    	or croak "'$id' is read only";
 
     
     # check if has collections
@@ -58,6 +64,8 @@ sub delete {
     eval {
         croak "Connector extension '$id' does not exist."
             unless $s->{sql_conn}->is_extension($id);
+	croak "Connector '$id' is read only"
+		if $s->{sql_conn}->is_readonly($id);
         
         $s->del_test_collection($id);
         
@@ -98,26 +106,79 @@ sub show_edit {
     $TPL_EDIT;
 }
 
-sub create_new {
-    my $s = shift;
+sub new_connector {
+	my $s = shift;
 
-    my $name = "connector";
-    $name .= $CHRS[int rand @CHRS] for 1..6;
+	my $name = "New_connector_";
+	$name .= $CHRS[int rand @CHRS] for 1..6;
 
-    mkpath("$CONFIG{conn_base_dir}/$name");
-    open my $fh, ">", sprintf $Page::Connector::SOURCE_TPL, "\Q$name\E"
-        or croak "Unable to create main.pm: ", $!;
-    print {$fh} $CONFIG{connector_src_skeleton};
-    close $fh;
+	return $s->create($name, 
+			$CONFIG{connector_src_skeleton}, 
+			join ",", @Page::Connector::REQ_INPUT_FIELDS);
+}
 
-    my $id = $s->{sql_conn}->insert({ 
-        name => $name, 
-        extension => 1, 
-        active => 0,
-        inputFields => join(", ", @Page::Connector::REQ_INPUT_FIELDS),
-        }, 1);
+sub create {
+	validate_pos(@_, 1, {type => SCALAR}, {type => SCALAR}, {type => SCALAR}, 0);
+	my ($s, $name, $src_content, $input_fields, $param_ref) = @_;
 
-    return $id;
+	mkpath("$CONFIG{conn_base_dir}/$name");
+	open my $fh, ">", sprintf $Page::Connector::SOURCE_TPL, "\Q$name\E"
+		or croak "Unable to create main.pm: ", $!;
+	print {$fh} $src_content;
+	close $fh;
+
+	my $id = $s->{sql_conn}->insert({ 
+			name => $name, 
+			extension => 1, 
+			active => 0,
+			read_only => 0,
+			inputFields => $input_fields,
+			}, 1);
+
+	return $id;
+}
+
+sub clone {
+	my ($s, $id) = @_;
+
+	# Fetch other connector
+	$s->{sql_conn}->is_extension($id)
+		or croak "'$id' is not a connector extension";
+
+	my $to_clone = $s->{sql_conn}->get({ id => $id })
+		or croak "Connector '$id' does not exist";
+	$to_clone->{extension} 
+		or croak "Connector '$id' is not an extension";
+
+	my @params = $s->{sql_param}->get(
+		{ connector => $id }, 
+		['param', 'example']
+	);
+
+	# New name
+	my $copy_nmbr = 1;
+	my $new_name;
+	do {
+		$new_name = sprintf($CONN_CLONE_TPL, 
+			$copy_nmbr++, 
+			$to_clone->{name}
+		);
+	} while $s->{sql_conn}->exists({ name => $new_name });
+
+	# Create clone
+	my $src_content = $s->read_source($to_clone->{name});
+	my $clone_id = $s->create($new_name, 
+		   $s->read_source($to_clone->{name}),
+		   $to_clone->{inputFields}
+	);
+
+	# Add params
+	for my $param_ref (@params) {
+		$param_ref->{connector} = $clone_id;
+		$s->{sql_param}->insert($param_ref);
+	}
+
+	return $clone_id;
 }
 
 
@@ -127,8 +188,10 @@ sub upload_source {
 
     $s->{sql_conn}->is_extension($conn_id)
         or croak "'$conn_id' is not a connector extension";
-        
 
+    not $s->{sql_conn}->is_readonly($conn_id)
+        or croak "'$conn_id' is read only";
+        
     my %conn = %{ $s->{sql_conn}->get({id => $conn_id}) };
     croak "No data for connector '$conn_id'"
         unless %conn;

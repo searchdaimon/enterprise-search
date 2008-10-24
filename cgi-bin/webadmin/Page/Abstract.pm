@@ -14,12 +14,13 @@ use config qw(%CONFIG);
 
 my %DEF_TPL_OPT = (
     INCLUDE_PATH => './templates:./templates/common',
-    ANYCASE => 1,
+    #ANYCASE => 1,
     COMPILE_EXT => 'ctt',
     COMPILE_DIR => $CONFIG{tpl_tmp},
 );
 my %TPL_SCALAR_FUNC = (
-    escape => sub { "\Q$_[0]\E" }   
+    escape => sub { "\Q$_[0]\E" },
+    cgi_escape => sub { CGI::escape($_[0]) },
 );
 
 my $dbh;

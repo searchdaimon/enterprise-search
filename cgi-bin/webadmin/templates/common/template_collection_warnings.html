@@ -20,14 +20,14 @@
 		type = 'error' %]
 		You forgot to enter hostname.
 	[% END %]
-[% ELSIF error_missing_share %]
-	[% WRAPPER 'template_message.html' 
-		type = 'error' %]
-		You forgot to enter what to crawl.
-	[% END %]
 [% ELSIF error_collection_not_exist %]
 	[% WRAPPER 'template_message.html'
 		type = 'error' %]
 		There doesn't exist a collection with that name.
 	[% END %]
+[% ELSIF coll_error %]
+	[% WRAPPER 'tpl_msg.html' type='error' %][% coll_error %][% END %]
+[% END %]
+[% IF coll_succs %]
+	[% WRAPPER 'tpl_msg.html' type='success' %][% coll_succs %][% END %]
 [% END %]

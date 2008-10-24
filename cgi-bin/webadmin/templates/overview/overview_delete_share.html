@@ -1,10 +1,17 @@
 [% INCLUDE 'header.html' title='Delete collection' %]
 [% USE HTML %]
 
+[% IF push_del %]
+	[% SET act = 'confirm_push_del' %]
+[% END %]
+	
 [% WRAPPER 'template_delete.html' 
+	act_name = act
 	it = collection_name
 	form = 'overview.cgi' %]
-
+	[% IF push_del %]
+		<input type="hidden" name="coll" value="[% HTML.escape(collection_name) %]" />
+	[% END %]
 	Are you sure you want to delete [% HTML.escape(collection_name) %]?
 [% END %]
 

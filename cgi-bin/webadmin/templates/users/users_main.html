@@ -1,29 +1,89 @@
-[% INCLUDE 'header.html' title='End users' %]
+[% WRAPPER 'header.html' title='End users' extra_js=['jquery'] %]
+<script type="text/javascript">
+	function check_all_users(checked) {
+		checked ? $("#usr_list input").attr("checked", "checked")
+			: $("#usr_list input").removeAttr("checked");
+	}
+</script>
+[% END %]
+[% PROCESS 'common_widgets.html' %]
 
 [% #Main page for users.cgi %]
 
 <h2>End users</h2>
 
-[% WRAPPER 'template_description.html' %]
-	System has a total of [% users.size %] users.
+[% WRAPPER 'template_description.html' style="margin-bottom : 0.5em;" %]
+	Search activated for [% activated_users %] out of a total of [% users.size %] system users. 
+	[% IF licensed_users %]
+		Your Black box license covers [% licensed_users %] users.
+	[% ELSE %]
+		You do not have license for any users on this system.
+	[% END %]
+[% END %]
+[% IF !error && licensed_users < activated_users %]
+	[% SET too_many = activated_users - licensed_users %]
+	[% SET error = "You have too many activated users. Current license covers $licensed_users users.
+		Search access will be <strong>disabled for $too_many users</strong>."
+	%]
 [% END %]
 
-[% WRAPPER 'template_table.html' 
-	header = ['', 'Username'] %]
-	[% FOREACH username IN users %]
+[% IF error %]
+	[% PROCESS 'tpl_msg.html' type="error" content = error %]
+[% END %]
+
+<form method="post" action="users.cgi">
+<input type="hidden" name="upd_usr_access" value="1" />
+[% PROCESS pretty_button
+        text = "Update user access"
+	icon = "kdmconfig"
+	no_form = 1
+%]
+   
+
+[% WRAPPER 'template_table.html' id="usr_list"
+	header = ['', 'Username', 'Blackbox search access'] style="width : 50%; margin-top : 1em; clear : both;" %]
+	[% i = 0 %]
+	[% FOREACH usr IN users %]
 		[% color = 1 - color %]
 		[% WRAPPER 'template_table_row.html' %]
 		
-		<td>
-			<img src="file.cgi?i=personal" alt="" />
+		<td style="width : 24px;">
+			<img src="file.cgi?i=personal&amp;size=22x22" alt="" />
 		</td>
 		<td>
-			<a href="users.cgi?user=[% username %]">[% username %]</a>
+			<a href="users.cgi?user=[% usr.username %]">[% usr.username | html %]</a>
+		</td>
+		<td>
+			<input name="users[[% i %]]" value="[% usr.username | html %]" type="checkbox" [% IF usr.active %]checked="checked"[% END %] />
 		</td>
 		
 		[% END %]
+		[% i = i + 1 %]
+	[% END %]
+	[% FOREACH username IN unknown_active %]
+		[% WRAPPER 'template_table_row.html' disabled = 1 %]
+			<td>
+				<img src="file.cgi?i=personal_disabled&amp;size=22x22" alt="" />
+			</td>
+			<td>[% username | html %] <em>(unknown user)</em></td>
+			<td>
+				<input name="users[[% i %]]" value="[% username | html %]" type="checkbox" checked="checked" />
+			</td>
+		[% END %]
+		[% i = i + 1 %]
 	[% END %]
 [% END %]
+<ul class="vertical_buttons">
+	<li><a href="javascript:check_all_users(true);">Select all</a></li>
+	<li><a href="javascript:check_all_users(false);">Select none</a></li>
+</ul>
 
+[% PROCESS pretty_button
+        text = "Update user access"
+	style = "margin-top : 1em;"
+	icon = "kdmconfig"
+	no_form = 1
+%]
+</form>
 
 [% INCLUDE 'footer.html' %]

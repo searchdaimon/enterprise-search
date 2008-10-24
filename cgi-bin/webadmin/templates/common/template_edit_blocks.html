@@ -4,6 +4,15 @@
 %]
 
 [% USE HTML %]
+
+[%# HTML form helpers %]
+[% BLOCK cb %]
+		<input type="checkbox" name="[% prefix %].[% key %]" [% IF id %]id="[% id %]"[% END %]
+			[% IF share.$key %] checked="checked" [% END %] /> 
+[% END %]
+
+
+
 [% rates = [
 	{ 'Every 5 minutes' => '5' },
 	{ 'Every 15 minutes' => '15' },
@@ -78,6 +87,8 @@
 			[% UNLESS share.auth_id %] value="[% share.password %]"[% END %] />
 		</div>
 	</div>
+
+	<p><em>Leave authentication values blank if no authentication is required.</em></p>
 		
 
 	</div>
@@ -98,7 +109,7 @@
 				<input name="share.groups[[% i %]]" type="checkbox" id="group[% i %]"
 						value="[% group %]"
 						[% IF share.groups.grep("^$group$").0 %]
-							[% # Check if share is a member of this group %]
+							[%# Check if share is a member of this group %]
 							checked="checked"
 						[% END %]
 						 /> [% group %]
@@ -147,21 +158,22 @@
 [% END %]
 
 [% BLOCK rate %]
-	<div class="block_default" style="height : 17em;">
+	<div class="block_default">
 	Recrawl every:
 	<div class="block_inner">
-		<input type="radio" value="" name="[% prefix %].rate"
-		[% UNLESS share.rate %] checked="checked" [% END %] />
-			(Default rate)<br /> [% # TODO: Show default rate %]
+		<select name="[% prefix %].rate">
+		<option value=""
+		[% UNLESS share.rate %] selected="selected" [% END %]>
+			(Default rate)</option>
 	[% FOREACH r IN rates %]
 		[% text = r.keys.0 %]
 		[% minutes = r.values.0 %]
-		
-		<input type="radio" value="[% minutes %]" name="[% prefix %].rate" id="[% prefix %].rate.[% minutes %]"
+		<option value="[% munutes %]" 
 			[% IF share.rate == minutes %] 
-				checked="checked" 
-			[% END %] /> <label for="[% prefix %].rate.[% minutes %]">[% text %]</label><br />
+				selected="selected"
+			[% END %]>[% text %]</option>
 	[% END %]
+		</select>
 	</div>
 	
 	</div>
@@ -173,10 +185,34 @@
 	Full crawl: 
 	<div class="block_inner" >
 		
-		<input type="submit" name="advanced.full_recrawl.submit" value="Force full crawl now" />
-		<input type="hidden" name="advanced.full_recrawl.id" value="[% id %]" />
+		<input type="hidden" name="id" value="[% id %]" />
+		<input type="hidden" name="action" value="recrawl" />
+		<input type="submit" value="Force full crawl now" />
+
 		
 	</div>
+	</div>
+[% END %]
+
+[% BLOCK test_crawl %]
+	<p style="font-size : x-small;">
+		For crawling a limited number of documents. The crawled<br />
+		documents will be added to index, thus searchable.
+	</p>
+	<div class="block_default">
+	Documents to crawl:
+		<div class="block_inner" >
+			<input type="text" name="num_docs" value="[% num_docs || 100 %]" /> 
+		</div>
+	</div>
+	<div class="block_default">&nbsp;
+		<div class="block_inner" >
+
+		<input type="hidden" name="id" value="[% id %]" />
+		<input type="hidden" name="action" value="test_crawl" />
+		<input type="submit" value="Start test crawl" />
+		
+		</div>
 	</div>
 [% END %]
 
@@ -198,29 +234,29 @@
 
 [% BLOCK user_select %]
     <div class="block_default">
-        <div style="block_inner" >
-        <div class="checklist_outer">
-        <div class="checklist_inner" id="userList">
-        [% i = 0 %]
-        [% FOREACH user IN user_list %]
+	<div style="block_inner" >
+	<div class="checklist_outer">
+	<div class="checklist_inner" id="userList">
+	[% i = 0 %]
+	[% FOREACH user IN user_list %]				
 
              [% SET regex_user = user.escape %]
-             [% # remove SID
-                SET display_user = user.remove(':S(-\d+)+$') %]
-            <label for="user[% i %]">
+	     [% # remove SID
+	     	SET display_user = user.remove(':S(-\d+)+$') %]
+           <label for="user[% i %]">
+					
 
-
-                <input name="share.users[[% i %]]" type="checkbox" id="user[% i %]"
-                    [% IF share.users.grep("^$regex_user$").0 %]
+		<input name="share.users[[% i %]]" type="checkbox" id="user[% i %]"
+		    [% IF share.users.grep("^$regex_user$").0 %]
                         checked="checked"
                     [% END %]
-                                        value="[% HTML.escape(user) %]"
-                /> [% HTML.escape(display_user) %]
-
-            </label>
-            [% i = i + 1 %]
-        [% END %]
-        </div></div>
+					value="[% HTML.escape(user) %]"
+		/> [% HTML.escape(display_user) %]
+						
+	    </label>
+	    [% i = i + 1 %]
+	[% END %]
+	</div></div>
         <a href="javascript:void" onclick="set_checked('user', true)">select all</a> &nbsp;
         <a href="javascript:void" onclick="set_checked('user', false)">unselect all</a>
         </div>
@@ -230,7 +266,6 @@
 [% BLOCK parameters %]
     [% IF parameters.size %]
         [% FOREACH p IN parameters %]
-        
         <div class="block_default" style="margin-top : 0.5em;">
             [% SET param = p.param %]
             [% HTML.escape(param) %]
@@ -247,3 +282,120 @@
         No custom parameter defined.
     [% END %]
 [% END %]
+
+[% BLOCK customize_summary %]
+	<div class="block_default">
+		<label for="sSnippet">
+		<input type="radio" name="[% prefix %].summary" value="snippet" id="sSnippet"
+			[% IF share.summary == "snippet" %] checked="checked" [% END %] /> 
+			Generate snippet</label>
+		<label for="sStart">
+		<input type="radio" name="[% prefix %].summary" value="start" id="sStart"
+			[% IF share.summary == "start" %] checked="checked" [% END %] />
+			First setences of a document
+		</label>
+	</div>
+[% END %]
+
+[% BLOCK customize_cache %]
+	<div class="block_default">
+		<label for="sCache">
+		<input type="checkbox" name="[% prefix %].cache_link" id="sCache"
+			[% IF share.cache_link %] checked="checked" [% END %] />
+			Show cache link</label>
+	</div>
+[% END %]
+
+
+[% BLOCK customize_filters %]
+	<div class="block_default">
+	<table><tr>
+		<td><label for="fSameUrl">Filter documents with same url?</label></td>
+		<td>[% PROCESS cb key = "filter_same_url" id="fSameUrl" %]</td>
+		</tr>
+
+		<tr>
+		<td><label for="fSameDomain">Filter documents on same domain?</label></td>
+		<td>[% PROCESS cb key = "filter_same_domain" id="fSameDomain" %]</td>
+		</tr>
+
+		<tr>
+		<td><label for="fSameTLD">Filter top level domains?</label></td>
+		<td>[% PROCESS cb key = "filter_TLDs" id="fSameTLD" %]</td>
+		</tr>
+
+		<tr>
+		<td><label for="fResponse">Filter response?</label></td>
+		<td>[% PROCESS cb key = "filter_response" id="fResponse" %]</td>
+		</tr>
+
+		<tr>
+		<td><label for="fDuplicates">Filter duplicates?</label></td>
+		<td>[% PROCESS cb key = "filter_same_crc32" id="fDuplicates" %]</td>
+
+	</tr></table>
+	</div>
+[% END %]
+
+[% BLOCK txt %]
+	<input type="text" name="[% prefix %].[% key %]" value="[% share.$key %]" style="[% style %]" />
+[% END %]
+
+[% BLOCK customize_ranking %]
+<div class="block_default">
+	[% WRAPPER 'template_message.html' type="discreet_info" style="float : left;" id=""%]
+		Leave fields blank to reset to default values.
+	[% END %]
+	<table style="clear : left;">
+	<tr>
+		<td>Author score</td>
+		<td>[% PROCESS txt key = "rank_author_array" %]
+			<span class="example">(Multiple values. Example: 1, 2)</span>
+		</td>
+	</tr>
+	<tr>
+		<td>Title score</td>
+		<td>[% PROCESS txt key = "rank_title_array" %]
+			<span class="example">(Multiple values. Example: 15, 14)</span>
+		</td>
+	</tr>
+
+	<tr>
+		<td>First word of title</td>
+		<td>[% PROCESS txt key = "rank_title_first_word" style="width : 2em;" %]
+			<span class="example">(Single values. Example: 25)</span></td>
+	</tr>
+
+	<tr>
+		<td>Headers score</td>
+		<td>
+			[% PROCESS txt key="rank_headline_array" style="" %]
+			<span class="example">(Multiple values. Example: 4, 6, 7, 8)</span>
+		</td>
+	</tr>
+
+	<tr>
+		<td>Content score</td>
+		<td>[% PROCESS txt key = "rank_body_array"  %]
+			<span class="example">(Multiple values. Example: 1,2,4,7,9)</span>
+		</td>
+	</tr>
+
+	<tr>
+		<td>URL score</td>
+		<td>[% PROCESS txt key = "rank_url_array" %]
+			<span class="example">(Multiple values. Example: 5, 4)</span>
+		</td>
+	</tr>
+
+	<tr>
+		<td>Linked to word</td>
+		<td>[% PROCESS txt key = "rank_url_main_word" style="width : 2em;" %]
+			<span class="example">(Single value. Example: 30)</span>
+		</td>
+	</tr>
+	</table>
+</div>
+
+[% END %]
+

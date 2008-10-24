@@ -44,11 +44,37 @@
 	    blocks = ['user_prefix'],
 	    icon = 'xedit'
         },
-        custom_parameters => {
-            header => 'Custom parameters',
-            blocks => ['parameters'],
-            icon   => 'kdmconfig'
-        }
+		custom_parameters => {
+			header => "Custom parameters",
+			blocks => ['parameters'],
+			icon   => 'kdmconfig',
+		},
+		customize_summary => {
+			header => 'Summary',
+			blocks => ['customize_summary'],
+			icon   => 'contents',
+		},
+		customize_cache => {
+			header => 'Cache',
+			blocks => ['customize_cache'],
+			icon => 'cache',
+		},
+		customize_filters => {
+			header => 'Filters',
+			blocks => ['customize_filters'],
+			icon   => 'filter',
+		},
+		customize_ranking => {
+			header => 'Ranking',
+			blocks => ['customize_ranking'],
+			icon   => 'sort_az',
+		},
+
+	test_crawl => {
+		header => 'Test crawl',
+		blocks => ['test_crawl'],
+		icon => 'kdmconfig'
+	}
     }
 %]
 
@@ -74,7 +100,7 @@
 [% BLOCK sub_fields %]
 <div class="connector_block">
 	<h3>[% header %]</h3>
-	<img src="file.cgi?i=[% icon %]" alt="" />
+	<img src="file.cgi?i=[% icon %]" alt="" style="margin-left : 0.5em;" />
 	<div class="connector_block_inner">
 	
 	[% FOREACH b IN blocks %]

@@ -1,0 +1,18 @@
+[% BLOCK pretty_button %]
+    <div class="pretty_button" style="[% style %]">
+        <img src="file.cgi?i=[% icon %]&amp;size=32x32" alt="" />
+	[% UNLESS no_form %]
+        	<form action="[% action %]" method="[% method || "get" %]">
+	[% END %]
+        [% IF view %]
+            <input type="hidden" name="view" value="[% view %]" />
+        [% END %]
+        <input type="submit" 
+            value="[% text %]"
+            name="[% name %]" />
+        
+	[% UNLESS no_form %]
+		</form>
+	[% END %]
+    </div>
+[% END %]

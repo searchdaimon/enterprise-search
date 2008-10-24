@@ -213,22 +213,26 @@ sub construct_update_query {
 #
 # Returns:
 #	sth - Statement
+my %sth_cache;
 sub _prepare_and_execute {
 	my $self = shift;
 	my $query = shift;
 	my @binds = @_;
-	my $dbh = $self->{'dbh'};
-	my $sth = $dbh->prepare($query)
-		or croak "Pepare: ", $dbh->errstr;
-
+	my $sth = $sth_cache{$query};
+	if (!$sth) {
+		$sth = $self->{dbh}->prepare($query)
+			or confess "Prepare: ", $self->{dbh}->errstr;
+		$sth_cache{$query} = $sth;
+	}
+	#warn $query;
 	
 	my $rv = $sth->execute(@binds)
-		or croak "Execute: ", $dbh->errstr;
+		or croak "Execute: ", $self->{dbh}->errstr;
 	return $sth;
 }
 
 # Generic functions to subclass.
-my $abstr = SQL::Abstract->new;
+my $abstr = SQL::Abstract->new();
 sub exists {
     validate_pos(@_, 1, 1, {type => SCALAR }, { type => HASHREF });
     my ($s, $tbl, $column, $where) = @_;
@@ -238,8 +242,10 @@ sub get {
     validate_pos(@_, 1, { type => SCALAR }, { type => HASHREF }, 0, 0);
     my ($s, $tbl, $where, $what, $order) = @_;
     $what ||= '*';
-    $s->sql_hashref(
-        $abstr->select($tbl, $what, $where, $order));
+    my ($q, @binds) = $abstr->select($tbl, $what, $where, $order);
+    #warn Dumper([$q, @binds]);
+    $s->sql_hashref($q, @binds);
+        
 }
 sub insert {
     validate_pos(@_, 1, { type => SCALAR }, { type => HASHREF }, 0);

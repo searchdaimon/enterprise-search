@@ -1,0 +1,40 @@
+#apiMsg {
+	position : absolute;
+	top : 0;
+	left : 0em;
+	color : #333333;
+	margin-left : 30em;
+
+}
+
+.userList {
+ 	position : absolute; 
+	width : 20em;
+	padding: 0.5em 1em 1em 1em;
+}
+
+.userList h3 { padding : 0; margin : 0; }
+
+#primaryList {
+	margin-left : -1em;;
+}
+
+#actBtnList {
+	list-style-type : none;
+	margin-left : 0.0em; 
+	padding : 0.5em;
+	background : #f2f2f2;
+	width : 42em;
+}
+#actBtnList li {
+	display : inline;
+	margin-right : 0.5em;
+}
+
+#loading {
+    /*float : right; 
+    padding : 1em; */
+    display : none; 
+}
+
+
