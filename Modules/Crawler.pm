@@ -56,5 +56,10 @@ sub normalize_http_url {
 	return SD::Crawl::htttp_url_normalization($url);
 }
 
+sub continue {
+	my $self = shift;
+	return SD::Crawl::pdocumentContinue($self->{ptr});
+}
+
 1;
 
