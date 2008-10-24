@@ -2091,8 +2091,7 @@ void connectHandler(int socket) {
 			sql_connect(&db);
 			us = get_usersystem(&db, usersystem, &data);
 
-			printf("Is primary: %d\n", data.is_primary);
-
+			n_groups = 1;
 			if (!data.is_primary)  {
 				char query[1024];
 				size_t querylen;
@@ -2104,27 +2103,29 @@ void connectHandler(int socket) {
 
 				if (mysql_real_query(&db, query, querylen)) {
 					blog(LOGERROR, 1, "Mysql error: %s", mysql_error(&db));
-				}
-
-				res = mysql_store_result(&db);
-				row = mysql_fetch_row(res);
-				if (row == NULL) {
-					blog(LOGERROR, 1, "Unable to fetch mysql row at %s:%d",__FILE__,__LINE__);
+				} else {
+					res = mysql_store_result(&db);
+					row = mysql_fetch_row(res);
+					if (row == NULL) {
+						blog(LOGERROR, 1, "Unable to fetch mysql row at %s:%d",__FILE__,__LINE__);
+						n_groups = 0;
+					} else {
+						strlcpy(secnduser, row[0], sizeof(secnduser));
+					}
 					mysql_free_result(res);
 				}
-
-				strlcpy(secnduser, row[0], sizeof(secnduser));
-				mysql_free_result(res);
 			} else {
 				strlcpy(secnduser, user, sizeof(secnduser));
 			}
 
-			if (us != NULL) {
-				n_groups = 0;
-				(us->us_listGroupsForUser)(&data, secnduser, &groups, &n_groups);
-				printf("Got %d groups for user %s\n", n_groups, user);
-			} else {
-				n_groups = 0;
+			if (n_groups) {
+				if (us != NULL) {
+					n_groups = 0;
+					(us->us_listGroupsForUser)(&data, secnduser, &groups, &n_groups);
+					printf("Got %d groups for user %s\n", n_groups, user);
+				} else {
+					n_groups = 0;
+				}
 			}
 			gettimeofday(&te, NULL);
 			printf("grepme Took: %f\n", getTimeDifference(&ts, &te));
