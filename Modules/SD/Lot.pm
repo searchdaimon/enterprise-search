@@ -8,10 +8,10 @@ use strict;
 use warnings;
 
 sub new {
-	validate_pos(@_, 1, { regex => qr(^\d+$) }, 0);
-	my ($class, $lot_nr, $subname) = @_;
+	validate_pos(@_, 1, { regex => qr(^\d+$) }, 1, 0);
+	my ($class, $lot_nr, $rank_file, $subname) = @_;
 	$subname ||= "";
-	SD::Lot::XS::lot_init($lot_nr, $subname);
+	SD::Lot::XS::lot_init($lot_nr, $subname, $rank_file);
 	return bless {
 		lot_size => SD::Lot::XS::lot_doc_count(),
 	}, shift;
