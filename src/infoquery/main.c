@@ -98,7 +98,7 @@ int main (int argc, char *argv[]) {
 	
 	FILE *fp;
 	if ((fp = bfopen("logs/infoquery.log","a")) == NULL) {
-		perror(bfile("logs/infoquery.log"));
+		//perror(bfile("logs/infoquery.log"));
 		//exit(1);
 	}
 	else {
@@ -386,14 +386,13 @@ int main (int argc, char *argv[]) {
 			errx(1, "infoquery groupsbyuserfromcollection user collection");
 
 		r = cmc_groupsforuserfromusersystem(socketha, value, atoi(value2), &groups);
-		printf("Got %d users.\n", r);
 		if (groups != NULL) {
 			int i;
 			char *group;
 
 			group = (char *)groups;
 			for (i = 0; i < r; i++) {
-				printf("> %s\n", group);
+				printf("%s\n", group);
 				group += MAX_LDAP_ATTR_LEN;
 			}
 		}
@@ -436,7 +435,7 @@ int main (int argc, char *argv[]) {
 		r = cmc_listusersus(socketha, atoi(value), &users);
 
 		for (i = 0; i < r; i++) {
-			printf("User: %s\n", users[i]);
+			printf("%s\n", users[i]);
 			free(users[i]);
 		}
 		free(users);
