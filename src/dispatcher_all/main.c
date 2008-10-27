@@ -2083,26 +2083,50 @@ int main(int argc, char *argv[])
 					" date:\"last year\"",
 					" date:\"two years plus\""};
 
+	    char *dateview_type_query_short[] = {
+					"today",
+					"yesterday",
+					"this week",
+					"this month",
+					"this year",
+					"last year",
+					"two years plus"};
+
 	    // Bør gjøres sammen med attributter?
 	    query_array	qa;
 	    get_query(QueryData.query, strlen(QueryData.query), &qa);
 	    container	*remove = set_container( int_container() );
 	    buffer	*B = buffer_init(-1);
+	    int		highlight_date = -1;
 
 	    for (i=0; i<qa.n; i++)
 		if (qa.query[i].operand == QUERY_DATE)
-		    set_insert(remove, i);
+		    {
+			set_insert(remove, i);
+			for (y=0; y<7; y++)
+			    {
+				char	full_string[64];
+				int qs_i;
+				int pos = 0;
+				for (qs_i=0; qs_i<qa.query[i].n; qs_i++)
+				    pos+= sprintf(&(full_string[pos]), "%s%s", qs_i>0?" ":"", qa.query[i].s[qs_i]);
+
+				if (!strcmp(dateview_type_query_short[y], full_string))
+				    highlight_date = y;
+			    }
+		    }
 
 	    bsprint_query_with_remove(B, remove, &qa);
 	    char	*basedatequery = buffer_exit(B);
 
 	    printf("<group name=\"Dato\" query=\'%s\' expanded=\"true\">\n", basedatequery);
 		for (y=0;y<7;y++) {
-		    printf("\t<item name=\'%s\' query=\'%s%s\' hits=\'%i\' />\n",
+		    printf("\t<item name=\'%s\' query=\'%s%s\' hits=\'%i\'%s />\n",
 			dateview_type_names[y],
 			basedatequery,
 			dateview_type_query[y],
-			SiderHeder[0].dates[y]);
+			SiderHeder[0].dates[y],
+			highlight_date==y ? " selected=\'true\'" : "");
 		}
 	    printf("</group>\n");
 	    printf("</navigation>\n");
@@ -2573,26 +2597,50 @@ int main(int argc, char *argv[])
 					" date:\"last year\"",
 					" date:\"two years plus\""};
 
+	    char *dateview_type_query_short[] = {
+					"today",
+					"yesterday",
+					"this week",
+					"this month",
+					"this year",
+					"last year",
+					"two years plus"};
+
 	    // Bør gjøres sammen med attributter?
 	    query_array	qa;
 	    get_query(QueryData.query, strlen(QueryData.query), &qa);
 	    container	*remove = set_container( int_container() );
 	    buffer	*B = buffer_init(-1);
+	    int		highlight_date = -1;
 
 	    for (i=0; i<qa.n; i++)
 		if (qa.query[i].operand == QUERY_DATE)
-		    set_insert(remove, i);
+		    {
+			set_insert(remove, i);
+			for (y=0; y<7; y++)
+			    {
+				char	full_string[64];
+				int qs_i;
+				int pos = 0;
+				for (qs_i=0; qs_i<qa.query[i].n; qs_i++)
+				    pos+= sprintf(&(full_string[pos]), "%s%s", qs_i>0?" ":"", qa.query[i].s[qs_i]);
+
+				if (!strcmp(dateview_type_query_short[y], full_string))
+				    highlight_date = y;
+			    }
+		    }
 
 	    bsprint_query_with_remove(B, remove, &qa);
 	    char	*basedatequery = buffer_exit(B);
 
 	    printf("<group name=\"Dato\" query=\'%s\' expanded=\"true\">\n", basedatequery);
 		for (y=0;y<7;y++) {
-		    printf("\t<item name=\'%s\' query=\'%s%s\' hits=\'%i\' />\n",
+		    printf("\t<item name=\'%s\' query=\'%s%s\' hits=\'%i\'%s />\n",
 			dateview_type_names[y],
 			basedatequery,
 			dateview_type_query[y],
-			SiderHeder[0].dates[y]);
+			SiderHeder[0].dates[y],
+			highlight_date==y ? " selected=\'true\'" : "");
 		}
 	    printf("</group>\n");
 	    printf("</navigation>\n");
