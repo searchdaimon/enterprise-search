@@ -2177,7 +2177,6 @@ void connectHandler(int socket) {
 					n = atoi(row[0]);
 					printf("Usersystem: %d\n", n);
 				} else {
-					printf("\n");
 					n = -1;
 				}
 
