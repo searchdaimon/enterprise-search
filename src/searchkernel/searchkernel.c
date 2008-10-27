@@ -468,9 +468,16 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 		else if ((*Sider).DocumentIndex.response == 200) {
 
 #ifdef BLACK_BOKS
-			sprintf((*Sider).cacheLink,"http://%s/cgi-bin/ShowCache?D=%i&amp;P=%u&amp;S=%i&amp;subname=%s",servername,DocID,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,subname);
+                       // Include time and sign the parameters.
+
+			time_t u_time = time(NULL);
+			unsigned int signature;
+			signature = sign_cache_params(DocID, subname, u_time);
+
+			sprintf((*Sider).cacheLink, "http://%s/cgi-bin/ShowCache2?D=%u&amp;subname=%s&amp;time=%u&amp;sign=%u",
+					servername, DocID, subname, u_time, signature);
 #else
-			sprintf((*Sider).cacheLink,"http://%s/cgi-bin/ShowCache2?D=%i&amp;subname=%s",servername,DocID,subname);
+			sprintf((*Sider).cacheLink,"http://%s/cgi-bin/ShowCache2?D=%u&amp;subname=%s",servername,DocID,subname);
 #endif
 
 
