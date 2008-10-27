@@ -639,6 +639,14 @@ savewords(struct pagewordsFormat *pagewords, pthread_mutex_t *wordsmutex, struct
 
 	for (i = 0; i < wordsPart->revIndexnr; i++) {
 		dictcontent_t *dc;
+		int j;
+
+		// Don't save words that are only digits.
+		for (j = 0; isdigit(wordsPart->revIndex[i].word[j]) || wordsPart->revIndex[i].word[j] == '\0'; j++) {
+			if (wordsPart->revIndex[i].word[j] == '\0') {
+				goto skipword;
+			}
+		}
 
 		if ((dc = hashtable_search(words, wordsPart->revIndex[i].word)) == NULL) {
 			filesKey = strdup(wordsPart->revIndex[i].word);
@@ -660,6 +668,8 @@ savewords(struct pagewordsFormat *pagewords, pthread_mutex_t *wordsmutex, struct
 			add_acls(acl_denied, &dc->acl_denied, acls);
 			dc->hits += wordsPart->revIndex[i].wordnr;
 		}
+ skipword:
+ 		;
 	}
 
 
