@@ -3365,7 +3365,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 					//char	other_group = 0;
 
 					filtered++;
-					if (fdata==NULL) fdata = fte_init("config/file_extensions.conf");
+					if (fdata==NULL) fdata = fte_init(bfile("config/file_extensions.conf"));
 					//if (atype==QUERY_GROUP && !strcasecmp(fte_getdefaultgroup(fdata, "nbo"), attrib)) other_group = 1;
 
 					char		**ptr1, **ptr2;
