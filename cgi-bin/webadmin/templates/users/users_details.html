@@ -29,11 +29,11 @@
 			[% WRAPPER 'template_table_row.html' %]
 			
 			<td><img src="file.cgi?i=kdmconfig" alt="" /></td>
-			<td>[% group %]</td>
+			<td>[% group | html %]</td>
 			<td>
 				<ul>
 				[% FOREACH collection IN groups.$group %]
-					<li><a href="overview.cgi?edit=[% collection %]">[% collection %]</a></li>
+					<li>[% collection | html %]</li>
 				[% END %]
 				</ul>
 			
