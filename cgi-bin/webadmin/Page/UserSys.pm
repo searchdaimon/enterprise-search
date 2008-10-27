@@ -57,7 +57,7 @@ sub show_add {
 
 	$vars->{part2} = 1;
 	$vars->{sys}{connector} = $sys_ref->{connector};
-	#$vars->{sys}{name} = $sys_ref->{name} || undef;
+	$vars->{sys}{name} = $sys_ref->{name};
 
 	return $TPL_ADD;
 }
