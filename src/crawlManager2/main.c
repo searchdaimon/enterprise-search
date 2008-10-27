@@ -2168,7 +2168,6 @@ void connectHandler(int socket) {
 				n = mysql_num_rows(res);
 
 				if (n > 0) {
-					printf("Foo\n");
 					row = mysql_fetch_row(res);
 					if (row == NULL) {
 						blog(LOGERROR, 1, "Unable to fetch mysql row at %s:%d",__FILE__,__LINE__);
