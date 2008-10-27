@@ -2161,19 +2161,20 @@ void connectHandler(int socket) {
 
 			if (mysql_real_query(&db, query, querylen)) {
 				blog(LOGERROR, 1, "Mysql error: %s", mysql_error(&db));
-			}
+				n = -1;
+			} else {
+				res = mysql_store_result(&db);
+				row = mysql_fetch_row(res);
+				if (row == NULL) {
+					blog(LOGERROR, 1, "Unable to fetch mysql row at %s:%d",__FILE__,__LINE__);
+					mysql_free_result(res);
+				}
 
-			res = mysql_store_result(&db);
-			row = mysql_fetch_row(res);
-			if (row == NULL) {
-				blog(LOGERROR, 1, "Unable to fetch mysql row at %s:%d",__FILE__,__LINE__);
+				n = atoi(row[0]);
+				printf("Usersystem: %d\n", n);
+
 				mysql_free_result(res);
 			}
-
-			n = atoi(row[0]);
-			printf("Usersystem: %d\n", n);
-
-			mysql_free_result(res);
 			mysql_close(&db);
 			sendall(socket, &n, sizeof(n));
 		}

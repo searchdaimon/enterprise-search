@@ -2189,26 +2189,11 @@ void *searchIndex_thread(void *arg)
 	
 		#ifdef IIACL
 
-			searcArrayLen = 0;
-			hits = ArrayLen;
-	
-			searchIndex((*searchIndex_thread_arg).indexType,
-				&searcArrayLen,
-				searcArray,
-				(*searchIndex_thread_arg).queryParsed,
-				TmpArray,
-				&(*searchIndex_thread_arg).subnames[i],
-				(*searchIndex_thread_arg).languageFilterNr, 
-				(*searchIndex_thread_arg).languageFilterAsNr,
-				&complicacy
-			);
-
-			//acl_allow sjekk
-			acl_allowArrayLen = 0;
-			acl_deniedArrayLen = 0;
-
 			unsigned int system = cmc_usersystemfromcollection(cmc_sock, searchIndex_thread_arg->subnames[i].subname);
-			if ((groupquery = hashtable_search(groupqueries, &system)) == NULL) {
+			if (system == -1) {
+				fprintf(stderr, "Unable to get usersystem for: %s\n", searchIndex_thread_arg->subnames[i].subname);
+				continue;
+			} else if ((groupquery = hashtable_search(groupqueries, &system)) == NULL) {
 				char **groups;
 				int n_groups, j;
 
@@ -2250,6 +2235,26 @@ void *searchIndex_thread(void *arg)
 			} else {
 				fprintf(stderr, "Reusing system mapping: %d\n", system);
 			}
+
+
+
+			searcArrayLen = 0;
+			hits = ArrayLen;
+	
+			searchIndex((*searchIndex_thread_arg).indexType,
+				&searcArrayLen,
+				searcArray,
+				(*searchIndex_thread_arg).queryParsed,
+				TmpArray,
+				&(*searchIndex_thread_arg).subnames[i],
+				(*searchIndex_thread_arg).languageFilterNr, 
+				(*searchIndex_thread_arg).languageFilterAsNr,
+				&complicacy
+			);
+
+			//acl_allow sjekk
+			acl_allowArrayLen = 0;
+			acl_deniedArrayLen = 0;
 
 
 			searchIndex("acl_allow",
