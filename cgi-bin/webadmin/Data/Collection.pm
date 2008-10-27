@@ -95,12 +95,12 @@ sub create {
 	croak "Collection already exists with id '$s->{attr}{id}'"
 		if defined $s->{attr}{id};
 	croak "Collection name '$s->{attr}{collection_name}' is taken"
-		if $s->name_exists();
+		if $s->{attr}{collection_name} ne "" && $s->name_exists();
 
 
 	# Create share
 	my %ins_attr = $s->_tbl_shares_attr();
-	my $id = $s->{sqlShares}->insert(\%ins_attr);
+	my $id = $s->{sqlShares}->insert(\%ins_attr, 1);
 	$s->{attr}{id} = $id;
 
 	$s->update();

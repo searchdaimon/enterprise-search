@@ -295,19 +295,6 @@ sub get_connector_name {
 
 # Group : Private methods
 
-sub _gen_coll_name {
-    my ($self, $data) = @_;
-    return $data->{collection_name}
-        if $data->{collection_name};
-
-    my @chars = ('a'..'z', 'A'..'Z', 0..9);
-    my $name;
-    do {
-        $name = "collection_";
-        $name .= $chars[rand @chars] for 1..5;
-    } while ($self->collection_name_exists($name));
-    return $name;
-}
 
 sub get_connector {
     validate_pos(@_, 1, { regex => qr(^\d+$) });

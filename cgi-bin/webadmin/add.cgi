@@ -15,7 +15,6 @@ my %state = $page->get_state();
 my $tpl_vars;
 my $tpl_file = "";
 
-warn Dumper(\%state);
 
 my %misc_opts;
 $misc_opts{from_scan} = $state{from_scan};

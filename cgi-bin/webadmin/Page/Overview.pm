@@ -434,6 +434,7 @@ sub gen_collection_list {
 		}
 
 	}
+	#croak Dumper(\@connectors);
 
 	# Add XML pushed collections
 	my @pushed_names = $s->list_pushed();

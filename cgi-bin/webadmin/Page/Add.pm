@@ -48,24 +48,6 @@ sub add_share {
         $coll->set_auth($share{username}, $share{password});
     }
     $coll->create();
-
-   # $share{active} = 1 if $share{active}; # 
-   # 
-   # my $param_ref = $share{custom_param};
-   # delete $share{custom_param};
-
-   # my $id = $s->{sqlShares}->insert_share(\%share);
-   # $sqlGroups->set_groups($id, $share{'group_member'}); #TODO: Rename to groups
-
-
-   # my @users = grep { defined $_ } @{$share{user}};
-   # $sqlUsers->set_users($id, \@users);
-
-   # if ($param_ref) {
-   #     tie my %collParams, 'Collection::Param', $id, $s->{dbh};
-   #     %collParams = %{$param_ref};
-   # }
-   # return 1;
 }
 
 # Print the html for the first form used when adding a share.
@@ -151,8 +133,6 @@ sub submit_first_form {
 	return ($vars, $template_file);
 }
 
-## Handles what to do when the user submits the second form.
-## The "add" wizard is complete, so add all info to the database.
 sub submit_second_form {
 	my ($self, $vars, $share, %misc_opts) = (@_);
 
@@ -162,6 +142,9 @@ sub submit_second_form {
 	my $sqlConnectors = $self->{'sqlConnectors'};
 	my $collection = $self->{'collection'};
 	
+	if ($share->{collection_name} eq "") {
+		$share->{collection_name} = $self->_gen_coll_name();
+	}
 	
 	# Check for any errors
 	my ($valid, $msg) = $collection->validate(
@@ -212,6 +195,19 @@ sub vars_from_scan {
     if ($sqlConnectors->get_name($share->{connector}) eq 'SMB') {
         $share->{'resource'} = q{\\\\} . $share->{host} . q{\\} . $share->{path};
     }
+}
+
+
+sub _gen_coll_name {
+	my $s = shift;
+
+    my @chars = ('a'..'z', 'A'..'Z', 0..9);
+    my $name;
+    do {
+        $name = "collection_";
+        $name .= $chars[rand @chars] for 1..5;
+    } while ($s->{sqlShares}->collection_name_exists($name));
+    return $name;
 }
 
 1;

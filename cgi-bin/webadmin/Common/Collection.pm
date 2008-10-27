@@ -55,7 +55,7 @@ sub validate {
             return (0, 'error_inv_name')
                     unless $s->valid_name($name);
     
-            if ($s->{sqlShares}->get_id_by_collection($name)) {
+            if ($name ne "" && $s->{sqlShares}->get_id_by_collection($name)) {
                 unless ($id and $s->{sqlShares}->get_collection_name($id) eq $name) {
                     return (0, 'error_collection_exists');
                 }
