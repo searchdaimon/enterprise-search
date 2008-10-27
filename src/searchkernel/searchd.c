@@ -629,7 +629,6 @@ void *do_chld(void *arg)
 		perror("recv subnames");
 
 
-
 	//sender svar med en gang at vi kan gjøre dette
 	net_status = net_CanDo;
 	//if ((n=sendall(mysocfd,&net_status, sizeof(net_status))) != sizeof(net_status)) {

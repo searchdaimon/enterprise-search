@@ -3135,6 +3135,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 		for (i=0; i<*TeffArrayElementer; i++)
 		    {
+			TeffArray->iindex[i].indexFiltered.duplicate = 0;
+
 			// For filtrert i search_thread_ting:
 			if (TeffArray->iindex[i].indexFiltered.is_filtered)
 			    --(*TotaltTreff);
