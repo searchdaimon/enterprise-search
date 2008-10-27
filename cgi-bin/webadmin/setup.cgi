@@ -22,13 +22,13 @@ use Page::Setup::Login;
 use Page::Setup::Integration;
 use Common::FormFlow qw(FLOW_START_FORM);
 
-
 # Init
 my $vars = { };
 my $page = Page::Setup->new();
 my %state = $page->get_state();
 my $dbh = $page->get_dbh();
 my $tpl_file;
+#warn Dumper(\%state);
 
 my $pageNet     = Page::Setup::Network->new($dbh);
 my $pageAuth        = undef; # Page::Setup::Auth->new($dbh); fjerner til bi begynner med lisens
@@ -36,7 +36,7 @@ my $pageLogin       = Page::Setup::Login->new($dbh);
 my $pageIntegr = Page::Setup::Integration->new($dbh);
     
 my $flow = Common::FormFlow->new();
-my $tpl_folders = ['setup', 'common/network'];
+my $tpl_folders = ['setup', 'common/network', 'usersys'];
 
 if (defined $state{view}) {
     # Non-wizard pages.
@@ -63,7 +63,7 @@ else {
         #->add($FLOW_START_FORM, \&process_login) 
         ->add(FLOW_START_FORM,  \&process_network)
         ->add('network_config', \&process_network)
-        ->add('network_restarted', sub { $pageIntegr->show() })
+        ->add('network_restarted', sub { $pageIntegr->show($vars) })
         #->add('license_valid', \&process_license)
         #->add('manual_act', \&process_manual_act)
         ->add('integration_method', \&process_integration_method)
@@ -147,38 +147,15 @@ sub process_manual_act {
 sub process_integration_method {
 	my $method = $state{'auth_method'};
 
-	if ($method eq 'shadow') {
-		# No need to configure values, next step.
-		print CGI::redirect("overview.cgi");
-		exit 0;
-	}
-	else {
-		return $pageIntegr
-				->show_integration_values($vars, $state{'auth_method'});
-	}
+	return $pageIntegr->show_integration_values($vars, $state{auth_connector});
 }
 
 sub process_integration_values {
-    my ($vars, $success) 
-        = $pageIntegr->process_integration($vars, {
-                'domain'		=> $state{'domain'}, 
-                'user'			=> $state{'user'},
-                'password'		=> $state{'password'},
-                'ip'			=> $state{'ip'},
-                #'port'			=> $state{'port'},
-                'auth_method'	=> $state{'auth_method'}
-                });
+	$pageIntegr->process_integration($vars, $state{sys});
 
-    if ($success) {
 	my $cfg = Sql::Config->new($dbh);
 	$cfg->insert_setting("setup_wizard_done", 1);
-        print CGI::redirect("overview.cgi");
-        exit 0;
-    }
-    else {
-        return $pageIntegr
-            ->show_integration_values($vars, $state{'auth_method'}, 1);
-    }
-
+	print CGI::redirect("overview.cgi");
+	exit 0;
 }
 

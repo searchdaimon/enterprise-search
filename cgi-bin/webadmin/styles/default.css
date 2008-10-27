@@ -345,7 +345,7 @@ table .disabled {
 .defaultForm {
 	padding-left : 1em; 
 	background : #D3DBEF;
-	float : left;
+	/* float : left; */
 	width : 60%;
 	padding : 1em;
 	border : 1px solid silver;

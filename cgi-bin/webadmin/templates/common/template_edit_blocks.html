@@ -130,6 +130,28 @@
 [% END %]
 [% END %]
 
+
+[% BLOCK user_system %]
+	<div class="block_default" style="padding-top : 0.5em;">
+	Choose user system
+	<div class="block_inner" style="padding-top : 0.5em;">
+	
+	<select name="[% prefix %].system">
+	[% FOREACH u IN user_systems %]
+		<option value="[% u.id %]"
+			[% 'selected = "selected"' IF u.id == share.system %] 
+			 >[% u.name | html %]
+			 [% ' (primary)' IF u.is_primary %]
+		</option>
+	[% END %]
+	</select>
+	</div>
+	
+	<p>You can also <a href="usersys.cgi">add a new user system</a>.</p>
+	
+	</div>
+[% END %]
+
 [% BLOCK connectors %]
 
 		[% IF use_radio_buttons 
@@ -340,6 +362,7 @@
 [% BLOCK txt %]
 	<input type="text" name="[% prefix %].[% key %]" value="[% share.$key %]" style="[% style %]" />
 [% END %]
+
 
 [% BLOCK customize_ranking %]
 <div class="block_default">

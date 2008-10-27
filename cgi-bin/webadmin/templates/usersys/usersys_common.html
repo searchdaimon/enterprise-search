@@ -1,6 +1,6 @@
 [% BLOCK sys_form %]
 <form action="usersys.cgi" method="post">
-<div class="defaultForm">
+<div class="defaultForm" style="[% style %]">
 <table>
        <tr>
                 <td>IP/hostname:</td>
@@ -40,7 +40,9 @@
 <p>
 	[% content %]
        <input type="hidden" name="action" value="[% action %]" />
-       <input type="submit" value="[% btn_value %]" />
+       [% IF btn_value.defined %]
+       	<input type="submit" value="[% btn_value %]" />
+	[% END %]
 </p>
 </div>
 </form>

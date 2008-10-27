@@ -262,7 +262,8 @@ sub delete {
 sub update {
     validate_pos(@_, 1, { type => SCALAR }, { type => HASHREF }, 0);
     my ($s, $tbl, $val, $where) = @_;
-    $s->sql_update($abstr->update($tbl, $val, $where));
+    my ($q, @binds) = $abstr->update($tbl, $val, $where);
+    $s->sql_update($q, @binds);
 }
 
 1;

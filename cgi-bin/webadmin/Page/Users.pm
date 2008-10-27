@@ -12,6 +12,7 @@ use Page::Abstract;
 use Boitho::Infoquery;
 use Sql::ActiveUsers;
 use Sql::Config;
+use Sql::System;
 use config qw(%CONFIG);
 
 our @ISA = qw(Page::Abstract);
@@ -45,9 +46,10 @@ sub show_usr_list {
 	}
 	$vars->{licensed_users} = $license{users};
 	$vars->{activated_users} = scalar keys %active;
+	my $prim_sys = Sql::System->new($s->{dbh})->primary_id();
 
 	my @users;
-	for my $usr (@{$s->{iq}->listUsers}) {
+	for my $usr (@{$s->{iq}->listUsers($prim_sys)}) {
 		push @users, {
 			username => $usr,
 			active   => $active{$usr},

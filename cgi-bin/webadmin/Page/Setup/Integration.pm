@@ -8,103 +8,73 @@ BEGIN {
 	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
 use Carp;
-use Page::Abstract;
-use Sql::Config;
-use Boitho::Infoquery;
+use Params::Validate;
 use Data::Dumper;
+
+use Page::Abstract;
+use Boitho::Infoquery;
+#use Sql::Config;
+use Sql::System;
+use Sql::SystemParam;
+use Data::UserSys;
+
 our @ISA = qw(Page::Abstract);
+use config qw(%CONFIG);
 
-use constant TPL_INTEGRATION => "setup_integration_method.html";
+use constant TPL_INTEGRATION     => "setup_integration_method.html";
+use constant TPL_INTEGRATIOM_VAL => "setup_integration_values.html";
 
-##
-# Init.
 sub _init {
-	my $self = shift;
-	my $dbh = $self->{'dbh'};
-	$self->{'sqlConfig'} = Sql::Config->new($dbh);
-	$self->{'infoQuery'}	 = Boitho::Infoquery->new;
+	my $s = shift;
+	$s->{'infoQuery'}	 = Boitho::Infoquery->new;
+	$s->{sql_sys} = Sql::System->new($s->{dbh});
 
-	return $self;
+	$s;
 }
 
 sub show {
-	my ($self, $vars) = @_;
-	#my $sqlConfig = $self->{'sqlConfig'};
+	my ($s, $vars) = @_;
+	$vars->{user_systems} = $CONFIG{user_systems};
+	$vars->{primary} = $s->{sql_sys}->get({ is_primary => 1 });
 	return TPL_INTEGRATION;
 }
 
 
 sub process_integration {
-	my ($self, $vars, $args_ptr) = @_;
-	my %args = %{$args_ptr};
+	my ($s, $vars, $sys_ref) = @_;
+
+	croak "FATAL: A primary system already exists"
+		if $s->{sql_sys}->exists({ is_primary => 1 });
+
+	$sys_ref->{is_primary} = 1;
+	my $sysobj = Data::UserSys->create($s->{dbh}, %{$sys_ref});
 	
-	my $sql       = $self->{'sqlConfig'};
-	my $method    = $args{'auth_method'};
-	my $infoQuery = $self->{'infoQuery'};
-	
-	my @args = ($args{'domain'}, $args{'user'}, 
-	$args{'password'}, $args{'ip'}, $args{'port'});
-	
-	# Validate
-	{
-		my $valid = 1;
-		my $error;
-		($valid, $error) = (0, "Integration method has not been set.")
-			unless $method;
-		
-		($valid, $error) = $infoQuery->authTest($method, @args)
-			unless not $valid;
-		
-		unless ($valid) {
-			carp $error;
-			$vars->{'error_msg'} = $error;
-			$vars->{'dap_settings'} = $args_ptr;
-			return ($vars, 0);
-			#return $self->show_integration_values($vars, $method, 1);	
-		}
-	}
-	
-	# Update
-	if ($method eq 'msad') {
-		$sql->update_authenticatmethod($method);
-		$sql->update_msad(@args);
-	
-	}
-	elsif ($method eq 'ldap') {
-		$sql->update_authenticatmethod($method);
-		$sql->update_ldap(@args);
-	}
-	
-	elsif ($method eq 'shadow') {
-		$sql->update_authenticatmethod("shadow");
-	
-	}
-	else {
-		croak ("Unknown authentication method submitted:" , $method);
-	}
-	
-	return ($vars, 1);
+	1;
 }
 
 
 
-sub show_integration_values($$$) {
-	my ($self, $vars, $method, $ignore_db_values) = @_;
-	my $template_file = "setup_integration_values.html";
-	my $sqlConfig = $self->{'sqlConfig'};
+sub show_integration_values {
+	validate_pos(@_, 1, 1, { regex => qr(^\d+$) }, 0);
+	my ($s, $vars, $conn_id, $ignore_db_values) = @_;
 	
-	if ($method eq 'shadow') {
-		croak "This method should not have been reached if the 
-				method is shadow. Shadow needs no integration values.";	
-	}
+	$vars->{user_systems} = $CONFIG{user_systems};
+	my $sql_param = Sql::SystemParam->new($s->{dbh});
+	my @params = $sql_param->get({ 
+		connector => $conn_id
+	});
+	$vars->{sys}{params} = { map {
+		 $_->{param} => { note => $_->{note} } 
+	} @params };
+	$vars->{sys}{connector} = $conn_id;
 	
-	unless ($ignore_db_values) {
-		$vars->{'dap_settings'} 
-			= $sqlConfig->get_dap_settings($method);
-	}
-	
-	$vars->{'method'} = $method;
-	return ($vars, $template_file);
+#	unless ($ignore_db_values) {
+#		$vars->{'dap_settings'} 
+#			= $sqlConfig->get_dap_settings($method);
+#	}
+#	
+#	$vars->{'method'} = $method;
+	return TPL_INTEGRATIOM_VAL;
 }
 
 1;

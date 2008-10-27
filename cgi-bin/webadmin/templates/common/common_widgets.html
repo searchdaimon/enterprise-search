@@ -25,6 +25,7 @@
 	[% WRAPPER 'template_table.html'
 		header = tbl_headers 
 	 %]
+	 [% SET name = 'name' UNLESS name %]
 	[% WRAPPER 'template_table_row.html' color = 1 %]
 		<td style="width : 64px;">
 			<img src="file.cgi?i=[% icon %]&amp;size=48x48" alt="" style="border : 0px solid;" />
@@ -36,7 +37,7 @@
 		</td>
 		<td>
 			[%# collection_name = share.collection_name %]
-			<input type="text" name="[% prefix %].name" value="[% $prefix.name %]" />
+			<input type="text" name="[% prefix %].[% name %]" value="[% $prefix.$name %]" />
 				[% IF note %]<span style="font-size : x-small;">[% note %]</span>[% END %]
 		</td>	
 	[% END %]

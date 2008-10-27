@@ -7,6 +7,7 @@ use Sql::CollectionAuth;
 use Data::Dumper;
 use Sql::Webadmin;
 use Params::Validate qw(validate_pos);
+use Readonly;
 
 our @ISA = qw(Sql::Webadmin);
 
@@ -15,8 +16,8 @@ my $dbh;
 my $sqlAuth;
 
 #
-# Valid fileds in db table shares.
-my @valid = qw(host connector active success
+# Fields in db table shares.
+Readonly::Array our @FIELDS => qw(host connector active success system
 		last rate query1 query2
 		smb_name smb_workgroup resource domain collection_name auth_id userprefix);
 
@@ -35,23 +36,23 @@ sub _init {
 #					Any attributes not listed in @valid are ignored.
 #
 # Returns:
-#	insert_id - Collection id for this insert.
-sub insert_share {
-    my $self = shift;
-    my $attr_val_ref = shift;
-
-    $attr_val_ref->{'collection_name'} 
-        = $self->_gen_coll_name($attr_val_ref);
-
-    my ($attr_str, $val_str, @binds) 
-        = $self->construct_insert_query($attr_val_ref, @valid);
-
-    my $query = "INSERT INTO $table ($attr_str) values ($val_str)";
-
-    $self->sql_insert($query, @binds);
-
-    return $dbh->{ q{mysql_insertid} };
-}
+##	insert_id - Collection id for this insert.
+#sub insert_share {
+#    my $self = shift;
+#    my $attr_val_ref = shift;
+#
+#    $attr_val_ref->{'collection_name'} 
+#        = $self->_gen_coll_name($attr_val_ref);
+#
+#    my ($attr_str, $val_str, @binds) 
+#        = $self->construct_insert_query($attr_val_ref, @valid);
+#
+#    my $query = "INSERT INTO $table ($attr_str) values ($val_str)";
+#
+#    $self->sql_insert($query, @binds);
+#
+#    return $dbh->{ q{mysql_insertid} };
+#}
 
 
 ##
@@ -60,20 +61,20 @@ sub insert_share {
 # Attributes:
 #	attr_val_ref -  A hash ref with db table attributes as: attribute => value.
 #					Any attributes not listed in @valid are ignored.
-sub update_share {
-    my ($self, $attr_val_ref) = @_;
-
-    my ($set_str, @binds) 
-        = $self->construct_update_query($attr_val_ref, @valid);
-
-    my $query = "UPDATE $table SET $set_str WHERE id = ?";
-    push @binds, $attr_val_ref->{'id'};
-
-    $self->sql_update($query, @binds);
-
-    1;
-}
-
+#sub update_share {
+#    my ($self, $attr_val_ref) = @_;
+#
+#    my ($set_str, @binds) 
+#        = $self->construct_update_query($attr_val_ref, @valid);
+#
+#    my $query = "UPDATE $table SET $set_str WHERE id = ?";
+#    push @binds, $attr_val_ref->{'id'};
+#
+#    $self->sql_update($query, @binds);
+#
+#    1;
+#}
+#
 ##
 # Returns list of all shares and its connector.
 sub get_shares_and_connector {

@@ -17,6 +17,7 @@ use Sql::Param;
 use Sql::CollectionAuth;
 use Boitho::Infoquery;
 use Sql::Hash::Param;
+use Sql::System;
 
 use config qw(%CONFIG);
 
@@ -26,7 +27,7 @@ our @EXPORT = qw(%COLLECTION_ATTR);
 Readonly::Hash our %COLLECTION_ATTR
     => map { $_ => 1 } qw(id collection_name host connector 
         users groups params active auth_id crawler_success rate 
-        query1 query2 resource domain userprefix);
+        query1 query2 resource domain userprefix system);
 
 sub new {
     validate_pos(@_, 1, { type => OBJECT }, { type => HASHREF });
@@ -89,54 +90,67 @@ sub get_attr { %{shift->{attr}} }
 ##
 # Create a new collection
 sub create {
-    my $s = shift;
+	my $s = shift;
 
-    croak "Collection already exists with id '$s->{attr}{id}'"
-        if defined $s->{attr}{id};
-    croak "Collection name '$s->{attr}{collection_name}' is taken"
-        if $s->name_exists();
+	croak "Collection already exists with id '$s->{attr}{id}'"
+		if defined $s->{attr}{id};
+	croak "Collection name '$s->{attr}{collection_name}' is taken"
+		if $s->name_exists();
 
 
-    # Create share
-    my $id = $s->{sqlShares}->insert_share($s->{attr});
-    $s->{attr}{id} = $id;
+	# Create share
+	my %ins_attr = $s->_tbl_shares_attr();
+	my $id = $s->{sqlShares}->insert(\%ins_attr);
+	$s->{attr}{id} = $id;
 
-    $s->update();
+	$s->update();
+}
+
+sub _tbl_shares_attr {
+	my $s = shift;
+	my %tbl_attr;
+	for my $field (@Sql::Shares::FIELDS) {
+		next if $field eq 'id';
+		next unless exists $s->{attr}{$field};
+		$tbl_attr{$field} = $s->{attr}{$field};
+	}
+	return %tbl_attr;
 }
 
 ##
 # Update existing collection.
 sub update {
-    my $s = shift;
-    my $id = $s->{attr}{id};
+	my $s = shift;
+	my $id = $s->{attr}{id};
 
-    my $sqlGroups = Sql::ShareGroups->new($s->{dbh});
-    my $sqlUsers  = Sql::ShareUsers->new($s->{dbh});
+	my $sqlGroups = Sql::ShareGroups->new($s->{dbh});
+	my $sqlUsers  = Sql::ShareUsers->new($s->{dbh});
 
-    # Errors
-    croak "Can not update without collection id"
-        unless defined $id;
+	# Errors
+	croak "Can not update without collection id"
+		unless defined $id;
 
-    # Updates
-    $s->{sqlShares}->update_share($s->{attr});
+	# Updates
 
-    if ($s->{input_fields_h}{groups}) {
-        $sqlGroups->set_groups($id, $s->{attr}{groups});
-    }
+	my %upd_attr = $s->_tbl_shares_attr();
 
-    if ($s->{input_fields_h}{exchange_user_select}) {
-        $sqlUsers->set_users($id, [grep { defined $_ } @{$s->{attr}{users}}]);
-    }
+	$s->{sqlShares}->update(\%upd_attr, { id => $id });
 
-    if ($s->{input_fields_h}{custom_parameters}) {
-        tie my %collParams, 'Sql::Hash::Param', $id, $s->{dbh};
-        my %parameters = $s->{attr}{params} ? %{$s->{attr}{params}} : ();
-        $collParams{$_} = $parameters{$_} for keys %parameters;
-        #%collParams = %parameters;
-        #croak Dumper(\%collParams);
-    }
+	if ($s->{input_fields_h}{groups}) {
+		$sqlGroups->set_groups($id, $s->{attr}{groups});
+	}
 
-    $s;
+	if ($s->{input_fields_h}{exchange_user_select}) {
+		$sqlUsers->set_users($id, [grep { defined $_ } @{$s->{attr}{users}}]);
+	}
+
+	if ($s->{input_fields_h}{custom_parameters}) {
+		tie my %collParams, 'Sql::Hash::Param', $id, $s->{dbh};
+		my %parameters = $s->{attr}{params} ? %{$s->{attr}{params}} : ();
+		$collParams{$_} = $parameters{$_} for keys %parameters;
+	}
+
+	$s;
 }
 
 sub delete {
@@ -163,31 +177,40 @@ sub delete {
 # Data needed in a form 
 # for editing/managing a collection.
 sub form_data {
-    my $s = shift;
+	my $s = shift;
 
-    my $iq = new Boitho::Infoquery($CONFIG{infoquery});
-    my $sqlConnectors = Sql::Connectors->new($s->{dbh});
-    my $sqlParam = Sql::Param->new($s->{dbh});
+	my $iq = new Boitho::Infoquery($CONFIG{infoquery});
+	my $sqlConnectors = Sql::Connectors->new($s->{dbh});
+	my $sqlParam = Sql::Param->new($s->{dbh});
+	my $sqlSystem = Sql::System->new($s->{dbh});
 
-    my %form_data;
-    $form_data{connectors} = $sqlConnectors->get_connectors()
-        if $s->{input_fields_h}{connectors};
+	my %form_data;
+	$form_data{connectors} = $sqlConnectors->get_connectors()
+		if $s->{input_fields_h}{connectors};
 
-    $form_data{group_list} = $iq->listGroups()
-        if $s->{input_fields_h}{groups};
+	$form_data{group_list} = $iq->listGroups()
+		if $s->{input_fields_h}{groups};
 
-    $form_data{user_list} = $iq->listMailUsers()
-        if $s->{input_fields_h}{exchange_user_select};
+	$form_data{user_list} = $iq->listMailUsers()
+		if $s->{input_fields_h}{exchange_user_select};
 
-    $form_data{authentication} = [ $s->{sqlAuth}->get_all_auth() ]
-        if $s->{input_fields_h}{authentication};
+	$form_data{authentication} = [ $s->{sqlAuth}->get_all_auth() ]
+		if $s->{input_fields_h}{authentication};
 
-    $form_data{input_fields} = $s->{input_fields};
-       
-    $form_data{parameters} = [ $sqlParam->get({ connector => $s->{attr}{connector}}) ]
-        if $s->{input_fields_h}{custom_parameters};
+	$form_data{input_fields} = $s->{input_fields};
 
-    return %form_data;
+	$form_data{parameters} = [ $sqlParam->get({ connector => $s->{attr}{connector}}) ]
+		if $s->{input_fields_h}{custom_parameters};
+
+	if ($s->{input_fields_h}{user_system}) {
+		$form_data{user_systems} = [ 
+			$sqlSystem->get({ }, 
+			['name', 'connector', 'id', 'is_primary'], 
+			['is_primary DESC, name ASC'])
+		];
+	}
+
+	return %form_data;
 }
 
 ##
