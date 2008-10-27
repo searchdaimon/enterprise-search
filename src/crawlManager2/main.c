@@ -2156,22 +2156,31 @@ void connectHandler(int socket) {
 			size_t querylen;
 
 			sql_connect(&db);
-			querylen = snprintf(query, sizeof(query), "SELECT system FROM shares WHERE collection_name = '%s'",
-			     packedHedder.subname);
+			querylen = snprintf(query, sizeof(query),
+			    "SELECT system FROM shares WHERE collection_name = '%s' AND system is NOT NULL",
+			    packedHedder.subname);
 
 			if (mysql_real_query(&db, query, querylen)) {
 				blog(LOGERROR, 1, "Mysql error: %s", mysql_error(&db));
 				n = -1;
 			} else {
 				res = mysql_store_result(&db);
-				row = mysql_fetch_row(res);
-				if (row == NULL) {
-					blog(LOGERROR, 1, "Unable to fetch mysql row at %s:%d",__FILE__,__LINE__);
-					mysql_free_result(res);
-				}
+				n = mysql_num_rows(res);
 
-				n = atoi(row[0]);
-				printf("Usersystem: %d\n", n);
+				if (n > 0) {
+					printf("Foo\n");
+					row = mysql_fetch_row(res);
+					if (row == NULL) {
+						blog(LOGERROR, 1, "Unable to fetch mysql row at %s:%d",__FILE__,__LINE__);
+						mysql_free_result(res);
+					}
+
+					n = atoi(row[0]);
+					printf("Usersystem: %d\n", n);
+				} else {
+					printf("\n");
+					n = -1;
+				}
 
 				mysql_free_result(res);
 			}
