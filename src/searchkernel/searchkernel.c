@@ -728,7 +728,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 							subname, tmpurl,
 							sizeof(tmpurl), PagesResults->cmcsocketha,
 #ifdef WITH_THREAD
-							&PagesResults->mutex
+							&PagesResults->mutex_pathaccess
 #else
 							NULL
 #endif
@@ -1406,7 +1406,7 @@ void *generatePagesResults(void *arg)
 				(*PagesResults).TeffArray->iindex[i].subname->subname, side->url, 
 				sizeof(side->url), PagesResults->cmcsocketha, 
 #ifdef WITH_THREAD
-				&PagesResults->mutex
+				&PagesResults->mutex_pathaccess
 #else
 				NULL
 #endif
