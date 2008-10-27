@@ -961,16 +961,16 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 			memset(&ldaprecord,'\0',MAX_LDAP_ATTR_LEN);
 
 			//henter konfig verdier
-			const char *admin_username 	= bconfig_getentrystr("msad_user");
-			const char *admin_password 	= bconfig_getentrystr("msad_password");
-			const char *ldap_host 		= bconfig_getentrystr("msad_ip");
-			const char *ldap_domain 	= bconfig_getentrystr("msad_domain");
+			const char *admin_username 	= bconfig_getentrystr("_ad_user");
+			const char *admin_password 	= bconfig_getentrystr("_ad_password");
+			const char *ldap_host 		= bconfig_getentrystr("_ad_ip");
+			const char *ldap_domain 	= bconfig_getentrystr("domain");
 			const int   ldap_port = 0; // runarb: 12 des 2007: er 0 riktig initalisering??
 			//bconfig_getentryint("msad_port",&ldap_port);
 			//const char *ldap_group 	= bconfig_getentrystr("msad_group");
-			const char *msad_ldapstring 	= bconfig_getentrystr("msad_ldapstring");
-			const char *msad_ldapgroupstring = bconfig_getentrystr("msad_ldapgroupstring");
-			const char *msad_ldapbase 	= bconfig_getentrystr("msad_ldapbase");
+			const char *msad_ldapstring 	= bconfig_getentrystr("ldapstring");
+			const char *msad_ldapgroupstring = bconfig_getentrystr("ldapgroupstring");
+			const char *msad_ldapbase 	= bconfig_getentrystr("ldapbase");
 			const char *sudo		= bconfig_getentrystr("sudo");
 			char ldap_base[528] = "";
 

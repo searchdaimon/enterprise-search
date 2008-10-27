@@ -40,9 +40,9 @@ bconfig_flush(int mode) {
 #ifdef BLACK_BOKS
 
 	//selecter fra db
-	char mysql_query [2048];
+	char mysql_query[5][2048];
         static MYSQL demo_db;
-	int i;	
+	int i, j;	
 
         MYSQL_RES *mysqlres; /* To be used to fetch information into */
         MYSQL_ROW mysqlrow;
@@ -72,35 +72,48 @@ bconfig_flush(int mode) {
         }
 
 
-	sprintf(mysql_query, "SELECT configkey, configvalue FROM config");
-
-        if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Execute query */
-                printf(mysql_error(&demo_db));
-#ifdef WITH_THREAD
-		pthread_mutex_unlock(&config_lock);
-#endif
-		return 0;
-        }
-
-        mysqlres=mysql_store_result(&demo_db); /* Download result from server */
-	_configdatanr = (int)mysql_num_rows(mysqlres);
-
-	debug("nrofrows %i\n",_configdatanr);
+	sprintf(mysql_query[0], "SELECT configkey, configvalue FROM config");
+	sprintf(mysql_query[1], "SELECT 'ad_ip' AS configkey, ip AS configvalue FROM system WHERE is_primary = 1");
+	sprintf(mysql_query[2], "SELECT 'ad_user' AS configkey, user AS configvalue FROM system WHERE is_primary = 1");
+	sprintf(mysql_query[3], "SELECT 'ad_password' AS configkey, password AS configvalue FROM system WHERE is_primary = 1");
+	sprintf(mysql_query[4], "SELECT param AS configkey, value AS configvalue FROM system, systemParamValue WHERE system.is_primary = 1 AND system.id = systemParamValue.system");
+	//sprintf(mysql_query[2], "SELECT configkey, configvalue FROM config");
 
 	if (_configdata != NULL)
 		free(_configdata);
-	_configdata = malloc(sizeof(struct _configdataFormat) * _configdatanr);
 
-	i=0;
-        while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
-                        debug("\tconfig %s => \"%s\"\n",mysqlrow[0],mysqlrow[1]);
-			strcpy(_configdata[i].configkey,mysqlrow[0]);
-			strcpy(_configdata[i].configvalue,mysqlrow[1]);
-		++i;
+	_configdata = NULL;
+
+	for (j = 0; j < 5; j++) {
+		int numrows, oldnumentries;
+
+		if (mysql_real_query(&demo_db, mysql_query[j], strlen(mysql_query[j]))){ /* Execute query */
+			printf(mysql_error(&demo_db));
+#ifdef WITH_THREAD
+			pthread_mutex_unlock(&config_lock);
+#endif
+			return 0;
+		}
+
+		mysqlres=mysql_store_result(&demo_db); /* Download result from server */
+		numrows = (int)mysql_num_rows(mysqlres);
+		oldnumentries = _configdatanr;
+		_configdatanr += numrows;
+		debug("nrofrows %i\n",_configdatanr);
+
+		_configdata = realloc(_configdata, sizeof(struct _configdataFormat) * _configdatanr);
+
+		i=0;
+		while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
+			debug("\tconfig %s => \"%s\"\n",mysqlrow[0],mysqlrow[1]);
+			strcpy(_configdata[i+oldnumentries].configkey,mysqlrow[0]);
+			strcpy(_configdata[i+oldnumentries].configvalue,mysqlrow[1]);
+			++i;
+		}
+
+
+		mysql_free_result(mysqlres);
 	}
-
-
-	mysql_free_result(mysqlres);
 	mysql_close(&demo_db);
 #endif
 
