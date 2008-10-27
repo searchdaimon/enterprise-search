@@ -84,7 +84,7 @@ set_grow(set *s)
 	int origlen;
 
 	origlen = s->len;
-	s->len *= 2;
+	s->len += 1;
 	if ((s->set = realloc(s->set, s->len * sizeof(char *))) == NULL) {
 		s->len = origlen;
 		return 0;
@@ -117,7 +117,7 @@ set_add(set *s, char *str)
 	}
 	s->set[i] = str;
 	s->size++;
-	
+
 	return 1;
 }
 
