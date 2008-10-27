@@ -877,6 +877,10 @@ char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf 
     struct attribute_temp_res	R;
     R = attribute_generate_xml_recurse(attributes, attrib_count, showattrp, getfiletypep, 2, qa);
 
+    for (i=0; i<qa->n; i++)
+	if (qa->query[i].operand == QUERY_DATE)
+	    set_insert(R.remove, i);
+
     bprintf(B, "<navigation query=\'");
     bsprint_query_with_remove(B, R.remove, qa);
     bprintf(B, "\'>\n");
