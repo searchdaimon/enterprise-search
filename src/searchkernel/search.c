@@ -2189,7 +2189,7 @@ void *searchIndex_thread(void *arg)
 	
 		#ifdef IIACL
 
-			unsigned int system = cmc_usersystemfromcollection(cmc_sock, searchIndex_thread_arg->subnames[i].subname);
+			int system = cmc_usersystemfromcollection(cmc_sock, searchIndex_thread_arg->subnames[i].subname);
 			if (system == -1) {
 				fprintf(stderr, "Unable to get usersystem for: %s\n", searchIndex_thread_arg->subnames[i].subname);
 				continue;
