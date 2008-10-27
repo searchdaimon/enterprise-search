@@ -3907,7 +3907,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 				if (!it_re.valid)
 				    {
 					re = reopen(lotNr, sizeof(unsigned int)*set_size(attr_keys), "attributeIndex", subname, 0);
-					map_insert(lot_re, lotNr, re);
+					if (re!=NULL) map_insert(lot_re, lotNr, re);
 				    }
 				else
 				    {
