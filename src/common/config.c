@@ -73,9 +73,9 @@ bconfig_flush(int mode) {
 
 
 	sprintf(mysql_query[0], "SELECT configkey, configvalue FROM config");
-	sprintf(mysql_query[1], "SELECT 'ad_ip' AS configkey, ip AS configvalue FROM system WHERE is_primary = 1");
-	sprintf(mysql_query[2], "SELECT 'ad_user' AS configkey, user AS configvalue FROM system WHERE is_primary = 1");
-	sprintf(mysql_query[3], "SELECT 'ad_password' AS configkey, password AS configvalue FROM system WHERE is_primary = 1");
+	sprintf(mysql_query[1], "SELECT '_ad_ip' AS configkey, ip AS configvalue FROM system WHERE is_primary = 1");
+	sprintf(mysql_query[2], "SELECT '_ad_user' AS configkey, user AS configvalue FROM system WHERE is_primary = 1");
+	sprintf(mysql_query[3], "SELECT '_ad_password' AS configkey, password AS configvalue FROM system WHERE is_primary = 1");
 	sprintf(mysql_query[4], "SELECT param AS configkey, value AS configvalue FROM system, systemParamValue WHERE system.is_primary = 1 AND system.id = systemParamValue.system");
 	//sprintf(mysql_query[2], "SELECT configkey, configvalue FROM config");
 
