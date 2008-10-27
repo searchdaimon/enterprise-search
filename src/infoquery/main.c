@@ -40,8 +40,7 @@ int main (int argc, char *argv[]) {
 	if (argc == 1) {
 		printf("./usage key [value]\n\n");
 		printf("groupsForUser <user name>\n");
-		printf("listUsers\n");
-		printf("listUsersUS usersystem\n");
+		printf("listUsers <usersystem>\n");
 		printf("listMailUsers\n");
 		printf("listGroups\n");
 		printf("collectionFor <user name> or <group name>\n");
@@ -58,7 +57,7 @@ int main (int argc, char *argv[]) {
 		printf("GetPassword <username>\n");
 		printf("collectionLocked <collection>\n");
                 printf("killCrawl <pid>\n");
-		puts("groupsforuserfromusersystem user usersystem");
+		puts("userGroups <user> <usersystem>");
 		printf("\nReturns %i on success and %i on failure\n",EXIT_SUCCESS,EXIT_FAILURE);
 		exit(1);
 	}
@@ -105,7 +104,8 @@ int main (int argc, char *argv[]) {
 		fprintf(fp,"%s: \"%s\"\n",key,value);	
 		fclose(fp);
 	}
-	if (strcmp(key,"listUsers") == 0) {
+	// DEPRECATED (24/10/2009)
+	/*if (strcmp(key,"listUsers") == 0) { 
 		if(!boithoad_listUsers(&respons_list,&responsnr)) {
 			perror("Error:Can't conect to boithoad");
 		}
@@ -115,8 +115,8 @@ int main (int argc, char *argv[]) {
                 	        printf("user: %s\n",respons_list[i]);
                 	}
 		}
-	}
-	else if (strcmp(key,"listMailUsers") == 0) {
+	} */
+	if (strcmp(key,"listMailUsers") == 0) {
 		if(!boithoad_listMailUsers(&respons_list,&responsnr)) {
 			perror("Error:Can't conect to boithoad");
 		}
@@ -370,7 +370,7 @@ int main (int argc, char *argv[]) {
 		r = cmc_collectionislocked(socketha, value);
 		printf("Collection locked: %s\n", r == 0 ? "no" : "yes");
 	}
-	else if (strcmp(key, "groupsforuserfromusersystem") == 0) {
+	else if (strcmp(key, "userGroups") == 0) {
 		int r;
 		int socketha;
 		int errorbufflen = 512;
@@ -392,7 +392,7 @@ int main (int argc, char *argv[]) {
 
 			group = (char *)groups;
 			for (i = 0; i < r; i++) {
-				printf("%s\n", group);
+				printf("group: %s\n", group);
 				group += MAX_LDAP_ATTR_LEN;
 			}
 		}
@@ -420,7 +420,7 @@ int main (int argc, char *argv[]) {
 
 		//printf("Collection locked: %s\n", r == 0 ? "no" : "yes");
 	}
-	else if (strcmp(key, "listUsersUS") == 0) {
+	else if (strcmp(key, "listUsers") == 0) {
 		int r;
 		int i;
 		int socketha;
@@ -439,7 +439,7 @@ int main (int argc, char *argv[]) {
 		r = cmc_listusersus(socketha, atoi(value), &users);
 
 		for (i = 0; i < r; i++) {
-			printf("%s\n", users[i]);
+			printf("user: %s\n", users[i]);
 			free(users[i]);
 		}
 		free(users);
