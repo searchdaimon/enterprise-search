@@ -66,8 +66,10 @@ sub deleteCollection($$) {
 }
 
 sub listUsers {
-	my $self = shift;
-	return $self->_getList('listUsers', 'user');
+	my ($self, $sys) = @_;
+	croak "system not provided"
+		unless defined $sys && $sys =~ /^\d+$/;
+	return $self->_getList("listUsers $sys", 'user', $sys);
 }
 
 sub listMailUsers {
@@ -224,12 +226,13 @@ sub _getList {
 	return undef unless $success;
 	
 	foreach my $line (@output) {
-		my ($key, $value) = split(": ", $line);
-		next unless ($value);
-		chomp($value);
-		push @list, $value if ($key eq $keyword);
+		chomp $line;
+		$line =~ /^\Q$keyword\E: (.*)$/;
+		my $value = $1;
+		next unless defined $value;
+		push @list, $value;
 	}
-	@list = sort { lc($a) cmp lc($b) } @list; #sort the human way.
+	@list = sort { lc $a cmp lc $b } @list; 
 	return \@list;
 }
 
