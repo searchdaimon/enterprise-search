@@ -414,6 +414,10 @@ int main (int argc, char *argv[]) {
 			errx(1, "infoquery collectionsforuser user");
 
 		r = cmc_collectionsforuser(socketha, value, &groups);
+
+		printf("Collections: %s\n", groups);
+		free(groups);
+
 		//printf("Collection locked: %s\n", r == 0 ? "no" : "yes");
 	}
 	else if (strcmp(key, "listUsersUS") == 0) {
