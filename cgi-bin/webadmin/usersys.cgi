@@ -19,37 +19,48 @@ my %vars = (
 my $page = Page::UserSys->new();
 my %state = $page->get_state();
 
-Readonly::Scalar my $API_UPD_MAPPING
-	=> "upd_mapping";
-Readonly::Scalar my $ACT_EDIT 
-	=> "edit";
+Readonly::Scalar my $API_UPD_MAPPING => "upd_mapping";
+Readonly::Scalar my $ACT_EDIT => "edit";
+Readonly::Scalar my $ACT_ADD  => "add";
+Readonly::Scalar my $VIEW_EDIT => "edit";
+Readonly::Scalar my $VIEW_MAP  => "map";
+Readonly::Scalar my $VIEW_ADD  => "add";
 
 my $tpl_file;
 my $using_api;
 
-if (my $sys_id = $state{'map'}) {
-	$tpl_file = $page->show_mapping(\%vars, $sys_id);
+if (my $v = $state{view}) {
+	
+	if ($v eq $VIEW_MAP) {
+		$tpl_file = $page->show_mapping(\%vars, $state{id});
+	}
+	elsif ($v eq $VIEW_ADD) {
+		$tpl_file = $page->show_add(\%vars, $state{part}, $state{sys});
+	}
+	elsif ($v eq $VIEW_EDIT) {
+		$tpl_file = $page->show_edit(\%vars, $state{id});
+	}
+	else { croak "Unknown view '$v'" }
 }
-elsif ($sys_id = $state{edit}) {
-	$tpl_file = $page->show_edit(\%vars, $sys_id);
-	warn Dumper(\%vars);
+
+elsif (my $a = $state{action}) {
+	if ($a eq $ACT_EDIT) {
+		$tpl_file = $page->upd_usersys(
+			\%vars, $state{id}, $state{sys});
+	}
+	elsif ($a eq $ACT_ADD) {
+		$tpl_file = $page->add(\%vars, $state{sys});
+	}
+	else { croak "Unknown action '$a'" }
 }
 elsif (my $api_cmd = $state{api}) {
 	$using_api = 1;
+
 	if ($api_cmd eq $API_UPD_MAPPING) {
 		$page->upd_mapping(\%vars, 
 			$state{id}, $state{mapping});
 	}
-	else { 
-		croak "Unknow api cmd '$api_cmd'" 
-	}
-}
-elsif (my $act = $state{action}) {
-	croak "Unknown action '$act'"
-		if $act ne $ACT_EDIT;
-
-	warn Dumper(\%state);
-	$tpl_file = $page->upd_usersys(\%vars, $state{id}, $state{sys});
+	else { croak "Unknow api cmd '$api_cmd'" }
 }
 else {
 	$tpl_file = $page->show(\%vars);

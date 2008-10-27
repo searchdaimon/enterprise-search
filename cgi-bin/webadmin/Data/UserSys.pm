@@ -41,14 +41,22 @@ sub new  {
 sub create {
 	my ($class, $dbh, %attr) = @_;
 
-	croak "TODO: Params";
+	my $params_ref = $attr{params} || { };
+	delete $attr{params};
 
-
-
+	# Add system
+	delete $attr{name}
+		unless $attr{name};
+	_del_invalid_attr(\%attr);
+	
 	my $sql = Sql::System->new($dbh);
 	my $sys_id = $sql->insert(\%attr, 1);
 
-	return $class::new($dbh, $sys_id);
+	# Add custom params
+	tie my %p_values, 'Sql::Hash::SystemParam', $sys_id, $dbh
+		or confess $!;
+	%p_values = %{$params_ref};
+	return $class->new($dbh, $sys_id);
 }
 
 sub update {
@@ -57,6 +65,7 @@ sub update {
 	# update params.
 	tie my %p_val, 'Sql::Hash::SystemParam', $s->{sys}{id}, $s->{dbh}
 		or confess $!;
+	$attr{params} ||= { };
 	%p_val = %{$attr{params}};
 	delete $attr{params};
 	
@@ -85,5 +94,6 @@ sub _del_invalid_attr {
 		delete $attr_ref->{$a};
 	}
 }
+
 
 1;

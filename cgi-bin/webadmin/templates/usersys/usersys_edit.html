@@ -1,4 +1,5 @@
 [% INCLUDE 'header.html' title = "User systems - edit $sys.name" %]
+[% PROCESS 'usersys_common.html' %]
 [% USE HTML %]
 
 <h1>Editing [% sys.name | html %]</h1>
@@ -7,45 +8,11 @@
 	[% PROCESS 'tpl_msg.html' type = "success" content = HTML.escape(ok) %]
 [% END %]
 
-<form action="usersys.cgi" method="post">
-<div class="defaultForm">
-<table>
-	<tr>
-                <td>IP/hostname:</td>
-                <td><input type="text" name="sys.ip" value="[% sys.ip | html %]" /></td>
-	</tr>
-
-	<tr>
-		<td>Name:</td><td><input type="text" name="sys.user" value="[% sys.user | html %]" /></td>
-	</tr>
-	<tr>
-		<td>Password:</td>
-                <td><input type="password" name="sys.password" value="" /></td>
-        </tr>
-	[% FOREACH p IN sys.params.keys %]
-	<tr>
-		<td>[% p | html %]</td>
-		<td>
-			<input type="text"
-			       value="[% sys.params.$p.value | html %]" 
-			       name="sys.params.[% p | html %]" />
-			[% IF sys.params.$p.note.defined %]
-				<span style="font-size : x-small; font-style : italic;">
-					[% sys.params.$p.note | html %]
-				</span>
-			[% END %]
-		</td>
-	</tr>
-	[% END %]
-	
-</table>
-<p>
-	<input type="hidden" name="action" value="edit" />
-	<input type="hidden" name="id" value="[% sys.id %]" />
-	<input type="submit" value="Update" />
-</p>
-</div>
-</form>
-
+[%# TODO: Add 'return' link  %]
+[% WRAPPER sys_form
+	action = 'edit'
+	btn_value = 'Update' %]
+       <input type="hidden" name="id" value="[% sys.id %]" /> 
+[% END %]
 
 [% INCLUDE 'footer.html' %]

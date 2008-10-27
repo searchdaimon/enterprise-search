@@ -18,6 +18,7 @@ our @ISA = qw(Page::Abstract);
 Readonly::Scalar my $TPL_LIST    => 'usersys_main.html';
 Readonly::Scalar my $TPL_MAPPING => 'usersys_mapping.html';
 Readonly::Scalar my $TPL_EDIT    => 'usersys_edit.html';
+Readonly::Scalar my $TPL_ADD     => 'usersys_add.html';
 
 use config qw(%CONFIG);
 
@@ -26,6 +27,7 @@ sub _init {
 	$s->{iq} = Boitho::Infoquery->new($CONFIG{infoquery});
 	$s->{sql_sys} = Sql::System->new($s->{dbh});
 	$s->{sql_mapping} = Sql::SystemMapping->new($s->{dbh});
+	$s->{sql_param} = Sql::SystemParam->new($s->{dbh});
 }
 
 sub show {
@@ -35,7 +37,33 @@ sub show {
 	$TPL_LIST;
 }
 
+sub show_add { 
+	my ($s, $vars, $part, $sys_ref) = @_;
+	if (!$part) { #part 1
+		return $TPL_ADD
+	}
+	croak "invalid part '$part'"
+		unless $part =~ /^2$/;
+	
+	croak "invalid system '$sys_ref->{connector}'"
+		unless $CONFIG{user_systems}{$sys_ref->{connector}};
+
+	my @params = $s->{sql_param}->get({ 
+		connector => $sys_ref->{connector} 
+	});
+	$vars->{sys}{params} = { map {
+		 $_->{param} => { note => $_->{note} } 
+	} @params };
+
+	$vars->{part2} = 1;
+	$vars->{sys}{connector} = $sys_ref->{connector};
+	#$vars->{sys}{name} = $sys_ref->{name} || undef;
+
+	return $TPL_ADD;
+}
+
 sub show_edit {
+	validate_pos(@_, 1, 1, { regex => qr(^\d+$) });
 	my ($s, $vars, $sys_id) = @_;
 	my $sys = Data::UserSys->new($s->{dbh}, $sys_id);
 	$vars->{sys} = { $sys->get() };
@@ -97,6 +125,14 @@ sub upd_mapping {
 sub upd_usersys {
 	validate_pos(@_, 1, 1, { regex => qr{^\d+$} }, 1);
 	my ($s, $vars, $sys_id, $sys_attr) = @_;
+
+	if (defined $sys_attr->{password}
+	    && $sys_attr->{password} eq "") {
+		# blank input, ignore.
+		delete $sys_attr->{password} 
+	}
+		
+
 	
 	my $sys = Data::UserSys->new($s->{dbh}, $sys_id);
 	$sys->update(%{$sys_attr});
@@ -108,31 +144,15 @@ sub upd_usersys {
 sub list_users {
 	validate_pos(@_, 1, { regex => qr(^\d+$) });
 	my ($s, $system_id) = @_;
-
-#	my @users = $s->{iq}->listUsers($system_id)
-#		or croak "infoquery: ", $s->{iq}->error();
-#	return @users;
-
-	# DEBUG
-	if ($system_id == 1) {
-		open my $fh, "/home/dagurval/websearch/example_list" or die $!;
-		my @usr;
-		for (0..300) {
-			$usr[$_] = <$fh>;
-			chomp $usr[$_];
-		}
-		return @usr;
-	}
-	else {
-		open my $fh, "/home/dagurval/websearch/example_list2" or die $!;
-		my @usr;
-		for (0..300) {
-			$usr[$_] = <$fh>;
-			chomp $usr[$_];
-		}
-		return @usr;
-	}
+	my $iq = Boitho::Infoquery->new($CONFIG{infoquery});
+	return @{$iq->listUsers($system_id)}
 }
 
+sub add {
+	my ($s, $vars, $sys_ref) = @_;
+	my $sys = Data::UserSys->create($s->{dbh}, %{$sys_ref});
+	$vars->{ok} = "System created.";
+	return $s->show($vars);
+}
 
 1;

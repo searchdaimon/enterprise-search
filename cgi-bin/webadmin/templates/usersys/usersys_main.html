@@ -1,8 +1,17 @@
 [% INCLUDE 'header.html' title = 'User systems' %]
+[% PROCESS 'common_widgets.html' %]
 [% USE Dumper %]
 
 
 <h1>User system integration</h1>
+
+[% PROCESS pretty_button
+        text = "Add new system"
+	icon = "" # TODO
+	view = "add"
+	action = "usersys.cgi"
+%]
+
 
 [% IF systems.size %]
 	[% PROCESS system_table
@@ -32,9 +41,9 @@
 [% BLOCK list_row %]
 	[% SET conn = system.connector %]
 	<td style="width : 40px;"><img src="file.cgi?i=agt_family" alt="" /></td>
-	<td>#[% system.id | html %]</td>
+	<td>[% system.name | html %]</td>
 	<td>[% user_systems.$conn | html %]</td>
-	<td><a href="usersys.cgi?edit=[% system.id %]">Edit</a></td>
+	<td><a href="usersys.cgi?view=edit&amp;id=[% system.id %]">Edit</a></td>
 	<td>
 	[% IF system.is_primary %]
 		<strong>Primary system</strong>

@@ -1,6 +1,7 @@
 [% INCLUDE 'header.html' title='Add collection' %]
 [% INCLUDE 'template_collection_warnings.html' %]
 [% PROCESS 'template_edit_blocks.html' %]
+[% PROCESS 'common_widgets.html' %]
 
 [% IF success %]
 	[% WRAPPER 'template_message.html'
@@ -17,7 +18,7 @@
 [% IF success %]
 	<h2>Add a new collection (part 1 of 2)</h2>
 [% ELSIF from_scan %]
-	[% #Adding a result from scan %]
+	[%#Adding a result from scan %]
 	<h2>Add a collection from scan - Part 1 of 2</h2>
 [% ELSE %]
 	<h2>Add a collection - Part 1 of 2</h2>
@@ -43,24 +44,14 @@
 
 <form action="add.cgi" method="post">
 
-[% WRAPPER 'template_table.html'
-	header = ['', 'Connector', 'Collection name'] %]
-	[% color = 1 %]
-	[% WRAPPER 'template_table_row.html' %]
-		<td style="width : 64px;"><img src="file.cgi?i=yast_nfs&amp;size=48x48" alt="" style="border : 0px solid;" /></td>
-		<td>
-		[% PROCESS connectors
-			use_radio_buttons = 0
-		 %]
-		</td>
-		<td>
-			[% collection_name = share.collection_name %]
-			<input type="text" name="share.collection_name" value="[% collection_name %]" />
-				<span style="font-size : x-small;">(Random name will be used if left blank.)</span><br />
-		</td>	
-	[% END %]
-
-[% END %]
+	[% PROCESS connector_select
+		tbl_headers = ['', 'Collection type', 'Collection name']
+		prefix = 'share'
+		list_block = 'connectors'
+		note = '(Random name will be used if left blank.)'
+		icon = 'yast_nfs'
+	%]
+	
 
 <div style="margin-top : 1em;">
 [% IF share.host %]<input type="hidden" value="[% share.host %]" name="share.host" />[% END %]

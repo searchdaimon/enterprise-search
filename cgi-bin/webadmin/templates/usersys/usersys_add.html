@@ -1,0 +1,55 @@
+[% INCLUDE 'header.html' title = "User systems - adding new" %]
+[% PROCESS 'usersys_common.html' %]
+[% PROCESS 'common_widgets.html' %]
+[% USE HTML %]
+
+[% UNLESS part2 %]
+	[% PROCESS part1 %]
+[% ELSE %]
+	[% PROCESS part2 %]
+[% END %]
+
+[% BLOCK part1 %]
+	<form method="post" action="usersys.cgi">
+	<h2>Add a new user system - part 1 of 2</h2>
+	[% PROCESS connector_select
+		tbl_headers = ['', 'System type', 'System name']
+		prefix = 'sys'
+		list_block = 'list_sys_connectors'
+		note = '(Defaults to "Unnamed system")'
+		icon = 'agt_family'
+	
+	%]
+	<p>
+		<input type="hidden" name="view" value="add" />
+		<input type="hidden" name="part" value="2" />
+		<input type="submit" value="Continue to details &mdash;&gt;">
+	</p>
+	</form>
+[% END %]
+
+[% BLOCK part2 %]
+	<h2>Add a new user system - part 2 of 2</h2>
+	[% WRAPPER sys_form 
+		no_name = 1 
+		action  = "add"
+		btn_value = "Add user system"
+		%]
+
+		<input type="hidden" name="sys.name" value="[% sys.name | html %]" />
+		<input type="hidden" name="sys.connector" value="[% sys.connector | html %]" />
+
+	[% END %]
+[% END %]
+
+
+[% BLOCK list_sys_connectors %]
+	<select name="sys.connector">
+		[% FOREACH id IN user_systems.keys %]
+			<option value="[% id %]">[% user_systems.$id %]</option>
+		[% END %]
+	</select>
+[% END %]
+	
+
+[% INCLUDE 'footer.html' %]
