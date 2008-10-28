@@ -3305,11 +3305,12 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 				// legger derfor til \0 som 5 char, slik at vi har en gyldig string
 				TeffArray->iindex[i].filetype[4] = '\0';
 
-				
+#if 0	
 				if (strstr(TeffArray->iindex[i].filetype,"10") != NULL) {
 					printf("werd. DocID %u, subname %s\n",TeffArray->iindex[i].DocID,(*TeffArray->iindex[i].subname).subname);
 					//exit(1);
 				}
+#endif
 				
 
 			}
