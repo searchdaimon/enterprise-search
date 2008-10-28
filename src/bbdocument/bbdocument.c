@@ -41,6 +41,7 @@
 #define filconvertetfile "/tmp/boithofilconverter"
 
 #define html_tempelate "<html>\n<head>\n<title>%s</title>\n<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'>\n</head>\n<body>\n%s\n</body>\n</html>\n"
+#define html_text_tempelate "<html>\n<head>\n<title>%s</title>\n<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'>\n</head>\n<body>\n<pre style='word-wrap:break-word;'>%s</pre>\n</body>\n</html>\n"
 
 //muligens bare convert:
 // ai
@@ -479,7 +480,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		printf("document %i\n",strlen(document));
 		printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
 
-		snprintf(documentfinishedbuftmp,(*documentfinishedbufsize),html_tempelate,titlefromadd,cpbuf);
+		snprintf(documentfinishedbuftmp,(*documentfinishedbufsize),html_text_tempelate,titlefromadd,cpbuf);
                 (*documentfinishedbufsize) = strlen(documentfinishedbuftmp);
 
 		free(cpbuf);
@@ -616,17 +617,16 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		int cpbufsize;
 		char *cpbuf;
 
-		cpbufsize = (strlen(html_tempelate) + exeocbuflen + strlen(titlefromadd)+1);	
+		cpbufsize = (strlen(html_text_tempelate) + exeocbuflen + strlen(titlefromadd)+1);	
 		cpbuf = malloc(cpbufsize);
 		//runarb: 30 jan 2008: hvorfor bruker vi documentfinished her, når det er documentfinishedbuf som returneres fra exeoc_timeout() ?
-		//snprintf(cpbuf,cpbufsize,html_tempelate,titlefromadd,documentfinishedbuf);
-		snprintf(cpbuf,cpbufsize,html_tempelate,titlefromadd,documentfinishedbuftmp);
+		snprintf(cpbuf,cpbufsize,html_text_tempelate,titlefromadd,documentfinishedbuftmp);
 		strscpy(documentfinishedbuftmp,cpbuf,(*documentfinishedbufsize));
 		(*documentfinishedbufsize) = strlen(documentfinishedbuftmp);
 
 
 		#ifdef DEBUG	
-		printf("maked html document of %i b (html_tempelate is %i b, cpbuf %i)\n",strlen(documentfinishedbuftmp),strlen(html_tempelate),strlen(cpbuf));
+		printf("maked html document of %i b (html_text_tempelate is %i b, cpbuf %i)\n",strlen(documentfinishedbuftmp),strlen(html_text_tempelate),strlen(cpbuf));
 		#endif
 
 		free(cpbuf);
@@ -675,7 +675,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
 		printf("have size %i\n",(*documentfinishedbufsize));
 
-		snprintf(documentfinishedbuftmp,(*documentfinishedbufsize),html_tempelate,titlefromadd,cpbuf);
+		snprintf(documentfinishedbuftmp,(*documentfinishedbufsize),html_text_tempelate,titlefromadd,cpbuf);
                 (*documentfinishedbufsize) = strlen(documentfinishedbuftmp);
 
 		printf("documentfinishedbufsize: %i\n",(*documentfinishedbufsize));
@@ -727,7 +727,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
 			return 0;
 		}
-		sprintf(*documentfinishedbuf, html_tempelate, titlefromadd, "");
+		sprintf(*documentfinishedbuf, html_text_tempelate, titlefromadd, "");
 		curdocp += strlen(*documentfinishedbuf);
 		while (*p != '\0') {
 			char *ft, *path;
@@ -923,9 +923,9 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		printf("can't run bbdocument_convert\n");
 		//lager en tom html buffer
 		//Setter titelen som subjekt. Hva hvis vi ikke har title?
-		htmlbuffersize = strlen(html_tempelate) + strlen(title) + 1;
+		htmlbuffersize = strlen(html_text_tempelate) + strlen(title) + 1;
 		htmlbuffer = malloc(htmlbuffersize);
-		snprintf(htmlbuffer, htmlbuffersize, html_tempelate,title,"");
+		snprintf(htmlbuffer, htmlbuffersize, html_text_tempelate,title,"");
 		htmlbuffersize = strlen(htmlbuffer);
 		printf("useing title \"%s\" as title\n",title);
 		printf("htmlbuffersize %i\n",htmlbuffersize);
