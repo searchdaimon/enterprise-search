@@ -2,10 +2,10 @@ BEGIN {
 	push @INC, $ENV{BOITHOHOME}."/Modules/";
 };
 
-
 use Getopt::Std;
+use Boitho::Lot;
 
-getopts('l', \%opts);
+getopts('ls:', \%opts);
 
 
 if ($opts{l}) {
@@ -17,9 +17,15 @@ if ($opts{l}) {
 
 }
 
-use Boitho::Lot;
+
+my $lockfile = $ENV{'BOITHOHOME'} . '/var/cleanLots.lock';
 
 my %hiestinlot = ();
+
+#lager en lås, slik at bare en kjører samtidig.
+#todo: kansje lage en lås pr collection?
+open(LOCKF,">$lockfile") or die("can't lock lock file $lockfile: $!");
+flock(LOCKF,2);
 
 print "indexing:\n";
 
@@ -34,9 +40,21 @@ foreach my $lot (0 .. 4096) {
 
 		while (my $subname = readdir(DIR) ) {
 
+			#skipper . og ..
+			if ($subname =~ /\.$/) {
+				next;
+			}
+	
 			my $dirtyfile = $Path . $subname . '/dirty';
 
 			if (-e $dirtyfile) {
+
+				#hvis vi bare skal ha et subnavn håpper vi over alle andre.
+				if (defined($opts{'s'}) && ($subname ne $opts{'s'}) ) {
+					print "Skipping subname $subname\n";
+					next;
+				}
+
 				print "name $dirtyfile\n";
 				print "lot $lot, subname $subname\n";
 
