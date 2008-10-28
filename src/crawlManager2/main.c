@@ -344,14 +344,22 @@ collectionsforuser_collection(struct hashtable *collections, char *user, struct 
 	int n_collections, i;
 	char **list;
 
+	printf("collectionsforuser_collection:\n  user=%s\n", user);
+
 	if (!userToSubname_getsubnamesAsString(usertosubname, user, subnamebuf, sizeof(subnamebuf)))
 		return 0;
 
 	n_collections = split(subnamebuf, ",", &list);
 
+	printf("  n_collections=%i\n", n_collections);
+
 	for (i = 0; i < n_collections; i++) {
+	    printf("    collection[%i] = %s\n", i, list[i]);
 		if (!hashtable_search(collections, list[i]))
+		    {
 			hashtable_insert(collections, strdup(list[i]), (void*)0x1);
+			printf("      INSERTING\n");
+		    }
 	}
 
 	FreeSplitList(list);
@@ -370,11 +378,13 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 	struct hashtable *collections;
 	struct hashtable_itr *itr;
 	struct userToSubnameDbFormat userToSubnameDb;
-	int i;
+	int i, j;
 
 	/* XXX: In lack of union select */
 	querylen[0] = snprintf(query[0], sizeof(query[0]), "SELECT secnd_usr, system FROM systemMapping WHERE prim_usr = '%s'", user);
 	querylen[1] = snprintf(query[1], sizeof(query[1]), "SELECT '%s' AS secnd_usr, id AS 'system' FROM system WHERE is_primary = 1", user);
+
+	collections = create_hashtable(13, ht_stringhash, ht_stringcmp);
 
 	for (i = 0; i < 2; i++) {
 		if (mysql_real_query(db, query[i], querylen[i])) {
@@ -389,7 +399,6 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 			continue;
 		}
 
-		collections = create_hashtable(13, ht_stringhash, ht_stringcmp);
 		if (!userToSubname_open(&userToSubnameDb,'r')) {
 			fprintf(stderr, "searchd_child: Warning! Can't open users.db\n");
 			continue;
@@ -397,7 +406,7 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 		
 		while ((row = mysql_fetch_row(res)) != NULL) {
 			char **groups;
-			int nrofcolls, n_groups, i;
+			int nrofcolls, n_groups;
 			usersystem_t *us;
 			usersystem_data_t data;
 
@@ -410,10 +419,11 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 				continue;
 			}
 			printf("Got %d groups for %s\n", n_groups, row[0]);
+			printf("Usersystem is %s\n", row[1]);
 
-			collectionsforuser_collection(collections, row[1], &userToSubnameDb);
-			for (i = 0; i < n_groups; i++)
-				collectionsforuser_collection(collections, groups[i], &userToSubnameDb);
+			collectionsforuser_collection(collections, row[0], &userToSubnameDb); // Hvorfor var denne satt til row[1]??
+			for (j = 0; j < n_groups; j++)
+				collectionsforuser_collection(collections, groups[j], &userToSubnameDb);
 			boithoad_respons_list_free(groups);
 			free_usersystem_data(&data);
 		}
