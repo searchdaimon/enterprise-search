@@ -363,9 +363,7 @@ collectionsforuser_collection(struct hashtable *collections, char *user, struct 
 	        #endif
 
 		if (!hashtable_search(collections, list[i]))
-		    {
 			hashtable_insert(collections, strdup(list[i]), (void*)0x1);
-		    }
 	}
 
 	FreeSplitList(list);
