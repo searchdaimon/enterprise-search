@@ -421,7 +421,7 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 				continue;
 			}
 			if (!(us->us_listGroupsForUser)(&data, row[0], &groups, &n_groups)) {
-				fprintf(stderr, "foooop\n");
+				fprintf(stderr, "Unable to list groups for user: %d\n", row[0]);
 				continue;
 			}
 			printf("Got %d groups for %s\n", n_groups, row[0]);
