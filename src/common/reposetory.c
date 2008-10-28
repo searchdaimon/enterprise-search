@@ -1358,11 +1358,21 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 		}
 
 		#ifdef DEBUG
+			printf("CurrentReposetoryVersionAsUInt: %u\n",CurrentReposetoryVersionAsUInt);
+
 			printf("ReposetoryHeader:\n");
 			printf("\tDocID: %u\n",(*ReposetoryHeader).DocID);
 			printf("\turl: \"%s\"\n",(*ReposetoryHeader).url);
 			printf("\thtmlSize: %ho\n",(*ReposetoryHeader).htmlSize);
 			printf("\timageSize: %ho\n",(*ReposetoryHeader).imageSize);
+
+			printf("\tacl_allowSize: %i\n",(*ReposetoryHeader).acl_allowSize);
+			printf("\tacl_deniedSize: %i\n",(*ReposetoryHeader).acl_deniedSize);
+			printf("\tdoctype: 4 bytes: \"%c%c%c%c\"\n",(*ReposetoryHeader).doctype);
+			printf("\turllen: %ho\n",(*ReposetoryHeader).urllen);
+			printf("\tattributeslen: %u\n",(*ReposetoryHeader).attributeslen);
+
+
 			printf("\n");
 		#endif
 
