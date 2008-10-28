@@ -344,21 +344,27 @@ collectionsforuser_collection(struct hashtable *collections, char *user, struct 
 	int n_collections, i;
 	char **list;
 
+	#ifdef DEBUG
 	printf("collectionsforuser_collection:\n  user=%s\n", user);
+	#endif
 
 	if (!userToSubname_getsubnamesAsString(usertosubname, user, subnamebuf, sizeof(subnamebuf)))
 		return 0;
 
 	n_collections = split(subnamebuf, ",", &list);
 
+	#ifdef DEBUG
 	printf("  n_collections=%i\n", n_collections);
+	#endif
 
 	for (i = 0; i < n_collections; i++) {
-	    printf("    collection[%i] = %s\n", i, list[i]);
+		#ifdef DEBUG
+	        printf("    collection[%i] = %s\n", i, list[i]);
+	        #endif
+
 		if (!hashtable_search(collections, list[i]))
 		    {
 			hashtable_insert(collections, strdup(list[i]), (void*)0x1);
-			printf("      INSERTING\n");
 		    }
 	}
 
@@ -421,7 +427,7 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 			printf("Got %d groups for %s\n", n_groups, row[0]);
 			printf("Usersystem is %s\n", row[1]);
 
-			collectionsforuser_collection(collections, row[0], &userToSubnameDb); // Hvorfor var denne satt til row[1]??
+			collectionsforuser_collection(collections, row[0], &userToSubnameDb);
 			for (j = 0; j < n_groups; j++)
 				collectionsforuser_collection(collections, groups[j], &userToSubnameDb);
 			boithoad_respons_list_free(groups);
