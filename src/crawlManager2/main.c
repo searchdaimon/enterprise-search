@@ -2198,7 +2198,7 @@ void connectHandler(int socket) {
 					n = atoi(row[0]);
 					printf("Usersystem: %d\n", n);
 				} else {
-					n = 1;
+					n = -1;
 				}
 
 				mysql_free_result(res);
