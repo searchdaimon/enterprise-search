@@ -157,8 +157,10 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 		    {
 			if (!strcmp("subject", (char*)multimap_key(it).ptr))
 			    p = (char*)multimap_val(it).ptr;
+			#ifdef EMAIL_ADRESS_AS_ATTRIBUTE
 			else if (!strcmp("from", (char*)multimap_key(it).ptr))
 			    asprintf(&crawldocumentAdd.attributes, "from=%s",(char*)multimap_val(it).ptr);
+			#endif
 		    }
 		
 		if (p == NULL) {
