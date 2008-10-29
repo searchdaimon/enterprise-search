@@ -1322,7 +1322,14 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 		(*collection)[i].id = strtoul(mysqlrow[7], (char **)NULL, 10);
 		(*collection)[i].userprefix = strdupnul(mysqlrow[8]);
 		(*collection)[i].rate = strtoul(mysqlrow[9], (char **)NULL, 10);
+
+		//runarb: 27 okt usikker på om dette er riktig.
+		if (mysqlrow[10] == NULL) {
+			blog(LOGERROR,1,"MySQL usersystem collom was NULL.");
+			return 0;
+		}
 		(*collection)[i].usersystem = strtoul(mysqlrow[10], (char **)NULL, 10);
+		
 
 		(*collection)[i].extra = NULL;
 
@@ -2191,7 +2198,7 @@ void connectHandler(int socket) {
 					n = atoi(row[0]);
 					printf("Usersystem: %d\n", n);
 				} else {
-					n = -1;
+					n = 1;
 				}
 
 				mysql_free_result(res);
