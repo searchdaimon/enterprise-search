@@ -1981,15 +1981,18 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#endif
 	// :temp
 
+	PagesResults.activetreads = 1;
 
 	#ifdef WITH_THREAD
-		PagesResults.activetreads = NROF_GENERATEPAGES_THREADS;
+		if (!searchd_config->optSingle) {
+			PagesResults.activetreads = NROF_GENERATEPAGES_THREADS;
+		}
 
-		pthread_t threadid[NROF_GENERATEPAGES_THREADS];
+		pthread_t threadid[PagesResults.activetreads];
 
 		dp_init();
 
-		//ret = pthread_mutexattr_init(&PagesResults.mutex);
+		
 		ret = pthread_mutex_init(&PagesResults.mutex, NULL);
 		ret = pthread_mutex_init(&PagesResults.mutextreadSyncFilter, NULL);
 
@@ -2000,18 +2003,14 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		//låser mutex. Vi er jo enda ikke kalre til å kjøre
 		pthread_mutex_lock(&PagesResults.mutex);
 
-		if (searchd_config->optSingle) {
+		if (!searchd_config->optSingle) {
 
-		}
-		else {
 			//start som thread that can get the pages
 			for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
 				ret = pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults);		
 			}
 
 		}
-	#else
-		PagesResults.activetreads = 1;
 	#endif
 
 	#ifdef DEBUG
@@ -2150,15 +2149,17 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 				ret = pthread_join(threadid[i], NULL);
 			}
 
-			//free mutex'en
-			ret = pthread_mutex_destroy(&PagesResults.mutex);
-			ret = pthread_mutex_destroy(&PagesResults.mutextreadSyncFilter);
-
-			#ifdef BLACK_BOKS
-				ret = pthread_mutex_destroy(&PagesResults.mutex_pathaccess);
-			#endif
-
 		}
+
+		//free mutex'en
+		ret = pthread_mutex_destroy(&PagesResults.mutex);
+		ret = pthread_mutex_destroy(&PagesResults.mutextreadSyncFilter);
+
+		#ifdef BLACK_BOKS
+			ret = pthread_mutex_destroy(&PagesResults.mutex_pathaccess);
+		#endif
+
+
 	#else 
 		generatePagesResults(&PagesResults);		
 	#endif
