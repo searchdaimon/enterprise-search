@@ -30,6 +30,21 @@ Readonly::Array my @EXCLUDE_URLS_HAVING =>  (
 Readonly::Scalar my $SD_BOT_NAME => "SharePoint sdbot/0.1";
 Readonly::Scalar my $SD_BOT_EMAIL => "esboot\@searchdaimon.com";
 
+sub checkCategory {
+   my ($url, $data) = @_;
+
+   if ($url =~ /contacts/) { return "SPCategory=Contacts"; }
+   if ($url =~ /Document%20Library/) { return "SPCategory=Document"; }
+   #if ($data =~ /new DiscussionBoard/) { return "Discussion"; }
+   #if ($data =~ /Tasks list to keep track of work related to this area/) { return "Calendar"; }
+   #if ($data =~ /Provides a place to store documents for this area/) { return "DocumentLibrary"; }
+   #if ($data =~ /L_DefaultContactsLink_Text/) { return "Contacts"; }
+   #if ($data =~ /L_ExportToContactsApp/) { return "Contacts"; }
+
+   return "SPCategory=Other";
+}
+
+
 ##
 # Main loop for a crawl update.
 # This is where a resource is crawled, and documents added.
@@ -46,6 +61,7 @@ sub crawl_update {
 	SD::sdCrawl::set_download_images($opt->{download_images});
 	SD::sdCrawl::setExclusionUrlParts(@EXCLUDE_URLS_HAVING);
 	SD::sdCrawl::setIISpecial();
+	SD::sdCrawl::setFindAtributes(\&checkCategory);
 
 	foreach my $starting_url (@urlList) {
 		my $url = URI->new(@urlList[0]);

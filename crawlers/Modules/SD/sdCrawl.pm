@@ -48,6 +48,7 @@ my @exclusionsUrlParts;
 my $iisspecial = 0;
 my @exclusionQueryParts;
 my $download_images = 0;
+my $FindAtributes;
 
 my $crawler;
  
@@ -58,6 +59,10 @@ sub Init {
     init_logging( );
     my $robot = init_robot( );
     return $robot;
+}
+
+sub setFindAtributes {
+	$FindAtributes = shift;
 }
 
 sub set_download_images {
@@ -233,20 +238,6 @@ sub consider_response {
   return 0;
 }
 
-sub checkCategory {
-   my $data = shift;
-
-   if ($data =~ /contacts/) { return "SPCategory=Contacts"; }
-   if ($data =~ /Document%20Library/) { return "SPCategory=Document"; }
-   #if ($data =~ /new DiscussionBoard/) { return "Discussion"; }
-   #if ($data =~ /Tasks list to keep track of work related to this area/) { return "Calendar"; }
-   #if ($data =~ /Provides a place to store documents for this area/) { return "DocumentLibrary"; }
-   #if ($data =~ /L_DefaultContactsLink_Text/) { return "Contacts"; }
-   #if ($data =~ /L_ExportToContactsApp/) { return "Contacts"; }
-
-  return "SPCategory=Other";
-}
-
 sub authorize {
   my $req = $_[0];
   if ($user) { 
@@ -298,8 +289,11 @@ sub process_near_url {
 		$title = substr($url, rindex($url, "/")+1);
 	}
 
+	my $category = "";
+	if ($FindAtributes) {
+		$category = $FindAtributes->($url_normalized, $response->content);
+	}
 
-	my $category = checkCategory($url_normalized);
 	if (!$crawler->document_exists($url, 0, length($response->content))) {
 		$crawler->add_document(
 				url     => $url_normalized,
