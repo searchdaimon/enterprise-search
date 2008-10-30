@@ -3584,8 +3584,9 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 
 			int	subname_nr = search_automaton(subnames_automaton, TeffArray->iindex[i].subname->subname);
-			printf("%s has nr %i\n", TeffArray->iindex[i].subname->subname, subname_nr);
-			assert(subname_nr>=0);
+			//printf("%s has nr %i\n", TeffArray->iindex[i].subname->subname, subname_nr);
+			//assert(subname_nr>=0);
+			if (subname_nr<0) continue;	// Burde ikke kunne skje.
 
 			/* XXX: Don't reopen all the time */
 			if ((crc32map = reopen(rLotForDOCid(TeffArray->iindex[i].DocID), sizeof(unsigned int), "crc32map", TeffArray->iindex[i].subname->subname, RE_READ_ONLY)) == NULL) {
@@ -3650,7 +3651,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 
 		//debug: printer ut alle treff, og litt om de.
-		//#ifdef DEBUG_II
+		#ifdef DEBUG_II
 			printf("hits after duplicate checking:\n\n");
 			printf("\t| %-5s | %-20s | %-8s | %-8s | %-8s | %-8s | %-8s | %-8s | %-8s |\n", "DocId", "Subname", "Date", "Subname", "Filename",
 			    "dup", "dup_c", "attr", "fltr");
@@ -3668,7 +3669,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 				);
 			}
 			printf("\n");
-		//#endif
+		#endif
 
 		printf("</################################# duplicate checking ######################################>\n");
 
