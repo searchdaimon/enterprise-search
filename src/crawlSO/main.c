@@ -1,7 +1,5 @@
 /*
- * Exchange crawler
- *
- * June, 2007
+ * Superoffice crawler
  */
 
 #define _GNU_SOURCE 1
@@ -79,7 +77,7 @@ crawlGo(struct crawlinfo *ci)
 	int port;
 	struct protoent *protocol;
 	struct sockaddr_in socketaddr;
-	char *sendbuf;
+	char *sendbuf, *sendbuflen;
 
 	port = DEFAULTPORT;
 
@@ -110,13 +108,18 @@ crawlGo(struct crawlinfo *ci)
 		return 0;
 	}
 
-	i = asprintf(&sendbuf, "%s\x10%s\x10%s", ci->collection->user, ci->collection->password,
-	    ci->collection->collection_name);
-	printf("Sending: %s\n", sendbuf);
+	i = asprintf(&sendbuf, "user %s\npassword %s\ncollection %s\nusersystem %d\nmodule %s\n",
+	    ci->collection->user, ci->collection->password,
+	    ci->collection->collection_name, ci->collection->usersystem, "superoffice");
+	asprintf(&sendbuflen, "%d\n", i);
+	if (send(s, sendbuflen, strlen(sendbuflen), 0) == -1)
+		warn("send(len)");
+	printf("Sending: %slen: %s\n", sendbuf, sendbuflen);
 	if (send(s, sendbuf, i, 0) == -1)
 		warn("send()");
 	else
 		close(s);
+	free(sendbuflen);
 	free(sendbuf);
 
 	return 1;
