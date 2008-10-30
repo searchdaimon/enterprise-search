@@ -8,6 +8,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <inttypes.h>
+#include <err.h>
+#include <mysql.h>
 
 #include "../boithoadClientLib/boithoad.h"
 
@@ -18,10 +20,12 @@
 #include "../common/logs.h"
 #include "../common/boithohome.h"
 #include "../common/sid.h"
+#include "../common/ht.h"
 #include "../common/crc32.h"
 #include "userobjekt.h"
 
 #include "../libcache/libcache.h"
+#include "../slicense/license.h"
 
 #include "../common/list.h"
 #include "../3pLibs/keyValueHash/hashtable.h"
@@ -31,6 +35,11 @@
 #define RETURN_FAILURE 0
 
 #define MAX_LDAP_ATTR_LEN 512
+
+#define MYSQL_HOST "localhost"
+#define MYSQL_USER "boitho"
+#define MYSQL_PASS "G7J7v5L5Y7"
+#define MYSQL_DB "boithobb"
 
 /*
 The sizelimit argument returns the number of matched entries specified for a search operation. When sizelimit 
@@ -48,6 +57,7 @@ number of 500 entries, no more than 500 entries are returned even when sizelimit
 cache_t *cache;
 pthread_mutex_t global_user_lock = PTHREAD_MUTEX_INITIALIZER;
 static struct hashtable  *gloabal_user_h = NULL;
+static struct hashtable *active_users;
 
 static unsigned int boithoad_hashfromkey(void *ky)
 {
@@ -66,6 +76,11 @@ static int boithoad_equalkeys(void *k1, void *k2)
 }
 
 
+int
+user_enabled(char *user)
+{
+	return hashtable_search(active_users, user) != NULL ? 1 : 0;
+}
 
 
 void connectHandler(int socket);
@@ -927,6 +942,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
         char user_password[64];
 	int i;
 	unsigned int authentication_timeout;
+	int license_system_active = 1;
 
 	printf("got new connection\n");
 
@@ -972,8 +988,14 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 			const char *msad_ldapgroupstring = bconfig_getentrystr("ldapgroupstring");
 			const char *msad_ldapbase 	= bconfig_getentrystr("ldapbase");
 			const char *sudo		= bconfig_getentrystr("sudo");
+			const char *active_usersystem   = bconfig_getentrystr("licensesystem");
+			const char *licensekey		= bconfig_getentrystr("licensekey");
 			char ldap_base[528] = "";
 
+			if (active_usersystem != NULL && licensekey != NULL && strcmp(active_usersystem, "ohSh7oow") == 0 && licensekey[0] == '\0') {
+				fprintf(stderr, "Disabling license system\n");
+				license_system_active = 0;
+			}
 
                         /* Flush config file and connect to ldap server */
                         int bad_ldap_connect(void) {
@@ -1045,8 +1067,11 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 					if (!bad_ldap_connect())
 						return 0;
 
-
-					if (ldap_authenticat (&ld,user_username,user_password,ldap_base,ldap_host,ldap_port)) {
+					if (!user_enabled(user_username) && license_system_active) {
+						printf("%s is not allowed to log in\n", user_username);
+						intresponse = ad_userauthenticated_ERROR;
+					}
+					else if (ldap_authenticat (&ld,user_username,user_password,ldap_base,ldap_host,ldap_port)) {
 						printf("Main: user authenticated\n");
 						printf("user_username: \"%s\"\n",user_username);
 						blog(LOGACCESS,1,"user \"%s\" successfuly authenticated.",user_username);
@@ -1411,6 +1436,74 @@ void badldap_init(FILE *elog) {
 
 }
 
+#define MAX_ALLOWED_USERS 25
+#define DEFAULT_N_USERS 5
+int
+get_number_of_licenced_users(MYSQL *db)
+{
+	unsigned short int users;
+	unsigned int serial;
+	char *query = "SELECT configvalue FROM config WHERE configkey = 'licensekey'";
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+
+	if (mysql_real_query(db, query, strlen(query)))
+		errx(1, "Unable to get active users: %s", mysql_error(db));
+
+	if ((res = mysql_store_result(db)) == NULL)
+		errx(1, "mysql_store_result: %s", mysql_error(db));
+
+	while ((row = mysql_fetch_row(res))) {
+		if (!get_licenseinfo(row[0], &serial, &users)) {
+			fprintf(stderr, "Invalid license key...");
+			mysql_free_result(res);
+			return DEFAULT_N_USERS;
+		}
+		break;
+	}
+	mysql_free_result(res);
+	if (!row)
+		return DEFAULT_N_USERS;
+
+	return users;
+}
+
+void
+init_active_users(struct hashtable *au)
+{
+	MYSQL *db;
+	char *query = "SELECT user FROM activeUsers";
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	int i;
+	unsigned int maxusers;
+
+	if ((db = mysql_init(NULL)) == NULL)
+		errx(1, "mysql_init, out of memory: %s", mysql_error(db));
+
+	if (!mysql_real_connect(db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_DB, 3306, NULL, 0))
+		errx(1, "Mysql connect error: '%s'. Exiting.", mysql_error(db));
+
+	if (mysql_real_query(db, query, strlen(query)))
+		errx(1, "Unable to get active users: %s", mysql_error(db));
+
+	if ((res = mysql_store_result(db)) == NULL)
+		errx(1, "mysql_store_result: %s", mysql_error(db));
+	i = 0;
+	maxusers = get_number_of_licenced_users(db);
+	printf("You have a license for %d users.\n", maxusers);
+	while ((row = mysql_fetch_row(res))) {
+		if (i >= maxusers) {
+			fprintf(stderr, "Max user count reached, will not allow any more\n");
+			break;
+		}
+		char *s = row[0];
+		hashtable_insert(au, strdup(s), (void *)0x1);
+		i++;
+	}
+	mysql_free_result(res);
+	mysql_close(db);
+}
 
 void
 usage(void)
@@ -1475,6 +1568,10 @@ main(int argc, char **argv)
 
 	//bconfig_init();
 	gloabal_user_h = create_hashtable(16, boithoad_hashfromkey, boithoad_equalkeys);
+	active_users = create_hashtable(16, ht_stringhash, ht_stringcmp);
+
+	/* Grab active users */
+	init_active_users(active_users);
 
         if (!openlogs(&logaccess,&logerror,"boithoad")) {
 		perror("unable to open logfiles for main boithoad");
