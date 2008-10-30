@@ -23,6 +23,7 @@
 #include "../common/ht.h"
 #include "../common/re.h"
 #include "../common/bprint.h"
+#include "../common/search_automaton.h"
 #include "../ds/dcontainer.h"
 #include "../ds/dvector.h"
 #include "../ds/dpair.h"
@@ -2586,8 +2587,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		char *search_user, int cmc_port
 		) {
 
-	fprintf(stderr, "search: searchSimple()\n");
-
 	int i,j,y,n;
 	//int x=0,j=0,k=0;
 	unsigned char PopRank;
@@ -3136,6 +3135,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		for (i=0; i<*TeffArrayElementer; i++)
 		    {
 			TeffArray->iindex[i].indexFiltered.duplicate = 0;
+			TeffArray->iindex[i].indexFiltered.duplicate_in_collection = -1;
 
 			// For filtrert i search_thread_ting:
 			if (TeffArray->iindex[i].indexFiltered.is_filtered)
@@ -3305,12 +3305,11 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 				// legger derfor til \0 som 5 char, slik at vi har en gyldig string
 				TeffArray->iindex[i].filetype[4] = '\0';
 
-#if 0	
+				
 				if (strstr(TeffArray->iindex[i].filetype,"10") != NULL) {
 					printf("werd. DocID %u, subname %s\n",TeffArray->iindex[i].DocID,(*TeffArray->iindex[i].subname).subname);
 					//exit(1);
 				}
-#endif
 				
 
 			}
@@ -3560,22 +3559,37 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		if (crc32maphash != NULL)
 			*crc32maphash = create_hashtable(41, ht_integerhash, ht_integercmp);
 
+		TeffArray->subnames = malloc(sizeof(char*) * nrOfSubnames);
+		for (i=0; i<nrOfSubnames; i++)
+		    {
+			TeffArray->subnames[i] = subnames[i].subname;
+		    }
+		automaton	*subnames_automaton = build_automaton(nrOfSubnames, (unsigned char**)TeffArray->subnames);
+
+		if (crc32maphash != NULL)
 	       	for (i = 0; i < (*TeffArrayElementer); i++) {
 			//runarb 22 sept 2008: hvorfor er denne her? Brukes bare på websøk
 			//TeffArray->iindex[i].PopRank = popRankForDocIDMemArray(TeffArray->iindex[i].DocID);
 #if 1
-			if (crc32maphash == NULL)
-				continue;
+//			if (crc32maphash == NULL)
+//				continue;
 
 			// This document is filtered out, don't even think about it.
-			if (TeffArray->iindex[i].indexFiltered.is_filtered == 1)
+			if (TeffArray->iindex[i].indexFiltered.filename == 1
+			    || TeffArray->iindex[i].indexFiltered.date == 1
+			    || TeffArray->iindex[i].indexFiltered.attribute == 1)
 				continue;
 
-			TeffArray->iindex[i].indexFiltered.duplicate = 0;
+			//TeffArray->iindex[i].indexFiltered.duplicate = 0; // Allerede initiert (mÃ¥ initieres for *alle*).
 
+
+			int	subname_nr = search_automaton(subnames_automaton, TeffArray->iindex[i].subname->subname);
+			printf("%s has nr %i\n", TeffArray->iindex[i].subname->subname, subname_nr);
+			assert(subname_nr>=0);
 
 			/* XXX: Don't reopen all the time */
 			if ((crc32map = reopen(rLotForDOCid(TeffArray->iindex[i].DocID), sizeof(unsigned int), "crc32map", TeffArray->iindex[i].subname->subname, RE_READ_ONLY)) == NULL) {
+//			if ((crc32map = reopen(rLotForDOCid(TeffArray->iindex[i].DocID), sizeof(unsigned int), "crc32map", TeffArray->subnames[subname_nr], RE_READ_ONLY)) == NULL) {
 				debug("reopen(crc32map)\n");
 				continue;
 			}
@@ -3590,17 +3604,19 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 				continue;
 			}
 
-			// Byttet fra list til vector da vector er mye raskere:
-			container *V = hashtable_search(*crc32maphash, &crc32);
-			if (V == NULL) {
-				V = vector_container(pair_container(int_container(), string_container()));
-				hashtable_insert(*crc32maphash, uinttouintp(crc32), V);
+			// Byttet fra list til vector da vector er raskere.
+			struct duplicate_docids *dup = hashtable_search(*crc32maphash, &crc32);
 
-				vector_pushback(V, TeffArray->iindex[i].DocID, TeffArray->iindex[i].subname->subname);
+			if (dup == NULL) {
+				dup = malloc(sizeof(struct duplicate_docids));
+				dup->coll = calloc(nrOfSubnames, sizeof(char));
+				dup->V = vector_container( pair_container( int_container(), int_container() ) );
+				hashtable_insert(*crc32maphash, uinttouintp(crc32), dup);
+
+				if (subname_nr >= 0) dup->coll[subname_nr]++;
+				vector_pushback(dup->V, TeffArray->iindex[i].DocID, subname_nr);
 
 			} else {
-				vector_pushback(V, TeffArray->iindex[i].DocID, TeffArray->iindex[i].subname->subname);
-
 				/* Remove duplicated */
 				if (TeffArray->iindex[i].indexFiltered.is_filtered) {
 					#ifdef DEBUG
@@ -3611,6 +3627,17 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 					--(*TotaltTreff);
 				}
 
+				//printf("DUPLICATE: %s / %s\n", TeffArray->iindex[i].subname->subname, TeffArray->subnames[subname_nr]);
+				vector_pushback(dup->V, TeffArray->iindex[i].DocID, subname_nr);
+
+				//if (subname_nr >= 0)
+				    {
+					if (dup->coll[subname_nr] > 0)
+					    TeffArray->iindex[i].indexFiltered.duplicate_in_collection = subname_nr;
+
+					dup->coll[subname_nr]++;
+				    }
+
 				TeffArray->iindex[i].indexFiltered.is_filtered = 1;
 				TeffArray->iindex[i].indexFiltered.duplicate = 1;
 			}
@@ -3618,29 +3645,32 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		}
 		//reclose_cache();
 
+		free_automaton(subnames_automaton);
 
 
 
 		//debug: printer ut alle treff, og litt om de.
-		#ifdef DEBUG_II
+		//#ifdef DEBUG_II
 			printf("hits after duplicate checking:\n\n");
-			printf("\t| %-5s | %-20s | %-8s | %-8s | %-8s | %-8s |\n", "DocId", "Subanme", "Date", "Subname", "Type", "dup");
+			printf("\t| %-5s | %-20s | %-8s | %-8s | %-8s | %-8s | %-8s | %-8s | %-8s |\n", "DocId", "Subname", "Date", "Subname", "Filename",
+			    "dup", "dup_c", "attr", "fltr");
 			for (i = 0; (i < (*TeffArrayElementer)) && (i < 100); i++) {
-				printf("\t| %-5u | %-20s | %-8d | %-8d | %-8d | %-8d | %-8d |\n",
+				printf("\t| %-5u | %-20s | %-8d | %-8d | %-8d | %-8d | %-8d | %-8d | %-8d |\n",
 					TeffArray->iindex[i].DocID,
 					(*TeffArray->iindex[i].subname).subname,
 					TeffArray->iindex[i].indexFiltered.date,
 					TeffArray->iindex[i].indexFiltered.subname,
 					TeffArray->iindex[i].indexFiltered.filename,
 					TeffArray->iindex[i].indexFiltered.duplicate,
+					TeffArray->iindex[i].indexFiltered.duplicate_in_collection,
+					TeffArray->iindex[i].indexFiltered.attribute,
 					TeffArray->iindex[i].indexFiltered.is_filtered
 				);
 			}
 			printf("\n");
-		#endif
+		//#endif
 
 		printf("</################################# duplicate checking ######################################>\n");
-
 
 		printf("order by \"%s\"\n",orderby);
 
@@ -3993,9 +4023,9 @@ char* searchFilterCount(int *TeffArrayElementer,
 			    }
 			else
 			    {
-			        char	*group, *descr;
+			        char	*group, *descr, *icon;
 
-				fte_getdescription(getfiletypep, "nbo", file_ext, &group, &descr);
+				fte_getdescription(getfiletypep, "nbo", file_ext, &group, &descr, &icon);
 				map_insert(file_groups, file_ext, group);
 
 				attribute_count_add(count, attributes, 3, "group", group, file_ext);
@@ -4238,7 +4268,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 			else if (TeffArray->iindex[i].indexFiltered.attribute == 1) {
 				continue;
 			}
-			else if (TeffArray->iindex[i].indexFiltered.duplicate == 1) {
+			else if (TeffArray->iindex[i].indexFiltered.duplicate_in_collection >= 0) {
 				continue;
 			}
 				

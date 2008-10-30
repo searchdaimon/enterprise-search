@@ -690,25 +690,25 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 #endif
 
 			/* Duplicates? */
-			// Byttet fra list til vector da vector er mye raskere (ax):
-			container *V = hashtable_search(PagesResults->crc32maphash, &Sider->DocumentIndex.crc32);
-			if (V != NULL) {
+			// Byttet fra list til vector da vector er raskere (ax).
+			struct duplicate_docids *dup = hashtable_search(PagesResults->crc32maphash, &Sider->DocumentIndex.crc32);
+			if (dup != NULL) {
 				int k;
 //				printf("############################\n");
-				Sider->n_urls = vector_size(V)-1;
+				Sider->n_urls = vector_size(dup->V)-1;
 				Sider->urls = calloc(Sider->n_urls, sizeof(*(Sider->urls)));
 				//iterator itr = list_begin(list);
 				//itr = list_next(itr);
 				//for (k = 0; itr.valid; itr = list_next(itr), k++) {
-				for (k = 0; k<vector_size(V)-1; k++) {
+				for (k = 0; k<vector_size(dup->V)-1; k++) {
 					char htmlbuf[1024*1024 * 5], imagebuf[1<<16];
 					unsigned int htmllen = sizeof(htmlbuf);
 					unsigned int imagelen = sizeof(imagelen);
 					char *url, *acla, *acld, *attributes;
 					struct DocumentIndexFormat di;
 					struct ReposetoryHeaderFormat repohdr;
-					unsigned int docid = pair(vector_get(V,k+1)).first.i;
-					char *subname = pair(vector_get(V,k+1)).second.str;
+					unsigned int docid = pair(vector_get(dup->V,k+1)).first.i;
+					char *subname = PagesResults->TeffArray->subnames[pair(vector_get(dup->V,k+1)).second.i];
 					char tmpurl[1024];
 					//printf("Woop subname!!!: %p %s\n", subname, subname);
 
@@ -2385,7 +2385,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	while (itr->e!=NULL)
 	    {
-		destroy((container*)hashtable_iterator_value(itr));
+		struct duplicate_docids *dup = hashtable_iterator_value(itr);
+		free(dup->coll);
+		destroy(dup->V);
+		free(dup);
 		hashtable_iterator_advance(itr);
 	    }
 
