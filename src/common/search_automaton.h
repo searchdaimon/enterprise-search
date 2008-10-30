@@ -124,10 +124,12 @@ static inline void print_automaton( char *prefix, automaton *A, int n )
 }
 */
 
-static inline automaton* build_automaton( int num_args, unsigned char **words )
+static inline automaton* build_automaton( int num_args, unsigned char **_words )
 {
     automaton	*base = new_automaton();
     int		i, j;
+    unsigned char	**words = malloc(sizeof(char*) * num_args);
+    for (i=0; i<num_args; i++) words[i] = (unsigned char*)strdup((char*)_words[i]);
 
     #ifdef DEBUG
 	    fprintf(stderr, "search_automaton: build_automaton()\n");
@@ -213,6 +215,9 @@ static inline automaton* build_automaton( int num_args, unsigned char **words )
 //    printf("Added words to automata:\n");
 //    print_automaton("", base, 0);
 //    printf("---\n");
+
+    for (i=0; i<num_args; i++) free(words[i]);
+    free(words);
 
     return base;
 }
