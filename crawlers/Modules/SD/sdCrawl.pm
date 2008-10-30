@@ -34,7 +34,6 @@ my $bot_email = "email\@email.com";
 
 my $hit_count = 0;
 my $robot;  # the user-agent itself
-my $QUIT_NOW;
 my @schedule;
 my $last_time_anything_said;
 my $last_time_anything_muttered;
@@ -43,15 +42,11 @@ my %points_to;
 my %notable_url_error;  # URL => error message
 my %seen_url_before;
 my $acl;
-my $allow_far_urls = 0;
 my @ip_start;
 my @ip_end;
-my @ip_country2;
 my @exclusionsUrlParts;
 my $iisspecial = 0;
-my $countries = "";
 my @exclusionQueryParts;
-my @allowCountries;
 my $download_images = 0;
 
 my $crawler;
@@ -62,10 +57,6 @@ sub Init {
    ($crawler, $bot_name, $bot_email, $acl, $user, $passw) = @_;
     init_logging( );
     my $robot = init_robot( );
-    init_signals( );
-    if ( $allow_far_urls ) {
-       InitCountry();
-    }
     return $robot;
 }
 
@@ -73,13 +64,6 @@ sub set_download_images {
 	$download_images = shift;
 }
 
-sub doFarUrls {
-   $allow_far_urls = 1;
-}
-
-sub setAllowedCountries{
-   (@allowCountries) = @_;
-}
 
 sub setDelay {
    ($delay) = @_;
@@ -103,10 +87,6 @@ sub Start {
    say("Quitting.\n");
 }
 
-sub setCountries {
-   $countries = @_;
-}
-
 sub setExclusionQueryParts {
     @exclusionQueryParts = @_;
 }
@@ -116,62 +96,18 @@ sub main_loop {
     schedule_count( )
     and $hit_count < $hit_limit
     and time( ) < $expiration
-    and ! $QUIT_NOW
   ) {
-    process_url( next_scheduled_url( ) );
+	my $url = next_scheduled_url( );
+	if( near_url( $url ) )   { 
+		process_near_url($url);
+	}
+	else {
+		mutter ( "Far url $url" );
+	}
   }
   return;
 }
 
-sub InitCountry {
-   open (theFile,"../Modules/ip2country.txt") || die("Could not open file!");
-   my $i=0;
-   while (<theFile>) {
-      chomp;
-      my @ips = split (",");
-      $ip_start[$i] = $ips[0];
-      $ip_end[$i] = $ips[1];
-      $ip_country2[$i] = $ips[2];
-      $i++;
-   }
-   close theFile;
-}
-
-
-sub getCountry {
-   my $url = URI->new(@_);
-   my $host = $url->host();
-   $host = "nslookup ".$host;
-   my $ip_address;
-   my @lookup = `$host`;
-   my $line;
-
-   foreach $line ( @lookup ) {
-      if ($line =~ /Address/) {
-         my @address = split / /, $line;
-         $ip_address =  $address[1];
-      }
-   }
-
-   my @ipp = split (/\./,$ip_address);
-   my $ip_number = $ipp[0]*256*256*256+$ipp[1]*256*256+$ipp[2]*256+$ipp[3];
-
-   my $j = 0;
-   while ($ip_number > $ip_end[$j]) {
-      $j++;
-   }
-
-   my $country;
-
-   if ($ip_number > $ip_start[$j]) {
-      $country = $ip_country2[$j];
-   } else {
-      $country = "NA";
-   }
-   return $country;
-}
-
- 
 sub init_logging {
   my $selected = select(STDERR);
   $| = 1; # Make STDERR unbuffered.
@@ -197,10 +133,6 @@ sub init_robot {
   return $robot;
 }
  
-sub init_signals {  # catch control-C's
-  $SIG{'INT'} = sub { $QUIT_NOW = 1; return;};
-  return;
-}
  
 sub say {
   # Add timestamps as needed:
@@ -224,19 +156,12 @@ sub mutter {
   print @_ if $verbose;
 }
 
-sub process_url {
-  my $url = $_[0];
-   if( near_url($url) )   { process_near_url($url) }
-  else                   { process_far_url($url) }
-  return;
-}
 
 sub near_url {   # Is the given URL "near"?
   #my $url = $_[0];
   my $url = URI->new($_[0]);
   foreach my $starting_url (@starting_urls) {
      my $starting_uri =URI->new($starting_url);
-     #if( substr($url, 0, length($starting_url))
      #eq $starting_url
     if( $url->host() eq  $starting_uri->host()
     ) {
@@ -309,74 +234,17 @@ sub consider_response {
 }
 
 sub checkCategory {
-   my $data = @_;
+   my $data = shift;
 
+   if ($data =~ /contacts/) { return "SPCategory=Contacts"; }
+   if ($data =~ /Document%20Library/) { return "SPCategory=Document"; }
    #if ($data =~ /new DiscussionBoard/) { return "Discussion"; }
    #if ($data =~ /Tasks list to keep track of work related to this area/) { return "Calendar"; }
    #if ($data =~ /Provides a place to store documents for this area/) { return "DocumentLibrary"; }
    #if ($data =~ /L_DefaultContactsLink_Text/) { return "Contacts"; }
    #if ($data =~ /L_ExportToContactsApp/) { return "Contacts"; }
 
-  return "";
-}
-
-sub country_ok {
-   my ($currentCountry) = @_;
-   my $country;
-
-   if (!@allowCountries) {
-      return 1;
-   }
-   foreach $country(@allowCountries) {
-      if ($currentCountry eq $country) {
-         return 1;
-      }
-   }
-   return 0;
-}
-
-sub process_far_url {
-  my $url = $_[0];
-   if (!$allow_far_urls) { return; }
-  say("HEADing far $url\n");
-  ++$hit_count;
-  mutter("  That was hit #$hit_count\n");
-
-
-
-   return unless country_ok(getCountry($url));
-
-   my $req = HTTP::Request->new(GET => $url);
-
-   my $response = $robot->request($req);
-   my $ct = mapMimeType($response->content_type);
-
-    my $title = "";
-    if($ct ne  'text/html') {
-       $title = substr($url, rindex($url, "/")+1);
-     }
-   
-   
-  
-   if (not $crawler->document_exists($url, 0, length($response->as_string))) {
-     $url = $crawler->normalize_http_url($url);
-	 $crawler->add_document(
-	 	url     => $url,
-		title   => $title,
-		type    => $ct,
-		acl_allow => $acl,
-		content => $response->content,
-		last_modified => str2time($response->header('Last-Modified'))
-		);
-   }
- 
-    mutter("  That was hit #$hit_count\n");
-    return unless consider_response($response);
- 
-    if($ct eq 'text/html') {
-       extract_links_from_response($response);     
-    }
-     return;
+  return "SPCategory=Other";
 }
 
 sub authorize {
@@ -407,7 +275,7 @@ sub process_near_url {
 	my $url_normalized = $crawler->normalize_http_url($url);
 	my $keep_doc = addOk($url_normalized);
 
-	say("Fetching ..." . substr($url, -80) . "\n");
+	say("Fetching \"$url\"\n");
 
 	my $req = HTTP::Request->new(GET => $url);
 	$req->authorization_basic($user, $passw)
@@ -431,7 +299,7 @@ sub process_near_url {
 	}
 
 
-	my $category = checkCategory($response->as_string);
+	my $category = checkCategory($url_normalized);
 	if (!$crawler->document_exists($url, 0, length($response->content))) {
 		$crawler->add_document(
 				url     => $url_normalized,
@@ -450,34 +318,6 @@ sub process_near_url {
 }
 
 
-#sub extract_links_from_response {
-#  my $response = $_[0];
-#  my $base = URI->new( $response->base )->canonical;
-    # "canonical" returns it in the one "official" tidy form
-
-#  my $stream = HTML::TokeParser->new( $response->content_ref );
-#  my $page_url = URI->new( $response->request->uri );
-
-#  mutter( "Extracting links from $page_url\n" );
-
-#  my($tag, $link_url);
-#  while( $tag = $stream->get_tag('a') ) {
-
-#    next unless defined($link_url = $tag->[1]{'href'});
-#    next unless length $link_url; # sanity check!
-#    $link_url = URI->new_abs($link_url, $base)->canonical;
-#    next unless $link_url->scheme eq 'http'; # sanity
-  
-#    if ($allow_far_urls) {
-#       $link_url->fragment(undef); # chop off any "#foo" part
-#       next if $link_url =~ m/\s/; # If it's got whitespace, it's a bad URL.
-#    }
-
-#    note_link_to($page_url => $link_url)
-#      unless $link_url->eq($page_url); # Don't note links to itself!
-#  }
-#  return;
-#}
 
 sub extract_links_from_response {
 	my $response = $_[0];
@@ -570,15 +410,6 @@ sub schedule {
      
     $u->host( regularize_hostname( $u->host( ) ) );
 
-    if ($allow_far_urls) {
-       next if defined $u->query; 
-       next if defined $u->userinfo; 
-       return unless $u->host( ) =~ m/\./; 
-       next if url_path_count($u) > 6;
-       next if $u->path =~ m<//> or $u->path =~ m{/\.+(/|$)};
-       $u->fragment(undef);
- 
-    }
 
     if (lc($u->as_string) =~ "default.aspx") {
        $u = URI->new(substr($u->as_string, 0, rindex(lc($u->as_string), "default.aspx")));
@@ -611,15 +442,6 @@ sub regularize_hostname {
   $host =~ s/\.$//;    # foo.com. => foo.com
   return 'localhost' if $host =~ m/^0*127\.0+\.0+\.0*1$/;
   return $host;
-}
-
-sub url_path_count {
-  # Return 4 for "http://fee.foo.int/dedle/dudle/dum/sum"
-  my $url = $_[0];
-  my @parts = $url->path_segments;
-  shift @parts if @parts and $parts[ 0] eq '';
-  pop   @parts if @parts and $parts[-1] eq '';
-  return scalar @parts;
 }
  
 sub report {  
