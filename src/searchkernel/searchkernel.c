@@ -1111,7 +1111,8 @@ void *generatePagesResults(void *arg)
 	debug("localshowabal %i",localshowabal);
 
 	while ((i=nextIndex(PagesResults)) != -1) {
-		debug("generatePagesResults: i %i, DocID %u\n",i,(*PagesResults).TeffArray->iindex[i].DocID);
+
+		debug("i %i, DocID %u, subname %s\n",i,(*PagesResults).TeffArray->iindex[i].DocID, (*PagesResults).TeffArray->iindex[i].subname->subname);
 
 		//if ((*SiderHeder).filtered > 300) {
 		//	(*PagesResults).filterOn = 0;
@@ -1380,8 +1381,8 @@ void *generatePagesResults(void *arg)
 			if (strcmp((*PagesResults).password,"water66") == 0) {
 				printf("pathaccess: have sodo password. Won't do pathaccess\n");
 			}
-			else if (!pathaccess(PagesResults, (*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray->iindex[i].subname).subname,side->DocumentIndex.Url,(*PagesResults).search_user,(*PagesResults).password)) {
-				fprintf(stderr, "searchkernel: Access denied for file \"%s\" in %s\n", side->DocumentIndex.Url, (*(*PagesResults).TeffArray->iindex[i].subname).subname);
+			else if (!pathaccess(PagesResults, (*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray->iindex[i].subname).subname,side->url,(*PagesResults).search_user,(*PagesResults).password)) {
+				fprintf(stderr, "searchkernel: Access denied for file \"%s\" in %s\n", side->url, (*(*PagesResults).TeffArray->iindex[i].subname).subname);
 
 				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 
