@@ -106,3 +106,5 @@ INSERT INTO systemParamValue (param, system, value) SELECT 'domain' as param, 1 
 INSERT INTO systemParamValue (param, system, value) VALUES('ldapstring', 1, '');
 INSERT INTO systemParamValue (param, system, value) VALUES('ldapbase', 1, '');
 INSERT INTO systemParamValue (param, system, value) VALUES('ldapgroupstring', 1, '');
+
+INSERT INTO config (configkey, configvalue) VALUES('licensekey', '');
