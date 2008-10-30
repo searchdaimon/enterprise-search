@@ -2852,7 +2852,6 @@ int main(int argc, char *argv[])
 	                			printf("\t<CACHE>%s</CACHE>\n", Sider[i].cacheLink);
 					else 
 						printf("\t<CACHE></CACHE>\n");
-					printf("\t<WHAT>%d</WHAT>\n", Sider[i].subname.config.cache_link);
 					
 					printf("\t<PAID_INCLUSION>%i</PAID_INCLUSION>\n",(int)Sider[i].subname.config.isPaidInclusion);
 
