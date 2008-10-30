@@ -140,3 +140,12 @@ CREATE TABLE shareResults (
   PRIMARY KEY  (share)
 ) TYPE=MyISAM COMMENT='searchd cfg values';
 
+CREATE TABLE param (
+  id int(11) NOT NULL auto_increment,
+  connector int(11) default NULL,
+  param varchar(255) default NULL,
+  example varchar(255) default NULL,
+  PRIMARY KEY  (id),
+  UNIQUE KEY connector (connector,param)
+) TYPE=MyISAM;
+
