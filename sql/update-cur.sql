@@ -108,3 +108,7 @@ INSERT INTO systemParamValue (param, system, value) VALUES('ldapbase', 1, '');
 INSERT INTO systemParamValue (param, system, value) VALUES('ldapgroupstring', 1, '');
 
 INSERT INTO config (configkey, configvalue) VALUES('licensekey', '');
+INSERT INTO config (configkey, configvalue) VALUES('licensesystem', 'ohSh7oow');
+
+ALTER TABLE `shares` add `system` int(10);
+UPDATE shares SET system = 1 WHERE system IS NULL;
