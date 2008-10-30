@@ -55,7 +55,7 @@ sub show_system_diagnostics {
 	$vars->{'lotinfo'}     = \@lots
             if @lots;
 	$vars->{'raid'} 	   = $self->_raid_status;
-	$vars->{'integration'} = $self->_integration_status;
+	#$vars->{'integration'} = $self->_integration_status;
 	
 	return ($vars, $template_file);
 }
@@ -107,39 +107,39 @@ sub _raid_status($) {
 	
 }
 
-sub _integration_status($$) {
-	my $self = shift;
-	my $sqlConfig = $self->{'sqlConfig'};
-	my $infoQuery = $self->{'infoQuery'};
-	
-	my $method = $sqlConfig->get_authenticatmethod;
-	my %status = ('method' => $method);
-	
-	# is valid method
-	unless ($sqlConfig->is_valid_authmethod($method)) {
-		$status{'error'}  = "Invalid authentication method ($method) used.";
-		return \%status;
-	}
-	
-	# can connect to dap
-	if (my $settings_ptr = $sqlConfig->get_dap_settings($method)) {
-		my %settings = %$settings_ptr;
-		my @param = (
-			$settings{'domain'},
-			$settings{'user'},
-			$settings{'password'},
-			$settings{'ip'},
-			$settings{'port'});
-		my ($success, $errormsg) = $infoQuery->authTest($method, @param);
-		
-		unless ($success) {
-			$status{'error'} = $errormsg;
-			return \%status;
-		}
-	}
-		
-	return \%status;
-}
-
+#sub _integration_status($$) {
+#	my $self = shift;
+#	my $sqlConfig = $self->{'sqlConfig'};
+#	my $infoQuery = $self->{'infoQuery'};
+#	
+#	my $method = $sqlConfig->get_authenticatmethod;
+#	my %status = ('method' => $method);
+#	
+#	# is valid method
+#	unless ($sqlConfig->is_valid_authmethod($method)) {
+#		$status{'error'}  = "Invalid authentication method ($method) used.";
+#		return \%status;
+#	}
+#	
+#	# can connect to dap
+#	if (my $settings_ptr = $sqlConfig->get_dap_settings($method)) {
+#		my %settings = %$settings_ptr;
+#		my @param = (
+#			$settings{'domain'},
+#			$settings{'user'},
+#			$settings{'password'},
+#			$settings{'ip'},
+#			$settings{'port'});
+#		my ($success, $errormsg) = $infoQuery->authTest($method, @param);
+#		
+#		unless ($success) {
+#			$status{'error'} = $errormsg;
+#			return \%status;
+#		}
+#	}
+#		
+#	return \%status;
+#}
+#
 
 1;
