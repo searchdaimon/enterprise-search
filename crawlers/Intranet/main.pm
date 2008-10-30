@@ -63,14 +63,9 @@ sub crawl_update {
     my @urlList = split /;/, $urls;
     my @exclusionsUrlPart = qw ( );  # See Sharpoint crawler on how to use this
     my @exclusionQueryPart = qw(); # See Sharpoint crawler on how to use this
-    my @allowedCountries = qw();
 
     SD::sdCrawl::process_starting_urls(@urlList);
     SD::sdCrawl::setDelay($opt->{delay} || 0);
-    #SD::sdCrawl::doFarUrls();
-    SD::sdCrawl::setAllowedCountries(@allowedCountries);
-    #SD::sdCrawl::setExclusionUrlParts(@exclusionsUrlPart);
-    #SD::sdCrawl::setIISpecial(); Consider using this if crawling windows machines
     SD::sdCrawl::set_download_images($opt->{download_images});
  
     foreach $starting_url(@urlList) {
