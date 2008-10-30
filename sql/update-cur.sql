@@ -149,3 +149,6 @@ CREATE TABLE param (
   UNIQUE KEY connector (connector,param)
 ) TYPE=MyISAM;
 
+UPDATE connectors SET inputFields = CONCAT('user_system, ', inputFields) WHERE inputFields NOT LIKE "%user_system%";
+
+INSERT INTO `connectors` VALUES (70, 'Superoffice', 'Supoeroffice push crawler', NULL, NULL, NULL, 0, 'custom_parameters, crawling, user_system, authentication', NULL, NULL, 1, 1);
