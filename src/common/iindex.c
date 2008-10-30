@@ -1083,6 +1083,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		#endif
 	}
 	else {
+		flock(fileno(IINDEXFH),LOCK_EX);
 		fstat(fileno(IINDEXFH),&inode);
 
 		revIndexArraySize += (inode.st_size / 2);
@@ -1162,6 +1163,12 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 					printf("\tread WordID: %u, nrOfHits %u\n",revIndexArray[count].WordID,revIndexArray[count].nrOfHits);
 				#endif
 
+				if (revIndexArray[count].nrOfHits > MaxsHitsInIndex) {
+					printf("iindex: nrOfHits lager then MaxsHitsInIndex (%i). Nr was %i\n",MaxsHitsInIndex ,revIndexArray[count].nrOfHits );
+					goto IndekserError;			
+				}
+
+
 				for (uy = 0;uy < revIndexArray[count].nrOfHits; uy++) {
                                         if (fread(&revIndexArray[count].hits[uy],sizeof(unsigned short),1,IINDEXFH) != 1) {
 						fprintf(stderr,"Can't read hit. DocID %u, nr of hits %d\n",revIndexArray[count].DocID,revIndexArray[count].nrOfHits);
@@ -1235,7 +1242,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		#endif
 
 		if (revIndexArray[count].nrOfHits > MaxsHitsInIndex) {
-			printf("nrOfHits lager then MaxsHitsInIndex (%i). Nr was %i\n",MaxsHitsInIndex ,revIndexArray[count].nrOfHits );
+			printf("revinde: nrOfHits lager then MaxsHitsInIndex (%i). Nr was %i\n",MaxsHitsInIndex ,revIndexArray[count].nrOfHits );
 			goto IndekserError;			
 		}
 
@@ -1297,6 +1304,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		perror(iindexPathNew);
 		goto IndekserError;		
 	}
+	flock(fileno(IINDEXFH),LOCK_EX);
 
 	//teller forkomster av DocID's pr WordID
 	lastWordID = 0;
@@ -1359,6 +1367,12 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 			++forekomstnr;
 		}
 		lastWordID = revIndexArray[i].WordID;
+
+		if (revIndexArray[i].nrOfHits > MaxsHitsInIndex) {
+			printf("Writing iindex: nrOfHits lager then MaxsHitsInIndex (%i). Nr was %i\n",MaxsHitsInIndex ,revIndexArray[i].nrOfHits );
+			goto IndekserError;			
+		}
+
 
 		//printf("\tDocID %u, nrOfHits %u\n",revIndexArray[i].DocID,revIndexArray[i].nrOfHits);
 
@@ -1548,6 +1562,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 		perror(FinalIindexFileName);
 		exit(1);
 	}
+	flock(fileno(FinalIindexFileFA),LOCK_EX);
 
 	//sprintf(FinalDictionaryFilePath,"%s/iindex/%s/dictionary/%s",PathForIindex,type,lang);
 	//sprintf(FinalDictionaryFileName,"%s/%i.txt",FinalDictionaryFilePath,bucket);
@@ -1562,6 +1577,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
                 perror(FinalDictionaryFileName);
 		exit(1);
         }
+	flock(fileno(FinalDictionaryFileFA),LOCK_EX);
 
 	#ifdef DEBUG
 	printf("FinalDictionaryFileName \"%s\"\n",FinalDictionaryFileName);
@@ -1611,6 +1627,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 			//printf("can't open %s\n",iindexfile[count].PathForLotIndex);
 			continue;
                 }
+		flock(fileno(iindexfile[count].fileha),LOCK_EX);
 
 		fstat(fileno(iindexfile[count].fileha),&inode);
 
