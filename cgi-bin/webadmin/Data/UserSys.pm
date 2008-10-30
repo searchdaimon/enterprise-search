@@ -84,6 +84,21 @@ sub get {
 	return %{$s->{sys}};
 }
 
+sub del {
+	my $s = shift;
+
+	# Delete params
+	tie my %p_val, 'Sql::Hash::SystemParam', $s->{sys}{id}, $s->{dbh}
+		or confess $!;
+	%p_val = ();
+
+	# Delete system
+	$s->{sql_sys}->delete({ id => $s->{sys}{id} });
+	
+	$s = undef;
+	1;
+}
+
 sub _del_invalid_attr {
 	my ($s, $attr_ref) = @_;
 	

@@ -13,12 +13,14 @@ use Page::Abstract;
 use Data::UserSys;
 use Sql::System;
 use Sql::SystemMapping;
+use Sql::Shares;
 our @ISA = qw(Page::Abstract);
 
 Readonly::Scalar my $TPL_LIST    => 'usersys_main.html';
 Readonly::Scalar my $TPL_MAPPING => 'usersys_mapping.html';
 Readonly::Scalar my $TPL_EDIT    => 'usersys_edit.html';
 Readonly::Scalar my $TPL_ADD     => 'usersys_add.html';
+Readonly::Scalar my $TPL_DEL     => 'usersys_del.html';
 
 use config qw(%CONFIG);
 
@@ -99,6 +101,71 @@ sub show_mapping {
 
 	$TPL_MAPPING;
 }
+
+sub _del_error {
+	my ($s, $sys_id) = @_;
+	return "User system does not exist"
+		unless $s->{sql_sys}->exists({id => $sys_id});
+
+	my $prim = $s->{sql_sys}->primary_id;
+
+	return "Can't delete primary user system"
+		if $sys_id == $prim;
+
+	my $shares = Sql::Shares->new($s->{dbh});
+	my @coll = $shares->get({ system => $sys_id }, 'collection_name');
+	if (@coll) {
+		return "Can't delete user system. User system is in use by '" 
+			. join(", ", map { $_->{collection_name} } @coll)
+			. "'";
+	}
+
+	return;
+}
+
+sub show_del {
+	my ($s, $vars, $sys_id) = @_;
+
+	if (my $err = $s->_del_error($sys_id)) {
+		$vars->{error} = $err;
+		return $s->show($vars);
+	}
+
+	my $name = $s->{sql_sys}->get({ 
+		id => $sys_id 
+	}, 'name')->{name};
+
+	$vars->{name} = $name;
+	$vars->{id} = $sys_id;
+
+	$TPL_DEL;
+}
+
+sub del {
+	my ($s, $vars, $sys_id) = @_;
+
+	# Validate request
+	croak "The operation must be a POST request to work."
+		unless $ENV{REQUEST_METHOD} eq 'POST';
+
+	if (my $err = $s->_del_error($sys_id)) {
+		$vars->{error} = $err;
+		return $s->show($vars);
+	}
+
+	# Del system w/ params
+	my $sys = Data::UserSys->new($s->{dbh}, $sys_id);
+	my $name = $sys->get('name');
+	$sys->del();
+
+	# Delete mapping
+	$s->{sql_mapping}->delete({ system => $s->{sys}{id} });
+
+	$vars->{ok} = "User system '$name' deleted.";
+	
+	return $s->show($vars);
+}
+
 
 sub upd_mapping {
 	validate_pos(@_, 1, 1, { regex => qr(^\d+$) }, 1);

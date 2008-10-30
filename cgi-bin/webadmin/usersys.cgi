@@ -18,13 +18,16 @@ my %vars = (
 );
 my $page = Page::UserSys->new();
 my %state = $page->get_state();
+#warn Dumper(\%state);
 
 Readonly::Scalar my $API_UPD_MAPPING => "upd_mapping";
 Readonly::Scalar my $ACT_EDIT => "edit";
 Readonly::Scalar my $ACT_ADD  => "add";
+Readonly::Scalar my $ACT_DEL  => "del";
 Readonly::Scalar my $VIEW_EDIT => "edit";
 Readonly::Scalar my $VIEW_MAP  => "map";
 Readonly::Scalar my $VIEW_ADD  => "add";
+Readonly::Scalar my $VIEW_DEL  => "del";
 
 my $tpl_file;
 my $using_api;
@@ -40,6 +43,9 @@ if (my $v = $state{view}) {
 	elsif ($v eq $VIEW_EDIT) {
 		$tpl_file = $page->show_edit(\%vars, $state{id});
 	}
+	elsif ($v eq $VIEW_DEL) {
+		$tpl_file = $page->show_del(\%vars, $state{id});
+	}
 	else { croak "Unknown view '$v'" }
 }
 
@@ -50,6 +56,9 @@ elsif (my $a = $state{action}) {
 	}
 	elsif ($a eq $ACT_ADD) {
 		$tpl_file = $page->add(\%vars, $state{sys});
+	}
+	elsif ($a eq $ACT_DEL) {
+		$tpl_file = $page->del(\%vars, $state{id});
 	}
 	else { croak "Unknown action '$a'" }
 }

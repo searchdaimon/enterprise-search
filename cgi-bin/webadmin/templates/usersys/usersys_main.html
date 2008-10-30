@@ -5,6 +5,16 @@
 
 <h1>User system integration</h1>
 
+[% IF ok.defined %]
+	[% WRAPPER 'tpl_msg.html' type="success" %]
+		[% ok | html %]
+	[% END %]
+[% END %]
+[% IF error.defined %]
+	[% WRAPPER 'tpl_msg.html' type="error" %]
+		[% error | html %]
+	[% END %]
+[% END %]
 [% PROCESS pretty_button
         text = "Add new system"
 	icon = "edit_add"
@@ -52,7 +62,8 @@
 	[% ELSE %]
 		<li><a href="usersys.cgi?view=map&amp;id=[% system.id %]">Map</a></li>
 	[% END %]
-		<li ><a href="usersys.cgi?view=edit&amp;id=[% system.id %]">Edit</a></li>
+		<li><a href="usersys.cgi?view=edit&amp;id=[% system.id %]">Edit</a></li>
+		<li><a href="usersys.cgi?view=del&amp;id=[% system.id %]">Delete</a></li>
 	</td>
 [% END %]
 
