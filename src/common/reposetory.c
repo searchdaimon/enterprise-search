@@ -835,6 +835,10 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 		rsize,unsigned int DocID,char subname[],struct ReposetoryHeaderFormat *ReposetoryHeader,
 		char **acl_allowbuffer,char **acl_deniedbuffer, unsigned int imagesize, char **url, char **attributes) {
 
+	#ifdef DEBUG
+		printf("rreadhtml(HtmlBufferSize=%u, radress64bit=%u, rsize=%u, DocID=%u, subname=\"%s\")\n",HtmlBufferSize,radress64bit,rsize,DocID,subname);
+	#endif
+
         #ifdef TIME_DEBUG_L
                 struct timeval start_time, end_time;
 		// for totalt tid i funksjonen
@@ -1460,7 +1464,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 
 			
 			#ifdef DEBUG
-			printf("acl_deniedSize size %i\n",(*ReposetoryHeader).acl_deniedSize);
+			//printf("acl_deniedSize size %i\n",(*ReposetoryHeader).acl_deniedSize);
 			#endif
 			(*acl_allowbuffer) = malloc((*ReposetoryHeader).acl_allowSize +1);
 			if ((*ReposetoryHeader).acl_allowSize != 0) {
