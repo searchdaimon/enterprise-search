@@ -341,8 +341,15 @@ struct indexFilteredFormat {
 	char date;
 	char subname;
 	char duplicate;
+	char duplicate_in_collection;
 	char attribute;
 	char attrib[MAX_ATTRIBUTES_IN_QUERY]; // en for hver attributt
+};
+
+struct duplicate_docids
+{
+        container *V;
+        char *coll;
 };
 
 struct rank_explaindFormat {
@@ -414,6 +421,7 @@ struct iindexFormat {
 	int nrofHits;
 	int attrib_count;
 	struct iindexMainElements iindex[maxIndexElements];
+	char **subnames;
 	int phrasenr;
 };
 
