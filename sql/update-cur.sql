@@ -112,3 +112,31 @@ INSERT INTO config (configkey, configvalue) VALUES('licensesystem', 'ohSh7oow');
 
 ALTER TABLE `shares` add `system` int(10);
 UPDATE shares SET system = 1 WHERE system IS NULL;
+
+
+CREATE TABLE shareParam (
+  share int(11) NOT NULL default '0',
+  param int(11) NOT NULL default '0',
+  value varchar(255) default NULL,
+  PRIMARY KEY  (share,param)
+) TYPE=MyISAM;
+
+CREATE TABLE shareResults (
+  share int(11) NOT NULL default '0',
+  summary enum('snippet','start') NOT NULL default 'snippet',
+  filter_same_url tinyint(4) NOT NULL default '1',
+  filter_same_domain tinyint(4) NOT NULL default '1',
+  filter_TLDs tinyint(4) NOT NULL default '1',
+  filter_response tinyint(4) NOT NULL default '1',
+  filter_same_crc32 tinyint(4) NOT NULL default '1',
+  rank_author_array varchar(255) NOT NULL default '1',
+  rank_title_array varchar(255) NOT NULL default '15',
+  rank_title_first_word int(11) NOT NULL default '25',
+  rank_headline_array varchar(255) NOT NULL default '4,6,7,8',
+  rank_body_array varchar(255) NOT NULL default '1,2,4,7,9,10,12,14,16,17,18,19,20,21,22,23,24',
+  rank_url_array varchar(255) NOT NULL default '5',
+  rank_url_main_word int(11) NOT NULL default '30',
+  cache_link tinyint(4) NOT NULL default '1',
+  PRIMARY KEY  (share)
+) TYPE=MyISAM COMMENT='searchd cfg values';
+
