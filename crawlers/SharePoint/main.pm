@@ -28,7 +28,7 @@ Readonly::Array my @EXCLUDE_URLS_HAVING =>  (
 );
 
 Readonly::Scalar my $SD_BOT_NAME => "SharePoint sdbot/0.1";
-Readonly::Scalar my $SD_BOT_EMAIL => "-";
+Readonly::Scalar my $SD_BOT_EMAIL => "esboot\@searchdaimon.com";
 
 ##
 # Main loop for a crawl update.
