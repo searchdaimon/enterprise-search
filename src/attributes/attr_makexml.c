@@ -566,6 +566,7 @@ struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *a
 		    struct attribute_temp_res	res = attribute_generate_xml_subpattern_recurse(pair(map_val(it_m1)).first.ptr, attrib_count, getfiletypep, indent+2, sort, sort_reverse, attr_query, qa);
 		    int		is_selected = 0;
 		    int		expanded = 0;
+		    char	*icon = NULL;
 
 		    BINDENT; bprintf(B, "<group key=\"%s\"", vector_get(attr_query,0).ptr);
 		    char	*t = attribute_generate_value_string_from_vector(" value=", attr_query);
@@ -574,8 +575,8 @@ struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *a
 		    bprintf(B, " name=\"%s\"", (char*)map_key(it_m1).ptr);
 		    // Spesialtilfelle for (file)group:
 		    if (!strcmp("group", vector_get(attr_query,0).ptr)
-			&& (!strcasecmp(fte_getdefaultgroup(getfiletypep, "nbo"), (char*)map_key(it_m1).ptr)
-			    || fte_groupid(getfiletypep, "nbo", (char*)map_key(it_m1).ptr) >= 0))
+			&& (!strcasecmp(fte_getdefaultgroup(getfiletypep, "nbo", &icon), (char*)map_key(it_m1).ptr)
+			    || fte_groupid(getfiletypep, "nbo", (char*)map_key(it_m1).ptr, &icon) >= 0))
 			{
 //			    bprintf(B, " query=\'%s group:\"%s\"\'", querystr, (char*)map_key(it_m1).ptr);
 //			    set_insert(R.remove, query_remove_word(qa, QUERY_GROUP, (char*)map_key(it_m1).ptr));
@@ -594,19 +595,25 @@ struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *a
 			    set_insert(R.remove, is_selected=add_to_query(B, qa, QUERY_ATTRIBUTE, s, &split) );
 //			    bprintf(B, "\'");
 			}
+
+		    if (icon==NULL) icon = getfiletypep->default_icon;
+		    bprintf(B, " icon=\"%s\"", icon);
 		    bprintf(B, " hits=\"");
 		    hit_split = B->pos;
 
-		    if (is_selected>=0 || !attribute_is_empty_remove(res.remove))
-			{
-			    expanded = 1;
-			}
+		    int	child_selected = !attribute_is_empty_remove(res.remove);
 
 		    //bprintf(B, "\" expanded=\"%s\">\n", expanded ? "true" : "false");
 		    set_insert(res.remove, is_selected);
 		    buffer	*B2 = buffer_init(-1);
 		    int	printed = attribute_print_xml_sorted(res.items, indent+2, B2, sort, sort_reverse, qa, res.remove, attrib_count);
-		    bprintf(B, "\" expanded=\"%s\">\n", expanded && printed>1 ? "true" : "false");
+
+		    if ((is_selected>=0 && printed>1) || child_selected)
+			{
+			    expanded = 1;
+			}
+
+		    bprintf(B, "\" expanded=\"%s\">\n", expanded ? "true" : "false");
 		    char	*u = buffer_exit(B2);
 		    bprintf(B, "%s", u);
 		    free(u);
@@ -627,13 +634,14 @@ struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *a
 		    if ((vector_size(attr_query)==3 && !strcmp("group", vector_get(attr_query,0).ptr))
 			|| !strcmp("filetype", vector_get(attr_query,0).ptr))
 			{
-			    char	*group, *descr;
-			    fte_getdescription(getfiletypep, "nbo", (char*)map_key(it_m1).ptr, &group, &descr);
+			    char	*group, *descr, *icon;
+			    fte_getdescription(getfiletypep, "nbo", (char*)map_key(it_m1).ptr, &group, &descr, &icon);
 
 			    is_file_ext = 1;
 			    BINDENT; bprintf(B, "<item key=\"filetype\"");
 			    bprintf(B, " value=\"%s\"", (char*)map_key(it_m1).ptr);
 			    bprintf(B, " name=\"%s\"", descr);
+			    bprintf(B, " icon=\"%s\"", icon);
 //			    bprintf(B, " query=\'%s filetype:\"%s\"\'", querystr, (char*)map_key(it_m1).ptr);
 //			    set_insert(R.remove, query_remove_word(qa, QUERY_FILETYPE, (char*)map_key(it_m1).ptr));
 //			    bprintf(B, " query=\'");
@@ -748,9 +756,10 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 					    // Spesialtilfelle for 'filetype':
 					    if (!strcmp("filetype", S->select[0]))
 						{
-						    char	*group, *descr;
-						    fte_getdescription(getfiletypep, "nbo", S->select[S->size-1], &group, &descr);
+						    char	*group, *descr, *icon;
+						    fte_getdescription(getfiletypep, "nbo", S->select[S->size-1], &group, &descr, &icon);
 						    bprintf(B, " name=\"%s\"", descr);
+						    bprintf(B, " icon=\"%s\"", icon);
 //						    bprintf(B, " query=\'");
 						    //add_to_query(B, qa, R.remove, QUERY_FILETYPE, S->select[S->size-1]);
 						    set_insert(R.remove, add_to_query(B, qa, QUERY_FILETYPE, S->select[S->size-1], &split) );
@@ -789,11 +798,12 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 					    // Spesialtilfelle for 'filetype':
 					    if (!strcmp("filetype", S->select[0]))
 						{
-						    char	*group, *descr;
+						    char	*group, *descr, *icon;
 						    //int	ret =
-						    fte_getdescription(getfiletypep, "nbo", S->select[S->size-1], &group, &descr);
+						    fte_getdescription(getfiletypep, "nbo", S->select[S->size-1], &group, &descr, &icon);
 						    //if (ret&255)
 						    bprintf(B, " name=\"%s\"", descr);
+						    bprintf(B, " icon=\"%s\"", icon);
 //						    bprintf(B, " query=\'%s filetype:%s\'", querystr, S->select[S->size-1]);
 //						    set_insert(R.remove, query_remove_word(qa, QUERY_FILETYPE, S->select[S->size-1]));
 //						    bprintf(B, " query=\'");
