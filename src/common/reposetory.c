@@ -207,9 +207,11 @@ void rclose(container *attrkeys)
 	{
 	    println(attrkeys);
 
+/*
 	    iterator	it_m1 = map_begin(attrkeys);
 	    for (; it_m1.valid; it_m1=map_next(it_m1))
 		{
+				// Legg til på disk:
 		    char	path[128], *filename;
 		    GetFilPathForLot(path, 1, (char*)pair(map_key(it_m1)).first.ptr);
 		    asprintf(&filename, "%s%s.new_attribute_keys", path, (char*)pair(map_key(it_m1)).second.ptr);
@@ -223,6 +225,7 @@ void rclose(container *attrkeys)
 		    free(filename);
 		    fclose(f_attrkeys);
 		}
+*/
 
 	    destroy(attrkeys);
 	}
@@ -488,19 +491,42 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 		// Keep a record over all different attribute keys:
 		char key[MAX_ATTRIB_LEN], value[MAX_ATTRIB_LEN], keyval[MAX_ATTRIB_LEN];
 		char	*o = NULL;
+		char update = 0;
 
 		iterator	it = map_find(attrkeys, subname, reponame);
 		if (!it.valid)
 		    {
 			map_insert(attrkeys, subname, reponame);
 			it = map_find(attrkeys, subname, reponame);
+			update = 1;
 		    }
 
 		container	*S = map_val(it).C;
 
 		while (next_attribute(attributes, &o, key, value, keyval))
 		    {
+			int	old_size = set_size(S);
+
 			set_insert(S, key);
+
+			if (set_size(S) > old_size) update = 1;
+		    }
+
+		if (update)
+		    {
+			// Legg til på disk:
+    			char	path[128], *filename;
+		        GetFilPathForLot(path, 1, subname);
+		        asprintf(&filename, "%s%s.new_attribute_keys", path, reponame);
+		        printf("rApendPost: Writing new attributes to %s\n", filename);
+		        FILE	*f_attrkeys = fopen(filename, "a");
+
+		        iterator	it_s1 = set_begin(S);
+		        for (; it_s1.valid; it_s1=set_next(it_s1))
+		    	    fprintf(f_attrkeys, "%s\n", (char*)set_key(it_s1).ptr);
+
+			free(filename);
+		        fclose(f_attrkeys);
 		    }
 	    }
 
