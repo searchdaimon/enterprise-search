@@ -1280,6 +1280,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 	if ((*nrofcollections) == 0) {
 		printf("dident find any rows\n");
 		(*collection) = NULL;		
+		return 0;
 	}
 	else {
 
@@ -1745,9 +1746,11 @@ rewriteurl(MYSQL *db, char *collection, char *uri, size_t len, enum platform_typ
 	int nrofcollections;
 	int forret = 1;
 
-	cm_searchForCollection(db, collection,&collections,&nrofcollections);
-
-	if (!cm_getCrawlLibInfo(global_h,&crawlLibInfo,collections->connector)) {
+	if (!cm_searchForCollection(db, collection,&collections,&nrofcollections)) {
+		blog(LOGERROR,1,"warn: Don't have collection info for this subname.");
+		forret = 0;
+	}
+	else if (!cm_getCrawlLibInfo(global_h,&crawlLibInfo,collections->connector)) {
 		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.");
 		//exit(1);
 		forret = 0;
