@@ -1887,21 +1887,11 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		revindexFilesCloseLocal(argstruct->revindexFilesHa); 
 
 		#ifdef BLACK_BOKS		
-/*
-<<<<<<< main.c
-			revindexFilesCloseLocal(argstruct->acl_allowindexFilesHa,"Main"); 
-			revindexFilesCloseLocal(argstruct->acl_deniedindexFilesHa,"Main"); 
-			#ifdef ATTRIBUTES
-			revindexFilesCloseLocal(argstruct->attribindexFilesHa,"Main"); 
-			#endif
-=======
-*/
 			revindexFilesCloseLocal(argstruct->acl_allowindexFilesHa); 
 			revindexFilesCloseLocal(argstruct->acl_deniedindexFilesHa); 
 			#ifdef ATTRIBUTES
 			revindexFilesCloseLocal(argstruct->attribindexFilesHa); 
 			#endif
-//>>>>>>> 1.43
 		#endif
 
 
@@ -2002,6 +1992,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		setLastIndexTimeForLot(lotNr,argstruct->httpResponsCodes,subname);
 
 		#ifdef PRESERVE_WORDS
+
 		argstruct->dictionarywordsfFH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords_raw", "w",'r',subname);
 
 		// Loop over and write all words here...
