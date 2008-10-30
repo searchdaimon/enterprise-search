@@ -49,6 +49,7 @@ file			{ return FILE_ID; }
 name			{ return NAME_ID; }
 ext			{ return EXT_ID; }
 version			{ return VERSION_ID; }
+icon			{ return ICON_ID; }
 \=			{ return EQUALS_ID; }
 \;			{ return SEMICOLON_ID; }
 \,			{ return COMMA_ID; }
