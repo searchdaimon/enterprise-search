@@ -1,0 +1,11 @@
+[% INCLUDE 'header.html' title='Delete user system' %]
+
+[% WRAPPER 'template_delete.html' 
+	it = name
+	form = 'usersys.cgi' %]
+		<input type="hidden" name="id" value="[% id %]" />
+		<input type="hidden" name="action" value="del" />
+	Are you sure you want to delete [% name | html %]?
+[% END %]
+
+[% INCLUDE 'footer.html' %]
