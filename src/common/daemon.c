@@ -268,6 +268,10 @@ sconnect_thread(void (*sh_pointer)(int), int port)
 	socklen_t sin_size;
 	int yes=1;
 
+	#ifdef DEBUG_BREAK_AFTER
+		static count = 0;
+	#endif
+
 	fprintf(stderr, "daemon: sconnect_thread(port=%i)\n", port);
 
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -321,6 +325,16 @@ sconnect_thread(void (*sh_pointer)(int), int port)
 		printf("Thread spawned...\n");
 		pthread_detach(thread);
 #endif
+
+		#ifdef DEBUG_BREAK_AFTER
+			++count;
+	
+        		if (count >= DEBUG_BREAK_AFTER) {
+				printf("exeting after %i connects\n",count);
+				break;
+			}
+		#endif
+
 	}
 
 	fprintf(stderr, "daemon: ~sconnect()\n");
