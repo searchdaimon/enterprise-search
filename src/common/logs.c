@@ -39,7 +39,7 @@ void blog(FILE *LOG, int level, const char *fmt, ...) {
 			now = time(NULL);
 			localtime_r(&now, &tm);
 			len = strftime(buf, sizeof(buf), "%F %T", &tm);
-			buf[len-1] = '\0';
+			buf[len] = '\0';
 			printf("%s: ", buf);
 			fprintf(LOG, "%s: ", buf);
 
