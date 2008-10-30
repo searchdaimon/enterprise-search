@@ -1705,7 +1705,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 
 	(*complicacy) = 0;
 
-	#ifdef DEBUG
+	#ifdef DEBUG_TIME
 	struct timeval start_time, end_time;
 	gettimeofday(&start_time, NULL);
 	#endif
@@ -1849,7 +1849,9 @@ for (i=0; i<(*queryParsed).n; i++)
 							//rank(TmpArrayLen,TmpArray,subname,(*complicacy));
 
 							printf("did find %i pages\n",TmpArrayLen);
-
+							if (TmpArrayLen == 0) {
+								continue;
+							}
 							resultArrayInit(tmpResult);
 							tmpResultElementer = 0;
 												
@@ -2025,9 +2027,9 @@ for (i=0; i<(*queryParsed).n; i++)
 
 	free(tmpResult);
 
-	#ifdef DEBUG
+	#ifdef DEBUG_TIME
 	gettimeofday(&end_time, NULL);
-	printf("Time debug: searchIndex %f\n",getTimeDifference(&start_time,&end_time));
+	printf("Time debug: searchIndex: Type: \"%s\", time: %f\n",indexType,getTimeDifference(&start_time,&end_time));
 
 	#endif
 
@@ -2587,49 +2589,35 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		char *search_user, int cmc_port
 		) {
 
+	printf("search: searchSimple()\n");
+
 	int i,j,y,n;
 	//int x=0,j=0,k=0;
+
 	unsigned char PopRank;
 	int responseShortTo;
 	struct reformat *crc32map;
 
 	int rankcount[256]; // rank går fra 0-252 (unsigned char)
-	//int M,N;
 	int tmpint;
 
 	struct timeval start_time, end_time;
 		
-	//double TermRankTemp;
-       	//double PopRankTemp;
-
 	
 	struct iindexFormat *TmpArray; 
-
-	/*				
-	struct iindexFormat *AthorArray;
-	struct iindexFormat *MainArray;
-	struct iindexFormat *UrlArray;
-
-	int MainArrayLen;
-	int UrlArrayLen;
-	int AthorArrayLen;
-	*/
 
 	//char *WordID;
 	struct searchIndex_thread_argFormat searchIndex_thread_arg_Athor;
 	struct searchIndex_thread_argFormat searchIndex_thread_arg_Url;
 	struct searchIndex_thread_argFormat searchIndex_thread_arg_Main;
-	//struct searchIndex_thread_argFormat searchIndex_thread_arg_Acl;
 	
      
         int baseArrayLen,MainArrayHits;
 	int TmpArrayLen;	
-	//unsigned long WordIDcrc32;
+
 	unsigned int PredictNrAthor;
 	unsigned int PredictNrUrl;
 	unsigned int PredictNrMain;
-//	unsigned int PredictNrattributes;
-	//unsigned int PredictNrAcl;
 
 	PredictNrAthor	= 0;
 	PredictNrUrl	= 0;
@@ -2640,7 +2628,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 		pthread_t threadid_Athor = 0;
 		pthread_t threadid_Url = 0;
 		pthread_t threadid_Main = 0;
-		//pthread_t threadid_Acl = 0;
 	#endif
 
 	//resetter subnmes hits
@@ -2650,29 +2637,29 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 	#ifdef BLACK_BOKS
 
-		//for(i=0;i<nrOfSubnames;i++) {		
-		//	PredictNrAcl += searchIndex_getnrs("Acl",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
-		//}
 
 	#else
-	//finner først ca hvor mange treff vi fil få. Dette brukes for å avgjøre om vi kan 
-	//klare oss med å søke i bare url og athor, eller om vi må søke i alt
-	//Athor
-	for(i=0;i<nrOfSubnames;i++) {		
-		PredictNrAthor += searchIndex_getnrs("Athor",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
-	}
+		//finner først ca hvor mange treff vi fil få. Dette brukes for å avgjøre om vi kan 
+		//klare oss med å søke i bare url og athor, eller om vi må søke i alt
 
-	//Url
-	for(i=0;i<nrOfSubnames;i++) {		
-		PredictNrUrl += searchIndex_getnrs("Url",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
-	}
+		//Athor:
+		for(i=0;i<nrOfSubnames;i++) {		
+			PredictNrAthor += searchIndex_getnrs("Athor",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
+		}
+
+		//Url:
+		for(i=0;i<nrOfSubnames;i++) {		
+			PredictNrUrl += searchIndex_getnrs("Url",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
+		}
+
+		//Main:
+		for(i=0;i<nrOfSubnames;i++) {		
+			PredictNrMain += searchIndex_getnrs("Main",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
+			vboprintf("PredictNrMain total with \"%s\" %u\n",&subnames[i],PredictNrMain);
+		}
+
+		vboprintf("PredictNrAthor %u, PredictNrUrl %u, PredictNrMain %u\n",PredictNrAthor,PredictNrUrl,PredictNrMain);
 	#endif
-
-	//Main
-	for(i=0;i<nrOfSubnames;i++) {		
-		PredictNrMain += searchIndex_getnrs("Main",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
-		vboprintf("PredictNrMain total with \"%s\" %u\n",&subnames[i],PredictNrMain);
-	}
 
 	#ifdef BLACK_BOKS
 		//filter
@@ -2680,7 +2667,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	#endif
 
 
-	vboprintf("PredictNrAthor %u, PredictNrUrl %u, PredictNrMain %u\n",PredictNrAthor,PredictNrUrl,PredictNrMain);
 
 	//nullstiller alle resultat tellere
 	searchIndex_thread_arg_Athor.resultArrayLen = 0;
@@ -2859,9 +2845,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	
 	//joiner trådene
 	#ifdef BLACK_BOKS
-		#ifdef WITH_THREAD
-			//pthread_join(threadid_Acl, NULL);
-		#endif
 	#else
 		#ifdef WITH_THREAD
 			//joiner trådene
@@ -2912,19 +2895,19 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	#ifdef BLACK_BOKS
 
 	#else
-	//ormerger Athor og Url inn i en temper array
-	or_merge(TmpArray,&TmpArrayLen,searchIndex_thread_arg_Athor.resultArray,searchIndex_thread_arg_Athor.resultArrayLen,
-		searchIndex_thread_arg_Url.resultArray,searchIndex_thread_arg_Url.resultArrayLen);
+		//ormerger Athor og Url inn i en temper array
+		or_merge(TmpArray,&TmpArrayLen,searchIndex_thread_arg_Athor.resultArray,searchIndex_thread_arg_Athor.resultArrayLen,
+			searchIndex_thread_arg_Url.resultArray,searchIndex_thread_arg_Url.resultArrayLen);
 
 
 
-	if (searchIndex_thread_arg_Athor.resultArray != NULL) {
-		free(searchIndex_thread_arg_Athor.resultArray);
-	}
+		if (searchIndex_thread_arg_Athor.resultArray != NULL) {
+			free(searchIndex_thread_arg_Athor.resultArray);
+		}
 
-	if (searchIndex_thread_arg_Url.resultArray != NULL) {
-		free(searchIndex_thread_arg_Url.resultArray);
-	}
+		if (searchIndex_thread_arg_Url.resultArray != NULL) {
+			free(searchIndex_thread_arg_Url.resultArray);
+		}
 	#endif
 
 	/*
@@ -3046,12 +3029,23 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 	}
 	#endif
 
-	//sjekker at dokumenter er i Aclen
-
 	free(TmpArray);
 
         gettimeofday(&end_time, NULL);
         (*queryTime).MainAthorMerge = getTimeDifference(&start_time,&end_time);
+
+	#ifdef DEBUG_II
+		//debug: printer ut alle treff, og litt om de.
+		printf("hits befoe filters:\n\n");
+		printf("\t| %-5s | %-20s |\n","DocID", "Subname");
+		for (i = 0; (i < (*TeffArrayElementer)) && (i < 100); i++) {
+			printf("\t| %-5u | %-20s |\n",
+				TeffArray->iindex[i].DocID,
+				(*TeffArray->iindex[i].subname).subname
+			);
+		}
+		printf("\n");
+	#endif
 
 
 	gettimeofday(&start_time, NULL);
@@ -3597,7 +3591,9 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *
 
 			unsigned int crc32;
 			crc32 = *RE_Uint(crc32map, TeffArray->iindex[i].DocID);
-			//printf("Got hash value: %x\n", crc32);
+
+			debug("Got hash value: %x\n", crc32);
+
 			reclose(crc32map);
 
 			if (crc32 == 0) {
