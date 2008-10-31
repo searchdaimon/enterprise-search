@@ -59,6 +59,7 @@ int main( int argc, char *argv[] )
 	    printf("Meta Keywords: { %s }\n", metakeyw);
 	    printf("Meta Description: { %s }\n", metadesc);
 */
+	    printf("body: \"%s\"\n",body);
 	    // Invoke highlighter:
 
 	    // Lage query:
@@ -68,7 +69,7 @@ int main( int argc, char *argv[] )
 //	    char		*tekst = "\"stian rustad\"";
 //	    char		*tekst = "bunnpris";
 //	    char		*tekst = "stian rustad";
-	    char		*tekst = "lars monrad-krohn";
+	    char		*tekst = "yahoo";
 	    get_query( tekst, strlen(tekst), &qa );
 
 		// Generer highlighting:
