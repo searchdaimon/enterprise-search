@@ -582,7 +582,10 @@ void html_parser_exit()
 void html_parser_run( char *url, char text[], int textsize, char **output_title, char **output_body,
     void (*fn)(char*,int,enum parsed_unit,enum parsed_unit_flag,void* wordlist), void* wordlist )
 {
+    #ifdef DEBUG
     fprintf(stderr, "html_parser: run(\"%s\")\n", url);
+    #endif
+
     assert(tags_automaton!=NULL);	// Gir feilmelding dersom man har glemt å kjøre html_parser_init().
 
     struct bhpm_yy_extra	*he = malloc(sizeof(struct bhpm_yy_extra));
