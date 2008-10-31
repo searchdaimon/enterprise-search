@@ -13,7 +13,7 @@ use Page::Abstract;
 our @ISA = qw(Page::Abstract);
 use config qw(%CONFIG);
 
-Readonly::Array  our @REQ_INPUT_FIELDS => qw(custom_parameters crawling);
+Readonly::Array  our @REQ_INPUT_FIELDS => qw(user_system custom_parameters crawling);
 Readonly::Scalar our $SOURCE_TPL => "$CONFIG{conn_base_dir}/%s/main.pm";
 
 sub _init {
