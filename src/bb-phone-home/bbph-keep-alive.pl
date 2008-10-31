@@ -46,7 +46,7 @@ sub check_state {
 		# We are running, as we should be
 		return 0 if ($alive == 1);
 
-		print "Starting phonehome client.\n";
+		print "Starting phonehome client ( $phonehomeclient ).\n";
 		`perl $phonehomeclient start`;
 
 		return 1;
