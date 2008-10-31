@@ -21,7 +21,7 @@ char *generate_thumbnail_by_convert(const void *document, const size_t size, siz
 
 	void *image;
 	void *thumbnail;
-	FILE *fp;
+	FILE *fp = NULL;
 	char command[512];
 	char documentfile[PATH_MAX];
 	char imagefile[PATH_MAX];
@@ -34,16 +34,22 @@ char *generate_thumbnail_by_convert(const void *document, const size_t size, siz
 	//tmpfilename = mktemp("/tmp/generateThumbnail_XXXXXX"); //make a unique temporary file name
 
 
-	
+	//runarb: 28 aug 2008: Jeg Tror at å legge på [0] skal gjøre det slik at vi bare får første
+	//del hvis en bilde er på flere sider(!). Forstår ikke hvordan det kan skje. Men det gjør det.
+	//se også http://studio.imagemagick.org/pipermail/magick-users/2002-May/002616.html
+	//men her jobber vi ikke med pdf... Kan det være gif som lager problemer?
+	//
+	//runarb: litt senere: men dette fungerte ikke :(, men gjør så hvis man kjører det fra komandolinjen...
 	snprintf(documentfile,sizeof(documentfile),"%s-doc-%u.%s",converttemptemplate,(unsigned int)getpid(),type);
 	snprintf(imagefile,sizeof(imagefile),"%s-image-%u.png",converttemptemplate,(unsigned int)getpid());
 	
 	if ((fp = fopen(documentfile,"wb")) == NULL) {
 		printf(documentfile);
-		return NULL;
+		goto generate_thumbnail_by_convert_error;
 	}
 	fwrite(document,1,size,fp);
 	fclose(fp);
+	fp = NULL;
 
 	snprintf(command,sizeof(command),"%s %s -resize 98x98 -bordercolor black -border 1x1 %s",convertpath,documentfile,imagefile);
 
@@ -65,13 +71,16 @@ char *generate_thumbnail_by_convert(const void *document, const size_t size, siz
 	shargs[2] = command;
         printf("generate_thumbnail_by_convert: runnig: /bin/sh -c %s\n",command);
 	exeocbuflenret = exeocbuflen;
-        exeoc_timeout(shargs,exeocbuf,&exeocbuflenret,&ret,120);
+        if (!exeoc_timeout(shargs,exeocbuf,&exeocbuflenret,&ret,120)) {
+		fprintf(stderr,"did timeout doring ImageMagick converting.");
+		goto generate_thumbnail_by_convert_error;
+	}
 
 
 
 	if ((fp = fopen(imagefile,"rb")) == NULL) {
                 printf(imagefile);
-                return NULL;
+		goto generate_thumbnail_by_convert_error;
         }
 	fstat(fileno(fp),&inode);
 	image = malloc(inode.st_size);
@@ -80,6 +89,7 @@ char *generate_thumbnail_by_convert(const void *document, const size_t size, siz
 	(*new_size) = inode.st_size;
 
 	fclose(fp);
+	fp = NULL;
 
 	printf("created image om size %i\n",(*new_size));
     
@@ -87,6 +97,20 @@ char *generate_thumbnail_by_convert(const void *document, const size_t size, siz
 	unlink(imagefile);
 
 	return image;
+
+
+	generate_thumbnail_by_convert_error:	
+		//hånterer feil
+		//stenger først ned eventuelt åpen fil
+		if (fp != NULL) {
+			fclose(fp);
+		}
+		//så sletter vi eventuelt filer som ble opprettet
+		unlink(documentfile);
+		unlink(imagefile);
+
+		return NULL;
+
 }
 
 
@@ -96,7 +120,7 @@ char *generate_pdf_thumbnail_by_convert( const void *document, const size_t size
 
 	void *image;
 	void *thumbnail;
-	FILE *fp;
+	FILE *fp = NULL;
 	char command[512];
 	char documentfile[PATH_MAX];
 	char imagefile[PATH_MAX];
@@ -116,10 +140,11 @@ char *generate_pdf_thumbnail_by_convert( const void *document, const size_t size
 	
 	if ((fp = fopen(documentfile,"wb")) == NULL) {
 		printf(documentfile);
-		return NULL;
+		goto generate_pdf_thumbnail_by_convert_error;
 	}
 	fwrite(document,1,size,fp);
 	fclose(fp);
+	fp = NULL;
 
 	snprintf(command,sizeof(command),"%s -dBATCH -dFirstPage=1 -dLastPage=1 -sDEVICE=png256 -dNOPAUSE -dSAFER -sOutputFile=%s %s",gspath,imagefile,documentfile);
 
@@ -148,12 +173,13 @@ char *generate_pdf_thumbnail_by_convert( const void *document, const size_t size
 
 	if ((fp = fopen(imagefile,"rb")) == NULL) {
                 printf(imagefile);
-                return NULL;
+		goto generate_pdf_thumbnail_by_convert_error;
         }
 	fstat(fileno(fp),&inode);
 	image = malloc(inode.st_size);
 	fread(image,1,inode.st_size,fp);
 	fclose(fp);
+	fp = NULL;
 
 	(*new_size) = inode.st_size;
 
@@ -161,5 +187,15 @@ char *generate_pdf_thumbnail_by_convert( const void *document, const size_t size
 	unlink(imagefile);
 
 	return image;
+
+	generate_pdf_thumbnail_by_convert_error:
+
+		if (fp != NULL) {
+			fclose(fp);
+		}
+
+		unlink(documentfile);
+		unlink(imagefile);
+		return NULL;
 }
 
