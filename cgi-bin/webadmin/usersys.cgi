@@ -77,7 +77,7 @@ else {
 
 if ($using_api) {
 	print $page->get_cgi->header("application/json");
-	print XS::JSON->encode(\%vars);
+	print JSON::XS->new->encode(\%vars);
 }
 else {
 	$page->process_tpl($tpl_file, \%vars, ( tpl_folders => 'usersys'));
