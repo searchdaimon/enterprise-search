@@ -484,8 +484,7 @@ char* create_full_link( char *url, int page_url_len, char *page_uri, char *page_
     // hvis det mangler)
     if (page_uri == NULL) {
 	#ifndef NOWARNINGS
-//	printf("page_uri is NULL!\n");
-	fprintf(stderr, "html_parser: Warning! page_uri==NULL\n");
+	//fprintf(stderr, "html_parser: Warning! page_uri==NULL\n");
 	#endif
 	new_url[0] = '\0';
 	return new_url;
