@@ -1004,18 +1004,18 @@ ShowThumbbb: src/ShowThumb/main.c
 
 	$(CC) $(SHOWTHUMBCMANDS) -o cgi-bin/ShowThumbbb -D BLACK_BOKS
 
-ShowCacheCOMMAND2 = $(CFLAGS) $(LIBS)*.c src/ShowCache2/main.c src/cgi-util/cgi-util.c $(LDFLAGS) -o cgi-bin/ShowCache2
+ShowCacheCOMMAND2 = $(CFLAGS) $(LIBS)*.c src/ShowCache2/main.c src/cgi-util/cgi-util.c $(LDFLAGS) 
 
 ShowCache2: src/ShowCache/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(ShowCacheCOMMAND2)
+	$(CC) $(ShowCacheCOMMAND2) -o cgi-bin/ShowCache2
 
 ShowCache2bb: src/ShowCache/main.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(ShowCacheCOMMAND2) -DBLACK_BOKS
+	$(CC) $(ShowCacheCOMMAND2) -DBLACK_BOKS -o cgi-bin/ShowCache2bb
 
 
 ShowCacheCOMMAND = $(CFLAGS) $(LIBS)*.c src/ShowCache/main.c src/cgi-util/cgi-util.c $(LDFLAGS) -o cgi-bin/ShowCache

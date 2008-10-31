@@ -474,7 +474,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 			unsigned int signature;
 			signature = sign_cache_params(DocID, subname, u_time);
 
-			sprintf((*Sider).cacheLink, "http://%s/cgi-bin/ShowCache2?D=%u&amp;subname=%s&amp;time=%u&amp;sign=%u",
+			sprintf((*Sider).cacheLink, "http://%s/cgi-bin/ShowCache2bb?D=%u&amp;subname=%s&amp;time=%u&amp;sign=%u",
 					servername, DocID, subname, u_time, signature);
 #else
 			sprintf((*Sider).cacheLink,"http://%s/cgi-bin/ShowCache2?D=%u&amp;subname=%s",servername,DocID,subname);
