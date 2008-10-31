@@ -70,6 +70,7 @@ static const unsigned char index_64[256] = {
 
 int base64_decode(char *out, const char *in, int maxlen __attribute((unused))) {
 
+
 	/*
 	SV* sv
 	PROTOTYPE: $
@@ -90,6 +91,12 @@ int base64_decode(char *out, const char *in, int maxlen __attribute((unused))) {
         SvPOK_on(RETVAL);
         r = SvPVX(RETVAL);
 	*/
+
+	#ifdef DEBUG
+		fprintf(stderr,"base64_decode(in=\"%s\", maxlen%i)\n",in,maxlen);
+	#endif
+
+
 	char *r = out;
 	const char *str = in;
 	int len = strlen(str);
@@ -97,8 +104,8 @@ int base64_decode(char *out, const char *in, int maxlen __attribute((unused))) {
 	unsigned char c[4];
 
 	#ifdef DEBUG
-	printf("len %i\n",len);
-	printf("str (%u)< end (%u). end - str = %i\n",(unsigned int)str,(unsigned int)end,(end-str));
+		printf("base64_decode: len %i\n",len);
+		printf("base64_decode: str (%u)< end (%u). end - str = %i\n",(unsigned int)str,(unsigned int)end,(end-str));
 	#endif
 
 	while (str < end) {
@@ -142,6 +149,9 @@ int base64_decode(char *out, const char *in, int maxlen __attribute((unused))) {
 	//SvCUR_set(RETVAL, r - SvPVX(RETVAL));
 	*r = '\0';
 	//returnerer lengde
+	#ifdef DEBUG
+		printf("~base64_decode\n");
+	#endif	
 	return (r - out);
 	/*
 	OUTPUT:
