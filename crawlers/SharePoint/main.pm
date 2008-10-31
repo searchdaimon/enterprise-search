@@ -33,15 +33,15 @@ Readonly::Scalar my $SD_BOT_EMAIL => "esboot\@searchdaimon.com";
 sub checkCategory {
    my ($url, $data) = @_;
 
-   if ($url =~ /contacts/) { return "SPCategory=Contacts"; }
-   if ($url =~ /Document%20Library/) { return "SPCategory=Document"; }
+   if ($url =~ /contacts/) { return "Contact=SharePoint"; }
+   if ($url =~ /Document%20Library/) { return "Document=SharePoint"; }
    #if ($data =~ /new DiscussionBoard/) { return "Discussion"; }
    #if ($data =~ /Tasks list to keep track of work related to this area/) { return "Calendar"; }
    #if ($data =~ /Provides a place to store documents for this area/) { return "DocumentLibrary"; }
    #if ($data =~ /L_DefaultContactsLink_Text/) { return "Contacts"; }
    #if ($data =~ /L_ExportToContactsApp/) { return "Contacts"; }
 
-   return "SPCategory=Other";
+   return "Other=SharePoint";
 }
 
 
