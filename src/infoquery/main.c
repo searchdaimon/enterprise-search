@@ -53,6 +53,7 @@ int main (int argc, char *argv[]) {
 		printf("scan <crawlertype> <host> <username> <password>\n");
 		printf("documentsInCollection <collection name>\n");
 		printf("SidToUser <sid>\n");
+		printf("SidToGroup <sid>\n");
 		printf("AuthUser <username> <password>\n");
 		printf("GetPassword <username>\n");
 		printf("collectionLocked <collection>\n");
@@ -97,7 +98,9 @@ int main (int argc, char *argv[]) {
 	
 	FILE *fp;
 	if ((fp = bfopen("logs/infoquery.log","a")) == NULL) {
-		//perror(bfile("logs/infoquery.log"));
+		#ifdef DEBUG
+			perror(bfile("logs/infoquery.log"));
+		#endif
 		//exit(1);
 	}
 	else {
@@ -328,6 +331,15 @@ int main (int argc, char *argv[]) {
 		if(value == NULL) {printf("no value given.\n");exit(1);}
 
 		if (boithoad_sidToUser(value, user))
+			printf("Documents: %s\n", user);
+		else
+			printf("No match\n");
+	}
+	else if (strcmp(key,"SidToGroup") == 0) {
+		char user[64];
+		if(value == NULL) {printf("no value given.\n");exit(1);}
+
+		if (boithoad_sidToGroup(value, user))
 			printf("Documents: %s\n", user);
 		else
 			printf("No match\n");
