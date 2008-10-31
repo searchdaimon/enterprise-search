@@ -9,7 +9,7 @@ use Data::Dumper;
 use Page::UserSys;
 use Readonly;
 use Carp;
-use JSON::XS qw(encode_json);
+use JSON::XS;
 
 use config qw(%CONFIG); 
 
@@ -77,7 +77,7 @@ else {
 
 if ($using_api) {
 	print $page->get_cgi->header("application/json");
-	print encode_json(\%vars);
+	print XS::JSON->encode(\%vars);
 }
 else {
 	$page->process_tpl($tpl_file, \%vars, ( tpl_folders => 'usersys'));
