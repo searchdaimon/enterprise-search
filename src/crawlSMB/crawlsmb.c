@@ -578,7 +578,7 @@ int smb_test_conect(struct collectionFormat *collection, char *prefix, char *dir
 char                dblock[512];
 dirp = (struct smbc_dirent*)dblock;
 
-	printf("traverse: start\n");
+	printf("smb_test_conect traverse: start\n");
 
 	while ( (dirc=smbc_getdents( dh, dirp, 512 )) != 0 )
 	{
@@ -592,7 +592,7 @@ dirp = (struct smbc_dirent*)dblock;
 		printf("name \"%s\"\n",dirp->name);
 
 	}
-	printf("traverse: end\n");
+	printf("smb_test_conect traverse: end\n");
 
 
     	if (smbc_closedir(dh) != 0) {
@@ -600,10 +600,10 @@ dirp = (struct smbc_dirent*)dblock;
 	}
 
 	if (!context_free(context)) {
-		documentError(collection, 1,"crawlsmb.c-smb_test_conect: Error! Could not free smbc context at %s:%d",__FILE__,__LINE__);	
-		return 0;
+		documentError(collection, 1,"crawlsmb.c-smb_test_conect: Error! Could not free smbc context at %s:%d",__FILE__,__LINE__);
     	}
 
+	printf("smb_test_conect(): returnin 1\n");
     	return 1;
 }
 
