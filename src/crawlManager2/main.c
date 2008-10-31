@@ -511,6 +511,7 @@ int cmr_crawlcanconect(struct hashtable *h, struct collectionFormat *collection)
 
 	if (!(*(*crawlLibInfo).crawlcanconect)(collection,documentError)) {
 		//overfører error
+		fprintf(stderr,"crawlcanconect rountine in cralwer returned 0.\n");
 		berror(documentErrorGetlast(collection));
         	 return 0;
        	}
@@ -1403,14 +1404,14 @@ int cm_handle_crawlcanconect(MYSQL *db, char cvalue[]) {
 
 	cm_searchForCollection(db, cvalue,&collections,&nrofcollections);
 
-	printf("crawlcanconect: cm_searchForCollection done\n");
+	printf("crawlcanconect: cm_searchForCollection done. Found %i collection(s)\n",nrofcollections);
 	if (nrofcollections == 1) {
 		
 		#ifndef DEBUG
 		//Temp: funger ikke når vi kompilerer debug. Må også compilere crawlManager debug
 		//make a conectina for add to use
 		if (!bbdn_conect(&collections[0].socketha,"",global_bbdnport)) {
-			//berror("can't conect to bbdn (boitho backend document server)\n");
+			berror("can't conect to bbdn (boitho backend document server)\n");
 			return 0;
 		}
 
