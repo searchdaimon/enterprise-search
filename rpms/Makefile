@@ -174,10 +174,7 @@ configfiles:
 	rpmbuild -bb $(boitho-configfiles_name).spec
 
 searchdbb:
-	#temp v.0.5.2
-	#temp: perl rpmmagic.pl --requires "boitho-everrun boithobb-filepermissions" --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumbbb cgi-bin/ShowCache config/filetypes.eng.conf config/filetypes.nbo.conf config/dispatcher.conf
-	#temp: v0.5.3
-	perl rpmmagic.pl --requires "boitho-suggest perl-Text-Iconv boitho-dictionary boitho-configfiles boitho-everrun boithobb-filepermissions" --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumbbb cgi-bin/ShowCache config/filetypes.eng.conf config/filetypes.nbo.conf config/dispatcher.conf  data/thesaurus.id data/thesaurus.text config/file_extensions.conf
+	perl rpmmagic.pl --requires "boitho-suggest perl-Text-Iconv boitho-dictionary boitho-configfiles boitho-everrun boithobb-filepermissions" --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumbbb cgi-bin/ShowCache2bb config/filetypes.eng.conf config/filetypes.nbo.conf config/dispatcher.conf  data/thesaurus.id data/thesaurus.text config/file_extensions.conf config/show_attributes.conf
 
 	rpmbuild -bb $(boitho-searchdbb_name).spec
 
