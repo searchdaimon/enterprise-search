@@ -180,7 +180,7 @@ searchdbb:
 
 
 crawlManager:
-	perl rpmmagic.pl --requires "boitho-everrun boitho-bbdn boithobb-filepermissions" --initd crawlManager $(boitho-crawlManager_name) $(boitho-crawlManager_version) $(BOITHOHOME) /home/boitho/boithoTools bin/crawlManager crawlers/crawlSMB crawlers/crawlExchange config/crawlmanager.conf 
+	perl rpmmagic.pl --requires "boitho-everrun boitho-bbdn boithobb-filepermissions /usr/lib/perl5/vendor_perl/5.8.8/i386-linux-thread-multi/auto/XML/Parser/Expat/Expat.so" --initd crawlManager $(boitho-crawlManager_name) $(boitho-crawlManager_version) $(BOITHOHOME) /home/boitho/boithoTools bin/crawlManager crawlers/crawlSMB crawlers/crawlExchange config/crawlmanager.conf 
 
 	rpmbuild -bb $(boitho-crawlManager_name).spec
 
