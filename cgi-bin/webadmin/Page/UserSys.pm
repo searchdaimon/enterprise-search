@@ -176,7 +176,7 @@ sub upd_mapping {
 	# TODO: Wrap into commit when
 	# 	we upgrade sql.
 
-	$s->{sql_mapping}->delete({}); # del all.
+	$s->{sql_mapping}->delete({ system => $system_id });
 
 	while (my ($prim_usr, $sec_usr) = each %{$mapping_ref}) {
 		$s->{sql_mapping}->insert({ 
