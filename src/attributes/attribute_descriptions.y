@@ -223,8 +223,6 @@ struct adf_data* adf_init( char *conf_file )
     struct adf_data	*adata = malloc(sizeof(struct adf_data));
     int			i, j;
 
-    printf("Values: "); println(data->value_attr);
-
     adata->lang_size = data->lang_size;
     adata->keys_size = data->keys_size;
     adata->values_size = data->values_size;
@@ -362,7 +360,6 @@ int adf_get_val_descr(struct adf_data *adata, char *lang, char *key, char *value
     if (adata==NULL) return 0;
     int		lang_no = adf_find(adata->lang, 0, adata->lang_size, lang);
 
-    printf("lang_no = %i\n", lang_no);
     if (lang_no<0)
 	{
 	    fprintf(stderr, "attribute_descriptions: Warning! Unknown language \"%s\". Using default language \"%s\" instead.\n", lang, adata->lang[0]);
@@ -371,15 +368,12 @@ int adf_get_val_descr(struct adf_data *adata, char *lang, char *key, char *value
 
     int		key_no = adf_find(adata->key_attr, 0, adata->keys_size, key);
 
-    printf("key_no = %i\n", key_no);
     if (key_no<0) return 0;	// No such key
 
     int		start = 0;
     if (key_no > 0) start = adata->keys2values[key_no-1];
 
-    printf("start=%i, stop=%i, max=%i\n", start, adata->keys2values[key_no], adata->values_size);
     int		value_no = adf_find(adata->value_attr, start, adata->keys2values[key_no], value);
-    printf("value_no = %i\n", value_no);
 
     if (value_no<0) return 0;	// No such value for 'key'.
 
