@@ -82,7 +82,7 @@ struct rac_yacc_data
 %parse-param { struct rac_yacc_data *data }
 %parse-param { yyscan_t yyscanner }
 %lex-param { yyscan_t yyscanner }
-%token SHOW_DUPLICATES_ID EXPANDED_ID FROM_ID GROUP_ID IMPORT_ID NAME_ID SELECT_ID SORT_ID SHOW_EMPTY_ID EQUALS_ID PARANTES_BEGIN PARANTES_CLOSE BRACKET_BEGIN BRACKET_CLOSE STRING_ID SORT_REVERSE_ID
+%token SHOW_DUPLICATES_ID EXPANDED_ID FROM_ID GROUP_ID IMPORT_ID NAME_ID SELECT_ID SORT_ID SHOW_EMPTY_ID EQUALS_ID PARANTES_BEGIN PARANTES_CLOSE BRACKET_BEGIN BRACKET_CLOSE STRING_ID SORT_REVERSE_ID FLAT_ID
 
 %%
 doc	:
@@ -179,6 +179,14 @@ block	:
 		data->current_item->flags|= sort_reverse;
 	    else
 		data->current_item->flags&= 0xffff - sort_reverse;
+	}
+	| block FLAT_ID EQUALS_ID STRING_ID
+	{
+//	    printf("show.empty = %s\n", (char*)$4);
+	    if (!strcasecmp((const char*)$4, "true"))
+		data->current_item->flags|= flat_expand;
+	    else
+		data->current_item->flags&= 0xffff - flat_expand;
 	}
 	;
 select	: SELECT_ID PARANTES_BEGIN strings PARANTES_CLOSE
@@ -503,6 +511,7 @@ void print_recurse_items(item *I, int indent)
 		    case sort_alpha: printf("alphabetic"); break;
 		}
 	    if (I->flags & sort_reverse) printf(" (reverse)");
+	    if (I->flags & flat_expand) printf(" (flat)");
 	    printf("\n");
 
 	    if (I->flags & is_expanded)

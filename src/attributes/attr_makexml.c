@@ -608,7 +608,8 @@ struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *a
 		    buffer	*B2 = buffer_init(-1);
 		    int	printed = attribute_print_xml_sorted(res.items, indent+2, B2, sort, sort_reverse, qa, res.remove, attrib_count);
 
-		    if ((is_selected>=0 && printed>1) || child_selected)
+		    //if ((is_selected>=0 && printed>1) || child_selected)
+		    if (child_selected)
 			{
 			    expanded = 1;
 			}
@@ -733,10 +734,91 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
     					    struct attribute_temp_res	res = attribute_generate_xml_subpattern_recurse(subattrp, attrib_count, getfiletypep, indent, parent->sort, parent->flags & sort_reverse, attr_query, qa);
 					    //attribute_print_xml_sorted(res.items, indent, B, parent->sort, parent->flags & sort_reverse);
 
-					    for (j=0; j<vector_size(res.items); j++)
+
+					    if (parent->flags & flat_expand && vector_size(attr_query) == 1)
 						{
-						    value	v = vector_get(res.items,j);
-						    vector_pushback(R.items, tuple(v).element[0].ptr, tuple(v).element[1].ptr, tuple(v).element[2].ptr, tuple(v).element[3].i, tuple(v).element[4].i, tuple(v).element[5].i);
+/***/
+//		    struct attribute_temp_res	res = attribute_generate_xml_subpattern_recurse(pair(map_val(it_m1)).first.ptr, attrib_count, getfiletypep, indent+2, sort, sort_reverse, attr_query, qa);
+						    int		is_selected = 0;
+						    int		expanded = 0;
+						    int		split = -1, hit_split = -1;
+						    buffer	*B = buffer_init(-1);
+//		    char	*icon = NULL;
+
+						    BINDENT; bprintf(B, "<group key=\"%s\"", vector_get(attr_query,0).ptr);
+						    //char	*t = attribute_generate_value_string_from_vector(" value=", attr_query);
+						    //bprintf(B, "%s", t);
+						    //free(t);
+						    bprintf(B, " name=\"%s\"", vector_get(attr_query,0).ptr);
+//						    bprintf(B, " name=\"%s\"", pair(map_val(it_m1)).second.ptr);
+						    set_insert(R.remove, is_selected=add_to_query(B, qa, QUERY_ATTRIBUTE, vector_get(attr_query,0).ptr, &split) );
+/*
+		    // Spesialtilfelle for (file)group:
+		    if (!strcmp("group", vector_get(attr_query,0).ptr)
+			&& (!strcasecmp(fte_getdefaultgroup(getfiletypep, "nbo", &icon), (char*)map_key(it_m1).ptr)
+			    || fte_groupid(getfiletypep, "nbo", (char*)map_key(it_m1).ptr, &icon) >= 0))
+			{
+//			    bprintf(B, " query=\'%s group:\"%s\"\'", querystr, (char*)map_key(it_m1).ptr);
+//			    set_insert(R.remove, query_remove_word(qa, QUERY_GROUP, (char*)map_key(it_m1).ptr));
+//			    bprintf(B, " query=\'");
+			    //set_insert(R.remove, add_to_query(B, qa, QUERY_GROUP, (char*)map_key(it_m1).ptr) );
+			    set_insert(R.remove, is_selected=add_to_query(B, qa, QUERY_GROUP, (char*)map_key(it_m1).ptr, &split) );
+//			    bprintf(B, "\'");
+			}
+		    else
+			{
+//			    char	*s = attribute_generate_key_value_string_from_vector(" attribute:", attr_query);
+//			    bprintf(B, " query=\'%s%s\'", querystr, s);
+//			    set_insert(R.remove, query_remove_word(qa, QUERY_ATTRIBUTE, s));
+			    char	*s = attribute_generate_key_value_string_from_vector2(attr_query);
+//			    bprintf(B, " query=\'");
+			    set_insert(R.remove, is_selected=add_to_query(B, qa, QUERY_ATTRIBUTE, s, &split) );
+//			    bprintf(B, "\'");
+			}
+
+		    if (icon==NULL) icon = getfiletypep->default_icon;
+		    bprintf(B, " icon=\"%s\"", icon);
+*/
+						    bprintf(B, " hits=\"");
+						    hit_split = B->pos;
+
+						    int	child_selected = !attribute_is_empty_remove(res.remove);
+
+		    //bprintf(B, "\" expanded=\"%s\">\n", expanded ? "true" : "false");
+						    set_insert(res.remove, is_selected);
+						    buffer	*B2 = buffer_init(-1);
+						    int	printed = attribute_print_xml_sorted(res.items, indent+2, B2, parent->sort, parent->flags & sort_reverse, qa, res.remove, attrib_count);
+
+						    //if ((is_selected>=0 && printed>1) || child_selected)
+						    if (child_selected)
+							{
+							    expanded = 1;
+							}
+
+						    bprintf(B, "\" expanded=\"%s\">\n", expanded ? "true" : "false");
+						    char	*u = buffer_exit(B2);
+						    bprintf(B, "%s", u);
+						    free(u);
+
+//		    iterator	it_sr = set_begin(res.remove);
+//		    for (; it_sr.valid; it_sr=set_next(it_sr))
+//			set_insert(R.remove, set_key(it_sr).i);
+
+//		    for (i=0; i<vector_size(res.items); i++) free(tuple(vector_get(res.items,i)).element[0].ptr);
+
+//		    destroy(res.items);
+//		    destroy(res.remove);
+						    BINDENT; bprintf(B, "</group>\n");
+/***/
+						    vector_pushback(R.items, buffer_exit(B), (char*)map_key(it_m1).ptr, pair(map_val(it_m1)).second.ptr, split, hit_split, expanded);
+						}
+					    else
+						{
+						    for (j=0; j<vector_size(res.items); j++)
+							{
+						    	    value	v = vector_get(res.items,j);
+						    	    vector_pushback(R.items, tuple(v).element[0].ptr, tuple(v).element[1].ptr, tuple(v).element[2].ptr, tuple(v).element[3].i, tuple(v).element[4].i, tuple(v).element[5].i);
+							}
 						}
 
 					    iterator	it_sr = set_begin(res.remove);
@@ -781,7 +863,7 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 					    hit_split = B->pos;
 					    bprintf(B, "\" />\n");
 
-					    vector_pushback(R.items, buffer_exit(B), (char*)map_key(it_m1).ptr, pair(map_val(it_m1)).second.ptr, split, hit_split, 0);
+					    vector_pushback(R.items, buffer_exit(B), (char*)map_key(it_m1).ptr, "", split, hit_split, 0);
 					}
 
 				    //R.hits+= pair(map_val(it_m1)).second.i;
