@@ -2,7 +2,6 @@ alter table collectionAuth add `comment` varchar(255) default NULL;
 
 INSERT INTO `config` VALUES ('msad_ldapstring','');
 INSERT INTO `config` VALUES ('msad_ldapbase','');
-delete from connectors where name <> "SMB";
 
 
 
@@ -20,9 +19,10 @@ CREATE TABLE `sessionData` (
   PRIMARY KEY  (`id`)
 ) TYPE=MyISAM;
 
-ALTER TABLE connectors add `active` tinyint(4) NOT NULL default '0';
 ALTER TABLE connectors add `extension` tinyint(4) default NULL;
 ALTER TABLE connectors add `modified` datetime default NULL;
+ALTER TABLE connectors add `active` tinyint(4) NOT NULL default '1';
+ALTER TABLE connectors add `read_only` tinyint(4) NOT NULL default '1';
 
 UPDATE connectors set active = 1;
 
@@ -42,12 +42,24 @@ CREATE TABLE shareParam (
   PRIMARY KEY  (share,param) 
 ) TYPE=MyISAM;
   
-INSERT INTO `connectors` VALUES (9, 'Exchange', 'Microsoft exchange', NULL, NULL, NULL, 0, 'authentication, connector, crawling, exchange_user_select',1, NULL, 0);
-INSERT INTO connectors VALUES (64,'Intranet',NULL,NULL,NULL,NULL,0,'custom_parameters, crawling',1,'2008-07-14 21:01:04',1);
+INSERT INTO `connectors` VALUES (9, 'Exchange', 'Microsoft exchange', NULL, NULL, NULL, 0, 'authentication, connector, crawling, exchange_user_select',1, NULL, 0, 1);
+INSERT INTO `connectors` VALUES (64, 'Intranet', NULL, NULL, NULL, NULL, 0, 'custom_parameters, crawling, authentication', 1, '2008-08-13 09:24:43', 1, 1);
 
-INSERT INTO param VALUES (102,64,'isPasswordProtected','1 = user must be able to log in, 0 = skip online password check.');
 INSERT INTO param VALUES (101,64,'url','http://www.example.com');
 
+
+ALTER TABLE `shares` ADD `crawl_pid` int(10) unsigned default NULL;
+
+INSERT INTO `config` ( `configkey` , `configvalue` ) 
+VALUES (
+'msad_ldapgroupstring', ''
+);
+
+
+INSERT INTO `config` ( `configkey` , `configvalue` ) 
+VALUES (
+'authentication_timeout', ''
+);
 
 -- New usersystem handling
 
@@ -151,4 +163,16 @@ CREATE TABLE param (
 
 UPDATE connectors SET inputFields = CONCAT('user_system, ', inputFields) WHERE inputFields NOT LIKE "%user_system%";
 
+
 INSERT INTO `connectors` VALUES (70, 'Superoffice', 'Superoffice push crawler', NULL, NULL, NULL, 0, 'custom_parameters, crawling, user_system, authentication', NULL, NULL, 1, 1);
+
+INSERT INTO `connectors` VALUES (73, 'SharePoint', NULL, NULL, NULL, NULL, 0, 'user_system, custom_parameters, crawling, authentication', 1, '2008-10-14 18:18:24', 1, 1);
+INSERT INTO `param` VALUES (121, 73, 'delay', 'Delay in seconds between crawl. Set to 0 to disable.');
+INSERT INTO `param` VALUES (108, 73, 'url', 'http://www.example.com');
+INSERT INTO `param` VALUES (124, 73, 'download_images', '1 to activate, 0 to disable.');
+
+CREATE TABLE `activeUsers` (
+  `user` varchar(255) default NULL,
+  UNIQUE KEY `user` (`user`)
+) TYPE=MyISAM;
+
