@@ -21,6 +21,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 			int dates[],
 			struct queryTimeFormat *queryTime,
 			struct fte_data *getfiletypep,
+			struct adf_data *attrdescrp,
 			attr_conf *showattrp,
 			query_array *qa
 		);

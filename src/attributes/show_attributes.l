@@ -23,7 +23,7 @@ name			{ return NAME_ID; }
 select			{ return SELECT_ID; }
 show.duplicates		{ return SHOW_DUPLICATES_ID; }
 show.empty		{ return SHOW_EMPTY_ID; }
-flat			{ return FLAT_ID; }
+build_groups		{ return BUILD_GROUPS_ID; }
 sort.reverse		{ return SORT_REVERSE_ID; }
 sort			{ return SORT_ID; }
 from			{ return FROM_ID; }

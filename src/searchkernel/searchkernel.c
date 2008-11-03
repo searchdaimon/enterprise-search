@@ -2212,7 +2212,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#ifdef BLACK_BOKS
 		//char	*querystr = asprint_query(&PagesResults.QueryData.queryParsed);
 		(*SiderHeder).navigation_xml = searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,
-		    &(*SiderHeder).queryTime, searchd_config->getfiletypep, searchd_config->showattrp, &PagesResults.QueryData.queryParsed);
+		    &(*SiderHeder).queryTime, searchd_config->getfiletypep, searchd_config->attrdescrp, searchd_config->showattrp, &PagesResults.QueryData.queryParsed);
 
 		(*SiderHeder).navigation_xml_len = strlen((*SiderHeder).navigation_xml);
 
@@ -2786,7 +2786,7 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	#ifdef BLACK_BOKS
 		//char	*querystr = asprint_query(&PagesResults.QueryData.queryParsed);
 		(*SiderHeder).navigation_xml = searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,
-		    &(*SiderHeder).queryTime, searchd_config->getfiletypep, searchd_config->showattrp, &PagesResults.QueryData.queryParsed);
+		    &(*SiderHeder).queryTime, searchd_config->getfiletypep, searchd_config->attrdescrp, searchd_config->showattrp, &PagesResults.QueryData.queryParsed);
 
 		(*SiderHeder).navigation_xml_len = strlen((*SiderHeder).navigation_xml);
 

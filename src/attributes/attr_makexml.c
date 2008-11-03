@@ -166,6 +166,17 @@ char* attribute_generate_value_string(char *prefix, char *param[], int size)
     return buffer_exit(B);
 }
 
+char* attribute_generate_value(char *param[], int size)
+{
+    buffer	*B = buffer_init(-1);
+    int		i;
+
+    if (size > 0) bprintf(B, "%s", param[0]);
+    for (i=1; i<size; i++) bprintf(B, "/%s", param[i]);
+
+    return buffer_exit(B);
+}
+
 char* attribute_generate_key_value_string_from_vector(char *prefix, container *param)
 {
     buffer	*B = buffer_init(-1);
@@ -199,6 +210,17 @@ char* attribute_generate_value_string_from_vector(char *prefix, container *param
     if (vector_size(param) > 1) bprintf(B, "%s\"%s", prefix, vector_get(param,1).ptr);
     for (i=2; i<vector_size(param); i++) bprintf(B, "/%s", vector_get(param,i).ptr);
     if (vector_size(param) > 1) bprintf(B, "\"");
+
+    return buffer_exit(B);
+}
+
+char* attribute_generate_value_from_vector(container *param)
+{
+    buffer	*B = buffer_init(-1);
+    int		i;
+
+    if (vector_size(param) > 1) bprintf(B, "%s", vector_get(param,1).ptr);
+    for (i=2; i<vector_size(param); i++) bprintf(B, "/%s", vector_get(param,i).ptr);
 
     return buffer_exit(B);
 }
@@ -543,7 +565,26 @@ int attribute_print_xml_sorted(container *items, int indent, buffer *B, int sort
     return printed;
 }
 
-struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *attributes, int attrib_count, struct fte_data *getfiletypep, int indent, int sort, char sort_reverse, container *attr_query, query_array *qa)
+static inline int attribute_description(struct adf_data *attrdescrp, char *key, char *value, char **description, char **icon)
+{
+    int		success = 0;
+    if (key==NULL || key[0]=='\0') return 0;
+
+    if (value==NULL || value[0]=='\0')
+	{
+	    success = adf_get_key_descr(attrdescrp, "nbo", key, description, icon);
+	}
+    else
+	{
+	    success = adf_get_val_descr(attrdescrp, "nbo", key, value, description, icon);
+	}
+
+    return success;
+}
+
+struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *attributes, int attrib_count,
+		    struct fte_data *getfiletypep, struct adf_data *attrdescrp, int indent, int sort, char sort_reverse,
+		    container *attr_query, query_array *qa)
 {
     int		i;
     iterator	it_m1 = map_begin(attributes);
@@ -563,16 +604,15 @@ struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *a
 
 	    if (map_size(pair(map_val(it_m1)).first.ptr) > 0)
 		{
-		    struct attribute_temp_res	res = attribute_generate_xml_subpattern_recurse(pair(map_val(it_m1)).first.ptr, attrib_count, getfiletypep, indent+2, sort, sort_reverse, attr_query, qa);
+		    struct attribute_temp_res	res = attribute_generate_xml_subpattern_recurse(pair(map_val(it_m1)).first.ptr, attrib_count, getfiletypep, attrdescrp, indent+2, sort, sort_reverse, attr_query, qa);
 		    int		is_selected = 0;
 		    int		expanded = 0;
 		    char	*icon = NULL;
 
 		    BINDENT; bprintf(B, "<group key=\"%s\"", vector_get(attr_query,0).ptr);
-		    char	*t = attribute_generate_value_string_from_vector(" value=", attr_query);
-		    bprintf(B, "%s", t);
-		    free(t);
-		    bprintf(B, " name=\"%s\"", (char*)map_key(it_m1).ptr);
+		    char	*value = attribute_generate_value_from_vector(attr_query);
+		    //char	*t = attribute_generate_value_string_from_vector(" value=", attr_query);
+		    if (strlen(value)>0) bprintf(B, " value=\"%s\"", value);
 		    // Spesialtilfelle for (file)group:
 		    if (!strcmp("group", vector_get(attr_query,0).ptr)
 			&& (!strcasecmp(fte_getdefaultgroup(getfiletypep, "nbo", &icon), (char*)map_key(it_m1).ptr)
@@ -595,6 +635,16 @@ struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *a
 			    set_insert(R.remove, is_selected=add_to_query(B, qa, QUERY_ATTRIBUTE, s, &split) );
 //			    bprintf(B, "\'");
 			}
+
+		    //bprintf(B, " name=\"%s\"", (char*)map_key(it_m1).ptr
+		    // Attribute descriptions overskriver fileext descriptions.
+		    char	*description;
+		    if (attribute_description(attrdescrp, vector_get(attr_query,0).ptr, value, &description, &icon))
+			bprintf(B, " name=\"%s\"", description);
+		    else
+			bprintf(B, " name=\"%s\"", (char*)map_key(it_m1).ptr);
+		    //free(t);
+		    free(value);
 
 		    if (icon==NULL) icon = getfiletypep->default_icon;
 		    bprintf(B, " icon=\"%s\"", icon);
@@ -667,12 +717,20 @@ struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *a
 			    //item.value = attribute_generate_value_string_from_vector("", attr_query);
 			    //item.name = strdup((char*)map_key(it_m1).ptr);
 			    //item.query = ;
+			    char	*description;
+			    char	*icon = NULL;
 
 			    BINDENT; bprintf(B, "<item key=\"%s\"", vector_get(attr_query,0).ptr);
-			    char	*t = attribute_generate_value_string_from_vector(" value=", attr_query);
-			    bprintf(B, "%s", t);
-			    free(t);
-			    bprintf(B, " name=\"%s\"", (char*)map_key(it_m1).ptr);
+			    char	*value = attribute_generate_value_from_vector(attr_query);
+			    if (strlen(value)>0) bprintf(B, " value=\"%s\"", value);
+//			    bprintf(B, " name=\"%s\"", (char*)map_key(it_m1).ptr);
+			    if (attribute_description(attrdescrp, vector_get(attr_query,0).ptr, value, &description, &icon))
+				bprintf(B, " name=\"%s\"", description);
+			    else
+				bprintf(B, " name=\"%s\"", (char*)map_key(it_m1).ptr);
+
+			    free(value);
+			    if (icon!=NULL) bprintf(B, " icon=\"%s\"", icon);
 //			    char	*s = attribute_generate_key_value_string_from_vector(" attribute:", attr_query);
 //			    bprintf(B, " query=\'%s%s\'", querystr, s);
 //			    set_insert(R.remove, query_remove_word(qa, QUERY_ATTRIBUTE, s));
@@ -697,7 +755,7 @@ struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *a
 }
 
 
-struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, int attrib_count, struct attr_group *parent, struct fte_data *getfiletypep, int indent, query_array *qa)
+struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, int attrib_count, struct attr_group *parent, struct fte_data *getfiletypep, struct adf_data *attrdescrp, int indent, query_array *qa)
 {
     int		i, j;
     struct attribute_temp_res	R;
@@ -731,11 +789,11 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 				{
 				    if (map_size(subattrp) > 0)
 					{
-    					    struct attribute_temp_res	res = attribute_generate_xml_subpattern_recurse(subattrp, attrib_count, getfiletypep, indent, parent->sort, parent->flags & sort_reverse, attr_query, qa);
+    					    struct attribute_temp_res	res = attribute_generate_xml_subpattern_recurse(subattrp, attrib_count, getfiletypep, attrdescrp, indent, parent->sort, parent->flags & sort_reverse, attr_query, qa);
 					    //attribute_print_xml_sorted(res.items, indent, B, parent->sort, parent->flags & sort_reverse);
 
 
-					    if (parent->flags & flat_expand && vector_size(attr_query) == 1)
+					    if (parent->flags & build_groups && vector_size(attr_query) == 1)
 						{
 /***/
 //		    struct attribute_temp_res	res = attribute_generate_xml_subpattern_recurse(pair(map_val(it_m1)).first.ptr, attrib_count, getfiletypep, indent+2, sort, sort_reverse, attr_query, qa);
@@ -743,48 +801,25 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 						    int		expanded = 0;
 						    int		split = -1, hit_split = -1;
 						    buffer	*B = buffer_init(-1);
-//		    char	*icon = NULL;
+						    char	*description, *icon = NULL;
 
 						    BINDENT; bprintf(B, "<group key=\"%s\"", vector_get(attr_query,0).ptr);
 						    //char	*t = attribute_generate_value_string_from_vector(" value=", attr_query);
 						    //bprintf(B, "%s", t);
 						    //free(t);
-						    bprintf(B, " name=\"%s\"", vector_get(attr_query,0).ptr);
+						    if (attribute_description(attrdescrp, vector_get(attr_query,0).ptr, NULL, &description, &icon))
+							bprintf(B, " name=\"%s\"", description);
+						    else
+							bprintf(B, " name=\"%s\"", pair(map_val(it_m1)).second.ptr);
+						    if (icon!=NULL) bprintf(B, " icon=\"%s\"", icon);
 //						    bprintf(B, " name=\"%s\"", pair(map_val(it_m1)).second.ptr);
 						    set_insert(R.remove, is_selected=add_to_query(B, qa, QUERY_ATTRIBUTE, vector_get(attr_query,0).ptr, &split) );
-/*
-		    // Spesialtilfelle for (file)group:
-		    if (!strcmp("group", vector_get(attr_query,0).ptr)
-			&& (!strcasecmp(fte_getdefaultgroup(getfiletypep, "nbo", &icon), (char*)map_key(it_m1).ptr)
-			    || fte_groupid(getfiletypep, "nbo", (char*)map_key(it_m1).ptr, &icon) >= 0))
-			{
-//			    bprintf(B, " query=\'%s group:\"%s\"\'", querystr, (char*)map_key(it_m1).ptr);
-//			    set_insert(R.remove, query_remove_word(qa, QUERY_GROUP, (char*)map_key(it_m1).ptr));
-//			    bprintf(B, " query=\'");
-			    //set_insert(R.remove, add_to_query(B, qa, QUERY_GROUP, (char*)map_key(it_m1).ptr) );
-			    set_insert(R.remove, is_selected=add_to_query(B, qa, QUERY_GROUP, (char*)map_key(it_m1).ptr, &split) );
-//			    bprintf(B, "\'");
-			}
-		    else
-			{
-//			    char	*s = attribute_generate_key_value_string_from_vector(" attribute:", attr_query);
-//			    bprintf(B, " query=\'%s%s\'", querystr, s);
-//			    set_insert(R.remove, query_remove_word(qa, QUERY_ATTRIBUTE, s));
-			    char	*s = attribute_generate_key_value_string_from_vector2(attr_query);
-//			    bprintf(B, " query=\'");
-			    set_insert(R.remove, is_selected=add_to_query(B, qa, QUERY_ATTRIBUTE, s, &split) );
-//			    bprintf(B, "\'");
-			}
 
-		    if (icon==NULL) icon = getfiletypep->default_icon;
-		    bprintf(B, " icon=\"%s\"", icon);
-*/
 						    bprintf(B, " hits=\"");
 						    hit_split = B->pos;
 
 						    int	child_selected = !attribute_is_empty_remove(res.remove);
 
-		    //bprintf(B, "\" expanded=\"%s\">\n", expanded ? "true" : "false");
 						    set_insert(res.remove, is_selected);
 						    buffer	*B2 = buffer_init(-1);
 						    int	printed = attribute_print_xml_sorted(res.items, indent+2, B2, parent->sort, parent->flags & sort_reverse, qa, res.remove, attrib_count);
@@ -800,16 +835,8 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 						    bprintf(B, "%s", u);
 						    free(u);
 
-//		    iterator	it_sr = set_begin(res.remove);
-//		    for (; it_sr.valid; it_sr=set_next(it_sr))
-//			set_insert(R.remove, set_key(it_sr).i);
-
-//		    for (i=0; i<vector_size(res.items); i++) free(tuple(vector_get(res.items,i)).element[0].ptr);
-
-//		    destroy(res.items);
-//		    destroy(res.remove);
 						    BINDENT; bprintf(B, "</group>\n");
-/***/
+
 						    vector_pushback(R.items, buffer_exit(B), (char*)map_key(it_m1).ptr, pair(map_val(it_m1)).second.ptr, split, hit_split, expanded);
 						}
 					    else
@@ -834,7 +861,8 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 					    int		split = -1, hit_split = -1;
 
 					    BINDENT; bprintf(B, "<item key=\"%s\"", S->select[0]);
-					    bprintf(B, "%s", attribute_generate_value_string(" value=", &(S->select[1]), S->size-1) );
+					    char	*value = attribute_generate_value(&(S->select[1]), S->size-1);
+					    if (strlen(value)>0) bprintf(B, " value=\"%s\"", value);
 					    // Spesialtilfelle for 'filetype':
 					    if (!strcmp("filetype", S->select[0]))
 						{
@@ -850,7 +878,13 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 						}
 					    else
 						{
-						    bprintf(B, " name=\"%s\"", S->select[S->size-1]);
+						    char	*description, *icon = NULL;
+						    //bprintf(B, " name=\"%s\"", S->select[S->size-1]);
+						    if (attribute_description(attrdescrp, S->select[S->size-1], value, &description, &icon))
+							bprintf(B, " name=\"%s\"", description);
+						    else
+							bprintf(B, " name=\"%s\"", S->select[S->size-1]);
+						    if (icon!=NULL) bprintf(B, " icon=\"%s\"", icon);
 						    char	*s = attribute_generate_key_value_string_from_vector2(attr_query);
 //						    bprintf(B, " query=\'%s%s\'", querystr, s);
 //						    set_insert(R.remove, query_remove_word(qa, QUERY_ATTRIBUTE, s));
@@ -862,6 +896,7 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 					    bprintf(B, " hits=\"");
 					    hit_split = B->pos;
 					    bprintf(B, "\" />\n");
+					    free(value);
 
 					    vector_pushback(R.items, buffer_exit(B), (char*)map_key(it_m1).ptr, "", split, hit_split, 0);
 					}
@@ -876,7 +911,9 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 					    int		split = -1;
 
 					    BINDENT; bprintf(B, "<item key=\"%s\"", S->select[0]);
-					    bprintf(B, "%s", attribute_generate_value_string(" value=", &(S->select[1]), S->size-1) );
+					    //bprintf(B, "%s", attribute_generate_value_string(" value=", &(S->select[1]), S->size-1) );
+					    char	*value = attribute_generate_value(&(S->select[1]), S->size-1);
+					    if (strlen(value)>0) bprintf(B, " value=\"%s\"", value);
 					    // Spesialtilfelle for 'filetype':
 					    if (!strcmp("filetype", S->select[0]))
 						{
@@ -895,7 +932,13 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 						}
 					    else
 						{
-						    bprintf(B, " name=\"%s\"", S->select[S->size-1]);
+						    char	*description, *icon = NULL;
+						    //bprintf(B, " name=\"%s\"", S->select[S->size-1]);
+						    if (attribute_description(attrdescrp, S->select[S->size-1], value, &description, &icon))
+							bprintf(B, " name=\"%s\"", description);
+						    else
+							bprintf(B, " name=\"%s\"", S->select[S->size-1]);
+						    if (icon!=NULL) bprintf(B, " icon=\"%s\"", icon);
 						    char	*s = attribute_generate_key_value_string_from_vector2(attr_query);
 //						    bprintf(B, " query=\'%s%s\'", querystr, s);
 //						    set_insert(R.remove, query_remove_word(qa, QUERY_ATTRIBUTE, s));
@@ -904,6 +947,7 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 //						    bprintf(B, "\'");
 						}
 					    bprintf(B, " hits=\"0\" />\n");
+					    free(value);
 					    vector_pushback(R.items, buffer_exit(B), S->select[S->size-1], NULL, split, -1, 0);
 					}
 				}
@@ -914,7 +958,7 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 		    case item_group:
 			{
 			    struct attr_group		*G = pair(vector_get(parent->child,i)).second.ptr;
-			    struct attribute_temp_res	res = attribute_generate_xml_recurse(attributes, attrib_count, G, getfiletypep, indent+2, qa);
+			    struct attribute_temp_res	res = attribute_generate_xml_recurse(attributes, attrib_count, G, getfiletypep, attrdescrp, indent+2, qa);
 			    buffer	*B = buffer_init(-1);
 
 			    BINDENT; bprintf(B, "<group name=\"%s\" query=\'", G->name);
@@ -955,7 +999,8 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 }
 
 
-char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf *showattrp, struct fte_data *getfiletypep, query_array *qa)
+char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf *showattrp,
+			struct fte_data *getfiletypep, struct adf_data *attrdescrp, query_array *qa)
 {
     int		i;
     buffer	*B = buffer_init(-1);
@@ -967,7 +1012,7 @@ char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf 
     printf("\n%s\n", s);
 */
     struct attribute_temp_res	R;
-    R = attribute_generate_xml_recurse(attributes, attrib_count, showattrp, getfiletypep, 2, qa);
+    R = attribute_generate_xml_recurse(attributes, attrib_count, showattrp, getfiletypep, attrdescrp, 2, qa);
 
     for (i=0; i<qa->n; i++)
 	if (qa->query[i].operand == QUERY_DATE)

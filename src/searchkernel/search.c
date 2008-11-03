@@ -44,6 +44,7 @@
 	#include "../ds/dmap.h"
 	#include "../ds/dmultimap.h"
 	#include "../getFiletype/identify_extension.h"
+	#include "../attributes/attribute_descriptions.h"
 	#include "../attributes/show_attributes.h"
 	#include "../attributes/attr_makexml.h"
 #endif
@@ -3806,6 +3807,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 			int dates[],
 			struct queryTimeFormat *queryTime,
 			struct fte_data *getfiletypep,
+			struct adf_data	*attrdescrp,
 			attr_conf *showattrp,
 			query_array *qa
 		) {
@@ -4417,7 +4419,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 		// Attributter:
 		fprintf(stderr, "search: generating xml for attributes\n");
 
-		char	*nav_xml = attribute_generate_xml(attributes, TeffArray->attrib_count+1, showattrp, getfiletypep, qa);
+		char	*nav_xml = attribute_generate_xml(attributes, TeffArray->attrib_count+1, showattrp, getfiletypep, attrdescrp, qa);
 		fprintf(stderr, "%s", nav_xml);
 
 		println(attributes);

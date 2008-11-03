@@ -394,10 +394,17 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "searchd: ERROR!! Unable to open file-extensions configuration file. Disabling file-extensions.\n");
 		    }
 
+		fprintf(stderr, "searchd: init attribute descriptions\n");
+		searchd_config.attrdescrp = adf_init(bfile("config/attribute_descriptions.conf"));
+		if (searchd_config.attrdescrp == NULL)
+		    {
+			fprintf(stderr, "searchd: ERROR!! Unable to open attribute descriptions configuration file. Disabling attribute descriptions.\n");
+		    }
+
 		fprintf(stderr, "searchd: init show-attributes\n");
 		char	*warnings;
 		searchd_config.showattrp = show_attributes_init(bfile("config/show_attributes.conf"), &warnings);
-		if (searchd_config.getfiletypep == NULL)
+		if (searchd_config.showattrp == NULL)
 		    {
 			fprintf(stderr, "searchd: ERROR!! Unable to open show-attributes configuration file. Disabling attributes.\n");
 		    }
