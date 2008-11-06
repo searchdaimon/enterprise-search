@@ -973,19 +973,103 @@ load_usersystems(struct hashtable **usersystems)
 
 	closedir(dirp);
 }
+//rutine for å laste et crawler biblotek
+int cm_loadCrawlLib(struct hashtable **h, char name[]) {
+
+	debug("cm_loadCrawlLib(name=%s)",name);
+
+	char libpath[PATH_MAX];
+	char perlpath[PATH_MAX];
+	char folderpath[PATH_MAX];
+	void* lib_handle;       /* handle of the opened library */
+	struct crawlLibInfoFormat *crawlLibInfo;
+	const char* error_msg;
+
+
+	sprintf(libpath,"%s/%s/%s.so",bfile("crawlers"),name,name);	
+	sprintf(perlpath,"%s/%s/main.pm",bfile("crawlers"),name);	
+	sprintf(folderpath,"%s/%s/",bfile("crawlers"),name);	
+
+
+	if (file_exist(libpath)) {
+		printf("loading path \"%s\"\n",libpath);
+		lib_handle = dlopen(libpath, RTLD_LAZY);
+		if (!lib_handle) {
+			blog(LOGERROR,1,"Error: during dlopen(): %s. File %s.",dlerror(),libpath);
+		    	//exit(1);
+			return 0;
+		}
+
+	
+		crawlLibInfo = dlsym(lib_handle, "crawlLibInfo");
+
+		/* check that no error occured */
+        	error_msg = dlerror();
+	        if (error_msg) {
+		blog(LOGERROR,1,"Error: Error locating '%s' - %s.",name, error_msg);
+        	    exit(1);
+        	}
+
+		
+		printf("loaded \"%s\"\n",(*crawlLibInfo).shortname);
+
+		if ((*crawlLibInfo).crawlinit == NULL) {
+
+		}
+		else if (!(*crawlLibInfo).crawlinit()) {
+			printf("crawlinit dident return 1\n");
+			blog(LOGERROR,1,"Error: crawlinit dident return 1.");
+			exit(1);
+		}
+
+		//sjekk at den ikke finnes i hashen fra før
+		if (hashtable_search((*h),(*crawlLibInfo).shortname) != NULL) {
+			printf("all redy have module with shortname \"%s\"\n",(*crawlLibInfo).shortname);
+			return 1;
+		}
+
+		if (! hashtable_insert((*h),(*crawlLibInfo).shortname,crawlLibInfo) ) {                        
+			blog(LOGERROR,1,"Error: can't hastable insert.");
+               		exit(-1);
+               	}
+
+		//alt ok. Legg det i en hash
+
+		//dlclose(lib_handle); 
+	}		
+	else if (file_exist(perlpath)) {
+
+		crawlLibInfo = perlCrawlStart(folderpath,name);
+
+		printf("loaded \"%s\"\n",(*crawlLibInfo).shortname);
+
+		//sjekk at den ikke finnes i hashen fra før
+		if (hashtable_search((*h),(*crawlLibInfo).shortname) != NULL) {
+			printf("all redy have module with shortname \"%s\"\n",(*crawlLibInfo).shortname);
+			return 1;
+		}
+
+		if (! hashtable_insert((*h),(*crawlLibInfo).shortname,crawlLibInfo) ) {                        
+			blog(LOGERROR,1,"Error: can't hastable insert.");
+               		exit(-1);
+               	}
+
+	}
+	else {
+		fprintf(stderr,"can't load \"%s\" crawler.\n",name);
+		return 0;
+	}
+
+	return 1;
+
+}
 
 int cm_start(struct hashtable **h, struct hashtable **usersystems) {
 
 	printf("cm_start start\n");
-	void* lib_handle;       /* handle of the opened library */
-	const char* error_msg;
-	struct crawlLibInfoFormat *crawlLibInfo;
 
 	DIR *dirp;
 	struct dirent *dp;
-	char libpath[PATH_MAX];
-	char perlpath[PATH_MAX];
-	char folderpath[PATH_MAX];
 
 	(*h) = create_hashtable(20, cm_hashfromkey, cm_equalkeys);
 
@@ -1000,81 +1084,9 @@ int cm_start(struct hashtable **h, struct hashtable **usersystems) {
 		if (dp->d_name[0] == '.') {
 			continue;
 		}
-		sprintf(libpath,"%s/%s/%s.so",bfile("crawlers"),dp->d_name,dp->d_name);	
-		sprintf(perlpath,"%s/%s/main.pm",bfile("crawlers"),dp->d_name);	
-		sprintf(folderpath,"%s/%s/",bfile("crawlers"),dp->d_name);	
 
+		cm_loadCrawlLib(h, dp->d_name);
 
-		if (file_exist(libpath)) {
-			printf("loading path \"%s\"\n",libpath);
-			lib_handle = dlopen(libpath, RTLD_LAZY);
-			if (!lib_handle) {
-				blog(LOGERROR,1,"Error: during dlopen(): %s. File %s.",dlerror(),libpath);
-			    	//exit(1);
-				continue;
-			}
-
-	
-			crawlLibInfo = dlsym(lib_handle, "crawlLibInfo");
-
-			/* check that no error occured */
-	        	error_msg = dlerror();
-		        if (error_msg) {
-				blog(LOGERROR,1,"Error: Error locating '%s' - %s.",dp->d_name, error_msg);
-	        	    exit(1);
-	        	}
-
-		
-			printf("loaded \"%s\"\n",(*crawlLibInfo).shortname);
-
-
-
-			if ((*crawlLibInfo).crawlinit == NULL) {
-
-			}
-			else if (!(*crawlLibInfo).crawlinit()) {
-				printf("crawlinit dident return 1\n");
-				blog(LOGERROR,1,"Error: crawlinit dident return 1.");
-
-				exit(1);
-			}
-
-			//sjekk at den ikke finnes i hashen fra før
-			if (hashtable_search((*h),(*crawlLibInfo).shortname) != NULL) {
-				printf("all redy have module with shortname \"%s\"\n",(*crawlLibInfo).shortname);
-				continue;
-			}
-
-			if (! hashtable_insert((*h),(*crawlLibInfo).shortname,crawlLibInfo) ) {                        
-				blog(LOGERROR,1,"Error: can't hastable insert.");
-                		exit(-1);
-                	}
-
-			//alt ok. Legg det i en hash
-
-			//dlclose(lib_handle); 
-		}		
-		else if (file_exist(perlpath)) {
-
-			crawlLibInfo = perlCrawlStart(folderpath,dp->d_name);
-
-			printf("loaded \"%s\"\n",(*crawlLibInfo).shortname);
-
-			//sjekk at den ikke finnes i hashen fra før
-			if (hashtable_search((*h),(*crawlLibInfo).shortname) != NULL) {
-				printf("all redy have module with shortname \"%s\"\n",(*crawlLibInfo).shortname);
-				continue;
-			}
-
-			if (! hashtable_insert((*h),(*crawlLibInfo).shortname,crawlLibInfo) ) {                        
-				blog(LOGERROR,1,"Error: can't hastable insert.");
-                		exit(-1);
-                	}
-
-		}
-		else {
-			fprintf(stderr,"can't load \"%s\" crawler.\n",dp->d_name);
-		}
 	}
 
 	closedir(dirp);
@@ -1092,12 +1104,18 @@ int cm_start(struct hashtable **h, struct hashtable **usersystems) {
 int cm_getCrawlLibInfo(struct hashtable *h,struct crawlLibInfoFormat **crawlLibInfo,char shortname[]) {
 	debug("cm_getCrawlLibInfo: start");
 	debug("wil search for \"%s\"",shortname);
-	if (((*crawlLibInfo) = (struct crawlLibInfoFormat *)hashtable_search(h,shortname)) == NULL) {
-		berror("don't have a crawler for \"%s\"\n",shortname);
-		return 0;
-        }
-	else {
+	if (((*crawlLibInfo) = (struct crawlLibInfoFormat *)hashtable_search(h,shortname)) != NULL) {
 		return 1;
+        }
+	else if ((cm_loadCrawlLib(&h, shortname)) && (((*crawlLibInfo) = (struct crawlLibInfoFormat *)hashtable_search(h,shortname)) != NULL)) {
+		//hvis vi ikke kunne finne det i hashen prøver vi å laset på ny
+		debug("Hadde ikke %s fra før, men fikk til å laste den.",shortname);
+		return 1;
+	}
+	else {
+		berror("don't have a crawler for \"%s\"\n",shortname);
+
+		return 0;
 	}
 }
 
