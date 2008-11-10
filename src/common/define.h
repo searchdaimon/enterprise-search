@@ -503,6 +503,7 @@ struct queryTimeFormat {
 	//runerb: 5 feb 2008
 	double html_parser_run;
 	double generate_snippet;
+	double duplicat_echecking;
 	#endif
 };
 
