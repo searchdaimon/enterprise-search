@@ -88,6 +88,9 @@ sub show_mapping {
 		return $s->show();
 	}
 
+	$vars->{prim} = $s->{sql_sys}->get({ id => $prim_id });
+	$vars->{sec}  = $s->{sql_sys}->get({ id => $sec_id });
+
 	$vars->{prim}{users} = [ $s->list_users($prim_id) ];
 	$vars->{sec}{users}  = [ $s->list_users($sec_id) ];
 
@@ -96,8 +99,6 @@ sub show_mapping {
 	$vars->{mapping} = \@mapping;
 	$vars->{prim}{mapped} = { map { $_->{prim_usr} => 1 } @mapping };
 	$vars->{sec}{mapped}  = { map { $_->{secnd_usr} => 1 } @mapping };
-
-	$vars->{sec_sys_id} = $sec_id;
 
 	$TPL_MAPPING;
 }

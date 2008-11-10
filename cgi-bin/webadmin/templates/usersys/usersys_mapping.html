@@ -24,7 +24,7 @@ SEC_RADIO_PREFIX  = "field_sec_users_";
 PRIM_SYS = 10;
 SEC_SYS = 11;
 
-SEC_SYSTEM_ID = [% sec_sys_id || 'null' %];
+SEC_SYSTEM_ID = [% sec.id || 'null' %];
 
 
 </script>
@@ -81,11 +81,11 @@ SEC_SYSTEM_ID = [% sec_sys_id || 'null' %];
 
 <div class="userList" 
 	[% IF primary %]id="primaryList"[% END %] style="[% position %]">
-	<h3>[% IF primary; 
-			"Primary system"; 
+	<h4>[% IF primary; 
+			"$prim.name <small>(primary)</small>";
 		ELSE; 
-			"User system #$sec_sys_id"; 
-		END %]</h3>
+			sec.name;
+		END %]</h4>
 <div class="checklist_outer" style="max-width : 100%;">
 <div class="checklist_inner
 [% IF primary;
