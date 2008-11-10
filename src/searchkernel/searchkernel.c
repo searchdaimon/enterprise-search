@@ -1117,7 +1117,6 @@ void *generatePagesResults(void *arg)
 		//if ((*SiderHeder).filtered > 300) {
 		//	(*PagesResults).filterOn = 0;
 		//}
-
 		#ifdef BLACK_BOKS
 			//hvis index filter tidligere har funet ut at dette ikke er et bra treff går vi til neste
 			if ((*PagesResults).TeffArray->iindex[i].indexFiltered.filename == 1) {
@@ -1884,6 +1883,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#ifdef BLACK_BOKS
 	(*SiderHeder).queryTime.html_parser_run = 0;
 	(*SiderHeder).queryTime.generate_snippet = 0;
+	(*SiderHeder).queryTime.duplicat_echecking = 0;
 	#endif
 
 	#if defined BLACK_BOKS && !defined _24SEVENOFFICE
@@ -2083,7 +2083,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	PagesResults.nextPage = 0;
 
 //cuted
-	gettimeofday(&popResult_start_time, NULL);
 
 	#ifndef BLACK_BOKS
 		//sorterer top treffene etter hvilken disk de ligger på, slik at vi kan jobbe mest mulig i paralell
@@ -2132,6 +2131,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	#endif
 
+	gettimeofday(&popResult_start_time, NULL);
+
 
 	#ifdef WITH_THREAD
 
@@ -2171,6 +2172,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	gettimeofday(&popResult_end_time, NULL);
         (*SiderHeder).queryTime.popResult = getTimeDifference(&popResult_start_time,&popResult_end_time);
+
 
 	/*
 	en siste sortering er nødvendig da sidene kan være i usortert rekkefølgde. Dette skjer da 
@@ -2333,6 +2335,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	vboprintf("\t%-40s %f\n","iintegerGetValueDate",(*SiderHeder).queryTime.iintegerGetValueDate);
 	vboprintf("\t%-40s %f\n","dateview",(*SiderHeder).queryTime.dateview);
 	vboprintf("\t%-40s %f\n","crawlManager",(*SiderHeder).queryTime.crawlManager);
+	vboprintf("\t%-40s %f\n","duplicat echecking",(*SiderHeder).queryTime.duplicat_echecking);
 
 #ifndef _24SEVENOFFICE
 	vboprintf("\t%-40s %f\n","getUserObjekt",(*SiderHeder).queryTime.getUserObjekt);
@@ -2401,7 +2404,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	vboprintf("searchkernel: ~dosearch()\n");
 	return 1;
 }
-
 
 
 int
@@ -2874,5 +2876,3 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	fprintf(stderr, "searchkernel: ~dorank()\n");
 	return 1;
 }
-
-

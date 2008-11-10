@@ -3532,7 +3532,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 
 
-		gettimeofday(&start_time, NULL);
 
 		//
 		//filter på dato
@@ -3608,6 +3607,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		*/
 
 		printf("<################################# duplicate checking ######################################>\n");
+		gettimeofday(&start_time, NULL);
 
 		// Loop over all results and do duplicate checking...
 		if (crc32maphash != NULL)
@@ -3727,7 +3727,12 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 			printf("\n");
 		#endif
 
+		gettimeofday(&end_time, NULL);
+		(*queryTime).duplicat_echecking = getTimeDifference(&start_time,&end_time);
+
 		printf("</################################# duplicate checking ######################################>\n");
+
+		gettimeofday(&start_time, NULL);
 
 		printf("order by \"%s\"\n",orderby);
 
