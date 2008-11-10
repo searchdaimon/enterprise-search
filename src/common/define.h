@@ -29,7 +29,9 @@
 	#define NrofDocIDsInLot 500000
 #endif
 //maks sider vi leser fra indeksen. Er denne på 20k og vi har 30k treff får vi bare returnert 20k
-#define maxIndexElements 400000
+//#define maxIndexElements 400000
+//temp: runarb: 7 august 2008
+#define maxIndexElements 1500000
 
 //totalt maks lotter vi kan ha.
 #define maxLots 10000
