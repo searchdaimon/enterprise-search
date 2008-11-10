@@ -31,11 +31,15 @@ if (defined($state->{'action'})) {
 			my ($state, $port) = bb_phone_home_start();
 			$vars->{'phone_start_retv'} = $state;
 			$vars->{'phone_start_port'} = $port;
+
+			sleep 2; # phone home magic takes some time
 		}
 		elsif ($do eq 'stop') {
 			# User is stopping service
 			my $state = bb_phone_home_stop();
 			$vars->{'phone_stop_retv'} = $state;
+
+			sleep 2;
 		}
 		my ($running, $pid) = bb_phone_home_running();
 
