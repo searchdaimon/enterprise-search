@@ -37,7 +37,7 @@ static inline void bhpm_newunicode( int val, yyscan_t scanner );
 %}
 
 character	[a-z]
-legalchar	[a-z0-9_']
+legalchar	[a-z0-9']
 attrchar	[a-z0-9\-_]
 legaltegn	[!"#$%()*+,\-_./:;=?@[\\\]^{|}~]
 tfchars		[a-z0-9_`!#$%()*+,\-./:;=?@[\]^{|}~]

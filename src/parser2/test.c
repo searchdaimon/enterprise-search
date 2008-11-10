@@ -10,7 +10,7 @@
 
 void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* wordlist )
 {
-    return;
+//    return;
 //    if (pos > 25) return;
 
     printf("\t%s (%i) ", word, pos);
@@ -97,8 +97,8 @@ int main( int argc, char *argv[] )
 	    free(buf);
 	    fclose(file);
 
-	    printf("Title: %s\n", title);
-//	    printf("Title: %s\nBody:\n%.512s\n", title, body);
+//	    printf("Title: %s\n", title);
+	    printf("Title: %s\nBody:\n%.512s\n", title, body);
 //	    printf("Title: %s\nBody:\n%s\n", title, body);
 
 //	    printf("\n\033[1;34mTitle\033[0m: %s\n\033[1;34mBody\033[0m:\n%s\n", title, body);
