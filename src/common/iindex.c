@@ -715,6 +715,8 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 			}
 
 
+			if (TeffArray->iindex[y].TermAntall != 0) {
+
 				//slutter hvis vi har tat for mange hits
 				if ((TeffArray->nrofHits + TeffArray->iindex[y].TermAntall) > maxTotalIindexHits) {
 					printf("Har max hits. Har nå %i\n",TeffArray->nrofHits);
@@ -742,7 +744,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				//}
 				//printf("\n");
 
-
+			}
 
 			TeffArray->iindex[y].subname = subname;
 
