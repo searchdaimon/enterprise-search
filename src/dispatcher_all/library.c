@@ -43,10 +43,6 @@
     #define MAXDATASIZE 100 // max number of bytes we can get at once 
 
 
-    //i hundredels sekunder (100 = 1sec)
-    #define maxSocketWait_SiderHeder 1000
-    #define maxSocketWait_CanDo 100
-
     #define maxerrors 5
     #define maxerrorlen 201
 

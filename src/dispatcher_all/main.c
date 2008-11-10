@@ -777,7 +777,7 @@ showabal,AddSiderHeder[i].servername);
 	*/
 }
 
-
+#ifdef EXPLAIN_RANK
 void print_explain_rank( struct SiderFormat *Side, char query[]) {
 
 	printf("<![CDATA[Rb=%hu;%hu;%hu&amp;Rh=%hu;%hu;%hu&amp;Rt=%hu;%hu;%hu&amp;Ra=%hu;%hu;%hu&amp;Rum=%hu;%hu;%hu&amp;Rud=%hu;%hu;%hu&amp;Rus=%hu;%hu;%hu&amp;AllRank=%i&amp;TermRank=%i&amp;PopRank=%i&amp;DocID=%i-%i&amp;Url=%s&amp;Query=%s]]>\n",
@@ -798,6 +798,7 @@ void print_explain_rank( struct SiderFormat *Side, char query[]) {
 	);
 
 }
+#endif
 
 unsigned int getDocIDFromSqlRun (MYSQL *demo_db, char mysql_query[], char rankUrl[]) {
 
