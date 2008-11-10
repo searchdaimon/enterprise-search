@@ -258,6 +258,11 @@ void get_query( char text[], int text_size, query_array *qa )
 	    qa->query[i].alt = NULL;
 	    qa->query[i].alt_n = 0;
 
+	    if (qa->query[i].operand=='+' && qa->query[i].n>1)
+		qa->query[i].operand = '"';
+	    else if (qa->query[i].operand=='-' && qa->query[i].n>1)
+		qa->query[i].operand = '~';
+
 	    for (j=0; j<vector_size(crnt); j++)
 	        {
 	            qa->query[i].s[j] = strdup(vector_get(crnt,j).ptr);
