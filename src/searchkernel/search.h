@@ -1,7 +1,6 @@
 struct hashtable;
 
-void searchSimple (int *TeffArrayElementer, struct iindexFormat *TeffArray,int *TotaltTreff,
-//		int *unfilteredTeffArrayElementer, struct iindexFormat *unfilteredTeffArray,
+void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int *TotaltTreff,
                 query_array *queryParsed, struct queryTimeFormat *queryTime,
                 struct subnamesFormat subnames[], int nrOfSubnames,int languageFilterNr,
                 int languageFilterAsNr[], char orderby[],

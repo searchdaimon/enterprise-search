@@ -447,7 +447,7 @@ searchcl : src/searchkernel/searchcl.c
 #dropper -D WITH_MEMINDEX og -D WITH_RANK_FILTER for nå
 #SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c   src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD $(LIBCONFIG)
 #må ha -D_GNU_SOURCE for O_DIRECT
-SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/dp/dp.c src/searchkernel/verbose.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/stemmer.o src/query/lex.query.o src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER2) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D EXPLAIN_RANK -D DISK_PROTECTOR
+SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/dp/dp.c src/searchkernel/verbose.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/stemmer.o src/query/lex.query.o src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER2) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D DISK_PROTECTOR
 
 
 searchddep:
@@ -462,13 +462,12 @@ searchd : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
 	
-	$(CC) $(SEARCHCOMMAND) -D WITH_RANK_FILTER -D WITH_THREAD -D DEFLOT -o bin/searchd 
+	$(CC) $(SEARCHCOMMAND) -D WITH_RANK_FILTER -D WITH_THREAD -D DEFLOT -o bin/searchd -D EXPLAIN_RANK 
 
 
 searchdbb : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
-#	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/getfiletype.o src/getFiletype/libfte.a src/attributes/libshow_attr.a src/spelling/spelling.c src/ds/libds.a -DIIACL -laspell $(24SEVENOFFICE) -D WITH_SPELLING
 	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/libfte.a src/newspelling/spelling.c src/newspelling/dmetaphone.c src/newspelling/levenshtein.c src/getFiletype/libfte.a src/attributes/libshow_attr.a src/ds/libds.a -DIIACL $(24SEVENOFFICE) -DWITH_SPELLING -DWITH_THREAD
 
 mergeUserToSubname: src/mergeUserToSubname/main.c
@@ -511,20 +510,19 @@ deleteDocIDFormCache:
 	$(CC) $(CFLAGS) $(LIBS)*.c src/dispatcher_all/library.c src/deleteDocIDFormCache/main.c -o bin/deleteDocIDFormCache $(LDFLAGS) -D WITH_CASHE -D EXPLAIN_RANK
 
 
-dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/banlists/ban.c src/UrlToDocID/search_index.c src/maincfg/maincfg.c src/dispatcher_all/library.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c -D EXPLAIN_RANK $(LDFLAGS) $(BDB) -D_GNU_SOURCE
+dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/banlists/ban.c src/UrlToDocID/search_index.c src/maincfg/maincfg.c src/dispatcher_all/library.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c $(LDFLAGS) $(BDB) -D_GNU_SOURCE
 
 dispatcher_all: src/dispatcher_all/main.c
 	@echo ""
 	@echo "$@:"
 
-	#$(CC) $(dispatcherCOMAND) $(MYSQL4) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG)
-	$(CC) $(dispatcherCOMAND) $(MYSQL) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG)
+	$(CC) $(dispatcherCOMAND) $(MYSQL) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG) -D EXPLAIN_RANK 
 
 dispatcher_allsql3: src/dispatcher_all/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) $(MYSQL) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG)
+	$(CC) $(dispatcherCOMAND) $(MYSQL) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG) -D EXPLAIN_RANK 
 
 dispatcher_allbb: src/dispatcher_all/main.c
 	@echo ""

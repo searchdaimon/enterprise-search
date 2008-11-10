@@ -1632,10 +1632,13 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 				Sider[i].iindex.TermRank,
 				Sider[i].iindex.PopRank,
 
-				Sider[i].iindex.rank_explaind.rankBody,
-				Sider[i].iindex.rank_explaind.rankHeadline,
-				Sider[i].iindex.rank_explaind.rankTittel,
-
+				#ifdef EXPLAIN_RANK
+					Sider[i].iindex.rank_explaind.rankBody,
+					Sider[i].iindex.rank_explaind.rankHeadline,
+					Sider[i].iindex.rank_explaind.rankTittel,
+				#else 
+					-1,-1,-1,
+				#endif
 
 
 				#ifdef BLACK_BOKS
@@ -1679,6 +1682,7 @@ spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa)
 {
 	int i;
 	int fixed;
+
 
 	fixed = 0;
 	for(i = 0; i < qa->n; i++) {
@@ -2018,11 +2022,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	printf("searchSimple\n");
 	#endif
 
-//	struct iindexFormat *unfilteredTeffArray;
-//	int unfilteredTeffArrayElementer;
-
-	searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTreff,
-//			&unfilteredTeffArrayElementer, unfilteredTeffArray,
+	searchSimple(&PagesResults.antall,&PagesResults.TeffArray,&(*SiderHeder).TotaltTreff,
 			&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
@@ -2228,7 +2228,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	if (searchd_config->optFastStartup != 1) {
 
 		/* Spellcheck the query */
-		if (SiderHeder->TotaltTreff < 10 || 1) {
+		if (SiderHeder->TotaltTreff < 10) {
 			query_array qa;
 
 			copy_query(&qa, &PagesResults.QueryData.queryParsed);
@@ -2369,12 +2369,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	vboprintf("\n\n");
 
-	#ifdef EXPLAIN_RANK
 
 	if (globalOptVerbose) {
 		print_explane_rank(*Sider,(*SiderHeder).showabal);
 	}
-	#endif
 
 	// Frigjør minne:
 	vboprintf("free memory\n");
@@ -2600,8 +2598,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 //	struct iindexFormat *unfilteredTeffArray;
 //	int unfilteredTeffArrayElementer;
 
-	searchSimple(&PagesResults.antall,PagesResults.TeffArray,&SiderHeder->TotaltTreff,
-//			&unfilteredTeffArrayElementer, unfilteredTeffArray,
+	searchSimple(&PagesResults.antall,&PagesResults.TeffArray,&SiderHeder->TotaltTreff,
 			&PagesResults.QueryData.queryParsed,&SiderHeder->queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
@@ -2868,11 +2865,9 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 
 	printf("\n\n");
 
-	#ifdef EXPLAIN_RANK
 
 	print_explane_rank(*Sider,(*SiderHeder).showabal);
 
-	#endif
 
 	printf("*ranking %i\n",*ranking);
 
