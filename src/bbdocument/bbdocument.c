@@ -374,7 +374,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
 	char **splitdata;
         int TokCount;
-	FILE *fp;
+	FILE *fp, *filconfp=NULL;
 	char filconvertetfile_real[216];
 	char filconvertetfile_out_txt[216];
 	char filconvertetfile_out_html[216];
@@ -383,6 +383,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	int ret;
 	char *documentfinishedbuftmp;
 	char fileconverttemplate[1024];
+	struct fileFilterFormat *fileFilter = NULL;
 
 	printf("bbdocument_convert: dokument_size %i, title \"%s\",filetype \"%s\"\n",dokument_size,titlefromadd,filetype);
 
@@ -423,7 +424,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	#endif
 
 
-	struct fileFilterFormat *fileFilter = malloc(sizeof(struct fileFilterFormat));
+	fileFilter = malloc(sizeof(struct fileFilterFormat));
 	struct fileFilterFormat *fileFilterOrginal;
 
 	//strcpy((*fileFilter).documentstype,filetype);
@@ -502,12 +503,21 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	#ifdef DEBUG
 	printf("bbdocument_convert: filconvertetfile_real \"%s\"\n",filconvertetfile_real);
 	#endif
-	if ((fp = fopen(filconvertetfile_real,"wb")) == NULL) {
+	if ((filconfp = fopen(filconvertetfile_real,"wb")) == NULL) {
 		perror(filconvertetfile_real);
 		exit(1);
 	}
-	fwrite(document,1,dokument_size,fp);
-	fclose(fp);
+	flock(fileno(filconfp),LOCK_EX);
+	fwrite(document,1,dokument_size,filconfp);
+	fclose(filconfp);
+
+	//reåpner den read only, ogi lager en delt lås på filen, slik at vi ungår at perl /tmp watch sletter den.
+	if ((filconfp = fopen(filconvertetfile_real,"rb")) == NULL) {
+		perror(filconvertetfile_real);
+		exit(1);
+	}
+	flock(fileno(filconfp),LOCK_SH);
+
 	//convert to text.
 	/*****************************************************************************/
 
@@ -647,21 +657,14 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		if ((fh = fopen(filconvertetfile_out_txt,"rb")) == NULL) {
 			printf("can't open out file \"%s\"\n",filconvertetfile_out_txt);
 			perror(filconvertetfile_out_txt);
-			(*documentfinishedbufsize) = 0;
-			free(fileFilter);
-			unlink(filconvertetfile_real);
-			unlink(filconvertetfile_out_txt);
-			unlink(filconvertetfile_out_html);
-
-			return 0;
+			goto bbdocument_convert_error;
 		}		
        		fstat(fileno(fh),&inode);
 
 
                 if ((cpbuf = malloc(inode.st_size +1)) == NULL) {
 			perror("malloc");
-			free(fileFilter);
-			return 0;
+			goto bbdocument_convert_error;
 		}
                 
         	fread(cpbuf,1,inode.st_size,fh);
@@ -692,12 +695,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		if ((fh = fopen(filconvertetfile_out_html,"rb")) == NULL) {
 			printf("can't open out file \"%s\"\n",filconvertetfile_out_html);
 			perror(filconvertetfile_out_html);
-			(*documentfinishedbufsize) = 0;
-			unlink(filconvertetfile_real);
-			unlink(filconvertetfile_out_txt);
-			unlink(filconvertetfile_out_html);
-
-			return 0;
+			goto bbdocument_convert_error;
 		}		
        		fstat(fileno(fh),&inode);
 		if ((*documentfinishedbufsize) > inode.st_size) {
@@ -720,12 +718,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		len = exeocbuflen;
 		p = strdup(documentfinishedbuftmp);
 		if (p == NULL) {
-			free(fileFilter);
-			unlink(filconvertetfile_real);
-			unlink(filconvertetfile_out_txt);
-			unlink(filconvertetfile_out_html);
-
-			return 0;
+			goto bbdocument_convert_error;
 		}
 		sprintf(*documentfinishedbuf, html_text_tempelate, titlefromadd, "");
 		curdocp += strlen(*documentfinishedbuf);
@@ -836,17 +829,14 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	}
 	else {
 		printf("unknown dokument outputformat \"%s\"\n",fileFilter->outputformat);
-		(*documentfinishedbufsize) = 0;
-		free(fileFilter);
-		unlink(filconvertetfile_out_txt);
-		unlink(filconvertetfile_out_html);
-		unlink(filconvertetfile_real);
-		return 0;
+		goto bbdocument_convert_error;
 	}
 
 	unlink(filconvertetfile_real);
 	unlink(filconvertetfile_out_txt);
 	unlink(filconvertetfile_out_html);
+
+	fclose(filconfp);
 
 	#ifndef DEBUG
 		//runarb: 13okr2007: hvorfor ver denne komentert ut? Det hoper seg opp med filer
@@ -858,6 +848,21 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	free(fileFilter);
 
 	return 1;
+
+	bbdocument_convert_error:
+		unlink(filconvertetfile_real);
+		unlink(filconvertetfile_out_txt);
+		unlink(filconvertetfile_out_html);
+
+		if (filconfp != NULL) {
+			fclose(filconfp);
+		}
+		if (fileFilter != fileFilter) {
+			free(fileFilter);
+		}
+		(*documentfinishedbufsize) = 0;
+
+		return 0;
 }
 
 
