@@ -3625,8 +3625,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 			//runarb 22 sept 2008: hvorfor er denne her? Brukes bare på websøk
 			//TeffArray->iindex[i].PopRank = popRankForDocIDMemArray(TeffArray->iindex[i].DocID);
 #if 1
-//			if (crc32maphash == NULL)
-//				continue;
 
 			// This document is filtered out, don't even think about it.
 			if ((*TeffArray)->iindex[i].indexFiltered.filename == 1
@@ -3642,19 +3640,27 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 			//assert(subname_nr>=0);
 			if (subname_nr<0) continue;	// Burde ikke kunne skje.
 
-			/* XXX: Don't reopen all the time */
-			if ((crc32map = reopen(rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(unsigned int), "crc32map", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY)) == NULL) {
-//			if ((crc32map = reopen(rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(unsigned int), "crc32map", (*TeffArray)->subnames[subname_nr], RE_READ_ONLY)) == NULL) {
-				debug("reopen(crc32map)\n");
-				continue;
-			}
-
 			unsigned int crc32;
-			crc32 = *RE_Uint(crc32map, (*TeffArray)->iindex[i].DocID);
+
+			#if 1
+				//bruker iintegerGetValue i steden for re. Men ser ut til at det er problemer med 0 indkeksering.
+				if (iintegerGetValue(&crc32,4,(*TeffArray)->iindex[i].DocID +1,"crc32map",(*(*TeffArray)->iindex[i].subname).subname) == 0) {
+					printf("can't iintegerGetValue crc32map\n");
+					continue;
+				}
+			#else
+				if ((crc32map = reopen(rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(unsigned int), "crc32map", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY)) == NULL) {
+					debug("reopen(crc32map)\n");
+					continue;
+				}
+
+				crc32 = *RE_Uint(crc32map, (*TeffArray)->iindex[i].DocID);
+
+				reclose(crc32map);
+			#endif
 
 			debug("Got hash value: %x\n", crc32);
 
-			reclose(crc32map);
 
 			if (crc32 == 0) {
 				debug("don't have crc32 value for DocID");
