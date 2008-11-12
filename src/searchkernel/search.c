@@ -1819,23 +1819,24 @@ for (i=0; i<(*queryParsed).n; i++)
 
 
 			case '|':
-                                        //while ( t_it!=NULL )
-                                        printf("will or search for:\n");
-                                        for (j=0; j<(*queryParsed).query[i].n; j++) {
-                                                printf("\t%s\n",(*queryParsed).query[i].s[j]);
-                                        }
+					#ifdef DEBUG
+                                        	printf("will or search for:\n");
+                                        	for (j=0; j<(*queryParsed).query[i].n; j++) {
+                                        	        printf("\t%s\n",(*queryParsed).query[i].s[j]);
+                                        	}
+					#endif
 					for (j=0; j<(*queryParsed).query[i].n; j++) {
 
 						++(*complicacy);
 
-                    				printf("aa_ søker på \"%s\"\n", (*queryParsed).query[i].s[j]);
+                    				vboprintf("aa_ søker på \"%s\"\n", (*queryParsed).query[i].s[j]);
                     				strscpy(queryelement,(*queryParsed).query[i].s[j],sizeof(queryelement));
                     			              
 						#ifdef BLACK_BOKS  			
                     			        strsandr(queryelement,"_NBSP_"," ");
 						#endif
 
-                				printf("queryelement:  %s\n", queryelement);
+                				vboprintf("queryelement:  %s\n", queryelement);
 
 						// hvis vi er et kort ord så har vi ikke fåt noen ord nummer palssering, så vi skal ikke øke hits
 						if ( isShortWord(queryelement) ) {
@@ -1878,7 +1879,7 @@ for (i=0; i<(*queryParsed).n; i++)
 							#endif
 							
 
-							printf("did find %i pages\n",TmpArrayLen);
+							vboprintf("did find %i pages\n",TmpArrayLen);
 							//hvis vi ikke hadde noe resulateter kan vi droppe å merge denne inn.
 							if (TmpArrayLen == 0) {
 								continue;
