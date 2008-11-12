@@ -8,7 +8,6 @@ use Crawler;
 our @ISA = qw(Crawler);
 
 use Carp;
-use JSON::XS qw(decode_json);
 use Data::Dumper;
 use LWP::Simple qw(get);
 
