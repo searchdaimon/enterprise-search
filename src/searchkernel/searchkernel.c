@@ -1711,8 +1711,6 @@ spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa)
 
 	if (fixed > 0) {
 		sprint_query(SiderHeder->spellcheckedQuery, MaxQueryLen, qa);
-	} else {
-		SiderHeder->spellcheckedQuery[0] = '\0';
 	}
 
 	return fixed;
@@ -2226,6 +2224,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#endif
 
 	#ifdef WITH_SPELLING
+
+	SiderHeder->spellcheckedQuery[0] = '\0';
 
 	if (searchd_config->optFastStartup != 1) {
 
