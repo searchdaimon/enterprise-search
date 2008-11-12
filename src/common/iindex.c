@@ -433,7 +433,9 @@ int ReadIIndexRecord (unsigned int *Adress, unsigned int *SizeForTerm, unsigned 
 		posisjon = (halvert -1) * sizeof(struct DictionaryFormat);
 		fseek(dictionaryha,posisjon,0);
 		if (fread(&DictionaryPost,sizeof(struct DictionaryFormat),1,dictionaryha) != 1) {
+			#ifdef DEBUG
 			printf("can't read last post\n");
+			#endif
 		}
 		else {
 			if (Query_WordID == DictionaryPost.WordID) {
