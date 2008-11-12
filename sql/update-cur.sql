@@ -176,3 +176,5 @@ CREATE TABLE `activeUsers` (
   UNIQUE KEY `user` (`user`)
 ) TYPE=MyISAM;
 
+
+INSERT INTO `param` VALUES (NULL, 70, 'Host', 'example.com');
