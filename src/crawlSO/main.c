@@ -78,6 +78,7 @@ crawlGo(struct crawlinfo *ci)
 	struct protoent *protocol;
 	struct sockaddr_in socketaddr;
 	char *sendbuf, *sendbuflen;
+	char *host;
 
 	port = DEFAULTPORT;
 
@@ -94,8 +95,10 @@ crawlGo(struct crawlinfo *ci)
 	memset(&socketaddr, '\0', sizeof(socketaddr));
 	socketaddr.sin_family = AF_INET;
 	socketaddr.sin_port = htons(port);
-	hostaddr = gethostbyname(ci->collection->resource);
-	printf("Connecting to: %s:%d\n", ci->collection->resource, port);
+	host = params_get_char_value(ci->collection->params,"Host");
+
+	hostaddr = gethostbyname(host);
+	printf("Connecting to: %s:%d\n", host, port);
 	if (!hostaddr) {
 		warn("gethostbyname()");
 		return 0;
