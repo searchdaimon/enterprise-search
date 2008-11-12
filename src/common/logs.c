@@ -74,7 +74,9 @@ int openlogs(FILE **LOGACCESS, FILE **LOGERROR, char name[]) {
 		//return 0;
 	}
 	else {
+		#ifdef DEBUG
 		printf("opened log \"%s\"\n",file);
+		#endif
 	}
 
 	sprintf(file,"logs/%s_error",name);
@@ -86,7 +88,9 @@ int openlogs(FILE **LOGACCESS, FILE **LOGERROR, char name[]) {
 		//return 0;
 	}
 	else {
+		#ifdef DEBUG
 		printf("opened log \"%s\"\n",file);
+		#endif
 	}
 	return 1;
 }
