@@ -835,10 +835,8 @@ void andNot_merge(struct iindexFormat **c, int *baselen, int *added,struct iinde
 
 	(*added) = k;
 
-	#ifdef DEBUG
-	printf("andNot_merge: a and b of length %i %i. Into %i\n",alen,blen,(*baselen));
-	printf("andNot_merge: end\n");
-	#endif
+	printf("~andNot_merge: a and b of length %i %i. Into %i\n",alen,blen,(*baselen));
+
 }
 
 void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added, struct iindexFormat *a, int alen, struct iindexFormat *b, int blen) {
@@ -2456,32 +2454,20 @@ void *searchIndex_thread(void *arg)
 					        Array->iindex[x].indexFiltered.attribute = 1;
 						//forsvinn++;
 					    }
-				    }
+				}
 				//int	nhits;
 				//and_merge((*searchIndex_thread_arg).attribArray[j], &(*searchIndex_thread_arg).attribArrayLen[j],
 				//    0, &nhits, tmpAttribArry[j], tmpAttribArrayLen[j], Array, ArrayLen);
 			    }
-			/*
-				    {
-					and_merge(&TmpArray2,&TmpArray2Len,0,&hits,&attribArray,attribArrayLen,&searcArray,searcArrayLen);
-					and_merge(&TmpArray,&TmpArrayLen,0,&hits,&acl_allowArray,acl_allowArrayLen,&TmpArray2,TmpArray2Len);
 
-			// Merge acl_denied:			
-    			andNot_merge(&Array,&ArrayLen,&hits,&TmpArray,TmpArrayLen,&acl_deniedArray,acl_deniedArrayLen);
-				    }
-				else
-				    {
-					// Vanlig søkequery er tomt, søk kun på attributter:
-					and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,attribArray,attribArrayLen);
+			    #ifdef DEBUG_II
+			        printf("Array:\n");
+			        for (x=start; x<ArrayLen; x++)
+			            {
+			 	        printf("\tDocID: %u,\t Filtered %d\n",Array->iindex[x].DocID,Array->iindex[x].indexFiltered.is_filtered);
+			            }
+			    #endif
 
-			// Merge acl_denied:			
-    			andNot_merge(&Array,&ArrayLen,&hits,&TmpArray,TmpArrayLen,&acl_deniedArray,acl_deniedArrayLen);
-				    }
-			    }
-			else	// Attributtquery er tomt
-			    {
-			    }
-			*/
 			#else
 
 			and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
@@ -2503,7 +2489,7 @@ void *searchIndex_thread(void *arg)
 			#ifdef DEBUG_II
 			printf("etter andNot_merge:\n");
 			for (y = 0; y < ArrayLen; y++) {
-				printf("TeffArray: DocID %u\nHits (%i): \n",Array->iindex[y].DocID,Array->iindex[y].TermAntall);	
+				printf("TeffArray: DocID %u, filtered %d\nHits (%i): \n",Array->iindex[y].DocID,Array->iindex[y].indexFiltered.is_filtered,Array->iindex[y].TermAntall);	
 				for (x=0;x<Array->iindex[y].TermAntall;x++) {
 					printf("\t%hu\n",Array->iindex[y].hits[x]);
 				}
@@ -2942,7 +2928,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	#ifdef BLACK_BOKS
 
 	#else
-		//ormerger Athor og Url inn i en temper array
+		//or_merger Athor og Url inn i en temper array
 		or_merge(&TmpArray,&TmpArrayLen,&searchIndex_thread_arg_Athor.resultArray,searchIndex_thread_arg_Athor.resultArrayLen,
 			&searchIndex_thread_arg_Url.resultArray,searchIndex_thread_arg_Url.resultArrayLen);
 
@@ -2957,91 +2943,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		}
 	#endif
 
-	/*
-	//Main
-	if (searchIndex_thread_arg_Main.resultArrayLen > 0) {
-		or_merge(TmpArray,&TmpArrayLen,TeffArray,(*TeffArrayElementer),
-			searchIndex_thread_arg_Main.resultArray,searchIndex_thread_arg_Main.resultArrayLen);
-		free(searchIndex_thread_arg_Main.resultArray);
-		memcpy(TeffArray,TmpArray,sizeof(struct iindexFormat) * TmpArrayLen);
-		(*TeffArrayElementer) = TmpArrayLen;
-	}
-	*/
-
-//	*unfilteredTeffArrayElementer = *TeffArrayElementer;
-//	unfilteredTeffArray = TeffArray;
-//	iindexArrayCopy2(unfilteredTeffArray, unfilteredTeffArrayElementer, 0, TeffArray, *TeffArrayElementer);
-
-	//#ifdef ATTRIBUTES
-/*
-		struct iindexFormat *filteredTeffArray[MAX_ATTRIBUTES_IN_QUERY];
-		int	filteredTeffArrayLen[MAX_ATTRIBUTES_IN_QUERY];
-
-		for (i=0; i<attributes_count; i++)
-		    {
-			filteredTeffArray[i] = (struct iindexFormat *)malloc(sizeof(struct iindexFormat));
-			filteredTeffArrayLen[i] = 0;
-			resultArrayInit(filteredTeffArray[i]);
-*/
-/*
-		// Merge resultater med attributter:
-		if (attributes_count > 0)
-		    {
-			// Test for query-words i standard søkequery:
-			char	null_query = 1;
-			int	j, hits;
-
-			for (j=0; j<queryParsed->n && null_query; j++)
-			    switch (queryParsed->query[j].operand)
-				{
-				    case QUERY_WORD:
-				    case QUERY_PHRASE:
-				    case QUERY_OR:
-					null_query = 0;
-					break;
-				    default:
-					break;
-				}
-
-			if (!null_query)
-			    {
-				fprintf(stderr, "search: Merging query.Main and query.attributes\n");
-				or_merge(TeffArray,TeffArrayElementer,TmpArray,TmpArrayLen,
-					searchIndex_thread_arg_Main.resultArray,searchIndex_thread_arg_Main.resultArrayLen);
-				and_merge(filteredTeffArray,&filteredTeffArrayLen,0,&hits,
-					searchIndex_thread_arg_attributes.resultArray,searchIndex_thread_arg_attributes.resultArrayLen,
-					TeffArray,*TeffArrayElementer);
-			    }
-			else
-			    {
-				// Vanlig søkequery er tomt, søk kun på attributter:
-				// TODO!!!!!!!!!!!
-				fprintf(stderr, "search: query.attributes only\n");
-				or_merge(TeffArray,TeffArrayElementer,TmpArray,TmpArrayLen,
-					searchIndex_thread_arg_attributes.resultArray,searchIndex_thread_arg_attributes.resultArrayLen);
-			    }
-		    }
-		else
-		    {
-			// Attributtquery er tomt:
-			fprintf(stderr, "search: query.Main only\n");
-			or_merge(TeffArray,TeffArrayElementer,TmpArray,TmpArrayLen,
-				searchIndex_thread_arg_Main.resultArray,searchIndex_thread_arg_Main.resultArrayLen);
-		    }
-*/
-	/*
-	or_merge(TeffArray,TeffArrayElementer,TmpArray,TmpArrayLen,
-		searchIndex_thread_arg_Main.resultArray,searchIndex_thread_arg_Main.resultArrayLen);
-
-	if (searchIndex_thread_arg_Main.resultArray != NULL) {
-		free(searchIndex_thread_arg_Main.resultArray);
-	}
-	*/
-	//if (searchIndex_thread_arg_attributes.resultArray != NULL) {
-	//	free(searchIndex_thread_arg_attributes.resultArray);
-	//}
-//	#endif
-	//#else
 	//merger inn temperer og main 
 
 	#ifdef BLACK_BOKS
@@ -3051,18 +2952,10 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		    destroy_query( &searchIndex_thread_arg_Main.attribute_query[i] );
 	    #endif
 
-	or_merge(TeffArray,TeffArrayElementer,&TmpArray,TmpArrayLen,
-		&searchIndex_thread_arg_Main.resultArray,searchIndex_thread_arg_Main.resultArrayLen);
+	// Bytter om på disse arrayene da kunden nedenfor TeffArray.
+	*TeffArrayElementer = searchIndex_thread_arg_Main.resultArrayLen;
+	swapiindex(TeffArray,&searchIndex_thread_arg_Main.resultArray);
 
-	// For Ã¥ bevare attributtfilter!!
-	for (i=0; i<*TeffArrayElementer; i++)
-	    {
-		(*TeffArray)->iindex[i].indexFiltered.is_filtered = searchIndex_thread_arg_Main.resultArray->iindex[i].indexFiltered.is_filtered;
-		(*TeffArray)->iindex[i].indexFiltered.attribute = searchIndex_thread_arg_Main.resultArray->iindex[i].indexFiltered.attribute;
-		for (j=0; j<searchIndex_thread_arg_Main.attrib_count; j++)
-		    (*TeffArray)->iindex[i].indexFiltered.attrib[j] =
-			searchIndex_thread_arg_Main.resultArray->iindex[i].indexFiltered.attrib[j];
-	    }
 
 	if (searchIndex_thread_arg_Main.resultArray != NULL) {
 		free(searchIndex_thread_arg_Main.resultArray);
@@ -3203,88 +3096,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 		#ifdef ATTRIBUTES
 		(*TeffArray)->attrib_count = searchIndex_thread_arg_Main.attrib_count;
-
-/*
-		printf("\nTeffArray:");
-		for (j=0; j<*TeffArrayElementer; j++)
-		    printf(" %i(%s)", (*TeffArray)->iindex[j].DocID, (*TeffArray)->iindex[j].subname);
-		printf("\n\n");
-*/
-/*
-		if (*TeffArrayElementer > 0)
-		    for (i=0; i<attributes_count; i++)
-			{
-			    int		j, k;
-			    int		vinn=0, forsvinn=0;
-			    int		hits;
-
-			    printf("AttribArray %i:", i);
-			    for (j=0; j<searchIndex_thread_arg_attributes[i].resultArrayLen; j++)
-				printf(" %i(%s)", searchIndex_thread_arg_attributes[i].resultArray->iindex[j].DocID
-				    , searchIndex_thread_arg_attributes[i].resultArray->iindex[j].subname);
-			    printf("\n\n");
-
-			    struct iindexFormat *filteredTeffArray;
-			    int	filteredTeffArrayLen;
-
-			    filteredTeffArray = (struct iindexFormat *)malloc(sizeof(struct iindexFormat));
-			    filteredTeffArrayLen = 0;
-			    resultArrayInit(filteredTeffArray);
-			    and_merge(filteredTeffArray,&filteredTeffArrayLen,0,&hits,
-					searchIndex_thread_arg_attributes[i].resultArray,searchIndex_thread_arg_attributes[i].resultArrayLen,
-					TeffArray,*TeffArrayElementer);
-			    printf("MergeArray %i:", i);
-			    for (j=0; j<filteredTeffArrayLen; j++)
-				printf(" %i", filteredTeffArray->iindex[j].DocID);
-			    printf("\n\n");
-			    free(filteredTeffArray);
-*/
-/*
-			    for (j=0,k=0; j<*TeffArrayElementer; j++)
-				{
-				    while (TeffArray->iindex[j].DocID > searchIndex_thread_arg_attributes[i].resultArray->iindex[k].DocID
-					&& k<searchIndex_thread_arg_attributes[i].resultArrayLen) k++;
-
-				    if (k<searchIndex_thread_arg_attributes[i].resultArrayLen
-					&& TeffArray->iindex[j].DocID == searchIndex_thread_arg_attributes[i].resultArray->iindex[k].DocID)
-					{
-					    TeffArray->iindex[j].indexFiltered.attrib[i] = 0;
-					    vinn++;
-					}
-				    else
-					{
-					    if (TeffArray->iindex[j].indexFiltered.is_filtered == 0) --(*TotaltTreff);
-					    TeffArray->iindex[j].indexFiltered.is_filtered = 1;
-					    TeffArray->iindex[j].indexFiltered.attrib[i] = 1;
-					    TeffArray->iindex[j].indexFiltered.attribute = 1;
-					    forsvinn++;
-					}
-				}
-			}
-*/
-/*
-		if (*TeffArrayElementer > 0 && filteredTeffArrayLen > 0)
-		    {
-			for (i=0,j=0; i<*TeffArrayElementer; i++)
-			    {
-				while (TeffArray->iindex[i].DocID > filteredTeffArray->iindex[j].DocID && j<filteredTeffArrayLen) j++;
-
-				if (j<filteredTeffArrayLen && TeffArray->iindex[i].DocID == filteredTeffArray->iindex[j].DocID)
-				    {
-					TeffArray->iindex[i].indexFiltered.attrib[0] = 0;	// Trengs denne?
-					TeffArray->iindex[i].indexFiltered.is_filtered = 0;
-				    }
-				else
-				    {
-					TeffArray->iindex[i].indexFiltered.is_filtered = 1;
-					TeffArray->iindex[i].indexFiltered.attrib[0] = 1;
-					--(*TotaltTreff);
-				    }
-			    }
-		    }
-
-		free(filteredTeffArray);
-*/
 		#endif
 
 
@@ -3720,15 +3531,15 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 			    "dup", "dup_c", "attr", "fltr");
 			for (i = 0; (i < (*TeffArrayElementer)) && (i < 100); i++) {
 				printf("\t| %-5u | %-20s | %-8d | %-8d | %-8d | %-8d | %-8d | %-8d | %-8d |\n",
-					TeffArray->iindex[i].DocID,
-					(*TeffArray->iindex[i].subname).subname,
-					TeffArray->iindex[i].indexFiltered.date,
-					TeffArray->iindex[i].indexFiltered.subname,
-					TeffArray->iindex[i].indexFiltered.filename,
-					TeffArray->iindex[i].indexFiltered.duplicate,
-					TeffArray->iindex[i].indexFiltered.duplicate_in_collection,
-					TeffArray->iindex[i].indexFiltered.attribute,
-					TeffArray->iindex[i].indexFiltered.is_filtered
+					(*TeffArray)->iindex[i].DocID,
+					(*(*TeffArray)->iindex[i].subname).subname,
+					(*TeffArray)->iindex[i].indexFiltered.date,
+					(*TeffArray)->iindex[i].indexFiltered.subname,
+					(*TeffArray)->iindex[i].indexFiltered.filename,
+					(*TeffArray)->iindex[i].indexFiltered.duplicate,
+					(*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection,
+					(*TeffArray)->iindex[i].indexFiltered.attribute,
+					(*TeffArray)->iindex[i].indexFiltered.is_filtered
 				);
 			}
 			printf("\n");
