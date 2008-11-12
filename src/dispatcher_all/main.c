@@ -111,7 +111,7 @@ struct subnamesFormat *get_usr_coll(char *usr, int *n_colls, int cmc_port) {
 	char buf[1024];
 
 	if (cmc_conect(&sock, buf, sizeof(buf), cmc_port) == 0)
-		errx(1, "Unable to connect to crawlManager: %s", buf);
+		die(1, "Unable to connect to crawlManager: %s", buf);
 	cmc_collectionsforuser(sock, usr, &collections);
 	cmc_close(sock);
 
@@ -3426,7 +3426,7 @@ void read_collection_cfg(struct subnamesConfigFormat * dst) {
 
   	config_init(&cfg);
   	if (!config_read_file(&cfg, bfile(CFG_SEARCHD))) {
-		errx(1, "Failed to load config '%s', '%s' line %d\n",
+		die(1, "Failed to load config '%s', '%s' line %d\n",
 			bfile(CFG_SEARCHD),
 			config_error_text(&cfg),
 			config_error_line(&cfg));
@@ -3465,7 +3465,7 @@ void read_collection_cfg(struct subnamesConfigFormat * dst) {
 		subnamesDefaultsConfig.summary = SUMMARY_SNIPPET;
 	}
 	else {
-		errx(1, "Invalid summary in config: %s\n", summarystr);
+		die(1, "Invalid summary in config: %s\n", summarystr);
 	}
 	free((void *) summarystr);
 
