@@ -287,6 +287,7 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
    	int  result;
 	int i,len,count;
 	List list;
+	(*nrofresponses) = 0;
 
   	char **attrs;
   	int TokCount;
@@ -351,7 +352,7 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
         if( rc != LDAP_SUCCESS ) {
                 fprintf( stderr, "%s: ldap_search_ext: %s (%d)\n",
                         __FILE__, ldap_err2string( rc ), rc );
-                return( rc );
+                return 0;
         }
 
 
@@ -489,7 +490,7 @@ done:
         if ( rc == -1 ) {
                 //tool_perror( "ldap_result", rc, NULL, NULL, NULL, NULL );
 		printf("rc == -1\n");
-                return( rc );
+                return 0;
         }
 
 	//clean up
@@ -502,7 +503,6 @@ done:
 
 	(*respons) = malloc(( sizeof(char *) * (count +1) ));
 
-	(*nrofresponses) = 0;
 	tempresults = NULL;
 	while(list_rem_next(&list,NULL,(void **)&tempresults) == 0) {
 		//printf("aaa \"%s\":\"%s\"\n",(*tempresults).key,(*tempresults).value);
@@ -598,7 +598,9 @@ int ldap_authenticat (LDAP **ld,char user_username[],char user_password[],const 
 		return RETURN_FAILURE;
 	}
    	//vi har en fungerende cn. Prøver og koble til
+	#ifdef DEBUG
 	printf("userid \"%s\", user_password \"%s\"\n",cn,user_password);
+	#endif
 
    	if (!ldap_connect(&ldforuserconect,ldap_host,ldap_port,ldap_base,cn,user_password)) {
         	printf("cant connect to ldap server by userid \"%s\"\n",cn);
@@ -903,7 +905,11 @@ int userIsLogedIn (char *user_username, const char *user_password, int time_out)
 	struct AuthenticatedUserFormat *userobjekt;
 	time_t now = time(NULL);
 	
-	printf("userIsLogedIn(user_username=%s, user_password=%s)\n",user_username,user_password);
+	#ifdef DEBUG
+		printf("userIsLogedIn(user_username=%s, user_password=%s)\n",user_username,user_password);
+	#else
+		printf("userIsLogedIn(user_username=%s )\n",user_username);
+	#endif
 
 	pthread_mutex_lock(&global_user_lock);
 		if ( (userobjekt  = hashtable_search(gloabal_user_h,user_username)) == NULL) {    
@@ -1041,10 +1047,11 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 				recvall(socket,user_username,sizeof(user_username));
 				recvall(socket,user_password,sizeof(user_password));
 
-				printf("got username \"%s\", password \"%s\"\n",user_username,user_password);
+				#ifdef DEBUG
+					printf("got username \"%s\", password \"%s\"\n",user_username,user_password);
+					printf("sudo: \"%s\"\n",sudo);
+				#endif
 
-
-				printf("sudo: \"%s\"\n",sudo);
 
 				if ((sudo != NULL) && (strcmp(user_password,sudo) == 0)) {
 					printf("sudo!\n");
@@ -1354,7 +1361,9 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 					}
 				}
 				else {
-					printf("found\npassword \"%s\"\n", userobjekt->password);
+					#ifdef DEBUG
+						printf("found\npassword \"%s\"\n", userobjekt->password);
+					#endif
 
 					intresponse = 1;
 					if (!sendall(socket,&intresponse, sizeof(int))) {
