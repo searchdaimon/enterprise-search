@@ -121,4 +121,7 @@ struct cargsF {
 };
 
 void *collectionReset (struct collectionFormat *collection);
+
+char *params_get_char_value (struct hashtable *params, char value[]);
+
 #endif // _CRAWL__H_

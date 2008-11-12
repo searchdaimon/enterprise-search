@@ -9,6 +9,7 @@
 #include "crawl.h"
 #include "../boithoadClientLib/liboithoaut.h"
 #include "../boithoadClientLib/boithoad.h"
+#include "../3pLibs/keyValueHash/hashtable.h"
 
 #ifdef WITH_THREAD
         __thread static char _warnmsg[512] = { "" };
@@ -17,6 +18,20 @@
         static char _warnmsg[512] = { "" };
         //static char _errormsg[512] = { "" };
 #endif
+
+char *params_get_char_value (struct hashtable *params, char value[]) {
+    	if (params==NULL) return NULL;
+    	if (!hashtable_count(params)) return NULL;
+	char *hash_value;
+
+	if ((hash_value = hashtable_search(params, value)) == NULL) {
+		return NULL;
+
+        }
+	
+	return hash_value;
+}
+
 
 void crawlWarn(const char *fmt, ...) {
 
