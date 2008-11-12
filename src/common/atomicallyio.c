@@ -112,8 +112,16 @@ FILE *batomicallyopen(char path[], char mode[]) {
 
 	//åpner orginal filen
 	if((bfh->fdOriginal = open(bfh->pathOriginal,O_RDONLY))< 0) {
+		//fikk ikke til å åpne. Kansje den ikke finnes? Det er ok.
 	}
 	else {
+		//kansje bare ved write
+                #ifdef SD_CLOEXEC
+	                if (!closeAtExexo(bfh->fdOriginal)) {
+				fprintf(stderr,"fcntl closeAtExexo fdOriginal.\n");
+				perror(bfh->pathOriginal);
+			}
+                #endif
 		flock(bfh->fdOriginal,LOCK_SH);
 	}
 	//åpner atomically tmp filen
@@ -121,6 +129,14 @@ FILE *batomicallyopen(char path[], char mode[]) {
 		perror(bfh->pathAtomicallyTmp);
 		return NULL;
 	}
+	//kansje bare ved write
+        #ifdef SD_CLOEXEC
+                if (!closeAtExexo(bfh->pathAtomicallyTmp)) {
+			fprintf(stderr,"fcntl closeAtExexo pathAtomicallyTmp.\n");
+			perror(bfh->pathAtomicallyTmp);
+		}
+        #endif
+
 	//helst skulle vi ha lokket filen her, slik at ikke andre kan begynne og kjase med vår kopi, og vi ikke for noen rases
 	//men siden dette er en drop inn replacement for fopen() kan det være at andre låser andre plasser.
 	//flock(bfh->fdAtomicallyTmp,LOCK_EX);

@@ -18,7 +18,6 @@
 #include "getpath.h"
 
 #include <stdlib.h>
-#include <fcntl.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/vfs.h>
@@ -241,6 +240,13 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
                         		}
 				}
                 	}
+			#ifdef SD_CLOEXEC
+				if (!fcloseAtExexo(FILEHANDLER)) {
+					fprintf(stderr,"fcloseAtExexo.\n");
+					perror(File);
+				}
+			#endif
+
 		}
 		//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
 		else if ((strcmp(type,"rb") == 0) || (strcmp(type,"r") == 0) || (strcmp(type,"r+") == 0)) {
@@ -250,6 +256,13 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
 				#endif
 				return NULL;
 			}
+			#ifdef SD_CLOEXEC
+				if (!fcloseAtExexo(FILEHANDLER)) {
+					fprintf(stderr,"fcloseAtExexo.\n");
+					perror(File);
+				}
+			#endif
+
 		}
 		else if ((strcmp(type,"wb") == 0) || (strcmp(type,"w") == 0) ) {
 			printf("making path \"%s\"\n",FilePath);
@@ -260,19 +273,28 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
 			}
 		}
 		else {
-                //temp: Bytte ut FilePath med filnavnet
-                if ( (FILEHANDLER = (FILE *)fopen64(File,type)) == NULL ) {
-                        makePath(FilePath);
+                	//temp: Bytte ut FilePath med filnavnet
+                	if ( (FILEHANDLER = (FILE *)fopen64(File,type)) == NULL ) {
+                        	makePath(FilePath);
 
-			//hvorfår har vi type "File" her ???, det verste er at det ser ut til å fungere også
-                        //if ( (FILEHANDLER = (FILE *)fopen64(File,"File")) == NULL ) {
-                        if ( (FILEHANDLER = (FILE *)fopen64(File,type)) == NULL ) {
-                                perror(File);
-                                //exit(0);
-				return NULL;
-                        }
-                }
+				//hvorfår har vi type "File" her ???, det verste er at det ser ut til å fungere også
+                        	//if ( (FILEHANDLER = (FILE *)fopen64(File,"File")) == NULL ) {
+                        	if ( (FILEHANDLER = (FILE *)fopen64(File,type)) == NULL ) {
+                        	        perror(File);
+                        	        //exit(0);
+					return NULL;
+        	                }
+	                }
+			#ifdef SD_CLOEXEC
+				if (!fcloseAtExexo(FILEHANDLER)) {
+					fprintf(stderr,"fcloseAtExexo.\n");
+					perror(File);
+				}
+			#endif
+
+
 		}
+
 
             	#ifdef DEBUG
                         printf("lotOpenFile: tryint to obtain lock \"%c\"\n",lock);

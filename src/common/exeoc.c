@@ -89,6 +89,11 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 			}
 		}
 
+		// lukker alle andre åpne filer
+        	int         fi, fmax = getdtablesize();
+	        for (fi=3; fi<fmax; fi++) close(fi);
+
+
 		//sleep(1);
 		//char *execvarg[] = {"/bin/cat","/tmp/test.txt", '\0'};
 		//execv("/bin/cat",execvarg);
@@ -140,7 +145,7 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 				warn("error in select, exeoc");
 				return 0;
 			} else if (numfds == 0) {
-				warn("timeout in select, exeoc");
+				warn("timeout in select, exeoc. kiling pid %u", (unsigned int)pid);
 				kill(pid, SIGKILL);
 				return 0;
 			}

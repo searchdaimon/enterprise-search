@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
 
 //#include "bfileutil.h"
 
@@ -142,6 +143,15 @@ int rrmdir(char dir[]) {
 #endif
 
 	if ((dirp = opendir(dir)) == NULL) {
+
+		//hvis mappen ikke finnes så er den nå sletter, og vi returnerer at atl er ok, selv om vi ikke gjorde noe
+		if (errno == ENOENT) {
+			#ifdef DEBUG
+				printf("Folder \"%s\" don't exist. Ignoring delete command\n");
+			#endif
+			return 1;
+		}
+
 		perror(dir);
 		return 0;
 	}
@@ -162,12 +172,14 @@ int rrmdir(char dir[]) {
 #ifdef DEBUG
 			printf("rrmdir: file: %s\n",path);
 #endif
+
+			/* Slett barnet */
+			if (remove(path) != 0) {
+				perror(path);
+			}
+
 		}
 
-		/* Slett barnet */
-		if (remove(path) != 0) {
-			perror("remove");
-		}
 
 	}	
 
@@ -175,7 +187,9 @@ int rrmdir(char dir[]) {
 
 
 	//sletter seg selv
-	remove( dir );
+	if (remove(dir) != 0) {
+        	perror(dir);
+        }
 
 	return 1;
 }
@@ -252,4 +266,28 @@ FILE *stretchfile(FILE *FH,char mode[],char file[], off_t branksize) {
         return FH;
 
 }
+
+#ifdef SD_CLOEXEC
+//rutiner som gjør slik at filer ikke arves ved exex og fork(?). Det er et problem med filfiltere i bbdn som
+//arver åpne lot filer, og dermed hinder indeksering.
+//ukjent om batomicallyopen bli close'et eller fclose't. Hvis fclose blir den da renamet.
+
+int closeAtExexo(int fd) {
+
+        int flags;
+        flags = fcntl(fd, F_GETFD);
+        if (flags == -1) {
+		return 0;
+        }
+       	if (fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == -1) {
+		return 0;
+	}
+
+	return 1;
+}
+int fcloseAtExexo(FILE *FILEHANDLER) {
+	return closeAtExexo(fileno(FILEHANDLER));
+}
+
+#endif
 
