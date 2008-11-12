@@ -122,6 +122,9 @@ int boithoad_listUsers(char **respons_list[],int *nrofresponses){
 
 	int socketha;
 
+	//hvis nos skulle skje lendere nede så har vi 0 brukere.
+	*nrofresponses = 0;
+
 	if ((socketha = cconnect("localhost", BADPORT)) == 0) {
 		#ifdef DEBUG
 			printf("cant connect to boithobd at %s:%d\n",__FILE__,__LINE__);
