@@ -955,7 +955,10 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 	//temp: ser ikke ut til at Apache lukker sin ende riktig
 	//while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) 
 	if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
-		blog(LOGACCESS, 1, "size is: %i\nversion: %i\ncommand: %i",packedHedder.size,packedHedder.version,packedHedder.command);
+		#ifdef DEBUG
+			printf( "size is: %i\nversion: %i\ncommand: %i",packedHedder.size,packedHedder.version,packedHedder.command);
+		#endif
+
 		packedHedder.size = packedHedder.size - sizeof(packedHedder);
 
 		bconfig_flush(CONFIG_CACHE_IS_OK);
