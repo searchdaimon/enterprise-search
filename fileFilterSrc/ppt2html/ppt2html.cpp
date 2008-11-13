@@ -114,7 +114,7 @@ int main( int argc, char* argv[] )
 	    argnr++;
 	}
 
-    Presentation	*P = new Presentation;
+    Presentation	*P = new Presentation();
 
     if (!P->load( argv[argnr++] ))
 	{
@@ -132,7 +132,7 @@ int main( int argc, char* argv[] )
 
     if (!out)
 	{
-	    cerr << "Error: Could open file for writing." << endl;
+	    cerr << "Error: Could not open file for writing." << endl;
 	    delete P;
 	    return -1;
 	}

@@ -4502,8 +4502,10 @@ const char* msofbtClientDataAtom::placeholderIdAsString() const
 void msofbtClientDataAtom::setData( unsigned size, const unsigned char* data )
 {
   if( size < 12 ) return;
+
   setPlacementId( readU16( data+8 ) );
-  setPlaceholderId( data[12]-1 );
+
+  if (size>=12) setPlaceholderId( data[12]-1 );
 }
 
 void msofbtClientDataAtom ::dump( std::ostream& out ) const
@@ -5698,6 +5700,8 @@ void PPTReader::handleStyleTextPropAtom ( StyleTextPropAtom* atom )
 
   int placeId = d->currentTextId-1;
   TextObject* text = d->currentSlide->textObject( placeId );
+
+    if (text==NULL) return;
 
   for (uint i=0; i<atom->listSize(); i++)
   { 
