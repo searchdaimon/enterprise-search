@@ -1,0 +1,40 @@
+
+Last ned:
+ * http://bbh-001.boitho.com/es/Fedora-8-x86_64-rescuecd.iso
+
+Lag ny Virtual Machine:
+ * Sett hardware-versjon til 4
+ * 1 cpu
+ * To nettverkskort, bridged. Det første skal ha "connect at power on" slått *av*. Det andre på.
+ * Ha med floppy (unngår feilmelding i eldre VM-er).
+ * Diskplass: *minimum* 20Gb. Bør være 30Gb eller mer.
+ * Cdrom: Velg å boote fra Fedora-isoimaget. (På noen miljø må man velge "connect cdrom" (egen knapp),
+   etter boot har startet. Velg isåfall boot-delay i "edit settings".)
+
+Installere ES (krever dhcp):
+ * Ved boot, gå til "Install or upgrade an existing system" og trykk 'Tab' (edit).
+ * Legg til " ks=http://bbh-001.boitho.com/es/ks.cfg ksdevice=eth1", og trykk enter.
+
+Fjern dhcp-server:
+ * '/sbin/chkconfig --levels 345 dhcpd off'
+   'cat /dev/null > /etc/sysconfig/dhcpd'
+   'rm /etc/dhcpd.conf'
+
+Post-install:
+ * Slett filene "/etc/udev/rules.d/70-persistent-net.rules",
+   og "/etc/udev/rules.d/75-persistent-net-generator.rules".
+   (hindrer at eth0 og eth1 bindes til installasjonmaskinens mac-adresser).
+ * 'adduser setup'
+   Editer "/etc/passwd": Fjern 'x' på bruker 'setup', og sett shell til "/home/setup/run_setup".
+ * Kopier inn 'run_setup' til "/home/setup".
+   chown root.setup run_setup
+   chmod 750 run_setup
+   chmod +s run_setup
+ * Kopier inn 'make_issue.sh' til "/home/setup".
+   Legg til "/home/setup/make_issue.sh" i "/etc/rc.d/rc.local".
+
+Lag distribusjonspakker med VMware Converter:
+ * Source type == Other (velg .vmx-fila)
+ * Destination type == Virtual Appliance
+ * Kjør en gang til med Destination type == Other Virtual Machine,
+   og velg den nederste versjonen (tilsvarer hwversjon 4).
