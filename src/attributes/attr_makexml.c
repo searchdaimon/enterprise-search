@@ -72,7 +72,7 @@ inline int add_to_query(buffer *B, query_array *qa, char operand, char *word, in
 		    case QUERY_GROUP: bprintf(B, " group:\""); break;
 		    case QUERY_FILETYPE: bprintf(B, " filetype:\""); break;
 		    case QUERY_ATTRIBUTE: bprintf(B, " attribute:\""); break;
-		    default: fprintf(stderr, "attr_makexml: Warning! Undefined operand in 'add_to_query'.\n"); return -1;
+		    default: fprintf(stderr, "attr_makexml: Warning! Undefined operand in 'add_to_query'.\n"); break;
 		}
 	    bprintf(B, "%s\"", word);
 	}
@@ -422,11 +422,13 @@ int attribute_print_xml_sorted(container *items, int indent, buffer *B, int sort
 		    M = multimap_container(string_container(), tuple_container(4, string_container(), int_container(), int_container(), int_container() ) );
 		    for (j=0; j<vector_size(items); j++)
 			{
+			    int		hits = attrib_count_hits(qa, tuple(vector_get(items, j)).element[2].ptr, attrib_count, remove, tuple(vector_get(items, j)).element[5].i);
 			    if (tuple(vector_get(items, j)).element[5].i) is_file_ext = 1;
+
 			multimap_insert(M, (char*)tuple(vector_get(items, j)).element[1].ptr,
 			    (char*)tuple(vector_get(items, j)).element[0].ptr,
 			    tuple(vector_get(items, j)).element[3].i,
-			    attrib_count_hits(qa, tuple(vector_get(items, j)).element[2].ptr, attrib_count, remove, tuple(vector_get(items, j)).element[5].i),
+			    hits,
 			    tuple(vector_get(items, j)).element[4].i);
 			}
 
@@ -504,7 +506,7 @@ int attribute_print_xml_sorted(container *items, int indent, buffer *B, int sort
 
 		    if (hit_split >= 0)
 			{
-			    bprintf(B, "%.*s", hit_split-pos, str);
+			    bprintf(B, "%.*s", hit_split-pos, &(str[pos]));
 			    bprintf(B, "%i", hits);
 			    pos = hit_split;
 			}
