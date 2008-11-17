@@ -154,7 +154,6 @@ table .disabled {
 /* settings blocks */
 .block_default {
     width : 100%;
-    text-align : top;
     position : relative;
     min-height : 2em;
   }
@@ -175,29 +174,39 @@ table .disabled {
 	padding : 0;
 }
 
-.message_box table { 
+/* Message boxes */
+.msgBox table { 
 	border : 0;
 }
 
-.message_box {
-	
+.msgBox {
 	padding : 1em; 
 	border-top : 1px solid; 
 	border-bottom: 1px solid; 
 	margin-bottom:1em;
 }
 
-.message_box .mb_text {
-	/* margin-left : 80px; */
+.msgBox .msgBoxText {
 	font-size : small;
 }
 
-.message_box img {
-	float : left;
-
+.msgBox .icon {
+	background : no-repeat;
 }
+.info { background : #eff2fb; }
+.info .icon { background-image : url(file.cgi?size=64x64&amp;i=info); }
+.help { background : #dce4f9; }
+.help .icon { background-image : url(file.cgi?size=64x64&amp;i=agt_support); }
+.error, .warning { 
+	background : #fefcea; 
+}
+.error .icon, .warning .icon { 
+	background-image : url(file.cgi?size=64x64&amp;i=error); 
+}
+.success { background : #d8fbaf; }
+.success .icon { background-image : url(file.cgi?size=64x64&amp;i=button_ok) }
 
-.
+
 .description {
 	background-color : #F2F2F2;
 	border-left-style : dashed;
@@ -252,8 +261,8 @@ table .disabled {
 .checklist_inner, .testrunInner {
     overflow:auto; 
     min-height : 5em; 
-    margin-bottom : 1em: 
-    margin-top : 1em;
+    margin-bottom : 1em;
+    /* margin-top : 1em; */
 }
 
 .checklist_inner label {
@@ -318,7 +327,7 @@ table .disabled {
 
 }
 .ui-tabs-nav li {
-    margin 0; 
+    /* margin : 0;  */
 }
 
 

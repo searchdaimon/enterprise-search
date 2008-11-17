@@ -1,6 +1,6 @@
 # Class: Sql::Webadmin
 # Abstract class with method common for all Sql classes. Should not be
-# used directly, but raher inhereted.
+# used directly, but inhereted.
 #
 package Sql::Webadmin;
 use strict;
@@ -10,22 +10,18 @@ use SQL::Abstract;
 use Params::Validate qw(validate_pos SCALAR HASHREF);
 use Carp;
 
-# Constructor: new
-#
-# Attributes:
-#	dbh - Database handler (connection)
 sub new {
 	my $class = shift;
 	my $dbh   = shift;
 
-	my $self = {};
+	my $self = bless {
+		dbh => $dbh,
+		abstr => SQL::Abstract->new(),
+	}, $class;
 	bless $self, $class;
 	
-	#init
-	$self->{'dbh'} = $dbh;
-	if ($self->can("_init")) {
-		$self->_init(@_);
-	}
+	$self->_init(@_)
+		if $self->can('_init');
 	
 	return $self;
 }

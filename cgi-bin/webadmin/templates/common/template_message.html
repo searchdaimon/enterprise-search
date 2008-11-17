@@ -1,44 +1,13 @@
-[%	#TODO: Move coloring to css.
-%]
-[% background = "#dce4f9" %]
-[% IF type == 'info' %]
-	[% title = 'Information' %]
-	[% background = "#eff2fb" %]
-	[% icon = "info" %]
-[% ELSIF type == "discreet_info" %]
-	[% background = "#dce4f9" %]
-	[% discreet = 1 %]
-[% ELSIF type == 'help' %]
-	[% title = 'Support' %]
-	[% background = "#dce4f9" %]
-	[% icon = "agt_support" %]
-[% ELSIF type == 'error' %]
-	[% title = "Ooops!" %]
-	[% background = "#fefcea" %]
-	[% icon = 'error' %]
-[% ELSIF type == 'success' %]
-	[% title = "Success!" %]
-	[% background = "#d8fbaf" %]
-	[% icon = "button_ok" %]
+[% class = type IF type %]
 
-[% ELSIF type == 'warning' %]
-	[% title = "Warning" %]
-	[% background = "#fefcea" %]
-	[% icon = "error" %]
-[% END %]
-
-
-
-<div class="message_box" [% IF id %] id="[% id %]" [% END %] style="background: [%background%]; [% style %]">
+<div class="msgBox [% class %]" [% IF id %] id="[% id %]" [% END %] style="[% style %]">
 
 	[% UNLESS discreet %]
 		<table>
 		<tr>
-			<td style="width:70px;">
-				<img src="file.cgi?size=64x64&amp;i=[% icon %]" 
-						title="[% title %]" alt="[% title %]" /></td>
+			<td style="width:70px; height : 70px;" class="icon"></td>
 			<td>
-				<div class="mb_text">[% content %]</div>
+				<div class="msgBoxText">[% content %]</div>
 			</td>
 		</tr>
 

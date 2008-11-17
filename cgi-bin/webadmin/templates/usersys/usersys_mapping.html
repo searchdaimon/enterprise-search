@@ -2,34 +2,67 @@
 	extra_js = ['jquery', 'usersys'] 
 	extra_css = ['usersys'] %]
 <script type="text/javascript">
+//<![CDATA[
 
-/**
- * NOTE: Only use function calls to manipulate userMapping.
- */ 
-userMapping = {
-	[% FOREACH m IN mapping %]
-		'[% m.prim_usr | html %]' : '[% m.secnd_usr | html %]' 
-			[% "," UNLESS loop.last %]
-	[% END %]
-};
+/* init */
+$(document).ready(function () {
+	var mapped = new Mapped();
+	mapped.showMapped();
 
+	var prim_sys = new System($(".checklist_outer .prim"), "prim", mapped);
+	var sec_sys  = new System($(".checklist_outer .sec"), "sec", mapped);
 
-// Constants
-PRIM_RADIO_NAME = "prim_users";
-SEC_RADIO_NAME  = "sec_users";
+	prim_sys.otherSys = sec_sys;
+	sec_sys.otherSys = prim_sys;
+	
+	sec_sys.showUnmapped();
+	prim_sys.showUnmapped();
 
-PRIM_RADIO_PREFIX = "field_prim_users_";
-SEC_RADIO_PREFIX  = "field_sec_users_";
+	mapped.primSys = prim_sys;
+	mapped.secSys = sec_sys;
 
-PRIM_SYS = 10;
-SEC_SYS = 11;
+	var btnAction = function(btn, confirmMsg, actionFunc) {
+		if (!confirm(confirmMsg)) return;
+		$(btn).attr('disabled', 'disabled');
+		var doneFunc = function() { 
+			$(btn).removeAttr('disabled');
+			prim_sys.offset = sec_sys.offset = mapped.offset = 0;
+			prim_sys.showUnmapped();
+			sec_sys.showUnmapped();
+			mapped.showMapped();
+		};
+		actionFunc(doneFunc, doneFunc);
+	};
+	$("#autoMapBtn").click(function() {
+		var confirmMsg = "Are you sure run automatic map?\n\nThis may map unrelated users.";
+		return btnAction(this, confirmMsg, automap);
+	});
+	$("#clearBtn").click(function() {
+		var confirmMsg = "Are you sure you want to clear all mapped users?";
+		return btnAction(this, confirmMsg, clearMapping);
+	});
+});
 
-SEC_SYSTEM_ID = [% sec.id || 'null' %];
-
-
+var SEC_SYSTEM_ID = [% sec.id || 'null' %];
+//]]>
 </script>
+<!--[if IE]>
+<style type="text/css">
+	.checklist_inner input {
+		/* IE does not seem to trigger
+		   events when display : none */
+		display : inline;
+		width : 0;
+		heigth : 0;
+	}
+</style>
+<![endif]-->
 [% END %]
-[% USE Dumper %]
+[%# template constants %]
+	[% NUM_USERS_OPT => [5, 50, 100, 200, 400] %]
+	[% SET DEF_NUM_USERS => 5 %]
+	[% SET num_users = num_users || DEF_NUM_USERS %]
+
 <h1>Map user system</h1>
 
 <div style="position : relative;">
@@ -37,34 +70,43 @@ SEC_SYSTEM_ID = [% sec.id || 'null' %];
    	<img src="file.cgi?i=jqueryloader&amp;ext=gif&amp;size=other" alt="loading" id="loading" />
 	<span></span>
 </div>
+
+[% PROCESS 'tpl_msg.html' type='info' id='msg' 
+	content = "Select the same user from both systems to complete mapping"
+	%]
+
 <h2>Unmapped users</h2>
-<p id="msg">Select the same user from both systems to complete mapping</p>
+
 </div>
-<div id="userListings" style="position : relative; height : 320px;">
-[% PROCESS list_users 
-	user_list = prim.users
-	primary = 1
-	mapped = prim.mapped
-	position = "top : 0; left : 0;"%]
+<div id="userListings" style="position : relative; height : 490px;">
 
 [% PROCESS list_users 
-	user_list = sec.users
+	primary = 1
+	position = "top : 0; left : 0;"
+	style = "margin-left : -1em;" %]
+
+[% PROCESS list_users 
 	primary = 0
-	mapped = sec.mapped
 	position = "top : 0; left : 23em;" %]
 
 </div>
-<ul id="actBtnList">
-	<li><input type="button" id="automapBtn" value="Automap users" /></li>
-	<li><input type="button" id="saveBtn" value="Save changes" disabled="disabled" /></li>
-</ul>
-
-
+<h3>Actions</h3>
+<p><button id="autoMapBtn">Attempt automatic map</button>&nbsp;
+   <button id="clearBtn">Clear all mapping</button>
+</p>
 
 <h2>Mapped users</h2>
-<table id="mapList" class="default_table" style="width : 60%;">
-<tr><th>Primary system</th><th>Secondary system</th><th></th></tr>
-</table>
+	<p id="mapMsg"><em>Loading...</em></p>
+	<p id="mapNav">
+		<button id="mapNavPrev" disabled="disabled">Previous Page</button>
+		<button id="mapNavNext" disabled="disabled">Next page</button>
+	</p>
+	<img src="file.cgi?i=jqueryloader&amp;ext=gif&amp;size=other" alt="loading" id="mappedLoading" />
+	<div style="min-height : 50em;">
+	<table id="mapList" class="default_table" style="width : 43.5em; display : none; margin-bottom : 2em;">
+		<tr id="mapHeaderRow"><th>Primary system</th><th>Secondary system</th><th></th></tr>
+	</table>
+	</div>
 
 
 [% INCLUDE 'footer.html' %]
@@ -72,36 +114,35 @@ SEC_SYSTEM_ID = [% sec.id || 'null' %];
 
 
 [% BLOCK list_users %]
-[% IF primary;
-	SET input_name = "prim_users";
-  ELSE;
-  	SET input_name = "sec_users";
-  END
-%]
-
-<div class="userList" 
-	[% IF primary %]id="primaryList"[% END %] style="[% position %]">
-	<h4>[% IF primary; 
-			"$prim.name <small>(primary)</small>";
-		ELSE; 
-			sec.name;
-		END %]</h4>
-<div class="checklist_outer" style="max-width : 100%;">
-<div class="checklist_inner
-[% IF primary;
-	" prim";
-   ELSE;
-   	" sec";
-   END; %]
-" style="min-height : 300px; max-height : 300px; width : 20em;">
-
-[% FOREACH usr IN user_list %]
-	<label for="field_[% input_name %]_[% usr | html %]" [% IF mapped.$usr %]style="display : none;"[% END %]>
-	<input type="radio" id="field_[% input_name %]_[% usr | html %]"
-		name="[% input_name %]" value="[% usr | html %]" />[% usr | html %]
-	</label>
-[% END %]
+	[% IF primary; 
+	         SET sys_type = "prim"; 
+	   ELSE; SET sys_type = "sec"; 
+	 END %]
+	<div class="userList" style="[% position %][% style %]">
+		<h4>[% IF primary; 
+				"$prim.name <small>(primary)</small>";
+			ELSE; 
+				sec.name;
+			END %]</h4>
+		<table class="stat" style="border : 0">
+		<tr>
+			<td>Users in total</td>
+			<td class="total"><em>Loading...</em></td>
+		</tr>
+		<tr>
+			<td>Unmapped</td>
+			<td class="unmapped"><em>Loading...</em></td>
+		</tr>
+		<tr>
+			<td>Showing</td>
+			<td class="showing"><em>Loading...</em></td>
+		</tr>
+		</table>
+	<div class="checklist_outer" style="max-width : 100%;">
+	<div class="checklist_inner [% sys_type %]" 
+	     style="min-height : 400px; max-height : 400px; width : 20em;">
+	
+		</div>
 	</div>
-</div>
-</div>
+	</div>
 [% END %]
