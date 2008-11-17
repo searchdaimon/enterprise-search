@@ -989,7 +989,7 @@ char* create_full_link( char *url, int page_url_len, char *page_uri, char *page_
     // begynner på http:// ?. url_split splitt ser vel etter http:// og setter den til NULL
     // hvis det mangler)
     if (page_uri == NULL) {
-	fprintf(stderr, "html_parser: Warning! page_uri==NULL\n");
+	//fprintf(stderr, "html_parser: Warning! page_uri==NULL\n");
 	new_url[0] = '\0';
 	return new_url;
     }
