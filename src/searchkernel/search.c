@@ -1162,7 +1162,7 @@ void frase_stopword(struct iindexFormat *c, int clen) {
 void iindexArrayCopy2(struct iindexFormat **c, int *baselen,int Originallen, struct iindexFormat **a, int alen) {
 
 	fprintf(stderr, "search: iindexArrayCopy2() Warning! This function has not been tested.\n");
-	printf("iindexArrayCopy2(baselen=%i, Originallen=%i, alen=%i)\n",*baselen,Originallen,alen);
+	//printf("iindexArrayCopy2(baselen=%i, Originallen=%i, alen=%i)\n",*baselen,Originallen,alen);
 	int x;
         int i=0,j=0;
 	int k=Originallen;
