@@ -190,7 +190,7 @@
 	[% FOREACH r IN rates %]
 		[% text = r.keys.0 %]
 		[% minutes = r.values.0 %]
-		<option value="[% munutes %]" 
+		<option value="[% minutes %]" 
 			[% IF share.rate == minutes %] 
 				selected="selected"
 			[% END %]>[% text %]</option>
