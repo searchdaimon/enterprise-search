@@ -24,8 +24,7 @@
         */
         $('#sourceBtn').click(function () { saveSource(this) });
         $('#sourceRunBtn').click(function () {
-            saveSource(this);
-            // TODO: Move to run tab, click run btn
+            saveSource(this, true);
             $('#connContainer > ul').tabs("select", 4);
             $('#runBtn').click();
         });
@@ -114,8 +113,7 @@
                     setError(resp['error']);
                     return;
                 }
-                setError(null);
-                setSuccs(null);
+		setMsg(null, null);
                 $('#newParamName').val('');
                 $('#newParamExample').val('');
                 var id = resp['param_id'];
@@ -144,7 +142,7 @@
     });
 
 
-    function saveSource(btn) {
+    function saveSource(btn, hideSuccs) {
             var origHTML = $(btn).html();
             $(btn).attr("disabled", "disabled").html("Saving..");
 
@@ -159,6 +157,12 @@
                 $(btn).removeAttr("disabled").html(origHTML);
                 completeFunc(x);
             }
+	    if (hideSuccs) {
+	    	params['success'] = function(resp) {
+ 			if (resp['error']) 
+                    		setError(resp['error']);
+                };
+	    }
                 
             $.ajax(params);
     };
@@ -182,8 +186,7 @@
                 setError(resp['error']);
                 return;
             }
-            setError(null);
-            setSuccs(null);
+	    setMsg(null);
 
             $("#param_row_" + id).fadeOut(200, function() { 
                 $(this).remove(); 
@@ -206,7 +209,6 @@
         */
         $('#runBtn').click(function() {
             $(this).attr("disabled", "disabled").html("Running...");
-            hideMsgs();
 
             $('.testrunInner').html('<pre></pre>'); 
 
@@ -395,13 +397,7 @@ function activateApplyBtn() {
 //]]>
 
 </script>
-
 [% END %]
-
-[%# PROCESS jstest %]
-
-[% PROCESS 'tpl_msg.html' type="error" id="errorBox" style="display : none" %]
-[% PROCESS 'tpl_msg.html' type="success" id="succsBox" style="display : none" %]
 
     <h1 id="connHeading">Connector [% conn.name %] [% '(read only)' IF conn.read_only %]</h1>
 
@@ -418,12 +414,14 @@ function activateApplyBtn() {
     </ul>
     <img src="file.cgi?i=jqueryloader&amp;ext=gif&amp;size=other" alt="loading" id="loading" />
 
+[% PROCESS 'tpl_msg.html' type="info" discreet=1 id="msg" style="display : none;" %]
+<div style="margin-top : -0.5em;">
     [% PROCESS upload UNLESS conn.read_only %]
     [% PROCESS edit %]
     [% PROCESS save %]
     [% PROCESS configure %]
     [% PROCESS test_run %]
-
+</div>
 </div>
 
 [% INCLUDE 'footer.html' %]

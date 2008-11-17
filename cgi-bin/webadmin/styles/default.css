@@ -157,6 +157,9 @@ table .disabled {
     position : relative;
     min-height : 2em;
   }
+.block_default table { 
+	border : 0;
+}
 
 
 .block_inner {

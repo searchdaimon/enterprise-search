@@ -9,18 +9,23 @@
 #paramTable {
     width : 600px;
 }
-.inputTable { text-align : left; }
+.inputTable { 
+	text-align : left;
+	border : 0;
+}
 .inputTable td { width : 20em; }
 
 
 #loading {
-    float : right; 
-    padding : 1em; 
+	position : absolute;
     display : none; 
+    right : 1em;
+    top : -1em;
 }
 
 #connContainer {
     float : left; 
     width : 80%;
+    position: relative;
 }
 

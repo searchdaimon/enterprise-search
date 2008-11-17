@@ -464,22 +464,9 @@ function userRowHTML(sys_type, user, attr_for_animation) {
 
 
 function colorMapList() { colorTable('mapList'); }
-function setMsg(type, msg) {
-	if (type == null)
-		type = "info";
-	$("#msg").fadeOut(250, function() {
-		$("#msg").attr('class', 'msgBox ' + type);
-		$("#msg .msgBoxText").html(escapeHTML(msg));
-		$("#msg").fadeIn(250);	
-	});
-	
-}
-
-
 
 
 var last_api_save = null;
-
 function updApiMsg(state) {
 	var msg = null;
 	var show_anim = false;

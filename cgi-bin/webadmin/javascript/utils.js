@@ -31,3 +31,18 @@ function unescapeHTML(str) {
 		  .replace(/&quot/, "\"");
 }
 
+function setMsg(type, msg) {
+	if (msg == null) {
+		$("#msg").hide();
+		return;
+	}
+	if (type == null)
+		type = "info";
+
+	$("#msg").fadeOut(250, function() {
+		$("#msg").attr('class', 'msgBox ' + type);
+		$("#msg .msgBoxText").html(escapeHTML(msg));
+		$("#msg").fadeIn(250);	
+	});
+	
+}

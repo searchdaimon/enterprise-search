@@ -28,11 +28,6 @@ function getDefaultParams() {
     };
 }
 
-function hideMsgs() {
-    $.each($(".message_box"), function(index, obj) {
-        $(obj).hide("fast");
-    });
-}
 
 
 $(document).ready(function() {
@@ -41,34 +36,16 @@ $(document).ready(function() {
          */
         $('#connContainer > ul').tabs({ 
             selected : window.selected_tab ? selected_tab : 0,
-            show     : function() { hideMsgs() }
+            show     : function() { setMsg(null); }
         });
 });
 
 
-function setMsg(visible, boxelem, msgelem, msg) {
-        if (msg == null) msg = "";
-        if (visible) {
-            msgelem.html(msg);
-            boxelem.show("fast");
-        }
-        else {
-            boxelem.hide();
-        }
-    }
-
 function setError(msg) { 
-        if ($('#succsBox').is(":visible")) 
-            setSuccs(null);
-
-        setMsg(msg != null, $('#errorBox'), $('#errorBox .mb_text'), msg); 
+	setMsg("error", msg);
     }
 function setSuccs(msg) {
-        if ($('#errorBox').is(":visible"))
-            setError(null);
-
-
-        setMsg(msg != null, $('#succsBox'), $('#succsBox .mb_text'), msg); 
+	setMsg("success", msg);
     }
 
 
