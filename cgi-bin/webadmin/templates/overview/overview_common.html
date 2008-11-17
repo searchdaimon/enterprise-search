@@ -112,9 +112,7 @@
 			[% END #table %]
 
 		[% ELSE %]
-			[% WRAPPER 'template_info.html' %]
-				There are no collections being indexed.
-			[% END %]
+				<p>There are no collections being indexed.</p>
 		[% END #if %]
 	[% i = i + 1 %]
 	[% END #connectors %]
