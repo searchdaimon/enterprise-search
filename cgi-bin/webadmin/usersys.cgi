@@ -19,7 +19,7 @@ use config qw(%CONFIG);
 my %vars;
 my $page = Page::UserSys->new();
 my %state = $page->get_state();
-warn Dumper(\%state);
+#warn Dumper(\%state);
 
 Readonly::Scalar my $API_ADD_MAPPING   => "add_mapping";
 Readonly::Scalar my $API_DEL_MAPPING   => "del_mapping";
