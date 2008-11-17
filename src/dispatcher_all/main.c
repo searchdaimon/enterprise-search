@@ -111,7 +111,7 @@ struct subnamesFormat *get_usr_coll(char *usr, int *n_colls, int cmc_port) {
 	char buf[1024];
 
 	if (cmc_conect(&sock, buf, sizeof(buf), cmc_port) == 0)
-		die(1, "Unable to connect to crawlManager: %s", buf);
+		die(1, "", "Unable to connect to crawlManager: %s", buf);
 	cmc_collectionsforuser(sock, usr, &collections);
 	cmc_close(sock);
 
@@ -242,7 +242,7 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 	}
 
 	if (cgi_getentrystr("query") == NULL) {
-		die(2,"","Did'n receive any query.");
+		die(2,"","Didn't recieve any query.");
 	}
 	else {
 		strscpy(QueryData->query,cgi_getentrystr("query"),sizeof(QueryData->query) -1);
@@ -288,10 +288,10 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 
 #if defined(BLACK_BOKS) && !defined(_24SEVENOFFICE)
 	if (cgi_getentrystr("tkey") == NULL) {
-		die(2,"","Did'n receive any tkey.");
+		die(2,"","Didn't recieve 'tkey'.");
 	}
 	else if (strlen(cgi_getentrystr("tkey")) != 32) {
-		die(2,"","tkey isent 32 bytes long\n");
+		die(2,"","'tkey' isn't 32 bytes long.");
 	}
 	else {
 		strscpy(QueryData->tkey,cgi_getentrystr("tkey"),sizeof(QueryData->tkey));
@@ -934,7 +934,7 @@ int main(int argc, char *argv[])
 	struct timeval start_time, end_time;
 #endif
 	int nrRespondedServers;
-	char errormessage[maxerrorlen];
+	//char errormessage[maxerrorlen];
 	struct errorhaFormat errorha;
 	errorha.nr = 0;
 	//int posisjon;
@@ -1284,7 +1284,7 @@ int main(int argc, char *argv[])
 
 
         if (strlen(QueryData.query) > MaxQueryLen -1) {
-                die(3,QueryData.query,"Query to long.");
+                die(3,QueryData.query,"Query too long.");
         }
 
 	for(i=0;i<dispconfig.bannedwordsnr;i++) {
@@ -1303,7 +1303,7 @@ int main(int argc, char *argv[])
 	#endif
 	//hvis vi har et for kort query
 	if(strlen(QueryData.query) < 2) {
-		die(5,QueryData.query,"Query to short.");
+		die(5,QueryData.query,"Query too short.");
 	}
 
         //gjør om til liten case
@@ -1376,8 +1376,8 @@ int main(int argc, char *argv[])
 		// 92: \, 32: space, 34: ", 43: +
 
 		if (QueryData.query[i] == ';') {
-			sprintf(errormessage,"Illegal character in query. \"%c\" ascii value: %u",QueryData.query[i],(unsigned int)QueryData.query[i]);
-			die(15,QueryData.query,errormessage);
+			//sprintf(errormessage,"Illegal character in query. \"%c\" ascii value: %u",QueryData.query[i],(unsigned int)QueryData.query[i]);
+			die(15,QueryData.query,"Illegal character in query. \"%c\" ascii value: %u",QueryData.query[i],(unsigned int)QueryData.query[i]);
 		}
 		/*
 		if(
@@ -1741,7 +1741,7 @@ int main(int argc, char *argv[])
 			if (endranking == 0) {
 				//printf("\t<noresult />\n");
 				//die(1,QueryData.query, "No rank found");
-				die(1,QueryData.query, "That site does not rank in the top 60,000 sites for that search term");
+				die(1,QueryData.query, "That site does not rank in the top 60,000 sites for that search term.");
 			} else {
 				printf("<ranking>\n");
 				printf("\t<rank>%d</rank>\n", endranking);
@@ -3426,7 +3426,7 @@ void read_collection_cfg(struct subnamesConfigFormat * dst) {
 
   	config_init(&cfg);
   	if (!config_read_file(&cfg, bfile(CFG_SEARCHD))) {
-		die(1, "Failed to load config '%s', '%s' line %d\n",
+		die(1, "", "Failed to load config '%s', '%s' line %d.\n",
 			bfile(CFG_SEARCHD),
 			config_error_text(&cfg),
 			config_error_line(&cfg));
@@ -3465,7 +3465,7 @@ void read_collection_cfg(struct subnamesConfigFormat * dst) {
 		subnamesDefaultsConfig.summary = SUMMARY_SNIPPET;
 	}
 	else {
-		die(1, "Invalid summary in config: %s\n", summarystr);
+		die(1, "", "Invalid summary in config: %s\n", summarystr);
 	}
 	free((void *) summarystr);
 

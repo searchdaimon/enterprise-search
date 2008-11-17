@@ -103,7 +103,7 @@ void addError(struct errorhaFormat *errorha, int errorcode,char errormessage[]) 
 			++(*errorha).nr;
 		}
 		else {
-			die(10,"","to many errors occurd");
+			die(10,"","Too many errors occured.");
 		}
 }
 
