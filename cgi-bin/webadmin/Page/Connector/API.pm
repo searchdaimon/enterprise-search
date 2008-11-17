@@ -15,7 +15,8 @@ use Sql::SessionData;
 use Data::Collection;
 use Page::Connector;
 use Boitho::Infoquery;
-our @ISA = qw(Page::Connector);
+use Page::API;
+our @ISA = qw(Page::Connector Page::API);
 
 use config qw(%CONFIG);
 
@@ -343,18 +344,6 @@ sub test_kill {
 
 ##
 # Private methods
-
-sub api_error {
-    my ($s, $api_vars, $err) = @_;
-    if ($err) {
-        carp $err;
-        $err =~ s/at .* line \d+$//g;
-        $api_vars->{error} = $err;
-        return 1;
-    }
-    return;
-}
-
 
 ##
 # Fetches the id of the test collection.
