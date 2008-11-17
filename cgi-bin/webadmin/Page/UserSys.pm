@@ -23,24 +23,24 @@ sub list_users {
 	validate_pos(@_, 1, { regex => qr(^\d+$) });
 	my ($s, $system_id) = @_;
 	
-	# DEBUG:
-	if ($system_id == 1) {
-		open my $fh, "/home/dagurval/websearch/example_list" or die $1;
-		my @users = <$fh>;
-		chomp for @users;
-		my %users = map { $_ => 1 } grep { $_ } @users;
-		return keys %users;
-	}
-	else {
-		open my $fh, "/home/dagurval/websearch/example_list" or die $1;
-		my @users = <$fh>;
-		chomp for @users;
-		my %users = map { $_ => 1 } grep { $_ } @users;
-		return keys %users;
-
-	}
-	#my $iq = Boitho::Infoquery->new($CONFIG{infoquery});
-	#return @{$iq->listUsers($system_id)}
+#	# DEBUG:
+#	if ($system_id == 1) {
+#		open my $fh, "/home/dagurval/websearch/example_list" or die $1;
+#		my @users = <$fh>;
+#		chomp for @users;
+#		my %users = map { $_ => 1 } grep { $_ } @users;
+#		return keys %users;
+#	}
+#	else {
+#		open my $fh, "/home/dagurval/websearch/example_list" or die $1;
+#		my @users = <$fh>;
+#		chomp for @users;
+#		my %users = map { $_ => 1 } grep { $_ } @users;
+#		return keys %users;
+#
+#	}
+	my $iq = Boitho::Infoquery->new($CONFIG{infoquery});
+	return @{$iq->listUsers($system_id)}
 }
 
 1;
