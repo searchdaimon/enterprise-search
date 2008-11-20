@@ -3022,7 +3022,7 @@ int main(int argc, char *argv[])
 			logstmt = mysql_stmt_init(&demo_db);
 			pilogstmt = mysql_stmt_init(&demo_db);
 
-			sprintf(query,"INSERT DELAYED INTO search_logg (tid,query,search_bruker,treff,search_tid,ip_adresse,betaler_keywords_treff,HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang) VALUES(NOW(),?,?,?,?,?,?,?,?,?,?)");
+			sprintf(query,"INSERT DELAYED INTO search_logg (tid,query,search_bruker,treff,search_tid,ip_adresse,betaler_keywords_treff,HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang,side) VALUES(NOW(),?,?,?,?,?,?,?,?,?,?,?)");
 			mysql_stmt_prepare(logstmt, query, strlen(query));
 
 			bind[0].buffer_type = MYSQL_TYPE_STRING; // query
@@ -3069,6 +3069,8 @@ int main(int argc, char *argv[])
 			len[9] = strlen(QueryData.GeoIPcontry);
 			bind[9].length = &len[9];
 
+			bind[10].buffer_type = MYSQL_TYPE_LONG; // side
+			bind[10].buffer = &QueryData.start;
 
 
 			mysql_stmt_bind_param(logstmt, bind);
@@ -3208,9 +3210,9 @@ int main(int argc, char *argv[])
 			);
 */
 			//logger til mysql
-			sprintf(query,"insert DELAYED into search_logg (id,tid,query,search_bruker,treff,search_tid,ip_adresse,side,betaler_keywords_treff,\
-				HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang) \
-				values(NULL,NOW(),\"%s\",\"%s\",\"%i\",\"%f\",\"%s\",\"1\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\")",
+			sprintf(query,"insert DELAYED into search_logg (id,tid,query,search_bruker,treff,search_tid,ip_adresse,betaler_keywords_treff,\
+				HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang,side) \
+				values(NULL,NOW(),\"%s\",\"%s\",\"%i\",\"%f\",\"%s\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\",\"%i\")",
 				queryEscaped,
 				QueryData.search_user,
 				FinalSiderHeder.TotaltTreff,
@@ -3220,7 +3222,8 @@ int main(int argc, char *argv[])
 				QueryData.HTTP_ACCEPT_LANGUAGE,
 				QueryData.HTTP_USER_AGENT,
 				QueryData.HTTP_REFERER,
-				QueryData.GeoIPcontry
+				QueryData.GeoIPcontry,
+				QueryData.start
 			);
 
 			mysql_real_query(&demo_db, query, strlen(query));
