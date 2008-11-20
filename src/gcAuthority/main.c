@@ -261,7 +261,7 @@ main(int argc, char **argv)
 	char *subname;
 	struct gcaoptFormat gcaopt;
 
-	gcaopt.MaxAgeDiflastSeen  = 86400;
+	gcaopt.MaxAgeDiflastSeen  = (86400 * 5); //86400=1 dag
 	gcaopt.dryRun  = 0;
 	gcaopt.log = NULL;
 	gcaopt.logSummary = NULL;
