@@ -3,6 +3,8 @@ package CrawlWatch::TmpSizeWatch;
 use strict;
 use warnings;
 use Carp;
+use Fcntl ':flock'; # import LOCK_* constants
+
 BEGIN {
 	unshift @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
@@ -26,14 +28,30 @@ sub new {
 
 sub name { "TmpSizeWatch" }
 
-sub run {
-    	my $self = shift;
-    	$self->{'log'}->write("Running TmpSizeWatch.");
+#tester om vi kan låse filen.
+sub canLock {
+	my $filename = shift;
 
-    	#doint the actual TmpSizeWatch run.
+	unless (open(FH, $filename)) {
+	    print STDERR "Can't open $filename: $!\n";
+	    return 0;
+	}
+
+	unless (flock(FH, LOCK_EX|LOCK_EX)) {
+		print STDERR "Can't lock $filename: $!\n";
+	}
+
+	close(FH);
+
+	return 1;
+
+}
+
+sub cleaneFolder {
+	my($self, $folder, $maxtime) = @_;
 
 	#lager en array over alle /tmp filer
-        my @files = getCandidates("/tmp");
+        my @files = getCandidates($folder);
 
         foreach my $file (@files) {
 
@@ -41,13 +59,15 @@ sub run {
                 my ($fdev,$fino,$fmode,$fnlink,$fuid,$fgid,$frdev,$fsize,
                         $fatime,$fmtime,$fctime,$fblksize,$fblocks) = stat($file);
 
-		# get user info. Bur være nåverdende bruker, ikke boitho her.
+		# get user info. Bør være nåverdende bruker, ikke boitho her.
 		my ($uname, $upass, $uuid, $ugid, $uquota, $ucomment, $ugcos,
 			 $udir, $ushell, $uexpire) = getpwnam('boitho');
 
-                my $now_string = localtime($fatime);
-
-                if (($fuid == $uuid) && ( $fatime < (time - 600)) && (-f $file)) {
+                my $now_string = ctime($fatime);
+		if (!canLock($file)) {
+			#can't lock file
+		}
+                elsif (($fuid == $uuid) && ( $fatime < (time - $maxtime)) && (-f $file)) {
                         print "OLD: file uid $fuid, time $now_string: $file\n";
 		    	$self->{'log'}->write("TmpSizeWatch: removing old /tmp file $file. File last accessed at $now_string");
 
@@ -57,6 +77,18 @@ sub run {
                         print "NEW: file uid $fuid, time $now_string: $file\n";
                 }
         }
+	
+}
+
+sub run {
+    	my $self = shift;
+    	$self->{'log'}->write("Running TmpSizeWatch.");
+
+    	#doint the actual TmpSizeWatch run.
+	$self->cleaneFolder("/tmp", 600); #10 min
+
+	$self->cleaneFolder("/coredumps", 86400 * 5); #5 dager
+
 
     1;
 }
