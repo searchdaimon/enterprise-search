@@ -6,7 +6,15 @@
 int main()
 {
     setuid(0);
+    system("rm -rf `find /etc/sysconfig -name ifcfg-eth?.bak`");
     system("/usr/sbin/setup");
-    system("/etc/init.d/network restart");
-    system("/home/setup/make_issue.sh");
+    printf("Stopping network: eth0"); fflush(stdout);
+    system("/sbin/ifdown eth0");
+    printf(" eth1"); fflush(stdout);
+    system("/sbin/ifdown eth1");
+    printf("\nStarting network: eth0"); fflush(stdout);
+    system("/sbin/ifup eth0");
+    printf(" eth1"); fflush(stdout);
+    system("/sbin/ifup eth1");
+    printf("\n");
 }

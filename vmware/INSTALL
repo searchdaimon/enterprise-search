@@ -21,20 +21,11 @@ Fjern dhcp-server:
    'rm /etc/dhcpd.conf'
 
 Post-install:
- * Slett filene "/etc/udev/rules.d/70-persistent-net.rules",
-   og "/etc/udev/rules.d/75-persistent-net-generator.rules".
-   (hindrer at eth0 og eth1 bindes til installasjonmaskinens mac-adresser).
- * 'adduser setup'
-   Editer "/etc/passwd": Fjern 'x' på bruker 'setup', og sett shell til "/home/setup/run_setup".
- * Kopier inn 'run_setup' til "/home/setup".
-   chown root.setup run_setup
-   chmod 750 run_setup
-   chmod +s run_setup
- * Kopier inn 'make_issue.sh' til "/home/setup".
-   Legg til "/home/setup/make_issue.sh" i "/etc/rc.d/rc.local".
+ * Alle punktene her er lagt til fix_and_install.sh, og vil automatisk bli kjørt sammen med rpm-fila.
 
 Lag distribusjonspakker med VMware Converter:
  * Source type == Other (velg .vmx-fila)
- * Destination type == Virtual Appliance
+ * Destination type == Virtual Appliance, om du ønsker å lage det.
  * Kjør en gang til med Destination type == Other Virtual Machine,
-   og velg den nederste versjonen (tilsvarer hwversjon 4).
+   og velg den midterste versjonen (tilsvarer hwversjon 4).
+ * Editer .vmx-fila for å fjerne floppy, mac-adresser mm.
