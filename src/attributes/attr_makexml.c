@@ -586,7 +586,7 @@ static inline int attribute_description(struct adf_data *attrdescrp, char *key, 
 
 struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *attributes, int attrib_count,
 		    struct fte_data *getfiletypep, struct adf_data *attrdescrp, int indent, int sort, char sort_reverse,
-		    container *attr_query, query_array *qa)
+		    container *attr_query, query_array *qa, container *hide)
 {
     int		i;
     iterator	it_m1 = map_begin(attributes);
@@ -603,10 +603,29 @@ struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *a
 	    int		split = -1;
 	    int		hit_split = -1;
 	    vector_pushback(attr_query, (char*)map_key(it_m1).ptr);
+	    int		is_hidden = 0;
+	    for (i=0; i<vector_size(hide) && !is_hidden; i++)
+		{
+		    int		j;
+		    container	*hide_elem = vector_get(hide, i).C;
+
+		    for (j=0; j<vector_size(hide_elem); j++)
+			{
+			    if (strcasecmp(vector_get(attr_query,j).ptr, vector_get(hide_elem,j).ptr)) break;
+			}
+
+		    if (j>=vector_size(hide_elem)) is_hidden = 1;
+		}
+
+	    if (is_hidden)
+		{
+		    vector_remove_last(attr_query);
+		    continue;
+		}
 
 	    if (map_size(pair(map_val(it_m1)).first.ptr) > 0)
 		{
-		    struct attribute_temp_res	res = attribute_generate_xml_subpattern_recurse(pair(map_val(it_m1)).first.ptr, attrib_count, getfiletypep, attrdescrp, indent+2, sort, sort_reverse, attr_query, qa);
+		    struct attribute_temp_res	res = attribute_generate_xml_subpattern_recurse(pair(map_val(it_m1)).first.ptr, attrib_count, getfiletypep, attrdescrp, indent+2, sort, sort_reverse, attr_query, qa, hide);
 		    int		is_selected = 0;
 		    int		expanded = 0;
 		    char	*icon = NULL;
@@ -791,7 +810,7 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 				{
 				    if (map_size(subattrp) > 0)
 					{
-    					    struct attribute_temp_res	res = attribute_generate_xml_subpattern_recurse(subattrp, attrib_count, getfiletypep, attrdescrp, indent, parent->sort, parent->flags & sort_reverse, attr_query, qa);
+    					    struct attribute_temp_res	res = attribute_generate_xml_subpattern_recurse(subattrp, attrib_count, getfiletypep, attrdescrp, indent, parent->sort, parent->flags & sort_reverse, attr_query, qa, parent->hide);
 					    //attribute_print_xml_sorted(res.items, indent, B, parent->sort, parent->flags & sort_reverse);
 
 

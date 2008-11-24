@@ -60,6 +60,7 @@ typedef struct item item;
 struct item
 {
     container	*child;
+    container	*hide;
     item	*parent;
     // group/select/import data:
     enum attr_item_type type;
@@ -82,7 +83,7 @@ struct rac_yacc_data
 %parse-param { struct rac_yacc_data *data }
 %parse-param { yyscan_t yyscanner }
 %lex-param { yyscan_t yyscanner }
-%token SHOW_DUPLICATES_ID EXPANDED_ID FROM_ID GROUP_ID IMPORT_ID NAME_ID SELECT_ID SORT_ID SHOW_EMPTY_ID EQUALS_ID PARANTES_BEGIN PARANTES_CLOSE BRACKET_BEGIN BRACKET_CLOSE STRING_ID SORT_REVERSE_ID BUILD_GROUPS_ID
+%token SHOW_DUPLICATES_ID EXPANDED_ID FROM_ID GROUP_ID IMPORT_ID NAME_ID SELECT_ID SORT_ID SHOW_EMPTY_ID EQUALS_ID PARANTES_BEGIN PARANTES_CLOSE BRACKET_BEGIN BRACKET_CLOSE STRING_ID SORT_REVERSE_ID BUILD_GROUPS_ID HIDE_ID
 
 %%
 doc	:
@@ -109,6 +110,7 @@ block	:
 
 	    new_item = malloc(sizeof(item));
 	    new_item->child = vector_container( ptr_container() );
+	    new_item->hide = vector_container( ptr_container() );
 	    new_item->parent = data->current_item;
 	    new_item->type = item_group;
 	    new_item->id = NULL;
@@ -146,6 +148,7 @@ block	:
 	    new_item = malloc(sizeof(item));
 	    new_item->child = NULL;
 	    new_item->parent = data->current_item;
+	    new_item->hide = NULL;
 	    new_item->type = item_import;
 //	    new_item->id = strdup(vector_get(data->S,0).ptr);
 	    new_item->id = vector_get(data->S,0).ptr;
@@ -188,6 +191,11 @@ block	:
 	    else
 		data->current_item->flags&= 0xffff - build_groups;
 	}
+	| block HIDE_ID PARANTES_BEGIN strings PARANTES_CLOSE
+	{
+	    vector_pushback(data->current_item->hide, data->S);
+	    data->S = vector_container( string_container() );
+	}
 	;
 select	: SELECT_ID PARANTES_BEGIN strings PARANTES_CLOSE
 	{
@@ -195,6 +203,7 @@ select	: SELECT_ID PARANTES_BEGIN strings PARANTES_CLOSE
 
 	    new_item = malloc(sizeof(item));
 	    new_item->child = NULL;
+	    new_item->hide = NULL;
 	    new_item->parent = data->current_item;
 	    new_item->type = item_select;
 	    new_item->id = NULL;
@@ -244,9 +253,9 @@ sort	: SORT_ID EQUALS_ID STRING_ID
 	        data->current_item->sort = sort_none;
 	    else if (!strcasecmp((const char*)$3, "hits"))
 	        data->current_item->sort = sort_hits;
-	    else if (!strcasecmp((const char*)$3, "alphabetic"))
+	    else if (!strcasecmp((const char*)$3, "alphabetic")
 //		|| !strcasecmp((const char*)$3, "ascending")
-//		|| !strcasecmp((const char*)$3, "alphabetic"))
+		|| !strcasecmp((const char*)$3, "alpha"))
 	        data->current_item->sort = sort_alpha;
 //	    else if (!strcasecmp((const char*)$3, "desc")
 //		|| !strcasecmp((const char*)$3, "descending"))
@@ -299,6 +308,7 @@ attr_conf* show_attributes_init( char *conf_file, char **warnings )
     data->current_item->flags = 0;
     data->current_item->sort = sort_none;
     data->current_item->child = vector_container( ptr_container() );
+    data->current_item->hide = vector_container( ptr_container() );
     data->current_item->parameters = vector_container( string_container() );
     data->current_item->parent = NULL;
 
@@ -323,6 +333,7 @@ attr_conf* show_attributes_init( char *conf_file, char **warnings )
     ac->sort = data->current_item->sort;
     ac->flags = data->current_item->flags;
     ac->child = recurse_items(data->current_item, sort_hits);
+    ac->hide = data->current_item->hide;
     ac->name = strdup("<root>");
     ac->alt_names = NULL;
 
@@ -350,6 +361,12 @@ static void recursive_delete(struct attr_group *a)
 
     free(a->name);
     destroy(a->alt_names);
+
+    for (i=0; i<vector_size(a->hide); i++)
+	{
+	    destroy( vector_get(a->hide, i).ptr );
+	}
+    destroy(a->hide);
 
     for (i=0; i<vector_size(a->child); i++)
 	{
@@ -434,6 +451,7 @@ static container* recurse_items(item *parent, int sort_inherit)
 		    G->name = strdup(I->id);
 		    G->flags = I->flags;
 		    G->sort = (I->sort == -1 ? sort_inherit : I->sort);
+		    G->hide = I->hide;
 
 		    G->alt_names = map_container( string_container(), string_container() );
 		    for (j=0; j<vector_size(I->parameters); j+=2)
@@ -536,6 +554,25 @@ void print_recurse_items(item *I, int indent)
 			if (j%3==2) printf("|");
 			else printf(" ");
 		    printf("show.duplicates\n");
+		}
+	}
+
+    if (I->hide != NULL)
+	{
+	    for (i=0; i<vector_size(I->hide); i++)
+		{
+		    for (j=0; j<indent*3+2; j++)
+			if (j%3==2) printf("|");
+			else printf(" ");
+		    printf("hide");
+		    container	*hide = vector_get(I->hide, i).ptr;
+		    for (j=0; j<vector_size(hide); j++)
+			{
+			    if (j==0) printf(" ");
+			    else printf("/");
+			    printf("%s", vector_get(hide, j).ptr);
+			}
+		    printf("\n");
 		}
 	}
 

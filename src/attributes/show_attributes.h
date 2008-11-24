@@ -14,6 +14,7 @@ struct attr_group
     container	*child;
     char	*name;
     container	*alt_names;
+    container	*hide;
     char 	flags;
     enum attr_sort_enum	sort;
 };

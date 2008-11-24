@@ -21,6 +21,7 @@ group			{ return GROUP_ID; }
 import			{ return IMPORT_ID; }
 name			{ return NAME_ID; }
 select			{ return SELECT_ID; }
+hide			{ return HIDE_ID; }
 show.duplicates		{ return SHOW_DUPLICATES_ID; }
 show.empty		{ return SHOW_EMPTY_ID; }
 build_groups		{ return BUILD_GROUPS_ID; }
