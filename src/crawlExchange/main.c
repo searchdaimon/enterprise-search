@@ -42,17 +42,17 @@ ex_rewrite_url(char *uri, enum platform_type ptype, enum browser_type btype)
 	if (p == NULL)
 		return 0;
 	if (ptype == WINDOWS) {
-		printf("Wiiiindows!\n");
+		//printf("Wiiiindows!\n");
 		*p = '\0';
 	} else {
 		size_t len;
-		printf("Something else!!\n");
+		//printf("Something else!!\n");
 		p++;
 		len = strlen(p);
 		memmove(uri, p, strlen(p));
 		uri[len] = '\0';
 	}
-	printf("pushing out: %s\n", uri);
+	//printf("pushing out: %s\n", uri);
 	return 1;
 }
 
@@ -133,40 +133,31 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 		//printf("RAW EMAIL:\n%.4096s\n", mail.buf);
 		//printf("ANALYZE ON!!\n\n");
 		container	*M_header = mail_analyze_header(mail.buf, mail.size-1);
-		//iterator	it = multimap_begin(M_header);
-		//for (; it.valid; it=multimap_next(it))
-		//    {
-		//	printf("KEY( %s ): VALUE( %s )\n", (char*)multimap_key(it).ptr, (char*)multimap_val(it).ptr);
-		//    }
-		//printf("\nANALYZE OFF!!\n");
-		//destroy(M_header);
-		/*
+#if 0
+		iterator	it = multimap_begin(M_header);
+		for (; it.valid; it=multimap_next(it))
+		    {
+			printf("KEY( %s ): VALUE( %s )\n", (char*)multimap_key(it).ptr, (char*)multimap_val(it).ptr);
+		    }
+		printf("\nANALYZE OFF!!\n");
+		destroy(M_header);
 		p = NULL;
-		if (strcasecmp(mail.buf, "subject:") == 0) {
-			p = mail.buf;
-		} else if ((p = strcasestr(mail.buf, "\nsubject:")) != NULL) {
-			p++;
-		} else if ((p = strcasestr(mail.buf, "\rsubject:")) != NULL) {
-			p++;
-		}
-		*/
+#endif
 		iterator	it = multimap_begin(M_header);
 		p = NULL;
 		crawldocumentAdd.attributes = "";
-		for (; it.valid; it=multimap_next(it))
-		    {
+		for (; it.valid; it=multimap_next(it)) {
 			if (!strcmp("subject", (char*)multimap_key(it).ptr))
 			    p = (char*)multimap_val(it).ptr;
-			#ifdef EMAIL_ADRESS_AS_ATTRIBUTE
+#ifdef EMAIL_ADRESS_AS_ATTRIBUTE
 			else if (!strcmp("from", (char*)multimap_key(it).ptr))
 			    asprintf(&crawldocumentAdd.attributes, "from=%s",(char*)multimap_val(it).ptr);
-			#endif
-		    }
+#endif
+		}
 		
 		if (p == NULL) {
 			crawldocumentAdd.title = "";
 		} else {
-			//p += 8; // strlen("subject:");
 			while (isspace(*p)) {
 				p++;
 			}
@@ -196,7 +187,7 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 			crawldocumentAdd.acl_allow = strdup(usersid);
 			crawldocumentAdd.acl_denied = strdup("");
 		}
-/*
+#if 0
 		buffer		*B = buffer_init(-1);
 		int		to_i=1, from_i=1;
 		it = multimap_begin(M_header);
@@ -209,7 +200,7 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 		    }
 
 		crawldocumentAdd.attributes = buffer_exit(B);
-*/
+#endif
 		destroy(M_header);
 
 		printf("Adding: '%s'\n", crawldocumentAdd.title);
