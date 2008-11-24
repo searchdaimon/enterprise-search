@@ -1130,6 +1130,14 @@ crawlExchange:
 	(cd src/crawlExchange; make clean)
 	(cd src/crawlExchange; make)
 
+crawlExchangePublic:
+	@echo ""
+	@echo "$@:"
+
+	(cd src/crawlExchangePublic; make clean)
+	(cd src/crawlExchangePublic; make)
+
+
 crawlSO:
 	@echo ""
 	@echo "$@:"
