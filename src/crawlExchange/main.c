@@ -66,7 +66,11 @@ struct crawlLibInfoFormat crawlLibInfo = {
 	NULL,
 	ex_rewrite_url,
 	crawl_security_none,
+#ifdef WITH_PUBLIC_FOLDERS
+	"ExchangePublic",
+#else
 	"Exchange",
+#endif
 	"",
 };
 
@@ -264,6 +268,7 @@ crawlcanconnect(struct collectionFormat *collection,
 	char **users;
 	char *eerror;
 	CURL * curl;
+	int publicdone;
 
 	int n_users = 0;
 
@@ -273,12 +278,23 @@ crawlcanconnect(struct collectionFormat *collection,
 		snprintf(origresource, sizeof(origresource), "http://%s", collection->resource);
 	}
 
-	for (users = collection->users; users && *users; users++) {
-		splitUserString(*users,&user, &usersid);
-		user = *users;
+#ifdef WITH_PUBLIC_FOLDERS
+	publicdone = 0;
+#else
+	publicdone = 1;
+#endif
+	for (users = collection->users; (users && *users) || publicdone == 0; users++) {
+		if (users && *users) {
+			splitUserString(*users,&user, &usersid);
+			user = *users;
 
-		snprintf(resource, sizeof(resource), "%s/exchange/%s/", origresource, user);
+			snprintf(resource, sizeof(resource), "%s/exchange/%s/", origresource, user);
+		} else { // Public folder
+			snprintf(resource, sizeof(resource), "%s/public/", origresource);
+			publicdone = 1;
+		}
 		printf("Resource: %s\n", resource);
+
 		/* Shut up the xml parser a bit */
 		xmlGetWarningsDefaultValue = 0;
 		if ((curl = ex_logOn(resource, origresource, collection->user, collection->password, &eerror)) == NULL) {
@@ -290,6 +306,7 @@ crawlcanconnect(struct collectionFormat *collection,
 		//listxml = NULL;
 		//printf("%s\n", listxml);
 		if (listxml != NULL) {
+			/* XXX */
 			if (strcmp(listxml, "<html><head><title>Error</title></head><body>Error: Access is Denied.</body></html>") == 0) {
 				free(listxml);
 				continue;
@@ -358,6 +375,7 @@ crawlGo(struct crawlinfo *ci)
 	char *eerror;
 	set *acl_allow, *acl_deny;
 	CURL *curl;
+	int publicdone;
 
 	normalize_url(ci->collection->resource);
 
@@ -367,15 +385,25 @@ crawlGo(struct crawlinfo *ci)
 		snprintf(origresource, sizeof(origresource), "http://%s", ci->collection->resource);
 	}
 
+#ifdef WITH_PUBLIC_FOLDERS
+	publicdone = 0;
+#else
+	publicdone = 1;
+#endif
 	err = 0;
-	for (users = ci->collection->users; users && *users; users++) {
-		//user = *users;
-		splitUserString(*users,&user, &usersid);
-
+	for (users = ci->collection->users; (users && *users) || publicdone == 0; (users && *users) ? users++ : publicdone++) {
 		if (!ci->documentContinue(ci->collection))
 			break;
 
-		snprintf(resource, sizeof(resource), "%s/exchange/%s/", origresource, user);
+		if (users && *users) {
+			user = *users;
+			splitUserString(*users,&user, &usersid);
+			snprintf(resource, sizeof(resource), "%s/exchange/%s/", origresource, user);
+		} else { // Public folder
+			snprintf(resource, sizeof(resource), "%s/public/", origresource);
+			publicdone = 1;
+		}
+
 		printf("Trying %s\n", resource);
 		/* Shut up the xml parser a bit */
 		xmlGetWarningsDefaultValue = 0;
@@ -394,7 +422,7 @@ crawlGo(struct crawlinfo *ci)
 			acl_deny = malloc(sizeof(*acl_deny));
 			set_init(acl_allow);
 			set_init(acl_deny);
-			if (!grabContent(listxml, resource, ci, acl_allow, acl_deny, usersid, curl))
+			if (!grabContent(listxml, resource, ci, acl_allow, acl_deny, NULL, curl))
 				err++;
 			set_free_all(acl_allow);
 			set_free_all(acl_deny);

@@ -24,6 +24,9 @@
 #include "../crawl/crawl.h"
 #include "../base64/base64.h"
 
+#define MASK_READ 0x00120089
+#define MASK_DENIED_READ 0x00020089
+
 /*
  * XXX:
  * Will most probably segfault on a malformed xml structure
@@ -34,6 +37,7 @@ ex_parsetime(char *time)
 {
 	struct tm tm;
 
+	bzero(&tm, sizeof(tm));
 	printf("ex_parsetime(time=\"%s\")\n",time);
 
 	/* XXX: Does not handle time zones */
@@ -43,7 +47,7 @@ ex_parsetime(char *time)
 	return mktime(&tm);
 }
 
-#if 0
+#if 1
 void
 dumptree(xmlNodePtr n, int indent)
 {
@@ -78,6 +82,62 @@ xml_find_child(xmlNodePtr parent, char *name)
 }
 
 void
+handle_acllist_dacl_2(const xmlDocPtr doc, xmlNodePtr acls, set *acl_allow, set *acl_deny, int rev)
+{
+	xmlNodePtr cur, child, mask, sid;
+
+	if ((cur = xml_find_child(acls, "effective_aces"))) {
+		for (child = cur->xmlChildrenNode; child; child = child->next) {
+			set *acl;
+			char *sidstr, *maskstr, *nt4name;
+			unsigned int masknum;
+
+			if (strcmp((char *)child->name, "access_allowed_ace") == 0) {
+				acl = acl_allow;
+			} else if (strcmp((char *)child->name, "access_denied_ace") == 0) {
+				acl = acl_deny;
+			} else {
+				//warnx("unknown entry a_a_[ad]: %s", (char *)child->name);
+				continue;
+			}
+			
+			if (!(mask = xml_find_child(child, "access_mask"))) {
+				warnx("no access mask");
+				continue;
+			}
+			if ((sid = xml_find_child(child, "sid"))) {
+				if (!(sid = xml_find_child(sid, "string_sid"))) {
+					warnx("No string sid");
+					continue;
+				}
+			} else {
+				warnx("no sid");
+				continue;
+			}
+			sidstr = (char *)xmlNodeListGetString(doc, sid->xmlChildrenNode, 1);
+			maskstr = (char *)xmlNodeListGetString(doc, mask->xmlChildrenNode, 1);
+			masknum = strtol(maskstr, NULL, 16);
+			free(maskstr);
+
+			//printf("Sid: %s\nMask: %x\n", sidstr, masknum);
+
+			if (acl == acl_allow && (MASK_READ & masknum) == MASK_READ) {
+				//warnx("Adding to allow list: %s\n", sidstr);
+				set_add(acl, sidstr);
+			} else if (acl == acl_deny && (MASK_DENIED_READ & masknum) == MASK_DENIED_READ) {
+				//warnx("Adding to deny list: %s\n", sidstr);
+				set_add(acl, sidstr);
+			} else {
+				//printf("something else... %X\n", masknum);
+				free(sidstr);
+			}
+		}
+	} else {
+		warnx("No effective aces");
+	}
+}
+
+void
 handle_acllist(const xmlDocPtr doc, xmlNodePtr acls, set *acl_allow, set *acl_deny)
 {
 	xmlNodePtr cur;
@@ -90,6 +150,31 @@ handle_acllist(const xmlDocPtr doc, xmlNodePtr acls, set *acl_allow, set *acl_de
 				printf("Found owner: %s\n", sid);
 				set_add(acl_allow, sid);
 			}
+		}
+	}
+
+	/* dacl */
+	if ((cur = xml_find_child(acls, "dacl"))) {
+		xmlNodePtr rev;
+		int revision;
+
+		printf("dacl tree\n");
+		dumptree(cur, 0);
+
+		if ((rev = xml_find_child(cur, "revision"))) {
+			char *r = (char*)xmlNodeListGetString(doc, rev->xmlChildrenNode, 1);
+			revision = atoi(r);
+			free(r);
+			printf("We have a revision: %d\n", revision);
+		} else {
+			warnx("Unable to find dacl revision");
+			return;
+		}
+
+		if (revision == 2) {
+			handle_acllist_dacl_2(doc, cur, acl_allow, acl_deny, revision);
+		} else {
+			warnx("Unknown revision: %d", revision);
 		}
 	}
 }

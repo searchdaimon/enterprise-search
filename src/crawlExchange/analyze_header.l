@@ -10,7 +10,7 @@
 #include "../ds/dcontainer.h"
 #include "../ds/dmultimap.h"
 
-#include "analyze_header.h"
+#include "../crawlExchange/analyze_header.h"
 
 
 struct _mail_yy_extra

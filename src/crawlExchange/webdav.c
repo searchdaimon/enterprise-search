@@ -231,6 +231,9 @@ CURL *ex_logOn(const char *mailboxurl, const char *Exchangeurl ,const char *user
 		asprintf(errorm,"Got redirected to an httpS page. If your server only supports https please use an https url as the resource for Exchange.\n");		
 		return NULL;
 	}
+	else if (code == 200) {
+		/* Looks good */
+	}
 	else {
 		asprintf(errorm,"Can't decide login type.\n");
 		return NULL;		
