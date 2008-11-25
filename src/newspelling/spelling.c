@@ -365,6 +365,7 @@ check_word(spelling_t *s, char *word, int *found)
 	wchar_t *like;
 	scache_t *cache;
 	char u8word[LINE_MAX];
+	int i;
 
 	*found = 0;
 	if (!s->inited)
@@ -374,6 +375,9 @@ check_word(spelling_t *s, char *word, int *found)
 	if (wword == NULL)
 		return NULL;
 	mbstowcs(wword, word, strlen(word)+1);
+
+	for (i = 0; wword[i] != '\0'; i++)
+		wword[i] = tolower(wword[i]);
 
 	if (s->words == NULL) {
 		free(wword);
