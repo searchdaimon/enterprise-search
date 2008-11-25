@@ -56,11 +56,13 @@ train(spelling_t *s, const char *dict)
 	while (getline(&line, &len, fp) > 0) {
 		wchar_t *wcword;
 		struct wordelem *we, *wel;
+		int i;
 
 		p = line;
 		p[strlen(p)-1] = '\0';
-		while (!isspace(*p))
+		while (!isspace(*p)) {
 			p++;
+		}
 		word = strndup(line, p - line);
 
 		p++; /* Get the frequency */
@@ -78,6 +80,9 @@ train(spelling_t *s, const char *dict)
 			goto word_end;
 		}
 		free(word);
+
+		for (i = 0; wcword[i] != '\0'; i++)
+			wcword[i] = tolower(wcword[i]);
 
 		wel = hashtable_search(s->words, wcword);
 		if (wel == NULL) {
@@ -299,11 +304,15 @@ correct_word(spelling_t *s, char *word)
 {
 	wchar_t *wword;
 	void *p;
+	int i;
 
 	wword = malloc((strlen(word)+1)*sizeof(wchar_t));
 	if (wword == NULL)
 		return 1;
 	mbstowcs(wword, word, strlen(word)+1);
+
+	for (i = 0; wword[i] != '\0'; i++)
+		wword[i] = tolower(wword[i]);
 
 	if (s->words == NULL) {
 		free(wword);
@@ -394,6 +403,9 @@ check_word(spelling_t *s, char *word, int *found)
 	if (bestw != NULL) {
 		*found = 1;
 		wcstombs(u8word, bestw, LINE_MAX);
+
+		if (strcasecmp(u8word, word) == 0)
+			return NULL;
 		return strdup(u8word);
 	} else {
 		return NULL;
