@@ -2069,8 +2069,8 @@ int main(int argc, char *argv[])
 	    char *dateview_type_names[] = {
 					"I dag",
 					"I går",
-					"Denne uken",
-					"Denne måneden",
+					"Siste 7 dager",
+					"Siste 30 dager",
 					"I år",
 					"Sist år",
 					"Eldre enn to år"};
@@ -2583,8 +2583,8 @@ int main(int argc, char *argv[])
 	    char *dateview_type_names[] = {
 					"I dag",
 					"I går",
-					"Denne uken",
-					"Denne måneden",
+					"Siste 7 dager",
+					"Siste 30 dager",
 					"I år",
 					"Sist år",
 					"Eldre enn to år"};
