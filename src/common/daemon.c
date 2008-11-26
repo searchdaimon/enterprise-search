@@ -1,10 +1,16 @@
-#include <sys/types.h>
+#ifndef _GNU_SOURCE
+	//for asprintf
+	#define _GNU_SOURCE
+#endif
 
+#include <sys/types.h>
 #include "daemon.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <err.h>
+#include <stdio.h>
+#include <sys/file.h>
 
 #include "../common/bstr.h"
 #include "boithohome.h"
