@@ -351,7 +351,8 @@ struct indexFilteredFormat {
 struct duplicate_docids
 {
         container *V;
-        char *coll;
+	struct iindexMainElements *fistiindex;
+		
 };
 
 struct rank_explaindFormat {
@@ -386,6 +387,8 @@ struct rank_explaindFormat {
 struct hitsFormat {
 	unsigned short pos;
 	char phrase;
+	//struct iindexMainElements *iindexp;
+
 };
 
 // Formatett på treff i indeksen
@@ -423,7 +426,7 @@ struct iindexFormat {
 	int nrofHits;
 	int attrib_count;
 	struct iindexMainElements iindex[maxIndexElements];
-	char **subnames;
+	char **subnames_old;
 	int phrasenr;
 };
 
