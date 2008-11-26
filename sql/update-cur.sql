@@ -58,7 +58,7 @@ VALUES (
 
 INSERT INTO `config` ( `configkey` , `configvalue` ) 
 VALUES (
-'authentication_timeout', ''
+'authentication_timeout', '100'
 );
 
 -- New usersystem handling
@@ -167,7 +167,7 @@ UPDATE connectors SET inputFields = CONCAT('user_system, ', inputFields) WHERE i
 INSERT INTO `connectors` VALUES (70, 'Superoffice', 'Superoffice push crawler', NULL, NULL, NULL, 0, 'custom_parameters, crawling, user_system, authentication', NULL, NULL, 1, 1);
 
 INSERT INTO `connectors` VALUES (73, 'SharePoint', NULL, NULL, NULL, NULL, 0, 'user_system, custom_parameters, crawling, authentication', 1, '2008-10-14 18:18:24', 1, 1);
-INSERT INTO `param` VALUES (121, 73, 'delay', 'Delay in seconds between crawl. Set to 0 to disable.');
+INSERT INTO `param` VALUES (121, 73, 'delay', 'Delay in seconds between crawl.');
 INSERT INTO `param` VALUES (108, 73, 'url', 'http://www.example.com');
 INSERT INTO `param` VALUES (124, 73, 'download_images', '1 to activate, 0 to disable.');
 
@@ -178,3 +178,5 @@ CREATE TABLE `activeUsers` (
 
 
 INSERT INTO `param` VALUES (NULL, 70, 'Host', 'example.com');
+
+
