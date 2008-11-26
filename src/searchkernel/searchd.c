@@ -75,7 +75,6 @@ char servername[32];
 //#endif
 
 #ifdef WITH_PROFILING
-	#define profiling_maxruncount 1
 	static int profiling_runcount = 0;
 #endif
 
@@ -959,7 +958,7 @@ void *do_chld(void *arg)
 		#ifdef WITH_PROFILING
 			++profiling_runcount;
 
-			if (profiling_runcount >= profiling_maxruncount) {
+			if (profiling_runcount >= WITH_PROFILING) {
 				fprintf(stderr, "searchd_child: exiting to do profiling. Have done %i runs\n",profiling_runcount);
 				sleep(1);
 				exit(1);
