@@ -46,9 +46,11 @@
 
 #ifdef WITH_THREAD
         #include <pthread.h>
-	#define NROF_GENERATEPAGES_THREADS 5
-	//#define NROF_GENERATEPAGES_THREADS 3
-
+	#ifdef BLACK_BOKS
+		#define NROF_GENERATEPAGES_THREADS 5
+	#else
+		#define NROF_GENERATEPAGES_THREADS 5
+	#endif
 #endif
 
 #include "searchkernel.h"
@@ -268,7 +270,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 	struct queryTimeFormat *queryTime, int summaryFH, struct PagesResultsFormat *PagesResults)
 {
 
-	vboprintf("searchkernel: popResult(antall=%i, DocID=%i)\n", antall, DocID);
+	vboprintf("searchkernel: popResult(antall=%i, DocID=%i, subname=%s)\n", antall, DocID,subname);
 
 	char *url = NULL, *attributes = NULL;
 	int y;
@@ -692,11 +694,12 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 			/* Duplicates? */
 			// Byttet fra list til vector da vector er raskere (ax).
 			struct duplicate_docids *dup = hashtable_search(PagesResults->crc32maphash, &Sider->DocumentIndex.crc32);
-			if (dup != NULL) {
+			if (dup != NULL && dup->V != NULL) {
 				int k;
-//				printf("############################\n");
-				Sider->n_urls = vector_size(dup->V)-1;
+
+				Sider->n_urls = vector_size(dup->V) -1;
 				Sider->urls = calloc(Sider->n_urls, sizeof(*(Sider->urls)));
+				
 				//iterator itr = list_begin(list);
 				//itr = list_next(itr);
 				//for (k = 0; itr.valid; itr = list_next(itr), k++) {
@@ -708,9 +711,10 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 					struct DocumentIndexFormat di;
 					struct ReposetoryHeaderFormat repohdr;
 					unsigned int docid = pair(vector_get(dup->V,k+1)).first.i;
-					char *subname = PagesResults->TeffArray->subnames[pair(vector_get(dup->V,k+1)).second.i];
+					//char *subname = PagesResults->TeffArray->subnames[pair(vector_get(dup->V,k+1)).second.i];
+					char *subname = pair(vector_get(dup->V,k+1)).second.ptr;
 					char tmpurl[1024];
-					//printf("Woop subname!!!: %p %s\n", subname, subname);
+					printf("Woop subname!!!: %p %s\n", subname, subname);
 
 					acld = acla = attributes = url = NULL;
 					if (!DIRead(&di, docid, subname)) {
@@ -2309,6 +2313,19 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	vboprintf("\t%-40s %f\n","popResult",(*SiderHeder).queryTime.popResult);
 	vboprintf("\t%-40s %f\n","adultcalk",(*SiderHeder).queryTime.adultcalk);
 
+	#ifdef BLACK_BOKS
+		vboprintf("\t%-40s %f\n","filetypes",(*SiderHeder).queryTime.filetypes);
+		vboprintf("\t%-40s %f\n","iintegerGetValueDate",(*SiderHeder).queryTime.iintegerGetValueDate);
+		vboprintf("\t%-40s %f\n","dateview",(*SiderHeder).queryTime.dateview);
+		vboprintf("\t%-40s %f\n","crawlManager",(*SiderHeder).queryTime.crawlManager);
+		vboprintf("\t%-40s %f\n","duplicat echecking",(*SiderHeder).queryTime.duplicat_echecking);
+		vboprintf("\t%-40s %f\n","cmc_conect",(*SiderHeder).queryTime.cmc_conect);
+	#endif
+
+	#ifndef _24SEVENOFFICE
+		vboprintf("\t%-40s %f\n","getUserObjekt",(*SiderHeder).queryTime.getUserObjekt);
+	#endif
+
 	#ifdef DEBUG_TIME
 		printf("\npopResult:\n");
 		printf("\t%-40s %i, %f\n","DocumentIndex",PagesResults.popResultBreakDownTime.DocumentIndex.nr,PagesResults.popResultBreakDownTime.DocumentIndex.time);
@@ -2330,20 +2347,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#endif
 
 
-	#ifdef BLACK_BOKS
-	vboprintf("\t%-40s %f\n","filetypes",(*SiderHeder).queryTime.filetypes);
-	vboprintf("\t%-40s %f\n","iintegerGetValueDate",(*SiderHeder).queryTime.iintegerGetValueDate);
-	vboprintf("\t%-40s %f\n","dateview",(*SiderHeder).queryTime.dateview);
-	vboprintf("\t%-40s %f\n","crawlManager",(*SiderHeder).queryTime.crawlManager);
-	vboprintf("\t%-40s %f\n","duplicat echecking",(*SiderHeder).queryTime.duplicat_echecking);
-
-#ifndef _24SEVENOFFICE
-	vboprintf("\t%-40s %f\n","getUserObjekt",(*SiderHeder).queryTime.getUserObjekt);
-#endif
-	vboprintf("\t%-40s %f\n","cmc_conect",(*SiderHeder).queryTime.cmc_conect);
-
-
-	#endif
 
 	vboprintf("filters:\n");
 
@@ -2388,8 +2391,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	while (itr->e!=NULL)
 	    {
 		struct duplicate_docids *dup = hashtable_iterator_value(itr);
-		free(dup->coll);
-		destroy(dup->V);
+		if (dup->V != NULL) {
+			destroy(dup->V);
+		}
 		free(dup);
 		hashtable_iterator_advance(itr);
 	    }
