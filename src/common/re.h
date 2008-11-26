@@ -24,7 +24,7 @@
 #define RE_COPYONCLOSE 0x1
 #define RE_HAVE_4_BYTES_VERSION_PREFIX 0x2
 #define RE_READ_ONLY 0x4
-
+#define RE_STARTS_AT_0 0x8
 
 struct reformat {
         void *mem;
@@ -53,6 +53,10 @@ void *renget(struct reformat *re, size_t nr);
 #define RE_Uint(re, DocID) ((unsigned int *)reget(re, DocID))
 #define REN_Uint(re, nr) ((unsigned int *)renget(re, nr))
 
+#define RE_Int(re, DocID) ((int *)reget(re, DocID))
+#define REN_Int(re, nr) ((int *)renget(re, nr))
+
+#define RE_Char(re, DocID) ((char *)reget(re, DocID))
 
 #define RE_Brank(re, DocID) ((struct brank *)reget(re, DocID))
 #define REN_Brank(re, nr) ((struct brank *)renget(re, nr))

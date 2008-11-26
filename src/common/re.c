@@ -9,7 +9,8 @@
 #include "ht.h"
 
 #include "../3pLibs/keyValueHash/hashtable.h"
-
+#include "../3pLibs/keyValueHash/hashtable_itr.h"
+#include "../common/timediff.h"
 
 void _filecpy(int into, int from) {
 
@@ -80,13 +81,15 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 	}
 	else {
 		if((re->fd = lotOpenFileNoCasheByLotNrl(lotNr, re->mainfile, openmode, 'r', subname)) == -1) {
+			fprintf(stderr,"can't open file %s. for lot %i, subname %s\n",re->mainfile,lotNr,subname);
+			perror("lot file");
 			goto reopen_error;
 		}
 	}
 
 	fstat(re->fd,&inode);	
 
-	if (inode.st_size < re->maxsize) {
+	if (((re->flags & RE_READ_ONLY) != RE_READ_ONLY) && (inode.st_size < re->maxsize)) {
                                 /*
                                 Stretch the file size to the size of the (mmapped) array of ints
                                 */
@@ -143,7 +146,6 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 static struct hashtable *lots_cache;
 
 struct reformat *reopen_cache(int lotNr, size_t structsize, char file[], char subname[], int flags) {
-	struct hashtable *files = NULL;
 	char lotfile[PATH_MAX];
 	struct reformat *re;
 
@@ -152,27 +154,18 @@ struct reformat *reopen_cache(int lotNr, size_t structsize, char file[], char su
 		lots_cache = create_hashtable(3, ht_stringhash, ht_stringcmp);
 		if (lots_cache == NULL)
 			err(1, "hashtable_create(reopen_cache)");
-#if 0
-	} else {
-		files = hashtable_search(lots_cache, lotfile);
-	}
-
-	if (files == NULL) {
-		files = create_hashtable(1, ht_integerhash, ht_integercmp);
-		if (files == NULL)
-			err(1, "hashtable_create(reopen_cache 2)");
-		hashtable_insert(lots_cache, strdup(lotfile), files);
-#endif
 	} else {
 		re = hashtable_search(lots_cache, lotfile);
+		#ifdef DEBUG
+		printf("has cahce for %s:%s lot %d. pointer %p\n", subname, file, lotNr, re);
+		#endif
 		if (re != NULL)
 			return re;
 	}
 	printf("Cache miss for %s:%s lot %d\n", subname, file, lotNr);
 	re = reopen(lotNr, structsize, file, subname, flags);
 
-	hashtable_insert(lots_cache, uinttouintp(lotNr), re);
-	//hashtable_insert(files, uinttouintp(lotNr), re);
+	hashtable_insert(lots_cache, strdup(lotfile), re);
 
 	return re;
 }
@@ -180,10 +173,43 @@ struct reformat *reopen_cache(int lotNr, size_t structsize, char file[], char su
 void
 reclose_cache(void)
 {
-	return; // XXX
+	struct reformat *re;
+        struct hashtable_itr *itr;
+	char *filesname;
+
+        struct timeval start_time, end_time;
+        gettimeofday(&start_time, NULL);
+
+
+      	//itererer over hash, frigjør alle elementer
+        if (lots_cache!= NULL && hashtable_count(lots_cache) > 0)
+        {
+
+                itr = hashtable_iterator(lots_cache);
+
+                do {
+                	filesname = hashtable_iterator_key(itr);
+                        re = hashtable_iterator_value(itr);
+
+			printf("closing \"%s\"\n",filesname);
+
+			reclose(re);
+
+
+             	} while (hashtable_iterator_remove(itr));
+
+                free(itr);
+	}
+
+        gettimeofday(&end_time, NULL);
+        printf("Time debug: reclose_cache %f\n",getTimeDifference(&start_time,&end_time));
+	
+
+	return; 
 }
 
 void reclose(struct reformat *re) {
+
 	munmap(re->mem,re->maxsize);
 
 
@@ -215,7 +241,7 @@ void *reposread(struct reformat *re, size_t position) {
 
 
 	if (position > re->maxsize) {
-		fprintf(stderr,"DocID is not in the lot that is open!\n");
+		fprintf(stderr,"DocID is not in the lot that is open!. position %u > maxsize %d.\n",position,re->maxsize);
 		exit(-1);
 	}
 
@@ -250,9 +276,16 @@ void *reposread(struct reformat *re, size_t position) {
 void *reget(struct reformat *re, unsigned int DocID) {
 
 	size_t position = (re->structsize * (DocID - LotDocIDOfset(re->lotNr)));
-
+	if ((re->flags & RE_STARTS_AT_0) == RE_STARTS_AT_0) {
+		#ifdef DEBUG
+		printf("pso ord %u, position %u\n", position,re->structsize);
+		#endif
+		if (position != 0) {
+			position -= re->structsize;
+		}
+	}
 	#ifdef DEBUG	
-	printf("regetp: DocID %u, position %i\n",DocID, (int)position);
+	printf("regetp: DocID %u, position %u, lot %i\n",DocID, position, re->lotNr);
 	#endif
 
 	return reposread(re,position);;
