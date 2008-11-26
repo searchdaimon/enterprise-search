@@ -2468,11 +2468,11 @@ void *searchIndex_thread(void *arg)
 			            }
 			    #endif
 
-			#else
+			#else // ATTRIBUTES
 
-			and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
-			// Merge acl_denied:			
-    			andNot_merge(&Array,&ArrayLen,&hits,&TmpArray,TmpArrayLen,&acl_deniedArray,acl_deniedArrayLen);
+			    and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
+			    // Merge acl_denied:			
+    			    andNot_merge(&Array,&ArrayLen,&hits,&TmpArray,TmpArrayLen,&acl_deniedArray,acl_deniedArrayLen);
 			#endif
 
 
@@ -2629,7 +2629,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 	unsigned char PopRank;
 	int responseShortTo;
-	struct reformat *crc32map;
+	struct reformat *re;
 
 	int rankcount[256]; // rank går fra 0-252 (unsigned char)
 	int tmpint;
@@ -3153,7 +3153,10 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		*********************************************************************************************************************
 		*/
 
+		printf("<################################# file filter ######################################>\n");
+
 		gettimeofday(&start_time, NULL);
+
 
 		//char filetype[5];
 		//struct filesKeyFormat *filesKey;
@@ -3163,28 +3166,40 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 			#ifdef DEBUG
 			printf("i = %i, subname \"%s\"\n",i,(*(*TeffArray)->iindex[i].subname).subname);
 			#endif
-			if (iintegerGetValue(&(*TeffArray)->iindex[i].filetype,4,(*TeffArray)->iindex[i].DocID,"filtypes",(*(*TeffArray)->iindex[i].subname).subname) == 0) {
-				printf("woldent get integerindex\n");
-				(*TeffArray)->iindex[i].filetype[0] = '\0';
-			}
-			else {
-				#ifdef DEBUG
-				printf("file typs is: \"%c%c%c%c\"\n",(*TeffArray)->iindex[i].filetype[0],(*TeffArray)->iindex[i].filetype[1],(*TeffArray)->iindex[i].filetype[2],(*TeffArray)->iindex[i].filetype[3]);
-				#endif				
+			#if 1
+				if ((re = reopen_cache(rLotForDOCid((*TeffArray)->iindex[i].DocID), 4, "filtypes", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY|RE_STARTS_AT_0)) == NULL) {
+					debug("reopen(filtypes)\n");
+					(*TeffArray)->iindex[i].filetype[0] = '\0';
 
-				// filetype kan være på opptil 4 bokstaver. Hvis det er ferre en 4 så vil 
-				// det være \0 er paddet på slutten, men hvsi det er 4 så er det ikke det.
-				// legger derfor til \0 som 5 char, slik at vi har en gyldig string
-				(*TeffArray)->iindex[i].filetype[4] = '\0';
-
-				
-				if (strstr((*TeffArray)->iindex[i].filetype,"10") != NULL) {
-					printf("werd. DocID %u, subname %s\n",(*TeffArray)->iindex[i].DocID,(*(*TeffArray)->iindex[i].subname).subname);
-					//exit(1);
+					continue;
 				}
-				
 
+				strncpy((*TeffArray)->iindex[i].filetype, RE_Char(re, (*TeffArray)->iindex[i].DocID),4);
+			#else 
+				if (iintegerGetValue(&(*TeffArray)->iindex[i].filetype,4,(*TeffArray)->iindex[i].DocID,"filtypes",(*(*TeffArray)->iindex[i].subname).subname) == 0) {
+					printf("woldent get integerindex\n");
+					(*TeffArray)->iindex[i].filetype[0] = '\0';
+				}
+				else {
+					#ifdef DEBUG
+					printf("file typs is: \"%c%c%c%c\"\n",(*TeffArray)->iindex[i].filetype[0],(*TeffArray)->iindex[i].filetype[1],(*TeffArray)->iindex[i].filetype[2],(*TeffArray)->iindex[i].filetype[3]);
+					#endif								
+
+				}
+			#endif
+
+			// filetype kan være på opptil 4 bokstaver. Hvis det er ferre en 4 så vil 
+			// det være \0 er paddet på slutten, men hvsi det er 4 så er det ikke det.
+			// legger derfor til \0 som 5 char, slik at vi har en gyldig string
+			(*TeffArray)->iindex[i].filetype[4] = '\0';
+			
+			/*	
+			if (strstr((*TeffArray)->iindex[i].filetype,"10") != NULL) {
+				printf("werd. DocID %u, subname %s\n",(*TeffArray)->iindex[i].DocID,(*(*TeffArray)->iindex[i].subname).subname);
+				//exit(1);
 			}
+			*/
+
 		}
 
 
@@ -3198,6 +3213,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 		gettimeofday(&end_time, NULL);
 		(*queryTime).filetypes = getTimeDifference(&start_time,&end_time);
+		printf("<################################# /file filter ######################################>\n");
 
 
 		#ifdef DEBUG
@@ -3331,7 +3347,18 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 		//slår opp alle datoene
 		for (i = 0; i < *TeffArrayElementer; i++) {
-			iintegerGetValue(&(*TeffArray)->iindex[i].date,sizeof(int),(*TeffArray)->iindex[i].DocID,"dates",(*(*TeffArray)->iindex[i].subname).subname);
+			#if 1
+				if ((re = reopen_cache(rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(int), "dates", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY|RE_STARTS_AT_0)) == NULL) {
+					debug("reopen(dates)\n");
+					continue;
+				}
+
+				(*TeffArray)->iindex[i].date = *RE_Int(re, (*TeffArray)->iindex[i].DocID);
+
+			#else 
+				iintegerGetValue(&(*TeffArray)->iindex[i].date,sizeof(int),(*TeffArray)->iindex[i].DocID,"dates",(*(*TeffArray)->iindex[i].subname).subname);
+			#endif
+
 			#ifdef DEBUG
 			printf("got %u\n",(*TeffArray)->iindex[i].date);
 			#endif
@@ -3420,17 +3447,12 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 		printf("<################################# duplicate checking ######################################>\n");
 		gettimeofday(&start_time, NULL);
-
+		int k;
 		// Loop over all results and do duplicate checking...
 		if (crc32maphash != NULL)
 			*crc32maphash = create_hashtable(41, ht_integerhash, ht_integercmp);
 
-		(*TeffArray)->subnames = malloc(sizeof(char*) * nrOfSubnames);
-		for (i=0; i<nrOfSubnames; i++)
-		    {
-			(*TeffArray)->subnames[i] = subnames[i].subname;
-		    }
-		automaton	*subnames_automaton = build_automaton(nrOfSubnames, (unsigned char**)(*TeffArray)->subnames);
+		//struct duplicate_docids *dups = malloc( (sizeof(struct duplicate_docids) * (*TeffArrayElementer)) );
 
 		if (crc32maphash != NULL)
 	       	for (i = 0; i < (*TeffArrayElementer); i++) {
@@ -3444,31 +3466,25 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 			    || (*TeffArray)->iindex[i].indexFiltered.attribute == 1)
 				continue;
 
-			//TeffArray->iindex[i].indexFiltered.duplicate = 0; // Allerede initiert (mÃ¥ initieres for *alle*).
-
-
-			int	subname_nr = search_automaton(subnames_automaton, (*TeffArray)->iindex[i].subname->subname);
-			//printf("%s has nr %i\n", TeffArray->iindex[i].subname->subname, subname_nr);
-			//assert(subname_nr>=0);
-			if (subname_nr<0) continue;	// Burde ikke kunne skje.
 
 			unsigned int crc32;
 
-			#if 1
+			#if 0
 				//bruker iintegerGetValue i steden for re. Men ser ut til at det er problemer med 0 indkeksering.
 				if (iintegerGetValue(&crc32,4,(*TeffArray)->iindex[i].DocID +1,"crc32map",(*(*TeffArray)->iindex[i].subname).subname) == 0) {
 					printf("can't iintegerGetValue crc32map\n");
 					continue;
 				}
 			#else
-				if ((crc32map = reopen(rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(unsigned int), "crc32map", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY)) == NULL) {
+				//if ((re = reopen(rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(unsigned int), "crc32map", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY)) == NULL) {
+				if ((re = reopen_cache(rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(unsigned int), "crc32map", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY)) == NULL) {
 					debug("reopen(crc32map)\n");
 					continue;
 				}
 
-				crc32 = *RE_Uint(crc32map, (*TeffArray)->iindex[i].DocID);
+				crc32 = *RE_Uint(re, (*TeffArray)->iindex[i].DocID);
 
-				reclose(crc32map);
+				//reclose(crc32map);
 			#endif
 
 			debug("Got hash value: %x\n", crc32);
@@ -3484,12 +3500,13 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 			if (dup == NULL) {
 				dup = malloc(sizeof(struct duplicate_docids));
-				dup->coll = calloc(nrOfSubnames, sizeof(char));
-				dup->V = vector_container( pair_container( int_container(), int_container() ) );
+				//dup = &dups[i];
+				dup->V = NULL;
+				//setter dublicat rekorden til å peke på den første 
+				dup->fistiindex = &(*TeffArray)->iindex[i];
+
 				hashtable_insert(*crc32maphash, uinttouintp(crc32), dup);
 
-				if (subname_nr >= 0) dup->coll[subname_nr]++;
-				vector_pushback(dup->V, (*TeffArray)->iindex[i].DocID, subname_nr);
 
 			} else {
 				/* Remove duplicated */
@@ -3502,25 +3519,33 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 					--(*TotaltTreff);
 				}
 
-				//printf("DUPLICATE: %s / %s\n", TeffArray->iindex[i].subname->subname, TeffArray->subnames[subname_nr]);
-				vector_pushback(dup->V, (*TeffArray)->iindex[i].DocID, subname_nr);
+				if (dup->V == NULL) {
+					dup->V = vector_container( pair_container( int_container(), ptr_container() ) );
+					//legger til den første
+					printf("DUPLICATE first: DocID=%u, subname=%s\n", dup->fistiindex->DocID, dup->fistiindex->subname->subname);
+					vector_pushback(dup->V, dup->fistiindex->DocID, dup->fistiindex->subname->subname);
+				}
 
-				//if (subname_nr >= 0)
-				    {
-					if (dup->coll[subname_nr] > 0)
-					    (*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection = subname_nr;
+				//går gjenom de vi har fra før, og sjekker om dette er den første duplikaten i en kollection
+				//hvis det ikke er det skal vi markere det.
+				for (k = 0; k<vector_size(dup->V); k++) { 
 
-					dup->coll[subname_nr]++;
-				    }
+					if (pair(vector_get(dup->V,k)).second.ptr == (*TeffArray)->iindex[i].subname->subname) {
+						++(*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection;
+					}
+				}
+
+				printf("DUPLICATE secund(s): DocID=%u, subname=%s\n", (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].subname->subname);
+				vector_pushback(dup->V, (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].subname->subname);
+
 
 				(*TeffArray)->iindex[i].indexFiltered.is_filtered = 1;
 				(*TeffArray)->iindex[i].indexFiltered.duplicate = 1;
 			}
 #endif
 		}
-		//reclose_cache();
+		reclose_cache();
 
-		free_automaton(subnames_automaton);
 
 
 
