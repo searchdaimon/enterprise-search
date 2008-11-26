@@ -85,35 +85,6 @@ crawlGo(struct crawlinfo *ci)
 
 	host = params_get_char_value(ci->collection->params,"Host");
 
-	/*
-	protocol = getprotobyname("tcp");
-	if (!protocol) {
-		warn("getprotobyname()");
-		return 0;
-	}
-	s = socket(PF_INET, SOCK_STREAM, protocol->p_proto);
-	if (s == -1) {
-		warn("socket()");
-		return 0;
-	}
-	memset(&socketaddr, '\0', sizeof(socketaddr));
-	socketaddr.sin_family = AF_INET;
-	socketaddr.sin_port = htons(port);
-
-	hostaddr = gethostbyname(host);
-	printf("Connecting to: %s:%d\n", host, port);
-	if (!hostaddr) {
-		warn("gethostbyname()");
-		return 0;
-	}
-	memcpy(&socketaddr.sin_addr, hostaddr->h_addr, hostaddr->h_length);
-	i = connect(s, &socketaddr, sizeof(socketaddr));
-	if (i == -1) {
-		warn("connect()");
-		exit(1);
-		return 0;
-	}
-	*/
 	s = cconnect(host,DEFAULTPORT);
 	if (s == 0) {
 		warn("connect()");
