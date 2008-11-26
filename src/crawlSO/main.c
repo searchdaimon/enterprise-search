@@ -18,6 +18,7 @@
 #include <err.h>
 
 #include "../crawl/crawl.h"
+#include "../common/daemon.h"
 
 int crawlcanconnect(struct collectionFormat *collection,
                    int (*documentError)(struct collectionFormat *, int, const char *, ...) __attribute__((unused)));
@@ -47,7 +48,7 @@ so_rewrite_url(char *uri, enum platform_type ptype, enum browser_type btype)
 struct crawlLibInfoFormat crawlLibInfo = {
 	NULL,
 	crawlfirst,
-	crawlupdate,
+	crawlfirst,
 	crawlcanconnect,
 	NULL,
 	NULL,
@@ -82,6 +83,9 @@ crawlGo(struct crawlinfo *ci)
 
 	port = DEFAULTPORT;
 
+	host = params_get_char_value(ci->collection->params,"Host");
+
+	/*
 	protocol = getprotobyname("tcp");
 	if (!protocol) {
 		warn("getprotobyname()");
@@ -95,7 +99,6 @@ crawlGo(struct crawlinfo *ci)
 	memset(&socketaddr, '\0', sizeof(socketaddr));
 	socketaddr.sin_family = AF_INET;
 	socketaddr.sin_port = htons(port);
-	host = params_get_char_value(ci->collection->params,"Host");
 
 	hostaddr = gethostbyname(host);
 	printf("Connecting to: %s:%d\n", host, port);
@@ -110,6 +113,16 @@ crawlGo(struct crawlinfo *ci)
 		exit(1);
 		return 0;
 	}
+	*/
+	s = cconnect(host,DEFAULTPORT);
+	if (s == 0) {
+		warn("connect()");
+		ci->documentError(ci->collection, 1, "Unable to connect to: %s\n", host);
+		return 0;
+	}
+
+	printf("connected\n");
+
 
 	i = asprintf(&sendbuf, "user %s\npassword %s\ncollection %s\nusersystem %d\nmodule %s\n",
 	    ci->collection->user, ci->collection->password,
@@ -120,12 +133,11 @@ crawlGo(struct crawlinfo *ci)
 	printf("Sending: %slen: %s\n", sendbuf, sendbuflen);
 	if (send(s, sendbuf, i, 0) == -1)
 		warn("send()");
-	else
-		close(s);
+
 	free(sendbuflen);
 	free(sendbuf);
 
-	return 1;
+	return s;
 }
 
 int
@@ -133,6 +145,8 @@ crawlfirst(crawlfirst_args)
 {
 
 	struct crawlinfo ci;
+	int s, ret;
+	char buf[1];
 
 	ci.documentExist = documentExist;
 	ci.documentAdd = documentAdd;
@@ -142,23 +156,13 @@ crawlfirst(crawlfirst_args)
 	ci.timefilter = 0;
 	printf("crawlSO: %s\n", collection->resource);
 
-	return crawlGo(&ci);
+	ret = crawlGo(&ci);
+
+	//blockint intil the so crawler close sock.
+	read(s, buf, 1);
+
+	close(s);
+
+	return ret;
 }
 
-
-int
-crawlupdate(crawlupdate_args)
-{
-	struct crawlinfo ci;
-
-	ci.documentExist = documentExist;
-	ci.documentAdd = documentAdd;
-	ci.documentError = documentError;
-	ci.documentContinue = documentContinue;
-	ci.collection = collection;
-	ci.timefilter = collection->lastCrawl;
-
-	printf("crawlSO: %s\n", collection->resource);
-
-	return crawlGo(&ci);
-}
