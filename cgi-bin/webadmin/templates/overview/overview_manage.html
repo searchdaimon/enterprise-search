@@ -3,28 +3,6 @@
 [% PROCESS 'template_connector_blocks.html' %]
 [% PROCESS 'template_collection_warnings.html' %]
 
-[% IF recrawl_request.defined %]
-
-	[% IF recrawl_request %]
-		[% WRAPPER 'template_message.html'
-			type = 'success' %]
-
-			Request for a full recrawl has been request submitted.
-
-		[% END %]
-
-	[% ELSE %]
-		[% WRAPPER 'template_message.html'
-			type = 'warning' %]
-
-			Unable to submit recrawl request.
-			[% IF recrawl_error %]
-				<br />Error: [% HTML.escape(recrawl_error) %]
-			[% END %]
-		[% END %]
-	[% END %]
-[% END %]
-
 [% PROCESS 'overview_tabs.html'
 	selected = "Advanced management" %]
 [% UNLESS error_collection_not_exist %]
