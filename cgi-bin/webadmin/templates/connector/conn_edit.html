@@ -372,6 +372,12 @@ function activateApplyBtn() {
                 $.each($('[@name^="share"]:checkbox:checked'), function (index, obj) {
                     coll_data[$(obj).attr('name')] = $(obj).val();
                 });
+		$.each($('select').filter('[@name^="share"]'), function(index, obj) {
+			var name = $(obj).attr('name');
+			var val;
+			val = $(obj).children(':selected').val();
+                    	coll_data[name] = val;
+		});
 
                 var auth_id = $('[@name="share.auth_id"]').val();
                 if (auth_id) 
