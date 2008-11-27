@@ -134,7 +134,7 @@ iindex:
 bbadmin:
 	echo BOITHOHOME
 	echo $(BOITHOHOME)
-	perl rpmmagic.pl --pre "mkdir --parents --mode=777 /home/boitho/boithoTools/var/webadmin_tmp/" --requires "perl-JSON-XS perl-Config-Tiny perl-XML-Simple boitho-repomod perl-Apache-Htpasswd mysql mysql-server boitho-infoquery boithobb-setuid boithobb-sqlUpdate==1.6.2 bbAutoUpdate perl-SQL-Abstract perl-Readonly perl-Params-Validate" --post "chown apache:apache /home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd" $(boitho-bbadmin_name) $(boitho-bbadmin_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/webadmin Modules config/setup.txt
+	perl rpmmagic.pl --pre "mkdir --parents --mode=777 /home/boitho/boithoTools/var/webadmin_tmp/" --requires "perl-JSON-XS perl-Config-Tiny perl-XML-Simple boitho-repomod perl-Apache-Htpasswd perl-File-Copy-Recursive perl-IO-String perl-Archive-Tar perl mysql mysql-server boitho-infoquery boithobb-setuid boithobb-sqlUpdate==1.6.2 bbAutoUpdate perl-SQL-Abstract perl-Readonly perl-Params-Validate" --post "chown apache:apache /home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd" $(boitho-bbadmin_name) $(boitho-bbadmin_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/webadmin Modules config/setup.txt
 
 	rpmbuild -bb $(boitho-bbadmin_name).spec
 
