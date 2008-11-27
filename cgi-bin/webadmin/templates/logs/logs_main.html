@@ -74,17 +74,17 @@
 [% IF logfile %]
 <a name="logfile" />
 	[% UNLESS logfile.filename %]
-		[% WRAPPER 'template_info.html' %]
+		<p>
 			You forgot to select which logfile to view
-		[% END %]
+		</p>
 	[% ELSE %]
 		<h2>Showing [% logfile.filename %]</h2>
 	
 		[% IF logfile.content.size %]
 			
-			[% WRAPPER 'template_info.html' %]
+			<p>
 				Showing last [% logfile.content.size %] messages in [% logfile.filename %].
-			[% END %]
+			</p>
 	
 
 			<div style="font-familiy : monospace; font-size : small;">
