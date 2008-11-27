@@ -192,10 +192,12 @@ sub recrawl_collection {
 	my $collection_name = 
 		$sqlShares->get_collection_name($id);
 
-	$vars->{recrawl_request}
-		= $s->{infoQuery}->recrawlCollection($collection_name);
-	$vars->{recrawl_error} = $s->{infoQuery}->error
-		unless $vars->{recrawl_request};
+	my $succs = $s->{infoQuery}->recrawlCollection($collection_name);
+	$succs ? $vars->{coll_succs} = "Crawl request sent."
+	       : $vars->{coll_error} = $s->{infoQuery}->error();
+
+	#$vars->{recrawl_error} = $s->{infoQuery}->error
+		#unless $vars->{recrawl_request};
 	$vars->{id} = $id;
 
 	return $s->manage_collection($vars, $id);
