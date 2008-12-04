@@ -21,7 +21,8 @@ Fjern dhcp-server:
    'rm /etc/dhcpd.conf'
 
 Post-install:
- * Alle punktene her er lagt til fix_and_install.sh, og vil automatisk bli kjørt sammen med rpm-fila.
+ * fix_and_install.sh vil automatisk bli kjørt sammen med rpm-fila.
+ * Fjern lokal hostname fra /etc/hosts
 
 Lag distribusjonspakker med VMware Converter:
  * Source type == Other (velg .vmx-fila)
