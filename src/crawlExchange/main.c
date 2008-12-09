@@ -261,7 +261,7 @@ crawlcanconnect(struct collectionFormat *collection,
                    int (*documentError)(struct collectionFormat *, int, const char *, ...) __attribute__((unused)))
 {
 	char *listxml;
-	char origresource[PATH_MAX];
+	//char origresource[PATH_MAX];
 	char resource[PATH_MAX];
 	char *userString;
 	char *user, *usersid;
@@ -273,9 +273,9 @@ crawlcanconnect(struct collectionFormat *collection,
 	int n_users = 0;
 
 	if (strstr(collection->resource, "://")) {
-		snprintf(origresource, sizeof(origresource), "%s", collection->resource);
+		snprintf(collection->origresource, sizeof(collection->origresource), "%s", collection->resource);
 	} else {
-		snprintf(origresource, sizeof(origresource), "http://%s", collection->resource);
+		snprintf(collection->origresource, sizeof(collection->origresource), "http://%s", collection->resource);
 	}
 
 #ifdef WITH_PUBLIC_FOLDERS
@@ -288,17 +288,17 @@ crawlcanconnect(struct collectionFormat *collection,
 			splitUserString(*users,&user, &usersid);
 			user = *users;
 
-			snprintf(resource, sizeof(resource), "%s/exchange/%s/", origresource, user);
+			snprintf(resource, sizeof(resource), "%s/exchange/%s/", collection->origresource, user);
 		} else { // Public folder
-			snprintf(resource, sizeof(resource), "%s/public/", origresource);
+			snprintf(resource, sizeof(resource), "%s/public/", collection->origresource);
 			publicdone = 1;
 		}
 		printf("Resource: %s\n", resource);
 
 		/* Shut up the xml parser a bit */
 		xmlGetWarningsDefaultValue = 0;
-		if ((curl = ex_logOn(resource, origresource, collection->user, collection->password, &eerror)) == NULL) {
-			documentError(collection, 1, "Unable to connect to %s: %s\n", origresource, eerror);
+		if ((curl = ex_logOn(resource, collection->origresource, collection->user, collection->password, &eerror)) == NULL) {
+			documentError(collection, 1, "Unable to connect to %s: %s\n", collection->origresource, eerror);
 			return 0;
 
 		}
@@ -322,7 +322,7 @@ crawlcanconnect(struct collectionFormat *collection,
 	if (n_users == 0)
 		return 1;
 
-	documentError(collection, 1, "Unable to connect to: %s\n", origresource);
+	documentError(collection, 1, "Unable to connect to: %s\n", collection->origresource);
 	documentError(collection, 1, "Html error: %s\n", listxml);
 
 
@@ -368,7 +368,7 @@ crawlGo(struct crawlinfo *ci)
 {
 	char *listxml;
 	int err;
-	char origresource[PATH_MAX];
+	//char origresource[PATH_MAX];
 	char resource[PATH_MAX];
 	char **users;
 	char *user, *usersid;
@@ -380,9 +380,9 @@ crawlGo(struct crawlinfo *ci)
 	normalize_url(ci->collection->resource);
 
 	if (strstr(ci->collection->resource, "://")) {
-		snprintf(origresource, sizeof(origresource), "%s", ci->collection->resource);
+		snprintf(ci->collection->origresource, sizeof(ci->collection->origresource), "%s", ci->collection->resource);
 	} else {
-		snprintf(origresource, sizeof(origresource), "http://%s", ci->collection->resource);
+		snprintf(ci->collection->origresource, sizeof(ci->collection->origresource), "http://%s", ci->collection->resource);
 	}
 
 #ifdef WITH_PUBLIC_FOLDERS
@@ -398,16 +398,16 @@ crawlGo(struct crawlinfo *ci)
 		if (users && *users) {
 			user = *users;
 			splitUserString(*users,&user, &usersid);
-			snprintf(resource, sizeof(resource), "%s/exchange/%s/", origresource, user);
+			snprintf(resource, sizeof(resource), "%s/exchange/%s/", ci->collection->origresource, user);
 		} else { // Public folder
-			snprintf(resource, sizeof(resource), "%s/public/", origresource);
+			snprintf(resource, sizeof(resource), "%s/public/", ci->collection->origresource);
 			publicdone = 1;
 		}
 
 		printf("Trying %s\n", resource);
 		/* Shut up the xml parser a bit */
 		xmlGetWarningsDefaultValue = 0;
-		if ((curl = ex_logOn(resource, origresource, ci->collection->user, ci->collection->password, &eerror)) == NULL) {
+		if ((curl = ex_logOn(resource, ci->collection->origresource, ci->collection->user, ci->collection->password, &eerror)) == NULL) {
 			fprintf(stderr,"Can't connect to %s: %s\n",resource,eerror);
 			continue;
 		}

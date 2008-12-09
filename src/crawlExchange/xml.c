@@ -234,9 +234,21 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 	/* Directory perhaps? */
 	printf("Pathname: %s\n", url);
 	if (url[hreflen-1] == '/') {
-		newxml = ex_getContent(url, curl);
-		grabContent(newxml, (char *)url, ci, acl_allow2, acl_deny2, usersid, curl);
-		free(newxml);
+		CURL	*curl;
+		char	*eerror;
+
+		if ((curl = ex_logOn(parent, ci->collection->origresource, ci->collection->user, ci->collection->password, &eerror)) == NULL)
+		    {
+			fprintf(stderr, "Can't connect to %s: %s\n", parent, eerror);
+		    }
+		else
+		    {
+			newxml = ex_getContent(url, curl);
+			grabContent(newxml, (char *)url, ci, acl_allow2, acl_deny2, usersid, curl);
+			free(newxml);
+
+			ex_logOff(curl);
+		    }
 	} else {
 		char *sid = NULL;
 		time_t lastmodified = 0;
