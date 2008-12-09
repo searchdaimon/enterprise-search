@@ -49,6 +49,8 @@ struct collectionFormat {
 	int docsRemaining;
 	//9okt 2008
 	void *timeusage;
+	// desember 2008:
+	char origresource[PATH_MAX];
 };
 
 struct crawldocumentExistFormat {
