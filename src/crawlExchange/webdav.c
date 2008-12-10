@@ -100,6 +100,7 @@ void ex_logOff(CURL *curl) {
 
 	curl_easy_cleanup(curl);
 }
+
 CURL *ex_logOn(const char *mailboxurl, const char *Exchangeurl ,const char *username, const char *password, char **errorm) {
 
 	CURL *curl;

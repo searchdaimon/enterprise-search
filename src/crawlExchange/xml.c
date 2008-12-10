@@ -48,21 +48,47 @@ ex_parsetime(char *time)
 }
 
 #if 1
+
+int
+only_white(char *s) 
+{
+	while (*s) {
+		if (!isspace(*s))
+			return 0;
+		s++;
+	}
+
+	return 1;
+}
+
 void
-dumptree(xmlNodePtr n, int indent)
+dumptree(xmlDocPtr doc, xmlNodePtr n, int indent)
 {
 	int i;
         xmlNodePtr cur;
 
+	if (n->type == XML_TEXT_NODE) {
+		xmlChar *s;
+
+		s = xmlNodeListGetString(doc, n, 1);
+		if (!only_white(s)) {
+			for (i = 0; i < indent; i++)
+				printf("  ");
+
+			printf("\"%s\"\n", (char *)s);
+		}
+		free(s);
+		return;
+	}
+
         for (i = 0; i < indent; i++)
                 printf("  ");
+
 
         printf("%s\n", n->name);
 
         for (cur = n->xmlChildrenNode; cur; cur = cur->next) {
-
-                if (cur->xmlChildrenNode)
-                        dumptree(cur, indent+1);
+		dumptree(doc, cur, indent+1);
         }
 
 }
@@ -158,8 +184,8 @@ handle_acllist(const xmlDocPtr doc, xmlNodePtr acls, set *acl_allow, set *acl_de
 		xmlNodePtr rev;
 		int revision;
 
-		printf("dacl tree\n");
-		dumptree(cur, 0);
+		//printf("dacl tree\n");
+		//dumptree(doc, cur, 0);
 
 		if ((rev = xml_find_child(cur, "revision"))) {
 			char *r = (char*)xmlNodeListGetString(doc, rev->xmlChildrenNode, 1);
@@ -201,6 +227,7 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 	}
 
 	url = (char *)xmlNodeListGetString(doc, href->xmlChildrenNode, 1);
+	//printf("On: %s\n", url);
 	if (strcmp(url, parent) == 0) {
 		/* Update acl lists */
 		if ((cur = xml_find_child(propstat, "prop"))) {
@@ -265,7 +292,8 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 				 *
 				 * - eirik
 				 */
-				if (strcmp(type, "IPM.Note") == 0) {
+				if (strcmp(type, "IPM.Note") == 0 || // Private folder e-mail
+				    strcmp(type, "IPM.Post") == 0) { // Public folder e-mail
 					free(type);
 				} else {
 					fprintf(stderr, "Found item of type: '%s', not grabing\n", type);
