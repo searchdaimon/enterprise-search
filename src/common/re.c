@@ -164,7 +164,9 @@ struct reformat *reopen_cache(int lotNr, size_t structsize, char file[], char su
 	}
 	printf("Cache miss for %s:%s lot %d\n", subname, file, lotNr);
 	re = reopen(lotNr, structsize, file, subname, flags);
-
+	if (re == NULL) {
+		return NULL;
+	}
 	hashtable_insert(lots_cache, strdup(lotfile), re);
 
 	return re;
