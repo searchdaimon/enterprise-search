@@ -1,3 +1,4 @@
+#include <mysql.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -18,6 +19,10 @@
 #include "../common/gc.h"
 #include "../bbdocument/bbdocument.h"
 
+/* MYSQL login information */
+#define MYSQL_HOST "localhost"
+#define MYSQL_USER "boitho"
+#define MYSQL_PASS "G7J7v5L5Y7"
 
 
 
@@ -159,6 +164,76 @@ FILE *lockcoll(char subname[]) {
 
 }
 
+int isOkCrawled (char subname[], struct gcaoptFormat *gcaopt) {
+
+        char mysql_query [2048];
+        static MYSQL demo_db;
+        MYSQL_RES *mysqlres; /* To be used to fetch information into */
+        MYSQL_ROW mysqlrow;
+	int nrofcollections;
+        int i,y;
+	int crawler_success = 0;
+
+
+        mysql_init(&demo_db);
+
+        //koble til mysql
+        if(!mysql_real_connect(&demo_db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)){
+                printf(mysql_error(&demo_db));
+                blog(gcaopt->logSummary,1,"MySQL Error: \"%s\".",mysql_error(&demo_db));
+                exit(1);
+        }
+
+
+
+        sprintf(mysql_query, "select crawler_success from shares where collection_name='%s'",subname);
+     
+        debug("mysql_query: %s\n",mysql_query);
+
+        if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
+                printf(mysql_error(&demo_db));
+                blog(gcaopt->logSummary,1,"MySQL Error: \"%s\".",mysql_error(&demo_db));
+
+                exit(1);
+        }
+        mysqlres=mysql_store_result(&demo_db); /* Download result from server */
+
+        nrofcollections = (int)mysql_num_rows(mysqlres);
+
+	if (nrofcollections == 0) {
+		blog(gcaopt->logSummary,1,"Skipping \"%s\": dident find any rows",subname);
+	}
+	else if (nrofcollections != 1) {
+		blog(gcaopt->logSummary,1,"Skipping \"%s\": has more then 1 rows",subname);
+	}
+	else {
+		while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
+
+                	if (mysqlrow[0] != NULL) {
+                        	crawler_success = atoi(mysqlrow[0]);
+                	}
+
+		}
+	}
+
+	mysql_free_result(mysqlres);
+	mysql_close(&demo_db);
+
+
+	printf("~isOkCrawled(crawler_success=%i)\n",crawler_success);
+
+
+
+
+	if (crawler_success == 1) {
+		return 1;
+	}
+	else {
+		return 0;
+	}
+
+}
+
 void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 
 	int LotNr, i;
@@ -172,10 +247,16 @@ void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 	gcaopt->keept = 0;
 	gcaopt->gced = 0;
 
+	if (!isOkCrawled(subname,gcaopt)) {
+		blog(gcaopt->logSummary,1,"Skipping \"%s\". Was not correctly crawled.",subname);		
+		return;
+	}
+
 	if ((LOCK = lockcoll(subname)) == NULL) {
 		fprintf(stderr,"Can't lock lockfile!\n");
 		exit(-1);
 	}
+	
 
 	#ifdef BLACK_BOKS
 
