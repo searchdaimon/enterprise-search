@@ -69,7 +69,7 @@ sub cleaneFolder {
 		}
                 elsif (($fuid == $uuid) && ( $fatime < (time - $maxtime)) && (-f $file)) {
                         print "OLD: file uid $fuid, time $now_string: $file\n";
-		    	$self->{'log'}->write("TmpSizeWatch: removing old /tmp file $file. File last accessed at $now_string");
+		    	$self->{'log'}->write("TmpSizeWatch: removing old file $file. File last accessed at $now_string");
 
                         #unlink($file) or warn "Can't delete $file: $!\n";
                 }
