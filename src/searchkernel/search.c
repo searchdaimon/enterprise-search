@@ -3532,8 +3532,10 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 					if (pair(vector_get(dup->V,k)).second.ptr == (*TeffArray)->iindex[i].subname->subname) {
 						++(*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection;
+						break;
 					}
 				}
+				    
 
 				printf("DUPLICATE secund(s): DocID=%u, subname=%s\n", (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].subname->subname);
 				vector_pushback(dup->V, (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].subname->subname);

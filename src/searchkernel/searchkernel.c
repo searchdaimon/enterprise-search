@@ -153,6 +153,8 @@ struct PagesResultsFormat {
 		struct hashtable *crc32maphash;
 		enum platform_type ptype; 
 		enum browser_type btype; 
+
+		int filtering_on_collection;
 };
 
 
@@ -696,6 +698,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 			struct duplicate_docids *dup = hashtable_search(PagesResults->crc32maphash, &Sider->DocumentIndex.crc32);
 			if (dup != NULL && dup->V != NULL) {
 				int k;
+				int x=0;
 
 				Sider->n_urls = vector_size(dup->V) -1;
 				Sider->urls = calloc(Sider->n_urls, sizeof(*(Sider->urls)));
@@ -703,33 +706,40 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 				//iterator itr = list_begin(list);
 				//itr = list_next(itr);
 				//for (k = 0; itr.valid; itr = list_next(itr), k++) {
-				for (k = 0; k<vector_size(dup->V)-1; k++) {
+				for (k = 0; k<vector_size(dup->V); k++) {
+					unsigned int dup_docid = pair(vector_get(dup->V,k)).first.i;
+					//char *dup_subname = PagesResults->TeffArray->subnames[pair(vector_get(dup->V,k)).second.i];
+					char *dup_subname = pair(vector_get(dup->V,k)).second.ptr;
+
+					if (dup_docid == DocID && !strcmp(dup_subname, subname))
+					    {
+						x = 1;
+						continue;
+					    }
+
 					char htmlbuf[1024*1024 * 5], imagebuf[1<<16];
 					unsigned int htmllen = sizeof(htmlbuf);
 					unsigned int imagelen = sizeof(imagelen);
 					char *url, *acla, *acld, *attributes;
 					struct DocumentIndexFormat di;
 					struct ReposetoryHeaderFormat repohdr;
-					unsigned int docid = pair(vector_get(dup->V,k+1)).first.i;
-					//char *subname = PagesResults->TeffArray->subnames[pair(vector_get(dup->V,k+1)).second.i];
-					char *subname = pair(vector_get(dup->V,k+1)).second.ptr;
 					char tmpurl[1024];
-					printf("Woop subname!!!: %p %s\n", subname, subname);
+					printf("Woop subname!!!: %p %s\n", dup_subname, dup_subname);
 
 					acld = acla = attributes = url = NULL;
-					if (!DIRead(&di, docid, subname)) {
+					if (!DIRead(&di, dup_docid, dup_subname)) {
 						warn("DIRead()");
 						continue;
 					}
-					rReadHtml(htmlbuf, &htmllen, di.RepositoryPointer, di.htmlSize, docid,
-							subname, &repohdr, &acla, &acld, di.imageSize,
+					rReadHtml(htmlbuf, &htmllen, di.RepositoryPointer, di.htmlSize, dup_docid,
+							dup_subname, &repohdr, &acla, &acld, di.imageSize,
 							&url, &attributes);
 
 					strlcpy(tmpurl, url, sizeof(tmpurl));
 					//printf("Dup url: %s -- %s\n", url, tmpurl);
 					handle_url_rewrite(tmpurl, sizeof(tmpurl), PagesResults->ptype,
 							PagesResults->btype,
-							subname, tmpurl,
+							dup_subname, tmpurl,
 							sizeof(tmpurl), PagesResults->cmcsocketha,
 #ifdef WITH_THREAD
 							&PagesResults->mutex_pathaccess
@@ -738,10 +748,10 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 #endif
 							);
 					//printf("tmpurl: %s\n", tmpurl);
-					Sider->urls[k].url = strdup(tmpurl);
-					Sider->urls[k].uri = strdup(tmpurl);
-					shortenurl(Sider->urls[k].uri, strlen(Sider->urls[k].uri));
-					//strcpy(Sider->urls[k].url, subname);
+					Sider->urls[k-x].url = strdup(tmpurl);
+					Sider->urls[k-x].uri = strdup(tmpurl);
+					shortenurl(Sider->urls[k-x].uri, strlen(Sider->urls[k-x].uri));
+					//strcpy(Sider->urls[k-x].url, dup_subname);
 					free(attributes);
 					free(acla);
 					free(acld);
@@ -1122,6 +1132,7 @@ void *generatePagesResults(void *arg)
 		//	(*PagesResults).filterOn = 0;
 		//}
 		#ifdef BLACK_BOKS
+
 			//hvis index filter tidligere har funet ut at dette ikke er et bra treff går vi til neste
 			if ((*PagesResults).TeffArray->iindex[i].indexFiltered.filename == 1) {
 				#ifdef DEBUG
@@ -1141,15 +1152,19 @@ void *generatePagesResults(void *arg)
 				#endif
 				continue;
 			}
-			if ((*PagesResults).TeffArray->iindex[i].indexFiltered.duplicate == 1) {
+			// If NOT filtering on collection:
+			if (!(*PagesResults).filtering_on_collection
+			    && (*PagesResults).TeffArray->iindex[i].indexFiltered.duplicate == 1) {
 				#ifdef DEBUG
 				printf("filter: index filtered (duplicate)\n");
 				#endif
 				continue;
 			}
-			if ((*PagesResults).TeffArray->iindex[i].indexFiltered.is_filtered == 1) {
+			// If filtering on collection:
+			if ((*PagesResults).filtering_on_collection
+			    && (*PagesResults).TeffArray->iindex[i].indexFiltered.duplicate_in_collection >= 0) {
 				#ifdef DEBUG
-				printf("filter: index filtered (is_filtered)\n");
+				printf("filter: index filtered (duplicate_c)\n");
 				#endif
 				continue;
 			}
@@ -2029,6 +2044,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
 			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 0, &crc32maphash, search_user, searchd_config->cmc_port);
+	PagesResults.filtering_on_collection = (filteron.collection != NULL);
 	PagesResults.crc32maphash = crc32maphash;
 
 	#ifdef DEBUG
@@ -2609,6 +2625,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
 			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 1, NULL, search_user, searchd_config->cmc_port);
+	PagesResults.filtering_on_collection = (filteron.collection != NULL);
 	// XXX: eirik, we should not discard the duplicate tests
 	//&rankDocId);
 
