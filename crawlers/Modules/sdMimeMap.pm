@@ -355,7 +355,7 @@ sub mapMimeType {
    if (defined  $types{$mt}) {
       return $types{$mt};
   } else {
-     return "dat";
+     return "";
   }
 }
 
