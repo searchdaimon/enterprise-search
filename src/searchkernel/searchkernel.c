@@ -713,6 +713,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 
 					if (dup_docid == DocID && !strcmp(dup_subname, subname))
 					    {
+						// Hvis dette er docid-en som vises, skal den ikke filtreres.
 						x = 1;
 						continue;
 					    }
@@ -724,7 +725,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 					struct DocumentIndexFormat di;
 					struct ReposetoryHeaderFormat repohdr;
 					char tmpurl[1024];
-					printf("Woop subname!!!: %p %s\n", dup_subname, dup_subname);
+					//printf("Woop subname!!!: %p %s\n", dup_subname, dup_subname);
 
 					acld = acla = attributes = url = NULL;
 					if (!DIRead(&di, dup_docid, dup_subname)) {
@@ -1149,6 +1150,12 @@ void *generatePagesResults(void *arg)
 			if ((*PagesResults).TeffArray->iindex[i].indexFiltered.subname == 1) {
 				#ifdef DEBUG
 				printf("filter: index filtered (subname)\n");
+				#endif
+				continue;
+			}
+			if ((*PagesResults).TeffArray->iindex[i].indexFiltered.attribute == 1) {
+				#ifdef DEBUG
+				printf("filter: index filtered (attribute)\n");
 				#endif
 				continue;
 			}

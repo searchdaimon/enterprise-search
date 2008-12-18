@@ -3461,9 +3461,11 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 #if 1
 
 			// This document is filtered out, don't even think about it.
-			if ((*TeffArray)->iindex[i].indexFiltered.filename == 1
-			    || (*TeffArray)->iindex[i].indexFiltered.date == 1
-			    || (*TeffArray)->iindex[i].indexFiltered.attribute == 1)
+//			if ((*TeffArray)->iindex[i].indexFiltered.filename == 1
+//			    || (*TeffArray)->iindex[i].indexFiltered.date == 1
+//			    || (*TeffArray)->iindex[i].indexFiltered.attribute == 1)
+//				continue;
+			if ((*TeffArray)->iindex[i].indexFiltered.date == 1)
 				continue;
 
 
@@ -3515,7 +3517,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 						printf("is already filtered out ");
 					#endif				
 				}
-				else {
+				else if (filteron->collection == NULL) {
 					--(*TotaltTreff);
 				}
 
@@ -3531,7 +3533,11 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 				for (k = 0; k<vector_size(dup->V); k++) { 
 
 					if (pair(vector_get(dup->V,k)).second.ptr == (*TeffArray)->iindex[i].subname->subname) {
+
 						++(*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection;
+
+						if (!(*TeffArray)->iindex[i].indexFiltered.is_filtered && filteron->collection != NULL)
+							--(*TotaltTreff);
 						break;
 					}
 				}
@@ -3705,36 +3711,27 @@ char* searchFilterCount(int *TeffArrayElementer,
 		// key -> (val->#), #
 		container	*attributes = map_container( string_container(), pair_container( ptr_container(), int_container() ) );
 		container	*file_groups = map_container( string_container(), string_container() );
-		#endif
 
 
-//ax		h = create_hashtable(200, fileshashfromkey, filesequalkeys);
+		// Teller filtyper og attributter til navigasjonsmenyen:
 
 		for (i = 0; i < (*TeffArrayElementer); i++) {
 
-			//his dette er en slettet index element så teller vi den ikke.
-			//dette så vi ikke skal telle ting som folk ikke her tilgang til
-			//runarb: 1 now 2007: Hvorfor er denne halet ut ?? Da gjør at ting som filtreres ut i filtere i søkekjernen ikke vises riktig
-			//legger den inn
-			//runarb: 2 nov 2007: Skaper problmer med at tallene forandrer seg, gjør slik at de fortsat blir med i tallene, men ikke
-			//vises i resultatene. Gør så at brukeren kan slå av filteret ved å vise filterbeskjeden
-			/*
-			if (TeffArray->iindex[i].deleted) {
-				continue;
-			}
-			else 
-			*/
 			if (TeffArray->iindex[i].indexFiltered.date == 1) {
 				continue;
 			}
 			else if (TeffArray->iindex[i].indexFiltered.subname == 1) {
 				continue;
 			}
-			else if (TeffArray->iindex[i].indexFiltered.duplicate == 1) {
+			else if (filteron->collection==NULL && TeffArray->iindex[i].indexFiltered.duplicate == 1) {
+				printf("docid(%i) (duplicate)\n", TeffArray->iindex[i].DocID);
+				continue;
+			}
+			else if (filteron->collection!=NULL && TeffArray->iindex[i].indexFiltered.duplicate_in_collection >= 0) {
+				printf("docid(%i) (duplicate_c)\n", TeffArray->iindex[i].DocID);
 				continue;
 			}
 
-			#ifdef ATTRIBUTES
 			// Ax: Slå opp attributter for dokumentet.
 
 			int	DocID = TeffArray->iindex[i].DocID;
@@ -3763,43 +3760,61 @@ char* searchFilterCount(int *TeffArrayElementer,
 					struct stat	inode;
 					fstat(fileno(f_crc32_words), &inode);
 					crc32_words_size = inode.st_size;
-					m_crc32_words = mmap(NULL, crc32_words_size, PROT_READ, MAP_PRIVATE, fileno(f_crc32_words), 0);
 
-					crc32_words_size/= attr_crc32_words_blocksize;
-
-					iterator it_pre = map_insert(attr_subname_re, subname, f_crc32_words, m_crc32_words, crc32_words_size);
-					attr_keys = tuple(map_val(it_pre)).element[1].C;
-					// Read attribute columns for this subname.
-					FILE	*f_attrcols = lotOpenFileNoCasheByLotNr(1, "reposetory.attribute_columns", "r", 's', subname);
-
-					if (f_attrcols!=NULL)
+					if (crc32_words_size > 0
+					    && (m_crc32_words=mmap(NULL, crc32_words_size, PROT_READ, MAP_PRIVATE, fileno(f_crc32_words), 0))
+						!= MAP_FAILED)
 					    {
-						char		key[MAX_ATTRIB_LEN];
+						crc32_words_size/= attr_crc32_words_blocksize;
 
-						while (fgets(key, MAX_ATTRIB_LEN, f_attrcols) != NULL)
+						// Putt i cache:
+						iterator it_pre = map_insert(attr_subname_re, subname, f_crc32_words, m_crc32_words, crc32_words_size);
+						attr_keys = tuple(map_val(it_pre)).element[1].C;
+						// Read attribute columns for this subname.
+						FILE	*f_attrcols = lotOpenFileNoCasheByLotNr(1, "reposetory.attribute_columns", "r", 's', subname);
+
+						if (f_attrcols!=NULL)
 						    {
-							key[strlen(key)-1] = '\0';
-							set_insert(attr_keys, key);
+							char		key[MAX_ATTRIB_LEN];
+
+							while (fgets(key, MAX_ATTRIB_LEN, f_attrcols) != NULL)
+							    {
+								key[strlen(key)-1] = '\0';
+								set_insert(attr_keys, key);
+							    }
+
+							fclose(f_attrcols);
 						    }
 
-						fclose(f_attrcols);
+						lot_re = tuple(map_val(it_pre)).element[0].C;
 					    }
+					else
+					    {
+						fclose(f_crc32_words);
+						no_attributes = 1;
+					    }
+				    }
 
-//					printf("reopen(lotNr=1, structsize=%i, file=%s, subname=%s, flags=%i)\n",
-//					sizeof(unsigned int)*set_size(attr_keys), "attributeIndex", subname, 0);
-//					re = reopen(1, sizeof(unsigned int)*set_size(attr_keys), "attributeIndex", subname, 0);
-//					tuple(map_val(it_pre)).element[0].ptr = re;
-					lot_re = tuple(map_val(it_pre)).element[0].C;
+				if (no_attributes)
+				    {
+					map_insert(attr_subname_re, subname, NULL, NULL, 0);
 				    }
 			    }
 			else
 			    {
-				// Values already in cache:
-				lot_re = tuple(map_val(it_re)).element[0].C;
-				attr_keys = tuple(map_val(it_re)).element[1].C;
-				f_crc32_words = tuple(map_val(it_re)).element[2].ptr;
-				m_crc32_words = tuple(map_val(it_re)).element[3].ptr;
-				crc32_words_size = tuple(map_val(it_re)).element[4].i;
+				if (tuple(map_val(it_re)).element[2].ptr == NULL)
+				    {
+					no_attributes = 1;
+				    }
+				else
+				    {
+					// Values already in cache:
+					lot_re = tuple(map_val(it_re)).element[0].C;
+					attr_keys = tuple(map_val(it_re)).element[1].C;
+					f_crc32_words = tuple(map_val(it_re)).element[2].ptr;
+					m_crc32_words = tuple(map_val(it_re)).element[3].ptr;
+					crc32_words_size = tuple(map_val(it_re)).element[4].i;
+				    }
 			    }
 
 			if (!no_attributes)
@@ -3820,6 +3835,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 			// Beregning av attributt-bits:
 			int	len = TeffArray->attrib_count + 1;
 			int	count = 0;
+			//count = (1<<len) -1;
 			for (j=0; j<len-1; j++)
 			    count+= (1 - TeffArray->iindex[i].indexFiltered.attrib[j])<<j;
 			count+= (1 - TeffArray->iindex[i].indexFiltered.filename)<<(len-1);
@@ -3853,25 +3869,8 @@ char* searchFilterCount(int *TeffArrayElementer,
 					    }
 				    }
 			    }
-			#endif	// ATTRIBUTES
-/*ax
-			// Slå opp filendelse:
-			if (NULL == (filesValue = hashtable_search(h,TeffArray->iindex[i].filetype) )) {
-//				fprintf(stderr, "search: Hash does not contain filetype '%s'. Adding filetype.\n", TeffArray->iindex[i].filetype);
-				filesValue = malloc(sizeof(int));
-				(*filesValue) = 1;
-				filesKey = strdup(TeffArray->iindex[i].filetype);
-				if (! hashtable_insert(h,filesKey,filesValue) ) {
-					printf("cant insert\n");     
-					exit(-1);
-				}
 
-		        }
-			else {
-				++(*filesValue);
-			}
-*/
-			#ifdef ATTRIBUTES
+
 			char	**ptr1, **ptr2;
 			char	*file_ext;
 
@@ -3902,15 +3901,15 @@ char* searchFilterCount(int *TeffArrayElementer,
 				attribute_count_add(count, attributes, 3, "group", group, file_ext);
 			        attribute_count_add(count, attributes, 2, "filetype", file_ext);
 			    }
-			#endif	// ATTRIBUTES
 		}
 
-		#ifdef ATTRIBUTES
 		// Lukk åpne filer og frigjør ledig minne:
 		{
 		    iterator	it_re1 = map_begin(attr_subname_re);
 		    for (; it_re1.valid; it_re1=map_next(it_re1))
 			{
+			    if (tuple(map_val(it_re1)).element[2].ptr == NULL) continue;
+
 			    iterator	it_re2 = map_begin(tuple(map_val(it_re1)).element[0].C);
 			    for (; it_re2.valid; it_re2=map_next(it_re2))
 				{
@@ -3923,165 +3922,15 @@ char* searchFilterCount(int *TeffArrayElementer,
 		    destroy(attr_subname_re);
 		}
 		destroy(file_groups);
-		#endif
-
-/*
-		(*filters).filtypes.nrof = 0;
-
-		if (hashtable_count(h) > 0)
-		{
-
-			//legger inn All feltet
-			strscpy((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name,
-                                "All",
-	                        sizeof((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name));
-			strscpy((*filters).filtypes.elements[ (*filters).filtypes.nrof ].longname,
-                                "All",
-	                        sizeof((*filters).filtypes.elements[ (*filters).filtypes.nrof ].longname));
-			(*filters).filtypes.elements[(*filters).filtypes.nrof].nrof = 0;
-
-			++(*filters).filtypes.nrof;
-
-			//itererer over hash
-			struct hashtable_itr *itr;
-
-       			itr = hashtable_iterator(h);
-			
-       			do {
-       				filesKey = hashtable_iterator_key(itr);
-       				filesValue = (int *)hashtable_iterator_value(itr);
-
-				//ignorerer filnavn som er blanke, eller har % i seg
-				if ((strchr(filesKey,'%') != NULL) || (filesKey[0] == '\0')) {
-					printf("ignoring file name \"%s\" that has %i files\n",filesKey,(*filesValue));
-					continue;
-				}
-
-				printf("files \"%s\": %i\n",filesKey,*filesValue);
-
-				strscpy(
-					(*filters).filtypes.elements[ (*filters).filtypes.nrof ].name,
-					filesKey,
-					sizeof((*filters).filtypes.elements[ (*filters).filtypes.nrof ].name));
-
-				(*filters).filtypes.elements[(*filters).filtypes.nrof].nrof = (*filesValue);
-				++(*filters).filtypes.nrof;
-				
-				
-       			} while ((hashtable_iterator_advance(itr)) && ((*filters).filtypes.nrof<MAXFILTERELEMENTS));
-    			free(itr);
-
-			//sorterer på forekomst
-//@ax-			qsort((*filters).filtypes.elements,(*filters).filtypes.nrof,sizeof(struct filterinfoElementsFormat),compare_filetypes);
-
-		}
-
-		hashtable_destroy(h,1); 
 
 
-				// key==group_id, value=={group, size}:
-		container	*G = map_container( int_container(), pair_container( string_container(), int_container() ) );	// @ax+
-				// key==descr_id, value=={descr, size, group_id, postfix}:
-		container	*D = map_container( int_container(),
-		    tuple_container( 4, string_container(), int_container(), int_container(), string_container() ) );	// @ax+
-
-		char *cpnt;
-
-		for (i=1; i<(*filters).filtypes.nrof; i++)
-		    {
-		        char		*group, *descr;
-			int		ret;
-			ret = fte_getdescription(getfiletypep, "nbo", (*filters).filtypes.elements[i].name, &group, &descr);
-
-//			printf("  %s:%s\t%i = [%i|%i]\n", group, descr, ret, ret/256, ret%256);
-
-			iterator	mit = map_find(G, ret%256);
-			if (mit.valid)
-			    pair(map_val(mit)).second.i+= (*filters).filtypes.elements[i].nrof;
-			else
-			    map_insert(G, ret%256, group, (*filters).filtypes.elements[i].nrof);
-
-			mit = map_find(D, ret/256);
-			if (mit.valid)
-			    tuple(map_val(mit)).element[1].i+= (*filters).filtypes.elements[i].nrof;
-			else
-			    {
-				char	**ptr1, **ptr2;
-				if (fte_getext_from_ext(getfiletypep, (*filters).filtypes.elements[i].name, &ptr1, &ptr2))
-				    {
-					ptr2--;
-					map_insert(D, ret/256, descr, (*filters).filtypes.elements[i].nrof, ret%256, *ptr2);
-				    }
-				else
-				    {
-					map_insert(D, ret/256, descr, (*filters).filtypes.elements[i].nrof, ret%256,
-					    (*filters).filtypes.elements[i].name);
-				    }
-			    }
-		    }
-
-				// key==size, value=={group, group_id}:
-		container	*G2 = multimap_container( int_container(), pair_container( string_container(), int_container() ) );
-				// key=={group_id, size}, value=={descr, postfix}:
-		container	*D2 = multimap_container( pair_container(int_container(), int_container()), pair_container( string_container(), string_container() ) );
-
-		iterator	git = map_begin(G);
-		for (; git.valid; git=map_next(git))
-		    multimap_insert(G2, pair(map_val(git)).second.i, pair(map_val(git)).first.ptr, map_key(git).i);
-
-		iterator	dit = map_begin(D);
-		for (; dit.valid; dit=map_next(dit))
-		    multimap_insert(D2, tuple(map_val(dit)).element[2].i, tuple(map_val(dit)).element[1].i, tuple(map_val(dit)).element[0].ptr, tuple(map_val(dit)).element[3].ptr);
-
-		(*filters).filtypes.nrof = 1;
-		git = multimap_end(G2);
-		for (; git.valid; git=multimap_previous(git))
-		    {
-			printf("  %s (%i)\n", pair(multimap_val(git)).first.ptr, multimap_key(git).i);
-
-			i = (*filters).filtypes.nrof;
-
-			dit = multimap_end(D2);
-			for (; dit.valid; dit=multimap_previous(dit))
-			    if (pair(multimap_key(dit)).first.i == pair(multimap_val(git)).second.i)
-				{
-				    strscpy( (*filters).filtypes.elements[i].name, pair(multimap_val(dit)).second.ptr, sizeof((*filters).filtypes.elements[i].name) );
-				    printf("    [%s] %s (%i)\n", pair(multimap_val(dit)).second.ptr, pair(multimap_val(dit)).first.ptr, pair(multimap_key(dit)).second.i);
-				    #ifdef ATTRIBUTES
-				    int	len = TeffArray->attrib_count + 1;
-				    int count = 0;
-				    //int	*count = malloc(sizeof(int)*len);
-				    //for (j=0; j<len-1; j++) count[j] = pair(multimap_key(dit)).second.i;	// TODO: Fiks senere!!!
-				    //count[len-1] = pair(multimap_key(dit)).second.i;
-
-				    for (j=0; j<len-1; j++)
-					count+= 1<<j;
-				    count+= 1<<(len-1);
-
-				    for (j=0; j<pair(multimap_key(dit)).second.i; j++)
-					{
-					    attribute_count_add(count, attributes, 3, "group", pair(multimap_val(git)).first.ptr, pair(multimap_val(dit)).second.ptr);
-					    attribute_count_add(count, attributes, 2, "filetype", pair(multimap_val(dit)).second.ptr);
-					}
-				    //free(count);
-				    #endif
-				}
-
-			strscpy( (*filters).filtypes.elements[i].longname, pair(multimap_val(git)).first.ptr, sizeof((*filters).filtypes.elements[i].longname) );
-			(*filters).filtypes.elements[i].nrof = multimap_key(git).i;
-			(*filters).filtypes.nrof++;
-		    }
-
-		destroy(G);	// @ax+
-		destroy(D);	// @ax+
-		destroy(G2);	// @ax+
-		destroy(D2);	// @ax+
-*/
-		#if defined(ATTRIBUTES) && defined(DEBUG)
+		#ifdef DEBUG
 		printf("attributes:\n");
 		attribute_count_print(attributes, TeffArray->attrib_count+1, 2);
 		printf("------\n");
 		#endif
+
+		#endif // ATTRIBUTES
 
 		/***********************************************************************************************
 		 collections
@@ -4255,7 +4104,10 @@ char* searchFilterCount(int *TeffArrayElementer,
 			else if (TeffArray->iindex[i].indexFiltered.attribute == 1) {
 				continue;
 			}
-			else if (TeffArray->iindex[i].indexFiltered.duplicate == 1) {
+			else if (filteron->collection==NULL && TeffArray->iindex[i].indexFiltered.duplicate == 1) {
+				continue;
+			}
+			else if (filteron->collection!=NULL && TeffArray->iindex[i].indexFiltered.duplicate_in_collection >= 0) {
 				continue;
 			}
 
