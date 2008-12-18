@@ -297,7 +297,7 @@ void attribute_count_print( container *attributes, int attrib_count, int indent 
 	    int		i;
 
 	    for (i=0; i<indent; i++) printf(" ");
-	    printf("%s (?)\n", (char*)map_key(it).ptr);
+	    printf("%s\n", (char*)map_key(it).ptr);
 	    /*
 	    for (i=0; i<attrib_count; i++)
 		{
@@ -448,7 +448,8 @@ int attribute_print_xml_sorted(container *items, int indent, buffer *B, int sort
 
 	    for (i=0; i<qa->n; i++)
 		if (qa->query[i].operand == QUERY_GROUP
-		    || qa->query[i].operand == QUERY_FILETYPE) set_insert(remove, i);
+		    || qa->query[i].operand == QUERY_FILETYPE
+		    || qa->query[i].operand == QUERY_ATTRIBUTE) set_insert(remove, i);
 	}
 
     buffer	*B2 = buffer_init(-1);
