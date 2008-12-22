@@ -1,0 +1,30 @@
+
+#collectionNav {
+    margin-left : 7.8em;
+}
+
+#results {
+    /* max-width : 600px; */
+    width : expression(Math.min(parseInt(this.offsetWidth), 600) + "px");
+}
+
+#filtered {
+    /* max-width : 30em; */
+    width : expression(Math.min(parseInt(this.offsetWidth), 30) + "em");
+    margin-left : 7.8em;
+}
+
+#navWrapper {
+    /* max-width : 32em; */
+    width : expression(Math.min(parseInt(this.offsetWidth), 32) + "em");
+}
+
+#navWrapper #liNavMenu {
+    /* max-width : 20em; */
+    width : expression(Math.min(parseInt(this.offsetWidth), 20) + "em");
+}
+
+#navWrapper #liNavMenu li {
+    padding-top : 0;
+    padding-right : 0.6em;
+}

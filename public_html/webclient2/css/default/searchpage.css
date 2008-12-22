@@ -1,0 +1,372 @@
+body {
+    padding : 0;
+    margin : 0;
+}
+
+.thumb {
+    border : 0;
+}
+
+#topNav {
+    margin-top : 0;
+    padding-top : 0;
+}
+
+#topNav a img {
+    border : 0;
+    float : left;
+}
+
+#topNav form div {
+    position : relative;
+    float : left;
+    padding-top : 40px;
+    padding-left : 1em;
+}
+
+#topNav #queryBtn {
+    /* vertical align to center of queryField */
+    position : absolute; 
+    top : 35px;
+    right : -65px;;
+}
+
+
+#infoBar {
+    clear : both;
+    float : left;
+    margin-right : 0;
+    background : #014f99;
+    position : relative;
+    height : 27px; /* same as img */
+    width : 100%;
+
+}
+#infoBar span { /* text */
+    color : white;
+    font-family: Arial, Helvetica, sans-serif; 
+    font-size: small;
+    margin-top : 0.3em;
+    margin-left : 0.3em;
+    margin-right : 18px; /* same as img */
+}
+
+#infoBar img {
+    position : absolute;
+    right : 0;
+    top : 0;
+}
+
+#filterText {
+	position : absolute;
+	background :  #dee7f0;/*#cdd7e3;*/
+	padding : 0;
+	margin-top : 0.5em;
+	height : 2em;
+}
+#filterText h4 { 
+	margin : 0.5em;
+}
+
+#nav, #filterText {
+	color: #333333;
+	font-family: Arial, Helvetica, sans-serif;
+	width : 15em;
+    	left : 0;
+
+}
+
+#nav {
+    position : absolute;
+    background : #dee7f0;
+	top : 2.6em;
+	z-index : 0;
+
+}
+
+#nav #navTree {
+    font-size : small;
+    font-family : Verdana, sans-serif;
+    margin-top : 0.6em;
+}
+    
+#nav #navTree a {
+    text-decoration : none;
+    color : blue;
+}
+#nav  a:hover {
+	color : #537fb0;
+}
+#nav #navTree .navHits {
+	font-size : 80% !important;
+	font-weight : normal !important;
+	color : #333333;
+}
+
+#nav .topGroupDiv {
+	background : #cdd7e3;
+	position : absolute;
+	width : 100%;
+	left : 0;
+	z-index : -1;
+	height : 1.5em;
+}
+
+
+#collectionNav {
+    float : left;
+    margin-top : 1em;
+    list-style-type : none;
+    padding : 0;
+    margin : 0;
+    margin-left : 16em;
+    margin-top : 0.5em;
+    width : auto;
+}
+
+#collectionNav .collectionTab {
+    position : relative;
+    float : left;
+    font-family : Arial, Helvetica, sans-serif;
+    font-size : small;
+
+    margin-right : 0.1em;
+    background : #537FB0 url(/webclient/templates/searchpage/img/collcorner.png) 
+        top left no-repeat;
+    color : #cccccc;
+    
+    padding-left : 0.6em;
+    padding-bottom : 0.5em;
+    padding-top : 0.5em;
+    margin-top : 0.1em;
+
+}
+
+#collectionNav .collectionTab a {
+    color : white;
+    text-decoration : none;
+}
+#collectionNav span {
+    padding-right : 0.5em;
+}
+#collectionNav .collRight {
+    position : absolute;
+    background : url(/webclient/templates/searchpage/img/collcorner_right.png) 
+        top right no-repeat;
+    right : 0;
+    top : 0;
+}
+
+
+#collectionNav .selected  {
+    background : #014f99 url(/webclient/templates/searchpage/img/collcorner.png) 
+        top left no-repeat !important;
+}
+
+#messages {
+    margin-left : 16em;
+}
+
+#messages #spellcheck {
+    clear : both;
+    color : #ce4e4b;
+    font-size : small;
+}
+#messages #spellcheck a {
+    font-style: italic;
+    color : blue;
+}
+
+#sortBar {
+	position : absolute;
+	right : 1em;
+	margin-top : -1em;
+	color : #333333;
+	font-size : small; 
+	font-family: Tahoma, Verdana;
+}
+
+#noResultsText {
+	font-size : large;
+}
+
+#results {
+    clear : both;
+    margin-left : 16em;
+    font-family : arial;
+    max-width: 800px;
+    margin-top : -0.5em;
+}
+
+#results ul {
+    list-style-type : none;
+    padding : 0;
+    margin-left : 0;
+}
+
+#results li {
+    margin-top : 0.5em;
+}
+
+#result img {
+}
+
+#results table {
+    width : 100%; 
+    border-collapse : collapse;
+}
+
+#results td {
+    vertical-align : top;
+}
+#results .title {
+    font-size : medium;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight : bolder;
+}
+
+#results .url, .snippet, .details, .doctype, .duplicates {
+    font-size : 80%;
+}
+
+#results .snippet {
+    max-width : 45em;
+}   
+
+#results .url, .duplicates {
+    color : green;
+    background : white; 
+}
+
+#results .details {
+    color : #444444;
+    background : white; 
+
+}
+#results .details a {
+	color : #537fb0;
+}
+
+.duplicateList {
+	list-style-type : none;
+	font-size : 75%;
+	margin-left : 1em;;
+}
+.duplicateList a {
+	color: #009933;
+	text-decoration : none !important;
+}
+
+.duplicates a:hover {
+	color : white;
+	color: #00AA44;
+}
+.duplicates a {
+	text-decoration : underline;
+	cursor : pointer;
+}
+
+
+#filtered {
+    margin-left : 16em;
+    color : #333333;
+    font-style : italic;
+    float : left;
+    max-width : 30em;
+    margin-bottom : 0.5em;
+}
+
+#navWrapper {
+    padding-left : 0;
+clear : both;
+    color : white;
+    list-style-type : none;
+    height : 27px;
+    width : 24.2em;
+    border : 0;
+     margin : auto;
+     /* background : gray;  */
+}
+#navWrapperRight, #navWrapperLeft {
+    width : 5em;
+    padding-right : 1em !important;
+    padding-top : 0 !important;
+    height : 27px !important;
+}
+
+#navWrapperLeft {
+    background : #014f99 url(/webclient/templates/searchpage/img/nav_left.png) top left no-repeat !important;
+}
+
+#navWrapperRight {
+    background : #014f99 url(/webclient/templates/searchpage/img/nav_right.png) top right no-repeat !important;
+}
+
+#navWrapper a {
+    color : white;
+    text-decoration : none;
+}
+#navWrapper a:hover {
+	text-decoration : underline;
+}
+
+#navWrapper li {
+    padding-right : 0.5em;
+    font-family: Arial, Helvetica, sans-serif; 
+    font-size : small;
+    padding-top : 0.4em;
+    float : left;
+    height : 24px;
+    background : #014f99;
+    width : 1em;
+}
+
+#navWrapper #nextNav, #navWrapper #prevNav {
+	width : 3.5em;
+}
+#navWrapper #nextNav {
+	padding-left : 0.5em;
+}
+#navWrapper #prevNav {
+	padding-right : 0.5em;
+}
+
+#navWrapper #navCurrent {
+    font-weight : bolder;
+    /* font-size : medium; */
+}
+
+
+
+.lineBlue {
+    border-top: 3px solid #014f99; 
+    margin-top : 0;
+    padding-top : 0;
+    margin-bottom : 0;
+}
+
+
+#copyright {
+    /* margin-left : 25.0em; */
+    text-align : center;
+    font-family: Arial, Helvetica, sans-serif; 
+    font-size : x-small;
+}
+
+
+/**
+ * In error.tpl: 
+ */
+#errors {
+    padding-top : 0.5em;
+    padding-left : 0.5em;
+    padding-left : auto;
+    padding-right : auto;
+    font-family : arial;
+    font-size : medium;
+    color : #981515;
+}
+
+
+
+

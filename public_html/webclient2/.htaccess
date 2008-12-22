@@ -1,0 +1,20 @@
+AuthName "Restricted Area"
+AuthUserFile /home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd 
+AuthGroupFile /dev/null
+AuthType Basic
+
+require user admin
+
+DirectoryIndex index.pl
+AddHandler cgi-script pl
+Options +ExecCGI
+
+# No direct reading of tpl files
+<Files ~ "\.tpl$">
+	Deny from all
+</Files>
+
+# Localisation
+<Files ~ "\.po$">
+	Deny from all
+</Files>

@@ -1,0 +1,86 @@
+msgid ""
+msgstr ""
+
+# header
+msgid "Showing %1 - %2 out of %3 results"
+msgstr "Showing %1 - %2 out of %3 results"
+
+msgid "(search_btn_img)"
+msgstr "img/default/search_en.jpg"
+
+msgid "Start search"
+msgstr "Start search"
+
+msgid "Search"
+msgstr "Search"
+
+msgid "Results for"
+msgstr "Results for"
+
+msgid "Showing %1 - %2 out of %3 results. %4 sec."
+msgstr "Showing %1 - %2 out of %quant(%3, result, results). %4 sec."
+
+msgid "Showing no results. %1 sec."
+msgstr "Showing no results. %1 sec."
+
+#filter
+msgid "(filtered_msg)"
+msgstr "%quant(%1, of the expected results was, of the expected results were) filtered out by the system. This can happen if the resource has been moved, deleted or the rights have been change after the most recent indexing."
+
+# collections
+msgid "no hits"
+msgstr "no hits"
+
+msgid "%1 hits"
+msgstr "%quant(%1, hit, hits)"
+
+msgid "All collections"
+msgstr "All collections"
+
+# sorting
+msgid "Sort"
+msgstr "Sort"
+
+msgid "relevance"
+msgstr "relevance"
+
+msgid "oldest first"
+msgstr "oldest first"
+
+msgid "newest first"
+msgstr "newest first"
+
+# left nav
+msgid "Filtering"
+msgstr "Filtering"
+
+msgid "All results"
+msgstr "All results"
+
+# results
+msgid "cache"
+msgstr "cache"
+
+msgid "Found %1 other copies"
+msgstr "Found %quant(%1, other copy, other copies)"
+
+msgid "Found no results for query \"%1\"."
+msgstr "Found no results for query \"%1\"."
+
+# page nav
+msgid "Next"
+msgstr "Next"
+
+# other
+msgid "Did you mean: %1?"
+msgstr "Did you mean: <a href=\"%2\">%1</a>?"
+
+# footer
+msgid "(copyright)"
+msgstr "Copyright &copy; 2008."
+
+msgid "Searchdaimon AS"
+msgstr "Searchdaimon AS"
+
+msgid "All Rights Reserved."
+msgstr "All Rights Reserved."

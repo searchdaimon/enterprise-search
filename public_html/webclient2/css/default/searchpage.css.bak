@@ -1,0 +1,340 @@
+body {
+    padding : 0;
+    margin : 0;
+}
+
+.thumb {
+    border : 0;
+}
+
+#topNav {
+    margin-top : 0;
+    padding-top : 0;
+}
+
+#topNav a img {
+    border : 0;
+    float : left;
+}
+
+#topNav form div {
+    position : relative;
+    float : left;
+    padding-top : 40px;
+    padding-left : 1em;
+}
+
+#topNav #queryBtn {
+    /* vertical align to center of queryField */
+    position : absolute; 
+    top : 35px;
+    right : -65px;;
+}
+
+
+#infoBar {
+    clear : both;
+    float : left;
+    margin-right : 0;
+    background : #014f99;
+    position : relative;
+    height : 27px; /* same as img */
+    width : 100%;
+
+}
+#infoBar span { /* text */
+    color : white;
+    font-family: Arial, Helvetica, sans-serif; 
+    font-size: small;
+    margin-top : 0.3em;
+    margin-left : 0.3em;
+    margin-right : 18px; /* same as img */
+}
+
+#infoBar img {
+    position : absolute;
+    right : 0;
+    top : 0;
+}
+
+#nav {
+    position : absolute;
+    margin-top : 0.5em;
+    width : 15em;
+    left : 0;
+    
+    color: #333333;
+    font-family: Arial, Helvetica, sans-serif;
+
+    background : #dee7f0;
+}
+
+#nav #navTree {
+    font-size : small;
+    font-family : Verdana, sans-serif;
+}
+    
+#nav #navTree a {
+    text-decoration : none;
+    color : blue;
+}
+#nav #navTree a:hover {
+	color : #537fb0;
+}
+#nav #navTree .navHits {
+	font-size : 80% !important;
+	font-weight : normal !important;
+	color : #333333;
+}
+
+#collectionNav {
+    float : left;
+    margin-top : 1em;
+    list-style-type : none;
+    padding : 0;
+    margin : 0;
+    margin-left : 15.5em;
+    margin-top : 0.5em;
+    width : auto;
+}
+
+#collectionNav .collectionTab {
+    position : relative;
+    float : left;
+    font-family : Arial, Helvetica, sans-serif;
+    font-size : small;
+
+    margin-right : 0.1em;
+    background : #537FB0 url(/webclient/templates/searchpage/img/collcorner.png) 
+        top left no-repeat;
+    color : #cccccc;
+    
+    padding-left : 0.6em;
+    padding-bottom : 0.5em;
+    padding-top : 0.5em;
+    margin-top : 0.1em;
+
+}
+
+#collectionNav .collectionTab a {
+    color : white;
+    text-decoration : none;
+}
+#collectionNav span {
+    padding-right : 0.5em;
+}
+#collectionNav .collRight {
+    position : absolute;
+    background : url(/webclient/templates/searchpage/img/collcorner_right.png) 
+        top right no-repeat;
+    right : 0;
+    top : 0;
+}
+
+
+#collectionNav .selected  {
+    background : #014f99 url(/webclient/templates/searchpage/img/collcorner.png) 
+        top left no-repeat !important;
+}
+
+#messages {
+    margin-left : 15.5em;
+}
+
+#messages #errorText {
+    font-family : arial;
+    font-size : medium;
+    color : #981515;
+    padding-left : 5em;
+}
+
+#messages #spellcheck {
+    clear : both;
+    color : #ce4e4b;
+    font-size : small;
+}
+#messages #spellcheck a {
+    font-style: italic;
+    color : blue;
+}
+
+#sortBar {
+    float : right;
+    margin-top : -1em;
+    margin-right : 1em;
+    color : #333333;
+    font-size : x-small; 
+    font-family: Tahoma, Verdana;
+}
+
+
+
+#results {
+    clear : both;
+    margin-left : 15.5em;
+    font-family : arial;
+    max-width: 600px;
+    margin-top : -0.5em;
+}
+
+#results ul {
+    list-style-type : none;
+    padding : 0;
+    margin-left : 0;
+}
+
+#results li {
+    margin-top : 0.5em;
+}
+
+#result img {
+}
+
+#results table {
+    width : 100%; 
+    border-collapse : collapse;
+}
+
+#results td {
+    vertical-align : top;
+}
+#results .title {
+    font-size : medium;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#results .url, .snippet, .details, .doctype, .duplicates {
+    font-size : 80%;
+}
+
+#results .snippet {
+    max-width : 45em;
+}   
+
+#results .url, .duplicates {
+    color : green;
+    background : white; 
+}
+
+#results .details {
+    color : #444444;
+    background : white; 
+
+}
+.duplicateList {
+	list-style-type : none;
+	font-size : 75%;
+	margin-left : 1em;;
+}
+.duplicateList a {
+	color: #009933;
+	text-decoration : none !important;
+}
+
+.duplicates a:hover {
+	color : white;
+	color: #00AA44;
+}
+.duplicates a {
+	text-decoration : underline;
+	cursor : pointer;
+}
+
+
+#filtered {
+    margin-left : 15.5em;
+    color : #333333;
+    font-style : italic;
+    float : left;
+    max-width : 30em;
+    margin-bottom : 0.5em;
+}
+
+#navWrapper {
+    clear : both;
+    max-width : 32em;
+    list-style-type : none;
+    padding-left : 0;
+    margin-left : auto;
+    margin-right : auto;
+    /* margin-left : 15.5em; */
+    height : 27px;
+    margin-bottom : 0;
+    padding-bottom : 0;
+}
+#navWrapper li {
+    float : left;
+    height : 27px;
+}
+
+#navWrapperRight, #navWrapperLeft {
+    width : 5em;
+}
+
+#navWrapperLeft {
+    background : #014f99 url(/webclient/templates/searchpage/img/nav_left.png) 
+    top left no-repeat;
+    padding-left : 1em;
+}
+
+#navWrapperRight {
+    background : #014f99 url(/webclient/templates/searchpage/img/nav_right.png) 
+        top right no-repeat;
+    padding-right : 1em;
+}
+
+#navWrapper #liNavMenu {
+    max-width : 20em;
+    text-align : center;
+    background : #014f99;
+}
+
+
+#navigationMenu { 
+    list-style-type : none;
+    padding-left : 0;
+    margin-left : 0;
+    color : white;
+    
+    float : left;
+    
+}
+
+#navigationMenu li {
+    padding-right : 0.5em;
+    
+    font-family: Arial, Helvetica, sans-serif; 
+    font-size : small;
+    padding-top : 0.4em;
+}
+
+#navigationMenu li #navCurrent {
+    font-weight : bolder;
+    font-size : medium;
+}
+
+#navigationMenu a {
+    color : white;
+}
+
+
+.lineBlue {
+    border-top: 3px solid #014f99; 
+    margin-top : 0;
+    padding-top : 0;
+    margin-bottom : 0;
+}
+
+
+#copyright {
+    /* margin-left : 25.0em; */
+    text-align : center;
+    font-family: Arial, Helvetica, sans-serif; 
+    font-size : x-small;
+}
+
+
+
+
+
+

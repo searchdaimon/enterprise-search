@@ -1,0 +1,35 @@
+
+.ac_over {
+            background : Highlight;
+            color : HighlightText;
+        }
+
+        .ac_results {
+            padding :0;
+            border : 1px solid WindowFrame;
+            background-color : Window;
+            overflow :hidden;
+        }
+
+        .ac_results iframe {
+            display : none;
+            position : absolute;
+            top : 0;
+            left : 0;
+            z-index : -1;
+            filter : mask();
+            width : 3000px;
+            height : 3000px;
+        }
+
+        .ac_results ul {
+            list-style-type : none;
+            margin : 0;
+            padding : 0;
+            padding-left :0.5em;
+        }
+        .ac_results li {
+
+        }
+
+
