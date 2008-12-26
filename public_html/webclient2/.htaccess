@@ -1,13 +1,26 @@
-AuthName "Restricted Area"
-AuthUserFile /home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd 
-AuthGroupFile /dev/null
+# Auth
+
+## Debug
+#AuthName "Restricted Area"
+#AuthUserFile /home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd 
+#AuthGroupFile /dev/null
+#require user admin
 AuthType Basic
+AuthName modBoitho
+AuthBoitho on
+AuthType Basic
+require valid-user
 
-require user admin
-
+# Execute perl scripts
 DirectoryIndex index.pl
 AddHandler cgi-script pl
 Options +ExecCGI
+
+# Pretty url's (redirect)
+RewriteEngine On
+RewriteRule ^suggest/(.*)$ /cgi-bin/suggest_webclient?q=$1 [L,QSA]
+
+
 
 # No direct reading of tpl files
 <Files ~ "\.tpl$">
