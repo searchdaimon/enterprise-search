@@ -7,4 +7,3 @@ echo -e "/^setup/,s/^setup:x/setup:/\nw\nq" | ed -s /etc/passwd
 chown root.setup /home/setup/run_setup
 chmod 750 /home/setup/run_setup
 chmod +s /home/setup/run_setup
-cp "/home/setup/make_issue.sh" /sbin/ifup-local

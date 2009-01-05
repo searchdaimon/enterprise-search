@@ -15,14 +15,14 @@ Installere ES (krever dhcp):
  * Ved boot, gå til "Install or upgrade an existing system" og trykk 'Tab' (edit).
  * Legg til " ks=http://bbh-001.boitho.com/es/ks.cfg ksdevice=eth1", og trykk enter.
 
-Fjern dhcp-server:
+Fjern dhcp-server (optional):
  * '/sbin/chkconfig --levels 345 dhcpd off'
    'cat /dev/null > /etc/sysconfig/dhcpd'
    'rm /etc/dhcpd.conf'
 
 Post-install:
- * fix_and_install.sh vil automatisk bli kjørt sammen med rpm-fila.
- * Fjern lokal hostname fra /etc/hosts
+ * post_install.sh vil automatisk bli kjørt sammen med rpm-fila.
+ * reboot
 
 Lag distribusjonspakker med VMware Converter:
  * Source type == Other (velg .vmx-fila)
