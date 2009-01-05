@@ -22,9 +22,9 @@ use Readonly;
 Readonly::Hash my %LINK_IGNORE => map { $_ => 1 } qw(td script table form head);
 
 my $log; 
-my $expiration = 20 * 60 + time( );
-my $hit_limit = 5000;
-my $verbose = 0;
+my $expiration = 5 * 60 * 60 + time( );
+my $hit_limit = 50000;
+my $verbose = 1;
 my $user;
 my $passw;
 my $bot_name = 'sdbot/0.1';
@@ -33,6 +33,7 @@ my $delay = 2;
 my $bot_email = "email\@email.com";
 
 my $hit_count = 0;
+my $skipDynamic = 0;
 my $robot;  # the user-agent itself
 my @schedule;
 my $last_time_anything_said;
@@ -73,6 +74,9 @@ sub set_download_images {
 sub setDelay {
    ($delay) = @_;
 }
+sub skipDynamic {
+   ($skipDynamic) = @_;
+}
 
 sub setExclusionUrlParts {
    @exclusionsUrlParts = @_;
@@ -109,6 +113,12 @@ sub main_loop {
 	else {
 		mutter ( "Far url $url" );
 	}
+  }
+  if ($hit_count > $hit_limit) {
+	print "Exiting: have hit hit limit of $hit_limit.\n";
+  }
+  if (time( ) > $expiration) {
+	print "Exiting: have hit time limit.\n";
   }
   return;
 }
@@ -276,7 +286,6 @@ sub process_near_url {
 	return unless consider_response($response);
 
 	if (!addOk($url_normalized)) {
-		my $ct = mapMimeType($response->content_type);
 		extract_links_from_response($response)
 			if $response->content_type eq 'text/html';
 		return;
@@ -347,6 +356,14 @@ sub extract_links_from_response {
 sub note_link_to {
   my($from_url => $to_url) = @_;
   $points_to{ $to_url }{ $from_url } = 1;
+  if (($skipDynamic == 1) && ($to_url =~ /\?/)) {
+	printf("skipping dynamic url $to_url\n");
+	next;
+  }
+  elsif ($to_url =~ /\#/) {
+	printf("skipping \# url $to_url\n");
+  }
+
   mutter("Noting link\n  from $from_url\n    to $to_url\n");
    schedule($to_url);
   return;
