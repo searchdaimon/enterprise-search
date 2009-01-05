@@ -18,7 +18,7 @@ my $pointer;
 #my $soap_client;
 my $robot;
 my $bot_name = "sdbot/0.1";
-my $bot_email = "bs\@searchdaimon.com";
+my $bot_email = "support\@searchdaimon.com";
 sub init_robot { 
    my $timeout = 4;
  
@@ -64,8 +64,10 @@ sub crawl_update {
     my @exclusionsUrlPart = qw ( );  # See Sharpoint crawler on how to use this
     my @exclusionQueryPart = qw(); # See Sharpoint crawler on how to use this
 
+
     SD::sdCrawl::process_starting_urls(@urlList);
-    SD::sdCrawl::setDelay($opt->{delay} || 0);
+    SD::sdCrawl::setDelay($opt->{delay} || 2);
+    SD::sdCrawl::skipDynamic(0);
     SD::sdCrawl::set_download_images($opt->{download_images});
  
     foreach $starting_url(@urlList) {
