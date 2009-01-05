@@ -179,17 +179,20 @@ normalize_key(char *k)
 }
 
 int
-get_licenseinfo(char *s, unsigned int *_serial, unsigned short int *_users)
+get_licenseinfo(const char *license, unsigned int *_serial, unsigned short int *_users)
 {
 	size_t len;
 	char *buf;
 	int i;
 	int j;
+	char *s;
 	char hash[SHA_DIGEST_LENGTH], *h;
 	char data[32];
 	unsigned short int *users;
 	unsigned int *serial;
 	int check_indexes[] = { 2, 4, 6, 8, 10, 12, 11, 15, 17, -1, };
+
+	s = strdup(license);
 
 	normalize_key(s);
 	len = base32_decode(s, &buf, strlen(s));
@@ -208,6 +211,7 @@ get_licenseinfo(char *s, unsigned int *_serial, unsigned short int *_users)
 
 		if ((hash[idx]&0xff) != (h[idx]&0xff)) {
 			free(h);
+			free(s);
 			return 0;
 		}
 	}
@@ -218,7 +222,7 @@ get_licenseinfo(char *s, unsigned int *_serial, unsigned short int *_users)
 	*_users = *users;
 	free(h);
 	free(buf);
-
+	free(s);
 	return 1;
 }
 
