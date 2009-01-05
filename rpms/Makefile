@@ -95,6 +95,9 @@ boitho-perlxs-sdcrawl_version = 0.1
 boitho-webadd_name = boitho-bbdocumentwebadd
 boitho-webadd_version = 0.1
 
+boitho-setup_login_name = boitho-setup_login
+boitho-setup_login_version = 0.1.1
+
 all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch scripts repomod suggest perlxs-sdcrawl webadd
 
 sqlUpdate:
@@ -207,6 +210,11 @@ fileFilter:
 	perl rpmmagic.pl --nostrip --initdrestart "boitho-bbdn" --requires "perl-Email-MIME perl-TimeDate" $(boitho-fileFilter_name) $(boitho-fileFilter_version) $(BOITHOHOME) /home/boitho/boithoTools fileFilter
 
 	rpmbuild -bb $(boitho-fileFilter_name).spec
+
+setup_login:
+	make $(BOITHOHOME)/vmware/run_setup
+	perl rpmmagic.pl --post "sh /home/setup/post_install.sh" $(boitho-setup_login_name) $(boitho-setup_login_version) $(BOITHOHOME)/vmware / home/setup/run_setup home/root/post_install.sh sbin/ifup-local
+	rpmbuild -bb $(boitho-setup_login_name).spec
 
 tlcd-gt14:
 	rm -rf $(tlcd-gt14_name)-$(tlcd-gt14_version)
