@@ -63,8 +63,7 @@ int bbdocument_convert(
 			char *documenturi, 
 			unsigned int lastmodified, 
 			char *acl_allow, 
-			char *acl_denied, 
-			char *doctype,
+			char *acl_denied,
 			struct hashtable **metahash
 		);
 

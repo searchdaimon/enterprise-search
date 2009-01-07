@@ -228,8 +228,14 @@ int bbdocument_init(container **attrkeys) {
 			*/
 
 			if (strcmp(splitdata[0],"documentstype") == 0) {
-				//nyt filter
+
+				//legger til det gamle filteret
 				if (fileFilter != NULL) {
+					if (NULL != hashtable_search(h_fileFilter,fileFilter->documentstype )) {
+						printf("####################### BUG ################################\n");
+						printf("allredy have a filter for \"%s\"!\n",fileFilter->documentstype);
+						printf("#######################/BUG ################################\n");
+					}
 					//add to hash
 					printf("inserting %s\n",(*fileFilter).documentstype);
 					//chtbl_insert(&htbl,(void *)fileFilter);
@@ -240,6 +246,8 @@ int bbdocument_init(container **attrkeys) {
 
 					printf("end inserting\n");
 				}
+				//begynner på et nytt filter
+
 				fileFilter = malloc(sizeof(struct fileFilterFormat));
 
 				//ikke alle filfiltere har sat alle opsjoner, så vi nulstiller alt, slik at det er lett og strcmp()'e
@@ -293,6 +301,9 @@ int bbdocument_init(container **attrkeys) {
                         }
 			printf("end inserting\n");
 		}
+		//markerer at vi har lagt det til
+		fileFilter = NULL;
+
 		fclose(filep);
 	}
 	closedir(dirp);
@@ -370,7 +381,7 @@ void stripTags(char *cpbuf, int cplength) {
 	}
 }
 
-int bbdocument_convert(char filetype[],char document[],const int dokument_size,char **documentfinishedbuf,int *documentfinishedbufsize, const char titlefromadd[], char *subname, char *documenturi, unsigned int lastmodified, char *acl_allow, char *acl_denied, char *doctype, struct hashtable **metahash) {
+int bbdocument_convert(char filetype[],char document[],const int dokument_size,char **documentfinishedbuf,int *documentfinishedbufsize, const char titlefromadd[], char *subname, char *documenturi, unsigned int lastmodified, char *acl_allow, char *acl_denied, struct hashtable **metahash) {
 
 	char **splitdata;
         int TokCount;
@@ -795,7 +806,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 					}
 				}
 				//runarb: 18 jan 2008: har var titel "", ikke titlefromadd, som gjorde at 24so crawling mistet titler.
-				if (bbdocument_convert(ft, docbuf, docbufsize, &convdocbuf, &convdocbufsize, titlefromadd, subname, documenturi, lastmodified, acl_allow, acl_denied, "", NULL) == 0) {
+				if (bbdocument_convert(ft, docbuf, docbufsize, &convdocbuf, &convdocbufsize, titlefromadd, subname, documenturi, lastmodified, acl_allow, acl_denied,  NULL) == 0) {
 					fprintf(stderr, "Failed on bbdocument_convert.\n");
 					failed++;
 					free(docbuf);
@@ -807,7 +818,6 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 					curdocp += convdocbufsize;
 				} else if (type == 2) {
 					char subnamenew[256];
-					//int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,const char title[], char doctype[]) {
 					snprintf(subnamenew, sizeof(subnamenew), "%s-%s", subname, part);
 					printf("bbdocument_convert: _add(%s)\n", documenturi);
 					bbdocument_add(subnamenew, documenturi, "html", convdocbuf, convdocbufsize, lastmodified, acl_allow, acl_denied, titlefromadd, "", "", NULL);
@@ -892,17 +902,35 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	else printf(" )\n");
 
 
-	//tester at det ikke finnes først
-	if ((uriindex_get(documenturi,&DocIDForExistTest,&lastmodifiedForExistTest,subname))
-		&& (lastmodifiedForExistTest == lastmodified)
-		) {
-		printf("bbdocument_add: Uri \"%s\" all redy exist with DocID \"%u\" and time \"%u\"\n",documenturi,DocIDForExistTest,lastmodifiedForExistTest);
-		return 0;
+	//tester at det ikke finnes først. Hvis det finnes hånterer vi det. Eventuelt også lagre  den nye versjonen hvis det er forandret.
+	if (uriindex_get(documenturi,&DocIDForExistTest,&lastmodifiedForExistTest,subname)) {
+
+		if (lastmodifiedForExistTest == lastmodified) {
+			printf("bbdocument_add: Uri \"%s\" all redy exist with DocID \"%u\" and time \"%u\"\n",documenturi,DocIDForExistTest,lastmodifiedForExistTest);
+			return 0;
+		}
+		//hvis url er kjent, men oppdater rebruker vi den.
+		ReposetoryHeader.DocID = DocIDForExistTest;
+	}
+	else {
+		//hvis vi ikke har DocID har vi et system som trenger å få opprettet det. For eks bb eller bdisk.
+		ReposetoryHeader.DocID = rGeneraeADocID(subname);
+
+		#ifdef DEBUG
+			printf("Dident have a known DocID for document. Did generet on. DOcID is now %u\n",ReposetoryHeader.DocID);
+		#endif
+
 	}
 
+	// hvis vi har en "text applicatino" enkoding, som ikke er en vanlig tekst fil, men tekst som kommer fra 
+	// en apllikasjon behandler vi det som text.
+	//if (strcmp(documenttype,"tapp") == 0) {
+	//	documenttype_real = strdup("text");
+	//}
+	//else 
 	if (documenttype[0] == '\0') {
 		if ((documenttype_real = sfindductype(documenturi)) == NULL) {
-			printf("Will use .none because I can't decide format. File name isent dos type (8.3): %s\n", documenturi);
+			printf("Will use .none as documenttype because I can't decide format. File name isent dos type (8.3): %s\n", documenturi);
 			documenttype_real = strdup("none");
 			
 		}
@@ -911,6 +939,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		documenttype_real = malloc(strlen(documenttype)+1);
 		strcpy(documenttype_real,documenttype);
 	}
+
 
 
 	//hvis vi ikke her med noen egen doctype så bruker vi den vi har fått via documenttype
@@ -923,7 +952,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		strncpy(ReposetoryHeader.doctype,doctype,sizeof(ReposetoryHeader.doctype));
 	}
 
-	if (!bbdocument_convert(documenttype_real,document,dokument_size,&htmlbuffer,&htmlbuffersize,title,subname,documenturi, lastmodified,acl_allow, acl_denied, doctype, &metahash)) {
+	if (!bbdocument_convert(documenttype_real,document,dokument_size,&htmlbuffer,&htmlbuffersize,title,subname,documenturi, lastmodified,acl_allow, acl_denied, &metahash)) {
 
 		printf("can't run bbdocument_convert\n");
 		//lager en tom html buffer
@@ -978,12 +1007,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	//runarb:  8 juli 2008: tar bort bruken av ReposetoryHeader's url
 	//runarb: 11 juli 2008: kan ikke gjøre dette, da vi kopierer den inn i DocumentIndex fra ReposetoryHeader 
 	strncpy(ReposetoryHeader.url,documenturi,sizeof(ReposetoryHeader.url));
-	//hvis vi har DocID 0 har vi et system som ikke tar vare på docider. For eks bb eller bdisk.
-	ReposetoryHeader.DocID = rGeneraeADocID(subname);
 		
-#ifdef DEBUG
-	printf("Dident have a known DocID for document. Did generet on. DOcID is now %u\n",ReposetoryHeader.DocID);
-#endif
 
 	ReposetoryHeader.response = 200;
 	strcpy(ReposetoryHeader.content_type,"htm");
