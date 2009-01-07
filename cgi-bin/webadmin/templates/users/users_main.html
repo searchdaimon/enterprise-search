@@ -13,18 +13,20 @@
 <h2>End users</h2>
 
 [% WRAPPER 'template_description.html' style="margin-bottom : 0.5em;" %]
+	[% IF licensed_users < activated_users %]
+	Changes not saved.
+	[% ELSE %]
 	Search activated for [% activated_users %] out of a total of [% users.size %] system users. 
+	[% END %]
 	[% IF licensed_users %]
-		Your Black box license covers [% licensed_users %] users.
+		Your license covers [% licensed_users %] users.
 	[% ELSE %]
 		You do not have license for any users on this system.
 	[% END %]
 [% END %]
 [% IF !error && licensed_users < activated_users %]
 	[% SET too_many = activated_users - licensed_users %]
-	[% SET error = "You have too many activated users. Current license covers $licensed_users users.
-		Search access will be <strong>disabled for $too_many users</strong>."
-	%]
+	[% SET error = "You have selected $activated_users users. Current license only covers $licensed_users users. Try again." %]
 [% END %]
 
 [% IF error %]
@@ -41,7 +43,7 @@
    
 
 [% WRAPPER 'template_table.html' id="usr_list"
-	header = ['', 'Username', 'Blackbox search access'] style="width : 50%; margin-top : 1em; clear : both;" %]
+	header = ['', 'Username', 'Search access'] style="width : 50%; margin-top : 1em; clear : both;" %]
 	[% i = 0 %]
 	[% FOREACH usr IN users %]
 		[% color = 1 - color %]
