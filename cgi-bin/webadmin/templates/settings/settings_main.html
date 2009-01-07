@@ -24,13 +24,14 @@
 		[% WRAPPER 'template_message.html' type='success' %]
 		Version preference changed to [% dist_succs %].
 		[% END %]
+<!--
 	[% ELSIF dist_downgrade_err %]
             [% WRAPPER 'template_message.html' type='error' %]
             It's not possible to downgrade the system. 
             Can't go from <em>[% dist_downgrade_err.prev %]</em> 
             to <em>[% dist_downgrade_err.new %]</em>.
             [% END %]
-
+-->
         [% ELSIF dist_err %]
             [% WRAPPER 'template_message.html' type='error' %]
                 Unable to update version preference. [% dist_err %] 
@@ -39,7 +40,7 @@
         [% ELSE %]
 		[% WRAPPER 'template_message.html'
 			type='info' %]
-			Select what version of search daimon software you want to run.
+			Select what version of Searchdaimon ES you want to run.
 			<ul>
 				<li><strong>Production</strong> is the most tested and stable version.</li>
 				<li><strong>Testing</strong> is a middle way and contains packages that have not reached production yet.</li>
