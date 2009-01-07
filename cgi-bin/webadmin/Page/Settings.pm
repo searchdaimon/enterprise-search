@@ -153,12 +153,12 @@ sub select_dist_version {
     croak "Invalid dist version '$dist'"
         unless $CONFIG{dist_versions}->{$dist};
 
-    my $prev_dist = $s->{sqlConfig}->get_setting(CFG_DIST_VERSION);
-    if ($versions->{$dist} < $versions->{$prev_dist}) {
-        # Can't downgrade versions
-        $vars->{dist_downgrade_err} = { prev => $prev_dist, 'new' => $dist };
-    }
-    else {
+    #my $prev_dist = $s->{sqlConfig}->get_setting(CFG_DIST_VERSION);
+    #if ($versions->{$dist} < $versions->{$prev_dist}) {
+    #    # Can't downgrade versions
+    #    $vars->{dist_downgrade_err} = { prev => $prev_dist, 'new' => $dist };
+    #}
+    #else {
         my ($succs, $output) = $s->_run_repomod($dist);
         if ($succs) {
             $s->{sqlConfig}->update_setting(CFG_DIST_VERSION, $dist);
@@ -167,7 +167,7 @@ sub select_dist_version {
         else {
             $vars->{dist_err} = $output;
         }
-    }
+    #}
 
     return $s->show_main_settings($vars);
 }
