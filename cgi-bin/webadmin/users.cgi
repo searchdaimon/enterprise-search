@@ -20,7 +20,7 @@ elsif ($state{upd_usr_access}) {
 	$tpl_file = $page->upd_usr_access($vars, $state{users});
 }
 else {
-	$tpl_file = $page->show_usr_list($vars);
+	$tpl_file = $page->show_usr_list($vars, -1);
 }
 
 $page->process_tpl($tpl_file, $vars, 
