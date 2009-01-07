@@ -34,18 +34,26 @@ sub show_usr_details {
 }
 
 sub show_usr_list {
-	my ($s, $vars) = @_;
-	
+	#my ($s, $vars) = @_;
+	my ($s, $vars, $selected_users) = @_;
+
 	my $sqlActive = Sql::ActiveUsers->new($s->get_dbh);
 	my %active = map { $_->{user} => 1 } $sqlActive->get({}, 'user');
 
 	my %license = $s->get_license_info();
 	if (!$license{valid}) {
-		$vars->{error} = "This black box installation no license, or "
+		$vars->{error} = "This installation has no license, or "
 			. " an invalid license. Search will not work for any users.";
 	}
 	$vars->{licensed_users} = $license{users};
-	$vars->{activated_users} = scalar keys %active;
+
+	if ($selected_users < 0) {
+	    $vars->{activated_users} = scalar keys %active;
+	}
+	else {
+	    $vars->{activated_users} = $selected_users;
+	}
+
 	my $prim_sys = Sql::System->new($s->{dbh})->primary_id();
 
 	my @users;
@@ -66,14 +74,20 @@ sub show_usr_list {
 sub upd_usr_access {
 	my ($s, $vars, $users_raw) = @_;
 	my @users = grep { defined } @{$users_raw};
-	
-	my $sqlActive = Sql::ActiveUsers->new($s->get_dbh);
+	my $selected_users = $#users +1;
 
-	#TODO : Error prone. Do in a transaction.
-	$sqlActive->delete({});
-	$sqlActive->insert({ user => $_ }) for @users;
+	# Ikke oppdater hvis antall valgte brukere er større enn lisensierte brukere.
+	my %license = $s->get_license_info();
 
-	return $s->show_usr_list($vars);
+	if ($license{valid} && $selected_users <= $license{users}) {
+		my $sqlActive = Sql::ActiveUsers->new($s->get_dbh);
+
+		#TODO : Error prone. Do in a transaction.
+		$sqlActive->delete({});
+	        $sqlActive->insert({ user => $_ }) for @users;
+	}
+
+	return $s->show_usr_list($vars, $selected_users);
 }
 
 sub get_license_info {
