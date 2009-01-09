@@ -153,8 +153,6 @@ struct PagesResultsFormat {
 		struct hashtable *crc32maphash;
 		enum platform_type ptype; 
 		enum browser_type btype; 
-
-		int filtering_on_collection;
 };
 
 
@@ -696,7 +694,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 			/* Duplicates? */
 			// Byttet fra list til vector da vector er raskere (ax).
 			struct duplicate_docids *dup = hashtable_search(PagesResults->crc32maphash, &Sider->DocumentIndex.crc32);
-			if (dup != NULL && dup->V != NULL) {
+			if (dup != NULL && dup->V != NULL && vector_size(dup->V)>1) {
 				int k;
 				int x=0;
 
@@ -1160,18 +1158,9 @@ void *generatePagesResults(void *arg)
 				continue;
 			}
 			// If NOT filtering on collection:
-			if (!(*PagesResults).filtering_on_collection
-			    && (*PagesResults).TeffArray->iindex[i].indexFiltered.duplicate == 1) {
+			if ((*PagesResults).TeffArray->iindex[i].indexFiltered.duplicate == 1) {
 				#ifdef DEBUG
 				printf("filter: index filtered (duplicate)\n");
-				#endif
-				continue;
-			}
-			// If filtering on collection:
-			if ((*PagesResults).filtering_on_collection
-			    && (*PagesResults).TeffArray->iindex[i].indexFiltered.duplicate_in_collection >= 0) {
-				#ifdef DEBUG
-				printf("filter: index filtered (duplicate_c)\n");
 				#endif
 				continue;
 			}
@@ -2051,7 +2040,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
 			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 0, &crc32maphash, search_user, searchd_config->cmc_port);
-	PagesResults.filtering_on_collection = (filteron.collection != NULL);
 	PagesResults.crc32maphash = crc32maphash;
 
 	#ifdef DEBUG
@@ -2632,7 +2620,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
 			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 1, NULL, search_user, searchd_config->cmc_port);
-	PagesResults.filtering_on_collection = (filteron.collection != NULL);
 	// XXX: eirik, we should not discard the duplicate tests
 	//&rankDocId);
 
