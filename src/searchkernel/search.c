@@ -1396,6 +1396,60 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 }
 
 
+enum iff_filter_flag {
+FILTER_DATE=1,
+FILTER_COLLECTION=2,
+FILTER_DUPLICATE=4,
+FILTER_ATTRIBUTE=8,
+FILTER_FILETYPE=16,
+FILTER_ALL=31 };
+
+/*
+char iff_is_filtered(struct indexFilteredFormat *filter, unsigned int mask)
+{
+    if ((mask & FILTER_DATE) && filter->date) return 1;
+    if ((mask & FILTER_COLLECTION) && filter->subname) return 1;
+    if ((mask & FILTER_DUPLICATE) && filter->duplicate) return 1;
+    if ((mask & FILTER_FILETYPE) && filter->filename) return 1;
+    if ((mask & FILTER_ATTRIBUTE) && filter->attribute) return 1;
+
+    return 0;
+}
+*/
+void iff_clear_all(struct indexFilteredFormat *filter)
+{
+    int		i;
+
+    filter->date = 0;
+    filter->subname = 0;
+    filter->duplicate = 0;
+    filter->filename = 0;
+    filter->attribute = 0;
+    filter->is_filtered = 0;
+    filter->duplicate_in_collection = 0;
+
+    for (i=0; i<MAX_ATTRIBUTES_IN_QUERY; i++)
+	filter->attrib[i] = 0;
+}
+
+// Dette er filter som filtrerer dokumenter.
+// Filter kun for telling (som duplicate_in_collection) håndteres separat.
+char iff_set_filter(struct indexFilteredFormat *filter, unsigned int mask)
+{
+    char	is_filtered = filter->is_filtered;
+
+    if (mask & FILTER_DATE) filter->date = 1;
+    if (mask & FILTER_COLLECTION) filter->subname = 1;
+    if (mask & FILTER_DUPLICATE) filter->duplicate = 1;
+    if (mask & FILTER_FILETYPE) filter->filename = 1;
+    if (mask & FILTER_ATTRIBUTE) filter->attribute = 1;
+
+    filter->is_filtered = 1;
+
+    return !is_filtered;
+}
+
+
 void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filteron) {
 	int i,len,j;
 	//dagur:
@@ -1737,6 +1791,8 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 	TeffArrayOriginal = (*TeffArrayElementer);
 	vboprintf("searchIndex: got that we have %i elements in array from before\n",TeffArrayOriginal);
 
+	char	first = 1;
+
 //for (i=0; i<(*queryParsed).size; i++)
 for (i=0; i<(*queryParsed).n; i++)
         {
@@ -1783,7 +1839,7 @@ for (i=0; i<(*queryParsed).n; i++)
 						//ToDo: kan ikke gjøre det da dette kansje ikke er første element
 						//må skille her
 						//if (*TeffArrayElementer == 0) {
-						if (i == 0) {
+						if (first) {
 							
 							TmpArrayLen = (*TeffArrayElementer);
 							GetIndexAsArray_thesaurus(TeffArrayElementer,TeffArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, (*queryParsed).query[i].alt, (*queryParsed).query[i].alt_n);
@@ -1812,7 +1868,7 @@ for (i=0; i<(*queryParsed).n; i++)
 
 					}
 
-					
+				first = 0;
 				break;
 
 
@@ -1855,7 +1911,7 @@ for (i=0; i<(*queryParsed).n; i++)
 						//ToDo: kan ikke gjøre det da dette kansje ikke er første element
 						//må skille her
 						//if (*TeffArrayElementer == 0) {
-						if (i == 0) {
+						if (first) {
 							TmpArrayLen = (*TeffArrayElementer);
 							GetIndexAsArray(TeffArrayElementer,*TeffArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
 							//rank((*TeffArrayElementer),TeffArray,subname,(*complicacy));
@@ -1921,7 +1977,7 @@ for (i=0; i<(*queryParsed).n; i++)
 					//	t_it = t_it->next;
 					}
 
-					
+				first = 0;
 				break;
 
 			case '"':
@@ -2032,7 +2088,7 @@ for (i=0; i<(*queryParsed).n; i++)
 					//så må vi and merge frasene inn i queryet
 					//hvis dette er første forekomst så kopierer vi bare inn
 					//hvis ikke må vi and merge
-					if (i == 0) {
+					if (first) {
 						vboprintf("er første fraseelement\n");
 						
 						k=TeffArrayOriginal;
@@ -2050,7 +2106,7 @@ for (i=0; i<(*queryParsed).n; i++)
 					}
 
 
-
+				first = 0;
                                 break;
 
 		}
@@ -2392,8 +2448,6 @@ void *searchIndex_thread(void *arg)
 					    case QUERY_OR:
 						null_query = 0;
 						break;
-					    default:
-						break;
 					}
 
 				if (null_query) empty_search_query = 1;
@@ -2419,8 +2473,9 @@ void *searchIndex_thread(void *arg)
 			// Ettersom merging mÃ¥ gjÃ¸res per collection, gjÃ¸r vi attributt-filtreringa allerede her:
 			for (x=start; x<ArrayLen; x++)
 			    {
-				Array->iindex[x].indexFiltered.is_filtered = 0;
-				Array->iindex[x].indexFiltered.attribute = 0;
+				iff_clear_all(&Array->iindex[x].indexFiltered);
+				//Array->iindex[x].indexFiltered.is_filtered = 0;
+				//Array->iindex[x].indexFiltered.attribute = 0;
 			    }
 
 				//printf("\nSearchArray:");
@@ -2443,15 +2498,14 @@ void *searchIndex_thread(void *arg)
 					if (y<tmpAttribArrayLen[j]
 					    && Array->iindex[x].DocID == tmpAttribArray[j]->iindex[y].DocID)
 					    {
-						Array->iindex[x].indexFiltered.attrib[j] = 0;
+						//Array->iindex[x].indexFiltered.attrib[j] = 0;
 						//vinn++;
 					    }
 					else
 					    {
 						//if (Array->iindex[x].indexFiltered.is_filtered == 0) --(*TotaltTreff);
-					        Array->iindex[x].indexFiltered.is_filtered = 1;
+						iff_set_filter(&Array->iindex[x].indexFiltered, FILTER_ATTRIBUTE);
 					        Array->iindex[x].indexFiltered.attrib[j] = 1;
-					        Array->iindex[x].indexFiltered.attribute = 1;
 						//forsvinn++;
 					    }
 				}
@@ -2489,7 +2543,7 @@ void *searchIndex_thread(void *arg)
 			#ifdef DEBUG_II
 			printf("etter andNot_merge:\n");
 			for (y = 0; y < ArrayLen; y++) {
-				printf("TeffArray: DocID %u, filtered %d\nHits (%i): \n",Array->iindex[y].DocID,Array->iindex[y].indexFiltered.is_filtered,Array->iindex[y].TermAntall);	
+				printf("TeffArray: DocID %u, filtered %d\nHits (%i): \n",Array->iindex[y].DocID,Array->iindex[y].indexFiltered.is_filtered,Array->iindex[y].TermAntall);
 				for (x=0;x<Array->iindex[y].TermAntall;x++) {
 					printf("\t%hu\n",Array->iindex[y].hits[x]);
 				}
@@ -3086,8 +3140,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 		for (i=0; i<*TeffArrayElementer; i++)
 		    {
-			(*TeffArray)->iindex[i].indexFiltered.duplicate = 0;
-			(*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection = -1;
+			//(*TeffArray)->iindex[i].indexFiltered.duplicate = 0;
+			//(*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection = -1;
 
 			// For filtrert i search_thread_ting:
 			if ((*TeffArray)->iindex[i].indexFiltered.is_filtered)
@@ -3126,9 +3180,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 			for (i = 0; i < (*TeffArrayElementer); i++) {
 
 				if (strcmp((*(*TeffArray)->iindex[i].subname).subname,(*filteron).collection) != 0) {
-					if (!(*TeffArray)->iindex[i].indexFiltered.is_filtered) --(*TotaltTreff);
-					(*TeffArray)->iindex[i].indexFiltered.is_filtered = 1;
-					(*TeffArray)->iindex[i].indexFiltered.subname = 1;
+					if (iff_set_filter(&(*TeffArray)->iindex[i].indexFiltered, FILTER_COLLECTION))
+					    --(*TotaltTreff);
 				}
 
 			}
@@ -3309,17 +3362,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 				    {
 					if (D[i] < filtered)
 					    {
-					        if ((*TeffArray)->iindex[i].indexFiltered.is_filtered) {
-						    #ifdef DEBUG
-							printf("is already filtered out\n");
-						    #endif
-					        }
-					        else {
+						if (iff_set_filter(&(*TeffArray)->iindex[i].indexFiltered, FILTER_FILETYPE))
 						    --(*TotaltTreff);
-						}
-
-                                                (*TeffArray)->iindex[i].indexFiltered.is_filtered = 1;
-                                                (*TeffArray)->iindex[i].indexFiltered.filename = 1;
                                             }
                                     }
                             }
@@ -3413,18 +3457,11 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 					printf("not time hit %s",ctime(&(*TeffArray)->iindex[i].date));
 					#endif
 
-					if ((*TeffArray)->iindex[i].indexFiltered.is_filtered) {
-						#ifdef DEBUG
-							printf("is already filtered out ");
-						#endif	
-					}
-					else {
+					if (iff_set_filter(&(*TeffArray)->iindex[i].indexFiltered, FILTER_DATE))
+					    {
 						--(*TotaltTreff);
 						++filtered;
-					}
-
-					(*TeffArray)->iindex[i].indexFiltered.is_filtered = 1;
-					(*TeffArray)->iindex[i].indexFiltered.date = 1;
+					    }
 				}
 
 			}		
@@ -3459,16 +3496,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 			//runarb 22 sept 2008: hvorfor er denne her? Brukes bare på websøk
 			//TeffArray->iindex[i].PopRank = popRankForDocIDMemArray(TeffArray->iindex[i].DocID);
 #if 1
-
-			// This document is filtered out, don't even think about it.
-//			if ((*TeffArray)->iindex[i].indexFiltered.filename == 1
-//			    || (*TeffArray)->iindex[i].indexFiltered.date == 1
-//			    || (*TeffArray)->iindex[i].indexFiltered.attribute == 1)
-//				continue;
-			if ((*TeffArray)->iindex[i].indexFiltered.date == 1)
-				continue;
-
-
 			unsigned int crc32;
 
 			#if 0
@@ -3512,15 +3539,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 			} else {
 				/* Remove duplicated */
-				if ((*TeffArray)->iindex[i].indexFiltered.is_filtered) {
-					#ifdef DEBUG
-						printf("is already filtered out ");
-					#endif				
-				}
-				else if (filteron->collection == NULL) {
-					--(*TotaltTreff);
-				}
-
 				if (dup->V == NULL) {
 					dup->V = vector_container( pair_container( int_container(), ptr_container() ) );
 					//legger til den første
@@ -3534,21 +3552,20 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 					if (pair(vector_get(dup->V,k)).second.ptr == (*TeffArray)->iindex[i].subname->subname) {
 
-						++(*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection;
-
-						if (!(*TeffArray)->iindex[i].indexFiltered.is_filtered && filteron->collection != NULL)
-							--(*TotaltTreff);
+						(*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection = 1;
 						break;
 					}
 				}
 				    
+				if ((filteron->collection == NULL)
+				    || ((*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection))
+				    {
+					printf("DUPLICATE secund(s): DocID=%u, subname=%s\n", (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].subname->subname);
+					vector_pushback(dup->V, (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].subname->subname);
 
-				printf("DUPLICATE secund(s): DocID=%u, subname=%s\n", (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].subname->subname);
-				vector_pushback(dup->V, (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].subname->subname);
-
-
-				(*TeffArray)->iindex[i].indexFiltered.is_filtered = 1;
-				(*TeffArray)->iindex[i].indexFiltered.duplicate = 1;
+					if (iff_set_filter(&(*TeffArray)->iindex[i].indexFiltered, FILTER_DUPLICATE))
+					    --(*TotaltTreff);
+				    }
 			}
 #endif
 		}
@@ -3723,12 +3740,8 @@ char* searchFilterCount(int *TeffArrayElementer,
 			else if (TeffArray->iindex[i].indexFiltered.subname == 1) {
 				continue;
 			}
-			else if (filteron->collection==NULL && TeffArray->iindex[i].indexFiltered.duplicate == 1) {
+			else if (TeffArray->iindex[i].indexFiltered.duplicate == 1) {
 				printf("docid(%i) (duplicate)\n", TeffArray->iindex[i].DocID);
-				continue;
-			}
-			else if (filteron->collection!=NULL && TeffArray->iindex[i].indexFiltered.duplicate_in_collection >= 0) {
-				printf("docid(%i) (duplicate_c)\n", TeffArray->iindex[i].DocID);
 				continue;
 			}
 
@@ -3988,10 +4001,10 @@ char* searchFilterCount(int *TeffArrayElementer,
 			else if (TeffArray->iindex[i].indexFiltered.attribute == 1) {
 				continue;
 			}
-			else if (TeffArray->iindex[i].indexFiltered.duplicate_in_collection >= 0) {
+			else if (TeffArray->iindex[i].indexFiltered.duplicate_in_collection == 1) {
 				continue;
 			}
-				
+
 			if (NULL == (filesValue = hashtable_search(h,(*TeffArray->iindex[i].subname).subname) )) {    
 				printf("not found!. Vil insert first \"%s\"\n",(*TeffArray->iindex[i].subname).subname);
 				filesValue = malloc(sizeof(int));
@@ -4104,10 +4117,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 			else if (TeffArray->iindex[i].indexFiltered.attribute == 1) {
 				continue;
 			}
-			else if (filteron->collection==NULL && TeffArray->iindex[i].indexFiltered.duplicate == 1) {
-				continue;
-			}
-			else if (filteron->collection!=NULL && TeffArray->iindex[i].indexFiltered.duplicate_in_collection >= 0) {
+			else if (TeffArray->iindex[i].indexFiltered.duplicate == 1) {
 				continue;
 			}
 
