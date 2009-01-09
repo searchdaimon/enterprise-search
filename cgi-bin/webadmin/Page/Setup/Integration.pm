@@ -44,6 +44,8 @@ sub process_integration {
 	my ($s, $vars, $sys_ref) = @_;
 
 	croak "FATAL: A primary system already exists"
+		if $s->{sql_sys}->exists({ is_primary => 1 }) and $s->{sql_sys}->get({ is_primary => 1})->{ip} ne '127.0.0.1';
+	$s->{sql_sys}->delete({ is_primary => 1 })
 		if $s->{sql_sys}->exists({ is_primary => 1 });
 
 	$sys_ref->{is_primary} = 1;
