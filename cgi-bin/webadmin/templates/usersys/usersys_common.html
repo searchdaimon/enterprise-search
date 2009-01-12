@@ -1,5 +1,7 @@
 [% BLOCK sys_form %]
+[% UNLESS NO_FORM %]
 <form action="usersys.cgi" method="post">
+[% END %]
 <div class="defaultForm" style="[% style %]">
 <table>
        <tr>
@@ -45,5 +47,7 @@
 	[% END %]
 </p>
 </div>
+[% UNLESS NO_FORM %]
 </form>
+[% END %]
 [% END %]
