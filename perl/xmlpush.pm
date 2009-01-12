@@ -39,8 +39,8 @@ sub xmlpush_end {
 	$writer->end(); # Close up the shop
 }
 
-sub xmlpush_add($$$$$$$$$$) {
-	my ($writer, $dformat, $dtype, $title, $uri, $lastmodified, $collection, $aclallow, $acldeny, $body) = @_;
+sub xmlpush_add($$$$$$$$$$$) {
+	my ($writer, $dformat, $dtype, $title, $uri, $lastmodified, $collection, $aclallow, $acldeny, $body, $attributes) = @_;
 
 
 	$writer->startTag('add');
@@ -71,6 +71,9 @@ sub xmlpush_add($$$$$$$$$$) {
 	$writer->endTag();
 	$writer->startTag('acldeny');
 	$writer->characters($acldeny);
+	$writer->endTag();
+	$writer->startTag('attributes');
+	$writer->characters($attributes);
 	$writer->endTag();
 	$writer->startTag('body', encoding => 'base64' );
 	$writer->characters(encode_base64($body));
@@ -110,10 +113,33 @@ sub xmlpush_post($$) {
 	}
 }
 
+use Data::Dumper;
+
+sub xmlpush_users($$@) {
+	my ($writer, $usersystem, @users) = @_;
+
+	$writer->startTag('users', 'usersystem' => $usersystem);
+	$writer->startTag('dropusers');
+	$writer->endTag();
+	foreach my $user (@users) {
+		$writer->startTag('user', 'username' => $user->{'username'} );
+		foreach my $group (@{ $user->{'groups'} }) {
+			$writer->startTag('group');
+			$writer->characters($group);
+			$writer->endTag();
+		}
+		$writer->endTag();
+	}
+	$writer->endTag();
+}
+
 my $output;
 my $writer = xmlpush_start('akey', \$output);
 
-xmlpush_add($writer, 'text', 'txt', 'atitle', 'http://www.pvv.ntnu.no', '2008-05-04', 'test', 'ean', 'rb', 'Eirik!');
+
+xmlpush_users($writer, 1, {'username' => 'rb', 'groups' => ['a', 'b', 'c'] } );
+
+xmlpush_add($writer, 'text', 'txt', 'atitle', 'http://www.pvv.ntnu.no', '2008-05-04', 'test', 'ean', 'rb', 'Eirik!', 'a=b,c=d');
 xmlpush_close($writer, 'test');
 
 xmlpush_end($writer);
