@@ -456,6 +456,23 @@ int main (int argc, char *argv[]) {
 		}
 		free(users);
 	}
+	else if (strcmp(key, "usersystemlookup") == 0) {
+		int i;
+		int socketha;
+		int errorbufflen = 512;
+                char errorbuff[errorbufflen];
+
+		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
+                        printf("Error: %s\n",errorbuff);
+                        exit(1);
+                }
+
+		if (value == NULL)
+			errx(1, "infoquery usersystemlookup collection");
+
+		i = cmc_usersystemfromcollection(socketha, value);
+		printf("System: %d\n", i);
+	}
         else if (strcmp(key, "killCrawl") == 0) {
             // parse param
             if (value == NULL) { 
