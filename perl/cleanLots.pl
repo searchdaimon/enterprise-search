@@ -62,10 +62,6 @@ foreach my $lot (0 .. 4096) {
 				print "runing $command\n";
 				system($command);
 
-				#$command = $ENV{'BOITHOHOME'} . "/bin/LotInvertetIndexMaker3bb Main $lot \"$subname\"";
-				#print "runing $command\n";
-                                #system($command);
-
 				$command = $ENV{'BOITHOHOME'} . "/bin/mergeUserToSubname $lot \"$subname\"";
 				print "runing $command\n";
                                 system($command);
