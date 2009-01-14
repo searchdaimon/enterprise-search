@@ -1,8 +1,9 @@
 # Class: Boitho::SettingsExport
 # Class for exporting and importing webadmin settings from/to mysql.
 #
-# TODO: Depends on read_config() from WebAdmin's to-be-deprecated class Sql::Sql.
-#       The functionality of that method should be imported to make this module independent.
+# DEPRECATED! Use SD::Settings::Import and SD::Setting::Export instead.
+# 
+
 package Boitho::SettingsExport;
 use strict;
 use warnings;
