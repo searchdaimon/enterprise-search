@@ -15,7 +15,7 @@ our @ISA = qw(Sql::Webadmin);
 Readonly::Scalar our $TBL => "system";
 
 sub list {
-	my $q = "SELECT * FROM system";
+	my $q = "SELECT * FROM system ORDER BY is_primary DESC, name ASC";
 	shift->sql_hashref($q);
 }
 

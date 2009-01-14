@@ -2,17 +2,18 @@ package Data::UserSys;
 use strict;
 use warnings;
 use Carp;
-use Params::Validate;
+use Params::Validate qw(validate_pos HASHREF);
 use Readonly;
 use Data::Dumper;
 
 
 use Sql::System;
 use Sql::Hash::SystemParam;
+use Sql::SystemParamValue;
 
 
 Readonly::Hash my %USERSYS_ATTR 
-	=> map { $_ => 1 } qw(name ip user password is_primary connector);
+	=> map { $_ => 1 } qw(name is_primary connector);
 
 sub new  { 
 	validate_pos(@_, 1 , 1, { regex => qr/^\d+$/ });
@@ -26,6 +27,7 @@ sub new  {
 	my %params = map {$_ => {
 		value => $p_values{$_},
 		note => $p_obj->note($_),
+		required => $p_obj->required($_),
 	}} keys %p_values;
 	$sys_ref->{params} = \%params;
 	
@@ -44,6 +46,8 @@ sub create {
 	my $params_ref = $attr{params} || { };
 	delete $attr{params};
 
+	_validate_params($dbh, $attr{connector}, $params_ref);
+
 	# Add system
 	delete $attr{name}
 		unless $attr{name};
@@ -61,17 +65,38 @@ sub create {
 
 sub update {
 	my ($s, %attr) = @_;
-	
+
+	my $sql_paramval = Sql::SystemParamValue->new($s->{dbh});
+
+	my $params_ref = $attr{params} || { };
+	delete $attr{params};
+
+	# magic! keep current pass, if none is provided
+	if (!exists($params_ref->{password}) || $params_ref->{password} eq q{}) {
+		my $curr_pass  = $sql_paramval->get({
+			param => 'password',
+			system => $s->{sys}{id}
+		});
+		$params_ref->{password} = $curr_pass->{value}
+			if $curr_pass;
+	}
+
+	_validate_params(
+		$s->{dbh}, 
+		$s->{sys}{connector}, 
+		$params_ref, 
+	);
+
 	# update params.
 	tie my %p_val, 'Sql::Hash::SystemParam', $s->{sys}{id}, $s->{dbh}
 		or confess $!;
-	$attr{params} ||= { };
-	%p_val = %{$attr{params}};
-	delete $attr{params};
+	%p_val = %{$params_ref};
 	
 	# update system tbl
-	$s->_del_invalid_attr(\%attr);
-	$s->{sql_sys}->update(\%attr, { id => $s->{sys}{id} });
+	_del_invalid_attr(\%attr);
+	if (%attr) {
+		$s->{sql_sys}->update(\%attr, { id => $s->{sys}{id} });
+	}
 
 	1;
 }
@@ -100,7 +125,7 @@ sub del {
 }
 
 sub _del_invalid_attr {
-	my ($s, $attr_ref) = @_;
+	my ($attr_ref) = @_;
 	
 	for my $a (keys %{$attr_ref}) {
 		next if $USERSYS_ATTR{$a}; # valid
@@ -108,6 +133,27 @@ sub _del_invalid_attr {
 		warn "ignoring invalid attr '$a'";
 		delete $attr_ref->{$a};
 	}
+}
+
+## 
+# croaks on missing param
+sub _validate_params {
+	validate_pos(@_, 1, { regex => qr(^\d+$) }, { type => HASHREF });
+	my ($dbh, $conn_id, $params_ref) = @_;
+
+	my $sql_param = Sql::SystemParam->new($dbh);
+	my @required_param = map { $_->{param} } $sql_param->get({ 
+		connector => $conn_id, 
+		required => 1 
+	}, 'param');
+	
+	for my $p (@required_param) {
+		croak "Required parameter '$p' missing."
+			unless defined($params_ref->{$p})
+			       && $params_ref->{$p} ne q{};
+	}
+	
+	1;
 }
 
 

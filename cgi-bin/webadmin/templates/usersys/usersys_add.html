@@ -3,6 +3,13 @@
 [% PROCESS 'common_widgets.html' %]
 [% USE HTML %]
 
+[% IF error %]
+	[% PROCESS 'tpl_msg.html' 
+		type="error" 
+		content=HTML.escape(error) 
+	%]
+[% END %]
+
 [% UNLESS part2 %]
 	[% PROCESS part1 %]
 [% ELSE %]

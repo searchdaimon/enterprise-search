@@ -7,10 +7,12 @@ use config qw(%CONFIG);
 BEGIN {
 	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
-use Boitho::SettingsExport;
+use SD::Settings::Export;
+use SD::Settings::Import;
 use Sql::Config;
 use Sql::Shares;
 use Sql::ShareGroups;
+use File::Temp qw(tempfile);
 BEGIN {
     eval {
         require Apache::Htpasswd;
@@ -31,29 +33,11 @@ sub _init {
 	my $self = shift;
 	my $dbh = $self->{dbh};
 	$self->{sqlConfig} = Sql::Config->new($dbh);
-	$self->{settings} = Boitho::SettingsExport->new($dbh);
 
         croak "Repomod is not executable"
             unless -x $CONFIG{repomod_path};
 }
 
-## 
-# Delete all settings.
-sub delete_all_settings($) {
-	my $self = shift;
-	my $keep_configkeys = shift;
-	my $dbh = $self->{'dbh'};
-
-	for ('Sql::Config', 'Sql::Shares', 'Sql::ShareGroups', 'Sql::CollectionAuth') {
-		my $sql = $_->new($dbh);
-		if ($keep_configkeys and $_ eq 'Sql::Config') {
-			$_->delete_all($keep_configkeys);
-			next;
-		}
-		$sql->delete_all();
-	}
-	1;
-}
 
 
 sub update_settings {
@@ -77,7 +61,6 @@ sub update_settings {
 
 sub confirmed_delete_settings($$) {
 	my ($self, $vars) = @_;
-	$self->delete_all_settings('KEEP CONFIGKEYS');
 	my $template_file = 'settings_delete_done.html';
 	return ($vars, $template_file);
 }
@@ -112,28 +95,51 @@ sub show_advanced_settings_updated($$) {
 
 sub show_import_export($$) {
 	my ($self ,$vars) = @_;
-	return ($vars, "settings_import_export.html");
+	return "settings_import_export.html";
 }
 
-sub import_settings($$$) {
-	my ($self, $vars, $file) = @_;
-	my $settings = $self->{'settings'};
-	$self->delete_all_settings();
+sub import_settings {
+	my ($s, $vars, $fileh) = @_;
+	my $tmpfile = $s->_get_import_file($fileh);
+	my $import = SD::Settings::Import->new();
+	my ($succs, $msg) = (1, "OK");
 	eval {
-		$settings->import_settings($file, 'OBFUSCATE');
+		$import->do_import($tmpfile);
 	};
-	$vars->{'import_success'} = {	
-			'success' =>1,
-			'message' => "OK",
-	};
-	
+	if (my $err = $@) {
+		$err =~ s/at .* line \d+\.?$//g;
+		$msg = $err;
+		$succs = 0;
+	}
+
+	unlink $tmpfile;
 	$vars->{'import_success'} = {
-			'success' => 0,
-			'message' => $@, }
-			if $@; # import failed.
-	
-	return $self->show_import_export($vars);
+		'success' => $succs,
+		'message' => $msg,
+	};
+
+	return $s->show_import_export($vars);
 }
+
+sub _get_import_file {
+	my ($s, $fileh) = @_;
+	my (undef, $tmpfile) = tempfile();
+	open my $tmph, ">", $tmpfile
+		or croak "open tmpfile: ", $!;
+
+	#my $buffer;
+	print {$tmph} <$fileh>;
+#	while (read($fileh, $buffer, 1024)) {
+#		print {$tmph} $buffer;
+#	}
+	close $tmph;
+	
+	return $tmpfile;
+}
+
+1;
+
+
 
 sub show_main_settings($$) {
 	my ($self, $vars) = @_;
@@ -186,10 +192,10 @@ sub _run_repomod {
 }
 
 
-sub export_settings($) {
-	my $self = shift;
-	my $settings = $self->{'settings'};
-	return $settings->export_settings('OBFUSCATE');	
+sub export_settings {
+	my $s = shift;
+	my $export = SD::Settings::Export->new();
+	return $export->export();
 }
 
 sub update_admin_passwd {

@@ -43,39 +43,62 @@ sub show {
 sub process_integration {
 	my ($s, $vars, $sys_ref) = @_;
 
+
 	croak "FATAL: A primary system already exists"
-		if $s->{sql_sys}->exists({ is_primary => 1 }) and $s->{sql_sys}->get({ is_primary => 1})->{ip} ne '127.0.0.1';
+		if  $s->{sql_sys}->exists({ is_primary => 1 }) 
+		and $s->{sql_sys}->get({ is_primary => 1})->{ip} ne '127.0.0.1';
+
 	$s->{sql_sys}->delete({ is_primary => 1 })
 		if $s->{sql_sys}->exists({ is_primary => 1 });
 
 	$sys_ref->{is_primary} = 1;
-	my $sysobj = Data::UserSys->create($s->{dbh}, %{$sys_ref});
+	eval {
+		my $sysobj = Data::UserSys->create($s->{dbh}, %{$sys_ref});
+	};
+	if ($@) {
+		$vars->{error_msg} = $@;
+		$vars->{error_msg} =~ s/at .*? line \d+$//;
+		return $s->show_integration_values(
+			$vars, 
+			$sys_ref->{connector},
+			$sys_ref->{name},
+			$sys_ref,
+		);
+	}
 	
-	1;
+	return undef;
 }
 
 
 
 sub show_integration_values {
-	validate_pos(@_, 1, 1, { regex => qr(^\d+$) }, 0);
-	my ($s, $vars, $conn_id, $ignore_db_values) = @_;
+	validate_pos(@_, 1, 1, { regex => qr(^\d+$) }, 1, 0);
+	my ($s, $vars, $conn_id, $sys_name, $sys_attr) = @_;
 	
 	$vars->{user_systems} = $CONFIG{user_systems};
-	my $sql_param = Sql::SystemParam->new($s->{dbh});
-	my @params = $sql_param->get({ 
-		connector => $conn_id
+	if ($sys_attr) {
+		$vars->{sys} = $sys_attr;
+	}
+	my %param_values = $sys_attr->{params} 
+		? %{$sys_attr->{params}} : ( );
+	#croak Dumper(\%param_values);
+	my @params = Sql::SystemParam->new($s->{dbh})->get({
+		connector => $conn_id,
 	});
+	#croak Dumper(\@params);
+
+
 	$vars->{sys}{params} = { map {
-		 $_->{param} => { note => $_->{note} } 
+		$_->{param} => {
+			note => $_->{note},
+			required => $_->{required},
+			value => $param_values{$_->{param}}
+		}
 	} @params };
+	#croak Dumper($vars);
 	$vars->{sys}{connector} = $conn_id;
+	$vars->{sys}{name} = $sys_name;
 	
-#	unless ($ignore_db_values) {
-#		$vars->{'dap_settings'} 
-#			= $sqlConfig->get_dap_settings($method);
-#	}
-#	
-#	$vars->{'method'} = $method;
 	return TPL_INTEGRATIOM_VAL;
 }
 

@@ -23,8 +23,9 @@
 
 	<form action="setup.cgi" method="post">
 		<div style="margin-top : 0.5em;">
-			[% WRAPPER sys_form style="background : 0; border : 0;" %]
+			[% WRAPPER sys_form style="background : 0; border : 0;" no_name = 1 %]
 			<input type="hidden" name="sys.connector" value="[% sys.connector %]" />
+			<input type="hidden" name="sys.name" value="[% sys.name %]" />
 			[% END %]
 		</div>
 		<p>							

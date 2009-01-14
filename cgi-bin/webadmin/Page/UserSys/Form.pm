@@ -20,6 +20,8 @@ Readonly::Scalar my $TPL_EDIT    => 'usersys_edit.html';
 Readonly::Scalar my $TPL_ADD     => 'usersys_add.html';
 Readonly::Scalar my $TPL_DEL     => 'usersys_del.html';
 
+Readonly::Scalar my $ADD_PART_2 => 2;
+Readonly::Scalar my $CLEAN_ERRMSG_REGEX => qr{at .*? line \d+$};
 
 
 sub _init {
@@ -37,35 +39,59 @@ sub show {
 
 sub show_add { 
 	my ($s, $vars, $part, $sys_ref) = @_;
+
 	if (!$part) { #part 1
 		return $TPL_ADD
 	}
 	croak "invalid part '$part'"
-		unless $part =~ /^2$/;
+		unless $part =~ /^$ADD_PART_2$/;
 	
 	croak "invalid system '$sys_ref->{connector}'"
 		unless $CONFIG{user_systems}{$sys_ref->{connector}};
+	
+	$vars->{sys}{params} = { $s->_build_params(
+		$sys_ref->{connector}, 
+		%{$sys_ref->{params}},
+	)};
 
-	my @params = $s->{sql_param}->get({ 
-		connector => $sys_ref->{connector} 
-	});
-	$vars->{sys}{params} = { map {
-		 $_->{param} => { note => $_->{note} } 
-	} @params };
+	$vars->{sys}{name} = $sys_ref->{name};
+	$vars->{sys}{connector} = $sys_ref->{connector};
 
 	$vars->{part2} = 1;
-	$vars->{sys}{connector} = $sys_ref->{connector};
-	$vars->{sys}{name} = $sys_ref->{name};
 
 	return $TPL_ADD;
 }
+##
+# custom params, as used in HTML template.
+sub _build_params {
+	my ($s, $conn_id, %param_values) = @_;
+	my @params = $s->{sql_param}->get({ 
+		connector => $conn_id
+	});
+	return map {
+		 $_->{param} => { 
+			note     => $_->{note}, 
+		 	required => $_->{required},
+			value    => $param_values{$_->{param}},
+		} 
+	} @params;
+}
 
 sub show_edit {
-	validate_pos(@_, 1, 1, { regex => qr(^\d+$) });
-	my ($s, $vars, $sys_id) = @_;
+	validate_pos(@_, 1, 1, { regex => qr(^\d+$) }, 0);
+	my ($s, $vars, $sys_id, $sys_attr) = @_;
 	my $sys = Data::UserSys->new($s->{dbh}, $sys_id);
-	$vars->{sys} = { $sys->get() };
-	
+	if (!$sys_attr) {
+		$vars->{sys} = { $sys->get() };
+	}
+	else {
+		$vars->{sys} = $sys_attr;
+		$vars->{sys}{params} = { $s->_build_params(
+			$sys->get('connector'), 
+			%{$sys_attr->{params}}
+		) };
+		$vars->{sys}{id} = $sys_id;
+	}
 	$TPL_EDIT;
 }
 
@@ -160,16 +186,17 @@ sub upd_usersys {
 	validate_pos(@_, 1, 1, { regex => qr{^\d+$} }, 1);
 	my ($s, $vars, $sys_id, $sys_attr) = @_;
 
-	if (defined $sys_attr->{password}
-	    && $sys_attr->{password} eq "") {
-		# blank input, ignore.
-		delete $sys_attr->{password} 
+	if (defined $sys_attr->{name} && $sys_attr->{name} eq q{}) {
+		delete $sys_attr->{name};
 	}
 		
-
-	
 	my $sys = Data::UserSys->new($s->{dbh}, $sys_id);
-	$sys->update(%{$sys_attr});
+	eval { $sys->update(%{$sys_attr}) };
+	if ($@) {
+		$vars->{error} = $@;
+		$vars->{error} =~ s/$CLEAN_ERRMSG_REGEX//;
+		return $s->show_edit($vars, $sys_id, $sys_attr);
+	}
 	
 	$vars->{ok} = "System updated.";
 	return $s->show_edit($vars, $sys_id);
@@ -179,7 +206,14 @@ sub upd_usersys {
 
 sub add {
 	my ($s, $vars, $sys_ref) = @_;
-	my $sys = Data::UserSys->create($s->{dbh}, %{$sys_ref});
+	eval {
+		my $sys = Data::UserSys->create($s->{dbh}, %{$sys_ref});
+	};
+	if ($@) {
+		$vars->{error} = $@;
+		$vars->{error} =~ s/$CLEAN_ERRMSG_REGEX//;
+		return $s->show_add($vars, $ADD_PART_2, $sys_ref);
+	}
 	$vars->{ok} = "System created.";
 	return $s->show($vars);
 }

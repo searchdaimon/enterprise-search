@@ -50,18 +50,23 @@ if (defined($state{'submit'})) {
 	elsif (defined $btn->{'export_settings'}) {
 		# User is downloading exported settings
                 my $utime = time();
-                print "Content-Type: text/plain\n",
+		my $export_file = $page->export_settings();
+		open my $fh, "<", $export_file
+			or croak "export file open: ", $!;
+
+                print "Content-Type: application/x-gzip\n",
                       "Content-disposition: Attachment; ",
                       "filename=bbexport-$utime.backup\n",
                       "\n";
-		print $page->export_settings();
+		print while <$fh>;
+		close $fh;
+
 		exit 0;
 	}
 
 	elsif (defined $btn->{'import_settings'}) {
 		# User is importing a file.
-		($vars, $tpl_file) 
-			= $page->import_settings($vars, $state{import_file});
+		$tpl_file = $page->import_settings($vars, $state{import_file});
 	}
 
 	elsif (defined $btn->{'dist_select'}) {
@@ -111,7 +116,7 @@ elsif (defined $state{'view'}) {
 	my $view = $state{'view'};
 	
 	if ($view eq "import_export") {
-		($vars, $tpl_file) = $page->show_import_export($vars);
+		$tpl_file = $page->show_import_export($vars);
 	}
 
 	elsif ($view eq "advanced") {

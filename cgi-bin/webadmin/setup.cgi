@@ -145,13 +145,17 @@ sub process_manual_act {
 }
 
 sub process_integration_method {
-	my $method = $state{'auth_method'};
-
-	return $pageIntegr->show_integration_values($vars, $state{auth_connector});
+	return $pageIntegr->show_integration_values(
+		$vars, 
+		$state{auth_connector}, 
+		$state{sys_name}
+	);
 }
 
 sub process_integration_values {
-	$pageIntegr->process_integration($vars, $state{sys});
+	my $tpl_file = $pageIntegr->process_integration($vars, $state{sys});
+	return $tpl_file if $tpl_file;
+ 	# $tpl_file is undef if all is OK.
 
 	my $cfg = Sql::Config->new($dbh);
 	$cfg->insert_setting("setup_wizard_done", 1);

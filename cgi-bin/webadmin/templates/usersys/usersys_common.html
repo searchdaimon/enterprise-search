@@ -4,36 +4,33 @@
 [% END %]
 <div class="defaultForm" style="[% style %]">
 <table>
-       <tr>
-                <td>IP/hostname:</td>
-                <td><input type="text" name="sys.ip" value="[% sys.ip | html %]" /></td>
-       </tr>
+
        [% UNLESS no_name %]
        <tr>
 		<td>Name:</td>
-		<td><input type="text" name="sys.name" value="[% sys.name | html %]" /></td>
+		<td><input type="text" name="sys.name" value="[% sys.name | html %]" />
+		</td>
        </tr>
        [% END %]
 
+              [% FOREACH p IN sys.params %]
        <tr>
-               <td>Username:</td><td><input type="text" name="sys.user" value="[% sys.user | html %]" /></td>
-       </tr>
-       <tr>
-               <td>Password:</td>
-                <td><input type="password" name="sys.password" value="" /></td>
-        </tr>
-       [% FOREACH p IN sys.params.keys %]
-       <tr>
-               <td>[% p | html %]</td>
+               <td>[% p.key | html %]:</td>
                <td>
-                       <input type="text"
-                              value="[% sys.params.$p.value | html %]"
-                              name="sys.params.[% p | html %]" />
-                       [% IF sys.params.$p.note.defined %]
+                       <input type="[% IF p.key == "password"; "password"; ELSE; "text"; END %]"
+                              value="[% p.value.value | html IF p.key != "password" %]"
+                              name="sys.params.[% p.key | html %]" />
+
+                       [% IF p.value.note.defined %]
                                <span style="font-size : x-small; font-style : italic;">
-                                       [% sys.params.$p.note | html %]
+                                       [% p.value.note | html %]
                                </span>
                        [% END %]
+
+			[% UNLESS p.value.required %]
+		               [% INCLUDE is_optional %]
+        		[% END %]
+
                </td>
        </tr>
        [% END %]
@@ -50,4 +47,10 @@
 [% UNLESS NO_FORM %]
 </form>
 [% END %]
+[% END %]
+
+[% BLOCK is_optional %]
+	<span style="font-size : x-small; font-style : italic;" />
+		(optional)
+	</span>
 [% END %]

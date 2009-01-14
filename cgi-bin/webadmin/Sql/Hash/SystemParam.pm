@@ -107,6 +107,13 @@ sub note {
 	}, 'note')->{note};
 }
 
+sub required { 
+	my ($s, $param) = @_;
+	return $s->{sql_param}->get({ 
+		param => $param,
+		connector => $s->{conn_id},
+	}, 'required')->{required};
+}
 
 
 

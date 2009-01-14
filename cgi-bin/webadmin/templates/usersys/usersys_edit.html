@@ -7,7 +7,9 @@
 [% IF ok %]
 	[% PROCESS 'tpl_msg.html' type = "success" content = HTML.escape(ok) %]
 [% END %]
-
+[% IF error %]
+	[% PROCESS 'tpl_msg.html' type = "error" content = HTML.escape(error) %]
+[% END %]
 [%# TODO: Add 'return' link  %]
 [% WRAPPER sys_form
 	action = 'edit'

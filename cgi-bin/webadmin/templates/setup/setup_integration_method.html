@@ -10,7 +10,6 @@
 	
 	<form action="setup.cgi" method="post">
 	<input type="hidden" name="form_id" value="integration_method" />
-		
 	<ul style="list-style-type : none;">
 		[% FOREACH id IN user_systems.keys %]
 			
@@ -22,8 +21,11 @@
 			</li>
 		[% END %]
 	</ul>
-			
-	<div id="buttons_block">
+	<div>
+			Name:&nbsp;&nbsp;<input type="text" name="sys_name" />
+				<span style="font-size : x-small;">[% '(Defaults to "Unnamed system")' | html %]</span>
+	</div>
+	<div id="buttons_block" style="margin-top : 1em;">
 		<input type="submit" name="next_button" value="Continue" class="next_button" />
 	<div>
 	</form>
