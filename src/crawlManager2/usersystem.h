@@ -9,9 +9,11 @@ struct hashtable;
 
 typedef struct {
 	unsigned int id;
-	char *hostname;
-	char *username;
-	char *password;
+	/* hostname, username and passwd  
+	   are stored int *parameters as of 14 jan 09
+	 char *hostname;  
+	 char *username;  
+	 char *password;  */
 	char is_primary;
 	unsigned int type;
 	struct hashtable *parameters;

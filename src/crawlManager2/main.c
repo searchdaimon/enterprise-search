@@ -91,7 +91,7 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 	struct userToSubnameDbFormat userToSubnameDb;
 	usersystem_t *us;
 
-	querylen = snprintf(query, sizeof(query), "SELECT ip, user, password, is_primary, connector FROM system WHERE id = %d", id);
+	querylen = snprintf(query, sizeof(query), "SELECT is_primary, connector FROM system WHERE id = %d", id);
 
 	if (mysql_real_query(db, query, querylen)) {
 		blog(LOGERROR, 1, "Mysql error: %s", mysql_error(db));
@@ -112,7 +112,7 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 		return NULL;
 	}
 
-	data->type = atoi(row[4]);
+	data->type = atoi(row[1]);
 	us = hashtable_search(usersystemshash, &data->type);
 	if (us == NULL) {
 		blog(LOGERROR, 1, "No usersystem module for this type: %d", data->type);
@@ -120,14 +120,10 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 	}
 
 	data->id = id;
-	data->hostname = strdup(row[0]);
-	data->username = strdup(row[1]);
-	data->password = strdup(row[2]);
-	data->is_primary = atoi(row[3]);
+	data->is_primary = atoi(row[0]);
 	
 	data->parameters = create_hashtable(3, ht_stringhash, ht_stringcmp);
 
-	printf("%d: %s %s:%s\n", id, data->hostname, data->username, data->password);
 
 	querylen = snprintf(query, sizeof(query), "SELECT param, value FROM systemParamValue WHERE system = %d", data->id);
 	if (mysql_real_query(db, query, querylen)) {
@@ -152,9 +148,6 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 void
 free_usersystem_data(usersystem_data_t *data)
 {
-	free(data->hostname);
-	free(data->username);
-	free(data->password);
 	hashtable_destroy(data->parameters, 1);
 }
 
