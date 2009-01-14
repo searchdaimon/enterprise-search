@@ -71,11 +71,19 @@ bconfig_flush(int mode) {
 		return 0;
         }
 
-
+	char ad_select_tpl[] = "SELECT '%s' AS configkey, systemParamValue.value AS configvalue \
+		FROM system, systemParamValue \
+		WHERE systemParamValue.param = \"%s\" \
+		AND system.is_primary = 1 \
+		AND system.id = systemParamValue.system";
+	char selectbfr[512];
 	sprintf(mysql_query[0], "SELECT configkey, configvalue FROM config");
-	sprintf(mysql_query[1], "SELECT '_ad_ip' AS configkey, ip AS configvalue FROM system WHERE is_primary = 1");
-	sprintf(mysql_query[2], "SELECT '_ad_user' AS configkey, user AS configvalue FROM system WHERE is_primary = 1");
-	sprintf(mysql_query[3], "SELECT '_ad_password' AS configkey, password AS configvalue FROM system WHERE is_primary = 1");
+	snprintf(selectbfr, sizeof selectbfr, ad_select_tpl, "_ad_ip", "ip");
+	sprintf(mysql_query[1], selectbfr); 
+	snprintf(selectbfr, sizeof selectbfr, ad_select_tpl, "_ad_user", "user");
+	sprintf(mysql_query[2], selectbfr);
+	snprintf(selectbfr, sizeof selectbfr, ad_select_tpl, "_ad_password", "password");
+	sprintf(mysql_query[3], selectbfr);
 	sprintf(mysql_query[4], "SELECT param AS configkey, value AS configvalue FROM system, systemParamValue WHERE system.is_primary = 1 AND system.id = systemParamValue.system");
 	//sprintf(mysql_query[2], "SELECT configkey, configvalue FROM config");
 
