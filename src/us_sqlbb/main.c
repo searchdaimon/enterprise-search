@@ -56,7 +56,8 @@ sqlbb_list_groupsforuser(usersystem_data_t *data, const char *user, char ***grou
 	int i;
 
 	sql_connect(&db);
-	querylen = snprintf(query, sizeof(query), "SELECT groupname FROM foreignUserSystem WHERE usersystem = %d AND username = '%s'",
+	querylen = snprintf(query, sizeof(query), "SELECT DISTINCT groupname FROM foreignUserSystem " 
+	                "WHERE usersystem = %d AND username = '%s'",
 			data->id, user);
 	if (mysql_real_query(&db, query, querylen)) {
 		fprintf(stderr, "Failed to remove rows, Error: %s\n", mysql_error(&db));
