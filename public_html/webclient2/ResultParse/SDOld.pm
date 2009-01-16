@@ -226,7 +226,7 @@ sub _filteradd {
 
 ##
 # Filters in query.
-# TODO: Deprecate? Provided in XML result?
+# TODO: deprecate. We want this in the XML result.
 sub _query_filters {
 	my ($s, $query) = @_;
 	my %filters;

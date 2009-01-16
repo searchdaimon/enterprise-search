@@ -1,6 +1,10 @@
 msgid ""
 msgstr ""
 
+# main
+msgid "search"
+msgstr "search"
+
 # header
 msgid "Showing %1 - %2 out of %3 results"
 msgstr "Showing %1 - %2 out of %3 results"

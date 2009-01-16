@@ -1,0 +1,90 @@
+msgid ""
+msgstr ""
+
+# main
+msgid "search"
+msgstr "search"
+
+# header
+msgid "Showing %1 - %2 out of %3 results"
+msgstr "Viser %1 - %2 av totalt %3 resultater"
+
+msgid "(search_btn_img)"
+msgstr "img/default/search_en.jpg"
+
+msgid "Start search"
+msgstr "Utfør søk"
+
+msgid "Search"
+msgstr "Søk"
+
+msgid "Results for"
+msgstr "Resultater for"
+
+msgid "Showing %1 - %2 out of %3 results. %4 sec."
+msgstr "Viser %1 - %2 av totalt %quant(%3, resultat, resultater). %4 sek."
+
+msgid "Showing no results. %1 sec."
+msgstr "Viser ingen resultater. %1 sec."
+
+#filter
+msgid "(filtered_msg)"
+msgstr "%1 av resultatene ble filtrert bort av systemet. Dette kan være fordi ressursen har blitt flyttet, slettet eller endret rettigheter på etter systemet sist indekserte de."
+
+# collections
+msgid "no hits"
+msgstr "ingen"
+
+msgid "%1 hits"
+msgstr "%1 treff"
+
+msgid "All collections"
+msgstr "Alle"
+
+# sorting
+msgid "Sort"
+msgstr "Sorter"
+
+msgid "relevance"
+msgstr "relevans"
+
+msgid "oldest first"
+msgstr "eldst først"
+
+msgid "newest first"
+msgstr "nyest først"
+
+# left nav
+msgid "Filtering"
+msgstr "Filtrering"
+
+msgid "All results"
+msgstr "Alle resultater"
+
+# results
+msgid "cache"
+msgstr "bufret side"
+
+msgid "Found %1 other copies"
+msgstr "Fant %quant(%1, annen kopi, andre kopier)"
+
+msgid "Found no results for query \"%1\"."
+msgstr "Fant ingen resultat for søket \"%1\"."
+
+# page nav
+msgid "Next"
+msgstr "Neste"
+
+# other
+msgid "Did you mean: %1?"
+msgstr "Mente du: <a href=\"%2\">%1</a>?"
+
+# footer
+msgid "(copyright)"
+msgstr "Copyright &copy; 2008."
+
+msgid "Searchdaimon AS"
+msgstr "Searchdaimon AS"
+
+msgid "All Rights Reserved."
+msgstr "All Rights Reserved."
