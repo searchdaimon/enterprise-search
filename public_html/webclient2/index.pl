@@ -30,7 +30,8 @@ $lang ||= $CFG{lang};
 
 my $cgi = new CGI();
 my %state = %{CGI::State->state($cgi)};
-my $tpl = init_tpl($state{tpl}, $lang);
+#my $tpl = init_tpl($state{tpl}, $lang);
+my $tpl = init_tpl(undef, $lang);
 
 fatal("Invalid language " . $lang)
 	unless $VALID_LANG{$lang};
@@ -235,7 +236,7 @@ sub init_tpl {
 
 sub gen_query_url {
 	my $query = shift;
-	return escapeHTML("?query=" . uri_escape($query));
+	return escapeHTML("?query=$query");
 }
 
 1;
