@@ -13,11 +13,20 @@ use LWP::Simple qw(get);
 use Data::Dumper;
 use I18N::SearchRes;
 use Template;
+use CGI qw(escapeHTML);
+use LWP::Simple qw(get);
+use MIME::Base64 qw(encode_base64 decode_base64);
 
-my $lang ||= $CFG{lang};
-$lang = lc $lang;
-$lang = "en_us" 
-	if $lang eq "ENG"; # legacy;
+carp Dumper(\%ENV);
+
+my $lang;
+if ($ENV{HTTP_ACCEPT_LANGUAGE}) {
+	my ($browser_lang) = split q{,}, $ENV{HTTP_ACCEPT_LANGUAGE};
+	$browser_lang =~ s/-/_/g;
+	$lang = $browser_lang
+		if $VALID_LANG{$browser_lang};
+}
+$lang ||= $CFG{lang};
 
 my $cgi = new CGI();
 my %state = %{CGI::State->state($cgi)};
@@ -36,6 +45,9 @@ if (defined(my $query = $state{query})) {
 		$page = 1;
 	}
 	($tpl_file, %tpl_vars) = show_search($query, $state{debug}, $page, $lang);
+}
+elsif (exists $state{cache}) {
+	($tpl_file, %tpl_vars) = show_cache($state{u}, $tpl);
 }
 else {
 	($tpl_file, %tpl_vars) = show_main();
@@ -109,6 +121,36 @@ sub show_search {
 	));
 }
 
+sub show_cache {
+	my ($cache_uri_base64) = @_;
+
+	$cache_uri_base64 
+		or fatal("Cache URI not provided.");
+
+	my $url = decode_base64($cache_uri_base64)
+		or fatal("Invalid cache URI");
+
+	my $cache_data;
+	eval {
+		local $SIG{ALRM} = sub { 
+			die "cache download exceeded timeout ", $CFG{cache_timeout} 
+		};
+		alarm $CFG{cache_timeout};
+		$cache_data = get($url);
+		alarm 0;
+	};
+	if ($@) {
+		carp $@;
+		$@ =~ /timeout/ 
+			? fatal("Unable to load cache, cache server timed out.")
+			: fatal("Unable to load cache, unknown error.");
+	}
+	fatal("Unable to load cache, cache server provided no data.")
+		unless defined $cache_data;
+
+	return ($TPL_FILE{cache}, cache_data => $cache_data);
+}
+
 sub gen_search_uri {
 	my %attr = @_;
 
@@ -165,7 +207,8 @@ sub init_tpl {
 		or fatal("Couldn't make a language handle");
 	$i18n->fail_with(sub { 
 		shift; 
-		warn "Maketext lookup failure:", Dumper(\@_) 
+		warn "Maketext lookup failure:", Dumper(\@_) ;
+		return 'I18N_error';
 	});
 
         my $i18n_filter = sub {
@@ -183,9 +226,16 @@ sub init_tpl {
 	$opt{FILTERS}->{i18n}   = $i18n_filter;
 	$opt{FILTERS}->{warn}   = sub { warn "Template: ", @_; return q{}; };
 	$opt{FILTERS}->{strong} = sub { "<strong>" . $_[0] . "</strong>" };
+	$opt{FILTERS}->{query_url} = \&gen_query_url;
+	$opt{FILTERS}->{encode_base64} = \&encode_base64;
 
 	my $tpl = $tpl = Template->new(%opt);
 	return $tpl;
+}
+
+sub gen_query_url {
+	my $query = shift;
+	return escapeHTML("?query=" . uri_escape($query));
 }
 
 1;

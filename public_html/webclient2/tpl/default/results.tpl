@@ -52,7 +52,7 @@
 </div>
 <div id="nav">
 	<div style="margin-left : 0.5em; font-size : medium; margin-top : 0.5em; ">
-		<a style="text-decoration : none;  color : blue;" href="?query=[% navigation.return_query | html %]">&#171;&nbsp;[% "All results" | i18n %]</a>
+		<a style="text-decoration : none;  color : blue;" href="[% navigation.return_query | query_url %]">&#171;&nbsp;[% "All results" | i18n %]</a>
 	</div>
 
 
@@ -62,12 +62,11 @@
 
 <ul id="collectionNav">
 	<li class="collectionTab[% " selected" UNLESS coll_info.selected %]">
-            <a href="?query=[% coll_info.all_query | html %]">[% "All collections" | i18n %]</a><span class="collectionRes" /><div class="collRight">&nbsp;</div>
+            <a href="[% coll_info.all_query | query_url %]">[% "All collections" | i18n %]</a>&nbsp;<span class="collectionRes" /><div class="collRight">&nbsp;</div>
         </li>
 	[% FOREACH c IN coll_info.coll %]
-		[% SET url = "?query=$c.query" %]
 		<li class="collectionTab[% " selected" IF coll_info.selected == c.name %]">
-            		<a href="[% url | html %]">[% c.name | html | replace(' ', '&nbsp') %]</a>[% "&nbsp;" 
+            		<a href="[% c.query | query_url %]">[% c.name | html | replace(' ', '&nbsp') %]</a>[% "&nbsp;" 
 			%]<span class="collectionRes">([% 
 				IF c.results; 
 					s = "%1 hits"; 
@@ -92,7 +91,7 @@
 	[% END %]
 [% IF res_info.spelling.text %]
     <div id="spellcheck">
-    	[% SET url = "?query=$res_info.spelling.query" %]
+    	[% SET url = res_info.spelling.query | query_url %]
     	[% s = "Did you mean: %1?"; 
 	   s.i18n(HTML.escape(res_info.spelling.text), HTML.escape(url)) %]
 	</div> 
@@ -146,7 +145,7 @@
 			<span class="url">[% r.uri | html %]</span>
 			<span class="details">
 				[% IF r.cache %]
-				 - <a href="[% r.cache | html %]">[% "cache" | i18n %]</a>
+				 - <a href="?cache&amp;u=[% r.cache | encode_base64 %]">[% "cache" | i18n %]</a>
 				[% END %]
 				[% IF r.age %]
 				 - [% r.age | html %]
@@ -192,7 +191,6 @@
 
 [% BLOCK _sort_link %][% FILTER collapse %]
 	[% SET query = sort_info.query.$l %]
-	[% SET url = "?query=$query" %]
 
 	[% SET txt = { newest => "newest first", 
 		   oldest => "oldest first",
@@ -201,6 +199,6 @@
 	[% IF l == sort_info.current %]
 		[% txt.$l | i18n | strong %]
 	[% ELSE %]
-		<a href="[% url | html %]">[% txt.$l | i18n %]</a>
+		<a href="[% query | query_url %]">[% txt.$l | i18n %]</a>
 	[% END %]
 [% END %][% END %]

@@ -29,7 +29,7 @@
 			<div class="topGroupDiv">&nbsp;</div>
 		[% END %]
 		[% "<strong>" IF g.selected %]
-		<a href="?query=[% g.query | html %]">[% g.name | html %]</a>
+		<a href="[% g.query | query_url %]">[% g.name | html %]</a>
 		[% "</strong>" IF g.selected %]
 		[% IF g.hits %]
 			<span class="navHits">
@@ -74,7 +74,7 @@
 	[% END %]
 	<!-- item -->
 	<li>&nbsp;[% "<strong>" IF i.selected %] 
-		<span>[% icon %]<a href="?query=[% i.query | html %]">[% i.name | html %]</a>
+		<span>[% icon %]<a href="[% i.query | query_url %]">[% i.name | html %]</a>
 		 </span>[% "</strong>" IF i.selected %]
 
 		 <span class="navHits"> ([% 

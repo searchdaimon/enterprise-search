@@ -50,6 +50,7 @@
 
 </div>
 
+[% IF query.defined && !hide_infobar_ok %]
 <div id="infoBar">
     <span style="float : left;">
         <strong>[% "Results for" | i18n %]: <em>[% query %]</em></strong>
@@ -73,5 +74,6 @@
     </span>
     <img src="img/default/infobar_right.jpg" alt="" />
 </div>
+[% END %]
 <div style="clear : both; position : relative;">
 [% END %]

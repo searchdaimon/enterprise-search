@@ -1,4 +1,4 @@
-[% PROCESS 'head.tpl' %][% INCLUDE header %]
+[% PROCESS 'head.tpl' hide_infobar_ok = 1 %][% INCLUDE header %]
 
 <div id="errors">
 	[% FOREACH e IN errors %]

@@ -88,3 +88,6 @@ msgstr "Searchdaimon AS"
 
 msgid "All Rights Reserved."
 msgstr "All Rights Reserved."
+
+msgid "(cacheinfo)"
+msgstr "Dette er en lokal kopi av dokumentet, slik det er lagret på søkesystemet for øyeblikket."

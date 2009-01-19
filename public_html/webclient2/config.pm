@@ -9,7 +9,8 @@ our @EXPORT = qw(%CFG %VALID_TPL @SEARCH_ENV_LOGGING %DEF_TPL_OPT %TPL_FILE %VAL
 
 Readonly::Hash our %CFG => (
 	tpl           => 'default',
-	lang          => 'en_us',
+	#lang          => 'en_us',
+	lang          => 'no',
 	num_results   => 10,
 	search_uri    => 'http://dagurval.boitho.com/cgi-bin/dispatcher_allbb',
 	subname       => 'wikipedia',
@@ -25,12 +26,14 @@ Readonly::Hash our %CFG => (
 	page_nav => {
 		show_pages => 10, # How many page links in nav bar.
 	},
+	cache_timeout => 20, # seconds
 );
 
 Readonly::Hash our %TPL_FILE => (
 	main    => "main.tpl",
 	results => "results.tpl",
 	error   => "error.tpl",
+	cache   => "cache.tpl",
 );
 
 Readonly::Array our @SEARCH_ENV_LOGGING
