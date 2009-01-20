@@ -1161,7 +1161,6 @@ void frase_stopword(struct iindexFormat *c, int clen) {
 
 void iindexArrayCopy2(struct iindexFormat **c, int *baselen,int Originallen, struct iindexFormat **a, int alen) {
 
-	fprintf(stderr, "search: iindexArrayCopy2() Warning! This function has not been tested.\n");
 	//printf("iindexArrayCopy2(baselen=%i, Originallen=%i, alen=%i)\n",*baselen,Originallen,alen);
 	int x;
         int i=0,j=0;
@@ -2221,15 +2220,6 @@ void *searchIndex_thread(void *arg)
 
 	for (i=0; i<(*searchIndex_thread_arg).attrib_count; i++)
 	    {
-		/*
-		if (((*searchIndex_thread_arg).attribArray[i] = malloc(sizeof(struct iindexFormat))) == NULL) {
-            		perror("malloc attribArray");
-            		exit(1);
-    		    }
-
-		resultArrayInit((*searchIndex_thread_arg).attribArray[i]);
-		*/
-
 		if ((tmpAttribArray[i] = malloc(sizeof(struct iindexFormat))) == NULL) {
             		perror("malloc attribArray");
             		exit(1);
@@ -2664,6 +2654,7 @@ void *searchIndex_thread(void *arg)
 
 	vboprintf("search: ~searchIndex_thread()\n");
 }
+
 
 void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int *TotaltTreff, 
 		query_array *queryParsed, struct queryTimeFormat *queryTime, 
@@ -3214,13 +3205,18 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		//char filetype[5];
 		//struct filesKeyFormat *filesKey;
 
+		re = NULL;
 		for (i = 0; i < (*TeffArrayElementer); i++) {
 			//printf("$%%$$%%$$$$$$$$$$$$$$ Eirik: %d\n", (*TeffArray)->iindex[i].DocID);
 			#ifdef DEBUG
 			printf("i = %i, subname \"%s\"\n",i,(*(*TeffArray)->iindex[i].subname).subname);
 			#endif
 			#if 1
-				if ((re = reopen_cache(rLotForDOCid((*TeffArray)->iindex[i].DocID), 4, "filtypes", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY|RE_STARTS_AT_0)) == NULL) {
+ 
+				if (reIsOpen(re,rLotForDOCid((*TeffArray)->iindex[i].DocID), (*TeffArray)->iindex[i].subname->subname, "filtypes") ) {
+
+				}
+				else if ((re = reopen_cache(rLotForDOCid((*TeffArray)->iindex[i].DocID), 4, "filtypes", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY|RE_STARTS_AT_0)) == NULL) {
 					debug("reopen(filtypes)\n");
 					(*TeffArray)->iindex[i].filetype[0] = '\0';
 
@@ -3242,27 +3238,14 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 			#endif
 
 			// filetype kan være på opptil 4 bokstaver. Hvis det er ferre en 4 så vil 
-			// det være \0 er paddet på slutten, men hvsi det er 4 så er det ikke det.
+			// det være \0 er paddet på slutten, men hvis det er 4 så er det ikke det.
 			// legger derfor til \0 som 5 char, slik at vi har en gyldig string
 			(*TeffArray)->iindex[i].filetype[4] = '\0';
 			
-			/*	
-			if (strstr((*TeffArray)->iindex[i].filetype,"10") != NULL) {
-				printf("werd. DocID %u, subname %s\n",(*TeffArray)->iindex[i].DocID,(*(*TeffArray)->iindex[i].subname).subname);
-				//exit(1);
-			}
-			*/
 
 		}
 
 
-		/*
-		// sort by nrof
-		for(i=0;i<nrOfSubnames;i++) {
-			printf("qsort filtypes %i\n",subnames[i].nrOfFiletypes);
-			qsort(subnames[i].filtypes,subnames[i].nrOfFiletypes,sizeof(struct subnamesFiltypesFormat),compare_filetypes);
-		}
-		*/
 
 		gettimeofday(&end_time, NULL);
 		(*queryTime).filetypes = getTimeDifference(&start_time,&end_time);
@@ -3390,9 +3373,13 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		printf("looking opp dates\n");
 
 		//slår opp alle datoene
+		re = NULL;
 		for (i = 0; i < *TeffArrayElementer; i++) {
 			#if 1
-				if ((re = reopen_cache(rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(int), "dates", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY|RE_STARTS_AT_0)) == NULL) {
+				if (reIsOpen(re,rLotForDOCid((*TeffArray)->iindex[i].DocID), (*TeffArray)->iindex[i].subname->subname, "dates") ) {
+
+				}
+				else if ((re = reopen_cache(rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(int), "dates", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY|RE_STARTS_AT_0)) == NULL) {
 					debug("reopen(dates)\n");
 					continue;
 				}
@@ -3505,8 +3492,10 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 					continue;
 				}
 			#else
-				//if ((re = reopen(rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(unsigned int), "crc32map", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY)) == NULL) {
-				if ((re = reopen_cache(rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(unsigned int), "crc32map", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY)) == NULL) {
+				if (reIsOpen(re,rLotForDOCid((*TeffArray)->iindex[i].DocID), (*TeffArray)->iindex[i].subname->subname, "crc32map") ) {
+
+				}
+				else if ((re = reopen_cache(rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(unsigned int), "crc32map", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY)) == NULL) {
 					debug("reopen(crc32map)\n");
 					continue;
 				}
