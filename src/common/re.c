@@ -12,6 +12,7 @@
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
 #include "../common/timediff.h"
 
+
 void _filecpy(int into, int from) {
 
 	char buf[4096];
@@ -30,6 +31,7 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 	struct reformat *re = NULL;
 	char openmode[4];
 	int mmapmode;
+	int i;
 
 	#ifdef DEBUG
 	printf("reopen(lotNr=%i, structsize=%d, file=%s, subname=%s, flags=%i)\n",lotNr,structsize,file,subname,flags);
@@ -122,6 +124,14 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 		goto reopen_error;
         }
 
+	if ((re->flags & RE_POPULATE) == RE_POPULATE) {
+		int pr = 0;
+		printf("RE_POPULATE'ing\n");
+		for(i=0;i<re->maxsize;i++) {
+			pr += ((char *)re->mem)[i]; 	
+		}
+	}
+
 	/*
 	printf("mmap dump:\n");
 	printf("########################################\n");
@@ -168,6 +178,7 @@ struct reformat *reopen_cache(int lotNr, size_t structsize, char file[], char su
 		return NULL;
 	}
 	hashtable_insert(lots_cache, strdup(lotfile), re);
+
 
 	return re;
 }
@@ -237,7 +248,7 @@ void reclose(struct reformat *re) {
 }
 
 
-void *reposread(struct reformat *re, size_t position) {
+static inline void *reposread(struct reformat *re, size_t position) {
 
 	void *p;
 
@@ -247,8 +258,7 @@ void *reposread(struct reformat *re, size_t position) {
 		exit(-1);
 	}
 
-	p = re->mem;
-	p += position;
+	p = re->mem + position;
 
 	if ((re->flags & RE_HAVE_4_BYTES_VERSION_PREFIX) == RE_HAVE_4_BYTES_VERSION_PREFIX) {
 		p += 4;
@@ -276,6 +286,7 @@ void *reposread(struct reformat *re, size_t position) {
 
 
 void *reget(struct reformat *re, unsigned int DocID) {
+
 
 	size_t position = (re->structsize * (DocID - LotDocIDOfset(re->lotNr)));
 	if ((re->flags & RE_STARTS_AT_0) == RE_STARTS_AT_0) {

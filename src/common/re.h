@@ -25,6 +25,7 @@
 #define RE_HAVE_4_BYTES_VERSION_PREFIX 0x2
 #define RE_READ_ONLY 0x4
 #define RE_STARTS_AT_0 0x8
+#define RE_POPULATE 0x10
 
 struct reformat {
         void *mem;
@@ -39,6 +40,9 @@ struct reformat {
         char tmpfile[62];
         int fd_tmp;
 };
+
+
+#define reIsOpen(ire,ilotNr,isubname,ifile) (( ire != NULL ) && ( re->lotNr == ilotNr ) && ( strcmp(re->subname,isubname) == 0 ) && (strcmp(re->mainfile,ifile) == 0))
 
 
 struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[], int flags);
