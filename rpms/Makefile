@@ -8,19 +8,19 @@ tlcd-gt14_name = tlcd-gt14
 tlcd-gt14_version = 0.0.2
 
 boitho-ad_name = boitho-ad
-boitho-ad_version = 0.3.19
+boitho-ad_version = 0.3.29
 
 boitho-searchdbb_name = boitho-searchdbb
-boitho-searchdbb_version = 5.5.61
+boitho-searchdbb_version = 5.5.74
 
 boitho-crawlManager_name = boitho-crawlManager
-boitho-crawlManager_version = 1.4.54
+boitho-crawlManager_version = 1.4.65
 
 boitho-boitho-bbdn_name = boitho-bbdn
-boitho-boitho-bbdn_version = 1.8.15
+boitho-boitho-bbdn_version = 1.8.20
 
 boitho-fileFilter_name = boitho-fileFilter
-boitho-fileFilter_version = 1.3.13
+boitho-fileFilter_version = 1.3.14
 
 boitho-base_name = boitho-base
 boitho-base_version = 1.3.0
@@ -29,32 +29,34 @@ boitho-apaceconf_name = boitho-apaceconf
 boitho-apaceconf_version = 1.3.0
 
 boitho-bbadmin_name = boitho-bbadmin
-boitho-bbadmin_version = 2.8.41
+boitho-bbadmin_version = 2.8.53
 
 boitho-everrun_name = boitho-everrun
 boitho-everrun_version = 2.0.3
 
 boitho-infoquery_name = boitho-infoquery
-boitho-infoquery_version = 2.0.18
+boitho-infoquery_version = 2.0.20
 
 boitho-iindex_name = boitho-iindex
-boitho-iindex_version = 2.0.23
+boitho-iindex_version = 2.0.26
 
 boitho-webclient_name = boitho-webclient
-boitho-webclient_version = 6.0.40
+boitho-webclient_version = 6.0.50
 
 boithobb-setuid_name = boithobb-setuid
-boithobb-setuid_version = 1.0.16
-
+boithobb-setuid_version = 1.0.17
 
 boithobb-crawl_watch_name = boithobb-crawl_watch
-boithobb-crawl_watch_version = 1.0.15
+boithobb-crawl_watch_version = 1.0.17
 
 boithobb-bbAutoUpdate_name = bbAutoUpdate
 boithobb-bbAutoUpdate_version = 1.0.3
 
 boithobb-sqlUpdate_name = boithobb-sqlUpdate
-boithobb-sqlUpdate_version = 1.7.8
+boithobb-sqlUpdate_version = 1.7.16
+
+boithobb-licensekey_name = boithobb-licensekey
+boithobb-licensekey_version = 1.0.0
 
 boithobb-filepermissions_name = boithobb-filepermissions
 boithobb-filepermissions_version = 0.5.7
@@ -75,35 +77,44 @@ boitho-auth_name = mod_auth_boitho
 boitho-auth_version = 1.2
 
 boitho-scripts_name = boitho-scripts
-boitho-scripts_version = 1.1
+boitho-scripts_version = 1.2
 
 boitho-dictionary_name = boitho-dictionary
-boitho-dictionary_version = 1.4.2
+boitho-dictionary_version = 1.4.3
+
+boitho-list_collections_name = boitho-list_collections
+boitho-list_collections_version = 0.0.1
 
 boitho-repomod_name= boitho-repomod
 boitho-repomod_version = 1.2
 
 boitho-suggest_name = boitho-suggest
-boitho-suggest_version = 1.6
+boitho-suggest_version = 1.6.2
 
 boitho-gc_name = boitho-garbage-collection
-boitho-gc_version = 1.3
+boitho-gc_version = 1.5
 
 boitho-perlxs-sdcrawl_name = boitho-perlxs-sdcrawl
-boitho-perlxs-sdcrawl_version = 0.1
+boitho-perlxs-sdcrawl_version = 0.2
 
 boitho-webadd_name = boitho-bbdocumentwebadd
-boitho-webadd_version = 0.1
+boitho-webadd_version = 0.3
 
 boitho-setup_login_name = boitho-setup_login
 boitho-setup_login_version = 0.1.1
 
-all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch scripts repomod suggest perlxs-sdcrawl webadd
+
+all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager boitho-bbdn base setuidbb bbAutoUpdate sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch scripts repomod suggest perlxs-sdcrawl webadd list_collections licensekey
 
 sqlUpdate:
 	perl rpmmagic.pl --sql sql/update-cur.sql --requires "boitho-database" $(boithobb-sqlUpdate_name) $(boithobb-sqlUpdate_version) $(BOITHOHOME) /home/boitho/boithoTools 
 
 	rpmbuild -bb $(boithobb-sqlUpdate_name).spec
+
+licensekey:
+	perl rpmmagic.pl --sql sql/licensekey.sql --requires "boitho-database" $(boithobb-licensekey_name) $(boithobb-licensekey_version) $(BOITHOHOME) /home/boitho/boithoTools 
+
+	rpmbuild -bb $(boithobb-licensekey_name).spec
 
 filepermissions:
 	perl rpmmagic.pl --post "sh /home/boitho/boithoTools/blackbox/filepermissions_fix.sh" $(boithobb-filepermissions_name) $(boithobb-filepermissions_version) $(BOITHOHOME) /home/boitho/boithoTools blackbox/filepermissions_fix.sh
@@ -121,11 +132,11 @@ webclient:
 	rpmbuild -bb $(boitho-webclient_name).spec
 
 webadd:
-	perl rpmmagic.pl $(boitho-webadd_name) $(boitho-webadd_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/bbdocumentWebAdd
+	perl rpmmagic.pl --requires "/usr/lib/libxml2.so.2" $(boitho-webadd_name) $(boitho-webadd_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/bbdocumentWebAdd
 	rpmbuild -bb $(boitho-webadd_name).spec
 
 perlxs-sdcrawl:
-	perl rpmmagic.pl $(boitho-perlxs-sdcrawl_name) $(boitho-perlxs-sdcrawl_version) $(BOITHOHOME) /home/boitho/boithoTools perlxs/SD-Crawl/blib/
+	perl rpmmagic.pl $(boitho-perlxs-sdcrawl_name) $(boitho-perlxs-sdcrawl_version) $(BOITHOHOME) /home/boitho/boithoTools perlxs/SD-Crawl/blib
 	rpmbuild -bb $(boitho-perlxs-sdcrawl_name).spec
 
 iindex:
@@ -137,12 +148,12 @@ iindex:
 bbadmin:
 	echo BOITHOHOME
 	echo $(BOITHOHOME)
-	perl rpmmagic.pl --pre "mkdir --parents --mode=777 /home/boitho/boithoTools/var/webadmin_tmp/" --requires "perl-JSON-XS perl-Config-Tiny perl-XML-Simple boitho-repomod perl-Apache-Htpasswd perl-File-Copy-Recursive perl-IO-String perl-Archive-Tar perl mysql mysql-server boitho-infoquery boithobb-setuid boithobb-sqlUpdate==1.6.2 bbAutoUpdate perl-SQL-Abstract perl-Readonly perl-Params-Validate" --post "chown apache:apache /home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd" $(boitho-bbadmin_name) $(boitho-bbadmin_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/webadmin Modules config/setup.txt
+	perl rpmmagic.pl --pre "mkdir --parents --mode=777 /home/boitho/boithoTools/var/webadmin_tmp/; chmod 777 /home/boitho/boithoTools/crawlers/" --requires "boitho-list_collections perl-JSON-XS perl-Config-Tiny perl-XML-Simple boitho-repomod perl-Apache-Htpasswd perl-File-Copy-Recursive perl-IO-String perl-Archive-Tar perl mysql mysql-server boitho-infoquery boithobb-setuid boithobb-sqlUpdate==1.6.2 bbAutoUpdate perl-SQL-Abstract perl-Readonly perl-Params-Validate" --post "chown apache:apache /home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd" $(boitho-bbadmin_name) $(boitho-bbadmin_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/webadmin Modules config/setup.txt
 
 	rpmbuild -bb $(boitho-bbadmin_name).spec
 
 boithoad:
-	perl rpmmagic.pl --pre "rm -f /home/boitho/boithoTools/logs/boithoad_*" --initd boithoad --requires "boithobb-filepermissions" $(boitho-ad_name) $(boitho-ad_version) $(BOITHOHOME) /home/boitho/boithoTools bin/boithoad
+	perl rpmmagic.pl --pre "rm -f /home/boitho/boithoTools/logs/boithoad_*" --initd boithoad --requires "boithobb-sqlUpdate>=1.7.10 boithobb-filepermissions" $(boitho-ad_name) $(boitho-ad_version) $(BOITHOHOME) /home/boitho/boithoTools bin/boithoad bin/slicense_info
 
 	rpmbuild -bb $(boitho-ad_name).spec
 
@@ -177,7 +188,7 @@ configfiles:
 	rpmbuild -bb $(boitho-configfiles_name).spec
 
 searchdbb:
-	perl rpmmagic.pl --requires "boitho-suggest perl-Text-Iconv boitho-dictionary boitho-configfiles boitho-everrun boithobb-filepermissions" --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumbbb cgi-bin/ShowCache2bb config/filetypes.eng.conf config/filetypes.nbo.conf config/dispatcher.conf  data/thesaurus.id data/thesaurus.text config/file_extensions.conf config/show_attributes.conf
+	perl rpmmagic.pl --requires "boithobb-sqlUpdate>=1.7.10 boitho-suggest perl-Text-Iconv boitho-dictionary boitho-configfiles boitho-everrun boithobb-filepermissions" --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumbbb cgi-bin/ShowCache2bb config/filetypes.eng.conf config/filetypes.nbo.conf config/dispatcher.conf  data/thesaurus.id data/thesaurus.text config/file_extensions.conf config/show_attributes.conf config/attribute_descriptions.conf
 
 	rpmbuild -bb $(boitho-searchdbb_name).spec
 
@@ -188,7 +199,7 @@ crawlManager:
 	rpmbuild -bb $(boitho-crawlManager_name).spec
 
 crawlManager2:
-	perl rpmmagic.pl --nostrip --requires "/usr/lib/perl5/vendor_perl/5.8.8/i386-linux-thread-multi/auto/HTML/Parser/Parser.so boitho-perlxs-sdcrawl boitho-everrun boitho-bbdn boithobb-filepermissions" --initd crawlManager $(boitho-crawlManager_name) $(boitho-crawlManager_version) $(BOITHOHOME) /home/boitho/boithoTools bin/crawlManager2 crawlers/crawlSMB crawlers/crawlExchange crawlers/Modules crawlers/Intranet usersystems/us_ad/us_ad.so usersystems/us_sqlbb/us_sqlbb.so config/crawlmanager.conf perl/persistent.pl
+	perl rpmmagic.pl --nostrip --requires "/usr/lib/perl5/vendor_perl/5.8.8/i386-linux-thread-multi/XML/Parser.pm perl-SOAP-Lite perl-XML-XPath boitho-bbdocumentwebadd boitho-infoquery>=2.0.19-1 boitho-bbdn>=1.8.16-1 boithobb-sqlUpdate>=1.7.10 /usr/lib/perl5/vendor_perl/5.8.8/i386-linux-thread-multi/auto/HTML/Parser/Parser.so boitho-perlxs-sdcrawl boitho-everrun boitho-bbdn boithobb-filepermissions" --initd crawlManager $(boitho-crawlManager_name) $(boitho-crawlManager_version) $(BOITHOHOME) /home/boitho/boithoTools bin/crawlManager2 crawlers/crawlSMB crawlers/crawlExchange crawlers/Modules crawlers/Intranet crawlers/SharePoint crawlers/crawlSO crawlers/crawlExchangePublic usersystems/us_ad/us_ad.so usersystems/us_sqlbb/us_sqlbb.so config/crawlmanager.conf perl/persistent.pl
 
 	rpmbuild -bb $(boitho-crawlManager_name).spec
 
@@ -199,6 +210,10 @@ scripts:
 dictionary:
 	perl rpmmagic.pl --requires "boitho-scripts" $(boitho-dictionary_name) $(boitho-dictionary_version) $(BOITHOHOME) /home/boitho/boithoTools bin/dictionarywordsLot data/dict/ data/dict/bb.dat data/dict/bb.multi data/dict/iso-8859-1.cset data/dict/iso-8859-1.cmap
 	rpmbuild -bb $(boitho-dictionary_name).spec
+
+list_collections:
+	perl rpmmagic.pl $(boitho-list_collections_name) $(boitho-list_collections_version) $(BOITHOHOME) /home/boitho/boithoTools bin/list_collections
+	rpmbuild -bb $(boitho-list_collections_name).spec
 
 
 boitho-bbdn:
