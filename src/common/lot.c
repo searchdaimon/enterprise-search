@@ -874,3 +874,14 @@ char *listAllColl_next(DIR * ll) {
 void listAllColl_close(DIR * ll) {
 	closedir(ll);
 }
+
+
+int lotDeleteFile(char File[], int LotNr,char subname[]) {
+
+	char FilePath[PATH_MAX];
+	
+	GetFilPathForLotFile(FilePath, File, LotNr, subname);
+
+	printf("unlinking %s\n",FilePath);
+	return unlink(FilePath);
+}
