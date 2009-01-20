@@ -646,10 +646,15 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 					//midlertidg fiks på at title altid begynner med space på bb.
 					//vil dermed altidd føre til treff i første tegn, og
 					// dermed bare vise ".." som title
-					if ( ((int)(*Sider).title - (int)strpointer) > 10) {
+					//if ( ((int)(*Sider).title - (int)strpointer) > 10) {
+					if ( ((int)strpointer - (int)(*Sider).title) > 10) {
+						printf("chop\n");
 						strpointer[0] = '\0';
 					}
-					vboprintf("fant space at %i\n",((int)(*Sider).title - (int)strpointer));
+					else {
+						printf("no chop, ing %i\n", (int)(*Sider).title - (int)strpointer);
+					}
+					vboprintf("fant space at %i\n",((int)strpointer) - (int)(*Sider).title);
 				}						
 				else if ((strpointer = strrchr((*Sider).title,';')) != NULL) {
 					++strpointer; //pekeren peker på semikolonet. SKal ha det med, så må legge il en
@@ -799,7 +804,10 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 
 int nextIndex(struct PagesResultsFormat *PagesResults) {
 
-	vboprintf("searchkernel: nextIndex()\n");
+	#ifdef DEBUG
+	printf("searchkernel: nextIndex()\n");
+	#endif
+
 	int forreturn;
 
 	#ifdef WITH_THREAD
@@ -831,7 +839,9 @@ int nextIndex(struct PagesResultsFormat *PagesResults) {
 	//printf("nextIndex: waiting for UNlock: end\n");
 	#endif
 
-	vboprintf("searchkernel: ~nextIndex()\n");
+	#ifdef DEBUG
+	printf("searchkernel: ~nextIndex()\n");
+	#endif
 	return forreturn;
 }
 
