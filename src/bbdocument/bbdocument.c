@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <unistd.h>
-
+#include <errno.h>
 
 #include "../common/define.h"
 #include "../common/debug.h"
@@ -1064,12 +1064,21 @@ int bbdocument_deletecoll(char collection[]) {
 
 	for (i=0; i < 64; i++) {
 		GetFilePathForIindex(FilePath,IndexPath,i,"Main","aa",collection);
-		GetFilePathForIDictionary(FilePath,DictionaryPath,i,"Main","aa",collection);
-		//printf("FilePath: %s\nIndexPath: %s\nDictionaryPath: %s\n",FilePath,IndexPath,DictionaryPath);
-		if (rrmdir(IndexPath) != 1) {
+		#ifdef DEBUG
+		printf("FilePath: %s\nIndexPath: %s\n",FilePath,IndexPath);
+		#endif
+
+		if ((unlink(IndexPath) != 1) && (errno != ENOENT)) { //ENOENT=No such file or directory. Viser ikke feil hvis filen ikke fantes. Det er helt normalt
                         perror("remove IndexPath");
                 }
-		if (rrmdir(DictionaryPath) != 1) {
+
+
+		GetFilePathForIDictionary(FilePath,DictionaryPath,i,"Main","aa",collection);
+		#ifdef DEBUG
+		printf("FilePath: %s\nDictionaryPath: %s\n",FilePath,DictionaryPath);
+		#endif
+
+		if ((unlink(DictionaryPath) != 0) && (errno != ENOENT)) {//ENOENT=No such file or directory. Viser ikke feil hvis filen ikke fantes. Det er helt normalt
                         perror("remove DictionaryPath");
                 }
 	}
