@@ -19,7 +19,7 @@ our @ISA = qw(SD::Settings::Abstract);
 sub _init {
 	my $s = shift;
 	$s->{tmpdir} = tempdir();
-	$s->{conn_rollback_dir} = "/home/dagurval/tmp/lol";# tempdir();
+	$s->{conn_rollback_dir} = tempdir();
 }
 
 
@@ -209,5 +209,5 @@ sub _validate {
 
 	
 
-SD::Settings::Import->new->do_import(shift);
+#SD::Settings::Import->new->do_import(shift);
 1;

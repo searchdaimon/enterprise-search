@@ -163,7 +163,7 @@ sub _data_to_file {
 	$s;
 }
 
-my $export = SD::Settings::Export->new;
-print $export->export();
+#my $export = SD::Settings::Export->new;
+#print $export->export();
 
 1;
