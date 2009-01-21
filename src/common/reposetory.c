@@ -1388,7 +1388,6 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 		}
 
 		#ifdef DEBUG
-			printf("CurrentReposetoryVersionAsUInt: %u\n",CurrentReposetoryVersionAsUInt);
 
 			printf("ReposetoryHeader:\n");
 			printf("\tDocID: %u\n",(*ReposetoryHeader).DocID);
@@ -1396,12 +1395,15 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			printf("\thtmlSize: %ho\n",(*ReposetoryHeader).htmlSize);
 			printf("\timageSize: %ho\n",(*ReposetoryHeader).imageSize);
 
+			#ifdef BLACK_BOKS
+			printf("CurrentReposetoryVersionAsUInt: %u\n",CurrentReposetoryVersionAsUInt);
+
 			printf("\tacl_allowSize: %i\n",(*ReposetoryHeader).acl_allowSize);
 			printf("\tacl_deniedSize: %i\n",(*ReposetoryHeader).acl_deniedSize);
 			printf("\tdoctype: 4 bytes: \"%c%c%c%c\"\n",(*ReposetoryHeader).doctype);
 			printf("\turllen: %ho\n",(*ReposetoryHeader).urllen);
 			printf("\tattributeslen: %u\n",(*ReposetoryHeader).attributeslen);
-
+			#endif
 
 			printf("\n");
 		#endif
