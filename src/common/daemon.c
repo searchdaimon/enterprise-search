@@ -368,14 +368,6 @@ int cconnect (char *hostname, int PORT) {
 	//int errnosave;
 	#endif
 
-        //if (argc != 2) {
-        //    fprintf(stderr,"usage: client hostname\n");
-        //    exit(1);
-        //}
-
-	#ifdef DEBUG
-	printf("conecting to %s:%i",hostname,PORT);
-	#endif
 
         if ((he=gethostbyname(hostname)) == NULL) {  // get the host info 
             perror("gethostbyname");
@@ -492,8 +484,7 @@ int sendall(int s, void *buf, int len) {
 	int tosend;
 	
 	#ifdef DEBUG
-	//to noisy
-	//printf("sendall: will send %i b\n",len);
+	printf("sendall(s=%i, len=%i)\n",s,len);
 	#endif
 
         while(total < len) {
@@ -506,9 +497,9 @@ int sendall(int s, void *buf, int len) {
 	    }
 
             if ((n = send(s, buf+total, tosend, MSG_NOSIGNAL)) == -1) {
-            //if ((n = send(s, buf+total, tosend, 0)) == -1) {
-            //if ((n = send(s, buf+total, bytesleft, 0)) == -1) {
-			//perror("send");
+
+			printf("sendall: send() in main while loop. total=%i, len %i\n",total, len);
+			perror("send()");
 			return 0;
 		}
 
@@ -589,6 +580,10 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 	int forret = 0;
         //int i;
 
+	#ifdef DEBUG
+		printf("sendpacked(socket=%i, command=%d, version=%d, dataSize=%i, subname=%s)\n",socket,command,version,dataSize,subname);
+	#endif
+
 	//siden vi skal sende pakken over nettet er det like gått å nullstille all data. Da slipper vi at valgring klager også.
 	memset(&packedHedder,0,sizeof(packedHedder));
 
@@ -612,17 +607,27 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 	}
 
 	if (!sendall(socket, buf, len)) {
+		printf("sendpacked: can't sendall()\n");
 		goto end_error;
 	}
 
 	//setter at vi skal returnere 1, som er OK
 	forret =  1;
 
+
+
 	end_error:
 		if (data != NULL) {
 			free(buf);
 		}
-		return forret;
+
+	#ifdef DEBUG
+	printf("~sendpacked(ret=%i)\n",forret);
+	#endif
+
+	//dene returneres altid, også hvs vi ikke gjort en gotoend_error
+	return forret;
+
 }
 
 void
