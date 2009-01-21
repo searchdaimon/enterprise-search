@@ -315,8 +315,6 @@ int rmkdir(char dest[], int LotNr,char subname[]) {
         sendall(socketha,dest, destLen);
 
 
-	close(socketha);
-
 	return 0;
 }
 
@@ -349,6 +347,10 @@ int rComand(char dest[], int LotNr,char subname[]) {
 int rSendFile(char source[], char dest[], int LotNr, char opentype[],char subname[]) {
 
 	FILE *FILEHANDLER;
+
+	#ifdef DEBUG
+	printf("rSendFile(source=%s, dest=%s, LotNr=%i, opentype=%s, subname=%s)\n",source,dest,LotNr,opentype,subname);
+	#endif
 
        //opner filen
         if ( (FILEHANDLER = fopen(source,"r")) == NULL ) {
@@ -438,6 +440,7 @@ int rSendFileByOpenHandlerBySocket(FILE *FILEHANDLER, char dest[], int LotNr, ch
 	//sender heder
 	if (!sendpacked(socketha,C_rSendFile,BLDPROTOCOLVERSION, 0, NULL,subname)) {
 		fprintf(stderr,"Can't sendpacked() on header\n");
+		perror("sendpacked");
 		socketError();
 		return 0;
 	}
