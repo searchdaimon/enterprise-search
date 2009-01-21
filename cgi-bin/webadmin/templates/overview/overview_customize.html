@@ -22,8 +22,9 @@
 <form method="post" action="overview.cgi">
 	<div>
 	<input type="hidden" name="id" value="[% id %]" />
+	<!-- Runarb: 21 jan 2009, tatt bort 'customize_filters' -->
 	[% PROCESS 'template_edit_collection.html'
-		fields = ['customize_summary', 'customize_cache', 'customize_filters', 'customize_ranking'] %]
+		fields = ['customize_summary', 'customize_cache', 'customize_ranking'] %]
 	</div>
 	<div>
 	<input type="submit" name="upd_customization" value="Submit customizations" />
