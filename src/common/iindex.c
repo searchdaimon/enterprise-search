@@ -348,6 +348,13 @@ int ReadIIndexRecord (unsigned int *Adress, unsigned int *SizeForTerm, unsigned 
 	printf("Stat: %u / %i\n",(unsigned int)inode.st_size,sizeof(struct DictionaryFormat));
 	#endif
 
+	if (inode.st_size == 0) {
+		*Adress = 0;
+		*SizeForTerm = 0;
+		fclose(dictionaryha);
+		return 0;
+	}
+
 	min = 0;
 	max = inode.st_size / sizeof(struct DictionaryFormat);
 
@@ -1271,7 +1278,10 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		//Runarb  3 juni 2008: 	Dette er ikke rikig, vi skal slette gamle forekomster, men ikke nye, som har oppstått i ettertid.
 		//Runarb 16 juni 2008: 	Vi bytter om, slik at vi bare analyserer DocumentIndex for å finne gcede sider. Hvis den er slettet der, så er den pr deg slettet. 
 		//			Slik hånterer vi at det kan ligge nydata1->nydata2->nydata3 i reposetoriet, og v1 er ok, v2 er ok, men siste, v3 er ikke ok, og skal lsettes
-		//			Da sakl de ut av alle indekser.
+		//			Da skal de ut av alle indekser.
+		//Runarb 14 jan 2009:   Forstår ikke hvorfor dettte er slik. Nå kan vi ikke legge til dokumentet i gced filen hvis det er endret. Og alle 
+		//			tidligere ord i et dokument vil være søkbar for det. Tror v1,v2,v3 problemet gjelder på web, der vi av og til
+		//			sletter dokumenter vi ikke liker. Har ikke endret noe nåe.
 		//garbare collection
 		if ((IndekserOpt->garbareCollection) && (NULL != hashtable_search(h,&revIndexArray[count].DocID)) ) {
 			#ifdef DEBUG
