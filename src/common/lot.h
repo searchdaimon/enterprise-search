@@ -28,6 +28,7 @@ void GetFilePathForIDictionary(char *FilePath, char *FileName,int IndexNr,char T
 void GetFilPathForThumbnaleByDocID(char *FileName,int DocID,char subname[]);
 FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char subname[]);
 FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock,char subname[]);
+int lotDeleteFile(char File[], int LotNr,char subname[]);
 #ifdef DO_DIRECT
 int lotOpenFileNoCache_direct(unsigned int DocID, char *resource, char *type, char lock, char *subname);
 #endif
