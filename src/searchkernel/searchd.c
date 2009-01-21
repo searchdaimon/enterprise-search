@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
 
 	strncpy(servername,argv[1 +optind],sizeof(servername) -1);
 
-
+	
 	lotPreOpenStartl(&searchd_config.lotPreOpen.DocumentIndex,"DocumentIndex","www",searchd_config.optPreOpen);
 	lotPreOpenStartl(&searchd_config.lotPreOpen.Summary,"summary","www",searchd_config.optPreOpen);
 
