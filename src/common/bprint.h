@@ -2,10 +2,15 @@
 #ifndef _BPRINT_H_
 #define _BPRINT_H_
 
+#ifndef _GNU_SOURCE
+	#define _GNU_SOURCE
+#endif
+
 
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #define BUFFER_BLOCKSIZE	16384
 
