@@ -415,8 +415,22 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	//hvis vi har et html dokument kan vi bruke dette direkte
 	//er dog noe uefektist her, ved at vi gjør minnekopiering
 	if ((strcmp(filetype,"htm") == 0) || (strcmp(filetype,"html") == 0 )) {
-		memcpy(documentfinishedbuftmp,document,dokument_size);
-                (*documentfinishedbufsize) = dokument_size;
+		if (titlefromadd[0]=='\0')
+		    {
+			memcpy(documentfinishedbuftmp,document,dokument_size);
+	                (*documentfinishedbufsize) = dokument_size;
+		    }
+		else
+		    {
+			// Noen dokumenter kan ha lagt ved tittel ved add uten å ha tittel i html-en (f.eks epost).
+			// Legg til korrekt tittel i dokumentet.
+			// Html-parseren tar kun hensyn til den første tittelen, så det skal holde å legge den til
+			// øverst i dokumentet.
+			int	pos = sprintf(documentfinishedbuftmp, "<title>%s</title>\n", titlefromadd);
+			memcpy(&(documentfinishedbuftmp[pos]),document,dokument_size);
+			(*documentfinishedbufsize) = pos+dokument_size;
+		    }
+
 		documentfinishedbuftmp[(*documentfinishedbufsize) +1] = '\0';
 		return 1;
 	}
