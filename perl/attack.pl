@@ -4,20 +4,29 @@
 use Time::HiRes;
 use Getopt::Std;
 use LWP::Simple;
-getopts('u:w', \%opts);
+getopts('u:wm:n:', \%opts);
 
-#print "w : $opts{'w'}, ARGV $ARGV[0]\n";
 
 my $host = shift(@ARGV) or die "must specify a host";
 my $file = shift(@ARGV) or die "must specify a queryfile";
 
 my $user = "";
+my $max = 0;
+my $ntimes = 1;
 
 if (exists ($opts{'u'}) ) {
 	$user = $opts{'u'} . '@';
 }
 
+if (exists ($opts{'m'}) ) {
+	$max = $opts{'m'} . '@';
+}
 
+if (exists ($opts{'n'}) ) {
+	$ntimes = $opts{'n'};
+}
+
+for (1..$ntimes) {
 open(INF,$file) or die("can't open $file: $!");
 my @arr = <INF>;
 close(INF);
@@ -30,7 +39,10 @@ print "----------------------------------------------------------------\n";
 printf "| %-40s | %-7s | %-7s |\n",  "Query", "Time", "Hits";
 print "----------------------------------------------------------------\n";
 
+my $count = 0;
 foreach my $i (@arr) {
+	++$count;
+
 	chomp($i);
 
 	$query = $i;
@@ -56,6 +68,11 @@ foreach my $i (@arr) {
 	printf "| %-40s | %.5f | %7s |\n",  $i, $time, $hits;
 
 	#print "$i\t$time\n";	
+
+	if ( ($max != 0) && ($max == $count) ) {
+		last;
+	}
 }
 print "----------------------------------------------------------------\n";
 
+}
