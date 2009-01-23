@@ -43,7 +43,7 @@ elsif (my $act = $state{act}) {
     }
     
     elsif ($act eq 'new') {
-        my $conn_id = $pageForm->create_new();
+        my $conn_id = $pageForm->new_connector();
         $tpl_file = $pageForm->show_edit(\%tpl_vars, $conn_id);
     }
     elsif ($act eq 'clone') {
