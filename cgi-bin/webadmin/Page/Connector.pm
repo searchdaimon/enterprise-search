@@ -39,15 +39,24 @@ sub source_to_file {
 }
 
 sub del_test_collection {
-    validate_pos(@_, 1, { regex => qr(^\d+$) });
-    my ($s, $conn_id) = @_;
-    my $test_coll = sprintf $CONFIG{test_coll_name}, $s->{sql_conn}->get_name($conn_id);
-    return unless $s->{sql_shares}->exists({collection_name => $test_coll});
+	validate_pos(@_, 1, { regex => qr(^\d+$) });
+	my ($s, $conn_id) = @_;
+	my $test_coll = sprintf $CONFIG{test_coll_name}, $s->{sql_conn}->get_name($conn_id);
+	return unless $s->{sql_shares}->exists({collection_name => $test_coll});
 
-    my $coll_id = $s->{sql_shares}->get_id_by_collection($test_coll);
+	my $coll_id = $s->{sql_shares}->get_id_by_collection($test_coll);
 
-    my $c = Data::Collection->new($s->{dbh}, { id => $coll_id });
-    $c->delete();
+	# del from db
+	my $c = Data::Collection->new($s->{dbh}, { id => $coll_id });
+	$c->delete();
+
+	# del from disk
+	my $iq = Boitho::Infoquery->new($CONFIG{infoquery});
+	if (!$iq->deleteCollection($test_coll)) {
+		# likely not a problem, ignoring error.
+		warn $iq->error;
+	}
+	$s;
 }
 
 1;
