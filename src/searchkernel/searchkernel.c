@@ -108,6 +108,18 @@ struct popResultBreakDownTimeFormat {
 };
 #endif
 
+#define MAX_CM_CONSUMERS 2
+
+#ifdef WITH_THREAD
+struct socket_pool {
+	int sock[MAX_CM_CONSUMERS];
+	int used[MAX_CM_CONSUMERS];
+	int consumers;
+	pthread_mutex_t mutex;
+	pthread_cond_t cv;
+};
+#endif
+
 struct PagesResultsFormat {
 		struct SiderFormat *Sider;
 		struct SiderHederFormat *SiderHeder;
@@ -136,10 +148,11 @@ struct PagesResultsFormat {
 
 		int memfiltered;
 
+
 		#ifdef WITH_THREAD
 			pthread_mutex_t mutex;
 			pthread_mutex_t mutextreadSyncFilter;
-			pthread_mutex_t mutex_pathaccess;
+			struct socket_pool cmConn;
 		#endif
 
 		int activetreads;
@@ -239,21 +252,65 @@ get_browser(char *useragent)
 
 #ifdef BLACK_BOKS
 static inline int
+get_sock_from_pool(struct socket_pool *pool, int *index)
+{
+	int i;
+
+	pthread_mutex_lock(&pool->mutex);
+	printf("Getting...\n");
+	while (pool->consumers == MAX_CM_CONSUMERS) {
+		printf("Getting2...\n");
+		pthread_cond_wait(&pool->cv, &pool->mutex);
+	}
+	pool->consumers++;
+
+	for (i = 0; i < MAX_CM_CONSUMERS; i++) {
+		if (pool->used[i] == 0) {
+			pool->used[i] = 1;
+			pthread_mutex_unlock(&pool->mutex);
+			*index = i;
+			printf("Got... %d\n", i);
+			return pool->sock[i];
+		}
+	}
+	
+	assert(1 == 0);
+}
+
+static inline int
+release_sock_to_pool(struct socket_pool *pool, int index)
+{
+	pthread_mutex_lock(&pool->mutex);
+	printf("Releasing: %d\n", index);
+	pool->used[index] = 0;
+	
+	pool->consumers--;
+	pthread_cond_signal(&pool->cv);
+	pthread_mutex_unlock(&pool->mutex);
+}
+#endif
+
+
+
+#ifdef BLACK_BOKS
+static inline int
 handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum browser_type btype, char *collection,
-           char *url_out, size_t len, int sock, pthread_mutex_t *lock)
+           char *url_out, size_t len, int sock, struct socket_pool *pool)
 {
 
 #ifndef _24SEVENOFFICE
 
 #ifdef WITH_THREAD
-	pthread_mutex_lock(lock);
+	int index;
+
+	sock = get_sock_from_pool(pool, &index);
 #endif
 
 	cmc_rewrite_url(sock, collection, url_in, lenin, ptype, btype, url_out, len);
 
 	printf("handle_url_rewrite: Did rewrite \"%s\" -> \"%s\"\n",url_in,url_out);
 #ifdef WITH_THREAD
-	pthread_mutex_unlock(lock);
+	release_sock_to_pool(pool, index);
 #endif
 
 #endif
@@ -746,7 +803,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 							dup_subname, tmpurl,
 							sizeof(tmpurl), PagesResults->cmcsocketha,
 #ifdef WITH_THREAD
-							&PagesResults->mutex_pathaccess
+							&PagesResults->cmConn
 #else
 							NULL
 #endif
@@ -1039,15 +1096,19 @@ pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection
 #ifndef _24SEVENOFFICE
 	int ret = 0;
 
-	#ifdef WITH_THREAD
-		pthread_mutex_lock(&(*PagesResults).mutex_pathaccess);
-	#endif
+#ifdef WITH_THREAD
+	int sockIndex;
 
-	ret = cmc_pathaccess(socketha,collection_in,uri_in,user_in,password_in);
+	socketha = get_sock_from_pool(&PagesResults->cmConn, &sockIndex);
+	//pthread_mutex_lock(&(*PagesResults).mutex_pathaccess);
+#endif
 
-	#ifdef WITH_THREAD
-		pthread_mutex_unlock(&(*PagesResults).mutex_pathaccess);
-	#endif
+	ret = cmc_pathaccess(socketha, collection_in, uri_in, user_in, password_in);
+
+#ifdef WITH_THREAD
+	release_sock_to_pool(&PagesResults->cmConn, sockIndex);
+	//pthread_mutex_unlock(&(*PagesResults).mutex_pathaccess);
+#endif
 
 	printf("pathaccess: %i\n",ret);
 
@@ -1431,7 +1492,7 @@ void *generatePagesResults(void *arg)
 				(*PagesResults).TeffArray->iindex[i].subname->subname, side->url, 
 				sizeof(side->url), PagesResults->cmcsocketha, 
 #ifdef WITH_THREAD
-				&PagesResults->mutex_pathaccess
+				&PagesResults->cmConn
 #else
 				NULL
 #endif
@@ -1938,8 +1999,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 		/****************************************************************/
 
-		gettimeofday(&start_time, NULL);
 		//int socketha;
+		// XXX
+#ifndef WITH_THREAD
+		gettimeofday(&start_time, NULL);
 		int errorbufflen = 512;
 		char errorbuff[errorbufflen];
 		printf("making a connection to crawlerManager\n");
@@ -1952,6 +2015,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	        }
 		gettimeofday(&end_time, NULL);
 	        (*SiderHeder).queryTime.cmc_conect = getTimeDifference(&start_time,&end_time);
+#endif
 
 
 		
@@ -2025,7 +2089,30 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		ret = pthread_mutex_init(&PagesResults.mutextreadSyncFilter, NULL);
 
 		#ifdef BLACK_BOKS
-			ret = pthread_mutex_init(&PagesResults.mutex_pathaccess, NULL);
+			ret = pthread_mutex_init(&PagesResults.cmConn.mutex, NULL);
+			pthread_cond_init(&PagesResults.cmConn.cv, NULL);
+
+
+
+			int errorbufflen = 512;
+			char errorbuff[errorbufflen];
+			{
+				int k;
+				struct socket_pool *pool = &PagesResults.cmConn;
+				gettimeofday(&start_time, NULL);
+				for (k = 0; k < MAX_CM_CONSUMERS; k++) {
+					printf("making a connection to crawlerManager: %d:%d\n", k, MAX_CM_CONSUMERS);
+					pool->used[k] = 0;
+					if (!cmc_conect(&pool->sock[k], errorbuff,errorbufflen,(*searchd_config).cmc_port)) {
+						printf("Error: %s:%i\n",errorbuff,(*searchd_config).cmc_port);
+						fprintf(stderr, "searchkernel: ~dosearch()\n");
+						return(0);
+					}
+				}
+				pool->consumers = 0;
+				gettimeofday(&end_time, NULL);
+			}
+			(*SiderHeder).queryTime.cmc_conect += getTimeDifference(&start_time,&end_time);
 		#endif
 
 		//låser mutex. Vi er jo enda ikke kalre til å kjøre
@@ -2181,7 +2268,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		ret = pthread_mutex_destroy(&PagesResults.mutextreadSyncFilter);
 
 		#ifdef BLACK_BOKS
-			ret = pthread_mutex_destroy(&PagesResults.mutex_pathaccess);
+			ret = pthread_mutex_destroy(&PagesResults.cmConn.mutex);
 		#endif
 
 
@@ -2190,7 +2277,16 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#endif
 
 	#ifdef BLACK_BOKS
-		cmc_close(PagesResults.cmcsocketha);
+#ifdef WITH_THREAD
+	{
+		int k;
+
+		for (k = 0; k < MAX_CM_CONSUMERS; k++)
+			cmc_close(PagesResults.cmConn.sock[k]);
+	}
+#else
+	cmc_close(PagesResults.cmcsocketha);
+#endif
 	#endif
 
 	gettimeofday(&popResult_end_time, NULL);
