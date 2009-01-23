@@ -78,8 +78,8 @@ A:active { color : blue; }
     	
 	<script type="text/javascript">
 	$("#queryField").ready(function() {
-			$("#queryField").focus();
 			addAutocomplete($("#queryField"), $("#queryButton"));
+			$("#queryField").focus();
 	});
 	</script>
 

@@ -17,8 +17,6 @@ use CGI qw(escapeHTML);
 use LWP::Simple qw(get);
 use MIME::Base64 qw(encode_base64 decode_base64);
 
-carp Dumper(\%ENV);
-
 my $lang;
 if ($ENV{HTTP_ACCEPT_LANGUAGE}) {
 	my ($browser_lang) = split q{,}, $ENV{HTTP_ACCEPT_LANGUAGE};
