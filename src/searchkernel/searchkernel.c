@@ -278,7 +278,6 @@ static inline int
 release_sock_to_pool(struct socket_pool *pool, int index)
 {
 	pthread_mutex_lock(&pool->mutex);
-	printf("Releasing: %d\n", index);
 	pool->used[index] = 0;
 	
 	pool->consumers--;
