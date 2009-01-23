@@ -133,6 +133,8 @@ user_enabled(char *user, const char *licensekey)
 		return 0;
 	}
 
+	mysql_close(db);
+
 	return 1; //har tilgang
 }
 
@@ -1134,7 +1136,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 						blog(LOGERROR,1,"can't connect to ldap server.");
 						intresponse = ad_userauthenticated_ERROR;
 					}
-					else if (!user_enabled(user_username,licensekey) && license_system_active) {
+					else if (license_system_active && !user_enabled(user_username,licensekey)) {
 						printf("%s is not allowed to log in\n", user_username);
 						intresponse = ad_userauthenticated_ERROR;
 					}
