@@ -411,10 +411,10 @@ sub gen_collection_list {
 	my @connectors = $sqlConnectors->get({ active => 1 });
 	for my $c (@connectors) {
 		my $test_coll = sprintf $CONFIG{test_coll_name}, $c->{name};
+		$test_coll = $sqlShares->dbh->quote($test_coll);
 		my @collections = $sqlShares->get({ 
 				connector => $c->{id},  
-				collection_name => {"!=", $test_coll },
-				});
+				}, "*, collection_name = $test_coll AS is_test_coll" );
 		next unless @collections;
 		
 		$c->{collections} = \@collections;

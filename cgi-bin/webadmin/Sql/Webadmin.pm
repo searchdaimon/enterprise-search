@@ -262,4 +262,8 @@ sub update {
     $s->sql_update($q, @binds);
 }
 
+sub dbh {
+	return shift->{dbh}
+}
+
 1;

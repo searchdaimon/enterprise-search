@@ -31,7 +31,11 @@
 					</td>
 		
 					<td style="width : 15%">
-						[% HTML.escape(c.collection_name) %]
+						[% IF c.is_test_coll %]
+							<span style="background : #ffb2b2; color : black; font-weight : bolder;">Test collection</span>
+						[% ELSE %]
+							[% HTML.escape(c.collection_name) %]
+						[% END %]
 					</td>
 			
 					<td style="width : 15%">
@@ -67,43 +71,10 @@
 						[% END %]
 					</td>
 					<td>
+
 	
 						<ul class="button_list">
-						[% IF c.is_pushed %]
-							<li><div>
-								<a href="overview.cgi?action=push_del&coll=[% HTML.escape(c.collection_name) %]">Delete</a>
-							</div></li>
-						[% ELSE %]
-							[% IF c.active %]
-							<li>
-								[% IF c.crawl_pid %]
-								<div style="background : #ffb2b2; ">
-									<a  href="overview.cgi?action=stop_crawl&amp;id=[% c.id %]">Stop&nbsp;crawl</a>
-								</div>
-								[% ELSE %]
-								<div>
-									<a href="overview.cgi?action=crawl&amp;id=[% c.id %]">Crawl&nbsp;now</a>
-								</div>
-								[% END %]
-							</li>
-							[% ELSE %]
-							<li>
-								<div>
-									<a href="overview.cgi?action=activate&amp;id=[% c.id %]">Activate</a>
-								</div>
-							</li>
-							[% END %]
-							<li>
-								<div>
-									<a href="overview.cgi?action=edit&amp;id=[% c.id %]">Manage</a>
-								</div>
-							</li>
-							<li>
-								<div>
-									<a href="overview.cgi?action=delete&amp;id=[% c.id %]">Delete</a>
-								</div>
-							</li>
-						[% END %]
+							[% INCLUDE coll_buttons c = c %]
 						</ul>
 					</td>
 				[% END #row %]
@@ -120,3 +91,57 @@
 
 
 [% END #block %]
+
+[% BLOCK coll_buttons %]
+	[% IF c.is_pushed  %]
+		[% INCLUDE btn 
+			action = "push_del", 
+			coll = c.collection_name, 
+			title = "Delete" 
+		%]
+		[% RETURN %]
+	[% END %]
+	
+	[% IF !c.is_test_coll %]	
+		[% IF c.active %]
+			[% IF c.crawl_pid %]
+				[% INCLUDE btn
+					style = "background : #ffb2b2;"
+					action = "stop_crawl",
+					id = c.id 
+					title = "Stop crawl"
+				%]
+			[% ELSE %]
+				[% INCLUDE btn
+					action = "crawl"
+					id = c.id
+					title = "Crawl now" 
+				%]
+			[% END %]
+		[% ELSE %]
+			[% INCLUDE btn
+				action = "activate"
+				title = "Activate"
+				id = c.id 
+			%]
+		[% END %]
+
+		[% INCLUDE btn 
+			action = "edit"
+			title = "Manage"
+			id = c.id 
+		%]
+	[% END %]
+
+	[% INCLUDE btn
+		action = "delete"
+		title = "Delete"
+		id = c.id 
+	%]
+[% END %]
+
+[% BLOCK btn %]
+	<li><div style="[% style %]">
+	<a href="overview.cgi?action=[% action %]&amp;id=[% id %]&amp;coll=[% HTML.escape(coll) %]">[% title %]</a>
+	</div></li>
+[% END %]
