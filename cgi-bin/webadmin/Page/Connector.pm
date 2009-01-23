@@ -54,7 +54,7 @@ sub del_test_collection {
 	my $iq = Boitho::Infoquery->new($CONFIG{infoquery});
 	if (!$iq->deleteCollection($test_coll)) {
 		# likely not a problem, ignoring error.
-		warn $iq->error;
+		carp $iq->error;
 	}
 	$s;
 }
