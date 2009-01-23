@@ -257,9 +257,7 @@ get_sock_from_pool(struct socket_pool *pool, int *index)
 	int i;
 
 	pthread_mutex_lock(&pool->mutex);
-	printf("Getting...\n");
 	while (pool->consumers == MAX_CM_CONSUMERS) {
-		printf("Getting2...\n");
 		pthread_cond_wait(&pool->cv, &pool->mutex);
 	}
 	pool->consumers++;
@@ -269,7 +267,6 @@ get_sock_from_pool(struct socket_pool *pool, int *index)
 			pool->used[i] = 1;
 			pthread_mutex_unlock(&pool->mutex);
 			*index = i;
-			printf("Got... %d\n", i);
 			return pool->sock[i];
 		}
 	}
@@ -2091,8 +2088,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		#ifdef BLACK_BOKS
 			ret = pthread_mutex_init(&PagesResults.cmConn.mutex, NULL);
 			pthread_cond_init(&PagesResults.cmConn.cv, NULL);
-
-
 
 			int errorbufflen = 512;
 			char errorbuff[errorbufflen];
