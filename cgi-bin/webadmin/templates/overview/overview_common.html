@@ -18,6 +18,10 @@
 
 
 [% BLOCK list_collections %]
+	
+	[% IF only_show_testcoll %]
+		<p>Connector is not marked as ready for use. Only the test collection will available.</p>
+	[% END %]
 
 		[% WRAPPER 'template_table.html'
 			header = ['Status', 'Collection', 'Last crawl', 'Next crawl', 'Collection size' ''] %]
