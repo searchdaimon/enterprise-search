@@ -1089,6 +1089,7 @@ void increaseFilteredSilent(struct PagesResultsFormat *PagesResults,int *whichFi
 #ifdef BLACK_BOKS
 static inline int
 pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection_in[], char uri_in[], char user_in[], char password_in[]) {
+
 #ifndef _24SEVENOFFICE
 	int ret = 0;
 
@@ -1481,6 +1482,12 @@ void *generatePagesResults(void *arg)
 			printf("url rewrite: start\n");
 		#endif
 
+		gettimeofday(&end_time, NULL);
+		(*(*PagesResults).SiderHeder).queryTime.pathaccess += getTimeDifference(&start_time,&end_time);
+
+
+		gettimeofday(&start_time, NULL);
+
 #ifdef BLACK_BOKS
 		if (!PagesResults->getRank) {
 
@@ -1503,7 +1510,7 @@ void *generatePagesResults(void *arg)
 
 		#endif
 		gettimeofday(&end_time, NULL);
-		(*(*PagesResults).SiderHeder).queryTime.crawlManager += getTimeDifference(&start_time,&end_time);
+		(*(*PagesResults).SiderHeder).queryTime.urlrewrite += getTimeDifference(&start_time,&end_time);
 
 
 		if (1 || !PagesResults->getRank) {
@@ -1959,7 +1966,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	struct DocumentIndexFormat DocumentIndexPost;
 	
 	(*SiderHeder).queryTime.cmc_conect = 0;
-	(*SiderHeder).queryTime.crawlManager = 0;
+	(*SiderHeder).queryTime.pathaccess = 0;
+	(*SiderHeder).queryTime.urlrewrite = 0;
 	#ifdef BLACK_BOKS
 	(*SiderHeder).queryTime.html_parser_run = 0;
 	(*SiderHeder).queryTime.generate_snippet = 0;
@@ -2428,7 +2436,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		vboprintf("\t%-40s %f\n","filetypes",(*SiderHeder).queryTime.filetypes);
 		vboprintf("\t%-40s %f\n","iintegerGetValueDate",(*SiderHeder).queryTime.iintegerGetValueDate);
 		vboprintf("\t%-40s %f\n","dateview",(*SiderHeder).queryTime.dateview);
-		vboprintf("\t%-40s %f\n","crawlManager",(*SiderHeder).queryTime.crawlManager);
+		vboprintf("\t%-40s %f\n","pathaccess",(*SiderHeder).queryTime.pathaccess);
+		vboprintf("\t%-40s %f\n","urlrewrite",(*SiderHeder).queryTime.urlrewrite);
 		vboprintf("\t%-40s %f\n","duplicat echecking",(*SiderHeder).queryTime.duplicat_echecking);
 		vboprintf("\t%-40s %f\n","cmc_conect",(*SiderHeder).queryTime.cmc_conect);
 	#endif
@@ -2613,6 +2622,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	struct DocumentIndexFormat DocumentIndexPost;
 	
+	(*SiderHeder).queryTime.urlrewrite = 0;
+	(*SiderHeder).queryTime.pathaccess = 0;
 
  /* False */
 	#ifdef BLACK_BOKS
@@ -2675,11 +2686,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		gettimeofday(&end_time, NULL);
 	        (*SiderHeder).queryTime.cmc_conect = getTimeDifference(&start_time,&end_time);
 
-		(*SiderHeder).queryTime.crawlManager = 0;
 
 	#else
 		(*SiderHeder).queryTime.cmc_conect = 0;
-		(*SiderHeder).queryTime.crawlManager = 0;
 	#endif
 
 
@@ -2954,7 +2963,8 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	printf("\tfiletypes %f\n",(*SiderHeder).queryTime.filetypes);
 	printf("\tiintegerGetValueDate %f\n",(*SiderHeder).queryTime.iintegerGetValueDate);
 	printf("\tdateview %f\n",(*SiderHeder).queryTime.dateview);
-	printf("\tcrawlManager %f\n",(*SiderHeder).queryTime.crawlManager);
+	printf("\tpathaccess %f\n",(*SiderHeder).queryTime.pathaccess);
+	printf("\turlrewrite %f\n",(*SiderHeder).queryTime.urlrewrite);
 
 	printf("\tgetUserObjekt %f\n",(*SiderHeder).queryTime.getUserObjekt);
 	printf("\tcmc_conect %f\n",(*SiderHeder).queryTime.cmc_conect);

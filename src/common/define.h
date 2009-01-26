@@ -494,7 +494,8 @@ struct queryTimeFormat {
 	double dateview;
 	double iintegerGetValueDate;
 	double filetypes;
-	double crawlManager;
+	double pathaccess;
+	double urlrewrite;
 	double getUserObjekt;
 	double cmc_conect;
 	double UrlSearch;
