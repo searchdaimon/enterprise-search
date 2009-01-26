@@ -2118,7 +2118,7 @@ for (i=0; i<(*queryParsed).n; i++)
  
         }
 
-	vboprintf("searchIndex: (*TeffArrayElementer) %i, TeffArrayOriginal %i\n",(*TeffArrayElementer),TeffArrayOriginal);
+	vboprintf("~searchIndex: (*TeffArrayElementer) %i, TeffArrayOriginal %i for subname \"%s\"\n",(*TeffArrayElementer),TeffArrayOriginal,subname->subname);
 //toDo: trenger vi denne nå???
 //tror ikke vi trenger denne mere, da vi har merget queryet inn i den
 	(*TeffArrayElementer) = (*TeffArrayElementer) + TeffArrayOriginal;
@@ -2129,13 +2129,12 @@ for (i=0; i<(*queryParsed).n; i++)
 
 	#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
-		printf("Time debug: searchIndex: Type: \"%s\", time: %f\n",indexType,getTimeDifference(&start_time,&end_time));
+		printf("Time debug: ~searchIndex: Type: \"%s\", time: %f\n",indexType,getTimeDifference(&start_time,&end_time));
 	#endif
 
 	vboprintf("searchIndex: end\n");
 	vboprintf("######################################################################\n\n");
 
-	vboprintf("search: ~searchIndex()\n");
 }
 
 struct searchIndex_thread_argFormat {
@@ -2332,7 +2331,13 @@ void *searchIndex_thread(void *arg)
 
 
 			searcArrayLen = 0;
+
+			//acl_allow sjekk
+			acl_allowArrayLen = 0;
+			acl_deniedArrayLen = 0;
+
 			hits = ArrayLen;
+
 	
 			searchIndex((*searchIndex_thread_arg).indexType,
 				&searcArrayLen,
@@ -2345,10 +2350,11 @@ void *searchIndex_thread(void *arg)
 				&complicacy
 			);
 
-			//acl_allow sjekk
-			acl_allowArrayLen = 0;
-			acl_deniedArrayLen = 0;
 
+			if (searcArrayLen == 0) {
+				printf("diden't find any hits for this subname, skipping it.\n");
+				continue;
+			}
 
 			searchIndex("acl_allow",
 				&acl_allowArrayLen,
