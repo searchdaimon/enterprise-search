@@ -408,19 +408,23 @@ sub gen_collection_list {
 	my $default_crawl_rate
 		= $s->{sqlConfig}->get_setting('default_crawl_rate');
 
-	my @connectors = $sqlConnectors->get({ active => 1 });
-	for my $c (@connectors) {
-		my $test_coll = sprintf $CONFIG{test_coll_name}, $c->{name};
-		$test_coll = $sqlShares->dbh->quote($test_coll);
-		my @collections = $sqlShares->get({ 
-				connector => $c->{id},  
-				}, "*, collection_name = $test_coll AS is_test_coll" );
+	my @connectors = $sqlConnectors->get({});
+	for my $conn (@connectors) {
+		my @collections = $sqlShares->get({ connector => $conn->{id}});
 		next unless @collections;
 		
-		$c->{collections} = \@collections;
-
+		$conn->{collections} = \@collections;
+		
+		my $test_coll = sprintf $CONFIG{test_coll_name}, $conn->{name};
 		for my $coll (@collections) {
+
+			if ($coll->{collection_name} eq $test_coll) {
+				$coll->{is_test_coll} = 1;
+				$conn->{has_test_coll} = 1;
+			}
+
 			next unless $coll->{active};
+
 			my $rate = $coll->{rate} || $default_crawl_rate;
 			
 			$coll->{last_crawl} = $s->_mysql_to_unixtime($coll->{last});
@@ -453,6 +457,7 @@ sub gen_collection_list {
 		name => $META_CONN_PUSH,
 		collections => \@pushed_colls,
 	};
+	#carp Dumper(\@connectors);
 	return @connectors;
 }
 

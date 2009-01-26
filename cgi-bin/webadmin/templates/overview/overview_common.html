@@ -2,16 +2,29 @@
 [% USE date %]
 
 [% BLOCK list_connectors %]
-	[% i = 0 %]
 	[% FOREACH conn IN connectors %]
+		[% NEXT UNLESS conn.active || conn.has_test_coll %]
 		<h3>[% conn.name %]</h3>
-		[% color = 0 %]
 		[% IF conn.collections.size %]
-		
-			[% WRAPPER 'template_table.html'
+			[% INCLUDE list_collections 
+				collections = conn.collections 
+				only_show_testcoll = !conn.active && conn.has_test_coll
+			%]
+		[% ELSE %]
+			<p>There are no collections being indexed.</p>
+		[% END %]
+	[% END %]
+[% END %]
+
+
+[% BLOCK list_collections %]
+
+		[% WRAPPER 'template_table.html'
 			header = ['Status', 'Collection', 'Last crawl', 'Next crawl', 'Collection size' ''] %]
-		
-			[% FOREACH c IN conn.collections %]
+			[% SET color = 0 %]
+			
+			[% FOREACH c IN collections %]
+				[% NEXT IF only_show_testcoll && !c.is_test_coll %]
 				[% color = 1 - color %]
 				[% WRAPPER 'template_table_row.html' 
 					disabled = !c.active && !c.is_pushed
@@ -77,20 +90,16 @@
 							[% INCLUDE coll_buttons c = c %]
 						</ul>
 					</td>
-				[% END #row %]
-				[% END #collections %]
+				[% END %]
+				[% END %]
 			
-			[% END #table %]
-
-		[% ELSE %]
-				<p>There are no collections being indexed.</p>
-		[% END #if %]
-	[% i = i + 1 %]
-	[% END #connectors %]
+			[% END %]
 
 
 
-[% END #block %]
+[% END %]
+
+
 
 [% BLOCK coll_buttons %]
 	[% IF c.is_pushed  %]
