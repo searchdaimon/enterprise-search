@@ -169,7 +169,7 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 	snprintf(query, sizeof query, query_tpl, name_esc);
 	
 	if (mysql_real_query(db, query, strlen(query)) != 0) {
-		warnx("Mysql error (%s line %d): %s\n", 
+		warnx("Mysql error (%s line %d): %s", 
 			__FILE__, __LINE__, mysql_error(db));
 		return 0;
 	}
@@ -177,7 +177,7 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 	MYSQL_RES *res = mysql_store_result(db);
 	MYSQL_ROW row = mysql_fetch_row(res);
 	if (row == NULL) {
-		warnx("No config data for collection %s\n", coll_name);
+		warnx("No config data for collection %s", coll_name);
 		return 0;
 	}
 
@@ -186,7 +186,7 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 	else if (strcmp(row[0], "snippet") == 0)
 		cfg->summary = SUMMARY_SNIPPET;
 	else { 
-		warnx("Unknown 'summary' format %s\n", row[0]);
+		warnx("Unknown 'summary' format %s", row[0]);
 		cfg->summary = SUMMARY_SNIPPET;
 	}
 
@@ -228,7 +228,7 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 {
 	int res;
 	config_setting_t *cfgarray;
-#ifdef DEBUG
+#ifdef DEBUG_TIME
 	struct timeval start_time, end_time;
 #endif
 
@@ -408,7 +408,7 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 	//Runarb: Dette er vel bare aktuelt for black boks. For web trnger eksterne klienter å kalle dispatcher_all direkte?
 #ifdef BLACK_BOKS
 
-#ifdef DEBUG
+#ifdef DEBUG_TIME
 	gettimeofday(&start_time, NULL);
 #endif
 	char *remoteaddr = getenv("REMOTE_ADDR");
@@ -448,9 +448,9 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 	}
 	if (hasaccess == 0)
 		die(1,"", "Not allowed to handle request from ip address \"%s\".",remoteaddr);
-#ifdef DEBUG
+#ifdef DEBUG_TIME
 	gettimeofday(&end_time, NULL);
-	dprintf("Time debug: access %f\n",getTimeDifference(&start_time,&end_time));
+	fprintf(stderr,"Time debug: access %f\n",getTimeDifference(&start_time,&end_time));
 #endif
 
 #endif
@@ -468,7 +468,7 @@ handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *
 	int AdultPages, NonAdultPages;
 	int posisjon, i;
 	int funnet;
-#ifdef DEBUG
+#ifdef DEBUG_TIME
 	struct timeval start_time, end_time;
 #endif
 
@@ -578,7 +578,7 @@ showabal,AddSiderHeder[i].servername);
 
 	}
 
-#ifdef DEBUG
+#ifdef DEBUG_TIME
 		gettimeofday(&start_time, NULL);
 #endif
 		//sorterer resultatene
@@ -589,12 +589,12 @@ showabal,AddSiderHeder[i].servername);
 			mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements);
 		#endif
 
-#ifdef DEBUG
+#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
-		dprintf("Time debug: mgsort_1 %f\n",getTimeDifference(&start_time,&end_time));
+		fprintf(stderr,"Time debug: mgsort_1 %f\n",getTimeDifference(&start_time,&end_time));
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_TIME
 		gettimeofday(&start_time, NULL);
 #endif		
 
@@ -738,13 +738,13 @@ showabal,AddSiderHeder[i].servername);
 		printf("\n");
 	#endif
 
-#ifdef DEBUG
+#ifdef DEBUG_TIME
 	gettimeofday(&end_time, NULL);
-	dprintf("Time debug: filter pages %f\n",getTimeDifference(&start_time,&end_time));
+	fprintf(stderr,"Time debug: filter pages %f\n",getTimeDifference(&start_time,&end_time));
 #endif
 
 
-#ifdef DEBUG
+#ifdef DEBUG_TIME
 	gettimeofday(&start_time, NULL);
 #endif
 
@@ -752,9 +752,9 @@ showabal,AddSiderHeder[i].servername);
 	//mgsort(Sider, nrOfServers * QueryData->MaxsHits , sizeof(struct SiderFormat), compare_elements_posisjon);
 	mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements_posisjon);
 
-#ifdef DEBUG
+#ifdef DEBUG_TIME
 	gettimeofday(&end_time, NULL);
-	dprintf("Time debug: mgsort_2 %f\n",getTimeDifference(&start_time,&end_time));
+	fprintf(stderr,"Time debug: mgsort_2 %f\n",getTimeDifference(&start_time,&end_time));
 #endif
 
 	/* tempaa */
@@ -930,7 +930,7 @@ int main(int argc, char *argv[])
 	//int connected[maxServers];
 	//int NonAdultPages,AdultPages;
 	struct timeval main_start_time, main_end_time;
-#ifdef DEBUG
+#ifdef DEBUG_TIME
 	struct timeval start_time, end_time;
 #endif
 	int nrRespondedServers;
@@ -964,7 +964,7 @@ int main(int argc, char *argv[])
 	struct dispconfigFormat dispconfig;
 	int cachetimeout;
 
-	#ifdef DEBUG
+	#ifdef DEBUG_TIME
 	gettimeofday(&start_time, NULL);
 	#endif
 	dprintf("struct SiderFormat size %i\n",sizeof(struct SiderFormat));
@@ -1243,6 +1243,11 @@ int main(int argc, char *argv[])
 
 	struct subnamesConfigFormat default_cfg;
 	read_collection_cfg(&default_cfg);
+
+	#ifdef DEBUG_TIME
+		gettimeofday(&end_time, NULL);
+		fprintf(stderr,"Time debug: init %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
 		
 #if BLACK_BOKS
 
@@ -1250,9 +1255,21 @@ int main(int argc, char *argv[])
 		cmc_port = maincfg_get_int(&maincfg,"CMDPORT");
 	}
 
+	#ifdef DEBUG_TIME
+        gettimeofday(&start_time, NULL);
+	#endif
 
 	int num_colls;
 	struct subnamesFormat *collections = get_usr_coll(QueryData.search_user, &num_colls, cmc_port);
+
+	#ifdef DEBUG_TIME
+        	gettimeofday(&end_time, NULL);
+        	fprintf(stderr,"Time debug: get_usr_coll() %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
+
+	#ifdef DEBUG_TIME
+        gettimeofday(&start_time, NULL);
+	#endif
 
 	for (i = 0; i < num_colls; i++) {
 		if (!fetch_coll_cfg(&demo_db, collections[i].subname, &collections[i].config)) {
@@ -1260,6 +1277,11 @@ int main(int argc, char *argv[])
 		}
 		collections[i].hits = -1;
 	}
+
+	#ifdef DEBUG_TIME
+        	gettimeofday(&end_time, NULL);
+        	fprintf(stderr,"Time debug: fetch_coll_cfg() %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
 
 #else
 	int num_colls = 1;
@@ -1269,13 +1291,9 @@ int main(int argc, char *argv[])
 	collections[0].hits = - 1;
 #endif
 
-	#ifdef DEBUG
-	gettimeofday(&end_time, NULL);
-	dprintf("Time debug: init %f\n",getTimeDifference(&start_time,&end_time));
-	#endif
 
-	#ifdef DEBUG
-	gettimeofday(&start_time, NULL);
+	#ifdef DEBUG_TIME
+		gettimeofday(&start_time, NULL);
 	#endif
 
 	if (searchport == 0) {
@@ -1411,13 +1429,13 @@ int main(int argc, char *argv[])
 	strsandr(QueryData.queryhtml, "&", "&amp;");
 
 	//printf("query behandlet %s\n",QueryData.queryhtml);
-	#ifdef DEBUG
+	#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
-		dprintf("Time debug: query normalizeing %f\n",getTimeDifference(&start_time,&end_time));
+		fprintf(stderr,"Time debug: query normalizeing %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
-	#ifdef DEBUG
-	gettimeofday(&start_time, NULL);
+	#ifdef DEBUG_TIME
+		gettimeofday(&start_time, NULL);
 	#endif
 
 	#ifndef BLACK_BOKS
@@ -1463,12 +1481,12 @@ int main(int argc, char *argv[])
 	#endif
 
 	#ifdef DEBUG
-	gettimeofday(&end_time, NULL);
-	dprintf("Time debug: geoip %f\n",getTimeDifference(&start_time,&end_time));
+		gettimeofday(&end_time, NULL);
+		fprintf(stderr,"Time debug: geoip %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
 	#ifdef DEBUG
-	gettimeofday(&start_time, NULL);
+		gettimeofday(&start_time, NULL);
 	#endif
 
 	//kopierer inn query	
@@ -1526,8 +1544,8 @@ int main(int argc, char *argv[])
 	}
 
 	#ifdef DEBUG
-	gettimeofday(&end_time, NULL);
-	dprintf("Time debug: query copying %f\n",getTimeDifference(&start_time,&end_time));
+		gettimeofday(&end_time, NULL);
+		fprintf(stderr,"Time debug: query copying %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
 
@@ -1574,8 +1592,8 @@ int main(int argc, char *argv[])
 	#endif
 
 
-	#ifdef DEBUG
-	gettimeofday(&start_time, NULL);
+	#ifdef DEBUG_TIME
+		gettimeofday(&start_time, NULL);
 	#endif
 
 	//Paid inclusion
@@ -1799,18 +1817,34 @@ int main(int argc, char *argv[])
 	//addserver bruker som regel mest tid, så tar den sist slik at vi ikke trenger å vente unødvendig
 	brGetPages(addsockfd,nrOfAddServers,AddSiderHeder,Sider,&pageNr,0);
 
-	#ifdef DEBUG
-	gettimeofday(&end_time, NULL);
-	dprintf("Time debug: geting pages %f\n",getTimeDifference(&start_time,&end_time));
+	#ifdef DEBUG_TIME
+		gettimeofday(&end_time, NULL);
+		fprintf(stderr,"Time debug: geting pages %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
+	#ifdef DEBUG_TIME
+        	gettimeofday(&start_time, NULL);
+	#endif
+	
 	handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, (hascashe || hasprequery), &errorha, pageNr,
 	               nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers,&queryNodeHeder);
 
+	#ifdef DEBUG_TIME
+        	gettimeofday(&end_time, NULL);
+        	fprintf(stderr,"Time debug: handle_results %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
+
+        #ifdef DEBUG_TIME
+                gettimeofday(&start_time, NULL);
+        #endif
 
 	//stopper å ta tidn og kalkulerer hvor lang tid vi brukte
 	gettimeofday(&main_end_time, NULL);
 	FinalSiderHeder.total_usecs = getTimeDifference(&main_start_time,&main_end_time);
+
+	#ifdef DEBUG_TIME
+		fprintf(stderr,"Time debug: Total time %f\n",FinalSiderHeder.total_usecs);
+	#endif
 
 	#ifdef BLACK_BOKS
 
@@ -1962,7 +1996,8 @@ int main(int argc, char *argv[])
 					printf("\t\t<filetypes>%f</filetypes>\n",SiderHeder[i].queryTime.filetypes);
 					printf("\t\t<iintegerGetValueDate>%f</iintegerGetValueDate>\n",SiderHeder[i].queryTime.iintegerGetValueDate);
 					printf("\t\t<dateview>%f</dateview>\n",SiderHeder[i].queryTime.dateview);
-					printf("\t\t<crawlManager>%f</crawlManager>\n",SiderHeder[i].queryTime.crawlManager);
+					printf("\t\t<pathaccess>%f</pathaccess>\n",SiderHeder[i].queryTime.pathaccess);
+					printf("\t\t<urlrewrite>%f</urlrewrite>\n",SiderHeder[i].queryTime.urlrewrite);
 					printf("\t\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);
 					printf("\t\t<cmc_connect>%f</cmc_connect>\n",SiderHeder[i].queryTime.cmc_conect);
 #endif
@@ -2476,7 +2511,8 @@ int main(int argc, char *argv[])
 					printf("\t\t<filetypes>%f</filetypes>\n",SiderHeder[i].queryTime.filetypes);
 					printf("\t\t<iintegerGetValueDate>%f</iintegerGetValueDate>\n",SiderHeder[i].queryTime.iintegerGetValueDate);
 					printf("\t\t<dateview>%f</dateview>\n",SiderHeder[i].queryTime.dateview);
-					printf("\t\t<crawlManager>%f</crawlManager>\n",SiderHeder[i].queryTime.crawlManager);
+					printf("\t\t<pathaccess>%f</pathaccess>\n",SiderHeder[i].queryTime.pathaccess);
+					printf("\t\t<urlrewrite>%f</urlrewrite>\n",SiderHeder[i].queryTime.urlrewrite);
 					printf("\t\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);
 					printf("\t\t<cmc_conect>%f</cmc_conect>\n",SiderHeder[i].queryTime.cmc_conect);
 #endif
@@ -2929,9 +2965,14 @@ int main(int argc, char *argv[])
 
 	    printf("</SEARCH>\n");
 	} // end if(dispconfig.writeprequery)
+
+	#ifdef DEBUG_TIME
+	        gettimeofday(&end_time, NULL);
+	        fprintf(stderr,"Time debug: xml gen %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
 	
-	#ifdef DEBUG
-	gettimeofday(&start_time, NULL);
+	#ifdef DEBUG_TIME
+		gettimeofday(&start_time, NULL);
 	#endif
 
 	//stenger ned stdout da det ikke skal sendes ut mer data, og dertfor er det ikke noen vits at klienten venter mer
@@ -2967,9 +3008,9 @@ int main(int argc, char *argv[])
         	fclose(LOGFILE);
 	}
 
-	#ifdef DEBUG
-	gettimeofday(&end_time, NULL);
-	dprintf("Time debug: end clean up %f\n",getTimeDifference(&start_time,&end_time));
+	#ifdef DEBUG_TIME
+		gettimeofday(&end_time, NULL);
+		fprintf(stderr,"Time debug: end clean up %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
 
@@ -3002,6 +3043,9 @@ int main(int argc, char *argv[])
 	}
 	#endif
 
+	#ifdef DEBUG_TIME
+        	gettimeofday(&start_time, NULL);
+	#endif
 
 	/********************************************************************************************/
 	//mysql logging
@@ -3289,6 +3333,15 @@ int main(int argc, char *argv[])
 
 	/********************************************************************************************/
 
+	#ifdef DEBUG_TIME
+	        gettimeofday(&end_time, NULL);
+	        fprintf(stderr,"Time debug: sql loging %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
+
+	#ifdef DEBUG_TIME
+	        gettimeofday(&start_time, NULL);
+	#endif
+
 	free(Sider);
 
   	/* Free the configuration */
@@ -3328,6 +3381,12 @@ int main(int argc, char *argv[])
 	//#ifdef WITH_PROFILING
 	//	}
 	//#endif
+
+	#ifdef DEBUG_TIME
+        	gettimeofday(&end_time, NULL);
+        	fprintf(stderr,"Time debug: freeing at the end %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
+
         return EXIT_SUCCESS;
 } 
 
@@ -3608,7 +3667,7 @@ void read_collection_cfg(struct subnamesConfigFormat * dst) {
 	subnamesDefaultsConfig.rankUrlMainWord = config_setting_get_int(cfgstring);
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "defaultthumbnail") ) == NULL) {
-		warnx("can't load \"defaultthumbnail\" from config\n");
+		warnx("can't load \"defaultthumbnail\" from config");
 		subnamesDefaultsConfig.defaultthumbnail = NULL;
         }
 	else {
@@ -3616,7 +3675,7 @@ void read_collection_cfg(struct subnamesConfigFormat * dst) {
 	}
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "sqlImpressionsLogQuery") ) == NULL) {
-                warnx("can't load \"sqlImpressionsLogQuery\" from config\n");
+                warnx("can't load \"sqlImpressionsLogQuery\" from config");
 		subnamesDefaultsConfig.sqlImpressionsLogQuery[0] = '\0';
         }
 	else {
