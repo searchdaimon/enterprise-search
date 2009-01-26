@@ -10,7 +10,7 @@
 
 #define DP_LOCK_FILE "var/dp.lock"
 
-static int DP_LOCK = NULL;
+static int DP_LOCK = 0;
 
 int dp_priority_locl_start() {
 
