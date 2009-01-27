@@ -2669,7 +2669,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		struct filtersFormat *filters,
 		struct filteronFormat *filteron,
 		query_array *search_user_as_query,
-		int ranking, struct hashtable **crc32maphash,
+		int ranking, struct hashtable **crc32maphash, struct duplicate_docids **dups,
 		char *search_user, int cmc_port
 		) {
 
@@ -3479,25 +3479,18 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		gettimeofday(&start_time, NULL);
 		int k;
 		// Loop over all results and do duplicate checking...
-		if (crc32maphash != NULL)
-			*crc32maphash = create_hashtable(41, ht_integerhash, ht_integercmp);
 
-		//struct duplicate_docids *dups = malloc( (sizeof(struct duplicate_docids) * (*TeffArrayElementer)) );
+		if (( crc32maphash != NULL) && (dups != NULL) ) {
+			*crc32maphash = create_hashtable((*TeffArrayElementer), ht_integerhash, ht_integercmp);		
+			*dups = malloc( (sizeof(struct duplicate_docids) * (*TeffArrayElementer)) );
 
-		if (crc32maphash != NULL)
-	       	for (i = 0; i < (*TeffArrayElementer); i++) {
-			//runarb 22 sept 2008: hvorfor er denne her? Brukes bare på websøk
-			//TeffArray->iindex[i].PopRank = popRankForDocIDMemArray(TeffArray->iindex[i].DocID);
-#if 1
 			unsigned int crc32;
+			struct duplicate_docids *dup;
 
-			#if 0
-				//bruker iintegerGetValue i steden for re. Men ser ut til at det er problemer med 0 indkeksering.
-				if (iintegerGetValue(&crc32,4,(*TeffArray)->iindex[i].DocID +1,"crc32map",(*(*TeffArray)->iindex[i].subname).subname) == 0) {
-					printf("can't iintegerGetValue crc32map\n");
-					continue;
-				}
-			#else
+	       		for (i = 0; i < (*TeffArrayElementer); i++) {
+				//runarb 22 sept 2008: hvorfor er denne her? Brukes bare på websøk
+				//TeffArray->iindex[i].PopRank = popRankForDocIDMemArray(TeffArray->iindex[i].DocID);
+
 				if (reIsOpen(re,rLotForDOCid((*TeffArray)->iindex[i].DocID), (*TeffArray)->iindex[i].subname->subname, "crc32map") ) {
 
 				}
@@ -3508,62 +3501,67 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 				crc32 = *RE_Uint(re, (*TeffArray)->iindex[i].DocID);
 
-				//reclose(crc32map);
-			#endif
+				
 
-			debug("Got hash value: %x\n", crc32);
+				#ifdef DEBUG
+				printf("Got hash value: %x\n", crc32);
+				#endif
 
-
-			if (crc32 == 0) {
-				debug("don't have crc32 value for DocID");
-				continue;
-			}
-
-			// Byttet fra list til vector da vector er raskere.
-			struct duplicate_docids *dup = hashtable_search(*crc32maphash, &crc32);
-
-			if (dup == NULL) {
-				dup = malloc(sizeof(struct duplicate_docids));
-				//dup = &dups[i];
-				dup->V = NULL;
-				//setter dublicat rekorden til å peke på den første 
-				dup->fistiindex = &(*TeffArray)->iindex[i];
-
-				hashtable_insert(*crc32maphash, uinttouintp(crc32), dup);
-
-
-			} else {
-				/* Remove duplicated */
-				if (dup->V == NULL) {
-					dup->V = vector_container( pair_container( int_container(), ptr_container() ) );
-					//legger til den første
-					printf("DUPLICATE first: DocID=%u, subname=%s\n", dup->fistiindex->DocID, dup->fistiindex->subname->subname);
-					vector_pushback(dup->V, dup->fistiindex->DocID, dup->fistiindex->subname->subname);
+				if (crc32 == 0) {
+					debug("don't have crc32 value for DocID");
+					continue;
 				}
 
-				//går gjenom de vi har fra før, og sjekker om dette er den første duplikaten i en kollection
-				//hvis det ikke er det skal vi markere det.
-				for (k = 0; k<vector_size(dup->V); k++) { 
+				dup = hashtable_search(*crc32maphash, &crc32);
 
-					if (pair(vector_get(dup->V,k)).second.ptr == (*TeffArray)->iindex[i].subname->subname) {
+				if (dup == NULL) {
+					//dup = malloc(sizeof(struct duplicate_docids));
+					dup = &(*dups)[i];
+					dup->V = NULL;
+					//setter dublicat rekorden til å peke på den første 
+					dup->fistiindex = &(*TeffArray)->iindex[i];
 
-						(*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection = 1;
-						break;
+					hashtable_insert(*crc32maphash, uinttouintp(crc32), dup);
+
+
+				} else {
+					/* Remove duplicated */
+					if (dup->V == NULL) {
+						dup->V = vector_container( pair_container( int_container(), ptr_container() ) );
+						//legger til den første
+						#ifdef DEBUG
+						printf("DUPLICATE first: DocID=%u, subname=%s\n", dup->fistiindex->DocID, dup->fistiindex->subname->subname);
+						#endif
+						vector_pushback(dup->V, dup->fistiindex->DocID, dup->fistiindex->subname->subname);
 					}
-				}
-				    
-				if ((filteron->collection == NULL)
-				    || ((*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection))
-				    {
-					printf("DUPLICATE secund(s): DocID=%u, subname=%s\n", (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].subname->subname);
-					vector_pushback(dup->V, (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].subname->subname);
 
-					if (iff_set_filter(&(*TeffArray)->iindex[i].indexFiltered, FILTER_DUPLICATE))
-					    --(*TotaltTreff);
-				    }
+					//går gjenom de vi har fra før, og sjekker om dette er den første duplikaten i en kollection
+					//hvis det ikke er det skal vi markere det.
+					for (k = 0; k<vector_size(dup->V); k++) { 
+
+						if (pair(vector_get(dup->V,k)).second.ptr == (*TeffArray)->iindex[i].subname->subname) {
+
+							(*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection = 1;
+							break;
+						}
+					}
+				    
+					if ((filteron->collection == NULL)
+					    || ((*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection))
+					    {
+						#ifdef DEBUG
+						printf("DUPLICATE secund(s): DocID=%u, subname=%s\n", (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].subname->subname);
+						#endif
+						vector_pushback(dup->V, (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].subname->subname);
+
+						if (iff_set_filter(&(*TeffArray)->iindex[i].indexFiltered, FILTER_DUPLICATE))
+						    --(*TotaltTreff);
+					    }
+				}
 			}
-#endif
 		}
+
+
 		reclose_cache();
 
 
@@ -3628,14 +3626,13 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 	#else
 
-	gettimeofday(&start_time, NULL);
+		gettimeofday(&start_time, NULL);
 
-	allrankcalk((*TeffArray),TeffArrayElementer);
+		allrankcalk((*TeffArray),TeffArrayElementer);
 
-       	gettimeofday(&end_time, NULL);
-        (*queryTime).allrankCalc = getTimeDifference(&start_time,&end_time);
+       		gettimeofday(&end_time, NULL);
+        	(*queryTime).allrankCalc = getTimeDifference(&start_time,&end_time);
 
-	
 	#endif
 
 
@@ -3707,9 +3704,23 @@ char* searchFilterCount(int *TeffArrayElementer,
 		struct hashtable *h;
 		int i, j;
 		struct timeval start_time, end_time;
+		struct timeval tot_start_time, tot_end_time;
+		struct timeval att_start_time, att_end_time;
+		double att1=0;
+		double att2=0;
+		double att3=0;
+		double att4=0;
+		double att5=0;
+
+		gettimeofday(&tot_start_time, NULL);
+
+
 		/***********************************************************************************************
 		teller filtyper
 		***********************************************************************************************/
+	        #ifdef DEBUG_TIME
+        	        gettimeofday(&start_time, NULL);
+	        #endif
 
 		fprintf(stderr, "search: searchFilterCount()\n");
 
@@ -3725,9 +3736,18 @@ char* searchFilterCount(int *TeffArrayElementer,
 		container	*file_groups = map_container( string_container(), string_container() );
 
 
+	        #ifdef DEBUG_TIME
+	                gettimeofday(&end_time, NULL);
+	                printf("Time debug: searchFilterCount init time: %f\n",getTimeDifference(&start_time, &end_time));
+	        #endif
+
 		// Teller filtyper og attributter til navigasjonsmenyen:
+	        #ifdef DEBUG_TIME
+        	        gettimeofday(&start_time, NULL);
+	        #endif
 
 		for (i = 0; i < (*TeffArrayElementer); i++) {
+
 
 			if (TeffArray->iindex[i].indexFiltered.date == 1) {
 				continue;
@@ -3741,6 +3761,8 @@ char* searchFilterCount(int *TeffArrayElementer,
 			}
 
 			// Ax: Slå opp attributter for dokumentet.
+			//att
+			gettimeofday(&att_start_time, NULL);
 
 			int	DocID = TeffArray->iindex[i].DocID;
 			char	*subname = TeffArray->iindex[i].subname->subname;
@@ -3825,6 +3847,13 @@ char* searchFilterCount(int *TeffArrayElementer,
 				    }
 			    }
 
+			//att
+			gettimeofday(&att_end_time, NULL);
+			att1 += getTimeDifference(&att_start_time, &att_end_time);
+
+			//att
+			gettimeofday(&att_start_time, NULL);
+
 			if (!no_attributes)
 			    {
 				int	lotNr = rLotForDOCid(DocID);
@@ -3839,6 +3868,13 @@ char* searchFilterCount(int *TeffArrayElementer,
 					re = map_val(it_re).ptr;
 				    }
 			    }
+
+			//att
+	                gettimeofday(&att_end_time, NULL);
+	                att2 += getTimeDifference(&att_start_time, &att_end_time);
+
+			//att
+                        gettimeofday(&att_start_time, NULL);
 
 			// Beregning av attributt-bits:
 			int	len = TeffArray->attrib_count + 1;
@@ -3878,6 +3914,12 @@ char* searchFilterCount(int *TeffArrayElementer,
 				    }
 			    }
 
+			//att
+	                gettimeofday(&att_end_time, NULL);
+	                att3 += getTimeDifference(&att_start_time, &att_end_time);
+
+			//att
+			gettimeofday(&att_start_time, NULL);
 
 			char	**ptr1, **ptr2;
 			char	*file_ext;
@@ -3891,6 +3933,13 @@ char* searchFilterCount(int *TeffArrayElementer,
 			    {
 				file_ext = TeffArray->iindex[i].filetype;
 			    }
+
+                        //att
+                        gettimeofday(&att_end_time, NULL);
+                        att4 += getTimeDifference(&att_start_time, &att_end_time);
+
+                        //att
+                        gettimeofday(&att_start_time, NULL);
 
 			iterator	it_gr = map_find(file_groups, file_ext);
 
@@ -3909,7 +3958,25 @@ char* searchFilterCount(int *TeffArrayElementer,
 				attribute_count_add(count, attributes, 3, "group", group, file_ext);
 			        attribute_count_add(count, attributes, 2, "filetype", file_ext);
 			    }
+			//att
+	                gettimeofday(&att_end_time, NULL);
+	               	att5 += getTimeDifference(&att_start_time, &att_end_time);
 		}
+
+		printf("Time debug: searchFilterCount att1 time: %f\n",att1);
+		printf("Time debug: searchFilterCount att2 time: %f\n",att2);
+		printf("Time debug: searchFilterCount att3 time: %f\n",att3);
+		printf("Time debug: searchFilterCount att4 time: %f\n",att4);
+		printf("Time debug: searchFilterCount att5 time: %f\n",att5);
+
+	        #ifdef DEBUG_TIME
+	                gettimeofday(&end_time, NULL);
+	                printf("Time debug: searchFilterCount loop time: %f\n",getTimeDifference(&start_time, &end_time));
+	        #endif
+
+        	#ifdef DEBUG_TIME
+        	        gettimeofday(&start_time, NULL);
+        	#endif
 
 		// Lukk åpne filer og frigjør ledig minne:
 		{
@@ -3940,10 +4007,17 @@ char* searchFilterCount(int *TeffArrayElementer,
 
 		#endif // ATTRIBUTES
 
+        	#ifdef DEBUG_TIME
+                	gettimeofday(&end_time, NULL);
+                	printf("Time debug: searchFilterCount attr end time: %f\n",getTimeDifference(&start_time, &end_time));
+        	#endif
+
 		/***********************************************************************************************
 		 collections
 		***********************************************************************************************/
-
+        	#ifdef DEBUG_TIME
+        	        gettimeofday(&start_time, NULL);
+        	#endif
 		//collections
 		//finner hvilken vi har trykket på, og markerer denne slik at det kan markeres i designed i klienten
 		//kopierer også inn antall treff i hver subname
@@ -4089,6 +4163,11 @@ char* searchFilterCount(int *TeffArrayElementer,
 			printf("coll \"%s\", checked %i\n",(*filters).collections.elements[i].name,(*filters).collections.elements[i].checked);
 		}
 
+	        #ifdef DEBUG_TIME
+        	        gettimeofday(&end_time, NULL);
+        	        printf("Time debug: searchFilterCount collsum time: %f\n",getTimeDifference(&start_time, &end_time));
+        	#endif
+
 		/***********************************************************************************************
 		//dates
 		***********************************************************************************************/
@@ -4144,7 +4223,15 @@ char* searchFilterCount(int *TeffArrayElementer,
 		gettimeofday(&end_time, NULL);
 		(*queryTime).dateview = getTimeDifference(&start_time,&end_time);
 
+		#ifdef DEBUG_TIME
+			printf("Time debug: searchFilterCount data sum time: %f\n",(*queryTime).dateview);
+		#endif
+
 #ifdef ATTRIBUTES
+	        #ifdef DEBUG_TIME
+        	        gettimeofday(&start_time, NULL);
+	        #endif
+
 		// Attributter:
 		fprintf(stderr, "search: generating xml for attributes\n");
 
@@ -4155,7 +4242,16 @@ char* searchFilterCount(int *TeffArrayElementer,
 		attribute_destroy_recursive(attributes);
 
 		fprintf(stderr, "search: done attributes\n");
+		
+        	#ifdef DEBUG_TIME
+                	gettimeofday(&end_time, NULL);
+                	printf("Time debug: searchFilterCount attr xml time: %f\n",getTimeDifference(&start_time, &end_time));
+        	#endif
 #endif
+
+		gettimeofday(&tot_end_time, NULL);
+                (*queryTime).FilterCount = getTimeDifference(&tot_start_time,&tot_end_time);
+
 		fprintf(stderr, "search: ~searchFilterCount()\n");
 #ifdef ATTRIBUTES
     return nav_xml;

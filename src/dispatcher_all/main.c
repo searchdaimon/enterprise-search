@@ -1996,6 +1996,7 @@ int main(int argc, char *argv[])
 					printf("\t\t<filetypes>%f</filetypes>\n",SiderHeder[i].queryTime.filetypes);
 					printf("\t\t<iintegerGetValueDate>%f</iintegerGetValueDate>\n",SiderHeder[i].queryTime.iintegerGetValueDate);
 					printf("\t\t<dateview>%f</dateview>\n",SiderHeder[i].queryTime.dateview);
+					printf("\t\t<FilterCount>%f</FilterCount>\n",SiderHeder[i].queryTime.FilterCount);
 					printf("\t\t<pathaccess>%f</pathaccess>\n",SiderHeder[i].queryTime.pathaccess);
 					printf("\t\t<urlrewrite>%f</urlrewrite>\n",SiderHeder[i].queryTime.urlrewrite);
 					printf("\t\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);
@@ -2511,6 +2512,7 @@ int main(int argc, char *argv[])
 					printf("\t\t<filetypes>%f</filetypes>\n",SiderHeder[i].queryTime.filetypes);
 					printf("\t\t<iintegerGetValueDate>%f</iintegerGetValueDate>\n",SiderHeder[i].queryTime.iintegerGetValueDate);
 					printf("\t\t<dateview>%f</dateview>\n",SiderHeder[i].queryTime.dateview);
+					printf("\t\t<FilterCount>%f</FilterCount>\n",SiderHeder[i].queryTime.FilterCount);
 					printf("\t\t<pathaccess>%f</pathaccess>\n",SiderHeder[i].queryTime.pathaccess);
 					printf("\t\t<urlrewrite>%f</urlrewrite>\n",SiderHeder[i].queryTime.urlrewrite);
 					printf("\t\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);

@@ -163,6 +163,7 @@ struct PagesResultsFormat {
 		struct popResultBreakDownTimeFormat popResultBreakDownTime;
 		#endif
 		struct hashtable *crc32maphash;
+		struct duplicate_docids *dups;
 		enum platform_type ptype; 
 		enum browser_type btype; 
 };
@@ -1820,6 +1821,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	struct PagesResultsFormat PagesResults;
 	struct filteronFormat filteron;
 	struct hashtable *crc32maphash;
+	struct duplicate_docids *dups;
 
 	memset(&PagesResults,'\0',sizeof(PagesResults));
 
@@ -1974,6 +1976,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	(*SiderHeder).queryTime.html_parser_run = 0;
 	(*SiderHeder).queryTime.generate_snippet = 0;
 	(*SiderHeder).queryTime.duplicat_echecking = 0;
+	(*SiderHeder).queryTime.FilterCount = 0;
 	#endif
 
 	#if defined BLACK_BOKS && !defined _24SEVENOFFICE
@@ -2140,8 +2143,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
-			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 0, &crc32maphash, search_user, searchd_config->cmc_port);
+			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 0, &crc32maphash, &dups,search_user, searchd_config->cmc_port);
 	PagesResults.crc32maphash = crc32maphash;
+	PagesResults.dups = dups;
 
 	#ifdef DEBUG
 	printf("end searchSimple\n");
@@ -2438,6 +2442,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		vboprintf("\t%-40s %f\n","filetypes",(*SiderHeder).queryTime.filetypes);
 		vboprintf("\t%-40s %f\n","iintegerGetValueDate",(*SiderHeder).queryTime.iintegerGetValueDate);
 		vboprintf("\t%-40s %f\n","dateview",(*SiderHeder).queryTime.dateview);
+		vboprintf("\t%-40s %f\n","FilterCount",(*SiderHeder).queryTime.FilterCount);
 		vboprintf("\t%-40s %f\n","pathaccess",(*SiderHeder).queryTime.pathaccess);
 		vboprintf("\t%-40s %f\n","urlrewrite",(*SiderHeder).queryTime.urlrewrite);
 		vboprintf("\t%-40s %f\n","duplicat echecking",(*SiderHeder).queryTime.duplicat_echecking);
@@ -2512,6 +2517,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	free(PagesResults.TeffArray);
 
 	// Slett innholdet i crc32maphash:
+	/*
 	struct hashtable_itr *itr = hashtable_iterator(PagesResults.crc32maphash);
 
 	while (itr->e!=NULL)
@@ -2525,6 +2531,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	    }
 
 	free(itr);
+	*/
+	free(PagesResults.dups);
 
 	hashtable_destroy(PagesResults.crc32maphash,0);
 
@@ -2737,7 +2745,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			&PagesResults.QueryData.queryParsed,&SiderHeder->queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
-			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 1, NULL, search_user, searchd_config->cmc_port);
+			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 1, NULL, NULL,search_user, searchd_config->cmc_port);
 	// XXX: eirik, we should not discard the duplicate tests
 	//&rankDocId);
 
@@ -2972,6 +2980,7 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	printf("\tfiletypes %f\n",(*SiderHeder).queryTime.filetypes);
 	printf("\tiintegerGetValueDate %f\n",(*SiderHeder).queryTime.iintegerGetValueDate);
 	printf("\tdateview %f\n",(*SiderHeder).queryTime.dateview);
+	printf("\tFilterCount %f\n",(*SiderHeder).queryTime.FilterCount);
 	printf("\tpathaccess %f\n",(*SiderHeder).queryTime.pathaccess);
 	printf("\turlrewrite %f\n",(*SiderHeder).queryTime.urlrewrite);
 
