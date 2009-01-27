@@ -110,7 +110,6 @@ struct popResultBreakDownTimeFormat {
 
 #define MAX_CM_CONSUMERS 2
 
-#ifdef WITH_THREAD
 struct socket_pool {
 	int sock[MAX_CM_CONSUMERS];
 	int used[MAX_CM_CONSUMERS];
@@ -118,7 +117,7 @@ struct socket_pool {
 	pthread_mutex_t mutex;
 	pthread_cond_t cv;
 };
-#endif
+
 
 struct PagesResultsFormat {
 		struct SiderFormat *Sider;
@@ -251,6 +250,8 @@ get_browser(char *useragent)
 }
 
 #ifdef BLACK_BOKS
+
+#ifdef WITH_THREAD
 static inline int
 get_sock_from_pool(struct socket_pool *pool, int *index)
 {
@@ -284,6 +285,7 @@ release_sock_to_pool(struct socket_pool *pool, int index)
 	pthread_cond_signal(&pool->cv);
 	pthread_mutex_unlock(&pool->mutex);
 }
+#endif
 #endif
 
 
@@ -2500,6 +2502,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		print_explane_rank(*Sider,(*SiderHeder).showabal);
 	}
 
+        #ifdef DEBUG_TIME
+                gettimeofday(&start_time, NULL);
+        #endif
+
 	// Frigjør minne:
 	vboprintf("free memory\n");
 
@@ -2524,7 +2530,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	destroy_query( &PagesResults.QueryData.queryParsed );
 	destroy_query( &PagesResults.QueryData.search_user_as_query );
-
+        #ifdef DEBUG_TIME
+                gettimeofday(&end_time, NULL);
+                printf("Time debug: freeing mem time: %f\n",getTimeDifference(&start_time, &end_time));
+        #endif
 	vboprintf("searchkernel: ~dosearch()\n");
 	return 1;
 }
