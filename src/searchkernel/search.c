@@ -3780,11 +3780,10 @@ char* searchFilterCount(int *TeffArrayElementer,
 		struct timeval start_time, end_time;
 		struct timeval tot_start_time, tot_end_time;
 		struct timeval att_start_time, att_end_time;
-		double att1=0;
-		double att2=0;
-		double att3=0;
-		double att4=0;
-		double att5=0;
+
+	        #ifdef DEBUG_TIME		
+		double att1=0, att2=0, att3=0, att4=0, att5=0;
+		#endif
 
 		gettimeofday(&tot_start_time, NULL);
 
@@ -3838,8 +3837,9 @@ char* searchFilterCount(int *TeffArrayElementer,
 			}
 
 			// Ax: Slå opp attributter for dokumentet.
-			//att
+		        #ifdef DEBUG_TIME
 			gettimeofday(&att_start_time, NULL);
+			#endif
 
 			int	DocID = TeffArray->iindex[i].DocID;
 			char	*subname = TeffArray->iindex[i].subname->subname;
@@ -3924,12 +3924,11 @@ char* searchFilterCount(int *TeffArrayElementer,
 				    }
 			    }
 
-			//att
+		        #ifdef DEBUG_TIME
 			gettimeofday(&att_end_time, NULL);
 			att1 += getTimeDifference(&att_start_time, &att_end_time);
-
-			//att
 			gettimeofday(&att_start_time, NULL);
+			#endif
 
 			if (!no_attributes)
 			    {
@@ -3946,12 +3945,11 @@ char* searchFilterCount(int *TeffArrayElementer,
 				    }
 			    }
 
-			//att
+		        #ifdef DEBUG_TIME
 	                gettimeofday(&att_end_time, NULL);
 	                att2 += getTimeDifference(&att_start_time, &att_end_time);
-
-			//att
                         gettimeofday(&att_start_time, NULL);
+			#endif
 
 			// Beregning av attributt-bits:
 			int	len = TeffArray->attrib_count + 1;
@@ -4026,12 +4024,11 @@ char* searchFilterCount(int *TeffArrayElementer,
 				    }
 			    }
 
-			//att
+		        #ifdef DEBUG_TIME		
 	                gettimeofday(&att_end_time, NULL);
 	                att3 += getTimeDifference(&att_start_time, &att_end_time);
-
-			//att
 			gettimeofday(&att_start_time, NULL);
+			#endif
 
 			char	**ptr1, **ptr2;
 			char	*file_ext;
@@ -4046,12 +4043,11 @@ char* searchFilterCount(int *TeffArrayElementer,
 				file_ext = TeffArray->iindex[i].filetype;
 			    }
 
-                        //att
+		        #ifdef DEBUG_TIME
                         gettimeofday(&att_end_time, NULL);
                         att4 += getTimeDifference(&att_start_time, &att_end_time);
-
-                        //att
                         gettimeofday(&att_start_time, NULL);
+			#endif
 
 			iterator	it_gr = map_find(file_groups, file_ext);
 		        char	*group, *descr, *icon;
@@ -4130,11 +4126,13 @@ char* searchFilterCount(int *TeffArrayElementer,
 			    }
 
 
-			//att
+		        #ifdef DEBUG_TIME
 	                gettimeofday(&att_end_time, NULL);
 	               	att5 += getTimeDifference(&att_start_time, &att_end_time);
+			#endif
 		}
 
+		#ifdef DEBUG_TIME
 		printf("Time debug: searchFilterCount att1 time: %f\n",att1);
 		printf("Time debug: searchFilterCount att2 time: %f\n",att2);
 		printf("Time debug: searchFilterCount att3 time: %f\n",att3);
@@ -4142,6 +4140,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 		printf("Time debug: searchFilterCount att5 time: %f\n",att5);
 
                 gettimeofday(&att_start_time, NULL);
+		#endif
 
 		struct hashtable_itr	*h_it = hashtable_iterator(attrib_count_temp);
 		if (hashtable_count(attrib_count_temp))
@@ -4157,8 +4156,10 @@ char* searchFilterCount(int *TeffArrayElementer,
 		free(h_it);
 		hashtable_destroy(attrib_count_temp, 1);
 
+		#ifdef DEBUG_TIME
                 gettimeofday(&att_end_time, NULL);
                	printf("Time debug: attribute_count_add time: %f\n", getTimeDifference(&att_start_time, &att_end_time));
+		#endif
 
 		attribute_finish_count();
 
