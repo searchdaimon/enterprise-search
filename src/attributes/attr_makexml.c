@@ -225,9 +225,27 @@ char* attribute_generate_value_from_vector(container *param)
     return buffer_exit(B);
 }
 
+int	ant[10];
 
-va_list va_attribute_count_add( int count, container *attributes, int argc, va_list ap )
+void attribute_init_count()
 {
+    int		i;
+    for (i=0; i<10; i++) ant[i] = 0;
+}
+
+void attribute_finish_count()
+{
+    int		i;
+    for (i=0; i<10; i++)
+	if (ant[i]>0)
+	    printf("\t%i:%i", i, ant[i]);
+    printf("\n");
+}
+
+
+va_list va_attribute_count_add( int size, int count, container *attributes, int argc, va_list ap )
+{
+    ant[0]++;
     int		i;
     char	*id = va_arg(ap, char*);
     container	*subattr;
@@ -235,43 +253,48 @@ va_list va_attribute_count_add( int count, container *attributes, int argc, va_l
     iterator	it = map_find(attributes, id);
     if (it.valid)
 	{
+	    ant[1]++;
 	    subattr = pair(map_val(it)).first.ptr;
 
 	    container	*M = pair(map_val(it)).second.ptr;
 	    it = map_find(M, count);
 	    if (it.valid)
 		{
-		    map_val(it).i++;
+		    ant[2]++;
+		    map_val(it).i+= size;
 		}
 	    else
 		{
-		    map_insert(M, count, 1);
+		    ant[3]++;
+		    map_insert(M, count, size);
 		}
 	    //for (i=0; i<len; i++)
 		//((int*)pair(map_val(it)).second.ptr)[i]+= count[i];
 	}
     else
 	{
+	    ant[4]++;
 	    subattr = map_container( string_container(), pair_container( ptr_container(), ptr_container() ) );
 
 	    container	*M = map_container( int_container(), int_container() );
-	    map_insert(M, count, 1);
+	    map_insert(M, count, size);
 	    //int		*C = malloc(sizeof(int)*len);
 	    //for (i=0; i<len; i++) C[i] = count[i];
 	    map_insert(attributes, id, subattr, M);
 	}
 
-    if (argc > 1) ap = va_attribute_count_add( count, subattr, argc-1, ap );
+    if (argc > 1) ap = va_attribute_count_add( size, count, subattr, argc-1, ap );
 
     return ap;
 }
 
-void attribute_count_add( int count, container *attributes, int argc, ... )
+void attribute_count_add( int size, int count, container *attributes, int argc, ... )
 {
+    ant[5]++;
     va_list		ap;
 
     va_start(ap, argc);
-    ap = va_attribute_count_add( count, attributes, argc, ap );
+    ap = va_attribute_count_add( size, count, attributes, argc, ap );
     va_end(ap);
 }
 
@@ -287,6 +310,25 @@ void attribute_destroy_recursive( container *attributes )
 
     destroy(attributes);
 }
+
+/*
+struct attribute_temp
+{
+};
+
+struct attribute_hash attribute_new()
+{
+}
+
+void attribute_count_add( int count, container *attributes, int argc, ... )
+void attribute_add( struct attribute_temp *temp, int count, char *arg1, char *arg2, char *arg3 )
+{
+}
+
+container* attribute_build( )
+{
+}
+*/
 
 void attribute_count_print( container *attributes, int attrib_count, int indent )
 {

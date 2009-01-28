@@ -8,7 +8,9 @@
 #include "attribute_descriptions.h"
 #include "show_attributes.h"
 
-void attribute_count_add( int count, container *attributes, int argc, ... );
+void attribute_init_count();
+void attribute_finish_count();
+void attribute_count_add( int size, int count, container *attributes, int argc, ... );
 void attribute_count_print( container *attributes, int attrib_len, int indent );
 void attribute_destroy_recursive( container *attributes );
 
