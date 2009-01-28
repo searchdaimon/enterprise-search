@@ -3684,6 +3684,80 @@ static attr_crc32_words_block_compare(const void *a, const void *b)
     return 0;
 }
 
+struct _attribute_temp_1_key
+{
+    int		count;
+    unsigned int crc32val;
+    char	*key;
+    char	*arg1, *arg2;
+};
+
+struct _attribute_temp_1_val
+{
+    int		count;
+    char	*key, *value, *value2;
+    int		size;
+};
+
+int _attribute_temp_1_cmp( void *key1, void *key2 )
+{
+    struct _attribute_temp_1_key	*a = (struct _attribute_temp_1_key*)key1,
+					*b = (struct _attribute_temp_1_key*)key2;
+//    printf("cmp()\n");
+//    printf(" count:%i;crc32val:%i;key:%s", a->count, a->crc32val, a->key);
+//    printf(" count:%i;crc32val:%i;key:%s", b->count, b->crc32val, b->key);
+    if (a->count == b->count)
+	{
+	    if (a->arg1!=NULL && b->arg1!=NULL)
+		{
+		    if (strcmp(a->key, b->key)==0
+			&& strcmp(a->arg1, b->arg1)==0)
+			{
+			    if (a->arg2==NULL && b->arg2==NULL) return 1;
+			    if (a->arg2!=NULL && b->arg2!=NULL
+				&& strcmp(a->arg2, b->arg2)==0) return 1;
+			}
+		}
+	    else if (a->arg1==NULL && b->arg1==NULL && a->crc32val == b->crc32val)
+		{
+		    if (strcmp(a->key, b->key)==0) { /*printf(" (EQUAL)\n");*/ return 1; }
+//		    else printf(" (_)\n");
+//		    return 0;
+		}
+	}
+//    printf("\n");
+    /*
+    if (a->count > b->count) return 1;
+    if (a->count < b->count) return -1;
+	    if (a->crc32val > b->crc32val) return 1;
+    if (a->crc32val < b->crc32val) return -1;
+    return strcmp(a->key, b->key);
+    */
+    return 0;
+}
+
+unsigned int _attribute_temp_1_hash( void *key )
+{
+    unsigned int	v;
+    struct _attribute_temp_1_key	*a = (struct _attribute_temp_1_key*)key;
+
+//    printf("hash() "); fflush(stdout);
+//    printf("count:%i;crc32val:%i;key:%s", a->count, a->crc32val, a->key);
+    if (a->arg1==NULL) v = a->crc32val & 0xffff0000;
+    else
+	{
+	    int		i;
+	    char	*last_arg = a->arg1;
+	    if (a->arg2!=NULL) last_arg = a->arg2;
+	    v = 1;
+	    for (i=0; last_arg[i]!='\0'; i++) v*= last_arg[i];
+	    v = (v<<16) & 0xffff0000;
+	}
+    v+= a->count & 0xffff;
+//    printf("id:%u\n", v);
+    return v;
+}
+
 
 char* searchFilterCount(int *TeffArrayElementer, 
 			struct iindexFormat *TeffArray, 
@@ -3734,6 +3808,9 @@ char* searchFilterCount(int *TeffArrayElementer,
 		// key -> (val->#), #
 		container	*attributes = map_container( string_container(), pair_container( ptr_container(), int_container() ) );
 		container	*file_groups = map_container( string_container(), string_container() );
+
+		attribute_init_count();
+		struct hashtable *attrib_count_temp = create_hashtable(16, _attribute_temp_1_hash, _attribute_temp_1_cmp);
 
 
 	        #ifdef DEBUG_TIME
@@ -3897,15 +3974,50 @@ char* searchFilterCount(int *TeffArrayElementer,
 						if (*crc32val != 0)
 						    {
 							char	*key = (char*)set_key(it_s1).ptr;
-							char	*value = (char*)bsearch((const void*)(crc32val), (const void*)m_crc32_words, crc32_words_size,
-							    attr_crc32_words_blocksize, attr_crc32_words_block_compare );
+							// Sjekk cache
+							struct _attribute_temp_1_key	this_key, *hash_key;
+							struct _attribute_temp_1_val	*hash_val;
+							this_key.count = count;
+							this_key.key = key;
+							this_key.crc32val = *crc32val;
+							this_key.arg1 = NULL;
+							this_key.arg2 = NULL;
 
-							if (value != NULL)
+							hash_val = (struct _attribute_temp_1_val*)hashtable_search(attrib_count_temp, (void*)&this_key);
+
+							if (hash_val == NULL)
 							    {
-								value+= sizeof(unsigned int);
+								char	*value = (char*)bsearch((const void*)(crc32val), (const void*)m_crc32_words, crc32_words_size,
+							            attr_crc32_words_blocksize, attr_crc32_words_block_compare );
 
-								// Legg til:
-								attribute_count_add(count, attributes, 2, key, value);
+							        if (value != NULL)
+								    {
+								        value+= sizeof(unsigned int);
+
+									// Legg til:
+									//attribute_count_add(count, attributes, 2, key, value);
+									hash_key = malloc(sizeof(struct _attribute_temp_1_key));
+									hash_key->count = count;
+									hash_key->key = key;
+									hash_key->crc32val = *crc32val;
+									hash_key->arg1 = NULL;
+									hash_key->arg2 = NULL;
+
+									hash_val = malloc(sizeof(struct _attribute_temp_1_val));
+									hash_val->count = count;
+									hash_val->key = key;
+									hash_val->value = value;
+									hash_val->value2 = NULL;
+									hash_val->size = 1;
+									hashtable_insert(attrib_count_temp, hash_key, hash_val);
+//									printf("Legger til %s=%s\n", key, value);
+								    }
+//								printf("[ ]\n");
+							    }
+							else
+							    {
+//								printf("[X]\n");
+								hash_val->size++;
 							    }
 						    }
 
@@ -3942,22 +4054,82 @@ char* searchFilterCount(int *TeffArrayElementer,
                         gettimeofday(&att_start_time, NULL);
 
 			iterator	it_gr = map_find(file_groups, file_ext);
+		        char	*group, *descr, *icon;
 
 			if (it_gr.valid)
 			    {
-				attribute_count_add(count, attributes, 3, "group", map_val(it_gr).ptr, file_ext);
-			        attribute_count_add(count, attributes, 2, "filetype", file_ext);
+				//attribute_count_add(1, count, attributes, 3, "group", map_val(it_gr).ptr, file_ext);
+			        //attribute_count_add(1, count, attributes, 2, "filetype", file_ext);
+				group = map_val(it_gr).ptr;
 			    }
 			else
 			    {
-			        char	*group, *descr, *icon;
-
 				fte_getdescription(getfiletypep, "nbo", file_ext, &group, &descr, &icon);
 				map_insert(file_groups, file_ext, group);
 
-				attribute_count_add(count, attributes, 3, "group", group, file_ext);
-			        attribute_count_add(count, attributes, 2, "filetype", file_ext);
+				//attribute_count_add(1, count, attributes, 3, "group", group, file_ext);
+			        //attribute_count_add(1, count, attributes, 2, "filetype", file_ext);
 			    }
+
+
+			struct _attribute_temp_1_key	this_key, *hash_key;
+			struct _attribute_temp_1_val	*hash_val;
+			this_key.count = count;
+			// Add group:
+			    {
+				this_key.key = "group";
+				this_key.arg1 = group;
+				this_key.arg2 = file_ext;
+
+				hash_val = (struct _attribute_temp_1_val*)hashtable_search(attrib_count_temp, (void*)&this_key);
+
+				if (hash_val == NULL)
+				    {
+					hash_key = malloc(sizeof(struct _attribute_temp_1_key));
+					hash_key->count = count;
+					hash_key->key = "group";
+					hash_key->arg1 = group;
+					hash_key->arg2 = file_ext;
+
+					hash_val = malloc(sizeof(struct _attribute_temp_1_val));
+					hash_val->count = count;
+					hash_val->key = "group";
+					hash_val->value = group;
+					hash_val->value2 = file_ext;
+					hash_val->size = 1;
+					hashtable_insert(attrib_count_temp, hash_key, hash_val);
+				    }
+				else hash_val->size++;
+			    }
+
+			// Add filetype:
+			    {
+				this_key.key = "filetype";
+				this_key.arg1 = file_ext;
+				this_key.arg2 = NULL;
+
+				hash_val = (struct _attribute_temp_1_val*)hashtable_search(attrib_count_temp, (void*)&this_key);
+
+				if (hash_val == NULL)
+				    {
+					hash_key = malloc(sizeof(struct _attribute_temp_1_key));
+					hash_key->count = count;
+					hash_key->key = "filetype";
+					hash_key->arg1 = file_ext;
+					hash_key->arg2 = NULL;
+
+					hash_val = malloc(sizeof(struct _attribute_temp_1_val));
+					hash_val->count = count;
+					hash_val->key = "filetype";
+					hash_val->value = file_ext;
+					hash_val->value2 = NULL;
+					hash_val->size = 1;
+					hashtable_insert(attrib_count_temp, hash_key, hash_val);
+				    }
+				else hash_val->size++;
+			    }
+
+
 			//att
 	                gettimeofday(&att_end_time, NULL);
 	               	att5 += getTimeDifference(&att_start_time, &att_end_time);
@@ -3968,6 +4140,27 @@ char* searchFilterCount(int *TeffArrayElementer,
 		printf("Time debug: searchFilterCount att3 time: %f\n",att3);
 		printf("Time debug: searchFilterCount att4 time: %f\n",att4);
 		printf("Time debug: searchFilterCount att5 time: %f\n",att5);
+
+                gettimeofday(&att_start_time, NULL);
+
+		struct hashtable_itr	*h_it = hashtable_iterator(attrib_count_temp);
+		if (hashtable_count(attrib_count_temp))
+		    do
+			{
+			    struct _attribute_temp_1_val *val = hashtable_iterator_value(h_it);
+			    if (val->value2 == NULL)
+				attribute_count_add(val->size, val->count, attributes, 2, val->key, val->value);
+			    else
+				attribute_count_add(val->size, val->count, attributes, 3, val->key, val->value, val->value2);
+			} while (hashtable_iterator_advance(h_it));
+
+		free(h_it);
+		hashtable_destroy(attrib_count_temp, 1);
+
+                gettimeofday(&att_end_time, NULL);
+               	printf("Time debug: attribute_count_add time: %f\n", getTimeDifference(&att_start_time, &att_end_time));
+
+		attribute_finish_count();
 
 	        #ifdef DEBUG_TIME
 	                gettimeofday(&end_time, NULL);
