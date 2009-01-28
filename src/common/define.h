@@ -508,6 +508,7 @@ struct queryTimeFormat {
 	double html_parser_run;
 	double generate_snippet;
 	double duplicat_echecking;
+	double FilterCount;
 	#endif
 };
 
