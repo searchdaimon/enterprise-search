@@ -23,6 +23,6 @@ struct datelib {
 };
 
 
-int getdate(char *, struct datelib *);
+int sd_getdate(char *, struct datelib *);
 
 #endif /* _GETDATE_H_ */

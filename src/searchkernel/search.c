@@ -3418,7 +3418,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 			struct datelib dl;
 
 			dl.start = dl.end = 0;
-			getdate((*filteron).date, &dl);
+			sd_getdate((*filteron).date, &dl);
 
 			printf("start %u, end %u\n",dl.start,dl.end);
 			printf("start: %s",ctime(&dl.start));

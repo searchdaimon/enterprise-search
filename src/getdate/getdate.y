@@ -457,7 +457,7 @@ getdate_dateview(enum dateview_output_type type)
 }
 
 int
-getdate(char *str, struct datelib *dl)
+sd_getdate(char *str, struct datelib *dl)
 {
 	char *p, *input = strdup(str);
 	time_t now, test;
@@ -497,21 +497,21 @@ main(int argc, char **argv)
 {
 	struct datelib dl;
 
-	getdate("2 years 5 days 1 week ago", &dl);
+	sd_getdate("2 years 5 days 1 week ago", &dl);
 	printf("%s\n", ctime(&dl.start));
 	printf("%s\n", ctime(&dl.end));
-	getdate("1 years", &dl);
+	sd_getdate("1 years", &dl);
 	printf("%s\n", ctime(&dl.start));
 	printf("%s\n", ctime(&dl.end));
-	getdate("2 months", &dl);
+	sd_getdate("2 months", &dl);
 	printf("%s\n", ctime(&dl.start));
 	printf("%s\n", ctime(&dl.end));
-	getdate("1 months", &dl);
+	sd_getdate("1 months", &dl);
 	printf("%s\n", ctime(&dl.start));
 	printf("%s\n", ctime(&dl.end));
 
 
-	getdate("last months", &dl);
+	sd_getdate("last months", &dl);
 
 	printf("%s\n", ctime(&dl.start));
 	printf("%s\n", ctime(&dl.end));

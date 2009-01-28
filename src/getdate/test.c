@@ -15,7 +15,7 @@ main(int argc, char **argv)
 
 	sprintf(buf,"today");
 	printf("date: %s\n",buf);
-        n = getdate(buf, &dl);
+        n = sd_getdate(buf, &dl);
 	printf("n: %i\n",n);
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
@@ -23,7 +23,7 @@ main(int argc, char **argv)
 
 	sprintf(buf,"yesterday");
 	printf("date: %s\n",buf);
-        n = getdate(buf, &dl);
+        n = sd_getdate(buf, &dl);
 	printf("n: %i\n",n);
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
@@ -31,7 +31,7 @@ main(int argc, char **argv)
 
 	sprintf(buf,"last week");
 	printf("date: %s\n",buf);
-        n = getdate(buf, &dl);
+        n = sd_getdate(buf, &dl);
 	printf("n: %i\n",n);
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
@@ -39,7 +39,7 @@ main(int argc, char **argv)
 
 	sprintf(buf,"last months");
 	printf("date: %s\n",buf);
-        n = getdate(buf, &dl);
+        n = sd_getdate(buf, &dl);
 	printf("n: %i\n",n);
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
@@ -47,14 +47,14 @@ main(int argc, char **argv)
 
 	sprintf(buf,"this year");
 	printf("date: %s\n",buf);
-        n = getdate(buf, &dl);
+        n = sd_getdate(buf, &dl);
 	printf("n: %i\n",n);
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
 
 	sprintf(buf,"this week");
 	printf("date: %s\n",buf);
-        n = getdate(buf, &dl);
+        n = sd_getdate(buf, &dl);
 	printf("n: %i\n",n);
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
@@ -63,7 +63,7 @@ main(int argc, char **argv)
 
 	sprintf(buf,"last year");
 	printf("date: %s\n",buf);
-        n = getdate(buf, &dl);
+        n = sd_getdate(buf, &dl);
 	printf("n: %i\n",n);
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
@@ -71,7 +71,7 @@ main(int argc, char **argv)
 
 	sprintf(buf,"two years plus");
 	printf("date: %s\n",buf);
-        n = getdate(buf, &dl);
+        n = sd_getdate(buf, &dl);
 	printf("n: %i\n",n);
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
@@ -79,14 +79,14 @@ main(int argc, char **argv)
 
 	sprintf(buf,"today");
 	printf("date: %s\n",buf);
-        n = getdate(buf, &dl);
+        n = sd_getdate(buf, &dl);
 	printf("n: %i\n",n);
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
 
 	sprintf(buf,"this month");
 	printf("date: %s\n",buf);
-        n = getdate(buf, &dl);
+        n = sd_getdate(buf, &dl);
 	printf("n: %i\n",n);
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
@@ -97,7 +97,7 @@ main(int argc, char **argv)
 /*
 	sprintf(buf,"2 years 5 days 1 week");
 	printf("date: %s\n",buf);
-        n = getdate(buf, &dl);
+        n = sd_getdate(buf, &dl);
 	printf("n: %i\n",n);
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
@@ -105,7 +105,7 @@ main(int argc, char **argv)
 
 	sprintf(buf,"1 years");
 	printf("date: %s\n",buf);
-        n = getdate(buf, &dl);
+        n = sd_getdate(buf, &dl);
 	printf("n: %i\n",n);
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
@@ -113,7 +113,7 @@ main(int argc, char **argv)
 
 	sprintf(buf,"2 months");
 	printf("date: %s\n",buf);
-        n = getdate(buf, &dl);
+        n = sd_getdate(buf, &dl);
 	printf("n: %i\n",n);
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
@@ -121,7 +121,7 @@ main(int argc, char **argv)
 
 	sprintf(buf,"1 months");
 	printf("date: %s\n",buf);
-        n = getdate(buf, &dl);
+        n = sd_getdate(buf, &dl);
 	printf("n: %i\n",n);
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
