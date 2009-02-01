@@ -2,6 +2,10 @@
 			// Rank siden til slutt hvis den har en h√yere rank enn siden vi skal ranke
 #include "verbose.h"
 
+#ifndef _GNU_SOURCE
+	#define _GNU_SOURCE
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -12,6 +16,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <assert.h>
+
 
 #include "../common/adultWeight.h"
 #include "../common/DocumentIndex.h"
@@ -109,6 +114,7 @@ struct popResultBreakDownTimeFormat {
 #endif
 
 #define MAX_CM_CONSUMERS 2
+#define SUMMARY_LEN 160
 
 struct socket_pool {
 	int sock[MAX_CM_CONSUMERS];
@@ -176,6 +182,45 @@ static int equal_domainid_fn(void *key1, void *key2) {
 	return (*(unsigned short int *)key1) == (*(unsigned short int *)key2);
 }
 
+
+char *generate_summary(char summary_cfg, query_array query_parsed, char *body)  {
+	char *summary;
+
+	size_t body_len = strlen(body);
+	if (summary_cfg == SUMMARY_SNIPPET) {
+		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , SUMMARY_LEN);
+	}
+	else if (summary_cfg == SUMMARY_START) {
+		// asuming *5 is enough to also clean out htmltags at
+		// the beginning of the document
+		char stripbuff[SUMMARY_LEN * 5];
+		htmlstrip(body, stripbuff, SUMMARY_LEN * 5);
+		size_t striplen = strlen(stripbuff);
+
+		int summary_len = (striplen > SUMMARY_LEN)
+			? SUMMARY_LEN
+			: striplen;
+		
+		
+		summary = malloc(sizeof(char) * (summary_len + 1));
+		strncpy(summary, stripbuff, summary_len);
+		
+		if (body_len > SUMMARY_LEN) {
+			summary[SUMMARY_LEN - 4] = '.';
+			summary[SUMMARY_LEN - 3] = '.';
+			summary[SUMMARY_LEN - 2] = '.';
+		}
+
+		summary[SUMMARY_LEN - 1] = '\0';
+	}
+	else { 
+		warnx("Unknown snippet/summery cfg: %d\n", summary_cfg); 
+		summary = strdup("");
+	}
+
+	return summary;
+
+}
 
 
 void utfclean(char test[],int len) {
@@ -322,11 +367,11 @@ handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum br
 int
 popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,
 	struct iindexMainElements *TeffArray,struct QueryDataForamt QueryData, char *htmlBuffer,
-	unsigned int htmlBufferSize, char servername[],char subname[], unsigned int getRank,
+	unsigned int htmlBufferSize, char servername[], struct subnamesFormat *subname, unsigned int getRank,
 	struct queryTimeFormat *queryTime, int summaryFH, struct PagesResultsFormat *PagesResults)
 {
 
-	vboprintf("searchkernel: popResult(antall=%i, DocID=%i, subname=%s)\n", antall, DocID,subname);
+	vboprintf("searchkernel: popResult(antall=%i, DocID=%i, subname=%s)\n", antall, DocID, subname->subname);
 
 	char *url = NULL, *attributes = NULL;
 	int y;
@@ -364,7 +409,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 				rLotForDOCid(DocID),
 				(unsigned int)imagep,
 				(*Sider).DocumentIndex.imageSize,
-				subname);
+				subname->subname);
 
 #else
 		sprintf((*Sider).thumbnale,"http://%s/cgi-bin/ShowThumb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",
@@ -372,7 +417,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 				rLotForDOCid(DocID),
 				(unsigned int)imagep,
 				(*Sider).DocumentIndex.imageSize,
-				subname);
+				subname->subname);
 #endif
 		//sprintf((*Sider).thumbnale,"http://%s/cgi-bin/ShowThumb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",servername,rLotForDOCid(DocID),4 + sizeof(struct ReposetoryHeaderFormat) + ((*Sider).DocumentIndex.RepositoryPointer + (*Sider).DocumentIndex.htmlSize),(*Sider).DocumentIndex.imageSize,subname);
 		(*Sider).thumbnailwidth = 100;
@@ -454,7 +499,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 					gettimeofday(&start_time, NULL);
 
 
-					generate_snippet(QueryData.queryParsed, body, strlen(body), &snippet, "<b>", "</b>", 160);
+					snippet = generate_summary(subname->config.summary, QueryData.queryParsed, body);
 
 					gettimeofday(&end_time, NULL);
 #ifdef BLACK_BOKS
@@ -473,7 +518,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 					free(snippet);
 				}
 				free(resbuf);
-			} else if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
+			} else if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname->subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
 				//kune ikke lese html. Pointer owerflow ?
 				//printf("Fii faa foo: %s\n", url);
 				printf("error reding html for %s\n",(*Sider).DocumentIndex.Url);
@@ -530,12 +575,12 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 
 			time_t u_time = time(NULL);
 			unsigned int signature;
-			signature = sign_cache_params(DocID, subname, u_time);
+			signature = sign_cache_params(DocID, subname->subname, u_time);
 
 			sprintf((*Sider).cacheLink, "http://%s/cgi-bin/ShowCache2bb?D=%u&amp;subname=%s&amp;time=%u&amp;sign=%u",
-					servername, DocID, subname, u_time, signature);
+					servername, DocID, subname->subname, u_time, signature);
 #else
-			sprintf((*Sider).cacheLink,"http://%s/cgi-bin/ShowCache2?D=%u&amp;subname=%s",servername,DocID,subname);
+			sprintf((*Sider).cacheLink,"http://%s/cgi-bin/ShowCache2?D=%u&amp;subname=%s",servername,DocID,subname->subname);
 #endif
 
 
@@ -543,7 +588,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 
 
 			if (((*Sider).DocumentIndex.SummaryPointer != 0) && 
-					((rReadSummary_l(DocID,&metadesc, &titleaa,&body,(*Sider).DocumentIndex.SummaryPointer,(*Sider).DocumentIndex.SummarySize,subname,summaryFH) != 0))) {
+					((rReadSummary_l(DocID,&metadesc, &titleaa,&body,(*Sider).DocumentIndex.SummaryPointer,(*Sider).DocumentIndex.SummarySize,subname->subname,summaryFH) != 0))) {
 
 				vboprintf("hav Summary on disk\n");
 
@@ -559,7 +604,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 			else {
 
 				debug("don't hav Summary on disk. Will hav to read html\n");	
-				if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
+				if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname->subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
 					//printf("Fii faa foo: %s\n", url);
 					//kune ikke lese html. Pointer owerflow ?
 					printf("error reding html for %s\n",(*Sider).DocumentIndex.Url);
@@ -608,7 +653,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 
 
 			char        *summary;
-			//generate_highlighting( QueryData.queryParsed, body, strlen(body)+1, &summary );
+					//generate_highlighting(QueryData.queryParsed, body, strlen(body)+1, &summary);
 			//temp: bug generate_snippet er ikke ut til Â takle og ha en tom body
 			if (strlen(body) == 0 || getRank) {
 				(*Sider).description[0] = '\0';
@@ -636,7 +681,8 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 #endif
 
 				//printf("calling generate_snippet, body \"%s\", length %i\n",body, strlen(body));
-				generate_snippet( QueryData.queryParsed, body, strlen(body), &summary, "<b>", "</b>" , 160);
+				summary = generate_summary(subname->config.summary, QueryData.queryParsed, body);
+
 
 #ifdef DEBUG_TIME
 				gettimeofday(&end_time, NULL);
@@ -770,7 +816,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 					//char *dup_subname = PagesResults->TeffArray->subnames[pair(vector_get(dup->V,k)).second.i];
 					char *dup_subname = pair(vector_get(dup->V,k)).second.ptr;
 
-					if (dup_docid == DocID && !strcmp(dup_subname, subname))
+					if (dup_docid == DocID && !strcmp(dup_subname, subname->subname))
 					    {
 						// Hvis dette er docid-en som vises, skal den ikke filtreres.
 						x = 1;
@@ -1395,7 +1441,7 @@ void *generatePagesResults(void *arg)
 		#ifdef DEBUG_TIME
 			gettimeofday(&start_time, NULL);
 		#endif
-		if (PagesResults->getRank == 0 && !popResult(side, (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,(*(*PagesResults).TeffArray->iindex[i].subname).subname, PagesResults->getRank,&PagesResults->SiderHeder->queryTime,PagesResults->searchd_config->lotPreOpen.Summary[rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID)],PagesResults)) {
+		if (PagesResults->getRank == 0 && !popResult(side, (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,PagesResults->TeffArray->iindex[i].subname, PagesResults->getRank,&PagesResults->SiderHeder->queryTime,PagesResults->searchd_config->lotPreOpen.Summary[rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID)],PagesResults)) {
                        	vboprintf("can't popResult\n");
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantpopResult,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 			continue;
