@@ -470,7 +470,7 @@ searchd : src/searchkernel/searchd.c
 searchdbb : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/libfte.a src/newspelling/spelling.c src/newspelling/dmetaphone.c src/newspelling/levenshtein.c src/getFiletype/libfte.a src/attributes/libshow_attr.a src/ds/libds.a -DIIACL $(24SEVENOFFICE) -DWITH_SPELLING -DWITH_THREAD
+	$(CC) $(SEARCHCOMMAND) src/searchkernel/htmlstriper.c $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/libfte.a src/newspelling/spelling.c src/newspelling/dmetaphone.c src/newspelling/levenshtein.c src/getFiletype/libfte.a src/attributes/libshow_attr.a src/ds/libds.a -DIIACL $(24SEVENOFFICE) -DWITH_SPELLING -DWITH_THREAD
 
 mergeUserToSubname: src/mergeUserToSubname/main.c
 	@echo ""
