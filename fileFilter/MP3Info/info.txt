@@ -1,0 +1,1 @@
+home: http://ibiblio.org/pub/linux/apps/sound/mp3-utils/mp3info

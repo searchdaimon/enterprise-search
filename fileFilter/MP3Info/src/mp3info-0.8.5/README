@@ -1,0 +1,149 @@
+MP3info - An MP3 technical info viewer and ID3 1.x tag editor
+
+
+ABOUT
+=====
+
+Q: What's MP3Info?
+
+A: MP3Info is a little utility used to read and modify the ID3 tags of MP3
+files. MP3Info can also display various technical aspects of an MP3 file
+including playing time, bit-rate, sampling frequency and other attributes
+in a pre-defined or user-specifiable output format.
+
+Q: OK, so what's an 'MP3'?
+
+A:  For those of you who have been living in a cave for the past decade, an 
+MP3 (short for MPEG 2, layer 3) is a very popular digital audio file format 
+which encodes an audio file with a lossy compression algorithm resulting in 
+files representing a minute of near-CD quality stereo sound in less than a 
+megabyte of data. Compare this to non-compressed formats (Windows .WAV files 
+for instance) which encode the same minute of audio in about ten megabytes of 
+data.
+
+Q: What's an 'ID3 tag'?
+
+A: An ID3 tag is a little scrap of data added to the beginning or end of the 
+MP3 file which stores information about the audio recording including the 
+title, artist, album, copyright date, and musical genre.  ID3 tags are an 
+optional feature of the MP3 format, so not all MP3 files have ID3 tags.
+
+
+HISTORY
+=======
+
+MP3Info was originally written by Ricardo Cerqueira <rmc@plug.pt>. Cedric 
+Tefft <cedric@phreaker.net> took over maintenance in January 2000 and has been 
+the primary maintainer ever since.  Over the years a number of patches, 
+suggestions and bug reports have been submitted by countless individuals, some 
+of whom are credited in the ChangeLog.
+
+
+PORTABILITY
+===========
+
+MP3Info was developed under Linux, but should work on most UN*X variants.
+Included with the text-based version is a GUI version which requires the GTK
+libraries (see http://www.gtk.org).  The console version runs in plain
+command-line and interactive curses mode.  The curses or ncurses library is
+required.
+
+The command-line version can also be compiled for Windows, but a precompiled 
+Windows binary is included in the source distribution and as a
+separate Windows-specific package.  There is currently no GUI version for
+Windows.
+
+
+OBTAINING THE LATEST VERSION OF MP3INFO
+=======================================
+
+MP3Info's home is the public library archive at ibiblio.org
+(formerly MetaLab, formerly SunSite). Both source and i386 RPM's
+(for Linux) are available as well as the aforementioned Windows executable.
+
+HOMEPAGE 
+
+    http://ibiblio.org/mp3info/
+
+PRIMARY DOWNLOAD
+
+   ftp://ftp.ibiblio.org/pub/linux/apps/sound/mp3-utils/mp3info
+   http://ibiblio.org/pub/linux/apps/sound/mp3-utils/mp3info
+
+MIRRORS
+
+   ftp://ftp.freesoftware.com/pub/linux/sunsite/apps/sound/mp3-utils/mp3info/
+   ftp://ftp.twoguys.org/linux/apps/sound/mp3-utils/mp3info/
+
+The entire ibiblio Linux archive (including MP3Info) is mirrored to many other 
+locations around the world.  A full and current list of ibiblio mirrors can be 
+found at http://ibiblio.org/pub/Linux/MIRRORS.html
+
+
+INSTALLATION
+============
+
+See the file 'INSTALL' for build and installation instructions on UNIX platforms.
+See win32\INSTALL-WINDOWS.txt for installation of the Windows binary.
+
+
+Help/Usage/HowTo (Console Version)
+==================================
+MP3Info is fully documented in its manual page.  To view the manual page on a 
+UNIX platform, simply type 'man mp3info' at any time after installation.  If 
+you don't have groff installed on your system or for some other reason can't 
+read the man page, a text-only version is available in the file mp3info.txt
+
+There is also an HTML version of the manual page included as mp3info.html.
+This is considered the the primary help file for Windows users.
+
+
+Usage: GTK Version
+==================
+
+gmp3info [song.mp3]
+
+
+DISCLAIMER
+==========
+
+I do not take responsibility for damaged files, MP3s or not. 
+
+BUGS & CAVEATS
+==============
+
+Known bugs and limitations are detailed in the manual page.  If you have any
+bug reports or patches, please email them to me.  Bugs get fixed a lot faster
+if you include patches -- especially if the problem is platform specific.
+
+
+TO DO
+=====
+
+* ID3v2 support is the most often-requested feature and is badly needed,
+  however this will entail an almost complete rewrite and I'm a lazy SOB,
+  so it's going to be a while yet...  Anybody wanna volunteer?
+
+* Make format specifiers a bit more flexible (allow user to choose 
+  int/float/string display arbitrarily and provide some mechanism for
+  convenient magnitude displays of large numbers (KB for kilobytes, MB for
+  megabytes, etc.)
+
+* Add line-editing capabilities to curses version (I have a user-contributed 
+  patch, but it's a little broken)
+
+* Make exit codes more useful and document them better (i.e. return 1 
+  if no ID3 found, 2 if MP3 is corrupt, 3 if the file wasn't found or
+  something along those lines).
+
+* Add capability to copy ID3 tags from one file to another
+
+* Add -p format specifiers for:
+	* Maximum and minimum bitrates
+	* File index (first file = 0, second file = 1, etc.)
+
+
+
+					- Cedric Tefft <cedric@phreaker.net>
+					  November 6, 2006
+

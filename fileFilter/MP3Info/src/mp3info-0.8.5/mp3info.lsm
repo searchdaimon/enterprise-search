@@ -1,0 +1,19 @@
+Begin4
+Title: mp3info
+Version: 0.8.1
+Entered-date: 2000-08-18
+Description: An MP3 technical info viewer and ID3 1.x tag editor.
+MP3Info has an interactive mode (using curses) and a command line mode.
+A separate executable includes a GTK-based GUI version.  MP3Info can
+display ID3 tag information as well as various techincal aspects of
+an MP3 file including playing time, bit-rate, sampling frequency
+and other attributes in a pre-defined or user-specifiable output format.
+Keywords: mp3, id3, console, gtk, audio, sound
+Author: cedric@earthling.net (Cedric Tefft)
+Maintained-by: cedric@earthling.net (Cedric Tefft)
+Primary-site: ftp://metalab.unc.edu/pub/linux/apps/sound/mp3-utils/mp3info
+mp3info-0.8.1.tgz
+mp3info-0.8.1-1.i386.rpm
+Alternate-site: ftp://ftp.freesoftware.com/pub/linux/sunsite/apps/sound/mp3-utils/mp3info/
+Copying-policy: GPL
+End

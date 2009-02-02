@@ -1,0 +1,376 @@
+mp3info(1)                                                          mp3info(1)
+
+
+
+NAME
+       mp3info - MP3 technical info viewer and ID3 tag editor
+
+
+SYNOPSIS
+       mp3info [ -h | -G ]
+
+       mp3info [-x] [-F] [-r a|m|v] [-p FORMAT_STRING] file...
+
+       mp3info [-d] file...
+
+       mp3info  [-i]  [-t title] [-a artist] [-l album] [-y year] [-c comment]
+       [-n track] [-g genre] file...
+
+
+DESCRIPTION
+       mp3info is a utility used to read and modify the ID3 tags in MPEG layer
+       3  (MP3)  files.   It  can  also (optionally) display various technical
+       attributes of the MP3 file.
+
+
+OPTIONS
+       -a artist
+              Specify ID3 artist name
+
+       -c comment
+              Specify ID3 comment
+
+       -g genre
+              Specify ID3 genre (use -G option for a list  of  valid  genres).
+              You may specify either a genre name or a number.
+
+       -l album
+              Specify ID3 album name
+
+       -n track
+              Specify ID3 v1.1 track number
+
+       -t title
+              Specify ID3 track title
+
+       -y year
+              Specify ID3 copyright year
+
+       -G     Display  a  list  of  valid  genres and their associated numeric
+              codes. These are the only values accepted by the -g switch.
+
+       -h     Display a help page
+
+       -x     Display technical attributes of the MP3 file
+
+       -r a|m|v
+              Report bit rate of Variable Bit Rate (VBR) files as one  of  the
+              following  (See  the  section  below entitled Bit Rates for more
+              information):
+
+              a - Average bit rate [float](Note: this option also  causes  the
+                     bit  rates  of  non-VBR files to be displayed as floating
+                     point values).
+              m - Median bit rate [integer]
+              v - Simply  use  the  word  'Variable'  [string]  (this  is  the
+                     default).
+
+       -i     Edit ID3 tag interactively (uses curses/ncurses functions)
+
+       -d     Delete ID3 tag (if one exists)
+
+       -f     Force  Mode: Treat all files as MP3s even if MP3 frames can't be
+              found
+
+       -F     Do a Full scan for technical information (see the section  Speed
+              Considerations below for more information)
+
+       -p "FORMAT_STRING"
+
+              Print  MP3 attributes according to FORMAT_STRING.  FORMAT_STRING
+              is similar to a printf(3) format string in that  it  is  printed
+              verbatim   except  for  the  following  conversions  and  escape
+              sequences. Any conversion specifier may optionally  include  the
+              various alignment, precision, and field width modifiers accepted
+              by printf(3).  See the EXAMPLES section below  for  examples  of
+              how format strings are used in mp3info.
+
+
+              Conversion Specifiers
+
+                 %f     Filename without the path [string]
+                 %F     Filename with the path [string]
+                 %k     File size in KB [integer]
+                 %a     Artist [string]
+                 %c     Comment [string]
+                 %g     Musical genre [string]
+                 %G     Musical genre number [integer]
+                 %l     Album name [string]
+                 %n     Track [integer]
+                 %t     Track Title [string]
+                 %y     Year [string]
+                 %C     Copyright flag [string]
+                 %e     Emphasis [string]
+                 %E     CRC Error protection [string]
+                 %L     MPEG Layer [string]
+                 %O     Original material flag [string]
+                 %o     Stereo/mono mode [string]
+                 %p     Padding [string]
+                 %v     MPEG Version [float]
+                 %u     Number of good audio frames [integer]
+                 %b     Number of corrupt audio frames [integer]
+                 %Q     Sampling frequency in Hz [integer]
+                 %q     Sampling frequency in KHz [integer]
+                 %r     Bit  Rate  in  KB/s  (type  and meaning affected by -r
+                        option)
+                 %m     Playing time: minutes only [integer]
+                 %s     Playing time: seconds only [integer] (usually used  in
+                        conjunction with %m)
+                 %S     Total playing time in seconds [integer]
+                 %%     A single percent sign
+
+              Escape Sequences
+
+                 \n     Newline
+                 \t     Horizontal tab
+                 \v     Vertical tab
+                 \b     Backspace
+                 \r     Carriage Return
+                 \f     Form Feed
+                 \a     Audible Alert (terminal bell)
+                 \xhh   Any  arbitrary  character specified by the hexidecimal
+                        number hh
+                 \ooo   Any arbitrary character specified by the octal  number
+                        ooo
+                 \\     A single backslash character
+
+
+
+USAGE
+       Specifying  MP3  files  without any other options displays the existing
+       ID3 tag (if any).
+
+       Specifying a track number of 0 reverts an ID3 tag to 1.0 format
+
+       Non-specified ID3 fields, if existant, will remain unchanged.
+
+       Genres can be specified as numbers or names: -g 17 same as -g Rock
+
+       Multiple word fields must be enclosed in quotes (eg: -t "A title")
+
+
+NOTES
+       Speed Considerations
+              In order to  determine  certain  technical  attributes  (playing
+              time, number of frames, number of bad frames, and in a few cases
+              the bit rate) with absolute certainty, it would be necessary  to
+              read  the  entire  MP3  file.   Mp3info  normally tries to speed
+              things up by reading a handful of frames from various points  in
+              the  file and estimating the statistics for the rest of the file
+              based on those samples.  Usually, this results in very  accurate
+              estimates.   Audio playing times are usually off by no more than
+              a second, and the number of frames is off  by  less  than  0.1%.
+              Often  the  estimates agree exactly with the full scans.  Never-
+              theless, the user may wish to ensure that she is  getting  exact
+              information.
+
+              One  should  specify  the -F switch if one wants mp3info to read
+              the entire MP3 file when  determining  this  information.   Note
+              that  a  full  scan  will only affect mp3info's output if the -x
+              switch is used or the -p switch is used with a  FORMAT_SPECIFIER
+              containing  %m,  %s, %S, %u or (rarely) %r.  Using the -F switch
+              under other conditions will only slow down mp3info.   Also  note
+              that  a  FORMAT_SPECIFIER  containing  %b or a VBR MP3 file will
+              automatically trigger a full scan even if the -F switch  is  not
+              used.
+
+              Several users have noted that the %u specifier used alone:
+
+
+              mp3info -p "%u" song.mp3
+
+              sometimes gives a different number of good frames than when used
+              with the %b specifier:
+
+              mp3info -p "%u %b" song.mp3
+
+              This is because when you use %u by itself,  mp3info  only  esti-
+              mates  the number of frames based on the bitrate and the size of
+              the file.  When you use the %b specifier, you force  mp3info  to
+              do a full scan of the file which guarantees an accurate count of
+              both the good and bad frames.  If you want to guarantee an accu-
+              rate count of the number of good frames when using %u by itself,
+              you should use the -F option.
+
+
+       Bit Rates
+              MP3 files are made up of many (usally  several  thousand)  audio
+              blocks  called  'frames'.   Each of these frames is encoded at a
+              specific 'bit rate' which determines both  the  quality  of  the
+              sound  and  the  size  of the frame itself.  Bit rates can range
+              from 8 Kb/s (kilobits per second) to 320 Kb/s.   Note  that  the
+              MP3  specification  only allows 14 discreet bit rates for an MP3
+              file, so, for instance, a stereo MP3 could have frames with  bit
+              rates of 128 Kb/s and 160 Kb/s, but nowhere in between.
+
+              Audio  frames  with  high bit rates sound much better than those
+              with lower bit rates, but take up more  space.   Obviously,  one
+              would  like  to use a bit rate that is only high enough to main-
+              tain a comfortable level of audio quality.   Normally,  all  the
+              frames  in  an MP3 file are encoded at the same bit rate.  A few
+              MP3 files, however, are encoded such that the bit rate may  vary
+              from one frame to the next.  These MP3 files are called Variable
+              Bit Rate (or VBR) files.   Since VBR files do not have one  sin-
+              gle bit rate, attempting to report the bit rate of the file as a
+              whole can be problematic.  Consequently, mp3info allows  you  to
+              specify how you want this value reported.
+
+              The default is to simply print the word 'Variable' where the bit
+              rate would normally appear.  Another  option  is  to  print  the
+              mathematical  average of all the frames.  This has the advantage
+              of being completely accurate, but the  number  printed  may  not
+              correspond  to  one  of  the 14 discreet bit rates that would be
+              allowed for that file.  The third alternative solves that  prob-
+              lem  by  allowing  the bit rate to be reported as the median bit
+              rate which is what you would get if you lined up all the  frames
+              in  the  file  by bit rate from lowest to highest and picked the
+              frame closest to the middle of the line.
+
+              For more specific usage information, see the -r switch  and  the
+              %r  conversion  specifier  under  the  description  of -p's FOR-
+              MAT_SPECIFIER.
+
+
+
+EXAMPLES
+       Display existing ID3 tag information (if any) in song.mp3
+
+
+              mp3info song.mp3
+
+       Set the  title,  author  and  genre  of  song.mp3.  (All  other  fields
+       unchanged)
+
+              mp3info -t "Song Title" -a Author -g "Rock & Roll" song.mp3
+
+       Set  the  album field of all MP3 files in the current directory to "The
+       White Album"
+
+
+              mp3info -l "The White Album" *.mp3
+
+       Delete the entire ID3 tag from song1.mp3 and song2.mp3
+
+              mp3info -d song1.mp3 song2.mp3
+
+       Delete the comment field from the ID3 tags of all MP3 files in the cur-
+       rent directory. (All other fields unchanged)
+
+              mp3info -c "" *.mp3
+
+       Display the Title, Artist, Album, and Year of all MP3 files in the cur-
+       rent directory.  We include the labels 'File', etc. and insert newlines
+       (\n) to make things more readable for humans:
+
+              mp3info  -p  "File:  %f\nTitle: %t\nArtist: %a\nAlbum: %l\nYear:
+              %y\n\n" *.mp3
+
+       Say you want to build a spreadsheet of your MP3 files.  Here's  a  com-
+       mand  you might use to help you accomplish that.  Most spreadsheet pro-
+       grams will import an ASCII file and treat a given character as a  field
+       separator.   A commonly used field separator is the tab character.  For
+       each MP3 file in the current directory, we want to output the filename,
+       title, artist, and album on a single line and have the fields separated
+       by a tab (\t) character.  Note that you must include a newline (\n)  at
+       the end of the format string in order to get each file's information on
+       a separate line.  Here's the command:
+
+              mp3info -p "%f\t%t\t%a\t%l\t%y\n" *.mp3
+
+       Some spreadsheets or other software may allow importing data from  flat
+       files  where  each  field is a specific width.  Here's where the format
+       modifers come into play.  This next command outputs the  same  informa-
+       tion  as  the command above, but uses fixed-width fields instead of tab
+       separators.  The filename field is defined as 50 characters  wide,  the
+       title field is defined as 31 characters wide, and so on.
+
+              mp3info -p "%50f%31t%31a%31l%4y\n" *.mp3
+
+       The  problem  with  the  output of this command is that all strings are
+       normally right- justified within their fields.  This looks a little odd
+       since most western languages read from left to right.  In order to make
+       the fields left-justified, add a minus sign (-) in front of the  field-
+       width:
+
+              mp3info -p "%-50f%-31t%-31a%-31l%-4y\n" *.mp3
+
+       Now  suppose  you just want the running time of each MP3 file specified
+       in minutes and seconds.  Simple enough:
+
+              mp3info -p "%f: %m:%s\n" *.mp3
+
+       You may notice when you do this, however, that leading  zeros  are  not
+       displayed  in  the  seconds  field (%s).  So for instance, if you had a
+       track four minutes and two seconds long its running time would be  dis-
+       played  as '4:2' instead of '4:02'.  In order to tell mp3info to pad an
+       integer field with zeros, you need to use a field  width  modifier  and
+       place  a zero in front of it.  The following command is the same as the
+       previous one, but it specifies that mp3info is to display  the  seconds
+       field  with  a fixed field-width of two characters and to pad the field
+       with leading zeros if necessary:
+
+              mp3info -p "%f: %m:%02s\n" *.mp3
+
+       The last trick we have to show  you  is  the  precision  specifier  for
+       floating  point variables.  The following command displays the filename
+       and average bit rate for all MP3 files in the current directory.
+
+              mp3info -r a -p "%f %r\n" *.mp3
+
+       By default, the floating point value of the average bit  rate  is  dis-
+       played with six digits past the decimal point (ex: 175.654332).  If you
+       are like me, this seems like a bit of overkill.  At most you  want  one
+       or  two  digits  beyond  the decimal place displayed.  Or you might not
+       want any.  The following command displays the  average  bit  rate  with
+       first two, then zero digits beyond the decimal point:
+
+              mp3info -r a -p "%f %.2r %.0r\n" *.mp3
+
+       If  you wanted to specify a field width for a floating point value, you
+       could do that by placing the field-width before the  decimal  point  in
+       the field modifier.  This command does just that -- specifying an aver-
+       age bit-rate field six characters wide that will  show  two  digits  of
+       precision beyond the decimal point:
+
+              mp3info -r a -p "%f %6.2r\n" *.mp3
+
+BUGS
+       There's  no  "save  and quit" in interactive mode. You must fill in all
+       the fields (even if it is with blanks) and let the  program  finish  by
+       itself.  CTRL+C does leave MP3info, but the data isn't saved.
+
+       Using  space  to erase tags in interactive mode does not work correctly
+       if you then backspace over the deleted text.
+
+       The title, author, album, and comment fields are limited to 30  charac-
+       ters.  This is a limitation of the ID3 1.0 tag format, not MP3Info.  If
+       you specify the track number (with the -n  switch),  the  ID3  1.0  tag
+       becomes  a  1.1  tag and the comment field is limited to 28 characters.
+       This is because the difference between ID3 1.0 and 1.1 is that the  tag
+       number  is  stored  in  the last byte of the comment field.  This trick
+       "borrows" two bytes from the  fixed-length  comment  field  effectively
+       reducing the maximum comment by two characters.
+
+       Genres  cannot be specified arbitrarily.  They must be specified from a
+       pre-determined list (use mp3info -G to see that list).  Again, this  is
+       a limitation of the ID3 1.0 tag format.
+
+       Only ID3 versions 1.0 and 1.1 are supported.  ID3V2 is a much more pow-
+       erful standard and is planned for some as-yet-undetermined future  ver-
+       sion.  Unfortunately, a clean implementation is a heck of a lot of work
+       and I'm unbelievably lazy, so don't hold your breath.  It  is  probably
+       worth noting at this juncture, however, that I do accept patches.  :-)
+
+       Exit codes are somewhat haphazard and not well documented.
+
+
+AUTHOR
+       Cedric Tefft <cedric@phreaker.net>
+
+
+SEE ALSO
+       printf(3)
+
+
+
+mp3info                        November 6, 2006                     mp3info(1)

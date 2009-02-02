@@ -1,0 +1,127 @@
+v0.8.5  - Added 'make install-mp3info' and 'make install-gmp3info' options to
+	  Makefile (Felix Kronlage)
+	- Fixed a bug in the windows version that caused it to blow up or give
+	  erroneous output on certain MP3 files
+	- Added handling of 'free form' bitrate frames, the lack of which was
+	  causing segfaults on AMD 64-bit sytems
+	- Tweaked code to eliminate various gcc warnings and errors
+	- Improved detection of invalid MP3 frames (Ben Bennett)
+	- Updated gmp3info for GTK 2 (Eric Lassauge)
+	- Miscellaneous documentation updates and corrections
+
+v0.8.4  - Added %k format specifier to allow printing of the file size
+	  in formatted text output (-p option) (Thanks to Sascha Luedecke
+	  <sascha@meta-x.de>)
+	- Rearranged some items in the man page and quick help (-h)
+	  to make them more readable.
+	- Fixed minor logic bug in mp3tech (pointed out by Moshe
+	  Jacobson <moshe@togetherweb.com>)
+	- Now compiles under CYGWIN32 (Julia A. Case <julie@MageNet.com>).
+	- The following fixes were contributed by Pawel
+	  Wiecek <coven@debian.org>
+		- Manual page typos fixed
+		- Now correctly recognizes and reports MPEG version 2.5 files
+		- Clearing individual ID3 fields can now be accomplished
+		  by passing a blank argument ("") to any tag setting
+		  switch (-t, -a, etc.)
+ 
+v0.8.3  - Fixed a bug in GTK version that showed garbage or nothing
+	  where track information should have been displayed.
+	- Fixed a bug that prevented the interactive curses version from
+	  changing from one genre to another if the second genre contained
+          fewer characters than the first.
+	- Ricardo Cerqueria contributed the following enhancements:
+	- Added a FILE | OPEN menu to the GTK version
+        - Added a technical information view to the GTK version
+	- Added an 'About' box to GTK version
+
+v0.8.2  - Fixed a bug which caused mp3info to erroneously report some 
+	  constant bitrate (CBR) files as variable bitrate (VBR) files.
+
+v0.8.1  - Fixed an elusive bug that sometimes caused mp3info to fail to
+	  find an ID3 tag even when one was present.
+
+v0.8	- Added the ability to handle VBR (Variable Bit Rate) MP3 files
+	- Added the ability to deal with garbage or non-standard headers
+          at the beginning of a file
+	- Added user-specifiable output format with capabilities similar
+	  to printf(3)
+	- The GTK version now handles read-only files correctly
+	- Techincal Info display (-x) greatly improved and is now
+	  considered reliable.
+	- UNIX man page created for mp3info (console version only)
+	- Major internal code re-engineering
+
+v0.7    - Added extended genres (taken from WinAmp).
+	- Fixed minor bug in genre list display
+        - Fixed a bug in the GTK version which set the genre to 'Blues' if 
+          the MP3 file did not have an existing ID3 tag.
+        - Help screen and documentation fixed up and edited for clarity.
+	- Added -f switch to force MP3Info to process files as if they were
+	  MP3's even if they don't contain the standard MP3 header.
+	- Added support for ID3 v1.1 tags (track numbers) - Thanks to Don
+          Melton (don@blivet.com)
+	- Added an option (-x) to display technical information about the 
+          MP3 file.  This is an experimental feature and should not be
+	  considered reliable.
+
+v0.6.1  - Fixed a bug introduced in 0.6 that set genre to 'Blues' if no genre
+	  was given on the command line and the MP3 file did not have an
+	  existing ID3 tag.
+
+v0.6	- As of this version maintenance of mp3info has been taken over 
+	  by Cedric Tefft <cedric@phreaker.net>
+	- Reworked command-line/curses version to handle processing multiple MP3's.
+	- Added the capability to delete an existing ID3 tag (-d switch)
+	- Added full text/numeric genre handling to command-line, curses and GTK modes.
+	- Added the capability to display the list of valid genres (-G switch)
+	- View mode is now determined automatically when no other options are specified.  
+	  The -v option is accepted for backward compatibility, but ignored.  It 
+	  should probably be removed in a future version.
+	- Added ID3 structure to make internal argument passing a little cleaner.
+	- Consolidated ID3 tag reading/writing code.
+	- Interactive mode now displays existing tags.
+	- Modified Makefile to make gmp3info dependant on gmp3info.c
+
+v0.5	- Added genre tag. (Still in numerical form) (Thanks to jsc@arsdigita.com)
+	- Corrected a byte ordering bug which affected Sun systems (Thanks to Benjamin Korvemaker)
+	- Corrected a permissions bug (Thanks to Carsten Hahn)
+	- Fixed a GTK bug in gmp3info. (Thanks go to Thomas Schultz)
+
+v0.4	- gmp3info is now part of the pack.
+	  Fixed some incompatibity problems with SGI (thanks again to Petter) and RedHat 6.0.
+	- Added MP3 check, using the magic number (Thanks to Steven James for this one)
+
+v0.3.1	- Fixed a couple of HP/UX incompatibilities (Thanks to Petter Reinholdtsen)
+	- Added -v (to view an existing tag)
+
+v0.3	- Fixed "trash in the fields" bug. (Strings are now forced to be null-terminated)
+	  Updated help screen.
+	  Fixed minor warnings during compile.
+	  If "-h" is among options, others are now ignored.
+	  "-i" now must be specified for interactive (curses) mode.
+	  Commented and cleaned code.
+
+v0.3-b1 - Added reading and preservation of existing tags in command line mode.
+	  Fixed occasional tag seek bug.
+	  Changed options parsing to use "getopt"
+
+v0.3-a1 - Merged the command line version back in.
+	  Fixed "tag appending instead of overwriting" bug
+
+v0.2-b1 - Fixed "non-existant file is created" bug.
+	  Added a help screen
+	  Field lengths became constants.
+
+v0.2-a2	- A few minor bugfixes.
+	- Added ^C support (terminal was going crazy if the program was interrupted)
+	- Added flexible window size (window width is always equal to terminal width)
+
+v0.2-a1	- Not released
+	- curses version. Weeeeeee! (Way better :-) )
+
+v0.1.1  - Not released
+	- Added support for the "Year" and "Comment" fields.
+	- Fixed quite a few overflow problems
+
+v0.1 	- Initial version. Never released

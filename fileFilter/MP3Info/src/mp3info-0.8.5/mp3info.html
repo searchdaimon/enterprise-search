@@ -1,0 +1,657 @@
+<HTML><HEAD><TITLE>Manpage of mp3info</TITLE>
+</HEAD><BODY>
+<H1>mp3info</H1>
+Section: User Commands  (1)<BR>Updated: November 6, 2006<BR><A HREF="#index">Index</A>
+
+<P>
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+mp3info - MP3 technical info viewer and ID3 tag editor
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>mp3info </B>[<B> -h </B>|<B> -G </B>]<B></B>
+
+<P>
+
+<B>mp3info </B>[<B>-x</B>] [<B>-F</B>] [<B>-r a</B>|<B>m</B>|<B>v</B>] [<B>-p</B> <I>FORMAT_STRING</I>] <I>file...</I>
+
+<P>
+
+<B>mp3info </B>[<B>-d</B>]<B> </B><I>file...</I>
+
+<P>
+
+<B>mp3info </B>[<B>-i</B>] [<B>-t </B><I>title</I>] [<B>-a </B><I>artist</I>] [<B>-l </B><I>album</I>] [<B>-y </B><I>year</I>] [<B>-c </B><I>comment</I>] [<B>-n </B><I>track</I>] [<B>-g </B><I>genre</I>] <I>file...</I>
+
+<BR>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>mp3info</B>
+
+is a utility used to read and modify the ID3 tags in MPEG 
+layer 3 (MP3) files.  It can also (optionally) display various technical
+attributes of the MP3 file. 
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>OPTIONS</H2>
+
+<B><DL COMPACT>
+<DT>-a </B><I>artist</I><DD>
+
+
+Specify ID3 artist name
+<B><DT>-c </B><I>comment</I><DD>
+
+
+Specify ID3 comment
+<B><DT>-g </B><I>genre</I><DD>
+
+
+Specify ID3 genre (use <B>-G</B> option for a list of valid genres).
+You may specify either a genre name or a number.
+<B><DT>-l </B><I>album</I><DD>
+
+
+Specify ID3 album name
+<B><DT>-n </B><I>track</I><DD>
+
+
+Specify ID3 v1.1 track number
+<B><DT>-t </B><I>title</I><DD>
+
+
+Specify ID3 track title
+<B><DT>-y </B><I>year</I><DD>
+
+
+Specify ID3 copyright year
+<B><DT>-G<DD>
+</B>
+
+Display a list of valid genres and their associated numeric codes. These are the only
+values accepted by the <B>-g</B> switch.
+<B><DT>-h<DD>
+</B>
+
+Display a help page
+<B><DT>-x<DD>
+</B>
+
+Display technical attributes of the MP3 file
+<B><DT>-r a</B>|<B>m</B>|<B>v<DD>
+</B>
+
+Report bit rate of Variable Bit Rate (VBR) files as one of the following
+(See the section below entitled <B>Bit Rates</B> for more information):
+</DL>
+<P>
+
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>
+<B>a</B>
+
+- Average bit rate [float](Note: this option also causes the bit rates of
+<DD>non-VBR files to be displayed as floating point values).
+</DL>
+<P>
+
+<DL COMPACT>
+<DT>
+<B>m</B>
+
+- Median bit rate [integer]
+</DL>
+<P>
+
+<DL COMPACT>
+<DT>
+<B>v</B>
+
+- Simply use the word 'Variable' [string] (this is the default).
+
+</DL>
+</DL>
+
+<B><DL COMPACT>
+<DT>-i<DD>
+</B>
+
+<DD>Edit ID3 tag interactively (uses curses/ncurses functions)
+<B><DT>-d<DD>
+</B>
+
+Delete ID3 tag (if one exists)
+<B><DT>-f<DD>
+</B>
+
+Force Mode: Treat all files as MP3s even if MP3 frames can't be found
+<B><DT>-F<DD>
+</B>
+
+Do a Full scan for technical information (see the section <B>Speed Considerations</B> below for more information)
+</DL>
+<P>
+
+<B>-p &quot;</B><I>FORMAT_STRING</I>&quot;
+
+<DL COMPACT>
+<DT><DD>
+Print MP3 attributes according to <I>FORMAT_STRING</I>.  <I>FORMAT_STRING</I> is 
+similar to a <B><A HREF="http://localhost/cgi-bin/man/man2html?3+printf">printf</A>(3)</B> format string in that it is printed verbatim except 
+for the following conversions and escape sequences. Any conversion specifier may 
+optionally include the various alignment, precision, and field width modifiers 
+accepted by <B><A HREF="http://localhost/cgi-bin/man/man2html?3+printf">printf</A>(3)</B>.  See
+the <B>EXAMPLES</B> section below for examples of how format strings are used
+in mp3info.
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><DD>
+<B>Conversion Specifiers</B>
+
+</DL>
+<P>
+
+<DL COMPACT><DT><DD>
+
+<B><DL COMPACT>
+<DT>%f<DD>
+</B>
+
+Filename without the path [string]
+<B><DT>%F<DD>
+</B>
+
+Filename with the path [string]
+<B><DT>%k<DD>
+</B>
+
+File size in KB [integer]
+<B><DT>%a<DD>
+</B>
+
+Artist [string]
+<B><DT>%c<DD>
+</B>
+
+Comment [string]
+<B><DT>%g<DD>
+</B>
+
+Musical genre [string]
+<B><DT>%G<DD>
+</B>
+
+Musical genre number [integer]
+<B><DT>%l<DD>
+</B>
+
+Album name [string]
+<B><DT>%n<DD>
+</B>
+
+Track [integer]
+<B><DT>%t<DD>
+</B>
+
+Track Title [string]
+<B><DT>%y<DD>
+</B>
+
+Year [string]
+<B><DT>%C<DD>
+</B>
+
+Copyright flag [string]
+<B><DT>%e<DD>
+</B>
+
+Emphasis [string]
+<B><DT>%E<DD>
+</B>
+
+CRC Error protection [string]
+<B><DT>%L<DD>
+</B>
+
+MPEG Layer [string]
+<B><DT>%O<DD>
+</B>
+
+Original material flag [string]
+<B><DT>%o<DD>
+</B>
+
+Stereo/mono mode [string]
+<B><DT>%p<DD>
+</B>
+
+Padding [string]
+<B><DT>%v<DD>
+</B>
+
+MPEG Version [float]
+<B><DT>%u<DD>
+</B>
+
+Number of good audio frames [integer]
+<B><DT>%b<DD>
+</B>
+
+Number of corrupt audio frames [integer]
+<B><DT>%Q<DD>
+</B>
+
+Sampling frequency in Hz [integer]
+<B><DT>%q<DD>
+</B>
+
+Sampling frequency in KHz [integer]
+<B><DT>%r<DD>
+</B>
+
+Bit Rate in KB/s (type and meaning affected by <B>-r</B> option)
+<B><DT>%m<DD>
+</B>
+
+Playing time: minutes only [integer]
+<B><DT>%s<DD>
+</B>
+
+Playing time: seconds only [integer] (usually used in conjunction with <B>%m</B>)
+<B><DT>%S<DD>
+</B>
+
+Total playing time in seconds [integer] 
+<B><DT>%%<DD>
+</B>
+
+A single percent sign
+</DL>
+</DL>
+
+
+<P>
+
+<DL COMPACT><DT><DD>
+<B>Escape Sequences</B>
+
+</DL>
+
+<P>
+
+
+<DL COMPACT><DT><DD>
+<B><DL COMPACT>
+<DT>\n<DD>
+</B>
+
+Newline
+<B><DT>\t<DD>
+</B>
+
+Horizontal tab
+<B><DT>\v<DD>
+</B>
+
+Vertical tab
+<B><DT>\b<DD>
+</B>
+
+Backspace
+<B><DT>\r<DD>
+</B>
+
+Carriage Return
+<B><DT>\f<DD>
+</B>
+
+Form Feed
+<B><DT>\a<DD>
+</B>
+
+Audible Alert (terminal bell)
+<B><DT>\x</B><I>hh</I><B><DD>
+</B>
+
+Any arbitrary character specified by the hexidecimal number <I>hh</I>
+<B><DT>\</B><I>ooo</I><B><DD>
+</B>
+
+Any arbitrary character specified by the octal number <I>ooo</I>
+<B><DT>\\</B><DD>
+
+
+A single backslash character
+</DL>
+</DL>
+
+<P>
+
+
+<P>
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>USAGE</H2>
+
+<P>
+Specifying MP3 files without any other options displays the existing ID3 tag (if any).
+<P>
+
+Specifying a track number of 0 reverts an ID3 tag to 1.0 format
+<P>
+
+Non-specified ID3 fields, if existant, will remain unchanged.
+<P>
+
+Genres can be specified as numbers or names: <B>-g 17</B> same as <B>-g Rock</B>
+<P>
+
+Multiple word fields must be enclosed in quotes (eg: <B>-t &quot;A title&quot;</B>)
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+<P>
+<DL COMPACT>
+<DT><B>Speed Considerations</B><DD>
+In order to determine certain technical attributes (playing time, number of 
+frames, number of bad frames, and in a few cases the bit rate) with absolute 
+certainty, it would be necessary to read the entire MP3 file.  Mp3info normally 
+tries to speed things up by reading a handful of frames from various points in 
+the file and estimating the statistics for the rest of the file based on those 
+samples.  Usually, this results in very accurate estimates.  Audio playing times 
+are usually off by no more than a second, and the number of frames is off by 
+less than 0.1%.  Often the estimates agree exactly with the full scans. 
+Nevertheless, the user may wish to ensure that she is getting exact information.  
+<DT><DD>
+One should specify the <B>-F</B> switch if one wants mp3info to read the entire 
+MP3 file when determining this information.  Note that a full scan will only 
+affect mp3info's output if the <B>-x</B> switch is used or the <B>-p</B> switch is 
+used with a FORMAT_SPECIFIER containing <B>%m</B>, <B>%s</B>, <B>%S</B>, <B>%u</B> 
+or (rarely) <B>%r</B>.  Using the <B>-F</B> switch under other conditions will 
+only slow down mp3info.  Also note that a FORMAT_SPECIFIER containing <B>%b</B> 
+or a VBR MP3 file will automatically trigger a full scan even if the <B>-F</B> 
+switch is not used.
+<DT><DD>
+Several users have noted that the <B>%u</B> specifier used alone:
+</DL>
+<P>
+
+<DL COMPACT>
+<DT><DD>
+<B>mp3info -p &quot;%u&quot; song.mp3</B>
+
+<DT><DD>
+sometimes gives a different number of good frames than when used with the <B>%b</B> specifier:
+<DT><DD>
+<B>mp3info -p &quot;%u %b&quot; song.mp3</B>
+
+<DT><DD>
+This is because when you use <B>%u</B> by itself, mp3info only estimates the 
+number of frames based on the bitrate and the size of the file.  When you use 
+the <B>%b</B> specifier, you force mp3info to do a full scan of the file which 
+guarantees an accurate count of both the good and bad frames.  If you want to 
+guarantee an accurate count of the number of good frames when using <B>%u</B> 
+by itself, you should use the <B>-F</B> option.
+<P>
+<DT><B>Bit Rates</B><DD>
+MP3 files are made up of many (usally several thousand) audio blocks called 'frames'.
+Each of these frames is encoded at a specific 'bit rate' which 
+determines both the quality of the sound and the size of the frame itself.  Bit 
+rates can range from 8 Kb/s (kilobits per second) to 320 Kb/s.  Note that the 
+MP3 specification only allows 14 discreet bit rates for an MP3 file, so, for 
+instance, a stereo MP3 could have frames with bit rates of 128 Kb/s and 160 
+Kb/s, but nowhere in between.
+<DT><DD>
+Audio frames with high bit rates sound much better than those with lower bit 
+rates, but take up more space.  Obviously, one would like to use a bit rate that 
+is only high enough to maintain a comfortable level of audio quality.  Normally, 
+all the frames in an MP3 file are encoded at the same bit rate.  A few MP3 
+files, however, are encoded such that the bit rate may vary from one frame to 
+the next.  These MP3 files are called Variable Bit Rate (or VBR) files.   Since  
+VBR files do not have one single bit rate, attempting to report the bit rate of 
+the file as a whole can be problematic.  Consequently, 
+mp3info allows you to specify how you want this value reported.
+<DT><DD>
+The default is to simply print the word 'Variable' where the bit rate would 
+normally appear.  Another option is to print the mathematical average of all 
+the frames.  This has the advantage of being completely accurate, but the number 
+printed may not correspond to one of the 14 discreet bit rates that would be 
+allowed for that file.  The third alternative solves that problem by allowing 
+the bit rate to be reported as the median bit rate which is what you would get 
+if you lined up all the frames in the file by bit rate from lowest to highest 
+and picked the 
+frame closest to the middle of the line.
+<DT><DD>
+For more specific usage information, see the <B>-r</B> switch and the <B>%r</B> 
+conversion specifier under the description of
+<B>-p</B>'s FORMAT_SPECIFIER.
+<P>
+<P>
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>EXAMPLES</H2>
+
+<P>
+Display existing ID3 tag information (if any) in song.mp3
+<P>
+
+<DL COMPACT>
+<DT><DD>
+<B>mp3info song.mp3</B>
+
+</DL>
+<P>
+
+Set the title, author and genre of song.mp3. (All other fields unchanged)
+<DL COMPACT>
+<DT><DD>
+<B>mp3info -t &quot;Song Title&quot; -a Author -g &quot;Rock &amp; Roll&quot; song.mp3</B>
+
+</DL>
+<P>
+
+Set the album field of all MP3 files in the current directory 
+to &quot;The White Album&quot;
+<P>
+
+<DL COMPACT>
+<DT><DD>
+<B>mp3info -l &quot;The White Album&quot; *.mp3</B>
+
+</DL>
+<P>
+
+Delete the entire ID3 tag from song1.mp3 and song2.mp3
+<DL COMPACT>
+<DT><DD>
+<B>mp3info -d song1.mp3 song2.mp3</B>
+
+</DL>
+<P>
+
+Delete the comment field from the ID3 tags of all MP3 files
+in the current directory. (All other fields unchanged)
+<DL COMPACT>
+<DT><DD>
+<B>mp3info -c &quot;&quot; *.mp3</B>
+
+</DL>
+<P>
+
+Display the Title, Artist, Album, and Year of all MP3 files in the current directory.
+We include the labels 'File', etc. and insert newlines (<B>\n</B>) to make things
+more readable for humans:
+<DL COMPACT>
+<DT><DD>
+<B>mp3info -p &quot;File: %f\nTitle: %t\nArtist: %a\nAlbum: %l\nYear: %y\n\n&quot; *.mp3</B>
+
+</DL>
+<P>
+
+Say you want to build a spreadsheet of your MP3 files.  Here's a command you might use
+to help you accomplish that.  Most spreadsheet programs will import an ASCII file and treat
+a given character as a field separator.  A commonly used field separator is the tab character.
+For each MP3 file in the current directory, we want to output the filename, title, artist, 
+and album on a single line and have the fields separated by a tab (<B>\t</B>) character.  Note
+that you must include a newline (<B>\n</B>) at the end of the format string in order
+to get each file's information on a separate line.  Here's the command:
+<DL COMPACT>
+<DT><DD>
+<B>mp3info -p &quot;%f\t%t\t%a\t%l\t%y\n&quot; *.mp3</B>
+
+</DL>
+<P>
+
+Some spreadsheets or other software may allow importing data from flat files
+where each field is a specific width.  Here's where the format modifers come into
+play.  This next command outputs the same information as the command above, but uses
+fixed-width fields instead of tab separators.  The filename field is defined as
+50 characters wide, the title field is defined as 31 characters wide, and so on.
+<DL COMPACT>
+<DT><DD>
+<B>mp3info -p &quot;%50f%31t%31a%31l%4y\n&quot; *.mp3</B>
+
+</DL>
+<P>
+
+The problem with the output of this command is that all strings are normally right-
+justified within their fields.  This looks a little odd since most western
+languages read from left to right.  In order to make
+the fields left-justified, add a minus sign (<B>-</B>) in front of the field-width:
+<DL COMPACT>
+<DT><DD>
+<B>mp3info -p &quot;%-50f%-31t%-31a%-31l%-4y\n&quot; *.mp3</B>
+
+</DL>
+<P>
+
+Now suppose you just want the running time of each MP3 file specified in minutes
+and seconds.  Simple enough:
+<DL COMPACT>
+<DT><DD>
+<B>mp3info -p &quot;%f: %m:%s\n&quot; *.mp3</B>
+
+</DL>
+<P>
+
+You may notice when you do this, however, that leading zeros are not displayed
+in the seconds field (<B>%s</B>).  So for instance, if you had a
+track four minutes and two seconds long its running time would be displayed 
+as '4:2' instead of '4:02'.  In order to tell mp3info to pad an integer field
+with zeros, you need to use a field width modifier and place a zero in front of it.
+The following command is the same as the previous one, but it specifies that mp3info
+is to display the seconds field with a fixed
+field-width of two characters and to pad the field with leading zeros if necessary:
+<DL COMPACT>
+<DT><DD>
+<B>mp3info -p &quot;%f: %m:%02s\n&quot; *.mp3</B>
+
+</DL>
+<P>
+
+The last trick we have to show you is the precision specifier for floating point
+variables.  The following command displays the filename and average bit rate for
+all MP3 files in the current directory.  
+<DL COMPACT>
+<DT><DD>
+<B>mp3info -r a -p &quot;%f %r\n&quot; *.mp3</B>
+
+</DL>
+<P>
+
+By default, the floating point value of the average bit rate is displayed with six
+digits past the decimal point (ex: 175.654332).  If you are like me, this seems like a bit
+of overkill.  At most you want one or two digits beyond the decimal place displayed.  Or you
+might not want any.  The following command displays the average bit rate with first two, then
+zero digits beyond the decimal point:
+<DL COMPACT>
+<DT><DD>
+<B>mp3info -r a -p &quot;%f %.2r %.0r\n&quot; *.mp3</B>
+
+</DL>
+<P>
+
+If you wanted to specify a field width for a floating point value, you could do that by
+placing the field-width before the decimal point in the field modifier.  This command does
+just that -- specifying an average bit-rate field six characters wide that will show two
+digits of precision beyond the decimal point:
+<DL COMPACT>
+<DT><DD>
+<B>mp3info -r a -p &quot;%f %6.2r\n&quot; *.mp3</B>
+
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+There's no &quot;save and quit&quot; in interactive mode. You must fill in all the 
+fields (even if it is with blanks) and let the program finish by itself. 
+CTRL+C does leave MP3info, but the data isn't saved.
+<P>
+
+Using space to erase tags in interactive mode does not work correctly if you 
+then backspace over the deleted text.
+<P>
+
+The title, author, album, and comment fields are limited to 30 characters.  
+This is a limitation of the ID3 1.0 tag format, not MP3Info.  If you specify 
+the track number (with the <B>-n</B> switch), the ID3 1.0 tag becomes a 1.1 tag and the 
+comment field is limited to 28 characters.  This is because the difference 
+between ID3 1.0 and 1.1 is that the tag number is stored in the last byte of 
+the comment field.  This trick &quot;borrows&quot; two bytes from the fixed-length
+comment field effectively reducing the maximum comment by two characters.
+<P>
+
+Genres cannot be specified arbitrarily.  They must be specified from a 
+pre-determined list (use <B>mp3info -G</B> to see that list).  Again, this is a 
+limitation of the ID3 1.0 tag format.
+<P>
+
+Only ID3 versions 1.0 and 1.1 are supported.  ID3V2 is a much more powerful
+standard and is planned for some as-yet-undetermined future version.  Unfortunately,
+a clean implementation is a heck of a lot of work and I'm unbelievably lazy, so don't
+hold your breath.  It is probably worth noting at this juncture, however, that I do
+accept patches.  :-)
+<P>
+
+Exit codes are somewhat haphazard and not well documented.
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>AUTHOR</H2>
+
+Cedric Tefft &lt;<A HREF="mailto:cedric@phreaker.net">cedric@phreaker.net</A>&gt;
+<P>
+<A NAME="lbAK">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B>printf(3)</B>
+<P>
+</B>
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">OPTIONS</A><DD>
+<DT><A HREF="#lbAF">USAGE</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">EXAMPLES</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">AUTHOR</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by <B>man2html</b> on November 6, 2006.
+</BODY>
+</HTML>
