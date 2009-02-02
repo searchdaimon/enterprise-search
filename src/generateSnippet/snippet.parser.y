@@ -1033,7 +1033,9 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
 
 int generate_snippet( query_array qa, char text[], int text_size, char **output_text, char* b_start, char* b_end, int _snippet_size )
 {
-    fprintf(stderr, "snippet.parser: generate_snippet()\n");
+    #ifdef DEBUG
+        fprintf(stderr, "snippet.parser: generate_snippet()\n");
+    #endif
 
     struct bsgp_yy_extra	*he = malloc(sizeof(struct bsgp_yy_extra));
     struct bsg_intern_data	*data = malloc(sizeof(struct bsg_intern_data));
