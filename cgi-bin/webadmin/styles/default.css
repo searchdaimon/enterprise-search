@@ -212,13 +212,12 @@ table .disabled {
 
 .description {
 	background-color : #F2F2F2;
-	border-left-style : dashed;
-	margin-bottom : 1em;
-	margin-left : 1em;
-	margin-right : 1em;
+	/* border-left-style : dashed; */
 	margin-top : 1em;
+	margin-bottom : 1em;
+	padding: 0.4em;
 	width : 60%;
-	padding-left : 1em;
+	border : 1px solid #f3f3f3;
 }
 
 .connector_block {
