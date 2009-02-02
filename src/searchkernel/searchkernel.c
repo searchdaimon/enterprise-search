@@ -197,21 +197,21 @@ char *generate_summary(char summary_cfg, query_array query_parsed, char *body)  
 		htmlstrip(body, stripbuff, SUMMARY_LEN * 5);
 		size_t striplen = strlen(stripbuff);
 
-		int summary_len = (striplen > SUMMARY_LEN)
+		size_t summary_len = (striplen > SUMMARY_LEN)
 			? SUMMARY_LEN
 			: striplen;
 		
 		
 		summary = malloc(sizeof(char) * (summary_len + 1));
-		strncpy(summary, stripbuff, summary_len);
+		strlcpy(summary, stripbuff, summary_len);
 		
-		if (body_len > SUMMARY_LEN) {
+		if (striplen > SUMMARY_LEN) {
 			summary[SUMMARY_LEN - 4] = '.';
 			summary[SUMMARY_LEN - 3] = '.';
 			summary[SUMMARY_LEN - 2] = '.';
+			summary[SUMMARY_LEN - 1] = '\0';
 		}
 
-		summary[SUMMARY_LEN - 1] = '\0';
 	}
 	else { 
 		warnx("Unknown snippet/summery cfg: %d\n", summary_cfg); 
