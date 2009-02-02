@@ -1,12 +1,13 @@
 
-CC=/usr/local/bin/gcc -O2 -g
+CC=gcc -O2 -g -m32
+yacc=bison
 
 all:
-	yacc -d -b rac -p rac show_attributes.y
+	$(yacc) -d -b rac -p rac show_attributes.y
 	flex -f -8 -P rac -i show_attributes.l
 	$(CC) -c lex.rac.c
 	$(CC) -c rac.tab.c
-	yacc -d -b adf -p adf attribute_descriptions.y
+	$(yacc) -d -b adf -p adf attribute_descriptions.y
 	flex -f -8 -P adf -i attribute_descriptions.l
 	$(CC) -c lex.adf.c
 	$(CC) -c adf.tab.c

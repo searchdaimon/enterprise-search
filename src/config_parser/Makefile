@@ -1,10 +1,11 @@
 
-CC=gcc
+CC=gcc -m32
+yacc=bison
 
 all:	config_parser
 
 config_parser:
-	yacc -d config_parser.yacc
+	$(yacc) -d config_parser.yacc
 	lex -i config_parser.lex
 	$(CC) -c lex.yy.c y.tab.c
 	ar rc libconfig_parser.a lex.yy.o y.tab.o

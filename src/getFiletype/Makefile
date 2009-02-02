@@ -1,8 +1,9 @@
 
-CC=/usr/local/bin/gcc -O2 -g
+CC=gcc -O2 -g -m32
+yacc=bison
 
 all:
-	yacc -d -b fte -p fte identify_extension.y
+	$(yacc) -d -b fte -p fte identify_extension.y
 	flex -f -8 -P fte -i identify_extension.l
 #	$(CC) -o fte_test test.c lex.fte.c fte.tab.c ../ds/libds.a
 	$(CC) -c lex.fte.c

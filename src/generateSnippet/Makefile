@@ -1,8 +1,9 @@
 
-CC=/usr/local/bin/gcc -O2 -g
+CC=gcc -O2 -g -m32
+yacc=bison
 
 all:
-	yacc -d -p bsgp snippet.parser.y
+	$(yacc) -d -p bsgp snippet.parser.y
 	flex -f -8 -P bsgp -i snippet.parser.l
 	$(CC) -c lex.bsgp.c y.tab.c
 	ar rc libsnippet_generator.a lex.bsgp.o y.tab.o
