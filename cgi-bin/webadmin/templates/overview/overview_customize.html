@@ -9,6 +9,12 @@
 [% PROCESS 'overview_tabs.html' selected="Result customization" %]
 <h2>Customize results for [% HTML.escape(share.collection_name) %]</h2>
 
+[% IF succs  %]
+	[% PROCESS 'tpl_msg.html' type = "success" content = succs %]
+[% END %]
+
+
+
 [% IF errors %]
 	[% WRAPPER 'tpl_msg.html' type="error" %]
 		<ul>
