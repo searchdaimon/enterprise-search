@@ -221,7 +221,9 @@ void get_query( char text[], int text_size, query_array *qa )
     struct _qp_yy_extra		*qe = malloc(sizeof(struct _qp_yy_extra));
     int				i, j;
 
+    #ifdef DEBUG
     fprintf(stderr, "query.parser: get_query(\"%s\")\n", text);
+    #endif
 
     qe->big = vector_container( pair_container( int_container(), vector_container( string_container() ) ) );
     qe->sequence = vector_container( string_container() );
