@@ -365,6 +365,8 @@ sub upd_customization {
 	$params{share} = $id;
 	$sqlRes->insert(\%params);
 
+	$vars->{succs} = "Customizations updated";
+
 	return $s->show_customize($vars, $id);
 }
 
