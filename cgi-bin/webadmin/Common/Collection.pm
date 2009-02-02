@@ -71,7 +71,7 @@ sub validate {
 
 sub valid_name { 
     my ($s, $name) = @_;
-	return $name =~ /^([a-zA-Z0-9]|\.|_|-|)+$/;
+	return $name =~ /^([a-zA-Z0-9]|_|-|)+$/;
 #    for my $c (split q{}, $name) {
 #        return unless $VALID_COLL_CHRS{$c};
 #    }
