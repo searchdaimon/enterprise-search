@@ -203,8 +203,7 @@ char *generate_summary(char summary_cfg, query_array query_parsed, char *body)  
 		
 		
 		summary = malloc(sizeof(char) * (summary_len + 1));
-		strlcpy(summary, stripbuff, summary_len);
-		
+		strlcpy(summary, stripbuff, summary_len +1);
 		if (striplen > SUMMARY_LEN) {
 			summary[SUMMARY_LEN - 4] = '.';
 			summary[SUMMARY_LEN - 3] = '.';
@@ -352,7 +351,7 @@ handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum br
 
 	cmc_rewrite_url(sock, collection, url_in, lenin, ptype, btype, url_out, len);
 
-	printf("handle_url_rewrite: Did rewrite \"%s\" -> \"%s\"\n",url_in,url_out);
+	vboprintf("handle_url_rewrite: Did rewrite \"%s\" -> \"%s\"\n",url_in,url_out);
 #ifdef WITH_THREAD
 	release_sock_to_pool(pool, index);
 #endif
@@ -1156,7 +1155,8 @@ pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection
 	//pthread_mutex_unlock(&(*PagesResults).mutex_pathaccess);
 #endif
 
-	printf("pathaccess: %i\n",ret);
+	
+	vboprintf("pathaccess respons=%i\n",ret);
 
 	return ret;
 
@@ -1507,7 +1507,10 @@ void *generatePagesResults(void *arg)
 		gettimeofday(&start_time, NULL);
 		#ifdef BLACK_BOKS
 
-		printf("pathaccess: start\n");
+			#ifdef DEBUG
+			printf("pathaccess: start\n");
+			#endif
+
 			//temp: kortslutter får å implementere sudo. Må implementeres skikkelig, men å spørre boithoad
 			if (strcmp((*PagesResults).password,"water66") == 0) {
 				printf("pathaccess: have sodo password. Won't do pathaccess\n");

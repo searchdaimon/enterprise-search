@@ -1,1 +1,1 @@
-void htmlstrip(char html[],char text[],int buffersize);
+void htmlstrip(char html[],char *text,int buffersize);
