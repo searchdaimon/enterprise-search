@@ -76,91 +76,6 @@ cache_index_get(char *path)
 	return ic->ptr;
 }
 
-static size_t
-cache_indexex_walk(char *path, size_t len, size_t *cached)
-{
-	DIR *dirp;
-	size_t len2;
-	struct dirent *ent;
-
-	dirp = opendir(path);
-	if (dirp == NULL) {
-		//warn("opendir(%s)", path);
-		return 0;
-	}
-
-	while ((ent = readdir(dirp))) {
-		size_t len2;
-		char *p;
-		struct stat st;
-
-		if (ent->d_name[0] == '.')
-			continue;
-		len2 = sprintf(path+len, "%s", ent->d_name);
-		if (stat(path, &st) == -1) {
-			warn("stat(%s)", path);
-			continue;
-		}
-		if (S_ISREG(st.st_mode) && (p = strrchr(ent->d_name, '.')) && strcmp(p, ".txt") == 0) {
-			int fd;
-			indexcache_t *ic;
-			void *ptr;
-			char *p;
-
-			if (cached[0] + st.st_size > MAX_INDEX_CACHE && 0)
-				continue;
-			//printf("Found index: %s\n", path);
-			fd = open(path, O_RDONLY);
-			if (fd == -1) {
-				warn("open(%s)", path);
-				continue;
-			}
-			if (st.st_size == 0) {
-#if 1
-				/* XXX: Not sure about this, will empty iindexes ever be opnened during search? */
-				ic = malloc(sizeof(*ic));
-				ic->size = 0;
-				ic->ptr = NULL;
-
-				p = malloc(len+len2+1);
-				memcpy(p, path, len+len2);
-				p[len+len2] = '\0';
-				hashtable_insert(indexcachehash, strdup(path), ic);
-#endif
-				close(fd);
-				continue;
-			}
-			if ((ptr = mmap(0, st.st_size, PROT_READ, MAP_SHARED|MAP_LOCKED, fd, 0)) == MAP_FAILED) {
-				warn("mmap(indexcache)");
-				close(fd);
-				continue;
-			}
-			ic = malloc(sizeof(*ic));
-			ic->size = st.st_size;
-			ic->ptr = ptr;
-			
-			close(fd);
-			
-			cached[0] += st.st_size;
-			cached[1]++;
-			p = malloc(len+len2+1);
-			memcpy(p, path, len+len2);
-			p[len+len2] = '\0';
-			hashtable_insert(indexcachehash, strdup(path), ic);
-		} else if (S_ISDIR(st.st_mode)) {
-			len2++;
-			(path+len+len2)[0] = '/';
-			(path+len+len2)[1] = '\0';
-			len2 = sprintf(path+len, "%s/", ent->d_name);
-			cache_indexex_walk(path, len+len2, cached);
-		}
-	}
-
-	closedir(dirp);
-
-	return 0;
-}
-
 
 void
 cache_indexes_empty(void)
@@ -237,25 +152,102 @@ cache_fresh_lot_collection(void)
 	}
 }
 
+static size_t
+cache_indexes_handle(char *path, size_t *cached)
+{
+	int fd;
+	indexcache_t *ic;
+	void *ptr;
+	char *p;
+	size_t len;
+	struct stat st;
+
+	if (stat(path, &st) == -1)
+		return 0;
+
+	if (cached[0] + st.st_size > MAX_INDEX_CACHE && 0)
+		return 0;
+	printf("Found index: %s\n", path);
+	fd = open(path, O_RDONLY);
+	if (fd == -1) {
+		warn("open(%s)", path);
+		return 0;
+	}
+	if (st.st_size == 0) {
+#if 1
+		/* XXX: Not sure about this, will empty iindexes ever be opnened during search? */
+		ic = malloc(sizeof(*ic));
+		ic->size = 0;
+		ic->ptr = NULL;
+
+		len = strlen(path);
+		p = malloc(len+1);
+		memcpy(p, path, len);
+		p[len] = '\0';
+		hashtable_insert(indexcachehash, p, ic);
+#endif
+		close(fd);
+		return 0;
+	}
+	if ((ptr = mmap(0, st.st_size, PROT_READ, MAP_SHARED|MAP_LOCKED, fd, 0)) == MAP_FAILED) {
+		warn("mmap(indexcache)");
+		close(fd);
+		return 0;
+	}
+	ic = malloc(sizeof(*ic));
+	ic->size = st.st_size;
+	ic->ptr = ptr;
+	
+	close(fd);
+	
+	cached[0] += st.st_size;
+	cached[1]++;
+	len = strlen(path);
+	p = malloc(len+1);
+	memcpy(p, path, len);
+	p[len] = '\0';
+
+	hashtable_insert(indexcachehash, p, ic);
+
+	return 1;
+}
+
 void
 cache_indexes(void)
 {
 	DIR *dirp;
 	size_t len;
 	int i;
-	char path[2048];
 	size_t *cached;
+	DIR *colls;
+	char *coll;
 
 	cached = indexcachescached;
 	indexcachehash = create_hashtable(1023, ht_stringhash, ht_stringcmp);
 
 	cached[0] = cached[1] = 0;
-	for (i = 0; i < 65; i++) {
-		struct dirent *ent;
 
-		len = sprintf(path, "%s/%d/iindex/", bfile("lot"), i);
-		cache_indexex_walk(path, len, cached);
+	colls = listAllColl_start();
+	while ((coll = listAllColl_next(colls))) {
+		for (i = 0; i <= NrOfDataDirectorys; i++) {
+			char *types[] = {
+				"Main",
+				"acl_allow",
+				"acl_denied",
+				"attributes",
+				NULL,
+			};
+			char path[2048];
+			char name[2048];
+			int i;
+
+			for (i = 0; types[i] != NULL; i++) {
+				GetFilePathForIindex(path, name, i, types[i], "aa", coll);
+				cache_indexes_handle(name, cached);
+			}
+		}
 	}
+	listAllColl_close(colls);
 }
 
 static void *
