@@ -20,7 +20,7 @@
 #include "../common/ht.h"
 #include "../3pLibs/keyValueHash/hashtable.h"
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
-
+#include "../common/timediff.h"
 #include "../common/reposetory.h"
 #include "../common/bstr.h"
 #include "../acls/acls.h"
@@ -317,6 +317,22 @@ int bbdocument_delete (char uri[], char subname[]) {
 
 	return 1;
 }
+void bbdocument_exist_update_di(char subname[],docid DocID) {
+
+	// Update DI with new existed timestamp
+	struct DocumentIndexFormat docindex;
+
+	#if defined(BLACK_BOKS) && !defined(_24SEVENOFFICE)
+		DIRead(&docindex, DocID, subname);
+		docindex.lastSeen = time(NULL);
+		DIWrite(&docindex, DocID, subname, NULL);
+		debug("bbdocument_exist: satte lastSeen \"%s\"",ctime(&docindex.lastSeen));
+	#endif
+
+}
+int bbdocument_exist_zero_lottery(int odds) {
+	return ( (rand() % odds) == 1 );
+}
 
 int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified) {
 	docid DocID;
@@ -324,25 +340,29 @@ int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified
 
         debug("bbadocument_exist: %s, \"%s\", lastmodified %u",subname,documenturi,lastmodified);
 
-	if (uriindex_get(documenturi,&DocID,&lastmodifiedForExistTest,subname)
-	    && (((lastmodifiedForExistTest == lastmodified)
-	        || (lastmodified == 0)))) {
-		struct DocumentIndexFormat docindex;
-		debug("bbdocument_exist: Uri \"%s\" exists with DocID \"%u\" and time \"%u\"\n",
-		    documenturi, DocID, lastmodifiedForExistTest);
-		// Update DI with new existed timestamp
-
-#if defined(BLACK_BOKS) && !defined(_24SEVENOFFICE)
-		DIRead(&docindex, DocID, subname);
-		docindex.lastSeen = time(NULL);
-		DIWrite(&docindex, DocID, subname, NULL);
-		debug("bbdocument_exist: satte lastSeen \"%s\"",ctime(&docindex.lastSeen));
-#endif
+	if (!uriindex_get(documenturi,&DocID,&lastmodifiedForExistTest,subname)) {
+		debug("bbdocument_exist: uriindex_get() feil. This must be an unknow url. Will crawl\n");
+		return 0;
+	}
+	else if (lastmodifiedForExistTest == lastmodified) {
+		debug("bbdocument_exist: Uri \"%s\" exists with DocID \"%u\" and time \"%u\"\n", documenturi, DocID, lastmodifiedForExistTest);
+		bbdocument_exist_update_di(subname,DocID);
+		return 1;
+	}
+	else if ((lastmodified == 0) && bbdocument_exist_zero_lottery(20)) {
+		//vi må av og til crawle de med ukjent/0 lastmodified
+		debug("bbdocument_exist: Uri \"%s\" exists and we got 0 as current time. But we did winn in the lottery, and are askinf for it to be crawled. DocID \"%u\"\n", documenturi, DocID);
+		return 0;
+	}
+	else if (lastmodified == 0) {
+		debug("bbdocument_exist: Uri \"%s\" exists and we got 0 as current time.. DocID \"%u\"\n", documenturi, DocID);
+		bbdocument_exist_update_di(subname,DocID);
 		return 1;
 	}
 
-	debug("bbdocument_exist: dokument dosent exist");
 
+	//ingen av testene slå ut. Dokumenetet finnes ikke
+	debug("bbdocument_exist: dokument dosent exist");
 	return 0;
 }
 
@@ -395,6 +415,10 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	char *documentfinishedbuftmp;
 	char fileconverttemplate[1024];
 	struct fileFilterFormat *fileFilter = NULL;
+
+        #ifdef DEBUG_TIME
+                struct timeval start_time, end_time;
+	#endif
 
 	printf("bbdocument_convert: dokument_size %i, title \"%s\",filetype \"%s\"\n",dokument_size,titlefromadd,filetype);
 
@@ -586,6 +610,10 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	shargs[1] = envpair;
         shargs[4] = fileFilter->command;
 
+        #ifdef DEBUG_TIME
+                gettimeofday(&start_time, NULL);
+        #endif
+
 	if (!exeoc_timeout(shargs,documentfinishedbuftmp,&exeocbuflen,&ret,120)) {
 
 		printf("dident get any data from exeoc. But can be a filter that creates files, sow we wil continue\n");
@@ -595,6 +623,11 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		//return 0;
 
 	}
+
+        #ifdef DEBUG_TIME
+                gettimeofday(&end_time, NULL);
+                printf("Time debug: exeoc_timeout() time: %f\n",getTimeDifference(&start_time, &end_time));
+        #endif
 
 	if (metahash) {
 		FILE *metafp;
