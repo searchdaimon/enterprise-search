@@ -67,6 +67,8 @@
 
 #endif
 
+#include "../searchkernel/preopen.h"
+
 //rangeringsfilter er der vi har et hvist antall treff, definert som RFC (Rank Filter Cutoff).
 //har vi så mnage treff filtrerer vi ut de under en hvis rankt
 #define AthorRFC1 	10000
@@ -1697,7 +1699,7 @@ void GetIndexAsArray_thesaurus (int *AntallTeff, struct iindexFormat **TeffArray
 	int TmpArrayLen;
 
 #ifndef BLACK_BOKS
-	GetIndexAsArray(AntallTeff,*TeffArray,WordIDcrc32,IndexType,IndexSprok,subname,languageFilterNr,languageFilterAsNr);
+	_GetIndexAsArray(AntallTeff,*TeffArray,WordIDcrc32,IndexType,IndexSprok,subname,languageFilterNr,languageFilterAsNr, cache_index_get);
 #else
 
 	vboprintf("alt_n %i, alt %p\n",alt_n, alt);
@@ -1708,7 +1710,7 @@ void GetIndexAsArray_thesaurus (int *AntallTeff, struct iindexFormat **TeffArray
 	resultArrayInit(tmpAnser);
 
 	if (alt == NULL) {
-		GetIndexAsArray(AntallTeff,*TeffArray,WordIDcrc32,IndexType,IndexSprok,subname,languageFilterNr,languageFilterAsNr);
+		_GetIndexAsArray(AntallTeff,*TeffArray,WordIDcrc32,IndexType,IndexSprok,subname,languageFilterNr,languageFilterAsNr, cache_index_get);
 	}
 	else {
 
@@ -1726,7 +1728,7 @@ void GetIndexAsArray_thesaurus (int *AntallTeff, struct iindexFormat **TeffArray
 				TmpArrayLen = 0;
 				resultArrayInit(TmpArray);
 
-				GetIndexAsArray(&TmpArrayLen,TmpArray,WordIDcrc32,IndexType,IndexSprok,subname,languageFilterNr, languageFilterAsNr);
+				_GetIndexAsArray(&TmpArrayLen,TmpArray,WordIDcrc32,IndexType,IndexSprok,subname,languageFilterNr, languageFilterAsNr, cache_index_get);
 				//rank(TmpArrayLen,TmpArray,subname,(*complicacy));
 
                                 vboprintf("%s (%i)\n", alt[j].s[k],TmpArrayLen);
@@ -1912,7 +1914,7 @@ for (i=0; i<(*queryParsed).n; i++)
 						//if (*TeffArrayElementer == 0) {
 						if (first) {
 							TmpArrayLen = (*TeffArrayElementer);
-							GetIndexAsArray(TeffArrayElementer,*TeffArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
+							_GetIndexAsArray(TeffArrayElementer,*TeffArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, cache_index_get);
 							//rank((*TeffArrayElementer),TeffArray,subname,(*complicacy));
 
 							(*TeffArrayElementer) = (*TeffArrayElementer) - TmpArrayLen;
@@ -1924,7 +1926,7 @@ for (i=0; i<(*queryParsed).n; i++)
 							#endif
 
 							TmpArrayLen = 0;
-							GetIndexAsArray(&TmpArrayLen,*TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
+							_GetIndexAsArray(&TmpArrayLen,*TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, cache_index_get);
 
 							#ifdef DEBUG_TIME
 								gettimeofday(&end_foo_time, NULL);

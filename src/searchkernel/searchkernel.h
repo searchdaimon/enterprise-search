@@ -28,6 +28,7 @@ struct searchd_configFORMAT {
 	struct adf_data	*attrdescrp;
 	attr_conf	*showattrp;
 	int optFastStartup;
+	int optCacheIndexes;
 };
 
 int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct SiderHederFormat *SiderHeder,

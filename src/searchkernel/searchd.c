@@ -45,7 +45,7 @@
 #include <locale.h>
 
 
-
+#include "preopen.h"
 #include "verbose.h"
 #include "searchkernel.h"
 
@@ -111,8 +111,10 @@ catch_sigusr1(int sig)
 	fprintf(stderr, "searchd: Warning! Caught sigusr1. Reinitializing spelling.\n");
 	untrain(&spelling);
 	init_spelling("var/dictionarywords");
+
 }
 #endif
+
 
 /* The signal handler exit the program. . */
 void
@@ -156,6 +158,7 @@ void lotPreOpenStartl(int *preOpen[], char filename[], char subname[], int use) 
 
 }
 
+
 int main(int argc, char *argv[])
 {
 	fprintf(stderr, "searchd: Initializing...\n");
@@ -178,6 +181,7 @@ int main(int argc, char *argv[])
 	searchd_config.optrankfile = NULL;
 	searchd_config.optPreOpen = 0;
 	searchd_config.optFastStartup = 0;
+	searchd_config.optCacheIndexes = 0;
 	
 	// Needed for the speller to properly convert utf8 to wchar_t
 	setlocale(LC_ALL, "en_US.UTF-8");
@@ -185,7 +189,7 @@ int main(int argc, char *argv[])
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"lp:m:b:vsof"))!=-1) {
+        while ((c=getopt(argc,argv,"clp:m:b:vsof"))!=-1) {
                 switch (c) {
                         case 'p':
                                 searchd_config.searchport = atoi(optarg);
@@ -214,8 +218,11 @@ int main(int argc, char *argv[])
 			case 'f':
 				searchd_config.optFastStartup = 1;
 				break;
+			case 'c':
+				searchd_config.optCacheIndexes = 1;
+				break;
 			default:
-                        	exit(1);
+				errx(1, "Unknown argument: %c", c);
                 }
         
 	}
@@ -240,6 +247,17 @@ int main(int argc, char *argv[])
 	
 	lotPreOpenStartl(&searchd_config.lotPreOpen.DocumentIndex,"DocumentIndex","www",searchd_config.optPreOpen);
 	lotPreOpenStartl(&searchd_config.lotPreOpen.Summary,"summary","www",searchd_config.optPreOpen);
+
+	if (searchd_config.optCacheIndexes == 1) {
+		if (searchd_config.optFastStartup != 1) {
+			printf("Reading indexes...\n");
+			cache_indexes();
+			printf("Cached indexes: %dMB, cached indexes: %d\n", indexcachescached[0]/(1024*1024), indexcachescached[1]);
+			cache_fresh_lot_collection();
+		}
+		cache_indexes_keepalive();
+		signal(SIGUSR2, cache_indexes_hup);
+	}
 
 
 	#ifdef BLACK_BOKS
