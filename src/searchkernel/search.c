@@ -2043,7 +2043,7 @@ for (i=0; i<(*queryParsed).n; i++)
 							tmpResultElementer = 0;
 							//tmpResult->nrofHits = 0;
 							resultArrayInit(tmpResult);
-							GetIndexAsArray(&tmpResultElementer,tmpResult,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
+							_GetIndexAsArray(&tmpResultElementer,tmpResult,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, cache_index_get);
 							//rank(tmpResultElementer,tmpResult,subname,(*complicacy));
 
                                                         //(*TeffArrayElementer) = (*TeffArrayElementer) - TmpArrayLen;        	        
@@ -2056,7 +2056,7 @@ for (i=0; i<(*queryParsed).n; i++)
 							TmpArrayLen = 0;
 							//TmpArray->nrofHits = 0;
 							resultArrayInit(*TmpArray);
-							GetIndexAsArray(&TmpArrayLen,*TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
+							_GetIndexAsArray(&TmpArrayLen,*TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, cache_index_get);
 							//rank(TmpArrayLen,TmpArray,subname,(*complicacy));
 
 							vboprintf("\t dddd: frase_merge %i %i\n",(*TeffArrayElementer),TmpArrayLen);
