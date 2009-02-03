@@ -288,6 +288,11 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 	if (collection->docsRemaining != -1)
 		collection->docsRemaining--;
 
+        #ifdef DEBUG_TIME
+                struct timeval start_time, end_time;
+                gettimeofday(&start_time, NULL);
+        #endif
+
 	//send it inn
 	if (!bbdn_docadd(collection->socketha,
 				collection->collection_name,
@@ -322,6 +327,11 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 	else {
 		blog(LOGACCESS,1,"crawled url: \"%s\", size: %i b, ACL: allow \"%s\", denied \"%s\"",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).dokument_size,(*crawldocumentAdd).acl_allow,(*crawldocumentAdd).acl_denied);
 	}
+
+	#ifdef DEBUG_TIME
+		gettimeofday(&end_time, NULL);
+		printf("Time debug: bbdn_docadd() time: %f\n",getTimeDifference(&start_time, &end_time));
+	#endif
 
 	#ifdef DEBUG
 	printf("documentAdd end\n");
