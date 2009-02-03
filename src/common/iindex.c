@@ -511,10 +511,11 @@ static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
 //	struct iindex
 //	int antall //antal forekomster
 /////////////////////////////////////////////////////////////////////////////////////////////////
-void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray, 
+
+void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray, 
 		unsigned int WordIDcrc32, char * IndexType, char *IndexSprok,
 		struct subnamesFormat *subname, 
-		int languageFilterNr, int languageFilterAsNr[] ) {
+		int languageFilterNr, int languageFilterAsNr[], void *(filemap)(char *) ) {
 
 	#ifdef TIME_DEBUG
 		struct timeval start_time, end_time;
@@ -543,6 +544,7 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	//void *allip;
 	char *allindex;
 	char *allindexp;
+	void *filemapptr;
 
 
 
@@ -594,6 +596,17 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		//sprintf(IndexPath,"data/iindex/%s/index/%s/%i.txt",IndexType,IndexSprok, WordIDcrc32 % AntallBarrals);
 		iindexfile = WordIDcrc32 % AntallBarrals;
 		GetFilePathForIindex(FilePath,IndexPath,iindexfile,IndexType,IndexSprok,(*subname).subname);
+#ifdef MMAP_IINDEX
+		if (filemap == NULL) {
+			filemapptr = NULL;
+		} else {
+			filemapptr = filemap(IndexPath);
+			if (filemapptr == MAP_FAILED) {
+				warn("Empty file");
+				return;
+			}
+		}
+#endif
 		//sprintf(IndexPath,"%s/iindex/%s/index/%s/%i.txt",FilePath,IndexType,IndexSprok, iindexfile);
 
 		#ifdef DEBUG
@@ -605,7 +618,11 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 			gettimeofday(&start_time, NULL);
 		#endif
 
-		if ((fileha = fopen(IndexPath,"rb")) == NULL) {
+		if (
+#ifdef MMAP_IINDEX
+			!filemapptr && 
+#endif
+			(fileha = fopen(IndexPath,"rb")) == NULL) {
 			perror(IndexPath);
 		}
 		else {
@@ -620,33 +637,38 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		#ifdef MMAP_IINDEX
 
 
-	
-				//lseek(filed,Adress,0);
-				off_t mmap_offset;
+				if (filemapptr) {
+					allindex = allindexp = filemapptr+Adress;
+					printf("### Using cached indexpath: %s %p\n", IndexPath, filemapptr);
+				} else {
+		
+					//lseek(filed,Adress,0);
+					off_t mmap_offset;
 
-				mmap_offset = Adress % getpagesize();
+					mmap_offset = Adress % getpagesize();
 
-				#ifdef DEBUG
-				printf("Adress %i, page size %i, mmap_offset %i\n",Adress,getpagesize(),mmap_offset);
-				#endif
+					#ifdef DEBUG
+					printf("Adress %i, page size %i, mmap_offset %i\n",Adress,getpagesize(),mmap_offset);
+					#endif
 
-				//Adress = 0;
-				//mmap_offset = 0;
+					//Adress = 0;
+					//mmap_offset = 0;
 
-				mmap_size = SizeForTerm + mmap_offset;
-				if ((allindex = mmap(0,mmap_size,PROT_READ,MAP_SHARED,fileno(fileha),Adress - mmap_offset) ) == MAP_FAILED) {
-					fprintf(stderr,"can't mmap file \"%s\", Adress: %u, SizeForTerm: %u\n",IndexPath,Adress,SizeForTerm);
-					perror("mmap");
-					return;
+					mmap_size = SizeForTerm + mmap_offset;
+					if ((allindex = mmap(0,mmap_size,PROT_READ,MAP_SHARED,fileno(fileha),Adress - mmap_offset) ) == MAP_FAILED) {
+						fprintf(stderr,"can't mmap file \"%s\", Adress: %u, SizeForTerm: %u\n",IndexPath,Adress,SizeForTerm);
+						perror("mmap");
+						return;
+					}
+
+					#ifdef DEBUG
+					printf("mmap respons: %i\n",(int)allindex);
+					#endif
+
+					allindexp = allindex;
+
+					allindex += mmap_offset;
 				}
-
-				#ifdef DEBUG
-				printf("mmap respons: %i\n",(int)allindex);
-				#endif
-
-				allindexp = allindex;
-
-				allindex += mmap_offset;
 
 		#else
 
@@ -833,13 +855,13 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		#endif
 
 		#ifdef MMAP_IINDEX
-			munmap(allindexp,mmap_size);
+			if (filemapptr == NULL)
+				munmap(allindexp,mmap_size);
 		#else
 			free(allindexp);
 		#endif
-
-		fclose(fileha);
-
+		if (filemapptr == NULL)
+			fclose(fileha);
 
 		*AntallTeff = y;
 			
@@ -856,6 +878,15 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	printf("GetIndexAsArray: AntallTeff = %i\n",(*AntallTeff));
 	#endif
 }
+
+void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray, 
+		unsigned int WordIDcrc32, char * IndexType, char *IndexSprok,
+		struct subnamesFormat *subname, 
+		int languageFilterNr, int languageFilterAsNr[] ) {
+	_GetIndexAsArray(AntallTeff, TeffArray, WordIDcrc32, IndexType, IndexSprok, subname, languageFilterNr, languageFilterAsNr, NULL);
+}
+
+
 
 
 void GetNForTerm(unsigned int WordIDcrc32, char *IndexType, char *IndexSprok, int *TotaltTreff, struct subnamesFormat *subname) {
