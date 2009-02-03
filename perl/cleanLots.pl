@@ -111,3 +111,9 @@ foreach my $key (keys %hiestinlot) {
 
 }
 
+# Tell searchd to recache
+open(my $fh, "< " . $ENV{BOITHOHOME} . "/var/searchd.pid");
+my $pid = <$fh>;
+kill 'USR2', $pid;
+close($fh);
+
