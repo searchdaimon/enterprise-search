@@ -48,47 +48,21 @@ ex_parsetime(char *time)
 }
 
 #if 1
-
-int
-only_white(char *s) 
-{
-	while (*s) {
-		if (!isspace(*s))
-			return 0;
-		s++;
-	}
-
-	return 1;
-}
-
 void
-dumptree(xmlDocPtr doc, xmlNodePtr n, int indent)
+dumptree(xmlNodePtr n, int indent)
 {
 	int i;
         xmlNodePtr cur;
 
-	if (n->type == XML_TEXT_NODE) {
-		xmlChar *s;
-
-		s = xmlNodeListGetString(doc, n, 1);
-		if (!only_white(s)) {
-			for (i = 0; i < indent; i++)
-				printf("  ");
-
-			printf("\"%s\"\n", (char *)s);
-		}
-		free(s);
-		return;
-	}
-
         for (i = 0; i < indent; i++)
                 printf("  ");
-
 
         printf("%s\n", n->name);
 
         for (cur = n->xmlChildrenNode; cur; cur = cur->next) {
-		dumptree(doc, cur, indent+1);
+
+                if (cur->xmlChildrenNode)
+                        dumptree(cur, indent+1);
         }
 
 }
@@ -184,8 +158,11 @@ handle_acllist(const xmlDocPtr doc, xmlNodePtr acls, set *acl_allow, set *acl_de
 		xmlNodePtr rev;
 		int revision;
 
-		//printf("dacl tree\n");
-		//dumptree(doc, cur, 0);
+
+		#ifdef DEBUG
+		printf("dacl tree\n");
+		dumptree(cur, 0);
+		#endif
 
 		if ((rev = xml_find_child(cur, "revision"))) {
 			char *r = (char*)xmlNodeListGetString(doc, rev->xmlChildrenNode, 1);
@@ -206,7 +183,7 @@ handle_acllist(const xmlDocPtr doc, xmlNodePtr acls, set *acl_allow, set *acl_de
 }
 
 void
-handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, char *parent, set *acl_allow, set *acl_deny, char *usersid, CURL *curl)
+handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, char *parent, set *acl_allow, set *acl_deny, char *usersid, CURL **curl, struct loginInfoFormat *login)
 {
 	xmlNodePtr href, propstat, cur;
 	char *url;
@@ -227,7 +204,7 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 	}
 
 	url = (char *)xmlNodeListGetString(doc, href->xmlChildrenNode, 1);
-	//printf("On: %s\n", url);
+
 	if (strcmp(url, parent) == 0) {
 		/* Update acl lists */
 		if ((cur = xml_find_child(propstat, "prop"))) {
@@ -261,21 +238,12 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 	/* Directory perhaps? */
 	printf("Pathname: %s\n", url);
 	if (url[hreflen-1] == '/') {
-		CURL	*curl;
-		char	*eerror;
-
-		if ((curl = ex_logOn(parent, ci->collection->origresource, ci->collection->user, ci->collection->password, &eerror)) == NULL)
-		    {
-			fprintf(stderr, "Can't connect to %s: %s\n", parent, eerror);
-		    }
-		else
-		    {
-			newxml = ex_getContent(url, curl);
-			grabContent(newxml, (char *)url, ci, acl_allow2, acl_deny2, usersid, curl);
-			free(newxml);
-
-			ex_logOff(curl);
-		    }
+		if ((newxml = ex_getContent(url, curl, login)) == NULL) {
+			printf("can't ex_getContent() for url %s. skipping\n",url);
+			goto err1;
+		}
+		grabContent(newxml, (char *)url, ci, acl_allow2, acl_deny2, usersid, curl, login);
+		free(newxml);
 	} else {
 		char *sid = NULL;
 		time_t lastmodified = 0;
@@ -292,10 +260,18 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 				 *
 				 * - eirik
 				 */
-				if (strcmp(type, "IPM.Note") == 0 || // Private folder e-mail
-				    strcmp(type, "IPM.Post") == 0) { // Public folder e-mail
+				if (strcmp(type, "IPM.Note") == 0) {
 					free(type);
-				} else {
+				} 
+				#ifdef WITH_PUBLIC_FOLDERS
+				// Runarb: 12 des 2008:
+				// ser ut til at mail i public fiolders konverteres til IPM.Post ... Tør ikke å bare grabbe
+				// IPM.Post for alle mail, da det kansje kan være noe annet i vanlig Exchange?
+				else if (strcmp(type, "IPM.Post") == 0) {
+					free(type);
+				}
+				#endif 
+				else {
 					fprintf(stderr, "Found item of type: '%s', not grabing\n", type);
 					free(type);
 					goto err1;
@@ -337,7 +313,7 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 }
 
 int
-getEmailUrls(const char *data, struct crawlinfo *ci, char *parent, set *acl_allow, set *acl_deny, char *usersid, CURL *curl)
+getEmailUrls(const char *data, struct crawlinfo *ci, char *parent, set *acl_allow, set *acl_deny, char *usersid, CURL **curl, struct loginInfoFormat *login)
 {
 	xmlDocPtr doc;
 	xmlNodePtr cur;
@@ -357,7 +333,7 @@ getEmailUrls(const char *data, struct crawlinfo *ci, char *parent, set *acl_allo
 	//printf("Root node: %s\n", cur->name);
 	for (cur = cur->xmlChildrenNode; cur; cur = cur->next) {
 		if (xmlStrcmp(cur->name, (const xmlChar *)"response") == 0) {
-			handle_response(doc, cur, ci, parent, acl_allow, acl_deny, usersid, curl);
+			handle_response(doc, cur, ci, parent, acl_allow, acl_deny, usersid, curl, login);
 		}
 	}
 	xmlFreeDoc(doc);

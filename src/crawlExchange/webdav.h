@@ -18,10 +18,16 @@ struct ex_buffer {
 	char *buf;
 };
 
-char *ex_getEmail(const char *url, struct ex_buffer *buf, CURL * curl);
-char *ex_getContent(const char *url, CURL *curl);
+struct loginInfoFormat {
+	char Exchangeurl[255];
+	char username[255];
+	char password[255];
+};
 
-void ex_logOff(CURL *curl);
-CURL *ex_logOn(const char *mailboxurl, const char *Exchangeurl ,const char *username, const char *password, char **errorm);
+char *ex_getEmail(const char *url, struct ex_buffer *buf, CURL ** curl);
+char *ex_getContent(const char *url, CURL **curl, struct loginInfoFormat *login);
+
+void ex_logOff(CURL **curl);
+CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **errorm);
 
 #endif

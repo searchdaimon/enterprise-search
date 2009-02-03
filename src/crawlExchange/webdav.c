@@ -66,7 +66,7 @@ ex_write_buffer(void *buffer, size_t size, size_t nmemb, void *stream)
 
 /* Free the returned value */
 char *
-ex_getEmail(const char *url, struct ex_buffer *buf, CURL * curl)
+ex_getEmail(const char *url, struct ex_buffer *buf, CURL ** curl)
 {
 	CURLcode result;
 	struct curl_slist *headers = NULL;
@@ -74,34 +74,28 @@ ex_getEmail(const char *url, struct ex_buffer *buf, CURL * curl)
 	printf("ex_getEmail(url=%s)\n",url);
 
 	//curl = curl_easy_init();
-	if (curl == NULL)
+	if (*curl == NULL)
 		return NULL;
 
 	buf->buf = NULL;
 	headers = curl_slist_append(headers, "Translate: f");
-	//headers = curl_slist_append(headers, "Content-type: text/xml");
-	//headers = curl_slist_append(headers, "Depth: 1");
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-	curl_easy_setopt(curl, CURLOPT_URL, url);
-	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
-	//curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, my_fwrite);
-	//curl_easy_setopt(curl, CURLOPT_WRITEDATA, NULL);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, ex_write_buffer);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, buf);
-	//curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-	//curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-	result = curl_easy_perform(curl);
+	curl_easy_setopt(*curl, CURLOPT_HTTPHEADER, headers);
+	curl_easy_setopt(*curl, CURLOPT_URL, url);
+	curl_easy_setopt(*curl, CURLOPT_CUSTOMREQUEST, "GET");
+	curl_easy_setopt(*curl, CURLOPT_WRITEFUNCTION, ex_write_buffer);
+	curl_easy_setopt(*curl, CURLOPT_WRITEDATA, buf);
+	result = curl_easy_perform(*curl);
 	curl_slist_free_all(headers);
 
 	return buf->buf;
 }
 
-void ex_logOff(CURL *curl) {
+void ex_logOff(CURL **curl) {
 
-	curl_easy_cleanup(curl);
+	curl_easy_cleanup(*curl);
 }
 
-CURL *ex_logOn(const char *mailboxurl, const char *Exchangeurl ,const char *username, const char *password, char **errorm) {
+CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **errorm) {
 
 	CURL *curl;
 	CURLcode result;
@@ -113,7 +107,7 @@ CURL *ex_logOn(const char *mailboxurl, const char *Exchangeurl ,const char *user
 	*errorm = NULL;
 	
 	
-	printf("ex_logOn(mailboxurl=%s, Exchangeurl=%s, username=%s)\n", mailboxurl, Exchangeurl, username);
+	printf("ex_logOn(mailboxurl=%s, Exchangeurl=%s, username=%s)\n", mailboxurl, login->Exchangeurl, login->username);
 
 	curl = curl_easy_init();
 
@@ -163,7 +157,7 @@ CURL *ex_logOn(const char *mailboxurl, const char *Exchangeurl ,const char *user
 	    	/* First set the URL that is about to receive our POST. This URL can
 	       	just as well be a https:// URL if that is what should receive the
 	       	data. */
-		snprintf(owaauthpath,sizeof(owaauthpath),"%s/exchweb/bin/auth/owaauth.dll",Exchangeurl);
+		snprintf(owaauthpath,sizeof(owaauthpath),"%s/exchweb/bin/auth/owaauth.dll",login->Exchangeurl);
 	    	curl_easy_setopt(curl, CURLOPT_URL, owaauthpath);
 
 	    	//bruke cookies
@@ -177,7 +171,7 @@ CURL *ex_logOn(const char *mailboxurl, const char *Exchangeurl ,const char *user
 		//bygger port datane
 		// skal være av slik: destination=https%3A%2F%2Fsbs.searchdaimon.com%2FExchange%2Feo&flags=0&username=eo&password=1234Asd&SubmitCreds=Log+On&trusted=0
 
-		asprintf(&postData,"destination=%s&flags=0&username=%s&password=%s&SubmitCreds=Log+On&trusted=0",destination, username, password);
+		asprintf(&postData,"destination=%s&flags=0&username=%s&password=%s&SubmitCreds=Log+On&trusted=0",destination, login->username, login->password);
 
 		printf("postData new: %s\n\n",postData);
 
@@ -201,7 +195,7 @@ CURL *ex_logOn(const char *mailboxurl, const char *Exchangeurl ,const char *user
 		
 	}
 	else if (code == 401) {
-		if ((userpass = make_userpass(username, password)) == NULL)
+		if ((userpass = make_userpass(login->username, login->password)) == NULL)
 			return NULL;
 		curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
 
@@ -246,7 +240,7 @@ CURL *ex_logOn(const char *mailboxurl, const char *Exchangeurl ,const char *user
 
 /* Free the returned value */
 char *
-ex_getContent(const char *url, CURL *curl)
+ex_getContent(const char *url, CURL **curl, struct loginInfoFormat *login)
 {
 	CURLcode result;
 	struct curl_slist *headers = NULL;
@@ -265,16 +259,15 @@ ex_getContent(const char *url, CURL *curl)
 	headers = curl_slist_append(headers, "Translate: f");
 	headers = curl_slist_append(headers, "Content-type: text/xml");
 	headers = curl_slist_append(headers, "Depth: 1");
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+	curl_easy_setopt(*curl, CURLOPT_HTTPHEADER, headers);
     
-	curl_easy_setopt(curl, CURLOPT_URL, url);
-	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PROPFIND");
+	curl_easy_setopt(*curl, CURLOPT_URL, url);
+	curl_easy_setopt(*curl, CURLOPT_CUSTOMREQUEST, "PROPFIND");
 
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, ex_write_buffer);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buf);
-	//curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-	//curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDS,
+	curl_easy_setopt(*curl, CURLOPT_WRITEFUNCTION, ex_write_buffer);
+	curl_easy_setopt(*curl, CURLOPT_WRITEDATA, &buf);
+
+	curl_easy_setopt(*curl, CURLOPT_POSTFIELDS,
 		"<?xml version=\"1.0\"?>"
 		"<d:propfind xmlns:d='DAV:' xmlns:c='urn:schemas:httpmail:' xmlns:m='urn:schemas:mailheader:' xmlns:p='http://schemas.microsoft.com/mapi/proptag/' xmlns:ex='http://schemas.microsoft.com/exchange/security/'>"
 			"<d:prop>"
@@ -290,17 +283,30 @@ ex_getContent(const char *url, CURL *curl)
 
 //http://schemas.microsoft.com/mapi/proptag/0x0E1D001E
 
-	result = curl_easy_perform(curl);
-	result = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+	result = curl_easy_perform(*curl);
+	result = curl_easy_getinfo(*curl, CURLINFO_RESPONSE_CODE, &code);
 	curl_slist_free_all(headers);
 
 	//printf("Mail\n\n%s\n\n", buf.buf);
 	printf("response code %d\n",code);
 
 	if (code == 401) {
-		free(buf.buf);
+		if (buf.buf != NULL) 
+			free(buf.buf);
+
 		return NULL;
 	}
+       //login timeout
+       if (code == 440) {
+               	char *errorm;
+		ex_logOff(curl);
+               	*curl = ex_logOn(url, login, &errorm);
+		if (buf.buf != NULL) 
+               		free(buf.buf);
+
+               	return NULL;
+
+        }
 
 	#ifdef DEBUG
 	printf("buf.buf: \"%s\"\n",buf.buf);

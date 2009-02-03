@@ -23,5 +23,5 @@ typedef struct stringListElement {
 
 xmlChar * getHref(const xmlDocPtr doc, xmlNodePtr cur);
 void freeStringList(stringListElement * head);
-int getEmailUrls(const char *data, struct crawlinfo *ci, char *parent, set *acl_allow, set *acl_deny, char *usersid, CURL *curl);
+int getEmailUrls(const char *data, struct crawlinfo *ci, char *parent, set *acl_allow, set *acl_deny, char *usersid, CURL **curl, struct loginInfoFormat *login);
 
