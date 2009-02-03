@@ -231,7 +231,9 @@ cache_indexes(void)
 			int j;
 
 			for (j = 0; types[j] != NULL; j++) {
-				GetFilePathForIindex(path, name, i, types[i], "aa", coll);
+				GetFilePathForIindex(path, name, i, types[j], "aa", coll);
+				cache_indexes_handle(name, cached);
+				GetFilePathForIDictionary(path, name, i, types[j], "aa", coll);
 				cache_indexes_handle(name, cached);
 			}
 		}
