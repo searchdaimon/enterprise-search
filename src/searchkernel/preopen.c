@@ -102,53 +102,42 @@ cache_indexes_empty(void)
 void
 cache_fresh_lot_collection(void)
 {
-	DIR *dirp;
+	DIR *colls;
+	char *coll;
 	char path[2048];
 	size_t len;
 	int i;
 
 	/* We only look at the first 5 lots */
-	for (i = 1; i < 6; i++) {
-		struct dirent *de;
+	colls = listAllColl_start();
+	while ((coll = listAllColl_next(colls))) {
+		for (i = 1; i < 6; i++) {
+			DIR *dirp;
+			struct dirent *de;
 
-		len = snprintf(path, sizeof(path), "%s/%d/%d", bfile("lot"), i, i);
+			GetFilPathForLot(path, i, coll);
+			len = strlen(path);
 
-		dirp = opendir(path);
-		if (dirp == NULL)
-			continue;
-		
-		while ((de = readdir(dirp))) {
-			size_t len2;
-			DIR *dirp2;
-			struct dirent *de2;
-
-			if (de->d_name[0] == '.')
+			dirp = opendir(path);
+			if (dirp == NULL)
 				continue;
-
-			len2 = sprintf(path+len, "/%s", de->d_name);
-
-			dirp2 = opendir(path);
-			if (dirp2 == NULL)
-				continue;
-			while ((de2 = readdir(dirp2))) {
+			while ((de = readdir(dirp))) {
 				int fd;
 				int dw;
 
-				if (de2->d_name[0] == '.')
+				if (de->d_name[0] == '.')
 					continue;
 
-				sprintf(path+len+len2, "/%s", de2->d_name);
-				//printf("Found file: %s\n", path);
+				sprintf(path+len, "/%s", de->d_name);
+				printf("Found file: %s\n", path);
 				fd = open(path, O_RDONLY);
 				if (fd == -1)
 					continue;
 				read(fd, &dw, sizeof(dw));
 				close(fd);
 			}
-			closedir(dirp2);
+			closedir(dirp);
 		}
-
-		closedir(dirp);
 	}
 }
 
