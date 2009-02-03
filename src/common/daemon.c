@@ -498,7 +498,7 @@ int sendall(int s, void *buf, int len) {
 
             if ((n = send(s, buf+total, tosend, MSG_NOSIGNAL)) == -1) {
 
-			printf("sendall: send() in main while loop. total=%i, len %i\n",total, len);
+			fprintf(stderr,"sendall: send() in main while loop. total=%i, len %i\n",total, len);
 			perror("send()");
 			return 0;
 		}
