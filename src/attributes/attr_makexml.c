@@ -237,9 +237,14 @@ void attribute_finish_count()
 {
     int		i;
     for (i=0; i<10; i++)
-	if (ant[i]>0)
-	    printf("\t%i:%i", i, ant[i]);
-    printf("\n");
+	if (ant[i]>0) {
+		#ifdef DEBUG
+		    printf("\t%i:%i", i, ant[i]);
+		#endif
+	}
+    #ifdef DEBUG
+    	printf("\n");
+    #endif
 }
 
 
