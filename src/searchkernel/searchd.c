@@ -253,6 +253,7 @@ int main(int argc, char *argv[])
 			printf("Reading indexes...\n");
 			cache_indexes();
 			printf("Cached indexes: %dMB, cached indexes: %d\n", indexcachescached[0]/(1024*1024), indexcachescached[1]);
+			preopen();
 			cache_fresh_lot_collection();
 		}
 		cache_indexes_keepalive();
