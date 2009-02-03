@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
 	searchd_config.optrankfile = NULL;
 	searchd_config.optPreOpen = 0;
 	searchd_config.optFastStartup = 0;
-	searchd_config.optCacheIndexes = 0;
+	searchd_config.optCacheIndexes = 1;
 	
 	// Needed for the speller to properly convert utf8 to wchar_t
 	setlocale(LC_ALL, "en_US.UTF-8");
@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
 				searchd_config.optFastStartup = 1;
 				break;
 			case 'c':
-				searchd_config.optCacheIndexes = 1;
+				searchd_config.optCacheIndexes = 0;
 				break;
 			default:
 				errx(1, "Unknown argument: %c", c);
