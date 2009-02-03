@@ -67,12 +67,7 @@ ht_integerhash(void *ky)
 int
 ht_integercmp(void *k1, void *k2)
 {
-	int *c1, *c2;
-
-	c1 = k1;
-	c2 = k2;
-
-	return (*c1 == *c2);
+	return (*((int *)k1) == *((int *)k2));
 }
 
 unsigned int *
