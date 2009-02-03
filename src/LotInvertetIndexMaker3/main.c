@@ -154,8 +154,8 @@ int main (int argc, char *argv[]) {
 		}
 
 		//siden vi nå har lagt til alle andringer fra rev index kan vi nå slettet gced filen også
-		Indekser_deleteGcedFile(lotNr, subname);
-
+		//Indekser_deleteGcedFile(lotNr, subname);
+		lotDeleteFile("gced", lotNr, subname);
 
 	}
 	else if ((argc - optind) == 5) {
