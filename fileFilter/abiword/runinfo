@@ -1,6 +1,6 @@
-documentstype: doc
-command: /usr/bin/abiword --to=txt #file
-outputformat: textfile
+#documentstype: doc
+#command: /usr/bin/abiword --to=txt #file
+#outputformat: textfile
 
 documentstype: abw
 command: /usr/bin/abiword --to=txt #file
