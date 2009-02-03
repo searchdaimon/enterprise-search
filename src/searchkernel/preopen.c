@@ -163,22 +163,25 @@ cache_indexex_walk(char *path, size_t len, size_t *cached)
 
 
 void
-cache_indexes_empty()
+cache_indexes_empty(void)
 {
 	size_t *cached;
+	struct hashtable_itr *itr;
 
 	cached = indexcachescached;
+	itr = hashtable_iterator(indexcachehash);
+	if (hashtable_count(indexcachehash) > 0) {
+		do {
+			indexcache_t *ic;
 
-#if 0
-	int i;
-
-	for (i = 0; i < cached[1]; i++) {
-		munmap(indexcaches[i], indexcachessize[i]);
+			ic = hashtable_iterator_value(itr);
+			if (ic == NULL)
+				continue;
+			munmap(ic->ptr, ic->size);
+		} while (hashtable_iterator_advance(itr));
 	}
-	cached[0] = cached[1] = 0;
-#endif
 
-	hashtable_destroy(indexcachehash, 0);
+	hashtable_destroy(indexcachehash, 1);
 }
 
 void
