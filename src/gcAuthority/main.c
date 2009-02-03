@@ -17,6 +17,7 @@
 
 #include "../common/iindex.h"
 #include "../common/gc.h"
+#include "../common/gcrepo.h"
 #include "../bbdocument/bbdocument.h"
 
 /* MYSQL login information */
@@ -105,8 +106,15 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt, time_t newest_do
 		#endif
 	}
 
+
 	//markerer hva vi kan slette.
 	gc_reduce(re, LotNr, subname);
+
+	reclose(re);
+
+	//trunkerer reposetoryet.
+	gcrepo(LotNr, subname);
+
 
 	//vasker iindex
         struct IndekserOptFormat IndekserOpt;
@@ -127,9 +135,9 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt, time_t newest_do
 	}
 
 	//siden vi nå har lagt til alle andringer fra rev index kan vi nå slettet gced filen også
-	Indekser_deleteGcedFile(LotNr, subname);
+	//Indekser_deleteGcedFile(LotNr, subname);
+	lotDeleteFile("gced", LotNr, subname);
 
-	reclose(re);
 
 	return 0;
 }
