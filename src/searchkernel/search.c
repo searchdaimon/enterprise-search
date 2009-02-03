@@ -1647,7 +1647,7 @@ int searchIndex_getnrs(char *indexType,query_array *queryParsed,struct subnamesF
 							//GetIndexAsArray(TeffArrayElementer,TeffArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
 							//rank((*TeffArrayElementer),TeffArray,subname,(*complicacy));
 							//void GetNForTerm(unsigned long WordIDcrc32, char *IndexType, char *IndexSprok, int  *TotaltTreff, char subname[]);
-							GetNForTerm(WordIDcrc32,indexType,"aa",&nterm,subname);
+							_GetNForTerm(WordIDcrc32,indexType,"aa",&nterm,subname, cache_index_get);
 							nr = nterm;
 						}
 						else {
@@ -1655,7 +1655,7 @@ int searchIndex_getnrs(char *indexType,query_array *queryParsed,struct subnamesF
 							//TmpArray->nrofHits = 0;
 							//GetIndexAsArray(&TmpArrayLen,TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
 
-							GetNForTerm(WordIDcrc32,indexType,"aa",&nterm,subname);
+							_GetNForTerm(WordIDcrc32,indexType,"aa",&nterm,subname, cache_index_get);
 							if (nterm == 0) {
 								nr = 0;
 							}

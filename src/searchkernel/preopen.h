@@ -14,7 +14,7 @@ void cache_indexes_keepalive(void);
 //extern size_t indexcachessize[];
 extern size_t indexcachescached[];
 
-void *cache_index_get(char *path);
+void *cache_index_get(char *path, size_t *size);
 void cache_fresh_lot_collection(void);
 
 #endif /* _PREOPEN_H_ */

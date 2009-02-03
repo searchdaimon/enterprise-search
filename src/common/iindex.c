@@ -215,13 +215,16 @@ int compare_DictionaryMemoryElements (const void *p1, const void *p2) {
 }
 
 //ToDo: bruker ikke subname her enda. Må spesifisere det når vi loader
-int ReadIIndexRecordFromMemeory (unsigned int *Adress, unsigned int *SizeForTerm, unsigned int Query_WordID,char *IndexType, char *IndexSprok,unsigned int WordIDcrc32,char subname[]) {
+int ReadIIndexRecordFromMemeory (unsigned int *Adress, unsigned int *SizeForTerm, unsigned int Query_WordID,char *IndexType, char *IndexSprok,unsigned int WordIDcrc32,char subname[], void *(filemap)(char *, size_t *)) {
 
 	int iindexfile;
 	int i;
 	struct DictionaryFormat *DictionaryPost;
 	struct DictionaryFormat dummy;
 	iindexfile = WordIDcrc32 % AntallBarrals;
+	char path[2048], name[2048];
+	size_t dictsize;
+	void *ptr;
 	
 	#ifdef DEBUG
 	printf("ReadIIndexRecordFromMemeory: WordIDcrc32 %u\n",WordIDcrc32);
@@ -232,9 +235,42 @@ int ReadIIndexRecordFromMemeory (unsigned int *Adress, unsigned int *SizeForTerm
 	//for(i=0;i<AthorDictionary[iindexfile].elements;i++) {
         //        printf("%u\n",AthorDictionary[iindexfile].Dictionary[i].WordID);
         //}
+	//
+	//
+	//
+	
+	//printf("With filemap: %p %s\n", filemap, IndexType);
+	
+	if (filemap == NULL)
+		return 0;
+	
+	iindexfile = WordIDcrc32 % AntallBarrals;
+	GetFilePathForIDictionary(path,name,iindexfile,IndexType,IndexSprok,subname);
+	ptr = filemap(name, &dictsize);
+	if (ptr == MAP_FAILED) {
+		//printf("Empty file... No match no matter what.\n");
+		return 1;
+	}
 
 	dummy.WordID = WordIDcrc32;
-	if (strcmp(IndexType,"Athor") == 0) {
+	if (ptr != NULL) {
+		if ((DictionaryPost = bsearch(&dummy,ptr,dictsize/sizeof(dummy),sizeof(dummy),compare_DictionaryMemoryElements)) == NULL) {
+#ifdef DEBUG
+			printf("fant ikke \n");
+#endif
+			return 0;
+		}
+		else {
+			printf("funnet!\nmem term %u Adress %u, SizeForTerm %u\n",(*DictionaryPost).WordID,(*DictionaryPost).Adress,(*DictionaryPost).SizeForTerm);
+
+			*Adress = (*DictionaryPost).Adress;
+			*SizeForTerm = (*DictionaryPost).SizeForTerm;
+
+			return 1;
+		}
+
+	}
+	else if (strcmp(IndexType,"Athor") == 0) {
 		if ((DictionaryPost = bsearch(&dummy,AthorDictionary[iindexfile].Dictionary,AthorDictionary[iindexfile].elements,sizeof(struct DictionaryFormat),compare_DictionaryMemoryElements)) == NULL) {
 			#ifdef DEBUG
 			printf("fant ikke \n");
@@ -250,24 +286,6 @@ int ReadIIndexRecordFromMemeory (unsigned int *Adress, unsigned int *SizeForTerm
 
 			return 1;
 		}
-	}
-	else if (strcmp(IndexType,"Main") == 0) {
-		if ((DictionaryPost = bsearch(&dummy,MainDictionary[iindexfile].Dictionary,MainDictionary[iindexfile].elements,sizeof(struct DictionaryFormat),compare_DictionaryMemoryElements)) == NULL) {
-			#ifdef DEBUG
-			printf("fant ikke \n");
-			#endif
-			return 0;
-		}
-		else {
-			printf("funnet!\nmem term %u Adress %u, SizeForTerm %u\n",(*DictionaryPost).WordID,(*DictionaryPost).Adress,(*DictionaryPost).SizeForTerm);
-
-	                *Adress = (*DictionaryPost).Adress;
-        	        *SizeForTerm = (*DictionaryPost).SizeForTerm;
-
-
-			return 1;
-		}
-
 	}
 	else {
 		#ifdef DEBUG
@@ -515,7 +533,7 @@ static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
 void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray, 
 		unsigned int WordIDcrc32, char * IndexType, char *IndexSprok,
 		struct subnamesFormat *subname, 
-		int languageFilterNr, int languageFilterAsNr[], void *(filemap)(char *) ) {
+		int languageFilterNr, int languageFilterAsNr[], void *(filemap)(char *, size_t *) ) {
 
 	#ifdef TIME_DEBUG
 		struct timeval start_time, end_time;
@@ -585,7 +603,7 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 	//prøver førs å lese fra minne
 	//temp:
-	if ((!ReadIIndexRecordFromMemeory(&Adress, &SizeForTerm,WordIDcrc32,IndexType,IndexSprok,WordIDcrc32,(*subname).subname))
+	if ((!ReadIIndexRecordFromMemeory(&Adress, &SizeForTerm,WordIDcrc32,IndexType,IndexSprok,WordIDcrc32,(*subname).subname,filemap))
 	&& (!ReadIIndexRecord(&Adress, &SizeForTerm,WordIDcrc32,IndexType,IndexSprok,WordIDcrc32,(*subname).subname))
 	) {
 
@@ -600,7 +618,7 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		if (filemap == NULL) {
 			filemapptr = NULL;
 		} else {
-			filemapptr = filemap(IndexPath);
+			filemapptr = filemap(IndexPath, NULL);
 			if (filemapptr == MAP_FAILED) {
 				warn("Empty file");
 				return;
@@ -890,6 +908,9 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 
 void GetNForTerm(unsigned int WordIDcrc32, char *IndexType, char *IndexSprok, int *TotaltTreff, struct subnamesFormat *subname) {
+	return _GetNForTerm(WordIDcrc32, IndexType, IndexSprok, TotaltTreff, subname, NULL);
+}
+void _GetNForTerm(unsigned int WordIDcrc32, char *IndexType, char *IndexSprok, int *TotaltTreff, struct subnamesFormat *subname, void *(filemap)(char *, size_t *)) {
 
 		unsigned int Adress;
         	unsigned int SizeForTerm;
@@ -900,7 +921,7 @@ void GetNForTerm(unsigned int WordIDcrc32, char *IndexType, char *IndexSprok, in
 		unsigned int Antall;
 		FILE *fileha;		    
 		//////////////////////////////////////////////
-		if ((!ReadIIndexRecordFromMemeory(&Adress, &SizeForTerm,WordIDcrc32,IndexType,IndexSprok,WordIDcrc32,(*subname).subname))
+		if ((!ReadIIndexRecordFromMemeory(&Adress, &SizeForTerm,WordIDcrc32,IndexType,IndexSprok,WordIDcrc32,(*subname).subname, filemap))
 		&& (!ReadIIndexRecord(&Adress, &SizeForTerm,WordIDcrc32,IndexType,IndexSprok,WordIDcrc32,(*subname).subname))
 		) {
 			//*AntallTeff = 0;

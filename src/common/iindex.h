@@ -15,6 +15,9 @@ void GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
                 int languageFilterNr, int languageFilterAsNr[] );
 
 void GetNForTerm(unsigned int WordIDcrc32, char *IndexType, char *IndexSprok, int  *TotaltTreff, struct subnamesFormat *subname);
+void _GetNForTerm(unsigned int WordIDcrc32, char *IndexType, char *IndexSprok, int  *TotaltTreff, struct subnamesFormat *subname, void *(filemap)(char *, size_t *));
+
+
 
 void IIndexLoad (char Type[], char lang[],char subname[]);
 

@@ -59,7 +59,7 @@ struct hashtable *indexcachehash;
 size_t indexcachescached[2];
 
 void *
-cache_index_get(char *path)
+cache_index_get(char *path, size_t *size)
 {
 	indexcache_t *ic;
 
@@ -72,6 +72,8 @@ cache_index_get(char *path)
 		return NULL;
 	if (ic->ptr == NULL)
 		return MAP_FAILED;
+	if (size != NULL)
+		*size = ic->size;
 
 	return ic->ptr;
 }
