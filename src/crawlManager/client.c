@@ -214,7 +214,10 @@ cmc_pathaccess(int socketha,char collection_in[], char uri_in[], char user_in[],
                 return 0;
         }
 
+	#ifdef DEBUG
 	printf("cmc_pathaccess: intrespons %i\n",intrespons);
+	#endif
+
 	return intrespons;
 }
 
@@ -225,7 +228,9 @@ cmc_rewrite_url(int socketha, char *collection_in, char *uri_in, size_t inlen, e
 	char uri[512];
 	struct rewriteFormat rewrite;
 
+	#ifdef DEBUG
 	printf("cmc_rewrite_url: will rewrite: \"%s\"\n",uri_in);
+	#endif
 
 	memset(&rewrite, '\0', sizeof(rewrite));
 
@@ -324,7 +329,10 @@ int cmc_groupsforuserfromusersystem(int socketha, char *_user, unsigned int us, 
 		return 0;
 	}
 
-	gettimeofday(&ts, NULL);
+	#ifdef DEBUG_TIME
+		gettimeofday(&ts, NULL);
+	#endif
+
 	if (n > 0) {
 		groups = calloc(n, MAX_LDAP_ATTR_LEN);
 		if (recv(socketha, groups, n * MAX_LDAP_ATTR_LEN, MSG_WAITALL) == -1) {
@@ -335,8 +343,11 @@ int cmc_groupsforuserfromusersystem(int socketha, char *_user, unsigned int us, 
 	} else {
 		*_groups = NULL;
 	}
-	gettimeofday(&te, NULL);
-	printf("grepme cmc_groupsforuserfromusersystem took: %f\n", getTimeDifference(&ts, &te));
+
+	#ifdef DEBUG_TIME
+		gettimeofday(&te, NULL);
+		printf("grepme cmc_groupsforuserfromusersystem took: %f\n", getTimeDifference(&ts, &te));
+	#endif
 
 	return n;
 }
