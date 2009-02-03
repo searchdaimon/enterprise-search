@@ -228,9 +228,9 @@ cache_indexes(void)
 			};
 			char path[2048];
 			char name[2048];
-			int i;
+			int j;
 
-			for (i = 0; types[i] != NULL; i++) {
+			for (j = 0; types[j] != NULL; j++) {
 				GetFilePathForIindex(path, name, i, types[i], "aa", coll);
 				cache_indexes_handle(name, cached);
 			}
