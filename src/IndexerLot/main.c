@@ -154,6 +154,7 @@ struct IndexerLot_workthreadFormat {
 	struct filteredf filtered;
 	int n_new, n_recrawled, n_untouched;
 	FILE *FNREPO;
+	FILE *GCED;
 };
 
 struct optFormat {
@@ -738,7 +739,8 @@ void *IndexerLot_workthread(void *arg) {
 	isnew = isrecrawled = isuntouched = 0;
 	while (getNextPage(argstruct,htmlcompressdbuffer,sizeofhtmlcompressdbuffer,imagebuffer,sizeofimagebuffer,
 		&radress,&acl_allow,&acl_denied,&ReposetoryHeader, &url, &attributes)) {
-			int documentUpdate = 0;
+
+				int documentUpdate = 0;
 
        				awvalue = 0;
                			title = NULL;
@@ -777,7 +779,7 @@ void *IndexerLot_workthread(void *arg) {
 
 				//hvis dette er samme dokumens som vi har fra før kan vi ignorere det.
 				//runarb: 28 aug 2008. Legger til en sjekk på at dokumentet ikke er 0 bytes stort. Vi
-				//kan ikke ha indeksert det hvis vi ikke her størelsen, men RepositoryPointer == radress == 0 er lov, og skjer for første dokument
+				//kan ikke ha indeksert det hvis vi ikke har størelsen, men RepositoryPointer == radress == 0 er lov, og skjer for første dokument
 				if ( (argstruct->rEindex == 0) && (DocumentIndexPost->RepositoryPointer == radress) && (DocumentIndexPost->htmlSize != 0)) {
 					#ifdef DEBUG
 						printf("have already indexed this dokument\n");
@@ -1099,6 +1101,18 @@ void *IndexerLot_workthread(void *arg) {
 					//skiver til DocumentIndex
 					//DIWrite(DocumentIndexPost,ReposetoryHeader.DocID,(*argstruct).subname);
 
+
+				/*
+				Vi ser ut til å bure gced under lasting av revindex også. Sikkert brukt ved sletting på web.
+				//da dette er en oppdatering vil vi ha nye ord i den reverserte index, og kan trykt slette de som ligger i invertert index.
+				if (documentUpdate) {
+					printf("DocId %u was updatated. Adding it to the gced file\n",ReposetoryHeader.DocID);
+					if (fwrite(&ReposetoryHeader.DocID,sizeof(unsigned int),1,argstruct->GCED) != 1) {
+						perror("writing DocID to gced file");
+					}
+				}
+				*/
+		
 				if (documentUpdate)
 					isrecrawled++;
 				else
@@ -1780,6 +1794,14 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
         	        return;
 	        }
 
+        	if ( (argstruct->GCED = lotOpenFileNoCasheByLotNr(argstruct->lotNr,"gced","ab", 'e',argstruct->subname)) == NULL) {
+        	        #ifdef DEBUG
+        	                printf("Can't open the gced file\n");
+        	        #endif
+
+        	        return;
+	        }
+
 #ifdef PRESERVE_WORDS
 		argstruct->words = create_hashtable(1337, ht_stringhash, ht_stringcmp);
 		argstruct->acls = create_hashtable(1337, ht_stringhash, ht_stringcmp);
@@ -1883,6 +1905,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		#endif
 
 		fclose(argstruct->FNREPO);
+		fclose(argstruct->GCED);
 
 		revindexFilesCloseLocal(argstruct->revindexFilesHa); 
 
@@ -2129,7 +2152,8 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			#endif
 
                 	//siden vi nå har lagt til alle andringer fra rev index kan vi nå slettet gced filen også
-                	Indekser_deleteGcedFile(lotNr, subname);
+                	//Indekser_deleteGcedFile(lotNr, subname);
+			lotDeleteFile("gced", lotNr, subname);
 		}
 
 
