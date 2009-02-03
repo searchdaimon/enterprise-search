@@ -109,14 +109,15 @@ cache_indexex_walk(char *path, size_t len, size_t *cached)
 
 			if (cached[0] + st.st_size > MAX_INDEX_CACHE && 0)
 				continue;
-			printf("Found index: %s\n", path);
+			//printf("Found index: %s\n", path);
 			fd = open(path, O_RDONLY);
 			if (fd == -1) {
 				warn("open(%s)", path);
 				continue;
 			}
-#if 1
 			if (st.st_size == 0) {
+#if 1
+				/* XXX: Not sure about this, will empty iindexes ever be opnened during search? */
 				ic = malloc(sizeof(*ic));
 				ic->size = 0;
 				ic->ptr = NULL;
@@ -125,11 +126,10 @@ cache_indexex_walk(char *path, size_t len, size_t *cached)
 				memcpy(p, path, len+len2);
 				p[len+len2] = '\0';
 				hashtable_insert(indexcachehash, strdup(path), ic);
-
+#endif
 				close(fd);
 				continue;
 			}
-#endif
 			if ((ptr = mmap(0, st.st_size, PROT_READ, MAP_SHARED|MAP_LOCKED, fd, 0)) == MAP_FAILED) {
 				warn("mmap(indexcache)");
 				close(fd);
@@ -220,7 +220,7 @@ cache_fresh_lot_collection(void)
 					continue;
 
 				sprintf(path+len+len2, "/%s", de2->d_name);
-				printf("Found file: %s\n", path);
+				//printf("Found file: %s\n", path);
 				fd = open(path, O_RDONLY);
 				if (fd == -1)
 					continue;
@@ -264,13 +264,13 @@ cache_indexes_keepalive_thread(void *dummy)
 		pthread_cond_wait(&index_cache_cv, &index_cache_lock);
 
 		// Refresh cache
-#if defined DEBUG || 1
-		printf("Refreshing index cache...\n");
-#endif
+		//printf("Refreshing index cache...\n");
 		cache_indexes_empty();
 		cache_indexes();
 		// Preopen some other files
 		preopen();
+		// Lot directories
+		cache_fresh_lot_collection();
 		pthread_mutex_unlock(&index_cache_lock);
 
 	}
