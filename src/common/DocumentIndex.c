@@ -485,7 +485,9 @@ int DIRead_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subn
 
 
 	if (file == NULL) {
+		#ifdef DEBUG
 		printf("DIRead_fh: file isent open.\n");
+		#endif
 		forReturn = DIRead_fmode(DocumentIndexPost,DocID,subname,'r');
 	}
 	else {
@@ -520,7 +522,9 @@ int DIRead_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subna
 
 
 	if (file == -1) {
+		#ifdef DEBUG
 		printf("DIRead_fh: file isent open.\n");
+		#endif
 		forReturn = DIRead_fmode(DocumentIndexPost,DocID,subname,'r');
 	}
 	else {

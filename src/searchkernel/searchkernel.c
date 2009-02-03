@@ -749,7 +749,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 					// dermed bare vise ".." som title
 					//if ( ((int)(*Sider).title - (int)strpointer) > 10) {
 					if ( ((int)strpointer - (int)(*Sider).title) > 10) {
-						printf("chop\n");
+						vboprintf("chop\n");
 						strpointer[0] = '\0';
 					}
 					else {
@@ -958,7 +958,7 @@ int nextPage(struct PagesResultsFormat *PagesResults) {
 	#endif
 
 	if (((*PagesResults).activetreads > 2) && ((*PagesResults).MaxsHits - (*PagesResults).nextPage) < 3) {
-		printf("we have %i pages, and %i activetreads. This tread can die.\n",(*PagesResults).nextPage,(*PagesResults).activetreads);
+		vboprintf("we have %i pages, and %i activetreads. This tread can die.\n",(*PagesResults).nextPage,(*PagesResults).activetreads);
 		--(*PagesResults).activetreads;
 		forreturn = -1;
 	}
@@ -2034,7 +2034,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		//henter brukerens passord fra boithoad
 		gettimeofday(&start_time, NULL);
 		//henter inn brukerens passord
-		printf("geting pw for \"%s\"\n",PagesResults.search_user);
+		vboprintf("geting pw for \"%s\"\n",PagesResults.search_user);
 		/**************************************************************************
 		Runarb: 08 Jan 2008: Gjør av vi bare hopper over å hente gruppe info hvis vi ikke
 		for det til.
@@ -2052,7 +2052,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	        	(*SiderHeder).queryTime.getUserObjekt = getTimeDifference(&start_time,&end_time);
 		}
 
-		printf("groupOrQuery \"%s\"\n",groupOrQuery);
+		vboprintf("groupOrQuery \"%s\"\n",groupOrQuery);
 
 
 		/****************************************************************/
@@ -2063,7 +2063,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		gettimeofday(&start_time, NULL);
 		int errorbufflen = 512;
 		char errorbuff[errorbufflen];
-		printf("making a connection to crawlerManager\n");
+		vboprintf("making a connection(s) to crawlerManager(s)\n");
 		if (!cmc_conect(&PagesResults.cmcsocketha,errorbuff,errorbufflen,(*searchd_config).cmc_port)) {
                         //printf("Error: %s:%i\n",errorbuff,(*searchd_config).cmc_port);
 			(*errorLen) = snprintf(errorstr,(*errorLen),"Can't connect to crawler manager: \"%s\", port %i",errorbuff,(*searchd_config).cmc_port);
@@ -2100,7 +2100,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
    		// Print query med innebygd print-funksjon:
     		char        buf[1024];
     		sprint_expanded_query(buf, 1023, &PagesResults.QueryData.queryParsed);
-    		printf("\nExpanded query: %s\n\n", buf);
+    		vboprintf("\nExpanded query: %s\n\n", buf);
 
 	#endif
 
@@ -2157,7 +2157,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 				struct socket_pool *pool = &PagesResults.cmConn;
 				gettimeofday(&start_time, NULL);
 				for (k = 0; k < MAX_CM_CONSUMERS; k++) {
-					printf("making a connection to crawlerManager: %d:%d\n", k, MAX_CM_CONSUMERS);
+					vboprintf("making a connection to crawlerManager: %d:%d\n", k, MAX_CM_CONSUMERS);
 					pool->used[k] = 0;
 					if (!cmc_conect(&pool->sock[k], errorbuff,errorbufflen,(*searchd_config).cmc_port)) {
 						printf("Error: %s:%i\n",errorbuff,(*searchd_config).cmc_port);
@@ -2411,12 +2411,22 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		if (SiderHeder->TotaltTreff < 10) {
 			query_array qa;
 
+			#ifdef DEBUG_TIME
+                		gettimeofday(&start_time, NULL);
+        		#endif
+
 			copy_query(&qa, &PagesResults.QueryData.queryParsed);
 
 			if (spellcheck_query(SiderHeder, &qa) > 0) {
 				printf("Query corrected to: %s\n", SiderHeder->spellcheckedQuery);
 			}
 			destroy_query(&qa);
+
+			#ifdef DEBUG_TIME
+                		gettimeofday(&end_time, NULL);
+                		printf("Time debug: spellcheck_query(%s) time: %f\n",PagesResults.QueryData.query,getTimeDifference(&start_time, &end_time));
+		        #endif
+
 		}
 	}
 	else SiderHeder->spellcheckedQuery[0] = '\0';
@@ -2733,7 +2743,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		strlcat(groupOrQuery," |",sizeof(groupOrQuery));
 		strlcat(groupOrQuery,PagesResults.search_user,sizeof(groupOrQuery));
 
-		printf("groupOrQuery \"%s\"\n",groupOrQuery);
+		vboprintf("groupOrQuery \"%s\"\n",groupOrQuery);
 		/****************************************************************/
 
 

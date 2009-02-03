@@ -852,7 +852,7 @@ void *do_chld(void *arg)
 	
 	//printf("query \"%s\", TotaltTreff %i,showabal %i,filtered %i,total_usecs %f\n",queryNodeHeder.query,SiderHeder->TotaltTreff,SiderHeder->showabal,SiderHeder->filtered,SiderHeder->total_usecs);
 
-	fprintf(stderr, "searchd_child: |%-40s | %-11i | %-11i | %-11i | %-11f|\n",
+	fprintf(stderr, "|%-40s | %-11i | %-11i | %-11i | %-11f|\n",
 		queryNodeHeder.query,
 		SiderHeder->TotaltTreff,
 		SiderHeder->showabal,

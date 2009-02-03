@@ -172,7 +172,10 @@ struct reformat *reopen_cache(int lotNr, size_t structsize, char file[], char su
 		if (re != NULL)
 			return re;
 	}
-	printf("Cache miss for %s:%s lot %d\n", subname, file, lotNr);
+	#ifdef DEBUG
+	printf("reopen_cache: Cache miss for %s:%s lot %d\n", subname, file, lotNr);
+	#endif
+
 	re = reopen(lotNr, structsize, file, subname, flags);
 	if (re == NULL) {
 		return NULL;
@@ -190,9 +193,10 @@ reclose_cache(void)
         struct hashtable_itr *itr;
 	char *filesname;
 
-        struct timeval start_time, end_time;
-        gettimeofday(&start_time, NULL);
-
+	#ifdef DEBUG_TIME
+	        struct timeval start_time, end_time;
+	        gettimeofday(&start_time, NULL);
+	#endif
 
       	//itererer over hash, frigjør alle elementer
         if (lots_cache!= NULL && hashtable_count(lots_cache) > 0)
@@ -204,7 +208,9 @@ reclose_cache(void)
                 	filesname = hashtable_iterator_key(itr);
                         re = hashtable_iterator_value(itr);
 
-			printf("closing \"%s\"\n",filesname);
+			#ifdef DEBUG
+			printf("reclose_cache: closing \"%s\"\n",filesname);
+			#endif
 
 			reclose(re);
 
@@ -213,10 +219,11 @@ reclose_cache(void)
 
                 free(itr);
 	}
+	#ifdef DEBUG_TIME
+	        gettimeofday(&end_time, NULL);
+	        printf("Time debug: reclose_cache %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
 
-        gettimeofday(&end_time, NULL);
-        printf("Time debug: reclose_cache %f\n",getTimeDifference(&start_time,&end_time));
-	
 
 	return; 
 }

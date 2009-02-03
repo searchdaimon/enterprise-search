@@ -228,7 +228,9 @@ container* thesaurus_get_synonyms(thesaurus *T, char *_word)
 void thesaurus_expand_query( thesaurus *T, query_array *qa )
 {
     if (T==NULL) return;
-    fprintf(stderr, "stemmer: thesaurus_expand_query()\n");
+    #ifdef DEBUG
+	    fprintf(stderr, "stemmer: thesaurus_expand_query()\n");
+    #endif
 
     int		i, j, k;
 
@@ -284,6 +286,8 @@ void thesaurus_expand_query( thesaurus *T, query_array *qa )
 		}
 	}
 
-    fprintf(stderr, "stemmer: ~thesaurus_expand_query()\n");
+    #ifdef DEBUG
+	    fprintf(stderr, "stemmer: ~thesaurus_expand_query()\n");
+    #endif
 }
 
