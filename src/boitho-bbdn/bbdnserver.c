@@ -11,6 +11,7 @@
 #include "../common/daemon.h"
 #include "../bbdocument/bbdocument.h"
 #include "../maincfg/maincfg.h"
+#include "../common/timediff.h"
 
 #include "bbdn.h"
 
@@ -48,9 +49,13 @@ void connectHandler(int socket) {
 	int count = 0;
 	container *attrkeys;
 
+        #ifdef DEBUG_TIME
+      		struct timeval start_time, end_time;
+                struct timeval tot_start_time, tot_end_time;
+                gettimeofday(&tot_start_time, NULL);
+        #endif
 
 while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
-//if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
 
 	#ifdef DEBUG
 	printf("size is: %i\nversion: %i\ncommand: %i\n",packedHedder.size,packedHedder.version,packedHedder.command);
@@ -99,6 +104,10 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			char *attributes;
 			int dokument_size;
 			unsigned int lastmodified;
+
+			#ifdef DEBUG_TIME
+                		gettimeofday(&start_time, NULL);
+        		#endif
 
 			//subname
 			if ((i=recvall(socket, &intrespons, sizeof(intrespons))) == 0) {
@@ -209,10 +218,23 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			if ((i=recvall(socket, attributes, intrespons)) == 0)
 				err(1, "Can't receive attribute list");
 
+			#ifdef DEBUG_TIME
+                		gettimeofday(&end_time, NULL);
+                		printf("Time debug: bbdn_docadd recv data time: %f\n",getTimeDifference(&start_time, &end_time));
+        		#endif
+
 			printf("got subname \"%s\": title \"%s\". Nr %i, dokument_size %i attrib: %s\n",subname,title,count,dokument_size, attributes);
+
+        		#ifdef DEBUG_TIME
+        		        gettimeofday(&start_time, NULL);
+		        #endif
 
 			bbdocument_add(subname,documenturi,documenttype,document,dokument_size,lastmodified,acl_allow,acl_denied,title,doctype, attributes, attrkeys);
 
+			#ifdef DEBUG_TIME
+                		gettimeofday(&end_time, NULL);
+                		printf("Time debug: bbdn_docadd runing bbdocument_add() time: %f\n",getTimeDifference(&start_time, &end_time));
+        		#endif
 			free(subname);
 			free(documenturi);
 			free(documenttype);
@@ -267,5 +289,11 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 
 
 }
+
+
+        #ifdef DEBUG_TIME
+                gettimeofday(&tot_end_time, NULL);
+                printf("Time debug: bbdn total time time: %f\n",getTimeDifference(&tot_start_time, &tot_end_time));
+        #endif
 
 }
