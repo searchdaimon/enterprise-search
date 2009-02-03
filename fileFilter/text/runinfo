@@ -1,6 +1,8 @@
 documentstype: txt
 format: text
 
-documentstype: tapp
+documentstype: ini
 format: text
 
+documentstype: tapp
+format: text
