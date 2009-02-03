@@ -3,6 +3,10 @@
 echo -n "Searchdaimon ES running on " > /etc/issue
 cat /etc/system-release >> /etc/issue
 echo "Kernel \r on an \m" >> /etc/issue
-echo -n "IP-" >> /etc/issue
-ifconfig eth1|sed -ne "2p"|awk '{print $2}' >> /etc/issue
+ADDR=`ifconfig eth1|sed -ne "2p"`
+if [[ `echo $ADDR|awk '{print $1}'` == "inet" ]]; then
+    echo "IP-"`echo $ADDR|awk '{print $2}'` >> /etc/issue
+else
+    echo "Couldn't get IP-adress." >> /etc/issue
+fi
 echo >> /etc/issue
