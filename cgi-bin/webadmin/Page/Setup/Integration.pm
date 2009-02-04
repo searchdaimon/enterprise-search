@@ -46,7 +46,7 @@ sub process_integration {
 
 	croak "FATAL: A primary system already exists"
 		if  $s->{sql_sys}->exists({ is_primary => 1 }) 
-		and $s->{sql_sys}->get({ is_primary => 1})->{ip} ne '127.0.0.1';
+		and !$s->_primary_is_default_install();
 
 	$s->{sql_sys}->delete({ is_primary => 1 })
 		if $s->{sql_sys}->exists({ is_primary => 1 });
@@ -67,6 +67,20 @@ sub process_integration {
 	}
 	
 	return undef;
+}
+
+sub _primary_is_default_install {
+	my $s = shift;
+	my $id = $s->{sql_sys}->get({ is_primary => 1 })->{id};
+
+	use Sql::SystemParamValue;
+	my $ip = Sql::SystemParamValue->new($s->{dbh})->get({
+		system => $id,
+		param => "ip",
+	})->{value};
+	#warn $ip eq "127.0.0.1" ? "is default" : "is not default";
+	return $ip eq "127.0.0.1";
+
 }
 
 
