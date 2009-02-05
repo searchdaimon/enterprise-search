@@ -91,9 +91,11 @@
 	[% END %]
 [% IF res_info.spelling.text %]
     <div id="spellcheck">
-    	[% SET url = res_info.spelling.query | query_url %]
     	[% s = "Did you mean: %1?"; 
-	   s.i18n(HTML.escape(res_info.spelling.text), HTML.escape(url)) %]
+	   s.i18n(HTML.escape(
+	   	res_info.spelling.text), 
+		HTML.escape(res_info.spelling.query.query_url)) 
+	 %]
 	</div> 
 [% END %]
 

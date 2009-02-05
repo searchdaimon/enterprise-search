@@ -216,7 +216,9 @@ sub init_tpl {
 	}; 
 	# tpl instance, with filter and vmethod
         $Template::Stash::SCALAR_OPS->{i18n} = $i18n_filter;
+	$Template::Stash::SCALAR_OPS->{query_url} = \&gen_query_url;
 	my (undef) = $Template::Stash::SCALAR_OPS->{i18n}; # rm warning
+	my (undef) = $Template::Stash::SCALAR_OPS->{query_url};
 
 	$VALID_TPL{$tpl_name} or fatal("Invalid template '$tpl_name'");
 
