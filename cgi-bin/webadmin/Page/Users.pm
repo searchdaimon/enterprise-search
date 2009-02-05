@@ -56,13 +56,19 @@ sub show_usr_list {
 
 	my $prim_sys = Sql::System->new($s->{dbh})->primary_id();
 
+	my $iq_users_ref = $s->{iq}->listUsers($prim_sys);
 	my @users;
-	for my $usr (@{$s->{iq}->listUsers($prim_sys)}) {
-		push @users, {
-			username => $usr,
-			active   => $active{$usr},
-		};
-		delete $active{$usr};
+	if (defined $iq_users_ref) {
+		for my $usr (@{$iq_users_ref}) {
+			push @users, {
+				username => $usr,
+				active   => $active{$usr},
+			};
+			delete $active{$usr};
+		}
+	}
+	else {
+		$vars->{error} = "Unable to fetch user list. " . $s->{iq}->error;
 	}
 
 	$vars->{users} = \@users;
