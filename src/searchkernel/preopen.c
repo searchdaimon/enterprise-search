@@ -21,6 +21,8 @@ preopen(void)
 {
 	int i;
         DIR *dirh;
+
+	reclose_cache();
 	
 	if ((dirh = listAllColl_start()) == NULL)
                 err(1, "listAllColl_start()");
