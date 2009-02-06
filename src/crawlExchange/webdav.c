@@ -5,6 +5,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/time.h>
 #include <string.h>
 
 
@@ -71,7 +72,7 @@ ex_getEmail(const char *url, struct ex_buffer *buf, CURL ** curl)
 {
 	CURLcode result;
 	struct curl_slist *headers = NULL;
-	time_t start_time, end_time;
+	struct timeval start_time, end_time;
 
 	printf("ex_getEmail(url=%s)\n",url);
 
