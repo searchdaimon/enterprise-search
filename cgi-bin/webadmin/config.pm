@@ -177,7 +177,8 @@ $CONFIG{user_systems} = {
 	1 => "Active Directory",
 	#2 => "Super Office",
 	#3 => "Lightweight Directory Access Protocol (LDAP)"
-	3 => "Other",
+	#3 => "Other",
+	3 => "Connector Pushed",
 };
 
 
