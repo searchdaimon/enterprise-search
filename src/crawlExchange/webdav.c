@@ -13,6 +13,7 @@
 #include <stdlib.h>
 
 #include "webdav.h"
+#include "../common/timediff.h"
 
 
 char *
@@ -70,6 +71,7 @@ ex_getEmail(const char *url, struct ex_buffer *buf, CURL ** curl)
 {
 	CURLcode result;
 	struct curl_slist *headers = NULL;
+	time_t start_time, end_time;
 
 	printf("ex_getEmail(url=%s)\n",url);
 
@@ -84,8 +86,11 @@ ex_getEmail(const char *url, struct ex_buffer *buf, CURL ** curl)
 	curl_easy_setopt(*curl, CURLOPT_CUSTOMREQUEST, "GET");
 	curl_easy_setopt(*curl, CURLOPT_WRITEFUNCTION, ex_write_buffer);
 	curl_easy_setopt(*curl, CURLOPT_WRITEDATA, buf);
+	gettimeofday(&start_time, NULL);
 	result = curl_easy_perform(*curl);
+	gettimeofday(&end_time, NULL);
 	curl_slist_free_all(headers);
+	printf("Grab took: %f\n", getTimeDifference(&start_time,&end_time));
 
 	return buf->buf;
 }
