@@ -95,9 +95,10 @@ crawlGo(struct crawlinfo *ci)
 	printf("connected\n");
 
 
-	i = asprintf(&sendbuf, "user %s\npassword %s\ncollection %s\nusersystem %d\nmodule %s\n",
+	i = asprintf(&sendbuf, "user %s\npassword %s\ncollection %s\nusersystem %d\nmodule %s\nlastcrawl %d\n",
 	    ci->collection->user, ci->collection->password,
-	    ci->collection->collection_name, ci->collection->usersystem, "superoffice");
+	    ci->collection->collection_name, ci->collection->usersystem, "superoffice",
+	    ci->collection->lastCrawl);
 	asprintf(&sendbuflen, "%d\n", i);
 	if (send(s, sendbuflen, strlen(sendbuflen), 0) == -1)
 		warn("send(len)");
