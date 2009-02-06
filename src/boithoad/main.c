@@ -1049,7 +1049,6 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 			const char *ldap_host 		= bconfig_getentrystr("_ad_ip");
 			const char *ldap_domain 	= bconfig_getentrystr("domain");
 			const int   ldap_port = 0; // runarb: 12 des 2007: er 0 riktig initalisering??
-			//bconfig_getentryint("msad_port",&ldap_port);
 			const char *msad_ldapstring 	= bconfig_getentrystr("ldapstring");
 			const char *msad_ldapgroupstring = bconfig_getentrystr("ldapgroupstring");
 			const char *msad_ldapbase 	= bconfig_getentrystr("ldapbase");
@@ -1492,10 +1491,6 @@ void badldap_init(FILE *elog) {
         }
    	if (bconfig_getentrystr("msad_domain") == NULL) {
 		blog(elog, 1, "cant read config for msad_domain");
-		exit(1);
-        }
-   	if (bconfig_getentrystr("msad_port") == NULL) {
-		blog(elog, 1, "cant read config for msad_port");
 		exit(1);
         }
 
