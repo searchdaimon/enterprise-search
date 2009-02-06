@@ -1050,7 +1050,6 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 			const char *ldap_domain 	= bconfig_getentrystr("domain");
 			const int   ldap_port = 0; // runarb: 12 des 2007: er 0 riktig initalisering??
 			//bconfig_getentryint("msad_port",&ldap_port);
-			//const char *ldap_group 	= bconfig_getentrystr("msad_group");
 			const char *msad_ldapstring 	= bconfig_getentrystr("ldapstring");
 			const char *msad_ldapgroupstring = bconfig_getentrystr("ldapgroupstring");
 			const char *msad_ldapbase 	= bconfig_getentrystr("ldapbase");
@@ -1076,7 +1075,6 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
                                         strscpy(ldap_base,msad_ldapbase,sizeof(ldap_base));
                                 }
                                 if ((msad_ldapstring == NULL) || (msad_ldapstring[0] == '\0')) {
-                                        //sprintf(adminsdistinguishedName,"cn=%s,cn=%s,%s",admin_username,ldap_group,ldap_base);
                                         //bruker brukernavn på formen user@domain.ttl
                                         sprintf(adminsdistinguishedName,"%s@%s",admin_username,ldap_domain);
                                 }
@@ -1499,10 +1497,6 @@ void badldap_init(FILE *elog) {
    	if (bconfig_getentrystr("msad_port") == NULL) {
 		blog(elog, 1, "cant read config for msad_port");
 		exit(1);
-        }
-   	if (bconfig_getentrystr("msad_group") == NULL) {
-		blog(elog, 1, "cant read config for msad_group");
-		//exit(1);
         }
 
 }
