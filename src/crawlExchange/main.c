@@ -208,6 +208,7 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 		destroy(M_header);
 
 		printf("Adding: '%s'\n", crawldocumentAdd.title);
+		printf("usersid \"%s\"\nacl_allow \"%s\"\nacl_denied \"%s\"\n",usersid,crawldocumentAdd.acl_allow , crawldocumentAdd.acl_denied);
 		(ci->documentAdd)(ci->collection, &crawldocumentAdd);
 		if (crawldocumentAdd.title[0] != '\0')
 			free(crawldocumentAdd.title);
@@ -253,7 +254,7 @@ void splitUserString(char *userString,  char **user, char **usersid) {
 		*usersid = p;
 	}
 	
-	printf("user \"%s\"\nusersid \"%s\"\n",*user,*usersid);
+	printf("splitUserString: user \"%s\"\nsplitUserString: usersid \"%s\"\n",*user,*usersid);
 }
 
 int
@@ -378,7 +379,7 @@ crawlGo(struct crawlinfo *ci)
 	char origresource[PATH_MAX];
 	char resource[PATH_MAX];
 	char **users;
-	char *user, *usersid;
+	char *user, *usersid=NULL;
 	char *eerror;
 	set *acl_allow, *acl_deny;
 	CURL *curl;
@@ -435,7 +436,7 @@ crawlGo(struct crawlinfo *ci)
 			acl_deny = malloc(sizeof(*acl_deny));
 			set_init(acl_allow);
 			set_init(acl_deny);
-			if (!grabContent(listxml, resource, ci, acl_allow, acl_deny, NULL, &curl, &login))
+			if (!grabContent(listxml, resource, ci, acl_allow, acl_deny, usersid, &curl, &login))
 				err++;
 			set_free_all(acl_allow);
 			set_free_all(acl_deny);
