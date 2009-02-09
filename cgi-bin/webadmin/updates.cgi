@@ -30,7 +30,7 @@ if (defined $state{btn}) {
         $tpl_file = $page->update_packages($vars);
     }
     elsif ($btn->{upload}) {
-        $tpl_file = $page->upload_pkg($vars, $state{pkg_file});
+        $tpl_file = $page->upload_pkg($vars, $state{upload}->{pkg_file});
     }
     elsif ($btn->{run_install}) {
         $tpl_file = $page->install_uploaded($vars);

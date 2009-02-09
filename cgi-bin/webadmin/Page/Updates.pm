@@ -6,6 +6,7 @@ use Data::Dumper;
 use File::Path;
 use Page::Abstract;
 use Common::TplCheckList;
+use Params::Validate qw(validate_pos OBJECT);
 BEGIN {
 	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
@@ -50,49 +51,57 @@ sub show_advanced {
 }
 
 sub upload_pkg {
-    my ($s, $vars, $file) = @_;
+	validate_pos(@_, 1, 1, { type => OBJECT });
+	my ($s, $vars, $file) = @_;
 
 
-    # Some browsers send full path. Use only the filename.
-    $file =~ s/.*[\/\\](.*)/$1/;
-    
-    
-    # Strip chrs that the wrapper doesn't like
-    my $filename = $s->strip_filename($file);
+	# Some browsers send full path. Use only the filename.
+	# 9.feb 09 -calling s//$1 regex directly on $file,
+	# will cause the fh to close with IE o_O. 
+	$file =~ /.*[\/\\](.*)/;
+	my $filename = $1;
+	# Workaround, copying by regex.
+	unless (defined $filename) {
+		$file =~ /(.*)/;
+		$filename = $1;
+	}
 
-    if (!$filename or $filename !~ /\.rpm$/) {
-        $vars->{'error_not_rpm'} = $filename;
-        return $s->show_advanced($vars);
-    }
+	# Strip chrs that the wrapper doesn't like
+	$filename = $s->strip_filename($filename);
 
-    # Add number suffix if file already exists.
-    my $folder = $CONFIG->{'rpm_upload_folder'};
-    my $filenum = q{};
-    my $filepath;
-    while (1) {
-        $filepath = "$folder/$filenum$filename";
-        $filenum = $filenum ? ++$filenum : 1;
-        last unless -e $filepath;
-    }
+	if (!$filename or $filename !~ /\.rpm$/) {
+		$vars->{'error_not_rpm'} = $filename;
+		return $s->show_advanced($vars);
+	}
 
-    # Write the file.
-    unless (-e $folder) {
-        carp "Upload folder ($folder) does not exist, attempting to create it.";
-        eval { mkpath($folder) };
-        croak "Unable to create folder $folder, $@\n" if $@;
-    }
+	# Add number suffix if file already exists.
+	my $folder = $CONFIG->{'rpm_upload_folder'};
+	my $filenum = q{};
+	my $filepath;
+	while (1) {
+		$filepath = "$folder/$filenum$filename";
+		$filenum = $filenum ? ++$filenum : 1;
+		last unless -e $filepath;
+	}
 
-    open my $rpm_file, ">", $filepath
-        or croak "RPM Upload: Unable to open $filepath for writing";
-    
-    my $buffer;
-    while (read($file, $buffer, 1024)) {
-        print {$rpm_file} $buffer;
-    }
+	# Write the file.
+	unless (-e $folder) {
+		carp "Upload folder ($folder) does not exist, attempting to create it.";
+		eval { mkpath($folder) };
+		croak "Unable to create folder $folder, $@\n" if $@;
+	}
 
-    $vars->{'succs_upload'} = $filename;
+	open my $rpm_file, ">", $filepath
+		or croak "RPM Upload: Unable to open $filepath for writing";
 
-    return $s->show_advanced($vars);
+	my $buffer;
+	while (read($file, $buffer, 1024)) {
+		print {$rpm_file} $buffer;
+	}
+
+	$vars->{'succs_upload'} = $filename;
+
+	return $s->show_advanced($vars);
 }
 
 ##
