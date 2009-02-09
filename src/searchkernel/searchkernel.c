@@ -842,6 +842,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 
 					strlcpy(tmpurl, url, sizeof(tmpurl));
 					//printf("Dup url: %s -- %s\n", url, tmpurl);
+#ifdef BLACK_BOKS
 					handle_url_rewrite(tmpurl, sizeof(tmpurl), PagesResults->ptype,
 							PagesResults->btype,
 							dup_subname, tmpurl,
@@ -852,6 +853,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 							NULL
 #endif
 							);
+#endif
 					//printf("tmpurl: %s\n", tmpurl);
 					Sider->urls[k-x].url = strdup(tmpurl);
 					Sider->urls[k-x].uri = strdup(tmpurl);

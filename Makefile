@@ -449,7 +449,7 @@ searchcl : src/searchkernel/searchcl.c
 #dropper -D WITH_MEMINDEX og -D WITH_RANK_FILTER for nå
 #SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c   src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD $(LIBCONFIG)
 #må ha -D_GNU_SOURCE for O_DIRECT
-SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/dp/dp.c src/searchkernel/verbose.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/stemmer.o src/query/lex.query.o src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER2) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D DISK_PROTECTOR
+SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/searchkernel/htmlstriper.c src/dp/dp.c src/searchkernel/verbose.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/stemmer.o src/query/lex.query.o src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER2) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D DISK_PROTECTOR
 
 
 searchddep:
@@ -470,7 +470,7 @@ searchd : src/searchkernel/searchd.c
 searchdbb : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(SEARCHCOMMAND) src/searchkernel/htmlstriper.c $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/libfte.a src/newspelling/spelling.c src/newspelling/dmetaphone.c src/newspelling/levenshtein.c src/searchkernel/preopen.c src/getFiletype/libfte.a src/attributes/libshow_attr.a src/ds/libds.a -DIIACL $(24SEVENOFFICE) -DWITH_SPELLING -DWITH_THREAD
+	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/libfte.a src/newspelling/spelling.c src/newspelling/dmetaphone.c src/newspelling/levenshtein.c src/searchkernel/preopen.c src/getFiletype/libfte.a src/attributes/libshow_attr.a src/ds/libds.a -DIIACL $(24SEVENOFFICE) -DWITH_SPELLING -DWITH_THREAD
 
 mergeUserToSubname: src/mergeUserToSubname/main.c
 	@echo ""

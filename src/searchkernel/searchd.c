@@ -248,6 +248,7 @@ int main(int argc, char *argv[])
 	lotPreOpenStartl(&searchd_config.lotPreOpen.DocumentIndex,"DocumentIndex","www",searchd_config.optPreOpen);
 	lotPreOpenStartl(&searchd_config.lotPreOpen.Summary,"summary","www",searchd_config.optPreOpen);
 
+#ifdef BLACK_BOKS
 	if (searchd_config.optCacheIndexes == 1) {
 		if (searchd_config.optFastStartup != 1) {
 			printf("Reading indexes...\n");
@@ -259,6 +260,7 @@ int main(int argc, char *argv[])
 		cache_indexes_keepalive();
 		signal(SIGUSR2, cache_indexes_hup);
 	}
+#endif
 
 
 	#ifdef BLACK_BOKS

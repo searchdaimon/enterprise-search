@@ -75,6 +75,14 @@
 #define MainRFC1 	200000
 #define MainRFC2 	10000
 
+#ifndef BLACK_BOKS
+void *
+cache_index_get(char *path, size_t *size)
+{
+	return NULL;
+}
+#endif
+
 int compare_elements (const void *,const void *);
 int compare_filetypes (const void *p1, const void *p2);
 
@@ -2265,10 +2273,12 @@ void *searchIndex_thread(void *arg)
         vboprintf("is thread id %u. Wil search \"%s\"\n",(unsigned int)tid,(*searchIndex_thread_arg).indexType);
 	#endif
 
+#ifdef BLACK_BOKS
 	int cmc_sock;
 	char cmc_statusbuf[1024];
 	cmc_conect(&cmc_sock, cmc_statusbuf, sizeof(cmc_statusbuf), searchIndex_thread_arg->cmc_port);
 	struct hashtable *groupqueries = create_hashtable(3, ht_integerhash, ht_integercmp);
+#endif
 
 	ArrayLen = 0;
 	
@@ -2621,6 +2631,7 @@ void *searchIndex_thread(void *arg)
 
 		
 	}
+#ifdef BLACK_BOKS
 	cmc_close(cmc_sock);
 	{
 		struct hashtable_itr *itr;
@@ -2633,6 +2644,7 @@ void *searchIndex_thread(void *arg)
 		}
 	}
 	hashtable_destroy(groupqueries, 1);
+#endif
 
 	free(TmpArray);
 	free(TmpArray2);
