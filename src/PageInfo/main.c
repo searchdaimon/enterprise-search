@@ -8,7 +8,9 @@
 #include "../common/DocumentIndex.h"
 #include "../common/poprank.h"
 #include "../common/reposetory.h"
+#include "../common/langToNr.h"
 #include "../common/search_automaton.h"
+#include "../cgi-util/cgi-util.h"
 
 #include "../parser/html_parser.h"
 #include "../IndexerRes/IndexerRes.h"
@@ -100,53 +102,91 @@ int main (int argc, char *argv[]) {
 	int optDelete = 0;
 	int optAdult = 0;
 
+	unsigned int DocID;
+	char *subname;
 
-        extern char *optarg;
-        extern int optind, opterr, optopt;
-        char c;
-        while ((c=getopt(argc,argv,"hwsarpdu"))!=-1) {
-                switch (c) {
-                        case 'h':
-                                optShowhtml = 1;
-                                break;
-                        case 'u':
-                                optAdult = 1;
-                                break;
-                        case 'w':
-				optShowWords = 1;
-                                break;
-                        case 's':
-				optSummary = 1;
-                                break;
-                        case 'a':
-				optAnchor = 1;
-                                break;
-			case 'p':
-				optPopRank = 1;
-				break;
-			case 'r':
-				optResource = 1;
-				break;
-			case 'd':
-				optDelete = 1;
-				break;
-                        default:
-                                          exit(1);
-                }
-        }
-        --optind;
+	if (getenv("QUERY_STRING") == NULL) {
 
-	#ifdef DEBUG
-        printf("argc %i, optind %i\n",argc,optind);
-	#endif
+	        extern char *optarg;
+	        extern int optind, opterr, optopt;
+	        char c;
+	        while ((c=getopt(argc,argv,"hwsarpdu"))!=-1) {
+	                switch (c) {
+	                        case 'h':
+	                                optShowhtml = 1;
+	                                break;
+	                        case 'u':
+	                                optAdult = 1;
+	                                break;
+	                        case 'w':
+					optShowWords = 1;
+	                                break;
+	                        case 's':
+					optSummary = 1;
+	                                break;
+	                        case 'a':
+					optAnchor = 1;
+	                                break;
+				case 'p':
+					optPopRank = 1;
+					break;
+				case 'r':
+					optResource = 1;
+					break;
+				case 'd':
+					optDelete = 1;
+					break;
+	                        default:
+	                                          exit(1);
+	                }
+	        }
+	        --optind;
 
-        if ((argc - optind)!= 3) {
-		printf("Dette programet gir info om en DocID\n\n\tUsage PageInfo DocID collection\n");
-		exit(1);
+		#ifdef DEBUG
+	        printf("argc %i, optind %i\n",argc,optind);
+		#endif
+
+	        if ((argc - optind)!= 3) {
+			printf("Dette programet gir info om en DocID\n\n\tUsage PageInfo DocID collection\n");
+			exit(1);
+		}
+
+		
+		DocID = atol(argv[1 +optind]);
+		subname = argv[2 +optind];
+
+
 	}
+	else {
+		printf("Content-type: text/plain\n\n");
+		int res;
+	        // Initialize the CGI lib
+	        res = cgi_init();
 
-	const unsigned int DocID = atol(argv[1 +optind]);
-	char *subname = argv[2 +optind];
+	        // Was there an error initializing the CGI???
+	        if (res != CGIERR_NONE) {
+	                printf("Error # %d: %s<p>\n", res, cgi_strerror(res));
+	                fprintf(stderr,"Cgi-lib error.");
+			return -1;
+	        }
+
+	        if (cgi_getentrystr("subname") == NULL) {
+	                fprintf(stderr,"Didn't recieve any subname.");
+			return -1;
+	        }
+	        else {
+	                subname = cgi_getentrystr("subname");
+	        }
+
+	        if (cgi_getentrystr("DocID") == NULL) {
+	                fprintf(stderr,"Didn't recieve any DocID.");
+			return -1;
+	        }
+	        else {
+	                DocID = atol( cgi_getentrystr("DocID") );
+	        }
+
+	}
 
 	html_parser_init();
 
@@ -162,11 +202,11 @@ int main (int argc, char *argv[]) {
 		return 0;
 	}
 
-	if (DIRead(&DocumentIndexPost,DocID,subname)) {
+	if (DIRead_fmode(&DocumentIndexPost,DocID,subname,'s')) {
 
-		printf("Url: \"%s\"\nLanguage: %s\nOffensive code: %hu\nDocument type: %s\nTime tested sins last good crawl: %hu\nAdult weight: %hu\nResource size: %u\nIPAddress: %u\nHtml size: %i\nImage size: %i\nUserID: %i\nCrawler version: %f\nRepository pointer: %u\n",
+		printf("Url: \"%s\"\nLanguage: %s\nOffensive code: %hu\nDocument type: %s\nTime tested sins last good crawl: %hu\nAdult weight: %hu\nResource size: %u\nIP Address: %u\nHtml size: %i\nImage size: %i\nUser ID: %i\nCrawler version: %f\nRepository pointer: %u\n",
 			DocumentIndexPost.Url, 
-			DocumentIndexPost.Sprok, 
+			getLangCode2(atoi(DocumentIndexPost.Sprok)), 
 			DocumentIndexPost.Offensive_code, 
 			DocumentIndexPost.Dokumenttype, 
 			DocumentIndexPost.AntallFeiledeCrawl, 
@@ -196,7 +236,8 @@ int main (int argc, char *argv[]) {
 		printf("crc32: %u\n",DocumentIndexPost.crc32);
 
 #ifdef BLACK_BOKS
-		printf("lastSeen: %s (%u)\n", ctime(&DocumentIndexPost.lastSeen), DocumentIndexPost.lastSeen);
+		printf("Last seen Unix: %u\n",DocumentIndexPost.lastSeen);
+		printf("Last seen ISO: %s", ctime(&DocumentIndexPost.lastSeen));
 #endif
 
 		printf("Nr of out links: %u\n",(unsigned int)DocumentIndexPost.nrOfOutLinks);
@@ -204,7 +245,7 @@ int main (int argc, char *argv[]) {
 
 		char *metadesc, *title, *body;
 		if (DocumentIndexPost.SummarySize == 0) {
-			printf("Don't have pre-parsed summery (summary size is 0)\n");
+			printf("Summary: Don't have pre-parsed summery (summary size is 0)\n");
 
 		}
 		else if (rReadSummary(DocID,&metadesc, &title, &body,DocumentIndexPost.SummaryPointer,DocumentIndexPost.SummarySize,subname)) {
@@ -213,7 +254,7 @@ int main (int argc, char *argv[]) {
 
 			printf("\tTitle from summary:  \"%s\"\n\tMeta description from summary: \"%s\"\n",title,metadesc);
 			if (optSummary) {
-				printf("sumary body\n*******************\n%s\n*******************\n\n",body);
+				printf("Summary body\n*******************\n%s\n*******************\n\n",body);
 			}
 		}
 		else {
@@ -229,20 +270,21 @@ int main (int argc, char *argv[]) {
 		struct ReposetoryHeaderFormat ReposetoryHeader;
 		char *url, *attributes;
 
-		if (rReadHtml(htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,DocumentIndexPost.imageSize, &url, &attributes)) {
-			printf("returned true!\n");
+		if (!rReadHtml(htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,DocumentIndexPost.imageSize, &url, &attributes)) {
+			printf("rReadHtml: did not returne true!\n");
 		}
-		warn("rreadhtml()");
 		printf("Entire url: %s\n", url);
+
+		#ifdef BLACK_BOKS
+			printf("acl allow: \"%s\"\n",acl_allowbuffer);
+			printf("acl denied: \"%s\"\n",acl_deniedbuffer);
+		#endif
+
 		if (optShowhtml) {
 
 			printf("html uncompresed size %i\n",htmlBufferSize);
 			printf("html buff:\n*******************************\n%s\n*******************************\n\n",htmlBuffer);
 
-			#ifdef BLACK_BOKS
-				printf("acl_allowbuffer: \"%s\"\n",acl_allowbuffer);
-				printf("acl_deniedbuffer: \"%s\"\n",acl_deniedbuffer);
-			#endif
 
 		}
 		if (optShowWords) {
@@ -263,7 +305,7 @@ int main (int argc, char *argv[]) {
 			}
 		}
 		if (optAdult) {
-		int httpResponsCodes[nrOfHttpResponsCodes];
+			int httpResponsCodes[nrOfHttpResponsCodes];
 	        	//char *title;
 	        	//char *body;
 			struct adultFormat *adult;
