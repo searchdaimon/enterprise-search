@@ -1,7 +1,7 @@
 %{
 
 #include "snippet.parser.common.h"
-#include "y.tab.h"
+#include "snippet.parser.tab.h"
 
 static inline void bsgp_newstring( const char* str, yyscan_t scanner );
 

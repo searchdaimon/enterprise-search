@@ -5,8 +5,8 @@ yacc=bison
 all:
 	$(yacc) -d -p bsgp snippet.parser.y
 	flex -f -8 -P bsgp -i snippet.parser.l
-	$(CC) -c lex.bsgp.c y.tab.c
-	ar rc libsnippet_generator.a lex.bsgp.o y.tab.o
+	$(CC) -c lex.bsgp.c snippet.parser.tab.c
+	ar rc libsnippet_generator.a lex.bsgp.o snippet.parser.tab.o
 	ranlib libsnippet_generator.a
 
 
