@@ -177,7 +177,9 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 	MYSQL_RES *res = mysql_store_result(db);
 	MYSQL_ROW row = mysql_fetch_row(res);
 	if (row == NULL) {
-		warnx("No config data for collection %s", coll_name);
+		#ifdef DEBUG
+			warnx("No config data for collection %s", coll_name);
+		#endif
 		return 0;
 	}
 
@@ -3001,14 +3003,16 @@ int main(int argc, char *argv[])
 	}
 	}
 
-	if ((LOGFILE = fopen(QUERY_LOG_FILE,"a")) == NULL) {
-		perror(QUERY_LOG_FILE);
-	}
-	else {
-		flock(fileno(LOGFILE),LOCK_EX);
-        	fprintf(LOGFILE,"%s %i %f nodes: %i\n",queryNodeHeder.query,FinalSiderHeder.TotaltTreff,FinalSiderHeder.total_usecs,nrRespondedServers);
-        	fclose(LOGFILE);
-	}
+	#ifndef BLACK_BOKS
+		if ((LOGFILE = fopen(QUERY_LOG_FILE,"a")) == NULL) {
+			perror(QUERY_LOG_FILE);
+		}
+		else {
+			flock(fileno(LOGFILE),LOCK_EX);
+	        	fprintf(LOGFILE,"%s %i %f nodes: %i\n",queryNodeHeder.query,FinalSiderHeder.TotaltTreff,FinalSiderHeder.total_usecs,nrRespondedServers);
+	        	fclose(LOGFILE);
+		}
+	#endif
 
 	#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
@@ -3669,7 +3673,9 @@ void read_collection_cfg(struct subnamesConfigFormat * dst) {
 	subnamesDefaultsConfig.rankUrlMainWord = config_setting_get_int(cfgstring);
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "defaultthumbnail") ) == NULL) {
-		warnx("can't load \"defaultthumbnail\" from config");
+		#ifdef DEBUG
+			warnx("can't load \"defaultthumbnail\" from config");
+		#endif
 		subnamesDefaultsConfig.defaultthumbnail = NULL;
         }
 	else {
@@ -3677,7 +3683,9 @@ void read_collection_cfg(struct subnamesConfigFormat * dst) {
 	}
 
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "sqlImpressionsLogQuery") ) == NULL) {
-                warnx("can't load \"sqlImpressionsLogQuery\" from config");
+		#ifdef DEBUG
+                	warnx("can't load \"sqlImpressionsLogQuery\" from config");
+		#endif
 		subnamesDefaultsConfig.sqlImpressionsLogQuery[0] = '\0';
         }
 	else {
