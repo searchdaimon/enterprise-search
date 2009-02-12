@@ -1,22 +1,16 @@
 use strict;
 
-if ($#ARGV != 1) {
-	print "usage: ./zonefiles.pl ttl zonefile\n";
+if ($#ARGV != 0) {
+	print "usage: ./zonefiles.pl ttl\n";
 
 }
 
-
 my $ttl = $ARGV[0];
-my $zonefile = $ARGV[1];
 
 
-print "ttl: $ttl, zonefile: $zonefile\n";
-
-
-open(INF,"$zonefile") or die("$zonefile: $!"); 
 
 my $lastdomain = '';
-while (<INF>) {
+while (<STDIN>) {
 	chomp;
 
 	my $line = $_;
