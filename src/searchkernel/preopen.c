@@ -21,19 +21,30 @@ preopen(void)
 {
 	int i;
         DIR *dirh;
+	FILE *FH;
+
 
 	reclose_cache();
 	
-	if ((dirh = listAllColl_start()) == NULL)
-                err(1, "listAllColl_start()");
-
+	if ((dirh = listAllColl_start()) == NULL) {
+		printf("Can't listAllColl_start()\n");
+		return;
+	}
+ 
         char * subname;
         while ((subname = listAllColl_next(dirh)) != NULL) {
                 printf("subname: %s\n", subname);
 		for(i=1;i<12;i++) {
-			reopen_cache(i,4, "filtypes",subname,RE_READ_ONLY|RE_STARTS_AT_0|RE_POPULATE);
-			reopen_cache(i,sizeof(int), "dates",subname,RE_READ_ONLY|RE_STARTS_AT_0|RE_POPULATE);
-			reopen_cache(i,sizeof(unsigned int), "crc32map",subname,RE_READ_ONLY|RE_POPULATE);
+			// vi åpner kun lotter som har DocumentIndex. Dette er spesielt viktig da vi oppretter 
+			// filene hvis de ikke finnes.
+			if ((FH = lotOpenFileNoCasheByLotNr(i,"DocumentIndex","rb", 'r', subname)) == NULL) {
+				continue;
+			}
+			reopen_cache(i,4, "filtypes",subname,RE_READ_ONLY|RE_STARTS_AT_0|RE_POPULATE|RE_CREATE_AND_STRETCH);
+			reopen_cache(i,sizeof(int), "dates",subname,RE_READ_ONLY|RE_STARTS_AT_0|RE_POPULATE|RE_CREATE_AND_STRETCH);
+			reopen_cache(i,sizeof(unsigned int), "crc32map",subname,RE_READ_ONLY|RE_POPULATE|RE_CREATE_AND_STRETCH);
+
+			fclose(FH);
 		}	
 	}
         listAllColl_close(dirh);
@@ -113,7 +124,11 @@ cache_fresh_lot_collection(void)
 	int i;
 
 	/* We only look at the first 5 lots */
-	colls = listAllColl_start();
+        if ((colls = listAllColl_start()) == NULL) {
+		printf("Can't listAllColl_start()\n");
+                return;
+	}
+
 	while ((coll = listAllColl_next(colls))) {
 		for (i = 1; i < 6; i++) {
 			DIR *dirp;
@@ -220,7 +235,11 @@ cache_indexes(void)
 
 	cached[0] = cached[1] = 0;
 
-	colls = listAllColl_start();
+        if ((colls = listAllColl_start()) == NULL) {
+		printf("Can't listAllColl_start()\n");
+                return;
+	}
+
 	while ((coll = listAllColl_next(colls))) {
 		for (i = 0; i <= NrOfDataDirectorys; i++) {
 			char *types[] = {
