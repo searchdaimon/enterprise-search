@@ -2287,6 +2287,12 @@ void *searchIndex_thread(void *arg)
 	for(i=0;i<(*searchIndex_thread_arg).nrOfSubnames;i++) {
 		query_array *groupquery;
 		struct timeval starttime, endtime;
+
+		#ifdef DEBUG_TIME
+		struct timeval subname_starttime, subname_endtime;
+		gettimeofday(&subname_starttime, NULL);
+		#endif
+
 		vboprintf("Checking subname: %s\n", searchIndex_thread_arg->subnames[i].subname);
 
 		#if defined BLACK_BOKS && !defined _24SEVENOFFICE
@@ -2312,7 +2318,7 @@ void *searchIndex_thread(void *arg)
 
 				#ifdef DEBUG_TIME
 				gettimeofday(&endtime, NULL);
-				fprintf(stderr, "Time debug: cmc_groupsforuserfromusersystem(): %f\n", getTimeDifference(&starttime, &endtime));
+				printf("Time debug: cmc_groupsforuserfromusersystem(): %f\n", getTimeDifference(&starttime, &endtime));
 				#endif
 
 				size_t grouplistsize = n_groups * (MAX_LDAP_ATTR_LEN+5);
@@ -2629,6 +2635,10 @@ void *searchIndex_thread(void *arg)
 		#endif
 
 
+		#ifdef DEBUG_TIME
+			gettimeofday(&subname_endtime, NULL);
+			printf("Time debug: all of subname: %f\n", getTimeDifference(&subname_starttime, &subname_endtime));
+		#endif
 		
 	}
 #ifdef BLACK_BOKS
