@@ -628,7 +628,7 @@ void *do_chld(void *arg)
        	signal (SIGALRM, catch_alarm);
 
 	/* Set an alarm to go off in a little while. This so we don't run forever if we get en ever loop */
-       	alarm (20);
+       	alarm (60);
 
 	
 	#ifdef WITH_THREAD
