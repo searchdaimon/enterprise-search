@@ -50,7 +50,11 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 		structsize += 4;
 	}
 
-	if ((re->flags & RE_READ_ONLY) == RE_READ_ONLY) {
+	if ( ( (re->flags & RE_READ_ONLY) == RE_READ_ONLY ) && ( (re->flags & RE_CREATE_AND_STRETCH) == RE_CREATE_AND_STRETCH ) ) {
+		strcpy(openmode,">>");
+		mmapmode = PROT_READ;
+	}
+	else if ((re->flags & RE_READ_ONLY) == RE_READ_ONLY) {
 		strcpy(openmode,"rb");
 		mmapmode = PROT_READ;
 	}
@@ -91,7 +95,14 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 
 	fstat(re->fd,&inode);	
 
-	if (((re->flags & RE_READ_ONLY) != RE_READ_ONLY) && (inode.st_size < re->maxsize)) {
+	if ( 
+	   ( (re->flags & RE_READ_ONLY) == RE_READ_ONLY ) 
+	&& (!( (re->flags & RE_CREATE_AND_STRETCH) == RE_CREATE_AND_STRETCH )) 
+	) {
+		//vi skal bare lese, og ikke opprette eler strekke, så vi kan håppe over det...
+	}
+	else if (inode.st_size < re->maxsize) {
+				printf("Stretching re file..\n");
                                 /*
                                 Stretch the file size to the size of the (mmapped) array of ints
                                 */
@@ -177,6 +188,9 @@ struct reformat *reopen_cache(int lotNr, size_t structsize, char file[], char su
 	#endif
 
 	re = reopen(lotNr, structsize, file, subname, flags);
+	//Runarb 11 feb 2009:
+	//vi må nesten cache at filen ikke fantes, for bakoverkompetabilitet. Når vi siden gjør om dette på preopning til å ikke
+	//reåpne etter hver crawl, må vi gjøre om
 	if (re == NULL) {
 		return NULL;
 	}
@@ -212,8 +226,9 @@ reclose_cache(void)
 			printf("reclose_cache: closing \"%s\"\n",filesname);
 			#endif
 
-			reclose(re);
-
+			if (re != NULL) {
+				reclose(re);
+			}
 
              	} while (hashtable_iterator_remove(itr));
 
