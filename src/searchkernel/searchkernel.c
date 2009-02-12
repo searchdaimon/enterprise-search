@@ -857,7 +857,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 					//printf("tmpurl: %s\n", tmpurl);
 					Sider->urls[k-x].url = strdup(tmpurl);
 					Sider->urls[k-x].uri = strdup(tmpurl);
-					shortenurl(Sider->urls[k-x].uri, strlen(Sider->urls[k-x].uri));
+					shortenurl(Sider->urls[k-x].uri, strlen(Sider->urls[k-x].uri) +1); // +1 da minne område er faktisk 1 bytes lenegre en strenglendgden for å få plass til \0. Dette skal også legges på uri'en.
 					//strcpy(Sider->urls[k-x].url, dup_subname);
 					free(attributes);
 					free(acla);
