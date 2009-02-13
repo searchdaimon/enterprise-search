@@ -10,6 +10,7 @@
 #include "../common/reposetory.h"
 #include "../common/langToNr.h"
 #include "../common/search_automaton.h"
+#include "../common/bstr.h"
 #include "../cgi-util/cgi-util.h"
 
 #include "../parser/html_parser.h"
@@ -72,6 +73,53 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 
 }
 
+#ifdef BLACK_BOKS
+char *aclResolvEl(char value[]) {
+
+	static char user[64];
+
+
+        if (boithoad_sidToGroup(value, user)) {
+
+	}	
+        else {
+		strcpy(user,value);
+	}
+
+	return user;
+
+}
+
+char *aclResolv(char acl[]) {
+	char **Data;
+	int Count;
+	static char ret[1024];
+
+	ret[0] = '\0';
+
+	if (split(acl, ",", &Data) == 0) {
+		return acl;
+	}
+
+        Count = 0;
+        while( (Data[Count] != NULL) ) {
+
+		if(Data[Count][0] == '\0') {
+			++Count;
+			continue;
+		}
+		if(Count != 0) {
+			strcat(ret,",");
+		}
+		strcat(ret,aclResolvEl(Data[Count]));
+
+		++Count;
+	}
+
+	return ret;
+
+}
+#endif
 
 int main (int argc, char *argv[]) {
 
@@ -276,8 +324,11 @@ int main (int argc, char *argv[]) {
 		printf("Entire url: %s\n", url);
 
 		#ifdef BLACK_BOKS
-			printf("acl allow: \"%s\"\n",acl_allowbuffer);
-			printf("acl denied: \"%s\"\n",acl_deniedbuffer);
+			printf("acl allow raw: \"%s\"\n",acl_allowbuffer);
+			printf("acl denied raw: \"%s\"\n",acl_deniedbuffer);
+
+			printf("acl allow resolved: \"%s\"\n",aclResolv(acl_allowbuffer));
+			printf("acl denied resolved: \"%s\"\n",aclResolv(acl_deniedbuffer));
 		#endif
 
 		if (optShowhtml) {
