@@ -152,7 +152,7 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 			//temp: setter filopning til r+ for å få til å samarbeid melom DIRead og DIwrite
 			//dette gjør at søk ikke funker på web på grun av rettighter :-(
 			if ((DocumentIndexHA = fopen(FileName,"r+b")) == NULL) {
-				printf("%d: cant open file %s\n", __LINE__, FileName);
+				printf("%d: cant open file %s for c\n", __LINE__, FileName);
 				perror(FileName);
 			    return NULL;
 			}
@@ -162,7 +162,7 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 			//temp: setter filopning til r+ for å få til å samarbeid melom DIRead og DIwrite
 			//dette gjør at søk ikke funker på web på grun av rettighter :-(
 			if ((DocumentIndexHA = fopen(FileName,"r+b")) == NULL) {
-				printf("%d: cant open file %s\n",__LINE__, FileName);
+				printf("%d: cant open file %s for r\n",__LINE__, FileName);
 				perror(FileName);
 			    return NULL;
 			}
@@ -171,7 +171,7 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 			//printf("opening file\n");
 			//en ekte r read
 			if ((DocumentIndexHA = fopen(FileName,"rb")) == NULL) {
-				printf("%d: cant open file %s\n", __LINE__, FileName);
+				printf("%d: cant open file %s for rb\n", __LINE__, FileName);
 				perror(FileName);
 			    return NULL;
 			}
