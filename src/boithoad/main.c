@@ -1044,9 +1044,9 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 			memset(&ldaprecord,'\0',MAX_LDAP_ATTR_LEN);
 
 			//henter konfig verdier
-			const char *admin_username 	= bconfig_getentrystr("_ad_user");
-			const char *admin_password 	= bconfig_getentrystr("_ad_password");
-			const char *ldap_host 		= bconfig_getentrystr("_ad_ip");
+			const char *admin_username 	= bconfig_getentrystr("user");
+			const char *admin_password 	= bconfig_getentrystr("password");
+			const char *ldap_host 		= bconfig_getentrystr("ip");
 			const char *ldap_domain 	= bconfig_getentrystr("domain");
 			const int   ldap_port = 0; // runarb: 12 des 2007: er 0 riktig initalisering??
 			const char *msad_ldapstring 	= bconfig_getentrystr("ldapstring");
