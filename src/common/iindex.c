@@ -620,7 +620,10 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		} else {
 			filemapptr = filemap(IndexPath, NULL);
 			if (filemapptr == MAP_FAILED) {
-				warn("Empty file");
+				#ifdef DEBUG
+					fprintf(stderr,"IndexPath: \"%s\"\n",IndexPath);
+					warnx("Empty file");
+				#endif
 				return;
 			}
 		}

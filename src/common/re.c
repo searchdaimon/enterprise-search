@@ -137,7 +137,9 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 
 	if ((re->flags & RE_POPULATE) == RE_POPULATE) {
 		int pr = 0;
-		printf("RE_POPULATE'ing\n");
+		#ifdef DEBUG
+			printf("RE_POPULATE'ing\n");
+		#endif
 		for(i=0;i<re->maxsize;i++) {
 			pr += ((char *)re->mem)[i]; 	
 		}

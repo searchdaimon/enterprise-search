@@ -12,6 +12,7 @@
 #include "../common/re.h"
 #include "../common/boithohome.h"
 #include "../common/ht.h"
+#include "verbose.h"
 
 #include "../3pLibs/keyValueHash/hashtable.h"
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
@@ -33,7 +34,7 @@ preopen(void)
  
         char * subname;
         while ((subname = listAllColl_next(dirh)) != NULL) {
-                printf("subname: %s\n", subname);
+                vboprintf("subname: %s\n", subname);
 		for(i=1;i<12;i++) {
 			// vi åpner kun lotter som har DocumentIndex. Dette er spesielt viktig da vi oppretter 
 			// filene hvis de ikke finnes.
@@ -148,7 +149,7 @@ cache_fresh_lot_collection(void)
 					continue;
 
 				sprintf(path+len, "/%s", de->d_name);
-				printf("Found file: %s\n", path);
+				vboprintf("Found file: %s\n", path);
 				fd = open(path, O_RDONLY);
 				if (fd == -1)
 					continue;
@@ -175,7 +176,7 @@ cache_indexes_handle(char *path, size_t *cached)
 
 	if (cached[0] + st.st_size > MAX_INDEX_CACHE && 0)
 		return 0;
-	printf("Found index: %s\n", path);
+	vboprintf("Found index: %s\n", path);
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
 		warn("open(%s)", path);
