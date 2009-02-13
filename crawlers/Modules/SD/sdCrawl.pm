@@ -24,7 +24,7 @@ Readonly::Hash my %LINK_IGNORE => map { $_ => 1 } qw(td script table form head);
 my $log; 
 my $expiration = 5 * 60 * 60 + time( );
 my $hit_limit = 50000;
-my $verbose = 1;
+my $verbose = 0;
 my $user;
 my $passw;
 my $bot_name = 'sdbot/0.1';
