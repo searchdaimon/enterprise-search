@@ -78,21 +78,14 @@ bconfig_flush(int mode) {
 		AND system.id = systemParamValue.system";
 	char selectbfr[512];
 	sprintf(mysql_query[0], "SELECT configkey, configvalue FROM config");
-	snprintf(selectbfr, sizeof selectbfr, ad_select_tpl, "_ad_ip", "ip");
-	sprintf(mysql_query[1], selectbfr); 
-	snprintf(selectbfr, sizeof selectbfr, ad_select_tpl, "_ad_user", "user");
-	sprintf(mysql_query[2], selectbfr);
-	snprintf(selectbfr, sizeof selectbfr, ad_select_tpl, "_ad_password", "password");
-	sprintf(mysql_query[3], selectbfr);
-	sprintf(mysql_query[4], "SELECT param AS configkey, value AS configvalue FROM system, systemParamValue WHERE system.is_primary = 1 AND system.id = systemParamValue.system");
-	//sprintf(mysql_query[2], "SELECT configkey, configvalue FROM config");
+	sprintf(mysql_query[1], "SELECT param AS configkey, value AS configvalue FROM system, systemParamValue WHERE system.is_primary = 1 AND system.id = systemParamValue.system");
 
 	if (_configdata != NULL)
 		free(_configdata);
 
 	_configdata = NULL;
 
-	for (j = 0; j < 5; j++) {
+	for (j = 0; j < 2; j++) {
 		int numrows, oldnumentries;
 
 		if (mysql_real_query(&demo_db, mysql_query[j], strlen(mysql_query[j]))){ /* Execute query */
