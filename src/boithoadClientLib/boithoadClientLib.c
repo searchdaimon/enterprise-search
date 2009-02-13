@@ -335,7 +335,9 @@ int boithoad_sidToGroup(char sid_in[], char username_in[]) {
 		forreturn = 1;
 	}
 	else {
-		printf("didn't have a group at %s:%d\n",__FILE__,__LINE__);
+		#ifdef DEBUG
+			printf("didn't have a group at %s:%d\n",__FILE__,__LINE__);
+		#endif
 		strcpy(username_in,"");
 		forreturn = 0;
 	}
