@@ -204,12 +204,14 @@ static int auth_boitho_authorize(const char *user, const char* pw,
 
     if (status==1) {
 	//runarb: 
-	#ifdef APACHE_V13
-		ap_log_error(APLOG_MARK, APLOG_ERR, r->server, "%s: User \"%s\" authenticated.",module_name,user);
-	#else 
-		ap_log_error(APLOG_MARK, APLOG_EMERG, 0, r->server, "%s: User \"%s\" authenticated.",module_name,user);
-
+	#ifdef DEBUG
+		#ifdef APACHE_V13
+			ap_log_error(APLOG_MARK, APLOG_ERR, r->server, "%s: User \"%s\" authenticated.",module_name,user);
+		#else 
+			ap_log_error(APLOG_MARK, APLOG_EMERG, 0, r->server, "%s: User \"%s\" authenticated.",module_name,user);
+		#endif
 	#endif
+
         return 1;  /* Correct pw */
     }
     else {
