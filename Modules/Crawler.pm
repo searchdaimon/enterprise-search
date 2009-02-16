@@ -61,5 +61,11 @@ sub continue {
 	return SD::Crawl::pdocumentContinue($self->{ptr});
 }
 
+sub change_collection {
+	my ($self, $collection) = @_;
+
+	SD::Crawl::pdocumentChangeCollection($self->{ptr}, $collection);
+}
+
 1;
 

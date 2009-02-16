@@ -101,11 +101,24 @@ void pdocumentAdd(struct cargsF *cargs, char * url, int lastmodified, char * doc
 	free(crawldocumentAdd);
 }
 
+void
+pdocumentChangeCollection(struct cargsF *cargs, char *collection)
+{
+	cargs->collection->collection_name = collection;
+}
+
 MODULE = SD::Crawl		PACKAGE = SD::Crawl		
 
 void
+pdocumentChangeCollection(x, collection)
+		void * x
+		char * collection
+	CODE:
+		pdocumentChangeCollection(x, collection);
+
+void
 pdocumentAdd( x , url , lastmodified, document, title, type, acl_allow, acl_denied, attributes)
-		int * x
+		void * x
 		char * url
 		int lastmodified
 		SV * document
@@ -123,7 +136,7 @@ pdocumentAdd( x , url , lastmodified, document, title, type, acl_allow, acl_deni
 
 void
 pdocumentExist( x , url , lastmodified, dokument_size)
-	int * x
+	void * x
 	char * url
 	int lastmodified
 	int dokument_size
@@ -133,7 +146,7 @@ pdocumentExist( x , url , lastmodified, dokument_size)
 int 
 pdocumentContinue(x)
 
-	int * x
+	void * x
 
         INIT:
                 int ret;
@@ -148,7 +161,7 @@ pdocumentContinue(x)
 int 
 pdocumentError(x, errorstring)
 
-	int * x
+	void * x
 	char * errorstring
 
 
