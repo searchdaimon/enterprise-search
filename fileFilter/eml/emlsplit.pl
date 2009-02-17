@@ -5,6 +5,7 @@ use strict;
 
 #use Email::Simple;
 use Email::MIME;
+use Data::Dumper;
 
 # A bit modified list stolen from mime.types in ubuntu
 my %types = 
@@ -288,6 +289,7 @@ my %types =
 	"text/iuls" => "uls",
 	"text/mathml" => "mml",
 	"text/plain" => "txt",
+	"text/txt" => "txt",
 	"text/richtext" => "rtx",
 	"text/scriptlet" => "sct",
 	"text/texmacs" => "tm",
@@ -383,7 +385,8 @@ sub writemail {
 
 	foreach (@parts) {
 		my $fn;
-		if ($_->content_type =~ /^multipart\//) {
+
+		if (defined $_->content_type and $_->content_type =~ /^multipart\//) {
 			my @sub = $_->subparts;
 			foreach my $subp (@sub) {
 				writemail($subp);
@@ -391,7 +394,7 @@ sub writemail {
 			next;	
 		}
 		
-		my ($ct) = split(";", $_->content_type);
+		my ($ct) = defined $_->content_type ? split(";", $_->content_type) : "text/txt";
 		$fn = "$dirfiltername".$_->invent_filename($ct);
 		my $suffix;
 		$suffix = defined($types{$ct}) ? $types{$ct} : "dat";
