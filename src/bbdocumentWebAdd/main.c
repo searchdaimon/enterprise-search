@@ -169,6 +169,44 @@ sd_add(int sock, xmlDocPtr doc, xmlNodePtr top)
 	}
 }
 
+void
+sd_delete(int sock, xmlDocPtr doc, xmlNodePtr top)
+{
+	xmlNodePtr n;
+	xmlChar *coll;
+
+	fprintf(stderr, "Going to delete something!\n");
+
+	if ((n = xml_find_child(top, "collection")) == NULL) { 
+		fprintf(stderr, "Unable to find collection to delete from\n");
+		return;
+	}
+
+	if ((coll = xmlNodeListGetString(doc, n->xmlChildrenNode, 1)) == NULL) {
+		fprintf(stderr, "Unable to get collection name from delete\n");
+		return;
+	}
+
+
+	for (n = top->xmlChildrenNode; n != NULL; n = n->next) {
+		xmlChar *p;
+
+		if (xmlStrcmp(n->name, (xmlChar*)"uri") != 0) {
+			fprintf(stderr, "Unknown node(close) name: %s\n", (char *)n->name);
+			continue;
+		}
+		if ((p = xmlNodeListGetString(doc, n->xmlChildrenNode, 1)) == NULL) {
+			fprintf(stderr, "Unable to get uri to delete.\n");
+			continue;
+		}
+
+		bbdn_deleteuri(sock, (char *)coll, (char *)p);
+
+		xmlFree(p);
+	}
+
+	xmlFree(coll);
+}
 
 
 void
@@ -373,6 +411,8 @@ main(int argc, char **argv)
 			// Ignore
 		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "add"))){
 			sd_add(bbdnsock, doc, cur);
+		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "delete"))){
+			sd_delete(bbdnsock, doc, cur);
 		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "close"))) {
 			sd_close(bbdnsock, doc, cur);
 		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "users"))) {
