@@ -85,10 +85,13 @@ int bbdn_docadd(int socketha,char subname[],char documenturi[],char documenttype
         //document
         //dokument_size
 	debug("sending document(len %i)",dokument_size);
+	debug("sending1 %d\n", dokument_size);
         if(sendall(socketha,&dokument_size, sizeof(int)) == 0) { perror("sendall dokument_size"); return 0; }
+	debug("sending2 %d\n", dokument_size);
 	if (dokument_size != 0) {
         	if(sendall(socketha,document, dokument_size) == 0) { perror("sendall document"); return 0; }
 	}
+	debug("sending3 %d\n", dokument_size);
         //lastmodified
         if(sendall(socketha,&lastmodified, sizeof(int)) == 0) { perror("sendall lastmodified"); return 0; }
 
@@ -140,6 +143,27 @@ int bbdn_closecollection(int socketha, char subname[]) {
        	len = strlen(subname) +1;
         if(sendall(socketha,&len, sizeof(int)) == -1) { perror("sendall"); exit(1); }
         if(sendall(socketha,subname, len) == -1) { perror("sendall"); exit(1); }
+
+	debug("bbdn_closecollection end");
+		
+	return 1;
+}
+
+/* Delete an uri from the system */
+int bbdn_deleteuri(int socketha, char subname[], char *uri) {
+	int len;
+	
+	debug("bbdn_closecollection start");
+	sendpacked(socketha,bbc_deleteuri,BLDPROTOCOLVERSION, 0, NULL,"");
+
+       	len = strlen(subname) +1;
+        if(sendall(socketha,&len, sizeof(int)) == -1) { perror("sendall"); exit(1); }
+        if(sendall(socketha,subname, len) == -1) { perror("sendall"); exit(1); }
+
+       	len = strlen(uri) +1;
+        if(sendall(socketha,&len, sizeof(int)) == -1) { perror("sendall"); exit(1); }
+        if(sendall(socketha,uri, len) == -1) { perror("sendall"); exit(1); }
+
 
 	debug("bbdn_closecollection end");
 		

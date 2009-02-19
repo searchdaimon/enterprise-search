@@ -5,5 +5,6 @@
 
 
 #define bbc_docadd 		10
+#define bbc_deleteuri		11
 
 #define bbc_closecollection	20

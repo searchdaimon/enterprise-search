@@ -12,6 +12,7 @@
 #include "../bbdocument/bbdocument.h"
 #include "../maincfg/maincfg.h"
 #include "../common/timediff.h"
+#include "../common/lot.h"
 
 #include "bbdn.h"
 
@@ -272,6 +273,56 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			printf("cleanin lots end\n");
 
 			
+		}
+		else if (packedHedder.command == bbc_deleteuri) {
+			printf("deleteuri\n");
+			char *subname, *uri;
+			//subname
+                        if ((i=recv(socket, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
+                                perror("Cant read intrespons");
+                                exit(1);
+                        }
+                        subname = malloc(intrespons +1);
+                        if ((i=recv(socket, subname, intrespons,MSG_WAITALL)) == -1) {
+                                perror("Cant read subname");
+                                exit(1);
+                        }
+			subname[intrespons] = '\0';
+                        if ((i=recv(socket, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
+                                perror("Cant read intrespons");
+                                exit(1);
+                        }
+                        uri = malloc(intrespons +1);
+                        if ((i=recv(socket, uri, intrespons,MSG_WAITALL)) == -1) {
+                                perror("Cant read uri");
+                                exit(1);
+                        }
+			uri[intrespons] = '\0';
+
+			printf("going to delete: %s from %s\n", uri, subname);
+
+			bbdocument_delete(uri, subname);
+			/* Add docid to the gced file */
+			{
+				FILE *fh;
+				unsigned int DocID, lastmodified;
+				unsigned int lotNr;
+
+				if (uriindex_get(uri, &DocID, &lastmodified, subname) == 0) {
+					perror("Unable to get uri info");
+					exit(1);
+				}
+
+				lotNr = rLotForDOCid(DocID);
+
+				if ((fh = lotOpenFileNoCasheByLotNr(lotNr,"gced","a", 'e',subname)) == NULL) {
+					perror("can't open gced file");
+					exit(1);
+				}
+
+				fwrite(&DocID, sizeof(DocID), 1, fh);
+				fclose(fh);
+			}
 		}
 		else {
 			printf("unnown comand. %i\n", packedHedder.command);

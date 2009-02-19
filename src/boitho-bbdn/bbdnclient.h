@@ -11,5 +11,6 @@ int bbdn_docadd(int socketha,char subname[],char documenturi[],char documenttype
 int bbdn_docexist(int socketha, char subname[],char documenturi[],unsigned int lastmodified);
 
 int bbdn_closecollection(int socketha, char subname[]);
+int bbdn_deleteuri(int socketha, char subname[], char *uri);
 
 #endif //_BBDHCLIENT__H_
