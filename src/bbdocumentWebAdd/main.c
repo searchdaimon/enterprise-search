@@ -18,6 +18,9 @@
 #include "../maincfg/maincfg.h"
 #include "../crawlManager/client.h"
 #include "../common/define.h"
+#include "../common/key.h"
+
+char systemkey[KEY_STR_LEN];
 
 #define ROOT_NODE_NAME "sddocument"
 
@@ -317,7 +320,6 @@ main(int argc, char **argv)
 {
 	int postsize;
 	char *xmldata;
-	char *keystr;
 	xmlDocPtr doc;
         xmlNodePtr cur, anode;
 	int bbdnsock;
@@ -329,6 +331,7 @@ main(int argc, char **argv)
 	maincfg = maincfgopen();
 	bbdnport = maincfg_get_int(&maincfg, "BLDPORT");
 	maincfgclose(&maincfg);
+	key_get(systemkey);
 
 	if (!bbdn_conect(&bbdnsock, "", bbdnport))
 		errx(1, "Unable to connect to document manager");
@@ -388,7 +391,14 @@ main(int argc, char **argv)
         }
 
 	if ((anode = xml_find_child(cur, "key")) != NULL) {
-		fprintf(stderr, "Got a key\n");
+		char *p;
+		
+		p = (char *)xmlNodeListGetString(doc, anode->xmlChildrenNode, 1);
+		if (p == NULL)
+			errx(1, "No key data");
+
+		if (!key_equal(systemkey, p))
+			errx(1, "Keys does not match");
 	} else {
 		errx(1, "Did not receive a key");
 	}
