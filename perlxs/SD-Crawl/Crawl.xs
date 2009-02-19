@@ -35,7 +35,8 @@ int pdocumentError(struct cargsF *cargs, char error[]) {
 }
 
 
-void pdocumentExist(struct cargsF *cargs, char * url, int lastmodified, int dokument_size) {
+int pdocumentExist(struct cargsF *cargs, char * url, int lastmodified, int dokument_size) {
+	int ret;
 
 	debug("pdocumentExist");
 	debug("pdocumentExist cargs %p",cargs);
@@ -53,7 +54,7 @@ void pdocumentExist(struct cargsF *cargs, char * url, int lastmodified, int doku
 
 	if ((crawldocumentExist = malloc(sizeof(struct crawldocumentExistFormat))) == NULL) {
 		perror("malloc crawldocumentExist");
-		return;
+		return 0;
 	}
 
 	crawldocumentExist->documenturi = strdup(url);
@@ -62,9 +63,11 @@ void pdocumentExist(struct cargsF *cargs, char * url, int lastmodified, int doku
 	crawldocumentExist->lastmodified = lastmodified;
 	crawldocumentExist->dokument_size = dokument_size;
 
-	cargs->documentExist(cargs->collection,crawldocumentExist);
+	ret = cargs->documentExist(cargs->collection,crawldocumentExist);
 
 	free(crawldocumentExist);
+
+	return ret;
 }
 
 void pdocumentAdd(struct cargsF *cargs, char * url, int lastmodified, char * document, char title[], 
@@ -134,13 +137,17 @@ pdocumentAdd( x , url , lastmodified, document, title, type, acl_allow, acl_deni
 		pdocumentAdd( x , url , lastmodified, doc_str, title, type, acl_allow, acl_denied, attributes, doc_size);
 	
 
-void
+int
 pdocumentExist( x , url , lastmodified, dokument_size)
 	void * x
 	char * url
 	int lastmodified
 	int dokument_size
-
+	INIT:
+		int ret;
+	PPCODE:
+		ret = pdocumentExist(x, url, lastmodified, dokument_size);
+		XPUSHs(sv_2mortal(newSVnv(ret)));
 
 
 int 
