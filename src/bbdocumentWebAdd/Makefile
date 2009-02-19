@@ -5,7 +5,7 @@ LDFLAGS=	 -lxml2 /usr/lib/mysql/libmysqlclient.a
 CFLAGS=	-g -Wall -O2 -I/usr/include/libxml2/ -DDEBUG -I/usr/include/mysql
 
 
-OBJS=	main.o bbdnclient.o daemon.o debug.o error.o bstr.o strlcat.o base64.o maincfg.o client.o timediff.o key.o
+OBJS=	main.o bbdnclient.o daemon.o debug.o error.o bstr.o strlcat.o base64.o maincfg.o client.o timediff.o key.o strlcpy.o
 PROG=	bbdocumentWebAdd
 
 all: $(PROG)

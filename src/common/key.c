@@ -37,7 +37,7 @@ key_get(char *keyout)
 	if (row == NULL || mysql_num_rows(res) < 1)
 		errx(1, "No key found");
 		
-	strcpy(keyout, row[0]);
+	strlcpy(keyout, row[0], KEY_STR_LEN);
 
 	mysql_close(&db);
 
