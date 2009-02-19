@@ -195,7 +195,7 @@ sd_delete(int sock, xmlDocPtr doc, xmlNodePtr top)
 		xmlChar *p;
 
 		if (xmlStrcmp(n->name, (xmlChar*)"uri") != 0) {
-			fprintf(stderr, "Unknown node(close) name: %s\n", (char *)n->name);
+			fprintf(stderr, "Unknown node(delete) name: %s\n", (char *)n->name);
 			continue;
 		}
 		if ((p = xmlNodeListGetString(doc, n->xmlChildrenNode, 1)) == NULL) {
