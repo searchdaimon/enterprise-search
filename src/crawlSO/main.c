@@ -19,6 +19,7 @@
 
 #include "../crawl/crawl.h"
 #include "../common/daemon.h"
+#include "../common/key.h"
 
 int crawlcanconnect(struct collectionFormat *collection,
                    int (*documentError)(struct collectionFormat *, int, const char *, ...) __attribute__((unused)));
@@ -33,8 +34,6 @@ struct crawlinfo {
 	struct collectionFormat *collection;
 	unsigned int timefilter;
 };
-
-
 
 int 
 so_rewrite_url(char *uri, enum platform_type ptype, enum browser_type btype)
@@ -80,6 +79,9 @@ crawlGo(struct crawlinfo *ci)
 	struct sockaddr_in socketaddr;
 	char *sendbuf, *sendbuflen;
 	char *host;
+	char systemkey[KEY_STR_LEN];
+
+	key_get(systemkey);
 
 	port = DEFAULTPORT;
 
@@ -95,10 +97,10 @@ crawlGo(struct crawlinfo *ci)
 	printf("connected\n");
 
 
-	i = asprintf(&sendbuf, "user %s\npassword %s\ncollection %s\nusersystem %d\nmodule %s\nlastcrawl %d\n",
+	i = asprintf(&sendbuf, "user %s\npassword %s\ncollection %s\nusersystem %d\nmodule %s\nlastcrawl %d\nsystemkey %s",
 	    ci->collection->user, ci->collection->password,
 	    ci->collection->collection_name, ci->collection->usersystem, "superoffice",
-	    ci->collection->lastCrawl);
+	    ci->collection->lastCrawl, systemkey);
 	asprintf(&sendbuflen, "%d\n", i);
 	if (send(s, sendbuflen, strlen(sendbuflen), 0) == -1)
 		warn("send(len)");
