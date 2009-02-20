@@ -637,7 +637,6 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		if ((metafp = fopen(envpairpath, "r")) != NULL) {
 			char *key, *value, line[2048];
 
-			printf("Fooop\n");
 			while (fgets(line, sizeof(line), metafp)) {
 				char *p, *p2;
 
@@ -764,7 +763,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		fclose(fh);
 	}
 	else if (strcmp(fileFilter->outputformat, "dir") == 0 || strcmp(fileFilter->outputformat, "diradd") == 0) {
-		char *p;
+		char *p, *pstart;
 		/* Does len do anything any more? */
 		int len, failed = 0;
 		int iter = 0;
@@ -775,6 +774,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
 		len = exeocbuflen;
 		p = strdup(documentfinishedbuftmp);
+		pstart = p;
 		if (p == NULL) {
 			goto bbdocument_convert_error;
 		}
@@ -882,7 +882,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 			*documentfinishedbuf = strdup(".");
 		}
 		//printf("Got this: %d %d<<\n%s\n", strlen(*documentfinishedbuf), *documentfinishedbufsize, *documentfinishedbuf);
-		//free(p);
+		free(pstart);
 	}
 	else {
 		printf("unknown dokument outputformat \"%s\"\n",fileFilter->outputformat);
