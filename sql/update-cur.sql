@@ -66,9 +66,6 @@ VALUES (
 CREATE TABLE system (
   id int(10) unsigned NOT NULL auto_increment,
   name varchar(255) NOT NULL default 'Unnamed system',
-  ip varchar(32) default NULL,
-  user varchar(255) default NULL,
-  password varchar(255) default NULL,
   is_primary tinyint(4) default '0',
   connector int(10) unsigned default NULL,
   PRIMARY KEY  (id)
@@ -87,6 +84,7 @@ CREATE TABLE systemParam (
   connector int(11) unsigned NOT NULL default '0',
   param varchar(255) NOT NULL default '',
   note varchar(255) default NULL,
+  required TINYINT DEFAULT '0' NOT NULL,
   PRIMARY KEY  (connector,param),
   UNIQUE KEY systemParam (connector,param)
 ) TYPE=MyISAM;
@@ -106,18 +104,6 @@ CREATE TABLE foreignUserSystem (
 ) TYPE=MyISAM;
 
 
--- Active directory system
-INSERT INTO system (id, name, ip, user, password, is_primary, connector) SELECT 1 AS id, 'Active Directory' AS name, c3.configvalue AS ip, c1.configvalue AS user, c2.configvalue AS password, 1 AS is_primary, 1 AS connector FROM config AS c1, config AS c2, config AS c3 WHERE c1.configkey = 'msad_user' AND c2.configkey = 'msad_password' AND c3.configkey = 'msad_ip';
-
-INSERT INTO systemParam VALUES (1,'ldapstring',NULL);
-INSERT INTO systemParam VALUES (1,'domain',NULL);
-INSERT INTO systemParam VALUES (1,'ldapbase',NULL);
-INSERT INTO systemParam VALUES (1,'ldapgroupstring',NULL);
-
-INSERT INTO systemParamValue (param, system, value) SELECT 'domain' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_domain'; 
-INSERT INTO systemParamValue (param, system, value) VALUES('ldapstring', 1, '');
-INSERT INTO systemParamValue (param, system, value) VALUES('ldapbase', 1, '');
-INSERT INTO systemParamValue (param, system, value) VALUES('ldapgroupstring', 1, '');
 
 INSERT INTO config (configkey, configvalue) VALUES('licensekey', '');
 INSERT INTO config (configkey, configvalue) VALUES('licensesystem', 'ohSh7oow');
@@ -166,10 +152,11 @@ UPDATE connectors SET inputFields = CONCAT('user_system, ', inputFields) WHERE i
 
 INSERT INTO `connectors` VALUES (70, 'Superoffice', 'Superoffice push crawler', NULL, NULL, NULL, 0, 'custom_parameters, crawling, user_system, authentication', NULL, NULL, 1, 1);
 
-INSERT INTO `connectors` VALUES (73, 'SharePoint', NULL, NULL, NULL, NULL, 0, 'user_system, custom_parameters, crawling, authentication', 1, '2008-10-14 18:18:24', 1, 1);
-INSERT INTO `param` VALUES (121, 73, 'delay', 'Delay in seconds between crawl.');
-INSERT INTO `param` VALUES (108, 73, 'url', 'http://www.example.com');
-INSERT INTO `param` VALUES (124, 73, 'download_images', '1 to activate, 0 to disable.');
+# Runarb: 21 jan. Disabler denne da SharePoint crawleren ikke fungerer.	
+# INSERT INTO `connectors` VALUES (73, 'SharePoint', NULL, NULL, NULL, NULL, 0, 'user_system, custom_parameters, crawling, authentication', 1, '2008-10-14 18:18:24', 1, 1);
+# INSERT INTO `param` VALUES (121, 73, 'delay', 'Delay in seconds between crawl.');
+# INSERT INTO `param` VALUES (108, 73, 'url', 'http://www.example.com');
+# INSERT INTO `param` VALUES (124, 73, 'download_images', '1 to activate, 0 to disable.');
 
 CREATE TABLE `activeUsers` (
   `user` varchar(255) default NULL,
@@ -179,4 +166,41 @@ CREATE TABLE `activeUsers` (
 
 INSERT INTO `param` VALUES (NULL, 70, 'Host', 'example.com');
 
+
+
+INSERT INTO `connectors` VALUES (99, 'ExchangePublic', 'Microsoft Exchange Public Folder', NULL, NULL, NULL, 0, 'user_system, authentication, connector, crawling', 0, NULL, 1, 1);
+
+-- Active directory system
+INSERT INTO `system` (id, name, is_primary, connector) VALUES (1, 'Active Directory', 1, 1);
+
+
+#INSERT INTO systemParamValue (param, system, value) SELECT 'domain' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_domain'; 
+#INSERT INTO systemParamValue (param, system, value) VALUES('ldapstring', 1, '');
+#INSERT INTO systemParamValue (param, system, value) VALUES('ldapbase', 1, '');
+#INSERT INTO systemParamValue (param, system, value) VALUES('ldapgroupstring', 1, '');
+
+# setter opp hva som trengs for ad
+INSERT INTO `systemParam` VALUES (1, 'ip', NULL, 1);
+INSERT INTO `systemParam` VALUES (1, 'user', NULL, 1);
+INSERT INTO `systemParam` VALUES (1, 'password', NULL, 1);
+INSERT INTO `systemParam` VALUES (1, 'domain', NULL, 1);
+INSERT INTO `systemParam` VALUES (1, 'ldapstring', NULL, 0);
+INSERT INTO `systemParam` VALUES (1, 'ldapbase', NULL, 0);
+INSERT INTO `systemParam` VALUES (1, 'ldapgroupstring' ,NULL, 0);
+
+# kopierer over ldap info til brukersys.
+# msad_group er depricated
+INSERT INTO systemParamValue (param, system, value) SELECT 'ip' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ip'; 
+INSERT INTO systemParamValue (param, system, value) SELECT 'user' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_user'; 
+INSERT INTO systemParamValue (param, system, value) SELECT 'password' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_password'; 
+INSERT INTO systemParamValue (param, system, value) SELECT 'domain' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_domain'; 
+INSERT INTO systemParamValue (param, system, value) SELECT 'ldapgroupstring' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapgroupstring'; 
+INSERT INTO systemParamValue (param, system, value) SELECT 'ldapbase' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapbase'; 
+INSERT INTO systemParamValue (param, system, value) SELECT 'ldapstring' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapstring'; 
+
+# setter ordbok rerun til 7 hvis den er kl 10.00, som er standar.
+update config set configvalue = '7' where configkey = 'suggdict_run_hour' and configvalue  = '10';
+
+#setter cache til 100 hvis den er tom
+update config set configvalue = '100' where configkey = 'authentication_timeout' and configvalue  = '';
 
