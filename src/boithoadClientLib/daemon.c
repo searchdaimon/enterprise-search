@@ -199,6 +199,9 @@ int recvall(int sockfd, void *buf, int len) {
 			return 0;
 		}
 
+		if (n == 0)
+			return 0;
+
 		#ifdef DEBUG
 		printf("recved %i bytes. total red %i, left %i, total to get %i\n",n,total,bytesleft,len);
 		#endif
