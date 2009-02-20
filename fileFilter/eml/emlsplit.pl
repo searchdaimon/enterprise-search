@@ -423,7 +423,7 @@ if (defined($ENV{SDMETAFILE}))  {
 	my $metafile = $ENV{SDMETAFILE};
 	open(FH, "> $metafile");
 	my @values = $parsed->header("Date");
-	if (length(@values) > 0) {
+	if (defined($values[0])) {
 		print FH "lastmodified = " . str2time($values[0]) . "\n";
 	}
 	close(FH);
