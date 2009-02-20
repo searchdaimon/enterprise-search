@@ -458,6 +458,7 @@ sub gen_collection_list {
 	push @connectors, { 
 		name => $META_CONN_PUSH,
 		collections => \@pushed_colls,
+		active => $#pushed_colls > 0 ? 1 : undef,
 	};
 	#carp Dumper(\@connectors);
 	return @connectors;
