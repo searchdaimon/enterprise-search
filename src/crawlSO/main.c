@@ -19,7 +19,7 @@
 
 #include "../crawl/crawl.h"
 #include "../common/daemon.h"
-#include "../common/key.h"
+#include "../key/key.h"
 
 int crawlcanconnect(struct collectionFormat *collection,
                    int (*documentError)(struct collectionFormat *, int, const char *, ...) __attribute__((unused)));
