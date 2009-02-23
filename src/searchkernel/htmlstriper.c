@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 
 void htmlstrip(char html[],char *text,int buffersize) {
 	int i;
