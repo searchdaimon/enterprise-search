@@ -204,3 +204,5 @@ update config set configvalue = '7' where configkey = 'suggdict_run_hour' and co
 #setter cache til 100 hvis den er tom
 update config set configvalue = '100' where configkey = 'authentication_timeout' and configvalue  = '';
 
+# setter inn et tilfeldig tall som en unik nøkkel.
+insert into config (configkey, configvalue) VALUES('key', MD5(RAND()));
