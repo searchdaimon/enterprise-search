@@ -12,3 +12,6 @@ boithoadClientLib: boithoadClientLib.c
 	ar rc liboithoaut.a boithoadClientLib.o daemon.o
 	ranlib liboithoaut.a
 
+
+clean:
+	rm liboithoaut.a daemon.o
