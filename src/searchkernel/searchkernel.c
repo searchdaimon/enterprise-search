@@ -802,10 +802,10 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 			struct duplicate_docids *dup = hashtable_search(PagesResults->crc32maphash, &Sider->DocumentIndex.crc32);
 			if (dup != NULL && dup->V != NULL && vector_size(dup->V)>1) {
 				int k;
-				int x=0;
+				
 
-				Sider->n_urls = vector_size(dup->V) -1;
-				Sider->urls = calloc(Sider->n_urls, sizeof(*(Sider->urls)));
+				Sider->n_urls = 0;
+				Sider->urls = calloc(vector_size(dup->V), sizeof(*(Sider->urls)));
 				
 				//iterator itr = list_begin(list);
 				//itr = list_next(itr);
@@ -818,7 +818,6 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 					if (dup_docid == DocID && !strcmp(dup_subname, subname->subname))
 					    {
 						// Hvis dette er docid-en som vises, skal den ikke filtreres.
-						x = 1;
 						continue;
 					    }
 
@@ -854,15 +853,20 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 #endif
 							);
 #endif
-					//printf("tmpurl: %s\n", tmpurl);
-					Sider->urls[k-x].url = strdup(tmpurl);
-					Sider->urls[k-x].uri = strdup(tmpurl);
-					shortenurl(Sider->urls[k-x].uri, strlen(Sider->urls[k-x].uri) +1); // +1 da minne område er faktisk 1 bytes lenegre en strenglendgden for å få plass til \0. Dette skal også legges på uri'en.
-					//strcpy(Sider->urls[k-x].url, dup_subname);
+					//printf("tmpurl: \"%s\"\n", tmpurl);
+					if ((Sider->urls[Sider->n_urls].url = strdup(tmpurl)) == NULL) {
+						perror("Malloc url");
+					}
+					if ((Sider->urls[Sider->n_urls].uri = strdup(tmpurl)) == NULL) {
+						perror("Malloc uri");
+					}
+					shortenurl(Sider->urls[Sider->n_urls].uri, strlen(Sider->urls[Sider->n_urls].uri) +1); // +1 da minne område er faktisk 1 bytes lenegre en strenglendgden for å få plass til \0. Dette skal også legges på uri'en.
+					//strcpy(Sider->urls[Sider->n_urls].url, dup_subname);
 					free(attributes);
 					free(acla);
 					free(acld);
 					free(url);
+					++Sider->n_urls;
 				}
 			} else {
 				Sider->n_urls = 0;
@@ -1768,7 +1772,7 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 	printf("|----------|----------|----------||----------|----------|----------|------------------------|----------|----------|-----|\n");
 
 	for(i=0;i<showabal;i++) {
-                        printf("|%10i|%10i|%10i||%10i|%10i|%10i|%10i (%5i %5i)|%10i|%10i|%5hu| %s (DocID %u-%i, DomainID %hu, s: \"%s\")\n",
+                        printf("|%10i|%10i|%10i||%10i|%10i|%10i|%10i (%5i %5i)|%10i|%10i|%5d| %s (DocID %u-%i, DomainID %d, s: \"%s\")\n",
 
 				Sider[i].iindex.allrank,
 				Sider[i].iindex.TermRank,
@@ -3071,9 +3075,9 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 
 	printf("\n\n");
 
-
-	print_explane_rank(*Sider,(*SiderHeder).showabal);
-
+	if (globalOptVerbose) {
+		print_explane_rank(*Sider,(*SiderHeder).showabal);
+	}
 
 	printf("*ranking %i\n",*ranking);
 
