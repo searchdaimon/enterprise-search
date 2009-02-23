@@ -780,7 +780,7 @@ SortUdfile: src/SortUdfile/main.c
 SortUdfileToNewFiles: src/SortUdfileToNewFiles/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/SortUdfileToNewFiles/main.c -o bin/SortUdfileToNewFiles $(LDFLAGS)
 
-PageInfoComand=	$(LIBS)*.c src/PageInfo/main.c $(HTMLPARSER2) $(LDFLAGS) src/IndexerRes/IndexerRes.c
+PageInfoComand=	$(LIBS)*.c src/PageInfo/main.c $(HTMLPARSER2) $(LDFLAGS) src/IndexerRes/IndexerRes.c src/cgi-util/cgi-util.c
 
 PageInfo: src/PageInfo/main.c
 	@echo ""
@@ -792,7 +792,7 @@ PageInfobb: src/PageInfo/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(PageInfoComand) -o bin/PageInfobb -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(PageInfoComand) src/boithoadClientLib/boithoadClientLib.c -o bin/PageInfobb -D BLACK_BOKS
 
 addManuellUrlFile: src/addManuellUrlFile/main.c
 	@echo ""
@@ -1097,14 +1097,14 @@ crawlManager2: src/crawlManager2/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/crawlManager2/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
+	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/key/key.c src/crawlManager2/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
 
 # XXX
 
 
 crawlManager2bb: src/crawlManager2/main.c
 	mkdir --parents bin
-	$(CC) -D__USE_BSD -std=c99 -m32 -D_REENTRANT -D_GNU_SOURCE -fno-strict-aliasing -pipe -Wdeclaration-after-statement -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I/usr/include/gdbm  -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -D_REENTRANT -D_GNU_SOURCE -fno-strict-aliasing -pipe -Wdeclaration-after-statement -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I/usr/include/gdbm  -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/crawlManager2/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAPBB) $(MYSQLBB) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) -rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE  /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl -lresolv -lnsl -ldl -lm -lcrypt -lutil -lpthread -lc 
+	$(CC) -D__USE_BSD -std=c99 -m32 -D_REENTRANT -D_GNU_SOURCE -fno-strict-aliasing -pipe -Wdeclaration-after-statement -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I/usr/include/gdbm  -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -D_REENTRANT -D_GNU_SOURCE -fno-strict-aliasing -pipe -Wdeclaration-after-statement -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I/usr/include/gdbm  -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/crawlManager2/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  src/key/key.c -o bin/crawlManager2 $(LDFLAGS) $(LDAPBB) $(MYSQLBB) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) -rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE  /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl -lresolv -lnsl -ldl -lm -lcrypt -lutil -lpthread -lc 
  
 
 crawlManager2perltest: src/crawlManager2/perltest.c
