@@ -18,7 +18,7 @@
 #include "../maincfg/maincfg.h"
 #include "../crawlManager/client.h"
 #include "../common/define.h"
-#include "../common/key.h"
+#include "../key/key.h"
 
 char systemkey[KEY_STR_LEN];
 

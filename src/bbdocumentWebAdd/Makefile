@@ -1,5 +1,5 @@
 CC=	gcc
-VPATH= .:../boitho-bbdn/:../common/:../base64/:../maincfg/:../crawlManager/:.
+VPATH= .:../boitho-bbdn/:../common/:../base64/:../maincfg/:../crawlManager/:../key:.
 
 LDFLAGS=	 -lxml2 /usr/lib/mysql/libmysqlclient.a
 CFLAGS=	-g -Wall -O2 -I/usr/include/libxml2/ -DDEBUG -I/usr/include/mysql
