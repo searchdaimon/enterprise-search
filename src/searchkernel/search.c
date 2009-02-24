@@ -3563,18 +3563,21 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 							break;
 						}
 					}
-				    
-					if ((filteron->collection == NULL)
-					    || ((*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection))
-					    {
-						#ifdef DEBUG
-						printf("DUPLICATE secund(s): DocID=%u, subname=%s\n", (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].subname->subname);
-						#endif
-						vector_pushback(dup->V, (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].subname->subname);
 
+					// Hvis den første allerede er filtrert ut:
+					if (dup->fistiindex->indexFiltered.is_filtered && !(*TeffArray)->iindex[i].indexFiltered.is_filtered)
+					    {
+						if (iff_set_filter(&dup->fistiindex->indexFiltered, FILTER_DUPLICATE))
+						    --(*TotaltTreff);	// Vil ikke denne alltid bli false?
+						dup->fistiindex = &(*TeffArray)->iindex[i];
+					    }
+					else
+					    {
 						if (iff_set_filter(&(*TeffArray)->iindex[i].indexFiltered, FILTER_DUPLICATE))
 						    --(*TotaltTreff);
 					    }
+
+					vector_pushback(dup->V, (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].subname->subname);
 				}
 			}
 		}
