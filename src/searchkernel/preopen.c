@@ -35,7 +35,7 @@ preopen(void)
         char * subname;
         while ((subname = listAllColl_next(dirh)) != NULL) {
                 vboprintf("subname: %s\n", subname);
-		for(i=1;i<12;i++) {
+		for(i=1;i<maxLots;i++) {
 			// vi åpner kun lotter som har DocumentIndex. Dette er spesielt viktig da vi oppretter 
 			// filene hvis de ikke finnes.
 			if ((FH = lotOpenFileNoCasheByLotNr(i,"DocumentIndex","rb", 'r', subname)) == NULL) {
