@@ -16,8 +16,7 @@
 #define NET_IFCFG	   "ifcfg-eth1"
 #define NETSCRIPT_DIR	   "/etc/sysconfig/network-scripts"
 
-//#define RESOLV_PATH	   "/etc/resolv.conf"
-#define RESOLV_PATH	   "/tmp/resolv.conf"
+#define RESOLV_PATH	   "/etc/resolv.conf"
 #define INIT_NETWORK_PATH  "/etc/init.d/network"
 #define RUN_SUID	   1
 #define SUID_USER	   0
