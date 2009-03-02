@@ -26,43 +26,13 @@ int main()
 
     for (i=0; i<4; i++)
 	{
-	    char		*group, *descr;
+	    char		*group, *descr, *icon;
 	    int			ret;
 
-	    ret = fte_getdescription(fdata, "nbo", test_ext[i], &group, &descr);
-	    printf("Group(%s): %s, Description: %s\t(%i)\n", test_ext[i], group, descr, ret);
-	}
-
-    char	*test_groups[] = {"Bilde","Word","Document","Annet"};
-
-    for (i=0; i<4; i++)
-	{
-	    char		**ptr1, **ptr2, **ptr_i;
-
-	    if (fte_getextension(fdata, "nbo", test_groups[i], &ptr1, &ptr2))
-		{
-		    printf("Ext(%s):", test_groups[i]);
-		    for (ptr_i=ptr1; ptr_i<ptr2; ptr_i++) printf(" %s", *ptr_i);
-		}
-	    else printf("Ext(%s): <none>", test_groups[i]);
-	    printf(" (%i)\n", fte_groupid(fdata, "nbo", test_groups[i]));
-	}
-
-
-    char	*test_ext2[] = {"htm","doc","docx","jpeg","tix"};
-
-    for (i=0; i<5; i++)
-	{
-	    char		**ptr1, **ptr2, **ptr_i;
-
-	    if (fte_getext_from_ext(fdata, test_ext2[i], &ptr1, &ptr2))
-		{
-		    printf("Ext(%s):", test_ext2[i]);
-		    for (ptr_i=ptr1; ptr_i<ptr2; ptr_i++) printf(" %s", *ptr_i);
-		}
-	    else printf("Ext(%s): <none>", test_ext2[i]);
-	    printf(" (%i)\n", fte_extid(fdata, test_ext2[i]));
+	    ret = fte_getdescription(fdata, "nbo", test_ext[i], &group, &descr, &icon);
+	    printf("Extension(%s): %s / %s, Icon=%s\n", test_ext[i], group, descr, icon);
 	}
 
     fte_destroy(fdata);
 }
+
