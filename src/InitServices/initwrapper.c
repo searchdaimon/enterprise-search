@@ -1,8 +1,11 @@
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
 
 #include "../common/exeoc.h"
 
@@ -25,12 +28,20 @@ const char *valid_params[] = {"start", "stop", "restart", "status", '\0'};
 int main(int argc, char **argv) {
 
 #if DO_SUID
-    if (setuid(UID_USER) != 0) {
-        printf("Unable to setuid(%d)\n", UID_USER);
-        exit(2);
-    }
-	
+	if (setuid(UID_USER) != 0) {
+		printf("Unable to setuid(%d)\n", UID_USER);
+		exit(2);
+	}
 #endif
+	{
+		struct rlimit rlim;
+
+		rlim.rlim_cur = RLIM_INFINITY;
+		rlim.rlim_max = RLIM_INFINITY;
+
+		if (setrlimit(RLIMIT_MEMLOCK, &rlim) == -1)
+			warn("setrlimit()");
+	}
 	
 	if (argc == 3) {
 		char *service = argv[1];
