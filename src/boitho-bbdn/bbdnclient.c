@@ -153,7 +153,7 @@ int bbdn_closecollection(int socketha, char subname[]) {
 int bbdn_deleteuri(int socketha, char subname[], char *uri) {
 	int len;
 	
-	debug("bbdn_closecollection start");
+	debug("bbdn_deleteuri start");
 	sendpacked(socketha,bbc_deleteuri,BLDPROTOCOLVERSION, 0, NULL,"");
 
        	len = strlen(subname) +1;
@@ -165,7 +165,25 @@ int bbdn_deleteuri(int socketha, char subname[], char *uri) {
         if(sendall(socketha,uri, len) == -1) { perror("sendall"); exit(1); }
 
 
-	debug("bbdn_closecollection end");
+	debug("bbdn_deleteuri end");
 		
+	return 1;
+}
+
+int bbdb_addwhisper(int sock, char *subname, whisper_t whisper) {
+	int len;
+
+	debug("bbdn_addwhisper: start");
+	sendpacked(sock, bbc_addwhisper, BLDPROTOCOLVERSION, 0, NULL, "");
+
+	len = strlen(subname);
+	if (sendall(sock, &len, sizeof(len)) == -1)
+		err(1, "sendall(len)");
+	if (sendall(sock, subname, len) == -1)
+		err(1, "sendall(subname)");
+	if (sendall(sock, &whisper, sizeof(whisper)) == -1)
+		err(1, "sendall(whisper)");
+	debug("bbdn_addwhisper: end");
+
 	return 1;
 }

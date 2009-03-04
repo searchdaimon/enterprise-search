@@ -1,6 +1,8 @@
 #ifndef _BBDHCLIENT__H_
 #define _BBDHCLIENT__H_
 
+#include "../common/gcwhisper.h"
+
 
 int bbdn_conect(int *socketha, char tkey[], int PORT);
 
@@ -12,5 +14,7 @@ int bbdn_docexist(int socketha, char subname[],char documenturi[],unsigned int l
 
 int bbdn_closecollection(int socketha, char subname[]);
 int bbdn_deleteuri(int socketha, char subname[], char *uri);
+int bbdb_addwhisper(int sock, char *subname, whisper_t whisper);
+
 
 #endif //_BBDHCLIENT__H_

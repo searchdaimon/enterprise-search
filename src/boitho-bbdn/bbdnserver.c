@@ -13,6 +13,7 @@
 #include "../maincfg/maincfg.h"
 #include "../common/timediff.h"
 #include "../common/lot.h"
+#include "../common/gcwhisper.h"
 
 #include "bbdn.h"
 
@@ -323,6 +324,25 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 				fwrite(&DocID, sizeof(DocID), 1, fh);
 				fclose(fh);
 			}
+			free(subname);
+		}
+		else if (packedHedder.command == bbc_addwhisper) {
+			whisper_t add;
+			char *subname;
+
+			if ((i=recv(socket, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) 
+				err(1, "Cant read intrespons");
+			subname = malloc(intrespons+1);
+			if ((i=recv(socket, subname, intrespons,MSG_WAITALL)) == -1) {
+				perror("Cant read subname");
+				exit(1);
+			}
+			subname[intrespons] = '\0';
+			if ((i=recv(socket, &add, sizeof(add),MSG_WAITALL)) == -1) 
+				err(1, "Cant read add whisper");
+
+			gcwhisper_write(subname, add);
+			free(subname);
 		}
 		else {
 			printf("unnown comand. %i\n", packedHedder.command);
