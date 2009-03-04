@@ -7,6 +7,7 @@
 #include <err.h>
 #include <libconfig.h>
 #include <mysql.h>
+#include <ctype.h>
 
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
@@ -274,6 +275,44 @@ sd_users_user(MYSQL *db, unsigned int usersystem, xmlDocPtr doc, xmlNodePtr top)
 }
 
 void
+sd_gcwhispers(int sock, xmlDocPtr doc, xmlNodePtr top)
+{
+	xmlNodePtr cur, n;
+	char *collection;
+	whisper_t w;
+	
+	if ((n = xml_find_child(top, "collection")) == NULL) {
+		fprintf(stderr, "Unable to find collection to add gcwhisper to\n");
+		return;
+	}
+	if ((collection = (char *)xmlNodeListGetString(doc, n->xmlChildrenNode, 1)) == NULL) {
+		warnx("Unable to find collection name");
+		return ;
+	}
+
+	w = 0;
+	for (cur = top->xmlChildrenNode; cur != NULL; cur = cur->next) {
+		if (xmlStrcmp(cur->name, (xmlChar *)"whisper") == 0) {
+			char *str, *p;
+
+			str = (char *)xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+			if (str == NULL)
+				continue;
+
+			if (strcmp(str, "notold") == 0) {
+				w |= GCWHISPER_NOTOLD;
+			} else {
+				warn("Unknown gcwhisper string: '%s'", str);
+			}
+			free(str);
+		}
+	}
+	bbdb_addwhisper(sock, collection, w);
+	free(collection);
+}
+
+
+void
 sd_users(xmlDocPtr doc, xmlNodePtr top)
 {
 	xmlNodePtr cur;
@@ -427,6 +466,8 @@ main(int argc, char **argv)
 			sd_close(bbdnsock, doc, cur);
 		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "users"))) {
 			sd_users(doc, cur);
+		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "gcwhispers"))) {
+			sd_gcwhispers(bbdnsock, doc, cur);
 		} else if ((!xmlStrcmp(cur->name, (xmlChar*)"text"))) {
 			//fprintf(stderr, "Got text: %s\n", xmlNodeListGetString(doc, cur, 1));
 			// Ignore for now
