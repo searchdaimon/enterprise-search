@@ -34,12 +34,14 @@ gcwhisper_read(char *subname)
 			*p = '\0';
 			
 		for (i = 0; whispers[i].str != NULL; i++) {
-			if (strcmp(whispers[i].str, buf) == 0)
+			if (strcmp(whispers[i].str, buf) == 0) {
 				w |= whispers[i].flag;
+				break;
+			}
 		}
 		/* We did not find a match */
 		if (whispers[i].str == NULL)
-			warnx("Trying to read unknown whisper string: %s", buf);
+			warnx("Trying to read unknown whisper string: '%s'", buf);
 	}
 
 	fclose(fp);
