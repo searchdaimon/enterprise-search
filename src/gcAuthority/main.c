@@ -18,6 +18,7 @@
 #include "../common/iindex.h"
 #include "../common/gc.h"
 #include "../common/gcrepo.h"
+#include "../common/gcwhisper.h"
 #include "../bbdocument/bbdocument.h"
 
 /* MYSQL login information */
@@ -41,12 +42,9 @@ int
 gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt, time_t newest_document)
 {
 	int i;
-	
 	struct reformat *re;
-
 	FILE *DOCINDEXFH;
-
-
+	whisper_t whisper;
 
 
 	//åpner dokument indeks får å teste at vi har en, hvis ikke kan vi bare avslutte.
@@ -67,6 +65,7 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt, time_t newest_do
 	}
 
 
+	whisper = gcwhisper_read(subname);
 
 	//går gjenom alle på jakt etter de som kan slettes
 	for (i=0;i<NrofDocIDsInLot;i++) {
@@ -85,9 +84,10 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt, time_t newest_do
 		#endif
 
 		#ifdef BLACK_BOKS
-		if (	( (gcaopt->lastSeenHack == 1) && (REN_DocumentIndex(re, i)->lastSeen == 0) )
-			|| ( (REN_DocumentIndex(re, i)->lastSeen != 0) && (newest_document > (REN_DocumentIndex(re, i)->lastSeen + gcaopt->MaxAgeDiflastSeen)) )
-		) {
+		if ((whisper & GCWHISPER_NOTOLD) == 0 &&
+		    (((gcaopt->lastSeenHack == 1) && (REN_DocumentIndex(re, i)->lastSeen == 0))
+		     || ((REN_DocumentIndex(re, i)->lastSeen != 0) &&
+		         (newest_document > (REN_DocumentIndex(re, i)->lastSeen + gcaopt->MaxAgeDiflastSeen))))) {
 
 
 			//sletter
