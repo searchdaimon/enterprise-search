@@ -256,9 +256,14 @@ int main(int argc, char *argv[])
 			printf("Cached indexes: %dMB, cached indexes: %d\n", indexcachescached[0]/(1024*1024), indexcachescached[1]);
 			preopen();
 			cache_fresh_lot_collection();
+
+			cache_indexes_keepalive();
+			signal(SIGUSR2, cache_indexes_hup);
+
 		}
-		cache_indexes_keepalive();
-		signal(SIGUSR2, cache_indexes_hup);
+		else {
+			signal(SIGUSR2, SIG_IGN);
+		}
 	}
 #endif
 
