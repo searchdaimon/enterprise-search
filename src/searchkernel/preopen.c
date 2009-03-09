@@ -274,7 +274,7 @@ cache_indexes_keepalive_thread(void *dummy)
 		pthread_cond_wait(&index_cache_cv, &index_cache_lock);
 
 		// Refresh cache
-		//printf("Refreshing index cache...\n");
+		printf("Refreshing index cache...\n");
 		cache_indexes_empty();
 		cache_indexes();
 		// Preopen some other files
