@@ -429,7 +429,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 
 	//tester om vi har en url
 	if ((*Sider).DocumentIndex.Url[0] == '\0') {
-		printf("Cant read url for %i-%i\n",DocID,rLotForDOCid(DocID));
+		printf("Cant read url for DocID=%i-%i, Subname=\"%s\"\n",DocID,rLotForDOCid(DocID),subname->subname);
 		//temp: blie denne kalt også ved popresult sjekken i dosearch?
 		//(*SiderHeder).filtered++;
 		returnStatus = 0;
