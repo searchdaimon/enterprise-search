@@ -147,7 +147,16 @@ sub _exec_action {
     my $status = 1;
 
     close $wraph or $status = 0;
+	# mar 09, 2009 
+	# bugfix: check-update returns 100 if new packages are available.
+	my $exit_val = $? >> 8;
+	if ($service eq 'check-update' && $exit_val == 100) {
+		$status = 1;
+	}
     return ($status, @output);
 }
 
+#use Data::Dumper;
+#my $y = Boitho::YumWrapper->new(undef, "/home/boitho/boithoTools/setuid/yumwrapper");
+#print Dumper($y->check_update());
 1;
