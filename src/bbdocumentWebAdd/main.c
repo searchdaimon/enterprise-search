@@ -81,7 +81,9 @@ sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 	}
 
 	memset(&xmldoc, '\0', sizeof(xmldoc));
+	#ifdef DEBUG
 	fprintf(stderr, "Going to add something! %s\n", top->name);
+	#endif
 
 	getxmlnodestr(title);
 	getxmlnodestr(uri);
@@ -136,7 +138,11 @@ sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 		memcpy(body, xmldoc.body, xmldoc.bodysize);
 		body[xmldoc.bodysize] = '\0';
 		xmldoc.bodysize++;
-		fprintf(stderr, "We are %d long\n", xmldoc.bodysize);
+
+		#ifdef DEBUG
+			fprintf(stderr, "We are %d long\n", xmldoc.bodysize);
+		#endif
+
 		free(xmldoc.body);
 		xmldoc.body = body;
 	}
@@ -436,7 +442,7 @@ main(int argc, char **argv)
 		if (p == NULL)
 			errx(1, "No key data");
 
-		if (!key_equal(systemkey, p))
+		if ((systemkey[0] != '\0') && (!key_equal(systemkey, p)))
 			errx(1, "Keys does not match");
 	} else {
 		errx(1, "Did not receive a key");
@@ -446,7 +452,9 @@ main(int argc, char **argv)
 
 		p = xmlNodeListGetString(doc, anode->xmlChildrenNode, 1);
 		version = atoi((char*)p);
-		fprintf(stderr, "Got a version: %d\n", version);
+		#ifdef DEBUG
+			fprintf(stderr, "Got a version: %d\n", version);
+		#endif
 
 		xmlFree(p);
 	} else {
