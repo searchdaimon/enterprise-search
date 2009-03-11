@@ -264,6 +264,8 @@ int main(int argc, char *argv[])
 		else {
 			signal(SIGUSR2, SIG_IGN);
 		}
+	} else {
+		signal(SIGUSR2, SIG_IGN);
 	}
 #endif
 
