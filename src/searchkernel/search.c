@@ -1,3 +1,4 @@
+
 #include <stdarg.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -2175,7 +2176,7 @@ void *searchIndex_thread(void *arg)
         struct searchIndex_thread_argFormat *searchIndex_thread_arg = (struct searchIndex_thread_argFormat *)arg;
 	int i,j,y,x;
 
-	int ArrayLen, TmpArrayLen, TmpArray2Len;
+	int ArrayLen, TmpArrayLen, TmpArray2Len, totAttribLength;
 
 	struct iindexFormat *TmpArray, *TmpArray2;
 	struct iindexFormat *Array;
@@ -2361,6 +2362,8 @@ void *searchIndex_thread(void *arg)
 			acl_allowArrayLen = 0;
 			acl_deniedArrayLen = 0;
 
+			totAttribLength = 0;
+
 			hits = ArrayLen;
 
 	
@@ -2376,7 +2379,34 @@ void *searchIndex_thread(void *arg)
 			);
 
 
-			if (searcArrayLen == 0) {
+			#ifdef ATTRIBUTES
+			for (j=0; j<(*searchIndex_thread_arg).attrib_count; j++)
+			    {
+				tmpAttribArrayLen[j] = 0;
+
+				// Skriv ut hvilke attributter det søkes på til skjermen:
+				char	qbuf[1024];
+				sprint_query(qbuf,1023,&(*searchIndex_thread_arg).attribute_query[j]);
+				printf("Looking up attributes: %s\n", qbuf);
+
+				    searchIndex("attributes",
+					&tmpAttribArrayLen[j],
+					&tmpAttribArray[j],
+					&(*searchIndex_thread_arg).attribute_query[j],
+					&TmpArray,
+					&(*searchIndex_thread_arg).subnames[i],
+					(*searchIndex_thread_arg).languageFilterNr, 
+					(*searchIndex_thread_arg).languageFilterAsNr,
+					&complicacy
+				    );
+					totAttribLength += tmpAttribArrayLen[j];
+				
+
+				printf("%i hits.\n", tmpAttribArrayLen[j]);
+			    }
+			#endif
+
+			if ((searcArrayLen == 0) && (totAttribLength == 0)) {
 				vboprintf("diden't find any hits for this subname, skipping it.\n");
 				continue;
 			}
@@ -2403,29 +2433,6 @@ void *searchIndex_thread(void *arg)
 				&complicacy
 			);
 
-			#ifdef ATTRIBUTES
-			for (j=0; j<(*searchIndex_thread_arg).attrib_count; j++)
-			    {
-				tmpAttribArrayLen[j] = 0;
-
-				// Skriv ut hvilke attributter det søkes på til skjermen:
-				char	qbuf[1024];
-				sprint_query(qbuf,1023,&(*searchIndex_thread_arg).attribute_query[j]);
-				printf("Looking up attributes: %s\n", qbuf);
-
-				    searchIndex("attributes",
-					&tmpAttribArrayLen[j],
-					&tmpAttribArray[j],
-					&(*searchIndex_thread_arg).attribute_query[j],
-					&TmpArray,
-					&(*searchIndex_thread_arg).subnames[i],
-					(*searchIndex_thread_arg).languageFilterNr, 
-					(*searchIndex_thread_arg).languageFilterAsNr,
-					&complicacy
-				    );
-				printf("%i hits.\n", tmpAttribArrayLen[j]);
-			    }
-			#endif
 
 			#ifdef DEBUG_II
 				printf("acl_allowArrayLen %i:\n",acl_allowArrayLen);
