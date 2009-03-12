@@ -189,6 +189,9 @@ use Data::Dumper;
 use strict;
 use warnings;
 
+use Crawler;
+our @ISA = qw(Crawler);
+
 ##
 # Main loop for a crawl update.
 # This is where a resource is crawled, and documents added.
@@ -198,15 +201,18 @@ sub crawl_update {
     croak "TODO: Implement.\n Options received: ", Dumper($opt);
 
     #TODO: Fetch data needed to check if document exists, and add it.
-    my ($content, $title, $url, $last_modified);
-    if (not $self->document_exists($url, $last_modified)) {
+    my ($content, $title, $url, $last_modified) = ('content', 'title', 'url', 0);
+    my $size = length($content);
+    if (not $self->document_exists($url, $last_modified, $size)) {
         
         $self->add_document((
+            type      => 'txt',
             content   => $content,
             title     => $title,
             url       => $url,
             acl_allow => "Everyone", # permissions
-            last_modified => time(), # unixtime
+            last_modified => $last_modified, # unixtime
+            attributes => '', # key1=value1,key2=value2
         ));
     }
 
