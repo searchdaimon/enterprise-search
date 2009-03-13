@@ -1,12 +1,8 @@
 # Uncomment if you want debugging info 
 CFLAGS = -g -Wall -O2
 
-ifdef BLACKBOX
-MYSQL_THREAD = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient_r
-endif
-
-PERL_EMBED = -rdynamic `perl -MExtUtils::Embed -e ccopts`
-CFLAGS += $(PERL_EMBED)
+PERLEMBED = -rdynamic `perl -MExtUtils::Embed -e ccopts`
+CFLAGS += $(PERLEMBED)
 
 CC=	/usr/local/bin/gcc -Wall -O2 $(CFLAGS)
 LIB=	libperlembed.a $
