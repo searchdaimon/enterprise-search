@@ -92,12 +92,10 @@ static inline void bprintf( buffer *B, const char *fmt, ... )
 	{
 	    if (B->growing)
 		{
-		    char	*newdata;
-
 		    if (len_printed < BUFFER_BLOCKSIZE) B->maxsize+= BUFFER_BLOCKSIZE;
 		    else B->maxsize+= len_printed+1;
 
-		    newdata = malloc(B->maxsize);
+		    B->data = realloc(B->maxsize);
 
 		    va_start(ap, fmt);
 		    B->pos = old_pos;
