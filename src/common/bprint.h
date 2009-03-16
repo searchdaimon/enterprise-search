@@ -95,7 +95,7 @@ static inline void bprintf( buffer *B, const char *fmt, ... )
 		    if (len_printed < BUFFER_BLOCKSIZE) B->maxsize+= BUFFER_BLOCKSIZE;
 		    else B->maxsize+= len_printed+1;
 
-		    B->data = realloc(B->maxsize);
+		    B->data = realloc(B->data, B->maxsize);
 
 		    va_start(ap, fmt);
 		    B->pos = old_pos;
