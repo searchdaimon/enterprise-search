@@ -45,6 +45,11 @@ static inline buffer* buffer_init( int _maxsize )
     return B;
 }
 
+static inline int buffer_length(buffer *B)
+{
+	return B->pos;
+}
+
 static inline char* buffer_exit( buffer *B )
 {
     char	*output;
@@ -69,6 +74,26 @@ static inline char* buffer_abort( buffer *B )
     free( B );
 
     return output;
+}
+
+static inline void bmemcpy(buffer *B, void *src, size_t len)
+{
+	size_t needsize = 0;
+
+	assert(B->growing);
+
+	/* XXX: Learn division */
+	while (len > B->maxsize - B->pos - 1 + needsize)
+		needsize += BUFFER_BLOCKSIZE;
+
+	if (needsize > 0) {
+		B->data = realloc(B->data, B->maxsize + needsize);
+		B->maxsize += needsize;
+	}
+
+	memcpy(B->data+B->pos, src, len);
+	B->pos += len;
+	B->data[B->pos] = '\0';
 }
 
 
