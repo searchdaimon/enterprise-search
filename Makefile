@@ -251,7 +251,7 @@ bbdocumentConvertTest: src/bbdocumentConvertTest/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/bbdocumentConvertTest/main.c -o bin/bbdocumentConvertTest $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c src/bbdocumentConvertTest/main.c -o bin/bbdocumentConvertTest $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS
 
 
 analyseShortRank: src/analyseShortRank/main.c
@@ -483,6 +483,12 @@ readUserToSubname: src/readUserToSubname/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/readUserToSubname/main.c src/acls/acls.c -o bin/readUserToSubname $(LDFLAGS) -DBLACK_BOKS $(BDB)
+
+readUrls.db: src/readUrls.db/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/readUrls.db/main.c src/acls/acls.c src/bbdocument/bbdocument.c -o bin/readUrls.db $(LDFLAGS) -DBLACK_BOKS $(BDB)
 
 boithoads: src/boithoads/main.c
 	@echo ""
