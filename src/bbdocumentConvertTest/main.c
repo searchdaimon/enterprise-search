@@ -75,7 +75,7 @@ int bbdocument_convert(
 			lastmodified,
 			acl_allow,
 			acl_denied,
-			""
+			NULL
 			)
 		) {
 		printf("cant convert\n");
