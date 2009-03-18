@@ -1013,17 +1013,19 @@ void *IndexerLot_workthread(void *arg) {
 						#endif
 
 						#ifdef ATTRIBUTES
-						// attributes:
-						attriblot_add((*argstruct).attriblot, attributes);
+							// attributes:
+							if (attributes != NULL) {
+								attriblot_add((*argstruct).attriblot, attributes);
 
-						iiattribadd(&(*pagewords).attrib, attributes);
+								iiattribadd(&(*pagewords).attrib, attributes);
 
-						attribMakeRevIndex(&(*pagewords).attrib);
+								attribMakeRevIndex(&(*pagewords).attrib);
 
-						attribMakeRevIndexBucket(&(*pagewords).attrib, ReposetoryHeader.DocID, &langnr);
+								attribMakeRevIndexBucket(&(*pagewords).attrib, ReposetoryHeader.DocID, &langnr);
 
-						attributeIndexAdd(argstruct->re, ReposetoryHeader.DocID, attributes);
-						// end attributes.
+								attributeIndexAdd(argstruct->re, ReposetoryHeader.DocID, attributes);
+							}
+							// end attributes.
 						#endif
 
 						debug("time %u\n",ReposetoryHeader.time);
