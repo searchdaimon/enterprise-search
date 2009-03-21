@@ -89,6 +89,8 @@ sub run {
 
 	$self->cleaneFolder("/coredumps", 86400 * 5); #5 dager
 
+	$self->cleaneFolder("/coredumps/saved", 86400 * 5); #5 dager
+
 
     1;
 }
