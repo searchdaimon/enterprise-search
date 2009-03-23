@@ -12,6 +12,7 @@ use CGI qw(escapeHTML);
 use File::Temp qw(tempfile);
 
 use Sql::SessionData;
+use Sql::System;
 use Data::Collection;
 use Page::Connector;
 use Boitho::Infoquery;
@@ -353,12 +354,18 @@ sub init_test_collection {
     my $test_coll = $s->{sql_shares}->get({ collection_name => $s->{coll}{name} }, 'id');
     return $test_coll->{id} 
         if $test_coll;
+
+	# Fetch primary system
+	my $sqlSys = Sql::System->new($s->{dbh});
+	my $prim_sys = $sqlSys->primary_id()
+		|| croak "No primary system found.";
     
     # Collection does not exist, create.
     my $coll = Data::Collection->new($s->{dbh}, { 
         collection_name => $s->{coll}{name},
         connector => $s->{conn}{id},
         active => 0,
+	'system' => $prim_sys,
     });
     $coll->create();
     return { $coll->get_attr() }->{id};
