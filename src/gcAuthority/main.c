@@ -270,9 +270,10 @@ void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 
 		for(LotNr=1;LotNr<maxLots;LotNr++) {
 
-
-			if((re = reopen(LotNr, sizeof(struct DocumentIndexFormat), "DocumentIndex", subname, RE_READ_ONLY|RE_HAVE_4_BYTES_VERSION_PREFIX)) == NULL) {
-				continue;
+			
+			if((re = reopen(LotNr, sizeof(struct DocumentIndexFormat), "DocumentIndex", subname, RE_READ_ONLY|RE_HAVE_4_BYTES_VERSION_PREFIX|RE_STRETCH)) == NULL) {
+				//når vi ikke lengere kan åpne en DocumentIndex er det forde vi har kommet til siste lot.
+				break;
 			}
 
 			//finner nyeste dokument 
