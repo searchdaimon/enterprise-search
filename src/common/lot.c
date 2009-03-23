@@ -227,7 +227,7 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
 
 		if (strcmp(type,">>") == 0) {
 			//emulating perl's >>. If the file eksist is is opene for reading and writing.
-			//if not it is createt and openf for writing and reading
+			//if not it is createt and open for reading and writing
 			if ( (FILEHANDLER = (FILE *)fopen64(File,"r+")) == NULL ) {
                         	makePath(FilePath);
 
@@ -359,6 +359,15 @@ int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,
 		//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
 		else if ((strcmp(type,"rb") == 0) || (strcmp(type,"r") == 0)) {
 			if ( (fd = open64(File,O_RDONLY)) == -1 ) {
+				#ifdef DEBUG
+				perror(File);
+				#endif
+				return -1;
+			}
+		}
+		//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
+		else if ((strcmp(type,"r+b") == 0) || (strcmp(type,"r+") == 0)) {
+			if ( (fd = open64(File,O_RDWR)) == -1 ) {
 				#ifdef DEBUG
 				perror(File);
 				#endif
