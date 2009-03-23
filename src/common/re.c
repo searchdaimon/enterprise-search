@@ -32,6 +32,7 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 	char openmode[4];
 	int mmapmode;
 	int i;
+	int stretch = 0;
 
 	#ifdef DEBUG
 	printf("reopen(lotNr=%i, structsize=%d, file=%s, subname=%s, flags=%i)\n",lotNr,structsize,file,subname,flags);
@@ -50,17 +51,26 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 		structsize += 4;
 	}
 
-	if ( ( (re->flags & RE_READ_ONLY) == RE_READ_ONLY ) && ( (re->flags & RE_CREATE_AND_STRETCH) == RE_CREATE_AND_STRETCH ) ) {
+	if ( ( (re->flags & RE_READ_ONLY) == RE_READ_ONLY ) && ( (re->flags & RE_STRETCH) == RE_STRETCH ) ) {
+		// skal strekke hvis filen er for liten, men ikke opprette hvis den ikke er der.
+		strcpy(openmode,"r+b");
+		mmapmode = PROT_READ;
+		stretch = 1;
+	}
+	else if ( ( (re->flags & RE_READ_ONLY) == RE_READ_ONLY ) && ( (re->flags & RE_CREATE_AND_STRETCH) == RE_CREATE_AND_STRETCH ) ) {
 		strcpy(openmode,">>");
 		mmapmode = PROT_READ;
+		stretch = 1;
 	}
 	else if ((re->flags & RE_READ_ONLY) == RE_READ_ONLY) {
 		strcpy(openmode,"rb");
 		mmapmode = PROT_READ;
+		stretch = 0;
 	}
 	else {
 		strcpy(openmode,">>");
 		mmapmode = PROT_READ|PROT_WRITE;
+		stretch = 1;
 	}
 
 	re->lotNr = lotNr;
@@ -82,6 +92,7 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 			goto reopen_error;
 		}
 
+		//kopierer tmp til fd
 		_filecpy(re->fd, re->fd_tmp);
 
 	}
@@ -95,13 +106,7 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 
 	fstat(re->fd,&inode);	
 
-	if ( 
-	   ( (re->flags & RE_READ_ONLY) == RE_READ_ONLY ) 
-	&& (!( (re->flags & RE_CREATE_AND_STRETCH) == RE_CREATE_AND_STRETCH )) 
-	) {
-		//vi skal bare lese, og ikke opprette eler strekke, så vi kan håppe over det...
-	}
-	else if (inode.st_size < re->maxsize) {
+	if ((stretch == 1) && (inode.st_size < re->maxsize) ) {
 				printf("Stretching re file..\n");
                                 /*
                                 Stretch the file size to the size of the (mmapped) array of ints

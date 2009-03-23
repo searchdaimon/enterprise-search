@@ -27,6 +27,7 @@
 #define RE_STARTS_AT_0 			0x8
 #define RE_POPULATE 			0x10
 #define RE_CREATE_AND_STRETCH		0x20
+#define RE_STRETCH			0x40
 
 struct reformat {
         void *mem;
