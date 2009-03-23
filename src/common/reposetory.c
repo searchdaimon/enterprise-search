@@ -528,12 +528,13 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 			free(filename);
 		        fclose(f_attrkeys);
 		    }
-	    }
 
-	if (fwrite(attributes, ReposetoryHeader->attributeslen, 1, RFILE) < 0)
-	    {
-		perror("rApendPost: can't write attributes");
-	    }
+		if (fwrite(attributes, ReposetoryHeader->attributeslen, 1, RFILE) < 0)
+		    {
+			perror("rApendPost: can't write attributes");
+		    }
+      }
+
 #endif
 
         //skriver record seperator
@@ -1248,7 +1249,10 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		#ifdef DEBUG
 		printf("acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
 		#endif
-		(*acl_allowbuffer) = malloc((*ReposetoryHeader).acl_allowSize +1);
+		if (((*acl_allowbuffer) = malloc((*ReposetoryHeader).acl_allowSize +1)) == NULL) {
+			perror("Malloc acl_allowd");
+			return 0;
+		}
 		if ((*ReposetoryHeader).acl_allowSize != 0) {
 			if (read(LotFileOpen,(*acl_allowbuffer),(*ReposetoryHeader).acl_allowSize) != (*ReposetoryHeader).acl_allowSize) {
 				printf("cant't read acl_allow. acl_allow size %i at %s:%d\n",(*ReposetoryHeader).acl_allowSize,__FILE__,__LINE__);
@@ -1266,7 +1270,10 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		#ifdef DEBUG
 		printf("acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
 		#endif
-		(*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1);
+		if (((*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1)) == NULL) {
+			perror("Malloc acl_denied");
+			return 0;
+		}
 		if ((*ReposetoryHeader).acl_deniedSize != 0) {
 			if (read(LotFileOpen,(*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize) != (*ReposetoryHeader).acl_deniedSize) {
 				printf("cant't read acl_denied. acl_denied size %i at %s:%d\n",(*ReposetoryHeader).acl_deniedSize,__FILE__,__LINE__);
@@ -1324,7 +1331,10 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		//rart, ser ikke ut til at vi faktsik sjekker om disse er riktige		
 		totalpost_p += memcpyrc(recordseparator,totalpost_p,3);
 
-		*url = malloc(strlen(ReposetoryHeader->url)+1);
+		if ((*url = malloc(strlen(ReposetoryHeader->url)+1)) == NULL) {
+			perror("Malloc url");
+			return 0;
+		}
 		strcpy(*url, ReposetoryHeader->url);
 		*attributes = strdup("");
 	#endif
