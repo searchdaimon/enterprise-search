@@ -20,6 +20,8 @@
 
 #define __unused __attribute__((__unused__))
 
+int change_state(char *cmd);
+
 int
 main(int argc, char **argv, char **envp __unused)
 {
@@ -29,9 +31,9 @@ main(int argc, char **argv, char **envp __unused)
 	int ret;
 	struct passwd *pwd;
 	uid_t webuid, execuid;
-	uid_t uid = getuid();
+//	uid_t uid = getuid();
 	char *perlenv[] = { NULL };
-	struct stat st;
+//	struct stat st;
 
 	if (argc < 2)
 		errx(1, "Usage: ./setuidcaller cmd");
@@ -56,13 +58,15 @@ main(int argc, char **argv, char **envp __unused)
 	execuid = pwd->pw_uid;
 
 
-	if (uid != webuid) {
+#if 0
+	if (uid != webuid && argc < 3) {
 		errno = EPERM;
 		perror("Started as the wrong user");
 		return 99;
 	}
+#endif
 
-	if (argc != 2) {
+	if (argc < 2) {
 		fprintf(stderr, "Wrong number of arguments.\n");
 		return 98;
 	}
@@ -92,15 +96,38 @@ main(int argc, char **argv, char **envp __unused)
 	}
 
 	if (strcmp(argv[1], "start") == 0) {
-		ret = execlp(perlprog, "perl", program, "start2", NULL, perlenv, NULL);
+		ret = change_state("alive");
+		ret = execlp(perlprog, "perl", program, "start", NULL, perlenv, NULL);
 	} else if (strcmp(argv[1], "stop") == 0) {
-		ret = execlp(perlprog, "perl", program, "stop2", NULL, perlenv, NULL);
+		ret = change_state("dead");
+		ret = execlp(perlprog, "perl", program, "stop", NULL, perlenv, NULL);
 	} else {
 		ret = execlp(perlprog, "perl", program, "running", NULL, perlenv, NULL);
 	}
 
 	perror("Unable to exec program");
 
-	return 100;
+	return ret;
 }
 
+int
+change_state(char *cmd)
+{
+	FILE *fp;
+	char path[2048];
+	char *bh;
+
+	bh = getenv("BOITHOHOME");
+	if (bh == NULL)
+		return 300;
+
+	snprintf(path, sizeof(path), "%s/var/phonehome.state", bh);
+	fp = fopen(path, "w");
+	if (fp == NULL) {
+		return 301;
+	}
+	fprintf(fp, "%s\n", cmd);
+	fclose(fp);
+
+	return 1;
+}
