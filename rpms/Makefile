@@ -132,7 +132,7 @@ webclient:
 	rpmbuild -bb $(boitho-webclient_name).spec
 
 webadd:
-	perl rpmmagic.pl --requires "/usr/lib/libxml2.so.2" $(boitho-webadd_name) $(boitho-webadd_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/bbdocumentWebAdd
+	perl rpmmagic.pl --requires "/usr/lib/libxml2.so.2 boithobb-filepermissions" $(boitho-webadd_name) $(boitho-webadd_version) $(BOITHOHOME) /home/boitho/boithoTools cgi-bin/bbdocumentWebAdd
 	rpmbuild -bb $(boitho-webadd_name).spec
 
 perlxs-sdcrawl:
