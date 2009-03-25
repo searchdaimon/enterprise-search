@@ -317,6 +317,39 @@ sd_gcwhispers(int sock, xmlDocPtr doc, xmlNodePtr top)
 	free(collection);
 }
 
+void
+sd_errormsg(int sock, xmlDocPtr doc, xmlNodePtr top)
+{
+	char *msg;
+	char path[2048];
+	char *home;
+	FILE *fp;
+	time_t now;
+	char stime[128];
+
+	if ((home =  getenv("BOITHOHOME")) == NULL) {
+		warn("Unable to get BOITHOHOME");
+		return;
+	}
+	if ((msg = (char *)xmlNodeListGetString(doc, top->xmlChildrenNode, 1)) == NULL) {
+		warnx("Unable to find error message");
+		return;
+	}
+	snprintf(path, sizeof(path), "%s/logs/bbdocumentWebAdd.log", home);
+	if ((fp = fopen(path, "a")) == NULL) {
+		warn("Unable to append to: %s: %s", path, msg);
+		free(msg);
+		return;
+	}
+	now = time(NULL);
+	strlcpy(stime, ctime(&now));
+	stime[strlen(stime)-1] = '\0';
+	fprintf(fp, "%s: %s\n", stime, msg);
+	fclose(fp);
+
+	free(msg);
+}
+
 
 void
 sd_users(xmlDocPtr doc, xmlNodePtr top)
@@ -476,6 +509,8 @@ main(int argc, char **argv)
 			sd_users(doc, cur);
 		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "gcwhispers"))) {
 			sd_gcwhispers(bbdnsock, doc, cur);
+		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "error"))) {
+			sd_errormsg(bbdnsock, doc, cur);
 		} else if ((!xmlStrcmp(cur->name, (xmlChar*)"text"))) {
 			//fprintf(stderr, "Got text: %s\n", xmlNodeListGetString(doc, cur, 1));
 			// Ignore for now
