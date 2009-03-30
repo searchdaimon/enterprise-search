@@ -203,6 +203,9 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 	else if (code == 401) {
 		if ((userpass = make_userpass(login->username, login->password)) == NULL)
 			return NULL;
+
+		printf("Got 401 error code. We have normal basic login.\n");
+
 		curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
 
 		//usikker om vi kan gjøre dette. Kan være at curl trenger datene siden.
@@ -215,8 +218,21 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 		result = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
 
 		printf("code %i\n",code);
+
+		if (code == 302) {
+                        curl_easy_getinfo(curl, CURLINFO_REDIRECT_URL , &redirecttarget);
+                        printf("red to \"%s\"\n",redirecttarget);
+		}
+
 		if (code == 200) {
 
+		}
+		else if ( (code == 302) && (strstr(redirecttarget,"/owa/") != NULL) ) {
+			//vi blir redirektet til owa. Noe som ser ut til å være helt normalt i Exchnage 2007.
+		}
+		else if (code == 302) {
+                        asprintf(errorm,"Login 302 redirected to %s.",redirecttarget);
+			return NULL;
 		}
 		else if (code == 401) {
 			asprintf(errorm,"Wrong username or passord");
@@ -240,6 +256,8 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 		return NULL;		
 	}
 
+
+	printf("~ex_logOn()\n");
 
 	return curl;
 }
