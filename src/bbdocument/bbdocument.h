@@ -3,6 +3,7 @@
 
 #ifdef BLACK_BOKS
 
+#include <db.h>
 #include "../ds/dcontainer.h"
 
 
@@ -74,6 +75,8 @@ int bbdocument_delete (char uri[], char subname[]);
 
 int uriindex_add (char uri[], unsigned int DocID, unsigned int lastmodified, char subname[]);
 int uriindex_get (char uri[], unsigned int *DocID, unsigned int *lastmodified, char subname[]);
+int uriindex_close (DB **dbpp);
+int uriindex_open(DB **dbpp, char subname[]);
 
 unsigned int bbdocument_nrOfDocuments(char subname[]);
 int bbdocument_deletecoll(char collection[]);
