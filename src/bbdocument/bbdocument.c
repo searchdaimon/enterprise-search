@@ -334,8 +334,7 @@ void bbdocument_exist_update_di(char subname[],docid DocID) {
 
 }
 int bbdocument_exist_zero_lottery(int odds) {
-	return 0;
-	//return ( (rand() % odds) == 1 );
+	return ( (rand() % odds) == 1 );
 }
 
 int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified) {
@@ -353,7 +352,7 @@ int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified
 		bbdocument_exist_update_di(subname,DocID);
 		return 1;
 	}
-	else if ((lastmodified == 0) && bbdocument_exist_zero_lottery(0)) {
+	else if ((lastmodified == 0) && bbdocument_exist_zero_lottery(20)) {
 		//vi må av og til crawle de med ukjent/0 lastmodified
 		debug("bbdocument_exist: Uri \"%s\" exists and we got 0 as current time. But we did winn in the lottery, and are askinf for it to be crawled. DocID \"%u\"\n", documenturi, DocID);
 		return 0;
