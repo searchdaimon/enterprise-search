@@ -92,9 +92,16 @@ sqlbb_authenticate_user(usersystem_data_t *data, char *user, char *password)
 	return 0;
 }
 
+char *
+sqlbb_get_name(void)
+{
+	return strdup("sqlBB");
+}
+
 usersystem_t usersystem_info = {
 	US_TYPE_SQLBB,
 	NULL,
 	sqlbb_list_users,
 	sqlbb_list_groupsforuser,
+	sqlbb_get_name,
 };

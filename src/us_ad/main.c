@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "../boithoadClientLib/liboithoaut.h"
 
@@ -27,9 +28,17 @@ ad_authenticate_user(usersystem_data_t *data, char *user, char *password)
 	return 0;
 }
 
+char *
+ad_get_name(void)
+{
+	        return strdup("Active Directory");
+}
+
+
 usersystem_t usersystem_info = {
 	US_TYPE_AD,
 	ad_authenticate_user,
 	ad_list_users,
 	ad_list_groupsforuser,
+	ad_get_name,
 };
