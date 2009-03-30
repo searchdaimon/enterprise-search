@@ -67,5 +67,38 @@ sub change_collection {
 	SD::Crawl::pdocumentChangeCollection($self->{ptr}, $collection);
 }
 
+sub add_foreign_user {
+	my ($self, $user, $group) = @_;
+
+	croak "Need a user" unless defined $user;
+	$group = $user unless (defined $group);
+
+	return SD::Crawl::paddForeignUser($self->{ptr}, $user, $group);
+}
+
+sub remove_foreign_users {
+	my ($self) = @_;
+
+	return SD::Crawl::premoveForeignUsers($self->{ptr});
+}
+
+sub closeCurrentCollection {
+	my ($self) = @_;
+
+	SD::Crawl::pcloseCurrentCollection($self->{ptr});
+};
+
+sub get_last_crawl_time {
+	my ($self) = @_;
+
+	return SD::Crawl::pget_last_crawl($self->{ptr});
+}
+
+sub delete_uri {
+	my ($self, $subname, $uri) = @_;
+
+	return SD::Crawl::pdeleteuri($self->{ptr}, $subname, $uri);
+}
+
 1;
 
