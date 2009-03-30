@@ -46,8 +46,10 @@ next_attribute(char *attributes, char **offset, char *k, char *v, char *kv)
 
 	if (p-value < MAX_ATTRIB_LEN)
 	    {
-		strncpy(v, value, p-value);// + (last ? 0 : -1));
-		v[p-value] = '\0';
+		int ending_slash = 0;	// Fjern slash på slutten for normalisering
+		if (p-value > 0 && value[p-value-1]=='/') ending_slash = 1;
+		strncpy(v, value, p-value-ending_slash);// + (last ? 0 : -1));
+		v[p-value-ending_slash] = '\0';
 	    }
 	else
 	    {
@@ -57,8 +59,10 @@ next_attribute(char *attributes, char **offset, char *k, char *v, char *kv)
 
 	if (p-key < MAX_ATTRIB_LEN)
 	    {
-		strncpy(kv, key, p-key);// + (last ? 0 : -1));
-		kv[p-key] = '\0';
+		int ending_slash = 0;
+		if (p-value > 0 && value[p-value-1]=='/') ending_slash = 1;
+		strncpy(kv, key, p-key-ending_slash);// + (last ? 0 : -1));
+		kv[p-key-ending_slash] = '\0';
 	    }
 	else
 	    {
@@ -135,7 +139,7 @@ main(int argc, char **argv)
 {
 	char key[MAX_ATTRIB_LEN], value[MAX_ATTRIB_LEN];
 	char keyval[MAX_ATTRIB_LEN];
-	char attributes[] = "hei=ho,no=er,det=,jul=igjen,vi=baker,nissemenn=,";
+	char attributes[] = "hei=ho,no=er,det=,jul=igjen,vi=baker,nissemenn=,folder=mg@searchdaimon/Inbox/,";
 	//char attributes[] = "hei=ho,ha=hopp,finn=sesam";
 	char *o = NULL;
 
