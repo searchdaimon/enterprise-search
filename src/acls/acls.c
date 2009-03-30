@@ -118,13 +118,18 @@ char **userToSubname_getsubnamesList(struct userToSubnameDbFormat *db, char grou
 		}
 
 		char **subnames = NULL;
-		while (ret != DB_NOTFOUND) {
+		while (ret == 0) {
 			i++;
 			subnames = realloc(subnames, i * sizeof(char *));
 			subnames[i-1] = strdup(data.data);
 			ret = cursorp->c_get(cursorp, &key, &data, DB_NEXT_DUP);
 			(*num_colls)++;
 		}
+		// vi skal kjøre cursorp->c_get() helt til siste record, og da returnerer den feil not fund.
+		//hvis vi er her, og ret ikke er not found, så må vi ha hatt en annen feil...
+	        if (ret != DB_NOTFOUND) {
+	                perror("Can't get all record by db->c_get");
+	        }
 
 		// Close the cursor 
 		if (cursorp != NULL)
