@@ -5,6 +5,7 @@
 
 #include <db.h>
 #include "../ds/dcontainer.h"
+#include "../common/bprint.h"
 
 
 //rutine for å inalisere.
@@ -57,8 +58,7 @@ int bbdocument_convert(
 			char filetype[],
 			char document[],
 			const int dokument_size,
-			char **documentfinishedbuf,
-			int *documentfinishedbufsize, 
+			buffer *documentfinishedbuf,
 			const char titlefromadd[], 
 			char *subname, 
 			char *documenturi, 

@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
+#include <assert.h>
 
 #include "../common/define.h"
 #include "../common/debug.h"
@@ -23,6 +24,7 @@
 #include "../common/timediff.h"
 #include "../common/reposetory.h"
 #include "../common/bstr.h"
+#include "../common/bprint.h"
 #include "../acls/acls.h"
 
 #include "bbdocument.h"
@@ -308,7 +310,8 @@ int bbdocument_init(container **attrkeys) {
 	}
 	closedir(dirp);
 
-    if (attrkeys!=NULL) *attrkeys = ropen();
+	if (attrkeys != NULL)
+		*attrkeys = ropen();
 }
 
 int bbdocument_delete (char uri[], char subname[]) {
@@ -331,7 +334,8 @@ void bbdocument_exist_update_di(char subname[],docid DocID) {
 
 }
 int bbdocument_exist_zero_lottery(int odds) {
-	return ( (rand() % odds) == 1 );
+	return 0;
+	//return ( (rand() % odds) == 1 );
 }
 
 int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified) {
@@ -349,7 +353,7 @@ int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified
 		bbdocument_exist_update_di(subname,DocID);
 		return 1;
 	}
-	else if ((lastmodified == 0) && bbdocument_exist_zero_lottery(20)) {
+	else if ((lastmodified == 0) && bbdocument_exist_zero_lottery(0)) {
 		//vi må av og til crawle de med ukjent/0 lastmodified
 		debug("bbdocument_exist: Uri \"%s\" exists and we got 0 as current time. But we did winn in the lottery, and are askinf for it to be crawled. DocID \"%u\"\n", documenturi, DocID);
 		return 0;
@@ -401,7 +405,7 @@ void stripTags(char *cpbuf, int cplength) {
 	}
 }
 
-int bbdocument_convert(char filetype[],char document[],const int dokument_size,char **documentfinishedbuf,int *documentfinishedbufsize, const char titlefromadd[], char *subname, char *documenturi, unsigned int lastmodified, char *acl_allow, char *acl_denied, struct hashtable **metahash) {
+int bbdocument_convert(char filetype[],char document[],const int dokument_size, buffer *outbuffer, const char titlefromadd[], char *subname, char *documenturi, unsigned int lastmodified, char *acl_allow, char *acl_denied, struct hashtable **metahash) {
 
 	char **splitdata;
         int TokCount;
@@ -428,43 +432,25 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		filetype[i] = btolower(filetype[i]);
 	}
 
-	#ifdef DEBUG
-	printf("documentfinishedbufsize is %i\n",(*documentfinishedbufsize));
-	#endif
-
-	(*documentfinishedbufsize) = (dokument_size * 2) + 512;
-	*documentfinishedbuf = malloc((*documentfinishedbufsize));
-	documentfinishedbuftmp = *documentfinishedbuf;
-
 	//hvis vi har et html dokument kan vi bruke dette direkte
 	//er dog noe uefektist her, ved at vi gjør minnekopiering
 	if ((strcmp(filetype,"htm") == 0) || (strcmp(filetype,"html") == 0 )) {
-		if (titlefromadd[0]=='\0')
-		    {
-			memcpy(documentfinishedbuftmp,document,dokument_size);
-	                (*documentfinishedbufsize) = dokument_size;
-		    }
-		else
-		    {
+		if (titlefromadd[0]=='\0') {
+			bmemcpy(outbuffer, document, dokument_size);
+		}
+		else {
 			// Noen dokumenter kan ha lagt ved tittel ved add uten å ha tittel i html-en (f.eks epost).
 			// Legg til korrekt tittel i dokumentet.
 			// Html-parseren tar kun hensyn til den første tittelen, så det skal holde å legge den til
 			// øverst i dokumentet.
-			int	pos = sprintf(documentfinishedbuftmp, "<title>%s</title>\n", titlefromadd);
-			memcpy(&(documentfinishedbuftmp[pos]),document,dokument_size);
-			(*documentfinishedbufsize) = pos+dokument_size;
-		    }
-
-		documentfinishedbuftmp[(*documentfinishedbufsize) +1] = '\0';
+			bprintf(outbuffer, "<title>%s</title>\n", titlefromadd, document);
+			bmemcpy(outbuffer, document, dokument_size);
+		}
 		return 1;
 	}
 	else if (strcmp(filetype,"hnxt") == 0) {
-               
-		ntobr(document,dokument_size);
- 
-		snprintf(documentfinishedbuftmp,(*documentfinishedbufsize),html_tempelate,titlefromadd,document);
-
-                (*documentfinishedbufsize) = strlen(documentfinishedbuftmp);
+		ntobr(document, dokument_size);
+		bprintf(outbuffer, html_tempelate, titlefromadd, document);
 		return 1;
 	}
 
@@ -481,10 +467,10 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	//if (chtbl_lookup(&htbl,(void *)&fileFilterOrginal) != 0) { 
 	if (NULL == (fileFilterOrginal = hashtable_search(h_fileFilter,filetype) )) {
 		printf("don't have converter for \"%s\"\n",filetype);
-		(*documentfinishedbufsize) = 0;
 
-		//#ifdef DEBUG
+		#ifdef DEBUG
 		printf("writing to unknownfiltype.log\n");
+		#endif
 		if ((fp = fopen(bfile("logs/unknownfiltype.log"),"ab")) == NULL) {
 			perror(bfile("logs/unknownfiltype.log"));
 		}
@@ -494,8 +480,9 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 			fprintf(fp,"%s: %s\n",titlefromadd,filetype);
 			fclose(fp);
 		}	
+		#ifdef DEBUG
 		printf("writing to unknownfiltype.log. done\n");
-		//#endif
+		#endif
 
 		return 0;
 	}
@@ -528,11 +515,10 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		stripTags(cpbuf,dokument_size);
 
 		printf("document %i\n",strlen(document));
-		printf("documentfinishedbuf %i\n",(*documentfinishedbufsize));
+		
 
-		snprintf(documentfinishedbuftmp,(*documentfinishedbufsize),html_text_tempelate,titlefromadd,cpbuf);
-                (*documentfinishedbufsize) = strlen(documentfinishedbuftmp);
-
+		bprintf(outbuffer, html_text_tempelate, titlefromadd, cpbuf);
+		//printf("documentfinishedbuf %i\n", buffer_length(outbuffer));
 		free(cpbuf);
 
                 return 1;
@@ -595,10 +581,9 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	//#endif
 	printf("running: %s\n",(*fileFilter).command);
 	//sender med størelsen på buferen nå. Vil få størelsen på hva vi leste tilbake
-	exeocbuflen = (*documentfinishedbufsize);
+	exeocbuflen = (dokument_size * 2) + 512; // XXX: Find a better way //(*documentfinishedbufsize);
+	char *execobuf = malloc(exeocbuflen);
 
-
-	
 	char envpairtemplate[] = "tmp/converter-metadata-XXXXXX";
 	char *envpairpath = strdup(bfile(envpairtemplate));
 	char envpair[PATH_MAX];
@@ -614,14 +599,10 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
                 gettimeofday(&start_time, NULL);
         #endif
 
-	if (!exeoc_timeout(shargs,documentfinishedbuftmp,&exeocbuflen,&ret,120)) {
-
+	if (!exeoc_timeout(shargs, execobuf, &exeocbuflen, &ret, 120)) {
 		printf("dident get any data from exeoc. But can be a filter that creates files, sow we wil continue\n");
-		//kan ikke sette den til 0 da vi bruker den får å vite hvos stor bufferen er lengere nede
-		//(*documentfinishedbufsize) = 0;
-		documentfinishedbuftmp[0] = '\0';
-		//return 0;
-
+		execobuf[0] = '\0';
+		exeocbuflen = 0;
 	}
 
         #ifdef DEBUG_TIME
@@ -674,36 +655,17 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 	}
 
 #ifdef DEBUG
-	printf("did convert to %i bytes (strlen %i)\n",exeocbuflen,strlen(documentfinishedbuftmp));
+	//printf("did convert to %i bytes (strlen %i)\n",exeocbuflen,strlen(documentfinishedbuftmp));
 #endif
 
 	if (strcmp((*fileFilter).outputformat,"text") == 0) {
-		//hvis dette er text skal det inn i et html dokument.
-		//må ha med subjekt lengde her også
-
-		int cpbufsize;
-		char *cpbuf;
-
-		cpbufsize = (strlen(html_text_tempelate) + exeocbuflen + strlen(titlefromadd)+1);	
-		cpbuf = malloc(cpbufsize);
-		//runarb: 30 jan 2008: hvorfor bruker vi documentfinished her, når det er documentfinishedbuf som returneres fra exeoc_timeout() ?
-		snprintf(cpbuf,cpbufsize,html_text_tempelate,titlefromadd,documentfinishedbuftmp);
-		strscpy(documentfinishedbuftmp,cpbuf,(*documentfinishedbufsize));
-		(*documentfinishedbufsize) = strlen(documentfinishedbuftmp);
-
-
-		#ifdef DEBUG	
-		printf("maked html document of %i b (html_text_tempelate is %i b, cpbuf %i)\n",strlen(documentfinishedbuftmp),strlen(html_text_tempelate),strlen(cpbuf));
-		#endif
-
-		free(cpbuf);
-
-
+		bprintf(outbuffer, html_text_tempelate,titlefromadd,execobuf);
 	}
 	else if (strcmp((*fileFilter).outputformat,"html") == 0) {
 		//html trenger ikke å konvertere
 		//dette er altså outputformat html. Ikke filtype outputformat. Filtupe hondteres lengere oppe
 		//ToDo: må vel kopiere inn noe data her???
+		bprintf(outbuffer, "%s", execobuf);
 	}
 	else if (strcmp((*fileFilter).outputformat,"textfile") == 0) {
 		FILE *fh;
@@ -733,32 +695,33 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 
 		fclose(fh);
 
-		printf("have size %i\n",(*documentfinishedbufsize));
+		//printf("have size %i\n",(*documentfinishedbufsize));
 
-		snprintf(documentfinishedbuftmp,(*documentfinishedbufsize),html_text_tempelate,titlefromadd,cpbuf);
-                (*documentfinishedbufsize) = strlen(documentfinishedbuftmp);
-
-		printf("documentfinishedbufsize: %i\n",(*documentfinishedbufsize));
-
+		bprintf(outbuffer, html_text_tempelate, titlefromadd, cpbuf);
 		free(cpbuf);
 
 		//seltter filen vi lagde
 		unlink(filconvertetfile_out_txt);
-
 	}
 	else if (strcmp((*fileFilter).outputformat,"htmlfile") == 0) {
 		FILE *fh;
 		struct stat inode; 
+		size_t n;
+		char buf[4096];
 		if ((fh = fopen(filconvertetfile_out_html,"rb")) == NULL) {
 			printf("can't open out file \"%s\"\n",filconvertetfile_out_html);
 			perror(filconvertetfile_out_html);
 			goto bbdocument_convert_error;
 		}		
        		fstat(fileno(fh),&inode);
+#if 0
 		if ((*documentfinishedbufsize) > inode.st_size) {
 			(*documentfinishedbufsize) = inode.st_size;
 		}
-        	fread(documentfinishedbuftmp,1,(*documentfinishedbufsize),fh);
+#endif
+		while ((n = fread(buf, 1, sizeof(buf)-1, fh)) > 0) {
+			bmemcpy(outbuffer, buf, n);
+		}
 
 		fclose(fh);
 	}
@@ -767,19 +730,17 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		/* Does len do anything any more? */
 		int len, failed = 0;
 		int iter = 0;
-		char *curdocp = documentfinishedbuftmp;
 		int type; /* 1 for dir, 2 for diradd */
 
 		type = (strcmp(fileFilter->outputformat, "dir") == 0) ? 1 : 2;
 
 		len = exeocbuflen;
-		p = strdup(documentfinishedbuftmp);
+		p = strdup(execobuf);
 		pstart = p;
 		if (p == NULL) {
 			goto bbdocument_convert_error;
 		}
-		sprintf(*documentfinishedbuf, html_text_tempelate, titlefromadd, "");
-		curdocp += strlen(*documentfinishedbuf);
+		bprintf(outbuffer, html_text_tempelate, titlefromadd, "");
 		while (*p != '\0') {
 			char *ft, *path;
 			char *part = NULL;
@@ -802,13 +763,11 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 			if (*p == '\n')
 				*p++ = '\0';
 
-			curdocp[0] = '\0';
 			/* We have a new file, let's get to work on it */
 			//printf("########Got: %s: %s\n", ft, path);
 			{
 				char *docbuf;
-				char *convdocbuf;
-				int docbufsize, convdocbufsize;
+				int docbufsize;
 				struct stat st;
 				int n;
 				char buf[1024];
@@ -839,55 +798,35 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 				fclose(fp);
 				unlink(path);
 				docbuf[docbufsize] = '\0';
-				convdocbufsize = 0;
 
-				if (type == 1)  {
-					while (((curdocp - documentfinishedbuftmp) + (char *)docbufsize) >
-					    (char *)documentfinishedbufsize) {
-						char *oldptr = *documentfinishedbuf;
-						
-						*documentfinishedbufsize *= 2;
-						*documentfinishedbuf = realloc(*documentfinishedbuf, *documentfinishedbufsize);
-						curdocp = *documentfinishedbuf + (curdocp - oldptr);
-						documentfinishedbuftmp = *documentfinishedbuf;
-					}
-				}
 				//runarb: 18 jan 2008: har var titel "", ikke titlefromadd, som gjorde at 24so crawling mistet titler.
-				if (bbdocument_convert(ft, docbuf, docbufsize, &convdocbuf, &convdocbufsize, titlefromadd, subname, documenturi, lastmodified, acl_allow, acl_denied,  NULL) == 0) {
+				if (bbdocument_convert(ft, docbuf, docbufsize, outbuffer, titlefromadd, subname, documenturi, lastmodified, acl_allow, acl_denied,  NULL) == 0) {
 					fprintf(stderr, "Failed on bbdocument_convert.\n");
 					failed++;
 					free(docbuf);
-					free(convdocbuf);
 					continue;
 				}
-				if (type == 1) {
-					memcpy(curdocp, convdocbuf, convdocbufsize);
-					curdocp += convdocbufsize;
-				} else if (type == 2) {
-					char subnamenew[256];
-					snprintf(subnamenew, sizeof(subnamenew), "%s-%s", subname, part);
-					printf("bbdocument_convert: _add(%s)\n", documenturi);
-					bbdocument_add(subnamenew, documenturi, "html", convdocbuf, convdocbufsize, lastmodified, acl_allow, acl_denied, titlefromadd, "", "", NULL);
-				}
 				
-				free(convdocbuf);
 				free(docbuf);
 			}
 		}
-		if (type == 1) {
-			*curdocp = '\0';
-			*documentfinishedbufsize = curdocp - documentfinishedbuftmp; 
-		} else if (type == 2) {
+		if (type == 2) {
+			assert(0);
+#if 0
 			*documentfinishedbufsize = 1;
 			*documentfinishedbuf = strdup(".");
+#endif
 		}
 		//printf("Got this: %d %d<<\n%s\n", strlen(*documentfinishedbuf), *documentfinishedbufsize, *documentfinishedbuf);
 		free(pstart);
 	}
 	else {
 		printf("unknown dokument outputformat \"%s\"\n",fileFilter->outputformat);
+		free(execobuf);
 		goto bbdocument_convert_error;
 	}
+
+	free(execobuf);
 
 	unlink(filconvertetfile_real);
 	unlink(filconvertetfile_out_txt);
@@ -917,7 +856,6 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size,c
 		if (fileFilter != fileFilter) {
 			free(fileFilter);
 		}
-		(*documentfinishedbufsize) = 0;
 
 		return 0;
 }
@@ -941,6 +879,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	unsigned int DocIDForExistTest;
 	unsigned int lastmodifiedForExistTest;
 	struct hashtable *metahash = NULL;
+	buffer *documentbuffer;
 
 	printf("bbdocument_add: \"%s\"\n",documenturi);
 
@@ -999,7 +938,8 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		strncpy(ReposetoryHeader.doctype,doctype,sizeof(ReposetoryHeader.doctype));
 	}
 
-	if (!bbdocument_convert(documenttype_real,document,dokument_size,&htmlbuffer,&htmlbuffersize,title,subname,documenturi, lastmodified,acl_allow, acl_denied, &metahash)) {
+	documentbuffer = buffer_init(0);
+	if (!bbdocument_convert(documenttype_real,document,dokument_size,documentbuffer,title,subname,documenturi, lastmodified,acl_allow, acl_denied, &metahash)) {
 
 		printf("can't run bbdocument_convert\n");
 		//lager en tom html buffer
@@ -1010,6 +950,9 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		htmlbuffersize = strlen(htmlbuffer);
 		printf("useing title \"%s\" as title\n",title);
 		printf("htmlbuffersize %i\n",htmlbuffersize);
+	} else {
+		htmlbuffersize = buffer_length(documentbuffer);
+		htmlbuffer = buffer_exit(documentbuffer);
 	}
 
 	if (metahash) {
