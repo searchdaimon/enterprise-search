@@ -4,6 +4,7 @@
 #include <err.h>
 
 #include "define.h"
+#include "re.h"
 #include "reposetory.h"
 #include "lot.h"
 #include "DocumentIndex.h"
@@ -11,11 +12,6 @@
 #define MaxAgeDiflastSeen 86400
 //#define MaxAgeDiflastSeen 100
 
-struct DIArrayFormat {
-        struct DocumentIndexFormat docindex;
-        unsigned int DocID;
-	char gced;
-};
 
 int
 gcrepo(int LotNr, char *subname)
@@ -32,44 +28,18 @@ gcrepo(int LotNr, char *subname)
 	char path[1024];
 	char path2[1024];
 	char path3[1024];
-	FILE *DOCINDEXFH, *FNREPO;
+	FILE *FNREPO;
+	struct reformat *re;
 
 	int keept = 0;
 	int gced = 0;
 
 	container *attrkeys = ropen();
 
-	struct DIArrayFormat *DIArray;
-	int DocIDPlace;
 
-        if ( (DOCINDEXFH = lotOpenFileNoCasheByLotNr(LotNr,"DocumentIndex","rb", 's',subname)) == NULL) {
-		#ifdef DEBUG
-                	printf("lot dont have a DocumentIndex file\n");
-		#endif
-
-                return 0;
-        }
-	fclose(DOCINDEXFH);
-
-
-
-	if ((DIArray = malloc(sizeof(struct DIArrayFormat) * NrofDocIDsInLot)) == NULL) {
-		perror("gcrepo: malloc DIArray");
-		exit(1);
-	}
-
-
-
-	for (i=0;i<NrofDocIDsInLot;i++) {
-		DIArray[i].DocID = 0;
-		DIArray[i].gced = 0;
-
-		if (!DIRead(&DIArray[i].docindex, LotDocIDOfset(LotNr) +i, subname)) {
-			//fprintf(stderr, "Unable to locate a DI for %d\n", LotDocIDOfset(LotNr) +i);
-			continue;
-		}
-
-
+	if((re = reopen(LotNr, sizeof(struct DocumentIndexFormat), "DocumentIndex", subname, RE_HAVE_4_BYTES_VERSION_PREFIX|RE_COPYONCLOSE)) == NULL) {
+		perror("reopen DocumentIndex");
+		return 0;
 	}
 
 
@@ -77,27 +47,23 @@ gcrepo(int LotNr, char *subname)
 		#ifdef DEBUG
                 	printf("lot dont have a reposetory file\n");
 		#endif
-
                 return 0;
         }
 
 
 	while (rGetNext_fh(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&raddress,0,0,subname,&acl_allow,&acl_deny, FNREPO ,&url, &attributes)) {
 
-		DocIDPlace = (ReposetoryHeader.DocID - LotDocIDOfset(LotNr));
-		DIArray[DocIDPlace].DocID = ReposetoryHeader.DocID;
 
 		#ifdef DEBUG
 		printf("dokument \"%s\", DocID %u.\n",
-			DIArray[DocIDPlace].docindex.Url,
+			RE_DocumentIndex(re,ReposetoryHeader.DocID)->Url,
 			ReposetoryHeader.DocID);
 		#endif
 
 		//printf("%p\n", docindex.RepositoryPointer);
-		if (raddress != DIArray[DocIDPlace].docindex.RepositoryPointer) {
-			DIArray[DocIDPlace].gced = 1;
+		if (raddress != RE_DocumentIndex(re,ReposetoryHeader.DocID)->RepositoryPointer) {
 			#ifdef DEBUG
-			printf("Garbage collecting %d at %u. docindex has %u\n", ReposetoryHeader.DocID, raddress,DIArray[DocIDPlace].docindex.RepositoryPointer);
+			printf("Garbage collecting %d at %u. docindex has %u\n", ReposetoryHeader.DocID, raddress,RE_DocumentIndex(re,ReposetoryHeader.DocID)->RepositoryPointer);
 			#endif
 			++gced;
 		}
@@ -105,7 +71,7 @@ gcrepo(int LotNr, char *subname)
 			unsigned long int offset;
 			offset = rApendPost(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_deny, "repo.wip", url,
 			    attributes, attrkeys);
-			DIArray[DocIDPlace].docindex.RepositoryPointer = offset;
+			RE_DocumentIndex(re,ReposetoryHeader.DocID)->RepositoryPointer = offset;
 			#ifdef DEBUG
 			printf("Writing DocID: %d\n", ReposetoryHeader.DocID);
 			#endif
@@ -121,16 +87,8 @@ gcrepo(int LotNr, char *subname)
 
 	printf("keept %i\ngced %i\n",keept,gced);
 
-	printf("writing to DI..\n");
-	for (i=0;i<NrofDocIDsInLot;i++) {
+	reclose(re);
 
-		if (DIArray[i].DocID != 0) {
-			DIWrite(&DIArray[i].docindex, DIArray[i].DocID, subname, "DocumentIndex.wip");
-		}
-	}
-	printf("..done\n");
-
-	free(DIArray);
 
 	/* And we have a race... */
 	GetFilPathForLot(path, LotNr, subname);
