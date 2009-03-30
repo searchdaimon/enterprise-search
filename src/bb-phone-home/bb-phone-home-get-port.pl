@@ -8,6 +8,8 @@ use Sys::Syslog;
 
 use Fcntl ':flock';
 
+use POSIX qw(strftime);
+
 my $sshportstart = 10000;
 my $sshportend = 10500;
 
@@ -78,7 +80,7 @@ if ($#ARGV != -1) {
 
 	while (1) {
 		open(my $fh, '>>', $logfile) or last;
-		my $time = time;
+		my $time = strftime "%a %b %e %H:%M:%S %Y", localtime;
 		print $fh "$time: " . $ARGV[0] . " was delegated to port '$port'.\n";
 		close $fh;
 		last;
