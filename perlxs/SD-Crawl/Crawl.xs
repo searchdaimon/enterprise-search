@@ -1,3 +1,5 @@
+#include <err.h>
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -8,6 +10,7 @@
 #include "clib/url.h"
 #include "clib/bstr.h"
 #include "../../src/common/debug.h"
+#include "../../src/boitho-bbdn/bbdnclient.h"
 
 #include <stdio.h>
 
@@ -110,7 +113,47 @@ pdocumentChangeCollection(struct cargsF *cargs, char *collection)
 	cargs->collection->collection_name = collection;
 }
 
+int
+paddForeignUser(struct cargsF *cargs, char *user, char *group)
+{
+	return addForeignUser(cargs->collection->collection_name, user, group);
+}
+
+int
+premoveForeignUsers(struct cargsF *cargs) 
+{
+	return removeForeignUsers(cargs->collection->collection_name);
+}
+
+void
+pcloseCurrentCollection(struct  cargsF *cargs)
+{
+	extern int global_bbdnport;
+	bbdn_closecollection(cargs->collection->socketha, cargs->collection->collection_name);
+	bbdn_close(cargs->collection->socketha);
+	cargs->collection->socketha = 0;
+	bbdn_conect(&cargs->collection->socketha, "", global_bbdnport);
+}
+
+unsigned int
+pgetLastCrawl(struct cargsF *cargs)
+{
+	return cargs->collection->lastCrawl;
+}
+
+int
+pdeleteuri(struct cargsF *cargs, char *subname, char *uri)
+{
+	return bbdn_deleteuri(cargs->collection->socketha, subname, uri);
+}
+
 MODULE = SD::Crawl		PACKAGE = SD::Crawl		
+
+void
+pcloseCurrentCollection(x)
+		void * x
+	CODE:
+		pcloseCurrentCollection(x);
 
 void
 pdocumentChangeCollection(x, collection)
@@ -164,6 +207,27 @@ pdocumentContinue(x)
                 XPUSHs(sv_2mortal(newSVnv(ret)));
 
 
+int
+paddForeignUser(x, user, group)
+	void *x
+	char *user
+	char *group
+	INIT:
+		int ret;
+	PPCODE:
+		ret = paddForeignUser(x, user, group);
+		
+		XPUSHs(sv_2mortal(newSVnv(ret)));
+
+int
+premoveForeignUsers(x)
+	void *x
+	INIT:
+		int ret;
+	PPCODE:
+		ret = premoveForeignUsers(x);
+		
+		XPUSHs(sv_2mortal(newSVnv(ret)));
 
 int 
 pdocumentError(x, errorstring)
@@ -184,3 +248,26 @@ htttp_url_normalization(url)
 		url_normalization(urlout,sizeof(urlout));
 
 		XPUSHs(sv_2mortal(newSVpv(urlout,0)));
+
+unsigned int
+pget_last_crawl(x)
+	void *x
+	INIT:
+		int ret;
+	PPCODE:
+		ret = pgetLastCrawl(x);
+		
+		XPUSHs(sv_2mortal(newSVnv(ret)));
+
+int
+pdeleteuri(x, subname, uri)
+	void *x
+	char *subname
+	char *uri
+	INIT:
+		int ret;
+	PPCODE:
+		ret = pdeleteuri(x, subname, uri);
+
+		XPUSHs(sv_2mortal(newSVnv(ret)));
+
