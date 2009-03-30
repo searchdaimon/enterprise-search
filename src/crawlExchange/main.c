@@ -33,12 +33,12 @@ int crawlupdate(crawlupdate_args);
 
 
 int 
-ex_rewrite_url(char *uri, enum platform_type ptype, enum browser_type btype)
+ex_rewrite_url(struct collectionFormat *collection, char *url, char *uri, char *fulluri, size_t len, enum platform_type ptype, enum browser_type btype)
 {
 	char *p;
 
-	printf("We got: %s\n", uri);
-	p = strchr(uri, '\x10');
+	printf("We got: %s\n", url);
+	p = strchr(url, '\x10');
 	if (p == NULL)
 		return 0;
 	if (ptype == WINDOWS) {
@@ -49,10 +49,12 @@ ex_rewrite_url(char *uri, enum platform_type ptype, enum browser_type btype)
 		//printf("Something else!!\n");
 		p++;
 		len = strlen(p);
-		memmove(uri, p, strlen(p));
-		uri[len] = '\0';
+		memmove(url, p, strlen(p));
+		url[len] = '\0';
 	}
-	//printf("pushing out: %s\n", uri);
+	strcpy(uri, "Exchange");
+	strcpy(fulluri, "Exchange");
+	//printf("pushing out: %s\n", url);
 	return 1;
 }
 
