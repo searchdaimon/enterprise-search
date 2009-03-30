@@ -71,7 +71,7 @@ sub SOAP::Serializer::as_Credentials {
 	my $euser = SOAP::Data->new(name=>'userName', value=>$value->{userName}, type=>'string');
 	my $epass = SOAP::Data->new(name=>'password', value=>$value->{password}, type=>'string');
 	my $edomain = SOAP::Data->new(name=>'domain', value=>$value->{domain}, type=>'string');
-	print Dumper($name);
+	#print Dumper($name);
 	my $rval = ['credentials',##$name,
 	   {'xsi:type'=>'Credentials', %$attr}, 
 	   {
@@ -119,28 +119,48 @@ sub traverse_repository_file {
 		my $ts = undef;
 
 		$ts = find_in_mapentry_array('updateDate', $me->{properties});
-		if (defined($ts)) {
+		if (not defined($ts)) {
 			$ts = find_in_mapentry_array('creationDate', $me->{properties});
 		}
 
 		my $type = find_in_mapentry_array('mimeType', $me->{properties});
 
-		print Dumper($me);
+		#print STDERR Dumper($me);
 
-		$time = str2time($ts) if (defined($ts));
+		$time = int(str2time($ts)) if (defined($ts));
 
-		#my $data = $service->getContent($uid, 0);
 		my $getdata = sub {
 			return $service->getContent($uid, 0)->{data};
 		};
 
 		my $getpermissions = sub {
 			print "Grabing permissions...\n";
+			my @perms;
 
-			#print "Foo: " . Dumper($service->getPermissions($uid)) . "\n";
-			#print "Bar: " . Dumper($service->getPermissionTypes($uid)) . "\n";
+			my @permissions = $service->getPermissions($uid);
 
-			return $service->getPermissions($uid);
+			foreach my $perm (@permissions) {
+				my ($entry, $rights);
+				$perm = @{$perm}[0];
+				$entry = $perm->{entry};
+				$rights = $perm->{rights};
+
+				# XXX: Verify
+				my $found = 0;
+				foreach my $right (@{$rights}) {
+					$found++ if ($right->{id} eq 'viewContent');
+				}
+				next unless ($found > 0);
+
+				if (ref $entry eq 'Group') {
+					push @perms, $entry->{name};
+					# XXX: Get mappings
+				} elsif (ref $entry eq 'Person') {
+					push @perms, $entry->{name};
+				}
+			}
+
+			return @perms;
 		};
 
 		if (defined($self->{found_document})) {
@@ -173,6 +193,7 @@ sub traverse_repository {
 
 	my $root = $service->getRepositoryRootFolder($repo) || die "$SOAP_ERROR";
 
+	#print Dumper($root->{properties});
 	print "Traversing: " . find_in_mapentry_array("name", $root->{properties}) . "\n";
 
 	traverse_repository_folder($self, make_id($root->{id}->{repository}, $root->{id}->{uid}), $service);
@@ -185,79 +206,145 @@ sub register_repository {
 
 	my %factories = (
 		sharepoint => 'net.entropysoft.eci.sharepoint.SharePointContentProviderFactory',
+		alfresco => 'net.entropysoft.eci.alfresco.foundation.AlfrescoContentProviderFactory',
 	);
 	my $factory = $factories{$type} || die "Unknown factory for connector: $type";
 
 	my $regservice = $self->{regservice};
 
-	my $site;
-	if ($host !~ /^http/) {
-		$site = "http://" . $host;
-	} else {
-		$site = $host;
-	}
 
-	$regservice->createUpdateRepositoryXml(
+	if ($type eq 'sharepoint') {
+		my $site;
+		if ($host !~ /^http/) {
+			$site = "http://" . $host;
+		} else {
+			$site = $host;
+		}
+
+		$regservice->createUpdateRepositoryXml(
+			'
+			<repository>
+			<disabled>false</disabled>
+			<displayName>'.$name . " " . $site.'</displayName>
+			<factoryClassName>'.$factory.'</factoryClassName>
+			<ignoreOtherProperties>false</ignoreOtherProperties>
+			<mappings>
+			<forceReadOnly>false</forceReadOnly>
+			<hidden>false</hidden>
+			<internalName>name</internalName>
+
+			<providerName>FileLeafRef</providerName>
+			</mappings>
+			<mappings>
+			<forceReadOnly>false</forceReadOnly>
+			<hidden>false</hidden>
+			<internalName>author</internalName>
+			<providerName>Author</providerName>
+			</mappings>
+			<mappings>
+			<forceReadOnly>false</forceReadOnly>
+			<hidden>false</hidden>
+
+			<internalName>contentLength</internalName>
+			<providerName>File_x0020_Size</providerName>
+			</mappings>
+			<mappings>
+			<forceReadOnly>false</forceReadOnly>
+			<hidden>false</hidden>
+			<internalName>creationDate</internalName>
+			<providerName>Created</providerName>
+			</mappings>
+			<mappings>
+			<forceReadOnly>false</forceReadOnly>
+
+			<hidden>false</hidden>
+			<internalName>updateDate</internalName>
+			<providerName>Modified</providerName>
+			</mappings>
+			<name>'.$name.'</name>
+			<properties>
+			<key>net.entropysoft.services.timeToLive</key>
+			</properties>
+			<properties>
+			<key>siteUrl</key>
+			<value>'.$site.'</value>
+
+			</properties>
+			<properties>
+			<key>handleGenericLists</key>
+			<value>false</value>
+			</properties>
+			<properties>
+			<key>httpChunkingEnabled</key>
+			<value>true</value>
+			</properties>
+			<properties>
+			<key>credentials.userName</key>
+			</properties>
+
+			<properties>
+			<key>credentials.password</key>
+			</properties>
+			<properties>
+			<key>credentials.domain</key>
+			</properties>
+			</repository>
+			',
+		{
+			domain => $domain,
+			password => $pass,
+			userName => $user,
+		},
+		1);
+	} elsif ($type eq 'alfresco') {
+		$regservice->createUpdateRepositoryXml(
 		'
 		<repository>
 		<disabled>false</disabled>
-		<displayName>'.$name . " " . $site.'</displayName>
+		<displayName>'.$name.'-'.$host.'</displayName>
 		<factoryClassName>'.$factory.'</factoryClassName>
 		<ignoreOtherProperties>false</ignoreOtherProperties>
 		<mappings>
 		<forceReadOnly>false</forceReadOnly>
 		<hidden>false</hidden>
-		<internalName>name</internalName>
-
-		<providerName>FileLeafRef</providerName>
-		</mappings>
-		<mappings>
-		<forceReadOnly>false</forceReadOnly>
-		<hidden>false</hidden>
-		<internalName>author</internalName>
-		<providerName>Author</providerName>
-		</mappings>
-		<mappings>
-		<forceReadOnly>false</forceReadOnly>
-		<hidden>false</hidden>
-
-		<internalName>contentLength</internalName>
-		<providerName>File_x0020_Size</providerName>
+		<internalName>'.$name.'</internalName>
+		<providerName>{http://www.alfresco.org/model/content/1.0}name</providerName>
 		</mappings>
 		<mappings>
 		<forceReadOnly>false</forceReadOnly>
 		<hidden>false</hidden>
 		<internalName>creationDate</internalName>
-		<providerName>Created</providerName>
+		<providerName>{http://www.alfresco.org/model/content/1.0}created</providerName>
 		</mappings>
 		<mappings>
 		<forceReadOnly>false</forceReadOnly>
-
 		<hidden>false</hidden>
 		<internalName>updateDate</internalName>
-		<providerName>Modified</providerName>
+		<providerName>{http://www.alfresco.org/model/content/1.0}modified</providerName>
+		</mappings>
+		<mappings>
+		<forceReadOnly>false</forceReadOnly>
+		<hidden>false</hidden>
+		<internalName>comment</internalName>
+		<providerName>{http://www.alfresco.org/model/content/1.0}description</providerName>
+		</mappings>
+		<mappings>
+		<forceReadOnly>false</forceReadOnly>
+		<hidden>false</hidden>
+		<internalName>author</internalName>
+		<providerName>{http://www.alfresco.org/model/content/1.0}creator</providerName>
 		</mappings>
 		<name>'.$name.'</name>
 		<properties>
 		<key>net.entropysoft.services.timeToLive</key>
 		</properties>
 		<properties>
-		<key>siteUrl</key>
-		<value>'.$site.'</value>
-
-		</properties>
-		<properties>
-		<key>handleGenericLists</key>
-		<value>false</value>
-		</properties>
-		<properties>
-		<key>httpChunkingEnabled</key>
-		<value>true</value>
+		<key>remoteFactoryUrl</key>
+		<value>'.$host.'</value>
 		</properties>
 		<properties>
 		<key>credentials.userName</key>
 		</properties>
-
 		<properties>
 		<key>credentials.password</key>
 		</properties>
@@ -266,23 +353,25 @@ sub register_repository {
 		</properties>
 		</repository>
 		',
-	{
-		domain => $domain,
-		password => $pass,
-		userName => $user,
-	},
-	1);
+		{
+			domain => $domain,
+			password => $pass,
+			userName => $user,
+		},
+		1);
+
+	}
 }
 
 sub init {
-	my ($self, $ip, $user, $pass) = @_;
+	my ($self, $ip, $user, $pass, $reponame) = @_;
 
 	$self->{the_user} = $user;
 	$self->{the_pass} = $pass;
+	$self->{usergroups} = {};
 
-	my $service = new SOAP::Lite->service("http://$user:$pass\@$ip:8082/entropysoft/ws/ContentService?WSDL");
-	my $regservice = new SOAP::Lite->service("http://$user:$pass\@$ip:8082/entropysoft/ws/RepositoryRegistry?WSDL");
-	#my $regservice = new SOAP::Lite->service("file:./regserv.wsdl");
+	my $service = new SOAP::Lite->service("http://$user:$pass\@$ip:8080/entropysoft/ws/ContentService?WSDL");
+	my $regservice = new SOAP::Lite->service("http://$user:$pass\@$ip:8080/entropysoft/ws/RepositoryRegistry?WSDL");
 	$service->on_fault(\&soap_fault_handler);
 	$service->on_nonserialized(sub { die "$_[0]?!?" });
 
@@ -296,17 +385,35 @@ sub init {
 
 	$self->{service} = $service;
 	$self->{regservice} = $regservice;
+
+	my $rlist = $service->searchDirectoryEntries($reponame, 1, undef, 0, 0, undef); 
+	foreach my $res (@{$rlist->{results}}) {
+		next if (ref($res) ne 'Person');
+		my $name = $res->{name};
+		next if defined $self->{usergroups}->{$name};
+		my @groups;
+
+		my $ugroups = $service->getGroupMembership(make_id($res->{id}->{repository}, $res->{id}->{uid}));
+
+		foreach my $group (@{$ugroups}) {
+			push @groups, $group->{name};
+		}
+		push @groups, 'EVERYONE';
+
+		$self->{usergroups}->{$name} = \@groups;
+	}
+#	print Dumper($self->{usergroups});
 }
 
 sub new {
-	my ($foo, $ip, $user, $pass) = @_;
+	my ($foo, $ip, $user, $pass, $reponame) = @_;
 
 	my $self = {};
 
 	$self->{service} = undef;
 	$self->{max_size} = undef;
 	bless $self;
-	$self->init($ip, $user, $pass);
+	$self->init($ip, $user, $pass, $reponame);
 
 	return $self;
 }
