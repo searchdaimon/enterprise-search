@@ -7,6 +7,7 @@
 
 #include "../bbdocument/bbdocument.h"
 #include "../common/bfileutil.h"
+#include "../common/bprint.h"
 
 main (int argc, char *argv[]) {
 
@@ -16,6 +17,7 @@ main (int argc, char *argv[]) {
 	char *documenttype_real;
 	char *documentfinishedbuf;
 	int documentfinishedbufsize;
+	buffer *buffer;
 
 	if (argc != 2) {
 		printf("usage ./%s doc\n",argv[0]);
@@ -47,6 +49,8 @@ main (int argc, char *argv[]) {
 	char acl_allow[] = "";
 	char acl_denied[] = "";
 
+	buffer = buffer_init(0);
+
 /*
 int bbdocument_convert(
                         char filetype[],
@@ -67,8 +71,7 @@ int bbdocument_convert(
 			documenttype_real,
 			data,
 			inode.st_size,
-			&documentfinishedbuf,
-			&documentfinishedbufsize,
+			buffer,
 			"test title",
 			"", //subname
 			filname,
@@ -83,6 +86,8 @@ int bbdocument_convert(
 	}
 	
 
+	documentfinishedbufsize = buffer_length(buffer);
+	documentfinishedbuf = buffer_exit(buffer);
 	printf("convertet to %ib\nDocument:\n%s\n",documentfinishedbufsize,documentfinishedbuf);
 
 }
