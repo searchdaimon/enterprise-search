@@ -13,6 +13,7 @@ use Sql::ShareGroups;
 use Sql::ShareUsers;
 use Sql::Config;
 use Sql::ShareResults;
+use Sql::SessionData;
 use Data::Collection;
 use Page::Abstract;
 BEGIN {
@@ -31,6 +32,7 @@ use constant TPL_EDIT        => 'overview_edit.html';
 use constant TPL_DELETE_COLL => 'overview_delete_share.html';
 use constant TPL_CUSTOMIZE   => 'overview_customize.html';
 use constant TPL_ADV_MANAGEMENT => 'overview_manage.html';
+use constant TPL_GRAPHS		=> 'overview_graphs.html';
 Readonly::Scalar my $META_CONN_PUSH => "Pushed collections";
 Readonly::Scalar my $CRAWL_STATUS_OK => qr{^(OK\.|Ok)$};
 
@@ -150,6 +152,20 @@ sub show_customize {
 	#croak Dumper($vars);
 
 	return TPL_CUSTOMIZE;
+}
+
+sub show_graphs {
+	my ($s, $vars, $id) = @_;
+
+	my $sqlShares = Sql::Shares->new($s->{dbh});
+	my $sess = Sql::SessionData->new($s->{dbh});
+	my $sessid = $sess->insert('crawled documents' => '');
+	$vars->{sessid} = $sessid;
+	$vars->{id} = $id;
+	my $collection_name = $sqlShares->get_collection_name($id);
+	$vars->{collection_name} = $collection_name;
+	
+	return TPL_GRAPHS;
 }
 
 sub submit_edit {

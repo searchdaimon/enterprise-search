@@ -1,0 +1,45 @@
+[% INCLUDE 'header.html' title = 'Result customization' %]
+[% USE HTML %]
+
+[% IF error_collection_not_exist %]
+	[% PROCESS 'template_collection_warnings.html' %]
+	[% STOP %]
+[% END %]
+
+[% PROCESS 'overview_tabs.html' selected="Graphs" %]
+<h2>Graphs for [% HTML.escape(collection_name) %]</h2>
+
+[% IF succs  %]
+	[% PROCESS 'tpl_msg.html' type = "success" content = succs %]
+[% END %]
+
+
+[% IF errors %]
+	[% WRAPPER 'tpl_msg.html' type="error" %]
+		<ul>
+		[% FOREACH e IN errors %]
+			<li>[% e %]</li>
+		[% END %]
+		</ul>
+	[% END %]
+[% END %]
+
+<script type="text/javascript" src="/amcharts/amcolumn/swfobject.js"></script>
+	<div id="crawleddocuments">
+	<strong>You need to upgrade your Flash Player</strong>
+	</div>
+
+	<script type="text/javascript">
+	// <![CDATA[            
+	var so = new SWFObject("/amcharts/amline/amline.swf", "amline", "520", "400", "8", "#FFFFFF");
+	so.addVariable("path", "/amcharts/amline/");
+	so.addVariable("settings_file", encodeURIComponent("Graph/config.cgi?action=crawleddocs&last=1"));
+	so.addVariable("data_file", encodeURIComponent("Graph/graph.cgi?action=crawleddocs&last=1&crawler=[% id %]&sessid=[% sessid %]"));
+	so.addVariable("preloader_color", "#999999");
+	so.write("crawleddocuments");
+	// ]]>
+</script>
+
+
+
+[% INCLUDE 'footer.html' %]

@@ -70,6 +70,9 @@ if (defined $state{action}) {
 	elsif ($action eq 'customize') {
 		$tpl_file = $overview->show_customize($vars, $id);
 	}
+	elsif ($action eq 'graphs') {
+		$tpl_file = $overview->show_graphs($vars, $id);
+	}
 	elsif ($action eq 'stop_crawl') {
 		$tpl_file = $overview->stop_crawl($vars, $id);
 	}

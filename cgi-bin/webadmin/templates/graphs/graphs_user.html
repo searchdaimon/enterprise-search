@@ -1,0 +1,59 @@
+[% INCLUDE 'header.html' title = 'Graphs' %]
+[% USE HTML %]
+
+<!--
+[% PROCESS 'template_tabs.html' 
+	tabs = [
+	{
+		'name' => 'Log files',
+		'url' => 'logs.cgi'
+	},
+	{
+		'name' => 'Search log',
+		'url' => 'logs.cgi?view=search',
+		
+	}]
+        selected => 'Log files'
+%]
+-->
+
+<h2>Graphs for [% user | html %]</h2>
+
+
+<script type="text/javascript" src="/amcharts/amcolumn/swfobject.js"></script>
+        <div id="queries">
+	<strong>You need to upgrade your Flash Player</strong>
+	</div>
+
+	<script type="text/javascript">
+	// <![CDATA[            
+	var so = new SWFObject("/amcharts/amcolumn/amcolumn.swf", "amcolumn", "520", "380", "8", "#FFFFFF");
+	so.addVariable("path", "/amcharts/amcolumn/");
+	so.addVariable("settings_file", encodeURIComponent("Graph/config.cgi?action=queries&user=[% user %]&last=[% last %]"));
+	so.addVariable("data_file", encodeURIComponent("Graph/graph.cgi?action=queries&user=[% user %]&last=[% last %]"));
+	so.addVariable("preloader_color", "#999999");
+	so.write("queries");
+	// ]]>
+	</script>
+
+<script type="text/javascript" src="/amcharts/amcolumn/swfobject.js"></script>
+        <div id="searches">
+	<strong>You need to upgrade your Flash Player</strong>
+	</div>
+
+	<script type="text/javascript">
+	// <![CDATA[            
+	var so = new SWFObject("/amcharts/amcolumn/amcolumn.swf", "amcolumn", "520", "380", "8", "#FFFFFF");
+	so.addVariable("path", "/amcharts/amcolumn/");
+	so.addVariable("settings_file", encodeURIComponent("Graph/config.cgi?action=searchesday&user=[% user %]&last=[% last %]"));
+	so.addVariable("data_file", encodeURIComponent("Graph/graph.cgi?action=searchesday&user=[% user %]&last=[% last %]"));
+	so.addVariable("preloader_color", "#999999");
+	so.write("searches");
+	// ]]>
+	</script>
+
+<p>
+<a href="graphs.cgi?last=[% last %]">back</a>
+</p>
+
+[% INCLUDE 'footer.html' %]
