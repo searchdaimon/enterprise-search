@@ -50,6 +50,7 @@ struct collectionFormat {
 	int docsRemaining;
 	//9okt 2008
 	void *timeusage;
+	char *alias;
 	//runarb: 23 feb 2009;
 	char systemkey[KEY_STR_LEN];
 };
@@ -100,7 +101,7 @@ struct crawlLibInfoFormat {
 	int (*crawlpatAcces)(char resource[], char username[], char password[],int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...), struct collectionFormat *collection);
 
 	int (*scan)(int (*scan_found_share)(char share[]),char host[],char username[], char password[], int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...));
-	int (*rewrite_url)(char *, enum platform_type, enum browser_type);
+	int (*rewrite_url)(struct collectionFormat *, char *, char *, char *, size_t, enum platform_type, enum browser_type);
 
 	int crawl_security;
 	//char *shortname;
