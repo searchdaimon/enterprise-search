@@ -43,6 +43,26 @@ int main () {
 
 */
 
+static void
+setrlimits(void)
+{
+        struct rlimit rlim;
+
+	// don't dump core
+        rlim.rlim_cur = 0;
+        rlim.rlim_max = 0;
+        if (setrlimit(RLIMIT_CORE, &rlim) == -1) {
+                perror("setrlimit");
+        }
+        if (getrlimit(RLIMIT_CORE, &rlim) == -1) {
+                perror("getrlimit");
+                return;
+        }
+        printf("%d %d\n", rlim.rlim_cur, rlim.rlim_max);
+}
+
+
+
 int
 exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret,int alsostderr, struct timeval *timeout)
 {
@@ -93,6 +113,8 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
         	int         fi, fmax = getdtablesize();
 	        for (fi=3; fi<fmax; fi++) close(fi);
 
+		// skrur av core domping
+		setrlimits();
 
 		//sleep(1);
 		//char *execvarg[] = {"/bin/cat","/tmp/test.txt", '\0'};
