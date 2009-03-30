@@ -11,6 +11,7 @@
 #include <time.h> // time(), localtime()
 #include <unistd.h> // getpid()
 #include <signal.h> // kill()
+#include <err.h>
 
 #if WITH_PATHACCESS_CACHE
 #include <libmemcached/memcached.h>
