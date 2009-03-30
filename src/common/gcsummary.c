@@ -52,11 +52,16 @@ gcsummary(int LotNr, char *subname)
 	strcat(path, "summary.gcSummary");
 	strcat(path_old, "summary");
 
-	if ((fh = lotOpenFileNoCasheByLotNr(LotNr,"summary","r",'e',subname)) == NULL)
-		err(1, "Unable to open summary file");
+	if ((fh = lotOpenFileNoCasheByLotNr(LotNr,"summary","r",'e',subname)) == NULL) {
+		warn("Unable to open summary file");
+		return 0;
+	}
 
-	if ((newfh = lotOpenFileNoCasheByLotNr(LotNr,"summary.gcSummary","w",'e',subname)) == NULL)
-		err(1, "Unable to open summary wip file");
+	if ((newfh = lotOpenFileNoCasheByLotNr(LotNr,"summary.gcSummary","w",'e',subname)) == NULL) {
+		warn("Unable to open summary wip file");
+		fclose(fh);
+		return 0;
+	}
 
 	fseeko64(fh, 0, SEEK_SET);
 	if (fread(&firstDocID, sizeof(firstDocID), 1, fh) != 1) {
