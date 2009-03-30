@@ -157,7 +157,7 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 		filter_TLDs, filter_response, filter_same_crc32, \
 		rank_author_array, rank_title_array, rank_title_first_word, \
 		rank_headline_array, rank_body_array, rank_url_array, \
-		rank_url_main_word, cache_link \
+		rank_url_main_word, cache_link, without_aclcheck \
 		FROM shareResults, shares \
 		WHERE \
 			shares.collection_name = '%s' \
@@ -168,6 +168,7 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 	char query[1024];
 	snprintf(query, sizeof query, query_tpl, name_esc);
 	
+	cfg->has_config = 0;
 	if (mysql_real_query(db, query, strlen(query)) != 0) {
 		warnx("Mysql error (%s line %d): %s", 
 			__FILE__, __LINE__, mysql_error(db));
@@ -183,6 +184,7 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 		return 0;
 	}
 
+	cfg->has_config = 1;
 	if (strcmp(row[0], "start") == 0)
 		cfg->summary = SUMMARY_START;
 	else if (strcmp(row[0], "snippet") == 0)
@@ -212,6 +214,7 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 	cfg->sqlImpressionsLogQuery[0] = '\0';
 
 	cfg->cache_link = row[13][0] == '1' ? 1 : 0;
+	cfg->without_aclcheck = row[14][0] == '1' ? 1 : 0;
 
 	mysql_free_result(res);
 	return 1;
@@ -258,13 +261,24 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
         }
 
 
-	if (cgi_getentrystr("search_bruker") == NULL) {
-		fprintf(stderr,"Did'n receive any username.");
-		QueryData->search_user[0] = '\0';
+#ifdef BLACK_BOKS
+	QueryData->anonymous = 0;
+	if (cgi_getentryint("anonymous") != 0) {
+		QueryData->anonymous = 1;
+		strscpy(QueryData->search_user, ANONYMOUS_USER, sizeof(QueryData->search_user));
 	}
-	else {
-		strscpy((char *)QueryData->search_user,cgi_getentrystr("search_bruker"),sizeof(QueryData->search_user) -1);
+	if (QueryData->anonymous == 0) {
+#endif
+		if (cgi_getentrystr("search_bruker") == NULL) {
+			fprintf(stderr,"Did not receive any username.");
+			QueryData->search_user[0] = '\0';
+		}
+		else {
+			strscpy((char *)QueryData->search_user,cgi_getentrystr("search_bruker"),sizeof(QueryData->search_user) -1);
+		}
+#ifdef BLACK_BOKS
 	}
+#endif /* Anonymous */
 
 
 	if (cgi_getentrystr("userip") == NULL) {
@@ -283,12 +297,28 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 		//strscpy(QueryData->subname,"www,freelistning,paidinclusion",sizeof(QueryData->subname) -1);
 		strscpy(QueryData->subname,"paidinclusion,freelistning,www",sizeof(QueryData->subname) -1);
 	}
+#if 0
 	else {
+		/* XXX: 24so temporary hack */
+		char *p;
+		
 		strscpy(QueryData->subname,cgi_getentrystr("subname"),sizeof(QueryData->subname) -1);
+		if (strncmp(QueryData->subname, "email-", 6) == 0) {
+			strlcpy(QueryData->search_user, QueryData->subname+6, sizeof(QueryData->search_user));
+		} else {
+			strlcpy(QueryData->search_user, QueryData->subname, sizeof(QueryData->search_user));
+		}
+		p = strrchr(QueryData->search_user, '-');
+		if (p != NULL) {
+			if (strcmp(p, "-body") == 0)
+				*p = '\0';
+		}
 	}
+#endif
 
 
-#if defined(BLACK_BOKS) && !defined(_24SEVENOFFICE)
+#if 0
+#if defined(BLACK_BOKS)
 	if (cgi_getentrystr("tkey") == NULL) {
 		die(2,"","Didn't recieve 'tkey'.");
 	}
@@ -303,6 +333,7 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 			die(2,"","Wrong tkey.");
 		}
 	}
+#endif
 #endif
 
 	if (cgi_getentrystr("orderby") == NULL) {
@@ -1261,8 +1292,34 @@ int main(int argc, char *argv[])
         gettimeofday(&start_time, NULL);
 	#endif
 
-	int num_colls;
-	struct subnamesFormat *collections = get_usr_coll(QueryData.search_user, &num_colls, cmc_port);
+	int num_colls = 0;
+	struct subnamesFormat *collections = NULL;
+	if (QueryData.anonymous) {
+		MYSQL_RES *res;
+		MYSQL_ROW row;
+		char query[1024];
+		size_t querylen;
+
+		querylen = snprintf(query, sizeof(query), "SELECT collection_name FROM shares, shareResults WHERE shares.id = shareResults .share AND shareResults.without_aclcheck = 1");
+
+		if (mysql_real_query(&demo_db, query, querylen) != 0) {
+			warnx("Mysql error (%s line %d): %s\n",
+					__FILE__, __LINE__, mysql_error(&demo_db));
+		} else if ((res = mysql_store_result(&demo_db)) == NULL) {
+			warnx("Mysql error (%s line %d): %s\n",
+					__FILE__, __LINE__, mysql_error(&demo_db));
+		} else {
+			num_colls = mysql_num_rows(res);
+			collections = calloc(num_colls, sizeof(*collections));
+			while ((row = mysql_fetch_row(res)) != NULL) {
+				strncpy(collections[i].subname, row[0], sizeof(collections[i].subname));
+			}
+			mysql_free_result(res);
+		}
+	} else {
+		collections = get_usr_coll(QueryData.search_user, &num_colls, cmc_port);
+	}
+
 
 	#ifdef DEBUG_TIME
         	gettimeofday(&end_time, NULL);
@@ -2280,6 +2337,9 @@ int main(int argc, char *argv[])
                 		//DocumentIndex
                 		printf("\t<url><![CDATA[%s]]></url>\n",Sider[i].url);
                 		printf("\t<uri><![CDATA[%s]]></uri>\n",Sider[i].uri);
+#ifdef BLACK_BOKS
+                		printf("\t<fulluri><![CDATA[%s]]></fulluri>\n",Sider[i].fulluri);
+#endif
 
 				//gjør om språk fra tall til code
 				getLangCode(documentlangcode,atoi(Sider[i].DocumentIndex.Sprok));
@@ -2795,6 +2855,9 @@ int main(int argc, char *argv[])
                 		//DocumentIndex
                 		printf("\t<URL><![CDATA[%s]]></URL>\n",Sider[i].url);
                 		printf("\t<URI><![CDATA[%s]]></URI>\n",Sider[i].uri);
+#ifdef BLACK_BOKS
+                		printf("\t<FULLURI><![CDATA[%s]]></FULLURI>\n",Sider[i].fulluri);
+#endif
 
 				{
 					int j;
@@ -2803,6 +2866,7 @@ int main(int argc, char *argv[])
 						printf("\t<DUPLICATESURLS>\n");
 							printf("\t\t<URL><![CDATA[%s]]></URL>\n",Sider[i].urls[j].url);
 							printf("\t\t<URI><![CDATA[%s]]></URI>\n",Sider[i].urls[j].uri);
+							printf("\t\t<FULLURI><![CDATA[%s]]></FULLURI>\n",Sider[i].urls[j].fulluri);
 						printf("\t</DUPLICATESURLS>\n");
 					}
 				}
@@ -3502,6 +3566,7 @@ void read_collection_cfg(struct subnamesConfigFormat * dst) {
 
 	struct subnamesConfigFormat subnamesDefaultsConfig;
 	subnamesDefaultsConfig.cache_link = 1;
+	subnamesDefaultsConfig.without_aclcheck = 0;
 
 	config_setting_t *cfgstring;
 	config_setting_t *cfgcollections;

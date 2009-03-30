@@ -577,6 +577,12 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 							bsread(&sockfd[i], len, Sider[*pageNr].urls[k].uri, maxSocketWait_SiderHeder);
 							Sider[*pageNr].urls[k].uri[len] = '\0';
 
+							bsread(&sockfd[i], sizeof(len), &len, maxSocketWait_SiderHeder);
+							Sider[*pageNr].urls[k].fulluri = malloc(len+1);
+							bsread(&sockfd[i], len, Sider[*pageNr].urls[k].fulluri, maxSocketWait_SiderHeder);
+							Sider[*pageNr].urls[k].fulluri[len] = '\0';
+
+
 							//bsread(&sockfd[i], 64, Sider[*pageNr].urls[k].subname, maxSocketWait_SiderHeder);
 
 						}
