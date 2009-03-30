@@ -1,6 +1,8 @@
 %define name #name
 %define version #version
 %define release 1
+#defines
+
 
 Summary: Boitho authentication daemonize.
 Name: %{name}
