@@ -338,7 +338,7 @@ release_sock_to_pool(struct socket_pool *pool, int index)
 #ifdef BLACK_BOKS
 static inline int
 handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum browser_type btype, char *collection,
-           char *url_out, size_t len, int sock, struct socket_pool *pool)
+           char *url_out, size_t len, char *uri_out, size_t uri_out_len, char *fulluri_out, size_t fulluri_out_len, int sock, struct socket_pool *pool)
 {
 
 #ifndef _24SEVENOFFICE
@@ -349,7 +349,7 @@ handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum br
 	sock = get_sock_from_pool(pool, &index);
 #endif
 
-	cmc_rewrite_url(sock, collection, url_in, lenin, ptype, btype, url_out, len);
+	cmc_rewrite_url(sock, collection, url_in, lenin, ptype, btype, url_out, len, uri_out, uri_out_len, fulluri_out, fulluri_out_len);
 
 	vboprintf("handle_url_rewrite: Did rewrite \"%s\" -> \"%s\"\n",url_in,url_out);
 #ifdef WITH_THREAD
@@ -827,7 +827,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 					char *url, *acla, *acld, *attributes;
 					struct DocumentIndexFormat di;
 					struct ReposetoryHeaderFormat repohdr;
-					char tmpurl[1024];
+					char tmpurl[1024], tmpuri[1024], tmpfulluri[1024];
 					//printf("Woop subname!!!: %p %s\n", dup_subname, dup_subname);
 
 					acld = acla = attributes = url = NULL;
@@ -844,8 +844,10 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 #ifdef BLACK_BOKS
 					handle_url_rewrite(tmpurl, sizeof(tmpurl), PagesResults->ptype,
 							PagesResults->btype,
-							dup_subname, tmpurl,
-							sizeof(tmpurl), PagesResults->cmcsocketha,
+							dup_subname, tmpurl, sizeof(tmpurl),
+							tmpuri, sizeof(tmpuri),
+							tmpfulluri, sizeof(tmpfulluri),
+							PagesResults->cmcsocketha,
 #ifdef WITH_THREAD
 							&PagesResults->cmConn
 #else
@@ -853,14 +855,16 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 #endif
 							);
 #endif
-					//printf("tmpurl: \"%s\"\n", tmpurl);
 					if ((Sider->urls[Sider->n_urls].url = strdup(tmpurl)) == NULL) {
 						perror("Malloc url");
 					}
-					if ((Sider->urls[Sider->n_urls].uri = strdup(tmpurl)) == NULL) {
+					if ((Sider->urls[Sider->n_urls].uri = strdup(tmpuri)) == NULL) {
 						perror("Malloc uri");
 					}
-					shortenurl(Sider->urls[Sider->n_urls].uri, strlen(Sider->urls[Sider->n_urls].uri) +1); // +1 da minne område er faktisk 1 bytes lenegre en strenglendgden for å få plass til \0. Dette skal også legges på uri'en.
+					if ((Sider->urls[Sider->n_urls].fulluri = strdup(tmpfulluri)) == NULL) {
+						perror("Malloc uri");
+					}
+					//shortenurl(Sider->urls[Sider->n_urls].uri, strlen(Sider->urls[Sider->n_urls].uri) +1); // +1 da minne område er faktisk 1 bytes lenegre en strenglendgden for å få plass til \0. Dette skal også legges på uri'en.
 					//strcpy(Sider->urls[Sider->n_urls].url, dup_subname);
 					free(attributes);
 					free(acla);
@@ -1521,7 +1525,7 @@ void *generatePagesResults(void *arg)
 			if (strcmp((*PagesResults).password,"water66") == 0) {
 				printf("pathaccess: have sodo password. Won't do pathaccess\n");
 			}
-			else if (!pathaccess(PagesResults, (*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray->iindex[i].subname).subname,side->url,(*PagesResults).search_user,(*PagesResults).password)) {
+			else if (PagesResults->TeffArray->iindex[i].subname->config.has_config && !pathaccess(PagesResults, (*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray->iindex[i].subname).subname,side->url,(*PagesResults).search_user,(*PagesResults).password)) {
 				fprintf(stderr, "searchkernel: Access denied for file \"%s\" in %s\n", side->url, (*(*PagesResults).TeffArray->iindex[i].subname).subname);
 
 				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
@@ -1549,9 +1553,11 @@ void *generatePagesResults(void *arg)
 #ifdef BLACK_BOKS
 		if (!PagesResults->getRank) {
 
-			handle_url_rewrite(side->url, sizeof(side->url), PagesResults->ptype, PagesResults->btype, 
+			handle_url_rewrite(side->url, sizeof(side->url),
+				PagesResults->ptype, PagesResults->btype, 
 				(*PagesResults).TeffArray->iindex[i].subname->subname, side->url, 
-				sizeof(side->url), PagesResults->cmcsocketha, 
+				sizeof(side->url), side->uri, sizeof(side->uri), side->fulluri, sizeof(side->fulluri),
+				PagesResults->cmcsocketha, 
 #ifdef WITH_THREAD
 				&PagesResults->cmConn
 #else
@@ -1573,13 +1579,22 @@ void *generatePagesResults(void *arg)
 
 		if (1 || !PagesResults->getRank) {
 			//urI
-			strscpy(side->uri, side->url, sizeof(side->uri));
+			//strscpy(side->uri, side->url, sizeof(side->uri));
 			//urL
 			//strscpy(side->url,side->DocumentIndex.Url,sizeof(side->url));
+			//
 
-			side->pathlen = find_domain_path_len(side->uri);
+			side->pathlen = find_domain_path_len(side->url);
 
-			shortenurl(side->uri,sizeof(side->uri));
+#ifndef BLACK_BOKS
+			memcpy(side->uri, side->url, sizeof(side->uri));
+			memcpy(side->fulluri, side->url, sizeof(side->fulluri));
+#endif
+
+#ifdef BLACK_BOKS
+			//memcpy(side->fulluri, side->uri, sizeof(side->fulluri));
+#endif
+			//shortenurl(side->uri,sizeof(side->uri));
 
 			strcpy(side->servername,(*PagesResults).servername);
 		}

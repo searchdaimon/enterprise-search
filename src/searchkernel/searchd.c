@@ -942,6 +942,10 @@ void *do_chld(void *arg)
 			len = strlen(s->urls[j].uri);
 			send(mysocfd, &len, sizeof(len), MSG_NOSIGNAL);
 			send(mysocfd, s->urls[j].uri, len, MSG_NOSIGNAL);
+			len = strlen(s->urls[j].fulluri);
+			send(mysocfd, &len, sizeof(len), MSG_NOSIGNAL);
+			send(mysocfd, s->urls[j].fulluri, len, MSG_NOSIGNAL);
+
 
 			//printf("sending url: %s\n", s->urls[j].uri);
 
