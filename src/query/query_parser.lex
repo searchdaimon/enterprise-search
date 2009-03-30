@@ -16,6 +16,7 @@
 #include "../ds/dvector.h"
 #include "../ds/dset.h"
 
+#include "../common/utf8-strings.h"
 #include "../common/bprint.h"
 
 #include "query_parser.h"
@@ -182,6 +183,7 @@ static inline string_array _string_array_init( int n )
     sa.s = malloc(sizeof(char*[sa.n]));
     sa.spelled = NULL;
     sa.alt = NULL;
+    sa.hide = 0;
 
     return sa;
 }
@@ -267,7 +269,7 @@ void get_query( char text[], int text_size, query_array *qa )
 
 	    for (j=0; j<vector_size(crnt); j++)
 	        {
-	            qa->query[i].s[j] = strdup(vector_get(crnt,j).ptr);
+	            qa->query[i].s[j] = copy_latin1_to_utf8(vector_get(crnt,j).ptr);
 	        }
 	}
 
@@ -458,6 +460,7 @@ void sprint_query( char *s, int n, query_array *qa )
 
     for (i=0; i<qa->n; i++)
 	{
+	    if (qa->query[i].hide) continue;
 	    if (i>0) pos+= snprintf(s+pos, n - pos, " ");
 
 	    switch (qa->query[i].operand)
@@ -507,7 +510,11 @@ void sprint_query( char *s, int n, query_array *qa )
 
 	    for (j=0; j<qa->query[i].n; j++)
 		{
-		    if (j>0) pos+= snprintf(s+pos, n - pos, " ");
+		    if (j>0)
+			{
+			    if (qa->query[i].operand == QUERY_ATTRIBUTE) pos+= snprintf(s+pos, n - pos, "/");
+			    else pos+= snprintf(s+pos, n - pos, " ");
+			}
 		    pos+= snprintf(s+pos, n - pos, "%s", qa->query[i].s[j]);
 		}
 
@@ -528,6 +535,7 @@ char* asprint_query( query_array *qa )
 
     for (i=0; i<qa->n; i++)
 	{
+	    if (qa->query[i].hide) continue;
 	    if (i>0) bprintf(B, " ");
 
 	    switch (qa->query[i].operand)
@@ -577,7 +585,11 @@ char* asprint_query( query_array *qa )
 
 	    for (j=0; j<qa->query[i].n; j++)
 		{
-		    if (j>0) bprintf(B, " ");
+		    if (j>0)
+			{
+			    if (qa->query[i].operand == QUERY_ATTRIBUTE) bprintf(B, "/");
+			    else bprintf(B, " ");
+			}
 		    bprintf(B, "%s", qa->query[i].s[j]);
 		}
 
@@ -611,6 +623,8 @@ int bsprint_query_with_remove( buffer *B, container *remove, query_array *qa )
 		}
 	    else all_gone = 0;
 
+	    if (qa->query[i].hide) continue;
+
 	    if (i>0) bprintf(B, " ");
 
 	    switch (qa->query[i].operand)
@@ -660,7 +674,11 @@ int bsprint_query_with_remove( buffer *B, container *remove, query_array *qa )
 
 	    for (j=0; j<qa->query[i].n; j++)
 		{
-		    if (j>0) bprintf(B, " ");
+		    if (j>0)
+			{
+			    if (qa->query[i].operand == QUERY_ATTRIBUTE) bprintf(B, "/");
+			    else bprintf(B, " ");
+			}
 		    bprintf(B, "%s", qa->query[i].s[j]);
 		}
 

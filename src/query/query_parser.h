@@ -55,6 +55,7 @@ typedef struct
     char		operand;
     char		**s;
     char		**spelled;
+    char		hide;
     int			alt_n;
     string_alternative	*alt;		// Close words and phrases (stems and/or synonyms)
 } string_array;
