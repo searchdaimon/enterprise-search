@@ -36,6 +36,7 @@ struct gcaoptFormat {
 	int keept;
 	int gced;
 	int lastSeenHack;
+	int dontcheckok;
 };
 
 int
@@ -255,7 +256,7 @@ void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 	gcaopt->keept = 0;
 	gcaopt->gced = 0;
 
-	if (!isOkCrawled(subname,gcaopt)) {
+	if (gcaopt->dontcheckok == 0 && !isOkCrawled(subname,gcaopt)) {
 		blog(gcaopt->logSummary,1,"Skipping \"%s\". Was not correctly crawled.",subname);		
 		return;
 	}
@@ -356,11 +357,12 @@ main(int argc, char **argv)
 	gcaopt.log = NULL;
 	gcaopt.logSummary = NULL;
 	gcaopt.lastSeenHack = 0;
+	gcaopt.dontcheckok = 0;
 
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"t:dls"))!=-1) {
+        while ((c=getopt(argc,argv,"t:dlso"))!=-1) {
                 switch (c) {
                         case 't':
                                 gcaopt.MaxAgeDiflastSeen  = atou(optarg);
@@ -381,6 +383,9 @@ main(int argc, char **argv)
 				break;
 			case 's':
 				gcaopt.lastSeenHack = 1;
+				break;
+			case 'o':
+				gcaopt.dontcheckok = 1;
 				break;
                         default:
                                 exit(1);
