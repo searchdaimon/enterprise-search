@@ -75,6 +75,9 @@ msgstr "Found no results for query \"%1\"."
 msgid "Next"
 msgstr "Next"
 
+msgid "Prev"
+msgstr "Prev"
+
 # other
 msgid "Did you mean: %1?"
 msgstr "Did you mean: <a href=\"%2\">%1</a>?"
