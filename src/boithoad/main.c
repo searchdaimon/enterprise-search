@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -897,50 +898,57 @@ int getAllGroupsForUser(struct hashtable **grouphash, LDAP *ld, char *user_usern
 	/* First figure out the primary group */
 	/* 1. Get User SID */
 	sprintf(filter, "(sAMAccountName=%s)", user_username);
+	printf("Filter: %s\n", filter);
 	if (!ldap_simple_search(&ld, filter, "primaryGroupID,objectSid", &respons, &nrOfSearcResults, ldap_base)) {
 		printf("Unable to get userSID and primaryGroup\n");
 		printf("Filter: %s, attributes: %s\n", filter, "primaryGroupID,objectSid");
 		return 0;
 	}
+	assert(nrOfSearcResults > 0);
 
-	sid = malloc(strlen(respons[*respons[0] == 'S' ? 0 : 1]) + 16);
-	strcpy(sid, respons[*respons[0] == 'S' ? 0 : 1]);
-	//printf("Sid: %s\n", sid);
-	if (!insert_group(*grouphash, sid)) {
-		free(sid);
+	groupsid = NULL;
+	if (nrOfSearcResults > 0) {
+		sid = malloc(strlen(respons[*respons[0] == 'S' ? 0 : 1]) + 16);
+		strcpy(sid, respons[*respons[0] == 'S' ? 0 : 1]);
+		//printf("Sid: %s\n", sid);
+		if (!insert_group(*grouphash, sid)) {
+			free(sid);
+		}
+		else {
+			printf("calling gather_groups() ldapbasegroup=%s, sid=%s\n",ldapbasegroup, sid);
+			gather_groups(*grouphash, &ld, ldapbasegroup, sid);
+		}
+		/* 2. Replace last element */
+		groupsid = strdup(sid);
+		sid_replacelast(groupsid, respons[*respons[0] == 'S' ? 1 : 0]);
+		if (!insert_group(*grouphash, groupsid)) {
+			free(groupsid);
+		}
+		else {
+			printf("calling gather_groups() ldapbasegroup=%s, groupsid=%s\n",ldapbasegroup, groupsid);
+			gather_groups(*grouphash, &ld, ldapbasegroup, groupsid);
+		}
+		printf("Primary group: %s\n", groupsid);
+		printf("%p\n", respons);
+		ldap_simple_free(respons);			
 	}
-	else {
-		printf("calling gather_groups() ldapbasegroup=%s, sid=%s\n",ldapbasegroup, sid);
-		gather_groups(*grouphash, &ld, ldapbasegroup, sid);
-	}
-	/* 2. Replace last element */
-	groupsid = strdup(sid);
-	sid_replacelast(groupsid, respons[*respons[0] == 'S' ? 1 : 0]);
-	if (!insert_group(*grouphash, groupsid)) {
-		free(groupsid);
-	}
-	else {
-		printf("calling gather_groups() ldapbasegroup=%s, groupsid=%s\n",ldapbasegroup, groupsid);
-		gather_groups(*grouphash, &ld, ldapbasegroup, groupsid);
-	}
-	printf("Primary group: %s\n", groupsid);
-	printf("%p\n", respons);
-	ldap_simple_free(respons);			
 
 	/* 3. Get group name */
-	sprintf(filter, "(objectSid=%s)", groupsid);
-	if (!ldap_simple_search(&ld, filter, "sAMAccountName", &respons, &nrOfSearcResults, ldapbasegroup)) {
-		printf("Unable to get userSID and primaryGroup");
-		return 0;
+	if (groupsid != NULL) {
+		sprintf(filter, "(objectSid=%s)", groupsid);
+		if (!ldap_simple_search(&ld, filter, "sAMAccountName", &respons, &nrOfSearcResults, ldapbasegroup)) {
+			printf("Unable to get userSID and primaryGroup");
+			return 0;
+		}
+		if (nrOfSearcResults > 0) {
+			id = strdup(respons[0]);
+			if (!insert_group(*grouphash, id))
+				free(id);
+		} else {
+			fprintf(stderr, "Could not resolve primaryGroup name: %s\n", groupsid);
+		}
+		ldap_simple_free(respons);			
 	}
-	if (nrOfSearcResults > 0) {
-		id = strdup(respons[0]);
-		if (!insert_group(*grouphash, id))
-			free(id);
-	} else {
-		fprintf(stderr, "Could not resolve primaryGroup name: %s\n", groupsid);
-	}
-	ldap_simple_free(respons);			
 
 	/* Add Everyone and the username for the user */
 	id = strdup("Everyone");
