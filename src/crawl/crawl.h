@@ -4,6 +4,7 @@
 #include <limits.h>
 
 #include "../common/define.h"
+#include "../key/key.h"
 
 //void crawlperror(const char *fmt, ...);
 void crawlWarn(const char *fmt, ...);
@@ -49,6 +50,8 @@ struct collectionFormat {
 	int docsRemaining;
 	//9okt 2008
 	void *timeusage;
+	//runarb: 23 feb 2009;
+	char systemkey[KEY_STR_LEN];
 };
 
 struct crawldocumentExistFormat {
