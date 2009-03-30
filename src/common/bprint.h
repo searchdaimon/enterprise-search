@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <err.h>
 
 #define BUFFER_BLOCKSIZE	16384
 
@@ -80,20 +81,23 @@ static inline void bmemcpy(buffer *B, void *src, size_t len)
 {
 	size_t needsize = 0;
 
-	assert(B->growing);
 
-	/* XXX: Learn division */
-	while (len > B->maxsize - B->pos - 1 + needsize)
-		needsize += BUFFER_BLOCKSIZE;
+	if (B->growing) {
+		/* XXX: Learn division */
+		while (len > B->maxsize - B->pos - 1 + needsize)
+			needsize += BUFFER_BLOCKSIZE;
 
-	if (needsize > 0) {
-		B->data = realloc(B->data, B->maxsize + needsize);
-		B->maxsize += needsize;
+		if (needsize > 0) {
+			B->data = realloc(B->data, B->maxsize + needsize);
+			B->maxsize += needsize;
+		}
+
+		memcpy(B->data+B->pos, src, len);
+		B->pos += len;
+		B->data[B->pos] = '\0';
+	} else {
+		errx(1, "Do not support non-growing bmemcpy");
 	}
-
-	memcpy(B->data+B->pos, src, len);
-	B->pos += len;
-	B->data[B->pos] = '\0';
 }
 
 
