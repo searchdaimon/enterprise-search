@@ -510,6 +510,11 @@ main(int argc, char **argv)
 	printf("%s\n", ctime(&dl.start));
 	printf("%s\n", ctime(&dl.end));
 
+	getdate("1 week", &dl);
+	printf("%s\n", ctime(&dl.start));
+	printf("%s\n", ctime(&dl.end));
+
+
 
 	sd_getdate("last months", &dl);
 
