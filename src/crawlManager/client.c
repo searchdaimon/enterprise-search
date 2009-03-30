@@ -222,14 +222,14 @@ cmc_pathaccess(int socketha,char collection_in[], char uri_in[], char user_in[],
 }
 
 int
-cmc_rewrite_url(int socketha, char *collection_in, char *uri_in, size_t inlen, enum platform_type ptype, enum browser_type btype,
-                char *uri_out, size_t len)
+cmc_rewrite_url(int socketha, char *collection_in, char *url_in, size_t urlinlen, enum platform_type ptype, enum browser_type btype,
+                char *url_out, size_t url_out_len, char *uri_out, size_t uri_out_len, char *fulluri_out, size_t fulluri_out_len)
 {
-	char uri[512];
+	char url[1024], uri[1024], fulluri[1024];
 	struct rewriteFormat rewrite;
 
 	#ifdef DEBUG
-	printf("cmc_rewrite_url: will rewrite: \"%s\"\n",uri_in);
+	printf("cmc_rewrite_url: will rewrite: \"%s\"\n",url_in);
 	#endif
 
 	memset(&rewrite, '\0', sizeof(rewrite));
@@ -240,18 +240,28 @@ cmc_rewrite_url(int socketha, char *collection_in, char *uri_in, size_t inlen, e
 	*/
 				
 	strscpy(rewrite.collection, collection_in, sizeof(rewrite.collection));
-	strscpy(rewrite.uri, uri_in, sizeof(rewrite.uri));
+	strscpy(rewrite.url, url_in, sizeof(rewrite.url));
 	rewrite.ptype = ptype;
 	rewrite.btype = btype;
 
 	sendpacked(socketha, cm_rewriteurl, BLDPROTOCOLVERSION, sizeof(rewrite), &rewrite, "");
 	//sendall(socketha, &rewrite, sizeof(rewrite));
 
+	if (recvall(socketha, url, sizeof(url)) == 0) {
+		perror("recvall(url)");
+		exit(1);
+	}
 	if (recvall(socketha, uri, sizeof(uri)) == 0) {
 		perror("recvall(uri)");
 		exit(1);
 	}
-	strscpy(uri_out, uri, len);
+	if (recvall(socketha, fulluri, sizeof(fulluri)) == 0) {
+		perror("recvall(fulluri)");
+		exit(1);
+	}
+	strscpy(url_out, url, url_out_len);
+	strscpy(uri_out, uri, uri_out_len);
+	strscpy(fulluri_out, fulluri, fulluri_out_len);
 	/*
 	if (gettimeofday(&end_time, NULL) != 0)
 		printf("# ################################## # Error...\n");
@@ -317,7 +327,6 @@ int cmc_groupsforuserfromusersystem(int socketha, char *_user, unsigned int us, 
 	char user[512];
 	int i, n;
 	char **groups;
-	struct timeval ts, te;
 
 	strncpy(user, _user, sizeof(user));
 	sendpacked(socketha, cm_groupsforuserfromusersystem, BLDPROTOCOLVERSION, sizeof(user), user, "");
@@ -403,6 +412,34 @@ cmc_listusersus(int sock, int usersystem, char ***users)
 	(*users)[n_users] = NULL;
 
 	return n_users;
+}
+
+int
+cmc_addForeignUsers(int sock, char *collection, char *inuser, char *ingroup)
+{
+	int n;
+	char group[512], user[512];
+
+	strlcpy(group, ingroup, sizeof(group));
+	strlcpy(user, inuser, sizeof(user));
+
+	sendpacked(sock, cm_removeForeignUsers, BLDPROTOCOLVERSION, 0, NULL, collection);
+	sendall(sock, user, sizeof(user));
+	sendall(sock, group, sizeof(group));
+	recv(sock, &n, sizeof(n), MSG_WAITALL);
+
+	return n;
+}
+
+int
+cmc_removeForeignUsers(int sock, char *collection)
+{
+	int n;
+
+	sendpacked(sock, cm_removeForeignUsers, BLDPROTOCOLVERSION, 0, NULL, collection);
+	recv(sock, &n, sizeof(n), MSG_WAITALL);
+
+	return n;
 }
 
 void cmc_close(int socketha) {

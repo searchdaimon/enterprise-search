@@ -21,4 +21,7 @@ int cmc_usersystemfromcollection(int sock, char *collection);
 int cmc_listusersus(int sock, int usersystem, char ***users);
 
 
+int cmc_removeForeignUsers(int sock, char *collection);
+int cmc_addForeignUsers(int sock, char *collection, char *inuser, char *ingroup);
+	
 
