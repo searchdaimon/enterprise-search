@@ -17,6 +17,7 @@
 #endif
 
 #include "../crawl/crawl.h"
+#include "../key/key.h"
 
 #include "../common/collection.h"
 #include "../common/config.h"
@@ -1403,6 +1404,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 	for (i=0;i<(*nrofcollections);i++) {
 		(*collection)[i].errormsg[0] = '\0';
 		(*collection)[i].docsRemaining = -1;
+		key_get((*collection)[i].systemkey);
 	}
 
 	/***********************************************************************/
