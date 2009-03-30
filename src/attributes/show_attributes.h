@@ -22,6 +22,7 @@ struct attr_group
 struct attr_select
 {
     char	**select;//, **from;
+    char	flags;
     int		size;
 };
 

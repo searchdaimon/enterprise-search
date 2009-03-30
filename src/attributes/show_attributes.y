@@ -83,7 +83,7 @@ struct rac_yacc_data
 %parse-param { struct rac_yacc_data *data }
 %parse-param { yyscan_t yyscanner }
 %lex-param { yyscan_t yyscanner }
-%token SHOW_DUPLICATES_ID EXPANDED_ID FROM_ID GROUP_ID IMPORT_ID NAME_ID SELECT_ID SORT_ID SHOW_EMPTY_ID EQUALS_ID PARANTES_BEGIN PARANTES_CLOSE BRACKET_BEGIN BRACKET_CLOSE STRING_ID SORT_REVERSE_ID BUILD_GROUPS_ID HIDE_ID
+%token SHOW_DUPLICATES_ID EXPANDED_ID FROM_ID GROUP_ID IMPORT_ID NAME_ID SELECT_ID SORT_ID SHOW_EMPTY_ID EQUALS_ID PARANTES_BEGIN PARANTES_CLOSE BRACKET_BEGIN BRACKET_CLOSE STRING_ID SORT_REVERSE_ID HIDE_ID
 
 %%
 doc	:
@@ -183,14 +183,14 @@ block	:
 	    else
 		data->current_item->flags&= 0xffff - sort_reverse;
 	}
-	| block BUILD_GROUPS_ID EQUALS_ID STRING_ID
-	{
+//	| block BUILD_GROUPS_ID EQUALS_ID STRING_ID
+//	{
 //	    printf("show.empty = %s\n", (char*)$4);
-	    if (!strcasecmp((const char*)$4, "true"))
-		data->current_item->flags|= build_groups;
-	    else
-		data->current_item->flags&= 0xffff - build_groups;
-	}
+//	    if (!strcasecmp((const char*)$4, "true"))
+//		data->current_item->flags|= build_groups;
+//	    else
+//		data->current_item->flags&= 0xffff - build_groups;
+//	}
 	| block HIDE_ID PARANTES_BEGIN strings PARANTES_CLOSE
 	{
 	    vector_pushback(data->current_item->hide, data->S);
@@ -207,8 +207,14 @@ select	: SELECT_ID PARANTES_BEGIN strings PARANTES_CLOSE
 	    new_item->parent = data->current_item;
 	    new_item->type = item_select;
 	    new_item->id = NULL;
+	    if (!strcmp((char*)vector_get(data->S, vector_size(data->S)-1).ptr, "*"))
+		{
+		    vector_remove_last(data->S);
+		    new_item->flags = 0;
+		}
+	    else new_item->flags = build_groups;
+
 	    new_item->parameters = data->S;
-	    new_item->flags = 0;
 	    vector_pushback(data->current_item->child, new_item);
 
 //	    printf("select( ");
@@ -420,6 +426,7 @@ static container* recurse_items(item *parent, int sort_inherit)
 		    struct attr_select	*S = malloc(sizeof(struct attr_select));
 
 		    S->size = vector_size(I->parameters);
+		    S->flags = I->flags;
 		    S->select = malloc(sizeof(char*) * S->size);
 
 		    for (j=0; j<S->size; j++)

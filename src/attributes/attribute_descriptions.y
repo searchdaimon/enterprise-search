@@ -288,6 +288,9 @@ struct adf_data* adf_init( char *conf_file )
     destroy(data->lang);
     destroy(data->keys_icon);
     destroy(data->values_icon);
+    destroy(data->keys2values);
+    destroy(data->key_attr);
+    destroy(data->value_attr);
 
     for (i=0; i<data->lang_size; i++)
 	{

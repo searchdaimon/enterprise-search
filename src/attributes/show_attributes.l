@@ -24,8 +24,8 @@ select			{ return SELECT_ID; }
 hide			{ return HIDE_ID; }
 show.duplicates		{ return SHOW_DUPLICATES_ID; }
 show.empty		{ return SHOW_EMPTY_ID; }
-build_groups		{ return BUILD_GROUPS_ID; }
 sort.reverse		{ return SORT_REVERSE_ID; }
+build_groups[^\n]*	{ /* ignore */ }
 sort			{ return SORT_ID; }
 from			{ return FROM_ID; }
 \;{blank}*\n		{ /* Ignore. */ racget_extra(yyscanner)->line++; }

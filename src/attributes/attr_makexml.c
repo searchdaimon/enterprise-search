@@ -40,7 +40,7 @@ int query_remove_word(query_array *qa, char operand, char *_word)
     return -1;
 }
 */
-
+/*
 inline int add_to_query(buffer *B, query_array *qa, char operand, char *word, int *split)
 {
     int		i;
@@ -153,7 +153,7 @@ int query_remove_phrase(query_array *qa, char operand, container *V)
     return -1;
 }
 */
-
+/*
 char* attribute_generate_value_string(char *prefix, char *param[], int size)
 {
     buffer	*B = buffer_init(-1);
@@ -224,7 +224,7 @@ char* attribute_generate_value_from_vector(container *param)
 
     return buffer_exit(B);
 }
-
+*/
 int	ant[10];
 
 void attribute_init_count()
@@ -358,7 +358,7 @@ void attribute_count_print( container *attributes, int attrib_count, int indent 
 	}
 }
 
-
+/*
 int attrib_count_hits(query_array *qa, container *count, int len, container *remove, int is_file_ext)
 {
     if (count==NULL) return 0;
@@ -376,31 +376,37 @@ int attrib_count_hits(query_array *qa, container *count, int len, container *rem
 
     for (i=0,j=0; i<qa->n; i++)
 	{
+	    printf("\"%s\"", qa->query[i].s[0]);
 	    if (it.valid && set_key(it).i == i)
 		{
 		    it = set_next(it);
-		    if (qa->query[i].operand == QUERY_ATTRIBUTE) filter+= 1<<j;
+		    if (qa->query[i].operand == QUERY_ATTRIBUTE) {filter+= 1<<j;printf("(f:attr)");}
 		    if (qa->query[i].operand == QUERY_GROUP
-			|| qa->query[i].operand == QUERY_FILETYPE) filter+= 1<<(len-1);
+			|| qa->query[i].operand == QUERY_FILETYPE) {filter+= 1<<(len-1);printf("(f:group)");}
 		}
 	    else if (is_file_ext && (qa->query[i].operand == QUERY_FILETYPE
-		|| qa->query[i].operand == QUERY_GROUP)) filter+= 1<<(len-1);
+		|| qa->query[i].operand == QUERY_GROUP)) {filter+= 1<<(len-1);printf("(f:group)");}
 
-	    if (qa->query[i].operand == QUERY_ATTRIBUTE) j++;
+	    if (qa->query[i].operand == QUERY_ATTRIBUTE) {j++;printf("(j++)");}
 	}
 
     int		alle = 0;
     for (i=0; i<len; i++) alle+= 1<<i;
 
     filter = alle - filter;
+    printf("filter:");
+    for (i=0; i<len; i++) printf("%c", (filter & (1<<i) ? '1':'0'));
 
     int		hits = 0;
+    int		__total__ = 0;
     it = map_begin(count);
     for (; it.valid; it=map_next(it))
 	{
+	    __total__++;
 	    if ((map_key(it).i & filter) == filter)
 		hits+= map_val(it).i;
 	}
+    printf("\tmatch:%i/%i\n", hits, __total__);
 
     return hits;
 }
@@ -437,6 +443,7 @@ int attribute_print_xml_sorted(container *items, int indent, buffer *B, int sort
 		    M = multimap_container(int_container(), tuple_container(4, string_container(), int_container(), int_container(), int_container() ) );
 		    for (j=0; j<vector_size(items); j++)
 			{
+			    printf("  * %s ", (char*)tuple(vector_get(items, j)).element[1].ptr);
 			    if (tuple(vector_get(items, j)).element[5].i) is_file_ext = 1;
 			multimap_insert(M, 0, (char*)tuple(vector_get(items, j)).element[0].ptr,
 			    tuple(vector_get(items, j)).element[3].i,
@@ -451,6 +458,7 @@ int attribute_print_xml_sorted(container *items, int indent, buffer *B, int sort
 		    M = multimap_container(int_container(), tuple_container(4, string_container(), int_container(), int_container(), int_container() ) );
 		    for (j=0; j<vector_size(items); j++)
 			{
+			    printf("  * %s ", (char*)tuple(vector_get(items, j)).element[1].ptr);
 			    int		hits = attrib_count_hits(qa, tuple(vector_get(items, j)).element[2].ptr, attrib_count, remove, tuple(vector_get(items, j)).element[5].i);
 			    if (tuple(vector_get(items, j)).element[5].i) is_file_ext = 1;
 
@@ -469,6 +477,7 @@ int attribute_print_xml_sorted(container *items, int indent, buffer *B, int sort
 		    M = multimap_container(string_container(), tuple_container(4, string_container(), int_container(), int_container(), int_container() ) );
 		    for (j=0; j<vector_size(items); j++)
 			{
+			    printf("  * %s ", (char*)tuple(vector_get(items, j)).element[1].ptr);
 			    int		hits = attrib_count_hits(qa, tuple(vector_get(items, j)).element[2].ptr, attrib_count, remove, tuple(vector_get(items, j)).element[5].i);
 			    if (tuple(vector_get(items, j)).element[5].i) is_file_ext = 1;
 
@@ -528,7 +537,7 @@ int attribute_print_xml_sorted(container *items, int indent, buffer *B, int sort
 	}
     else
 	printf("TRUETRUETRUE\n");
-*/
+*-
     char	*q = buffer_exit(B2);
 
     iterator	it_m2;
@@ -605,7 +614,7 @@ int attribute_print_xml_sorted(container *items, int indent, buffer *B, int sort
 			{
 			    bprintf(B, "%s", str);
 			}
-*/
+*--
 		    printed++;
 		}
 	}
@@ -614,7 +623,7 @@ int attribute_print_xml_sorted(container *items, int indent, buffer *B, int sort
     destroy(M);
     return printed;
 }
-
+*/
 static inline int attribute_description(struct adf_data *attrdescrp, char *key, char *value, char **description, char **icon)
 {
     int		success = 0;
@@ -631,11 +640,12 @@ static inline int attribute_description(struct adf_data *attrdescrp, char *key, 
 
     return success;
 }
-
+/*
 struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *attributes, int attrib_count,
 		    struct fte_data *getfiletypep, struct adf_data *attrdescrp, int indent, int sort, char sort_reverse,
 		    container *attr_query, query_array *qa, container *hide)
 {
+    printf("      children\n");
     int		i;
     iterator	it_m1 = map_begin(attributes);
     struct attribute_temp_res	R;
@@ -651,6 +661,7 @@ struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *a
 	    int		split = -1;
 	    int		hit_split = -1;
 	    vector_pushback(attr_query, (char*)map_key(it_m1).ptr);
+	    printf("        %s", (char*)map_key(it_m1).ptr);
 	    int		is_hidden = 0;
 	    for (i=0; i<vector_size(hide) && !is_hidden; i++)
 		{
@@ -667,12 +678,14 @@ struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *a
 
 	    if (is_hidden)
 		{
+		    printf(" (hidden)\n");
 		    vector_remove_last(attr_query);
 		    continue;
 		}
 
 	    if (map_size(pair(map_val(it_m1)).first.ptr) > 0)
 		{
+		    printf(" [more children]\n");
 		    struct attribute_temp_res	res = attribute_generate_xml_subpattern_recurse(pair(map_val(it_m1)).first.ptr, attrib_count, getfiletypep, attrdescrp, indent+2, sort, sort_reverse, attr_query, qa, hide);
 		    int		is_selected = 0;
 		    int		expanded = 0;
@@ -747,13 +760,16 @@ struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *a
 		    destroy(res.items);
 		    destroy(res.remove);
 		    BINDENT; bprintf(B, "</group>\n");
+		    printf("        [/more children]\n");
 		}
 	    else
 		{
+		    printf(" (no children)");
 		    // Spesialtilfelle for 'filetype':
 		    if ((vector_size(attr_query)==3 && !strcmp("group", vector_get(attr_query,0).ptr))
 			|| !strcmp("filetype", vector_get(attr_query,0).ptr))
 			{
+			    printf(" (filetype)\n");
 			    char	*group, *descr, *icon;
 			    fte_getdescription(getfiletypep, "nbo", (char*)map_key(it_m1).ptr, &group, &descr, &icon);
 
@@ -775,13 +791,14 @@ struct attribute_temp_res attribute_generate_xml_subpattern_recurse(container *a
 				    || qa->query[i].operand == QUERY_GROUP) set_insert(R.remove, i);
 			    bprintf(B, " hits=\"%i\" />\n",
 				attrib_count_hits(qa, pair(map_val(it_m1)).second.ptr, attrib_count, R.remove));
-			    */
+			    *--
 			    //destroy(remove);
 			    //hit_split = B->pos;
 			    //bprintf(B, "\" />\n");
 			}
 		    else
 			{
+			    printf(" (attribute)\n");
 			    //item.key = strdup((char*)vector_get(attr_query,0).ptr);
 			    //item.value = attribute_generate_value_string_from_vector("", attr_query);
 			    //item.name = strdup((char*)map_key(it_m1).ptr);
@@ -846,25 +863,31 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 			    iterator	it_m1;
 			    it_m1.valid = 0;
 
+			    printf("Select ");
 			    for (j=0; j<S->size; j++)
 				{
+				    if (j>0) printf("/");
+				    printf("%s", S->select[j]);
 				    it_m1 = map_find(subattrp, S->select[j]);
 				    if (it_m1.valid) subattrp = pair(map_val(it_m1)).first.ptr;
 				    else break;
 				    vector_pushback(attr_query, S->select[j]);
 				}
+			    printf("\n");
 
 			    if (it_m1.valid)
 				{
 				    if (map_size(subattrp) > 0)
 					{
+					    printf("  valid/1\n");
     					    struct attribute_temp_res	res = attribute_generate_xml_subpattern_recurse(subattrp, attrib_count, getfiletypep, attrdescrp, indent, parent->sort, parent->flags & sort_reverse, attr_query, qa, parent->hide);
 					    //attribute_print_xml_sorted(res.items, indent, B, parent->sort, parent->flags & sort_reverse);
 
 
 					    if (parent->flags & build_groups && vector_size(attr_query) == 1)
 						{
-/***/
+						    printf("    building groups\n");
+/***---
 //		    struct attribute_temp_res	res = attribute_generate_xml_subpattern_recurse(pair(map_val(it_m1)).first.ptr, attrib_count, getfiletypep, indent+2, sort, sort_reverse, attr_query, qa);
 						    int		is_selected = 0;
 						    int		expanded = 0;
@@ -906,10 +929,12 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 
 						    BINDENT; bprintf(B, "</group>\n");
 
-						    vector_pushback(R.items, buffer_exit(B), (char*)map_key(it_m1).ptr, pair(map_val(it_m1)).second.ptr, split, hit_split, expanded);
+						    //vector_pushback(R.items, buffer_exit(B), (char*)map_key(it_m1).ptr, pair(map_val(it_m1)).second.ptr, split, hit_split, expanded);
+						    vector_pushback(R.items, buffer_exit(B), (char*)map_key(it_m1).ptr, pair(map_val(it_m1)).second.ptr, split, hit_split, 1);
 						}
 					    else
 						{
+						    printf("    proceeding\n");
 						    for (j=0; j<vector_size(res.items); j++)
 							{
 						    	    value	v = vector_get(res.items,j);
@@ -926,6 +951,7 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 					}
 				    else
 					{
+					    printf("  valid/0\n");
 					    buffer	*B = buffer_init(-1);
 					    int		split = -1, hit_split = -1;
 
@@ -974,6 +1000,7 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 				}
 			    else	// Zero hits:
 				{
+				    printf("  invalid/0\n");
 				    if (parent->flags & show_empty)
 					{
 					    buffer	*B = buffer_init(-1);
@@ -1066,13 +1093,805 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 
     return R;
 }
+*/
+
+struct _attr_tree_
+{
+    char	*name, *key, *value, *icon;
+    char	*querystr;
+    container	*query_param;
+    container	*count;
+    container	*children;
+    int		selected;
+    char	selected_descendant, expanded, show_empty;
+    int		container_id;
+    int		hits;
+    enum attr_sort_enum sort;
+    char	sort_reverse, free_name, free_value;
+};
+
+struct _attr_ret_
+{
+    container	*C;
+    char	selected_descendant;
+};
+
+struct _attr_query_element_
+{
+    char	*w[10];
+    char	selected;
+    int		query_pos;
+    int		filter_id;
+};
+
+struct _attr_tree_* _attribute_tree_malloc_()
+{
+    struct _attr_tree_	*this_item = malloc(sizeof(struct _attr_tree_));
+    this_item->name = NULL;
+    this_item->key = NULL;
+    this_item->value = NULL;
+    this_item->icon = NULL;
+    this_item->free_name = 0;
+    this_item->free_value = 0;
+    this_item->query_param = NULL;
+    this_item->count = NULL;
+    this_item->children = NULL;
+    this_item->selected = -1;
+    this_item->selected_descendant = 0;
+    this_item->expanded = 0;
+    this_item->container_id = 0;
+    this_item->hits = 0;
+    this_item->show_empty = 0;
+    this_item->sort = sort_none;
+    this_item->sort_reverse = 0;
+
+    return this_item;
+}
+/*
+void _attribute_tree_free_( struct _attr_tree_ *this_item )
+{
+    if (this_item->name != NULL) free(this_item->name);
+    if (this_item->query_param != NULL) destroy(this_item->query_param);
+    if (this_item->count != NULL) free(this_item->count);
+    if (this_item->children != NULL) foreach _attribute_tree_free_(child);
+}
+*/
+
+int _attribute_is_selected_(container *A, container *param, int container_id)
+{
+    int		i, j;
+    for (i=0; i<vector_size(A); i++)
+	{
+	    struct _attr_query_element_ *vquery = (struct _attr_query_element_*)vector_get(A,i).ptr;
+	    char selected = 1;
+	    for (j=0; j<10 && j<vector_size(param) && selected; j++)
+		{
+    		    if (vquery->w[j]==NULL) selected = 0;
+		    else if (strcasecmp(vquery->w[j], (char*)vector_get(param,j).ptr)) selected = 0;
+		}
+
+	    if (j<10 && vquery->w[j]!=NULL) selected = 0;
+
+	    // filetype/X == group/Y/X
+	    if (!selected && vquery->w[0]!=NULL && !strcasecmp(vquery->w[0], "filetype")
+		&& !strcasecmp((char*)vector_get(param,0).ptr, "group")
+		&& vquery->w[1]!=NULL && vector_size(param)>=3
+		&& !strcasecmp(vquery->w[1], (char*)vector_get(param,2).ptr))
+		{
+		    selected = 1;
+		}
+
+	    if (selected)
+		{
+		    vquery->selected = container_id;
+		    return vquery->filter_id;
+		}
+	}
+
+    return -1;
+}
+
+
+struct _attr_ret_ _attribute_add_children_(container *attributes, container *attr_query, container *hide, container *A, int container_id)
+{
+    int		i, j;
+    container	*list_items = vector_container( ptr_container() );
+    iterator	it_m1 = map_begin(attributes);
+    int		has_selected_child = 0;
+
+    for (; it_m1.valid; it_m1=map_next(it_m1))
+	{
+	    vector_pushback(attr_query, (char*)map_key(it_m1).ptr);
+
+	    int		is_hidden = 0;
+	    for (i=0; i<vector_size(hide) && !is_hidden; i++)
+		{
+		    container	*hide_elem = vector_get(hide, i).C;
+
+		    for (j=0; j<vector_size(hide_elem); j++)
+			{
+			    if (strcasecmp(vector_get(attr_query,j).ptr, vector_get(hide_elem,j).ptr)) break;
+			}
+
+		    if (j>=vector_size(hide_elem)) is_hidden = 1;
+		}
+
+	    if (is_hidden)
+		{
+		    vector_remove_last(attr_query);
+		    continue;
+		}
+
+	    struct _attr_tree_	*this_item = _attribute_tree_malloc_();
+	    int val = _attribute_is_selected_(A, attr_query, container_id);
+	    if (val>=0) this_item->selected = val;
+
+	    if (map_size(pair(map_val(it_m1)).first.ptr) > 0)
+		{
+		    struct _attr_ret_ ret = _attribute_add_children_(pair(map_val(it_m1)).first.ptr, attr_query, hide, A, container_id);
+		    if (ret.selected_descendant)
+			{
+			    this_item->selected_descendant = 1;
+			    has_selected_child = 1;
+			}
+		    this_item->children = ret.C;
+		    this_item->query_param = vector_container( string_container() );
+		    for (j=0; j<vector_size(attr_query); j++)
+			vector_pushback(this_item->query_param, vector_get(attr_query, j).ptr);
+		    //this_item->name = ;
+		    this_item->count = pair(map_val(it_m1)).second.ptr;
+		}
+	    else
+		{
+		    this_item->query_param = vector_container( string_container() );
+		    for (j=0; j<vector_size(attr_query); j++)
+			vector_pushback(this_item->query_param, vector_get(attr_query, j).ptr);
+		    //this_item->name = ;
+		    this_item->count = pair(map_val(it_m1)).second.ptr;
+		}
+
+	    vector_remove_last(attr_query);
+
+	    if (this_item->name == NULL && this_item->query_param == NULL && this_item->count == NULL && this_item->children == NULL)
+		{
+		    free(this_item);
+		}
+	    else
+		{
+		    vector_pushback(list_items, this_item);
+		    if (this_item->selected >= 0) has_selected_child = 1;
+		}
+	}
+
+    struct _attr_ret_	ret;
+    ret.C = list_items;
+    ret.selected_descendant = has_selected_child;
+    return ret;
+}
+
+
+
+struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_group *parent, container *A, int *container_id)
+{
+    int		i, j;
+    container	*list_items = vector_container( ptr_container() );
+    int		has_selected_child = 0;
+
+    for (i=0; i<vector_size(parent->child); i++)
+	{
+	    struct _attr_tree_	*this_item = _attribute_tree_malloc_();
+
+	    switch (pair(vector_get(parent->child,i)).first.i)
+	        {
+		    case item_select:
+		        {
+			    struct attr_select	*S = pair(vector_get(parent->child,i)).second.ptr;
+
+			    container	*subattrp = attributes;
+			    container	*attr_query = vector_container( string_container() );
+			    iterator	it_m1;
+			    it_m1.valid = 0;
+
+			    //printf("Select ");
+			    for (j=0; j<S->size; j++)
+				{
+				    //if (j>0) printf("/");
+				    //printf("%s", S->select[j]);
+				    it_m1 = map_find(subattrp, S->select[j]);
+				    if (it_m1.valid) subattrp = pair(map_val(it_m1)).first.ptr;
+				    else break;
+				    vector_pushback(attr_query, S->select[j]);
+				}
+			    //printf("\n");
+
+			    if (it_m1.valid)
+				{
+				    this_item->query_param = attr_query;
+				    this_item->count = pair(map_val(it_m1)).second.ptr;
+				    this_item->sort = parent->sort;
+				    this_item->sort_reverse = parent->flags & sort_reverse;
+				    int val = _attribute_is_selected_(A, attr_query, *container_id);
+				    if (val>=0) this_item->selected = val;
+
+				    if (map_size(subattrp) > 0)
+					{
+					    //printf("  Generate subpattern children\n");
+					    struct _attr_ret_ ret = _attribute_add_children_(subattrp, attr_query, parent->hide, A, *container_id);
+					    if (ret.selected_descendant)
+						{
+						    this_item->selected_descendant = 1;
+						    has_selected_child = 1;
+						}
+
+					    if (S->flags & build_groups)
+						{
+						    this_item->children = ret.C;
+						}
+					    else
+						{
+						    for (j=0; j<vector_size(ret.C); j++)
+							vector_pushback(list_items, vector_get(ret.C,j).ptr);
+						    this_item->query_param = NULL;
+						    this_item->count = NULL;
+						    this_item->children = NULL;
+						    this_item->name = NULL;
+						}
+
+					    if (this_item->children == NULL) destroy(ret.C);
+					}
+				    //else
+					//{
+					    //printf("  No children\n");
+					//}
+
+				}
+			    else	// Zero hits:
+				{
+				    //printf("  Zero hits\n");
+				    if (parent->flags & show_empty)
+					{
+					    this_item->query_param = attr_query;
+					    int val = _attribute_is_selected_(A, attr_query, *container_id);
+					    if (val>=0) this_item->selected = val;
+					    this_item->show_empty = 1;
+					    //printf("    (show anyway)\n");
+					}
+				}
+
+			    if (this_item->query_param == NULL) destroy(attr_query);
+			    break;
+			}
+		    case item_group:
+			{
+			    //printf("Creating new container {\n");
+			    struct attr_group		*G = pair(vector_get(parent->child,i)).second.ptr;
+			    this_item->name = strdup(G->name);
+			    this_item->free_name = 1;
+			    this_item->expanded = G->flags & is_expanded;
+			    this_item->sort = G->sort;
+			    this_item->sort_reverse = G->flags & sort_reverse;
+
+			    (*container_id)++; // NB! Will fail miserably for recursive container-groups.
+			    this_item->container_id = *container_id;
+			    //printf("  Container #id: %i\n", this_item->container_id);
+			    struct _attr_ret_ ret = _attribute_build_tree_(attributes, G, A, container_id);
+			    if (ret.selected_descendant)
+				{
+				    this_item->selected_descendant = 1;
+				    has_selected_child = 1;
+				}
+
+			    this_item->children = ret.C;
+
+			    //printf("}\n");
+			    break;
+			}
+		    case item_import:
+			{
+			    struct attr_import	*I = pair(vector_get(parent->child,i)).second.ptr;
+			    break;
+			}
+		}
+
+	    if (this_item->name == NULL && this_item->query_param == NULL && this_item->count == NULL && this_item->children == NULL)
+		{
+		    free(this_item);
+		}
+	    else
+		{
+		    vector_pushback(list_items, this_item);
+		    if (this_item->selected >= 0) has_selected_child = 1;
+		}
+	}
+
+    struct _attr_ret_	ret;
+    ret.C = list_items;
+    ret.selected_descendant = has_selected_child;
+    return ret;
+}
+
+
+int _attribute_count_hits_(container *count, int filter, int group_filter_id)
+{
+    if (count==NULL) return 0;
+
+    int		i;
+    int		len = group_filter_id+1;
+    int		alle = 0;
+
+    for (i=0; i<len; i++) alle+= 1<<i;
+
+    int		inverse = alle - filter;
+    //printf("filter:");
+    //for (i=0; i<len; i++) printf("%c", (inverse & (1<<i) ? '1':'0'));
+    //printf("\n");
+
+    int		hits = 0;
+    int		__total__ = 0;
+    iterator	it;
+
+    it = map_begin(count);
+    for (; it.valid; it=map_next(it))
+	{
+	    //printf("       ");
+	    //for (i=0; i<len; i++) printf("%c", ((alle - map_key(it).i) & (1<<i) ? '1':'0'));
+
+	    __total__++;
+	    if (((alle - map_key(it).i) & inverse) == 0)
+		{
+		    hits+= map_val(it).i;
+		    //printf("  <count>\n");
+		}
+	    //else printf("  <----->\n");
+	}
+    //printf("       match:%i/%i\n", hits, __total__);
+
+    return hits;
+}
+
+
+int _attribute_build_items_(container *X, container *A, query_array *qa, int default_filter, int group_filter_id, struct fte_data *getfiletypep, struct adf_data *attrdescrp)
+{
+    if (X==NULL) return 0;
+
+    int		i, j;
+    int		total_hits = 0;
+
+    for (i=0; i<vector_size(X); i++)
+	{
+	    struct _attr_tree_	*item = vector_get(X, i).ptr;
+	    int			filter = default_filter;
+
+	    // Container? Recalculate qa:
+	    if (item->container_id > 0)
+		{
+		    // NB! Overlappende selecteds i forskjellige groups kan feile.
+		    //printf("Recalculating qa for container %i\n", item->container_id);
+		    filter = 0;
+		    for (j=0; j<vector_size(A); j++)
+			{
+			    struct _attr_query_element_ *vquery = (struct _attr_query_element_*)vector_get(A,j).ptr;
+
+			    if (!(vquery->selected > 0 && vquery->selected != item->container_id))
+				{
+				    //printf("  qarg: %i\n", vquery->query_pos);
+				    qa->query[vquery->query_pos].hide = 1;
+				    filter|= (1<<vquery->filter_id);
+				}
+			    //else if (vquery->selected == 0) filter|= (1<<vquery->filter_id);
+			}
+		}
+
+	    /*
+	    if (item->selected>=0)
+		{
+		    filter|= (1<<item->selected);	// Skulle bli samme om filtrert eller ikke?
+							// må -un-filtreres for rekursivitet
+		}
+	    */
+
+	    // Construct querystring:
+	    buffer	*B = buffer_init(-1);
+	    bsprint_query_with_remove(B, NULL, qa);
+
+	    if (item->query_param!=NULL && vector_size(item->query_param)>0 && item->selected<0)
+		{
+		    if (!strcasecmp((char*)vector_get(item->query_param,0).ptr, "group"))
+			{
+			    if (vector_size(item->query_param)==3)
+				bprintf(B, " filetype:\"%s\"", (char*)vector_get(item->query_param,2).ptr);
+			    else if (vector_size(item->query_param)==2)
+				bprintf(B, " group:\"%s\"", (char*)vector_get(item->query_param,1).ptr);
+			}
+		    else
+			{
+			    bprintf(B, " attribute:\"");
+			    for (j=0; j<vector_size(item->query_param); j++)
+				{
+				    if (j==1) bprintf(B, "=");
+				    else if (j>1) bprintf(B, "/");
+				    bprintf(B, "%s", (char*)vector_get(item->query_param,j).ptr);
+				}
+			    bprintf(B, "\"");
+			}
+		}
+	    item->querystr = buffer_exit(B);
+
+	    // Calculate hits:
+	    int hits = 0;
+
+	    if (item->children!=NULL) // Recurse:
+		hits = _attribute_build_items_(item->children, A, qa, filter, group_filter_id, getfiletypep, attrdescrp);
+
+	    if (item->count==NULL)
+		item->hits = hits;
+	    else
+		item->hits = _attribute_count_hits_(item->count, filter, group_filter_id);
+
+	    total_hits+= item->hits;
+
+	    if (item->container_id > 0)
+		{
+		    // NB! Overlappende selecteds i forskjellige groups kan feile.
+		    for (j=0; j<vector_size(A); j++)
+			{
+			    struct _attr_query_element_ *vquery = (struct _attr_query_element_*)vector_get(A,j).ptr;
+			    if (vquery->selected == item->container_id)
+				{
+				    qa->query[vquery->query_pos].hide = 0;
+				}
+			}
+		}
+
+	    // Set name, key, etc.
+
+	    if (item->query_param!=NULL && vector_size(item->query_param)>0)
+		{
+		    int		key_type = 0;
+
+		    if (!strcasecmp((char*)vector_get(item->query_param,0).ptr, "group"))
+			{
+			    if (vector_size(item->query_param)==3)
+				{
+				    key_type = 1;
+				    item->key = "filetype";
+				    item->value = (char*)vector_get(item->query_param,2).ptr;
+				}
+			    else if (vector_size(item->query_param)==2)
+				{
+				    key_type = 2;
+				    item->key = "group";
+				    item->value = (char*)vector_get(item->query_param,1).ptr;
+				}
+			}
+		    else if (!strcasecmp((char*)vector_get(item->query_param,0).ptr, "filetype"))
+			{
+			    if (vector_size(item->query_param)==2)
+				{
+				    key_type = 1;
+				    item->key = "filetype";
+				    item->value = (char*)vector_get(item->query_param,1).ptr;
+				}
+			}
+		    else
+			{
+			    item->key = (char*)vector_get(item->query_param, 0).ptr;
+			    if (vector_size(item->query_param)>1)
+				{
+				    buffer	*vb = buffer_init(-1);
+
+				    bprintf(vb, "%s", (char*)vector_get(item->query_param, 1).ptr);
+				    for (j=2; j<vector_size(item->query_param); j++)
+					bprintf(vb, "/%s", (char*)vector_get(item->query_param, j).ptr);
+
+				    item->value = buffer_exit(vb);
+				    item->free_value = 1;
+				}
+			}
+
+		    if (key_type == 1 && item->value!=NULL) //filetype
+			{
+			    char	*group;
+			    fte_getdescription(getfiletypep, "nbo", item->value, &group, &(item->name), &(item->icon));
+			}
+		    else if (key_type == 2 && item->value!=NULL) //group
+			{
+			    fte_groupid(getfiletypep, "nbo", item->value, &(item->icon));
+			}
+		    else if (item->key!=NULL) //attribute
+			{
+			    attribute_description(attrdescrp, item->key, item->value, &(item->name), &(item->icon));
+			}
+		}
+
+	    if (item->name==NULL)
+		{
+		    if (item->value!=NULL) item->name = item->value;
+		    else item->name = item->key;
+		}
+	}
+
+    return total_hits;
+}
+
+
+void _attribute_sort_items_(container **X, enum attr_sort_enum sort, char sort_reverse)
+{
+    if (*X == NULL) return;
+
+    int		i, j;
+    container	*N = NULL;
+
+    /*
+    printf("sort: ");
+    switch (sort)
+    {
+	case sort_none: printf("sort_none"); break;
+	case sort_hits: printf("sort_hits"); break;
+	case sort_alpha: printf("sort_alpha"); break;
+    }
+    if (sort_reverse) printf(" (reverse)");
+    printf("\n");
+
+    for (i=0; i<vector_size(*X); i++)
+	{
+	    struct _attr_tree_	*item = vector_get(*X, i).ptr;
+	    printf("  %.8x name:%s hits:%i\n", (int)X, item->name, item->hits);
+	}
+    */
+
+    if (sort == sort_hits) N = multimap_container( int_container(), ptr_container() );
+    else if (sort == sort_alpha) N = multimap_container( string_container(), ptr_container() );
+
+    for (i=0; i<vector_size(*X); i++)
+	{
+	    struct _attr_tree_	*item = vector_get(*X, i).ptr;
+
+	    if (item->children != NULL)
+		_attribute_sort_items_(&(item->children), item->sort, item->sort_reverse);
+
+	    if (sort == sort_hits) multimap_insert(N, item->hits, item);
+	    else if (sort == sort_alpha)
+		{
+		    if (item->name!=NULL) multimap_insert(N, item->name, item);
+		    else if (item->value!=NULL) multimap_insert(N, item->name, item);
+		    else if (item->name!=NULL) multimap_insert(N, item->name, item);
+		    else multimap_insert(N, item->name, item);
+		}
+	}
+
+    if (!sort_reverse && sort != sort_hits && sort != sort_alpha) return;
+
+    container	*Y = vector_container( ptr_container() );
+    iterator	it;
+
+    if ((sort == sort_hits && sort_reverse) || (sort == sort_alpha && !sort_reverse))
+	{
+	    it = multimap_begin(N);
+	    for (; it.valid; it=multimap_next(it))
+		vector_pushback(Y, map_val(it).ptr);
+	}
+    else
+	{
+	    if (sort != sort_hits && sort != sort_alpha)
+		{
+		    for (i=vector_size(*X)-1; i>=0; i--)
+			vector_pushback(Y, vector_get(*X, i).ptr);
+		}
+	    else
+		{
+		    it = multimap_end(N);
+		    for (; it.valid; it=multimap_previous(it))
+			vector_pushback(Y, map_val(it).ptr);
+		}
+	}
+
+    if (N != NULL) destroy(N);
+    destroy(*X);
+    *X = Y;
+
+    /*
+    for (i=0; i<vector_size(*X); i++)
+	{
+	    struct _attr_tree_	*item = vector_get(*X, i).ptr;
+	    printf("  %.8x name:%s hits:%i\n", (int)X, item->name, item->hits);
+	}
+    */
+
+    return;
+}
+
+
+void _attribute_print_and_delete_tree_(buffer *bout, container *X, int indent)
+{
+    if (X==NULL) return;
+
+    int		i, j;
+
+    for (i=0; i<vector_size(X); i++)
+	{
+	    struct _attr_tree_	*item = vector_get(X, i).ptr;
+
+	    if (item->container_id == 0 && ((item->hits == 0 && !item->show_empty) || indent==-1))
+		{
+		    if (item->children!=NULL)
+			{
+			    _attribute_print_and_delete_tree_(bout, item->children, -1);
+			}
+
+		    if (item->free_value) free(item->value);
+		    if (item->free_name) free(item->name);
+		    if (item->querystr != NULL) free(item->querystr);
+		    destroy(item->children);
+		    destroy(item->query_param);
+		    free(item);
+		    continue;
+		}
+
+	    for (j=0; j<indent; j++) bprintf(bout, " ");
+
+	    if (item->children!=NULL) bprintf(bout, "<group");
+	    else bprintf(bout, "<item");
+
+	    /*
+	    char	*key=NULL, *value=NULL, *name=NULL, *icon=NULL;
+	    char	free_value = 0;
+
+	    if (item->query_param!=NULL && vector_size(item->query_param)>0)
+		{
+		    int		key_type = 0;
+
+		    if (!strcasecmp((char*)vector_get(item->query_param,0).ptr, "group"))
+			{
+			    if (vector_size(item->query_param)==3)
+				{
+				    key_type = 1;
+				    key = "filetype";
+				    value = (char*)vector_get(item->query_param,2).ptr;
+				}
+			    else if (vector_size(item->query_param)==2)
+				{
+				    key_type = 2;
+				    key = "group";
+				    value = (char*)vector_get(item->query_param,1).ptr;
+				}
+			}
+		    else if (!strcasecmp((char*)vector_get(item->query_param,0).ptr, "filetype"))
+			{
+			    if (vector_size(item->query_param)==2)
+				{
+				    key_type = 1;
+				    key = "filetype";
+				    value = (char*)vector_get(item->query_param,1).ptr;
+				}
+			}
+		    else
+			{
+			    key = (char*)vector_get(item->query_param, 0).ptr;
+			    if (vector_size(item->query_param)>1)
+				{
+				    buffer	*vb = buffer_init(-1);
+
+				    bprintf(vb, "%s", (char*)vector_get(item->query_param, 1).ptr);
+				    for (j=2; j<vector_size(item->query_param); j++)
+					bprintf(vb, "/%s", (char*)vector_get(item->query_param, j).ptr);
+
+				    value = buffer_exit(vb);
+				    free_value = 1;
+				}
+			}
+
+		    if (key_type == 1 && value!=NULL) //filetype
+			{
+			    char	*group;
+			    fte_getdescription(getfiletypep, "nbo", value, &group, &name, &icon);
+			}
+		    else if (key_type == 2 && value!=NULL) //group
+			{
+			    fte_groupid(getfiletypep, "nbo", value, &icon);
+			}
+		    else if (key!=NULL) //attribute
+			{
+			    attribute_description(attrdescrp, key, value, &name, &icon);
+			}
+		}
+
+	    if (item->name!=NULL) name = item->name;
+	    else if (name == NULL && value!=NULL) name = value;
+	    else if (name == NULL) name = key;
+	    */
+
+	    if (item->key!=NULL) bprintf(bout, " key=\'%s\'", item->key);
+	    if (item->value!=NULL) bprintf(bout, " value=\'%s\'", item->value);
+	    if (item->name!=NULL) bprintf(bout, " name=\'%s\'", item->name);
+	    if (item->icon!=NULL) bprintf(bout, " icon=\'%s\'", item->icon);
+
+	    if (item->querystr!=NULL) bprintf(bout, " query=\'%s\'", item->querystr);
+	    if (item->selected >= 0) bprintf(bout, " selected=\'true\'");
+	    bprintf(bout, " expanded=\'%s\'", item->selected_descendant || item->expanded ? "true":"false");
+	    if (item->container_id == 0) bprintf(bout, " hits=\'%i\'", item->hits);
+
+	    if (item->children!=NULL)
+		{
+		    bprintf(bout, ">\n");
+		    _attribute_print_and_delete_tree_(bout, item->children, indent+4);
+		    for (j=0; j<indent; j++) bprintf(bout, " ");
+		    bprintf(bout, "</group>\n");
+		}
+	    else bprintf(bout, " />\n");
+
+	    if (item->free_value) free(item->value);
+	    if (item->free_name) free(item->name);
+	    if (item->querystr != NULL) free(item->querystr);
+	    destroy(item->children);
+	    destroy(item->query_param);
+	    free(item);
+	}
+}
+
+
+
+container* _attribute_dissect_query_(query_array *qa, int group_filter_id)
+{
+    int		i;
+    int		exists = -1;
+    container	*A = vector_container( ptr_container() );
+    int		acount = 0;
+
+    for (i=0; i<qa->n; i++)
+	if (qa->query[i].n == 1)
+	    {
+		if (qa->query[i].operand == QUERY_ATTRIBUTE
+		    || qa->query[i].operand == QUERY_GROUP
+		    || qa->query[i].operand == QUERY_FILETYPE)
+		    {
+			struct _attr_query_element_ *vquery = malloc(sizeof(struct _attr_query_element_));
+			int	j;
+			for (j=0; j<10; j++) vquery->w[j] = NULL;
+			j = 0;
+			vquery->selected = 0;
+			vquery->query_pos = i;
+
+			if (qa->query[i].operand == QUERY_GROUP)
+			    {
+				vquery->w[j++] = strdup("group");
+				vquery->filter_id = group_filter_id;
+			    }
+			if (qa->query[i].operand == QUERY_FILETYPE)
+			    {
+				vquery->w[j++] = strdup("filetype");
+				vquery->filter_id = group_filter_id;
+			    }
+			else vquery->filter_id = acount++;
+
+			char	*s = strdup(qa->query[i].s[0]);
+			char	*ptrptr;
+			char	*token;
+			token = strtok_r(s, "=", &ptrptr);
+			vquery->w[j++] = strdup(token);
+
+			while (j<10)
+			    {
+				token = strtok_r(NULL, "/", &ptrptr);
+				if (token == NULL) break;
+				vquery->w[j++] = strdup(token);
+			    }
+			free(s);
+
+			vector_pushback(A, vquery);
+		    }
+	    }
+
+    return A;
+}
+
 
 
 char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf *showattrp,
 			struct fte_data *getfiletypep, struct adf_data *attrdescrp, query_array *qa)
 {
-    int		i;
-    buffer	*B = buffer_init(-1);
+    int		i, j;
+    //buffer	*B = buffer_init(-1);
 /*
     query_array	*qa = malloc(sizeof(query_array));
     get_query(querystr, strlen(querystr), qa);
@@ -1080,9 +1899,63 @@ char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf 
     sprint_query_array(s, 1024, qa);
     printf("\n%s\n", s);
 */
-    struct attribute_temp_res	R;
-    R = attribute_generate_xml_recurse(attributes, attrib_count, showattrp, getfiletypep, attrdescrp, 2, qa);
+    //struct attribute_temp_res	R;
+    //R = attribute_generate_xml_recurse(attributes, attrib_count, showattrp, getfiletypep, attrdescrp, 2, qa);
 
+    /*** *** ***/
+    container *A = _attribute_dissect_query_(qa, attrib_count-1);
+    int *container_id = malloc(sizeof(int));
+    *container_id = 0;
+    struct _attr_ret_ ret = _attribute_build_tree_(attributes, showattrp, A, container_id);
+
+    int		default_filter = 0;
+    printf("default filter: %2x\ngroup filter_id: %i\n", default_filter, attrib_count-1);
+    //_attribute_build_querystr_(ret.C, qa);
+    //_attribute_calculate_hits_(ret.C, default_filter, attrib_count-1);
+    _attribute_build_items_(ret.C, A, qa, default_filter, attrib_count-1, getfiletypep, attrdescrp);
+    _attribute_sort_items_(&ret.C, showattrp->sort, showattrp->flags & sort_reverse);
+
+    buffer	*bout = buffer_init(-1);
+    bprintf(bout, "<navigation query=\'");
+
+    for (i=0; i<vector_size(A); i++)
+	{
+	    struct _attr_query_element_ *vquery = (struct _attr_query_element_*)vector_get(A,i).ptr;
+	    if (vquery->selected)
+		{
+		    qa->query[vquery->query_pos].hide = 1;
+		}
+	    else default_filter|= (1<<vquery->filter_id);
+	}
+
+    // Hide dato from "all"-query:
+    for (i=0; i<qa->n; i++)
+	if (qa->query[i].operand == QUERY_DATE)
+	    qa->query[i].hide = 1;
+
+    bsprint_query_with_remove(bout, NULL, qa);
+    bprintf(bout, "\'>\n");
+
+    _attribute_print_and_delete_tree_(bout, ret.C, 4);
+
+    //bprintf(bout, "</navigation>\n");	// Denne legges på i dispatcher, sammen med dato-feltet.
+
+    free(container_id);
+    destroy(ret.C);
+
+    for (i=0; i<vector_size(A); i++)
+	{
+	    struct _attr_query_element_ *vquery = vector_get(A,i).ptr;
+	    for (j=0; j<10; j++) if (vquery->w[j]!=NULL) free(vquery->w[j]);
+	    free(vquery);
+	}
+    destroy(A);
+
+    char	*out = buffer_exit(bout);
+    printf("%s\n", out);
+    return out;
+    /*** *** ***/
+/*
     for (i=0; i<qa->n; i++)
 	if (qa->query[i].operand == QUERY_DATE)
 	    set_insert(R.remove, i);
@@ -1099,6 +1972,6 @@ char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf 
     destroy(R.items);
     destroy(R.remove);
 
-    return buffer_exit(B);
+    return buffer_exit(B);*/
 }
 
