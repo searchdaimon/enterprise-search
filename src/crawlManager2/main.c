@@ -43,7 +43,9 @@
 
 #include "../acls/acls.h"
 #include "perlcrawl.h"
+#include "../perlembed/perlembed.h"
 #include "usersystem.h"
+#include "shortenurl.h"
 
 
 #define crawl_crawl 1
@@ -90,6 +92,7 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 	struct hashtable *collections;
 	struct hashtable_itr *itr;
 	struct userToSubnameDbFormat userToSubnameDb;
+	usersystem_container_t *usc;
 	usersystem_t *us;
 
 	querylen = snprintf(query, sizeof(query), "SELECT is_primary, connector FROM system WHERE id = %d", id);
@@ -114,17 +117,24 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 	}
 
 	data->type = atoi(row[1]);
-	us = hashtable_search(usersystemshash, &data->type);
-	if (us == NULL) {
+	usc = hashtable_search(usersystemshash, &data->type);
+	if (usc == NULL) {
 		blog(LOGERROR, 1, "No usersystem module for this type: %d", data->type);
 		return NULL;
+	}
+	switch (usc->moduletype) {
+	case USC_TYPE_C:
+		us = usc->usersystem.us_c;
+		break;
+	case USC_TYPE_PERL:
+		us = usc->usersystem.us_perl->us;
+		break;
 	}
 
 	data->id = id;
 	data->is_primary = atoi(row[0]);
 	
-	data->parameters = create_hashtable(3, ht_stringhash, ht_stringcmp);
-
+	data->parameters = create_hashtable(7, ht_stringhash, ht_stringcmp);
 
 	querylen = snprintf(query, sizeof(query), "SELECT param, value FROM systemParamValue WHERE system = %d", data->id);
 	if (mysql_real_query(db, query, querylen)) {
@@ -142,6 +152,8 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 
 	mysql_free_result(res);
 	mysql_free_result(resparam);
+
+	data->usc = usc;
 
 	return us;
 }
@@ -423,7 +435,7 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 				continue;
 			}
 			if (!(us->us_listGroupsForUser)(&data, row[0], &groups, &n_groups)) {
-				fprintf(stderr, "Unable to list groups for user: %d\n", row[0]);
+				fprintf(stderr, "Unable to list groups for user: %s\n", row[0]);
 				continue;
 			}
 			printf("Got %d groups for %s\n", n_groups, row[0]);
@@ -925,54 +937,168 @@ int file_exist (char file[]) {
 }
 
 void
+list_usersystems(struct hashtable *us)
+{
+	struct hashtable_itr *itr;
+
+	if (hashtable_count(us) > 0) {
+		char *name;
+		usersystem_container_t *usc;
+		usersystem_t *us_c;
+		usersystem_perl_t *us_perl;
+		usersystem_data_t d;
+
+		itr = hashtable_iterator(us);
+
+		do {
+			usc = hashtable_iterator_value(itr);
+
+			switch (usc->moduletype) {
+			case USC_TYPE_C:
+				us_c = usc->usersystem.us_c;
+				name = us_c->us_getName(NULL);
+				printf("C usersystem: %s(%d)\n", name, us_c->type);
+				free(name);
+				break;
+			case USC_TYPE_PERL:
+				us_perl = usc->usersystem.us_perl;
+				printf("perl usersysten: %s\n", us_perl->us->us_getName(us_perl));
+				d.usc = usc;
+				break;
+			}
+		} while (hashtable_iterator_advance(itr));
+	}
+}
+
+/* Perl default usersystem_t */
+usersystem_t perl_usersystem = {
+	US_TYPE_INHERIT,
+	us_authenticate_perl,
+	us_listUsers_perl,
+	us_listGroupsForUser_perl,
+	us_getName_perl,
+};
+
+int
+load_usersystem(struct hashtable *us, char *name)
+{
+	char libpath[PATH_MAX], folderpath[PATH_MAX],
+	    perlpath[PATH_MAX], idpath[PATH_MAX];
+	usersystem_container_t *usc;
+	unsigned int fileid;
+	FILE *fpid;
+
+	int insert_us(usersystem_container_t *usc, unsigned int type) {
+		if (hashtable_search(us, &type) != NULL) {
+			warnx("We already have a usersystem with id: %s: %d", name, type);
+			return 0;
+		}
+		hashtable_insert(us, uinttouintp(type), usc);
+		printf("Loaded %s(%d)\n", name, type);
+
+		return 1;
+	}
+
+	sprintf(folderpath, "%s/%s", bfile("usersystems"), name);
+	sprintf(libpath, "%s/%s.so", folderpath, name);
+	sprintf(perlpath, "%s/main.pm", folderpath, name);
+	sprintf(idpath, "%s/id", folderpath, name);
+	usc = malloc(sizeof(*usc));
+
+	fileid = 0;
+	if ((fpid = fopen(idpath, "r"))) {
+		char buf[1024];
+		size_t len;
+
+		len = fread(buf, 1, sizeof(buf), fpid);
+		if (len > 0) {
+			buf[len] = '\0';
+			fileid = strtol(buf, NULL, 10);
+		}
+		
+		fclose(fpid);
+	}
+
+	if (file_exist(libpath)) {
+		void *libhandle;
+		usersystem_t *usersystem;
+		char *error;
+
+		libhandle = dlopen(libpath, RTLD_LAZY);
+		if (libhandle == NULL) {
+			warn("Unable to load crawler: %s", name);
+			return 0;
+		}
+
+		usersystem = dlsym(libhandle, "usersystem_info");
+		if ((error = dlerror()) != NULL) {
+			warnx("Unable to get usersystem_info for %s: %s", name, error);
+			dlclose(libhandle);
+			return 0;
+		}
+
+		usc->usersystem.us_c = usersystem;
+		usc->moduletype = USC_TYPE_C;
+
+		if (insert_us(usc, usersystem->type) == 0) {
+			warnx("C insert failed");
+			dlclose(libhandle);
+			free(usc);
+			return 0;
+		}
+	} else if (file_exist(perlpath)) {
+		usersystem_perl_t *usersystem;
+		unsigned int type;
+		int retn;
+
+		if (fileid == 0)
+			errx(1, "Perl usersystem require a file id");
+		
+		type = fileid;
+		usersystem = malloc(sizeof(*usersystem));
+		usersystem->perlpath = strdup(perlpath);
+		usersystem->us = &perl_usersystem;
+		usersystem->type = type;
+		usc->usersystem.us_perl = usersystem;
+		usc->moduletype = USC_TYPE_PERL;
+
+		if (insert_us(usc, type) == 0) {
+			warnx("perl insert failed");
+			free(usersystem->perlpath);
+			free(usersystem);
+			free(usc);
+			return 0;
+		}
+	} else {
+		free(usc);
+		warnx("No usersystem found with name: '%s'\n", name);
+		return 0;
+	}
+
+	return 1;
+}
+
+void
 load_usersystems(struct hashtable **usersystems)
 {
 	DIR *dirp;
 	struct dirent *dp;
+	char path[PATH_MAX];
 
 	printf("Looking for users systems...\n");
 	(*usersystems) = create_hashtable(21, ht_integerhash, ht_integercmp);
 	if (*usersystems == NULL)
 		err(1, "Unable to create usersystem hashtable");
 
-	if ((dirp = opendir(bfile("usersystems"))) == NULL)
-		err(1, "No usersystems available: %s", bfile("usersystems"));
+	strcpy(path, bfile("usersystems"));
+	if ((dirp = opendir(path)) == NULL)
+		err(1, "No usersystems available: %s", path);
 
 	while ((dp = readdir(dirp)) != NULL) {
-		char libpath[PATH_MAX], folderpath[PATH_MAX];
-
 		if (dp->d_name[0] == '.')
 			continue;
 
-		sprintf(folderpath, "%s/%s", bfile("usersystems"), dp->d_name);
-		sprintf(libpath, "%s/%s.so", folderpath, dp->d_name);
-
-		if (file_exist(libpath)) {
-			void *libhandle;
-			usersystem_t *usersystem;
-			char *error;
-
-			libhandle = dlopen(libpath, RTLD_LAZY);
-			if (libhandle == NULL) {
-				warn("Unable to load crawler: %s", dp->d_name);
-				continue;
-			}
-
-			usersystem = dlsym(libhandle, "usersystem_info");
-			if ((error = dlerror()) != NULL) {
-				warnx("Unable to get usersystem_info for %s: %s", dp->d_name, error);
-				dlclose(libhandle);
-				continue;
-			}
-
-			if (hashtable_search(*usersystems, &usersystem->type) != NULL) {
-				warnx("We already have a usersystem with id: %s: %d", dp->d_name, usersystem->type);
-				dlclose(libhandle);
-				continue;
-			}
-			hashtable_insert(*usersystems, uinttouintp(usersystem->type), usersystem);
-			printf("Loaded %s(%d)\n", dp->d_name, usersystem->type);
-		}
+		load_usersystem((*usersystems), dp->d_name);
 	}
 
 	closedir(dirp);
@@ -1077,6 +1203,9 @@ int cm_start(struct hashtable **h, struct hashtable **usersystems) {
 
 	(*h) = create_hashtable(20, cm_hashfromkey, cm_equalkeys);
 
+	const char *perl_incl[] = { bfile("crawlers/Modules"), NULL };                                                                 
+	perl_embed_init(perl_incl, 1);
+
 	if ((dirp = opendir(bfile("crawlers"))) == NULL) {
 		perror(bfile("crawlers"));
 		blog(LOGERROR,1,"Error: can't open crawlers directory.");
@@ -1096,6 +1225,7 @@ int cm_start(struct hashtable **h, struct hashtable **usersystems) {
 	closedir(dirp);
 
 	load_usersystems(usersystems);
+	//list_usersystems(*usersystems);
 
 	printf("cm_start end\n");
 
@@ -1259,7 +1389,8 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 						shares.id, \
 						shares.userprefix, \
 						shares.rate, \
-						shares.system \
+						shares.system, \
+						shares.alias \
 					from \
 						shares,connectors \
 					where \
@@ -1280,7 +1411,8 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 						shares.id, \
 						shares.userprefix, \
 						shares.rate, \
-						shares.system \
+						shares.system, \
+						shares.alias \
 					from \
 						shares,connectors \
 					where \
@@ -1355,6 +1487,11 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 		(*collection)[i].usersystem = strtoul(mysqlrow[10], (char **)NULL, 10);
 		
 
+		if (mysqlrow[11] == NULL) {
+			(*collection)[i].alias = NULL;
+		} else {
+			(*collection)[i].alias = strdup(mysqlrow[11]);
+		}
 		(*collection)[i].extra = NULL;
 
 		//normaliserer collection navn, ved å fjenre ting som space og - \ / etc
@@ -1763,30 +1900,98 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 }
 
 int
-rewriteurl(MYSQL *db, char *collection, char *uri, size_t len, enum platform_type ptype, enum browser_type btype) {
+rewriteurl(MYSQL *db, char *collection, char *url, size_t urllen, char *uri, size_t urilen, char *fulluri, size_t fullurilen, enum platform_type ptype, enum browser_type btype) {
 
 	struct crawlLibInfoFormat *crawlLibInfo;
 	struct collectionFormat *collections;
 	int nrofcollections;
 	int forret = 1;
+	size_t len = urilen;
 
+	fprintf(stderr, "rewrite1\n");
 	if (!cm_searchForCollection(db, collection,&collections,&nrofcollections)) {
+		fprintf(stderr, "rewrite2\n");
 		blog(LOGERROR,1,"warn: Don't have collection info for this subname.");
 		forret = 0;
 	}
 	else if (!cm_getCrawlLibInfo(global_h,&crawlLibInfo,collections->connector)) {
+		fprintf(stderr, "rewrite3\n");
 		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.");
 		//exit(1);
 		forret = 0;
-	}
-	else if (crawlLibInfo->rewrite_url == NULL || !((*crawlLibInfo->rewrite_url)(uri, ptype, btype))) {
+	} else if (crawlLibInfo->rewrite_url == NULL) {
+		fprintf(stderr, "rewrite5\n");
+		memcpy(uri, url, urilen);
+		shortenurl(uri, urilen);
+		memcpy(fulluri, url, fullurilen);
+	} else if (!((*crawlLibInfo->rewrite_url)(collections, url, uri, fulluri, len, ptype, btype))) {
+		fprintf(stderr, "rewrite4\n");
+		memcpy(uri, url, urilen);
+		shortenurl(uri, urilen);
+		memcpy(fulluri, url, fullurilen);
 		forret = 0;
 	}
+	fprintf(stderr, "rewrite6\n");
 
 	sm_collectionfree(&collections,nrofcollections);
 
 	return forret;
 
+}
+
+int
+addForeignUser(char *collection, char *user, char *group)
+{
+	int n;
+	MYSQL db;
+	struct collectionFormat *collections;
+	int nrofcollections;
+	size_t querylen;
+	char query[2048];
+
+	sql_connect(&db);
+	cm_searchForCollection(&db, collection,&collections,&nrofcollections);
+
+	querylen = snprintf(query, sizeof(query), "INSERT INTO foreignUserSystem (usersystem, username, groupname)"
+			"VALUES(%d, '%s', '%s')", collections[0].usersystem, user, group);
+	printf("Query: %s\n", query);
+	
+	n = 1;
+	if (mysql_real_query(&db, query, querylen)) {
+		blog(LOGERROR, 1, "Mysql error: %s", mysql_error(&db));
+		n = 0;
+	}
+
+	mysql_close(&db);
+
+	return n;
+}
+
+int
+removeForeignUsers(char *collection)
+{
+	int n;
+	MYSQL db;
+	struct collectionFormat *collections;
+	int nrofcollections;
+	size_t querylen;
+	char query[2048];
+
+	sql_connect(&db);
+	cm_searchForCollection(&db, collection,&collections,&nrofcollections);
+
+	querylen = snprintf(query, sizeof(query), "DELETE FROM foreignUserSystem WHERE usersystem = %d",
+			collections[0].usersystem);
+
+	n = 1;
+	if (mysql_real_query(&db, query, querylen)) {
+		blog(LOGERROR, 1, "Mysql error: %s", mysql_error(&db));
+		n = 0;
+	}
+
+	mysql_close(&db);		
+
+	return n;
 }
 
 void connectHandler(int socket) {
@@ -2043,6 +2248,7 @@ void connectHandler(int socket) {
 		else if (packedHedder.command == cm_rewriteurl) {
 			struct rewriteFormat rewrite;
 			struct timeval start_time2, end_time2;
+			char uri[1024], fulluri[1024];
 
 			puts("cm_rewriteurl start");
 
@@ -2053,11 +2259,18 @@ void connectHandler(int socket) {
 	
 			MYSQL db;
 			sql_connect(&db);
-			rewriteurl(&db, rewrite.collection, rewrite.uri, sizeof(rewrite.uri), rewrite.ptype, rewrite.btype);
+			rewriteurl(&db, rewrite.collection, rewrite.url, sizeof(rewrite.url), uri, sizeof(uri), fulluri, sizeof(fulluri), rewrite.ptype, rewrite.btype);
 
-			if (sendall(socket, rewrite.uri, sizeof(rewrite.uri)) == 0) {
+			if (sendall(socket, rewrite.url, sizeof(rewrite.url)) == 0) {
 				perror("sendall(uri)");
 			}
+			if (sendall(socket, uri, sizeof(uri)) == 0) {
+				perror("sendall(uri)");
+			}
+			if (sendall(socket, fulluri, sizeof(uri)) == 0) {
+				perror("sendall(uri)");
+			}
+
 			mysql_close(&db);
 
 			puts("cm_rewriteurl end");
@@ -2225,7 +2438,30 @@ void connectHandler(int socket) {
 					n = atoi(row[0]);
 					printf("Usersystem: %d\n", n);
 				} else {
-					n = -1;
+					/* Use the primary usersystem */
+					querylen = snprintf(query, sizeof(query),
+							"SELECT id FROM system WHERE is_primary = 1");
+					if (mysql_real_query(&db, query, querylen)) {
+						blog(LOGERROR, 1, "Mysql error: %s", mysql_error(&db));
+						n = -1;
+					} else {
+						res = mysql_store_result(&db);
+						n = mysql_num_rows(res);
+
+						if (n > 0) {
+							row = mysql_fetch_row(res);
+							if (row == NULL) {
+								blog(LOGERROR, 1, "Unable to fetch mysql row at %s:%d",
+										__FILE__,__LINE__);
+								mysql_free_result(res);
+							}
+
+							n = atoi(row[0]);
+							printf("Usersystem: %d\n", n);
+						} else {
+							n = -1;
+						}
+					}
 				}
 
 				mysql_free_result(res);
@@ -2251,6 +2487,41 @@ void connectHandler(int socket) {
 				sendall(socket, collections, (maxSubnameLength+1)*n);
 				free(collections);
 			}
+		}
+		else if (packedHedder.command == cm_addForeignUser) {
+			char user[512];
+			char group[512];
+			int n;
+
+			printf("addForeignUser\n");
+			
+			recvall(socket, collection,sizeof(collection));
+			recvall(socket, user, sizeof(user));
+			recvall(socket, group, sizeof(group));
+			printf("collection \"%s\"\n", collection);
+			printf("user \"%s\"\n", user);
+			printf("group \"%s\"\n", group);
+
+			n = addForeignUser(collection, user, group);
+
+			sendall(socket, &n, sizeof(n));
+		}
+		else if (packedHedder.command == cm_removeForeignUsers) {
+			char query[2048];
+			size_t querylen;
+			struct collectionFormat *collections;
+			int nrofcollections;
+			MYSQL db;
+			int n;
+
+			printf("removeForeignUsers\n");
+			
+			recvall(socket, collection,sizeof(collection));
+			printf("collection \"%s\"\n", collection);
+
+			n = removeForeignUsers(collection);
+
+			sendall(socket, &n, sizeof(n));
 		}
 		else {
 			printf("unknown command. %i\n", packedHedder.command);
