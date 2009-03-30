@@ -59,6 +59,8 @@ int main (int argc, char *argv[]) {
 		printf("collectionLocked <collection>\n");
                 printf("killCrawl <pid>\n");
 		puts("userGroups <user> <usersystem>");
+		puts("addForeignUser <collection> <user> <group>");
+		puts("removeForeignUsers <collection>");
 		printf("\nReturns %i on success and %i on failure\n",EXIT_SUCCESS,EXIT_FAILURE);
 		exit(1);
 	}
@@ -472,6 +474,16 @@ int main (int argc, char *argv[]) {
 
 		i = cmc_usersystemfromcollection(socketha, value);
 		printf("System: %d\n", i);
+	}
+	else if (strcmp(key, "addForeignUser") == 0) {
+		if (value == NULL | value2 == NULL || value3 == NULL)
+			errx(1, "infoquery addForeignUser collection user group");
+		printf("%s\n", cmc_addForeignUsers(value, value2, value3) ? "ok" : "failed");
+	}
+	else if (strcmp(key, "removeForeignUsers") == 0) {
+		if (value == NULL)
+			errx(1, "infoquery removeForeignUsers collection");
+		printf("%s\n", cmc_removeForeignUsers(value) ? "ok" : "failed");
 	}
         else if (strcmp(key, "killCrawl") == 0) {
             // parse param
