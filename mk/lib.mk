@@ -1,5 +1,3 @@
-include ${BOITHOHOME}/config.mk
-
 include ${BOITHOHOME}/mk/setup.mk
 include ${BOITHOHOME}/mk/cc.mk
 include ${BOITHOHOME}/mk/objdir.mk
