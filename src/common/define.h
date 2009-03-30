@@ -170,6 +170,8 @@
 #define cm_deleteCollection	50
 #define cm_rewriteurl		60
 #define cm_killcrawl            70
+#define cm_removeForeignUsers	80
+#define cm_addForeignUser	81
 
 //verdier av forskjelige term posisjoner
 #define poengForBody 1	
@@ -239,6 +241,8 @@ struct subnamesConfigFormat {
 		char sqlImpressionsLogQuery[252];
 
 		char cache_link; // 30.09.2008 - show cache link, dj
+		char without_aclcheck; // Enabled for collections that want anonymous search
+		char has_config; // Set to true if the config has been retrieved for this collection
 };
 struct subnamesFormat {
 	char subname[maxSubnameLength]; // 23.07.08 - fra 64 til maxSubnameLength
@@ -453,11 +457,12 @@ struct SiderFormat {
 	#ifdef BLACK_BOKS
 		char uri[1024];
 		char url[1024];
+		char fulluri[1024];
 	#else
 		char uri[201];
 		char url[201];
 	#endif
-	char user[21];
+	char user[64];
 	float bid;
 	struct subnamesFormat subname;
 	char HtmlPreparsed;
@@ -471,6 +476,7 @@ struct SiderFormat {
 	struct {
 		char *url;
 		char *uri;
+		char *fulluri;
 		char subname[64];
 	} *urls;
 	char *attributes;
@@ -639,7 +645,7 @@ struct queryNodeHederFormat
 	unsigned int getRank;
 	char userip[16];
 	char GeoIPcontry[3];
-	char search_user[21];
+	char search_user[64];
 	char HTTP_ACCEPT_LANGUAGE[12];
         char HTTP_USER_AGENT[64];
         char HTTP_REFERER[255];
@@ -668,7 +674,7 @@ struct QueryDataForamt {
 	int opensearch;
 	double version;
 	char GeoIPcontry[3];
-	char search_user[21];
+	char search_user[64];
 	char HTTP_ACCEPT_LANGUAGE[12];
         char HTTP_USER_AGENT[64];
         char HTTP_REFERER[255];
@@ -676,6 +682,9 @@ struct QueryDataForamt {
 	char AmazonSubscriptionId[50];
 //v3	char languageFilter[12];
 	char orderby[10];
+#ifdef BLACK_BOKS
+	int anonymous;
+#endif
 	char tkey[33]; // 32 bytes key +1 for \0
 	char rankUrl[256];
 
@@ -701,7 +710,7 @@ struct rewriteFormat {
 	enum platform_type ptype;
 	enum browser_type btype;
 	char collection[64];
-	char uri[512];
+	char url[1024];
 };
 
 #define ANCHORMAGIC 0xb309a213
@@ -719,6 +728,8 @@ struct anchorIndexFormat {
 typedef unsigned int docid;
 
 #define __bunused __attribute__((unused))
+
+#define ANONYMOUS_USER "SDESAnonymous"
 
 #endif //_DEFINE__H_
 
