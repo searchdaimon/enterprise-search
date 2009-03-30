@@ -87,7 +87,7 @@ sub run {
     	#doint the actual TmpSizeWatch run.
 	$self->cleaneFolder("/tmp", 600); #10 min
 
-	$self->cleaneFolder("/coredumps", 86400 * 5); #5 dager
+	$self->cleaneFolder("/coredumps", 86400 * 1); #1 dag
 
 	$self->cleaneFolder("/coredumps/saved", 86400 * 5); #5 dager
 
