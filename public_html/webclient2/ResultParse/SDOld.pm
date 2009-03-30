@@ -112,6 +112,7 @@ sub results {
 			title   => $r->{TITLE}[0],
 			url     => $r->{URL}[0],
 			uri     => $r->{URI}[0],
+			fulluri => $r->{FULLURI}[0],
 			snippet => $r->{DESCRIPTION}[0],
 			age     => $r->{TIME_ISO}[0],
 			cache   => $r->{CACHE}[0],
@@ -119,6 +120,7 @@ sub results {
 			dupes => [ map { +{ 
 				url => $_->{URL}[0], 
 				uri => $_->{URI}[0],
+				fulluri => $_->{FULLURI}[0],
 			} } @{$r->{DUPLICATESURLS}} ],
 		};
 	}

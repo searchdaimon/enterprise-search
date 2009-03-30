@@ -144,10 +144,11 @@
 			[% r.snippet %]
 		</div>
 		<div>
-			<span class="url">[% r.uri | html %]</span>
+			<span class="url" title="[% r.fulluri | html %]">[% r.uri | html %]</span>
+			<br />
 			<span class="details">
 				[% IF r.cache %]
-				 - <a href="?cache&amp;u=[% r.cache | encode_base64 %]">[% "cache" | i18n %]</a>
+				<a href="?cache&amp;u=[% r.cache | encode_base64 %]">[% "cache" | i18n %]</a>
 				[% END %]
 				[% IF r.age %]
 				 - [% r.age | html %]
@@ -177,7 +178,7 @@
 		<ul class="duplicateList" id="dupe[% dupe_id %]" style="display: none;">
 			[% FOR d IN dupes %]
 				<li>
-					<a href="[% d.url | html %]">[% d.uri | html %]</a>
+					<a title="[% d.fulluri | html %]" href="[% d.url | html %]">[% d.uri | html %]</a>
 				</li>
 			[% END %]
 		</ul>
