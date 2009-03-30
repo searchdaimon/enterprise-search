@@ -6,6 +6,7 @@
 #include "crawlsmb.h"
 #include "scan.h"
 #include "cleanresource.h"
+#include "../crawlManager2/shortenurl.h"
 
 //#include "../boitho-bbdn/bbdnclient.h"
 
@@ -150,29 +151,56 @@ int crawlupdate(struct collectionFormat *collection,
 }
 
 int
-smb_rewrite_url(char *uri, enum platform_type ptype, enum browser_type btype)
+smb_rewrite_url(struct collectionFormat *collection, char *url, char *uri, char *fulluri, size_t len, enum platform_type ptype, enum browser_type btype)
 {
+	printf("smb_rewrite_url1: raw url: \"%s\"\n",url);
+	smbc_urldecode( url, url, strlen(url)+1 );
+	cleanresourceUnixToWin(url);
+	printf("smb_rewrite_url2: raw url: \"%s\"\n",url);
 
-	printf("smb_rewrite_url1: raw url: \"%s\"\n",uri);
-	smbc_urldecode( uri, uri, strlen(uri)+1 );
-	cleanresourceUnixToWin(uri);
-	printf("smb_rewrite_url2: raw url: \"%s\"\n",uri);
+	char *tmpurl = strdup(url+7);
 
-	char *tmpuri = strdup(uri+7);
+	//printf("Alias? %s\n", collection->alias ? collection->alias : "no alias");
 
 	if (ptype == MAC) {
 		int i;
 
-		for (i = 0; i < strlen(tmpuri); i++)
-			if (tmpuri[i] == '\\')
-				tmpuri[i] = '/';
+		for (i = 0; i < strlen(tmpurl); i++)
+			if (tmpurl[i] == '\\')
+				tmpurl[i] = '/';
 
-		sprintf(uri, "sdsmb://%s", tmpuri);
-	} else if (btype == MOZILLA) {
-		sprintf(uri, "file://///%s", tmpuri);
+		sprintf(url, "sdsmb://%s", tmpurl);
+		if (collection->alias) {
+			sprintf(fulluri, "%s/%s", collection->alias, tmpurl);
+		} else {
+			sprintf(fulluri, "sdsmb://%s", tmpurl);
+		}
+	} else {
+		char *p;
+		if (btype == MOZILLA) {
+			sprintf(url, "file://///%s", tmpurl);
+			p = tmpurl;
+		} else {
+			p = strstr(url, ":\\\\");
+			if (p != NULL) {
+				p+=3;
+			}
+		}
+		{
+			char *p2, *p3;
+			/* Go beyond file://ip/sharename/ */
+			if (p != NULL && (p2 = strchr(p, '\\')) && (p3 = strchr(p2+1, '\\')) && collection->alias) {
+				p3++;
+				sprintf(fulluri, "[%s]\\%s", collection->alias, p3);
+			} else {
+				sprintf(fulluri, "file://%s", tmpurl);
+			}
+		}
 	}
+	strcpy(uri, fulluri);
+	shortenurl(uri, len);
 
-	free(tmpuri);
+	free(tmpurl);
 
 	return 1;
 }
