@@ -133,14 +133,64 @@ sub xmlpush_users($$@) {
 	$writer->endTag();
 }
 
+sub xmlpush_delete($$@) {
+	my ($writer, $collection, @uris) = @_;
+
+	$writer->startTag('delete');
+	$writer->startTag('collection');
+	$writer->characters($collection);
+	$writer->endTag();
+
+	foreach my $uri (@uris) {
+		$writer->startTag('uri');
+		$writer->characters($uri);
+		$writer->endTag();
+	}
+
+	$writer->endTag();
+}
+
+sub xmlpush_gcwhisper($$@) {
+	my ($writer, $collection, @whispers) = @_;
+	$writer->startTag('gcwhispers');
+	$writer->startTag('collection');
+	$writer->characters($collection);
+	$writer->endTag();
+
+	foreach my $whisper (@whispers) {
+		$writer->startTag('whisper');
+		$writer->characters($whisper);
+		$writer->endTag();
+	}
+
+	$writer->endTag();
+}
+
+sub xmlpush_error {
+	my ($writer, $msg) = @_;
+
+	$writer->startTag('error');
+	$writer->characters($msg);
+	$writer->endTag;
+}
+
 my $output;
-my $writer = xmlpush_start('akey', \$output);
+my $writer = xmlpush_start('3fb09aa259aadaca8827087ff51ef231', \$output);
+
+#xmlpush_users($writer, 1, {'username' => 'rb', 'groups' => ['a', 'b', 'c'] } );
 
 
-xmlpush_users($writer, 1, {'username' => 'rb', 'groups' => ['a', 'b', 'c'] } );
+#my $holdTerminator = $/;
+#undef $/;
+#my $buf = <STDIN>;
+#$/ = $holdTerminator;
 
-xmlpush_add($writer, 'text', 'txt', 'atitle', 'http://www.pvv.ntnu.no', '2008-05-04', 'test', 'ean', 'rb', 'Eirik!', 'a=b,c=d');
-xmlpush_close($writer, 'test');
+#oxmlpush_add($writer, 'eml', 'eml', 'atitle', 'http://www.pvv.ntnu.no/foo.eml', '2008-05-04', 'test', 'ean', 'rb', $buf, 'a=b,c=d');
+#xmlpush_close($writer, 'test');
+xmlpush_error($writer, "Some error...");
+#xmlpush_gcwhisper($writer, 'mailtest', ( 'notold' ));
+
+#xmlpush_delete($writer, 'foo', ('http://www.google.com', 'http://www.fast.no'));
 
 xmlpush_end($writer);
 
