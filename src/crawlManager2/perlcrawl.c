@@ -1,3 +1,4 @@
+#include <err.h>
 #include <EXTERN.h>
 #include <perl.h>
 
