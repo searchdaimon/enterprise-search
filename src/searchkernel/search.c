@@ -6,6 +6,10 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#if defined (_OPENMP)
+	#include <omp.h>
+#endif
+
 #include "verbose.h"
 
 //#include "../common/define.h"
@@ -732,10 +736,21 @@ void rankAclArray(int TeffArrayElementer, struct iindexFormat *TeffArray, int co
 void rankMainArray(int TeffArrayElementer, struct iindexFormat *TeffArray, int complicacy) {
 	int y;
 
+        #ifdef DEBUG_TIME
+                struct timeval start_time, end_time;
+                gettimeofday(&start_time, NULL);
+        #endif
+
+	#pragma omp parallel for
 	for (y=0; y<TeffArrayElementer; y++) {
 		TeffArray->iindex[y].TermRank = rankMain(TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall,
 			TeffArray->iindex[y].DocID,TeffArray->iindex[y].subname,&TeffArray->iindex[y],complicacy);
 	}
+
+        #ifdef DEBUG_TIME
+                gettimeofday(&end_time, NULL);
+                printf("Time debug: rankMainArray() time: %f\n",getTimeDifference(&start_time, &end_time));
+        #endif
 }
 
 #ifdef EXPLAIN_RANK
@@ -917,7 +932,7 @@ void GetIndexAsArray_thesaurus (int *AntallTeff, struct iindexFormat **TeffArray
 }
 
 void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat **TeffArray,
-		query_array *queryParsed,struct iindexFormat **TmpArray,struct subnamesFormat *subname, 
+		query_array *queryParsed,struct subnamesFormat *subname, 
 		int languageFilterNr, 
 		int languageFilterAsNr[], int *complicacy){
 
@@ -930,7 +945,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
         int TmpArrayLen;
 	int TeffArrayOriginal;
 	int newadded;
-
+	struct iindexFormat *TmpArray;
 	//TeffArray->nrofHits = 0;
 	//TeffArray->phrasenr = 0;
 
@@ -946,6 +961,13 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 	struct iindexFormat *tmpResult = (struct iindexFormat *)malloc(sizeof(struct iindexFormat));
 	resultArrayInit(tmpResult);
 	int tmpResultElementer;
+
+        if ((TmpArray = malloc(sizeof(struct iindexFormat))) == NULL) {
+                perror("malloc TmpArray");
+                exit(1);
+        }
+	//Runarb 29 jan 2008: usikker om vi trenger denne
+        //resultArrayInit(TmpArray);
 
 	vboprintf("######################################################################\n");
 	vboprintf("searchIndex: vil search index \"%s\"\n",indexType);
@@ -1019,12 +1041,12 @@ for (i=0; i<(*queryParsed).n; i++)
 						}
 						else {
 							TmpArrayLen = 0;
-							(*TmpArray)->nrofHits = 0;
-							GetIndexAsArray_thesaurus(&TmpArrayLen,TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, (*queryParsed).query[i].alt, (*queryParsed).query[i].alt_n);
+							TmpArray->nrofHits = 0;
+							GetIndexAsArray_thesaurus(&TmpArrayLen,&TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, (*queryParsed).query[i].alt, (*queryParsed).query[i].alt_n);
 
 							vboprintf("did find %i pages\n",TmpArrayLen);
 																									
-							andprox_merge(*TeffArray,&baseArrayLen,TeffArrayOriginal,*TeffArray,(*TeffArrayElementer),*TmpArray,TmpArrayLen);
+							andprox_merge(*TeffArray,&baseArrayLen,TeffArrayOriginal,*TeffArray,(*TeffArrayElementer),TmpArray,TmpArrayLen);
 							vboprintf("baseArrayLen %i\n",baseArrayLen);
 							(*TeffArrayElementer) = baseArrayLen;
 
@@ -1089,7 +1111,8 @@ for (i=0; i<(*queryParsed).n; i++)
 							#endif
 
 							TmpArrayLen = 0;
-							_GetIndexAsArray(&TmpArrayLen,*TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, cache_index_get);
+
+							_GetIndexAsArray(&TmpArrayLen,TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, cache_index_get);
 
 							#ifdef DEBUG_TIME
 								gettimeofday(&end_foo_time, NULL);
@@ -1112,7 +1135,7 @@ for (i=0; i<(*queryParsed).n; i++)
 								gettimeofday(&start_foo_time, NULL);
 							#endif
 							or_merge(&tmpResult,&tmpResultElementer,
-									TeffArray,(*TeffArrayElementer),TmpArray,TmpArrayLen);
+									TeffArray,(*TeffArrayElementer),&TmpArray,TmpArrayLen);
 
 							#ifdef DEBUG_TIME
 								gettimeofday(&end_foo_time, NULL);
@@ -1218,14 +1241,14 @@ for (i=0; i<(*queryParsed).n; i++)
 							
 							TmpArrayLen = 0;
 							//TmpArray->nrofHits = 0;
-							resultArrayInit(*TmpArray);
-							_GetIndexAsArray(&TmpArrayLen,*TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, cache_index_get);
-							//rank(TmpArrayLen,TmpArray,subname,(*complicacy));
+
+							resultArrayInit(TmpArray);
+							_GetIndexAsArray(&TmpArrayLen,TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, cache_index_get);
 
 							vboprintf("\t dddd: frase_merge %i %i\n",(*TeffArrayElementer),TmpArrayLen);
 
 							//dette er ikke en ekts frasesøk, kan bare ha en frase
-							frase_merge(tmpResult,&tmpResultElementer,0,tmpResult,tmpResultElementer,*TmpArray,TmpArrayLen);
+							frase_merge(tmpResult,&tmpResultElementer,0,tmpResult,tmpResultElementer,TmpArray,TmpArrayLen);
 
 							// vi må ha en kopi av det gamle svaret slik at vi har noe og merge med, men vi kan ikke lagre svaret i oss selv. så vi må
 							// ha en ny array til det.
@@ -1234,7 +1257,7 @@ for (i=0; i<(*queryParsed).n; i++)
 
 							resultArrayInit(tmpAnser);
 							tmpAnserElementer = 0;
-							frase_merge(tmpAnser,&tmpAnserElementer,0,tmpResult,tmpResultElementer,*TmpArray,TmpArrayLen);
+							frase_merge(tmpAnser,&tmpAnserElementer,0,tmpResult,tmpResultElementer,TmpArray,TmpArrayLen);
 							printf("after frase_merge(): tmpResultElementer: %i\n",tmpResultElementer);
 							*/
 							//ToDO: burde kansje bruke noe mem move eller slik her
@@ -1291,6 +1314,7 @@ for (i=0; i<(*queryParsed).n; i++)
 	vboprintf("new len is %i\n",(*TeffArrayElementer));
 
 	free(tmpResult);
+	free(TmpArray);
 
 	#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
@@ -1332,7 +1356,7 @@ void *searchIndex_thread(void *arg)
 
 	int ArrayLen, TmpArrayLen, TmpArray2Len, totAttribLength;
 
-	struct iindexFormat *TmpArray, *TmpArray2;
+	struct iindexFormat *TmpArray;
 	struct iindexFormat *Array;
 	void (*rank)(int TeffArrayElementer, struct iindexFormat *TeffArray, int complicacy);
 	int complicacy;
@@ -1349,11 +1373,6 @@ void *searchIndex_thread(void *arg)
         }
 	resultArrayInit(TmpArray);
 
-	if ((TmpArray2 = malloc(sizeof(struct iindexFormat))) == NULL) {
-                perror("malloc TmpArray2");
-                exit(1);
-        }
-	resultArrayInit(TmpArray2);
 
 	if ((Array = malloc(sizeof(struct iindexFormat))) == NULL) {
                 perror("malloc main t Array");
@@ -1520,73 +1539,88 @@ void *searchIndex_thread(void *arg)
 
 			hits = ArrayLen;
 
-	
-			searchIndex((*searchIndex_thread_arg).indexType,
-				&searcArrayLen,
-				&searcArray,
-				(*searchIndex_thread_arg).queryParsed,
-				&TmpArray,
-				&(*searchIndex_thread_arg).subnames[i],
-				(*searchIndex_thread_arg).languageFilterNr, 
-				(*searchIndex_thread_arg).languageFilterAsNr,
-				&complicacy
-			);
+//   			omp_set_dynamic(0);
+//   			omp_set_num_threads(2);
 
+			#pragma omp parallel for
+			for(y=0;y<2;y++) {
 
-			#ifdef ATTRIBUTES
-			for (j=0; j<(*searchIndex_thread_arg).attrib_count; j++)
-			    {
-				tmpAttribArrayLen[j] = 0;
+				#if defined (_OPENMP)
+      				printf("Hello World from thread %d, runing %d\n", omp_get_thread_num(),y);
+				#endif
+				if (y==0) {
 
-				// Skriv ut hvilke attributter det søkes på til skjermen:
-				char	qbuf[1024];
-				sprint_query(qbuf,1023,&(*searchIndex_thread_arg).attribute_query[j]);
-				printf("Looking up attributes: %s\n", qbuf);
+					#ifdef ATTRIBUTES
+					for (j=0; j<(*searchIndex_thread_arg).attrib_count; j++)
+					    {
+						tmpAttribArrayLen[j] = 0;
 
-				    searchIndex("attributes",
-					&tmpAttribArrayLen[j],
-					&tmpAttribArray[j],
-					&(*searchIndex_thread_arg).attribute_query[j],
-					&TmpArray,
-					&(*searchIndex_thread_arg).subnames[i],
-					(*searchIndex_thread_arg).languageFilterNr, 
-					(*searchIndex_thread_arg).languageFilterAsNr,
-					&complicacy
-				    );
-					totAttribLength += tmpAttribArrayLen[j];
+						// Skriv ut hvilke attributter det søkes på til skjermen:
+						char	qbuf[1024];
+						sprint_query(qbuf,1023,&(*searchIndex_thread_arg).attribute_query[j]);
+						printf("Looking up attributes: %s\n", qbuf);
+
+						    searchIndex("attributes",
+							&tmpAttribArrayLen[j],
+							&tmpAttribArray[j],
+							&(*searchIndex_thread_arg).attribute_query[j],
+							&(*searchIndex_thread_arg).subnames[i],
+							(*searchIndex_thread_arg).languageFilterNr, 
+							(*searchIndex_thread_arg).languageFilterAsNr,
+							&complicacy
+						    );
+							totAttribLength += tmpAttribArrayLen[j];
 				
 
-				printf("%i hits.\n", tmpAttribArrayLen[j]);
-			    }
-			#endif
+						printf("%i hits.\n", tmpAttribArrayLen[j]);
+					    }
+					#endif
+				}
+				else if (y==1) {
+					searchIndex((*searchIndex_thread_arg).indexType,
+						&searcArrayLen,
+						&searcArray,
+						(*searchIndex_thread_arg).queryParsed,
+						&(*searchIndex_thread_arg).subnames[i],
+						(*searchIndex_thread_arg).languageFilterNr, 
+						(*searchIndex_thread_arg).languageFilterAsNr,
+						&complicacy
+					);
+
+				}
+			} //omp for
 
 			if ((searcArrayLen == 0) && (totAttribLength == 0)) {
 				vboprintf("diden't find any hits for this subname, skipping it.\n");
 				continue;
 			}
 
-			searchIndex("acl_allow",
-				&acl_allowArrayLen,
-				&acl_allowArray,
-				groupquery,
-				&TmpArray,
-				&(*searchIndex_thread_arg).subnames[i],
-				(*searchIndex_thread_arg).languageFilterNr, 
-				(*searchIndex_thread_arg).languageFilterAsNr,
-				&complicacy
-			);
-
-			searchIndex("acl_denied",
-				&acl_deniedArrayLen,
-				&acl_deniedArray,
-				groupquery,
-				&TmpArray,
-				&(*searchIndex_thread_arg).subnames[i],
-				(*searchIndex_thread_arg).languageFilterNr, 
-				(*searchIndex_thread_arg).languageFilterAsNr,
-				&complicacy
-			);
-
+			#pragma omp parallel for
+			for(y=0;y<2;y++) {
+	
+				if (y==0) {
+					searchIndex("acl_allow",
+						&acl_allowArrayLen,
+						&acl_allowArray,
+						groupquery,
+						&(*searchIndex_thread_arg).subnames[i],
+						(*searchIndex_thread_arg).languageFilterNr, 
+						(*searchIndex_thread_arg).languageFilterAsNr,
+						&complicacy
+					);
+				} else if (y==1) {
+					searchIndex("acl_denied",
+						&acl_deniedArrayLen,
+						&acl_deniedArray,
+						groupquery,
+						&(*searchIndex_thread_arg).subnames[i],
+						(*searchIndex_thread_arg).languageFilterNr, 
+						(*searchIndex_thread_arg).languageFilterAsNr,
+						&complicacy
+					);
+				}
+			} // omp for
+				
 
 			#ifdef DEBUG_II
 				printf("acl_allowArrayLen %i:\n",acl_allowArrayLen);
@@ -1746,7 +1780,6 @@ void *searchIndex_thread(void *arg)
 				&ArrayLen,
 				Array,
 				(*searchIndex_thread_arg).queryParsed,
-				TmpArray,
 				&(*searchIndex_thread_arg).subnames[i],
 				(*searchIndex_thread_arg).languageFilterNr, 
 				(*searchIndex_thread_arg).languageFilterAsNr,
@@ -1818,7 +1851,6 @@ void *searchIndex_thread(void *arg)
 #endif
 
 	free(TmpArray);
-	free(TmpArray2);
 
 	#ifdef BLACK_BOKS
 		free(searcArray);
@@ -2042,31 +2074,11 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		searchIndex_thread_arg_Main.attrib_count = attributes_count;
 	#endif
 
-/*
-		#if defined(BLACK_BOKS) && defined(ATTRIBUTES)
-		container	*attr_query = vector_container( pair_container( int_container(), vector_container( string_container() ) ) );
-		for (i=0; i<vector_size((*filteron).attributes); i++)
-		    if (pair(vector_get((*filteron).attributes,i)).first.i == QUERY_ATTRIBUTE)
-			{
-			    vector_pushback(attr_query, QUERY_WORD);
-			    vector_pushback( pair(vector_get(attr_query,vector_size(attr_query)-1)).second.C,
-				    pair(vector_get((*filteron).attributes,i)).second.ptr);
-			}
-
-		make_query_array(attr_query, &searchIndex_thread_arg_Main.attribute_query);
-		destroy(attr_query);
-		#endif
-*/
 		#ifdef WITH_THREAD
 			n = pthread_create(&threadid_Main, NULL, searchIndex_thread, &searchIndex_thread_arg_Main);
 		#else
 			searchIndex_thread(&searchIndex_thread_arg_Main);
 		#endif
-/*
-		#if defined(BLACK_BOKS) && defined(ATTRIBUTES)
-		destroy_query( &searchIndex_thread_arg_Main.attribute_query );
-		#endif
-*/
 	}
 
 	/*
@@ -2559,27 +2571,34 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 		//slår opp alle datoene
 		re = NULL;
+		int nreopen = 0;
+		#pragma omp parallel for firstprivate(re)
 		for (i = 0; i < *TeffArrayElementer; i++) {
-			#if 1
-				if (reIsOpen(re,rLotForDOCid((*TeffArray)->iindex[i].DocID), (*TeffArray)->iindex[i].subname->subname, "dates") ) {
+
+				if (!reIsOpen(re,rLotForDOCid((*TeffArray)->iindex[i].DocID), (*TeffArray)->iindex[i].subname->subname, "dates") ) {
+
+					#pragma omp critical
+					{
+						++nreopen;
+						re = reopen_cache( rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(int), "dates", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY|RE_STARTS_AT_0);
+					}
+
+					if (re == NULL) {
+						debug("reopen(dates)\n");
+						continue;
+					}
 
 				}
-				else if ((re = reopen_cache(rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(int), "dates", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY|RE_STARTS_AT_0)) == NULL) {
-					debug("reopen(dates)\n");
-					continue;
-				}
-
 				(*TeffArray)->iindex[i].date = *RE_Int(re, (*TeffArray)->iindex[i].DocID);
 
-			#else 
-				iintegerGetValue(&(*TeffArray)->iindex[i].date,sizeof(int),(*TeffArray)->iindex[i].DocID,"dates",(*(*TeffArray)->iindex[i].subname).subname);
-			#endif
 
 			#ifdef DEBUG
 			printf("got %u\n",(*TeffArray)->iindex[i].date);
 			#endif
 		}
-		vboprintf("looking opp dates end\n");
+
+		printf("We did reopen %i times\n",nreopen);
+		printf("looking opp dates end\n");
 
 		gettimeofday(&end_time, NULL);
 		(*queryTime).iintegerGetValueDate = getTimeDifference(&start_time,&end_time);
