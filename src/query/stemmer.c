@@ -26,6 +26,9 @@ const char tword_stem=1, tword_dup=2;
 
 thesaurus* thesaurus_init( char *fname_text, char *fname_id )
 {
+
+    printf("thesaurus_init(%s, %s)\n",fname_text,fname_id);
+
     FILE	*f_text = fopen(fname_text, "r"),
 		*f_id = fopen(fname_id, "r");
 
@@ -34,6 +37,8 @@ thesaurus* thesaurus_init( char *fname_text, char *fname_id )
 	    printf("Error: thesaurus: Could not open files for reading.\n");
 	    return NULL;
 	}
+
+    
 
     thesaurus	*T = malloc(sizeof(thesaurus));
     fscanf(f_id, "%i\n", &T->Id_size);
