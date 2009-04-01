@@ -24,7 +24,7 @@
 
 #ifdef BLACK_BOKS
 	#define maxWordForPage 40000
-	#define maxAclForPage 10
+	#define maxAclForPage 150
 	#define maxAttribForPage 20
 #else
 	#define maxWordForPage 4000
