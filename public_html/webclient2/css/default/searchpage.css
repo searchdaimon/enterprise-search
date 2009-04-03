@@ -198,6 +198,10 @@ body {
     margin-top : -0.5em;
 }
 
+#results a:hover {
+	background : #efefef;
+}
+
 #results ul {
     list-style-type : none;
     padding : 0;
@@ -220,18 +224,24 @@ body {
     vertical-align : top;
 }
 #results .title {
-    font-size : medium;
+    font-size : 90%;
     font-family: Arial, Helvetica, sans-serif;
     font-weight : bolder;
 }
 
-#results .url, .snippet, .details, .doctype, .duplicates {
+#results .snippet {
+	margin-top : 0.3em;
     font-size : 80%;
 }
 
 #results .snippet {
     max-width : 45em;
 }   
+
+.url, .snippet, .details, .doctype, .duplicates {
+	font-size : 75%;
+}
+
 
 #results .url, .duplicates {
     color : green;
@@ -257,10 +267,6 @@ body {
 	text-decoration : none !important;
 }
 
-.duplicates a:hover {
-	color : white;
-	color: #00AA44;
-}
 .duplicates a {
 	text-decoration : underline;
 	cursor : pointer;
@@ -368,5 +374,37 @@ clear : both;
 }
 
 
+/**
+ * In attribute_blocks.tpl
+ */
+.emailAttributes {
+	padding-top : 0.2em;
+	padding-bottom : 0.2em;
+}
+.emailAttributes, .genericAttributes  {
+	color : gray;
+	font-size : 70%;
+}
+
+.emailAttributes a, .genericAttributes a {
+	text-decoration : none;
+	color : #555555;
+}
+.emailAttributes a:hover, .genericAttributes a:hover {
+	color : #333333;
+}
+
+.genericAttributes {
+	border-collapse : collapse;
+	border : 0;
+}
 
 
+.genericAttributes img {
+	border : 0;
+	width : 6px;
+	height : 6px;
+	margin-bottom : -2px;
+	/* font-size : 60%; */
+	/* font-style : italic; */
+}

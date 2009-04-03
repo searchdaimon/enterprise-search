@@ -32,8 +32,10 @@
 [% END %]
 
 [% USE HTML %]
+[% USE Dumper %]
 [% PROCESS 'nav_left.tpl' %]
 [% PROCESS 'nav_page.tpl' %]
+[% PROCESS 'attribute_blocks.tpl' %]
 
   <noscript>
            <style type="text/css">
@@ -134,18 +136,20 @@
 [%##
   # blocks 
   %]
-
 [% BLOCK show_res %]
 	<li>
 		<table><tr>
 		<td>
-		<div class="title"><a href="[% r.url | html %]">[% r.title | html %]</a></div>
+		<div class="title"><img src="[% icon_url(r.icon) %]" style="width : 14px; height : 14px;" alt="" />&nbsp;<a href="[% r.url | html %]">[% r.title | html %]</a></div>
+		[% IF r.attributes.size && r.filetype == "eml" %]
+			[% INCLUDE email_attributes attr = r.attributes %]
+		[% END %]
 		<div class="snippet">
 			[% r.snippet %]
 		</div>
+			[% INCLUDE generic_attributes attr = r.attributes %]
 		<div>
 			<span class="url" title="[% r.fulluri | html %]">[% r.uri | html %]</span>
-			<br />
 			<span class="details">
 				[% IF r.cache %]
 				<a href="?cache&amp;u=[% r.cache | encode_base64 %]">[% "cache" | i18n %]</a>

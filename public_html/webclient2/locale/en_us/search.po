@@ -71,6 +71,38 @@ msgstr "Found %quant(%1, other copy, other copies)"
 msgid "Found no results for query \"%1\"."
 msgstr "Found no results for query \"%1\"."
 
+# attributes
+msgid "From"
+msgstr "From"
+
+msgid "To"
+msgstr "To"
+
+msgid "and %1 others"
+msgstr "and %quant(%1, other, others)"
+
+msgid "Creator"
+msgstr "Creator"
+
+msgid "Author"
+msgstr "Author"
+
+msgid "Last saved by"
+msgstr "Last saved by"
+
+msgid "Language"
+msgstr "Language"
+
+msgid "Size"
+msgstr "Size"
+
+msgid "Resolution"
+msgstr "Resolution"
+
+msgid "Page count"
+msgstr "Page count"
+
+
 # page nav
 msgid "Next"
 msgstr "Next"

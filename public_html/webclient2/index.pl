@@ -43,7 +43,8 @@ if (defined(my $query = $state{query})) {
 	if (!$page || $state{page} !~ /^\d+$/) {
 		$page = 1;
 	}
-	($tpl_file, %tpl_vars) = show_search($query, $state{debug}, $page, $lang);
+	my $show_xml = $state{debug} && $state{debug} eq "showxml";
+	($tpl_file, %tpl_vars) = show_search($query, $show_xml, $page, $lang);
 }
 elsif (exists $state{cache}) {
 	($tpl_file, %tpl_vars) = show_cache($state{u}, $tpl);
@@ -108,8 +109,8 @@ sub show_search {
 		icon_url     => sub {
 			my $icon = shift;
 			my $path = "$CFG{icon}{dir}/\Q$icon\E.$CFG{icon}{ext}";
-			return $path if -e $path;
-			warn "Icon '$path' does not exist.";
+			return $path; #if -e $path;
+			#warn "Icon '$path' does not exist.";
 			return q{};
 		},
 		page_nav => {

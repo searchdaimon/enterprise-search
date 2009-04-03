@@ -108,6 +108,17 @@ sub results {
 
 	my @res;
 	foreach my $r (@{$res_xml}) {
+		my %attr;
+		if ($r->{attributes}[0]{attribute}) {
+			%attr = map {
+				$_->{key} => {
+					value => $_->{value},
+					query => $_->{query},
+					attr_query => $_->{attribute_query},
+				}
+			} @{$r->{attributes}[0]{attribute}};
+		}
+
 		push @res, {
 			title   => $r->{TITLE}[0],
 			url     => $r->{URL}[0],
@@ -117,6 +128,9 @@ sub results {
 			age     => $r->{TIME_ISO}[0],
 			cache   => $r->{CACHE}[0],
 			thumb   => $r->{THUMBNAIL}[0],
+			filetype => $r->{filetype}[0],
+			icon => $r->{icon}[0],
+			attributes => \%attr,
 			dupes => [ map { +{ 
 				url => $_->{URL}[0], 
 				uri => $_->{URI}[0],
@@ -204,6 +218,7 @@ sub sort_info {
 }
 
 sub filters { shift->{filters} }
+
 
 ##
 # Remove and/or add filter from/to query.
