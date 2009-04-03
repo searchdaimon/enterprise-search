@@ -34,8 +34,12 @@ IM = /home/eirik/.root/lib/libMagick.a /home/eirik/.root/lib/libWand.a -I/home/e
 
 #bbh1:
 BDB = -I/usr/local/BerkeleyDB.4.5/include/ /usr/local/BerkeleyDB.4.5/lib/libdb.a
+#MYSQL = -I/usr/include/mysql /usr/lib/mysql/libmysqlclient.a
+#CC+=-D NO_64_BIT_DIV
 #bbh2
-#BDB = -I/usr/include/db4 /usr/lib/libdb-4.6.a
+#BDB = -I/usr/include/db4 /usr/lib/libdb-4.6.a -lpthread
+#MYSQL = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
+#CC+=-m32
 
 #SMBCLIENT=-lsmbclient
 #skrur dette på igjen. Brukte det og segfeile når vi hadde det med statisk?
@@ -62,14 +66,12 @@ BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail_by_convert.c -DBBDOC
 LDAP = -DWITH_OPENLDAP -I/home/boitho/.root/ -L/home/boitho/.root/ /usr/lib/libcrypto.a -lldap 
 LDAPBB = -DWITH_OPENLDAP -lldap 
 
-#flag for å inkludere mysql
-#MYSQL = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
-MYSQL = -I/usr/include/mysql /usr/lib/mysql/libmysqlclient.a
 
 SLICENCE=	src/slicense/base32.c  src/slicense/license.c
 
 # For blackbox build
 MYSQLBB = -I/usr/include/mysql/ /usr/lib/mysql/libmysqlclient.a
+MYSQL = -I/usr/include/mysql/ /usr/lib/mysql/libmysqlclient.a
 #MYSQL4 = -I/home/eirik/.root/include/mysql -L/home/eirik/.root/lib/mysql/ -lmysqlclient -DMYSQLFOUR
 
 MYSQL_THREAD = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient_r
@@ -470,7 +472,8 @@ searchd : src/searchkernel/searchd.c
 searchdbb : src/searchkernel/searchd.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/libfte.a src/newspelling/spelling.c src/newspelling/dmetaphone.c src/newspelling/levenshtein.c src/searchkernel/preopen.c src/getFiletype/libfte.a src/attributes/libshow_attr.a src/ds/libds.a -DIIACL $(24SEVENOFFICE) -DWITH_SPELLING -DWITH_THREAD
+	(cd src/searchdbb/; make)
+	#$(CC) $(SEARCHCOMMAND) $(BDB) src/getdate/dateview.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c -D BLACK_BOKS -o bin/searchdbb src/getdate/getdate.tab.o src/getFiletype/libfte.a src/newspelling/spelling.c src/newspelling/dmetaphone.c src/newspelling/levenshtein.c src/searchkernel/preopen.c src/getFiletype/libfte.a src/attributes/libshow_attr.a src/ds/libds.a -DIIACL $(24SEVENOFFICE) -DWITH_SPELLING -DWITH_THREAD
 
 mergeUserToSubname: src/mergeUserToSubname/main.c
 	@echo ""
@@ -1103,7 +1106,7 @@ crawlManager2: src/crawlManager2/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/key/key.c src/crawlManager2/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
+	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/key/key.c src/crawlManager2/shortenurl.c src/crawlManager2/usersystem.c src/perlembed/perlembed.c src/perlembed/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
 
 # XXX
 
