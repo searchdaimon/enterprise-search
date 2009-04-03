@@ -1120,6 +1120,7 @@ int cm_loadCrawlLib(struct hashtable **h, char name[]) {
 	sprintf(libpath,"%s/%s/%s.so",bfile("crawlers"),name,name);	
 	sprintf(perlpath,"%s/%s/main.pm",bfile("crawlers"),name);	
 	sprintf(folderpath,"%s/%s/",bfile("crawlers"),name);	
+	
 
 
 	if (file_exist(libpath)) {
@@ -1170,7 +1171,7 @@ int cm_loadCrawlLib(struct hashtable **h, char name[]) {
 	}		
 	else if (file_exist(perlpath)) {
 
-		crawlLibInfo = perlCrawlStart(folderpath,name);
+		crawlLibInfo = perlCrawlStart(folderpath, name);
 
 		printf("loaded \"%s\"\n",(*crawlLibInfo).shortname);
 

@@ -6,8 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
-
-#include "perlxsi.h"
+#include "../perlembed/perlembed.h"
 #include "../crawl/crawl.h"
 
 #include "../common/bstr.h"
@@ -17,42 +16,12 @@
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
 #include "../3pLibs/keyValueHash/hashtable.h"
 
-static PerlInterpreter *my_perl;
-
-
-void params_to_perlhash(HV *perl_ht, struct hashtable *params) {
-    if (!hashtable_count(params)) return;
-
-    struct hashtable_itr *itr;
-    itr = hashtable_iterator(params);
-
-
-    do {
-        char *param = hashtable_iterator_key(itr);
-        char *value = hashtable_iterator_value(itr);
-        
-        // check if key already exists
-        if (hv_exists(perl_ht, param, strlen(param))) {
-            fprintf(stderr, "Parameter '%s' is already defined. Ignoring.\n", param);
-            continue;
-        }
-
-        hv_store(perl_ht, param, strlen(param),
-            sv_2mortal(newSVpv(value, 0)), 0);
-        
-    } while (hashtable_iterator_advance(itr));
-    free(itr);
-}
-
 int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, char execute[]) {
 
-	int retn;
+	//int retn;
 	//antar at rutiner som ikke returnerer noe mislykkes. Dette kan for eks skje hvis vi kaller die, eller ikke trenger retur koden
-	int success = 0;
-
 
 	char perlfile[PATH_MAX];
-	int perlCache = 0;
 
 	snprintf(perlfile,sizeof(perlfile),"%s/main.pm",collection->crawlLibInfo->resourcepath);
 
@@ -64,31 +33,11 @@ int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, 
 		printf("collection %p, documentExist %p, documentAdd %p, documentError %p, documentContinue %p\n",cargs->collection,cargs->documentExist,cargs->documentAdd,cargs->documentError,cargs->documentContinue);
 	#endif
 
-	dSP;
-	int i;
-	ENTER;
-	SAVETMPS;
-	PUSHMARK(SP);
+	HV *obj_attr = newHV();
+	hv_store(obj_attr, "ptr", strlen("ptr"), sv_2mortal(newSViv(PTR2IV(cargs))), 0);
 
-	//filnavnet
-	XPUSHs(sv_2mortal(newSVpv(perlfile, 0) ));
 
-	//mappen, for å inkludere
-	XPUSHs(sv_2mortal(newSVpv(collection->crawlLibInfo->resourcepath, 0) ));
-
-	//om vi skal cache perl ting i minne
-	XPUSHs(sv_2mortal(newSViv(perlCache))); 
-
-	//hva den skal kalle
-	XPUSHs(sv_2mortal(newSVpv(execute, 0) ));
-
-	//pekere til c funksjonene.
-	XPUSHs(sv_2mortal(newSViv(PTR2IV(cargs))));
-
-	//lager en ny perl hash
 	HV *hv = newHV();
-	//hv_store(hv, "key1", 4, sv_2mortal(newSVpv("test", 0)), 0);
-
 
 	//sendes altid med
 	hv_store(hv, "last_crawl", strlen("last_crawl"), sv_2mortal(newSVuv(collection->lastCrawl)), 0);
@@ -117,41 +66,10 @@ int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, 
 
 
         // Add custom params to hash.
-        params_to_perlhash(hv, collection->params);
+	ht_to_perl_ht(hv, collection->params);
 
-	//push the option has inn as a subrutine arg.
-	XPUSHs(sv_2mortal(newRV((SV *)hv)));
+	return perl_embed_run(perlfile, execute, hv, "Perlcrawl", obj_attr);
 
-	PUTBACK;
-
-	//kaller perl
-	//call_pv("Perlcrawl::crawlupdate", G_DISCARD | G_EVAL);
-	retn = call_pv("Embed::Persistent::eval_file", G_SCALAR | G_EVAL);
-
-	SPAGAIN; //refresh stack pointer
-
-	if (SvTRUE(ERRSV)) {
-		printf("An error occurred in the Perl preprocessor: %s",SvPV_nolen(ERRSV));
-	}
-	else if (retn == 0) {
-
-	}
-	else if (retn == 1) {
-		//pop the return value, as a int
-		success = POPi;
-	}
-	else {
-		fprintf(stderr,"Did return %i valus, but we are supposed to only return 1!\n", retn);
-	}
-
-	debug("preprocessAndRun: return nr %i, returning value %i\n",retn,success);
-
-	FREETMPS;
-	LEAVE;
-
-
-
-	return success;
 }
 
 int perlcm_crawlupdate(struct collectionFormat *collection,
@@ -222,13 +140,7 @@ int perlcm_crawlpatAcces(char resource[], char username[], char password[], int 
 }
 
 struct crawlLibInfoFormat *perlCrawlStart(char perlpath[], char name[]) {
-
-
 	struct crawlLibInfoFormat *crawlLibInfo;
-	char blib[512];
-
-	printf("perlCrawlStart(perlpath=%s, name=%s)\n",perlpath, name);
-
 
 	if((crawlLibInfo = malloc(sizeof(struct crawlLibInfoFormat))) == NULL) {
 		perror("malloc crawlLibInfo");
@@ -243,42 +155,9 @@ struct crawlLibInfoFormat *perlCrawlStart(char perlpath[], char name[]) {
 	crawlLibInfo->scan 		= NULL;
 	crawlLibInfo->rewrite_url 	= NULL;
 	crawlLibInfo->crawl_security 	= 0;
-	strcpy(crawlLibInfo->shortname,name);
-	strcpy(crawlLibInfo->resourcepath,perlpath);
-
-	snprintf( blib,sizeof(blib),"-Mblib=%s",bfile("perlxs/SD-Crawl") );
-
-        //char *perl_args[] = { "", "-Mblib=/home/boitho/boitho/websearch/perlxs/SD-Crawl",  "-I", collection->crawlLibInfo->resourcepath, perlfile, NULL };
-        //char *perl_args[] = { "", "-Mblib=/home/boitho/boitho/websearch/perlxs/SD-Crawl",  "-I", bfile("crawlers/Modules/"), bfile2("perl/persistent.pl"), NULL };
-        char *perl_args[] = { "", blib,  "-I", bfile("crawlers/Modules/"), bfile2("perl/persistent.pl"), NULL };
-
-
-	int perl_argsc = 4;
+	strncpy(crawlLibInfo->shortname, name, sizeof(crawlLibInfo->shortname));
+	strncpy(crawlLibInfo->resourcepath, perlpath, sizeof(crawlLibInfo->resourcepath));
 	
-
-	extern char **environ;
-
-
-
-        PERL_SYS_INIT3(&argc,&argv,&environ);
-        my_perl = perl_alloc();
-        perl_construct(my_perl);
-
-        perl_parse(my_perl, xs_init, perl_argsc, perl_args, NULL);
-
-        PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
-
-	//hvis vi ikke sender med perl coden med -e må den kjøres her, men da får i mindre feil melidinger
-	//eval_pv(collection->perlcode, FALSE);
-
-
-        /*** skipping perl_run() ***/
-
-
-//        perl_destruct(my_perl);
-//        perl_free(my_perl);
-//        PERL_SYS_TERM();
-
 
 	return crawlLibInfo;
 
