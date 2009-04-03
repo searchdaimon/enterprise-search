@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <err.h>
+//#include <err.h>
 
 #define BUFFER_BLOCKSIZE	16384
 
@@ -96,7 +96,8 @@ static inline void bmemcpy(buffer *B, void *src, size_t len)
 		B->pos += len;
 		B->data[B->pos] = '\0';
 	} else {
-		errx(1, "Do not support non-growing bmemcpy");
+		fprintf(stderr, "bprint.h: Do not support non-growing bmemcpy");
+		exit(1);
 	}
 }
 
