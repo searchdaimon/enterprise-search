@@ -14,11 +14,15 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "bbdocdefine.h"
+#include "bbfilters.h"
+
 #include "../common/define.h"
 #include "../common/debug.h"
 #include "../common/exeoc.h"
 #include "../common/boithohome.h"
 #include "../common/ht.h"
+#include "../perlembed/perlembed.h"
 #include "../3pLibs/keyValueHash/hashtable.h"
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
 #include "../common/timediff.h"
@@ -51,20 +55,10 @@
 // Magnus: Det heter altså "jpeg", ikke "jepg" ;)
 char *supportetimages[] = {"png", "jpg", "jpeg", "bmp", "tif", "tiff", "gif", "eps", "ai", '\0'};
 
-
-
 //globals
 //CHTbl htbl;
 struct hashtable *h_fileFilter;
 
-struct fileFilterFormat {
-	char documentstype[12];
-	char command[512];
-	char outputtype[12];
-	char outputformat[12];
-	char comment[64];
-	char format[12];
-};
 
 struct uriindexFormat {
         unsigned int DocID;
@@ -182,6 +176,7 @@ int bbdocument_init(container **attrkeys) {
 	struct fileFilterFormat *fileFilter = NULL;
 
 	char fileFilterName[] = "fileFilter";
+	perl_embed_init(NULL, 1);
 
 
 	//chtbl_init(&htbl, PRIME_TBLSIZ, bbdocument_h, bbdocument_hmatch, free);
@@ -251,12 +246,19 @@ int bbdocument_init(container **attrkeys) {
 				//begynner på et nytt filter
 
 				fileFilter = malloc(sizeof(struct fileFilterFormat));
+				fileFilter->attrwhitelist = NULL;
 
 				//ikke alle filfiltere har sat alle opsjoner, så vi nulstiller alt, slik at det er lett og strcmp()'e
 				//etter en verdi, uten at vi må tenke på at den kansje ikke er satt.
 				memset(fileFilter,'\0',sizeof(struct fileFilterFormat));
 
+				// default til FILTER_EXEOC
+				fileFilter->filtertype = FILTER_EXEOC;
+
 				strcpy((*fileFilter).documentstype,splitdata[1]);
+				
+				strlcpy(fileFilter->path, path, sizeof fileFilter->path);
+				
 
 			}
 			else if (strcmp(splitdata[0],"command") == 0) {
@@ -282,6 +284,24 @@ int bbdocument_init(container **attrkeys) {
 			else if (strcmp(splitdata[0],"outputformat") == 0) {
 				//text, html
 				strcpy((*fileFilter).outputformat,splitdata[1]);
+			}
+			else if (strcmp(splitdata[0], "filtertype") == 0) {
+			
+				if (strcmp(splitdata[1], FILTER_EXEOC_STR) == 0)
+					fileFilter->filtertype = FILTER_EXEOC;
+
+				else if (strcmp(splitdata[1], FILTER_PERL_PLUGIN_STR) == 0) 
+					fileFilter->filtertype = FILTER_PERL_PLUGIN;
+
+				else 
+					errx(1, "Unknown filtertype %s\n", splitdata[1]);
+			
+			}
+			else if (strcmp(splitdata[0], "attrwhitelist") == 0) {
+				// TODO: Free fileFilter->attrwhitelist
+				if (!split(splitdata[1], ",", &fileFilter->attrwhitelist))
+					warnx("attrwhitelist was empty.");
+
 			}
 			else {
 				printf("unknown command \"%s\"\n",lines);
@@ -556,33 +576,57 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 	/*****************************************************************************/
 
 
-	#ifdef DEBUG
-	printf("command: %s\n",(*fileFilter).command);
-	#endif
-
 	strsandr((*fileFilter).command,"#file",filconvertetfile_real);
 	strsandr((*fileFilter).command,"#outtxtfile",filconvertetfile_out_txt);
 	strsandr((*fileFilter).command,"#outhtmlfile",filconvertetfile_out_html);
+	exeocbuflen = (dokument_size * 2) + 512; // XXX: Find a better way //(*documentfinishedbufsize);
+
+	switch (fileFilter->filtertype) {
+		case FILTER_EXEOC:
+			run_filter_exeoc(
+				documentfinishedbuftmp,  
+				//*documentfinishedbufsize, 
+				exeocbuflen,
+				fileFilter, 
+				metahash
+			);
+			break;
+		case FILTER_PERL_PLUGIN:
+			run_filter_perlplugin(
+				documentfinishedbuftmp,
+				//*documentfinishedbufsize,
+				exeocbuflen ,
+				fileFilter,
+				metahash
+			);
+			break;
+		default:
+			errx(1, "Unknown filtertype '%d'", fileFilter->filtertype);
+	}
+
+#ifdef USE_LIBEXTRACTOR
+	if (fileFilter->attrwhitelist != NULL)
+		add_libextractor_attr(metahash, filconvertetfile_real, fileFilter->attrwhitelist);
+#endif
 
 
-	//hvis vi skal lage en ny fil må vi slette den gamle
-	//sletter den etterpå i steden. Men før vi kaller return
-	//if (strcmp((*fileFilter).outputformat,"textfile") == 0) {
-	//	unlink(filconvertetfile_out_txt);
-	//}
+//<<<<<<< bbdocument.c
 
+//=======
 	//her parser vi argumenter selv, og hver space blir en ny argyment, selv om vi 
 	//bruker "a b", som ikke riktig blir to argumenter her, a og b
 	//splitter på space får å lage en argc
-	TokCount = split((*fileFilter).command, " ", &splitdata);
+	/*TokCount = split((*fileFilter).command, " ", &splitdata);
 	//#ifdef DEBUG
 	printf("splitet comand in %i, program is \"%s\"\n",TokCount,splitdata[0]);
 	//#endif
 	printf("running: %s\n",(*fileFilter).command);
 	//sender med størelsen på buferen nå. Vil få størelsen på hva vi leste tilbake
-	exeocbuflen = (dokument_size * 2) + 512; // XXX: Find a better way //(*documentfinishedbufsize);
 	char *execobuf = malloc(exeocbuflen);
+//>>>>>>> 1.64
 
+//<<<<<<< bbdocument.c
+//=======
 	char envpairtemplate[] = "tmp/converter-metadata-XXXXXX";
 	char *envpairpath = strdup(bfile(envpairtemplate));
 	char envpair[PATH_MAX];
@@ -608,7 +652,8 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
                 gettimeofday(&end_time, NULL);
                 printf("Time debug: exeoc_timeout() time: %f\n",getTimeDifference(&start_time, &end_time));
         #endif
-
+	*/
+/*
 	if (metahash) {
 		FILE *metafp;
 
@@ -620,7 +665,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 			while (fgets(line, sizeof(line), metafp)) {
 				char *p, *p2;
 
-				/* Comment */
+				// Comment
 				if (line[0] == '#')
 					continue;
 
@@ -634,7 +679,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 				while (isspace(*(p2-1)))
 					p2--;
 				*p2 = '\0';
-				p++; /* Skip past = */
+				p++; // Skip past = 
 				while (isspace(*p))
 					p++;
 				value = p;
@@ -651,20 +696,21 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 		} else {
 			printf("Couldn't open %s\n", envpairpath);
 		}
-	}
+	} */
 
+//>>>>>>> 1.64
 #ifdef DEBUG
 	//printf("did convert to %i bytes (strlen %i)\n",exeocbuflen,strlen(documentfinishedbuftmp));
 #endif
 
 	if (strcmp((*fileFilter).outputformat,"text") == 0) {
-		bprintf(outbuffer, html_text_tempelate,titlefromadd,execobuf);
+		bprintf(outbuffer, html_text_tempelate,titlefromadd,documentfinishedbuftmp);
 	}
 	else if (strcmp((*fileFilter).outputformat,"html") == 0) {
 		//html trenger ikke å konvertere
 		//dette er altså outputformat html. Ikke filtype outputformat. Filtupe hondteres lengere oppe
 		//ToDo: må vel kopiere inn noe data her???
-		bprintf(outbuffer, "%s", execobuf);
+		bprintf(outbuffer, "%s", documentfinishedbuftmp);
 	}
 	else if (strcmp((*fileFilter).outputformat,"textfile") == 0) {
 		FILE *fh;
@@ -734,7 +780,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 		type = (strcmp(fileFilter->outputformat, "dir") == 0) ? 1 : 2;
 
 		len = exeocbuflen;
-		p = strdup(execobuf);
+		p = strdup(documentfinishedbuftmp);
 		pstart = p;
 		if (p == NULL) {
 			goto bbdocument_convert_error;
@@ -821,11 +867,11 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 	}
 	else {
 		printf("unknown dokument outputformat \"%s\"\n",fileFilter->outputformat);
-		free(execobuf);
+		free(documentfinishedbuftmp);
 		goto bbdocument_convert_error;
 	}
 
-	free(execobuf);
+	free(documentfinishedbuftmp);
 
 	unlink(filconvertetfile_real);
 	unlink(filconvertetfile_out_txt);
@@ -954,6 +1000,8 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		htmlbuffer = buffer_exit(documentbuffer);
 	}
 
+	buffer *attrbuffer = buffer_init(-1);
+	bprintf(attrbuffer, "%s", attributes);
 	if (metahash) {
 		struct hashtable_itr *itr;
 
@@ -965,15 +1013,19 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 				key = hashtable_iterator_key(itr);
 				value = hashtable_iterator_value(itr);
 
-				printf("Key: %s Value: %s\n", key, value);
+				printf("%s: Key: %s Value: %s\n", documenttype_real, key, value);
 
 				if (strcmp(key, "lastmodified") == 0) {
 					lastmodified = atol(value);
+					continue;
 				}
+
+				bprintf(attrbuffer, "%s=%s,", key, value);
 			} while (hashtable_iterator_advance(itr));
 		}
 		hashtable_destroy(metahash, 1);
 	}
+	char *all_attributes = buffer_exit(attrbuffer);
 
 	//printf("document (size %i)\"%s\"\n",htmlbuffersize,htmlbuffer);
 
@@ -1014,8 +1066,8 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 #endif
 
 	ReposetoryHeader.urllen = strlen(documenturi);
-	ReposetoryHeader.attributeslen = strlen(attributes);
-	rApendPostcompress(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_denied, NULL, documenturi, attributes, attrkeys);
+	ReposetoryHeader.attributeslen = strlen(all_attributes);
+	rApendPostcompress(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_denied, NULL, documenturi, all_attributes, attrkeys);
 
 #ifdef DEBUG	
 	printf("legger til DocID \"%u\", time \"%u\"\n",ReposetoryHeader.DocID,lastmodified);
@@ -1025,6 +1077,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 	uriindex_add(documenturi,ReposetoryHeader.DocID,lastmodified,subname);
 
+	free(all_attributes);
 	free(htmlbuffer);
 	free(documenttype_real);
 }	
