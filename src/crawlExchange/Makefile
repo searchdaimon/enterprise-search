@@ -1,7 +1,7 @@
 #gcc xml.c url.c main.c -I/usr/include/libxml2/ -L/usr/lib -lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl && ./a.out
 CFLAGS?=	
 CFLAGS+=	-I/usr/include/libxml2/ -L/usr/lib -I/home/boitho/.root/include 
-CFLAGS+=	-O0 -g -DBLACK_BOKS -DIIACL
+CFLAGS+=	-O0 -g -DBLACK_BOKS -DIIACL  -DEMAIL_ADRESS_AS_ATTRIBUTE
 LDFLAGS=	-lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl -L/home/boitho/.root/lib
 PROG?=		crawlExchange
 CC=		/usr/local/bin/gcc

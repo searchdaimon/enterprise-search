@@ -26,6 +26,8 @@
 #include "../ds/dcontainer.h"
 #include "../ds/dmultimap.h"
 
+#define MAX_ATTR_LEN 1024
+
 int crawlcanconnect(struct collectionFormat *collection,
                    int (*documentError)(struct collectionFormat *, int, const char *, ...) __attribute__((unused)));
 int crawlfirst(crawlfirst_args);
@@ -104,6 +106,56 @@ make_crawl_uri(char *uri, char *id)
 	return p;
 }
 
+char *parse_mail_header(container *M_header, char **attr_dst, char **title_dst) {
+	char *p = NULL, *p2;
+	char attr[MAX_ATTR_LEN];
+	int pos = 0;
+
+	iterator it = multimap_begin(M_header);
+	int num_receivers = 0;
+
+	for (; it.valid; it=multimap_next(it)) {
+		if (strcmp("subject", (char *) multimap_key(it).ptr) == 0)
+			p = (char*)multimap_val(it).ptr;
+#ifdef EMAIL_ADRESS_AS_ATTRIBUTE
+		else if (!strcmp("from", (char*) multimap_key(it).ptr)) {
+			pos += snprintf(&(attr[pos]), MAX_ATTR_LEN - pos, 
+				"from=%s,", (char *) multimap_val(it).ptr);
+			//asprintf(&crawldocumentAdd.attributes, "from=%s,",
+
+		}
+		else if (strcmp("to", (char *) multimap_key(it).ptr) == 0) {
+			// TODO: Support more than one 'to' field
+			if (num_receivers++) continue;
+
+			pos += snprintf(&(attr[pos]), MAX_ATTR_LEN - pos, 
+				"to=%s,", (char *) multimap_val(it).ptr);
+		}
+#endif
+	}
+	pos += snprintf(&(attr[pos]), MAX_ATTR_LEN - pos, 
+		"num_receivers=%d,", num_receivers);
+	*attr_dst = strdup(attr);
+
+	if (p == NULL) {
+		*title_dst = "";
+	} else {
+		while (isspace(*p)) {
+			p++;
+		}
+		for (p2 = p; *p2 != '\n' && *p2 != '\r' && *p2 != '\0'; p2++)
+			;
+		if (p2 - p > 0) {
+			*title_dst = strndup(p, p2 - p);
+			fix_subject(*title_dst, p2-p+1);
+		} else {
+			*title_dst = NULL;
+		}
+		if (*title_dst == NULL)
+			*title_dst = "";
+	}
+}
+
 void
 grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char *sid, size_t contentlen, time_t lastmodified, char *usersid, CURL **curl)
 {
@@ -126,7 +178,6 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 	if ((ci->documentExist)(ci->collection, &crawldocumentExist)) {
 		// This document already exists
 	} else {
-		char *p, *p2;
 
 		if (ex_getEmail(url, &mail, curl) == NULL) {
 			free(crawldocumentExist.documenturi);
@@ -149,35 +200,13 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 		destroy(M_header);
 		p = NULL;
 #endif
-		iterator	it = multimap_begin(M_header);
-		p = NULL;
-		crawldocumentAdd.attributes = "";
-		for (; it.valid; it=multimap_next(it)) {
-			if (!strcmp("subject", (char*)multimap_key(it).ptr))
-			    p = (char*)multimap_val(it).ptr;
-#ifdef EMAIL_ADRESS_AS_ATTRIBUTE
-			else if (!strcmp("from", (char*)multimap_key(it).ptr))
-			    asprintf(&crawldocumentAdd.attributes, "from=%s",(char*)multimap_val(it).ptr);
-#endif
-		}
+
+		parse_mail_header(M_header, 
+			&crawldocumentAdd.attributes, 
+			&crawldocumentAdd.title);
+		destroy(M_header);
 		
-		if (p == NULL) {
-			crawldocumentAdd.title = "";
-		} else {
-			while (isspace(*p)) {
-				p++;
-			}
-			for (p2 = p; *p2 != '\n' && *p2 != '\r' && *p2 != '\0'; p2++)
-				;
-			if (p2 - p > 0) {
-				crawldocumentAdd.title = strndup(p, p2 - p);
-				fix_subject(crawldocumentAdd.title, p2-p+1);
-			} else {
-				crawldocumentAdd.title = NULL;
-			}
-			if (crawldocumentAdd.title == NULL)
-				crawldocumentAdd.title = "";
-		}
+
 		crawldocumentAdd.documenttype = "eml";
 		crawldocumentAdd.doctype = "";
 		crawldocumentAdd.document = mail.buf;
@@ -207,7 +236,6 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 
 		crawldocumentAdd.attributes = buffer_exit(B);
 #endif
-		destroy(M_header);
 
 		printf("Adding: '%s'\n", crawldocumentAdd.title);
 		printf("usersid \"%s\"\nacl_allow \"%s\"\nacl_denied \"%s\"\n",usersid,crawldocumentAdd.acl_allow , crawldocumentAdd.acl_denied);
@@ -216,6 +244,12 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 			free(crawldocumentAdd.title);
 		free(crawldocumentAdd.acl_allow);
 		free(crawldocumentAdd.acl_denied);
+#ifdef EMAIL_ADRESS_AS_ATTRIBUTE
+		warnx("attributes: %s\n", crawldocumentAdd.attributes);
+		free(crawldocumentAdd.attributes);
+#else
+		warnx("not compiled with attributes");
+#endif
 
 		free(mail.buf);
 	}
