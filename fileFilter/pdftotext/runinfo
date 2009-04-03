@@ -1,3 +1,4 @@
 documentstype: pdf
 command: ./pdftotext #file
 outputformat: textfile
+attrwhitelist: author

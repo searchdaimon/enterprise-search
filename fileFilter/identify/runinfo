@@ -2,42 +2,51 @@ documentstype: jpg
 command: identify -ping -format "Geometry: %wx%h, Format: %m" #file
 outputformat: text
 outputtype: stdio
+attrwhitelist: size, resolution
+
 
 documentstype: png
 command: identify -ping -format "Geometry: %wx%h, Format: %m" #file
 outputformat: text
 outputtype: stdio
+attrwhitelist: size, resolution
 
 documentstype: tif
 #command: identify -ping -format "Geometry: %wx%h, Format: %m" #file
 command: identify -ping -format "Format: %m" #file
 outputformat: text
 outputtype: stdio
+attrwhitelist: size, resolution
 
 documentstype: tiff
 command: identify -ping -format "Geometry: %wx%h, Format: %m" #file
 outputformat: text
 outputtype: stdio
+attrwhitelist: size, resolution
 
 documentstype: bmp
 command: identify -ping -format "Geometry: %wx%h, Format: %m" #file
 outputformat: text
 outputtype: stdio
+attrwhitelist: size, resolution
 
 documentstype: gif
 command: identify -ping -format "Geometry: %wx%h, Format: %m" #file
 outputformat: text
 outputtype: stdio
+attrwhitelist: size, resolution
 
 documentstype: eps
 command: identify -ping -format "Geometry: %wx%h, Format: %m" #file
 outputformat: text
 outputtype: stdio
+attrwhitelist: size, resolution
 
 documentstype: ai
 command: identify -ping -format "Geometry: %wx%h, Format: %m" #file
 outputformat: text
 outputtype: stdio
+attrwhitelist: size, resolution
 
 #documentstype: psd
 #command: identify -ping -format "Format: %m" #file

@@ -2,11 +2,13 @@ documentstype: doc
 command: /usr/bin/catdoc -s 8859-1 #file
 outputformat: text
 outputtype: stdio
+attrwhitelist: creator,language,last saved by,page count
 
 documentstype: xls
 command: /usr/bin/xls2csv -s 8859-1 -c " " #file
 outputformat: text
 outputtype: stdio
+attrwhitelist: creator,language,last saved by,page count
 
 #documentstype: ppt
 #command: ./catppt #file

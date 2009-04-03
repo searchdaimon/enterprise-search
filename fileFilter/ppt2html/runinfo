@@ -1,8 +1,10 @@
 documentstype: ppt
 command: ./ppt2html -t #file #outtxtfile
 outputformat: textfile
+attrwhitelist: creator,language,last saved by,page count
 
 documentstype: pot
 command: ./ppt2html -t #file #outtxtfile
 outputformat: textfile
+attrwhitelist: creator,language,last saved by,page count
 
