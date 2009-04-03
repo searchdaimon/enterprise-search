@@ -34,7 +34,12 @@
 #include "../common/attributes.h" // next_attribute
 #include "../common/bstr.h"
 #include "../maincfg/maincfg.h"
+#include "../common/cgi.h" // escapeHTML
 #include "../crawlManager/client.h"
+#ifdef ATTRIBUTES
+	#include "../attributes/attr_makexml.c"
+	#include "qrewrite.h"
+#endif
 
 #include <libconfig.h>
 #define CFG_SEARCHD "config/searchd.conf"
@@ -102,7 +107,32 @@ int prequerywriteFlag = 0;
     int compare_elements (const void *p1, const void *p2);
     int compare_elements_posisjon (const void *p1, const void *p2);
 
+
+
 #ifdef BLACK_BOKS
+
+char *get_filetype_icon(char *ext) {
+	static struct fte_data *fdata = NULL;
+	if (fdata == NULL)
+		fdata = fte_init(bfile("config/file_extensions.conf"));
+ 	/* TODO? fte_destroy(fdata) */
+
+	static char *icon;
+	char *group, *descr;
+
+	if (fdata == NULL) {
+		errx(1, "No fte_data %d %s", __LINE__, __FILE__);
+		return;
+	}
+	if (!fte_getdescription(fdata, "nbo", ext, &group, &descr, &icon)) {
+		warnx("no icon for ext %s\n", ext);
+		icon[0] = '\0';
+		return icon;
+	}
+
+	return icon;
+}
+
 struct subnamesFormat *get_usr_coll(char *usr, int *n_colls, int cmc_port) {
 	char **colls;
 	char *collections;
@@ -1481,11 +1511,10 @@ int main(int argc, char *argv[])
 	}
 
         //fjerner tegn. " blir til &quot;
-	strcpy(QueryData.queryhtml,QueryData.query);
-	strsandr(QueryData.queryhtml,"\"","&quot;");
-	strsandr(QueryData.queryhtml, ">", "&gt;");
-	strsandr(QueryData.queryhtml, "<", "&lt;");
-	strsandr(QueryData.queryhtml, "&", "&amp;");
+
+	//strcpy(QueryData.queryhtml,QueryData.query);
+	escapeHTML(QueryData.queryhtml, sizeof QueryData.queryhtml, QueryData.query);
+
 
 	//printf("query behandlet %s\n",QueryData.queryhtml);
 	#ifdef DEBUG_TIME
@@ -2876,11 +2905,25 @@ int main(int argc, char *argv[])
 					char *o = NULL;
 					char key[MAX_ATTRIB_LEN], value[MAX_ATTRIB_LEN], keyvalue[MAX_ATTRIB_LEN];
 
+					qrewrite qrewrite;
+					qrewrite_init(&qrewrite, QueryData.query);
+					char attbuff[MaxQueryLen], attrq_esc[MaxQueryLen * 4], attrq2_esc[MaxQueryLen * 4];
+
 					printf("\t<attributes>\n");
 					while (next_attribute(Sider[i].attributes, &o, key, value, keyvalue)) {
-						printf("\t<attribute key=\"%s\" value=\"%s\" />\n", key, value);
+						query_attr_set_filter(attbuff, sizeof attbuff, &qrewrite, key, value, 0);
+						escapeHTML(attrq_esc, sizeof attrq_esc, attbuff);
+						
+						query_attr_set_filter(attbuff, sizeof attbuff, &qrewrite, key, value, 1);
+						escapeHTML(attrq2_esc, sizeof attrq2_esc, attbuff);
+
+
+						printf("\t<attribute key=\"%s\" value=\"%s\" query=\"%s\" attribute_query=\"%s\" />\n", 
+							key, value, 
+							attrq_esc, attrq2_esc);
 					}
 					printf("\t</attributes>\n");
+					qrewrite_destroy(&qrewrite);
 				}
 				#endif
 
@@ -2896,6 +2939,8 @@ int main(int argc, char *argv[])
 				printf("\t<DOCUMENTTYPE>%s</DOCUMENTTYPE>\n", Sider[i].DocumentIndex.Dokumenttype);
                 		printf("\t<POSISJON>%i</POSISJON>\n",x);
                 		printf("\t<REPOSITORYSIZE>%u</REPOSITORYSIZE>\n",Sider[i].DocumentIndex.htmlSize);
+				printf("\t<filetype>%s</filetype>\n", Sider[i].iindex.filetype);
+				printf("\t<icon>%s</icon>\n", get_filetype_icon(Sider[i].iindex.filetype));
 
 
 				if (!getRank) {
