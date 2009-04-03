@@ -6,7 +6,9 @@
  use Symbol qw(delete_package);
  use Devel::Symdump;
  use Carp;
- BEGIN { unshift @INC, $ENV{BOITHOHOME} . "/Modules" }
+ BEGIN { 
+	unshift @INC, $ENV{BOITHOHOME} . "/Modules";
+ }
 
  sub valid_package_name {
      my($string) = @_;
@@ -19,83 +21,67 @@
      return "Embed" . $string;
  }
 
- #søker gjenom en array på jakt etter key
- sub inArray {
-     my($key, @arr) = @_;
+sub eval_pkg {
+	my ($pkg, $sub) = @_;
+	#wrap the code into a subroutine inside our unique package
+	eval qq|package $pkg; sub handler {  $sub; } |;
+	die $@ if $@;
+}
 
-     foreach my $i (@arr) {
-	if ($i eq $key) {
-		return 1;
+#void perl_embed_run(char *file_path, char *func_name, HV *func_params, char *obj_name, HV *obj_attr) {
+sub eval_file2 {
+	my ($file_path, $keep_cache, $func_name, $func_params_ref, $bless_name, $bless_ref) = @_;
+	my $package = valid_package_name($file_path);
+	my $mtime = -M $file_path;
+
+
+	if(defined $Cache{$package}{mtime}
+			&&
+			$Cache{$package}{mtime} <= $mtime)
+	{
+		# we have compiled this subroutine already,
+		# it has not been updated on disk, nothing left to do
+		#print STDERR "Already compiled $package->handler\n";
 	}
-     }
-     return 0;
- }
- sub eval_file {
-     my($filename, $folder, $delete, $execute, $pointer, $opt) = @_;
-     my $package = valid_package_name($filename);
-     my $mtime = -M $filename;
-     my $ret = 0;
+	else {
 
-#     print "eval_file( filename=$filename, delete=$delete, execute=$execute, pointer=$pointer )\n";
-#
-#     print "options:\n";
-#     foreach my $k (keys %{ $opt }) {
-# 	     print "$k: $opt->{$k}\n";
-#     }
-    
-     if (!inArray($folder,@INC)) {
-		push @INC, $folder;
-     }
+		local $/ = undef;
 
-     if(defined $Cache{$package}{mtime}
-        &&
-        $Cache{$package}{mtime} <= $mtime)
-     {
-        # we have compiled this subroutine already,
-        # it has not been updated on disk, nothing left to do
-        print STDERR "already compiled $package->handler\n";
-     }
-     else {
+		open my $srch, $file_path
+			or die "open '$file_path'", $!;
+		my $sub = <$srch>;
+		close $srch;
 
-        local $/ = undef;
+		my $eval = qq|package $package; sub handler {  $sub; } |;
 
-        open my $srch, $filename
-            or die "open '$filename'", $!;
-        my $sub = <$srch>;
-        close $srch;
+		# eval out of the scope of this func
+		# so our variables won't be accessable.
+		eval_pkg($package, $sub);
 
-        #wrap the code into a subroutine inside our unique package
-        my $eval = qq|package $package; sub handler {  $sub; } |;
-        {
-            # hide our variables within this block
-            my($filename,$mtime,$package,$sub);
-            eval $eval;
-        }
-        die $@ if $@;
-
-        #cache it unless we're cleaning out each time
-        $Cache{$package}{mtime} = $mtime unless $delete;
-     }
-	#debug: printer ut inc1
-	#print "inc1:\n";
-	#print join("\n", @INC);
-	#print "\n";
-		
-     eval { 
+		$Cache{$package}{mtime} = $mtime 
+			if $keep_cache;
+	}
+	my $ret;
+	eval { 
 		$package->handler();
-                $ret = $package->$execute(bless({ ptr => $pointer }, 'Perlcrawl'), $opt);
+		if (defined $bless_name) {
+			$ret = $package->$func_name(bless($bless_ref, $bless_name), $func_params_ref);
+		}
+		else {
+			$ret = $package->$func_name($func_params_ref);
+		}
 	};
+	die $@ if $@;
 
-     die $@ if $@;
+	delete_package($package) unless $keep_cache;
 
-     delete_package($package) if $delete;
+	#take a look if you want
+	#print Devel::Symdump->rnew($package)->as_string, $/;
 
-     #take a look if you want
-     #print Devel::Symdump->rnew($package)->as_string, $/;
- 
-     #print "eval_file: rutine return value $ret\n";
-     return $ret;
- }
+#print "eval_file: rutine return value $ret\n";
+	return $ret;
+}
 
+	
  1;
 

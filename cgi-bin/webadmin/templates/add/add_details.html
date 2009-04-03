@@ -1,5 +1,20 @@
+[% WRAPPER 'header.html' title='Add collection'
+	extra_js = ['jquery', 'collection_edit', 'effects.core', 'effects.highlight'] 
+%]
+<script type="text/javascript">
+//<![CDATA[
+	$(document).ready(function() {
+		var s = new UserPrefixSugg(
+			$('#authSelect'), 
+			$('#authNewInput'), 
+			$("#prefixInput")
+		);
+	});
+//]]>
+</script>
+
+[% END %]
 [% USE Dumper %]
-[% INCLUDE 'header.html' title='Add collection' %]
 [% INCLUDE 'template_collection_warnings.html' %]
 
 [% PROCESS 'template_connector_help.html' %]

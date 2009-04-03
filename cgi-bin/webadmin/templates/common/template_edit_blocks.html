@@ -58,7 +58,7 @@
 	[% IF authentication.size %]
 		<h4>Use stored authentication</h4>
 		<div style="margin-left : 1em;">
-		<select name="[% prefix %].auth_id">
+		<select name="[% prefix %].auth_id" id="authSelect">
 			<option value="">(New values - input below)</option>
 			[% FOREACH auth IN authentication %]
 				<option value="[% auth.id %]"
@@ -75,7 +75,7 @@
 		Username:
 	
 		<div class="block_inner">
-			<input type="text" name="[% prefix %].username" 
+			<input type="text" name="[% prefix %].username" id="authNewInput"
 			[% UNLESS share.auth_id %] value="[% share.username %]" [% END %] />
 		</div>
 	</div>
@@ -248,8 +248,10 @@
 	
 
 	<div class="block_inner" >
-		<input type="text" name="[% prefix %].userprefix" value="[% $prefix.userprefix %]" />[% optional %]
-		<br /><span class="example">Example: WIN-EXAMPLE-COM</span>
+		<input type="text" name="[% prefix %].userprefix" 
+			value="[% $prefix.userprefix %]" 
+			id="prefixInput" />[% optional %]
+		<br /><span class="example">Example: WIN-EXAMPLE-COM\</span>
 	</div>
 	</div>
 [% END %]

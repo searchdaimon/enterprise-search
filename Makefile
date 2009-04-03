@@ -14,6 +14,8 @@ LDFLAGS = -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL src/ds/libds.a
 
 #pop rank bibloteket
 LIBS = src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c src/base64/base64.c src/common/
+PERLEMBED = src/perlembed/libperlembed.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE   -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl 
+
 
 LIBGeoIP = -lGeoIP
 
@@ -50,7 +52,7 @@ BDB = -I/usr/local/BerkeleyDB.4.5/include/ /usr/local/BerkeleyDB.4.5/lib/libdb.a
 SMBCLIENT=/home/boitho/src/samba-3.0.25b/source/bin/libsmbclient.a -I/home/boitho/src/samba-3.0.25b/source/include/
 #SMBCLIENT=-Isrc/3pLibs/samba-3.0.24/source/include/ -Lsrc/3pLibs/samba-3.0.24/source/lib/ -lsmbclient
 
-BBDOCUMENT = src/bbdocument/bbdocument.c src/ds/libds.a $(BDB) -D BLACK_BOKS
+BBDOCUMENT = src/bbdocument/bbdocument.c src/bbdocument/bbfilters.c src/ds/libds.a $(BDB) -D BLACK_BOKS $(PERLEMBED) 
 #BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail.c -DBBDOCUMENT_IMAGE $(IM)
 BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail_by_convert.c -DBBDOCUMENT_IMAGE_BY_CONVERT
 
@@ -97,7 +99,10 @@ HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a src/ds/libd
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange crawlSO boitho-bbdn PageInfobb IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb perlxs-sdcrawl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic
+bb : perlembed getFiletype searchddep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange crawlSO boitho-bbdn PageInfobb IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb perlxs-sdcrawl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic
+
+perlembed:
+	(cd src/perlembed; make clean; make)
 
 dppreload:
 	$(CC) -shared -fPIC src/dp/preload.c src/common/timediff.c -o bin/dppreload.so -ldl -Wall $(LDFLAGS)
@@ -420,7 +425,7 @@ crawlFiles: src/crawlFiles/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/crawlFiles/main.c  -o bin/crawlFiles $(LDFLAGS) src/boitho-bbdn/bbdnclient.c -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c src/crawlFiles/main.c  -o bin/crawlFiles $(LDFLAGS) src/boitho-bbdn/bbdnclient.c -D BLACK_BOKS 
 
 	
 
@@ -521,7 +526,7 @@ deleteDocIDFormCache:
 	$(CC) $(CFLAGS) $(LIBS)*.c src/dispatcher_all/library.c src/deleteDocIDFormCache/main.c -o bin/deleteDocIDFormCache $(LDFLAGS) -D WITH_CASHE -D EXPLAIN_RANK
 
 
-dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/banlists/ban.c src/UrlToDocID/search_index.c src/maincfg/maincfg.c src/dispatcher_all/library.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c $(LDFLAGS) $(BDB) -D_GNU_SOURCE
+dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/banlists/ban.c src/UrlToDocID/search_index.c src/maincfg/maincfg.c src/dispatcher_all/library.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c $(LDFLAGS) src/dispatcher_all/qrewrite.o $(BDB) -D_GNU_SOURCE 
 
 dispatcher_all: src/dispatcher_all/main.c
 	@echo ""
@@ -535,11 +540,11 @@ dispatcher_allsql3: src/dispatcher_all/main.c
 
 	$(CC) $(dispatcherCOMAND) $(MYSQL) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG) -D EXPLAIN_RANK 
 
-dispatcher_allbb: src/dispatcher_all/main.c
+dispatcher_allbb: src/dispatcher_all/main.c src/dispatcher_all/qrewrite.o
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) $(MYSQL) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c src/crawlManager/client.c src/query/lex.query.o src/ds/libds.a -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) -DWITH_SPELLING $(BDB)
+	$(CC) $(dispatcherCOMAND) $(MYSQL) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c src/crawlManager/client.c src/query/lex.query.o src/ds/libds.a -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) src/getFiletype/libfte.a src/attributes/libshow_attr.a  -DWITH_SPELLING $(BDB)
 
 dispatcher_all247: src/dispatcher_all/main.c
 	@echo ""
@@ -660,7 +665,7 @@ gcAuthoritybb: src/gcAuthority/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c src/bbdocument/bbdocument.c src/gcAuthority/main.c -o bin/gcAuthoritybb $(LDFLAGS) -D BLACK_BOKS $(BDB) $(MYSQL)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c $(BBDOCUMENT) src/gcAuthority/main.c -o bin/gcAuthoritybb $(LDFLAGS) -D BLACK_BOKS $(BDB) $(MYSQL)
 
 gcSummary: src/gcSummary/gcsummary.c
 	@echo ""
@@ -827,11 +832,11 @@ boithold: src/boithold/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/boithold/main.c -o bin/boithold $(LDFLAGS)
 
-boitho-bbdn: src/boitho-bbdn/bbdnserver.c
+boitho-bbdn: src/boitho-bbdn/bbdnserver.c src/bbdocument/bbfilters.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c  src/acls/acls.c  src/boitho-bbdn/bbdnserver.c src/maincfg/maincfg.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE) -static $(LIBCONFIG) -DIIACL $(24SEVENOFFICE) -D NO_REUSEADDR
+	$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c src/boitho-bbdn/bbdnserver.c src/maincfg/maincfg.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE)  $(LIBCONFIG) -DIIACL $(24SEVENOFFICE) -D NO_REUSEADDR -DUSE_LIBEXTRACTOR
 
 
 boitholdTest: src/boitholdTest/main.c
@@ -1105,8 +1110,13 @@ crawlManager: src/crawlManager/main.c
 crawlManager2: src/crawlManager2/main.c
 	@echo ""
 	@echo "$@:"
+#<<<<<<< Makefile
+	#$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c  src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a
+	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/key/key.c src/crawlManager2/shortenurl.c src/crawlManager2/usersystem.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a 
+#=======
 
-	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/key/key.c src/crawlManager2/shortenurl.c src/crawlManager2/usersystem.c src/perlembed/perlembed.c src/perlembed/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
+	#$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/key/key.c src/crawlManager2/shortenurl.c src/crawlManager2/usersystem.c src/perlembed/perlembed.c src/perlembed/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
+#>>>>>>> 1.143
 
 # XXX
 

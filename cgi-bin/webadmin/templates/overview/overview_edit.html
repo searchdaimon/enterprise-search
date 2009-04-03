@@ -1,4 +1,18 @@
-[% INCLUDE 'header.html' title = 'Edit collection settings' %]
+[% WRAPPER 'header.html' title = 'Edit collection settings' 
+	extra_js = ['jquery', 'collection_edit', 'effects.core', 'effects.highlight'] 
+%]
+<script type="text/javascript">
+//<![CDATA[
+	$(document).ready(function() {
+		var s = new UserPrefixSugg(
+			$('#authSelect'), 
+			$('#authNewInput'), 
+			$("#prefixInput")
+		);
+	});
+//]]>
+</script>
+[% END %]
 [% USE HTML %]
 [% PROCESS 'template_connector_blocks.html' %]
 [% PROCESS 'template_collection_warnings.html' %]
