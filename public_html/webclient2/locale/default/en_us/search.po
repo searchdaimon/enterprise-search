@@ -68,7 +68,7 @@ msgstr "cache"
 msgid "Found %1 other copies"
 msgstr "Found %quant(%1, other copy, other copies)"
 
-msgid "Found no results for query \"%1\"."
+msgid "Found no results for query \"1\"."
 msgstr "Found no results for query \"%1\"."
 
 msgid "show"
@@ -114,7 +114,7 @@ msgid "Prev"
 msgstr "Prev"
 
 # other
-msgid "Did you mean: %1?"
+msgid "Did you mean: 1?"
 msgstr "Did you mean: <a href=\"%2\">%1</a>?"
 
 # footer

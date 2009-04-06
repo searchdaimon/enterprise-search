@@ -68,7 +68,7 @@ msgstr "bufret side"
 msgid "Found 1 other copies"
 msgstr "Fant %quant(%1, annen kopi, andre kopier)"
 
-msgid "Found no results for query \"%1\"."
+msgid "Found no results for query \"1\"."
 msgstr "Fant ingen resultat for søket \"%1\"."
 
 msgid "show"
@@ -115,7 +115,7 @@ msgid "Prev"
 msgstr "Forrige"
 
 # other
-msgid "Did you mean: %1?"
+msgid "Did you mean: 1?"
 msgstr "Mente du: <a href=\"%2\">%1</a>?"
 
 # footer

@@ -93,10 +93,8 @@
 	[% END %]
 [% IF res_info.spelling.text %]
     <div id="spellcheck">
-    	[% s = "Did you mean: %1?"; 
-	   s.i18n(HTML.escape(
-	   	res_info.spelling.text), 
-		HTML.escape(res_info.spelling.query.query_url)) 
+    	[% s = "Did you mean: 1?"; 
+	   s.i18n(HTML.escape(res_info.spelling.text), res_info.spelling.query.query_url) 
 	 %]
 	</div> 
 [% END %]
@@ -111,7 +109,7 @@
 <div id="results">
 	[% UNLESS results.size %]
 		<p id="noResultsText">[%   
-			s = 'Found no results for query "%1".';
+			s = 'Found no results for query "1".';
 			s.i18n(query) | html %]
 		</p>
 	[% ELSE %]
