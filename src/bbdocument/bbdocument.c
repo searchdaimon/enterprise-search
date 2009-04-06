@@ -580,6 +580,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 	strsandr((*fileFilter).command,"#outtxtfile",filconvertetfile_out_txt);
 	strsandr((*fileFilter).command,"#outhtmlfile",filconvertetfile_out_html);
 	exeocbuflen = (dokument_size * 2) + 512; // XXX: Find a better way //(*documentfinishedbufsize);
+	documentfinishedbuftmp = malloc(exeocbuflen);
 
 	switch (fileFilter->filtertype) {
 		case FILTER_EXEOC:
