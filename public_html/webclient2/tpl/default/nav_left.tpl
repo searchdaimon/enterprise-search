@@ -33,7 +33,7 @@
 		[% "</strong>" IF g.selected %]
 		[% IF g.hits %]
 			<span class="navHits">
-				([% s="%1 hits"; s.i18n(g.hits) %])
+				([% s="1 hits"; s.i18n(g.hits) %])
 			</span>
 		[% END %]
 
@@ -78,7 +78,7 @@
 		 </span>[% "</strong>" IF i.selected %]
 
 		 <span class="navHits"> ([% 
-		 	s="%1 hits";
+		 	s="1 hits";
 			s.i18n(i.hits)
 		%])</span>
 	</li>

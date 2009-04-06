@@ -379,7 +379,7 @@ clear : both;
  */
 .emailAttributes {
 	padding-top : 0.2em;
-	padding-bottom : 0.2em;
+	/* padding-bottom : 0.2em; */
 }
 .emailAttributes, .genericAttributes  {
 	color : gray;
@@ -400,7 +400,7 @@ clear : both;
 }
 
 
-.genericAttributes img {
+.filterIcon img {
 	border : 0;
 	width : 6px;
 	height : 6px;

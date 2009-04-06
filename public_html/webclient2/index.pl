@@ -5,7 +5,7 @@ use warnings;
 use config qw(%CFG @SEARCH_ENV_LOGGING %VALID_TPL %TPL_FILE %VALID_LANG %DEF_TPL_OPT);
 use ResultParse::SDOld;
 
-use Carp;
+use CGI::Carp qw(fatalsToBrowser warningsToBrowser);
 use Readonly;
 use URI::Escape qw(uri_escape);
 use CGI::State;
@@ -16,6 +16,16 @@ use Template;
 use CGI qw(escapeHTML);
 use LWP::Simple qw(get);
 use MIME::Base64 qw(encode_base64 decode_base64);
+BEGIN {
+	CGI::Carp::set_message(" ");
+	{
+		# We want warnings to be shown in browser.
+		# TODO: Overwriting _warn is not a good way to do this,
+		# 	neither is calling fatalsToBrowser
+		no warnings; # So it doesn't warn about being redefined.
+		*CGI::Carp::_warn = sub { fatalsToBrowser("Warning: " . shift) };
+	}
+};
 
 my $lang;
 if ($ENV{HTTP_ACCEPT_LANGUAGE}) {
@@ -29,7 +39,8 @@ $lang ||= $CFG{lang};
 my $cgi = new CGI();
 my %state = %{CGI::State->state($cgi)};
 #my $tpl = init_tpl($state{tpl}, $lang);
-my $tpl = init_tpl(undef, $lang);
+my $tpl_name = $state{tpl};
+my $tpl = init_tpl($tpl_name, $lang);
 
 fatal("Invalid language " . $lang)
 	unless $VALID_LANG{$lang};
@@ -62,13 +73,14 @@ sub print_html {
 	        -type => "text/html", 
 	        -charset => "UTF-8",
 	);
+	warningsToBrowser();
 	$tpl->process($tpl_file, \%tpl_vars)
 		or croak "Template '$tpl_file' error: ", $tpl->error(), "\n";
 }
 
 sub fatal {
 	my @err = @_;
-	carp @err;
+	#carp @err;
 	print_html($TPL_FILE{error}, ( errors => \@err, query => $state{query} ));
 	exit 1;
 }
@@ -197,17 +209,20 @@ sub init_tpl {
 	my ($tpl_name, $lang) = @_;
 	$tpl_name ||= $CFG{tpl};
 	$lang ||= $CFG{lang};
+	
+	$VALID_TPL{$tpl_name} or croak "Invalid template '$tpl_name'";
 
 	# init translation
 
 	my @langs = $lang eq $CFG{lang} 
 		? ($lang) 
 		: ($lang, $CFG{lang});
+	I18N::SearchRes::load_lang($tpl_name);
 	my $i18n = I18N::SearchRes->get_handle(@langs)
 		or fatal("Couldn't make a language handle");
 	$i18n->fail_with(sub { 
 		shift; 
-		warn "Maketext lookup failure:", Dumper(\@_) ;
+		warn "No locale for: ", join(", ", @_);
 		return 'I18N_error';
 	});
 
@@ -221,7 +236,6 @@ sub init_tpl {
 	my (undef) = $Template::Stash::SCALAR_OPS->{i18n}; # rm warning
 	my (undef) = $Template::Stash::SCALAR_OPS->{query_url};
 
-	$VALID_TPL{$tpl_name} or fatal("Invalid template '$tpl_name'");
 
 	my %opt = %DEF_TPL_OPT;
 	$opt{INCLUDE_PATH} .= $tpl_name;
@@ -237,7 +251,11 @@ sub init_tpl {
 
 sub gen_query_url {
 	my $query = shift;
-	return escapeHTML("?query=$query");
+	my $uri = "?query=$query";
+	$uri .= "&tpl=$tpl_name"
+		if defined $tpl_name;
+
+	return escapeHTML($uri);
 }
 
 1;

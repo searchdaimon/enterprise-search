@@ -6,8 +6,8 @@ msgid "search"
 msgstr "search"
 
 # header
-msgid "Showing %1 - %2 out of %3 results"
-msgstr "Showing %1 - %2 out of %3 results"
+#msgid "Showing %1 - %2 out of %3 results"
+#msgstr "Showing %1 - %2 out of %3 results"
 
 msgid "(search_btn_img)"
 msgstr "img/default/search_en.jpg"
@@ -21,10 +21,10 @@ msgstr "Search"
 msgid "Results for"
 msgstr "Results for"
 
-msgid "Showing %1 - %2 out of %3 results. %4 sec."
+msgid "Showing 1 - 2 out of 3 results. 4 sec."
 msgstr "Showing %1 - %2 out of %quant(%3, result, results). %4 sec."
 
-msgid "Showing no results. %1 sec."
+msgid "Showing no results. 1 sec."
 msgstr "Showing no results. %1 sec."
 
 #filter
@@ -35,7 +35,7 @@ msgstr "%quant(%1, of the expected results was, of the expected results were) fi
 msgid "no hits"
 msgstr "no hits"
 
-msgid "%1 hits"
+msgid "1 hits"
 msgstr "%quant(%1, hit, hits)"
 
 msgid "All collections"
@@ -71,6 +71,9 @@ msgstr "Found %quant(%1, other copy, other copies)"
 msgid "Found no results for query \"%1\"."
 msgstr "Found no results for query \"%1\"."
 
+msgid "show"
+msgstr "show"
+
 # attributes
 msgid "From"
 msgstr "From"
@@ -78,7 +81,7 @@ msgstr "From"
 msgid "To"
 msgstr "To"
 
-msgid "and %1 others"
+msgid "and 1 others"
 msgstr "and %quant(%1, other, others)"
 
 msgid "Creator"

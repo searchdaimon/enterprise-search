@@ -6,8 +6,8 @@ msgid "search"
 msgstr "search"
 
 # header
-msgid "Showing %1 - %2 out of %3 results"
-msgstr "Viser %1 - %2 av totalt %3 resultater"
+#msgid "Showing %1 - %2 out of %3 results"
+#msgstr "Viser %1 - %2 av totalt %3 resultater"
 
 msgid "(search_btn_img)"
 msgstr "img/default/search_en.jpg"
@@ -21,10 +21,10 @@ msgstr "Søk"
 msgid "Results for"
 msgstr "Resultater for"
 
-msgid "Showing %1 - %2 out of %3 results. %4 sec."
+msgid "Showing 1 - 2 out of 3 results. 4 sec."
 msgstr "Viser %1 - %2 av totalt %quant(%3, resultat, resultater). %4 sek."
 
-msgid "Showing no results. %1 sec."
+msgid "Showing no results. 1 sec."
 msgstr "Viser ingen resultater. %1 sec."
 
 #filter
@@ -35,7 +35,7 @@ msgstr "%1 av resultatene ble filtrert bort av systemet. Dette kan være fordi r
 msgid "no hits"
 msgstr "ingen"
 
-msgid "%1 hits"
+msgid "1 hits"
 msgstr "%1 treff"
 
 msgid "All collections"
@@ -65,15 +65,54 @@ msgstr "Alle resultater"
 msgid "cache"
 msgstr "bufret side"
 
-msgid "Found %1 other copies"
+msgid "Found 1 other copies"
 msgstr "Fant %quant(%1, annen kopi, andre kopier)"
 
 msgid "Found no results for query \"%1\"."
 msgstr "Fant ingen resultat for søket \"%1\"."
 
+msgid "show"
+msgstr "vis"
+
+# attributes
+msgid "From"
+msgstr "Fra"
+
+msgid "To"
+msgstr "Til"
+
+msgid "and 1 others"
+msgstr "og %quant(%1, annen, andre)"
+
+msgid "Creator"
+msgstr "Opphav"
+
+msgid "Author"
+msgstr "Forfatter"
+
+msgid "Last saved by"
+msgstr "Sist lagret av"
+
+msgid "Language"
+msgstr "Språk"
+
+msgid "Size"
+msgstr "Størrelse"
+
+msgid "Resolution"
+msgstr "Oppløsning"
+
+msgid "Page count"
+msgstr "Antall sider"
+
+
+
 # page nav
 msgid "Next"
 msgstr "Neste"
+
+msgid "Prev"
+msgstr "Forrige"
 
 # other
 msgid "Did you mean: %1?"

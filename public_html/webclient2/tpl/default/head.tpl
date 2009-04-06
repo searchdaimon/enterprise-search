@@ -58,7 +58,7 @@
     <span style="float : right; display : inline;">
 	[% IF res_info.total_res %]
 
-        	[% str = "Showing %1 - %2 out of %3 results. %4 sec."; 
+        	[% str = "Showing 1 - 2 out of 3 results. 4 sec."; 
 	   	str.i18n(
 			res_info.res_from,
 			res_info.res_to,
@@ -67,7 +67,7 @@
 		%]
     	[% ELSE %]
 		[% 
-			s = "Showing no results. %1 sec."; 
+			s = "Showing no results. 1 sec."; 
 			s.i18n(res_info.search_time || 0) 
 		%]
 	[% END %]

@@ -71,7 +71,7 @@
             		<a href="[% c.query | query_url %]">[% c.name | html | replace(' ', '&nbsp') %]</a>[% "&nbsp;" 
 			%]<span class="collectionRes">([% 
 				IF c.results; 
-					s = "%1 hits"; 
+					s = "1 hits"; 
 					s.i18n(c.results);
 				ELSE;
 					"no hits" | i18n;
@@ -175,9 +175,9 @@
 	[% SET dupe_id = 0 UNLESS dupe_id %]
 	[% dupe_id = dupe_id + 1 %]
 	<div class="duplicates" style="margin-top : 0.5em;" >
-		<strong>[% s = "Found %1 other copies";
+		<strong>[% s = "Found 1 other copies";
 			   s.i18n(dupes.size) %]
-			(<a  onclick="$('#dupe[% dupe_id %]').toggle(200); return 1;">show</a>)
+			(<a  onclick="$('#dupe[% dupe_id %]').toggle(200); return 1;">[% "show" | i18n %]</a>)
 		</strong>
 		<ul class="duplicateList" id="dupe[% dupe_id %]" style="display: none;">
 			[% FOR d IN dupes %]

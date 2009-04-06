@@ -1,17 +1,27 @@
 [% USE Dumper %]
+
+[% BLOCK filter_icon %]
+	<a href="[% q | query_url %]" class="filterIcon"><img 
+		src="img/common/filter.png" alt="[% alt || "All documents with attribute" %]" />
+	</a>
+[% END %]
+
 [% BLOCK email_attributes %]
 	<div class="emailAttributes">
 
 
 		[% IF attr.from %]
 			[% "From" | i18n %]: <a href="[% attr.from.query | query_url %]">[% attr.from.value %]</a>
+			[% PROCESS filter_icon q = attr.from.attr_query alt="All documents from this person" %]
+			&nbsp;&nbsp;
 		[% END %]
 
 		[% IF attr.to %]
 			[% "To" | i18n %]: <a href="[% attr.to.query | query_url %]">[% attr.to.value %]</a> 
+			[% PROCESS filter_icon q = attr.to.attr_query alt="All documents to this person" %]
 			[% IF attr.num_receivers.value > 1 %]
 				<span>
-					([% s="and %1 others"; s.i18n(attr.num_receivers.value - 1) %])
+					([% s="and 1 others"; s.i18n(attr.num_receivers.value - 1) %])
 				</span>
 			[% END %]
 		[% END %]
@@ -36,7 +46,7 @@
 		<td style="width : 7em">[% title | i18n %]</td>
 		<td>
 			<a href="[% a.query | query_url %]">[% a.value %]</a> 
-			<a href="[% a.attr_query | query_url %]"><img src="img/common/filter.png" alt="All documents with attribute" /></a>
+			[% PROCESS filter_icon q = a.attr_query %]
 		</td>
 	</tr>
 [% END %]
