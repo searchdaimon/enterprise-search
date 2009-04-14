@@ -23,16 +23,14 @@ CFLAGS+=	-I/usr/include/libxml2
 endif
 
 ifdef WANT_BDB
-CFLAGS+=	-I/usr/local/BerkeleyDB.4.5/include/
-LDFLAGS+=	/usr/local/BerkeleyDB.4.5/lib/libdb.a
+CFLAGS+=	$(BDB_INC)
+LDFLAGS+=	$(BDB_LIB)
+#CFLAGS+=	-I/usr/local/BerkeleyDB.4.5/include/
+#LDFLAGS+=	/usr/local/BerkeleyDB.4.5/lib/libdb.a
 endif
 
 ifdef WANT_SPELLING
 LDFLAGS+=	${LIBDIR}/libspelling.a
-endif
-
-ifdef WANT_DS
-LDFLAGS+=	$(BOITHOHOME)/src/ds/libds.a
 endif
 
 ifdef WANT_GETDATE
@@ -41,6 +39,10 @@ endif
 
 ifdef WANT_COMMON
 LDFLAGS+=	${LIBDIR}/libcommon.a
+endif
+
+ifdef WANT_DS
+LDFLAGS+=	$(BOITHOHOME)/src/ds/libds.a
 endif
 
 ifdef WANT_HASHTABLE
