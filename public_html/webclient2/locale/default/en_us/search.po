@@ -65,7 +65,7 @@ msgstr "All results"
 msgid "cache"
 msgstr "cache"
 
-msgid "Found %1 other copies"
+msgid "Found 1 other copies"
 msgstr "Found %quant(%1, other copy, other copies)"
 
 msgid "Found no results for query \"1\"."

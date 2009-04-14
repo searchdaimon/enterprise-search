@@ -402,8 +402,8 @@ clear : both;
 
 .filterIcon img {
 	border : 0;
-	width : 6px;
-	height : 6px;
+	width : 8px;
+	height : 8px;
 	margin-bottom : -2px;
 	/* font-size : 60%; */
 	/* font-style : italic; */

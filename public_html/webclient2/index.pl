@@ -20,7 +20,7 @@ BEGIN {
 	CGI::Carp::set_message(" ");
 	{
 		# We want warnings to be shown in browser.
-		# TODO: Overwriting _warn is not a good way to do this,
+		# TODO: Redefining _warn is not a good way to do this,
 		# 	neither is calling fatalsToBrowser
 		no warnings; # So it doesn't warn about being redefined.
 		*CGI::Carp::_warn = sub { fatalsToBrowser("Warning: " . shift) };
