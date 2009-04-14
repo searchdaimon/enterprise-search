@@ -1,0 +1,16 @@
+WITH_BLACKBOX=	yes
+
+# XXX: eirik, check which server we are on
+
+BOX=	bbh2 #bbh1
+
+# BBH1
+#BDB_INC=	
+#BDB_LIB=	
+
+# BBH2
+PERL_EMBED_INC=	-I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -D_GNU_SOURCE
+PERL_EMBED_LIB=	-rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl
+BDB_INC=	-I/usr/include/db4
+BDB_LIB=	/usr/lib/libdb-4.6.a
+CC=		gcc -m32
