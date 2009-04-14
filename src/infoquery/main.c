@@ -476,14 +476,34 @@ int main (int argc, char *argv[]) {
 		printf("System: %d\n", i);
 	}
 	else if (strcmp(key, "addForeignUser") == 0) {
+		int s;
+		int errorbufflen = 512;
+                char errorbuff[errorbufflen];
+
 		if (value == NULL | value2 == NULL || value3 == NULL)
 			errx(1, "infoquery addForeignUser collection user group");
-		printf("%s\n", cmc_addForeignUsers(value, value2, value3) ? "ok" : "failed");
+		
+		if (!cmc_conect(&s,errorbuff,errorbufflen,cmc_port)) {
+                        printf("Error: %s\n",errorbuff);
+                        exit(1);
+                }
+
+		printf("%s\n", cmc_addForeignUsers(s, value, value2, value3) ? "ok" : "failed");
 	}
 	else if (strcmp(key, "removeForeignUsers") == 0) {
+		int s;
+		int errorbufflen = 512;
+                char errorbuff[errorbufflen];
+
 		if (value == NULL)
 			errx(1, "infoquery removeForeignUsers collection");
-		printf("%s\n", cmc_removeForeignUsers(value) ? "ok" : "failed");
+
+		if (!cmc_conect(&s,errorbuff,errorbufflen,cmc_port)) {
+                        printf("Error: %s\n",errorbuff);
+                        exit(1);
+                }
+
+		printf("%s\n", cmc_removeForeignUsers(s, value) ? "ok" : "failed");
 	}
         else if (strcmp(key, "killCrawl") == 0) {
             // parse param
