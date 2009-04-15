@@ -5,8 +5,9 @@ WITH_BLACKBOX=	yes
 BOX=	bbh2 #bbh1
 
 # BBH1
-#BDB_INC=	
-#BDB_LIB=	
+BDB_INC=        -I/usr/local/BerkeleyDB.4.5/include/
+BDB_LIB=        /usr/local/BerkeleyDB.4.5/lib/libdb.a
+
 
 # BBH2
 PERL_EMBED_INC=	-I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -D_GNU_SOURCE
