@@ -1,1 +1,0 @@
-WITH_BLACKBOX=	yes
