@@ -112,37 +112,37 @@ sub get_searches_day {
 
 	my $dbh = $self->get_dbh();
 
-#	my $where = '';
-#	$where = 'AND search_bruker = ? ' if (defined($user));
-#	my $sth = $dbh->prepare(
-#		'SELECT DATE(tid) AS date, COUNT(*) AS num '.
-#		'FROM search_logg '.
-#		'WHERE tid > DATE_SUB(NOW(), INTERVAL ? DAY) '. $where
-#		'GROUP by date'
-#	);
-#	if (defined $user) {
-#		$sth->execute($days, $user);
-#	} else {
-#		$sth->execute($days);
-#	}
+	my $where = '';
+	$where = 'AND search_bruker = ? ' if (defined($user));
+	my $sth = $dbh->prepare(
+		'SELECT DATE(tid) AS date, COUNT(*) AS num '.
+		'FROM search_logg '.
+		'WHERE tid > DATE_SUB(NOW(), INTERVAL ? DAY) '. $where .
+		'GROUP by date'
+	);
+	if (defined $user) {
+		$sth->execute($days, $user);
+	} else {
+		$sth->execute($days);
+	}
 
 	my $data = '';
 
-	my @data = (
-		[ '2009-02-19', 3, ],
-		[ '2009-02-23', 12, ],
-		[ '2009-02-26', 2, ],
-		[ '2009-02-27', 1, ],
-		[ '2009-03-02', 1, ],
-		[ '2009-03-09', 6, ],
-		[ '2009-03-12', 1, ],
-		[ '2009-03-17', 9, ],
-		[ '2009-03-18', 1, ],
-	   );
+#	my @data = (
+#		[ '2009-02-19', 3, ],
+#		[ '2009-02-23', 12, ],
+#		[ '2009-02-26', 2, ],
+#		[ '2009-02-27', 1, ],
+#		[ '2009-03-02', 1, ],
+#		[ '2009-03-09', 6, ],
+#		[ '2009-03-12', 1, ],
+#		[ '2009-03-17', 9, ],
+#		[ '2009-03-18', 1, ],
+#	   );
 
 	my $dt = DateTime->now()->subtract(days => $days);
-	foreach my $r (@data) {
-#	while ((my $r = $sth->fetchrow_arrayref)) {
+#	foreach my $r (@data) {
+	while ((my $r = $sth->fetchrow_arrayref)) {
 		$data .= $dt->ymd.";0\n" while $dt->add(days => 1)->ymd lt $r->[0];
 		$data .= $r->[0] . ";" . $r->[1] . "\n";
 	}
