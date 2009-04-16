@@ -17,7 +17,7 @@ int globalOptVerbose = 0;
 void shortenurl(char *url,int urllen) {
 
   	char **Data;
-	size_t *datalen;
+	size_t *datalen, protolen;
   	int Count, TokCount;
 	#ifdef BLACK_BOKS
 		unsigned char newurl[128];
@@ -25,8 +25,6 @@ void shortenurl(char *url,int urllen) {
 		unsigned char newurl[201];
 	#endif
 
-	int added, suburllen;
-	int i;
 	char slash[2];
 	int len;
 #ifdef DEBUG
@@ -112,13 +110,56 @@ void shortenurl(char *url,int urllen) {
 #endif
 
 
+	/* Minmum length of filename */
+#define PRESERVE_SPACE 20 /* XXX: Find suitable number */
+	protolen = strlen(proto);
 	/* We really want the first part (alias, or ip), first directory and first part of file name */
-	if (TokCount >= 3 && (strlen(proto) + datalen[0] + datalen[1] + datalen[TokCount-1]) > TARGET_VISIBLE_URL_LEN) {
+	if (TokCount >= 3 && (protolen + datalen[0] + datalen[1] + datalen[TokCount-1]) > TARGET_VISIBLE_URL_LEN) {
 		/* Shorten last element enough */
+		if (datalen[TokCount-1] > PRESERVE_SPACE) {
+			Data[TokCount-1][PRESERVE_SPACE] = '\0';
+			Data[TokCount-1][PRESERVE_SPACE-3] = '\xE2';
+			Data[TokCount-1][PRESERVE_SPACE-2] = '\x80';
+			Data[TokCount-1][PRESERVE_SPACE-1] = '\xA6';
+			datalen[TokCount-1] = PRESERVE_SPACE;
+		}
 
-		
-		snprintf(url, urllen, "%s%s%s%s...%s%s", proto, datalen[0], slash, datalen[1], slash, slash, datalen[TokCount-1]);
-		return;
+		if (protolen + datalen[0] + datalen[1] + datalen[TokCount-1] <= TARGET_VISIBLE_URL_LEN) {
+			snprintf(url, urllen, /*proto*/"%s" /*ip*/"%s" /*slash*/ "%s"
+			    /*firstdir*/ "%s" /*slash*/"%s" /*dot*/"%s" /*slash*/"%s" /*file*/"%s",
+			    proto, Data[0], slash, Data[1], slash, "\xE2\x80\xA6", slash, Data[TokCount-1]);
+			goto shortenurllongdone;
+		}
+		if (datalen[1] > PRESERVE_SPACE) {
+			Data[1][PRESERVE_SPACE] = '\0';
+			Data[1][PRESERVE_SPACE-3] = '\xE2';
+			Data[1][PRESERVE_SPACE-2] = '\x80';
+			Data[1][PRESERVE_SPACE-1] = '\xA6';
+			datalen[1] = PRESERVE_SPACE;
+		}
+		if (protolen + datalen[0] + datalen[1] + datalen[TokCount-1] <= TARGET_VISIBLE_URL_LEN) {
+			snprintf(url, urllen, /*proto*/"%s" /*ip*/"%s" /*slash*/ "%s"
+			    /*firstdir*/ "%s" /*slash*/"%s" /*dot*/"%s" /*slash*/"%s" /*file*/"%s",
+			    proto, Data[0], slash, Data[1], slash, "\xE2\x80\xA6", slash, Data[TokCount-1]);
+			goto shortenurllongdone;
+		}
+		if (datalen[0] > PRESERVE_SPACE) {
+			Data[0][PRESERVE_SPACE] = '\0';
+			Data[0][PRESERVE_SPACE-3] = '\xE2';
+			Data[0][PRESERVE_SPACE-2] = '\x80';
+			Data[0][PRESERVE_SPACE-1] = '\xA6';
+			datalen[0] = PRESERVE_SPACE;
+		}
+		if (protolen + datalen[0] + datalen[1] + datalen[TokCount-1] <= TARGET_VISIBLE_URL_LEN) {
+			snprintf(url, urllen, /*proto*/"%s" /*ip*/"%s" /*slash*/ "%s"
+			    /*firstdir*/ "%s" /*slash*/"%s" /*dot*/"%s" /*slash*/"%s" /*file*/"%s",
+			    proto, Data[0], slash, Data[1], slash, "\xE2\x80\xA6", slash, Data[TokCount-1]);
+			goto shortenurllongdone;
+		}
+
+		snprintf(url, urllen, "%.*s", PRESERVE_SPACE, origurl);
+ shortenurllongdone:
+ 		;
 	} else {
 		int n = 0;
 		size_t totlen, rtotlen;
@@ -135,7 +176,6 @@ void shortenurl(char *url,int urllen) {
 		fp = 1;
 		lastdots = 0;
 		rtotlen = totlen;
-#define PRESERVE_SPACE 20 /* XXX: Find suitable number */
 		while (totlen+PRESERVE_SPACE < TARGET_VISIBLE_URL_LEN && bp >= fp && n < TokCount) {
 			//printf("%d < %d && %d >=  %d && %d < %d\n", totlen+20, TARGET_VISIBLE_URL_LEN, bp, fp, n, TokCount);
 			
@@ -239,13 +279,16 @@ main(int argc, char **argv)
 	//char *url = strdup("file:\\\\192.168.22.25\\filer\\Kunder_Norge_Sverige\\Ringnes\\2002\\Brus\\Pepsi\\Gammelt\\Tester\\Pepsi spÃ¸rreund..ppt");
 	//char *url = strdup("[Administration]\\Diverse fra Runar\\googlexlsx\\OptimizationModel_for_Business_Productivity_Solutions.xlsx");
 	//char *url = strdup("[Administration]\progs\SuperOffice 6.1 SR1 CD\STDReportFiles\FI Report Files\Kalenteri (1 päivä).txt");
-	char *url = strdup("http://sp2007-01/sites/crawltest/_catalogs/masterpage/Preview%20Images/searchresults.gif");
+	//char *url = strdup("http://sp2007-01/sites/crawltest/_catalogs/masterpage/Preview%20Images/searchresults.gif");
+	char *url = strdup("file://213.179.58.125/Administration/Diverse%20fra%20Runar/dyp%20mappe/eksempel/2008/okober/16/raporrter/Lorem%20ipsum%20dolor%20sit%20amet,%20consectetur%20adipisicing%20elit/do%20eiusmod%20tempor%20incididunt%20ut%20labore%20et%20dolore%20magna%20aliqua/boitho%20lang%20dyp%20test.txt");
 
 	globalOptVerbose = 1;
 
 	shortenurl(url,255);
 
 	printf("url %s\n",url);
+
+	return 0;
 }
 
 #endif
