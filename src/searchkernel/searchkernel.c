@@ -337,9 +337,11 @@ release_sock_to_pool(struct socket_pool *pool, int index)
 
 #ifdef BLACK_BOKS
 static inline int
-handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum browser_type btype, char *collection,
+handle_url_rewrite(const char *url_in, size_t lenin, enum platform_type ptype, enum browser_type btype, char *collection,
            char *url_out, size_t len, char *uri_out, size_t uri_out_len, char *fulluri_out, size_t fulluri_out_len, int sock, struct socket_pool *pool)
 {
+
+	int ret = 1;
 
 #ifndef _24SEVENOFFICE
 
@@ -349,16 +351,20 @@ handle_url_rewrite(char *url_in, size_t lenin, enum platform_type ptype, enum br
 	sock = get_sock_from_pool(pool, &index);
 #endif
 
-	cmc_rewrite_url(sock, collection, url_in, lenin, ptype, btype, url_out, len, uri_out, uri_out_len, fulluri_out, fulluri_out_len);
-
-	vboprintf("handle_url_rewrite: Did rewrite \"%s\" -> \"%s\"\n",url_in,url_out);
+	ret = cmc_rewrite_url(sock, collection, url_in, lenin, ptype, btype, url_out, len, uri_out, uri_out_len, fulluri_out, fulluri_out_len);
+	if (ret == 0) {
+		fprintf(stderr,"Cant rewrite url %s\n",url_in);
+	}
+	else {
+		vboprintf("handle_url_rewrite: Did rewrite \"%s\" -> \"%s\"\n",url_in,url_out);
+	}
 #ifdef WITH_THREAD
 	release_sock_to_pool(pool, index);
 #endif
 
 #endif
 
-	return 1;
+	return ret;
 }
 #endif
 
@@ -839,10 +845,8 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 							dup_subname, &repohdr, &acla, &acld, di.imageSize,
 							&url, &attributes);
 
-					strlcpy(tmpurl, url, sizeof(tmpurl));
-					//printf("Dup url: %s -- %s\n", url, tmpurl);
 #ifdef BLACK_BOKS
-					handle_url_rewrite(tmpurl, sizeof(tmpurl), PagesResults->ptype,
+					if (!handle_url_rewrite(url, sizeof(url), PagesResults->ptype,
 							PagesResults->btype,
 							dup_subname, tmpurl, sizeof(tmpurl),
 							tmpuri, sizeof(tmpuri),
@@ -853,7 +857,9 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 #else
 							NULL
 #endif
-							);
+							)) {
+						snprintf(tmpurl,sizeof(tmpurl),"XXX-Can't_rewrite_duplicate_url_for_DocID_%u_XXX:%s",dup_docid);
+					}
 #endif
 					if ((Sider->urls[Sider->n_urls].url = strdup(tmpurl)) == NULL) {
 						perror("Malloc url");
@@ -1553,7 +1559,7 @@ void *generatePagesResults(void *arg)
 #ifdef BLACK_BOKS
 		if (!PagesResults->getRank) {
 
-			handle_url_rewrite(side->url, sizeof(side->url),
+			if (!handle_url_rewrite(side->url, sizeof(side->url),
 				PagesResults->ptype, PagesResults->btype, 
 				(*PagesResults).TeffArray->iindex[i].subname->subname, side->url, 
 				sizeof(side->url), side->uri, sizeof(side->uri), side->fulluri, sizeof(side->fulluri),
@@ -1563,7 +1569,9 @@ void *generatePagesResults(void *arg)
 #else
 				NULL
 #endif
-			);
+			)) {
+				snprintf(side->uri, sizeof(side->uri),"XXX-Can't_rewrite__url_for_DocID_%u_XXX:%s",(*PagesResults).TeffArray->iindex[i].DocID);
+			}
 
 		}
 #endif

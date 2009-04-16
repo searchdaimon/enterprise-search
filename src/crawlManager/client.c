@@ -222,14 +222,15 @@ cmc_pathaccess(int socketha,char collection_in[], char uri_in[], char user_in[],
 }
 
 int
-cmc_rewrite_url(int socketha, char *collection_in, char *url_in, size_t urlinlen, enum platform_type ptype, enum browser_type btype,
-                char *url_out, size_t url_out_len, char *uri_out, size_t uri_out_len, char *fulluri_out, size_t fulluri_out_len)
+cmc_rewrite_url(int socketha, char *collection_in, const char *url_in, size_t urlinlen, enum platform_type ptype, 
+		enum browser_type btype, char *url_out, size_t url_out_len, char *uri_out, size_t uri_out_len, 
+		char *fulluri_out, size_t fulluri_out_len)
 {
 	char url[1024], uri[1024], fulluri[1024];
 	struct rewriteFormat rewrite;
 
 	#ifdef DEBUG
-	printf("cmc_rewrite_url: will rewrite: \"%s\"\n",url_in);
+	printf("cmc_rewrite_url: will rewrite (strlen %i) : \"%s\"\n",strlen(url_in),url_in);
 	#endif
 
 	memset(&rewrite, '\0', sizeof(rewrite));
@@ -249,15 +250,15 @@ cmc_rewrite_url(int socketha, char *collection_in, char *url_in, size_t urlinlen
 
 	if (recvall(socketha, url, sizeof(url)) == 0) {
 		perror("recvall(url)");
-		exit(1);
+		return 0;
 	}
 	if (recvall(socketha, uri, sizeof(uri)) == 0) {
 		perror("recvall(uri)");
-		exit(1);
+		return 0;
 	}
 	if (recvall(socketha, fulluri, sizeof(fulluri)) == 0) {
 		perror("recvall(fulluri)");
-		exit(1);
+		return 0;
 	}
 	strscpy(url_out, url, url_out_len);
 	strscpy(uri_out, uri, uri_out_len);

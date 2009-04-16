@@ -24,4 +24,6 @@ int cmc_listusersus(int sock, int usersystem, char ***users);
 int cmc_removeForeignUsers(int sock, char *collection);
 int cmc_addForeignUsers(int sock, char *collection, char *inuser, char *ingroup);
 	
-
+int cmc_rewrite_url(int socketha, char *collection_in, const char *url_in, size_t urlinlen, enum platform_type ptype,
+                enum browser_type btype, char *url_out, size_t url_out_len, char *uri_out, size_t uri_out_len,
+                char *fulluri_out, size_t fulluri_out_len);
