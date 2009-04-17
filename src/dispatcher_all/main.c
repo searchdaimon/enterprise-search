@@ -446,11 +446,15 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 		strscpy(QueryData->rankUrl, cgi_getentrystr("getrank"), sizeof(QueryData->rankUrl));
 	}
 
-	if (cgi_getentryint("maxshits") == 0) {
-		QueryData->MaxsHits = DefultMaxsHits;
+	if (cgi_getentryint("maxshits") != 0) {
+		QueryData->MaxsHits = cgi_getentryint("maxshits");			
+	}
+	else if (cgi_getentryint("maxhits") != 0) {
+		QueryData->MaxsHits = cgi_getentryint("maxhits");			
 	}
 	else {
-		QueryData->MaxsHits = cgi_getentryint("maxshits");			
+		QueryData->MaxsHits = DefultMaxsHits;
+
 	}
 
 	if (cgi_getentryint("opensearch") == 0) {
