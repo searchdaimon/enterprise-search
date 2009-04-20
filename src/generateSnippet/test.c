@@ -26,8 +26,8 @@ int main(int argc, char *argv[])
 
     get_query(sok, strlen(sok), &qa);
 
-    thesaurus		*T = thesaurus_init("../../data/thesaurus.text", "../../data/thesaurus.id");
-//    thesaurus		*T = thesaurus_init("../../data/mini.thesaurus.text", "../../data/mini.thesaurus.id");
+//    thesaurus		*T = thesaurus_init("../../data/thesaurus.text", "../../data/thesaurus.id");
+    thesaurus		*T = thesaurus_init("../../data/mini.thesaurus.text", "../../data/mini.thesaurus.id");
 
     // Kjør stemming på query:
     thesaurus_expand_query(T, &qa);
@@ -60,19 +60,26 @@ int main(int argc, char *argv[])
 		    i+= fread( &(buf[i]), sizeof(char), size-i, file );
 		}
 
-	    char	*snippet;
+	    if (paramnr>2) printf("\n     ---------------\n\n");
 
-	    int		success = generate_snippet( qa, buf, size, &snippet, "\033[1;32m", "\033[0m", 320 );
+	    int		modes[3] = {first_snippet, plain_snippet, db_snippet};
+	    for (i=0; i<3; i++)
+		{
+		    char	*snippet;
 
-	    if (paramnr>2) printf("    - - - - -\n");
-	    printf("%s\n", snippet);
-	    free(snippet);
+		    int		success = generate_snippet( qa, buf, size, &snippet, "\033[1;32m", "\033[0m", modes[i], 320, 4, 80 );
+
+		    if (i>0) printf("\n");
+		    printf("%s\n", snippet);
+		    free(snippet);
+
+		    if (!success)
+			printf("FAILURE WHEN PARSING.\n");
+		}
+
 	    free(buf);
 
 	    fclose(file);
-
-	    if (!success)
-		printf("FAILURE WHEN PARSING.\n");
 	}
 
     destroy_query(&qa);

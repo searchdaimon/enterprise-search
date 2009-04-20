@@ -1866,6 +1866,7 @@ void *searchIndex_thread(void *arg)
 			do {
 				destroy_query(hashtable_iterator_value(itr));
 			} while (hashtable_iterator_advance(itr) != 0);
+			free(itr);
 		}
 	}
 	hashtable_destroy(groupqueries, 1);
@@ -3415,11 +3416,11 @@ char* searchFilterCount(int *TeffArrayElementer,
 		destroy(file_groups);
 
 
-		#ifdef DEBUG
+		//#ifdef DEBUG
 		printf("attributes:\n");
 		attribute_count_print(attributes, TeffArray->attrib_count+1, 2);
 		printf("------\n");
-		#endif
+		//#endif
 
 		#endif // ATTRIBUTES
 

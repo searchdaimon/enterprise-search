@@ -189,9 +189,11 @@ char *generate_summary(char summary_cfg, query_array query_parsed, char *body)  
 
 	size_t body_len = strlen(body);
 	if (summary_cfg == SUMMARY_SNIPPET) {
-		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , SUMMARY_LEN);
+		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , plain_snippet, SUMMARY_LEN, 4, 80);
 	}
 	else if (summary_cfg == SUMMARY_START) {
+		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , first_snippet, SUMMARY_LEN, 4, 80);
+	    /*
 		// asuming *5 is enough to also clean out htmltags at
 		// the beginning of the document
 		char stripbuff[SUMMARY_LEN * 5];
@@ -211,8 +213,14 @@ char *generate_summary(char summary_cfg, query_array query_parsed, char *body)  
 			summary[SUMMARY_LEN - 2] = '.';
 			summary[SUMMARY_LEN - 1] = '\0';
 		}
-
+	    */
 	}
+	/*
+	  ++Ax:
+	    Snippet for database-records:
+		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , db_snippet, SUMMARY_LEN, 4, 80);
+	    De to siste tallene er maks antall rader og maks antall tegn per kolonne.
+	*/
 	else { 
 		warnx("Unknown snippet/summery cfg: %d\n", summary_cfg); 
 		summary = strdup("");
