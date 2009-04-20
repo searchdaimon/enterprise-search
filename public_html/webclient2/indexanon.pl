@@ -2,6 +2,6 @@
 use strict;
 use warnings;
 
-our $isanonymous = undef;
+our $isanonymous = 1;
 
 require 'index-common.pm';
