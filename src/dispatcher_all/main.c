@@ -1182,12 +1182,16 @@ int main(int argc, char *argv[])
 	        char *optRank = NULL;
 		int optStart = 1;
 		int optMaxsHits = DefultMaxsHits;
+		int anonymous = 0;
 
         	extern char *optarg;
         	extern int optind, opterr, optopt;
         	char c;
-        	while ((c=getopt(argc,argv,"pr:s:m:o:"))!=-1) {
+        	while ((c=getopt(argc,argv,"apr:s:m:o:"))!=-1) {
         	        switch (c) {
+				case 'a':
+					anonymous = 1;
+					break;
 				case 'p':
 					prequerywriteFlag = 1;
 					dispconfig.writeprequery = 1;
@@ -1258,6 +1262,7 @@ int main(int argc, char *argv[])
 			QueryData.MaxsHits = optMaxsHits;
 			QueryData.start = optStart;
 			QueryData.filterOn = 1;
+			QueryData.anonymous = anonymous;
 			QueryData.HTTP_ACCEPT_LANGUAGE[0] = '\0';
         		QueryData.HTTP_USER_AGENT[0] = '\0';
         		QueryData.HTTP_REFERER[0] = '\0';
@@ -1334,7 +1339,7 @@ int main(int argc, char *argv[])
 		char query[1024];
 		size_t querylen;
 
-		querylen = snprintf(query, sizeof(query), "SELECT collection_name FROM shares, shareResults WHERE shares.id = shareResults .share AND shareResults.without_aclcheck = 1");
+		querylen = snprintf(query, sizeof(query), "SELECT collection_name FROM shares WHERE without_aclcheck = 1");
 
 		if (mysql_real_query(&demo_db, query, querylen) != 0) {
 			warnx("Mysql error (%s line %d): %s\n",
@@ -1344,11 +1349,13 @@ int main(int argc, char *argv[])
 					__FILE__, __LINE__, mysql_error(&demo_db));
 		} else {
 			num_colls = mysql_num_rows(res);
-			collections = calloc(num_colls, sizeof(*collections));
-			while ((row = mysql_fetch_row(res)) != NULL) {
-				strncpy(collections[i].subname, row[0], sizeof(collections[i].subname));
+			if (num_colls != 0) {
+				collections = calloc(num_colls, sizeof(*collections));
+				while ((row = mysql_fetch_row(res)) != NULL) {
+					strncpy(collections[i].subname, row[0], sizeof(collections[i].subname));
+				}
+				mysql_free_result(res);
 			}
-			mysql_free_result(res);
 		}
 	} else {
 		collections = get_usr_coll(QueryData.search_user, &num_colls, cmc_port);
@@ -1383,6 +1390,7 @@ int main(int argc, char *argv[])
 	collections[0].config = default_cfg;
 	collections[0].hits = - 1;
 #endif
+	warnx("Num colls: %d\n", num_colls);
 
 
 	#ifdef DEBUG_TIME
@@ -1619,6 +1627,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	queryNodeHeder.filterOn = QueryData.filterOn;
+	queryNodeHeder.anonymous = QueryData.anonymous;
 
 
 

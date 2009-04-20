@@ -36,6 +36,7 @@
     #include <zlib.h>
     #include <sys/file.h>
 #include <err.h>
+#include <assert.h>
 
     #include "library.h"
 #include "../common/debug.h"
@@ -311,8 +312,8 @@ void bsConnectAndQuery(int *sockfd,int server_cnt, char **servers,
 			continue;
 		if (!bsQuery(&sockfd[i + offset], header, sizeof *header)
 		 || !bsQuery(&sockfd[i + offset], &colls_cnt, sizeof colls_cnt)
-		 || !bsQuery(&sockfd[i + offset], colls, 
-		 	sizeof(struct subnamesFormat) * colls_cnt)) {
+		 || (colls_cnt > 0 && !bsQuery(&sockfd[i + offset], colls,
+		 	sizeof(struct subnamesFormat) * colls_cnt))) {
 			warnx("Can't send. Server %s:%i", servers[i], port);
 		}
 	}
