@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <signal.h>
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <netinet/in.h>
@@ -44,6 +45,7 @@
 #include <signal.h>
 #include <locale.h>
 
+#include "../common/sigaction.h"
 
 #include "preopen.h"
 #include "verbose.h"
@@ -496,20 +498,38 @@ int main(int argc, char *argv[])
 
 	runCount = 0;
 
+#ifndef NEW_CHILD_CATCHER
 	signal(SIGCLD, SIG_IGN);  /* now I don't have to wait() for forked children! */
+#else
+	{
+		struct sigaction sa;
+		int ret;
+
+		sa.sa_sigaction = sigchild_handler;
+		sigemptyset(&sa.sa_mask);
+		sa.sa_flags = SA_SIGINFO;
+
+		ret = sigaction(SIGCHLD, &sa, 0);
+		if (ret) {
+			errx(1, "sigaction()");
+		}
+	}
+#endif
 
 	printf("|------------------------------------------------------------------------------------------------|\n");
 	printf("|%-40s | %-11s | %-11s | %-11s | %-11s|\n","query", "TotaltTreff", "showabal", "filtered", "total_usecs");
 	printf("|------------------------------------------------------------------------------------------------|\n");
 
-	for(;;)
+	for((clilen = sizeof(cli_addr));;)
 	{
-		clilen = sizeof(cli_addr);
 		searchd_config.newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
 
 		if(searchd_config.newsockfd < 0) {
+			/* Just restart */
+			if (errno == EINTR)
+				continue;
 
-			fprintf(stderr,"searchd: Server warning! Accept error\n");
+			warn("searchd: Server warning! Accept error");
 		}
 		else {
 
@@ -535,9 +555,8 @@ int main(int argc, char *argv[])
 				if (fork() == 0) { // this is the child process
 
 					close(sockfd); // child doesn't need the listener
-	
+
 					do_chld((void *) &searchd_config);	
-				 
 
 					close(searchd_config.newsockfd);
 					vboprintf("searchd: Terminating child.\n");
@@ -659,8 +678,10 @@ void *do_chld(void *arg)
 		perror("recv nrOfSubnames");
 
 	struct subnamesFormat subnames[nrOfSubnames];
-	if ((recv(mysocfd, &subnames, sizeof subnames, MSG_WAITALL)) == -1)
-		perror("recv subnames");
+	if (nrOfSubnames > 0) {
+		if ((recv(mysocfd, &subnames, sizeof subnames, MSG_WAITALL)) == -1)
+			perror("recv subnames");
+	}
 
 
 	//sender svar med en gang at vi kan gjøre dette
@@ -733,7 +754,7 @@ void *do_chld(void *arg)
 			searchd_config,
 			SiderHeder->errorstr, &SiderHeder->errorstrlen,
 			&global_DomainIDs, queryNodeHeder.HTTP_USER_AGENT,
-			groupOrQuery
+			groupOrQuery, queryNodeHeder.anonymous
 			)) 
 		{
 			fprintf(stderr, "searchd_child: dosearch did not return 1\n");
@@ -892,8 +913,10 @@ void *do_chld(void *arg)
 	#endif
 
 	/* Disable tcp delay */
+#if 0
 	int nodelayflag = 1;
-	//setsockopt(mysocfd, IPPROTO_TCP, TCP_NODELAY, &nodelayflag, sizeof(int));
+	setsockopt(mysocfd, IPPROTO_TCP, TCP_NODELAY, &nodelayflag, sizeof(int));
+#endif
 
 	if ((n=send(mysocfd,SiderHeder, sizeof(struct SiderHederFormat),MSG_NOSIGNAL)) != sizeof(struct SiderHederFormat)) {
 		fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(struct SiderHederFormat),__FILE__,__LINE__);

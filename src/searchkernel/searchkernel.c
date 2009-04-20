@@ -172,6 +172,7 @@ struct PagesResultsFormat {
 		struct duplicate_docids *dups;
 		enum platform_type ptype; 
 		enum browser_type btype; 
+		int anonymous;
 };
 
 
@@ -1153,9 +1154,10 @@ void increaseFilteredSilent(struct PagesResultsFormat *PagesResults,int *whichFi
 #ifdef BLACK_BOKS
 static inline int
 pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection_in[], char uri_in[], char user_in[], char password_in[]) {
-
-#ifndef _24SEVENOFFICE
 	int ret = 0;
+
+	if (PagesResults->anonymous)
+		return 1;
 
 #ifdef WITH_THREAD
 	int sockIndex;
@@ -1175,11 +1177,6 @@ pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection
 	vboprintf("pathaccess respons=%i\n",ret);
 
 	return ret;
-
-#else
-	return 1;
-#endif
-
 }
 #endif
 
@@ -1891,7 +1888,7 @@ int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct Side
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames, 
 int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[], 
 char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *searchd_config, char *errorstr,int *errorLen,
-	struct iintegerMemArrayFormat *DomainIDs, char *useragent, char groupOrQuery[]
+	struct iintegerMemArrayFormat *DomainIDs, char *useragent, char groupOrQuery[], int anonymous
 	) { 
 
 
@@ -1916,6 +1913,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	//PagesResults.godPages
 	PagesResults.start = start;
 	PagesResults.searchd_config = searchd_config;
+	PagesResults.anonymous = anonymous;
 
 	#ifdef DEBUG_TIME
 		PagesResults.popResultBreakDownTime.DocumentIndex.nr = 0;
@@ -2060,28 +2058,30 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#if defined BLACK_BOKS && !defined _24SEVENOFFICE
 
 
-		//henter brukerens passord fra boithoad
-		gettimeofday(&start_time, NULL);
-		//henter inn brukerens passord
-		vboprintf("geting pw for \"%s\"\n",PagesResults.search_user);
-		/**************************************************************************
-		Runarb: 08 Jan 2008: Gjør av vi bare hopper over å hente gruppe info hvis vi ikke
-		for det til.
+		if (!PagesResults.anonymous) {
+			//henter brukerens passord fra boithoad
+			gettimeofday(&start_time, NULL);
+			//henter inn brukerens passord
+			vboprintf("geting pw for \"%s\"\n",PagesResults.search_user);
+			/**************************************************************************
+			Runarb: 08 Jan 2008: Gjør av vi bare hopper over å hente gruppe info hvis vi ikke
+			for det til.
 
-		Før stoppet vi opp, men det gjør at det ikke fungerer med 24so søk. 
-		**************************************************************************/
-		if (!boithoad_getPassword(PagesResults.search_user,PagesResults.password)) {
-			printf("Can't boithoad_getPassword. Brukeren er ikke logget inn??\n");
-			//(*errorLen) = snprintf(errorstr,(*errorLen),"Can't get user info from authentication backend");
-			//return(0);
+			Før stoppet vi opp, men det gjør at det ikke fungerer med 24so søk. 
+			**************************************************************************/
+			if (!boithoad_getPassword(PagesResults.search_user,PagesResults.password)) {
+				printf("Can't boithoad_getPassword. Brukeren er ikke logget inn??\n");
+				//(*errorLen) = snprintf(errorstr,(*errorLen),"Can't get user info from authentication backend");
+				//return(0);
+			}
+			else {
+				//printf("got pw \"%s\" -> \"%s\"\n",PagesResults.search_user,PagesResults.password);
+				gettimeofday(&end_time, NULL);
+				(*SiderHeder).queryTime.getUserObjekt = getTimeDifference(&start_time,&end_time);
+			}
+		} else {
+			vboprintf("Anonymous search\n");
 		}
-		else {
-			//printf("got pw \"%s\" -> \"%s\"\n",PagesResults.search_user,PagesResults.password);
-			gettimeofday(&end_time, NULL);
-	        	(*SiderHeder).queryTime.getUserObjekt = getTimeDifference(&start_time,&end_time);
-		}
-
-		vboprintf("groupOrQuery \"%s\"\n",groupOrQuery);
 
 
 		/****************************************************************/
@@ -2221,7 +2221,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
-			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 0, &crc32maphash, &dups,search_user, searchd_config->cmc_port);
+			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 0, &crc32maphash, &dups,search_user, searchd_config->cmc_port, PagesResults.anonymous);
 	PagesResults.crc32maphash = crc32maphash;
 	PagesResults.dups = dups;
 
@@ -2833,7 +2833,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			&PagesResults.QueryData.queryParsed,&SiderHeder->queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
-			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 1, NULL, NULL,search_user, searchd_config->cmc_port);
+			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 1, NULL, NULL,search_user, searchd_config->cmc_port, 0);
 	// XXX: eirik, we should not discard the duplicate tests
 	//&rankDocId);
 

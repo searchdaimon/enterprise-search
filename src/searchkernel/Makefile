@@ -16,9 +16,8 @@ WANT_BASE64=	true
 
 PROG=	searchd
 
-CFLAGS?=	
-
-CFLAGS+=	-DIIACL -DWITH_SPELLING -DWITH_THREAD -DDISK_PROTECTOR -DATTRIBUTES -D_FILE_OFFSET_BITS=64
+CFLAGS+=	-DIIACL -DWITH_SPELLING -DWITH_THREAD -DDISK_PROTECTOR -DATTRIBUTES -D_FILE_OFFSET_BITS=64 \
+		-DNEW_CHILD_CATCHER
 LDFLAGS+=	\
 		../getFiletype/libfte.a ../attributes/libshow_attr.a \
 		../generateSnippet/libsnippet_generator.a \
@@ -33,6 +32,5 @@ LDFLAGS+=	\
 
 OBJS=	preopen.o search.o searchkernel.o searchd.o htmlstriper.o dp.o searchFilters.o verbose.o maincfg.o \
 	shortenurl.o client.o merge.o boithoadClientLib.o
-
 
 include ../../mk/prog.mk

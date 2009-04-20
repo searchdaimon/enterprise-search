@@ -36,7 +36,7 @@ int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct Side
     int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[],
     char search_user[], struct filtersFormat *filters,
     struct searchd_configFORMAT *searchd_config, char *errorstr,int *errorLen, struct iintegerMemArrayFormat *DomainIDs,
-    char *, char *);
+    char *, char *, int anonymous);
 
 #define RANK_TYPE_FIND	1
 #define RANK_TYPE_SUM	2

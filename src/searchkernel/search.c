@@ -1345,6 +1345,7 @@ struct searchIndex_thread_argFormat {
 	double searchtime;
 	char *search_user;
 	int cmc_port;
+	int anonymous;
 };
 
 void *searchIndex_thread(void *arg)
@@ -1473,6 +1474,7 @@ void *searchIndex_thread(void *arg)
 	
 		#ifdef IIACL
 
+		if (!searchIndex_thread_arg->anonymous) {
 			int system = cmc_usersystemfromcollection(cmc_sock, searchIndex_thread_arg->subnames[i].subname);
 			if (system == -1) {
 				fprintf(stderr, "Unable to get usersystem for: %s\n", searchIndex_thread_arg->subnames[i].subname);
@@ -1483,22 +1485,22 @@ void *searchIndex_thread(void *arg)
 
 				vboprintf("Getting mappings for system %d\n", system);
 
-				#ifdef DEBUG_TIME
+#ifdef DEBUG_TIME
 				gettimeofday(&starttime, NULL);
-				#endif
+#endif
 
 				n_groups = cmc_groupsforuserfromusersystem(cmc_sock, searchIndex_thread_arg->search_user,
-				    system, &groups);
+						system, &groups);
 
-				#ifdef DEBUG_TIME
+#ifdef DEBUG_TIME
 				gettimeofday(&endtime, NULL);
 				printf("Time debug: cmc_groupsforuserfromusersystem(): %f\n", getTimeDifference(&starttime, &endtime));
-				#endif
+#endif
 
 				size_t grouplistsize = n_groups * (MAX_LDAP_ATTR_LEN+5);
 				vboprintf("n_groups: %d\n", n_groups);
 				char *grouplist;
-				
+
 				if (n_groups > 0) {
 					grouplist = malloc(grouplistsize);
 					grouplist[0] = '\0';
@@ -1526,6 +1528,7 @@ void *searchIndex_thread(void *arg)
 			} else {
 				vboprintf("Reusing system mapping: %d\n", system);
 			}
+		}
 
 
 
@@ -1595,34 +1598,37 @@ void *searchIndex_thread(void *arg)
 				continue;
 			}
 
-			#pragma omp parallel for
-			for(y=0;y<2;y++) {
-	
-				if (y==0) {
-					searchIndex("acl_allow",
-						&acl_allowArrayLen,
-						&acl_allowArray,
-						groupquery,
-						&(*searchIndex_thread_arg).subnames[i],
-						(*searchIndex_thread_arg).languageFilterNr, 
-						(*searchIndex_thread_arg).languageFilterAsNr,
-						&complicacy
-					);
-				} else if (y==1) {
-					searchIndex("acl_denied",
-						&acl_deniedArrayLen,
-						&acl_deniedArray,
-						groupquery,
-						&(*searchIndex_thread_arg).subnames[i],
-						(*searchIndex_thread_arg).languageFilterNr, 
-						(*searchIndex_thread_arg).languageFilterAsNr,
-						&complicacy
-					);
-				}
-			} // omp for
+			if (!searchIndex_thread_arg->anonymous) {
+				#pragma omp parallel for
+				for(y=0;y<2;y++) {
+		
+					if (y==0) {
+						searchIndex("acl_allow",
+							&acl_allowArrayLen,
+							&acl_allowArray,
+							groupquery,
+							&(*searchIndex_thread_arg).subnames[i],
+							(*searchIndex_thread_arg).languageFilterNr, 
+							(*searchIndex_thread_arg).languageFilterAsNr,
+							&complicacy
+						);
+					} else if (y==1) {
+						searchIndex("acl_denied",
+							&acl_deniedArrayLen,
+							&acl_deniedArray,
+							groupquery,
+							&(*searchIndex_thread_arg).subnames[i],
+							(*searchIndex_thread_arg).languageFilterNr, 
+							(*searchIndex_thread_arg).languageFilterAsNr,
+							&complicacy
+						);
+					}
+				} // omp for
+			}
 				
 
 			#ifdef DEBUG_II
+			if (!searchIndex_thread_arg->anonymous) {
 				printf("acl_allowArrayLen %i:\n",acl_allowArrayLen);
 				for (y = 0; y < acl_allowArrayLen; y++) {
 					printf("acl_allow TeffArray: DocID %u\n",acl_allowArray->iindex[y].DocID);			
@@ -1632,6 +1638,7 @@ void *searchIndex_thread(void *arg)
 				for (y = 0; y < acl_deniedArrayLen; y++) {
 					printf("acl_denied TeffArray: DocID %u\n",acl_deniedArray->iindex[y].DocID);			
 				}
+			}
 
 				printf("searcArrayLen %i:\n",searcArrayLen);
 				for (y = 0; y < searcArrayLen; y++) {
@@ -1673,17 +1680,27 @@ void *searchIndex_thread(void *arg)
 
 			if (!empty_search_query)
 			    {
-				and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
-				// Merge acl_denied:			
-	    			andNot_merge(&Array,&ArrayLen,&hits,&TmpArray,TmpArrayLen,&acl_deniedArray,acl_deniedArrayLen);
+				if (!searchIndex_thread_arg->anonymous) {
+					and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
+					// Merge acl_denied:			
+					andNot_merge(&Array,&ArrayLen,&hits,&TmpArray,TmpArrayLen,&acl_deniedArray,acl_deniedArrayLen);
+				} else {
+					swapiindex(&Array, &searcArray);
+					ArrayLen = searcArrayLen;
+				}
 			    }
 			else
 			    {
-				// Merge med attributter istedet:
-				and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,tmpAttribArray[0],tmpAttribArrayLen[0]);
-				// Merge acl_denied:			
-	    			andNot_merge(&Array,&ArrayLen,&hits,&TmpArray,TmpArrayLen,&acl_deniedArray,acl_deniedArrayLen);
-				//(*searchIndex_thread_arg).attribArrayLen[0] = 0;
+				if (!searchIndex_thread_arg->anonymous) {
+					// Merge med attributter istedet:
+					and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,tmpAttribArray[0],tmpAttribArrayLen[0]);
+					// Merge acl_denied:			
+					andNot_merge(&Array,&ArrayLen,&hits,&TmpArray,TmpArrayLen,&acl_deniedArray,acl_deniedArrayLen);
+				} else {
+					swapiindex(&Array, &searcArray);
+					ArrayLen = searcArrayLen;
+				}
+			//(*searchIndex_thread_arg).attribArrayLen[0] = 0;
 			    }
 
 			// Ettersom merging mÃ¥ gjÃ¸res per collection, gjÃ¸r vi attributt-filtreringa allerede her:
@@ -1739,10 +1756,14 @@ void *searchIndex_thread(void *arg)
 			    #endif
 
 			#else // ATTRIBUTES
-
-			    and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
-			    // Merge acl_denied:			
-    			    andNot_merge(&Array,&ArrayLen,&hits,&TmpArray,TmpArrayLen,&acl_deniedArray,acl_deniedArrayLen);
+				if (!searchIndex_thread_arg->anonymous) {
+					and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
+					// Merge acl_denied:			
+					andNot_merge(&Array,&ArrayLen,&hits,&TmpArray,TmpArrayLen,&acl_deniedArray,acl_deniedArrayLen);
+				} else {
+					swapiindex(&Array, &searcArray);
+					ArrayLen = searcArrayLen;
+				}
 			#endif
 
 
@@ -1894,7 +1915,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		struct filteronFormat *filteron,
 		query_array *search_user_as_query,
 		int ranking, struct hashtable **crc32maphash, struct duplicate_docids **dups,
-		char *search_user, int cmc_port
+		char *search_user, int cmc_port, int anonymous
 		) {
 
 	vboprintf("search: searchSimple()\n");
@@ -1992,6 +2013,9 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	searchIndex_thread_arg_Athor.resultArray 	= NULL;
 	searchIndex_thread_arg_Url.resultArray		= NULL;
 
+	searchIndex_thread_arg_Athor.anonymous = anonymous;
+	searchIndex_thread_arg_Url.anonymous = anonymous;
+	searchIndex_thread_arg_Main.anonymous = anonymous;
 
 	
 	#ifdef BLACK_BOKS
@@ -2132,8 +2156,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	*/
 	
 	//joiner trådene
-	#ifdef BLACK_BOKS
-	#else
+	#ifndef BLACK_BOKS
 		#ifdef WITH_THREAD
 			//joiner trådene
 			if (threadid_Athor != 0) {
@@ -2180,9 +2203,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	TmpArrayLen = 0;
 	resultArrayInit(TmpArray);
 
-	#ifdef BLACK_BOKS
-
-	#else
+	#ifndef BLACK_BOKS
 		//or_merger Athor og Url inn i en temper array
 		or_merge(&TmpArray,&TmpArrayLen,&searchIndex_thread_arg_Athor.resultArray,searchIndex_thread_arg_Athor.resultArrayLen,
 			&searchIndex_thread_arg_Url.resultArray,searchIndex_thread_arg_Url.resultArrayLen);
