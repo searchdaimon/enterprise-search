@@ -653,6 +653,7 @@ struct queryNodeHederFormat
         char AmazonSubscriptionId[50];
 //v3	char languageFilter[12];
 	char orderby[10];
+	int anonymous;
 };
 
 //for "struct query"
