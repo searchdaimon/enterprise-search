@@ -7,6 +7,9 @@ BOX=	bbh2 #bbh1
 # BBH1
 BDB_INC=        -I/usr/local/BerkeleyDB.4.5/include/
 BDB_LIB=        /usr/local/BerkeleyDB.4.5/lib/libdb.a
+PERL_EMBED_INC=	`perl -MExtUtils::Embed -e ccopts`
+PERL_EMBED_LIB=	`perl -MExtUtils::Embed -e ldopts`
+#`perl -MExtUtils::Embed -e ccopts -e ldopts` -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE   -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl
 
 
 # BBH2
