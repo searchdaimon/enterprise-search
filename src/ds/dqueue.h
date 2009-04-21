@@ -1,5 +1,5 @@
 /**
- *	(C) Copyright 2007, Magnus Galåen
+ *	(C) Copyright 2007-2009, Magnus Galåen
  *
  *	dqueue.h: Queue-container.
  */
@@ -18,6 +18,8 @@ int queue_size( container *C );
     // Advarsel, verdiene slettes (free) når denne funksjonen kjøres:
 void queue_pop( container *C );
 value queue_peak( container *C );
+value queue_peak_front( container *C, int index_from_first );
+value queue_peak_end( container *C, int index_from_last );
 void queue_push( container *C, ... );
 
 

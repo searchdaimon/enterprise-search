@@ -77,7 +77,7 @@ void queue_push( container *C, ... )
 	    value	*old_elem = Q->elem;
 	    int		old_size = Q->size;
 
-	    assert( Q->tail == Q->head );
+	    //assert( Q->tail == Q->head );
 //	    printf(" (oldsize:%i, newsize:%i) ", Q->size, Q->size*2); fflush(stdout);
 
 	    Q->size*= 2;
@@ -138,6 +138,42 @@ value queue_peak( container *C )
 	}
 
     return Q->elem[Q->head];
+}
+
+
+value queue_peak_front( container *C, int index_from_first )
+{
+    queue_container_priv	*Q = C->priv;
+    int				index = Q->head + index_from_first;
+
+    if (index >= Q->size) index-= Q->size;
+
+    if (Q->num_elems<index_from_first+1)
+	{
+	    fprintf(stderr, "queue_peak: Error! Attempting to peak value outside of boundaries!\n");
+
+	    return (value)NULL;
+	}
+
+    return Q->elem[index];
+}
+
+
+value queue_peak_end( container *C, int index_from_last )
+{
+    queue_container_priv	*Q = C->priv;
+    int				index = Q->tail -1 - index_from_last;
+
+    if (index < 0) index+= Q->size;
+
+    if (Q->num_elems<index_from_last+1)
+	{
+	    fprintf(stderr, "queue_peak: Error! Attempting to peak value outside of boundaries!\n");
+
+	    return (value)NULL;
+	}
+
+    return Q->elem[index];
 }
 
 
