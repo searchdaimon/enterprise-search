@@ -49,6 +49,12 @@ ifdef WANT_HASHTABLE
 LDFLAGS+=	$(LIBDIR)/libhashtable.a
 endif
 
+ifdef WANT_PERLEMBED
+LDFLAGS+=	${LIBDIR}/libperlembed.a
+LDFLAGS+=	$(PERL_EMBED_LIB)
+CFLAGS+=	$(PERL_EMBED_INC)
+endif
+
 ifndef NO_DEBUG
 CFLAGS+=	-g
 endif
