@@ -36,7 +36,7 @@ msgid "no hits"
 msgstr "ingen"
 
 msgid "1 hits"
-msgstr "%1 treff"
+msgstr "%1&nbsp;treff"
 
 msgid "All collections"
 msgstr "Alle"
