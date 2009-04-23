@@ -628,8 +628,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 
 //<<<<<<< bbdocument.c
 //=======
-	char envpairtemplate[] = "tmp/converter-metadata-XXXXXX";
-	char *envpairpath = strdup(bfile(envpairtemplate));
+	char *envpairpath = strdup(/tmp/converter-metadata-XXXXXX);
 	char envpair[PATH_MAX];
 	mktemp(envpairpath);
 	sprintf(envpair, "SDMETAFILE=%s", envpairpath);

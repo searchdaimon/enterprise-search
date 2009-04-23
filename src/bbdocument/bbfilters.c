@@ -22,11 +22,16 @@ void run_filter_perlplugin(char *dst, size_t dst_size, struct fileFilterFormat *
 	hv_store(params, "data", strlen("data"),  sv_2mortal(newRV((SV *) perl_dst)), 0);
 	//hv_store(params, "extracted_files", strlen("extracted_files"),  sv_2mortal(newRV((SV *) perl_extracted_files)), 0);
 
+	#ifdef DEBUG
+		printf("perl run: %s:dump(file=%s, metadata=%p)\n",perlpath,filter->command,perl_metahash);
+	#endif
+
 	if(!perl_embed_run(perlpath, "dump", params, NULL, NULL))
 		errx(1, "Perlplugin error on '%s'", filter->command);
 
 	STRLEN data_size;
 	char *data = SvPV(perl_dst, data_size);
+
 
 	// asuming data is a '\0'-terminated string
 	strlcpy(dst, data, dst_size);
@@ -59,6 +64,8 @@ void parse_libextractor_output(struct hashtable *dst, const char *output, char *
 	int n_lines = split(output, "\n", &lines);
 	char key[MAX_ATTRIB_LEN];
 	char val[MAX_ATTRIB_LEN];
+
+	printf("parse_libextractor_output: n_lines %i\n",n_lines);
 	
 	int i, j;
 	for (i = 0; i < n_lines; i++) {
@@ -95,6 +102,9 @@ void add_libextractor_attr(struct hashtable **metadata, char *filepath, char **w
 	int retval;
 	char *buf = malloc(sizeof(char) * buflen);
 	char *args[] = { LIBEXTRACTOR_PATH, filepath, NULL };
+
+	printf("add_libextractor_attr runing: %s %s\n",LIBEXTRACTOR_PATH,filepath);
+
 	if (!exeoc_timeout(args, buf, &buflen, &retval, 120)) {
 		warnx("exec_timeout failed %d %s\n", __LINE__, __FILE__);
 		free(buf);
@@ -138,8 +148,7 @@ void run_filter_exeoc(char *dst, size_t dst_size, struct fileFilterFormat *fileF
 	//sender med størelsen på buferen nå. Vil få størelsen på hva vi leste tilbake
 
 
-	char envpairtemplate[] = "tmp/converter-metadata-XXXXXX";
-	char *envpairpath = strdup(bfile(envpairtemplate));
+	char *envpairpath = strdup("/tmp/converter-metadata-XXXXXX");
 	char envpair[PATH_MAX];
 	mktemp(envpairpath);
 	sprintf(envpair, "SDMETAFILE=%s", envpairpath);
