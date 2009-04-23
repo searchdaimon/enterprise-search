@@ -1592,7 +1592,11 @@ int _attribute_build_items_(container *X, container *A, query_array *qa, int def
 		    if (key_type == 1 && item->value!=NULL) //filetype
 			{
 			    char	*group;
-			    fte_getdescription(getfiletypep, "nbo", item->value, &group, &(item->name), &(item->icon));
+			    if ((fte_getdescription(getfiletypep, "nbo", item->value, &group, &(item->name), &(item->icon)) & 255) == 0)
+				{
+				    item->name = strdup(item->name);
+				    item->free_name = 1;
+				}
 			}
 		    else if (key_type == 2 && item->value!=NULL) //group
 			{
