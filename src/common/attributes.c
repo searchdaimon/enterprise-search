@@ -18,6 +18,7 @@ next_attribute(char *attributes, char **offset, char *k, char *v, char *kv)
 	if (**offset == '\0') return 0;
 
 	key = *offset;
+	while (key[0] == ',') key++;
 	value = strchr(key, '=');
 	if (value == NULL)
 		return 0;
@@ -70,7 +71,7 @@ next_attribute(char *attributes, char **offset, char *k, char *v, char *kv)
 		kv[MAX_ATTRIB_LEN-1] = '\0';
 	    }
 
-	if (*p == ',') p++;	
+	while (*p == ',') p++;
 	*offset = p;
 
 	return 1;
@@ -139,7 +140,7 @@ main(int argc, char **argv)
 {
 	char key[MAX_ATTRIB_LEN], value[MAX_ATTRIB_LEN];
 	char keyval[MAX_ATTRIB_LEN];
-	char attributes[] = "hei=ho,no=er,det=,jul=igjen,vi=baker,nissemenn=,folder=mg@searchdaimon/Inbox/,";
+	char attributes[] = ",,hei=ho,no=er,,det=,jul=igjen,vi=baker,nissemenn=,folder=mg@searchdaimon/Inbox/,,,";
 	//char attributes[] = "hei=ho,ha=hopp,finn=sesam";
 	char *o = NULL;
 
