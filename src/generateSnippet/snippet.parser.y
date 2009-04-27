@@ -1204,12 +1204,16 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 
 	    if (data->mode == db_snippet)
 		{
-		    if (tab<vector_size(data->Tab) && pos==vector_get(data->Tab, tab).i && colon==0)
+		    if (tab<vector_size(data->Tab) && pos==vector_get(data->Tab, tab).i)
 			{
-			    bprintf(B, ":");
-			    col++;
 			    tab++;
-			    colon++;
+
+			    if (colon == 0)
+				{
+				    bprintf(B, ":");
+				    col++;
+				    colon++;
+				}
 			}
 
 		    if (col > data->cols)
