@@ -1923,9 +1923,6 @@ rewriteurl(MYSQL *db, char *collection, char *url, size_t urllen, char *uri, siz
 		forret = 0;
 	} else if (crawlLibInfo->rewrite_url == NULL) {
 		fprintf(stderr, "rewrite5\n");
-		memcpy(uri, url, urilen);
-		shortenurl(uri, urilen);
-		memcpy(fulluri, url, fullurilen);
 	} else if (!((*crawlLibInfo->rewrite_url)(collections, url, uri, fulluri, len, ptype, btype))) {
 		fprintf(stderr, "rewrite4\n");
 		memcpy(uri, url, urilen);
@@ -1933,10 +1930,19 @@ rewriteurl(MYSQL *db, char *collection, char *url, size_t urllen, char *uri, siz
 		memcpy(fulluri, url, fullurilen);
 		forret = 0;
 	}
+
+	if (forret == 0)
+	    {
+		memcpy(uri, url, urilen);
+		shortenurl(uri, urilen);
+		memcpy(fulluri, url, fullurilen);
+	    }
+
 	fprintf(stderr, "rewrite6\n");
 
 	sm_collectionfree(&collections,nrofcollections);
 
+	//printf("*** [rewriteurl] [fulluri] [%s] ***\n", fulluri);
 	return forret;
 
 }
