@@ -1001,7 +1001,8 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	}
 
 	buffer *attrbuffer = buffer_init(-1);
-	bprintf(attrbuffer, "%s", attributes);
+	bprintf(attrbuffer, "%s,", attributes);
+
 	if (metahash) {
 		struct hashtable_itr *itr;
 

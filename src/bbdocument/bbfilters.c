@@ -50,13 +50,20 @@ void run_filter_perlplugin(char *dst, size_t dst_size, struct fileFilterFormat *
 
 #ifdef USE_LIBEXTRACTOR
 
-int in_list(const char *key, char **list) {
+static inline const char* in_list(const char *key, char **list) {
 	int i;
 	for (i = 0; list[i] != NULL; i++) {
-		if (strcmp(list[i], key) == 0)
-			return 1;
+		int	n = strlen(key);
+		if (strncmp(list[i], key, n) == 0)
+		    {
+			if (list[i][n] == '\0') return key;
+			if (list[i][n] == '=' && list[i][n+1] == '>')
+			    {
+				return &(list[i][n+2]);
+			    }
+		    }
 	}
-	return 0;
+	return NULL;
 }
 
 void parse_libextractor_output(struct hashtable *dst, const char *output, char **whitelist) {
@@ -71,6 +78,7 @@ void parse_libextractor_output(struct hashtable *dst, const char *output, char *
 	for (i = 0; i < n_lines; i++) {
 		char *line = lines[i];
 		char *remain = strchr(line, '-');
+		const char *ret;
 		if (remain == NULL)
 			continue;
 		int keylen = remain - line;
@@ -80,15 +88,16 @@ void parse_libextractor_output(struct hashtable *dst, const char *output, char *
 		strlcpy(key, line, keylen);
 		strlcpy(val, remain, sizeof val);
 
-		if (!in_list(key, whitelist)) {
+		if ((ret=in_list(key, whitelist)) == NULL) {
 			//warnx("ignoring attr %s - %s\n", key, val);
 			continue;
 		}
 
-		hashtable_insert(dst, strdup(key), strdup(val));
+		hashtable_insert(dst, strdup(ret), strdup(val));
 		//warnx("inserted attr %s - %s\n", key, val);
 	}
 	FreeSplitList(lines);
+	printf("parse_libextractor_output: done\n");
 }
 
 void add_libextractor_attr(struct hashtable **metadata, char *filepath, char **whitelist) {
