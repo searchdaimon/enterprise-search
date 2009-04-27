@@ -443,11 +443,12 @@ shortenurl: src/searchkernel/shortenurl.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/searchkernel/shortenurl.c  -o bin/shortenurl $(LDFLAGS) -D WITH_SHORTENURL_MAIN
 
-everrun: src/everrun/catchdump.c
+everrun: src/everrun/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) src/everrun/catchdump.c -o bin/everrun
+	$(CC) src/everrun/main.c -o bin/everrun
+	#$(CC) src/everrun/catchdump.c -o bin/everrun
 
 searchcl : src/searchkernel/searchcl.c
 	@echo ""
