@@ -31,7 +31,7 @@
                     		<a href="[% query | query_url %]&amp;page=[% p %]">[% p %]</a>
                 	</li>
 		[% END %]
-                [% LAST IF (p * per_page) > total_res %]
+                [% LAST IF (p * per_page) >= total_res %]
                 [% p = p + 1 %]
 
             [% END %]
