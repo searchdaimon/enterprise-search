@@ -252,9 +252,10 @@ int main (int argc, char *argv[]) {
 
 	if (DIRead_fmode(&DocumentIndexPost,DocID,subname,'s')) {
 
-		printf("Url: \"%s\"\nLanguage: %s\nOffensive code: %hu\nDocument type: %s\nTime tested sins last good crawl: %hu\nAdult weight: %hu\nResource size: %u\nIP Address: %u\nHtml size: %i\nImage size: %i\nUser ID: %i\nCrawler version: %f\nRepository pointer: %u\n",
+		printf("Url: \"%s\"\nLanguage: %s (id: %s)\nOffensive code: %hu\nDocument type: %s\nTime tested sins last good crawl: %hu\nAdult weight: %hu\nResource size: %u\nIP Address: %u\nHtml size: %i\nImage size: %i\nUser ID: %i\nCrawler version: %f\nRepository pointer: %u\n",
 			DocumentIndexPost.Url, 
 			getLangCode2(atoi(DocumentIndexPost.Sprok)), 
+			DocumentIndexPost.Sprok,
 			DocumentIndexPost.Offensive_code, 
 			DocumentIndexPost.Dokumenttype, 
 			DocumentIndexPost.AntallFeiledeCrawl, 
@@ -362,7 +363,7 @@ int main (int argc, char *argv[]) {
 			struct adultFormat *adult;
 			struct pagewordsFormat *pagewords = malloc(sizeof(struct pagewordsFormat));
 			int AdultWeight;
-			int langnr;
+			unsigned char langnr;
         		if ((adult = malloc(sizeof(struct adultFormat))) == NULL) {
         		        perror("malloc argstruct.adult");
         		        exit(1);
