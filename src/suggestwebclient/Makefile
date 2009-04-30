@@ -19,6 +19,7 @@ OBJECTS_CLNT = $(SOURCES_CLNT.c:%.c=%.o) $(TARGETS_CLNT.c:%.c=%.o)
 
 CPPFLAGS += -D_REENTRANT
 CFLAGS += -g 
+CFLAGS += ${EXTRA_CFLAGS}
 LDLIBS += -lnsl -lpthread 
 RPCGENFLAGS = -M
 

@@ -175,6 +175,16 @@ Suggest:
 	(cd src/suggestwebclient; make)
 	cp src/suggestwebclient/suggest_webclient cgi-bin/
 
+SuggestOEM:
+	@echo ""
+	@echo "$@:"
+
+	(cd src/suggestrpc; make)
+	cp src/suggestrpc/suggest_server bin/
+	(cd src/suggestwebclient; env EXTRA_CFLAGS=-DSUGGEST_OEM make)
+	cp src/suggestwebclient/suggest_webclient cgi-bin/
+
+
 #brukte før src/parser/libhtml_parser.a, byttet til src/parser/lex.yy.c src/parser/lex.yy.c slik at vi kan bruke gdb
 IndexerLot= $(CFLAGS) $(LIBS)*.c src/dictionarywordsLot/set.c src/dictionarywordsLot/acl.c src/acls/acls.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c src/ds/libds.a $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS -D WITHOUT_DIWRITE_FSYNC -D EXPLAIN_RANK
 

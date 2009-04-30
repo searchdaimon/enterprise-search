@@ -97,11 +97,18 @@ main (int argc, char *argv[])
 			fprintf(stderr, "Did not find a prefix.\n");
 			exit(0);
 		}
+#ifndef SUGGEST_OEM
 		user = getenv("REMOTE_USER");
 		if (user == NULL) {
 			fprintf(stderr, "Not logged in.\n");
 			exit(0);
 		}
+#else
+		if ((user = cgi_getentrystr("user")) == NULL) {
+			fprintf(stderr, "Did not find a prefix.\n");
+			exit(0);
+		}
+#endif
 	}
 	else {
 		if (argc < 4) {
