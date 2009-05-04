@@ -1,0 +1,126 @@
+[% INCLUDE 'header.html' title = 'Statistics' %]
+[% USE HTML %]
+
+<!--
+[% PROCESS 'template_tabs.html' 
+	tabs = [
+	{
+		'name' => 'Log files',
+		'url' => 'logs.cgi'
+	},
+	{
+		'name' => 'Search log',
+		'url' => 'logs.cgi?view=search',
+		
+	}]
+        selected => 'Log files'
+%]
+-->
+
+<h2>Statistics</h2>
+
+<h4>Showing statistics for
+[% IF user=="" %]
+all users
+[% ELSE %]
+user '[% user %]'
+[% END %]
+during the last [% last %] days</h4>
+
+
+<p>
+<form>
+Select user:
+[% selected = 0 %]
+<select name="user" onchange="window.open(this.options[this.selectedIndex].value,'_top')">
+	[% IF user=="" %]
+	[% selected = 1 %]
+	<option value="graphs.cgi?last=[% last %]" selected="true">All users</option>
+	[% ELSE %]
+	<option value="graphs.cgi?last=[% last %]">All users</option>
+	[% END %]
+	[% FOREACH u IN users %]
+	    [% IF selected == 0 && u.user == user %]
+		[% selected = 1 %]
+		<option value="graphs.cgi?user=[% u.user %]&last=[% last %]" selected="true">[% u.user | html %]</option>
+	    [% ELSE %]
+		<option value="graphs.cgi?user=[% u.user %]&last=[% last %]">[% u.user | html %]</option>
+	    [% END %]
+	[% END %]
+</select>
+</form>
+</p>
+
+<p>
+Select period:
+[% IF last != 30 %]<a href="graphs.cgi?user=[% user %]&last=30">30 days</a>[% ELSE %]30 days[% END %]
+- [% IF last != 60 %]<a href="graphs.cgi?user=[% user %]&last=60">60 days</a>[% ELSE %]60 days[% END %]
+- [% IF last != 90 %]<a href="graphs.cgi?user=[% user %]&last=90">90 days</a>[% ELSE %]90 days[% END %]
+- [% IF last != 180 %]<a href="graphs.cgi?user=[% user %]&last=180">180 days</a>[% ELSE %]180 days[% END %]
+ </p>
+
+<br />
+
+[% IF user=="" %]
+<p>
+<h2>Most active searchers</h2>
+<script type="text/javascript" src="/amcharts/amcolumn/swfobject.js"></script>
+        <div id="searchers">
+	<strong>You need to upgrade your Flash Player</strong>
+	</div>
+
+	<script type="text/javascript">
+	// <![CDATA[            
+	var so = new SWFObject("/amcharts/amcolumn/amcolumn.swf", "amcolumn", "520", "380", "8", "#FFFFFF");
+	so.addVariable("path", "/amcharts/amcolumn/");
+	so.addVariable("settings_file", encodeURIComponent("Graph/config.cgi?action=users&last=[% last %]"));
+	so.addVariable("data_file", encodeURIComponent("Graph/graph.cgi?action=users&last=[% last %]"));
+	so.addVariable("preloader_color", "#999999");
+	so.write("searchers");
+	// ]]>
+	</script>
+</p>
+[% END %]
+
+
+<p>
+<h2>Top queries</h2>
+<script type="text/javascript" src="/amcharts/amcolumn/swfobject.js"></script>
+        <div id="queries">
+	<strong>You need to upgrade your Flash Player</strong>
+	</div>
+
+	<script type="text/javascript">
+	// <![CDATA[            
+	var so = new SWFObject("/amcharts/amcolumn/amcolumn.swf", "amcolumn", "520", "380", "8", "#FFFFFF");
+	so.addVariable("path", "/amcharts/amcolumn/");
+	so.addVariable("settings_file", encodeURIComponent("Graph/config.cgi?action=queries&[% userstring %]last=[% last %]"));
+	so.addVariable("data_file", encodeURIComponent("Graph/graph.cgi?action=queries&[% userstring %]last=[% last %]"));
+	so.addVariable("preloader_color", "#999999");
+	so.write("queries");
+	// ]]>
+	</script>
+</p>
+
+<p>
+<h2>Searches per day</h2>
+  <script type="text/javascript" src="/amcharts/amline/swfobject.js"></script>
+        <div id="searches">
+                <strong>You need to upgrade your Flash Player</strong>
+        </div>
+
+        <script type="text/javascript">
+                // <![CDATA[            
+                var so = new SWFObject("/amcharts/amline/amline.swf", "amline", "520", "400", "8", "#FFFFFF");
+                so.addVariable("path", "/amcharts/amline/");
+                so.addVariable("settings_file", encodeURIComponent("Graph/config.cgi?action=searchesday&[% userstring %]last=[% last %]"));
+                so.addVariable("data_file", encodeURIComponent("Graph/graph.cgi?action=searchesday&[% userstring %]last=[% last %]"));
+                so.write("searches");
+                // ]]>
+        </script>
+</p>
+
+
+ 
+
+[% INCLUDE 'footer.html' %]
