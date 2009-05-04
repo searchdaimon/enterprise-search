@@ -6,8 +6,9 @@
 	[% STOP %]
 [% END %]
 
-[% PROCESS 'overview_tabs.html' selected="Graphs" %]
-<h2>Graphs for [% HTML.escape(collection_name) %]</h2>
+[% PROCESS 'overview_tabs.html' selected="Statistics" %]
+<h2>Statistics for collection '[% HTML.escape(collection_name) %]'</h2>
+<h3>Documents crawled per second</h3>
 
 [% IF succs  %]
 	[% PROCESS 'tpl_msg.html' type = "success" content = succs %]
