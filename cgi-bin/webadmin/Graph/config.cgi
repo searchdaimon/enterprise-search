@@ -36,28 +36,31 @@ my $frequency = '';
 my $redrawline = '';
 my $reload_data_interval = '';
 my $linemin = '';
+my $data_label = '{value}';
 if ($state{action} eq 'searchesday') {
-	$type = 'line';
-	$rotate = '45';
-	$leftmargin = '60';
-	$header = 'Number of searches';
-	$frequency = 1;
-	#$frequency = $state{last}/20;
-	($header .= ' by ' . $state{user}) if defined $state{user};
+	if (defined $state{user}) {
+    	    $type = 'column';
+	    $rotate = '45';
+	    $leftmargin = '60';
+	    $frequency = $state{last}/20;
+	if ($state{last} > 60) { $data_label = ''; }
+	} else {
+	    $type = 'line';
+	    $rotate = '45';
+	    $leftmargin = '60';
+	    $frequency = 1;
+	    #$frequency = $state{last}/20;
+	}
 } elsif ($state{action} eq 'queries') {
 	$type = 'bar';
 	$leftmargin = '180';
-	$header = 'Top queries';
-	($header .= ' by ' . $state{user}) if defined $state{user};
 } elsif ($state{action} eq 'users') {
 	$leftmargin = 120;
-	$header = 'Most active searchers';
 	$type = 'bar';
 } elsif ($state{action} eq 'crawleddocs') {
 	$type = 'line';
 	$rotate = '45';
 	$leftmargin = '60';
-	$header = 'Crawled documents';
 	$redrawline = 'true';
 	$reload_data_interval = '1';
 	$frequency = 3;
@@ -66,7 +69,7 @@ if ($state{action} eq 'searchesday') {
 
 print "Content-Type: text/plain\n\n";
 
-if ($type eq 'coulumn' or $type eq 'bar') {
+if ($type eq 'column' or $type eq 'bar') {
 print <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Value between [] brackets, for example [#FFFFFF] shows default value which is used if this parameter is not set -->
@@ -99,7 +102,7 @@ print <<EOF
     <type></type>                                             <!-- [clustered] (clustered, stacked, 100% stacked, 3d column) -->
     <width>100</width>                                        <!-- [80] (0 - 100) width of column (in percents)  -->
     <spacing>1</spacing>                                      <!-- [5] (Number) space between columns of one category axis value, in pixels. Negative values can be used. -->
-    <grow_time>0</grow_time>                                  <!-- [0] (Number) grow time in seconds. Leave 0 to appear instantly -->
+    <grow_time>2</grow_time>                                  <!-- [0] (Number) grow time in seconds. Leave 0 to appear instantly -->
     <sequenced_grow></sequenced_grow>                         <!-- [false] (true / false) whether columns should grow at the same time or one after another -->
     <grow_effect>strong</grow_effect>                        <!-- [elastic] (elastic, regular, strong) -->    
     <alpha></alpha>                                           <!-- [100] (Number) alpha of all columns -->
@@ -144,7 +147,7 @@ print <<EOF
     <color></color>                                           <!-- [#FFFFFF] (hex color code) Separate color codes with comas for gradient -->
     <alpha></alpha>                                           <!-- [0] (0 - 100) use 0 if you are using custom swf or jpg for background -->
     <border_color></border_color>                             <!-- [#000000] (hex color code) -->
-    <border_alpha>15</border_alpha>                           <!-- [0] (0 - 100) -->
+    <border_alpha></border_alpha>                           <!-- [0] (0 - 100) -->
     <file></file>                                             <!-- [] (filename) swf or jpg file of a background. Do not use progressive jpg file, it will be not visible with flash player 7 -->
                                                               <!-- The chart will look for this file in "path" folder ("path" is set in HTML) -->
   </background>
@@ -316,7 +319,7 @@ print <<EOF
       <text_color></text_color>                               <!-- [text_color] (hex color code) button text color -->
       <text_size></text_size>                                 <!-- [text_size](Number) button text size -->
       <text>                                                  <!-- [] (text) html tags may be used (supports <b>, <i>, <u>, <font>, <a href="">, <br/>. Enter text between []: <![CDATA[your <b>bold</b> and <i>italic</i> text]]>-->
-        <![CDATA[<b>$header</b>]]>
+        <![CDATA[]]>
       </text>        
     </label>
   </labels>
@@ -331,7 +334,7 @@ print <<EOF
       <color>#044a90</color>                                  <!-- [] (hex color code)  -->
       <alpha></alpha>                                         <!-- [column.alpha] (0 - 100) -->
       <data_labels>
-        <![CDATA[{value}]]>                                          <!-- [column.data_labels (line.data_labels)] ({title} {value} {series} {percents} {start} {difference} {total}) You can format any data label: {title} will be replaced with real title, {value} - with value and so on. You can add your own text or html code too. -->
+        <![CDATA[$data_label]]>                                          <!-- [column.data_labels (line.data_labels)] ({title} {value} {series} {percents} {start} {difference} {total}) You can format any data label: {title} will be replaced with real title, {value} - with value and so on. You can add your own text or html code too. -->
       </data_labels>      
       <gradient_fill_colors></gradient_fill_colors>          <!-- [] (hex color codes separated by comas) columns can be filled with gradients. Set any number of colors here. Note, that the legend key will be filled with color value, not with gradient. -->
       <balloon_color></balloon_color>                        <!-- [balloon.color] (hex color code) leave empty to use the same color as graph -->
@@ -401,7 +404,7 @@ print <<EOF
   <add_time_stamp></add_time_stamp>                           <!-- [false] (true / false) if true, a unique number will be added every time flash loads data. Mainly this feature is useful if you set reload _data_interval >0 -->
   <precision></precision>                                     <!-- [2] (Number) shows how many numbers should be shown after comma for calculated values (percents, used only in stacked charts) -->
   <connect></connect>                                         <!-- [false] (true / false) whether to connect points if y data is missing -->
-  <hide_bullets_count></hide_bullets_count>                   <!-- [] (Number) if there are more then hideBulletsCount points on the screen, bullets can be hidden, to avoid mess. Leave empty, or 0 to show bullets all the time. This rule doesn't influence if custom bullet is defined near y value, in data file -->
+  <hide_bullets_count>30</hide_bullets_count>                   <!-- [] (Number) if there are more then hideBulletsCount points on the screen, bullets can be hidden, to avoid mess. Leave empty, or 0 to show bullets all the time. This rule doesn't influence if custom bullet is defined near y value, in data file -->
   <link_target></link_target>                                 <!-- [] (_blank, _top ...) -->
   <start_on_axis></start_on_axis>                             <!-- [true] (true / false) if set to false, graph is moved 1/2 of one series interval from Y axis -->
   <colors></colors>                                           <!-- [#FF0000,#0000FF,#00FF00,#FF9900,#CC00CC,#00CCCC,#33FF00,#990000,#000066,#555555] Colors of graphs. if the graph color is not set, color from this array will be used -->  
@@ -703,7 +706,7 @@ print <<EOF
       <text_color></text_color>                               <!-- [text_color] (hex color code) button text color -->
       <text_size></text_size>                                 <!-- [text_size](Number) button text size -->
       <text>                                                  <!-- [] (text) html tags may be used (supports <b>, <i>, <u>, <font>, <a href="">, <br/>. Enter text between []: <![CDATA[your <b>bold</b> and <i>italic</i> text]]>-->
-        <![CDATA[<b>$header</b>]]>
+        <![CDATA[]]>
       </text>        
     </label>    
   
