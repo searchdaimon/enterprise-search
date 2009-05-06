@@ -5,7 +5,7 @@ GET_REL=`echo "$PREFIX""get_rel"`
 WASH_TAGS=`echo "$PREFIX""wash_tags"`
 XSL=`echo "$PREFIX""xlml2xhtml.xsl"`
 
-unzip -p "$1" xl/sharedStrings.xml | sed -e "s/<[^>]*>\(<[^>]*>\)*/<span>/g"
+unzip -p "$1" xl/sharedStrings.xml | sed -e "s/<[^>]*>\(<[^>]*>\)*/ <span>/g"
 
 WORKSHEETS=`unzip -p "$1" xl/_rels/workbook.xml.rels | $GET_REL --worksheets`
 
