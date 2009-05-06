@@ -1,107 +1,107 @@
 documentstype: docx
-command: ./docx2html #file | ./html2text
-outputformat: text
+command: ./docx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: docm
-command: ./docx2html #file | ./html2text
-outputformat: text
+command: ./docx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: dotx
-command: ./docx2html #file | ./html2text
-outputformat: text
+command: ./docx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: dotm
-command: ./docx2html #file | ./html2text
-outputformat: text
+command: ./docx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: xlsx
-command: ./xlsx2html #file | ./html2text
-outputformat: text
+command: ./xlsx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: xlsm
-command: ./xlsx2html #file | ./html2text
-outputformat: text
+command: ./xlsx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: xltx
-command: ./xlsx2html #file | ./html2text
-outputformat: text
+command: ./xlsx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: xltm
-command: ./xlsx2html #file | ./html2text
-outputformat: text
+command: ./xlsx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: xlsb
-command: ./xlsx2html #file | ./html2text
-outputformat: text
+command: ./xlsx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: xlam
-command: ./xlsx2html #file | ./html2text
-outputformat: text
+command: ./xlsx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: pptx
-command: ./pptx2html #file | ./html2text
-outputformat: text
+command: ./pptx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: pptm
-command: ./pptx2html #file | ./html2text
-outputformat: text
+command: ./pptx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: potx
-command: ./pptx2html #file | ./html2text
-outputformat: text
+command: ./pptx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: potm
-command: ./pptx2html #file | ./html2text
-outputformat: text
+command: ./pptx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: ppam
-command: ./pptx2html #file | ./html2text
-outputformat: text
+command: ./pptx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: ppsx
-command: ./pptx2html #file | ./html2text
-outputformat: text
+command: ./pptx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: ppsm
-command: ./pptx2html #file | ./html2text
-outputformat: text
+command: ./pptx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
 
 documentstype: sldx
-command: ./pptx2html #file | ./html2text
-outputformat: text
+command: ./pptx2html #file
+outputformat: html
 outputtype: stdio
 attrwhitelist: creator,language,last saved by,page count
