@@ -462,7 +462,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 			// Legg til korrekt tittel i dokumentet.
 			// Html-parseren tar kun hensyn til den første tittelen, så det skal holde å legge den til
 			// øverst i dokumentet.
-			bprintf(outbuffer, "<title>%s</title>\n", titlefromadd, document);
+			bprintf(outbuffer, "<title>%s</title>\n", titlefromadd);
 			bmemcpy(outbuffer, document, dokument_size);
 		}
 		return 1;
@@ -711,6 +711,10 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 		//dette er altså outputformat html. Ikke filtype outputformat. Filtupe hondteres lengere oppe
 		//ToDo: må vel kopiere inn noe data her???
 		bprintf(outbuffer, "%s", documentfinishedbuftmp);
+		// Ved filkonvertering vil tittelen som sendes med (from add) være filnavnet.
+		// Den vil vi kun bruke dersom dokumentet i seg selv ikke har en tittel.
+		// Derfor legges den tittelen til nederst i dokumentet:
+		bprintf(outbuffer, "<title>%s</title>\n", titlefromadd);
 	}
 	else if (strcmp((*fileFilter).outputformat,"textfile") == 0) {
 		FILE *fh;
@@ -769,6 +773,8 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 		}
 
 		fclose(fh);
+		unlink(filconvertetfile_out_html);
+		bprintf(outbuffer, "<title>%s</title>\n", titlefromadd);
 	}
 	else if (strcmp(fileFilter->outputformat, "dir") == 0 || strcmp(fileFilter->outputformat, "diradd") == 0) {
 		char *p, *pstart;
