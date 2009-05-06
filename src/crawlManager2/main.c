@@ -1922,7 +1922,8 @@ rewriteurl(MYSQL *db, char *collection, char *url, size_t urllen, char *uri, siz
 		//exit(1);
 		forret = 0;
 	} else if (crawlLibInfo->rewrite_url == NULL) {
-		fprintf(stderr, "rewrite5\n");
+		fprintf(stderr, "Don't have a rewrite url rutine for this connector.\n");
+		forret = 0;
 	} else if (!((*crawlLibInfo->rewrite_url)(collections, url, uri, fulluri, len, ptype, btype))) {
 		fprintf(stderr, "rewrite4\n");
 		memcpy(uri, url, urilen);
