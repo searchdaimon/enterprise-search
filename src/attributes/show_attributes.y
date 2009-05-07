@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include "../ds/dcontainer.h"
 #include "../ds/dpair.h"
@@ -68,6 +69,7 @@ struct item
     container	*parameters;
     char	flags;
     enum attr_sort_enum	sort;
+    int		max_items;
 };
 
 
@@ -83,7 +85,7 @@ struct rac_yacc_data
 %parse-param { struct rac_yacc_data *data }
 %parse-param { yyscan_t yyscanner }
 %lex-param { yyscan_t yyscanner }
-%token SHOW_DUPLICATES_ID EXPANDED_ID FROM_ID GROUP_ID IMPORT_ID NAME_ID SELECT_ID SORT_ID SHOW_EMPTY_ID EQUALS_ID PARANTES_BEGIN PARANTES_CLOSE BRACKET_BEGIN BRACKET_CLOSE STRING_ID SORT_REVERSE_ID HIDE_ID
+%token SHOW_DUPLICATES_ID EXPANDED_ID FROM_ID GROUP_ID IMPORT_ID NAME_ID SELECT_ID SORT_ID SHOW_EMPTY_ID EQUALS_ID PARANTES_BEGIN PARANTES_CLOSE BRACKET_BEGIN BRACKET_CLOSE STRING_ID SORT_REVERSE_ID HIDE_ID SHOW_MAX_ID
 
 %%
 doc	:
@@ -93,6 +95,7 @@ doc	:
 	| doc group
 	| doc select
 	| doc sort
+	| doc show_max
 	;
 group	: GROUP_ID PARANTES_BEGIN STRING_ID PARANTES_CLOSE BRACKET_BEGIN block BRACKET_CLOSE
 	{
@@ -117,6 +120,7 @@ block	:
 	    new_item->parameters = vector_container( string_container() );
 	    new_item->flags = 0;
 	    new_item->sort = -1;
+	    new_item->max_items = data->current_item->max_items;
 	    vector_pushback(data->current_item->child, new_item);
 
 	    data->current_item = new_item;
@@ -167,6 +171,7 @@ block	:
 	    vector_pushback(data->current_item->parameters, $7);
 	}
 	| block sort
+	| block show_max
 	| block SHOW_EMPTY_ID EQUALS_ID STRING_ID
 	{
 //	    printf("show.empty = %s\n", (char*)$4);
@@ -273,6 +278,11 @@ sort	: SORT_ID EQUALS_ID STRING_ID
 		}
 	}
 	;
+show_max : SHOW_MAX_ID EQUALS_ID STRING_ID
+	{
+	    data->current_item->max_items = strtol((const char*)$3, NULL, 10);
+	    if (errno == EINVAL || errno == ERANGE) data->current_item->max_items = -1;
+	}
 strings	:
 	| strings STRING_ID
 	{
@@ -313,6 +323,7 @@ attr_conf* show_attributes_init( char *conf_file, char **warnings )
     data->current_item->type = item_group;
     data->current_item->flags = 0;
     data->current_item->sort = sort_none;
+    data->current_item->max_items = -1;
     data->current_item->child = vector_container( ptr_container() );
     data->current_item->hide = vector_container( ptr_container() );
     data->current_item->parameters = vector_container( string_container() );
@@ -337,6 +348,7 @@ attr_conf* show_attributes_init( char *conf_file, char **warnings )
 
     attr_conf	*ac = malloc(sizeof(attr_conf));
     ac->sort = data->current_item->sort;
+    ac->max_items = data->current_item->max_items;
     ac->flags = data->current_item->flags;
     ac->child = recurse_items(data->current_item, sort_hits);
     ac->hide = data->current_item->hide;
@@ -458,6 +470,7 @@ static container* recurse_items(item *parent, int sort_inherit)
 		    G->name = strdup(I->id);
 		    G->flags = I->flags;
 		    G->sort = (I->sort == -1 ? sort_inherit : I->sort);
+		    G->max_items = I->max_items;
 		    G->hide = I->hide;
 
 		    G->alt_names = map_container( string_container(), string_container() );
@@ -561,6 +574,14 @@ void print_recurse_items(item *I, int indent)
 			if (j%3==2) printf("|");
 			else printf(" ");
 		    printf("show.duplicates\n");
+		}
+
+	    if (I->max_items > 0)
+		{
+		    for (j=0; j<indent*3+2; j++)
+			if (j%3==2) printf("|");
+			else printf(" ");
+		    printf("show.max = %i\n", I->max_items);
 		}
 	}
 

@@ -17,6 +17,7 @@ struct attr_group
     container	*hide;
     char 	flags;
     enum attr_sort_enum	sort;
+    int		max_items;
 };
 
 struct attr_select

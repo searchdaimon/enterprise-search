@@ -1108,6 +1108,7 @@ struct _attr_tree_
     int		hits;
     enum attr_sort_enum sort;
     char	sort_reverse, free_name, free_value;
+    int		max_items;
 };
 
 struct _attr_ret_
@@ -1144,6 +1145,7 @@ struct _attr_tree_* _attribute_tree_malloc_()
     this_item->show_empty = 0;
     this_item->sort = sort_none;
     this_item->sort_reverse = 0;
+    this_item->max_items = -1;
 
     return this_item;
 }
@@ -1370,6 +1372,7 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 			    this_item->expanded = G->flags & is_expanded;
 			    this_item->sort = G->sort;
 			    this_item->sort_reverse = G->flags & sort_reverse;
+			    this_item->max_items = G->max_items;
 
 			    (*container_id)++; // NB! Will fail miserably for recursive container-groups.
 			    this_item->container_id = *container_id;
@@ -1706,7 +1709,7 @@ void _attribute_sort_items_(container **X, enum attr_sort_enum sort, char sort_r
 }
 
 
-void _attribute_print_and_delete_tree_(buffer *bout, container *X, int indent)
+void _attribute_print_and_delete_tree_(buffer *bout, container *X, int indent, int max_items)
 {
     if (X==NULL) return;
 
@@ -1720,7 +1723,7 @@ void _attribute_print_and_delete_tree_(buffer *bout, container *X, int indent)
 		{
 		    if (item->children!=NULL)
 			{
-			    _attribute_print_and_delete_tree_(bout, item->children, -1);
+			    _attribute_print_and_delete_tree_(bout, item->children, -1, item->max_items);
 			}
 
 		    if (item->free_value) free(item->value);
@@ -1732,97 +1735,40 @@ void _attribute_print_and_delete_tree_(buffer *bout, container *X, int indent)
 		    continue;
 		}
 
-	    for (j=0; j<indent; j++) bprintf(bout, " ");
 
-	    if (item->children!=NULL) bprintf(bout, "<group");
-	    else bprintf(bout, "<item");
-
-	    /*
-	    char	*key=NULL, *value=NULL, *name=NULL, *icon=NULL;
-	    char	free_value = 0;
-
-	    if (item->query_param!=NULL && vector_size(item->query_param)>0)
+	    if (max_items > 0 && i>=max_items)
 		{
-		    int		key_type = 0;
-
-		    if (!strcasecmp((char*)vector_get(item->query_param,0).ptr, "group"))
+		    if (i==max_items)
 			{
-			    if (vector_size(item->query_param)==3)
-				{
-				    key_type = 1;
-				    key = "filetype";
-				    value = (char*)vector_get(item->query_param,2).ptr;
-				}
-			    else if (vector_size(item->query_param)==2)
-				{
-				    key_type = 2;
-				    key = "group";
-				    value = (char*)vector_get(item->query_param,1).ptr;
-				}
-			}
-		    else if (!strcasecmp((char*)vector_get(item->query_param,0).ptr, "filetype"))
-			{
-			    if (vector_size(item->query_param)==2)
-				{
-				    key_type = 1;
-				    key = "filetype";
-				    value = (char*)vector_get(item->query_param,1).ptr;
-				}
-			}
-		    else
-			{
-			    key = (char*)vector_get(item->query_param, 0).ptr;
-			    if (vector_size(item->query_param)>1)
-				{
-				    buffer	*vb = buffer_init(-1);
-
-				    bprintf(vb, "%s", (char*)vector_get(item->query_param, 1).ptr);
-				    for (j=2; j<vector_size(item->query_param); j++)
-					bprintf(vb, "/%s", (char*)vector_get(item->query_param, j).ptr);
-
-				    value = buffer_exit(vb);
-				    free_value = 1;
-				}
-			}
-
-		    if (key_type == 1 && value!=NULL) //filetype
-			{
-			    char	*group;
-			    fte_getdescription(getfiletypep, "nbo", value, &group, &name, &icon);
-			}
-		    else if (key_type == 2 && value!=NULL) //group
-			{
-			    fte_groupid(getfiletypep, "nbo", value, &icon);
-			}
-		    else if (key!=NULL) //attribute
-			{
-			    attribute_description(attrdescrp, key, value, &name, &icon);
+			    for (j=0; j<indent; j++) bprintf(bout, " ");
+			    bprintf(bout, "<item name=\'...\' />\n");
 			}
 		}
-
-	    if (item->name!=NULL) name = item->name;
-	    else if (name == NULL && value!=NULL) name = value;
-	    else if (name == NULL) name = key;
-	    */
-
-	    if (item->key!=NULL) bprintf(bout, " key=\'%s\'", item->key);
-	    if (item->value!=NULL) bprintf(bout, " value=\'%s\'", item->value);
-	    if (item->name!=NULL) bprintf(bout, " name=\'%s\'", item->name);
-	    if (item->icon!=NULL) bprintf(bout, " icon=\'%s\'", item->icon);
-
-	    if (item->querystr!=NULL) bprintf(bout, " query=\'%s\'", item->querystr);
-	    if (item->selected >= 0) bprintf(bout, " selected=\'true\'");
-	    bprintf(bout, " expanded=\'%s\'", item->selected_descendant || item->expanded ? "true":"false");
-	    if (item->container_id == 0) bprintf(bout, " hits=\'%i\'", item->hits);
-
-	    if (item->children!=NULL)
+	    else
 		{
-		    bprintf(bout, ">\n");
-		    _attribute_print_and_delete_tree_(bout, item->children, indent+4);
 		    for (j=0; j<indent; j++) bprintf(bout, " ");
-		    bprintf(bout, "</group>\n");
+		    if (item->children!=NULL) bprintf(bout, "<group");
+		    else bprintf(bout, "<item");
+
+		    if (item->key!=NULL) bprintf(bout, " key=\'%s\'", item->key);
+		    if (item->value!=NULL) bprintf(bout, " value=\'%s\'", item->value);
+		    if (item->name!=NULL) bprintf(bout, " name=\'%s\'", item->name);
+		    if (item->icon!=NULL) bprintf(bout, " icon=\'%s\'", item->icon);
+
+		    if (item->querystr!=NULL) bprintf(bout, " query=\'%s\'", item->querystr);
+		    if (item->selected >= 0) bprintf(bout, " selected=\'true\'");
+		    bprintf(bout, " expanded=\'%s\'", item->selected_descendant || item->expanded ? "true":"false");
+		    if (item->container_id == 0) bprintf(bout, " hits=\'%i\'", item->hits);
+
+		    if (item->children!=NULL)
+			{
+			    bprintf(bout, ">\n");
+			    _attribute_print_and_delete_tree_(bout, item->children, indent+4, item->max_items);
+			    for (j=0; j<indent; j++) bprintf(bout, " ");
+			    bprintf(bout, "</group>\n");
+			}
+		    else bprintf(bout, " />\n");
 		}
-	    else bprintf(bout, " />\n");
 
 	    if (item->free_value) free(item->value);
 	    if (item->free_name) free(item->name);
@@ -1940,7 +1886,7 @@ char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf 
     bsprint_query_with_remove(bout, NULL, qa);
     bprintf(bout, "\'>\n");
 
-    _attribute_print_and_delete_tree_(bout, ret.C, 4);
+    _attribute_print_and_delete_tree_(bout, ret.C, 4, showattrp->max_items);
 
     //bprintf(bout, "</navigation>\n");	// Denne legges på i dispatcher, sammen med dato-feltet.
 
