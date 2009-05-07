@@ -74,6 +74,7 @@
 	[% END %]
 	<!-- item -->
 	<li>&nbsp;[% "<strong>" IF i.selected %] 
+	    [% IF i.query %]
 		<span>[% icon %]<a href="[% i.query | query_url %]">[% i.name | html %]</a>
 		 </span>[% "</strong>" IF i.selected %]
 
@@ -81,6 +82,9 @@
 		 	s="1 hits";
 			s.i18n(i.hits)
 		%])</span>
+	    [% ELSE %]
+		<span>[% i.name %]</span>
+	    [% END %]
 	</li>
 	<!-- end item -->
 [% END %]
