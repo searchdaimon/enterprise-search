@@ -2,7 +2,7 @@
 
 [% BLOCK filter_icon %]
 	<a href="[% q | query_url %]" class="filterIcon"><img 
-		src="img/common/viewmag.png" alt="[% alt || "All documents with attribute" %]" />
+		src="img/common/viewmag.gif" alt="[% alt || "All documents with attribute" %]" />
 	</a>
 [% END %]
 

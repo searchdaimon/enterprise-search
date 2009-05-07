@@ -63,10 +63,10 @@
 */
 
 .treeview-gray li { 
-	background-image: url(../../img/common/tree/treeview-gray-line.png); 
+	background-image: url(../../img/common/tree/treeview-gray-line.gif); 
 }
 .treeview-gray .hitarea, .treeview-gray li.lastCollapsable, .treeview-gray li.lastExpandable { 
-	background-image: url(../../img/common/tree/treeview-gray.png); 
+	background-image: url(../../img/common/tree/treeview-gray.gif); 
 } 
 
 /*

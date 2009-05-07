@@ -89,7 +89,7 @@ A:active { color : blue; }
 <body>
 <center>
 <div>
-<img src="img/common/logo_smaller.png" alt="Searchdaimon" title="Searchdaimon" />
+<img src="img/common/logo_smaller.gif" alt="Searchdaimon" title="Searchdaimon" />
 <form action="#" method="get">
 	<table><tr>
 		<td>
