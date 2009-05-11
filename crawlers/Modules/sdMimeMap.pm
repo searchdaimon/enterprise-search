@@ -296,6 +296,7 @@ my %types =
 	"text/iuls" => "uls",
 	"text/mathml" => "mml",
 	"text/plain" => "txt",
+	"text/txt" => "txt",
 	"text/richtext" => "rtx",
 	"text/scriptlet" => "sct",
 	"text/texmacs" => "tm",
@@ -349,6 +350,7 @@ my %types =
 	"x-epoc/x-sisx-app" => "sisx",
 	"x-world/x-vrml" => "vrm"
 );
+
 
 sub mapMimeType {
    my $mt = $_[0];
