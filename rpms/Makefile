@@ -14,7 +14,7 @@ boitho-searchdbb_name = boitho-searchdbb
 boitho-searchdbb_version = 5.5.92
 
 boitho-crawlManager_name = boitho-crawlManager
-boitho-crawlManager_version = 1.4.72
+boitho-crawlManager_version = 1.4.73
 
 boitho-boitho-bbdn_name = boitho-bbdn
 boitho-boitho-bbdn_version = 1.8.28
@@ -59,7 +59,7 @@ boithobb-licensekey_name = boithobb-licensekey
 boithobb-licensekey_version = 1.0.0
 
 boithobb-filepermissions_name = boithobb-filepermissions
-boithobb-filepermissions_version = 0.5.7
+boithobb-filepermissions_version = 0.5.8
 
 boithobb-database_name = boitho-database
 boithobb-database_version = 0.2
