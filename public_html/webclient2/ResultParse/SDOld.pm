@@ -227,7 +227,8 @@ sub _filteradd {
 	my ($s, $query, $remove_filter, @add) = @_;
 
 	if ($remove_filter) {
-		$query =~ s/\b\Q$remove_filter\E:"?((?:\w| )+)"?(?:\Z|\s)//g;
+		#$query =~ s/\b\Q$remove_filter\E:"?((?:\w| )+)"?(?:\Z|\s)//g;
+		$query =~ s/\b\Q$remove_filter\E\s*:\s*(\"[^\"]*\"|[^\s]*)//g;
 		$query =~ s/^\s+|\s+$//g;
 	}
 
