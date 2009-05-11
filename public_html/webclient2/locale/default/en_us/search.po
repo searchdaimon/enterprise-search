@@ -119,7 +119,7 @@ msgstr "Did you mean: <a href=\"%2\">%1</a>?"
 
 # footer
 msgid "(copyright)"
-msgstr "Copyright &copy; 2008."
+msgstr "Copyright &copy; "
 
 msgid "Searchdaimon AS"
 msgstr "Searchdaimon AS"
