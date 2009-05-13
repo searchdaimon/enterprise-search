@@ -1,5 +1,5 @@
 %define name boitho-phonehome
-%define version 0.9
+%define version 0.13
 %define release 1
 
 Summary: Boitho phone home, includes ssh keys for password less login and config files.
@@ -67,8 +67,8 @@ chmod 700 /home/phonehome/.ssh
 
 if [ ! -f /home/boitho/boithoTools/var/phonehome.state ]; then
 	echo dead > /home/boitho/boithoTools/var/phonehome.state
-	chown phonehome /home/boitho/boithoTools/var/phonehome.state
 fi
+chown phonehome /home/boitho/boithoTools/var/phonehome.state
 
 touch /home/boitho/boithoTools/var/bb-phone-home-keepalive-pid-file
 chown phonehome /home/boitho/boithoTools/var/bb-phone-home-keepalive-pid-file
