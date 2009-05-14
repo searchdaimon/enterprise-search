@@ -66,8 +66,8 @@ wchar_t *
 dmetaphone(wchar_t *word)
 {
 	size_t len = wcslen(word);
-	wchar_t *_w = malloc((len+10) * sizeof(wchar_t)), *w;
-	wchar_t *p = malloc((len+10) * sizeof(wchar_t));
+	wchar_t *_w = malloc((2*len+10) * sizeof(wchar_t)), *w;
+	wchar_t *p = malloc((2*len+10) * sizeof(wchar_t));
 	wchar_t *p2 = p;
 	int offset = 0;
 	int last = len - 1;
@@ -77,8 +77,8 @@ dmetaphone(wchar_t *word)
 		return w[i];
 	}
 
-	memset(_w, '\0', (len+10) * sizeof(wchar_t));
-	memset(p, '\0', (len+10) * sizeof(wchar_t));
+	memset(_w, '\0', (2*len+10) * sizeof(wchar_t));
+	memset(p, '\0', (2*len+10) * sizeof(wchar_t));
 	//p2 += 4;
 
 	w = _w + 4;
@@ -812,7 +812,7 @@ dmetaphone(wchar_t *word)
 	}
 
 
-	DMPAdd(p2, '\0');
+	DMPAdd(p2, L'\0');
 
 	free(_w);
 
@@ -836,10 +836,15 @@ int
 main(int argc, char **argv)
 {
 	int i;
+	wchar_t buf[2048];
 
+#if 0
 	for (i = 1; i < argc; i++) {
-		dmp_test(argv[i]);
+		mbtowc(buf, argv[i], sizeof(buf));
+		dmp_test(buf);
 	}
+#endif
+	dmp_test(L"zxzxzxzxzxzxzxzxzxzxz");
 
 	return 0;
 }
