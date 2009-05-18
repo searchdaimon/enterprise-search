@@ -53,7 +53,9 @@ sub fetch_attachments {
 		}
 		push @attachments, [$suffix, $fn];
 		open(my $wf, "> $fn") || die "$fn: $!";
-		print $wf $_->body;
+		eval {
+			print $wf $_->body;
+		};
 		close $wf;
 	}
 
