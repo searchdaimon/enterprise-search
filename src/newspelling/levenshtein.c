@@ -17,12 +17,27 @@ min3(int a, int b, int c)
 	return min;
 }
 int
-levenshteindistance(wchar_t *s1, wchar_t *s2)
+levenshteindistance(wchar_t *_s1, wchar_t *_s2)
 {
-	int l1 = wcslen(s1);
-	int l2 = wcslen(s2);
-	int d[l1+1][l2+1], i, j;
+	int l1, l2;
 	int cost;
+	wchar_t *s1, *s2;
+
+	s1 = _s1;
+	s2 = _s2;
+	while ((*s1) == (*s2) && *s2 != '\0' && *s1 != '\0') {
+		s1++;
+		s2++;
+	}
+
+	l1 = wcslen(s1);
+	l2 = wcslen(s2);
+	while (s1[l1-1] == s2[l2-2] && l1 > 0 && l2 > 0) {
+		l1--;
+		l2--;
+	}
+
+	int d[l1+1][l2+1], i, j;
 
 	//printf("Checking: %ls %ls\n", s1, s2);
 
@@ -37,7 +52,7 @@ levenshteindistance(wchar_t *s1, wchar_t *s2)
 				cost = 0;
 			else
 				cost = 1;
-			d[i][j] = min3(
+			d[i][j] = MIN3(
 				d[i-1][j] + 1,	// deletion
 				d[i][j-1] + 1,	// insertion
 				d[i-1][j-1] + cost // substituion
