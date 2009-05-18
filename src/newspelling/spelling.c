@@ -334,7 +334,22 @@ check_soundslike(spelling_t *s, scache_t *c,  wchar_t *wword, wchar_t *like, wch
 	container *list;
 	//struct hashtable_itr *itr;
 	iterator itr;
+	struct hashtable_itr *hitr;
 
+	/* Already seen this */
+	if (hashtable_search(c, like))
+		return;
+
+#if 0
+	printf("hashtable count: %d\n", hashtable_count(c));
+	hitr = hashtable_iterator(c);
+	if (hashtable_count(c) > 0) {
+		do {
+			wchar_t *a = hashtable_iterator_key(hitr);
+			printf("Word: %ls\n", a);
+		} while (hashtable_iterator_advance(hitr));
+	}
+#endif
 
 	list = hashtable_search(s->soundslike, like);
 	if (list == NULL) {
@@ -427,7 +442,7 @@ main(int argc, char **argv)
 
 	setlocale(LC_ALL, "en_US.UTF-8");
 
-	train(&s, "/home/eirik/wordlist-100freq.2");
+	train(&s, "/home/eirik/wordlist-100freq");
 	//train(&s, "/home/eirik/Boitho/boitho/websearch/var/dictionarywords");
 
 #if 0
