@@ -17,13 +17,15 @@
 #include "../3pLibs/keyValueHash/hashtable.h"
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
 
+#define MAX_PREOPEM_FILE 300
+
 void
 preopen(void)
 {
 	int i;
         DIR *dirh;
 	FILE *FH;
-
+	int count = 0;
 
 	reclose_cache();
 	
@@ -33,7 +35,7 @@ preopen(void)
 	}
  
         char * subname;
-        while ((subname = listAllColl_next(dirh)) != NULL) {
+	while (((subname = listAllColl_next(dirh)) != NULL) && (count < MAX_PREOPEM_FILE)) {
                 vboprintf("subname: %s\n", subname);
 		for(i=1;i<maxLots;i++) {
 			// vi åpner kun lotter som har DocumentIndex. Dette er spesielt viktig da vi oppretter 
@@ -46,9 +48,20 @@ preopen(void)
 			reopen_cache(i,sizeof(unsigned int), "crc32map",subname,RE_READ_ONLY|RE_POPULATE|RE_CREATE_AND_STRETCH);
 
 			fclose(FH);
+
+			if (count > MAX_PREOPEM_FILE) {
+				break;
+			}
+			// +3 da vi øker med filtypes, dates, og crc32map
+			count += 3;
 		}	
 	}
         listAllColl_close(dirh);
+
+
+	if (count >= MAX_PREOPEM_FILE) {
+		printf("can't preopen any more. Did hit MAX_PREOPEM limit of %d files\n", MAX_PREOPEM_FILE);
+	}
 }
 
 pthread_mutex_t index_cache_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -254,12 +267,15 @@ cache_indexes(void)
 			char name[2048];
 			int j;
 
+
 			for (j = 0; types[j] != NULL; j++) {
 				GetFilePathForIindex(path, name, i, types[j], "aa", coll);
 				cache_indexes_handle(name, cached);
 				GetFilePathForIDictionary(path, name, i, types[j], "aa", coll);
 				cache_indexes_handle(name, cached);
 			}
+
+			
 		}
 	}
 	listAllColl_close(colls);
