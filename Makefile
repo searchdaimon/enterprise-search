@@ -43,7 +43,7 @@ PERLEMBED = src/perlembed/libperlembed.a -rdynamic `perl -MExtUtils::Embed -e cc
 #BDB = -I/usr/include/db4 /usr/lib/libdb-4.6.a -lpthread
 #MYSQL = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
 #CC+=-m32
-#PERLEMBED = src/perlembed/libperlembed.a -rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE  /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl 
+#PERLEMBED = lib/libperlembed.a -rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE  /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl 
 
 #SMBCLIENT=-lsmbclient
 #skrur dette på igjen. Brukte det og segfeile når vi hadde det med statisk?
@@ -1126,9 +1126,10 @@ crawlManager: src/crawlManager/main.c
 crawlManager2: src/crawlManager2/main.c
 	@echo ""
 	@echo "$@:"
+	(cd src/crawlManager2; make clean all)
 #<<<<<<< Makefile
-	#$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c  src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a
-	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/key/key.c src/crawlManager2/shortenurl.c src/crawlManager2/usersystem.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a 
+	@#$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c  src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a
+	@#$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/key/key.c src/crawlManager2/shortenurl.c src/crawlManager2/usersystem.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a 
 #=======
 
 	#$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/key/key.c src/crawlManager2/shortenurl.c src/crawlManager2/usersystem.c src/perlembed/perlembed.c src/perlembed/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
