@@ -174,7 +174,7 @@ cache_indexes_handle(char *path, size_t *cached)
 	if (stat(path, &st) == -1)
 		return 0;
 
-	if (cached[0] + st.st_size > MAX_INDEX_CACHE && 0)
+	if (cached[0] + st.st_size > MAX_INDEX_CACHE)
 		return 0;
 	vboprintf("Found index: %s\n", path);
 	fd = open(path, O_RDONLY);
