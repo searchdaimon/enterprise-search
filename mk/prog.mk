@@ -13,8 +13,8 @@ LDFLAGS+=	/usr/local/lib/libconfig.a
 endif
 
 ifdef WANT_MYSQL
-LDFLAGS+=	/usr/lib/mysql/libmysqlclient.a
-CFLAGS+=	-I/usr/include/mysql
+LDFLAGS+=	$(MYSQL_LIB)
+CFLAGS+=	$(MYSQL_INC)
 endif
 
 ifdef WANT_LIBXML
