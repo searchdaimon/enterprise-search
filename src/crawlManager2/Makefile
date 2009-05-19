@@ -1,2 +1,28 @@
-shortenurl: shortenurl.c
-	gcc -m32 -g -o shortenurl shortenurl.c -DWITH_SHORTENURL_MAIN ../../lib/libcommon.a -lz -lm -W -Wall
+#shortenurl: shortenurl.c
+#	gcc -g shortenurl.c -DWITH_SHORTENURL_MAIN -o shortenurl ../common/*.c -W -Wall -lz -lm
+
+
+VPATH=	.:../acls:../maincfg:../key:../crawl:../boitho-bbdn/:../boithoadClientLib:../bbdocument
+
+WANT_COMMON=	true
+WANT_DS=	true
+WANT_LIBCONFIG=	true
+WANT_HASHTABLE=	true
+WANT_BASE64=	true
+WANT_BDB=	true
+WANT_PERLEMBED=	true
+WANT_MYSQL=	true
+
+PROG=	crawlManager2
+
+CFLAGS?=	
+
+CFLAGS+=	-DATTRIBUTES -D_FILE_OFFSET_BITS=64 -DNO_64_BIT_DIV -DIIACL -DBLACK_BOKS -D_REENTRANT \
+		-DNO_REUSEADDR -DWITH_CONFIG
+
+LDFLAGS+=	-lm -lz 
+		
+OBJS=	bbdnclient.o maincfg.o acls.o bbdocument.o bbfilters.o shortenurl.o usersystem.o main.o boithoadClientLib.o crawl.o key.o perlcrawl.o
+
+
+include ../../mk/prog.mk
