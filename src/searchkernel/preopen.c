@@ -3,10 +3,14 @@
 	runarb: 15 ja. Dette var en test av om å preåpne re filer ville øke ytelsen. Det ble ingen forskjell.
 */
 
+#include <sys/file.h>
+
 #include <stdio.h>
 #include <dirent.h>
 #include <err.h>
 #include <pthread.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "../common/lot.h"
 #include "../common/re.h"
@@ -60,7 +64,7 @@ preopen(void)
 
 
 	if (count >= MAX_PREOPEM_FILE) {
-		printf("can't preopen any more. Did hit MAX_PREOPEM limit of %d files\n", MAX_PREOPEM_FILE);
+		warnx("can't preopen any more. Did hit MAX_PREOPEM limit of %d files", MAX_PREOPEM_FILE);
 	}
 }
 
@@ -139,7 +143,7 @@ cache_fresh_lot_collection(void)
 
 	/* We only look at the first 5 lots */
         if ((colls = listAllColl_start()) == NULL) {
-		printf("Can't listAllColl_start()\n");
+		warnx("Can't listAllColl_start()");
                 return;
 	}
 
@@ -178,7 +182,7 @@ static size_t
 cache_indexes_handle(char *path, size_t *cached)
 {
 	int fd;
-	indexcache_t *ic;
+	indexcache_t *ic, *icold;
 	void *ptr;
 	char *p;
 	size_t len;
@@ -196,8 +200,8 @@ cache_indexes_handle(char *path, size_t *cached)
 		return 0;
 	}
 	if (st.st_size == 0) {
-#if 1
-		/* XXX: Not sure about this, will empty iindexes ever be opnened during search? */
+#if 0
+		/* XXX: Not sure about this, will empty iindexes ever be opened during search? */
 		ic = malloc(sizeof(*ic));
 		ic->size = 0;
 		ic->ptr = NULL;
@@ -229,13 +233,50 @@ cache_indexes_handle(char *path, size_t *cached)
 	memcpy(p, path, len);
 	p[len] = '\0';
 
-	hashtable_insert(indexcachehash, p, ic);
+	icold = hashtable_search(indexcachehash, p);
+	if (icold != NULL) {
+		munmap(icold->ptr, icold->size);
+		icold->ptr = ic->ptr;
+		icold->size = ic->size;
+		free(ic);
+		free(p);
+	} else {
+		hashtable_insert(indexcachehash, p, ic);
+	}
 
 	return 1;
 }
 
 void
-cache_indexes(void)
+cache_indexes_collection(char *coll)
+{
+	int i;
+	size_t *cached;
+
+	cached = indexcachescached;
+	for (i = 0; i <= NrOfDataDirectorys; i++) {
+		char *types[] = {
+			"Main",
+			"acl_allow",
+			"acl_denied",
+			"attributes",
+			NULL,
+		};
+		char path[2048];
+		char name[2048];
+		int j;
+
+		for (j = 0; types[j] != NULL; j++) {
+			GetFilePathForIindex(path, name, i, types[j], "aa", coll);
+			cache_indexes_handle(name, cached);
+			GetFilePathForIDictionary(path, name, i, types[j], "aa", coll);
+			cache_indexes_handle(name, cached);
+		}
+	}
+}
+
+void
+cache_indexes_all(void)
 {
 	DIR *dirp;
 	size_t len;
@@ -243,6 +284,22 @@ cache_indexes(void)
 	size_t *cached;
 	DIR *colls;
 	char *coll;
+	FILE *fp;
+	char collpath[2048];
+
+	lot_get_closed_collections_file(collpath);
+	if ((fp = fopen(collpath, "r+")) == NULL) {
+		warn("Unable to open collection list: fopen(%s)", collpath);
+	} else {
+		flock(fileno(fp), LOCK_EX);
+		ftruncate(fileno(fp), 0);
+		flock(fileno(fp), LOCK_UN);
+		/*
+		 * Release the lock, so that indexes updated while running the
+		 * cache step will not block. We can recache it later.
+		 */ 
+		fclose(fp);
+	}
 
 	cached = indexcachescached;
 	indexcachehash = create_hashtable(1023, ht_stringhash, ht_stringcmp);
@@ -255,30 +312,48 @@ cache_indexes(void)
 	}
 
 	while ((coll = listAllColl_next(colls))) {
-		for (i = 0; i <= NrOfDataDirectorys; i++) {
-			char *types[] = {
-				"Main",
-				"acl_allow",
-				"acl_denied",
-				"attributes",
-				NULL,
-			};
-			char path[2048];
-			char name[2048];
-			int j;
-
-
-			for (j = 0; types[j] != NULL; j++) {
-				GetFilePathForIindex(path, name, i, types[j], "aa", coll);
-				cache_indexes_handle(name, cached);
-				GetFilePathForIDictionary(path, name, i, types[j], "aa", coll);
-				cache_indexes_handle(name, cached);
-			}
-
-			
-		}
+		cache_indexes_collection(coll);
 	}
 	listAllColl_close(colls);
+
+
+}
+
+void
+cache_indexes(int action)
+{
+	if (action == 0) { /* All collections */
+		cache_indexes_all();
+	} else if (action == 1) {
+		if (indexcachehash == NULL) {
+			warnx("Unable to run an incremental index cache when there has not been done a full one");
+		} else {
+			FILE *fp;
+			char collpath[2048];
+
+			lot_get_closed_collections_file(collpath);
+			if ((fp = fopen(collpath, "r+")) == NULL) {
+				warn("Unable to open collection list: fopen(%s)", collpath);
+			} else {
+				char line[2048];
+
+				flock(fileno(fp), LOCK_EX);
+
+				while (fgets(line, sizeof(line), fp) != NULL) {
+					line[strlen(line)-1] = '\0'; /* Remove trailing newline */
+					printf("Got updated collection: %s\n", line);
+					cache_indexes_collection(line);
+				}
+				
+				ftruncate(fileno(fp), 0);
+				flock(fileno(fp), LOCK_UN);
+				fclose(fp);
+				puts("done");
+			}
+		}
+	} else {
+		warnx("Unknown cache index action: %d", action);
+	}
 }
 
 static void *
@@ -291,12 +366,13 @@ cache_indexes_keepalive_thread(void *dummy)
 
 		// Refresh cache
 		printf("Refreshing index cache...\n");
-		cache_indexes_empty();
-		cache_indexes();
+		/* We do incremental caching now */
+		/*cache_indexes_empty();*/
+		cache_indexes(1);
 		// Preopen some other files
 		preopen();
 		// Lot directories
-		cache_fresh_lot_collection();
+		/*cache_fresh_lot_collection();*/
 		pthread_mutex_unlock(&index_cache_lock);
 
 	}

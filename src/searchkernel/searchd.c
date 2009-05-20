@@ -254,7 +254,7 @@ int main(int argc, char *argv[])
 	if (searchd_config.optCacheIndexes == 1) {
 		if (searchd_config.optFastStartup != 1) {
 			printf("Reading indexes...\n");
-			cache_indexes();
+			cache_indexes(0);
 			printf("Cached indexes: %dMB, cached indexes: %d\n", indexcachescached[0]/(1024*1024), indexcachescached[1]);
 			preopen();
 			cache_fresh_lot_collection();
