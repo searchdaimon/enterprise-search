@@ -24,6 +24,16 @@
             blocks => [share.connector_name],
             icon   => 'yast_nfs_32',
         },
+	alias => {
+		header	=> 'Share alias',
+		blocks	=> ['alias'],
+		icon	=> 'kdmconfig',
+	},
+	anonymous => {
+		header	=> 'Anonymous collection',
+		blocks	=> ['anonymous'],
+		icon	=> 'kdmconfig',
+	},
         crawling => {
             header => 'Crawling behaviour',
             blocks => ['active', 'rate'],

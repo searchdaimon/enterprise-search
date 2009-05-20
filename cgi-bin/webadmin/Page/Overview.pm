@@ -186,6 +186,12 @@ sub submit_edit {
         $dataColl->set_auth($share->{username}, $share->{password});
     }
 
+    if ($attr{without_aclcheck}) {
+	$sqlShares->set_without_aclcheck($share->{id}, 1);
+    } else {
+	$sqlShares->set_without_aclcheck($share->{id}, undef);
+    }
+
     # Continue with the submit.
     $dataColl->update();
 

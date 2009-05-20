@@ -19,7 +19,8 @@ my $sqlAuth;
 # Fields in db table shares.
 Readonly::Array our @FIELDS => qw(host connector active success system
 		last rate query1 query2
-		smb_name smb_workgroup resource domain collection_name auth_id userprefix);
+		smb_name smb_workgroup resource domain collection_name auth_id userprefix
+		alias);
 
 sub _init {
 	my $self = shift;
@@ -192,6 +193,25 @@ sub set_active {
 		WHERE id = ?";
 	
 	return $self->sql_update($query, 1, $id);
+}
+
+##
+# Set a collection to have no aclchecking done
+#
+# Attributes:
+# 	id - collection id
+# 	unset - true if without_aclcheck should be unset
+sub set_without_aclcheck {
+	my $self = shift;
+	my $id = shift;
+	my $unset = shift;
+
+	$unset = 0 unless $unset;
+	my $query = "UPDATE shares
+		SET without_aclcheck = ?
+		WHERE id = ?";
+	
+	return $self->sql_update($query, $unset, $id);
 }
 
 ##

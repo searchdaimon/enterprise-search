@@ -422,5 +422,25 @@
 	</table>
 </div>
 
+
+[% END %]
+
+[% BLOCK anonymous %]
+	<div class="block_default">
+	Enable anonymous search:
+		<div class="block_inner" >
+			<input type="checkbox" name="[% prefix %].without_aclcheck"
+				[% IF share.without_aclcheck %] checked="checked" [% END %] />
+		</div>
+	</div>
+[% END %]
+
+[% BLOCK alias %]
+	<div class="block_default">
+	Share alias:
+		<div class="block_inner" >
+			<input type="text" name="[% prefix %].alias" value="[% share.alias %]" />
+		</div>
+	</div>
 [% END %]
 
