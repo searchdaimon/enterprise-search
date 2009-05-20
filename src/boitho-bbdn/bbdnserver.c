@@ -1,3 +1,4 @@
+#include <sys/file.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -5,6 +6,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <inttypes.h>
+#include <signal.h>
 
 #include "../common/boithohome.h"
 #include "../common/define.h"
@@ -13,7 +15,9 @@
 #include "../maincfg/maincfg.h"
 #include "../common/timediff.h"
 #include "../common/lot.h"
+#include "../common/re.h"
 #include "../common/gcwhisper.h"
+#include "../common/reposetory.h"
 
 #include "bbdn.h"
 
@@ -49,7 +53,7 @@ void connectHandler(int socket) {
 	int i,n;
 	int intrespons;
 	int count = 0;
-	container *attrkeys;
+	container *attrkeys = NULL;
 
         #ifdef DEBUG_TIME
       		struct timeval start_time, end_time;
@@ -64,6 +68,10 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 	#endif
 	packedHedder.size = packedHedder.size - sizeof(packedHedder);
 
+	if (attrkeys == NULL) {
+		attrkeys = ropen();
+	}
+
 	if (packedHedder.command == bbc_askToAuthenticate) {
 		if ((i=recv(socket, tkeyForTest, sizeof(tkeyForTest),MSG_WAITALL)) == -1) {
         	    perror("Cant read tkeyForTest");
@@ -73,7 +81,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			printf("authenticated\n");
 			intrespons = bbc_authenticate_ok;
 
-			bbdocument_init(&attrkeys);
+			bbdocument_init(NULL);
 
 			isAuthenticated = 1;
 		}
@@ -262,6 +270,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
                         }
 
 			bbdocument_close(attrkeys);
+			attrkeys = NULL;
 
 			//toDo må bruke subname, og C ikke perl her
 			printf("cleanin lots start\n");
@@ -273,6 +282,38 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			system(command);
 			printf("cleanin lots end\n");
 
+			{
+				char collpath[LINE_MAX];
+				FILE *fp;
+
+				lot_get_closed_collections_file(collpath);
+				fp = fopen(collpath, "a");
+				if (fp == NULL) {
+					warn("fopen(%s, append)", collpath);
+				} else {
+					flock(fileno(fp), LOCK_EX);
+					fseek(fp, 0, SEEK_END);
+					fprintf(fp, "%s\n", subname);
+					flock(fileno(fp), LOCK_UN);
+					fclose(fp);
+				}
+			}
+
+			{
+				int pid;
+				char pidpath[LINE_MAX];
+				FILE *fp;
+
+				sbfile(pidpath, "var/searchd.pid");
+				if ((fp = fopen(pidpath, "r")) == NULL) {
+					warn("Unable to open pidfile for searchdbb: fopen(%s)", pidpath);
+				} else {
+					fscanf(fp, "%d", &pid);
+					kill(pid, SIGUSR2);
+					fclose(fp);
+				}
+
+			}
 			
 		}
 		else if (packedHedder.command == bbc_deleteuri) {
@@ -302,27 +343,48 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 
 			printf("going to delete: %s from %s\n", uri, subname);
 
-			bbdocument_delete(uri, subname);
 			/* Add docid to the gced file */
 			{
 				FILE *fh;
 				unsigned int DocID, lastmodified;
 				unsigned int lotNr;
+				int err = 0;
 
 				if (uriindex_get(uri, &DocID, &lastmodified, subname) == 0) {
 					perror("Unable to get uri info");
-					exit(1);
+					err++;
 				}
+				if (!err) {
+					lotNr = rLotForDOCid(DocID);
 
-				lotNr = rLotForDOCid(DocID);
-
-				if ((fh = lotOpenFileNoCasheByLotNr(lotNr,"gced","a", 'e',subname)) == NULL) {
-					perror("can't open gced file");
-					exit(1);
+					if ((fh = lotOpenFileNoCasheByLotNr(lotNr,"gced","a", 'e',subname)) == NULL) {
+						perror("can't open gced file");
+						err++;
+					} else {
+						fwrite(&DocID, sizeof(DocID), 1, fh);
+						fclose(fh);
+					}
 				}
+				if (!err) {
+					struct reformat *re;
 
-				fwrite(&DocID, sizeof(DocID), 1, fh);
-				fclose(fh);
+					if((re = reopen(rLotForDOCid(DocID), sizeof(struct DocumentIndexFormat), "DocumentIndex", subname, RE_HAVE_4_BYTES_VERSION_PREFIX)) == NULL) {
+						perror("can't reopen()");
+						err++;
+					} else {
+						DIS_delete(RE_DocumentIndex(re, DocID));
+						reclose(re);
+					}
+				}
+				//markerer at den er skitten
+				if (!err) {
+					FILE *dirtfh;
+					dirtfh = lotOpenFileNoCashe(DocID,"dirty","ab",'e',subname);
+					fwrite("1",1,1,dirtfh);
+					fclose(dirtfh);
+				}
+				if (err == 0) 
+					bbdocument_delete(uri, subname);
 			}
 			free(subname);
 		}
@@ -360,7 +422,6 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 
 
 }
-
 
         #ifdef DEBUG_TIME
                 gettimeofday(&tot_end_time, NULL);
