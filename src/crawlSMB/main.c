@@ -153,6 +153,8 @@ int crawlupdate(struct collectionFormat *collection,
 int
 smb_rewrite_url(struct collectionFormat *collection, char *url, char *uri, char *fulluri, size_t len, enum platform_type ptype, enum browser_type btype)
 {
+	int valid_alias;
+
 	printf("smb_rewrite_url1: raw url: \"%s\"\n",url);
 	smbc_urldecode( url, url, strlen(url)+1 );
 	cleanresourceUnixToWin(url);
@@ -160,7 +162,11 @@ smb_rewrite_url(struct collectionFormat *collection, char *url, char *uri, char 
 
 	char *tmpurl = strdup(url+7);
 
-	//printf("Alias? %s\n", collection->alias ? collection->alias : "no alias");
+	if (collection->alias && collection->alias[0])
+		valid_alias = 1;
+	else
+		valid_alias = 0;
+
 
 	if (ptype == MAC) {
 		int i;
@@ -170,7 +176,7 @@ smb_rewrite_url(struct collectionFormat *collection, char *url, char *uri, char 
 				tmpurl[i] = '/';
 
 		sprintf(url, "sdsmb://%s", tmpurl);
-		if (collection->alias) {
+		if (valid_alias) {
 			sprintf(fulluri, "%s/%s", collection->alias, tmpurl);
 		} else {
 			sprintf(fulluri, "sdsmb://%s", tmpurl);
@@ -189,7 +195,7 @@ smb_rewrite_url(struct collectionFormat *collection, char *url, char *uri, char 
 		{
 			char *p2, *p3;
 			/* Go beyond file://ip/sharename/ */
-			if (p != NULL && (p2 = strchr(p, '\\')) && (p3 = strchr(p2+1, '\\')) && collection->alias) {
+			if (p != NULL && (p2 = strchr(p, '\\')) && (p3 = strchr(p2+1, '\\')) && valid_alias) {
 				p3++;
 				sprintf(fulluri, "[%s]\\%s", collection->alias, p3);
 			} else {
