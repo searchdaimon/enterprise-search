@@ -118,14 +118,16 @@ sub edit_collection {
 }
 
 sub manage_collection {
-
 	my ($self, $vars, $id) = (@_);
 	my $collection_name = $sqlShares->get_collection_name($id);
 
+	my $dataColl = Data::Collection->new($self->{dbh}, { id => $id });
+	my %form_data = $dataColl->form_data();
+	my %coll_data = $dataColl->coll_data();
+
 	$vars->{'id'} = $id;
-	$vars->{'share'} = {
-		'collection_name' => $collection_name,
-	};
+	$vars->{'share'} = \%coll_data;
+
 	return TPL_ADV_MANAGEMENT;
 }
 

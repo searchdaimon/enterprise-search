@@ -17,6 +17,19 @@
 	<form method="post" action="overview.cgi">
 	[% PROCESS 'template_edit_collection.html' 
 		fields = ['test_crawl'] %]
+	</form>
+
+	<h2>Edit settings for [% HTML.escape(share.collection_name) %]</h2>
+
+	<form method="post" action="overview.cgi">
+	[% PROCESS 'template_edit_collection.html' 
+		fields = ['anonymous', 'alias'] %]
+
+		<div style="padding-top : 1em;">
+		<input type="hidden" value="[% share.id %]" name="share.id" />
+		<input type="submit" name="submit_edit" value="Submit changes" />
+		</div>
+	</form>
 [% END %]
 [% INCLUDE 'footer.html' %]
 
