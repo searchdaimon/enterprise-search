@@ -5,11 +5,15 @@
 #AuthUserFile /home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd 
 #AuthGroupFile /dev/null
 #require user admin
+
 AuthType Basic
 AuthName modBoitho
-AuthBoitho on
-AuthType Basic
-require valid-user
+
+<Files "index.pl">
+	AuthBoitho on
+	AuthType Basic
+	require valid-user
+</Files>
 
 # Execute perl scripts
 DirectoryIndex index.pl
@@ -21,7 +25,6 @@ RewriteEngine On
 RewriteRule ^suggest/(.*)$ /cgi-bin/suggest_webclient?q=$1 [L,QSA]
 
 
-
 # No direct reading of tpl files
 <Files ~ "\.tpl$">
 	Deny from all
@@ -29,5 +32,10 @@ RewriteRule ^suggest/(.*)$ /cgi-bin/suggest_webclient?q=$1 [L,QSA]
 
 # Localisation
 <Files ~ "\.po$">
+	Deny from all
+</Files>
+
+# Perl modules
+<Files ~ "\.pm$">
 	Deny from all
 </Files>
