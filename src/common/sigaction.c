@@ -16,14 +16,16 @@ void
 sigchild_handler(int sig, siginfo_t *sip, void *extra)
 {
 	pid_t child = sip->si_pid;
+	int status;
 
 	if (sip->si_code == CLD_EXITED) {
 		printf("Got signal '%s', si_code %d"
 				" for child %d\n",
 				strsignal(sip->si_signo), sip->si_code, child);
+		if (waitpid(-1, &status, 0) == -1) {
+			perror("waitpid()");
+		}
 	} else {
-		int status;
-
 		printf("Got signal '%s', si_code %d"
 				" for child %d: ",
 				strsignal(sip->si_signo), sip->si_code, child);
