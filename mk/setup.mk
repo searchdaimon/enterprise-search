@@ -21,6 +21,7 @@ PERL_EMBED_LIB=	`perl -MExtUtils::Embed -e ldopts`
 LDFLAGS+=	/usr/lib/mysql/libmysqlclient.a
 CFLAGS+=	-I/usr/include/mysql
 #`perl -MExtUtils::Embed -e ccopts -e ldopts` -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE   -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl
+CC=		gcc
 endif
 
 ifeq ($(strip $(host)),bbh-002.boitho.com)
