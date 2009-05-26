@@ -894,3 +894,9 @@ int lotDeleteFile(char File[], int LotNr,char subname[]) {
 	printf("unlinking %s\n",FilePath);
 	return unlink(FilePath);
 }
+
+void
+lot_get_closed_collections_file(char *buf)
+{
+	sbfile(buf, "var/closed_collections");
+}
