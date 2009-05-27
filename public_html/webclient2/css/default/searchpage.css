@@ -131,7 +131,7 @@ body {
     font-size : small;
 
     margin-right : 0.1em;
-    background : #537FB0 url(/webclient/templates/searchpage/img/collcorner.gif) 
+    background : #537FB0 url(/webclient2/img/common/collcorner.gif) 
         top left no-repeat;
     color : #cccccc;
     
@@ -151,7 +151,7 @@ body {
 }
 #collectionNav .collRight {
     position : absolute;
-    background : url(/webclient/templates/searchpage/img/collcorner_right.gif) 
+    background : url(/webclient2/img/common/collcorner_right.gif) 
         top right no-repeat;
     right : 0;
     top : 0;
@@ -159,7 +159,7 @@ body {
 
 
 #collectionNav .selected  {
-    background : #014f99 url(/webclient/templates/searchpage/img/collcorner.gif) 
+    background : #014f99 url(/webclient2/img/common/collcorner.gif) 
         top left no-repeat !important;
 }
 
@@ -301,11 +301,11 @@ clear : both;
 }
 
 #navWrapperLeft {
-    background : #014f99 url(/webclient/templates/searchpage/img/nav_left.gif) top left no-repeat !important;
+    background : #014f99 url(/webclient2/img/common/nav_left.gif) top left no-repeat !important;
 }
 
 #navWrapperRight {
-    background : #014f99 url(/webclient/templates/searchpage/img/nav_right.gif) top right no-repeat !important;
+    background : #014f99 url(/webclient2/img/common/nav_right.gif) top right no-repeat !important;
 }
 
 #navWrapper a {
