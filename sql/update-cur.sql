@@ -206,3 +206,14 @@ update config set configvalue = '100' where configkey = 'authentication_timeout'
 
 # setter inn et tilfeldig tall som en unik nøkkel.
 insert into config (configkey, configvalue) VALUES('key', MD5(RAND()));
+
+
+
+INSERT INTO `connectors` VALUES (110, 'Sharepoint', NULL, NULL, NULL, NULL, 0, 'user_system, custom_parameters, crawling, authentication', 1, '2009-04-01 15:24:43', 1, 1);
+INSERT INTO param VALUES (184,110,'ip','sharepoint.example.net');
+INSERT INTO param VALUES (185,110,'site','sites/test');
+INSERT INTO param VALUES (187,110,'ignoreperms','1 (ignore permissions), 0 (permission checking is on)');
+INSERT INTO param VALUES (191,110,'allsites','1 (grab all), 0 (use site paramtere)');
+
+ALTER TABLE shares ADD without_aclcheck tinyint(4) DEFAULT 0;
+ALTER TABLE shares ADD alias varchar(255);
