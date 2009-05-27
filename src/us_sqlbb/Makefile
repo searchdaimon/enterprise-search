@@ -2,7 +2,7 @@
 CFLAGS=		
 CFLAGS+=	-W -Wall -O0 -g -DBLACK_BOKS -I/usr/include/mysql
 LDFLAGS=	
-PROG=		us_mapback.so
+PROG=		us_sqlbb.so
 CC=		/usr/local/bin/gcc
 
 # Hack to get common lib files from boitho
@@ -23,8 +23,8 @@ all: $(PROG)
 
 $(PROG): $(OBJS)
 	libtool $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOKS -g -static
-	-mkdir ../../usersystems/us_mapback
-	cp $(PROG) ../../usersystems/us_mapback
+	-mkdir ../../usersystems/us_sqlbb
+	cp $(PROG) ../../usersystems/us_sqlbb
 
 clean:
 	rm -f ${OBJS} ${PROG}
