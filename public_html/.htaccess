@@ -1,5 +1,7 @@
 RewriteEngine on
-RewriteRule ^$ /webclient [R]
-RewriteRule ^index.html$ /webclient [R]
+RewriteRule ^$ /webclient2 [R]
+RewriteRule ^index.html$ /webclient2 [R]
 RewriteRule ^admin$ /cgi-bin/webadmin/overview.cgi [R]
 RewriteRule ^admin/$ /cgi-bin/webadmin/overview.cgi [R]
+RewriteRule ^/webclient$ /webclient2 [R]
+RewriteRule ^/webclient/(.*)$ /webclient2/$1 [R]
