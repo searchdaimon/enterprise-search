@@ -15,6 +15,13 @@ AuthName modBoitho
 	require valid-user
 </Files>
 
+<Files "">
+	AuthBoitho on
+	AuthType Basic
+	require valid-user
+</Files>
+
+
 # Execute perl scripts
 DirectoryIndex index.pl
 AddHandler cgi-script pl
