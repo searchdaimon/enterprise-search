@@ -74,7 +74,12 @@ pthread_cond_t index_cache_cv = PTHREAD_COND_INITIALIZER;
 void
 cache_indexes_hup(int sig)
 {
-	pthread_mutex_lock(&index_cache_lock);
+	/*
+	 * If it is locked we are either in the signal handler somewhere else,
+	 * or the indexer cache in running.
+	 */
+	if (pthread_mutex_trylock(&index_cache_lock) != 0)
+		return;
 	pthread_cond_signal(&index_cache_cv);
 	pthread_mutex_unlock(&index_cache_lock);
 }
