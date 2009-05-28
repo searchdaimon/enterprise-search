@@ -55,6 +55,10 @@ BLACKBOX=
 PREFIX=		
 endif
 
+ifndef NO_DEBUG
+CFLAGS+=	-g
+endif
+
 ifdef WITH_PREFIX
 USEPREFIX=	$(PREFIX)
 else
