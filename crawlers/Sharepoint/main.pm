@@ -229,12 +229,11 @@ use HTTP::Request::Common;
 
 use SD::Crawl;
 
-use SOAP::WSDL;
 use SOAP::Lite(readable => 1);
 use Date::Parse;
 
 my $DEBUG;
-$DEBUG = 1;
+$DEBUG = 0;
 ($DEBUG & 1) && SOAP::Lite->import(trace => 'debug');
 ($DEBUG & 2) && LWP::Debug->import(level => '+');
 
@@ -632,7 +631,7 @@ sub crawl_update {
 	my $listsservice = $self->new_service($ip, $username, $password, "lists", $site);
 	my $versionsservice = $self->new_service($ip, $username, $password, "versions", $site);
 	my $permservice = $self->new_service($ip, $username, $password, "permissions", $site, 'directory');
-	my $webservice = $self->new_service($ip, $username, $password, "Webs", $site);
+	my $webservice = $allsites ? $self->new_service($ip, $username, $password, "Webs", $site) : undef;
 
 	# XXX: Detect sharepoint version
 	print "Sharepoint version: $sharepoint_version\n";
@@ -660,9 +659,9 @@ sub crawl_update {
 	# XXX: We want the last  crawl time
 	$self->{lastcrawl} = $self->get_last_crawl_time();
 
-	print Dumper($webservice->get_web_collection());
+	#print Dumper($webservice->get_web_collection());
 
-#	$self->handle_lists($self);
+	$self->handle_lists($self);
 }
 
 
