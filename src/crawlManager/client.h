@@ -1,3 +1,5 @@
+#include "../common/define.h"
+
 int cmc_conect(int *socketha,char statusbuff[],int statusbufflen, int port);
 
 int cmc_crawl(int socketha,char collection_inn[], char *);
