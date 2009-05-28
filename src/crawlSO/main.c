@@ -113,6 +113,7 @@ crawlfirst(crawlfirst_args)
 	struct crawlinfo ci;
 	int s, ret;
 	char buf[1];
+	int count = 0;
 
 	ci.documentExist = documentExist;
 	ci.documentAdd = documentAdd;
@@ -127,11 +128,28 @@ crawlfirst(crawlfirst_args)
 	if (ret == 1) {
 		//read until the so crawler close sock.
 		while (( documentContinue(collection) ) && ( read(s, buf, 1) > 0) ) {
-			printf("ping from so.\n");
+
+			// litt hackis. Akseserer collection strukten direkte slik. Men siden vi ikke 
+			// kaller add selv, må vi oppdatere antal dokumenter som er crawletferdig, slik at
+			// vi kan avbryte hvis vi har en docsRemaining klausul.
+
+		        if (collection->docsRemaining != -1) {
+                		collection->docsRemaining--;
+			}
+
+
+			++count;
+			printf("Crawled %i\r",count);
+			fflush(stdout);
 		}
 	}
 	close(s);
 
+	//hvis vi ikke fikk sent noe data, er noe feil. Skriver feilmelding og returnerer feil.
+	if (count == 0) {
+		documentError(collection, 1,"Failed to get data from SuperOffice. Please check the Xml Push error log for additional info.");
+		ret = 0;
+	}
 	printf("~crawlSO:crawlfirst(ret=%i)\n",ret);
 	return ret;
 }
