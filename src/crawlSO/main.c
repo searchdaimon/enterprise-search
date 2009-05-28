@@ -35,12 +35,14 @@ struct crawlinfo {
 	unsigned int timefilter;
 };
 
-int 
-so_rewrite_url(char *uri, enum platform_type ptype, enum browser_type btype)
+int
+so_rewrite_url(struct collectionFormat *collection, char *url, char *uri, char *fulluri, size_t len, enum platform_type ptype, enum browser_type btype)
 {
+	strcpy(uri, url);
+	strcpy(fulluri, url);
+
 	return 1;
 }
-
 
 struct crawlLibInfoFormat crawlLibInfo = {
 	NULL,
