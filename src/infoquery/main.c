@@ -347,12 +347,18 @@ int main (int argc, char *argv[]) {
 			printf("No match\n");
 	}
 	else if (strcmp(key,"AuthUser") == 0) {
+		int r;
+
 		if (value2 == NULL) {
 			printf("AuthUser username password\n");
 			exit(1);
 		}
-		if (boitho_authenticat(value, value2)) {
-			printf("%s is authenticated...\n", value);
+		if ((r = boitho_authenticat(value, value2))) {
+			if (r == 1) {
+				printf("%s is authenticated...\n", value);
+			} else if (r == 2) {
+				printf("%s is not allowed to log in\n", value);
+			}
 		} else {
 			printf("User not authenticated\n");
 		}

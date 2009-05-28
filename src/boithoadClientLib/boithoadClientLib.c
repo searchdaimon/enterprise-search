@@ -90,6 +90,9 @@ int boitho_authenticat(const char username_in[],char password_in[]) {
 	else if (response == ad_userauthenticated_ERROR) {
 		return 0;
 	}
+	else if (response == ad_userauthenticated_NOACCESS) {
+		return 2;
+	}
 	else {
 		fprintf(stderr,"dident get ad_userauthenticated_ERROR or ad_userauthenticated_OK\n");
 		return 0;

@@ -194,14 +194,19 @@ static int auth_boitho_authorize(const char *user, const char* pw,
 		request_rec* r)
 {
     int status;
+    int ret;
 
-	if (boitho_authenticat(user,pw)) {
+	if ((ret = boitho_authenticat(user,pw)) == 1) {
 		status=1;
+	}
+	else if (ret == 2) {
+		status = 2;
 	}
 	else {
 		status=0;
 	}
 
+	
     if (status==1) {
 	//runarb: 
 	#ifdef DEBUG
@@ -213,6 +218,9 @@ static int auth_boitho_authorize(const char *user, const char* pw,
 	#endif
 
         return 1;  /* Correct pw */
+    }
+    else if (status == 2) {
+	return 2; /* Not allowed */
     }
     else {
 	return 0; /* Nope */
@@ -341,7 +349,7 @@ static int auth_boitho_handler(request_rec *r)
      ret = auth_boitho_authorize(user,passwd,r);
      if (ret==-1)
          return HTTP_INTERNAL_SERVER_ERROR;
-     if (ret!=1) {
+     if (ret == 0) {
 	#ifdef APACHE_V13
 		ap_log_rerror(APLOG_MARK, APLOG_ERR, r, "Invalid password entered for user %s", user);
 	#else
@@ -349,6 +357,9 @@ static int auth_boitho_handler(request_rec *r)
 	#endif
          ap_note_basic_auth_failure(r);  
          return HTTP_UNAUTHORIZED;
+     } else if (ret == 2) {
+        apr_table_setn(r->headers_out, "Location", "/noaccess.html");
+	return HTTP_MOVED_TEMPORARILY;
      }
 
      return OK;

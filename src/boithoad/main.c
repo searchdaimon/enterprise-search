@@ -1141,10 +1141,6 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 						blog(LOGERROR,1,"can't connect to ldap server.");
 						intresponse = ad_userauthenticated_ERROR;
 					}
-					else if (license_system_active && !user_enabled(user_username,licensekey)) {
-						printf("%s is not allowed to log in\n", user_username);
-						intresponse = ad_userauthenticated_ERROR;
-					}
 					else if (ldap_authenticat (&ld,user_username,user_password,ldap_base,ldap_host,ldap_port)) {
 						printf("Main: user authenticated\n");
 						printf("user_username: \"%s\"\n",user_username);
@@ -1157,6 +1153,14 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 						intresponse = ad_userauthenticated_ERROR;
 						printf("Main: user NOT authenticated\n");
 					}
+
+					if (intresponse == ad_userauthenticated_OK &&
+					    license_system_active && !user_enabled(user_username,licensekey)) {
+						printf("%s is not allowed to log in\n", user_username);
+						intresponse = ad_userauthenticated_NOACCESS;
+						firstOkLogin = 0;
+					}
+
 
 					sendall(socket,&intresponse, sizeof(intresponse));
 

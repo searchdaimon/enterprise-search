@@ -18,5 +18,6 @@
 #define bad_sidToGroup		41
 
 #define ad_userauthenticated_OK  111
+#define ad_userauthenticated_NOACCESS  112
 #define ad_userauthenticated_ERROR  000
 
