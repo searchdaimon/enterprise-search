@@ -217,3 +217,9 @@ INSERT INTO param VALUES (191,110,'allsites','1 (grab all), 0 (use site paramter
 
 ALTER TABLE shares ADD without_aclcheck tinyint(4) DEFAULT 0;
 ALTER TABLE shares ADD alias varchar(255);
+
+
+UPDATE config SET configvalue = 'RRYAYACZACJAB6RLANAQ8K4G' WHERE configvalue = '' AND configkey = 'licensekey';
+DELETE FROM config WHERE configkey='licensesystem';
+
+UPDATE connectors SET extension = 0, active = 1 WHERE id = 9;
