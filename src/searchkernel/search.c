@@ -1522,7 +1522,8 @@ void *searchIndex_thread(void *arg)
 				vboprintf("grouplist: %s\n", grouplist);
 				groupquery = malloc(sizeof(*groupquery));
 				get_query(grouplist, strlen(grouplist), groupquery);
-				free(groups);
+				if (n_groups > 0)
+					free(groups);
 				free(grouplist);
 				hashtable_insert(groupqueries, uinttouintp(system), groupquery);
 			} else {
