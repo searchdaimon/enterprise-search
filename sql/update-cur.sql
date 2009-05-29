@@ -171,7 +171,7 @@ INSERT INTO `param` VALUES (NULL, 70, 'Host', 'example.com');
 INSERT INTO `connectors` VALUES (99, 'ExchangePublic', 'Microsoft Exchange Public Folder', NULL, NULL, NULL, 0, 'user_system, authentication, connector, crawling', 0, NULL, 1, 1);
 
 -- Active directory system
-INSERT INTO `system` (id, name, is_primary, connector) VALUES (1, 'Active Directory', 1, 1);
+INSERT INTO system (id, name, is_primary, connector) (SELECT 1 AS id, 'Active Directory' AS name, 1 AS is_primary, 1 as connector FROM config WHERE 0 = (SELECT COUNT(*) AS SUM FROM system) LIMIT 1);
 
 
 --INSERT INTO systemParamValue (param, system, value) SELECT 'domain' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_domain'; 
@@ -190,13 +190,13 @@ INSERT INTO `systemParam` VALUES (1, 'ldapgroupstring' ,NULL, 0);
 
 -- kopierer over ldap info til brukersys.
 -- msad_group er depricated
-INSERT INTO systemParamValue (param, system, value) SELECT 'ip' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ip'; 
-INSERT INTO systemParamValue (param, system, value) SELECT 'user' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_user'; 
-INSERT INTO systemParamValue (param, system, value) SELECT 'password' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_password'; 
-INSERT INTO systemParamValue (param, system, value) SELECT 'domain' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_domain'; 
-INSERT INTO systemParamValue (param, system, value) SELECT 'ldapgroupstring' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapgroupstring'; 
-INSERT INTO systemParamValue (param, system, value) SELECT 'ldapbase' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapbase'; 
-INSERT INTO systemParamValue (param, system, value) SELECT 'ldapstring' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapstring'; 
+INSERT INTO systemParamValue (param, system, value) (SELECT 'ip' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ip' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
+INSERT INTO systemParamValue (param, system, value) (SELECT 'user' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_user' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
+INSERT INTO systemParamValue (param, system, value) (SELECT 'password' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_password' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
+INSERT INTO systemParamValue (param, system, value) (SELECT 'domain' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_domain' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
+INSERT INTO systemParamValue (param, system, value) (SELECT 'ldapgroupstring' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapgroupstring' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
+INSERT INTO systemParamValue (param, system, value) (SELECT 'ldapbase' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapbase' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
+INSERT INTO systemParamValue (param, system, value) (SELECT 'ldapstring' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapstring' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
 
 -- setter ordbok rerun til 7 hvis den er kl 10.00, som er standar.
 update config set configvalue = '7' where configkey = 'suggdict_run_hour' and configvalue  = '10';
