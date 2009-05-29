@@ -334,7 +334,6 @@ check_soundslike(spelling_t *s, scache_t *c,  wchar_t *wword, wchar_t *like, wch
 	container *list;
 	//struct hashtable_itr *itr;
 	iterator itr;
-	struct hashtable_itr *hitr;
 
 	/* Already seen this */
 	if (hashtable_search(c, like))
