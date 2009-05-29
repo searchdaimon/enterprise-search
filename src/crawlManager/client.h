@@ -1,3 +1,4 @@
+/* Include define.h to get enum platform_* */
 #include "../common/define.h"
 
 int cmc_conect(int *socketha,char statusbuff[],int statusbufflen, int port);
