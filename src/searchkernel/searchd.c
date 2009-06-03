@@ -877,6 +877,8 @@ void *do_chld(void *arg)
 		SiderHeder->responstype = searchd_responstype_normalsearch;
 	}
 
+	dp_priority_locl_end();
+
 	//kopierer inn subnames. Kan bare sende over MAX_COLLECTIONS, men søker i alle
 
 
