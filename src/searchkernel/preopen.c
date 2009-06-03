@@ -181,6 +181,7 @@ cache_fresh_lot_collection(void)
 			closedir(dirp);
 		}
 	}
+	listAllColl_close(colls);
 }
 
 static size_t
@@ -319,9 +320,8 @@ cache_indexes_all(void)
 	while ((coll = listAllColl_next(colls))) {
 		cache_indexes_collection(coll);
 	}
+
 	listAllColl_close(colls);
-
-
 }
 
 void
