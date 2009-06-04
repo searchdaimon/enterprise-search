@@ -20,7 +20,6 @@ attribute:"SuperOffice"
 doc
 pdf
 boitho
-
 searh
 searh
 search
@@ -88,7 +87,6 @@ og
 blåbær
 to be or not to be
 "to be or not to be"
-
 en et og eller
 alle
 at
