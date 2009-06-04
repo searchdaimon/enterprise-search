@@ -49,7 +49,7 @@ foreach my $i (@arr) {
 	$query =~ s/([^A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg;
 
 
-	my $url = "http://$user$host/webclient/?query=$query&tpl=";
+	my $url = "http://$user$host/webclient2/?query=$query&tpl=";
 	#print "$url\n";
 	
 	our $StartTime  = Time::HiRes::time;
@@ -58,9 +58,21 @@ foreach my $i (@arr) {
   	warn "Couldn't get $url" unless defined $content;
 
 	my $hits = $content;
+	#webclient 1
 	#$hits =~ s/av totalt (\d+) resultater//g;
-	$hits =~ s/av totalt ([\d ]+) resultater//g;
-	$hits = $1;
+	#webclient 2
+	if ($hits =~ /Viser ingen resultater/) {
+		$hits = 0;
+	}
+	else {
+		if ($hits =~ s/av totalt ([\d ,]+) resultat//g) {
+			$hits = $1;
+			$hist = chop($hits);
+		}
+		else {
+			$hits = "\033[1;32m Error \033[0m";
+		}
+	}
 	#print "#####################################################\n";
 	#print $content, "\n";
 	#print "#####################################################\n";
