@@ -1,6 +1,6 @@
 VPATH= .:../boitho-bbdn/:../common/:../base64/:../maincfg/:../crawlManager/:../key:.
 
-CFLAGS=		-DDEBUG
+CFLAGS=		
 
 CGIBIN=		true
 
