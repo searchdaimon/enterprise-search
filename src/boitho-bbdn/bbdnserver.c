@@ -24,6 +24,8 @@
 #define PROTOCOLVERSION 1
 
 void connectHandler(int socket);
+/* perlembed has some perlxs that requires global_bbdnport to exist */
+int global_bbdnport = 0;
 
 
 
