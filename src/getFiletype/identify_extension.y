@@ -75,13 +75,13 @@ lang	: lang_id EQUALS_ID string_list SEMICOLON_ID
 	    data->lang_size = vector_size( data->lang );
 	    data->modus++;
 
-	    printf("lang = {");
+	    fprintf(stderr, "lang = {");
 	    for (i=0; i<data->lang_size; i++)
 		{
 		    if (i>0) printf(",");
-		    printf("%s", vector_get( data->lang, i ).ptr);
+		    fprintf(stderr, "%s", vector_get( data->lang, i ).ptr);
 		}
-	    printf("}\n");
+	    fprintf(stderr, "}\n");
 
 	    data->group = malloc(sizeof(container*) * data->lang_size);
 	    data->descr = malloc(sizeof(container*) * data->lang_size);
@@ -277,11 +277,11 @@ struct fte_data* fte_init( char *conf_file )
     fteset_extra(data, scanner);
     fteset_in(fyyin, scanner);
 
-    printf("getfiletype: Running scanner...\n");
+    fprintf(stderr, "getfiletype: Running scanner...\n");
 
     fteparse(data, scanner);
 
-    printf("getfiletype: Done.\n");
+    fprintf(stderr, "getfiletype: Done.\n");
 
     ftelex_destroy(scanner);
     fclose(fyyin);
