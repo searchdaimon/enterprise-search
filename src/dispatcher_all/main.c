@@ -49,6 +49,7 @@
     #include "../ds/dset.h"
     #include "../query/query_parser.h"
     #include "../common/bprint.h"
+    #include "../common/xml.h"
 
 
 #define DefultMaxsHits 20
@@ -2254,17 +2255,17 @@ int main(int argc, char *argv[])
 			    }
 		    }
 
-	    bsprint_query_with_remove(B, remove, &qa);
+	    bsprint_query_with_remove(B, remove, &qa, 1);
 	    char	*basedatequery = buffer_exit(B);
 
-	    printf("<group name=\"Dato\" query=\'%s\' expanded=\"true\">\n", basedatequery);
+	    printf("<group name=\"Dato\" query=\"%s\" expanded=\"true\">\n", basedatequery);
 		for (y=0;y<7;y++) {
-		    printf("\t<item name=\'%s\' query=\'%s%s\' hits=\'%i\'%s />\n",
+		    printf("\t<item name=\"%s\" query=\"%s%s\" hits=\"%i\"%s />\n",
 			dateview_type_names[y],
 			basedatequery,
 			dateview_type_query[y],
 			SiderHeder[0].dates[y],
-			highlight_date==y ? " selected=\'true\'" : "");
+			highlight_date==y ? " selected=\"true\"" : "");
 		}
 	    printf("</group>\n");
 	    printf("</navigation>\n");
@@ -2773,17 +2774,19 @@ int main(int argc, char *argv[])
 			    }
 		    }
 
-	    bsprint_query_with_remove(B, remove, &qa);
+	    bsprint_query_with_remove(B, remove, &qa, 1);
 	    char	*basedatequery = buffer_exit(B);
+	    char	xmlescapebuf1[2048];
+	    char	xmlescapebuf2[2048];
 
-	    printf("<group name=\"Dato\" query=\'%s\' expanded=\"true\">\n", basedatequery);
+	    printf("<group name=\"Dato\" query=\"%s\" expanded=\"true\">\n", basedatequery);
 		for (y=0;y<7;y++) {
-		    printf("\t<item name=\'%s\' query=\'%s%s\' hits=\'%i\'%s />\n",
+		    printf("\t<item name=\"%s\" query=\"%s%s\" hits=\"%i\"%s />\n",
 			dateview_type_names[y],
-			basedatequery,
-			dateview_type_query[y],
+			xml_escape_attr(basedatequery, xmlescapebuf1, sizeof(xmlescapebuf1)),
+			xml_escape_attr(dateview_type_query[y], xmlescapebuf2, sizeof(xmlescapebuf2)),
 			SiderHeder[0].dates[y],
-			highlight_date==y ? " selected=\'true\'" : "");
+			highlight_date==y ? " selected=\"true\"" : "");
 		}
 	    printf("</group>\n");
 	    printf("</navigation>\n");
