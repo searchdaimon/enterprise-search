@@ -93,7 +93,7 @@ void copy_query( query_array *dest, query_array *src );
  */
 void sprint_query( char *s, int n, query_array *qa );
 char* asprint_query( query_array *qa );
-int bsprint_query_with_remove( buffer *B, container *remove, query_array *qa );
+int bsprint_query_with_remove( buffer *B, container *remove, query_array *qa, int escape );
 
 /*
  *	Hent ut "ryddig" query-streng:
