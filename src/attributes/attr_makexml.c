@@ -8,6 +8,7 @@
 #include "../ds/dmultimap.h"
 #include "../ds/dtuple.h"
 #include "../common/bprint.h"
+#include "../common/xml.h"
 #include "../query/query_parser.h"
 #include "attr_makexml.h"
 
@@ -1495,7 +1496,7 @@ int _attribute_build_items_(container *X, container *A, query_array *qa, int def
 
 	    // Construct querystring:
 	    buffer	*B = buffer_init(-1);
-	    bsprint_query_with_remove(B, NULL, qa);
+	    bsprint_query_with_remove(B, NULL, qa, 1);
 
 	    if (item->query_param!=NULL && vector_size(item->query_param)>0 && item->selected<0)
 		{
@@ -1741,24 +1742,26 @@ void _attribute_print_and_delete_tree_(buffer *bout, container *X, int indent, i
 		    if (i==max_items)
 			{
 			    for (j=0; j<indent; j++) bprintf(bout, " ");
-			    bprintf(bout, "<item name=\'...\' />\n");
+			    bprintf(bout, "<item name=\"...\" />\n");
 			}
 		}
 	    else
 		{
+		    char buf[1024];
+
 		    for (j=0; j<indent; j++) bprintf(bout, " ");
 		    if (item->children!=NULL) bprintf(bout, "<group");
 		    else bprintf(bout, "<item");
 
-		    if (item->key!=NULL) bprintf(bout, " key=\'%s\'", item->key);
-		    if (item->value!=NULL) bprintf(bout, " value=\'%s\'", item->value);
-		    if (item->name!=NULL) bprintf(bout, " name=\'%s\'", item->name);
-		    if (item->icon!=NULL) bprintf(bout, " icon=\'%s\'", item->icon);
+		    if (item->key!=NULL) bprintf(bout, " key=\"%s\"", xml_escape_attr(item->key, buf, sizeof(buf)));
+		    if (item->value!=NULL) bprintf(bout, " value=\"%s\"", xml_escape_attr(item->value, buf, sizeof(buf)));
+		    if (item->name!=NULL) bprintf(bout, " name=\"%s\"", xml_escape_attr(item->name, buf, sizeof(buf)));
+		    if (item->icon!=NULL) bprintf(bout, " icon=\"%s\"", xml_escape_attr(item->icon, buf, sizeof(buf)));
 
-		    if (item->querystr!=NULL) bprintf(bout, " query=\'%s\'", item->querystr);
-		    if (item->selected >= 0) bprintf(bout, " selected=\'true\'");
-		    bprintf(bout, " expanded=\'%s\'", item->selected_descendant || item->expanded ? "true":"false");
-		    if (item->container_id == 0) bprintf(bout, " hits=\'%i\'", item->hits);
+		    if (item->querystr!=NULL) bprintf(bout, " query=\"%s\"", xml_escape_attr(item->querystr, buf, sizeof(buf)));
+		    if (item->selected >= 0) bprintf(bout, " selected=\"true\"");
+		    bprintf(bout, " expanded=\"%s\"", item->selected_descendant || item->expanded ? "true":"false");
+		    if (item->container_id == 0) bprintf(bout, " hits=\"%i\"", item->hits);
 
 		    if (item->children!=NULL)
 			{
@@ -1866,7 +1869,7 @@ char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf 
     _attribute_sort_items_(&ret.C, showattrp->sort, showattrp->flags & sort_reverse);
 
     buffer	*bout = buffer_init(-1);
-    bprintf(bout, "<navigation query=\'");
+    bprintf(bout, "<navigation query=\"");
 
     for (i=0; i<vector_size(A); i++)
 	{
@@ -1883,8 +1886,8 @@ char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf 
 	if (qa->query[i].operand == QUERY_DATE)
 	    qa->query[i].hide = 1;
 
-    bsprint_query_with_remove(bout, NULL, qa);
-    bprintf(bout, "\'>\n");
+    bsprint_query_with_remove(bout, NULL, qa, 1);
+    bprintf(bout, "\">\n");
 
     _attribute_print_and_delete_tree_(bout, ret.C, 4, showattrp->max_items);
 
