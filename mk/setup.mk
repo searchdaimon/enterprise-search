@@ -31,8 +31,8 @@ PERL_EMBED_LIB=	-rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thre
 BDB_INC=	-I/usr/include/db4
 BDB_LIB=	/usr/lib/libdb-4.6.a
 CC=		gcc -m32
-LDFLAGS+=	-L/usr/lib/mysql -lmysqlclient
-CFLAGS+=	-I/usr/include/mysql
+MYSQL_LIB+=	/usr/lib/mysql/libmysqlclient.a -lssl
+MYSQL_INC+=	-I/usr/include/mysql
 endif
 
 ifdef WITH_PROFILE
