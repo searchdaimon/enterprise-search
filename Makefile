@@ -43,7 +43,7 @@ PERLEMBED = lib/libperlembed.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ld
 #BDB = -I/usr/include/db4 /usr/lib/libdb-4.6.a -lpthread
 #MYSQL = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
 #CC+=-m32
-#PERLEMBED = lib/libperlembed.a -rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE  /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl 
+#PERLEMBED = src/perlembed/*.c -rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE  /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl 
 
 #SMBCLIENT=-lsmbclient
 #skrur dette på igjen. Brukte det og segfeile når vi hadde det med statisk?
@@ -54,7 +54,7 @@ PERLEMBED = lib/libperlembed.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ld
 SMBCLIENT=/home/boitho/src/samba-3.0.25b/source/bin/libsmbclient.a -I/home/boitho/src/samba-3.0.25b/source/include/
 #SMBCLIENT=-Isrc/3pLibs/samba-3.0.24/source/include/ -Lsrc/3pLibs/samba-3.0.24/source/lib/ -lsmbclient
 
-BBDOCUMENT = src/bbdocument/bbdocument.c src/bbdocument/bbfilters.c src/ds/libds.a $(BDB) -D BLACK_BOKS $(PERLEMBED) 
+BBDOCUMENT = src/bbdocument/bbdocument.c src/bbdocument/bbfilters.c src/ds/libds.a $(BDB) -D BLACK_BOKS #$(PERLEMBED) 
 #BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail.c -DBBDOCUMENT_IMAGE $(IM)
 BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail_by_convert.c -DBBDOCUMENT_IMAGE_BY_CONVERT
 
@@ -846,11 +846,12 @@ boithold: src/boithold/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/boithold/main.c -o bin/boithold $(LDFLAGS)
 
 boitho-bbdn: src/boitho-bbdn/bbdnserver.c src/bbdocument/bbfilters.c
-	#gammelt bygge sys
-	#$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c src/boitho-bbdn/bbdnserver.c src/maincfg/maincfg.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE)  $(LIBCONFIG) -DIIACL $(24SEVENOFFICE) -D NO_REUSEADDR -DUSE_LIBEXTRACTOR
+	@#gammelt bygge sys
+	@#$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c src/boitho-bbdn/bbdnserver.c src/maincfg/maincfg.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE)  $(LIBCONFIG) -DIIACL $(24SEVENOFFICE) -D NO_REUSEADDR -DUSE_LIBEXTRACTOR
 	@echo ""
 	@echo "$@:"
 
+	@#$(CC) -rdynamic -D__USE_BSD -m32 -fno-strict-aliasing -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64  $(CFLAGS) -I/home/eirik/.root/include -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -D_REENTRANT -D_GNU_SOURCE src/perlembed/*.c $(LIBS)*.c src/acls/acls.c src/boitho-bbdn/bbdnserver.c src/maincfg/maincfg.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE)  $(LIBCONFIG) -DIIACL $(24SEVENOFFICE) -D NO_REUSEADDR -DUSE_LIBEXTRACTOR  -rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE  /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl -lresolv -lnsl -ldl -lm -lcrypt -lutil -lpthread -lc 
 	(cd src/boitho-bbdn; make clean; make)
 
 
@@ -1131,7 +1132,7 @@ crawlManager2: src/crawlManager2/main.c
 	@#$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/key/key.c src/crawlManager2/shortenurl.c src/crawlManager2/usersystem.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a 
 #=======
 
-	#$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/key/key.c src/crawlManager2/shortenurl.c src/crawlManager2/usersystem.c src/perlembed/perlembed.c src/perlembed/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
+	@#$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/key/key.c src/crawlManager2/shortenurl.c src/crawlManager2/usersystem.c src/perlembed/perlembed.c src/perlembed/perlxsi.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
 #>>>>>>> 1.143
 
 # XXX
@@ -1139,7 +1140,8 @@ crawlManager2: src/crawlManager2/main.c
 
 crawlManager2bb: src/crawlManager2/main.c
 	mkdir --parents bin
-	$(CC) -D__USE_BSD -std=c99 -m32 -D_REENTRANT -D_GNU_SOURCE -fno-strict-aliasing -pipe -Wdeclaration-after-statement -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I/usr/include/gdbm  -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -D_REENTRANT -D_GNU_SOURCE -fno-strict-aliasing -pipe -Wdeclaration-after-statement -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I/usr/include/gdbm  -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/crawlManager2/perlcrawl.c src/crawlManager2/usersystem.c src/acls/acls.c src/maincfg/maincfg.c src/perlembed/*.c src/crawlManager2/shortenurl.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  src/key/key.c -o bin/crawlManager2 $(LDFLAGS) $(LDAPBB) $(MYSQLBB) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) -rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE  /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl -lresolv -lnsl -ldl -lm -lcrypt -lutil -lpthread -lc
+	@#$(CC) -D__USE_BSD -std=c99 -m32 -D_REENTRANT -D_GNU_SOURCE -fno-strict-aliasing -pipe -Wdeclaration-after-statement -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I/usr/include/gdbm  -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -D_REENTRANT -D_GNU_SOURCE -fno-strict-aliasing -pipe -Wdeclaration-after-statement -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I/usr/include/gdbm  -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/crawlManager2/perlcrawl.c src/crawlManager2/usersystem.c src/acls/acls.c src/maincfg/maincfg.c src/perlembed/*.c src/crawlManager2/shortenurl.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  src/key/key.c -o bin/crawlManager2 $(LDFLAGS) $(LDAPBB) $(MYSQLBB) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) -rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE  /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl -lresolv -lnsl -ldl -lm -lcrypt -lutil -lpthread -lc
+	$(CC) -D__USE_BSD -std=c99 -m32 -D_REENTRANT -D_GNU_SOURCE -fno-strict-aliasing -pipe -Wdeclaration-after-statement -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I/usr/include/gdbm  -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -D_REENTRANT -D_GNU_SOURCE -fno-strict-aliasing -pipe -Wdeclaration-after-statement -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I/usr/include/gdbm  -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/crawlManager2/perlcrawl.c src/crawlManager2/usersystem.c src/acls/acls.c src/maincfg/maincfg.c src/crawlManager2/shortenurl.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  src/key/key.c -o bin/crawlManager2 $(LDFLAGS) $(LDAPBB) $(MYSQLBB) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) $(PERLEMBED) 
  
 
 crawlManager2perltest: src/crawlManager2/perltest.c
