@@ -326,10 +326,16 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 		//die(2,"Did'n receive any subname.");
 		//temp: quick fix, for www problemet.
 		//strscpy(QueryData->subname,"www,freelistning,paidinclusion",sizeof(QueryData->subname) -1);
-		strscpy(QueryData->subname,"paidinclusion,freelistning,www",sizeof(QueryData->subname) -1);
+		//strscpy(QueryData->subname,"paidinclusion,freelistning,www",sizeof(QueryData->subname) -1);
+		/* 25.05.09: eirik
+		 * Subname has changed it's meaning.
+		 * If subname is non-empty we only want these collection.
+		 * Empty(strlen(str) == 0) is everyone
+		 */
+		strscpy(QueryData->subname, "", sizeof(QueryData->subname) - 1);
 	}
 #if 0
-	else {
+	else if (QueryData->search_user[0] == '\0') {
 		/* XXX: 24so temporary hack */
 		char *p;
 		
@@ -344,6 +350,17 @@ init_cgi(struct QueryDataForamt *QueryData, struct config_t *cfg, int *noDoctype
 			if (strcmp(p, "-body") == 0)
 				*p = '\0';
 		}
+		p = strrchr(QueryData->subname, '-');
+		if (p != NULL) {
+			if (strcmp(p, "-body") == 0)
+				*p = '\0';
+		}
+	} else {
+		strlcpy(QueryData->subname, cgi_getentrystr("subname"), sizeof(QueryData->subname));
+	}
+#else
+	else {
+		strlcpy(QueryData->subname, cgi_getentrystr("subname"), sizeof(QueryData->subname));
 	}
 #endif
 
@@ -1316,6 +1333,7 @@ int main(int argc, char *argv[])
 
 	struct subnamesConfigFormat default_cfg;
 	read_collection_cfg(&default_cfg);
+	default_cfg.has_config = 0;
 
 	#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
@@ -1334,6 +1352,31 @@ int main(int argc, char *argv[])
 
 	int num_colls = 0;
 	struct subnamesFormat *collections = NULL;
+	char **wantcolls = NULL;
+	int n_wantcolls = 0;
+	if (QueryData.subname[0] != '\0') {
+		n_wantcolls = split(QueryData.subname, ",", &wantcolls);
+	}
+	/* Use local function so we get the lexical scope we want */
+	int want_collection(char *coll) {
+		int i;
+
+		if (n_wantcolls == 0) {
+			//fprintf(stderr, "Go ahead...\n");
+			return 1;
+		}
+		
+		for (i = 0; i < n_wantcolls; i++) {
+			//fprintf(stderr, "Checking %s <-> %s\n", coll, wantcolls[i]);
+			if (strcmp(coll, wantcolls[i]) == 0) {
+				fprintf(stderr, "Wants it!");
+				return 1;
+			}
+		}
+
+		//fprintf(stderr, "No way, don't want that!\n");
+		return 0;
+	}
 	if (QueryData.anonymous) {
 		MYSQL_RES *res;
 		MYSQL_ROW row;
@@ -1351,15 +1394,39 @@ int main(int argc, char *argv[])
 		} else {
 			num_colls = mysql_num_rows(res);
 			if (num_colls != 0) {
+				int i = 0;
+				
 				collections = calloc(num_colls, sizeof(*collections));
 				while ((row = mysql_fetch_row(res)) != NULL) {
-					strncpy(collections[i].subname, row[0], sizeof(collections[i].subname));
+					//fprintf(stderr, "Yay: %s\n", row[0]);
+					if (want_collection(row[0])) {
+						strlcpy(collections[i].subname, row[0], sizeof(collections[i].subname));
+						i++;
+					}
 				}
+				/* Set num_colls to the actual amount of collection we got */
+				num_colls = i;
 				mysql_free_result(res);
 			}
 		}
 	} else {
 		collections = get_usr_coll(QueryData.search_user, &num_colls, cmc_port);
+
+		fprintf(stderr, "num colls: %d\n", num_colls);
+		struct subnamesFormat *filtered_collections = calloc(num_colls, sizeof(*filtered_collections));
+		int i, j;
+
+		j = 0; /* New num_colls */
+		for (i = 0; i < num_colls; i++) {
+			fprintf(stderr, "Yay2: %s\n", collections[i].subname);
+			if (want_collection(collections[i].subname)) {
+				strlcpy(filtered_collections[j].subname, collections[i].subname, sizeof(filtered_collections[j].subname));
+				j++;
+			}
+		}
+		free(collections);
+		collections = filtered_collections;
+		num_colls = j;
 	}
 
 
@@ -2924,6 +2991,7 @@ int main(int argc, char *argv[])
 					qrewrite qrewrite;
 					qrewrite_init(&qrewrite, QueryData.query);
 					char attbuff[MaxQueryLen], attrq_esc[MaxQueryLen * 4], attrq2_esc[MaxQueryLen * 4];
+					char ekey[1024], evalue[1024];
 
 					printf("\t<attributes>\n");
 					while (next_attribute(Sider[i].attributes, &o, key, value, keyvalue)) {
@@ -2932,10 +3000,12 @@ int main(int argc, char *argv[])
 						
 						query_attr_set_filter(attbuff, sizeof attbuff, &qrewrite, key, value, 1);
 						escapeHTML(attrq2_esc, sizeof attrq2_esc, attbuff);
+						escapeHTML(ekey, sizeof ekey, key);
+						escapeHTML(evalue, sizeof evalue, value);
 
 
 						printf("\t<attribute key=\"%s\" value=\"%s\" query=\"%s\" attribute_query=\"%s\" />\n", 
-							key, value, 
+							ekey, evalue, 
 							attrq_esc, attrq2_esc);
 					}
 					printf("\t</attributes>\n");
