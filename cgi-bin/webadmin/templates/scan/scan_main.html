@@ -52,11 +52,11 @@
 				
 
 				<td>	
-					[% IF done %]
+					[%# IF done %]
                                         <ul class="button_list">
                                             <li><div><a href="scan.cgi?action=del_result&amp;id=[% id %]">Delete</a></div></li>
                                         </ul>
-					[% END %]
+					[%# END %]
 				</td>
 			[% END %]
 			[% i = i + 1 %]
