@@ -1,9 +1,5 @@
-#!/usr/bin/env perl
 use strict;
 use warnings;
-
-use config qw(%CFG @SEARCH_ENV_LOGGING %VALID_TPL %TPL_FILE %VALID_LANG %DEF_TPL_OPT);
-use ResultParse::SDOld;
 
 use CGI::Carp qw(fatalsToBrowser warningsToBrowser);
 use Readonly;
@@ -16,6 +12,8 @@ use Template;
 use CGI qw(escapeHTML);
 use LWP::Simple qw(get);
 use MIME::Base64 qw(encode_base64 decode_base64);
+use config qw(%TPL_FILE %CFG @SEARCH_ENV_LOGGING %DEF_TPL_OPT);
+use ResultParse::SDOld;
 BEGIN {
 	CGI::Carp::set_message(" ");
 	{
@@ -27,23 +25,12 @@ BEGIN {
 	}
 };
 
-my $lang;
-if ($ENV{HTTP_ACCEPT_LANGUAGE}) {
-	my ($browser_lang) = split q{,}, $ENV{HTTP_ACCEPT_LANGUAGE};
-	$browser_lang =~ s/-/_/g;
-	$lang = $browser_lang
-		if $VALID_LANG{$browser_lang};
-}
-$lang ||= $CFG{lang};
-
 my $cgi = new CGI();
 my %state = %{CGI::State->state($cgi)};
-#my $tpl = init_tpl($state{tpl}, $lang);
-my $tpl_name = $state{tpl};
-my $tpl = init_tpl($tpl_name, $lang);
 
-fatal("Invalid language " . $lang)
-	unless $VALID_LANG{$lang};
+my %query_params; # holds GET params that should
+	# be passed along as user navigates
+my $tpl = init_tpl();
 
 my $tpl_file;
 my %tpl_vars;
@@ -56,7 +43,7 @@ if (defined(my $query = $state{query})) {
 		$page = 1;
 	}
 	my $show_xml = $state{debug} && $state{debug} eq "showxml";
-	($tpl_file, %tpl_vars) = show_search($query, $show_xml, $page, $lang, $isanonymous);
+	($tpl_file, %tpl_vars) = show_search($query, $show_xml, $page, $isanonymous);
 }
 elsif (exists $state{cache}) {
 	($tpl_file, %tpl_vars) = show_cache($state{u}, $tpl);
@@ -69,6 +56,8 @@ print_html($tpl_file, %tpl_vars);
 
 sub print_html {
 	my ($tpl_file, %tpl_vars) = @_;
+	
+	$tpl_vars{query_params} = \%query_params;
 
 	print $cgi->header(
 	        -type => "text/html", 
@@ -92,10 +81,10 @@ sub show_main {
 }
 
 sub show_search {
-	my ($query, $show_debug, $page, $lang, $anonymous) = @_;
+	my ($query, $show_debug, $page, $anonymous) = @_;
 
 
-	my $search_uri = gen_search_uri(query => $query, page => $page, lang => $lang, anonymous => $anonymous);
+	my $search_uri = gen_search_uri(query => $query, page => $page, anonymous => $anonymous);
 	my $xml_str = get($search_uri)
 		or fatal("No result from dispatcher.");
 
@@ -173,7 +162,7 @@ sub gen_search_uri {
 		unless defined $attr{page};
 
 	# Add defaults
-	$attr{lang}     ||= $CFG{lang};
+	$attr{lang}     ||= $query_params{lang} || $CFG{lang};
 	$attr{username} ||= $CFG{username};
 	$attr{maxhits}  ||= $CFG{num_results};
 	$attr{subname}  ||= $CFG{subname};
@@ -196,11 +185,13 @@ sub gen_search_uri {
 	$attr{start} = $attr{page};
 	delete $attr{page};
 
+	
 	# Anonymous search
 	if ($attr{anonymous}) {
 		delete $attr{search_bruker};
 		$attr{anonymous} = '1';
 	}
+
 
 	#warn "searchd params: ", Dumper(\%attr);
 
@@ -213,14 +204,37 @@ sub gen_search_uri {
 }
 
 sub init_tpl {
-	my ($tpl_name, $lang) = @_;
-	$tpl_name ||= $CFG{tpl};
-	$lang ||= $CFG{lang};
 	
-	$VALID_TPL{$tpl_name} or croak "Invalid template '$tpl_name'";
+	# select template
+	my $tpl_name = $state{tpl};
+	if ($tpl_name) {
+		croak "Invalid template '$tpl_name'"
+			unless $tpl_name =~ /^[a-zA-Z_\-0-9]+$/ && (-d "tpl/$tpl_name");
+		$query_params{tpl} = $tpl_name;
+	}
+	else { $tpl_name = $CFG{tpl} }
+
+	# select language
+	my $lang;
+	if ($lang = $state{lang}) {
+		if (!valid_lang($tpl_name, $lang)) {
+			croak "Invalid language " . $state{lang};
+		}
+		$query_params{lang} = $lang;
+	}
+	elsif ($ENV{HTTP_ACCEPT_LANGUAGE}) {
+		my ($browser_lang) = split q{,}, $ENV{HTTP_ACCEPT_LANGUAGE};
+		$browser_lang =~ s/-/_/g;
+		if (valid_lang($tpl_name, $browser_lang)) {
+			$lang = $browser_lang;
+			$query_params{lang} = $lang;
+		}
+		else { $lang = $CFG{lang} }
+		
+	}
+	else { $lang = $CFG{lang} }
 
 	# init translation
-
 	my @langs = $lang eq $CFG{lang} 
 		? ($lang) 
 		: ($lang, $CFG{lang});
@@ -250,19 +264,33 @@ sub init_tpl {
 	$opt{FILTERS}->{warn}   = sub { warn "Template: ", @_; return q{}; };
 	$opt{FILTERS}->{strong} = sub { "<strong>" . $_[0] . "</strong>" };
 	$opt{FILTERS}->{query_url} = \&gen_query_url;
-	$opt{FILTERS}->{encode_base64} = \&encode_base64;
+	$opt{FILTERS}->{cache_url} = \&gen_cache_url;
 
 	my $tpl = $tpl = Template->new(%opt);
 	return $tpl;
 }
 
+sub _gen_url {
+	my $base_url = shift;
+	while (my ($k, $v) = each %query_params) {
+		$base_url .= "&$k=$v"
+	}
+	return escapeHTML($base_url);
+}
+
 sub gen_query_url {
 	my $query = shift;
-	my $uri = "?query=$query";
-	$uri .= "&tpl=$tpl_name"
-		if defined $tpl_name;
+	return _gen_url("?query=$query");
+}
 
-	return escapeHTML($uri);
+sub gen_cache_url {
+	my $cache_link = shift;
+	return _gen_url("?cache&u=" . encode_base64($cache_link));
+}
+
+sub valid_lang { 
+	my ($tpl_name, $lang) = @_;
+	return $lang =~ /^[a-z_]+$/ && (-d "./locale/$tpl_name/$lang");
 }
 
 1;

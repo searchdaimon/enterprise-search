@@ -150,7 +150,7 @@
 			<span class="url" title="[% r.fulluri | html %]">[% r.uri | html %]</span>
 			<span class="details">
 				[% IF r.cache %]
-				<a href="?cache&amp;u=[% r.cache | encode_base64 %]">[% "cache" | i18n %]</a>
+				<a href="[% r.cache | cache_url %]">[% "cache" | i18n %]</a>
 				[% END %]
 				[% IF r.age %]
 				 - [% r.age | html %]
