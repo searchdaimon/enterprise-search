@@ -140,7 +140,9 @@ $.fn.corner = function(o) {
                         this.style.position = 'relative';
                     ds.position = 'absolute';
                     ds.bottom = ds.left = ds.padding = ds.margin = '0';
-                    if ($.browser.msie)
+			// SD change, added ie8 check. Don't use setExpression if ie8.
+    			var ie8 = $.browser.msie && /MSIE 8.0/.test(navigator.userAgent);
+                    if (!ie8 && $.browser.msie)
                         ds.setExpression('width', 'this.parentNode.offsetWidth');
                     else
                         ds.width = '100%';
