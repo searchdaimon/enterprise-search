@@ -71,7 +71,12 @@ sub print_html {
 sub fatal {
 	my @err = @_;
 	#carp @err;
-	print_html($TPL_FILE{error}, ( errors => \@err, query => $state{query} ));
+	if ($tpl) {
+		print_html($TPL_FILE{error}, ( errors => \@err, query => $state{query} ));
+	}
+	else {
+		croak Dumper(\@err);
+	}
 	exit 1;
 }
 	
@@ -229,28 +234,42 @@ sub init_tpl {
 			$lang = $browser_lang;
 			$query_params{lang} = $lang;
 		}
-		else { $lang = $CFG{lang} }
-		
+		else { 
+
+			$lang = valid_lang($CFG{lang}) 
+				? $CFG{lang} : undef;
+		}
 	}
-	else { $lang = $CFG{lang} }
+	else { 
+		$lang = valid_lang($CFG{lang}) 
+			? $CFG{lang} : undef;
+	}
 
 	# init translation
-	my @langs = $lang eq $CFG{lang} 
-		? ($lang) 
-		: ($lang, $CFG{lang});
-	I18N::SearchRes::load_lang($tpl_name);
-	my $i18n = I18N::SearchRes->get_handle(@langs)
-		or fatal("Couldn't make a language handle");
-	$i18n->fail_with(sub { 
-		shift; 
-		warn "No locale for: ", join(", ", @_);
-		return 'I18N_error';
-	});
+	my $i18n_filter;
+	if (defined $lang) {
+		my @langs = $lang eq $CFG{lang} 
+			? ($lang) 
+			: ($lang, $CFG{lang});
+		I18N::SearchRes::load_lang($tpl_name);
+		my $i18n = I18N::SearchRes->get_handle(@langs)
+			or fatal("Couldn't make a language handle");
+		$i18n->fail_with(sub { 
+			shift; 
+			warn "No locale for: ", join(", ", @_);
+			return 'I18N_error';
+		});
 
-        my $i18n_filter = sub {
-		#warn "Params: ", Dumper(\@_);
-		$i18n->maketext(@_);
-	}; 
+        	$i18n_filter = sub {
+			#warn "Params: ", Dumper(\@_);
+			$i18n->maketext(@_);
+		}; 
+	}
+	else {
+		# Support templates with no translations
+		$i18n_filter = sub { shift } 
+	}
+
 	# tpl instance, with filter and vmethod
         $Template::Stash::SCALAR_OPS->{i18n} = $i18n_filter;
 	$Template::Stash::SCALAR_OPS->{query_url} = \&gen_query_url;
@@ -266,7 +285,8 @@ sub init_tpl {
 	$opt{FILTERS}->{query_url} = \&gen_query_url;
 	$opt{FILTERS}->{cache_url} = \&gen_cache_url;
 
-	my $tpl = $tpl = Template->new(%opt);
+	my $tpl = Template->new(%opt)
+		|| croak $tpl->error();
 	return $tpl;
 }
 
@@ -290,6 +310,7 @@ sub gen_cache_url {
 
 sub valid_lang { 
 	my ($tpl_name, $lang) = @_;
+	return unless defined $lang;
 	return $lang =~ /^[a-z_]+$/ && (-d "./locale/$tpl_name/$lang");
 }
 
