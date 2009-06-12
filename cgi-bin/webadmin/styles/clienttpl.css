@@ -1,0 +1,8 @@
+#tplContainer { 
+ 	clear : both; 
+	margin-top : 4em;
+}
+
+#tplContainer > ul > li {
+	margin-right : 0.2em;
+}

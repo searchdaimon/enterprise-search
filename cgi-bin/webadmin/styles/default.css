@@ -86,6 +86,11 @@ table .disabled {
 	color : gray !important;
 }
 
+table tr:hover {
+	background : #044a90 !important;
+	color : white !important;
+}
+
 
 .info_dashed {
     margin-top : 1em;
@@ -298,6 +303,7 @@ table .disabled {
      margin-top : 0.2em; 
 }
 
+/*
 .textNewLarge {
     margin-bottom : 1em;
     font-size : large;
@@ -305,7 +311,7 @@ table .disabled {
 }
 .textNewLarge img {
     border : 0px solid;
-}
+}*/
 
 /**
  * Tabs
@@ -326,10 +332,6 @@ table .disabled {
     display : inline;
     font-family: "Trebuchet MS", Trebuchet, Verdana, Helvetica, Arial, sans-serif;
     font-size : 14px;
-
-}
-.ui-tabs-nav li {
-    /* margin : 0;  */
 }
 
 
@@ -344,10 +346,15 @@ table .disabled {
     color : black;
   }
 
+.ui-tabs-nav li a:hover {
+	background : #044a90 !important;
+	color : white !important;
+
+}
+
 .ui-tabs-selected a {
     background : #044a90 !important;
     color : white !important;
-    font-weight : bolder; 
 }
 
 .ui-tabs-hide { display : none; }

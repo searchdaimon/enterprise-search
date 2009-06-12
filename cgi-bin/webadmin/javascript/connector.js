@@ -15,17 +15,12 @@ beforeFunc = function(x) { $('#loading').show(); }
 completeFunc = function(x, y) { $('#loading').hide(); }
 
 function getDefaultParams() {
-    return {
-        type : "GET",
-        url  : "connector.cgi",
-        dataType: "json",
-        async : true,
-        cache : false,
-        success: succsFunc,
-        error  : errorFunc,
-        beforeSend: beforeFunc,
-        complete: completeFunc
-    };
+	var defaults = defaultJQueryParams();
+	defaults['success'] = succsFunc;
+	defaults['error'] = errorFunc,
+	defaults['beforeSend'] = beforeFunc;
+	defaults['complete'] = completeFunc;
+	return defaults;
 }
 
 

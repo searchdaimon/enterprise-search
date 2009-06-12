@@ -1,4 +1,18 @@
 
+/**
+ * params for jquery ajax request
+ */
+function defaultJQueryParams() {
+	return {
+		type : "GET",
+		url  : "connector.cgi",
+		dataType: "json",
+		async : true,
+		cache : false,
+    	};
+}
+
+
 function set_checked(prefix, checked) {
 
     var i = 0;
@@ -18,6 +32,8 @@ function colorTable(tableId) {
 }
 
 function escapeHTML(str) {
+	if (!str.replace)
+		throw "escapeHTML can replace on string: '" + str + "'. Is it a string?";
 	return str.replace(/&/, "&amp;")
 		  .replace(/</, "&lt;")
 		  .replace(/>/, "&gt;")

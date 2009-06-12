@@ -182,6 +182,10 @@ $CONFIG{user_systems} = {
 };
 
 
+# Group: ClientTPL
+$CONFIG{client_path} = $ENV{BOITHOHOME} . "/public_html/webclient2";
+$CONFIG{client_tpl_path} = $CONFIG{client_path} . "/tpl";
+
 $CONFIG{connector_src_skeleton} = q|
 package Perlcrawl;
 use Carp;

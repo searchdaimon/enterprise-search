@@ -1,0 +1,368 @@
+[% WRAPPER 'header.html' 
+	title = 'Client templates - edit template files'
+	extra_js = ['jquery', 'ui.core', 'ui.tabs', 'dump', 'clienttpl']
+	extra_css = ['clienttpl']
+%]
+[% USE HTML %]
+[% USE Dumper %]
+
+<script type="text/javascript">
+//<![CDATA[
+
+// Globals
+tpl = '[% tpl | html %]';
+tpl_files = [
+	[% FOREACH f IN tpl_files %]
+	'[% f | html %]'[% ',' IF !loop.last %]
+	[% END %]
+];
+var lang_files = [
+	[% FOREACH f IN lang_files %]
+		'[% f | html %]'[% ',' IF !loop.last %]
+	[% END %]
+];
+is_readonly = [% is_readonly || 'null' %];
+var selected = [];
+selected.tab = null;
+selected.file = null;
+selected.fileType = null;
+var tabs;
+
+// Constants
+FILE_TPL = 1;
+FILE_LANG = 2;
+
+
+$(document).ready(function() {
+
+	// disable all actions if
+	// template is read only
+	if (is_readonly) {
+		$("button").each(function(i, btn) {
+			if ($(btn).attr("id") != "previewBtn")
+				$(btn).attr("disabled", "disabled");
+		});
+	}
+
+	var onShowFunc = function(arg) {
+		// get filename from tab
+		selected.tab = arg['tab'];
+		var tabstr = $(selected.tab).children("span").html();
+		var tabchunks = tabstr.split(":&nbsp;", 2);
+		var file = tabchunks[1];
+		var fileType = tabchunks[0] == "Tpl" ? FILE_TPL : FILE_LANG;
+		var id = _file_id(fileType, file);
+		selected.file = file;
+		selected.fileType = fileType;
+
+		// update save btn
+		var saveBtn = $("#saveBtn");
+		$("#saveBtn span").html("Save " + escapeHTML(file));
+		saveBtn.unbind("click"); // remove prev event
+
+		saveBtn.click(function() {
+			saveSource(id, fileType, file);
+		});
+		if (!is_readonly)
+			saveBtn.removeAttr("disabled");
+
+		// del btn
+		var delBtn = $("#delBtn");
+		$("#delBtn span").html("Delete " + escapeHTML(file));
+		delBtn.unbind("click").click(function() {
+			if (confirm("Are you sure you want to delete " + file + "?"))
+				delSource(id, fileType, file);
+		});
+		if (!is_readonly)
+			delBtn.removeAttr("disabled");
+	};
+
+ 	tabs = $('#tplContainer > ul').tabs({ 
+            selected : window.selected_tab ? selected_tab : 0,
+            show     : onShowFunc,
+	});
+	// remove dummy (needed to initialize tabs var)
+	tabs.tabs('remove', 0);
+
+	buildContainer();
+	{ // workaround for not showing all textareas 
+	  // TODO: fix the bug instead.
+	tabs.tabs('select', 1);
+	tabs.tabs('select', 0);
+	}
+	$(tpl_files).each(function(i, file) {
+		loadSource(FILE_TPL, file);
+	});
+	$(lang_files).each(function(i, file) {
+		loadSource(FILE_LANG, file);
+	});
+	$("#btnRename").click(function() {
+		var newName = prompt("New name for template", tpl);
+		if (!newName) return;
+		renameTpl(newName);
+	});
+	$("#btnNewFile").click(function() {
+		$("#newFileDialog").show(200);
+	});
+	$("#newTplBtn").click(function() {
+		var fileName = prompt("Template file name:", "newfile.tpl");
+		$("#newFileDialog").hide(200);
+		if (!fileName)
+			return;
+		newSourceFile(fileName, FILE_TPL);
+	});
+	$("#newLangBtn").click(function() {
+		var lang = prompt("Language:", "da");
+		$("#newFileDialog").hide(200);
+		if (!lang)
+			return;
+		newSourceFile(lang, FILE_LANG);
+	});
+
+	$("#previewBtn").click(function() {
+		var url = "/webclient2/?";
+		if (selected.file != "main.tpl") {
+			url += "&query=test";
+		}
+		if (selected.fileType == FILE_LANG) {
+			url += "&lang=" + selected.file;
+		}
+		url += "&tpl=" + tpl;
+		window.open(url);
+	});
+
+	$("#msg").click(function() {
+		$(this).hide(200);
+	});
+});
+
+function appendTab(fileType, file) {
+	// "static vars"
+	if (!appendTab.initialized) {
+		//appendTab.cont_ul = $("#tplContainer > ul");
+		appendTab.cont_blocks = $("#tplContainer > div");
+		appendTab.initialized = true;
+	}
+
+	var prefix = fileType == FILE_TPL ? "Tpl:&nbsp;" : "Language:&nbsp;";
+	var id = _file_id(fileType, file);
+
+	// Append a tab
+	/*$(appendTab.cont_ul).append(
+		'<li><a href="#' + escapeHTML(id) + '"><span>' 
+		+ prefix + escapeHTML(file) 
+		+ '</span></a> </li>'
+	);*/
+
+	// Create edit box for tab
+	$(appendTab.cont_blocks).append(
+		'<div class="tplBlock" id="' + escapeHTML(id) + '">'
+		+ '<textarea rows="15" cols="80" style="width : 100%; height : 30em;"></textarea>'
+		+ '</div>'
+	);
+	tabs.tabs('add', '#' + escapeHTML(id), prefix + escapeHTML(file));
+
+	return id;
+}
+
+function buildContainer() {
+	$('#tplContainer').hide();
+
+	// clear all
+	//cont_ul = $("#tplContainer > ul").html('');
+	//cont_blocks = $("#tplContainer > div").html('');
+	$(tpl_files).each(function (i, file) {
+		appendTab(FILE_TPL, file);
+	});
+	$(lang_files).each(function (i, file) {
+		appendTab(FILE_LANG, file);
+	});
+
+	$('#tplContainer').show();
+}
+
+function _file_id(fileType, file) {
+	if (file == null)
+		throw "file missing";
+	
+	if (fileType == FILE_TPL)
+		return "tpl" + file.substring(0, file.length - 4);
+	if (fileType == FILE_LANG)
+		return "lang_" + file;
+
+	throw "unsupported filetype";
+}
+
+function loadSource(fileType, file) {
+	if (file == null)
+		throw "file missing";
+
+	var showInTextarea = function(data) {
+		var id = _file_id(fileType, file);
+		$("#"+ escapeHTML(id) + " textarea").val(data.contents);
+	};
+
+
+	$.ajax(ajaxParams({
+		success: showInTextarea,
+		data : {
+			file : file,
+			file_type : fileTypeToStr(fileType),
+			tpl : tpl,
+			api : 'fetch_source'
+		}
+	}));
+
+}
+
+function fileTypeToStr(fileType) {
+	return fileType == FILE_TPL ? "tpl" : "lang";
+}
+
+function saveSource(id, fileType, file) {
+	if (file == null) throw "file missing";
+	var params = ajaxParams({
+		success : function(data) {
+			loadSource(fileType, file);
+			succsFunc("Saved.");
+		},
+		type : "POST",
+		data : {
+			source : $('#' + id + ' > textarea').val(),
+			file_type : fileTypeToStr(fileType),
+			file : file,
+			tpl : tpl,
+			api : 'save_source'
+		}
+	});
+	$.ajax(params);
+}
+
+function delSource(id, fileType, file) {
+	if (file == null) throw "file missing";
+	var params = ajaxParams({
+		success : function(data) {
+			$("#saveBtn").attr("disabled", "disabled");
+			$("#delBtn").attr("disabled", "disabled");
+			succsFunc("File deleted.");
+			$(selected.tab).fadeOut(1000, function() {
+				$(selected.tab).remove();
+				$("#" + id).remove();
+				tabs.tabs('select', 0);
+			});
+		},
+		type : "GET",
+		data : {
+			file : file,
+			tpl : tpl,
+			api : 'del_source',
+			file_type : fileTypeToStr(fileType)
+		}
+	});
+	$.ajax(params);
+}
+
+
+function newSourceFile(fileName, fileType) {
+	var params = ajaxParams({
+		type : "GET",
+		success : function(data) {
+			appendTab(fileType, data['new_file_name']);
+			loadSource(fileType, data['new_file_name']);
+
+			// select the new tab
+			tabs.tabs('select', tabs.tabs('length') - 1);
+
+			succsFunc("File created");
+		},
+		data : {
+			tpl : tpl,
+			new_file : fileName,
+			api : 'new_source',
+			file_type : fileTypeToStr(fileType)
+		}
+	});
+	$.ajax(params);
+}
+
+function renameTpl(newName) {
+	if (tpl == newName)
+		return;
+
+	var params = ajaxParams({
+		type : "GET",
+		data : {
+			tpl : tpl,
+			new_name : newName,
+			api : "rename"
+		},
+		success : function(data) {
+			tpl = newName;
+                	$('#headerTplName').fadeOut(100).html(newName).fadeIn(100);
+			succsFunc("Name changed to " + newName);
+		}
+	});
+	$.ajax(params);
+}
+
+//]]>
+</script>
+[% END %]
+
+<h2>
+[% IF is_readonly %]
+	Viewing template files for <span id="headerTplName">[% tpl | html %]</span> (read only)
+[% ELSE %]
+	Editing template files for <span id="headerTplName">[% tpl | html %]</span>
+[% END %]
+</h2>
+
+	[% PROCESS 'tpl_msg.html' type="info" discreet=1 id="msg" style="display : none;" %]
+<div id="tplMenu">
+    	<img src="file.cgi?i=jqueryloader&amp;ext=gif&amp;size=other" alt="loading" id="loading" style="float : right; margin-right : 2em;" />
+
+	<div style=" float : left; margin-right : 2em; padding : 0.3em;">
+		<button id="saveBtn">
+        		<img src="file.cgi?i=filesave&amp;size=16x16" alt="" />
+			<span>Save</span>
+		</button>
+		<button id="delBtn">
+        		<img src="file.cgi?i=trash&amp;size=16x16" alt="" />
+			<span>Delete</span>
+		</button>
+		<button id="btnNewFile">
+        		<img src="file.cgi?i=filenew&amp;size=16x16" alt="" />
+			New file
+		</button>
+	</div>
+
+	<div style=" float : left; margin-right : 2em; padding : 0.3em;">
+		<button id="btnRename">
+			Rename template
+		</button>
+
+	</div>
+
+	<div style="float : left; margin-right : 2em; padding : 0.3em;">
+	<button id="previewBtn">
+        	<img src="file.cgi?i=demo&amp;size=16x16" alt="" />
+		Preview template</button>
+	</div>
+	
+
+	<div id="newFileDialog" style="display : none; clear : left; margin : 1em; padding : 1em; border : 1px solid silver; float : left;">
+		<p>What do you want to create?</p>
+		<p>
+		<button id="newTplBtn">New template</button>
+		<button id="newLangBtn">New translation</button>
+		</p>
+	</div>
+
+</div>
+<div id="tplContainer">
+	<ul><li><a href="#"><span>Dummy:&nbsp;dummy</span></a></li></ul>
+	<div style="margin-top : -0.5em;">
+	</div>
+</div>
+
+[% INCLUDE 'footer.html' %]

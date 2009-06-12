@@ -1,4 +1,5 @@
 [% INCLUDE 'header.html' title = 'Connector extensions' %]
+[% PROCESS 'common_widgets.html' %]
 [% USE Dumper %]
 [% USE HTML %]
 
@@ -11,12 +12,17 @@
     Connector [% HTML.escape(delete_ok) %] was deleted.
     [% END %]
 [% END %]
-    
-<div class="textNewLarge">
-    <img src="file.cgi?size=22x22&amp;i=edit_add" alt="new" />
-    <a href="connector.cgi?act=new">Create a new connector</a>
-</div>
 
+[% PROCESS pretty_button 
+		icon = "edit_add"
+		action = "connector.cgi"
+                text = "Create a new connector"
+		act  = "new"
+		method = "post"
+                name = "btn.new"  %]
+
+
+   
 <h2>Local connectors</h2>
 [% IF local_connectors.size %]
 	[% PROCESS connector_list
@@ -53,7 +59,7 @@
         [% color = 1 %]
         [% FOREACH c IN connectors %]
             [% WRAPPER 'template_table_row.html' %]
-                <td><img src="file.cgi?i=[% IF c.active %]connect_creating[% ELSE %]connect_no[% END %]&amp;size=32x32" alt="" /></td>
+                <td style="width : 64px;"><img src="file.cgi?i=[% IF c.active %]connect_creating[% ELSE %]connect_no[% END %]&amp;size=32x32" alt="" /></td>
                 <td>[% HTML.escape(c.name) %]</td>
                 <td>[% c.modified %]</td>
                 <td>[% IF c.active; "Active"; ELSE; "Disabled"; END %]</td>
@@ -65,7 +71,7 @@
 				[% ELSE %]
 					[% SET param = "act=$b.act" %]
 				[% END %]
-                        	<li><div><a href="connector.cgi?[% param %]&connid=[% c.id %]">[% b.name %]</a></div></li>
+                        	<li><div><a href="connector.cgi?[% param %]&amp;connid=[% c.id %]">[% b.name %]</a></div></li>
 			[% END %]
                 	</ul>
                 </td>

@@ -1,0 +1,71 @@
+[% INCLUDE 'header.html' title = 'Client templates' %]
+[% PROCESS 'common_widgets.html' %]
+[% USE Dumper %]
+[% USE HTML %]
+
+<h2>Client templates</h2>
+     [% PROCESS pretty_button 
+		icon = "edit_add"
+		action = "clienttpl.cgi"
+                text = "Create a new template"
+		act  = "new"
+		method = "post"
+                name = "btn.new"  %]
+
+<h2>Local templates</h2>
+[% IF custom_tpl.size %]
+	[% PROCESS tpl_list
+		templates = custom_tpl
+		buttons = [
+			{ show => 'edit_tpl',  name => 'Edit' },
+			{ act => 'clone', name => 'Clone' },
+			{ show   => 'del', name => 'Delete' },
+		]
+	%]
+
+[% ELSE %]
+	<p>No local templates created.</p>
+[% END %]
+
+<h2>Searchdaimon templates</h2>
+[% IF ro_tpl.size %]
+	[% PROCESS tpl_list
+		templates = ro_tpl
+		buttons = [
+			{ show => 'edit_tpl',  name => 'View' },
+			{ act  => 'clone', name => 'Clone' },
+		]
+	%]
+[% ELSE %]
+	<p>No searchdaimon tempaltes found.</p>
+[% END %]
+
+[% INCLUDE 'footer.html' %]
+
+[% BLOCK tpl_list %]
+	[% WRAPPER 'template_table.html' style='width : 80%' header = ['', 'Name', '']  %]
+	[% color = 1 %]
+	[% FOREACH t IN templates.sort %]
+		
+		[% WRAPPER 'template_table_row.html' %]
+			<td style="width : 64px;"><img src="file.cgi?i=windowlist&amp;size=32x32" alt="" /></td>
+			<td>[% t | html %]</td>
+			<td>
+				<ul class="button_list">
+				[% FOREACH b IN buttons %]
+					[% IF b.show %]
+						[% SET param = "show=$b.show" %]
+					[% ELSE %]
+						[% SET param = "act=$b.act" %]
+					[% END %]
+					<li><div>
+						<a href="clienttpl.cgi?[% param %]&amp;tpl=[% t | html %]">[% b.name %]</a>
+					</div></li>
+				[% END %]
+				</ul>
+			</td>
+		[% END %]
+		[% color = 1 - color %]
+	[% END %]
+	[% END %]
+[% END %]

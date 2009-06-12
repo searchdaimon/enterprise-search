@@ -7,6 +7,9 @@
         [% IF view %]
             <input type="hidden" name="view" value="[% view %]" />
         [% END %]
+	[% IF act %]
+		<input type="hidden" name="act" value="[% act %]" />
+	[% END %]
         <input type="submit" 
             value="[% text %]"
             name="[% name %]" />

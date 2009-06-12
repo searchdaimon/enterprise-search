@@ -1,0 +1,12 @@
+[% INCLUDE 'header.html' title='Delete template' %] 
+  
+[% WRAPPER 'template_delete.html' 
+	it = "template $tpl_name"
+	form = 'clienttpl.cgi' 
+	id = tpl_name
+	%]
+	<input type="hidden" name="act" value="del" />
+	Are you sure you want to delete template <em>[% tpl_name | html %]</em>?
+[% END %]
+
+[% INCLUDE 'footer.html' %]
