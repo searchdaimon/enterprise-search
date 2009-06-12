@@ -105,9 +105,10 @@ A:active { color : blue; }
 		<td style="width : 100%;">
 		</td>
 	</tr></table>
-	[% IF tpl %]
-        	<input type="hidden" name="tpl" value="[% tpl | html %]" />
+	[% FOREACH p IN query_params %]
+        	<input type="hidden" name="[% p.key %]"  value="[% p.value | html %]" />
 	[% END %]
+	
 	</div>
 
 </form>

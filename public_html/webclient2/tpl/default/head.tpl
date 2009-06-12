@@ -39,9 +39,11 @@
     <form method="get" action="?">
         <div>
             <input type="text" name="query" id="queryField" value="[% query | html %]" size="40" />
-	    [% IF tpl %]
-            	<input type="hidden" name="tpl" value="[% tpl | html %]" />
-	    [% END %]
+[% FOREACH p IN query_params %]
+        	<input type="hidden" name="[% p.key %]"  value="[% p.value | html %]" />
+	[% END %]
+	
+
 
             <input type="image" id="queryBtn" 
                 src="[% "(search_btn_img)" | i18n %]" title="[% "Start search" | i18n %]" alt="[% "Search" | i18n %]" />

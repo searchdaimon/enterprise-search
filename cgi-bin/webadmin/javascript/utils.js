@@ -8,7 +8,7 @@ function defaultJQueryParams() {
 		url  : "connector.cgi",
 		dataType: "json",
 		async : true,
-		cache : false,
+		cache : false
     	};
 }
 

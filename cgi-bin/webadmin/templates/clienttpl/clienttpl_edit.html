@@ -1,6 +1,6 @@
 [% WRAPPER 'header.html' 
 	title = 'Client templates - edit template files'
-	extra_js = ['jquery', 'ui.core', 'ui.tabs', 'dump', 'clienttpl']
+	extra_js = ['jquery', 'ui.core', 'ui.tabs', 'utils', 'clienttpl']
 	extra_css = ['clienttpl']
 %]
 [% USE HTML %]
@@ -31,6 +31,7 @@ var tabs;
 // Constants
 FILE_TPL = 1;
 FILE_LANG = 2;
+
 
 
 $(document).ready(function() {
@@ -79,7 +80,7 @@ $(document).ready(function() {
 
  	tabs = $('#tplContainer > ul').tabs({ 
             selected : window.selected_tab ? selected_tab : 0,
-            show     : onShowFunc,
+            show     : onShowFunc
 	});
 	// remove dummy (needed to initialize tabs var)
 	tabs.tabs('remove', 0);
