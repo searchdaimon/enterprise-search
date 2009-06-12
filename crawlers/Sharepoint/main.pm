@@ -5,6 +5,8 @@ use warnings;
 use SOAP::Lite;
 use Data::Dumper;
 
+use Time::HiRes;
+
 sub new {
 	my $self = shift;
 	my $class = ref($self) || $self;
@@ -63,18 +65,28 @@ sub get_list {
 }
 
 sub get_list_items {
-	my ($self, $name, $pager) = @_;
+	my ($self, $name, $pager, $lastcrawl) = @_;
 
-	# XXX: Not used, need to get the last crawl time from the search system
+	my $startg = Time::HiRes::time;
 	my $q;
-	if (undef and $self->{lastcrawl} > 0) {
+	print "Lastcrawl: " . $self->{lastcrawl}."\n";
+	$self->{lastcrawl} = $lastcrawl;
+	if (defined $self->{lastcrawl} and $self->{lastcrawl} > 0) {
 		my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($self->{lastcrawl});
 
-		my $time = $year.'-'.$mon.'-'.$mday.' '.$hour.':'.$min.':'.$sec;
+		my $timestr = (1900 + $year) . "-";
+		$mon += 1;
+		$timestr .= ($mon < 10 ? '0' . $mon : $mon) . "-";
+		$timestr .= ($mday < 10 ? '0' . $mday : $mday) . "T";
+
+		$timestr .= ($hour < 10 ? '0' . $hour : $hour) . ":";
+		$timestr .= ($min < 10 ? '0' . $min : $min) . ":";
+		$timestr .= ($sec < 10 ? '0' . $sec : $sec) . "Z";
+
 		$q = SOAP::Data->new(name => 'Where', value => [
 			SOAP::Data->new(name => 'Geq', value => [
 				SOAP::Data->new(name => 'FieldRef', attr => {Name => 'Modified'}),
-				SOAP::Data->new(name => 'Value', attr => {Type => 'DateTime'}, value => $time),
+				SOAP::Data->new(name => 'Value', attr => {Type => 'DateTime'}, value => $timestr),
 			])
 		]);
 	} else {
@@ -104,8 +116,15 @@ sub get_list_items {
 			SOAP::Data->new(name => 'Query', value => [ $q, ]),
 		]),
 	];
+	my $endg = Time::HiRes::time;
 
-	return $self->do_query('GetListItems', $data);
+	my $startg = Time::HiRes::time;
+	my $r = $self->do_query('GetListItems', $data);
+	my $endg = Time::HiRes::time;
+
+	print STDERR "Get took:". ($endg-$startg)."\n";
+
+	return $r;
 }
 
 sub get_attachment_collection {
@@ -373,6 +392,11 @@ sub role_to_groups {
 sub handle_listitem_attachment_worker {
 	my ($self, $url, $allowedstr, $parent) = @_;
 
+	# Some urls are not wanted, dwp for instance.
+	# dwp are xml files describing a specific page on the sharepoint server, we generate our own pages so ignore these
+	return if ($url =~ /\.dwp$/i); # v2
+	return if ($url =~ /\.webpart$/i); # v3
+
 	my $req = HEAD $url;
 	my $ua = LWP::UserAgent->new(keep_alive => 1);
 	my $res = $ua->request($req);
@@ -380,14 +404,16 @@ sub handle_listitem_attachment_worker {
 	$lastmodified = 0 unless defined $lastmodified;
 	#print Dumper($res);
 
-	if ($res->status_line =~ /^2\d\d/ and !$self->document_exists($url, $lastmodified, $res->header('Content-Length'))) {
+	if (($res->status_line =~ /^2\d\d/) and (not $self->document_exists($url, $lastmodified, $res->header('Content-Length')))) {
 		my $req = GET $url;
 		my $res = $ua->request($req);
 		my $type = mapMimeType($res->header('Content-Type'));
 
+		my $title = $url;
+		$title = $1 if $title =~ /([^\/]+)$/;
 		$self->add_document(
 				url => $url,
-				title => $url,
+				title => $title,
 				content => $res->content,
 				last_modified => $lastmodified,
 				type => $type,
@@ -404,6 +430,9 @@ sub handle_listitem_attachment_worker {
 
 sub handle_listitem_attachment {
 	my ($self, $listid, $itemid, $itemurl, $allowedstr) = @_;
+
+	# XXX: Sloooooow
+	return;
 
 	my $ref = $self->{listsservice}->get_attachment_collection($listid, $itemid);
 
@@ -426,16 +455,27 @@ sub handle_value {
 	return $value;
 }
 
-sub handle_listitem_worker {
-	my ($self, $items, $listid, $dispurl, $allowedstr) = @_;
 
+sub handle_listitem_worker {
+	my ($self, $items, $listid, $dispurl, $allowedstr, $pattributes_l) = @_;
+
+	my @attributes_l = @{ $pattributes_l };
+
+	my $starttime = Time::HiRes::time;
+	print STDERR "Got: " . scalar (@{ $items->{listitems}->{'rs:data'}->{'z:row'} })."\n";
 	foreach my $item (@{ $items->{listitems}->{'rs:data'}->{'z:row'} }) {
 		my $doc = '';
 		my $title = '';
 		my $modifiedstr = '0';
 		my $id = '';
 		my $encodedabsurl = undef;
+
+		my @attributes = @attributes_l;
+		push @attributes, 'sptype=listitem';
+
+		my $s1 = Time::HiRes::time;
 		# XXX: Filter away some keys?
+		$doc .= "<table>\n";
 		foreach my $key (keys %{$item}) {
 			my $pkey = $key;
 			$pkey =~ s/^ows_//;
@@ -451,11 +491,20 @@ sub handle_listitem_worker {
 			$id = $item->{$key} if ($pkey eq 'ID');
 			$encodedabsurl = $item->{$key} if ($pkey eq 'EncodedAbsUrl');
 
-			$doc .= $pkey . ': '.handle_value($item->{$key})."\n";
+			$doc .= "<tr>\n";
+			$doc .= "<td>$pkey</td>\n";
+			$doc .= "<td>".handle_value($item->{$key})."</td>\n";
+			$doc .= "</tr>\n";
 		}
+		$doc .= "</table>\n";
+		my $e1 = Time::HiRes::time;
+		#print "Stage1 took: ".($e1-$s1)."\n";
 
+		my $s2 = Time::HiRes::time;
 		my $unixtime = str2time($modifiedstr);
-
+		my $e2 = Time::HiRes::time;
+		#print "Stage2 took: ".($e2-$s2)."\n";
+		my $s3 = Time::HiRes::time;
 		my $path = $dispurl . "ID=". $id;
 		# Try harder to find a title
 		if ($title eq '' and exists $item->{ows_BaseName}) {
@@ -463,37 +512,72 @@ sub handle_listitem_worker {
 			$title .= $item->{ows_BaseName};
 		}
 
+		# Type
+		if (exists($item->{'ows_EventDate'})) {
+			push @attributes, 'Appointment=Sharepoint';
+		}
+		elsif (exists($item->{'ows_ContentType'}) and $item->{'ows_ContentType'} eq 'Person') {
+			push @attributes, 'Person=Sharepoint';
+		}
+
+		# Author
+		if (exists($item->{'ows_Editor'})) {
+			my $a = $item->{'ows_Editor'};
+			$a =~ s/^\d+;#//;
+			push @attributes, ('author=' . $a);
+		} elsif (exists($item->{'ows_Author'})) {
+			my $a = $item->{'ows_Author'};
+			$a =~ s/^\d+;#//;
+			push @attributes, ('author=' . $a);
+		}
+
+		push @attributes, "snippet=db";
+
+		my $e3 = Time::HiRes::time;
+		#print "Stage3 took: ".($e3-$s3)."\n";
+		my $s4 = Time::HiRes::time;
 		if (!$self->document_exists($path, $unixtime, length($doc))) {
 			$self->add_document(
 					url => $path,
 					title => $title,
 					content => $doc,
 					last_modified => $unixtime,
-					type => 'tapp',
+					type => 'html',
 					acl_allow => $allowedstr,
-					attributes => 'source=sharepoint,sptype=listitem',
+					attributes => join(',', @attributes),
 					);
 		}
+		my $e4 = Time::HiRes::time;
+		#print "Stage4 took: ".($e4-$s4)."\n";
+		my $s5 = Time::HiRes::time;
 
-		if (defined $encodedabsurl) {
-			# XXX: Getting 404 on quite a bit of the files that end in .\d\d\d, skip them for now
-			if ($encodedabsurl !~ /\.\d+$/) {
-				$self->handle_listitem_attachment_worker($encodedabsurl, $allowedstr, $path);
-			}
-		}
-
-		$self->handle_listitem_attachment($listid, $id, $path, $allowedstr);
+#		if (defined $encodedabsurl) {
+#			# XXX: Getting 404 on quite a bit of the files that end in .\d\d\d, skip them for now
+#			if ($encodedabsurl !~ /\.\d+$/) {
+#				$self->handle_listitem_attachment_worker($encodedabsurl, $allowedstr, $path);
+#			}
+#		}
+		my $e5 = Time::HiRes::time;
+		#print "Stage5 took: ".($e5-$s5)."\n";
+		my $s6 = Time::HiRes::time;
+		# XXX: Slow, so we skip it right now
+		#$self->handle_listitem_attachment($listid, $id, $path, $allowedstr);
+		my $e6 = Time::HiRes::time;
+		#print "Stage6 took: ".($e6-$s6)."\n";
 	}
+	my $endtime = Time::HiRes::time;
+
+	#print STDERR "Add took: " . ($endtime - $starttime) . "\n";
 }
 
 sub handle_listitem {
-	my ($self, $listid, $listurl, $allowedstr) = @_;
+	my ($self, $listid, $listurl, $allowedstr, $pattributes_l) = @_;
 
 	my $items;
 
 	# XXX: Verify
 	my $dispurl = $listurl;
-	$dispurl =~ s/\w+.aspx$/DispForm.aspx?/;
+	$dispurl =~ s/[^\/]+.aspx$/DispForm.aspx?/;
 
 	# More items in the list?
 	my $first = 1;
@@ -507,22 +591,25 @@ sub handle_listitem {
 		}
 
 		print "Got pager: $pager\n" unless $first;
-		$items = $self->{listsservice}->get_list_items($listid, $pager);
+		$items = $self->{listsservice}->get_list_items($listid, $pager, $self->{lastcrawl});
 #		if ($listurl =~ /users/) {
 #			print STDERR Dumper($items);
 #		}
 		return unless exists $items->{listitems}->{'rs:data'}->{'z:row'};
 #		return unless ($listurl =~ /users/);
 
-		$self->handle_listitem_worker($items, $listid, $dispurl, $allowedstr);
+		$self->handle_listitem_worker($items, $listid, $dispurl, $allowedstr, $pattributes_l);
 		$first = undef;
 	}
 }
 
 sub handle_lists {
-	my ($self) = @_;
+	my ($self, $pattributes_p) = @_;
+
+	my @attributes_p = @{ $pattributes_p } ;
 
 	my $lists = $self->{listsservice}->get_list_collection();
+
 
 	#print STDERR Dumper(map { $_->{Title} } @{ $lists->{Lists} });
 
@@ -592,11 +679,14 @@ sub handle_lists {
 			$doc .= $x . ": ". $list->{$x}."\n";
 		}
 
+
 		my $path = $self->{url} . $list->{DefaultViewUrl};
 
 		my %seenallowed;
 		my $allowedstr = join(',', grep { ! $seenallowed{$_}++ } @allowed);
 		if (!$self->document_exists($path, $unixtime, length($doc))) {
+			my @attributes_l = @attributes_p;
+			push @attributes_l, "sptype=list";
 			$self->add_document(
 				url => $path,
 				title => $list->{Title},
@@ -604,11 +694,64 @@ sub handle_lists {
 				last_modified => $unixtime,
 				type => 'txt',
 				acl_allow => $allowedstr,
-				attributes => 'source=sharepoint,sptype=list',
+				attributes => join(',', @attributes_l),
 			);
 		}
 
-		$self->handle_listitem($list->{ID}, $path, $allowedstr);
+		my @attributes = @attributes_p;
+		push @attributes, 'List=' . $list->{Title};
+		$self->handle_listitem($list->{ID}, $path, $allowedstr, \@attributes);
+	}
+}
+
+sub handle_sites {
+	my ($self, $sites) = @_;
+
+	#print Dumper($sites);
+
+	foreach my $site (@{$sites}) {
+		my $url = $site->{Url};
+		if ($url =~ /^(\w+):\/\/([^\/]+)(\/.*)?$/) {
+			my $proto = $1;
+			my $ip = $2;
+			# Check for toplevel site
+			my $subsite = defined $3 ? $3 : '';
+
+			$subsite =~ s/^\/+//;
+
+			print "Trying site: " . ($site->{Title} or 'undefined') . "\n";
+
+			my $userservice = $self->new_service($ip, $self->{username},
+			    $self->{password}, "usergroup", $subsite, 'directory');
+			my $listsservice = $self->new_service($ip, $self->{username}, $self->{password}, "lists", $subsite);
+			my $versionsservice = $self->new_service($ip, $self->{username}, $self->{password}, "versions", $subsite);
+			my $permservice = $self->new_service($ip, $self->{username},
+			    $self->{password}, "permissions", $subsite, 'directory');
+
+			$self->{userservice} = $userservice;
+			$self->{listsservice} = $listsservice;
+			$self->{permservice} = $permservice;
+			$self->{versionsservice} = $versionsservice;
+
+			$self->{proto} = $proto;
+			$self->{ip} = $ip;
+			$self->{url} = $proto . '://'.$ip;
+			$self->{base} = $site->{Url};
+
+			my @attributes;
+
+			push @attributes, "source=sharepoint";
+			#push @attributes, "site=$url";
+			my $_subsite = $subsite;
+			$_subsite = 'Home' if (not defined $_subsite or $_subsite eq '' or $_subsite =~ /^\s{0,}$/);
+			push @attributes, "Site=$_subsite";
+			#print Dumper(\@attributes);
+
+			$self->handle_lists(\@attributes);
+		} else {
+			warn "Url on unknown format: $url";
+		}
+#		print $site->{Url} ."\n";
 	}
 }
 
@@ -626,42 +769,51 @@ sub crawl_update {
 	my $ignoreperms = $opt->{ignoreperms};
 	my $allsites = $opt->{allsites} == 0 ? undef : 1;
 
+	# XXX: Support https
 	$self->{proto} = 'http';
-	my $userservice = $self->new_service($ip, $username, $password, "usergroup", $site, 'directory');
-	my $listsservice = $self->new_service($ip, $username, $password, "lists", $site);
-	my $versionsservice = $self->new_service($ip, $username, $password, "versions", $site);
-	my $permservice = $self->new_service($ip, $username, $password, "permissions", $site, 'directory');
-	my $webservice = $allsites ? $self->new_service($ip, $username, $password, "Webs", $site) : undef;
+
+	my $webservice = $self->new_service($ip, $username, $password, "Webs", $site);
 
 	# XXX: Detect sharepoint version
 	print "Sharepoint version: $sharepoint_version\n";
 	my @version = split(/\./, $sharepoint_version);
 	$self->{majorversion} = $version[0];
 
-	$self->{url} = $self->{proto}.'://'.$ip;
-	$self->{base} = $self->{url};
-	if (defined $site and $site !~ /\s+/ and $site ne '') {
-		my $site2 = $site;
-		$site2 =~ s/^\/+//;
-		$site2 =~ s/\/+$//;
-		$self->{base} .= "/$site2";
-	}
+
+	my $lastcrawl = $self->get_last_crawl_time();
+	print "Last crawl? $lastcrawl\n";
 
 	$self->{ip} = $ip;
 	$self->{username} = $username;
 	$self->{password} = $password;
-	$self->{userservice} = $userservice;
-	$self->{listsservice} = $listsservice;
-	$self->{permservice} = $permservice;
-	$self->{versionsservice} = $versionsservice;
 	$self->{ignoreperms} = $ignoreperms;
-	$self->{allsites} = $allsites;
-	# XXX: We want the last  crawl time
-	$self->{lastcrawl} = $self->get_last_crawl_time();
+	$self->{lastcrawl} = $lastcrawl;
 
-	#print Dumper($webservice->get_web_collection());
+#	print Dumper($sites);
+	
+	if ($allsites) {
+		#my $userservice = $self->new_service($ip, $username, $password, "usergroup", $site, 'directory');
+		#my $listsservice = $self->new_service($ip, $username, $password, "lists", $site);
+		#my $versionsservice = $self->new_service($ip, $username, $password, "versions", $site);
+		#my $permservice = $self->new_service($ip, $username, $password, "permissions", $site, 'directory');
 
-	$self->handle_lists($self);
+		my $sites = $webservice->get_web_collection()->{Webs};
+		$sites = [$sites] if (ref $sites eq 'HASH');
+
+		print Dumper($sites);
+
+		$self->handle_sites($sites);
+	} else {
+		my $url = $self->{proto} . "://$ip";
+		if (defined $site and $site !~ /\s+/ and $site ne '') {
+			my $site2 = $site;
+			$site2 =~ s/^\/+//;
+			$site2 =~ s/\/+$//;
+			$url .= "/$site2";
+		}
+
+		$self->handle_sites([ { Url => $url, Title => undef, } ]);
+	}
 }
 
 
