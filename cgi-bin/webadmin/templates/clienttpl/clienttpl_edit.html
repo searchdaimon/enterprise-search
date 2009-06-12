@@ -321,7 +321,7 @@ function renameTpl(newName) {
 <div id="tplMenu">
     	<img src="file.cgi?i=jqueryloader&amp;ext=gif&amp;size=other" alt="loading" id="loading" style="float : right; margin-right : 2em;" />
 
-	<div style=" float : left; margin-right : 2em; padding : 0.3em;">
+	<div class="buttonDiv">
 		<button id="saveBtn">
         		<img src="file.cgi?i=filesave&amp;size=16x16" alt="" />
 			<span>Save</span>
@@ -336,23 +336,24 @@ function renameTpl(newName) {
 		</button>
 	</div>
 
-	<div style=" float : left; margin-right : 2em; padding : 0.3em;">
+	<div clasS="buttonDiv">
 		<button id="btnRename">
 			Rename template
 		</button>
 
 	</div>
 
-	<div style="float : left; margin-right : 2em; padding : 0.3em;">
+	<div class="buttonDiv">
 	<button id="previewBtn">
         	<img src="file.cgi?i=demo&amp;size=16x16" alt="" />
 		Preview template</button>
 	</div>
 	
 
-	<div id="newFileDialog" style="display : none; clear : left; margin : 1em; padding : 1em; border : 1px solid silver; float : left;">
+	<div id="newFileDialog">
 		<p>What do you want to create?</p>
 		<p>
+        	<img src="file.cgi?i=filenew&amp;size=48x48" alt="" />
 		<button id="newTplBtn">New template</button>
 		<button id="newLangBtn">New translation</button>
 		</p>

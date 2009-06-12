@@ -6,3 +6,28 @@
 #tplContainer > ul > li {
 	margin-right : 0.2em;
 }
+
+#tplMenu .buttonDiv {
+	float : left;
+	margin-right : 2em;
+	padding : 0.3em;
+}
+
+#newFileDialog {
+ 	display : none; 
+	clear : left;
+	margin : 1em;
+	padding : 1em; 
+	border : 1px solid silver; 
+	float : left;
+}
+
+#newFileDialog img {
+ 	float : left;
+	margin-right : 0.5em;
+}
+
+#newFileDialog button {
+	margin-top : 14px; 
+}
+

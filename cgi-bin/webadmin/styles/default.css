@@ -72,23 +72,27 @@ table {
 
 table th {
 	text-align : left;
-	background-color : #f2f2f2;
+	background-color : #f2f2f2 !important;
+	color : black !important;
 }
 
 /* row colors */
 table .odd { background : #D3DBEF; }
 table .selected { 
-	background : #4473c4 !important; 
-	color : white !important;
+	/*background : #4473c4;
+	color : white;*/
+
+    background : #044a90;
+    color : white;
 }
 table .disabled {
-	background : #F0F0F0 !important;
-	color : gray !important;
+	background : #F0F0F0;
+	color : gray;
 }
 
 table tr:hover {
-	background : #044a90 !important;
-	color : white !important;
+	background : #044a90;
+	color : white;
 }
 
 
@@ -336,7 +340,7 @@ table tr:hover {
 
 
 .ui-tabs-nav li a {
-    padding : 0.2em; 
+    padding : 0.3em; 
     padding-bottom : 0;
     text-decoration : none;
     background : #d3dbef;
@@ -347,14 +351,17 @@ table tr:hover {
   }
 
 .ui-tabs-nav li a:hover {
-	background : #044a90 !important;
-	color : white !important;
+	background : #044a90;
+	color : white;
 
 }
 
 .ui-tabs-selected a {
     background : #044a90 !important;
-    color : white !important;
+    color : white !important; 
+
+	/*background : #4473c4 !important;
+	color : white !important;*/
 }
 
 .ui-tabs-hide { display : none; }
