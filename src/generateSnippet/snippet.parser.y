@@ -1187,6 +1187,8 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 	    mb = vector_get(data->Match,i).ptr;
 	}
 
+    char	line_cut = 0;
+
     for (pos=data->best.start; pos<data->best.stop; pos++)
 	{
 	    if (more && pos == mb->bend)
@@ -1210,7 +1212,7 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 
 			    if (colon == 0)
 				{
-				    bprintf(B, ":");
+				    if (!line_cut) bprintf(B, ":");
 				    col++;
 				    colon++;
 				}
@@ -1218,13 +1220,14 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 
 		    if (col > data->cols)
 			{
-			    bprintf(B, " ...");
-			    break;
+			    if (!line_cut) bprintf(B, " ...");
+			    line_cut = 1;
 			}
 
 		    if (eoln<Eoln_size && pos==vector_get(data->Eoln, eoln).i)
 			{
 			    bprintf(B, "<br />\n");
+			    line_cut = 0;
 			    eoln++;
 			    col = 0;
 			    colon = 0;
@@ -1237,7 +1240,7 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 		    active_highl++;
 		}
 
-	    if (!(data->mode == db_snippet && col==0 && data->Bbuf->data[pos]==' '))
+	    if (!(data->mode == db_snippet && col==0 && data->Bbuf->data[pos]==' ') && !line_cut)
 		bprintf(B, "%c", data->Bbuf->data[pos]);
 
 	    col++;
@@ -1253,13 +1256,20 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
     if (active_highl>0)
 	bprintf(B, b_end);
 
-    if (data->Bbuf->pos - data->best.stop < 5)
+    if (data->mode == db_snippet)
 	{
-	    bprintf(B, "%s", &(data->Bbuf->data[pos]));
+	    if (colon==0) bprintf(B, ":");
 	}
-    else if (!last_was_eos && data->best.stop < data->Bbuf->pos)
+    else
 	{
-	    bprintf(B, " ...");
+    	    if (data->Bbuf->pos - data->best.stop < 5)
+		{
+    	    	    bprintf(B, "%s", &(data->Bbuf->data[pos]));
+		}
+    	    else if (!last_was_eos && data->best.stop < data->Bbuf->pos)
+		{
+	    	    bprintf(B, " ...");
+		}
 	}
 
     return buffer_exit(B);
