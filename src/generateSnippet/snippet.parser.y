@@ -710,7 +710,7 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
     _queue_size_Q = queue_size(Q);
     if (_queue_size_Q > 0) _queue_peak_Q = queue_peak(Q);
 
-    while (_queue_size_Q > 0 && ((data->Bbuf->pos - pair(_queue_peak_Q).first.i) > maxsize) || forced)
+    while (_queue_size_Q > 0 && (((data->Bbuf->pos - pair(_queue_peak_Q).first.i) > maxsize) || forced))
 	{
 	    if (data->mode == first_snippet && pair(_queue_peak_Q).first.i > 0) break;
 
