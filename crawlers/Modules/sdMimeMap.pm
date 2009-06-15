@@ -354,6 +354,9 @@ my %types =
 
 sub mapMimeType {
    my $mt = $_[0];
+
+   $mt =~ s/;.*$//;
+   
    if (defined  $types{$mt}) {
       return $types{$mt};
   } else {
