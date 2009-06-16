@@ -1412,15 +1412,14 @@ int main(int argc, char *argv[])
 	} else {
 		collections = get_usr_coll(QueryData.search_user, &num_colls, cmc_port);
 
-		fprintf(stderr, "num colls: %d\n", num_colls);
 		struct subnamesFormat *filtered_collections = calloc(num_colls, sizeof(*filtered_collections));
 		int i, j;
 
 		j = 0; /* New num_colls */
 		for (i = 0; i < num_colls; i++) {
-			fprintf(stderr, "Yay2: %s\n", collections[i].subname);
 			if (want_collection(collections[i].subname)) {
-				strlcpy(filtered_collections[j].subname, collections[i].subname, sizeof(filtered_collections[j].subname));
+				strlcpy(filtered_collections[j].subname, collections[i].subname,
+				        sizeof(filtered_collections[j].subname));
 				j++;
 			}
 		}
