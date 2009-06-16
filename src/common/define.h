@@ -189,8 +189,10 @@
 #define complicacy_maxPoengAthorPhraserank 260
 #define complicacy_maxPoengAthorSimple 6
 
+#define SUMMARY_NONE 0
 #define SUMMARY_START   1
 #define SUMMARY_SNIPPET 2
+#define SUMMARY_DB 3
 
 //Lengden på en okument post lengde
 //#define DocumentIndexPOSTLENGTH 253
