@@ -439,7 +439,7 @@ struct SiderFormat {
 	struct DocumentIndexFormat DocumentIndex;
 	struct iindexMainElements iindex;
 	int htmlSize;
-	char description[300]; 
+	char description[500];
 	char title [70];
 	char thumbnale[128];
 	int thumbnailwidth;
