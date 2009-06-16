@@ -564,6 +564,10 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 
 int rReadSummary_post(const unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[], 	int fd) {
 
+	#ifdef DEBUG
+		printf("rReadSummary_post(DocID=%u, radress64bit=%u, rsize=%hu,subname=\"%s\"\n",DocID,radress64bit,rsize,subname);
+	#endif
+
         #ifdef TIME_DEBUG_L
                 struct timeval start_time, end_time;
 		// for totalt tid i funksjonen
@@ -1134,6 +1138,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 		printf("\turl: \"%s\"\n",(*ReposetoryHeader).url);
 		printf("\thtmlSize: %ho\n",(*ReposetoryHeader).htmlSize);
 		printf("\timageSize: %ho\n",(*ReposetoryHeader).imageSize);
+		printf("at %s:%d\n",__FILE__,__LINE__);
 		printf("\n");
 	#endif
 
@@ -1168,6 +1173,10 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
                 gettimeofday(&tot_start_time, NULL);
         #endif
 	
+	#ifdef DEBUG
+		printf("rReadPost2(rsize=%u, imagesize=%u, htmlbufferSize=%d)\n",rsize,imagesize,htmlbufferSize);
+	#endif
+
 	int n;
 
 	if (htmlbufferSize < rsize) {
@@ -1317,6 +1326,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 				}
 			}
 			(*attributes)[ReposetoryHeader->attributeslen] = '\0';
+					
 		} else {
 			*attributes = NULL;
 		}
@@ -1342,16 +1352,23 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 	free(totalpost);
 
 	if (strncmp(recordseparator,"***",3)) {
-		printf("bad record separator %c%c%c\n",recordseparator[0],recordseparator[1],recordseparator[2]);
+		printf("bad record separator \"%c%c%c\"\n",recordseparator[0],recordseparator[1],recordseparator[2]);
 	}
 
 	#ifdef DEBUG
-		printf("ReposetoryHeader:\n");
+		printf("ReposetoryHeader (of size %d):\n",sizeof((*ReposetoryHeader)));
 		printf("\tDocID: %u\n",(*ReposetoryHeader).DocID);
 		printf("\turl: \"%s\"\n",(*ReposetoryHeader).url);
 		printf("\thtmlSize: %ho\n",(*ReposetoryHeader).htmlSize);
 		printf("\timageSize: %ho\n",(*ReposetoryHeader).imageSize);
+		printf("\turllen: %ho\n",(*ReposetoryHeader).urllen);
+		printf("\tattributeslen: %ho\n",(*ReposetoryHeader).attributeslen);
+		printf("\tat %s:%d\n",__FILE__,__LINE__);
 		printf("\n");
+		printf("annet:\n");
+		printf("\tCurrentReposetoryVersionAsUInt: \"%u\"\n",CurrentReposetoryVersionAsUInt);
+		printf("\tattributes: \"%s\"\n",*attributes);
+
 	#endif
 
 	if ((*ReposetoryHeader).htmlSize != rsize) {
@@ -1404,7 +1421,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			printf("\turl: \"%s\"\n",(*ReposetoryHeader).url);
 			printf("\thtmlSize: %ho\n",(*ReposetoryHeader).htmlSize);
 			printf("\timageSize: %ho\n",(*ReposetoryHeader).imageSize);
-
+			printf("at %s:%d\n",__FILE__,__LINE__);
 			#ifdef BLACK_BOKS
 			printf("CurrentReposetoryVersionAsUInt: %u\n",CurrentReposetoryVersionAsUInt);
 
@@ -1794,7 +1811,10 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char **url, char
 
 int runpack(char *ReposetoryData,uLong comprLen,char *inndata,int length) {
 
-	
+	#ifdef DEBUG
+		printf("runpack()");
+	#endif
+
 	int error;
 	//char compressBuff[sizeof(ReposetoryData)];
 
