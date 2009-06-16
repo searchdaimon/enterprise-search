@@ -26,6 +26,7 @@
 #include "../generateSnippet/snippet.parser.h"
 #include "../common/ir.h"
 #include "../common/timediff.h"
+#include "../common/attributes.h"
 #include "../common/bstr.h"
 #include "../query/query_parser.h"
 #include "../query/stemmer.h"
@@ -186,9 +187,12 @@ static int equal_domainid_fn(void *key1, void *key2) {
 
 char *generate_summary(char summary_cfg, query_array query_parsed, char *body)  {
 	char *summary;
-
 	size_t body_len = strlen(body);
-	if (summary_cfg == SUMMARY_SNIPPET) {
+
+	if (summary_cfg == SUMMARY_DB) {
+		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , db_snippet, SUMMARY_LEN, 4, 80);
+	}
+	else if (summary_cfg == SUMMARY_SNIPPET) {
 		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , plain_snippet, SUMMARY_LEN, 4, 80);
 	}
 	else if (summary_cfg == SUMMARY_START) {
@@ -616,7 +620,6 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 
 			}
 			else {
-
 				debug("don't hav Summary on disk. Will hav to read html\n");	
 				if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname->subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
 					//printf("Fii faa foo: %s\n", url);
@@ -630,6 +633,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 					return 0;
 
 				}
+				/* XXX: Probably no longer needed */
 				strlcpy(Sider->uri, url, sizeof(Sider->uri));
 				strlcpy(Sider->url, url, sizeof(Sider->uri));
 
@@ -676,6 +680,8 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 				printf("bug: body består av under 15 tegn. Da kan det være at vi bare har <div> som tegn.\n");
 			}
 			else {
+				char key[MAX_ATTRIB_LEN], value[MAX_ATTRIB_LEN], keyval[MAX_ATTRIB_LEN];
+				char summary_cfg, *attr_offset;
 
 #ifdef DEBUG
 				printf("calling generate_snippet with strlen body %i\n",strlen(body));
@@ -694,8 +700,15 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 				printf("#################################################################\n");
 #endif
 
+				summary_cfg = subname->config.summary;
+				if (next_attribute_key(attributes, &attr_offset, key, value, keyval, "snippet")) {
+					if (strcmp(value, "db") == 0) {
+						summary_cfg = SUMMARY_DB;
+					}
+				}
+
 				//printf("calling generate_snippet, body \"%s\", length %i\n",body, strlen(body));
-				summary = generate_summary(subname->config.summary, QueryData.queryParsed, body);
+				summary = generate_summary(summary_cfg, QueryData.queryParsed, body);
 
 
 #ifdef DEBUG_TIME
@@ -3115,3 +3128,4 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	fprintf(stderr, "searchkernel: ~dorank()\n");
 	return 1;
 }
+
