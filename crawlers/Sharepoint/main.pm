@@ -69,7 +69,6 @@ sub get_list_items {
 
 	my $startg = Time::HiRes::time;
 	my $q;
-	print "Lastcrawl: " . $self->{lastcrawl}."\n";
 	$self->{lastcrawl} = $lastcrawl;
 	if (defined $self->{lastcrawl} and $self->{lastcrawl} > 0) {
 		my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($self->{lastcrawl});
@@ -130,9 +129,15 @@ sub get_list_items {
 sub get_attachment_collection {
 	my ($self, $listname, $id) = @_;
 
+	print "Listname: $listname, Itemid: $id\n";
+
+#	my $guid = $listname;
+#	$guid =~ s/^{//;
+#	$guid =~ s/}$//;
+
 	my $data = [
-		SOAP::Data->new(name => 'listName', type => 's:string', prefix => 's0', value => $listname),
-		SOAP::Data->new(name => 'listItemID', type => 's:int', prefix => 's0', value => $id),
+		SOAP::Data->new(name => 'listName', prefix => 's0', value => $listname),
+		SOAP::Data->new(name => 'listItemID', prefix => 's0', value => $id),
 	];
 
 	return $self->do_query('GetAttachmentCollection', $data);
@@ -245,6 +250,7 @@ use LWP::UserAgent;
 use LWP::Authen::Ntlm;
 use LWP::Debug;
 use HTTP::Request::Common;
+use URI::Escape;
 
 use SD::Crawl;
 
@@ -390,27 +396,44 @@ sub role_to_groups {
 }
 
 sub handle_listitem_attachment_worker {
-	my ($self, $url, $allowedstr, $parent) = @_;
+	my ($self, $url, $allowedstr, $parent, $p_attributes) = @_;
 
 	# Some urls are not wanted, dwp for instance.
 	# dwp are xml files describing a specific page on the sharepoint server, we generate our own pages so ignore these
 	return if ($url =~ /\.dwp$/i); # v2
 	return if ($url =~ /\.webpart$/i); # v3
 
-	my $req = HEAD $url;
+
+	my $get_url = $url;
+
+	my $req = HEAD $get_url;
 	my $ua = LWP::UserAgent->new(keep_alive => 1);
 	my $res = $ua->request($req);
+	if ($res->status_line =~ /^401/) {
+		# XXX: Send basic auth somehow else
+		$get_url =~ s/^http(s|)?:\/\//http$1:\/\/$the_user:$the_pass@/;
+
+		$req = HEAD $get_url;
+		$res = $ua->request($req);
+	}
+
 	my $lastmodified = str2time($res->header('Last-Modified'));
 	$lastmodified = 0 unless defined $lastmodified;
-	#print Dumper($res);
 
+	#print "Resource status: " . $res->status_line ." for $url\n";
 	if (($res->status_line =~ /^2\d\d/) and (not $self->document_exists($url, $lastmodified, $res->header('Content-Length')))) {
-		my $req = GET $url;
+		my $req = GET $get_url;
 		my $res = $ua->request($req);
 		my $type = mapMimeType($res->header('Content-Type'));
 
 		my $title = $url;
 		$title = $1 if $title =~ /([^\/]+)$/;
+		$title = uri_unescape($title);
+
+		my @attributes = @{ $p_attributes };
+		push @attributes, "sptype=file";
+		push @attributes, "parent=$parent";
+
 		$self->add_document(
 				url => $url,
 				title => $title,
@@ -418,7 +441,7 @@ sub handle_listitem_attachment_worker {
 				last_modified => $lastmodified,
 				type => $type,
 				acl_allow => $allowedstr,
-				attributes => 'source=sharepoint,sptype=file,parent='.$parent,
+				attributes => join(',', @attributes),
 				);
 	}
 
@@ -429,18 +452,17 @@ sub handle_listitem_attachment_worker {
 }
 
 sub handle_listitem_attachment {
-	my ($self, $listid, $itemid, $itemurl, $allowedstr) = @_;
+	my ($self, $listid, $listname, $itemid, $itemurl, $allowedstr, $p_attributes) = @_;
 
-	# XXX: Sloooooow
-	return;
+	my $ref = $self->{listsservice}->get_attachment_collection($listname, $itemid);
 
-	my $ref = $self->{listsservice}->get_attachment_collection($listid, $itemid);
+	#print Dumper($ref);
 
 	return unless (ref $ref->{Attachments} eq 'ARRAY');
 
 	foreach my $url (@{$ref->{Attachments}}) {
 		print $url."\n";
-		$self->handle_listitem_attachment_worker($url, $allowedstr, $itemurl);
+		$self->handle_listitem_attachment_worker($url, $allowedstr, $itemurl, $p_attributes);
 	}
 
 }
@@ -450,6 +472,8 @@ sub handle_value {
 
 	if ($value =~ /(\d+;#)/) {
 		$value = substr($value, length $1);
+	} elsif  ($value =~ /(\d+)\.0+/) {
+		$value = $1;
 	}
 
 	return $value;
@@ -457,12 +481,13 @@ sub handle_value {
 
 
 sub handle_listitem_worker {
-	my ($self, $items, $listid, $dispurl, $allowedstr, $pattributes_l) = @_;
+	my ($self, $items, $listid, $dispurl, $allowedstr, $pattributes_l, $listname) = @_;
 
 	my @attributes_l = @{ $pattributes_l };
+	my @attributes_a = @{ $pattributes_l };
 
-	my $starttime = Time::HiRes::time;
-	print STDERR "Got: " . scalar (@{ $items->{listitems}->{'rs:data'}->{'z:row'} })."\n";
+	#my $starttime = Time::HiRes::time;
+	print STDERR "Number of items this round: " . scalar (@{ $items->{listitems}->{'rs:data'}->{'z:row'} })."\n";
 	foreach my $item (@{ $items->{listitems}->{'rs:data'}->{'z:row'} }) {
 		my $doc = '';
 		my $title = '';
@@ -491,20 +516,68 @@ sub handle_listitem_worker {
 			$id = $item->{$key} if ($pkey eq 'ID');
 			$encodedabsurl = $item->{$key} if ($pkey eq 'EncodedAbsUrl');
 
+			$pkey =~ s/x0020_//;
+
+			# Misc drop
+			my @misc_drop_keys = qw(
+				LinkFilenameNoMenu
+				LinkTitleNoMenu
+				LinkTitle
+				Attachments
+				Editor
+				Author
+				Deleted
+				FileLeafRef
+				GroupEdit
+				FileRef
+				ServerUrl
+				FSObjType
+				WorkflowVersion
+				BaseName
+				ContentTypeDisp
+				ContentType
+				ProgId
+				SelectTitle
+				NameWithPicture
+				NameWithPictureAndDetails
+				IsSiteAdmin
+				LinkFilename
+				EncodedAbsUrl
+				IsActive
+				Created
+				Modified
+				UserSelection
+				MetaInfo
+				FileDirRef
+				PictureDisp
+				PermMask
+				Order
+				Title
+				Title
+				Last_Modified
+				Created_Date
+			);
+			next if (grep $_ eq $pkey, @misc_drop_keys);
+
+			# Drop ids
+			next if $pkey =~ /id$/i;
+
+			$pkey =~ s/_/ /;
+
 			$doc .= "<tr>\n";
 			$doc .= "<td>$pkey</td>\n";
 			$doc .= "<td>".handle_value($item->{$key})."</td>\n";
 			$doc .= "</tr>\n";
 		}
 		$doc .= "</table>\n";
-		my $e1 = Time::HiRes::time;
+		#my $e1 = Time::HiRes::time;
 		#print "Stage1 took: ".($e1-$s1)."\n";
 
-		my $s2 = Time::HiRes::time;
+		#my $s2 = Time::HiRes::time;
 		my $unixtime = str2time($modifiedstr);
-		my $e2 = Time::HiRes::time;
+		#my $e2 = Time::HiRes::time;
 		#print "Stage2 took: ".($e2-$s2)."\n";
-		my $s3 = Time::HiRes::time;
+		#my $s3 = Time::HiRes::time;
 		my $path = $dispurl . "ID=". $id;
 		# Try harder to find a title
 		if ($title eq '' and exists $item->{ows_BaseName}) {
@@ -533,9 +606,9 @@ sub handle_listitem_worker {
 
 		push @attributes, "snippet=db";
 
-		my $e3 = Time::HiRes::time;
+		#my $e3 = Time::HiRes::time;
 		#print "Stage3 took: ".($e3-$s3)."\n";
-		my $s4 = Time::HiRes::time;
+		#my $s4 = Time::HiRes::time;
 		if (!$self->document_exists($path, $unixtime, length($doc))) {
 			$self->add_document(
 					url => $path,
@@ -547,37 +620,42 @@ sub handle_listitem_worker {
 					attributes => join(',', @attributes),
 					);
 		}
-		my $e4 = Time::HiRes::time;
+		#my $e4 = Time::HiRes::time;
 		#print "Stage4 took: ".($e4-$s4)."\n";
-		my $s5 = Time::HiRes::time;
+		#my $s5 = Time::HiRes::time;
 
-#		if (defined $encodedabsurl) {
-#			# XXX: Getting 404 on quite a bit of the files that end in .\d\d\d, skip them for now
-#			if ($encodedabsurl !~ /\.\d+$/) {
-#				$self->handle_listitem_attachment_worker($encodedabsurl, $allowedstr, $path);
-#			}
-#		}
-		my $e5 = Time::HiRes::time;
+		my $child_title = $title;
+		$child_title =~ s/^[^:]+:\s*//;
+
+		if (defined $encodedabsurl) {
+			# XXX: Getting 404 on quite a bit of the files that end in .\d\d\d, skip them for now
+			if ($encodedabsurl !~ /\.\d+$/ and not defined($item->{'ows_WebPartDescription'})) {
+				$self->handle_listitem_attachment_worker($encodedabsurl, $allowedstr, $child_title, \@attributes_a);
+			}
+		}
+		#my $e5 = Time::HiRes::time;
 		#print "Stage5 took: ".($e5-$s5)."\n";
-		my $s6 = Time::HiRes::time;
-		# XXX: Slow, so we skip it right now
-		#$self->handle_listitem_attachment($listid, $id, $path, $allowedstr);
-		my $e6 = Time::HiRes::time;
+		#my $s6 = Time::HiRes::time;
+		$self->handle_listitem_attachment($listid, $listname, $id, $child_title, $allowedstr, \@attributes_a);
+		#my $e6 = Time::HiRes::time;
 		#print "Stage6 took: ".($e6-$s6)."\n";
 	}
-	my $endtime = Time::HiRes::time;
+	#my $endtime = Time::HiRes::time;
 
 	#print STDERR "Add took: " . ($endtime - $starttime) . "\n";
 }
 
 sub handle_listitem {
-	my ($self, $listid, $listurl, $allowedstr, $pattributes_l) = @_;
+	my ($self, $listid, $listurl, $allowedstr, $pattributes_l, $listname) = @_;
 
 	my $items;
 
 	# XXX: Verify
 	my $dispurl = $listurl;
-	$dispurl =~ s/[^\/]+.aspx$/DispForm.aspx?/;
+	if (not ($dispurl =~ s/[^\/]+.aspx$/DispForm.aspx?/)) {
+		print STDERR "Unable to handle listurl: $listurl\n";
+		return;
+	}
 
 	# More items in the list?
 	my $first = 1;
@@ -598,7 +676,7 @@ sub handle_listitem {
 		return unless exists $items->{listitems}->{'rs:data'}->{'z:row'};
 #		return unless ($listurl =~ /users/);
 
-		$self->handle_listitem_worker($items, $listid, $dispurl, $allowedstr, $pattributes_l);
+		$self->handle_listitem_worker($items, $listid, $dispurl, $allowedstr, $pattributes_l, $listname);
 		$first = undef;
 	}
 }
@@ -615,7 +693,8 @@ sub handle_lists {
 
 	foreach my $list (@{$lists->{Lists}}) {
 
-		print "Desc: ".$list->{Description}."\n";
+		print "Title: ".$list->{Title}."\n";
+		#print "Desc: ".$list->{Description}."\n";
 		#print STDERR Dumper($list);
 		my @allowed = ();
 		# XXX: Temporary hack
@@ -679,8 +758,9 @@ sub handle_lists {
 			$doc .= $x . ": ". $list->{$x}."\n";
 		}
 
-
 		my $path = $self->{url} . $list->{DefaultViewUrl};
+
+		print STDERR Dumper($list) if $path eq 'http://sharepoint.udc.no';
 
 		my %seenallowed;
 		my $allowedstr = join(',', grep { ! $seenallowed{$_}++ } @allowed);
@@ -700,7 +780,7 @@ sub handle_lists {
 
 		my @attributes = @attributes_p;
 		push @attributes, 'List=' . $list->{Title};
-		$self->handle_listitem($list->{ID}, $path, $allowedstr, \@attributes);
+		$self->handle_listitem($list->{ID}, $path, $allowedstr, \@attributes, $list->{Title});
 	}
 }
 
