@@ -72,7 +72,7 @@ struct bsg_intern_data
     char	*q_stop;
     int		last_match, q_start;
     struct calc_data	calc_data1, calc_data2;
-    char	has_hits;
+    char	has_hits, first;
     int		q_flags;
     struct score_block	best, *q_best;
     int		snippet_size;
@@ -710,10 +710,9 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
     _queue_size_Q = queue_size(Q);
     if (_queue_size_Q > 0) _queue_peak_Q = queue_peak(Q);
 
-    while (_queue_size_Q > 0 && (((data->Bbuf->pos - pair(_queue_peak_Q).first.i) > maxsize) || forced))
+    while (_queue_size_Q > 0 && (((data->Bbuf->pos - pair(_queue_peak_Q).first.i) > maxsize) || forced)
+	&& !(data->mode==first_snippet && !data->first))
 	{
-	    if (data->mode == first_snippet && pair(_queue_peak_Q).first.i > 0) break;
-
 	    int		_vector_size_Match;
 	    int 	pos, flags;
 	    int		i, j;
@@ -1003,12 +1002,13 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 	    // Save score:
 	    if (mode==plain_snippet || mode==first_snippet)
 		{
-		    if (score > data->best.score)
+		    if (data->first || score > data->best.score)
 			{
 			    data->best.score = score;
 			    data->best.start = pos;
 			    data->best.stop = data->Bbuf->pos;
 			    data->best.hits = bin_hits;
+			    data->first = 0;
 			}
 		}
 	    else if (mode==mplain_snippet)
@@ -1164,9 +1164,8 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
     int		Msize = vector_size(data->Match);
     int		Eoln_size = vector_size(data->Eoln);
     int		eoln = 0;
-    int		tab = 0;
-    int		col = 0;
-    int		colon = 0;
+    int		tab = 0, table_tab = -1;
+    int		col = 0, crnt_col = 0;
 
     for (i=0; i<Msize; i++)
 	if (((struct match_block*)(vector_get(data->Match,i).ptr))->bstart >= data->best.start) break;
@@ -1178,6 +1177,8 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 
             for (tab=0; tab<vector_size(data->Tab); tab++)
 	        if (vector_get(data->Tab, tab).i > data->best.start) break;
+
+	    bprintf(B, "<table>\n");
 	}
 
     more = (i < Msize);
@@ -1193,8 +1194,11 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 	{
 	    if (more && pos == mb->bend)
 		{
-		    bprintf(B, b_end);
-		    active_highl--;
+		    if (active_highl)
+			{
+			    bprintf(B, b_end);
+			    active_highl--;
+			}
 		    i++;
 		    more = (i < Msize);
 
@@ -1206,44 +1210,55 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 
 	    if (data->mode == db_snippet)
 		{
+		    if (table_tab==-1)
+			{
+			    table_tab = 0;
+			    bprintf(B, "<tr><td>");
+			}
+
 		    if (tab<vector_size(data->Tab) && pos==vector_get(data->Tab, tab).i)
 			{
 			    tab++;
 
-			    if (colon == 0)
+			    if (table_tab == 0)
 				{
-				    if (!line_cut) bprintf(B, ":");
-				    col++;
-				    colon++;
+				    if (line_cut) bprintf(B, "...");
+				    bprintf(B, "</td><td>");
+				    table_tab = 1;
+				    crnt_col = 0;
 				}
 			}
 
-		    if (col > data->cols)
+		    if (col+3 >= data->cols)
 			{
-			    if (!line_cut) bprintf(B, " ...");
 			    line_cut = 1;
 			}
 
 		    if (eoln<Eoln_size && pos==vector_get(data->Eoln, eoln).i)
 			{
-			    bprintf(B, "<br />\n");
+			    if (line_cut) bprintf(B, "...");
+			    if (table_tab==0) bprintf(B, "</td><td></td></tr>\n");
+			    else if (table_tab==1) bprintf(B, "</td></tr>\n");
 			    line_cut = 0;
 			    eoln++;
 			    col = 0;
-			    colon = 0;
+			    crnt_col = 0;
+			    table_tab = -1;
 			}
 		}
 
-	    if (more && pos == mb->bstart)
+	    if (more && pos == mb->bstart && !line_cut)
 		{
 		    bprintf(B, b_start);
 		    active_highl++;
 		}
 
-	    if (!(data->mode == db_snippet && col==0 && data->Bbuf->data[pos]==' ') && !line_cut)
-		bprintf(B, "%c", data->Bbuf->data[pos]);
-
-	    col++;
+	    if (!(data->mode == db_snippet && crnt_col==0 && data->Bbuf->data[pos]==' ') && !line_cut)
+		{
+		    bprintf(B, "%c", data->Bbuf->data[pos]);
+		    col++;
+		    crnt_col++;
+		}
 
 	    switch (data->Bbuf->data[pos])
 		{
@@ -1258,7 +1273,10 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 
     if (data->mode == db_snippet)
 	{
-	    if (colon==0) bprintf(B, ":");
+	    if (line_cut) bprintf(B, "...");
+	    if (table_tab==0) bprintf(B, "</td><td></td></tr>\n");
+	    else if (table_tab==1) bprintf(B, "</td></tr>\n");
+	    bprintf(B, "</table>\n");
 	}
     else
 	{
@@ -1706,6 +1724,8 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 
 empty_query:
 
+    data->first = 1;
+
     data->best.score = 0;
     data->best.start = 0;
     data->best.stop = 0;
@@ -1737,7 +1757,13 @@ empty_query:
 
     test_for_snippet(data,1);
     if (data->best.stop==0)
-	data->best.stop = data->Bbuf->pos;
+	{
+	    if (data->Bbuf->pos < data->snippet_size)
+		data->best.stop = data->Bbuf->pos;
+	    else
+		data->best.stop = data->snippet_size-4;
+	}
+
     if (data->mode == plain_snippet) *output_text = print_best_dual_snippet(data, b_start, b_end);
     else  *output_text = print_best_snippet(data, b_start, b_end);
 

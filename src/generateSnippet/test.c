@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 		{
 		    char	*snippet;
 
-		    int		success = generate_snippet( qa, buf, size, &snippet, "\033[1;32m", "\033[0m", modes[i], 320, 4, 80 );
+		    int		success = generate_snippet( qa, buf, size, &snippet, "\033[1;32m[", "]\033[0m", modes[i], 320, 4, 80 );
 
 		    if (i>0) printf("\n");
 		    printf("%s\n", snippet);
