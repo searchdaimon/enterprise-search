@@ -55,6 +55,7 @@
 
 [% BLOCK connector_list %]
     [% WRAPPER 'template_table.html' style = 'width : 80%;'
+    	class = "hovering"
             header = ['', 'Name', 'Last modified', '', ''] %]
         [% color = 1 %]
         [% FOREACH c IN connectors %]

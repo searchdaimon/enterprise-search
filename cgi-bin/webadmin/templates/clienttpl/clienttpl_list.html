@@ -43,7 +43,7 @@
 [% INCLUDE 'footer.html' %]
 
 [% BLOCK tpl_list %]
-	[% WRAPPER 'template_table.html' style='width : 80%' header = ['', 'Name', '']  %]
+	[% WRAPPER 'template_table.html' style='width : 80%' header = ['', 'Name', ''] class = "hovering"  %]
 	[% color = 1 %]
 	[% FOREACH t IN templates.sort %]
 		

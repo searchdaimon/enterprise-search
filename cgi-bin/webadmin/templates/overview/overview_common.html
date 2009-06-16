@@ -24,7 +24,7 @@
 	[% END %]
 
 		[% WRAPPER 'template_table.html'
-			header = ['Status', 'Collection', 'Last crawl', 'Next crawl', 'Collection size' ''] %]
+			header = ['Status', 'Collection', 'Last crawl', 'Next crawl', 'Collection size' ''] class="hovering" %]
 			[% SET color = 0 %]
 			
 			[% FOREACH c IN collections %]

@@ -21,6 +21,11 @@ var lang_files = [
 		'[% f | html %]'[% ',' IF !loop.last %]
 	[% END %]
 ];
+var cfg_files = [
+	[% FOREACH f IN cfg_files %]
+		'[% f | html %]'[% ',' IF !loop.last %]
+	[% END %]
+];
 is_readonly = [% is_readonly || 'null' %];
 var selected = [];
 selected.tab = null;
@@ -29,10 +34,24 @@ selected.fileType = null;
 var tabs;
 
 // Constants
+FILE_DUMMY = -1;
 FILE_TPL = 1;
 FILE_LANG = 2;
+FILE_CFG = 3;
 
 
+
+function typeFromTabstr(str) {
+	if (str == "Tpl") 
+		return FILE_TPL;
+	else if (str == "Lang")
+		return FILE_LANG;
+	else if (str == "Cfg")
+		return FILE_CFG;
+	else if (str == "Dummy")
+		return FILE_DUMMY;
+	else throw "unknown filetype " + str;
+}
 
 $(document).ready(function() {
 
@@ -51,7 +70,9 @@ $(document).ready(function() {
 		var tabstr = $(selected.tab).children("span").html();
 		var tabchunks = tabstr.split(":&nbsp;", 2);
 		var file = tabchunks[1];
-		var fileType = tabchunks[0] == "Tpl" ? FILE_TPL : FILE_LANG;
+		var fileType = typeFromTabstr(tabchunks[0]);
+		if (fileType == FILE_DUMMY)
+			return;
 		var id = _file_id(fileType, file);
 		selected.file = file;
 		selected.fileType = fileType;
@@ -74,8 +95,12 @@ $(document).ready(function() {
 			if (confirm("Are you sure you want to delete " + file + "?"))
 				delSource(id, fileType, file);
 		});
-		if (!is_readonly)
+		if (fileType == FILE_CFG) {
+			delBtn.attr("disabled", "disabled");
+		}
+		else if (!is_readonly)
 			delBtn.removeAttr("disabled");
+		else { }
 	};
 
  	tabs = $('#tplContainer > ul').tabs({ 
@@ -96,6 +121,9 @@ $(document).ready(function() {
 	});
 	$(lang_files).each(function(i, file) {
 		loadSource(FILE_LANG, file);
+	});
+	$(cfg_files).each(function(i, file) {
+		loadSource(FILE_CFG, file);
 	});
 	$("#btnRename").click(function() {
 		var newName = prompt("New name for template", tpl);
@@ -145,7 +173,13 @@ function appendTab(fileType, file) {
 		appendTab.initialized = true;
 	}
 
-	var prefix = fileType == FILE_TPL ? "Tpl:&nbsp;" : "Language:&nbsp;";
+	var prefix;
+	switch (fileType) {
+		case FILE_TPL: prefix = "Tpl:&nbsp;"; break;
+		case FILE_LANG: prefix = "Lang:&nbsp;"; break;
+		case FILE_CFG: prefix = "Cfg:&nbsp;"; break;
+		default: throw "unknown filetype";
+	}
 	var id = _file_id(fileType, file);
 
 	// Append a tab
@@ -178,6 +212,9 @@ function buildContainer() {
 	$(lang_files).each(function (i, file) {
 		appendTab(FILE_LANG, file);
 	});
+	$(cfg_files).each(function (i, file) {
+		appendTab(FILE_CFG, file);
+	});
 
 	$('#tplContainer').show();
 }
@@ -185,13 +222,13 @@ function buildContainer() {
 function _file_id(fileType, file) {
 	if (file == null)
 		throw "file missing";
-	
-	if (fileType == FILE_TPL)
-		return "tpl" + file.substring(0, file.length - 4);
-	if (fileType == FILE_LANG)
-		return "lang_" + file;
 
-	throw "unsupported filetype";
+	switch (fileType) {
+		case FILE_TPL: return "tpl" + file.substring(0, file.length - 4);
+		case FILE_LANG: return "lang_" + file;
+		case FILE_CFG: return "cfg_" + file.substring(0, file.length - 4);
+		default: throw "unsupported filetype";
+	}
 }
 
 function loadSource(fileType, file) {
@@ -217,7 +254,12 @@ function loadSource(fileType, file) {
 }
 
 function fileTypeToStr(fileType) {
-	return fileType == FILE_TPL ? "tpl" : "lang";
+	switch (fileType) {
+		case FILE_TPL: return "tpl";
+		case FILE_LANG: return "lang";
+		case FILE_CFG: return "cfg";
+		default: throw "Unknown filetype";
+	}
 }
 
 function saveSource(id, fileType, file) {

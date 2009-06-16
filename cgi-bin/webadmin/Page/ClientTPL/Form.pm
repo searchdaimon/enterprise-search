@@ -28,19 +28,12 @@ Readonly::Scalar my $LANG_FILE_NAME => "search.po";
 sub new_template {
 	my ($s, $tpl_vars) = @_;
 
-	# create name & dir
 	my $name = $s->gen_new_tpl_name("new_template");
-	my $tpl_path = $s->tpl_path($name);
-	mkdir $tpl_path
-		or croak "Unable to create path $tpl_path";
 
-	# copy over tpl skeleton files
-	for my $file (@SKELETON_TPL_FILES) {
-		my $file_path = "$SKELETON_DIR/$file";
-		copy($file_path, $tpl_path)
-			or croak "unable to copy $file_path to $tpl_path: ", $!;
-	}
-	# lang skeleton files
+	$s->_skeleton_copy($s->tpl_path($name), @SKELETON_TPL_FILES);
+	$s->_skeleton_copy($s->cfg_path($name), @Page::ClientTPL::VALID_CFG_FILES);
+
+	# lang skeleton files need special treatment
 	for my $lang (@SKELETON_LANG) {
 		$s->create_lang_dir($name, $lang);
 		my $file_path = "$SKELETON_DIR/${lang}_search.po";
@@ -52,7 +45,18 @@ sub new_template {
 	return $s->show_edit($tpl_vars, $name);
 }
 
+sub _skeleton_copy {
+	my ($s, $to_dir, @files) = @_;
+	mkdir $to_dir
+		or croak "Unable to create path $to_dir ", $!;
 
+	for my $file (@files) {
+		my $file_path = "$SKELETON_DIR/$file";
+		copy($file_path, $to_dir)
+			or croak "unable to copy $file_path to $to_dir: ", $!;
+	}
+	1;
+}
 
 
 sub gen_new_tpl_name {
@@ -98,6 +102,7 @@ sub show_edit {
 	$tpl_vars->{is_readonly} = $s->is_readonly_tpl($tpl);
 	$tpl_vars->{tpl_files} = [ $s->_list_tpl_files($tpl) ];
 	$tpl_vars->{lang_files} = [ $s->_list_lang_files($tpl) ];
+	$tpl_vars->{cfg_files} = [ $s->_list_cfg_files($tpl) ];
 	$tpl_vars->{tpl} = $tpl;
 
 	return $TPL_EDIT;
@@ -124,11 +129,17 @@ sub show_del {
 sub del_template {
 	my ($s, $tpl_vars, $tpl) = @_;
 	$s->_del_validate($tpl);
-	my $path = $s->tpl_path($tpl);
+	my $tpl_path = $s->tpl_path($tpl);
+	my $lang_path = $s->lang_path($tpl);
+	my $cfg_path = $s->cfg_path($tpl);
+	
+	for my $dir ($tpl_path, $lang_path, $cfg_path) {
 
-	rmtree($path); # croaks on fatal error, API says.
-	croak "template '$path' was not deleted, possible partial delete"
-		if -d $path;
+		rmtree($dir); # croaks on fatal error, API says.
+		croak "dir '$dir' was not deleted, possible partial delete"
+			if -d $dir;
+	}
+	
 	return $s->show_list($tpl_vars);
 }
 
@@ -145,20 +156,18 @@ sub clone_template {
 		or croak "Unable to create path $new_tpl_path";
 
 	# copy template files
-	find(
-		sub { 
-			my $file = $_;
-			unless ($file =~ /\.tpl$/) {
-				warn "Ignoring file '$file'";
-				return;
-			}
-			my $o_path = $s->tpl_file_path($old_tpl, $file);
-			my $n_path = $s->tpl_file_path($new_tpl, $file); 
-			copy($o_path, $n_path)
-				or croak "Unable to copy '$file' ", $!;
-			
-		},
-		$s->tpl_path($old_tpl)
+	find(sub { 
+		my $file = $_;
+		unless ($file =~ /\.tpl$/) {
+			warn "Ignoring file '$file'";
+			return;
+		}
+		my $o_path = $s->tpl_file_path($old_tpl, $file);
+		my $n_path = $s->tpl_file_path($new_tpl, $file); 
+		copy($o_path, $n_path)
+			or croak "Unable to copy '$file' ", $!;
+		
+		}, $s->tpl_path($old_tpl)
 	);
 
 	# copy language files
@@ -180,47 +189,86 @@ sub clone_template {
 			or croak "unable top copy '$dir' ", $!;
 	}
 
+	# copy config files
+	my $new_cfg_path = $s->cfg_path($new_tpl);
+	mkdir $new_cfg_path 
+		or croak "unable to create path $new_cfg_path";
+	find(sub {
+		my $file = $_;
+		return unless $s->is_valid_cfg($file);
+
+		my $o_path = $s->cfg_file_path($old_tpl, $file);
+		my $n_path = $s->cfg_file_path($new_tpl, $file);
+		copy($o_path, $n_path) 
+			or croak "Unable to copy '$file' ", $!;
+
+		}, $s->cfg_path($old_tpl)
+	);
+
 	return $s->show_edit($tpl_vars, $new_tpl);
 
 }
-
 sub _list_tpl_files {
 	my ($s, $tpl) = @_;
-	my $path = $CONFIG{client_tpl_path} . "/" . $tpl;
-	opendir my $dh, $path
-		or croak "open tpldir $path:", $!;
-	my @tpl_files;
-	for my $file (readdir $dh) {
-		next if $s->in_ign_list($file);
-		if ($file !~ /\.tpl$/) {
-			warn "Ignoring non-template file '$file'";
-			next;
-		}
-		push @tpl_files, $file;
-	}
-	return @tpl_files;
+	return $s->_list_files(
+		$s->tpl_path($tpl),
+		sub { shift !~ /\.tpl$/ }
+	);
 }
 
+sub _list_cfg_files {
+	my ($s, $tpl) = @_;
+	return $s->_list_files(
+		$s->cfg_path($tpl), 
+		sub { !$s->is_valid_cfg(shift) }
+	);
+}
 
 
 sub _list_lang_files {
 	my ($s, $tpl) = @_;
-	
-	my $path = $s->lang_path($tpl);
-	my @lang_dirs;
-	opendir my $dh, $path
-		or croak "open langdir $path: ", $!;
+	return $s->_list_files(
+		$s->lang_path($tpl),
+		sub { !$s->is_lang_dir($tpl, shift) }
+	);
+}
 
-	for my $dir (readdir $dh) {
-		next if $s->in_ign_list($dir);
-		if (!$s->is_lang_dir($tpl, $dir)) {
-			warn "ignoring non-lang dir: $dir";
+sub _list_files {
+	my ($s, $path, $ign_clause) = @_;
+	opendir my $dh, $path
+		or croak "unable to open '$path' ", $!;
+	
+	my @files;
+	for my $file (readdir $dh) {
+		next if $s->in_ign_list($file);
+		if (&$ign_clause($file)) {
+			warn "Ignoring file '$file'";
 			next;
 		}
-		push @lang_dirs, $dir;
+		push @files, $file;
 	}
-	return @lang_dirs;
+	return @files;
 }
+
+
+#sub _list_lang_files {
+#	my ($s, $tpl) = @_;
+#	
+#	my $path = $s->lang_path($tpl);
+#	my @lang_dirs;
+#	opendir my $dh, $path
+#		or croak "open langdir $path: ", $!;
+#
+#	for my $dir (readdir $dh) {
+#		next if $s->in_ign_list($dir);
+#		if (!$s->is_lang_dir($tpl, $dir)) {
+#			warn "ignoring non-lang dir: $dir";
+#			next;
+#		}
+#		push @lang_dirs, $dir;
+#	}
+#	return @lang_dirs;
+#}
 
 
 1;

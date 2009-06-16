@@ -14,6 +14,7 @@ our @ISA = qw(Page::ClientTPL Page::API);
 
 Readonly::Scalar my $FILE_TPL => "tpl";
 Readonly::Scalar my $FILE_LANG => "lang";
+Readonly::Scalar my $FILE_CFG => "cfg";
 
 
 sub fetch_file {
@@ -25,6 +26,9 @@ sub fetch_file {
 		}
 		elsif ($file_type eq $FILE_LANG) {
 			$api_vars->{contents} = $s->_fetch_lang_file($tpl, $file);
+		}
+		elsif ($file_type eq $FILE_CFG) {
+			$api_vars->{contents} = $s->_fetch_cfg_file($tpl, $file);
 		}
 		else {
 			croak "Unknown file type '$file_type'";
@@ -51,6 +55,13 @@ sub _fetch_tpl_file {
 	return $s->_fetch_file_contents($path);
 }
 
+sub _fetch_cfg_file {
+	my ($s, $tpl, $cfg) = @_;
+	$s->_validate_cfg($tpl, $cfg);
+	return $s->_fetch_file_contents(
+		$s->cfg_file_path($tpl, $cfg));
+}
+
 sub save_file {
 	validate_pos(@_, 1, 1, 1, 1, 1, 1);
 	my ($s, $api_vars, $tpl, $file, $source, $file_type) = @_;
@@ -70,6 +81,10 @@ sub save_file {
 		elsif ($file_type eq $FILE_LANG) {
 			$s->_validate_lang($tpl, $file);
 			$path = $s->lang_file_path($tpl, $file);
+		}
+		elsif ($file_type eq $FILE_CFG) {
+			$s->_validate_cfg($tpl, $file);
+			$path = $s->cfg_file_path($tpl, $file);
 		}
 		else { croak "unsupported filetype" }
 		
@@ -127,16 +142,9 @@ sub rename_template {
 		croak "Template already exists"
 			if $s->tpl_exists($new_tpl_name);
 
-		{ # move templates
-			my $old_path = $s->tpl_path($tpl);
-			my $new_path = $s->tpl_path($new_tpl_name);
-			move($old_path, $new_path)
-				or croak "Could not move '$old_path' to '$new_path'", $!;
-		}
-
-		{ # move language
-			my $old_path = $s->lang_path($tpl);
-			my $new_path = $s->lang_path($new_tpl_name);
+		for my $path_func qw(tpl_path lang_path cfg_path) {
+			my $old_path = $s->$path_func($tpl);
+			my $new_path = $s->$path_func($new_tpl_name);
 			move($old_path, $new_path)
 				or croak "Could not move '$old_path' to '$new_path'", $!;
 		}
@@ -215,7 +223,7 @@ sub _create_template {
 sub _validate_lang {
 	my ($s, $tpl, $lang) = @_;
 	croak "Invalid language"
-		unless $s->is_valid_lang($lang) && !$s->in_ign_list($tpl);
+		unless $s->is_valid_lang($lang) && !$s->in_ign_list($lang);
 	croak "Language file does not exist"
 		unless $s->tpl_exists($tpl) && $s->lang_exists($tpl, $lang);
 }
@@ -231,6 +239,14 @@ sub _validate_tpl {
 			unless $s->is_valid_tplfile($tpl_file);
 	}
 	1;
+}
+
+sub _validate_cfg {
+	my ($s, $tpl, $cfg) = @_;
+	croak "Invalid config"
+		unless $s->is_valid_cfg($cfg);
+	croak "Config file does not exist"
+		unless $s->tpl_exists($tpl) && $s->cfg_exists($tpl, $cfg);
 }
 ##
 # Read file contents.

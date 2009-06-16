@@ -90,10 +90,16 @@ table .disabled {
 	color : gray;
 }
 
-table tr:hover {
+.hovering tr:hover {
 	background : #044a90;
 	color : white;
 }
+.hovering tr:hover a {
+	color : #fefefe;
+}
+
+
+
 
 
 .info_dashed {
@@ -128,7 +134,7 @@ table tr:hover {
 }
 
 .button_list a, .vertical_buttons a {
-	color : #333333;
+	color : #333333 !important;
 	padding-left : 0.2em;
 }
 

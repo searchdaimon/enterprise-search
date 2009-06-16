@@ -20,6 +20,12 @@ Readonly::Array our @REQ_TPL_FILES
 
 Readonly::Scalar our $LANG_FILE_NAME => "search.po";
 
+Readonly::Scalar our $CFG_FILE_NAVMENU => "navmenu.cfg";
+Readonly::Array our @VALID_CFG_FILES => ($CFG_FILE_NAVMENU);
+
+sub in_ign_list { $FILE_IGN_LIST{$_[1]} }
+
+# template helper methods
 sub tpl_exists { 
 	my ($s, $tpl) = @_;
 	my $path = "$CONFIG{client_tpl_path}/$tpl";
@@ -28,7 +34,6 @@ sub tpl_exists {
 
 sub is_valid_name { $_[1] =~ $VALID_TPL_NAME }
 sub is_valid_tplfile { $_[1] =~ $VALID_TPLFILE_NAME }
-sub in_ign_list { $FILE_IGN_LIST{$_[1]} }
 sub is_readonly_tpl { shift; shift =~ $IS_SD_TPL }
 
 sub tpl_path {
@@ -40,6 +45,8 @@ sub tpl_file_path {
 	my ($s, $tpl, $tpl_file) = @_;
 	return $s->tpl_path($tpl) . "/$tpl_file";
 }
+
+# language helper methods
 
 sub lang_path {
 	my ($s, $tpl) = @_;
@@ -77,5 +84,33 @@ sub create_lang_dir {
 		or croak "unable to create $lang_dir", $!;
 	1;
 }
+
+# config helper methods
+
+sub is_valid_cfg { 
+	my ($s, $cfg_file) = @_;
+	for my $file (@VALID_CFG_FILES) {
+		#carp "checking $cfg_file against $file";
+		return 1 if $cfg_file eq $file;
+	}
+	#carp "no match for $cfg_file";
+	return;
+}
+sub cfg_path {
+	validate_pos(@_, 1, 1);
+	my ($s, $tpl) = @_;
+	return $CONFIG{client_path} . "/config/$tpl"
+}
+sub cfg_file_path {
+	validate_pos(@_, 1, 1, 1);
+	my ($s, $tpl, $file) = @_;
+	return $s->cfg_path($tpl) . "/$file";
+}
+
+sub cfg_exists {
+	my ($s, $tpl, $cfg_file) = @_;
+	return (-e $s->cfg_file_path($tpl, $cfg_file));
+}
+
 
 1;

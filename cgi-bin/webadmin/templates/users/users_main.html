@@ -3,7 +3,16 @@
 	function check_all_users(checked) {
 		checked ? $("#usr_list input").attr("checked", "checked")
 			: $("#usr_list input").removeAttr("checked");
-	}
+	}	
+
+	/*$(document).ready(function() { // make rows clickable 
+		$('#usr_list tr').click(function() {
+			var searchAccess = $(this).find("input");
+			searchAccess.attr("checked") 
+				? searchAccess.removeAttr("checked") 
+				: searchAccess.attr("checked", "checked");
+		});
+	});*/
 </script>
 [% END %]
 [% PROCESS 'common_widgets.html' %]
@@ -42,7 +51,7 @@
 %]
    
 
-[% WRAPPER 'template_table.html' id="usr_list"
+[% WRAPPER 'template_table.html' id="usr_list" class="hovering"
 	header = ['', 'Username', 'Search access'] style="width : 50%; margin-top : 1em; clear : both;" %]
 	[% i = 0 %]
 	[% FOREACH usr IN users %]
@@ -55,9 +64,11 @@
 		<td>
 			<a href="users.cgi?user=[% usr.username %]">[% usr.username | html %]</a>
 		</td>
+		
 		<td>
-			<input name="users[[% i %]]" value="[% usr.username | html %]" type="checkbox" [% IF usr.active %]checked="checked"[% END %] />
+			<input id="useraccess[% i %]" name="users[[% i %]]" value="[% usr.username | html %]" type="checkbox" [% IF usr.active %]checked="checked"[% END %] />
 		</td>
+
 		
 		[% END %]
 		[% i = i + 1 %]
