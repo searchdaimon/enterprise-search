@@ -16,6 +16,9 @@ $(OBJDIR)/%.o: %.c
 $(LIB): $(OBJLIB)
 	cp $(OBJLIB) ${LIBDIR}/${LIB}
 
+ifndef NO_DEBUG
+CFLAGS+=        -g
+endif
 
 clean:
 	rm -f $(OBJDIR)/$(OBJLIB) $(addprefix $(OBJDIR)/, $(OBJS))
