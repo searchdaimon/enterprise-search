@@ -5,6 +5,7 @@
 #include "attributes.h"
 #include "define.h"
 
+
 int
 next_attribute(char *attributes, char **offset, char *k, char *v, char *kv)
 {
@@ -75,6 +76,17 @@ next_attribute(char *attributes, char **offset, char *k, char *v, char *kv)
 	*offset = p;
 
 	return 1;
+}
+
+int
+next_attribute_key(char *attributes, char **offset, char *k, char *v, char *kv, char *want)
+{
+	while (next_attribute(attributes, offset, k, v, kv)) {
+		if (strcmp(want, k) == 0)
+			return 1;
+	}
+
+	return 0;
 }
 
 /*
