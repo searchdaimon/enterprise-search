@@ -2995,10 +2995,10 @@ int main(int argc, char *argv[])
 					printf("\t<attributes>\n");
 					while (next_attribute(Sider[i].attributes, &o, key, value, keyvalue)) {
 						query_attr_set_filter(attbuff, sizeof attbuff, &qrewrite, key, value, 0);
-						escapeHTML(attrq_esc, sizeof attrq_esc, attbuff);
+						xml_escape_uri(attbuff, attrq_esc, sizeof attrq_esc);
 						
 						query_attr_set_filter(attbuff, sizeof attbuff, &qrewrite, key, value, 1);
-						escapeHTML(attrq2_esc, sizeof attrq2_esc, attbuff);
+						xml_escape_uri(attbuff, attrq2_esc, sizeof attrq2_esc);
 						escapeHTML(ekey, sizeof ekey, key);
 						escapeHTML(evalue, sizeof evalue, value);
 
