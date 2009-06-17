@@ -298,33 +298,28 @@ unsigned int rLastDocID(char subname[]) {
 	unsigned int DocID;
 	int n;
 
-	if ((DocIDFILE = lotOpenFileNoCasheByLotNr(1,"DocID","r",'e',subname)) == NULL) {
+	if ((DocIDFILE = lotOpenFileNoCasheByLotNr(1,"DocID","r",'s',subname)) == NULL) {
 		return 0;
 	}
 
 
-	if (DocIDFILE == 0) {
-		printf("file sise is 0\n");
-		DocID = 0;
+	fstat(fileno(DocIDFILE),&inode);
+
+	if ((n =fread(&buff,sizeof(char),inode.st_size,DocIDFILE)) != inode.st_size) {
+		printf("dident read %"PRId64" char, but %i\n",inode.st_size,n);
+		perror("fread");
 	}
-	else {
-		fstat(fileno(DocIDFILE),&inode);
-
-		if ((n =fread(&buff,sizeof(char),inode.st_size,DocIDFILE)) != inode.st_size) {
-			printf("dident read %"PRId64" char, but %i\n",inode.st_size,n);
-			perror("fread");
-		}
-		buff[inode.st_size] = '\0';
+	buff[inode.st_size] = '\0';
 	
-		#ifdef DEBUG
-			printf("DocID is \"%s\"\n",buff);
-		#endif
+	#ifdef DEBUG
+		printf("DocID buff is \"%s\"\n",buff);
+	#endif
 
-		DocID = atou(buff);
-		//printf("new docid %u = %s\n",DocID,buff);
+	DocID = atou(buff);
+	//printf("new docid %u = %s\n",DocID,buff);
 
-		fclose(DocIDFILE);
-	}		
+	fclose(DocIDFILE);
+		
 
 	return DocID;
 }
@@ -1314,9 +1309,11 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		}
 
 		/* We have attributes */
+		*attributes = NULL;
 		if (CurrentReposetoryVersionAsUInt > 5) {
-			(*attributes) = malloc(ReposetoryHeader->attributeslen+1);
 			if (ReposetoryHeader->attributeslen != 0) {
+				(*attributes) = malloc(ReposetoryHeader->attributeslen+1);
+
 				int n;
 				if ((n = read(LotFileOpen, *attributes, ReposetoryHeader->attributeslen)) == -1) {
 					printf("%d\n", n);
@@ -1324,12 +1321,12 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 					    ReposetoryHeader->attributeslen, __FILE__, __LINE__);
 					perror("");
 				}
+				(*attributes)[ReposetoryHeader->attributeslen] = '\0';
+
 			}
-			(*attributes)[ReposetoryHeader->attributeslen] = '\0';
 					
-		} else {
-			*attributes = NULL;
 		}
+		
 
 		if(read(LotFileOpen,recordseparator,sizeof(char) * 3) != 3) {
 			perror("can't read recordseperator");
