@@ -701,7 +701,8 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 #endif
 
 				summary_cfg = subname->config.summary;
-				if (next_attribute_key(attributes, &attr_offset, key, value, keyval, "snippet")) {
+				
+				if ((attributes != NULL) && (next_attribute_key(attributes, &attr_offset, key, value, keyval, "snippet"))) {
 					if (strcmp(value, "db") == 0) {
 						summary_cfg = SUMMARY_DB;
 					}
@@ -1594,9 +1595,8 @@ void *generatePagesResults(void *arg)
 		}
 #endif
 
-		#ifdef DEBUG
-		printf("url rewrite: done\n");
-		#endif
+
+		vboprintf("url rewrite done:\nurl \"%s\"\nuri \"%s\"\nfulluri \"%s\"\n",side->url,side->uri,side->fulluri);
 
 		#endif
 		gettimeofday(&end_time, NULL);
