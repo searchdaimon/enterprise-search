@@ -132,7 +132,7 @@ u8f		(\360\235\233[\234-\272]|\360\235\233[\274-\277]|\360\235\234[\200-\224]|\3
 			    qe->space = 0;
 			}
  /* <LITERAL_CMD_PHRASE>({letter}|{u8a}|{u8b}|{u8c}|{u8d}|{u8e}|{u8f})({letter}|{u8a}|{u8b}|{u8c}|{u8d}|{u8e}|{u8f}|{infix}|{literal_infix})*({letter}|{u8a}|{u8b}|{u8c}|{u8d}|{u8e}|{u8f})		{ */
-<ATTRIBUTE_CMD_PHRASE>[^\"\=]* {
+<ATTRIBUTE_CMD_PHRASE>[^\"]* {
 			    struct _qp_yy_extra		*qe = yyget_extra( yyscanner );
 
 			    vector_pushback(qe->sequence, yytext);
