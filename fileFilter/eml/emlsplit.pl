@@ -94,7 +94,9 @@ sub writemail {
 		}
 		print ($suffix ." ".$fn."\n");
 		open(my $wf, "> $fn") || die "$fn: $!";
-		print $wf $_->body;
+		eval {
+			print $wf $_->body;
+		};
 		close $wf;
 	}
 }
@@ -107,7 +109,11 @@ open(my $mh, "> $headername") or die "$!: $headername";
 print $mh $filenames . "\n";
 
 foreach my $hn (qw(Subject From To Cc Bcc Reply-to Date)) {
-	my @values = $parsed->header($hn);
+	my @values;
+	eval {
+		@values = $parsed->header($hn);
+	} or next;
+	
 	next if (length(@values) == 0);
 	print $mh "$hn:";
 	print $mh join(", ", @values);
