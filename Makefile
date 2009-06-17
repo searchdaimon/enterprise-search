@@ -104,7 +104,7 @@ all:
 bb : perlembed getFiletype searchddep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange crawlSO boitho-bbdn PageInfobb IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb perlxs-sdcrawl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb yumupdate usSQLBB usAD
 
 perlembed:
-	(cd src/perlembed; make clean; make)
+	(cd src/perlembed && make clean && make)
 
 dppreload:
 	$(CC) -shared -fPIC src/dp/preload.c src/common/timediff.c -o bin/dppreload.so -ldl -Wall $(LDFLAGS)
@@ -127,7 +127,7 @@ getFiletype:
 	@echo ""
 	@echo "$@:"
 
-	(cd src/getFiletype; make)
+	(cd src/getFiletype && make clean && make)
 
 repomodwrap:
 	@echo ""
@@ -139,7 +139,7 @@ setuidcaller:
 	@echo ""
 	@echo "$@:"
 
-	(cd src/bb-phone-home/; make)
+	(cd src/bb-phone-home/ && make clean &&  make)
 	cp src/bb-phone-home/bb-phone-home-client.conf config
 	cp src/bb-phone-home/bb-client.pl bin/
 	cp src/bb-phone-home/setuidcaller bin/
@@ -149,38 +149,38 @@ invalidateOldFiles:
 	@echo ""
 	@echo "$@:"
 
-	(cd src/invalidateOldFiles; make clean; make)
+	(cd src/invalidateOldFiles && make clean && make)
 	cp src/invalidateOldFiles/invalidateOldFiles bin/
 
 perlxs-sdcrawl:
 	@echo ""
 	@echo "$@:"
 
-	(cd perlxs/SD-Crawl; make clean; perl Makefile.PL; make)
+	(cd perlxs/SD-Crawl && make clean && perl Makefile.PL && make)
 
 bbdocumentWebAdd:
 	@echo ""
 	@echo "$@:"
 
-	(rm src/base64/base64.o; cd src/bbdocumentWebAdd/; make clean; make)
+	(rm src/base64/base64.o && cd src/bbdocumentWebAdd/ && make clean && make)
 
 
 Suggest:
 	@echo ""
 	@echo "$@:"
 
-	(cd src/suggestrpc; make)
+	(cd src/suggestrpc && make clean && make)
 	cp src/suggestrpc/suggest_server bin/
-	(cd src/suggestwebclient; make)
+	(cd src/suggestwebclient && make clean && make)
 	cp src/suggestwebclient/suggest_webclient cgi-bin/
 
 SuggestOEM:
 	@echo ""
 	@echo "$@:"
 
-	(cd src/suggestrpc; make)
+	(cd src/suggestrpc && make clean && make)
 	cp src/suggestrpc/suggest_server bin/
-	(cd src/suggestwebclient; env EXTRA_CFLAGS=-DSUGGEST_OEM make)
+	(cd src/suggestwebclient && make clean && env EXTRA_CFLAGS=-DSUGGEST_OEM make)
 	cp src/suggestwebclient/suggest_webclient cgi-bin/
 
 
@@ -476,7 +476,7 @@ searchddep:
 	@echo ""
 	@echo "$@:"
 	for i in src/query src/parser src/generateSnippet src/ds src/utf8-filter src/getdate src/parser2 src/newspelling src/getFiletype src/attributes/ src/base64/ src/common/ src/getdate/ src/3pLibs/keyValueHash/ src/newspelling/; do\
-           (cd $$i; $(MAKE) all);\
+           (cd $$i && $(MAKE) all);\
         done
 
 searchd : src/searchkernel/searchd.c
@@ -765,7 +765,7 @@ readLinkFile: src/readLinkFile/main.c
 	$(CC) $(CFLAGS) $(LIBS)*.c src/readLinkFile/main.c -o bin/readLinkFile $(LDFLAGS)
 
 mergeLinkDB:
-	(cd src/mergeLinkDB/; make)
+	(cd src/mergeLinkDB/ && make clean && make)
 	cp src/mergeLinkDB/mergeLinkDB bin/mergeLinkDB
 
 anchorread: src/anchorread/main.c
@@ -852,7 +852,7 @@ boitho-bbdn: src/boitho-bbdn/bbdnserver.c src/bbdocument/bbfilters.c
 	@echo "$@:"
 
 	@#$(CC) -rdynamic -D__USE_BSD -m32 -fno-strict-aliasing -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64  $(CFLAGS) -I/home/eirik/.root/include -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -D_REENTRANT -D_GNU_SOURCE src/perlembed/*.c $(LIBS)*.c src/acls/acls.c src/boitho-bbdn/bbdnserver.c src/maincfg/maincfg.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE)  $(LIBCONFIG) -DIIACL $(24SEVENOFFICE) -D NO_REUSEADDR -DUSE_LIBEXTRACTOR  -rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE  /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl -lresolv -lnsl -ldl -lm -lcrypt -lutil -lpthread -lc 
-	(cd src/boitho-bbdn; make clean; make)
+	(cd src/boitho-bbdn && make clean && make)
 
 
 boitholdTest: src/boitholdTest/main.c
@@ -1101,16 +1101,16 @@ boithoadClientLib: src/boithoadClientLib/boithoadClientLib.c
 
 
 InitServices: src/InitServices/initwrapper.c
-	(cd src/InitServices/; make)
+	(cd src/InitServices/ && make clean && make)
 
 	cp src/InitServices/initwrapper setuid/
 
 YumWrapper: src/YumWrapper/yumwrapper.c
-	(cd src/YumWrapper; make)
+	(cd src/YumWrapper && make clean && make)
 	cp src/YumWrapper/yumwrapper setuid/
 
 NetConfig: src/NetConfig/configwrite.c
-	(cd src/NetConfig; make)
+	(cd src/NetConfig && make clean && make)
 	cp src/NetConfig/configwrite setuid/
 
 yumupdate:
@@ -1126,7 +1126,7 @@ crawlManager: src/crawlManager/main.c
 crawlManager2: src/crawlManager2/main.c
 	@echo ""
 	@echo "$@:"
-	(cd src/crawlManager2; make clean all)
+	(cd src/crawlManager2 && make clean && make all)
 #<<<<<<< Makefile
 	@#$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c  src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a
 	@#$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/key/key.c src/crawlManager2/shortenurl.c src/crawlManager2/usersystem.c src/crawlManager2/perlcrawl.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager2/main.c src/boithoadClientLib/boithoadClientLib.c  -o bin/crawlManager2 $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a 
@@ -1168,37 +1168,37 @@ crawlExchange:
 	@echo ""
 	@echo "$@:"
 
-	(cd src/crawlExchange; make clean)
-	(cd src/crawlExchange; make)
+	(cd src/crawlExchange && make clean)
+	(cd src/crawlExchange && make)
 
 crawlExchangePublic:
 	@echo ""
 	@echo "$@:"
 
-	(cd src/crawlExchangePublic; make clean)
-	(cd src/crawlExchangePublic; make)
+	(cd src/crawlExchangePublic && make clean)
+	(cd src/crawlExchangePublic && make)
 
 
 crawlSO:
 	@echo ""
 	@echo "$@:"
 
-	(cd src/crawlSO; make clean)
-	(cd src/crawlSO; make)
+	(cd src/crawlSO && make clean)
+	(cd src/crawlSO && make)
 
 usAD:
 	@echo ""
 	@echo "$@:"
 
-	(cd src/us_ad; make clean)
-	(cd src/us_ad; make)
+	(cd src/us_ad && make clean)
+	(cd src/us_ad && make)
 
 usSQLBB:
 	@echo ""
 	@echo "$@:"
 
-	(cd src/us_sqlbb; make clean)
-	(cd src/us_sqlbb; make)
+	(cd src/us_sqlbb && make clean)
+	(cd src/us_sqlbb && make)
 
 
 
@@ -1209,8 +1209,8 @@ crawl247:
 	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g -Wl,-static $(LIBS)*.c src/crawl247/crawl.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawl/mailsubject.c -o src/crawl247/crawl247.so $(LDFLAGS) $(SMBCLIENT)
 	mkdir -p crawlers/crawl247/
 	cp src/crawl247/crawl247.so crawlers/crawl247/
-	@#(cd src/crawl247; make clean)
-	@#(cd src/crawl247; make)
+	@#(cd src/crawl247 && make clean)
+	@#(cd src/crawl247 && make)
 
 
 
@@ -1227,16 +1227,16 @@ list_collections:
 	@echo ""
 	@echo "$@:"
 
-	(cd src/list_collections; make clean)
-	(cd src/list_collections; make)
+	(cd src/list_collections && make clean)
+	(cd src/list_collections && make)
 	cp src/list_collections/list_collections bin/list_collections
 
 slicense_info:
 	@echo ""
 	@echo "$@:"
 
-	(cd src/slicense; make clean)
-	(cd src/slicense; make slicense_info)
+	(cd src/slicense && make clean)
+	(cd src/slicense && make slicense_info)
 	cp src/slicense/slicense_info bin/slicense_info
 
 
