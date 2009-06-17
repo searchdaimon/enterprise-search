@@ -18,6 +18,12 @@ xml_escape_attr(const char *str, char *buf, size_t len)
 			strcpy(buf+j, "&quot;");
 			j += 6;
 			break;
+		case '&':
+			if (j+6 >= len)
+				return NULL;
+			strcpy(buf+j, "&amp;");
+			j += 5;
+			break;
 		default:
 			if (j+1 >= len)
 				return NULL;
