@@ -105,7 +105,16 @@ msgstr "Oppløsning"
 msgid "Page count"
 msgstr "Antall sider"
 
+# Sharepoint attributes
 
+msgid "List"
+msgstr "Liste"
+
+msgid "Site"
+msgstr "Side"
+
+msgid "Item"
+msgstr "Element"
 
 # page nav
 msgid "Next"

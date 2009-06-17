@@ -105,6 +105,16 @@ msgstr "Resolution"
 msgid "Page count"
 msgstr "Page count"
 
+# Sharepoint attributes
+
+msgid "List"
+msgstr "List"
+
+msgid "Site"
+msgstr "Site"
+
+msgid "Item"
+msgstr "Item"
 
 # page nav
 msgid "Next"
@@ -112,6 +122,7 @@ msgstr "Next"
 
 msgid "Prev"
 msgstr "Prev"
+
 
 # other
 msgid "Did you mean: 1?"
@@ -130,3 +141,4 @@ msgstr "All Rights Reserved."
 # cache
 msgid "(cacheinfo)"
 msgstr "This is the local copy of the document, as stored on the search system at this moment."
+

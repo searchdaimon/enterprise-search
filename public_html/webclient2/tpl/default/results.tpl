@@ -145,6 +145,10 @@
 		<div class="snippet">
 			[% r.snippet %]
 		</div>
+			[% IF r.attributes.source && r.attributes.source.value == "sharepoint" %]
+				[% INCLUDE sharepoint_attributes attr = r.attributes %]
+			[% END %]
+
 			[% INCLUDE generic_attributes attr = r.attributes %]
 		<div>
 			<span class="url" title="[% r.fulluri | html %]">[% r.uri | html %]</span>

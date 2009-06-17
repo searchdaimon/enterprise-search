@@ -41,6 +41,14 @@
 	</table>
 [% END %]
 
+[% BLOCK sharepoint_attributes %]
+	<table class="genericAttributes">
+		[% PROCESS _attr_row a = attr.parent title="Item" IF attr.sptype.value == "file" && attr.parent %]
+		[% PROCESS _attr_row a = attr.List title="List" IF attr.List %]
+		[% PROCESS _attr_row a = attr.Site title="Site" IF attr.Site %]
+	</table>
+[% END %]
+
 [% BLOCK _attr_row %]
 	<tr>
 		<td style="width : 7em">[% title | i18n %]</td>
