@@ -432,7 +432,7 @@ sub handle_listitem_attachment_worker {
 
 		my @attributes = @{ $p_attributes };
 		push @attributes, "sptype=file";
-		push @attributes, "parent=$parent";
+		push @attributes, "parent=$parent" if defined $parent;
 
 		$self->add_document(
 				url => $url,
@@ -630,7 +630,7 @@ sub handle_listitem_worker {
 		if (defined $encodedabsurl) {
 			# XXX: Getting 404 on quite a bit of the files that end in .\d\d\d, skip them for now
 			if ($encodedabsurl !~ /\.\d+$/ and not defined($item->{'ows_WebPartDescription'})) {
-				$self->handle_listitem_attachment_worker($encodedabsurl, $allowedstr, $child_title, \@attributes_a);
+				$self->handle_listitem_attachment_worker($encodedabsurl, $allowedstr, undef, \@attributes_a);
 			}
 		}
 		#my $e5 = Time::HiRes::time;
