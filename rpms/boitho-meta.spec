@@ -1,5 +1,5 @@
 %define name boitho-meta
-%define version 0.3
+%define version 0.3.2
 %define release 2
 
 Summary: Boitho meta packages, depend on all the other boitho packages.
@@ -18,6 +18,7 @@ Requires: boitho-base boitho-bbadmin boitho-everrun boitho-infoquery boitho-iind
 Requires: boithobb-setuid boithobb-crawl_watch bbAutoUpdate
 Requires: boitho-database daemonize mod_auth_boitho boitho-phonehome boitho-configfiles
 Requires: boitho-scripts boitho-dictionary boitho-apaceconf boitho-bbdocumentwebadd
+Requires: perl-version perl-Authen-NTLM
 
 
 #Turn off automatic dependency generation
