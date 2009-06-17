@@ -42,6 +42,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <errno.h>
+#include <err.h>
 #include <signal.h>
 #include <locale.h>
 
@@ -228,7 +229,8 @@ int main(int argc, char *argv[])
                 }
         
 	}
-        --optind;
+        argc -= optind;
+	argv += optind;
 
 	#ifdef DEBUG
         fprintf(stderr, "searchd: Debug: argc %i, optind %i\n",argc,optind);
@@ -244,8 +246,11 @@ int main(int argc, char *argv[])
 	}
 	#endif
 
-	strncpy(servername,argv[1 +optind],sizeof(servername) -1);
-
+	if (argc > 0) {
+		strncpy(servername,argv[0],sizeof(servername) -1);
+	} else {
+		errx(1, "You have to supply a hostname");
+	}
 	
 	lotPreOpenStartl(&searchd_config.lotPreOpen.DocumentIndex,"DocumentIndex","www",searchd_config.optPreOpen);
 	lotPreOpenStartl(&searchd_config.lotPreOpen.Summary,"summary","www",searchd_config.optPreOpen);
@@ -380,12 +385,6 @@ int main(int argc, char *argv[])
 		printf("starting single thread version\n");
 	#endif
 	*/
-
-        if (argc < 2) {
-                fprintf(stderr, "searchd: Error! No servername given.\n");
-                exit(0);
-        }
-
 
 	fprintf(stderr, "searchd: Servername %s\n",servername);
 
