@@ -1,9 +1,10 @@
 #ifndef _DOCUMENTINDEX_H_
 #define _DOCUMENTINDEX_H_
 
-#include "define.h"
 #include <stdio.h>
+
 #include "lot.h"
+#include "define.h"
 
 
 int DIHaveIndex (int lotNr,char subname[]);
