@@ -681,7 +681,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 			}
 			else {
 				char key[MAX_ATTRIB_LEN], value[MAX_ATTRIB_LEN], keyval[MAX_ATTRIB_LEN];
-				char summary_cfg, *attr_offset;
+				char summary_cfg, *attr_offset=NULL;
 
 #ifdef DEBUG
 				printf("calling generate_snippet with strlen body %i\n",strlen(body));
