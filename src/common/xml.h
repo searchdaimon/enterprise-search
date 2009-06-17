@@ -4,5 +4,7 @@
 #include <sys/types.h>
 
 char *xml_escape_attr(const char *str, char *buf, size_t len);
+char *xml_escape_uri(char *arg, char *out, size_t len);
+
 
 #endif /* _COMMON_XML_H_ */

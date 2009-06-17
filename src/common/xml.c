@@ -1,6 +1,7 @@
 #include <sys/types.h>
 
 #include <string.h>
+#include <stdio.h>
 
 char *
 xml_escape_attr(const char *str, char *buf, size_t len)
@@ -35,6 +36,39 @@ xml_escape_attr(const char *str, char *buf, size_t len)
 	
 	return buf;
 }
+
+char *
+xml_escape_uri(char *arg, char *out, size_t len)
+{ 
+	int i; 
+	char c; 
+	char *p;
+
+	p = out;
+	for (i = 0; (c = arg[i]) != '\0'; i++) { 
+		if ((c == 0x2D) || (c == 0x2E) || // Hyphen-Minus, Full Stop
+		    ((0x30 <= c) && (c <= 0x39)) || // Digits [0-9]
+		    ((0x41 <= c) && (c <= 0x5A)) || // Uppercase [A-Z]
+		    ((0x61 <= c) && (c <= 0x7A))) { // Lowercase [a-z]
+			if (len < 2)
+				return NULL;
+			len--;
+			*p = c;	
+			p++;
+		} else {
+			if (len < 4)
+				return NULL;
+			
+			snprintf(p, len, "%%%02X", c);
+			p += 3;
+			len -= 3;
+		}
+	}
+	*p = '\0';
+
+	return out;
+}
+
 
 #ifdef XML_TEST_MAIN
 
