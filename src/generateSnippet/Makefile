@@ -11,7 +11,7 @@ all:
 
 
 test:
-	$(CC) -o snippet test.c libsnippet_generator.a ../query/lex.query.o ../query/stemmer.o ../ds/libds.a
+	$(CC) -o snippet test.c libsnippet_generator.a ../query/lex.query.o ../query/stemmer.o ../ds/libds.a ../common/xml.c
 
 clean:
 	rm -rf libsnippet_generator.a *.o snippet y.tab.c lex.bsgp.c y.tab.h
