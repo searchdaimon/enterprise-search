@@ -1753,12 +1753,12 @@ void _attribute_print_and_delete_tree_(buffer *bout, container *X, int indent, i
 		    if (item->children!=NULL) bprintf(bout, "<group");
 		    else bprintf(bout, "<item");
 
-		    if (item->key!=NULL) bprintf(bout, " key=\"%s\"", xml_escape_attr(item->key, buf, sizeof(buf)));
-		    if (item->value!=NULL) bprintf(bout, " value=\"%s\"", xml_escape_attr(item->value, buf, sizeof(buf)));
+		    if (item->key!=NULL) bprintf(bout, " key=\"%s\"", xml_escape_uri(item->key, buf, sizeof(buf)));
+		    if (item->value!=NULL) bprintf(bout, " value=\"%s\"", xml_escape_uri(item->value, buf, sizeof(buf)));
 		    if (item->name!=NULL) bprintf(bout, " name=\"%s\"", xml_escape_attr(item->name, buf, sizeof(buf)));
-		    if (item->icon!=NULL) bprintf(bout, " icon=\"%s\"", xml_escape_attr(item->icon, buf, sizeof(buf)));
+		    if (item->icon!=NULL) bprintf(bout, " icon=\"%s\"", xml_escape_uri(item->icon, buf, sizeof(buf)));
 
-		    if (item->querystr!=NULL) bprintf(bout, " query=\"%s\"", xml_escape_attr(item->querystr, buf, sizeof(buf)));
+		    if (item->querystr!=NULL) bprintf(bout, " query=\"%s\"", xml_escape_uri(item->querystr, buf, sizeof(buf)));
 		    if (item->selected >= 0) bprintf(bout, " selected=\"true\"");
 		    bprintf(bout, " expanded=\"%s\"", item->selected_descendant || item->expanded ? "true":"false");
 		    if (item->container_id == 0) bprintf(bout, " hits=\"%i\"", item->hits);

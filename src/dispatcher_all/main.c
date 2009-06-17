@@ -2849,8 +2849,8 @@ int main(int argc, char *argv[])
 		for (y=0;y<7;y++) {
 		    printf("\t<item name=\"%s\" query=\"%s%s\" hits=\"%i\"%s />\n",
 			dateview_type_names[y],
-			xml_escape_attr(basedatequery, xmlescapebuf1, sizeof(xmlescapebuf1)),
-			xml_escape_attr(dateview_type_query[y], xmlescapebuf2, sizeof(xmlescapebuf2)),
+			xml_escape_uri(basedatequery, xmlescapebuf1, sizeof(xmlescapebuf1)),
+			xml_escape_uri(dateview_type_query[y], xmlescapebuf2, sizeof(xmlescapebuf2)),
 			SiderHeder[0].dates[y],
 			highlight_date==y ? " selected=\"true\"" : "");
 		}

@@ -687,7 +687,7 @@ int bsprint_query_with_remove( buffer *B, container *remove, query_array *qa, in
 			    if (qa->query[i].operand == QUERY_ATTRIBUTE) bprintf(B, "/");
 			    else bprintf(B, " ");
 			}
-		    bprintf(B, "%s", escape ? xml_escape_attr(qa->query[i].s[j], buf, sizeof(buf)) : qa->query[i].s[j]);
+		    bprintf(B, "%s", escape ? xml_escape_uri(qa->query[i].s[j], buf, sizeof(buf)) : qa->query[i].s[j]);
 		}
 
 	    if (qa->query[i].n > 1 || qa->query[i].operand == QUERY_PHRASE
