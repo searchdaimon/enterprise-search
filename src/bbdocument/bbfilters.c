@@ -5,7 +5,7 @@
 #include "../common/boithohome.h"
 #include "../common/ht.h"
 
-#define LIBEXTRACTOR_PATH "/home/boitho/boithoTools/bin/extract"
+#define LIBEXTRACTOR_PATH "/usr/bin/extract"
 //#define LIBEXTRACTOR_PATH "/home/dagurval/websearch/fakeextract/extract"
 
 void run_filter_perlplugin(char *dst, size_t dst_size, struct fileFilterFormat *filter, struct hashtable **metahash) {
