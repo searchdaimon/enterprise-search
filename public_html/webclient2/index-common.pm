@@ -14,6 +14,8 @@ use LWP::Simple qw(get);
 use MIME::Base64 qw(encode_base64 decode_base64);
 use config qw(%TPL_FILE %CFG @SEARCH_ENV_LOGGING %DEF_TPL_OPT);
 use ResultParse::SDOld;
+use NavMenu qw(read_navmenu_cfg);
+
 BEGIN {
 	CGI::Carp::set_message(" ");
 	{
@@ -30,7 +32,7 @@ my %state = %{CGI::State->state($cgi)};
 
 my %query_params; # holds GET params that should
 	# be passed along as user navigates
-my $tpl = init_tpl();
+my ($tpl, $tpl_name) = init_tpl();
 
 my $tpl_file;
 my %tpl_vars;
@@ -43,7 +45,7 @@ if (defined(my $query = $state{query})) {
 		$page = 1;
 	}
 	my $show_xml = $state{debug} && $state{debug} eq "showxml";
-	($tpl_file, %tpl_vars) = show_search($query, $show_xml, $page, $isanonymous);
+	($tpl_file, %tpl_vars) = show_search($query, $show_xml, $page, $isanonymous, $tpl_name);
 }
 elsif (exists $state{cache}) {
 	($tpl_file, %tpl_vars) = show_cache($state{u}, $tpl);
@@ -86,10 +88,11 @@ sub show_main {
 }
 
 sub show_search {
-	my ($query, $show_debug, $page, $anonymous) = @_;
+	my ($query, $show_debug, $page, $anonymous, $tpl_name) = @_;
 
+	my $navmenu_cfg = encode_base64(read_navmenu_cfg($tpl_name));
 
-	my $search_uri = gen_search_uri(query => $query, page => $page, anonymous => $anonymous);
+	my $search_uri = gen_search_uri(query => $query, page => $page, anonymous => $anonymous, navmenucfg => $navmenu_cfg);
 	my $xml_str = get($search_uri)
 		or fatal("No result from dispatcher.");
 
@@ -183,7 +186,7 @@ sub gen_search_uri {
 	# Legacy ...
 	$attr{search_bruker} = $attr{username};
 	delete $attr{username};
-	$attr{userip} = $attr{REMOTE_ADDR};
+	$attr{userip} = $ENV{REMOTE_ADDR};
 	delete $attr{REMOTE_ADDR};
 	$attr{AmazonAssociateTag} = "";
 	$attr{AmazonSubscriptionId} = "";
@@ -228,14 +231,21 @@ sub init_tpl {
 		$query_params{lang} = $lang;
 	}
 	elsif ($ENV{HTTP_ACCEPT_LANGUAGE}) {
-		my ($browser_lang) = split q{,}, $ENV{HTTP_ACCEPT_LANGUAGE};
-		$browser_lang =~ s/-/_/g;
-		if (valid_lang($tpl_name, $browser_lang)) {
-			$lang = $browser_lang;
+		my @browser_lang = split q{,}, $ENV{HTTP_ACCEPT_LANGUAGE};
+		my $valid_lang;
+		for my $l (@browser_lang) {
+			$l  =~ s/-/_/g;
+			$l =~ s/;.*$//;
+			if (valid_lang($tpl_name, $l)) {
+				$valid_lang = $l;
+				last;
+			}
+		}
+		if ($valid_lang) {
+			$lang = $valid_lang;
 			$query_params{lang} = $lang;
 		}
 		else { 
-
 			$lang = valid_lang($CFG{lang}) 
 				? $CFG{lang} : undef;
 		}
@@ -287,7 +297,7 @@ sub init_tpl {
 
 	my $tpl = Template->new(%opt)
 		|| croak $tpl->error();
-	return $tpl;
+	return ($tpl, $tpl_name);
 }
 
 sub _gen_url {

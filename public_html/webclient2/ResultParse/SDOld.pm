@@ -97,9 +97,13 @@ sub collections {
 }
 
 sub errors {
-	my $err_xml = shift->{xml}{error};
+	my $s = shift;
+	my $err_xml = $s->{xml}{ERROR} || $s->{xml}{error};
 	return unless $err_xml;
-	return map { @{$_->{errormessage}} } @{$err_xml};
+	return map { $_->{ERRORMESSAGE} 
+		? @{$_->{ERRORMESSAGE}} 
+		: @{$_->{errormessage}} } @{$err_xml};
+
 }
 
 sub results {
