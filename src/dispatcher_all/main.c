@@ -1053,7 +1053,7 @@ int main(int argc, char *argv[])
 		else errx(1, "invalid access type");
 
 
-		getRank = (QueryData.rankUrl[0] == '\0') ? 1 : 0;
+		getRank = (QueryData.rankUrl[0] == '\0') ? 0 : 1;
         }
 	if (QueryData.start > MAX_RESULT_OFFSET) {
 		warnx("'start' larger than MAX_RESULT_OFFSET. Setting to %d.", MAX_RESULT_OFFSET);
