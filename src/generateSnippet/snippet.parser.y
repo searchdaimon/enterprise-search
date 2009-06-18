@@ -1178,8 +1178,9 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
             for (tab=0; tab<vector_size(data->Tab); tab++)
 	        if (vector_get(data->Tab, tab).i > data->best.start) break;
 
-	    bprintf(B, "<table>\n");
+	    bprintf(B, "<snippet type=\"db\">\n\t<table>\n");
 	}
+    else bprintf(B, "<![CDATA[");
 
     more = (i < Msize);
 
@@ -1213,7 +1214,7 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 		    if (table_tab==-1)
 			{
 			    table_tab = 0;
-			    bprintf(B, "<tr><td>");
+			    bprintf(B, "\t\t<tr><td><![CDATA[");
 			}
 
 		    if (tab<vector_size(data->Tab) && pos==vector_get(data->Tab, tab).i)
@@ -1223,7 +1224,7 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 			    if (table_tab == 0)
 				{
 				    if (line_cut) bprintf(B, "...");
-				    bprintf(B, "</td><td>");
+				    bprintf(B, "]]></td><td><![CDATA[");
 				    table_tab = 1;
 				    crnt_col = 0;
 				}
@@ -1237,8 +1238,8 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 		    if (eoln<Eoln_size && pos==vector_get(data->Eoln, eoln).i)
 			{
 			    if (line_cut) bprintf(B, "...");
-			    if (table_tab==0) bprintf(B, "</td><td></td></tr>\n");
-			    else if (table_tab==1) bprintf(B, "</td></tr>\n");
+			    if (table_tab==0) bprintf(B, "]]></td><td></td></tr>\n");
+			    else if (table_tab==1) bprintf(B, "]]></td></tr>\n");
 			    line_cut = 0;
 			    eoln++;
 			    col = 0;
@@ -1274,9 +1275,9 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
     if (data->mode == db_snippet)
 	{
 	    if (line_cut) bprintf(B, "...");
-	    if (table_tab==0) bprintf(B, "</td><td></td></tr>\n");
-	    else if (table_tab==1) bprintf(B, "</td></tr>\n");
-	    bprintf(B, "</table>\n");
+	    if (table_tab==0) bprintf(B, "]]></td><td></td></tr>\n");
+	    else if (table_tab==1) bprintf(B, "]]></td></tr>\n");
+	    bprintf(B, "\t</table>\n</snippet>");
 	}
     else
 	{
@@ -1288,6 +1289,8 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 		{
 	    	    bprintf(B, " ...");
 		}
+
+	    bprintf(B, "]]>\n");
 	}
 
     return buffer_exit(B);
