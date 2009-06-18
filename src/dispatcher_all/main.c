@@ -2061,7 +2061,9 @@ int main(int argc, char *argv[])
                 		//DocumentIndex
                 		printf("\t<link><![CDATA[%s]]></link>\n",Sider[i].url);
 
-				printf("\t<description><![CDATA[%s]]></description>\n",Sider[i].description);
+				printf("\t<description>%s</description>\n",Sider[i].description);
+				//printf("\t<description><![CDATA[%s]]></description>\n",Sider[i].description);
+				
                 		printf("</item>\n");
 
     			//teller bare normale sider
@@ -2473,7 +2475,7 @@ int main(int argc, char *argv[])
 						printf("\t<thumbnail></thumbnail>\n");
 					}
 
-					printf("\t<description><![CDATA[%s]]></description>\n",Sider[i].description);
+					printf("\t<description>%s</description>\n",Sider[i].description);
 				}
 
 
@@ -3043,7 +3045,7 @@ int main(int argc, char *argv[])
 
 					printf("\t<DESCRIPTION_LENGTH>%i</DESCRIPTION_LENGTH>\n",strlen(Sider[i].description));
 					printf("\t<DESCRIPTION_MAX>%i</DESCRIPTION_MAX>\n",sizeof(Sider[i].description));
-					printf("\t<DESCRIPTION><![CDATA[%s]]></DESCRIPTION>\n",Sider[i].description);
+					printf("\t<DESCRIPTION>%s</DESCRIPTION>\n",Sider[i].description);
 				}
 
 
@@ -3270,7 +3272,7 @@ int main(int argc, char *argv[])
 			mysql_stmt_prepare(logstmt, query, strlen(query));
 
 			bind[0].buffer_type = MYSQL_TYPE_STRING; // query
-			bind[0].buffer = QueryData.query;
+			bind[0].buffer = QueryData.query;	// Ax: Max lengde i databasen er 30 tegn. Lage en nice-write?
 			len[0] = strlen(QueryData.query);
 			bind[0].length = &len[0];
 
