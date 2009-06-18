@@ -658,14 +658,14 @@ void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filter
 //				(*filteron).filetype = (*queryParsed).query[i].s[0];
 //				strscpy((*filteron).filetype, buf, sizeof((*filteron).collection));
 				vector_pushback((*filteron).attributes, QUERY_GROUP, buf);
-				vboprintf("Filtering on attributes: \"group/%s\"\n", buf);
+				vboprintf("Filtering on attributes: \"group:%s\"\n", buf);
 //				free(buf);
 				break;
 			    }
 			case QUERY_FILETYPE:
 			    {
 				vector_pushback((*filteron).attributes, QUERY_FILETYPE, buf);
-				vboprintf("Filtering on attributes: \"filetype/%s\"\n", buf);
+				vboprintf("Filtering on attributes: \"filetype:%s\"\n", buf);
 //				free(buf);
 				break;
 			    }
