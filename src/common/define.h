@@ -194,6 +194,9 @@
 #define SUMMARY_SNIPPET 2
 #define SUMMARY_DB 3
 
+#define NAVMENUCFG_SIZE 4096
+#define MAX_RESULT_OFFSET 1000
+
 //Lengden på en okument post lengde
 //#define DocumentIndexPOSTLENGTH 253
 
@@ -656,6 +659,7 @@ struct queryNodeHederFormat
 //v3	char languageFilter[12];
 	char orderby[10];
 	int anonymous;
+	char navmenucfg[NAVMENUCFG_SIZE]; // jun 16 09
 };
 
 //for "struct query"
@@ -692,6 +696,8 @@ struct QueryDataForamt {
 	char rankUrl[256];
 
 	query_array search_user_as_query;
+	
+	char navmenucfg[NAVMENUCFG_SIZE]; // jun 16 09
 };
 
 

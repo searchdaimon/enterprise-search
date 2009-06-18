@@ -39,6 +39,8 @@ typedef void* yyscan_t;
 typedef struct rac_buffer_state *YY_BUFFER_STATE;
 YY_BUFFER_STATE rac_scan_bytes( const char *bytes, int len, yyscan_t yyscanner );
 struct rac_yy_extra *racget_extra( yyscan_t yyscanner );
+//YY_BUFFER_STATE racscan_bytes( const char *bytes, int len, yyscan_t yyscanner );
+
 // ---
 
 
@@ -77,6 +79,7 @@ struct rac_yacc_data
 {
     container	*S;
     item	*current_item;
+    int		failed;
 };
 
 %}
@@ -299,18 +302,13 @@ static void recursive_delete(struct attr_group *a);
 
 
 // Returnerer warnings.
-attr_conf* show_attributes_init( char *conf_file, char **warnings )
+attr_conf* show_attributes_init(char *text, char **warnings, int *failed)
 {
-    FILE	*fyyin = fopen(conf_file, "r");
-
-    if (fyyin==NULL)
-	{
-    	    fprintf(stderr, "rac: Error! Could not open file '%s'.\n", conf_file);
-	    return NULL;
-	}
+	*failed = 0;
 
     struct rac_yy_extra		*re = malloc(sizeof(struct rac_yy_extra));
     struct rac_yacc_data	*data = malloc(sizeof(struct rac_yacc_data));
+    data->failed = 0;
 
     re->ptr = 0;
     re->last_ptr = 0;
@@ -333,16 +331,17 @@ attr_conf* show_attributes_init( char *conf_file, char **warnings )
 
     raclex_init(&scanner);
     racset_extra(re, scanner);
-    racset_in(fyyin, scanner);
+    //racset_in(fyyin, scanner);
+    YY_BUFFER_STATE bs = rac_scan_bytes(text, strlen(text), scanner);
 
-    printf("Running scanner...\n");
 
     racparse(data, scanner);
 
-    printf("Done.\n");
 
+    rac_delete_buffer(bs, scanner);
     raclex_destroy(scanner);
-    fclose(fyyin);
+
+    //fclose(fyyin);
 
     print_recurse_items(data->current_item, 0);
 
@@ -361,6 +360,7 @@ attr_conf* show_attributes_init( char *conf_file, char **warnings )
 //    destroy(data->current_item->child);
     destroy(data->S);
     destroy(data->current_item->parameters);
+    *failed = data->failed;
     free(data->current_item);
     free(data);
 
@@ -619,5 +619,6 @@ void print_recurse_items(item *I, int indent)
 racerror( struct rac_yacc_data *data, void *yyscan_t, char *s )
 {
     fprintf(stderr, "rac: Parse error (%s)\n", s);
+    data->failed = 1;
 }
 

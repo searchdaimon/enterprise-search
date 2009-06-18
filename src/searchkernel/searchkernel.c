@@ -1909,7 +1909,7 @@ int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct Side
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames, 
 int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[], 
 char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *searchd_config, char *errorstr,int *errorLen,
-	struct iintegerMemArrayFormat *DomainIDs, char *useragent, char groupOrQuery[], int anonymous
+	struct iintegerMemArrayFormat *DomainIDs, char *useragent, char groupOrQuery[], int anonymous, attr_conf *navmenu_cfg
 	) { 
 
 
@@ -2440,7 +2440,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#ifdef BLACK_BOKS
 		//char	*querystr = asprint_query(&PagesResults.QueryData.queryParsed);
 		(*SiderHeder).navigation_xml = searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,
-		    &(*SiderHeder).queryTime, searchd_config->getfiletypep, searchd_config->attrdescrp, searchd_config->showattrp, &PagesResults.QueryData.queryParsed);
+		    &(*SiderHeder).queryTime, searchd_config->getfiletypep, searchd_config->attrdescrp, navmenu_cfg, &PagesResults.QueryData.queryParsed);
 
 		(*SiderHeder).navigation_xml_len = strlen((*SiderHeder).navigation_xml);
 
@@ -3034,8 +3034,11 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 
 	#ifdef BLACK_BOKS
 		//char	*querystr = asprint_query(&PagesResults.QueryData.queryParsed);
+ 		
+		// TODO?: Send inn navmenu_cfg i stedet for NULL om vi
+		// tar i bruk dorank igjen.
 		(*SiderHeder).navigation_xml = searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,
-		    &(*SiderHeder).queryTime, searchd_config->getfiletypep, searchd_config->attrdescrp, searchd_config->showattrp, &PagesResults.QueryData.queryParsed);
+		    &(*SiderHeder).queryTime, searchd_config->getfiletypep, searchd_config->attrdescrp, NULL, &PagesResults.QueryData.queryParsed);
 
 		(*SiderHeder).navigation_xml_len = strlen((*SiderHeder).navigation_xml);
 

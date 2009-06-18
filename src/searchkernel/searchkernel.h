@@ -26,7 +26,7 @@ struct searchd_configFORMAT {
 	thesaurus           *thesaurusp;
 	struct fte_data	*getfiletypep;
 	struct adf_data	*attrdescrp;
-	attr_conf	*showattrp;
+	//attr_conf	*showattrp;
 	int optFastStartup;
 	int optCacheIndexes;
 };
@@ -36,7 +36,7 @@ int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct Side
     int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[],
     char search_user[], struct filtersFormat *filters,
     struct searchd_configFORMAT *searchd_config, char *errorstr,int *errorLen, struct iintegerMemArrayFormat *DomainIDs,
-    char *, char *, int anonymous);
+    char *, char *, int anonymous, attr_conf *navmenu_cfg);
 
 #define RANK_TYPE_FIND	1
 #define RANK_TYPE_SUM	2

@@ -93,6 +93,33 @@ void die(int errorcode,char query[] ,const char *fmt, ...) {
 
 }
 
+void dumpQueryDataForamt(struct QueryDataForamt *d) {
+	warnx("=dump start ptr: %p size: %d", d, sizeof *d);
+	warnx("query: %s", d->query);
+	warnx("queryhtml: %s", d->queryhtml);
+	warnx("userip: %s", d->userip);
+	warnx("subname: %s", d->subname);
+	warnx("MaxHits: %d", d->MaxsHits);
+	warnx("start: %d", d->start);
+	warnx("filterOn: %d", d->filterOn);
+	warnx("opensearch: %d", d->opensearch);
+	warnx("version: %f", d->version);
+	warnx("GeoIPcontry: %s", d->GeoIPcontry);
+	warnx("search_user: %s", d->search_user);
+	warnx("HTTP_ACCEPT_LANGUAGE: %s", d->HTTP_ACCEPT_LANGUAGE);
+	warnx("HTTP_USER_AGENT: %s", d->HTTP_USER_AGENT);
+	warnx("HTTP_REFERER: %s", d->HTTP_REFERER);
+	warnx("orederby: %s", d->orderby);
+#ifdef BLACK_BOKS
+	warnx("anonymous: %d", d->anonymous);
+#endif
+	warnx("tkey: %s", d->tkey);
+	warnx("rankUrl: %s", d->rankUrl);
+	warnx("navmenu: %s", d->navmenucfg);
+	warnx("=dump end");
+}
+
+
 //legger tilen error til køen
 void addError(struct errorhaFormat *errorha, int errorcode,char errormessage[]) {
 

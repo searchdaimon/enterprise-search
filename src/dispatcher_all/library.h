@@ -20,6 +20,7 @@
     #define maxerrors 5
     #define maxerrorlen 201
 
+#define DefultMaxsHits 20
 
 #define QUERY_LOG_FILE "/home/boitho/logs/query.log"
 
@@ -46,6 +47,7 @@
 		int bannedwordsnr;
         };
 
+void dumpQueryDataForamt(struct QueryDataForamt *d);
 
 void die(int errorcode,char query[] ,const char *fmt, ...);
 void bsConnectAndQuery(int *sockfd,int server_cnt, char **servers, 

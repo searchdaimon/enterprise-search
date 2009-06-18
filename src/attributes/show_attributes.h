@@ -44,7 +44,7 @@ typedef struct
 */
 typedef struct attr_group attr_conf;
 
-attr_conf* show_attributes_init( char *conf_file, char **warnings );
+attr_conf* show_attributes_init( char *conf_file, char **warnings, int *failed);
 
 void show_attributes_destroy( attr_conf *ac );
 

@@ -431,7 +431,7 @@ int main(int argc, char *argv[])
 
 		fprintf(stderr, "searchd: init show-attributes\n");
 		char	*warnings;
-		searchd_config.showattrp = show_attributes_init(bfile("config/show_attributes.conf"), &warnings);
+		/*searchd_config.showattrp = show_attributes_init(bfile("config/show_attributes.conf"), &warnings);
 		if (searchd_config.showattrp == NULL)
 		    {
 			fprintf(stderr, "searchd: ERROR!! Unable to open show-attributes configuration file. Disabling attributes.\n");
@@ -441,7 +441,7 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "searchd: ******************* Warnings reading show-attributes config: ********************\n");
 			fprintf(stderr, "%s", warnings);
 			fprintf(stderr, "searchd: *********************************************************************************\n");
-		    }
+		    }*/
 
 	#else
 
@@ -589,6 +589,18 @@ int main(int argc, char *argv[])
 	return(0);
 }
 
+attr_conf *parse_navmenu_cfg(char *cfgstr, int *failed) {
+	char *warnings;
+	attr_conf *cfg = show_attributes_init(cfgstr, &warnings, failed);
+	
+	if (*failed)
+		warnx("navmenucfg parsing failed");
+
+	if (warnings[0] != '\0')
+		warnx("navmenucfg parsing warnings: %s", warnings);
+
+	return cfg;
+}
 
 /* 
 	This is the routine that is executed from a new thread 
@@ -745,6 +757,16 @@ void *do_chld(void *arg)
 
 	if (!queryNodeHeder.getRank) {
 
+		int parsing_failed;
+		attr_conf *navmenu_cfg = parse_navmenu_cfg(queryNodeHeder.navmenucfg, &parsing_failed);
+		if (parsing_failed) {
+			SiderHeder->responstype = searchd_responstype_error;
+			snprintf(SiderHeder->errorstr, sizeof SiderHeder->errorstr, 
+				"An error occurred while parsing configuration for navigation menu.");
+			SiderHeder->errorstrlen = strlen(SiderHeder->errorstr); // TODO: is errorstrlen even used?
+		}
+
+
 		if (!dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),&Sider,SiderHeder,SiderHeder->hiliteQuery,
 			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
 			queryNodeHeder.start, queryNodeHeder.filterOn, 
@@ -753,7 +775,7 @@ void *do_chld(void *arg)
 			searchd_config,
 			SiderHeder->errorstr, &SiderHeder->errorstrlen,
 			&global_DomainIDs, queryNodeHeder.HTTP_USER_AGENT,
-			groupOrQuery, queryNodeHeder.anonymous
+			groupOrQuery, queryNodeHeder.anonymous, navmenu_cfg
 			)) 
 		{
 			fprintf(stderr, "searchd_child: dosearch did not return 1\n");
@@ -764,6 +786,10 @@ void *do_chld(void *arg)
 
 			fprintf(stderr, "searchd_child: Error: cand do dosearch: \"%s\"\n",SiderHeder->errorstr);
 		}
+
+		show_attributes_destroy(navmenu_cfg);
+
+		
 	}
 	else if (queryNodeHeder.getRank)  {
 		fprintf(stderr, "searchd_child: ########################################### Ranking document: %u\n", queryNodeHeder.getRank);
