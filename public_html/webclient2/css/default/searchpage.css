@@ -399,6 +399,18 @@ clear : both;
 	border : 0;
 }
 
+ul.genericAttributes {
+    line-height: 0.8em;
+    margin: 0;
+    padding: 0;
+}
+
+.genericAttributes li {
+	margin: 0 0 0 1.5em;
+	padding: 0;
+        list-style-type : disc;
+}
+
 
 .filterIcon img {
 	border : 0;
@@ -407,4 +419,9 @@ clear : both;
 	margin-bottom : -2px;
 	/* font-size : 60%; */
 	/* font-style : italic; */
+}
+
+.snippet .dbSnippet td.first {
+    color: #3f3f5f;
+    width: 10em;
 }
