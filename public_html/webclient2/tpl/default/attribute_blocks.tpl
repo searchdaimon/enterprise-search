@@ -30,7 +30,7 @@
 [% END %]
 
 [% BLOCK generic_attributes %]
-	<table class="genericAttributes">
+	<ul class="genericAttributes">
 		[% PROCESS _attr_row a = attr.creator title="Creator" IF attr.creator %]
 		[% PROCESS _attr_row a = attr.author title="Author" IF attr.author %]
 		[% k="last saved by"; PROCESS _attr_row a = attr.$k title="Last saved by" IF attr.$k %]
@@ -38,23 +38,21 @@
 		[%# PROCESS _attr_row a = attr.size title="Size" IF attr.size  # crashes with vmethod size %]
 		[% PROCESS _attr_row a = attr.resolution title="Resolution" IF attr.resolution %]
 		[% k="page count"; PROCESS _attr_row a = attr.$k title="Page count" IF attr.$k %]
-	</table>
+	</ul>
 [% END %]
 
 [% BLOCK sharepoint_attributes %]
-	<table class="genericAttributes">
+	<ul class="genericAttributes">
 		[% PROCESS _attr_row a = attr.parent title="Item" IF attr.sptype.value == "file" && attr.parent %]
 		[% PROCESS _attr_row a = attr.List title="List" IF attr.List %]
 		[% PROCESS _attr_row a = attr.Site title="Site" IF attr.Site %]
-	</table>
+	</ul>
 [% END %]
 
 [% BLOCK _attr_row %]
-	<tr>
-		<td style="width : 7em">[% title | i18n %]</td>
-		<td>
-			<a href="[% a.query | query_url %]">[% a.value %]</a> 
-			[% PROCESS filter_icon q = a.attr_query %]
-		</td>
-	</tr>
+	<li>
+		[% title | i18n %]:
+		<a href="[% a.query | query_url %]">[% a.value %]</a> 
+		[% PROCESS filter_icon q = a.attr_query %]
+	</li>
 [% END %]
