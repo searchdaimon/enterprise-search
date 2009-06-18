@@ -539,7 +539,7 @@ deleteDocIDFormCache:
 	$(CC) $(CFLAGS) $(LIBS)*.c src/dispatcher_all/library.c src/deleteDocIDFormCache/main.c -o bin/deleteDocIDFormCache $(LDFLAGS) -D WITH_CASHE -D EXPLAIN_RANK
 
 
-dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/banlists/ban.c src/UrlToDocID/search_index.c src/maincfg/maincfg.c src/dispatcher_all/library.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c $(LDFLAGS) src/dispatcher_all/qrewrite.o $(BDB) -D_GNU_SOURCE 
+dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/banlists/ban.c src/UrlToDocID/search_index.c src/maincfg/maincfg.c src/dispatcher_all/library.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c $(LDFLAGS) src/dispatcher_all/qrewrite.o src/dispatcher_all/cgihandler.c $(BDB) -D_GNU_SOURCE 
 
 dispatcher_all: src/dispatcher_all/main.c
 	@echo ""
@@ -553,7 +553,7 @@ dispatcher_allsql3: src/dispatcher_all/main.c
 
 	$(CC) $(dispatcherCOMAND) $(MYSQL) $(LIBGeoIP) -D WITH_CASHE -o cgi-bin/dispatcher_all $(LIBCONFIG) -D EXPLAIN_RANK 
 
-dispatcher_allbb: src/dispatcher_all/main.c src/dispatcher_all/qrewrite.o
+dispatcher_allbb: src/dispatcher_all/main.c src/dispatcher_all/qrewrite.o 
 	@echo ""
 	@echo "$@:"
 
