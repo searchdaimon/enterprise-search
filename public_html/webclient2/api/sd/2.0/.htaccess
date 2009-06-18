@@ -1,0 +1,6 @@
+AuthBoitho on
+AuthType Basic
+require valid-user
+
+RewriteEngine On
+RewriteRule ^search /cgi-bin/dispatcher_allbb?opensearch=0&%{QUERY_STRING} [L,QSA]

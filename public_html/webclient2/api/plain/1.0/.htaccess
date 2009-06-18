@@ -1,0 +1,11 @@
+AuthBoitho on
+AuthType Basic
+require valid-user
+
+RewriteEngine On
+RewriteCond %{QUERY_STRING} prefix=(.*)
+RewriteRule ^suggest$ /cgi-bin/suggest_webclient?q=%1 [L,QSA]
+#RewriteRule 
+#RewriteRule ^search /cgi-bin/dispatcher_allbb?opensearch=0&%{QUERY_STRING} [L,QSA]
+#RewriteRule ^suggest/(.*)$ /cgi-bin/suggest_webclient?q=$1 [L,QSA]
+
