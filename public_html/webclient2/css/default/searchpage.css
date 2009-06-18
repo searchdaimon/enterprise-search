@@ -421,7 +421,14 @@ ul.genericAttributes {
 	/* font-style : italic; */
 }
 
+.snippet .dbSnippet td {
+    border-style: solid;
+    border-width: 1px 0 1px 0;
+    border-color: #dfdfdf;
+}
+
 .snippet .dbSnippet td.first {
     color: #3f3f5f;
     width: 10em;
+    border-width: 1px 1px 1px 0;
 }
