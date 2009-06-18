@@ -143,7 +143,20 @@
 			[% INCLUDE email_attributes attr = r.attributes %]
 		[% END %]
 		<div class="snippet">
-			[% r.snippet %]
+			[% SET s = r.snippet.snippet.pop %]
+			[% IF s.type == "db" %]
+				<table class="dbSnippet">
+				[% FOREACH tr IN s.table.pop.tr %]
+					<tr>
+					[% FOREACH td IN tr.td %]
+						<td [% IF loop.first %]class="first"[% END %]>[% td %]</td>
+					[% END %]
+					</tr>
+				[% END %]
+				</table>
+			[% ELSE %]
+				[% r.snippet %]
+			[% END %]
 		</div>
 			[% IF r.attributes.source && r.attributes.source.value == "sharepoint" %]
 				[% INCLUDE sharepoint_attributes attr = r.attributes %]
