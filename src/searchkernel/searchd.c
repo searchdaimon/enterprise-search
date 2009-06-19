@@ -191,7 +191,6 @@ int main(int argc, char *argv[])
 
         char c;
         while ((c=getopt(argc,argv,"clp:m:b:vsof"))!=-1) {
-		printf("optind getopt: %d\n", optind);
                 switch (c) {
                         case 'p':
                                 searchd_config.searchport = atoi(optarg);
@@ -226,10 +225,8 @@ int main(int argc, char *argv[])
 			default:
 				errx(1, "Unknown argument: %c", c);
                 }
-		printf("optind getopt: %d\n", optind);
         
 	}
-	printf("Optind: %d\n", optind);
 
 	#ifdef BLACK_BOKS
 	fprintf(stderr, "searchd: Blackboxmode (searchdbb).\n");
