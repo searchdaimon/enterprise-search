@@ -105,7 +105,7 @@ main (int argc, char *argv[])
 		}
 #else
 		if ((user = cgi_getentrystr("user")) == NULL) {
-			fprintf(stderr, "Did not find a prefix.\n");
+			fprintf(stderr, "Did not find a user.\n");
 			exit(0);
 		}
 #endif
