@@ -1296,17 +1296,17 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 			    iterator	it_m1;
 			    it_m1.valid = 0;
 
-			    printf("Select ");
+			    //printf("Select ");
 			    for (j=0; j<S->size; j++)
 				{
-				    if (j>0) printf("/");
-				    printf("%s", S->select[j]);
+				    //if (j>0) printf("/");
+				    //printf("%s", S->select[j]);
 				    it_m1 = map_find(subattrp, S->select[j]);
 				    if (it_m1.valid) subattrp = pair(map_val(it_m1)).first.ptr;
 				    else break;
 				    vector_pushback(attr_query, S->select[j]);
 				}
-			    printf("\n");
+			    //printf("\n");
 
 			    if (it_m1.valid)
 				{
@@ -1319,7 +1319,7 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 
 				    if (map_size(subattrp) > 0)
 					{
-					    printf("  Generate subpattern children\n");
+					    //printf("  Generate subpattern children\n");
 					    struct _attr_ret_ ret = _attribute_add_children_(subattrp, attr_query, parent->hide, A, *container_id);
 					    if (ret.selected_descendant)
 						{
@@ -1343,15 +1343,15 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 
 					    if (this_item->children == NULL) destroy(ret.C);
 					}
-				    else
-					{
-					    printf("  No children\n");
-					}
+				    //else
+					//{
+					//    printf("  No children\n");
+					//}
 
 				}
 			    else	// Zero hits:
 				{
-				    printf("  Zero hits\n");
+				    //printf("  Zero hits\n");
 				    /*
 				    if (parent->flags & show_empty)
 					{
@@ -1369,7 +1369,7 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 			}
 		    case item_group:
 			{
-			    printf("Creating new container {\n");
+			    //printf("Creating new container {\n");
 			    struct attr_group		*G = pair(vector_get(parent->child,i)).second.ptr;
 			    this_item->name = strdup(G->name);
 			    this_item->free_name = 1;
@@ -1381,7 +1381,7 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 
 			    (*container_id)++; // NB! Will fail miserably for recursive container-groups.
 			    this_item->container_id = *container_id;
-			    printf("  Container #id: %i\n", this_item->container_id);
+			    //printf("  Container #id: %i\n", this_item->container_id);
 			    struct _attr_ret_ ret = _attribute_build_tree_(attributes, G, A, container_id);
 			    if (ret.selected_descendant)
 				{
@@ -1391,7 +1391,7 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 
 			    this_item->children = ret.C;
 
-			    printf("}\n");
+			    //printf("}\n");
 			    break;
 			}
 		    case item_import:
@@ -1870,7 +1870,7 @@ char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf 
     struct _attr_ret_ ret = _attribute_build_tree_(attributes, showattrp, A, container_id);
 
     int		default_filter = 0;
-    printf("default filter: %2x\ngroup filter_id: %i\n", default_filter, attrib_count-1);
+    //printf("default filter: %2x\ngroup filter_id: %i\n", default_filter, attrib_count-1);
     //_attribute_build_querystr_(ret.C, qa);
     //_attribute_calculate_hits_(ret.C, default_filter, attrib_count-1);
     _attribute_build_items_(ret.C, A, qa, default_filter, attrib_count-1, getfiletypep, attrdescrp);
