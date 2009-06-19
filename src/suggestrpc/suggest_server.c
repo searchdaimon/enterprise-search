@@ -131,14 +131,21 @@ get_best_results_2_svc(struct senddata *argp, struct svc_req *rqstp)
 	groups = NULL;
 #if 1
 	nlp = &result.numbest_res_u.list;
-	for (si2 = si = suggest_find_prefix(sd, argp->word, argp->user, &groups, &num);
+	for (si2 = si =
+#ifdef WITH_ACL
+			suggest_find_prefix(sd, argp->word, argp->user, &groups, &num);
+#else
+			suggest_find_prefix(sd, argp->word);
+#endif
 	     si != NULL && *si != NULL;
 	     si++) {
 		nl = *nlp = (namenode *)
 			calloc(1, sizeof(namenode));
 		if (nl == NULL) {
 			result._errno = errno;
+#ifdef WITH_ACL
 			acl_free_reslist(groups, num);
+#endif
 			return &result;
 		}
 		nl->name = strdup((*si)->word);
@@ -147,7 +154,9 @@ get_best_results_2_svc(struct senddata *argp, struct svc_req *rqstp)
 		//free((*si)->word);
 		//free((*si));
 	}
+#ifdef WITH_ACL
 	acl_free_reslist(groups, num);
+#endif
 
 	*nlp = (namelist)NULL;
 	result._errno = 0;

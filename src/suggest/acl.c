@@ -6,7 +6,16 @@
 #include <stdlib.h>
 
 #include "acl.h"
+#include "../boithoadClientLib/boithoad.h"
+#if defined US_BOITHOAD
 #include "../boithoadClientLib/liboithoaut.h"
+#elif defined USERSYSTEM
+#include "../crawlManager/client.h"
+#elif !defined WITH_ACL
+
+#else
+#error "Unknown usersystem type"
+#endif
 #include "../3pLibs/keyValueHash/hashtable.h"
 
 #define MIN(x,y) ((x) > (y) ? (y) : (x))
@@ -23,6 +32,34 @@ acl_free_reslist(char **reslist, int n)
 	free(reslist);
 }
 
+#ifdef USERSYSTEM
+int
+acl_usersystem(char *group, char ***groupsout, int *num)
+{
+	int s, i;
+	int port;
+	char buf[1024];
+	int usersystem = 2;
+	char **_gs;
+	char **groups;
+
+	port = 7392;
+	cmc_conect(&s, buf, sizeof(buf), port);
+
+	*num = cmc_groupsforuserfromusersystem(s, group, usersystem, &_gs);
+
+	groups = calloc(*num, sizeof(char *));
+	for (i = 0; i < *num; i++) {
+		groups[i] = strdup((char *)_gs + (i*MAX_LDAP_ATTR_LEN));
+	}
+	*groupsout = groups;
+
+	cmc_close(s);
+
+	return 1;
+}
+#endif
+
 int
 acl_is_allowed(char **allow, char **deny, char *group, char ***groups, int *num)
 {
@@ -34,9 +71,15 @@ acl_is_allowed(char **allow, char **deny, char *group, char ***groups, int *num)
 	if (acl_in_list(group, allow))
 		gotallow = 1;
 
-	if (*groups == NULL)
+	if (*groups == NULL) {
+#ifdef US_BOITHOAD
 		if (!boithoad_groupsForUser(group, groups, num))
 			return 0;
+#elif defined USERSYSTEM
+		if (!acl_usersystem(group, groups, num))
+			return 0;
+#endif
+	}
 
 	for (i = 0; i < *num; i++) {
 		if (!gotallow) {
@@ -49,7 +92,6 @@ acl_is_allowed(char **allow, char **deny, char *group, char ***groups, int *num)
 		}
 	}
 
-	//acl_free_reslist(groups, num);
 	return gotallow;
 }
 

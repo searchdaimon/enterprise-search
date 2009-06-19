@@ -12,7 +12,7 @@ SERVER = suggest_server
 SOURCES_CLNT.c = 
 SOURCES_CLNT.h = 
 SOURCES_SVC.c = ../suggest/suggest.c ../suggest/suffixtree.c ../suggest/acl.c ../3pLibs/keyValueHash/hashtable.c \
-	../common/ht.c
+	../crawlManager/client.c
 SOURCES_SVC.h = 
 SOURCES.x = suggest.x
 
@@ -27,8 +27,8 @@ OBJECTS_SVC = $(SOURCES_SVC.c:%.c=%.o) $(TARGETS_SVC.c:%.c=%.o)
 # Compiler flags 
 
 CPPFLAGS += -D_REENTRANT
-CFLAGS += -g  -DWITH_ACL
-LDLIBS += -lnsl -lpthread -lm
+CFLAGS += -g  -DWITH_ACL -DUSERSYSTEM
+LDLIBS += -lnsl -lpthread -lm ../../lib/libcommon.a
 RPCGENFLAGS = 
 
 # Targets 
@@ -55,8 +55,9 @@ $(CLIENTREDICT) : $(OBJECTS_CLNT_REDICT)
 
 
 $(SERVER) : $(OBJECTS_SVC) 
-	$(CC) -o $(SERVER) $(OBJECTS_SVC) $(LDLIBS) ../boithoadClientLib/*.c ../common/bstr.c ../common/strlcat.c ../common/debug.c
+	$(CC) -o $(SERVER) $(OBJECTS_SVC) $(LDLIBS) ../boithoadClientLib/liboithoaut.a
 
  clean:
 	 $(RM) core $(TARGETS) $(OBJECTS_CLNT) $(OBJECTS_SVC) $(CLIENT) $(SERVER)
+
 

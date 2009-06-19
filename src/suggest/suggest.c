@@ -91,8 +91,8 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 	int freq, linenum;
 	int got;
 	char word[1024];
-	char aclallow[1024];
-	char acldeny[1024];
+	char aclallow[1024*1024];
+	char acldeny[1024*1024];
 	struct hashtable *acls;
 
 	acls = create_hashtable(101, ht_stringhash, ht_stringcmp);
@@ -119,7 +119,6 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 			continue;
 		}
 		if (line == NULL || split(line, " ", &linedata) < 2) {
-	//	if ((ret = fscanf(fp, "%s %d %s %s\n", word, &freq, aclallow, acldeny)) < 3) {
 			printf("'%s' %d\n", line, len);
 			fprintf(stderr, "Unable to read parse line %d in %s\n", linenum, wordlist);
 			linenum++;
@@ -129,14 +128,18 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 		free(line);
 		strscpy(word, linedata[0],sizeof(word));
 		freq = atol(linedata[1]);
+#ifdef WITH_ACL
 		if (linedata[2])
 			strscpy(aclallow, linedata[2],sizeof(aclallow));
 		else
-			strcpy(linedata[2], "");
+#endif
+			strcpy(aclallow, "");
+#ifdef WITH_ACL
 		if (linedata[2] && linedata[3])
 			strscpy(acldeny, linedata[3],sizeof(acldeny));
 		else
-			strcpy(linedata[3], "");
+#endif
+			strcpy(acldeny, "");
 		
 		/* Free linedata */
 		{
@@ -181,6 +184,8 @@ suggest_find_prefix(struct suggest_data *sd, char *prefix)
 {
 #ifndef WITH_ACL
 	char *user = NULL;
+	char ***groups = NULL;
+	int *num = NULL;
 #endif 
 	return suffixtree_find_prefix(&sd->tree, prefix, user, groups, num);
 }

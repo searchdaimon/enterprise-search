@@ -11,6 +11,7 @@
 #include <strings.h>
 #include <string.h>
 #include <errno.h>
+#include <err.h>
 
 #include "suffixtree.h"
 #include "suggest.h"
@@ -293,11 +294,52 @@ _suffixtree_find_prefix_children(struct suffixtree *root, char *word, unsigned i
 	struct suffixtree *sf;
 
 	forchildren(sf, root) {
-		if ((unsigned int)find_common_substr(word+len, sf->suffix) > 0)
+		if (word[0] == '\0' || (unsigned int)find_common_substr(word+len, sf->suffix) > 0)
 			return _suffixtree_find_prefix(sf, word,
 			                               len + strlen(sf->suffix), user, groups, num);
 	}
 	return NULL;
+}
+
+int
+_suffixtree_collect_prefixes(struct suffixtree *root, char *user, char ***groups, int *num, int have, struct suggest_input **best)
+{
+	struct suffixtree *sf;
+
+	forchildren(sf, root) {
+		struct suggest_input **cur;
+
+		for (cur = sf->best; *cur != NULL; cur++) {
+			if (!acl_is_allowed((*cur)->aclallow, (*cur)->acldeny, user, groups, num)) {
+				printf("Not allowed access to(collect): %s\n", (*cur)->word);
+				continue;
+			}
+			best[have] = *cur;
+			have++;
+
+			printf("Got new word: %s %d\n", (*cur)->word, have);
+			
+			if (have == MAX_BEST)
+				break;
+		}
+		if (have == MAX_BEST)
+			break;
+
+	}
+
+	/* Try children if we still don't have what we need */
+	if (have < MAX_BEST) {
+		forchildren(sf, root) {
+			have = _suffixtree_collect_prefixes(sf, user, groups, num, have, best);
+
+			if (have == MAX_BEST)
+				break;
+		}
+	}
+
+	best[have] = NULL;
+
+	return have;
 }
 
 struct suggest_input **
@@ -305,27 +347,38 @@ _suffixtree_find_prefix(struct suffixtree *root, char *word, unsigned int len, c
 {
 	struct suggest_input **best;
 
+	printf("Word: '%s'\n", word);
+	/* Continue down the rabbit hole */
 	if (len >= strlen(word)) {
 		struct suggest_input **cur;
 		int i = 0;
 
 		best = malloc(sizeof(*best) * (MAX_BEST+1));
-		if (best == NULL)
+		if (best == NULL) {
+			warn("malloc(bext)");
 			return NULL;
+		}
 		i = 0;
 		for (cur = root->best; *cur != NULL; cur++) {
 #ifdef WITH_ACL
 			if (!acl_is_allowed((*cur)->aclallow, (*cur)->acldeny, user, groups, num)) {
+				printf("Not allowed to access: %s\n", (*cur)->word);
 				continue;
 			}
 #endif
 			best[i] = *cur;
 			i++;
+			printf("Got new word: %s %d\n", (*cur)->word, i);
 		}
+
+		if (i < MAX_BEST)
+			i = _suffixtree_collect_prefixes(root, user, groups, num, i, best);
 		best[i] = NULL;
+
 		return best;
 	}
 	else {
+		printf("Prefix\n");
 		return _suffixtree_find_prefix_children(root, word, len, user, groups, num);
 	}
 }
