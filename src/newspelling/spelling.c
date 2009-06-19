@@ -32,6 +32,7 @@ struct wordelem {
 
 typedef struct hashtable scache_t;
 
+unsigned int spelling_min_freq = 0;
 
 int
 train(spelling_t *s, const char *dict)
@@ -42,6 +43,7 @@ train(spelling_t *s, const char *dict)
 	char *line;
 	size_t len;
 	struct hashtable *soundslikelookup;
+	int num_words = 0, num_dup_words = 0;
 
 	if ((fp = fopen(dict, "r")) == NULL) {
 		warn("fopen(dict)");
@@ -66,6 +68,11 @@ train(spelling_t *s, const char *dict)
 		word = strndup(line, p - line);
 
 		p++; /* Get the frequency */
+
+		if (strtol(p, NULL, 10) < spelling_min_freq) {
+			free(word);
+			goto word_end;
+		}
 
 		/* Convert from utf-8 to wchar_t */
 		wcword = malloc((strlen(word)+1)*sizeof(wchar_t)); /* Check length */
@@ -112,10 +119,16 @@ train(spelling_t *s, const char *dict)
 				we->soundslike = sl;
 			}
 			list_pushback(list, we);
+			num_words++;
 		} else {
+			num_dup_words++;
 			wel->frequency += strtol(p, NULL, 10);
 		}
  word_end:
+
+ 		if ((num_words % 10000) == 0) {
+			printf("Words: %d (dups: %d)\n", num_words, num_dup_words);
+		}
 		free(line);
 		line = NULL;
 	}

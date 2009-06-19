@@ -161,6 +161,7 @@ void lotPreOpenStartl(int *preOpen[], char filename[], char subname[], int use) 
 
 }
 
+extern unsigned int spelling_min_freq;
 
 int main(int argc, char *argv[])
 {
@@ -190,7 +191,7 @@ int main(int argc, char *argv[])
 	setlocale(LC_ALL, "en_US.UTF-8");
 
         char c;
-        while ((c=getopt(argc,argv,"clp:m:b:vsof"))!=-1) {
+        while ((c=getopt(argc,argv,"clp:m:b:vsofS:"))!=-1) {
                 switch (c) {
                         case 'p':
                                 searchd_config.searchport = atoi(optarg);
@@ -221,6 +222,9 @@ int main(int argc, char *argv[])
 				break;
 			case 'c':
 				searchd_config.optCacheIndexes = 0;
+				break;
+			case 'S':
+				spelling_min_freq = strtol(optarg, NULL, 10);
 				break;
 			default:
 				errx(1, "Unknown argument: %c", c);
@@ -308,7 +312,6 @@ int main(int argc, char *argv[])
 
 			cache_indexes_keepalive();
 			signal(SIGUSR2, cache_indexes_hup);
-
 		}
 		else {
 			signal(SIGUSR2, SIG_IGN);
@@ -316,6 +319,7 @@ int main(int argc, char *argv[])
 	} else {
 		signal(SIGUSR2, SIG_IGN);
 	}
+
 #endif
 
 
