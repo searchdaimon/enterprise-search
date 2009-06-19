@@ -189,10 +189,9 @@ int main(int argc, char *argv[])
 	// Needed for the speller to properly convert utf8 to wchar_t
 	setlocale(LC_ALL, "en_US.UTF-8");
 
-        extern char *optarg;
-        extern int optind, opterr, optopt;
         char c;
         while ((c=getopt(argc,argv,"clp:m:b:vsof"))!=-1) {
+		printf("optind getopt: %d\n", optind);
                 switch (c) {
                         case 'p':
                                 searchd_config.searchport = atoi(optarg);
@@ -227,55 +226,10 @@ int main(int argc, char *argv[])
 			default:
 				errx(1, "Unknown argument: %c", c);
                 }
+		printf("optind getopt: %d\n", optind);
         
 	}
-        argc -= optind;
-	argv += optind;
-
-	#ifdef DEBUG
-        fprintf(stderr, "searchd: Debug: argc %i, optind %i\n",argc,optind);
-	#endif
-
-	if (searchd_config.optrankfile == NULL) {
-		searchd_config.optrankfile = "Brank";
-	}
-
-	#ifdef WITH_SPELLING
-	if (searchd_config.optFastStartup != 1) {
-		init_spelling("var/dictionarywords");
-	}
-	#endif
-
-	if (argc > 0) {
-		strncpy(servername,argv[0],sizeof(servername) -1);
-	} else {
-		errx(1, "You have to supply a hostname");
-	}
-	
-	lotPreOpenStartl(&searchd_config.lotPreOpen.DocumentIndex,"DocumentIndex","www",searchd_config.optPreOpen);
-	lotPreOpenStartl(&searchd_config.lotPreOpen.Summary,"summary","www",searchd_config.optPreOpen);
-
-#ifdef BLACK_BOKS
-	if (searchd_config.optCacheIndexes == 1) {
-		if (searchd_config.optFastStartup != 1) {
-			printf("Reading indexes...\n");
-			cache_indexes(0);
-			printf("Cached indexes: %dMB, cached indexes: %d\n", indexcachescached[0]/(1024*1024), indexcachescached[1]);
-			preopen();
-			cache_fresh_lot_collection();
-
-			cache_indexes_keepalive();
-			signal(SIGUSR2, cache_indexes_hup);
-
-		}
-		else {
-			signal(SIGUSR2, SIG_IGN);
-		}
-	} else {
-		signal(SIGUSR2, SIG_IGN);
-	}
-#endif
-
+	printf("Optind: %d\n", optind);
 
 	#ifdef BLACK_BOKS
 	fprintf(stderr, "searchd: Blackboxmode (searchdbb).\n");
@@ -320,6 +274,53 @@ int main(int argc, char *argv[])
 
 	fprintf(stderr, "searchd: Starting. Time is %s",ctime(&starttime));
 	#endif
+
+
+
+	#ifdef DEBUG
+        fprintf(stderr, "searchd: Debug: argc %i, optind %i\n",argc,optind);
+	#endif
+
+	if (searchd_config.optrankfile == NULL) {
+		searchd_config.optrankfile = "Brank";
+	}
+
+	#ifdef WITH_SPELLING
+	if (searchd_config.optFastStartup != 1) {
+		init_spelling("var/dictionarywords");
+	}
+	#endif
+
+	if (argc > 0) {
+		strncpy(servername,argv[optind], sizeof(servername) -1);
+	} else {
+		errx(1, "You have to supply a hostname");
+	}
+	
+	lotPreOpenStartl(&searchd_config.lotPreOpen.DocumentIndex,"DocumentIndex","www",searchd_config.optPreOpen);
+	lotPreOpenStartl(&searchd_config.lotPreOpen.Summary,"summary","www",searchd_config.optPreOpen);
+
+#ifdef BLACK_BOKS
+	if (searchd_config.optCacheIndexes == 1) {
+		if (searchd_config.optFastStartup != 1) {
+			printf("Reading indexes...\n");
+			cache_indexes(0);
+			printf("Cached indexes: %dMB, cached indexes: %d\n", indexcachescached[0]/(1024*1024), indexcachescached[1]);
+			preopen();
+			cache_fresh_lot_collection();
+
+			cache_indexes_keepalive();
+			signal(SIGUSR2, cache_indexes_hup);
+
+		}
+		else {
+			signal(SIGUSR2, SIG_IGN);
+		}
+	} else {
+		signal(SIGUSR2, SIG_IGN);
+	}
+#endif
+
 
         maincfg = maincfgopen();
 
