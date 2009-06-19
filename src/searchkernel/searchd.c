@@ -190,6 +190,11 @@ int main(int argc, char *argv[])
 	// Needed for the speller to properly convert utf8 to wchar_t
 	setlocale(LC_ALL, "en_US.UTF-8");
 
+	/* Ignore collection updates for now */
+	signal(SIGUSR2, SIG_IGN);
+	/* And ignore spelling updates */
+	signal(SIGUSR1, SIG_IGN);
+
         char c;
         while ((c=getopt(argc,argv,"clp:m:b:vsofS:"))!=-1) {
                 switch (c) {
