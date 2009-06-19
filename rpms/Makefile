@@ -68,10 +68,13 @@ boitho-meta_name = boitho-meta
 boitho-meta_version = 0.3.2
 
 boitho-phonehome_name = boitho-phonehome
-boitho-phonehome_version = 0.9
+boitho-phonehome_version = 0.13
 
 boitho-dummy_name = boitho-dummy
 boitho-dummy_version = 0.1
+
+boitho-local-network_name = boitho-local-network
+boitho-local-network_version = 0.1
 
 boitho-auth_name = mod_auth_boitho
 boitho-auth_version = 1.13
@@ -202,7 +205,7 @@ crawlManager:
 	rpmbuild -bb $(boitho-crawlManager_name).spec
 
 crawlManager2:
-	perl rpmmagic.pl --nostrip --requires "/usr/lib/perl5/vendor_perl/5.8.8/i386-linux-thread-multi/XML/Parser.pm perl-SOAP-Lite perl-XML-XPath boitho-bbdocumentwebadd boitho-infoquery>=2.0.19-1 boitho-bbdn>=1.8.16-1 boithobb-sqlUpdate>=1.7.10 /usr/lib/perl5/vendor_perl/5.8.8/i386-linux-thread-multi/auto/HTML/Parser/Parser.so boitho-perlxs-sdcrawl boitho-everrun boitho-bbdn boithobb-filepermissions /usr/lib/mysql/libmysqlclient.so.15 perl-Devel-Symdump /usr/lib/perl5/site_perl/5.8.8/i386-linux-thread-multi/auto/XML/LibXML/LibXML.so /usr/lib/perl5/site_perl/5.8.8/i386-linux-thread-multi/auto/XML/LibXML/Common/Common.so" --initd crawlManager $(boitho-crawlManager_name) $(boitho-crawlManager_version) $(BOITHOHOME) /home/boitho/boithoTools bin/crawlManager2 crawlers/crawlSMB crawlers/crawlExchange crawlers/Modules crawlers/Intranet crawlers/crawlSO crawlers/crawlExchangePublic crawlers/Sharepoint usersystems/us_ad/us_ad.so usersystems/us_sqlbb/us_sqlbb.so config/crawlmanager.conf perl/persistent.pl
+	perl rpmmagic.pl --nostrip --requires "perl-HTML-Strip /usr/lib/perl5/vendor_perl/5.8.8/i386-linux-thread-multi/XML/Parser.pm perl-SOAP-Lite perl-XML-XPath boitho-bbdocumentwebadd boitho-infoquery>=2.0.19-1 boitho-bbdn>=1.8.16-1 boithobb-sqlUpdate>=1.7.10 /usr/lib/perl5/vendor_perl/5.8.8/i386-linux-thread-multi/auto/HTML/Parser/Parser.so boitho-perlxs-sdcrawl boitho-everrun boitho-bbdn boithobb-filepermissions /usr/lib/mysql/libmysqlclient.so.15 perl-Devel-Symdump /usr/lib/perl5/site_perl/5.8.8/i386-linux-thread-multi/auto/XML/LibXML/LibXML.so /usr/lib/perl5/site_perl/5.8.8/i386-linux-thread-multi/auto/XML/LibXML/Common/Common.so" --initd crawlManager $(boitho-crawlManager_name) $(boitho-crawlManager_version) $(BOITHOHOME) /home/boitho/boithoTools bin/crawlManager2 crawlers/crawlSMB crawlers/crawlExchange crawlers/Modules crawlers/Intranet crawlers/crawlSO crawlers/crawlExchangePublic crawlers/Sharepoint usersystems/us_ad/us_ad.so usersystems/us_sqlbb/us_sqlbb.so config/crawlmanager.conf perl/persistent.pl
 
 	rpmbuild -bb $(boitho-crawlManager_name).spec
 
@@ -343,6 +346,16 @@ PageInfobb:
 	rpmbuild -bb $(boitho-PageInfobb_name).spec
 
 
+local-network:
+	rm -rf $(boitho-local-network_name)-$(boitho-local-network_version)
+	mkdir $(boitho-local-network_name)-$(boitho-local-network_version)
+	echo local-network > $(boitho-local-network_name)-$(boitho-local-network_version)/DUMMY
+	tar -z -c -f $(boitho-local-network_name)-$(boitho-local-network_version).tar.gz $(boitho-local-network_name)-$(boitho-local-network_version)
+	mv $(boitho-local-network_name)-$(boitho-local-network_version).tar.gz $(HOME)/redhat/SOURCES/
+	rpmbuild -bb $(boitho-local-network_name).spec
+
+
+
 clean:
 	#rm /home/boitho/redhat/SOURCES/boitho-ad-0.2.2.tar.gz $(boitho-ad_name).spec
 	#sletter buggde pakker
@@ -350,5 +363,7 @@ clean:
 
 install:
 	cp --verbose /home/boitho/redhat/RPMS/i386/boitho*.rpm ~/FedoraRepository/boitho/updates/4/i386/
+
+
 
 
