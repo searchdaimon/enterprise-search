@@ -21,7 +21,7 @@ Readonly::Scalar my $TPL_DEL   => "clienttpl_del.html";
 
 Readonly::Scalar my $SKELETON_DIR   => "skeletons/clienttpl";
 Readonly::Array  my @SKELETON_TPL_FILES => @Page::ClientTPL::REQ_TPL_FILES;
-Readonly::Array  my @SKELETON_LANG => qw(no en_us);
+Readonly::Array  my @SKELETON_LANG => qw(en no);
 
 Readonly::Scalar my $LANG_FILE_NAME => "search.po";
 
