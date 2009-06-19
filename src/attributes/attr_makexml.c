@@ -1098,7 +1098,7 @@ struct attribute_temp_res attribute_generate_xml_recurse(container *attributes, 
 
 struct _attr_tree_
 {
-    char	*name, *key, *value, *icon;
+    char	*name, *key, *value, *icon, *version;
     char	*querystr;
     container	*query_param;
     container	*count;
@@ -1133,6 +1133,7 @@ struct _attr_tree_* _attribute_tree_malloc_()
     this_item->key = NULL;
     this_item->value = NULL;
     this_item->icon = NULL;
+    this_item->version = NULL;
     this_item->free_name = 0;
     this_item->free_value = 0;
     this_item->query_param = NULL;
@@ -1295,17 +1296,17 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 			    iterator	it_m1;
 			    it_m1.valid = 0;
 
-			    //printf("Select ");
+			    printf("Select ");
 			    for (j=0; j<S->size; j++)
 				{
-				    //if (j>0) printf("/");
-				    //printf("%s", S->select[j]);
+				    if (j>0) printf("/");
+				    printf("%s", S->select[j]);
 				    it_m1 = map_find(subattrp, S->select[j]);
 				    if (it_m1.valid) subattrp = pair(map_val(it_m1)).first.ptr;
 				    else break;
 				    vector_pushback(attr_query, S->select[j]);
 				}
-			    //printf("\n");
+			    printf("\n");
 
 			    if (it_m1.valid)
 				{
@@ -1318,7 +1319,7 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 
 				    if (map_size(subattrp) > 0)
 					{
-					    //printf("  Generate subpattern children\n");
+					    printf("  Generate subpattern children\n");
 					    struct _attr_ret_ ret = _attribute_add_children_(subattrp, attr_query, parent->hide, A, *container_id);
 					    if (ret.selected_descendant)
 						{
@@ -1342,15 +1343,15 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 
 					    if (this_item->children == NULL) destroy(ret.C);
 					}
-				    //else
-					//{
-					    //printf("  No children\n");
-					//}
+				    else
+					{
+					    printf("  No children\n");
+					}
 
 				}
 			    else	// Zero hits:
 				{
-				    //printf("  Zero hits\n");
+				    printf("  Zero hits\n");
 				    /*
 				    if (parent->flags & show_empty)
 					{
@@ -1368,7 +1369,7 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 			}
 		    case item_group:
 			{
-			    //printf("Creating new container {\n");
+			    printf("Creating new container {\n");
 			    struct attr_group		*G = pair(vector_get(parent->child,i)).second.ptr;
 			    this_item->name = strdup(G->name);
 			    this_item->free_name = 1;
@@ -1380,7 +1381,7 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 
 			    (*container_id)++; // NB! Will fail miserably for recursive container-groups.
 			    this_item->container_id = *container_id;
-			    //printf("  Container #id: %i\n", this_item->container_id);
+			    printf("  Container #id: %i\n", this_item->container_id);
 			    struct _attr_ret_ ret = _attribute_build_tree_(attributes, G, A, container_id);
 			    if (ret.selected_descendant)
 				{
@@ -1390,7 +1391,7 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 
 			    this_item->children = ret.C;
 
-			    //printf("}\n");
+			    printf("}\n");
 			    break;
 			}
 		    case item_import:
@@ -1599,7 +1600,8 @@ int _attribute_build_items_(container *X, container *A, query_array *qa, int def
 		    if (key_type == 1 && item->value!=NULL) //filetype
 			{
 			    char	*group;
-			    if ((fte_getdescription(getfiletypep, "nbo", item->value, &group, &(item->name), &(item->icon)) & 255) == 0)
+			    if ((fte_getdescription(getfiletypep, "nbo", item->value, &group, &(item->name), &(item->icon), &(item->version)) & 255) == 0)
+			    //if ((fte_getdescription(getfiletypep, "nbo", item->value, &group, &(item->name), &(item->icon)) & 255) == 0)
 				{
 				    item->name = strdup(item->name);
 				    item->free_name = 1;
@@ -1762,6 +1764,7 @@ void _attribute_print_and_delete_tree_(buffer *bout, container *X, int indent, i
 		    if (item->value!=NULL) bprintf(bout, " value=\"%s\"", xml_escape_uri(item->value, buf, sizeof(buf)));
 		    if (item->name!=NULL) bprintf(bout, " name=\"%s\"", xml_escape_attr(item->name, buf, sizeof(buf)));
 		    if (item->icon!=NULL) bprintf(bout, " icon=\"%s\"", xml_escape_uri(item->icon, buf, sizeof(buf)));
+		    if (item->version!=NULL) bprintf(bout, " version=\"%s\"", xml_escape_attr(item->version, buf, sizeof(buf)));
 
 		    if (item->querystr!=NULL) bprintf(bout, " query=\"%s\"", xml_escape_uri(item->querystr, buf, sizeof(buf)));
 		    if (item->selected >= 0) bprintf(bout, " selected=\"true\"");

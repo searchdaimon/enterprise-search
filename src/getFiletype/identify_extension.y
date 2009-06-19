@@ -374,7 +374,7 @@ struct fte_data
 			{
 			    if (fdata->version[j] != NULL)
 				{
-				    asprintf(&fdata->descr[i][j], "%s (%s)", ptr, fdata->version[j]);
+				    asprintf(&fdata->descr[i][j], "%s", ptr);
 				}
 			    else
 				{
@@ -512,7 +512,7 @@ char fte_belongs_to_group(struct fte_data *fdata, char *lang, char *ext, char *g
 }
 
 
-int fte_getdescription(struct fte_data *fdata, char *lang, char *ext, char **group, char **descr, char **icon)
+int fte_getdescription(struct fte_data *fdata, char *lang, char *ext, char **group, char **descr, char **icon, char **version)
 {
     int		lang_no = fte_find(fdata->lang, fdata->lang_size, lang);
 
@@ -564,6 +564,8 @@ int fte_getdescription(struct fte_data *fdata, char *lang, char *ext, char **gro
 		*icon = fdata->default_icon;
 	}
     else *icon = fdata->ext_icon[descr_id];
+
+    *version = fdata->version[descr_id];
 
     return ret;
 }

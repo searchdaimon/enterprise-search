@@ -26,11 +26,11 @@ int main()
 
     for (i=0; i<4; i++)
 	{
-	    char		*group, *descr, *icon;
+	    char		*group, *descr, *icon, *version;
 	    int			ret;
 
-	    ret = fte_getdescription(fdata, "nbo", test_ext[i], &group, &descr, &icon);
-	    printf("Extension(%s): %s / %s, Icon=%s\n", test_ext[i], group, descr, icon);
+	    ret = fte_getdescription(fdata, "nbo", test_ext[i], &group, &descr, &icon, &version);
+	    printf("Extension(%s): %s / %s, Icon=%s, Version=%s\n", test_ext[i], group, descr, icon, version);
 	}
 
     fte_destroy(fdata);

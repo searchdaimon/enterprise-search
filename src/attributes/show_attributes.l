@@ -43,7 +43,7 @@ from			{ /* ignore */ }
 
 			    BEGIN LIST;
 			}
-<LIST>(\"{blank}*\,{blank}*\"|\,|\=)	{
+<LIST>(\"{blank}*\,{blank}*\"|\,|\/|\=)	{
 			    struct rac_yy_extra	*re = racget_extra(yyscanner);
 
 			    if (!re->next)
@@ -57,7 +57,7 @@ from			{ /* ignore */ }
 			    return STRING_ID;
 			}
 <LIST>{blank}+		{ racget_extra(yyscanner)->space = 1; }
-<LIST>[^\"\,\=\ \t\r\f\n]+	{
+<LIST>[^\"\,\/\=\ \t\r\f\n]+	{
 			    struct rac_yy_extra	*re = racget_extra(yyscanner);
 
 			    if (re->space && !re->next) re->buf[re->ptr++] = ' ';

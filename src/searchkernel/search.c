@@ -3274,7 +3274,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 			#endif
 
 			iterator	it_gr = map_find(file_groups, file_ext);
-		        char	*group, *descr, *icon;
+		        char	*group, *descr, *icon, *version;
 
 			if (it_gr.valid)
 			    {
@@ -3284,7 +3284,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 			    }
 			else
 			    {
-				fte_getdescription(getfiletypep, "nbo", file_ext, &group, &descr, &icon);
+				fte_getdescription(getfiletypep, "nbo", file_ext, &group, &descr, &icon, &version);
 				map_insert(file_groups, file_ext, group);
 
 				//attribute_count_add(1, count, attributes, 3, "group", group, file_ext);
