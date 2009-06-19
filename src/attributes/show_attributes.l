@@ -22,14 +22,14 @@ import			{ return IMPORT_ID; }
 name			{ return NAME_ID; }
 select			{ return SELECT_ID; }
 hide			{ return HIDE_ID; }
-show.duplicates		{ return SHOW_DUPLICATES_ID; }
+show.duplicates		{ /* ignore */ }
 show.empty		{ return SHOW_EMPTY_ID; }
 show.max		{ return SHOW_MAX_ID; }
 sort.reverse		{ return SORT_REVERSE_ID; }
 build_groups[^\n]*	{ /* ignore */ }
 sort			{ return SORT_ID; }
-from			{ return FROM_ID; }
-\;{blank}*\n		{ /* Ignore. */ racget_extra(yyscanner)->line++; }
+from			{ /* ignore */ }
+\;{blank}*\n		{ /* Ignore */ racget_extra(yyscanner)->line++; }
 \=			{ return EQUALS_ID; }
 \(			{ return PARANTES_BEGIN; }
 \)			{ return PARANTES_CLOSE; }

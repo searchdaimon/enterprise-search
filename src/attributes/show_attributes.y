@@ -1,21 +1,6 @@
 %{
-// (C) Copyright Searchdaimon AS 2008, Magnus Galåen (mg@searchdaimon.com)
 /**
- *	TODO:
- *
- *		- Alle jpg,jpeg -> jpeg
- *		+ Liste opp pÃ¥ format:
- *			files/Bilde/jpeg
- *			files/Word
- *			files/Excel
- *			...
- *		+ Alias:
- *			files/Word/docx -> Word-dokument
- *			files/Bilde/tif -> tif-bilde
- *			...
- *		- Med eller uten duplicates?
- *		- StÃ¸tte for files.show.extension, files.show... etc.
- *		- Arving?
+ *	(C) Copyright Searchdaimon AS 2008-2009, Magnus Galåen (mg@searchdaimon.com)
  */
 
 
@@ -88,7 +73,8 @@ struct rac_yacc_data
 %parse-param { struct rac_yacc_data *data }
 %parse-param { yyscan_t yyscanner }
 %lex-param { yyscan_t yyscanner }
-%token SHOW_DUPLICATES_ID EXPANDED_ID FROM_ID GROUP_ID IMPORT_ID NAME_ID SELECT_ID SORT_ID SHOW_EMPTY_ID EQUALS_ID PARANTES_BEGIN PARANTES_CLOSE BRACKET_BEGIN BRACKET_CLOSE STRING_ID SORT_REVERSE_ID HIDE_ID SHOW_MAX_ID
+%token EXPANDED_ID GROUP_ID IMPORT_ID NAME_ID SELECT_ID SORT_ID SHOW_EMPTY_ID EQUALS_ID PARANTES_BEGIN PARANTES_CLOSE BRACKET_BEGIN BRACKET_CLOSE STRING_ID SORT_REVERSE_ID HIDE_ID SHOW_MAX_ID
+//%token SHOW_DUPLICATES_ID EXPANDED_ID FROM_ID GROUP_ID IMPORT_ID NAME_ID SELECT_ID SORT_ID SHOW_EMPTY_ID EQUALS_ID PARANTES_BEGIN PARANTES_CLOSE BRACKET_BEGIN BRACKET_CLOSE STRING_ID SORT_REVERSE_ID HIDE_ID SHOW_MAX_ID
 
 %%
 doc	:
@@ -121,7 +107,7 @@ block	:
 	    new_item->type = item_group;
 	    new_item->id = NULL;
 	    new_item->parameters = vector_container( string_container() );
-	    new_item->flags = 0;
+	    new_item->flags = show_empty;
 	    new_item->sort = -1;
 	    new_item->max_items = data->current_item->max_items;
 	    vector_pushback(data->current_item->child, new_item);
@@ -130,6 +116,7 @@ block	:
 	}
 	| block group
 	| block select
+/*
 	| block SHOW_DUPLICATES_ID EQUALS_ID STRING_ID
 	{
 //	    printf("show.duplicates = %s\n", (char*)$4);
@@ -139,6 +126,7 @@ block	:
 	    else
 		data->current_item->flags&= 0xffff - show_duplicates;
 	}
+*/
 	| block EXPANDED_ID EQUALS_ID STRING_ID
 	{
 //	    printf("expanded = %s\n", (char*)$4);
@@ -218,9 +206,9 @@ select	: SELECT_ID PARANTES_BEGIN strings PARANTES_CLOSE
 	    if (!strcmp((char*)vector_get(data->S, vector_size(data->S)-1).ptr, "*"))
 		{
 		    vector_remove_last(data->S);
-		    new_item->flags = 0;
+		    new_item->flags = show_empty;
 		}
-	    else new_item->flags = build_groups;
+	    else new_item->flags = build_groups | show_empty;
 
 	    new_item->parameters = data->S;
 	    vector_pushback(data->current_item->child, new_item);
@@ -319,7 +307,7 @@ attr_conf* show_attributes_init(char *text, char **warnings, int *failed)
     data->current_item = malloc(sizeof(item));
     data->current_item->id = NULL;
     data->current_item->type = item_group;
-    data->current_item->flags = 0;
+    data->current_item->flags = show_empty;
     data->current_item->sort = sort_none;
     data->current_item->max_items = -1;
     data->current_item->child = vector_container( ptr_container() );
@@ -567,7 +555,7 @@ void print_recurse_items(item *I, int indent)
 			else printf(" ");
 		    printf("show.empty\n");
 		}
-
+/*
 	    if (I->flags & show_duplicates)
 		{
 		    for (j=0; j<indent*3+2; j++)
@@ -575,7 +563,7 @@ void print_recurse_items(item *I, int indent)
 			else printf(" ");
 		    printf("show.duplicates\n");
 		}
-
+*/
 	    if (I->max_items > 0)
 		{
 		    for (j=0; j<indent*3+2; j++)

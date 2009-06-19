@@ -1143,7 +1143,7 @@ struct _attr_tree_* _attribute_tree_malloc_()
     this_item->expanded = 0;
     this_item->container_id = 0;
     this_item->hits = 0;
-    this_item->show_empty = 0;
+    this_item->show_empty = 1;
     this_item->sort = sort_none;
     this_item->sort_reverse = 0;
     this_item->max_items = -1;
@@ -1351,6 +1351,7 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 			    else	// Zero hits:
 				{
 				    //printf("  Zero hits\n");
+				    /*
 				    if (parent->flags & show_empty)
 					{
 					    this_item->query_param = attr_query;
@@ -1359,6 +1360,7 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 					    this_item->show_empty = 1;
 					    //printf("    (show anyway)\n");
 					}
+				    */
 				}
 
 			    if (this_item->query_param == NULL) destroy(attr_query);
@@ -1373,6 +1375,7 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 			    this_item->expanded = G->flags & is_expanded;
 			    this_item->sort = G->sort;
 			    this_item->sort_reverse = G->flags & sort_reverse;
+			    this_item->show_empty = G->flags & show_empty;
 			    this_item->max_items = G->max_items;
 
 			    (*container_id)++; // NB! Will fail miserably for recursive container-groups.
@@ -1720,7 +1723,9 @@ void _attribute_print_and_delete_tree_(buffer *bout, container *X, int indent, i
 	{
 	    struct _attr_tree_	*item = vector_get(X, i).ptr;
 
-	    if (item->container_id == 0 && ((item->hits == 0 && !item->show_empty) || indent==-1))
+	    //if (item->container_id == 0 && ((item->hits == 0 && !item->show_empty) || indent==-1))
+	    //if (item->children!=NULL) bprintf(bout, "show_empty=%s", item->show_empty ? "true" : "false");
+	    if ((item->container_id == 0 && (item->hits == 0 || indent==-1)) || (item->hits==0 && !item->show_empty))
 		{
 		    if (item->children!=NULL)
 			{
