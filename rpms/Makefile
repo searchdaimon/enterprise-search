@@ -11,7 +11,7 @@ boitho-ad_name = boitho-ad
 boitho-ad_version = 0.3.31
 
 boitho-searchdbb_name = boitho-searchdbb
-boitho-searchdbb_version = 5.5.108
+boitho-searchdbb_version = 5.5.113
 
 boitho-crawlManager_name = boitho-crawlManager
 boitho-crawlManager_version = 1.4.93
@@ -191,7 +191,7 @@ configfiles:
 	rpmbuild -bb $(boitho-configfiles_name).spec
 
 searchdbb:
-	perl rpmmagic.pl --post "sh /home/boitho/boithoTools/blackbox/limitsTuning.sh" --requires "boithobb-sqlUpdate>=1.7.10 boitho-suggest perl-Text-Iconv boitho-dictionary boitho-configfiles boitho-everrun boithobb-filepermissions" --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumbbb cgi-bin/ShowCache2bb config/filetypes.eng.conf config/filetypes.nbo.conf config/dispatcher.conf  data/thesaurus.id data/thesaurus.text config/file_extensions.conf config/show_attributes.conf config/attribute_descriptions.conf blackbox/limitsTuning.sh
+	perl rpmmagic.pl --nostrip --post "sh /home/boitho/boithoTools/blackbox/limitsTuning.sh" --requires "boithobb-sqlUpdate>=1.7.10 boitho-suggest perl-Text-Iconv boitho-dictionary boitho-configfiles boitho-everrun boithobb-filepermissions" --initd searchdbb $(boitho-searchdbb_name) $(boitho-searchdbb_version) $(BOITHOHOME) /home/boitho/boithoTools config/searchd.conf cgi-bin/dispatcher_allbb bin/searchdbb cgi-bin/ShowThumbbb cgi-bin/ShowCache2bb config/filetypes.eng.conf config/filetypes.nbo.conf config/dispatcher.conf  data/thesaurus.id data/thesaurus.text config/file_extensions.conf config/show_attributes.conf config/attribute_descriptions.conf blackbox/limitsTuning.sh
 
 	rpmbuild -bb $(boitho-searchdbb_name).spec
 
