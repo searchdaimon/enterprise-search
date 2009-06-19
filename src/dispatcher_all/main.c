@@ -2233,7 +2233,7 @@ int main(int argc, char *argv[])
 					}
 
 					printf("\t<description length=\"%i\" max=\"%i\">%s</description>\n",
-					    Sider[i].description, strlen(Sider[i].description, sizeof(Sider[i].description));
+					    Sider[i].description, strlen(Sider[i].description), sizeof(Sider[i].description));
 				}
 
 
