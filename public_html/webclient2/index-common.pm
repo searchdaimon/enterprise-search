@@ -246,12 +246,12 @@ sub init_tpl {
 			$query_params{lang} = $lang;
 		}
 		else { 
-			$lang = valid_lang($CFG{lang}) 
+			$lang = valid_lang($tpl_name, $CFG{lang}) 
 				? $CFG{lang} : undef;
 		}
 	}
 	else { 
-		$lang = valid_lang($CFG{lang}) 
+		$lang = valid_lang($tpl_name. $CFG{lang}) 
 			? $CFG{lang} : undef;
 	}
 
@@ -319,6 +319,7 @@ sub gen_cache_url {
 }
 
 sub valid_lang { 
+	croak "missing param" unless @_ >= 2;
 	my ($tpl_name, $lang) = @_;
 	return unless defined $lang;
 	return $lang =~ /^[a-z_]+$/ && (-d "./locale/$tpl_name/$lang");
