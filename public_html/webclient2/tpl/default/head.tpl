@@ -4,6 +4,7 @@
 <head>
     <title>[% query | html %] - Searchdaimon</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="alternate" type="application/rss+xml" title="[% query | html %] - Searchdaimon search" href="api/opensearch/1.1/search?query=[% query | html %]" />
     <link type="text/css" rel="stylesheet" href="css/common/suggest.css" />
     <link type="text/css" rel="stylesheet" href="css/common/jquery.treeview.css" />
     <link type="text/css" rel="stylesheet" href="css/default/searchpage.css" />

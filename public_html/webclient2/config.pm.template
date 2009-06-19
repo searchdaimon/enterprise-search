@@ -9,7 +9,7 @@ our @EXPORT = qw(%CFG %VALID_TPL @SEARCH_ENV_LOGGING %DEF_TPL_OPT %TPL_FILE %VAL
 
 Readonly::Hash our %CFG => (
 	tpl           => 'default',
-	#lang          => 'en_us',
+	#lang          => 'en',
 	lang          => 'no',
 	num_results   => 10,
 	search_uri    => 'http://' . $ENV{SERVER_NAME} .'/cgi-bin/dispatcher_allbb',
@@ -38,11 +38,6 @@ Readonly::Hash our %TPL_FILE => (
 
 Readonly::Array our @SEARCH_ENV_LOGGING
 	=> qw(HTTP_ACCEPT_LANGUAGE HTTP_USER_AGENT HTTP_REFERER);
-
-Readonly::Hash our %VALID_TPL 
-	=> map { $_ => 1 } qw(default);
-Readonly::Hash our %VALID_LANG
-	=> map { $_ => 1 } qw(no en_us);
 
 Readonly::Hash our %DEF_TPL_OPT => (
     INCLUDE_PATH => './tpl/',
