@@ -252,6 +252,8 @@ use LWP::Debug;
 use HTTP::Request::Common;
 use URI::Escape;
 
+use HTML::Strip;
+
 use SD::Crawl;
 
 use SOAP::Lite(readable => 1);
@@ -469,6 +471,11 @@ sub handle_listitem_attachment {
 
 sub handle_value {
 	my ($value) = @_;
+
+	# Remove html
+	my $hs = HTML::Strip->new();
+	my $value = $hs->parse( $value );
+	$hs->eof;
 
 	if ($value =~ /(\d+;#)/) {
 		$value = substr($value, length $1);
@@ -760,8 +767,6 @@ sub handle_lists {
 
 		my $path = $self->{url} . $list->{DefaultViewUrl};
 
-		print STDERR Dumper($list) if $path eq 'http://sharepoint.udc.no';
-
 		my %seenallowed;
 		my $allowedstr = join(',', grep { ! $seenallowed{$_}++ } @allowed);
 		if (!$self->document_exists($path, $unixtime, length($doc))) {
@@ -847,7 +852,6 @@ sub crawl_update {
 	my $site = $opt->{site};
 	my $repository = $opt->{collection_name};
 	my $ignoreperms = $opt->{ignoreperms};
-	my $allsites = $opt->{allsites} == 0 ? undef : 1;
 
 	# XXX: Support https
 	$self->{proto} = 'http';
@@ -870,20 +874,42 @@ sub crawl_update {
 	$self->{lastcrawl} = $lastcrawl;
 
 #	print Dumper($sites);
-	
-	if ($allsites) {
-		#my $userservice = $self->new_service($ip, $username, $password, "usergroup", $site, 'directory');
-		#my $listsservice = $self->new_service($ip, $username, $password, "lists", $site);
-		#my $versionsservice = $self->new_service($ip, $username, $password, "versions", $site);
-		#my $permservice = $self->new_service($ip, $username, $password, "permissions", $site, 'directory');
 
-		my $sites = $webservice->get_web_collection()->{Webs};
-		$sites = [$sites] if (ref $sites eq 'HASH');
+	$site =~ s/^\s+//;
+	$site =~ s/\s+$//;
 
+	my $sites = $webservice->get_web_collection()->{Webs};
+	$sites = [$sites] if (ref $sites eq 'HASH');
+
+	if ($site eq '') {
 		print Dumper($sites);
 
 		$self->handle_sites($sites);
 	} else {
+		print "Sites:\n";
+		my @want_sites;
+
+		foreach my $r (@{ $sites }) {
+			my $name = $r->{Url};
+			$name =~ s/^http(s)?:\/\///;
+			$name =~ s/^[^\/]+//;
+			print $name;
+
+			# Special case for the top level site
+			if ($name eq '' and $site eq '/') {
+				push @want_sites, $r;
+				next;
+			}
+			$name =~ s/^\///;
+			my @subnames = split("/", $name);
+			if ($subnames[0] eq $site) {
+				push @want_sites, $r;
+				next;
+			}
+		}
+
+		print Dumper(\@want_sites);
+
 		my $url = $self->{proto} . "://$ip";
 		if (defined $site and $site !~ /\s+/ and $site ne '') {
 			my $site2 = $site;
@@ -892,7 +918,7 @@ sub crawl_update {
 			$url .= "/$site2";
 		}
 
-		$self->handle_sites([ { Url => $url, Title => undef, } ]);
+		$self->handle_sites(\@want_sites);
 	}
 }
 
