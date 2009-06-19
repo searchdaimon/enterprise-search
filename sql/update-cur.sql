@@ -213,7 +213,6 @@ INSERT INTO `connectors` VALUES (110, 'Sharepoint', NULL, NULL, NULL, NULL, 0, '
 INSERT INTO param VALUES (184,110,'ip','sharepoint.example.net');
 INSERT INTO param VALUES (185,110,'site','sites/test');
 INSERT INTO param VALUES (187,110,'ignoreperms','1 (ignore permissions), 0 (permission checking is on)');
-INSERT INTO param VALUES (191,110,'allsites','1 (grab all), 0 (use site paramtere)');
 
 ALTER TABLE shares ADD without_aclcheck tinyint(4) DEFAULT 0;
 ALTER TABLE shares ADD alias varchar(255);
