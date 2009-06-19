@@ -116,14 +116,14 @@ char *get_filetype_icon(char *ext) {
 		fdata = fte_init(bfile("config/file_extensions.conf"));
  	/* TODO? fte_destroy(fdata) */
 
-	static char *icon;
+	static char *icon, *version;
 	char *group, *descr;
 
 	if (fdata == NULL) {
 		errx(1, "No fte_data %d %s", __LINE__, __FILE__);
 		return;
 	}
-	if (!fte_getdescription(fdata, "nbo", ext, &group, &descr, &icon)) {
+	if (!fte_getdescription(fdata, "nbo", ext, &group, &descr, &icon, &version)) {
 		warnx("no icon for ext %s\n", ext);
 		icon[0] = '\0';
 		return icon;
@@ -1810,11 +1810,12 @@ int main(int argc, char *argv[])
 	}
 	else if (QueryData.version >= 2.1) { // ax++
     	    printf("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
-    	    if (!noDoctype)
-	        printf("<!DOCTYPE searchresults SYSTEM \"http://www.boitho.com/xml/search.dtd\">\n");
+    	    if (!noDoctype) {
+	        printf("<!DOCTYPE searchresults SYSTEM \"http://www.searchdaimon.com/xml/search.dtd\">\n");
+    	    }
 
     	    printf("<search>\n");
-	    //får rare svar fra hilite. Dropper å bruke den for nå
+	    //får rare svar fra hilite. Dropper å bruke den får nå
 	    FinalSiderHeder.hiliteQuery[0] = '\0';
 	    #ifdef WITH_SPELLING
 	    strsandr(SiderHeder->spellcheckedQuery, "\"","&quot;");
@@ -1839,10 +1840,10 @@ int main(int argc, char *argv[])
 		bfile(""),
 		nrRespondedServers
 	    );
-	
+
 	    //viser info om dispatcher_all
 	    printf("<dispatcher_info>\n");
-	    printf("\t<filters>\n"); // ax: filter som har blitt utlÃ¸st
+	    printf("\t<filters>\n");
 	    {
 		printf("\t\t<filterAdultWeight_bool>%i</filterAdultWeight_bool>\n",dispatcherfiltersTraped.filterAdultWeight_bool);
 		printf("\t\t<filterAdultWeight_value>%i</filterAdultWeight_value>\n",dispatcherfiltersTraped.filterAdultWeight_value);
@@ -1930,8 +1931,6 @@ int main(int argc, char *argv[])
 #endif
 
 				printf("</searchnode>\n");
-
-
 			}	
 		}
 	    }
@@ -1996,7 +1995,7 @@ int main(int argc, char *argv[])
 		
 		printf("</filetype>\n");
 
-	    }
+	    }		
 
 	    #ifdef ATTRIBUTES
 	    printf("%s\n", SiderHeder[0].navigation_xml);
@@ -2057,13 +2056,15 @@ int main(int argc, char *argv[])
 
 	    bsprint_query_with_remove(B, remove, &qa, 1);
 	    char	*basedatequery = buffer_exit(B);
+	    char	xmlescapebuf1[2048];
+	    char	xmlescapebuf2[2048];
 
 	    printf("<group name=\"Dato\" query=\"%s\" expanded=\"true\">\n", basedatequery);
 		for (y=0;y<7;y++) {
 		    printf("\t<item name=\"%s\" query=\"%s%s\" hits=\"%i\"%s />\n",
 			dateview_type_names[y],
-			basedatequery,
-			dateview_type_query[y],
+			xml_escape_uri(basedatequery, xmlescapebuf1, sizeof(xmlescapebuf1)),
+			xml_escape_uri(dateview_type_query[y], xmlescapebuf2, sizeof(xmlescapebuf2)),
 			SiderHeder[0].dates[y],
 			highlight_date==y ? " selected=\"true\"" : "");
 		}
@@ -2074,26 +2075,6 @@ int main(int argc, char *argv[])
 	    destroy_query(&qa);
 
 	    }
-
-	    /*
-	    char *dateview_type_names[] = { "today",
-					"yesterday",
-					"this_week",
-					"this_month",
-					"this_year",
-					"last_year",
-					"two_years_plus"};
-	    */
-	    /*
-	    printf("<dates>\n");
-		printf("\t<all>0</all>\n");
-		for (y=0;y<7;y++) {
-			if (SiderHeder[0].dates > 0) {
-				printf("\t<%s>%i</%s>\n",dateview_type_names[y],SiderHeder[0].dates[y],dateview_type_names[y]);
-			}
-		}
-	    printf("</dates>\n");
-	    */
 
 	    #else
 
@@ -2184,6 +2165,48 @@ int main(int argc, char *argv[])
                 		printf("\t<fulluri><![CDATA[%s]]></fulluri>\n",Sider[i].fulluri);
 #endif
 
+				{
+					int j;
+
+					for (j = 0; j < Sider[i].n_urls; j++) {
+						printf("\t<duplicateurl>\n");
+							printf("\t\t<url><![CDATA[%s]]></url>\n",Sider[i].urls[j].url);
+							printf("\t\t<uri><![CDATA[%s]]></uri>\n",Sider[i].urls[j].uri);
+							printf("\t\t<fulluri><![CDATA[%s]]></fulluri>\n",Sider[i].urls[j].fulluri);
+						printf("\t</duplicateurl>\n");
+					}
+				}
+
+				#ifdef ATTRIBUTES
+				{
+					char *o = NULL;
+					char key[MAX_ATTRIB_LEN], value[MAX_ATTRIB_LEN], keyvalue[MAX_ATTRIB_LEN];
+
+					qrewrite qrewrite;
+					qrewrite_init(&qrewrite, QueryData.query);
+					char attbuff[MaxQueryLen], attrq_esc[MaxQueryLen * 4], attrq2_esc[MaxQueryLen * 4];
+					char ekey[1024], evalue[1024];
+
+					printf("\t<attributes>\n");
+					while (next_attribute(Sider[i].attributes, &o, key, value, keyvalue)) {
+						query_attr_set_filter(attbuff, sizeof attbuff, &qrewrite, key, value, 0);
+						xml_escape_uri(attbuff, attrq_esc, sizeof attrq_esc);
+						
+						query_attr_set_filter(attbuff, sizeof attbuff, &qrewrite, key, value, 1);
+						xml_escape_uri(attbuff, attrq2_esc, sizeof attrq2_esc);
+						escapeHTML(ekey, sizeof ekey, key);
+						escapeHTML(evalue, sizeof evalue, value);
+
+
+						printf("\t<attribute key=\"%s\" value=\"%s\" query=\"%s\" attribute_query=\"%s\" />\n", 
+							ekey, evalue, 
+							attrq_esc, attrq2_esc);
+					}
+					printf("\t</attributes>\n");
+					qrewrite_destroy(&qrewrite);
+				}
+				#endif
+
 				//gjør om språk fra tall til code
 				getLangCode(documentlangcode,atoi(Sider[i].DocumentIndex.Sprok));
 
@@ -2196,18 +2219,21 @@ int main(int argc, char *argv[])
 				printf("\t<documenttype>%s</documenttype>\n", Sider[i].DocumentIndex.Dokumenttype);
                 		printf("\t<position>%i</position>\n",x);
                 		printf("\t<repositorysize>%u</repositorysize>\n",Sider[i].DocumentIndex.htmlSize);
+				printf("\t<filetype>%s</filetype>\n", Sider[i].iindex.filetype);
+				printf("\t<icon>%s</icon>\n", get_filetype_icon(Sider[i].iindex.filetype));
 
 
 				if (!getRank) {
 					if (Sider[i].thumbnale[0] != '\0') {
-						printf("\t<thumbnail width=\"%i\" height=\"%i\">%s</THUMBNAIL>\n",
-						Sider[i].thumbnailwidth, Sider[i].thumbnailheight, Sider[i].thumbnale);
+						printf("\t<thumbnail width=\"%i\" height=\"%i\">%s</thumbnail>\n",
+						    Sider[i].thumbnale, Sider[i].thumbnailwidth, Sider[i].thumbnailheight);
 					}
 					else {
 						printf("\t<thumbnail></thumbnail>\n");
 					}
 
-					printf("\t<description>%s</description>\n",Sider[i].description);
+					printf("\t<description length=\"%i\" max=\"%i\">%s</description>\n",
+					    Sider[i].description, strlen(Sider[i].description, sizeof(Sider[i].description));
 				}
 
 
@@ -2245,10 +2271,14 @@ int main(int argc, char *argv[])
 						timebuf[64] = '\0';
 						printf("\t<time_iso>%s</time_iso>\n",timebuf);
 					}
-
-
-					//sender en tom cashe link. Må ha cashe link hvis ikke bryter vi designet
-	                		printf("\t<cache></cache>\n");
+					// Sender med cache link hvis 
+					// collection er konfigurert til aa vise cache.
+					if ((int) Sider[i].subname.config.cache_link)
+	                			printf("\t<cache>%s</cache>\n", Sider[i].cacheLink);
+					else 
+						printf("\t<cache></cache>\n");
+					
+					printf("\t<paid_inclusion>%i</paid_inclusion>\n",(int)Sider[i].subname.config.isPaidInclusion);
 
 				#else
 				
@@ -2272,7 +2302,7 @@ int main(int argc, char *argv[])
 	                		printf("\t<adultweight>%hu</adultweight>\n",Sider[i].DocumentIndex.AdultWeight);
 	                		printf("\t<metadescription><![CDATA[]]></metadescription>\n");
 	                		printf("\t<category></category>\n");
-	                		printf("\t<offensive_code>false</offensive_code>\n");
+	                		printf("\t<offensice_code>false</offensive_code>\n");
 
 
 					ipaddr.s_addr = Sider[i].DocumentIndex.IPAddress;
