@@ -9,7 +9,7 @@ struct fte_data
     char	**lang, **ext, **version, **ext_sorted, **ext_icon, **group_icon;
     int		*ext2descr, *ext2group;
     char	***group, ***descr;
-    char	**default_group, **default_descr;
+    char	**default_group;//, **default_descr;
     char	*default_icon;
     char	_default_descr_array_[32];
 };

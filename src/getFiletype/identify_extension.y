@@ -54,7 +54,8 @@ struct fte_yacc_data
     int		lang_size, group_size, descr_size;
     container	*lang, *ext, *version, *ext_icon, *group_icon;
     container	**group, **descr;
-    char	**default_group, **default_descr, *default_icon;
+//    char	**default_group, **default_descr, *default_icon;
+    char	**default_group, *default_icon;
 };
 
 %}
@@ -63,7 +64,7 @@ struct fte_yacc_data
 %parse-param { struct fte_yacc_data *data }
 %parse-param { yyscan_t yyscanner }
 %lex-param { yyscan_t yyscanner }
-%token EQUALS_ID STRING_ID BRACKET_BEGIN BRACKET_CLOSE COMMA_ID SEMICOLON_ID LANG_ID GROUP_ID FILE_ID NAME_ID EXT_ID VERSION_ID DEFAULT_ID POSTFIX_ID ICON_ID
+%token EQUALS_ID STRING_ID BRACKET_BEGIN BRACKET_CLOSE COMMA_ID SEMICOLON_ID LANG_ID GROUP_ID FILE_ID NAME_ID EXT_ID VERSION_ID DEFAULT_ID ICON_ID
 
 %%
 doc	: lang default list_of_groups
@@ -86,7 +87,7 @@ lang	: lang_id EQUALS_ID string_list SEMICOLON_ID
 	    data->group = malloc(sizeof(container*) * data->lang_size);
 	    data->descr = malloc(sizeof(container*) * data->lang_size);
 	    data->default_group = malloc(sizeof(char*) * data->lang_size);
-	    data->default_descr = malloc(sizeof(char*) * data->lang_size);
+	    //data->default_descr = malloc(sizeof(char*) * data->lang_size);
 	    data->default_icon = NULL;
 
 	    for (i=0; i<data->lang_size; i++)
@@ -94,7 +95,7 @@ lang	: lang_id EQUALS_ID string_list SEMICOLON_ID
 		    data->group[i] = vector_container( string_container() );
 		    data->descr[i] = vector_container( string_container() );
 		    data->default_group[i] = NULL;
-		    data->default_descr[i] = NULL;
+		    //data->default_descr[i] = NULL;
 		}
 
 	    data->ext = vector_container( ptr_container() );
@@ -126,10 +127,13 @@ def_ids	:
 	    if (lang_no<0) fprintf(stderr, "getfiletype: Parse error! Invalid lang-specifier.\n");
 	    else data->default_group[lang_no] = strdup((char*)$5);
 	}
+	/*
 	| def_ids POSTFIX_ID EQUALS_ID STRING_ID SEMICOLON_ID
 	{
 	    data->default_descr[0] = strdup((char*)$4);
 	}
+	*/
+	/*
 	| def_ids POSTFIX_ID STRING_ID EQUALS_ID STRING_ID SEMICOLON_ID
 	{
 	    int		lang_no = fte_findc(data->lang, (char*)$3);
@@ -137,6 +141,7 @@ def_ids	:
 	    if (lang_no<0) fprintf(stderr, "getfiletype: Parse error! Invalid lang-specifier.\n");
 	    else data->default_descr[lang_no] = strdup((char*)$5);
 	}
+	*/
 	| def_ids ICON_ID EQUALS_ID STRING_ID SEMICOLON_ID
 	{
 	    data->default_icon = strdup((char*)$4);
@@ -386,7 +391,7 @@ struct fte_data
 	}
 
     fdata->default_group = data->default_group;
-    fdata->default_descr = data->default_descr;
+    //fdata->default_descr = data->default_descr;
     fdata->default_icon = data->default_icon;
 
     // Deallocate internal memory used:
@@ -449,7 +454,7 @@ void fte_destroy(struct fte_data *fdata)
 	    free(fdata->group[i]);
 	    free(fdata->descr[i]);
 	    free(fdata->default_group[i]);
-	    free(fdata->default_descr[i]);
+	    //free(fdata->default_descr[i]);
 	}
 
     free(fdata->lang);
@@ -462,7 +467,7 @@ void fte_destroy(struct fte_data *fdata)
     free(fdata->ext2group);
     free(fdata->descr);
     free(fdata->group);
-    free(fdata->default_descr);
+    //free(fdata->default_descr);
     free(fdata->default_group);
     free(fdata->default_icon);
     free(fdata);
@@ -529,13 +534,13 @@ int fte_getdescription(struct fte_data *fdata, char *lang, char *ext, char **gro
 	    if (fdata->default_group[lang_no] == NULL) *group = fdata->default_group[0];
 	    else *group = fdata->default_group[lang_no];
 
-	    if (fdata->default_descr[lang_no] == NULL) snprintf(fdata->_default_descr_array_, 32, "%s%s", ext, fdata->default_descr[0]);
-	    else snprintf(fdata->_default_descr_array_, 32, "%s%s", ext, fdata->default_descr[lang_no]);
+	    snprintf(fdata->_default_descr_array_, 32, "%s", ext);
 
 	    fdata->_default_descr_array_[31] = '\0';
 	    *descr = fdata->_default_descr_array_;
 
 	    *icon = fdata->default_icon;
+	    *version = NULL;
 
 	    int		ret=0, i;	// Simple hash:
 	    for (i=0; ext[i]!='\0'; i++) ret+= ext[i]<<((i%3)*8 + (i/3));

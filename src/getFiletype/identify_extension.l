@@ -44,7 +44,7 @@ id		[a-z_]
 lang			{ return LANG_ID; }
 default			{ return DEFAULT_ID; }
 group			{ return GROUP_ID; }
-postfix			{ return POSTFIX_ID; }
+ /* postfix			{ return POSTFIX_ID; } */
 file			{ return FILE_ID; }
 name			{ return NAME_ID; }
 ext			{ return EXT_ID; }
