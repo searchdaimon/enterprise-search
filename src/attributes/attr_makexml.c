@@ -1500,7 +1500,7 @@ int _attribute_build_items_(container *X, container *A, query_array *qa, int def
 
 	    // Construct querystring:
 	    buffer	*B = buffer_init(-1);
-	    bsprint_query_with_remove(B, NULL, qa, 1);
+	    bsprint_query_with_remove(B, NULL, qa, 0);
 
 	    if (item->query_param!=NULL && vector_size(item->query_param)>0 && item->selected<0)
 		{
