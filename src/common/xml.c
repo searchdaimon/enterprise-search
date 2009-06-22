@@ -38,10 +38,11 @@ xml_escape_attr(const char *str, char *buf, size_t len)
 }
 
 char *
-xml_escape_uri(char *arg, char *out, size_t len)
+xml_escape_uri(char *_arg, char *out, size_t len)
 { 
 	int i; 
-	char c; 
+	unsigned char *arg = (unsigned char*)_arg;
+	unsigned char c;
 	char *p;
 
 	p = out;
@@ -77,15 +78,17 @@ xml_escape_uri(char *arg, char *out, size_t len)
 int
 main(int argc, char **argv)
 {
-	char buf[10];
+	char buf[50];
 
-	printf("Should be NULL: %p\n", xml_escape_attr("abcdeabcde", buf, sizeof(buf)));
-	printf("Should be string: %s\n", xml_escape_attr("abcdeabcd", buf, sizeof(buf)));
+	printf("Should be NULL: %p\n", xml_escape_attr("abcdeabcde", buf, 10));
+	printf("Should be string: %s\n", xml_escape_attr("abcdeabcd", buf, 10));
 
 	printf("Quote: %s\n", xml_escape_attr("\"", buf, sizeof(buf)));
 	printf("Quote overflow: %s\n", xml_escape_attr("aaa\"", buf, sizeof(buf)));
-	printf("Quote : %s\n", xml_escape_attr("a\"a", buf, sizeof(buf)));
+	printf("Quote: %s\n", xml_escape_attr("a\"a", buf, sizeof(buf)));
+	char	buf2[50];
+	printf("Double-esc: %s\n", xml_escape_uri( xml_escape_uri("collection:sharepoint_udc", buf, sizeof(buf)), buf2, sizeof(buf2)));
+	printf("√√∏√•: %s\n", xml_escape_uri("√¶√∏√• - √√√", buf, sizeof(buf)));
 
-	
 }
 #endif
