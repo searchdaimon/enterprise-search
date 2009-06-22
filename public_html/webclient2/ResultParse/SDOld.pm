@@ -179,6 +179,7 @@ sub _build_group {
 		selected => $g->{selected} ? 1 : 0,
 		groups   => [ ],
 		icon     => $g->{icon},
+		sort     => $g->{sort},
 	);
 
 	if ($g->{group}) {

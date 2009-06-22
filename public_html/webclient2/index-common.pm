@@ -32,6 +32,7 @@ my %state = %{CGI::State->state($cgi)};
 
 my %query_params; # holds GET params that should
 	# be passed along as user navigates
+
 my ($tpl, $tpl_name) = init_tpl();
 
 my $tpl_file;
@@ -275,9 +276,16 @@ sub init_tpl {
         $Template::Stash::SCALAR_OPS->{i18n} = $i18n_filter;
         $Template::Stash::SCALAR_OPS->{i18n_nowarn} = $i18n_nowarn_filter;
 	$Template::Stash::SCALAR_OPS->{query_url} = \&gen_query_url;
+	$Template::Stash::HASH_OPS->{preprocess_nav} = sub {
+		my $nav = shift;
+		NavMenu::translate_nav($nav, $i18n_nowarn_filter);
+		NavMenu::sort_nav($nav);
+		return;
+	};
 	my (undef) = $Template::Stash::SCALAR_OPS->{i18n}; # rm warning
 	my (undef) = $Template::Stash::SCALAR_OPS->{i18n_nowarn};
 	my (undef) = $Template::Stash::SCALAR_OPS->{query_url};
+	my (undef) = $Template::Stash::HASH_OPS->{pre_process_nav};
 
 
 	my %opt = %DEF_TPL_OPT;
@@ -288,6 +296,7 @@ sub init_tpl {
 	$opt{FILTERS}->{strong} = sub { "<strong>" . $_[0] . "</strong>" };
 	$opt{FILTERS}->{query_url} = \&gen_query_url;
 	#$opt{FILTERS}->{cache_url} = \&gen_cache_url;
+
 
 	my $tpl = Template->new(%opt)
 		|| croak $tpl->error();

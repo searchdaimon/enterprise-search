@@ -2,6 +2,7 @@
 [% BLOCK nav_left %]
 
 	<ul id="navTree" class="filetree treeview-gray" style="display : none;"> 
+		[% nav.preprocess_nav %]
 		[% FOREACH group IN nav.groups %]
 			[% INCLUDE nav_group g = group top_group = 1 %]
 		[% END %]
@@ -29,7 +30,7 @@
 			<div class="topGroupDiv">&nbsp;</div>
 		[% END %]
 		[% "<strong>" IF g.selected %]
-		<a href="[% g.query | query_url %]">[% g.name | i18n_nowarn | html %]</a>
+		<a href="[% g.query | query_url %]">[% g.name | html %]</a>
 		[% "</strong>" IF g.selected %]
 		[% IF g.hits %]
 			<span class="navHits">
@@ -75,7 +76,7 @@
 	<!-- item -->
 	<li>&nbsp;[% "<strong>" IF i.selected %] 
 	    [% IF i.query %]
-		<span>[% icon %]<a href="[% i.query | query_url %]">[% i.name | i18n_nowarn | html %]</a>
+		<span>[% icon %]<a href="[% i.query | query_url %]">[% i.name | html %]</a>
 		 </span>[% "</strong>" IF i.selected %]
 
 		 <span class="navHits"> ([% 
@@ -83,7 +84,7 @@
 			s.i18n(i.hits)
 		%])</span>
 	    [% ELSE %]
-		<span>[% i.name | i18n_nowarn | html %]</span>
+		<span>[% i.name | html %]</span>
 	    [% END %]
 	</li>
 	<!-- end item -->
