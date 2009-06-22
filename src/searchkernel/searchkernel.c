@@ -408,7 +408,6 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 
 
 
-	(*Sider).cacheLink[0] = '\0';
 
 
 	htmlBuffer[0] = '\0';
@@ -590,15 +589,21 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 
 #ifdef BLACK_BOKS
                        // Include time and sign the parameters.
-
 			time_t u_time = time(NULL);
 			unsigned int signature;
 			signature = sign_cache_params(DocID, subname->subname, u_time);
-
-			sprintf((*Sider).cacheLink, "http://%s/cgi-bin/ShowCache2bb?D=%u&amp;subname=%s&amp;time=%u&amp;sign=%u",
-					servername, DocID, subname->subname, u_time, signature);
+			
+			Sider->cache_params.doc_id = DocID;
+			Sider->cache_params.time = u_time;
+			Sider->cache_params.signature = signature;
+			strscpy(Sider->cache_params.subname, subname->subname, sizeof Sider->cache_params.subname);
+			strscpy(Sider->cache_params.cache_host, servername, sizeof Sider->cache_params.cache_host);
 #else
-			sprintf((*Sider).cacheLink,"http://%s/cgi-bin/ShowCache2?D=%u&amp;subname=%s",servername,DocID,subname->subname);
+			Sider->cache_params.doc_id = DocID;
+			Sider->cache_params.time = 0;
+			Sider->cache_params.signature = 0;
+			strscpy(Sider->cache_params.subname, subname->subname, sizeof Sider->cache_params.subname);
+			strscpy(Sider->cache_params.cache_host, servername, sizeof Sider->cache_params.cache_host);
 #endif
 
 

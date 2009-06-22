@@ -2526,7 +2526,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 						if (atype==QUERY_GROUP)
 						    {
-							if (fte_belongs_to_group(fdata, "nbo", (*TeffArray)->iindex[i].filetype, attrib))
+							if (fte_belongs_to_group(fdata, "eng", (*TeffArray)->iindex[i].filetype, attrib))
 							    {
 								D[i]++;
 							    }
@@ -3284,7 +3284,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 			    }
 			else
 			    {
-				fte_getdescription(getfiletypep, "nbo", file_ext, &group, &descr, &icon, &version);
+				fte_getdescription(getfiletypep, "eng", file_ext, &group, &descr, &icon, &version);
 				map_insert(file_groups, file_ext, group);
 
 				//attribute_count_add(1, count, attributes, 3, "group", group, file_ext);

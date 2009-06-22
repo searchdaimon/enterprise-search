@@ -197,6 +197,15 @@
 #define NAVMENUCFG_SIZE 4096
 #define MAX_RESULT_OFFSET 1000
 
+#define LANG_UNKNOWN -1
+#define LANG_NBO 1
+#define LANG_ENG 2
+
+#define MAX_SERVERNAME_LEN 32
+
+
+typedef unsigned int docid;
+
 //Lengden på en okument post lengde
 //#define DocumentIndexPOSTLENGTH 253
 
@@ -439,6 +448,15 @@ struct iindexFormat {
 	int phrasenr;
 };
 
+struct cache_params {
+	docid doc_id;
+	time_t time;
+	char subname[maxSubnameLength];
+	char cache_host[MAX_SERVERNAME_LEN];
+	unsigned int signature;
+
+};
+
 // formatet for dataene for sidene skal være
 struct SiderFormat {
 	struct DocumentIndexFormat DocumentIndex;
@@ -449,7 +467,8 @@ struct SiderFormat {
 	char thumbnale[128];
 	int thumbnailwidth;
 	int thumbnailheight;
-	char cacheLink[128];
+	// char cacheLink[128]; // 19jun: slutter aa sende link,
+	struct cache_params cache_params;
 	char domain[65];
 	char servername[32];
 	//29 mai 2007. Gjør om til int, ser ikke ut til å bruke flyttetall her
@@ -660,6 +679,7 @@ struct queryNodeHederFormat
 	char orderby[10];
 	int anonymous;
 	char navmenucfg[NAVMENUCFG_SIZE]; // jun 16 09
+	int lang; // jun 19 09, uses LANG_* constants in define.h 
 };
 
 //for "struct query"
@@ -698,6 +718,7 @@ struct QueryDataForamt {
 	query_array search_user_as_query;
 	
 	char navmenucfg[NAVMENUCFG_SIZE]; // jun 16 09
+	int lang;
 };
 
 
@@ -734,7 +755,6 @@ struct anchorIndexFormat {
 	off_t offset;
 };
 
-typedef unsigned int docid;
 
 #define __bunused __attribute__((unused))
 

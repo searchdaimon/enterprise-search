@@ -28,7 +28,7 @@ int pi_switch(int showabal,struct SiderFormat *CurentSider, struct SiderFormat *
                                 #endif
                                 //bytter om slik at den beste blir pi side også, så vil vi filtrere ut denne vi har np
                                 Sider[i].subname.config.isPaidInclusion = CurentSider->subname.config.isPaidInclusion;
-                                strscpy(Sider[i].cacheLink,CurentSider->cacheLink,sizeof(Sider[i].cacheLink));
+				Sider[i].cache_params = CurentSider->cache_params;
 
                                 return 1;
 

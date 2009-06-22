@@ -7,6 +7,25 @@
 #include "cgihandler.h"
 #include "library.h"
 
+
+int _lookup_lang(const char *lang) {
+	// TODO: lookup table
+	if (strcmp(lang, "no") == 0)
+		return LANG_NBO;
+	if (strcmp(lang, "nb") == 0)
+		return LANG_NBO;
+	if (strcmp(lang, "nn") == 0)
+		return LANG_NBO;
+	
+	if (strcmp(lang, "en") == 0)
+		return LANG_ENG;
+	if (strcmp(lang, "en_us") == 0)
+		return LANG_ENG;
+
+	return LANG_UNKNOWN;
+	
+}
+
 void dispatcher_cgi_init(void) {
 	int res = cgi_init();
 	if (res != CGIERR_NONE)
@@ -90,6 +109,7 @@ void cgi_set_defaults(struct QueryDataForamt *qdata) {
 	qdata->version = 2.0;
 	qdata->navmenucfg[0] = '\0';
 	qdata->MaxsHits = DefultMaxsHits;
+	qdata->lang = LANG_UNKNOWN;
 	
 
 	// legacy
@@ -117,6 +137,11 @@ void cgi_fetch_common(struct QueryDataForamt *qdata, int *noDocType) {
 	if ((tmpint = cgi_getentryint("opensearch")) != 0)
 		qdata->opensearch = cgi_getentryint("opensearch");
 
+	const char *tmpstr;
+	if ((tmpstr = cgi_getentrystr("lang")) != NULL) {
+		int lang = _lookup_lang(tmpstr);
+		if (lang) qdata->lang = lang;
+	}
 }
 
 

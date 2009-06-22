@@ -251,6 +251,7 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 #endif
 
 
+
 /* Cache helper functions */
 
 // sprintf(cashefile,"%s/%s.%i.%s","/home/boitho/var/cashedir",QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
@@ -1409,6 +1410,8 @@ int main(int argc, char *argv[])
 	strscpy(queryNodeHeder.AmazonSubscriptionId,QueryData.AmazonSubscriptionId,sizeof(queryNodeHeder.AmazonSubscriptionId) -1);
 
 	strscpy(queryNodeHeder.navmenucfg, QueryData.navmenucfg, sizeof queryNodeHeder.navmenucfg);
+	
+	queryNodeHeder.lang = QueryData.lang;
 
 
 	//--QueryData.start; //maskinen begynner p� 1, meneske p� 0
@@ -2004,13 +2007,13 @@ int main(int argc, char *argv[])
 	    {
 
 	    char *dateview_type_names[] = {
-					"I dag",
-					"I går",
-					"Siste 7 dager",
-					"Siste 30 dager",
-					"I år",
-					"Sist år",
-					"Eldre enn to år"};
+					"Today",
+					"Yesterday",
+					"Last 7 days",
+					"Last 30 days",
+					"This year",
+					"Last year",
+					"Older than two years"};
 
 	    char *dateview_type_query[] = {
 					" date:\"today\"",
@@ -2059,7 +2062,7 @@ int main(int argc, char *argv[])
 	    char	xmlescapebuf1[2048];
 	    char	xmlescapebuf2[2048];
 
-	    printf("<group name=\"Dato\" query=\"%s\" expanded=\"true\">\n", basedatequery);
+	    printf("<group name=\"Date\" query=\"%s\" expanded=\"true\">\n", basedatequery);
 		for (y=0;y<7;y++) {
 		    printf("\t<item name=\"%s\" query=\"%s%s\" hits=\"%i\"%s />\n",
 			dateview_type_names[y],
@@ -2274,7 +2277,10 @@ int main(int argc, char *argv[])
 					// Sender med cache link hvis 
 					// collection er konfigurert til aa vise cache.
 					if ((int) Sider[i].subname.config.cache_link)
-	                			printf("\t<cache>%s</cache>\n", Sider[i].cacheLink);
+	                			printf("\t<cache document=\"%u\" time=\"%u\" signature=\"%u\" collection=\"%s\" host=\"%s\" />\n", 
+							Sider[i].cache_params.doc_id, Sider[i].cache_params.time, 
+							Sider[i].cache_params.signature, Sider[i].cache_params.subname, 
+							Sider[i].cache_params.cache_host);
 					else 
 						printf("\t<cache></cache>\n");
 					
@@ -2314,7 +2320,12 @@ int main(int argc, char *argv[])
 					printf("\t<crawlerversion>%f</crawlerversion>\n",Sider[i].DocumentIndex.clientVersion);
 					printf("\t<htmlpreparsed>%i</htmlpreparsed>\n",Sider[i].HtmlPreparsed);
 
-	                		printf("\t<cache>%s</cache>\n",Sider[i].cacheLink);
+					printf("\t<cache document=\"%u\" time=\"%u\" signature=\"%u\" collection=\"%s\" host=\"%s\" />\n", 
+							Sider[i].cache_params.doc_id, Sider[i].cache_params.time, 
+							Sider[i].cache_params.signature, Sider[i].cache_params.subname, 
+							Sider[i].cache_params.cache_host);
+	
+
 
 	                		printf("\t<paid_inclusion>%i</paid_inclusion>\n",(int)Sider[i].subname.config.isPaidInclusion);
 
@@ -2552,15 +2563,15 @@ int main(int argc, char *argv[])
 	    #endif
 
 	    {
-
 	    char *dateview_type_names[] = {
-					"I dag",
-					"I går",
-					"Siste 7 dager",
-					"Siste 30 dager",
-					"I år",
-					"Sist år",
-					"Eldre enn to år"};
+					"Today",
+					"Yesterday",
+					"Last 7 days",
+					"Last 30 days",
+					"This year",
+					"Last year",
+					"Older than two years"};
+
 
 	    char *dateview_type_query[] = {
 					" date:\"today\"",
@@ -2609,7 +2620,7 @@ int main(int argc, char *argv[])
 	    char	xmlescapebuf1[2048];
 	    char	xmlescapebuf2[2048];
 
-	    printf("<group name=\"Dato\" query=\"%s\" expanded=\"true\">\n", basedatequery);
+	    printf("<group name=\"Date\" query=\"%s\" expanded=\"true\">\n", basedatequery);
 		for (y=0;y<7;y++) {
 		    printf("\t<item name=\"%s\" query=\"%s%s\" hits=\"%i\"%s />\n",
 			dateview_type_names[y],
@@ -2848,7 +2859,11 @@ int main(int argc, char *argv[])
 					// Sender med cache link hvis 
 					// collection er konfigurert til aa vise cache.
 					if ((int) Sider[i].subname.config.cache_link)
-	                			printf("\t<CACHE>%s</CACHE>\n", Sider[i].cacheLink);
+	                			printf("\t<CACHE document=\"%u\" time=\"%u\" signature=\"%u\" collection=\"%s\" host=\"%s\"></CACHE>\n", 
+							Sider[i].cache_params.doc_id, Sider[i].cache_params.time, 
+							Sider[i].cache_params.signature, Sider[i].cache_params.subname, 
+							Sider[i].cache_params.cache_host);
+
 					else 
 						printf("\t<CACHE></CACHE>\n");
 					
@@ -2888,7 +2903,10 @@ int main(int argc, char *argv[])
 					printf("\t<CRAWLERVERSION>%f</CRAWLERVERSION>\n",Sider[i].DocumentIndex.clientVersion);
 					printf("\t<HTMLPREPARSED>%i</HTMLPREPARSED>\n",Sider[i].HtmlPreparsed);
 
-	                		printf("\t<CACHE>%s</CACHE>\n",Sider[i].cacheLink);
+	                		printf("\t<CACHE document=\"%u\" time=\"%u\" signature=\"%u\" collection=\"%s\" host=\"%s\"></CACHE>\n", 
+							Sider[i].cache_params.doc_id, Sider[i].cache_params.time, 
+							Sider[i].cache_params.signature, Sider[i].cache_params.subname, 
+							Sider[i].cache_params.cache_host);
 
 	                		printf("\t<PAID_INCLUSION>%i</PAID_INCLUSION>\n",(int)Sider[i].subname.config.isPaidInclusion);
 

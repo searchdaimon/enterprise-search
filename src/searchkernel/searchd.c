@@ -70,7 +70,7 @@ void *do_chld(void *);
 int	service_count;
 
 //global variabel for å holde servernavn
-char servername[32];
+char servername[MAX_SERVERNAME_LEN];
 
 //#ifndef BLACK_BOKS
 	#include <libconfig.h>
