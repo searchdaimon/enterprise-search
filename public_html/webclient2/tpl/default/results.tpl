@@ -167,7 +167,7 @@
 			<span class="url" title="[% r.fulluri | html %]">[% r.uri | html %]</span>
 			<span class="details">
 				[% IF r.cache %]
-				<a href="[% r.cache | cache_url %]">[% "cache" | i18n %]</a>
+				<a href="[% gen_cache_url(r.cache) %]">[% "cache" | i18n %]</a>
 				[% END %]
 				[% IF r.age %]
 				 - [% r.age | html %]

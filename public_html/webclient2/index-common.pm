@@ -48,7 +48,7 @@ if (defined(my $query = $state{query})) {
 	($tpl_file, %tpl_vars) = show_search($query, $show_xml, $page, $isanonymous, $tpl_name);
 }
 elsif (exists $state{cache}) {
-	($tpl_file, %tpl_vars) = show_cache($state{u}, $tpl);
+	($tpl_file, %tpl_vars) = show_cache(map { $_ => $state{$_} } qw(signature time document collection host));
 }
 else {
 	($tpl_file, %tpl_vars) = show_main();
@@ -60,6 +60,7 @@ sub print_html {
 	my ($tpl_file, %tpl_vars) = @_;
 	
 	$tpl_vars{query_params} = \%query_params;
+	$tpl_vars{gen_cache_url} = \&gen_cache_url;
 
 	print $cgi->header(
 	        -type => "text/html", 
@@ -132,13 +133,25 @@ sub show_search {
 }
 
 sub show_cache {
-	my ($cache_uri_base64) = @_;
+	my %cache_params = @_;
+	for (qw(signature time document collection host)) {
+		fatal("Parameter '$_' missing")
+			unless defined $cache_params{$_};
+	}
+	for (qw(signature time document)) {
+		fatal("Invalid value for '$_'")
+			unless $cache_params{$_} =~ /^\d+$/;
+	}
 
-	$cache_uri_base64 
-		or fatal("Cache URI not provided.");
-
-	my $url = decode_base64($cache_uri_base64)
-		or fatal("Invalid cache URI");
+	fatal("Invalid value for 'host'")
+		unless $cache_params{host} =~ /^([a-z0-9]|\.)+$/i;
+	
+	my $uri = sprintf $CFG{cache_uri_tpl}, map({ uri_escape($_) }
+		$cache_params{host},
+		$cache_params{signature},
+		$cache_params{'time'},
+		$cache_params{document},
+		$cache_params{collection});
 
 	my $cache_data;
 	eval {
@@ -146,11 +159,11 @@ sub show_cache {
 			die "cache download exceeded timeout ", $CFG{cache_timeout} 
 		};
 		alarm $CFG{cache_timeout};
-		$cache_data = get($url);
+		$cache_data = get($uri);
 		alarm 0;
 	};
 	if ($@) {
-		carp $@;
+		#carp $@;
 		$@ =~ /timeout/ 
 			? fatal("Unable to load cache, cache server timed out.")
 			: fatal("Unable to load cache, unknown error.");
@@ -293,7 +306,7 @@ sub init_tpl {
 	$opt{FILTERS}->{warn}   = sub { warn "Template: ", @_; return q{}; };
 	$opt{FILTERS}->{strong} = sub { "<strong>" . $_[0] . "</strong>" };
 	$opt{FILTERS}->{query_url} = \&gen_query_url;
-	$opt{FILTERS}->{cache_url} = \&gen_cache_url;
+	#$opt{FILTERS}->{cache_url} = \&gen_cache_url;
 
 	my $tpl = Template->new(%opt)
 		|| croak $tpl->error();
@@ -314,8 +327,12 @@ sub gen_query_url {
 }
 
 sub gen_cache_url {
-	my $cache_link = shift;
-	return _gen_url("?cache&u=" . encode_base64($cache_link));
+	my $cache_params = shift;
+	my $base_url = "?cache";
+	while (my ($k, $v) = each %{$cache_params}) {
+		$base_url .= "&$k=$v"
+	}
+	return _gen_url($base_url);
 }
 
 sub valid_lang { 

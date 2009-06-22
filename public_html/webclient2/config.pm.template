@@ -3,13 +3,12 @@ use strict;
 use warnings;
 use Readonly;
 use Exporter qw(import);
-our @EXPORT = qw(%CFG %VALID_TPL @SEARCH_ENV_LOGGING %DEF_TPL_OPT %TPL_FILE %VALID_LANG);
+our @EXPORT = qw(%CFG @SEARCH_ENV_LOGGING %DEF_TPL_OPT %TPL_FILE);
 
 
 
 Readonly::Hash our %CFG => (
 	tpl           => 'default',
-	#lang          => 'en',
 	lang          => 'no',
 	num_results   => 10,
 	search_uri    => 'http://' . $ENV{SERVER_NAME} .'/cgi-bin/dispatcher_allbb',
@@ -27,6 +26,7 @@ Readonly::Hash our %CFG => (
 		show_pages => 10, # How many page links in nav bar.
 	},
 	cache_timeout => 20, # seconds
+	cache_uri_tpl => "http://%s/cgi-bin/ShowCache2bb?sign=%d&time=%d&D=%d&subname=%s",
 );
 
 Readonly::Hash our %TPL_FILE => (
