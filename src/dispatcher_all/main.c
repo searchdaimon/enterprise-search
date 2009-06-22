@@ -123,7 +123,7 @@ char *get_filetype_icon(char *ext) {
 		errx(1, "No fte_data %d %s", __LINE__, __FILE__);
 		return;
 	}
-	if (!fte_getdescription(fdata, "nbo", ext, &group, &descr, &icon, &version)) {
+	if (!fte_getdescription(fdata, "eng", ext, &group, &descr, &icon, &version)) {
 		warnx("no icon for ext %s\n", ext);
 		icon[0] = '\0';
 		return icon;

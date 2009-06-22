@@ -632,11 +632,11 @@ static inline int attribute_description(struct adf_data *attrdescrp, char *key, 
 
     if (value==NULL || value[0]=='\0')
 	{
-	    success = adf_get_key_descr(attrdescrp, "nbo", key, description, icon);
+	    success = adf_get_key_descr(attrdescrp, "eng", key, description, icon);
 	}
     else
 	{
-	    success = adf_get_val_descr(attrdescrp, "nbo", key, value, description, icon);
+	    success = adf_get_val_descr(attrdescrp, "eng", key, value, description, icon);
 	}
 
     return success;
@@ -1600,7 +1600,7 @@ int _attribute_build_items_(container *X, container *A, query_array *qa, int def
 		    if (key_type == 1 && item->value!=NULL) //filetype
 			{
 			    char	*group;
-			    if ((fte_getdescription(getfiletypep, "nbo", item->value, &group, &(item->name), &(item->icon), &(item->version)) & 255) == 0)
+			    if ((fte_getdescription(getfiletypep, "eng", item->value, &group, &(item->name), &(item->icon), &(item->version)) & 255) == 0)
 			    //if ((fte_getdescription(getfiletypep, "nbo", item->value, &group, &(item->name), &(item->icon)) & 255) == 0)
 				{
 				    item->name = strdup(item->name);
@@ -1609,7 +1609,7 @@ int _attribute_build_items_(container *X, container *A, query_array *qa, int def
 			}
 		    else if (key_type == 2 && item->value!=NULL) //group
 			{
-			    fte_groupid(getfiletypep, "nbo", item->value, &(item->icon));
+			    fte_groupid(getfiletypep, "eng", item->value, &(item->icon));
 			}
 		    else if (item->key!=NULL) //attribute
 			{
