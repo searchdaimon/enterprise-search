@@ -268,41 +268,22 @@ sub init_tpl {
 			? $CFG{lang} : undef;
 	}
 
-	# init translation
-	my $i18n_filter;
-	if (defined $lang) {
-		my @langs = $lang eq $CFG{lang} 
-			? ($lang) 
-			: ($lang, $CFG{lang});
-		I18N::SearchRes::load_lang($tpl_name);
-		my $i18n = I18N::SearchRes->get_handle(@langs)
-			or fatal("Couldn't make a language handle");
-		$i18n->fail_with(sub { 
-			shift; 
-			warn "No locale for: ", join(", ", @_);
-			return 'I18N_error';
-		});
-
-        	$i18n_filter = sub {
-			#warn "Params: ", Dumper(\@_);
-			$i18n->maketext(@_);
-		}; 
-	}
-	else {
-		# Support templates with no translations
-		$i18n_filter = sub { shift } 
-	}
+	my ($i18n_filter, $i18n_nowarn_filter) = init_lang($tpl_name, $lang);
+	
 
 	# tpl instance, with filter and vmethod
         $Template::Stash::SCALAR_OPS->{i18n} = $i18n_filter;
+        $Template::Stash::SCALAR_OPS->{i18n_nowarn} = $i18n_nowarn_filter;
 	$Template::Stash::SCALAR_OPS->{query_url} = \&gen_query_url;
 	my (undef) = $Template::Stash::SCALAR_OPS->{i18n}; # rm warning
+	my (undef) = $Template::Stash::SCALAR_OPS->{i18n_nowarn};
 	my (undef) = $Template::Stash::SCALAR_OPS->{query_url};
 
 
 	my %opt = %DEF_TPL_OPT;
 	$opt{INCLUDE_PATH} .= $tpl_name;
 	$opt{FILTERS}->{i18n}   = $i18n_filter;
+	$opt{FILTERS}->{i18n_nowarn}   = $i18n_nowarn_filter;
 	$opt{FILTERS}->{warn}   = sub { warn "Template: ", @_; return q{}; };
 	$opt{FILTERS}->{strong} = sub { "<strong>" . $_[0] . "</strong>" };
 	$opt{FILTERS}->{query_url} = \&gen_query_url;
@@ -311,6 +292,48 @@ sub init_tpl {
 	my $tpl = Template->new(%opt)
 		|| croak $tpl->error();
 	return ($tpl, $tpl_name);
+}
+
+sub init_lang {
+	my ($tpl_name, $lang) = @_;
+	unless (defined $lang) {
+		# Support templates with no translations
+		my $i18n = sub { shift };
+		return ($i18n, $i18n);
+	}
+
+	my $warn_fail = sub {
+		shift; 
+		warn "No locale for: ", join(", ", @_);
+		return 'I18N_error';
+	};
+	my $silent_fail = sub { shift; return join q{ }, @_; };
+
+	my @langs = $lang eq $CFG{lang} 
+		? ($lang) 
+		: ($lang, $CFG{lang});
+	I18N::SearchRes::load_lang($tpl_name);
+	my $i18n = I18N::SearchRes->get_handle(@langs)
+		or fatal("Couldn't make a language handle");
+	
+	my $silent = 0;
+	$i18n->fail_with($warn_fail);
+
+        my $i18n_filter = sub {
+		if ($silent) {
+			$i18n->fail_with($warn_fail);
+			$silent = 0;
+		}
+		$i18n->maketext(@_);
+	}; 
+	my $i18n_nowarn_filter = sub {
+		if (!$silent) {
+			$i18n->fail_with($silent_fail);
+			$silent = 1;
+		}
+		$i18n->maketext(@_);
+	};
+	return ($i18n_filter, $i18n_nowarn_filter);
 }
 
 sub _gen_url {

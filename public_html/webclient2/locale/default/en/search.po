@@ -245,18 +245,6 @@ msgstr "Rich Text Format"
 msgid "PowerPoint"
 msgstr "PowerPoint"
 
-msgid "PowerPoint"
-msgstr "PowerPoint"
-
-msgid "PowerPoint"
-msgstr "PowerPoint"
-
-msgid "PowerPoint"
-msgstr "PowerPoint"
-
-msgid "PowerPoint"
-msgstr "PowerPoint"
-
 msgid "Slide Show"
 msgstr "Slide Show"
 
@@ -290,18 +278,6 @@ msgstr "Macro-enabled Slide Show"
 msgid "Excel"
 msgstr "Excel"
 
-msgid "Excel"
-msgstr "Excel"
-
-msgid "Excel"
-msgstr "Excel"
-
-msgid "Excel"
-msgstr "Excel"
-
-msgid "Excel"
-msgstr "Excel"
-
 msgid "Workbook"
 msgstr "Workbook"
 
@@ -325,18 +301,6 @@ msgstr "Binary Workbook"
 
 msgid "Macro-enabled Add-in"
 msgstr "Macro-enabled Add-in"
-
-msgid "OpenOffice"
-msgstr "OpenOffice"
-
-msgid "OpenOffice"
-msgstr "OpenOffice"
-
-msgid "OpenOffice"
-msgstr "OpenOffice"
-
-msgid "OpenOffice"
-msgstr "OpenOffice"
 
 msgid "OpenOffice"
 msgstr "OpenOffice"
@@ -365,50 +329,14 @@ msgstr "StarOffice Document"
 msgid "Adobe PDF"
 msgstr "Adobe PDF"
 
-msgid "Adobe PDF"
-msgstr "Adobe PDF"
-
-msgid "Adobe PDF"
-msgstr "Adobe PDF"
-
-msgid "Adobe PDF"
-msgstr "Adobe PDF"
-
-msgid "Adobe PDF"
-msgstr "Adobe PDF"
-
 msgid "Document"
 msgstr "Document"
 
 msgid "AbiWord"
 msgstr "AbiWord"
 
-msgid "AbiWord"
-msgstr "AbiWord"
-
-msgid "AbiWord"
-msgstr "AbiWord"
-
-msgid "AbiWord"
-msgstr "AbiWord"
-
-msgid "AbiWord"
-msgstr "AbiWord"
-
 msgid "Document"
 msgstr "Document"
-
-msgid "Word Perfect"
-msgstr "Word Perfect"
-
-msgid "Word Perfect"
-msgstr "Word Perfect"
-
-msgid "Word Perfect"
-msgstr "Word Perfect"
-
-msgid "Word Perfect"
-msgstr "Word Perfect"
 
 msgid "Word Perfect"
 msgstr "Word Perfect"
@@ -430,18 +358,6 @@ msgstr "Webpage"
 
 msgid "HTML Document"
 msgstr "HTML Document"
-
-msgid "Notepad"
-msgstr "Notepad"
-
-msgid "Notepad"
-msgstr "Notepad"
-
-msgid "Notepad"
-msgstr "Notepad"
-
-msgid "Notepad"
-msgstr "Notepad"
 
 msgid "Notepad"
 msgstr "Notepad"
@@ -485,29 +401,11 @@ msgstr "MP3 Audio"
 msgid "AutoCAD"
 msgstr "AutoCAD"
 
-msgid "AutoCAD"
-msgstr "AutoCAD"
-
 msgid "Archive"
 msgstr "Archive"
 
 msgid "ZIP Archive"
 msgstr "ZIP Archive"
-
-msgid "Application Data"
-msgstr "Application Data"
-
-msgid "Application Data"
-msgstr "Application Data"
-
-msgid "Application Data"
-msgstr "Application Data"
-
-msgid "Application Data"
-msgstr "Application Data"
-
-msgid "Application Data"
-msgstr "Application Data"
 
 msgid "Application data"
 msgstr "Application data"
