@@ -1770,6 +1770,13 @@ void _attribute_print_and_delete_tree_(buffer *bout, container *X, int indent, i
 		    if (item->selected >= 0) bprintf(bout, " selected=\"true\"");
 		    bprintf(bout, " expanded=\"%s\"", item->selected_descendant || item->expanded ? "true":"false");
 		    if (item->container_id == 0) bprintf(bout, " hits=\"%i\"", item->hits);
+		    if (item->sort==sort_alpha)
+			{
+			    if (item->sort_reverse)
+				bprintf(bout, " sort=\"alpha_reversed\"");
+			    else
+				bprintf(bout, " sort=\"alpha\"");
+			}
 
 		    if (item->children!=NULL)
 			{
