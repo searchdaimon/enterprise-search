@@ -76,7 +76,7 @@
 	<!-- item -->
 	<li>&nbsp;[% "<strong>" IF i.selected %] 
 	    [% IF i.query %]
-		<span>[% icon %]<a href="[% i.query | query_url %]">[% i.name | html %]</a>
+		<span>[% icon %]<a href="[% i.query | query_url %]">[% i.name | html %][% IF i.version %]&nbsp;([% i.version %])[% END %]</a>
 		 </span>[% "</strong>" IF i.selected %]
 
 		 <span class="navHits"> ([% 

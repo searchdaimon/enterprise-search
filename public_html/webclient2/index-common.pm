@@ -13,7 +13,7 @@ use CGI qw(escapeHTML);
 use LWP::Simple qw(get);
 use MIME::Base64 qw(encode_base64 decode_base64);
 use config qw(%TPL_FILE %CFG @SEARCH_ENV_LOGGING %DEF_TPL_OPT);
-use ResultParse::SDOld;
+use ResultParse::SD_v2_1;
 use NavMenu qw(read_navmenu_cfg);
 
 BEGIN {
@@ -104,7 +104,7 @@ sub show_search {
 		exit;
 	}
 
-	my $res = ResultParse::SDOld->new($xml_str, \&fatal, $query);
+	my $res = ResultParse::SD_v2_1->new($xml_str, \&fatal, $query);
 
 	
 	fatal($res->errors()) 
@@ -190,7 +190,7 @@ sub gen_search_uri {
 	$attr{subname}  ||= $CFG{subname};
 	$attr{secret}   ||= $CFG{secret};
 	$attr{tkey}     ||= $CFG{tkey};
-	#$attr{version} ||= $CFG{version};
+	$attr{version} ||= $CFG{version};
 
 	# Add env variables
 	for my $e (@SEARCH_ENV_LOGGING) {
