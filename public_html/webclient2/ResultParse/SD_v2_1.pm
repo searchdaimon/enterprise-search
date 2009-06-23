@@ -4,6 +4,7 @@ use warnings;
 
 use List::Util qw(min);
 use Carp;
+use Data::Dumper;
 
 use ResultParse::SDResult;
 use config qw(%CFG);
@@ -105,7 +106,7 @@ sub results {
 			snippet => $r->{description}[0],
 			age     => $r->{time_iso}[0],
 			cache   => $r->{cache}[0],
-			thumb   => $r->{thumbnail}[0],
+			thumb   => $r->{thumbnail} ? $r->{thumbnail}[0]{content} : undef,
 			filetype => $r->{filetype}[0],
 			icon => $r->{icon}[0],
 			attributes => \%attr,
