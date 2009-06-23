@@ -1038,7 +1038,7 @@ void disp_out_sd_v2_1(
 				//if (!getRank) {
 					if (Sider[i].thumbnale[0] != '\0') {
 						printf("\t<thumbnail width=\"%i\" height=\"%i\">%s</thumbnail>\n",
-						    Sider[i].thumbnale, Sider[i].thumbnailwidth, Sider[i].thumbnailheight);
+						    Sider[i].thumbnailwidth, Sider[i].thumbnailheight, Sider[i].thumbnale);
 					}
 					else {
 						printf("\t<thumbnail></thumbnail>\n");
