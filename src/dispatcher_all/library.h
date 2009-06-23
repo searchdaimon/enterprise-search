@@ -1,3 +1,6 @@
+#ifndef _H_DISP_LIBRARHY 
+#define _H_DISP_LIBRARHY 
+
  #include "../common/define.h"
 
     #define MAXDATASIZE 100 // max number of bytes we can get at once
@@ -19,6 +22,8 @@
 
     #define maxerrors 5
     #define maxerrorlen 201
+   
+#define salt "sdjbjolQdfgkkf"
 
 #define DefultMaxsHits 20
 
@@ -84,4 +89,5 @@ cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struc
 int
 cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
             size_t sider_header_len, struct SiderFormat *sider, size_t sider_len);
+#endif
 #endif
