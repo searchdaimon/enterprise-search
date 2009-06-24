@@ -106,28 +106,6 @@ int prequerywriteFlag = 0;
 
 #ifdef BLACK_BOKS
 
-char *get_filetype_icon(char *ext) {
-	static struct fte_data *fdata = NULL;
-	if (fdata == NULL)
-		fdata = fte_init(bfile("config/file_extensions.conf"));
- 	/* TODO? fte_destroy(fdata) */
-
-	static char *icon, *version;
-	char *group, *descr;
-
-	if (fdata == NULL) {
-		errx(1, "No fte_data %d %s", __LINE__, __FILE__);
-		return;
-	}
-	if (!fte_getdescription(fdata, "eng", ext, &group, &descr, &icon, &version)) {
-		warnx("no icon for ext %s\n", ext);
-		icon[0] = '\0';
-		return icon;
-	}
-
-	return icon;
-}
-
 struct subnamesFormat *get_usr_coll(char *usr, int *n_colls, int cmc_port) {
 	char **colls;
 	char *collections;
