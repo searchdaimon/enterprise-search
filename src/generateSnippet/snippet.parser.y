@@ -1338,6 +1338,7 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
 	}
 
     buffer	*B = buffer_init(-1);
+    bprintf(B, "<![CDATA[");
 
     // Skriv ut to mini-snippets med '...' imellom:
     for (nr=nr1, x=0; x<2; nr=nr2, x++)
@@ -1410,6 +1411,7 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
 		}
 	}
 
+    bprintf(B, "]]>\n");
     return buffer_exit(B);
 }
 
