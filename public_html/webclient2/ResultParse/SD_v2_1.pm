@@ -16,7 +16,7 @@ sub errors {
 	my $s = shift;
 	my $err_xml = $s->{xml}{error} || $s->{xml}{error};
 	return unless $err_xml;
-	return @{$_->{errormessage}};
+	return @{$err_xml->[0]{errormessage}};
 }
 
 sub res_info {
