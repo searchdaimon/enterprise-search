@@ -24,8 +24,19 @@ sub add_document {
         confess "parameter '$_' is missing"
             unless defined $params{$_};
     }
+    if (defined $params{attributes}) {
+	    confess "parameter 'attributes' should be a HASH, (got ", ref $params{attributes} || "SCALAR", ")"
+		    unless ref $params{attributes} eq "HASH";
 
-    # run
+	    my $attrstr = q{};
+	    while (my ($k, $v) = each %{$params{attributes}}) {
+		    next unless defined $v;
+		    $attrstr .= "$k=$v,";
+	    }
+	    $params{attributes} = $attrstr;
+    }
+
+# run
     return SD::Crawl::pdocumentAdd($self->{ptr},
         $params{url},
         $params{last_modified},
