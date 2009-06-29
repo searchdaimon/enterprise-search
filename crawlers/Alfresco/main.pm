@@ -86,7 +86,7 @@ sub crawl_update {
 				last_modified => $time,
 				type => $rtype,
 				acl_allow => join(',', @permissions),
-				attributes => "");
+				);
 		}
 		$counter++;
 	});

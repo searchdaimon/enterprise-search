@@ -76,7 +76,7 @@ sub crawl_update {
 				last_modified => $time,
 				type => $rtype,
 				acl_allow => "S-1-5-18,en",
-				attributes => "");
+				);
 		}
 		$counter++;
 	});

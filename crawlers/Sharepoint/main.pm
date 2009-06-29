@@ -436,6 +436,9 @@ sub handle_listitem_attachment_worker {
 		push @attributes, "sptype=file";
 		push @attributes, "parent=$parent" if defined $parent;
 
+		# TODO: change $p_attributes from array to hash
+		my %attr = map { split "=", $_, 2 } @attributes;
+
 		$self->add_document(
 				url => $url,
 				title => $title,
@@ -443,7 +446,7 @@ sub handle_listitem_attachment_worker {
 				last_modified => $lastmodified,
 				type => $type,
 				acl_allow => $allowedstr,
-				attributes => join(',', @attributes),
+				attributes => \%attr,
 				);
 	}
 
@@ -617,6 +620,10 @@ sub handle_listitem_worker {
 		#print "Stage3 took: ".($e3-$s3)."\n";
 		#my $s4 = Time::HiRes::time;
 		if (!$self->document_exists($path, $unixtime, length($doc))) {
+
+			# TODO: change $p_attributes from array to hash
+			my %attr = map { split "=", $_, 2 } @attributes;
+
 			$self->add_document(
 					url => $path,
 					title => $title,
@@ -624,7 +631,7 @@ sub handle_listitem_worker {
 					last_modified => $unixtime,
 					type => 'html',
 					acl_allow => $allowedstr,
-					attributes => join(',', @attributes),
+					attributes => \%attr,
 					);
 		}
 		#my $e4 = Time::HiRes::time;
@@ -772,6 +779,11 @@ sub handle_lists {
 		if (!$self->document_exists($path, $unixtime, length($doc))) {
 			my @attributes_l = @attributes_p;
 			push @attributes_l, "sptype=list";
+
+
+			# TODO: change $p_attributes from array to hash
+			my %attr = map { split "=", $_, 2 } @attributes_l;
+
 			$self->add_document(
 				url => $path,
 				title => $list->{Title},
@@ -779,7 +791,7 @@ sub handle_lists {
 				last_modified => $unixtime,
 				type => 'txt',
 				acl_allow => $allowedstr,
-				attributes => join(',', @attributes_l),
+				attributes => \%attr,
 			);
 		}
 
