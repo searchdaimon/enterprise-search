@@ -60,6 +60,9 @@ void die(int errorcode,char query[] ,const char *fmt, ...) {
 
 	va_list     ap;
 	va_start(ap, fmt);
+	
+	char queryesc[MaxQueryLen*2+1];
+	escapeHTML(queryesc, sizeof queryesc, query);
 
 	printf("<search>\n");
 	printf("<error>\n");
@@ -70,7 +73,7 @@ void die(int errorcode,char query[] ,const char *fmt, ...) {
 	printf("</errormessage>\n");
  
 	printf("</error>\n");
-	printf("<RESULT_INFO TOTAL=\"0\" QUERY=\"%s\" HILITE=\"\" TIME=\"0\" FILTERED=\"0\" SHOWABAL=\"0\" BOITHOHOME=\"%s\"/>\n",query,bfile(""));
+	printf("<RESULT_INFO TOTAL=\"0\" QUERY=\"%s\" HILITE=\"\" TIME=\"0\" FILTERED=\"0\" SHOWABAL=\"0\" BOITHOHOME=\"%s\"/>\n",queryesc,bfile(""));
 	printf("</search>\n");
 
 
