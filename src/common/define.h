@@ -660,7 +660,6 @@ struct wordsFormat {
 
 struct queryNodeHederFormat
 {
-	//toDo, skal ikke dette være MaxQueryLen ?
 	char query[MaxQueryLen];
 	char subname[maxSubnameLength];
 	int MaxsHits;

@@ -372,7 +372,7 @@ unsigned int rGeneraeADocID (char subname[]) {
 
 int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys) {
 	int error;
-	int WorkBuffSize = (*ReposetoryHeader).htmlSize;
+	int WorkBuffSize = ((*ReposetoryHeader).htmlSize * 1.2) + 12;
 	char *WorkBuff;
 
 #ifdef DEBUG
@@ -387,10 +387,10 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 
 	int HtmlBufferSize = (*ReposetoryHeader).htmlSize;	
 
-	
+		
 	if ((error = compress((Bytef *)WorkBuff,(uLongf *)&WorkBuffSize,(Bytef *)htmlbuffer,(uLongf)HtmlBufferSize)) != 0) {
                 printf("compress error. Code: %i\n",error);
-		printf("WorkBuffSize %i, HtmlBufferSize %i\n",WorkBuffSize,HtmlBufferSize );
+		printf("WorkBuffSize %i, HtmlBufferSize %i at %s:%d\n",WorkBuffSize,HtmlBufferSize,__FILE__,__LINE__);
 		return 0;
 	}
 
@@ -2278,10 +2278,13 @@ addResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t
 	off_t offset;
 	struct DocumentIndexFormat docindex;
 	int error;
-	int WorkBuffSize = resourcelen;
+	int WorkBuffSize = (resourcelen * 1.2) + 12;
 	char *WorkBuff;
 
-	WorkBuff = malloc(WorkBuffSize);
+	if ((WorkBuff = malloc(WorkBuffSize)) == NULL) {
+		perror("malloc");	
+	}
+ 
 	int HtmlBufferSize = resourcelen;
 
 
@@ -2295,7 +2298,7 @@ addResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t
 
 	if ((error = compress((Bytef *)WorkBuff,(uLongf *)&WorkBuffSize,(Bytef *)resource,(uLongf)HtmlBufferSize)) != 0) {
 		printf("compress error. Code: %i\n",error);
-		printf("WorkBuffSize %i, HtmlBufferSize %i\n",WorkBuffSize,HtmlBufferSize);
+		printf("WorkBuffSize %i, HtmlBufferSize %i at %s:%d\n",WorkBuffSize,HtmlBufferSize, __FILE__, __LINE__);
 		fclose(fp);
 		return;
 	}

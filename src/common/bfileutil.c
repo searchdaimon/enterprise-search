@@ -8,10 +8,26 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <sys/vfs.h> // statfs
 
 //#include "bfileutil.h"
-
 #include "boithohome.h"
+
+
+// return -1 on error
+long long kbytes_left_in_dir(char *dir_path) {
+         struct statfs buf;
+         long fssize;
+
+         if (statfs(dir_path, &buf) == -1) {
+		 perror(dir_path);
+		 return -1;
+	 }
+	 return (buf.f_bsize * buf.f_bavail) / 1024; // kb
+}
+
+
+
 
 
 /*
