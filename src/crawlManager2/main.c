@@ -63,6 +63,9 @@
 
 #define TEST_COLL_NAME "_%s_TestCollection" // %s is connector name.
 
+#define BB_DATA_DIR "/boithoData"
+#define MIN_DISK_REQUIRED 4194304 // 4GB in KB
+
 struct hashtable *global_h, *usersystemshash;
 
 struct {
@@ -1792,6 +1795,7 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 	FILE *LOCK;
 
 	struct collection_lockFormat collection_lock;
+	
 
 	for(i=0;i<nrofcollections;i++) {
 		if (collection[i].extra != NULL)
@@ -1800,6 +1804,21 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 		collection[i].docsRemaining = docsRemaining;
 
 		blog(LOGACCESS,1,"Starting crawl of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
+
+#ifdef BLACK_BOKS
+		long long left = kbytes_left_in_dir(BB_DATA_DIR);
+		if (left == -1)
+			warnx("Warn: Unable to check space left in lots.");
+		else if (left < MIN_DISK_REQUIRED) {
+			set_crawl_state(db, CRAWL_ERROR, collection[i].id, "Crawl request ignored. Not enough disk space.");
+			blog(LOGERROR, 1, "Not enough disk space to craw, space left: %fMB", left / 1024.0);
+			continue;
+		} 
+		else { 
+			// printf("Disk space left: %fMB\n", left / 1024.0); 
+		}
+#endif
+
 
         int output_redirected = 0;
         if (is_test_collection(&collection[i])) {
