@@ -1,5 +1,5 @@
 /*
- *	(C) Searchdaimon 2004-2008, Written by Magnus Galåen (mg@searchdaimon.com)
+ *	(C) Searchdaimon 2004-2009, Written by Magnus Galåen (mg@searchdaimon.com)
  *
  *	Example for "query_parser".
  *
@@ -11,33 +11,38 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "../common/boithohome.h"
+#include "../ds/dcontainer.h"
+#include "../ds/dmap.h"
+
 #include "query_parser.h"
 #include "stemmer.h"
 
 
-void test_expand( char *tekst );
+void test_expand( thesaurus *T, char *tekst );
 void testit( char *tekst );
 
 int main( int argc, char *argv[] )
 {
+    container	*BigT = load_all_thesauruses(bfile("data/thesaurus/"));
+
+    iterator	it = map_find(BigT, "nbo");
+    thesaurus	*T = NULL;
+    if (it.valid) T = map_val(it).ptr;
+
     if (argc>1)
 	{
-	    testit( argv[1] );
-//	    test_expand( argv[1] );
+//	    testit( argv[1] );
+	    test_expand( T, argv[1] );
 	}
+
+    destroy_all_thesauruses( BigT );
 
     return 0;
 }
 
-void test_expand( char *tekst )
+void test_expand( thesaurus *T, char *tekst )
 {
-    printf("Loading thesaurus..."); fflush(stdout);
-
-    // Initialiser thesaurus med ouput-filene fra 'build_thesaurus_*':
-    thesaurus		*T = thesaurus_init("../../data/thesaurus.text", "../../data/thesaurus.id");
-
-    printf("done\n");
-
     query_array		qa;
 
     // Parse query:
@@ -96,8 +101,6 @@ void test_expand( char *tekst )
     // ---
 
     destroy_query(&qa);
-
-    thesaurus_destroy(T);
 }
 
 

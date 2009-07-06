@@ -2,7 +2,7 @@
 /**
  *	stemmer.c
  *
- *	(C) Copyright SearchDaimon AS 2008, Magnus Galåen (mg@searchdaimon.com)
+ *	(C) Copyright SearchDaimon AS 2008-2009, Magnus Galåen (mg@searchdaimon.com)
  *
  *	Slår opp stems og bøyninger av ord.
  *
@@ -12,12 +12,97 @@
  *	for å få med disse.
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <dirent.h>
 
+#include "../ds/dcontainer.h"
+#include "../ds/dmap.h"
+#include "../ds/dset.h"
 #include "../common/utf8-strings.h"
+#include "../common/boithohome.h"
 #include "stemmer.h"
+
+
+
+container* load_all_thesauruses(char *path)
+{
+    DIR		*dir = opendir(path);
+
+    if (!dir)
+	{
+	    printf("[thesaurus] Could not find directory '%s'. Stemming will be disabled.\n", path);
+	    return NULL;
+	}
+    else printf("[thesaurus] Reading thesauruses from '%s'.\n", path);
+
+    container	*Stext = set_container( string_container() ),
+		*Sid = set_container( string_container() );
+
+    struct dirent	*entry;
+    while ((entry = readdir(dir)) != NULL)
+	{
+	    char	prefix[4], postfix[6];
+	    strncpy(prefix, entry->d_name, 4);
+	    if (strlen(entry->d_name) > 3) strncpy(postfix, &((entry->d_name)[3]), 6);
+	    else postfix[0] = '\0';
+	    prefix[3] = '\0';
+	    postfix[5] = '\0';
+
+	    //printf("%s [%s:%s]\n", entry->d_name, prefix, postfix);
+	    // [a-z][a-z][a-z].[text|id]
+	    if (!strcmp(postfix, ".text")) set_insert(Stext, prefix);
+	    if (!strcmp(postfix, ".id")) set_insert(Sid, prefix);
+	}
+
+    closedir(dir);
+
+    container *Thesauruses = ds_union(set_begin2(Stext), set_begin2(Sid));
+
+    destroy(Stext);
+    destroy(Sid);
+
+    container	*BigT = map_container( string_container(), ptr_container() );
+
+    iterator	it = set_begin(Thesauruses);
+    for (; it.valid; it=set_next(it))
+	{
+	    char	*n_text, *n_id, *lang = set_key(it).str;
+	    asprintf(&n_text, "%s%s.text", path, lang);
+	    asprintf(&n_id, "%s%s.id", path, lang);
+
+	    printf("[thesaurus] Loading \"%s\"...\n", lang);
+	    map_insert(BigT, lang, thesaurus_init(n_text, n_id));
+
+	    free(n_text);
+	    free(n_id);
+	}
+
+    destroy(Thesauruses);
+
+    println(BigT);
+
+    return BigT;
+}
+
+
+void destroy_all_thesauruses( container *BigT )
+{
+    iterator	it = map_begin(BigT);
+    for (; it.valid; it=map_next(it))
+	{
+	    thesaurus_destroy(map_val(it).ptr);
+	}
+
+    destroy(BigT);
+}
+
+
 
 
 // tword-flags:

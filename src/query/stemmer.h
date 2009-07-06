@@ -9,6 +9,12 @@
 #include "query_parser.h"
 
 
+container* load_all_thesauruses(char *path);
+void destroy_all_thesauruses(container *);
+
+
+
+
 typedef struct
 {
     int		id;

@@ -25,6 +25,8 @@
 #include "../dp/dp.h"
 #include "../query/query_parser.h"
 #include "../query/stemmer.h"
+#include "../ds/dcontainer.h"
+#include "../ds/dmap.h"
 
 #define _REENTRANT
 
@@ -407,18 +409,19 @@ int main(int argc, char *argv[])
 
 	#ifdef BLACK_BOKS
 		// Initialiser thesaurus med ouput-filene fra 'build_thesaurus_*':
-		searchd_config.thesaurusp = NULL;
+		searchd_config.thesaurus_all = NULL;
 #ifndef WITHOUT_THESAURUS
 		printf("init thesaurus\n");
 
 		if (searchd_config.optFastStartup != 1) {
-    			searchd_config.thesaurusp = thesaurus_init(bfile("data/thesaurus.text"), bfile2("data/thesaurus.id"));
+    			//searchd_config.thesaurusp = thesaurus_init(bfile("data/thesaurus.text"), bfile2("data/thesaurus.id"));
+			searchd_config.thesaurus_all = load_all_thesauruses(bfile("data/thesaurus/"));
 		}
 		printf("init thesaurus done\n");
 
-		if (searchd_config.thesaurusp == NULL)
+		if (searchd_config.thesaurus_all == NULL)
 		    {
-			fprintf(stderr, "searchd: ERROR!! Unable to open thesaurus. Disabling stemming.\n");
+			fprintf(stderr, "searchd: ERROR!! Unable to open thesauruses. Disabling stemming.\n");
 		    }
 
 #endif
@@ -729,6 +732,33 @@ void *do_chld(void *arg)
 
 	strcpy(SiderHeder->servername,servername);
 
+#ifndef WITHOUT_THESAURUS
+	// TODO: Denne må skalere til flere språk:
+	char	*lang = NULL;
+	switch (queryNodeHeder.lang)
+	    {
+		case LANG_NBO: lang = "nbo"; break;
+		case LANG_ENG: lang = "eng"; break;
+	    }
+
+	printf("[searchd] lang_id = %i\n", queryNodeHeder.lang);
+	printf("[searchd] lang = %s\n", lang);
+
+	if (lang!=NULL)
+	    {
+		iterator	it = map_find(searchd_config->thesaurus_all, lang);
+		if (it.valid)
+		    {
+			printf("[searchd] Loading %s thesaurus\n", lang);
+			searchd_config->thesaurusp = map_val(it).ptr;
+		    }
+		else
+		    {
+			printf("[searchd] No thesaurus for %s\n", lang);
+			searchd_config->thesaurusp = NULL;
+		    }
+	    }
+#endif
 
 /***************************************/
 	 	/****************/
