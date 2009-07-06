@@ -333,3 +333,32 @@ void destroy_iterator( iterator *it )
     it->destroy(it);
 }
 */
+
+inline container* ds_union( iterator2 a, iterator2 b )
+{
+    container	*C = a.C;
+    container	*R = C->clone(C);
+
+    while (a.valid && b.valid)
+	{
+	    int cmp = a.compare_keys(C, ds_key(a), ds_key(b));
+
+	    if (cmp==0)
+		{
+		    a.insert(R, ds_key(a));
+		    ds_next(a);
+		    ds_next(b);
+		}
+	    else if (cmp < 0)
+		{
+		    ds_next(a);
+		}
+	    else
+		{
+		    ds_next(b);
+		}
+	}
+
+    return R;
+}
+

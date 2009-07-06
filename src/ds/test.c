@@ -14,6 +14,41 @@
 #include "dset.h"
 
 
+void test_it2()
+{
+    container	*S = set_container( string_container() );
+    set_insert(S, "shuriken");
+    set_insert(S, "bo-stav");
+    set_insert(S, "katana");
+    set_insert(S, "sai-sverd");
+    set_insert(S, "nunchaku");
+
+    iterator2	it2 = set_begin2(S);
+    for (; it2.valid; ds_next(it2)) printf("%s\n", ds_key(it2).str);
+
+    printf("-----\n");
+
+    it2 = set_end2(S);
+    for (; it2.valid; ds_next(it2)) printf("%s\n", ds_key(it2).str);
+
+    printf("-----\n");
+
+
+    container	*T = set_container( string_container() );
+    set_insert(T, "katana");
+    set_insert(T, "samurai-sverd");
+    set_insert(T, "nunchaku");
+    set_insert(T, "sai-sverd");
+
+    container	*R = ds_union( set_begin2(S), set_begin2(T) );
+    println(R);
+
+    destroy(S);
+    destroy(T);
+    destroy(R);
+}
+
+
 void another_test()
 {
     container	*V = vector_container( pair_container( int_container(), vector_container( string_container() ) ) );
@@ -379,6 +414,9 @@ void map_test()
 
 int main()
 {
+    test_it2();
+    exit(0);
+
     another_test();
     tuple_test();
     multimap_test();

@@ -455,6 +455,7 @@ inline iterator set_end( container *C )
 }
 
 
+
 inline iterator set_find_value( container *C, value key )
 {
     set_container_priv	*MP = C->priv;
@@ -575,4 +576,94 @@ container* set_container( container *Key )
     MP->size = 0;
 
     return M;
+}
+
+
+
+inline iterator2 _set_next2( iterator2 it2 )
+{
+    iterator	it;
+    it.node = it2.node;
+    it.valid = it2.valid;
+    it = set_next(it);
+    it2.node = it.node;
+    it2.valid = it.valid;
+
+    return it2;
+}
+
+inline iterator2 _set_previous2( iterator2 it2 )
+{
+    iterator	it;
+    it.node = it2.node;
+    it.valid = it2.valid;
+    it = set_previous(it);
+    it2.node = it.node;
+    it2.valid = it.valid;
+
+    return it2;
+}
+
+inline value _set_get_key( iterator2 it2 )
+{
+    iterator	it;
+    it.node = it2.node;
+    it.valid = it2.valid;
+
+    return set_key(it);
+}
+
+inline value _set_get_value( iterator2 it2 )
+{
+    value	v;
+    v.i = 0;
+
+    return v;
+}
+
+inline void _set_insert( container *C, value v )
+{
+    set_insert(C, v);
+}
+
+inline int _set_compare_keys( container *C, value a, value b )
+{
+    //printf("comparing %s and %s\n", a.str, b.str);
+    set_container_priv	*MP = C->priv;
+    return MP->Key->compare( MP->Key, a, b );
+}
+
+inline iterator2 set_begin2( container *C )
+{
+    iterator		it = set_begin(C);
+    iterator2		it2;
+
+    it2.node = it.node;
+    it2.valid = it.valid;
+    it2.next = _set_next2;
+    it2.get_key = _set_get_key;
+    it2.get_value = _set_get_value;
+    it2.compare_keys = _set_compare_keys;
+    it2.C = C;
+    it2.insert = _set_insert;
+
+    return it2;
+}
+
+
+inline iterator2 set_end2( container *C )
+{
+    iterator		it = set_end(C);
+    iterator2		it2;
+
+    it2.node = it.node;
+    it2.valid = it.valid;
+    it2.next = _set_previous2;
+    it2.get_key = _set_get_key;
+    it2.get_value = _set_get_value;
+    it2.compare_keys = _set_compare_keys;
+    it2.C = C;
+    it2.insert = _set_insert;
+
+    return it2;
 }

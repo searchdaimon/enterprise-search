@@ -40,6 +40,8 @@ extern inline int set_size( container *C );
 
 extern inline iterator set_begin( container *C );
 extern inline iterator set_end( container *C );
+extern inline iterator2 set_begin2( container *C );
+extern inline iterator2 set_end2( container *C );
 
 extern inline iterator set_next( const iterator old_it );
 extern inline iterator set_previous( const iterator old_it );

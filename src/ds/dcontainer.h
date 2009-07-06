@@ -1,6 +1,6 @@
 
 /**
- *	(C) Copyright 2006-2008, Magnus Galåen
+ *	(C) Copyright 2006-2009, Magnus Galåen
  *
  *	dcontainer.h: Basic containers.
  */
@@ -23,6 +23,7 @@
 
 typedef struct container container;
 typedef struct iterator iterator;
+typedef struct iterator2 iterator2;
 
 typedef union
 {
@@ -60,6 +61,21 @@ struct iterator
     int		valid;
 };
 
+struct iterator2
+{
+    void	*node;
+    int		valid;
+    iterator2	(*next)( iterator2 );
+    value	(*get_key)( iterator2 );
+    value	(*get_value)( iterator2 );
+    int		(*compare_keys)( container *C, value a, value b );
+    container	*C;
+    void	(*insert)( container *C, value v );
+};
+
+#define ds_next(it2) (it2 = it2.next(it2))
+#define ds_key(it2) (it2.get_key(it2))
+#define ds_value(it2) (it2.get_value(it2))
 
 /* fancy allocate: */
 
@@ -82,6 +98,7 @@ static inline value copy( container *C, value v )
     return C->copy( C, v );
 }
 
+container* ds_union( iterator2 a, iterator2 b );
 //void destroy_iterator( iterator *it );
 
 
