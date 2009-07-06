@@ -19,11 +19,6 @@
     width : expression(Math.min(parseInt(this.offsetWidth), 32) + "em");
 }
 
-#navWrapper #liNavMenu {
-    /* max-width : 20em; */
-    width : expression(Math.min(parseInt(this.offsetWidth), 20) + "em");
-}
-
 #navWrapper #liNavMenu li {
     padding-top : 0;
     padding-right : 0.6em;
