@@ -40,7 +40,7 @@ void test_it2()
     set_insert(T, "nunchaku");
     set_insert(T, "sai-sverd");
 
-    container	*R = ds_union( set_begin2(S), set_begin2(T) );
+    container	*R = ds_intersection( set_begin2(S), set_begin2(T) );
     println(R);
 
     destroy(S);

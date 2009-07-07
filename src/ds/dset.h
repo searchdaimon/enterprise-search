@@ -34,8 +34,6 @@ struct _set_node_
 
 container* set_container( container *Key );
 
-//extern inline void set_union( container *dest, container *src );
-
 extern inline int set_size( container *C );
 
 extern inline iterator set_begin( container *C );

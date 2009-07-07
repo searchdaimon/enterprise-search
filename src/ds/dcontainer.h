@@ -98,7 +98,7 @@ static inline value copy( container *C, value v )
     return C->copy( C, v );
 }
 
-container* ds_union( iterator2 a, iterator2 b );
+container* ds_intersection( iterator2 a, iterator2 b );
 //void destroy_iterator( iterator *it );
 
 

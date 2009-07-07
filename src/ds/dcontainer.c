@@ -334,7 +334,7 @@ void destroy_iterator( iterator *it )
 }
 */
 
-inline container* ds_union( iterator2 a, iterator2 b )
+inline container* ds_intersection( iterator2 a, iterator2 b )
 {
     container	*C = a.C;
     container	*R = C->clone(C);

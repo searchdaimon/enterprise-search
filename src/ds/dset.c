@@ -507,16 +507,6 @@ inline iterator set_find( container *C, ... )
     return it;
 }
 
-/*
-inline void set_union( container *dest, container *src )
-{
-    iterator	it = set_begin(src);
-    for (; it.valid; it=set_next(it))
-	set_insert_value(dest, set_key(it));
-
-    destroy(src);
-}
-*/
 
 inline int set_size( container *C )
 {

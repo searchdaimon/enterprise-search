@@ -62,7 +62,7 @@ container* load_all_thesauruses(char *path)
 
     closedir(dir);
 
-    container *Thesauruses = ds_union(set_begin2(Stext), set_begin2(Sid));
+    container *Thesauruses = ds_intersection(set_begin2(Stext), set_begin2(Sid));
 
     destroy(Stext);
     destroy(Sid);
@@ -274,7 +274,7 @@ container* thesaurus_get_synonyms(thesaurus *T, char *_word)
     else
 	{
 	    container	*V = vector_container( string_container() );
-	    container	*S = set_container( string_container() );
+	    container	*S = NULL; // = set_container( string_container() );
 	    tword	*prev = match;
 
 	    //fprintf(stderr, " id: %i flags: %i word: %s\n", match->id, match->flags, match->text);

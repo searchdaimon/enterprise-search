@@ -24,9 +24,9 @@ void testit( char *tekst );
 
 int main( int argc, char *argv[] )
 {
-    container	*BigT = load_all_thesauruses(bfile("data/thesaurus/"));
+    container	*BigT = load_all_thesauruses(bfile("data/"));
 
-    iterator	it = map_find(BigT, "nbo");
+    iterator	it = map_find(BigT, "tst");
     thesaurus	*T = NULL;
     if (it.valid) T = map_val(it).ptr;
 
