@@ -26,7 +26,7 @@ unless (@ARGV == 2) {
 use constant LOG_FILE => "backuplog.log";
 use constant LOG_INFO => 1;
 use constant LOG_WARN => 2;
-use constant DEBUG_SKIP_DAYS => 3;
+use constant DEBUG_SKIP_DAYS => 0;
 
 
 my $SRC_PATH = shift;
