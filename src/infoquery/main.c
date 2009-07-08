@@ -11,8 +11,9 @@
 #include "../boithoadClientLib/liboithoaut.h"
 #include "../boithoadClientLib/boithoad.h"
 
-#include "../bbdocument/bbdocument.h"
+//#include "../bbdocument/bbdocument.h"
 #include "../maincfg/maincfg.h"
+#include "../common/define.h"
 
 int str_is_nmbr(char * str) {
 	int i;
@@ -447,6 +448,7 @@ int main (int argc, char *argv[]) {
 		int errorbufflen = 512;
                 char errorbuff[errorbufflen];
 		char **users;
+		struct cm_listusers_h users_h;
 
 		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
                         printf("Error: %s\n",errorbuff);
@@ -456,13 +458,19 @@ int main (int argc, char *argv[]) {
 		if (value == NULL)
 			errx(1, "infoquery collectionsforuser user");
 
-		r = cmc_listusersus(socketha, atoi(value), &users);
+		users_h = cmc_listusersus(socketha, atoi(value), &users);
 
-		for (i = 0; i < r; i++) {
-			printf("user: %s\n", users[i]);
-			free(users[i]);
+		if (users_h.num_users < 0) {
+			printf("Error: %s\n", users_h.error);
+			exit(1);
 		}
-		free(users);
+		else {
+			for (i = 0; i < users_h.num_users; i++) {
+				printf("user: %s\n", users[i]);
+				free(users[i]);
+			}
+			free(users);
+		}
 	}
 	else if (strcmp(key, "usersystemlookup") == 0) {
 		int i;

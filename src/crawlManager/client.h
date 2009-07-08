@@ -21,7 +21,7 @@ int cmc_collectionislocked(int socketha, char *collection_in);
 int cmc_groupsforuserfromusersystem(int socketha, char *_user, unsigned int usersystem, char ***_groups);
 int cmc_collectionsforuser(int sock, char *_user, char **groups);
 int cmc_usersystemfromcollection(int sock, char *collection);
-int cmc_listusersus(int sock, int usersystem, char ***users);
+struct cm_listusers_h cmc_listusersus(int sock, int usersystem, char ***users);
 
 
 int cmc_removeForeignUsers(int sock, char *collection);

@@ -173,6 +173,11 @@
 #define cm_removeForeignUsers	80
 #define cm_addForeignUser	81
 
+struct cm_listusers_h {
+	int num_users;
+	char error[512];
+};
+
 //verdier av forskjelige term posisjoner
 #define poengForBody 1	
 #define poengForHeadline 4

@@ -395,24 +395,26 @@ cmc_usersystemfromcollection(int sock, char *collection)
 	return n;
 }
 
-int
+struct cm_listusers_h
 cmc_listusersus(int sock, int usersystem, char ***users)
 {
-	int n_users;
-	int i;
+	struct cm_listusers_h users_h;
+	int i, n_users;
 	char user[MAX_LDAP_ATTR_LEN];
 
 	sendpacked(sock, cm_listusersus, BLDPROTOCOLVERSION, 0, NULL, "");
 	sendall(sock, &usersystem, sizeof(usersystem));
-	recv(sock, &n_users, sizeof(n_users), 0);
-	*users = malloc((n_users+1) * sizeof(char *));
-	for (i = 0; i < n_users; i++) {
-		recv(sock, user, sizeof(user), 0);
-		(*users)[i] = strdup(user);
+	recv(sock, &users_h, sizeof(users_h), 0);
+	n_users = users_h.num_users;
+	if (n_users >= 0) {
+		*users = malloc((n_users+1) * sizeof(char *));
+		for (i = 0; i < n_users; i++) {
+			recv(sock, user, sizeof(user), 0);
+			(*users)[i] = strdup(user);
+		}
+		(*users)[n_users] = NULL;
 	}
-	(*users)[n_users] = NULL;
-
-	return n_users;
+	return users_h;
 }
 
 int

@@ -2329,19 +2329,27 @@ void connectHandler(int socket) {
 			MYSQL db;
 			usersystem_t *us;
 			usersystem_data_t data;
-			int n_users, j;
+			struct cm_listusers_h h_users;
+			memset(&h_users.error, '\0', sizeof h_users.error);
+			int j, n_users;
 			char **users;
 
 			sql_connect(&db);
 			recv(socket, &usersystem, sizeof(usersystem), 0);
 			if ((us = get_usersystem(&db, usersystem, &data)) == NULL) {
 				blog(LOGERROR, 1, "Unable to get usersystem");
+				strlcpy(h_users.error, "Unable to get usersystem", sizeof h_users.error);
+				h_users.num_users = -1;
 				n_users = 0;
-			} else {
-				(us->us_listUsers)(&data, &users, &n_users);
+			} 
+			else {
+				// asuming call returns 0 on error.
+				// TODO: Get error string from lib.
+				h_users.num_users = (us->us_listUsers)(&data, &users, &n_users) 
+					? n_users : -1;
 			}
 
-			sendall(socket, &n_users, sizeof(n_users));
+			sendall(socket, &h_users, sizeof(h_users));
 			if (n_users > 0) {
 				char *userbuf = malloc(n_users * MAX_LDAP_ATTR_LEN);
 				for (j = 0; j < n_users; j++) {
