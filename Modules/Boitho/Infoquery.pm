@@ -72,6 +72,29 @@ sub listUsers {
 	return $self->_getList("listUsers $sys", 'user', $sys);
 }
 
+sub countUsers {
+	my ($s, $sys) = @_;
+	croak "system not provided"
+		unless defined $sys && $sys =~ /^\d+$/;
+
+	my @errors;
+	my $usr_count = 0;
+	my $succs = $s->_infoquery_exec("listUsers $sys", sub {
+		if ($_[0] =~ /^user:/) {
+			$usr_count++ if $_[0] =~ /^user:/;
+		}
+		else {
+			push @errors, $_[0];
+		}
+	});
+	if (!$succs) {
+		$error = join "\n", @errors;
+	}
+		
+	return -1 unless $succs;
+	return $usr_count;
+}
+
 sub listMailUsers {
 	my $self = shift;
 	return $self->_getList('listMailUsers', 'user');
@@ -215,7 +238,7 @@ sub _infoquery_exec {
 
 
 
-# Helper method to parse simple lists from infoquery.
+# Helper method to parse lists from infoquery.
 sub _getList {
 	my ($self, $parameter, $keyword) = @_;
 	my @list = ();
@@ -236,5 +259,8 @@ sub _getList {
 	return \@list;
 }
 
+#my $iq = Boitho::Infoquery->new($ENV{BOITHOHOME} . "/bin/infoquery");
+#my $iq = Boitho::Infoquery->new("/tmp/faker.pl");
+#print Dumper($iq->countUsers(1));
 
 1;
