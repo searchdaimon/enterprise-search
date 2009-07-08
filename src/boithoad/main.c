@@ -1027,7 +1027,9 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 
 		packedHedder.size = packedHedder.size - sizeof(packedHedder);
 
-		bconfig_flush(CONFIG_CACHE_IS_OK);
+		(packedHedder.command == bad_askToAuthenticate)
+			? bconfig_flush(CONFIG_CACHE_IS_OK)
+			: bconfig_flush(CONFIG_NO_CACHE);
 
 		const char *authenticatmetod = bconfig_getentrystr("authenticatmetod");
 
