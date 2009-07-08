@@ -2,7 +2,6 @@
 #include "../cgi-util/cgi-util.h"
 #include "../base64/base64.h"
 #include "../common/bstr.h"
-#include <libconfig.h>
 #include <err.h>
 #include "cgihandler.h"
 #include "library.h"
@@ -32,19 +31,12 @@ void dispatcher_cgi_init(void) {
 		errx(1, "cgi init error %d: %s", res, cgi_strerror(res));
 }
 
-/**
- * Access combinations:
- * 	No secret key && valid user -> limited access
- *	secret key && valid key && in access list -> full access
- *	connection from localhost -> full access
- *
- * All other combinations: no access
- */
-int cgi_access_type(struct config_t *cfg, char *remoteaddr) {
+int cgi_access_type(char *remoteaddr, char *correct_bbkey) {
 	if (strcmp(remoteaddr, "127.0.0.1") == 0)
 		return ACCESS_TYPE_FULL;
 
-	const char *secret_key = cgi_getentrystr("secret");
+	const char *bbkey = cgi_getentrystr("bbkey");
+	warnx("correct: %s, provided: %s\n", correct_bbkey, bbkey);
 
 	/*extern char **environ;
 	char **next = environ;
@@ -54,7 +46,7 @@ int cgi_access_type(struct config_t *cfg, char *remoteaddr) {
 	}*/
 
 	// Limited access if no key, but user is logged in
-	if (secret_key == NULL) {
+	if (bbkey == NULL) {
 		if (getenv("REDIRECT_REMOTE_USER") != NULL) {
 			return ACCESS_TYPE_LIMITED;
 		}
@@ -62,33 +54,11 @@ int cgi_access_type(struct config_t *cfg, char *remoteaddr) {
 		warn("no key, no logged in user");
 		return ACCESS_TYPE_NONE;
 	}
-	
-	// Full access if host:key match in config.
-	int num_hosts;
-	config_setting_t *setting;
-	setting = config_lookup(cfg, "access");
-	if (setting == NULL || !(num_hosts = config_setting_length(setting))) {
-		warnx("No hosts in dispatcher 'access'-list.");
-		return ACCESS_TYPE_NONE;
-	}
-	int i;
-	for (i = 0; i < num_hosts; i++) {
-		const char *host_ip;
-		char *host_key;
 
-		host_ip = config_setting_get_string_elem(setting, i);
-		host_key = strchr(host_ip, ':');
-		if (host_key == NULL) {
-			warnx("Invalid host:key in conf '%s'", host_ip);
-			continue;
-		}
-		*host_key = '\0';
-		host_key++;
-		if (strcmp(host_ip, remoteaddr) == 0 || strcmp(host_ip, "all") == 0) {
-			if (strcmp(host_key, secret_key) == 0)
-				return ACCESS_TYPE_FULL;
-		}
-	}
+
+	if (strcmp(bbkey, correct_bbkey) == 0)
+		return ACCESS_TYPE_FULL;
+
 	return ACCESS_TYPE_NONE;
 }
 

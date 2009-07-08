@@ -35,6 +35,7 @@
 #include "../maincfg/maincfg.h"
 #include "../common/cgi.h" // escapeHTML
 #include "../crawlManager/client.h"
+#include "../key/key.h" // key_get_existingconn
 
 #include <libconfig.h>
 #define CFG_SEARCHD "config/searchd.conf"
@@ -1014,10 +1015,13 @@ int main(int argc, char *argv[])
 			errx(1, "env variable REMOTE_ADDR missing");
 
 		dispatcher_cgi_init();
+
+		char correct_key[512];
+		key_get_existingconn(&demo_db, correct_key);
 		
-		int access = cgi_access_type(&cfg, remoteaddr);
+		int access = cgi_access_type(remoteaddr, correct_key);
 		if (access == ACCESS_TYPE_NONE) 
-			die(1,"", "No access for \"%s\".", remoteaddr);
+			die(1,"", "Access key missing, or wrong access key.");
 		
 		cgi_set_defaults(&QueryData);
 		cgi_fetch_common(&QueryData, &noDoctype);
