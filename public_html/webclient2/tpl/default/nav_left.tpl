@@ -1,4 +1,4 @@
-
+[% USE Dumper %]
 [% BLOCK nav_left %]
 
 	<ul id="navTree" class="filetree treeview-gray" style="display : none;"> 
@@ -84,7 +84,7 @@
 			s.i18n(i.hits)
 		%])</span>
 	    [% ELSE %]
-		<span>[% i.name | html %]</span>
+		<span>[% i.name | html %]</span>[% "</strong>" IF i.selected %]
 	    [% END %]
 	</li>
 	<!-- end item -->

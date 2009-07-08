@@ -3,9 +3,12 @@ AuthType Basic
 require valid-user
 
 RewriteEngine On
-RewriteCond %{QUERY_STRING} prefix=(.*)
-RewriteRule ^suggest$ /cgi-bin/suggest_webclient?q=%1 [L,QSA]
-#RewriteRule 
-#RewriteRule ^search /cgi-bin/dispatcher_allbb?opensearch=0&%{QUERY_STRING} [L,QSA]
-#RewriteRule ^suggest/(.*)$ /cgi-bin/suggest_webclient?q=$1 [L,QSA]
+RewriteCond %{QUERY_STRING} prefix=(.*) [OR]
+Rewritecond %{QUERY_STRING} .
+RewriteRule ^suggest$ /cgi-bin/suggest_webclient?q=%1 [L]
+
+RewriteCond %{QUERY_STRING} signature=(\d+) [OR]
+RewriteCond %{QUERY_STRING} .
+RewriteRule ^cache/([^/]*)/(\d+) /cgi-bin/ShowCache2bb?D=$2&subname=$1&sign=%1 [L,QSA]
+#RewriteRule ^cache/([^/]*)/(\d+) /cgi-bin/d?D=$2&subname=$1&sign=%1 [L,QSA]
 
