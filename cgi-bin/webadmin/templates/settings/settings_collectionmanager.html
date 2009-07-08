@@ -4,7 +4,7 @@
 
 <div id="settings">
 	
-    <h3>Collection recrawl schedule</h3>
+    <h2>Collection recrawl schedule</h2>
 
     [% IF schedule_updated %]
         [% WRAPPER 'template_message.html' type="success" %]
@@ -56,7 +56,7 @@
             
 	
 
-    <h3>Garbage collection</h3>
+    <h2>Garbage collection</h2>
         [% IF gc_updated %]
             [% WRAPPER 'template_message.html' type="success" %]
                 Garbage collection settings have been updated.
@@ -83,7 +83,7 @@
         </p>
         </form>
 [% USE Dumper %]
-    <h3>Suggest dictionary rebuild</h3>
+    <h2>Suggest dictionary rebuild</h2>
     [% IF suggdict_updated %]
             [% WRAPPER 'template_message.html' type="success" %]
                 Suggest dictionary rebuild time has been updated.

@@ -17,4 +17,10 @@ sub delete { shift->SUPER::delete($TBL, @_) }
 
 sub is_active { return shift->exists({user => shift }) }
 
+sub num_active {
+	my $s = shift;
+	my $q = "SELECT count('user') FROM $TBL";
+	return $s->sql_single($q);
+}
+
 1;

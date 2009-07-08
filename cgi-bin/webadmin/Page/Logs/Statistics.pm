@@ -1,4 +1,4 @@
-package Page::Graphs;
+package Page::Logs::Statistics;
 use strict;
 use warnings;
 
@@ -8,10 +8,11 @@ use DateTime;
 use File::Temp qw(tempfile);
 use Data::Dumper;
 use POSIX;
+use Readonly;
 
 use Sql::SessionData;
 use Sql::Shares;
-use config qw($CONFIG);
+use config qw(%CONFIG);
 
 BEGIN {
 	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
@@ -19,22 +20,26 @@ BEGIN {
 
 use Boitho::Infoquery;
 
-my %CONFIG = %$CONFIG;
 our @ISA = qw(Page::Abstract);
 
+use constant DEFAULT_LAST_VALUE         => 30;
+use constant DEFAULT_USERS_VALUE        => 15;
+Readonly::Scalar my $TPL_MAIN => "logs_statistics.html";
 
-sub _init {
-    my $self = shift;
-    my $dbh = $self->{dbh};
-}
+sub show {
+	my ($s, $tpl_vars, $last, $user) = @_;
 
-
-sub show_logfiles {
-    my ($self, $vars) = @_;
-#    $vars->{loglist} = [$self->_get_logs()];
-#    $vars->{lines} = $self->{lines};
-#    return TPL_LOGFILE;
-    return undef;
+	$last = DEFAULT_LAST_VALUE
+		unless defined $last;
+	croak "'last' must be an integer"
+		unless int $last;
+	$tpl_vars->{last} = $last;
+	
+	$tpl_vars->{users} = [ sort { $a->{user} cmp $b->{user} }
+		@{$s->get_users($last)} ];
+	$tpl_vars->{user} = $user;
+	
+	return $TPL_MAIN;
 }
 
 sub get_data_queries {

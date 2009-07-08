@@ -1,0 +1,327 @@
+msgid ""
+msgstr ""
+
+## main.tpl
+msgid "Searchdaimon search"
+msgstr "Searchdaimon search"
+
+
+## results.tpl
+
+msgid "n hits"
+msgstr "%quant(%1, hit, hits)"
+
+msgid "no hits"
+msgstr "no hits"
+
+msgid "relv"
+msgstr "Relevance"
+
+msgid "oldest"
+msgstr "Oldest first"
+
+msgid "newest"
+msgstr "Newest first"
+
+msgid "Did you mean: s?"
+msgstr "Did you mean: <a href=\"%2\">%1</a>?"
+
+msgid "Found no results for query \"s\"."
+msgstr "Found no results for query \"%1\"."
+
+msgid "cache"
+msgstr "cache"
+
+msgid "Search"
+msgstr "Search"
+
+msgid "All collections"
+msgstr "All collections"
+
+msgid "All results"
+msgstr "All results"
+
+msgid "(filtered_msg)"
+msgstr "%quant(%1, of the expected results was, of the expected results were) filtered out by the system. This can happen if the resource has been moved, deleted or the rights have been change after the most recent indexing."
+
+# page nav
+msgid "Next"
+msgstr "Next"
+
+msgid "Prev"
+msgstr "Prev"
+
+
+
+## cache.tpl
+msgid "(cacheinfo)"
+msgstr "This is the local copy of the document, as stored on the search system at this moment."
+
+
+## Navigation
+# Attribute description
+msgid "SharePoint"
+msgstr "SharePoint"
+
+msgid "File Type"
+msgstr "File Type"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Information Type"
+msgstr "Information Type"
+
+msgid "Appointment"
+msgstr "Appointment"
+
+msgid "Selection"
+msgstr "Selection"
+
+msgid "Person"
+msgstr "Person"
+
+msgid "Customer"
+msgstr "Customer"
+
+msgid "SuperOffice"
+msgstr "SuperOffice"
+
+msgid "Project"
+msgstr "Project"
+
+msgid "Sale"
+msgstr "Sale"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Today"
+msgstr "Today"
+
+msgid "Yesterday"
+msgstr "Yesterday"
+
+msgid "Last 7 days"
+msgstr "Last 7 days"
+
+msgid "Last 30 days"
+msgstr "Last 30 days"
+
+msgid "This year"
+msgstr "This year"
+
+msgid "Last year"
+msgstr "Last year"
+
+msgid "Older than two years"
+msgstr "Older than two years"
+
+# File extensions
+msgid "Other"
+msgstr "Other"
+
+msgid "Word"
+msgstr "Word"
+
+msgid "Word"
+msgstr "Word"
+
+msgid "Word"
+msgstr "Word"
+
+msgid "Word"
+msgstr "Word"
+
+msgid "Word"
+msgstr "Word"
+
+msgid "Document"
+msgstr "Document"
+
+msgid "Document Template"
+msgstr "Document Template"
+
+msgid "Document"
+msgstr "Document"
+
+msgid "Document Template"
+msgstr "Document Template"
+
+msgid "Macro-enabled Document"
+msgstr "Macro-enabled Document"
+
+msgid "Macro-enabled Document Template"
+msgstr "Macro-enabled Document Template"
+
+msgid "Rich Text Format"
+msgstr "Rich Text Format"
+
+msgid "PowerPoint"
+msgstr "PowerPoint"
+
+msgid "Slide Show"
+msgstr "Slide Show"
+
+msgid "Presentation"
+msgstr "Presentation"
+
+msgid "Presentation Template"
+msgstr "Presentation Template"
+
+msgid "Presentation"
+msgstr "Presentation"
+
+msgid "Macro-enabled Presentation"
+msgstr "Macro-enabled Presentation"
+
+msgid "Presentation Template"
+msgstr "Presentation Template"
+
+msgid "Macro-enabled Presentation Template"
+msgstr "Macro-enabled Presentation Template"
+
+msgid "Macro-enabled Add-in"
+msgstr "Macro-enabled Add-in"
+
+msgid "Slide Show"
+msgstr "Slide Show"
+
+msgid "Macro-enabled Slide Show"
+msgstr "Macro-enabled Slide Show"
+
+msgid "Excel"
+msgstr "Excel"
+
+msgid "Workbook"
+msgstr "Workbook"
+
+msgid "Template"
+msgstr "Template"
+
+msgid "Workbook"
+msgstr "Workbook"
+
+msgid "Macro-enabled Workbook"
+msgstr "Macro-enabled Workbook"
+
+msgid "Template"
+msgstr "Template"
+
+msgid "Macro-enabled Workbook Template"
+msgstr "Macro-enabled Workbook Template"
+
+msgid "Binary Workbook"
+msgstr "Binary Workbook"
+
+msgid "Macro-enabled Add-in"
+msgstr "Macro-enabled Add-in"
+
+msgid "OpenOffice"
+msgstr "OpenOffice"
+
+msgid "Presentation"
+msgstr "Presentation"
+
+msgid "Presentation Template"
+msgstr "Presentation Template"
+
+msgid "Spreadsheet"
+msgstr "Spreadsheet"
+
+msgid "Spreadsheet Template"
+msgstr "Spreadsheet Template"
+
+msgid "Document"
+msgstr "Document"
+
+msgid "Document Template"
+msgstr "Document Template"
+
+msgid "StarOffice Document"
+msgstr "StarOffice Document"
+
+msgid "Adobe PDF"
+msgstr "Adobe PDF"
+
+msgid "Document"
+msgstr "Document"
+
+msgid "AbiWord"
+msgstr "AbiWord"
+
+msgid "Document"
+msgstr "Document"
+
+msgid "Word Perfect"
+msgstr "Word Perfect"
+
+msgid "Document"
+msgstr "Document"
+
+msgid "E-mail"
+msgstr "E-mail"
+
+msgid "E-mail (eml)"
+msgstr "E-mail (eml)"
+
+msgid "E-mail (msg)"
+msgstr "E-mail (msg)"
+
+msgid "Webpage"
+msgstr "Webpage"
+
+msgid "HTML Document"
+msgstr "HTML Document"
+
+msgid "Notepad"
+msgstr "Notepad"
+
+msgid "Text Document"
+msgstr "Text Document"
+
+msgid "Image"
+msgstr "Image"
+
+msgid "JPEG Image"
+msgstr "JPEG Image"
+
+msgid "PNG Image"
+msgstr "PNG Image"
+
+msgid "Photoshop"
+msgstr "Photoshop"
+
+msgid "GIF Image"
+msgstr "GIF Image"
+
+msgid "Adobe TIFF Image"
+msgstr "Adobe TIFF Image"
+
+msgid "BMP Image"
+msgstr "BMP Image"
+
+msgid "Encapsulated PostScript"
+msgstr "Encapsulated PostScript"
+
+msgid "Adobe Illustrator"
+msgstr "Adobe Illustrator"
+
+msgid "Audio"
+msgstr "Audio"
+
+msgid "MP3 Audio"
+msgstr "MP3 Audio"
+
+msgid "AutoCAD"
+msgstr "AutoCAD"
+
+msgid "Archive"
+msgstr "Archive"
+
+msgid "ZIP Archive"
+msgstr "ZIP Archive"
+
+msgid "Application data"
+msgstr "Application data"
+

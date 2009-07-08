@@ -12,9 +12,8 @@
 <div>
 <form method="post" action="scan.cgi">
 
-<h3>Scanning behaviour</h3>
 [% i = 0 %]
-[% WRAPPER 'template_table.html'
+[% WRAPPER 'template_table.html' style="width : 100%;"
 	header = ['', 'Connector', 'Range'] %]
 	[% color = 1 %]
 	[% WRAPPER 'template_table_row.html' %]

@@ -9,6 +9,7 @@ BEGIN {
 }
 use SD::Settings::Export;
 use SD::Settings::Import;
+use SD::SLicense qw(license_info $DB_LICENSE_FIELD);
 use Sql::Config;
 use Sql::Shares;
 use Sql::ShareGroups;
@@ -58,16 +59,22 @@ sub update_settings {
 	return $vars;
 }
 
+sub update_license {
+	my ($s, $vars, $license) = @_;
+	$s->{sqlConfig}->update_setting($DB_LICENSE_FIELD, $license);
+	$vars->{upd_license_success} = 1;
+	return $s->show_main_settings($vars);
+}
 
 sub confirmed_delete_settings($$) {
 	my ($self, $vars) = @_;
 	my $template_file = 'settings_delete_done.html';
-	return ($vars, $template_file);
+	return $template_file;
 }
 
 sub show_confirm_dialog($$) {
 	my ($self, $vars) = @_;
-	return ($vars, "settings_delete_all.html");
+	return "settings_delete_all.html";
 }
 
 sub show_advanced_settings($$) {
@@ -85,7 +92,7 @@ sub show_advanced_settings($$) {
         $vars->{all_settings} = \%settings;
         $vars->{default_settings} = \@default;
 
-	return ($vars, TPL_ADVANCED);
+	return TPL_ADVANCED;
 }
 
 sub show_advanced_settings_updated($$) {
@@ -141,15 +148,28 @@ sub _get_import_file {
 
 
 
-sub show_main_settings($$) {
+sub show_main_settings {
 	my ($self, $vars) = @_;
 	my $template_file = "settings_main.html";
 	my $sqlConfig = $self->{'sqlConfig'};
 	$vars->{'dist_preference'}
 		= $sqlConfig->get_setting("dist_preference");
 
+	my $l = $sqlConfig->get_setting($DB_LICENSE_FIELD);
+	my %license = license_info($l, $CONFIG{slicense_info_path});
+	$license{key} = $l;
+	$vars->{license} = \%license;
 
-	return ($vars, $template_file);
+
+
+	return $template_file;
+}
+
+sub api_check_license {
+	my ($s, $api_vars, $license) = @_;
+	my %nfo = license_info($license, $CONFIG{slicense_info_path});
+	$api_vars->{valid} = $nfo{valid};
+	1;
 }
 
 sub select_dist_version {

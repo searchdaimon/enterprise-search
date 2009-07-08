@@ -14,6 +14,7 @@ use Sql::ShareUsers;
 use Sql::Config;
 use Sql::ShareResults;
 use Sql::SessionData;
+use Sql::System;
 use Data::Collection;
 use Page::Abstract;
 BEGIN {
@@ -84,12 +85,25 @@ sub crawl_collection {
 
 sub show { shift->list_collections(@_) }
 sub list_collections {
-	my ($s, $vars) = @_;
+	my ($s, $vars, $from_setup) = @_;
 	$vars->{connectors} 
             = [ $s->gen_collection_list() ];
 
+	$s->_post_setup_check($vars)
+		if $from_setup;
 
         TPL_DEFAULT;
+}
+
+sub _post_setup_check {
+	my ($s, $vars) = @_;
+
+	# warn if integration failed.
+	my $sys = Sql::System->new($s->{dbh});
+	return if $s->{infoQuery}->countUsers($sys->primary_id) != -1;
+	
+	$vars->{error_usersys}{msg} = $s->{infoQuery}->error;
+	$vars->{error_usersys}{sys_id} = $sys->primary_id;
 }
 
 

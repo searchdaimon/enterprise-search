@@ -1,0 +1,237 @@
+[% WRAPPER 'header.html' title = 'Manage synonyms' extra_js=['jquery', 'utils', 'dump', 'effects.core', 'effects.highlight'] use_extjs = 1 %]
+<script type="text/javascript">
+//<![CDATA[
+NEW_GROUP = -1;
+
+ALL_LANGUAGES = [
+	[% FOREACH l IN languages %]
+		["[% l.0 %]", "[% l.1 %]" ][% "," UNLESS loop.last %]
+	[% END %]
+];
+
+
+function synAjaxParams(overrideParams) {
+	var defaults = defaultJQueryParams();
+	var errFunc = function(str) {
+		//console.log(str);
+	};
+	var succsFunc = function(str) {
+		//console.log(str);
+	};
+
+	defaults['error'] = function(data) {
+		errFunc("Internal error, or no connection. Changes not saved.");
+	};
+	defaults['success'] = function(data) {
+		if (data['error']) {
+			overrideParams['error'] 
+				? overrideParams['error'](data) 
+				: errFunc(data['error']);
+			return;
+		}
+		overrideParams['success'] 
+			? overrideParams['success'](data)
+			: succsFunc(data['ok']);
+	};
+	defaults['beforeSend'] = function() { $("#loading").show(); }
+	defaults['complete'] = function() { $("#loading").hide(); }
+	defaults['url'] = "synonym.cgi";
+
+
+	$.each(overrideParams, function(key, val) {
+		if (key != "success")
+			defaults[key] = val;
+	});
+	return defaults;
+}
+
+
+
+
+Ext.onReady(function(){
+	Ext.QuickTips.init();
+	var fm = Ext.form;
+
+	var cm = new Ext.grid.ColumnModel([{
+			id : 'synonymlist',
+			header : "Synonym List",
+			dataIndex : 'list',
+			width : 400,
+			editor : new fm.TextField({ allowBlank : false })
+		},
+		{
+			id : 'language',
+			header : "Language",
+			dataIndex : 'language',
+			width : 100,
+			editor: new Ext.form.ComboBox({
+				store : ALL_LANGUAGES,
+				typeAhead: true,
+				triggerAction: 'all',
+				lazyRender:true,
+				listClass: 'x-combo-list-small',
+				allowBlank : false,
+				displayField : "field2"
+			})
+		}
+	]);
+
+	cm.defaultSortable = true;
+
+	var Synlist = Ext.data.Record.create([
+		{ name : 'list' },
+		{ name : 'language' },
+		{ name : 'group' }
+	]);
+
+    	var store = new Ext.data.Store({
+        	url: 'synonym.cgi?api=list',
+        	reader: new Ext.data.JsonReader({
+			root: 'list',
+	  		id : 'group'
+           	}, Synlist),
+        	sortInfo : { field : 'list', direction:'ASC' }
+	});
+
+
+	var allwaysEmptyRow = function() {
+		var count = store.getCount();
+		var lastRecord = store.getAt(count - 1);
+		if (lastRecord.get('group') != NEW_GROUP)
+			store.insert(count, new Synlist({ group : NEW_GROUP, language : "_all"  }));
+	};
+
+	var gridToolbar = new Ext.Toolbar();
+	gridToolbar.addButton({
+		text : "Add new synonyms",
+		handler : function() { 
+			// There should always be a new row at
+			// the bottom - so just go to that one.
+			grid.stopEditing();
+			grid.startEditing(store.getCount() - 1, 0);
+		}
+	});
+	gridToolbar.addButton({
+		text : "Delete selected",
+		handler : function() {
+			var selModel = grid.getSelectionModel();
+			if (!selModel.hasSelection()) {
+				//TODO: warn when nothing is selected
+				return;
+			}
+			var pos = selModel.getSelectedCell();
+			var x = pos[0];
+			store.removeAt(x); // [0] has x-position
+			grid.stopEditing();
+			x == 0  ? grid.startEditing(0, 0)
+				: grid.startEditing(x - 1, 0);
+		}
+	});
+
+	var grid = new Ext.grid.EditorGridPanel({
+
+		store : store,
+		cm : cm,
+		renderTo : 'synonymGrid',
+		width : 700,
+		height : 400,
+		autoExpandColumn : 'synonymlist',
+		frame : true,
+		clicksToEdit : 1,
+		tbar : gridToolbar
+	});
+
+	store.addListener('update', function(store, record, operation) {
+		var g = record.get('group');
+		if (g == NEW_GROUP) {
+			synlistAdd({
+				language : record.get('language'),
+				list : record.get('list')
+			}, function(data) {
+				// Call returns an group ID on success.
+				// Update the record with it.
+				record.set('group', data['group']);
+				allwaysEmptyRow();
+			});
+		}
+		else {
+			synlistUpdate({
+				group : g,
+				language : record.get('language'),
+				list : record.get('list')
+			});
+		}
+	});
+	store.addListener('remove', function(store, record, index) {
+		synlistDel(record.get('group'));
+	});
+	store.addListener('load', function() {
+		$("#loading").hide();
+	});
+
+	store.addListener('load', allwaysEmptyRow);
+	store.addListener('update', allwaysEmptyRow);
+	store.addListener('remove', allwaysEmptyRow);
+
+	store.load();
+});
+
+
+function synlistUpdate(data) {
+	data['api'] = "update";
+	if (data['list'].join) {
+		// Sent as an array in some cases,
+		// others as string.. joining if not str
+		data['list'] = data['list'].join(",");
+	}
+	$.ajax(synAjaxParams({
+		data : data,
+		success : function() { updApiMsg(API_IS_SAVED); },
+		error : function() { updApiMsg(API_ERR_SAVING); }
+	}));
+}
+
+function synlistAdd(data, succsFunc) {
+	data['api'] = "add";
+	$.ajax(synAjaxParams({
+		data : data,
+		success : function(data) { succsFunc(data); updApiMsg(API_IS_SAVED); },
+		error : function() { updApiMsg(API_ERR_SAVING); }
+
+	}));
+}
+
+function synlistDel(group) {
+	if (group == NEW_GROUP)
+		return;
+	$.ajax(synAjaxParams({
+		data : { 
+			group : group ,
+			api : "delete"
+		},
+		success : function() { updApiMsg(API_IS_SAVED); },
+		error : function() { updApiMsg(API_ERR_SAVING); }
+	}));
+}
+
+//]]>
+</script>
+[% END %]
+
+<div id="apiMsg" style="float : right; margin-right : 2em;">
+   	<img src="file.cgi?i=jqueryloader&amp;ext=gif&amp;size=other" alt="loading" id="loading" />
+	<span></span>
+</div>
+<div>
+<h1 style="">Edit synonym list</h1>
+</div>
+<div id="synonymGrid"></div>
+
+
+
+
+[% USE Dumper %]
+[% USE HTML %]
+
+
+[% INCLUDE 'footer.html' %]

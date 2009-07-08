@@ -1,18 +1,22 @@
 package Page::UserSys::Form;
 use strict;
 use warnings;
-use Data::UserSys;
-use Sql::Shares;
 
 use Data::Dumper;
 use Readonly;
 use Carp;
+use Params::Validate qw(validate_pos);
+
+BEGIN { push @INC, $ENV{BOITHOHOME}, "/Modules" }
+
+use Sql::Shares;
+use Data::UserSys;
+use Boitho::Infoquery;
+use config qw(%CONFIG);
+
 use Page::UserSys;
 our @ISA = qw(Page::UserSys);
 
-use config qw(%CONFIG);
-
-use Params::Validate qw(validate_pos);
 
 Readonly::Scalar my $TPL_LIST    => 'usersys_main.html';
 Readonly::Scalar my $TPL_MAPPING => 'usersys_mapping.html';
@@ -27,12 +31,20 @@ Readonly::Scalar my $CLEAN_ERRMSG_REGEX => qr{at .*? line \d+$};
 sub _init {
 	my $s = shift;
 	$s->{sql_param} = Sql::SystemParam->new($s->{dbh});
+	$s->{iq} = Boitho::Infoquery->new($CONFIG{infoquery});
 	$s->SUPER::_init(@_);
 }
 
 sub show {
 	my ($s, $vars) = @_;
-	$vars->{systems} = [$s->{sql_sys}->list()];
+	my $iq = $s->{iq};
+
+	$vars->{systems} = [ map {
+		$_->{user_count} = $iq->countUsers($_->{id});
+		$_->{user_count_error} = $iq->error
+			if $_->{user_count} == -1;
+		$_;
+	} $s->{sql_sys}->list() ];
 	
 	$TPL_LIST;
 }
@@ -118,34 +130,14 @@ sub show_mapping {
 	$TPL_MAPPING;
 }
 
-sub _del_error {
-	my ($s, $sys_id) = @_;
-	return "User system does not exist"
-		unless $s->{sql_sys}->exists({id => $sys_id});
-
-	my $prim = $s->{sql_sys}->primary_id;
-
-	return "Can't delete primary user system"
-		if $sys_id == $prim;
-
-	my $shares = Sql::Shares->new($s->{dbh});
-	my @coll = $shares->get({ system => $sys_id }, 'collection_name');
-	if (@coll) {
-		return "Can't delete user system. User system is in use by '" 
-			. join(", ", map { $_->{collection_name} } @coll)
-			. "'";
-	}
-
-	return;
-}
 
 sub show_del {
 	my ($s, $vars, $sys_id) = @_;
 
-	if (my $err = $s->_del_error($sys_id)) {
-		$vars->{error} = $err;
-		return $s->show($vars);
-	}
+#	if (my $err = $s->_del_error($sys_id)) {
+#		$vars->{error} = $err;
+#		return $s->show($vars);
+#	}
 
 	my $name = $s->{sql_sys}->get({ 
 		id => $sys_id 
@@ -164,15 +156,18 @@ sub del {
 	croak "The operation must be a POST request to work."
 		unless $ENV{REQUEST_METHOD} eq 'POST';
 
-	if (my $err = $s->_del_error($sys_id)) {
-		$vars->{error} = $err;
-		return $s->show($vars);
-	}
 
 	# Del system w/ params
 	my $sys = Data::UserSys->new($s->{dbh}, $sys_id);
 	my $name = $sys->get('name');
-	$sys->del();
+	eval {
+		$sys->restrictive_del();
+	};
+	if ($@) {
+		$vars->{error} = $@;
+		$vars->{error} =~ s/$CLEAN_ERRMSG_REGEX//;
+		return $s->show($vars);
+	}
 
 	# Delete mapping
 	$s->{sql_mapping}->delete({ system => $s->{sys}{id} });
@@ -198,7 +193,14 @@ sub upd_usersys {
 		return $s->show_edit($vars, $sys_id, $sys_attr);
 	}
 	
-	$vars->{ok} = "System updated.";
+	my $users = $s->{iq}->countUsers($sys->get('id'));
+	if ($users == -1) {
+		$vars->{error} = "System updated, but unable to contact system. "
+			. $s->{iq}->error;
+	}
+	else {
+		$vars->{ok} = "System updated. System has $users users.";
+	}
 	return $s->show_edit($vars, $sys_id);
 }
 
@@ -206,15 +208,24 @@ sub upd_usersys {
 
 sub add {
 	my ($s, $vars, $sys_ref) = @_;
+	my $users;
+	my $sys;
 	eval {
-		my $sys = Data::UserSys->create($s->{dbh}, %{$sys_ref});
+		$sys = Data::UserSys->create($s->{dbh}, %{$sys_ref});
+		$users = $s->{iq}->countUsers($sys->get('id'));
+		croak "Unable to connect to user system. " . $s->{iq}->error
+			if $users == -1;
 	};
 	if ($@) {
 		$vars->{error} = $@;
 		$vars->{error} =~ s/$CLEAN_ERRMSG_REGEX//;
+		eval { $sys->del() if defined $sys }; 
+		if ($@) {
+			warn "Error while cleaning up after adding invalid system: " . $@;
+		}
 		return $s->show_add($vars, $ADD_PART_2, $sys_ref);
 	}
-	$vars->{ok} = "System created.";
+	$vars->{ok} = "System created. System has $users users.";
 	return $s->show($vars);
 }
 

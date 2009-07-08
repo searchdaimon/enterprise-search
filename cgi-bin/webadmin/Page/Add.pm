@@ -9,12 +9,14 @@ use Sql::ShareGroups;
 use Sql::ShareUsers;
 use Sql::ScanResults;
 use Sql::Param;
-#use Modules::Boitho::Infoquery;
 use Boitho::Infoquery;
+BEGIN { push @INC, $ENV{BOITHOHOME} . "/Modules" }
+
 use Data::Dumper;
 use Common::Collection;
 use Data::Collection;
 use Carp;
+
 use config qw($CONFIG);
 our @ISA = qw(Page::Abstract);
 
@@ -48,6 +50,14 @@ sub add_share {
         $coll->set_auth($share{username}, $share{password});
     }
     $coll->create();
+
+	# Start crawling the collection
+	{
+		my $iq = new Boitho::Infoquery($CONFIG->{infoquery});
+		$iq->crawlCollection($attr{collection_name})
+			or carp $iq->error;
+	}
+    
 }
 
 # Print the html for the first form used when adding a share.

@@ -1,6 +1,7 @@
 [% INCLUDE 'header.html' title = 'User systems' %]
 [% PROCESS 'common_widgets.html' %]
 [% USE Dumper %]
+[% USE HTML %]
 
 
 <h1>User system integration</h1>
@@ -34,11 +35,11 @@
 
 [% BLOCK system_table %]
 	[% WRAPPER 'template_table.html' class="hovering"
-		header = ['', 'System', 'Type', '' ] style='width : 80%' %]
+		header = ['', 'System', 'Type', 'Users', '' ] style='width : 80%' %]
 
 		[% SET color = 0 %]
 		[% FOREACH s IN systems %]
-			[% WRAPPER 'template_table_row.html' %]
+			[% WRAPPER 'template_table_row.html' error = s.user_count_error %]
 				[% PROCESS list_row
 					system = s %]
 			[% END %]
@@ -53,6 +54,7 @@
 	<td style="width : 40px;"><img src="file.cgi?i=agt_family" alt="" /></td>
 	<td>[% system.name | html %]</td>
 	<td>[% user_systems.$conn | html %]</td>
+	<td>[% HTML.escape(system.user_count_error) || system.user_count %]</td>
 	<td style="text-align : right;">
         <ul class="vertical_buttons">
 	[% IF system.is_primary %]

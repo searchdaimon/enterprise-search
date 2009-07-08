@@ -17,6 +17,7 @@ Readonly::Scalar my $FILE_LANG => "lang";
 Readonly::Scalar my $FILE_CFG => "cfg";
 
 
+
 sub fetch_file {
 	my ($s, $api_vars, $tpl, $file, $file_type) = @_;
 

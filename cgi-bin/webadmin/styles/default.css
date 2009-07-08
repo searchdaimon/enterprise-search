@@ -1,19 +1,63 @@
 
+/* "reset" from extjs. Need to include this on
+ * all pages if we want to keep consistent look when using extjs */
+
+html, body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, form, fieldset, input, p, blockquote, th, td {
+	margin : 0;
+	padding : 0;
+}
+img, body, html {
+	border : 0;
+}
+address, caption, cite, code, dfn, em, strong, th, var {
+	font-style : normal;
+	font-weight : normal;
+}
+ol, ul {
+	list-style : none;
+}
+caption, th {
+	text-align : left;
+}
+h1, h2, h3, h4, h5, h6 {
+	font-size : 100%;
+}
+q:before, q:after {
+	content : '';
+}
+/* end reset */
+
+/* undo reset... */
+h1 { font-size : 200%; }
+h2 { font-size : 150%; }
+h3 { font-size : 130%; }
+h4 { font-size : 110%; }
+input { margin-top : 0.5em; }
+strong { font-weight : bold; }
+ul { list-style-type : disc; margin-left : 2em; }
+em { font-style : italic; }
+	     
+
+
 /** searchdaimon default light blue: #e7f3fb */
 /** searchdaimon default dark blue: #044a90 */
 /** info color : #dce4f9 */
 
 h1, h2, h3, h4 {
 	color : #044a90;
-	margin-bottom : 0.3em;
+	/* margin-bottom : 0.3em; */
+	font-family : Tahoma;
+	padding-top : 0.5em;
+	padding-bottom : 0.3em;
 }
 
 
 body {
-    font-family : sans-serif;
+	font-family : sans-serif;
 	color : black;
 	background-color : white;
 	font-size : small;
+	padding : 0.5em;
 }
 
 A:link { color : blue; }
@@ -25,7 +69,7 @@ A:active { color : blue; }
 
 #left_menu {
 	position : absolute;
-	font-family : 'sans-serif';
+	font-family : sans-serif;
 	width : 20%;
 	top : 1em;
 }
@@ -34,6 +78,7 @@ A:active { color : blue; }
 	/* background-color : #3779c0;*/
 	color : white;
 	background-color : #044a90;
+	padding : 0.1em;
 }
 
 #left_menu ul {
@@ -50,44 +95,50 @@ A:active { color : blue; }
 	border-color : #d5e9f7;
 	padding : 0.2em;
 	margin-bottom : 0.2em;
-	font-size : small; 
+	/* font-size : x-small;  */
 	/* font-size : x-small; */
 	/* font-weight : bold; */
 }
 
 #left_menu a {
 	color : #333333;
+	margin-left : 0.5em;
 }
+#left_menu a:hover {
+	color : #555555;
+}
+
 
 
 /**
  * Default table style
  */
 table {
-    width : 100%;
+    /*width : 100%;*/
     border-collapse : collapse;
-    border : 1px solid;
-    border-color : silver;
+    /*border : 1px solid;
+    border-color : silver;*/
+    /* font-size : x-small; */
 }
 
 table th {
 	text-align : left;
 	background-color : #f2f2f2 !important;
 	color : black !important;
+	font-weight : bolder;
 }
 
-/* row colors */
 table .odd { background : #D3DBEF; }
 table .selected { 
-	/*background : #4473c4;
-	color : white;*/
-
     background : #044a90;
     color : white;
 }
 table .disabled {
 	background : #F0F0F0;
 	color : gray;
+}
+table .error {
+	background : #ffcfcf;
 }
 
 .hovering tr:hover {
@@ -146,7 +197,7 @@ table .disabled {
     padding-top : 0.2em;
     padding-bottom : 0.2em;
     background-color : #E7E7F7;
-	font-size : small;
+	/* font-size : small; */
 }
 
 .vertical_buttons {
@@ -186,11 +237,6 @@ table .disabled {
 .block_resource { width : 25em; }
  
 
-#settings #version_list {
-	list-style-type : none;
-	margin : 0 0 1em 1em;
-	padding : 0;
-}
 
 /* Message boxes */
 .msgBox table { 
@@ -256,6 +302,9 @@ table .disabled {
 .connector_block .connector_block_inner {
 	margin-left : 70px;
 	min-height : 60px;
+}
+.connector_block_inner {
+	margin-top : 0.5em;
 }
 
 .example {
@@ -385,3 +434,25 @@ table .disabled {
 .defaultForm table { 
 	border : 0 
 } 
+
+.hintSuccess, .hintFail {
+	display : none;
+	padding : 0.5em; 
+	border : 1px solid #f1f1f1;
+	padding-left : 24px;
+	font-size : x-small;
+	
+}
+
+.hintSuccess {
+	background : #f0fee9;
+	background-image : url("file.cgi?i=agt_action_success&amp;size=16x16");
+	background-repeat : no-repeat;
+	background-position : 0.3em;
+}
+.hintFail { 
+	background : #ffcfcf;
+	background-image : url("file.cgi?i=agt_action_fail&amp;size=16x16");
+	background-repeat : no-repeat;
+	background-position : 0.3em;
+}

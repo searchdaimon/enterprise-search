@@ -4,12 +4,15 @@ use warnings;
 use Carp;
 use Data::Dumper;
 use Page::Logs;
+use Page::Logs::Statistics;
 use Benchmark qw(:all :hireswallclock);
+
 
 my $vars = { };
 
 my $tpl_file = undef;
 my $logs = Page::Logs->new();
+my $pageStat = Page::Logs::Statistics->new();
 my %state = $logs->get_state();
 
 
@@ -20,6 +23,10 @@ if (defined($state{view})) {
 		# User is viewing search log
 		($vars, $tpl_file) = $logs->show_search_log($vars);
 	}
+	elsif ($view eq 'statistics') {
+		$tpl_file = $pageStat->show($vars, $state{last}, $state{user});
+	}
+	else { croak "unknown view '$view'" }
 }
 
 if ($state{'log'}) {

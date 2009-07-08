@@ -1,4 +1,64 @@
-[% INCLUDE 'header.html' title="Settings" %]
+[% WRAPPER 'header.html' title="Settings" extra_js=[ 'jquery', 'utils', 'effects.core', 'effects.highlight' ] %]
+
+<script type="text/javascript">
+//<![CDATA[
+
+LICENSE_LENGTH = 25;
+
+$(document).ready(function() {
+
+	$("#revertHref").click(function() {
+		$("#revertInfo").toggle(200);
+		
+	});
+
+	$("#licenseKey").keypress(function() { 
+			$("#hintSuccess").hide();
+			$("#hintFail").hide();
+			$("#validHref").show();
+	});
+	$("#validHref").click(function() {
+		checkValidLicense($("#licenseKey").attr('value'));
+	})
+});
+
+function setLicense(license) {
+	$("#licenseKey").attr('value', license);
+	$("#licenseKey").effect("highlight", { }, 2000);
+	checkValidLicense(license);
+
+}
+
+function checkValidLicense(license) {
+	var params = defaultJQueryParams();
+	params['data'] = {
+		license : license,
+		api : "check_license"
+	};
+	params['url'] = "settings.cgi";
+	params['success'] = function(data) {
+		$("#validHref").hide();
+		data['valid']
+			? $("#hintSuccess").css('display', 'inline')
+			: $("#hintFail").css('display', 'inline');
+	};
+	params['error'] = function(data) {
+		console.log(data);
+	}
+	params['beforeSend'] = function() {
+		$("#hintSuccess").hide();
+		$("#hintFail").hide();
+		$("#loading").show();
+	}
+	params['complete'] = function() {
+		$("#loading").hide();
+	}
+	$.ajax(params);
+}
+
+//]]>
+</script>
+[% END %]
 [% PROCESS 'settings_tabs.html' selected="Main settings" %]
 
 [% versions = [
@@ -16,9 +76,55 @@
 	}
 ] %]
 
-<div id="settings">
+<div>
+	<h2>License</h2>
+	[% IF upd_license_success %]
+		[% WRAPPER 'template_message.html' type='success' %]
+			License updated.
+		[% END %]
+	[% END %]
+
+	[% IF !license.valid %]
+		[% INCLUDE 'tpl_msg.html' discreet = 1 type="warning"
+			content = "This installation has no license, or 
+			 an invalid license. Search will not work for any users." 
+		%]
+	[% ELSE %]
+		<p>Your current license covers [% license.users %] users.</p>
+	[% END %]
+		<p>
+			<form method="post" action="settings.cgi">
+			<div style="display : inline;">
+				License: <input id="licenseKey" type="text" value="[% license.key %]" name="license_key" size="35"/> <input type="submit" value="Update" name="submit.update_license" />
+			</div>
+   			<div style="display : inline; margin-left : 0.5em;">
+				<img src="file.cgi?i=jqueryloader&amp;ext=gif&amp;size=other" alt="loading" id="loading" style="width : 16px; height : 16px; display : none;" />
+				
+				<div class="hintSuccess" id="hintSuccess">
+					License is valid.
+				</div>
+				<div class="hintFail" id="hintFail">
+					License is not valid.
+				</div>
+					<a href="#" id="validHref" style="font-size : x-small; color : #333333;" title="Check if entered license is valid before updating.">Check if valid</a>
+			</div>
+		
+			</form>
+		</p>
+		<p style="margin-top : 0.5em;">
+			<a id="revertHref" href="#" style="color : #333333;">Revert to the basic license?</a>
+		</p>
+		<p style="margin-top : 0.5em; background : #f1f1f1; padding : 0.5em; display : none;" id="revertInfo">
+			You can revert to the basic 10 user license by using the license key 
+			<em><a onclick="setLicense('RRYAYACZACJAB6RLANAQ8K4G');" href="#" style="color : #333333;">RRYAYACZACJAB6RLANAQ8K4G</a></em>.
+		</p>
+
+
+</div>
+
+<div>
 	
-	<h3>Select version</h3>
+	<h2>Select version</h2>
 	
 	[% IF dist_succs.defined %]
 		[% WRAPPER 'template_message.html' type='success' %]
@@ -51,7 +157,7 @@
 	[% END %]
 	
 	<form action="settings.cgi" method="post">
-	<ul id="version_list">
+	<ul style="list-style-type : none;">
 
 		[% FOREACH versions %]
 
@@ -70,7 +176,7 @@
 </div>
 
 <div id="settings">
-    <h3>Administration account password</h3>
+    <h2>Administration account password</h2>
 
     [% IF pass_updated %]
         [% WRAPPER 'template_message.html' type="success" %]
@@ -102,23 +208,5 @@
     </form>
 
 </div>
-
-<!--
-<div id="settings">
-
-        <h3>Update manualy</h3>
-		[% WRAPPER 'template_message.html'
-			type='info' %]
-			Look for updates manualy.
-
-		[% END %]
-	<form action="update.cgi" method="get">
-
-	<input type="submit" name="update_now" value="Update" />
-
-	</form>
-
-</div>
--->
 
 [% INCLUDE 'footer.html' %]

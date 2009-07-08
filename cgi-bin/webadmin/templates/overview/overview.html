@@ -1,4 +1,5 @@
 [% PROCESS 'overview_common.html' %]
+[% PROCESS 'common_widgets.html' %]
 
 [% IF show_only_inner %]
 	[% ##
@@ -13,13 +14,32 @@
 	
 	[% INCLUDE 'header.html' 
 		title = 'Collections overview'
-		extra_js = ['overview_update']
+		extra_js = ['jquery', 'overview_update']
 		onload = 'overview_update_interval(3)'
 	%]
 
 	[% PROCESS overview_messages.html %]
+
+	[% IF error_usersys %]
+		[% WRAPPER 'tpl_msg.html' type="error" %]
+			Unable to connect to the user system. <br />
+			[% error_usersys.error | html %]<br />
+			Please fix the <a href="usersys.cgi?view=edit&id=[% error_usersys.sys_id %]">user system setup</a>.
+		[% END %]
+	[% END %]
 	
-	<h2>Collections</h2>
+	<h1>Collections</h1>
+	     [% PROCESS pretty_button 
+		icon = "edit_add"
+		action = "add.cgi"
+                text = "Create a new collection"
+		#act  = "new"
+		method = "post"
+                name = "btn.new"  %]
+
+
+	
+
 	<form action="overview.cgi" method="post">
 	<div id="overview">
 	[% PROCESS list_connectors %]

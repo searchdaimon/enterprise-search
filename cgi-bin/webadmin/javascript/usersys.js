@@ -1,8 +1,3 @@
-var API_IS_WORKING = 1;
-var API_IS_SAVED   = 2;
-var API_ERR_SAVING = 3;
-var API_CLEAR      = 4;
-
 var UNMAPPED_LIMIT = 500;
 var MAPPED_LIMIT   = 30;
 
@@ -466,38 +461,5 @@ function userRowHTML(sys_type, user, attr_for_animation) {
 function colorMapList() { colorTable('mapList'); }
 
 
-var last_api_save = null;
-function updApiMsg(state) {
-	var msg = null;
-	var show_anim = false;
-
-	switch (state) {
-	case API_IS_WORKING:
-		show_anim = true;
-		msg = "Working...";
-		break;
-	case API_IS_SAVED:
-		last_api_save = new Date();
-		msg = "Updated at " + last_api_save.toLocaleTimeString() + ".";
-		break;
-	case API_ERR_SAVING:
-		msg = "<strong>Error</strong>.<br /> ";
-		if (last_api_save) {
-		 	msg += "Last updated at "
-			    + last_api_save.toLocaleString() + ".";
-		}
-		break;
-	case API_CLEAR:
-		msg = "";
-		break;
-	default:
-		msg = "Unknown state " + state;
-	}
-
-	var anim = $("#loading");
-	show_anim ? $(anim).show() : $(anim).hide();
-	
-	$("#apiMsg span").html(msg);
-}
 
 

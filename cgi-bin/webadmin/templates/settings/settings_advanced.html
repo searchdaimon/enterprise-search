@@ -18,7 +18,7 @@
 	Alter the default settings.
 [% END %]
 <form action="settings.cgi" method="post">
-[% WRAPPER 'template_table.html' 
+[% WRAPPER 'template_table.html'  style="width : 100%;"
 	header = ['Setting', 'Value'] %]
 	[% FOREACH default_settings %]
 	[% color = 1 - color %]
@@ -45,7 +45,7 @@
 [% END %]
 
 <form action="settings.cgi" method="post">
-[% WRAPPER 'template_table.html' 
+[% WRAPPER 'template_table.html'  style="width : 100%;"
 	header = ['Setting','Value'] %]
 
 	[% FOREACH key IN all_settings.keys.sort %]

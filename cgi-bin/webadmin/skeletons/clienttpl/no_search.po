@@ -1,0 +1,1201 @@
+msgid ""
+msgstr ""
+
+## main.tpl
+msgid "Searchdaimon search"
+msgstr "Searchdaimon søk"
+
+
+## results.tpl
+
+msgid "n hits"
+msgstr "%1 treff"
+
+msgid "no hits"
+msgstr "ingen treff"
+
+msgid "relv"
+msgstr "Relevans"
+
+msgid "oldest"
+msgstr "Eldst først"
+
+msgid "newest"
+msgstr "Nyest først"
+
+msgid "Did you mean: s?"
+msgstr "Mente du: <a href=\"%2\">%1</a>?"
+
+msgid "Found no results for query \"s\"."
+msgstr "Fant ingen resultat for søket \"%1\"."
+
+msgid "cache"
+msgstr "bufret side"
+
+msgid "Search"
+msgstr "Søk"
+
+msgid "All collections"
+msgstr "Alle"
+
+msgid "All results"
+msgstr "Alle resultater"
+
+msgid "(filtered_msg)"
+msgstr "%1 av resultatene ble filtrert bort av systemet. Dette kan være fordi ressursen har blitt flyttet, slettet eller endret rettigg heter på etter systemet sist indekserte de."
+
+# page nav
+msgid "Next"
+msgstr "Neste"
+
+msgid "Prev"
+msgstr "Forrige"
+
+
+
+## cache.tpl
+msgid "(cacheinfo)"
+msgstr "Dette er en lokal kopi av dokumentet, slik det er lagret på søkesystemet for øyeblikket."
+
+
+## Navigation
+# Attribute description
+msgid "SharePoint"
+msgstr "SharePoint"
+
+msgid "File Type"
+msgstr "Filtype"
+
+msgid "Date"
+msgstr "Dato"
+
+msgid "Information Type"
+msgstr "Informasjonstype"
+
+msgid "Appointment"
+msgstr "Avtale"    
+
+msgid "Selection"
+msgstr "Seleksjon"
+
+msgid "Person"
+msgstr "Person"
+
+msgid "Customer"
+msgstr "Kunde"  
+
+msgid "Project"
+msgstr "Prosjekt"
+
+msgid "Sale"
+msgstr "Salg"
+
+msgid "Date"
+msgstr "Dato"
+
+msgid "Today"
+msgstr "I dag"
+
+msgid "Today"
+msgstr "I dag"
+
+msgid "Today"
+msgstr "I dag"
+
+msgid "Today"
+msgstr "I dag"
+
+msgid "Today"
+msgstr "I dag"
+
+msgid "Yesterday"
+msgstr "I går"   
+
+msgid "Yesterday"
+msgstr "I går"   
+
+msgid "Yesterday"
+msgstr "I går"   
+
+msgid "Yesterday"
+msgstr "I går"   
+
+msgid "Yesterday"
+msgstr "I går"   
+
+msgid "Last 7 days"
+msgstr "Siste 7 dager"
+
+msgid "Last 30 days"
+msgstr "Siste 30 dager"
+
+msgid "This year"
+msgstr "I år"
+
+msgid "Last year"
+msgstr "Sist år"
+
+msgid "Last year"
+msgstr "Sist år"
+
+msgid "Last year"
+msgstr "Sist år"
+
+msgid "Last year"
+msgstr "Sist år"
+
+msgid "Last year"
+msgstr "Sist år"
+
+msgid "Older than two years"
+msgstr "Eldre enn to år"
+
+msgid "Older than two years"
+msgstr "Eldre enn to år"
+
+msgid "Older than two years"
+msgstr "Eldre enn to år"
+
+
+# File extensions
+msgid "Other"
+msgstr "Annet"
+
+msgid "Other"
+msgstr "Annet"
+
+msgid "Other"
+msgstr "Annet"
+
+msgid "Other"
+msgstr "Annet"
+
+msgid "Other"
+msgstr "Annet"
+
+msgid "Other"
+msgstr "Annet"
+
+msgid "Other"
+msgstr "Annet"
+
+msgid "Other"
+msgstr "Annet"
+
+msgid "Other"
+msgstr "Annet"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document Template"
+msgstr "Utformingsmal"   
+
+msgid "Document Template"
+msgstr "Utformingsmal"   
+
+msgid "Document Template"
+msgstr "Utformingsmal"   
+
+msgid "Document Template"
+msgstr "Utformingsmal"   
+
+msgid "Document Template"
+msgstr "Utformingsmal"   
+
+msgid "Document Template"
+msgstr "Utformingsmal"   
+
+msgid "Document Template"
+msgstr "Utformingsmal"   
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document Template"
+msgstr "Utformingsmal"   
+
+msgid "Document Template"
+msgstr "Utformingsmal"   
+
+msgid "Document Template"
+msgstr "Utformingsmal"   
+
+msgid "Document Template"
+msgstr "Utformingsmal"   
+
+msgid "Document Template"
+msgstr "Utformingsmal"   
+
+msgid "Document Template"
+msgstr "Utformingsmal"   
+
+msgid "Macro-enabled Document"
+msgstr "Makroaktivert dokument"
+
+msgid "Macro-enabled Document"
+msgstr "Makroaktivert dokument"
+
+msgid "Macro-enabled Document"
+msgstr "Makroaktivert dokument"
+
+msgid "Macro-enabled Document"
+msgstr "Makroaktivert dokument"
+
+msgid "Macro-enabled Document"
+msgstr "Makroaktivert dokument"
+
+msgid "Macro-enabled Document"
+msgstr "Makroaktivert dokument"
+
+msgid "Macro-enabled Document Template"
+msgstr "Makroaktivert utformingsmal"   
+
+msgid "Macro-enabled Document Template"
+msgstr "Makroaktivert utformingsmal"   
+
+msgid "Macro-enabled Document Template"
+msgstr "Makroaktivert utformingsmal"   
+
+msgid "Macro-enabled Document Template"
+msgstr "Makroaktivert utformingsmal"   
+
+msgid "Macro-enabled Document Template"
+msgstr "Makroaktivert utformingsmal"   
+
+msgid "Macro-enabled Document Template"
+msgstr "Makroaktivert utformingsmal"   
+
+msgid "Rich Text Format"
+msgstr "Rik tekst-dokument"
+
+msgid "Rich Text Format"
+msgstr "Rik tekst-dokument"
+
+msgid "Rich Text Format"
+msgstr "Rik tekst-dokument"
+
+msgid "Rich Text Format"
+msgstr "Rik tekst-dokument"
+
+msgid "Rich Text Format"
+msgstr "Rik tekst-dokument"
+
+msgid "Rich Text Format"
+msgstr "Rik tekst-dokument"
+
+msgid "Rich Text Format"
+msgstr "Rik tekst-dokument"
+
+msgid "Rich Text Format"
+msgstr "Rik tekst-dokument"
+
+msgid "Slide Show"
+msgstr "Fremvisning"
+
+msgid "Slide Show"
+msgstr "Fremvisning"
+
+msgid "Slide Show"
+msgstr "Fremvisning"
+
+msgid "Slide Show"
+msgstr "Fremvisning"
+
+msgid "Slide Show"
+msgstr "Fremvisning"
+
+msgid "Slide Show"
+msgstr "Fremvisning"
+
+msgid "Slide Show"
+msgstr "Fremvisning"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation Template"
+msgstr "Utformingsmal"       
+
+msgid "Presentation Template"
+msgstr "Utformingsmal"       
+
+msgid "Presentation Template"
+msgstr "Utformingsmal"       
+
+msgid "Presentation Template"
+msgstr "Utformingsmal"       
+
+msgid "Presentation Template"
+msgstr "Utformingsmal"       
+
+msgid "Presentation Template"
+msgstr "Utformingsmal"       
+
+msgid "Presentation Template"
+msgstr "Utformingsmal"       
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Macro-enabled Presentation"
+msgstr "Makroaktivert presentasjon"
+
+msgid "Macro-enabled Presentation"
+msgstr "Makroaktivert presentasjon"
+
+msgid "Macro-enabled Presentation"
+msgstr "Makroaktivert presentasjon"
+
+msgid "Macro-enabled Presentation"
+msgstr "Makroaktivert presentasjon"
+
+msgid "Macro-enabled Presentation"
+msgstr "Makroaktivert presentasjon"
+
+msgid "Macro-enabled Presentation"
+msgstr "Makroaktivert presentasjon"
+
+msgid "Presentation Template"
+msgstr "Utformingsmal"       
+
+msgid "Presentation Template"
+msgstr "Utformingsmal"       
+
+msgid "Presentation Template"
+msgstr "Utformingsmal"       
+
+msgid "Presentation Template"
+msgstr "Utformingsmal"       
+
+msgid "Presentation Template"
+msgstr "Utformingsmal"       
+
+msgid "Presentation Template"
+msgstr "Utformingsmal"       
+
+msgid "Macro-enabled Presentation Template"
+msgstr "Makroaktivert utformingsmal"       
+
+msgid "Macro-enabled Presentation Template"
+msgstr "Makroaktivert utformingsmal"       
+
+msgid "Macro-enabled Presentation Template"
+msgstr "Makroaktivert utformingsmal"       
+
+msgid "Macro-enabled Presentation Template"
+msgstr "Makroaktivert utformingsmal"       
+
+msgid "Macro-enabled Presentation Template"
+msgstr "Makroaktivert utformingsmal"       
+
+msgid "Macro-enabled Presentation Template"
+msgstr "Makroaktivert utformingsmal"       
+
+msgid "Macro-enabled Add-in"
+msgstr "Makroaktivert tillegg"
+
+msgid "Macro-enabled Add-in"
+msgstr "Makroaktivert tillegg"
+
+msgid "Macro-enabled Add-in"
+msgstr "Makroaktivert tillegg"
+
+msgid "Macro-enabled Add-in"
+msgstr "Makroaktivert tillegg"
+
+msgid "Macro-enabled Add-in"
+msgstr "Makroaktivert tillegg"
+
+msgid "Macro-enabled Add-in"
+msgstr "Makroaktivert tillegg"
+
+msgid "Slide Show"
+msgstr "Fremvisning"
+
+msgid "Slide Show"
+msgstr "Fremvisning"
+
+msgid "Slide Show"
+msgstr "Fremvisning"
+
+msgid "Slide Show"
+msgstr "Fremvisning"
+
+msgid "Slide Show"
+msgstr "Fremvisning"
+
+msgid "Slide Show"
+msgstr "Fremvisning"
+
+msgid "Macro-enabled Slide Show"
+msgstr "Makroaktivert fremvisning"
+
+msgid "Macro-enabled Slide Show"
+msgstr "Makroaktivert fremvisning"
+
+msgid "Macro-enabled Slide Show"
+msgstr "Makroaktivert fremvisning"
+
+msgid "Macro-enabled Slide Show"
+msgstr "Makroaktivert fremvisning"
+
+msgid "Macro-enabled Slide Show"
+msgstr "Makroaktivert fremvisning"
+
+msgid "Macro-enabled Slide Show"
+msgstr "Makroaktivert fremvisning"
+
+msgid "Macro-enabled Slide Show"
+msgstr "Makroaktivert fremvisning"
+
+msgid "Macro-enabled Slide Show"
+msgstr "Makroaktivert fremvisning"
+
+msgid "Workbook"
+msgstr "Arbeidsbok"
+
+msgid "Workbook"
+msgstr "Arbeidsbok"
+
+msgid "Workbook"
+msgstr "Arbeidsbok"
+
+msgid "Workbook"
+msgstr "Arbeidsbok"
+
+msgid "Workbook"
+msgstr "Arbeidsbok"
+
+msgid "Workbook"
+msgstr "Arbeidsbok"
+
+msgid "Workbook"
+msgstr "Arbeidsbok"
+
+msgid "Template"
+msgstr "Utformingsmal"
+
+msgid "Template"
+msgstr "Utformingsmal"
+
+msgid "Template"
+msgstr "Utformingsmal"
+
+msgid "Template"
+msgstr "Utformingsmal"
+
+msgid "Template"
+msgstr "Utformingsmal"
+
+msgid "Template"
+msgstr "Utformingsmal"
+
+msgid "Template"
+msgstr "Utformingsmal"
+
+msgid "Workbook"
+msgstr "Arbeidsbok"
+
+msgid "Workbook"
+msgstr "Arbeidsbok"
+
+msgid "Workbook"
+msgstr "Arbeidsbok"
+
+msgid "Workbook"
+msgstr "Arbeidsbok"
+
+msgid "Workbook"
+msgstr "Arbeidsbok"
+
+msgid "Workbook"
+msgstr "Arbeidsbok"
+
+msgid "Workbook"
+msgstr "Arbeidsbok"
+
+msgid "Macro-enabled Workbook"
+msgstr "Makroaktivert arbeidsbok"
+
+msgid "Macro-enabled Workbook"
+msgstr "Makroaktivert arbeidsbok"
+
+msgid "Macro-enabled Workbook"
+msgstr "Makroaktivert arbeidsbok"
+
+msgid "Macro-enabled Workbook"
+msgstr "Makroaktivert arbeidsbok"
+
+msgid "Macro-enabled Workbook"
+msgstr "Makroaktivert arbeidsbok"
+
+msgid "Macro-enabled Workbook"
+msgstr "Makroaktivert arbeidsbok"
+
+msgid "Template"
+msgstr "Utformingsmal"
+
+msgid "Template"
+msgstr "Utformingsmal"
+
+msgid "Template"
+msgstr "Utformingsmal"
+
+msgid "Template"
+msgstr "Utformingsmal"
+
+msgid "Template"
+msgstr "Utformingsmal"
+
+msgid "Template"
+msgstr "Utformingsmal"
+
+msgid "Macro-enabled Workbook Template"
+msgstr "Makroaktivert utformingsmal"   
+
+msgid "Macro-enabled Workbook Template"
+msgstr "Makroaktivert utformingsmal"   
+
+msgid "Macro-enabled Workbook Template"
+msgstr "Makroaktivert utformingsmal"   
+
+msgid "Macro-enabled Workbook Template"
+msgstr "Makroaktivert utformingsmal"   
+
+msgid "Macro-enabled Workbook Template"
+msgstr "Makroaktivert utformingsmal"   
+
+msgid "Macro-enabled Workbook Template"
+msgstr "Makroaktivert utformingsmal"   
+
+msgid "Binary Workbook"
+msgstr "Binær arbeidsbok"
+
+msgid "Binary Workbook"
+msgstr "Binær arbeidsbok"
+
+msgid "Binary Workbook"
+msgstr "Binær arbeidsbok"
+
+msgid "Binary Workbook"
+msgstr "Binær arbeidsbok"
+
+msgid "Binary Workbook"
+msgstr "Binær arbeidsbok"
+
+msgid "Binary Workbook"
+msgstr "Binær arbeidsbok"
+
+msgid "Macro-enabled Add-in"
+msgstr "Makroaktivert tillegg"
+
+msgid "Macro-enabled Add-in"
+msgstr "Makroaktivert tillegg"
+
+msgid "Macro-enabled Add-in"
+msgstr "Makroaktivert tillegg"
+
+msgid "Macro-enabled Add-in"
+msgstr "Makroaktivert tillegg"
+
+msgid "Macro-enabled Add-in"
+msgstr "Makroaktivert tillegg"
+
+msgid "Macro-enabled Add-in"
+msgstr "Makroaktivert tillegg"
+
+msgid "Macro-enabled Add-in"
+msgstr "Makroaktivert tillegg"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation"
+msgstr "Presentasjon"
+
+msgid "Presentation Template"
+msgstr "Presentasjonsmal"    
+
+msgid "Presentation Template"
+msgstr "Presentasjonsmal"    
+
+msgid "Presentation Template"
+msgstr "Presentasjonsmal"    
+
+msgid "Presentation Template"
+msgstr "Presentasjonsmal"    
+
+msgid "Presentation Template"
+msgstr "Presentasjonsmal"    
+
+msgid "Spreadsheet"
+msgstr "Regneark"  
+
+msgid "Spreadsheet"
+msgstr "Regneark"  
+
+msgid "Spreadsheet"
+msgstr "Regneark"  
+
+msgid "Spreadsheet"
+msgstr "Regneark"  
+
+msgid "Spreadsheet"
+msgstr "Regneark"  
+
+msgid "Spreadsheet Template"
+msgstr "Regnearkmal"        
+
+msgid "Spreadsheet Template"
+msgstr "Regnearkmal"        
+
+msgid "Spreadsheet Template"
+msgstr "Regnearkmal"        
+
+msgid "Spreadsheet Template"
+msgstr "Regnearkmal"        
+
+msgid "Spreadsheet Template"
+msgstr "Regnearkmal"        
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document Template"
+msgstr "Dokumentmal"     
+
+msgid "Document Template"
+msgstr "Dokumentmal"     
+
+msgid "Document Template"
+msgstr "Dokumentmal"     
+
+msgid "Document Template"
+msgstr "Dokumentmal"     
+
+msgid "Document Template"
+msgstr "Dokumentmal"     
+
+msgid "StarOffice Document"
+msgstr "StarOffice-dokument"
+
+msgid "StarOffice Document"
+msgstr "StarOffice-dokument"
+
+msgid "StarOffice Document"
+msgstr "StarOffice-dokument"
+
+msgid "StarOffice Document"
+msgstr "StarOffice-dokument"
+
+msgid "StarOffice Document"
+msgstr "StarOffice-dokument"
+
+msgid "StarOffice Document"
+msgstr "StarOffice-dokument"
+
+msgid "StarOffice Document"
+msgstr "StarOffice-dokument"
+
+msgid "StarOffice Document"
+msgstr "StarOffice-dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "Document"
+msgstr "Dokument"
+
+msgid "E-mail"
+msgstr "E-post"
+
+msgid "E-mail"
+msgstr "E-post"
+
+msgid "E-mail"
+msgstr "E-post"
+
+msgid "E-mail"
+msgstr "E-post"
+
+msgid "E-mail"
+msgstr "E-post"
+
+msgid "E-mail (eml)"
+msgstr "E-post (eml)"
+
+msgid "E-mail (eml)"
+msgstr "E-post (eml)"
+
+msgid "E-mail (eml)"
+msgstr "E-post (eml)"
+
+msgid "E-mail (eml)"
+msgstr "E-post (eml)"
+
+msgid "E-mail (eml)"
+msgstr "E-post (eml)"
+
+msgid "E-mail (eml)"
+msgstr "E-post (eml)"
+
+msgid "E-mail (msg)"
+msgstr "E-post (msg)"
+
+msgid "E-mail (msg)"
+msgstr "E-post (msg)"
+
+msgid "E-mail (msg)"
+msgstr "E-post (msg)"
+
+msgid "E-mail (msg)"
+msgstr "E-post (msg)"
+
+msgid "E-mail (msg)"
+msgstr "E-post (msg)"
+
+msgid "E-mail (msg)"
+msgstr "E-post (msg)"
+
+msgid "Webpage"
+msgstr "Webside"
+
+msgid "Webpage"
+msgstr "Webside"
+
+msgid "Webpage"
+msgstr "Webside"
+
+msgid "Webpage"
+msgstr "Webside"
+
+msgid "Webpage"
+msgstr "Webside"
+
+msgid "HTML Document"
+msgstr "HTML-dokument"
+
+msgid "HTML Document"
+msgstr "HTML-dokument"
+
+msgid "HTML Document"
+msgstr "HTML-dokument"
+
+msgid "HTML Document"
+msgstr "HTML-dokument"
+
+msgid "HTML Document"
+msgstr "HTML-dokument"
+
+msgid "Text Document"
+msgstr "Tekst-dokument"
+
+msgid "Text Document"
+msgstr "Tekst-dokument"
+
+msgid "Text Document"
+msgstr "Tekst-dokument"
+
+msgid "Text Document"
+msgstr "Tekst-dokument"
+
+msgid "Text Document"
+msgstr "Tekst-dokument"
+
+msgid "Text Document"
+msgstr "Tekst-dokument"
+
+msgid "Image"
+msgstr "Bilde"
+
+msgid "Image"
+msgstr "Bilde"
+
+msgid "Image"
+msgstr "Bilde"
+
+msgid "Image"
+msgstr "Bilde"
+
+msgid "Image"
+msgstr "Bilde"
+
+msgid "JPEG Image"
+msgstr "JPEG-bilde"
+
+msgid "JPEG Image"
+msgstr "JPEG-bilde"
+
+msgid "JPEG Image"
+msgstr "JPEG-bilde"
+
+msgid "JPEG Image"
+msgstr "JPEG-bilde"
+
+msgid "JPEG Image"
+msgstr "JPEG-bilde"
+
+msgid "JPEG Image"
+msgstr "JPEG-bilde"
+
+msgid "PNG Image"
+msgstr "PNG-bilde"
+
+msgid "PNG Image"
+msgstr "PNG-bilde"
+
+msgid "PNG Image"
+msgstr "PNG-bilde"
+
+msgid "PNG Image"
+msgstr "PNG-bilde"
+
+msgid "PNG Image"
+msgstr "PNG-bilde"
+
+msgid "PNG Image"
+msgstr "PNG-bilde"
+
+msgid "Photoshop"
+msgstr "Photoshop"
+
+msgid "Photoshop"
+msgstr "Photoshop"
+
+msgid "Photoshop"
+msgstr "Photoshop"
+
+msgid "Photoshop"
+msgstr "Photoshop"
+
+msgid "Photoshop"
+msgstr "Photoshop"
+
+msgid "Photoshop"
+msgstr "Photoshop"
+
+msgid "GIF Image"
+msgstr "GIF-bilde"
+
+msgid "GIF Image"
+msgstr "GIF-bilde"
+
+msgid "GIF Image"
+msgstr "GIF-bilde"
+
+msgid "GIF Image"
+msgstr "GIF-bilde"
+
+msgid "GIF Image"
+msgstr "GIF-bilde"
+
+msgid "GIF Image"
+msgstr "GIF-bilde"
+
+msgid "Adobe TIFF Image"
+msgstr "Adobe TIFF-bilde"
+
+msgid "Adobe TIFF Image"
+msgstr "Adobe TIFF-bilde"
+
+msgid "Adobe TIFF Image"
+msgstr "Adobe TIFF-bilde"
+
+msgid "Adobe TIFF Image"
+msgstr "Adobe TIFF-bilde"
+
+msgid "Adobe TIFF Image"
+msgstr "Adobe TIFF-bilde"
+
+msgid "Adobe TIFF Image"
+msgstr "Adobe TIFF-bilde"
+
+msgid "BMP Image"
+msgstr "BMP-bilde"
+
+msgid "BMP Image"
+msgstr "BMP-bilde"
+
+msgid "BMP Image"
+msgstr "BMP-bilde"
+
+msgid "BMP Image"
+msgstr "BMP-bilde"
+
+msgid "BMP Image"
+msgstr "BMP-bilde"
+
+msgid "BMP Image"
+msgstr "BMP-bilde"
+
+msgid "Encapsulated PostScript"
+msgstr "Innkapslet PostScript" 
+
+msgid "Encapsulated PostScript"
+msgstr "Innkapslet PostScript" 
+
+msgid "Encapsulated PostScript"
+msgstr "Innkapslet PostScript" 
+
+msgid "Encapsulated PostScript"
+msgstr "Innkapslet PostScript" 
+
+msgid "Encapsulated PostScript"
+msgstr "Innkapslet PostScript" 
+
+msgid "Encapsulated PostScript"
+msgstr "Innkapslet PostScript" 
+
+msgid "Adobe Illustrator"
+msgstr "Adobe Illustrator"
+
+msgid "Adobe Illustrator"
+msgstr "Adobe Illustrator"
+
+msgid "Adobe Illustrator"
+msgstr "Adobe Illustrator"
+
+msgid "Adobe Illustrator"
+msgstr "Adobe Illustrator"
+
+msgid "Adobe Illustrator"
+msgstr "Adobe Illustrator"
+
+msgid "Adobe Illustrator"
+msgstr "Adobe Illustrator"
+
+msgid "Audio"
+msgstr "Lydfil"
+
+msgid "Audio"
+msgstr "Lydfil"
+
+msgid "Audio"
+msgstr "Lydfil"
+
+msgid "Audio"
+msgstr "Lydfil"
+
+msgid "Audio"
+msgstr "Lydfil"
+
+msgid "MP3 Audio"
+msgstr "MP3-lydfil"
+
+msgid "MP3 Audio"
+msgstr "MP3-lydfil"
+
+msgid "MP3 Audio"
+msgstr "MP3-lydfil"
+
+msgid "MP3 Audio"
+msgstr "MP3-lydfil"
+
+msgid "MP3 Audio"
+msgstr "MP3-lydfil"
+
+msgid "AutoCAD"
+msgstr "AutoCAD"
+
+msgid "AutoCAD"
+msgstr "AutoCAD"
+
+msgid "AutoCAD"
+msgstr "AutoCAD"
+
+msgid "AutoCAD"
+msgstr "AutoCAD"
+
+msgid "AutoCAD"
+msgstr "AutoCAD"
+
+msgid "AutoCAD"
+msgstr "AutoCAD"
+
+msgid "AutoCAD"
+msgstr "AutoCAD"
+
+msgid "AutoCAD"
+msgstr "AutoCAD"
+
+msgid "AutoCAD"
+msgstr "AutoCAD"
+
+msgid "AutoCAD"
+msgstr "AutoCAD"
+
+msgid "Archive"
+msgstr "Arkiv"
+
+msgid "Archive"
+msgstr "Arkiv"
+
+msgid "Archive"
+msgstr "Arkiv"
+
+msgid "Archive"
+msgstr "Arkiv"
+
+msgid "Archive"
+msgstr "Arkiv"
+
+msgid "ZIP Archive"
+msgstr "ZIP-arkiv"
+
+msgid "ZIP Archive"
+msgstr "ZIP-arkiv"
+
+msgid "ZIP Archive"
+msgstr "ZIP-arkiv"
+
+msgid "ZIP Archive"
+msgstr "ZIP-arkiv"
+
+msgid "ZIP Archive"
+msgstr "ZIP-arkiv"
+
+msgid "Application data"
+msgstr "Program data"
+
+msgid "Application data"
+msgstr "Program data"
+
+msgid "Application data"
+msgstr "Program data"
+
+msgid "Application data"
+msgstr "Program data"
+

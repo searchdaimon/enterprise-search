@@ -1,4 +1,10 @@
 
+var API_IS_WORKING = 1;
+var API_IS_SAVED   = 2;
+var API_ERR_SAVING = 3;
+var API_CLEAR      = 4;
+
+
 /**
  * params for jquery ajax request
  */
@@ -62,3 +68,45 @@ function setMsg(type, msg) {
 	});
 	
 }
+
+var last_api_save = null;
+function updApiMsg(state) {
+	var msg = null;
+	var show_anim = false;
+	var highlight = false;
+
+	switch (state) {
+	case API_IS_WORKING:
+		show_anim = true;
+		msg = "Working...";
+		break;
+	case API_IS_SAVED:
+		last_api_save = new Date();
+		msg = "Updated at " + last_api_save.toLocaleTimeString() + ".";
+		break;
+	case API_ERR_SAVING:
+		msg = '<span style="font-weight : bolder; color : red;">Error saving.<br /> ';
+		if (last_api_save) {
+		 	msg += "Last updated at "
+			    + last_api_save.toLocaleString() + ".";
+		}
+		highlight = true;
+
+		break;
+	case API_CLEAR:
+		msg = "";
+		break;
+	default:
+		msg = "Unknown state " + state;
+	}
+
+
+	var anim = $("#loading");
+	show_anim ? $(anim).show() : $(anim).hide();
+
+
+	$("#apiMsg span").html(msg);
+	if (highlight)
+		$("#apiMsg").effect("highlight", { }, 4000);
+}
+

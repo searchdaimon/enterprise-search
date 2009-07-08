@@ -1,0 +1,18 @@
+[% 
+	tabs = [
+	{
+		name => "Search statistics",
+		url => "logs.cgi?view=statistics",
+		
+	},
+	{
+		'name' => 'Log files',
+		'url' => 'logs.cgi'
+	},
+	{
+		'name' => 'Search log',
+		'url' => 'logs.cgi?view=search',
+		
+	}]
+%]
+[% PROCESS 'template_tabs.html' %]

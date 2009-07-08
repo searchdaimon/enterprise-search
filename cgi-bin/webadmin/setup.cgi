@@ -159,7 +159,7 @@ sub process_integration_values {
 
 	my $cfg = Sql::Config->new($dbh);
 	$cfg->insert_setting("setup_wizard_done", 1);
-	print CGI::redirect("overview.cgi");
+	print CGI::redirect("overview.cgi?from_setup=1");
 	exit 0;
 }
 

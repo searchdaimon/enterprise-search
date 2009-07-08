@@ -1,24 +1,14 @@
 [% INCLUDE 'header.html' title = 'Logs' %]
 [% USE HTML %]
 
-[% PROCESS 'template_tabs.html' 
-	tabs = [
-	{
-		'name' => 'Log files',
-		'url' => 'logs.cgi'
-	},
-	{
-		'name' => 'Search log',
-		'url' => 'logs.cgi?view=search',
-		
-	}]
+[% PROCESS 'logs_tabs.html' 
         selected => 'Log files'
 %]
 
 <h2>View logs</h2>
 
 <form action="logs.cgi" method="get">
-[% WRAPPER 'template_table.html' class="hovering"
+[% WRAPPER 'template_table.html' class="hovering" style="width : 100%;"
 	header = ['', 'Description', 'Filename', 'Size', ''] %]
 
 [% color = 1 %]

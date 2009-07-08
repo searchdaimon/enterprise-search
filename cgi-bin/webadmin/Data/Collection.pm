@@ -205,9 +205,10 @@ sub form_data {
 
 	if ($s->{input_fields_h}{user_system}) {
 		$form_data{user_systems} = [ 
-			$sqlSystem->get({ }, 
-			['name', 'connector', 'id', 'is_primary'], 
-			['is_primary DESC, name ASC'])
+			$sqlSystem->list()
+		#	$sqlSystem->get({ }, 
+		#	['name', 'connector', 'id', 'is_primary'], 
+		#	['is_primary', 'name'])
 		];
 	}
 

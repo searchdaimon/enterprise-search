@@ -223,12 +223,12 @@ sub _prepare_and_execute {
 	#warn $query;
 	
 	my $rv = $sth->execute(@binds)
-		or croak "Execute: ", $self->{dbh}->errstr;
+		or croak "Execute: ", $self->{dbh}->errstr, " Query: ", $query;
 	return $sth;
 }
 
 # Generic functions to subclass.
-my $abstr = SQL::Abstract->new();
+my $abstr = SQL::Abstract->new(quote_char => "`", name_sep => ".");
 sub exists {
     validate_pos(@_, 1, 1, {type => SCALAR }, { type => HASHREF });
     my ($s, $tbl, $column, $where) = @_;

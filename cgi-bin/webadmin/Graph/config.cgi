@@ -17,9 +17,9 @@ use constant DEFAULT_USERS_VALUE	=> 15;
 use Carp;
 use XML::Simple;
 
-use Page::Graphs;
+use Page::Logs::Statistics;
 
-my $page = Page::Graphs->new();
+my $page = Page::Logs::Statistics->new();
 my $dbh = $page->get_dbh();
 my %state = $page->get_state();
 

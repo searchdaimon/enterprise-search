@@ -19,7 +19,7 @@
 
 [%#Main page for users.cgi %]
 
-<h2>End users</h2>
+<h1>End users</h1>
 
 [% WRAPPER 'template_description.html' style="margin-bottom : 0.5em;" %]
 	[% IF licensed_users < activated_users %]
@@ -32,10 +32,12 @@
 	[% ELSE %]
 		You do not have license for any users on this system.
 	[% END %]
+	<a href="settings.cgi">License settings</a>.
+
 [% END %]
 [% IF !error && licensed_users < activated_users %]
 	[% SET too_many = activated_users - licensed_users %]
-	[% SET error = "You have selected $activated_users users. Current license only covers $licensed_users users. Try again." %]
+	[% SET error = "You have selected $activated_users users. Current license only covers $licensed_users users." %]
 [% END %]
 
 [% IF error %]

@@ -20,10 +20,19 @@ my $vars = {};
 my $pageNet = Page::Settings::Network->new($page->get_dbh);
 my $pageCM = Page::Settings::CollectionManager->new($page->get_dbh);
 
+my $using_api = 0;
+my %api_vars;
+carp Dumper(\%state);
+if ($state{api}) {
+	my $api = $state{api};
+	$using_api = 1;
 
-# Group: User actions
-
-if (defined($state{'submit'})) {
+	if ($api eq "check_license") {
+		$page->api_check_license(\%api_vars, $state{license});
+	}
+	else { croak "Unknown api call '$api'" }
+}
+elsif (defined($state{'submit'})) {
 	my $btn = $state{'submit'};
 
 	if (defined $btn->{'network_conf'}) {
@@ -37,14 +46,13 @@ if (defined($state{'submit'})) {
 
 	elsif (defined $btn->{'reset_configuration'}) {
 		# User wants to reset configuration. Confirm.
-		($vars, $tpl_file) = $page->show_confirm_dialog($vars);
+		$tpl_file = $page->show_confirm_dialog($vars);
 	}
 
 	elsif (defined $btn->{'submit_settings'}) {
 		# Update config values, show success message.
 		$vars = $page->update_settings($vars, $state{'setting'});
-		($vars, $tpl_file) 
-			= $page->show_advanced_settings_updated($vars);
+		$tpl_file = $page->show_advanced_settings_updated($vars);
 	}
 
 	elsif (defined $btn->{'export_settings'}) {
@@ -71,7 +79,7 @@ if (defined($state{'submit'})) {
 
 	elsif (defined $btn->{'dist_select'}) {
 		# User selected a different version from main settings
-		($vars, $tpl_file) 
+		$tpl_file 
 			= $page->select_dist_version($vars, $state{'dist'});
 	}
 
@@ -94,6 +102,11 @@ if (defined($state{'submit'})) {
         elsif (defined $btn->{cm_suggdict}) {
             $tpl_file = $pageCM->update_suggdict($vars, $state{cm}{suggdict_run_hour});
         }
+	elsif (defined $btn->{update_license}) {
+		$tpl_file = $page->update_license($vars, $state{license_key});
+	}
+
+	else { croak "Unknown submit action" }
 }
 
 elsif (defined($state{'confirm_delete'})) {
@@ -103,7 +116,7 @@ elsif (defined($state{'confirm_delete'})) {
 	croak ("The operation must be a POST request to work.") 
 		unless($ENV{'REQUEST_METHOD'} eq 'POST');
 	
-	($vars, $tpl_file) = $page->confirmed_delete_settings($vars);
+	$tpl_file = $page->confirmed_delete_settings($vars);
 	
 }
 
@@ -120,7 +133,7 @@ elsif (defined $state{'view'}) {
 	}
 
 	elsif ($view eq "advanced") {
-		($vars, $tpl_file) = $page->show_advanced_settings($vars);
+		$tpl_file = $page->show_advanced_settings($vars);
 	}
 
         elsif ($view eq "network_restart") {
@@ -137,12 +150,18 @@ elsif (defined $state{'view'}) {
 }
 
 
-unless (defined $tpl_file) {
-# Show main page.
-    ($vars, $tpl_file) 
-        = $page->show_main_settings($vars);
+if (!$using_api && !$tpl_file) {
+	$tpl_file  = $page->show_main_settings($vars);
 
 }
+if ($using_api) {
+    	my $json = JSON::XS->new;
+    	$json->pretty(1);
+	print $page->get_cgi()->header(-type => 'text/plain', -charset => "UTF-8");
 
-$page->process_tpl($tpl_file, $vars, 
-    tpl_folders => $tpl_folders);
+	print $json->encode(\%api_vars);
+}
+else {
+	$page->process_tpl($tpl_file, $vars, 
+    		tpl_folders => $tpl_folders);
+}

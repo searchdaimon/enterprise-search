@@ -120,6 +120,9 @@ sub del {
 	# Delete system
 	$s->{sql_sys}->delete({ id => $s->{sys}{id} });
 	
+	
+	# TODO: Delete mapping ?
+
 	$s = undef;
 	1;
 }
@@ -155,6 +158,31 @@ sub _validate_params {
 	
 	1;
 }
+
+##
+# Croaks if system should not be deleted. This is when:
+# * it's still in use.
+# * it's primary system.
+sub restrictive_del {
+	my $s = shift;
+
+	my $prim = $s->{sql_sys}->primary_id;
+
+	croak "Can't delete primary user system"
+		if $s->{sys}{id} == $prim;
+
+	my $shares = Sql::Shares->new($s->{dbh});
+
+	if (my @coll = $shares->get({ system => $s->{sys}{id} }, 'collection_name')) {
+	
+		croak "Can't delete user system. User system is in use by '" 
+			. join(", ", map { $_->{collection_name} } @coll)
+			. "'";
+	}
+
+	$s->del();
+}
+
 
 
 1;

@@ -50,7 +50,7 @@ function typeFromTabstr(str) {
 		return FILE_CFG;
 	else if (str == "Dummy")
 		return FILE_DUMMY;
-	else throw "unknown filetype " + str;
+	else throw "typeFromTabstr unknown filetype " + str;
 }
 
 $(document).ready(function() {
@@ -68,7 +68,7 @@ $(document).ready(function() {
 		// get filename from tab
 		selected.tab = arg['tab'];
 		var tabstr = $(selected.tab).children("span").html();
-		var tabchunks = tabstr.split(":&nbsp;", 2);
+		var tabchunks = tabstr.split(/:\s|:&nbsp;/, 2); // &nbsp; in ff, ie, \s in opera
 		var file = tabchunks[1];
 		var fileType = typeFromTabstr(tabchunks[0]);
 		if (fileType == FILE_DUMMY)
@@ -178,7 +178,7 @@ function appendTab(fileType, file) {
 		case FILE_TPL: prefix = "Tpl:&nbsp;"; break;
 		case FILE_LANG: prefix = "Lang:&nbsp;"; break;
 		case FILE_CFG: prefix = "Cfg:&nbsp;"; break;
-		default: throw "unknown filetype";
+		default: throw "appendTab unknown filetype";
 	}
 	var id = _file_id(fileType, file);
 

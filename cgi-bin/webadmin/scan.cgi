@@ -21,8 +21,8 @@ my $vars = {};
 my $pageScanning = Page::Scan::Scanning->new($page->get_dbh);
 my $pageProcess  = Page::Scan::Process->new($page->get_dbh);
 
-if (defined $state{'action'}) {
-	my $action = $state{'action'};
+if (defined $state{'action'} || defined $state{act}) { # TODO: use act only.
+	my $action = $state{'action'} || $state{act};
 
 	switch ($action) {
 		case "new" {

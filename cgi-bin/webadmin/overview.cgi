@@ -13,7 +13,6 @@ BEGIN {
 
 
 my $vars = { };
-
 my $overview = Page::Overview->new();
 my %state = $overview->get_state();
 
@@ -141,7 +140,7 @@ elsif (defined $state{upd_customization}) {
 else {
 	# Show default page (list of collections)
 	$tpl_file
-	    = $overview->list_collections($vars);
+	    = $overview->list_collections($vars, $state{from_setup});
 }
 
 

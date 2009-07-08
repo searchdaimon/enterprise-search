@@ -16,9 +16,9 @@ use constant DEFAULT_LAST_VALUE		=> 30;
 use constant DEFAULT_USERS_VALUE	=> 15;
 use Carp;
 
-use Page::Graphs;
+use Page::Logs::Statistics;
 
-my $page = Page::Graphs->new();
+my $page = Page::Logs::Statistics->new();
 my $dbh = $page->get_dbh();
 my %state = $page->get_state();
 

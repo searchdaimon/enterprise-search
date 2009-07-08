@@ -4,8 +4,8 @@
 [% BLOCK list_connectors %]
 	[% FOREACH conn IN connectors %]
 		[% NEXT UNLESS conn.active || conn.has_test_coll %]
-		<h3>[% conn.name %]</h3>
-		[% IF conn.collections.size %]
+		<h3 style="margin-top : 1em;">[% conn.name %] collections</h3>
+	[% IF conn.collections.size %]
 			[% INCLUDE list_collections 
 				collections = conn.collections 
 				only_show_testcoll = !conn.active && conn.has_test_coll
@@ -24,7 +24,7 @@
 	[% END %]
 
 		[% WRAPPER 'template_table.html'
-			header = ['Status', 'Collection', 'Last crawl', 'Next crawl', 'Collection size' ''] class="hovering" %]
+			header = ['Status', 'Collection', 'Last crawl', 'Next crawl', 'Collection size' ''] class="hovering" style="width : 100%;" %]
 			[% SET color = 0 %]
 			
 			[% FOREACH c IN collections %]

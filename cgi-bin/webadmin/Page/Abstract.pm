@@ -11,6 +11,8 @@ use CGI::State;
 use Template;
 use Template::Stash;
 use config qw(%CONFIG);
+use Sql::ActiveUsers;
+use Sql::Config;
 
 my %DEF_TPL_OPT = (
     INCLUDE_PATH => './templates:./templates/common',
@@ -24,6 +26,8 @@ my %TPL_SCALAR_FUNC = (
 );
 
 my $dbh;
+my $sqlActive;
+my $sqlCfg;
 
 # Constructor: new
 #
@@ -43,6 +47,10 @@ sub new {
     if ($self->can("_init")) { 
         $self->_init(@_);
     }
+
+	$sqlActive ||= Sql::ActiveUsers->new($d);
+	$sqlCfg ||= Sql::Config->new($d);
+
     return $self;
 }
 
@@ -78,6 +86,10 @@ sub process_tpl {
 
     $opt{INCLUDE_PATH} .= join ":./templates/", ('', @extra_folders)
         if scalar @extra_folders;
+
+	# Add values always needed
+	$vars_ref->{header_active_users} = $sqlActive->num_active();
+	$vars_ref->{header_license_system_set} = $sqlCfg->get_setting("licensesystem") ? 1 :0;
 
     # Print html.
     my $no_header = $opt{no_header} and delete $opt{no_header};

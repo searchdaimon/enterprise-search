@@ -3,23 +3,13 @@
 
 
 [% #tid, query, search_bruker, treff, search_tid, ip_adresse HTTP_USER_AGENT, side %]
-[% PROCESS 'template_tabs.html' 
-	tabs = [
-	{
-		'name' => 'Log files',
-		'url' => 'logs.cgi'
-	},
-	{
-		'name' => 'Search log',
-		'url' => 'logs.cgi?view=search',
-		
-	}]
+[% PROCESS 'logs_tabs.html' 
         selected = 'Search log'
 %]
 <h2> Last [% search.size %] searches </h2>
 
 
-[% WRAPPER 'template_table.html'
+[% WRAPPER 'template_table.html' style="width : 100%;"
 	header = ['Time', 'User', 'Query', 'Result page', 'Total hits', 'Execution time', 'Client'] %]
 
 	[% FOREACH search %]
