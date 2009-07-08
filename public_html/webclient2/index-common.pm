@@ -213,6 +213,7 @@ sub gen_search_uri {
 		delete $attr{search_bruker};
 		$attr{anonymous} = '1';
 	}
+	$attr{bbkey} = $CFG{bbkey} if $CFG{bbkey};
 
 
 	#warn "searchd params: ", Dumper(\%attr);
