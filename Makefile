@@ -39,7 +39,7 @@ MYSQL = -I/usr/include/mysql /usr/lib/mysql/libmysqlclient.a
 CC+=-D NO_64_BIT_DIV
 PERLEMBED = lib/libperlembed.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE   -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl 
 
-#bbh2
+##bbh2
 #BDB = -I/usr/include/db4 /usr/lib/libdb-4.6.a -lpthread
 #MYSQL = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
 #CC+=-m32
@@ -251,7 +251,8 @@ searchfilterTest: src/searchfilterTest/main.c
 infoquery: src/infoquery/main.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/infoquery/main.c src/acls/acls.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c $(BBDOCUMENT) -o bin/infoquery $(LDFLAGS) $(LIBCONFIG) $(PERLEMBED)
+	(cd src/infoquery && make clean && make)
+	#$(CC) $(CFLAGS) $(LIBS)*.c src/maincfg/maincfg.c src/infoquery/main.c src/acls/acls.c src/crawlManager/client.c src/boithoadClientLib/boithoadClientLib.c $(BBDOCUMENT) -o bin/infoquery $(LDFLAGS) $(LIBCONFIG) $(PERLEMBED)
 
 GetIndexAsArrayTest: src/GetIndexAsArrayTest/main.c
 	@echo ""
