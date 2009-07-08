@@ -165,6 +165,7 @@ void cgi_fetch_limited(struct QueryDataForamt *qdata, char *remoteaddr) {
 		warnx("HTTP_USER_AGENT not available");
 	}
 	qdata->HTTP_REFERER[0] = '\0';
+	qdata->version = 2.1;
 
 	
 
