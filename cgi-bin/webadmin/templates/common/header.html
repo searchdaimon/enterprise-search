@@ -9,10 +9,10 @@
                 content="[% meta_refresh.seconds %];url=[% meta_refresh.url %]" />
         [% END %]
 
-[% IF use_extjs %]
-		<link rel="stylesheet" type="text/css" href="/extjs/ext-current/resources/css/ext-all.css" /> 
-		<script type="text/javascript" src="/extjs/ext-current/adapter/ext/ext-base.js"></script>
-		<script type="text/javascript" src="/extjs/ext-current/ext-all.js"></script>
+	[% IF use_extjs %]
+		<link rel="stylesheet" type="text/css" href="/lib/ext-3.0-rc2/resources/css/ext-all.css" /> 
+		<script type="text/javascript" src="/lib/ext-3.0-rc2/adapter/ext/ext-base.js"></script>
+		<script type="text/javascript" src="/lib/ext-3.0-rc2/ext-all.js"></script>
 	[% END %]
 
 	<link rel="stylesheet" href="file.cgi?css=default" type="text/css" />
@@ -27,6 +27,16 @@
 	
 
         [% content %][%# if header is used as a wrapper. %]
+
+	<!--[if IE 6]>
+	<style type="text/css">
+
+		.block_default {
+			// "min height"
+    			height : expression(Math.min(parseInt(this.offsetWidth), 2) + "em");
+		}
+	</style>
+	<![endif]-->
 
 
 </head>
