@@ -96,7 +96,7 @@ sub set_img_dir { $img_dir = shift }
 sub print_image() {
 	my ($size, $ext, $icon) = @_;
 	my $path = "$img_dir/$size/$icon.$ext";
-	print $cgi->header(-type => "image/$ext", -expires => "+1h");
+	print $cgi->header(-type => "image/$ext", -expires => "+1d");
 	print_file_contents($path, "image");
 	1;
 }
@@ -109,7 +109,7 @@ sub print_image() {
 sub print_css {
 	my $css = shift;
 	my $path = "$css_dir/$css.css";
-	print $cgi->header("text/css");
+	print $cgi->header(-type => "text/css", -expires => "+1d");
 	print_file_contents($path, "css");
 	1;
 }
@@ -122,7 +122,7 @@ sub print_css {
 sub print_js {
     my $js = shift;
     my $path = "$js_dir/$js.js";
-    print $cgi->header("application/x-javascript");
+    print $cgi->header(-type => "application/x-javascript", -expires => "+1d");
     print_file_contents($path, "js");
 }
 
