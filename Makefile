@@ -540,7 +540,7 @@ deleteDocIDFormCache:
 	$(CC) $(CFLAGS) $(LIBS)*.c src/dispatcher_all/library.c src/deleteDocIDFormCache/main.c -o bin/deleteDocIDFormCache $(LDFLAGS) -D WITH_CASHE -D EXPLAIN_RANK
 
 
-dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/banlists/ban.c src/UrlToDocID/search_index.c src/maincfg/maincfg.c src/dispatcher_all/library.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c $(LDFLAGS) src/dispatcher_all/qrewrite.o src/dispatcher_all/cgihandler.c src/dispatcher_all/out/opensearch.c src/dispatcher_all/out/sdxml.c $(BDB) -D_GNU_SOURCE 
+dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/banlists/ban.c src/UrlToDocID/search_index.c src/maincfg/maincfg.c src/dispatcher_all/library.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c $(LDFLAGS) src/dispatcher_all/qrewrite.o src/dispatcher_all/cgihandler.c src/dispatcher_all/out/opensearch.c src/dispatcher_all/out/sdxml.c src/key/key.c $(BDB) -D_GNU_SOURCE 
 
 dispatcher_all: src/dispatcher_all/main.c
 	@echo ""
