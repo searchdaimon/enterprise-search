@@ -11,6 +11,7 @@ use Data::UserSys;
 use Sql::System;
 use Sql::SystemParam;
 use Sql::SystemConnector;
+use Page::Connector::UserSys;
 use Page::API;
 our @ISA = qw(Page::Connector::API Page::API);
 
