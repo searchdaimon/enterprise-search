@@ -142,11 +142,11 @@ table .error {
 }
 
 .hovering tr:hover {
-	background : #044a90;
-	color : white;
+	background : #E2EBFF;
+	/* color : white; */
 }
 .hovering tr:hover a {
-	color : #fefefe;
+	/* color : #fefefe; */
 }
 
 

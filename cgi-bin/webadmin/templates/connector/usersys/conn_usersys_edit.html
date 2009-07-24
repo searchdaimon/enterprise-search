@@ -1,0 +1,92 @@
+[% additional_param = [{
+		title = "Note"
+		name = "note"
+	},{
+		title = "Required?"
+		input_type = "checkbox"
+		name = "required"
+}] %]
+
+[% BLOCK testrun_javascript %]
+<script type="text/javascript">
+//<![CDATA[
+
+selected = "list_users";
+
+$(document).ready(function() {
+	$("[@name=testFunc]").click(function() {
+		selected = $(this).val();
+		//console.log("selected " + selected);
+
+		var dialogs = {
+			'user_groups' : 'testListGroups',
+			'auth_user' : 'testAuth'
+		};
+		for (var i in dialogs) {
+			if (selected == dialogs[i])
+				continue;
+			$('#' + dialogs[i]).hide(200);
+		}
+		if (dialogs[selected])
+			$('#' + dialogs[selected]).show(200);
+	});
+
+	$("#runBtn").click(function() {
+		runTest(selected);
+	});
+});
+
+//]]>
+</script>
+[% END %]
+
+[% BLOCK test_run %]
+<div class="connectorBlock" id="run">
+    <h3>Method to test</h3>
+    <p>
+    	<label for="radioListUsers">
+		<input type="radio" name="testFunc" value="list_users" checked="checked" id="radioListUsers" /> 
+		List users
+	</label>
+    	<label for="radioListUserGroups">
+		<input type="radio" name="testFunc" value="user_groups" id="radioListUserGroups" />
+		List user groups
+	</label>
+    	<label for="radioAuthUser">
+		<input type="radio" name="testFunc" value="auth_user" id="radioAuthUser" /> 
+		Authenticate user
+	</label>
+    </p>
+    <p style="margin-top : 1em;">
+    	<button id="runBtn">Run test</button>
+    <span id="runStatus"></span>
+    </p>
+
+	<div id="testListGroups" style="clear : left; margin-top : 1em; padding : 1em; border : 1px solid silver;  float : left; display : none;">
+	<h4>List user groups parameters</h4>
+    		User from primary system: <input type="text" id="testGroupsUser" class="testParam" />
+
+		<p style="margin-top : 0.5em;">Note: The user needs to be <a href="usersys.cgi?view=map&amp;id=[% testsys.id %]">mapped</a> first.</p>
+	</div>
+
+	<div id="testAuth" style="clear : left; margin-top : 1em; padding : 1em; border : 1px solid silver;  float : left; display : none;">
+	<h4>Authenticate user parameters</h4>
+		Username: <input type="text" id="testAuthUser" class="testParam" /> Password: <input type="password" id="testAuthPass" class="testParam" />
+	</div>
+	
+
+    <h3 style="clear : both;">Output</h3>
+    <div class="testrunOuter">
+        <div class="testrunInner">
+            <pre>Output from run will be visible here.</pre></div>
+    </div>
+
+    <h3 style="clear : both;">Output</h3>
+    <div class="testresultsOuter">
+        <div class="testresultsInner">
+            <pre>No results yet.</pre></div>
+    </div>
+</div>
+[% END %]
+	
+[% PROCESS 'conn_edit.html' %]

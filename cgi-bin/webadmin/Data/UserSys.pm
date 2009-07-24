@@ -10,6 +10,7 @@ use Data::Dumper;
 use Sql::System;
 use Sql::Hash::SystemParam;
 use Sql::SystemParamValue;
+use Sql::SystemParam;
 
 
 Readonly::Hash my %USERSYS_ATTR 
@@ -35,18 +36,19 @@ sub new  {
 		sql_sys => $sql_sys,
 		sys     => $sys_ref,
 		dbh     => $dbh,
+		sql_param => Sql::SystemParam->new($dbh),
 	}, $class;
 }
 
-
-
-sub create {
+## 
+# Ignore parameter validation. Used when creating
+# a test system.
+sub create_novalidate {
 	my ($class, $dbh, %attr) = @_;
-
+	
 	my $params_ref = $attr{params} || { };
 	delete $attr{params};
 
-	_validate_params($dbh, $attr{connector}, $params_ref);
 
 	# Add system
 	delete $attr{name}
@@ -61,6 +63,13 @@ sub create {
 		or confess $!;
 	%p_values = %{$params_ref};
 	return $class->new($dbh, $sys_id);
+
+}
+
+sub create {
+	my ($class, $dbh, %attr) = @_;
+	_validate_params($dbh, $attr{connector}, $attr{params} || { });
+	create_novalidate($class, $dbh, %attr);
 }
 
 sub update {
@@ -107,6 +116,22 @@ sub get {
 		return $s->{sys}{$attr};
 	}
 	return %{$s->{sys}};
+}
+
+##
+# Returns all system parameters, including ones not set.
+sub get_param_all {
+	my $s = shift;
+	my @params = $s->{sql_param}->get({ 
+		connector => $s->{sys}{connector}
+	});
+	return map {
+		 $_->{param} => { 
+			note     => $_->{note}, 
+		 	required => $_->{required},
+			value    => $s->{sys}{param}{$_->{param}},
+		} 
+	} @params;
 }
 
 sub del {

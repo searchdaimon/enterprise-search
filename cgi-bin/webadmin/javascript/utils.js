@@ -11,7 +11,7 @@ var API_CLEAR      = 4;
 function defaultJQueryParams() {
 	return {
 		type : "GET",
-		url  : "connector.cgi",
+		url  : "?",
 		dataType: "json",
 		async : true,
 		cache : false

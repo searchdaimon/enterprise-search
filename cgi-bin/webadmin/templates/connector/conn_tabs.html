@@ -1,0 +1,14 @@
+[% 
+	tabs = [
+	{
+		name => "Crawler connectors",
+		url => "connector.cgi",
+		
+	},
+	{
+		'name' => 'User system connectors',
+		'url' => 'connector.cgi?conntype=2'
+	},
+	]
+%]
+[% PROCESS 'template_tabs.html' %]

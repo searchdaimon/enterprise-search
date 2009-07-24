@@ -110,9 +110,9 @@ if ($using_api) {
 	print JSON::XS->new->encode(\%vars);
 }
 else {
-	croak "user systems already set"
-		if defined $vars{user_systems};
-	$vars{user_systems} = $CONFIG{user_systems};
+	#croak "user systems already set"
+		#if defined $vars{user_systems};
+	#$vars{user_systems} = $CONFIG{user_systems};
 
 	$page->process_tpl($tpl_file, \%vars, ( tpl_folders => 'usersys'));
 }

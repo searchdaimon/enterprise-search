@@ -1,0 +1,72 @@
+
+[% BLOCK test_run %]
+<div class="connectorBlock" id="run">
+    <h3>Test</h3>
+    <p>
+        <button id="runBtn">Run test</button>
+        <button id="refreshBtn" disabled="disabled">Refresh output</button>
+        <button id="killBtn" disabled="disabled">Kill test</button>
+    </p>
+    <p id="runStatus"></p>
+    <h3>Output</h3>
+
+    <div class="testrunOuter">
+        <div class="testrunInner">
+            <pre>Output from run will be visible here.</pre></div>
+    </div>
+</div>
+[% END %]
+
+[% BLOCK testrun_javascript %]
+<script type="text/javascript">
+//<![CDATA[
+$(document).ready(function() {
+	$('#runBtn').click(function() {
+		runTest();
+	});
+});
+//]]>
+</script>
+
+[% END %]
+
+
+[% BLOCK save_extras %]
+	[%# connector input fields %]
+    [% dont_show => { 	
+			crawling => 1, connector => 1, collection => 1, custom_parameters => 1, 
+			advanced => 1, customize_filters => 1, customize_ranking => 1, customize_summary => 1,
+			test_crawl => 1, customize_cache => 1, user_system => 1} %]
+
+    [% PROCESS 'template_edit_collection.html' fields = undef %]
+    <div style="margin-bottom : 3em;">
+        Input fields:
+        <div class="checklist_outer" style="margin-top : 0.5em;">
+	<div class="checklist_inner" id="userList">
+	[% # from template_edit_collection
+	   FOREACH field IN field_list.keys.sort %]
+            [% NEXT IF dont_show.$field %]
+            <label for="field_[% field %]">
+					
+                [% SET field_esc = field.escape %]
+		<input name="field.[% field %]" type="checkbox" id="field_[% field %]" class="saveTrigger"
+		    [% 'checked="checked"' IF conn.input_fields.grep("^$field_esc$").0 %]
+		    [% 'disabled="disabled"' IF conn.read_only %]
+
+					value="[% field %]"
+		/> [% field %]
+	    </label>
+	[% END %]
+	</div>
+        </div>
+    </div>
+[% END %]
+
+[% SET additional_param = [{ 
+			title => "Example text",
+			name  => 'example',
+}] %]
+	
+
+[% PROCESS 'conn_edit.html' has_save_extras = 1 %]
+

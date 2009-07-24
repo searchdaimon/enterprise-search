@@ -8,7 +8,7 @@
             <p>
             <ul>
                 <li>Go to <a href="overview.cgi">overview</a> to delete collections?</li>
-                <li>Return to <a href="connector.cgi">connector extensions</a>?</li>
+                <li>Return to <a href="connector.cgi?conntype=[% conntype %]">connector extensions</a>?</li>
             </ul>
             </p>
         [% END %]
@@ -21,6 +21,8 @@
 	form = 'connector.cgi' 
 	id = conn.id
 	%]
+		<input type="hidden" name="conntype" value="[% conntype %]" />
+		<input type="hidden" name="act" value="del" />
 	Are you sure you want to delete connector <em>[% conn.name %]</em>?
     [% END %]
 [% END %]

@@ -3,7 +3,10 @@
 [% USE Dumper %]
 [% USE HTML %]
 
-<h1>Connector extensions</h1>
+[% PROCESS 'conn_tabs.html' 
+	selected = selected %]
+
+<h1>[% connector_name %] extensions</h1>
 [% IF error %]
     [% WRAPPER 'tpl_msg.html' type="error" %][% error %][% END %]
 [% END %]
@@ -15,7 +18,7 @@
 
 [% PROCESS pretty_button 
 		icon = "edit_add"
-		action = "connector.cgi"
+		action = "?"
                 text = "Create a new connector"
 		act  = "new"
 		method = "post"
@@ -72,7 +75,7 @@
 				[% ELSE %]
 					[% SET param = "act=$b.act" %]
 				[% END %]
-                        	<li><div><a href="connector.cgi?[% param %]&amp;connid=[% c.id %]">[% b.name %]</a></div></li>
+                        	<li><div><a href="?[% param %]&amp;connid=[% c.id %]&amp;conntype=[% conntype %]">[% b.name %]</a></div></li>
 			[% END %]
                 	</ul>
                 </td>

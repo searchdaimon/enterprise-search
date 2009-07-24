@@ -52,8 +52,8 @@
 
 [% BLOCK list_sys_connectors %]
 	<select name="sys.connector">
-		[% FOREACH id IN user_systems.keys %]
-			<option value="[% id %]">[% user_systems.$id %]</option>
+		[% FOREACH c IN connectors %]
+			<option value="[% c.id %]">[% c.name | html %]</option>
 		[% END %]
 	</select>
 [% END %]

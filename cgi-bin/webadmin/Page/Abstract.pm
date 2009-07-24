@@ -55,8 +55,12 @@ sub new {
 }
 
 sub get_dbh { $_[0]->{dbh} }
-sub get_state {  wantarray ? return %{$_[0]->{state}} : $_[0]->{state} }
-sub get_cgi { $_[0]->{cgi} }
+sub get_state {
+	my $s = shift;
+	my $state = $s ? $s->{state} : CGI::State->state(CGI->new);
+	return wantarray ? %{$state} : $state;
+}
+sub get_cgi { $_[0] ? $_[0]->{cgi} : CGI->new }
 
 sub process_tpl {
     my ($s, $tpl_file, $vars_ref, %opt) = @_;

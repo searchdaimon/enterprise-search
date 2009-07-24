@@ -744,7 +744,7 @@ void *do_chld(void *arg)
 	printf("[searchd] lang_id = %i\n", queryNodeHeder.lang);
 	printf("[searchd] lang = %s\n", lang);
 
-	if (lang!=NULL)
+	if (lang != NULL && searchd_config->thesaurus_all != NULL)
 	    {
 		iterator	it = map_find(searchd_config->thesaurus_all, lang);
 		if (it.valid)

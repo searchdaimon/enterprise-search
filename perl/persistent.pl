@@ -52,7 +52,7 @@ sub eval_file2 {
 		my $sub = <$srch>;
 		close $srch;
 
-		my $eval = qq|package $package; sub handler {  $sub; } |;
+		#my $eval = qq|package $package; sub handler {  $sub; } |;
 
 		# eval out of the scope of this func
 		# so our variables won't be accessable.

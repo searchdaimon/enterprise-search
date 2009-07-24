@@ -105,6 +105,11 @@ sub listGroups {
 	return $self->_getList('listGroups', 'group');
 }
 
+sub userGroups {
+	my ($self, $user, $sys) = @_;
+	return $self->_getList(qq{userGroups "\Q$user\E" "\Q$sys\E"}, 'group');
+}
+
 sub scan($$$$$) {
 	my $self = shift;
 	my $connector = shift;

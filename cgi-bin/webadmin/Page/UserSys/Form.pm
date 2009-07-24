@@ -10,6 +10,7 @@ use Params::Validate qw(validate_pos);
 BEGIN { push @INC, $ENV{BOITHOHOME}, "/Modules" }
 
 use Sql::Shares;
+use Sql::SystemConnector;
 use Data::UserSys;
 use Boitho::Infoquery;
 use config qw(%CONFIG);
@@ -31,6 +32,7 @@ Readonly::Scalar my $CLEAN_ERRMSG_REGEX => qr{at .*? line \d+$};
 sub _init {
 	my $s = shift;
 	$s->{sql_param} = Sql::SystemParam->new($s->{dbh});
+	$s->{sql_conn} = Sql::SystemConnector->new($s->{dbh});
 	$s->{iq} = Boitho::Infoquery->new($CONFIG{infoquery});
 	$s->SUPER::_init(@_);
 }
@@ -53,18 +55,29 @@ sub show_add {
 	my ($s, $vars, $part, $sys_ref) = @_;
 
 	if (!$part) { #part 1
+		$vars->{connectors} = [ $s->{sql_conn}->get({ active => 1 }, ['id', 'name'], "name") ];
 		return $TPL_ADD
 	}
 	croak "invalid part '$part'"
 		unless $part =~ /^$ADD_PART_2$/;
 	
-	croak "invalid system '$sys_ref->{connector}'"
-		unless $CONFIG{user_systems}{$sys_ref->{connector}};
-	
-	$vars->{sys}{params} = { $s->_build_params(
-		$sys_ref->{connector}, 
-		%{$sys_ref->{params}},
-	)};
+	croak "invalid connector '$sys_ref->{connector}' (does not exist, or not active)"
+		unless $s->{sql_conn}->exists({ 
+			id => $sys_ref->{connector}, 
+			active => 1 
+		});
+
+	my @params = $s->{sql_param}->get({ 
+		connector => $sys_ref->{connector}
+	});
+
+	$vars->{sys}{params} = { map {
+		$_->{param} => { 
+			note => $_->{note},
+			required => $_->{required},
+			value => $sys_ref->{$_->{param}}
+		}
+	} @params };
 
 	$vars->{sys}{name} = $sys_ref->{name};
 	$vars->{sys}{connector} = $sys_ref->{connector};
@@ -73,21 +86,7 @@ sub show_add {
 
 	return $TPL_ADD;
 }
-##
-# custom params, as used in HTML template.
-sub _build_params {
-	my ($s, $conn_id, %param_values) = @_;
-	my @params = $s->{sql_param}->get({ 
-		connector => $conn_id
-	});
-	return map {
-		 $_->{param} => { 
-			note     => $_->{note}, 
-		 	required => $_->{required},
-			value    => $param_values{$_->{param}},
-		} 
-	} @params;
-}
+
 
 sub show_edit {
 	validate_pos(@_, 1, 1, { regex => qr(^\d+$) }, 0);
@@ -98,10 +97,7 @@ sub show_edit {
 	}
 	else {
 		$vars->{sys} = $sys_attr;
-		$vars->{sys}{params} = { $s->_build_params(
-			$sys->get('connector'), 
-			%{$sys_attr->{params}}
-		) };
+		$vars->{sys}{param} = $sys->get_param_all();
 		$vars->{sys}{id} = $sys_id;
 	}
 	$TPL_EDIT;

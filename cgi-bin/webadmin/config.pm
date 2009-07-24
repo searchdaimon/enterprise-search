@@ -13,6 +13,8 @@ our $CONFIG = \%CONFIG; #backwards compatible..
 # Group: Extra connectors
 $CONFIG{conn_base_dir} = $ENV{BOITHOHOME} . "/crawlers";
 $CONFIG{test_coll_name} = "_%s_TestCollection"; # %s is connector name.
+$CONFIG{test_usersys_name} = "Usersystem '%d' test";
+$CONFIG{sysconn_base_dir} = $ENV{BOITHOHOME} . "/usersystems";
 
 # Group: Template
 # Tmp path for compiled templates, etc.
@@ -173,13 +175,13 @@ $CONFIG{'signature_file'} = $ENV{'BOITHOHOME'} . "/config/bb_signature";
 
 
 # Group: User systems
-$CONFIG{user_systems} = {
-	1 => "Active Directory",
-	#2 => "Super Office",
-	#3 => "Lightweight Directory Access Protocol (LDAP)"
-	#3 => "Other",
-	3 => "Connector Pushed",
-};
+#$CONFIG{user_systems} = { # DEPRECATED. Moved to DB table systemConnector.
+#	1 => "Active Directory",
+#	#2 => "Super Office",
+#	#3 => "Lightweight Directory Access Protocol (LDAP)"
+#	#3 => "Other",
+#	3 => "Connector Pushed",
+#};
 
 
 # Group: ClientTPL

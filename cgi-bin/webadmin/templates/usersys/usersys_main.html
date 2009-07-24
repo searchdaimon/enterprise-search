@@ -53,7 +53,7 @@
 	[% SET conn = system.connector %]
 	<td style="width : 40px;"><img src="file.cgi?i=agt_family" alt="" /></td>
 	<td>[% system.name | html %]</td>
-	<td>[% user_systems.$conn | html %]</td>
+	<td>[% system.type | html %]</td>
 	<td>[% HTML.escape(system.user_count_error) || system.user_count %]</td>
 	<td style="text-align : right;">
         <ul class="vertical_buttons">
