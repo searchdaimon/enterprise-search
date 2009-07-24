@@ -16,13 +16,15 @@
     [% END %]
 [% END %]
 
-[% PROCESS pretty_button 
+[% WRAPPER pretty_button 
 		icon = "edit_add"
 		action = "?"
                 text = "Create a new connector"
 		act  = "new"
 		method = "post"
                 name = "btn.new"  %]
+<input type="hidden" name="conntype" value="[% conntype %]" />
+		[% END %]
 
 
    
