@@ -1166,7 +1166,7 @@ int main(int argc, char *argv[])
 	collections[0].config = default_cfg;
 	collections[0].hits = - 1;
 #endif
-	warnx("Num colls: %d\n", num_colls);
+	warnx("Numer of colls: %d\n", num_colls);
 
 
 	#ifdef DEBUG_TIME
@@ -1356,12 +1356,12 @@ int main(int argc, char *argv[])
 		sprintf(QueryData.GeoIPcontry,"na");
 	#endif
 
-	#ifdef DEBUG
+	#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
 		fprintf(stderr,"Time debug: geoip %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
-	#ifdef DEBUG
+	#ifdef DEBUG_TIME
 		gettimeofday(&start_time, NULL);
 	#endif
 
@@ -1424,7 +1424,7 @@ int main(int argc, char *argv[])
         	Sider[i].deletet = 1;
 	}
 
-	#ifdef DEBUG
+	#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
 		fprintf(stderr,"Time debug: query copying %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
@@ -1758,6 +1758,7 @@ int main(int argc, char *argv[])
 		);
 	}
 	else if (QueryData.version == 2.0) {
+		noDoctype = 1; //det var ikke doctype orginalt i xml'en. Og sende den bryter 24so.
     		disp_out_sd_v2_0(FinalSiderHeder, QueryData, noDoctype, SiderHeder, hascashe, hasprequery, nrRespondedServers, (nrOfServers + nrOfPiServers), nrOfAddServers, dispatcherfiltersTraped,
 		sockfd, addsockfd, AddSiderHeder, errorha, Sider, queryNodeHeder, etime
 		);

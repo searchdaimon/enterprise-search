@@ -154,30 +154,65 @@ void _cgistr_to_str(char *dst, char *cgi_key, size_t dst_len) {
 
 void cgi_fetch_full(struct QueryDataForamt *qdata) {
 	const char *tmpstr;
-#ifdef BLACK_BOKS
-	if (cgi_getentryint("anonymous") != 0) {
-		qdata->anonymous = 1;
-		strscpy(qdata->search_user, ANONYMOUS_USER, sizeof(qdata->search_user));
-	}
-	if (!qdata->anonymous) {
-#endif
-		if ((tmpstr = cgi_getentrystr("search_bruker")) != NULL) {
-			strscpy(qdata->search_user, tmpstr, sizeof(qdata->search_user));
-		}
-		if (qdata->search_user[0] == '\0')
-			errx(1, "search_bruker missing");
-#ifdef BLACK_BOKS
-	}
-#endif
-	if ((tmpstr = cgi_getentrystr("subname")) != NULL) {
-		/* 25.05.09: eirik
-		 * Subname has changed it's meaning.
-		 * If subname is non-empty we only want these collection.
-		 * Empty(strlen(str) == 0) is everyone
-		 */
-		strscpy(qdata->subname, tmpstr, sizeof(qdata->subname));
-	}
 
+#ifdef TFSO_HACK
+	if (cgi_getentrystr("search_bruker") == NULL) {
+                char *p;
+
+                strscpy(qdata->subname,cgi_getentrystr("subname"),sizeof(qdata->subname) -1);
+                if (strncmp(qdata->subname, "email-", 6) == 0) {
+                        strlcpy(qdata->search_user, qdata->subname+6, sizeof(qdata->search_user));
+                } else {
+                        strlcpy(qdata->search_user, qdata->subname, sizeof(qdata->search_user));
+                }
+
+		//fjerner eventuelt -body
+                p = strrchr(qdata->search_user, '-');
+                if (p != NULL) {
+                        if (strcmp(p, "-body") == 0)
+                                *p = '\0';
+                }
+
+                p = strrchr(qdata->subname, '-');
+                if (p != NULL) {
+                        if (strcmp(p, "-body") == 0)
+                                *p = '\0';
+                }
+	
+		warnx("tfso hack search_user \"%s\"\n",qdata->search_user);
+		warnx("tfso hack subname \"%s\"\n",qdata->subname);
+	}
+#else
+	if (0) {
+
+	}	
+#endif
+	else {
+
+	#ifdef BLACK_BOKS
+		if (cgi_getentryint("anonymous") != 0) {
+			qdata->anonymous = 1;
+			strscpy(qdata->search_user, ANONYMOUS_USER, sizeof(qdata->search_user));
+		}
+		if (!qdata->anonymous) {
+		#endif
+			if ((tmpstr = cgi_getentrystr("search_bruker")) != NULL) {
+				strscpy(qdata->search_user, tmpstr, sizeof(qdata->search_user));
+			}
+			if (qdata->search_user[0] == '\0')
+				errx(1, "search_bruker missing");
+		#ifdef BLACK_BOKS
+		}
+		#endif
+		if ((tmpstr = cgi_getentrystr("subname")) != NULL) {
+			/* 25.05.09: eirik
+			 * Subname has changed it's meaning.
+			 * If subname is non-empty we only want these collection.
+			 * Empty(strlen(str) == 0) is everyone
+			 */
+			strscpy(qdata->subname, tmpstr, sizeof(qdata->subname));
+		}
+	}
 	// Assuming remote address is *not* from remote user,
 	// but from our client (webclient) or similar.
 	if ((tmpstr = cgi_getentrystr("userip")) != NULL) {

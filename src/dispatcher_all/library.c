@@ -313,7 +313,7 @@ bsQuery(int *sock, void *data, size_t data_size) {
 int bsMultiConnect(int *sockfd, int server_cnt, char **servers, int port, int offset) {
 	int i;
 	for (i = 0; i < server_cnt; i++) {
-		dprintf("connecting to \"%s\" as sockfd nr %i\n",servers[i],(i +alreadynr));
+		dprintf("connecting to \"%s\" as sockfd nr %i\n",servers[i],i);
 
 		if (bsconnect(&sockfd[i + offset], servers[i], port)) {
 			dprintf("can connect\n");
