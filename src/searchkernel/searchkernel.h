@@ -7,6 +7,10 @@
 #include "../common/define.h"
 #include "../common/integerindex.h"
 
+#ifdef WITH_SPELLING
+        #include "../newspelling/spelling.h"
+#endif
+
 struct lotPreOpenFormat {
 
 	int *DocumentIndex;
@@ -38,7 +42,7 @@ int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct Side
     int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[],
     char search_user[], struct filtersFormat *filters,
     struct searchd_configFORMAT *searchd_config, char *errorstr,int *errorLen, struct iintegerMemArrayFormat *DomainIDs,
-    char *, char *, int anonymous, attr_conf *navmenu_cfg);
+    char *, char *, int anonymous, attr_conf *navmenu_cfg, spelling_t *spelling);
 
 #define RANK_TYPE_FIND	1
 #define RANK_TYPE_SUM	2

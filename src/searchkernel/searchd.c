@@ -56,6 +56,7 @@
 
 #ifdef WITH_SPELLING
 	#include "../newspelling/spelling.h"
+	spelling_t *spelling = NULL;
 #endif
 
 #define cfg_searchd "config/searchd.conf"
@@ -99,26 +100,6 @@ int isInSubname(struct subnamesFormat *subnames,int nrOfSubnames,char s[]) {
 }
 
 
-#ifdef WITH_SPELLING
-spelling_t spelling;
-
-void
-init_spelling(char *dict)
-{
-	fprintf(stderr, "searchd: init_spelling()\n");
-	//spelling = spelling_init(lang);
-	train(&spelling, bfile(dict));
-}
-
-void
-catch_sigusr1(int sig)
-{
-	fprintf(stderr, "searchd: Warning! Caught sigusr1. Reinitializing spelling.\n");
-	untrain(&spelling);
-	init_spelling("var/dictionarywords");
-
-}
-#endif
 
 
 /* The signal handler exit the program. . */
@@ -295,7 +276,23 @@ int main(int argc, char *argv[])
 
 	#ifdef WITH_SPELLING
 	if (searchd_config.optFastStartup != 1) {
-		init_spelling("var/dictionarywords");
+		if ((spelling = malloc(sizeof(spelling_t))) == NULL) {
+			perror("malloc spelling_t");
+		}
+
+		//if (!init_spelling("var/dictionarywords")) {
+		//	warnx("Can't init spelling.");
+		//}
+		//	cache_indexes_keepalive();
+		//	signal(SIGUSR2, cache_indexes_hup);
+
+        	if (!train(spelling, bfile("var/dictionarywords"))) {
+        	        warnx("Can't init spelling.");
+	        }
+
+		cache_spelling_keepalive(spelling);
+		signal(SIGUSR1, cache_spelling_hup);
+
 	}
 	#endif
 
@@ -340,9 +337,7 @@ int main(int argc, char *argv[])
 
 	maincfgclose(&maincfg);
 
-	#ifdef WITH_SPELLING
-		signal(SIGUSR1, catch_sigusr1);
-	#endif
+	
 	/***********************************************************************************/
 	//prøver å få fil lock. Bare en deamon kan kjøre avgangen
 
@@ -511,16 +506,25 @@ int main(int argc, char *argv[])
 	signal(SIGCLD, SIG_IGN);  /* now I don't have to wait() for forked children! */
 #else
 	{
-		struct sigaction sa;
-		int ret;
+		// runarb 28 juni 2009: 
+		// Hvis vi har verbose output så skal vi wait()e for våre barn, og vise prity print når de dør.
+		// desverre har det vært mye kød, der hovedprosessen blir hengene i sigchild_handler() og ikke kan
+		// fork'e flere barn. For å ungå dtte venter vi ikke på våre barn til vanlig.
+		if (globalOptVerbose) {
+			struct sigaction sa;
+			int ret;
 
-		sa.sa_sigaction = sigchild_handler;
-		sigemptyset(&sa.sa_mask);
-		sa.sa_flags = SA_SIGINFO;
+			sa.sa_sigaction = sigchild_handler;
+			sigemptyset(&sa.sa_mask);
+			sa.sa_flags = SA_SIGINFO;
 
-		ret = sigaction(SIGCHLD, &sa, 0);
-		if (ret) {
-			errx(1, "sigaction()");
+			ret = sigaction(SIGCHLD, &sa, 0);
+			if (ret) {
+				errx(1, "sigaction()");
+			}
+		}
+		else {
+			signal(SIGCLD, SIG_IGN);  /* now I don't have to wait() for forked children! */
 		}
 	}
 #endif
@@ -532,6 +536,7 @@ int main(int argc, char *argv[])
 	for((clilen = sizeof(cli_addr));;)
 	{
 		searchd_config.newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+
 
 		if(searchd_config.newsockfd < 0) {
 			/* Just restart */
@@ -595,7 +600,19 @@ int main(int argc, char *argv[])
 	}
 
 	html_parser_exit();
-	
+
+	free(searchd_config.lotPreOpen.Summary);	
+	free(searchd_config.lotPreOpen.DocumentIndex);	
+	adf_destroy(searchd_config.attrdescrp);
+	fte_destroy(searchd_config.getfiletypep);
+	if (searchd_config.optFastStartup != 1) {
+		thesaurus_destroy(searchd_config.thesaurusp);
+	}
+	//freegjør spelling. Trekt, men kjekt av valgring kan finne ut om noe ikke her blirr frigjort.
+	if (searchd_config.optFastStartup != 1) {
+		untrain(&spelling);
+	}
+
 	return(0);
 }
 
@@ -698,6 +715,7 @@ void *do_chld(void *arg)
 	if ((recv(mysocfd, &nrOfSubnames, sizeof nrOfSubnames, MSG_WAITALL)) == -1)
 		perror("recv nrOfSubnames");
 
+	vboprintf("nrOfSubnames: %d\n",nrOfSubnames);
 	struct subnamesFormat subnames[nrOfSubnames];
 	if (nrOfSubnames > 0) {
 		if ((recv(mysocfd, &subnames, sizeof subnames, MSG_WAITALL)) == -1)
@@ -812,7 +830,8 @@ void *do_chld(void *arg)
 			searchd_config,
 			SiderHeder->errorstr, &SiderHeder->errorstrlen,
 			&global_DomainIDs, queryNodeHeder.HTTP_USER_AGENT,
-			groupOrQuery, queryNodeHeder.anonymous, navmenu_cfg
+			groupOrQuery, queryNodeHeder.anonymous, navmenu_cfg,
+			spelling
 			)) 
 		{
 			fprintf(stderr, "searchd_child: dosearch did not return 1\n");

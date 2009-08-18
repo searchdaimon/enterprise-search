@@ -84,9 +84,6 @@
 
 	//struct iindexFormat *TeffArray; //[maxIndexElements];
 
-#ifdef WITH_SPELLING
-	extern spelling_t spelling;
-#endif
 
 #ifdef DEBUG_TIME
 struct popResultTimesFormat {
@@ -1870,7 +1867,7 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 
 #ifdef WITH_SPELLING
 int
-spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa)
+spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa, spelling_t *spelling)
 {
 	int i;
 	int fixed;
@@ -1886,10 +1883,10 @@ spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa)
 				char *p;
 				int found;
 
-				if (correct_word(&spelling, sa->s[0]))
+				if (correct_word(spelling, sa->s[0]))
 					continue;
 
-				p = check_word(&spelling, sa->s[0], &found);
+				p = check_word(spelling, sa->s[0], &found);
 				if (p == NULL)
 					continue;
 
@@ -1914,7 +1911,8 @@ int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct Side
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames, 
 int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[], 
 char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *searchd_config, char *errorstr,int *errorLen,
-	struct iintegerMemArrayFormat *DomainIDs, char *useragent, char groupOrQuery[], int anonymous, attr_conf *navmenu_cfg
+	struct iintegerMemArrayFormat *DomainIDs, char *useragent, char groupOrQuery[], int anonymous, attr_conf *navmenu_cfg,
+	spelling_t *spelling
 	) { 
 
 
@@ -2472,9 +2470,13 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 			copy_query(&qa, &PagesResults.QueryData.queryParsed);
 
-			if (spellcheck_query(SiderHeder, &qa) > 0) {
-				printf("Query corrected to: %s\n", SiderHeder->spellcheckedQuery);
+			if (spellcheck_query(SiderHeder, &qa, spelling) > 0) {
+				printf("Spelling: Query corrected to: %s\n", SiderHeder->spellcheckedQuery);
 			}
+			else {
+				printf("Spelling: no match\n");
+			}
+
 			destroy_query(&qa);
 
 			#ifdef DEBUG_TIME
@@ -2484,7 +2486,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 		}
 	}
-	else SiderHeder->spellcheckedQuery[0] = '\0';
 	#endif
 
 	//lager en liste med ordene som ingikk i queryet til hiliting

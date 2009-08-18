@@ -21,6 +21,10 @@
 #include "../3pLibs/keyValueHash/hashtable.h"
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
 
+#ifdef WITH_SPELLING
+        #include "../newspelling/spelling.h"
+#endif
+
 #define MAX_PREOPEM_FILE 300
 
 void
@@ -71,6 +75,11 @@ preopen(void)
 pthread_mutex_t index_cache_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t index_cache_cv = PTHREAD_COND_INITIALIZER;
 
+#ifdef WITH_SPELLING
+pthread_mutex_t spelling_cache_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t spelling_cache_cv = PTHREAD_COND_INITIALIZER;
+#endif
+
 void
 cache_indexes_hup(int sig)
 {
@@ -83,6 +92,21 @@ cache_indexes_hup(int sig)
 	pthread_cond_signal(&index_cache_cv);
 	pthread_mutex_unlock(&index_cache_lock);
 }
+
+#ifdef WITH_SPELLING
+void
+cache_spelling_hup(int sig)
+{
+	/*
+	 * If it is locked we are either in the signal handler somewhere else,
+	 * or the indexer cache in running.
+	 */
+	if (pthread_mutex_trylock(&spelling_cache_lock) != 0)
+		return;
+	pthread_cond_signal(&spelling_cache_cv);
+	pthread_mutex_unlock(&spelling_cache_lock);
+}
+#endif
 
 #define MAX_INDEX_CACHE (1024*1024*256)
 
@@ -383,6 +407,36 @@ cache_indexes_keepalive_thread(void *dummy)
 	}
 }
 
+#ifdef WITH_SPELLING
+static void *
+cache_spelling_keepalive_thread(spelling_t *spelling)
+{
+
+
+	for (;;) {
+		// Hush little baby
+		pthread_mutex_lock(&spelling_cache_lock);
+		pthread_cond_wait(&spelling_cache_cv, &spelling_cache_lock);
+
+		// Refresh cache
+		printf("Refreshing spelling cache...\n");
+		// do it
+
+        	untrain(spelling);
+
+        	if (!train(spelling, bfile("var/dictionarywords"))) {
+        	        warnx("Can't init spelling.");
+	        }
+
+
+
+		pthread_mutex_unlock(&spelling_cache_lock);
+
+		printf("~Refreshing spelling cache\n");
+	}
+}
+#endif
+
 void
 cache_indexes_keepalive(void)
 {
@@ -393,3 +447,15 @@ cache_indexes_keepalive(void)
 		err(1, "Unable to start cache index keepalive thread");
 }
 
+#ifdef WITH_SPELLING
+void 
+cache_spelling_keepalive(spelling_t *spelling) 
+{
+	pthread_t td;
+	int rc;
+
+	if ((rc = pthread_create(&td, NULL, cache_spelling_keepalive_thread, spelling)))
+		err(1, "Unable to start spelling keepalive thread");
+	
+}
+#endif
