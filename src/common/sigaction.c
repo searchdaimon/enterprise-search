@@ -3,7 +3,7 @@
 
 #include <signal.h>
 
-
+#include <stdlib.h>
 #include <stdio.h>
 
 #ifndef _GNU_SOURCE
@@ -17,6 +17,12 @@ sigchild_handler(int sig, siginfo_t *sip, void *extra)
 {
 	pid_t child = sip->si_pid;
 	int status;
+
+	if (sig != SIGCHLD) {
+		fprintf(stderr,"sigchild_handler() ble calt med noe som ikke var SIGCHLD (%d), men sig %d\n",SIGCHLD,sig);
+		fprintf(stderr,"signal stacken må ha blirr korypt. Exiter.\n");
+		exit(-1);
+	}
 
 	if (sip->si_code == CLD_EXITED) {
 		printf("Got signal '%s', si_code %d"
