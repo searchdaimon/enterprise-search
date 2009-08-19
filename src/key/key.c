@@ -12,7 +12,7 @@
 #define MYSQL_PASS	"G7J7v5L5Y7"
 #define MYSQL_DB	"boithobb"
 
-int key_get_existingconn(MYSQL *db, char *keyout) {
+int key_get_existingconn(void *db, char *keyout) {
 	MYSQL_ROW row;
 	MYSQL_RES *res;
 
