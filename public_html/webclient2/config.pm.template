@@ -25,6 +25,7 @@ Readonly::Hash our %CFG => (
 	},
 	cache_timeout => 20, # seconds
 	cache_uri_tpl => "http://%s/cgi-bin/ShowCache2bb?sign=%d&time=%d&D=%d&subname=%s",
+	bbkey => "3fb09aa259aadaca8827087ff51ef231",
 );
 
 Readonly::Hash our %TPL_FILE => (
