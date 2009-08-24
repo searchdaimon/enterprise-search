@@ -98,8 +98,10 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 	}
 	else {
 		if((re->fd = lotOpenFileNoCasheByLotNrl(lotNr, re->mainfile, openmode, 'r', subname)) == -1) {
+			#ifdef DEBUG
 			fprintf(stderr,"can't open file %s. for lot %i, subname %s\n",re->mainfile,lotNr,subname);
 			perror("lot file");
+			#endif
 			goto reopen_error;
 		}
 	}
