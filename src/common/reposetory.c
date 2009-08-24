@@ -385,9 +385,11 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 		return 0;
 	}
 
+
 	int HtmlBufferSize = (*ReposetoryHeader).htmlSize;	
 
-		
+	printf("WorkBuffSize: %i\n",WorkBuffSize);
+	
 	if ((error = compress((Bytef *)WorkBuff,(uLongf *)&WorkBuffSize,(Bytef *)htmlbuffer,(uLongf)HtmlBufferSize)) != 0) {
                 printf("compress error. Code: %i\n",error);
 		printf("WorkBuffSize %i, HtmlBufferSize %i at %s:%d\n",WorkBuffSize,HtmlBufferSize,__FILE__,__LINE__);
@@ -460,11 +462,12 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
         }
 
 	//skriver bilde
-	if(fwrite(imagebuffer,(*ReposetoryHeader).imageSize,1,RFILE) < 0) {
-       	        perror("rApendPost: can't write image");
-       	}
-	debug("did write image of %i bytes",(*ReposetoryHeader).imageSize);
-
+	if ((*ReposetoryHeader).imageSize != 0) {
+		if(fwrite(imagebuffer,(*ReposetoryHeader).imageSize,1,RFILE) < 0) {
+       		        perror("rApendPost: can't write image");
+       		}
+		debug("did write image of %i bytes",(*ReposetoryHeader).imageSize);
+	}
 	//skriver acl
 #ifdef BLACK_BOKS
 	if(fwrite(acl_allow,(*ReposetoryHeader).acl_allowSize,1,RFILE) < 0) {
@@ -550,8 +553,10 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 	#endif
 
 	#ifdef BLACK_BOKS
-		printf("rApendPost: acl_allow: \"%s\"\n",acl_allow);	
-		printf("rApendPost: acl_denied:  \"%s\"\n",acl_denied);	
+		#ifdef DEBUG
+			printf("rApendPost: acl_allow: \"%s\"\n",acl_allow);	
+			printf("rApendPost: acl_denied:  \"%s\"\n",acl_denied);	
+		#endif
 	#endif
 
 	return offset;
@@ -911,8 +916,10 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 			recordseparator,rsize,imagesize);
 
 	#else
-		rReadPost2(fd,ReposetoryHeader,WorkBuff,sizeof(WorkBuff),NULL,acl_allowbuffer,acl_deniedbuffer,
-			recordseparator,rsize,imagesize, url, attributes);
+		if (!rReadPost2(fd,ReposetoryHeader,WorkBuff,sizeof(WorkBuff),NULL,acl_allowbuffer,acl_deniedbuffer, recordseparator,rsize,imagesize, url, attributes)) {
+			forreturn = 0;
+	                goto rReadHtml_end;
+		}
 	#endif
 
 
@@ -1384,7 +1391,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 
 int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
 			char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[], char **url,
-			char **attributes) {
+			char **attributes, int LotNr) {
 
         #ifdef TIME_DEBUG_L
                 struct timeval start_time, end_time;
@@ -1432,6 +1439,10 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			printf("\n");
 		#endif
 
+		if (rLotForDOCid((*ReposetoryHeader).DocID) != LotNr) {
+			printf("DocID %u is not in the lot ( %i ) we are reading. Somting is wrong.\n",(*ReposetoryHeader).DocID);
+			return 0;
+		}
 
 		if (htmlbufferSize < (*ReposetoryHeader).htmlSize) {
 			printf("htmlSize (%hu) lager then buffer. %i\n",(*ReposetoryHeader).htmlSize,htmlbufferSize);
@@ -1477,12 +1488,12 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 		#ifdef BLACK_BOKS
 
 			//begrenser størelsen på en acl. Slik at en klikk ikke gjør at alt ikke fungerer. Må tenke på om 2000 er nokk størelse her
-			if ((*ReposetoryHeader).acl_allowSize > 2000) {
+			if (((*ReposetoryHeader).acl_allowSize > 2000) || ((*ReposetoryHeader).acl_allowSize < 0)) {
 				printf("bad acl_allowSize. size %i\n",(*ReposetoryHeader).acl_allowSize);
 				return 0;
 			}
 			#ifdef IIACL
-			if ((*ReposetoryHeader).acl_deniedSize > 2000) {
+			if (((*ReposetoryHeader).acl_deniedSize > 2000) || ((*ReposetoryHeader).acl_deniedSize < 0)) {
 				printf("bad acl_deniedSize. size %i\n",(*ReposetoryHeader).acl_deniedSize);
 				return 0;
 			}
@@ -1492,7 +1503,10 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			#ifdef DEBUG
 			//printf("acl_deniedSize size %i\n",(*ReposetoryHeader).acl_deniedSize);
 			#endif
-			(*acl_allowbuffer) = malloc((*ReposetoryHeader).acl_allowSize +1);
+			if (((*acl_allowbuffer) = malloc((*ReposetoryHeader).acl_allowSize +1)) == NULL) {
+				perror("malloc acl_allowbuffer");
+				return 0;
+			}
 			if ((*ReposetoryHeader).acl_allowSize != 0) {
 				if (fread((*acl_allowbuffer),(*ReposetoryHeader).acl_allowSize,1,LotFileOpen) != 1) {
 					printf("cant't read acl_allow. acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
@@ -1511,7 +1525,10 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			printf("acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
 			#endif
 
-			(*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1);
+			if (((*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1)) == NULL) {
+				perror("malloc acl_deniedbuffer");
+				return 0;
+			}
 			if ((*ReposetoryHeader).acl_deniedSize != 0) {
 				if (fread((*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize,1,LotFileOpen) != 1) {
 					printf("cant't read acl_denied. acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
@@ -1626,21 +1643,16 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpe
 
 		//finner hvor i filen vi starter
 		startOffset = ftell(LotFileOpen);
-		//rReadPost(struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
-                //        char imagebuffer[],char **aclbuffer,char recordseparator[])
 
-
-		rReadPost(LotFileOpen,ReposetoryHeader,htmlbuffer,htmlbufferSize,imagebuffer,acl_allowbuffer,acl_deniedbuffer,recordseparator, url, attributes);
-
-		//runpack(ReposetoryData,buff,bufflength);
-		
-		//printf("DocID %u url: %s\n",(*ReposetoryHeader).DocID,(*ReposetoryHeader).url);
 
 		//recovery av bad records
+		// sjekker at rReadPost() ikke returnerete 0
 		//sjekker om vi kan kalkulere en gyldig lot id fra docIDen, hvis ikke her vi nokk en bad record.
 		//eller hvis recordseparator ikke er ***
 		//skal søke til record seperatoren og prøve på ny
-		if ((rLotForDOCid((*ReposetoryHeader).DocID) != LotNr) || (strncmp(recordseparator,"***",3) != 0)) {
+		if ((rReadPost(LotFileOpen,ReposetoryHeader,htmlbuffer,htmlbufferSize,imagebuffer,acl_allowbuffer,acl_deniedbuffer,recordseparator, url, attributes, LotNr) == 0) 
+			|| (rLotForDOCid((*ReposetoryHeader).DocID) != LotNr) 
+			|| (strncmp(recordseparator,"***",3) != 0)) {
 			#ifdef DEBUG
 				printf("bad reposetory record\n");
 				printf("rLotForDOCid() : %i, LotNr %i\n",rLotForDOCid((*ReposetoryHeader).DocID),LotNr);
@@ -1676,21 +1688,13 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpe
 			if (feof(LotFileOpen)) {
 				printf("did hit eof trying to recover from bad reposetory record\n");
 			}
-			//printf("søk for rs ok: %i",rscount);
-			//sleep(2);
-			//exit(1);
 		}
 		else {
 
 			//finner adressen på denne recorden
 			stoppOffset = ftello64(LotFileOpen);
-			#ifdef BLACK_BOKS
-				//*radress = ((stoppOffset - sizeof(struct ReposetoryHeaderFormat) - (*ReposetoryHeader).htmlSize - (*ReposetoryHeader).imageSize - (*ReposetoryHeader).aclSize) -3);
-			#else
-				//*radress = ((stoppOffset - sizeof(struct ReposetoryHeaderFormat) - (*ReposetoryHeader).htmlSize - (*ReposetoryHeader).imageSize) -3);
-			#endif
-				*radress = startOffset;
-			//*rsize = bufflength;
+
+			*radress = startOffset;
 
 			#ifdef BLACK_BOKS
 			//hvis dette er en ny nokk rekord retunerer vi denne
