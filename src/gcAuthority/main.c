@@ -228,6 +228,23 @@ int isOkCrawled (char subname[], struct gcaoptFormat *gcaopt) {
 	mysql_free_result(mysqlres);
 	mysql_close(&demo_db);
 
+	/* Fall back to fullyCrawled if mysql did not contain collection information */
+	if (nrofcollections == 0) {
+		char path[PATH_MAX];
+		int fd;
+
+		fprintf(stderr, "Falling back to using fullyCrawled file.\n");
+		GetFilPathForLot(path, 1, subname);
+		strcat(path, "fullyCrawled");
+
+		fd = open(path, O_RDONLY);
+		if (fd == -1) {
+			crawler_success = 0;
+		} else {
+			crawler_success = 1;
+			close(fd);
+		}
+	}
 
 	printf("~isOkCrawled(crawler_success=%i)\n",crawler_success);
 

@@ -1883,17 +1883,25 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 			set_crawl_state(db, CRAWL_ERROR, collection[i].id, bstrerror());
 		}
 		else {
+			int success = 0;
+
+			bbdn_opencollection(collection[i].socketha, collection[i].collection_name);
 
 			if (flag == crawl_recrawl || (*collection).lastCrawl == 0) {
-				cm_crawlfirst(global_h,&collection[i]) 
-					? set_crawl_state(db, CRAWL_DONE, collection[i].id, NULL)
-					: set_crawl_state(db, CRAWL_ERROR, collection[i].id, bstrerror());
-
+				if (cm_crawlfirst(global_h,&collection[i])) { 
+					set_crawl_state(db, CRAWL_DONE, collection[i].id, NULL);
+					success = 1;
+				} else {
+					set_crawl_state(db, CRAWL_ERROR, collection[i].id, bstrerror());
+				}
 			}
 			else {
-            	cm_crawlupdate(global_h,&collection[i])
-					? set_crawl_state(db, CRAWL_DONE, collection[i].id, NULL)
-					: set_crawl_state(db, CRAWL_ERROR, collection[i].id, bstrerror());
+				if (cm_crawlupdate(global_h,&collection[i])) {
+					set_crawl_state(db, CRAWL_DONE, collection[i].id, NULL);
+					success = 1;
+				} else {
+					set_crawl_state(db, CRAWL_ERROR, collection[i].id, bstrerror());
+				}
 			}
 
 			closecollection(&collection[i]);
