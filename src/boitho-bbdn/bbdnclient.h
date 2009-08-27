@@ -15,6 +15,8 @@ int bbdn_docexist(int socketha, char subname[],char documenturi[],unsigned int l
 int bbdn_closecollection(int socketha, char subname[]);
 int bbdn_deleteuri(int socketha, char subname[], char *uri);
 int bbdb_addwhisper(int sock, char *subname, whisper_t whisper);
+void bbdn_opencollection(int sock, char *subname);
+
 
 
 #endif //_BBDHCLIENT__H_

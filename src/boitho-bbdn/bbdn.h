@@ -9,3 +9,4 @@
 #define bbc_addwhisper		12
 
 #define bbc_closecollection	20
+#define bbc_opencollection	21

@@ -19,6 +19,8 @@
 #include "../common/gcwhisper.h"
 #include "../common/reposetory.h"
 
+#include "../perlembed/perlembed.h"
+
 #include "bbdn.h"
 
 #define PROTOCOLVERSION 1
@@ -257,6 +259,23 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			free(doctype);
 			free(attributes);
 		}
+		else if (packedHedder.command == bbc_opencollection) {
+			char *subname;
+			char path[PATH_MAX];
+
+			printf("open collection\n");
+
+                        if ((i=recv(socket, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1)
+                                err(1, "Cant read intrespons");
+                        subname = malloc(intrespons +1);
+                        if ((i=recv(socket, subname, intrespons,MSG_WAITALL)) == -1)
+                                err(1, "Cant read subname");
+
+			GetFilPathForLot(path, 1, subname);
+			strcat(path, "fullyCrawled");
+
+			unlink(path);
+		}
 		else if (packedHedder.command == bbc_closecollection) {
 			printf("closecollection\n");
 			char *subname;
@@ -315,6 +334,17 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 					fclose(fp);
 				}
 
+			}
+
+			/* We are done crawling  */
+			{
+				int fd = lotOpenFileNoCasheByLotNrl(1, "fullyCrawled", ">>", '\0', subname);
+
+				if (fd == -1) {
+					warn("Unable to write fullyCrawled file");
+				} else {
+					close(fd);
+				}
 			}
 			
 		}

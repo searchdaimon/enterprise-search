@@ -187,3 +187,17 @@ int bbdb_addwhisper(int sock, char *subname, whisper_t whisper) {
 
 	return 1;
 }
+
+void
+bbdn_opencollection(int sock, char *subname)
+{
+	int len;
+
+	sendpacked(sock, bbc_opencollection, BLDPROTOCOLVERSION, 0, NULL, "");
+
+	len = strlen(subname);
+	if (sendall(sock, &len, sizeof(len)) == -1)
+		err(1, "sendall(len)");
+	if (sendall(sock, subname, len) == -1)
+		err(1, "sendall(subname)");
+}
