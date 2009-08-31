@@ -272,8 +272,15 @@
 		conntype : conntype,
       		connid : connid
 	    };
-	    if (testMethod)
+
+	    $('#runStatus').html("Connector is running..");
+
+	    if (testMethod) {
 		    data['method'] = testMethod;
+		    $('#runStatus').html("Connector is running..");
+	    } else {
+		    $('#runStatus').html("Crawler is running..");
+	    }
 
 	    $.each($('.testParam'), function (index, obj) {
 		data['params.' + index] = $(obj).val();
@@ -369,17 +376,31 @@ function refreshOutput() {
             // ie didn't want to replace pre contents directly.
             $('.testrunInner').html('<pre>' + resp['output']  + '</pre>'); 
 
-            if (resp['crawl_done']) {
-                clearInterval(refreshInterval);
-                $('#refreshBtn').attr("disabled", "disabled");
-                $('#killBtn').attr("disabled", "disabled");
-                $('#runBtn').removeAttr("disabled").html("Run test");
-                $('#runStatus').html("Crawl is not running.");
-            }
-            else {
-                $('#runStatus').html("Crawl is running..");
-                $('#refreshBtn').removeAttr("disabled");
-            }
+	    // UserSystem
+	    if (data['method']) {
+	        if (resp['crawl_done']) {
+    	            clearInterval(refreshInterval);
+            	    $('#runBtn').removeAttr("disabled").html("Run test");
+            	    $('#runStatus').html("Connector is not running.");
+        	}
+        	else {
+            	    $('#runStatus').html("Connector is running..");
+        	}
+	    }
+	    // Crawler
+	    else {
+	        if (resp['crawl_done']) {
+    	            clearInterval(refreshInterval);
+        	    $('#refreshBtn').attr("disabled", "disabled");
+            	    $('#killBtn').attr("disabled", "disabled");
+            	    $('#runBtn').removeAttr("disabled").html("Run test");
+            	    $('#runStatus').html("Crawl is not running.");
+        	}
+        	else {
+            	    $('#runStatus').html("Crawl is running..");
+            	    $('#refreshBtn').removeAttr("disabled");
+        	}
+	    }
         }
     };
 
