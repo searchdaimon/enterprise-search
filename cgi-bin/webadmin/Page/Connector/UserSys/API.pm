@@ -11,7 +11,6 @@ use Data::UserSys;
 use Sql::System;
 use Sql::SystemParam;
 use Sql::SystemConnector;
-use Page::Connector::UserSys;
 use Page::API;
 our @ISA = qw(Page::Connector::API Page::API);
 
@@ -136,7 +135,7 @@ sub test_run {
 	}
 	elsif ($method eq $TEST_AUTH_USER) {
 		my ($user, $pass) = ($param_ref->[1], $param_ref->[2]);
-		croak "TODO: not implemented in infoquery";
+		$res = $iq->authUser($user, $pass, $sys_id, logfile => $output_file);
 	}
 	else { croak "Unknown test method '$method'" }
 	$api_vars->{output} = $res ? Dumper($res) : $iq->error;

@@ -170,11 +170,12 @@ sub test_output {
 
     my $sessData = Sql::SessionData->new($s->{dbh});
     my $output_path = { $sessData->get($test_id) }->{data};
-  
+
     my $done;
+
     eval {
-        croak "Results for testrun do not exist."
-            unless defined $output_path && -e $output_path;
+	croak "Results for testrun do not exist."
+    	    unless defined $output_path && -e $output_path;
 
         open my $fh, "<", $output_path
             or croak $!;
