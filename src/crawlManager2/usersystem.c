@@ -6,8 +6,8 @@
 #define PERL_LIST_GROUPS "PerlUserSystem::_internal_list_groups"
 #define PERL_LIST_USERS "PerlUserSystem::_internal_list_users"
 #define PERL_GET_NAME "PerlUserSystem::_internal_get_name"
+#define PERL_AUTH_USER "PerlUserSystem::_internal_authenticate"
 
-/* XXX: Untested */
 int
 us_authenticate_perl(usersystem_data_t *data, char *user, char *password)
 {
@@ -21,8 +21,8 @@ us_authenticate_perl(usersystem_data_t *data, char *user, char *password)
 
 	hv_store(params, "_in_user", strlen("_in_user"), sv_2mortal(newRV((SV *)in_user)), 0);
 	hv_store(params, "_in_pass", strlen("_in_pass"), sv_2mortal(newRV((SV *)in_pass)), 0);
-	hv_store(params, "_out_retval", strlen("_out_retval"), sv_2mortal(newRV((SV *)in_pass)), 0);
-	if (!perl_embed_run(usp->perlpath, "Usersystem::_internal_authenticate", params, NULL, NULL)) {
+	hv_store(params, "_out_retval", strlen("_out_retval"), sv_2mortal(newRV((SV *)out_retval)), 0);
+	if (!perl_embed_run(usp->perlpath, PERL_AUTH_USER, params, NULL, NULL)) {
 		warnx("perl error");
 		return 0;
 	}

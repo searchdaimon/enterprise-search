@@ -99,6 +99,7 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 	usersystem_container_t *usc;
 	usersystem_t *us;
 
+
 	querylen = snprintf(query, sizeof(query), "SELECT is_primary, connector FROM system WHERE id = %d", id);
 
 	if (mysql_real_query(db, query, querylen)) {
@@ -150,7 +151,8 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 	n = mysql_num_rows(resparam);
 	
 	while ((rowparam = mysql_fetch_row(resparam)) != NULL) {
-		printf("Param: %s => %s\n", rowparam[0], rowparam[1]);
+		if (!strcmp(rowparam[0], "password")) printf("Param: password => ********\n");
+		else printf("Param: %s => %s\n", rowparam[0], rowparam[1]);
 		hashtable_insert(data->parameters, strdup(rowparam[0]), strdup(rowparam[1]));
 	}
 
@@ -1762,11 +1764,11 @@ int redirect_stdoutput(char * file) {
     }
 
     if (file_exist(file)) {
-        blog(LOGERROR, 1, "Test output file already exists '%s' exists.", file);
+        blog(LOGERROR, 1, "Test output file '%s' already exists.", file);
         return 0;
     }
 
-    printf("tc: redirecting std[out,err] to %s.", file);
+    printf("tc: redirecting std[out,err] to %s\n", file);
     if ((freopen(file, "a+", stdout)) == NULL
             || freopen(file, "a+", stderr) == NULL) {
         perror(file);
@@ -2333,6 +2335,7 @@ void connectHandler(int socket) {
 			printf("cm_killcraw: killed pid %d: %s\n", pid, ok ? "yes" : "no");
 		}
 		else if (packedHedder.command == cm_listusersus) {
+			char extrabuf[512];
 			unsigned int usersystem;
 			MYSQL db;
 			usersystem_t *us;
@@ -2344,6 +2347,26 @@ void connectHandler(int socket) {
 
 			sql_connect(&db);
 			recv(socket, &usersystem, sizeof(usersystem), 0);
+			recvall(socket,extrabuf,sizeof extrabuf);
+
+			// Redirect output:
+			int output_redirected = 0;
+			if (extrabuf != NULL && extrabuf[0] != '\0')
+			    {
+				if (!redirect_stdoutput(extrabuf))
+				    {
+					blog(LOGERROR, 1, "test usersystem error.");
+				    }
+				else
+				    {
+			                // a lock implies that a crawl is still running
+			                flock(fileno(stdout), LOCK_SH); 
+			                setvbuf(stdout, NULL, _IOLBF, 0); // line buffered
+			                setvbuf(stderr, NULL, _IOLBF, 0);
+			                output_redirected = 1;
+				    }
+			    }
+
 			if ((us = get_usersystem(&db, usersystem, &data)) == NULL) {
 				blog(LOGERROR, 1, "Unable to get usersystem");
 				strlcpy(h_users.error, "Unable to get usersystem", sizeof h_users.error);
@@ -2369,8 +2392,66 @@ void connectHandler(int socket) {
 			}
 			
 			mysql_close(&db);
+
+			if (output_redirected)
+			    {
+				// Det er dessverre ikke mulig å redirecte std* tilbake til console.
+				fclose(stderr); 
+				fclose(stdout);
+		    	    }
+		}
+		else if (packedHedder.command == cm_authenticateuser) {
+			char user[512], pass[512], extrabuf[512];
+			unsigned int usersystem;
+			MYSQL db;
+			usersystem_t *us;
+			usersystem_data_t data;
+			unsigned int r = 0;
+
+			sql_connect(&db);
+			recvall(socket,user,sizeof user);
+			recvall(socket,pass,sizeof pass);
+			recv(socket, &usersystem, sizeof(usersystem), 0);
+			recvall(socket,extrabuf,sizeof extrabuf);
+
+			// Redirect output:
+			int output_redirected = 0;
+			if (extrabuf != NULL && extrabuf[0] != '\0')
+			    {
+				if (!redirect_stdoutput(extrabuf))
+				    {
+					blog(LOGERROR, 1, "test usersystem error.");
+				    }
+				else
+				    {
+			                // a lock implies that a crawl is still running
+			                flock(fileno(stdout), LOCK_SH); 
+			                setvbuf(stdout, NULL, _IOLBF, 0); // line buffered
+			                setvbuf(stderr, NULL, _IOLBF, 0);
+			                output_redirected = 1;
+				    }
+			    }
+
+			if ((us = get_usersystem(&db, usersystem, &data)) == NULL) {
+				blog(LOGERROR, 1, "Unable to get usersystem");
+			} 
+			else {
+				r = (us->us_authenticate)(&data, user, pass);
+			}
+
+			sendall(socket, &r, sizeof(r));
+			
+			mysql_close(&db);
+
+			if (output_redirected)
+			    {
+				// Det er dessverre ikke mulig å redirecte std* tilbake til console.
+				fclose(stderr);
+				fclose(stdout);
+		    	    }
 		}
 		else if (packedHedder.command == cm_groupsforuserfromusersystem) {
+			char extrabuf[512];
 			char user[512], secnduser[512];
 			char **groups, group[MAX_LDAP_ATTR_LEN]; //[MAX_LDAP_ATTR_LEN];
 			int n_groups, j;
@@ -2390,8 +2471,27 @@ void connectHandler(int socket) {
 
 			recvall(socket, user, sizeof(user));
 			recvall(socket, &usersystem, sizeof(usersystem));
+			recvall(socket,extrabuf,sizeof extrabuf);
 
 			printf("usersystem \"%d\", user \"%s\"\n", usersystem, user);
+
+			// Redirect output:
+			int output_redirected = 0;
+			if (extrabuf != NULL && extrabuf[0] != '\0')
+			    {
+				if (!redirect_stdoutput(extrabuf))
+				    {
+					blog(LOGERROR, 1, "test usersystem error.");
+				    }
+				else
+				    {
+			                // a lock implies that a crawl is still running
+			                flock(fileno(stdout), LOCK_SH); 
+			                setvbuf(stdout, NULL, _IOLBF, 0); // line buffered
+			                setvbuf(stderr, NULL, _IOLBF, 0);
+			                output_redirected = 1;
+				    }
+			    }
 
 			sql_connect(&db);
 			us = get_usersystem(&db, usersystem, &data);
@@ -2432,8 +2532,9 @@ void connectHandler(int socket) {
 					n_groups = 0;
 				}
 			}
+
 			gettimeofday(&te, NULL);
-			printf("grepme Took: %f\n", getTimeDifference(&ts, &te));
+			printf("GroupsForUser part 1 took %f seconds.\n", getTimeDifference(&ts, &te));
 			gettimeofday(&ts, NULL);
 			sendall(socket, &n_groups, sizeof(int));
 			if (n_groups > 0) {
@@ -2446,10 +2547,17 @@ void connectHandler(int socket) {
 				boithoad_respons_list_free(groups);
 			}
 			gettimeofday(&te, NULL);
-			printf("grepme Took2: %f\n", getTimeDifference(&ts, &te));
+			printf("GroupsForUser part 2 took %f seconds.\n", getTimeDifference(&ts, &te));
 			free_usersystem_data(&data);
 			
 			mysql_close(&db);
+
+			if (output_redirected)
+			    {
+				// Det er dessverre ikke mulig å redirecte std* tilbake til console.
+				fclose(stderr); 
+				fclose(stdout);
+		    	    }
 		}
 		else if (packedHedder.command == cm_usersystemfromcollection) {
 			char collection[512];

@@ -66,10 +66,29 @@ sub deleteCollection($$) {
 }
 
 sub listUsers {
-	my ($self, $sys) = @_;
+	my ($self, $sys, %opt) = @_;
 	croak "system not provided"
 		unless defined $sys && $sys =~ /^\d+$/;
-	return $self->_getList("listUsers $sys", 'user', $sys);
+
+	my $exec = "listUsers $sys";
+	$exec .= " \Q$opt{logfile}\E" 
+		if defined $opt{logfile};
+
+	#return $self->_getList("listUsers $sys", 'user', $sys);
+	return $self->_getList($exec, 'user', $sys);
+}
+
+sub authUser {
+	my ($self, $user, $pass, $sys, %opt) = @_;
+
+	my $exec = "AuthUser \Q$user\E \Q$pass\E \Q$sys\E";
+	$exec .= " \Q$opt{logfile}\E"
+		if defined $opt{logfile};
+
+	my ($success, @output) = $self->_infoquery_exec($exec);
+	return undef unless $success;
+	chomp $output[0];
+	return $output[0];
 }
 
 sub countUsers {
@@ -106,8 +125,14 @@ sub listGroups {
 }
 
 sub userGroups {
-	my ($self, $user, $sys) = @_;
-	return $self->_getList(qq{userGroups "\Q$user\E" "\Q$sys\E"}, 'group');
+	my ($self, $user, $sys, %opt) = @_;
+
+	my $exec = "userGroups \Q$user\E \Q$sys\E";
+	$exec .= " \Q$opt{logfile}\E"
+		if defined $opt{logfile};
+
+	#return $self->_getList(qq{userGroups "\Q$user\E" "\Q$sys\E"}, 'group');
+	return $self->_getList($exec, 'group');
 }
 
 sub scan($$$$$) {

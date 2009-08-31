@@ -263,6 +263,7 @@ cmc_rewrite_url(int socketha, char *collection_in, const char *url_in, size_t ur
 	strscpy(url_out, url, url_out_len);
 	strscpy(uri_out, uri, uri_out_len);
 	strscpy(fulluri_out, fulluri, fulluri_out_len);
+	printf("*** [fulluri] [%s] ***\n");
 	/*
 	if (gettimeofday(&end_time, NULL) != 0)
 		printf("# ################################## # Error...\n");
@@ -324,15 +325,18 @@ int cmc_killcrawl(int socketha, int port) {
     return resp;
 }
 
-int cmc_groupsforuserfromusersystem(int socketha, char *_user, unsigned int us, char ***_groups) {
+int cmc_groupsforuserfromusersystem(int socketha, char *_user, unsigned int us, char ***_groups, char *extra_in) {
 	char user[512];
 	int i, n;
 	char **groups;
+	char extrabuf[512];
 
 	strncpy(user, _user, sizeof(user));
+	strncpy(extrabuf, extra_in, sizeof extrabuf);
 	sendpacked(socketha, cm_groupsforuserfromusersystem, BLDPROTOCOLVERSION, sizeof(user), user, "");
 
 	sendall(socketha, &us, sizeof(us));
+	sendall(socketha, &extrabuf, sizeof extrabuf);
 
 	if (recv(socketha, &n, sizeof n, MSG_WAITALL) == -1) {
 		perror("groupsbyuserforcoll recv");
@@ -358,6 +362,27 @@ int cmc_groupsforuserfromusersystem(int socketha, char *_user, unsigned int us, 
 		gettimeofday(&te, NULL);
 		printf("grepme cmc_groupsforuserfromusersystem took: %f\n", getTimeDifference(&ts, &te));
 	#endif
+
+	return n;
+}
+
+int cmc_authuser(int sock, char *_user, char *_pass, unsigned int usersystem, char *extra_in)
+{
+	char user[512], pass[512];
+	int n;
+	char extrabuf[512];
+
+	strncpy(user, _user, sizeof(user));
+	strncpy(pass, _pass, sizeof(pass));
+	strncpy(extrabuf, extra_in, sizeof extrabuf);
+
+	sendpacked(sock, cm_authenticateuser, BLDPROTOCOLVERSION, 0, NULL, "");
+	sendall(sock, &user, sizeof(user));
+	sendall(sock, &pass, sizeof(pass));
+	sendall(sock, &usersystem, sizeof(usersystem));
+	sendall(sock, &extrabuf, sizeof extrabuf);
+
+	recv(sock, &n, sizeof(int), 0);
 
 	return n;
 }
@@ -396,14 +421,19 @@ cmc_usersystemfromcollection(int sock, char *collection)
 }
 
 struct cm_listusers_h
-cmc_listusersus(int sock, int usersystem, char ***users)
+cmc_listusersus(int sock, int usersystem, char ***users, char *extra_in)
 {
 	struct cm_listusers_h users_h;
 	int i, n_users;
 	char user[MAX_LDAP_ATTR_LEN];
+	char extrabuf[512];
+
+	strncpy(extrabuf, extra_in, sizeof extrabuf);
 
 	sendpacked(sock, cm_listusersus, BLDPROTOCOLVERSION, 0, NULL, "");
 	sendall(sock, &usersystem, sizeof(usersystem));
+	sendall(sock, &extrabuf, sizeof extrabuf);
+
 	recv(sock, &users_h, sizeof(users_h), 0);
 	n_users = users_h.num_users;
 	if (n_users >= 0) {

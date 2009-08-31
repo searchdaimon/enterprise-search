@@ -18,10 +18,11 @@ int cmc_deleteCollection(int socketha,char collection_in[], char **errormsgp);
 
 int cmc_collectionislocked(int socketha, char *collection_in);
 
-int cmc_groupsforuserfromusersystem(int socketha, char *_user, unsigned int usersystem, char ***_groups);
+int cmc_groupsforuserfromusersystem(int socketha, char *_user, unsigned int usersystem, char ***_groups, char *extra_in);
 int cmc_collectionsforuser(int sock, char *_user, char **groups);
 int cmc_usersystemfromcollection(int sock, char *collection);
-struct cm_listusers_h cmc_listusersus(int sock, int usersystem, char ***users);
+struct cm_listusers_h cmc_listusersus(int sock, int usersystem, char ***users, char *extra_in);
+int cmc_authuser(int sock, char *user, char *pass, unsigned int usersystem, char *extra_in);
 
 
 int cmc_removeForeignUsers(int sock, char *collection);

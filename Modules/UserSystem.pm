@@ -57,7 +57,7 @@ sub _internal_authenticate {
 	delete $params->{_in_user};
 	delete $params->{_in_pass};
 	delete $params->{_out_retval};
-	$ret_val = PerlUserSystem::authenticate($params, $user, $pass);
+	${ $ret_val } = PerlUserSystem::authenticate($params, $user, $pass);
 	return 1;
 }
 

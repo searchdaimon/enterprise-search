@@ -83,8 +83,31 @@ sub _scp_fetch_file {
 
 sub authenticate {
 	my ($params, $username, $password) = (@_);
-	croak "Not implemented.";
-	return 0;
+
+	my $expect_script = sprintf $Const::EXPECT_SSH, 
+		$Const::EXPECT_TIMEOUT, "\Q$$username\@$params->{ip}\E", "\Qid\E", "\Q$$password\E";
+
+	my ($exp_fh, $exp_file) = tempfile();
+	print {$exp_fh} $expect_script;
+	close $exp_fh;
+
+	print "Connecting to '$params->{ip}' with username '$$username'\n";
+
+	my $exph;
+
+	if (! open $exph, "$Const::EXPECT_CMD $exp_file |") {
+		print "unable to run expect: $!\n";
+		return 0;
+	    }
+
+	print $_ while <$exph>;
+	unlink $exp_file;
+	if (! close $exph) {
+		print "$Const::EXPECT_CMD exited with error.\n";
+		return 0;
+	    }
+
+	return 1;
 }
 
 
@@ -101,6 +124,30 @@ Readonly::Scalar our $EXPECT_TIMEOUT => 20;
 Readonly::Scalar our $EXPECT_TPL => q|
 set timeout %s
 spawn scp %s %s
+expect {
+	"password:" {
+		send "%s\r\n"
+		exp_continue
+	} "yes/no)?" {
+		send "yes\r\n"
+		set timeout -1
+		exp_continue
+	} "Permission denied, please try again." {
+		puts "Permission denied, please try again."
+		exit 1
+	} eof {
+		exit
+	} timeout {
+		puts "timeout"
+		exit 1
+	} -re . { #match everyting else
+		exp_continue
+	}
+}
+|;
+Readonly::Scalar our $EXPECT_SSH => q|
+set timeout %s
+spawn ssh %s %s
 expect {
 	"password:" {
 		send "%s\r\n"

@@ -41,7 +41,7 @@ int main (int argc, char *argv[]) {
 	if (argc == 1) {
 		printf("./usage key [value]\n\n");
 		printf("groupsForUser <user name>\n");
-		printf("listUsers <usersystem>\n");
+		printf("listUsers <usersystem> [extra]\n");
 		printf("listMailUsers\n");
 		printf("listGroups\n");
 		printf("collectionFor <user name> or <group name>\n");
@@ -55,11 +55,11 @@ int main (int argc, char *argv[]) {
 		printf("documentsInCollection <collection name>\n");
 		printf("SidToUser <sid>\n");
 		printf("SidToGroup <sid>\n");
-		printf("AuthUser <username> <password>\n");
+		printf("AuthUser <username> <password> <usersystem> [extra]\n");
 		printf("GetPassword <username>\n");
 		printf("collectionLocked <collection>\n");
                 printf("killCrawl <pid>\n");
-		puts("userGroups <user> <usersystem>");
+		puts("userGroups <user> <usersystem> [extra]");
 		puts("addForeignUser <collection> <user> <group>");
 		puts("removeForeignUsers <collection>");
 		printf("\nReturns %i on success and %i on failure\n",EXIT_SUCCESS,EXIT_FAILURE);
@@ -349,20 +349,24 @@ int main (int argc, char *argv[]) {
 	}
 	else if (strcmp(key,"AuthUser") == 0) {
 		int r;
+		int socketha;
+		int errorbufflen = 512;
+                char errorbuff[errorbufflen];
 
-		if (value2 == NULL) {
-			printf("AuthUser username password\n");
-			exit(1);
-		}
-		if ((r = boitho_authenticat(value, value2))) {
-			if (r == 1) {
-				printf("%s is authenticated...\n", value);
-			} else if (r == 2) {
-				printf("%s is not allowed to log in\n", value);
-			}
-		} else {
-			printf("User not authenticated\n");
-		}
+		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
+                        printf("Error: %s\n",errorbuff);
+                        exit(1);
+                }
+
+		if (value == NULL || value2 == NULL || value3 ==  NULL)
+			errx(1, "infoquery AuthUser <username> <password> <usersystem> [extra]");
+
+		r = cmc_authuser(socketha, value, value2, atoi(value3), value4 == NULL ? "" : value4);
+
+		if (r == 1)
+		    printf("success\n");
+		else
+		    printf("failure\n");
 	}
 	else if (strcmp(key,"GetPassword") == 0) {
 		char password[1024];
@@ -406,7 +410,7 @@ int main (int argc, char *argv[]) {
 		if (value == NULL || value2 == NULL)
 			errx(1, "infoquery groupsbyuserfromcollection user collection");
 
-		r = cmc_groupsforuserfromusersystem(socketha, value, atoi(value2), &groups);
+		r = cmc_groupsforuserfromusersystem(socketha, value, atoi(value2), &groups, value3 == NULL ? "" : value3);
 		if (groups != NULL) {
 			int i;
 			char *group;
@@ -458,7 +462,7 @@ int main (int argc, char *argv[]) {
 		if (value == NULL)
 			errx(1, "infoquery collectionsforuser user");
 
-		users_h = cmc_listusersus(socketha, atoi(value), &users);
+		users_h = cmc_listusersus(socketha, atoi(value), &users, value2 == NULL ? "" : value2);
 
 		if (users_h.num_users < 0) {
 			printf("Error: %s\n", users_h.error);
