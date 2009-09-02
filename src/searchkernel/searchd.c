@@ -408,16 +408,18 @@ int main(int argc, char *argv[])
 #ifndef WITHOUT_THESAURUS
 		printf("init thesaurus\n");
 
+		searchd_config.thesaurus_all = NULL;
 		if (searchd_config.optFastStartup != 1) {
-    			//searchd_config.thesaurusp = thesaurus_init(bfile("data/thesaurus.text"), bfile2("data/thesaurus.id"));
-			searchd_config.thesaurus_all = load_all_thesauruses(bfile("data/thesaurus/"));
-		}
-		printf("init thesaurus done\n");
 
-		if (searchd_config.thesaurus_all == NULL)
-		    {
-			fprintf(stderr, "searchd: ERROR!! Unable to open thesauruses. Disabling stemming.\n");
-		    }
+			searchd_config.thesaurus_all = load_all_thesauruses(bfile("data/thesaurus/"));
+
+			printf("init thesaurus done\n");
+
+			if (searchd_config.thesaurus_all == NULL) {
+				fprintf(stderr, "searchd: ERROR!! Unable to open thesauruses. Disabling stemming.\n");
+		    	}
+
+		}
 
 #endif
 		fprintf(stderr, "searchd: init file-extensions\n");
@@ -762,6 +764,7 @@ void *do_chld(void *arg)
 	printf("[searchd] lang_id = %i\n", queryNodeHeder.lang);
 	printf("[searchd] lang = %s\n", lang);
 
+	searchd_config->thesaurusp = NULL;
 	if (lang != NULL && searchd_config->thesaurus_all != NULL)
 	    {
 		iterator	it = map_find(searchd_config->thesaurus_all, lang);
@@ -773,7 +776,6 @@ void *do_chld(void *arg)
 		else
 		    {
 			printf("[searchd] No thesaurus for %s\n", lang);
-			searchd_config->thesaurusp = NULL;
 		    }
 	    }
 #endif
