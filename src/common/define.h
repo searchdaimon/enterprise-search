@@ -167,6 +167,7 @@
 #define cm_listusersus		8
 #define cm_recrawlcollection	10
 #define cm_collectionislocked   11
+#define cm_authenticateuser	12
 #define cm_deleteCollection	50
 #define cm_rewriteurl		60
 #define cm_killcrawl            70

@@ -1490,7 +1490,7 @@ void *searchIndex_thread(void *arg)
 #endif
 
 				n_groups = cmc_groupsforuserfromusersystem(cmc_sock, searchIndex_thread_arg->search_user,
-						system, &groups);
+						system, &groups, NULL);
 
 #ifdef DEBUG_TIME
 				gettimeofday(&endtime, NULL);
