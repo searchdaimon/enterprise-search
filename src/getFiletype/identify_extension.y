@@ -79,7 +79,7 @@ lang	: lang_id EQUALS_ID string_list SEMICOLON_ID
 	    fprintf(stderr, "lang = {");
 	    for (i=0; i<data->lang_size; i++)
 		{
-		    if (i>0) printf(",");
+		    if (i>0) fprintf(stderr, ",");
 		    fprintf(stderr, "%s", vector_get( data->lang, i ).ptr);
 		}
 	    fprintf(stderr, "}\n");
