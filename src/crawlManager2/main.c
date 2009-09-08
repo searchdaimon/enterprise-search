@@ -186,7 +186,7 @@ int documentContinue(struct collectionFormat *collection) {
 	time_t now;
 
         //sjekker om vi har nokk plass lokalt. Sjkker førte gang så hver hundrende gang.
-	if ((collection->docsCount == 0) || ((collection->docsCount % 100) = 0)) {
+	if ((collection->docsCount == 0) || ((collection->docsCount % 100) == 0)) {
 		if (!bbdn_HasSufficientSpace(collection->socketha, collection->collection_name)) {
 			snprintf(collection->errormsg, sizeof collection->errormsg,
 				"Insufficient disk space. Can't crawl any more documents.");
