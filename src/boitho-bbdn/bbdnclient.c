@@ -188,6 +188,31 @@ int bbdb_addwhisper(int sock, char *subname, whisper_t whisper) {
 	return 1;
 }
 
+int bbdn_HasSufficientSpace(int socketha, char subname[]) {
+
+	int intrespons = 0;
+	int len, i;
+
+	//sender heder
+        sendpacked(socketha,bbc_HasSufficientSpace,BLDPROTOCOLVERSION, 0, NULL,"");
+
+        //subname
+        len = strlen(subname) +1;
+	debug("sending (len %i): \"%s\"",len,subname);
+        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall subname len"); return 0; }
+        if(sendall(socketha,subname, len) == 0) { perror("sendall subname"); return 0; }
+
+        
+
+        
+        if ((i=recv(socketha, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
+            bperror("Cant recv respons");
+            return 0;
+        }
+
+	return intrespons;
+}
+
 void
 bbdn_opencollection(int sock, char *subname)
 {

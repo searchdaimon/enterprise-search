@@ -172,9 +172,10 @@ free_usersystem_data(usersystem_data_t *data)
 
 int documentContinue(struct collectionFormat *collection) {
 
+	
 	debug("documentContinue: start");
 
-	if (collection->docsRemaining == 0) {
+	if ((collection->docsRemaining != -1) && (collection->docsCount >= collection->docsRemaining)) {
 		snprintf(collection->errormsg, sizeof collection->errormsg, 
 			"User specified document limit reached.");
 		return 0;
@@ -183,6 +184,15 @@ int documentContinue(struct collectionFormat *collection) {
 	int recrawl_schedule_start, recrawl_schedule_end;
 	struct tm *t;
 	time_t now;
+
+        //sjekker om vi har nokk plass lokalt. Sjkker førte gang så hver hundrende gang.
+	if ((collection->docsCount == 0) || ((collection->docsCount % 100) = 0)) {
+		if (!bbdn_HasSufficientSpace(collection->socketha, collection->collection_name)) {
+			snprintf(collection->errormsg, sizeof collection->errormsg,
+				"Insufficient disk space. Can't crawl any more documents.");
+			return 0;		
+		}
+	}
 
 	//hvis vi skal crawl oftere en hvert dågn bruker vi ikke schedule time, men tilater å crawl hele tiden.
 	if ( (collection->rate != 0) && (collection->rate < 1440)) {
@@ -304,8 +314,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 	printf("documentAdd: uri %s, title %s\n",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).title);
 	#endif
 
-	if (collection->docsRemaining != -1)
-		collection->docsRemaining--;
+	collection->docsCount++;
 
         #ifdef DEBUG_TIME
                 struct timeval start_time, end_time;
@@ -1548,6 +1557,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 	for (i=0;i<(*nrofcollections);i++) {
 		(*collection)[i].errormsg[0] = '\0';
 		(*collection)[i].docsRemaining = -1;
+		(*collection)[i].docsCount = 0;
 		key_get((*collection)[i].systemkey);
 	}
 

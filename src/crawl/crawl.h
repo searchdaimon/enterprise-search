@@ -53,6 +53,8 @@ struct collectionFormat {
 	char *alias;
 	//runarb: 23 feb 2009;
 	char systemkey[KEY_STR_LEN];
+	//runarb: 21 aug 2009
+	int docsCount;
 };
 
 struct crawldocumentExistFormat {

@@ -438,6 +438,31 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			gcwhisper_write(subname, add);
 			free(subname);
 		}
+		else if (packedHedder.command == bbc_HasSufficientSpace) {
+
+			char *subname;
+			//subname
+			if ((i=recvall(socket, &intrespons, sizeof(intrespons))) == 0) {
+                    		perror("Cant read intrespons");
+                    		exit(1);
+                	}
+			subname = malloc(intrespons +1);
+			if ((i=recvall(socket, subname, intrespons)) == 0) {
+                                perror("Cant read subname");
+                                exit(1);
+                        }
+
+			// tester bare i lot 1 her. Må også sjekke andre loter når vi begynner å støtte frlere disker på ES.
+			intrespons = lotHasSufficientSpace(1, 4096, subname);
+
+			if ((n=sendall(socket, &intrespons, sizeof(intrespons))) == -1) {
+                	               perror("Cant recv filerest");
+        	                       exit(1);
+	               	}
+
+			printf("~Asked for HasSufficientSpace for subname \"%s\". Returnerer %d\n",subname, intrespons);
+
+		}
 		else {
 			printf("unnown comand. %i\n", packedHedder.command);
 		}
