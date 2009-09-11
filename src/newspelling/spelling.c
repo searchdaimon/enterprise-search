@@ -45,14 +45,31 @@ train(spelling_t *s, const char *dict)
 	struct hashtable *soundslikelookup;
 	int num_words = 0, num_dup_words = 0;
 
+	printf("train(s=%p, dict=%s)\n",s,dict);
+	printf("Globals: spelling_min_freq %d\n", spelling_min_freq);
+
 	if ((fp = fopen(dict, "r")) == NULL) {
 		warn("fopen(dict)");
 		return 0;
 	}
 
 	s->words = create_hashtable(5000, ht_wstringhash, ht_wstringcmp);
+	if (s->words == NULL) {
+		perror("create_hashtable s->words");
+		return 0;
+	}
+
 	s->soundslike = create_hashtable(5000, ht_wstringhash, ht_wstringcmp);
+	if (s->soundslike == NULL) {
+		perror("create_hashtable s->soundslike");
+		return 0;
+	}
+
 	soundslikelookup = create_hashtable(5000, ht_wstringhash, ht_wstringcmp);
+	if (soundslikelookup == NULL) {
+		perror("create_hashtable soundslikelookup");
+		return 0;
+	}
 
 	line = NULL;
 	while (getline(&line, &len, fp) > 0) {
@@ -141,14 +158,43 @@ train(spelling_t *s, const char *dict)
 
 	hashtable_destroy(soundslikelookup, 0);
 
+	printf("~train\n");
+
 	return 1;
 }
 
 void
 untrain(spelling_t *s)
 {
+	struct hashtable_itr *itr;
+
+	printf("untrain()\n");
+
+	s->inited = 0;
+
+	// frigjør s->soundslike, vil kalle egen free funksjon ved å iterere over alle.
+	itr = hashtable_iterator(s->soundslike);
+	do {
+		container *list = hashtable_iterator_value(itr);
+
+		destroy(list);
+	} while (hashtable_iterator_advance(itr));
+	free(itr);
+	hashtable_destroy(s->soundslike, 0);
+	s->soundslike = NULL;
+
+	// firgjør s->words. Vil kalle free() på alle elementene
+	hashtable_destroy(s->words, 1);
+	s->words = NULL;
+
+	printf("~untrain\n");
+
+
+/*
 	struct hashtable *h;
 	struct hashtable_itr *itr;
+
+	printf("untrain()\n");
 
 	s->inited = 0;
 	h = s->soundslike;
@@ -165,9 +211,11 @@ untrain(spelling_t *s)
 	s->words = NULL;
 	hashtable_destroy(h, 1);
 
+	printf("~untrain\n");
+*/
 }
 
-void editsn(spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int levels);
+void editsn(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int levels);
 
 static inline int
 normalizefreq(unsigned int freq, int distance)
@@ -181,11 +229,10 @@ normalizefreq(unsigned int freq, int distance)
 }
 
 
-void check_soundslike(spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *like, wchar_t **bestw, int *mindist, int *maxfreq, int stage);
+void check_soundslike(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *like, wchar_t **bestw, int *mindist, int *maxfreq, int stage);
 
 static inline void
-//handle_word(spelling_t *s, wchar_t *word, wchar_t *best, int *max, int levels)
-handle_word(spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int phase)
+handle_word(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int phase)
 {
 	wchar_t *like;
 
@@ -195,7 +242,7 @@ handle_word(spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t *
 }
 
 void
-editsn(spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int stage)
+editsn(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int stage)
 {
 	int i, j;
 	wchar_t nword[LINE_MAX];
@@ -261,7 +308,7 @@ handle_soundslike(scache_t *c, int dist, int frequency, wchar_t *word, wchar_t *
 
 
 void
-editsn_soundslike(spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int stage)
+editsn_soundslike(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int stage)
 {
 	int i, j;
 	wchar_t nword[LINE_MAX];
@@ -313,7 +360,7 @@ editsn_soundslike(spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wch
 }
 
 int
-correct_word(spelling_t *s, char *word)
+correct_word(const spelling_t *s, char *word)
 {
 	wchar_t *wword;
 	void *p;
@@ -342,7 +389,7 @@ correct_word(spelling_t *s, char *word)
 }
 
 void
-check_soundslike(spelling_t *s, scache_t *c,  wchar_t *wword, wchar_t *like, wchar_t **bestw, int *mindist, int *maxfreq, int phase)
+check_soundslike(const spelling_t *s, scache_t *c,  wchar_t *wword, wchar_t *like, wchar_t **bestw, int *mindist, int *maxfreq, int phase)
 {
 	container *list;
 	//struct hashtable_itr *itr;
@@ -383,7 +430,7 @@ check_soundslike(spelling_t *s, scache_t *c,  wchar_t *wword, wchar_t *like, wch
 }
 
 char *
-check_word(spelling_t *s, char *word, int *found)
+check_word(const spelling_t *s, char *word, int *found)
 {
 	wchar_t *bestw;
 	int mindist = INT_MAX;
