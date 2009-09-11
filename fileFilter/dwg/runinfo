@@ -1,0 +1,5 @@
+documentstype: dwg
+command: ./dwg_dump #file
+outputformat: text
+outputtype: stdio
+
