@@ -1019,6 +1019,7 @@ void *do_chld(void *arg)
 	    }
 
 	free(SiderHeder->navigation_xml);
+	
 	#endif
 
 	#ifdef DEBUG
