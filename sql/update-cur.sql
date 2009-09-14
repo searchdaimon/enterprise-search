@@ -173,7 +173,6 @@ INSERT INTO `connectors` VALUES (99, 'ExchangePublic', 'Microsoft Exchange Publi
 -- Active directory system
 INSERT INTO system (id, name, is_primary, connector) (SELECT 1 AS id, 'Active Directory' AS name, 1 AS is_primary, 1 as connector FROM config WHERE 0 = (SELECT COUNT(*) AS SUM FROM system) LIMIT 1);
 
-
 --INSERT INTO systemParamValue (param, system, value) SELECT 'domain' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_domain'; 
 --INSERT INTO systemParamValue (param, system, value) VALUES('ldapstring', 1, '');
 --INSERT INTO systemParamValue (param, system, value) VALUES('ldapbase', 1, '');
@@ -188,6 +187,7 @@ INSERT INTO `systemParam` VALUES (1, 'ldapstring', NULL, 0);
 INSERT INTO `systemParam` VALUES (1, 'ldapbase', NULL, 0);
 INSERT INTO `systemParam` VALUES (1, 'ldapgroupstring' ,NULL, 0);
 
+
 -- kopierer over ldap info til brukersys.
 -- msad_group er depricated
 INSERT INTO systemParamValue (param, system, value) (SELECT 'ip' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ip' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
@@ -198,6 +198,8 @@ INSERT INTO systemParamValue (param, system, value) (SELECT 'ldapgroupstring' as
 INSERT INTO systemParamValue (param, system, value) (SELECT 'ldapbase' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapbase' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
 INSERT INTO systemParamValue (param, system, value) (SELECT 'ldapstring' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapstring' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
 
+
+
 -- setter ordbok rerun til 7 hvis den er kl 10.00, som er standar.
 update config set configvalue = '7' where configkey = 'suggdict_run_hour' and configvalue  = '10';
 
@@ -206,6 +208,11 @@ update config set configvalue = '100' where configkey = 'authentication_timeout'
 
 -- setter inn et tilfeldig tall som en unik nøkkel.
 insert into config (configkey, configvalue) VALUES('key', MD5(RAND()));
+
+# setter at exchange connector ikke er Perl crawler (extension) og er aktiv.
+UPDATE connectors SET extension = 0, active = 1 WHERE id = 9;
+
+
 
 
 
@@ -221,4 +228,3 @@ ALTER TABLE shares ADD alias varchar(255);
 UPDATE config SET configvalue = 'RRYAYACZACJAB6RLANAQ8K4G' WHERE configvalue = '' AND configkey = 'licensekey';
 DELETE FROM config WHERE configkey='licensesystem';
 
-UPDATE connectors SET extension = 0, active = 1 WHERE id = 9;
