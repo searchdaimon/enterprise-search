@@ -228,3 +228,18 @@ ALTER TABLE shares ADD alias varchar(255);
 UPDATE config SET configvalue = 'RRYAYACZACJAB6RLANAQ8K4G' WHERE configvalue = '' AND configkey = 'licensekey';
 DELETE FROM config WHERE configkey='licensesystem';
 
+
+CREATE TABLE `systemConnector` (
+  `id` int(10) unsigned NOT NULL auto_increment,
+  `name` varchar(255) default NULL,
+  `extension` tinyint(4) NOT NULL default '1',
+  `modified` datetime default NULL,
+  `active` tinyint(4) NOT NULL default '1',
+  `read_only` tinyint(4) NOT NULL default '1',
+  PRIMARY KEY  (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=15038 DEFAULT CHARSET=latin1;
+
+
+INSERT INTO `systemConnector` (`id`, `name`, `extension`, `modified`, `active`, `read_only`) VALUES (1,'Active Directory',0,NULL,1,1);
+INSERT INTO `systemConnector` (`id`, `name`, `extension`, `modified`, `active`, `read_only`) VALUES (2,'Connector Pushed',0,NULL,1,1);
+
