@@ -34,14 +34,15 @@ typedef struct hashtable scache_t;
 
 unsigned int spelling_min_freq = 0;
 
-int
-train(spelling_t *s, const char *dict)
+spelling_t *
+train(const char *dict)
 {
 	FILE *fp;
 	char *word;
 	char *p;
 	char *line;
 	size_t len;
+	spelling_t *s;
 	struct hashtable *soundslikelookup;
 	int num_words = 0, num_dup_words = 0;
 
@@ -50,26 +51,33 @@ train(spelling_t *s, const char *dict)
 
 	if ((fp = fopen(dict, "r")) == NULL) {
 		warn("fopen(dict)");
-		return 0;
+		return NULL;
 	}
+
+	if ((s = malloc(sizeof(spelling_t))) == NULL) {
+        	perror("malloc spelling_t");
+		return NULL;
+        }
 
 	s->words = create_hashtable(5000, ht_wstringhash, ht_wstringcmp);
 	if (s->words == NULL) {
 		perror("create_hashtable s->words");
-		return 0;
+		return NULL;
 	}
 
 	s->soundslike = create_hashtable(5000, ht_wstringhash, ht_wstringcmp);
 	if (s->soundslike == NULL) {
 		perror("create_hashtable s->soundslike");
-		return 0;
+		return NULL;
 	}
 
 	soundslikelookup = create_hashtable(5000, ht_wstringhash, ht_wstringcmp);
 	if (soundslikelookup == NULL) {
 		perror("create_hashtable soundslikelookup");
-		return 0;
+		return NULL;
 	}
+
+	
 
 	line = NULL;
 	while (getline(&line, &len, fp) > 0) {
@@ -100,7 +108,9 @@ train(spelling_t *s, const char *dict)
 		if (mbstowcs(wcword, word, strlen(word)+1) == -1) {
 			free(word);
 			free(wcword);
-			warn("mbstowcs");
+			#ifdef DEBUG
+				warn("mbstowcs");
+			#endif
 			goto word_end;
 		}
 		free(word);
@@ -160,7 +170,7 @@ train(spelling_t *s, const char *dict)
 
 	printf("~train\n");
 
-	return 1;
+	return s;
 }
 
 void
