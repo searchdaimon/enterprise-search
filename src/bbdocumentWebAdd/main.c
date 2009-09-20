@@ -313,7 +313,7 @@ sd_gcwhispers(int sock, xmlDocPtr doc, xmlNodePtr top)
 			free(str);
 		}
 	}
-	bbdb_addwhisper(sock, collection, w);
+	bbdn_addwhisper(sock, collection, w);
 	free(collection);
 }
 

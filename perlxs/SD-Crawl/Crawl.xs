@@ -147,6 +147,12 @@ pdeleteuri(struct cargsF *cargs, char *subname, char *uri)
 	return bbdn_deleteuri(cargs->collection->socketha, subname, uri);
 }
 
+void
+paddwhisper(struct cargsF *cargs, char *subname, int value)
+{
+	bbdn_addwhisper(cargs->collection->socketha, subname, value);
+}
+
 MODULE = SD::Crawl		PACKAGE = SD::Crawl		
 
 void
@@ -271,3 +277,10 @@ pdeleteuri(x, subname, uri)
 
 		XPUSHs(sv_2mortal(newSVnv(ret)));
 
+void
+paddwhisper(x, subname, value)
+	void *x
+	char *subname
+	int value
+	CODE:
+		paddwhisper(x, subname, value);

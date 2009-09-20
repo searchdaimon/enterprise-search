@@ -170,7 +170,7 @@ int bbdn_deleteuri(int socketha, char subname[], char *uri) {
 	return 1;
 }
 
-int bbdb_addwhisper(int sock, char *subname, whisper_t whisper) {
+int bbdn_addwhisper(int sock, char *subname, whisper_t whisper) {
 	int len;
 
 	debug("bbdn_addwhisper: start");
