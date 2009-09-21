@@ -116,12 +116,13 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 	printf("ex_logOn(mailboxurl=%s, Exchangeurl=%s, username=%s)\n", mailboxurl, login->Exchangeurl, login->username);
 
 	curl = curl_easy_init();
-
-
 	if (curl == NULL) {
 		asprintf(errorm,"Can't init curl_easy_init()");		
 		return NULL;
 	}
+
+	// for debuging: Tar med headeren i http bodien
+	//curl_easy_setopt(curl, CURLOPT_HEADER, 1);
 
 	#ifdef DEBUG
     	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
@@ -240,7 +241,7 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 		}
 		else {
 			asprintf(errorm,"Http error code %i\n",code);
-			return NULL;
+//			return NULL;
 		}
 
     	}
