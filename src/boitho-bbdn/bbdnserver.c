@@ -10,6 +10,7 @@
 
 #include "../common/boithohome.h"
 #include "../common/define.h"
+#include "../common/re.h"
 #include "../common/daemon.h"
 #include "../bbdocument/bbdocument.h"
 #include "../maincfg/maincfg.h"
@@ -45,7 +46,9 @@ int main (void) {
 
         sconnect(connectHandler, bbdnport);
 
-        printf("conek ferdig \n");
+        printf("bbdnserver:Main() sconnect ferdig\n");
+
+	maincfgclose(&maincfg);
 
         return 0;
 }
@@ -237,13 +240,20 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
                 		printf("Time debug: bbdn_docadd recv data time: %f\n",getTimeDifference(&start_time, &end_time));
         		#endif
 
+			printf("\n");
+			printf("########################################################\n");
+			printf("Url: %s\n",documenturi);
 			printf("got subname \"%s\": title \"%s\". Nr %i, dokument_size %i attrib: %s\n",subname,title,count,dokument_size, attributes);
-
+			printf("########################################################\n");
+			printf("calling bbdocument_add():\n");
         		#ifdef DEBUG_TIME
         		        gettimeofday(&start_time, NULL);
 		        #endif
 
 			bbdocument_add(subname,documenturi,documenttype,document,dokument_size,lastmodified,acl_allow,acl_denied,title,doctype, attributes, attrkeys);
+
+			printf(":bbdocument_add end\n");
+			printf("########################################################\n");
 
 			#ifdef DEBUG_TIME
                 		gettimeofday(&end_time, NULL);
@@ -329,9 +339,16 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 				if ((fp = fopen(pidpath, "r")) == NULL) {
 					warn("Unable to open pidfile for searchdbb: fopen(%s)", pidpath);
 				} else {
-					fscanf(fp, "%d", &pid);
-					kill(pid, SIGUSR2);
-					fclose(fp);
+					int scanc = fscanf(fp, "%d", &pid);
+					if (scanc != 1) {
+						fprintf(stderr,"Unable to get a valid pid from %s\n",pidpath);
+					}
+					else {
+						printf("pid %i, scanc %i\n", pid, scanc);
+						kill(pid, SIGUSR2);
+					}
+						fclose(fp);
+
 				}
 
 			}
@@ -346,6 +363,9 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 					close(fd);
 				}
 			}
+
+			free(subname);
+
 			
 		}
 		else if (packedHedder.command == bbc_deleteuri) {
@@ -383,6 +403,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 				int err = 0;
 
 				if (uriindex_get(uri, &DocID, &lastmodified, subname) == 0) {
+					fprintf(stderr,"Unable to get uri info. uri=\"%s\",subname=\"%s\".",uri,subname);
 					perror("Unable to get uri info");
 					err++;
 				}
@@ -437,6 +458,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 
 			gcwhisper_write(subname, add);
 			free(subname);
+
 		}
 		else if (packedHedder.command == bbc_HasSufficientSpace) {
 
