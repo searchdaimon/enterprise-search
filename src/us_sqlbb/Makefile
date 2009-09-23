@@ -23,7 +23,7 @@ all: $(PROG)
 
 $(PROG): $(OBJS)
 	libtool $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOKS -g -static
-	-mkdir ../../usersystems/us_sqlbb
+	mkdir -p ../../usersystems/us_sqlbb
 	cp $(PROG) ../../usersystems/us_sqlbb
 
 clean:
