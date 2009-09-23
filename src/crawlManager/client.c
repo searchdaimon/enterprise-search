@@ -229,9 +229,9 @@ cmc_rewrite_url(int socketha, char *collection_in, const char *url_in, size_t ur
 	char url[1024], uri[1024], fulluri[1024];
 	struct rewriteFormat rewrite;
 
-	#ifdef DEBUG
-	printf("cmc_rewrite_url: will rewrite (strlen %i) : \"%s\"\n",strlen(url_in),url_in);
-	#endif
+	//#ifdef DEBUG
+	printf("cmc_rewrite_url(collection_in=\"%s\", url_in=\"%s\")\n",collection_in,url_in);
+	//#endif
 
 	memset(&rewrite, '\0', sizeof(rewrite));
 
@@ -263,7 +263,7 @@ cmc_rewrite_url(int socketha, char *collection_in, const char *url_in, size_t ur
 	strscpy(url_out, url, url_out_len);
 	strscpy(uri_out, uri, uri_out_len);
 	strscpy(fulluri_out, fulluri, fulluri_out_len);
-	printf("*** [fulluri] [%s] ***\n");
+	printf("~cmc_rewrite_url [uri_out=\"%s\", fulluri=\"%s\"]\n",uri_out,fulluri_out);
 	/*
 	if (gettimeofday(&end_time, NULL) != 0)
 		printf("# ################################## # Error...\n");
@@ -438,6 +438,11 @@ cmc_listusersus(int sock, int usersystem, char ***users, char *extra_in)
 	n_users = users_h.num_users;
 	if (n_users >= 0) {
 		*users = malloc((n_users+1) * sizeof(char *));
+		// runarb 2 sept 2009: må finne en måte å sjekke om malloc fungerte her. 
+        	//if (*users == NULL) {
+                //	perror("malloc");
+                //	return 0;
+	        //}
 		for (i = 0; i < n_users; i++) {
 			recv(sock, user, sizeof(user), 0);
 			(*users)[i] = strdup(user);
