@@ -310,15 +310,25 @@ _suffixtree_collect_prefixes(struct suffixtree *root, char *user, char ***groups
 		struct suggest_input **cur;
 
 		for (cur = sf->best; *cur != NULL; cur++) {
+			int i, found;
+
 			if (!acl_is_allowed((*cur)->aclallow, (*cur)->acldeny, user, groups, num)) {
 				printf("Not allowed access to(collect): %s\n", (*cur)->word);
 				continue;
 			}
+
+			for (i = 0, found = 0; i < have; i++) {
+				if (strcmp(best[i]->word, (*cur)->word) == 0) {
+					found = 1;
+					break;
+				}
+			}
+			if (found)
+				continue;
+
 			best[have] = *cur;
 			have++;
 
-			printf("Got new word: %s %d\n", (*cur)->word, have);
-			
 			if (have == MAX_BEST)
 				break;
 		}
