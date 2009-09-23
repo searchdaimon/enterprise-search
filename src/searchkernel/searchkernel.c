@@ -120,6 +120,7 @@ struct socket_pool {
 	int consumers;
 	pthread_mutex_t mutex;
 	pthread_cond_t cv;
+	int max_consumers;
 };
 
 
@@ -139,7 +140,7 @@ struct PagesResultsFormat {
 		int MaxsHits;
 		int start;
 		int indexnr;
-		int cmcsocketha;
+		//int cmcsocketha;
 		char search_user[64];
 		char password[64];
 		char useragent[64];
@@ -155,8 +156,9 @@ struct PagesResultsFormat {
 		#ifdef WITH_THREAD
 			pthread_mutex_t mutex;
 			pthread_mutex_t mutextreadSyncFilter;
-			struct socket_pool cmConn;
 		#endif
+
+		struct socket_pool cmConn;
 
 		int activetreads;
 
@@ -306,22 +308,26 @@ get_browser(char *useragent)
 
 #ifdef BLACK_BOKS
 
-#ifdef WITH_THREAD
 static inline int
 get_sock_from_pool(struct socket_pool *pool, int *index)
 {
 	int i;
 
-	pthread_mutex_lock(&pool->mutex);
-	while (pool->consumers == MAX_CM_CONSUMERS) {
+	#ifdef WITH_THREAD
+		pthread_mutex_lock(&pool->mutex);
+	#endif
+
+	while (pool->consumers == pool->max_consumers) {
 		pthread_cond_wait(&pool->cv, &pool->mutex);
 	}
 	pool->consumers++;
 
-	for (i = 0; i < MAX_CM_CONSUMERS; i++) {
+	for (i = 0; i < pool->max_consumers; i++) {
 		if (pool->used[i] == 0) {
 			pool->used[i] = 1;
-			pthread_mutex_unlock(&pool->mutex);
+			#ifdef WITH_THREAD
+				pthread_mutex_unlock(&pool->mutex);
+			#endif
 			*index = i;
 			return pool->sock[i];
 		}
@@ -333,14 +339,19 @@ get_sock_from_pool(struct socket_pool *pool, int *index)
 static inline int
 release_sock_to_pool(struct socket_pool *pool, int index)
 {
-	pthread_mutex_lock(&pool->mutex);
+	#ifdef WITH_THREAD
+		pthread_mutex_lock(&pool->mutex);
+	#endif
 	pool->used[index] = 0;
 	
 	pool->consumers--;
-	pthread_cond_signal(&pool->cv);
-	pthread_mutex_unlock(&pool->mutex);
+	#ifdef WITH_THREAD
+		pthread_cond_signal(&pool->cv);
+		pthread_mutex_unlock(&pool->mutex);
+	#endif
+
 }
-#endif
+
 #endif
 
 
@@ -348,30 +359,27 @@ release_sock_to_pool(struct socket_pool *pool, int index)
 #ifdef BLACK_BOKS
 static inline int
 handle_url_rewrite(const char *url_in, size_t lenin, enum platform_type ptype, enum browser_type btype, char *collection,
-           char *url_out, size_t len, char *uri_out, size_t uri_out_len, char *fulluri_out, size_t fulluri_out_len, int sock, struct socket_pool *pool)
+           char *url_out, size_t len, char *uri_out, size_t uri_out_len, char *fulluri_out, size_t fulluri_out_len, struct socket_pool *pool)
 {
 
 	int ret = 1;
 
 #ifndef _24SEVENOFFICE
 
-#ifdef WITH_THREAD
 	int index;
+	int sock;
 
 	sock = get_sock_from_pool(pool, &index);
-#endif
 
 	ret = cmc_rewrite_url(sock, collection, url_in, lenin, ptype, btype, url_out, len, uri_out, uri_out_len, fulluri_out, fulluri_out_len);
 	if (ret == 0) {
-		fprintf(stderr,"Cant rewrite url %s\n",url_in);
+		fprintf(stderr,"Cant rewrite url \"%s\"\n",url_in);
 	}
 	else {
-		vboprintf("handle_url_rewrite: Did rewrite \"%s\" -> \"%s\"\n",url_in,url_out);
+		vboprintf("handle_url_rewrite: Did rewrite \"%s\" to:\n\turl_out: \"%s\"\n\tfulluri_out: \"%s\"\n",url_in,url_out,fulluri_out);
 	}
-#ifdef WITH_THREAD
-	release_sock_to_pool(pool, index);
-#endif
 
+	release_sock_to_pool(pool, index);
 #endif
 
 	return ret;
@@ -876,7 +884,6 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 							dup_subname, tmpurl, sizeof(tmpurl),
 							tmpuri, sizeof(tmpuri),
 							tmpfulluri, sizeof(tmpfulluri),
-							PagesResults->cmcsocketha,
 #ifdef WITH_THREAD
 							&PagesResults->cmConn
 #else
@@ -1177,25 +1184,20 @@ void increaseFilteredSilent(struct PagesResultsFormat *PagesResults,int *whichFi
 
 #ifdef BLACK_BOKS
 static inline int
-pathaccess(struct PagesResultsFormat *PagesResults, int socketha,char collection_in[], char uri_in[], char user_in[], char password_in[]) {
+pathaccess(struct PagesResultsFormat *PagesResults, char collection_in[], char uri_in[], char user_in[], char password_in[]) {
 	int ret = 0;
 
 	if (PagesResults->anonymous)
 		return 1;
 
-#ifdef WITH_THREAD
 	int sockIndex;
+	int socketha;
 
 	socketha = get_sock_from_pool(&PagesResults->cmConn, &sockIndex);
-	//pthread_mutex_lock(&(*PagesResults).mutex_pathaccess);
-#endif
 
 	ret = cmc_pathaccess(socketha, collection_in, uri_in, user_in, password_in);
 
-#ifdef WITH_THREAD
 	release_sock_to_pool(&PagesResults->cmConn, sockIndex);
-	//pthread_mutex_unlock(&(*PagesResults).mutex_pathaccess);
-#endif
 
 	
 	vboprintf("pathaccess respons=%i\n",ret);
@@ -1552,7 +1554,7 @@ void *generatePagesResults(void *arg)
 			if (strcmp((*PagesResults).password,"water66") == 0) {
 				printf("pathaccess: have sodo password. Won't do pathaccess\n");
 			}
-			else if (PagesResults->TeffArray->iindex[i].subname->config.has_config && !pathaccess(PagesResults, (*PagesResults).cmcsocketha,(*(*PagesResults).TeffArray->iindex[i].subname).subname,side->url,(*PagesResults).search_user,(*PagesResults).password)) {
+			else if (PagesResults->TeffArray->iindex[i].subname->config.has_config && !pathaccess(PagesResults,(*(*PagesResults).TeffArray->iindex[i].subname).subname,side->url,(*PagesResults).search_user,(*PagesResults).password)) {
 				fprintf(stderr, "searchkernel: Access denied for file \"%s\" in %s\n", side->url, (*(*PagesResults).TeffArray->iindex[i].subname).subname);
 
 				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
@@ -1584,14 +1586,14 @@ void *generatePagesResults(void *arg)
 				PagesResults->ptype, PagesResults->btype, 
 				(*PagesResults).TeffArray->iindex[i].subname->subname, side->url, 
 				sizeof(side->url), side->uri, sizeof(side->uri), side->fulluri, sizeof(side->fulluri),
-				PagesResults->cmcsocketha, 
 #ifdef WITH_THREAD
 				&PagesResults->cmConn
 #else
 				NULL
 #endif
 			)) {
-				snprintf(side->uri, sizeof(side->uri),"XXX-Can't_rewrite__url_for_DocID_%u_XXX:%s",(*PagesResults).TeffArray->iindex[i].DocID);
+				snprintf(side->uri, sizeof(side->uri),"XXX-Can't_rewrite_url_for_DocID_%u_XXX:%s",(*PagesResults).TeffArray->iindex[i].DocID);
+				snprintf(side->fulluri, sizeof(side->fulluri),"XXX-Can't_rewrite_fulluri_for_DocID_%u_XXX:%s",(*PagesResults).TeffArray->iindex[i].DocID);
 			}
 
 		}
@@ -1872,6 +1874,9 @@ spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa, spelling_
 	int i;
 	int fixed;
 
+	if (spelling == NULL) {
+		return 0;
+	}
 
 	fixed = 0;
 	for(i = 0; i < qa->n; i++) {
@@ -2117,13 +2122,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		int errorbufflen = 512;
 		char errorbuff[errorbufflen];
 		vboprintf("making a connection(s) to crawlerManager(s)\n");
-		if (!cmc_conect(&PagesResults.cmcsocketha,errorbuff,errorbufflen,(*searchd_config).cmc_port)) {
-                        //printf("Error: %s:%i\n",errorbuff,(*searchd_config).cmc_port);
-			(*errorLen) = snprintf(errorstr,(*errorLen),"Can't connect to crawler manager: \"%s\", port %i",errorbuff,(*searchd_config).cmc_port);
-
-			fprintf(stderr, "searchkernel: ~dosearch()\n");
-                        return(0);
-	        }
 		gettimeofday(&end_time, NULL);
 	        (*SiderHeder).queryTime.cmc_conect = getTimeDifference(&start_time,&end_time);
 #endif
@@ -2199,30 +2197,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		ret = pthread_mutex_init(&PagesResults.mutex, NULL);
 		ret = pthread_mutex_init(&PagesResults.mutextreadSyncFilter, NULL);
 
-		#ifdef BLACK_BOKS
-			ret = pthread_mutex_init(&PagesResults.cmConn.mutex, NULL);
-			pthread_cond_init(&PagesResults.cmConn.cv, NULL);
-
-			int errorbufflen = 512;
-			char errorbuff[errorbufflen];
-			{
-				int k;
-				struct socket_pool *pool = &PagesResults.cmConn;
-				gettimeofday(&start_time, NULL);
-				for (k = 0; k < MAX_CM_CONSUMERS; k++) {
-					vboprintf("making a connection to crawlerManager: %d:%d\n", k, MAX_CM_CONSUMERS);
-					pool->used[k] = 0;
-					if (!cmc_conect(&pool->sock[k], errorbuff,errorbufflen,(*searchd_config).cmc_port)) {
-						printf("Error: %s:%i\n",errorbuff,(*searchd_config).cmc_port);
-						fprintf(stderr, "searchkernel: ~dosearch()\n");
-						return(0);
-					}
-				}
-				pool->consumers = 0;
-				gettimeofday(&end_time, NULL);
-			}
-			(*SiderHeder).queryTime.cmc_conect += getTimeDifference(&start_time,&end_time);
-		#endif
 
 		//låser mutex. Vi er jo enda ikke kalre til å kjøre
 		pthread_mutex_lock(&PagesResults.mutex);
@@ -2253,6 +2227,37 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	printf("end searchSimple\n");
 	#endif
 
+
+	#ifdef BLACK_BOKS
+		#ifdef WITH_THREAD
+			ret = pthread_mutex_init(&PagesResults.cmConn.mutex, NULL);
+			pthread_cond_init(&PagesResults.cmConn.cv, NULL);
+		#endif
+
+		int errorbufflen = 512;
+		char errorbuff[errorbufflen];
+		{
+			int k;
+			struct socket_pool *pool = &PagesResults.cmConn;
+			pool->max_consumers = MAX_CM_CONSUMERS;
+			if (searchd_config->optSingle) {
+				pool->max_consumers = 1;
+			}
+			gettimeofday(&start_time, NULL);
+			for (k = 0; k < pool->max_consumers; k++) {
+				vboprintf("making a connection to crawlerManager: %d:%d\n", k, pool->max_consumers);
+				pool->used[k] = 0;
+				if (!cmc_conect(&pool->sock[k], errorbuff,errorbufflen,(*searchd_config).cmc_port)) {
+					printf("Error: %s:%i\n",errorbuff,(*searchd_config).cmc_port);
+					fprintf(stderr, "searchkernel: ~dosearch()\n");
+					return(0);
+				}
+			}
+			pool->consumers = 0;
+			gettimeofday(&end_time, NULL);
+		}
+		(*SiderHeder).queryTime.cmc_conect += getTimeDifference(&start_time,&end_time);
+	#endif
 
 	//intresnag debug info
 	#ifdef BLACK_BOKS
@@ -2391,11 +2396,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	{
 		int k;
 
-		for (k = 0; k < MAX_CM_CONSUMERS; k++)
+		for (k = 0; k < PagesResults.cmConn.max_consumers; k++)
 			cmc_close(PagesResults.cmConn.sock[k]);
 	}
 #else
-	cmc_close(PagesResults.cmcsocketha);
 #endif
 	#endif
 
@@ -2454,9 +2458,11 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		free(filteron.sort);
 	#endif
 
+	// må altid inaliseres
+	SiderHeder->spellcheckedQuery[0] = '\0';
+
 	#ifdef WITH_SPELLING
 
-	SiderHeder->spellcheckedQuery[0] = '\0';
 
 	if (searchd_config->optFastStartup != 1) {
 
@@ -2661,7 +2667,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	return 1;
 }
 
-
+#if 0
 int
 dorank(char query[], int queryLen, struct SiderFormat **Sider, struct SiderHederFormat *SiderHeder,
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames, 
@@ -3138,3 +3144,4 @@ searchSimple(&PagesResults.antall,PagesResults.TeffArray,&(*SiderHeder).TotaltTr
 	return 1;
 }
 
+#endif
