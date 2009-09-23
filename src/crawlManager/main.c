@@ -328,7 +328,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 
 int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections) {
 
-	int i;
+	int i,y;
 
 	for (i=0;i<nrofcollections;i++) {
 		#ifdef DEBUG
@@ -346,9 +346,18 @@ int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections)
 		#ifdef DEBUG
 			printf("freeing nr %i: end\n",i);
 		#endif
+
+		//firgjør bruker array.
+		if ((*collection)[i].users != NULL) {
+			y=0;
+			while ((*collection)[i].users[y] != NULL) {
+				free((*collection)[i].users[y]);
+				++y;
+			}
+			free((*collection)[i].users);
+		}
 	}
 
-	//toDo: hvorfor segfeiler vi her ????
 	if ((*collection)) {
 		free(*collection);
 	}
@@ -869,6 +878,9 @@ cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
         MYSQL_ROW mysqlrow;
 	int i, numUsers;
 
+	//initer denne til NULL, slik at den altid er det hvis noe skulle feile (eller vi ikke finner rader).
+	collection->users = NULL;
+
 	sprintf(mysql_query, "SELECT name FROM shareUsers WHERE share = %d",
 	       collection->id);
 
@@ -882,9 +894,7 @@ cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
 	numUsers = mysql_num_rows(mysqlres);
 
 	if (numUsers == 0) {
-		collection->users = NULL;
 		//returner 1 lengder nede, så for vi også frigjort resursen
-		//return 1;
 	}
 	else {
 		debug("nrofrows %i\n", numUsers);
