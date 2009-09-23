@@ -30,7 +30,6 @@
 
 struct gcaoptFormat {
 	unsigned int MaxAgeDiflastSeen;
-	int dryRun;
 	FILE *log;
 	FILE *logSummary;
 	int keept;
@@ -360,17 +359,19 @@ void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 
 	fclose(LOCK);
 }
+void print_usage() {
+		errx(1, "Usage: ./gcrepo [ subname ]");
+}
 
 int
 main(int argc, char **argv)
 {
 
-	int LotNr, i;
+	int i;
 	char *subname;
 	struct gcaoptFormat gcaopt;
 
 	gcaopt.MaxAgeDiflastSeen  = (86400 * 5); //86400=1 dag
-	gcaopt.dryRun  = 0;
 	gcaopt.log = NULL;
 	gcaopt.logSummary = NULL;
 	gcaopt.lastSeenHack = 0;
@@ -379,14 +380,14 @@ main(int argc, char **argv)
         extern char *optarg;
         extern int optind, opterr, optopt;
         char c;
-        while ((c=getopt(argc,argv,"t:dlso"))!=-1) {
+        while ((c=getopt(argc,argv,"t:dlsho"))!=-1) {
                 switch (c) {
+                        case 'h':
+				print_usage();
+				break;
                         case 't':
                                 gcaopt.MaxAgeDiflastSeen  = atou(optarg);
                                 break;
-			case 'd':
-				gcaopt.dryRun = 1;
-				break;
 			case 'l':
 				if ((gcaopt.log = fopen(bfile("logs/gc"),"ab")) == NULL) {
 					perror("logs/gc");
@@ -443,7 +444,7 @@ main(int argc, char **argv)
 
 	}
 	else {
-		errx(1, "Usage: ./gcrepo subname [ lotnr ]");
+		print_usage();
 	}
 
 
