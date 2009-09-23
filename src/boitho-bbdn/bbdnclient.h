@@ -20,4 +20,6 @@ int bbdn_HasSufficientSpace(int socketha, char subname[]);
 void bbdn_opencollection(int sock, char *subname);
 
 
+int bbdn_close(int socketha);
+
 #endif //_BBDHCLIENT__H_
