@@ -22,14 +22,14 @@ int bbdn_conect(int *socketha, char tkey[], int PORT) {
         
         if (!sendall((*socketha),tkey, 32)) {
 		bperror("sendall");
-		return 0;
+		goto bbdn_conect_err;
 	}
 
 
         
         if ((i=recv((*socketha), &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
-            bperror("Cant recv respons");
-            return 0;
+            	bperror("Cant recv respons");
+  		goto bbdn_conect_err;
         }
 	
 	if (intrespons == bbc_authenticate_ok) {
@@ -38,12 +38,16 @@ int bbdn_conect(int *socketha, char tkey[], int PORT) {
 	}
 	else if (intrespons == bbc_authenticate_feiled) {
 		berror("bbc authenticate feiled");
-		return 0;
+		goto bbdn_conect_err;
 	}
 	else {
 		berror("respons from server was nider bbc_authenticate_feiled or bbc_authenticate_ok!\n");
-		return 0;
+		goto bbdn_conect_err;
 	}
+
+	bbdn_conect_err:
+		close(*socketha);
+		return 0;
 	
 }
 
