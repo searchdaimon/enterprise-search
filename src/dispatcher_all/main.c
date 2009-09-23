@@ -1166,7 +1166,10 @@ int main(int argc, char *argv[])
 	collections[0].config = default_cfg;
 	collections[0].hits = - 1;
 #endif
-	warnx("Numer of colls: %d\n", num_colls);
+
+	#ifdef DEBUG
+		warnx("Numer of colls: %d\n", num_colls);
+	#endif
 
 
 	#ifdef DEBUG_TIME
