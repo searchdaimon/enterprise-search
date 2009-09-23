@@ -276,21 +276,12 @@ int main(int argc, char *argv[])
 
 	#ifdef WITH_SPELLING
 	if (searchd_config.optFastStartup != 1) {
-		if ((spelling = malloc(sizeof(spelling_t))) == NULL) {
-			perror("malloc spelling_t");
-		}
 
-		//if (!init_spelling("var/dictionarywords")) {
-		//	warnx("Can't init spelling.");
-		//}
-		//	cache_indexes_keepalive();
-		//	signal(SIGUSR2, cache_indexes_hup);
-
-        	if (!train(spelling, bfile("var/dictionarywords"))) {
+        	if ((spelling = train(bfile("var/dictionarywords"))) == NULL) {
         	        warnx("Can't init spelling.");
 	        }
 
-		cache_spelling_keepalive(spelling);
+		cache_spelling_keepalive(&spelling);
 		signal(SIGUSR1, cache_spelling_hup);
 
 	}
@@ -852,6 +843,7 @@ void *do_chld(void *arg)
 	else if (queryNodeHeder.getRank)  {
 		fprintf(stderr, "searchd_child: ########################################### Ranking document: %u\n", queryNodeHeder.getRank);
 
+		#if 0
 		if (dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),&Sider,SiderHeder,SiderHeder->hiliteQuery,
 			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
 			queryNodeHeder.start, queryNodeHeder.filterOn, 
@@ -955,6 +947,8 @@ void *do_chld(void *arg)
 
 		fprintf(stderr, "searchd_child: doRank()\n");
 		//setter at vi ikke hadde noen svar
+		#endif
+
 	}
 	else {
 		SiderHeder->responstype = searchd_responstype_normalsearch;
