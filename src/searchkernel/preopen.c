@@ -27,6 +27,9 @@
 
 #define MAX_PREOPEM_FILE 300
 
+// maks minne vi kan bruke på å cache i indekser
+#define MAX_INDEX_CACHE (1024*1024*256)
+
 void
 preopen(void)
 {
@@ -409,7 +412,7 @@ cache_indexes_keepalive_thread(void *dummy)
 
 #ifdef WITH_SPELLING
 static void *
-cache_spelling_keepalive_thread(spelling_t *spelling)
+cache_spelling_keepalive_thread(spelling_t **spelling)
 {
 
 
@@ -422,9 +425,11 @@ cache_spelling_keepalive_thread(spelling_t *spelling)
 		printf("Refreshing spelling cache...\n");
 		// do it
 
-        	untrain(spelling);
+		if (*spelling != NULL) {
+        		untrain(*spelling);
+		}
 
-        	if (!train(spelling, bfile("var/dictionarywords"))) {
+        	if ((*spelling = train(bfile("var/dictionarywords"))) == NULL) {
         	        warnx("Can't init spelling.");
 	        }
 

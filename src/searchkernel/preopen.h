@@ -22,7 +22,7 @@ void *cache_index_get(char *path, size_t *size);
 void cache_fresh_lot_collection(void);
 
 #ifdef WITH_SPELLING
-void cache_spelling_keepalive(spelling_t *spelling);
+void cache_spelling_keepalive(spelling_t **spelling);
 static void *cache_spelling_keepalive_thread(void *dummy);
 void cache_spelling_hup(int sig);
 #endif
