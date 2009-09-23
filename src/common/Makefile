@@ -11,6 +11,6 @@ OBJS=	adultWeight.o chtbl.o debug.o iconv.o ir.o logs.o poprank.o sha1.o timedif
 	bsocket.o crc32.o error.o integerindex.o langToNr.o lotlist.o reposetoryNET.o strlcat.o vid.o \
 	bstr.o daemon.o exeoc.o ipdb.o list.o mgsort.o revindex.o strlcpy.o re.o ht.o doc_cache.o \
 	attributes.o getpath.o atomicallyio.o io.o utf8-strings.o dp.o cgi.o gcwhisper.o sigaction.o \
-	pidfile.o collection.o xml.o
+	pidfile.o collection.o xml.o gc.o gcrepo.o time.o
 
 include ../../mk/lib.mk
