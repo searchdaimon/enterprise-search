@@ -31,6 +31,8 @@ int key_get_existingconn(void *db, char *keyout) {
 		
 	strlcpy(keyout, row[0], KEY_STR_LEN);
 
+	mysql_free_result(res);
+
 	return 1;
 }
 
@@ -46,6 +48,7 @@ key_get(char *keyout)
 		errx(1, "Unable to connect to mysql: %s", mysql_error(&db));
 
 	int ret = key_get_existingconn(&db, keyout);
+
 	mysql_close(&db);
 
 	return ret;
