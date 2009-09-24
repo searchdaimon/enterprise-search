@@ -241,9 +241,12 @@ sub init_tpl {
 	my $lang;
 	if ($lang = $state{lang}) {
 		if (!valid_lang($tpl_name, $lang)) {
-			croak "Invalid language " . $state{lang};
+			#croak "Invalid language " . $state{lang};
+			$lang = undef;
 		}
-		$query_params{lang} = $lang;
+		else {
+		    $query_params{lang} = $lang;
+		}
 	}
 	elsif ($ENV{HTTP_ACCEPT_LANGUAGE}) {
 		my @browser_lang = split q{,}, $ENV{HTTP_ACCEPT_LANGUAGE};
@@ -369,9 +372,10 @@ sub gen_cache_url {
 }
 
 sub valid_lang { 
-	croak "missing param" unless @_ >= 2;
+	#croak "missing param" unless @_ >= 2;
+	if (@_ < 2) { return 0; }
 	my ($tpl_name, $lang) = @_;
-	return unless defined $lang;
+	if (!defined $lang) { return 0; }
 	return $lang =~ /^[a-z_]+$/ && (-d "./locale/$tpl_name/$lang");
 }
 
