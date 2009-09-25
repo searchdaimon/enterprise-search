@@ -841,7 +841,7 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 		char **acl_allowbuffer,char **acl_deniedbuffer, unsigned int imagesize, char **url, char **attributes) {
 
 	#ifdef DEBUG
-		printf("rreadhtml(HtmlBufferSize=%u, radress64bit=%u, rsize=%u, DocID=%u, subname=\"%s\")\n",HtmlBufferSize,radress64bit,rsize,DocID,subname);
+		printf("rreadhtml(HtmlBufferSize=%u, radress64bit=%u, rsize=%u, DocID=%u, subname=\"%s\",imagesize=%u)\n",HtmlBufferSize,radress64bit,rsize,DocID,subname,imagesize);
 	#endif
 
         #ifdef TIME_DEBUG_L
@@ -1176,7 +1176,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
         #endif
 	
 	#ifdef DEBUG
-		printf("rReadPost2(rsize=%u, imagesize=%u, htmlbufferSize=%d)\n",rsize,imagesize,htmlbufferSize);
+		printf("rReadPost2(rsize=%u, imagesize=%u, htmlbufferSize=%d, htmlbuffer=%p, imagebuffer=%p)\n",rsize,imagesize,htmlbufferSize,htmlbuffer,imagebuffer);
 	#endif
 
 	int n;
@@ -1227,7 +1227,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 #endif
 	} else if (htmlbuffer == NULL) {
 		//hvis vi ikke har en buffer å putte htmlen inn i søker vi bare over
-		//fseek(LotFileOpen,(*ReposetoryHeader).htmlSize,SEEK_CUR);
+		totalpost_p += (*ReposetoryHeader).htmlSize;
 	} else {
 		totalpost_p += memcpyrc(htmlbuffer,totalpost_p,(*ReposetoryHeader).htmlSize);
 	}
@@ -1236,7 +1236,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		//printf("imageSize is 0. Skipping to read it\n");
 	} else if (imagebuffer == NULL) {
 		//hvis vi ikke har en buffer å putte bilde inn i søker vi bare over
-		//fseek(LotFileOpen,(*ReposetoryHeader).imageSize,SEEK_CUR);
+		totalpost_p += (*ReposetoryHeader).imageSize;
 	} else {
 		totalpost_p += memcpyrc(imagebuffer,totalpost_p,(*ReposetoryHeader).imageSize);
 	}
@@ -1356,7 +1356,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 	free(totalpost);
 
 	if (strncmp(recordseparator,"***",3)) {
-		printf("bad record separator \"%c%c%c\"\n",recordseparator[0],recordseparator[1],recordseparator[2]);
+		printf("bad record separator \"%c%c%c\" at %s:%i\n",recordseparator[0],recordseparator[1],recordseparator[2],__FILE__,__LINE__);
 	}
 
 	#ifdef DEBUG
