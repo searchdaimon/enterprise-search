@@ -1865,7 +1865,6 @@ int main(int argc, char *argv[])
 		mysql_search_logg(demo_db, &QueryData, &FinalSiderHeder, totlaAds, &queryNodeHeder, nrOfServers, Sider, nrOfPiServers);
 	}
 	/********************************************************************************************/
-#endif
 
 	mysql_close(&demo_db);
 
