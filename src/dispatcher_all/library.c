@@ -1,7 +1,6 @@
 /*
     #include <arpa/inet.h>
     #include <stdio.h>
-    #include <stdlib.h>
     #include <unistd.h>
     #include <errno.h>
     #include <string.h>
@@ -17,6 +16,7 @@
     #include "../common/timediff.h"   
     #include "../common/bstr.h"   
     #include "../common/daemon.h"   
+    #include "../common/stdlib.h"
 
     #include <stdarg.h>
     #include <stdio.h>
@@ -967,3 +967,283 @@ cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, stru
 #endif
 
 
+void mysql_search_logg(MYSQL demo_db, struct QueryDataForamt *QueryData, 
+	struct SiderHederFormat *FinalSiderHeder, int totlaAds, 
+	struct queryNodeHederFormat *queryNodeHeder, int nrOfServers, struct SiderFormat *Sider, 
+	int nrOfPiServers) {
+	/********************************************************************************************/
+	//mysql logging
+	/********************************************************************************************/
+	#ifdef DEBUG_TIME
+        	gettimeofday(&start_time, NULL);
+	#endif
+
+
+#if MYSQLFOUR
+	#ifndef NO_LOGING
+		MYSQL_STMT *logstmt, *pilogstmt;
+		dprintf("Connecting to mysql db\n");
+		my_ulonglong  affected_rows;
+
+
+		//else {
+
+			MYSQL_BIND bind[12];
+			unsigned long len[12];
+			memset(bind, 0, sizeof(bind));
+			logstmt = mysql_stmt_init(&demo_db);
+			pilogstmt = mysql_stmt_init(&demo_db);
+
+			sprintf(query,"INSERT DELAYED INTO search_logg (tid,query,search_bruker,treff,search_tid,ip_adresse,betaler_keywords_treff,HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang,side) VALUES(NOW(),?,?,?,?,?,?,?,?,?,?,?)");
+			mysql_stmt_prepare(logstmt, query, strlen(query));
+
+			bind[0].buffer_type = MYSQL_TYPE_STRING; // query
+			bind[0].buffer = QueryData->query;	// Ax: Max lengde i databasen er 30 tegn. Lage en nice-write?
+			len[0] = strlen(QueryData->query);
+			bind[0].length = &len[0];
+
+			bind[1].buffer_type = MYSQL_TYPE_STRING; // user
+			bind[1].buffer = QueryData->search_user;
+			len[1] = strlen(QueryData->search_user);
+			bind[1].length = &len[1];
+
+			bind[2].buffer_type = MYSQL_TYPE_LONG; // treff
+			bind[2].buffer = &FinalSiderHeder->TotaltTreff;
+
+			bind[3].buffer_type = MYSQL_TYPE_DOUBLE; // sÃketid
+			bind[3].buffer = &FinalSiderHeder->total_usecs;
+
+			bind[4].buffer_type = MYSQL_TYPE_STRING; // ip
+			bind[4].buffer = QueryData->userip;
+			len[4] = strlen(QueryData->userip);
+			bind[4].length = &len[4];
+
+			bind[5].buffer_type = MYSQL_TYPE_LONG; // betaler
+			bind[5].buffer = &totlaAds;
+			
+			bind[6].buffer_type = MYSQL_TYPE_STRING; // http lang
+			bind[6].buffer = QueryData->HTTP_ACCEPT_LANGUAGE;
+			len[6] = strlen(QueryData->HTTP_ACCEPT_LANGUAGE);
+			bind[6].length = &len[6];
+
+			bind[7].buffer_type = MYSQL_TYPE_STRING; // http user agent
+			bind[7].buffer = QueryData->HTTP_USER_AGENT;
+			len[7] = strlen(QueryData->HTTP_USER_AGENT);
+			bind[7].length = &len[7];
+
+			bind[8].buffer_type = MYSQL_TYPE_STRING; // http referer
+			bind[8].buffer = QueryData->HTTP_REFERER;
+			len[8] = strlen(QueryData->HTTP_REFERER);
+			bind[8].length = &len[8];
+
+			bind[9].buffer_type = MYSQL_TYPE_STRING; // geoip
+			bind[9].buffer = QueryData->GeoIPcontry;
+			len[9] = strlen(QueryData->GeoIPcontry);
+			bind[9].length = &len[9];
+
+			bind[10].buffer_type = MYSQL_TYPE_LONG; // side
+			bind[10].buffer = &QueryData->start;
+
+
+			mysql_stmt_bind_param(logstmt, bind);
+
+			mysql_stmt_execute(logstmt);
+			mysql_stmt_close(logstmt);
+
+			//mysql_free_result(mysqlres);
+
+			/************************************************************************************************
+			Logging av Paid Inclusion til sql db.
+			************************************************************************************************/
+//insert DELAYED into pi_search_logg (tid,query,treff,search_tid,ip_adresse,spot,piDocID ) select NOW(),'$query',$hits,$time,'$ipadress',$spot,
+//id from pi_sider where WWWDocID=$DocID
+
+			sprintf(query,"insert into pi_search_logg (tid,query,treff,search_tid,ip_adresse,spot,piDocID ) \
+				select NOW(),?,?,?,?,?,id from pi_sider where WWWDocID=? ");
+
+
+			if (mysql_stmt_prepare(pilogstmt, query, strlen(query)) != 0) {
+  				fprintf(stderr, " mysql_stmt_prepare(), INSERT failed\n");
+  				fprintf(stderr, " %s\n", mysql_stmt_error(pilogstmt));
+			}
+
+			i = QueryData.MaxsHits * (QueryData.start -1);
+			x = i;
+
+			while ((x<(QueryData.MaxsHits*QueryData.start)) && (x<FinalSiderHeder.showabal) && (i < (queryNodeHeder.MaxsHits * (nrOfServers + nrOfPiServers)))) {
+
+				if (!Sider[i].deletet) {
+					dprintf("pi analyse. Subname \"%s\", pi \"%i\"\n",Sider[i].subname.subname, (int)Sider[i].subname.config.isPaidInclusion);
+
+					if (Sider[i].subname.config.isPaidInclusion) {
+						unsigned int spot;
+
+						spot = x + 1;		
+
+						memset(bind, 0, sizeof(bind));
+						memset(len, 0, sizeof(len)); // må vi ha denne?
+
+						bind[0].buffer_type = MYSQL_TYPE_STRING; // query
+						bind[0].buffer = QueryData->query;
+						len[0] = strlen(QueryData->query);
+						bind[0].length = &len[0];
+
+						bind[1].buffer_type = MYSQL_TYPE_LONG; // treff
+						bind[1].buffer = &FinalSiderHeder->TotaltTreff;
+
+
+						bind[2].buffer_type = MYSQL_TYPE_DOUBLE; // sÃketid
+						bind[2].buffer = &FinalSiderHeder->total_usecs;
+
+						bind[3].buffer_type = MYSQL_TYPE_STRING; // ip
+						bind[3].buffer = QueryData->userip;
+						len[3] = strlen(QueryData->userip);
+						bind[3].length = &len[3];
+
+						bind[4].buffer_type = MYSQL_TYPE_LONG ; // spot 
+						bind[4].buffer = &spot;
+						bind[4].is_unsigned = 1; 
+			
+						bind[5].buffer_type = MYSQL_TYPE_LONG; // piDocID
+						bind[5].buffer = &Sider[i]->iindex.DocID;
+						bind[5].is_unsigned = 1; 
+
+
+						if (mysql_stmt_bind_param(pilogstmt, bind) != 0) {
+							fprintf(stderr, " mysql_stmt_bind_param() failed\n");
+  							fprintf(stderr, " %s\n", mysql_stmt_error(pilogstmt));
+						}
+
+						if (mysql_stmt_execute(pilogstmt) != 0) {
+							fprintf(stderr, " mysql_stmt_execute(), 1 failed\n");
+							fprintf(stderr, " %s\n", mysql_stmt_error(pilogstmt));
+						}
+
+						/* Get the total number of affected rows */
+						affected_rows= mysql_stmt_affected_rows(pilogstmt);
+
+						if (affected_rows != 1) /* validate affected rows */
+						{
+  							fprintf(stderr, " invalid affected rows by MySQL\n");
+							fprintf(stderr, " total affected rows(insert 1): %lu\n", (unsigned long) affected_rows);
+							break;
+						}
+
+					}
+					else {
+						//dprintf("is NOT pi! :(\n");
+					}
+				}
+				//teller bare normale sider (hva med Paid Inclusion ?)
+				// Denne skal vel vaere innenfor !deletet?
+				if (Sider[i].type == siderType_normal) {
+					++x;
+				}
+
+				++i;
+			}
+
+			mysql_stmt_close(pilogstmt);
+
+			/************************************************************************************************/
+
+
+		//}
+	#endif
+
+
+#else /* MYSQLFOUR */
+
+	#ifndef NO_LOGING
+			char queryEscaped[MaxQueryLen*2+1];
+			char query [2048];
+			int x, i;
+
+			//escaper queryet rikit
+			mysql_real_escape_string(&demo_db,queryEscaped,QueryData->query,strlen(QueryData->query));
+
+			// Magnus: Kolonnene 'spot' og 'piDocID' finnes ikke. Har fjernet dem.
+			//logger til mysql
+			sprintf(query,"insert DELAYED into search_logg (id,tid,query,search_bruker,treff,search_tid,ip_adresse,betaler_keywords_treff,\
+				HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang,side) \
+				values(NULL,NOW(),\"%s\",\"%s\",\"%i\",\"%f\",\"%s\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\",\"%i\")",
+				queryEscaped,
+				QueryData->search_user,
+				FinalSiderHeder->TotaltTreff,
+				FinalSiderHeder->total_usecs,
+				QueryData->userip,
+				totlaAds,
+				QueryData->HTTP_ACCEPT_LANGUAGE,
+				QueryData->HTTP_USER_AGENT,
+				QueryData->HTTP_REFERER,
+				QueryData->GeoIPcontry,
+				QueryData->start
+			);
+
+			mysql_real_query(&demo_db, query, strlen(query));
+
+			//mysql_free_result(mysqlres);
+
+			//lopper gjenom og logger Paid Inclusion
+			#ifdef DEBUG
+			printf("looking for Paid Inclusion\n");
+			#endif
+
+
+			
+			x = 0;
+			i = 0;			
+			
+			while ((x<FinalSiderHeder->showabal) && (i < (queryNodeHeder->MaxsHits * (nrOfServers + nrOfPiServers)))) {
+			
+				if (!Sider[i].deletet) {
+					#ifdef DEBUG
+					printf("pi analyse. Subname \"%s\", pi \"%i\"\n",Sider[i].subname.subname, (int)Sider[i].subname.config.isPaidInclusion);
+					#endif
+
+					if (Sider[i].subname.config.isPaidInclusion) {
+					
+
+						strscpy(query,Sider[i].subname.config.sqlImpressionsLogQuery,sizeof(query));
+						strsandr(query,"$DocID",utoa(Sider[i].iindex.DocID));
+
+						strsandr(query,"$query",queryEscaped);
+						strsandr(query,"$hits",bitoa(FinalSiderHeder->TotaltTreff) );
+						strsandr(query,"$time",ftoa(FinalSiderHeder->total_usecs));
+						strsandr(query,"$ipadress",QueryData->userip);
+						strsandr(query,"$spot",bitoa(x + (QueryData->start * queryNodeHeder->MaxsHits)));
+
+						#ifdef DEBUG
+						printf("query \"%s\"\n",query);
+						#endif
+
+						mysql_real_query(&demo_db, query, strlen(query));
+
+					}
+					else {
+						#ifdef DEBUG
+						printf("is NOT pi! :(\n");
+						#endif
+					}
+				}
+				//teller bare normale sider (hva med Paid Inclusion ?)
+				if (Sider[i].type == siderType_normal) {
+					++x;
+				}
+
+				++i;
+			}
+
+	#endif
+
+
+#endif /* MYSQLFOUR */
+
+	/********************************************************************************************/
+
+	#ifdef DEBUG_TIME
+	        gettimeofday(&end_time, NULL);
+	        fprintf(stderr,"Time debug: sql loging %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
+
+}
