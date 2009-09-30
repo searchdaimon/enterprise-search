@@ -588,7 +588,7 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 				#endif
 
 				for (j = 0; j < SiderHeder[i].showabal; j++) {
-					if ((n=bsread(&sockfd[i],sizeof(struct SiderFormat), &Sider[(*pageNr)],maxSocketWait_SiderHeder))) {
+					if ((n=bsread(&sockfd[i],sizeof(struct SiderFormat), (char *)&Sider[(*pageNr)],maxSocketWait_SiderHeder))) {
 						size_t len;
 						int k;
 						/* Get urls ... */
@@ -598,27 +598,25 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 
 						for (k = 0; k < Sider[*pageNr].n_urls; k++) {
 
-							bsread(&sockfd[i], sizeof(len), &len, maxSocketWait_SiderHeder);
+							bsread(&sockfd[i], sizeof(len), (char *)&len, maxSocketWait_SiderHeder);
 							Sider[*pageNr].urls[k].url = malloc(len+1);
 							bsread(&sockfd[i], len, Sider[*pageNr].urls[k].url, maxSocketWait_SiderHeder);
 							Sider[*pageNr].urls[k].url[len] = '\0';
 
-							bsread(&sockfd[i], sizeof(len), &len, maxSocketWait_SiderHeder);
+							bsread(&sockfd[i], sizeof(len), (char *)&len, maxSocketWait_SiderHeder);
 							Sider[*pageNr].urls[k].uri = malloc(len+1);
 							bsread(&sockfd[i], len, Sider[*pageNr].urls[k].uri, maxSocketWait_SiderHeder);
 							Sider[*pageNr].urls[k].uri[len] = '\0';
 
-							bsread(&sockfd[i], sizeof(len), &len, maxSocketWait_SiderHeder);
+							bsread(&sockfd[i], sizeof(len), (char *)&len, maxSocketWait_SiderHeder);
 							Sider[*pageNr].urls[k].fulluri = malloc(len+1);
 							bsread(&sockfd[i], len, Sider[*pageNr].urls[k].fulluri, maxSocketWait_SiderHeder);
 							Sider[*pageNr].urls[k].fulluri[len] = '\0';
 
 
-							//bsread(&sockfd[i], 64, Sider[*pageNr].urls[k].subname, maxSocketWait_SiderHeder);
-
 						}
 
-						bsread(&sockfd[i], sizeof(len), &len, maxSocketWait_SiderHeder);
+						bsread(&sockfd[i], sizeof(len), (char *)&len, maxSocketWait_SiderHeder);
 						Sider[*pageNr].attributes = malloc(len+1);
 						bsread(&sockfd[i], len, Sider[*pageNr].attributes, maxSocketWait_SiderHeder);
 						Sider[*pageNr].attributes[len] = '\0';
