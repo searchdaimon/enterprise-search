@@ -1,7 +1,8 @@
 #ifndef _H_DISP_LIBRARHY 
 #define _H_DISP_LIBRARHY 
 
- #include "../common/define.h"
+#include <mysql.h>
+#include "../common/define.h"
 
     #define MAXDATASIZE 100 // max number of bytes we can get at once
 
@@ -65,6 +66,9 @@ void bsConectAndQueryOneServer(char server[], int searchport, char query[], char
 void addError(struct errorhaFormat *errorha, int errorcode,char errormessage[]);
 void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,struct SiderFormat *Sider, int *pageNr,int alreadynr);
 
+void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
+        struct SiderHederFormat *FinalSiderHeder, int totlaAds,
+        struct queryNodeHederFormat *queryNodeHeder, int nrOfServers, struct SiderFormat *Sider, int nrOfPiServers);
 
 #ifdef WITH_CASHE
 

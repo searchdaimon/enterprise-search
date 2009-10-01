@@ -88,8 +88,8 @@
 #define dprintf(str, args...) 
 #endif
 #include "cgihandler.h"
-#include "out/sdxml.h"
-#include "out/opensearch.h"
+#include "out_sdxml.h"
+#include "out_opensearch.h"
 
 void read_collection_cfg(struct subnamesConfigFormat * dst);
 void read_dispatcher_cfg(struct config_t * cfg, struct dispconfigFormat * dispconfig, int *cachetimeout);
@@ -1862,7 +1862,7 @@ int main(int argc, char *argv[])
 	//mysql logging
 	/********************************************************************************************/
 	if (!dispconfig.writeprequery) {
-		mysql_search_logg(demo_db, &QueryData, &FinalSiderHeder, totlaAds, &queryNodeHeder, nrOfServers, Sider, nrOfPiServers);
+		mysql_search_logg(&demo_db, &QueryData, &FinalSiderHeder, totlaAds, &queryNodeHeder, nrOfServers, Sider, nrOfPiServers);
 	}
 	/********************************************************************************************/
 
