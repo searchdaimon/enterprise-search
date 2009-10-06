@@ -1919,14 +1919,14 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 			closecollection(&collection[i]);
 
 			//ber bbdn om å lukke sokket
-			bbdn_close(&collection[i].socketha);
+			bbdn_close(collection[i].socketha);
    
-    	}
+    		}
                 
 		if (output_redirected) {
 			fclose(stderr); 
 			fclose(stdout);
-        }
+        	}
 
 		crawl_unlock(&collection_lock);
 		crawl_element_unlock(&collection_lock);
@@ -2733,6 +2733,7 @@ int main (int argc, char *argv[]) {
 		perror("logs");
 		exit(1);
 	}
+
 	signal(SIGUSR2, catch_sigusr2);
 	write_gpidfile("crawlManager");
 
@@ -2784,6 +2785,8 @@ int main (int argc, char *argv[]) {
 
 
 	maincfgclose(&maincfg);
+
+	closelogs(LOGACCESS,LOGERROR);
 
 }
 
