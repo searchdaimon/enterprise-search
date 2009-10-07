@@ -35,6 +35,7 @@ our $hit_count = 0;
 our @starting_urls;
 our $download_images = 0;
 
+our $lasterror = "";
 
 our $expiration = 5 * 60 * 60 + time( );
 
@@ -47,7 +48,6 @@ our %seen_url_before;
 our @exclusionsUrlParts;
 our $iisspecial = 0;
 our @exclusionQueryParts;
-our $FindAtributes;
 our @schedule;
 our $crawler;
  
@@ -121,6 +121,13 @@ sub crawl_update {
 	report( ) if $hit_count;
 
    }
+
+	print "################################################\n";
+	print "hit_count: " . $hit_count . ", error: " . $lasterror . "\n";
+
+   if ($hit_count == 0) {
+	die($lasterror);
+   }
 }
 
 
@@ -129,9 +136,6 @@ sub crawl_update {
 
 
 
-sub setFindAtributes {
-	$FindAtributes = shift;
-}
 
 
 
@@ -198,6 +202,8 @@ sub mutter {
   }
   print @_ if verbose;
   print "\n" if verbose;
+
+  $lasterror = join(" ",@_);
 }
 
 
@@ -250,7 +256,8 @@ sub note_error_response {
     mutter(sprintf "Noting {%s} error at %s\n",$response->status_line, $url );
     $notable_url_error{$url} = $response->status_line;
   } else {
-    mutter(sprintf "Not really noting {%s} error at %s\n",$response->status_line, $url );
+    #skriver feilmelding, og lagrer den i $!
+    mutter(sprintf "Can't get url %s: %s\n",$url, $response->status_line );
   }
   return;
 }
@@ -322,10 +329,6 @@ sub process_near_url {
 		$title = substr($url, rindex($url, "/")+1);
 	}
 
-	my $category = "";
-	if ($FindAtributes) {
-		$category = $FindAtributes->($url_normalized, $response->content);
-	}
 
 	if (!$crawler->document_exists($url, 0, length($response->content))) {
 		$crawler->add_document(
@@ -335,12 +338,14 @@ sub process_near_url {
 				last_modified => str2time($response->header('Last-Modified')),
 				type    => $ct,
 				acl_allow => "Everyone",
-				attributes => $category);
+			);
 		#print "Length ", length($response->content);
 	}	
 
 	extract_links_from_response($response)
 		if $response->content_type eq 'text/html';
+
+	$hit_count++;
 	1;
 }
 
