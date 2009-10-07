@@ -218,6 +218,7 @@ bblog(severity_t severity, const char *str, ...)
 	if (logger.appenders & LOGGER_APPENDER_FILE) {
 		FILE *fp = fopen(bblog_path, "a");
 		if (fp != NULL) {
+			setvbuf(fp, NULL, _IOLBF, 0);
 			bblog_file(fp, severity, str, ap, 1);
 			fclose(fp);
 		}
