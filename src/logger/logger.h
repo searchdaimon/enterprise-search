@@ -24,6 +24,8 @@ void bblog_set_default_severity(severity_t severity);
 int bblog_init(char *name);
 void bblog_set_severity(severity_t severity);
 void bblog_set_appenders(unsigned int appenders);
+unsigned int bblog_get_appenders(void);
+severity_t bblog_get_severity(void);
 void bblog(severity_t severity, const char *str, ...);
 void bblog_destroy(void);
 

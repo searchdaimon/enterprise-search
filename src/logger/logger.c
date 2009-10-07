@@ -130,6 +130,18 @@ bblog_set_severity(severity_t severity)
 	logger.max_severity = severity;
 }
 
+unsigned int
+bblog_get_appenders(void)
+{
+	return logger.appenders;
+}
+
+severity_t
+bblog_get_severity(void)
+{
+	return logger.max_severity;
+}
+
 void
 bblog_set_appenders(unsigned int appenders)
 {
