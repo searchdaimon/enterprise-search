@@ -27,6 +27,7 @@ void bblog_set_appenders(unsigned int appenders);
 unsigned int bblog_get_appenders(void);
 severity_t bblog_get_severity(void);
 void bblog(severity_t severity, const char *str, ...);
+void bblog_errno(severity_t severity, const char *str, ...);
 void bblog_destroy(void);
 
 #endif

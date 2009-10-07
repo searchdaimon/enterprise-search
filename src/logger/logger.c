@@ -200,15 +200,12 @@ bblog_file(FILE *fp, severity_t severity, const char *format, va_list ap, int wr
 	fprintf(fp, "%s\n", str);
 }
 
-void
-bblog(severity_t severity, const char *str, ...)
+static void
+bblog_internal(severity_t severity, const char *str, va_list ap) 
 {
-	va_list ap;
-
 	if (severity > logger.max_severity)
 		return;
 
-	va_start(ap, str);
 	if (logger.appenders & LOGGER_APPENDER_STDERR) {
 		bblog_file(stderr, severity, str, ap, 0);
 	}
@@ -226,6 +223,27 @@ bblog(severity_t severity, const char *str, ...)
 	if (logger.appenders & LOGGER_APPENDER_SYSLOG) {
 		vsyslog(priority_map_to_syslog[severity], str, ap); 
 	}
+}
+
+void 
+bblog_errno(severity_t severity, const char *str, ...)
+{
+	va_list ap;
+	char newstr[LINE_MAX];
+
+	snprintf(newstr, sizeof(newstr), "%s: %s", str, strerror(errno));
+	va_start(ap, str);
+	bblog_internal(severity, str, ap);
+	va_end(ap);
+}
+
+void
+bblog(severity_t severity, const char *str, ...)
+{
+	va_list ap;
+
+	va_start(ap, str);
+	bblog_internal(severity, str, ap);
 	va_end(ap);
 }
 
