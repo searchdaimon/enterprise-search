@@ -164,12 +164,14 @@ bblog_set_appenders(unsigned int appenders)
 
 unsigned int priority_map_to_syslog[] = {
 	LOG_ERR,
+	LOG_ERR,
 	LOG_WARNING,
 	LOG_INFO,
 	LOG_DEBUG,
 };
 
 const char *priority_map_to_string[] = {
+	"CLEAN",
 	"ERROR",
 	"WARNING",
 	"INFO",
