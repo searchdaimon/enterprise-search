@@ -32,6 +32,7 @@ bblog_set_default_severity(severity_t severity)
 	default_severity = severity;
 }
 
+#if 0
 static void *
 config_watcher(void *dummy __attribute__((unused)))
 {
@@ -72,12 +73,21 @@ config_watcher(void *dummy __attribute__((unused)))
 	}
 #endif
 }
+#endif
 
 static void
-log_setup(void)
+bblog_setup_syslog(void)
 {
 	if (logger.appenders & LOGGER_APPENDER_SYSLOG) {
 		openlog(logger.name, LOG_PID, LOG_LOCAL6);
+	}
+}
+
+static void
+bblog_teardown_syslog(void)
+{
+	if (logger.appenders & LOGGER_APPENDER_SYSLOG) {
+		closelog();
 	}
 }
 
@@ -85,11 +95,14 @@ int
 bblog_init(char *name)
 {
 	char path[PATH_MAX];
-	char *appenders;
+	char *appenders, *severity;
 	int default_appenders = LOGGER_APPENDER_SYSLOG;
 
 	if ((appenders = getenv("BBLOGGER_APPENDERS")) != NULL)
 		default_appenders = atoi(appenders);
+
+	if ((severity = getenv("BBLOGGER_SEVERITY")) != NULL)
+		default_severity = atoi(severity);
 
 	logger.appenders = default_appenders;
 	logger.max_severity = default_severity;
@@ -100,7 +113,7 @@ bblog_init(char *name)
 	snprintf(path, sizeof(path), "logs/%s.log", name);
 	strlcpy(bblog_path, bfile(path), sizeof(bblog_path));
 
-	log_setup();
+	bblog_setup_syslog();
 
 #if 0
 	// Config watcher
@@ -109,6 +122,32 @@ bblog_init(char *name)
 #endif
 
 	return 1;
+}
+
+void
+bblog_set_severity(severity_t severity)
+{
+	logger.max_severity = severity;
+}
+
+void
+bblog_set_appenders(unsigned int appenders)
+{
+	int close_syslog = 0, open_syslog = 1;
+
+	if ((logger.appenders & LOGGER_APPENDER_SYSLOG) != 
+	    (appenders & LOGGER_APPENDER_SYSLOG)) {
+		if (logger.appenders & LOGGER_APPENDER_SYSLOG) {
+			close_syslog = 1;
+		} else {
+			open_syslog = 1;
+		}
+	}
+	logger.appenders = appenders;
+	if (open_syslog)
+		bblog_setup_syslog();
+	if (close_syslog)
+		bblog_teardown_syslog();
 }
 
 unsigned int priority_map_to_syslog[] = {
@@ -140,7 +179,8 @@ bblog_file(FILE *fp, severity_t severity, const char *format, va_list ap, int wr
 		len += strftime(str, sizeof(str), "%d/%m/%y %T: ", localtime_r(&t, &tm));
 	}
 	
-	len += snprintf(str+len, sizeof(str)-len, "%s: ", priority_map_to_string[severity]);
+	if (severity != CLEAN)
+		len += snprintf(str+len, sizeof(str)-len, "%s: ", priority_map_to_string[severity]);
 	len += vsnprintf(str+len, sizeof(str)-len, format, ap);
 
 	fprintf(fp, "%s\n", str);
@@ -174,17 +214,9 @@ bblog(severity_t severity, const char *str, ...)
 	va_end(ap);
 }
 
-static void
-bblog_teardown(void)
-{
-	if (logger.appenders & LOGGER_APPENDER_SYSLOG) {
-		closelog();
-	}
-}
-
 void
 bblog_destroy(void)
 {
-	bblog_teardown();
+	bblog_teardown_syslog();
 	bblog_path[0] = '\0';
 }
