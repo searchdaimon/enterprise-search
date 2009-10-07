@@ -61,6 +61,10 @@ sub downl_all_zip {
 	warn $path;
         next unless -e $path;
         $logs_str .= "\Q$path\E ";
+
+	# Try the previous log file as well
+        next unless -e $path.".1";
+        $logs_str .= "\Q$path\E.1 ";
     }
 
     # create zip for all logs.
