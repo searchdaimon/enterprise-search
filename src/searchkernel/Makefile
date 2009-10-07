@@ -13,6 +13,7 @@ WANT_LIBCONFIG=	true
 WANT_BDB=	true
 WANT_HASHTABLE=	true
 WANT_BASE64=	true
+WANT_LOGGER=	true
 
 PROG=	searchd
 
