@@ -28,6 +28,9 @@ boitho-base_version = 1.3.0
 boitho-apaceconf_name = boitho-apaceconf
 boitho-apaceconf_version = 1.3.0
 
+boitho-syslogconf_name = boitho-syslogconf
+boitho-syslogconf_version = 1.0.0
+
 boitho-bbadmin_name = boitho-bbadmin
 boitho-bbadmin_version = 2.8.73
 
@@ -210,7 +213,7 @@ crawlManager2:
 	rpmbuild -bb $(boitho-crawlManager_name).spec
 
 scripts:
-	perl rpmmagic.pl $(boitho-scripts_name) $(boitho-scripts_version) $(BOITHOHOME) /home/boitho/boithoTools script/eachNight.sh script/reloadDictionary.sh script/makebbwordlist.sh perl/createaspellwordlist.pl
+	perl rpmmagic.pl $(boitho-scripts_name) $(boitho-scripts_version) $(BOITHOHOME) /home/boitho/boithoTools script/eachNight.sh script/reloadDictionary.sh script/makebbwordlist.sh perl/createaspellwordlist.pl script/log_rotation_script
 	rpmbuild -bb $(boitho-scripts_name).spec
 
 dictionary:
@@ -281,6 +284,19 @@ base:
 	mv $(boitho-base_name)-$(boitho-base_version).tar.gz $(HOME)/redhat/SOURCES/	
 
 	rpmbuild -bb $(boitho-base_name).spec
+
+syslogconf:
+
+	rm -rf $(boitho-syslogconf_name)-$(boitho-syslogconf_version)
+	mkdir $(boitho-syslogconf_name)-$(boitho-syslogconf_version)
+
+	cp ../blackbox/bb.rsyslog.conf $(boitho-syslogconf_name)-$(boitho-syslogconf_version)
+
+	tar -z -c -f $(boitho-syslogconf_name)-$(boitho-syslogconf_version).tar.gz $(boitho-syslogconf_name)-$(boitho-syslogconf_version)
+	mv $(boitho-syslogconf_name)-$(boitho-syslogconf_version).tar.gz $(HOME)/redhat/SOURCES/	
+
+	rpmbuild -bb $(boitho-syslogconf_name).spec
+
 
 apaceconf:
 
