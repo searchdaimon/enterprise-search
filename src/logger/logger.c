@@ -233,7 +233,7 @@ bblog_errno(severity_t severity, const char *str, ...)
 
 	snprintf(newstr, sizeof(newstr), "%s: %s", str, strerror(errno));
 	va_start(ap, str);
-	bblog_internal(severity, str, ap);
+	bblog_internal(severity, newstr, ap);
 	va_end(ap);
 }
 
