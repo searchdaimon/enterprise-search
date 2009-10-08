@@ -8,6 +8,7 @@
 //preopen
 #include "../common/lot.h"
 
+#include "../logger/logger.h"
 
 #include "../common/boithohome.h"
 #include "../common/bstr.h"
@@ -106,7 +107,7 @@ int isInSubname(struct subnamesFormat *subnames,int nrOfSubnames,char s[]) {
 void
 catch_alarm (int sig)
 {
-	fprintf(stderr, "searchd: Warning! Recieved alarm signal. Exiting.\n");
+	bblog(ERROR, "searchd: Warning! Recieved alarm signal. Exiting.");
 	exit(1);
 }
 
@@ -117,7 +118,7 @@ void lotPreOpenStartl(int *preOpen[], char filename[], char subname[], int use) 
 	char buf[1];
 
 	if ((*preOpen = malloc(sizeof(int) * maxLots)) == NULL) {
-		perror("malloc preOpen");
+		bblog_errno(ERROR, "malloc preOpen");
 		exit(-1);
 	}
 
@@ -135,7 +136,7 @@ void lotPreOpenStartl(int *preOpen[], char filename[], char subname[], int use) 
 					} 
 
 					read((*preOpen)[i],&buf,sizeof(buf));
-					printf("opening %i, as %i\n",i,(*preOpen)[i]);
+					bblog(INFO, "opening %i, as %i",i,(*preOpen)[i]);
 				}
 			}
 		#endif
@@ -148,7 +149,8 @@ extern unsigned int spelling_min_freq;
 
 int main(int argc, char *argv[])
 {
-	fprintf(stderr, "searchd: Initializing...\n");
+	bblog_init("searchd");
+	bblog(CLEAN, "Initializing...");
 
 	int 	sockfd;
 	int runCount;
@@ -179,11 +181,11 @@ int main(int argc, char *argv[])
 	signal(SIGUSR1, SIG_IGN);
 
         char c;
-        while ((c=getopt(argc,argv,"clp:m:b:vsofS:"))!=-1) {
+        while ((c=getopt(argc,argv,"clp:m:b:vsofA:L:S:"))!=-1) {
                 switch (c) {
                         case 'p':
                                 searchd_config.searchport = atoi(optarg);
-				fprintf(stderr, "searchd: Option -p: Using port %i.\n",searchd_config.searchport);
+				bblog(CLEAN, "searchd: Option -p: Using port %i.",searchd_config.searchport);
                                 break;
                         case 'l':
 				searchd_config.optLog = 1;
@@ -197,12 +199,12 @@ int main(int argc, char *argv[])
                         case 'b':
 				searchd_config.optrankfile = optarg;
                                 break;
-                        case 'v':
-				fprintf(stderr, "searchd: Option -v: Verbose output.\n");
+                        case 'v': /* XXX: Remove now that we have severity in the logger? */
+				bblog(CLEAN, "searchd: Option -v: Verbose output.");
 				globalOptVerbose = 1;
                                 break;
                         case 's':
-				fprintf(stderr, "searchd: Option -s: Won't fork for new connections\n");
+				bblog(INFO, "Option -s: Won't fork for new connections");
 				searchd_config.optSingle = 1;
                                 break;
 			case 'f':
@@ -211,46 +213,32 @@ int main(int argc, char *argv[])
 			case 'c':
 				searchd_config.optCacheIndexes = 0;
 				break;
+			case 'A':
+				bblog_set_appenders(atoi(optarg));
+				break;
+			case 'L':
+				bblog_set_severity(atoi(optarg));
+				break;
 			case 'S':
 				spelling_min_freq = strtol(optarg, NULL, 10);
 				break;
 			default:
+				bblog(ERROR, "Unknown argument: %c", c);
 				errx(1, "Unknown argument: %c", c);
                 }
         
 	}
 
 	#ifdef BLACK_BOKS
-	fprintf(stderr, "searchd: Blackboxmode (searchdbb).\n");
+	bblog(CLEAN, "Blackbox mode (searchdbb)");
 
 	time_t starttime;
-
 	time(&starttime);
 
-	FILE *FH;
-
-	#define stdoutlog "logs/searchdbb_stdout"
-	#define stderrlog "logs/searchdbb_stderr"
-
 	if (searchd_config.optLog) {
-		fprintf(stderr, "searchd: Opening log \"%s\"\n",bfile(stdoutlog));
-	
-		if ((FH = freopen (bfile(stdoutlog), "a+", stdout)) == NULL) {
-			perror(bfile(stdoutlog));
-
-		}
-
-		fprintf(stderr, "searchd: Opening log \"%s\"\n",bfile(stderrlog));
-	
-		if ((FH = freopen (bfile(stderrlog), "a+", stderr)) == NULL) {
-			perror(bfile(stderrlog));
-
-		}
-
-		//setter filene til å være linjebuferet, akurat slik en terminal er, ikke block bufferede slik en fil er
-		//hvis ikke får vi ikke med oss siste del hvis vi får en seg feil
-		setvbuf(stdout, NULL, _IOLBF, 0); 
-		setvbuf(stderr, NULL, _IOLBF, 0); 
+		/* Only add file logging if syslog is disabled */
+		if ((bblog_get_appenders() & LOGGER_APPENDER_SYSLOG) == 0)
+			bblog_set_appenders(LOGGER_APPENDER_FILE|bblog_get_appenders());
 	}
 
 	/* Write pidfile */
@@ -259,15 +247,17 @@ int main(int argc, char *argv[])
 	if (pidfile != NULL) {
 		fprintf(pidfile, "%d", getpid());
 		fclose(pidfile);
+	} else {
+		bblog(WARN, "Unable to write to pidfile");
 	}
 
-	fprintf(stderr, "searchd: Starting. Time is %s",ctime(&starttime));
+	bblog(CLEAN, "searchd: Starting. Time is %s",ctime(&starttime));
 	#endif
 
 
 
 	#ifdef DEBUG
-        fprintf(stderr, "searchd: Debug: argc %i, optind %i\n",argc,optind);
+        bblog(DEBUG, "searchd: Debug: argc %i, optind %i",argc,optind);
 	#endif
 
 	if (searchd_config.optrankfile == NULL) {
@@ -276,20 +266,19 @@ int main(int argc, char *argv[])
 
 	#ifdef WITH_SPELLING
 	if (searchd_config.optFastStartup != 1) {
-
         	if ((spelling = train(bfile("var/dictionarywords"))) == NULL) {
-        	        warnx("Can't init spelling.");
+        	        bblog(ERROR, "Can't init spelling.");
 	        }
 
 		cache_spelling_keepalive(&spelling);
 		signal(SIGUSR1, cache_spelling_hup);
-
 	}
 	#endif
 
 	if (argc > 0) {
 		strncpy(servername,argv[optind], sizeof(servername) -1);
 	} else {
+		bblog(ERROR, "No hostname supplied");
 		errx(1, "You have to supply a hostname");
 	}
 	
@@ -299,9 +288,9 @@ int main(int argc, char *argv[])
 #ifdef BLACK_BOKS
 	if (searchd_config.optCacheIndexes == 1) {
 		if (searchd_config.optFastStartup != 1) {
-			printf("Reading indexes...\n");
+			bblog(INFO, "Reading indexes");
 			cache_indexes(0);
-			printf("Cached indexes: %dMB, cached indexes: %d\n", indexcachescached[0]/(1024*1024), indexcachescached[1]);
+			bblog(INFO, "Cached indexes: %dMB, cached indexes: %d", indexcachescached[0]/(1024*1024), indexcachescached[1]);
 			preopen();
 			cache_fresh_lot_collection();
 
@@ -360,11 +349,11 @@ int main(int argc, char *argv[])
 
   	/* Load the file */
 	#ifdef DEBUG
-  	fprintf(stderr, "searchd: Debug: Loading [%s] ...\n",bfile(cfg_searchd));
+  	bblog(DEBUG, "searchd: Debug: Loading [%s] ...",bfile(cfg_searchd));
 	#endif
 
   	if (!config_read_file(&cfg, bfile(cfg_searchd))) {
-    		fprintf(stderr, "searchd: Error! [%s] failed: %s at line %i\n",bfile(cfg_searchd),config_error_text(&cfg),config_error_line(&cfg));
+		bblog(ERROR, "config read failed: [%s]: %s at line %i",bfile(cfg_searchd),config_error_text(&cfg),config_error_line(&cfg));
 		exit(1);
 	}
 	//#endif	
@@ -381,11 +370,11 @@ int main(int argc, char *argv[])
 	#endif
 	*/
 
-	fprintf(stderr, "searchd: Servername %s\n",servername);
+	bblog(CLEAN, "Servername: %s", servername);
 
 	//ToDo: må ha låsing her
         if ((LOGFILE = bfopen("config/query.log","a")) == NULL) {
-                perror(bfile("config/query.log"));
+                bblog_errno(ERROR, "%s", bfile("config/query.log"));
         }
         else {
                 fprintf(LOGFILE,"starting server %s\n",servername);
@@ -397,37 +386,33 @@ int main(int argc, char *argv[])
 		// Initialiser thesaurus med ouput-filene fra 'build_thesaurus_*':
 		searchd_config.thesaurus_all = NULL;
 #ifndef WITHOUT_THESAURUS
-		printf("init thesaurus\n");
+		bblog(INFO, "init thesaurus");
 
 		searchd_config.thesaurus_all = NULL;
 		if (searchd_config.optFastStartup != 1) {
-
 			searchd_config.thesaurus_all = load_all_thesauruses(bfile("data/thesaurus/"));
 
-			printf("init thesaurus done\n");
-
 			if (searchd_config.thesaurus_all == NULL) {
-				fprintf(stderr, "searchd: ERROR!! Unable to open thesauruses. Disabling stemming.\n");
-		    	}
-
+				bblog(ERROR, "Unable to open thesaurus. Disabling stemming");
+		    	} else {
+				bblog(INFO, "init thesaurus done");
+			}
 		}
 
 #endif
-		fprintf(stderr, "searchd: init file-extensions\n");
+		bblog(INFO, "init file-extensions");
 		searchd_config.getfiletypep = fte_init(bfile("config/file_extensions.conf"));
-		if (searchd_config.getfiletypep == NULL)
-		    {
-			fprintf(stderr, "searchd: ERROR!! Unable to open file-extensions configuration file. Disabling file-extensions.\n");
-		    }
+		if (searchd_config.getfiletypep == NULL) {
+			bblog(ERROR, "Unable to open file-extensions configuration file. Disabling file-extensions.");
+		}
 
-		fprintf(stderr, "searchd: init attribute descriptions\n");
+		bblog(INFO, "init attribute descriptions");
 		searchd_config.attrdescrp = adf_init(bfile("config/attribute_descriptions.conf"));
-		if (searchd_config.attrdescrp == NULL)
-		    {
-			fprintf(stderr, "searchd: ERROR!! Unable to open attribute descriptions configuration file. Disabling attribute descriptions.\n");
-		    }
+		if (searchd_config.attrdescrp == NULL) {
+			bblog(ERROR, "Unable to open attribute descriptions configuration file. Disabling attribute descriptions.");
+		}
 
-		fprintf(stderr, "searchd: init show-attributes\n");
+		bblog(INFO, "init show-attributes");
 		char	*warnings;
 		/*searchd_config.showattrp = show_attributes_init(bfile("config/show_attributes.conf"), &warnings);
 		if (searchd_config.showattrp == NULL)
@@ -444,18 +429,14 @@ int main(int argc, char *argv[])
 	#else
 
 		//starter opp
-		fprintf(stderr, "searchd: Loading domain-ids..."); fflush(stderr);
+		bblog(INFO, "Loading domain-ids...");
 		iintegerLoadMemArray2(&global_DomainIDs,"domainid",sizeof(unsigned short), "www");
-		fprintf(stderr, "done\n");
 
         	//laster inn alle poprankene
-        	fprintf(stderr, "searchd: Loading pop MemArray..."); fflush(stderr);
+        	bblog(INFO, "Loading pop MemArray...");
         	popopenMemArray2("www",searchd_config.optrankfile); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
-        	fprintf(stderr, "done\n");
-
-		fprintf(stderr, "searchd: Loading adultWeight MemArray..."); fflush(stderr);
+		bblog(INFO, "Loading adultWeight MemArray...");
 		adultWeightopenMemArray2("www"); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
-		fprintf(stderr, "done\n");
 	#endif
 
 
@@ -465,27 +446,26 @@ int main(int argc, char *argv[])
 		IIndexLoad();
 	#endif
 
-	if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-		fprintf(stderr,"searchd: Server error! Can't open stream socket.\n"), exit(0);
-
-
-
+	if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		bblog(ERROR, "Server error! Can't open stream socket.");
+		exit(1);
+	}
 
 	memset((char *) &serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_addr.sin_port = htons(searchd_config.searchport);
-	fprintf(stderr, "searchd: Will bind to port %i\n",searchd_config.searchport);
+	bblog(INFO, "Will bind to port %i",searchd_config.searchport);
 	//seter at sokket kan rebrukes
         int yes=1;
         if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
-            perror("setsockopt");
-            exit(1);
+		bblog_errno(ERROR, "setsockopt()");
+		exit(1);
         }
 	
 	if(bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-		fprintf(stderr,"searchd: Server error! Can't bind local address. Port %i\n",searchd_config.searchport);
-		exit(0);
+		bblog_errno(ERROR, "Can't bind local address. Port %i", searchd_config.searchport);
+		exit(1);
 	}	
 
 	/* set the level of thread concurrency we desire */
@@ -513,7 +493,8 @@ int main(int argc, char *argv[])
 
 			ret = sigaction(SIGCHLD, &sa, 0);
 			if (ret) {
-				errx(1, "sigaction()");
+				bblog_errno(ERROR, "sigaction()");
+				exit(1);
 			}
 		}
 		else {
@@ -522,9 +503,9 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	printf("|------------------------------------------------------------------------------------------------|\n");
-	printf("|%-40s | %-11s | %-11s | %-11s | %-11s|\n","query", "TotaltTreff", "showabal", "filtered", "total_usecs");
-	printf("|------------------------------------------------------------------------------------------------|\n");
+	bblog(CLEAN, "|------------------------------------------------------------------------------------------------|");
+	bblog(CLEAN, "|%-40s | %-11s | %-11s | %-11s | %-11s|","query", "TotaltTreff", "showabal", "filtered", "total_usecs");
+	bblog(CLEAN, "|------------------------------------------------------------------------------------------------|");
 
 	for((clilen = sizeof(cli_addr));;)
 	{
@@ -536,7 +517,7 @@ int main(int argc, char *argv[])
 			if (errno == EINTR)
 				continue;
 
-			warn("searchd: Server warning! Accept error");
+			bblog(WARN, "searchd: Server warning! Accept error");
 		}
 		else {
 
@@ -545,7 +526,7 @@ int main(int argc, char *argv[])
 			}
 			else {
 			#ifdef DEBUG
-				fprintf(stderr, "searchd: Debug mode; will not fork to new process.\n");
+				bblog(DEBUG, "Debug mode; will not fork to new process.");
 				do_chld((void *) &searchd_config);
 			#else
 				/*
@@ -558,7 +539,7 @@ int main(int argc, char *argv[])
 					do_chld((void *) &searchd_config);	
 				#endif
 				*/
-				vboprintf("searchd: Forking new prosess.\n");
+				bblog(DEBUG, "Forking new prosess.");
 				if (fork() == 0) { // this is the child process
 
 					close(sockfd); // child doesn't need the listener
@@ -566,7 +547,7 @@ int main(int argc, char *argv[])
 					do_chld((void *) &searchd_config);	
 
 					close(searchd_config.newsockfd);
-					vboprintf("searchd: Terminating child.\n");
+					bblog(DEBUG, "Terminating child.");
 		
 					exit(0);
 				}
@@ -586,7 +567,7 @@ int main(int argc, char *argv[])
 				pthread_join(chld_thr, NULL);
 			#endif
 			*/
-			fprintf(stderr, "searchd: have reached Max runs. Exiting\n");
+			bblog(WARN, "have reached Max runs. Exiting...");
 			break;
 		}
 
@@ -614,10 +595,10 @@ attr_conf *parse_navmenu_cfg(char *cfgstr, int *failed) {
 	attr_conf *cfg = show_attributes_init(cfgstr, &warnings, failed);
 	
 	if (*failed)
-		warnx("navmenucfg parsing failed");
+		bblog(WARN, "navmenucfg parsing failed");
 
 	if (warnings[0] != '\0')
-		warnx("navmenucfg parsing warnings: %s", warnings);
+		bblog(WARN, "navmenucfg parsing warnings: %s", warnings);
 
 	return cfg;
 }
@@ -627,8 +608,8 @@ attr_conf *parse_navmenu_cfg(char *cfgstr, int *failed) {
 */
 void *do_chld(void *arg)
 {
-	vboprintf("searchd_child: Starting new thread.\n");
-	vboprintf("searchd: do_chld()\n");
+	bblog(DEBUG, "searchd_child: Starting new thread.");
+	bblog(DEBUG, "searchd: do_chld()");
 	//int 	mysocfd = (int) arg;
 	struct searchd_configFORMAT *searchd_config = arg;
 	int   mysocfd = (*searchd_config).newsockfd;
@@ -672,8 +653,8 @@ void *do_chld(void *arg)
 
 
 	if ((SiderHeder  = malloc(sizeof(struct SiderHederFormat))) == NULL) {
-		perror("malloc");
-		fprintf(stderr, "searchd: ~do_chld()\n");
+		bblog(ERROR, "malloc()");
+		bblog(CLEAN, "~do_chld()");
 		return 0;
 	}
 
@@ -689,9 +670,9 @@ void *do_chld(void *arg)
 
 	
 	#ifdef WITH_THREAD
-		vboprintf("Child thread [%d]: Socket number = %d\n", pthread_self(), mysocfd);
+		bblog(DEBUG, "Child thread [%d]: Socket number = %d", pthread_self(), mysocfd);
 	#else
-		vboprintf("Socket number = %d\n",mysocfd);
+		bblog(DEBUG, "Socket number = %d",mysocfd);
 	#endif
 
 	#ifdef DEBUG
@@ -701,18 +682,18 @@ void *do_chld(void *arg)
 	/* read from the given socket */
 
 	if ((i=recv(mysocfd, &queryNodeHeder, sizeof(queryNodeHeder),MSG_WAITALL)) == -1) {
-		perror("recv");
+		bblog_errno(ERROR, "recv()");
 	}
 
 	// Read collections /w cfg.
 	if ((recv(mysocfd, &nrOfSubnames, sizeof nrOfSubnames, MSG_WAITALL)) == -1)
-		perror("recv nrOfSubnames");
+		bblog_errno(ERROR, "recv nrOfSubnames");
 
-	vboprintf("nrOfSubnames: %d\n",nrOfSubnames);
+	bblog(DEBUG, "nrOfSubnames: %d",nrOfSubnames);
 	struct subnamesFormat subnames[nrOfSubnames];
 	if (nrOfSubnames > 0) {
 		if ((recv(mysocfd, &subnames, sizeof subnames, MSG_WAITALL)) == -1)
-			perror("recv subnames");
+			bblog_errno(ERROR, "recv subnames");
 	}
 
 
@@ -720,26 +701,25 @@ void *do_chld(void *arg)
 	net_status = net_CanDo;
 	//if ((n=sendall(mysocfd,&net_status, sizeof(net_status))) != sizeof(net_status)) {
 	if ((n=send(mysocfd,&net_status, sizeof(net_status),MSG_NOSIGNAL)) != sizeof(net_status)) {
-		fprintf(stderr, "searchd_child: Warning! Sent only %i of %i bytes at %s:%d\n",n,sizeof(net_status),__FILE__,__LINE__);
-		perror("sendall net_status");
+		bblog_errno(ERROR, "searchd_child: Warning! Sent only %i of %i bytes at %s:%d",n,sizeof(net_status),__FILE__,__LINE__);
 	}
 
 
-	vboprintf("MaxsHits %i\n",queryNodeHeder.MaxsHits);
+	bblog(DEBUG, "MaxsHits %i",queryNodeHeder.MaxsHits);
 	//Sider  = (struct SiderFormat *)malloc(sizeof(struct SiderFormat) * (queryNodeHeder.MaxsHits));
-	vboprintf("Ranking search?\n");
+	bblog(DEBUG, "Ranking search?");
 
 
 	//ToDo: må ha låsing her
         if ((LOGFILE = bfopen("config/query.log","a")) == NULL) {
-                perror("logfile");
+                bblog_errno(ERROR, "logfile");
         }
         else {
                 fprintf(LOGFILE,"%s\n",queryNodeHeder.query);
                 fclose(LOGFILE);
         }
 
-	vboprintf("searchd_child: Incoming query: %s\n",queryNodeHeder.query);
+	bblog(DEBUG, "searchd_child: Incoming query: %s",queryNodeHeder.query);
 
 	strcpy(SiderHeder->servername,servername);
 
@@ -752,8 +732,8 @@ void *do_chld(void *arg)
 		case LANG_ENG: lang = "eng"; break;
 	    }
 
-	printf("[searchd] lang_id = %i\n", queryNodeHeder.lang);
-	printf("[searchd] lang = %s\n", lang);
+	bblog(INFO, "[searchd] lang_id = %i", queryNodeHeder.lang);
+	bblog(INFO, "[searchd] lang = %s", lang);
 
 	searchd_config->thesaurusp = NULL;
 	if (lang != NULL && searchd_config->thesaurus_all != NULL)
@@ -761,12 +741,12 @@ void *do_chld(void *arg)
 		iterator	it = map_find(searchd_config->thesaurus_all, lang);
 		if (it.valid)
 		    {
-			printf("[searchd] Loading %s thesaurus\n", lang);
+			bblog(INFO, "[searchd] Loading %s thesaurus", lang);
 			searchd_config->thesaurusp = map_val(it).ptr;
 		    }
 		else
 		    {
-			printf("[searchd] No thesaurus for %s\n", lang);
+			bblog(INFO, "[searchd] No thesaurus for %s", lang);
 		    }
 	    }
 #endif
@@ -776,7 +756,7 @@ void *do_chld(void *arg)
 
 	//dekoder subname
 
-	vboprintf("nrOfSubnames %i\n",nrOfSubnames);
+	bblog(DEBUG, "nrOfSubnames %i",nrOfSubnames);
   	
 /*
 	nrOfSubnames = 1;
@@ -787,12 +767,14 @@ void *do_chld(void *arg)
 */
 
 	#ifdef DEBUG
-	fprintf(stderr, "searchd_child: \n##########################################################\n");
-	fprintf(stderr, "searchd_child: subnames:\nTotal of %i\n",nrOfSubnames);
+	bblog(DEBUG, "searchd_child: ");
+	bblog(DEBUG, "##########################################################");
+	bblog(DEBUG, "searchd_child: subnames:");
+	bblog(DEBUG, "Total of %i", nrOfSubnames);
 	for (i=0;i<nrOfSubnames;i++) {
-		fprintf(stderr, "searchd_child: subname nr %i: \"%s\"\n",i,subnames[i].subname);
+		bblog(DEBUG, "searchd_child: subname nr %i: \"%s\"",i,subnames[i].subname);
 	}
-	fprintf(stderr, "searchd_child: ##########################################################\n\n");
+	bblog(DEBUG, "searchd_child: ##########################################################");
 	#endif
 
 	SiderHeder->filtypesnrof = MAXFILTYPES;
@@ -800,7 +782,7 @@ void *do_chld(void *arg)
 	SiderHeder->errorstrlen=sizeof(SiderHeder->errorstr);
 
 	#ifdef DEBUG
-	fprintf(stderr, "searchd_child: queryNodeHeder.getRank %u\n",queryNodeHeder.getRank);
+	bblog(DEBUG, "searchd_child: queryNodeHeder.getRank %u",queryNodeHeder.getRank);
 	#endif
 
 	if (!queryNodeHeder.getRank) {
@@ -827,13 +809,13 @@ void *do_chld(void *arg)
 			spelling
 			)) 
 		{
-			fprintf(stderr, "searchd_child: dosearch did not return 1\n");
+			bblog(WARN, "searchd_child: dosearch did not return success");
 			SiderHeder->responstype 	= searchd_responstype_error;
 			//setter at vi ikke hadde noen svar
 			SiderHeder->TotaltTreff 	= 0;
 			SiderHeder->showabal		= 0;
 
-			fprintf(stderr, "searchd_child: Error: cand do dosearch: \"%s\"\n",SiderHeder->errorstr);
+			bblog(ERROR, "searchd_child: can't do dosearch: \"%s\"", SiderHeder->errorstr);
 		}
 
 		show_attributes_destroy(navmenu_cfg);
@@ -841,7 +823,7 @@ void *do_chld(void *arg)
 		
 	}
 	else if (queryNodeHeder.getRank)  {
-		fprintf(stderr, "searchd_child: ########################################### Ranking document: %u\n", queryNodeHeder.getRank);
+		bblog(INFO, "searchd_child: Ranking document: %u", queryNodeHeder.getRank);
 
 		#if 0
 		if (dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),&Sider,SiderHeder,SiderHeder->hiliteQuery,
@@ -858,11 +840,10 @@ void *do_chld(void *arg)
 			
 			if (ranking == -1) {
 				status = net_nomatch;
-				fprintf(stderr, "searchd_child: 1 Sending: %d\n", sizeof(status));
+				bblog(INFO, "searchd_child: 1 Sending: %d", sizeof(status));
 				if ((n=send(mysocfd, &status, sizeof(status),0)) != sizeof(status)) {
-					fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(status),__FILE__,__LINE__);
-					perror("sendall status");
-					fprintf(stderr, "searchd: ~do_chld()\n");
+					bblog_errno(ERROR, "searchd_child: send only %i of %i at %s:%d",n,sizeof(status),__FILE__,__LINE__);
+					bblog(INFO, "searchd: ~do_chld()");
 					return;
 				}
 			} else {
@@ -883,25 +864,22 @@ void *do_chld(void *arg)
 					return;
 				}
 #else
-				fprintf(stderr, "searchd_child: 2 Sending: %d\n", sizeof(data));
+				bblog(INFO, "searchd_child: 2 Sending: %d", sizeof(data));
 				if ((n = send(mysocfd, data, sizeof(data),0)) != sizeof(data)) {
-					fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(data),__FILE__,__LINE__);
-					perror("sendall data");
-					fprintf(stderr, "searchd: ~do_chld()\n");
+					bblog_errno(ERROR, "searchd_child: send only %i of %i at %s:%d",n,sizeof(data),__FILE__,__LINE__);
+					bblog(INFO, "searchd: ~do_chld()");
 					return;
 				}
 #endif
 			}
 
-			fprintf(stderr, "searchd_child: 3 Receiving: %d\n",sizeof(ranking));
+			bblog(INFO, "searchd_child: 3 Receiving: %d",sizeof(ranking));
 			if (recv(mysocfd, &ranking, sizeof(ranking), 0) != sizeof(ranking)) {
-			//if (recvall(mysocfd, &ranking, sizeof(ranking))!= sizeof(ranking)) {
-				fprintf(stderr, "searchd_child: recv ranking %s:%d\n",__FILE__,__LINE__);
-				perror("");
-				fprintf(stderr, "searchd: ~do_chld()\n");
+				bblog_errno(ERROR, "searchd_child: recv ranking %s:%d",__FILE__,__LINE__);
+				bblog(INFO, "searchd: ~do_chld()");
 				return;
 			}
-			fprintf(stderr, "searchd_child: Received ranking: %d\n", ranking);
+			bblog(INFO, "searchd_child: Received ranking: %d", ranking);
 
 			if (!dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),&Sider,SiderHeder,SiderHeder->hiliteQuery,
 				servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
@@ -912,31 +890,30 @@ void *do_chld(void *arg)
 				SiderHeder->errorstr, &SiderHeder->errorstrlen,
 				&global_DomainIDs, RANK_TYPE_SUM, 0/*queryNodeHeder.getRank*/, &ranking)) {
 
-				perror("Got some kind of an error?");
-				fprintf(stderr, "searchd: ~do_chld()\n");
+				bblog_errno(ERROR, "dorank error");
+				bblog(INFO, "searchd: ~do_chld()");
 				return;
 			} else {
 				int ranking2;
-				fprintf(stderr, "searchd_child: Let us see how this ranking went: %d\n", ranking);
+				bblog(INFO, "searchd_child: Let us see how this ranking went: %d", ranking);
 				ranking2 = ranking;
 				status = 0xabdedd0f;
-				fprintf(stderr, "searchd_child: 4 Sending: %d %d\n", sizeof(ranking), ranking);
-				fprintf(stderr, "searchd_child: Ranking: %p\n", &ranking);
+				bblog(INFO, "searchd_child: 4 Sending: %d %d", sizeof(ranking), ranking);
+				bblog(INFO, "searchd_child: Ranking: %p", &ranking);
 #if 1
 				if ((n = send(mysocfd, &ranking2, sizeof(ranking2), 0)) != sizeof(ranking2)) {
-					fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n", n, sizeof(ranking2),__FILE__,__LINE__);
-					perror("sendall ranking2");
-					fprintf(stderr, "searchd: ~do_chld()\n");
+					bblog_errno(ERROR, "ranking2: send only %i of %i at %s:%d", n, sizeof(ranking2),__FILE__,__LINE__);
+					bblog(INFO, "searchd: ~do_chld()");
 					return;
 				}
 #endif
-				fprintf(stderr, "searchd_child: Sent: %d %d\n", ranking, n);
+				bblog(INFO, "searchd_child: Sent: %d %d", ranking, n);
 				sleep(5);
 			}
 
 			SiderHeder->responstype = searchd_responstype_ranking;
 			close(mysocfd);
-			fprintf(stderr, "searchd: ~do_chld()\n");
+			bblog(INFO, "searchd: ~do_chld()");
 			return;
 		} else {
 			SiderHeder->responstype = searchd_responstype_error;
@@ -945,7 +922,7 @@ void *do_chld(void *arg)
 		}
 
 
-		fprintf(stderr, "searchd_child: doRank()\n");
+		bblog(INFO, "searchd_child: doRank()");
 		//setter at vi ikke hadde noen svar
 		#endif
 
@@ -966,12 +943,12 @@ void *do_chld(void *arg)
 	SiderHeder->nrOfSubnames = i--;
 
 	if (globalOptVerbose) {
-		fprintf(stderr, "searchd_child: subnames:\n");
+		bblog(INFO, "searchd_child: subnames:");
 		for (i=0;i<SiderHeder->nrOfSubnames;i++) {
-			fprintf(stderr, "searchd_child: \t%s: %i\n",SiderHeder->subnames[i].subname,SiderHeder->subnames[i].hits);
+			bblog(INFO, "searchd_child: \t%s: %i",SiderHeder->subnames[i].subname,SiderHeder->subnames[i].hits);
 		}
 	
-		fprintf(stderr, "searchd_child: \n");
+		bblog(INFO, "searchd_child:");
 	}
 	//finer først tiden vi brukte
         gettimeofday(&globalend_time, NULL);
@@ -980,7 +957,7 @@ void *do_chld(void *arg)
 	
 	//printf("query \"%s\", TotaltTreff %i,showabal %i,filtered %i,total_usecs %f\n",queryNodeHeder.query,SiderHeder->TotaltTreff,SiderHeder->showabal,SiderHeder->filtered,SiderHeder->total_usecs);
 
-	fprintf(stderr, "|%-40s | %-11i | %-11i | %-11i | %-11f|\n",
+	bblog(CLEAN, "|%-40s | %-11i | %-11i | %-11i | %-11f|",
 		queryNodeHeder.query,
 		SiderHeder->TotaltTreff,
 		SiderHeder->showabal,
@@ -998,8 +975,7 @@ void *do_chld(void *arg)
 #endif
 
 	if ((n=send(mysocfd,SiderHeder, sizeof(struct SiderHederFormat),MSG_NOSIGNAL)) != sizeof(struct SiderHederFormat)) {
-		fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(struct SiderHederFormat),__FILE__,__LINE__);
-		perror("sendall SiderHeder");
+		bblog_errno(ERROR, "siderheder: send only %i of %i at %s:%d",n,sizeof(struct SiderHederFormat),__FILE__,__LINE__);
 	}
 
 	#ifdef ATTRIBUTES
@@ -1007,8 +983,7 @@ void *do_chld(void *arg)
 	    {
 		if ((n=send(mysocfd, SiderHeder->navigation_xml, SiderHeder->navigation_xml_len, MSG_NOSIGNAL)) != SiderHeder->navigation_xml_len)
 		    {
-			fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,SiderHeder->navigation_xml_len,__FILE__,__LINE__);
-		        perror("sendall navigation_xml");
+			bblog_errno(ERROR, "navigation xml: send only %i of %i at %s:%d",n,SiderHeder->navigation_xml_len,__FILE__,__LINE__);
 		    }
 	    }
 
@@ -1018,7 +993,7 @@ void *do_chld(void *arg)
 
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	fprintf(stderr, "searchd_child: Time debug: sending SiderHeder %f\n",getTimeDifference(&start_time,&end_time));
+	bblog(DEBUG, "searchd_child: Time debug: sending SiderHeder %f",getTimeDifference(&start_time,&end_time));
 	#endif
 	
 
@@ -1034,7 +1009,7 @@ void *do_chld(void *arg)
 
 		//printf("N_urls: %d\n", s->n_urls);
 		if ((n=send(mysocfd, s, sizeof(struct SiderFormat), MSG_NOSIGNAL)) != (sizeof(struct SiderFormat))) {
-			fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(struct SiderFormat),__FILE__,__LINE__);
+			bblog(ERROR, "siderformat: send only %i of %i at %s:%d",n,sizeof(struct SiderFormat),__FILE__,__LINE__);
 			break;
 		}
 		/* Send duplicate urls */
@@ -1069,7 +1044,7 @@ void *do_chld(void *arg)
 	
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	fprintf(stderr, "searchd_child: Time debug: sendig sider %f\n",getTimeDifference(&start_time,&end_time));
+	bblog(DEBUG, "Time debug: sendig sider %f",getTimeDifference(&start_time,&end_time));
 	#endif
 
 
@@ -1080,7 +1055,7 @@ void *do_chld(void *arg)
 	free(SiderHeder);
 
 	#ifdef DEBUG
-	fprintf(stderr, "searchd_child: exiting\n");
+	bblog(DEBUG, "exiting");
 	#endif
 
 	//pthread_exit((void *)0); /* exit with status */
@@ -1094,14 +1069,14 @@ void *do_chld(void *arg)
 			++profiling_runcount;
 
 			if (profiling_runcount >= WITH_PROFILING) {
-				fprintf(stderr, "searchd_child: exiting to do profiling. Have done %i runs\n",profiling_runcount);
+				bblog(INFO, "searchd_child: exiting to do profiling. Have done %i runs",profiling_runcount);
 				sleep(1);
 				exit(1);
 			}
-			fprintf(stderr, "searchd_child: Has runned %i times\n",profiling_runcount);
+			bblog(INFO, "searchd_child: Has runned %i times",profiling_runcount);
 		#endif
 
 
-    vboprintf("searchd: Normal exit.\n");
-    vboprintf("searchd: ~do_chld()\n");
+    bblog(DEBUG, "searchd: Normal exit.");
+    bblog(INFO, "searchd: ~do_chld()");
 }

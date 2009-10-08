@@ -8,7 +8,7 @@ void htmlstrip(char html[],char *text,int buffersize) {
 	int textnr = 0;
 
 	#ifdef DEBUG
-	printf("htmlstrip(html=\"%s\", buffersize=%d, strlen(html)=%d)\n",html,buffersize,strlen(html));
+	bblog(DEBUG, "htmlstrip(html=\"%s\", buffersize=%d, strlen(html)=%d)",html,buffersize,strlen(html));
 	#endif
 
 	for (i=0; ((html[i] != '\0') && (i < buffersize)); i++) {
@@ -27,12 +27,12 @@ void htmlstrip(char html[],char *text,int buffersize) {
 		}
 		else if ((unsigned char)html[i] < 11) {
 			#ifdef DEBUG
-			printf("ignoring format char c %c (uchar %d)\n",html[i],(unsigned char)html[i]);			
+			bblog(DEBUG, "ignoring format char c %c (uchar %d)",html[i],(unsigned char)html[i]);			
 			#endif
 		}
 		else {
 			#ifdef DEBUG
-			printf("c %c into %d as uchar %d\n",html[i],textnr,(unsigned char)html[i]);
+			bblog(DEBUG, "c %c into %d as uchar %d",html[i],textnr,(unsigned char)html[i]);
 			#endif
 			text[textnr] = html[i];
 			textnr++;
@@ -54,7 +54,7 @@ void htmlstrip(char html[],char *text,int buffersize) {
 	text[textnr] = '\0';
 
 	#ifdef DEBUG	
-		printf("~htmlstrip(textnr=%d, i=%d)\n",textnr,i);	
+		bblog(DEBUG, "~htmlstrip(textnr=%d, i=%d)",textnr,i);	
 	#endif
 
 }

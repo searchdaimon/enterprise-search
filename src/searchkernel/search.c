@@ -33,6 +33,7 @@
 #include "../ds/dvector.h"
 #include "../ds/dpair.h"
 #include "../crawlManager/client.h"
+#include "../logger/logger.h"
 
 #include "merge.h"
 
@@ -301,7 +302,7 @@ static inline int rankAthor_complicacy(const struct hitsFormat *hits, int nrofhi
 	phrasenr = 0;
 
 	#ifdef DEBUG
-	printf("rankAthor_complicacy: nrofhit %i\n",nrofhit);
+	bblog(DEBUG, "rankAthor_complicacy: nrofhit %i", nrofhit);
 	#endif
 
 	for (i = 0;i < nrofhit; i++) {
@@ -353,9 +354,9 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 
 	#ifdef DEBUG_II
 		//printer ut elementet
-		printf("rankMain: DocID %u, subname \"%s\"\n",DocID,subname->subname);
+		bblog(DEBUG, "rankMain: DocID %u, subname \"%s\"", DocID,subname->subname);
 		for (i = 0;i < nrofhit; i++) {
-			printf("\thit %i, phrase %i\n",(int)hits[i].pos,(int)hits[i].phrase);
+			bblog(DEBUG, "\thit %i, phrase %i", (int)hits[i].pos,(int)hits[i].phrase);
 		}
 	#endif
 
@@ -395,7 +396,7 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 				//rank += (*subname).config.rankTittelFirstWord;
 				TittelFirstWord = (*subname).config.rankTittelFirstWord;
 				#ifdef DEBUG
-				printf("rank title hit. add %i, TittelFirstWord %i, subname \"%s\", DocID %u\n",(*subname).config.rankTittelFirstWord,TittelFirstWord,(*subname).subname,DocID);
+				bblog(DEBUG, "rank title hit. add %i, TittelFirstWord %i, subname \"%s\", DocID %u", (*subname).config.rankTittelFirstWord,TittelFirstWord,(*subname).subname,DocID);
 				#endif
 				++nrTittelFirst;
 			}
@@ -405,7 +406,7 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 			}
 			else {
 				#ifdef DEBUG
-					printf("Word to long into title. pos %i (starts at 100)\n",hits[i].pos);
+					bblog(DEBUG, "Word to long into title. pos %i (starts at 100)", hits[i].pos);
 				#endif
 			}
                	}
@@ -453,7 +454,7 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 	}
 
 	#ifdef DEBUG_II
-		printf("rankMain: DocID %u, nrofhit %i ,rank %i, havePhrase %i\n",DocID,nrofhit,rank,havePhrase);
+		bblog(DEBUG, "rankMain: DocID %u, nrofhit %i ,rank %i, havePhrase %i", DocID,nrofhit,rank,havePhrase);
 	#endif
 
 	return rank;
@@ -527,7 +528,7 @@ void iindexArrayCopy2(struct iindexFormat **c, int *baselen,int Originallen, str
 
 	if (Originallen==0) {
 		//hvis vi ikke har hits, og ikke har noe fra før kan vi bare bruke memcpy
-		vboprintf("can use swap in iindexArrayCopy2()\n");
+		bblog(INFO, "can use swap in iindexArrayCopy2()");
 		//flytter bare pekerene
 		//struct iindexFormat *tmparr;
 		//tmparr = *c;
@@ -547,7 +548,7 @@ void iindexArrayCopy2(struct iindexFormat **c, int *baselen,int Originallen, str
 
 			for(x=0;x<(*a)->iindex[i].TermAntall;x++) {
 				#ifdef DEBUG_II
-				printf("aaa %hu\n",(*a)->iindex[i].hits[x].pos);
+				bblog(DEBUG, "aaa %hu", (*a)->iindex[i].hits[x].pos);
 				#endif
 				(*c)->iindex[k].hits[(*c)->iindex[k].TermAntall].pos = (*a)->iindex[i].hits[x].pos;
 				(*c)->iindex[k].hits[(*c)->iindex[k].TermAntall].phrase = 0;
@@ -631,7 +632,7 @@ void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filter
         {
             //struct text_list *t_it = (*queryParsed).elem[i];
 
-            vboprintf("Search type %c\n", (*queryParsed).query[i].operand );
+            bblog(INFO, "Search type %c",  (*queryParsed).query[i].operand );
 
 	    len = (*queryParsed).query[i].n -1;
 	    for (j=0; j<(*queryParsed).query[i].n; j++)
@@ -650,7 +651,7 @@ void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filter
 			    {
 //				strscpy((*filteron).collection, buf, sizeof((*filteron).collection));
 				(*filteron).collection = strdup(buf);
-				vboprintf("Filtering on collection: \"%s\"\n",(*filteron).collection);
+				bblog(INFO, "Filtering on collection: \"%s\"", (*filteron).collection);
 				break;
 			    }
 			case QUERY_GROUP:
@@ -658,21 +659,21 @@ void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filter
 //				(*filteron).filetype = (*queryParsed).query[i].s[0];
 //				strscpy((*filteron).filetype, buf, sizeof((*filteron).collection));
 				vector_pushback((*filteron).attributes, QUERY_GROUP, buf);
-				vboprintf("Filtering on attributes: \"group:%s\"\n", buf);
+				bblog(INFO, "Filtering on attributes: \"group:%s\"",  buf);
 //				free(buf);
 				break;
 			    }
 			case QUERY_FILETYPE:
 			    {
 				vector_pushback((*filteron).attributes, QUERY_FILETYPE, buf);
-				vboprintf("Filtering on attributes: \"filetype:%s\"\n", buf);
+				bblog(INFO, "Filtering on attributes: \"filetype:%s\"",  buf);
 //				free(buf);
 				break;
 			    }
 			case QUERY_ATTRIBUTE:
 			    {
 				vector_pushback((*filteron).attributes, QUERY_ATTRIBUTE, buf);
-				vboprintf("Filtering on attributes: \"%s\"\n", buf);
+				bblog(INFO, "Filtering on attributes: \"%s\"",  buf);
 //				free(buf);
 				break;
 			    }
@@ -681,7 +682,7 @@ void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filter
 //				(*filteron).date = (*queryParsed).query[i].s[0];
 //				strscpy((*filteron).date, buf, sizeof((*filteron).collection));
 				(*filteron).date = strdup(buf);
-				vboprintf("Filtering on date: \"%s\"\n",(*filteron).date);
+				bblog(INFO, "Filtering on date: \"%s\"", (*filteron).date);
 				break;
 			    }
 			case QUERY_SORT:
@@ -689,7 +690,7 @@ void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filter
 //				(*filteron).sort = (*queryParsed).query[i].s[0];
 //				strscpy((*filteron).sort, buf, sizeof((*filteron).sort));
 				(*filteron).sort = strdup(buf);
-				vboprintf("wil filter on sort: \"%s\"\n",(*filteron).sort);
+				bblog(INFO, "wil filter on sort: \"%s\"", (*filteron).sort);
 				break;
 			    }
 		}
@@ -749,7 +750,7 @@ void rankMainArray(int TeffArrayElementer, struct iindexFormat *TeffArray, int c
 
         #ifdef DEBUG_TIME
                 gettimeofday(&end_time, NULL);
-                printf("Time debug: rankMainArray() time: %f\n",getTimeDifference(&start_time, &end_time));
+                bblog(DEBUG, "Time debug: rankMainArray() time: %f", getTimeDifference(&start_time, &end_time));
         #endif
 }
 
@@ -796,7 +797,7 @@ int searchIndex_getnrs(char *indexType,query_array *queryParsed,struct subnamesF
         {
             //struct text_list *t_it = (*queryParsed).elem[i];
 
-            vboprintf("Search type %c\n", (*queryParsed).query[i].operand );
+            bblog(INFO, "Search type %c",  (*queryParsed).query[i].operand );
 
 
 
@@ -811,15 +812,15 @@ int searchIndex_getnrs(char *indexType,query_array *queryParsed,struct subnamesF
 		                	//while ( t_it!=NULL )
                 			//{
 					for (j=0; j<(*queryParsed).query[i].n; j++) {
-                    				vboprintf("aa_ søker på \"%s\"\n", (*queryParsed).query[i].s[j]);
+                    				bblog(INFO, "aa_ søker på \"%s\"",  (*queryParsed).query[i].s[j]);
                     				strncat(queryelement,(*queryParsed).query[i].s[j],sizeof(queryelement));
 			
-                				vboprintf("queryelement:  %s\n", queryelement);
+                				bblog(INFO, "queryelement:  %s",  queryelement);
 
 						convert_to_lowercase((unsigned char *)queryelement);
 
 						WordIDcrc32 = crc32boitho(queryelement);
-						vboprintf("searchIndex: WordIDcrc32 %u\n",WordIDcrc32);
+						bblog(INFO, "searchIndex: WordIDcrc32 %u", WordIDcrc32);
 						if (i == 0) {
 					
 							//GetIndexAsArray(TeffArrayElementer,TeffArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
@@ -859,9 +860,9 @@ int searchIndex_getnrs(char *indexType,query_array *queryParsed,struct subnamesF
         }
 
 
-	vboprintf("searchIndex_getnrs: \"%s\": nrs %i\n",subname->subname,nr);
+	bblog(INFO, "searchIndex_getnrs: \"%s\": nrs %i", subname->subname,nr);
 
-	vboprintf("searchIndex_getnrs: end\n");
+	bblog(INFO, "searchIndex_getnrs: end");
 
 	return nr;
 }
@@ -880,7 +881,7 @@ void GetIndexAsArray_thesaurus (int *AntallTeff, struct iindexFormat **TeffArray
 	_GetIndexAsArray(AntallTeff,*TeffArray,WordIDcrc32,IndexType,IndexSprok,subname,languageFilterNr,languageFilterAsNr, cache_index_get);
 #else
 
-	vboprintf("alt_n %i, alt %p\n",alt_n, alt);
+	bblog(INFO, "alt_n %i, alt %p", alt_n, alt);
 	struct iindexFormat *TmpArray = (struct iindexFormat *)malloc(sizeof(struct iindexFormat));
 	resultArrayInit(TmpArray);
 
@@ -892,8 +893,8 @@ void GetIndexAsArray_thesaurus (int *AntallTeff, struct iindexFormat **TeffArray
 	}
 	else {
 
-		vboprintf("\n##########################################\n");
-		vboprintf("thesaurus search:\n\n");
+		bblog(INFO, "##########################################");
+		bblog(INFO, "thesaurus search:");
 	
 		(*AntallTeff) = 0;
 
@@ -909,7 +910,7 @@ void GetIndexAsArray_thesaurus (int *AntallTeff, struct iindexFormat **TeffArray
 				_GetIndexAsArray(&TmpArrayLen,TmpArray,WordIDcrc32,IndexType,IndexSprok,subname,languageFilterNr, languageFilterAsNr, cache_index_get);
 				//rank(TmpArrayLen,TmpArray,subname,(*complicacy));
 
-                                vboprintf("%s (%i)\n", alt[j].s[k],TmpArrayLen);
+                                bblog(INFO, "%s (%i)",  alt[j].s[k],TmpArrayLen);
 				if (TmpArrayLen != 0) {									
 					or_merge(&tmpAnser,AntallTeff,TeffArray,(*AntallTeff),&TmpArray,TmpArrayLen);
 					iindexArrayCopy2(TeffArray,AntallTeff,0,&tmpAnser,(*AntallTeff));							
@@ -918,7 +919,7 @@ void GetIndexAsArray_thesaurus (int *AntallTeff, struct iindexFormat **TeffArray
                         }
                         
 		}	
-		vboprintf("\n##########################################\n\n");
+		bblog(INFO, "##########################################");
 
 
 	}
@@ -936,7 +937,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 		int languageFilterNr, 
 		int languageFilterAsNr[], int *complicacy){
 
-	vboprintf("search: searchIndex()\n");
+	bblog(INFO, "search: searchIndex()");
 
 	int i, y, j,k,h;
 	char queryelement[128];
@@ -969,13 +970,13 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 	//Runarb 29 jan 2008: usikker om vi trenger denne
         //resultArrayInit(TmpArray);
 
-	vboprintf("######################################################################\n");
-	vboprintf("searchIndex: vil search index \"%s\"\n",indexType);
-	vboprintf("######################################################################\n");
+	bblog(INFO, "######################################################################");
+	bblog(INFO, "searchIndex: vil search index \"%s\"", indexType);
+	bblog(INFO, "######################################################################");
 
-	vboprintf("\nsearchIndex \"%s\", subname \"%s\"\n",indexType,(*subname).subname);
+	bblog(INFO, "searchIndex \"%s\", subname \"%s\"", indexType,(*subname).subname);
 	TeffArrayOriginal = (*TeffArrayElementer);
-	vboprintf("searchIndex: got that we have %i elements in array from before\n",TeffArrayOriginal);
+	bblog(INFO, "searchIndex: got that we have %i elements in array from before", TeffArrayOriginal);
 
 	char	first = 1;
 
@@ -984,7 +985,7 @@ for (i=0; i<(*queryParsed).n; i++)
         {
             //struct text_list *t_it = (*queryParsed).elem[i];
 
-        	vboprintf("Search type %c\n", (*queryParsed).query[i].operand );
+        	bblog(INFO, "Search type %c",  (*queryParsed).query[i].operand );
 		#ifdef DEBUG_TIME
 		gettimeofday(&start_time_element, NULL);
 		#endif
@@ -1001,14 +1002,14 @@ for (i=0; i<(*queryParsed).n; i++)
 					queryelement[0] = '\0';
 
 					for (j=0; j<(*queryParsed).query[i].n; j++) {
-                    				vboprintf("aa_ søker på \"%s\"\n", (*queryParsed).query[i].s[j]);
+                    				bblog(INFO, "aa_ søker på \"%s\"",  (*queryParsed).query[i].s[j]);
                     				strncat(queryelement,(*queryParsed).query[i].s[j],sizeof(queryelement));
                     			                			
-                				vboprintf("queryelement:  %s\n", queryelement);
+                				bblog(INFO, "queryelement:  %s",  queryelement);
 
 						// hvis vi er et kort ord så har vi ikke fått noen ord nummer palssering, så vi skal ikke søke etter det
 						if ( isShortWord(queryelement) ) {
-							printf("is short word\n");
+							bblog(INFO, "is short word");
 							continue;
 						}
 
@@ -1020,7 +1021,7 @@ for (i=0; i<(*queryParsed).n; i++)
 						convert_to_lowercase((unsigned char *)queryelement);
 
 						WordIDcrc32 = crc32boitho(queryelement);
-						vboprintf("searchIndex: WordIDcrc32 %u\n",WordIDcrc32);
+						bblog(INFO, "searchIndex: WordIDcrc32 %u", WordIDcrc32);
 						//hvis vi ikke har noen elementer i base arrayen, legger vi inn direkte
 						//ToDo: kan ikke gjøre det da dette kansje ikke er første element
 						//må skille her
@@ -1030,7 +1031,7 @@ for (i=0; i<(*queryParsed).n; i++)
 							TmpArrayLen = (*TeffArrayElementer);
 							GetIndexAsArray_thesaurus(TeffArrayElementer,TeffArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, (*queryParsed).query[i].alt, (*queryParsed).query[i].alt_n);
 							//rank((*TeffArrayElementer),TeffArray,subname,(*complicacy));
-							vboprintf("oooooo: (*TeffArrayElementer) %i,TmpArrayLen %i\n",(*TeffArrayElementer),TmpArrayLen);
+							bblog(INFO, "oooooo: (*TeffArrayElementer) %i,TmpArrayLen %i", (*TeffArrayElementer),TmpArrayLen);
 
 							//rar b-2 bug her. Skal det være + ikke -?
 							//Runarb: 19 aug 2007: skaper igjen problemer. ser ut til å skal være '-'
@@ -1044,10 +1045,10 @@ for (i=0; i<(*queryParsed).n; i++)
 							TmpArray->nrofHits = 0;
 							GetIndexAsArray_thesaurus(&TmpArrayLen,&TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, (*queryParsed).query[i].alt, (*queryParsed).query[i].alt_n);
 
-							vboprintf("did find %i pages\n",TmpArrayLen);
+							bblog(INFO, "did find %i pages", TmpArrayLen);
 																									
 							andprox_merge(*TeffArray,&baseArrayLen,TeffArrayOriginal,*TeffArray,(*TeffArrayElementer),TmpArray,TmpArrayLen);
-							vboprintf("baseArrayLen %i\n",baseArrayLen);
+							bblog(INFO, "baseArrayLen %i", baseArrayLen);
 							(*TeffArrayElementer) = baseArrayLen;
 
 						}
@@ -1060,27 +1061,27 @@ for (i=0; i<(*queryParsed).n; i++)
 
 			case '|':
 					#ifdef DEBUG
-                                        	printf("will or search for:\n");
+                                        	bblog(DEBUG, "will or search for:");
                                         	for (j=0; j<(*queryParsed).query[i].n; j++) {
-                                        	        printf("\t%s\n",(*queryParsed).query[i].s[j]);
+                                        	        bblog(DEBUG, "\t%s", (*queryParsed).query[i].s[j]);
                                         	}
 					#endif
 					for (j=0; j<(*queryParsed).query[i].n; j++) {
 
 						++(*complicacy);
 
-                    				vboprintf("aa_ søker på \"%s\"\n", (*queryParsed).query[i].s[j]);
+                    				bblog(INFO, "aa_ søker på \"%s\"",  (*queryParsed).query[i].s[j]);
                     				strscpy(queryelement,(*queryParsed).query[i].s[j],sizeof(queryelement));
                     			              
 						#ifdef BLACK_BOKS  			
                     			        strsandr(queryelement,"_NBSP_"," ");
 						#endif
 
-                				vboprintf("queryelement:  %s\n", queryelement);
+                				bblog(INFO, "queryelement:  %s",  queryelement);
 
 						// hvis vi er et kort ord så har vi ikke fåt noen ord nummer palssering, så vi skal ikke øke hits
 						if ( isShortWord(queryelement) ) {
-							printf("is short word\n");
+							bblog(INFO, "is short word");
 							continue;
 						}
 
@@ -1092,7 +1093,7 @@ for (i=0; i<(*queryParsed).n; i++)
 						convert_to_lowercase((unsigned char *)queryelement);
 
 						WordIDcrc32 = crc32boitho(queryelement);
-						vboprintf("searchIndex: WordIDcrc32 %u\n",WordIDcrc32);
+						bblog(INFO, "searchIndex: WordIDcrc32 %u", WordIDcrc32);
 						//hvis vi ikke har noen elementer i base arrayen, legger vi inn direkte
 						//ToDo: kan ikke gjøre det da dette kansje ikke er første element
 						//må skille her
@@ -1116,11 +1117,11 @@ for (i=0; i<(*queryParsed).n; i++)
 
 							#ifdef DEBUG_TIME
 								gettimeofday(&end_foo_time, NULL);
-								printf("Time debug: searchIndex GetIndexAsArray() time: %f\n",getTimeDifference(&start_foo_time, &end_foo_time));
+								bblog(DEBUG, "Time debug: searchIndex GetIndexAsArray() time: %f", getTimeDifference(&start_foo_time, &end_foo_time));
 							#endif
 							
 
-							vboprintf("did find %i pages\n",TmpArrayLen);
+							bblog(INFO, "did find %i pages", TmpArrayLen);
 							//hvis vi ikke hadde noe resulateter kan vi droppe å merge denne inn.
 							if (TmpArrayLen == 0) {
 								continue;
@@ -1139,7 +1140,7 @@ for (i=0; i<(*queryParsed).n; i++)
 
 							#ifdef DEBUG_TIME
 								gettimeofday(&end_foo_time, NULL);
-								printf("Time debug: searchIndex or_merge() time: %f\n",getTimeDifference(&start_foo_time, &end_foo_time));
+								bblog(DEBUG, "Time debug: searchIndex or_merge() time: %f", getTimeDifference(&start_foo_time, &end_foo_time));
 							#endif
 
 							#ifdef DEBUG_TIME				
@@ -1150,13 +1151,13 @@ for (i=0; i<(*queryParsed).n; i++)
 
 							#ifdef DEBUG_TIME
 								gettimeofday(&end_foo_time, NULL);
-								printf("Time debug: searchIndex iindexArrayCopy2() time: %f\n",getTimeDifference(&start_foo_time, &end_foo_time));
+								bblog(DEBUG, "Time debug: searchIndex iindexArrayCopy2() time: %f", getTimeDifference(&start_foo_time, &end_foo_time));
 							#endif
 
-							vboprintf("tmpResultElementer %i\n",tmpResultElementer);
+							bblog(INFO, "tmpResultElementer %i", tmpResultElementer);
 							baseArrayLen = ti;
 
-							vboprintf("baseArrayLen %i\n",baseArrayLen);
+							bblog(INFO, "baseArrayLen %i", baseArrayLen);
 							(*TeffArrayElementer) = baseArrayLen;
 
 						}
@@ -1192,7 +1193,7 @@ for (i=0; i<(*queryParsed).n; i++)
 
 			                	strscpy(queryelement,(*queryParsed).query[i].s[j],sizeof(queryelement));
 
-                    				vboprintf("\nelement %s\n", queryelement);
+                    				bblog(INFO, "element %s",  queryelement);
 
 						//gjør om il liten case
 						//for(h=0;h<strlen(queryelement);h++) {
@@ -1201,12 +1202,12 @@ for (i=0; i<(*queryParsed).n; i++)
 
 						// hvis vi er et kort ord så har vi ikke fåt noen ord nummer palssering, så vi skal ikke øke hits
 						if ( isShortWord(queryelement) ) {
-							printf("is short word\n");
+							bblog(INFO, "is short word");
 							continue;
 						}
 						//utestet
 						//else if (isStoppWord(queryelement)) {
-						//	printf("is stopword\n");
+						//	printf("is stopword");
 						//	 //frase_stopword(tmpResult,tmpResultElementer);
 						//	(*queryParsed).query[i].stopword = 1;
 						//	//exit(1);
@@ -1217,7 +1218,7 @@ for (i=0; i<(*queryParsed).n; i++)
 						convert_to_lowercase((unsigned char *)queryelement);
 
 						WordIDcrc32 = crc32boitho(queryelement);
-						vboprintf("searchIndex: WordIDcrc32 %u\n",WordIDcrc32);
+						bblog(INFO, "searchIndex: WordIDcrc32 %u", WordIDcrc32);
 
                     				debug("crc32: %u",WordIDcrc32);
                     				
@@ -1233,7 +1234,7 @@ for (i=0; i<(*queryParsed).n; i++)
 							//rank(tmpResultElementer,tmpResult,subname,(*complicacy));
 
                                                         //(*TeffArrayElementer) = (*TeffArrayElementer) - TmpArrayLen;        	        
-							//printf("TeffArrayElementer %i\n",(*TeffArrayElementer));
+							//printf("TeffArrayElementer %i", (*TeffArrayElementer));
 						}
 						else {
 
@@ -1245,7 +1246,7 @@ for (i=0; i<(*queryParsed).n; i++)
 							resultArrayInit(TmpArray);
 							_GetIndexAsArray(&TmpArrayLen,TmpArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, cache_index_get);
 
-							vboprintf("\t dddd: frase_merge %i %i\n",(*TeffArrayElementer),TmpArrayLen);
+							bblog(INFO, "\t dddd: frase_merge %i %i", (*TeffArrayElementer),TmpArrayLen);
 
 							//dette er ikke en ekts frasesøk, kan bare ha en frase
 							frase_merge(tmpResult,&tmpResultElementer,0,tmpResult,tmpResultElementer,TmpArray,TmpArrayLen);
@@ -1258,7 +1259,7 @@ for (i=0; i<(*queryParsed).n; i++)
 							resultArrayInit(tmpAnser);
 							tmpAnserElementer = 0;
 							frase_merge(tmpAnser,&tmpAnserElementer,0,tmpResult,tmpResultElementer,TmpArray,TmpArrayLen);
-							printf("after frase_merge(): tmpResultElementer: %i\n",tmpResultElementer);
+							printf("after frase_merge(): tmpResultElementer: %i", tmpResultElementer);
 							*/
 							//ToDO: burde kansje bruke noe mem move eller slik her
 							//for (y=0;y<baseArrayLen;y++) {
@@ -1276,14 +1277,14 @@ for (i=0; i<(*queryParsed).n; i++)
 					//hvis dette er første forekomst så kopierer vi bare inn
 					//hvis ikke må vi and merge
 					if (first) {
-						vboprintf("er første fraseelement\n");
+						bblog(INFO, "er første fraseelement");
 						
 						k=TeffArrayOriginal;
 						//iindexArrayCopy(TeffArray,tmpResult,tmpResultElementer);		
 						//iindexArrayCopy(TeffArray,tmpAnser,tmpAnserElementer);
 						int ti;
 						iindexArrayCopy2(TeffArray,&ti,TeffArrayOriginal,&tmpResult,tmpResultElementer);
-						vboprintf("tmpResultElementer %i\n",tmpResultElementer);
+						bblog(INFO, "tmpResultElementer %i", tmpResultElementer);
 						(*TeffArrayElementer) = tmpResultElementer;
 					}
 					else {
@@ -1300,29 +1301,29 @@ for (i=0; i<(*queryParsed).n; i++)
 
 		#ifdef DEBUG_TIME
 		gettimeofday(&end_time_element, NULL);
-		printf("Time debug: searchIndex element time: %f\n",getTimeDifference(&start_time_element,&end_time_element));
+		bblog(DEBUG, "Time debug: searchIndex element time: %f", getTimeDifference(&start_time_element,&end_time_element));
 		#endif
 
  
         }
 
-	vboprintf("~searchIndex: (*TeffArrayElementer) %i, TeffArrayOriginal %i for subname \"%s\"\n",(*TeffArrayElementer),TeffArrayOriginal,subname->subname);
+	bblog(INFO, "~searchIndex: (*TeffArrayElementer) %i, TeffArrayOriginal %i for subname \"%s\"", (*TeffArrayElementer),TeffArrayOriginal,subname->subname);
 //toDo: trenger vi denne nå???
 //tror ikke vi trenger denne mere, da vi har merget queryet inn i den
 	(*TeffArrayElementer) = (*TeffArrayElementer) + TeffArrayOriginal;
 	TeffArrayOriginal = (*TeffArrayElementer);
-	vboprintf("new len is %i\n",(*TeffArrayElementer));
+	bblog(INFO, "new len is %i", (*TeffArrayElementer));
 
 	free(tmpResult);
 	free(TmpArray);
 
 	#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
-		printf("Time debug: ~searchIndex: Type: \"%s\", time: %f\n",indexType,getTimeDifference(&start_time,&end_time));
+		bblog(DEBUG, "Time debug: ~searchIndex: Type: \"%s\", time: %f", indexType,getTimeDifference(&start_time,&end_time));
 	#endif
 
-	vboprintf("searchIndex: end\n");
-	vboprintf("######################################################################\n\n");
+	bblog(INFO, "searchIndex: end");
+	bblog(INFO, "######################################################################");
 
 }
 
@@ -1350,7 +1351,7 @@ struct searchIndex_thread_argFormat {
 
 void *searchIndex_thread(void *arg)
 {
-	vboprintf("search: searchIndex_thread()\n");
+	bblog(INFO, "search: searchIndex_thread()");
 
         struct searchIndex_thread_argFormat *searchIndex_thread_arg = (struct searchIndex_thread_argFormat *)arg;
 	int i,j,y,x;
@@ -1366,7 +1367,7 @@ void *searchIndex_thread(void *arg)
 
 	gettimeofday(&start_time, NULL);
 
-	vboprintf("######################################################################\n");
+	bblog(INFO, "######################################################################");
 
 	if ((TmpArray = malloc(sizeof(struct iindexFormat))) == NULL) {
                 perror("malloc TmpArray");
@@ -1438,14 +1439,14 @@ void *searchIndex_thread(void *arg)
 	//	rank = rankMainArray;
 	//}
 	else {
-		fprintf(stderr, "search: Error! Unknown index type \"%s\"\n",(*searchIndex_thread_arg).indexType);
-		fprintf(stderr, "search: ~searchIndex_thread()\n");
+		bblog(ERROR, "search: Error! Unknown index type \"%s\"",(*searchIndex_thread_arg).indexType);
+		bblog(ERROR, "search: ~searchIndex_thread()");
 		return;
 	}
 	#ifdef WITH_THREAD
 	pthread_t tid;
         tid = pthread_self();
-        vboprintf("is thread id %u. Wil search \"%s\"\n",(unsigned int)tid,(*searchIndex_thread_arg).indexType);
+        bblog(INFO, "is thread id %u. Wil search \"%s\"", (unsigned int)tid,(*searchIndex_thread_arg).indexType);
 	#endif
 
 #ifdef BLACK_BOKS
@@ -1457,7 +1458,7 @@ void *searchIndex_thread(void *arg)
 
 	ArrayLen = 0;
 	
-	vboprintf("nrOfSubnames %i\nSearch user: %s\n",(*searchIndex_thread_arg).nrOfSubnames, searchIndex_thread_arg->search_user);
+	bblog(INFO, "nrOfSubnames %i Search user: %s", (*searchIndex_thread_arg).nrOfSubnames, searchIndex_thread_arg->search_user);
 
 	for(i=0;i<(*searchIndex_thread_arg).nrOfSubnames;i++) {
 		query_array *groupquery;
@@ -1468,7 +1469,7 @@ void *searchIndex_thread(void *arg)
 		gettimeofday(&subname_starttime, NULL);
 		#endif
 
-		vboprintf("Checking subname: %s\n", searchIndex_thread_arg->subnames[i].subname);
+		bblog(INFO, "Checking subname: %s",  searchIndex_thread_arg->subnames[i].subname);
 
 		#if defined BLACK_BOKS && !defined _24SEVENOFFICE
 	
@@ -1477,13 +1478,13 @@ void *searchIndex_thread(void *arg)
 		if (!searchIndex_thread_arg->anonymous) {
 			int system = cmc_usersystemfromcollection(cmc_sock, searchIndex_thread_arg->subnames[i].subname);
 			if (system == -1) {
-				fprintf(stderr, "Unable to get usersystem for: %s\n", searchIndex_thread_arg->subnames[i].subname);
+				bblog(ERROR, "Unable to get usersystem for: %s", searchIndex_thread_arg->subnames[i].subname);
 				continue;
 			} else if ((groupquery = hashtable_search(groupqueries, &system)) == NULL) {
 				char **groups;
 				int n_groups, j;
 
-				vboprintf("Getting mappings for system %d\n", system);
+				bblog(INFO, "Getting mappings for system %d",  system);
 
 #ifdef DEBUG_TIME
 				gettimeofday(&starttime, NULL);
@@ -1494,11 +1495,11 @@ void *searchIndex_thread(void *arg)
 
 #ifdef DEBUG_TIME
 				gettimeofday(&endtime, NULL);
-				printf("Time debug: cmc_groupsforuserfromusersystem(): %f\n", getTimeDifference(&starttime, &endtime));
+				bblog(DEBUg, "Time debug: cmc_groupsforuserfromusersystem(): %f",  getTimeDifference(&starttime, &endtime));
 #endif
 
 				size_t grouplistsize = n_groups * (MAX_LDAP_ATTR_LEN+5);
-				vboprintf("n_groups: %d\n", n_groups);
+				bblog(INFO, "n_groups: %d",  n_groups);
 				char *grouplist;
 
 				if (n_groups > 0) {
@@ -1519,7 +1520,7 @@ void *searchIndex_thread(void *arg)
 					strcpy(grouplist+grouplistlen,"\"");
 					grouplistlen += 1;
 				}
-				vboprintf("grouplist: %s\n", grouplist);
+				bblog(INFO, "grouplist: %s",  grouplist);
 				groupquery = malloc(sizeof(*groupquery));
 				get_query(grouplist, strlen(grouplist), groupquery);
 				if (n_groups > 0)
@@ -1527,7 +1528,7 @@ void *searchIndex_thread(void *arg)
 				free(grouplist);
 				hashtable_insert(groupqueries, uinttouintp(system), groupquery);
 			} else {
-				vboprintf("Reusing system mapping: %d\n", system);
+				bblog(INFO, "Reusing system mapping: %d",  system);
 			}
 		}
 
@@ -1550,7 +1551,7 @@ void *searchIndex_thread(void *arg)
 			for(y=0;y<2;y++) {
 
 				#if defined (_OPENMP)
-      				printf("Hello World from thread %d, runing %d\n", omp_get_thread_num(),y);
+      				bblog(INFO, "Hello World from thread %d, runing %d",  omp_get_thread_num(),y);
 				#endif
 				if (y==0) {
 
@@ -1562,7 +1563,7 @@ void *searchIndex_thread(void *arg)
 						// Skriv ut hvilke attributter det søkes på til skjermen:
 						char	qbuf[1024];
 						sprint_query(qbuf,1023,&(*searchIndex_thread_arg).attribute_query[j]);
-						printf("Looking up attributes: %s\n", qbuf);
+						bblog(INFO, "Looking up attributes: %s",  qbuf);
 
 						    searchIndex("attributes",
 							&tmpAttribArrayLen[j],
@@ -1576,7 +1577,7 @@ void *searchIndex_thread(void *arg)
 							totAttribLength += tmpAttribArrayLen[j];
 				
 
-						printf("%i hits.\n", tmpAttribArrayLen[j]);
+						bblog(INFO, "%i hits.",  tmpAttribArrayLen[j]);
 					    }
 					#endif
 				}
@@ -1595,7 +1596,7 @@ void *searchIndex_thread(void *arg)
 			} //omp for
 
 			if ((searcArrayLen == 0) && (totAttribLength == 0)) {
-				vboprintf("diden't find any hits for this subname, skipping it.\n");
+				bblog(INFO, "diden't find any hits for this subname, skipping it.");
 				continue;
 			}
 
@@ -1630,22 +1631,22 @@ void *searchIndex_thread(void *arg)
 
 			#ifdef DEBUG_II
 			if (!searchIndex_thread_arg->anonymous) {
-				printf("acl_allowArrayLen %i:\n",acl_allowArrayLen);
+				bblog(DEBUG, "acl_allowArrayLen %i:", acl_allowArrayLen);
 				for (y = 0; y < acl_allowArrayLen; y++) {
-					printf("acl_allow TeffArray: DocID %u\n",acl_allowArray->iindex[y].DocID);			
+					bblog(DEBUG, "acl_allow TeffArray: DocID %u", acl_allowArray->iindex[y].DocID);			
 				}
 
-				printf("acl_deniedArrayLen %i:\n",acl_deniedArrayLen);
+				bblog(DEBUG, "acl_deniedArrayLen %i:", acl_deniedArrayLen);
 				for (y = 0; y < acl_deniedArrayLen; y++) {
-					printf("acl_denied TeffArray: DocID %u\n",acl_deniedArray->iindex[y].DocID);			
+					bblog(DEBUG, "acl_denied TeffArray: DocID %u", acl_deniedArray->iindex[y].DocID);			
 				}
 			}
 
-				printf("searcArrayLen %i:\n",searcArrayLen);
+				bblog(DEBUG, "searcArrayLen %i:", searcArrayLen);
 				for (y = 0; y < searcArrayLen; y++) {
-					printf("Main TeffArray: DocID %u\nHits: %i\n",searcArray->iindex[y].DocID,searcArray->iindex[y].TermAntall);			
+					bblog(DEBUG, "Main TeffArray: DocID %u Hits: %i", searcArray->iindex[y].DocID,searcArray->iindex[y].TermAntall);			
 					for (x=0;x<searcArray->iindex[y].TermAntall;x++) {
-						printf("\t%hu\n",searcArray->iindex[y].hits[x]);
+						bblog(DEBUG, "\t%hu", searcArray->iindex[y].hits[x]);
 					}		
 
 				}
@@ -1749,10 +1750,10 @@ void *searchIndex_thread(void *arg)
 			    }
 
 			    #ifdef DEBUG_II
-			        printf("Array:\n");
+			        bblog(DEBUG, "Array:");
 			        for (x=start; x<ArrayLen; x++)
 			            {
-			 	        printf("\tDocID: %u,\t Filtered %d\n",Array->iindex[x].DocID,Array->iindex[x].indexFiltered.is_filtered);
+			 	        bblog(DEBUG, "\tDocID: %u,\t Filtered %d", Array->iindex[x].DocID,Array->iindex[x].indexFiltered.is_filtered);
 			            }
 			    #endif
 
@@ -1769,21 +1770,21 @@ void *searchIndex_thread(void *arg)
 
 
 			#ifdef DEBUG_II
-			printf("after first merge:\n");
+			bblog(DEBUG, "after first merge:");
 			for (y = 0; y < ArrayLen; y++) {
-				printf("TeffArray: DocID %u\nHits (%i): \n",Array->iindex[y].DocID,Array->iindex[y].TermAntall);	
+				bblog(DEBUG, "TeffArray: DocID %u Hits (%i): ", Array->iindex[y].DocID,Array->iindex[y].TermAntall);	
 				for (x=0;x<Array->iindex[y].TermAntall;x++) {
-					printf("\t%hu\n",Array->iindex[y].hits[x]);
+					bblog(DEBUG, "\t%hu", Array->iindex[y].hits[x]);
 				}		
 			}
 			#endif
 
 			#ifdef DEBUG_II
-			printf("etter andNot_merge:\n");
+			bblog(DEBUG, "etter andNot_merge:");
 			for (y = 0; y < ArrayLen; y++) {
-				printf("TeffArray: DocID %u, filtered %d\nHits (%i): \n",Array->iindex[y].DocID,Array->iindex[y].indexFiltered.is_filtered,Array->iindex[y].TermAntall);
+				bblog(DEBUG, "TeffArray: DocID %u, filtered %d Hits (%i): ", Array->iindex[y].DocID,Array->iindex[y].indexFiltered.is_filtered,Array->iindex[y].TermAntall);
 				for (x=0;x<Array->iindex[y].TermAntall;x++) {
-					printf("\t%hu\n",Array->iindex[y].hits[x]);
+					bblog(DEBUG, "\t%hu", Array->iindex[y].hits[x]);
 				}
 			}
 			#endif
@@ -1815,7 +1816,7 @@ void *searchIndex_thread(void *arg)
 
 
 		(*searchIndex_thread_arg).subnames[i].hits += hits;
-		vboprintf("searchIndex_thread: index %s, subname \"%s\",hits %i\n",(*searchIndex_thread_arg).indexType,(*searchIndex_thread_arg).subnames[i].subname,hits);
+		bblog(INFO, "searchIndex_thread: index %s, subname \"%s\",hits %i", (*searchIndex_thread_arg).indexType,(*searchIndex_thread_arg).subnames[i].subname,hits);
 
 
 		#else
@@ -1836,7 +1837,7 @@ void *searchIndex_thread(void *arg)
 
 			#ifdef DEBUG
 				for (y = 0; y < ArrayLen; y++) {
-					printf("searchIndex_thread: TeffArray: subname \"%s\", DocID %u\nHits (%i): \n",
+					bblog(DEBUG, "searchIndex_thread: TeffArray: subname \"%s\", DocID %u Hits (%i): ", 
 						Array->iindex[y].subname->subname,Array->iindex[y].DocID,Array->iindex[y].TermAntall);
 				}
 			#endif
@@ -1844,8 +1845,8 @@ void *searchIndex_thread(void *arg)
 			hits = ArrayLen - hits;
 			(*searchIndex_thread_arg).subnames[i].hits += hits;
 
-			vboprintf("searchIndex_thread: ArrayLen %i\n",ArrayLen);
-			vboprintf("searchIndex_thread: index %s, subname \"%s\",hits %i\n",(*searchIndex_thread_arg).indexType,(*searchIndex_thread_arg).subnames[i].subname,hits);
+			bblog(INFO, "searchIndex_thread: ArrayLen %i", ArrayLen);
+			bblog(INFO, "searchIndex_thread: index %s, subname \"%s\",hits %i", (*searchIndex_thread_arg).indexType,(*searchIndex_thread_arg).subnames[i].subname,hits);
 
 
 		#endif
@@ -1853,7 +1854,7 @@ void *searchIndex_thread(void *arg)
 
 		#ifdef DEBUG_TIME
 			gettimeofday(&subname_endtime, NULL);
-			printf("Time debug: all of subname: %f\n", getTimeDifference(&subname_starttime, &subname_endtime));
+			bblog(DEBUG, "Time debug: all of subname: %f",  getTimeDifference(&subname_starttime, &subname_endtime));
 		#endif
 		
 	}
@@ -1901,11 +1902,11 @@ void *searchIndex_thread(void *arg)
 
 	gettimeofday(&end_time, NULL);
 	(*searchIndex_thread_arg).searchtime = getTimeDifference(&start_time,&end_time);
-	vboprintf("searchtime %f\n",(*searchIndex_thread_arg).searchtime);
+	bblog(INFO, "searchtime %f", (*searchIndex_thread_arg).searchtime);
 
-	vboprintf("######################################################################\n");
+	bblog(INFO, "######################################################################");
 
-	vboprintf("search: ~searchIndex_thread()\n");
+	bblog(INFO, "search: ~searchIndex_thread()");
 }
 
 
@@ -1920,7 +1921,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		char *search_user, int cmc_port, int anonymous
 		) {
 
-	vboprintf("search: searchSimple()\n");
+	bblog(INFO, "search: searchSimple()");
 
 	int i,j,y,n;
 	//int x=0,j=0,k=0;
@@ -1986,10 +1987,10 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		//Main:
 		for(i=0;i<nrOfSubnames;i++) {		
 			PredictNrMain += searchIndex_getnrs("Main",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
-			vboprintf("PredictNrMain total with \"%s\" %u\n",&subnames[i],PredictNrMain);
+			bblog(INFO, "PredictNrMain total with \"%s\" %u", &subnames[i],PredictNrMain);
 		}
 
-		vboprintf("PredictNrAthor %u, PredictNrUrl %u, PredictNrMain %u\n",PredictNrAthor,PredictNrUrl,PredictNrMain);
+		bblog(INFO, "PredictNrAthor %u, PredictNrUrl %u, PredictNrMain %u", PredictNrAthor,PredictNrUrl,PredictNrMain);
 	#endif
 
 	#ifdef BLACK_BOKS
@@ -2191,7 +2192,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	}
 	*/
 
-	vboprintf("Athor ArrayLen %i, Url ArrayLen %i, Main ArrayLen %i\n",searchIndex_thread_arg_Athor.resultArrayLen,
+	bblog(INFO, "Athor ArrayLen %i, Url ArrayLen %i, Main ArrayLen %i", searchIndex_thread_arg_Athor.resultArrayLen,
 			searchIndex_thread_arg_Url.resultArrayLen,searchIndex_thread_arg_Main.resultArrayLen);
 
 	//sanker inn tiden
@@ -2254,15 +2255,14 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 	#ifdef DEBUG_II
 		//debug: printer ut alle treff, og litt om de.
-		printf("hits befoe filters:\n\n");
-		printf("\t| %-5s | %-20s |\n","DocID", "Subname");
+		bblog(DEBUG, "hits befoe filters:");
+		bblog(DEBUG, "\t| %-5s | %-20s |", "DocID", "Subname");
 		for (i = 0; (i < (*TeffArrayElementer)) && (i < 100); i++) {
-			printf("\t| %-5u | %-20s |\n",
+			bblog(DEBUG, "\t| %-5u | %-20s |", 
 				(*TeffArray)->iindex[i].DocID,
 				(*(*TeffArray)->iindex[i].subname).subname
 			);
 		}
-		printf("\n");
 	#endif
 
 
@@ -2323,13 +2323,13 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 			y += rankcount[responseShortTo];
 			#ifdef DEBUG
 			if (rankcount[responseShortTo] != 0) {
-				printf("rank %i: %i\n",responseShortTo,(int)rankcount[responseShortTo]);
+				bblog(DEBUG, "rank %i: %i", responseShortTo,(int)rankcount[responseShortTo]);
 			}
 			#endif
 
 		} while((responseShortTo>0) && (y <= responseShortToMin));
 		
-		vboprintf("responseShortTo: %i, y: %i\n",responseShortTo,y);
+		bblog(INFO, "responseShortTo: %i, y: %i", responseShortTo,y);
 		
 		if (responseShortTo != 0) {
 			//fjerner sider som er lavere en responseShortTo 
@@ -2342,7 +2342,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 				}
 			}
 		}
-		vboprintf("shortet respons array from %i to %i.\n",(*TeffArrayElementer),y);
+		bblog(INFO, "shortet respons array from %i to %i.", (*TeffArrayElementer),y);
 		(*TeffArrayElementer) = y;
 
 		
@@ -2386,7 +2386,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		if ((*filteron).collection != NULL) {
 		
 
-			vboprintf("will filter on collection \"%s\"\n",(*filteron).collection);
+			bblog(INFO, "will filter on collection \"%s\"", (*filteron).collection);
 
 			for (i = 0; i < (*TeffArrayElementer); i++) {
 
@@ -2417,7 +2417,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		*********************************************************************************************************************
 		*/
 
-		vboprintf("<################################# file filter ######################################>\n");
+		bblog(INFO, "<################################# file filter ######################################>");
 
 		gettimeofday(&start_time, NULL);
 
@@ -2429,7 +2429,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		for (i = 0; i < (*TeffArrayElementer); i++) {
 			//printf("$%%$$%%$$$$$$$$$$$$$$ Eirik: %d\n", (*TeffArray)->iindex[i].DocID);
 			#ifdef DEBUG
-			printf("i = %i, subname \"%s\"\n",i,(*(*TeffArray)->iindex[i].subname).subname);
+			bblog(DEBUG, "i = %i, subname \"%s\"", i,(*(*TeffArray)->iindex[i].subname).subname);
 			#endif
 			#if 1
  
@@ -2437,7 +2437,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 				}
 				else if ((re = reopen_cache(rLotForDOCid((*TeffArray)->iindex[i].DocID), 4, "filtypes", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY|RE_STARTS_AT_0)) == NULL) {
-					debug("reopen(filtypes)\n");
+					bblog(DEBUG, "reopen(filtypes)");
 					(*TeffArray)->iindex[i].filetype[0] = '\0';
 
 					continue;
@@ -2446,12 +2446,12 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 				strncpy((*TeffArray)->iindex[i].filetype, RE_Char(re, (*TeffArray)->iindex[i].DocID),4);
 			#else 
 				if (iintegerGetValue(&(*TeffArray)->iindex[i].filetype,4,(*TeffArray)->iindex[i].DocID,"filtypes",(*(*TeffArray)->iindex[i].subname).subname) == 0) {
-					printf("woldent get integerindex\n");
+					bblog(WARN, "woldent get integerindex");
 					(*TeffArray)->iindex[i].filetype[0] = '\0';
 				}
 				else {
 					#ifdef DEBUG
-					printf("file typs is: \"%c%c%c%c\"\n",(*TeffArray)->iindex[i].filetype[0],(*TeffArray)->iindex[i].filetype[1],(*TeffArray)->iindex[i].filetype[2],(*TeffArray)->iindex[i].filetype[3]);
+					bblog(DEBUG, "file typs is: \"%c%c%c%c\"", (*TeffArray)->iindex[i].filetype[0],(*TeffArray)->iindex[i].filetype[1],(*TeffArray)->iindex[i].filetype[2],(*TeffArray)->iindex[i].filetype[3]);
 					#endif								
 
 				}
@@ -2469,7 +2469,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 		gettimeofday(&end_time, NULL);
 		(*queryTime).filetypes = getTimeDifference(&start_time,&end_time);
-		vboprintf("<################################# /file filter ######################################>\n");
+		bblog(INFO, "<################################# /file filter ######################################>");
 
 
 		#ifdef DEBUG
@@ -2586,11 +2586,11 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		lager en oversikt over, og filtrerer på, dato
 		*********************************************************************************************************************
 		*/
-		vboprintf("<################################# date filter ######################################>\n");
+		bblog(INFO, "<################################# date filter ######################################>");
 		gettimeofday(&start_time, NULL);
 
 
-		vboprintf("looking opp dates\n");
+		bblog(INFO, "looking opp dates");
 
 		//slår opp alle datoene
 		re = NULL;
@@ -2616,12 +2616,12 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 
 			#ifdef DEBUG
-			printf("got %u\n",(*TeffArray)->iindex[i].date);
+			bblog(DEBUG, "got %u", (*TeffArray)->iindex[i].date);
 			#endif
 		}
 
-		printf("We did reopen %i times\n",nreopen);
-		printf("looking opp dates end\n");
+		bblog(INFO, "We did reopen %i times", nreopen);
+		bblog(INFO, "looking opp dates end");
 
 		gettimeofday(&end_time, NULL);
 		(*queryTime).iintegerGetValueDate = getTimeDifference(&start_time,&end_time);
@@ -2634,16 +2634,16 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		//filter på dato
 
 		if ((*filteron).date != NULL) {
-			printf("wil filter on date \"%s\"\n",(*filteron).date);
+			bblog(DEBUG, "wil filter on date \"%s\"", (*filteron).date);
 
 			struct datelib dl;
 
 			dl.start = dl.end = 0;
 			sd_getdate((*filteron).date, &dl);
 
-			printf("start %u, end %u\n",dl.start,dl.end);
-			printf("start: %s",ctime(&dl.start));
-			printf("end:   %s",ctime(&dl.end));
+			bblog(INFO, "start %u, end %u", dl.start,dl.end);
+			bblog(INFO, "start: %s",ctime(&dl.start));
+			bblog(INFO, "end:   %s",ctime(&dl.end));
 
 			int notFiltered, filtered;
 
@@ -2655,11 +2655,11 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 				
 				if (((*TeffArray)->iindex[i].date >= dl.start) && ((*TeffArray)->iindex[i].date <= dl.end)) {
 					#ifdef DEBUG
-					printf("time hit %s",ctime(&(*TeffArray)->iindex[i].date));
+					bblog(DEBUG, "time hit %s",ctime(&(*TeffArray)->iindex[i].date));
 					#endif
 					if ((*TeffArray)->iindex[i].indexFiltered.is_filtered) {
 						#ifdef DEBUG
-							printf("is already filtered out ");
+							bblog(DEBUG, "is already filtered out ");
 						#endif				
 					}
 					else {
@@ -2668,7 +2668,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 				}
 				else {
 					#ifdef DEBUG
-					printf("not time hit %s",ctime(&(*TeffArray)->iindex[i].date));
+					bblog(DEBUG, "not time hit %s",ctime(&(*TeffArray)->iindex[i].date));
 					#endif
 
 					if (iff_set_filter(&(*TeffArray)->iindex[i].indexFiltered, FILTER_DATE))
@@ -2680,13 +2680,13 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 			}		
 
-			vboprintf("date filter: filtered %i, notFiltered %i\n",filtered,notFiltered);
+			bblog(INFO, "date filter: filtered %i, notFiltered %i", filtered,notFiltered);
 			
 			
 
 		}
 
-		vboprintf("</################################# date filter ######################################>\n");
+		bblog(INFO, "</################################# date filter ######################################>");
 
 
 		/*
@@ -2696,7 +2696,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		*********************************************************************************************************************
 		*/
 
-		vboprintf("<################################# duplicate checking ######################################>\n");
+		bblog(INFO, "<################################# duplicate checking ######################################>");
 		gettimeofday(&start_time, NULL);
 		int k;
 		// Loop over all results and do duplicate checking...
@@ -2725,11 +2725,11 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 				
 
 				#ifdef DEBUG
-				printf("Got hash value: %x\n", crc32);
+				bblog(DEBUG, "Got hash value: %x",  crc32);
 				#endif
 
 				if (crc32 == 0) {
-					debug("don't have crc32 value for DocID");
+					bblog(WARN, "don't have crc32 value for DocID");
 					continue;
 				}
 
@@ -2751,7 +2751,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 						dup->V = vector_container( pair_container( int_container(), ptr_container() ) );
 						//legger til den første
 						#ifdef DEBUG
-						printf("DUPLICATE first: DocID=%u, subname=%s\n", dup->fistiindex->DocID, dup->fistiindex->subname->subname);
+						bblog(DEBUG, "DUPLICATE first: DocID=%u, subname=%s",  dup->fistiindex->DocID, dup->fistiindex->subname->subname);
 						#endif
 						vector_pushback(dup->V, dup->fistiindex->DocID, dup->fistiindex->subname->subname);
 					}
@@ -2793,11 +2793,11 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 		//debug: printer ut alle treff, og litt om de.
 		#ifdef DEBUG_II
-			printf("hits after duplicate checking:\n\n");
-			printf("\t| %-5s | %-20s | %-8s | %-8s | %-8s | %-8s | %-8s | %-8s | %-8s |\n", "DocId", "Subname", "Date", "Subname", "Filename",
+			bblog(DEBUG, "hits after duplicate checking:");
+			bblog(DEBUG, "\t| %-5s | %-20s | %-8s | %-8s | %-8s | %-8s | %-8s | %-8s | %-8s |",  "DocId", "Subname", "Date", "Subname", "Filename",
 			    "dup", "dup_c", "attr", "fltr");
 			for (i = 0; (i < (*TeffArrayElementer)) && (i < 100); i++) {
-				printf("\t| %-5u | %-20s | %-8d | %-8d | %-8d | %-8d | %-8d | %-8d | %-8d |\n",
+				bblog(DEBUG, "\t| %-5u | %-20s | %-8d | %-8d | %-8d | %-8d | %-8d | %-8d | %-8d |", 
 					(*TeffArray)->iindex[i].DocID,
 					(*(*TeffArray)->iindex[i].subname).subname,
 					(*TeffArray)->iindex[i].indexFiltered.date,
@@ -2809,33 +2809,32 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 					(*TeffArray)->iindex[i].indexFiltered.is_filtered
 				);
 			}
-			printf("\n");
 		#endif
 
 		gettimeofday(&end_time, NULL);
 		(*queryTime).duplicat_echecking = getTimeDifference(&start_time,&end_time);
 
-		vboprintf("</################################# duplicate checking ######################################>\n");
+		bblog(INFO, "</################################# duplicate checking ######################################>");
 
 		gettimeofday(&start_time, NULL);
 
-		vboprintf("order by \"%s\"\n",orderby);
+		bblog(INFO, "order by \"%s\"", orderby);
 
 		if (((*filteron).sort != NULL) && (strcmp((*filteron).sort,"newest") == 0)) {
-			printf("will do newest sort\n");
+			bblog(INFO, "will do newest sort");
 			for (i = 0; i < *TeffArrayElementer; i++) {
 				(*TeffArray)->iindex[i].allrank = (*TeffArray)->iindex[i].date;
 			}
 		}
 		else if ( ((*filteron).sort != NULL) && (strcmp((*filteron).sort,"oldest") == 0) ) {
-			printf("will do oldest sort\n");
+			bblog(INFO, "will do oldest sort");
 			for (i = 0; i < *TeffArrayElementer; i++) {
 				//4294967295 unsigned int (long) max
 				(*TeffArray)->iindex[i].allrank = ULONG_MAX - (*TeffArray)->iindex[i].date;
 			}			
 		}
 		else {
-			vboprintf("do normal sort\n");
+			bblog(INFO, "do normal sort");
 			for (i = 0; i < *TeffArrayElementer; i++) {
 				(*TeffArray)->iindex[i].allrank = (*TeffArray)->iindex[i].TermRank;
 
@@ -2862,9 +2861,9 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 	gettimeofday(&start_time, NULL);
 
-		vboprintf("vil sortere %i\n",*TeffArrayElementer);
+		bblog(INFO, "vil sortere %i", *TeffArrayElementer);
  		qsort((*TeffArray)->iindex, *TeffArrayElementer , sizeof(struct iindexMainElements), compare_elements);
-		vboprintf("sort ferdig\n");
+		bblog(INFO, "sort ferdig");
 	gettimeofday(&end_time, NULL);
 	(*queryTime).indexSort = getTimeDifference(&start_time,&end_time);
 
@@ -2879,7 +2878,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		//qsort(TeffArray, 30 , sizeof(struct iindexFormat), compare_elements);
 		/********************************************************************************/
 
-	vboprintf("search: ~searchSimple()\n");
+	bblog(INFO, "search: ~searchSimple()");
 }
 
 #ifdef BLACK_BOKS
@@ -2888,7 +2887,7 @@ void searchFilterInit(struct filtersFormat *filters, int dates[]) {
 
 	int i;
 
-	vboprintf("search: searchFilterInit()\n");
+	bblog(INFO, "search: searchFilterInit()");
 
 	(*filters).filtypes.nrof 	= 0;
 	(*filters).collections.nrof 	= 0;
@@ -3019,7 +3018,7 @@ char* searchFilterCount(int *TeffArrayElementer,
         	        gettimeofday(&start_time, NULL);
 	        #endif
 
-		vboprintf("search: searchFilterCount()\n");
+		bblog(INFO, "search: searchFilterCount()");
 
 		#ifdef ATTRIBUTES
 		// subname -> (re, attr_columns, crc32->word)
@@ -3038,7 +3037,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 
 	        #ifdef DEBUG_TIME
 	                gettimeofday(&end_time, NULL);
-	                printf("Time debug: searchFilterCount init time: %f\n",getTimeDifference(&start_time, &end_time));
+	                bblog(DEBUG, "Time debug: searchFilterCount init time: %f", getTimeDifference(&start_time, &end_time));
 	        #endif
 
 		// Teller filtyper og attributter til navigasjonsmenyen:
@@ -3056,7 +3055,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 				continue;
 			}
 			else if (TeffArray->iindex[i].indexFiltered.duplicate == 1) {
-				vboprintf("docid(%i) (duplicate)\n", TeffArray->iindex[i].DocID);
+				bblog(INFO, "docid(%i) (duplicate)",  TeffArray->iindex[i].DocID);
 				continue;
 			}
 
@@ -3357,11 +3356,11 @@ char* searchFilterCount(int *TeffArrayElementer,
 		}
 
 		#ifdef DEBUG_TIME
-		printf("Time debug: searchFilterCount att1 time: %f\n",att1);
-		printf("Time debug: searchFilterCount att2 time: %f\n",att2);
-		printf("Time debug: searchFilterCount att3 time: %f\n",att3);
-		printf("Time debug: searchFilterCount att4 time: %f\n",att4);
-		printf("Time debug: searchFilterCount att5 time: %f\n",att5);
+		bblog(DEBUG, "Time debug: searchFilterCount att1 time: %f", att1);
+		bblog(DEBUG, "Time debug: searchFilterCount att2 time: %f", att2);
+		bblog(DEBUG, "Time debug: searchFilterCount att3 time: %f", att3);
+		bblog(DEBUG, "Time debug: searchFilterCount att4 time: %f", att4);
+		bblog(DEBUG, "Time debug: searchFilterCount att5 time: %f", att5);
 
                 gettimeofday(&att_start_time, NULL);
 		#endif
@@ -3382,14 +3381,14 @@ char* searchFilterCount(int *TeffArrayElementer,
 
 		#ifdef DEBUG_TIME
                 gettimeofday(&att_end_time, NULL);
-               	printf("Time debug: attribute_count_add time: %f\n", getTimeDifference(&att_start_time, &att_end_time));
+               	bblog(DEBUG, "Time debug: attribute_count_add time: %f",  getTimeDifference(&att_start_time, &att_end_time));
 		#endif
 
 		attribute_finish_count();
 
 	        #ifdef DEBUG_TIME
 	                gettimeofday(&end_time, NULL);
-	                printf("Time debug: searchFilterCount loop time: %f\n",getTimeDifference(&start_time, &end_time));
+	                bblog(DEBUG, "Time debug: searchFilterCount loop time: %f", getTimeDifference(&start_time, &end_time));
 	        #endif
 
         	#ifdef DEBUG_TIME
@@ -3418,16 +3417,16 @@ char* searchFilterCount(int *TeffArrayElementer,
 
 
 		//#ifdef DEBUG
-		printf("attributes:\n");
+		bblog(DEBUG, "attributes:");
 		attribute_count_print(attributes, TeffArray->attrib_count+1, 2);
-		printf("------\n");
+		bblog(DEBUG, "------");
 		//#endif
 
 		#endif // ATTRIBUTES
 
         	#ifdef DEBUG_TIME
                 	gettimeofday(&end_time, NULL);
-                	printf("Time debug: searchFilterCount attr end time: %f\n",getTimeDifference(&start_time, &end_time));
+                	bblog(DEBUG, "Time debug: searchFilterCount attr end time: %f", getTimeDifference(&start_time, &end_time));
         	#endif
 
 		/***********************************************************************************************
@@ -3455,7 +3454,7 @@ char* searchFilterCount(int *TeffArrayElementer,
                			filesKey = strdup(subnames[i].subname);
 
 				if (! hashtable_insert(h,filesKey,filesValue) ) {
-					printf("cant insert\n");     
+					bblog(DEBUG, "cant insert");     
 					exit(-1);
 				}
 			}
@@ -3493,12 +3492,12 @@ char* searchFilterCount(int *TeffArrayElementer,
 			}
 
 			if (NULL == (filesValue = hashtable_search(h,(*TeffArray->iindex[i].subname).subname) )) {    
-				printf("not found!. Vil insert first \"%s\"\n",(*TeffArray->iindex[i].subname).subname);
+				bblog(DEBUG, "not found!. Vil insert first \"%s\"", (*TeffArray->iindex[i].subname).subname);
 				filesValue = malloc(sizeof(int));
 				(*filesValue) = 1;
 				filesKey = strdup((*TeffArray->iindex[i].subname).subname);
 				if (! hashtable_insert(h,filesKey,filesValue) ) {
-					printf("cant insert\n");     
+					bblog(DEBUG, "cant insert");     
 					exit(-1);
 				}
 
@@ -3533,7 +3532,7 @@ char* searchFilterCount(int *TeffArrayElementer,
        				filesKey = hashtable_iterator_key(itr);
        				filesValue = (int *)hashtable_iterator_value(itr);
 
-					vboprintf("collection \"%s\": %i\n",filesKey,*filesValue);
+					bblog(INFO, "collection \"%s\": %i", filesKey,*filesValue);
 
 					strscpy(
 						(*filters).collections.elements[ (*filters).collections.nrof ].name,
@@ -3571,15 +3570,15 @@ char* searchFilterCount(int *TeffArrayElementer,
 		}
 
 		#ifdef DEBUG		
-		printf("filtering on coll \"%s\"\n",filteron->collection);
+		bblog(DEBUG, "filtering on coll \"%s\"", filteron->collection);
 		for (i=0;i<(*filters).collections.nrof;i++) {
-			printf("coll \"%s\", checked %i\n",(*filters).collections.elements[i].name,(*filters).collections.elements[i].checked);
+			bblog(DEBUG, "coll \"%s\", checked %i", (*filters).collections.elements[i].name,(*filters).collections.elements[i].checked);
 		}
 		#endif
 
 	        #ifdef DEBUG_TIME
         	        gettimeofday(&end_time, NULL);
-        	        printf("Time debug: searchFilterCount collsum time: %f\n",getTimeDifference(&start_time, &end_time));
+        	        bblog(DEBUG, "Time debug: searchFilterCount collsum time: %f", getTimeDifference(&start_time, &end_time));
         	#endif
 
 		/***********************************************************************************************
@@ -3592,7 +3591,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 
 		date_info_start(&dv, 0, -1);
 		
-		vboprintf("for all dates\n");
+		bblog(INFO, "for all dates");
 		for (i = 0; i < *TeffArrayElementer; i++) {
 
 			if (TeffArray->iindex[i].indexFiltered.filename == 1) {
@@ -3620,9 +3619,9 @@ char* searchFilterCount(int *TeffArrayElementer,
 		}
 
 		enum dateview_output_type type = TWO_YEARS_PLUS;
-		vboprintf("dateview result array:\n");
+		bblog(INFO, "dateview result array:");
 		for (i = 0; i < type; i++) {
-		                vboprintf("Type: %d Count: %d\n", i, dvo->output[i]);
+		                bblog(INFO, "Type: %d Count: %d",  i, dvo->output[i]);
 				dates[i] = dvo->output[i];
 	        }
 		
@@ -3636,7 +3635,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 		(*queryTime).dateview = getTimeDifference(&start_time,&end_time);
 
 		#ifdef DEBUG_TIME
-			printf("Time debug: searchFilterCount data sum time: %f\n",(*queryTime).dateview);
+			bblog(DEBUG, "Time debug: searchFilterCount data sum time: %f", (*queryTime).dateview);
 		#endif
 
 #ifdef ATTRIBUTES
@@ -3645,31 +3644,31 @@ char* searchFilterCount(int *TeffArrayElementer,
 	        #endif
 
 		// Attributter:
-		vboprintf("search: generating xml for attributes\n");
+		bblog(INFO, "search: generating xml for attributes");
 
 		char	*nav_xml = attribute_generate_xml(attributes, TeffArray->attrib_count+1, showattrp, getfiletypep, attrdescrp, qa);
 
 		#ifdef DEBUG
 			//skriver ut atribut xml'en.
-			fprintf(stderr, "%s", nav_xml);
+			bblog(DEBUG, "Navigation xml: %s", nav_xml);
 			//Runarb 2 feb 2009: hva gjør denne funksjonen ????
-			println(attributes);
+			//println(attributes);
 		#endif
 
 		attribute_destroy_recursive(attributes);
 
-		vboprintf("search: done attributes\n");
+		bblog(INFO, "search: done attributes");
 		
         	#ifdef DEBUG_TIME
                 	gettimeofday(&end_time, NULL);
-                	printf("Time debug: searchFilterCount attr xml time: %f\n",getTimeDifference(&start_time, &end_time));
+                	bblog(DEBUG, "Time debug: searchFilterCount attr xml time: %f", getTimeDifference(&start_time, &end_time));
         	#endif
 #endif
 
 		gettimeofday(&tot_end_time, NULL);
                 (*queryTime).FilterCount = getTimeDifference(&tot_start_time,&tot_end_time);
 
-		vboprintf("search: ~searchFilterCount()\n");
+		bblog(INFO, "search: ~searchFilterCount()");
 #ifdef ATTRIBUTES
     return nav_xml;
 #else

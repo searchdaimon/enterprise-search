@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "../logger/logger.h"
 #include "../common/lot.h"
 #include "../common/re.h"
 #include "../common/boithohome.h"
@@ -41,13 +42,13 @@ preopen(void)
 	reclose_cache();
 	
 	if ((dirh = listAllColl_start()) == NULL) {
-		printf("Can't listAllColl_start()\n");
+		bblog(ERROR, "Can't listAllColl_start()");
 		return;
 	}
  
         char * subname;
 	while (((subname = listAllColl_next(dirh)) != NULL) && (count < MAX_PREOPEM_FILE)) {
-                vboprintf("subname: %s\n", subname);
+                bblog(DEBUG, "subname: %s", subname);
 		for(i=1;i<maxLots;i++) {
 			// vi åpner kun lotter som har DocumentIndex. Dette er spesielt viktig da vi oppretter 
 			// filene hvis de ikke finnes.
@@ -71,7 +72,7 @@ preopen(void)
 
 
 	if (count >= MAX_PREOPEM_FILE) {
-		warnx("can't preopen any more. Did hit MAX_PREOPEM limit of %d files", MAX_PREOPEM_FILE);
+		bblog(WARN, "can't preopen any more. Did hit MAX_PREOPEM limit of %d files", MAX_PREOPEM_FILE);
 	}
 }
 
@@ -175,7 +176,7 @@ cache_fresh_lot_collection(void)
 
 	/* We only look at the first 5 lots */
         if ((colls = listAllColl_start()) == NULL) {
-		warnx("Can't listAllColl_start()");
+		bblog(ERROR, "Can't listAllColl_start()");
                 return;
 	}
 
@@ -198,7 +199,7 @@ cache_fresh_lot_collection(void)
 					continue;
 
 				sprintf(path+len, "/%s", de->d_name);
-				vboprintf("Found file: %s\n", path);
+				bblog(DEBUG, "Found file: %s", path);
 				fd = open(path, O_RDONLY);
 				if (fd == -1)
 					continue;
@@ -226,10 +227,10 @@ cache_indexes_handle(char *path, size_t *cached)
 
 	if (cached[0] + st.st_size > MAX_INDEX_CACHE)
 		return 0;
-	vboprintf("Found index: %s\n", path);
+	bblog(DEBUG, "Found index: %s", path);
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
-		warn("open(%s)", path);
+		bblog_errno(ERROR, "open(%s)", path);
 		return 0;
 	}
 	if (st.st_size == 0) {
@@ -249,7 +250,7 @@ cache_indexes_handle(char *path, size_t *cached)
 		return 0;
 	}
 	if ((ptr = mmap(0, st.st_size, PROT_READ, MAP_SHARED|MAP_LOCKED, fd, 0)) == MAP_FAILED) {
-		warn("mmap(indexcache)");
+		bblog_errno(WARN, "mmap(indexcache)");
 		close(fd);
 		return 0;
 	}
@@ -322,7 +323,7 @@ cache_indexes_all(void)
 
 	lot_get_closed_collections_file(collpath);
 	if ((fp = fopen(collpath, "r+")) == NULL) {
-		warn("Unable to open collection list: fopen(%s)", collpath);
+		bblog_errno(WARN, "Unable to open collection list: fopen(%s)", collpath);
 	} else {
 		flock(fileno(fp), LOCK_EX);
 		ftruncate(fileno(fp), 0);
@@ -340,7 +341,7 @@ cache_indexes_all(void)
 	cached[0] = cached[1] = 0;
 
         if ((colls = listAllColl_start()) == NULL) {
-		printf("Can't listAllColl_start()\n");
+		bblog(ERROR, "Can't listAllColl_start()");
                 return;
 	}
 
@@ -358,14 +359,14 @@ cache_indexes(int action)
 		cache_indexes_all();
 	} else if (action == 1) {
 		if (indexcachehash == NULL) {
-			warnx("Unable to run an incremental index cache when there has not been done a full one");
+			bblog(WARN, "Unable to run an incremental index cache when there has not been done a full one");
 		} else {
 			FILE *fp;
 			char collpath[2048];
 
 			lot_get_closed_collections_file(collpath);
 			if ((fp = fopen(collpath, "r+")) == NULL) {
-				warn("Unable to open collection list: fopen(%s)", collpath);
+				bblog_errno(ERROR, "Unable to open collection list: fopen(%s)", collpath);
 			} else {
 				char line[2048];
 
@@ -373,18 +374,18 @@ cache_indexes(int action)
 
 				while (fgets(line, sizeof(line), fp) != NULL) {
 					line[strlen(line)-1] = '\0'; /* Remove trailing newline */
-					printf("Got updated collection: %s\n", line);
+					bblog(INFO, "Got updated collection: %s", line);
 					cache_indexes_collection(line);
 				}
 				
 				ftruncate(fileno(fp), 0);
 				flock(fileno(fp), LOCK_UN);
 				fclose(fp);
-				puts("done");
+				bblog(INFO, "done");
 			}
 		}
 	} else {
-		warnx("Unknown cache index action: %d", action);
+		bblog(WARN, "Unknown cache index action: %d", action);
 	}
 }
 
@@ -397,7 +398,7 @@ cache_indexes_keepalive_thread(void *dummy)
 		pthread_cond_wait(&index_cache_cv, &index_cache_lock);
 
 		// Refresh cache
-		printf("Refreshing index cache...\n");
+		bblog(INFO, "Refreshing index cache...");
 		/* We do incremental caching now */
 		/*cache_indexes_empty();*/
 		cache_indexes(1);
@@ -422,7 +423,7 @@ cache_spelling_keepalive_thread(spelling_t **spelling)
 		pthread_cond_wait(&spelling_cache_cv, &spelling_cache_lock);
 
 		// Refresh cache
-		printf("Refreshing spelling cache...\n");
+		bblog(INFO, "Refreshing spelling cache...");
 		// do it
 
 		if (*spelling != NULL) {
@@ -430,26 +431,28 @@ cache_spelling_keepalive_thread(spelling_t **spelling)
 		}
 
         	if ((*spelling = train(bfile("var/dictionarywords"))) == NULL) {
-        	        warnx("Can't init spelling.");
+        	        bblog(WARN, "Can't init spelling.");
 	        }
 
 
 
 		pthread_mutex_unlock(&spelling_cache_lock);
 
-		printf("~Refreshing spelling cache\n");
+		bblog(INFO, "~Refreshing spelling cache");
 	}
 }
 #endif
 
-void
+void *
 cache_indexes_keepalive(void)
 {
 	pthread_t td;
 	int rc;
 
-	if ((rc = pthread_create(&td, NULL, cache_indexes_keepalive_thread, NULL)))
-		err(1, "Unable to start cache index keepalive thread");
+	if ((rc = pthread_create(&td, NULL, cache_indexes_keepalive_thread, NULL))) {
+		bblog_errno(ERROR, "Unable to start cache index keepalive thread");
+		exit(1);
+	}
 }
 
 #ifdef WITH_SPELLING
@@ -459,8 +462,10 @@ cache_spelling_keepalive(spelling_t *spelling)
 	pthread_t td;
 	int rc;
 
-	if ((rc = pthread_create(&td, NULL, cache_spelling_keepalive_thread, spelling)))
-		err(1, "Unable to start spelling keepalive thread");
+	if ((rc = pthread_create(&td, NULL, cache_spelling_keepalive_thread, spelling))) {
+		bblog_errno(ERROR, "Unable to start spelling keepalive thread");
+		exit(1);
+	}
 	
 }
 #endif

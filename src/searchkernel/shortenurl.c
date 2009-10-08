@@ -5,6 +5,7 @@
 #include "verbose.h"
 
 #include "../common/bstr.h"
+#include "../logger/logger.h"
 
 #ifdef BLACK_BOKS
 	#define TARGET_VISIBLE_URL_LEN 80
@@ -45,10 +46,11 @@ void shortenurl(char *url,int urllen) {
 	int i;
 	char slash[2];
 	int len;
-	vboprintf("shortenurl: inn url %s\n", url);
 	char *p;
 	char proto[128];
 	char origurl[urllen+1];
+
+	bblog(DEBUG, "shortenurl: inn url %s", url);
 	
 	newurl[0] = '\0';
 	proto[0] = '\0';
@@ -73,13 +75,13 @@ void shortenurl(char *url,int urllen) {
 	strcpy(origurl, url);
 
 	#ifdef DEBUG
-		printf("shortenurl: after proto \"%s\"\n",url);
+		bblog(DEBUG, "shortenurl: after proto \"%s\"", url);
 	#endif
 
 	//hvis den er kort kan vi bare returnere
 	if (len < TARGET_VISIBLE_URL_LEN) {
 		#ifdef DEBUG
- 			printf("shortenurl: url is short enough. Don't need to shorten\n");
+ 			bblog(DEBUG, "shortenurl: url is short enough. Don't need to shorten");
 		#endif
 
 		snprintf(url, urllen, "%s%s", proto, origurl);
@@ -88,18 +90,18 @@ void shortenurl(char *url,int urllen) {
 
   	if ((TokCount = split(url, "/", &Data)) > 1) {
 		#ifdef DEBUG
-		printf("seperator: / \n");
+		bblog(DEBUG, "seperator: / ");
 		#endif
 		strcpy(slash,"/");
 	}
 	else if ((TokCount = split(url, "\\", &Data)) > 1) {
 		#ifdef DEBUG
-		printf("seperator: \\ \n");
+		bblog(DEBUG, "seperator: \\ ");
 		#endif
 		strcpy(slash,"\\");
 	}
 	else {
-		printf("can't split\n");
+		bblog(ERROR, "can't split url");
 		snprintf(url, urllen, "%s%s", proto, origurl);
 		return;
 	}
@@ -116,7 +118,7 @@ void shortenurl(char *url,int urllen) {
 	--TokCount; //split ser ut til å begynner på 1, ikke på 0 
 
 	#ifdef DEBUG
-  	printf("\tfound %d token(s):\n", TokCount);
+  	bblog(DEBUG, "\tfound %d token(s):", TokCount);
 	#endif
 
   	Count = 0;
@@ -124,7 +126,7 @@ void shortenurl(char *url,int urllen) {
 	added = 0;
 	suburllen = 0;
 	while( (Data[Count] != NULL) ) {
-		vboprintf("a: \t\t%d\t\"%s\"\n", Count, Data[Count]);
+		bblog(DEBUG, "a: \t\t%d\t\"%s\"", Count, Data[Count]);
 		suburllen = strlen(Data[Count]);
 
 		if ((added + suburllen) < (TARGET_VISIBLE_URL_LEN * 0.3)) {
@@ -139,19 +141,19 @@ void shortenurl(char *url,int urllen) {
 		++Count;
 	}
 
-	strlcat(newurl,"...",sizeof(newurl));
+	strlcat(newurl, "...", sizeof(newurl));
 
 	//printf("rev:\n");
 	Count = TokCount;
 	added = 0;
 	suburllen = 0;
 	while( (Count > 0) ) {
-		vboprintf("b: \t\t%d\t\"%s\"\n", Count, Data[Count]);
+		bblog(DEBUG, "b: \t\t%d\t\"%s\"", Count, Data[Count]);
 
 		suburllen = strlen(Data[Count]);
 		if ((added + suburllen) < (TARGET_VISIBLE_URL_LEN * 0.7)) {
 			#ifdef DEBUG
-			printf("candidate %s\n",Data[Count]);
+			bblog(DEBUG, "candidate %s",Data[Count]);
 			#endif
 		}
 		else {
@@ -162,11 +164,11 @@ void shortenurl(char *url,int urllen) {
 		--Count;
 	}
 
-	vboprintf("TokCount %i, count %i\n",TokCount,Count);
+	bblog(DEBUG, "TokCount %i, count %i",TokCount,Count);
 
 	//hvis også siste navn er for langt, hånterer vi det spesifikt.
 	if (TokCount == Count) {
-		vboprintf("bb\n");
+		bblog(DEBUG, "bb");
 		strlcat(newurl,slash,sizeof(newurl));
 		strlcat(newurl,Data[Count],sizeof(newurl));		
 
@@ -174,22 +176,22 @@ void shortenurl(char *url,int urllen) {
 	else {
 		//printf("addint last part:\n");
 		for (i=Count+1;i<TokCount+1;i++) {
-			vboprintf("c: \t\t%d\t\"%s\"\n", i, Data[i]);
+			bblog(DEBUG, "c: \t\t%d\t\"%s\"", i, Data[i]);
 
-			vboprintf("newurl: len %i, \"%s\"\n",strlen((char*)newurl),newurl);
+			bblog(DEBUG, "newurl: len %i, \"%s\"",strlen((char*)newurl),newurl);
 
                 	strlcat(newurl,slash,sizeof(newurl));
 			strlcat(newurl,Data[i],sizeof(newurl));
 		}
 	}
 
-	vboprintf("shortenurl 1: newurl \"%s\"\n",newurl);
+	bblog(DEBUG, "shortenurl 1: newurl \"%s\"",newurl);
 	//runarb 27 mai
 	//Hvis den har et utf 8 tegn der vi slutter å kopierer for vi med bare halve tegnet, og bryter da xml'en
-	vboprintf("strlen %i, size %i\n",strlen((char*)newurl),sizeof(newurl));
+	bblog(DEBUG, "strlen %i, size %i",strlen((char*)newurl),sizeof(newurl));
 	i = strlen((char*)newurl) -1;
 	while(i!=0 && newurl[i] > 127) {
-		printf("removing char %c\n",newurl[i]);
+		bblog(DEBUG, "removing char %c",newurl[i]);
 		newurl[i] = '\0';
 		--i;
 	}
@@ -198,7 +200,7 @@ void shortenurl(char *url,int urllen) {
 	//	) {
 	//	newurl[sizeof(newurl) -1] = 'X';
 	//}	
-	vboprintf("shortenurl 2: newurl \"%s\"\n",newurl);
+	bblog(DEBUG, "shortenurl 2: newurl \"%s\"",newurl);
 
 	FreeSplitList(Data);
 	
