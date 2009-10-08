@@ -15,7 +15,6 @@
 
 #include "logger.h"
 
-#include "../common/strlcpy.h"
 #include "../common/boithohome.h"
 
 #define CONFIG_WATCHER_POLL 1
@@ -106,12 +105,12 @@ bblog_init(char *name)
 
 	logger.appenders = default_appenders;
 	logger.max_severity = default_severity;
-	strlcpy(logger.name, name, sizeof(logger.name));
+	snprintf(logger.name, sizeof(logger.name), "%s", name);
 	snprintf(path, sizeof(path), "config/%s.logger.conf", name);
-	strlcpy(bblog_configpath, bfile(path), sizeof(bblog_configpath));
+	snprintf(bblog_configpath, sizeof(bblog_configpath), "%s", bfile(path));
 
 	snprintf(path, sizeof(path), "logs/%s.log", name);
-	strlcpy(bblog_path, bfile(path), sizeof(bblog_path));
+	snprintf(bblog_path, sizeof(bblog_path), "%s", bfile(path));
 
 	bblog_setup_syslog();
 
