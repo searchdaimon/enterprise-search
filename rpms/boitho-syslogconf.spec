@@ -54,6 +54,12 @@ cp /etc/rsyslog.conf /etc/rsyslog.conf.orig
 cp /etc/bb.rsyslog.conf /etc/rsyslog.conf
 /etc/rc.d/init.d/rsyslog restart
 
+for i in searchdbb_stderr searchdbb_stdout; do
+	if [ -f /home/boitho/boithoTools/logs/$i ]; then
+		rm -f /home/boitho/boithoTools/logs/$i
+	fi
+done
+
 %files
 %defattr(-,boitho,boitho)
 /etc/bb.rsyslog.conf
