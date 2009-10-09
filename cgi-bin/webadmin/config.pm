@@ -42,8 +42,7 @@ $CONFIG{'logfiles'} = {
 	'boithoad_access' => "Active directory access log",
 	'boithoad_error' => "Active directory error log",
         'bb_auto_update.log' => 'Blackbox auto update log',
-        'searchdbb_stderr' => 'Search Error Log',
-        'searchdbb_stdout' => 'Search Access Log',
+        'searchd.log' => 'Searchd log',
 	'gc' => 'Garbage collection all documents',
 	'gcSummary' => 'Garbage collection Summary',
 
