@@ -75,7 +75,6 @@ struct {
 } *memcache_servers;
 
 
-FILE *LOGACCESS, *LOGERROR;
 int global_bbdnport;
 
 #ifdef WITH_PATHACCESS_CACHE
