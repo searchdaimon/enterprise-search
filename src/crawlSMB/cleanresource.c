@@ -78,7 +78,7 @@ int cleanresourceUnixToWin(char resource[]) {
     	//utf8_hack(resource);
 
 	#ifdef DEBUG
-	printf("new %s\n",resource);
+	bblog(DEBUG, "new %s",resource);
 	#endif
 }
 

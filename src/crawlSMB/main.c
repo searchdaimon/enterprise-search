@@ -12,6 +12,7 @@
 
 
 #include "../crawl/crawl.h"
+#include "../logger/logger.h"
 
 
 
@@ -23,7 +24,7 @@ int crawlpatAcces   (char resource[], char username[], char password[], int (*do
 	int status;
 	int no_auth = 0;
 
-	printf("aa username \"%s\"\n",username);
+	bblog(INFO, "aa username \"%s\"", username);
 
 	resourcereal = resource;
 
@@ -35,7 +36,7 @@ int crawlpatAcces   (char resource[], char username[], char password[], int (*do
 	//fp char bug fiks:
 	cleanresourceWinToUnix(resourcereal);
 
-        printf("crawlSMB: \n\tresourcereal: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",resourcereal,username,password);
+        bblog(INFO, "crawlSMB: resourcereal: \"%s\" user \"%s\" Password \"%s\"", resourcereal,username,password);
 
 
 	prefix = smb_mkprefix( username, password );
@@ -45,10 +46,10 @@ int crawlpatAcces   (char resource[], char username[], char password[], int (*do
 	free(prefix);
 
 	if (status == 1) {
-		printf("can open :) . (status %i)\n",status);
+		bblog(INFO, "can open :) . (status %i)", status);
 	}
 	else {
-		printf("can't open. (status %i)\n",status);
+		bblog(ERROR, "can't open. (status %i)",status);
 	}
 
 	return status;
@@ -63,7 +64,7 @@ int crawlcanconect( struct collectionFormat *collection,int (*documentError)(str
 
 	cleanresourceWinToUnix((*collection).resource);
 
-        printf("crawlSMB: \n\tresource: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",(*collection).resource,(*collection).user,(*collection).password);
+        bblog(INFO, "crawlSMB: resource: \"%s\" user \"%s\" Password \"%s\"",(*collection).resource,(*collection).user,(*collection).password);
 
 	if ((*collection).user == NULL) {
 		no_auth = 1;
@@ -93,7 +94,7 @@ int crawlfirst(struct collectionFormat *collection,
 	char        *prefix;
 	int result;
 
-	printf("crawlfirst: start\n");
+	bblog(INFO, "crawlfirst: start");
 
 	cleanresourceWinToUnix((*collection).resource);
 	if ((*collection).user == NULL) {
@@ -101,7 +102,7 @@ int crawlfirst(struct collectionFormat *collection,
 	}
 
 
-        printf("crawlSMB: \n\tresource: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",(*collection).resource,(*collection).user,(*collection).password);
+        bblog(INFO, "crawlSMB: resource: \"%s\" user \"%s\" Password \"%s\"",(*collection).resource,(*collection).user,(*collection).password);
     	prefix = smb_mkprefix( (*collection).user, (*collection).password );
 
     	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, documentError, documentContinue, no_auth);
@@ -109,7 +110,7 @@ int crawlfirst(struct collectionFormat *collection,
     	free(prefix);
 
 
-	printf("crawlfirst: end\n");
+	bblog(INFO, "crawlfirst: end");
 
         return result;
 }
@@ -135,9 +136,9 @@ int crawlupdate(struct collectionFormat *collection,
 		no_auth = 1;
 	}
 
-	printf("crawlupdate: start\n");
+	bblog(INFO, "crawlupdate: start");
 
-        printf("crawlSMB: \"%s\"\n\tuser \"%s\"\n\tPassword \"%s\"\n",(*collection).resource,(*collection).user,(*collection).password);
+        bblog(INFO, "crawlSMB: \"%s\" user \"%s\" Password \"%s\"",(*collection).resource,(*collection).user,(*collection).password);
     	prefix = smb_mkprefix( (*collection).user, (*collection).password );
 
     	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, documentError, documentContinue,no_auth);
@@ -145,7 +146,7 @@ int crawlupdate(struct collectionFormat *collection,
     	free(prefix);
 
 
-	printf("crawlupdate: end\n");
+	bblog(INFO, "crawlupdate: end");
 
         return result;
 }
@@ -155,10 +156,10 @@ smb_rewrite_url(struct collectionFormat *collection, char *url, char *uri, char 
 {
 	int valid_alias;
 
-	printf("smb_rewrite_url1: raw url: \"%s\"\n",url);
+	bblog(INFO, "smb_rewrite_url1: raw url: \"%s\"", url);
 	smbc_urldecode( url, url, strlen(url)+1 );
 	cleanresourceUnixToWin(url);
-	printf("smb_rewrite_url2: raw url: \"%s\"\n",url);
+	bblog(INFO, "smb_rewrite_url2: raw url: \"%s\"", url);
 
 	char *tmpurl = strdup(url+7);
 

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "../common/bstr.h"
+#include "../logger/logger.h"
 
 #ifdef BLACK_BOKS
 	#define TARGET_VISIBLE_URL_LEN 80
@@ -28,7 +29,7 @@ void shortenurl(char *url,int urllen) {
 	char slash[2];
 	int len;
 #ifdef DEBUG
-	printf("shortenurl: inn url %s\n", url);
+	bblog(DEBUG, "shortenurl: inn url %s", url);
 #endif
 	char *p;
 	char proto[128];
@@ -54,13 +55,13 @@ void shortenurl(char *url,int urllen) {
 	strcpy(origurl, url);
 
 	#ifdef DEBUG
-		printf("shortenurl: after proto \"%s\"\n",url);
+		bblog(DEBUG, "shortenurl: after proto \"%s\"",url);
 	#endif
 
 	//hvis den er kort kan vi bare returnere
 	if (len < TARGET_VISIBLE_URL_LEN) {
 		#ifdef DEBUG
- 			printf("shortenurl: url is short enough. Don't need to shorten\n");
+ 			bblog(DEBUG, "shortenurl: url is short enough. Don't need to shorten");
 		#endif
 
 		snprintf(url, urllen, "%s%s", proto, origurl);
@@ -69,18 +70,18 @@ void shortenurl(char *url,int urllen) {
 
   	if ((TokCount = split(url, "/", &Data)) > 1) {
 		#ifdef DEBUG
-		printf("seperator: / \n");
+		bblog(DEBUG, "seperator: /");
 		#endif
 		strcpy(slash,"/");
 	}
 	else if ((TokCount = split(url, "\\", &Data)) > 1) {
 		#ifdef DEBUG
-		printf("seperator: \\ \n");
+		bblog(DEBUG, "seperator: \\");
 		#endif
 		strcpy(slash,"\\");
 	}
 	else {
-		printf("can't split\n");
+		bblog(ERROR, "can't split url: %s", origurl);
 		snprintf(url, urllen, "%s%s", proto, origurl);
 		return;
 	}
@@ -97,14 +98,12 @@ void shortenurl(char *url,int urllen) {
 	--TokCount; //split ser ut til å begynner på 1, ikke på 0 
 
 #ifdef DEBUG
-	#ifdef DEBUG
-  	printf("\tfound %d token(s):\n", TokCount);
-	#endif
+  	bblog(DEBUG, "found %d token(s):",  TokCount);
 
 	{
 	int a;
 	for (a = 0; Data[a] != NULL; a++) {
-		printf("\t\t%s (%d)\n", Data[a], strlen(Data[a]));
+		bblog(DEBUG, "    %s (%d)",  Data[a], strlen(Data[a]));
 	}
 	}
 #endif

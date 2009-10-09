@@ -12,6 +12,7 @@ WANT_BASE64=	true
 WANT_BDB=	true
 WANT_PERLEMBED=	true
 WANT_MYSQL=	true
+WANT_LOGGER=	true
 
 PROG=	crawlManager2
 

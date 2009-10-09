@@ -15,6 +15,7 @@
 
 #include "webdav.h"
 #include "../common/timediff.h"
+#include "../logger/logger.h"
 
 
 char *
@@ -43,7 +44,7 @@ ex_write_buffer(void *buffer, size_t size, size_t nmemb, void *stream)
 	size_t origsize;
 
 	if (size != 1)
-		fprintf(stderr, "ex_write_buffer(): size not equal to one!\n");
+		bblog(ERROR, "ex_write_buffer(): size not equal to one!");
 	buf = stream;
 
 	origsize = 0;
@@ -74,7 +75,7 @@ ex_getEmail(const char *url, struct ex_buffer *buf, CURL ** curl)
 	struct curl_slist *headers = NULL;
 	struct timeval start_time, end_time;
 
-	printf("ex_getEmail(url=%s)\n",url);
+	bblog(INFO, "ex_getEmail(url=%s)",url);
 
 	//curl = curl_easy_init();
 	if (*curl == NULL)
@@ -91,7 +92,7 @@ ex_getEmail(const char *url, struct ex_buffer *buf, CURL ** curl)
 	result = curl_easy_perform(*curl);
 	gettimeofday(&end_time, NULL);
 	curl_slist_free_all(headers);
-	printf("Grab took: %f\n", getTimeDifference(&start_time,&end_time));
+	bblog(DEBUG, "Grab took: %f", getTimeDifference(&start_time,&end_time));
 
 	return buf->buf;
 }
@@ -113,7 +114,7 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 	*errorm = NULL;
 	
 	
-	printf("ex_logOn(mailboxurl=%s, Exchangeurl=%s, username=%s)\n", mailboxurl, login->Exchangeurl, login->username);
+	bblog(INFO, "ex_logOn(mailboxurl=%s, Exchangeurl=%s, username=%s)", mailboxurl, login->Exchangeurl, login->username);
 
 	curl = curl_easy_init();
 	if (curl == NULL) {
@@ -145,18 +146,18 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 		printf("\n");
 	#endif
 
-	printf("code %i\n",code);
+	bblog(DEBUG, "code %i",code);
 
 	//hvis vi fikke en redirect finner vi ut til hvor
 	if (code == 302) {
     		result = curl_easy_getinfo(curl, CURLINFO_REDIRECT_URL , &redirecttarget);
-    		printf("res %d\n",result);
-	    	printf("redirect's to \"%s\"\n",redirecttarget);
+    		bblog(INFO, "res %d",result);
+	    	bblog(INFO, "redirect's to \"%s\"",redirecttarget);
 	}
 
 	if (code == 302 && (strstr(redirecttarget,"exchweb/bin/auth/owalogon.asp") != NULL)) {
 
-		printf("we have form based login!\n");
+		bblog(INFO, "we have form based login!");
 
 		char *destination;
 		char *postData;
@@ -180,7 +181,7 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 
 		asprintf(&postData,"destination=%s&flags=0&username=%s&password=%s&SubmitCreds=Log+On&trusted=0",destination, login->username, login->password);
 
-		printf("postData new: %s\n\n",postData);
+		bblog(DEBUG, "postData new: %s",postData);
 
 	    	/* Now specify the POST data */
 	    	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData);
@@ -195,7 +196,7 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 	    	//printf("red to \"%s\"\n",redirecttarget);
 
 	    	result = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
-	    	printf("res %d, code %d\n",result,code);
+	    	bblog(INFO, "res %d, code %d",result,code);
 
 		curl_free(destination);
 		free(postData);
@@ -205,7 +206,7 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 		if ((userpass = make_userpass(login->username, login->password)) == NULL)
 			return NULL;
 
-		printf("Got 401 error code. We have normal basic login.\n");
+		bblog(INFO, "Got 401 error code. We have normal basic login.");
 
 		curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
 
@@ -218,11 +219,11 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 		result = curl_easy_perform(curl);
 		result = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
 
-		printf("code %i\n",code);
+		bblog(DEBUG, "code %i",code);
 
 		if (code == 302) {
                         curl_easy_getinfo(curl, CURLINFO_REDIRECT_URL , &redirecttarget);
-                        printf("red to \"%s\"\n",redirecttarget);
+                        bblog(INFO, "redirect to \"%s\"",redirecttarget);
 		}
 
 		if (code == 200) {
@@ -240,7 +241,7 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 			return NULL;
 		}
 		else {
-			asprintf(errorm,"Http error code %i\n",code);
+			asprintf(errorm,"Http error code %i",code);
 //			return NULL;
 		}
 
@@ -253,12 +254,12 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 		/* Looks good */
 	}
 	else {
-		asprintf(errorm,"Can't decide login type.\n");
+		asprintf(errorm,"Can't decide login type.");
 		return NULL;		
 	}
 
 
-	printf("~ex_logOn()\n");
+	bblog(INFO, "~ex_logOn()");
 
 	return curl;
 }
@@ -274,7 +275,7 @@ ex_getContent(const char *url, CURL **curl, struct loginInfoFormat *login)
 
 	#ifdef DEBUG
 		//warn: skriver ut passord i klartekst.
-		printf("ex_getContent(url=%s)\n",url);
+		bblog(DEBUG, "ex_getContent(url=%s)",url);
 	#endif
 
 	buf.buf = NULL;
@@ -313,7 +314,7 @@ ex_getContent(const char *url, CURL **curl, struct loginInfoFormat *login)
 	curl_slist_free_all(headers);
 
 	//printf("Mail\n\n%s\n\n", buf.buf);
-	printf("response code %d\n",code);
+	bblog(INFO, "response code %d",code);
 
 	if (code == 401) {
 		if (buf.buf != NULL) 
@@ -334,7 +335,7 @@ ex_getContent(const char *url, CURL **curl, struct loginInfoFormat *login)
         }
 
 	#ifdef DEBUG
-	printf("buf.buf: \"%s\"\n",buf.buf);
+	bblog(DEBUG, "buf.buf: \"%s\"",buf.buf);
 	#endif
 
 	return buf.buf;

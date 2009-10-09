@@ -23,6 +23,7 @@
 #include "../dictionarywordsLot/set.h"
 #include "../crawl/crawl.h"
 #include "../base64/base64.h"
+#include "../logger/logger.h"
 
 #define MASK_READ 0x00120089
 #define MASK_DENIED_READ 0x00020089
@@ -38,11 +39,11 @@ ex_parsetime(char *time)
 	struct tm tm;
 
 	bzero(&tm, sizeof(tm));
-	printf("ex_parsetime(time=\"%s\")\n",time);
+	bblog(INFO, "ex_parsetime(time=\"%s\")",time);
 
 	/* XXX: Does not handle time zones */
 	if (strptime(time, "%Y-%m-%dT%H:%M:%S.", &tm) == NULL)
-		warn("strptime");
+		bblog_errno(WARN, "strptime");
 
 	return mktime(&tm);
 }
@@ -57,7 +58,7 @@ dumptree(xmlNodePtr n, int indent)
         for (i = 0; i < indent; i++)
                 printf("  ");
 
-        printf("%s\n", n->name);
+        bblog(CLEAN, "%s", n->name);
 
         for (cur = n->xmlChildrenNode; cur; cur = cur->next) {
 
@@ -102,7 +103,7 @@ handle_acllist_dacl_2(const xmlDocPtr doc, xmlNodePtr acls, set *acl_allow, set 
 			}
 			
 			if (!(mask = xml_find_child(child, "access_mask"))) {
-				warnx("no access mask");
+				bblog(WARN, "no access mask");
 				continue;
 			}
 			if ((sid = xml_find_child(child, "sid"))) {
@@ -111,7 +112,7 @@ handle_acllist_dacl_2(const xmlDocPtr doc, xmlNodePtr acls, set *acl_allow, set 
 					continue;
 				}
 			} else {
-				warnx("no sid");
+				bblog(WARN, "no sid");
 				continue;
 			}
 			sidstr = (char *)xmlNodeListGetString(doc, sid->xmlChildrenNode, 1);
@@ -133,7 +134,7 @@ handle_acllist_dacl_2(const xmlDocPtr doc, xmlNodePtr acls, set *acl_allow, set 
 			}
 		}
 	} else {
-		warnx("No effective aces");
+		bblog(WARN, "No effective aces");
 	}
 }
 
@@ -147,7 +148,7 @@ handle_acllist(const xmlDocPtr doc, xmlNodePtr acls, set *acl_allow, set *acl_de
 		if ((cur = xml_find_child(cur, "sid"))) {
 			if ((cur = xml_find_child(cur, "string_sid"))) {
 				char *sid = (char*)xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-				printf("Found owner: %s\n", sid);
+				bblog(DEBUG, "Found owner: %s", sid);
 				set_add(acl_allow, sid);
 			}
 		}
@@ -160,7 +161,7 @@ handle_acllist(const xmlDocPtr doc, xmlNodePtr acls, set *acl_allow, set *acl_de
 
 
 		#ifdef DEBUG
-		printf("dacl tree\n");
+		bblog(DEBUG, "dacl tree");
 		dumptree(cur, 0);
 		#endif
 
@@ -168,16 +169,16 @@ handle_acllist(const xmlDocPtr doc, xmlNodePtr acls, set *acl_allow, set *acl_de
 			char *r = (char*)xmlNodeListGetString(doc, rev->xmlChildrenNode, 1);
 			revision = atoi(r);
 			free(r);
-			printf("We have a revision: %d\n", revision);
+			bblog(INFO, "We have a revision: %d", revision);
 		} else {
-			warnx("Unable to find dacl revision");
+			bblog(WARN, "Unable to find dacl revision");
 			return;
 		}
 
 		if (revision == 2) {
 			handle_acllist_dacl_2(doc, cur, acl_allow, acl_deny, revision);
 		} else {
-			warnx("Unknown revision: %d", revision);
+			bblog(WARN, "Unknown revision: %d", revision);
 		}
 	}
 }
@@ -195,11 +196,11 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 		return;
 
 	if (!(href = xml_find_child(response, "href"))) {
-		printf("Unable to find href...\n");
+		bblog(ERROR, "Unable to find href...");
 		return;
 	}
 	if (!(propstat = xml_find_child(response, "propstat"))) {
-		printf("Unable to find propstat...\n");
+		bblog(ERROR, "Unable to find propstat...");
 		return;
 	}
 
@@ -214,7 +215,7 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 				}
 			}
 		}
-		printf("Found parent, skiping...\n");
+		bblog(INFO, "Found parent, skiping...");
 		free(url);
 		return;
 	}
@@ -236,10 +237,10 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 #endif
 
 	/* Directory perhaps? */
-	printf("Pathname: %s\n", url);
+	bblog(INFO, "Pathname: %s", url);
 	if (url[hreflen-1] == '/') {
 		if ((newxml = ex_getContent(url, curl, login)) == NULL) {
-			printf("can't ex_getContent() for url %s. skipping\n",url);
+			bblog(ERROR, "can't ex_getContent() for url %s. skipping",url);
 			goto err1;
 		}
 		grabContent(newxml, (char *)url, ci, acl_allow2, acl_deny2, usersid, curl, login);
@@ -272,7 +273,7 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 				}
 				#endif 
 				else {
-					fprintf(stderr, "Found item of type: '%s', not grabing\n", type);
+					bblog(ERROR, "Found item of type: '%s', not grabing", type);
 					free(type);
 					goto err1;
 				}
@@ -297,7 +298,7 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 		}
 
 		if (sid == NULL || lastmodified == 0) {
-			printf("Missing email information, skiping.\n");
+			bblog(WARN, "Missing email information, skiping.");
 		} else {
 			grab_email(ci, acl_allow2, acl_deny2, url, sid, contentlen, lastmodified, usersid, curl);
 		}
@@ -321,12 +322,12 @@ getEmailUrls(const char *data, struct crawlinfo *ci, char *parent, set *acl_allo
 	//printf("aaaaa \n########################%s\n########################\n",data);
 	doc = xmlParseMemory(data, strlen(data));
 	if (!doc) {
-		fprintf(stderr, "Parse error!\n");
+		bblog(ERROR, "Parse error!");
 		return 0;
 	}
 	cur = xmlDocGetRootElement(doc);
 	if (!cur) {
-		fprintf(stderr, "Empty document\n");
+		bblog(ERROR, "Empty document");
 		xmlFreeDoc(doc);
 		return 0;
 	}

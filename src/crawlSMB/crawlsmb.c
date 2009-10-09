@@ -23,6 +23,7 @@
 #include "../common/iconv.h"
 
 #include "../crawl/crawl.h"
+#include "../logger/logger.h"
 
 #include "acl.parser.h"
 #include "crawlsmb.h"
@@ -86,7 +87,7 @@ static int context_free( SMBCCTX *context )
 {
     if (smbc_free_context(context, 0) != 0)
 	{
-	    perror("crawlsmb.c: Error! Could not free smbc context");
+	    bblog(ERROR, "crawlsmb.c: Could not free smbc context");
 		//ToDo: returnerer free uanset. Får nemlig altid feil her
                 //hvis ikke. Er dette en minne lekasj prblem?
 	    return 1;
@@ -98,32 +99,32 @@ static int context_free( SMBCCTX *context )
 
 int smbc_readloop(int sockfd, void *buf, off_t len) {
 
-	printf("smbc_readloop: start\n");
+	bblog(INFO, "smbc_readloop: start");
 	
         off_t total = 0;
         off_t bytesleft = len; // how many we have left to send
         int n;
 
         #ifdef DEBUG
-        printf("will read %i",len);
+        bblog(DEBUG, "will read %i",len);
         #endif
 
         while(total < len) {
 
                 if ((n = smbc_read(sockfd, buf+total, 65000)) <= 0) {
-			printf("error: can't smbc_read()\n");
+			bblog(ERROR, "can't smbc_read()");
                         return 0;
                 }
 
                 //#ifdef DEBUG
-                printf("reading %i bytes. \ttotal red %"PRId64", \tleft %"PRId64", \ttotal to get %"PRId64" ( %f\% )\n",n,total,bytesleft,len,((float)total/(float)len)*100.00);
+                bblog(DEBUG, "reading %.5i bytes. total red %.8"PRId64", left %.8"PRId64", total to get %.8"PRId64" ( %f\% )",n,total,bytesleft,len,((float)total/(float)len)*100.00);
                 //#endif
 
                 total += n;
                 bytesleft -= n;
         }
 
-	printf("smbc_readloop: end. did read %"PRId64"\n",total);
+	bblog(INFO, "smbc_readloop: end. did read %"PRId64"",total);
         return total;
 
 }
@@ -220,7 +221,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 {
 
     #ifdef DEBUG
-    printf("dir \"%s\"\n",dir_name);
+    bblog(DEBUG, "dir \"%s\"",dir_name);
     #endif
 
     static int count = 0;
@@ -256,7 +257,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
     {
             if (dirc < 0)
             {
-                    documentError(collection, 1,"crawlsmb.c: Error! Could not get directory entries from %s\n", dir_name);
+                    documentError(collection, 1,"crawlsmb.c: Error! Could not get directory entries from %s", dir_name);
 		    smbc_closedir(dh);
 		    context_free(context);
                     return 0;
@@ -288,7 +289,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
             asprintf(&uri, "file:%s",entry_name);
 
 	    #ifdef DEBUG
-	    printf("entry_name raw: \"%s\"\n",entry_name);
+	    bblog(DEBUG, "entry_name raw: \"%s\"",entry_name);
 	    #endif
 
             // Skip direntries named "." and "..". 
@@ -321,7 +322,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
                     	context_free(context);
 			context = context_init(no_auth);
 
-			printf("stating \"%s\"\n",full_entry_name);
+			bblog(INFO, "stating \"%s\"",full_entry_name);
                     	if ( smbc_stat(full_entry_name, &file_stat) < 0 ) {
                             	documentError(collection, 1,"crawlsmb.c: Error! Could not get stat for %s", entry_name);
 			    	//free(parsed_acl[0]);
@@ -343,9 +344,9 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
 
 			#ifdef DEBUG
-				printf("times: st_atime %s ",ctime(&file_stat.st_atime));
-				printf("times: st_mtime %s ",ctime(&file_stat.st_mtime));
-				printf("times: st_ctime %s ",ctime(&file_stat.st_ctime));
+				bblog(DEBUG, "times: st_atime %s ",ctime(&file_stat.st_atime));
+				bblog(DEBUG, "times: st_mtime %s ",ctime(&file_stat.st_mtime));
+				bblog(DEBUG, "times: st_ctime %s ",ctime(&file_stat.st_ctime));
 			#endif
 
 
@@ -355,18 +356,18 @@ int smb_recursive_get( char *prefix, char *dir_name,
                     	    context_free(context);
 			    context = context_init(no_auth);
 
-				printf("opening full_entry_name: \"%s\"\n",full_entry_name);
+			    bblog(INFO, "opening full_entry_name: \"%s\"",full_entry_name);
 			    fd = smbc_open( full_entry_name, O_RDONLY, 0 );
 
 			    if (fd<0)
 				{
 				    if (errno == EACCES)
 					{
-					    documentError(collection, 1,"crawlsmb.c: Error! We don't have access to %s.\n", entry_name);
+					    documentError(collection, 1,"crawlsmb.c: Error! We don't have access to %s.", entry_name);
 					}
 				    else
 					{
-					    documentError(collection, 1,"crawlsmb.c: Error! Could not open file %s. Error code %i\n", entry_name, errno);
+					    documentError(collection, 1,"crawlsmb.c: Error! Could not open file %s. Error code %i", entry_name, errno);
 					}
 				}
 			    else
@@ -377,7 +378,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
 					//tester størelsen på filen. Hvis den er for stor dropper vi å laste den ned.
 					if (file_stat.st_size > MAX_FILE_SIZE) {
-						fprintf(stderr,"Warning: document \"%s\" is larger then maximum size of %i. Size is %"PRId64"\n",entry_name,MAX_FILE_SIZE,file_stat.st_size);
+						bblog(WARN, "Warning: document \"%s\" is larger then maximum size of %i. Size is %"PRId64"",entry_name,MAX_FILE_SIZE,file_stat.st_size);
 
 						fbuf = strdup("");
 						//setter at dokumentet er 0 bytes
@@ -387,9 +388,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 					else {
 
 				    		if ((fbuf = malloc(file_stat.st_size+1)) == NULL) {
-							fprintf(stderr,"can't malloc %i bytes for file buffer\n",file_stat.st_size);
-							perror("malloc");
-
+							bblog_errno(ERROR,"can't malloc %i bytes for file buffer",file_stat.st_size);
 							goto closefile;
 				    		}
 
@@ -410,25 +409,25 @@ int smb_recursive_get( char *prefix, char *dir_name,
 			                    	if ( (n = smbc_getxattr(full_entry_name, "system.nt_sec_desc.*", value, sizeof(value))) < 0 ) {
 
 							if (n == EINVAL) {
-	                			            documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. The client library is not properly initialized or one of the parameters is not of a correct form.\n", entry_name);
+	                			            documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. The client library is not properly initialized or one of the parameters is not of a correct form.", entry_name);
 							}
 							else if (n == ENOMEM) {
-        	                			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. No memory was available for internal needs.\n", entry_name);
+        	                			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. No memory was available for internal needs.", entry_name);
 							}
 							else if (n == EEXIST) {
-                	        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. If the attribute already exists and the flag SMBC_XATTR_FLAG_CREAT was specified.\n", entry_name);
+                	        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. If the attribute already exists and the flag SMBC_XATTR_FLAG_CREAT was specified.", entry_name);
 							}
 							else if (n == ENOATTR) {
-                        				    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. If the attribute does not exist and the flag SMBC_XATTR_FLAG_REPLACE was specified.\n", entry_name);
+                        				    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. If the attribute does not exist and the flag SMBC_XATTR_FLAG_REPLACE was specified.", entry_name);
 							}
 							else if (n == EPERM) {
-	                        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. Permission was denied.\n", entry_name);
+	                        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. Permission was denied.", entry_name);
 							}
 							else if (n == ENOTSUP) {
-	                        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. The referenced file system does not support extended attributes\n", entry_name);
+	                        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. The referenced file system does not support extended attributes", entry_name);
 							}
 							else {
-	                        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. Unknown error code \"%i\"\n", entry_name,n);
+	                        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. Unknown error code \"%i\"", entry_name,n);
 							}
 
 			    				context_free(context);
@@ -438,8 +437,8 @@ int smb_recursive_get( char *prefix, char *dir_name,
                     				
 			    			parsed_acl = parseacl_read_access( value );
 			    			#ifdef DEBUG
-			    				printf("crawlsmb.c: Users allowed \t'%s'\n", parsed_acl[0]);
-			    				printf("crawlsmb.c: Users denied  \t'%s'\n", parsed_acl[1]);
+			    				bblog(DEBUG, "crawlsmb.c: Users allowed '%s'", parsed_acl[0]);
+			    				bblog(DEBUG, "crawlsmb.c: Users denied  '%s'", parsed_acl[1]);
 			    			#endif
                         			
 
@@ -502,7 +501,7 @@ next_it:
 
 	    ++count;
 	    if ((count % 1000) == 0) {
-		printf("progres %i\n",count);
+		bblog(INFO, "progres %i",count);
 	    }
         }
 
@@ -534,7 +533,7 @@ int smb_test_conect(struct collectionFormat *collection, char *prefix, char *dir
     int		dh;
     SMBCCTX	*context;
 
-    printf("smb_test_conect(prefix=%s, dir_name=%s)\n",prefix,dir_name);
+    bblog(INFO, "smb_test_conect(prefix=%s, dir_name=%s)",prefix,dir_name);
 
     context = context_init(no_auth);
 
@@ -551,16 +550,11 @@ int smb_test_conect(struct collectionFormat *collection, char *prefix, char *dir
 
 
 
-    printf("Opening %s ... ", full_name);
-    fflush(stdout);
-
     dh = smbc_opendir( full_name );
-
-
 
     if (dh < 0)
 	{
-	    printf("failure\n");
+	    bblog(WARN, "failed to open: %s", full_name);
 
 	    if (errno != EACCES)
 		{
@@ -571,14 +565,14 @@ int smb_test_conect(struct collectionFormat *collection, char *prefix, char *dir
 	    return 0;
 	}
 
-    printf("success\n");
+    bblog(INFO, "successfully opened: %s", full_name);
 
 	struct smbc_dirent  *dirp;
 	int dirc;
 char                dblock[512];
 dirp = (struct smbc_dirent*)dblock;
 
-	printf("smb_test_conect traverse: start\n");
+	bblog(INFO, "smb_test_conect traverse: start");
 
 	while ( (dirc=smbc_getdents( dh, dirp, 512 )) != 0 )
 	{
@@ -589,10 +583,10 @@ dirp = (struct smbc_dirent*)dblock;
                     return 0;
                 }
 
-		printf("name \"%s\"\n",dirp->name);
+		bblog(INFO, "name \"%s\"",dirp->name);
 
 	}
-	printf("smb_test_conect traverse: end\n");
+	bblog(INFO, "smb_test_conect traverse: end");
 
 
     	if (smbc_closedir(dh) != 0) {
@@ -603,7 +597,7 @@ dirp = (struct smbc_dirent*)dblock;
 		documentError(collection, 1,"crawlsmb.c-smb_test_conect: Error! Could not free smbc context at %s:%d",__FILE__,__LINE__);
     	}
 
-	printf("smb_test_conect(): returnin 1\n");
+	bblog(INFO, "smb_test_conect(): returnin 1");
     	return 1;
 }
 
@@ -625,25 +619,13 @@ int smb_test_open(struct collectionFormat *collection,  char *prefix, char *dir_
     	SMBCCTX	*context;
     	int no_auth = 0; //kan ikke ha manglende bruker og passord her
 
-
     	context = context_init(no_auth);
-
-
 	snprintf(uri, uri_size, "%s%s", prefix, dir_name);
-
-
-	printf("urip: \"%s\"\n",uri);
-
-
-
-    	printf("Opening %s ... ", uri);
-    	fflush(stdout);
-
     	fd = smbc_open( uri, O_RDONLY, 0 );
 
     	if (fd < 0)
 	{
-	    printf("failure\n");
+	    bblog(WARN, "failed to open: %s", uri);
 
 	    if (errno != EACCES)
 		{
@@ -654,7 +636,7 @@ int smb_test_open(struct collectionFormat *collection,  char *prefix, char *dir_
 	    return 0;
 	}
 
-    	printf("success\n");
+    	bblog(INFO, "successfully opened: %s", uri);
 
     	smbc_close(fd);
     	if (!context_free(context)) {

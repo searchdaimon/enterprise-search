@@ -25,6 +25,7 @@
 #include "../dictionarywordsLot/set.h"
 #include "../ds/dcontainer.h"
 #include "../ds/dmultimap.h"
+#include "../logger/logger.h"
 
 #define MAX_ATTR_LEN 1024
 
@@ -39,7 +40,7 @@ ex_rewrite_url(struct collectionFormat *collection, char *url, char *uri, char *
 {
 	char *p;
 
-	printf("We got: %s\n", url);
+	bblog(DEBUG, "We got: %s", url);
 	p = strchr(url, '\x10');
 	if (p == NULL)
 		return 0;
@@ -237,18 +238,18 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 		crawldocumentAdd.attributes = buffer_exit(B);
 #endif
 
-		printf("Adding: '%s'\n", crawldocumentAdd.title);
-		printf("usersid \"%s\"\nacl_allow \"%s\"\nacl_denied \"%s\"\n",usersid,crawldocumentAdd.acl_allow , crawldocumentAdd.acl_denied);
+		bblog(INFO, "Adding: '%s'", crawldocumentAdd.title);
+		bblog(INFO, "usersid \"%s\"acl_allow \"%s\" acl_denied \"%s\"",usersid,crawldocumentAdd.acl_allow , crawldocumentAdd.acl_denied);
 		(ci->documentAdd)(ci->collection, &crawldocumentAdd);
 		if (crawldocumentAdd.title[0] != '\0')
 			free(crawldocumentAdd.title);
 		free(crawldocumentAdd.acl_allow);
 		free(crawldocumentAdd.acl_denied);
 #ifdef EMAIL_ADRESS_AS_ATTRIBUTE
-		warnx("attributes: %s\n", crawldocumentAdd.attributes);
+		bblog(INFO, "attributes: %s", crawldocumentAdd.attributes);
 		free(crawldocumentAdd.attributes);
 #else
-		warnx("not compiled with attributes");
+		bblog(WARN, "not compiled with attributes");
 #endif
 
 		free(mail.buf);
@@ -276,7 +277,8 @@ grabContent(char *xml, char *url, struct crawlinfo *ci, set *acl_allow, set *acl
 void splitUserString(char *userString,  char **user, char **usersid) {
 
 	char *p;
-	printf("userString %s\n",userString);
+
+	bblog(INFO, "userString %s",userString);
 
 	p = strchr(userString,':');
 	if (p == NULL) {
@@ -290,7 +292,7 @@ void splitUserString(char *userString,  char **user, char **usersid) {
 		*usersid = p;
 	}
 	
-	printf("splitUserString: user \"%s\"\nsplitUserString: usersid \"%s\"\n",*user,*usersid);
+	bblog(INFO, "splitUserString: user \"%s\" splitUserString: usersid \"%s\"",*user,*usersid);
 }
 
 int
@@ -331,7 +333,7 @@ crawlcanconnect(struct collectionFormat *collection,
 			snprintf(resource, sizeof(resource), "%s/public/", origresource);
 			publicdone = 1;
 		}
-		printf("Resource: %s\n", resource);
+		bblog(INFO, "Resource: %s", resource);
 
 		/* Shut up the xml parser a bit */
 		xmlGetWarningsDefaultValue = 0;
@@ -342,7 +344,7 @@ crawlcanconnect(struct collectionFormat *collection,
 
 
 		if ((curl = ex_logOn(resource, &login, &eerror)) == NULL) {
-			documentError(collection, 1, "Unable to connect to %s: %s\n", origresource, eerror);
+			documentError(collection, 1, "Unable to connect to %s: %s", origresource, eerror);
 			return 0;
 
 		}
@@ -366,8 +368,8 @@ crawlcanconnect(struct collectionFormat *collection,
 	if (n_users == 0)
 		return 1;
 
-	documentError(collection, 1, "Unable to connect to: %s\n", origresource);
-	documentError(collection, 1, "Html error: %s\n", listxml);
+	documentError(collection, 1, "Unable to connect to: %s", origresource);
+	documentError(collection, 1, "Html error: %s", listxml);
 
 
 	return 0;
@@ -449,7 +451,7 @@ crawlGo(struct crawlinfo *ci)
 			publicdone = 1;
 		}
 
-		printf("Trying %s\n", resource);
+		bblog(INFO, "Trying %s", resource);
 		/* Shut up the xml parser a bit */
 		xmlGetWarningsDefaultValue = 0;
 
@@ -458,7 +460,7 @@ crawlGo(struct crawlinfo *ci)
 		strscpy( login.Exchangeurl,origresource,sizeof(login.Exchangeurl) );
 
 		if ((curl = ex_logOn(resource, &login, &eerror)) == NULL) {
-			fprintf(stderr,"Can't connect to %s: %s\n",resource,eerror);
+			bblog(ERROR, "Can't connect to %s: %s",resource,eerror);
 			continue;
 		}
 		listxml = ex_getContent(resource, &curl, &login);
@@ -500,7 +502,7 @@ crawlfirst(crawlfirst_args)
 	ci.documentContinue = documentContinue;
 	ci.collection = collection;
 	ci.timefilter = 0;
-	printf("crawlEXCHANGE: %s\n", collection->resource);
+	bblog(DEBUG, "crawlEXCHANGE: %s", collection->resource);
 
 	return crawlGo(&ci);
 }
@@ -518,7 +520,7 @@ crawlupdate(crawlupdate_args)
 	ci.collection = collection;
 	ci.timefilter = collection->lastCrawl;
 
-	printf("crawlEXCHANGE: %s\n", collection->resource);
+	bblog(DEBUG, "crawlEXCHANGE: %s", collection->resource);
 
 	return crawlGo(&ci);
 }

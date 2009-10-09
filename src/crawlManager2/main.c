@@ -17,6 +17,8 @@
 #include <libmemcached/memcached.h>
 #endif
 
+#include "../logger/logger.h"
+
 #include "../crawl/crawl.h"
 #include "../key/key.h"
 
@@ -103,7 +105,7 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 	querylen = snprintf(query, sizeof(query), "SELECT is_primary, connector FROM system WHERE id = %d", id);
 
 	if (mysql_real_query(db, query, querylen)) {
-		blog(LOGERROR, 1, "Mysql error: %s", mysql_error(db));
+		bblog(ERROR, "Mysql error: %s", mysql_error(db));
 		return NULL;
 	}
 
@@ -116,7 +118,7 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 
 	row = mysql_fetch_row(res);
 	if (row == NULL) {
-		blog(LOGERROR, 1, "Unable to fetch mysql row ar %s:%d",__FILE__,__LINE__);
+		bblog(ERROR, "Unable to fetch mysql row ar %s:%d",__FILE__,__LINE__);
 		mysql_free_result(res);
 		return NULL;
 	}
@@ -124,7 +126,7 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 	data->type = atoi(row[1]);
 	usc = hashtable_search(usersystemshash, &data->type);
 	if (usc == NULL) {
-		blog(LOGERROR, 1, "No usersystem module for this type: %d", data->type);
+		bblog(ERROR, "No usersystem module for this type: %d", data->type);
 		return NULL;
 	}
 	switch (usc->moduletype) {
@@ -143,7 +145,7 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 
 	querylen = snprintf(query, sizeof(query), "SELECT param, value FROM systemParamValue WHERE system = %d", data->id);
 	if (mysql_real_query(db, query, querylen)) {
-		blog(LOGERROR, 1, "Mysql error: %s", mysql_error(db));
+		bblog(ERROR, "Mysql error: %s", mysql_error(db));
 		return NULL;
 	}
 
@@ -151,8 +153,8 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 	n = mysql_num_rows(resparam);
 	
 	while ((rowparam = mysql_fetch_row(resparam)) != NULL) {
-		if (!strcmp(rowparam[0], "password")) printf("Param: password => ********\n");
-		else printf("Param: %s => %s\n", rowparam[0], rowparam[1]);
+		if (!strcmp(rowparam[0], "password")) bblog(INFO, "Param: password => ********");
+		else bblog(INFO, "Param: %s => %s",  rowparam[0], rowparam[1]);
 		hashtable_insert(data->parameters, strdup(rowparam[0]), strdup(rowparam[1]));
 	}
 
@@ -173,7 +175,7 @@ free_usersystem_data(usersystem_data_t *data)
 int documentContinue(struct collectionFormat *collection) {
 
 	
-	debug("documentContinue: start");
+	bblog(DEBUG, "documentContinue: start");
 
 	if ((collection->docsRemaining != -1) && (collection->docsCount >= collection->docsRemaining)) {
 		snprintf(collection->errormsg, sizeof collection->errormsg, 
@@ -196,7 +198,7 @@ int documentContinue(struct collectionFormat *collection) {
 
 	//hvis vi skal crawl oftere en hvert dågn bruker vi ikke schedule time, men tilater å crawl hele tiden.
 	if ( (collection->rate != 0) && (collection->rate < 1440)) {
-		printf("documentContinue: Collection is set to be recrawled every %i min, ignoring schedule time\n",collection->rate);
+		bblog(INFO, "documentContinue: Collection is set to be recrawled every %i min, ignoring schedule time", collection->rate);
 		return 1;
 	}
 
@@ -214,7 +216,7 @@ int documentContinue(struct collectionFormat *collection) {
 	now = time(NULL);
 	t = localtime(&now);	
 
-	debug("now: %i,recrawl_schedule_start %i,recrawl_schedule_end %i\n",t->tm_hour,recrawl_schedule_start,recrawl_schedule_end);
+	bblog(DEBUG, "now: %i,recrawl_schedule_start %i,recrawl_schedule_end %i",t->tm_hour,recrawl_schedule_start,recrawl_schedule_end);
 
 	//hvis vi ikke har noen begrensning så er det bare å crawler på
 	if ((recrawl_schedule_start == 0) || (recrawl_schedule_end == 0)) {
@@ -236,18 +238,18 @@ int documentContinue(struct collectionFormat *collection) {
 	if ( recrawl_schedule_start > recrawl_schedule_end ) {
 
 		if ((t->tm_hour < recrawl_schedule_start) && (t->tm_hour >= recrawl_schedule_end)) {
-			printf("scenario 1: to early, wont crawl\n");
+			bblog(INFO, "scenario 1: to early, wont crawl");
 			sched_cont = 0;
 		}
 
 	}
 	else {
 		if (t->tm_hour < recrawl_schedule_start) {
-			printf("scenario 2: to early, wont crawl\n");
+			bblog(INFO, "scenario 2: to early, wont crawl");
 			sched_cont = 0;
 		}
 		else if (t->tm_hour >= recrawl_schedule_end) {
-			printf("scenario 2: to late, wont crawl\n");
+			bblog(INFO, "scenario 2: to late, wont crawl");
 			sched_cont = 0;
 		}
 	}
@@ -257,9 +259,9 @@ int documentContinue(struct collectionFormat *collection) {
 		return 0;
 	}
 
-	debug("hour is now %i, will crawl\n",t->tm_hour);
+	bblog(DEBUG, "hour is now %i, will crawl",t->tm_hour);
 
-	debug("documentContinue: end\n");
+	bblog(DEBUG, "documentContinue: end");
 
 	return 1;
 }
@@ -268,13 +270,13 @@ int documentExist(struct collectionFormat *collection, struct crawldocumentExist
 	int ret;
 
 	#ifdef DEBUG
-	printf("documentExist: start\n");
+	bblog(DEBUG, "documentExist: start");
 	#endif
 
 	ret = bbdocument_exist(collection->collection_name, crawldocumentExist->documenturi, crawldocumentExist->lastmodified);
 
 	#ifdef DEBUG
-	printf("documentExist: end\n");
+	bblog(DEBUG, "documentExist: end");
 	#endif
 
 	return ret;
@@ -287,31 +289,25 @@ char *documentErrorGetlast(struct collectionFormat *collection) {
 
 
 int documentError(struct collectionFormat *collection,int level, const char *fmt, ...) {
-
-
-
         va_list     ap;
 
         va_start(ap, fmt);
 
-	printf("documentError: ");
-        vprintf(fmt,ap);
-
-	bvlog(LOGERROR,level,fmt,ap);
+	bblog(ERROR, "documentError: level: %d", level);
+	bblogv(ERROR, fmt, ap);
 
 	vsprintf(collection->errormsg ,fmt,ap);
 
         va_end(ap);
-
 }
 
 int documentAdd(struct collectionFormat *collection, struct crawldocumentAddFormat *crawldocumentAdd) {
 	#ifdef DEBUG
-	printf("documentAdd start\n");
+	bblog(DEBUG, "documentAdd start");
 	#endif
 
 	#ifdef DEBUG
-	printf("documentAdd: uri %s, title %s\n",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).title);
+	bblog(DEBUG, "documentAdd: uri %s, title %s",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).title);
 	#endif
 
 	collection->docsCount++;
@@ -336,7 +332,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 				crawldocumentAdd->attributes)
 	   ) {
 
-		blog(LOGERROR,1,"can't sent to bbdn! Tryed to send doc \"%s\" Will sleep and then reconect. Wont send same doc again.",(*crawldocumentAdd).documenturi);
+		bblog(ERROR, "can't sent to bbdn! Tryed to send doc \"%s\" Will sleep and then reconect. Wont send same doc again.",(*crawldocumentAdd).documenturi);
 		
 		//ber om å lokke sokketen. Dette er ikke det samme som å steneg kollectionen.
 		//bbdn_closecollection((*collection).socketha,(*collection).collection_name);
@@ -345,7 +341,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 		sleep(10);
 
 		if (!bbdn_conect(&(*collection).socketha,"",global_bbdnport)) {
-			blog(LOGERROR,1,"can't connect to bbdn (boitho backend document server)");
+			bblog(ERROR, "can't connect to bbdn (boitho backend document server)");
 			return 0;
 		}
 
@@ -353,16 +349,16 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 
 	}
 	else {
-		blog(LOGACCESS,1,"crawled url: \"%s\", size: %i b, ACL: allow \"%s\", denied \"%s\"",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).dokument_size,(*crawldocumentAdd).acl_allow,(*crawldocumentAdd).acl_denied);
+		bblog(CLEAN, "crawled url: \"%s\", size: %i b, ACL: allow \"%s\", denied \"%s\"",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).dokument_size,(*crawldocumentAdd).acl_allow,(*crawldocumentAdd).acl_denied);
 	}
 
 	#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
-		printf("Time debug: bbdn_docadd() time: %f\n",getTimeDifference(&start_time, &end_time));
+		bblog(DEBUG, "Time debug: bbdn_docadd() time: %f",getTimeDifference(&start_time, &end_time));
 	#endif
 
 	#ifdef DEBUG
-	printf("documentAdd end\n");
+	bblog(DEBUG, "documentAdd end");
 	#endif
 
 	return 1;
@@ -376,7 +372,7 @@ collectionsforuser_collection(struct hashtable *collections, char *user, struct 
 	char **list;
 
 	#ifdef DEBUG
-	printf("collectionsforuser_collection:\n  user=%s\n", user);
+	bblog(DEBUG, "collectionsforuser_collection:  user=%s", user);
 	#endif
 
 	if (!userToSubname_getsubnamesAsString(usertosubname, user, subnamebuf, sizeof(subnamebuf)))
@@ -385,12 +381,12 @@ collectionsforuser_collection(struct hashtable *collections, char *user, struct 
 	n_collections = split(subnamebuf, ",", &list);
 
 	#ifdef DEBUG
-	printf("  n_collections=%i\n", n_collections);
+	bblog(DEBUG, "  n_collections=%i",  n_collections);
 	#endif
 
 	for (i = 0; i < n_collections; i++) {
 		#ifdef DEBUG
-	        printf("    collection[%i] = %s\n", i, list[i]);
+	        bblog(DEBUG, "    collection[%i] = %s",  i, list[i]);
 	        #endif
 
 		if (!hashtable_search(collections, list[i]))
@@ -423,7 +419,7 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 
 	for (i = 0; i < 2; i++) {
 		if (mysql_real_query(db, query[i], querylen[i])) {
-			blog(LOGERROR, 1, "Mysql error: %s", mysql_error(db));
+			bblog(ERROR, "Mysql error: %s", mysql_error(db));
 			continue;
 		}
 
@@ -435,7 +431,7 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 		}
 
 		if (!userToSubname_open(&userToSubnameDb,'r')) {
-			fprintf(stderr, "searchd_child: Warning! Can't open users.db\n");
+			bblog(WARN, "Warning! Can't open users.db");
 			continue;
 		}
 		
@@ -446,15 +442,15 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 			usersystem_data_t data;
 
 			if ((us = get_usersystem(db, atoi(row[1]), &data)) == NULL) {
-				fprintf(stderr, "No usersystem: %s %s\n", row[0], row[1]);
+				bblog(WARN, "No usersystem: %s %s", row[0], row[1]);
 				continue;
 			}
 			if (!(us->us_listGroupsForUser)(&data, row[0], &groups, &n_groups)) {
-				fprintf(stderr, "Unable to list groups for user: %s\n", row[0]);
+				bblog(WARN, "Unable to list groups for user: %s", row[0]);
 				continue;
 			}
-			printf("Got %d groups for %s\n", n_groups, row[0]);
-			printf("Usersystem is %s\n", row[1]);
+			bblog(INFO, "Got %d groups for %s",  n_groups, row[0]);
+			bblog(INFO, "Usersystem is %s",  row[1]);
 
 			collectionsforuser_collection(collections, row[0], &userToSubnameDb);
 			for (j = 0; j < n_groups; j++)
@@ -483,7 +479,7 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 		len = strlen(name);
 		p[len] = ',';
 		p += len+1;
-		printf("Collection: %s\n", hashtable_iterator_key(itr));
+		bblog(INFO, "Collection: %s",  hashtable_iterator_key(itr));
 	} while (hashtable_iterator_advance(itr));
 	free(itr);
 	p--;
@@ -500,7 +496,7 @@ int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections)
 
 	for (i=0;i<nrofcollections;i++) {
 		#ifdef DEBUG
-		printf("freeing nr %i: start\n",i);
+		bblog(DEBUG, "freeing nr %i: start", i);
 		#endif
 		free((*collection)[i].resource);
                 free((*collection)[i].user);
@@ -513,7 +509,7 @@ int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections)
 		free((*collection)[i].userprefix);
 		hashtable_destroy((*collection)[i].params, 1);
 		#ifdef DEBUG
-			printf("freeing nr %i: end\n",i);
+			bblog(DEBUG, "freeing nr %i: end", i);
 		#endif
 	}
 
@@ -523,9 +519,9 @@ int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections)
 }
 
 int closecollection(struct collectionFormat *collection) {
-	debug("closecollection start\n");
+	bblog(DEBUG, "closecollection start");
 	bbdn_closecollection((*collection).socketha,(*collection).collection_name);
-	debug("closecollection end\n");
+	bblog(DEBUG, "closecollection end");
 
 }
 
@@ -534,17 +530,17 @@ int cmr_crawlcanconect(struct hashtable *h, struct collectionFormat *collection)
 	struct crawlLibInfoFormat *crawlLibInfo;
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,(*collection).connector)) {
-		printf("can't get CrawlLibInfo\n");
+		bblog(INFO, "can't get CrawlLibInfo");
 		return 0;
 	}
 
-	debug("wil crawl \"%s\"",(*collection).resource);
+	bblog(DEBUG, "wil crawl \"%s\"",(*collection).resource);
 
 	if (!(*(*crawlLibInfo).crawlcanconect)(collection,documentError)) {
 		//overfører error
-		fprintf(stderr,"crawlcanconect rountine in cralwer returned 0.\n");
+		bblog(ERROR, "crawlcanconect rountine in cralwer returned 0.");
 		berror(documentErrorGetlast(collection));
-        	 return 0;
+		return 0;
        	}
 	else {
 		return 1;
@@ -561,20 +557,20 @@ int cm_crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 	}
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,(*collection).connector)) {
-		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.");
+		bblog(ERROR, "Error: can't get CrawlLibInfo.");
 		//exit(1);
 		return 0;
 	}
 
 	collection->crawlLibInfo = crawlLibInfo;
 
-	debug("wil crawl \"%s\"",(*collection).resource);
+	bblog(DEBUG, "wil crawl \"%s\"",(*collection).resource);
 
 	if (!(*(*crawlLibInfo).crawlfirst)(collection,documentExist,documentAdd,documentError,documentContinue)) {
-        	printf("problems in crawlfirst_ld\n");
+        	bblog(INFO, "problems in crawlfirst_ld");
 		//overfører error
                 berror( documentErrorGetlast(collection) );
-		blog(LOGERROR,1,"Error: Problems in crawlfirst_ld.");
+		bblog(ERROR, "Error: Problems in crawlfirst_ld.");
 
 		return 0;
        	}
@@ -598,19 +594,19 @@ int cm_crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
 	}
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,(*collection).connector)) {
-		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.");
+		bblog(ERROR, "Error: can't get CrawlLibInfo.");
 		exit(1);
 	}
 
 	collection->crawlLibInfo = crawlLibInfo;
 
-	debug("wil crawl \"%s\"",(*collection).resource);
+	bblog(DEBUG, "wil crawl \"%s\"",(*collection).resource);
 
 	if (!(*(*crawlLibInfo).crawlupdate)(collection,documentExist,documentAdd,documentError,documentContinue)) {
         	
 		//overfører error
                 berror( documentErrorGetlast(collection) );
-		blog(LOGERROR,1,"Error: problems in crawlfirst_ld.");
+		bblog(ERROR, "Error: problems in crawlfirst_ld.");
 
 		return 0;
        	}
@@ -655,7 +651,7 @@ pathaccess_makekey(char *collection, char *username, char *password, char *uri, 
 	s = malloc(len);
 	//sprintf(s, "pathaccess_%s\1%s\1%s\1%s", collection, username, password, uri);
 	sprintf(s, "pathaccess_%s_%s_%s_%s", collection, username, password, uri);
-	printf("Key: %s\n", s);
+	bblog(INFO, "Key: %s",  s);
 	for (i = 0; s[i] != '\0'; i++) {
 		if (isspace(s[i]))
 			//s[i] = '\2';
@@ -685,7 +681,7 @@ pathaccess_savecache(char *collection, char *username, char *password, char *uri
 
 	ret = memcached_add(mc, s, len, add, alen, 300, 0);
 	if (ret != MEMCACHED_SUCCESS)
-		printf("Unable to add new cache item.\n");
+		bblog(INFO, "Unable to add new cache item.");
 
 	free(s);
 }
@@ -747,7 +743,7 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 
 	struct pathAccessTimesFormat pathAccessTimes;
 
-	printf("pathAccess: start\n");
+	bblog(INFO, "pathAccess: start");
 
 	//temp:
 	//26.0207:quiq fix. Lagger til domene i brukernav
@@ -759,20 +755,20 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 	*/
 
 	gettimeofday(&start_time, NULL);
-	debug("cm_searchForCollection");
+	bblog(DEBUG, "cm_searchForCollection");
 	if (!cm_searchForCollection(db, collection,&collections,&nrofcollections)) {
-		printf("cant't find Collection \"%s\"in db at %s:%d\n",collection,__FILE__,__LINE__);
+		bblog(INFO, "cant't find Collection \"%s\"in db at %s:%d", collection,__FILE__,__LINE__);
 		return 0;
 	}
 
 	//skal returnere 1, og bare 1, hvis ikke er det noe feil
 	if (nrofcollections != 1) {
-		printf("error looking opp collection \"%s\"\n",collection);
+		bblog(INFO, "error looking opp collection \"%s\"", collection);
 		return 0;
 	}
 
 	if (!requires_path_access(&collections[0])) {
-		printf("Collection '%s' requires no path access.", collection);
+		bblog(INFO, "Collection '%s' requires no path access.", collection);
 		return 1;
 	}
 
@@ -781,9 +777,9 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 
 
 	gettimeofday(&start_time, NULL);
-	debug("cm_getCrawlLibInfo");
+	bblog(DEBUG, "cm_getCrawlLibInfo");
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,collections[0].connector)) {
-		printf("can't get CrawlLibInfo\n");
+		bblog(INFO, "can't get CrawlLibInfo");
 		return 0;
 	}
 	collections[0].crawlLibInfo = crawlLibInfo;
@@ -791,13 +787,13 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 	gettimeofday(&end_time, NULL);
 	pathAccessTimes.getCrawlLibInfo = getTimeDifference(&start_time,&end_time);
 
-	printf("wil pathAccess \"%s\", for user \"%s\"\n",uri,username_in);
+	bblog(INFO, "wil pathAccess \"%s\", for user \"%s\"", uri,username_in);
 
 	gettimeofday(&start_time, NULL);
 
 	username = adduserprefix(collections,username_in);
 
-	printf("username after adduserprefix: \"%s\"\n",username);
+	bblog(INFO, "username after adduserprefix: \"%s\"", username);
 
 	origuri = strdup(uri);
 #ifdef WITH_PATHACCESS_CACHE
@@ -805,7 +801,7 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 		mc_add_servers();
 #endif
 	if ((*crawlLibInfo).crawlpatAcces == NULL) {
-		printf("cralwer her ikke crawlpatAcces. returnerer tilgang. Må i fremtiden slå det opp\n");
+		bblog(INFO, "cralwer her ikke crawlpatAcces. returnerer tilgang. Må i fremtiden slå det opp");
 		forreturn = 1;
 	}
 #ifdef WITH_PATHACCESS_CACHE
@@ -819,7 +815,7 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 	}
 #endif
 	else if (!(*(*crawlLibInfo).crawlpatAcces)(uri,username,password,documentError,&collections[0])) {
-        	printf("Can't crawlLibInfo. Can be denyed or somthing else\n");
+        	bblog(INFO, "Can't crawlLibInfo. Can be denyed or somthing else");
 		//overfører error
                 berror("%s", documentErrorGetlast(&collections[0]));
 
@@ -841,18 +837,18 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 	pathAccessTimes.crawlpatAcces = getTimeDifference(&start_time,&end_time);
 
 
-	printf("pathAccess: times\n");	
-	printf("\tsearchForCollection: %f\n",pathAccessTimes.searchForCollection);
-	printf("\tgetCrawlLibInfo: %f\n",pathAccessTimes.getCrawlLibInfo);
-	printf("\tcrawlpatAcces: %f\n",pathAccessTimes.crawlpatAcces);
+	bblog(INFO, "pathAccess: times");	
+	bblog(INFO, "\tsearchForCollection: %f", pathAccessTimes.searchForCollection);
+	bblog(INFO, "\tgetCrawlLibInfo: %f", pathAccessTimes.getCrawlLibInfo);
+	bblog(INFO, "\tcrawlpatAcces: %f", pathAccessTimes.crawlpatAcces);
 
-	printf("pathAccess: end\n");
+	bblog(INFO, "pathAccess: end");
 
 	if (forreturn == 1) {
-		blog(LOGACCESS,2,"pathAccess allowed url: \"%s\", user: \"%s\", time used %f s",uri,username,pathAccessTimes.crawlpatAcces);
+		bblog(INFO,"pathAccess allowed url: \"%s\", user: \"%s\", time used %f s",uri,username,pathAccessTimes.crawlpatAcces);
 	}
 	else {
-		blog(LOGERROR,2,"pathAccess denyed url: \"%s\", user: \"%s\", time used %f s, Error: \"%s\"",uri,username,pathAccessTimes.crawlpatAcces, documentErrorGetlast( &collections[0]) );
+		bblog(INFO, "pathAccess denyed url: \"%s\", user: \"%s\", time used %f s, Error: \"%s\"",uri,username,pathAccessTimes.crawlpatAcces, documentErrorGetlast( &collections[0]) );
 	}
 
 	free(username);
@@ -875,7 +871,7 @@ static char found_sharenr = 0;
 
 int scan_found_share(char share[]) {
 
-	printf("add \"%s\" (nr %i)\n",share,found_sharenr);
+	bblog(INFO, "add \"%s\" (nr %i)", share,found_sharenr);
 	found_share[found_sharenr] = malloc(strlen(share) +1);
 	strcpy(found_share[found_sharenr],share);
 
@@ -900,25 +896,25 @@ int scan (struct hashtable *h,char ***shares,int *nrofshares,char crawlertype[],
 	struct crawlLibInfoFormat *crawlLibInfo;
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,crawlertype)) {
-		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.");
+		bblog(ERROR, "Error: can't get CrawlLibInfo.");
 
                 exit(1);
         }
 
 	if ((*crawlLibInfo).scan == NULL) {
-		printf("can't scan. Crawler dosen't support it.\n");
-		blog(LOGERROR,1,"Error: can't scan. Crawler dosent suport it.");
+		bblog(INFO, "can't scan. Crawler dosen't support it.");
+		bblog(ERROR, "Error: can't scan. Crawler dosent suport it.");
 
 		return 0;
 	}
 
-	printf("scan:\nhost %s\nusername %s\npassword %s\n",host,username,password);
+	bblog(INFO, "scan:\nhost %s\nusername %s\npassword %s", host,username,password);
 
 	scan_found_start();
 
 	if (!(*(*crawlLibInfo).scan)(scan_found_share,host,username,password,documentError)) {
-                printf("problems in scan\n");
-		blog(LOGERROR,1,"Error: problems in scan.");
+                bblog(INFO, "problems in scan");
+		bblog(ERROR, "Error: problems in scan.");
 
 		return 0;
         }
@@ -972,12 +968,12 @@ list_usersystems(struct hashtable *us)
 			case USC_TYPE_C:
 				us_c = usc->usersystem.us_c;
 				name = us_c->us_getName(NULL);
-				printf("C usersystem: %s(%d)\n", name, us_c->type);
+				bblog(INFO, "C usersystem: %s(%d)",  name, us_c->type);
 				free(name);
 				break;
 			case USC_TYPE_PERL:
 				us_perl = usc->usersystem.us_perl;
-				printf("perl usersysten: %s\n", us_perl->us->us_getName(us_perl));
+				bblog(INFO, "perl usersysten: %s",  us_perl->us->us_getName(us_perl));
 				d.usc = usc;
 				break;
 			}
@@ -1005,11 +1001,11 @@ load_usersystem(struct hashtable *us, char *name)
 
 	int insert_us(usersystem_container_t *usc, unsigned int type) {
 		if (hashtable_search(us, &type) != NULL) {
-			warnx("We already have a usersystem with id: %s: %d", name, type);
+			bblog(WARN, "We already have a usersystem with id: %s: %d", name, type);
 			return 0;
 		}
 		hashtable_insert(us, uinttouintp(type), usc);
-		printf("Loaded %s(%d)\n", name, type);
+		bblog(INFO, "Loaded %s(%d)",  name, type);
 
 		return 1;
 	}
@@ -1041,13 +1037,13 @@ load_usersystem(struct hashtable *us, char *name)
 
 		libhandle = dlopen(libpath, RTLD_LAZY);
 		if (libhandle == NULL) {
-			warn("Unable to load crawler: %s", name);
+			bblog(WARN, "Unable to load crawler: %s", name);
 			return 0;
 		}
 
 		usersystem = dlsym(libhandle, "usersystem_info");
 		if ((error = dlerror()) != NULL) {
-			warnx("Unable to get usersystem_info for %s: %s", name, error);
+			bblog(WARN, "Unable to get usersystem_info for %s: %s", name, error);
 			dlclose(libhandle);
 			return 0;
 		}
@@ -1056,7 +1052,7 @@ load_usersystem(struct hashtable *us, char *name)
 		usc->moduletype = USC_TYPE_C;
 
 		if (insert_us(usc, usersystem->type) == 0) {
-			warnx("C insert failed");
+			bblog(WARN, "C insert failed");
 			dlclose(libhandle);
 			free(usc);
 			return 0;
@@ -1066,8 +1062,10 @@ load_usersystem(struct hashtable *us, char *name)
 		unsigned int type;
 		int retn;
 
-		if (fileid == 0)
-			errx(1, "Perl usersystem require a file id");
+		if (fileid == 0) {
+			bblog(ERROR, "Perl usersystem require a file id");
+			exit(1);
+		}
 		
 		type = fileid;
 		usersystem = malloc(sizeof(*usersystem));
@@ -1078,7 +1076,7 @@ load_usersystem(struct hashtable *us, char *name)
 		usc->moduletype = USC_TYPE_PERL;
 
 		if (insert_us(usc, type) == 0) {
-			warnx("perl insert failed");
+			bblog(WARN, "perl insert failed");
 			free(usersystem->perlpath);
 			free(usersystem);
 			free(usc);
@@ -1086,7 +1084,7 @@ load_usersystem(struct hashtable *us, char *name)
 		}
 	} else {
 		free(usc);
-		warnx("No usersystem found with name: '%s'\n", name);
+		bblog(WARN, "No usersystem found with name: '%s'", name);
 		return 0;
 	}
 
@@ -1100,14 +1098,18 @@ load_usersystems(struct hashtable **usersystems)
 	struct dirent *dp;
 	char path[PATH_MAX];
 
-	printf("Looking for users systems...\n");
+	bblog(INFO, "Looking for users systems...");
 	(*usersystems) = create_hashtable(21, ht_integerhash, ht_integercmp);
-	if (*usersystems == NULL)
-		err(1, "Unable to create usersystem hashtable");
+	if (*usersystems == NULL) {
+		bblog(ERROR, "Unable to create usersystem hashtable");
+		exit(1);
+	}
 
 	strcpy(path, bfile("usersystems"));
-	if ((dirp = opendir(path)) == NULL)
-		err(1, "No usersystems available: %s", path);
+	if ((dirp = opendir(path)) == NULL) {
+		bblog(ERROR, "No usersystems available: %s", path);
+		exit(1);
+	}
 
 	while ((dp = readdir(dirp)) != NULL) {
 		if (dp->d_name[0] == '.')
@@ -1121,7 +1123,7 @@ load_usersystems(struct hashtable **usersystems)
 //rutine for å laste et crawler biblotek
 int cm_loadCrawlLib(struct hashtable **h, char name[]) {
 
-	debug("cm_loadCrawlLib(name=%s)",name);
+	bblog(DEBUG, "cm_loadCrawlLib(name=%s)",name);
 
 	char libpath[PATH_MAX];
 	char perlpath[PATH_MAX];
@@ -1138,10 +1140,10 @@ int cm_loadCrawlLib(struct hashtable **h, char name[]) {
 
 
 	if (file_exist(libpath)) {
-		printf("loading path \"%s\"\n",libpath);
+		bblog(INFO, "loading path \"%s\"", libpath);
 		lib_handle = dlopen(libpath, RTLD_LAZY);
 		if (!lib_handle) {
-			blog(LOGERROR,1,"Error: during dlopen(): %s. File %s.",dlerror(),libpath);
+			bblog(ERROR, "Error: during dlopen(): %s. File %s.",dlerror(),libpath);
 		    	//exit(1);
 			return 0;
 		}
@@ -1152,30 +1154,30 @@ int cm_loadCrawlLib(struct hashtable **h, char name[]) {
 		/* check that no error occured */
         	error_msg = dlerror();
 	        if (error_msg) {
-		blog(LOGERROR,1,"Error: Error locating '%s' - %s.",name, error_msg);
+		bblog(ERROR, "Error: Error locating '%s' - %s.",name, error_msg);
         	    exit(1);
         	}
 
 		
-		printf("loaded \"%s\"\n",(*crawlLibInfo).shortname);
+		bblog(INFO, "loaded \"%s\"", (*crawlLibInfo).shortname);
 
 		if ((*crawlLibInfo).crawlinit == NULL) {
 
 		}
 		else if (!(*crawlLibInfo).crawlinit()) {
-			printf("crawlinit dident return 1\n");
-			blog(LOGERROR,1,"Error: crawlinit dident return 1.");
+			bblog(INFO, "crawlinit dident return 1");
+			bblog(ERROR, "Error: crawlinit dident return 1.");
 			exit(1);
 		}
 
 		//sjekk at den ikke finnes i hashen fra før
 		if (hashtable_search((*h),(*crawlLibInfo).shortname) != NULL) {
-			printf("all redy have module with shortname \"%s\"\n",(*crawlLibInfo).shortname);
+			bblog(INFO, "all redy have module with shortname \"%s\"", (*crawlLibInfo).shortname);
 			return 1;
 		}
 
 		if (! hashtable_insert((*h),(*crawlLibInfo).shortname,crawlLibInfo) ) {                        
-			blog(LOGERROR,1,"Error: can't hastable insert.");
+			bblog(ERROR, "Error: can't hastable insert.");
                		exit(-1);
                	}
 
@@ -1187,22 +1189,22 @@ int cm_loadCrawlLib(struct hashtable **h, char name[]) {
 
 		crawlLibInfo = perlCrawlStart(folderpath, name);
 
-		printf("loaded \"%s\"\n",(*crawlLibInfo).shortname);
+		bblog(INFO, "loaded \"%s\"", (*crawlLibInfo).shortname);
 
 		//sjekk at den ikke finnes i hashen fra før
 		if (hashtable_search((*h),(*crawlLibInfo).shortname) != NULL) {
-			printf("all redy have module with shortname \"%s\"\n",(*crawlLibInfo).shortname);
+			bblog(INFO, "all redy have module with shortname \"%s\"", (*crawlLibInfo).shortname);
 			return 1;
 		}
 
 		if (! hashtable_insert((*h),(*crawlLibInfo).shortname,crawlLibInfo) ) {                        
-			blog(LOGERROR,1,"Error: can't hastable insert.");
+			bblog(ERROR, "Error: can't hastable insert.");
                		exit(-1);
                	}
 
 	}
 	else {
-		fprintf(stderr,"can't load \"%s\" crawler.\n",name);
+		bblog(ERROR, "can't load \"%s\" crawler.",name);
 		return 0;
 	}
 
@@ -1212,7 +1214,7 @@ int cm_loadCrawlLib(struct hashtable **h, char name[]) {
 
 int cm_start(struct hashtable **h, struct hashtable **usersystems) {
 
-	printf("cm_start start\n");
+	bblog(INFO, "cm_start start");
 
 	DIR *dirp;
 	struct dirent *dp;
@@ -1224,7 +1226,7 @@ int cm_start(struct hashtable **h, struct hashtable **usersystems) {
 
 	if ((dirp = opendir(bfile("crawlers"))) == NULL) {
 		perror(bfile("crawlers"));
-		blog(LOGERROR,1,"Error: can't open crawlers directory.");
+		bblog(ERROR, "Error: can't open crawlers directory.");
 
 		exit(1);
 	}	
@@ -1243,7 +1245,7 @@ int cm_start(struct hashtable **h, struct hashtable **usersystems) {
 	load_usersystems(usersystems);
 	//list_usersystems(*usersystems);
 
-	printf("cm_start end\n");
+	bblog(INFO, "cm_start end");
 
 
 }
@@ -1252,18 +1254,19 @@ int cm_start(struct hashtable **h, struct hashtable **usersystems) {
 /************************************************************/
 
 int cm_getCrawlLibInfo(struct hashtable *h,struct crawlLibInfoFormat **crawlLibInfo,char shortname[]) {
-	debug("cm_getCrawlLibInfo: start");
-	debug("wil search for \"%s\"",shortname);
+	bblog(DEBUG, "cm_getCrawlLibInfo: start");
+	bblog(DEBUG, "wil search for \"%s\"",shortname);
 	if (((*crawlLibInfo) = (struct crawlLibInfoFormat *)hashtable_search(h,shortname)) != NULL) {
 		return 1;
         }
 	else if ((cm_loadCrawlLib(&h, shortname)) && (((*crawlLibInfo) = (struct crawlLibInfoFormat *)hashtable_search(h,shortname)) != NULL)) {
 		//hvis vi ikke kunne finne det i hashen prøver vi å laset på ny
-		debug("Hadde ikke %s fra før, men fikk til å laste den.",shortname);
+		bblog(DEBUG, "Hadde ikke %s fra før, men fikk til å laste den.",shortname);
 		return 1;
 	}
 	else {
 		berror("don't have a crawler for \"%s\"\n",shortname);
+		bblog(ERROR, "don't have a crawler for \"%s\"",shortname);
 
 		return 0;
 	}
@@ -1282,8 +1285,8 @@ cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
 	       collection->id);
 
 	if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
-               	printf(mysql_error(db));
-		blog(LOGERROR,1,"MySQL Error: \"%s\".",mysql_error(db));
+               	bblog(INFO, "%s", mysql_error(db));
+		bblog(ERROR, "MySQL Error: \"%s\".",mysql_error(db));
                	return 0;
        	}
 	mysqlres=mysql_store_result(db); /* Download result from server */
@@ -1296,7 +1299,7 @@ cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
 		//return 1;
 	}
 	else {
-		debug("nrofrows %i\n", numUsers);
+		bblog(DEBUG, "nrofrows %i", numUsers);
 		collection->users = malloc((numUsers+1) * sizeof(char *));
 		if (collection->users == NULL)
 			return 0;
@@ -1327,15 +1330,15 @@ sql_fetch_params(MYSQL *db, struct hashtable ** h, unsigned int coll_id)  {
         AND shareParam.share = %d", coll_id);
 
     if (mysql_real_query(db, mysql_query, strlen(mysql_query))) {
-        printf(mysql_error(db));
-	blog(LOGERROR,1,"MySQL Error: \"%s\".",mysql_error(db));
+        bblog(INFO, mysql_error(db));
+	bblog(ERROR, "MySQL Error: \"%s\".",mysql_error(db));
         exit(1);
     }
 
     MYSQL_RES * res = mysql_store_result(db);
     while ((row = mysql_fetch_row(res)) != NULL) {
         if (!hashtable_insert(*h, strdup(row[1]), strdup(row[0]))) {
-            printf("can't insert param into ht");
+            bblog(INFO, "can't insert param into ht");
             exit(1);
         }
     }
@@ -1355,7 +1358,7 @@ sql_set_crawl_pid(MYSQL *db , int *pid, unsigned int coll_id) {
 		pid_str, coll_id);
 
 	if (mysql_real_query(db, query, strlen(query)))
-		blog(LOGERROR,1,"mysql Error: %s", mysql_error(db));
+		bblog(ERROR, "mysql Error: %s", mysql_error(db));
 }
 
 int
@@ -1369,7 +1372,7 @@ sql_coll_by_pid(MYSQL *db, int crawl_pid) {
     
 	MYSQL_ROW row;
 	if (mysql_real_query(db, query, strlen(query))) {
-		blog(LOGERROR, 1, "mysql error: '%s'", mysql_error(db));
+		bblog(ERROR, "mysql error: '%s'", mysql_error(db));
         exit(1);
     }
     MYSQL_RES * res = mysql_store_result(db);
@@ -1436,11 +1439,11 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 					");
 	}
 
-	debug("mysql_query: %s\n",mysql_query);
+	bblog(DEBUG, "mysql_query: %s",mysql_query);
 
 	if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
-               	printf(mysql_error(db));
-		blog(LOGERROR,1,"MySQL Error: \"%s\" '''%s'''.",mysql_error(db), mysql_query);
+               	bblog(INFO, "%s", mysql_error(db));
+		bblog(ERROR, "MySQL Error: \"%s\" '''%s'''.",mysql_error(db), mysql_query);
 		
                	exit(1);
        	}
@@ -1449,13 +1452,13 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 	(*nrofcollections) = (int)mysql_num_rows(mysqlres);
 
 	if ((*nrofcollections) == 0) {
-		printf("dident find any rows\n");
+		bblog(INFO, "dident find any rows");
 		(*collection) = NULL;		
 		return 0;
 	}
 	else {
 
-	debug("nrofrows %i\n",*nrofcollections);
+	bblog(DEBUG, "nrofrows %i",*nrofcollections);
 
 	(*collection) = malloc(sizeof(struct collectionFormat) * (*nrofcollections));
 
@@ -1466,7 +1469,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 
         i=0;
         while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
-        	debug("\tdata resource: %s, connector: %s, collection_name: %s, lastCrawl: %s, userprefix: %s\n",mysqlrow[0],mysqlrow[1],mysqlrow[2],mysqlrow[3],mysqlrow[8]);
+        	bblog(DEBUG, "  data resource: %s, connector: %s, collection_name: %s, lastCrawl: %s, userprefix: %s",mysqlrow[0],mysqlrow[1],mysqlrow[2],mysqlrow[3],mysqlrow[8]);
 		
 		//lagger inn i info struct
 		(*collection)[i].resource  		= strdup(mysqlrow[0]);	
@@ -1497,7 +1500,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 
 		//runarb: 27 okt usikker på om dette er riktig.
 		if (mysqlrow[10] == NULL) {
-			blog(LOGERROR,1,"MySQL usersystem collom was NULL.");
+			bblog(ERROR, "MySQL usersystem collom was NULL.");
 			return 0;
 		}
 		(*collection)[i].usersystem = strtoul(mysqlrow[10], (char **)NULL, 10);
@@ -1514,7 +1517,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 		collection_normalize_name((*collection)[i].collection_name,strlen((*collection)[i].collection_name));
 
 
-		debug("resource \"%s\", connector \"%s\", collection_name \"%s\"\n",(*collection)[i].resource,(*collection)[i].connector,(*collection)[i].collection_name);
+		bblog(DEBUG, "resource \"%s\", connector \"%s\", collection_name \"%s\"",(*collection)[i].resource,(*collection)[i].connector,(*collection)[i].collection_name);
 
 		cm_collectionFetchUsers(collection[i], db);
                 sql_fetch_params(db, &(*collection)[i].params, (*collection)[i].id);
@@ -1532,10 +1535,10 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 
 		sprintf(mysql_query,"select username,password from collectionAuth where id = %i",(*collection)[i].auth_id);
 
-		debug("mysql_query: %s\n",mysql_query);
+		bblog(DEBUG, "mysql_query: %s",mysql_query);
 
 		if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
-	               	printf(mysql_error(db));
+	               	bblog(INFO, "%s", mysql_error(db));
 	               	exit(1);
 	       	}
 		mysqlres=mysql_store_result(db); /* Download result from server */
@@ -1544,7 +1547,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 		(*collection)[i].password = NULL;
         
 	        while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
-	        	debug("\tUser \"%s\", Password \"%s\"\n",mysqlrow[0],mysqlrow[1]);
+	        	bblog(DEBUG, "\tUser \"%s\", Password \"%s\"",mysqlrow[0],mysqlrow[1]);
 			(*collection)[i].user 			= strdup(mysqlrow[0]);	
 			(*collection)[i].password 		= strdup(mysqlrow[1]);	
 		
@@ -1566,7 +1569,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 	}
 
 
-	debug("cm_searchForCollection: end\n");
+	bblog(DEBUG, "cm_searchForCollection: end");
 	return 1;
 	
 }
@@ -1577,11 +1580,11 @@ int cm_handle_crawlcanconect(MYSQL *db, char cvalue[]) {
 	int nrofcollections;
 	int i;
 
-	printf("cm_handle_crawlcanconect (%s)\n",cvalue);
+	bblog(INFO, "cm_handle_crawlcanconect (%s)", cvalue);
 
 	cm_searchForCollection(db, cvalue,&collections,&nrofcollections);
 
-	printf("crawlcanconect: cm_searchForCollection done. Found %i collection(s)\n",nrofcollections);
+	bblog(INFO, "crawlcanconect: cm_searchForCollection done. Found %i collection(s)", nrofcollections);
 	if (nrofcollections == 1) {
 		
 		#ifndef DEBUG
@@ -1589,6 +1592,7 @@ int cm_handle_crawlcanconect(MYSQL *db, char cvalue[]) {
 		//make a conectina for add to use
 		if (!bbdn_conect(&collections[0].socketha,"",global_bbdnport)) {
 			berror("can't conect to bbdn (boitho backend document server)\n");
+			bblog(ERROR, "can't conect to bbdn (boitho backend document server)");
 			return 0;
 		}
 
@@ -1597,12 +1601,12 @@ int cm_handle_crawlcanconect(MYSQL *db, char cvalue[]) {
 		}
 
 		//ber bbdn om å lukke
-		printf("closeing bbdn con\n");
+		bblog(INFO, "closeing bbdn conn");
                 bbdn_close(&collections[0].socketha);
 		#endif
 	}
 	else {
-		printf("crawlcanconect: Error got back %i coll to crawl\n",nrofcollections);
+		bblog(INFO, "crawlcanconect: Error got back %i coll to crawl", nrofcollections);
 	}
 
 
@@ -1632,7 +1636,7 @@ void set_crawl_state(MYSQL *db, int state, unsigned int coll_id, char * msg) {
 			break;
 
 		default:
-			fprintf(stderr, "Unknown crawl state %d line: %s file: %s", 
+			bblog(ERROR, "Unknown crawl state %d line: %s file: %s", 
 				state, __LINE__, __FILE__);
 			exit(1);
 	}
@@ -1646,7 +1650,7 @@ int sql_set_crawler_message(MYSQL *db, int crawler_success  , char mrg[], unsign
         MYSQL_RES *mysqlres; /* To be used to fetch information into */
         MYSQL_ROW mysqlrow;
 
-	blog(LOGACCESS, 2, "Status: set_crawler_message: mesage: \"%s\", success: %i, id: %i.",mrg,crawler_success,id);
+	bblog(INFO, "Status: set_crawler_message: mesage: \"%s\", success: %i, id: %i.",mrg,crawler_success,id);
 
 	//escaper queryet rikit
     mysql_real_escape_string(db,messageEscaped,mrg,strlen(mrg));
@@ -1661,13 +1665,13 @@ int sql_set_crawler_message(MYSQL *db, int crawler_success  , char mrg[], unsign
 
 	}
 
-	blog(LOGACCESS,2,"Status: \"%s\".",mysql_query);
+	bblog(INFO, "Status: \"%s\".",mysql_query);
 
         //debug("mysql_query: %s\n",mysql_query);
 
         if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
                 //printf(mysql_error(&demo_db));
-		blog(LOGERROR,1,"Mysql Error: \"%s\".",mysql_error(db));
+		bblog(ERROR, "Mysql Error: \"%s\".",mysql_error(db));
                 exit(1);
         }
 
@@ -1701,7 +1705,7 @@ int crawl_lock(struct collection_lockFormat *collection_lock, char collection[])
 
 	sprintf((*collection_lock).lockfile,"var/boitho-collections-%s.lock",collection);
 
-	debug("locking lock \"%s\"",(*collection_lock).lockfile);
+	bblog(DEBUG, "locking lock \"%s\"",(*collection_lock).lockfile);
 
 	if (((*collection_lock).LOCK = bfopen((*collection_lock).lockfile,"w+")) == NULL) {
 		perror((*collection_lock).lockfile);
@@ -1727,7 +1731,7 @@ int crawl_element_lock(struct collection_lockFormat *collection_lock, char conne
 
 	sprintf((*collection_lock).elementlockfile,"var/boitho-element-%s.lock",connector);
 
-	debug("locking lock \"%s\"",(*collection_lock).elementlockfile);
+	bblog(DEBUG, "locking lock \"%s\"",(*collection_lock).elementlockfile);
 
 	if (((*collection_lock).ELEMENTLOCK = bfopen((*collection_lock).elementlockfile,"w+")) == NULL) {
 		perror((*collection_lock).elementlockfile);
@@ -1769,16 +1773,16 @@ int is_test_collection(struct collectionFormat * coll) {
 * Redirect stderr, stdout to file */
 int redirect_stdoutput(char * file) {
     if (file == NULL) {
-        blog(LOGERROR, 1, "No output file for test coll");
+        bblog(ERROR, "No output file for test coll");
         return 0;
     }
 
     if (file_exist(file)) {
-        blog(LOGERROR, 1, "Test output file '%s' already exists.", file);
+        bblog(ERROR, "Test output file '%s' already exists.", file);
         return 0;
     }
 
-    printf("tc: redirecting std[out,err] to %s\n", file);
+    bblog(INFO, "tc: redirecting std[out,err] to %s",  file);
     if ((freopen(file, "a+", stdout)) == NULL
             || freopen(file, "a+", stderr) == NULL) {
         perror(file);
@@ -1789,14 +1793,14 @@ int redirect_stdoutput(char * file) {
 
 void sql_connect(MYSQL *db) {
 	if (!mysql_init(db)) {
-		blog(LOGERROR, 1, "mysql_init, out of memory");
+		bblog(ERROR, "mysql_init, out of memory");
 		exit(1);
 	}
 
 	if (!mysql_real_connect(db, MYSQL_HOST, MYSQL_USER, 
 			MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)) {
-		printf(mysql_error(db));
-		blog(LOGERROR, 1, "Mysql connect error: '%s'. Exiting.", mysql_error(db));
+		bblog(INFO, "%s", mysql_error(db));
+		bblog(ERROR, "Mysql connect error: '%s'. Exiting.", mysql_error(db));
 		exit(1);
 	}
 }
@@ -1815,15 +1819,15 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 		collection[i].extra = extra;
 		collection[i].docsRemaining = docsRemaining;
 
-		blog(LOGACCESS,1,"Starting crawl of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
+		bblog(ERROR,"Starting crawl of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
 
 #ifdef BLACK_BOKS
 		long long left = kbytes_left_in_dir(BB_DATA_DIR);
 		if (left == -1)
-			warnx("Warn: Unable to check space left in lots.");
+			bblog(WARN, "Unable to check space left in lots.");
 		else if (left < MIN_DISK_REQUIRED) {
 			set_crawl_state(db, CRAWL_ERROR, collection[i].id, "Crawl request ignored. Not enough disk space.");
-			blog(LOGERROR, 1, "Not enough disk space to craw, space left: %fMB", left / 1024.0);
+			bblog(ERROR, "Not enough disk space to craw, space left: %fMB", left / 1024.0);
 			continue;
 		} 
 		else { 
@@ -1835,7 +1839,7 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
         int output_redirected = 0;
         if (is_test_collection(&collection[i])) {
             if (!redirect_stdoutput(collection[i].extra)) {
-                blog(LOGERROR, 1, "test collection error, skipping.");
+                bblog(ERROR, "test collection error, skipping.");
                 continue;
             }
             
@@ -1849,7 +1853,7 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 		//sletter collection. Gjør dette uavhenging om vi har lock eller ikke, slik at vi altid får slettet, så kan vi gjøre
 		// ny crawl etterpå hvis vi ikke hadde lock
 		if (flag == crawl_recrawl) {
-			debug("crawl_recrawl");
+			bblog(DEBUG, "crawl_recrawl");
 
 			char querybuf[1024];
 			int querylen;
@@ -1857,8 +1861,8 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 			querylen = snprintf(querybuf, sizeof(querybuf), "UPDATE shares SET last = NULL WHERE id = '%d'",
 					    collection[i].id);
 			if (mysql_real_query(db, querybuf, querylen)) {
-				printf("Mysql error: %s", mysql_error(db));
-				blog(LOGERROR,1,"MySQL Error: %s: \"%s\".", querybuf, mysql_error(db));
+				bblog(INFO, "Mysql error: %s", mysql_error(db));
+				bblog(ERROR, "MySQL Error: %s: \"%s\".", querybuf, mysql_error(db));
 			}
 
 			//nullsetter lastCrawl, som er den verdien som viser siste crawl. 
@@ -1871,7 +1875,7 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 
 		//tester at vi ikke allerede holder på å crawle denne fra før
 		if (!crawl_lock(&collection_lock,collection[i].collection_name)) {
-			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are already crawling it.",collection[i].collection_name);
+			bblog(ERROR, "Error: Can't crawl collection \"%s\". We are already crawling it.",collection[i].collection_name);
 			//runarb: 14 jan 2008: ingen grun til å oppdatere beskjeden, da det som står der er med korekt
                         //set_crawler_message(0,"Error: Can't crawl collection. We are all redy crawling it.",collection[i].id);
 
@@ -1881,7 +1885,7 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 		//tester at vi ikke driver å crawler med den crawleren fra før. Her burde vi kansje 
 		//heller satset på å begrense på server. Slik at for eks to smb servere kan crawles samtidig
 		if (!crawl_element_lock(&collection_lock,collection[i].connector)) {
-			blog(LOGERROR,1,"Error: Can't crawl collection \"%s\". We are already crawling this type/server.",collection[i].collection_name);
+			bblog(ERROR, "Error: Can't crawl collection \"%s\". We are already crawling this type/server.",collection[i].collection_name);
 			set_crawl_state(db, CRAWL_ERROR, collection[i].id,
 				"Can't crawl collection. We are already crawling this type/server.");
 
@@ -1931,7 +1935,7 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 		crawl_unlock(&collection_lock);
 		crawl_element_unlock(&collection_lock);
 
-		blog(LOGACCESS,1,"Finished crawling of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
+		bblog(CLEAN, "Finished crawling of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
 
 	}
 
@@ -1949,22 +1953,22 @@ rewriteurl(MYSQL *db, char *collection, char *url, size_t urllen, char *uri, siz
 	int forret = 1;
 	size_t len = urilen;
 
-	fprintf(stderr, "rewrite1\n");
+	bblog(DEBUG, "rewrite1");
 	if (!cm_searchForCollection(db, collection,&collections,&nrofcollections)) {
-		fprintf(stderr, "rewrite2\n");
-		blog(LOGERROR,1,"warn: Don't have collection info for this subname.");
+		bblog(DEBUG, "rewrite2");
+		bblog(ERROR, "Don't have collection info for this subname.");
 		forret = 0;
 	}
 	else if (!cm_getCrawlLibInfo(global_h,&crawlLibInfo,collections->connector)) {
-		fprintf(stderr, "rewrite3\n");
-		blog(LOGERROR,1,"Error: can't get CrawlLibInfo.");
+		bblog(DEBUG, "rewrite3");
+		bblog(ERROR, "Error: can't get CrawlLibInfo.");
 		//exit(1);
 		forret = 0;
 	} else if (crawlLibInfo->rewrite_url == NULL) {
-		fprintf(stderr, "Don't have a rewrite url rutine for this connector.\n");
+		bblog(DEBUG, "Don't have a rewrite url rutine for this connector.");
 		forret = 0;
 	} else if (!((*crawlLibInfo->rewrite_url)(collections, url, uri, fulluri, len, ptype, btype))) {
-		fprintf(stderr, "rewrite4\n");
+		bblog(DEBUG, "rewrite4");
 		memcpy(uri, url, urilen);
 		shortenurl(uri, urilen);
 		memcpy(fulluri, url, fullurilen);
@@ -1978,7 +1982,7 @@ rewriteurl(MYSQL *db, char *collection, char *url, size_t urllen, char *uri, siz
 		memcpy(fulluri, url, fullurilen);
 	    }
 
-	fprintf(stderr, "rewrite6\n");
+	bblog(DEBUG, "rewrite6");
 
 	sm_collectionfree(&collections,nrofcollections);
 
@@ -2002,11 +2006,11 @@ addForeignUser(char *collection, char *user, char *group)
 
 	querylen = snprintf(query, sizeof(query), "INSERT INTO foreignUserSystem (usersystem, username, groupname)"
 			"VALUES(%d, '%s', '%s')", collections[0].usersystem, user, group);
-	printf("Query: %s\n", query);
+	bblog(INFO, "Query: %s",  query);
 	
 	n = 1;
 	if (mysql_real_query(&db, query, querylen)) {
-		blog(LOGERROR, 1, "Mysql error: %s", mysql_error(&db));
+		bblog(ERROR, "Mysql error: %s", mysql_error(&db));
 		n = 0;
 	}
 
@@ -2033,7 +2037,7 @@ removeForeignUsers(char *collection)
 
 	n = 1;
 	if (mysql_real_query(&db, query, querylen)) {
-		blog(LOGERROR, 1, "Mysql error: %s", mysql_error(&db));
+		bblog(ERROR, "Mysql error: %s", mysql_error(&db));
 		n = 0;
 	}
 
@@ -2053,23 +2057,23 @@ void connectHandler(int socket) {
 	struct timeval start_time, end_time;
 	int count = 0;
 	
-        printf("got new connection\n");
+        bblog(INFO, "got new connection");
 
 	while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
 
 		gettimeofday(&start_time_all, NULL);
 
-	        debug("size is: %i\nversion: %i\ncommand: %i\n",packedHedder.size,packedHedder.version,packedHedder.command);
+	        bblog(DEBUG, "size is: %i version: %i command: %i ",packedHedder.size,packedHedder.version,packedHedder.command);
 	        packedHedder.size = packedHedder.size - sizeof(packedHedder);
 
 
 		if (packedHedder.command == cm_crawlcollection) {
 			char extrabuf[512];
-			printf("crawlcollection\n");
+			bblog(INFO, "crawlcollection");
 			
 			recvall(socket,collection,sizeof(collection));
 			recvall(socket,extrabuf,sizeof(extrabuf));
-			printf("collection \"%s\"\n",collection);
+			bblog(INFO, "collection \"%s\"", collection);
 
 			struct collectionFormat *collections;
 			int nrofcollections;
@@ -2108,12 +2112,12 @@ void connectHandler(int socket) {
 		else if (packedHedder.command == cm_recrawlcollection) {
 			char extrabuf[512];
 			int docsRemaining;
-			printf("recrawlcollection\n");
+			bblog(INFO, "recrawlcollection");
 			
 			recvall(socket,collection,sizeof(collection));
 			recvall(socket, &docsRemaining, sizeof docsRemaining);
 			recvall(socket,extrabuf,sizeof extrabuf);
-			printf("collection \"%s\"\n",collection);
+			bblog(INFO, "collection \"%s\"", collection);
 
 			struct collectionFormat *collections;
 			int nrofcollections;
@@ -2137,10 +2141,10 @@ void connectHandler(int socket) {
 
 		}
 		else if (packedHedder.command == cm_deleteCollection) {
-			printf("cm_deleteCollection\n");
+			bblog(INFO, "cm_deleteCollection");
 			
 			recvall(socket,collection,sizeof(collection));
-			printf("collection \"%s\"\n",collection);
+			bblog(INFO, "collection \"%s\"", collection);
 
 			struct collectionFormat *collections;
 			int nrofcollections;
@@ -2151,8 +2155,9 @@ void connectHandler(int socket) {
 			if (!crawl_lock(&collection_lock,collection)) {
 				intresponse=0;
 				sendall(socket,&intresponse, sizeof(int));
-				char errormsg[] = { "Can't delete collection, it's being crawled." };
+				char errormsg[] = "Can't delete collection, it's being crawled.";
 
+				bblog(ERROR, "%s", errormsg);
 				len = (strlen(errormsg) +1);
 				sendall(socket,&len, sizeof(int));			
 				sendall(socket,&errormsg, len);		
@@ -2172,13 +2177,9 @@ void connectHandler(int socket) {
 				crawl_unlock(&collection_lock);
 
 			}
-
-			
-
-
 		}
 		else if (packedHedder.command == cm_scan) {
-			printf("scan\n");
+			bblog(INFO, "scan");
 			char crawlertype[64];
 			char host[64];
 			char username[64];
@@ -2192,25 +2193,25 @@ void connectHandler(int socket) {
 			recvall(socket,username,sizeof(username));
 			recvall(socket,password,sizeof(password));
 
-			printf("gor scan job:\ncrawlertype %s\nhost %s\nusername %s\npassword %s\n",crawlertype,host,username,password);
+			bblog(INFO, "gor scan job: crawlertype %s host %s username %s password %s", crawlertype,host,username,password);
 
 			if (!scan (global_h,&shares,&nrofshares,crawlertype,host,username,password)) {
-				printf("aa can't scan\n");
+				bblog(INFO, "aa can't scan");
 				socketsendsaa(socket,&shares,0);
-				printf("bb\n");
+				bblog(INFO, "bb");
 				sprintf(errormsg,"Can't scan.");
 
 				len = (strlen(errormsg) +1);
 				sendall(socket,&len, sizeof(int));			
 				sendall(socket,&errormsg, len);			
-				printf("snedet error msg \"%s\" of len %i\n",errormsg,len);
+				bblog(ERROR, "snedet error msg \"%s\" of len %i", errormsg,len);
 					
 			}
 			else {
-				printf("scan ok. Found %i\n",nrofshares);
+				bblog(INFO, "scan ok. Found %i", nrofshares);
 
 				for (i=0;i<nrofshares;++i) {
-					printf("share %s\n",shares[i]);
+					bblog(INFO, "share %s", shares[i]);
 					
 				}
 
@@ -2225,14 +2226,14 @@ void connectHandler(int socket) {
 			char username[64];
                         char password[64];
 
-			printf("cm_pathaccess: start\n");
+			bblog(INFO, "cm_pathaccess: start");
 
 #if 1
 			gettimeofday(&start_time, NULL);
 			recvall(socket,collection,sizeof(collection));
 			gettimeofday(&end_time, NULL);
-			printf("ttt time %f\n",getTimeDifference(&start_time,&end_time));
-			printf("collection: \"%s\", size %i, len %i\n",collection,sizeof(collection),strlen(collection));
+			bblog(INFO, "ttt time %f", getTimeDifference(&start_time,&end_time));
+			bblog(INFO, "collection: \"%s\", size %i, len %i", collection,sizeof(collection),strlen(collection));
 
 			recvall(socket,uri,sizeof(uri));
 
@@ -2242,8 +2243,8 @@ void connectHandler(int socket) {
 			recvall(socket,all,sizeof(all));
 #endif
 
-			printf("collection: \"%s\"\nuri: \"%s\"\nusername \"%s\"\npassword \"%s\"\n",collection,uri,username,password);
-			//printf("collection: \"%s\"\nuri: \"%s\"\nusername \"%s\"\npassword \"%s\"\n",all,all+64,all+64+512,all+64+64+512);
+			bblog(INFO, "collection: \"%s\"\nuri: \"%s\"\nusername \"%s\"\npassword \"%s\"", collection,uri,username,password);
+			//bblog(INFO, "collection: \"%s\"\nuri: \"%s\"\nusername \"%s\"\npassword \"%s\"", all,all+64,all+64+512,all+64+64+512);
 
 			MYSQL db;
 			sql_connect(&db);
@@ -2257,14 +2258,14 @@ void connectHandler(int socket) {
 
 
 
-			printf("cm_pathaccess: end\n");
+			bblog(INFO, "cm_pathaccess: end");
 		}
 		else if (packedHedder.command == cm_crawlcanconect) {
-			printf("crawlcanconect\n");
+			bblog(INFO, "crawlcanconect");
 
 			recvall(socket,collection,sizeof(collection));
 
-			printf("got collection name '%s' to crawl", collection);
+			bblog(INFO, "got collection name '%s' to crawl", collection);
 
 			MYSQL db;
 			sql_connect(&db);
@@ -2272,13 +2273,11 @@ void connectHandler(int socket) {
 
 				berrorbuf = bstrerror();	
 
-				printf("can't connect! error: \"%s\"\n",berrorbuf);
-
+				bblog(ERROR, "can't connect! error: \"%s\"", berrorbuf);
 
 				len = strlen(berrorbuf) +1;
         			sendall(socket,&len, sizeof(int));
 			        sendall(socket,berrorbuf, len);
-
 			}			
 			else {
 				berrorbuf = strdup("ok");
@@ -2290,7 +2289,7 @@ void connectHandler(int socket) {
 				free(berrorbuf);
 			}
 			mysql_close(&db);
-			printf("crawlcanconect: done");
+			bblog(INFO, "crawlcanconect: done");
 			
 		}
 		else if (packedHedder.command == cm_rewriteurl) {
@@ -2298,30 +2297,30 @@ void connectHandler(int socket) {
 			struct timeval start_time2, end_time2;
 			char uri[1024], fulluri[1024];
 
-			puts("cm_rewriteurl start");
+			bblog(INFO, "cm_rewriteurl start");
 
 			//gettimeofday(&start_time2, NULL);
 			recvall(socket, &rewrite, sizeof(rewrite));
 			//gettimeofday(&end_time2, NULL);
-			//printf("# 222 ### Time debug: sending url rewrite data %f\n",getTimeDifference(&start_time2,&end_time2));
+			//bblog(INFO, "# 222 ### Time debug: sending url rewrite data %f",getTimeDifference(&start_time2,&end_time2));
 	
 			MYSQL db;
 			sql_connect(&db);
 			rewriteurl(&db, rewrite.collection, rewrite.url, sizeof(rewrite.url), uri, sizeof(uri), fulluri, sizeof(fulluri), rewrite.ptype, rewrite.btype);
 
 			if (sendall(socket, rewrite.url, sizeof(rewrite.url)) == 0) {
-				perror("sendall(uri)");
+				bblog(ERROR, "sendall(uri)");
 			}
 			if (sendall(socket, uri, sizeof(uri)) == 0) {
-				perror("sendall(uri)");
+				bblog(ERROR, "sendall(uri)");
 			}
 			if (sendall(socket, fulluri, sizeof(uri)) == 0) {
-				perror("sendall(uri)");
+				bblog(ERROR, "sendall(uri)");
 			}
 
 			mysql_close(&db);
 
-			puts("cm_rewriteurl end");
+			bblog(INFO, "cm_rewriteurl end");
 		}
 		else if (packedHedder.command == cm_killcrawl) {
 			int pid;
@@ -2337,12 +2336,12 @@ void connectHandler(int socket) {
 				set_crawl_state(&db, CRAWL_ERROR, coll_id, "User stopped crawl.");
 			}
 			else {
-				blog(LOGACCESS, 1, "cm_killcrawl: no collection has pid %d, ignoring request.", pid);
+				bblog(ERROR, "cm_killcrawl: no collection has pid %d, ignoring request.", pid);
 			}
 			sendall(socket, &ok, sizeof ok);
 			mysql_close(&db);
 
-			printf("cm_killcraw: killed pid %d: %s\n", pid, ok ? "yes" : "no");
+			bblog(INFO, "cm_killcraw: killed pid %d: %s",  pid, ok ? "yes" : "no");
 		}
 		else if (packedHedder.command == cm_listusersus) {
 			char extrabuf[512];
@@ -2365,7 +2364,7 @@ void connectHandler(int socket) {
 			    {
 				if (!redirect_stdoutput(extrabuf))
 				    {
-					blog(LOGERROR, 1, "test usersystem error.");
+					bblog(ERROR, "test usersystem error.");
 				    }
 				else
 				    {
@@ -2378,7 +2377,7 @@ void connectHandler(int socket) {
 			    }
 
 			if ((us = get_usersystem(&db, usersystem, &data)) == NULL) {
-				blog(LOGERROR, 1, "Unable to get usersystem");
+				bblog(ERROR, "Unable to get usersystem");
 				strlcpy(h_users.error, "Unable to get usersystem", sizeof h_users.error);
 				h_users.num_users = -1;
 				n_users = 0;
@@ -2430,7 +2429,7 @@ void connectHandler(int socket) {
 			    {
 				if (!redirect_stdoutput(extrabuf))
 				    {
-					blog(LOGERROR, 1, "test usersystem error.");
+					bblog(ERROR, "test usersystem error.");
 				    }
 				else
 				    {
@@ -2443,7 +2442,7 @@ void connectHandler(int socket) {
 			    }
 
 			if ((us = get_usersystem(&db, usersystem, &data)) == NULL) {
-				blog(LOGERROR, 1, "Unable to get usersystem");
+				bblog(ERROR, "Unable to get usersystem");
 			} 
 			else {
 				r = (us->us_authenticate)(&data, user, pass);
@@ -2477,13 +2476,13 @@ void connectHandler(int socket) {
 			struct timeval ts, te;
 
 			gettimeofday(&ts, NULL);
-			printf("groupsforuserfromusersystem\n");
+			bblog(INFO, "groupsforuserfromusersystem");
 
 			recvall(socket, user, sizeof(user));
 			recvall(socket, &usersystem, sizeof(usersystem));
 			recvall(socket,extrabuf,sizeof extrabuf);
 
-			printf("usersystem \"%d\", user \"%s\"\n", usersystem, user);
+			bblog(INFO, "usersystem \"%d\", user \"%s\"",  usersystem, user);
 
 			// Redirect output:
 			int output_redirected = 0;
@@ -2491,7 +2490,7 @@ void connectHandler(int socket) {
 			    {
 				if (!redirect_stdoutput(extrabuf))
 				    {
-					blog(LOGERROR, 1, "test usersystem error.");
+					bblog(ERROR, "test usersystem error.");
 				    }
 				else
 				    {
@@ -2517,12 +2516,12 @@ void connectHandler(int socket) {
 				    usersystem, user);
 
 				if (mysql_real_query(&db, query, querylen)) {
-					blog(LOGERROR, 1, "Mysql error: %s", mysql_error(&db));
+					bblog(ERROR, "Mysql error: %s", mysql_error(&db));
 				} else {
 					res = mysql_store_result(&db);
 					row = mysql_fetch_row(res);
 					if (row == NULL) {
-						blog(LOGERROR, 1, "Unable to fetch mysql row at %s:%d",__FILE__,__LINE__);
+						bblog(ERROR, "Unable to fetch mysql row at %s:%d",__FILE__,__LINE__);
 						n_groups = 0;
 					} else {
 						strlcpy(secnduser, row[0], sizeof(secnduser));
@@ -2537,14 +2536,14 @@ void connectHandler(int socket) {
 				if (us != NULL) {
 					n_groups = 0;
 					(us->us_listGroupsForUser)(&data, secnduser, &groups, &n_groups);
-					printf("Got %d groups for user %s\n", n_groups, user);
+					bblog(INFO, "Got %d groups for user %s",  n_groups, user);
 				} else {
 					n_groups = 0;
 				}
 			}
 
 			gettimeofday(&te, NULL);
-			printf("GroupsForUser part 1 took %f seconds.\n", getTimeDifference(&ts, &te));
+			bblog(INFO, "GroupsForUser part 1 took %f seconds.",  getTimeDifference(&ts, &te));
 			gettimeofday(&ts, NULL);
 			sendall(socket, &n_groups, sizeof(int));
 			if (n_groups > 0) {
@@ -2557,7 +2556,7 @@ void connectHandler(int socket) {
 				boithoad_respons_list_free(groups);
 			}
 			gettimeofday(&te, NULL);
-			printf("GroupsForUser part 2 took %f seconds.\n", getTimeDifference(&ts, &te));
+			bblog(INFO, "GroupsForUser part 2 took %f seconds.",  getTimeDifference(&ts, &te));
 			free_usersystem_data(&data);
 			
 			mysql_close(&db);
@@ -2584,7 +2583,7 @@ void connectHandler(int socket) {
 			    packedHedder.subname);
 
 			if (mysql_real_query(&db, query, querylen)) {
-				blog(LOGERROR, 1, "Mysql error: %s", mysql_error(&db));
+				bblog(ERROR, "Mysql error: %s", mysql_error(&db));
 				n = -1;
 			} else {
 				res = mysql_store_result(&db);
@@ -2593,18 +2592,18 @@ void connectHandler(int socket) {
 				if (n > 0) {
 					row = mysql_fetch_row(res);
 					if (row == NULL) {
-						blog(LOGERROR, 1, "Unable to fetch mysql row at %s:%d",__FILE__,__LINE__);
+						bblog(ERROR, "Unable to fetch mysql row at %s:%d",__FILE__,__LINE__);
 						mysql_free_result(res);
 					}
 
 					n = atoi(row[0]);
-					printf("Usersystem: %d\n", n);
+					bblog(INFO, "Usersystem: %d",  n);
 				} else {
 					/* Use the primary usersystem */
 					querylen = snprintf(query, sizeof(query),
 							"SELECT id FROM system WHERE is_primary = 1");
 					if (mysql_real_query(&db, query, querylen)) {
-						blog(LOGERROR, 1, "Mysql error: %s", mysql_error(&db));
+						bblog(ERROR, "Mysql error: %s", mysql_error(&db));
 						n = -1;
 					} else {
 						res = mysql_store_result(&db);
@@ -2613,13 +2612,13 @@ void connectHandler(int socket) {
 						if (n > 0) {
 							row = mysql_fetch_row(res);
 							if (row == NULL) {
-								blog(LOGERROR, 1, "Unable to fetch mysql row at %s:%d",
+								bblog(ERROR, "Unable to fetch mysql row at %s:%d",
 										__FILE__,__LINE__);
 								mysql_free_result(res);
 							}
 
 							n = atoi(row[0]);
-							printf("Usersystem: %d\n", n);
+							bblog(INFO, "Usersystem: %d",  n);
 						} else {
 							n = -1;
 						}
@@ -2640,7 +2639,7 @@ void connectHandler(int socket) {
 			recvall(socket, user, sizeof(user));
 			sql_connect(&db);
 
-			printf("Collections for user: %s\n", user);
+			bblog(INFO, "Collections for user: %s",  user);
 			n = collectionsforuser(user, &collections, &db);
 			mysql_close(&db);
 
@@ -2655,14 +2654,14 @@ void connectHandler(int socket) {
 			char group[512];
 			int n;
 
-			printf("addForeignUser\n");
+			bblog(INFO, "addForeignUser");
 			
 			recvall(socket, collection,sizeof(collection));
 			recvall(socket, user, sizeof(user));
 			recvall(socket, group, sizeof(group));
-			printf("collection \"%s\"\n", collection);
-			printf("user \"%s\"\n", user);
-			printf("group \"%s\"\n", group);
+			bblog(INFO, "collection \"%s\"",  collection);
+			bblog(INFO, "user \"%s\"",  user);
+			bblog(INFO, "group \"%s\"",  group);
 
 			n = addForeignUser(collection, user, group);
 
@@ -2676,24 +2675,24 @@ void connectHandler(int socket) {
 			MYSQL db;
 			int n;
 
-			printf("removeForeignUsers\n");
+			bblog(INFO, "removeForeignUsers");
 			
 			recvall(socket, collection,sizeof(collection));
-			printf("collection \"%s\"\n", collection);
+			bblog(INFO, "collection \"%s\"",  collection);
 
 			n = removeForeignUsers(collection);
 
 			sendall(socket, &n, sizeof(n));
 		}
 		else {
-			printf("unknown command. %i\n", packedHedder.command);
+			bblog(WARN, "unknown command. %i",  packedHedder.command);
 		}
 
 		gettimeofday(&end_time_all, NULL);
-		printf("cm time %f\n",getTimeDifference(&start_time_all,&end_time_all));
+		bblog(INFO, "cm time %f", getTimeDifference(&start_time_all,&end_time_all));
 
 	}
-	printf("end of packed\n");
+	bblog(INFO, "end of packed");
 
         ++count;
 }
@@ -2712,40 +2711,28 @@ mc_add_servers(void)
 }
 #endif
 
-void
-catch_sigusr2(int sig)
-{
-	closelogs(LOGACCESS, LOGERROR);
-	wait_loglock("crawlManager");
-	openlogs(&LOGACCESS,&LOGERROR,"crawlManager");
-}
-
 int main (int argc, char *argv[]) {
 	struct config_t maincfg;
 	struct config_t cmcfg;
 	config_setting_t *cfgarr;
 
+	bblog_init("crawlManager");
+
 	#ifdef DEBUG
-		printf("Ble kompilert med -DDEBUG\n");
+		bblog(DEBUG, "Ble kompilert med -DDEBUG");
 	#endif
 
-	if (!openlogs(&LOGACCESS,&LOGERROR,"crawlManager")) {
-		perror("logs");
-		exit(1);
-	}
-
-	signal(SIGUSR2, catch_sigusr2);
 	write_gpidfile("crawlManager");
 
-	printf("crawlManager: in main\n");
+	bblog(INFO, "crawlManager: in main");
 
-	printf("crawlManager: running maincfgopen\n");
+	bblog(INFO, "crawlManager: running maincfgopen");
 	maincfg = maincfgopen();
 
-	printf("crawlManager: running maincfg_get_int\n");
+	bblog(INFO, "crawlManager: running maincfg_get_int");
 	int crawlport = maincfg_get_int(&maincfg,"CMDPORT");
 	global_bbdnport = maincfg_get_int(&maincfg,"BLDPORT");
-	printf("crawlManager: runing cm_start\n");
+	bblog(INFO, "crawlManager: runing cm_start");
 
 
 	/* Initialize the configuration */
@@ -2753,11 +2740,11 @@ int main (int argc, char *argv[]) {
 
 	/* Load the file */
         #ifdef DEBUG
-	        printf("loading [%s]..\n",bfile("config/crawlmanager.conf"));
+	        bblog(DEBUG, "loading [%s]..", bfile("config/crawlmanager.conf"));
         #endif
 
         if (!config_read_file(&cmcfg, bfile("config/crawlmanager.conf"))) {
-                printf("[%s]failed: %s at line %i\n",bfile("config/crawlmanager.conf"),config_error_text(&cmcfg),config_error_line(&cmcfg));
+                bblog(ERROR, "[%s]failed: %s at line %i", bfile("config/crawlmanager.conf"),config_error_text(&cmcfg),config_error_line(&cmcfg));
         	exit(1);
         }
 
@@ -2773,7 +2760,7 @@ int main (int argc, char *argv[]) {
 		}
 		memcache_servers[i].addr = NULL;
 	} else {
-		printf("No memcache servers specified, disabling pathaccess caching.\n");
+		bblog(INFO, "No memcache servers specified, disabling pathaccess caching.");
 		memcache_servers = NULL;
 	}
 

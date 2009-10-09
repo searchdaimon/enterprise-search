@@ -9,6 +9,7 @@
 #include "../perlembed/perlembed.h"
 #include "../crawl/crawl.h"
 
+#include "../logger/logger.h"
 #include "../common/bstr.h"
 #include "../common/boithohome.h"
 #include "../common/debug.h"
@@ -25,12 +26,12 @@ int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, 
 
 	snprintf(perlfile,sizeof(perlfile),"%s/main.pm",collection->crawlLibInfo->resourcepath);
 
-	debug("cargs %p\n",cargs);
+	bblog(DEBUG, "cargs %p\n",cargs);
 
 
 	#ifdef DEBUG
 		//printer ut pekere til colection info, og alle rutinene
-		printf("collection %p, documentExist %p, documentAdd %p, documentError %p, documentContinue %p\n",cargs->collection,cargs->documentExist,cargs->documentAdd,cargs->documentError,cargs->documentContinue);
+		bblog(DEBUG, "collection %p, documentExist %p, documentAdd %p, documentError %p, documentContinue %p",cargs->collection,cargs->documentExist,cargs->documentAdd,cargs->documentError,cargs->documentContinue);
 	#endif
 
 	HV *obj_attr = newHV();
