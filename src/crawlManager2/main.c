@@ -30,7 +30,6 @@
 #include "../common/error.h"
 #include "../common/timediff.h"
 #include "../common/boithohome.h"
-#include "../common/logs.h"
 #include "../common/ht.h"
 #include "../maincfg/maincfg.h"
 #include "../boitho-bbdn/bbdnclient.h"
@@ -2772,8 +2771,5 @@ int main (int argc, char *argv[]) {
 
 
 	maincfgclose(&maincfg);
-
-	closelogs(LOGACCESS,LOGERROR);
-
 }
 
