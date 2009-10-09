@@ -55,6 +55,10 @@ LDFLAGS+=	$(PERL_EMBED_LIB)
 CFLAGS+=	$(PERL_EMBED_INC)
 endif
 
+ifdef WANT_LOGGER
+LDFLAGS+=	${LIBDIR}/liblogger.a
+endif
+
 ifndef NO_DEBUG
 CFLAGS+=	-g
 endif
