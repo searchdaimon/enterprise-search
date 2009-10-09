@@ -1,6 +1,8 @@
 #ifndef _SRC_LOGGER_LOGGER_H_
 #define _SRC_LOGGER_LOGGER_H_
 
+#include <stdarg.h>
+
 typedef enum {
 	CLEAN,
 	ERROR,
@@ -27,6 +29,7 @@ void bblog_set_appenders(unsigned int appenders);
 unsigned int bblog_get_appenders(void);
 severity_t bblog_get_severity(void);
 void bblog(severity_t severity, const char *str, ...);
+void bblogv(severity_t severity, const char *str, va_list ap);
 void bblog_errno(severity_t severity, const char *str, ...);
 void bblog_destroy(void);
 

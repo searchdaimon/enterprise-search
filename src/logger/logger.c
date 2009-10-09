@@ -256,6 +256,16 @@ bblog(severity_t severity, const char *str, ...)
 }
 
 void
+bblogv(severity_t severity, const char *str, va_list ap)
+{
+	if (severity > logger.max_severity)
+		return;
+
+	bblog_internal(severity, str, ap);
+}
+
+
+void
 bblog_destroy(void)
 {
 	bblog_teardown_syslog();
