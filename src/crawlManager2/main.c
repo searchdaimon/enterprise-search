@@ -756,10 +756,13 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 	bblog(DEBUG, "cm_searchForCollection");
 	if (!cm_searchForCollection(db, collection,&collections,&nrofcollections)) {
 		bblog(INFO, "cant't find Collection \"%s\"in db at %s:%d", collection,__FILE__,__LINE__);
-		return 0;
+		// desverre må vi bare returnere tilgang her, da vi ikke har en collection å mappe dette mot. Kan være på 24so hvor
+		// vi ikke har database entrees for alle collectionene.
+		return 1;
 	}
 
-	//skal returnere 1, og bare 1, hvis ikke er det noe feil
+	//skal returnere 1, og bare 1, hvis ikke har vi fått flere en 1, er det noe feil
+	// hvis vi fikk 0 treff, returnerte cm_searchForCollection() 0.
 	if (nrofcollections != 1) {
 		bblog(INFO, "error looking opp collection \"%s\"", collection);
 		return 0;
@@ -1123,6 +1126,7 @@ int cm_loadCrawlLib(struct hashtable **h, char name[]) {
 
 	bblog(DEBUG, "cm_loadCrawlLib(name=%s)",name);
 
+
 	char libpath[PATH_MAX];
 	char perlpath[PATH_MAX];
 	char folderpath[PATH_MAX];
@@ -1231,6 +1235,10 @@ int cm_start(struct hashtable **h, struct hashtable **usersystems) {
 
 	while ((dp = readdir(dirp)) != NULL) {
 		if (dp->d_name[0] == '.') {
+			continue;
+		}
+		if (strcmp(dp->d_name,"Modules") == 0) {
+			bblog(DEBUG, "Skipping system folder %s",dp->d_name);
 			continue;
 		}
 
@@ -1651,7 +1659,7 @@ int sql_set_crawler_message(MYSQL *db, int crawler_success  , char mrg[], unsign
 	bblog(INFO, "Status: set_crawler_message: mesage: \"%s\", success: %i, id: %i.",mrg,crawler_success,id);
 
 	//escaper queryet rikit
-    mysql_real_escape_string(db,messageEscaped,mrg,strlen(mrg));
+	mysql_real_escape_string(db,messageEscaped,mrg,strlen(mrg));
 
 	//printf("mysql_queryEscaped \"%s\"\n",messageEscaped);
 
@@ -2252,7 +2260,7 @@ void connectHandler(int socket) {
 			//intresponse = pathAccess(global_h,all,all+64,all+64+512,all+64+64+512);
 
 			mysql_close(&db);
-            sendall(socket,&intresponse, sizeof(int));
+	                sendall(socket,&intresponse, sizeof(int));
 
 
 
