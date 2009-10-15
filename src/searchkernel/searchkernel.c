@@ -1556,7 +1556,7 @@ void *generatePagesResults(void *arg)
 			if (strcmp((*PagesResults).password,"water66") == 0) {
 				bblog(WARN, "pathaccess: have sodo password. Won't do pathaccess");
 			}
-			else if (PagesResults->TeffArray->iindex[i].subname->config.has_config && !pathaccess(PagesResults,(*(*PagesResults).TeffArray->iindex[i].subname).subname,side->url,(*PagesResults).search_user,(*PagesResults).password)) {
+			else if (!pathaccess(PagesResults,(*(*PagesResults).TeffArray->iindex[i].subname).subname,side->url,(*PagesResults).search_user,(*PagesResults).password)) {
 				bblog(ERROR, "searchkernel: Access denied for file \"%s\" in %s", side->url, (*(*PagesResults).TeffArray->iindex[i].subname).subname);
 
 				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
