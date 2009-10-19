@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LIBS="src/base64 src/newspelling src/getdate src/common src/3pLibs/keyValueHash src/perlembed"
+LIBS="src/base64 src/newspelling src/getdate src/common src/3pLibs/keyValueHash src/perlembed src/ds src/logger"
 
 case $1 in 
 	deps)
