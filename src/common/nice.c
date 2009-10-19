@@ -34,11 +34,12 @@ enum {
 #define IOPRIO_CLASS_SHIFT      13
 
 void
-ionice_idle(void)
+ionice_benice(void)
 {
-	int ioprio = 0;
-	int ioclass = IOPRIO_CLASS_IDLE;
+	int ioprio = 7;
+	int ioclass = IOPRIO_CLASS_BE;
 
+	bblog(INFO, "Setting ionice for process to IDLE.");
 	if (ioprio_set(IOPRIO_WHO_PROCESS, getpid(), ioprio | (ioclass << IOPRIO_CLASS_SHIFT))) {
 		bblog_errno(ERROR, "ioprio_set(): Unable to set idle io priority");
 	}
