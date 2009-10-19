@@ -18,7 +18,11 @@
 
 #define CONFIG_WATCHER_POLL 1
 
-static logger_t logger;
+static logger_t logger = {
+	.name = "unknown",
+	.appenders = LOGGER_APPENDER_STDERR,
+	.max_severity = INFO,
+};
 static char bblog_path[PATH_MAX];
 static char bblog_configpath[PATH_MAX];
 static severity_t default_severity = WARN;
