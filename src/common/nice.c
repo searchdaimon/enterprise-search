@@ -43,4 +43,7 @@ ionice_benice(void)
 	if (ioprio_set(IOPRIO_WHO_PROCESS, getpid(), ioprio | (ioclass << IOPRIO_CLASS_SHIFT))) {
 		bblog_errno(ERROR, "ioprio_set(): Unable to set idle io priority");
 	}
+	if (nice(15) == -1) {
+		bblog_errno(ERROR, "nice(15): Unable to increment cpu nice");
+	}
 }
