@@ -19,6 +19,7 @@
 #include "../common/re.h"
 #include "../common/gcwhisper.h"
 #include "../common/reposetory.h"
+#include "../common/nice.h"
 
 #include "../perlembed/perlembed.h"
 
@@ -67,6 +68,8 @@ void connectHandler(int socket) {
                 struct timeval tot_start_time, tot_end_time;
                 gettimeofday(&tot_start_time, NULL);
         #endif
+
+	ionice_benice();
 
 while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
 

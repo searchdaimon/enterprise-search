@@ -201,8 +201,6 @@ main(int argc, char **argv)
 	char *word = "logge"; //"heimdalsmunnen";
 	FILE *fp;
 	int i;
-	struct suggest_input **suffixtree_find_prefix(struct suffixtree *, char *, char *);
-
 
 	if (sd == NULL) {
 		fprintf(stderr, "Could not initialize suggest\n");

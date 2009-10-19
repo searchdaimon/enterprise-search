@@ -31,6 +31,7 @@
 #include "../common/timediff.h"
 #include "../common/boithohome.h"
 #include "../common/ht.h"
+#include "../common/nice.h"
 #include "../maincfg/maincfg.h"
 #include "../boitho-bbdn/bbdnclient.h"
 
@@ -781,7 +782,7 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 	bblog(DEBUG, "cm_getCrawlLibInfo");
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,collections[0].connector)) {
 		bblog(INFO, "can't get CrawlLibInfo");
-		return 0;
+		return 1;
 	}
 	collections[0].crawlLibInfo = crawlLibInfo;
 
@@ -2077,6 +2078,7 @@ void connectHandler(int socket) {
 			char extrabuf[512];
 			bblog(INFO, "crawlcollection");
 			
+			ionice_benice();
 			recvall(socket,collection,sizeof(collection));
 			recvall(socket,extrabuf,sizeof(extrabuf));
 			bblog(INFO, "collection \"%s\"", collection);
@@ -2120,6 +2122,7 @@ void connectHandler(int socket) {
 			int docsRemaining;
 			bblog(INFO, "recrawlcollection");
 			
+			ionice_benice();
 			recvall(socket,collection,sizeof(collection));
 			recvall(socket, &docsRemaining, sizeof docsRemaining);
 			recvall(socket,extrabuf,sizeof extrabuf);
@@ -2149,6 +2152,7 @@ void connectHandler(int socket) {
 		else if (packedHedder.command == cm_deleteCollection) {
 			bblog(INFO, "cm_deleteCollection");
 			
+			ionice_benice();
 			recvall(socket,collection,sizeof(collection));
 			bblog(INFO, "collection \"%s\"", collection);
 

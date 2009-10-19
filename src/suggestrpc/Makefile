@@ -3,7 +3,7 @@
 
 # Parameters
 
-CC=/usr/local/bin/gcc 
+CC=/usr/local/bin/gcc  -m32
 
 CLIENT = suggest_client
 CLIENTREDICT = suggest_client_redict
