@@ -1,6 +1,6 @@
 
-CC=/usr/local/bin/gcc -Wall -O2 -g
-#CC=/usr/local/bin/gcc -g -p
+CC=/usr/bin/gcc -Wall -O2 -g -m32
+#CC=/usr/local/bin/gcc -g -p -pg -m32
 
 all:
 	$(CC) -c dcontainer.c
