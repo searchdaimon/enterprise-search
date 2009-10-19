@@ -30,7 +30,7 @@ CPPFLAGS += -D_REENTRANT
 CFLAGS += -g  -DWITH_ACL -DUS_BOITHOAD
 # For using a different usersystem use this, and set usersystem id in acl.c
 #CFLAGS += -g  -DWITH_ACL -DUSERSYSTEM
-LDLIBS += -lnsl -lpthread -lm ../../lib/libcommon.a
+LDLIBS += -lnsl -lpthread -lm ../../lib/libcommon.a ../../lib/liblogger.a
 RPCGENFLAGS = 
 
 # Targets 

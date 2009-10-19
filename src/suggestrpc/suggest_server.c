@@ -11,6 +11,7 @@
 #include "../suggest/suggest.h"
 
 #include "../common/boithohome.h"
+#include "../common/nice.h"
 
 pthread_mutex_t    mutex = PTHREAD_MUTEX_INITIALIZER;
 struct suggest_data *sd = NULL;
@@ -98,6 +99,8 @@ get_best_results_2_svc(struct senddata *argp, struct svc_req *rqstp)
 	struct suggest_input **si, **si2;
 	char **groups;
 	int num;
+
+	ionice_benice();
 
 #if 0
 	if (pthread_mutex_lock(&mutex) != 0) {
