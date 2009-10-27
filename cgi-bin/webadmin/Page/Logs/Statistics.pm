@@ -136,14 +136,12 @@ sub get_searches_day {
 
 	sub md {
 		my $dt = shift;
-		sprintf("%.2d-%.2d", $dt->month, $dt->day);
+		sprintf("%s. %d.", $dt->month_abbr, $dt->day);
 	}
 
 	while ((my $r = $sth->fetchrow_arrayref)) {
 		$data .= md($dt).";0\n" while $dt->add(days => 1)->ymd lt $r->[0];
-		my $md = $r->[0];
-		$md =~ s/^\d+-//;
-		$data .= $md . ";" . $r->[1] . "\n";
+		$data .= md($dt) . ";" . $r->[1] . "\n";
 	}
 
 	return $data;
