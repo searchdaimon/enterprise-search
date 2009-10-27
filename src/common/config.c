@@ -57,18 +57,12 @@ bconfig_flush(int mode) {
 
 	if (mysql_init(&demo_db) == NULL) {
 		fprintf(stderr, "Unable to connect to mysqld\n");
-#ifdef WITH_THREAD
-		pthread_mutex_unlock(&config_lock);
-#endif
-		return 0;
+		goto _free_and_return_error;
 	}
 
         if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
                 printf(mysql_error(&demo_db));
-#ifdef WITH_THREAD
-		pthread_mutex_unlock(&config_lock);
-#endif
-		return 0;
+		goto _free_and_return_error;
         }
 
 	char ad_select_tpl[] = "SELECT '%s' AS configkey, systemParamValue.value AS configvalue \
@@ -90,10 +84,7 @@ bconfig_flush(int mode) {
 
 		if (mysql_real_query(&demo_db, mysql_query[j], strlen(mysql_query[j]))){ /* Execute query */
 			printf(mysql_error(&demo_db));
-#ifdef WITH_THREAD
-			pthread_mutex_unlock(&config_lock);
-#endif
-			return 0;
+			goto _free_and_return_error;
 		}
 
 		mysqlres=mysql_store_result(&demo_db); /* Download result from server */
@@ -124,6 +115,14 @@ bconfig_flush(int mode) {
 	pthread_mutex_unlock(&config_lock);
 #endif
 	return 1;
+
+//firgjør lock og returnerer feil.
+_free_and_return_error:
+#ifdef WITH_THREAD
+	pthread_mutex_unlock(&config_lock);
+#endif
+	return 0;
+
 }
 
 
