@@ -45,10 +45,10 @@ if ($state{action} eq 'searchesday') {
 	    $frequency = $state{last}/20;
 	if ($state{last} > 60) { $data_label = ''; }
 	} else {
-	    $type = 'line';
+	    $type = 'column';
 	    $rotate = '45';
 	    $leftmargin = '60';
-	    $frequency = 1;
+	    $frequency = 2;
 	    #$frequency = $state{last}/20;
 	}
 } elsif ($state{action} eq 'queries') {
