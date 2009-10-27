@@ -147,9 +147,17 @@ sub get_searches_day {
 
 	my $dt = DateTime->now()->subtract(days => $days);
 #	foreach my $r (@data) {
+
+	sub md {
+		my $dt = shift;
+		sprintf("%.2d-%.2d", $dt->month, $dt->day);
+	}
+
 	while ((my $r = $sth->fetchrow_arrayref)) {
-		$data .= $dt->ymd.";0\n" while $dt->add(days => 1)->ymd lt $r->[0];
-		$data .= $r->[0] . ";" . $r->[1] . "\n";
+		$data .= md($dt).";0\n" while $dt->add(days => 1)->ymd lt $r->[0];
+		my $md = $r->[0];
+		$md =~ s/^\d+-//;
+		$data .= $md . ";" . $r->[1] . "\n";
 	}
 
 	return $data;
