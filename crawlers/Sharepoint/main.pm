@@ -705,7 +705,9 @@ sub handle_lists {
 
 	#print STDERR Dumper(map { $_->{Title} } @{ $lists->{Lists} });
 
-	foreach my $list (@{$lists->{Lists}}) {
+	my $ref = [];
+	$ref = $lists->{Lists} if ref $lists->{Lists} eq 'ARRAY';
+	foreach my $list (@{$ref}) {
 
 		print "Title: ".$list->{Title}."\n";
 		#print "Desc: ".$list->{Description}."\n";
