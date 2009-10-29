@@ -4,7 +4,7 @@
 use Time::HiRes;
 use Getopt::Std;
 use LWP::Simple;
-getopts('u:wm:n:', \%opts);
+getopts('u:wm:n:r', \%opts);
 
 
 my $host = shift(@ARGV) or die "must specify a host";
@@ -13,6 +13,8 @@ my $file = shift(@ARGV) or die "must specify a queryfile";
 my $user = "";
 my $max = 0;
 my $ntimes = 1;
+my $random = 0;
+my $wordwash = 0;
 
 if (exists ($opts{'u'}) ) {
 	$user = $opts{'u'} . '@';
@@ -26,10 +28,22 @@ if (exists ($opts{'n'}) ) {
 	$ntimes = $opts{'n'};
 }
 
+if (exists ($opts{'r'}) ) {
+	$random = 1;
+}
+if (exists ($opts{'w'}) ) {
+	$wordwash = 1;
+}
+
 for (1..$ntimes) {
 open(INF,$file) or die("can't open $file: $!");
 my @arr = <INF>;
 close(INF);
+
+if ($random) {
+	fisher_yates_shuffle( \@arr );    # permutes @array in place	
+}
+
 
 print "Server: \t$host\n";
 print "Query file: \t$file\n";
@@ -45,11 +59,17 @@ foreach my $i (@arr) {
 
 	chomp($i);
 
+	#fjerner alt etter første ugyldige tegn. Kjekt for å parse ordbøker og slikt
+	if ($wordwash) {
+		$i =~ /(^[\wæøåÆØÅ ]+)/;
+		$i = $1;
+	}
+
 	$query = $i;
 	$query =~ s/([^A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg;
 
 
-	my $url = "http://$user$host/webclient2/?query=$query&tpl=";
+	my $url = "http://$user$host/webclient2/?query=$query&lang=no";
 	#print "$url\n";
 	
 	our $StartTime  = Time::HiRes::time;
@@ -88,3 +108,15 @@ foreach my $i (@arr) {
 print "----------------------------------------------------------------\n";
 
 }
+
+# array randomiserings funksjon. Se perl cookbook side 121
+sub fisher_yates_shuffle {
+         my $array = shift;
+         my $i;
+         for ($i = @$array; --$i; ) {
+             my $j = int rand ($i+1);
+             next if $i == $j;
+             @$array[$i,$j] = @$array[$j,$i];
+         }
+}
+
