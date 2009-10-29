@@ -1839,6 +1839,7 @@ int runpack(char *ReposetoryData,uLong comprLen,char *inndata,int length) {
 		printf("uncompress error. Code: %i\n",error);
 		return 0;
 	}
+	ReposetoryData[comprLen] = '\0';
 
 	//printf("url: %s\n",(*ReposetoryData).url);
 
