@@ -23,7 +23,7 @@ CFLAGS?=	-pthread
 
 #LDFLAGS+=	-lm -lz -pthread
 		
-OBJS=	logger.o test.o
+OBJS=	logger.o
 
 
 include ../../mk/lib.mk
