@@ -3,4 +3,4 @@ AuthType Basic
 require valid-user
 
 RewriteEngine On
-RewriteRule ^search /cgi-bin/dispatcher_allbb?opensearch=1&%{QUERY_STRING} [L,QSA]
+RewriteRule ^search /cgi-bin/dispatcher_allbb?outformat=opensearch&%{QUERY_STRING} [L,QSA]
