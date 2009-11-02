@@ -703,7 +703,7 @@ struct QueryDataForamt {
 	int MaxsHits;
 	int start;
 	int filterOn;
-	int opensearch;
+	int outformat;
 	double version;
 	char GeoIPcontry[3];
 	char search_user[64];
