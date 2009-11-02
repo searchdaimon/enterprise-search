@@ -12,7 +12,9 @@ WANT_BASE64=	true
 WANT_BDB=	true
 #WANT_PERLEMBED=	true
 WANT_MYSQL=     true
+WANT_LOGGER=	true
 
+CGIBIN=	true
 PROG=	dispatcher_allbb
 
 CFLAGS?=	
