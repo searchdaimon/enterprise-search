@@ -236,7 +236,7 @@ handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *
                struct QueryDataForamt *QueryData,
                struct SiderHederFormat *FinalSiderHeder, int fromCache, struct errorhaFormat *errorha,
                int pageNr, int nrOfServers, int nrOfPiServers, struct filtersTrapedFormat *dispatcherfiltersTraped,
-	       int *nrRespondedServers,struct queryNodeHederFormat *queryNodeHeder) 
+	       int *nrRespondedServers,struct queryNodeHederFormat *queryNodeHeder, MYSQL *demo_db) 
 {
 	int AdultPages, NonAdultPages;
 	int posisjon, i;
@@ -311,7 +311,7 @@ showabal,AddSiderHeder[i].servername);
 
 		//hvis vi ikke fikk svar fra noen
 		if(*nrRespondedServers == 0) {
-			die(16,"","Couldn't contact the search system. Please try again later.");
+			dieLog(demo_db, QueryData, 16,"","Couldn't contact the search system. Please try again later.");
 		}
 		//genererer feil om at ikke alle server svarte på queryet
 		if (*nrRespondedServers != (nrOfServers + nrOfPiServers)) {
@@ -882,6 +882,8 @@ int main(int argc, char *argv[])
 	memset(&queryNodeHeder,'\0',sizeof(queryNodeHeder));
 	QueryData.navmenucfg[0] = '\0';
 
+	cgi_set_defaults(&QueryData);
+
         //hvis vi har argumeneter er det første et query
         if (getenv("QUERY_STRING") == NULL) {
 
@@ -893,7 +895,7 @@ int main(int argc, char *argv[])
         	extern char *optarg;
         	extern int optind, opterr, optopt;
         	char c;
-        	while ((c=getopt(argc,argv,"apr:s:m:o:"))!=-1) {
+        	while ((c=getopt(argc,argv,"apr:s:m:o:f:"))!=-1) {
         	        switch (c) {
 				case 'a':
 					anonymous = 1;
@@ -921,6 +923,17 @@ int main(int argc, char *argv[])
         	                        optMaxsHits = atoi(optarg);
                 	                printf("will show max %i pages\n",optStart);
                 	                break;
+        	                case 'f':
+        	                        if (strcmp(optarg,"opensearch") == 0) {
+						QueryData.outformat = _OUT_FOMRAT_OPENSEARCH;
+					}
+					else {
+						printf("Unknown out format %s\n",optRank);
+						exit(-1);
+					}
+                	                printf("will output data in \"%s\" format\n",optRank);
+                	                break;
+
                         	default:
 					printf("ukjent option\n");
                                 	exit(1);
@@ -1023,7 +1036,6 @@ int main(int argc, char *argv[])
 		if (access == ACCESS_TYPE_NONE) 
 			die(1,"", "Access key missing, or wrong access key.");
 		
-		cgi_set_defaults(&QueryData);
 		cgi_fetch_common(&QueryData, &noDoctype);
 		if (access == ACCESS_TYPE_LIMITED)
 			cgi_fetch_limited(&QueryData, remoteaddr);
@@ -1039,6 +1051,8 @@ int main(int argc, char *argv[])
 		QueryData.start = MAX_RESULT_OFFSET;
 	}
 
+	//aaa
+	dumpQueryDataForamt(&QueryData);	
 
 	struct subnamesConfigFormat default_cfg;
 	read_collection_cfg(&default_cfg);
@@ -1617,7 +1631,7 @@ int main(int argc, char *argv[])
 				brGetPages(addsockfd,nrOfAddServers,AddSiderHeder,Sider,&pageNr,0);
 
 				handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, (hascashe || hasprequery), &errorha, pageNr,
-					       nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers, &queryNodeHeder);
+					       nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers, &queryNodeHeder, &demo_db);
 
 				//for((x<FinalSiderHeder.showabal) && (i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)))) {
 
@@ -1711,7 +1725,7 @@ int main(int argc, char *argv[])
 	#endif
 	
 	handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, (hascashe || hasprequery), &errorha, pageNr,
-	               nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers,&queryNodeHeder);
+	               nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers,&queryNodeHeder, &demo_db);
 
 	#ifdef DEBUG_TIME
         	gettimeofday(&end_time, NULL);
@@ -1750,7 +1764,7 @@ int main(int argc, char *argv[])
 	if (dispconfig.writeprequery) {
 		printf("query \"%s\", total %i,showabal %i, nodes %i, time %f\n",QueryData.queryhtml,FinalSiderHeder.TotaltTreff,FinalSiderHeder.showabal,nrRespondedServers,FinalSiderHeder.total_usecs);
 	}
-	else if (QueryData.opensearch) {
+	else if (QueryData.outformat == _OUT_FOMRAT_OPENSEARCH) {
 		disp_out_opensearch(
 			FinalSiderHeder.showabal, 
 			Sider, &queryNodeHeder, 
@@ -1760,13 +1774,13 @@ int main(int argc, char *argv[])
 		
 		);
 	}
-	else if (QueryData.version == 2.0) {
+	else if ((QueryData.outformat == _OUT_FOMRAT_SD) && (QueryData.version == 2.0)) {
 		noDoctype = 1; //det var ikke doctype orginalt i xml'en. Og sende den bryter 24so.
     		disp_out_sd_v2_0(FinalSiderHeder, QueryData, noDoctype, SiderHeder, hascashe, hasprequery, nrRespondedServers, (nrOfServers + nrOfPiServers), nrOfAddServers, dispatcherfiltersTraped,
 		sockfd, addsockfd, AddSiderHeder, errorha, Sider, queryNodeHeder, etime
 		);
 	} 
-	else if (QueryData.version == 2.1) { 
+	else if ((QueryData.outformat == _OUT_FOMRAT_SD) && (QueryData.version == 2.1)) { 
     		disp_out_sd_v2_1(FinalSiderHeder, QueryData, noDoctype, SiderHeder, hascashe, hasprequery, nrRespondedServers, (nrOfServers + nrOfPiServers), nrOfAddServers, dispatcherfiltersTraped,
 		sockfd, addsockfd, AddSiderHeder, errorha, Sider, queryNodeHeder, etime
 		);

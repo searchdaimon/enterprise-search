@@ -55,12 +55,9 @@
 #endif
 
 
-
-void die(int errorcode,char query[] ,const char *fmt, ...) {
+void die_va(int errorcode,char query[], const char *fmt, va_list ap) {
 	FILE *LOGFILE;
 
-	va_list     ap;
-	va_start(ap, fmt);
 	
 	char queryesc[MaxQueryLen*2+1];
 	escapeHTML(queryesc, sizeof queryesc, query);
@@ -78,14 +75,12 @@ void die(int errorcode,char query[] ,const char *fmt, ...) {
 	printf("</search>\n");
 
 
-        //ToDo: må ha låsing her
         if ((LOGFILE = fopen(QUERY_LOG_FILE,"a")) == NULL) {
                 perror(QUERY_LOG_FILE);
         }
         else {
 		
 		flock(fileno(LOGFILE),LOCK_EX);
-                //fprintf(LOGFILE,"error: %i %s\n",errorcode,errormessage);
 		vfprintf(LOGFILE,fmt,ap);
 		fprintf(LOGFILE,"\n");
                 fclose(LOGFILE);
@@ -97,6 +92,24 @@ void die(int errorcode,char query[] ,const char *fmt, ...) {
 
 }
 
+void die(int errorcode,char query[] ,const char *fmt, ...) {
+
+	va_list     ap;
+	va_start(ap, fmt);
+
+	die_va(errorcode,query,fmt, ap);
+}
+
+void dieLog(MYSQL *demo_db, struct QueryDataForamt *QueryData, int errorcode, char query[] ,const char *fmt, ...) {
+	mysql_search_logg(demo_db,QueryData,NULL,0,NULL,0,NULL,0);
+
+	va_list     ap;
+        va_start(ap, fmt);
+
+        die_va(errorcode,query,fmt, ap);
+	
+}
+
 void dumpQueryDataForamt(struct QueryDataForamt *d) {
 	warnx("=dump start ptr: %p size: %d", d, sizeof *d);
 	warnx("query: %s", d->query);
@@ -106,7 +119,7 @@ void dumpQueryDataForamt(struct QueryDataForamt *d) {
 	warnx("MaxHits: %d", d->MaxsHits);
 	warnx("start: %d", d->start);
 	warnx("filterOn: %d", d->filterOn);
-	warnx("opensearch: %d", d->opensearch);
+	warnx("outformat: %d", d->outformat);
 	warnx("version: %f", d->version);
 	warnx("GeoIPcontry: %s", d->GeoIPcontry);
 	warnx("search_user: %s", d->search_user);
@@ -1006,8 +1019,7 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 
 		if (mysql_stmt_prepare(logstmt, query, strlen(query)) != 0) {
 			fprintf(stderr, " mysql_stmt_prepare(), INSERT INTO search_logg failed\n");
-			fprintf(stderr, " Error: \"%s\"\n", mysql_stmt_error(logstmt));
-			
+			fprintf(stderr, " Error: \"%s\"\n", mysql_stmt_error(logstmt));			
 			return;
 		}
 
@@ -1021,12 +1033,21 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 		len[1] = strlen(QueryData->search_user);
 		bind[1].length = &len[1];
 
-		bind[2].buffer_type = MYSQL_TYPE_LONG; // treff
-		bind[2].buffer = &FinalSiderHeder->TotaltTreff;
+		if (FinalSiderHeder==NULL) {
 
-		bind[3].buffer_type = MYSQL_TYPE_DOUBLE; // sÃketid
-		bind[3].buffer = &FinalSiderHeder->total_usecs;
+			bind[2].buffer_type = MYSQL_TYPE_NULL; // treff
+			bind[2].buffer = NULL;
 
+			bind[3].buffer_type = MYSQL_TYPE_NULL; // sÃketid
+			bind[3].buffer = NULL;
+		}
+		else {
+			bind[2].buffer_type = MYSQL_TYPE_LONG; // treff
+			bind[2].buffer = &FinalSiderHeder->TotaltTreff;
+
+			bind[3].buffer_type = MYSQL_TYPE_DOUBLE; // sÃketid
+			bind[3].buffer = &FinalSiderHeder->total_usecs;
+		}
 		bind[4].buffer_type = MYSQL_TYPE_STRING; // ip
 		bind[4].buffer = QueryData->userip;
 		len[4] = strlen(QueryData->userip);
@@ -1069,92 +1090,93 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 		Logging av Paid Inclusion til sql db.
 		************************************************************************************************/
 		#ifndef BLACK_BOKS
+			if (Sider != NULL) {
+				sprintf(query,"insert into pi_search_logg (tid,query,treff,search_tid,ip_adresse,spot,piDocID ) \
+					select NOW(),?,?,?,?,?,id from pi_sider where WWWDocID=? ");
+	
 
-			sprintf(query,"insert into pi_search_logg (tid,query,treff,search_tid,ip_adresse,spot,piDocID ) \
-				select NOW(),?,?,?,?,?,id from pi_sider where WWWDocID=? ");
+				if (mysql_stmt_prepare(pilogstmt, query, strlen(query)) != 0) {
+					fprintf(stderr, " mysql_stmt_prepare(), INSERT into pi_search_logg failed\n");
+					fprintf(stderr, " %s\n", mysql_stmt_error(pilogstmt));
+					return;
+				}
 
+				i = QueryData->MaxsHits * (QueryData->start -1);
+				x = i;
 
-			if (mysql_stmt_prepare(pilogstmt, query, strlen(query)) != 0) {
-				fprintf(stderr, " mysql_stmt_prepare(), INSERT into pi_search_logg failed\n");
-				fprintf(stderr, " %s\n", mysql_stmt_error(pilogstmt));
-				return;
-			}
+				while ((x<(QueryData->MaxsHits * QueryData->start)) && (x<FinalSiderHeder->showabal) && (i < (queryNodeHeder->MaxsHits * (nrOfServers + nrOfPiServers)))) {
 
-			i = QueryData->MaxsHits * (QueryData->start -1);
-			x = i;
+					if (!Sider[i].deletet) {
+						dprintf("pi analyse. Subname \"%s\", pi \"%i\"\n",Sider[i].subname.subname, (int)Sider[i].subname.config.isPaidInclusion);
 
-			while ((x<(QueryData->MaxsHits * QueryData->start)) && (x<FinalSiderHeder->showabal) && (i < (queryNodeHeder->MaxsHits * (nrOfServers + nrOfPiServers)))) {
+						if (Sider[i].subname.config.isPaidInclusion) {
+							unsigned int spot;
 
-				if (!Sider[i].deletet) {
-					dprintf("pi analyse. Subname \"%s\", pi \"%i\"\n",Sider[i].subname.subname, (int)Sider[i].subname.config.isPaidInclusion);
+							spot = x + 1;		
 
-					if (Sider[i].subname.config.isPaidInclusion) {
-						unsigned int spot;
+							memset(bind, 0, sizeof(bind));
+							memset(len, 0, sizeof(len)); // må vi ha denne?
 
-						spot = x + 1;		
+							bind[0].buffer_type = MYSQL_TYPE_STRING; // query
+							bind[0].buffer = QueryData->query;
+							len[0] = strlen(QueryData->query);
+							bind[0].length = &len[0];
+							
+							bind[1].buffer_type = MYSQL_TYPE_LONG; // treff
+							bind[1].buffer = &FinalSiderHeder->TotaltTreff;
+							
+							bind[2].buffer_type = MYSQL_TYPE_DOUBLE; // sÃketid
+							bind[2].buffer = &FinalSiderHeder->total_usecs;
+							
+							bind[3].buffer_type = MYSQL_TYPE_STRING; // ip
+							bind[3].buffer = QueryData->userip;
+							len[3] = strlen(QueryData->userip);
+							bind[3].length = &len[3];
 
-						memset(bind, 0, sizeof(bind));
-						memset(len, 0, sizeof(len)); // må vi ha denne?
-
-						bind[0].buffer_type = MYSQL_TYPE_STRING; // query
-						bind[0].buffer = QueryData->query;
-						len[0] = strlen(QueryData->query);
-						bind[0].length = &len[0];
-
-						bind[1].buffer_type = MYSQL_TYPE_LONG; // treff
-						bind[1].buffer = &FinalSiderHeder->TotaltTreff;
-
-						bind[2].buffer_type = MYSQL_TYPE_DOUBLE; // sÃketid
-						bind[2].buffer = &FinalSiderHeder->total_usecs;
-
-						bind[3].buffer_type = MYSQL_TYPE_STRING; // ip
-						bind[3].buffer = QueryData->userip;
-						len[3] = strlen(QueryData->userip);
-						bind[3].length = &len[3];
-
-						bind[4].buffer_type = MYSQL_TYPE_LONG ; // spot 
-						bind[4].buffer = &spot;
-						bind[4].is_unsigned = 1; 
+							bind[4].buffer_type = MYSQL_TYPE_LONG ; // spot 
+							bind[4].buffer = &spot;
+							bind[4].is_unsigned = 1; 
 			
-						bind[5].buffer_type = MYSQL_TYPE_LONG; // piDocID
-						bind[5].buffer = &Sider[i].iindex.DocID;
-						bind[5].is_unsigned = 1; 
+							bind[5].buffer_type = MYSQL_TYPE_LONG; // piDocID
+							bind[5].buffer = &Sider[i].iindex.DocID;
+							bind[5].is_unsigned = 1; 
 
 
-						if (mysql_stmt_bind_param(pilogstmt, bind) != 0) {
-							fprintf(stderr, " mysql_stmt_bind_param() failed\n");
-							fprintf(stderr, " %s\n", mysql_stmt_error(pilogstmt));
+							if (mysql_stmt_bind_param(pilogstmt, bind) != 0) {
+								fprintf(stderr, " mysql_stmt_bind_param() failed\n");
+								fprintf(stderr, " %s\n", mysql_stmt_error(pilogstmt));
+							}
+
+							if (mysql_stmt_execute(pilogstmt) != 0) {
+								fprintf(stderr, " mysql_stmt_execute(), 1 failed\n");
+								fprintf(stderr, " %s\n", mysql_stmt_error(pilogstmt));
+							}
+
+							/* Get the total number of affected rows */
+							affected_rows= mysql_stmt_affected_rows(pilogstmt);
+
+							if (affected_rows != 1) /* validate affected rows */
+							{
+								fprintf(stderr, " invalid affected rows by MySQL\n");
+								fprintf(stderr, " total affected rows(insert 1): %lu\n", (unsigned long) affected_rows);
+								break;
+							}
 						}
-
-						if (mysql_stmt_execute(pilogstmt) != 0) {
-							fprintf(stderr, " mysql_stmt_execute(), 1 failed\n");
-							fprintf(stderr, " %s\n", mysql_stmt_error(pilogstmt));
-						}
-
-						/* Get the total number of affected rows */
-						affected_rows= mysql_stmt_affected_rows(pilogstmt);
-
-						if (affected_rows != 1) /* validate affected rows */
-						{
-							fprintf(stderr, " invalid affected rows by MySQL\n");
-							fprintf(stderr, " total affected rows(insert 1): %lu\n", (unsigned long) affected_rows);
-							break;
+						else {
+							//dprintf("is NOT pi! :(\n");
 						}
 					}
-					else {
-						//dprintf("is NOT pi! :(\n");
+					//teller bare normale sider (hva med Paid Inclusion ?)
+					// Denne skal vel vaere innenfor !deletet?
+					if (Sider[i].type == siderType_normal) {
+						++x;
 					}
-				}
-				//teller bare normale sider (hva med Paid Inclusion ?)
-				// Denne skal vel vaere innenfor !deletet?
-				if (Sider[i].type == siderType_normal) {
-					++x;
+
+					++i;
 				}
 
-				++i;
+				mysql_stmt_close(pilogstmt);
 			}
-
-			mysql_stmt_close(pilogstmt);
 		#endif
 		/************************************************************************************************/
 
@@ -1170,6 +1192,17 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 		char query [2048];
 		int x, i;
 
+		char TotaltTreff[10], total_usecs[23];
+		
+		if (FinalSiderHeder==NULL) {
+			strcpy(TotaltTreff,"NULL");
+			strcpy(total_usecs,"NULL");
+		}
+		else {
+			snprintf(TotaltTreff,sizeof(TotaltTreff),"\"%i\"",FinalSiderHeder->TotaltTreff);
+			snprintf(total_usecs,sizeof(total_usecs),"\"%f\"",FinalSiderHeder->total_usecs);
+		}
+
 		//escaper queryet rikit
 		mysql_real_escape_string(demo_db,queryEscaped,QueryData->query,strlen(QueryData->query));
 
@@ -1177,11 +1210,11 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 		//logger til mysql
 		sprintf(query,"insert DELAYED into search_logg (id,tid,query,search_bruker,treff,search_tid,ip_adresse,betaler_keywords_treff,\
 			HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang,side) \
-			values(NULL,NOW(),\"%s\",\"%s\",\"%i\",\"%f\",\"%s\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\",\"%i\")",
+			values(NULL,NOW(),\"%s\",\"%s\",%s,%s,\"%s\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\",\"%i\")",
 			queryEscaped,
 			QueryData->search_user,
-			FinalSiderHeder->TotaltTreff,
-			FinalSiderHeder->total_usecs,
+			TotaltTreff,
+			total_usecs,
 			QueryData->userip,
 			totlaAds,
 			QueryData->HTTP_ACCEPT_LANGUAGE,
@@ -1191,6 +1224,7 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 			QueryData->start
 		);
 
+
 		mysql_real_query(demo_db, query, strlen(query));
 
 
@@ -1199,49 +1233,50 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 		************************************************************************************************/
 		#ifndef BLACK_BOKS
 
-
+			if (Sider != NULL) {
 			
-			x = 0;
-			i = 0;			
+				x = 0;
+				i = 0;			
 			
-			while ((x<FinalSiderHeder->showabal) && (i < (queryNodeHeder->MaxsHits * (nrOfServers + nrOfPiServers)))) {
-			
-				if (!Sider[i].deletet) {
-					#ifdef DEBUG
-					printf("pi analyse. Subname \"%s\", pi \"%i\"\n",Sider[i].subname.subname, (int)Sider[i].subname.config.isPaidInclusion);
-					#endif
-
-					if (Sider[i].subname.config.isPaidInclusion) {
-					
-
-						strscpy(query,Sider[i].subname.config.sqlImpressionsLogQuery,sizeof(query));
-						strsandr(query,"$DocID",utoa(Sider[i].iindex.DocID));
-
-						strsandr(query,"$query",queryEscaped);
-						strsandr(query,"$hits",bitoa(FinalSiderHeder->TotaltTreff) );
-						strsandr(query,"$time",ftoa(FinalSiderHeder->total_usecs));
-						strsandr(query,"$ipadress",QueryData->userip);
-						strsandr(query,"$spot",bitoa(x + (QueryData->start * queryNodeHeder->MaxsHits)));
-
+				while ((x<FinalSiderHeder->showabal) && (i < (queryNodeHeder->MaxsHits * (nrOfServers + nrOfPiServers)))) {
+				
+					if (!Sider[i].deletet) {
 						#ifdef DEBUG
-						printf("query \"%s\"\n",query);
+						printf("pi analyse. Subname \"%s\", pi \"%i\"\n",Sider[i].subname.subname, (int)Sider[i].subname.config.isPaidInclusion);
 						#endif
 
-						mysql_real_query(demo_db, query, strlen(query));
+						if (Sider[i].subname.config.isPaidInclusion) {
+						
 
-					}
-					else {
-						#ifdef DEBUG
-						printf("is NOT pi! :(\n");
-						#endif
-					}
-				}
-				//teller bare normale sider (hva med Paid Inclusion ?)
-				if (Sider[i].type == siderType_normal) {
-					++x;
-				}
+							strscpy(query,Sider[i].subname.config.sqlImpressionsLogQuery,sizeof(query));
+							strsandr(query,"$DocID",utoa(Sider[i].iindex.DocID));
 
-				++i;
+							strsandr(query,"$query",queryEscaped);
+							strsandr(query,"$hits",bitoa(FinalSiderHeder->TotaltTreff) );
+							strsandr(query,"$time",ftoa(FinalSiderHeder->total_usecs));
+							strsandr(query,"$ipadress",QueryData->userip);
+							strsandr(query,"$spot",bitoa(x + (QueryData->start * queryNodeHeder->MaxsHits)));
+
+							#ifdef DEBUG
+							printf("query \"%s\"\n",query);
+							#endif
+
+							mysql_real_query(demo_db, query, strlen(query));
+	
+						}
+						else {
+							#ifdef DEBUG
+							printf("is NOT pi! :(\n");
+							#endif
+						}
+					}
+					//teller bare normale sider (hva med Paid Inclusion ?)
+					if (Sider[i].type == siderType_normal) {
+						++x;
+					}
+	
+					++i;
+				}
 			}
 		#endif
 		/************************************************************************************************/

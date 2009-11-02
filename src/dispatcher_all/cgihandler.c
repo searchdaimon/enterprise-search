@@ -75,11 +75,12 @@ void cgi_set_defaults(struct QueryDataForamt *qdata) {
 	qdata->subname[0] = '\0';
 	qdata->orderby[0] = '\0';
 	qdata->filterOn = 1;
-	qdata->opensearch = 0;
+	qdata->outformat = _OUT_FOMRAT_SD;
 	qdata->version = 2.0;
 	qdata->navmenucfg[0] = '\0';
 	qdata->MaxsHits = DefultMaxsHits;
 	qdata->lang = LANG_UNKNOWN;
+	qdata->start = 1;
 	
 
 	// legacy
@@ -99,13 +100,14 @@ void cgi_fetch_common(struct QueryDataForamt *qdata, int *noDocType) {
         *noDocType = (cgi_getentrystr("noDoctype") == NULL) ? 1 : 0;
 
 	int tmpint;
-	qdata->start = ((tmpint = cgi_getentryint("start")) != 0) 
-		? tmpint
-		: 1;
+	if (((tmpint = cgi_getentryint("start")) != 0) ) {
+		qdata->start = tmpint;
+	}
 
-
-	if ((tmpint = cgi_getentryint("opensearch")) != 0)
-		qdata->opensearch = cgi_getentryint("opensearch");
+	if ((cgi_getentrystr("outformat") != NULL) && (strcmp(cgi_getentrystr("outformat"),"opensearch") == 0)) {
+               	qdata->outformat = _OUT_FOMRAT_OPENSEARCH;
+		fprintf(stderr,"ddddd\n");
+        }
 
 	const char *tmpstr;
 	if ((tmpstr = cgi_getentrystr("lang")) != NULL) {

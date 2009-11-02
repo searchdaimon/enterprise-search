@@ -23,6 +23,9 @@
 
     #define maxerrors 5
     #define maxerrorlen 201
+
+#define _OUT_FOMRAT_SD 1
+#define _OUT_FOMRAT_OPENSEARCH 2
    
 #define salt "sdjbjolQdfgkkf"
 
@@ -69,6 +72,8 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
         struct SiderHederFormat *FinalSiderHeder, int totlaAds,
         struct queryNodeHederFormat *queryNodeHeder, int nrOfServers, struct SiderFormat *Sider, int nrOfPiServers);
+
+void dieLog(MYSQL *demo_db, struct QueryDataForamt *QueryData, int errorcode, char query[] ,const char *fmt, ...);
 
 #ifdef WITH_CASHE
 
