@@ -1051,8 +1051,6 @@ int main(int argc, char *argv[])
 		QueryData.start = MAX_RESULT_OFFSET;
 	}
 
-	//aaa
-	dumpQueryDataForamt(&QueryData);	
 
 	struct subnamesConfigFormat default_cfg;
 	read_collection_cfg(&default_cfg);

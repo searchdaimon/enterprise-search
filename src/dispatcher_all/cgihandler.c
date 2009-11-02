@@ -106,7 +106,6 @@ void cgi_fetch_common(struct QueryDataForamt *qdata, int *noDocType) {
 
 	if ((cgi_getentrystr("outformat") != NULL) && (strcmp(cgi_getentrystr("outformat"),"opensearch") == 0)) {
                	qdata->outformat = _OUT_FOMRAT_OPENSEARCH;
-		fprintf(stderr,"ddddd\n");
         }
 
 	const char *tmpstr;
