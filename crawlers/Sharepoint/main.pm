@@ -67,7 +67,7 @@ sub get_list {
 sub get_list_items {
 	my ($self, $name, $pager, $lastcrawl) = @_;
 
-	my $startg = Time::HiRes::time;
+	my $startb = Time::HiRes::time;
 	my $q;
 	$self->{lastcrawl} = $lastcrawl;
 	if (defined $self->{lastcrawl} and $self->{lastcrawl} > 0) {
@@ -115,7 +115,8 @@ sub get_list_items {
 			SOAP::Data->new(name => 'Query', value => [ $q, ]),
 		]),
 	];
-	my $endg = Time::HiRes::time;
+	my $endb = Time::HiRes::time;
+	print STDERR "Build took:". ($endb-$startb)."\n";
 
 	my $startg = Time::HiRes::time;
 	my $r = $self->do_query('GetListItems', $data);
