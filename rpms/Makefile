@@ -236,8 +236,8 @@ fileFilter:
 	rpmbuild -bb $(boitho-fileFilter_name).spec
 
 setup_login:
-	make $(BOITHOHOME)/vmware/run_setup
-	perl rpmmagic.pl --post "sh /home/setup/post_install.sh" $(boitho-setup_login_name) $(boitho-setup_login_version) $(BOITHOHOME)/vmware / home/setup/run_setup home/root/post_install.sh sbin/ifup-local
+	cd $(BOITHOHOME)/vmware/; make run_setup; cd -
+	perl rpmmagic.pl --post "sh /home/root/post_install.sh" $(boitho-setup_login_name) $(boitho-setup_login_version) $(BOITHOHOME)/vmware / etc/hosts etc/sysconfig/network home/setup/run_setup home/root/post_install.sh sbin/ifup-local
 	rpmbuild -bb $(boitho-setup_login_name).spec
 
 tlcd-gt14:
