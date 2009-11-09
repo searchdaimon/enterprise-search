@@ -1,5 +1,5 @@
 %define name boitho-base
-%define version 1.3.0
+%define version 1.3.1
 %define release 1
 
 Summary: Boitho base system. Creates user and other things that is common for all modules
@@ -43,6 +43,8 @@ mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/sql/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/sysconfig/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/bin/
 
+install -d -m 700 $RPM_BUILD_ROOT/home/sdes/.ssh/
+install -D -m 600 authorized_keys $RPM_BUILD_ROOT/home/sdes/.ssh/authorized_keys
 
 #install -D -m 755 boitho.repo $RPM_BUILD_ROOT/etc/yum.repos.d/boitho.repo
 
@@ -62,8 +64,22 @@ chown boitho /home/boitho/boithoTools/var
 chown boitho /home/boitho/boithoTools/logs/
 chown boitho /boithoData
 
+LOGINUSER=sdes
+getent passwd $LOGINUSER > /dev/null
+if [ $? -eq 2 ]; then
+	/usr/sbin/useradd -m -s /bin/bash $LOGINUSER
+fi
 
 %post
+
+SSHDCONFIG=/etc/ssh/sshd_config
+
+# Do not permit root to log directly in
+egrep "^PermitRootLogin no$" $SSHDCONFIG > /dev/null  || echo "PermitRootLogin no" >> $SSHDCONFIG
+# Do not allow password logins
+egrep "^PasswordAuthentication yes$" $SSHDCONFIG && sed -i.bak -e 's/^PasswordAuthentication yes$/PasswordAuthentication no/' $SSHDCONFIG 
+
+/etc/init.d/sshd restart
 
 %files
 %defattr(-,boitho,boitho)
@@ -83,6 +99,11 @@ chown boitho /boithoData
 /home/boitho/boithoTools/sql
 /home/boitho/boithoTools/sysconfig
 /home/boitho/boithoTools/bin
+
+%defattr(700,sdes,sdes)
+/home/sdes/.ssh
+%defattr(600,sdes,sdes)
+/home/sdes/.ssh/authorized_keys
 
 #/etc/yum.repos.d/boitho.repo
 

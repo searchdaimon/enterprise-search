@@ -23,7 +23,7 @@ boitho-fileFilter_name = boitho-fileFilter
 boitho-fileFilter_version = 1.3.19
 
 boitho-base_name = boitho-base
-boitho-base_version = 1.3.0
+boitho-base_version = 1.3.1
 
 boitho-apaceconf_name = boitho-apaceconf
 boitho-apaceconf_version = 1.3.0
@@ -279,6 +279,7 @@ base:
 	mkdir $(boitho-base_name)-$(boitho-base_version)
 
 	cp ../blackbox/bbdemo.boitho.com.conf $(boitho-base_name)-$(boitho-base_version)
+	cp ../blackbox/sdes-authorized_keys $(boitho-base_name)-$(boitho-base_version)/authorized_keys
 
 	tar -z -c -f $(boitho-base_name)-$(boitho-base_version).tar.gz $(boitho-base_name)-$(boitho-base_version)
 	mv $(boitho-base_name)-$(boitho-base_version).tar.gz $(HOME)/redhat/SOURCES/	
