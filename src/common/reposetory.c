@@ -1062,13 +1062,13 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 	//leser acl
 	#ifdef BLACK_BOKS
 
-		//begrenser størelsen på en acl. Slik at en klikk ikke gjør at alt ikke fungerer. Må tenke på om 2000 er nokk størelse her
-		if ((*ReposetoryHeader).acl_allowSize > 2000) {
+		//begrenser størelsen på en acl. Slik at en klikk ikke gjør at alt ikke fungerer. Må tenke på om 16384 er nokk størelse her
+		if ((*ReposetoryHeader).acl_allowSize > 16384) {
 			printf("bad acl_allowSize. size %i\n",(*ReposetoryHeader).acl_allowSize);
 			return 0;
 		}
 		#ifdef IIACL
-		if ((*ReposetoryHeader).acl_deniedSize > 2000) {
+		if ((*ReposetoryHeader).acl_deniedSize > 16384) {
 			printf("bad acl_deniedSize. size %i\n",(*ReposetoryHeader).acl_deniedSize);
 			return 0;
 		}
@@ -1244,13 +1244,13 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 	//leser acl
 	#ifdef BLACK_BOKS
 
-		//begrenser størelsen på en acl. Slik at en klikk ikke gjør at alt ikke fungerer. Må tenke på om 2000 er nokk størelse her
-		if ((*ReposetoryHeader).acl_allowSize > 2000) {
+		//begrenser størelsen på en acl. Slik at en klikk ikke gjør at alt ikke fungerer. Må tenke på om 16384 er nokk størelse her
+		if ((*ReposetoryHeader).acl_allowSize > 16384) {
 			printf("bad acl_allowSize. size %i\n",(*ReposetoryHeader).acl_allowSize);
 			return 0;
 		}
 		#ifdef IIACL
-		if ((*ReposetoryHeader).acl_deniedSize > 2000) {
+		if ((*ReposetoryHeader).acl_deniedSize > 16384) {
 			printf("bad acl_deniedSize. size %i\n",(*ReposetoryHeader).acl_deniedSize);
 			return 0;
 		}
@@ -1487,13 +1487,13 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 		//leser acl
 		#ifdef BLACK_BOKS
 
-			//begrenser størelsen på en acl. Slik at en klikk ikke gjør at alt ikke fungerer. Må tenke på om 2000 er nokk størelse her
-			if (((*ReposetoryHeader).acl_allowSize > 2000) || ((*ReposetoryHeader).acl_allowSize < 0)) {
+			//begrenser størelsen på en acl. Slik at en klikk ikke gjør at alt ikke fungerer. Må tenke på om 16384 er nokk størelse her
+			if (((*ReposetoryHeader).acl_allowSize > 16384) || ((*ReposetoryHeader).acl_allowSize < 0)) {
 				printf("bad acl_allowSize. size %i\n",(*ReposetoryHeader).acl_allowSize);
 				return 0;
 			}
 			#ifdef IIACL
-			if (((*ReposetoryHeader).acl_deniedSize > 2000) || ((*ReposetoryHeader).acl_deniedSize < 0)) {
+			if (((*ReposetoryHeader).acl_deniedSize > 16384) || ((*ReposetoryHeader).acl_deniedSize < 0)) {
 				printf("bad acl_deniedSize. size %i\n",(*ReposetoryHeader).acl_deniedSize);
 				return 0;
 			}
