@@ -113,6 +113,7 @@ struct popResultBreakDownTimeFormat {
 #endif
 
 #define MAX_CM_CONSUMERS 2
+#define MAX_CM_CONSUMERS_URLREWRITE 2
 #define SUMMARY_LEN 160
 
 struct socket_pool {
@@ -133,8 +134,10 @@ struct PagesResultsFormat {
 		int showabal;
 		int nextPage;
 		int filterOn;
+		#ifndef BLACK_BOKS
 		int adultpages;
 		int noadultpages;
+		#endif
 		struct QueryDataForamt QueryData;
 		char *servername;
 		//int godPages;
@@ -160,6 +163,7 @@ struct PagesResultsFormat {
 		#endif
 
 		struct socket_pool cmConn;
+		struct socket_pool cmConnUrlrewrite;
 
 		int activetreads;
 
@@ -330,6 +334,8 @@ get_sock_from_pool(struct socket_pool *pool, int *index)
 				pthread_mutex_unlock(&pool->mutex);
 			#endif
 			*index = i;
+
+			bblog(INFO, "~get_sock_from_pool(pool index=%i)",i); 
 			return pool->sock[i];
 		}
 	}
@@ -887,7 +893,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 							tmpuri, sizeof(tmpuri),
 							tmpfulluri, sizeof(tmpfulluri),
 #ifdef WITH_THREAD
-							&PagesResults->cmConn
+							&PagesResults->cmConnUrlrewrite
 #else
 							NULL
 #endif
@@ -1232,10 +1238,6 @@ int time_DIRead_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char 
 	return ret;
 }
 
-//int generatePagesResults( struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall, 
-//struct iindexFormat *TeffArray, int showabal, int filterOn, int adultpages, int noadultpages,struct 
-//QueryDataForamt QueryData, char servername[],int godPages,int MaxsHits,int start) 
-//void *generatePagesResults(struct PagesResultsFormat *PagesResults) 
 void *generatePagesResults(void *arg) 
 {
 
@@ -1249,6 +1251,7 @@ void *generatePagesResults(void *arg)
 	char *htmlBuffer;
 	unsigned short *DomainID;
 
+	double ltime;
 	struct timeval start_time, end_time;
 	int localshowabal;
 	//tread lock
@@ -1394,7 +1397,8 @@ void *generatePagesResults(void *arg)
 
 
 		bblog(INFO, "[tid: %u] looking on  DocID: %u url: \"%s\", subname: \"%s\"", (unsigned int)tid,(*PagesResults).TeffArray->iindex[i].DocID,side->DocumentIndex.Url,(*(*PagesResults).TeffArray->iindex[i].subname).subname);
-		
+
+		#ifndef BLACK_BOKS
 		//adult fra di
 		if (((*PagesResults).filterOn) && (filterAdultWeight_value(side->DocumentIndex.AdultWeight,(*PagesResults).adultpages,(*PagesResults).noadultpages)) ) {
 			bblog(INFO, "Filter: filtered adult. DocID %u, adult value %i, adult bool value %i", 
@@ -1405,6 +1409,8 @@ void *generatePagesResults(void *arg)
 				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterAdultWeight_value,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 	                        continue;
 		}
+		#endif
+
 
 		//filtrerer ut dublikater fra med crc32 fra DocumentIndex
 		if (side->DocumentIndex.crc32 != 0) {
@@ -1571,14 +1577,14 @@ void *generatePagesResults(void *arg)
 			bblog(DEBUG, "pathaccess: done");
 			#endif
 
-			#ifdef DEBUG
-			bblog(DEBUG, "url rewrite: start");
-		#endif
 
 		gettimeofday(&end_time, NULL);
 		(*(*PagesResults).SiderHeder).queryTime.pathaccess += getTimeDifference(&start_time,&end_time);
 
 
+		#ifdef DEBUG
+		bblog(DEBUG, "url rewrite: start");
+		#endif
 		gettimeofday(&start_time, NULL);
 
 #ifdef BLACK_BOKS
@@ -1589,7 +1595,7 @@ void *generatePagesResults(void *arg)
 				(*PagesResults).TeffArray->iindex[i].subname->subname, side->url, 
 				sizeof(side->url), side->uri, sizeof(side->uri), side->fulluri, sizeof(side->fulluri),
 #ifdef WITH_THREAD
-				&PagesResults->cmConn
+				&PagesResults->cmConnUrlrewrite
 #else
 				NULL
 #endif
@@ -1609,7 +1615,10 @@ void *generatePagesResults(void *arg)
 
 		#endif
 		gettimeofday(&end_time, NULL);
-		(*(*PagesResults).SiderHeder).queryTime.urlrewrite += getTimeDifference(&start_time,&end_time);
+		ltime = getTimeDifference(&start_time,&end_time);
+		bblog(DEBUG, "url rewrite: time %f for url \"%s\"", ltime, side->uri);
+
+		(*(*PagesResults).SiderHeder).queryTime.urlrewrite += ltime;
 
 
 		if (1 || !PagesResults->getRank) {
@@ -1893,13 +1902,16 @@ spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa, spelling_
 				char *p;
 				int found;
 
-				if (correct_word(spelling, sa->s[0]))
+				if (correct_word(spelling, sa->s[0])) {
+					bblog(INFO, "correct_word sees: %s is correct.",sa->s[0]);
 					continue;
+				}
 
 				p = check_word(spelling, sa->s[0], &found);
-				if (p == NULL)
+				if (p == NULL) {
+					bblog(INFO, "check_word sees: Didi not find correct spelling.");
 					continue;
-
+				}
 				bblog(INFO, "Found correct spelling: %s",  p);
 				free(sa->s[0]);
 				sa->s[0] = p;
@@ -1916,6 +1928,32 @@ spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa, spelling_
 	return fixed;
 }
 #endif
+
+
+int cmConect_and_pool (struct socket_pool *pool, char errorbuff, int errorbufflen, int max_consumers, struct searchd_configFORMAT *searchd_config){
+
+	int k;
+	pool->max_consumers = max_consumers;
+	if (searchd_config->optSingle) {
+		pool->max_consumers = 1;
+	}
+
+	for (k = 0; k < pool->max_consumers; k++) {
+		bblog(INFO, "making a connection to crawlerManager: %d:%d", k, pool->max_consumers);
+		pool->used[k] = 0;
+		if (!cmc_conect(&pool->sock[k], errorbuff,errorbufflen,searchd_config->cmc_port)) {
+			bblog(ERROR, "%s:%i",errorbuff,(*searchd_config).cmc_port);
+			bblog(INFO, "searchkernel: ~dosearch()");
+			return(0);
+		}
+	}
+	pool->consumers = 0;
+
+	return 1;
+}
+
+
+
 
 int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct SiderHederFormat *SiderHeder,
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames, 
@@ -1937,14 +1975,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	PagesResults.SiderHeder = SiderHeder;
 	PagesResults.antall = 0;
-	//PagesResults.TeffArray;
-	//PagesResults.showabal;
 	PagesResults.filterOn = filterOn;
-	//PagesResults.adultpages
-	//PagesResults.noadultpages
-	//PagesResults.QueryData
 	PagesResults.servername = servername;
-	//PagesResults.godPages
 	PagesResults.start = start;
 	PagesResults.searchd_config = searchd_config;
 	PagesResults.anonymous = anonymous;
@@ -2064,9 +2096,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	PagesResults.TeffArray = malloc(sizeof(struct iindexFormat));
 	PagesResults.TeffArray->nrofHits = 0;
 
-	//int adultpages, noadultpages;
-	//struct QueryDataForamt QueryData;
-
 
 	struct timeval start_time, end_time;
 	struct timeval popResult_start_time, popResult_end_time;
@@ -2089,12 +2118,14 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	(*SiderHeder).queryTime.FilterCount = 0;
 	#endif
 
+
 	#if defined BLACK_BOKS && !defined _24SEVENOFFICE
 
 
+		gettimeofday(&start_time, NULL);
+
 		if (!PagesResults.anonymous) {
 			//henter brukerens passord fra boithoad
-			gettimeofday(&start_time, NULL);
 			//henter inn brukerens passord
 			bblog(INFO, "geting pw for \"%s\"", PagesResults.search_user);
 			/**************************************************************************
@@ -2110,8 +2141,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			}
 			else {
 				//printf("got pw \"%s\" -> \"%s\"\n",PagesResults.search_user,PagesResults.password);
-				gettimeofday(&end_time, NULL);
-				(*SiderHeder).queryTime.getUserObjekt = getTimeDifference(&start_time,&end_time);
 			}
 		} else {
 			bblog(INFO, "Anonymous search");
@@ -2120,20 +2149,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 		/****************************************************************/
 
-		//int socketha;
-		// XXX
-#ifndef WITH_THREAD
-		gettimeofday(&start_time, NULL);
-		int errorbufflen = 512;
-		char errorbuff[errorbufflen];
 
-		bblog(INFO, "making a connection(s) to crawlerManager(s)\n");
-		bblog(INFO, "making a connection(s) to crawlerManager(s)");
 		gettimeofday(&end_time, NULL);
-	        (*SiderHeder).queryTime.cmc_conect = getTimeDifference(&start_time,&end_time);
-#endif
-
-
+		(*SiderHeder).queryTime.getUserObjekt = getTimeDifference(&start_time,&end_time);
+		bblog(INFO, "geting pw tme boithoad_getPassword() %f", (*SiderHeder).queryTime.getUserObjekt);		
 		
 	#endif
 
@@ -2179,7 +2198,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		languageFilternr = 0;
 	}
 
-	// temp:
+
 	#ifdef DEBUG
 	int h;
 	for (h=0;h<languageFilternr;h++) {
@@ -2187,8 +2206,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	}
 	bblog(DEBUG, "languageFilternr %i", languageFilternr);
 	#endif
-	// :temp
 
+	// inaliseres til 1. Hvis vi har tråstøtte, og ikke kjører i single mode settes den så til NROF_GENERATEPAGES_THREADS lengere nede.
 	PagesResults.activetreads = 1;
 
 	#ifdef WITH_THREAD
@@ -2224,8 +2243,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	searchSimple(&PagesResults.antall,&PagesResults.TeffArray,&(*SiderHeder).TotaltTreff,
 			&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
-			orderby,
-			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 0, &crc32maphash, &dups,search_user, searchd_config->cmc_port, PagesResults.anonymous);
+			orderby, filters,&filteron,&PagesResults.QueryData.search_user_as_query, 0, 
+			&crc32maphash, &dups,search_user, searchd_config->cmc_port, PagesResults.anonymous);
+
 	PagesResults.crc32maphash = crc32maphash;
 	PagesResults.dups = dups;
 
@@ -2237,35 +2257,35 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#ifdef BLACK_BOKS
 		#ifdef WITH_THREAD
 			ret = pthread_mutex_init(&PagesResults.cmConn.mutex, NULL);
+			ret = pthread_mutex_init(&PagesResults.cmConnUrlrewrite.mutex, NULL);
+
 			pthread_cond_init(&PagesResults.cmConn.cv, NULL);
+			pthread_cond_init(&PagesResults.cmConnUrlrewrite.cv, NULL);
 		#endif
 
 		int errorbufflen = 512;
 		char errorbuff[errorbufflen];
-		{
-			int k;
-			struct socket_pool *pool = &PagesResults.cmConn;
-			pool->max_consumers = MAX_CM_CONSUMERS;
-			if (searchd_config->optSingle) {
-				pool->max_consumers = 1;
-			}
-			gettimeofday(&start_time, NULL);
-			for (k = 0; k < pool->max_consumers; k++) {
-				bblog(INFO, "making a connection to crawlerManager: %d:%d", k, pool->max_consumers);
-				pool->used[k] = 0;
-				if (!cmc_conect(&pool->sock[k], errorbuff,errorbufflen,(*searchd_config).cmc_port)) {
-					bblog(ERROR, "%s:%i",errorbuff,(*searchd_config).cmc_port);
-					bblog(INFO, "searchkernel: ~dosearch()");
-					return(0);
-				}
-			}
-			pool->consumers = 0;
-			gettimeofday(&end_time, NULL);
+
+		gettimeofday(&start_time, NULL);
+
+		bblog(INFO, "making a connection(s) to crawlerManager(s)\n");
+
+		// lager tilkobling for pathaccess
+		if (!cmConect_and_pool(&PagesResults.cmConn, errorbuff, errorbufflen, MAX_CM_CONSUMERS, searchd_config) ) {
+			return 0;
 		}
-		(*SiderHeder).queryTime.cmc_conect += getTimeDifference(&start_time,&end_time);
+	
+		// lager tilkobling for Urlrewrite
+		if (!cmConect_and_pool(&PagesResults.cmConnUrlrewrite, errorbuff, errorbufflen, MAX_CM_CONSUMERS_URLREWRITE, searchd_config) ) {
+			return 0;
+		}
+
+
+		gettimeofday(&end_time, NULL);
+		(*SiderHeder).queryTime.cmc_conect = getTimeDifference(&start_time,&end_time);
 	#endif
 
-	//intresnag debug info
+	//intresang debug info som viser antall treff pr subname
 	#ifdef BLACK_BOKS
 		//viser hvordan treffene er i subnames
 		if (globalOptVerbose) {
@@ -2288,7 +2308,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	y=0;
        	(*SiderHeder).filtered = 0;
 
+	#ifndef BLACK_BOKS
+
 	gettimeofday(&start_time, NULL);
+
 	//kalkulerer antall adult sier i første n resultater
 	PagesResults.noadultpages = 0;
 	PagesResults.adultpages = 0;
@@ -2303,17 +2326,18 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		}
 	}
 
-	
 	gettimeofday(&end_time, NULL);
         (*SiderHeder).queryTime.adultcalk = getTimeDifference(&start_time,&end_time);
-	////////
 
-	//går i utbangspungete gjenon alle sider, men eskaper når vi når anatllet vi vil ha
+	#else
+		(*SiderHeder).queryTime.adultcalk = 0;
+	#endif
+	
+
+	//går i utgangspungete gjenon alle sider, men eskaper når vi når anatllet vi vil ha
 	PagesResults.showabal = 0;
-	//PagesResults.godPages = 0;
 	PagesResults.nextPage = 0;
 
-//cuted
 
 	#ifndef BLACK_BOKS
 		//sorterer top treffene etter hvilken disk de ligger på, slik at vi kan jobbe mest mulig i paralell
@@ -2390,6 +2414,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 		#ifdef BLACK_BOKS
 			ret = pthread_mutex_destroy(&PagesResults.cmConn.mutex);
+			ret = pthread_mutex_destroy(&PagesResults.cmConnUrlrewrite.mutex);
 		#endif
 
 
@@ -2402,8 +2427,13 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	{
 		int k;
 
-		for (k = 0; k < PagesResults.cmConn.max_consumers; k++)
+		for (k = 0; k < PagesResults.cmConn.max_consumers; k++) {
 			cmc_close(PagesResults.cmConn.sock[k]);
+		}
+
+		for (k = 0; k < PagesResults.cmConnUrlrewrite.max_consumers; k++) {
+			cmc_close(PagesResults.cmConnUrlrewrite.sock[k]);
+		}
 	}
 #else
 #endif
@@ -2507,12 +2537,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#ifdef DEBUG
 	bblog(DEBUG, "hiliteQuery");
 	#endif
-	//x=0;
-	//for (y=0; y<PagesResults.QueryData.queryParsed.size; y++) {
-	//	struct text_list *t_it = PagesResults.QueryData.queryParsed.elem[y];
+
 	for (i=0; i<PagesResults.QueryData.queryParsed.n; i++) {
 
-		//while ( t_it!=NULL )
 		for (j=0; j<PagesResults.QueryData.queryParsed.query[i].n; j++)
                 {
 
@@ -2625,7 +2652,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	bblog(INFO, "\t%-40s %i", "filteredsilent",PagesResults.filteredsilent);
 
 	bblog(INFO, "");
-	bblog(INFO, "\tnoadultpages %i, adultpages %i", PagesResults.noadultpages,PagesResults.adultpages);
+
+	#ifndef BLACK_BOKS
+		bblog(INFO, "\tnoadultpages %i, adultpages %i", PagesResults.noadultpages,PagesResults.adultpages);
+	#endif
 
 	bblog(INFO, "");
 
@@ -2688,14 +2718,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	PagesResults.SiderHeder = SiderHeder;
 	PagesResults.antall = 0;
-	//PagesResults.TeffArray;
-	//PagesResults.showabal;
 	PagesResults.filterOn = filterOn;
-	//PagesResults.adultpages
-	//PagesResults.noadultpages
-	//PagesResults.QueryData
 	PagesResults.servername = servername;
-	//PagesResults.godPages
 	PagesResults.MaxsHits = MaxsHits;
 	PagesResults.start = 0;
 	//hvr vi skal begynne. Vå bruker dog navn som 1, 2 osv til brukeren, men starter på 0 internt 
@@ -2748,8 +2772,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	PagesResults.TeffArray = malloc(sizeof(struct iindexFormat));
 
-	//int adultpages, noadultpages;
-	//struct QueryDataForamt QueryData;
 
 	#ifdef DEBUG
 		memset(&PagesResults.QueryData,' ',sizeof(PagesResults.QueryData));
