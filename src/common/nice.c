@@ -1,12 +1,11 @@
-#include <sys/syscall.h>
-#include <asm/unistd.h>
 
-#include <sys/types.h>
-#include <unistd.h>
+#include "nice.h"
+
+// hvis vi ikke kjener SYS_ioprio_get har vi en gammel gcc/glibc (for eks bbh-001) gjømmer hele nice systemet
+#ifdef SYS_ioprio_get
 
 #include "../logger/logger.h"
 
-#include "nice.h"
 
 static inline int ioprio_set(int which, int who, int ioprio)
 {
@@ -34,6 +33,7 @@ enum {
 #define IOPRIO_CLASS_SHIFT      13
 
 void
+
 ionice_benice(void)
 {
 	int ioprio = 7;
@@ -47,3 +47,5 @@ ionice_benice(void)
 		bblog_errno(ERROR, "nice(15): Unable to increment cpu nice");
 	}
 }
+
+#endif
