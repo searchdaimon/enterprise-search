@@ -14,4 +14,4 @@ boithoadClientLib: boithoadClientLib.c
 
 
 clean:
-	rm liboithoaut.a daemon.o
+	rm -f liboithoaut.a daemon.o
