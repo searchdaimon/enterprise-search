@@ -426,12 +426,11 @@ void stripTags(char *cpbuf, int cplength) {
 
 int bbdocument_convert(char filetype[],char document[],const int dokument_size, buffer *outbuffer, const char titlefromadd[], char *subname, char *documenturi, unsigned int lastmodified, char *acl_allow, char *acl_denied, struct hashtable **metahash) {
 
-	char **splitdata;
         int TokCount;
 	FILE *fp, *filconfp=NULL;
-	char filconvertetfile_real[216];
-	char filconvertetfile_out_txt[216];
-	char filconvertetfile_out_html[216];
+	char filconvertetfile_real[216] = "";
+	char filconvertetfile_out_txt[216] = "";
+	char filconvertetfile_out_html[216] = "";
 	int exeocbuflen;
 	int i;
 	int ret;
@@ -477,44 +476,33 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 	printf("strcmp done\n");
 	#endif
 
-
-	fileFilter = malloc(sizeof(struct fileFilterFormat));
 	struct fileFilterFormat *fileFilterOrginal;
 
-	//strcpy((*fileFilter).documentstype,filetype);
+
+
 	
-	//if (chtbl_lookup(&htbl,(void *)&fileFilterOrginal) != 0) { 
 	if (NULL == (fileFilterOrginal = hashtable_search(h_fileFilter,filetype) )) {
 		printf("don't have converter for \"%s\"\n",filetype);
 
 		#ifdef DEBUG
-		printf("writing to unknownfiltype.log\n");
-		#endif
-		if ((fp = fopen(bfile("logs/unknownfiltype.log"),"ab")) == NULL) {
-			perror(bfile("logs/unknownfiltype.log"));
-		}
-		else {
-			printf("title %s\n",titlefromadd);
-			printf("filetype %s\n",filetype);
-			fprintf(fp,"%s: %s\n",titlefromadd,filetype);
-			fclose(fp);
-		}	
-		#ifdef DEBUG
-		printf("writing to unknownfiltype.log. done\n");
+			printf("writing to unknownfiltype.log\n");
+			if ((fp = fopen(bfile("logs/unknownfiltype.log"),"ab")) == NULL) {
+				perror(bfile("logs/unknownfiltype.log"));
+			}
+			else {
+				printf("title %s\n",titlefromadd);
+				printf("filetype %s\n",filetype);
+				fprintf(fp,"%s: %s\n",titlefromadd,filetype);
+				fclose(fp);
+			}	
+			printf("writing to unknownfiltype.log. done\n");
 		#endif
 
 		return 0;
 	}
-	else {
-		memcpy(fileFilter, fileFilterOrginal, sizeof(struct fileFilterFormat));
-
-		#ifdef DEBUG
-			printf("have converter for file type\n");
-		#endif
-	}
 
 	//hvis dette er en fil av type text trenger vi ikke og konvertere den.
-	if (strcmp((*fileFilter).format,"text") == 0) {
+	if (strcmp((*fileFilterOrginal).format,"text") == 0) {
 		#ifdef DEBUG
 			printf("fileFilter ses it is a file of format text. Can use it direktly\n");
 		#endif
@@ -533,8 +521,9 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 		//de er jo som kjent på formater < og >
 		stripTags(cpbuf,dokument_size);
 
+		#ifdef DEBUG
 		printf("document %i\n",strlen(document));
-		
+		#endif
 
 		bprintf(outbuffer, html_text_tempelate, titlefromadd, cpbuf);
 		//printf("documentfinishedbuf %i\n", buffer_length(outbuffer));
@@ -542,6 +531,16 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 
                 return 1;
 	}
+
+	//vi må lage en kopi av filfilter infoen, da vi skal endre den.
+	fileFilter = malloc(sizeof(struct fileFilterFormat));
+
+	memcpy(fileFilter, fileFilterOrginal, sizeof(struct fileFilterFormat));
+
+	#ifdef DEBUG
+		printf("have converter for file type\n");
+	#endif
+
 
 	/*****************************************************************************
 		Vi har konverter. Må skrive til fil får å kunne sende den med
@@ -586,7 +585,6 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 		case FILTER_EXEOC:
 			run_filter_exeoc(
 				documentfinishedbuftmp,  
-				//*documentfinishedbufsize, 
 				exeocbuflen,
 				fileFilter, 
 				metahash
@@ -595,7 +593,6 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 		case FILTER_PERL_PLUGIN:
 			run_filter_perlplugin(
 				documentfinishedbuftmp,
-				//*documentfinishedbufsize,
 				exeocbuflen ,
 				fileFilter,
 				metahash
@@ -897,9 +894,15 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 	return 1;
 
 	bbdocument_convert_error:
-		unlink(filconvertetfile_real);
-		unlink(filconvertetfile_out_txt);
-		unlink(filconvertetfile_out_html);
+		if (filconvertetfile_real[0] != '\0') {
+			unlink(filconvertetfile_real);
+		}
+		if (filconvertetfile_out_txt[0] != '\0') {
+			unlink(filconvertetfile_out_txt);
+		}
+		if (filconvertetfile_out_html[0] != '\0') {
+			unlink(filconvertetfile_out_html);
+		}
 
 		if (filconfp != NULL) {
 			fclose(filconfp);
@@ -908,6 +911,9 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 			free(fileFilter);
 		}
 
+		if (fileFilter != NULL) {
+			free(fileFilter);
+		}
 		return 0;
 }
 
@@ -1001,6 +1007,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		htmlbuffersize = strlen(htmlbuffer);
 		printf("useing title \"%s\" as title\n",title);
 		printf("htmlbuffersize %i\n",htmlbuffersize);
+		free(buffer_abort(documentbuffer));
 	} else {
 		htmlbuffersize = buffer_length(documentbuffer);
 		htmlbuffer = buffer_exit(documentbuffer);
@@ -1029,12 +1036,13 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 				bprintf(attrbuffer, "%s=%s,", key, value);
 			} while (hashtable_iterator_advance(itr));
+
+			free(itr);
 		}
 		hashtable_destroy(metahash, 1);
 	}
 	char *all_attributes = buffer_exit(attrbuffer);
 
-	//printf("document (size %i)\"%s\"\n",htmlbuffersize,htmlbuffer);
 
 
 	//prøver å lag et bilde
@@ -1042,6 +1050,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	if (!bbdocument_makethumb(documenttype_real,document,dokument_size,&imagebuffer,&imageSize)) {
 		printf("can't generate image\n");
 		ReposetoryHeader.imageSize = 0;
+		imagebuffer = NULL;
 	}
 	else {
 		debug("generated image\n");
@@ -1087,6 +1096,11 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	free(all_attributes);
 	free(htmlbuffer);
 	free(documenttype_real);
+
+	if (imagebuffer != NULL) {
+		free(imagebuffer);
+	}
+
 }	
 
 int bbdocument_deletecoll(char collection[]) {
