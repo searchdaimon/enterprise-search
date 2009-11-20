@@ -77,7 +77,7 @@ void perl_embed_clean() {
  * obj_name     - class name, when run_func is a class method (NULL if not used)
  * obj_attr     - hashref obj_name is blessed with (NULL if not used)
  */
-int perl_embed_run(char *file_path, char *func_name, HV *func_params, char *obj_name, HV *obj_attr) {
+int perl_embed_run(char *file_path, char *func_name, HV *func_params, char *obj_name, HV *obj_attr, char *error, int errorlength) {
 	dSP;
 	ENTER;
 	SAVETMPS;
@@ -106,6 +106,11 @@ int perl_embed_run(char *file_path, char *func_name, HV *func_params, char *obj_
 	SPAGAIN; //refresh stack pointer
 	if (SvTRUE(ERRSV)) {
 		fprintf(stderr, "Perl preprocessor error: %s\n", SvPV_nolen(ERRSV));
+		// overfører error beskjeden.
+		if (errorlength != 0) {
+			snprintf(error,errorlength,SvPV_nolen(ERRSV));
+		}
+		retv = -1;
 	}
 	else if (retn == 1) {
 		//pop the return value, as a int
@@ -117,6 +122,8 @@ int perl_embed_run(char *file_path, char *func_name, HV *func_params, char *obj_
 
 	FREETMPS;
 	LEAVE;
+
+	printf("~perl_embed_run=%i\n",retv);
 
 	return retv;
 }
