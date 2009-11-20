@@ -22,7 +22,7 @@ us_authenticate_perl(usersystem_data_t *data, char *user, char *password)
 	hv_store(params, "_in_user", strlen("_in_user"), sv_2mortal(newRV((SV *)in_user)), 0);
 	hv_store(params, "_in_pass", strlen("_in_pass"), sv_2mortal(newRV((SV *)in_pass)), 0);
 	hv_store(params, "_out_retval", strlen("_out_retval"), sv_2mortal(newRV((SV *)out_retval)), 0);
-	if (!perl_embed_run(usp->perlpath, PERL_AUTH_USER, params, NULL, NULL)) {
+	if (!perl_embed_run(usp->perlpath, PERL_AUTH_USER, params, NULL, NULL, NULL, 0)) {
 		warnx("perl error");
 		return 0;
 	}
@@ -47,7 +47,7 @@ us_listUsers_perl(usersystem_data_t *data, char ***users, int *n_users)
 	ht_to_perl_ht(params, data->parameters);
 
 	hv_store(params, "_internal_users", strlen("_internal_users"), sv_2mortal(newRV((SV *)av)), 0);
-	if (!perl_embed_run(usp->perlpath, PERL_LIST_USERS, params, NULL, NULL)) {
+	if (!perl_embed_run(usp->perlpath, PERL_LIST_USERS, params, NULL, NULL, NULL, 0)) {
 		warnx("perl error");
 		return 0;
 	}
@@ -91,7 +91,7 @@ us_listGroupsForUser_perl(usersystem_data_t *data, const char *user, char ***gro
 
 	hv_store(params, "_internal_groups", strlen("_internal_groups"), sv_2mortal(newRV((SV *)av)), 0);
 	hv_store(params, "_in_username", strlen("_in_username"), sv_2mortal(newRV((SV *)username)), 0);
-	if (!perl_embed_run(usp->perlpath, PERL_LIST_GROUPS, params, NULL, NULL)) {
+	if (!perl_embed_run(usp->perlpath, PERL_LIST_GROUPS, params, NULL, NULL, NULL, 0)) {
 		warnx("perl error");
 		*n_groups = 0;
 		*groups = NULL;
@@ -132,7 +132,7 @@ us_getName_perl(void *data)
 
 	hv_store(params, "_internal_name", strlen("_internal_name"),  sv_2mortal(newRV((SV *) perl_name)), 0);
 
-	if (!perl_embed_run(usp->perlpath, PERL_GET_NAME, params, NULL, NULL))
+	if (!perl_embed_run(usp->perlpath, PERL_GET_NAME, params, NULL, NULL, NULL, 0))
 		name = "error";
 	else
 		name = SvPV(perl_name, data_size);
