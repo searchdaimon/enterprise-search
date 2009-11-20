@@ -1793,7 +1793,7 @@ void *generatePagesResults(void *arg)
 }
 
 int sider_allrank_sort (const void *p1, const void *p2) {
-	
+
 	if (((struct SiderFormat *)p1)->iindex.allrank > ((struct SiderFormat *)p2)->iindex.allrank) {
 		 return -1;
 	}
