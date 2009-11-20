@@ -1476,7 +1476,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 
         i=0;
         while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
-        	bblog(DEBUG, "  data resource: %s, connector: %s, collection_name: %s, lastCrawl: %s, userprefix: %s",mysqlrow[0],mysqlrow[1],mysqlrow[2],mysqlrow[3],mysqlrow[8]);
+        	bblog(DEBUG, "  data resource: %s, connector: %s, collection_name: %s, lastCrawl: %s, userprefix: %s, auth_id: %s",mysqlrow[0],mysqlrow[1],mysqlrow[2],mysqlrow[3],mysqlrow[8],mysqlrow[6]);
 		
 		//lagger inn i info struct
 		(*collection)[i].resource  		= strdup(mysqlrow[0]);	
@@ -2231,14 +2231,13 @@ void connectHandler(int socket) {
 
 		}
 		else if (packedHedder.command == cm_pathaccess) {
-			//char all[512+64+64+64];
+		
 			char uri[512];
 			char username[64];
                         char password[64];
 
 			bblog(INFO, "cm_pathaccess: start");
 
-#if 1
 			gettimeofday(&start_time, NULL);
 			recvall(socket,collection,sizeof(collection));
 			gettimeofday(&end_time, NULL);
@@ -2249,19 +2248,13 @@ void connectHandler(int socket) {
 
 			recvall(socket,username,sizeof(username));
 			recvall(socket,password,sizeof(password));
-#else
-			recvall(socket,all,sizeof(all));
-#endif
 
 			bblog(INFO, "collection: \"%s\"\nuri: \"%s\"\nusername \"%s\"\npassword \"%s\"", collection,uri,username,password);
-			//bblog(INFO, "collection: \"%s\"\nuri: \"%s\"\nusername \"%s\"\npassword \"%s\"", all,all+64,all+64+512,all+64+64+512);
 
 			MYSQL db;
 			sql_connect(&db);
 
-			//int pathAccess(struct hashtable *h, char connector[], char uri[], char username[], char password[])
 			intresponse = pathAccess(&db, global_h,collection,uri,username,password);
-			//intresponse = pathAccess(global_h,all,all+64,all+64+512,all+64+64+512);
 
 			mysql_close(&db);
 	                sendall(socket,&intresponse, sizeof(int));
@@ -2304,27 +2297,16 @@ void connectHandler(int socket) {
 		}
 		else if (packedHedder.command == cm_rewriteurl) {
 			struct rewriteFormat rewrite;
-			struct timeval start_time2, end_time2;
-			char uri[1024], fulluri[1024];
 
 			bblog(INFO, "cm_rewriteurl start");
 
-			//gettimeofday(&start_time2, NULL);
 			recvall(socket, &rewrite, sizeof(rewrite));
-			//gettimeofday(&end_time2, NULL);
-			//bblog(INFO, "# 222 ### Time debug: sending url rewrite data %f",getTimeDifference(&start_time2,&end_time2));
 	
 			MYSQL db;
 			sql_connect(&db);
-			rewriteurl(&db, rewrite.collection, rewrite.url, sizeof(rewrite.url), uri, sizeof(uri), fulluri, sizeof(fulluri), rewrite.ptype, rewrite.btype);
+			rewriteurl(&db, rewrite.collection, rewrite.url, sizeof(rewrite.url), rewrite.uri, sizeof(rewrite.uri), rewrite.fulluri, sizeof(rewrite.fulluri), rewrite.ptype, rewrite.btype);
 
-			if (sendall(socket, rewrite.url, sizeof(rewrite.url)) == 0) {
-				bblog(ERROR, "sendall(uri)");
-			}
-			if (sendall(socket, uri, sizeof(uri)) == 0) {
-				bblog(ERROR, "sendall(uri)");
-			}
-			if (sendall(socket, fulluri, sizeof(uri)) == 0) {
+			if (sendall(socket, &rewrite, sizeof(rewrite)) == 0) {
 				bblog(ERROR, "sendall(uri)");
 			}
 
@@ -2555,15 +2537,17 @@ void connectHandler(int socket) {
 			gettimeofday(&te, NULL);
 			bblog(INFO, "GroupsForUser part 1 took %f seconds.",  getTimeDifference(&ts, &te));
 			gettimeofday(&ts, NULL);
-			sendall(socket, &n_groups, sizeof(int));
 			if (n_groups > 0) {
 				char *groupbuf = malloc(n_groups * sizeof(group));
 				for (j = 0; j < n_groups; j++) {
 					strlcpy(groupbuf + (j * sizeof(group)), groups[j], sizeof(group));
 				}
-				sendall(socket, groupbuf, n_groups * sizeof(group));
+				sendallPack(socket, 4, &n_groups, sizeof(int), groupbuf, n_groups * sizeof(group));
 				free(groupbuf);
 				boithoad_respons_list_free(groups);
+			}
+			else {
+				sendall(socket, &n_groups, sizeof(int));
 			}
 			gettimeofday(&te, NULL);
 			bblog(INFO, "GroupsForUser part 2 took %f seconds.",  getTimeDifference(&ts, &te));
@@ -2653,10 +2637,12 @@ void connectHandler(int socket) {
 			n = collectionsforuser(user, &collections, &db);
 			mysql_close(&db);
 
-			sendall(socket, &n, sizeof(n));
 			if (n > 0) {
-				sendall(socket, collections, (maxSubnameLength+1)*n);
+				sendallPack(socket, 4, &n, sizeof(n), collections, (maxSubnameLength+1)*n);
 				free(collections);
+			}
+			else {
+				sendall(socket, &n, sizeof(n));
 			}
 		}
 		else if (packedHedder.command == cm_addForeignUser) {
@@ -2699,7 +2685,7 @@ void connectHandler(int socket) {
 		}
 
 		gettimeofday(&end_time_all, NULL);
-		bblog(INFO, "cm time %f", getTimeDifference(&start_time_all,&end_time_all));
+		bblog(INFO, "~cm time %f", getTimeDifference(&start_time_all,&end_time_all));
 
 	}
 	bblog(INFO, "end of packed");

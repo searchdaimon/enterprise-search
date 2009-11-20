@@ -198,17 +198,6 @@ cmc_pathaccess(int socketha,char collection_in[], char uri_in[], char user_in[],
 
 	sendpacked(socketha,cm_pathaccess,BLDPROTOCOLVERSION, sizeof(all), all, collection);
 
-#if 0
-	if(sendall(socketha,&collection, sizeof(collection)) == 0) { perror("sendall"); exit(1); }
-
-	if(sendall(socketha,&uri, sizeof(uri)) == 0) { perror("sendall"); exit(1); }
-
-	if(sendall(socketha,&user, sizeof(user)) == 0) { perror("sendall"); exit(1); }
-	if(sendall(socketha,&password, sizeof(password)) == 0) { perror("sendall"); exit(1); }
-#else 
-	//if(sendall(socketha,&all, sizeof(all)) == 0) { perror("sendall"); exit(1); }
-#endif
-
 	if ((i=recv(socketha, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
                 perror("Cant recv respons");
                 return 0;
@@ -226,19 +215,19 @@ cmc_rewrite_url(int socketha, char *collection_in, const char *url_in, size_t ur
 		enum browser_type btype, char *url_out, size_t url_out_len, char *uri_out, size_t uri_out_len, 
 		char *fulluri_out, size_t fulluri_out_len)
 {
-	char url[1024], uri[1024], fulluri[1024];
+	char url[1024];
 	struct rewriteFormat rewrite;
+	struct timeval start_time, end_time;
 
 	//#ifdef DEBUG
 	printf("cmc_rewrite_url(collection_in=\"%s\", url_in=\"%s\")\n",collection_in,url_in);
 	//#endif
 
-	memset(&rewrite, '\0', sizeof(rewrite));
+	gettimeofday(&start_time, NULL);
 
-	/*
-	if (gettimeofday(&start_time, NULL) != 0)
-		printf("# ################################## # Error...\n");
-	*/
+
+	memset(&rewrite, '\0', sizeof(rewrite));
+	
 				
 	strscpy(rewrite.collection, collection_in, sizeof(rewrite.collection));
 	strscpy(rewrite.url, url_in, sizeof(rewrite.url));
@@ -246,29 +235,23 @@ cmc_rewrite_url(int socketha, char *collection_in, const char *url_in, size_t ur
 	rewrite.btype = btype;
 
 	sendpacked(socketha, cm_rewriteurl, BLDPROTOCOLVERSION, sizeof(rewrite), &rewrite, "");
-	//sendall(socketha, &rewrite, sizeof(rewrite));
 
-	if (recvall(socketha, url, sizeof(url)) == 0) {
+
+	if (recvall(socketha, &rewrite, sizeof(rewrite)) == 0) {
 		perror("recvall(url)");
 		return 0;
 	}
-	if (recvall(socketha, uri, sizeof(uri)) == 0) {
-		perror("recvall(uri)");
-		return 0;
-	}
-	if (recvall(socketha, fulluri, sizeof(fulluri)) == 0) {
-		perror("recvall(fulluri)");
-		return 0;
-	}
-	strscpy(url_out, url, url_out_len);
-	strscpy(uri_out, uri, uri_out_len);
-	strscpy(fulluri_out, fulluri, fulluri_out_len);
+
+	strscpy(url_out, rewrite.url, url_out_len);
+	strscpy(uri_out, rewrite.uri, uri_out_len);
+	strscpy(fulluri_out, rewrite.fulluri, fulluri_out_len);
+
 	printf("~cmc_rewrite_url [uri_out=\"%s\", fulluri=\"%s\"]\n",uri_out,fulluri_out);
-	/*
-	if (gettimeofday(&end_time, NULL) != 0)
-		printf("# ################################## # Error...\n");
-	printf("####### ttt time %.50f\n",getTimeDifference(&start_time,&end_time));
-	*/
+	
+	gettimeofday(&end_time, NULL);
+
+	printf("~cmc_rewrite_url(2) time %f\n",getTimeDifference(&start_time,&end_time));
+	
 
 	return 1;
 }
@@ -330,13 +313,29 @@ int cmc_groupsforuserfromusersystem(int socketha, char *_user, unsigned int us, 
 	int i, n;
 	char **groups;
 	char extrabuf[512];
+	struct timeval ts, te;
+	void *all, *p;
 
-	strncpy(user, _user, sizeof(user));
-	strncpy(extrabuf, extra_in, sizeof extrabuf);
-	sendpacked(socketha, cm_groupsforuserfromusersystem, BLDPROTOCOLVERSION, sizeof(user), user, "");
+	int allsize = 512 + 512 + sizeof(us);
+	if ((all = malloc(allsize)) == NULL) {
+		perror("cmc_groupsforuserfromusersystem; malloc all buf");
+		return 0;
+	}
+	p = all;
 
-	sendall(socketha, &us, sizeof(us));
-	sendall(socketha, &extrabuf, sizeof extrabuf);
+	// kopierer all dataen i en pakke
+	strncpy(p, _user, 512);
+	p += 512;
+
+	memcpy(p, &us, sizeof(us));
+	p += sizeof(us);
+
+	strncpy(p, extra_in, 512);
+	p += 512;
+
+	sendpacked(socketha, cm_groupsforuserfromusersystem, BLDPROTOCOLVERSION, allsize, all, "");
+
+	free(all);
 
 	if (recv(socketha, &n, sizeof n, MSG_WAITALL) == -1) {
 		perror("groupsbyuserforcoll recv");
