@@ -105,8 +105,6 @@ CREATE TABLE foreignUserSystem (
 
 
 
-INSERT INTO config (configkey, configvalue) VALUES('licensekey', '');
-INSERT INTO config (configkey, configvalue) VALUES('licensesystem', 'ohSh7oow');
 
 ALTER TABLE `shares` add `system` int(10);
 UPDATE shares SET system = 1 WHERE system IS NULL;
@@ -225,9 +223,13 @@ ALTER TABLE shares ADD without_aclcheck tinyint(4) DEFAULT 0;
 ALTER TABLE shares ADD alias varchar(255);
 
 
-UPDATE config SET configvalue = 'RRYAYACZACJAB6RLANAQ8K4G' WHERE configvalue = '' AND configkey = 'licensekey';
-DELETE FROM config WHERE configkey='licensesystem';
+# Slutter med å sette in dette, men sletter heller ikke da vi trenger bakoverkompalitet.
+#INSERT INTO config (configkey, configvalue) VALUES('licensekey', '');
+#INSERT INTO config (configkey, configvalue) VALUES('licensesystem', 'ohSh7oow');
+#DELETE FROM config WHERE configkey='licensesystem';
 
+#UPDATE config SET configvalue = 'RRYAYACZACJAB6RLANAQ8K4G' WHERE configvalue = '' AND configkey = 'licensekey';
+INSERT INTO config (configkey, configvalue) VALUES('licensekey', 'RRYAYACZACJAB6RLANAQ8K4G');
 
 CREATE TABLE `systemConnector` (
   `id` int(10) unsigned NOT NULL auto_increment,
@@ -241,5 +243,7 @@ CREATE TABLE `systemConnector` (
 
 
 INSERT INTO `systemConnector` (`id`, `name`, `extension`, `modified`, `active`, `read_only`) VALUES (1,'Active Directory',0,NULL,1,1);
-INSERT INTO `systemConnector` (`id`, `name`, `extension`, `modified`, `active`, `read_only`) VALUES (2,'Connector Pushed',0,NULL,1,1);
+INSERT INTO `systemConnector` (`id`, `name`, `extension`, `modified`, `active`, `read_only`) VALUES (3,'Connector Pushed',0,NULL,1,1);
 
+ALTER TABLE search_logg MODIFY treff int(5) unsigned  NULL;
+ALTER TABLE search_logg MODIFY search_tid decimal(12,10) unsigned NULL;
