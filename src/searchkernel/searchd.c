@@ -111,6 +111,14 @@ catch_alarm (int sig)
 	exit(1);
 }
 
+/* The signal handler exit the program. . */
+void
+catch_alarm_nolog (int sig)
+{
+	fprintf(stderr, "searchd->catch_alarm_nolog(): Warning! Recieved alarm signal. Exiting.");
+	exit(1);
+}
+
 
 void lotPreOpenStartl(int *preOpen[], char filename[], char subname[], int use) {
 
@@ -603,55 +611,65 @@ attr_conf *parse_navmenu_cfg(char *cfgstr, int *failed) {
 	return cfg;
 }
 
+//copy a memory area, and return the size copyed
+#ifdef DEBUG_MEMCPYRC
+static size_t memcpyrc(void *s1, const void *s2, size_t n) {
+#else
+static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
+#endif
+        memcpy(s1,s2,n);
+
+        return n;
+}
+
+
 /* 
 	This is the routine that is executed from a new thread 
 */
 void *do_chld(void *arg)
 {
+
+	// Setter signalhånterer for allarm. Hvis allarm skjer i straten av programet, er noe seriøst galt. For eks er vi tom for minne.
+	//Da fungerer det dårlig å logge, syslog kan kalle malloc og slikt. Vil resette den til en versjon som logger før vi kjører søk.	
+       	signal (SIGALRM, catch_alarm_nolog);
+
+	/* Set an alarm to go off in a little while. This so we don't run forever if we get en ever loop */
+       	alarm (60);
+
+	// starter loging
 	bblog(DEBUG, "searchd_child: Starting new thread.");
 	bblog(DEBUG, "searchd: do_chld()");
-	//int 	mysocfd = (int) arg;
+
+	// deklarerer variabler
 	struct searchd_configFORMAT *searchd_config = arg;
 	int   mysocfd = (*searchd_config).newsockfd;
-
 	struct timeval globalstart_time, globalend_time;
-
-
 	FILE *LOGFILE;
-	//char 	data[100];
 	int 	i,n;
 	struct queryNodeHederFormat queryNodeHeder;
 	struct SiderFormat *Sider;
 	int net_status;
 	int ranking;
 	struct hashtable *crc32hashmap;
-
-	//struct SiderFormat Sid
-
 	int nrOfSubnames;
-
 	config_setting_t *cfgstring;
 	config_setting_t *cfgcollection;
 	config_setting_t *cfgcollections;
-
 	struct subnamesConfigFormat subnamesDefaultsConfig;
 	char **Data;
         int Count;
-
-	
         char groupOrQuery[1024];
         groupOrQuery[0] = '\0';
 
 
-
-	//struct SiderFormat Sider[MaxsHits * 2];
-
 	struct SiderHederFormat *SiderHeder;
+
 
 
 	dp_priority_locl_start();
 
 
+	// første malloc. Har vi forlite minne vil vi henge her.
 	if ((SiderHeder  = malloc(sizeof(struct SiderHederFormat))) == NULL) {
 		bblog(ERROR, "malloc()");
 		bblog(CLEAN, "~do_chld()");
@@ -660,13 +678,6 @@ void *do_chld(void *arg)
 
 
 	gettimeofday(&globalstart_time, NULL);
-
-	//make a timeout
-	/* Establish a handler for SIGALRM signals. */
-       	signal (SIGALRM, catch_alarm);
-
-	/* Set an alarm to go off in a little while. This so we don't run forever if we get en ever loop */
-       	alarm (60);
 
 	
 	#ifdef WITH_THREAD
@@ -678,6 +689,15 @@ void *do_chld(void *arg)
 	#ifdef DEBUG
         	struct timeval start_time, end_time;
 	#endif
+
+	// Setter signalhånterer for allarm. Hvis allarm skjer i straten av programet, er noe seriøst galt. For eks er vi tom for minne.
+	//Da fungerer det dårlig å logge, syslog kan kalle malloc og slikt. Nå resetter vi den den til en versjon som logger søk.	
+       	signal (SIGALRM, catch_alarm);
+
+	/* Disable tcp delay */
+	int nodelayflag = 1;
+	setsockopt(mysocfd, IPPROTO_TCP, TCP_NODELAY, &nodelayflag, sizeof(int));
+
 
 	/* read from the given socket */
 
@@ -934,8 +954,6 @@ void *do_chld(void *arg)
 	dp_priority_locl_end();
 
 	//kopierer inn subnames. Kan bare sende over MAX_COLLECTIONS, men søker i alle
-
-
 	for (i=0;((i<MAX_COLLECTIONS) && (i<nrOfSubnames));i++) {
 		SiderHeder->subnames[i] = subnames[i];
 	}
@@ -967,6 +985,143 @@ void *do_chld(void *arg)
 	#ifdef DEBUG
 	gettimeofday(&start_time, NULL);
 	#endif
+
+
+	#if 1
+
+
+	#ifdef DEBUG
+	gettimeofday(&end_time, NULL);
+	bblog(DEBUG, "searchd_child: Time debug: sending SiderHeder %f",getTimeDifference(&start_time,&end_time));
+	#endif
+	
+
+	#ifdef DEBUG
+	gettimeofday(&start_time, NULL);
+	#endif
+
+	struct sendarrayFormat{
+		int size;
+		void *p;
+		int copy;
+	};
+
+	void send_to_array (struct sendarrayFormat *sendarray, int *sendarraylength, void *p, int size, int copy) {
+
+		#ifdef DEBUG
+		printf("send_to_array(sendarraylength=%i,size=%i)\n",*sendarraylength,size);
+		#endif
+
+		if (size == 0) {
+			return;
+		}
+
+		sendarray[*sendarraylength].copy = copy;
+	
+		if (copy) {
+			sendarray[*sendarraylength].p = malloc(size);
+			memcpy(sendarray[*sendarraylength].p,p,size); 
+			sendarray[*sendarraylength].size = size;
+		}
+		else {
+			sendarray[*sendarraylength].p = p;
+			sendarray[*sendarraylength].size = size; 
+
+		}
+		*sendarraylength += 1;
+	}
+
+	int sendarraylength = 0;
+	struct sendarrayFormat sendarray[SiderHeder->showabal + 2 + (SiderHeder->showabal * 32)];
+
+
+	send_to_array(sendarray, &sendarraylength, SiderHeder, sizeof(struct SiderHederFormat),0);
+
+	#ifdef ATTRIBUTES
+	if (SiderHeder->navigation_xml_len > 0)
+	    {
+		send_to_array(sendarray, &sendarraylength, SiderHeder->navigation_xml, SiderHeder->navigation_xml_len, 0);
+	    }
+
+	
+	#endif
+
+
+	for (i = 0; i < SiderHeder->showabal; i++) {
+		int j;
+		struct SiderFormat *s = Sider+i;
+		size_t len;
+
+		// da vi må vite maks lengde på dataen på forhond, slik at vi ikke går over sendarray må vi sette en maks på antal urler.
+		if (s->n_urls > 10) {
+			s->n_urls = 10;
+		}
+
+		send_to_array(sendarray, &sendarraylength, s, sizeof(struct SiderFormat), 0);
+
+
+
+		/* Send duplicate urls */
+		for (j = 0; j < s->n_urls; j++) {
+			len = strlen(s->urls[j].url);
+			send_to_array(sendarray, &sendarraylength, &len, sizeof(len), 1);
+			send_to_array(sendarray, &sendarraylength, s->urls[j].url, len, 0);
+
+			len = strlen(s->urls[j].uri);
+			send_to_array(sendarray, &sendarraylength, &len, sizeof(len), 1);
+			send_to_array(sendarray, &sendarraylength, s->urls[j].uri, len, 0);
+
+			len = strlen(s->urls[j].fulluri);
+			send_to_array(sendarray, &sendarraylength, &len, sizeof(len), 1);
+			send_to_array(sendarray, &sendarraylength, s->urls[j].fulluri, len, 0);
+
+		}
+
+		/* Send attributes */
+		//printf("### Send attributes: %s\n", s->attributes);
+		if (s->attributes == NULL) {
+			len = 0;
+		}
+		else {
+			len = strlen(s->attributes);
+		}
+
+		send_to_array(sendarray, &sendarraylength, &len, sizeof(len), 1);
+		send_to_array(sendarray, &sendarraylength, s->attributes, len, 0);
+
+	}
+
+	int sendtotal = 0;
+	for (i=0;i<sendarraylength;i++) {
+		sendtotal += sendarray[i].size;
+	}
+
+	void *sendp, *sendall;
+
+	if ((sendall = malloc(sendtotal)) == NULL) {
+		perror("sendp");
+		return 0;
+	}
+	sendp = sendall;
+
+	for (i=0;i<sendarraylength;i++) {
+		sendp += memcpyrc(sendp,sendarray[i].p,sendarray[i].size);
+		if (sendarray[i].copy) {
+			free(sendarray[i].p);
+		}
+	}
+
+	if ((n=send(mysocfd, sendall, sendtotal, MSG_NOSIGNAL)) != sendtotal ) {
+		bblog(ERROR, "siderformat: send only %i of %i at %s:%d",n,sendtotal,__FILE__,__LINE__);
+		return 0;
+	}
+	printf("~sendall(sendarraylength=%i, sendall=%p, sendtotal=%i)\n",sendarraylength,sendall,sendtotal);
+
+	free(SiderHeder->navigation_xml);
+
+	free(sendall);
+	
+	#else 
 
 	/* Disable tcp delay */
 #if 0
@@ -1041,7 +1196,8 @@ void *do_chld(void *arg)
 		send(mysocfd, &len, sizeof(len), MSG_NOSIGNAL);
 		send(mysocfd, s->attributes, len, MSG_NOSIGNAL);
 	}
-	
+	#endif
+
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
 	bblog(DEBUG, "Time debug: sendig sider %f",getTimeDifference(&start_time,&end_time));
