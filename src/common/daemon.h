@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <netdb.h>
+#include <stdarg.h>
 
 #include "define.h"
 
@@ -44,3 +45,4 @@ int socketgetsaa(int socketha,char **respons_list[],int *nrofresponses);
 
 void wait_loglock(char *name);
 
+int sendallPack(int s, int numargs, ...);

@@ -12,6 +12,7 @@
 #include <err.h>
 #include <stdio.h>
 #include <sys/file.h>
+#include <stdarg.h>
 
 #include "../common/bstr.h"
 #include "boithohome.h"
@@ -262,8 +263,10 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
 
 
 #ifdef WITH_DAEMON_THREAD
-#if 1
 
+#ifndef WITH_THREAD
+	#error "Hvis man skal bruke WITH_DAEMON_THREAD, må man også definere WITH_THREAD. Definer WITH_THREAD"
+#endif
 //rutine som binder seg til PORT og kaller sh_pointer hver gang det kommer en ny tilkobling
 // Threaded
 int
@@ -349,7 +352,6 @@ sconnect_thread(void (*sh_pointer)(int), int port)
 } 
 
 #endif
-#endif
 
 int cconnect (char *hostname, int PORT) {
 
@@ -362,11 +364,6 @@ int cconnect (char *hostname, int PORT) {
 
 	#ifdef DEBUG
 	fprintf(stderr, "daemon: cconnect(hostname=\"%s\", port=%i)\n", hostname, PORT);
-	#endif
-
-	#ifdef DEBUG
-	//extern int errno;
-	//int errnosave;
 	#endif
 
 
@@ -477,6 +474,7 @@ int cconnect (char *hostname, int PORT) {
         //return 0;
 } 
 
+
 int sendall(int s, void *buf, int len) {
 
         int total = 0;        // how many bytes we've sent
@@ -527,6 +525,96 @@ int sendall(int s, void *buf, int len) {
 	#endif
 
 	return total;
+}
+
+/************************************************************************************
+
+ Ruting som tar inn data som skal sende, pakker de i en minne blok, og sender de som en send. Dette _kan_ øke socket 
+ hastigheten hvis vi kjører med TCP_NODELAY
+
+ eks: 
+	sendallPack(socket, 4, &n, sizeof(n), collections, (maxSubnameLength+1)*n);
+************************************************************************************/
+
+int sendallPack(int s, int numargs, ...) {
+
+	va_list listPointer;
+	void *p;
+	void *blockToSend;
+	int size = 0;
+	int i;
+	void *data;
+	int datasize;
+	int ret;
+
+	#ifdef DEBUG
+	fprintf(stderr,"sendallPack(numargs=%i) \n",numargs);
+	#endif
+
+	/***********************************************
+	 går gjenom dataene en gang for å finne total størelse
+	***********************************************/
+
+	va_start( listPointer, numargs );
+
+    	for( i = 0 ; i < numargs; i+=2)
+    	{
+        	data = va_arg( listPointer, void* );
+        	datasize = va_arg( listPointer, int );
+
+		size += datasize;
+	}
+
+	va_end( listPointer );
+
+
+	/***********************************************
+	 oppretter minne for å kopiere data inn i
+	***********************************************/
+
+
+	if ((blockToSend = malloc(size)) == NULL) {
+		perror("sendallPack: malloc p");
+		return 0;
+	}
+	p = blockToSend;
+
+	/***********************************************
+	 går gjenom dataene en gang til for å kopiere de inn
+	***********************************************/
+
+	va_start( listPointer, numargs );
+
+    	for( i = 0 ; i < numargs; i+=2)
+    	{
+        	data = va_arg( listPointer, void* );
+        	datasize = va_arg( listPointer, int );
+
+		#ifdef DEBUG
+		fprintf(stderr,"i=%i, datasize=%i, p=%p, size=%i\n",i, datasize, p, size);
+		#endif
+
+		memcpy(p,data,datasize);
+		p += datasize;
+	}
+
+	va_end( listPointer );
+
+	/***********************************************
+	 Nå når vi har lagget en pakke ut av det, gjør vi det faktisk send kallet.
+	***********************************************/
+
+	/*
+	fprintf(stderr,"blockToSend=%p\n",blockToSend);
+	for (i=0;i<size;i++) {
+		fprintf(stderr,"\n################\n%c\n##################\n\n",((char *)blockToSend)[i]);	
+	}
+	*/
+	ret = sendall(s,blockToSend,size);
+	free(blockToSend);
+
+	return ret;
+
 }
 
 int recvall(int sockfd, void *buf, int len) {
