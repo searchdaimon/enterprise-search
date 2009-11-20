@@ -26,7 +26,7 @@ void run_filter_perlplugin(char *dst, size_t dst_size, struct fileFilterFormat *
 		printf("perl run: %s:dump(file=%s, metadata=%p)\n",perlpath,filter->command,perl_metahash);
 	#endif
 
-	if(!perl_embed_run(perlpath, "dump", params, NULL, NULL))
+	if(!perl_embed_run(perlpath, "dump", params, NULL, NULL, NULL, 0))
 		errx(1, "Perlplugin error on '%s'", filter->command);
 
 	STRLEN data_size;
@@ -131,13 +131,11 @@ void add_libextractor_attr(struct hashtable **metadata, char *filepath, char **w
 #endif
 
 
-void run_filter_exeoc(char *dst, size_t dst_size, struct fileFilterFormat *fileFilter, struct hashtable **metahash) {
+void run_filter_exeoc(char *dst, const size_t dst_size, struct fileFilterFormat *fileFilter, struct hashtable **metahash) {
 	#ifdef DEBUG
 	printf("command: %s\n",(*fileFilter).command);
 	#endif
 
-	char **splitdata;
-        int TokCount;
 
 
 	//hvis vi skal lage en ny fil må vi slette den gamle
@@ -146,15 +144,7 @@ void run_filter_exeoc(char *dst, size_t dst_size, struct fileFilterFormat *fileF
 	//	unlink(filconvertetfile_out_txt);
 	//}
 
-	//her parser vi argumenter selv, og hver space blir en ny argyment, selv om vi 
-	//bruker "a b", som ikke riktig blir to argumenter her, a og b
-	//splitter på space får å lage en argc
-	TokCount = split((*fileFilter).command, " ", &splitdata);
-	//#ifdef DEBUG
-	printf("splitet comand in %i, program is \"%s\"\n",TokCount,splitdata[0]);
-	//#endif
 	printf("running: %s\n",(*fileFilter).command);
-	//sender med størelsen på buferen nå. Vil få størelsen på hva vi leste tilbake
 
 
 	char *envpairpath = strdup("/tmp/converter-metadata-XXXXXX");

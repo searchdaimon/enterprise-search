@@ -13,7 +13,7 @@
 #define FILTER_PERL_PLUGIN_STR "perlplugin"
 
 void run_filter_perlplugin(char *dst, size_t dst_size, struct fileFilterFormat *filter, struct hashtable **metahash);
-void run_filter_exeoc(char *dst, size_t dst_size, struct fileFilterFormat *fileFilter, struct hashtable **metahash);
+void run_filter_exeoc(char *dst, const size_t dst_size, struct fileFilterFormat *fileFilter, struct hashtable **metahash);
 #ifdef USE_LIBEXTRACTOR
 void add_libextractor_attr(struct hashtable **metadata, char *filepath, char **whitelist);
 void parse_libextractor_output(struct hashtable *dst, const char *output, char **whitelist);
