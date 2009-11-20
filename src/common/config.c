@@ -14,10 +14,10 @@
 
 
 struct _configdataFormat *_configdata = NULL;
-int _configdatanr;
+int _configdatanr = 0;
 time_t lastConfigRead = 0;
 
-/* XXX: Remove when we get a thread safe mysql client library */
+/* Må ha lock både da mysql bibloteket ikke er trsåkert, og for å hindre at vi flusher configen mens en annen tråd leser fra den */
 #ifdef WITH_THREAD
 pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
@@ -74,13 +74,10 @@ bconfig_flush(int mode) {
 	sprintf(mysql_query[0], "SELECT configkey, configvalue FROM config");
 	sprintf(mysql_query[1], "SELECT param AS configkey, value AS configvalue FROM system, systemParamValue WHERE system.is_primary = 1 AND system.id = systemParamValue.system");
 
-	if (_configdata != NULL)
-		free(_configdata);
 
-	_configdata = NULL;
-
+	i=0;
+	_configdatanr = 0;
 	for (j = 0; j < 2; j++) {
-		int numrows, oldnumentries;
 
 		if (mysql_real_query(&demo_db, mysql_query[j], strlen(mysql_query[j]))){ /* Execute query */
 			printf(mysql_error(&demo_db));
@@ -88,18 +85,19 @@ bconfig_flush(int mode) {
 		}
 
 		mysqlres=mysql_store_result(&demo_db); /* Download result from server */
-		numrows = (int)mysql_num_rows(mysqlres);
-		oldnumentries = _configdatanr;
-		_configdatanr += numrows;
+
+		_configdatanr += (int)mysql_num_rows(mysqlres);
 		debug("nrofrows %i\n",_configdatanr);
 
-		_configdata = realloc(_configdata, sizeof(struct _configdataFormat) * _configdatanr);
+		if ((_configdata = realloc(_configdata, sizeof(struct _configdataFormat) * _configdatanr)) == NULL) {
+			perror("Malloc _configdata");
+			exit(-1);
+		}
 
-		i=0;
 		while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
-			debug("\tconfig %s => \"%s\"\n",mysqlrow[0],mysqlrow[1]);
-			strcpy(_configdata[i+oldnumentries].configkey,mysqlrow[0]);
-			strcpy(_configdata[i+oldnumentries].configvalue,mysqlrow[1]);
+			debug("\tconfig %s => \"%s\"",mysqlrow[0],mysqlrow[1]);
+			strcpy(_configdata[i].configkey,mysqlrow[0]);
+			strcpy(_configdata[i].configvalue,mysqlrow[1]);
 			++i;
 		}
 
@@ -129,17 +127,30 @@ _free_and_return_error:
 const char *bconfig_getentrystr(char vantkey[]) {
 
 	int i;
+	char *ret = NULL;
+	#ifdef WITH_THREAD
+	        pthread_mutex_lock(&config_lock);
+	#endif
+
+	if (_configdata == NULL) {
+		fprintf(stderr, "bconfig_getentrystr: _configdata is NULL! You MOST run bconfig_init first.\n");
+		exit(-1);
+	}
 
 	for(i=0;i<_configdatanr;i++) {
 		//printf("config %s: %s\n",_configdata[i].configkey,_configdata[i].configvalue);
 
 		if (strcmp(vantkey,_configdata[i].configkey) == 0) {
-			return _configdata[i].configvalue;
+			ret = _configdata[i].configvalue;
 		}
 
 	}
 
-	return NULL;
+	#ifdef WITH_THREAD
+		pthread_mutex_unlock(&config_lock);
+	#endif
+
+	return ret;
 }
 
 int bconfig_getentryint(char vantkey[], int *val) {
@@ -154,7 +165,6 @@ int bconfig_getentryint(char vantkey[], int *val) {
 	}
 
 
-	//return atoi(bconfig_getentrystr(vantkey));
 }
 int bconfig_getentryuint(char vantkey[], unsigned int *val) {
 	const char *cp;
@@ -168,7 +178,6 @@ int bconfig_getentryuint(char vantkey[], unsigned int *val) {
 	}
 
 
-	//return atoi(bconfig_getentrystr(vantkey));
 }
 #endif
 
