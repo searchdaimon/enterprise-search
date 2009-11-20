@@ -17,7 +17,7 @@
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
 #include "../3pLibs/keyValueHash/hashtable.h"
 
-int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, char execute[]) {
+int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, char execute[], char *error, int errorlength) {
 
 	//int retn;
 	//antar at rutiner som ikke returnerer noe mislykkes. Dette kan for eks skje hvis vi kaller die, eller ikke trenger retur koden
@@ -69,7 +69,7 @@ int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, 
         // Add custom params to hash.
 	ht_to_perl_ht(hv, collection->params);
 
-	return perl_embed_run(perlfile, execute, hv, "Perlcrawl", obj_attr);
+	return perl_embed_run(perlfile, execute, hv, "Perlcrawl", obj_attr, error, errorlength);
 
 }
 
@@ -81,6 +81,7 @@ int perlcm_crawlupdate(struct collectionFormat *collection,
 
 	struct cargsF cargs;
 	int ret;
+	char error[512];
 
 	cargs.collection 	= collection;
 	cargs.documentExist 	= documentExist;
@@ -89,14 +90,15 @@ int perlcm_crawlupdate(struct collectionFormat *collection,
 	cargs.documentContinue = documentContinue;
 
 
-	ret = preprocessAndRun(collection,&cargs,"Perlcrawl::crawl_update");
+	ret = preprocessAndRun(collection,&cargs,"Perlcrawl::crawl_update", error,sizeof(error) );
 
 	//hvis vi fik 0 som retur verdi, er alt ok, og vi returnerer 1
 	if (ret == 0) {
 		return 1;
 	}
 	else {
-		return ret;
+		documentError(collection,1,error);		
+		return 0;
 	}
 }
 
@@ -136,7 +138,7 @@ int perlcm_crawlpatAcces(char resource[], char username[], char password[], int 
 	collectionWithUserData.resource = resource;
 
 
-	return preprocessAndRun(&collectionWithUserData,&cargs,"Perlcrawl::path_access");
+	return preprocessAndRun(&collectionWithUserData,&cargs,"Perlcrawl::path_access", NULL, 0);
 
 }
 
