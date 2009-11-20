@@ -746,6 +746,8 @@ struct rewriteFormat {
 	enum browser_type btype;
 	char collection[64];
 	char url[1024];
+	char uri[1024];
+	char fulluri[1024];
 };
 
 #define ANCHORMAGIC 0xb309a213
