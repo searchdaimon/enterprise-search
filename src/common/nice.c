@@ -2,8 +2,13 @@
 #include "nice.h"
 
 // hvis vi ikke kjener SYS_ioprio_get har vi en gammel gcc/glibc (for eks bbh-001) gjømmer hele nice systemet
-#ifdef SYS_ioprio_get
+#ifndef SYS_ioprio_get
 
+void ionice_benice(void)
+{
+
+}
+#else
 #include "../logger/logger.h"
 
 
@@ -32,9 +37,7 @@ enum {
 
 #define IOPRIO_CLASS_SHIFT      13
 
-void
-
-ionice_benice(void)
+void ionice_benice(void)
 {
 	int ioprio = 7;
 	int ioclass = IOPRIO_CLASS_BE;
