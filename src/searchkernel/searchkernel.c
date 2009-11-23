@@ -1794,7 +1794,18 @@ void *generatePagesResults(void *arg)
 
 int sider_allrank_sort (const void *p1, const void *p2) {
 
-	if (((struct SiderFormat *)p1)->iindex.allrank > ((struct SiderFormat *)p2)->iindex.allrank) {
+	// en mer stabil sortering der vi også sorterer på DocID slik at resultatene ikke håpper på serp'ene.
+	if (((struct SiderFormat *)p1)->iindex.allrank == ((struct SiderFormat *)p2)->iindex.allrank) {
+
+		if (((struct SiderFormat *)p1)->iindex.originalPosition < ((struct SiderFormat *)p2)->iindex.originalPosition) {
+			 return -1;
+		}
+		else {
+			return (((struct SiderFormat *)p1)->iindex.originalPosition > ((struct SiderFormat *)p2)->iindex.originalPosition);
+		}
+
+	}
+	else if (((struct SiderFormat *)p1)->iindex.allrank > ((struct SiderFormat *)p2)->iindex.allrank) {
 		 return -1;
 	}
 	else {
@@ -1831,7 +1842,7 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 	bblog(WARN, "|----------|----------|----------||----------|----------|----------|------------------------|----------|----------|-----|");
 
 	for(i=0;i<showabal;i++) {
-                        bblog(WARN, "|%10i|%10i|%10i||%10i|%10i|%10i|%10i (%5i %5i)|%10i|%10i|%5d| %s (DocID %u-%i, DomainID %d, s: \"%s\")", 
+                        bblog(WARN, "|%10i|%10i|%10i||%10i|%10i|%10i|%10i (%5i %5i)|%10i|%10i|%5d| %s (DocID %u-%i, DomainID %d, s: \"%s\"), O. Pos %u", 
 
 				Sider[i].iindex.allrank,
 				Sider[i].iindex.TermRank,
@@ -1867,7 +1878,8 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 				Sider[i].DomainID,
 				#endif
 
-				(*Sider[i].iindex.subname).subname
+				(*Sider[i].iindex.subname).subname,
+				Sider[i].iindex.originalPosition
 
 				);
 	}

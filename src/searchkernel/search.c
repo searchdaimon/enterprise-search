@@ -1117,7 +1117,7 @@ for (i=0; i<(*queryParsed).n; i++)
 
 							#ifdef DEBUG_TIME
 								gettimeofday(&end_foo_time, NULL);
-								bblog(DEBUG, "Time debug: searchIndex GetIndexAsArray() time: %f", getTimeDifference(&start_foo_time, &end_foo_time));
+								bblog(DEBUG, "Time debug: searchIndex GetIndexAsArray(subname=%s, word=%s) time: %f", subname, (*queryParsed).query[i].s[j], getTimeDifference(&start_foo_time, &end_foo_time));
 							#endif
 							
 
@@ -1495,7 +1495,7 @@ void *searchIndex_thread(void *arg)
 
 #ifdef DEBUG_TIME
 				gettimeofday(&endtime, NULL);
-				bblog(DEBUg, "Time debug: cmc_groupsforuserfromusersystem(): %f",  getTimeDifference(&starttime, &endtime));
+				bblog(DEBUG, "Time debug: cmc_groupsforuserfromusersystem(): %f",  getTimeDifference(&starttime, &endtime));
 #endif
 
 				size_t grouplistsize = n_groups * (MAX_LDAP_ATTR_LEN+5);
@@ -2362,8 +2362,12 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	
 	#ifdef BLACK_BOKS
 
+		// gjør ting med TeffArray før vi roter for mye med den.
 		for (i=0; i<*TeffArrayElementer; i++)
 		    {
+			// lagrer den orgianla posisjoene. Trenger denne for å gjøre en stabil sortering siden.
+			(*TeffArray)->iindex[i].originalPosition = i;
+
 			//(*TeffArray)->iindex[i].indexFiltered.duplicate = 0;
 			//(*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection = -1;
 
@@ -2867,16 +2871,24 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	gettimeofday(&end_time, NULL);
 	(*queryTime).indexSort = getTimeDifference(&start_time,&end_time);
 
-		//temp:
-		/********************************************************************************/
-		//if ((*TotaltTreff) > 30) {
-		//	for (i=0;i<30;i++) {
-		//		TeffArray[i].allrank = TeffArray[i].TermRank;
-		//	}
-		//}
-		//
-		//qsort(TeffArray, 30 , sizeof(struct iindexFormat), compare_elements);
-		/********************************************************************************/
+	
+	// Debug: viser alle treffene 
+	/********************************************************************************/
+	//for (i=0;i<*TeffArrayElementer;i++) {
+	//	printf("DocID=%u, rank=%hu, Subname=%s\n", (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].allrank, (*TeffArray)->iindex[i].subname->subname);
+	//}
+	/********************************************************************************/
+
+	//temp:
+	/********************************************************************************/
+	//if ((*TotaltTreff) > 30) {
+	//	for (i=0;i<30;i++) {
+	//		TeffArray[i].allrank = TeffArray[i].TermRank;
+	//	}
+	//}
+	//
+	//qsort(TeffArray, 30 , sizeof(struct iindexFormat), compare_elements);
+	/********************************************************************************/
 
 	bblog(INFO, "search: ~searchSimple()");
 }
@@ -3689,12 +3701,10 @@ int compare_filetypes (const void *p1, const void *p2) {
 
 int compare_elements (const void *p1, const void *p2) {
 
-
-        if (((struct iindexMainElements *)p1)->allrank > ((struct iindexMainElements *)p2)->allrank)
+        if (((struct iindexMainElements *)p1)->allrank > ((struct iindexMainElements *)p2)->allrank) {
                 return -1;
-        else
+	}
+        else {
                 return ((struct iindexMainElements *)p1)->allrank < ((struct iindexMainElements *)p2)->allrank;
-
+	}
 }
-
-
