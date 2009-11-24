@@ -7,9 +7,9 @@
 
 #include "../banlists/ban.h"
 
-    #include <mysql.h>
 #include "library.h"
 
+#include <mysql.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -185,6 +185,8 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 		#ifdef DEBUG
 			warnx("No config data for collection %s", coll_name);
 		#endif
+
+		mysql_free_result(res);
 		return 0;
 	}
 
@@ -653,12 +655,6 @@ unsigned int getDocIDFromSql (MYSQL *demo_db, char rankUrl[]) {
 int main(int argc, char *argv[])
 {
 
-	//#ifdef WITH_PROFILING
-	//int pcount;
-	//for (pcount=0;pcount<=50;pcount++) {	
-	//#endif
-
-	//char queryEscaped[MaxQueryLen*2+1];
 
 	int cmc_port = 0;
         int sockfd[maxServers];
@@ -701,8 +697,9 @@ int main(int argc, char *argv[])
         struct QueryDataForamt QueryData;
 	//int connected[maxServers];
 	//int NonAdultPages,AdultPages;
-	struct timeval main_start_time, main_end_time;
+	struct timeval search_start_time, search_end_time;
 #ifdef DEBUG_TIME
+	struct timeval total_start_time, total_end_time;
 	struct timeval start_time, end_time;
 #endif
 	int nrRespondedServers;
@@ -710,8 +707,6 @@ int main(int argc, char *argv[])
 	struct errorhaFormat errorha;
 	errorha.nr = 0;
 	//int posisjon;
-	//struct timeval timeout;
-	//struct timeval time;
 	//int socketWait;	
 	int hascashe;
         int hasprequery;
@@ -737,12 +732,18 @@ int main(int argc, char *argv[])
 	int cachetimeout;
 
 	#ifdef DEBUG_TIME
+		gettimeofday(&total_start_time, NULL);
+	#endif
+
+	//starter å ta tiden
+	gettimeofday(&search_start_time, NULL);
+
+
+	#ifdef DEBUG_TIME
 	gettimeofday(&start_time, NULL);
 	#endif
 	dprintf("struct SiderFormat size %i\n",sizeof(struct SiderFormat));
 
-	//starter å ta tiden
-	gettimeofday(&main_start_time, NULL);
 
 
 	struct config_t maincfg;
@@ -1433,7 +1434,6 @@ int main(int argc, char *argv[])
 	Sider = malloc(maxSider);
 
 	//inaliserer side arrayen
-	//aaaaaaaaa
 	for(i=0;i<(nrOfServers + nrOfPiServers) * queryNodeHeder.MaxsHits;i++) {
         	Sider[i].iindex.allrank = 0;
         	Sider[i].deletet = 1;
@@ -1730,17 +1730,7 @@ int main(int argc, char *argv[])
         	fprintf(stderr,"Time debug: handle_results %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
-        #ifdef DEBUG_TIME
-                gettimeofday(&start_time, NULL);
-        #endif
 
-	//stopper å ta tidn og kalkulerer hvor lang tid vi brukte
-	gettimeofday(&main_end_time, NULL);
-	FinalSiderHeder.total_usecs = getTimeDifference(&main_start_time,&main_end_time);
-
-	#ifdef DEBUG_TIME
-		fprintf(stderr,"Time debug: Total time %f\n",FinalSiderHeder.total_usecs);
-	#endif
 
 	#ifdef BLACK_BOKS
 
@@ -1754,6 +1744,17 @@ int main(int argc, char *argv[])
 		}
 	#endif
 
+        #ifdef DEBUG_TIME
+                gettimeofday(&start_time, NULL);
+        #endif
+
+	//stopper å ta tidn og kalkulerer hvor lang tid vi brukte
+	gettimeofday(&search_end_time, NULL);
+	FinalSiderHeder.total_usecs = getTimeDifference(&search_start_time,&search_end_time);
+
+	#ifdef DEBUG_TIME
+		fprintf(stderr,"Time debug: Total time %f\n",FinalSiderHeder.total_usecs);
+	#endif
 
 
 	totlaAds = 0;
@@ -1806,7 +1807,7 @@ int main(int argc, char *argv[])
 	//kalkulerer dette på ny, men uten pi servere
 	nrRespondedServers = 0;
         for (i=0;i<nrOfServers;i++) {
-                //aaaaa
+
                 if (sockfd[i] != 0) {
                         ++nrRespondedServers;
                 }
@@ -1895,14 +1896,12 @@ int main(int argc, char *argv[])
 	config_destroy(&cfg);
 	maincfgclose(&maincfg);
 
-//	fprintf(stderr,"dispatcher_all: done\n");
 
 	#ifdef ATTRIBUTES
 	free(SiderHeder[0].navigation_xml);
 	#endif
 	free(SiderHeder);
 	free(AddSiderHeder);
-
 	//hvis vi har web system kan vi ha flere servere, og de er da som en char **
 	#ifndef BLACK_BOKS
 		for(i=0;i<nrOfServers;i++) {
@@ -1925,13 +1924,15 @@ int main(int argc, char *argv[])
 	if (!dispconfig.writeprequery) {
 		printf("\n\n");	
 	}
-	//#ifdef WITH_PROFILING
-	//	}
-	//#endif
 
 	#ifdef DEBUG_TIME
         	gettimeofday(&end_time, NULL);
         	fprintf(stderr,"Time debug: freeing at the end %f\n",getTimeDifference(&start_time,&end_time));
+
+
+		// skriver total tiden
+        	gettimeofday(&total_end_time, NULL);
+        	fprintf(stderr,"Time debug: Total time %f\n",getTimeDifference(&total_start_time,&total_end_time));
 	#endif
 
         return EXIT_SUCCESS;

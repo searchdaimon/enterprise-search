@@ -153,7 +153,7 @@ void addError(struct errorhaFormat *errorha, int errorcode,char errormessage[]) 
 }
 
 
-int bsconnect (int *sockfd, char server[], int port) {
+int bsconnect (int *sockfd, char server[], int port, int timeoutInSec) {
 
 
 	int returnstatus = 0;
@@ -181,7 +181,7 @@ int bsconnect (int *sockfd, char server[], int port) {
 	memset(&(their_addr.sin_zero), '\0', 8);  // zero the rest of the struct 
 
 	/* Initialize the timeout data structure. */
-	timeout.tv_sec = 1;
+	timeout.tv_sec = timeoutInSec;
 	timeout.tv_usec = 0;
 
 	fd_set set;
@@ -231,9 +231,6 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 
 	int dataReceived = 0;
 	int y = 0;
-//      struct timeval timeout;
-//      struct timeval time;
-        //struct timespec timeout;
         struct timespec time;
         int socketWait;
 	int n;
@@ -293,14 +290,13 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 	}
 	//vi timet ut socketetn. Setter den som ikke tilkoblet
 	if (socketWait >= maxSocketWait) {
-		dprintf("timed out\n");
-		//connected[i] = 0;
+		dprintf("bsread: timed out\n");
 		returnstatus = 0;
 	}
 
 	if (returnstatus == 0) {
 		(*sockfd) = 0;
-		dprintf("somthing is wrong. Closeing socket\n");
+		dprintf("somthing is wrong. Nulling socket\n");
 	}
 	
 	dprintf("Done geting data for this server. Did get %i of %i\n",dataReceived,datasize);
@@ -329,12 +325,10 @@ int bsMultiConnect(int *sockfd, int server_cnt, char **servers, int port, int of
 	for (i = 0; i < server_cnt; i++) {
 		dprintf("connecting to \"%s\" as sockfd nr %i\n",servers[i],i);
 
-		if (bsconnect(&sockfd[i + offset], servers[i], port)) {
-			dprintf("can connect\n");
-		}
-		else {
-			dprintf("can NOT connect\n");
+		if (!bsconnect(&sockfd[i + offset], servers[i], port, maxSocketWait_Connect)) {
+			fprintf(stderr,"can't connect to server \"%s\"\n", servers[i]);
 			sockfd[i] = 0;
+			// Runarb 23 nov 2009: Skal vi virkelig returnere her. Kan vi ikke ha andre servere å koble til ?
 			return 0;
 		}
 	}
@@ -363,34 +357,6 @@ void bsConnectAndQuery(int *sockfd,int server_cnt, char **servers,
 	}
 }
 
-/*void bsConectAndQuery(int *sockfd,int nrOfServers, char *servers[],struct queryNodeHederFormat *queryNodeHeder,int alreadynr, int port) {
-
-	int i;
-#ifdef DEBUG
-	struct timeval start_time, end_time;
-	gettimeofday(&start_time, NULL);
-#endif
-	
-	bsMultiConnect(sockfd, nrOfServers, servers, port, alreadynr);
-		
-	//sender ut forespørsel
-	for (i=0;i<nrOfServers;i++) {
-		//sender forespørsel
-
-		if (sockfd[i+alreadynr] != 0) {
-			if (!bsQuery(&sockfd[i+alreadynr], queryNodeHeder, sizeof *queryNodeHeder))
-				fprintf(stderr,"Error: Can't connect. Server %s:%i\n",servers[i], port);
-		}
-		dprintf("sending of queryNodeHeder end\n");
-	}
-
-#ifdef DEBUG
-	gettimeofday(&end_time, NULL);
-
-	printf("Time debug: bsConectAndQuery %f\n",getTimeDifference(&start_time,&end_time));
-
-#endif
-}*/
 
 int bdread_continue(int sockfd[], int nrof,int bytesleft[], int lastgoodread[], int readsdone, int maxSocketWait) {
 
@@ -498,15 +464,13 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 	int i,n;
 	int net_status;
 
-	#ifdef DEBUG
+	#ifdef DEBUG_TIME
 	struct timeval start_time, end_time;
 	gettimeofday(&start_time, NULL);
 	#endif
 
 	#ifdef DEBUG
-
 	printf("brGetPages: alreadynr %i, *pageNr %i, nrOfServers %i\n",alreadynr,*pageNr,nrOfServers);
-	
 	#endif
 
 	//sejjer om vi har fåt et midlertidig svar på at jobben har begynt
@@ -518,7 +482,6 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 			//motter hedderen for svaret
 			if (bsread (&sockfd[i],sizeof(net_status),(char *)&net_status,maxSocketWait_CanDo)) {
 
-
 				if (net_status != net_CanDo) {
 					dprintf("net_status wasen net_CanDo but %i\n",net_status);
 					sockfd[i] = 0;
@@ -527,14 +490,13 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 		}			
 		
 	}
-	#ifdef DEBUG
+	/****************************************************************/
+	#ifdef DEBUG_TIME
 	gettimeofday(&end_time, NULL);
 	dprintf("Time debug: brGetPages.jobstart pages %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
-	/****************************************************************/
-
-	#ifdef DEBUG
+	#ifdef DEBUG_TIME
 	gettimeofday(&start_time, NULL);
 	#endif
 
@@ -546,55 +508,54 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 		//motter hedderen for svaret
 		if (sockfd[i] != 0) {
 
-			if (bsread (&sockfd[i],sizeof(struct SiderHederFormat),(char *)&SiderHeder[i],maxSocketWait_SiderHeder)) {
-
+			if (!bsread (&sockfd[i],sizeof(struct SiderHederFormat),(char *)&SiderHeder[i],maxSocketWait_SiderHeder)) {
+				dprintf("brGetPages: Failed to bsread SiderHeder");
+				continue; // ingen vits i å fortsette å lese fra denne hvis vi ikke fik til å gjøre dette read kallet
 			}
 
 			#ifdef ATTRIBUTES
-			SiderHeder[i].navigation_xml = malloc(sizeof(char) * (SiderHeder[i].navigation_xml_len +1));
-			if (bsread (&sockfd[i], SiderHeder[i].navigation_xml_len, SiderHeder[i].navigation_xml, maxSocketWait_SiderHeder))
-			    {
-			    }
+			if ((SiderHeder[i].navigation_xml = malloc( sizeof(char) * (SiderHeder[i].navigation_xml_len +1)) ) == NULL) {
+				perror("Can't malloc data for navigation_xml");
+				continue; // ingen vits å å fortsette mer
+			}
+
+			if (!bsread (&sockfd[i], SiderHeder[i].navigation_xml_len, SiderHeder[i].navigation_xml, maxSocketWait_SiderHeder)) {
+				dprintf("brGetPages: Failed to bsread navigation_xml");
+				continue; // ingen vits å å fortsette mer
+		    	}
+
 			SiderHeder[i].navigation_xml[SiderHeder[i].navigation_xml_len] = '\0';
 			#endif
 		}
 	}
 
-	#ifdef DEBUG
+	#ifdef DEBUG_TIME
 	gettimeofday(&end_time, NULL);
 	dprintf("Time debug: brGetPages.reading heder pages %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 
-	//int bdread(int sockfd[],int nrof,int datasize, void *result, int maxSocketWait)
 
-//	bdread(sockfd,nrOfServers,sizeof(struct SiderHederFormat),SiderHeder, maxSocketWait_SiderHeder);
-
-	#ifdef DEBUG
+	#ifdef DEBUG_TIME
 	gettimeofday(&start_time, NULL);
 	#endif
 
 
-	//(*pageNr) = 0;
 	for (i=alreadynr;i<nrOfServers+alreadynr;i++) {
 
-			dprintf("aa: i: %i. Server \"%s\" that has %i pages. Soctet %i\n",
-				i,
-				SiderHeder[i].servername,
-				SiderHeder[i].showabal,
-				sockfd[i]);
-		
 
-			if (sockfd[i] != 0) {
+			if (sockfd[i] == 0) {
+				dprintf("Server nr %i don't have a open socket.",i);
+			}
+			else {
 				int j;
 
-				/*
-				for(y=0;y<SiderHeder[i].showabal;y++) {
+				dprintf("aa: i: %i. Server \"%s\" that has %i pages. Soctet %i\n",
+					i,
+					SiderHeder[i].servername,
+					SiderHeder[i].showabal,
+					sockfd[i]);
+		
 
-					if (bsread (&sockfd[i],sizeof(struct SiderFormat),(char *)&Sider[(*pageNr)],maxSocketWait_SiderHeder)) {
-						(*pageNr)++;
-					}
-				}
-				*/
 
 				#ifdef DEBUG
 					printf("brGetPages: trying to read %i bytes from server %i\n",sizeof(struct SiderFormat) * SiderHeder[i].showabal,i);
@@ -627,6 +588,10 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 							bsread(&sockfd[i], len, Sider[*pageNr].urls[k].fulluri, maxSocketWait_SiderHeder);
 							Sider[*pageNr].urls[k].fulluri[len] = '\0';
 
+							#ifdef DEBUG
+								printf("n_urls=%i\n", Sider[*pageNr].n_urls);
+								printf("url=\"%s\", uri=\"%s\", fulluri=\"%s\"\n", Sider[*pageNr].urls[k].url, Sider[*pageNr].urls[k].uri, Sider[*pageNr].urls[k].fulluri);
+							#endif
 
 						}
 
@@ -646,7 +611,7 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 	}
 
 
-	#ifdef DEBUG
+	#ifdef DEBUG_TIME
 	gettimeofday(&end_time, NULL);
 	dprintf("Time debug: brGetPages.reading pages %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
@@ -986,9 +951,6 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 	/********************************************************************************************/
 	//mysql logging
 	/********************************************************************************************/
-	#ifdef DEBUG_TIME
-        	gettimeofday(&start_time, NULL);
-	#endif
 
 #ifndef MYSQL_VERSION_ID
 
@@ -1289,9 +1251,5 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 
 	/********************************************************************************************/
 
-	#ifdef DEBUG_TIME
-	        gettimeofday(&end_time, NULL);
-	        fprintf(stderr,"Time debug: sql loging %f\n",getTimeDifference(&start_time,&end_time));
-	#endif
 
 }

@@ -18,8 +18,9 @@
     //extern int errno;
 
     //i hundredels sekunder (100 = 1sec)
-    #define maxSocketWait_SiderHeder 6000
-    #define maxSocketWait_CanDo 100
+    #define maxSocketWait_SiderHeder 6001
+    #define maxSocketWait_CanDo 6002
+    #define maxSocketWait_Connect 6003
 
     #define maxerrors 5
     #define maxerrorlen 201
