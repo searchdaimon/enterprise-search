@@ -19,7 +19,7 @@ PROG=	dispatcher_allbb
 
 CFLAGS?=	
 
-CFLAGS+=	-DATTRIBUTES -D_FILE_OFFSET_BITS=64 -DIIACL -DBLACK_BOKS
+CFLAGS+=	-DATTRIBUTES -D_FILE_OFFSET_BITS=64 -DIIACL -DBLACK_BOKS -DWITH_SPELLING 
 
 LDFLAGS+=	-lm -lz ../getFiletype/libfte.a ../query/lex.query.o -lpthread
 
