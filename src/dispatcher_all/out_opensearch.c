@@ -20,19 +20,19 @@ void disp_out_opensearch(int total_res, struct SiderFormat *results, struct quer
 
 	while ((x<(res_per_page * start)) && ( x < total_res) && (i < (queryNodeHeder->MaxsHits * num_servers))) {
 
-		if (results[i].deletet)
-			continue;
+		if (!results[i].deletet) {
 
-		printf("<item>\n");
-		printf("\t<docid>%i-%i</docid>\n",results[i].iindex.DocID, rLotForDOCid(results[i].iindex.DocID));
-		printf("\t<title><![CDATA[%s]]></title>\n", results[i].title);
-		printf("\t<link><![CDATA[%s]]></link>\n", results[i].url);
-		printf("\t<description>%s</description>\n", results[i].description);
-		printf("</item>\n");
+			printf("<item>\n");
+			printf("\t<docid>%i-%i</docid>\n",results[i].iindex.DocID, rLotForDOCid(results[i].iindex.DocID));
+			printf("\t<title><![CDATA[%s]]></title>\n", results[i].title);
+			printf("\t<link><![CDATA[%s]]></link>\n", results[i].url);
+			printf("\t<description>%s</description>\n", results[i].description);
+			printf("</item>\n");
 
-		//teller bare normale sider
-		if (results[i].type == siderType_normal) {
-			++x;
+			//teller bare normale sider
+			if (results[i].type == siderType_normal) {
+				++x;
+			}
 		}
 		++i;
 	}
