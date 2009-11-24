@@ -36,7 +36,9 @@ int cgi_access_type(char *remoteaddr, char *correct_bbkey) {
 		return ACCESS_TYPE_FULL;
 
 	const char *bbkey = cgi_getentrystr("bbkey");
+	#ifdef DEBUG
 	warnx("correct: %s, provided: %s\n", correct_bbkey, bbkey);
+	#endif
 
 	/*extern char **environ;
 	char **next = environ;
