@@ -354,139 +354,134 @@ showabal,AddSiderHeder[i].servername);
 	}
 
 #ifdef DEBUG_TIME
-		gettimeofday(&start_time, NULL);
+	gettimeofday(&start_time, NULL);
 #endif
-		//sorterer resultatene
-		dprintf("mgsort: pageNr %i\n",pageNr);
-		//tmp:
-		//dette skaper problemer for blaingen på bb. Sikkert samme problmet på web, så vi må se på hva vi kan gjøre
-		#ifndef BLACK_BOKS
-			mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements);
-		#endif
+	//sorterer resultatene
+	dprintf("mgsort: pageNr %i\n",pageNr);
+
+	//dette skaper problemer for blaingen på bb. Sikkert samme problmet på web, så vi må se på hva vi kan gjøre
+	#ifndef BLACK_BOKS
+		mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements);
+	#endif
 
 #ifdef DEBUG_TIME
-		gettimeofday(&end_time, NULL);
-		fprintf(stderr,"Time debug: mgsort_1 %f\n",getTimeDifference(&start_time,&end_time));
+	gettimeofday(&end_time, NULL);
+	fprintf(stderr,"Time debug: mgsort_1 %f\n",getTimeDifference(&start_time,&end_time));
 #endif
 
 #ifdef DEBUG_TIME
-		gettimeofday(&start_time, NULL);
+	gettimeofday(&start_time, NULL);
 #endif		
 
-		filtersTrapedReset(dispatcherfiltersTraped);
+	filtersTrapedReset(dispatcherfiltersTraped);
 
-		//dette er kansje ikke optimalet, da vi går gjenom alle siden. Ikke bare de som skal være med
-		for(i=0;i<queryNodeHeder->MaxsHits * (nrOfServers + nrOfPiServers);i++) {
+	//dette er kansje ikke optimalet, da vi går gjenom alle siden. Ikke bare de som skal være med
+	for(i=0;i<queryNodeHeder->MaxsHits * (nrOfServers + nrOfPiServers);i++) {
 
 
-			if (Sider[i].deletet) {
-				dprintf("page is deleted\n");
+		if (Sider[i].deletet) {
+			dprintf("page is deleted\n");
+		}
+		else {
+
+			dprintf("looking on url %s, adult %i, allrank %u, i %i, type %i\n",Sider[i].DocumentIndex.Url,Sider[i].DocumentIndex.AdultWeight,Sider[i].iindex.allrank,i,Sider[i].type);
+
+			//setter som slettet
+			Sider[i].deletet = 1;
+
+
+			#ifndef BLACK_BOKS
+			// hvis dette er en pi side, må vi håntere at det kan komme versjoner av den som har bedre rank
+			// hvis det skjer skal vi bruke pi siden, og forkaste den andre
+	
+			if (pi_switch(i,&Sider[i],Sider)) {
+				dprintf("pi switch'ed url \"%s\"\n",Sider[i].url);
+				FinalSiderHeder->filtered++;
+				--FinalSiderHeder->TotaltTreff;
+				continue;
 			}
-			else {
 
-				dprintf("looking on url %s, adult %i, allrank %u, i %i, type %i\n",Sider[i].DocumentIndex.Url,Sider[i].DocumentIndex.AdultWeight,Sider[i].iindex.allrank,i,Sider[i].type);
+			#endif
 
-				//setter som slettet
-				Sider[i].deletet = 1;
-
-
-				#ifndef BLACK_BOKS
-				// hvis dette er en pi side, må vi håntere at det kan komme versjoner av den som har bedre rank
-				// hvis det skjer skal vi bruke pi siden, og forkaste den andre
-	
-				if (pi_switch(i,&Sider[i],Sider)) {
-					dprintf("pi switch'ed url \"%s\"\n",Sider[i].url);
-					FinalSiderHeder->filtered++;
-					--FinalSiderHeder->TotaltTreff;
-					continue;
-				}
-	
-				#endif
-
-				if ((QueryData->filterOn) && (Sider[i].subname.config.filterSameUrl) 
-						&& (filterSameUrl(i,Sider[i].url,Sider)) ) {
-					dprintf("Hav seen url befor. Url '%s', DocID %u\n",Sider[i].url,Sider[i].iindex.DocID);
-					//(*SiderHeder).filtered++;
-					FinalSiderHeder->filtered++;
-					--FinalSiderHeder->TotaltTreff;
-					++dispatcherfiltersTraped->filterSameUrl;					
-					continue;
-				}
+			if ((QueryData->filterOn) && (Sider[i].subname.config.filterSameUrl) 
+					&& (filterSameUrl(i,Sider[i].url,Sider)) ) {
+				dprintf("Hav seen url befor. Url '%s', DocID %u\n",Sider[i].url,Sider[i].iindex.DocID);
+				//(*SiderHeder).filtered++;
+				FinalSiderHeder->filtered++;
+				--FinalSiderHeder->TotaltTreff;
+				++dispatcherfiltersTraped->filterSameUrl;					
+				continue;
+			}
 
 #ifndef BLACK_BOKS
 
 #if 0
-				// 19. juni
-				//ToDo: fjerner adult vekt filtrering her. Er det trykt. Hvis vi for eks har misket resultater, men ikke noen noder hadde fø sider, og tilot adoult
-				// hva er egentlig adoult filter statur på searchd nå?
-				if ((QueryData->filterOn) && Sider[i].DocumentIndex.AdultWeight > 50) {
-					dprintf("slettet adult side %s ault %i\n",Sider[i].url,Sider[i].DocumentIndex.AdultWeight);
-					//(*SiderHeder).filtered++;
-					FinalSiderHeder->filtered++;
-					--FinalSiderHeder->TotaltTreff;
-					++dispatcherfiltersTraped->filterAdultWeight_value;
-					continue;
-				}
+			// 19. juni
+			//ToDo: fjerner adult vekt filtrering her. Er det trykt. Hvis vi for eks har misket resultater, men ikke noen noder hadde fø sider, og tilot adoult
+			// hva er egentlig adoult filter statur på searchd nå?
+			if ((QueryData->filterOn) && Sider[i].DocumentIndex.AdultWeight > 50) {
+				dprintf("slettet adult side %s ault %i\n",Sider[i].url,Sider[i].DocumentIndex.AdultWeight);
+				//(*SiderHeder).filtered++;
+				FinalSiderHeder->filtered++;
+				--FinalSiderHeder->TotaltTreff;
+				++dispatcherfiltersTraped->filterAdultWeight_value;
+				continue;
+			}
 #endif
-				if ((QueryData->filterOn) && (Sider[i].subname.config.filterSameCrc32) 
-						&& filterSameCrc32(i,&Sider[i],Sider)) {
-					dprintf("hav same crc32. crc32 from DocumentIndex. Will delete \"%s\"\n",Sider[i].DocumentIndex.Url);
-					//(*SiderHeder).filtered++;
-					FinalSiderHeder->filtered++;
-					--FinalSiderHeder->TotaltTreff;
-					++dispatcherfiltersTraped->filterSameCrc32_1;
+			if ((QueryData->filterOn) && (Sider[i].subname.config.filterSameCrc32) 
+					&& filterSameCrc32(i,&Sider[i],Sider)) {
+				dprintf("hav same crc32. crc32 from DocumentIndex. Will delete \"%s\"\n",Sider[i].DocumentIndex.Url);
+				//(*SiderHeder).filtered++;
+				FinalSiderHeder->filtered++;
+				--FinalSiderHeder->TotaltTreff;
+				++dispatcherfiltersTraped->filterSameCrc32_1;
 
-					continue;
-				}
+				continue;
+			}
 
-				if ((QueryData->filterOn) && (Sider[i].subname.config.filterSameDomain) 
-						&& (filterSameDomain(i,&Sider[i],Sider))) {
-					dprintf("hav same domain \"%s\"\n",Sider[i].domain);
-					//(*SiderHeder).filtered++;
-					FinalSiderHeder->filtered++;
-					--FinalSiderHeder->TotaltTreff;
-					++dispatcherfiltersTraped->filterSameDomain;
+			if ((QueryData->filterOn) && (Sider[i].subname.config.filterSameDomain) 
+					&& (filterSameDomain(i,&Sider[i],Sider))) {
+				dprintf("hav same domain \"%s\"\n",Sider[i].domain);
+				//(*SiderHeder).filtered++;
+				FinalSiderHeder->filtered++;
+				--FinalSiderHeder->TotaltTreff;
+				++dispatcherfiltersTraped->filterSameDomain;
 
-					continue;
-				}
+				continue;
+			}
 
 #if 0
-				if ((QueryData->filterOn) && filterDescription(i,&Sider[i],Sider)) {
-					dprintf("hav same Description. DocID %i\n",Sider[i].iindex.DocID);
-					//(*SiderHeder).filtered++;
-					FinalSiderHeder->filtered++;
-					--FinalSiderHeder->TotaltTreff;
-					continue;
-				}
-#endif
-#endif
-				#ifndef BLACK_BOKS
-				if(isDomainBan(Sider[i].domain)) {
-
-					dprintf("hav baned domain \"%s\"\n",Sider[i].domain);
-					//(*SiderHeder).filtered++;
-					//filtrerer stille
-					//FinalSiderHeder->filtered++;
-					--FinalSiderHeder->TotaltTreff;
-					//++dispatcherfiltersTraped->filterBannedDomain;
-
-					continue;
-
-				}
-				#endif
-
-				//printf("url %s\n",Sider[i].DocumentIndex.Url);
-
-				//hvis siden overlevde helt hit er den ok
-				Sider[i].deletet = 0;
+			if ((QueryData->filterOn) && filterDescription(i,&Sider[i],Sider)) {
+				dprintf("hav same Description. DocID %i\n",Sider[i].iindex.DocID);
+				//(*SiderHeder).filtered++;
+				FinalSiderHeder->filtered++;
+				--FinalSiderHeder->TotaltTreff;
+				continue;
 			}
-		}
+#endif
+#endif
+			#ifndef BLACK_BOKS
+			if(isDomainBan(Sider[i].domain)) {
 
-//	} // !hascashe && !hasprequery
-//	else {
-//		*nrRespondedServers = 1;
-//
-//	}
+				dprintf("hav baned domain \"%s\"\n",Sider[i].domain);
+				//(*SiderHeder).filtered++;
+				//filtrerer stille
+				//FinalSiderHeder->filtered++;
+				--FinalSiderHeder->TotaltTreff;
+				//++dispatcherfiltersTraped->filterBannedDomain;
+
+				continue;
+
+			}
+			#endif
+
+			//printf("url %s\n",Sider[i].DocumentIndex.Url);
+
+			//hvis siden overlevde helt hit er den ok
+			Sider[i].deletet = 0;
+		}
+	}
+
 
 	//why was sort here???
 	posisjon=0;
