@@ -70,7 +70,7 @@ void disp_out_sd_v2_0(
 	    #endif
     	    printf("<RESULT_INFO TOTAL=\"%i\" SPELLCHECKEDQUERY=\"%s\" QUERY=\"%s\" HILITE=\"%s\" TIME=\"%f\" FILTERED=\"%i\" \
 	        SHOWABAL=\"%i\" CASHE=\"%i\" \
-		PREQUERY=\"%i\" GEOIPCONTRY=\"%s\" SUBNAME=\"%s\" BOITHOHOME=\"%s\" NROFSEARCHNODES=\"%i\"/>\n",
+		PREQUERY=\"%i\" GEOIPCONTRY=\"%s\" SUBNAME=\"%s\" BOITHOHOME=\"%s\" NROFSEARCHNODES=\"%i\" XMLVERSION=\"2.0\"/>\n",
 		FinalSiderHeder.TotaltTreff,
 		#ifdef WITH_SPELLING
 		SiderHeder->spellcheckedQuery,
@@ -658,7 +658,7 @@ void disp_out_sd_v2_1(
 	    #endif
     	    printf("<result_info query=\"%s\" spellcheckedquery=\"%s\" filtered=\"%i\" \
 	        shown=\"%i\" total=\"%i\" cache=\"%i\" \
-		prequery=\"%i\" time=\"%f\" geoipcountry=\"%s\" subname=\"%s\" boithohome=\"%s\" nrofsearchnodes=\"%i\"/>\n",
+		prequery=\"%i\" time=\"%f\" geoipcountry=\"%s\" subname=\"%s\" boithohome=\"%s\" nrofsearchnodes=\"%i\" xmlversion=\"2.1\"/>\n",
 		QueryData.queryhtml,
 		#ifdef WITH_SPELLING
 		SiderHeder->spellcheckedQuery,
@@ -890,12 +890,13 @@ void disp_out_sd_v2_1(
 			    }
 		    }
 
-	    bsprint_query_with_remove(B, remove, &qa, 1);
+	    bsprint_query_with_remove(B, remove, &qa, 0);
 	    char	*basedatequery = buffer_exit(B);
 	    char	xmlescapebuf1[2048];
 	    char	xmlescapebuf2[2048];
 
-	    printf("<group name=\"Date\" query=\"%s\" expanded=\"true\">\n", basedatequery);
+	    printf("<group name=\"Date\" query=\"%s\" expanded=\"true\">\n", 
+			xml_escape_uri(basedatequery, xmlescapebuf1, sizeof(xmlescapebuf1)));
 		for (y=0;y<7;y++) {
 		    printf("\t<item name=\"%s\" query=\"%s%s\" hits=\"%i\"%s />\n",
 			dateview_type_names[y],
