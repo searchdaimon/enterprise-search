@@ -441,6 +441,8 @@ struct iindexMainElements {
 	#ifdef EXPLAIN_RANK
 		struct rank_explaindFormat rank_explaind;
 	#endif
+
+	unsigned int originalPosition;
 };
 
 
