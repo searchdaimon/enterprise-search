@@ -596,6 +596,7 @@ void iff_clear_all(struct indexFilteredFormat *filter)
     filter->attribute = 0;
     filter->is_filtered = 0;
     filter->duplicate_in_collection = 0;
+    filter->duplicate_to_show = 0;
 
     for (i=0; i<MAX_ATTRIBUTES_IN_QUERY; i++)
 	filter->attrib[i] = 0;
@@ -2738,6 +2739,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 				}
 
 				dup = hashtable_search(*crc32maphash, &crc32);
+				(*TeffArray)->iindex[i].crc32 = crc32;
 
 				if (dup == NULL) {
 					//dup = malloc(sizeof(struct duplicate_docids));
@@ -2758,6 +2760,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 						bblog(DEBUG, "DUPLICATE first: DocID=%u, subname=%s",  dup->fistiindex->DocID, dup->fistiindex->subname->subname);
 						#endif
 						vector_pushback(dup->V, dup->fistiindex->DocID, dup->fistiindex->subname->subname);
+						dup->fistiindex->indexFiltered.duplicate_to_show = 1;
 					}
 
 					//går gjenom de vi har fra før, og sjekker om dette er den første duplikaten i en kollection
@@ -2776,7 +2779,10 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 					    {
 						if (iff_set_filter(&dup->fistiindex->indexFiltered, FILTER_DUPLICATE))
 						    --(*TotaltTreff);	// Vil ikke denne alltid bli false?
+
+						dup->fistiindex->indexFiltered.duplicate_to_show = 0;
 						dup->fistiindex = &(*TeffArray)->iindex[i];
+						dup->fistiindex->indexFiltered.duplicate_to_show = 1;
 					    }
 					else
 					    {
@@ -2993,6 +2999,19 @@ unsigned int _attribute_temp_1_hash( void *key )
     return v;
 }
 
+struct _attribute_temp_dup_data_
+{
+    char	*key, *value;
+    int		count;
+    unsigned int crc32val;
+};
+
+struct _attribute_dups_
+{
+    container	*main, *dups;
+};
+
+
 
 char* searchFilterCount(int *TeffArrayElementer, 
 			struct iindexFormat *TeffArray, 
@@ -3042,9 +3061,11 @@ char* searchFilterCount(int *TeffArrayElementer,
 		// key -> (val->#), #
 		container	*attributes = map_container( string_container(), pair_container( ptr_container(), int_container() ) );
 		container	*file_groups = map_container( string_container(), string_container() );
+		container	*dup_attributes = map_container( int_container(), ptr_container() );
 
 		attribute_init_count();
 		struct hashtable *attrib_count_temp = create_hashtable(16, _attribute_temp_1_hash, _attribute_temp_1_cmp);
+
 
 
 	        #ifdef DEBUG_TIME
@@ -3068,7 +3089,12 @@ char* searchFilterCount(int *TeffArrayElementer,
 			}
 			else if (TeffArray->iindex[i].indexFiltered.duplicate == 1) {
 				bblog(INFO, "docid(%i) (duplicate)",  TeffArray->iindex[i].DocID);
-				continue;
+				//continue;
+				// Ax: Vi merger attributter for alle duplikater.
+				// Dette vil fikse tellefeil når en av duplikatene for et dokument f.eks
+				// er lagret i SuperOffice (med tilhørende attributt).
+				// Det vil feile miserabelt dersom duplikatene er i flere forskjellige systemer
+				// (f.eks både .doc og .pdf e.l.).
 			}
 
 			// Ax: Slå opp attributter for dokumentet.
@@ -3077,6 +3103,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 			#endif
 
 			int	DocID = TeffArray->iindex[i].DocID;
+			int	checksum = TeffArray->iindex[i].crc32; // Døpt checksum for å ikke blande sammen med crc32attr.
 			char	*subname = TeffArray->iindex[i].subname->subname;
 //			printf("DocID=%i (subname=%s)\n", DocID, subname);
 			iterator	it_re = map_find(attr_subname_re, subname);
@@ -3194,6 +3221,19 @@ char* searchFilterCount(int *TeffArrayElementer,
 			    count+= (1 - TeffArray->iindex[i].indexFiltered.attrib[j])<<j;
 			count+= (1 - TeffArray->iindex[i].indexFiltered.filename)<<(len-1);
 
+			// Ax: Attribute dup-handling:
+			container *alist = NULL;
+
+			if (TeffArray->iindex[i].indexFiltered.duplicate_to_show == 1
+			    || TeffArray->iindex[i].indexFiltered.duplicate == 1)
+			    {
+				alist = vector_container( ptr_container() );
+			    }
+
+			if (TeffArray->iindex[i].indexFiltered.duplicate == 1 && TeffArray->iindex[i].indexFiltered.duplicate_to_show == 1)
+			    bblog(ERROR, "DocID %i is both assigned as duplicate to be shown, and to be filtered out.", DocID);
+
+
 			if (!no_attributes)
 			    {
 				// Faktisk oppslag:
@@ -3207,6 +3247,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 						if (*crc32val != 0)
 						    {
 							char	*key = (char*)set_key(it_s1).ptr;
+							char	*value = NULL;
 							// Sjekk cache
 							struct _attribute_temp_1_key	this_key, *hash_key;
 							struct _attribute_temp_1_val	*hash_val;
@@ -3216,41 +3257,65 @@ char* searchFilterCount(int *TeffArrayElementer,
 							this_key.arg1 = NULL;
 							this_key.arg2 = NULL;
 
-							hash_val = (struct _attribute_temp_1_val*)hashtable_search(attrib_count_temp, (void*)&this_key);
-
-							if (hash_val == NULL)
+							// Attr-dup:
+							if (alist != NULL)
 							    {
-								char	*value = (char*)bsearch((const void*)(crc32val), (const void*)m_crc32_words, crc32_words_size,
-							            attr_crc32_words_blocksize, attr_crc32_words_block_compare );
+								value = (char*)bsearch((const void*)(crc32val), (const void*)m_crc32_words, crc32_words_size,
+							    	    attr_crc32_words_blocksize, attr_crc32_words_block_compare );
 
-							        if (value != NULL)
+								if (value != NULL)
 								    {
 								        value+= sizeof(unsigned int);
 
-									// Legg til:
-									//attribute_count_add(count, attributes, 2, key, value);
-									hash_key = malloc(sizeof(struct _attribute_temp_1_key));
-									hash_key->count = count;
-									hash_key->key = key;
-									hash_key->crc32val = *crc32val;
-									hash_key->arg1 = NULL;
-									hash_key->arg2 = NULL;
+								    	struct _attribute_temp_dup_data_ *atdd =
+									    malloc(sizeof(struct _attribute_temp_dup_data_));
+									atdd->key = strdup(key);
+									atdd->value = strdup(value);
+									atdd->crc32val = *crc32val;
+									atdd->count = count;
 
-									hash_val = malloc(sizeof(struct _attribute_temp_1_val));
-									hash_val->count = count;
-									hash_val->key = key;
-									hash_val->value = value;
-									hash_val->value2 = NULL;
-									hash_val->size = 1;
-									hashtable_insert(attrib_count_temp, hash_key, hash_val);
-//									printf("Legger til %s=%s\n", key, value);
+									vector_pushback(alist, atdd);
 								    }
-//								printf("[ ]\n");
 							    }
-							else
+
+							if (TeffArray->iindex[i].indexFiltered.duplicate == 0)
 							    {
-//								printf("[X]\n");
-								hash_val->size++;
+								hash_val = (struct _attribute_temp_1_val*)hashtable_search(attrib_count_temp, (void*)&this_key);
+
+								if (hash_val == NULL)
+								    {
+									if (value == NULL)
+									    {
+										value = (char*)bsearch((const void*)(crc32val), (const void*)m_crc32_words, crc32_words_size,
+								    	    	    attr_crc32_words_blocksize, attr_crc32_words_block_compare );
+
+									        if (value != NULL) value+= sizeof(unsigned int);
+									    }
+
+								        if (value != NULL)
+									    {
+										// Legg til:
+										//attribute_count_add(count, attributes, 2, key, value);
+										hash_key = malloc(sizeof(struct _attribute_temp_1_key));
+										hash_key->count = count;
+										hash_key->key = strdup(key);
+										hash_key->crc32val = *crc32val;
+										hash_key->arg1 = NULL;
+										hash_key->arg2 = NULL;
+
+										hash_val = malloc(sizeof(struct _attribute_temp_1_val));
+										hash_val->count = count;
+										hash_val->key = strdup(key);
+										hash_val->value = strdup(value);
+										hash_val->value2 = NULL;
+										hash_val->size = 1;
+										hashtable_insert(attrib_count_temp, hash_key, hash_val);
+									    }
+								    }
+								else
+								    {
+									hash_val->size++;
+								    }
 							    }
 						    }
 
@@ -3258,6 +3323,88 @@ char* searchFilterCount(int *TeffArrayElementer,
 					    }
 				    }
 			    }
+
+			// Attr-dup:
+			if (alist!=NULL && TeffArray->iindex[i].indexFiltered.duplicate_to_show == 1)
+			    {
+				// Hovedattr
+				struct _attribute_dups_ *ads;
+				iterator		it_ads = map_find(dup_attributes, checksum);
+
+				if (!it_ads.valid)
+				    {
+					ads = malloc(sizeof(struct _attribute_dups_));
+					ads->main = alist;
+					ads->dups = NULL;
+					map_insert(dup_attributes, checksum, ads);
+				    }
+				else
+				    {
+					ads = map_val(it_ads).ptr;
+					ads->main = alist;
+				    }
+			    }
+			else if (alist!=NULL && TeffArray->iindex[i].indexFiltered.duplicate == 1)
+			    {
+				// Merge attr
+				struct _attribute_dups_ *ads;
+				iterator		it_ads = map_find(dup_attributes, checksum);
+
+				if (!it_ads.valid)
+				    {
+					ads = malloc(sizeof(struct _attribute_dups_));
+					ads->main = NULL;
+					ads->dups = alist;
+					map_insert(dup_attributes, checksum, ads);
+				    }
+				else
+				    {
+					int	ai, aj;
+					struct _attribute_temp_dup_data_ *aid, *ajd;
+
+					ads = map_val(it_ads).ptr;
+					if (ads->dups == NULL)
+					    {
+						ads->dups = alist;
+					    }
+					else
+					    {
+						// Ax: O(n^2), men antar n vil være så liten at dette allikevel er raskeste løsning.
+						for (ai=0; ai<vector_size(alist); ai++)
+						    {
+							char	has_dup = 0;
+
+							aid = vector_get(alist, ai).ptr;
+
+							for (aj=0; aj<vector_size(ads->dups); aj++)
+							    {
+								ajd = vector_get(ads->dups, aj).ptr;
+								// Ax: Om to duplikater har forskjellige verdier for samme nøkkel,
+								// så vil bare den ene bli med, ettersom vi ikke støtter multinøkler.
+								if (!strcmp(aid->key, ajd->key))
+								    has_dup = 1;
+							    }
+
+							if (!has_dup)
+							    {
+								vector_pushback(ads->dups, aid);
+							    }
+							else
+							    {
+								free(aid->key);
+								free(aid->value);
+								free(aid);
+							    }
+						    }
+
+						destroy(alist);
+					    }
+				    }
+
+				// Vi merger bare duplikat-attributter, ikke filetype og group:
+				continue;
+			    }
+
 
 		        #ifdef DEBUG_TIME		
 	                gettimeofday(&att_end_time, NULL);
@@ -3318,15 +3465,15 @@ char* searchFilterCount(int *TeffArrayElementer,
 				    {
 					hash_key = malloc(sizeof(struct _attribute_temp_1_key));
 					hash_key->count = count;
-					hash_key->key = "group";
+					hash_key->key = strdup("group");
 					hash_key->arg1 = group;
 					hash_key->arg2 = file_ext;
 
 					hash_val = malloc(sizeof(struct _attribute_temp_1_val));
 					hash_val->count = count;
-					hash_val->key = "group";
-					hash_val->value = group;
-					hash_val->value2 = file_ext;
+					hash_val->key = strdup("group");
+					hash_val->value = strdup(group);
+					hash_val->value2 = strdup(file_ext);
 					hash_val->size = 1;
 					hashtable_insert(attrib_count_temp, hash_key, hash_val);
 				    }
@@ -3345,14 +3492,14 @@ char* searchFilterCount(int *TeffArrayElementer,
 				    {
 					hash_key = malloc(sizeof(struct _attribute_temp_1_key));
 					hash_key->count = count;
-					hash_key->key = "filetype";
+					hash_key->key = strdup("filetype");
 					hash_key->arg1 = file_ext;
 					hash_key->arg2 = NULL;
 
 					hash_val = malloc(sizeof(struct _attribute_temp_1_val));
 					hash_val->count = count;
-					hash_val->key = "filetype";
-					hash_val->value = file_ext;
+					hash_val->key = strdup("filetype");
+					hash_val->value = strdup(file_ext);
 					hash_val->value2 = NULL;
 					hash_val->size = 1;
 					hashtable_insert(attrib_count_temp, hash_key, hash_val);
@@ -3366,6 +3513,101 @@ char* searchFilterCount(int *TeffArrayElementer,
 	               	att5 += getTimeDifference(&att_start_time, &att_end_time);
 			#endif
 		}
+
+		// Attr-dup:
+		iterator	da_it = map_begin(dup_attributes);
+		for (; da_it.valid; da_it=map_next(da_it))
+		    {
+			struct _attribute_dups_ *ads = map_val(da_it).ptr;
+
+			int	ai, aj;
+			struct _attribute_temp_dup_data_ *aid, *ajd;
+
+			if (ads->dups!=NULL && ads->main!=NULL) {
+			    // Ax: O(n^2), men antar n vil være så liten at dette allikevel er raskeste løsning.
+			    for (ai=0; ai<vector_size(ads->dups); ai++)
+				{
+				    char	has_dup = 0;
+
+    				    aid = vector_get(ads->dups, ai).ptr;
+
+				    for (aj=0; aj<vector_size(ads->main); aj++)
+					{
+					    ajd = vector_get(ads->main, aj).ptr;
+					    // Ax: Om to duplikater har forskjellige verdier for samme nøkkel,
+					    // så vil bare den ene bli med, ettersom vi ikke støtter multinøkler.
+					    if (!strcmp(aid->key, ajd->key))
+						has_dup = 1;
+				        }
+
+				    if (!has_dup)
+					{
+					    // Sjekk cache
+				    	    struct _attribute_temp_1_key	this_key, *hash_key;
+					    struct _attribute_temp_1_val	*hash_val;
+					    this_key.count = aid->count;
+					    this_key.key = aid->key;
+					    this_key.crc32val = aid->crc32val;
+					    this_key.arg1 = NULL;
+					    this_key.arg2 = NULL;
+
+					    hash_val = (struct _attribute_temp_1_val*)hashtable_search(attrib_count_temp, (void*)&this_key);
+
+					    if (hash_val == NULL)
+						{
+						    // Legg til:
+						    hash_key = malloc(sizeof(struct _attribute_temp_1_key));
+						    hash_key->count = aid->count;
+						    hash_key->key = strdup(aid->key);
+						    hash_key->crc32val = aid->crc32val;
+						    hash_key->arg1 = NULL;
+						    hash_key->arg2 = NULL;
+
+						    hash_val = malloc(sizeof(struct _attribute_temp_1_val));
+						    hash_val->count = aid->count;
+						    hash_val->key = strdup(aid->key);
+						    hash_val->value = strdup(aid->value);
+						    hash_val->value2 = NULL;
+						    hash_val->size = 1;
+						    hashtable_insert(attrib_count_temp, hash_key, hash_val);
+					        }
+					    else
+						{
+						    hash_val->size++;
+					        }
+				        }
+				}
+			}
+
+			// Free memory:
+			if (ads->main != NULL) {
+			    for (ai=0; ai<vector_size(ads->main); ai++)
+				{
+				    aid = vector_get(ads->main, ai).ptr;
+				    free(aid->key);
+				    free(aid->value);
+				    free(aid);
+				}
+
+			    destroy(ads->main);
+			}
+
+			if (ads->dups != NULL) {
+			    for (ai=0; ai<vector_size(ads->dups); ai++)
+				{
+				    aid = vector_get(ads->dups, ai).ptr;
+				    free(aid->key);
+				    free(aid->value);
+				    free(aid);
+				}
+
+			    destroy(ads->dups);
+			}
+
+			free(ads);
+		    }
+
+		destroy(dup_attributes);
 
 		#ifdef DEBUG_TIME
 		bblog(DEBUG, "Time debug: searchFilterCount att1 time: %f", att1);
@@ -3386,6 +3628,10 @@ char* searchFilterCount(int *TeffArrayElementer,
 				attribute_count_add(val->size, val->count, attributes, 2, val->key, val->value);
 			    else
 				attribute_count_add(val->size, val->count, attributes, 3, val->key, val->value, val->value2);
+
+			    free(val->key);
+			    free(val->value);
+			    free(val->value2);
 			} while (hashtable_iterator_advance(h_it));
 
 		free(h_it);
