@@ -368,6 +368,7 @@ struct indexFilteredFormat {
 	char subname;
 	char duplicate;
 	char duplicate_in_collection;
+	char duplicate_to_show; // Den duplikaten som ikke filtreres bort.
 	char attribute;
 	char attrib[MAX_ATTRIBUTES_IN_QUERY]; // en for hver attributt
 };
@@ -443,6 +444,9 @@ struct iindexMainElements {
 	#endif
 
 	unsigned int originalPosition;
+
+	// Ax, nov. 2009: Trenger unik nøkkel for duplikater, bruker crc32 checksum.
+	unsigned int crc32;
 };
 
 
