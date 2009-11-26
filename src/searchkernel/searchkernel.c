@@ -1846,7 +1846,11 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 
 				Sider[i].iindex.allrank,
 				Sider[i].iindex.TermRank,
+				#ifdef BLACK_BOKS
+				-1,
+				#else
 				Sider[i].iindex.PopRank,
+				#endif
 
 				#ifdef EXPLAIN_RANK
 					Sider[i].iindex.rank_explaind.rankBody,
