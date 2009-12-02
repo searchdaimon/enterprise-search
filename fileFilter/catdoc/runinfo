@@ -1,5 +1,5 @@
 documentstype: doc
-command: /usr/bin/catdoc -s 8859-1 #file
+command: /usr/bin/catdoc -s 8859-10 #file
 outputformat: text
 outputtype: stdio
 attrwhitelist: creator=>author,language,last saved by,page count
