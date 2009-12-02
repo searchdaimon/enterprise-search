@@ -1739,7 +1739,6 @@ void *searchIndex_thread(void *arg)
 					    }
 					else
 					    {
-						//if (Array->iindex[x].indexFiltered.is_filtered == 0) --(*TotaltTreff);
 						iff_set_filter(&Array->iindex[x].indexFiltered, FILTER_ATTRIBUTE);
 					        Array->iindex[x].indexFiltered.attrib[j] = 1;
 						//forsvinn++;
@@ -2369,8 +2368,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 			// lagrer den orgianla posisjoene. Trenger denne for å gjøre en stabil sortering siden.
 			(*TeffArray)->iindex[i].originalPosition = i;
 
-			//(*TeffArray)->iindex[i].indexFiltered.duplicate = 0;
-			//(*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection = -1;
 
 			// For filtrert i search_thread_ting:
 			if ((*TeffArray)->iindex[i].indexFiltered.is_filtered)
@@ -2752,6 +2749,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 
 				} else {
+
 					/* Remove duplicated */
 					if (dup->V == NULL) {
 						dup->V = vector_container( pair_container( int_container(), ptr_container() ) );
@@ -2777,17 +2775,18 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 					// Hvis den første allerede er filtrert ut:
 					if (dup->fistiindex->indexFiltered.is_filtered && !(*TeffArray)->iindex[i].indexFiltered.is_filtered)
 					    {
-						if (iff_set_filter(&dup->fistiindex->indexFiltered, FILTER_DUPLICATE))
+						if (iff_set_filter(&dup->fistiindex->indexFiltered, FILTER_DUPLICATE)) {
 						    --(*TotaltTreff);	// Vil ikke denne alltid bli false?
-
+						}
 						dup->fistiindex->indexFiltered.duplicate_to_show = 0;
 						dup->fistiindex = &(*TeffArray)->iindex[i];
 						dup->fistiindex->indexFiltered.duplicate_to_show = 1;
 					    }
 					else
 					    {
-						if (iff_set_filter(&(*TeffArray)->iindex[i].indexFiltered, FILTER_DUPLICATE))
+						if (iff_set_filter(&(*TeffArray)->iindex[i].indexFiltered, FILTER_DUPLICATE)) {
 						    --(*TotaltTreff);
+						}
 					    }
 
 					vector_pushback(dup->V, (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].subname->subname);

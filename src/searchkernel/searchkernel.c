@@ -476,9 +476,6 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 
 		(*Sider).description[0] = '\0'; 
 
-		//(*Sider).thumbnale[0] = '\0';
-		//printf("teter for inhole: %i rank: %i, i= %i showabal= %i\n",DocID,allrank,i,(*SiderHeder).showabal);
-		//memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
 
 		(*SiderHeder).showabal++;
 		returnStatus = 1;
@@ -559,7 +556,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 			else {
 
 				for(y=0;y<htmlBufferSize;y++) {
-					//printf("1 y: %i of %i\n",y,strlen(htmlBuffer));
+
 					if (!(
 								isalnum(htmlBuffer[y])  
 								|| (47 ==(int)htmlBuffer[y]) 
@@ -587,10 +584,8 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 					sprintf((*Sider).description,"Redirecting to %200s",htmlBuffer);
 				}
 				else {
-					//sprintf((*Sider).description,"i %i",htmlBufferSize);
 					(*Sider).description[0] = '\0';
 				}
-				//memcpy(&(*Sider).iindex,TeffArray,sizeof(*TeffArray));
 
 
 				(*SiderHeder).showabal++;
@@ -939,9 +934,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 			sprintf((*Sider).title,"%i error.",(*Sider).DocumentIndex.response);
 			returnStatus = 0;
 		}
-		//temp:
-		//printf("legger til DocID: %i rank: %i, i= %i showabal= %i\n",DocID,allrank,i,(*SiderHeder).showabal);
-		//memcpy(&(*Sider).iindex,&TeffArray,sizeof(TeffArray));
+
 	}
 
 	//temp:
