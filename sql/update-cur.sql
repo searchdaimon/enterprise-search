@@ -247,3 +247,9 @@ INSERT INTO `systemConnector` (`id`, `name`, `extension`, `modified`, `active`, 
 
 ALTER TABLE search_logg MODIFY treff int(5) unsigned  NULL;
 ALTER TABLE search_logg MODIFY search_tid decimal(12,10) unsigned NULL;
+
+-- Support new ACL scheme for collections
+
+ALTER TABLE shares ADD accesslevel varchar(20) default 'acl';
+ALTER TABLE shares ADD accessgroup varchar(512);
+ALTER TABLE shares DROP without_aclcheck;
