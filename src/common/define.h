@@ -215,6 +215,13 @@ typedef unsigned int docid;
 //Lengden på en okument post lengde
 //#define DocumentIndexPOSTLENGTH 253
 
+typedef enum {
+	CAL_ACL,
+	CAL_USER,
+	CAL_GROUP,
+	CAL_ANONYMOUS,
+} collection_accesslevel_t;
+
 struct subnamesFiltypesFormat {
 	char name[5]; //4 for navn og \0
 	int nrof;
@@ -261,7 +268,8 @@ struct subnamesConfigFormat {
 		char sqlImpressionsLogQuery[252];
 
 		char cache_link; // 30.09.2008 - show cache link, dj
-		char without_aclcheck; // Enabled for collections that want anonymous search
+		collection_accesslevel_t accesslevel; // Different access levels, user, group, acl and anonymous
+		char group[128]; /* the group that has access to the collection */
 		char has_config; // Set to true if the config has been retrieved for this collection
 };
 struct subnamesFormat {
@@ -774,4 +782,5 @@ struct anchorIndexFormat {
 #define ANONYMOUS_USER "SDESAnonymous"
 
 #endif //_DEFINE__H_
+
 
