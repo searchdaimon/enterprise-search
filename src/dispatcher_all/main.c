@@ -36,6 +36,7 @@
 #include "../common/cgi.h" // escapeHTML
 #include "../crawlManager/client.h"
 #include "../key/key.h" // key_get_existingconn
+#include "../logger/logger.h"
 
 #include <libconfig.h>
 #define CFG_SEARCHD "config/searchd.conf"
@@ -161,7 +162,7 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 		filter_TLDs, filter_response, filter_same_crc32, \
 		rank_author_array, rank_title_array, rank_title_first_word, \
 		rank_headline_array, rank_body_array, rank_url_array, \
-		rank_url_main_word, cache_link, without_aclcheck \
+		rank_url_main_word, cache_link, accesslevel, accessgroup \
 		FROM shareResults, shares \
 		WHERE \
 			shares.collection_name = '%s' \
@@ -220,7 +221,17 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 	cfg->sqlImpressionsLogQuery[0] = '\0';
 
 	cfg->cache_link = row[13][0] == '1' ? 1 : 0;
-	cfg->without_aclcheck = row[14][0] == '1' ? 1 : 0;
+
+	fprintf(stderr, "access level: %s", row[14]);
+	if (strcmp(row[14], "anonymous") == 0)
+		cfg->accesslevel = CAL_ANONYMOUS;
+	else if (strcmp(row[14], "user") == 0)
+		cfg->accesslevel = CAL_USER;
+	else if (strcmp(row[14], "group") == 0)
+		cfg->accesslevel = CAL_GROUP;
+	else
+		cfg->accesslevel = CAL_ACL;
+	strlcpy(cfg->group, row[15], sizeof(cfg->group));
 
 	mysql_free_result(res);
 	return 1;
@@ -646,6 +657,74 @@ unsigned int getDocIDFromSql (MYSQL *demo_db, char rankUrl[]) {
 	return 0;
 }
 
+int in_collectionlist(char *coll, char **wantcolls, int n_wantcolls) {
+	int i;
+
+	if (n_wantcolls == 0) {
+		//fprintf(stderr, "Go ahead...\n");
+		return 1;
+	}
+	
+	for (i = 0; i < n_wantcolls; i++) {
+		//fprintf(stderr, "Checking %s <-> %s\n", coll, wantcolls[i]);
+		if (strcmp(coll, wantcolls[i]) == 0) {
+			return 1;
+		}
+	}
+
+	//fprintf(stderr, "No way, don't want that!\n");
+	return 0;
+}
+
+int
+get_collectionnames(MYSQL *db, const char *accesslevel, struct subnamesFormat **_collections, int *_num_colls, char **wantcolls, int n_wantcolls)
+{
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	char query[1024];
+	size_t querylen;
+	struct subnamesFormat *collections = NULL;
+	int num_colls;
+
+	querylen = snprintf(query, sizeof(query), "SELECT collection_name FROM shares WHERE accesslevel = '%s'", accesslevel);
+
+	if (mysql_real_query(db, query, querylen) != 0) {
+		warnx("Mysql error (%s line %d): %s\n",
+				__FILE__, __LINE__, mysql_error(db));
+		goto error;
+	} else if ((res = mysql_store_result(db)) == NULL) {
+		warnx("Mysql error (%s line %d): %s\n",
+				__FILE__, __LINE__, mysql_error(db));
+		goto error;
+	} else {
+		num_colls = mysql_num_rows(res);
+		if (num_colls != 0) {
+			int i = 0;
+			
+			collections = calloc(num_colls, sizeof(*collections));
+			while ((row = mysql_fetch_row(res)) != NULL) {
+				//fprintf(stderr, "Yay: %s\n", row[0]);
+				if (in_collectionlist(row[0], wantcolls, n_wantcolls)) {
+					strlcpy(collections[i].subname, row[0], sizeof(collections[i].subname));
+					i++;
+				}
+			}
+			/* Set num_colls to the actual amount of collection we got */
+			num_colls = i;
+			mysql_free_result(res);
+		}
+	}
+	
+	*_collections = collections;
+	*_num_colls = num_colls;
+
+	return 1;
+ error:
+	*_num_colls = 0;
+	*_collections = NULL;
+	return 0;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -739,6 +818,12 @@ int main(int argc, char *argv[])
 	#endif
 	dprintf("struct SiderFormat size %i\n",sizeof(struct SiderFormat));
 
+
+	bblog(DEBUG, "started dispatcher");
+	bblog_init("dispatcher");
+	bblog_set_appenders(LOGGER_APPENDER_FILE);
+	//bblog_set_severity(100);
+	bblog(CLEAN, "started dispatcher");
 
 
 	struct config_t maincfg;
@@ -1074,76 +1159,53 @@ int main(int argc, char *argv[])
 	if (QueryData.subname[0] != '\0') {
 		n_wantcolls = split(QueryData.subname, ",", &wantcolls);
 	}
+		bblog(CLEAN, "1");
 	/* Use local function so we get the lexical scope we want */
-	int want_collection(char *coll) {
-		int i;
-
-		if (n_wantcolls == 0) {
-			//fprintf(stderr, "Go ahead...\n");
-			return 1;
-		}
-		
-		for (i = 0; i < n_wantcolls; i++) {
-			//fprintf(stderr, "Checking %s <-> %s\n", coll, wantcolls[i]);
-			if (strcmp(coll, wantcolls[i]) == 0) {
-				fprintf(stderr, "Wants it!");
-				return 1;
-			}
-		}
-
-		//fprintf(stderr, "No way, don't want that!\n");
-		return 0;
-	}
 	if (QueryData.anonymous) {
-		MYSQL_RES *res;
-		MYSQL_ROW row;
-		char query[1024];
-		size_t querylen;
-
-		querylen = snprintf(query, sizeof(query), "SELECT collection_name FROM shares WHERE without_aclcheck = 1");
-
-		if (mysql_real_query(&demo_db, query, querylen) != 0) {
-			warnx("Mysql error (%s line %d): %s\n",
-					__FILE__, __LINE__, mysql_error(&demo_db));
-		} else if ((res = mysql_store_result(&demo_db)) == NULL) {
-			warnx("Mysql error (%s line %d): %s\n",
-					__FILE__, __LINE__, mysql_error(&demo_db));
-		} else {
-			num_colls = mysql_num_rows(res);
-			if (num_colls != 0) {
-				int i = 0;
-				
-				collections = calloc(num_colls, sizeof(*collections));
-				while ((row = mysql_fetch_row(res)) != NULL) {
-					//fprintf(stderr, "Yay: %s\n", row[0]);
-					if (want_collection(row[0])) {
-						strlcpy(collections[i].subname, row[0], sizeof(collections[i].subname));
-						i++;
-					}
-				}
-				/* Set num_colls to the actual amount of collection we got */
-				num_colls = i;
-				mysql_free_result(res);
-			}
-		}
+		get_collectionnames(&demo_db, "anonymous", &collections, &num_colls, wantcolls, n_wantcolls);
 	} else {
-		collections = get_usr_coll(QueryData.search_user, &num_colls, cmc_port);
+		struct subnamesFormat *collections_extra;
+		int n_collections_extra;
+		struct subnamesFormat *filtered_collections;
+		int i, j, k;
 
-		struct subnamesFormat *filtered_collections = calloc(num_colls, sizeof(*filtered_collections));
-		int i, j;
+		collections = get_usr_coll(QueryData.search_user, &num_colls, cmc_port);
+		get_collectionnames(&demo_db, "user", &collections_extra, &n_collections_extra, NULL, 0);
+		filtered_collections = calloc(num_colls+n_collections_extra, sizeof(*filtered_collections));
 
 		j = 0; /* New num_colls */
 		for (i = 0; i < num_colls; i++) {
-			if (want_collection(collections[i].subname)) {
+			if (in_collectionlist(collections[i].subname, wantcolls, n_wantcolls)) {
 				strlcpy(filtered_collections[j].subname, collections[i].subname,
 				        sizeof(filtered_collections[j].subname));
 				j++;
 			}
 		}
+		k = j;
+		for (i = 0; i < n_collections_extra; i++) {
+			int skip = 0, l;
+
+			for (l = 0; l < k; l++) {
+				if (strcmp(collections_extra[i].subname, filtered_collections[l].subname) == 0) {
+					skip = 1;
+					break;
+				}
+			}
+			if (skip)
+				continue;
+			if (in_collectionlist(collections_extra[i].subname, wantcolls, n_wantcolls)) {
+				strlcpy(filtered_collections[j].subname, collections_extra[i].subname,
+				        sizeof(filtered_collections[j].subname));
+				j++;
+			}
+		}
+
 		free(collections);
+		free(collections_extra);
 		collections = filtered_collections;
 		num_colls = j;
 	}
+	//FreeSplitList(wantcolls);
 
 
 	#ifdef DEBUG_TIME
@@ -2039,7 +2101,7 @@ void read_collection_cfg(struct subnamesConfigFormat * dst) {
 
 	struct subnamesConfigFormat subnamesDefaultsConfig;
 	subnamesDefaultsConfig.cache_link = 1;
-	subnamesDefaultsConfig.without_aclcheck = 0;
+	subnamesDefaultsConfig.accesslevel = CAL_ACL;
 
 	config_setting_t *cfgstring;
 	config_setting_t *cfgcollections;
@@ -2237,6 +2299,7 @@ void read_collection_cfg(struct subnamesConfigFormat * dst) {
         }
 
 	subnamesDefaultsConfig.isPaidInclusion = config_setting_get_bool(cfgstring);
+	subnamesDefaultsConfig.accesslevel = CAL_ACL;
 
 	(*dst) = subnamesDefaultsConfig;
 }

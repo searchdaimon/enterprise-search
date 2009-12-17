@@ -28,7 +28,7 @@ Readonly::Hash our %COLLECTION_ATTR
     => map { $_ => 1 } qw(id collection_name host connector 
         users groups params active auth_id crawler_success rate 
         query1 query2 resource domain userprefix system
-	without_aclcheck alias);
+	alias accesslevel accessgroup);
 
 sub new {
     validate_pos(@_, 1, { type => OBJECT }, { type => HASHREF });

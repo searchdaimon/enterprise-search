@@ -33,6 +33,7 @@ use constant TPL_EDIT        => 'overview_edit.html';
 use constant TPL_DELETE_COLL => 'overview_delete_share.html';
 use constant TPL_CUSTOMIZE   => 'overview_customize.html';
 use constant TPL_ADV_MANAGEMENT => 'overview_manage.html';
+use constant TPL_ACCESS_LEVEL	=> 'overview_accesslevel.html';
 use constant TPL_GRAPHS		=> 'overview_graphs.html';
 Readonly::Scalar my $META_CONN_PUSH => "Pushed collections";
 Readonly::Scalar my $CRAWL_STATUS_OK => qr{^(OK\.|Ok)$};
@@ -145,6 +146,51 @@ sub manage_collection {
 	return TPL_ADV_MANAGEMENT;
 }
 
+sub show_access_level {
+	my ($self, $vars, $id) = (@_);
+
+	my $dataColl = Data::Collection->new($self->{dbh}, { id => $id });
+	my %form_data = $dataColl->form_data();
+	my %coll_data = $dataColl->coll_data();
+	my $iq = Boitho::Infoquery->new($CONFIG{'infoquery'});
+
+	$vars->{'id'} = $id;
+	$vars->{'share'} = \%coll_data;
+
+	$vars->{'levels'} = [
+		{
+			value => 'acl',
+			string => 'System permissions',
+			description => "Ordinary permission checking against the indexed system.",
+		},
+		{
+			value => 'user',
+			string => 'User',
+			description => "Allow access for all logged in users.",
+		},
+		{
+			value => 'group',
+			string => 'Group',
+			description => "Allow access to all members of a group.",
+		},
+		{
+			value => 'anonymous',
+			string => 'Anonymous',
+			description => "Anonymous search, available from public search site.",
+		},
+	];
+
+	$vars->{'groups'} = $iq->listGroups();
+
+	foreach my $r (@{ $vars->{'levels'} }) {
+		if ($r->{value} eq $coll_data{'accesslevel'}) {
+			$r->{checked} = 1;
+		}
+	}
+
+	return TPL_ACCESS_LEVEL;
+}
+
 sub show_customize {
 	my ($s, $vars, $id, $no_db_fetch) = @_;
 	my $sqlRes = Sql::ShareResults->new($s->{dbh});
@@ -200,12 +246,6 @@ sub submit_edit {
 
     if (not $attr{auth_id}) {
         $dataColl->set_auth($share->{username}, $share->{password});
-    }
-
-    if ($attr{without_aclcheck}) {
-	$sqlShares->set_without_aclcheck($share->{id}, 1);
-    } else {
-	$sqlShares->set_without_aclcheck($share->{id}, undef);
     }
 
     # Continue with the submit.

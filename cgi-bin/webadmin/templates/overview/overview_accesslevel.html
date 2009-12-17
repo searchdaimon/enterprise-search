@@ -1,0 +1,24 @@
+[% INCLUDE 'header.html' title = 'Access level' %]
+[% USE HTML %]
+[% PROCESS 'template_connector_blocks.html' %]
+[% PROCESS 'template_collection_warnings.html' %]
+
+[% PROCESS 'overview_tabs.html'
+	selected = "Access level" %]
+[% UNLESS error_collection_not_exist %]
+	<h2>Access level for [% HTML.escape(share.collection_name) %]</h2>
+	
+	<form method="post" action="overview.cgi">
+		[% WRAPPER 'template_edit_collection.html'
+	                fields = ['accesslevel'] %]
+		[% END %]
+
+
+		<div style="padding-top : 1em;">
+		<input type="hidden" value="[% share.id %]" name="share.id" />
+		<input type="submit" name="submit_edit" value="Submit changes" />
+		</div>
+	</form>
+[% END %]
+[% INCLUDE 'footer.html' %]
+

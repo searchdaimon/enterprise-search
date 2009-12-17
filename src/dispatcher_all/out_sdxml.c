@@ -219,6 +219,8 @@ void disp_out_sd_v2_0(
 	    #ifdef BLACK_BOKS
 
 	    for(i=0;i<SiderHeder[0].filters.collections.nrof;i++) {
+		if (SiderHeder[0].filters.collections.elements[i].nrof == -1)
+			continue;
 
 		if (SiderHeder[0].filters.collections.elements[i].checked) {
 			strscpy(colchecked," SELECTED=\"TRUE\"",sizeof(colchecked));
@@ -803,6 +805,8 @@ void disp_out_sd_v2_1(
 	    #ifdef BLACK_BOKS
 
 	    for(i=0;i<SiderHeder[0].filters.collections.nrof;i++) {
+		if (SiderHeder[0].filters.collections.elements[i].nrof == -1)
+			continue;
 
 		if (SiderHeder[0].filters.collections.elements[i].checked) {
 			strscpy(colchecked," selected=\"true\"",sizeof(colchecked));

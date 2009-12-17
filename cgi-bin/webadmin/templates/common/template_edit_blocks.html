@@ -425,13 +425,31 @@
 
 [% END %]
 
-[% BLOCK anonymous %]
+[% BLOCK accesslevel %]
 	<div class="block_default">
-	Enable anonymous search:
-		<div class="block_inner" >
-			<input type="checkbox" name="[% prefix %].without_aclcheck"
-				[% IF share.without_aclcheck %] checked="checked" [% END %] />
-		</div>
+			[% FOREACH level IN levels %] 
+			<div> 
+				<input type="radio" name="share.accesslevel" value="[% level.value %]" 
+					[% IF level.checked %] checked="checked"[% END %] /> 
+				[% HTML.escape(level.string) %] 
+
+				[% IF level.value == 'group' %] 
+				<select name="share.accessgroup"> 
+				[% FOREACH group IN groups %] 
+				<option value="[% HTML.escape(group) %]" 
+					[% IF group == share.accessgroup %] selected="selected"[% END %]
+				> 
+				[% HTML.escape(group) %] 
+				</option> 
+				[% END %] 
+				</select> 
+				[% END %] 
+
+				<p style="font-size : x-small;">
+				[% HTML.escape(level.description) %] 
+				</p>
+			</div> 
+			[% END %] 
 	</div>
 [% END %]
 

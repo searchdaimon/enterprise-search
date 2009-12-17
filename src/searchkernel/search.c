@@ -1348,6 +1348,7 @@ struct searchIndex_thread_argFormat {
 	char *search_user;
 	int cmc_port;
 	int anonymous;
+	struct filtersFormat *filters;
 };
 
 void *searchIndex_thread(void *arg)
@@ -1464,6 +1465,7 @@ void *searchIndex_thread(void *arg)
 	for(i=0;i<(*searchIndex_thread_arg).nrOfSubnames;i++) {
 		query_array *groupquery;
 		struct timeval starttime, endtime;
+		int do_aclcheck = 1;
 
 		#ifdef DEBUG_TIME
 		struct timeval subname_starttime, subname_endtime;
@@ -1472,16 +1474,25 @@ void *searchIndex_thread(void *arg)
 
 		bblog(INFO, "Checking subname: %s",  searchIndex_thread_arg->subnames[i].subname);
 
-		#if defined BLACK_BOKS && !defined _24SEVENOFFICE
+		#if defined BLACK_BOKS
+
+		bblog(DEBUG, "Subname %s %d", searchIndex_thread_arg->subnames[i].subname, searchIndex_thread_arg->subnames[i].config.accesslevel);
+
+		if (searchIndex_thread_arg->anonymous ||
+		    (searchIndex_thread_arg->subnames[i].config.accesslevel == CAL_USER && !searchIndex_thread_arg->anonymous)) {
+			bblog(INFO, "No need for acl checking for %s", searchIndex_thread_arg->subnames[i].subname);
+			do_aclcheck = 0;
+		}
 	
 		#ifdef IIACL
 
-		if (!searchIndex_thread_arg->anonymous) {
+		if (do_aclcheck) {
 			int system = cmc_usersystemfromcollection(cmc_sock, searchIndex_thread_arg->subnames[i].subname);
 			if (system == -1) {
 				bblog(ERROR, "Unable to get usersystem for: %s", searchIndex_thread_arg->subnames[i].subname);
 				continue;
-			} else if ((groupquery = hashtable_search(groupqueries, &system)) == NULL) {
+			} else if ((groupquery = hashtable_search(groupqueries, &system)) == NULL ||
+			           searchIndex_thread_arg->subnames[i].config.accesslevel == CAL_GROUP) {
 				char **groups;
 				int n_groups, j;
 
@@ -1513,21 +1524,38 @@ void *searchIndex_thread(void *arg)
 
 				size_t grouplistlen = 0;
 				for (j = 0; j < n_groups; j++) {
-					strcpy(grouplist+grouplistlen," |\"");
-					grouplistlen += 3;
-					aclElementNormalize((char*)groups + j*MAX_LDAP_ATTR_LEN);
-					strcpy(grouplist+grouplistlen, (char*)groups + j*MAX_LDAP_ATTR_LEN);
-					grouplistlen += strlen((char*)groups + j*MAX_LDAP_ATTR_LEN);
-					strcpy(grouplist+grouplistlen,"\"");
-					grouplistlen += 1;
+					if (searchIndex_thread_arg->subnames[i].config.accesslevel == CAL_GROUP) {
+						if (strcmp(searchIndex_thread_arg->subnames[i].config.group, (char*)groups + j*MAX_LDAP_ATTR_LEN) == 0) {
+							bblog(DEBUG, "User has access to collection: %s", searchIndex_thread_arg->subnames[i].subname);
+							do_aclcheck = 0;
+							break;
+						}
+					} else {
+						strcpy(grouplist+grouplistlen," |\"");
+						grouplistlen += 3;
+						aclElementNormalize((char*)groups + j*MAX_LDAP_ATTR_LEN);
+						strcpy(grouplist+grouplistlen, (char*)groups + j*MAX_LDAP_ATTR_LEN);
+						grouplistlen += strlen((char*)groups + j*MAX_LDAP_ATTR_LEN);
+						strcpy(grouplist+grouplistlen,"\"");
+						grouplistlen += 1;
+					}
 				}
-				bblog(INFO, "grouplist: %s",  grouplist);
-				groupquery = malloc(sizeof(*groupquery));
-				get_query(grouplist, strlen(grouplist), groupquery);
+
+				if (searchIndex_thread_arg->subnames[i].config.accesslevel == CAL_GROUP && do_aclcheck) {
+					bblog(INFO, "User does not have access to this collection: %s", searchIndex_thread_arg->subnames[i].subname);
+					searchIndex_thread_arg->subnames[i].hits = -1;
+					continue;
+				}
+
+				if (searchIndex_thread_arg->subnames[i].config.accesslevel != CAL_GROUP) {
+					bblog(INFO, "grouplist: %s",  grouplist);
+					groupquery = malloc(sizeof(*groupquery));
+					get_query(grouplist, strlen(grouplist), groupquery);
+					hashtable_insert(groupqueries, uinttouintp(system), groupquery);
+				}
 				if (n_groups > 0)
 					free(groups);
 				free(grouplist);
-				hashtable_insert(groupqueries, uinttouintp(system), groupquery);
 			} else {
 				bblog(INFO, "Reusing system mapping: %d",  system);
 			}
@@ -1601,7 +1629,7 @@ void *searchIndex_thread(void *arg)
 				continue;
 			}
 
-			if (!searchIndex_thread_arg->anonymous) {
+			if (do_aclcheck) {
 				#pragma omp parallel for
 				for(y=0;y<2;y++) {
 		
@@ -1631,7 +1659,7 @@ void *searchIndex_thread(void *arg)
 				
 
 			#ifdef DEBUG_II
-			if (!searchIndex_thread_arg->anonymous) {
+			if (do_aclcheck) {
 				bblog(DEBUG, "acl_allowArrayLen %i:", acl_allowArrayLen);
 				for (y = 0; y < acl_allowArrayLen; y++) {
 					bblog(DEBUG, "acl_allow TeffArray: DocID %u", acl_allowArray->iindex[y].DocID);			
@@ -1683,7 +1711,7 @@ void *searchIndex_thread(void *arg)
 
 			if (!empty_search_query)
 			    {
-				if (!searchIndex_thread_arg->anonymous) {
+				if (do_aclcheck) {
 					and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
 					// Merge acl_denied:			
 					andNot_merge(&Array,&ArrayLen,&hits,&TmpArray,TmpArrayLen,&acl_deniedArray,acl_deniedArrayLen);
@@ -1694,7 +1722,7 @@ void *searchIndex_thread(void *arg)
 			    }
 			else
 			    {
-				if (!searchIndex_thread_arg->anonymous) {
+				if (do_aclcheck) {
 					// Merge med attributter istedet:
 					and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,tmpAttribArray[0],tmpAttribArrayLen[0]);
 					// Merge acl_denied:			
@@ -1758,7 +1786,7 @@ void *searchIndex_thread(void *arg)
 			    #endif
 
 			#else // ATTRIBUTES
-				if (!searchIndex_thread_arg->anonymous) {
+				if (do_aclcheck) {
 					and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
 					// Merge acl_denied:			
 					andNot_merge(&Array,&ArrayLen,&hits,&TmpArray,TmpArrayLen,&acl_deniedArray,acl_deniedArrayLen);
@@ -2034,6 +2062,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		searchIndex_thread_arg_Athor.search_user_as_query = search_user_as_query;
 		searchIndex_thread_arg_Athor.languageFilterNr = languageFilterNr;
 		searchIndex_thread_arg_Athor.languageFilterAsNr = languageFilterAsNr;
+		searchIndex_thread_arg_Athor.filters = filters;
 		#ifdef WITH_THREAD
 			n = pthread_create(&threadid_Athor, NULL, searchIndex_thread, &searchIndex_thread_arg_Athor);
 		#else
@@ -2050,6 +2079,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		searchIndex_thread_arg_Url.search_user_as_query = search_user_as_query;
 		searchIndex_thread_arg_Url.languageFilterNr = languageFilterNr;
 		searchIndex_thread_arg_Url.languageFilterAsNr = languageFilterAsNr;
+		searchIndex_thread_arg_Url.filters = filters;
 		#ifdef WITH_THREAD
 			n = pthread_create(&threadid_Url, NULL, searchIndex_thread, &searchIndex_thread_arg_Url);
 		#else
@@ -2076,6 +2106,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		searchIndex_thread_arg_Main.languageFilterAsNr = languageFilterAsNr;
 		searchIndex_thread_arg_Main.search_user = search_user;
 		searchIndex_thread_arg_Main.cmc_port = cmc_port;
+		searchIndex_thread_arg_Main.filters = filters;
 
 	#ifdef ATTRIBUTES
 		int	attributes_count = 0;
@@ -3706,7 +3737,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 			if (NULL == (filesValue = hashtable_search(h,subnames[i].subname) )) {    
 
 				filesValue = malloc(sizeof(int));
-				(*filesValue) = 0;
+				(*filesValue) = subnames[i].hits;
 
                			filesKey = strdup(subnames[i].subname);
 
@@ -3760,6 +3791,11 @@ char* searchFilterCount(int *TeffArrayElementer,
 
 		        }
 			else {
+				if (*filesValue < 0) {
+					bblog(ERROR, "Should not have access to collection: %s, why are there hits?", TeffArray->iindex[i].subname->subname);
+					*filesValue = 0;
+				}
+				else
 				++(*filesValue);
 			}
 		

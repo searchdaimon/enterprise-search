@@ -66,6 +66,10 @@ if (defined $state{action}) {
 		# User is in the advanced management tab.
 		$tpl_file = $overview->manage_collection($vars, $id);
 	}
+	elsif ($action eq 'accesslevel') {
+		# User is in the advanced management tab.
+		$tpl_file = $overview->show_access_level($vars, $id);
+	}
 	elsif ($action eq 'customize') {
 		$tpl_file = $overview->show_customize($vars, $id);
 	}
