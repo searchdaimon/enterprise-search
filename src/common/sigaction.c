@@ -25,23 +25,23 @@ sigchild_handler(int sig, siginfo_t *sip, void *extra)
 	}
 
 	if (sip->si_code == CLD_EXITED) {
-		printf("Got signal '%s', si_code %d"
+		printf("Got signal '%d', si_code %d"
 				" for child %d\n",
-				strsignal(sip->si_signo), sip->si_code, child);
+				(sip->si_signo), sip->si_code, child);
 		if (waitpid(-1, &status, 0) == -1) {
 			perror("waitpid()");
 		}
 	} else {
-		printf("Got signal '%s', si_code %d"
+		printf("Got signal '%d', si_code %d"
 				" for child %d: ",
-				strsignal(sip->si_signo), sip->si_code, child);
+				sip->si_signo, sip->si_code, child);
 		if (waitpid(-1, &status, 0) == -1) {
 			perror("waitpid()");
 		} else {
 			if (WIFEXITED(status)) {
 				printf("Exited normally\n");
 			} else if (WIFSIGNALED(status)) {
-				printf("Child was signaled: %s(%d)\n", strsignal(WTERMSIG(status)), WTERMSIG(status));
+				printf("Child was signaled: %d(%d)\n", WTERMSIG(status), WTERMSIG(status));
 			} else {
 				printf("Unknown exit\n");
 			}
