@@ -879,7 +879,9 @@ sub crawl_update {
 	$self->{majorversion} = $version[0];
 
 
-	my $lastcrawl = $self->get_last_crawl_time();
+	# Ax: Alle sidene må recrawles. Hvis ikke blir ikke sider det er lenket til sjekket:
+	#my $lastcrawl = $self->get_last_crawl_time();
+	my $lastcrawl = 0;
 	print "Last crawl? $lastcrawl\n";
 
 	$self->{ip} = $ip;
