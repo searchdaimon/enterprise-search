@@ -99,11 +99,13 @@ user_enabled(char *user, const char *licensekey)
 	if (mysql_real_query(db, query_enabled_users, strlen(query_enabled_users)))
 		errx(1, "Unable to get active users: %s", mysql_error(db));
 
-	if ((res = mysql_store_result(db)) == NULL)
+	if ((res = mysql_store_result(db)) == NULL) 
 		errx(1, "mysql_store_result: %s", mysql_error(db));
 
 	row = mysql_fetch_row(res);
 	enabled_users = atoi(row[0]);
+
+	mysql_free_result(res);
 
 	printf("enabled_users: %i\n",enabled_users);
 
@@ -129,12 +131,15 @@ user_enabled(char *user, const char *licensekey)
 
 	n = mysql_num_rows(res);
 
+	mysql_free_result(res);
+	mysql_close(db);
+
 	free(query);
+
 	if (n != 1) {
 		return 0;
 	}
 
-	mysql_close(db);
 
 	return 1; //har tilgang
 }
@@ -153,6 +158,8 @@ int ldap_connect(LDAP **ld, const char ldap_host[] , int ldap_port,const char ba
    //char root_dn[512]; 
 	
    printf("ldap_connect(host=%s, user=%s, base=%s)\n",ldap_host,distinguishedName,base);
+
+   (*ld) = NULL;
 
    #ifdef DEBUG
    //setter at ldap også skal vise debug info
@@ -181,42 +188,40 @@ int ldap_connect(LDAP **ld, const char ldap_host[] , int ldap_port,const char ba
    if( ldap_set_option( (*ld), LDAP_OPT_REFERRALS, LDAP_OPT_OFF ) != LDAP_OPT_SUCCESS )
    {
         fprintf( stderr, "Could not set LDAP_OPT_REFERRALS off\n" );
-	exit( EXIT_FAILURE );
    }
    printf("~ldap_set_option\n");
 
    /* set the LDAP version to be 3 */
    if (ldap_set_option((*ld), LDAP_OPT_PROTOCOL_VERSION, &desired_version) != LDAP_OPT_SUCCESS)
    {
-      ldap_perror((*ld), "ldap_set_option");
-	return RETURN_FAILURE;
+      	ldap_perror((*ld), "ldap_set_option");
    }
    printf("~ldap_set_option\n");
 
    //hvis vi vil bruke sasl tilkobling. Tror det er en type secure layer tilkobling, men er ikke sikker.
    #if 0
-   struct berval cred;
-   cred.bv_val = password;
-   cred.bv_len = strlen(password);
-   struct berval *msgidp=NULL;
+	   struct berval cred;
+	   cred.bv_val = password;
+	   cred.bv_len = strlen(password);
+	   struct berval *msgidp=NULL;
 
 
-   if (ldap_sasl_bind_s((*ld), distinguishedName, LDAP_SASL_SIMPLE, &cred, NULL, NULL,&msgidp) != LDAP_SUCCESS ) {
-	fprintf(stderr,"Can't conect. Tryed to bind ldap server at %s:%i\n",ldap_host,ldap_port);
-      ldap_perror( (*ld), "ldap_bind" );
-    	return RETURN_FAILURE;
-   }
+	   if (ldap_sasl_bind_s((*ld), distinguishedName, LDAP_SASL_SIMPLE, &cred, NULL, NULL,&msgidp) != LDAP_SUCCESS ) {
+		fprintf(stderr,"Can't conect. Tryed to bind ldap server at %s:%i\n",ldap_host,ldap_port);
+	      	ldap_perror( (*ld), "ldap_bind" );
+	        return RETURN_FAILURE;
+	   }
    #else
-   if (ldap_bind_s((*ld), distinguishedName, password, auth_method) != LDAP_SUCCESS ) {
-	fprintf(stderr,"Can't conect. Tryed to bind ldap server at %s:%i\n",ldap_host,ldap_port);
-      ldap_perror( (*ld), "ldap_bind" );
-    	return RETURN_FAILURE;
-   }
+	   if (ldap_bind_s((*ld), distinguishedName, password, auth_method) != LDAP_SUCCESS ) {
+		fprintf(stderr,"Can't conect. Tryed to bind ldap server at %s:%i\n",ldap_host,ldap_port);
+   	   	ldap_perror( (*ld), "ldap_bind" );
+   	   	return RETURN_FAILURE;
+   	}
    #endif
    printf("~ldap_bind_s\n");
 
    printf("~/ldap_connect\n");
-	//alt er vel. Ingen ting her feilet
+   //alt er vel. Ingen ting her feilet
    return RETURN_SUCCESS;
 
 }
@@ -1458,8 +1463,9 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 			}
 			printf("ldap_close\n");
  ldap_end:
- 			if (ld != NULL)
+ 			if (ld != NULL) {
 				ldap_close(&ld);
+			}
 		}
 		else {
 			printf("unknown authenticatmetod %s\n",authenticatmetod);
@@ -1540,7 +1546,8 @@ usage(void)
 void
 my_freevalue(void *p)
 {
-	free(p);
+	//free(p);
+	hashtable_destroy(p,0); /* second arg indicates "free(value)" */
 }
 
 int
@@ -1598,6 +1605,9 @@ main(int argc, char **argv)
 	badldap_init(logerror);
 	sconnect_thread(connectHandler, BADPORT);
 	printf("connect done\n");
+
+
+	cache_free(cache);
 
 	return(0);
 }
