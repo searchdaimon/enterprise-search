@@ -51,6 +51,8 @@ DIR *listAllColl_start();
 char *listAllColl_next(DIR * ll);
 void listAllColl_close(DIR * ll);
 
+void lot_get_closed_collections_file(char *buf);
+
 #endif //_LOT__H_
 
 
