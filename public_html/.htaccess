@@ -5,5 +5,5 @@ RewriteRule ^admin$ /cgi-bin/webadmin/overview.cgi [R]
 RewriteRule ^admin/$ /cgi-bin/webadmin/overview.cgi [R]
 RewriteRule ^public/(.*)$ /webclient2/indexanon.pl?$1 [R]
 RewriteRule ^public$ /webclient2/indexanon.pl [R]
-RewriteRule ^/webclient$ /webclient2 [R]
-RewriteRule ^/webclient/(.*)$ /webclient2/$1 [R]
+RewriteRule ^webclient$ /webclient2
+RewriteRule ^webclient/(.*)$ /webclient2/$1
