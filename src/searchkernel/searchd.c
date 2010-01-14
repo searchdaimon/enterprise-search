@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
 	}
 	#endif
 
-	if (argc > 0) {
+	if (argc > optind) {
 		strncpy(servername,argv[optind], sizeof(servername) -1);
 	} else {
 		bblog(ERROR, "No hostname supplied");
