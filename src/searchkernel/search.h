@@ -8,7 +8,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		struct filteronFormat *filteron,
 		query_array *search_user_as_query,
 		int ranking, struct hashtable **crc32maphash, struct duplicate_docids **dups,
-		char *search_user, int cmc_port, int anonymous
+		char *search_user, int cmc_port, int anonymous,
+		container ***groups_per_usersystem, int **usersystem_per_subname // For repositoryaccess()
 		);
 
 #ifdef BLACK_BOKS

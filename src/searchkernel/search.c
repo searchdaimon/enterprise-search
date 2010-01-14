@@ -32,6 +32,7 @@
 #include "../ds/dcontainer.h"
 #include "../ds/dvector.h"
 #include "../ds/dpair.h"
+#include "../ds/dset.h"
 #include "../crawlManager/client.h"
 #include "../logger/logger.h"
 
@@ -1349,6 +1350,8 @@ struct searchIndex_thread_argFormat {
 	int cmc_port;
 	int anonymous;
 	struct filtersFormat *filters;
+	container **groups_per_usersystem;	// Ax: Groups per usersystem for search_user
+	int *usersystem_per_subname;	// ... and subname->usersystem
 };
 
 void *searchIndex_thread(void *arg)
@@ -1462,10 +1465,17 @@ void *searchIndex_thread(void *arg)
 	
 	bblog(INFO, "nrOfSubnames %i Search user: %s", (*searchIndex_thread_arg).nrOfSubnames, searchIndex_thread_arg->search_user);
 
+	(*searchIndex_thread_arg).usersystem_per_subname = malloc(sizeof(int) * (*searchIndex_thread_arg).nrOfSubnames);
+	// Er det mulig å hente ut hvor mange forskjellige brukersystem vi har?
+	(*searchIndex_thread_arg).groups_per_usersystem = malloc(sizeof(container*) * 256);
+	for (i=0; i<256; i++) (*searchIndex_thread_arg).groups_per_usersystem[i] = NULL;
+
 	for(i=0;i<(*searchIndex_thread_arg).nrOfSubnames;i++) {
 		query_array *groupquery;
 		struct timeval starttime, endtime;
 		int do_aclcheck = 1;
+
+		(*searchIndex_thread_arg).usersystem_per_subname[i] = -1;
 
 		#ifdef DEBUG_TIME
 		struct timeval subname_starttime, subname_endtime;
@@ -1488,6 +1498,7 @@ void *searchIndex_thread(void *arg)
 
 		if (do_aclcheck) {
 			int system = cmc_usersystemfromcollection(cmc_sock, searchIndex_thread_arg->subnames[i].subname);
+
 			if (system == -1) {
 				bblog(ERROR, "Unable to get usersystem for: %s", searchIndex_thread_arg->subnames[i].subname);
 				continue;
@@ -1521,9 +1532,13 @@ void *searchIndex_thread(void *arg)
 					grouplist = strdup("");
 				}
 
+				(*searchIndex_thread_arg).groups_per_usersystem[system] = set_container( string_container() );
 
 				size_t grouplistlen = 0;
 				for (j = 0; j < n_groups; j++) {
+					char	*group = ((char*)groups + j*MAX_LDAP_ATTR_LEN);
+					set_insert((*searchIndex_thread_arg).groups_per_usersystem[system], group);
+
 					if (searchIndex_thread_arg->subnames[i].config.accesslevel == CAL_GROUP) {
 						if (strcmp(searchIndex_thread_arg->subnames[i].config.group, (char*)groups + j*MAX_LDAP_ATTR_LEN) == 0) {
 							bblog(DEBUG, "User has access to collection: %s", searchIndex_thread_arg->subnames[i].subname);
@@ -1559,6 +1574,8 @@ void *searchIndex_thread(void *arg)
 			} else {
 				bblog(INFO, "Reusing system mapping: %d",  system);
 			}
+
+			(*searchIndex_thread_arg).usersystem_per_subname[i] = system;
 		}
 
 
@@ -1946,7 +1963,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		struct filteronFormat *filteron,
 		query_array *search_user_as_query,
 		int ranking, struct hashtable **crc32maphash, struct duplicate_docids **dups,
-		char *search_user, int cmc_port, int anonymous
+		char *search_user, int cmc_port, int anonymous,
+		container ***groups_per_usersystem, int **usersystem_per_subname
 		) {
 
 	bblog(INFO, "search: searchSimple()");
@@ -2107,6 +2125,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		searchIndex_thread_arg_Main.search_user = search_user;
 		searchIndex_thread_arg_Main.cmc_port = cmc_port;
 		searchIndex_thread_arg_Main.filters = filters;
+		searchIndex_thread_arg_Main.groups_per_usersystem = NULL;
+		searchIndex_thread_arg_Main.usersystem_per_subname = NULL;
 
 	#ifdef ATTRIBUTES
 		int	attributes_count = 0;
@@ -2409,6 +2429,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		(*TeffArray)->attrib_count = searchIndex_thread_arg_Main.attrib_count;
 		#endif
 
+		*groups_per_usersystem = searchIndex_thread_arg_Main.groups_per_usersystem;
+		*usersystem_per_subname = searchIndex_thread_arg_Main.usersystem_per_subname;
 
 		/*
 		*********************************************************************************************************************
@@ -2907,7 +2929,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	gettimeofday(&end_time, NULL);
 	(*queryTime).indexSort = getTimeDifference(&start_time,&end_time);
 
-	
+
 	// Debug: viser alle treffene 
 	/********************************************************************************/
 	//for (i=0;i<*TeffArrayElementer;i++) {

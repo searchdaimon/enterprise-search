@@ -178,6 +178,10 @@ struct PagesResultsFormat {
 		enum platform_type ptype; 
 		enum browser_type btype; 
 		int anonymous;
+		int nrOfSubnames;
+		struct subnamesFormat *subnames;
+		container **groups_per_usersystem;
+		int *usersystem_per_subname;
 };
 
 
@@ -1205,6 +1209,96 @@ pathaccess(struct PagesResultsFormat *PagesResults, char collection_in[], char u
 
 	return ret;
 }
+/*
+static inline char *aclResolveElem(char *value)
+{
+    static char user[64];
+
+    if (!boithoad_sidToGroup(value, user)) strcpy(user,value);
+
+    return user;
+}
+*/
+
+
+static inline int repositoryaccess(struct PagesResultsFormat *PagesResults, int DocID, char *subname)
+{
+    struct DocumentIndexFormat DocumentIndexPost;
+    struct ReposetoryHeaderFormat ReposetoryHeader;
+    char *acl_allowbuffer = NULL;
+    char *acl_deniedbuffer = NULL;
+    char *url, *attributes;
+    int error = 0; // if error, then return no access
+
+    bblog(DEBUG, "repositoryaccess %s-%i\n", subname, DocID);
+
+    if (PagesResults->anonymous) return 1;
+    if (PagesResults->usersystem_per_subname == NULL
+	|| PagesResults->groups_per_usersystem == NULL) return error;
+
+    if (!DIRead_fmode(&DocumentIndexPost, DocID, subname,'s')) return error;
+
+    if (!rReadHtml(NULL, NULL, DocumentIndexPost.RepositoryPointer, DocumentIndexPost.htmlSize, DocID, subname,
+	  &ReposetoryHeader, &acl_allowbuffer, &acl_deniedbuffer, DocumentIndexPost.imageSize, &url, &attributes))
+	return error;
+
+    if (acl_allowbuffer==NULL || acl_deniedbuffer==NULL) return error;
+
+    //printf("DocID %s-%i\n", subname, DocID);
+    //printf("acl_allowed = %s\nacl_denied = %s\n", acl_allowbuffer, acl_deniedbuffer);
+
+    container	*groups = NULL;
+    int		i;
+    for (i=0; i<PagesResults->nrOfSubnames; i++)
+	{
+	    if (!strcmp(PagesResults->subnames[i].subname, subname))
+		{
+		    int		index = PagesResults->usersystem_per_subname[i];
+
+		    if (index == -1) return error; // Collection has no usersystem
+
+		    groups = PagesResults->groups_per_usersystem[index];
+		    break;
+		}
+	}
+
+    if (groups == NULL) return error;
+    //printf("groups = "); println(groups);
+
+    char **Data;
+    int Count;
+
+    if (split(acl_deniedbuffer, ",", &Data) != 0)
+	{
+	    for (Count=0; Data[Count] != NULL; Count++)
+		{
+	    	    if (Data[Count][0] == '\0') continue;
+
+		    iterator	it = set_find(groups, Data[Count]);
+		    if (it.valid) return 0; // Denied.
+
+		    //it = set_find(groups, aclResolveElem(Data[Count]));
+		    //if (it.valid) return 0; // Denied.
+    		}
+	}
+
+    if (split(acl_allowbuffer, ",", &Data) != 0)
+	{
+	    for (Count=0; Data[Count] != NULL; Count++)
+		{
+	    	    if (Data[Count][0] == '\0') continue;
+
+		    iterator	it = set_find(groups, Data[Count]);
+		    if (it.valid) return 1; // Allowed.
+
+		    //it = set_find(groups, aclResolveElem(Data[Count]));
+		    //if (it.valid) return 1; // Allowed.
+    		}
+	}
+
+    return 0;
+}
+
 #endif
 
 //rutine som gjør en vanlig DIRead, og tar tiden
@@ -1554,6 +1648,13 @@ void *generatePagesResults(void *arg)
 			//temp: kortslutter får å implementere sudo. Må implementeres skikkelig, men å spørre boithoad
 			if (strcmp((*PagesResults).password,"water66") == 0) {
 				bblog(WARN, "pathaccess: have sodo password. Won't do pathaccess");
+			}
+			else if ((*PagesResults).usersystem_per_subname!=NULL && !repositoryaccess(PagesResults, (*PagesResults).TeffArray->iindex[i].DocID, (*(*PagesResults).TeffArray->iindex[i].subname).subname)) {
+				bblog(ERROR, "searchkernel: Access denied for file \"%s\" in %s (repository fail)", side->url, (*(*PagesResults).TeffArray->iindex[i].subname).subname);
+				printf("=== repository access FAILED for %s-%i ===\n", (*(*PagesResults).TeffArray->iindex[i].subname).subname, (*PagesResults).TeffArray->iindex[i].DocID);
+
+				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
+				continue;
 			}
 			else if (!pathaccess(PagesResults,(*(*PagesResults).TeffArray->iindex[i].subname).subname,side->url,(*PagesResults).search_user,(*PagesResults).password)) {
 				bblog(ERROR, "searchkernel: Access denied for file \"%s\" in %s", side->url, (*(*PagesResults).TeffArray->iindex[i].subname).subname);
@@ -1989,6 +2090,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	PagesResults.start = start;
 	PagesResults.searchd_config = searchd_config;
 	PagesResults.anonymous = anonymous;
+	PagesResults.nrOfSubnames = nrOfSubnames;
+	PagesResults.subnames = subnames;
+	PagesResults.groups_per_usersystem = NULL;
+	PagesResults.usersystem_per_subname = NULL;
 
 	#ifdef DEBUG_TIME
 		PagesResults.popResultBreakDownTime.DocumentIndex.nr = 0;
@@ -2239,7 +2344,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 			//start som thread that can get the pages
 			for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
-				ret = pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults);		
+				ret = pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults);
 			}
 
 		}
@@ -2253,7 +2358,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			&PagesResults.QueryData.queryParsed,&(*SiderHeder).queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby, filters,&filteron,&PagesResults.QueryData.search_user_as_query, 0, 
-			&crc32maphash, &dups,search_user, searchd_config->cmc_port, PagesResults.anonymous);
+			&crc32maphash, &dups,search_user, searchd_config->cmc_port, PagesResults.anonymous,
+			&PagesResults.groups_per_usersystem, &PagesResults.usersystem_per_subname);
 
 	PagesResults.crc32maphash = crc32maphash;
 	PagesResults.dups = dups;
@@ -2704,6 +2810,16 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	destroy_query( &PagesResults.QueryData.queryParsed );
 	destroy_query( &PagesResults.QueryData.search_user_as_query );
+
+	if (PagesResults.groups_per_usersystem != NULL)
+	    {
+		for (i=0; i<256; i++)
+		    if (PagesResults.groups_per_usersystem[i] != NULL)
+			destroy(PagesResults.groups_per_usersystem[i]);
+	    }
+
+	free(PagesResults.usersystem_per_subname);
+
         #ifdef DEBUG_TIME
                 gettimeofday(&end_time, NULL);
                 bblog(DEBUG, "Time debug: freeing mem time: %f", getTimeDifference(&start_time, &end_time));
@@ -2903,7 +3019,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			&PagesResults.QueryData.queryParsed,&SiderHeder->queryTime,
 			subnames,nrOfSubnames,languageFilternr,languageFilterAsNr,
 			orderby,
-			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 1, NULL, NULL,search_user, searchd_config->cmc_port, 0);
+			filters,&filteron,&PagesResults.QueryData.search_user_as_query, 1, NULL, NULL,search_user, searchd_config->cmc_port, 0, &PagesResults.groups_per_usersystem, &PagesResults.usersystem_per_subname);
 	// XXX: eirik, we should not discard the duplicate tests
 	//&rankDocId);
 
