@@ -23,20 +23,28 @@ struct b_fh_cookie {
 	char pathAtomicallyTmp[PATH_MAX];
 
 	char mode[4];
+	off_t   offset;     /* Current file offset in buf */
 
 };
 
 ssize_t breader (void *cookie, char *buffer, size_t size) {
 	#ifdef DEBUG
 	printf("reader(size=%d)\n",size);
+	printf("breader offset %u\n",(unsigned)((struct b_fh_cookie *)cookie)->offset);
 	#endif
+
+	((struct b_fh_cookie *)cookie)->offset += size;
+
 
 	return read(((struct b_fh_cookie *)cookie)->fdAtomicallyTmp,buffer,size);
 }
 ssize_t bwriter (void *cookie, const char *buffer, size_t size) {
 	#ifdef DEBUG
 	printf("writer(size=%d)\n",size);
+	printf("bwriter offset %u\n",(unsigned)((struct b_fh_cookie *)cookie)->offset);
 	#endif
+
+	((struct b_fh_cookie *)cookie)->offset += size;
 
 	return write(((struct b_fh_cookie *)cookie)->fdAtomicallyTmp,buffer,size);;
 }
@@ -44,8 +52,21 @@ int bseeker (void *cookie, _IO_off64_t *position, int whence) {
 	#ifdef DEBUG
 	printf("seeker(position=%lu,whence=%i)\n",position,whence);
 	#endif
+
+	if (whence == SEEK_SET) {
+		((struct b_fh_cookie *)cookie)->offset = *position;
+	}
+	else if (whence == SEEK_CUR) {
+		((struct b_fh_cookie *)cookie)->offset += *position;
+	}
+	else {
+		printf("bseeker: Unsoportet seek mode\n");
+		return -1;
+	}
+
+	*position = ((struct b_fh_cookie *)cookie)->offset;
 	
-	return lseek(((struct b_fh_cookie *)cookie)->fdAtomicallyTmp,(*position),whence);
+	return lseek(((struct b_fh_cookie *)cookie)->fdAtomicallyTmp, *position, whence);
 }
 int bcleaner (void *cookie) {
 	#ifdef DEBUG
@@ -58,7 +79,9 @@ int bcleaner (void *cookie) {
 	}
 
 	//renamer fdAtomicallyTmp -> fdOriginal
+	#ifdef DEBUG
 	printf("rename %s -> %s\n",((struct b_fh_cookie *)cookie)->pathAtomicallyTmp,((struct b_fh_cookie *)cookie)->pathOriginal);
+	#endif
 
 	if (rename(((struct b_fh_cookie *)cookie)->pathAtomicallyTmp,((struct b_fh_cookie *)cookie)->pathOriginal) == -1) {
 		return -1;
@@ -100,6 +123,8 @@ FILE *batomicallyopen(char path[], char mode[]) {
 	strcpy(bfh->pathOriginal,path);
 	strcpy(bfh->pathAtomicallyTmp,path);
 	strcat(bfh->pathAtomicallyTmp,".AtomicallyTmp");
+
+	bfh->offset = 0;
 
 	//finner ut hvilkene flag vi skal bruke
 	if ((strcmp(mode,"w") == 0) || (strcmp(mode,"wb") == 0)) {
@@ -158,6 +183,36 @@ FILE *batomicallyopen(char path[], char mode[]) {
 	return FH;
 }
 
+/*
+ Egne ftell funkasjo da ftell ikke fungerer riktig i libc versjonen som ligger på bbh-001. 
+
+ Dette er en kjent feil, og er dokumenetert på http://sources.redhat.com/ml/libc-alpha/2005-04/msg00035.html
+
+ Strukten _IO_cookie_file er nevnt i /usr/include/libio.h men ikke "deklarert" har derfor tatt den fra 
+ http://sources.redhat.com/ml/libc-hacker/2000-06/msg00230.html , så må vi håpe at den alldri oppdateres :(
+*/
+off_t batomicallyftell(FILE *stream) {
+
+
+	struct _B_IO_cookie_file
+	{
+	  struct _IO_FILE __file;
+	  const void *__vtable;
+	  void *__cookie;
+	  _IO_cookie_io_functions_t __io_functions;
+	};
+
+	// f* fonksjonene bufrer dataene. Kaller fseek for å tvinge den til å sende data til writer funksjonen, og dermed oppdatere cookie->offset
+	fseek(stream, 0, SEEK_CUR);
+
+	struct _B_IO_cookie_file *cfile = (struct _B_IO_cookie_file *) stream;
+
+	#ifdef DEBUG
+	printf("~batomicallyftell=%u\n",((struct b_fh_cookie *)cfile->__cookie)->offset);
+	#endif
+
+	return ((struct b_fh_cookie *)cfile->__cookie)->offset;
+}
 
 /*
 int main() {
