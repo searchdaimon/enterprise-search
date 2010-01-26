@@ -8,7 +8,7 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <errno.h>
-
+#include <inttypes.h>
 
 #include "define.h"
 #include "lot.h"
@@ -16,6 +16,7 @@
 #include "mgsort.h"
 #include "revindex.h"
 #include "bstr.h"
+#include "atomicallyio.h"
 
 #include "../3pLibs/keyValueHash/hashtable.h"
 
@@ -1579,8 +1580,8 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 	unsigned long term;
 	unsigned long Antall;
 
-	unsigned long startAdress;
-	unsigned long stoppAdress;
+	off_t startAdress;
+	off_t stoppAdress;
 
 	char FinalIindexFileName[128];
 	char FinalDictionaryFileName[128];
@@ -1627,7 +1628,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
         }
 
 
-	if ((FinalIindexFileFA = fopen(FinalIindexFileName,"wb")) == NULL) {
+	if ((FinalIindexFileFA = batomicallyopen(FinalIindexFileName,"wb")) == NULL) {
 		perror(FinalIindexFileName);
 		exit(1);
 	}
@@ -1642,7 +1643,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 
 	makePath(FinalDictionaryFilePath);
 
-	if ((FinalDictionaryFileFA = fopen(FinalDictionaryFileName,"wb")) == NULL) {
+	if ((FinalDictionaryFileFA = batomicallyopen(FinalDictionaryFileName,"wb")) == NULL) {
                 perror(FinalDictionaryFileName);
 		exit(1);
         }
@@ -1786,7 +1787,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 
 		currentTerm = iindexfile[0].lastTerm;
 
-		startAdress = (unsigned long)ftell(FinalIindexFileFA);
+		startAdress = batomicallyftell(FinalIindexFileFA);
 		fwrite(&iindexfile[0].lastTerm,sizeof(iindexfile[0].lastTerm),1,FinalIindexFileFA);
 		fwrite(&totaltAntall,sizeof(totaltAntall),1,FinalIindexFileFA);
 
@@ -1899,12 +1900,19 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 			i++;
 		}
 
-		stoppAdress = (unsigned long)ftell(FinalIindexFileFA);;
+		stoppAdress = batomicallyftell(FinalIindexFileFA);
                 DictionaryPost.WordID = currentTerm;
                 DictionaryPost.Adress = startAdress;
                 DictionaryPost.SizeForTerm = stoppAdress - startAdress;
+		if (DictionaryPost.SizeForTerm == 0) {
+			fprintf(stderr,"BUG: DictionaryPost.SizeForTerm is 0\n");
+		}
 
-                fwrite(&DictionaryPost,sizeof(DictionaryPost),1,FinalDictionaryFileFA);
+                if (fwrite(&DictionaryPost,sizeof(DictionaryPost),1,FinalDictionaryFileFA) != 1) {
+			printf("Cant't DictionaryPost to Dictionary");
+			perror("fwrite");
+			exit(-1);
+		}
 
 		//printf("WordID %ul, Adress: %ul, SizeForTerm: %ul\n",DictionaryPost.WordID,DictionaryPost.Adress,DictionaryPost.SizeForTerm);
 
