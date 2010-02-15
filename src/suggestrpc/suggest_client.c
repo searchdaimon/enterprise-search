@@ -28,13 +28,13 @@ reread_dict(char *host)
 }
 
 void
-suggest_1(char *host, char *arg, char *user)
+suggest_1(char *host, char *arg, char *user, char *collection)
 {
 	CLIENT *clnt;
 	enum clnt_stat retval_1;
 	numbest_res *result_1;
 	struct senddata args = {
-		arg, user
+		arg, user, (collection ? collection : "")
 	};
 
 #ifndef	DEBUG
@@ -78,15 +78,15 @@ main (int argc, char *argv[])
 {
 	char *host;
 
-	if (argc < 4) {
-		printf ("usage: %s server_host arg user\n", argv[0]);
+	if (argc < 5) {
+		printf ("usage: %s server_host arg user collection\n", argv[0]);
 		exit (1);
 	}
 	host = argv[1];
 	if (strcmp(argv[2], "__rebuild") == 0) {
 		reread_dict(host);
 	} else {
-		suggest_1 (host, argv[2], argv[3]);
+		suggest_1 (host, argv[2], argv[3], argv[4]);
 	}
 	//_exit(0); /* avoid segfault */
 

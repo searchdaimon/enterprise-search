@@ -136,9 +136,9 @@ get_best_results_2_svc(struct senddata *argp, struct svc_req *rqstp)
 	nlp = &result.numbest_res_u.list;
 	for (si2 = si =
 #ifdef WITH_ACL
-			suggest_find_prefix(sd, argp->word, argp->user, &groups, &num);
+			suggest_find_prefix(sd, argp->word, argp->user, &groups, &num, argp->collection[0] == '\0' ? NULL : argp->collection);
 #else
-			suggest_find_prefix(sd, argp->word);
+			suggest_find_prefix(sd, argp->word, argp->collection[0] == '\0' ? NULL : argp->collection);
 #endif
 	     si != NULL && *si != NULL;
 	     si++) {

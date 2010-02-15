@@ -21,6 +21,7 @@ struct namenode {
 struct senddata {
 	wordtype word;
 	wordtype user;
+	wordtype collection;
 };
 
 union numbest_res switch (int _errno) {
