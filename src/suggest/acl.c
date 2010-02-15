@@ -14,7 +14,7 @@
 #elif !defined WITH_ACL
 
 #else
-#error "Unknown usersystem type"
+//#error "Unknown usersystem type"
 #endif
 #include "../3pLibs/keyValueHash/hashtable.h"
 
@@ -78,6 +78,8 @@ acl_is_allowed(char **allow, char **deny, char *group, char ***groups, int *num)
 #elif defined USERSYSTEM
 		if (!acl_usersystem(group, groups, num))
 			return 0;
+#else
+		return 0;
 #endif
 	}
 

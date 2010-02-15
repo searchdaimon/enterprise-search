@@ -313,7 +313,7 @@ _suffixtree_collect_prefixes(struct suffixtree *root, char *user, char ***groups
 			int i, found;
 
 			if (!acl_is_allowed((*cur)->aclallow, (*cur)->acldeny, user, groups, num)) {
-				printf("Not allowed access to(collect): %s\n", (*cur)->word);
+				//printf("Not allowed access to(collect): %s\n", (*cur)->word);
 				continue;
 			}
 
@@ -372,7 +372,7 @@ _suffixtree_find_prefix(struct suffixtree *root, char *word, unsigned int len, c
 		for (cur = root->best; *cur != NULL; cur++) {
 #ifdef WITH_ACL
 			if (!acl_is_allowed((*cur)->aclallow, (*cur)->acldeny, user, groups, num)) {
-				printf("Not allowed to access: %s\n", (*cur)->word);
+				//printf("Not allowed to access: %s\n", (*cur)->word);
 				continue;
 			}
 #endif

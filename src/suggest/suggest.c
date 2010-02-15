@@ -18,6 +18,8 @@
 #include "suffixtree.h"
 #include "acl.h"
 
+#define MIN_FREQ 15 
+
 
 int
 suggest_add_item(struct suggest_data *sd, char *word, int freq, char *aclallow, char *acldeny, struct hashtable *acls)
@@ -151,12 +153,15 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 				free(linedata[ifree]);
 			free(linedata);
 		}
+
+		linenum++;
+		if (freq < MIN_FREQ)
+			continue;
 		//printf("%s <=> %d\nGot acl allow: %s\nGot acl deny: %s\n", word, freq, aclallow, acldeny);
 		if (suggest_add_item(sd, word, freq, aclallow, acldeny, acls) == -1) {
 			perror("suggest_add_item()");
 		}
 
-		linenum++;
 		got++;
 		if ((linenum % 100000) == 0) {
 			printf("100000 new word!\n");
