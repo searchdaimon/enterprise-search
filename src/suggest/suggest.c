@@ -22,7 +22,7 @@
 
 
 int
-suggest_add_item(struct suggest_data *sd, char *word, int freq, char *aclallow, char *acldeny, struct hashtable *acls)
+suggest_add_item(struct suggest_data *sd, char *word, int freq, char *aclallow, char *acldeny, struct hashtable *acls, char *collections)
 {
 	struct suggest_input *si;
 
@@ -48,6 +48,7 @@ suggest_add_item(struct suggest_data *sd, char *word, int freq, char *aclallow, 
 		return -1;
 	}
 #endif
+	si->collections = acl_parse_list(collections, acls);
 
 	suffixtree_insert(&(sd->tree), si);
 
@@ -97,6 +98,7 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 	char word[1024];
 	char aclallow[1024*1024];
 	char acldeny[1024*1024];
+	char collections[1024*1024];
 	struct hashtable *acls;
 
 	acls = create_hashtable(101, ht_stringhash, ht_stringcmp);
@@ -122,7 +124,10 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 			free(line);
 			continue;
 		}
-		if (line == NULL || split(line, " ", &linedata) < 2) {
+
+		line[strlen(line)-1] = '\0'; // Remove newline
+
+		if (split(line, " ", &linedata) < 2) {
 			printf("'%s' %d\n", line, len);
 			fprintf(stderr, "Unable to read parse line %d in %s\n", linenum, wordlist);
 			linenum++;
@@ -144,6 +149,11 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 		else
 #endif
 			strcpy(acldeny, "");
+
+		if (linedata[2] && linedata[3] && linedata[4])
+			strscpy(collections, linedata[4], sizeof(collections));
+		else
+			strcpy(collections, "");
 		
 		/* Free linedata */
 		{
@@ -158,7 +168,7 @@ suggest_read_frequency(struct suggest_data *sd, char *wordlist)
 		if (freq < MIN_FREQ)
 			continue;
 		//printf("%s <=> %d\nGot acl allow: %s\nGot acl deny: %s\n", word, freq, aclallow, acldeny);
-		if (suggest_add_item(sd, word, freq, aclallow, acldeny, acls) == -1) {
+		if (suggest_add_item(sd, word, freq, aclallow, acldeny, acls, collections) == -1) {
 			perror("suggest_add_item()");
 		}
 
@@ -184,9 +194,9 @@ suggest_most_used(struct suggest_data *sd)
 
 struct suggest_input **
 #ifdef WITH_ACL
-suggest_find_prefix(struct suggest_data *sd, char *prefix, char *user, char ***groups, int *num)
+suggest_find_prefix(struct suggest_data *sd, char *prefix, char *user, char ***groups, int *num, char *collectionFilter)
 #else
-suggest_find_prefix(struct suggest_data *sd, char *prefix)
+suggest_find_prefix(struct suggest_data *sd, char *prefix, char *collectionFilter)
 #endif
 {
 #ifndef WITH_ACL
@@ -194,7 +204,7 @@ suggest_find_prefix(struct suggest_data *sd, char *prefix)
 	char ***groups = NULL;
 	int *num = NULL;
 #endif 
-	return suffixtree_find_prefix(&sd->tree, prefix, user, groups, num);
+	return suffixtree_find_prefix(&sd->tree, prefix, user, groups, num, collectionFilter);
 }
 
 

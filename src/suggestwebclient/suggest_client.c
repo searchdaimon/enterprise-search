@@ -13,7 +13,7 @@
 #include "../cgi-util/cgi-util.h"
 
 void
-suggest_1(char *host, char *arg, char *user)
+suggest_1(char *host, char *arg, char *user, char *collection)
 {
 	CLIENT *clnt;
 	numbest_res *result_1;
@@ -31,6 +31,7 @@ suggest_1(char *host, char *arg, char *user)
 	args.word = wordlist[splitn-1];
 	convert_to_lowercase(args.word);
 	args.user = user;
+	args.collection = (collection ? collection : "");
 
 #ifndef	DEBUG
 	clnt = clnt_create (host, SUGGEST, SUGGESTVERS, "udp");
@@ -83,6 +84,7 @@ main (int argc, char *argv[])
 	char *host = NULL;
 	char *prefix;
 	char *user;
+	char *collection = NULL;
 	int ret;
 
 	printf("Cache-control: no-cache\n");
@@ -109,20 +111,26 @@ main (int argc, char *argv[])
 			exit(0);
 		}
 #endif
+		if ((collection = cgi_getentrystr("collection")) == NULL) {
+			fprintf(stderr, "Did not find collection info.\n");
+			collection = "";
+		}
+
 	}
 	else {
-		if (argc < 4) {
-			printf("Usage: ./prog host prefix user\n");
+		if (argc < 5) {
+			printf("Usage: ./prog host prefix user collection\n");
 			exit(1);
 		}
 		host = argv[1];
 		prefix = argv[2];
 		user = argv[3];
+		collection = argv[4];
 	}
 
 	if (host == NULL)
 		host = RPC_HOST;
-	suggest_1 (host, prefix, user);
+	suggest_1 (host, prefix, user, collection);
 
 	return 0;
 }

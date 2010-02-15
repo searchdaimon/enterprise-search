@@ -46,7 +46,7 @@ acl_usersystem(char *group, char ***groupsout, int *num)
 	port = 7392;
 	cmc_conect(&s, buf, sizeof(buf), port);
 
-	*num = cmc_groupsforuserfromusersystem(s, group, usersystem, &_gs);
+	*num = cmc_groupsforuserfromusersystem(s, group, usersystem, &_gs, "");
 
 	groups = calloc(*num, sizeof(char *));
 	for (i = 0; i < *num; i++) {

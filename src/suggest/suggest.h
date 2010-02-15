@@ -15,15 +15,16 @@ struct suggest_input {
 	char **aclallow;
 	char **acldeny;
 #endif
+	char **collections;
 };
 
 
 void suggest_most_used(struct suggest_data *);
 int suggest_read_frequency(struct suggest_data *, char *);
 #ifdef WITH_ACL
-struct suggest_input **suggest_find_prefix(struct suggest_data *, char *, char *, char ***, int *);
+struct suggest_input **suggest_find_prefix(struct suggest_data *, char *, char *, char ***, int *, char *);
 #else
-struct suggest_input **suggest_find_prefix(struct suggest_data *, char *);
+struct suggest_input **suggest_find_prefix(struct suggest_data *, char *, char *);
 #endif
 struct suggest_data *suggest_init(void);
 void suggest_destroy(struct suggest_data *);

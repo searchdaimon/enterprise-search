@@ -286,23 +286,23 @@ suffixtree_find_word(struct suffixtree *root, char *word)
 	return _suffixtree_find_word(root, word, 0);
 }
 
-struct suggest_input **_suffixtree_find_prefix(struct suffixtree *, char *, unsigned int, char *, char ***, int *);
+struct suggest_input **_suffixtree_find_prefix(struct suffixtree *, char *, unsigned int, char *, char ***, int *, char *);
 
 static struct suggest_input **
-_suffixtree_find_prefix_children(struct suffixtree *root, char *word, unsigned int len, char *user, char ***groups, int *num)
+_suffixtree_find_prefix_children(struct suffixtree *root, char *word, unsigned int len, char *user, char ***groups, int *num, char *collection)
 {
 	struct suffixtree *sf;
 
 	forchildren(sf, root) {
 		if (word[0] == '\0' || (unsigned int)find_common_substr(word+len, sf->suffix) > 0)
 			return _suffixtree_find_prefix(sf, word,
-			                               len + strlen(sf->suffix), user, groups, num);
+			                               len + strlen(sf->suffix), user, groups, num, collection);
 	}
 	return NULL;
 }
 
 int
-_suffixtree_collect_prefixes(struct suffixtree *root, char *user, char ***groups, int *num, int have, struct suggest_input **best)
+_suffixtree_collect_prefixes(struct suffixtree *root, char *user, char ***groups, int *num, int have, struct suggest_input **best, char *collection)
 {
 	struct suffixtree *sf;
 
@@ -311,6 +311,12 @@ _suffixtree_collect_prefixes(struct suffixtree *root, char *user, char ***groups
 
 		for (cur = sf->best; *cur != NULL; cur++) {
 			int i, found;
+
+			if (collection != NULL) {
+				int i;
+
+				continue;
+			}
 
 			if (!acl_is_allowed((*cur)->aclallow, (*cur)->acldeny, user, groups, num)) {
 				//printf("Not allowed access to(collect): %s\n", (*cur)->word);
@@ -340,7 +346,7 @@ _suffixtree_collect_prefixes(struct suffixtree *root, char *user, char ***groups
 	/* Try children if we still don't have what we need */
 	if (have < MAX_BEST) {
 		forchildren(sf, root) {
-			have = _suffixtree_collect_prefixes(sf, user, groups, num, have, best);
+			have = _suffixtree_collect_prefixes(sf, user, groups, num, have, best, collection);
 
 			if (have == MAX_BEST)
 				break;
@@ -353,7 +359,7 @@ _suffixtree_collect_prefixes(struct suffixtree *root, char *user, char ***groups
 }
 
 struct suggest_input **
-_suffixtree_find_prefix(struct suffixtree *root, char *word, unsigned int len, char *user, char ***groups, int *num)
+_suffixtree_find_prefix(struct suffixtree *root, char *word, unsigned int len, char *user, char ***groups, int *num, char *collection)
 {
 	struct suggest_input **best;
 
@@ -370,6 +376,20 @@ _suffixtree_find_prefix(struct suffixtree *root, char *word, unsigned int len, c
 		}
 		i = 0;
 		for (cur = root->best; *cur != NULL; cur++) {
+			if (collection) {
+				int i, skip = 1;
+
+				for (i = 0; (*cur)->collections[i]; i++) {
+					if (strcmp(collection, (*cur)->collections[i]) == 0) {
+						skip = 0;
+						break;
+					}
+				}
+				if (skip) {
+					//printf("%s is not a part of collection: %s\n", (*cur)->word, collection);
+					continue;
+				}
+			}
 #ifdef WITH_ACL
 			if (!acl_is_allowed((*cur)->aclallow, (*cur)->acldeny, user, groups, num)) {
 				//printf("Not allowed to access: %s\n", (*cur)->word);
@@ -382,21 +402,21 @@ _suffixtree_find_prefix(struct suffixtree *root, char *word, unsigned int len, c
 		}
 
 		if (i < MAX_BEST)
-			i = _suffixtree_collect_prefixes(root, user, groups, num, i, best);
+			i = _suffixtree_collect_prefixes(root, user, groups, num, i, best, collection);
 		best[i] = NULL;
 
 		return best;
 	}
 	else {
 		printf("Prefix\n");
-		return _suffixtree_find_prefix_children(root, word, len, user, groups, num);
+		return _suffixtree_find_prefix_children(root, word, len, user, groups, num, collection);
 	}
 }
 
 struct suggest_input **
-suffixtree_find_prefix(struct suffixtree *root, char *word, char *user, char ***groups, int *num)
+suffixtree_find_prefix(struct suffixtree *root, char *word, char *user, char ***groups, int *num, char *collectionFilter)
 {
-	return _suffixtree_find_prefix(root, word, 0, user, groups, num);
+	return _suffixtree_find_prefix(root, word, 0, user, groups, num, collectionFilter);
 }
 
 
