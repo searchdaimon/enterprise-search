@@ -3,7 +3,7 @@
 
 # Parameters
 
-CC=/usr/local/bin/gcc  -m32
+CC=/usr/local/bin/gcc  -m32 
 
 CLIENT = suggest_client
 CLIENTREDICT = suggest_client_redict
@@ -27,7 +27,7 @@ OBJECTS_SVC = $(SOURCES_SVC.c:%.c=%.o) $(TARGETS_SVC.c:%.c=%.o)
 # Compiler flags 
 
 CPPFLAGS += -D_REENTRANT
-CFLAGS += -g  -DWITH_ACL -DUS_BOITHOAD
+CFLAGS += -g  -DWITH_ACL -D_FILE_OFFSET_BITS=64 #-DUS_BOITHOAD
 # For using a different usersystem use this, and set usersystem id in acl.c
 #CFLAGS += -g  -DWITH_ACL -DUSERSYSTEM
 LDLIBS += -lnsl -lpthread -lm ../../lib/libcommon.a ../../lib/liblogger.a
