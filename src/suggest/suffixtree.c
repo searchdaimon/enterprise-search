@@ -16,6 +16,7 @@
 #include "suffixtree.h"
 #include "suggest.h"
 #include "acl.h"
+#include "../common/bstr.h"
 
 static int
 suffixtree_allocate_node(struct suffixtree *node)
@@ -286,23 +287,23 @@ suffixtree_find_word(struct suffixtree *root, char *word)
 	return _suffixtree_find_word(root, word, 0);
 }
 
-struct suggest_input **_suffixtree_find_prefix(struct suffixtree *, char *, unsigned int, char *, char ***, int *, char *);
+struct suggest_input **_suffixtree_find_prefix(struct suffixtree *, char *, unsigned int, char *, char ***, int *, char **);
 
 static struct suggest_input **
-_suffixtree_find_prefix_children(struct suffixtree *root, char *word, unsigned int len, char *user, char ***groups, int *num, char *collection)
+_suffixtree_find_prefix_children(struct suffixtree *root, char *word, unsigned int len, char *user, char ***groups, int *num, char **collections)
 {
 	struct suffixtree *sf;
 
 	forchildren(sf, root) {
 		if (word[0] == '\0' || (unsigned int)find_common_substr(word+len, sf->suffix) > 0)
 			return _suffixtree_find_prefix(sf, word,
-			                               len + strlen(sf->suffix), user, groups, num, collection);
+			                               len + strlen(sf->suffix), user, groups, num, collections);
 	}
 	return NULL;
 }
 
 int
-_suffixtree_collect_prefixes(struct suffixtree *root, char *user, char ***groups, int *num, int have, struct suggest_input **best, char *collection)
+_suffixtree_collect_prefixes(struct suffixtree *root, char *user, char ***groups, int *num, int have, struct suggest_input **best, char **collections)
 {
 	struct suffixtree *sf;
 
@@ -312,10 +313,19 @@ _suffixtree_collect_prefixes(struct suffixtree *root, char *user, char ***groups
 		for (cur = sf->best; *cur != NULL; cur++) {
 			int i, found;
 
-			if (collection != NULL) {
-				int i;
+			if (collections) {
+				int i, skip = 1;
 
-				continue;
+				for (i = 0; (*cur)->collections[i]; i++) {
+					if (acl_in_list((*cur)->collections[i], collections)) {
+						skip = 0;
+						break;
+					}
+				}
+				if (skip) {
+					//printf("%s is not a part of collection: %s\n", (*cur)->word, collection);
+					continue;
+				}
 			}
 
 			if (!acl_is_allowed((*cur)->aclallow, (*cur)->acldeny, user, groups, num)) {
@@ -346,7 +356,7 @@ _suffixtree_collect_prefixes(struct suffixtree *root, char *user, char ***groups
 	/* Try children if we still don't have what we need */
 	if (have < MAX_BEST) {
 		forchildren(sf, root) {
-			have = _suffixtree_collect_prefixes(sf, user, groups, num, have, best, collection);
+			have = _suffixtree_collect_prefixes(sf, user, groups, num, have, best, collections);
 
 			if (have == MAX_BEST)
 				break;
@@ -359,7 +369,7 @@ _suffixtree_collect_prefixes(struct suffixtree *root, char *user, char ***groups
 }
 
 struct suggest_input **
-_suffixtree_find_prefix(struct suffixtree *root, char *word, unsigned int len, char *user, char ***groups, int *num, char *collection)
+_suffixtree_find_prefix(struct suffixtree *root, char *word, unsigned int len, char *user, char ***groups, int *num, char **collections)
 {
 	struct suggest_input **best;
 
@@ -376,11 +386,11 @@ _suffixtree_find_prefix(struct suffixtree *root, char *word, unsigned int len, c
 		}
 		i = 0;
 		for (cur = root->best; *cur != NULL; cur++) {
-			if (collection) {
+			if (collections) {
 				int i, skip = 1;
 
 				for (i = 0; (*cur)->collections[i]; i++) {
-					if (strcmp(collection, (*cur)->collections[i]) == 0) {
+					if (acl_in_list((*cur)->collections[i], collections)) {
 						skip = 0;
 						break;
 					}
@@ -402,23 +412,41 @@ _suffixtree_find_prefix(struct suffixtree *root, char *word, unsigned int len, c
 		}
 
 		if (i < MAX_BEST)
-			i = _suffixtree_collect_prefixes(root, user, groups, num, i, best, collection);
+			i = _suffixtree_collect_prefixes(root, user, groups, num, i, best, collections);
 		best[i] = NULL;
 
 		return best;
 	}
 	else {
 		printf("Prefix\n");
-		return _suffixtree_find_prefix_children(root, word, len, user, groups, num, collection);
+		return _suffixtree_find_prefix_children(root, word, len, user, groups, num, collections);
 	}
 }
 
 struct suggest_input **
 suffixtree_find_prefix(struct suffixtree *root, char *word, char *user, char ***groups, int *num, char *collectionFilter)
 {
-	return _suffixtree_find_prefix(root, word, 0, user, groups, num, collectionFilter);
-}
+	char **collections;
+	int n_collections, n_collections_dup;
+	struct suggest_input **ret;
+	int i;
 
+	if (collectionFilter == NULL)
+		collectionFilter = "";
+
+	n_collections = split(collectionFilter, ",", &collections);
+
+	n_collections_dup = n_collections;
+	for (i = 0; i < n_collections_dup; i++) {
+		if (*collections[i] == '\0')
+			n_collections--;
+	}
+	ret = _suffixtree_find_prefix(root, word, 0, user, groups, num,
+	    n_collections == 0 ? NULL : collections);
+	FreeSplitList(collections);
+
+	return ret;
+}
 
 void
 suffixtree_destroy(struct suffixtree *root)
