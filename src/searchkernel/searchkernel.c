@@ -402,7 +402,8 @@ int
 popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,
 	struct iindexMainElements *TeffArray,struct QueryDataForamt QueryData, char *htmlBuffer,
 	unsigned int htmlBufferSize, char servername[], struct subnamesFormat *subname, unsigned int getRank,
-	struct queryTimeFormat *queryTime, int summaryFH, struct PagesResultsFormat *PagesResults)
+	struct queryTimeFormat *queryTime, int summaryFH, struct PagesResultsFormat *PagesResults,
+	char **acl_allow, char **acl_denied)
 {
 
 	bblog(INFO, "searchkernel: popResult(antall=%i, DocID=%i, subname=%s)",  antall, DocID, subname->subname);
@@ -411,8 +412,6 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 	int y;
 	char        *titleaa, *body, *metakeyw, *metadesc;
 	struct ReposetoryHeaderFormat ReposetoryHeader;
-	char *acl_allowbuffer = NULL;
-	char *acl_deniedbuffer = NULL;
 	off_t imagep;
 	struct timeval start_time, end_time;
 	titleaa = body = metakeyw = metadesc = NULL;
@@ -421,8 +420,6 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 
 	int termpos;
 	int returnStatus = 0;	
-
-
 
 
 
@@ -548,7 +545,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 					free(snippet);
 				}
 				free(resbuf);
-			} else if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname->subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
+			} else if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname->subname,&ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
 				//kune ikke lese html. Pointer owerflow ?
 				//printf("Fii faa foo: %s\n", url);
 				bblog(ERROR, "error reding html for %s", (*Sider).DocumentIndex.Url);
@@ -637,7 +634,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 			}
 			else {
 				bblog(DEBUG, "don't hav Summary on disk. Will hav to read html");	
-				if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname->subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
+				if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname->subname,&ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
 					//printf("Fii faa foo: %s\n", url);
 					//kune ikke lese html. Pointer owerflow ?
 					bblog(ERROR, "error reding html for %s", (*Sider).DocumentIndex.Url);
@@ -941,11 +938,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 
 	}
 
-	//temp:
-	if (acl_allowbuffer != NULL)
-		free(acl_allowbuffer);
-	if (acl_deniedbuffer != NULL)
-		free(acl_deniedbuffer);
+
 	if (url != NULL)
 		free(url);
 	if (attributes != NULL)
@@ -1220,14 +1213,11 @@ static inline char *aclResolveElem(char *value)
 }
 */
 
-
-static inline int repositoryaccess(struct PagesResultsFormat *PagesResults, int DocID, char *subname)
+static inline int repositoryaccess(struct PagesResultsFormat *PagesResults, int DocID, char *subname, char *acl_allow, char *acl_denied)
 {
-    struct DocumentIndexFormat DocumentIndexPost;
-    struct ReposetoryHeaderFormat ReposetoryHeader;
-    char *acl_allowbuffer = NULL;
-    char *acl_deniedbuffer = NULL;
-    char *url, *attributes;
+    //struct DocumentIndexFormat DocumentIndexPost;
+    //struct ReposetoryHeaderFormat ReposetoryHeader;
+    //char *url, *attributes;
     int error = 0; // if error, then return no access
 
     bblog(DEBUG, "repositoryaccess %s-%i\n", subname, DocID);
@@ -1236,16 +1226,18 @@ static inline int repositoryaccess(struct PagesResultsFormat *PagesResults, int 
     if (PagesResults->usersystem_per_subname == NULL
 	|| PagesResults->groups_per_usersystem == NULL) return error;
 
+    /*
     if (!DIRead_fmode(&DocumentIndexPost, DocID, subname,'s')) return error;
 
     if (!rReadHtml(NULL, NULL, DocumentIndexPost.RepositoryPointer, DocumentIndexPost.htmlSize, DocID, subname,
 	  &ReposetoryHeader, &acl_allowbuffer, &acl_deniedbuffer, DocumentIndexPost.imageSize, &url, &attributes))
 	return error;
+    */
 
-    if (acl_allowbuffer==NULL || acl_deniedbuffer==NULL) return error;
+    if (acl_allow==NULL || acl_denied==NULL) return error;
 
     //printf("DocID %s-%i\n", subname, DocID);
-    //printf("acl_allowed = %s\nacl_denied = %s\n", acl_allowbuffer, acl_deniedbuffer);
+    //printf("acl_allowed = %s\nacl_denied = %s\n", acl_allow, acl_denied);
 
     container	*groups = NULL;
     int		i;
@@ -1268,7 +1260,7 @@ static inline int repositoryaccess(struct PagesResultsFormat *PagesResults, int 
     char **Data;
     int Count;
 
-    if (split(acl_deniedbuffer, ",", &Data) != 0)
+    if (split(acl_denied, ",", &Data) != 0)
 	{
 	    for (Count=0; Data[Count] != NULL; Count++)
 		{
@@ -1282,7 +1274,7 @@ static inline int repositoryaccess(struct PagesResultsFormat *PagesResults, int 
     		}
 	}
 
-    if (split(acl_allowbuffer, ",", &Data) != 0)
+    if (split(acl_allow, ",", &Data) != 0)
 	{
 	    for (Count=0; Data[Count] != NULL; Count++)
 		{
@@ -1575,9 +1567,13 @@ void *generatePagesResults(void *arg)
 		#ifdef DEBUG_TIME
 			gettimeofday(&start_time, NULL);
 		#endif
-		if (PagesResults->getRank == 0 && !popResult(side, (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,PagesResults->TeffArray->iindex[i].subname, PagesResults->getRank,&PagesResults->SiderHeder->queryTime,PagesResults->searchd_config->lotPreOpen.Summary[rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID)],PagesResults)) {
+		char	*acl_allow=NULL, *acl_denied=NULL;
+
+		if (PagesResults->getRank == 0 && !popResult(side, (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,PagesResults->TeffArray->iindex[i].subname, PagesResults->getRank,&PagesResults->SiderHeder->queryTime,PagesResults->searchd_config->lotPreOpen.Summary[rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID)],PagesResults, &acl_allow, &acl_denied)) {
                        	bblog(INFO, "can't popResult");
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantpopResult,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
+			if (acl_allow!=NULL) free(acl_allow);
+			if (acl_denied!=NULL) free(acl_denied);
 			continue;
 
 		}
@@ -1628,12 +1624,16 @@ void *generatePagesResults(void *arg)
 		if (((*PagesResults).filterOn) && (filterTitle(side->title) )) {
 			bblog(INFO, "bad title \"%s\"", side->title);
 			increaseFiltered(PagesResults,NULL,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
+			if (acl_allow!=NULL) free(acl_allow);
+			if (acl_denied!=NULL) free(acl_denied);
 			continue;
 		}
 
 		if (((*PagesResults).filterOn) && (filterSummery(side->description) )) {
 			bblog(INFO, "bad summery \"%s\"", side->description);
 			increaseFiltered(PagesResults,NULL,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
+			if (acl_allow!=NULL) free(acl_allow);
+			if (acl_denied!=NULL) free(acl_denied);
 			continue;
 		}
 		#endif		
@@ -1649,11 +1649,13 @@ void *generatePagesResults(void *arg)
 			if (strcmp((*PagesResults).password,"water66") == 0) {
 				bblog(WARN, "pathaccess: have sodo password. Won't do pathaccess");
 			}
-			else if ((*PagesResults).usersystem_per_subname!=NULL && !repositoryaccess(PagesResults, (*PagesResults).TeffArray->iindex[i].DocID, (*(*PagesResults).TeffArray->iindex[i].subname).subname)) {
+			else if ((*PagesResults).usersystem_per_subname!=NULL && !repositoryaccess(PagesResults, (*PagesResults).TeffArray->iindex[i].DocID, (*(*PagesResults).TeffArray->iindex[i].subname).subname, acl_allow, acl_denied)) {
 				bblog(ERROR, "searchkernel: Access denied for file \"%s\" in %s (repository fail)", side->url, (*(*PagesResults).TeffArray->iindex[i].subname).subname);
-				printf("=== repository access FAILED for %s-%i ===\n", (*(*PagesResults).TeffArray->iindex[i].subname).subname, (*PagesResults).TeffArray->iindex[i].DocID);
+				//printf("=== repository access FAILED for %s-%i ===\n", (*(*PagesResults).TeffArray->iindex[i].subname).subname, (*PagesResults).TeffArray->iindex[i].DocID);
 
 				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cmc_pathaccess,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
+				if (acl_allow!=NULL) free(acl_allow);
+				if (acl_denied!=NULL) free(acl_denied);
 				continue;
 			}
 			else if (!pathaccess(PagesResults,(*(*PagesResults).TeffArray->iindex[i].subname).subname,side->url,(*PagesResults).search_user,(*PagesResults).password)) {
@@ -1664,6 +1666,8 @@ void *generatePagesResults(void *arg)
 				//temp:
 				//strcpy(side->title,"Access denied!");
 				//strcpy(side->description,"");
+				if (acl_allow!=NULL) free(acl_allow);
+				if (acl_denied!=NULL) free(acl_denied);
 				continue;
 
 			}
@@ -1671,6 +1675,8 @@ void *generatePagesResults(void *arg)
 			bblog(DEBUG, "pathaccess: done");
 			#endif
 
+		if (acl_allow!=NULL) free(acl_allow);
+		if (acl_denied!=NULL) free(acl_denied);
 
 		gettimeofday(&end_time, NULL);
 		(*(*PagesResults).SiderHeder).queryTime.pathaccess += getTimeDifference(&start_time,&end_time);
