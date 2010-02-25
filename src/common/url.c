@@ -178,8 +178,14 @@ int url_normalization (char url[], int urlsize) {
         //kutter av http:// (de 7 første tegnene)
         //strscpy(domain,url + 7,sizeof(domain));
 
+	if (url[0] == 0) {
+		fprintf(stderr,"url_normalization: Got emty url \"%s\"\n",url);
+		return 0;
+
+	}
+
 	if (strnlen(url,urlsize) < 10) {
-		fprintf(stderr,"bad url \"%s\"\n",url);
+		fprintf(stderr,"url_normalization: bad url \"%s\"\n",url);
 		return 0;
 	}
 
