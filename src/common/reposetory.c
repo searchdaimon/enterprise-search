@@ -16,7 +16,7 @@
 #include "dp.h"
 #include "DocumentIndex.h"
 //#include "define.h"
-//#include <errno.h>
+#include <errno.h>
 //extern int errno;
 
 #include <arpa/inet.h> //for inet_aton()
@@ -330,6 +330,7 @@ unsigned int rGeneraeADocID (char subname[]) {
 	FILE *DocIDFILE;
 	struct stat inode;      // lager en struktur for fstat å returnere.
 	char buff[64];
+	char *errorbuff;
 	unsigned int DocID;
 	int n;
 
@@ -337,19 +338,47 @@ unsigned int rGeneraeADocID (char subname[]) {
 
 
 	if (DocIDFILE == 0) {
+		if (errno != ENOENT) {
+			fprintf(stderr,"Can't open the \"DocID\" file for reading\n");
+			exit(-1);
+		}
 		printf("file sise is 0\n");
 		DocID = 0;
 	}
 	else {
-		fstat(fileno(DocIDFILE),&inode);
+		if (fstat(fileno(DocIDFILE),&inode) == -1) {
+			fprintf(stderr,"Can't fstat the \"DocID\" file\n");
+			exit(-1);
 
+		}
+		else if (inode.st_size > 10) {
+			fprintf(stderr,"The \"DocID\" file is to large to contain a unsigned int\n");
+			exit(-1);
+		}
+		else if (inode.st_size == 0) {
+			fprintf(stderr,"The \"DocID\" file is emty\n");
+			exit(-1);
+
+		}
 		if ((n =fread(&buff,sizeof(char),inode.st_size,DocIDFILE)) != inode.st_size) {
 			printf("dident read %"PRId64" char, but %i\n",inode.st_size,n);
 			perror("fread");
+			exit(-1);
 		}
 		buff[inode.st_size] = '\0';
 
-		DocID = atou(buff);
+
+		DocID = strtoul(buff, &errorbuff, 10);
+
+		if (errorbuff == NULL || *errorbuff != '\0') {
+			fprintf(stderr,"errorbuff if NULL or not errorbuff \\0\n");
+			exit(-1);
+		}
+		if (DocID == 0) {
+			fprintf(stderr,"Parser error. DocID is 0\n");
+			exit(-1);
+
+		}
 		//printf("new docid %u = %s\n",DocID,buff);
 
 		fclose(DocIDFILE);
@@ -360,12 +389,18 @@ unsigned int rGeneraeADocID (char subname[]) {
 
 
 	DocIDFILE = lotOpenFileNoCasheByLotNr(1,"DocID","w",'e',subname);
+	if (DocIDFILE == NULL) {
+		fprintf(stderr,"Can't open the \"DocID\" file for writing\n");
+		exit(-1);
 
-	printf("rGeneraeADocID: writing DocID %u, subname \"%s\"\n",DocID,subname);
+	}
 
 	fprintf(DocIDFILE,"%u",DocID);
 
+	fsync(fileno(DocIDFILE));
 	fclose(DocIDFILE);
+
+	printf("rGeneraeADocID: writing DocID %u, subname \"%s\"\n",DocID,subname);
 
 	return DocID;
 }
