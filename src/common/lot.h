@@ -53,6 +53,8 @@ void listAllColl_close(DIR * ll);
 
 void lot_get_closed_collections_file(char *buf);
 
+void lot_recache_collection(char subname[]);
+
 #endif //_LOT__H_
 
 

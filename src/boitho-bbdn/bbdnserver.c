@@ -288,6 +288,8 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			strcat(path, "fullyCrawled");
 
 			unlink(path);
+
+			free(subname);
 		}
 		else if (packedHedder.command == bbc_closecollection) {
 			printf("closecollection\n");
@@ -316,45 +318,9 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			system(command);
 			printf("cleanin lots end\n");
 
-			{
-				char collpath[LINE_MAX];
-				FILE *fp;
+			// legger subnamet til listen over ventene subnavn, og huper searchd.
+			lot_recache_collection(subname);
 
-				lot_get_closed_collections_file(collpath);
-				fp = fopen(collpath, "a");
-				if (fp == NULL) {
-					warn("fopen(%s, append)", collpath);
-				} else {
-					flock(fileno(fp), LOCK_EX);
-					fseek(fp, 0, SEEK_END);
-					fprintf(fp, "%s\n", subname);
-					flock(fileno(fp), LOCK_UN);
-					fclose(fp);
-				}
-			}
-
-			{
-				int pid;
-				char pidpath[LINE_MAX];
-				FILE *fp;
-
-				sbfile(pidpath, "var/searchd.pid");
-				if ((fp = fopen(pidpath, "r")) == NULL) {
-					warn("Unable to open pidfile for searchdbb: fopen(%s)", pidpath);
-				} else {
-					int scanc = fscanf(fp, "%d", &pid);
-					if (scanc != 1) {
-						fprintf(stderr,"Unable to get a valid pid from %s\n",pidpath);
-					}
-					else {
-						printf("pid %i, scanc %i\n", pid, scanc);
-						kill(pid, SIGUSR2);
-					}
-						fclose(fp);
-
-				}
-
-			}
 
 			/* We are done crawling  */
 			{
@@ -487,6 +453,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 
 			printf("~Asked for HasSufficientSpace for subname \"%s\". Returnerer %d\n",subname, intrespons);
 
+			free(subname);
 		}
 		else {
 			printf("unnown comand. %i\n", packedHedder.command);

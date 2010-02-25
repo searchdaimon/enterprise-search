@@ -7,6 +7,8 @@
 #include <dirent.h>
 #include <err.h>
 #include <sys/file.h>
+#include <limits.h>
+#include <signal.h>
 
 #include "lot.h"
 #include "define.h"
@@ -899,4 +901,52 @@ void
 lot_get_closed_collections_file(char *buf)
 {
 	sbfile(buf, "var/closed_collections");
+}
+
+void lot_recache_collection(char subname[]) {
+
+
+
+
+			{
+				char collpath[LINE_MAX];
+				FILE *fp;
+
+				lot_get_closed_collections_file(collpath);
+				fp = fopen(collpath, "a");
+				if (fp == NULL) {
+					warn("fopen(%s, append)", collpath);
+				} else {
+					flock(fileno(fp), LOCK_EX);
+					fseek(fp, 0, SEEK_END);
+					fprintf(fp, "%s\n", subname);
+					flock(fileno(fp), LOCK_UN);
+					fclose(fp);
+				}
+			}
+
+			{
+				int pid;
+				char pidpath[LINE_MAX];
+				FILE *fp;
+
+				sbfile(pidpath, "var/searchd.pid");
+				if ((fp = fopen(pidpath, "r")) == NULL) {
+					warn("Unable to open pidfile for searchdbb: fopen(%s)", pidpath);
+				} else {
+					int scanc = fscanf(fp, "%d", &pid);
+					if (scanc != 1) {
+						fprintf(stderr,"Unable to get a valid pid from %s\n",pidpath);
+					}
+					else {
+						printf("pid %i, scanc %i\n", pid, scanc);
+						kill(pid, SIGUSR2);
+					}
+						fclose(fp);
+
+				}
+
+			}
+
+
 }
