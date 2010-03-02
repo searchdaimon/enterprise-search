@@ -222,17 +222,22 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 
 	cfg->cache_link = row[13][0] == '1' ? 1 : 0;
 
-	fprintf(stderr, "access level: %s", row[14]);
-	if (strcmp(row[14], "anonymous") == 0)
-		cfg->accesslevel = CAL_ANONYMOUS;
-	else if (strcmp(row[14], "user") == 0)
-		cfg->accesslevel = CAL_USER;
-	else if (strcmp(row[14], "group") == 0)
-		cfg->accesslevel = CAL_GROUP;
-	else
-		cfg->accesslevel = CAL_ACL;
-	strlcpy(cfg->group, row[15], sizeof(cfg->group));
+	strlcpy(cfg->group, "", sizeof(cfg->group));
 
+	fprintf(stderr, "access level: %s", row[14]);
+	if (strcmp(row[14], "anonymous") == 0) {
+		cfg->accesslevel = CAL_ANONYMOUS;
+	}
+	else if (strcmp(row[14], "user") == 0) {
+		cfg->accesslevel = CAL_USER;
+	}
+	else if (strcmp(row[14], "group") == 0) {
+		cfg->accesslevel = CAL_GROUP;
+		strlcpy(cfg->group, row[15], sizeof(cfg->group));
+	}
+	else {
+		cfg->accesslevel = CAL_ACL;
+	}
 	mysql_free_result(res);
 	return 1;
 }
