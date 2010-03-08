@@ -28,6 +28,7 @@ typedef struct {
 	int hits;
 	set acl_allow;
 	set acl_denied;
+	set collections;
 } dictcontent_t;
 
 static unsigned int fileshashfromkey(void *ky)
@@ -55,7 +56,7 @@ void
 dolot(unsigned int lotNr, char *subname, struct hashtable *h, struct hashtable *aclshash)
 {
 	FILE *FH;
-	char line[512];
+	char line[64*1024];
 	char word[maxWordlLen +1];
 	char *filesKey;
 	unsigned int nr;
@@ -72,7 +73,7 @@ dolot(unsigned int lotNr, char *subname, struct hashtable *h, struct hashtable *
 		//printf("line \"%s\"\n",line);
 
 		if (!dictionarywordLineSplit(line, word, &nr, acl_allow, acl_denied)) {
-			puts("Error");
+			printf("Error: %s\n", line);
 			continue;
 		}
 
@@ -84,8 +85,10 @@ dolot(unsigned int lotNr, char *subname, struct hashtable *h, struct hashtable *
 			dc->hits = nr;
 			set_init(&dc->acl_allow);
 			set_init(&dc->acl_denied);
+			set_init(&dc->collections);
 			add_acls(acl_allow, &dc->acl_allow, aclshash);
 			add_acls(acl_denied, &dc->acl_denied, aclshash);
+			add_acls(subname, &dc->collections, aclshash);
 
                         if (!hashtable_insert(h, filesKey, dc)) {
                         	printf("cant insert\n");
@@ -96,6 +99,7 @@ dolot(unsigned int lotNr, char *subname, struct hashtable *h, struct hashtable *
                 else {
 			add_acls(acl_allow, &dc->acl_allow, aclshash);
 			add_acls(acl_denied, &dc->acl_denied, aclshash);
+			add_acls(subname, &dc->collections, aclshash);
 			dc->hits += nr;
                 }
 	}
@@ -190,6 +194,8 @@ int main (int argc, char *argv[]) {
 
 	//resultFH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords","w",'r',subname);
 	resultFH = fopen(bfile("var/dictionarywords"), "w");
+	if (resultFH == NULL)
+		err(1, "fopen()");
 
 	if (hashtable_count(h) > 0) {
 		printf("Writing %d words.\n", hashtable_count(h));
@@ -215,6 +221,15 @@ int main (int argc, char *argv[]) {
 			fprintf(resultFH, " ");
 			//printf("acl denied:\n");
 			SET_FOREACH(i, &dc->acl_denied, p) {
+				if (i > 0)
+					fprintf(resultFH, ",");
+				fprintf(resultFH, "%s", p);
+				//printf("\t%s\n", p);
+			}
+
+			fprintf(resultFH, " ");
+			//printf("acl denied:\n");
+			SET_FOREACH(i, &dc->collections, p) {
 				if (i > 0)
 					fprintf(resultFH, ",");
 				fprintf(resultFH, "%s", p);
