@@ -4,6 +4,8 @@
 
 OBJS=	spelling.o dmetaphone.o levenshtein.o
 LIB=	libspelling.a
+CFLAGS+=        -D_FILE_OFFSET_BITS=64
+
 #PROG=	spelling
 
 #all: $(PROG)
