@@ -13,8 +13,10 @@
 #include "../3pLibs/keyValueHash/hashtable.h"
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
 #include "../common/ht.h"
+#include "../common/utf8-strings.h"
 #include "../ds/dcontainer.h"
 #include "../ds/dlist.h"
+#include "../ds/dset.h"
 
 #include "spelling.h"
 #include "dmetaphone.h"
@@ -28,11 +30,51 @@ wchar_t alphabet_capital[] = L"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 struct wordelem {
 	wchar_t *word, *soundslike;
 	unsigned int frequency;
+        char	*acl_allowed, *acl_denied, *collections;
 };
+
 
 typedef struct hashtable scache_t;
 
 unsigned int spelling_min_freq = 0;
+
+
+char* merge_lists(char *list1, char *list2, int logical_and)
+{
+    char	**Data;
+    int		Count;
+    container	*S = set_container( string_container() );
+    container	*T = set_container( string_container() );
+
+    if (split(list1, ",", &Data) != 0)
+        for (Count=0; Data[Count] != NULL; Count++)
+	    {
+		set_insert(S, Data[Count]);
+		free(Data[Count]);
+	    }
+    free(Data);
+
+    if (split(list2, ",", &Data) != 0)
+        for (Count=0; Data[Count] != NULL; Count++)
+	    {
+	        if (Data[Count][0] == '\0') continue;
+		set_insert(T, Data[Count]);
+		free(Data[Count]);
+	    }
+    free(Data);
+
+    container *R;
+    if (logical_and) R = ds_intersection( set_begin2(S), set_begin2(T) );
+    else R = ds_union( set_begin2(S), set_begin2(T) );
+
+    char	*result = asprint(R, ",");
+    destroy(R);
+    destroy(S);
+    destroy(T);
+
+    return result;
+}
+
 
 spelling_t *
 train(const char *dict)
@@ -46,9 +88,6 @@ train(const char *dict)
 	struct hashtable *soundslikelookup;
 	int num_words = 0, num_dup_words = 0;
 
-	printf("train(s=%p, dict=%s)\n",s,dict);
-	printf("Globals: spelling_min_freq %d\n", spelling_min_freq);
-
 	if ((fp = fopen(dict, "r")) == NULL) {
 		warn("fopen(dict)");
 		return NULL;
@@ -58,6 +97,9 @@ train(const char *dict)
         	perror("malloc spelling_t");
 		return NULL;
         }
+
+	printf("train(s=%p, dict=%s)\n",s,dict);
+	printf("Globals: spelling_min_freq %d\n", spelling_min_freq);
 
 	s->words = create_hashtable(5000, ht_wstringhash, ht_wstringcmp);
 	if (s->words == NULL) {
@@ -84,17 +126,28 @@ train(const char *dict)
 		wchar_t *wcword;
 		struct wordelem *we, *wel;
 		int i;
+		char	*token[5];
 
 		p = line;
-		p[strlen(p)-1] = '\0';
-		while (!isspace(*p)) {
+		for (i=0; i<5; i++) token[i] = NULL;
+		for (i=0; i<5 && *p!='\0'; i++)
+		    {
+			token[i] = p;
+			while (!isspace(*p) && *p!='\0') p++;
+			*p = '\0';
 			p++;
-		}
-		word = strndup(line, p - line);
+		    }
 
-		p++; /* Get the frequency */
+		if (i<5)
+		    {
+			//invalid line data
+			goto word_end;
+		    }
 
-		if (strtol(p, NULL, 10) < spelling_min_freq) {
+		word = strdup(token[0]);
+
+		/* Get the frequency */
+		if (strtol(token[1], NULL, 10) < spelling_min_freq) {
 			free(word);
 			goto word_end;
 		}
@@ -117,14 +170,20 @@ train(const char *dict)
 
 		for (i = 0; wcword[i] != '\0'; i++)
 			wcword[i] = tolower(wcword[i]);
+		utf8_strtolower((utf8_byte*)token[2]);
+		utf8_strtolower((utf8_byte*)token[3]);
+		utf8_strtolower((utf8_byte*)token[4]);
 
 		wel = hashtable_search(s->words, wcword);
 		if (wel == NULL) {
 			container *list;
 			we = malloc(sizeof(*we));
-			we->frequency = strtol(p, NULL, 10);
+			we->frequency = strtol(token[1], NULL, 10);
 			we->word = wcword;
 			we->soundslike = dmetaphone(wcword);
+			we->acl_allowed = strdup(token[2]);
+			we->acl_denied = strdup(token[3]);
+			we->collections = strdup(token[4]);
 
 			if (!hashtable_insert(s->words, wcword, we)) {
 				warn("hashtable_insert()");
@@ -149,7 +208,18 @@ train(const char *dict)
 			num_words++;
 		} else {
 			num_dup_words++;
-			wel->frequency += strtol(p, NULL, 10);
+			wel->frequency += strtol(token[1], NULL, 10);
+
+			// Merge acls and collections:
+			char	*m_allowed = merge_lists(wel->acl_allowed, token[2], 0);
+			char 	*m_denied = merge_lists(wel->acl_denied, token[3], 1);
+			char	*m_coll = merge_lists(wel->collections, token[4], 0);
+			free(wel->acl_allowed);
+			free(wel->acl_denied);
+			free(wel->collections);
+			wel->acl_allowed = m_allowed;
+			wel->acl_denied = m_denied;
+			wel->collections = m_coll;
 		}
  word_end:
 
@@ -176,6 +246,7 @@ train(const char *dict)
 void
 untrain(spelling_t *s)
 {
+	// @@TODO: Her mangler det mye
 	struct hashtable_itr *itr;
 
 	printf("untrain()\n");
@@ -225,7 +296,7 @@ untrain(spelling_t *s)
 */
 }
 
-void editsn(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int levels);
+void editsn(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int levels, container *groups, container *subnames);
 
 static inline int
 normalizefreq(unsigned int freq, int distance)
@@ -239,20 +310,20 @@ normalizefreq(unsigned int freq, int distance)
 }
 
 
-void check_soundslike(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *like, wchar_t **bestw, int *mindist, int *maxfreq, int stage);
+void check_soundslike(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *like, wchar_t **bestw, int *mindist, int *maxfreq, int stage, container *groups, container *subnames);
 
 static inline void
-handle_word(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int phase)
+handle_word(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int phase, container *groups, container *subnames)
 {
 	wchar_t *like;
 
 	like = dmetaphone(word);
-	check_soundslike(s, c, wword, like, best, mindist, maxfreq, phase);
+	check_soundslike(s, c, wword, like, best, mindist, maxfreq, phase, groups, subnames);
 	free(like);
 }
 
 void
-editsn(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int stage)
+editsn(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int stage, container *groups, container *subnames)
 {
 	int i, j;
 	wchar_t nword[LINE_MAX];
@@ -262,7 +333,7 @@ editsn(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t 
 	for (i = 0; word[i] != '\0'; i++) {
 		wcsncpy(nword, word, i);
 		wcscpy(nword+i, word+i+1);
-		handle_word(s, c, wword, nword, best, mindist, maxfreq, stage);
+		handle_word(s, c, wword, nword, best, mindist, maxfreq, stage, groups, subnames);
 	}
 #endif
 
@@ -273,7 +344,7 @@ editsn(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t 
 		nword[i] = word[i+1];
 		nword[i+1] = word[i];
 		wcscpy(nword+i+2, word+i+2);
-		handle_word(s, c, wword, nword, best, mindist, maxfreq, stage);
+		handle_word(s, c, wword, nword, best, mindist, maxfreq, stage, groups, subnames);
 	}
 #endif
 
@@ -284,7 +355,7 @@ editsn(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t 
 			wcsncpy(nword, word, i);
 			nword[i] = alphabet[j];
 			wcscpy(nword+i+1, word+i+1);
-			handle_word(s, c, wword, nword, best, mindist, maxfreq, stage);
+			handle_word(s, c, wword, nword, best, mindist, maxfreq, stage, groups, subnames);
 		}
 	}
 #endif
@@ -297,7 +368,7 @@ editsn(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t 
 			wcsncpy(nword, word, i);
 			nword[i] = alphabet[j];
 			wcscpy(nword+i+1, word+i);
-			handle_word(s, c, wword, nword, best, mindist, maxfreq, stage);
+			handle_word(s, c, wword, nword, best, mindist, maxfreq, stage, groups, subnames);
 		}
 	}
 #endif
@@ -316,7 +387,7 @@ handle_soundslike(scache_t *c, int dist, int frequency, wchar_t *word, wchar_t *
 	}
 }
 
-
+/*
 void
 editsn_soundslike(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int stage)
 {
@@ -324,7 +395,7 @@ editsn_soundslike(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *wor
 	wchar_t nword[LINE_MAX];
 
 #if 1
-	/* deletions */
+	// deletions
 	for (i = 0; word[i] != '\0'; i++) {
 		wcsncpy(nword, word, i);
 		wcscpy(nword+i, word+i+1);
@@ -333,7 +404,7 @@ editsn_soundslike(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *wor
 #endif
 
 #if 1
-	/* transposition */
+	// transposition
 	for (i = 0; word[i+1] != '\0'; i++) {
 		wcsncpy(nword, word, i);
 		nword[i] = word[i+1];
@@ -344,7 +415,7 @@ editsn_soundslike(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *wor
 #endif
 
 #if 1
-	/* alterations */
+	// alterations
 	for (j = 0; alphabet_capital[j] != '\0'; j++) {
 		for (i = 0; word[i] != '\0'; i++) {
 			wcsncpy(nword, word, i);
@@ -356,7 +427,7 @@ editsn_soundslike(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *wor
 #endif
 
 #if 1
-	/* insertions */
+	// insertions
 	for (j = 0; alphabet_capital[j] != '\0'; j++) {
 		int len = wcslen(word);
 		for (i = 0; i <= len; i++) {
@@ -368,12 +439,104 @@ editsn_soundslike(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *wor
 	}
 #endif
 }
+*/
+
+int allowed_we(struct wordelem *we, container *groups, container *subnames)
+{
+    char **Data;
+    int Count;
+
+    printf("[spelling] ");
+    int i;
+    for (i=0; we->word[i]!=L'\0'; i++) printf("%c", (char)we->word[i]);
+    printf(" ");
+
+    if (set_size(subnames)>0 && split(we->collections, ",", &Data) != 0)
+	{
+	    int subname_allowed=0;
+
+	    for (Count=0; Data[Count] != NULL; Count++)
+		{
+		    iterator	it = set_find(subnames, Data[Count]);
+		    if (it.valid)
+			{
+			    subname_allowed = 1;
+			    break;
+			}
+
+		    free(Data[Count]);
+    		}
+
+	    for (; Data[Count] != NULL; Count++) free(Data[Count]);
+	    free(Data);
+
+	    if (!subname_allowed)
+		{
+		    printf("(not in collection)\n");
+		    return 0;
+		}
+	}
+
+
+    if (split(we->acl_denied, ",", &Data) != 0)
+	{
+	    int has_been_denied=0;
+
+	    for (Count=0; Data[Count] != NULL; Count++)
+		{
+		    iterator	it = set_find(groups, Data[Count]);
+		    if (it.valid)
+			{
+			    printf("(denied)\n");
+			    has_been_denied = 1;
+			    break;
+			}
+
+		    free(Data[Count]);
+    		}
+
+	    for (; Data[Count] != NULL; Count++) free(Data[Count]);
+	    free(Data);
+
+	    if (has_been_denied) return 0;
+	}
+
+
+    /**
+     *  Ax: public-collections vil per i dag ikke bli 'allowed' pga acl
+     */
+    if (split(we->acl_allowed, ",", &Data) != 0)
+	{
+	    int has_been_allowed = 0;
+
+	    for (Count=0; Data[Count] != NULL; Count++)
+		{
+		    iterator	it = set_find(groups, Data[Count]);
+		    if (it.valid)
+			{
+			    printf("(allowed)\n");
+			    has_been_allowed = 1;
+			    break;
+			}
+
+		    free(Data[Count]);
+    		}
+
+	    for (; Data[Count] != NULL; Count++) free(Data[Count]);
+	    free(Data);
+
+	    if (has_been_allowed) return 1;
+	}
+
+    printf("(not in acl_allowed)\n");
+    return 0;
+}
+
 
 int
-correct_word(const spelling_t *s, char *word)
+correct_word(const spelling_t *s, char *word, container *groups, container *subnames)
 {
 	wchar_t *wword;
-	void *p;
 	int i;
 
 	wword = malloc((strlen(word)+1)*sizeof(wchar_t));
@@ -389,17 +552,17 @@ correct_word(const spelling_t *s, char *word)
 		return 1;
 	}
 
-	p = hashtable_search(s->words, wword);
+	struct wordelem *we = hashtable_search(s->words, wword);
 
 	free(wword);
 
-	if (p == NULL)
+	if (we == NULL || !allowed_we(we, groups, subnames))
 		return 0;
 	return 1;
 }
 
 void
-check_soundslike(const spelling_t *s, scache_t *c,  wchar_t *wword, wchar_t *like, wchar_t **bestw, int *mindist, int *maxfreq, int phase)
+check_soundslike(const spelling_t *s, scache_t *c,  wchar_t *wword, wchar_t *like, wchar_t **bestw, int *mindist, int *maxfreq, int phase, container *groups, container *subnames)
 {
 	container *list;
 	//struct hashtable_itr *itr;
@@ -431,6 +594,8 @@ check_soundslike(const spelling_t *s, scache_t *c,  wchar_t *wword, wchar_t *lik
 		int dist;
 
 		we = list_val(itr).ptr;
+		if (!allowed_we(we, groups, subnames)) continue;
+
 		dist = levenshteindistance(wword, we->word);
 		handle_soundslike(c, dist, we->frequency, we->word, bestw, mindist, maxfreq, phase);
 
@@ -440,7 +605,7 @@ check_soundslike(const spelling_t *s, scache_t *c,  wchar_t *wword, wchar_t *lik
 }
 
 char *
-check_word(const spelling_t *s, char *word, int *found)
+check_word(const spelling_t *s, char *word, int *found, container *groups, container *subnames)
 {
 	wchar_t *bestw;
 	int mindist = INT_MAX;
@@ -478,12 +643,12 @@ check_word(const spelling_t *s, char *word, int *found)
 	like = dmetaphone(wword);
 	bestw = NULL;
 	//printf("We sound like: %ls\n", like);
-	check_soundslike(s, cache, wword, like, &bestw, &mindist, &maxfreq, 0);
+	check_soundslike(s, cache, wword, like, &bestw, &mindist, &maxfreq, 0, groups, subnames);
 	free(like);
 
 	// Phase 2, edit distance on foo
 	//editsn_soundslike(s, wword, like, &bestw, &mindist, &maxfreq, 1);
-	editsn(s, cache, wword, wword, &bestw, &mindist, &maxfreq, 1);
+	editsn(s, cache, wword, wword, &bestw, &mindist, &maxfreq, 1, groups, subnames);
 
 	hashtable_destroy(cache, 0);
 
