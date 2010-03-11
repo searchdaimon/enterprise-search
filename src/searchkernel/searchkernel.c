@@ -33,6 +33,7 @@
 #include "../common/integerindex.h"
 #include "../ds/dcontainer.h"
 #include "../logger/logger.h"
+#include "../common/utf8-strings.h"
 
 #include "../common/ht.h"
 
@@ -1262,30 +1263,48 @@ static inline int repositoryaccess(struct PagesResultsFormat *PagesResults, int 
 
     if (split(acl_denied, ",", &Data) != 0)
 	{
+	    int	has_been_denied = 0;
+
 	    for (Count=0; Data[Count] != NULL; Count++)
 		{
-	    	    if (Data[Count][0] == '\0') continue;
-
 		    iterator	it = set_find(groups, Data[Count]);
-		    if (it.valid) return 0; // Denied.
+		    if (it.valid)
+			{
+			    has_been_denied = 1;
+			    break;
+			}
 
-		    //it = set_find(groups, aclResolveElem(Data[Count]));
-		    //if (it.valid) return 0; // Denied.
+		    free(Data[Count]);
     		}
+
+	    for (; Data[Count] != NULL; Count++) free(Data[Count]);
+	    free(Data);
+
+	    if (has_been_denied) return 0;
 	}
 
     if (split(acl_allow, ",", &Data) != 0)
 	{
+	    int has_been_allowed = 0;
+
 	    for (Count=0; Data[Count] != NULL; Count++)
 		{
 	    	    if (Data[Count][0] == '\0') continue;
 
 		    iterator	it = set_find(groups, Data[Count]);
-		    if (it.valid) return 1; // Allowed.
+		    if (it.valid)
+			{
+			    has_been_allowed = 1;
+			    break;
+			}
 
-		    //it = set_find(groups, aclResolveElem(Data[Count]));
-		    //if (it.valid) return 1; // Allowed.
+		    free(Data[Count]);
     		}
+
+	    for (; Data[Count] != NULL; Count++) free(Data[Count]);
+	    free(Data);
+
+	    if (has_been_allowed) return 1;
 	}
 
     return 0;
@@ -1999,7 +2018,7 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 
 #ifdef WITH_SPELLING
 int
-spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa, spelling_t *spelling)
+spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa, spelling_t *spelling, container *groups, container *subnames)
 {
 	int i;
 	int fixed;
@@ -2018,12 +2037,12 @@ spellcheck_query(struct SiderHederFormat *SiderHeder, query_array *qa, spelling_
 				char *p;
 				int found;
 
-				if (correct_word(spelling, sa->s[0])) {
+				if (correct_word(spelling, sa->s[0], groups, subnames)) {
 					bblog(INFO, "correct_word sees: %s is correct.",sa->s[0]);
 					continue;
 				}
 
-				p = check_word(spelling, sa->s[0], &found);
+				p = check_word(spelling, sa->s[0], &found, groups, subnames);
 				if (p == NULL) {
 					bblog(INFO, "check_word sees: Didi not find correct spelling.");
 					continue;
@@ -2078,7 +2097,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	struct iintegerMemArrayFormat *DomainIDs, char *useragent, char groupOrQuery[], int anonymous, attr_conf *navmenu_cfg,
 	spelling_t *spelling
 	) { 
-
 
 	bblog(INFO, "searchkernel: dosearch(query=\"%s\")",  query);
 	struct PagesResultsFormat PagesResults;
@@ -2633,13 +2651,61 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 			copy_query(&qa, &PagesResults.QueryData.queryParsed);
 
-			if (spellcheck_query(SiderHeder, &qa, spelling) > 0) {
+			container	*all_groups = set_container( string_container() );
+			container	*all_subnames = set_container( string_container() );
+			iterator2	it_grp;
+
+			// Add groups
+			for (i=0; i<256; i++)
+			    if (PagesResults.groups_per_usersystem[i]!=NULL)
+				for (it_grp=set_begin2(PagesResults.groups_per_usersystem[i]); it_grp.valid; ds_next(it_grp))
+				    set_insert(all_groups, ds_key(it_grp).str);
+
+			// Add subnames
+			for (i=0; i<qa.n; i++)
+			    if (qa.query[i].operand == QUERY_COLLECTION)
+				{
+				    int		j, len=0;
+				    for (j=0; j<qa.query[i].n; j++)
+					len+= strlen(qa.query[i].s[j]);
+
+				    char	subname[len+1];
+				    subname[len] = '\0';
+
+				    len = 0;
+				    for (j=0; j<qa.query[i].n; j++)
+					{
+					    strcpy(subname+len, qa.query[i].s[j]);
+					    len+= strlen(qa.query[i].s[j]);
+					}
+
+				    utf8_strtolower((utf8_byte*)subname);
+				    set_insert(all_subnames, subname);
+			        }
+
+			if (set_size(all_subnames)==0)
+			    {
+				for (i=0; i<nrOfSubnames; i++)
+				    {
+					char	subname[strlen(subnames[i].subname)+1];
+					strcpy(subname, subnames[i].subname);
+					utf8_strtolower((utf8_byte*)subname);
+					set_insert(all_subnames, subname);
+				    }
+			    }
+
+			printf("groups = "); println(all_groups);
+			printf("subnames = "); println(all_subnames);
+
+			if (spellcheck_query(SiderHeder, &qa, spelling, all_groups, all_subnames) > 0) {
 				bblog(INFO, "Spelling: Query corrected to: %s",  SiderHeder->spellcheckedQuery);
 			}
 			else {
 				bblog(DEBUG, "Spelling: no match");
 			}
 
+			destroy(all_groups);
+			destroy(all_subnames);
 			destroy_query(&qa);
 
 			#ifdef DEBUG_TIME

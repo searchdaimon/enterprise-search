@@ -1537,6 +1537,7 @@ void *searchIndex_thread(void *arg)
 				size_t grouplistlen = 0;
 				for (j = 0; j < n_groups; j++) {
 					char	*group = ((char*)groups + j*MAX_LDAP_ATTR_LEN);
+					utf8_strtolower((utf8_byte*)group);
 					set_insert((*searchIndex_thread_arg).groups_per_usersystem[system], group);
 
 					if (searchIndex_thread_arg->subnames[i].config.accesslevel == CAL_GROUP) {
