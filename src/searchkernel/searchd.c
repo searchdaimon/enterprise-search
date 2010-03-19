@@ -397,7 +397,7 @@ int main(int argc, char *argv[])
 		bblog(INFO, "init thesaurus");
 
 		searchd_config.thesaurus_all = NULL;
-		if (searchd_config.optFastStartup != 1) {
+		if (searchd_config.optFastStartup != 1 && 0) {
 			searchd_config.thesaurus_all = load_all_thesauruses(bfile("data/thesaurus/"));
 
 			if (searchd_config.thesaurus_all == NULL) {

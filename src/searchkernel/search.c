@@ -1560,6 +1560,9 @@ void *searchIndex_thread(void *arg)
 				if (searchIndex_thread_arg->subnames[i].config.accesslevel == CAL_GROUP && do_aclcheck) {
 					bblog(INFO, "User does not have access to this collection: %s", searchIndex_thread_arg->subnames[i].subname);
 					searchIndex_thread_arg->subnames[i].hits = -1;
+
+					if (n_groups > 0) free(groups);
+					free(grouplist);
 					continue;
 				}
 
@@ -1569,8 +1572,8 @@ void *searchIndex_thread(void *arg)
 					get_query(grouplist, strlen(grouplist), groupquery);
 					hashtable_insert(groupqueries, uinttouintp(system), groupquery);
 				}
-				if (n_groups > 0)
-					free(groups);
+
+				if (n_groups > 0) free(groups);
 				free(grouplist);
 			} else {
 				bblog(INFO, "Reusing system mapping: %d",  system);
