@@ -7,6 +7,8 @@ typedef struct {
 	char inited;
 	struct hashtable *words;
 	struct hashtable *soundslike;
+	container *_aclV, *_subnameV;
+	container *_vp_tmpl;
 } spelling_t;
 
 spelling_t *train(const char *dict);
