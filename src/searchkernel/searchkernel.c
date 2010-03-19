@@ -2888,6 +2888,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		for (i=0; i<256; i++)
 		    if (PagesResults.groups_per_usersystem[i] != NULL)
 			destroy(PagesResults.groups_per_usersystem[i]);
+
+		free(PagesResults.groups_per_usersystem);
 	    }
 
 	free(PagesResults.usersystem_per_subname);

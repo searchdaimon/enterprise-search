@@ -1532,7 +1532,12 @@ void *searchIndex_thread(void *arg)
 					grouplist = strdup("");
 				}
 
-				(*searchIndex_thread_arg).groups_per_usersystem[system] = set_container( string_container() );
+				if (system < 256)	// hva gjør vi dersom system >= 256 ?
+				    {
+					if ((*searchIndex_thread_arg).groups_per_usersystem[system] != NULL)
+					    destroy((*searchIndex_thread_arg).groups_per_usersystem[system]);
+					(*searchIndex_thread_arg).groups_per_usersystem[system] = set_container( string_container() );
+				    }
 
 				size_t grouplistlen = 0;
 				for (j = 0; j < n_groups; j++) {

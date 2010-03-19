@@ -608,6 +608,8 @@ attr_conf *parse_navmenu_cfg(char *cfgstr, int *failed) {
 	if (warnings[0] != '\0')
 		bblog(WARN, "navmenucfg parsing warnings: %s", warnings);
 
+	free(warnings);
+
 	return cfg;
 }
 
