@@ -1,6 +1,6 @@
 
 /**
- *	(C) Copyright 2006-2009, Magnus Galåen
+ *	(C) Copyright 2006-2010, Magnus Galåen
  *
  *	dcontainer.h: Basic containers.
  */
@@ -11,6 +11,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include "../common/bprint.h"
 
 //#define ex(_type,_var) (*((_type##_value*)_var.ptr))
 
@@ -52,7 +53,9 @@ struct container
     container*	(*clone)( container *C );
     value	(*copy)( container *C, value a );
     void	(*print)( container *C, value a );
+    void	(*bprint)( container *C, buffer *B, char *delim, value a );
     void	*priv;
+    void	*childC;
 };
 
 struct iterator
@@ -92,6 +95,8 @@ void clear( container *C );
 void print( container *C );
 void println( container *C );
 void printv( container *C, value v );
+char* asprint( container *C, char *delim );
+void bprintv( container *C, buffer *B, char *delim, value v );
 
 static inline value copy( container *C, value v )
 {
@@ -99,6 +104,7 @@ static inline value copy( container *C, value v )
 }
 
 container* ds_intersection( iterator2 a, iterator2 b );
+container* ds_union( iterator2 a, iterator2 b );
 //void destroy_iterator( iterator *it );
 
 

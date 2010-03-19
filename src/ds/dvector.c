@@ -196,6 +196,55 @@ inline void vector_print( container *C, value a )
 }
 
 
+container* vector_empty_container( container *C )
+{
+    container			*V = malloc(sizeof(container));
+
+    V->compare = vector_compare;
+    V->ap_allocate = vector_ap_allocate;
+    V->deallocate = vector_deallocate;
+    V->destroy = vector_destroy;
+    V->clear = vector_clear;
+    V->clone = vector_clone;
+    V->copy = vector_copy;
+    V->print = vector_print;
+    V->priv = NULL;
+    V->childC = C;
+
+    return V;
+}
+
+void* vector_new_data()
+{
+    vector_container_priv	*VP = malloc(sizeof(vector_container_priv));
+    VP->C = NULL;
+    VP->size = 0;
+    VP->_array_size = 8; // We start the vector with a size of 8 units and increase it if necessary.
+    VP->elem = malloc(sizeof(value) * VP->_array_size);
+
+    return (void*)VP;
+}
+
+void vector_destroy_data( container *V )
+{
+    vector_container_priv	*VP = V->priv;
+    int				i;
+
+    for (i=0; i<VP->size; i++)
+	deallocate( VP->C, VP->elem[i] );
+
+    free(VP->elem);
+    free(VP);
+}
+
+void vector_attach_data( container *V, void *data )
+{
+    vector_container_priv	*VP = (vector_container_priv*)data;
+    V->priv = VP;
+    VP->C = V->childC;
+}
+
+
 container* vector_container( container *C )
 {
     container			*V = malloc(sizeof(container));
@@ -210,6 +259,7 @@ container* vector_container( container *C )
     V->copy = vector_copy;
     V->print = vector_print;
     V->priv = VP;
+    V->childC = C;
 
     VP->C = C;
     VP->size = 0;

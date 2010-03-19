@@ -1,5 +1,5 @@
 /**
- *	(C) Copyright 2006-2008, Magnus Galåen
+ *	(C) Copyright 2006-2010, Magnus Galåen
  *
  *	dvector.h: Vector-container.
  */
@@ -25,6 +25,11 @@ extern inline void vector_remove_last( container *C );
 extern inline value vector_get( container *C, int id );
 
 extern inline void vector_set( container *C, int id, value v );
+
+container* vector_empty_container( container *C );
+void* vector_new_data();
+void vector_destroy_data( container *C );
+extern inline void vector_attach_data( container *V, void *data );
 
 
 #endif	// _DVECTOR_H_

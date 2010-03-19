@@ -545,6 +545,20 @@ inline void set_print( container *C, value a )
     printf(")");
 }
 
+inline void set_bprint( container *C, buffer *B, char *delim, value a )
+{
+    int		i=0;
+    iterator	it = set_begin(a.C);
+
+    for (; it.valid; it=set_next(it))
+	{
+	    if (i==0) i++;
+	    else bprintf(B, "%s", delim);
+
+	    bprintv(((set_container_priv*)C->priv)->Key, B, delim, set_key(it));
+	}
+}
+
 
 container* set_container( container *Key )
 {
@@ -559,6 +573,7 @@ container* set_container( container *Key )
     M->clone = _set_clone;
     M->copy = set_copy;
     M->print = set_print;
+    M->bprint = set_bprint;
     M->priv = MP;
 
     MP->Key = Key;

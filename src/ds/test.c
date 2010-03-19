@@ -14,6 +14,30 @@
 #include "dset.h"
 
 
+void test_vmerge()
+{
+    container	*V = vector_empty_container( string_container() );
+    void	*d = vector_new_data();
+    void	*e = vector_new_data();
+
+    vector_attach_data(V,d);
+    vector_pushback(V, "alfa");
+    vector_pushback(V, "beta");
+
+    vector_attach_data(V,e);
+    vector_pushback(V, "delta");
+    vector_pushback(V, "gamma");
+    vector_pushback(V, "foxtrot");
+
+    vector_attach_data(V,d);
+    println(V);
+    vector_destroy_data(V);
+
+    vector_attach_data(V,e);
+    println(V);
+    destroy(V);
+}
+
 void test_it2()
 {
     container	*S = set_container( string_container() );
@@ -40,12 +64,21 @@ void test_it2()
     set_insert(T, "nunchaku");
     set_insert(T, "sai-sverd");
 
-    container	*R = ds_intersection( set_begin2(S), set_begin2(T) );
-    println(R);
+    printf("S = %s\n", asprint(S,"§§"));
+    printf("T = ");
+    println(T);
+
+    container	*Ri = ds_intersection( set_begin2(S), set_begin2(T) );
+    printf("intersection = ");
+    println(Ri);
+    container	*Ru = ds_union( set_begin2(S), set_begin2(T) );
+    printf("union = ");
+    println(Ru);
 
     destroy(S);
     destroy(T);
-    destroy(R);
+    destroy(Ri);
+    destroy(Ru);
 }
 
 
@@ -414,6 +447,8 @@ void map_test()
 
 int main()
 {
+    test_vmerge();
+    exit(0);
     test_it2();
     exit(0);
 

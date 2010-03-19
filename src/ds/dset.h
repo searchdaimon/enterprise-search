@@ -1,5 +1,5 @@
 /**
- *	(C) Copyright 2006-2008, Magnus Galåen
+ *	(C) Copyright 2006-2010, Magnus Galåen
  *
  *	dset.h: Set-container.
  */

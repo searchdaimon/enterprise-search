@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "dcontainer.h"
+#include "../common/bprint.h"
 
 
 /* int_container: */
@@ -136,6 +137,11 @@ inline void string_print( container *C, value a )
     printf("\"%s\"", (char*)a.ptr);
 }
 
+inline void string_bprint( container *C, buffer *B, char *delim, value a )
+{
+    bprintf(B, "%s", (char*)a.ptr);
+}
+
 container* string_container()
 {
     container	*C = (container*)malloc(sizeof(container));
@@ -148,6 +154,7 @@ container* string_container()
     C->clone = string_clone;
     C->copy = string_copy;
     C->print = string_print;
+    C->bprint = string_bprint;
     C->priv = NULL;
 
     return C;
@@ -327,6 +334,20 @@ inline void println( container *C )
     printf("\n");
 }
 
+char* asprint( container *C, char *delim )
+{
+    buffer	*B = buffer_init(-1);
+
+    C->bprint(C, B, delim, container_value(C));
+
+    return buffer_exit(B);
+}
+
+inline void bprintv( container *C, buffer *B, char *delim, value v )
+{
+    C->bprint(C, B, delim, v);
+}
+
 /*
 void destroy_iterator( iterator *it )
 {
@@ -358,6 +379,40 @@ inline container* ds_intersection( iterator2 a, iterator2 b )
 		    ds_next(b);
 		}
 	}
+
+    return R;
+}
+
+
+inline container* ds_union( iterator2 a, iterator2 b )
+{
+    container	*C = a.C;
+    container	*R = C->clone(C);
+
+    while (a.valid && b.valid)
+	{
+	    int cmp = a.compare_keys(C, ds_key(a), ds_key(b));
+
+	    if (cmp==0)
+		{
+		    a.insert(R, ds_key(a));
+		    ds_next(a);
+		    ds_next(b);
+		}
+	    else if (cmp < 0)
+		{
+		    a.insert(R, ds_key(a));
+		    ds_next(a);
+		}
+	    else
+		{
+		    a.insert(R, ds_key(b));
+		    ds_next(b);
+		}
+	}
+
+    for (;a.valid; ds_next(a)) a.insert(R, ds_key(a));
+    for (;b.valid; ds_next(b)) a.insert(R, ds_key(b));
 
     return R;
 }
