@@ -11,11 +11,12 @@ use Data::Dumper;
 #my $BACKUP_DIR = q{/tmp/backup};
 
 my @RSYNC_ARGS = (
-	"-v", # verbose output
-	"-z", # compress during transfer
+	#"-v", # verbose output
+	#"-z", # compress during transfer
 	"-a", # archive
 	"-e ssh", 
 	"--delete", # delete files deleted on src
+	"--exclude 'revindex/'", #exclude any directory called revindex
 );
 
 unless (@ARGV == 2) {
