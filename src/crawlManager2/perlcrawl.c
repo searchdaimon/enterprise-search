@@ -26,12 +26,12 @@ int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, 
 
 	snprintf(perlfile,sizeof(perlfile),"%s/main.pm",collection->crawlLibInfo->resourcepath);
 
-	bblog(DEBUG, "cargs %p\n",cargs);
+	bblog(DEBUGINFO, "cargs %p\n",cargs);
 
 
 	#ifdef DEBUG
 		//printer ut pekere til colection info, og alle rutinene
-		bblog(DEBUG, "collection %p, documentExist %p, documentAdd %p, documentError %p, documentContinue %p",cargs->collection,cargs->documentExist,cargs->documentAdd,cargs->documentError,cargs->documentContinue);
+		bblog(DEBUGINFO, "collection %p, documentExist %p, documentAdd %p, documentError %p, documentContinue %p",cargs->collection,cargs->documentExist,cargs->documentAdd,cargs->documentError,cargs->documentContinue);
 	#endif
 
 	HV *obj_attr = newHV();

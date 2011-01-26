@@ -174,7 +174,7 @@ free_usersystem_data(usersystem_data_t *data)
 int documentContinue(struct collectionFormat *collection) {
 
 	
-	bblog(DEBUG, "documentContinue: start");
+	bblog(DEBUGINFO, "documentContinue: start");
 
 	if ((collection->docsRemaining != -1) && (collection->docsCount >= collection->docsRemaining)) {
 		snprintf(collection->errormsg, sizeof collection->errormsg, 
@@ -215,10 +215,11 @@ int documentContinue(struct collectionFormat *collection) {
 	now = time(NULL);
 	t = localtime(&now);	
 
-	bblog(DEBUG, "now: %i,recrawl_schedule_start %i,recrawl_schedule_end %i",t->tm_hour,recrawl_schedule_start,recrawl_schedule_end);
+	bblog(DEBUGINFO, "now: %i,recrawl_schedule_start %i,recrawl_schedule_end %i",t->tm_hour,recrawl_schedule_start,recrawl_schedule_end);
 
 	//hvis vi ikke har noen begrensning så er det bare å crawler på
 	if ((recrawl_schedule_start == 0) || (recrawl_schedule_end == 0)) {
+		bblog(DEBUGINFO, "We can crawl att all times.");
 		return 1;
 	}
 
@@ -258,9 +259,9 @@ int documentContinue(struct collectionFormat *collection) {
 		return 0;
 	}
 
-	bblog(DEBUG, "hour is now %i, will crawl",t->tm_hour);
+	bblog(DEBUGINFO, "hour is now %i, will crawl",t->tm_hour);
 
-	bblog(DEBUG, "documentContinue: end");
+	bblog(DEBUGINFO, "documentContinue: end");
 
 	return 1;
 }
@@ -269,13 +270,13 @@ int documentExist(struct collectionFormat *collection, struct crawldocumentExist
 	int ret;
 
 	#ifdef DEBUG
-	bblog(DEBUG, "documentExist: start");
+	bblog(DEBUGINFO, "documentExist: start");
 	#endif
 
 	ret = bbdocument_exist(collection->collection_name, crawldocumentExist->documenturi, crawldocumentExist->lastmodified);
 
 	#ifdef DEBUG
-	bblog(DEBUG, "documentExist: end");
+	bblog(DEBUGINFO, "documentExist: end");
 	#endif
 
 	return ret;
@@ -302,11 +303,11 @@ int documentError(struct collectionFormat *collection,int level, const char *fmt
 
 int documentAdd(struct collectionFormat *collection, struct crawldocumentAddFormat *crawldocumentAdd) {
 	#ifdef DEBUG
-	bblog(DEBUG, "documentAdd start");
+	bblog(DEBUGINFO, "documentAdd start");
 	#endif
 
 	#ifdef DEBUG
-	bblog(DEBUG, "documentAdd: uri %s, title %s",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).title);
+	bblog(DEBUGINFO, "documentAdd: uri %s, title %s",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).title);
 	#endif
 
 	collection->docsCount++;
@@ -353,11 +354,11 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 
 	#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
-		bblog(DEBUG, "Time debug: bbdn_docadd() time: %f",getTimeDifference(&start_time, &end_time));
+		bblog(DEBUGINFO, "Time debug: bbdn_docadd() time: %f",getTimeDifference(&start_time, &end_time));
 	#endif
 
 	#ifdef DEBUG
-	bblog(DEBUG, "documentAdd end");
+	bblog(DEBUGINFO, "documentAdd end");
 	#endif
 
 	return 1;
@@ -371,7 +372,7 @@ collectionsforuser_collection(struct hashtable *collections, char *user, struct 
 	char **list;
 
 	#ifdef DEBUG
-	bblog(DEBUG, "collectionsforuser_collection:  user=%s", user);
+	bblog(DEBUGINFO, "collectionsforuser_collection:  user=%s", user);
 	#endif
 
 	if (!userToSubname_getsubnamesAsString(usertosubname, user, subnamebuf, sizeof(subnamebuf)))
@@ -380,12 +381,12 @@ collectionsforuser_collection(struct hashtable *collections, char *user, struct 
 	n_collections = split(subnamebuf, ",", &list);
 
 	#ifdef DEBUG
-	bblog(DEBUG, "  n_collections=%i",  n_collections);
+	bblog(DEBUGINFO, "  n_collections=%i",  n_collections);
 	#endif
 
 	for (i = 0; i < n_collections; i++) {
 		#ifdef DEBUG
-	        bblog(DEBUG, "    collection[%i] = %s",  i, list[i]);
+	        bblog(DEBUGINFO, "    collection[%i] = %s",  i, list[i]);
 	        #endif
 
 		if (!hashtable_search(collections, list[i]))
@@ -495,7 +496,7 @@ int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections)
 
 	for (i=0;i<nrofcollections;i++) {
 		#ifdef DEBUG
-		bblog(DEBUG, "freeing nr %i: start", i);
+		bblog(DEBUGINFO, "freeing nr %i: start", i);
 		#endif
 		free((*collection)[i].resource);
                 free((*collection)[i].user);
@@ -508,7 +509,7 @@ int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections)
 		free((*collection)[i].userprefix);
 		hashtable_destroy((*collection)[i].params, 1);
 		#ifdef DEBUG
-			bblog(DEBUG, "freeing nr %i: end", i);
+			bblog(DEBUGINFO, "freeing nr %i: end", i);
 		#endif
 	}
 
@@ -518,9 +519,9 @@ int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections)
 }
 
 int closecollection(struct collectionFormat *collection) {
-	bblog(DEBUG, "closecollection start");
+	bblog(DEBUGINFO, "closecollection start");
 	bbdn_closecollection((*collection).socketha,(*collection).collection_name);
-	bblog(DEBUG, "closecollection end");
+	bblog(DEBUGINFO, "closecollection end");
 
 }
 
@@ -533,7 +534,7 @@ int cmr_crawlcanconect(struct hashtable *h, struct collectionFormat *collection)
 		return 0;
 	}
 
-	bblog(DEBUG, "wil crawl \"%s\"",(*collection).resource);
+	bblog(DEBUGINFO, "wil crawl \"%s\"",(*collection).resource);
 
 	if (!(*(*crawlLibInfo).crawlcanconect)(collection,documentError)) {
 		//overfører error
@@ -563,7 +564,7 @@ int cm_crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 
 	collection->crawlLibInfo = crawlLibInfo;
 
-	bblog(DEBUG, "wil crawl \"%s\"",(*collection).resource);
+	bblog(DEBUGINFO, "wil crawl \"%s\"",(*collection).resource);
 
 	if (!(*(*crawlLibInfo).crawlfirst)(collection,documentExist,documentAdd,documentError,documentContinue)) {
         	bblog(INFO, "problems in crawlfirst_ld");
@@ -599,7 +600,7 @@ int cm_crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
 
 	collection->crawlLibInfo = crawlLibInfo;
 
-	bblog(DEBUG, "wil crawl \"%s\"",(*collection).resource);
+	bblog(DEBUGINFO, "wil crawl \"%s\"",(*collection).resource);
 
 	if (!(*(*crawlLibInfo).crawlupdate)(collection,documentExist,documentAdd,documentError,documentContinue)) {
         	
@@ -754,7 +755,7 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 	*/
 
 	gettimeofday(&start_time, NULL);
-	bblog(DEBUG, "cm_searchForCollection");
+	bblog(DEBUGINFO, "cm_searchForCollection");
 	if (!cm_searchForCollection(db, collection,&collections,&nrofcollections)) {
 		bblog(INFO, "cant't find Collection \"%s\"in db at %s:%d", collection,__FILE__,__LINE__);
 		// desverre må vi bare returnere tilgang her, da vi ikke har en collection å mappe dette mot. Kan være på 24so hvor
@@ -779,7 +780,7 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 
 
 	gettimeofday(&start_time, NULL);
-	bblog(DEBUG, "cm_getCrawlLibInfo");
+	bblog(DEBUGINFO, "cm_getCrawlLibInfo");
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,collections[0].connector)) {
 		bblog(INFO, "can't get CrawlLibInfo");
 		return 1;
@@ -1125,7 +1126,7 @@ load_usersystems(struct hashtable **usersystems)
 //rutine for å laste et crawler biblotek
 int cm_loadCrawlLib(struct hashtable **h, char name[]) {
 
-	bblog(DEBUG, "cm_loadCrawlLib(name=%s)",name);
+	bblog(DEBUGINFO, "cm_loadCrawlLib(name=%s)",name);
 
 
 	char libpath[PATH_MAX];
@@ -1239,7 +1240,7 @@ int cm_start(struct hashtable **h, struct hashtable **usersystems) {
 			continue;
 		}
 		if (strcmp(dp->d_name,"Modules") == 0) {
-			bblog(DEBUG, "Skipping system folder %s",dp->d_name);
+			bblog(DEBUGINFO, "Skipping system folder %s",dp->d_name);
 			continue;
 		}
 
@@ -1261,14 +1262,14 @@ int cm_start(struct hashtable **h, struct hashtable **usersystems) {
 /************************************************************/
 
 int cm_getCrawlLibInfo(struct hashtable *h,struct crawlLibInfoFormat **crawlLibInfo,char shortname[]) {
-	bblog(DEBUG, "cm_getCrawlLibInfo: start");
-	bblog(DEBUG, "wil search for \"%s\"",shortname);
+	bblog(DEBUGINFO, "cm_getCrawlLibInfo: start");
+	bblog(DEBUGINFO, "wil search for \"%s\"",shortname);
 	if (((*crawlLibInfo) = (struct crawlLibInfoFormat *)hashtable_search(h,shortname)) != NULL) {
 		return 1;
         }
 	else if ((cm_loadCrawlLib(&h, shortname)) && (((*crawlLibInfo) = (struct crawlLibInfoFormat *)hashtable_search(h,shortname)) != NULL)) {
 		//hvis vi ikke kunne finne det i hashen prøver vi å laset på ny
-		bblog(DEBUG, "Hadde ikke %s fra før, men fikk til å laste den.",shortname);
+		bblog(DEBUGINFO, "Hadde ikke %s fra før, men fikk til å laste den.",shortname);
 		return 1;
 	}
 	else {
@@ -1306,7 +1307,7 @@ cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
 		//return 1;
 	}
 	else {
-		bblog(DEBUG, "nrofrows %i", numUsers);
+		bblog(DEBUGINFO, "nrofrows %i", numUsers);
 		collection->users = malloc((numUsers+1) * sizeof(char *));
 		if (collection->users == NULL)
 			return 0;
@@ -1446,7 +1447,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 					");
 	}
 
-	bblog(DEBUG, "mysql_query: %s",mysql_query);
+	bblog(DEBUGINFO, "mysql_query: %s",mysql_query);
 
 	if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
                	bblog(INFO, "%s", mysql_error(db));
@@ -1465,7 +1466,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 	}
 	else {
 
-	bblog(DEBUG, "nrofrows %i",*nrofcollections);
+	bblog(DEBUGINFO, "nrofrows %i",*nrofcollections);
 
 	(*collection) = malloc(sizeof(struct collectionFormat) * (*nrofcollections));
 
@@ -1476,7 +1477,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 
         i=0;
         while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
-        	bblog(DEBUG, "  data resource: %s, connector: %s, collection_name: %s, lastCrawl: %s, userprefix: %s, auth_id: %s",mysqlrow[0],mysqlrow[1],mysqlrow[2],mysqlrow[3],mysqlrow[8],mysqlrow[6]);
+        	bblog(DEBUGINFO, "  data resource: %s, connector: %s, collection_name: %s, lastCrawl: %s, userprefix: %s, auth_id: %s",mysqlrow[0],mysqlrow[1],mysqlrow[2],mysqlrow[3],mysqlrow[8],mysqlrow[6]);
 		
 		//lagger inn i info struct
 		(*collection)[i].resource  		= strdup(mysqlrow[0]);	
@@ -1524,7 +1525,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 		collection_normalize_name((*collection)[i].collection_name,strlen((*collection)[i].collection_name));
 
 
-		bblog(DEBUG, "resource \"%s\", connector \"%s\", collection_name \"%s\"",(*collection)[i].resource,(*collection)[i].connector,(*collection)[i].collection_name);
+		bblog(DEBUGINFO, "resource \"%s\", connector \"%s\", collection_name \"%s\"",(*collection)[i].resource,(*collection)[i].connector,(*collection)[i].collection_name);
 
 		cm_collectionFetchUsers(collection[i], db);
                 sql_fetch_params(db, &(*collection)[i].params, (*collection)[i].id);
@@ -1542,7 +1543,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 
 		sprintf(mysql_query,"select username,password from collectionAuth where id = %i",(*collection)[i].auth_id);
 
-		bblog(DEBUG, "mysql_query: %s",mysql_query);
+		bblog(DEBUGINFO, "mysql_query: %s",mysql_query);
 
 		if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
 	               	bblog(INFO, "%s", mysql_error(db));
@@ -1554,7 +1555,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 		(*collection)[i].password = NULL;
         
 	        while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
-	        	bblog(DEBUG, "\tUser \"%s\", Password \"%s\"",mysqlrow[0],mysqlrow[1]);
+	        	bblog(DEBUGINFO, "\tUser \"%s\", Password \"%s\"",mysqlrow[0],mysqlrow[1]);
 			(*collection)[i].user 			= strdup(mysqlrow[0]);	
 			(*collection)[i].password 		= strdup(mysqlrow[1]);	
 		
@@ -1576,7 +1577,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 	}
 
 
-	bblog(DEBUG, "cm_searchForCollection: end");
+	bblog(DEBUGINFO, "cm_searchForCollection: end");
 	return 1;
 	
 }
@@ -1712,7 +1713,7 @@ int crawl_lock(struct collection_lockFormat *collection_lock, char collection[])
 
 	sprintf((*collection_lock).lockfile,"var/boitho-collections-%s.lock",collection);
 
-	bblog(DEBUG, "locking lock \"%s\"",(*collection_lock).lockfile);
+	bblog(DEBUGINFO, "locking lock \"%s\"",(*collection_lock).lockfile);
 
 	if (((*collection_lock).LOCK = bfopen((*collection_lock).lockfile,"w+")) == NULL) {
 		perror((*collection_lock).lockfile);
@@ -1738,7 +1739,7 @@ int crawl_element_lock(struct collection_lockFormat *collection_lock, char conne
 
 	sprintf((*collection_lock).elementlockfile,"var/boitho-element-%s.lock",connector);
 
-	bblog(DEBUG, "locking lock \"%s\"",(*collection_lock).elementlockfile);
+	bblog(DEBUGINFO, "locking lock \"%s\"",(*collection_lock).elementlockfile);
 
 	if (((*collection_lock).ELEMENTLOCK = bfopen((*collection_lock).elementlockfile,"w+")) == NULL) {
 		perror((*collection_lock).elementlockfile);
@@ -1860,7 +1861,7 @@ int crawl(MYSQL * db, struct collectionFormat *collection,int nrofcollections, i
 		//sletter collection. Gjør dette uavhenging om vi har lock eller ikke, slik at vi altid får slettet, så kan vi gjøre
 		// ny crawl etterpå hvis vi ikke hadde lock
 		if (flag == crawl_recrawl) {
-			bblog(DEBUG, "crawl_recrawl");
+			bblog(DEBUGINFO, "crawl_recrawl");
 
 			char querybuf[1024];
 			int querylen;
@@ -1960,22 +1961,22 @@ rewriteurl(MYSQL *db, char *collection, char *url, size_t urllen, char *uri, siz
 	int forret = 1;
 	size_t len = urilen;
 
-	bblog(DEBUG, "rewrite1");
+	bblog(DEBUGINFO, "rewrite1");
 	if (!cm_searchForCollection(db, collection,&collections,&nrofcollections)) {
-		bblog(DEBUG, "rewrite2");
+		bblog(DEBUGINFO, "rewrite2");
 		bblog(ERROR, "Don't have collection info for this subname.");
 		forret = 0;
 	}
 	else if (!cm_getCrawlLibInfo(global_h,&crawlLibInfo,collections->connector)) {
-		bblog(DEBUG, "rewrite3");
+		bblog(DEBUGINFO, "rewrite3");
 		bblog(ERROR, "Error: can't get CrawlLibInfo.");
 		//exit(1);
 		forret = 0;
 	} else if (crawlLibInfo->rewrite_url == NULL) {
-		bblog(DEBUG, "Don't have a rewrite url rutine for this connector.");
+		bblog(DEBUGINFO, "Don't have a rewrite url rutine for this connector.");
 		forret = 0;
 	} else if (!((*crawlLibInfo->rewrite_url)(collections, url, uri, fulluri, len, ptype, btype))) {
-		bblog(DEBUG, "rewrite4");
+		bblog(DEBUGINFO, "rewrite4");
 		memcpy(uri, url, urilen);
 		shortenurl(uri, urilen);
 		memcpy(fulluri, url, fullurilen);
@@ -1989,7 +1990,7 @@ rewriteurl(MYSQL *db, char *collection, char *url, size_t urllen, char *uri, siz
 		memcpy(fulluri, url, fullurilen);
 	    }
 
-	bblog(DEBUG, "rewrite6");
+	bblog(DEBUGINFO, "rewrite6");
 
 	sm_collectionfree(&collections,nrofcollections);
 
@@ -2070,7 +2071,7 @@ void connectHandler(int socket) {
 
 		gettimeofday(&start_time_all, NULL);
 
-	        bblog(DEBUG, "size is: %i version: %i command: %i ",packedHedder.size,packedHedder.version,packedHedder.command);
+	        bblog(DEBUGINFO, "size is: %i version: %i command: %i ",packedHedder.size,packedHedder.version,packedHedder.command);
 	        packedHedder.size = packedHedder.size - sizeof(packedHedder);
 
 
@@ -2715,7 +2716,7 @@ int main (int argc, char *argv[]) {
 	bblog_init("crawlManager");
 
 	#ifdef DEBUG
-		bblog(DEBUG, "Ble kompilert med -DDEBUG");
+		bblog(DEBUGINFO, "Ble kompilert med -DDEBUG");
 	#endif
 
 	write_gpidfile("crawlManager");
@@ -2736,7 +2737,7 @@ int main (int argc, char *argv[]) {
 
 	/* Load the file */
         #ifdef DEBUG
-	        bblog(DEBUG, "loading [%s]..", bfile("config/crawlmanager.conf"));
+	        bblog(DEBUGINFO, "loading [%s]..", bfile("config/crawlmanager.conf"));
         #endif
 
         if (!config_read_file(&cmcfg, bfile("config/crawlmanager.conf"))) {
