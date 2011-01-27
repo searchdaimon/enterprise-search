@@ -26,6 +26,7 @@ use constant bot_email => "support\@searchdaimon.com";
 use constant timeout => 4;
 use constant delay => 1;
 use constant verbose => 1;
+use constant max_size => 26214400; #26214400=25 mb
 
 Readonly::Hash my %LINK_IGNORE => map { $_ => 1 } qw(td script table form head link);
 
@@ -107,6 +108,7 @@ sub crawl_update {
     my $robot = LWP::RobotUA->new(bot_name, bot_email);
     $robot->delay(delay/60); 
     $robot->timeout(timeout);
+    $robot->max_size(max_size);
     $robot->requests_redirectable([]); # uncomment this line to disallow redirects
     $robot->protocols_allowed(['http','https']);  # disabling all others
     say("bot_name (bot_email) starting at ", scalar(localtime), "\n");
