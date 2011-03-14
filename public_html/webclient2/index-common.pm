@@ -15,6 +15,10 @@ use MIME::Base64 qw(encode_base64 decode_base64);
 use config qw(%TPL_FILE %CFG @SEARCH_ENV_LOGGING %DEF_TPL_OPT);
 use ResultParse::SD_v2_1;
 use NavMenu qw(read_navmenu_cfg);
+use Time::HiRes;
+
+our $StartTime  = Time::HiRes::time;
+
 
 BEGIN {
 	CGI::Carp::set_message(" ");
@@ -57,12 +61,25 @@ else {
 
 print_html($tpl_file, %tpl_vars);
 
+our $EndTime  = Time::HiRes::time;
+
+print "<!-- Total runtime: " . ($EndTime - $StartTime) . "-->\n";;
+# logger hvis vi brukte mer en normal tid.
+if (($EndTime - $StartTime) > $CFG{'slow_query_warning'}) {
+	if (defined(my $query = $state{query})) {
+		print STDERR "index.pl: Posible slow query '" . $query . "'. Used " . ($EndTime - $StartTime) . " sek. \n";
+	} else {
+		print STDERR "index.pl: Posible slow page rendering. Used " . ($EndTime - $StartTime) . " sek. \n";
+	}
+}
+
 sub print_html {
 	my ($tpl_file, %tpl_vars) = @_;
 	
 	$tpl_vars{query_params} = \%query_params;
 	$tpl_vars{gen_cache_url} = \&gen_cache_url;
-
+	$tpl_vars{anonymous} = $isanonymous;
+	
 	print $cgi->header(
 	        -type => "text/html", 
 	        -charset => "UTF-8",
@@ -70,6 +87,7 @@ sub print_html {
 	warningsToBrowser();
 	$tpl->process($tpl_file, \%tpl_vars)
 		or croak "Template '$tpl_file' error: ", $tpl->error(), "\n";
+
 }
 
 sub fatal {
@@ -117,7 +135,7 @@ sub show_search {
 		navigation   => $res->navigation(),
 		sort_info    => $res->sort_info(),
 		query        => $query,
-		#filters      => $res->filters(),
+		#filters     => $res->filters(),
 		icon_url     => sub {
 			my $icon = shift;
 			my $path = "$CFG{icon}{dir}/\Q$icon\E.$CFG{icon}{ext}";
