@@ -24,7 +24,7 @@ cache_init(cache_t *c, void (*freevalue)(void *value), unsigned int timeout)
 	pthread_mutex_init(&c->c_lock, NULL);
 	c->c_freevalue = freevalue;
 	c->c_timeout = timeout;
-	
+
 	return 1;
 }
 
@@ -67,6 +67,7 @@ cache_add(cache_t *c, char *prefix, char *key, void *value)
 	time_t now = time(NULL);
 	cache_value_t *v;
 
+
 	/* Do we already have this cached? */
 	k = gen_key(prefix, key);
 	if (k == NULL)
@@ -99,6 +100,7 @@ void *
 cache_fetch(cache_t *c, char *prefix, char *key)
 {
 
+
 	if (c->c_timeout == 0) {
 		return NULL;
 	}
@@ -118,6 +120,7 @@ cache_fetch(cache_t *c, char *prefix, char *key)
 		v = hashtable_remove(c->c_data, k);
 		c->c_freevalue(v->p);
 		free(v);
+		printf("cache_fetch: removed timouted key %s\n",k);
 		goto nomatch;
 	}
 	v->atime = time(NULL);
@@ -129,3 +132,30 @@ cache_fetch(cache_t *c, char *prefix, char *key)
 	free(k);
 	return NULL;
 }
+
+
+void *
+cache_free(cache_t *c)
+{
+
+    cache_value_t *v;
+
+    struct hashtable_itr *itr;
+    if (hashtable_count(c->c_data) > 0)
+    {
+        itr = hashtable_iterator(c->c_data);
+        do {
+            v = hashtable_iterator_value(itr);
+
+	    c->c_freevalue(v->p);
+	    free(v);
+        } while (hashtable_iterator_advance(itr));
+
+     	free(itr);
+
+    }
+
+    hashtable_destroy(c->c_data,0); /* second arg indicates "free(value)" */
+
+}
+
