@@ -4,7 +4,6 @@
  use strict;
  our %Cache;
  use Symbol qw(delete_package);
- use Devel::Symdump;
  use Carp;
  BEGIN { 
 	unshift @INC, $ENV{BOITHOHOME} . "/Modules";
@@ -78,9 +77,13 @@ sub eval_file2 {
 	#take a look if you want
 	#print Devel::Symdump->rnew($package)->as_string, $/;
 
-#print "eval_file: rutine return value $ret\n";
-	return $ret;
-}
+     #take a look if you want
+     # use Devel::Symdump;
+     #print Devel::Symdump->rnew($package)->as_string, $/;
+ 
+     #print "eval_file: rutine return value $ret\n";
+     return $ret;
+ }
 
 	
  1;
