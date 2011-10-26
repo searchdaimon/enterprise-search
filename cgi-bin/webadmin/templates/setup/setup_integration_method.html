@@ -1,3 +1,5 @@
+[% USE Dumper %]
+
 [% INCLUDE 'header.html' 
 	title = 'Sign in'
 	simple_header = 1
@@ -6,7 +8,9 @@
 <div id="wizard_block">
 	<img id="logo" src="file.cgi?i=logo_mini2&amp;size=other" alt="" />
 	<h2>First time wizard</h2>
-	<h3>- Integrate to your network</h3>
+	<h3>User system</h3>
+
+
 	
 	<form action="setup.cgi" method="post">
 	<input type="hidden" name="form_id" value="integration_method" />
@@ -20,11 +24,17 @@
 					
 			</li>
 		[% END %]
+
+
 	</ul>
 	<div>
 			Name:&nbsp;&nbsp;<input type="text" name="sys_name" />
 				<span style="font-size : x-small;">[% '(Defaults to "Unnamed system")' | html %]</span>
 	</div>
+	
+	<br>
+	<span style="font-size : x-small;">Searchdaimon ES can be integrated with multiple usersystems. You may choose a unique name to make it easier to keep<br> the different usersystems apart. The name may be whatever you like.</span>
+
 	<div id="buttons_block" style="margin-top : 1em;">
 		<input type="submit" name="next_button" value="Continue" class="next_button" />
 	<div>

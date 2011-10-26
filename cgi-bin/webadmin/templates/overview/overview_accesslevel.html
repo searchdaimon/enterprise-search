@@ -13,12 +13,18 @@
 	                fields = ['accesslevel'] %]
 		[% END %]
 
-
 		<div style="padding-top : 1em;">
 		<input type="hidden" value="[% share.id %]" name="share.id" />
 		<input type="submit" name="submit_edit" value="Submit changes" />
 		</div>
 	</form>
+
+
+<div style="width : 80%; ; top : 0.5em;">
+
+<p style="padding-top : 1em;">System permissions, user and group access levels require integration with an existing user system. End users can log in and use the search from the main search page <a class="external" href="/">her</a>. Anonymous/public search make the whole collection available for search by everyone, including the whole internet, without having to login. No existing user system is required. The public search page is available <a class="external" href="/public">her</a>.</p>
+</div>
+
 [% END %]
 [% INCLUDE 'footer.html' %]
 

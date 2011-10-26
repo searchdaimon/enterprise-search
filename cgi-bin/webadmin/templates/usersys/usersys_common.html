@@ -5,6 +5,8 @@
 <div class="defaultForm" style="[% style %]">
 <table>
 
+
+
        [% UNLESS no_name %]
        <tr>
 		<td>Name:</td>
@@ -13,9 +15,39 @@
        </tr>
        [% END %]
 
-              [% FOREACH p IN sys.params %]
+       [% FOREACH p IN sys.params %]
+		[% IF p.value.required %]
+	               [% INCLUDE element %]
+		[% END %]
+       [% END %]
        <tr>
-               <td>[% p.key | html %]:</td>
+               <td>&nbsp;</td>
+               <td>&nbsp;</td>
+       </tr>
+       [% FOREACH p IN sys.params %]
+		[% UNLESS p.value.required %]
+	               [% INCLUDE element %]
+		[% END %]
+       [% END %]
+
+</table>
+<p>
+	[% content %]
+       <input type="hidden" name="action" value="[% action %]" />
+       [% IF btn_value.defined %]
+       	<input type="submit" value="[% btn_value %]" />
+	[% END %]
+</p>
+</div>
+[% UNLESS NO_FORM %]
+</form>
+[% END %]
+[% END %]
+
+[% BLOCK element %]
+
+       <tr>
+               <td>[% p.key | ucfirst | html %]:</td>
                <td>
                        <input type="[% IF p.key == "password"; "password"; ELSE; "text"; END %]"
                               value="[% p.value.value | html IF p.key != "password" %]"
@@ -33,20 +65,7 @@
 
                </td>
        </tr>
-       [% END %]
 
-</table>
-<p>
-	[% content %]
-       <input type="hidden" name="action" value="[% action %]" />
-       [% IF btn_value.defined %]
-       	<input type="submit" value="[% btn_value %]" />
-	[% END %]
-</p>
-</div>
-[% UNLESS NO_FORM %]
-</form>
-[% END %]
 [% END %]
 
 [% BLOCK is_optional %]

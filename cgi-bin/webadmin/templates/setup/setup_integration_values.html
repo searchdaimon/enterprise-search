@@ -21,6 +21,30 @@
 		[% END %]
 	[% END %]
 
+
+<p style="margin-top : 0.5em; margin-bottom  : 0.5em;">For legacy reasons you most setup a Microsoft Active Directory as primary user system, even if you don&#39;t have an Active Directory. If you don&#39;t have an Active directory, you can use the values bellow to emulate one. Just cut and paste them below.</p>
+
+<table width="200" border="0">
+  <tr>
+    <td>Domain:</td>
+    <td>localhost.local</td>
+  </tr>
+  <tr>
+    <td>Ip:</td>
+    <td>127.0.0.1</td>
+  </tr>
+  <tr>
+    <td>Password:</td>
+    <td>12345678</td>
+  </tr>
+  <tr>
+    <td>User:</td>
+    <td>Admin</td>
+  </tr>
+</table>
+
+<h4 style="margin-top : 1em;">Microsoft Active Directory values</h4>
+
 	<form action="setup.cgi" method="post">
 		<div style="margin-top : 0.5em;">
 			[% WRAPPER sys_form style="background : 0; border : 0;" no_name = 1 %]
@@ -35,8 +59,7 @@
 					<input type="submit" name="next_button" value="Continue" class="next_button" />
 				</div>
 		</p>
-	</form>
-	
+	</form>	
 </div>
 		
 
