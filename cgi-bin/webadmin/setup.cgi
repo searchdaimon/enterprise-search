@@ -21,6 +21,7 @@ use Page::Setup::Network;
 use Page::Setup::Login;
 use Page::Setup::Integration;
 use Common::FormFlow qw(FLOW_START_FORM);
+use Digest::MD5 qw(md5_hex);
 
 # Init
 my $vars = { };
@@ -158,7 +159,11 @@ sub process_integration_values {
  	# $tpl_file is undef if all is OK.
 
 	my $cfg = Sql::Config->new($dbh);
+	#setter at wixarden er gjort.
 	$cfg->insert_setting("setup_wizard_done", 1);
+	#oppdaterer key verdien, slik at vi får en unik nøkker. Dette må gjøres her, da vi på vmware ikke instalerer databasen på ny for hver gang. 
+	$cfg->update_setting("key", md5_hex(rand()) );
+
 	print CGI::redirect("overview.cgi?from_setup=1");
 	exit 0;
 }
