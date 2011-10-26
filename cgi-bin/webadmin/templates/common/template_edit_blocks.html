@@ -59,7 +59,7 @@
 		<h4>Use stored authentication</h4>
 		<div style="margin-left : 1em;">
 		<select name="[% prefix %].auth_id" id="authSelect">
-			<option value="">(New values - input below)</option>
+			<option value="new_values">(New values - input below)</option>
 			[% FOREACH auth IN authentication %]
 				<option value="[% auth.id %]"
 					[% "selected=\"selected\"" IF share.auth_id == auth.id %]
