@@ -175,8 +175,8 @@ sub show_access_level {
 		},
 		{
 			value => 'anonymous',
-			string => 'Anonymous',
-			description => "Anonymous search, available from public search site.",
+			string => 'Anonymous ( public available )',
+			description => "Anonymous search, available to search from public search page.",
 		},
 	];
 
@@ -244,7 +244,7 @@ sub submit_edit {
     $attr{users} = \@users;
     my $dataColl = Data::Collection->new($s->{dbh}, \%attr);
 
-    if (not $attr{auth_id}) {
+    if ($attr{auth_id} eq 'new_values') {
         $dataColl->set_auth($share->{username}, $share->{password});
     }
 

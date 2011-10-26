@@ -22,7 +22,7 @@ my $pageCM = Page::Settings::CollectionManager->new($page->get_dbh);
 
 my $using_api = 0;
 my %api_vars;
-carp Dumper(\%state);
+#carp Dumper(\%state);
 if ($state{api}) {
 	my $api = $state{api};
 	$using_api = 1;

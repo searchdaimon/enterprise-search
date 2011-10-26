@@ -65,7 +65,12 @@ A:visited { color : blue; }
 A:active { color : blue; }
 
 
-
+a.external {
+	background-image : url("file.cgi?i=link&amp;size=other");
+	background-repeat : no-repeat;
+	background-position: 100% 50%;
+	padding: 0 14px 0 0;
+}
 
 #left_menu {
 	position : absolute;
