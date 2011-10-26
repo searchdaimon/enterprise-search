@@ -25,6 +25,21 @@ $CONFIG{tpl_tmp} = $ENV{BOITHOHOME} . "/var/webadmin_tmp";
 # Path to the file containing info for establishing a MySQL connection.
 $CONFIG{'config_path'} = $ENV{'BOITHOHOME'} . '/config/setup.txt';
 
+# Get server spesific setup data
+#henter server spesifik data fra fil
+open(INF,$CONFIG{'config_path'}) or die("Can't open setup.txt: $!");
+while (<INF>) {
+	chomp;  # avoid \n on last field
+	next unless /=/;
+
+	my ($key,$val) = split(/=/);
+	$CONFIG{$key} = $val;
+}
+close(INF);
+
+
+
+
 # Group: Logs
 
 # Path to where to look for logfiles.
@@ -35,17 +50,16 @@ $CONFIG{'log_path'} = $ENV{'BOITHOHOME'} . '/logs';
 $CONFIG{'logfiles'} = {
 	'access_log' => "Web server access",
 	'error_log' => "Web server error",
-	'crawlManager_access' => "Crawling management access",
-	'crawlManager_error' => "Crawling management error log",
+	'crawlManager.log' => "Crawling management log",
 	'indexing' => "Document indexing log",
 	'crawl_watch.log' => "Collection management log",
 	'boithoad_access' => "Active directory access log",
 	'boithoad_error' => "Active directory error log",
         'bb_auto_update.log' => 'Blackbox auto update log',
-        'searchd.log' => 'Searchd log',
+        'searchd.log' => 'Search service log',
 	'gc' => 'Garbage collection all documents',
 	'gcSummary' => 'Garbage collection Summary',
-
+	'bbdocumentWebAdd.log' => 'Xml Push error log',
 };
 
 
@@ -125,7 +139,7 @@ $CONFIG{'gdb_report_cmd'} = qq{bt};
 # URL to submit crash reports to
 $CONFIG->{'core_report_url'} = "http://dagurval.boitho.com/cgi-bin/report/submit.pl";
 
-$CONFIG{login_htpasswd_path} = $ENV{BOITHOHOME} . "/cgi-bin/webadmin/.htpasswd"; 
+$CONFIG{login_htpasswd_path} = $ENV{BOITHOHOME} . "/config/.htpasswd"; 
     #"/home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd";
 $CONFIG{login_admin_user} = "admin";
 
@@ -135,12 +149,14 @@ $CONFIG{adv_starred_fields} = ['msad_password', 'ldap_password', 'sudo', 'licens
 # Group: Network
 
 # The network device that is configurable
-$CONFIG{'net_device'} = "eth1";
-
+if (!exists $CONFIG{'net_device'}) {
+	$CONFIG{'net_device'} = "eth1";
+}
 # Name of network device configuration file
 # Is hardcoded into configwrite.c and *needs also be changed there*
-$CONFIG{'net_ifcfg'} = "ifcfg-eth1"; ## Must also be changed in configwrite.c
-
+if (!exists $CONFIG{'net_ifcfg'}) {
+	$CONFIG{'net_ifcfg'} = "ifcfg-eth1"; ## Must also be changed in configwrite.c
+}
 # Path to where the config file is
 # Is hardcoded into configwrite.c and *needs also be changed there*
 $CONFIG{'netscript_dir'} = "/etc/sysconfig/network-scripts"; ## Must also be changed in configwrite.c
@@ -153,8 +169,9 @@ $CONFIG{'configwrite_path'} = $ENV{'BOITHOHOME'} . "/setuid/configwrite";
 $CONFIG{'resolv_path'} = "/etc/resolv.conf";
 
 # Network interface to configure
-$CONFIG{'network_interface'} = "eth1";
-
+if (!exists $CONFIG{'network_interface'}) {
+	$CONFIG{'network_interface'} = "eth1";
+}
 
 
 # Group: License authentication
@@ -186,6 +203,7 @@ $CONFIG{'signature_file'} = $ENV{'BOITHOHOME'} . "/config/bb_signature";
 # Group: ClientTPL
 $CONFIG{client_path} = $ENV{BOITHOHOME} . "/public_html/webclient2";
 $CONFIG{client_tpl_path} = $CONFIG{client_path} . "/tpl";
+
 
 $CONFIG{connector_src_skeleton} = q|
 package Perlcrawl;
@@ -238,6 +256,59 @@ sub path_access {
     # * .. when you want the document to be filtered from a user search in general.
 
     return 1;
+}
+
+1;
+|;
+
+
+$CONFIG{connector_usersys_skeleton} = q|
+package PerlUserSystem;
+
+use strict;
+use warnings;
+use UserSystem;
+use Carp;
+use Data::Dumper;
+
+# Example code for authenticate(), list_groups() and list_users() here.
+# Give the usersystem a name in the Settings and parameters tab.
+# If used to authenticate users, set it to primary in the user systems menu. This demo will authenticate user demo, password qwerty
+#
+
+# Routine used to authenticate the user. Return=1 if username and password is correct.
+sub authenticate {
+	my ($undef, $self, $params) = @_;
+
+	if (($params->{Enduser} eq 'demo') && ($params->{Endpassword} eq 'qwerty')) {
+		return 1; #1=user is authenticated
+	}
+
+	return 0;
+}
+
+# Routine used to lookup which groups a user is a member of. Return an array containing all groups for the user.
+sub list_groups {
+	my ($params, $enduser) = @_;
+
+	my @groups;
+
+	# Add the group Everyone. All users should probably be a member of it.
+	push(@groups, "Everyone");
+
+	return \@groups;
+}
+
+# Routine used to list out all users. Return an array containing all users
+sub list_users {
+my $params = shift;
+	my @users;
+
+	# add the user "demo"
+	push(@users,"demo");
+
+	return \@users;
+
 }
 
 1;
