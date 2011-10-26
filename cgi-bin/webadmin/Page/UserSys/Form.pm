@@ -24,6 +24,7 @@ Readonly::Scalar my $TPL_MAPPING => 'usersys_mapping.html';
 Readonly::Scalar my $TPL_EDIT    => 'usersys_edit.html';
 Readonly::Scalar my $TPL_ADD     => 'usersys_add.html';
 Readonly::Scalar my $TPL_DEL     => 'usersys_del.html';
+Readonly::Scalar my $TPL_PRIM    => 'usersys_prim.html';
 
 Readonly::Scalar my $ADD_PART_2 => 2;
 Readonly::Scalar my $CLEAN_ERRMSG_REGEX => qr{at .*? line \d+$};
@@ -144,6 +145,18 @@ sub show_del {
 
 	$TPL_DEL;
 }
+sub show_prim {
+	my ($s, $vars, $sys_id) = @_;
+
+	my $name = $s->{sql_sys}->get({ 
+		id => $sys_id 
+	}, 'name')->{name};
+
+	$vars->{name} = $name;
+	$vars->{id} = $sys_id;
+
+	$TPL_PRIM;
+}
 
 sub del {
 	my ($s, $vars, $sys_id) = @_;
@@ -169,6 +182,28 @@ sub del {
 	$s->{sql_mapping}->delete({ system => $s->{sys}{id} });
 
 	$vars->{ok} = "User system '$name' deleted.";
+	
+	return $s->show($vars);
+}
+
+sub prim {
+	my ($s, $vars, $sys_id) = @_;
+
+	# Validate request
+	croak "The operation must be a POST request to work."
+		unless $ENV{REQUEST_METHOD} eq 'POST';
+
+
+	# Set primary system w/ params
+	my $sys = Data::UserSys->new($s->{dbh}, $sys_id);
+	my $name = $sys->get('name');
+
+	# set noe as as primary
+	$s->{sql_sys}->update({ is_primary => 0 });
+	# set the selected to primary
+	$s->{sql_sys}->update({ is_primary => 1 }, { id => $sys_id });
+
+	$vars->{ok} = "User system '$name' set as primary.";
 	
 	return $s->show($vars);
 }

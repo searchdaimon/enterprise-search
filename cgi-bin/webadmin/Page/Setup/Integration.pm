@@ -34,8 +34,11 @@ sub _init {
 
 sub show {
 	my ($s, $vars) = @_;
-	$vars->{user_systems} = $CONFIG{user_systems};
+	#$vars->{user_systems} = $CONFIG{user_systems}; # deprikert
+
 	$vars->{primary} = $s->{sql_sys}->get({ is_primary => 1 });
+	%{ $vars->{user_systems} }= ( $vars->{primary}->{id} => $vars->{primary}->{name} );
+
 	return TPL_INTEGRATION;
 }
 

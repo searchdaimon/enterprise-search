@@ -30,12 +30,13 @@ Readonly::Scalar my $API_CLEAR_MAPPING => "clear_mapping";
 Readonly::Scalar my $ACT_EDIT => "edit";
 Readonly::Scalar my $ACT_ADD  => "add";
 Readonly::Scalar my $ACT_DEL  => "del";
+Readonly::Scalar my $ACT_PRIM  => "prim";
 
 Readonly::Scalar my $VIEW_EDIT => "edit";
 Readonly::Scalar my $VIEW_MAP  => "map";
 Readonly::Scalar my $VIEW_ADD  => "add";
 Readonly::Scalar my $VIEW_DEL  => "del";
-
+Readonly::Scalar my $VIEW_PRIM  => "makeprimary";
 
 my $tpl_file;
 my $using_api;
@@ -54,11 +55,15 @@ if (my $v = $state{view}) {
 	elsif ($v eq $VIEW_DEL) {
 		$tpl_file = $page->show_del(\%vars, $state{id});
 	}
+	elsif ($v eq $VIEW_PRIM) {
+		$tpl_file = $page->show_prim(\%vars, $state{id});
+	}
 	else { croak "Unknown view '$v'" }
 }
 
 elsif (my $a = $state{action}) {
 	my $page = Page::UserSys::Form->new();
+
 	if ($a eq $ACT_EDIT) {
 		$tpl_file = $page->upd_usersys(
 			\%vars, $state{id}, $state{sys});
@@ -67,7 +72,20 @@ elsif (my $a = $state{action}) {
 		$tpl_file = $page->add(\%vars, $state{sys});
 	}
 	elsif ($a eq $ACT_DEL) {
-		$tpl_file = $page->del(\%vars, $state{id});
+		if (exists($state{confirm_delete})) {
+			$tpl_file = $page->del(\%vars, $state{id});
+		}
+		else {
+			$tpl_file = $page->show(\%vars);
+		}
+	}
+	elsif ($a eq $ACT_PRIM) {
+		if (exists($state{confirm_primary})) {
+			$tpl_file = $page->prim(\%vars, $state{id});
+		}
+		else {
+			$tpl_file = $page->show(\%vars);
+		}
 	}
 	else { croak "Unknown action '$a'" }
 }
