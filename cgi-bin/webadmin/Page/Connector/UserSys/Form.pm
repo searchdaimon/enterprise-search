@@ -58,7 +58,7 @@ sub new_connector {
 		$name = $prefix . ++$i
 	}
 	
-	return $s->create($name, q{test});
+	return $s->create($name, $CONFIG{connector_usersys_skeleton} );
 }
 
 sub clone {

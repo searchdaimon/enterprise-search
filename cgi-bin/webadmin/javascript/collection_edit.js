@@ -1,11 +1,17 @@
 
 function UserPrefixSugg(authSelect, authInput, prefixInput) {
+	
+
 	this.prefixInput = prefixInput;
 	this.authSelect = authSelect;
 	this.authInput = authInput;
 
+	username = $(this.authSelect).children(":selected").text();
+	this.updPrefix(username);
+
 	this.listenToAuth();
 };
+
 
 UserPrefixSugg.prototype.listenToAuth = function() {
 	

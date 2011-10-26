@@ -21,6 +21,7 @@ use Page::Logs::Statistics;
 my $page = Page::Logs::Statistics->new();
 my $dbh = $page->get_dbh();
 my %state = $page->get_state();
+my $outdata = qq{};
 
 #$state{last} = DEFAULT_LAST_VALUE unless (defined($state{last}));
 $state{last} = int($state{last}) or croak "Last must be an integer";
@@ -30,15 +31,22 @@ croak "need an action" unless defined $state{action};
 print "Content-Type: text/plain\n\n";
 
 if ($state{action} eq 'queries') {
-	print $page->get_data_queries($state{last}, 10, $state{user});
+	$outdata = $page->get_data_queries($state{last}, 10, $state{user});
 } elsif ($state{action} eq 'searchesday') {
-	print $page->get_searches_day($state{last}, $state{user});
+	$outdata = $page->get_searches_day($state{last}, $state{user});
 } elsif ($state{action} eq 'users') {
-	print $page->get_users_stat($state{last}, 20);
+	$outdata = $page->get_users_stat($state{last}, 20);
 } elsif ($state{action} eq 'crawleddocs') {
 	$state{crawler} = int($state{crawler}) or croak "Crawler must be an integer";
 	$state{sessid} = int($state{sessid}) or croak "Session ID must be an integer";
-	print $page->get_crawled_docs($state{crawler}, $state{sessid});
+	$outdata = $page->get_crawled_docs($state{crawler}, $state{sessid});
 } else {
 	croak "Unknown action: " . $state{action};
 }
+
+#The string is empty
+if (!$outdata) {
+	$outdata = " \n";
+}
+
+print $outdata;
