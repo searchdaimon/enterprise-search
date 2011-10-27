@@ -18,6 +18,7 @@ use Data::Collection;
 use Boitho::Infoquery;
 use Page::API;
 use Page::Connector::API;
+use Page::Overview;
 our @ISA = qw(Page::Connector::API Page::API);
 
 use config qw(%CONFIG);
@@ -135,6 +136,13 @@ sub cfg_html {
     while (my ($k, $v) = each %form_data) {
         $html_vars{$k} = $v 
     }
+
+    # Adding Accesslevel setings
+    my $vars = { };
+    my $overview = Page::Overview->new();
+    $overview->show_access_level($vars, $s->{coll}{id});
+    $html_vars{'levels'} = $vars->{'levels'};
+    $html_vars{'groups'} = $vars->{'groups'};
 
     my %coll_data = $coll->coll_data();
     $html_vars{share} = \%coll_data;
