@@ -93,16 +93,20 @@ sub get_attr { %{shift->{attr}} }
 sub create {
 	my $s = shift;
 
-	croak "Collection already exists with id '$s->{attr}{id}'"
-		if defined $s->{attr}{id};
-	croak "Collection name '$s->{attr}{collection_name}' is taken"
-		if $s->{attr}{collection_name} ne "" && $s->name_exists();
+	# Bacause asyncron javascript may lead to a rease condision, we will first try to insert. Then select the result...
 
-
-	# Create share
+	# Try to create the share
 	my %ins_attr = $s->_tbl_shares_attr();
-	my $id = $s->{sqlShares}->insert(\%ins_attr, 1);
-	$s->{attr}{id} = $id;
+	eval {
+		$s->{sqlShares}->insert(\%ins_attr, 0);
+	};
+
+	#select the new id.
+	my $test_coll = $s->{sqlShares}->get({ collection_name => $s->{attr}{collection_name} }, 'id');
+	croak "Cant create the collection '$s->{attr}{collection_name}'" 
+		unless $test_coll;
+
+	$s->{attr}{id} = $test_coll->{id};
 
 	$s->update();
 }

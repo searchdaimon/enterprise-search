@@ -116,7 +116,7 @@ sub new_connector {
 
 	return $s->create($name, 
 			$CONFIG{connector_src_skeleton}, 
-			join ",", @Page::Connector::REQ_INPUT_FIELDS);
+			join ",", Page::Connector::CrawlerUtils::req_input_fields() );
 }
 
 sub create {
