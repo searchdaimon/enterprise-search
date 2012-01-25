@@ -32,11 +32,11 @@
 #include "../common/boithohome.h"
 #include "../common/ht.h"
 #include "../common/nice.h"
+#include "../common/stdlib.h"
 #include "../maincfg/maincfg.h"
 #include "../boitho-bbdn/bbdnclient.h"
 
 #include "../common/boithohome.h"
-
 #include "../bbdocument/bbdocument.h"
 
 #include "../3pLibs/keyValueHash/hashtable.h"
@@ -82,12 +82,33 @@ int global_bbdnport;
 void mc_add_servers(void);
 #endif
 
+#ifdef WITH_US_CACHE
+	#include "../libcache/libcache.h"
+	#include "../common/crc32.h"
+
+	cache_t *cache;
+	cache_t *cache_groups;
+#endif
+
 
 
 int cm_searchForCollection (MYSQL *db, char cvalue[],struct collectionFormat *collection[],int *nrofcollections);
 
+void my_freevalue(void *p)
+{
+//        free(p);
+}
+void groups_freevalue(void *p)
+{
+	printf("groups_freevalue(%p, %p)\n",p, (*(char *)p));
+        free(p);
+	printf("~groups_freevalue\n");
+}
+
+
+
 usersystem_t *
-get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
+get_usersystem(MYSQL *db, unsigned int _id, usersystem_data_t *data)
 {
 	MYSQL_RES *res, *resparam;
 	MYSQL_ROW row, rowparam;
@@ -100,8 +121,13 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 	usersystem_container_t *usc;
 	usersystem_t *us;
 
-
-	querylen = snprintf(query, sizeof(query), "SELECT is_primary, connector FROM system WHERE id = %d", id);
+	// if someone askes for system nr 0, we shal return the primary user system
+	if (_id == 0) {
+		querylen = snprintf(query, sizeof(query), "SELECT is_primary, connector, id FROM system WHERE is_primary = 1");
+	}
+	else {
+		querylen = snprintf(query, sizeof(query), "SELECT is_primary, connector,id FROM system WHERE id = %d", _id);
+	}
 
 	if (mysql_real_query(db, query, querylen)) {
 		bblog(ERROR, "Mysql error: %s", mysql_error(db));
@@ -122,7 +148,10 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 		return NULL;
 	}
 
+	data->is_primary = atoi(row[0]);
 	data->type = atoi(row[1]);
+	data->id = atoi(row[2]);;
+
 	usc = hashtable_search(usersystemshash, &data->type);
 	if (usc == NULL) {
 		bblog(ERROR, "No usersystem module for this type: %d", data->type);
@@ -137,8 +166,6 @@ get_usersystem(MYSQL *db, unsigned int id, usersystem_data_t *data)
 		break;
 	}
 
-	data->id = id;
-	data->is_primary = atoi(row[0]);
 	
 	data->parameters = create_hashtable(7, ht_stringhash, ht_stringcmp);
 
@@ -398,6 +425,75 @@ collectionsforuser_collection(struct hashtable *collections, char *user, struct 
 	return 0;
 }
 
+
+int _listGroupsForUser(usersystem_t *us, usersystem_data_t *data, const char *user, char ***groups, int *n_groups) {
+
+	int i = 0;
+	int j;
+	int res;
+	char *gstring, *ps;
+
+#ifdef WITH_US_CACHE
+	char *ckey;
+	asprintf(&ckey,"%s:%p",user,us);
+
+	ps = cache_fetch(cache_groups, "groupsForUser", ckey);
+	if (ps != NULL) {
+
+		printf("_listGroupsForUser: Hav groups cached: \"%s\"\n",ps);
+
+
+		char **Data;
+		int Count;
+		*n_groups = split(ps, ",", &Data);
+
+		Count = 0;
+		(*groups) = malloc(((*n_groups)+1) * sizeof(char*));
+			
+		while( (Data[Count] != NULL) ) {
+			(*groups)[Count] = strdup(Data[Count]);
+			Count++;
+		}
+
+		res = 1;
+	}
+	else {
+#endif
+		printf("_listGroupsForUser(\"%s\"): No cache!\n", user);
+
+		res = (us->us_listGroupsForUser)(data, user, groups, n_groups);
+
+
+		if ((res == 1) && (n_groups > 0)) {
+	
+			gstring = malloc( (*n_groups) * MAX_LDAP_ATTR_LEN );
+			gstring[0] = '\0';
+			ps = gstring;
+			for (j = 0; j < *n_groups; j++) {
+				if (j!=0) {
+					ps += strlcpy(ps, ",", MAX_LDAP_ATTR_LEN);
+				}
+				ps += strlcpy(ps, (*groups)[j], MAX_LDAP_ATTR_LEN);
+			}
+
+			printf("gstring: %s\n",gstring);
+
+
+		}
+#ifdef WITH_US_CACHE
+		if ((res == 1) && (n_groups > 0)) {
+			if (cache_add(cache_groups, "groupsForUser", ckey, gstring, strlen(gstring)) != 1) {
+				printf("_listGroupsForUser: Can't add to cache");
+			}
+		}
+	}
+
+	free(ckey);
+#endif
+	return res;
+
+}
+
 int
 collectionsforuser(char *user, char **_collections, MYSQL *db)
 {
@@ -445,7 +541,7 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 				bblog(WARN, "No usersystem: %s %s", row[0], row[1]);
 				continue;
 			}
-			if (!(us->us_listGroupsForUser)(&data, row[0], &groups, &n_groups)) {
+			if (!_listGroupsForUser(us, &data, row[0], &groups, &n_groups)) {
 				bblog(WARN, "Unable to list groups for user: %s", row[0]);
 				continue;
 			}
@@ -455,7 +551,7 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 			collectionsforuser_collection(collections, row[0], &userToSubnameDb);
 			for (j = 0; j < n_groups; j++)
 				collectionsforuser_collection(collections, groups[j], &userToSubnameDb);
-			boithoad_respons_list_free(groups);
+			//boithoad_respons_list_free(groups);
 			free_usersystem_data(&data);
 		}
 
@@ -2409,6 +2505,8 @@ void connectHandler(int socket) {
 			usersystem_t *us;
 			usersystem_data_t data;
 			unsigned int r = 0;
+			unsigned int *pu;
+			char *ckey;
 
 			sql_connect(&db);
 			recvall(socket,user,sizeof user);
@@ -2434,23 +2532,45 @@ void connectHandler(int socket) {
 				    }
 			    }
 
-			if ((us = get_usersystem(&db, usersystem, &data)) == NULL) {
-				bblog(ERROR, "Unable to get usersystem");
-			} 
-			else {
-				r = (us->us_authenticate)(&data, user, pass);
+#ifdef WITH_US_CACHE
+			// make a key and looks in the cache.
+			asprintf(&ckey,"%s:%u:%i",user,crc32boitho(pass),usersystem);
+			pu = cache_fetch(cache, "logedInUser", ckey);
+			if ((pu != NULL) && (*pu == 1)) {
+				printf("Login was cashed\n");
+				r = *pu;
 			}
+			else {
+#endif
 
-			sendall(socket, &r, sizeof(r));
-			
-			mysql_close(&db);
+				if ((us = get_usersystem(&db, usersystem, &data)) == NULL) {
+					bblog(ERROR, "Unable to get usersystem nr %d", usersystem);
+				} 
+				else {
+					r = (us->us_authenticate)(&data, user, pass);
+				}
 
+				mysql_close(&db);
+
+				free_usersystem_data(&data);
+
+#ifdef WITH_US_CACHE
+				// if login was ok, cache login
+				if (r == 1) {
+					cache_add(cache, "logedInUser", ckey, intudup(r), sizeof(unsigned int));
+				}
+			}
+#endif
 			if (output_redirected)
 			    {
 				// Det er dessverre ikke mulig å redirecte std* tilbake til console.
 				fclose(stderr);
 				fclose(stdout);
-		    	    }
+	    		    }
+
+			sendall(socket, &r, sizeof(r));
+			free(ckey);			
+
 		}
 		else if (packedHedder.command == cm_groupsforuserfromusersystem) {
 			char extrabuf[512];
@@ -2528,11 +2648,12 @@ void connectHandler(int socket) {
 			if (n_groups) {
 				if (us != NULL) {
 					n_groups = 0;
-					(us->us_listGroupsForUser)(&data, secnduser, &groups, &n_groups);
+					_listGroupsForUser(us, &data, secnduser, &groups, &n_groups);
 					bblog(INFO, "Got %d groups for user %s",  n_groups, user);
 				} else {
 					n_groups = 0;
 				}
+
 			}
 
 			gettimeofday(&te, NULL);
@@ -2545,7 +2666,7 @@ void connectHandler(int socket) {
 				}
 				sendallPack(socket, 4, &n_groups, sizeof(int), groupbuf, n_groups * sizeof(group));
 				free(groupbuf);
-				boithoad_respons_list_free(groups);
+				//boithoad_respons_list_free(groups);
 			}
 			else {
 				sendall(socket, &n_groups, sizeof(int));
@@ -2632,8 +2753,8 @@ void connectHandler(int socket) {
 			int n;
 
 			recvall(socket, user, sizeof(user));
-			sql_connect(&db);
 
+			sql_connect(&db);
 			bblog(INFO, "Collections for user: %s",  user);
 			n = collectionsforuser(user, &collections, &db);
 			mysql_close(&db);
@@ -2765,8 +2886,26 @@ int main (int argc, char *argv[]) {
 
 	cm_start(&global_h, &usersystemshash);
 
+#ifdef WITH_US_CACHE
+	cache_delfiles();
+
+        cache = malloc(sizeof(*cache));
+        if (cache_init(cache, my_freevalue, 300) != 1) {
+		return (-1);
+	}
+
+        cache_groups = malloc(sizeof(*cache_groups));
+        if (cache_init(cache_groups, groups_freevalue, 300) != 1) {
+		return (-1);
+	}
+#endif
+
 	sconnect(connectHandler, crawlport);
 
+#ifdef WITH_US_CACHE
+	cache_free(cache);
+	cache_free(cache_groups);
+#endif
 
 	maincfgclose(&maincfg);
 }
