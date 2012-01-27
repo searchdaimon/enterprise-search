@@ -87,7 +87,7 @@ static int context_free( SMBCCTX *context )
 {
     if (smbc_free_context(context, 0) != 0)
 	{
-	    bblog(ERROR, "crawlsmb.c: Could not free smbc context");
+	    bblog(ERROR, "crawlsmb.c: Could not free smbc context: %s", strerror(errno));
 		//ToDo: returnerer free uanset. Får nemlig altid feil her
                 //hvis ikke. Er dette en minne lekasj prblem?
 	    return 1;
@@ -116,9 +116,9 @@ int smbc_readloop(int sockfd, void *buf, off_t len) {
                         return 0;
                 }
 
-                //#ifdef DEBUG
+                #ifdef DEBUG
                 bblog(DEBUG, "reading %.5i bytes. total red %.8"PRId64", left %.8"PRId64", total to get %.8"PRId64" ( %f\% )",n,total,bytesleft,len,((float)total/(float)len)*100.00);
-                //#endif
+                #endif
 
                 total += n;
                 bytesleft -= n;
@@ -324,7 +324,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
 			bblog(INFO, "stating \"%s\"",full_entry_name);
                     	if ( smbc_stat(full_entry_name, &file_stat) < 0 ) {
-                            	documentError(collection, 1,"crawlsmb.c: Error! Could not get stat for %s", entry_name);
+                            	documentError(collection, 1,"crawlsmb.c: Warning[no fatal]! Could not get stat for %s. Skipping document, continue crawl.", entry_name);
 			    	//free(parsed_acl[0]);
 			    	//free(parsed_acl[1]);
                             	//free(parsed_acl);
@@ -550,20 +550,6 @@ int smb_test_conect(struct collectionFormat *collection, char *prefix, char *dir
 
 
 
-    dh = smbc_opendir( full_name );
-
-    if (dh < 0)
-	{
-	    bblog(WARN, "failed to open: %s", full_name);
-
-	    if (errno != EACCES)
-		{
-		    documentError(collection, 1,"crawlsmb.c: Error! Could not open %s", dir_name);
-		}
-
-	    context_free(context);
-	    return 0;
-	}
 
     bblog(INFO, "successfully opened: %s", full_name);
 
