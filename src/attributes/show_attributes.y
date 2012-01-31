@@ -290,7 +290,7 @@ static void recursive_delete(struct attr_group *a);
 
 
 // Returnerer warnings.
-attr_conf* show_attributes_init(char *text, char **warnings, int *failed)
+attr_conf* show_attributes_init(char *text, char **warnings, int *failed, int verbose)
 {
 	*failed = 0;
 
@@ -331,8 +331,9 @@ attr_conf* show_attributes_init(char *text, char **warnings, int *failed)
 
     //fclose(fyyin);
 
-    print_recurse_items(data->current_item, 0);
-
+    if (verbose) {
+    	print_recurse_items(data->current_item, 0);
+    }
     attr_conf	*ac = malloc(sizeof(attr_conf));
     ac->sort = data->current_item->sort;
     ac->max_items = data->current_item->max_items;
