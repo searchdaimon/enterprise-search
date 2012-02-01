@@ -19,7 +19,6 @@
 #include "../common/daemon.h"
 #include "../common/iindex.h"
 #include "../acls/acls.h"
-#include "../boithoadClientLib/liboithoaut.h"
 #include "../common/timediff.h"
 #include "../parser/html_parser.h"
 #include "../maincfg/maincfg.h"
@@ -265,7 +264,7 @@ int main(int argc, char *argv[])
 
 
 	#ifdef DEBUG
-        bblog(DEBUG, "searchd: Debug: argc %i, optind %i",argc,optind);
+        bblog(DEBUGINFO, "searchd: Debug: argc %i, optind %i",argc,optind);
 	#endif
 
 	if (searchd_config.optrankfile == NULL) {
@@ -357,7 +356,7 @@ int main(int argc, char *argv[])
 
   	/* Load the file */
 	#ifdef DEBUG
-  	bblog(DEBUG, "searchd: Debug: Loading [%s] ...",bfile(cfg_searchd));
+  	bblog(DEBUGINFO, "searchd: Debug: Loading [%s] ...",bfile(cfg_searchd));
 	#endif
 
   	if (!config_read_file(&cfg, bfile(cfg_searchd))) {
@@ -534,7 +533,7 @@ int main(int argc, char *argv[])
 			}
 			else {
 			#ifdef DEBUG
-				bblog(DEBUG, "Debug mode; will not fork to new process.");
+				bblog(DEBUGINFO, "Debug mode; will not fork to new process.");
 				do_chld((void *) &searchd_config);
 			#else
 				/*
@@ -547,7 +546,7 @@ int main(int argc, char *argv[])
 					do_chld((void *) &searchd_config);	
 				#endif
 				*/
-				bblog(DEBUG, "Forking new prosess.");
+				bblog(DEBUGINFO, "Forking new prosess.");
 				if (fork() == 0) { // this is the child process
 
 					close(sockfd); // child doesn't need the listener
@@ -555,7 +554,7 @@ int main(int argc, char *argv[])
 					do_chld((void *) &searchd_config);	
 
 					close(searchd_config.newsockfd);
-					bblog(DEBUG, "Terminating child.");
+					bblog(DEBUGINFO, "Terminating child.");
 		
 					exit(0);
 				}
@@ -598,9 +597,9 @@ int main(int argc, char *argv[])
 	return(0);
 }
 
-attr_conf *parse_navmenu_cfg(char *cfgstr, int *failed) {
+attr_conf *parse_navmenu_cfg(char *cfgstr, int *failed, int verbose) {
 	char *warnings;
-	attr_conf *cfg = show_attributes_init(cfgstr, &warnings, failed);
+	attr_conf *cfg = show_attributes_init(cfgstr, &warnings, failed, verbose);
 	
 	if (*failed)
 		bblog(WARN, "navmenucfg parsing failed");
@@ -639,8 +638,8 @@ void *do_chld(void *arg)
        	alarm (60);
 
 	// starter loging
-	bblog(DEBUG, "searchd_child: Starting new thread.");
-	bblog(DEBUG, "searchd: do_chld()");
+	bblog(DEBUGINFO, "searchd_child: Starting new thread.");
+	bblog(DEBUGINFO, "searchd: do_chld()");
 
 	// deklarerer variabler
 	struct searchd_configFORMAT *searchd_config = arg;
@@ -683,9 +682,9 @@ void *do_chld(void *arg)
 
 	
 	#ifdef WITH_THREAD
-		bblog(DEBUG, "Child thread [%d]: Socket number = %d", pthread_self(), mysocfd);
+		bblog(DEBUGINFO, "Child thread [%d]: Socket number = %d", pthread_self(), mysocfd);
 	#else
-		bblog(DEBUG, "Socket number = %d",mysocfd);
+		bblog(DEBUGINFO, "Socket number = %d",mysocfd);
 	#endif
 
 	#ifdef DEBUG
@@ -711,7 +710,7 @@ void *do_chld(void *arg)
 	if ((recv(mysocfd, &nrOfSubnames, sizeof nrOfSubnames, MSG_WAITALL)) == -1)
 		bblog_errno(ERROR, "recv nrOfSubnames");
 
-	bblog(DEBUG, "nrOfSubnames: %d",nrOfSubnames);
+	bblog(DEBUGINFO, "nrOfSubnames: %d",nrOfSubnames);
 	struct subnamesFormat subnames[nrOfSubnames];
 	if (nrOfSubnames > 0) {
 		if ((recv(mysocfd, &subnames, sizeof subnames, MSG_WAITALL)) == -1)
@@ -727,11 +726,12 @@ void *do_chld(void *arg)
 	}
 
 
-	bblog(DEBUG, "MaxsHits %i",queryNodeHeder.MaxsHits);
+	bblog(DEBUGINFO, "MaxsHits %i",queryNodeHeder.MaxsHits);
 	//Sider  = (struct SiderFormat *)malloc(sizeof(struct SiderFormat) * (queryNodeHeder.MaxsHits));
-	bblog(DEBUG, "Ranking search?");
+	bblog(DEBUGINFO, "Ranking search?");
 
 
+	#ifndef BLACK_BOKS
 	//ToDo: må ha låsing her
         if ((LOGFILE = bfopen("config/query.log","a")) == NULL) {
                 bblog_errno(ERROR, "logfile");
@@ -740,8 +740,9 @@ void *do_chld(void *arg)
                 fprintf(LOGFILE,"%s\n",queryNodeHeder.query);
                 fclose(LOGFILE);
         }
+	#endif
 
-	bblog(DEBUG, "searchd_child: Incoming query: %s",queryNodeHeder.query);
+	bblog(DEBUGINFO, "searchd_child: Incoming query: %s",queryNodeHeder.query);
 
 	strcpy(SiderHeder->servername,servername);
 
@@ -778,7 +779,7 @@ void *do_chld(void *arg)
 
 	//dekoder subname
 
-	bblog(DEBUG, "nrOfSubnames %i",nrOfSubnames);
+	bblog(DEBUGINFO, "nrOfSubnames %i",nrOfSubnames);
   	
 /*
 	nrOfSubnames = 1;
@@ -789,14 +790,14 @@ void *do_chld(void *arg)
 */
 
 	#ifdef DEBUG
-	bblog(DEBUG, "searchd_child: ");
-	bblog(DEBUG, "##########################################################");
-	bblog(DEBUG, "searchd_child: subnames:");
-	bblog(DEBUG, "Total of %i", nrOfSubnames);
+	bblog(DEBUGINFO, "searchd_child: ");
+	bblog(DEBUGINFO, "##########################################################");
+	bblog(DEBUGINFO, "searchd_child: subnames:");
+	bblog(DEBUGINFO, "Total of %i", nrOfSubnames);
 	for (i=0;i<nrOfSubnames;i++) {
-		bblog(DEBUG, "searchd_child: subname nr %i: \"%s\"",i,subnames[i].subname);
+		bblog(DEBUGINFO, "searchd_child: subname nr %i: \"%s\"",i,subnames[i].subname);
 	}
-	bblog(DEBUG, "searchd_child: ##########################################################");
+	bblog(DEBUGINFO, "searchd_child: ##########################################################");
 	#endif
 
 	SiderHeder->filtypesnrof = MAXFILTYPES;
@@ -804,13 +805,13 @@ void *do_chld(void *arg)
 	SiderHeder->errorstrlen=sizeof(SiderHeder->errorstr);
 
 	#ifdef DEBUG
-	bblog(DEBUG, "searchd_child: queryNodeHeder.getRank %u",queryNodeHeder.getRank);
+	bblog(DEBUGINFO, "searchd_child: queryNodeHeder.getRank %u",queryNodeHeder.getRank);
 	#endif
 
 	if (!queryNodeHeder.getRank) {
 
 		int parsing_failed;
-		attr_conf *navmenu_cfg = parse_navmenu_cfg(queryNodeHeder.navmenucfg, &parsing_failed);
+		attr_conf *navmenu_cfg = parse_navmenu_cfg(queryNodeHeder.navmenucfg, &parsing_failed, globalOptVerbose);
 		if (parsing_failed) {
 			SiderHeder->responstype = searchd_responstype_error;
 			snprintf(SiderHeder->errorstr, sizeof SiderHeder->errorstr, 
@@ -994,7 +995,7 @@ void *do_chld(void *arg)
 
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	bblog(DEBUG, "searchd_child: Time debug: sending SiderHeder %f",getTimeDifference(&start_time,&end_time));
+	bblog(DEBUGINFO, "searchd_child: Time debug: sending SiderHeder %f",getTimeDifference(&start_time,&end_time));
 	#endif
 	
 
@@ -1117,7 +1118,7 @@ void *do_chld(void *arg)
 		bblog(ERROR, "siderformat: send only %i of %i at %s:%d",n,sendtotal,__FILE__,__LINE__);
 		return 0;
 	}
-	printf("~sendall(sendarraylength=%i, sendall=%p, sendtotal=%i)\n",sendarraylength,sendall,sendtotal);
+	bblog(DEBUGINFO,"~sendall(sendarraylength=%i, sendall=%p, sendtotal=%i)\n",sendarraylength,sendall,sendtotal);
 
 	free(SiderHeder->navigation_xml);
 
@@ -1150,7 +1151,7 @@ void *do_chld(void *arg)
 
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	bblog(DEBUG, "searchd_child: Time debug: sending SiderHeder %f",getTimeDifference(&start_time,&end_time));
+	bblog(DEBUGINFO, "searchd_child: Time debug: sending SiderHeder %f",getTimeDifference(&start_time,&end_time));
 	#endif
 	
 
@@ -1202,7 +1203,7 @@ void *do_chld(void *arg)
 
 	#ifdef DEBUG
 	gettimeofday(&end_time, NULL);
-	bblog(DEBUG, "Time debug: sendig sider %f",getTimeDifference(&start_time,&end_time));
+	bblog(DEBUGINFO, "Time debug: sendig sider %f",getTimeDifference(&start_time,&end_time));
 	#endif
 
 
@@ -1213,7 +1214,7 @@ void *do_chld(void *arg)
 	free(SiderHeder);
 
 	#ifdef DEBUG
-	bblog(DEBUG, "exiting");
+	bblog(DEBUGINFO, "exiting");
 	#endif
 
 	//pthread_exit((void *)0); /* exit with status */
@@ -1235,6 +1236,6 @@ void *do_chld(void *arg)
 		#endif
 
 
-    bblog(DEBUG, "searchd: Normal exit.");
+    bblog(DEBUGINFO, "searchd: Normal exit.");
     bblog(INFO, "searchd: ~do_chld()");
 }
