@@ -2,7 +2,7 @@
 #	gcc -g shortenurl.c -DWITH_SHORTENURL_MAIN -o shortenurl ../common/*.c -W -Wall -lz -lm
 
 
-VPATH=	.:../dp/:../searchFilters:../maincfg:../crawlManager:../boithoadClientLib
+VPATH=	.:../dp/:../searchFilters:../maincfg:../crawlManager
 
 WITH_PREFIX=	true
 WANT_COMMON=	true
@@ -32,6 +32,6 @@ LDFLAGS+=	\
 #LDFLAGS+=	-DATTRIBUTES ../common/*.c -D_FILE_OFFSET_BITS=64 -DDISK_PROTECTOR -DBLACK_BOKS -DIIACL -DWITH_SPELLING -DWITH_THREAD
 
 OBJS=	preopen.o search.o searchkernel.o searchd.o htmlstriper.o dp.o searchFilters.o verbose.o maincfg.o \
-	shortenurl.o client.o merge.o boithoadClientLib.o
+	shortenurl.o client.o merge.o client.o
 
 include ../../mk/prog.mk
