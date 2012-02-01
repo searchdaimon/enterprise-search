@@ -9,7 +9,11 @@ LDFLAGS+=	${LIBDIR}/libbase64.a
 endif
 
 ifdef WANT_LIBCONFIG
+ifeq ($(WANT_64BIT),1)
+LDFLAGS+=	/usr/local/lib64/libconfig.a
+else
 LDFLAGS+=	/usr/local/lib/libconfig.a
+endif
 endif
 
 ifdef WANT_MYSQL
@@ -42,7 +46,7 @@ LDFLAGS+=	${LIBDIR}/libcommon.a
 endif
 
 ifdef WANT_DS
-LDFLAGS+=	$(BOITHOHOME)/src/ds/libds.a
+LDFLAGS+=	$(LIBDIR)/libds.a
 endif
 
 ifdef WANT_HASHTABLE

@@ -21,6 +21,6 @@ CFLAGS+=        -g
 endif
 
 clean:
-	rm -f $(OBJDIR)/$(OBJLIB) $(addprefix $(OBJDIR)/, $(OBJS))
+	rm -f $(OBJLIB) $(addprefix $(OBJDIR)/, $(OBJS))
 
 .PHONY: clean
