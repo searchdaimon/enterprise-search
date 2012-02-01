@@ -53,8 +53,6 @@
 #ifndef BLACK_BOKS
     #include <libconfig.h>
     #define CACHE_STRUCT_VERSION "1.7"
-    //#define cashedir "cashedir"
-    //#define prequerydir "prequerydir"
 #endif
 
     #define CFG_DISPATCHER "config/dispatcher.conf"
@@ -94,10 +92,6 @@
 
 void read_collection_cfg(struct subnamesConfigFormat * dst);
 void read_dispatcher_cfg(struct config_t * cfg, struct dispconfigFormat * dispconfig, int *cachetimeout);
-
-/* Set if you want to write prequery data */
-int prequerywriteFlag = 0;
-
 
 
 
@@ -224,7 +218,10 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 
 	strlcpy(cfg->group, "", sizeof(cfg->group));
 
+	#ifdef DEBUG
 	fprintf(stderr, "access level: %s", row[14]);
+	#endif
+
 	if (strcmp(row[14], "anonymous") == 0) {
 		cfg->accesslevel = CAL_ANONYMOUS;
 	}
@@ -363,7 +360,7 @@ showabal,AddSiderHeder[i].servername);
 		dprintf("AdultPages %i, NonAdultPages: %i\n",AdultPages,NonAdultPages);
 		//hvis vi har adult pages sjekker vi om vi har nokk ikke adult pages å vise, hvis ikke viser vi bare adult
 
-	} // !hascashe && !hasprequery
+	} // !hascashe 
 	else {
 		*nrRespondedServers = 1;
 
@@ -628,6 +625,45 @@ unsigned int getDocIDFromSqlRun (MYSQL *demo_db, char mysql_query[], char rankUr
 	}
 }
 
+int getIntCfg (MYSQL *demo_db, char value[]) {
+
+	int numrows = 0;
+	MYSQL_RES *mysqlres; // To be used to fetch information into
+	MYSQL_ROW mysqlrow;
+	int retint;
+	char *mysql_query;
+
+	asprintf(&mysql_query,"select configvalue from config where configkey = \"%s\"",value);
+
+	if(mysql_real_query(demo_db, mysql_query, strlen(mysql_query))){ // Make query
+       		printf(mysql_error(demo_db));
+       		fprintf(stderr,"MySQL Error: \"%s\".\n",mysql_error(demo_db));
+	}
+	else {
+		mysqlres=mysql_store_result(demo_db); // Download result from server 
+		numrows = mysql_num_rows(mysqlres);
+	}
+
+	free(mysql_query);
+
+	if (numrows == 1) {
+
+		if ((mysqlrow=mysql_fetch_row(mysqlres)) == NULL) {
+        		fprintf(stderr,"MySQL Error: cant download results \"%s\".\n",mysql_error(demo_db));
+		}
+
+		retint = atou(mysqlrow[0]);
+
+		mysql_free_result(mysqlres);
+
+		return retint;
+       	}
+	else {
+		return 0;
+	}
+
+}
+
 unsigned int getDocIDFromSql (MYSQL *demo_db, char rankUrl[]) {
 
 
@@ -764,11 +800,13 @@ int main(int argc, char *argv[])
         //struct SiderHederFormat SiderHeder[maxServers];
         //struct SiderHederFormat AddSiderHeder[maxServers];
 
-        struct SiderHederFormat *SiderHeder = malloc(sizeof(struct SiderHederFormat) * maxServers);
-        struct SiderHederFormat *AddSiderHeder = malloc(sizeof(struct SiderHederFormat) * maxServers);
-
+        struct SiderHederFormat *SiderHeder = calloc(1,sizeof(struct SiderHederFormat) * maxServers);
+        struct SiderHederFormat *AddSiderHeder = calloc(1,sizeof(struct SiderHederFormat) * maxServers);
 	size_t maxSider;
+
+	// ToDo: Use calloc her, like abov for SiderHeder and AddSiderHeder.
 	struct SiderHederFormat FinalSiderHeder;
+	memset(&FinalSiderHeder,'\0',sizeof(struct SiderHederFormat));
 	//char buff[4096]; //generell buffer
 #ifndef BLACK_BOKS
 	struct in_addr ipaddr;
@@ -788,9 +826,7 @@ int main(int argc, char *argv[])
 	//int posisjon;
 	//int socketWait;	
 	int hascashe;
-        int hasprequery;
 #ifdef WITH_CASHE	
-	char prequeryfile[512];
 	char cashefile[512];
 #endif
 	struct filtersTrapedFormat dispatcherfiltersTraped;
@@ -823,8 +859,7 @@ int main(int argc, char *argv[])
 	#endif
 	dprintf("struct SiderFormat size %i\n",sizeof(struct SiderFormat));
 
-
-	bblog(DEBUG, "started dispatcher");
+	bblog(DEBUGINFO, "started dispatcher");
 	bblog_init("dispatcher");
 	bblog_set_appenders(LOGGER_APPENDER_FILE);
 	//bblog_set_severity(100);
@@ -863,8 +898,11 @@ int main(int argc, char *argv[])
 		fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
 		//exit(1);
 	}
-#endif
 
+	// get config overites from the db
+	dispconfig.usecashe = getIntCfg(&demo_db, "scc_usecashe");
+
+#endif
 
 
 	//////////////////
@@ -986,13 +1024,6 @@ int main(int argc, char *argv[])
 				case 'a':
 					anonymous = 1;
 					break;
-				case 'p':
-					prequerywriteFlag = 1;
-					dispconfig.writeprequery = 1;
-					#ifdef DEBUG
-					printf("Forcing prequery write\n");
-					#endif
-					break;
         	                case 'r':
         	                        optRank = optarg;
                 	                printf("will look up rank for \"%s\"\n",optRank);
@@ -1077,7 +1108,6 @@ int main(int argc, char *argv[])
 			QueryData.orderby[0] = '\0';
 			QueryData.version = 2.1;
 
-			if (!dispconfig.writeprequery) {
                         	printf("query %s, subname %s\n",QueryData.query,QueryData.subname);
 
 				//printer ut oversikt over serverne vi skal koble til
@@ -1098,7 +1128,7 @@ int main(int argc, char *argv[])
 
 
 				printf("\n");
-			}
+			
                 }
         }
         else {
@@ -1120,7 +1150,7 @@ int main(int argc, char *argv[])
 		
 		int access = cgi_access_type(remoteaddr, correct_key);
 		if (access == ACCESS_TYPE_NONE) 
-			die(1,"", "Access key missing, or wrong access key.");
+			die(1,"", "Access key missing, or wrong access key for ip \"%s\".",remoteaddr);
 		
 		cgi_fetch_common(&QueryData, &noDoctype);
 		if (access == ACCESS_TYPE_LIMITED)
@@ -1283,7 +1313,7 @@ int main(int argc, char *argv[])
 	#ifdef BLACK_BOKS
 		//21 feb 2007: collection er case sensetiv. Bare søkeord skal gjøres om. Må gjøre dette en annen plass
 	#else
-		//må gjøres for web da både prequery og cashe er lagret på disk som lovercase. Hvis ikke vil ikke søk på Msn treffe msn
+		//må gjøres for web da både cashe er lagret på disk som lovercase. Hvis ikke vil ikke søk på Msn treffe msn
         	//for(i=0;i<strlen(QueryData.query);i++) {
                 //	QueryData.query[i] = btolower(QueryData.query[i]);
         	//}
@@ -1393,7 +1423,6 @@ int main(int argc, char *argv[])
 	#endif
 
 	#ifndef BLACK_BOKS
-	if (!dispconfig.writeprequery) {
 	//prøver å finne ut hvilket land ut fra ip
 	GeoIP *gi;
 	GeoIPRecord * gir;
@@ -1429,7 +1458,6 @@ int main(int argc, char *argv[])
 
 		GeoIP_delete(gi);
 	}
-	} //if(!dispconfig.writeprequery)
 	#else
 		sprintf(QueryData.GeoIPcontry,"na");
 	#endif
@@ -1469,6 +1497,10 @@ int main(int argc, char *argv[])
 	
 	queryNodeHeder.lang = QueryData.lang;
 
+	if (QueryData.nocache) {
+		dispconfig.usecashe = 0;
+	}
+
 
 	//--QueryData.start; //maskinen begynner på 1, meneske på 0
 	//queryNodeHeder.start = QueryData.start;
@@ -1507,7 +1539,6 @@ int main(int argc, char *argv[])
 	#endif
 
 
-	hasprequery = 0;
 	hascashe = 0;
 	pageNr = 0;
 
@@ -1515,18 +1546,10 @@ int main(int argc, char *argv[])
 
 	char cachepath[1024];
 
-	cache_path(cachepath, sizeof(cachepath), CACHE_SEARCH, QueryData.queryhtml, QueryData.start, QueryData.GeoIPcontry);
-	cache_path(prequeryfile, sizeof(cachepath), CACHE_PREQUERY, QueryData.queryhtml, QueryData.start, QueryData.GeoIPcontry);
+	cache_path(cachepath, sizeof(cachepath), CACHE_SEARCH, QueryData.queryhtml, QueryData.start, QueryData.GeoIPcontry, queryNodeHeder.anonymous, QueryData.search_user, collections, num_colls);
 
-
-	if (!prequerywriteFlag && getRank == 0 && (dispconfig.useprequery) && (QueryData.filterOn) &&
-	    cache_read(prequeryfile, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, 0, maxSider)) {
-		hasprequery = 1;
-
-		debug("can open prequeryfile file \"%s\"",prequeryfile);
-
-	}
-	else if (!prequerywriteFlag && getRank == 0 && (dispconfig.usecashe) && (QueryData.filterOn) &&
+	// ano only! queryNodeHeder.anonymous
+	if (getRank == 0 && (dispconfig.usecashe) && (QueryData.filterOn) && 
 	         cache_read(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, cachetimeout, maxSider)) {
 		hascashe = 1;
 
@@ -1534,19 +1557,13 @@ int main(int argc, char *argv[])
 	}
 
 	#ifdef DEBUG
-		printf("cache and prequery info:\n");
-		printf("\tcachepath: \"%s\"\n",cachepath);
-		printf("\tprequeryfile: \"%s\"\n",prequeryfile);
-
-		printf("\tuseprequery: %i\n",dispconfig.useprequery);
-		printf("\tuseprequery: %i\n",dispconfig.useprequery);
-		printf("\tfilterOn: %i\n",QueryData.filterOn);
-
-		printf("\thasprequery: %i\n",hasprequery);
-		printf("\thascashe: %i\n",hascashe);
+		fprintf(stderr, "\tcachepath: \"%s\"\n",cachepath);
+		fprintf(stderr, "\tfilterOn: %i\n",QueryData.filterOn);
+		fprintf(stderr, "\thascashe: %i\n",hascashe);
+		fprintf(stderr, "\tusecashe: %i\n",dispconfig.usecashe);
 	#endif
 
-	#else
+
 	#endif
 
 
@@ -1560,7 +1577,7 @@ int main(int argc, char *argv[])
 		&queryNodeHeder, collections, num_colls, 0, searchport);
 
 	//kobler til vanlige servere
-	if (!(hascashe || hasprequery)) {
+	if (!hascashe) {
 		bsConnectAndQuery(sockfd, nrOfServers, servers,
 			&queryNodeHeder, collections, num_colls, nrOfPiServers, searchport);
 	}
@@ -1654,16 +1671,10 @@ int main(int argc, char *argv[])
 						close(sockfd[i]);
 					}
 				}
-//
-//				brGetPages(sockfd,nrOfPiServers,SiderHeder,Sider,&pageNr,nrOfServers);
-//				if ((!hascashe) && (!hasprequery)) {
-//					brGetPages(sockfd,nrOfServers,SiderHeder,Sider,&pageNr,0);
-//				}
-//
 
 
 				//kobler til vanlige servere
-				if ((!hascashe) && (!hasprequery)) {
+				if (!hascashe) {
 					//bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,0,searchport);
 					bsConnectAndQuery(sockfd, nrOfServers, servers,
 						&queryNodeHeder, collections, num_colls, 0, searchport);
@@ -1682,7 +1693,7 @@ int main(int argc, char *argv[])
 				//Paid inclusion
 				brGetPages(sockfd,nrOfPiServers,SiderHeder,Sider,&pageNr,0);
 
-				if ((!hascashe) && (!hasprequery)) {
+				if (!hascashe) {
 					brGetPages(sockfd,nrOfServers,SiderHeder,Sider,&pageNr,nrOfPiServers);
 				}
 
@@ -1690,7 +1701,7 @@ int main(int argc, char *argv[])
 				//addserver bruker som regel mest tid, så tar den sist slik at vi ikke trenger å vente unødvendig
 				brGetPages(addsockfd,nrOfAddServers,AddSiderHeder,Sider,&pageNr,0);
 
-				handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, (hascashe || hasprequery), &errorha, pageNr,
+				handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, hascashe, &errorha, pageNr,
 					       nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers, &queryNodeHeder, &demo_db);
 
 				//for((x<FinalSiderHeder.showabal) && (i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)))) {
@@ -1767,7 +1778,7 @@ int main(int argc, char *argv[])
 	brGetPages(sockfd,nrOfPiServers,SiderHeder,Sider,&pageNr,0);
 	dprintf("end get pi\n");
 
-	if ((!hascashe) && (!hasprequery)) {
+	if (!hascashe) {
 		brGetPages(sockfd,nrOfServers,SiderHeder,Sider,&pageNr,nrOfPiServers);
 	}
 
@@ -1784,7 +1795,7 @@ int main(int argc, char *argv[])
         	gettimeofday(&start_time, NULL);
 	#endif
 	
-	handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, (hascashe || hasprequery), &errorha, pageNr,
+	handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, hascashe, &errorha, pageNr,
 	               nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers,&queryNodeHeder, &demo_db);
 
 	#ifdef DEBUG_TIME
@@ -1821,11 +1832,7 @@ int main(int argc, char *argv[])
 
 	totlaAds = 0;
 
-	//skriver ikke ut masse data hvis vi lager prequery
-	if (dispconfig.writeprequery) {
-		printf("query \"%s\", total %i,showabal %i, nodes %i, time %f\n",QueryData.queryhtml,FinalSiderHeder.TotaltTreff,FinalSiderHeder.showabal,nrRespondedServers,FinalSiderHeder.total_usecs);
-	}
-	else if (QueryData.outformat == _OUT_FOMRAT_OPENSEARCH) {
+	if (QueryData.outformat == _OUT_FOMRAT_OPENSEARCH) {
 		disp_out_opensearch(
 			FinalSiderHeder.showabal, 
 			Sider, &queryNodeHeder, 
@@ -1837,12 +1844,12 @@ int main(int argc, char *argv[])
 	}
 	else if ((QueryData.outformat == _OUT_FOMRAT_SD) && (QueryData.version == 2.0)) {
 		noDoctype = 1; //det var ikke doctype orginalt i xml'en. Og sende den bryter 24so.
-    		disp_out_sd_v2_0(FinalSiderHeder, QueryData, noDoctype, SiderHeder, hascashe, hasprequery, nrRespondedServers, (nrOfServers + nrOfPiServers), nrOfAddServers, dispatcherfiltersTraped,
+    		disp_out_sd_v2_0(FinalSiderHeder, QueryData, noDoctype, SiderHeder, hascashe, nrRespondedServers, (nrOfServers + nrOfPiServers), nrOfAddServers, dispatcherfiltersTraped,
 		sockfd, addsockfd, AddSiderHeder, errorha, Sider, queryNodeHeder, etime
 		);
 	} 
 	else if ((QueryData.outformat == _OUT_FOMRAT_SD) && (QueryData.version == 2.1)) { 
-    		disp_out_sd_v2_1(FinalSiderHeder, QueryData, noDoctype, SiderHeder, hascashe, hasprequery, nrRespondedServers, (nrOfServers + nrOfPiServers), nrOfAddServers, dispatcherfiltersTraped,
+    		disp_out_sd_v2_1(FinalSiderHeder, QueryData, noDoctype, SiderHeder, hascashe, nrRespondedServers, (nrOfServers + nrOfPiServers), nrOfAddServers, dispatcherfiltersTraped,
 		sockfd, addsockfd, AddSiderHeder, errorha, Sider, queryNodeHeder, etime
 		);
 	} 
@@ -1865,7 +1872,7 @@ int main(int argc, char *argv[])
 
 	//30 mai 2007
 	//ser ut til å skape problemer når vi har cashed verdier her
-	if ((!hascashe) && (!hasprequery)) {
+	if (!hascashe) {
 	//kalkulerer dette på ny, men uten pi servere
 	nrRespondedServers = 0;
         for (i=0;i<nrOfServers;i++) {
@@ -1883,16 +1890,6 @@ int main(int argc, char *argv[])
 	}
 	}
 
-	#ifndef BLACK_BOKS
-		if ((LOGFILE = fopen(QUERY_LOG_FILE,"a")) == NULL) {
-			perror(QUERY_LOG_FILE);
-		}
-		else {
-			flock(fileno(LOGFILE),LOCK_EX);
-	        	fprintf(LOGFILE,"%s %i %f nodes: %i\n",queryNodeHeder.query,FinalSiderHeder.TotaltTreff,FinalSiderHeder.total_usecs,nrRespondedServers);
-	        	fclose(LOGFILE);
-		}
-	#endif
 
 	#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
@@ -1903,26 +1900,29 @@ int main(int argc, char *argv[])
 	#ifdef WITH_CASHE
 	//FILE *CACHE;
 	if (hascashe) {
-		//touch
-		//CACHE = open(cashefile,"r+b");
-		//fputc('1',CACHE); //fremprovoserer en oppdatering av akksestiden		
-		//fclose(CACHE);
-	}
-	else if(hasprequery) {
-		//har prequery
+		//touch - fremprovoserer en oppdatering av akksestiden
+		u_char byte;
+		int fd;
+
+		if ((fd = open(cachepath, O_RDWR, 0)) == -1) { 
+			perror(cachepath);
+		}
+		else {
+			if (	   (read(fd, &byte, sizeof(byte)) != sizeof(byte)) 
+				|| (lseek(fd, (off_t)0, SEEK_SET) == -1) 
+				|| (write(fd, &byte, sizeof(byte)) != sizeof(byte)) 
+				|| (close(fd) != 0)) 
+			{
+				perror(cachepath);
+			}
+		}
 	}
 	else if (!QueryData.filterOn) {
 
 	}
 	//skriver bare cashe hvis vi fikk svar fra all servere, og vi var ikke ute etter ranking
-	else if (getRank == 0 && pageNr > 0 && nrRespondedServers == nrOfServers) {
-		if (dispconfig.writeprequery) {
-			if (!cache_write(prequeryfile, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, pageNr)) {
-				//fprintf(stderr, "Prequery file: %s\n",prequeryfile);
-				perror("cache_write");
-			}
-		}
-		else if (!cache_write(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, pageNr)) {
+	else if (getRank == 0 && pageNr > 0 && nrRespondedServers == nrOfServers && dispconfig.usecashe) {
+		if (!cache_write(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, pageNr)) {
 			//fprintf(stderr, "Cache file: %s\n", cachepath);
 			perror("cache_write");
 		}
@@ -1936,7 +1936,7 @@ int main(int argc, char *argv[])
 	/********************************************************************************************/
 	//mysql logging
 	/********************************************************************************************/
-	if (!dispconfig.writeprequery) {
+	if (!QueryData.nolog) {
 		mysql_search_logg(&demo_db, &QueryData, &FinalSiderHeder, totlaAds, &queryNodeHeder, nrOfServers, Sider, nrOfPiServers);
 	}
 	/********************************************************************************************/
@@ -1983,9 +1983,8 @@ int main(int argc, char *argv[])
 	#endif
 
 	//må vi tvinge en buffer tømming ???
-	if (!dispconfig.writeprequery) {
-		printf("\n\n");	
-	}
+	printf("\n\n");	
+	
 
 	#ifdef DEBUG_TIME
         	gettimeofday(&end_time, NULL);
@@ -2331,9 +2330,6 @@ void read_dispatcher_cfg(struct config_t * cfg, struct dispconfigFormat * dispco
 
 	dispconfig->bannedwordsnr = 0;
 
-  	#ifdef BLACK_BOKS
-		dispconfig->writeprequery = 0;
-	#else
 	
 	config_setting_t *cfgarray;
 
@@ -2344,19 +2340,7 @@ void read_dispatcher_cfg(struct config_t * cfg, struct dispconfigFormat * dispco
 
 		dispconfig->usecashe = config_setting_get_bool(cfgarray);
 
-	    	if ( (cfgarray = config_lookup(cfg, "useprequery") ) == NULL) {
-			printf("can't load \"useprequery\" from config\n");
-			exit(1);
-	  	}
-
-		dispconfig->useprequery = config_setting_get_bool(cfgarray);
-
-	    	if ( (cfgarray = config_lookup(cfg, "writeprequery") ) == NULL) {
-			printf("can't load \"writeprequery\" from config\n");
-			exit(1);
-	  	}
-
-		dispconfig->writeprequery = config_setting_get_bool(cfgarray);
+	#ifndef BLACK_BOKS
 
 	    	if ( (cfgarray = config_lookup(cfg, "UrlToDocID") ) == NULL) {
 			printf("can't load \"UrlToDocID\" from config\n");

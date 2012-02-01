@@ -41,7 +41,6 @@ void disp_out_sd_v2_0(
 	int noDoctype,
         struct SiderHederFormat *SiderHeder,
 	int hascashe,
-	int hasprequery,
 	int nrRespondedServers,
 	int num_servers,
 	int nrOfAddServers,
@@ -70,7 +69,7 @@ void disp_out_sd_v2_0(
 	    #endif
     	    printf("<RESULT_INFO TOTAL=\"%i\" SPELLCHECKEDQUERY=\"%s\" QUERY=\"%s\" HILITE=\"%s\" TIME=\"%f\" FILTERED=\"%i\" \
 	        SHOWABAL=\"%i\" CASHE=\"%i\" \
-		PREQUERY=\"%i\" GEOIPCONTRY=\"%s\" SUBNAME=\"%s\" BOITHOHOME=\"%s\" NROFSEARCHNODES=\"%i\" XMLVERSION=\"2.0\"/>\n",
+		GEOIPCONTRY=\"%s\" SUBNAME=\"%s\" BOITHOHOME=\"%s\" NROFSEARCHNODES=\"%i\" XMLVERSION=\"2.0\"/>\n",
 		FinalSiderHeder.TotaltTreff,
 		#ifdef WITH_SPELLING
 		SiderHeder->spellcheckedQuery,
@@ -83,7 +82,6 @@ void disp_out_sd_v2_0(
 		FinalSiderHeder.filtered,
 		FinalSiderHeder.showabal,
 		hascashe,
-		hasprequery,
 		QueryData.GeoIPcontry,
 		QueryData.subname,
 		bfile(""),
@@ -112,7 +110,7 @@ void disp_out_sd_v2_0(
 	    printf("</DISPATCHER_INFO>\n");
 
 
-	    if ((!hascashe) && (!hasprequery)) {
+	    if (!hascashe) {
 
 		//viser info om serverne som svarte
 		//printf("<SEARCHNODES_INFO NROFSEARCHNODES=\"%i\" />\n",nrRespondedServers);
@@ -188,7 +186,7 @@ void disp_out_sd_v2_0(
 	    }
 	    else {
 		printf("<SEARCHNODES>\n");
-		printf("\t<NODENAME>cashe.exactseek.com</NODENAME>\n");
+		printf("\t<NODENAME>cashe.localhost.com</NODENAME>\n");
 		printf("\t<TOTALTIME>%f</TOTALTIME>\n",FinalSiderHeder.total_usecs);
 		printf("\t<FILTERED>0</FILTERED>\n");
 		printf("\t<HITS>%i</HITS>\n",FinalSiderHeder.TotaltTreff);
@@ -252,7 +250,13 @@ void disp_out_sd_v2_0(
 	    }		
 
 	    #ifdef ATTRIBUTES
-	    printf("%s\n", SiderHeder[0].navigation_xml);
+	    // Vi definerer <navigation> i searchdbb da vi vil ha med query. Hvis noe gikk feil må vi derfor definere den her også 
+	    if (SiderHeder[0].navigation_xml[0] != '\0') {
+	    	printf("%s\n", SiderHeder[0].navigation_xml);
+	    }
+	    else {
+		printf("<navigation>\n");
+	    }
 	    #endif
 
 	    {
@@ -528,7 +532,15 @@ void disp_out_sd_v2_0(
 					if (Sider[i].DocumentIndex.CrawleDato != 0) {
 						printf("\t<TIME_UNIX>%u</TIME_UNIX>\n",Sider[i].DocumentIndex.CrawleDato);
 						// Magnus: Konverterer til locale:
-				        	setlocale(LC_TIME, "no_NO.utf8");
+						if (strcmp(queryNodeHeder.HTTP_ACCEPT_LANGUAGE,"no") == 0) {
+				        		setlocale(LC_TIME, "no_NO.utf8");
+						}
+						else if (strcmp(queryNodeHeder.HTTP_ACCEPT_LANGUAGE,"fr") == 0) {
+							setlocale(LC_TIME, "fr_FR.utf8");
+						}
+						else {
+				        		setlocale(LC_TIME, "en_US.utf8");
+						}
 						strftime(timebuf, 63, "%A %e. %b %Y %k:%M", localtime((time_t *)&Sider[i].DocumentIndex.CrawleDato));
 						timebuf[64] = '\0';
 						printf("\t<TIME_ISO>%s</TIME_ISO>\n",timebuf);
@@ -631,7 +643,6 @@ void disp_out_sd_v2_1(
 	int noDoctype,
         struct SiderHederFormat *SiderHeder,
 	int hascashe,
-	int hasprequery,
 	int nrRespondedServers,
 	int num_servers,
 	int nrOfAddServers,
@@ -660,7 +671,7 @@ void disp_out_sd_v2_1(
 	    #endif
     	    printf("<result_info query=\"%s\" spellcheckedquery=\"%s\" filtered=\"%i\" \
 	        shown=\"%i\" total=\"%i\" cache=\"%i\" \
-		prequery=\"%i\" time=\"%f\" geoipcountry=\"%s\" subname=\"%s\" boithohome=\"%s\" nrofsearchnodes=\"%i\" xmlversion=\"2.1\"/>\n",
+		time=\"%f\" geoipcountry=\"%s\" subname=\"%s\" boithohome=\"%s\" nrofsearchnodes=\"%i\" xmlversion=\"2.1\"/>\n",
 		QueryData.queryhtml,
 		#ifdef WITH_SPELLING
 		SiderHeder->spellcheckedQuery,
@@ -671,7 +682,6 @@ void disp_out_sd_v2_1(
 		FinalSiderHeder.showabal,
 		FinalSiderHeder.TotaltTreff,
 		hascashe,
-		hasprequery,
 		FinalSiderHeder.total_usecs,
 		QueryData.GeoIPcontry,
 		QueryData.subname,
@@ -700,7 +710,7 @@ void disp_out_sd_v2_1(
 	    printf("</dispatcher_info>\n");
 
 
-	    if ((!hascashe) && (!hasprequery)) {
+	    if (!hascashe) {
 
 		//viser info om serverne som svarte
 		//printf("<SEARCHNODES_INFO NROFSEARCHNODES=\"%i\" />\n",nrRespondedServers);
@@ -774,7 +784,7 @@ void disp_out_sd_v2_1(
 	    }
 	    else {
 		printf("<searchnode>\n");
-		printf("\t<nodename>cache.exactseek.com</nodename>\n");
+		printf("\t<nodename>cache.localhost.com</nodename>\n");
 		printf("\t<totaltime>%f</totaltime>\n",FinalSiderHeder.total_usecs);
 		printf("\t<hits>%i</hits>\n",FinalSiderHeder.TotaltTreff);
 		printf("\t<filtered>0</filtered>\n");
@@ -838,7 +848,14 @@ void disp_out_sd_v2_1(
 	    }		
 
 	    #ifdef ATTRIBUTES
-	    printf("%s\n", SiderHeder[0].navigation_xml);
+	    // Vi definerer <navigation> i searchdbb da vi vil ha med query. Hvis noe gikk feil må vi derfor definere den her også 
+	    if (SiderHeder[0].navigation_xml[0] != '\0') {
+	    	printf("%s\n", SiderHeder[0].navigation_xml);
+	    }
+	    else {
+		printf("<navigation>\n");
+	    }
+
 	    #endif
 
 	    {
@@ -1109,7 +1126,15 @@ void disp_out_sd_v2_1(
 					if (Sider[i].DocumentIndex.CrawleDato != 0) {
 						printf("\t<time_unix>%u</time_unix>\n",Sider[i].DocumentIndex.CrawleDato);
 						// Magnus: Konverterer til locale:
-				        	setlocale(LC_TIME, "no_NO.utf8");
+						if (strcmp(queryNodeHeder.HTTP_ACCEPT_LANGUAGE,"no") == 0) {
+				        		setlocale(LC_TIME, "no_NO.utf8");
+						}
+						else if (strcmp(queryNodeHeder.HTTP_ACCEPT_LANGUAGE,"fr") == 0) {
+							setlocale(LC_TIME, "fr_FR.utf8");
+						}
+						else {
+				        		setlocale(LC_TIME, "en_US.utf8");
+						}
 						strftime(timebuf, 63, "%A %e. %b %Y %k:%M", localtime((time_t *)&Sider[i].DocumentIndex.CrawleDato));
 						timebuf[64] = '\0';
 						printf("\t<time_iso>%s</time_iso>\n",timebuf);

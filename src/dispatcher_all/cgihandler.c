@@ -251,5 +251,8 @@ void cgi_fetch_full(struct QueryDataForamt *qdata) {
 
 	if ((tmpint = cgi_getentryint("maxhits")) != 0) 
 		qdata->MaxsHits = tmpint;
+
+	qdata->nocache = cgi_getentryint("nocache");
+	qdata->nolog = cgi_getentryint("nolog");
 }
 

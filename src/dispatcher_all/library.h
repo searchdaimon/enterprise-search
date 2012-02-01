@@ -32,7 +32,6 @@
 
 #define DefultMaxsHits 20
 
-#define QUERY_LOG_FILE "/home/boitho/logs/query.log"
 
     struct errorhaFormat {
                 int nr;
@@ -78,7 +77,7 @@ void dieLog(MYSQL *demo_db, struct QueryDataForamt *QueryData, int errorcode, ch
 
 #ifdef WITH_CASHE
 
-#define CACHE_STRUCT_VERSION "1.7"
+#define CACHE_STRUCT_VERSION "1.8"
 
 enum cache_type {
         CACHE_PREQUERY,
@@ -90,7 +89,7 @@ unsigned int
 cache_hash(char *query, int start, char *country);
 
 char *
-cache_path(char *path, size_t len, enum cache_type type, char *query, int start, char *country);
+cache_path(char *path, size_t len, enum cache_type type, char *query, int start, char *country, int anonymous, char search_user[], struct subnamesFormat *collections, int num_colls);
 
 int
 cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,

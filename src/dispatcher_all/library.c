@@ -75,16 +75,9 @@ void die_va(int errorcode,char query[], const char *fmt, va_list ap) {
 	printf("</search>\n");
 
 
-        if ((LOGFILE = fopen(QUERY_LOG_FILE,"a")) == NULL) {
-                perror(QUERY_LOG_FILE);
-        }
-        else {
-		
-		flock(fileno(LOGFILE),LOCK_EX);
-		vfprintf(LOGFILE,fmt,ap);
-		fprintf(LOGFILE,"\n");
-                fclose(LOGFILE);
-        }
+	vfprintf(stderr,fmt,ap);
+	fprintf(stderr,"\n");
+
 
         va_end(ap);
 
@@ -596,9 +589,13 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 						}
 
 						bsread(&sockfd[i], sizeof(len), (char *)&len, maxSocketWait_SiderHeder);
+						Sider[*pageNr].attributelen = len;
+
 						Sider[*pageNr].attributes = malloc(len+1);
 						bsread(&sockfd[i], len, Sider[*pageNr].attributes, maxSocketWait_SiderHeder);
 						Sider[*pageNr].attributes[len] = '\0';
+
+						
 
 						(*pageNr) += 1;
 					}
@@ -755,9 +752,24 @@ cache_hash(char *query, int start, char *country)
 	return hash;
 }
 
+int
+cache_collhash(struct subnamesFormat *collections, int num_colls) {
+
+	int i;
+	int ret = 0;
+	char *p;
+
+	for (i=0;i<num_colls;i++) {
+		for(p = collections[i].subname; *p; p++)
+			ret += *p;
+	}
+
+
+	return ret;
+}
 
 char *
-cache_path(char *path, size_t len, enum cache_type type, char *query, int start, char *country)
+cache_path(char *path, size_t len, enum cache_type type, char *query, int start, char *country, int anonymous, char search_user[], struct subnamesFormat *collections, int num_colls)
 {
 	char tmppath[PATH_MAX];
 	char modquery[PATH_MAX];
@@ -793,7 +805,7 @@ cache_path(char *path, size_t len, enum cache_type type, char *query, int start,
 	snprintf(tmppath, sizeof(tmppath), "/%x%x", *p & 0xF, (*p >> 4) & 0xF);
 	strncat(path, tmppath, len);
 	mkdir(path, 0755);
-	snprintf(tmppath, sizeof(tmppath), "/%s.%d.%s", modquery, start, country);
+	snprintf(tmppath, sizeof(tmppath), "/%s.%d.%s.%s.%i", modquery, start, country, anonymous ? "anonymous":search_user, cache_collhash(collections, num_colls));
 	strncat(path, tmppath, len);
 
 	return path;
@@ -805,7 +817,7 @@ cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struc
            size_t sider_header_len, struct SiderFormat *sider, int cachetimeout, size_t max_sizer)
 {
 	gzFile *cache;
-	int fd, i, ret;
+	int fd, i, ret, k, len;
 	struct stat st;
 
 	if ((fd = open(path, O_RDONLY)) == -1) {
@@ -853,6 +865,24 @@ cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struc
 		goto err;
 	}
 
+
+	#ifdef ATTRIBUTES
+		for(i=0; i<1 ; i++) {
+			
+			if ((sider_header[i].navigation_xml = malloc(sider_header[i].navigation_xml_len +1)) == NULL) {
+				perror("malloc navigation_xml");
+				goto err;
+			}
+
+		        if (gzread(cache, sider_header[i].navigation_xml, sider_header[i].navigation_xml_len) != sider_header[i].navigation_xml_len) {
+		                perror("gzwrite(final_sider)");
+		                goto err;
+		        }
+			sider_header[i].navigation_xml[sider_header[i].navigation_xml_len] = '\0';
+		}
+	#endif
+
+
 	//ser ut til at vi av og til kan ha flere sider en vi har plass til i bufferen
 	if (*page_nr > max_sizer) {
 		fprintf(stderr, "Bug?: cache_read: have more pages in cache then space in buffer! nr of pages was %i\n",*page_nr);
@@ -865,9 +895,77 @@ cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struc
 			goto err;
 		}
 
+		#ifdef ATTRIBUTES
+		if ((sider[i].attributes = malloc(sider[i].attributelen +1)) == NULL) {
+			perror("Mallco attributes");
+			goto err;
+		}
+
+		if (gzread(cache, sider[i].attributes, sider[i].attributelen) != (sider[i].attributelen)) {
+			perror("Unable to write cache attributelen");
+			goto err;
+		}
+
+		sider[i].attributes[sider[i].attributelen] = '\0';
+
+
+                /* write urls ... */
+                sider[i].urls = calloc(sider[i].n_urls, sizeof(*(sider->urls)));
+                if (sider[i].url == NULL)
+                        err(1, "calloc(urls)");
+
+                for (k = 0; k < sider[i].n_urls; k++) {
+
+
+
+			if (gzread(cache, &len, sizeof(len)) != (sizeof(len))) {
+				perror("Unable to read url len");
+        			goto err;
+                	}
+			sider[i].urls[k].url = malloc(len+1);
+			if (gzread(cache, sider[i].urls[k].url, len) != (len)) {
+				perror("Unable to read url len");
+        			goto err;
+                	}
+			sider[i].urls[k].url[len] = '\0';
+
+
+			if (gzread(cache, &len, sizeof(len)) != (sizeof(len))) {
+				perror("Unable to read uri len");
+        			goto err;
+                	}
+			sider[i].urls[k].uri = malloc(len+1);
+			if (gzread(cache, sider[i].urls[k].uri, len) != (len)) {
+				perror("Unable to read uri len");
+        			goto err;
+                	}
+			sider[i].urls[k].uri[len] = '\0';
+
+
+			if (gzread(cache, &len, sizeof(len)) != (sizeof(len))) {
+				perror("Unable to read fulluri len");
+        			goto err;
+                	}
+			sider[i].urls[k].fulluri = malloc(len+1);
+			if (gzread(cache, sider[i].urls[k].fulluri, len) != (len)) {
+				perror("Unable to read fulluri len");
+        			goto err;
+                	}
+			sider[i].urls[k].fulluri[len] = '\0';
+
+			#ifdef DEBUG
+                        printf("n_urls=%i\n", sider[i].n_urls);
+                        printf("url=\"%s\", uri=\"%s\", fulluri=\"%s\"\n", sider[i].urls[k].url, sider[i].urls[k].uri, sider[i].urls[k].fulluri);
+			#endif				
+
+		}
+
+
+
+		#endif
+
 		//fprintf(stderr, "cache: read: %s\n", sider[i].uri);
 	}
-	
 
 	goto out;
  err:
@@ -886,7 +984,7 @@ cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, stru
             size_t sider_header_len, struct SiderFormat *sider, size_t sider_len)
 {
 	gzFile *cache;
-	int fd, i, ret;
+	int fd, i, ret, k, len;
 
 	//temp jayde 
 	//final_sider->TotaltTreff = 20;
@@ -905,6 +1003,12 @@ cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, stru
 		return 0;
 	}
 
+	// Debug: Disable compresion
+	//if (gzsetparams(cache,Z_NO_COMPRESSION,Z_DEFAULT_STRATEGY) !=  Z_OK) {
+	//	fprintf(stderr,"Cant disable commpresion\n");
+	//	exit(-1);
+	//}
+
 	ret = 1;
 	if (gzwrite(cache, page_nr, sizeof(*page_nr)) != sizeof(*page_nr)) {
 		perror("gzwrite(page_nr)");
@@ -921,12 +1025,74 @@ cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, stru
 		goto err;
 	}
 
+	#ifdef ATTRIBUTES
+		// wi ownly have one server for no
+		for(i=0; i<1 ; i++) {
+	
+		        if (gzwrite(cache, sider_header[i].navigation_xml, sider_header[i].navigation_xml_len) != sider_header[i].navigation_xml_len) {
+		                perror("gzwrite(navigation_xml)");
+		                goto err;
+		        }
+
+		}
+	#endif
+
+
 	for (i = 0; i < sider_len; i++) {
 		if (gzwrite(cache, &sider[i], sizeof(*sider)) != sizeof(*sider)) {
 			perror("Unable to write cache");
 			goto err;
 		}
-		//fprintf(stderr, "cache: wrote: %s\n", sider[i].uri);
+
+		#ifdef ATTRIBUTES
+		if (gzwrite(cache, sider[i].attributes, sider[i].attributelen) != (sider[i].attributelen)) {
+			perror("Unable to write cache attributelen");
+			goto err;
+		}
+            
+
+                for (k = 0; k < sider[i].n_urls; k++) {
+
+			len = strlen(sider[i].urls[k].url);
+			if (gzwrite(cache, &len, sizeof(len)) != (sizeof(len))) {
+				perror("Unable to read url len");
+        			goto err;
+                	}
+			if (gzwrite(cache, sider[i].urls[k].url, len) != (len)) {
+				perror("Unable to read url len");
+        			goto err;
+                	}
+
+
+			len = strlen(sider[i].urls[k].uri);
+			if (gzwrite(cache, &len, sizeof(len)) != (sizeof(len))) {
+				perror("Unable to read uri len");
+        			goto err;
+                	}
+			if (gzwrite(cache, sider[i].urls[k].uri, len) != (len)) {
+				perror("Unable to read uri len");
+        			goto err;
+                	}
+
+
+			len = strlen(sider[i].urls[k].fulluri);
+			if (gzwrite(cache, &len, sizeof(len)) != (sizeof(len))) {
+				perror("Unable to read fulluri len");
+        			goto err;
+                	}
+			if (gzwrite(cache, sider[i].urls[k].fulluri, len) != (len)) {
+				perror("Unable to read fulluri len");
+        			goto err;
+                	}
+							
+
+		}
+
+
+
+		#endif
+
+
 	}
 	
 
