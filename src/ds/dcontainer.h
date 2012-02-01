@@ -8,6 +8,9 @@
 #ifndef _DCONTAINER_H_
 #define _DCONTAINER_H_
 
+#ifndef _GNU_SOURCE
+    #define _GNU_SOURCE
+#endif
 
 #include <stdarg.h>
 #include <string.h>
