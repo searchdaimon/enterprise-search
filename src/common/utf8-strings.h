@@ -203,6 +203,54 @@ static inline int convert_U_utf8( utf8_byte *c, int val )
 }
 
 
+static inline int convert_utf8_U( utf8_byte *c )
+{
+    int		val = 0;
+
+    if ((int)c[0] >= 240)
+	{
+	    val+= ((int)c[0] -240)<<18;
+	    val+= ((int)c[1] -128)<<12;
+	    val+= ((int)c[2] -128)<<6;
+	    val+= ((int)c[3] -128);
+	}
+    else if ((int)c[0] >= 224)
+	{
+	    val+= ((int)c[0] -224)<<12;
+	    val+= ((int)c[1] -128)<<6;
+	    val+= ((int)c[2] -128);
+	}
+    else if ((int)c[0] >= 192)
+	{
+	    val+= ((int)c[0] -192)<<6;
+	    val+= ((int)c[1] -128);
+	}
+    else
+	{
+	    val+= (int)c[0];
+	}
+
+    return val;
+}
+
+
+static inline int valid_utf8_byte( utf8_byte *c, int max_len )
+{
+    if (max_len >= 1 && c[0] < 128) return 1;
+
+    if (max_len >= 2 && c[0] >= 192 && c[0] < 224
+        && c[1] >= 128) return 2;
+
+    if (max_len >= 3 && c[0] >= 224 && c[0] < 240
+        && c[1] >= 128 && c[2] >= 128) return 3;
+
+    if (max_len >= 4 && c[0] >= 240
+        && c[1] >= 128 && c[2] >= 128 && c[3] >= 128) return 4;
+
+    return 0;
+}
+
+
 static inline size_t utf8_strlen( const utf8_byte *s )
 {
     int		i, sz;
