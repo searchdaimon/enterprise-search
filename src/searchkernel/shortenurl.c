@@ -50,7 +50,7 @@ void shortenurl(char *url,int urllen) {
 	char proto[128];
 	char origurl[urllen+1];
 
-	bblog(DEBUG, "shortenurl: inn url %s", url);
+	bblog(DEBUGINFO, "shortenurl: inn url %s", url);
 	
 	newurl[0] = '\0';
 	proto[0] = '\0';
@@ -75,13 +75,13 @@ void shortenurl(char *url,int urllen) {
 	strcpy(origurl, url);
 
 	#ifdef DEBUG
-		bblog(DEBUG, "shortenurl: after proto \"%s\"", url);
+		bblog(DEBUGINFO, "shortenurl: after proto \"%s\"", url);
 	#endif
 
 	//hvis den er kort kan vi bare returnere
 	if (len < TARGET_VISIBLE_URL_LEN) {
 		#ifdef DEBUG
- 			bblog(DEBUG, "shortenurl: url is short enough. Don't need to shorten");
+ 			bblog(DEBUGINFO, "shortenurl: url is short enough. Don't need to shorten");
 		#endif
 
 		snprintf(url, urllen, "%s%s", proto, origurl);
@@ -90,13 +90,13 @@ void shortenurl(char *url,int urllen) {
 
   	if ((TokCount = split(url, "/", &Data)) > 1) {
 		#ifdef DEBUG
-		bblog(DEBUG, "seperator: / ");
+		bblog(DEBUGINFO, "seperator: / ");
 		#endif
 		strcpy(slash,"/");
 	}
 	else if ((TokCount = split(url, "\\", &Data)) > 1) {
 		#ifdef DEBUG
-		bblog(DEBUG, "seperator: \\ ");
+		bblog(DEBUGINFO, "seperator: \\ ");
 		#endif
 		strcpy(slash,"\\");
 	}
@@ -118,7 +118,7 @@ void shortenurl(char *url,int urllen) {
 	--TokCount; //split ser ut til å begynner på 1, ikke på 0 
 
 	#ifdef DEBUG
-  	bblog(DEBUG, "\tfound %d token(s):", TokCount);
+  	bblog(DEBUGINFO, "\tfound %d token(s):", TokCount);
 	#endif
 
   	Count = 0;
@@ -126,7 +126,7 @@ void shortenurl(char *url,int urllen) {
 	added = 0;
 	suburllen = 0;
 	while( (Data[Count] != NULL) ) {
-		bblog(DEBUG, "a: \t\t%d\t\"%s\"", Count, Data[Count]);
+		bblog(DEBUGINFO, "a: \t\t%d\t\"%s\"", Count, Data[Count]);
 		suburllen = strlen(Data[Count]);
 
 		if ((added + suburllen) < (TARGET_VISIBLE_URL_LEN * 0.3)) {
@@ -148,12 +148,12 @@ void shortenurl(char *url,int urllen) {
 	added = 0;
 	suburllen = 0;
 	while( (Count > 0) ) {
-		bblog(DEBUG, "b: \t\t%d\t\"%s\"", Count, Data[Count]);
+		bblog(DEBUGINFO, "b: \t\t%d\t\"%s\"", Count, Data[Count]);
 
 		suburllen = strlen(Data[Count]);
 		if ((added + suburllen) < (TARGET_VISIBLE_URL_LEN * 0.7)) {
 			#ifdef DEBUG
-			bblog(DEBUG, "candidate %s",Data[Count]);
+			bblog(DEBUGINFO, "candidate %s",Data[Count]);
 			#endif
 		}
 		else {
@@ -164,11 +164,11 @@ void shortenurl(char *url,int urllen) {
 		--Count;
 	}
 
-	bblog(DEBUG, "TokCount %i, count %i",TokCount,Count);
+	bblog(DEBUGINFO, "TokCount %i, count %i",TokCount,Count);
 
 	//hvis også siste navn er for langt, hånterer vi det spesifikt.
 	if (TokCount == Count) {
-		bblog(DEBUG, "bb");
+		bblog(DEBUGINFO, "bb");
 		strlcat(newurl,slash,sizeof(newurl));
 		strlcat(newurl,Data[Count],sizeof(newurl));		
 
@@ -176,22 +176,22 @@ void shortenurl(char *url,int urllen) {
 	else {
 		//printf("addint last part:\n");
 		for (i=Count+1;i<TokCount+1;i++) {
-			bblog(DEBUG, "c: \t\t%d\t\"%s\"", i, Data[i]);
+			bblog(DEBUGINFO, "c: \t\t%d\t\"%s\"", i, Data[i]);
 
-			bblog(DEBUG, "newurl: len %i, \"%s\"",strlen((char*)newurl),newurl);
+			bblog(DEBUGINFO, "newurl: len %i, \"%s\"",strlen((char*)newurl),newurl);
 
                 	strlcat(newurl,slash,sizeof(newurl));
 			strlcat(newurl,Data[i],sizeof(newurl));
 		}
 	}
 
-	bblog(DEBUG, "shortenurl 1: newurl \"%s\"",newurl);
+	bblog(DEBUGINFO, "shortenurl 1: newurl \"%s\"",newurl);
 	//runarb 27 mai
 	//Hvis den har et utf 8 tegn der vi slutter å kopierer for vi med bare halve tegnet, og bryter da xml'en
-	bblog(DEBUG, "strlen %i, size %i",strlen((char*)newurl),sizeof(newurl));
+	bblog(DEBUGINFO, "strlen %i, size %i",strlen((char*)newurl),sizeof(newurl));
 	i = strlen((char*)newurl) -1;
 	while(i!=0 && newurl[i] > 127) {
-		bblog(DEBUG, "removing char %c",newurl[i]);
+		bblog(DEBUGINFO, "removing char %c",newurl[i]);
 		newurl[i] = '\0';
 		--i;
 	}
@@ -200,7 +200,7 @@ void shortenurl(char *url,int urllen) {
 	//	) {
 	//	newurl[sizeof(newurl) -1] = 'X';
 	//}	
-	bblog(DEBUG, "shortenurl 2: newurl \"%s\"",newurl);
+	bblog(DEBUGINFO, "shortenurl 2: newurl \"%s\"",newurl);
 
 	FreeSplitList(Data);
 	
