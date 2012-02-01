@@ -34,6 +34,10 @@ char	*descr[lang_size][ext_size];
 */
 //#define YY_EXTRA_TYPE	struct readconf_data*
 
+#ifdef __LP64__
+#define YYSTYPE long int
+#endif
+
 %}
 
 blank		[\ \t\r\f\n]
@@ -57,7 +61,7 @@ icon			{ return ICON_ID; }
 \}			{ return BRACKET_CLOSE; }
 \"[^\"]*\"		{
 			    yytext[strlen(yytext)-1] = '\0';
-			    *fteget_lval(yyscanner) = (int)&(yytext[1]);
+			    *fteget_lval(yyscanner) = (YYSTYPE)&(yytext[1]);
 			    return STRING_ID;
 			}
 .|\n			{}

@@ -49,7 +49,7 @@ from			{ /* ignore */ }
 			    if (!re->next)
 				{
 				    re->buf[re->ptr++] = '\0';
-				    *racget_lval(yyscanner) = (int)&(re->buf[re->last_ptr]);
+				    *racget_lval(yyscanner) = (YYSTYPE)&(re->buf[re->last_ptr]);
 				    re->last_ptr = re->ptr;
 				    if (re->last_ptr > 3072) re->ptr = re->last_ptr = 0;
 				}
@@ -72,7 +72,7 @@ from			{ /* ignore */ }
 			    if (!re->next)
 				{
 				    re->buf[re->ptr++] = '\0';
-				    *racget_lval(yyscanner) = (int)&(re->buf[re->last_ptr]);
+				    *racget_lval(yyscanner) = (YYSTYPE)&(re->buf[re->last_ptr]);
 				    re->last_ptr = re->ptr;
 				    if (re->last_ptr > 3072) re->ptr = re->last_ptr = 0;
 				}

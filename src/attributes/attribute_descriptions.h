@@ -18,4 +18,5 @@ void adf_destroy(struct adf_data *adata);
 int adf_get_val_descr(struct adf_data *adata, char *lang, char *key, char *value, char **description, char **icon);
 int adf_get_key_descr(struct adf_data *adata, char *lang, char *key, char **description, char **icon);
 
+
 #endif	// ATTR_DESCR_H

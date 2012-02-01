@@ -249,11 +249,11 @@ void attribute_finish_count()
 }
 
 
-va_list va_attribute_count_add( int size, int count, container *attributes, int argc, va_list ap )
+void va_attribute_count_add( int size, int count, container *attributes, int argc, va_list *ap )
 {
     ant[0]++;
     int		i;
-    char	*id = va_arg(ap, char*);
+    char	*id = va_arg(*ap, char*);
     container	*subattr;
 
     iterator	it = map_find(attributes, id);
@@ -289,9 +289,7 @@ va_list va_attribute_count_add( int size, int count, container *attributes, int 
 	    map_insert(attributes, id, subattr, M);
 	}
 
-    if (argc > 1) ap = va_attribute_count_add( size, count, subattr, argc-1, ap );
-
-    return ap;
+    if (argc > 1) va_attribute_count_add( size, count, subattr, argc-1, ap );
 }
 
 void attribute_count_add( int size, int count, container *attributes, int argc, ... )
@@ -300,7 +298,7 @@ void attribute_count_add( int size, int count, container *attributes, int argc, 
     va_list		ap;
 
     va_start(ap, argc);
-    ap = va_attribute_count_add( size, count, attributes, argc, ap );
+    va_attribute_count_add( size, count, attributes, argc, &ap );
     va_end(ap);
 }
 

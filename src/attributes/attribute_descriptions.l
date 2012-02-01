@@ -5,6 +5,10 @@
 
 #include "adf.tab.h"
 
+#ifdef __LP64__
+#define YYSTYPE long int
+#endif
+
 %}
 
 blank		[\ \t\r\f\n]
@@ -24,7 +28,7 @@ icon			{ return ICON_ID; }
 \}			{ return BRACKET_CLOSE; }
 \"[^\"]*\"		{
 			    yytext[strlen(yytext)-1] = '\0';
-			    *adfget_lval(yyscanner) = (int)&(yytext[1]);
+			    *adfget_lval(yyscanner) = (YYSTYPE)&(yytext[1]);
 			    return STRING_ID;
 			}
 .|\n			{}

@@ -11,6 +11,10 @@
 #include "identify_extension.h"
 
 
+#ifdef __LP64__
+#define YYSTYPE long int
+#endif
+
 // --- fra flex:
 typedef void* yyscan_t;
 typedef struct fte_buffer_state *YY_BUFFER_STATE;

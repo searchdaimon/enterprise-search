@@ -13,6 +13,10 @@ struct rac_yy_extra
     buffer	*Bwarnings;
 };
 
+#ifdef __LP64__
+#define YYSTYPE long int
+#endif
+
 #define YY_EXTRA_TYPE struct rac_yy_extra*
 
 #endif	// _READ_ATTRIB_CONF_COMMON_H_

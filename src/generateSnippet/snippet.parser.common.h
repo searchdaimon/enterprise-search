@@ -11,6 +11,10 @@ struct bsgp_yy_extra
     int		stringtop;
 };
 
+#ifdef __LP64__
+#define YYSTYPE long int
+#endif
+
 #define YY_EXTRA_TYPE	struct bsgp_yy_extra*
 
 #endif	// _SNIPPET_PARSER_COMMON_H_

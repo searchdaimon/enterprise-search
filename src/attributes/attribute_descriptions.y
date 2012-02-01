@@ -10,6 +10,9 @@
 
 #include "attribute_descriptions.h"
 
+#ifdef __LP64__
+#define YYSTYPE long int
+#endif
 
 // --- fra flex:
 typedef void* yyscan_t;
@@ -171,7 +174,7 @@ values_ids :
 	{
 	    int		lang_no = adf_findc(data->lang, (char*)$3);
 
-	    if (lang_no<0) fprintf(stderr, "attribute_descrptions: Parse error! Invalid lang-specifier.\n");
+	    if (lang_no<0) fprintf(stderr, "attribute_descriptions: Parse error! Invalid lang-specifier.\n");
 	    else vector_pushback( data->values[lang_no], $5 );
 	}
 	| values_ids ICON_ID EQUALS_ID STRING_ID SEMICOLON_ID

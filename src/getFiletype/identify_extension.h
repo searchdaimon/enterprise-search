@@ -25,4 +25,5 @@ int fte_getext_from_ext(struct fte_data *fdata, char *ext, char ***ptr1, char **
 int fte_groupid(struct fte_data *fdata, char *lang, char *group, char **icon);
 int fte_extid(struct fte_data *fdata, char *ext);
 
+
 #endif	// IDENTIFY_EXTENSION_H
