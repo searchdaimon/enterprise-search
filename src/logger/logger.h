@@ -8,7 +8,7 @@ typedef enum {
 	ERROR,
 	WARN,
 	INFO,
-	DEBUG,
+	DEBUGINFO,
 } severity_t;
 
 typedef struct _logger {

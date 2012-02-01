@@ -21,7 +21,7 @@
 static logger_t logger = {
 	.name = "unknown",
 	.appenders = LOGGER_APPENDER_STDERR,
-	.max_severity = DEBUG,
+	.max_severity = DEBUGINFO,
 };
 static char bblog_path[PATH_MAX];
 static char bblog_configpath[PATH_MAX];
