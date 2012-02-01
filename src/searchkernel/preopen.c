@@ -48,7 +48,7 @@ preopen(void)
  
         char * subname;
 	while (((subname = listAllColl_next(dirh)) != NULL) && (count < MAX_PREOPEM_FILE)) {
-                bblog(DEBUG, "subname: %s", subname);
+                bblog(DEBUGINFO, "subname: %s", subname);
 		for(i=1;i<maxLots;i++) {
 			// vi åpner kun lotter som har DocumentIndex. Dette er spesielt viktig da vi oppretter 
 			// filene hvis de ikke finnes.
@@ -199,7 +199,7 @@ cache_fresh_lot_collection(void)
 					continue;
 
 				sprintf(path+len, "/%s", de->d_name);
-				bblog(DEBUG, "Found file: %s", path);
+				bblog(DEBUGINFO, "Found file: %s", path);
 				fd = open(path, O_RDONLY);
 				if (fd == -1)
 					continue;
@@ -227,7 +227,7 @@ cache_indexes_handle(char *path, size_t *cached)
 
 	if (cached[0] + st.st_size > MAX_INDEX_CACHE)
 		return 0;
-	bblog(DEBUG, "Found index: %s", path);
+	bblog(DEBUGINFO, "Found index: %s", path);
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
 		bblog_errno(ERROR, "open(%s)", path);
@@ -250,7 +250,7 @@ cache_indexes_handle(char *path, size_t *cached)
 		return 0;
 	}
 	if ((ptr = mmap(0, st.st_size, PROT_READ, MAP_SHARED|MAP_LOCKED, fd, 0)) == MAP_FAILED) {
-		bblog_errno(WARN, "mmap(indexcache)");
+		bblog_errno(INFO, "mmap(indexcache)");
 		close(fd);
 		return 0;
 	}
