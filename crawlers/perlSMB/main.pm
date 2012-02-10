@@ -1,17 +1,20 @@
-use strict;
-
 package Perlcrawl;
-use SD::Crawl;
-
+use Carp;
+use Data::Dumper;
+use strict;
+use warnings;
 use Filesys::SmbClient;
+
+use Crawler;
+our @ISA = qw(Crawler);
 
 sub recursdir {
 
-	my($pointer,$smb,$dirname) = @_;
+	my($sd,$smb,$dirname) = @_;
 
 	print "recursdir($dirname)\n";
 
-	my $fd = $smb->opendir($dirname) or warn("can't open dir \"$dirname\"");
+	my $fd = $smb->opendir('smb://' . $dirname) or warn("can't open dir \"$dirname\": $!") && return 0;
   	while (my $f = $smb->readdir_struct($fd)) {
 		print "$f->[1]\n";
 		#tar ikke med . .. og filer som begynner med .
@@ -23,10 +26,11 @@ sub recursdir {
 
 	    	if ($f->[0] == SMBC_DIR) {
 			print "recursdir: Directory ",$f->[1],"\n";
-			recursdir($pointer,$smb,$enerytpath);
+			recursdir($sd,$smb,$enerytpath);
 		}
     		elsif ($f->[0] == SMBC_FILE) {
-			if (not SD::Crawl::pdocumentExist($pointer, $enerytpath, 0, 0 )) {
+
+			if (not $sd->document_exists($enerytpath, 0, 0 )) {
 
 				print "recursdir: File: ",$f->[1],"\n";
 				my $fileh = $smb->open($enerytpath, 0666) or print "Can't read file:", $!, "\n";
@@ -35,29 +39,34 @@ sub recursdir {
 				while(defined($buf = $smb->read($fileh))) {
 					last if $buf eq '';
 					$filecontent .= $buf;
-					#print "recursdir: length: " . length($filecontent) . "\n";
 				}
 				$smb->close($fileh);
 
 				#send the fil to the search system
-				SD::Crawl::pdocumentAdd($pointer, $enerytpath, 0 ,length($filecontent), $filecontent, $f->[1], "", "Everyone", "");		
-
+				$sd->add_document((
+			            content   => $filecontent,
+			            title     => $f->[1],
+			            url       => $enerytpath,
+			            acl_allow => "Everyone", # permissions
+			            last_modified => 0, # unixtime
+			        ));
 			}
+
 		}
   	  	
   	}
   	$smb->closedir($fd);
 
+	return 1;
 }
 
-sub crawlupdate {
-	my ($self, $pointer, $opt ) = @_;
+sub crawl_update {
+	my (undef, $self, $opt) = @_;
 
-	print "crawlupdate(pointer=$pointer)\n";
 
 	print "Options:\n";
-	foreach my $i (%{ $opt} ) {
-		print "$i: \"$opt->{$i}\"\n";
+	foreach my $i (keys %{$opt} ) {
+		print "$i: \"" . $opt->{$i} . "\"\n";
 	}
 
 
@@ -65,17 +74,22 @@ sub crawlupdate {
                                        password  => $opt->{'password'},
                                        debug     => 0);
 
+	#Corect format is //host/shares not \\host\shares. Convertinig "\" to "/"
+	$opt->{'resource'} =~ s/\\/\//g;
 
-	recursdir($pointer, $smb, $opt->{'resource'} );
+	# do a test connect
+	my $fd = $smb->opendir('smb://' . $opt->{'resource'}) or die("can't open dir \"" . $opt->{'resource'} . "\": $!");
+  	$smb->closedir($fd);
 
+	# crawl it
+	recursdir($self, $smb, $opt->{'resource'} );
 
 
 }
 
-sub crawlpatAcces {
-	my ($self, $pointer, $opt ) = @_;
+sub path_access {
+	my ($undef, $self, $opt) = @_;
 
-	print "crawlpatAcces(pointer=$pointer)\n";
 
 	print "Options:\n";
 	foreach my $i (%{ $opt} ) {
