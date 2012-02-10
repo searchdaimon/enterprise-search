@@ -20,25 +20,24 @@ use Date::Parse;
 use Carp;
 use Data::Dumper;
 use Readonly;
+use URI::Escape;
  
 use constant bot_name => "sdbot/0.1";
 use constant bot_email => "support\@searchdaimon.com";
 use constant timeout => 4;
 use constant delay => 1;
-use constant verbose => 1;
+use constant verbose => 0;
 use constant max_size => 26214400; #26214400=25 mb
 
-Readonly::Hash my %LINK_IGNORE => map { $_ => 1 } qw(td script table form head link);
+Readonly::Hash my %LINK_IGNORE => map { $_ => 1 } qw(td script table form head link background);
 
 our $skipDynamic = 0;
-our $hit_limit = 50000;
 our $hit_count = 0;
 our @starting_urls;
 our $download_images = 0;
 
 our $lasterror = "";
 
-our $expiration = 5 * 60 * 60 + time( );
 
 
 our $last_time_anything_said;
@@ -60,7 +59,7 @@ sub path_access  {
     my $url = $opt->{"resource"};
 
 
-    my $robot = LWP::RobotUA->new(bot_name, bot_email);
+    my $robot = LWP::RobotUA->new(agent=>bot_name, from=>bot_email, keep_alive=>'1');
     $robot->delay(0); # "/60" to do seconds->minutes
     $robot->timeout(timeout);
     $robot->requests_redirectable([]); # comment this line to allow redirects
@@ -69,11 +68,26 @@ sub path_access  {
     my $req = HTTP::Request->new(HEAD => $url);
     print "Authenticating :  $user at $url\n";
  
-    if ($user) { 
-        $req->authorization_basic($user, $passw); 
-    }
 
     my $response = $robot->request($req);
+
+    if (($response->code == 401) && ($user)) {
+            if ($response->www_authenticate =~ m/basic/i) {
+                    $req->authorization_basic($user, $passw);
+            }
+            elsif (($response->www_authenticate =~ m/negotiate/i) || ($response->www_authenticate =~ m/ntlm/i)) {
+                    $url =~ m/http:\/\/([^\/]+)/i;
+                    my $server = $1 . ":80";
+                    print "Trying to authenticate by NTLM to server $server\n";
+                    $robot->credentials($server, '', $user, $passw);
+            }
+            else {
+                    print "Unknown authentication method \"" . $response->www_authenticate . "\".\n";
+            }
+
+            #rerun the request
+            $response = $robot->request($req);
+    }
   
     if ($response->is_success) { return 1; }
 
@@ -105,8 +119,8 @@ sub crawl_update {
     $download_images = $opt->{download_images};
 
     print "Name : ". bot_name."    mail :". bot_email."\n";
-    my $robot = LWP::RobotUA->new(bot_name, bot_email);
-    $robot->delay(delay/60); 
+    my $robot = LWP::RobotUA->new( agent=>bot_name, from=>bot_email, keep_alive=>'1' );
+    $robot->delay($opt->{delay}/60); 
     $robot->timeout(timeout);
     $robot->max_size(max_size);
     $robot->requests_redirectable([]); # uncomment this line to disallow redirects
@@ -159,9 +173,7 @@ sub main_loop {
 	my ($robot,$user, $passw) = @_;
 
   while(
-    schedule_count( )
-    and $hit_count < $hit_limit
-    and time( ) < $expiration
+    schedule_count( ) && $crawler->continue
   ) {
 	my $url = next_scheduled_url( );
 	if( near_url( $url ) )   { 
@@ -172,12 +184,6 @@ sub main_loop {
 	}
   }
 
-  if ($hit_count > $hit_limit) {
-	print "Exiting: have hit hit limit of $hit_limit.\n";
-  }
-  if (time( ) > $expiration) {
-	print "Exiting: have hit time limit.\n";
-  }
   return;
 }
 
@@ -186,13 +192,9 @@ sub main_loop {
  
  
 sub say {
-  # Add timestamps as needed:
-  unless(time( ) == ($last_time_anything_said || 0)) {
-    $last_time_anything_said = time( );
-    unshift @_, "[T$last_time_anything_said = " .
-      localtime($last_time_anything_said) . "]\n";
-  }
-  print @_;
+  # Print timestamps:
+  print "[" . localtime( time() ) . "] ", @_;
+
 }
 
 sub mutter {
@@ -212,15 +214,22 @@ sub mutter {
 sub near_url {   # Is the given URL "near"?
   #my $url = $_[0];
   my $url = URI->new($_[0]);
-  foreach my $starting_url (@starting_urls) {
-     my $starting_uri =URI->new($starting_url);
-     #eq $starting_url
-    if( $url->host() eq  $starting_uri->host()
-    ) {
+  foreach my $starting_uri (@starting_urls) {
+
+     my $noObjectUrl = $starting_uri->path;
+
+     if (!(($url->scheme eq 'http') || ($url->scheme eq 'https') )) {
+	next;
+     }
+
+     if(    ( $url->host eq  $starting_uri->host )
+	&& ( $url->path =~ /$noObjectUrl/    )
+     ) {
       mutter("  So $url is near");
        return 1;
     }
   }
+
   mutter("  So $url is far");   
   return 0;
 }
@@ -228,7 +237,9 @@ sub near_url {   # Is the given URL "near"?
 
 sub process_starting_urls {
   foreach my $url (@_) {
-    my $u = URI->new($url)->canonical;
+    my $u = URI->new($url);
+       $u = $u->canonical;
+
      push @starting_urls, $u;
   }
    #schedule($starting_urls[0]);
@@ -309,13 +320,31 @@ sub process_near_url {
 	my $url_normalized = $crawler->normalize_http_url($url);
 	my $keep_doc = addOk($url_normalized);
 
-	say("Fetching \"$url\"\n");
+	say("Fetching " . $hit_count . ":" . schedule_count() . " \"$url\"\n");
 
 	my $req = HTTP::Request->new(GET => $url);
-	$req->authorization_basic($user, $passw)
-		if $user;
 
 	my $response = $robot->request($req);
+
+	if (($response->code == 401) && ($user)) {
+		print "asked to authenticate by method: " . $response->www_authenticate . "\n";
+		if ($response->www_authenticate =~ m/basic/i) {
+			$req->authorization_basic($user, $passw);
+		}
+		elsif (($response->www_authenticate =~ m/negotiate/i) || ($response->www_authenticate =~ m/ntlm/i)) {
+			$url =~ m/http:\/\/([^\/]+)/i;
+			my $server = $1 . ":80";
+			print "Trying to authenticate by NTLM to server $server\n";
+			$robot->credentials($server, '', $user, $passw);
+		}
+		else {
+			die("Unknown authentication method \"" . $response->www_authenticate . "\".");
+		}
+
+		#rerun the request
+		$response = $robot->request($req);
+	} 
+
 	return unless consider_response($response);
 
 	if (!addOk($url_normalized)) {
@@ -329,23 +358,33 @@ sub process_near_url {
 	my $title = "";
 	if($response->content_type ne  'text/html') {
 		$title = substr($url, rindex($url, "/")+1);
+		$title = uri_unescape($title);
 	}
 
+	
 
-	if (!$crawler->document_exists($url, 0, length($response->content))) {
-		$crawler->add_document(
-				url     => $url_normalized,
-				title   => $title,
-				content => $response->content,
-				last_modified => str2time($response->header('Last-Modified')),
-				type    => $ct,
-				acl_allow => "Everyone",
-			);
-		#print "Length ", length($response->content);
+	if (!$crawler->document_exists($url, str2time($response->header('Last-Modified') || 0), length($response->content))) {
+
+		# do a basic, but exspensiv regex to see if ther is a robot noindex metatag
+		if (($response->content_type eq 'text/html') && ($response->content =~ /<META +NAME.*?ROBOTS.*?NOINDEX.*?>/i)) { 
+			print "Skiping indexint of $url_normalized because of Robots meta-tag restriction.\n";			
+		}
+		else {
+
+			$crawler->add_document(
+					url     => $url_normalized,
+					title   => $title,
+					content => $response->content,
+					last_modified => str2time($response->header('Last-Modified')),
+					type    => $ct,
+					acl_allow => "Everyone",
+				);
+			#print "Length ", length($response->content);
+		}
 	}	
 
 	extract_links_from_response($response)
-		if $response->content_type eq 'text/html';
+		if $response->content_type eq 'text/html' && $response->content !~ /<META +NAME.*?ROBOTS.*?NOFOLLOW.*?>/i;
 
 	$hit_count++;
 	1;
@@ -355,6 +394,7 @@ sub process_near_url {
 
 sub extract_links_from_response {
 	my $response = $_[0];
+	my $count = 0;
 	my $base = URI->new( $response->base )->canonical;
 
 	my $page_url = URI->new( $response->request->uri );
@@ -368,6 +408,7 @@ sub extract_links_from_response {
 
 		if ($l->[1] eq 'href') {
 			note_link_to($page_url, $l->[2]);
+			$count++;
 		}
 		elsif ($l->[0] eq 'img' && $l->[1] eq 'src') {
 			note_link_to($page_url, $l->[2])
@@ -375,33 +416,46 @@ sub extract_links_from_response {
 		}
 		elsif ($l->[0] eq 'iframe') {
 			note_link_to($page_url, $l->[2]);
+			$count++;
 		}
 		else {
 			print "INFO: Unknown link type ignored: ", Dumper($l);
 		}
+
 	}
+
+	$count--;
+	print "Exstracted $count from $page_url\n";
 }
 
 
 
 sub note_link_to {
-  my($from_url => $to_url) = @_;
+  my($from_url, $to_url) = @_;
   $points_to{ $to_url }{ $from_url } = 1;
   if (($skipDynamic == 1) && ($to_url =~ /\?/)) {
 	printf("skipping dynamic url $to_url\n");
-	next;
-  }
-  elsif ($to_url =~ /\#/) {
-	printf("skipping \# url $to_url\n");
+	return;
   }
 
-  mutter("Noting link\n  from $from_url\n    to $to_url\n");
-   schedule($to_url);
+  $to_url =~ s/\#.*//; # strip internal referanses
+
+
+  if ($from_url eq $to_url) {
+	print "Url points to self\n";
+	return;
+  }
+
+
+  if ( near_url( $to_url ) ) {
+  	mutter("Noting link\n  from $from_url\n    to $to_url\n");
+   	schedule($to_url);
+  }
   return;
 }
 
 sub next_scheduled_url {
-   my $url = splice @schedule, rand(@schedule), 1;
+  my $url = splice @schedule, rand(@schedule), 1;
   mutter("\nnext_scheduled_url: Pulling from schedule: ", $url || "[nil]","\n  with ", scalar(@schedule)," items left in schedule.\n");
   return $url;
 }
@@ -449,6 +503,7 @@ sub schedule {
      my $u = ref($url) ? $url : URI->new($url);
      $u = $u->canonical;  # force canonical form
      next unless 'http' eq ($u->scheme || '') or 'https' eq ($u->scheme || '');
+
      
     $u->host( regularize_hostname( $u->host( ) ) );
 
@@ -488,12 +543,12 @@ sub regularize_hostname {
  
 sub report {  
   say(
-    "\n\nEnding at ", scalar(localtime),
+    "Ending at ", scalar(localtime),
     " after ", time( ) - $^T,
-    "s of runtime and $hit_count hits.\n\n",
+    "s of runtime and $hit_count hits.\n",
   );
   unless(keys %notable_url_error) {
-    say( "\nNo bad links seen!\n" );
+    say( "No bad links seen!\n" );
     return;
   }
  
