@@ -208,7 +208,10 @@ sub gen_search_uri {
 	$attr{subname}  ||= $CFG{subname};
 	$attr{secret}   ||= $CFG{secret};
 	$attr{tkey}     ||= $CFG{tkey};
-	$attr{version} ||= $CFG{version};
+	$attr{version}  ||= $CFG{version};
+
+	$attr{nocache}  = $query_params{nocache} if $query_params{nocache};
+	$attr{nolog}    = $query_params{nolog} if $query_params{nolog};
 
 	# Add env variables
 	for my $e (@SEARCH_ENV_LOGGING) {
@@ -292,7 +295,10 @@ sub init_tpl {
 	}
 
 	my ($i18n_filter, $i18n_nowarn_filter) = init_lang($tpl_name, $lang);
-	
+
+	#setop nocache and nolog
+	$query_params{nocache} = $state{nocache} if $state{nocache};	
+	$query_params{nolog} = $state{nolog} if $state{nolog};	
 
 	# tpl instance, with filter and vmethod
         $Template::Stash::SCALAR_OPS->{i18n} = $i18n_filter;
