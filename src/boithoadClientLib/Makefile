@@ -5,7 +5,7 @@ CC = gcc
 # debugging info into the executable and -Wall turns on all warnings
 CFLAGS = -fPIC
 
-All: boithoadClientLib
+all: boithoadClientLib
 
 boithoadClientLib: boithoadClientLib.c
 	$(CC) -c $(CFLAGS) boithoadClientLib.c daemon.c
