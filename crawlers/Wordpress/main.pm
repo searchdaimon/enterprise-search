@@ -95,21 +95,20 @@ sub crawl_update {
     process_starting_urls(@urlList);
 
     foreach $starting_url (@urlList) {
- # Login to Wordpress, using http post
- $robot->post($loginurl, [ 'log' => $user, 'pwd' => $passw, 'wp-submit' => 'Log In' ]) or warn("Cant post to login: $!");
- # Continue as normal
- schedule($starting_url);
+ 	# Login to Wordpress, using http post
+ 	$robot->post($loginurl, [ 'log' => $user, 'pwd' => $passw, 'wp-submit' => 'Log In' ]) or warn("Cant post to login: $!");
+ 	# Continue as normal
+ 	schedule($starting_url);
 
-    main_loop( $robot,$user, $passw);
- report( ) if $hit_count;
-
+    	main_loop( $robot,$user, $passw);
+ 	report( ) if $hit_count;
    }
 
- print "################################################\n";
- print "hit_count: " . $hit_count . ", error: " . $lasterror . "\n";
+   print "################################################\n";
+   print "hit_count: " . $hit_count . ", error: " . $lasterror . "\n";
 
    if ($hit_count == 0) {
- die($lasterror);
+ 	die($lasterror);
    }
 }
 
