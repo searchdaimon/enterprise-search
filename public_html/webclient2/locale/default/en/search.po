@@ -209,24 +209,6 @@ msgstr "Other"
 msgid "Word"
 msgstr "Word"
 
-msgid "Word"
-msgstr "Word"
-
-msgid "Word"
-msgstr "Word"
-
-msgid "Word"
-msgstr "Word"
-
-msgid "Word"
-msgstr "Word"
-
-msgid "Document"
-msgstr "Document"
-
-msgid "Document Template"
-msgstr "Document Template"
-
 msgid "Document"
 msgstr "Document"
 
@@ -247,12 +229,6 @@ msgstr "PowerPoint"
 
 msgid "Slide Show"
 msgstr "Slide Show"
-
-msgid "Presentation"
-msgstr "Presentation"
-
-msgid "Presentation Template"
-msgstr "Presentation Template"
 
 msgid "Presentation"
 msgstr "Presentation"
