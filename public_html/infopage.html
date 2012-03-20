@@ -1,0 +1,182 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<title>Welcom to Searchdaimon ES</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        
+
+<style type="text/css">
+
+#wizard_block {
+    width : 70%;
+    border : 1px solid;
+    border-color : silver;
+    margin-right : 15%;
+    padding : 1em;
+  }
+  
+#wizard_block #logo {
+	float : right;
+	clear : right;
+	border : 0px solid;
+}
+
+
+#wizard_block h1, #wizard_block h2, #wizard_block h3 {
+    padding : 0;
+    margin : 0;
+    color : #044a90;
+  }
+
+#wizard_block h1 {
+	font-size : xx-large;
+}
+
+#wizard_block h2 {
+	font-size : x-large;
+}
+
+#wizard_block h3 {
+    font-size : large;
+  }
+
+
+
+#wizard_block #step_indicator {
+	border : 2px solid;
+	border-color : #e7f3fb;
+	margin : 1em;
+	font-size : small;
+	background-color : #dce4f9;
+	padding : 1em;
+
+}
+
+#wizard_block #step_indicator li {
+	color : #044a90;
+}
+
+#wizard_block #current_step {
+	font-weight : bold;
+}
+#wizard_block .buttons_block {
+	margin-left : 2em;
+}
+
+#wizard_block .next_button, .skip_button, .reload_button {
+    border : 1px solid;
+    padding-right : 40px;
+    height:32px;
+    color:#044a90;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    border-color : silver;
+    background : #FFFFFF no-repeat scroll right;
+  }
+
+#wizard_block #scanning_list {
+	font-size : large;
+}
+
+
+
+#wizard_block .skip_button {
+    background-image : url(file.cgi?i=player_fwd);
+  }
+
+
+#wizard_block .next_button {
+    background-image : url(file.cgi?i=next);
+  }
+
+#wizard_block .reload_button {
+	background-image : url(file.cgi?i=agt_reload);
+}
+
+
+#wizard_block .result_block {
+	margin-left : 1em;
+	margin-right : 1em;
+	margin-top : 1em;
+	border-top : 1px solid;
+	border-bottom : 1px solid;
+	border-color :  #e7f3fb;
+
+}
+
+#wizard_block .result_block ol {
+	list-style-type : none;
+	margin : 0;
+	padding : 0;
+}
+
+#wizard_block .result_block ul {
+	list-style-type : none;
+	margin : 0;
+	padding : 0;
+}
+
+</style>
+
+
+	<link rel="stylesheet" href="file.cgi?css=default" type="text/css" />
+	<script src="file.cgi?js=utils" type="text/javascript"></script>
+	
+		<link rel="stylesheet" href="file.cgi?css=setup" type="text/css" />
+	
+		<link rel="stylesheet" href="file.cgi?css=check_list" type="text/css" />
+	
+	
+
+	
+
+        
+
+	<!--[if IE 6]>
+	<style type="text/css">
+
+		.block_default {
+			// "min height"
+    			height : expression(Math.min(parseInt(this.offsetWidth), 2) + "em");
+		}
+	</style>
+	<![endif]-->
+
+
+</head>
+<body >
+
+	
+
+
+<div id="wizard_block">
+
+	<h2>Welcom to Searchdaimon ES</h2>
+	<p>
+		The first thing to do is to log in to the <a href="/admin">administrator panel</a> to setup some data to index.
+	</p>
+					<table width="80%" border="0">
+					  <tr>
+					    <td valign="top">Administrator pannel url:</td>
+					    <td><a href="/admin">/admin</a> <br />Default log in is username=<b>admin</b>, password=<b>water66</b></td>
+				      </tr>
+					  <tr>
+					    <td>Public search page url:<a href="http://$instancednsName/public"></a></td>
+					    <td><a href="/public">/public</a></td>
+				      </tr>
+					  </table>
+
+	<p>
+		<b>Tip:</b> This page is called "infopage" and is the default page users will see when they enter 
+		<a href="/">/</a> on your server. You may customize the default behavior at the <a href="/cgi-bin/webadmin/settings.cgi?view=frontpage">"Frontpage settings"</a> in the administrator panel.
+	</p>
+</div>
+
+
+
+
+</body>
+</html>
+
+
