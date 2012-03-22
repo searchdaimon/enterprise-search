@@ -342,11 +342,15 @@ print $response->status_line . "\n";
 #  }
 #  else {
 
+   # Remove tag cloud to minimize noise.
+   my $htmlcontent = $response->content;
+   $htmlcontent =~ s/<div class="tagcloud">.*?<\/div>//is;
+
    print "Added: $url_normalized\n";
    $crawler->add_document(
      url     => $url_normalized,
      title   => $title,
-     content => $response->content,
+     content => $htmlcontent,
      last_modified => str2time($response->header('Last-Modified')),
      type    => $ct,
      acl_allow => "Everyone",
