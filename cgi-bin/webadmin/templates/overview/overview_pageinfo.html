@@ -1,0 +1,84 @@
+[% INCLUDE 'header.html' title = 'Documents' %]
+[% USE HTML %]
+
+[% IF error_collection_not_exist %]
+	[% PROCESS 'template_collection_warnings.html' %]
+	[% STOP %]
+[% END %]
+
+[% PROCESS 'overview_tabs.html' selected="Documents" %]
+<h2>Documents DocID=[% HTML.escape(pageinfo.DocID) %] in [% HTML.escape(collection_name) %] bucket [% HTML.escape(lot) %]</h2>
+<br>
+
+[% IF pageinfo.deleted %]
+	<p><b>This document is deleted. It will be completely removed during the next garbage collection. </b></p>
+	<br>
+[% END %]
+
+<table border="1" class="infotable">
+
+<tr>
+<td><b>Url:</b></td>
+<td>[% pageinfo.Url %]</td>
+</tr>
+
+<tr>
+<td><b>Url unescaped:</b></td>
+<td>[% pageinfo.url_unescaped %]</td>
+</tr>
+
+<tr>
+<td><b>Text size:</b></td>
+<td>[% pageinfo.htmlSize %] B</td>
+</tr>
+
+<tr>
+<td><b>Image size:</b></td>
+<td>[% pageinfo.imageSize %] B</td>
+</tr>
+
+<tr>
+<td><b>File time:</b></td>
+<td>[% pageinfo.time %]</td>
+</tr>
+
+<tr>
+<td><b>Time crawled:</b></td>
+<td>[% pageinfo.storageTime %]</td>
+</tr>
+
+
+<tr>
+<td><b>Attributes:</b></td>
+<td>[% pageinfo.attributes %]</td>
+</tr>
+
+<tr>
+<td valign="top"><b>Acl allow:</b></td>
+<td>[% pageinfo.acl_allow %]</td>
+</tr>
+
+<tr>
+<td valign="top"><b>Acl denied:</b></td>
+<td>[% pageinfo.acl_denied %]</td>
+</tr>
+
+
+</table>
+
+<div>
+	<h2>Action</h2>
+	[% IF !pageinfo.deleted %]
+		<p><a href="/cgi-bin/bbdocumentWebAdd?do=delete&amp;url=[% pageinfo.url_unescaped %]&amp;collection=[% collection_name %]">Delete</a>
+	[% END %]
+</div>
+
+<div>
+	<h2>Document</h2>
+	<p><a href="[% htmldump %]">View source</a></p>
+</div>
+<div>
+	<iframe width="90%" height="600px" src="[% htmldump %]"></iframe>
+</div>
+
+[% INCLUDE 'footer.html' %]

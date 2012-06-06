@@ -1,0 +1,47 @@
+[% INCLUDE 'header.html' title = 'HTML File Upload' extra_css = 'filedrag' %]
+[% USE HTML %]
+
+[% IF error_collection_not_exist %]
+	[% PROCESS 'template_collection_warnings.html' %]
+	[% STOP %]
+[% END %]
+
+[% PROCESS 'overview_tabs.html' selected="HTML File Upload" %]
+<h2>Documents in [% HTML.escape(collection_name) %]</h2>
+
+
+<form id="upload" action="/cgi-bin/bbdocumentWebAdd?do=add&amp;collection=[% collection_name %]" method="POST" enctype="multipart/form-data">
+
+<fieldset>
+<legend>HTML File Upload</legend>
+
+<input type="hidden" id="MAX_FILE_SIZE" name="MAX_FILE_SIZE" value="3000000" />
+
+<div>
+	<label for="fileselect">Files to upload:</label>
+	<input type="file" id="fileselect" name="fileselect[]" multiple="multiple" />
+	<div id="filedrag">or drop files here</div>
+</div>
+
+<div id="submitbutton">
+	<button type="submit">Upload Files</button>
+</div>
+
+</fieldset>
+
+</form>
+
+<div id="progress"></div>
+
+<div id="messages">
+<p>Status Messages</p>
+</div>
+
+
+
+<script src="file.cgi?js=filedrag"></script>
+
+[% INCLUDE 'footer.html' %]
+
+
+

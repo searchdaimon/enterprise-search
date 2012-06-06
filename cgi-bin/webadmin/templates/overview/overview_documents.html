@@ -1,0 +1,32 @@
+[% INCLUDE 'header.html' title = 'Documents' %]
+[% USE HTML %]
+
+[% IF error_collection_not_exist %]
+	[% PROCESS 'template_collection_warnings.html' %]
+	[% STOP %]
+[% END %]
+
+[% PROCESS 'overview_tabs.html' selected="Documents" %]
+<h2>Documents in [% HTML.escape(collection_name) %]</h2>
+<br>
+
+[% IF collection_doc_count == 0 %]
+
+	<p>Crawled documents will appear her.</p>
+
+[% ELSE %]
+	<p>The ES utilizes a system where 5000 documents are grouped together and stored in a "bucket". Select a bucket below to list it's containing documents.</p>
+	<br>
+
+	<p>
+	<b>Bucket(s):</b>
+
+	[% FOREACH link IN collection_lot_links %]
+	   <b>[% link %]</b>
+	[% END %]
+	</p>
+	<br>
+
+[% END %]
+
+[% INCLUDE 'footer.html' %]

@@ -1,0 +1,95 @@
+[% WRAPPER 'header.html'
+    title = 'Console'
+    extra_js = ['jquery', 'ui.core', 'ui.tabs', 'connector', 'utils', 'dump']
+%]
+
+[% USE HTML %]
+[% USE Dumper %]
+
+
+
+
+<script type="text/javascript">
+//<![CDATA[
+
+id = [% HTML.escape(id) %];
+var refreshInterval;
+
+$(document).ready(function() { 
+
+	/*
+	* Refresh autput
+	*/
+	refreshOutput();
+
+ 	/**
+        * Refresh run output
+        */
+        $('#refreshBtn').click(function() {
+            refreshOutput();
+        });
+
+	/*
+	* Ask browser to refresh every 3 second
+	*/
+	var sec = 3 * 1000;
+    	refreshInterval = window.setInterval(refreshOutput, sec);
+});
+
+function refreshOutput() {
+
+    var params = getDefaultParams();
+    params['data'] = {
+        api : 'console_output',
+        id : id,
+    };
+
+
+
+    params['success'] = function(resp) {
+
+            // ie didn't want to replace pre contents directly.
+	    if (resp['output']) {
+            	$('.testrunInner').html('<pre>' + resp['output']  + '</pre>'); 
+	    }
+            $('.collectionsize').html(resp['doc_count']); 
+            $('.crawlermessage').html(resp['crawler_message']); 
+            $('.running').html(resp['running']); 
+
+    };
+
+    params['error'] = function() { refreshErrorFunc(null); }
+
+    $.ajax(params);
+}
+
+
+
+//]]>
+</script>
+
+[% END %]
+
+
+[% PROCESS 'template_connector_blocks.html' %]
+[% PROCESS 'template_collection_warnings.html' %]
+
+[% PROCESS 'overview_tabs.html'
+	selected = "Console" %]
+[% UNLESS error_collection_not_exist %]
+	<h2>Console output for [% HTML.escape(collection_name) %]</h2>
+
+	<p>Collection size: <b><span class="collectionsize">Looking up...</span></b></p>
+	<p>Status: <b><span class="crawlermessage">Looking up...</span></b></p>
+	<p>Crawl running: <b><span class="running">Looking up...</span></b></p>
+	
+    <h3>Output</h3>
+    <button id="refreshBtn">Refresh output</button>
+    <div class="testrunOuter">
+        <div class="testrunInner">
+            <pre>Output from run will be visible here.</pre></div>
+    </div>
+	
+[% END %]
+[% INCLUDE 'footer.html' %]
+

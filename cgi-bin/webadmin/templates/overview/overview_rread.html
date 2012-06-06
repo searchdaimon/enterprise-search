@@ -1,0 +1,46 @@
+[% INCLUDE 'header.html' title = 'Documents' %]
+[% USE HTML %]
+
+[% IF error_collection_not_exist %]
+	[% PROCESS 'template_collection_warnings.html' %]
+	[% STOP %]
+[% END %]
+
+[% PROCESS 'overview_tabs.html' selected="Documents" %]
+<h2>Documents in [% HTML.escape(collection_name) %] bucket [% HTML.escape(lot) %]</h2>
+
+
+<table border="0" with="90%" style="table-layout: fixed" class="infotable">
+	<tr>
+	<td>DocID</td>
+	<td>Url</td>
+	<td>&nbsp;</td>
+	<td>&nbsp;</td>
+	</tr>
+
+[% FOREACH doc IN rread.docs %]
+
+	<tr>
+	<td valign="top" >[% doc.DocId %]</td>
+	[% IF doc.deleted %]
+		<td valign="top" style="word-break:break-all;"><del>[% doc.url %]</del> (deleted)</td>
+	[% ELSE %]
+		<td valign="top" style="word-break:break-all;">[% doc.url %]</td>
+	[% END %]
+	<td valign="top">
+	[% IF doc.thumbnale.defined %]
+		<img src="[% doc.thumbnale %]" class="thumb" alt="thumb" width="100" height="100"/>
+	[% END %]
+	</td>
+	<td valign="top" nowrap="nowrap"><a href="[% doc.PageInfoUrl %]">More info</a></td>
+	</tr>
+
+[% END %]
+</table>
+
+[% IF next_link.defined %]
+	<h2><a href="[% next_link %]">Next files &gt;&gt;</a></h2>
+[% END %]
+
+
+[% INCLUDE 'footer.html' %]
