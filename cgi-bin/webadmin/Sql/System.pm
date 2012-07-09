@@ -29,6 +29,17 @@ sub primary_id {
 	return $res->{id};
 }
 
+sub have_system {
+	my $s = shift;
+
+	my $list = $s->list();
+
+	if ($list) {
+		return 1;
+	}
+	return 0; # have no system
+}
+
 sub exists { shift->SUPER::exists($TBL, 'id', @_) }
 sub get { shift->SUPER::get($TBL, @_) }
 sub insert { shift->SUPER::insert($TBL, @_) }

@@ -9,6 +9,7 @@ use Sql::ShareGroups;
 use Sql::ShareUsers;
 use Sql::ScanResults;
 use Sql::Param;
+use Sql::System;
 use Boitho::Infoquery;
 BEGIN { push @INC, $ENV{BOITHOHOME} . "/Modules" }
 
@@ -43,10 +44,17 @@ sub add_share {
         }
     }
 
+    # look up if we have a user system. If we dont we will set the access level to be anonymous
+    my $sys = Sql::System->new($s->{dbh});
+    if (!$sys->have_system()) {
+	$attr{accesslevel} = 'anonymous';
+    }
+
+
     $attr{active} = defined $share{active}; # HTML form sets it to "on"
 
     my $coll = Data::Collection->new($s->{dbh}, \%attr);
-    unless ($attr{auth_id}) { 
+    if ((!$attr{auth_id} || $attr{auth_id} eq 'new_values') && ($share{username} && $share{password})) { 
         $coll->set_auth($share{username}, $share{password});
     }
     $coll->create();
