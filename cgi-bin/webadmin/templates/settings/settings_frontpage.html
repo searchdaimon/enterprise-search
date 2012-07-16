@@ -1,0 +1,67 @@
+[% WRAPPER 'header.html' title="Settings" extra_js=[ 'jquery', 'utils', 'effects.core', 'effects.highlight' ] %]
+[% END %]
+
+[% PROCESS 'settings_tabs.html' selected="Frontpage settings" %]
+
+[% versions = [
+	{
+		'value'  => 'webclient2',
+		'title' => 'Private search page',
+	},
+	{
+		'value'  => 'public',
+		'title' => 'Public search page',
+	},
+	{
+		'value'  => 'infopage.html',
+		'title' => 'Infopage',
+	}
+] %]
+
+
+<div>
+	
+	<h2>Select frontpage action</h2>
+	
+	[% IF frontpage_succs.defined %]
+		[% WRAPPER 'template_message.html' type='success' %]
+		Frontpage preference changed to [% frontpage_succs %].
+		[% END %]
+        [% ELSIF frontpage_err %]
+            [% WRAPPER 'template_message.html' type='error' %]
+                Unable to update frontpage preference. [% frontpage_err %] 
+            [% END %]
+
+        [% ELSE %]
+		[% WRAPPER 'template_message.html'
+			type='info' %]
+			Select what should happend when a user gos the the <a href="/">frontpage</a> of your ES.
+			<ul>
+				<li><strong>Public search page</strong>. The user is shown a public search page where all users, including anonymous can search.</li>
+				<li><strong>Private search page</strong>. The user is asked to log in.</li>
+				<li><strong>Infopage</strong>. The user is shown a general info page.</li>
+			</ul>
+		[% END %]
+	[% END %]
+	
+	<form action="settings.cgi" method="post">
+	<ul style="list-style-type : none;">
+
+		[% FOREACH versions %]
+
+		<li>
+			<input type="radio" name="frontpage" 
+				value="[% value %]" id="frontpage_[% value %]" 
+				[% IF frontpage_preference == value %]
+					checked="checked"
+				[% END %] /> 
+			<label for="frontpage_[% value %]">[% title %]</label>
+		</li>
+		[% END %]
+	</ul>
+	<input type="submit" name="submit.frontpage_select" value="Select version" />
+	</form>
+</div>
+
+
+[% INCLUDE 'footer.html' %]
