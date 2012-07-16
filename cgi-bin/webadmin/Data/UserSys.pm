@@ -49,13 +49,18 @@ sub create_novalidate {
 	my $params_ref = $attr{params} || { };
 	delete $attr{params};
 
+	my $sql = Sql::System->new($dbh);
+
+	# if we have no system this wil be our primary system
+	if (!$sql->have_system()) {
+		$attr{is_primary} = 1;	
+	}
 
 	# Add system
 	delete $attr{name}
 		unless $attr{name};
 	_del_invalid_attr(\%attr);
 	
-	my $sql = Sql::System->new($dbh);
 	my $sys_id = $sql->insert(\%attr, 1);
 
 	# Add custom params
@@ -192,9 +197,6 @@ sub restrictive_del {
 	my $s = shift;
 
 	my $prim = $s->{sql_sys}->primary_id;
-
-	croak "Can't delete primary user system"
-		if $s->{sys}{id} == $prim;
 
 	my $shares = Sql::Shares->new($s->{dbh});
 

@@ -68,8 +68,9 @@
 		<li><a href="usersys.cgi?view=map&amp;id=[% system.id %]">Map</a></li>
 	[% END %]
 
+	<li><a href="usersys.cgi?view=del&amp;id=[% system.id %]">Delete</a></li>
+
 	[% UNLESS system.is_primary %]
-		<li><a href="usersys.cgi?view=del&amp;id=[% system.id %]">Delete</a></li>
 		<li><a href="usersys.cgi?view=makeprimary&amp;id=[% system.id %]">Make primary</a></li>
 	[% END %]
 	</td>
