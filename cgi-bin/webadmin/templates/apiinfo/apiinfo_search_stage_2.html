@@ -1,0 +1,56 @@
+[% INCLUDE 'header.html' title="Search" %]
+[% USE HTML %]
+
+[% PROCESS 'apiinfo_tabs.html' selected="Search" %]
+[% PROCESS 'apiinfo_common.html' %]
+[% PROCESS 'common_widgets.html' %]
+
+
+<h1>Generate search api urls</h1>
+
+<div class="defaultForm" style="[% style %]">
+<form method="get" action="apiinfo.cgi">
+
+<input type="hidden" name="searchmode" id="searchmode" value="[% searchmode %]" />
+
+<h4>Query</h4>
+<p>
+	Please specify a query to search for.
+</p>
+
+<p>
+	<input type="text" name="query" id="query" value="example" />
+</p>
+
+<br>
+
+
+	<h4>Output format</h4>
+	<p>
+	  <label for="outformat"></label>
+	  <select name="outformat" id="outformat">
+	    <option value="nativexml">Native xml</option>
+	    <option value="opensearch">OpenSearch</option>
+	  </select>
+	</p>
+	<br>
+
+[% IF searchmode == 'pre_auth' %]
+	<h4>Username</h4>
+	 <input type="text" name="username" id="username" value="Everyone" />
+	<br>
+[%END%]
+
+<br>
+
+<p>
+        <input type="submit" name="btn" id="btn" value="Generate url" />
+</p>
+
+</form>
+</div>
+
+
+[% INCLUDE 'footer.html' %]
+
+
