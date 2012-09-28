@@ -4,6 +4,7 @@ use warnings;
 
 use Carp;
 use Data::Dumper;
+use URI::Escape;
 
 use Sql::Config;
 use Sql::Shares;
@@ -28,13 +29,19 @@ use Time::Local qw(timelocal);
 our @ISA = qw(Page::Abstract);
 
 use config qw(%CONFIG);
-use constant TPL_DEFAULT     => 'overview.html';
-use constant TPL_EDIT        => 'overview_edit.html';
-use constant TPL_DELETE_COLL => 'overview_delete_share.html';
-use constant TPL_CUSTOMIZE   => 'overview_customize.html';
-use constant TPL_ADV_MANAGEMENT => 'overview_manage.html';
-use constant TPL_ACCESS_LEVEL	=> 'overview_accesslevel.html';
-use constant TPL_GRAPHS		=> 'overview_graphs.html';
+use constant TPL_DEFAULT     		=> 'overview.html';
+use constant TPL_EDIT        		=> 'overview_edit.html';
+use constant TPL_DELETE_COLL 		=> 'overview_delete_share.html';
+use constant TPL_CUSTOMIZE   		=> 'overview_customize.html';
+use constant TPL_ADV_MANAGEMENT 	=> 'overview_manage.html';
+use constant TPL_ACCESS_LEVEL		=> 'overview_accesslevel.html';
+use constant TPL_GRAPHS			=> 'overview_graphs.html';
+use constant TPL_CONSOLE		=> 'overview_console.html';
+use constant TPL_DOCUMENTS		=> 'overview_documents.html';
+use constant TPL_RREAD			=> 'overview_rread.html';
+use constant TPL_PAGEINFO		=> 'overview_pageinfo.html';
+use constant TPL_HTMLDUMP		=> 'overview_htmldump.html';
+
 Readonly::Scalar my $META_CONN_PUSH => "Pushed collections";
 Readonly::Scalar my $CRAWL_STATUS_OK => qr{^(OK\.|Ok)$};
 
@@ -77,7 +84,7 @@ sub crawl_collection {
 	}
 	
 	# Submit crawl request.
-	my $success = $iq->crawlCollection($collection);
+	my $success = $iq->crawlCollection($collection, logfile => $CONFIG{'coll_log_path'} . $collection);
 	$vars->{'crawl_request'} = $success ? 1 : 0;
 	$vars->{'crawl_error'} = $iq->get_error
 		unless($success);
@@ -157,28 +164,45 @@ sub show_access_level {
 	$vars->{'id'} = $id;
 	$vars->{'share'} = \%coll_data;
 
-	$vars->{'levels'} = [
-		{
-			value => 'acl',
-			string => 'System permissions',
-			description => "Ordinary permission checking against the indexed system.",
-		},
-		{
-			value => 'user',
-			string => 'User',
-			description => "Allow access for all logged in users.",
-		},
-		{
-			value => 'group',
-			string => 'Group',
-			description => "Allow access to all members of a group.",
-		},
-		{
-			value => 'anonymous',
-			string => 'Anonymous ( public available )',
-			description => "Anonymous search, available to search from public search page.",
-		},
-	];
+	# look up if we have a user system. If we don't we will only disply ananymus
+    	my $sys = Sql::System->new($self->{dbh});
+	if ($sys->have_system()) {
+
+		$vars->{'levels'} = [
+			{
+				value => 'acl',
+				string => 'System permissions',
+				description => "Ordinary permission checking against the indexed system.",
+			},
+			{
+				value => 'user',
+				string => 'User',
+				description => "Allow access for all logged in users.",
+			},
+			{
+				value => 'group',
+				string => 'Group',
+				description => "Allow access to all members of a group.",
+			},
+			{
+				value => 'anonymous',
+				string => 'Anonymous ( public available )',
+				description => "Anonymous search, available to search from public search page.",
+			},
+		];
+
+	}
+	else {
+
+		$vars->{'levels'} = [
+			{
+                                value => 'anonymous',
+                                string => 'Anonymous ( public available )',
+                                description => "Anonymous search, available to search from public search page.",
+                        },
+                ];
+
+	}
 
 	$vars->{'groups'} = $iq->listGroups();
 
@@ -230,6 +254,113 @@ sub show_graphs {
 	return TPL_GRAPHS;
 }
 
+sub show_console {
+        my ($s, $vars, $id) = @_;
+
+        my $sqlShares = Sql::Shares->new($s->{dbh});
+        my $sess = Sql::SessionData->new($s->{dbh});
+        my $sessid = $sess->insert('crawled documents' => '');
+        $vars->{sessid} = $sessid;
+        $vars->{id} = $id;
+        my $collection_name = $sqlShares->get_collection_name($id);
+        $vars->{collection_name} = $collection_name;
+
+        return TPL_CONSOLE;
+}
+
+sub show_documents {
+        my ($s, $vars, $id) = @_;
+
+        my $sqlShares = Sql::Shares->new($s->{dbh});
+        my $sess = Sql::SessionData->new($s->{dbh});
+        my $sessid = $sess->insert('crawled documents' => '');
+        $vars->{sessid} = $sessid;
+        $vars->{id} = $id;
+        my $collection_name = $sqlShares->get_collection_name($id);
+        $vars->{collection_name} = $collection_name;
+	$vars->{collection_doc_count} = $s->{infoQuery}->documentsInCollection($collection_name);
+	$vars->{collection_lot_count} = $s->{infoQuery}->lotsInCollection($collection_name);;
+
+	my @lotlinks;
+	for(my $count = 1; $count <= $vars->{collection_lot_count}; $count++) {
+		push(@lotlinks,($count==1?"":", ") . "<a href='overview.cgi?action=rread&amp;id=$id&amp;lot=$count&amp;offset=0'>$count</a>");
+	}
+
+	$vars->{collection_lot_links} = \@lotlinks;
+
+        return TPL_DOCUMENTS;
+}
+
+sub show_rread {
+        my ($s, $vars, $id, $lot, $offset) = @_;
+
+        my $sqlShares = Sql::Shares->new($s->{dbh});
+        my $sess = Sql::SessionData->new($s->{dbh});
+        my $sessid = $sess->insert('crawled documents' => '');
+        $vars->{sessid} = $sessid;
+        $vars->{id} = $id;
+        my $collection_name = $sqlShares->get_collection_name($id);
+        $vars->{collection_name} = $collection_name;
+        $vars->{lot} = $lot;
+
+	$vars->{rread} = $s->{infoQuery}->repositoryRead($lot,$collection_name,$offset);
+
+	foreach my $i (@{ $vars->{rread}->{docs} }) {
+		$i->{PageInfoUrl} = "overview.cgi?action=pageinfo&amp;id=$id&amp;offset=$i->{radress}&amp;DocID=$i->{DocId}&amp;htmlSize=$i->{htmlsize}&amp;imagesize=$i->{imagesize}";
+	}
+
+	if ($vars->{rread}->{Offset_last}) {
+		$vars->{next_link} = "overview.cgi?action=rread&amp;id=$id&amp;lot=$lot&amp;offset=$vars->{rread}->{Offset_last}";
+	}
+        return TPL_RREAD;
+}
+
+sub show_pageinfo {
+        my ($s, $vars, $id, $lot, $DocID, $offset, $htmlSize, $imagesize) = @_;
+
+        my $sqlShares = Sql::Shares->new($s->{dbh});
+        my $sess = Sql::SessionData->new($s->{dbh});
+        my $sessid = $sess->insert('crawled documents' => '');
+        $vars->{sessid} = $sessid;
+        $vars->{id} = $id;
+        my $collection_name = $sqlShares->get_collection_name($id);
+        $vars->{collection_name} = $collection_name;
+
+
+	$vars->{pageinfo} = $s->{infoQuery}->repositoryPageInfo($offset, $DocID, $htmlSize, $imagesize, $collection_name, 0);
+
+	$vars->{pageinfo}->{acl_allow} =~ s/,/<br>/g;
+	$vars->{pageinfo}->{acl_denied} =~ s/,/<br>/g;
+
+	$vars->{pageinfo}->{url_unescaped} = uri_unescape( $vars->{pageinfo}->{Url} );
+
+	$vars->{htmldump} = "overview.cgi?action=htmldump&amp;id=$id&amp;offset=$offset&amp;DocID=$DocID&amp;htmlSize=$htmlSize&amp;imagesize=$imagesize";
+
+	if ($vars->{attributes} eq ", ") {
+		$vars->{attributes} = '';
+	}
+
+        return TPL_PAGEINFO;
+}
+
+sub show_htmldump {
+        my ($s, $vars, $id, $lot, $DocID, $offset, $htmlSize, $imagesize) = @_;
+
+        my $sqlShares = Sql::Shares->new($s->{dbh});
+        my $sess = Sql::SessionData->new($s->{dbh});
+        my $sessid = $sess->insert('crawled documents' => '');
+        $vars->{sessid} = $sessid;
+        $vars->{id} = $id;
+        my $collection_name = $sqlShares->get_collection_name($id);
+        $vars->{collection_name} = $collection_name;
+
+
+	$vars->{pageinfo} = $s->{infoQuery}->repositoryPageInfo($offset, $DocID, $htmlSize, $imagesize, $collection_name, 1);
+
+
+        return TPL_HTMLDUMP;
+}
+
 sub submit_edit {
     validate_pos(@_, 1, 1, 1);
     my ($s, $vars, $share) = @_;
@@ -270,7 +401,7 @@ sub recrawl_collection {
 	my $collection_name = 
 		$sqlShares->get_collection_name($id);
 
-	my $succs = $s->{infoQuery}->recrawlCollection($collection_name);
+	my $succs = $s->{infoQuery}->recrawlCollection($collection_name, logfile => $CONFIG{'coll_log_path'} . $collection_name);
 	if ($succs) {
 		$vars->{coll_succs} = "Crawl request sent.";
 	}
@@ -296,7 +427,7 @@ sub test_crawl_coll {
 	my $name = $sqlShares->get_collection_name($id);
 	
 	my $succs = $s->{infoQuery}->recrawlCollection($name, 
-		documents_to_crawl => $num_docs);
+		documents_to_crawl => $num_docs, logfile => $CONFIG{'coll_log_path'} . $name);
 	if ($succs) {
 		$vars->{coll_succs} = "Crawl request sent.";
 	}
