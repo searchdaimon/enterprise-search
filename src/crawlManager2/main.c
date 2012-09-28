@@ -2384,8 +2384,9 @@ void connectHandler(int socket) {
 			bblog(INFO, "collection: \"%s\"\nuri: \"%s\"\nusername \"%s\"\npassword \"%s\"", collection,uri,username,password);
 
 			if (pass == NULL) {
-				bblog(ERROR, "Cant loockup password!");
-				intresponse = 0;
+				// If we can't loockup password we are probobly dealing with a api request actorised by key. Must skipp pathaccess
+				bblog(ERROR, "Can't loockup password! Can't do pathaccess, but must allow anyway.");
+				intresponse = 1;
 			}
 			else {
 
