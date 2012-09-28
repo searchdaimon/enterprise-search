@@ -71,7 +71,7 @@ sub _init {
 ##
 # Sends a crawl collection request to infoquery.
 sub crawl_collection {
-	my ($self, $vars, $id) = (@_);
+	my ($self, $vars, $id, $connector) = (@_);
 	my $iq = $self->{'infoQuery'};
 
 	my $collection = $sqlShares->get_collection_name($id);
@@ -118,7 +118,7 @@ sub _post_setup_check {
 ## 
 # Method for displaying a form to edit a collection.
 sub edit_collection {
-    my ($s, $vars, $coll_id) = (@_);
+    my ($s, $vars, $coll_id, $connector) = (@_);
     croak "not a valid 'coll_id'"
         unless $coll_id and $coll_id =~ /^\d+$/;
 
@@ -135,12 +135,13 @@ sub edit_collection {
         $vars->{$k} = $v;
     }
     $vars->{share} = \%coll_data;
+    $vars->{connector} = $connector;
 
     return TPL_EDIT;
 }
 
 sub manage_collection {
-	my ($self, $vars, $id) = (@_);
+	my ($self, $vars, $id, $connector) = (@_);
 	my $collection_name = $sqlShares->get_collection_name($id);
 
 	my $dataColl = Data::Collection->new($self->{dbh}, { id => $id });
@@ -148,13 +149,14 @@ sub manage_collection {
 	my %coll_data = $dataColl->coll_data();
 
 	$vars->{'id'} = $id;
+	$vars->{'connector'} = $connector;
 	$vars->{'share'} = \%coll_data;
 
 	return TPL_ADV_MANAGEMENT;
 }
 
 sub show_access_level {
-	my ($self, $vars, $id) = (@_);
+	my ($self, $vars, $id, $connector) = (@_);
 
 	my $dataColl = Data::Collection->new($self->{dbh}, { id => $id });
 	my %form_data = $dataColl->form_data();
@@ -162,6 +164,7 @@ sub show_access_level {
 	my $iq = Boitho::Infoquery->new($CONFIG{'infoquery'});
 
 	$vars->{'id'} = $id;
+	$vars->{'connector'} = $connector;
 	$vars->{'share'} = \%coll_data;
 
 	# look up if we have a user system. If we don't we will only disply ananymus
@@ -216,10 +219,11 @@ sub show_access_level {
 }
 
 sub show_customize {
-	my ($s, $vars, $id, $no_db_fetch) = @_;
+	my ($s, $vars, $id, $connector, $no_db_fetch) = @_;
 	my $sqlRes = Sql::ShareResults->new($s->{dbh});
 
 	$vars->{id} = $id;
+	$vars->{connector} = $connector;
 	$vars->{share}{collection_name} 
 		= $sqlShares->get_collection_name($id);
 
@@ -241,13 +245,14 @@ sub show_customize {
 }
 
 sub show_graphs {
-	my ($s, $vars, $id) = @_;
+	my ($s, $vars, $id, $connector) = @_;
 
 	my $sqlShares = Sql::Shares->new($s->{dbh});
 	my $sess = Sql::SessionData->new($s->{dbh});
 	my $sessid = $sess->insert('crawled documents' => '');
 	$vars->{sessid} = $sessid;
 	$vars->{id} = $id;
+	$vars->{connector} = $connector;
 	my $collection_name = $sqlShares->get_collection_name($id);
 	$vars->{collection_name} = $collection_name;
 	
@@ -255,13 +260,14 @@ sub show_graphs {
 }
 
 sub show_console {
-        my ($s, $vars, $id) = @_;
+        my ($s, $vars, $id, $connector) = @_;
 
         my $sqlShares = Sql::Shares->new($s->{dbh});
         my $sess = Sql::SessionData->new($s->{dbh});
         my $sessid = $sess->insert('crawled documents' => '');
         $vars->{sessid} = $sessid;
         $vars->{id} = $id;
+        $vars->{connector} = $connector;
         my $collection_name = $sqlShares->get_collection_name($id);
         $vars->{collection_name} = $collection_name;
 
@@ -269,13 +275,14 @@ sub show_console {
 }
 
 sub show_documents {
-        my ($s, $vars, $id) = @_;
+        my ($s, $vars, $id, $connector) = @_;
 
         my $sqlShares = Sql::Shares->new($s->{dbh});
         my $sess = Sql::SessionData->new($s->{dbh});
         my $sessid = $sess->insert('crawled documents' => '');
         $vars->{sessid} = $sessid;
         $vars->{id} = $id;
+        $vars->{connector} = $connector;
         my $collection_name = $sqlShares->get_collection_name($id);
         $vars->{collection_name} = $collection_name;
 	$vars->{collection_doc_count} = $s->{infoQuery}->documentsInCollection($collection_name);
@@ -283,7 +290,7 @@ sub show_documents {
 
 	my @lotlinks;
 	for(my $count = 1; $count <= $vars->{collection_lot_count}; $count++) {
-		push(@lotlinks,($count==1?"":", ") . "<a href='overview.cgi?action=rread&amp;id=$id&amp;lot=$count&amp;offset=0'>$count</a>");
+		push(@lotlinks,($count==1?"":", ") . "<a href='overview.cgi?action=rread&amp;id=$id&amp;lot=$count&amp;offset=0&amp;connector=$connector'>$count</a>");
 	}
 
 	$vars->{collection_lot_links} = \@lotlinks;
@@ -292,13 +299,14 @@ sub show_documents {
 }
 
 sub show_rread {
-        my ($s, $vars, $id, $lot, $offset) = @_;
+        my ($s, $vars, $id, $connector, $lot, $offset) = @_;
 
         my $sqlShares = Sql::Shares->new($s->{dbh});
         my $sess = Sql::SessionData->new($s->{dbh});
         my $sessid = $sess->insert('crawled documents' => '');
         $vars->{sessid} = $sessid;
         $vars->{id} = $id;
+        $vars->{connector} = $connector;
         my $collection_name = $sqlShares->get_collection_name($id);
         $vars->{collection_name} = $collection_name;
         $vars->{lot} = $lot;
@@ -306,23 +314,24 @@ sub show_rread {
 	$vars->{rread} = $s->{infoQuery}->repositoryRead($lot,$collection_name,$offset);
 
 	foreach my $i (@{ $vars->{rread}->{docs} }) {
-		$i->{PageInfoUrl} = "overview.cgi?action=pageinfo&amp;id=$id&amp;offset=$i->{radress}&amp;DocID=$i->{DocId}&amp;htmlSize=$i->{htmlsize}&amp;imagesize=$i->{imagesize}";
+		$i->{PageInfoUrl} = "overview.cgi?action=pageinfo&amp;id=$id&amp;offset=$i->{radress}&amp;DocID=$i->{DocId}&amp;htmlSize=$i->{htmlsize}&amp;imagesize=$i->{imagesize}&amp;connector=$connector";
 	}
 
 	if ($vars->{rread}->{Offset_last}) {
-		$vars->{next_link} = "overview.cgi?action=rread&amp;id=$id&amp;lot=$lot&amp;offset=$vars->{rread}->{Offset_last}";
+		$vars->{next_link} = "overview.cgi?action=rread&amp;id=$id&amp;lot=$lot&amp;offset=$vars->{rread}->{Offset_last}&amp;connector=$connector";
 	}
         return TPL_RREAD;
 }
 
 sub show_pageinfo {
-        my ($s, $vars, $id, $lot, $DocID, $offset, $htmlSize, $imagesize) = @_;
+        my ($s, $vars, $id, $connector, $lot, $DocID, $offset, $htmlSize, $imagesize) = @_;
 
         my $sqlShares = Sql::Shares->new($s->{dbh});
         my $sess = Sql::SessionData->new($s->{dbh});
         my $sessid = $sess->insert('crawled documents' => '');
         $vars->{sessid} = $sessid;
         $vars->{id} = $id;
+        $vars->{connector} = $connector;
         my $collection_name = $sqlShares->get_collection_name($id);
         $vars->{collection_name} = $collection_name;
 
@@ -334,7 +343,7 @@ sub show_pageinfo {
 
 	$vars->{pageinfo}->{url_unescaped} = uri_unescape( $vars->{pageinfo}->{Url} );
 
-	$vars->{htmldump} = "overview.cgi?action=htmldump&amp;id=$id&amp;offset=$offset&amp;DocID=$DocID&amp;htmlSize=$htmlSize&amp;imagesize=$imagesize";
+	$vars->{htmldump} = "overview.cgi?action=htmldump&amp;id=$id&amp;offset=$offset&amp;DocID=$DocID&amp;htmlSize=$htmlSize&amp;imagesize=$imagesize&amp;connector=$connector";
 
 	if ($vars->{attributes} eq ", ") {
 		$vars->{attributes} = '';
@@ -344,13 +353,14 @@ sub show_pageinfo {
 }
 
 sub show_htmldump {
-        my ($s, $vars, $id, $lot, $DocID, $offset, $htmlSize, $imagesize) = @_;
+        my ($s, $vars, $id, $connector, $lot, $DocID, $offset, $htmlSize, $imagesize) = @_;
 
         my $sqlShares = Sql::Shares->new($s->{dbh});
         my $sess = Sql::SessionData->new($s->{dbh});
         my $sessid = $sess->insert('crawled documents' => '');
         $vars->{sessid} = $sessid;
         $vars->{id} = $id;
+        $vars->{connector} = $connector;
         my $collection_name = $sqlShares->get_collection_name($id);
         $vars->{collection_name} = $collection_name;
 
@@ -387,7 +397,7 @@ sub submit_edit {
 }
 
 sub activate_collection($$$) {
-	my ($self, $vars, $id) = (@_);
+	my ($self, $vars, $id, $connector) = (@_);
 	$sqlShares->set_active($id);
 	$vars->{'success_activate'} = 1;
 	return $vars;
@@ -397,7 +407,7 @@ sub activate_collection($$$) {
 ## 
 # Force  full recrawl of a collection.
 sub recrawl_collection {
-	my ($s, $vars, $id) = @_;
+	my ($s, $vars, $id, $connector) = @_;
 	my $collection_name = 
 		$sqlShares->get_collection_name($id);
 
@@ -410,11 +420,12 @@ sub recrawl_collection {
 	}
 
 	$vars->{id} = $id;
+	$vars->{connector} = $connector;
 	return $s->manage_collection($vars, $id);
 }
 
 sub test_crawl_coll {
-	my ($s, $vars, $id, $num_docs) = @_;
+	my ($s, $vars, $id, $connector, $num_docs) = @_;
 	
 	$vars->{num_docs} = $num_docs;
 	
@@ -491,7 +502,7 @@ sub del_confirm {
 
 sub stop_crawl {
 	validate_pos(@_, 1, 1, { regex => qr(^\d+$) });
-	my ($s, $vars, $id) = @_;
+	my ($s, $vars, $id, $connector) = @_;
 	my $pid = $sqlShares->get({ id => $id }, 'crawl_pid')->{crawl_pid};
 	
 	if (!$pid) {

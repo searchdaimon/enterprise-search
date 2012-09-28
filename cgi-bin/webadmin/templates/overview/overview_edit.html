@@ -21,18 +21,21 @@
 [% PROCESS 'overview_tabs.html' selected="Edit collection" id = share.id %]
 	
 	<h2>Edit settings for [% HTML.escape(share.collection_name) %]</h2>
-	<form method="post" action="overview.cgi">
-	[% WRAPPER 'template_edit_collection.html'
-		fields = input_fields %]
-	[% END %]
+	[% IF connector == 14 %]
+		<p>Please use the api to edit main setings for pushed collection. However seting access level, result customization and viewing documents can be done here.</p>
+	[% ELSE %]
+		<form method="post" action="overview.cgi">
+		[% WRAPPER 'template_edit_collection.html'
+			fields = input_fields %]
+		[% END %]
 	
-	<div style="padding-top : 1em;">
-	<input type="hidden" value="[% share.id %]" name="share.id" />
-	<input type="submit" name="submit_edit" value="Submit changes" />
-	</div>
+		<div style="padding-top : 1em;">
+		<input type="hidden" value="[% share.id %]" name="share.id" />
+		<input type="submit" name="submit_edit" value="Submit changes" />
+		</div>
 		
-	</form>
-
+		</form>
+	[% END %]
 
 [% END %]
 [% INCLUDE 'footer.html' %]

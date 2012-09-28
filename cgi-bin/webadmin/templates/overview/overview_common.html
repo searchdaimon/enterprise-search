@@ -116,7 +116,9 @@
 	[% END %]
 	
 	[% IF !c.is_test_coll %]	
-		[% IF c.active %]
+		[% IF c.connector == 14 %]
+			<!-- Push connector. Do noting for now -->
+		[% ELSIF c.active %]
 			[% IF c.crawl_pid %]
 				[% INCLUDE btn
 					style = "background : #ffb2b2;"
@@ -142,6 +144,7 @@
 		[% INCLUDE btn 
 			action = "edit"
 			title = "Manage"
+			connector = c.connector
 			id = c.id 
 		%]
 	[% END %]
@@ -155,6 +158,6 @@
 
 [% BLOCK btn %]
 	<li><div style="[% style %]">
-	<a href="overview.cgi?action=[% action %]&amp;id=[% id %]&amp;coll=[% HTML.escape(coll) %]">[% title %]</a>
+	<a href="overview.cgi?action=[% action %]&amp;id=[% id %]&amp;coll=[% HTML.escape(coll) %]&amp;connector=[% connector %]">[% title %]</a>
 	</div></li>
 [% END %]
