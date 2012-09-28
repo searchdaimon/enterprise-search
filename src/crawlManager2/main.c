@@ -85,7 +85,6 @@ void mc_add_servers(void);
 
 #ifdef WITH_US_CACHE
 	#include "../libcache/libcache.h"
-	#include "../common/crc32.h"
 
 	cache_t *cache;
 	cache_t *cache_groups;
@@ -394,6 +393,8 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 		bblog(CLEAN, "crawled url: \"%s\", size: %i b, ACL: allow \"%s\", denied \"%s\"",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).dokument_size,(*crawldocumentAdd).acl_allow,(*crawldocumentAdd).acl_denied);
 	}
 
+	printf("** Added url: \"%s\"\n", (*crawldocumentAdd).documenturi);
+
 	#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
 		bblog(DEBUGINFO, "Time debug: bbdn_docadd() time: %f",getTimeDifference(&start_time, &end_time));
@@ -452,7 +453,7 @@ int _listGroupsForUser(usersystem_t *us, usersystem_data_t *data, const char *us
 	char *ckey;
 	asprintf(&ckey,"%s:%p",user,us);
 
-	ps = cache_fetch(cache_groups, "groupsForUser", ckey);
+	ps = cache_fetch(cache_groups, "groupsForUser", ckey, 300);
 	if (ps != NULL) {
 
 		printf("_listGroupsForUser: Hav groups cached: \"%s\"\n",ps);
@@ -497,7 +498,7 @@ int _listGroupsForUser(usersystem_t *us, usersystem_data_t *data, const char *us
 		}
 #ifdef WITH_US_CACHE
 		if ((res == 1) && (n_groups > 0)) {
-			if (cache_add(cache_groups, "groupsForUser", ckey, gstring, strlen(gstring)) != 1) {
+			if (cache_add(cache_groups, "groupsForUser", ckey, gstring, strlen(gstring) +1) != 1) { // +1 to save \0
 				printf("_listGroupsForUser: Can't add to cache");
 			}
 		}
@@ -618,6 +619,7 @@ int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections)
                 free((*collection)[i].query2);
 		free((*collection)[i].extra);
 		free((*collection)[i].userprefix);
+		free((*collection)[i].alias);
 		hashtable_destroy((*collection)[i].params, 1);
 		#ifdef DEBUG
 			bblog(DEBUGINFO, "freeing nr %i: end", i);
@@ -1327,6 +1329,9 @@ int cm_loadCrawlLib(struct hashtable **h, char name[]) {
 
 }
 
+int cm_end() {
+	perl_embed_clean();
+}
 int cm_start(struct hashtable **h, struct hashtable **usersystems) {
 
 	bblog(INFO, "cm_start start");
@@ -1441,6 +1446,10 @@ sql_fetch_params(MYSQL *db, struct hashtable ** h, unsigned int coll_id)  {
     char mysql_query[512];
     MYSQL_ROW row;
     (*h) = create_hashtable(7, cm_hashfromkey, cm_equalkeys);
+    if ((*h) == NULL) {
+	perror("Fail to creat hash table to hold sql params");
+	exit(-1);
+    }
 
     snprintf(mysql_query, sizeof mysql_query, "\
         SELECT shareParam.value, param.param \
@@ -1625,13 +1634,13 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 		(*collection)[i].userprefix = strdupnul(mysqlrow[8]);
 		(*collection)[i].rate = strtoul(mysqlrow[9], (char **)NULL, 10);
 
-		//runarb: 27 okt usikker på om dette er riktig.
+		//runarb: 19 jul 2012 usikker på om dette er riktig. Vi sjekker ikke noen plass om usersystem er -1.
 		if (mysqlrow[10] == NULL) {
-			bblog(ERROR, "MySQL usersystem collom was NULL.");
-			return 0;
+			(*collection)[i].usersystem = -1;
 		}
-		(*collection)[i].usersystem = strtoul(mysqlrow[10], (char **)NULL, 10);
-		
+		else {
+			(*collection)[i].usersystem = strtoul(mysqlrow[10], (char **)NULL, 10);
+		}
 
 		if (mysqlrow[11] == NULL) {
 			(*collection)[i].alias = NULL;
@@ -1736,7 +1745,7 @@ int cm_handle_crawlcanconect(MYSQL *db, char cvalue[]) {
 
 		//ber bbdn om å lukke
 		bblog(INFO, "closeing bbdn conn");
-                bbdn_close(&collections[0].socketha);
+                bbdn_close(collections[0].socketha);
 		#endif
 	}
 	else {
@@ -1915,10 +1924,8 @@ int redirect_stdoutput(char * file) {
         return 0;
     }
 
-    if (file_exist(file)) {
-        bblog(ERROR, "Test output file '%s' already exists.", file);
-        return 0;
-    }
+    // Deliting old version
+    unlink(file);
 
     bblog(INFO, "tc: redirecting std[out,err] to %s",  file);
     if ((freopen(file, "a+", stdout)) == NULL
@@ -1961,7 +1968,7 @@ int crawl(struct collectionFormat *collection,int nrofcollections, int flag, int
 
 
         int output_redirected = 0;
-        if (is_test_collection(&collection[i])) {
+        if (collection[i].extra != NULL) {
             if (!redirect_stdoutput(collection[i].extra)) {
                 bblog(ERROR, "test collection error, skipping.");
                 continue;
@@ -2130,6 +2137,7 @@ addForeignUser(char *collection, char *user, char *group)
 
 	sql_connect(&db);
 	cm_searchForCollection(&db, collection,&collections,&nrofcollections);
+
 
 	querylen = snprintf(query, sizeof(query), "INSERT INTO foreignUserSystem (usersystem, username, groupname)"
 			"VALUES(%d, '%s', '%s')", collections[0].usersystem, user, group);
@@ -2355,6 +2363,7 @@ void connectHandler(int socket) {
 			char uri[512];
 			char username[64];
                         char password[64];
+			char *pass, *ckey;
 
 			bblog(INFO, "cm_pathaccess: start");
 
@@ -2369,14 +2378,24 @@ void connectHandler(int socket) {
 			recvall(socket,username,sizeof(username));
 			recvall(socket,password,sizeof(password));
 
+                        asprintf(&ckey,"%s",username);
+                        pass = cache_fetch(cache, "logedInUser", ckey, 0);
+
 			bblog(INFO, "collection: \"%s\"\nuri: \"%s\"\nusername \"%s\"\npassword \"%s\"", collection,uri,username,password);
 
-			MYSQL db;
-			sql_connect(&db);
+			if (pass == NULL) {
+				bblog(ERROR, "Cant loockup password!");
+				intresponse = 0;
+			}
+			else {
 
-			intresponse = pathAccess(&db, global_h,collection,uri,username,password);
+				MYSQL db;
+				sql_connect(&db);
 
-			mysql_close(&db);
+				intresponse = pathAccess(&db, global_h,collection,uri,username,pass);
+
+				mysql_close(&db);
+			}
 	                sendall(socket,&intresponse, sizeof(int));
 
 
@@ -2555,8 +2574,8 @@ void connectHandler(int socket) {
 
 #ifdef WITH_US_CACHE
 			// make a key and looks in the cache.
-			asprintf(&ckey,"%s:%u:%i",user,crc32boitho(pass),usersystem);
-			pu = cache_fetch(cache, "logedInUser", ckey);
+			asprintf(&ckey,"%s",user);
+			pu = cache_fetch(cache, "logedInUser", ckey, 300);
 			if ((pu != NULL) && (*pu == 1)) {
 				printf("Login was cashed\n");
 				r = *pu;
@@ -2578,7 +2597,7 @@ void connectHandler(int socket) {
 #ifdef WITH_US_CACHE
 				// if login was ok, cache login
 				if (r == 1) {
-					cache_add(cache, "logedInUser", ckey, intudup(r), sizeof(unsigned int));
+					cache_add(cache, "logedInUser", ckey, strdup(pass), strlen(pass) +1); // +1 to save \0
 				}
 			}
 #endif
@@ -2911,12 +2930,12 @@ int main (int argc, char *argv[]) {
 	cache_delfiles();
 
         cache = malloc(sizeof(*cache));
-        if (cache_init(cache, my_freevalue, 300) != 1) {
+        if (cache_init(cache, my_freevalue) != 1) {
 		return (-1);
 	}
 
         cache_groups = malloc(sizeof(*cache_groups));
-        if (cache_init(cache_groups, groups_freevalue, 300) != 1) {
+        if (cache_init(cache_groups, groups_freevalue) != 1) {
 		return (-1);
 	}
 #endif
@@ -2929,5 +2948,10 @@ int main (int argc, char *argv[]) {
 #endif
 
 	maincfgclose(&maincfg);
+
+	cm_end();
+
+
+	return 0;
 }
 
