@@ -1,4 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <inttypes.h>
+
 #include <unistd.h> //for ftruncate()
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -20,6 +25,8 @@ int main (int argc, char *argv[]) {
 
 	struct stat inode;
 
+	struct popl popindex;
+
 	struct FileBucketsFormat {
 		int count;
 		int OpenFile;
@@ -29,45 +36,70 @@ int main (int argc, char *argv[]) {
 
 	struct FileBucketsFormat FileBuckets[NrOFFileBuckets];
 
-        if (argc < 2) {
-                printf("Dette programet sorterer en udfil etter rank\n\n\t./SortUdfile udfil\n");
+        if (argc < 3) {
+                printf("Dette programet sorterer en udfil etter rank og lagrer de i nye udfiler\n\n\t./SortUdfile udfile newprefix\n");
                 exit(0);
         }
+
+	char *udfile = argv[1];
+	char *prefix = argv[2];
 
 
 	for (i=0; i < NrOFFileBuckets; i++) {
 		FileBuckets[i].count = 0;
 		FileBuckets[i].OpenFile = 0;		
 	}
-        if ((UDFILE = fopen(argv[1],"r+b")) == NULL) {
+        if ((UDFILE = fopen(udfile,"rb")) == NULL) {
                 printf("Cant read udfile ");
-                perror(argv[1]);
+                perror(udfile);
                 exit(1);
         }
 	flock(fileno(UDFILE),LOCK_EX);
 
-	popopen();
+	//popopen();
+	popopen(&popindex,"/home/boitho/config/popindex");
 
 	fstat(fileno(UDFILE),&inode);
 
-	printf("udfile size: %i\n",inode.st_size);
+	printf("udfile size: %" PRId64 "\n",inode.st_size);
 
-        while(!feof(UDFILE)) {
+        //while(!feof(UDFILE)) {
+        while(fread(&udfilePost,sizeof(udfilePost),1,UDFILE) == 1) {
 
 
-                fread(&udfilePost,sizeof(udfilePost),1,UDFILE);
-
+		/*
+                if (fread(&udfilePost,sizeof(udfilePost),1,UDFILE) != 1) {
+			printf("can't read more data\n");
+		}
+		*/
 
 		//printf("%s\n",udfilePost.url);
 
-		rank = popRankForDocID(udfilePost.DocID);
-                
+		rank = popRankForDocID(&popindex,udfilePost.DocID);
 
-		if (rank == 0) {
+		#ifdef DEBUG
+		printf("DocID %u, rank %i\n",udfilePost.DocID,rank);
+                #endif
+
+		if (rank < 0) {
+			#ifdef DEBUG
+			fprintf(stderr,"can't read pop rank. Error nr %i. Perror : ",rank);
+			perror("");
+			#endif
+			rank = 0;
+		}
+		else if (rank == 0) {
 			bucket = 0;		
 		}
 		else {
 			bucket = (int)ceil(log(rank));
+		}
+
+		if (bucket < 0) {
+			printf("bucket smalet then 0. bucket %i, rank %i\n",bucket,rank);
+		}
+		else if (bucket > NrOFFileBuckets) {
+			printf("Above NrOFFileBuckets (%i). bucket was %i\n",NrOFFileBuckets,bucket);
 		}
 
 		FileBuckets[bucket].count++;
@@ -75,7 +107,7 @@ int main (int argc, char *argv[]) {
 		//tester om filen er open, hvis ikke opner vi
 		if (!FileBuckets[bucket].OpenFile) {
 
-			sprintf(FileBuckets[bucket].Filename,"/tmp/boithoSort_%i",bucket); 
+			sprintf(FileBuckets[bucket].Filename,"%s%i",prefix,bucket); 
 
 			if ((FileBuckets[bucket].FFILHANDLER = fopen(FileBuckets[bucket].Filename,"w+b")) == NULL) {
 	                	printf("Cant open temp file \n");
@@ -96,57 +128,29 @@ int main (int argc, char *argv[]) {
 		//	printf("DocID: %i, %i, %i\n",udfilePost.DocID,rank,bucket);
         	//}
 	}
-	popclose();
-        
-	//resetter filpekeren for udfilen slik at vi skriver til bunnanen av den
-	//rewind(UDFILE);
-	fflush(UDFILE);
 
-	ftruncate(fileno(UDFILE),0);
-	fseek(UDFILE,0, SEEK_SET);
+
+	if (!feof(UDFILE)) {
+		printf("Error: dident manage to read mor data, but ient at eof.\n");
+		perror("udfile");
+	}
+
+	popclose(&popindex);
+
+
 	
         
 	//for (i=(NrOFFileBuckets -1); i > 0; i--) {
 	for(i=0; i < NrOFFileBuckets; i++) {
 		if (FileBuckets[i].count != 0){ 
-                	printf("%i %i\n",i,FileBuckets[i].count);
+                	printf("%s%i %i\n",prefix,i,FileBuckets[i].count);
         	}
-
 	
-		if (FileBuckets[i].OpenFile) {
-
-
-			fflush(FileBuckets[i].FFILHANDLER);
-			//begynner fra bagyndelsen
-			//rewind(FileBuckets[i].FFILHANDLER);
-			fseek(FileBuckets[i].FFILHANDLER, 0, SEEK_SET);
-			
-
-			//koppierer ny data
-			while(!feof(FileBuckets[i].FFILHANDLER)) {
-
-
-				//printf("%s\n",udfilePost.url);
-				
-				fread(&udfilePost,sizeof(udfilePost),1,FileBuckets[i].FFILHANDLER);
-					
-
-				if (fwrite(&udfilePost,sizeof(udfilePost),1,UDFILE) != 1) {
-                		        printf("Cant write to UDFILE file \n");
-		                        perror(argv[1]);
-                        		exit(0);
-                		}
-
-			}
-
-			//lokker og fjerner opne filer
-			fclose(FileBuckets[i].FFILHANDLER);
-			remove(FileBuckets[i].Filename);
-			
-			FileBuckets[i].OpenFile = 0;
-		}
+		//if (FileBuckets[i].OpenFile) {
+		//
+		//}
 	}
 
-	fclose(UDFILE);	
+        
 }
 
