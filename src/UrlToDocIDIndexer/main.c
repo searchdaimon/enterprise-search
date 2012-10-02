@@ -10,13 +10,11 @@ extern int getopt(int, char * const *, const char *);
 #include <unistd.h>
 #endif
 
-#define nrOfFiles 64
 
 #define dbCashe 314572800	//300 mb
 #define dbCasheBlokes 1		//hvor mange deler vi skal dele cashen opp i. Ofte kan man ikke alokere store blikker samenhengenede
 
 #include "../common/define.h"
-#include "../common/crc32.h"
 
 const char *progname = "UrlToDocIDIndexer";             /* Program name. */
 
@@ -29,12 +27,21 @@ int main (int argc, char *argv[]) {
 
 	int dbNr = -1;
 
-        if (argc < 2) {
-                printf("Dette programet indekserer mange splitetet ud filer\n\n\tBruke\n\tUrlToDocIDIndexer slpitetUdfile ... n\n\n");
+        if (argc != 3) {
+                printf("Dette programet indekserer mange splitetet ud filer\n \
+		udfiler er mappen med splittede urfiler\nbdbfiler er mappen der man skal lagre databasen\n\tBruk:\n\t \
+		udfiler/ bdbfiler/\n");
                 exit(0);
         }
 
 
+	char *udfilerdir = argv[1];
+	char *bdbfilerdir = argv[2];
+
+	printf("udfilerdir \"%s\", bdbfilerdir \"%s\"\n",udfilerdir,bdbfilerdir);
+
+	char udfile[512];
+	char bdbfile[512];
 
 	int ret;
 	//DB *dbp;
@@ -45,27 +52,30 @@ int main (int argc, char *argv[]) {
 	DB *dbp;
 
 	DBT key, data;
-	char fileName[256];
+	//char fileName[256];
 	int dbFileForUrl;
 
 	unsigned int lastTime;
 	unsigned int currentTime;
 	double runtime;
+	//int emtyUrls;
+	int urls;
 
-for (i=1; i < argc;i++) {
+for (i=0; i < UrlToDocIDnrOfFiles;i++) {
 
 		//finner db navne
-		sprintf(fileName,"%s.db",argv[i],i);
+		sprintf(udfile,"%s%i",udfilerdir,i);
+		sprintf(bdbfile,"%s%i.db",bdbfilerdir,i);
 
                 //#ifdef DEBUG
-			printf("Opening file %s\n",argv[i]);
+			printf("Opening file %s\n",udfile);
  
-                	printf("Openig database: %s\n",fileName);
+                	printf("Openig database: %s\n",bdbfile);
                 //#endif
 
 		//opner databasen
 	/********************************************************************
-        * Opening nrOfFiles to stor det data in
+        * Opening db to stor det data in
         ********************************************************************/
                 /* Create and initialize database object */
                 if ((ret = db_create(&dbp, NULL, 0)) != 0) {
@@ -81,10 +91,10 @@ for (i=1; i < argc;i++) {
                 }
 
 
-
                 /* open the database. */
-                if ((ret = dbp->open(dbp, fileName, NULL, DB_BTREE, DB_CREATE, 0664)) != 0) {
-                        dbp->err(dbp, ret, "%s: open", fileName);
+                if ((ret = dbp->open(dbp, NULL, bdbfile, NULL, DB_BTREE, DB_CREATE, 0664)) != 0) {
+                //if ((ret = dbp->open(dbp, NULL, bdbfile, NULL, DB_HASH, DB_CREATE, 0664)) != 0) {
+                        dbp->err(dbp, ret, "%s: open", bdbfile);
                         //goto err1;
                 }
 
@@ -94,21 +104,31 @@ for (i=1; i < argc;i++) {
 
 	//opner filen
 
-	printf("aa %s\n",argv[i]);
+	printf("udfile %s\n",udfile);
 	
-         if ((UDFILE = fopen(argv[i],"r")) == NULL) {
+         if ((UDFILE = fopen(udfile,"r")) == NULL) {
                  printf("Cant read udfile ");
-                 perror(argv[i]);
+                 perror(udfile);
                  exit(1);
          }
-        while(!feof(UDFILE)) {
-//      for (y=0;y<70;y++) {
 
+	urls = 0;
+//        while(!feof(UDFILE)) {
+//      for (y=0;y<70;y++) {
+	while (( ret = fread(&udfilePost,sizeof(udfilePost),1,UDFILE)) > 0) {
+		/*
                 if (( ret = fread(&udfilePost,sizeof(udfilePost),1,UDFILE)) < 1) {
 			perror("read udfile");
 		}
+		*/
+		if (udfilePost.url[0] == '\0') {
+                	printf("Url is emty. Url %s, DocID %u length %i\n",udfilePost.url,udfilePost.DocID,strlen(udfilePost.url));
+			exit(1);			
+		}
 
-                //printf("Url %s, DocID %u lemgth %i\n",udfilePost.url,udfilePost.DocID,strlen(udfilePost.url));
+		#ifdef DEBUG
+                printf("Url %s, DocID %u length %i\n",udfilePost.url,udfilePost.DocID,strlen(udfilePost.url));
+		#endif
 
 		//resetter minne
                 memset(&key, 0, sizeof(DBT));
@@ -127,16 +147,23 @@ for (i=1; i < argc;i++) {
                                 break;
                         default:
                                 dbp->err(dbp, ret, "DB->put");
+                                fprintf(stderr, "%s: DB_KEYEXIST: %s (key \"%s\", val \"%u\")\n", progname, db_strerror(ret),key.data,data.data);
+                		fprintf(stderr,"Url %s, DocID %u length %i\n",udfilePost.url,udfilePost.DocID,strlen(udfilePost.url));
+
                                 if (ret != DB_KEYEXIST) {
-                                        fprintf(stderr, "%s: DB_KEYEXIST: %s\n", progname, db_strerror(ret));
-                                        return (EXIT_FAILURE);
+					//vi dør ikke hvis det bare er en vedi som finnes
+                                        exit (EXIT_FAILURE);
                                 }
+				
 
                                 break;
                 }
 
 
+		++urls;
 	}
+
+	printf("urls %i\n",urls);
 
 	fclose(UDFILE);
 
@@ -148,33 +175,6 @@ for (i=1; i < argc;i++) {
                 }
 
 }
-
-exit(1);
-
-
-
-
-	lastTime = (unsigned int)time(NULL);	
-	count = 0;
-
-
-		
-		//lager en has verdi slik at vi kan velge en av filene
-		crc32Value = crc32(udfilePost.url);
-		dbFileForUrl = (crc32Value % nrOfFiles);
-
-
-		if ((count % 100000) == 0) {
-			currentTime = (unsigned int)time(NULL);
-
-			runtime = (currentTime - lastTime);
-
-			printf("komet til %i, time %f s\n", count,runtime);
-
-			lastTime = currentTime;
-		}
-
-		count++;
 
 
 
