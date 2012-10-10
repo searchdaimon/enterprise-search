@@ -24,7 +24,7 @@
 	<li class="[% classes.join(" ") %]"> 
 		[%#TODO icon %]
 		[% IF g.icon %]
-			<img src="[% icon_url(g.icon) %]" alt="" />
+			<img src="[% icon_url(g.icon) %]" alt="" width="16" height="16"/>
 		[% END %]
 		[% IF top_group %]
 			<div class="topGroupDiv">&nbsp;</div>
@@ -71,7 +71,7 @@
 	[% SET icon = "" %]
 	[% IF i.icon %]
 		[% SET url = icon_url(i.icon) %]
-		[% SET icon = "<img src=\"$url\" alt=\"\" />&nbsp;" %]
+		[% SET icon = "<img src=\"$url\" alt=\"\" width=\"16\" height=\"16\"/>&nbsp;" %]
 	[% END %]
 	<!-- item -->
 	<li>&nbsp;[% "<strong>" IF i.selected %] 
