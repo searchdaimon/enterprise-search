@@ -1,0 +1,411 @@
+msgid ""
+msgstr ""
+
+# main
+msgid "search"
+msgstr "Rechercher"
+
+# header
+#msgid "Showing %1 - %2 out of %3 results"
+#msgstr "Résultats %1 à %2 sur %3."
+
+msgid "(search_btn_img)"
+msgstr "img/default/search_fr.jpg"
+
+msgid "Start search"
+msgstr "Lancer la recherche"
+
+msgid "Search"
+msgstr "Rechercher"
+
+msgid "Results for"
+msgstr "Résultats pour"
+
+msgid "Showing 1 - 2 out of 3 results. 4 sec."
+msgstr "Résultats %1 à %2 sur %3. ( %4 sec)."
+
+msgid "Showing no results. 1 sec."
+msgstr "Aucun résultat pour cette recherche. Requête affichée en %4 secondes."
+
+#filter
+msgid "(filtered_msg)"
+msgstr "%quant(%1, résultat a été filtré, résultats ont été filtrés) par le moteur de recherche et ne vous seront pas pr�sent�s. Ceci peut se produire si les fichiers correspondant à ces résultats ont été déplacés ou effacés, si vous n'avez pas ou plus les droits de lecture sur ces fichiers, ou si les droits sur ces fichiers ont été modifiés depuis la dernière indexation."
+
+# collections
+msgid "no hits"
+msgstr "Aucun résultat"
+
+msgid "1 hits"
+msgstr "%nbsp_quant(%1,résultat,résultats)"
+
+msgid "All collections"
+msgstr "Toutes les collections"
+
+# sorting
+msgid "Sort"
+msgstr "Tri :"
+
+msgid "relevance"
+msgstr "Pertinence"
+
+msgid "oldest first"
+msgstr "Plus anciens"
+
+msgid "newest first"
+msgstr "Plus récents"
+
+# left nav
+msgid "Filtering"
+msgstr "Filtrage"
+
+msgid "All results"
+msgstr "Tous les résultats"
+
+# results
+msgid "cache"
+msgstr "En cache"
+
+msgid "Found 1 other copies"
+msgstr "%quant(%1, autre exemplaire trouvé, autres exemplaires trouvés)"
+
+msgid "Found no results for query \"1\"."
+msgstr "Aucun résultat pour la recherche \"%1\"."
+
+msgid "show"
+msgstr "Affiche"
+
+# attributes
+msgid "From"
+msgstr "De"
+
+msgid "To"
+msgstr "à"
+
+msgid "and 1 others"
+msgstr "et %quant(%1, autre, autres)"
+
+msgid "Creator"
+msgstr "Créateur"
+
+msgid "Author"
+msgstr "Auteur"
+
+msgid "Last saved by"
+msgstr "Dernier enregistrement par"
+
+msgid "Language"
+msgstr "Langue"
+
+msgid "Size"
+msgstr "Taille"
+
+msgid "Resolution"
+msgstr "Résolution"
+
+msgid "Page count"
+msgstr "Nombre de pages"
+
+# Sharepoint attributes
+
+msgid "List"
+msgstr "Liste"
+
+msgid "Site"
+msgstr "Site"
+
+msgid "Item"
+msgstr "Objet"
+
+# page nav
+msgid "Next"
+msgstr ">>"
+
+msgid "Prev"
+msgstr "<<"
+
+
+# other
+msgid "Did you mean: 1?"
+msgstr "Essayez avec l'orthographe : <a href=\"%2\">%1</a>?"
+
+# footer
+msgid "(copyright)"
+msgstr "Copyright &copy; "
+
+msgid "Searchdaimon AS"
+msgstr "Searchdaimon AS"
+
+msgid "All Rights Reserved."
+msgstr "All Rights Reserved."
+
+# cache
+msgid "(cacheinfo)"
+msgstr "Ceci est une copie en cache du document, tel qu'il a été indexé par le moteur de recherche lors de la dernière indexation."
+
+
+## Navigation
+# Attribute description
+msgid "SharePoint"
+msgstr "SharePoint"
+
+msgid "File Type"
+msgstr "Type de fichier"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Information Type"
+msgstr "Propriétés"
+
+msgid "Appointment"
+msgstr "Rendez-vous"
+
+msgid "Selection"
+msgstr "Sélection"
+
+msgid "Person"
+msgstr "Personne"
+
+msgid "Customer"
+msgstr "Client"
+
+msgid "SuperOffice"
+msgstr "SuperOffice"
+
+msgid "Project"
+msgstr "Projet"
+
+msgid "Sale"
+msgstr "Vente"
+
+msgid "Date"
+msgstr "Date de modification"
+
+msgid "Today"
+msgstr "Aujourd'hui"
+
+msgid "Yesterday"
+msgstr "Hier"
+
+msgid "Last 7 days"
+msgstr "7 derniers jours"
+
+msgid "Last 30 days"
+msgstr "30 derniers jours"
+
+msgid "This year"
+msgstr "Cette année"
+
+msgid "Last year"
+msgstr "L'année dernière"
+
+msgid "Older than two years"
+msgstr "Plus de 2 ans"
+
+# File extensions
+msgid "Other"
+msgstr "Autre"
+
+msgid "Word"
+msgstr "Word"
+
+msgid "Word"
+msgstr "Word"
+
+msgid "Word"
+msgstr "Word"
+
+msgid "Word"
+msgstr "Word"
+
+msgid "Word"
+msgstr "Word"
+
+msgid "Document"
+msgstr "Document"
+
+msgid "Document Template"
+msgstr "Modèle de document"
+
+msgid "Document"
+msgstr "Document"
+
+msgid "Document Template"
+msgstr "Modèle de document"
+
+msgid "Macro-enabled Document"
+msgstr "Document"
+
+msgid "Macro-enabled Document Template"
+msgstr "Modèle de document avec macro"
+
+msgid "Rich Text Format"
+msgstr "Rich Text Format"
+
+msgid "PowerPoint"
+msgstr "PowerPoint"
+
+msgid "Slide Show"
+msgstr "Présentation"
+
+msgid "Presentation"
+msgstr "Présentation"
+
+msgid "Presentation Template"
+msgstr "Modèle de presentation"
+
+msgid "Presentation"
+msgstr "Présentation"
+
+msgid "Macro-enabled Presentation"
+msgstr "Présentation avec macro"
+
+msgid "Presentation Template"
+msgstr "Modèle de présentation"
+
+msgid "Macro-enabled Presentation Template"
+msgstr "Modèle de présentation avec macro"
+
+msgid "Macro-enabled Add-in"
+msgstr "Add-on avec macro"
+
+msgid "Slide Show"
+msgstr "Présentation"
+
+msgid "Macro-enabled Slide Show"
+msgstr "Présentation avec macro"
+
+msgid "Excel"
+msgstr "Excel"
+
+msgid "Workbook"
+msgstr "Feuille de calcul"
+
+msgid "Template"
+msgstr "Modèle"
+
+msgid "Workbook"
+msgstr "Classeur"
+
+msgid "Macro-enabled Workbook"
+msgstr "Classeur avc macro"
+
+msgid "Template"
+msgstr "Modèle"
+
+msgid "Macro-enabled Workbook Template"
+msgstr "Modèle de classeur avec macro"
+
+msgid "Binary Workbook"
+msgstr "Classeur binaire"
+
+msgid "Macro-enabled Add-in"
+msgstr "Add-on avec macro"
+
+msgid "OpenOffice"
+msgstr "OpenOffice"
+
+msgid "Presentation"
+msgstr "Présentation"
+
+msgid "Presentation Template"
+msgstr "Modèle de présentation"
+
+msgid "Spreadsheet"
+msgstr "Classeur"
+
+msgid "Spreadsheet Template"
+msgstr "Modèle de classeur"
+
+msgid "Document"
+msgstr "Document"
+
+msgid "Document Template"
+msgstr "Modèle de document"
+
+msgid "StarOffice Document"
+msgstr "Document StarOffice"
+
+msgid "Adobe PDF"
+msgstr "Adobe PDF"
+
+msgid "Document"
+msgstr "Document"
+
+msgid "AbiWord"
+msgstr "AbiWord"
+
+msgid "Document"
+msgstr "Document"
+
+msgid "Word Perfect"
+msgstr "Word Perfect"
+
+msgid "Document"
+msgstr "Document"
+
+msgid "E-mail"
+msgstr "E-mail"
+
+msgid "E-mail (eml)"
+msgstr "E-mail (eml)"
+
+msgid "E-mail (msg)"
+msgstr "E-mail (msg)"
+
+msgid "Webpage"
+msgstr "Page web"
+
+msgid "HTML Document"
+msgstr "Document HTML"
+
+msgid "Notepad"
+msgstr "Fichier TXT"
+
+msgid "Text Document"
+msgstr "Document Texte"
+
+msgid "Image"
+msgstr "Image"
+
+msgid "JPEG Image"
+msgstr "Image JPEG"
+
+msgid "PNG Image"
+msgstr "Image PNG"
+
+msgid "Photoshop"
+msgstr "Photoshop"
+
+msgid "GIF Image"
+msgstr "Image GIF"
+
+msgid "Adobe TIFF Image"
+msgstr "Image TIFF"
+
+msgid "BMP Image"
+msgstr "Image BMP"
+
+msgid "Encapsulated PostScript"
+msgstr "PostScript"
+
+msgid "Adobe Illustrator"
+msgstr "Adobe Illustrator"
+
+msgid "Audio"
+msgstr "Fichier audio"
+
+msgid "MP3 Audio"
+msgstr "Fichier audio MP3"
+
+msgid "AutoCAD"
+msgstr "AutoCAD"
+
+msgid "Archive"
+msgstr "Archive"
+
+msgid "ZIP Archive"
+msgstr "Archive ZIP"
+
+msgid "Application data"
+msgstr "Donnée d'application"
