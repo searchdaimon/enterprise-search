@@ -46,3 +46,17 @@ RewriteRule ^suggest/(.*)$ /cgi-bin/suggest_webclient?q=$1 [L,QSA]
 <Files ~ "\.pm$">
 	Deny from all
 </Files>
+
+
+
+# Enable cache control headers
+ExpiresActive On
+
+# expire gif, jpeg and js after 1 month the client's cache
+ExpiresByType image/gif "access plus 1 month"
+ExpiresByType image/jpeg "access plus 1 month"
+ExpiresByType application/x-javascript "access plus 1 month"
+# expire css js after 1 day in the client's cache
+ExpiresByType text/css "access plus 1 day"
+
+
