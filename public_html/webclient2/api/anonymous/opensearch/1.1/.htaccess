@@ -1,0 +1,2 @@
+RewriteEngine On
+RewriteRule ^search /cgi-bin/dispatcher_allbb?anonymous=1&outformat=opensearch&%{QUERY_STRING} [L,QSA]
