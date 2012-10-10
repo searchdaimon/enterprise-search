@@ -31,13 +31,9 @@
 
 [% BLOCK generic_attributes %]
 	<ul class="genericAttributes">
-		[% PROCESS _attr_row a = attr.creator title="Creator" IF attr.creator %]
-		[% PROCESS _attr_row a = attr.author title="Author" IF attr.author %]
-		[% k="last saved by"; PROCESS _attr_row a = attr.$k title="Last saved by" IF attr.$k %]
-		[% PROCESS _attr_row a = attr.language title="Language" IF attr.language %]
-		[%# PROCESS _attr_row a = attr.size title="Size" IF attr.size  # crashes with vmethod size %]
-		[% PROCESS _attr_row a = attr.resolution title="Resolution" IF attr.resolution %]
-		[% k="page count"; PROCESS _attr_row a = attr.$k title="Page count" IF attr.$k %]
+              	[% FOREACH k IN attr.keys %]
+                        [% PROCESS _attr_row a = attr.$k title="$k" %]
+                [% END %]
 	</ul>
 [% END %]
 
@@ -51,7 +47,7 @@
 
 [% BLOCK _attr_row %]
 	<li>
-		[% title | i18n %]:
+		[% title | i18n_nowarn FILTER ucfirst %]:
 		<a href="[% a.query | query_url %]">[% a.value %]</a> 
 		[% PROCESS filter_icon q = a.attr_query %]
 	</li>

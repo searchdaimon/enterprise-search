@@ -138,7 +138,7 @@
 	<li>
 		<table><tr>
 		<td>
-		<div class="title"><img src="[% icon_url(r.icon) %]" style="width : 14px; height : 14px;" alt="" />&nbsp;<a href="[% r.url | html %]">[% r.title | html %]</a></div>
+		<div class="title"><img src="[% icon_url(r.icon) %]" width="14" height="14" alt="" />&nbsp;<a href="[% r.url | html %]">[% r.title | html %]</a></div>
 		[% IF r.attributes.size && r.filetype == "eml" %]
 			[% INCLUDE email_attributes attr = r.attributes %]
 		[% END %]
@@ -178,7 +178,7 @@
 		</td>
 		<td style="width : 110px;">
 			[% IF r.thumb %]
-				<a href="[% r.url %]"><img src="[% r.thumb %]" class="thumb" alt="thumb" /></a>
+				<a href="[% r.url %]"><img src="[% r.thumb %]" class="thumb" alt="thumb" width="100" height="100"/></a>
 			[% END %]
 		</td>
 		</tr>
