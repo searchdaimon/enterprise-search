@@ -1,0 +1,11 @@
+TODO.txt for cgi-util
+
+* Fix file upload.
+* Handle shell invoked CGI's again.
+* Handle grabbing multiple values from a singularly-named set of fields.
+  (ie, checkboxes and multiple select fields)
+* Create cgi-util 1.x backwards-compatible API.
+* Handle multiple file upload (maybe).
+* Better tutorials (eg, more info. on using cookies!)
+
+End of TODO.txt

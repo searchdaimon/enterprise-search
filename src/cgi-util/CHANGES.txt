@@ -1,0 +1,115 @@
+CHANGES.txt for cgi-util:
+
+(Changes by Bill Kendrick <bill@newbreedsoftware.com> unless otherwise noted.)
+
+2.1.7  - 2002.Oct.18 - Fixed CONTENT_TYPE check so that HTTPS GET works.
+                       Robert Alloway <rob@servicecentre.co.uk>
+
+2.1.6  - 2002.Sep.26 - 'extern "C" { ... }' added to cgi-util.h, for C++
+                       compilers.
+                       Tony Hansen <tony@att.com>
+
+                     - 'unsigned char' casts added to avoid gcc warnings.
+                       Tony Hansen <tony@att.com>
+
+                     - cgi_getnentrystr() returns NULL instead of "x"
+                       Tony Hansen <tony@att.com>
+
+2.1.5  - 2002.Sep.26 - Fixed incorrect return value in cgi_dump_no_abort()
+                       Tony Hansen <tony@att.com>
+
+2.1.4  - 2002.May.1 - Added 'n' functions (eg, "cgi_getnentrystr()") for
+                      handling multiple form values with the same name.
+                      Stephen Woodbridge <woodbri@swoodbridge.com>
+
+2.1.3  - 2001.May.15 - Missing QUERY_STRING ignored (for compatibility
+                       with "boa" and "thttp" webservers).  Rather than
+                       return a "CGIERR_NULL_QUERY_STRING", it now sets
+                       the query string to an empty string ("").
+                       Ian Leonard <ileonard@ntlworld.com>
+
+2.1.2  - 2000.November.1 - cgi_getcookie() function restructuring.
+                           Chris Wareham <chris.wareham@catchword.com>
+
+2.1.1  - 2000.August.28 - "install" depended on "tests-cgis" instead of
+                          "test-cgis".  (Typo!)
+
+                          Made cgi-util handle "="'s within values better.
+                          (eg. "prog.cgi?char==" or "prog.cgi?pair=123=456")
+                          Masayuki Yamaguchi <yamaguchi@coolinx.net>
+
+2.1.0  - 2000.July.26 - Added initial browser file upload support.
+                        (Content-Type="multipart/form-data", RFC 1867)
+
+                      - Fixed "README.txt" to not call functions 'programs'
+                        (I must have been asleep when I wrote it!)
+
+                      - Added a file-upload example CGI and form,
+                        "filetest.c" and "filetest.html".
+
+                      - Added global "cgi_content_type" variable.
+
+                      - Added a "content_type" field to the
+                        "cgi_entry_type" structure.
+
+                      - Added "cgi_getentrytype()" function.
+
+                      - Added a "content_length" field to the
+                        "cgi_entry_type" structure.
+
+                      - ".txt" extensions added to documentation files.
+
+                      - "makefile" renamed "Makefile".
+
+                      - Set "LIBDIR" and "INCDIR" variables in "Makefile."
+                        Tobias Jahn <tjahn@sourceforge.net>
+
+                      - Set "CC=gcc" in "Makefile," since some "cc"'s
+                        don't like the "-Wall" switch.
+                        Tobias Jahn <tjahn@sourceforge.net>
+
+                      - Added "install-h" rule to "Makefile", and had
+                        "install-o", "install-a" and "install-so"
+                        require it.  (Before, only "install-o" installed
+                        the "cgi-util.h" file.  Now all three do.)
+
+                      - "query" variable renamed to "cgi_query" (to keep
+                        from interfering with anyone else's declaration).
+                        <jengo@mail.com>
+
+                      - Boolean function accepts strings "true" and "false"
+                        now, too.
+                        Denis <lovebyte2000@yahoo.com>
+
+                      - cgi_getcookie() function added.
+                        Pete Cassidy <pcassidy@iol.ie>
+
+                      - Added a copy of the GNU Library General Public License
+                        (LGPL) to the package.
+
+                      - cgi-util.h now creates a "CGI_UTIL_H" #define.
+
+2.0.4  - 1999.August.24 - The "unescape_url" code was too trusting.
+                          MJ Pomraning <pilcrow@mailbag.com>
+
+2.0.3  - 1999.August.13 - Some debugging code was left in 2.0.2.  It has been
+                          removed.
+                          Stan Osborne <stan@ana.com>
+
+2.0.2  - 1999.August.9 - If a POST-method submittion contained an "&" within
+                         one of the field's values, the value would be
+                         truncated.  This should be fixed.
+                         Ruediger Geys <aage@fen.baynet.de>
+
+                       - CGIUTILVER (defined in "cgi-util.h") now
+                         reports complete version number (2.0.2).
+
+2.0.1  - 1999.July.12 - malloc() fix in cgi_init()
+                        Tadek Orlowski <orlowski@epnet.com>
+
+2.0    - 1999.July.12 - Initlial re-release
+                        Bill Kendrick <bill@newbreedsoftware.com>
+                        Mike Simons <msimons@moria.simons-clan.com>
+
+
+End of CHANGELOG.txt

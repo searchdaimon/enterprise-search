@@ -1,0 +1,155 @@
+INSTALL.txt for cgi-util 2.1.2
+
+by Bill Kendrick
+bill@newbreedsoftware.com
+http://www.newbreedsoftware.com/cgi-util/
+
+June 15, 1999 - November 1, 2000
+
+
+COMPILING THE OBJECT
+--------------------
+  To compile the "cgi-util.o" object, simply type:
+
+      make
+
+
+COMPILING AND RUNNING THE TEST CGIS
+-----------------------------------
+  Compiling
+  ----------
+    The test CGI programs, "test.cgi" and "filetest.cgi" can by compiled by
+    issuing:
+
+        make test-cgis
+
+  cgi-bin directory
+  -----------------
+    Depending on how your webserver is set up (check with your system
+    administrator or look in your webserver's configuration files), you
+    may or may not need (or want) to move the "test.cgi" executable binary
+    into a "ScriptAlias" directory (usually called "cgi-bin" or "cgibin").
+
+  The test forms, "test.html" and "filetest.html"
+  -----------------------------------------------
+    Edit the "test.html" and "filetest.html" HTML files so that the HTML
+    forms' "action" values are set to the URL for "test.cgi" and
+    "filetest.cgi", wherever that is on your webserver.  For example:
+
+        <form action="URL-TO/test.cgi" method="get">
+
+    Where "URL-TO/test.cgi" is the URL address where "test.cgi" can be found.
+
+  Opening the form HTML file
+  --------------------------
+    Open the "test.html" or "filetest.html" file in a web browser.  You
+    should see an HTML page with a simple form.
+
+  Setting permissions on the HTML file
+  ------------------------------------
+    If, instead, you get an "Error 403: Permission Denied," then make sure that
+    the permissions for the files are set properly.  Typically, "read" access
+    for "owner," "group" and "other" is what you need.  Check with your
+    system administrator for details.  You can set these permissions (plus
+    the ability for you, the "owner," to be able to write to the file) with
+    the command:
+
+        chmod 644 test.html filetest.html
+
+    Now, try using your browser's "Reload" option to try opening the file
+    again.  If you have further difficulties, check with your system
+    administrator.
+
+  Fill the form out
+  -----------------
+    Fill out the form and submit it (with the "Ok" submission button) and you
+    should see the results from the CGI.
+
+  Error 403?
+  ----------
+    If, instead, you get an "Error 403: Permission Denied," then either
+    the directory containing the "[file]test.cgi" file, or the
+    "[file]test.cgi" file itself, have incorrect permissions.  Check with
+    your system administrator.
+
+    Both directories and executables typically need to have "read" and
+    "execute" access set for "owner," "group" and "other."  This can be set,
+    along with "write" permissions for yourself, the "owner," with the command:
+
+        chmod 755 FILENAME
+
+    Where "FILENAME" is either the path to the directory whose permissions
+    are set incorrectly, or the path to the "test.cgi" or "filetest.cgi"
+    executable binary itself.
+
+  Error 404?
+  ----------
+    If you got an error 404, then the URL address in the test HTML forms'
+    "action" fields are incorrect.
+
+  Once fixed, use your browser's "Back" option to go back to the form,
+  and then "Reload" it so that the corrected URL is used when you submit
+  this time.
+
+  Error 500?
+  ----------
+    If you got an error 500, then the CGI program crashed for some reason.
+    Check to see if a "core" file exists in the directory where you placed
+    "test.cgi" and "filetest.cgi" and try debugging it.
+
+
+INSTALLING
+----------
+  This section of the document explains how to install the "cgi-util"
+  library onto your server in a place where everyone (or just you) can get
+  to it, if you feel like it is something you'd like to do.  This is
+  entirely optional.  Note: you'll need root privledges to install it
+  in the standard global places.
+
+  Global
+  ------
+    Switch to a user with superuser privleges and simply type:
+
+        make install
+
+    The "cgi-util.h" header file will be placed inside your server's
+    "/usr/local/include/" directory, and the "cgi-util.o" object file
+    will be compiled (if it hasn't been already) and placed inside
+    "/usr/local/lib/".  A static library, "libcgi-util.a", and a shared
+    library, "libcgi-util.so", will also be created and placed inside
+    "/usr/local/lib/".
+
+  Somewhere Else
+  --------------
+    You can also set the installation paths by either editing the "LIBDIR="
+    and "INCDIR=" lines in "Makefile", or setting the values when you
+    run "make install".
+
+    Depending on where you set the paths, you may or may not need to have
+    superuser privleges.
+
+        make install LIBDIR=~/lib INCDIR=~/include
+
+  Just the .o
+  -----------
+    If, instead, you wish to only install the plain "cgi-util.o" object
+    file and the "cgi-util.h" header file, type:
+
+        make install-o
+
+  Just the .a
+  -----------
+    Or, if you want to install only the static "libcgi-util.a" library and
+    the "cgi-util.h" header file, type:
+
+        make install-a
+
+  Just the .so
+  ------------
+    Finally, if you want to install only the shared "libcgi-util.so" library
+    and the "cgi-util.h" header, type:
+
+        make install-so
+
+
+End of INSTALL.txt
