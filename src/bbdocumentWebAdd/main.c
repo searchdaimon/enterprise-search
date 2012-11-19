@@ -8,6 +8,7 @@
 #include <libconfig.h>
 #include <mysql.h>
 #include <ctype.h>
+#include <time.h>
 
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
@@ -82,7 +83,7 @@ sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 
 	memset(&xmldoc, '\0', sizeof(xmldoc));
 	#ifdef DEBUG
-	fprintf(stderr, "Going to add something! %s\n", top->name);
+		fprintf(stderr, "Going to add something! %s\n", top->name);
 	#endif
 
 	getxmlnodestr(title);
@@ -223,8 +224,12 @@ void
 sd_close(int sock, xmlDocPtr doc, xmlNodePtr top)
 {
 	xmlNodePtr n;
+	char *query;
+	MYSQL db;
 
-	fprintf(stderr, "Going to close something!\n");
+	#ifdef DEBUG
+		fprintf(stderr, "Going to close something!\n");
+	#endif
 
 	for (n = top->xmlChildrenNode; n != NULL; n = n->next) {
 		xmlChar *p;
@@ -239,6 +244,85 @@ sd_close(int sock, xmlDocPtr doc, xmlNodePtr top)
 		}
 
 		bbdn_closecollection(sock, (char *)p);
+
+		// creat it in the sql db
+	        if (mysql_init(&db) == NULL) {
+	                fprintf(stderr, "Unable to init mysql.\n");
+	                return;
+	        }
+	        if (!mysql_real_connect(&db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)) {
+	                fprintf(stderr, "Unable to connect to database: %s\n", mysql_error(&db));
+	                return ;
+	        }
+
+		// create the collections if ot don't exist
+		asprintf(&query, "INSERT IGNORE INTO shares VALUES (NULL,'',14,1,NULL,0,NOW(),0,'','','','','',NULL,'Pushing has started.','%s',NULL,NULL,NULL,NULL,'acl',NULL)", (char *)p);
+
+		if (mysql_real_query(&db, query, strlen(query))) {
+                      fprintf(stderr, "Failed to insert rows, Error: %s\n", mysql_error(&db));
+                      continue;
+  		}
+
+		// Update status
+		asprintf(&query, "UPDATE shares set crawler_success=1,crawler_message=\"OK.\" WHERE collection_name=\"%s\"", (char *)p);
+
+		if (mysql_real_query(&db, query, strlen(query))) {
+                      fprintf(stderr, "Failed to insert rows, Error: %s\n", mysql_error(&db));
+                      continue;
+  		}
+
+		free(query);
+		mysql_close(&db);
+
+
+		xmlFree(p);
+	}
+}
+
+void
+sd_create(int sock, xmlDocPtr doc, xmlNodePtr top)
+{
+	xmlNodePtr n;
+	char *query;
+	MYSQL db;
+
+	#ifdef DEBUG
+		fprintf(stderr, "Going to create something!\n");
+	#endif
+
+	for (n = top->xmlChildrenNode; n != NULL; n = n->next) {
+		xmlChar *p;
+
+		if (xmlStrcmp(n->name, (xmlChar*)"collection") != 0) {
+			fprintf(stderr, "Unknown node(create) name: %s\n", (char *)n->name);
+			continue;
+		}
+		if ((p = xmlNodeListGetString(doc, n->xmlChildrenNode, 1)) == NULL) {
+			fprintf(stderr, "Unable to get collection name to create.\n");
+			continue;
+		}
+
+
+		// creat it in the sql db
+	        if (mysql_init(&db) == NULL) {
+	                fprintf(stderr, "Unable to init mysql.\n");
+	                return;
+	        }
+	        if (!mysql_real_connect(&db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)) {
+	                fprintf(stderr, "Unable to connect to database: %s\n", mysql_error(&db));
+	                return ;
+	        }
+
+		asprintf(&query, "INSERT IGNORE INTO shares VALUES (NULL,'',14,1,NULL,0,NOW(),0,'','','','','',NULL,'Pushing has started.','%s',NULL,NULL,NULL,NULL,'acl',NULL)", (char *)p);
+
+		if (mysql_real_query(&db, query, strlen(query))) {
+                      fprintf(stderr, "Failed to insert rows, Error: %s\n", mysql_error(&db));
+                      continue;
+  		}
+
+		free(query);
+		mysql_close(&db);
+
 
 		xmlFree(p);
 	}
@@ -268,7 +352,9 @@ sd_users_user(MYSQL *db, unsigned int usersystem, xmlDocPtr doc, xmlNodePtr top)
 			free(groupname);
 			querylen = snprintf(query, sizeof(query), "INSERT INTO foreignUserSystem (usersystem, username, groupname) "
 			    "VALUES(%d, '%s', '%s')", usersystem, user, group);
-			fprintf(stderr, "Query: %s\n", query);
+			#ifdef DEBUG
+				fprintf(stderr, "Query: %s\n", query);
+			#endif
 			if (mysql_real_query(db, query, querylen)) {
 				fprintf(stderr, "Failed to insert row, Error: %s\n", mysql_error(db));
 				continue;
@@ -369,7 +455,9 @@ sd_users(xmlDocPtr doc, xmlNodePtr top)
 
 	// Get usersystem id
 	usersystem = atoi((char *)xmlGetProp(top, (xmlChar *)"usersystem"));
+	#ifdef DEBUG
 	fprintf(stderr, "Got a usersystem: %d\n", usersystem);
+	#endif
 
 	for (cur = top->xmlChildrenNode; cur != NULL; cur = cur->next) {
 		if (xmlStrcmp(cur->name, (xmlChar *)"user") == 0) {
@@ -379,7 +467,9 @@ sd_users(xmlDocPtr doc, xmlNodePtr top)
 			size_t querylen;
 
 			querylen = snprintf(query, sizeof(query), "DELETE FROM foreignUserSystem WHERE usersystem = %d", usersystem);
+			#ifdef DEBUG
 			fprintf(stderr, "Deleting old usersystem rows: %s\n", query);
+			#endif
 			if (mysql_real_query(&db, query, querylen)) {
 				fprintf(stderr, "Failed to remove rows, Error: %s\n", mysql_error(&db));
 				continue;
@@ -475,8 +565,10 @@ main(int argc, char **argv)
 		if (p == NULL)
 			errx(1, "No key data");
 
-		if ((systemkey[0] != '\0') && (!key_equal(systemkey, p)))
-			errx(1, "Keys does not match");
+		if ((systemkey[0] != '\0') && (!key_equal(systemkey, p))) {
+			fprintf(stderr,"Keys does not match:  Got \"%s\" but wanted \"%s\"\n",p,systemkey);
+			exit(-1);
+		}
 	} else {
 		errx(1, "Did not receive a key");
 	}
@@ -505,6 +597,8 @@ main(int argc, char **argv)
 			sd_delete(bbdnsock, doc, cur);
 		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "close"))) {
 			sd_close(bbdnsock, doc, cur);
+		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "create"))) {
+			sd_create(bbdnsock, doc, cur);
 		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "users"))) {
 			sd_users(doc, cur);
 		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "gcwhispers"))) {
@@ -518,6 +612,14 @@ main(int argc, char **argv)
 			warnx("Unknown xml node '%s'", cur->name);
 		}
 	}
+
+        struct timespec time;
+        /* Initialize the time data structure. */
+        time.tv_sec = 0;
+        time.tv_nsec = 200000000; // i nanoseconds = 0.2 sek
+
+        nanosleep(&time,NULL);
+
 
 	return 0;
 }
