@@ -3,8 +3,14 @@
 #include <string.h>
 #include <stdlib.h>
 #include <err.h>
+#include <signal.h>
+#include <time.h>
+
+#include "../common/define.h"
 
 #include "../common/boithohome.h"
+#include "../common/reposetory.h"
+#include "../common/lot.h"
 #include "../acls/acls.h"
 #include "../crawlManager/client.h"
 
@@ -13,7 +19,6 @@
 
 //#include "../bbdocument/bbdocument.h"
 #include "../maincfg/maincfg.h"
-#include "../common/define.h"
 
 int str_is_nmbr(char * str) {
 	int i;
@@ -26,6 +31,14 @@ int str_is_nmbr(char * str) {
 	return 1;
 }
 
+/* The signal handler exit the program. . */
+void
+catch_alarm_nolog (int sig)
+{
+        fprintf(stderr, "Error: Timed out.\n");
+
+        exit(EXIT_FAILURE);
+}
 
 int main (int argc, char *argv[]) {
 
@@ -35,6 +48,8 @@ int main (int argc, char *argv[]) {
 	char *value2 = NULL;
 	char *value3 = NULL;
 	char *value4 = NULL;
+	char *value5 = NULL;
+	char *value6 = NULL;
 	char **respons_list;
 	int responsnr;
 
@@ -53,6 +68,7 @@ int main (int argc, char *argv[]) {
 		printf("deleteCollection <collection name>\n");
 		printf("scan <crawlertype> <host> <username> <password>\n");
 		printf("documentsInCollection <collection name>\n");
+		printf("lotsInCollection <collection name>\n");
 		printf("SidToUser <sid>\n");
 		printf("SidToGroup <sid>\n");
 		printf("AuthUser <username> <password> <usersystem> [extra]\n");
@@ -62,6 +78,8 @@ int main (int argc, char *argv[]) {
 		puts("userGroups <user> <usersystem> [extra]");
 		puts("addForeignUser <collection> <user> <group>");
 		puts("removeForeignUsers <collection>");
+		printf("repositoryRead <nr> <collection> <offset>\n");
+		printf("repositoryPageInfo <pointer> <DocID> <htmlSize> <imagesize> <collection> [html]\n");
 		printf("\nReturns %i on success and %i on failure\n",EXIT_SUCCESS,EXIT_FAILURE);
 		exit(1);
 	}
@@ -93,6 +111,24 @@ int main (int argc, char *argv[]) {
 		value4 = NULL;
 	}
 
+	if (argc >= 6) {
+		value5 = argv[6];
+	} else {
+		value5 = NULL;
+	}
+
+	if (argc >= 7) {
+		value6 = argv[7];
+	} else {
+		value6 = NULL;
+	}
+
+
+	// Setter signalhånterer for allarm, da vi bruker alarm som timout. Hvis allarm skjer i straten av programet, er noe seriøst galt. For eks er vi tom for minne.
+        //Da fungerer det dårlig å logge, syslog kan kalle malloc og slikt. Vil resette den til en versjon som logger før vi kjører søk.   $
+        signal (SIGALRM, catch_alarm_nolog);
+
+
 	struct config_t maincfg;
         maincfg = maincfgopen();
 
@@ -107,7 +143,7 @@ int main (int argc, char *argv[]) {
 		//exit(1);
 	}
 	else {
-		fprintf(fp,"%s: \"%s\"\n",key,value);	
+		fprintf(fp,"bin/infoquery %s \"%s\" %s %s %s %s %s\n",key,value, value2!=NULL ? value2 : "", value3!=NULL ? value3 : "", value4!=NULL ? value4 : "", value5!=NULL ? value5 : "", value6!=NULL ? value6 : "");	
 		fclose(fp);
 	}
 	// DEPRECATED (24/10/2009)
@@ -134,13 +170,15 @@ int main (int argc, char *argv[]) {
 		}
 	}
 	else if (strcmp(key,"listGroups") == 0) {
-		boithoad_listGroups(&respons_list,&responsnr);
-
-                printf("groups: %i\n",responsnr);
-                for (i=0;i<responsnr;i++) {
-                        printf("group: %s\n",respons_list[i]);
-                }
-		//printf("groups: 2\ngroup: Users\ngroup: Administrators\n");
+		if ( boithoad_listGroups(&respons_list,&responsnr) == 0) {
+			printf("Error: Can't list groups. boithoad_listGroups() returned 0.\n");
+		} 
+		else {
+                	printf("groups: %i\n",responsnr);
+                	for (i=0;i<responsnr;i++) {
+                	        printf("group: %s\n",respons_list[i]);
+                	}
+		}
 	}
 	else if (strcmp(key,"groupsForUser") == 0) {
 		if(value == NULL) {printf("no value given.\n");exit(1);}
@@ -161,25 +199,41 @@ int main (int argc, char *argv[]) {
 
                 char **collections;
 		int nrofcollections;
+		                int r;
+                int socketha;
+                int errorbufflen = 512;
+                char errorbuff[errorbufflen];
+                char **groups;
+                int i;
+                char *group;
 
 		struct userToSubnameDbFormat userToSubnameDb;
 
-		if (!boithoad_groupsForUser(value,&respons_list,&responsnr)) {
-                        perror("Error: boithoad_groupsForUser");
-			return EXIT_FAILURE;
+
+                if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
+                        printf("Error: %s\n",errorbuff);
+                        return EXIT_FAILURE;			
                 }
 
-                printf("groups: %i\n",responsnr);
+		r = cmc_groupsforuserfromusersystem(socketha, value, 0, &groups, value3 == NULL ? "" : value3);
+
+		if (groups == NULL) {
+                       printf("Error: Can't get groups from crawlerManager\n");
+                       return EXIT_FAILURE;			
+		}
+
+                printf("groups: %i\n",r);
+
                 if (!userToSubname_open(&userToSubnameDb,'r')) {
 			perror("can't open userToSubname");
 			return EXIT_FAILURE;
 		}
 
-                for (i=0;i<responsnr;i++) {
-			
-			printf("group: %s\n",respons_list[i]);
+		group = (char *)groups;
+                for (i = 0; i < r; i++) {
+                	printf("group: %s\n", group);
 
-			if (userToSubname_getsubnamesAsSaa(&userToSubnameDb,respons_list[i],&collections, &nrofcollections)) {
+			if (userToSubname_getsubnamesAsSaa(&userToSubnameDb,group,&collections, &nrofcollections)) {
 
 
 				if (nrofcollections != 0) {
@@ -194,10 +248,10 @@ int main (int argc, char *argv[]) {
 				}
 			}
 
-                }
-
+                        group += MAX_LDAP_ATTR_LEN;
+	        }
+		
                 userToSubname_close(&userToSubnameDb);
-                boithoad_respons_list_free(respons_list);
 
 	}
 	else if (strcmp(key,"collectionFor") == 0) {
@@ -258,6 +312,11 @@ int main (int argc, char *argv[]) {
 		if(value == NULL) {printf("no value given.\n");exit(1);}
 
 		printf("Documents: %u\n",bbdocument_nrOfDocuments(value));
+	}
+	else if (strcmp(key,"lotsInCollection") == 0) {
+		if(value == NULL) {printf("no value given.\n");exit(1);}
+
+		printf("Lots: %u\n",rLotForDOCid( bbdocument_nrOfDocuments(value)) );
 	}
 	else if (strcmp(key,"scan") == 0) {
 		if(value == NULL) {printf("no value given.\n");exit(1);}
@@ -454,6 +513,9 @@ int main (int argc, char *argv[]) {
 		char **users;
 		struct cm_listusers_h users_h;
 
+	        /* Set an alarm to go off in a little while. This so we don't run forever if the user system is slow */
+	        alarm (90); // Apache timout=120
+
 		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
                         printf("Error: %s\n",errorbuff);
                         exit(1);
@@ -464,8 +526,11 @@ int main (int argc, char *argv[]) {
 
 		users_h = cmc_listusersus(socketha, atoi(value), &users, value2 == NULL ? "" : value2);
 
+	        /* cansel alarm */
+	        alarm (0);
+
 		if (users_h.num_users < 0) {
-			printf("Error: %s\n", users_h.error);
+			printf("Error: Did not find any users: %s\n", users_h.error);
 			exit(1);
 		}
 		else {
@@ -523,6 +588,149 @@ int main (int argc, char *argv[]) {
 
 		printf("%s\n", cmc_removeForeignUsers(s, value) ? "ok" : "failed");
 	}
+	else if (strcmp(key, "repositoryPageInfo") == 0) {
+	    // parse param
+            if (value == NULL) { 
+                puts("pointer nr not provided"); exit(1); 
+                exit(1);
+            }
+            if (value2 == NULL) { 
+                puts("DocID not provided"); exit(1); 
+                exit(1);
+            }
+            if (value3 == NULL) { 
+                puts("htmlSize not provided"); exit(1); 
+                exit(1);
+            }
+            if (value4 == NULL) { 
+                puts("imagesize not provided"); exit(1); 
+                exit(1);
+            }
+            if (value5 == NULL) { 
+                puts("Colection name not provided"); exit(1); 
+                exit(1);
+            }
+
+		int RepositoryPointer = atoi(value);
+		int DocID = atoi(value2);
+		int htmlSize = atoi(value3);
+		int imageSize = atoi(value4);
+
+                int htmlBufferSize = 3000000;
+		char *htmlBuffer, *acl_allowbuffer, *acl_deniedbuffer, *attributes, *url;
+            	unsigned int uriindex_DocID;
+            	unsigned int uriindex_lastmodified;
+
+                htmlBuffer = malloc(htmlBufferSize);
+                struct ReposetoryHeaderFormat ReposetoryHeader;
+
+                if (!rReadHtml(htmlBuffer,&htmlBufferSize,RepositoryPointer,htmlSize,DocID,value5,&ReposetoryHeader,
+			&acl_allowbuffer,&acl_deniedbuffer,imageSize, &url, &attributes)) {
+                        printf("rReadHtml: did not returne true!\n");
+                }
+
+		if (value6 != NULL) {
+			printf("%s\n",htmlBuffer);
+		}
+		else {
+	                printf("Url: %s\n", url);
+
+	        	printf("acl_allow: %s\n",acl_allowbuffer);
+	                printf("acl_denied: %s\n",acl_deniedbuffer);
+			printf("attributes: %s \n", attributes);
+
+			printf("htmlSize: %hu\n", ReposetoryHeader.htmlSize2);
+			printf("imageSize: %hu\n", ReposetoryHeader.imageSize);
+
+			printf("DocID: %u\n", ReposetoryHeader.DocID);
+
+			printf("time: %s", ctime(&ReposetoryHeader.time));
+			printf("storageTime: %s", ctime(&ReposetoryHeader.storageTime));
+
+			if (uriindex_get(url, &uriindex_DocID, &uriindex_lastmodified, value5) == 0) {
+				printf("deleted: 1\n");
+	                }
+
+		}
+
+
+		free(htmlBuffer);
+	}
+	else if (strcmp(key, "repositoryRead") == 0) {
+	    // parse param
+            if (value == NULL) { 
+                puts("Lot nr not provided"); exit(1); 
+                exit(1);
+            }
+            if (value2 == NULL) { 
+                puts("Collection name not provided"); exit(1); 
+                exit(1);
+            }
+            if (value3 == NULL) { 
+                puts("Offset nr not provided"); exit(1); 
+                exit(1);
+            }
+
+	    int cound = 0;
+
+	    int LotNr = atoi(value);
+	    int offset = atoi(value3);
+
+	    struct ReposetoryHeaderFormat ReposetoryHeader;
+            char htmlbuffer[524288];
+            char htmlbuffer_uncom[524288];
+            char imagebuffer[524288];
+            char *acl_allow;
+            char *acl_deny;
+            char *url, *attributes;
+            unsigned long int radress;
+	    char *thumbnale;
+	    int deleted;
+	    unsigned int uriindex_DocID;
+	    unsigned int uriindex_lastmodified;
+
+	    //loppergjenom alle
+            while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&radress,0,offset,value2,
+		&acl_allow,&acl_deny, &url, &attributes)) {
+
+		if (cound++ > 100) {
+			break;
+		}
+	
+		thumbnale = NULL;
+
+		#ifdef BLACK_BOKS
+			if (ReposetoryHeader.imageSize != 0 && ReposetoryHeader.imageSize != 65535) {
+
+				asprintf(&thumbnale,"/cgi-bin/ShowThumbbb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",
+                                	rLotForDOCid(ReposetoryHeader.DocID),
+                                	(unsigned int)getImagepFromRadres(radress,ReposetoryHeader.htmlSize2),
+                                	ReposetoryHeader.imageSize,
+                                	value2);
+			}
+		#endif
+
+		deleted = 0;
+		if (uriindex_get(ReposetoryHeader.url, &uriindex_DocID, &uriindex_lastmodified, value2) == 0) {
+                	fprintf(stderr,"Unable to get uri info. uri=\"%s\",subname=\"%s\".",ReposetoryHeader.url,value2);
+                        perror("Unable to get uri info");
+			deleted = 1;
+                }
+
+                printf("DocId: %i, url: %s, res: %hi, htmlsize: %hi, imagesize: %hi, time: %lu, radress: %lu, deleted: %i",
+				ReposetoryHeader.DocID,ReposetoryHeader.url,ReposetoryHeader.response,
+				ReposetoryHeader.htmlSize2,ReposetoryHeader.imageSize,ReposetoryHeader.time,radress, deleted);
+		if (thumbnale!=NULL) {printf(", thumbnale: %s", thumbnale);}
+		printf("\n");
+
+		free(thumbnale);
+
+	    }
+
+	    if (cound > 100) {
+	    	printf("Offset_start: %i\nOffset_last: %i\n",offset,radress);
+	    }
+	}
         else if (strcmp(key, "killCrawl") == 0) {
             // parse param
             if (value == NULL) { 
@@ -551,17 +759,17 @@ int main (int argc, char *argv[]) {
 	    int ok = cmc_killcrawl(socketha, pid);
 	    cmc_close(socketha);
 
-        if (ok == 0) {
-           puts("Unable to kill crawl.");
-           exit(1);
-        }
-		if (ok != 1) {
-			printf("Unexpected response %d\n", ok);
-			exit(1);
-		}
+            if (ok == 0) {
+           	puts("Unable to kill crawl.");
+           	exit(1);
+            }
+	    if (ok != 1) {
+		printf("Unexpected response %d\n", ok);
+		exit(1);
+	    }
 
-        puts("Crawl killed.");
-    }
+            puts("Crawl killed.");
+    	}
 	else {
 		printf("unknown key %s\n",key);
 	}
