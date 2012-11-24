@@ -42,7 +42,9 @@ int main (int argc, char *argv[]) {
 		char *subname = argv[5];
 		
 		for (i=0;i<=63;i++) {
+			#ifdef DEBUG
 			printf("bucket: %i\n",i);
+			#endif
 			mergei(i,startIndex,stoppIndex,type,lang,subname,&DocIDcount);
 		}
 
