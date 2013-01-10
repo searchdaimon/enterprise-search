@@ -14,6 +14,7 @@
 struct popmemmapFormat {
         int *ranks;
         off_t size;
+	off_t original_size;
         unsigned int largesDocID;
         int fd;
 };
@@ -32,10 +33,10 @@ int popopenMmap(struct popmemmapFormat *popmemmap,char *filname) {
 
         fstat(popmemmap->fd,&inode);
 
-	popmemmap->size = inode.st_size;
-	printf("old file size %"PRId64"\n",popmemmap->size);
+	popmemmap->original_size = inode.st_size;
+	printf("old file size %"PRId64"\n",popmemmap->original_size);
 
-        popmemmap->size += (sizeof(unsigned int) * mmap_MaxDocIDToAdd);
+        popmemmap->size = popmemmap->original_size + (sizeof(unsigned int) * mmap_MaxDocIDToAdd);
 	printf("new file size %"PRId64"\n",popmemmap->size);
 
 	#ifdef DEBUG
@@ -84,10 +85,21 @@ int popopenMmap(struct popmemmapFormat *popmemmap,char *filname) {
 
 
 void popcloseMmap (struct popmemmapFormat *popmemmap) {
-	ftruncate(popmemmap->fd,(popmemmap->largesDocID * sizeof(unsigned int)) );
+
+	off_t posible_new_size;
 
 	munmap(popmemmap->ranks,popmemmap->size);
 
+
+	posible_new_size = (popmemmap->largesDocID * sizeof(unsigned int));
+
+	printf("largesDocID was %u, posible_new_size %"PRId64"\n",popmemmap->largesDocID,posible_new_size);
+
+	//will bare trunere hvis vi har våkst filen. slik at ikke å legge til en eldre popindex minser den
+	if (posible_new_size > popmemmap->original_size) {
+
+		ftruncate(popmemmap->fd,(popmemmap->largesDocID * sizeof(unsigned int)) );
+	}
         close(popmemmap->fd);
 	
 }
@@ -145,6 +157,7 @@ int main (int argc, char *argv[]) {
 
 	if ((POPFILE = fopen(argv[2],"rb")) == NULL) {
 		perror(argv[2]);
+		exit(1);
 	}
 
 
@@ -154,9 +167,10 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
-	while (! feof(POPFILE)) {
+	//while (! feof(POPFILE)) {
 	//for (i=0;i<10;i++) {
-		fread(&DocID,sizeof(DocID),1,POPFILE);
+	//	fread(&DocID,sizeof(DocID),1,POPFILE);
+	while (fread(&DocID,sizeof(DocID),1,POPFILE) > 0) {
 		//printf("%i\n",DocID);
 	
 		if (DocID == LastDocID) {
