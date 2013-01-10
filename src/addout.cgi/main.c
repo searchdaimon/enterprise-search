@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 	
 	if (getenv("QUERY_STRING") == NULL) {
 		if (argc != 4 ) {
-			printf("no QUERY_STRING and no command lin input.\n\n\tUsage addout.cgi addid http://www.test.com\n");
+			fprintf(stderr,"no QUERY_STRING and no command lin input.\n\n\tUsage addout.cgi addid http://www.test.com\n");
 			exit(1);
 		}
 		else {
@@ -92,8 +92,9 @@ int main(int argc, char *argv[]) {
 	
         mysql_init(&demo_db);
 
-        if(!mysql_real_connect(&demo_db, "www2.boitho.com", "boitho_remote", "G7J7v5L5Y7", "boitho", 3306, NULL, 0)){
-                printf(mysql_error(&demo_db));
+        //if(!mysql_real_connect(&demo_db, "www2.boitho.com", "boitho_remote", "G7J7v5L5Y7", "boitho", 3306, NULL, 0)){
+        if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", "boithoweb", 3306, NULL, 0)){
+                fprintf(stderr,mysql_error(&demo_db));
                 exit(1);
         }
 
@@ -103,7 +104,7 @@ int main(int argc, char *argv[]) {
         sprintf(mysql_query, "select keyword,bid,uri,clickfrequency,ppcuser,affuser,ipadress,UNIX_TIMESTAMP(issuetime),UNIX_TIMESTAMP(NOW()),HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,betaler_keyword_id,betaler_side_id from issuedadds where id='%u'",addid); 
 
         if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
-             printf(mysql_error(&demo_db));
+             fprintf(stderr,mysql_error(&demo_db));
              exit(1);
         }
 
@@ -111,6 +112,7 @@ int main(int argc, char *argv[]) {
         //henter svaret
         mysqlres=mysql_store_result(&demo_db); /* Download result from server */
         if  ((mysqlrow=mysql_fetch_row(mysqlres)) == NULL) { /* Get a row from the results */
+		fprintf(stderr,"cnat't fint the add in db.\n");
 		strcpy(clickStatus,"CANT_FIND_ADD");
 	}
 	else {
@@ -200,7 +202,7 @@ int main(int argc, char *argv[]) {
 		sprintf(mysql_query, "update issuedadds set clickfrequency = clickfrequency+1 where id='%u'",addid);
 
         	if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
-             		printf(mysql_error(&demo_db));
+             		fprintf(stderr,mysql_error(&demo_db));
              		exit(1);
         	}
 
@@ -211,7 +213,7 @@ int main(int argc, char *argv[]) {
 			sprintf(mysql_query, "update brukere set penger=penger - %f where bruker_navn='%s'",issuedadd.bid,issuedadd.ppcuser);
 
 			if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
-        	                printf(mysql_error(&demo_db));
+        	                fprintf(stderr,mysql_error(&demo_db));
         	                exit(1);
         	        }
 
@@ -219,7 +221,7 @@ int main(int argc, char *argv[]) {
 			sprintf(mysql_query, "update brukere set penger=penger + %f where bruker_navn='%s'",issuedadd.bid,issuedadd.affuser);
 		
 			if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
-        	                printf(mysql_error(&demo_db));
+        	                fprintf(stderr,mysql_error(&demo_db));
         	                exit(1);
 	                }
 		}
@@ -240,7 +242,7 @@ int main(int argc, char *argv[]) {
 			clickStatus);
 	  
 		if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
-                        printf(mysql_error(&demo_db));
+                        fprintf(stderr,mysql_error(&demo_db));
                         exit(1);
                 }
 
