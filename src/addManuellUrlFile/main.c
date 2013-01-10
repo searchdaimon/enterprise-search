@@ -36,6 +36,12 @@ int main (int argc, char *argv[]) {
 			buff[strlen(buff) -1] = '\0';
 		}
 
+		//normaliserer
+		if (!url_normalization(buff,sizeof(buff))) {
+	                printf("Error: bad status from url_normalization. Url : \"%\"s\n",buff);
+			continue;
+	        }
+
 		if (strncmp(buff,"ms:",3) == 0) {
 			//hvis vi har på fårhånd manuelt funnet ut at de er ok vil de starte på "ms:"
 			//vi skal ikke gjøre noen tester på om de er ok eller ikke
@@ -43,12 +49,8 @@ int main (int argc, char *argv[]) {
 			memmove(buff,buff+3,strlen(buff));
 			//printf("ms: \"%s\"\n",buff);
 		}
-		else if (!gyldig_url(buff)) {
+		else if (!legalUrl(buff)) {
 			//printf("bad url: \"%s\"\n",buff);
-			continue;
-		}
-		else if (!isOkTttl(buff)) {
-			//printf("bad ttl: \"%s\"\n",buff);
 			continue;
 		}
 		
