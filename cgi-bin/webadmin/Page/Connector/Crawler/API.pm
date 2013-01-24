@@ -109,7 +109,7 @@ sub apply_test_cfg {
         $s->{dbh},
         \%coll_data);
 
-    unless ($coll_data{auth_id}) {
+    if ((!$coll_data{auth_id} || $coll_data{auth_id} eq 'new_values') && ($raw_coll_data{username} && $raw_coll_data{password})) {
         $coll_data{auth_id} = $coll->set_auth(
             $raw_coll_data{username}, 
             $raw_coll_data{password});
