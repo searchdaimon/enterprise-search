@@ -218,22 +218,33 @@ sub test_kill {
 # Creates collection if needed.
 sub init_test_collection {
     my $s = shift;
+    my $coll;
     my $test_coll = $s->{sql_shares}->get({ collection_name => $s->{coll}{name} }, 'id');
     return $test_coll->{id} 
         if $test_coll;
 
 	# Fetch primary system
 	my $sqlSys = Sql::System->new($s->{dbh});
-	my $prim_sys = $sqlSys->primary_id()
-		|| croak "No primary system found.";
+	my $prim_sys = $sqlSys->primary_id();
     
-    # Collection does not exist, create.
-    my $coll = Data::Collection->new($s->{dbh}, { 
-        collection_name => $s->{coll}{name},
-        connector => $s->{conn}{id},
-        active => 0,
-	'system' => $prim_sys,
-    });
+    # Collection does not exist, create. If we have a primary system use it, if not skip it and creat an collection anonymus can access
+    if ($prim_sys) {
+    	$coll = Data::Collection->new($s->{dbh}, { 
+    	    collection_name => $s->{coll}{name},
+    	    connector => $s->{conn}{id},
+    	    active => 0,
+	    'system' => $prim_sys,
+	});
+    }
+    else {
+    	$coll = Data::Collection->new($s->{dbh}, { 
+    	    collection_name => $s->{coll}{name},
+    	    connector => $s->{conn}{id},
+    	    active => 0,
+	    'accesslevel' => 'anonymous',
+	 });
+    }
+
     $coll->create();
     return { $coll->get_attr() }->{id};
 }
