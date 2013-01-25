@@ -62,6 +62,7 @@ $CONFIG{'logfiles'} = {
 	'bbdocumentWebAdd.log' => 'Xml Push error log',
 };
 
+$CONFIG{'coll_log_path'} = '/tmp/coll_log_';
 
 # Group: External utilites
 
@@ -235,7 +236,10 @@ sub crawl_update {
             url       => $url,
             acl_allow => "Everyone", # permissions
             last_modified => $last_modified, # unixtime
-            attributes => '', # key1=value1,key2=value2
+            attributes => {
+                              'key1' => 'value1',
+                              'key2' => 'value2'
+                          }
         ));
     }
 
@@ -263,6 +267,18 @@ sub path_access {
 
 
 $CONFIG{connector_usersys_skeleton} = q|
+####################################################################
+#                                                                  #
+#                                 !                                #
+#                              !!!!!!!                             #
+#   The user system connector is experimental, and the interface   #
+#   is likely to change in the further.                            #
+#                                                                  #
+#                                                                  #
+#                                                                  #
+####################################################################
+
+
 package PerlUserSystem;
 
 use strict;
