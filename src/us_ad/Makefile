@@ -1,9 +1,9 @@
 #gcc xml.c url.c main.c -I/usr/include/libxml2/ -L/usr/lib -lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl && ./a.out
 CFLAGS=		
-CFLAGS+=	-W -Wall -O0 -g -DBLACK_BOKS
+CFLAGS+=	-W -Wall -O0 -g -DBLACK_BOKS -fPIC
 LDFLAGS=	
 PROG=		us_ad.so
-CC=		/usr/local/bin/gcc
+CC=		gcc
 
 # Hack to get common lib files from boitho
 COMMONDIR=	../common
