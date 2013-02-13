@@ -1055,7 +1055,13 @@ void disp_out_sd_v2_1(
 						escapeHTML(ekey, sizeof ekey, key);
 						escapeHTML(evalue, sizeof evalue, value);
 
-
+// Runarb: 13.04.2012: Temporery fix for geting bad utf data from http://datasets.opentestset.com/datasets/Enron_files/full/arora-h/McKinsey%20Enterprise%20Report%2011-00.ppt						
+int len, n;
+for(len=0;len<strlen(evalue);len++) {
+if ((unsigned int)evalue[len] < 31) {
+	evalue[len] = 'X';
+}
+}
 						printf("\t<attribute key=\"%s\" value=\"%s\" query=\"%s\" attribute_query=\"%s\" />\n", 
 							ekey, evalue, 
 							attrq_esc, attrq2_esc);
