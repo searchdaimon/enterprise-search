@@ -66,7 +66,7 @@
 
 //flyttet til boithoad.h
 //#define BADPORT 3491 //Boitho autentifisering
-//#define MAX_LDAP_ATTR_LEN 512
+#define MAX_LDAP_ATTR_LEN 512
 //
 //#define bad_askToAuthenticate		1
 //#define bad_listUsers 		10
@@ -302,7 +302,7 @@ struct DocumentIndexFormat {
 	unsigned short AntallFeiledeCrawl;
 	unsigned short AdultWeight;
 	unsigned int RepositoryPointer;
-	unsigned short htmlSize;
+	unsigned short htmlSize __attribute__ ((deprecated));
         unsigned short imageSize;
 	unsigned int ResourcePointer;
 	unsigned short ResourceSize;
@@ -318,11 +318,12 @@ struct DocumentIndexFormat {
         unsigned int crc32;
 #ifdef BLACK_BOKS
 	time_t lastSeen;
-	char reservedSpace[60]; //3 now
+	unsigned int htmlSize2;
+	char reservedSpace[56]; //18 okt 2012
 #endif
 };
 
-#define MaxReposetoryContent 30000
+//#define MaxReposetoryContent 30000
 
 struct ReposetoryHeaderFormat {
 	unsigned int DocID;
@@ -336,7 +337,7 @@ struct ReposetoryHeaderFormat {
 	char content_type[4];
 	unsigned int IPAddress;
 	unsigned short response;
-	unsigned short htmlSize;
+	unsigned short htmlSize __attribute__ ((deprecated));
 	unsigned short imageSize;
 	unsigned int time;
 	unsigned short userID;
@@ -350,7 +351,8 @@ struct ReposetoryHeaderFormat {
 	char doctype[4];
 	unsigned short urllen;
 	unsigned int attributeslen;
-	char reservedSpace[54];
+	unsigned int htmlSize2;
+	char reservedSpace[50];
 #endif
 };
 
@@ -420,8 +422,6 @@ struct rank_explaindFormat {
 struct hitsFormat {
 	unsigned short pos;
 	char phrase;
-	//struct iindexMainElements *iindexp;
-
 };
 
 // Formatett på treff i indeksen
@@ -459,7 +459,6 @@ struct iindexMainElements {
 
 
 struct iindexFormat {
-	//unsigned short hits[maxTotalIindexHits];
 	struct hitsFormat hits[maxTotalIindexHits];
 	int nrofHits;
 	int attrib_count;
@@ -524,9 +523,9 @@ struct SiderFormat {
 		char subname[64];
 	} *urls;
 	char *attributes;
-
+	unsigned short attributelen;
 	//buffering som gjør at vi kan lagre den på fil, og fortsatt bruke gammel data
-	char reserved[28];
+	char reserved[26];
 };
 
 struct queryTimeFormat {
@@ -738,6 +737,8 @@ struct QueryDataForamt {
 	
 	char navmenucfg[NAVMENUCFG_SIZE]; // jun 16 09
 	int lang;
+	char nocache;
+	char nolog;
 };
 
 
@@ -780,6 +781,12 @@ struct anchorIndexFormat {
 #define __bunused __attribute__((unused))
 
 #define ANONYMOUS_USER "SDESAnonymous"
+
+/* MYSQL login information */
+#define MYSQL_HOST "localhost"
+#define MYSQL_USER "boitho"
+#define MYSQL_PASS "G7J7v5L5Y7"
+
 
 #endif //_DEFINE__H_
 
