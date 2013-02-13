@@ -353,6 +353,79 @@ sconnect_thread(void (*sh_pointer)(int), int port)
 
 #endif
 
+//rutine som binder seg til PORT og kaller sh_pointer hver gang det kommer en ny tilkobling
+int
+sconnect_simple(void (*sh_pointer)(int), int port)
+{
+	int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
+	struct sockaddr_in my_addr;    // my address information
+	struct sockaddr_in their_addr; // connector's address information
+	socklen_t sin_size;
+	int yes=1;
+
+	#ifdef DEBUG_BREAK_AFTER
+		static count = 0;
+	#endif
+
+	fprintf(stderr, "daemon: sconnect_thread(port=%i)\n", port);
+
+	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+		perror("socket");
+		exit(1);
+	}
+
+	if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
+		perror("setsockopt");
+		exit(1);
+	}
+
+#ifdef DEBUG
+	printf("will listen on port %i\n", port);
+#endif
+
+	my_addr.sin_family = AF_INET;         // host byte order
+	my_addr.sin_port = htons(port);     // short, network byte order
+	my_addr.sin_addr.s_addr = INADDR_ANY; // automatically fill with my IP
+	memset(&(my_addr.sin_zero), '\0', 8); // zero the rest of the struct
+
+	if (bind(sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1) {
+		fprintf(stderr,"Can't bind to port %i\n", port);
+		perror("bind");
+		exit(1);
+	}
+
+	if (listen(sockfd, BACKLOG) == -1) {
+		perror("listen");
+		exit(1);
+	}
+
+	printf("Bound to port %d ok. Antering accept loop\n", port);
+	for (;;) {
+		sin_size = sizeof(struct sockaddr_in);
+		if ((new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size)) == -1) {
+			perror("accept");
+			continue;
+		}
+		printf("server: got connection from %s\n", inet_ntoa(their_addr.sin_addr));
+		sh_pointer(new_fd);
+
+		close(new_fd);
+
+		#ifdef DEBUG_BREAK_AFTER
+			++count;
+	
+        		if (count >= DEBUG_BREAK_AFTER) {
+				printf("exeting after %i connects\n",count);
+				break;
+			}
+		#endif
+
+	}
+
+	fprintf(stderr, "daemon: ~sconnect()\n");
+	return 0;
+} 
+
 int cconnect (char *hostname, int PORT) {
 
         int sockfd;
