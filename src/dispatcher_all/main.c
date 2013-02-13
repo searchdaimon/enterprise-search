@@ -4,6 +4,7 @@
 #include "../common/stdlib.h"
 #include "../common/utf8-strings.h"
 #include "../UrlToDocID/search_index.h"
+#include "../tkey/tkey.h"
 
 #include "../banlists/ban.h"
 
