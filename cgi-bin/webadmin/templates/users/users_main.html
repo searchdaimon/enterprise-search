@@ -21,28 +21,34 @@
 
 <h1>End users</h1>
 
+[% IF error %]
+	[% PROCESS 'tpl_msg.html' type="error" content = error %]
+[% END %]
+
+
 [% WRAPPER 'template_description.html' style="margin-bottom : 0.5em;" %]
-	[% IF licensed_users < activated_users %]
-	Changes not saved.
+	[% IF licensed_users == 0 %]
+		You have license for unlimited users. 
 	[% ELSE %]
-	Search activated for [% activated_users %] out of a total of [% users.size %] system users. 
-	[% END %]
-	[% IF licensed_users %]
-		Your license covers [% licensed_users %] users.
-	[% ELSE %]
-		You do not have license for any users on this system.
+		[% IF licensed_users < activated_users %]
+		<b>Changes not saved.</b>
+		[% ELSE %]
+		Search activated for [% activated_users %] out of a total of [% users.size %] system users. 
+		[% END %]
+		[% IF licensed_users %]
+			Your license covers [% licensed_users %] users.
+		[% ELSE %]
+			You do not have license for any users on this system.
+		[% END %]
 	[% END %]
 	<a href="settings.cgi">License settings</a>.
 
 [% END %]
-[% IF !error && licensed_users < activated_users %]
+[% IF !error && licensed_users != 0 && licensed_users < activated_users %]
 	[% SET too_many = activated_users - licensed_users %]
 	[% SET error = "You have selected $activated_users users. Current license only covers $licensed_users users." %]
 [% END %]
 
-[% IF error %]
-	[% PROCESS 'tpl_msg.html' type="error" content = error %]
-[% END %]
 
 <form method="post" action="users.cgi">
 <input type="hidden" name="upd_usr_access" value="1" />
@@ -68,7 +74,12 @@
 		</td>
 		
 		<td>
-			<input id="useraccess[% i %]" name="users[[% i %]]" value="[% usr.username | html %]" type="checkbox" [% IF usr.active %]checked="checked"[% END %] />
+			[% IF licensed_users == 0 %]
+<!-- aaaaaaa fix lated -->
+				<input id="useraccess[% i %]" name="users[[% i %]]" value="[% usr.username | html %]" type="checkbox" [% IF usr.active %]checked="checked"[% END %] />				
+			[% ELSE %]
+				<input id="useraccess[% i %]" name="users[[% i %]]" value="[% usr.username | html %]" type="checkbox" [% IF usr.active %]checked="checked"[% END %] />
+			[% END %]
 		</td>
 
 		

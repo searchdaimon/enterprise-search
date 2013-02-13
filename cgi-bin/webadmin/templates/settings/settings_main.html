@@ -90,7 +90,11 @@ function checkValidLicense(license) {
 			 an invalid license. Search will not work for any users." 
 		%]
 	[% ELSE %]
-		<p>Your current license covers [% license.users %] users.</p>
+		[% IF license.users==0 %]
+			<p>Your current license covers unlimited users.</p>
+		[% ELSE %]
+			<p>Your current license covers [% license.users %] users.</p>
+		[% END %]
 	[% END %]
 		<p>
 			<form method="post" action="settings.cgi">
