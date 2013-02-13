@@ -29,7 +29,9 @@ Kal "ropen" for å opne Reposetoryet, "rclose" for å stenge Reposetoryet.
 #include <sys/file.h>
 #include <math.h>
 
+#ifdef BLACK_BOKS
 #include "../ds/dcontainer.h"
+#endif
 
 struct addNewUrlhaFormat {
                 int OpenLot;
@@ -71,8 +73,10 @@ struct ReposetoryOpenFilesFormat {
 struct ReposetoryOpenFilesFormat OpenReposetoryFiles[MaxOpenReposetoryFiles];
 
 
+#ifdef BLACK_BOKS
 container* ropen();
 void rclose(container*);
+#endif
 
 int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radress64bit,unsigned int rsize,unsigned
 				int DocID,char subname[],struct ReposetoryHeaderFormat *ReposetoryHeader,
@@ -115,9 +119,8 @@ size_t getResource(int LotNr, char *subname, unsigned int DocID, char *resource,
 
 
 
-
 unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys);
-int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys);
+int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys, int HtmlBufferSize);
 void setLastIndexTimeForLot(int LotNr,int httpResponsCodes[],char subname[]);
 unsigned int GetLastIndexTimeForLot(int LotNr,char subname[]);
 
