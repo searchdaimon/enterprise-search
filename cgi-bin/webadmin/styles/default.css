@@ -461,3 +461,7 @@ table .error {
 	background-repeat : no-repeat;
 	background-position : 0.3em;
 }
+
+.infotable td {
+	padding: 2px;
+}

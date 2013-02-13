@@ -140,22 +140,27 @@
 
 [% BLOCK user_system %]
 	<div class="block_default" style="padding-top : 0.5em;">
-	Choose user system
-	<div class="block_inner" style="padding-top : 0.5em;">
+
+	[% IF user_systems.size > 0 %]
+		Choose user system
+		<div class="block_inner" style="padding-top : 0.5em;">
 	
-	<select name="[% prefix %].system">
-	[% FOREACH u IN user_systems %]
-		<option value="[% u.id %]"
-			[% 'selected = "selected"' IF u.id == share.system %] 
-			 >[% u.name | html %]
-			 [% ' (primary)' IF u.is_primary %]
-		</option>
+		<select name="[% prefix %].system">
+		[% FOREACH u IN user_systems %]
+			<option value="[% u.id %]"
+				[% 'selected = "selected"' IF u.id == share.system %] 
+				 >[% u.name | html %]
+				 [% ' (primary)' IF u.is_primary %]
+			</option>
+		[% END %]
+		</select>
+		</div>
+	
+		<p>You can also <a href="usersys.cgi">add a new user system</a>.</p>
+	[% ELSE %]
+		<p>To enable access managment you must <a href="usersys.cgi">add a user system</a>.</p>
 	[% END %]
-	</select>
-	</div>
-	
-	<p>You can also <a href="usersys.cgi">add a new user system</a>.</p>
-	
+
 	</div>
 [% END %]
 
