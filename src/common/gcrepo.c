@@ -9,6 +9,9 @@
 #include "lot.h"
 #include "DocumentIndex.h"
 
+
+#ifdef BLACK_BOKS
+
 #define MaxAgeDiflastSeen 86400
 //#define MaxAgeDiflastSeen 100
 
@@ -69,8 +72,7 @@ gcrepo(int LotNr, char *subname)
 		}
 		else {
 			unsigned long int offset;
-			offset = rApendPost(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_deny, "repo.wip", url,
-			    attributes, attrkeys);
+			offset = rApendPost(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_deny, "repo.wip", url, attributes, attrkeys);
 			RE_DocumentIndex(re,ReposetoryHeader.DocID)->RepositoryPointer = offset;
 			#ifdef DEBUG
 			printf("Writing DocID: %d\n", ReposetoryHeader.DocID);
@@ -110,3 +112,4 @@ gcrepo(int LotNr, char *subname)
 	return 0;
 }
 
+#endif
