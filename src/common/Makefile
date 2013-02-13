@@ -1,9 +1,10 @@
 
-# Uncomment if you want debugging info 
 
 CFLAGS?=	-O2
 CFLAGS+=	-DATTRIBUTES -D_FILE_OFFSET_BITS=64 -DDISK_PROTECTOR -DBLACK_BOKS -DIIACL -DWITH_THREAD -DWITH_RANK_FILTER \
-		-DWITH_CONFIG
+		-DWITH_CONFIG -DWITH_DAEMON_THREAD
+# Uncomment if you want debugging info
+#CFLAGS+=	-DDEBUG
 
 LIB=	libcommon.a
 OBJS=	adultWeight.o chtbl.o debug.o iconv.o ir.o logs.o poprank.o sha1.o timediff.o \
