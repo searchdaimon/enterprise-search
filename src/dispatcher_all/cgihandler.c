@@ -35,6 +35,11 @@ int cgi_access_type(char *remoteaddr, char *correct_bbkey) {
 	if (strcmp(remoteaddr, "127.0.0.1") == 0)
 		return ACCESS_TYPE_FULL;
 
+
+	if (cgi_getentryint("anonymous") != 0) {
+		return ACCESS_TYPE_FULL;
+	}
+
 	const char *bbkey = cgi_getentrystr("bbkey");
 	#ifdef DEBUG
 	warnx("correct: %s, provided: %s\n", correct_bbkey, bbkey);
@@ -53,7 +58,7 @@ int cgi_access_type(char *remoteaddr, char *correct_bbkey) {
 			return ACCESS_TYPE_LIMITED;
 		}
 		
-		warn("no key, no logged in user");
+		warn("no key, no logged in user or anonymous access.");
 		return ACCESS_TYPE_NONE;
 	}
 
