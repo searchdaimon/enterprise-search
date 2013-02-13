@@ -382,6 +382,10 @@ int split(const char *Input, char *Delim, char ***List)
 void FreeSplitList(char **List) {
   int Count;
 
+  if (List == NULL) {
+	return;
+  }
+
   Count = 0;
   while( (List[Count] != NULL) ) {
     free(List[Count++]);
@@ -440,7 +444,7 @@ size_t strlwcat(char *dst, const char *src, size_t siz) {
 	len = strlcat(dst,src,siz);
 
 	if (len >= siz) {
-		bwarn("strlwcat: ENAMETOOLONG");
+		printf("strlwcat: ENAMETOOLONG\n");
 	}
 
 
