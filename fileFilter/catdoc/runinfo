@@ -5,7 +5,7 @@ outputtype: stdio
 attrwhitelist: creator=>author,language,last saved by,page count
 
 documentstype: xls
-command: /usr/bin/xls2csv -s 8859-1 -c " " #file
+command: /usr/bin/xls2csv -s 8859-10 -c " " #file
 outputformat: text
 outputtype: stdio
 attrwhitelist: creator=>author,language,last saved by,page count
