@@ -1,26 +1,62 @@
-[% 
-tabs = [
-	{
-		'name' => 'Edit collection',
-		'url' => "overview.cgi?action=edit&amp;id=$id"
-	},
-	{
-		'name' => 'Advanced management',
-		'url' => "overview.cgi?action=manage&amp;id=$id",
-		
-	},
-	{
-		'name' => 'Access level',
-		'url' => "overview.cgi?action=accesslevel&amp;id=$id",
-		
-	},
-	{
-		'name' => "Result customization",
-		'url'    => "overview.cgi?action=customize&amp;id=$id",
-	},
-	{
-		'name' => "Statistics",
-		'url'    => "overview.cgi?action=graphs&amp;id=$id",
-	},
+[% IF connector == 14 %]
+
+	[% tabs = [
+		{
+			'name' => 'Edit collection',
+			'url' => "overview.cgi?action=edit&amp;id=$id&amp;connector=$connector"
+		},
+		{
+			'name' => 'Access level',
+			'url' => "overview.cgi?action=accesslevel&amp;id=$id&amp;connector=$connector",		
+		},
+		{
+			'name' => "Result customization",
+			'url'    => "overview.cgi?action=customize&amp;id=$id&amp;connector=$connector",
+		},
+		{
+			'name' => "Documents",
+			'url'    => "overview.cgi?action=documents&amp;id=$id&amp;connector=$connector",
+		},
+		{
+			'name' => "HTML File Upload",
+			'url'    => "overview.cgi?action=upload&amp;id=$id&amp;connector=$connector",
+		},
 	] %]
+
+[% ELSE %]
+
+	[% tabs = [
+		{
+			'name' => 'Edit collection',
+			'url' => "overview.cgi?action=edit&amp;id=$id&amp;connector=$connector"
+		},
+		{
+			'name' => 'Advanced management',
+			'url' => "overview.cgi?action=manage&amp;id=$id&amp;connector=$connector",		
+		},
+		{
+			'name' => 'Access level',
+			'url' => "overview.cgi?action=accesslevel&amp;id=$id&amp;connector=$connector",		
+		},
+		{
+			'name' => "Result customization",
+			'url'    => "overview.cgi?action=customize&amp;id=$id&amp;connector=$connector",
+		},
+		{
+			'name' => "Console",
+			'url'    => "overview.cgi?action=console&amp;id=$id&amp;connector=$connector",
+		},
+		{
+			'name' => "Statistics",
+			'url'    => "overview.cgi?action=graphs&amp;id=$id&amp;connector=$connector",
+		},
+		{
+			'name' => "Documents",
+			'url'    => "overview.cgi?action=documents&amp;id=$id&amp;connector=$connector",
+		},
+	] %]
+
+[% END %]
+
+
 [% PROCESS 'template_tabs.html' %]
