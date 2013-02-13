@@ -2,7 +2,7 @@
 ## TODO: Remove uneeded dependencies
 
 
-VPATH=	.:../maincfg:../bbdocument:../acls:../boithoadClientLib:../crawlManager:../searchFilters:../tkey:../cgi-util:../key
+VPATH=	.:../maincfg:../bbdocument:../acls:../boithoadClientLib:../crawlManager:../searchFilters:../cgi-util:../key
 
 WANT_COMMON=	true
 WANT_DS=	true
@@ -24,7 +24,7 @@ CFLAGS+=	-DATTRIBUTES -D_FILE_OFFSET_BITS=64 -DIIACL -DBLACK_BOKS -DWITH_SPELLIN
 LDFLAGS+=	-lm -lz ../getFiletype/libfte.a ../query/lex.query.o -lpthread
 
 OBJS=	main.o maincfg.o acls.o out_opensearch.o  out_sdxml.o library.o qrewrite.o cgihandler.o client.o \
-	boithoadClientLib.o searchFilters.o tkey.o cgi-util.o key.o
+	boithoadClientLib.o searchFilters.o cgi-util.o key.o
 
 
 include ../../mk/prog.mk
