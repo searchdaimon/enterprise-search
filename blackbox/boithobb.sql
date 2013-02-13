@@ -48,11 +48,11 @@ CREATE TABLE `config` (
 #
 
 INSERT INTO `config` VALUES ('authenticatmetod', 'msad');
-INSERT INTO `config` VALUES ('msad_domain', 'domain.example.com');
-INSERT INTO `config` VALUES ('msad_user', 'username');
-INSERT INTO `config` VALUES ('msad_password', 'password');
-INSERT INTO `config` VALUES ('msad_ip', '127.0.0.1');
-INSERT INTO `config` VALUES ('msad_port', '');
+#INSERT INTO `config` VALUES ('msad_domain', 'domain.example.com');
+#INSERT INTO `config` VALUES ('msad_user', 'username');
+#INSERT INTO `config` VALUES ('msad_password', 'password');
+#INSERT INTO `config` VALUES ('msad_ip', '127.0.0.1');
+#INSERT INTO `config` VALUES ('msad_port', '');
 INSERT INTO `config` VALUES ('ldap_domain', '');
 INSERT INTO `config` VALUES ('ldap_user', '');
 INSERT INTO `config` VALUES ('ldap_password', '');
@@ -65,13 +65,13 @@ INSERT INTO `config` VALUES ('auth_key', 'c1a8ad17484619b51ca7f290f2e0a5e4  -');
 INSERT INTO `config` VALUES ('auth_code', '');
 INSERT INTO `config` VALUES ('gc_last_run', '1199976690');
 INSERT INTO `config` VALUES ('msad_ldapbase', '');
-INSERT INTO `config` VALUES ('recrawl_schedule_start', '22');
+INSERT INTO `config` VALUES ('recrawl_schedule_start', '');
 INSERT INTO `config` VALUES ('gc_default_rate', '604800');
-INSERT INTO `config` VALUES ('recrawl_schedule_end', '7');
+INSERT INTO `config` VALUES ('recrawl_schedule_end', '');
 INSERT INTO `config` VALUES ('suggdict_run_hour', '10');
 INSERT INTO `config` VALUES ('suggdict_last_run', '1199975440');
 INSERT INTO `config` VALUES ('recrawl_recheck_rate', '1440');
-INSERT INTO `config` VALUES ('setup_wizard_done', '0');
+INSERT INTO `config` VALUES ('no_setup', '1');
 
 # --------------------------------------------------------
 
@@ -259,3 +259,6 @@ CREATE TABLE `shares` (
 # Dataark for tabell `shares`
 #
 
+#
+#Runarb: 14 des 2010. licensekey har blitt flyttet fra sql/update-cur.sql til blackbox/boithobb.sql som er base pakken. Dete betyr at alle nye instalasjoner nå har lisensnøkkel som standar
+INSERT INTO config (configkey, configvalue) VALUES('licensekey', 'RRYAYACZACJAB6RLANAQ8K4G');
