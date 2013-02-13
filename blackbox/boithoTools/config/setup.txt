@@ -3,3 +3,8 @@ user=boitho
 Password=G7J7v5L5Y7
 server=localhost
 database=boithobb
+#network setup
+net_device=eth0
+net_ifcfg=ifcfg-eth0
+network_interface=eth0
+
