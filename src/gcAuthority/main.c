@@ -133,6 +133,9 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt, time_t newest_do
 	for (i=0;i<64;i++) {
 		Indekser(LotNr,"acl_denied",i,subname,&IndekserOpt);
 	}
+	for (i=0;i<64;i++) {
+		Indekser(LotNr,"attributes",i,subname,&IndekserOpt);
+	}
 
 	//siden vi nå har lagt til alle andringer fra rev index kan vi nå slettet gced filen også
 	//Indekser_deleteGcedFile(LotNr, subname);
@@ -350,6 +353,17 @@ void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 		#endif
 		mergei(i,0,0,"acl_denied","aa",subname,&DocIDcount);
 	}
+	printf("merging attributes\n");
+        for (i=0;i<NrOfDataDirectorys;i++) {
+		#ifdef DEBUG
+        	printf("gc_coll: bucket: %i\n",i);
+		#endif
+		mergei(i,0,0,"attributes","aa",subname,&DocIDcount);
+	}
+
+	// legger subnavnet til listen og huper searchd slik at cashen blir frisket opp.
+	printf("Huping searchd to recache \"%s\"\n",subname);
+	lot_recache_collection(subname);
 
         printf("DocIDcount: %i (/64)\n",DocIDcount);
 
