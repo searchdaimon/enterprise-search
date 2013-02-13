@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Carp;
+use File::Copy;
 use config qw(%CONFIG);
 BEGIN {
 	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
@@ -75,6 +76,28 @@ sub confirmed_delete_settings($$) {
 sub show_confirm_dialog($$) {
 	my ($self, $vars) = @_;
 	return "settings_delete_all.html";
+}
+
+sub show_frontpage_settings {
+	my ($self, $vars) = @_;
+	my $template_file = "settings_frontpage.html";
+	my $sqlConfig = $self->{'sqlConfig'};
+	$vars->{'frontpage_preference'}
+		= $sqlConfig->get_setting("frontpage_preference");
+
+
+	return $template_file;
+}
+
+sub show_anostat_settings {
+	my ($self, $vars) = @_;
+	my $template_file = "settings_anostat.html";
+	my $sqlConfig = $self->{'sqlConfig'};
+	$vars->{'anostat_preference'}
+		= $sqlConfig->get_setting("anostat_preference");
+
+
+	return $template_file;
 }
 
 sub show_advanced_settings($$) {
@@ -171,6 +194,65 @@ sub api_check_license {
 	$api_vars->{valid} = $nfo{valid};
 	1;
 }
+
+sub select_frontpage_version {
+    my ($s, $vars, $fpage) = @_;
+
+    my %frontpage_versions = ('webclient2' => 1, 'public' => 1, 'infopage.html' => 1);
+
+    croak "Invalid frontpage version '$fpage'"
+        unless $frontpage_versions{$fpage};
+
+    my $oldfile = $ENV{BOITHOHOME} . "/public_html/.htaccess";
+    my $newfile = "/tmp/public_html-htaccess.new";
+
+
+    eval {
+	    # Open input file in read mode
+	    open INPUTFILE, "<", $oldfile or die("Cant open $oldfile $!");
+	    # Open output file in write mode
+	    open OUTPUTFILE, ">", $newfile or die("Cant open $newfile $!");
+
+	    # Read the input file line by line
+	    while (my $l = <INPUTFILE>) {
+	         $l =~ s/(RewriteRule \^\$ \/)(.*?)( \[R\])/$1$fpage$3/g;
+	         print OUTPUTFILE $l; 
+	    }
+
+
+	    close INPUTFILE;
+	    close OUTPUTFILE;
+
+	    move($newfile,$oldfile) or die("Cant rename (move) $newfile -> oldfile: $!");
+    };
+
+    if ($@) {
+	warn $@;
+        $vars->{frontpage_err} = $@;
+    }
+    else {
+    	$s->{sqlConfig}->update_setting("frontpage_preference", $fpage);
+    	$vars->{frontpage_succs} = $fpage;
+    }
+
+    return $s->show_frontpage_settings($vars);
+}
+
+sub select_anostat_version {
+    my ($s, $vars, $fanostat) = @_;
+
+    my %anostat_versions = ('legal' => 1, 'illegal' => 1, );
+
+    croak "Invalid frontpage version '$fanostat'"
+        unless $anostat_versions{$fanostat};
+
+
+    $s->{sqlConfig}->update_setting("anostat_preference", $fanostat);
+    $vars->{anostat_succs} = $fanostat;
+
+    return $s->show_anostat_settings($vars);
+}
+
 
 sub select_dist_version {
     my ($s, $vars, $dist) = @_;
