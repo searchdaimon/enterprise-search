@@ -30,3 +30,24 @@ unsigned int atou(char buf[]) {
 	return strtoul(buf, (char **)NULL, 10);
 }
 
+int *intdup(int i) {
+        int *ret;
+
+        if ((ret = malloc(sizeof(int))) == NULL) {
+                return NULL;
+        }
+        (*ret) = i;
+
+        return ret;
+}
+unsigned int *intudup(unsigned int i) {
+        unsigned int *ret;
+
+        if ((ret = malloc(sizeof(unsigned int))) == NULL) {
+                return NULL;
+        }
+        (*ret) = i;
+
+        return ret;
+}
+
