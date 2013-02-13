@@ -2,8 +2,7 @@
 #define _GNU_SOURCE
 #endif
 
-#include <stdlib.h>
-#include <stdio.h>
+
 
 #include <libio.h>
 #include <inttypes.h>
@@ -14,6 +13,10 @@
 #include <unistd.h>
 #include <limits.h>
 #include <string.h>
+#include <sys/file.h>
+
+#include <stdlib.h>
+#include <stdio.h>
 
 struct b_fh_cookie {
 	int fdOriginal;
@@ -50,13 +53,32 @@ ssize_t bwriter (void *cookie, const char *buffer, size_t size) {
 }
 int bseeker (void *cookie, _IO_off64_t *position, int whence) {
 	#ifdef DEBUG
-	printf("seeker(position=%lu,whence=%i)\n",position,whence);
+	printf("seeker(position=%lld,whence=%i)\n",*position,whence);
+	printf("seeker(SEEK_SET=%i, SEEK_CUR=%i)\n",SEEK_SET,SEEK_CUR);
 	#endif
 
+	// Bugfiks: ftell kaller bseeker(position=0, whence=SEEK_CUR) for å finne posisjon eller å bufre data.
+	// dette fungerer ikke på bbh kernellen og vi må bruke batomicallyopen(). Dette resetter også posisjonen til strømen og
+	// funker dermed den. Fro alt dette returnerer vi bare 1 (ok). 
+	if ( (*position==0) && (whence==SEEK_CUR) ) {
+		#ifdef DEBUG
+			printf("bseeker(): got asked for offset\n");
+		#endif
+		return 1;
+	}
+
+
 	if (whence == SEEK_SET) {
+		#ifdef DEBUG
+			printf("bseeker(): SEEK_SET to %lu\n",*position);
+		#endif
+
 		((struct b_fh_cookie *)cookie)->offset = *position;
 	}
 	else if (whence == SEEK_CUR) {
+		#ifdef DEBUG
+			printf("bseeker(): SEEK_CUR to %lu\n",*position);
+		#endif
 		((struct b_fh_cookie *)cookie)->offset += *position;
 	}
 	else {
@@ -112,6 +134,10 @@ FILE *batomicallyopen(char path[], char mode[]) {
 	struct b_fh_cookie *bfh;
 	cookie_io_functions_t iofunctions;
 	int flagsAtomicallyTmp;
+
+	#ifdef DEBUG
+		printf("batomicallyopen(path=\"%s\",mode=\"%s\")\n",path,mode);		
+	#endif
 
 	if ((bfh = malloc(sizeof(struct b_fh_cookie))) == NULL) {
 		perror("malloc b_fh_cookie");
