@@ -38,6 +38,7 @@ ToDo: trenger en "close" prosedyre for filhandlerene.
 
 // DocumentIndex strukt, er rutiner som jobber på en di struct
 void DIS_delete(struct DocumentIndexFormat *DocumentIndexPost) {
+	DocumentIndexPost->htmlSize2 = 0;
 	DocumentIndexPost->htmlSize = 0;
 	DocumentIndexPost->imageSize = 0;
 	DocumentIndexPost->RepositoryPointer = 0;
@@ -51,7 +52,7 @@ int DIS_isDeleted(struct DocumentIndexFormat *DocumentIndexPost) {
 
 	//dokumentet er slettet hvis alle følgende pekere og størelse er 0
 	if (
-	   (DocumentIndexPost->htmlSize == 0)
+	   ((DocumentIndexPost->htmlSize2 == 0) && (DocumentIndexPost->htmlSize == 0))
 	&& (DocumentIndexPost->imageSize == 0)
 	&& (DocumentIndexPost->RepositoryPointer == 0)
 	&& (DocumentIndexPost->ResourcePointer == 0)
@@ -295,8 +296,8 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
         static int LotOpen = -1;
 	static unsigned LastDocID;
 	int n;
-
 	char FileName[128];
+
 
 
         //tester om reposetoriet allerede er open, eller ikke
@@ -308,10 +309,14 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
                 GetFilPathForLot(FileName,LotNr,subname);
                 strncat(FileName,"DocumentIndex",128);
 
-                printf("Opending lot %s\n",FileName);
+		#ifdef DEBUG
+	                printf("%s:%i: Opending lot %s\n",__FILE__,__LINE__,FileName);
+		#endif
 
                 if ( (LotFileOpen = fopen(FileName,"rb")) == NULL) {
-                        perror(FileName);
+			#ifdef DEBUG
+                        	perror(FileName);
+			#endif
                         //exit(1);
 			LotOpen = -1;
 			return 0;
@@ -340,6 +345,11 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
 				#ifdef DEBUG
 				perror("CurrentDocumentIndexVersionAsUInt");
 				#endif
+
+				//stnger ned filen
+        	                fclose(LotFileOpen);
+	                        LotOpen = -1;
+
 				return 0;
 			}
 		#endif
@@ -367,7 +377,9 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
         }
         else {
         //hvis vi er tom for data stenger vi filen, og retunerer en 0 som sier at vi er ferdig.
-                printf("ferdig\n");
+		#ifdef DEBUG
+                	printf("ferdig\n");
+		#endif
                 fclose(LotFileOpen);
 		LotOpen = -1;
                 return 0;
@@ -400,6 +412,10 @@ int DIRead_post_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID, int 
 		else {
 			forReturn  = 1;
 		}
+
+        if ((*DocumentIndexPost).htmlSize != 0) {
+                (*DocumentIndexPost).htmlSize2 = (*DocumentIndexPost).htmlSize;
+        }
 
 	return forReturn;
 		
@@ -436,6 +452,12 @@ int DIRead_post_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID, FIL
 			forReturn  = 1;
 		}
 
+
+	        if ((*DocumentIndexPost).htmlSize != 0) {
+	                (*DocumentIndexPost).htmlSize2 = (*DocumentIndexPost).htmlSize;
+	        }
+
+
 	return forReturn;
 		
 }
@@ -469,6 +491,10 @@ int DIRead_fmode (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char 
 		printf("can't open DocumentIndexPost for DocID %u.\n",DocID);
         }
 
+
+        if ((*DocumentIndexPost).htmlSize != 0) {
+                (*DocumentIndexPost).htmlSize2 = (*DocumentIndexPost).htmlSize;
+        }
 
 
 	#ifdef DISK_PROTECTOR
@@ -512,6 +538,10 @@ int DIRead_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subn
 
 	}
 
+        if ((*DocumentIndexPost).htmlSize != 0) {
+                (*DocumentIndexPost).htmlSize2 = (*DocumentIndexPost).htmlSize;
+        }
+
 
 	return forReturn;
 }
@@ -547,6 +577,10 @@ int DIRead_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subna
 		#endif
 
 	}
+
+        if ((*DocumentIndexPost).htmlSize != 0) {
+                (*DocumentIndexPost).htmlSize2 = (*DocumentIndexPost).htmlSize;
+        }
 
 
 	return forReturn;

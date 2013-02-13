@@ -26,13 +26,13 @@
 #include <dirent.h>
 #include <unistd.h>
 
-//#ifdef BLACK_BOKS
+#ifdef BLACK_BOKS
 #include "attributes.h"
 #include "../ds/dcontainer.h"
 #include "../ds/dpair.h"
 #include "../ds/dset.h"
 #include "../ds/dmap.h"
-//#endif
+#endif
 
 //#define MMAP_REPO
 //#define TIME_DEBUG_L
@@ -195,6 +195,7 @@ void fpop(char *buff,int *length,FILE *file,char separator,int nrOfseparators) {
 
 }
 
+#ifdef BLACK_BOKS
 container* ropen()
 {
     return map_container( pair_container( string_container(), string_container() ), set_container( string_container() ) );
@@ -236,6 +237,7 @@ void rclose(container *attrkeys)
 
     lotCloseFiles();
 }
+#endif
 
 
 void setLastIndexTimeForLot(int LotNr,int httpResponsCodes[],char subname[]){
@@ -405,9 +407,9 @@ unsigned int rGeneraeADocID (char subname[]) {
 	return DocID;
 }
 
-int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys) {
+int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys, int HtmlBufferSize) {
 	int error;
-	int WorkBuffSize = ((*ReposetoryHeader).htmlSize * 1.2) + 12;
+	int WorkBuffSize = (HtmlBufferSize * 1.2) + 12;
 	char *WorkBuff;
 
 #ifdef DEBUG
@@ -421,9 +423,7 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 	}
 
 
-	int HtmlBufferSize = (*ReposetoryHeader).htmlSize;	
-
-	printf("WorkBuffSize: %i\n",WorkBuffSize);
+	printf("HtmlBufferSize: %i, WorkBuffSize: %i\n",HtmlBufferSize,WorkBuffSize);
 	
 	if ((error = compress((Bytef *)WorkBuff,(uLongf *)&WorkBuffSize,(Bytef *)htmlbuffer,(uLongf)HtmlBufferSize)) != 0) {
                 printf("compress error. Code: %i\n",error);
@@ -431,9 +431,9 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 		return 0;
 	}
 
-	(*ReposetoryHeader).htmlSize = WorkBuffSize;
+	(*ReposetoryHeader).htmlSize2 = WorkBuffSize;
 
-	rApendPost(ReposetoryHeader,WorkBuff,imagebuffer,subname,acl_allow,acl_denied, reponame, url, attributes, attrkeys);
+	rApendPost(ReposetoryHeader,WorkBuff,imagebuffer,subname,acl_allow,acl_denied, reponame, url ,attributes, attrkeys );
 
 	free(WorkBuff);
 
@@ -492,7 +492,7 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 	}
 
 	//skriver html
-	if(fwrite(htmlbuffer,(*ReposetoryHeader).htmlSize,1,RFILE) < 0) {
+	if(fwrite(htmlbuffer,(*ReposetoryHeader).htmlSize2,1,RFILE) < 0) {
                 perror("rApendPost: can't write html");
         }
 
@@ -1030,7 +1030,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 
 
 	if (htmlbufferSize < rsize) {
-		printf("htmlSize lager then buffer. %i\n",htmlbufferSize);
+		printf("htmlbufferSize lager then buffer. %i\n",htmlbufferSize);
 		return 0;
 	}
 		
@@ -1063,17 +1063,20 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 	totalpost_p += memcpyrc(ReposetoryHeader,totalpost_p,sizeof(struct ReposetoryHeaderFormat));
 
 
-	if ((*ReposetoryHeader).htmlSize == 0) {
+	if ((*ReposetoryHeader).htmlSize != 0) {
+		(*ReposetoryHeader).htmlSize2 = (*ReposetoryHeader).htmlSize;
+	}
+
+	if ((*ReposetoryHeader).htmlSize2 == 0) {
 		#ifdef DEBUG
-			printf("htmlSize is 0. Skipping to read it\n");
+			printf("htmlSize2 is 0. Skipping to read it\n");
 		#endif
 	}
 	else if (htmlbuffer == NULL) {
 		//hvis vi ikke har en buffer å putte htmlen inn i søker vi bare over
-		//fseek(LotFileOpen,(*ReposetoryHeader).htmlSize,SEEK_CUR);
 	}
 	else {
-		totalpost_p += memcpyrc(htmlbuffer,totalpost_p,(*ReposetoryHeader).htmlSize);
+		totalpost_p += memcpyrc(htmlbuffer,totalpost_p,(*ReposetoryHeader).htmlSize2);
 
 	}
 
@@ -1173,14 +1176,14 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 		printf("ReposetoryHeader:\n");
 		printf("\tDocID: %u\n",(*ReposetoryHeader).DocID);
 		printf("\turl: \"%s\"\n",(*ReposetoryHeader).url);
-		printf("\thtmlSize: %ho\n",(*ReposetoryHeader).htmlSize);
+		printf("\thtmlSize2: %ho\n",(*ReposetoryHeader).htmlSize2);
 		printf("\timageSize: %ho\n",(*ReposetoryHeader).imageSize);
-		printf("at %s:%d\n",__FILE__,__LINE__);
+		printf("\tat %s:%d\n",__FILE__,__LINE__);
 		printf("\n");
 	#endif
 
-	if ((*ReposetoryHeader).htmlSize != rsize) {
-		printf("htmlsize %ho != rzise %ho\n",(*ReposetoryHeader).htmlSize,rsize);
+	if ((*ReposetoryHeader).htmlSize2 != rsize) {
+		printf("htmlsize2 %u != rzise %ho\n",(*ReposetoryHeader).htmlSize2,rsize);
 		return 0;
 	}
 
@@ -1217,7 +1220,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 	int n;
 
 	if (htmlbufferSize < rsize) {
-		printf("htmlSize (%u) lager then buffer. %i\n",rsize,htmlbufferSize);
+		printf("rReadPost2: htmlbufferSize (%u) lager then buffer. %i\n",rsize,htmlbufferSize);
 		return 0;
 	}
 		
@@ -1256,15 +1259,19 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 	//hedder	
 	totalpost_p += memcpyrc(ReposetoryHeader,totalpost_p,sizeof(struct ReposetoryHeaderFormat));
 
-	if ((*ReposetoryHeader).htmlSize == 0) {
+	if ((*ReposetoryHeader).htmlSize != 0) {
+		(*ReposetoryHeader).htmlSize2 = (*ReposetoryHeader).htmlSize;
+	}
+
+	if ((*ReposetoryHeader).htmlSize2 == 0) {
 #ifdef DEBUG
-		printf("htmlSize is 0. Skipping to read it\n");
+		printf("htmlSize2 is 0. Skipping to read it\n");
 #endif
 	} else if (htmlbuffer == NULL) {
 		//hvis vi ikke har en buffer å putte htmlen inn i søker vi bare over
-		totalpost_p += (*ReposetoryHeader).htmlSize;
+		totalpost_p += (*ReposetoryHeader).htmlSize2;
 	} else {
-		totalpost_p += memcpyrc(htmlbuffer,totalpost_p,(*ReposetoryHeader).htmlSize);
+		totalpost_p += memcpyrc(htmlbuffer,totalpost_p,(*ReposetoryHeader).htmlSize2);
 	}
 
 	if ((*ReposetoryHeader).imageSize == 0) {
@@ -1398,8 +1405,9 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		printf("ReposetoryHeader (of size %d):\n",sizeof((*ReposetoryHeader)));
 		printf("\tDocID: %u\n",(*ReposetoryHeader).DocID);
 		printf("\turl: \"%s\"\n",(*ReposetoryHeader).url);
-		printf("\thtmlSize: %ho\n",(*ReposetoryHeader).htmlSize);
+		printf("\thtmlSize2: %ho\n",(*ReposetoryHeader).htmlSize2);
 		printf("\timageSize: %ho\n",(*ReposetoryHeader).imageSize);
+		#ifdef BLACK_BOKS
 		printf("\turllen: %ho\n",(*ReposetoryHeader).urllen);
 		printf("\tattributeslen: %ho\n",(*ReposetoryHeader).attributeslen);
 		printf("\tat %s:%d\n",__FILE__,__LINE__);
@@ -1407,11 +1415,13 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		printf("annet:\n");
 		printf("\tCurrentReposetoryVersionAsUInt: \"%u\"\n",CurrentReposetoryVersionAsUInt);
 		printf("\tattributes: \"%s\"\n",*attributes);
+		#endif
+
 
 	#endif
 
-	if ((*ReposetoryHeader).htmlSize != rsize) {
-		printf("htmlsize %u != rzise %u\n",(*ReposetoryHeader).htmlSize,rsize);
+	if ((*ReposetoryHeader).htmlSize2 != rsize) {
+		printf("htmlsize2 %u != rzise %u\n",(*ReposetoryHeader).htmlSize2,rsize);
 		return 0;
 	}
 
@@ -1453,14 +1463,19 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			perror("cant read ReposetoryHeader");
 		}
 
+
+		if ((*ReposetoryHeader).htmlSize != 0) {
+                	(*ReposetoryHeader).htmlSize2 = (*ReposetoryHeader).htmlSize;
+        	}
+
 		#ifdef DEBUG
 
 			printf("ReposetoryHeader:\n");
 			printf("\tDocID: %u\n",(*ReposetoryHeader).DocID);
 			printf("\turl: \"%s\"\n",(*ReposetoryHeader).url);
-			printf("\thtmlSize: %ho\n",(*ReposetoryHeader).htmlSize);
+			printf("\thtmlSize2: %ho\n",(*ReposetoryHeader).htmlSize2);
 			printf("\timageSize: %ho\n",(*ReposetoryHeader).imageSize);
-			printf("at %s:%d\n",__FILE__,__LINE__);
+			printf("\tat %s:%d\n",__FILE__,__LINE__);
 			#ifdef BLACK_BOKS
 			printf("CurrentReposetoryVersionAsUInt: %u\n",CurrentReposetoryVersionAsUInt);
 
@@ -1469,6 +1484,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			printf("\tdoctype: 4 bytes: \"%c%c%c%c\"\n",(*ReposetoryHeader).doctype);
 			printf("\turllen: %ho\n",(*ReposetoryHeader).urllen);
 			printf("\tattributeslen: %u\n",(*ReposetoryHeader).attributeslen);
+			printf("\ttime: %lu\n",(*ReposetoryHeader).time);
 			#endif
 
 			printf("\n");
@@ -1479,23 +1495,35 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			return 0;
 		}
 
-		if (htmlbufferSize < (*ReposetoryHeader).htmlSize) {
-			printf("htmlSize (%hu) lager then buffer. %i\n",(*ReposetoryHeader).htmlSize,htmlbufferSize);
+		if (htmlbufferSize < (*ReposetoryHeader).htmlSize2) {
+			printf("rReadPost: htmlSize2 (%u) lager then buffer. %i\n",(*ReposetoryHeader).htmlSize2,htmlbufferSize);
 		}
 
 
-		if ((*ReposetoryHeader).htmlSize == 0) {
+		if ((*ReposetoryHeader).htmlSize2 == 0) {
 			#ifdef DEBUG
-				printf("htmlSize is 0. Skipping to read it\n");
+				printf("htmlSize2 is 0. Skipping to read it\n");
 			#endif
 		}
 		else if (htmlbuffer == NULL) {
 			//hvis vi ikke har en buffer å putte htmlen inn i søker vi bare over
-			fseek(LotFileOpen,(*ReposetoryHeader).htmlSize,SEEK_CUR);
+			fseek(LotFileOpen,(*ReposetoryHeader).htmlSize2,SEEK_CUR);
+		}
+		else if (htmlbufferSize < (*ReposetoryHeader).htmlSize2) {
+			printf("rReadPost: htmlSize2 (%u) lager then buffer. %i\n",(*ReposetoryHeader).htmlSize2,htmlbufferSize);
+
+			if (fread(htmlbuffer,htmlbufferSize,1,LotFileOpen) != 1) {
+				perror("fread");
+			}
+
+			// Skipp the rest
+			fseek(LotFileOpen,htmlbufferSize - (*ReposetoryHeader).htmlSize2,SEEK_CUR);
+
+			(*ReposetoryHeader).htmlSize2 = htmlbufferSize;
 		}
 		else {
-			if (fread(htmlbuffer,(*ReposetoryHeader).htmlSize,1,LotFileOpen) != 1) {
-				printf("can't read html. HtmlSize %hu \n",(*ReposetoryHeader).htmlSize);
+			if (fread(htmlbuffer,(*ReposetoryHeader).htmlSize2,1,LotFileOpen) != 1) {
+				printf("can't read html. HtmlSize2 %u \n",(*ReposetoryHeader).htmlSize2);
 				perror("fread");
 			}
 		}
@@ -1804,7 +1832,9 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, 
 		GetFilPathForLot(FileName,LotNr,subname);
 		strncat(FileName,reponame,128);
 
+		#ifdef DEBUG
 		printf("rGetNext: Opending lot %s\n",FileName);
+		#endif
 
 		if ( (LotFileOpen = fopen(FileName,"rb")) == NULL) {
 			perror(FileName);
@@ -1825,11 +1855,12 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, 
 
 
 	if (!found) {
-		printf("ferdig. lokker filen\n");
 		LotOpen = -1;
 		fclose(LotFileOpen);
-
+		#ifdef DEBUG
+		printf("rGetNext: ferdig. lokker filen\n");
 		printf("rGetNext: returnerer %i\n",found);
+		#endif
 	}
 
 	return found;

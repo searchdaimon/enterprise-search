@@ -560,9 +560,13 @@ int rGetNextNET(char *HostName, unsigned int LotNr,struct ReposetoryHeaderFormat
                         }
 
                         //printf("url %s\n", (*ReposetoryHeader).url);
+        		if ((*ReposetoryHeader).htmlSize != 0) {
+       			         (*ReposetoryHeader).htmlSize2 = (*ReposetoryHeader).htmlSize;
+		        }
+
 
                         //lseser htmlen
-                        if ((i=recv(socketha, htmlbuffer, (*ReposetoryHeader).htmlSize ,MSG_WAITALL))  == -1){
+                        if ((i=recv(socketha, htmlbuffer, (*ReposetoryHeader).htmlSize2 ,MSG_WAITALL))  == -1){
                            perror("recv html");
                             exit(1);
                         }
