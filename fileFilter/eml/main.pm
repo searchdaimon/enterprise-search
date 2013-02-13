@@ -43,6 +43,7 @@ sub fetch_attachments {
 		$fn = $fileprefix . $_->invent_filename($ct);
 		my $suffix;
 		$suffix = sdMimeMap::mapMimeType($ct);
+		print "Unknonw mime: $ct\n" if $suffix eq ''; #temp
 		$suffix = 'dat' if $suffix eq '';
 		if ($ct eq 'application/octet-stream') {
 			if (defined($_->{ct}) && defined($_->{ct}->{attributes}) &&
@@ -57,6 +58,11 @@ sub fetch_attachments {
 			print $wf $_->body;
 		};
 		close $wf;
+
+		# Debug: save the exstracet atachment
+		#if ($filename) {
+		#	system("cp \"$fn\" /tmp/dirfilter-rb-tmp/\"$filename\"");
+		#}
 	}
 
 	return @attachments;
