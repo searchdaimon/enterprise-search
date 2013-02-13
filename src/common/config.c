@@ -49,9 +49,13 @@ bconfig_flush(int mode) {
 
 #ifdef WITH_THREAD
 	my_init();
+
+	#ifdef DEBUG
 	if (mysql_thread_safe() == 0) {
 		fprintf(stderr, "The MYSQL client isn't compiled as thread safe! And will probably crash.\n");
 	}
+	#endif
+
 #else
 #endif
 
