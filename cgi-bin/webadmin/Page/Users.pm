@@ -38,42 +38,50 @@ sub show_usr_list {
 	#my ($s, $vars) = @_;
 	my ($s, $vars, $selected_users) = @_;
 
-	my $sqlActive = Sql::ActiveUsers->new($s->get_dbh);
-	my %active = map { $_->{user} => 1 } $sqlActive->get({}, 'user');
-
-	my %license = license_info($s->{license_key}, $CONFIG{slicense_info_path});
-	if (!$license{valid}) {
-		$vars->{error} = "This installation has no license, or "
-			. " an invalid license. Search will not work for any users.";
-	}
-	$vars->{licensed_users} = $license{users};
-
-	if ($selected_users < 0) {
-	    $vars->{activated_users} = scalar keys %active;
+	# Look up if we have a user system
+	my $sys = Sql::System->new($s->get_dbh);
+	if (!$sys->have_system()) {
+		$vars->{error} = "You don't have a user system, so there is no users to display.";
 	}
 	else {
-	    $vars->{activated_users} = $selected_users;
-	}
+		my @users;
 
-	my $prim_sys = Sql::System->new($s->{dbh})->primary_id();
-
-	my $iq_users_ref = $s->{iq}->listUsers($prim_sys);
-	my @users;
-	if (defined $iq_users_ref) {
-		for my $usr (@{$iq_users_ref}) {
-			push @users, {
-				username => $usr,
-				active   => $active{$usr},
-			};
-			delete $active{$usr};
+		my $sqlActive = Sql::ActiveUsers->new($s->get_dbh);
+		my %active = map { $_->{user} => 1 } $sqlActive->get({}, 'user');
+	
+		my %license = license_info($s->{license_key}, $CONFIG{slicense_info_path});
+		if (!$license{valid}) {
+			$vars->{error} = "This installation has no license, or "
+				. " an invalid license. Search will not work for any users.";
 		}
-	}
-	else {
-		$vars->{error} = "Unable to fetch user list. " . $s->{iq}->error;
-	}
+		$vars->{licensed_users} = $license{users};
+	
+		if ($selected_users < 0) {
+		    $vars->{activated_users} = scalar keys %active;
+		}
+		else {
+		    $vars->{activated_users} = $selected_users;
+		}
 
-	$vars->{users} = \@users;
-	$vars->{unknown_active} = [ keys %active ];
+		my $prim_sys = Sql::System->new($s->{dbh})->primary_id();
+	
+		my $iq_users_ref = $s->{iq}->listUsers($prim_sys);
+		if (defined $iq_users_ref) {
+			for my $usr (@{$iq_users_ref}) {
+				push @users, {
+					username => $usr,
+					active   => $active{$usr},
+				};
+				delete $active{$usr};
+			}
+		}
+		else {
+			$vars->{error} = "Unable to fetch user list. " . $s->{iq}->error;
+		}
+	
+		$vars->{users} = \@users;
+		$vars->{unknown_active} = [ keys %active ];
+	}
 
 	return $TPL_USER_LIST;
 }
@@ -86,7 +94,7 @@ sub upd_usr_access {
 	# Ikke oppdater hvis antall valgte brukere er større enn lisensierte brukere.
 	my %license = license_info($s->{license_key}, $CONFIG{slicense_info_path});
 
-	if ($license{valid} && $selected_users <= $license{users}) {
+	if ($license{valid} && ($selected_users <= $license{users} || $license{users}==0)) {
 		my $sqlActive = Sql::ActiveUsers->new($s->get_dbh);
 
 		#TODO : Error prone. Do in a transaction.
