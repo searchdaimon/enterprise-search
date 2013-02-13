@@ -157,7 +157,9 @@ sub construct_insert_query {
 		$values .= "?,";
 		push @bind_values, $value;
 	}
-	chop ($attributes, $values);
+	if ($attributes || $values) {
+		chop ($attributes, $values);
+	}
 	return ($attributes, $values, @bind_values);
 }
 
