@@ -20,7 +20,7 @@
 #include "../common/iindex.h"
 #include "../acls/acls.h"
 #include "../common/timediff.h"
-#include "../parser/html_parser.h"
+#include "../parser2/html_parser.h"
 #include "../maincfg/maincfg.h"
 #include "../dp/dp.h"
 #include "../query/query_parser.h"
@@ -178,6 +178,7 @@ int main(int argc, char *argv[])
 	searchd_config.optPreOpen = 0;
 	searchd_config.optFastStartup = 0;
 	searchd_config.optCacheIndexes = 1;
+	searchd_config.optAlarm = 60;
 	
 	// Needed for the speller to properly convert utf8 to wchar_t
 	setlocale(LC_ALL, "en_US.UTF-8");
@@ -188,7 +189,7 @@ int main(int argc, char *argv[])
 	signal(SIGUSR1, SIG_IGN);
 
         char c;
-        while ((c=getopt(argc,argv,"clp:m:b:vsofA:L:S:"))!=-1) {
+        while ((c=getopt(argc,argv,"clp:m:b:vsofA:L:S:a:"))!=-1) {
                 switch (c) {
                         case 'p':
                                 searchd_config.searchport = atoi(optarg);
@@ -229,6 +230,10 @@ int main(int argc, char *argv[])
 			case 'S':
 				spelling_min_freq = strtol(optarg, NULL, 10);
 				break;
+                        case 'a':
+				searchd_config.optAlarm = atoi(optarg);
+                                break;
+
 			default:
 				bblog(ERROR, "Unknown argument: %c", c);
 				errx(1, "Unknown argument: %c", c);
@@ -630,12 +635,6 @@ static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
 void *do_chld(void *arg)
 {
 
-	// Setter signalhånterer for allarm. Hvis allarm skjer i straten av programet, er noe seriøst galt. For eks er vi tom for minne.
-	//Da fungerer det dårlig å logge, syslog kan kalle malloc og slikt. Vil resette den til en versjon som logger før vi kjører søk.	
-       	signal (SIGALRM, catch_alarm_nolog);
-
-	/* Set an alarm to go off in a little while. This so we don't run forever if we get en ever loop */
-       	alarm (60);
 
 	// starter loging
 	bblog(DEBUGINFO, "searchd_child: Starting new thread.");
@@ -665,6 +664,13 @@ void *do_chld(void *arg)
 
 	struct SiderHederFormat *SiderHeder;
 
+
+	// Setter signalhånterer for allarm. Hvis allarm skjer i straten av programet, er noe seriøst galt. For eks er vi tom for minne.
+	//Da fungerer det dårlig å logge, syslog kan kalle malloc og slikt. Vil resette den til en versjon som logger før vi kjører søk.	
+       	signal (SIGALRM, catch_alarm_nolog);
+
+	/* Set an alarm to go off in a little while. This so we don't run forever if we get en ever loop */
+       	alarm (searchd_config->optAlarm);
 
 
 	dp_priority_locl_start();

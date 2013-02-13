@@ -35,6 +35,7 @@ struct searchd_configFORMAT {
 	//attr_conf	*showattrp;
 	int optFastStartup;
 	int optCacheIndexes;
+	int optAlarm;
 };
 
 int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct SiderHederFormat *SiderHeder,
