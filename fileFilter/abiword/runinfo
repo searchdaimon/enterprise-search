@@ -31,3 +31,7 @@ documentstype: sdw
 command: /usr/bin/abiword --to=txt #file
 outputformat: textfile
 
+documentstype: wpd
+command: /usr/bin/abiword --to=txt #file
+outputformat: textfile
+
