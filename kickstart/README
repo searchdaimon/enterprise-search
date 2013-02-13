@@ -1,5 +1,9 @@
 !! IKKE BRUK DD ELLER RAWWRITE FOR WINDOWS FOR Å LAGE USB PEN, DET FUNGERER IKKE !!
+!! ser bra ut, men så henger den på grub etter instalasjonen !!
+
+dette fungerer dog på Linux dd if=/home/boitho/boitho/websearch/kickstart/sdes-memorystick.img of=/dev/sdb
+Fin usb pinnen med "fdisk -l". Bruk dd på devicen, ikke på partisjonen (/dev/sdb vs /dev/sdb1).
 
 Filer:
 	sdes-memorystick.img
-		For usb minne pnne instalasjon av es
+		For usb minne pinne installasjon av es.
