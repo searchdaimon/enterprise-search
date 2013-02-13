@@ -126,15 +126,16 @@ CREATE TABLE shareResults (
   filter_response tinyint(4) NOT NULL default '1',
   filter_same_crc32 tinyint(4) NOT NULL default '1',
   rank_author_array varchar(255) NOT NULL default '1',
-  rank_title_array varchar(255) NOT NULL default '15',
-  rank_title_first_word int(11) NOT NULL default '25',
+  rank_title_array varchar(255) NOT NULL default '22,35',
+  rank_title_first_word int(11) NOT NULL default '40',
   rank_headline_array varchar(255) NOT NULL default '4,6,7,8',
-  rank_body_array varchar(255) NOT NULL default '1,2,4,7,9,10,12,14,16,17,18,19,20,21,22,23,24',
+  rank_body_array varchar(255) NOT NULL default '1,2,4,7,9,10,11,12',
   rank_url_array varchar(255) NOT NULL default '5',
   rank_url_main_word int(11) NOT NULL default '30',
   cache_link tinyint(4) NOT NULL default '1',
   PRIMARY KEY  (share)
 ) TYPE=MyISAM COMMENT='searchd cfg values';
+
 
 CREATE TABLE param (
   id int(11) NOT NULL auto_increment,
@@ -169,7 +170,7 @@ INSERT INTO `param` VALUES (NULL, 70, 'Host', 'example.com');
 INSERT INTO `connectors` VALUES (99, 'ExchangePublic', 'Microsoft Exchange Public Folder', NULL, NULL, NULL, 0, 'user_system, authentication, connector, crawling', 0, NULL, 1, 1);
 
 -- Active directory system
-INSERT INTO system (id, name, is_primary, connector) (SELECT 1 AS id, 'Active Directory' AS name, 1 AS is_primary, 1 as connector FROM config WHERE 0 = (SELECT COUNT(*) AS SUM FROM system) LIMIT 1);
+-- INSERT INTO system (id, name, is_primary, connector) (SELECT 1 AS id, 'Active Directory' AS name, 1 AS is_primary, 1 as connector FROM config WHERE 0 = (SELECT COUNT(*) AS SUM FROM system) LIMIT 1);
 
 --INSERT INTO systemParamValue (param, system, value) SELECT 'domain' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_domain'; 
 --INSERT INTO systemParamValue (param, system, value) VALUES('ldapstring', 1, '');
@@ -188,13 +189,13 @@ INSERT INTO `systemParam` VALUES (1, 'ldapgroupstring' ,NULL, 0);
 
 -- kopierer over ldap info til brukersys.
 -- msad_group er depricated
-INSERT INTO systemParamValue (param, system, value) (SELECT 'ip' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ip' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
-INSERT INTO systemParamValue (param, system, value) (SELECT 'user' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_user' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
-INSERT INTO systemParamValue (param, system, value) (SELECT 'password' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_password' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
-INSERT INTO systemParamValue (param, system, value) (SELECT 'domain' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_domain' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
-INSERT INTO systemParamValue (param, system, value) (SELECT 'ldapgroupstring' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapgroupstring' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
-INSERT INTO systemParamValue (param, system, value) (SELECT 'ldapbase' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapbase' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
-INSERT INTO systemParamValue (param, system, value) (SELECT 'ldapstring' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapstring' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
+-- INSERT INTO systemParamValue (param, system, value) (SELECT 'ip' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ip' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
+-- INSERT INTO systemParamValue (param, system, value) (SELECT 'user' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_user' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
+-- INSERT INTO systemParamValue (param, system, value) (SELECT 'password' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_password' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
+-- INSERT INTO systemParamValue (param, system, value) (SELECT 'domain' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_domain' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
+-- INSERT INTO systemParamValue (param, system, value) (SELECT 'ldapgroupstring' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapgroupstring' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
+-- INSERT INTO systemParamValue (param, system, value) (SELECT 'ldapbase' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapbase' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
+-- INSERT INTO systemParamValue (param, system, value) (SELECT 'ldapstring' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_ldapstring' AND 0 = (SELECT COUNT(*) AS SUM FROM system WHERE id > 1));
 
 
 
@@ -229,7 +230,8 @@ ALTER TABLE shares ADD alias varchar(255);
 #DELETE FROM config WHERE configkey='licensesystem';
 
 #UPDATE config SET configvalue = 'RRYAYACZACJAB6RLANAQ8K4G' WHERE configvalue = '' AND configkey = 'licensekey';
-INSERT INTO config (configkey, configvalue) VALUES('licensekey', 'RRYAYACZACJAB6RLANAQ8K4G');
+#Runarb: 14 des 2010. licensekey har blitt flyttet til blackbox/boithobb.sql som er base pakken. Debetyr at alle nye instalasjoner nå har lisensnøkkel som standar
+#INSERT INTO config (configkey, configvalue) VALUES('licensekey', 'RRYAYACZACJAB6RLANAQ8K4G');
 
 CREATE TABLE `systemConnector` (
   `id` int(10) unsigned NOT NULL auto_increment,
@@ -251,5 +253,40 @@ ALTER TABLE search_logg MODIFY search_tid decimal(12,10) unsigned NULL;
 -- Support new ACL scheme for collections
 
 ALTER TABLE shares ADD accesslevel varchar(20) default 'acl';
-ALTER TABLE shares ADD accessgroup varchar(512);
+ALTER TABLE shares ADD accessgroup varchar(255);
+
+-- Setter accesslevel til å være anonymous der vi ikke hadde acl sjekk tidligere.
+update shares set accesslevel='anonymous' where without_aclcheck=1;
+
 ALTER TABLE shares DROP without_aclcheck;
+
+-- Legger til user_prefix på intranet
+update connectors set inputFields="user_system, custom_parameters, crawling, user_prefix, authentication" where name="Intranet";
+
+-- Legger til nytt brukersystem
+-- INSERT INTO `systemConnector` (`id`, `name`, `extension`, `modified`, `active`, `read_only`) VALUES (5,'Executes shell command',0,NULL,1,1);
+-- INSERT INTO `systemParam` VALUES (5, 'command', '/home/boitho/myusers.py', 1);
+
+INSERT INTO `config` VALUES ('scc_usecashe',0);
+INSERT INTO `config` VALUES ('scc_default_rate',604800);
+INSERT INTO `config` VALUES ('scc_last_run',0);
+
+INSERT INTO param VALUES (123,64,'delay','Delay in seconds between successive requests. Set to 0 to disable.');
+
+-- New ranking 2012
+ALTER TABLE shareResults ALTER rank_title_array SET DEFAULT "22,35";
+ALTER TABLE shareResults ALTER rank_title_first_word SET DEFAULT "40";
+ALTER TABLE shareResults ALTER rank_headline_array SET DEFAULT "4,6,7,8";
+ALTER TABLE shareResults ALTER rank_body_array SET DEFAULT "1,2,4,7,9,10,11,12";
+
+#select what shal happend if users gos to the / page
+INSERT INTO config (configkey, configvalue) VALUES('frontpage_preference', 'webclient2');
+
+# allow usage statistic
+-- INSERT INTO config (configkey, configvalue) VALUES('anostat_preference', 'legal');
+-- INSERT INTO `config` VALUES ('anostat_default_rate',86400);
+-- INSERT INTO `config` VALUES ('anostat_last_run',0);
+
+INSERT INTO `connectors` VALUES (14, 'Push', 'Successfully pushed data', NULL, NULL, NULL, 0, '', NULL, NULL, 1, 1);
+
+INSERT INTO `systemConnector` (`id`, `name`, `extension`, `modified`, `active`, `read_only`) VALUES (4,'Mapback',0,NULL,1,1);
