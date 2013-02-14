@@ -25,9 +25,9 @@ fi
 # Byttes ut:
 #poor mans setuid. If we are root we will run the program as user boitho
 if [ `id -u` == 0 ]; then
-	B_RUN="/usr/local/sbin/daemonize -u boitho $BOITHOHOME/bin/everrun $BOITHOHOME/bin/boithoad -l"
+	B_RUN="/usr/local/sbin/daemonize -u boitho $BOITHOHOME/bin/everrun $BOITHOHOME/bin/boithoad"
 else
-	B_RUN="/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $BOITHOHOME/bin/boithoad -l"
+	B_RUN="/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $BOITHOHOME/bin/boithoad"
 fi
 
 B_NAME=boithoad
