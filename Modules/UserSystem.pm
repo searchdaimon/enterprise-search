@@ -4,7 +4,7 @@ use warnings;
 use Data::Dumper;
 use Carp;
 use Exporter qw(import);
-our @EXPORT = qw(_internal_list_users _internal_list_groups _internal_get_name _internal_authenticate);
+our @EXPORT = qw(_internal_list_users _internal_list_groups _internal_get_name);
 
 sub _internal_list_users {
 	my (undef, $params) = @_;
@@ -50,15 +50,15 @@ sub _internal_get_name {
 }
 
 
-sub _internal_authenticate {
-	my (undef, $params) = @_;
-	my ($user, $pass) = ($params->{_in_user}, $params->{_in_pass});
-	my $ret_val = $params->{_out_retval};
-	delete $params->{_in_user};
-	delete $params->{_in_pass};
-	delete $params->{_out_retval};
-	${ $ret_val } = PerlUserSystem::authenticate($params, $user, $pass);
-	return 1;
-}
+#sub _internal_authenticate {
+#	my (undef, $params) = @_;
+#	my ($user, $pass) = ($params->{_in_user}, $params->{_in_pass});
+#	my $ret_val = $params->{_out_retval};
+#	delete $params->{_in_user};
+#	delete $params->{_in_pass};
+#	delete $params->{_out_retval};
+#	${ $ret_val } = PerlUserSystem::authenticate($params, $user, $pass);
+#	return 1;
+#}
 
 1;
