@@ -12,8 +12,9 @@ if ($opts{l}) {
 	print "Will log all output to file\n";
 
 	#dublicate stdout to log what is happening
-	open(STDOUT, ">>$ENV{'BOITHOHOME'}/logs/indexing") || die "Can't dup stdout";
-	open(STDERR, ">>&STDOUT") || die "Can't dup stdout";
+# Runarb: 07.02.2012: This log is not biing rotated. Commenting it out for now.
+#	open(STDOUT, ">>$ENV{'BOITHOHOME'}/logs/indexing") || die "Can't dup stdout";
+#	open(STDERR, ">>&STDOUT") || die "Can't dup stdout";
 
 }
 
@@ -102,6 +103,9 @@ foreach my $key (keys %hiestinlot) {
 	print "runing $command\n";
 	system($command);
 
+        $command = $ENV{'BOITHOHOME'} . "/bin/sortCrc32attrMap \"$key\"";
+        print "runing $command\n";
+        system($command);
 
 	#kjører garbage collection.
 #	$command = $ENV{'BOITHOHOME'} . "/bin/gcRepobb \"$key\"";
@@ -110,3 +114,45 @@ foreach my $key (keys %hiestinlot) {
 
 
 }
+
+# Clean search cache
+print "Clining search cache.\n";
+recdir($ENV{'BOITHOHOME'} . "/var/cache");
+
+sub recdir {
+    my ($path) = @_;
+
+
+    print "recdir($path)\n";
+
+    if (-e $path) {
+
+      my $DIR;
+      opendir($DIR, $path) or warn("can't opendir $path: $!") && return;
+
+        while (my $file = readdir($DIR) ) {
+
+                #skiping . and ..
+                if ($file =~ /\.$/) {
+                      next;
+                }
+                my $candidate = $path . "\/" . $file;
+
+	        if (-d $candidate) {
+	                recdir($candidate);
+	        }
+		else {
+                	unlink($candidate) or warn("Cant delete cache file \"$candidate\": $!");
+		}
+      }
+
+      closedir($DIR);
+
+
+      rmdir($path) or warn("Cant delete dir \"$path\": $!");
+    }
+
+
+    return 1;
+}
+
