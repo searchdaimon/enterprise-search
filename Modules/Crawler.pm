@@ -31,8 +31,12 @@ sub add_document {
 	    my $attrstr = q{};
 	    while (my ($k, $v) = each %{$params{attributes}}) {
 		    next unless defined $v;
+		    next if $v eq '';
+
+		    $v =~ s/[,=]/ /g; #remove all , and = because they are used as seperators.
 		    $attrstr .= "$k=$v,";
 	    }
+	    chop($attrstr); #remove last ","
 	    $params{attributes} = $attrstr;
     }
 
@@ -54,9 +58,9 @@ sub document_exists {
 
 
     $size_bytes ||= 0;
-    croak "Second parameter (last modified) is missing."
+    croak "document_exists(): Required second parameter (last modified) is missing."
         unless defined $last_modified;
-    croak "Second parameter (last modified) needs to be unixtime."
+    croak "document_exists(): Required second parameter (last modified) needs to be unixtime."
         if $last_modified !~ /^\d+$/ || $last_modified < 0;
 
     return SD::Crawl::pdocumentExist($self->{ptr}, $url, $last_modified, $size_bytes);
