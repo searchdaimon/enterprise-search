@@ -390,7 +390,7 @@ if (TEST) {
 	 {	
 	  'GATEWAY' => '192.168.1.99',
           'BOOTPROTO' => 'none',
-          'DEVICE' => 'eth1',
+          'DEVICE' => 'eth0',
           'MTU' => '""',
           'NETMASK' => '255.255.255.0',
           'BROADCAST' => '192.168.1.255',
