@@ -15,6 +15,8 @@ use CrawlWatch::GC;
 use CrawlWatch::Recrawl;
 use CrawlWatch::SuggestDict;
 use CrawlWatch::TmpSizeWatch;
+use CrawlWatch::SearchCacheClean;
+use CrawlWatch::AnonymousStatistics;
 
 use constant LOG_FILE          => $ENV{'BOITHOHOME'} . "/logs/crawl_watch.log";
 use constant PATH_TO_INFOQUERY => $ENV{'BOITHOHOME'} . "/bin/infoquery";
@@ -37,6 +39,8 @@ my @services = (
     CrawlWatch::Recrawl->new($dbh, $iq, $log),
     CrawlWatch::SuggestDict->new($dbh, $iq, $log),
     CrawlWatch::TmpSizeWatch->new($dbh, $iq, $log),
+    CrawlWatch::SearchCacheClean->new($dbh, $iq, $log),
+    CrawlWatch::AnonymousStatistics->new($dbh, $iq, $log),
 );
 
 while (1) {
