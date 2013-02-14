@@ -216,6 +216,88 @@ sub documentsInCollection($$) {
 	}
 }
 
+sub lotsInCollection($$) {
+	my ($self, $collection) = (@_);
+	unless ($collection) {
+		carp "Didn't get a collection name.";
+		return;
+	}
+	
+	my $doc_count_ref = $self->_getList("lotsInCollection \Q$collection\E", 'Lots');
+
+	#runarb, legger til at infoquery kan feile, og ikke gi liste
+	if (not defined($doc_count_ref)) {
+		return -1; #returnerer -1 som en feilkode
+	}
+	else {
+		return $doc_count_ref->[0];
+	}
+}
+
+sub repositoryPageInfo($$$$$$$) {
+	my ($self, $pointer, $DocID, $htmlSize, $imagesize, $collection, $gethtml) = (@_);
+
+	my %pageinfo;
+
+	if ($gethtml) {
+		my @arr = $self->_infoquery_exec("repositoryPageInfo $pointer $DocID $htmlSize $imagesize $collection 1");
+		shift @arr;
+		$pageinfo{html} = join('',@arr);
+	}
+	else {
+		my @arr = $self->_infoquery_exec("repositoryPageInfo $pointer $DocID $htmlSize $imagesize $collection");
+		shift @arr;
+
+		foreach my $i (@arr) {
+			chomp($i);
+			if ($i =~ /:/) {
+	                        my ($key, $val) = split(': ',$i);
+	                        $pageinfo{$key} = $val;
+	                }
+			else {
+	                        print STDERR "repositoryPageInfo: Bad line from infoquery: \"$i\"\n";
+	                }
+		}
+	}
+
+	return \%pageinfo;
+}
+
+sub repositoryRead ($$$$) {
+        my ($self, $nr, $collection, $offset) = (@_);
+
+	my @docs;
+	my %repoinfo;
+
+	my @arr = $self->_infoquery_exec("repositoryRead $nr $collection $offset");
+
+	foreach my $i (@arr) {
+		chomp($i);
+
+		if ($i =~ /DocId:/) {
+			my %elementh;
+			my @doc = split(', ', $i);
+			foreach my $element (@doc) {
+				my ($key, $val) = split(': ',$element);
+				$elementh{$key} = $val;
+			}
+			push(@docs,\%elementh);
+		}
+		elsif ($i =~ /:/) {
+			my ($key, $val) = split(': ',$i);			
+			$repoinfo{$key} = $val;
+		}
+		else {
+			print STDERR "repositoryRead: Bad line from infoquery: \"$i\"\n";
+		}
+	}
+
+	$repoinfo{docs} = \@docs;
+
+
+	return \%repoinfo;
+}
+
 sub _crawl  {
 	my ($self, $crawl_cmd, $collection, %opt) = @_;
 
