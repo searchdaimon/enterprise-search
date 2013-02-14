@@ -71,7 +71,7 @@ sub run {
     my $self = shift;
     bb_config_update($self->{dbh}, CONF_LAST_SCC, time);
     my $scc_rate = bb_config_get($self->{dbh}, CONF_SCC_RATE);
-    my $now = time();
+    my $now = time() - 3600; # -3600 to compansate for standar ES time sone.
     $self->{'log'}->write("Runing search cache clean.");
     #doint the actual SCC run.
 
