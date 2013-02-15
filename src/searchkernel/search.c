@@ -17,6 +17,7 @@
 #include "../common/iindex.h"
 #include "../common/debug.h"
 #include "../common/crc32.h"
+#include "../common/ir.h"
 //#include "../query/query_parser.h"
 #include "searchkernel.h"
 #include "../common/timediff.h"
@@ -363,7 +364,7 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 
 
 	int i;
-        int nrBody, nrHeadline, nrTittel, nrUrl, TittelFirstWord, nrTittelFirst;
+        int nrBody, nrHeadline, nrTittel, nrUrl, nrTittelFirstWord, nrTittelFirst;
 	struct havePhraseF {
 		int Body, Headline, Tittel, Url;
 	}havePhrase = {
@@ -384,7 +385,7 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 	nrHeadline	 = 0;
 	nrTittel	 = 0;
 	nrUrl		 = 0;
-	TittelFirstWord  = 0;
+	nrTittelFirstWord  = 0;
 	nrTittelFirst	 = 0;
 
 	//poengDouble 	 = 0;
@@ -413,13 +414,13 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 			//spesialtilfelle. er først title ord 
 			//Hvis vi er første ord i titleen vil det rangeres spesielt
 			if (
-				  ((hits[i].pos == 100) && (hits[i].phrase==0))
+				  ((hits[i].pos == 100) && (hits[i].phrase!=1) && (complicacy==1))
 				||((hits[i].pos == (99 + complicacy)) && (hits[i].phrase==1))
 			) {	
 
-				TittelFirstWord = (*subname).config.rankTittelFirstWord;
+				++nrTittelFirstWord;
 				#ifdef EXPLAIN_RANK
-				bblog(DEBUGINFO, "rank title hit. add %i, TittelFirstWord %i, subname \"%s\", DocID %u", (*subname).config.rankTittelFirstWord,TittelFirstWord,(*subname).subname,DocID);
+				bblog(DEBUGINFO, "rank title hit. add %i, nrTittelFirstWord %i, subname \"%s\", DocID %u", (*subname).config.rankTittelFirstWord,nrTittelFirstWord,(*subname).subname,DocID);
 				#endif
 				++nrTittelFirst;
 			}
@@ -456,8 +457,13 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 	#ifdef EXPLAIN_RANK
 		TeffArray->rank_explaind.rankBody = rank_calc(nrBody,(*subname).config.rankBodyArray,(*subname).config.rankBodyArrayLen, havePhrase.Body);
 		TeffArray->rank_explaind.rankHeadline = rank_calc(nrHeadline,(*subname).config.rankHeadlineArray,(*subname).config.rankHeadlineArrayLen, havePhrase.Headline);
-		TeffArray->rank_explaind.rankTittel = rank_calc(nrTittel,(*subname).config.rankTittelArray,(*subname).config.rankTittelArrayLen, havePhrase.Tittel) + TittelFirstWord;
 		TeffArray->rank_explaind.rankUrl_mainbody = rank_calc(nrUrl,(*subname).config.rankUrlArray,(*subname).config.rankUrlArrayLen, havePhrase.Url);
+		if (nrTittelFirstWord != 0) {
+			TeffArray->rank_explaind.rankTittel = (*subname).config.rankTittelFirstWord;
+		}
+		else {
+			TeffArray->rank_explaind.rankTittel = rank_calc(nrTittel,(*subname).config.rankTittelArray,(*subname).config.rankTittelArrayLen, havePhrase.Tittel);
+		}
 
 		TeffArray->rank_explaind.nrBody = nrBody;
 		TeffArray->rank_explaind.nrHeadline = nrHeadline;
@@ -471,8 +477,14 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 	#else
 		rank += rank_calc(nrBody,(*subname).config.rankBodyArray,(*subname).config.rankBodyArrayLen, havePhrase.Body);
 		rank += rank_calc(nrHeadline,(*subname).config.rankHeadlineArray,(*subname).config.rankHeadlineArrayLen, havePhrase.Headline);
-		rank += rank_calc(nrTittel,(*subname).config.rankTittelArray,(*subname).config.rankTittelArrayLen, havePhrase.Tittel) + TittelFirstWord;
 		rank += rank_calc(nrUrl,(*subname).config.rankUrlArray,(*subname).config.rankUrlArrayLen, havePhrase.Url);
+		if (nrTittelFirstWord != 0) {
+			rank += (*subname).config.rankTittelFirstWord;
+		}
+		else {
+			rank += rank_calc(nrTittel,(*subname).config.rankTittelArray,(*subname).config.rankTittelArrayLen, havePhrase.Tittel);
+		}
+
 	#endif
 
 
@@ -491,7 +503,6 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 
 void iindexArrayCopy2(struct iindexFormat **c, int *baselen,int Originallen, struct iindexFormat **a, int alen) {
 
-	bblog(DEBUGINFO, "iindexArrayCopy2(baselen=%i, Originallen=%i, alen=%i)\n",*baselen,Originallen,alen);
 
 	int x;
         int i=0,j=0;
@@ -503,6 +514,8 @@ void iindexArrayCopy2(struct iindexFormat **c, int *baselen,int Originallen, str
 	int TermRank;
 	//unsigned short hits[MaxTermHit];
         (*baselen) = Originallen;
+
+	bblog(DEBUGINFO, "iindexArrayCopy2(baselen=%i, Originallen=%i, alen=%i)\n",*baselen,Originallen,alen);
 
 	if (Originallen==0) {
 		//hvis vi ikke har hits, og ikke har noe fra før kan vi bare bruke memcpy
@@ -807,9 +820,6 @@ int searchIndex_getnrs(char *indexType,query_array *queryParsed,struct subnamesF
 						bblog(INFO, "searchIndex: WordIDcrc32 %u", WordIDcrc32);
 						if (i == 0) {
 					
-							//GetIndexAsArray(TeffArrayElementer,TeffArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr);
-							//rank((*TeffArrayElementer),TeffArray,subname,(*complicacy));
-							//void GetNForTerm(unsigned long WordIDcrc32, char *IndexType, char *IndexSprok, int  *TotaltTreff, char subname[]);
 							_GetNForTerm(WordIDcrc32,indexType,"aa",&nterm,subname, cache_index_get);
 							nr = nterm;
 						}
@@ -901,7 +911,6 @@ void GetIndexAsArray_thesaurus (int *AntallTeff, struct iindexFormat **TeffArray
 				resultArrayInit(TmpArray);
 
 				_GetIndexAsArray(&TmpArrayLen,TmpArray,WordIDcrc32,IndexType,IndexSprok,subname,languageFilterNr, languageFilterAsNr, cache_index_get);
-				//rank(TmpArrayLen,TmpArray,subname,(*complicacy));
 
                                 bblog(INFO, "%s (%i)",  alt[j].s[k],TmpArrayLen);
 				if (TmpArrayLen != 0) {									
@@ -940,6 +949,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 	int TeffArrayOriginal;
 	int newadded;
 	struct iindexFormat *TmpArray;
+	struct iindexFormat *tmpResult;
 	//TeffArray->nrofHits = 0;
 	//TeffArray->phrasenr = 0;
 
@@ -952,7 +962,11 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 	gettimeofday(&start_time, NULL);
 	#endif
 
-	struct iindexFormat *tmpResult = (struct iindexFormat *)malloc(sizeof(struct iindexFormat));
+	if ((tmpResult = (struct iindexFormat *)malloc(sizeof(struct iindexFormat))) == NULL) {
+		perror("malloc tmpResult");
+		exit(1);
+	}
+	
 	resultArrayInit(tmpResult);
 	int tmpResultElementer;
 
@@ -1486,7 +1500,7 @@ void *searchIndex_thread(void *arg)
 			do_aclcheck = 0;
 		}
 	
-		#ifdef IIACL
+
 
 		if (do_aclcheck) {
 			int system = cmc_usersystemfromcollection(cmc_sock, searchIndex_thread_arg->subnames[i].subname);
@@ -1534,7 +1548,7 @@ void *searchIndex_thread(void *arg)
 				size_t grouplistlen = 0;
 				for (j = 0; j < n_groups; j++) {
 					char	*group = ((char*)groups + j*MAX_LDAP_ATTR_LEN);
-					utf8_strtolower((utf8_byte*)group);
+					//utf8_strtolower((utf8_byte*)group);
 					set_insert((*searchIndex_thread_arg).groups_per_usersystem[system], group);
 
 					if (searchIndex_thread_arg->subnames[i].config.accesslevel == CAL_GROUP) {
@@ -1799,18 +1813,7 @@ void *searchIndex_thread(void *arg)
 			            }
 			    #endif
 
-			#else // ATTRIBUTES
-				if (do_aclcheck) {
-					and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,searcArray,searcArrayLen);
-					// Merge acl_denied:			
-					andNot_merge(&Array,&ArrayLen,&hits,&TmpArray,TmpArrayLen,&acl_deniedArray,acl_deniedArrayLen);
-				} else {
-					//swapiindex(&Array, &searcArray);
-					//ArrayLen = searcArrayLen;
-					iindexArrayCopy2(&Array,&hits,ArrayLen,&searcArray,searcArrayLen);
-					ArrayLen = hits;
 
-				}
 			#endif
 
 
@@ -1829,32 +1832,15 @@ void *searchIndex_thread(void *arg)
 			//hits = ArrayLen - hits;
 
 
-		#else
-			//iindexArrayCopy(Array, searcArray, searcArrayLen);
-			//ArrayLen = searcArrayLen;
-			hits = ArrayLen;
-	
-			searchIndex((*searchIndex_thread_arg).indexType,
-				&ArrayLen,
-				Array,
-				(*searchIndex_thread_arg).queryParsed,
-				&(*searchIndex_thread_arg).subnames[i],
-				(*searchIndex_thread_arg).languageFilterNr, 
-				(*searchIndex_thread_arg).languageFilterAsNr,
-				&complicacy
-			);
-
-			hits = ArrayLen - hits;
 
 
-		#endif
 
 
 		(*searchIndex_thread_arg).subnames[i].hits += hits;
 		bblog(INFO, "searchIndex_thread: index %s, subname \"%s\", hits %i", (*searchIndex_thread_arg).indexType,(*searchIndex_thread_arg).subnames[i].subname,hits);
 
 
-		#else
+		#else // BLACK_BOX
 
 			hits = ArrayLen;
 			searchIndex(
@@ -3337,7 +3323,9 @@ char* searchFilterCount(int *TeffArrayElementer,
 								    	    	    attr_crc32_words_blocksize, attr_crc32_words_block_compare );
 
 									        if (value != NULL) value+= sizeof(unsigned int);
+										#ifdef DEBUG
 										if (value == NULL) bblog(INFO, "Can't lookup crc32 value for key=\"%s\". Crc32val=%u",key, *crc32val);
+										#endif
 									    }
 
 								        if (value != NULL)
@@ -3676,6 +3664,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 		if (hashtable_count(attrib_count_temp))
 		    do
 			{
+			    // value
 			    struct _attribute_temp_1_val *val = hashtable_iterator_value(h_it);
 			    if (val->value2 == NULL) {
 				attribute_count_add(val->size, val->count, attributes, 2, val->key, val->value);
@@ -3690,6 +3679,10 @@ char* searchFilterCount(int *TeffArrayElementer,
 			    free(val->key);
 			    free(val->value);
 			    free(val->value2);
+	
+			    // key
+			    struct _attribute_temp_1_key *hash_key  = hashtable_iterator_key(h_it);
+			    free(hash_key->key);
 			} while (hashtable_iterator_advance(h_it));
 
 		free(h_it);
