@@ -20,7 +20,7 @@
 #include "../common/adultWeight.h"
 #include "../common/DocumentIndex.h"
 //#include "../parse_summary/summary.h"
-#include "../parser/html_parser.h"
+#include "../parser2/html_parser.h"
 //#include "../parse_summary/highlight.h"
 #include "../generateSnippet/snippet.parser.h"
 #include "../common/ir.h"
@@ -31,6 +31,7 @@
 #include "../query/stemmer.h"
 #include "../common/integerindex.h"
 #include "../ds/dcontainer.h"
+#include "../ds/dset.h"
 #include "../logger/logger.h"
 #include "../common/utf8-strings.h"
 
@@ -431,7 +432,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 	//for unsigned short. Er bilde så stort skyldes det en feil)
 	if (((*Sider).DocumentIndex.imageSize != 0) && ((*Sider).DocumentIndex.imageSize != 65535)) {
 
-		imagep =  getImagepFromRadres((*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize);
+		imagep =  getImagepFromRadres((*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize2);
 		bblog(DEBUGINFO, "imakep %u", (unsigned int)imagep);
 #ifdef BLACK_BOKS
 		sprintf((*Sider).thumbnale,"/cgi-bin/ShowThumbbb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",
@@ -448,7 +449,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 				(*Sider).DocumentIndex.imageSize,
 				subname->subname);
 #endif
-		//sprintf((*Sider).thumbnale,"http://%s/cgi-bin/ShowThumb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",servername,rLotForDOCid(DocID),4 + sizeof(struct ReposetoryHeaderFormat) + ((*Sider).DocumentIndex.RepositoryPointer + (*Sider).DocumentIndex.htmlSize),(*Sider).DocumentIndex.imageSize,subname);
+		//sprintf((*Sider).thumbnale,"http://%s/cgi-bin/ShowThumb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",servername,rLotForDOCid(DocID),4 + sizeof(struct ReposetoryHeaderFormat) + ((*Sider).DocumentIndex.RepositoryPointer + (*Sider).DocumentIndex.htmlSize2),(*Sider).DocumentIndex.imageSize,subname);
 		(*Sider).thumbnailwidth = 100;
 		(*Sider).thumbnailheight = 100;
 	}
@@ -465,7 +466,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 		returnStatus = 0;
 	}
 	//tester om vi har noe innhold
-	else if ((*Sider).DocumentIndex.htmlSize == 0) {
+	else if ((*Sider).DocumentIndex.htmlSize2 == 0) {
 		//har ingen reposetroy data, ikke kravlet anda?
 		//(*SiderHeder).filtered++;
 
@@ -544,7 +545,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 					free(snippet);
 				}
 				free(resbuf);
-			} else if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname->subname,&ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
+			} else if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize2,DocID,subname->subname,&ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
 				//kune ikke lese html. Pointer owerflow ?
 				//printf("Fii faa foo: %s\n", url);
 				bblog(ERROR, "error reding html for %s", (*Sider).DocumentIndex.Url);
@@ -633,7 +634,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 			}
 			else {
 				bblog(DEBUGINFO, "don't hav Summary on disk. Will hav to read html");	
-				if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize,DocID,subname->subname,&ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
+				if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize2,DocID,subname->subname,&ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
 					//printf("Fii faa foo: %s\n", url);
 					//kune ikke lese html. Pointer owerflow ?
 					bblog(ERROR, "error reding html for %s", (*Sider).DocumentIndex.Url);
@@ -877,7 +878,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 						bblog_errno(WARN, "DIRead()");
 						continue;
 					}
-					rReadHtml(htmlbuf, &htmllen, di.RepositoryPointer, di.htmlSize, dup_docid,
+					rReadHtml(htmlbuf, &htmllen, di.RepositoryPointer, di.htmlSize2, dup_docid,
 							dup_subname, &repohdr, &acla, &acld, di.imageSize,
 							&url, &attributes);
 
@@ -977,7 +978,9 @@ int nextIndex(struct PagesResultsFormat *PagesResults) {
 		forreturn = (*PagesResults).indexnr++;
 	}	
 
+	#ifdef DEBUG
 	bblog(DEBUGINFO, "nextIndex: returning %i as index nr. Nr of hist is %i",forreturn,(*PagesResults).antall);
+	#endif
 
 	#ifdef WITH_THREAD
 	//printf("nextIndex: waiting for UNlock: start\n");
@@ -1222,7 +1225,8 @@ static inline int repositoryaccess(struct PagesResultsFormat *PagesResults, int 
 
     if ((subname->config.accesslevel == CAL_GROUP) || (subname->config.accesslevel == CAL_USER)) return 1;
     
-    //printf("acl_allowed = %s\nacl_denied = %s\n", acl_allow, acl_denied);
+    bblog(DEBUGINFO,"repositoryaccess: acl_allowed = %s",acl_allow);
+    bblog(DEBUGINFO,"repositoryaccess: acl_denied = %s", acl_denied);
 
     container	*groups = NULL;
     int		i;
@@ -1240,7 +1244,10 @@ static inline int repositoryaccess(struct PagesResultsFormat *PagesResults, int 
 	}
 
     if (groups == NULL) return error;
-    //printf("groups = "); println(groups);
+
+    #ifdef DEBUG
+	    bblog(DEBUGINFO,"repositoryaccess: groups = "); println(groups);
+    #endif
 
     char **Data;
     int Count;
@@ -1276,6 +1283,7 @@ static inline int repositoryaccess(struct PagesResultsFormat *PagesResults, int 
 	    	    if (Data[Count][0] == '\0') continue;
 
 		    iterator	it = set_find(groups, Data[Count]);
+
 		    if (it.valid)
 			{
 			    has_been_allowed = 1;
@@ -1368,7 +1376,9 @@ void *generatePagesResults(void *arg)
 
 	while ((i=nextIndex(PagesResults)) != -1) {
 
+		#ifdef DEBUG
 		bblog(DEBUGINFO, "i %i, DocID %u, subname %s",i,(*PagesResults).TeffArray->iindex[i].DocID, (*PagesResults).TeffArray->iindex[i].subname->subname);
+		#endif
 
 		//if ((*SiderHeder).filtered > 300) {
 		//	(*PagesResults).filterOn = 0;
@@ -2218,7 +2228,10 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	int i, y, j;
 	int x;
 
-	PagesResults.TeffArray = malloc(sizeof(struct iindexFormat));
+	if ((PagesResults.TeffArray = malloc(sizeof(struct iindexFormat))) == NULL) {
+		perror("Cant malloc PagesResults.TeffArray");
+		exit(-1);
+	}
 	PagesResults.TeffArray->nrofHits = 0;
 
 
@@ -2686,7 +2699,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			printf("groups = "); println(all_groups);
 			printf("subnames = "); println(all_subnames);
 
-			if (spellcheck_query(SiderHeder, &qa, spelling, all_groups, all_subnames) > 0) {
+			if (spellcheck_query(SiderHeder, &qa, spelling, PagesResults.anonymous ? NULL : all_groups, all_subnames) > 0) {
 				bblog(INFO, "Spelling: Query corrected to: %s",  SiderHeder->spellcheckedQuery);
 			}
 			else {
@@ -2850,7 +2863,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	free(PagesResults.TeffArray);
 
 	// Slett innholdet i crc32maphash:
-	/*
+	
 	struct hashtable_itr *itr = hashtable_iterator(PagesResults.crc32maphash);
 
 	while (itr->e!=NULL)
@@ -2859,12 +2872,12 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		if (dup->V != NULL) {
 			destroy(dup->V);
 		}
-		free(dup);
+		//free(dup);
 		hashtable_iterator_advance(itr);
 	    }
 
 	free(itr);
-	*/
+	
 	free(PagesResults.dups);
 
 	hashtable_destroy(PagesResults.crc32maphash,0);
