@@ -10,7 +10,7 @@ CFLAGS = -g -DATTRIBUTES
 
 # The dynamic libraries that the executable needs to be linked to
 # fjerner -ldb -static. Må legge dette til der de skal være
-LDFLAGS = -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL src/ds/libds.a
+LDFLAGS = -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL lib/libds.a
 
 #pop rank bibloteket
 LIBS = src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c src/base64/base64.c src/common/
@@ -56,7 +56,7 @@ MYSQL4 = -I/home/eirik/.root/include/mysql /home/eirik/.root/lib/mysql/libmysqlc
 SMBCLIENT=/home/boitho/src/samba-3.0.25b/source/bin/libsmbclient.a -I/home/boitho/src/samba-3.0.25b/source/include/
 #SMBCLIENT=-Isrc/3pLibs/samba-3.0.24/source/include/ -Lsrc/3pLibs/samba-3.0.24/source/lib/ -lsmbclient
 
-BBDOCUMENT = src/bbdocument/bbdocument.c src/bbdocument/bbfilters.c src/ds/libds.a $(BDB) -D BLACK_BOKS  
+BBDOCUMENT = src/bbdocument/bbdocument.c src/bbdocument/bbfilters.c lib/libds.a $(BDB) -D BLACK_BOKS  
 #BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail.c -DBBDOCUMENT_IMAGE $(IM)
 BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail_by_convert.c -DBBDOCUMENT_IMAGE_BY_CONVERT
 
@@ -86,8 +86,8 @@ LIBXML = -I/usr/include/libxml2  -lxml2
 
 #HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c  
 #har rullet tilbake, og bruker gammel html parser for nå, så trenger dermed ikke i ha med css parseren
-HTMLPARSER1=src/parser/libhtml_parser.a src/ds/libds.a
-HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a src/ds/libds.a
+HTMLPARSER1=src/parser/libhtml_parser.a lib/libds.a
+HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a lib/libds.a
 
 # The Dependency Rules
 # They take the form
@@ -102,16 +102,13 @@ HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a src/ds/libd
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : common logger perlembed boithoadClientLib getFiletype searchddep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange crawlSO boitho-bbdn PageInfobb IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb perlxs-sdcrawl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb yumupdate usSQLBB usAD 
-
-logger:
-	(cd src/logger && make clean && make)
-
-common:
-	(cd src/common && make clean && make)
+bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange crawlSO boitho-bbdn PageInfobb IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb perlxs-sdcrawl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb yumupdate usSQLBB usAD perlembed sdperl
 
 perlembed:
 	(cd src/perlembed && make clean && make)
+
+sdperl:
+	(cd src/perl && make clean && make)
 
 dppreload:
 	$(CC) -shared -fPIC src/dp/preload.c src/common/timediff.c -o bin/dppreload.so -ldl -Wall $(LDFLAGS)
@@ -171,6 +168,12 @@ bbdocumentWebAdd:
 
 	(rm -f src/base64/base64.o && cd src/bbdocumentWebAdd/ && make clean && make)
 
+bbdocumentHttpApi:
+	@echo ""
+	@echo "$@:"
+
+	(rm -f src/base64/base64.o && cd src/bbdocumentHttpApi/ && make clean && make)
+
 
 Suggest:
 	@echo ""
@@ -192,7 +195,7 @@ SuggestOEM:
 
 
 #brukte før src/parser/libhtml_parser.a, byttet til src/parser/lex.yy.c src/parser/lex.yy.c slik at vi kan bruke gdb
-IndexerLot= $(CFLAGS) $(LIBS)*.c src/dictionarywordsLot/set.c src/dictionarywordsLot/acl.c src/acls/acls.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c src/ds/libds.a $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS -D WITHOUT_DIWRITE_FSYNC -D EXPLAIN_RANK
+IndexerLot= $(CFLAGS) $(LIBS)*.c src/dictionarywordsLot/set.c src/dictionarywordsLot/acl.c src/acls/acls.c src/IndexerRes/IndexerRes.c src/IndexerLot/main.c src/searchFilters/searchFilters.c lib/libds.a $(LDFLAGS) -D DI_FILE_CASHE -D NOWARNINGS -D WITHOUT_DIWRITE_FSYNC -D EXPLAIN_RANK
 
 IndexerLot: src/IndexerLot/main.c
 	@echo ""
@@ -216,7 +219,14 @@ rreadWithRank: src/rreadWithRank/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/rreadWithRank/main.c  -o bin/rreadWithRank $(LDFLAGS) 
+	$(CC) $(CFLAGS) $(LIBS)*.c src/rreadWithRank/main.c  -o bin/rreadWithRank $(LDFLAGS)  
+
+sortCrc32attrMap: src/sortCrc32attrMap/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/sortCrc32attrMap/main.c -o bin/sortCrc32attrMap $(LDFLAGS)
+
 
 IndexerLot_langtest: src/IndexerLot_langtest/main.c
 	@echo ""
@@ -241,7 +251,7 @@ dictionarywordsLot: src/dictionarywordsLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/dictionarywordsLot/main.c src/dictionarywordsLot/acl.c src/dictionarywordsLot/set.c   -o bin/dictionarywordsLot $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/dictionarywordsLot/main.c src/dictionarywordsLot/acl.c src/dictionarywordsLot/set.c   -o bin/dictionarywordsLot $(LDFLAGS) -DBLACK_BOKS
 
 lotlistDispatcher: src/lotlistDispatcher/main.c
 	@echo ""
@@ -276,7 +286,8 @@ bbdocumentConvertTest: src/bbdocumentConvertTest/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c src/bbdocumentConvertTest/main.c -o bin/bbdocumentConvertTest $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS
+	#$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c src/bbdocumentConvertTest/main.c -o bin/bbdocumentConvertTest $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS
+	(cd src/bbdocumentConvertTest && make clean && make)
 
 
 analyseShortRank: src/analyseShortRank/main.c
@@ -295,7 +306,7 @@ boithoad: src/boithoad/main.c
 	@echo ""
 	@echo "$@:"
 	#for lokalt på bb: gcc -g src/common/*.c src/boithoad/main.c   -o bin/boithoad -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL -DWITH_OPENLDAP /usr/lib64/libcrypt.a  /usr/lib64/libssl.a -I/usr/include/mysql/ -L/usr/lib64/mysql/ -ldl   -D BLACK_BOKS -D WITH_CONFIG -DDEBUG ../../openldap-2.3.32/libraries/libldap/.libs/libldap.a ../../openldap-2.3.32/libraries/liblber/.libs/liblber.a -lmysqlclient -lsasl2
-	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c $(SLICENCE) -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) $(LIBCACHE) $(OPENSSL) -pthread -DWITH_DAEMON_THREAD -D BLACK_BOKS -D WITH_CONFIG -DWITH_THREAD
+	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c $(SLICENCE) -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) $(LIBCACHE) $(OPENSSL) -pthread -DWITH_DAEMON_THREAD -D BLACK_BOKS -D WITH_CONFIG -DWITH_THREAD -DLIBCACHE_SHARE
 
 PiToWWWDocID: src/PiToWWWDocID/main.c
 	@echo ""
@@ -445,6 +456,13 @@ crawlFiles: src/crawlFiles/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/crawlFiles/main.c  -o bin/crawlFiles $(LDFLAGS) src/boitho-bbdn/bbdnclient.c -D BLACK_BOKS
 
+crawlPush: src/crawlPush/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g -Wl,-static $(LIBS)*.c src/crawlPush/main.c -o src/crawlPush/crawlPUSH.so $(LDFLAGS) 
+	mkdir -p crawlers/crawlPush
+	cp src/crawlPush/crawlPUSH.so crawlers/crawlPush/
 	
 
 testGetNextLotForIndex: src/testGetNextLotForIndex/main.c
@@ -463,7 +481,7 @@ everrun: src/everrun/catchdump.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) src/everrun/catchdump.c -o bin/everrun
+	$(CC) src/everrun/main.c -o bin/everrun
 
 searchcl : src/searchkernel/searchcl.c
 	@echo ""
@@ -474,7 +492,7 @@ searchcl : src/searchkernel/searchcl.c
 #dropper -D WITH_MEMINDEX og -D WITH_RANK_FILTER for nå
 #SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/query/lex.query.c   src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c src/parse_summary/libsummary.a src/parse_summary/libhighlight.a  $(LDFLAGS) -lpthread -D WITH_THREAD $(LIBCONFIG)
 #må ha -D_GNU_SOURCE for O_DIRECT
-SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/searchkernel/htmlstriper.c src/dp/dp.c src/searchkernel/verbose.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/stemmer.o src/query/lex.query.o src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER2) src/generateSnippet/libsnippet_generator.a  src/ds/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D DISK_PROTECTOR
+SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/searchkernel/htmlstriper.c src/dp/dp.c src/searchkernel/verbose.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/stemmer.o src/query/lex.query.o src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER2) src/generateSnippet/libsnippet_generator.a  lib/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D DISK_PROTECTOR
 
 
 searchddep:
@@ -513,7 +531,8 @@ readUrls.db: src/readUrls.db/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/readUrls.db/main.c src/acls/acls.c src/bbdocument/bbdocument.c -o bin/readUrls.db $(LDFLAGS) -DBLACK_BOKS $(BDB)
+	#$(CC) $(CFLAGS) $(LIBS)*.c src/readUrls.db/main.c src/acls/acls.c $(BBDOCUMENT) -o bin/readUrls.db $(LDFLAGS) -DBLACK_BOKS $(BDB)
+	(cd src/readUrls.db/ && make clean && make)
 
 boithoads: src/boithoads/main.c
 	@echo ""
@@ -561,21 +580,21 @@ dispatcher_allbb: src/dispatcher_all/main.c src/dispatcher_all/qrewrite.o
 	@echo ""
 	@echo "$@:"
 
-	@#$(CC) $(dispatcherCOMAND) $(MYSQL4) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c src/crawlManager/client.c src/query/lex.query.o src/ds/libds.a -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) src/getFiletype/libfte.a src/attributes/libshow_attr.a  -DWITH_SPELLING $(BDB)
+	@#$(CC) $(dispatcherCOMAND) $(MYSQL4) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c src/crawlManager/client.c src/query/lex.query.o lib/libds.a -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) src/getFiletype/libfte.a src/attributes/libshow_attr.a  -DWITH_SPELLING $(BDB)
 	(cd src/dispatcher_all && make clean && make)
 
 dispatcher_all247: src/dispatcher_all/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) $(MYSQL) -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) src/ds/libds.a -D_24SEVENOFFICE
+	$(CC) $(dispatcherCOMAND) $(MYSQL) -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) lib/libds.a -D_24SEVENOFFICE
 
 
 dispatcher: src/dispatcher/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/dispatcher/main.c src/cgi-util/cgi-util.c src/ds/libds.a -o bin/dispatcher $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/dispatcher/main.c src/cgi-util/cgi-util.c lib/libds.a -o bin/dispatcher $(LDFLAGS)
 
 putFilesIntoFileTree: src/putFilesIntoFileTree/main.c
 	@echo ""
@@ -627,6 +646,12 @@ rreadbb : src/rread/rread.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/rread/rread.c -o bin/rreadbb $(LDFLAGS) -D BLACK_BOKS
 
+readLotbb : src/readLot/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/readLot/main.c -o bin/readLotbb $(LDFLAGS) -D BLACK_BOKS
+
 
 convertReposetoryCOMAND = $(CFLAGS) $(LIBS)*.c src/convertReposetory/main.c -o bin/convertReposetory $(LDFLAGS)
 
@@ -671,7 +696,7 @@ LotInvertetIndexMaker: src/LotInvertetIndexMaker/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMaker/main.c src/ds/libds.a -o bin/LotInvertetIndexMaker $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMaker/main.c lib/libds.a -o bin/LotInvertetIndexMaker $(LDFLAGS)
 
 gcRepobb: src/gcRepo/gcrepo.c
 	@echo ""
@@ -720,7 +745,7 @@ LotInvertetIndexMaker2:	src/LotInvertetIndexMaker2/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMaker2/main.c src/ds/libds.a -o bin/LotInvertetIndexMaker2 $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/LotInvertetIndexMaker2/main.c lib/libds.a -o bin/LotInvertetIndexMaker2 $(LDFLAGS)
 
 LotInvertetIndexMaker3:	src/LotInvertetIndexMaker3/main.c
 	@echo ""
@@ -908,6 +933,24 @@ readDocumentIndexByRe: src/readDocumentIndexByRe/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/readDocumentIndexByRe/main.c -o bin/readDocumentIndexByRe $(LDFLAGS)
+
+readAttributeIndex: src/readAttributeIndex/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/readAttributeIndex/main.c -o bin/readAttributeIndex $(LDFLAGS)
+
+lookForBadDocID: src/lookForBadDocID/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/lookForBadDocID/main.c -o bin/lookForBadDocID $(LDFLAGS)
+
+lookForBadDocIDbb: src/lookForBadDocID/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/lookForBadDocID/main.c -o bin/lookForBadDocIDbb $(LDFLAGS) -D BLACK_BOKS
 
 readDocumentIndexbb: src/readDocumentIndex/main.c
 	@echo ""
@@ -1099,12 +1142,11 @@ mergeIIndex: src/mergeIIndex/main.c
 
 
 boithoadClientLib: src/boithoadClientLib/boithoadClientLib.c
-	#$(CC) -c $(CFLAGS) src/common/daemon.c -o src/boithoadClientLib/daemon.o  -g
-	#$(CC) -c $(CFLAGS) src/boithoadClientLib/boithoadClientLib.c -o src/boithoadClientLib/boithoadClientLib.o  -g
-	#ar rc src/boithoadClientLib/liboithoaut.a src/boithoadClientLib/boithoadClientLib.o src/boithoadClientLib/daemon.o
-	#ranlib src/boithoadClientLib/liboithoaut.a
-	(cd src/boithoadClientLib && make clean && make)
-	
+	$(CC) -c $(CFLAGS) src/common/daemon.c -o src/boithoadClientLib/daemon.o  -g
+	$(CC) -c $(CFLAGS) src/boithoadClientLib/boithoadClientLib.c -o src/boithoadClientLib/boithoadClientLib.o  -g
+	ar rc src/boithoadClientLib/liboithoaut.a src/boithoadClientLib/boithoadClientLib.o src/boithoadClientLib/daemon.o
+	ranlib src/boithoadClientLib/liboithoaut.a
+
 
 InitServices: src/InitServices/initwrapper.c
 	(cd src/InitServices/ && make clean && make)
@@ -1127,7 +1169,7 @@ crawlManager: src/crawlManager/main.c
 	@echo "$@:"
 
 	#22 feb 2007, fjerner -static
-	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) src/ds/libds.a -rdynamic
+	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) lib/libds.a -rdynamic
 
 crawlManager2: src/crawlManager2/main.c
 	@echo ""
@@ -1186,13 +1228,26 @@ usAD:
 	(cd src/us_ad && make clean)
 	(cd src/us_ad && make)
 
+usShell:
+	@echo ""
+	@echo "$@:"
+
+	(cd src/us_shellexe && make clean)
+	(cd src/us_shellexe && make)
+
+usMapback:
+	@echo ""
+	@echo "$@:"
+
+	(cd src/us_mapback && make clean)
+	(cd src/us_mapback && make)
+
 usSQLBB:
 	@echo ""
 	@echo "$@:"
 
 	(cd src/us_sqlbb && make clean)
 	(cd src/us_sqlbb && make)
-
 
 
 crawl247:
@@ -1215,6 +1270,19 @@ crawlSFTP: src/crawlSFTP/crawlsftp.c
 	mkdir -p crawlers/crawlSFTP
 	cp src/crawlSFTP/crawlSFTP.so crawlers/crawlSFTP/
 
+mod_auth_boitho_a1:
+	@echo ""
+	@echo "$@:"
+
+	(cd src/mod_auth_boitho && make clean)
+	(cd src/mod_auth_boitho && make Apache1)
+
+mod_auth_boitho_a2:
+	@echo ""
+	@echo "$@:"
+
+	(cd src/mod_auth_boitho && make clean)
+	(cd src/mod_auth_boitho && make Apache2)
 
 list_collections: 
 	@echo ""
@@ -1230,7 +1298,7 @@ slicense_info:
 
 	(cd src/slicense && make clean)
 	(cd src/slicense && make slicense_info)
-	cp src/slicense/slicense_info bin/slicense_info
+	cp -v  src/slicense/slicense_info bin/slicense_info
 
 
 
