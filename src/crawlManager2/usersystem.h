@@ -6,6 +6,7 @@
 #define US_TYPE_SUPEROFFICE	2
 #define US_TYPE_SQLBB		3
 #define US_TYPE_MAPBACK		4
+#define US_TYPE_SHELL		5
 
 /* The first usersystem type the users can use, all below are reserved for SD */
 #define US_TYPE_FIRST_USER	100000
@@ -53,5 +54,11 @@ int us_authenticate_perl(usersystem_data_t *data, char *user, char *password);
 int us_listUsers_perl(usersystem_data_t *data, char ***users, int *n_users);
 int us_listGroupsForUser_perl(usersystem_data_t *data, const char *user, char ***groups, int *n_groups);
 char *us_getName_perl(void *data);
+
+// an structure used for C calback, if we need it in the future.
+struct us_cargsF {
+        usersystem_data_t *data;
+};
+
 
 #endif /* _USERSYSTEM_H_ */
