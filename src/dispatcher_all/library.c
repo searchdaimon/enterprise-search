@@ -518,6 +518,11 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 		    	}
 
 			SiderHeder[i].navigation_xml[SiderHeder[i].navigation_xml_len] = '\0';
+
+			#ifdef DEBUG
+				printf("\n\nnavigation_xml: %s\n\n", SiderHeder[i].navigation_xml);
+			#endif
+
 			#endif
 		}
 	}
