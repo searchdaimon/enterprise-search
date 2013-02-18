@@ -320,6 +320,8 @@ struct DocumentIndexFormat {
 	time_t lastSeen;
 	unsigned int htmlSize2;
 	char reservedSpace[56]; //18 okt 2012
+#else 
+	unsigned int htmlSize2;
 #endif
 };
 
@@ -353,6 +355,8 @@ struct ReposetoryHeaderFormat {
 	unsigned int attributeslen;
 	unsigned int htmlSize2;
 	char reservedSpace[50];
+#else
+	unsigned int htmlSize2;
 #endif
 };
 
