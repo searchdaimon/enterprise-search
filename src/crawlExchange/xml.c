@@ -148,7 +148,7 @@ handle_acllist(const xmlDocPtr doc, xmlNodePtr acls, set *acl_allow, set *acl_de
 		if ((cur = xml_find_child(cur, "sid"))) {
 			if ((cur = xml_find_child(cur, "string_sid"))) {
 				char *sid = (char*)xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-				bblog(DEBUG, "Found owner: %s", sid);
+				bblog(DEBUGINFO, "Found owner: %s", sid);
 				set_add(acl_allow, sid);
 			}
 		}
