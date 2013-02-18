@@ -2,6 +2,8 @@
 #LDFLAGS= -lm 
 #CFLAGS=	-g -Wall -DTESTMAIN -std=c99 -O2
 
+WANT_LOGGER=    true
+
 OBJS=	spelling.o dmetaphone.o levenshtein.o
 LIB=	libspelling.a
 CFLAGS+=        -D_FILE_OFFSET_BITS=64
