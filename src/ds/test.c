@@ -47,6 +47,13 @@ void test_it2()
     set_insert(S, "sai-sverd");
     set_insert(S, "nunchaku");
 
+    printf("Search for \"katana\" %d\n",(set_find(S, "katana")).valid);
+    printf("Search for \"sai-sverd\" %d\n",(set_find(S, "sai-sverd")).valid);
+    printf("Search for \"bo-stav\" %d\n",(set_find(S, "bo-stav")).valid);
+    printf("Search for \"shuriken\" %d\n",(set_find(S, "shuriken")).valid);
+    printf("Search for \"nunchaku\" %d\n",(set_find(S, "nunchaku")).valid);
+    printf("Search for \"dont exist\" %d\n",(set_find(S, "dont exist")).valid);
+
     iterator2	it2 = set_begin2(S);
     for (; it2.valid; ds_next(it2)) printf("%s\n", ds_key(it2).str);
 
@@ -81,6 +88,32 @@ void test_it2()
     destroy(Ru);
 }
 
+void test_aclset()
+{
+
+    container	*S2 = set_container( string_container() );
+
+    set_insert(S2, "s-1-5-21-3106318878-4088633202-286446095-1148");
+    set_insert(S2, "s-1-5-21-3106318878-4088633202-286446095-1115");
+    set_insert(S2, "everyone");
+    set_insert(S2, "s-1-5-21-3106318878-4088633202-286446095-1132");
+    set_insert(S2, "searchdaimon");
+    set_insert(S2, "s-1-1-0");
+    set_insert(S2, "domain users");
+    set_insert(S2, "demo");
+    set_insert(S2, "s-1-5-21-3106318878-4088633202-286446095-513");
+    set_insert(S2, "group4");
+    set_insert(S2, "s-1-5-32-545");
+    set_insert(S2, "demo group");
+    set_insert(S2, "users");
+    set_insert(S2, "s-1-5-21-3106318878-4088633202-286446095-1147");
+
+    printf("Search for \"s-1-5-32-545\"= %d\n",(set_find(S2, "s-1-5-32-545")).valid);
+    printf("Search for \"\"= %d\n",(set_find(S2, "")).valid);
+    printf("Search for \"s-1-5-21-3106318878-4088633202-286446095-1132\"= %d\n",(set_find(S2, "s-1-5-21-3106318878-4088633202-286446095-1132")).valid);
+
+
+}
 
 void another_test()
 {
@@ -447,8 +480,10 @@ void map_test()
 
 int main()
 {
+    test_aclset();
+exit(0);
     test_vmerge();
-    exit(0);
+    //exit(0);
     test_it2();
     exit(0);
 
