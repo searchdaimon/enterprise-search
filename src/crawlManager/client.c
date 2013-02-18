@@ -7,9 +7,13 @@
 #include "../common/define.h"
 #include "../common/daemon.h"
 #include "../common/bstr.h"
-#include "../common/timediff.h"
+//#include "../common/timediff.h"
 #include "../boithoadClientLib/boithoad.h"
 
+int cmc_getPassword(const char username_in[], char password[]) {
+
+	return 1;
+}
 
 int cmc_conect(int *socketha, char statusbuff[],int statusbufflen, int port) {
 
@@ -217,13 +221,13 @@ cmc_rewrite_url(int socketha, char *collection_in, const char *url_in, size_t ur
 {
 	char url[1024];
 	struct rewriteFormat rewrite;
-	struct timeval start_time, end_time;
 
-	//#ifdef DEBUG
-	printf("cmc_rewrite_url(collection_in=\"%s\", url_in=\"%s\")\n",collection_in,url_in);
-	//#endif
+	#ifdef DEBUG_TIME
+		struct timeval start_time, end_time;
+		printf("cmc_rewrite_url(collection_in=\"%s\", url_in=\"%s\")\n",collection_in,url_in);
+		gettimeofday(&start_time, NULL);
+	#endif
 
-	gettimeofday(&start_time, NULL);
 
 
 	memset(&rewrite, '\0', sizeof(rewrite));
@@ -246,12 +250,14 @@ cmc_rewrite_url(int socketha, char *collection_in, const char *url_in, size_t ur
 	strscpy(uri_out, rewrite.uri, uri_out_len);
 	strscpy(fulluri_out, rewrite.fulluri, fulluri_out_len);
 
+	#ifdef DEBUG
 	printf("~cmc_rewrite_url [uri_out=\"%s\", fulluri=\"%s\"]\n",uri_out,fulluri_out);
-	
-	gettimeofday(&end_time, NULL);
+	#endif
 
-	printf("~cmc_rewrite_url(2) time %f\n",getTimeDifference(&start_time,&end_time));
-	
+	#ifdef DEBUG_TIME
+		gettimeofday(&end_time, NULL);
+		printf("~cmc_rewrite_url(2) time %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
 
 	return 1;
 }
@@ -285,9 +291,14 @@ int cmc_crawlcanconect (int socketha, char vantcollection[], char statusbuff[],i
         }
 
 	if (strcmp(respons,"ok") != 0) {
+		fprintf(stderr,"respons was not ok, but \"%s\"\n", respons);
 		strscpy(statusbuff,respons,statusbufflen);
 		return 0;
 	}
+
+	#ifdef DEBUG
+		printf("~cmc_crawlcanconect=1\n");
+	#endif
 
 	return 1;
 
@@ -365,7 +376,7 @@ int cmc_groupsforuserfromusersystem(int socketha, char *_user, unsigned int us, 
 	return n;
 }
 
-int cmc_authuser(int sock, char *_user, char *_pass, unsigned int usersystem, char *extra_in)
+int cmc_authuser(int sock, const char *_user, const char *_pass, unsigned int usersystem, char *extra_in)
 {
 	char user[512], pass[512];
 	int n;
