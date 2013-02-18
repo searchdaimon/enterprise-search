@@ -102,7 +102,7 @@ HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a lib/libds.a
 all: 
 	@echo "enten bygg bb med make bb, eller byg web med make web"
 
-bb : getFiletype searchddep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange crawlSO boitho-bbdn PageInfobb IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb perlxs-sdcrawl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb yumupdate usSQLBB usAD perlembed sdperl
+bb : getFiletype dep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange crawlSO boitho-bbdn PageInfobb IndexerLotbb LotInvertetIndexMaker2  mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb perlxs-sdcrawl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb yumupdate usSQLBB usAD perlembed sdperl
 
 perlembed:
 	(cd src/perlembed && make clean && make)
@@ -495,7 +495,7 @@ searchcl : src/searchkernel/searchcl.c
 SEARCHCOMMAND = $(CFLAGS) $(LIBS)*.c src/searchkernel/htmlstriper.c src/dp/dp.c src/searchkernel/verbose.c src/maincfg/maincfg.c src/searchkernel/shortenurl.c src/query/stemmer.o src/query/lex.query.o src/searchkernel/searchkernel.c src/searchFilters/searchFilters.c src/searchkernel/search.c src/searchkernel/searchd.c $(HTMLPARSER2) src/generateSnippet/libsnippet_generator.a  lib/libds.a src/utf8-filter/lex.u8fl.o $(LDFLAGS) -lpthread $(LIBCONFIG) -D DISK_PROTECTOR
 
 
-searchddep:
+dep:
 	#ting searchd trenger
 	@echo ""
 	@echo "$@:"
