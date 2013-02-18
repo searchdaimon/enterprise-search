@@ -7,4 +7,4 @@ OBJS=	dcontainer.o dpair.o dtuple.o dvector.o dstack.o dqueue.o dlist.o dmap.o d
 include ../../mk/lib.mk
 
 test:
-	$(CC) -o test test.c libds.a
+	$(CC) -o test test.c $(LIBDIR)/libds.a
