@@ -499,7 +499,7 @@ dep:
 	#ting searchd trenger
 	@echo ""
 	@echo "$@:"
-	for i in src/query src/parser src/generateSnippet src/ds src/utf8-filter src/getdate src/parser2 src/newspelling src/getFiletype src/attributes/ src/base64/ src/common/ src/getdate/ src/3pLibs/keyValueHash/; do\
+	for i in src/query src/parser src/generateSnippet src/ds src/utf8-filter src/getdate src/parser2 src/newspelling src/getFiletype src/attributes/ src/base64/ src/common/ src/getdate/ src/3pLibs/keyValueHash/ src/perlembed src/logger; do\
            (cd $$i && $(MAKE) all);\
         done
 
