@@ -19,6 +19,7 @@
 #include "../ds/dset.h"
 #include "../ds/dmap.h"
 #include "../ds/dvector.h"
+#include "../logger/logger.h"
 
 #include "spelling.h"
 #include "dmetaphone.h"
@@ -336,7 +337,7 @@ train(const char *dict)
 		//for (i = 0; wcword[i] != '\0'; i++)
 		//	wcword[i] = tolower(wcword[i]);
 		utf8_strtolower((utf8_byte*)word);
-		utf8_strtolower((utf8_byte*)token[2]);
+		//utf8_strtolower((utf8_byte*)token[2]); // acl (groups)
 		utf8_strtolower((utf8_byte*)token[3]);
 		utf8_strtolower((utf8_byte*)token[4]);
 
@@ -418,7 +419,7 @@ train(const char *dict)
 	}
 	free(line);
 
-	//printf("Collected %d words\n", hashtable_count(s->words));
+	bblog(INFO,"Collected %d words\n", hashtable_count(s->words));
 
 	fclose(fp);
 	s->inited = 1;
@@ -634,65 +635,71 @@ editsn_soundslike(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *wor
 
 int allowed_we(const spelling_t *s, struct wordelem *we, container *groups, container *subnames)
 {
-//    printf("\n[spelling] ");
+    bblog(DEBUGINFO, "\n[spelling] ");
     int i;
-//    printf("%s | subnames(%i): ", we->word, we->collections_len);
+    bblog(DEBUGINFO, "%s | subnames(%i): ", we->word, we->collections_len);
 
-    if (set_size(subnames)>0)
+    if (set_size(subnames)==0)
 	{
-	    int subname_allowed=0;
+		bblog(ERROR, "Dident have access to any collection, so denying spelling");
+		return 0;
+	}
 
-	    for (i=0; i < we->collections_len; i++)
-		{
-		    iterator	it = set_find(subnames, vector_get(s->_subnameV, we->collections[i]).str);
-//		    printf("%s ", vector_get(s->_subnameV, we->collections[i]).str);
-		    if (it.valid)
-			{
-			    subname_allowed = 1;
-//			    printf("(in collection)");
-			    break;
-			}
-    		}
+    int subname_allowed=0;
 
-	    if (!subname_allowed)
+    for (i=0; i < we->collections_len; i++)
+	{
+	    iterator	it = set_find(subnames, vector_get(s->_subnameV, we->collections[i]).str);
+	    bblog(DEBUGINFO, "%s ", vector_get(s->_subnameV, we->collections[i]).str);
+	    if (it.valid)
 		{
-//		    printf("(not in collection)\n");
-		    return 0;
+		    subname_allowed = 1;
+		    bblog(DEBUGINFO, "(in collection)");
+		    break;
 		}
 	}
 
-//    printf("\ndenied(%i): ", we->acl_denied_len);
+    if (!subname_allowed)
+	{
+	    bblog(DEBUGINFO, "(not in collection)\n");
+	    return 0;
+	}
+
+
+    // We have no group info, proboly because we have an anonynmus searc. Skipping (and allowing).
+    if (groups==NULL) {
+	return 1;
+    }
+
+    bblog(DEBUGINFO, "\ndenied(%i): ", we->acl_denied_len);
 
     for (i=0; i < we->acl_denied_len; i++)
 	{
 	    iterator	it = set_find(groups, vector_get(s->_aclV, we->acl_denied[i]).str);
-//	    printf("%s ", vector_get(s->_aclV, we->acl_denied[i]).str);
+	    bblog(DEBUGINFO, "%s ", vector_get(s->_aclV, we->acl_denied[i]).str);
 
 	    if (it.valid)
 		{
-//		    printf("(denied)\n");
+		    bblog(DEBUGINFO, "(denied)\n");
 		    return 0;
 		}
 	}
 
-//    printf("(not denied)\nallowed(%i): ", we->acl_allowed_len);
+    bblog(DEBUGINFO, "(not denied)\nallowed(%i): ", we->acl_allowed_len);
 
-    /**
-     *  Ax: public-collections vil per i dag ikke bli 'allowed' pga acl
-     */
     for (i=0; i < we->acl_allowed_len; i++)
 	{
 	    iterator	it = set_find(groups, vector_get(s->_aclV, we->acl_allowed[i]).str);
-//	    printf("%s ", vector_get(s->_aclV, we->acl_allowed[i]).str);
+	    bblog(DEBUGINFO, "%s ", vector_get(s->_aclV, we->acl_allowed[i]).str);
 
 	    if (it.valid)
 		{
-//		    printf("(allowed)\n");
+		    bblog(DEBUGINFO, "(allowed)\n");
 		    return 1;
 		}
 	}
 
-//    printf("(not in acl_allowed)\n");
+    bblog(DEBUGINFO, "(not in acl_allowed)\n");
     return 0;
 }
 
@@ -776,6 +783,9 @@ check_word(const spelling_t *s, char *word, int *found, container *groups, conta
 	int i;
 
 	*found = 0;
+
+	bblog(DEBUGINFO,"inited p: %p, words p %p",s->inited,s->words);
+
 	if (!s->inited)
 		return NULL;
 
@@ -794,7 +804,7 @@ check_word(const spelling_t *s, char *word, int *found, container *groups, conta
 	// Phase 1, sounds like words
 	like = dmetaphone(wword);
 	bestw = NULL;
-	//printf("We sound like: %ls\n", like);
+	bblog(DEBUGINFO, "We sound like: %ls\n", like);
 	check_soundslike(s, cache, wword, like, &bestw, &mindist, &maxfreq, 0, groups, subnames);
 	free(like);
 
