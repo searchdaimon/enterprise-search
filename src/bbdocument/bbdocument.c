@@ -55,15 +55,11 @@
 // Magnus: Det heter altså "jpeg", ikke "jepg" ;)
 char *supportetimages[] = {"png", "jpg", "jpeg", "bmp", "tif", "tiff", "gif", "eps", "ai", '\0'};
 
+
 //globals
 //CHTbl htbl;
 struct hashtable *h_fileFilter;
 
-
-struct uriindexFormat {
-        unsigned int DocID;
-        unsigned int lastmodified;
-};
 
 
 
@@ -361,7 +357,7 @@ int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified
 	docid DocID;
 	unsigned int lastmodifiedForExistTest;
 
-        debug("bbadocument_exist: %s, \"%s\", lastmodified %u",subname,documenturi,lastmodified);
+        debug("bbadocument_exist(subname=\"%s\", documenturi=\"%s\", lastmodified=%u)",subname,documenturi,lastmodified);
 
 	if (!uriindex_get(documenturi,&DocID,&lastmodifiedForExistTest,subname)) {
 		debug("bbdocument_exist: uriindex_get() feil. This must be an unknow url. Will crawl\n");
@@ -938,6 +934,8 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	struct hashtable *metahash = NULL;
 	buffer *documentbuffer;
 
+	memset(&ReposetoryHeader,0,sizeof(ReposetoryHeader));
+
 	printf("bbdocument_add: \"%s\"\n",documenturi);
 
 	printf("bbdocument_add: Attributes = \"%s\" (", attributes);
@@ -1058,7 +1056,6 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	}
 
 
-	ReposetoryHeader.htmlSize = htmlbuffersize;
 	ReposetoryHeader.clientVersion = 2.14;
 
 	//runarb:  8 juli 2008: tar bort bruken av ReposetoryHeader's url
@@ -1083,11 +1080,11 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 	ReposetoryHeader.urllen = strlen(documenturi);
 	ReposetoryHeader.attributeslen = strlen(all_attributes);
-	rApendPostcompress(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_denied, NULL, documenturi, all_attributes, attrkeys);
+	rApendPostcompress(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_denied, NULL, documenturi, all_attributes, attrkeys, htmlbuffersize);
 
 #ifdef DEBUG	
 	printf("legger til DocID \"%u\", time \"%u\"\n",ReposetoryHeader.DocID,lastmodified);
-	printf("htmlSize %ho, imageSize %ho\n",ReposetoryHeader.htmlSize,ReposetoryHeader.imageSize);
+	printf("htmlSize %u, imageSize %ho\n",ReposetoryHeader.htmlSize2,ReposetoryHeader.imageSize);
 	printf("html: -%s-\n",htmlbuffer);
 #endif
 
@@ -1169,7 +1166,7 @@ unsigned int bbdocument_nrOfDocuments (char subname[]) {
 
 
 
-int uriindex_open(DB **dbpp, char subname[]) {
+int uriindex_open(DB **dbpp, char subname[], u_int32_t flags) {
 
 	DB *dbp = (*dbpp);
 
@@ -1201,7 +1198,7 @@ int uriindex_open(DB **dbpp, char subname[]) {
 
 
                 /* open the database. */
-                if ((ret = dbp->open(dbp, NULL, fileName, NULL, DB_BTREE, DB_CREATE, 0664)) != 0) {
+                if ((ret = dbp->open(dbp, NULL, fileName, NULL, DB_BTREE, flags, 0664)) != 0) {
                         dbp->err(dbp, ret, "%s: open", fileName);
                         //goto err1;
 			//dette skjer nor collection mappen ikke er opprettet enda, typisk forde vi ikke har lagret et dokument der enda
@@ -1260,7 +1257,7 @@ int uriindex_add (char uri[], unsigned int DocID, unsigned int lastmodified, cha
 	printf("uriindex_add: subname %s\n",subname);
 	#endif
 
-	uriindex_open(&dbp,subname);
+	uriindex_open(&dbp,subname, DB_CREATE);
 
 
 	//resetter minne
@@ -1306,7 +1303,7 @@ int uriindex_get (char uri[], unsigned int *DocID, unsigned int *lastmodified, c
 	int forreturn = 1;
 	struct uriindexFormat uriindex;
 
-        if (!uriindex_open(&dbp,subname)) {
+        if (!uriindex_open(&dbp,subname, DB_RDONLY)) {
 		#ifdef DEBUG
 			fprintf(stderr,"can't open uriindex\n");
 		#endif
@@ -1357,7 +1354,7 @@ int uriindex_delete (char uri[], char subname[]) {
 	int forreturn = 1;
 	struct uriindexFormat uriindex;
 
-        if (!uriindex_open(&dbp,subname)) {
+        if (!uriindex_open(&dbp,subname, DB_CREATE)) {
 		fprintf(stderr,"can't open uriindex\n");
 		return 0;
 	}
