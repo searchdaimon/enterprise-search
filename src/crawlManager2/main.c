@@ -1927,7 +1927,7 @@ int redirect_stdoutput(char * file) {
     // Deliting old version
     unlink(file);
 
-    bblog(INFO, "tc: redirecting std[out,err] to %s",  file);
+    printf("tc: redirecting std[out,err] to %s",  file);
     if ((freopen(file, "a+", stdout)) == NULL
             || freopen(file, "a+", stderr) == NULL) {
         perror(file);
@@ -1968,7 +1968,7 @@ int crawl(struct collectionFormat *collection,int nrofcollections, int flag, int
 
 
         int output_redirected = 0;
-        if (collection[i].extra != NULL) {
+        if ((collection[i].extra != NULL) && (getenv("BBLOGGER_APPENDERS") == NULL)) {
             if (!redirect_stdoutput(collection[i].extra)) {
                 bblog(ERROR, "test collection error, skipping.");
                 continue;
@@ -2490,7 +2490,7 @@ void connectHandler(int socket) {
 
 			// Redirect output:
 			int output_redirected = 0;
-			if (extrabuf != NULL && extrabuf[0] != '\0')
+			if ((extrabuf != NULL) && (extrabuf[0] != '\0') && (getenv("BBLOGGER_APPENDERS") == NULL))
 			    {
 				if (!redirect_stdoutput(extrabuf))
 				    {
@@ -2557,7 +2557,7 @@ void connectHandler(int socket) {
 
 			// Redirect output:
 			int output_redirected = 0;
-			if (extrabuf != NULL && extrabuf[0] != '\0')
+			if ((extrabuf != NULL) && (extrabuf[0] != '\0') && (getenv("BBLOGGER_APPENDERS") == NULL))
 			    {
 				if (!redirect_stdoutput(extrabuf))
 				    {
@@ -2640,7 +2640,7 @@ void connectHandler(int socket) {
 
 			// Redirect output:
 			int output_redirected = 0;
-			if (extrabuf != NULL && extrabuf[0] != '\0')
+			if ((extrabuf != NULL) && (extrabuf[0] != '\0') && (getenv("BBLOGGER_APPENDERS") == NULL))
 			    {
 				if (!redirect_stdoutput(extrabuf))
 				    {
