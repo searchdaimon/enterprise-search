@@ -1160,6 +1160,9 @@ NetConfig: src/NetConfig/configwrite.c
 	cp src/NetConfig/configwrite setuid/
 
 yumupdate:
+	@echo ""
+	@echo "$@:"
+
 	$(CC) $(CFLAGS) src/common/exeoc.c src/yumupdate/yumupdate.c -o setuid/yumupdate
 
 crawlManager: src/crawlManager/main.c
