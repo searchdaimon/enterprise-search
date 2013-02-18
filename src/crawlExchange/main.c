@@ -40,7 +40,7 @@ ex_rewrite_url(struct collectionFormat *collection, char *url, char *uri, char *
 {
 	char *p;
 
-	bblog(DEBUG, "We got: %s", url);
+	bblog(DEBUGINFO, "We got: %s", url);
 	p = strchr(url, '\x10');
 	if (p == NULL)
 		return 0;
@@ -329,6 +329,7 @@ crawlcanconnect(struct collectionFormat *collection,
 			user = *users;
 
 			snprintf(resource, sizeof(resource), "%s/exchange/%s/", origresource, user);
+//			snprintf(resource, sizeof(resource), "%s/owa/%s/", origresource, user);
 		} else { // Public folder
 			snprintf(resource, sizeof(resource), "%s/public/", origresource);
 			publicdone = 1;
@@ -423,6 +424,9 @@ crawlGo(struct crawlinfo *ci)
 	CURL *curl;
 	int publicdone;
 	struct loginInfoFormat login;
+	int count;
+
+	printf("crawlGo(resource=%s)\n",ci->collection->resource);
 
 	normalize_url(ci->collection->resource);
 
@@ -438,14 +442,17 @@ crawlGo(struct crawlinfo *ci)
 	publicdone = 1;
 #endif
 	err = 0;
+	count = 0;
 	for (users = ci->collection->users; (users && *users) || publicdone == 0; (users && *users) ? users++ : publicdone++) {
-		if (!ci->documentContinue(ci->collection))
+		if (!ci->documentContinue(ci->collection)) {
+			printf("crawlGo: Stoped by documentContinue\n");
 			break;
-
+		}
 		if (users && *users) {
 			user = *users;
 			splitUserString(*users,&user, &usersid);
 			snprintf(resource, sizeof(resource), "%s/exchange/%s/", origresource, user);
+//			snprintf(resource, sizeof(resource), "%s/owa/%s/", origresource, user);
 		} else { // Public folder
 			snprintf(resource, sizeof(resource), "%s/public/", origresource);
 			publicdone = 1;
@@ -484,7 +491,11 @@ crawlGo(struct crawlinfo *ci)
 		}
 
 		ex_logOff(&curl);
+
+		++count;
 	}
+
+	printf("Crawled %i users\n",count);
 
 	return 1;
 	//return err == 0 ? 0 : 1;
@@ -502,7 +513,7 @@ crawlfirst(crawlfirst_args)
 	ci.documentContinue = documentContinue;
 	ci.collection = collection;
 	ci.timefilter = 0;
-	bblog(DEBUG, "crawlEXCHANGE: %s", collection->resource);
+	bblog(DEBUGINFO, "crawlEXCHANGE: %s", collection->resource);
 
 	return crawlGo(&ci);
 }
@@ -520,7 +531,7 @@ crawlupdate(crawlupdate_args)
 	ci.collection = collection;
 	ci.timefilter = collection->lastCrawl;
 
-	bblog(DEBUG, "crawlEXCHANGE: %s", collection->resource);
+	bblog(DEBUGINFO, "crawlEXCHANGE: %s", collection->resource);
 
 	return crawlGo(&ci);
 }

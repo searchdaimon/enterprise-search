@@ -17,6 +17,7 @@
 #include "../common/timediff.h"
 #include "../logger/logger.h"
 
+#define DEBUG
 
 char *
 make_userpass(const char *username, const char *password)
@@ -92,7 +93,7 @@ ex_getEmail(const char *url, struct ex_buffer *buf, CURL ** curl)
 	result = curl_easy_perform(*curl);
 	gettimeofday(&end_time, NULL);
 	curl_slist_free_all(headers);
-	bblog(DEBUG, "Grab took: %f", getTimeDifference(&start_time,&end_time));
+	bblog(DEBUGINFO, "Grab took: %f", getTimeDifference(&start_time,&end_time));
 
 	return buf->buf;
 }
@@ -114,7 +115,12 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 	*errorm = NULL;
 	
 	
+
+	#ifdef DEBUG
+	bblog(INFO, "ex_logOn(mailboxurl=%s, Exchangeurl=%s, username=%s, password=%s)", mailboxurl, login->Exchangeurl, login->username, login->password);
+	#else
 	bblog(INFO, "ex_logOn(mailboxurl=%s, Exchangeurl=%s, username=%s)", mailboxurl, login->Exchangeurl, login->username);
+	#endif
 
 	curl = curl_easy_init();
 	if (curl == NULL) {
@@ -146,7 +152,7 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 		printf("\n");
 	#endif
 
-	bblog(DEBUG, "code %i",code);
+	bblog(DEBUGINFO, "code %i",code);
 
 	//hvis vi fikke en redirect finner vi ut til hvor
 	if (code == 302) {
@@ -181,7 +187,7 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 
 		asprintf(&postData,"destination=%s&flags=0&username=%s&password=%s&SubmitCreds=Log+On&trusted=0",destination, login->username, login->password);
 
-		bblog(DEBUG, "postData new: %s",postData);
+		bblog(DEBUGINFO, "postData new: %s",postData);
 
 	    	/* Now specify the POST data */
 	    	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData);
@@ -201,7 +207,54 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 		curl_free(destination);
 		free(postData);
 		
-	}
+	} // aaaaaaaa:
+	else if (code == 302 && (strstr(redirecttarget,"owa/auth/logon.aspx") != NULL)) {
+
+		bblog(INFO, "we have form based login!");
+
+		char *destination;
+		char *postData;
+
+	    	/* First set the URL that is about to receive our POST. This URL can
+	       	just as well be a https:// URL if that is what should receive the
+	       	data. */
+		snprintf(owaauthpath,sizeof(owaauthpath),"%s/owa/auth/owaauth.dll",login->Exchangeurl);
+	    	curl_easy_setopt(curl, CURLOPT_URL, owaauthpath);
+
+	    	//bruke cookies
+	    	curl_easy_setopt(curl, CURLOPT_COOKIEJAR, "-");
+
+	    	//curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION , 0);
+
+		//url enkoder destination feltet
+		destination = curl_easy_escape(curl, mailboxurl, 0);
+
+		//bygger port datane
+		// skal være av slik: destination=https%3A%2F%2Fsbs.searchdaimon.com%2FExchange%2Feo&flags=0&username=eo&password=1234Asd&SubmitCreds=Log+On&trusted=0
+
+		asprintf(&postData,"destination=%s&flags=0&username=%s&password=%s&SubmitCreds=Log+On&trusted=0",destination, login->username, login->password);
+
+		bblog(DEBUGINFO, "postData new: %s",postData);
+
+	    	/* Now specify the POST data */
+	    	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData);
+
+
+
+	    	/* Perform the request, res will get the return code */
+	    	result = curl_easy_perform(curl);
+
+	    	//res = curl_easy_getinfo(curl, CURLINFO_REDIRECT_URL , &redirecttarget);
+	    	//printf("res %d\n");
+	    	//printf("red to \"%s\"\n",redirecttarget);
+
+	    	result = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+	    	bblog(INFO, "res %d, code %d",result,code);
+
+		curl_free(destination);
+		free(postData);
+		
+	} //aaaaaaaaaaaaa
 	else if (code == 401) {
 		if ((userpass = make_userpass(login->username, login->password)) == NULL)
 			return NULL;
@@ -209,6 +262,14 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 		bblog(INFO, "Got 401 error code. We have normal basic login.");
 
 		curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+
+//		result = curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_ANY); //allow all aut options. Include ntlm
+		result = curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC); //allow all aut options. Include ntlm
+
+		if (result != CURLE_OK) {
+                        asprintf(errorm,"Can't set curl aut metod. Error code: %d.",result);
+			return NULL;			
+		} 
 
 		//usikker om vi kan gjøre dette. Kan være at curl trenger datene siden.
 		free_userpass(userpass);
@@ -219,7 +280,7 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 		result = curl_easy_perform(curl);
 		result = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
 
-		bblog(DEBUG, "code %i",code);
+		bblog(DEBUGINFO, "code %i",code);
 
 		if (code == 302) {
                         curl_easy_getinfo(curl, CURLINFO_REDIRECT_URL , &redirecttarget);
@@ -275,7 +336,7 @@ ex_getContent(const char *url, CURL **curl, struct loginInfoFormat *login)
 
 	#ifdef DEBUG
 		//warn: skriver ut passord i klartekst.
-		bblog(DEBUG, "ex_getContent(url=%s)",url);
+		bblog(DEBUGINFO, "ex_getContent(url=%s)",url);
 	#endif
 
 	buf.buf = NULL;
@@ -335,7 +396,7 @@ ex_getContent(const char *url, CURL **curl, struct loginInfoFormat *login)
         }
 
 	#ifdef DEBUG
-	bblog(DEBUG, "buf.buf: \"%s\"",buf.buf);
+	bblog(DEBUGINFO, "buf.buf: \"%s\"",buf.buf);
 	#endif
 
 	return buf.buf;
