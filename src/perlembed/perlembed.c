@@ -128,6 +128,83 @@ int perl_embed_run(char *file_path, char *func_name, HV *func_params, char *obj_
 	return retv;
 }
 
+int perl_embed_run_arr(char *file_path, char *func_name, HV *func_params, char *obj_name, HV *obj_attr, char *error, int errorlength, char ***retarray, int *retlength) {
+
+	int i;
+	dSP;
+	ENTER;
+	SAVETMPS;
+	PUSHMARK(SP);
+	AV *retav = newAV();
+
+	//filnavnet
+	XPUSHs(sv_2mortal(newSVpv(file_path, 0) ));
+
+	//mappen, for å inkludere
+	//XPUSHs(sv_2mortal(newSVpv(collection->crawlLibInfo->resourcepath, 0) ));
+
+	XPUSHs(sv_2mortal(newSViv(perl_opt_cache))); 
+	XPUSHs(sv_2mortal(newSVpv(func_name, 0)));
+	XPUSHs(sv_2mortal(newRV((SV *) func_params)));
+	if (obj_name != NULL)
+		XPUSHs(sv_2mortal(newSVpv(obj_name, 0)));
+	if (obj_attr != NULL)
+		XPUSHs(sv_2mortal(newRV((SV *) obj_attr)));
+
+	PUTBACK;
+
+	int retn = call_pv("Embed::Persistent::eval_file2", G_SCALAR | G_EVAL);
+	//antar at rutiner som ikke returnerer noe mislykkes. Dette kan for eks skje hvis vi kaller die, eller ikke trenger retur koden
+
+	SPAGAIN; //refresh stack pointer
+	if (SvTRUE(ERRSV)) {
+		fprintf(stderr, "Perl preprocessor error: %s\n", SvPV_nolen(ERRSV));
+		// overfører error beskjeden.
+		if (errorlength != 0) {
+			snprintf(error,errorlength,SvPV_nolen(ERRSV));
+		}
+		retn = -1;
+	}
+	else if (retn == 1) {
+               retav = (AV *)SvRV(POPs);
+		printf("retav: %p\n", retav);
+               printf("aaaav: %d\n", av_len(retav));
+	        if (av_len(retav) == -1) { /* No retarray */
+	                *retlength = 0;
+	                *retarray = NULL;
+	                return 1;
+	        }
+
+	        *retlength = av_len(retav)+1;
+	        *retarray = malloc(((*retlength)+1) * sizeof(char*));
+	        i = 0;
+	        while (av_len(retav) != -1) {
+	                SV *user = av_pop(retav);
+	                STRLEN data_size;
+	                char *suser;
+
+	                suser = SvPV(user, data_size);
+	                (*retarray)[i] = strdup(suser);
+			printf("suser: \"%s\"\n", suser);
+	                i++;
+	        }
+	        (*retarray)[i] = NULL;
+
+
+	}
+	else {
+		fprintf(stderr, "perlfunc returned %i values, expected 0 or 1. Ignored.\n", retn);
+		retn = -1;
+	}
+
+	FREETMPS;
+	LEAVE;
+
+	printf("~perl_embed_run_att=%i\n",retn);
+
+	return retn;
+}
+
 /**
  * helper functions 
  */
