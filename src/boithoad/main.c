@@ -107,7 +107,7 @@ user_enabled(char *user, const char *licensekey)
 
 	mysql_free_result(res);
 
-	printf("enabled_users: %i\n",enabled_users);
+	printf("enabled_users: %i (0 == unlimited)\n",enabled_users);
 
 	maxusers = get_number_of_licenced_users(licensekey);
 	printf("You have a license for %d users.\n", maxusers);
@@ -116,7 +116,7 @@ user_enabled(char *user, const char *licensekey)
 		errx(1, "Invalide user count license.");
 	}
 
-	if (enabled_users > maxusers) {
+	if (maxusers != 0 && enabled_users > maxusers) {
 		errx(1, "You have more user enabled then you have license fore.");
 	}
 
@@ -129,8 +129,12 @@ user_enabled(char *user, const char *licensekey)
 	if ((res = mysql_store_result(db)) == NULL)
 		errx(1, "mysql_store_result: %s", mysql_error(db));
 
-	n = mysql_num_rows(res);
-
+	if (maxusers == 0) {
+		n = 1; // Hav unlimeted. No need to lock it up
+	}
+	else {
+		n = mysql_num_rows(res);
+	}
 	mysql_free_result(res);
 	mysql_close(db);
 
@@ -1042,8 +1046,6 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 		if (bconfig_getentryuint("authentication_timeout", &authentication_timeout) == 0) {
 			authentication_timeout = 0;
 		}
-		//printf("resetting authentication timeout to %u\n",authentication_timeout);
-		cache_settimeout(cache, authentication_timeout);
 
 		if (strcmp(authenticatmetod,"msad") == 0) {
 			LDAP *ld = NULL;
@@ -1400,7 +1402,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 				recvall(socket,user_username,sizeof(user_username));
 
 				/* Look at the cache */
-				grouphash = cache_fetch(cache, "groupsforuser", user_username);
+				grouphash = cache_fetch(cache, "groupsforuser", user_username, authentication_timeout);
 				if (grouphash != NULL) {
 					fprintf(stderr, "Using the cache\n");
 					sendgroups(grouphash);
@@ -1495,26 +1497,6 @@ void connectHandler(int socket) {
 	printf("closed logs\n");
 }
 
-void badldap_init(FILE *elog) {
-
-   	if (bconfig_getentrystr("msad_user") == NULL) {
-		blog(elog, 1, "cant read config for msad_user");
-		exit(1);
-	}
-   	if (bconfig_getentrystr("msad_password") == NULL) {
-		blog(elog, 1, "cant read config for msad_password");
-		exit(1);
-        }
-   	if (bconfig_getentrystr("msad_ip") == NULL) {
-		blog(elog, 1, "cant read config for msad_ip");
-		exit(1);
-        }
-   	if (bconfig_getentrystr("msad_domain") == NULL) {
-		blog(elog, 1, "cant read config for msad_domain");
-		exit(1);
-        }
-
-}
 
 int
 get_number_of_licenced_users(const char *licensekey)
@@ -1592,7 +1574,7 @@ main(int argc, char **argv)
 	}
 
 	cache = malloc(sizeof(*cache));
-	cache_init(cache, my_freevalue, authentication_timeout); 
+	cache_init(cache, my_freevalue); 
 
 	//bconfig_init();
 	gloabal_user_h = create_hashtable(16, boithoad_hashfromkey, boithoad_equalkeys);
@@ -1602,7 +1584,6 @@ main(int argc, char **argv)
 		perror("unable to open logfiles for main boithoad");
 	}
 
-	badldap_init(logerror);
 	sconnect_thread(connectHandler, BADPORT);
 	printf("connect done\n");
 
