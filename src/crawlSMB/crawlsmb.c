@@ -85,7 +85,7 @@ static SMBCCTX* context_init(int no_auth)
 
 static int context_free( SMBCCTX *context )
 {
-    if (smbc_free_context(context, 0) != 0)
+    if (smbc_free_context(context, 1) != 0)
 	{
 	    bblog(ERROR, "crawlsmb.c: Could not free smbc context: %s", strerror(errno));
 		//ToDo: returnerer free uanset. Får nemlig altid feil her
@@ -206,11 +206,10 @@ char* smb_mkprefix( const char *username, const char *passwd )
     return strdup(buf);
 }
 
-
 /*
     Recursively get all files from 'dir_name'
  */
-int smb_recursive_get( char *prefix, char *dir_name,
+static int smb_recursive_get_next( char *prefix, char *dir_name,
 	struct collectionFormat *collection,
         int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
         int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
@@ -220,9 +219,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 	 )
 {
 
-    #ifdef DEBUG
-    bblog(DEBUG, "dir \"%s\"",dir_name);
-    #endif
+    bblog(INFO, "smb_recursive_get_next(prefix=\"%s\", dir_name=\"%s\")", prefix, dir_name);
 
     static int count = 0;
 
@@ -230,13 +227,13 @@ int smb_recursive_get( char *prefix, char *dir_name,
     char                dblock[512], *dbuf, *dbuf_temp;
     struct smbc_dirent  *dirp;
     char                full_name[strlen(prefix) + strlen(dir_name) + 1];
-    SMBCCTX		*context;
+//2012    SMBCCTX		*context;
 
     struct crawldocumentExistFormat crawldocumentExist;
     struct crawldocumentAddFormat crawldocumentAdd;
 
 
-    context = context_init(no_auth);
+//2012    context = context_init(no_auth);
 
     sprintf(full_name, "%s%s", prefix, dir_name);
 
@@ -244,7 +241,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
     if (dh < 0)
     {
             documentError(collection, 1,"crawlsmb.c: Error! Could not open directory %s for dir \"%s\" at %s:%d", dir_name,dir_name,__FILE__,__LINE__);
-	    context_free(context);
+//2012	    context_free(context);
             return 0;
     }
 
@@ -259,7 +256,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
             {
                     documentError(collection, 1,"crawlsmb.c: Error! Could not get directory entries from %s", dir_name);
 		    smbc_closedir(dh);
-		    context_free(context);
+//2012		    context_free(context);
                     return 0;
             }
 
@@ -279,10 +276,12 @@ int smb_recursive_get( char *prefix, char *dir_name,
     while (documentContinue(collection) && (dirc_total > 0)) {
             int         dsize;
             int         _dname_size = strlen(dir_name) + strlen(dirp->name) + 1;
+	    int		fd=0;
 
             char        *entry_name;
             char        *full_entry_name;
 	    char 	*uri;
+
 
             asprintf(&entry_name, "%s/%s", dir_name, dirp->name);
             asprintf(&full_entry_name, "%s%s", prefix, entry_name);
@@ -298,7 +297,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
 	    }
        	    else if (dirp->smbc_type == SMBC_DIR) {
-	   	smb_recursive_get( prefix, entry_name, collection, documentExist, documentAdd , documentError, documentContinue, no_auth);
+	   	smb_recursive_get_next( prefix, entry_name, collection, documentExist, documentAdd , documentError, documentContinue, no_auth);
             }
             else {
 
@@ -318,18 +317,34 @@ int smb_recursive_get( char *prefix, char *dir_name,
 				goto next_it;
 			}
 
+		    	//på grunn av en bug i smblib må vi kalle dette før hver opperasjon
+               	    	//context_free(context);
+		    	//context = context_init(no_auth);
+
+		    	bblog(INFO, "opening full_entry_name: \"%s\"",full_entry_name);
+		    	fd = smbc_open( full_entry_name, O_RDONLY, 0 );
+		    	if (fd<0) {
+				if (errno == EACCES) {
+				    documentError(collection, 1,"crawlsmb.c: Error! We don't have access to %s.", entry_name);
+				}
+				else {
+				    documentError(collection, 1,"crawlsmb.c: Error! Could not open file %s. Error code %i", entry_name, errno);
+				}
+//2012			    	context_free(context);
+//2012			    	context = context_init(no_auth);
+			    	goto next_it;
+			}
+
+
 			//på grunn av en bug i smblib må vi kalle dette før hver opperasjon
-                    	context_free(context);
-			context = context_init(no_auth);
+                    	//context_free(context);
+			//context = context_init(no_auth);
 
 			bblog(INFO, "stating \"%s\"",full_entry_name);
-                    	if ( smbc_stat(full_entry_name, &file_stat) < 0 ) {
+                    	if ( smbc_fstat(fd, &file_stat) < 0 ) {
                             	documentError(collection, 1,"crawlsmb.c: Warning[no fatal]! Could not get stat for %s. Skipping document, continue crawl.", entry_name);
-			    	//free(parsed_acl[0]);
-			    	//free(parsed_acl[1]);
-                            	//free(parsed_acl);
-			    	context_free(context);
-			    	context = context_init(no_auth);
+//2012			    	context_free(context);
+//2012			    	context = context_init(no_auth);
 			    	goto next_it;
                         }
 			
@@ -350,28 +365,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 			#endif
 
 
-			    int		fd;
 
-			    //på grunn av en bug i smblib må vi kalle dette før hver opperasjon
-                    	    context_free(context);
-			    context = context_init(no_auth);
-
-			    bblog(INFO, "opening full_entry_name: \"%s\"",full_entry_name);
-			    fd = smbc_open( full_entry_name, O_RDONLY, 0 );
-
-			    if (fd<0)
-				{
-				    if (errno == EACCES)
-					{
-					    documentError(collection, 1,"crawlsmb.c: Error! We don't have access to %s.", entry_name);
-					}
-				    else
-					{
-					    documentError(collection, 1,"crawlsmb.c: Error! Could not open file %s. Error code %i", entry_name, errno);
-					}
-				}
-			    else
-				{
 
 				    	int	i;
 				    	char	*fbuf;
@@ -389,14 +383,14 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
 				    		if ((fbuf = malloc(file_stat.st_size+1)) == NULL) {
 							bblog_errno(ERROR,"can't malloc %i bytes for file buffer",file_stat.st_size);
-							goto closefile;
+							goto next_it;
 				    		}
 
 				    		i = smbc_readloop( fd, fbuf, file_stat.st_size );
 
 				    		if (i<0) {
 							documentError(collection, 1,"crawlsmb.c: Error! Could not read %s", entry_name);
-							goto closefile;
+							goto next_it;
 				    		}
 					}
 
@@ -406,7 +400,7 @@ int smb_recursive_get( char *prefix, char *dir_name,
 					        //context = context_init(no_auth);
 
 
-			                    	if ( (n = smbc_getxattr(full_entry_name, "system.nt_sec_desc.*", value, sizeof(value))) < 0 ) {
+			                    	if ( (n = smbc_fgetxattr(fd, "system.nt_sec_desc.*", value, sizeof(value))) < 0 ) {
 
 							if (n == EINVAL) {
 	                			            documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. The client library is not properly initialized or one of the parameters is not of a correct form.", entry_name);
@@ -430,8 +424,8 @@ int smb_recursive_get( char *prefix, char *dir_name,
 	                        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. Unknown error code \"%i\"", entry_name,n);
 							}
 
-			    				context_free(context);
-			    				context = context_init(no_auth);
+//2012			    				context_free(context);
+//2012			    				context = context_init(no_auth);
                             				goto next_it;
                         			}
                     				
@@ -445,7 +439,6 @@ int smb_recursive_get( char *prefix, char *dir_name,
 
         					
 						crawldocumentAdd.documenturi = uri;
-
 
         					crawldocumentAdd.documenttype	= "";
         					crawldocumentAdd.document	= fbuf;
@@ -466,7 +459,6 @@ int smb_recursive_get( char *prefix, char *dir_name,
 					
 						free(crawldocumentAdd.title);
 
-		    				//documentAdd(bbdh, collection, entry_name, "", fbuf, file_stat.st_size, file_stat.st_mtime, parsed_acl, dirp->name ,"");
 
 
 			    			free(parsed_acl[0]);
@@ -478,10 +470,8 @@ int smb_recursive_get( char *prefix, char *dir_name,
 					
 				    	free(fbuf);
 
-				    	closefile:
-				    	smbc_close(fd);
+				   
 
-				}
 	
 
 
@@ -491,6 +481,9 @@ int smb_recursive_get( char *prefix, char *dir_name,
                 }
 
 next_it:
+	    if (fd>0) {
+            	smbc_close(fd);
+	    }
 	    free(uri);
 	    free(entry_name);
 	    free(full_entry_name);
@@ -507,16 +500,40 @@ next_it:
 
     free(dbuf);
 
-    //context_free(context);
-    if (!context_free(context)) {
-      	documentError(collection, 1,"crawlsmb.c-smb_recursive_get: Error! Could not free smbc context at %s:%d",__FILE__,__LINE__);
-        return 0;
-    }
+//2012    if (!context_free(context)) {
+//2012      	documentError(collection, 1,"crawlsmb.c-smb_recursive_get_next: Error! Could not free smbc context at %s:%d",__FILE__,__LINE__);
+//2012        return 0;
+//2012    }
 
+    bblog(INFO,"~smb_recursive_get_next(prefix=\"%s\", dir_name=\"%s\")", prefix, dir_name);
 
     return 1;
 }
 
+
+int smb_recursive_get( char *prefix, char *dir_name,
+	struct collectionFormat *collection,
+        int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
+        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
+	int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...),
+	int (*documentContinue)(struct collectionFormat *collection),
+	int no_auth
+	 )
+{
+
+    SMBCCTX             *context;
+    int ret;
+    context = context_init(no_auth);
+
+	ret = smb_recursive_get_next(prefix, dir_name, collection,documentExist,documentAdd,documentError,documentContinue,no_auth);
+
+    if (!context_free(context)) {
+        documentError(collection, 1,"crawlsmb.c-smb_recursive_get: Error! Could not free smbc context at %s:%d",__FILE__,__LINE__);
+    }
+
+    return ret;
+
+}
 
 /*
     Try to conect, basicly the same as smb_test_open
@@ -565,6 +582,7 @@ dirp = (struct smbc_dirent*)dblock;
 		if (dirc < 0)
                 {
                     documentError(collection, 1,"crawlsmb.c: Error! Could not get directory entries from %s", dir_name);
+		    smbc_closedir(dh);
                     context_free(context);
                     return 0;
                 }

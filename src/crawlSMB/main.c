@@ -8,7 +8,6 @@
 #include "cleanresource.h"
 #include "../crawlManager2/shortenurl.h"
 
-//#include "../boitho-bbdn/bbdnclient.h"
 
 
 #include "../crawl/crawl.h"
@@ -107,6 +106,7 @@ int crawlfirst(struct collectionFormat *collection,
 
     	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, documentError, documentContinue, no_auth);
 
+
     	free(prefix);
 
 
@@ -143,6 +143,7 @@ int crawlupdate(struct collectionFormat *collection,
 
     	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, documentError, documentContinue,no_auth);
 
+
     	free(prefix);
 
 
@@ -157,6 +158,7 @@ smb_rewrite_url(struct collectionFormat *collection, char *url, char *uri, char 
 	int valid_alias;
 
 	bblog(INFO, "smb_rewrite_url1: raw url: \"%s\"", url);
+
 	smbc_urldecode( url, url, strlen(url)+1 );
 	cleanresourceUnixToWin(url);
 	bblog(INFO, "smb_rewrite_url2: raw url: \"%s\"", url);
