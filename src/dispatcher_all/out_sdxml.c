@@ -484,23 +484,20 @@ void disp_out_sd_v2_0(
 				printf("\t<icon>%s</icon>\n", get_filetype_icon(Sider[i].iindex.filetype));
 
 
-				//if (!getRank) {
-					if (Sider[i].thumbnale[0] != '\0') {
-						printf("\t<THUMBNAIL>%s</THUMBNAIL>\n",Sider[i].thumbnale);
+				if (Sider[i].thumbnale[0] != '\0') {
+					printf("\t<THUMBNAIL>%s</THUMBNAIL>\n",Sider[i].thumbnale);
+					printf("\t<THUMBNAILWIDTH>%i</THUMBNAILWIDTH>\n",Sider[i].thumbnailwidth);
+					printf("\t<THUMBNAILHEIGHT>%i</THUMBNAILHEIGHT>\n",Sider[i].thumbnailheight);
+				}
+				else {
+					printf("\t<THUMBNAIL></THUMBNAIL>\n");
+					printf("\t<THUMBNAILWIDTH></THUMBNAILWIDTH>\n");
+					printf("\t<THUMBNAILHEIGHT></THUMBNAILHEIGHT>\n");
+				}
 
-						printf("\t<THUMBNAILWIDTH>%i</THUMBNAILWIDTH>\n",Sider[i].thumbnailwidth);
-						printf("\t<THUMBNAILHEIGHT>%i</THUMBNAILHEIGHT>\n",Sider[i].thumbnailheight);
-					}
-					else {
-						printf("\t<THUMBNAIL></THUMBNAIL>\n");
-						printf("\t<THUMBNAILWIDTH></THUMBNAILWIDTH>\n");
-						printf("\t<THUMBNAILHEIGHT></THUMBNAILHEIGHT>\n");
-					}
-
-					printf("\t<DESCRIPTION_LENGTH>%i</DESCRIPTION_LENGTH>\n",strlen(Sider[i].description));
-					printf("\t<DESCRIPTION_MAX>%i</DESCRIPTION_MAX>\n",sizeof(Sider[i].description));
-					printf("\t<DESCRIPTION>%s</DESCRIPTION>\n",Sider[i].description);
-				//}
+				printf("\t<DESCRIPTION_LENGTH>%i</DESCRIPTION_LENGTH>\n",strlen(Sider[i].description));
+				printf("\t<DESCRIPTION_MAX>%i</DESCRIPTION_MAX>\n",sizeof(Sider[i].description));
+				printf("\t<DESCRIPTION>%s</DESCRIPTION>\n",Sider[i].description);
 
 
 
@@ -1089,18 +1086,15 @@ if ((unsigned int)evalue[len] < 31) {
 				printf("\t<icon>%s</icon>\n", get_filetype_icon(Sider[i].iindex.filetype));
 
 
-				//if (!getRank) {
-					if (Sider[i].thumbnale[0] != '\0') {
-						printf("\t<thumbnail width=\"%i\" height=\"%i\">%s</thumbnail>\n",
-						    Sider[i].thumbnailwidth, Sider[i].thumbnailheight, Sider[i].thumbnale);
-					}
-					else {
-						printf("\t<thumbnail></thumbnail>\n");
-					}
+				if (Sider[i].thumbnale[0] != '\0') {
+					printf("\t<thumbnail width=\"%i\" height=\"%i\">%s</thumbnail>\n",
+					    Sider[i].thumbnailwidth, Sider[i].thumbnailheight, Sider[i].thumbnale);
+				}
+				else {
+					printf("\t<thumbnail></thumbnail>\n");
+				}
 
-					printf("\t<description>%s</description>\n",
-					    Sider[i].description);
-				//}
+				printf("\t<description>%s</description>\n", Sider[i].description);
 
 
 

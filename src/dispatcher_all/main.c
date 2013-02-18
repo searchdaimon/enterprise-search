@@ -837,7 +837,6 @@ int main(int argc, char *argv[])
 	char *lastdomain = NULL;
 #endif
 
-	unsigned int getRank = 0; /* Set if we are looking for the rank of a specific query on a url */
 
 #ifndef BLACK_BOKS
 	unsigned int wantedDocId;
@@ -1086,15 +1085,7 @@ int main(int argc, char *argv[])
 				QueryData.search_user[0] = '\0';
 			#endif
 
-			if (optRank == NULL) {
-				getRank = 0;
-				QueryData.rankUrl[0] = '\0';
-			}
-			else {
-				getRank = 1;
-				strscpy(QueryData.rankUrl,optRank,sizeof(QueryData.rankUrl));
-				printf("will rank \"%s\"\n",QueryData.rankUrl);
-			}
+			QueryData.rankUrl[0] = '\0';
 
 			QueryData.MaxsHits = optMaxsHits;
 			QueryData.start = optStart;
@@ -1161,7 +1152,6 @@ int main(int argc, char *argv[])
 		else errx(1, "invalid access type");
 
 
-		getRank = (QueryData.rankUrl[0] == '\0') ? 0 : 1;
         }
 	if (QueryData.start > MAX_RESULT_OFFSET) {
 		warnx("'start' larger than MAX_RESULT_OFFSET. Setting to %d.", MAX_RESULT_OFFSET);
@@ -1325,55 +1315,6 @@ int main(int argc, char *argv[])
 	//strcasesandr(QueryData.query,sizeof(QueryData.query),"."," ");
 
 	
-	#ifndef BLACK_BOKS
-
-	if (getRank) {
-
-		//normaliserer url. Setter for eks / på slutten
-		url_normalization(QueryData.rankUrl,sizeof(QueryData.rankUrl));
-
-
-
-        	char            db_index[strlen(dispconfig.UrlToDocID)+7];
-        	sprintf(db_index, "%s.index", dispconfig.UrlToDocID);
-	        urldocid_data   *data;
-
-		if ((data = urldocid_search_init(db_index, dispconfig.UrlToDocID)) == NULL) {
-			die(100, QueryData.query,"Unable to open index file \"%s\".",dispconfig.UrlToDocID);
-		}
-
-
-                if (getDocIDFromUrl(data, QueryData.rankUrl, &wantedDocId)) {
-			getRank = wantedDocId;
-			queryNodeHeder.getRank = wantedDocId;
-		
-			#ifdef DEBUG
-				printf("getRank: found DocID %u ( for url \"%s\" )\n",wantedDocId,QueryData.rankUrl);
-			#endif	
-		}
-		else {
-
-    	        	getRank = getDocIDFromSql(&demo_db, QueryData.rankUrl);
-                     	queryNodeHeder.getRank = getRank;
-
-			if (getRank == 0) {
-				die(100,QueryData.query, "Ranking information is not yet available for this URL. It takes 24 hours for new site submissions to be crawled, indexed and ranked. Check back later.");
-			}
-
-		}
-
-			
-
-		fprintf(stderr,"getRank: queryNodeHeder.getRank %u\n",queryNodeHeder.getRank);
-
-
-	}
-	else {
-		queryNodeHeder.getRank = 0;
-	}
-	#else
-		queryNodeHeder.getRank = 0;
-	#endif
 
 	for(i=0;i<strlen(QueryData.query);i++) {
 
@@ -1550,7 +1491,7 @@ int main(int argc, char *argv[])
 	cache_path(cachepath, sizeof(cachepath), CACHE_SEARCH, QueryData.queryhtml, QueryData.start, QueryData.GeoIPcontry, queryNodeHeder.anonymous, QueryData.search_user, collections, num_colls);
 
 	// ano only! queryNodeHeder.anonymous
-	if (getRank == 0 && (dispconfig.usecashe) && (QueryData.filterOn) && 
+	if ( (dispconfig.usecashe) && (QueryData.filterOn) && 
 	         cache_read(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, cachetimeout, maxSider)) {
 		hascashe = 1;
 
@@ -1592,186 +1533,6 @@ int main(int argc, char *argv[])
 	//Paid inclusion
 	//bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,nrOfServers,searchport);
 	
-	#ifndef BLACK_BOKS
-
-		if (getRank) {
-			int endranking = 0;
-			int ranking = -1;
-			int net_status;
-			int n;
-
-			/* XXX: Need to handle the paid inclusion servers as well? */
-			for (i = 0; i < nrOfServers + nrOfPiServers; i++) {
-				if (sockfd[i] != 0) {
-					int status;
-					//motter hedderen for svaret
-					if (bsread (&sockfd[i],sizeof(net_status), (char *)&net_status, maxSocketWait_CanDo)) {
-						if (net_status != net_CanDo) {
-							fprintf(stderr, "net_status wasn't net_CanDo but %i\n",net_status);
-							sockfd[i] = 0;
-							continue;
-						}
-					} else {
-						perror("initial protocol read failed");
-						sockfd[i] = 0;
-						continue;
-					}
- 
-					if (!bsread(&sockfd[i],sizeof(status), (char *)&status, 1000)) //maxSocketWait_CanDo))
-						die(2,QueryData.query, "Unable to get rank status. Server %i is not responding.",i);
-					else if (status == net_match) {
-						if (!bsread(&sockfd[i],sizeof(ranking), (char *)&ranking, 1000))//maxSocketWait_CanDo))
-							perror("recv rank");
-					} else if (status == net_nomatch) {
-						//return 1;
-					} else {
-						//die(1,QueryData.query, "searchd does not support ranking?");
-					}
-
-				
-					dprintf("getRank: server %i, ranking %i\n",i,ranking);
-				}
-			}
-			if (ranking != -1) {
-				for (i = 0; i < nrOfServers + nrOfPiServers; i++) {
-					if (sockfd[i] != 0) {
-						if (send(sockfd[i], &ranking, sizeof(ranking), 0) != sizeof(ranking))
-							perror("send...");
-					}
-				}
-
-				for (i = 0; i < nrOfServers + nrOfPiServers; i++) {
-					if (sockfd[i] != 0) {
-						if (!bsread(&sockfd[i], sizeof(ranking), (char *)&ranking, 10000))
-							perror("endranking");
-						endranking += ranking; 
-					}
-				}
-			}
-/*
-			else {
-				die(1,QueryData.query, "No rank found");
-			}
-*/
-			dprintf("getRank: endranking %i, queryNodeHeder.MaxsHits %i\n",endranking,queryNodeHeder.MaxsHits);
-
-			if ((endranking < queryNodeHeder.MaxsHits) || (endranking == 0)) {
-				queryNodeHeder.getRank = 0;
-
-				//enten skal vi være i top, og dermed være med, hvis ikke skal vi ikke være telt med. Uanset er tidligere verdi potensielt feil.
-				endranking = 0;
-
-				for (i=0;i<nrOfServers + nrOfPiServers;i++) {
-					if (sockfd[i] != 0) {
-						bsQuery(&sockfd[i], &queryNodeHeder);
-					}
-				}
-
-				for (i=0;i<nrOfServers + nrOfPiServers;i++) {
-					if (sockfd[i] != 0) {
-						close(sockfd[i]);
-					}
-				}
-
-
-				//kobler til vanlige servere
-				if (!hascashe) {
-					//bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,0,searchport);
-					bsConnectAndQuery(sockfd, nrOfServers, servers,
-						&queryNodeHeder, collections, num_colls, 0, searchport);
-				}
-
-				//addservere
-				//bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder,0,searchport);
-				bsConnectAndQuery(addsockfd, nrOfAddServers, addservers,
-						&queryNodeHeder, collections, num_colls, 0, searchport);
-
-				//Paid inclusion
-				//bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,nrOfServers,searchport);
-				bsConnectAndQuery(sockfd, nrOfPiServers, piservers,
-					&queryNodeHeder, collections, num_colls, nrOfServers, searchport);
-
-				//Paid inclusion
-				brGetPages(sockfd,nrOfPiServers,SiderHeder,Sider,&pageNr,0);
-
-				if (!hascashe) {
-					brGetPages(sockfd,nrOfServers,SiderHeder,Sider,&pageNr,nrOfPiServers);
-				}
-
-				//addservere
-				//addserver bruker som regel mest tid, så tar den sist slik at vi ikke trenger å vente unødvendig
-				brGetPages(addsockfd,nrOfAddServers,AddSiderHeder,Sider,&pageNr,0);
-
-				handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, hascashe, &errorha, pageNr,
-					       nrOfServers, nrOfPiServers, &dispatcherfiltersTraped, &nrRespondedServers, &queryNodeHeder, &demo_db);
-
-				//for((x<FinalSiderHeder.showabal) && (i < (QueryData.MaxsHits * (nrOfServers + nrOfPiServers)))) {
-
-
-				x = 0;
-				int printed = 0;
-				for(i=0;x < FinalSiderHeder.showabal && i < (queryNodeHeder.MaxsHits * (nrOfServers + nrOfPiServers)); i++) {
-					if (Sider[i].deletet)
-						continue;
-					if ((Sider[i].iindex.DocID == wantedDocId) || (strcmp(Sider[i].url,QueryData.rankUrl) == 0)) {
-						dprintf("did find pi pages as nr %i, url %s\n",i,Sider[i].url);
-						endranking = printed+1;
-						break;
-					}
-					if (Sider[i].type == siderType_normal) {
-						x++;
-					}
-					printed++;
-				}
-			}
-
-
-			if (endranking == 0) {
-				//printf("\t<noresult />\n");
-				//die(1,QueryData.query, "No rank found");
-				die(1,QueryData.query, "That site does not rank in the top 60,000 sites for that search term.");
-			} else {
-				printf("<ranking>\n");
-				printf("\t<rank>%d</rank>\n", endranking);
-				printf("\t<url>%s</url>\n", QueryData.rankUrl);
-				printf("\t<docid>%d</docid>\n", wantedDocId);
-				printf("</ranking>\n");
-
-			}
-
-			/* Free the configuration */
-			config_destroy(&cfg);
-			maincfgclose(&maincfg);
-
-			free(SiderHeder);
-			free(AddSiderHeder);
-			free(Sider);
-
-			for (i=0;i<nrOfServers + nrOfPiServers;i++) {
-				if (sockfd[i] != 0) {
-					close(sockfd[i]);
-				}
-			}
-
-#ifndef BLACK_BOKS
-			for(i=0;i<nrOfServers;i++) {
-				free(servers[i]);
-			}
-			for(i=0;i<nrOfPiServers;i++) {
-				free(piservers[i]);
-			}
-			for(i=0;i<nrOfAddServers;i++) {
-				free(addservers[i]);
-			}
-
-			free(servers);
-			free(piservers);
-			free(addservers);
-#endif
-
-			return 0;
-		}
-	#endif
 	free(collections);
 
 	//Paid inclusion
@@ -1922,7 +1683,7 @@ int main(int argc, char *argv[])
 
 	}
 	//skriver bare cashe hvis vi fikk svar fra all servere, og vi var ikke ute etter ranking
-	else if (getRank == 0 && pageNr > 0 && nrRespondedServers == nrOfServers && dispconfig.usecashe) {
+	else if ( pageNr > 0 && nrRespondedServers == nrOfServers && dispconfig.usecashe) {
 		if (!cache_write(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, pageNr)) {
 			//fprintf(stderr, "Cache file: %s\n", cachepath);
 			perror("cache_write");
