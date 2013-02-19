@@ -1,12 +1,13 @@
 
 CC=gcc -O2 -g -D NOWARNINGS
+yacc=bison -y
 # -O2 -Wall
 
 all: html
 
 html:
 	awk -f tags.awk tags.conf > html_parser_tags.h
-	yacc -d -b bhpm -p bhpm html_parser.y
+	$(yacc) -d -b bhpm -p bhpm html_parser.y
 	flex -f -8 -P bhpm -i html_parser.l
 	$(CC) -c lex.bhpm.c bhpm.tab.c
 	ar rc libhtml_parser.a lex.bhpm.o bhpm.tab.o
