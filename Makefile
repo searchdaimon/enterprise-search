@@ -513,8 +513,12 @@ dep:
 	@echo ""
 	@echo "$@:"
 	for i in src/query src/parser src/generateSnippet src/ds src/utf8-filter src/getdate src/parser2 src/newspelling src/getFiletype src/attributes/ src/base64/ src/common/ src/getdate/ src/3pLibs/keyValueHash/ src/perlembed src/logger; do\
-           (cd $$i && $(MAKE) all);\
+           echo ""; 												\
+	   echo "Making $$i:"; 											\
+           (cd $$i && $(MAKE) all); 										\
+	   if [ $$? -ne 0 ];  then echo ""; echo "Sorry, can't build $$i! Please see errors above."; break; fi 	\
         done
+
 
 searchd : src/searchkernel/searchd.c
 	@echo ""
