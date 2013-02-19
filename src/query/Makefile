@@ -1,6 +1,9 @@
 
 CC=gcc -O2 -Wall -g
 CPP=g++ -O2 -Wall -g
+
+include ../../mk/setup.mk
+
 all:	_query_parser
 
 _query_parser:

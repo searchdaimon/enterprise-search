@@ -1,6 +1,8 @@
 
 CC=gcc -g
 
+include ../../mk/setup.mk
+
 all:
 	flex -f -8 -Pu8fl utf8-filter.l
 	$(CC) -O2 -c lex.u8fl.c
