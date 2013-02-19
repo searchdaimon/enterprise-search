@@ -1,7 +1,7 @@
 CFLAGS=		-W -Wall -O2 -g -D_FILE_OFFSET_BITS=64 -DBLACK_BOKS
 LDFLAGS=	-lm -lz
 PROG=		invalidateOldFiles
-CC=		/usr/local/bin/gcc
+CC=		gcc
 
 # Hack to get common lib files from boitho
 COMMONDIR=	../common

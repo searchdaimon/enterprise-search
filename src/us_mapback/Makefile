@@ -3,7 +3,7 @@ CFLAGS=
 CFLAGS+=	-W -Wall -O0 -g -DBLACK_BOKS -I/usr/include/mysql
 LDFLAGS=	
 PROG=		us_mapback.so
-CC=		/usr/local/bin/gcc
+CC=		gcc
 
 # Hack to get common lib files from boitho
 COMMONDIR=	../common

@@ -1,6 +1,6 @@
 PROG=   initwrapper
 CFLAGS= -g -W -Wall
-CC = /usr/local/bin/gcc
+CC = gcc
 
 all: $(PROG)
 

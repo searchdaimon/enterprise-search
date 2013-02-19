@@ -1,7 +1,7 @@
 CFLAGS=		-W -Wall -O0 -g -I/usr/local/BerkeleyDB.4.5/include/
 LDFLAGS=	-lm -lz -D_FILE_OFFSET_BITS=64 -DWITHOUT_DIWRITE_FSYNC
 PROG=		gcrepo
-CC=		/usr/local/bin/gcc
+CC=		gcc
 
 # Hack to get common lib files from boitho
 COMMONDIR=	../common

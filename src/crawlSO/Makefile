@@ -3,7 +3,7 @@ CFLAGS=		-I/usr/include/libxml2/ -L/usr/lib -I/home/eirik/.root/include ../commo
 CFLAGS+=	-W -Wall -O2 -g -DBLACK_BOKS
 LDFLAGS=	-lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl -L/home/eirik/.root/lib
 PROG=		crawlSO.so
-CC=		/usr/local/bin/gcc
+CC=		gcc
 
 # Hack to get common lib files from boitho
 COMMONDIR=	../common

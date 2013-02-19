@@ -1,4 +1,4 @@
-CC = /usr/local/bin/gcc
+CC = gcc
 CCFLAGS = -Wall -g -c -std=c99
 
 configwrite: configwrite.o ../common/exeoc.c

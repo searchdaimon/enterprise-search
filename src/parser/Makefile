@@ -1,7 +1,5 @@
 
-#CC=/usr/local/bin/gcc -p -g -DDEBUG -DDEBUG_2
-CC=/usr/local/bin/gcc -O2 -g -D NOWARNINGS
-#CC=/usr/local/bin/gcc
+CC=gcc -O2 -g -D NOWARNINGS
 # -O2 -Wall
 
 all: html

@@ -1,5 +1,5 @@
 
-CC=/usr/local/bin/gcc -g
+CC=gcc -g
 
 all:
 	flex -f -8 -Pu8fl utf8-filter.l

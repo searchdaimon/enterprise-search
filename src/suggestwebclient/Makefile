@@ -6,7 +6,7 @@
 CLIENT = suggest_webclient
 SERVER = suggest_server
 
-CC=/usr/local/bin/gcc
+CC=gcc
 
 SOURCES_CLNT.c = ../cgi-util/cgi-util.c
 SOURCES_CLNT.h = 
@@ -30,7 +30,7 @@ all : $(CLIENT)
 $(OBJECTS_CLNT) : $(SOURCES_CLNT.c) $(SOURCES_CLNT.h) $(TARGETS_CLNT.c) 
 
 $(CLIENT) : $(OBJECTS_CLNT) 
-	/usr/local/bin/gcc -o $(CLIENT) $(OBJECTS_CLNT) $(LDLIBS) ../common/bstr.c ../common/strlcat.c ../common/debug.c
+	gcc -o $(CLIENT) $(OBJECTS_CLNT) $(LDLIBS) ../common/bstr.c ../common/strlcat.c ../common/debug.c
 
  clean:
 	 $(RM) core $(OBJECTS_CLNT) $(CLIENT)

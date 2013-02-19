@@ -1,5 +1,5 @@
 
-CC=/usr/local/bin/gcc -O2 -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
+CC=gcc -O2 -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 
 all: build_index search_index test
 

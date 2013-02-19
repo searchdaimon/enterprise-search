@@ -2,7 +2,7 @@ CFLAGS=		-W -Wall -O0 -g -D_FILE_OFFSET_BITS=64 -D__USE_LARGEFILE=64 -DNO_BRANK_
 #CFLAGS=		-W -Wall -O0 -g -I/usr/local/BerkeleyDB.4.5/include/ -D_FILE_OFFSET_BITS=64 -DWITHOUT_DIWRITE_FSYNC -D__USE_LARGEFILE=64 -D__USE_LARGEFILE64=1
 LDFLAGS=	
 PROG=		linkdbview
-CC=		/usr/local/bin/gcc
+CC=		gcc
 
 # Hack to get common lib files from boitho
 #COMMONDIR=	../common

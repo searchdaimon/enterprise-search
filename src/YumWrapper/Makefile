@@ -1,4 +1,4 @@
-CC = /usr/local/bin/gcc
+CC = gcc
 CCFLAGS = -Wall -g -c
 
 yumwrapper: yumwrapper.o ../common/exeoc.c
