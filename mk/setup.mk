@@ -21,7 +21,7 @@ PERL_EMBED_LIB=	`perl -MExtUtils::Embed -e ldopts`
 LDFLAGS+=	/usr/lib/mysql/libmysqlclient.a
 CFLAGS+=	-I/usr/include/mysql
 #`perl -MExtUtils::Embed -e ccopts -e ldopts` -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE   -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl
-CC=		gcc
+CC=		gcc -D NO_64_BIT_DIV
 endif
 
 ifeq ($(strip $(host)),bbh-002.boitho.com)
@@ -44,6 +44,10 @@ BDB_LIB=	/usr/lib/libdb-4.6.a
 CC=		gcc -m32
 MYSQL_LIB+=	/usr/lib/mysql/libmysqlclient.a -lssl
 MYSQL_INC+=	-I/usr/include/mysql
+endif
+
+ifdef NO_DEPRECATED_WARNINGS
+CFLAGS+=	-Wno-deprecated-declarations
 endif
 
 ifdef WITH_PROFILE
