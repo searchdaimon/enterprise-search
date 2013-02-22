@@ -7,7 +7,9 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include <asm/div64.h>
+#ifdef NO_64_BIT_DIV
+	#include <asm/div64.h>
+#endif
 
 #include "../common/sha1.h"
 #include "search_index.h"
@@ -134,8 +136,11 @@ unsigned int urldocid_search_index(urldocid_data *data, unsigned char *sha1)
 */
     block = malloc(bsize);
     //fungerer ikke på web1, se http://www.captain.at/howto-udivdi3-umoddi3.php
-    //bsize/= sizeof(record);
-    do_div(bsize,sizeof(record));
+    #ifdef NO_64_BIT_DIV
+	    do_div(bsize,sizeof(record));
+    #else
+            bsize/= sizeof(record);
+    #endif
 
     fseeko(data->dbf, adr[0], SEEK_SET);
     fread(block, sizeof(record), bsize, data->dbf);
