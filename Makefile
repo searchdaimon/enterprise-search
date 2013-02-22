@@ -1,19 +1,18 @@
 # Makefile
+#global Make setup
+include mk/setup.mk
 
-# The compiler to be used
-CC = gcc
 
 # Arguments passed to the compiler: -g causes the compiler to insert
 # debugging info into the executable and -Wall turns on all warnings
-CFLAGS = -g -DATTRIBUTES
+CFLAGS += -g -DATTRIBUTES
 # -DDEBUG
 
 # The dynamic libraries that the executable needs to be linked to
-# fjerner -ldb -static. Må legge dette til der de skal være
-LDFLAGS = -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL lib/libds.a
+LDFLAGS += -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL lib/libds.a
 
 #pop rank bibloteket
-LIBS = src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c src/base64/base64.c src/common/
+LIBS += src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtable.c src/base64/base64.c src/common/
 
 LIBGeoIP = -lGeoIP
 
@@ -32,20 +31,20 @@ IM = /home/eirik/.root/lib/libMagick.a /home/eirik/.root/lib/libWand.a -I/home/e
 #IM = -L/home/eirik/.root/lib -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
 #IM = /home/eirik/.root/lib/libMagick.a -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
 
-#bbh1:
-BDB = -I/usr/local/BerkeleyDB.4.5/include/ /usr/local/BerkeleyDB.4.5/lib/libdb.a
-MYSQL = -I/usr/include/mysql /usr/lib/mysql/libmysqlclient.a
-CC+=-D NO_64_BIT_DIV
-#MYSQL4 = -I/home/eirik/.root/include/mysql -L/home/eirik/.root/lib/mysql/ -lmysqlclient -DMYSQLFOUR
-MYSQL4 = -I/home/eirik/.root/include/mysql /home/eirik/.root/lib/mysql/libmysqlclient.a -DMYSQLFOUR
-#PERLEMBED = lib/libperlembed.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE   -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl 
+# #bbh1:
+# BDB = -I/usr/local/BerkeleyDB.4.5/include/ /usr/local/BerkeleyDB.4.5/lib/libdb.a
+# MYSQL = -I/usr/include/mysql /usr/lib/mysql/libmysqlclient.a
+# CC+=-D NO_64_BIT_DIV
+# #MYSQL4 = -I/home/eirik/.root/include/mysql -L/home/eirik/.root/lib/mysql/ -lmysqlclient -DMYSQLFOUR
+# MYSQL4 = -I/home/eirik/.root/include/mysql /home/eirik/.root/lib/mysql/libmysqlclient.a -DMYSQLFOUR
+# #PERLEMBED = lib/libperlembed.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE   -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl 
 
-##bbh2
-#BDB = -I/usr/include/db4 /usr/lib/libdb-4.6.a -lpthread
-#MYSQL = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
-#CC+=-m32
-# !!!!!!!!! mangler MYSQL4 !!!!!!!!
-#PERLEMBED = src/perlembed/*.c -rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE  /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl 
+# ##bbh2
+# #BDB = -I/usr/include/db4 /usr/lib/libdb-4.6.a -lpthread
+# #MYSQL = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
+# #CC+=-m32
+# # !!!!!!!!! mangler MYSQL4 !!!!!!!!
+# #PERLEMBED = src/perlembed/*.c -rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE  /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl 
 
 #SMBCLIENT=-lsmbclient
 #skrur dette på igjen. Brukte det og segfeile når vi hadde det med statisk?
@@ -53,10 +52,10 @@ MYSQL4 = -I/home/eirik/.root/include/mysql /home/eirik/.root/lib/mysql/libmysqlc
 
 #SMBCLIENT=src/3pLibs/samba-3.0.24/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.24/source/include/
 #SMBCLIENT=/home/boitho/src/samba-3.0.24/source/bin/libsmbclient.a -I/home/boitho/src/samba-3.0.24/source/include/
-SMBCLIENT=/home/boitho/src/samba-3.0.25b/source/bin/libsmbclient.a -I/home/boitho/src/samba-3.0.25b/source/include/
+SMBCLIENT=src/3pLibs/samba-3.0.25b/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.25b/source/include/
 #SMBCLIENT=-Isrc/3pLibs/samba-3.0.24/source/include/ -Lsrc/3pLibs/samba-3.0.24/source/lib/ -lsmbclient
 
-BBDOCUMENT = src/bbdocument/bbdocument.c src/bbdocument/bbfilters.c lib/libds.a $(BDB) -D BLACK_BOKS  
+BBDOCUMENT = src/bbdocument/bbdocument.c src/bbdocument/bbfilters.c lib/libds.a $(BDB_INC) $(BDB_LIB) -D BLACK_BOKS  
 #BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail.c -DBBDOCUMENT_IMAGE $(IM)
 BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail_by_convert.c -DBBDOCUMENT_IMAGE_BY_CONVERT
 
@@ -89,6 +88,8 @@ LIBXML = -I/usr/include/libxml2  -lxml2
 HTMLPARSER1=src/parser/libhtml_parser.a lib/libds.a
 HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a lib/libds.a
 
+
+
 # The Dependency Rules
 # They take the form
 # target : dependency1 dependency2...
@@ -100,7 +101,7 @@ HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a lib/libds.a
 # generate the file output-data and its dependencies, not plot.png 
 
 
-all : getFiletype dep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange crawlSO boitho-bbdn PageInfobb IndexerLotbb mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb perlxs-sdcrawl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb yumupdate usSQLBB usAD sdperl crawlPush
+all : getFiletype dep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange crawlSO boitho-bbdn PageInfobb IndexerLotbb mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb sdperl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb yumupdate usSQLBB usAD crawlPush
 
 perlembed:
 	@echo ""
@@ -173,7 +174,7 @@ perlxs-sdcrawl:
 	@echo ""
 	@echo "$@:"
 
-	(cd perlxs/SD-Crawl && make clean && perl Makefile.PL && make)
+	(cd perlxs/SD-Crawl && ../../bin/perl Makefile.PL && make clean && perl Makefile.PL && make)
 
 bbdocumentWebAdd:
 	@echo ""
@@ -220,7 +221,7 @@ IndexerLotbb: src/IndexerLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(IndexerLot) $(HTMLPARSER2) $(BDB) -D BLACK_BOKS -D PRESERVE_WORDS -o bin/IndexerLotbb -DIIACL
+	$(CC) $(IndexerLot) $(HTMLPARSER2) $(BDB_INC) $(BDB_LIB) -D BLACK_BOKS -D PRESERVE_WORDS -o bin/IndexerLotbb -DIIACL
 
 baddsPageAnalyser: src/baddsPageAnalyser/main.c
 	@echo ""
@@ -324,7 +325,7 @@ boithoad: src/boithoad/main.c
 PiToWWWDocID: src/PiToWWWDocID/main.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(CFLAGS) $(LIBS)*.c src/PiToWWWDocID/main.c src/UrlToDocID/search_index.c -o bin/PiToWWWDocID $(LDFLAGS)  $(MYSQL) $(BDB) -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
+	$(CC) $(CFLAGS) $(LIBS)*.c src/PiToWWWDocID/main.c src/UrlToDocID/search_index.c -o bin/PiToWWWDocID $(LDFLAGS)  $(MYSQL) $(BDB_INC) $(BDB_LIB) -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 
 
 boithoadtest: src/boithoadtest/main.c
@@ -473,7 +474,7 @@ crawlPush: src/crawlPush/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g -Wl,-static $(LIBS)*.c src/crawlPush/main.c -o src/crawlPush/crawlPUSH.so $(LDFLAGS) 
+	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g $(CRAWL_STATIC) $(LIBS)*.c src/crawlPush/main.c -o src/crawlPush/crawlPUSH.so $(LDFLAGS) 
 	mkdir -p crawlers/crawlPush
 	cp src/crawlPush/crawlPUSH.so crawlers/crawlPush/
 	
@@ -512,7 +513,7 @@ dep:
 	#ting searchd trenger
 	@echo ""
 	@echo "$@:"
-	for i in src/query src/generateSnippet src/ds src/utf8-filter src/getdate src/parser2 src/newspelling src/getFiletype src/attributes/ src/base64/ src/common/ src/getdate/ src/3pLibs/keyValueHash/ src/perlembed src/logger; do\
+	for i in src/query src/generateSnippet src/ds src/utf8-filter src/getdate src/parser2 src/newspelling src/getFiletype src/attributes/ src/base64/ src/common/ src/getdate/ src/3pLibs/keyValueHash/ src/perlembed src/logger src/boithoadClientLib; do\
            echo ""; 												\
 	   echo "Making $$i:"; 											\
            (cd $$i && $(MAKE) clean && $(MAKE) all); 										\
@@ -536,19 +537,19 @@ mergeUserToSubname: src/mergeUserToSubname/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/mergeUserToSubname/main.c src/acls/acls.c -o bin/mergeUserToSubname $(LDFLAGS) -DBLACK_BOKS $(BDB)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/mergeUserToSubname/main.c src/acls/acls.c -o bin/mergeUserToSubname $(LDFLAGS) -DBLACK_BOKS $(BDB_INC) $(BDB_LIB)
 
 readUserToSubname: src/readUserToSubname/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/readUserToSubname/main.c src/acls/acls.c -o bin/readUserToSubname $(LDFLAGS) -DBLACK_BOKS $(BDB)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/readUserToSubname/main.c src/acls/acls.c -o bin/readUserToSubname $(LDFLAGS) -DBLACK_BOKS $(BDB_INC) $(BDB_LIB)
 
 readUrls.db: src/readUrls.db/main.c
 	@echo ""
 	@echo "$@:"
 
-	#$(CC) $(CFLAGS) $(LIBS)*.c src/readUrls.db/main.c src/acls/acls.c $(BBDOCUMENT) -o bin/readUrls.db $(LDFLAGS) -DBLACK_BOKS $(BDB)
+	#$(CC) $(CFLAGS) $(LIBS)*.c src/readUrls.db/main.c src/acls/acls.c $(BBDOCUMENT) -o bin/readUrls.db $(LDFLAGS) -DBLACK_BOKS $(BDB_INC) $(BDB_LIB)
 	(cd src/readUrls.db/ && make clean && make)
 
 boithoads: src/boithoads/main.c
@@ -579,7 +580,7 @@ deleteDocIDFormCache:
 	$(CC) $(CFLAGS) $(LIBS)*.c src/dispatcher_all/library.c src/deleteDocIDFormCache/main.c -o bin/deleteDocIDFormCache $(LDFLAGS) -D WITH_CASHE -D EXPLAIN_RANK
 
 
-dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/banlists/ban.c src/UrlToDocID/search_index.c src/maincfg/maincfg.c src/dispatcher_all/library.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c $(LDFLAGS) src/dispatcher_all/qrewrite.o src/dispatcher_all/cgihandler.c src/dispatcher_all/out/opensearch.c src/dispatcher_all/out/sdxml.c src/key/key.c $(BDB) -D_GNU_SOURCE 
+dispatcherCOMAND = $(CFLAGS) $(LIBS)*.c src/banlists/ban.c src/UrlToDocID/search_index.c src/maincfg/maincfg.c src/dispatcher_all/library.c src/dispatcher_all/main.c src/tkey/tkey.c src/cgi-util/cgi-util.c src/searchFilters/searchFilters.c $(LDFLAGS) src/dispatcher_all/qrewrite.o src/dispatcher_all/cgihandler.c src/dispatcher_all/out/opensearch.c src/dispatcher_all/out/sdxml.c src/key/key.c $(BDB_INC) $(BDB_LIB) -D_GNU_SOURCE 
 
 dispatcher_all: src/dispatcher_all/main.c
 	@echo ""
@@ -597,7 +598,7 @@ dispatcher_allbb: src/dispatcher_all/main.c src/dispatcher_all/qrewrite.o
 	@echo ""
 	@echo "$@:"
 
-	@#$(CC) $(dispatcherCOMAND) $(MYSQL4) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c src/crawlManager/client.c src/query/lex.query.o lib/libds.a -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) src/getFiletype/libfte.a src/attributes/libshow_attr.a  -DWITH_SPELLING $(BDB)
+	@#$(CC) $(dispatcherCOMAND) $(MYSQL4) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c src/crawlManager/client.c src/query/lex.query.o lib/libds.a -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) src/getFiletype/libfte.a src/attributes/libshow_attr.a  -DWITH_SPELLING $(BDB_INC) $(BDB_LIB)
 	(cd src/dispatcher_all && make clean && make)
 
 dispatcher_all247: src/dispatcher_all/main.c
@@ -725,7 +726,7 @@ gcAuthoritybb: src/gcAuthority/main.c
 	@echo ""
 	@echo "$@:"
 
-	@#$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c $(BBDOCUMENT) src/gcAuthority/main.c -o bin/gcAuthoritybb $(LDFLAGS) -D BLACK_BOKS $(BDB) $(MYSQL)
+	@#$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c $(BBDOCUMENT) src/gcAuthority/main.c -o bin/gcAuthoritybb $(LDFLAGS) -D BLACK_BOKS $(BDB_INC) $(BDB_LIB) $(MYSQL)
 	(cd src/gcAuthority && make clean && make)
 
 gcSummary: src/gcSummary/gcsummary.c
@@ -918,13 +919,13 @@ UrlToDocIDIndexer: src/UrlToDocIDIndexer/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/UrlToDocIDIndexer/main.c -o bin/UrlToDocIDIndexer $(LDFLAGS) $(BDB)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/UrlToDocIDIndexer/main.c -o bin/UrlToDocIDIndexer $(LDFLAGS) $(BDB_INC) $(BDB_LIB)
 
 UrlToDocIDQuery: src/UrlToDocIDQuery/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/getDocIDFromUrl/getDocIDFromUrl.c src/UrlToDocIDQuery/main.c -o bin/UrlToDocIDQuery $(LDFLAGS) $(BDB)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/getDocIDFromUrl/getDocIDFromUrl.c src/UrlToDocIDQuery/main.c -o bin/UrlToDocIDQuery $(LDFLAGS) $(BDB_INC) $(BDB_LIB)
 
 UrlToDocIDSplitUdfile: src/UrlToDocIDSplitUdfile/main.c
 	@echo ""
@@ -1010,7 +1011,7 @@ BrankCalculatePI: src/BrankCalculatePI/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/getDocIDFromUrl/getDocIDFromUrl.c src/BrankCalculatePI/main.c -o bin/BrankCalculatePI $(BDB) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/getDocIDFromUrl/getDocIDFromUrl.c src/BrankCalculatePI/main.c -o bin/BrankCalculatePI $(BDB_INC) $(BDB_LIB) $(LDFLAGS)
 
 BrankCalculateMakeSimpeLinkDB: src/BrankCalculateMakeSimpeLinkDB/main.c
 	@echo ""
@@ -1022,13 +1023,13 @@ resolveRedirects: src/resolveRedirects/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/resolveRedirects/main.c src/UrlToDocID/search_index.c -o bin/resolveRedirects $(LDFLAGS) $(BDB)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/resolveRedirects/main.c src/UrlToDocID/search_index.c -o bin/resolveRedirects $(LDFLAGS) $(BDB_INC) $(BDB_LIB)
 
 redirResource: src/resolveRedirects/redirResource.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/resolveRedirects/redirResource.c src/getDocIDFromUrl/getDocIDFromUrl.c -o bin/redirResource $(LDFLAGS) $(BDB)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/resolveRedirects/redirResource.c src/getDocIDFromUrl/getDocIDFromUrl.c -o bin/redirResource $(LDFLAGS) $(BDB_INC) $(BDB_LIB)
 
 readDocumentIndexWithRank: src/readDocumentIndexWithRank/main.c
 	@echo ""
@@ -1214,7 +1215,7 @@ crawlSMB: src/crawlSMB/main.c
 	flex -f -8 -i -o src/crawlSMB/lex.acl.c src/crawlSMB/acl.parser.l
 
 
-	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g -Wl,-static $(LIBS)*.c src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) $(SMBCLIENT)
+	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g $(CRAWL_STATIC) $(LIBS)*.c src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) $(SMBCLIENT)
 	mkdir -p crawlers/crawlSMB
 	cp src/crawlSMB/crawlSMB.so crawlers/crawlSMB/
 
@@ -1274,7 +1275,7 @@ crawl247:
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g -Wl,-static $(LIBS)*.c src/crawl247/crawl.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawl/mailsubject.c -o src/crawl247/crawl247.so $(LDFLAGS) $(SMBCLIENT)
+	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g $(CRAWL_STATIC) $(LIBS)*.c src/crawl247/crawl.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawl/mailsubject.c -o src/crawl247/crawl247.so $(LDFLAGS) $(SMBCLIENT)
 	mkdir -p crawlers/crawl247/
 	cp src/crawl247/crawl247.so crawlers/crawl247/
 	@#(cd src/crawl247 && make clean)
@@ -1309,7 +1310,7 @@ list_collections:
 	@echo "$@:"
 
 	(cd src/list_collections && make clean)
-	(cd src/list_collections && make)
+	(cd src/list_collections && make list_collections)
 	cp src/list_collections/list_collections bin/list_collections
 
 slicense_info:
