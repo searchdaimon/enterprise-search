@@ -24,6 +24,8 @@ CFLAGS+=	-I/usr/include/mysql
 CC=		gcc -D NO_64_BIT_DIV
 LIBCONFIG=	/usr/local/lib/libconfig.a
 LIBCONFIG_64=	/usr/local/lib64/libconfig.a
+CRAWL_STATIC=	-Wl,-static
+US_STATIC=	-static
 endif
 
 ifeq ($(strip $(host)),bbh-002.boitho.com)
@@ -37,6 +39,8 @@ MYSQL_LIB+=	/usr/lib/mysql/libmysqlclient.a -lssl
 MYSQL_INC+=	-I/usr/include/mysql
 LIBCONFIG=	/usr/local/lib/libconfig.a
 LIBCONFIG_64=	/usr/local/lib64/libconfig.a
+CRAWL_STATIC=	-Wl,-static
+US_STATIC=	-static
 endif
 
 ifeq ($(strip $(host)),searchdaimon)
@@ -50,6 +54,8 @@ MYSQL_LIB+=	/usr/lib/mysql/libmysqlclient.a -lssl
 MYSQL_INC+=	-I/usr/include/mysql
 LIBCONFIG=	`pkg-config --libs libconfig`
 LIBCONFIG_64=	`pkg-config --libs libconfig`
+CRAWL_STATIC=	
+US_STATIC=	
 endif
 
 ifdef NO_DEPRECATED_WARNINGS

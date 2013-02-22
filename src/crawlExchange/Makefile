@@ -28,7 +28,7 @@ mail_analyze:
 	$(CC) -c lex.analyze_header.c
 
 $(PROG): $(OBJS)
-	libtool $(CC) -o $(PROG).so $(LDFLAGS) $(OBJS) lex.analyze_header.o ../ds/libds.a -fPIC -shared -D BLACK_BOKS -g -static
+	libtool $(CC) -o $(PROG).so $(LDFLAGS) $(OBJS) lex.analyze_header.o ../../lib/libds.a -fPIC -shared -D BLACK_BOKS -g -static
 	-mkdir -p ../..//crawlers/$(PROG)
 	cp $(PROG).so ../..//crawlers/$(PROG)
 

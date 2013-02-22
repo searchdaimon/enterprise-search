@@ -18,11 +18,12 @@ OBJS=		main.o
 #
 OBJS+=		$(COMMONSOBJ)
 
+include ../../mk/setup.mk
 
 all: $(PROG)
 
 $(PROG): $(OBJS)
-	libtool $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOKS -g -static
+	libtool $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOKS -g $(US_STATIC)
 	-mkdir ../../usersystems/us_mapback
 	cp $(PROG) ../../usersystems/us_mapback
 
