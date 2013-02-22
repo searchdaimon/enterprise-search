@@ -810,155 +810,42 @@ void *do_chld(void *arg)
 
 	SiderHeder->errorstrlen=sizeof(SiderHeder->errorstr);
 
-	#ifdef DEBUG
-	bblog(DEBUGINFO, "searchd_child: queryNodeHeder.getRank %u",queryNodeHeder.getRank);
-	#endif
-
-	if (!queryNodeHeder.getRank) {
-
-		int parsing_failed;
-		attr_conf *navmenu_cfg = parse_navmenu_cfg(queryNodeHeder.navmenucfg, &parsing_failed, globalOptVerbose);
-		if (parsing_failed) {
-			SiderHeder->responstype = searchd_responstype_error;
-			snprintf(SiderHeder->errorstr, sizeof SiderHeder->errorstr, 
-				"An error occurred while parsing configuration for navigation menu.");
-			SiderHeder->errorstrlen = strlen(SiderHeder->errorstr); // TODO: is errorstrlen even used?
-		}
 
 
-		if (!dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),&Sider,SiderHeder,SiderHeder->hiliteQuery,
-			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
-			queryNodeHeder.start, queryNodeHeder.filterOn, 
-			"",queryNodeHeder.orderby,SiderHeder->dates,queryNodeHeder.search_user,
-			&SiderHeder->filters,
-			searchd_config,
-			SiderHeder->errorstr, &SiderHeder->errorstrlen,
-			&global_DomainIDs, queryNodeHeder.HTTP_USER_AGENT,
-			groupOrQuery, queryNodeHeder.anonymous, navmenu_cfg,
-			spelling
-			)) 
-		{
-			bblog(WARN, "searchd_child: dosearch did not return success");
-			SiderHeder->responstype 	= searchd_responstype_error;
-			//setter at vi ikke hadde noen svar
-			SiderHeder->TotaltTreff 	= 0;
-			SiderHeder->showabal		= 0;
+	int parsing_failed;
+	attr_conf *navmenu_cfg = parse_navmenu_cfg(queryNodeHeder.navmenucfg, &parsing_failed, globalOptVerbose);
+	if (parsing_failed) {
+		SiderHeder->responstype = searchd_responstype_error;
+		snprintf(SiderHeder->errorstr, sizeof SiderHeder->errorstr, 
+			"An error occurred while parsing configuration for navigation menu.");
+		SiderHeder->errorstrlen = strlen(SiderHeder->errorstr); // TODO: is errorstrlen even used?
+	}
 
-			bblog(ERROR, "searchd_child: can't do dosearch: \"%s\"", SiderHeder->errorstr);
-		}
 
-		show_attributes_destroy(navmenu_cfg);
+	if (!dosearch(queryNodeHeder.query, strlen(queryNodeHeder.query),&Sider,SiderHeder,SiderHeder->hiliteQuery,
+		servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
+		queryNodeHeder.start, queryNodeHeder.filterOn, 
+		"",queryNodeHeder.orderby,SiderHeder->dates,queryNodeHeder.search_user,
+		&SiderHeder->filters,
+		searchd_config,
+		SiderHeder->errorstr, &SiderHeder->errorstrlen,
+		&global_DomainIDs, queryNodeHeder.HTTP_USER_AGENT,
+		groupOrQuery, queryNodeHeder.anonymous, navmenu_cfg,
+		spelling
+		)) 
+	{
+		bblog(WARN, "searchd_child: dosearch did not return success");
+		SiderHeder->responstype 	= searchd_responstype_error;
+		//setter at vi ikke hadde noen svar
+		SiderHeder->TotaltTreff 	= 0;
+		SiderHeder->showabal		= 0;
+
+		bblog(ERROR, "searchd_child: can't do dosearch: \"%s\"", SiderHeder->errorstr);
+	}
+
+	show_attributes_destroy(navmenu_cfg);
 
 		
-	}
-	else if (queryNodeHeder.getRank)  {
-		bblog(INFO, "searchd_child: Ranking document: %u", queryNodeHeder.getRank);
-
-		#if 0
-		if (dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),&Sider,SiderHeder,SiderHeder->hiliteQuery,
-			servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
-			queryNodeHeder.start, queryNodeHeder.filterOn, 
-			"",queryNodeHeder.orderby,SiderHeder->dates,queryNodeHeder.search_user,
-			&SiderHeder->filters,
-			searchd_config,
-			SiderHeder->errorstr, &SiderHeder->errorstrlen,
-			&global_DomainIDs, RANK_TYPE_FIND, queryNodeHeder.getRank, &ranking
-		)) {
-			int status;
-			int n;
-			
-			if (ranking == -1) {
-				status = net_nomatch;
-				bblog(INFO, "searchd_child: 1 Sending: %d", sizeof(status));
-				if ((n=send(mysocfd, &status, sizeof(status),0)) != sizeof(status)) {
-					bblog_errno(ERROR, "searchd_child: send only %i of %i at %s:%d",n,sizeof(status),__FILE__,__LINE__);
-					bblog(INFO, "searchd: ~do_chld()");
-					return;
-				}
-			} else {
-				int data[2];
-				data[0] = net_match;
-				data[1] = ranking;
-#if 0
-				if ((n=send(mysocfd, &status, sizeof(status),0)) != sizeof(status)) {
-					fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(status),__FILE__,__LINE__);
-					perror("sendall status2");
-					fprintf(stderr, "searchd: ~do_chld()\n");
-					return;
-				}
-				if ((n=send(mysocfd, &ranking, sizeof(ranking),0)) != sizeof(ranking)) {
-					fprintf(stderr, "searchd_child: send only %i of %i at %s:%d\n",n,sizeof(ranking),__FILE__,__LINE__);
-					perror("sendall ranking");
-					fprintf(stderr, "searchd: ~do_chld()\n");
-					return;
-				}
-#else
-				bblog(INFO, "searchd_child: 2 Sending: %d", sizeof(data));
-				if ((n = send(mysocfd, data, sizeof(data),0)) != sizeof(data)) {
-					bblog_errno(ERROR, "searchd_child: send only %i of %i at %s:%d",n,sizeof(data),__FILE__,__LINE__);
-					bblog(INFO, "searchd: ~do_chld()");
-					return;
-				}
-#endif
-			}
-
-			bblog(INFO, "searchd_child: 3 Receiving: %d",sizeof(ranking));
-			if (recv(mysocfd, &ranking, sizeof(ranking), 0) != sizeof(ranking)) {
-				bblog_errno(ERROR, "searchd_child: recv ranking %s:%d",__FILE__,__LINE__);
-				bblog(INFO, "searchd: ~do_chld()");
-				return;
-			}
-			bblog(INFO, "searchd_child: Received ranking: %d", ranking);
-
-			if (!dorank(queryNodeHeder.query, strlen(queryNodeHeder.query),&Sider,SiderHeder,SiderHeder->hiliteQuery,
-				servername,subnames,nrOfSubnames,queryNodeHeder.MaxsHits,
-				queryNodeHeder.start, queryNodeHeder.filterOn, 
-				"",queryNodeHeder.orderby,SiderHeder->dates,queryNodeHeder.search_user,
-				&SiderHeder->filters,
-				searchd_config,
-				SiderHeder->errorstr, &SiderHeder->errorstrlen,
-				&global_DomainIDs, RANK_TYPE_SUM, 0/*queryNodeHeder.getRank*/, &ranking)) {
-
-				bblog_errno(ERROR, "dorank error");
-				bblog(INFO, "searchd: ~do_chld()");
-				return;
-			} else {
-				int ranking2;
-				bblog(INFO, "searchd_child: Let us see how this ranking went: %d", ranking);
-				ranking2 = ranking;
-				status = 0xabdedd0f;
-				bblog(INFO, "searchd_child: 4 Sending: %d %d", sizeof(ranking), ranking);
-				bblog(INFO, "searchd_child: Ranking: %p", &ranking);
-#if 1
-				if ((n = send(mysocfd, &ranking2, sizeof(ranking2), 0)) != sizeof(ranking2)) {
-					bblog_errno(ERROR, "ranking2: send only %i of %i at %s:%d", n, sizeof(ranking2),__FILE__,__LINE__);
-					bblog(INFO, "searchd: ~do_chld()");
-					return;
-				}
-#endif
-				bblog(INFO, "searchd_child: Sent: %d %d", ranking, n);
-				sleep(5);
-			}
-
-			SiderHeder->responstype = searchd_responstype_ranking;
-			close(mysocfd);
-			bblog(INFO, "searchd: ~do_chld()");
-			return;
-		} else {
-			SiderHeder->responstype = searchd_responstype_error;
-			SiderHeder->TotaltTreff 	= 0;
-			SiderHeder->showabal	= 0;
-		}
-
-
-		bblog(INFO, "searchd_child: doRank()");
-		//setter at vi ikke hadde noen svar
-		#endif
-
-	}
-	else {
-		SiderHeder->responstype = searchd_responstype_normalsearch;
-	}
 
 	dp_priority_locl_end();
 

@@ -149,7 +149,6 @@ struct PagesResultsFormat {
 		char password[64];
 		char useragent[64];
 		struct iintegerMemArrayFormat *DomainIDs;
-		int getRank;
 
 		int filtered;
 		int filteredsilent;
@@ -401,7 +400,7 @@ handle_url_rewrite(const char *url_in, size_t lenin, enum platform_type ptype, e
 int
 popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,
 	struct iindexMainElements *TeffArray,struct QueryDataForamt QueryData, char *htmlBuffer,
-	unsigned int htmlBufferSize, char servername[], struct subnamesFormat *subname, unsigned int getRank,
+	unsigned int htmlBufferSize, char servername[], struct subnamesFormat *subname, 
 	struct queryTimeFormat *queryTime, int summaryFH, struct PagesResultsFormat *PagesResults,
 	char **acl_allow, char **acl_denied)
 {
@@ -686,7 +685,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 			char        *summary;
 					//generate_highlighting(QueryData.queryParsed, body, strlen(body)+1, &summary);
 			//temp: bug generate_snippet er ikke ut til å takle og ha en tom body
-			if (strlen(body) == 0 || getRank) {
+			if (strlen(body) == 0) {
 				(*Sider).description[0] = '\0';
 			}
 			else if (strlen(body) < 15) {
@@ -1349,10 +1348,8 @@ void *generatePagesResults(void *arg)
 	struct SiderFormat *side = malloc(sizeof(struct SiderFormat));
 
 #if BLACK_BOKS
-	if (!PagesResults->getRank) {
-		PagesResults->ptype = get_platform(PagesResults->useragent);
-		PagesResults->btype = get_browser(PagesResults->useragent);
-	}
+	PagesResults->ptype = get_platform(PagesResults->useragent);
+	PagesResults->btype = get_browser(PagesResults->useragent);
 #endif
 
 	if ((htmlBuffer = malloc(htmlBufferSize)) == NULL) {
@@ -1582,7 +1579,7 @@ void *generatePagesResults(void *arg)
 		#endif
 		char	*acl_allow=NULL, *acl_denied=NULL;
 
-		if (PagesResults->getRank == 0 && !popResult(side, (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,PagesResults->TeffArray->iindex[i].subname, PagesResults->getRank,&PagesResults->SiderHeder->queryTime,PagesResults->searchd_config->lotPreOpen.Summary[rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID)],PagesResults, &acl_allow, &acl_denied)) {
+		if (!popResult(side, (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,PagesResults->TeffArray->iindex[i].subname, &PagesResults->SiderHeder->queryTime,PagesResults->searchd_config->lotPreOpen.Summary[rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID)],PagesResults, &acl_allow, &acl_denied)) {
                        	bblog(INFO, "can't popResult");
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantpopResult,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 			if (acl_allow!=NULL) free(acl_allow);
@@ -1704,23 +1701,21 @@ void *generatePagesResults(void *arg)
 		gettimeofday(&start_time, NULL);
 
 #ifdef BLACK_BOKS
-		if (!PagesResults->getRank) {
 
-			if (!handle_url_rewrite(side->url, sizeof(side->url),
-				PagesResults->ptype, PagesResults->btype, 
-				(*PagesResults).TeffArray->iindex[i].subname->subname, side->url, 
-				sizeof(side->url), side->uri, sizeof(side->uri), side->fulluri, sizeof(side->fulluri),
+		if (!handle_url_rewrite(side->url, sizeof(side->url),
+			PagesResults->ptype, PagesResults->btype, 
+			(*PagesResults).TeffArray->iindex[i].subname->subname, side->url, 
+			sizeof(side->url), side->uri, sizeof(side->uri), side->fulluri, sizeof(side->fulluri),
 #ifdef WITH_THREAD
-				&PagesResults->cmConnUrlrewrite
+			&PagesResults->cmConnUrlrewrite
 #else
-				NULL
+			NULL
 #endif
-			)) {
-				snprintf(side->uri, sizeof(side->uri),"XXX-Can't_rewrite_url_for_DocID_%u_XXX:%s",(*PagesResults).TeffArray->iindex[i].DocID);
-				snprintf(side->fulluri, sizeof(side->fulluri),"XXX-Can't_rewrite_fulluri_for_DocID_%u_XXX:%s",(*PagesResults).TeffArray->iindex[i].DocID);
-			}
-
+		)) {
+			snprintf(side->uri, sizeof(side->uri),"XXX-Can't_rewrite_url_for_DocID_%u_XXX:%s",(*PagesResults).TeffArray->iindex[i].DocID);
+			snprintf(side->fulluri, sizeof(side->fulluri),"XXX-Can't_rewrite_fulluri_for_DocID_%u_XXX:%s",(*PagesResults).TeffArray->iindex[i].DocID);
 		}
+
 #endif
 
 
@@ -1737,27 +1732,14 @@ void *generatePagesResults(void *arg)
 		(*(*PagesResults).SiderHeder).queryTime.urlrewrite += ltime;
 
 
-		if (1 || !PagesResults->getRank) {
-			//urI
-			//strscpy(side->uri, side->url, sizeof(side->uri));
-			//urL
-			//strscpy(side->url,side->DocumentIndex.Url,sizeof(side->url));
-			//
-
-			side->pathlen = find_domain_path_len(side->url);
+		side->pathlen = find_domain_path_len(side->url);
 
 #ifndef BLACK_BOKS
-			memcpy(side->uri, side->url, sizeof(side->uri));
-			memcpy(side->fulluri, side->url, sizeof(side->fulluri));
+		memcpy(side->uri, side->url, sizeof(side->uri));
+		memcpy(side->fulluri, side->url, sizeof(side->fulluri));
 #endif
 
-#ifdef BLACK_BOKS
-			//memcpy(side->fulluri, side->uri, sizeof(side->fulluri));
-#endif
-			//shortenurl(side->uri,sizeof(side->uri));
-
-			strcpy(side->servername,(*PagesResults).servername);
-		}
+		strcpy(side->servername,(*PagesResults).servername);
 
 		//kopierer over subname
 		side->subname = (*(*PagesResults).TeffArray->iindex[i].subname);
@@ -2196,7 +2178,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	PagesResults.filtered		= 0;
 	PagesResults.filteredsilent	= 0;
 	PagesResults.memfiltered	= 0;	
-	PagesResults.getRank		= 0;
 	strcpy(PagesResults.useragent, useragent);
 
 
