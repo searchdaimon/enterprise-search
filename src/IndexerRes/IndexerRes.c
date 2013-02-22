@@ -1125,7 +1125,7 @@ void copyRepToDi(struct DocumentIndexFormat *DocumentIndexPost,struct Reposetory
 
 			(*DocumentIndexPost).IPAddress 		= (*ReposetoryHeader).IPAddress;
 			(*DocumentIndexPost).response 		= (*ReposetoryHeader).response;
-			(*DocumentIndexPost).htmlSize 		= (*ReposetoryHeader).htmlSize;
+			(*DocumentIndexPost).htmlSize2 		= (*ReposetoryHeader).htmlSize2;
 			(*DocumentIndexPost).imageSize 		= (*ReposetoryHeader).imageSize;
 			(*DocumentIndexPost).userID 		= (*ReposetoryHeader).userID;
 			(*DocumentIndexPost).clientVersion 	= (*ReposetoryHeader).clientVersion;

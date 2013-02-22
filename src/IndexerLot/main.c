@@ -124,6 +124,7 @@ struct IndexerLot_workthreadFormat {
 	int optHandleOld_duplicateNochange;
 	int optHandleOld_allrediIndexed;
 	int optHandleOld_indexed;
+	int optHandleOld_thencur;
 	char *optQuery;
 	char *optNetLot;
 	int rEindex;
@@ -412,7 +413,9 @@ void attriblot_close(struct attriblotFormat *attriblot)
 
 	    fwrite(&crc32, sizeof(unsigned int), 1, fp);
 	    fwrite(attribute, sizeof(char), MAX_ATTRIB_LEN, fp);
-//	    printf("%i %x %s\n", crc32, crc32, attribute);
+	    #ifdef DEBUG
+	    printf("%u -> %s\n", crc32, attribute);
+	    #endif
        	}
 
     fclose(fp);
@@ -463,7 +466,9 @@ void attributeIndexAdd(struct relocal re, unsigned int DocID, char *attributes)
 {
     if (re.attributeIndex==NULL) return;
 
-    fprintf(stderr, "IndexerLot: attributeIndexAdd( DocID=%i, attributes=%s )\n", DocID, attributes);
+    #ifdef DEBUG
+	    fprintf(stderr, "IndexerLot: attributeIndexAdd( DocID=%i, attributes=%s )\n", DocID, attributes);
+    #endif
 
     char k[MAX_ATTRIB_LEN], v[MAX_ATTRIB_LEN], kv[MAX_ATTRIB_LEN];
     char *o = NULL;
@@ -471,6 +476,9 @@ void attributeIndexAdd(struct relocal re, unsigned int DocID, char *attributes)
 
     while (next_attribute(attributes, &o, k, v, kv))
         {
+		#ifdef DEBUG
+			printf("k=\"%s\", v=\"%s\", kv=\"%s\"\n", k, v, kv);
+		#endif
 	    map_insert(M, k, v);
 	}
 
@@ -780,21 +788,28 @@ void *IndexerLot_workthread(void *arg) {
 				//hvis dette er samme dokumens som vi har fra før kan vi ignorere det.
 				//runarb: 28 aug 2008. Legger til en sjekk på at dokumentet ikke er 0 bytes stort. Vi
 				//kan ikke ha indeksert det hvis vi ikke har størelsen, men RepositoryPointer == radress == 0 er lov, og skjer for første dokument
-				if ( (argstruct->rEindex == 0) && (DocumentIndexPost->RepositoryPointer == radress) && (DocumentIndexPost->htmlSize != 0)) {
+				if ( (argstruct->rEindex == 0) && (DocumentIndexPost->RepositoryPointer == radress) && (DocumentIndexPost->htmlSize2 != 0)) {
 					#ifdef DEBUG
 						printf("have already indexed this dokument\n");
 					#endif
 					isuntouched++;
 					++(*argstruct).optHandleOld_allrediIndexed;
 					goto pageDone;
-				} else if (DocumentIndexPost->RepositoryPointer != radress && DocumentIndexPost->RepositoryPointer != 0) {
+				} else if ((DocumentIndexPost->CrawleDato!=0) && (DocumentIndexPost->CrawleDato > ReposetoryHeader.time)) {
+					#ifdef DEBUG
+						printf("Dokument is older then indexed. Time DocID %lu > Time this %lu\n",DocumentIndexPost->CrawleDato, ReposetoryHeader.time);
+					#endif
+					isuntouched++;
+					++(*argstruct).optHandleOld_thencur;
+					goto pageDone;
+				} else if (DocumentIndexPost->RepositoryPointer != radress && radress != 0) {
 					documentUpdate = 1;
 				}
 
 				HtmlBufferLength = sizeofHtmlBuffer;
-				if ( (nerror = uncompress((Bytef*)HtmlBuffer,(uLong *)&HtmlBufferLength,(Bytef*)htmlcompressdbuffer,ReposetoryHeader.htmlSize)) != 0) {
+				if ( (nerror = uncompress((Bytef*)HtmlBuffer,(uLong *)&HtmlBufferLength,(Bytef*)htmlcompressdbuffer,ReposetoryHeader.htmlSize2)) != 0) {
 					#ifdef DEBUG
-               				printf("uncompress error. Code: %i for DocID %u-%i. ReposetoryHeader.htmlSize %i,sizeofHtmlBuffer %i\n",nerror,ReposetoryHeader.DocID,rLotForDOCid(ReposetoryHeader.DocID),ReposetoryHeader.htmlSize,sizeofHtmlBuffer);
+               				printf("uncompress error. Code: %i for DocID %u-%i. ReposetoryHeader.htmlSize2 %i,sizeofHtmlBuffer %i\n",nerror,ReposetoryHeader.DocID,rLotForDOCid(ReposetoryHeader.DocID),ReposetoryHeader.htmlSize2,sizeofHtmlBuffer);
 					#endif
                				goto pageDone;
 		                }
@@ -805,7 +820,6 @@ void *IndexerLot_workthread(void *arg) {
 
 				if((*argstruct).optHandleOld) {
 
-					//if (DocumentIndexPost->htmlSize != 0) {
 
 					        if ( (argstruct->rEindex == 0) && (DocumentIndexPost->crc32 == crc32) ) {
 
@@ -822,7 +836,6 @@ void *IndexerLot_workthread(void *arg) {
 							++(*argstruct).optHandleOld_indexed;
 						}
 
-					//}
 
 				}
 
@@ -1016,7 +1029,7 @@ void *IndexerLot_workthread(void *arg) {
 							// attributes:
 							if (attributes != NULL) {
 								attriblot_add((*argstruct).attriblot, attributes);
-
+printf("attributes: \"%s\"\n",attributes);
 								iiattribadd(&(*pagewords).attrib, attributes);
 
 								attribMakeRevIndex(&(*pagewords).attrib);
@@ -1105,15 +1118,19 @@ void *IndexerLot_workthread(void *arg) {
 
 
 				/*
+				Runarb: 20 mai 2011: Koden under var haket ut, og følgende kommentar var lagt til. Dessverre vet jeg ikke hva det betyr
 				Vi ser ut til å bure gced under lasting av revindex også. Sikkert brukt ved sletting på web.
+				*/
 				//da dette er en oppdatering vil vi ha nye ord i den reverserte index, og kan trykt slette de som ligger i invertert index.
 				if (documentUpdate) {
-					printf("DocId %u was updatated. Adding it to the gced file\n",ReposetoryHeader.DocID);
+					#ifdef DEUG
+						printf("DocId %u was updatated. Adding it to the gced file\n",ReposetoryHeader.DocID);
+					#endif
 					if (fwrite(&ReposetoryHeader.DocID,sizeof(unsigned int),1,argstruct->GCED) != 1) {
 						perror("writing DocID to gced file");
 					}
 				}
-				*/
+				
 		
 				if (documentUpdate)
 					isrecrawled++;
@@ -1770,6 +1787,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			argstruct->optHandleOld_duplicateNochange	= 0;
 			argstruct->optHandleOld_allrediIndexed		= 0;
 			argstruct->optHandleOld_indexed			= 0;
+			argstruct->optHandleOld_thencur			= 0;
 
 			printf("will handel old dokuments in reposetory. Loading DocumentIndex...\n");
 			for(i=0;i<NrofDocIDsInLot;i++) {
@@ -2073,6 +2091,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			printf("duplicateNochange: %i\n",argstruct->optHandleOld_duplicateNochange);
 			printf("allrediIndexed: %i\n",argstruct->optHandleOld_allrediIndexed);
 			printf("optHandleOld_indexed: %i\n",argstruct->optHandleOld_indexed);
+			printf("optHandleOld_thencur: %i\n",argstruct->optHandleOld_thencur);
 
 			for(i=0;i<NrofDocIDsInLot;i++) {
 				free(argstruct->DIArray[i].oldp);
@@ -2406,7 +2425,7 @@ int main (int argc, char *argv[]) {
 				//toDo: vi må hente bilde fra readHTMLNET()				
 				ReposetoryHeader.imageSize = 0;
 
-				ReposetoryHeader.htmlSize = strlen(text);
+				ReposetoryHeader.htmlSize2 = strlen(text);
 
 				rApendPostcompress(&ReposetoryHeader,text,image,subname,NULL,NULL,"repo.test", ReposetoryHeader.url , "", NULL);
 
