@@ -10,9 +10,9 @@ endif
 
 ifdef WANT_LIBCONFIG
 ifeq ($(WANT_64BIT),1)
-LDFLAGS+=	`pkg-config --libs libconfig`
+LDFLAGS+=	$(LIBCONFIG_64)
 else
-LDFLAGS+=	`pkg-config --libs libconfig`
+LDFLAGS+=	$(LIBCONFIG)
 endif
 endif
 

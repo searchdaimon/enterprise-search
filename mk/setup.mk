@@ -22,6 +22,8 @@ LDFLAGS+=	/usr/lib/mysql/libmysqlclient.a
 CFLAGS+=	-I/usr/include/mysql
 #`perl -MExtUtils::Embed -e ccopts -e ldopts` -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE   -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl
 CC=		gcc -D NO_64_BIT_DIV
+LIBCONFIG=	/usr/local/lib/libconfig.a
+LIBCONFIG_64=	/usr/local/lib64/libconfig.a
 endif
 
 ifeq ($(strip $(host)),bbh-002.boitho.com)
@@ -33,6 +35,8 @@ BDB_LIB=	/usr/lib/libdb-4.6.a
 CC=		gcc -m32
 MYSQL_LIB+=	/usr/lib/mysql/libmysqlclient.a -lssl
 MYSQL_INC+=	-I/usr/include/mysql
+LIBCONFIG=	/usr/local/lib/libconfig.a
+LIBCONFIG_64=	/usr/local/lib64/libconfig.a
 endif
 
 ifeq ($(strip $(host)),searchdaimon)
@@ -41,9 +45,11 @@ PERL_EMBED_INC=	-I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -D_GNU_SOURC
 PERL_EMBED_LIB=	-rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl
 BDB_INC=	-I/usr/include/db4
 BDB_LIB=	/usr/lib/libdb-4.6.a
-CC=		gcc -m32
+CC=		gcc -m32 -lpthread
 MYSQL_LIB+=	/usr/lib/mysql/libmysqlclient.a -lssl
 MYSQL_INC+=	-I/usr/include/mysql
+LIBCONFIG=	`pkg-config --libs libconfig`
+LIBCONFIG_64=	`pkg-config --libs libconfig`
 endif
 
 ifdef NO_DEPRECATED_WARNINGS
