@@ -633,7 +633,11 @@ typedef struct {
 
 
 void
-savewords(struct pagewordsFormat *pagewords, pthread_mutex_t *wordsmutex, struct hashtable *words, struct hashtable *acls,
+savewords(struct pagewordsFormat *pagewords, 
+#ifdef WITH_THREAD
+pthread_mutex_t *wordsmutex,
+#endif
+ struct hashtable *words, struct hashtable *acls,
     char *acl_allow, char *acl_denied)
 {
 	struct pagewordsFormatPartFormat *wordsPart;
@@ -1098,8 +1102,6 @@ printf("attributes: \"%s\"\n",attributes);
 							savewords(pagewords,
 #ifdef WITH_THREAD
 							&argstruct->wordsmutex,
-#else
-							NULL,
 #endif
 							argstruct->words, argstruct->acls, acl_allow, acl_denied);
 					
