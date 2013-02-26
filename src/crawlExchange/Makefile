@@ -1,7 +1,7 @@
 #gcc xml.c url.c main.c -I/usr/include/libxml2/ -L/usr/lib -lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl && ./a.out
 CFLAGS?=	
 CFLAGS+=	`pkg-config --cflags libxml-2.0` -L/usr/lib -I/home/boitho/.root/include 
-CFLAGS+=	-O0 -g -DBLACK_BOKS -DIIACL  -DEMAIL_ADRESS_AS_ATTRIBUTE
+CFLAGS+=	-O0 -g -DBLACK_BOKS -DIIACL  -DEMAIL_ADRESS_AS_ATTRIBUTE -fPIC
 LDFLAGS=	`pkg-config --cflags libxml-2.0` -lz -lm  -lcurl  -lssl -lcrypto -ldl -L/home/boitho/.root/lib
 PROG?=		crawlExchange
 CC=		gcc
@@ -20,15 +20,16 @@ OBJS=		xml.o webdav.o main.o
 OBJS+=		$(COMMONSOBJ)
 OBJS+=		crawl.o ../base64/base64.o ../crawl/mailsubject.o set.o
 
+include ../../mk/setup.mk
 
 all: mail_analyze $(PROG)
 
 mail_analyze:
 	flex -8 -f -Panalyze_header -i ../crawlExchange/analyze_header.l
-	$(CC) -c lex.analyze_header.c
+	$(CC) -c lex.analyze_header.c -fPIC
 
 $(PROG): $(OBJS)
-	libtool $(CC) -o $(PROG).so $(LDFLAGS) $(OBJS) lex.analyze_header.o ../../lib/libds.a -fPIC -shared -D BLACK_BOKS -g -static
+	libtool $(CC) -o $(PROG).so $(LDFLAGS) $(OBJS) lex.analyze_header.o ../../lib/libds.a -fPIC -shared -D BLACK_BOKS -g $(CRAWL_STATIC)
 	-mkdir -p ../..//crawlers/$(PROG)
 	cp $(PROG).so ../..//crawlers/$(PROG)
 
