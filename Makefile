@@ -101,7 +101,7 @@ HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a lib/libds.a
 # generate the file output-data and its dependencies, not plot.png 
 
 
-all : getFiletype dep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange crawlSO boitho-bbdn PageInfobb IndexerLotbb mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad webadmindep Suggest gcRepobb repomodwrap gcAuthoritybb sdperl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb yumupdate usSQLBB usAD crawlPush
+all : getFiletype dep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb IndexerLotbb mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad Suggest gcRepobb gcAuthoritybb sdperl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb usSQLBB usAD crawlPush
 
 perlembed:
 	@echo ""
@@ -133,7 +133,7 @@ dptest:
 
 	env 24SEVENOFFICE=-D_24SEVENOFFICE make bb
 
-webadmindep: YumWrapper NetConfig InitServices setuidcaller
+setuid: YumWrapper NetConfig InitServices setuidcaller repomodwrap yumupdate
 
 tempFikes: IndexerLot_fik32bitbug DIconvert
 
