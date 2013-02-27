@@ -215,6 +215,11 @@ hashtable_remove(struct hashtable *h, void *k)
 void
 hashtable_destroy(struct hashtable *h, int free_values)
 {
+
+    if (h==NULL) {
+	return;
+    }
+
     unsigned int i;
     struct entry *e, *f;
     struct entry **table = h->table;
