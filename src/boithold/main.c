@@ -85,6 +85,8 @@ void connectHandler(int socket) {
 		packedHedder.size = packedHedder.size - sizeof(packedHedder);
 
 		if (packedHedder.command == C_rmkdir) {
+		
+			printf("C_rmkdir\n");
 
 			//leser data. Det skal væren en int som sier hvilken lot vi vil ha
 			if ((i=recv(socket, &LotNr, sizeof(LotNr),MSG_WAITALL)) == -1) {
@@ -116,6 +118,9 @@ void connectHandler(int socket) {
 			printf("mkdir %s\n",lotPath);
 
 			makePath(lotPath);
+
+			printf("~C_rmkdir\n");
+
 
 		}
 		else if (packedHedder.command == C_rComand) {
@@ -165,6 +170,33 @@ void connectHandler(int socket) {
 
 			printf("sending respons\n");
 			sendall(socket,&LotNr, sizeof(LotNr));
+
+		}
+		else if (packedHedder.command == C_getlotHasSufficientSpace) {
+			printf("fikk C_getLotToIndex\n");
+
+			int needSpace;
+			int response;
+
+			if ((i=read(socket, &LotNr, sizeof(LotNr))) == -1) {
+				perror("Cant read lotnr");
+				exit(1);
+			}
+
+			if ((i=recv(socket, &needSpace, sizeof(needSpace),MSG_WAITALL)) == -1) {
+				perror("Cant read dirty");
+				exit(1);
+			}
+
+
+			printf("needSpace: %i, LotNr %i\n",needSpace,LotNr);
+
+
+			response = lotHasSufficientSpace(LotNr, needSpace, packedHedder.subname);
+
+
+			printf("sending respons\n");
+			sendall(socket,&response, sizeof(response));
 
 		}
 		else if (packedHedder.command == C_rGetSize) {
@@ -422,7 +454,6 @@ void connectHandler(int socket) {
 			//char FilePath[156];
 			FILE *FILEHANDLER;
 			char c;
-			path_t *file_path;
 			char opentype[2];
 			//char *filblocbuff;
 			//off_t fileBloks,filerest;
