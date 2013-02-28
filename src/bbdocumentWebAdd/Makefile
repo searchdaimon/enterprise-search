@@ -1,4 +1,4 @@
-VPATH= .:../boitho-bbdn/:../common/:../base64/:../maincfg/:../crawlManager/:../key:.
+VPATH= .:../boitho-bbdn/:../common/:../base64/:../maincfg/:../crawlManager/:../cgi-util:../key:.
 
 CFLAGS=		
 
@@ -10,7 +10,7 @@ WANT_BASE64=	true
 WANT_COMMON=	true
 WANT_LIBXML=	true
 
-OBJS=	main.o bbdnclient.o daemon.o base64.o maincfg.o client.o key.o
+OBJS=	main.o bbdnclient.o daemon.o base64.o maincfg.o client.o key.o cgi-util.o
 PROG=	bbdocumentWebAdd
 
 include ../../mk/prog.mk

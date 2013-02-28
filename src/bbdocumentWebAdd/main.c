@@ -24,6 +24,11 @@
 
 char systemkey[KEY_STR_LEN];
 
+
+#define _GNU_SOURCE
+#include "../cgi-util/cgi-util.h"
+
+
 #define ROOT_NODE_NAME "sddocument"
 
 /* MYSQL login information */
@@ -62,7 +67,7 @@ xml_find_child(xmlNodePtr parent, char *name)
 
 
 void
-sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
+xml_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 {
 	struct xmldocumentFormat xmldoc;
 	xmlNodePtr n;
@@ -167,7 +172,7 @@ sd_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 
 
 void
-sd_add(int sock, xmlDocPtr doc, xmlNodePtr top)
+xml_add(int sock, xmlDocPtr doc, xmlNodePtr top)
 {
 	xmlNodePtr n;
 
@@ -176,12 +181,12 @@ sd_add(int sock, xmlDocPtr doc, xmlNodePtr top)
 	}
 	for (n = top->xmlChildrenNode; n != NULL; n = n->next) {
 		if (xmlStrcmp(n->name, (xmlChar*)"document") == 0)
-			sd_add_one(sock, doc, n);
+			xml_add_one(sock, doc, n);
 	}
 }
 
 void
-sd_delete(int sock, xmlDocPtr doc, xmlNodePtr top)
+xml_delete(int sock, xmlDocPtr doc, xmlNodePtr top)
 {
 	xmlNodePtr n;
 	xmlChar *coll;
@@ -219,9 +224,49 @@ sd_delete(int sock, xmlDocPtr doc, xmlNodePtr top)
 	xmlFree(coll);
 }
 
+void sd_close(int bbdnsock, char *coll) {
+
+
+        char *query;
+        MYSQL db;
+
+		bbdn_closecollection(bbdnsock, coll);
+
+                // creat it in the sql db
+                if (mysql_init(&db) == NULL) {
+                        fprintf(stderr, "Unable to init mysql.\n");
+                        return;
+                }
+                if (!mysql_real_connect(&db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)) {
+                        fprintf(stderr, "Unable to connect to database: %s\n", mysql_error(&db));
+                        return ;
+                }
+
+                // create the collections if ot don't exist
+                asprintf(&query, "INSERT IGNORE INTO shares VALUES (NULL,'',14,1,NULL,0,NOW(),0,'','','','','',NULL,'Pushing has started.','%s',NULL,NULL,NULL,NULL,'acl',NULL)", coll);
+
+                if (mysql_real_query(&db, query, strlen(query))) {
+                      fprintf(stderr, "Failed to insert row, Error: %s\n", mysql_error(&db));
+                      return;
+                }
+
+                // Update status
+                asprintf(&query, "UPDATE shares set crawler_success=1,crawler_message=\"OK.\",last=now() WHERE collection_name=\"%s\"", coll);
+
+                if (mysql_real_query(&db, query, strlen(query))) {
+                      fprintf(stderr, "Failed to update row, Error: %s\n", mysql_error(&db));
+                      return;
+                }
+
+                free(query);
+                mysql_close(&db);
+
+
+}
+
 
 void
-sd_close(int sock, xmlDocPtr doc, xmlNodePtr top)
+xml_close(int sock, xmlDocPtr doc, xmlNodePtr top)
 {
 	xmlNodePtr n;
 	char *query;
@@ -243,36 +288,7 @@ sd_close(int sock, xmlDocPtr doc, xmlNodePtr top)
 			continue;
 		}
 
-		bbdn_closecollection(sock, (char *)p);
-
-		// creat it in the sql db
-	        if (mysql_init(&db) == NULL) {
-	                fprintf(stderr, "Unable to init mysql.\n");
-	                return;
-	        }
-	        if (!mysql_real_connect(&db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)) {
-	                fprintf(stderr, "Unable to connect to database: %s\n", mysql_error(&db));
-	                return ;
-	        }
-
-		// create the collections if ot don't exist
-		asprintf(&query, "INSERT IGNORE INTO shares VALUES (NULL,'',14,1,NULL,0,NOW(),0,'','','','','',NULL,'Pushing has started.','%s',NULL,NULL,NULL,NULL,'acl',NULL)", (char *)p);
-
-		if (mysql_real_query(&db, query, strlen(query))) {
-                      fprintf(stderr, "Failed to insert rows, Error: %s\n", mysql_error(&db));
-                      continue;
-  		}
-
-		// Update status
-		asprintf(&query, "UPDATE shares set crawler_success=1,crawler_message=\"OK.\" WHERE collection_name=\"%s\"", (char *)p);
-
-		if (mysql_real_query(&db, query, strlen(query))) {
-                      fprintf(stderr, "Failed to insert rows, Error: %s\n", mysql_error(&db));
-                      continue;
-  		}
-
-		free(query);
-		mysql_close(&db);
+		sd_close(sock, (char *)p);
 
 
 		xmlFree(p);
@@ -280,7 +296,7 @@ sd_close(int sock, xmlDocPtr doc, xmlNodePtr top)
 }
 
 void
-sd_create(int sock, xmlDocPtr doc, xmlNodePtr top)
+xml_create(int sock, xmlDocPtr doc, xmlNodePtr top)
 {
 	xmlNodePtr n;
 	char *query;
@@ -329,7 +345,7 @@ sd_create(int sock, xmlDocPtr doc, xmlNodePtr top)
 }
 
 void
-sd_users_user(MYSQL *db, unsigned int usersystem, xmlDocPtr doc, xmlNodePtr top)
+xml_users_user(MYSQL *db, unsigned int usersystem, xmlDocPtr doc, xmlNodePtr top)
 {
 	xmlNodePtr cur;
 	char *username;
@@ -367,7 +383,7 @@ sd_users_user(MYSQL *db, unsigned int usersystem, xmlDocPtr doc, xmlNodePtr top)
 }
 
 void
-sd_gcwhispers(int sock, xmlDocPtr doc, xmlNodePtr top)
+xml_gcwhispers(int sock, xmlDocPtr doc, xmlNodePtr top)
 {
 	xmlNodePtr cur, n;
 	char *collection;
@@ -404,7 +420,7 @@ sd_gcwhispers(int sock, xmlDocPtr doc, xmlNodePtr top)
 }
 
 void
-sd_errormsg(int sock, xmlDocPtr doc, xmlNodePtr top)
+xml_errormsg(int sock, xmlDocPtr doc, xmlNodePtr top)
 {
 	char *msg;
 	char path[2048];
@@ -438,7 +454,7 @@ sd_errormsg(int sock, xmlDocPtr doc, xmlNodePtr top)
 
 
 void
-sd_users(xmlDocPtr doc, xmlNodePtr top)
+xml_users(xmlDocPtr doc, xmlNodePtr top)
 {
 	xmlNodePtr cur;
 	MYSQL db;
@@ -461,7 +477,7 @@ sd_users(xmlDocPtr doc, xmlNodePtr top)
 
 	for (cur = top->xmlChildrenNode; cur != NULL; cur = cur->next) {
 		if (xmlStrcmp(cur->name, (xmlChar *)"user") == 0) {
-			sd_users_user(&db, usersystem, doc, cur);
+			xml_users_user(&db, usersystem, doc, cur);
 		} else if (xmlStrcmp(cur->name, (xmlChar *)"dropusers") == 0) {
 			char query[1024];
 			size_t querylen;
@@ -484,7 +500,7 @@ sd_users(xmlDocPtr doc, xmlNodePtr top)
 }
 
 int
-main(int argc, char **argv)
+main(int argc, char **argv, char **envp)
 {
 	int postsize;
 	char *xmldata;
@@ -500,117 +516,212 @@ main(int argc, char **argv)
 	bbdnport = maincfg_get_int(&maincfg, "BLDPORT");
 	maincfgclose(&maincfg);
 	key_get(systemkey);
+	char *request_method;
 
 	if (!bbdn_conect(&bbdnsock, "", bbdnport))
 		errx(1, "Unable to connect to document manager");
 
+
+	request_method = strdup(getenv("REQUEST_METHOD"));
+	// We will handel the post stuf our self. Set REQUEST_METHOD to GET so cgi-util ignores it.
+	setenv("REQUEST_METHOD", "GET", 1);
+
+	if (cgi_init() != CGIERR_NONE) {
+		errx(1, "Can't init cgi-util");		
+	}
+
+	char api[100], coll[100], url[512];
+
+	sscanf(getenv("REQUEST_URI"),"/%[a-z]/%[a-zA-Z0-9]/%s", api, coll, url);
+
+	printf("api: \"%s\"\n",api);
+	printf("coll: \"%s\"\n",coll);
+	printf("url: \"%s\"\n",url);
+	printf("request_method: \"%s\"\n",request_method);
+	printf("aaa \"%s\"\n",getenv("REQUEST_URI"));
+
 	/*
 	 * Either called from command line, and then we want a file.
+	 * or a http get/put
 	 * Or we are handling a web request, and getting the data from stdin.
 	 */
-	if (argc == 2) {
-		FILE *fp;
+	if (strcmp(cgi_getentrystr("method"),"rest") == 0) {
 
-		fprintf(stderr, "reading file %s\n",argv[1]);
-		if ((fp = fopen(argv[1],"rb")) == NULL) {
-			perror(argv[1]);
-			exit(1);
+                char** env;
+                  for (env = envp; *env != 0; env++)
+                  {
+                    char* thisEnv = *env;
+                    printf("%s\n", thisEnv);
+                  }
+
+
+	}
+	else if (strcmp(cgi_getentrystr("do"),"add") == 0) {
+
+
+		char *url, *coll;
+		char *data;
+		int datasize;
+		int n;
+
+		url = getenv("HTTP_X_FILENAME") ? getenv("HTTP_X_FILENAME") : cgi_getentrystr("url");
+		coll = cgi_getentrystr("collection");
+
+		if (url == NULL) {
+			err(1, "No url specified. Either set http header HTTP_X_FILENAME or get parameter 'url'.\n");
 		}
-		struct stat inode;      // lager en struktur for fstat å returnere.
-		fstat(fileno(fp),&inode);		
+		if (coll == NULL) {
+			err(1,"No collection specified\n");
+		}
 
-		postsize = inode.st_size;
 
-		xmldata = malloc(postsize +1);
-		fread(xmldata,1,postsize,fp);
+		char *tmpname;
+		FILE *fh;
+		asprintf(&tmpname,"/tmp/%s",url);
+	
+		fh = fopen(tmpname,"wb");
+		if (fh == NULL) {
+			err(1,"Can't open file %s",tmpname);
+		}
 
-		fclose(fp);
-	} else if (getenv("CONTENT_LENGTH") != NULL) {
+		if ((data = malloc( atoi(getenv("CONTENT_LENGTH")) )) == NULL) {
+			errx(1, "Can't malloc data");
+		}
+
+		datasize = 0;
+		while ((n = fread ((unsigned char *)(data + datasize),1,1024,stdin)) > 0) {
+			datasize += n;
+		}
+
+		fwrite(data,1,datasize,fh);
+
+		fclose(fh);
+		free(tmpname);
+
+		//char** env;
+		//  for (env = envp; *env != 0; env++)
+		//  {
+		//    char* thisEnv = *env;
+		//    printf("%s\n", thisEnv);    
+		//  }
+
+
+		//        bbdn_docadd(bbdnsock, xmldoc.collection, uri, xmldoc.documenttype, xmldoc.body, xmldoc.bodysize,
+		//            xmldoc.lastmodified, xmldoc.aclallow, xmldoc.acldeny, xmldoc.title, xmldoc.documentformat, xmldoc.attributes);
+        	bbdn_docadd(bbdnsock, coll, url, "", data, datasize,
+      		    0, "Everyone", "", "omp1", "", "");
+
+
+		// close it
+		sd_close(bbdnsock, coll);
+	}
+	else if (strcmp(cgi_getentrystr("do"),"delete") == 0) {
+
+
+		char *url, *coll;
+
+		url = getenv("HTTP_X_FILENAME") ? getenv("HTTP_X_FILENAME") : cgi_getentrystr("url");
+		coll = cgi_getentrystr("collection");
+
+		if (url == NULL) {
+			err(1, "No url specified. Either set http header HTTP_X_FILENAME or get parameter 'url'.\n");
+		}
+		if (coll == NULL) {
+			err(1,"No collection specified\n");
+		}
+
+		bbdn_deleteuri(bbdnsock, coll, url);
+
+		printf("%s deleted.\n", url);
+	}
+	else if (getenv("CONTENT_LENGTH") != NULL) {
 		// Get data length
 		postsize = atoi(getenv("CONTENT_LENGTH"));
 		xmldata = malloc(postsize + 1);	
 		// Read data
 		fread(xmldata, 1, postsize, stdin);
 		xmldata[postsize] = '\0';
-	} else {
-		errx(1, "Didn't receive any data.");
-	}
 
-	//fprintf(stderr, "Received %i bytes.\n", postsize);
-	//fprintf(stderr, "Got document:\n%s\n", xmldata);
 
-	//parsing xml
-        doc = xmlParseDoc((xmlChar*)xmldata);
+		//fprintf(stderr, "Received %i bytes.\n", postsize);
+		//fprintf(stderr, "Got document:\n%s\n", xmldata);
 
-        if (doc == NULL)
+		//parsing xml
+        	doc = xmlParseDoc((xmlChar*)xmldata);
+
+        	if (doc == NULL)
 		errx(1, "Unable to parse document");
 
-        cur = xmlDocGetRootElement(doc);
+        	cur = xmlDocGetRootElement(doc);
 
-        if (cur == NULL) {
-                xmlFreeDoc(doc);
-                errx(1, "empty document");
-        }
+        	if (cur == NULL) {
+        	        xmlFreeDoc(doc);
+        	        errx(1, "empty document");
+        	}
 
-	// Some document checking
-        if (xmlStrcmp(cur->name, (const xmlChar *)ROOT_NODE_NAME)) {
-                xmlFreeDoc(doc);
-                errx(1, "document of the wrong type, root node != %s, but %s\n", ROOT_NODE_NAME, cur->name);
-        }
+		// Some document checking
+        	if (xmlStrcmp(cur->name, (const xmlChar *)ROOT_NODE_NAME)) {
+        	        xmlFreeDoc(doc);
+        	        errx(1, "document of the wrong type, root node != %s, but %s\n", ROOT_NODE_NAME, cur->name);
+        	}
 
-	if ((anode = xml_find_child(cur, "key")) != NULL) {
-		char *p;
+		if ((anode = xml_find_child(cur, "key")) != NULL) {
+			char *p;
 		
-		p = (char *)xmlNodeListGetString(doc, anode->xmlChildrenNode, 1);
-		if (p == NULL)
-			errx(1, "No key data");
+			p = (char *)xmlNodeListGetString(doc, anode->xmlChildrenNode, 1);
+			if (p == NULL)
+				errx(1, "No key data");
 
-		if ((systemkey[0] != '\0') && (!key_equal(systemkey, p))) {
-			fprintf(stderr,"Keys does not match:  Got \"%s\" but wanted \"%s\"\n",p,systemkey);
-			exit(-1);
-		}
-	} else {
-		errx(1, "Did not receive a key");
-	}
-	if ((anode = xml_find_child(cur, "version")) != NULL) {
-		xmlChar *p;
-
-		p = xmlNodeListGetString(doc, anode->xmlChildrenNode, 1);
-		version = atoi((char*)p);
-		#ifdef DEBUG
-			fprintf(stderr, "Got a version: %d\n", version);
-		#endif
-
-		xmlFree(p);
-	} else {
-		errx(1, "Did not receive a version number");
-	}
-
-	for (cur = cur->xmlChildrenNode; cur != NULL; cur = cur->next) {
-		if ((!xmlStrcmp(cur->name, (const xmlChar *) "key"))){
-			// Ignore
-		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "version"))){
-			// Ignore
-		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "add"))){
-			sd_add(bbdnsock, doc, cur);
-		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "delete"))){
-			sd_delete(bbdnsock, doc, cur);
-		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "close"))) {
-			sd_close(bbdnsock, doc, cur);
-		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "create"))) {
-			sd_create(bbdnsock, doc, cur);
-		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "users"))) {
-			sd_users(doc, cur);
-		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "gcwhispers"))) {
-			sd_gcwhispers(bbdnsock, doc, cur);
-		} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "error"))) {
-			sd_errormsg(bbdnsock, doc, cur);
-		} else if ((!xmlStrcmp(cur->name, (xmlChar*)"text"))) {
-			//fprintf(stderr, "Got text: %s\n", xmlNodeListGetString(doc, cur, 1));
-			// Ignore for now
+			if ((systemkey[0] != '\0') && (!key_equal(systemkey, p))) {
+				fprintf(stderr,"Keys does not match:  Got \"%s\" but wanted \"%s\"\n",p,systemkey);
+				exit(-1);
+			}
 		} else {
-			warnx("Unknown xml node '%s'", cur->name);
+			errx(1, "Did not receive a key");
 		}
+		if ((anode = xml_find_child(cur, "version")) != NULL) {
+			xmlChar *p;
+
+			p = xmlNodeListGetString(doc, anode->xmlChildrenNode, 1);
+			version = atoi((char*)p);
+			#ifdef DEBUG
+				fprintf(stderr, "Got a version: %d\n", version);
+			#endif
+
+			xmlFree(p);
+		} else {
+			errx(1, "Did not receive a version number");
+		}
+
+		for (cur = cur->xmlChildrenNode; cur != NULL; cur = cur->next) {
+			if ((!xmlStrcmp(cur->name, (const xmlChar *) "key"))){
+				// Ignore
+			} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "version"))){
+				// Ignore
+			} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "add"))){
+				xml_add(bbdnsock, doc, cur);
+			} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "delete"))){
+				xml_delete(bbdnsock, doc, cur);
+			} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "close"))) {
+				xml_close(bbdnsock, doc, cur);
+			} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "create"))) {
+				xml_create(bbdnsock, doc, cur);
+			} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "users"))) {
+				xml_users(doc, cur);
+			} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "gcwhispers"))) {
+				xml_gcwhispers(bbdnsock, doc, cur);
+			} else if ((!xmlStrcmp(cur->name, (const xmlChar *) "error"))) {
+				xml_errormsg(bbdnsock, doc, cur);
+			} else if ((!xmlStrcmp(cur->name, (xmlChar*)"text"))) {
+				//fprintf(stderr, "Got text: %s\n", xmlNodeListGetString(doc, cur, 1));
+				// Ignore for now
+			} else {
+				warnx("Unknown xml node '%s'", cur->name);
+			}
+		}
+
+	} else {
+		errx(1, "Didn't receive any command or data.");
 	}
 
         struct timespec time;
@@ -623,3 +734,38 @@ main(int argc, char **argv)
 
 	return 0;
 }
+
+/******************************************/
+/******************************************/
+/******************************************/
+/******************************************/
+/******************************************/
+/******************************************/
+
+/*
+int main(int argc, char **argv, char** envp) {
+
+
+        printf("Content-type: text/html\n");
+        printf("Pragma: no-cache\n\n");
+
+        int bbdnsock;
+        int bbdnport;
+        struct config_t maincfg;
+
+
+
+        maincfg = maincfgopen();
+        bbdnport = maincfg_get_int(&maincfg, "BLDPORT");
+        maincfgclose(&maincfg);
+        key_get(systemkey);
+
+	// Connect to backend
+        if (!bbdn_conect(&bbdnsock, "", bbdnport)) {
+                errx(1, "Unable to connect to document manager");
+	}
+
+
+	return EXIT_SUCCESS;
+}
+*/
