@@ -9,10 +9,11 @@
 #include "../parse_summary/summary.h"
 #include "../common/bstr.h"
 #include "../common/define.h"
+#include "../common/boithohome.h"
 
 #include <ctype.h>
 
-
+#define cashedir "var/cashedir"
 
 void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages_gloabal, int *nrOfPpcPages_global, struct queryNodeHederFormat *queryNodeHeder) {
 
@@ -90,7 +91,7 @@ void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages_gloabal, int *nrO
 
 		sprintf(cashefile,"%s/%s",cashedir,cashename);
 
-		if ((CACHE = fopen(cashefile,"rb")) != NULL) {
+		if ((CACHE = bfopen(cashefile,"rb")) != NULL) {
                 	hascashe = 1;
 			printf("has cashe. Useing it\n");
 
@@ -316,14 +317,17 @@ void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages_gloabal, int *nrO
         	free(htmlstring);
 
 		//writing cashe
-		CACHE = fopen(cashefile,"wb");
-		flock(fileno(CACHE),LOCK_EX);
-		fwrite(&nrOfPpcPages,sizeof(nrOfPpcPages),1,CACHE);
-		for (i=0; i<nrOfPpcPages;i++) {
-	        	fwrite(&ppcPages[i],sizeof(struct ppcPagesFormat),1,CACHE);
-	        }
-		fclose(CACHE);
-
+		if ((CACHE = bfopen(cashefile,"wb")) == NULL) {
+			perror(cashefile);
+		}
+		else {
+			flock(fileno(CACHE),LOCK_EX);
+			fwrite(&nrOfPpcPages,sizeof(nrOfPpcPages),1,CACHE);
+			for (i=0; i<nrOfPpcPages;i++) {
+	        		fwrite(&ppcPages[i],sizeof(struct ppcPagesFormat),1,CACHE);
+	        	}
+			fclose(CACHE);
+		}
 
 	}//!hascashe
 
