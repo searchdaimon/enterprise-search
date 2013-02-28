@@ -27,7 +27,7 @@ int main (int argc, char *argv[]) {
 	struct filesFormat files[256];
 
         if (argc < 3) {
-                printf("Dette programet tar inn N linkdb filer og sorterer de.\n\n\tmergeLinkdb MainLinkDB linkdb .. N\n\n");
+                printf("Dette programet tar inn N linkdb filer og merger de.\n\n\tmergeLinkdb MainLinkDB outlinkdb linkdb .. N\n\n");
                 exit(0);
         }
 
