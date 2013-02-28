@@ -30,8 +30,7 @@ int main (int argc, char *argv[]) {
 	while (!feof(fileha)) {
 		//wordid hedder
         	if (fread(&term,sizeof(unsigned long),1,fileha) != 1) {
-			printf("can't read term\n");
-			perror("");
+			perror("can't read term: ");
 			continue;
 		}
         	fread(&Antall,sizeof(unsigned long),1,fileha);
