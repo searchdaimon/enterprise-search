@@ -26,7 +26,7 @@ int main (int argc, char *argv[]) {
 	char *subname = argv[1];
 
 
-	if (!uriindex_open(&dbp,subname)) {
+	if (!uriindex_open(&dbp,subname, DB_RDONLY)) {
 		perror("Can't open db.");
 		exit(-1);
 	}
@@ -43,8 +43,8 @@ int main (int argc, char *argv[]) {
         /* Iterate over the database, retrieving each record in turn. */
         while ((ret = cursorp->c_get(cursorp, &key, &data, DB_NEXT)) == 0) {
             /* Do interesting things with the DBTs here. */
-            printf("\"%.*s\" -> %u\n", key.size, (char*)key.data, (*(unsigned int *)data.data));                
-
+//            printf("\"%.*s\" -> %u\n", key.size, (char*)key.data, (*(unsigned int *)data.data));                
+            printf("\"%.*s\" -> DocID %u:, lastmodified: %u\n", key.size, (char*)key.data, (*(struct uriindexFormat *)data.data).DocID, (*(struct uriindexFormat *)data.data).lastmodified);                
         }
 
         /* Close the cursor */
@@ -56,5 +56,5 @@ int main (int argc, char *argv[]) {
 
 	uriindex_close(&dbp);
 
-
+	printf("~\n");
 }
