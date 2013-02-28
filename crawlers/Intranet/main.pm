@@ -81,8 +81,19 @@ sub path_access  {
                     print "Trying to authenticate by NTLM to server $server\n";
                     $robot->credentials($server, '', $user, $passw);
             }
+	    elsif ($response->www_authenticate =~ m/digest/i) {
+                   $url =~ m/http:\/\/([^\/]+)/i;
+                   my $server = $1 . ":80";
+			
+		   my $ralm = $response->www_authenticate;
+		   $ralm =~ m/realm=\"([^\"]+)\"/i;
+		   $ralm = $1;
+
+                   print "Trying to authenticate by Digest to server $server\n";
+                   $robot->credentials($server, $ralm, $user, $passw);
+	    }
             else {
-                    print "Unknown authentication method \"" . $response->www_authenticate . "\".\n";
+                   print "Unknown authentication method \"" . $response->www_authenticate . "\".\n";
             }
 
             #rerun the request
@@ -119,11 +130,11 @@ sub crawl_update {
     $download_images = $opt->{download_images};
 
     print "Name : ". bot_name."    mail :". bot_email."\n";
-    my $robot = LWP::RobotUA->new( agent=>bot_name, from=>bot_email, keep_alive=>'1' );
+    my $robot = LWP::RobotUA::SD->new( agent=>bot_name, from=>bot_email, keep_alive=>'1' );
     $robot->delay($opt->{delay}/60); 
     $robot->timeout(timeout);
     $robot->max_size(max_size);
-    $robot->requests_redirectable([]); # uncomment this line to disallow redirects
+    $robot->requests_redirectable([qw/ GET HEAD /]); # Allow redirect of get and head request. We will then cachs them using our own redirect_ok() oberrite.
     $robot->protocols_allowed(['http','https']);  # disabling all others
     say("bot_name (bot_email) starting at ", scalar(localtime), "\n");
 
@@ -336,6 +347,17 @@ sub process_near_url {
 			my $server = $1 . ":80";
 			print "Trying to authenticate by NTLM to server $server\n";
 			$robot->credentials($server, '', $user, $passw);
+		}
+		elsif ($response->www_authenticate =~ m/digest/i) {
+                        $url =~ m/http:\/\/([^\/]+)/i;
+                        my $server = $1 . ":80";
+			
+			my $ralm = $response->www_authenticate;
+			$ralm =~ m/realm=\"([^\"]+)\"/i;
+			$ralm = $1;
+
+                        print "Trying to authenticate by Digest to server $server\n";
+                        $robot->credentials($server, $ralm, $user, $passw);
 		}
 		else {
 			die("Unknown authentication method \"" . $response->www_authenticate . "\".");
@@ -563,4 +585,27 @@ sub report {
 }
 
 
+package LWP::RobotUA::SD;
+
+use Data::Dumper;
+use strict;
+
+# this class is a subclass of LWP::RobotUA
+use base 'LWP::RobotUA';
+
+sub redirect_ok {
+	my ($self, $request, $response) = @_;
+
+	if ($request->uri->canonical =~ /robots.txt$/) {
+		print "######################\nAllowing redirect of robots.txt file\n######################\n";
+		print "Url: ", $request->uri->canonical, "\n";
+
+		return 1;
+	}
+	else {
+		return 0;
+	}
+}
+
 1;
+
