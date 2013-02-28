@@ -5,6 +5,7 @@
 
 #include "../common/boithohome.h"
 #include "../common/bstr.h"
+#include "../common/stdlib.h"
 
 
 #include "../3pLibs/keyValueHash/hashtable.h"
@@ -70,27 +71,6 @@ unsigned int domainpac(char s[]) {
 	//runarb: weak this is
 	return (s[0] * s[1] * s[2]);
 
-}
-
-int *intdup(int i) {
-	int *ret;
-
-	if ((ret = malloc(sizeof(int))) == NULL) {
-		return NULL;
-	}
-	(*ret) = i;
-
-	return ret;
-}
-unsigned int *intudup(int i) {
-	unsigned int *ret;
-
-	if ((ret = malloc(sizeof(unsigned int))) == NULL) {
-		return NULL;
-	}
-	(*ret) = i;
-
-	return ret;
 }
 
 int anyLoad(char file[],struct hashtable *h, unsigned int (*pac)(char s[])) {
