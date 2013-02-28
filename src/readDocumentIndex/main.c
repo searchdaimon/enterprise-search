@@ -24,7 +24,9 @@ int main (int argc, char *argv[]) {
 	printf("DocumentIndexPost size: %i\n",sizeof(DocumentIndexPost));
 
 	while (DIGetNext (&DocumentIndexPost,LotNr,&DocID,subname)) {
-		printf("DocID: %u, url: %s, RepositoryPointer %u\n",DocID,DocumentIndexPost.Url,DocumentIndexPost.RepositoryPointer);
+		if (DocumentIndexPost.RepositoryPointer != 0) {
+			printf("DocID: %u, url: %s, RepositoryPointer %u, lastSeen %s",DocID,DocumentIndexPost.Url,DocumentIndexPost.RepositoryPointer,ctime(&DocumentIndexPost.lastSeen));
+		}
 	}
 
 
