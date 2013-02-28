@@ -18,7 +18,7 @@
 
 
 /* the TCP port that is used for this example */
-#define TCP_PORT   6500
+#define TCP_PORT   7505
 
 #ifdef WITH_THREAD
 	#include <pthread.h>
@@ -28,16 +28,35 @@
 
 void *issueAdd(void *arg);
 
-int main () {
+int main (int argc, char *argv[]) {
 
 	int     sockfd, newsockfd;
 	socklen_t clilen;
 	struct sockaddr_in cli_addr, serv_addr;
+
+	printf("struct SiderFormat %i\n",sizeof(struct SiderFormat));
 	
 	#ifdef WITH_THREAD
 	pthread_t chld_thr;
 	#endif
 
+	int searchport = TCP_PORT;
+
+        extern char *optarg;
+        extern int optind, opterr, optopt;
+        char c;
+        while ((c=getopt(argc,argv,"p:"))!=-1) {
+                switch (c) {
+                        case 'p':
+                                searchport = atoi(optarg);
+                                printf("will use port %i\n",searchport);
+                                break;
+                        default:
+                                exit(1);
+                }
+
+        }
+        --optind;
 
 
 	#ifdef WITH_THREAD
@@ -61,7 +80,7 @@ int main () {
         memset((char *) &serv_addr, 0, sizeof(serv_addr));
         serv_addr.sin_family = AF_INET;
         serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-        serv_addr.sin_port = htons(TCP_PORT);
+        serv_addr.sin_port = htons(searchport);
 
 
 
@@ -191,7 +210,8 @@ void *issueAdd(void *arg) {
 
 
 
-        if(!mysql_real_connect(&demo_db, "www2.boitho.com", "boitho_remote", "G7J7v5L5Y7", "boitho", 3306, NULL, 0)){
+        //if(!mysql_real_connect(&demo_db, "www2.boitho.com", "boitho_remote", "G7J7v5L5Y7", "boitho", 3306, NULL, 0)){
+        if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", "boithoweb", 3306, NULL, 0)){
                 printf(mysql_error(&demo_db));
                 //return(1);
 		pthread_exit((void *)1); /* exit with status */
@@ -269,7 +289,8 @@ void *issueAdd(void *arg) {
 	}
 	strcpy(ppcprovider,"amazon");
 
-	getPpcAds(ppcprovider,ppcPages,&nrOfppcPages,&queryNodeHeder);
+	//temp: skrur av 3p xml feeds
+	//getPpcAds(ppcprovider,ppcPages,&nrOfppcPages,&queryNodeHeder);
 
 	//temp: Viser en mindre side da vi får problemer med siste?
 	//nrOfppcPages--;
@@ -316,7 +337,8 @@ void *issueAdd(void *arg) {
 		#ifdef DEBUG
 		printf("addid %u\n",addid);
 		#endif
-		sprintf(ppcPages[showabal].uri,"http://search.boitho.com/cgi-bin/addout.cgi?addid=%u&addurl=%s",addid,ppcPages[showabal].url);
+		//sprintf(ppcPages[showabal].uri,"http://search.boitho.com/cgi-bin/addout.cgi?addid=%u&addurl=%s",addid,ppcPages[showabal].url);
+		sprintf(ppcPages[showabal].uri,"http://bbh-001.boitho.com/cgi-bin/addout.cgi?addid=%u&addurl=%s",addid,ppcPages[showabal].url);
 		
 		//strcpy(Sider[i].uri,buff);
 		/*********************************************/
@@ -391,7 +413,7 @@ void *issueAdd(void *arg) {
                	
 		//hiliter ordet
 		sprintf(buff,"<b>%s</b>",queryNodeHeder.query);
-		strcasesandr(Sider[i].description,queryNodeHeder.query,buff);
+		strcasesandr(Sider[i].description,sizeof(Sider[i].description),queryNodeHeder.query,buff);
 
 		//bestemmer ppc type
 		//Sider[showabal].type = siderType_ppcside
@@ -439,13 +461,13 @@ void *issueAdd(void *arg) {
 			
 		#endif
 
-                if (!Sider[i].deletet) {
+                //if (!Sider[i].deletet) {
                         if ((n=sendall(mysocfd,&Sider[i], sizeof(struct SiderFormat))) != sizeof(struct SiderFormat)) {
                                 printf("send only %i of %i\n",n,sizeof(struct SiderFormat));
                                 perror("sendall");
                         }
 
-                }
+                //}
         }
 
 	//logger alle visningene vi har hatt på egen ppc ord
