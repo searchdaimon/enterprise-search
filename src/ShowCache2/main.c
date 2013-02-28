@@ -110,9 +110,6 @@ int main(int argc, char *argv[]) {
 
 	DIRead_fmode (&DocumentIndexPost,iDocID,subname, 's');
 
-//#ifdef BLACK_BOKS
-	DocumentIndexPost.imageSize = 0;
-//#endif
 
 
 	htmlBufSize = (DocumentIndexPost.htmlSize * 30);
