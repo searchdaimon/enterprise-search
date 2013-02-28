@@ -618,7 +618,7 @@ char iff_set_filter(struct indexFilteredFormat *filter, unsigned int mask)
 
 void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filteron) {
 	int i,len,j;
-	//dagur:
+	
 	// Ax: Disse frigjøres i searchkernel.c:
 	(*filteron).attributes = vector_container( pair_container( int_container(), string_container() ) );
 	(*filteron).collection = NULL;
@@ -782,7 +782,6 @@ int searchIndex_getnrs(char *indexType,query_array *queryParsed,struct subnamesF
                 int languageFilterAsNr[]) {
 	int nr;
 
-	//dagur: 
 	nr = 0;
 
 
