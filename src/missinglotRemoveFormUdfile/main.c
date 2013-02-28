@@ -64,7 +64,7 @@ main (int argc, char *argv[]) {
 		perror(outfile_remove);
 		exit(1);
 	}
-	if ((OUTFILE_remove = fopen(outfile_keep,"ab")) == NULL) {
+	if ((OUTFILE_keep = fopen(outfile_keep,"ab")) == NULL) {
 		perror(outfile_keep);
 		exit(1);
 	}
