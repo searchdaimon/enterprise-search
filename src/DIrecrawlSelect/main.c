@@ -46,7 +46,11 @@ int main (int argc, char *argv[]) {
 				continue;
 			}
 
-			
+			if (DocID == 0) {
+				printf("DocID is 0!\n");
+				continue;
+			}
+
 			if (DocumentIndexPost.response == 0) {
 
 			}
@@ -57,20 +61,26 @@ int main (int argc, char *argv[]) {
 				//hvis ingen tester slo ut så går vi bare til neste
 				continue;
 			}
+
 			#ifdef DEBUG
-			printf("recrawl: DocID %u, \"%s\"\n",DocID,DocumentIndexPost.Url);
+			printf("DocumentIndexPost: DocID %u, \"%s\"\n",DocID,DocumentIndexPost.Url);
 			#endif
 
-			strcpy(ud.url,DocumentIndexPost.Url);
+			//må ha memcpy her da vi må padde hele veien med \0, slik det er i DI, hvis sliter perl :(
+			memcpy(ud.url,DocumentIndexPost.Url,sizeof(ud.url));
 			ud.DocID = DocID;
+
 
 			if (fwrite(&ud,sizeof(ud),1,UDFILE) != 1) {
 				perror("fwrite");
 				exit(1);
 			}
 
+			#ifdef DEBUG
+			printf("UD: DocID %u, Url \"%s\"\n",ud.DocID,ud.url);
+			#endif
+
 			++forrecrawl;
-			//printf("DocID: %u, url: %s\n",DocID,DocumentIndexPost.Url);
 		}
 
 		printf("for recrawl: %i\n",forrecrawl);
