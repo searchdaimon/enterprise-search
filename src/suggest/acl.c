@@ -27,6 +27,11 @@ acl_free_reslist(char **reslist, int n)
 {
 	int i;
 
+	if (reslist == NULL) {
+		fprintf(stderr,"Error: acl_free_reslist(reslist=%p, reslist=%d): reslist is NULL\n", reslist, n);
+		return;
+	}
+
 	for (i = 0; i < n; i++)
 		free(reslist[i]);
 	free(reslist);
@@ -39,7 +44,7 @@ acl_usersystem(char *group, char ***groupsout, int *num)
 	int s, i;
 	int port;
 	char buf[1024];
-	int usersystem = 2;
+	int usersystem = 0; //usersystem 0 is primary system
 	char **_gs;
 	char **groups;
 
@@ -47,10 +52,12 @@ acl_usersystem(char *group, char ***groupsout, int *num)
 	cmc_conect(&s, buf, sizeof(buf), port);
 
 	*num = cmc_groupsforuserfromusersystem(s, group, usersystem, &_gs, "");
+	printf("Found %d groups in user susyem %d\n",*num, usersystem);
 
 	groups = calloc(*num, sizeof(char *));
 	for (i = 0; i < *num; i++) {
 		groups[i] = strdup((char *)_gs + (i*MAX_LDAP_ATTR_LEN));
+		printf("Group: \"%s\"\n", groups[i]);
 	}
 	*groupsout = groups;
 
