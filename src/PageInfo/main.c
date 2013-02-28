@@ -253,6 +253,7 @@ int main (int argc, char *argv[]) {
 	if (DIRead_fmode(&DocumentIndexPost,DocID,subname,'s')) {
 
 		printf("Url: \"%s\"\nLanguage: %s (id: %s)\nOffensive code: %hu\nDocument type: %s\nTime tested sins last good crawl: %hu\nAdult weight: %hu\nResource size: %u\nIP Address: %u\nHtml size: %i\nImage size: %i\nUser ID: %i\nCrawler version: %f\nRepository pointer: %u\n",
+
 			DocumentIndexPost.Url, 
 			getLangCode2(atoi(DocumentIndexPost.Sprok)), 
 			DocumentIndexPost.Sprok,
@@ -262,7 +263,7 @@ int main (int argc, char *argv[]) {
 			DocumentIndexPost.AdultWeight, 
 			DocumentIndexPost.ResourceSize, 
 			DocumentIndexPost.IPAddress, 
-			DocumentIndexPost.htmlSize, 
+			DocumentIndexPost.htmlSize2, 
 			DocumentIndexPost.imageSize,
 			DocumentIndexPost.userID, 
 			DocumentIndexPost.clientVersion,
@@ -319,7 +320,7 @@ int main (int argc, char *argv[]) {
 		struct ReposetoryHeaderFormat ReposetoryHeader;
 		char *url, *attributes;
 
-		if (!rReadHtml(htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,DocumentIndexPost.imageSize, &url, &attributes)) {
+		if (!rReadHtml(htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize2,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,DocumentIndexPost.imageSize, &url, &attributes)) {
 			printf("rReadHtml: did not returne true!\n");
 		}
 		printf("Entire url: %s\n", url);
@@ -335,7 +336,9 @@ int main (int argc, char *argv[]) {
 		if (optShowhtml) {
 
 			printf("html uncompresed size %i\n",htmlBufferSize);
-			printf("html buff:\n*******************************\n%s\n*******************************\n\n",htmlBuffer);
+			printf("html buff:\n*******************************\n");
+			fwrite(htmlBuffer,htmlBufferSize,1,stdout);
+			printf("\n*******************************\n\n");
 
 
 		}
@@ -381,6 +384,9 @@ int main (int argc, char *argv[]) {
 
 			printf("adult %i\n",AdultWeight);
 		}
+
+		printf("attributes:\"%s\"\n", attributes);
+
 		free(url);
 		free(attributes);
 		free(acl_allowbuffer);
