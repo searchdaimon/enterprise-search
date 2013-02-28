@@ -31,15 +31,15 @@ clean:
 
 
 mod_auth_boitho.soApache1: mod_auth_boitho.c 
-	$(APXS) $(DEFINES) -DAPACHE_V13 -c mod_auth_boitho.c ../boithoadClientLib/liboithoaut.a
+	$(APXS) $(DEFINES) -DAPACHE_V13 -c mod_auth_boitho.c ../crawlManager/client.c ../common/daemon.c ../common/strlcpy.c ../common/bstr.c ../common/strlcat.c
 
 mod_auth_boitho.soApache2: mod_auth_boitho.c 
-	$(APXS) $(DEFINES) -c mod_auth_boitho.c ../boithoadClientLib/liboithoaut.a
+	$(APXS) $(DEFINES) -c mod_auth_boitho.c ../crawlManager/client.c ../common/daemon.c ../common/strlcpy.c ../common/bstr.c ../common/strlcat.c
 
-rpm:
-	mkdir $(NAME)-$(VERSION)
-	cp $(NAME).so $(NAME)-$(VERSION)
-	echo "all:" > $(NAME)-$(VERSION)/Makefile
-	tar zcvf $(HOME)/redhat/SOURCES/$(NAME)-$(VERSION).tar.gz $(NAME)-$(VERSION)/
-	rm -rf $(NAME)-$(VERSION)/
-	rpm -bb mod_auth_boitho.spec
+#rpm:
+#	mkdir $(NAME)-$(VERSION)
+#	cp $(NAME).so $(NAME)-$(VERSION)
+#	echo "all:" > $(NAME)-$(VERSION)/Makefile
+#	tar zcvf $(HOME)/redhat/SOURCES/$(NAME)-$(VERSION).tar.gz $(NAME)-$(VERSION)/
+#	rm -rf $(NAME)-$(VERSION)/
+#	rpm -bb mod_auth_boitho.spec

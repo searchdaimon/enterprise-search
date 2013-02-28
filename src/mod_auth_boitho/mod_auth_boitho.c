@@ -16,6 +16,12 @@
  * I went back to mod_auth.c to see how it was converted.
  */
 
+#define DEBUG
+// runarb 06.04.2011:
+// hardcoded. Skal egentlig være spesifisert i config/main.conf. Nå blir det tul med andre utviklere...
+#define CMDPORT 7392
+
+
 /* The longest allowable length of a username */
 #define MAX_USERNAME_LENGTH 100
 
@@ -41,7 +47,8 @@
 
 
 //#include "../liboithoaut/liboithoaut.h"
-#include "../boithoadClientLib/liboithoaut.h"
+//#include "../boithoadClientLib/liboithoaut.h"
+#include "../crawlManager/client.h"
 
 #include "ap_config.h"
 
@@ -97,8 +104,10 @@ static void *create_auth_boitho_dir_config(apr_pool_t *p, char *d)
     return sec;
 }
 
+/*
+ * Config file commands that this module can handle
+ */
 #ifdef APACHE_V13
-
 static const command_rec auth_boitho_cmds[] =
 {
 	{"AuthBoitho", ap_set_flag_slot,
@@ -127,10 +136,11 @@ static int auth_boitho_authorize(const char *user, const char* pw,
 		request_rec* r);
 
 // Authentication function
-static int auth_boitho_handler(request_rec *r);
+static int auth_boitho_user_id(request_rec *r);
 
 // Authorization function
 static int auth_boitho_valid_user(request_rec *r);
+
 
 
 #ifdef APACHE_V13
@@ -145,8 +155,8 @@ module MODULE_VAR_EXPORT auth_boitho_module =
     auth_boitho_cmds,                  /* command table */
     NULL,                       /* handlers */
     NULL,                       /* filename translation */
-    auth_boitho_handler,    /* check_user_id */
-    auth_boitho_handler,          /* check auth */
+    auth_boitho_user_id,    /* check_user_id */
+    auth_boitho_valid_user,          /* check auth */
     NULL,                       /* check access */
     NULL,                       /* type_checker */
     NULL,                       /* fixups */
@@ -175,12 +185,19 @@ static void my_register_hooks()
 	/* We want to run before mod_auth runs. */
 	static const char *aszpost[] = {"mod_auth.c", NULL};
 	/* Authentication function */
-	ap_hook_check_user_id(auth_boitho_handler,NULL,aszpost,APR_HOOK_MIDDLE);
+	ap_hook_check_user_id(auth_boitho_user_id,NULL,aszpost,APR_HOOK_MIDDLE);
+	/* Authorization function */
+	ap_hook_auth_checker(auth_boitho_valid_user, NULL, aszpost, APR_HOOK_MIDDLE);
 }
 
 #endif
 
 
+static int auth_boitho_valid_user(request_rec *r)
+{
+       /* Any user will do. */
+      return OK;
+}
 
 /*
  * auth_boitho_authorize
@@ -195,8 +212,17 @@ static int auth_boitho_authorize(const char *user, const char* pw,
 {
     int status;
     int ret;
+    int socketha;
+    int errorbufflen = 512;
+    char errorbuff[errorbufflen];
 
-	if ((ret = boitho_authenticat(user,pw)) == 1) {
+
+        if (!cmc_conect(&socketha,errorbuff,errorbufflen,CMDPORT)) {
+        	printf("Error: %s\n",errorbuff);
+        	return 0;
+        }
+
+	if ((ret = cmc_authuser(socketha, user, pw , 0 , "")) == 1) {
 		status=1;
 	}
 	else if (ret == 2) {
@@ -206,7 +232,8 @@ static int auth_boitho_authorize(const char *user, const char* pw,
 		status=0;
 	}
 
-	
+	cmc_close(socketha);
+
     if (status==1) {
 	//runarb: 
 	#ifdef DEBUG
@@ -272,12 +299,11 @@ cleanstring(char *str, void *r)
 }
 
 /*
- * auth_boitho_handler
+ * auth_boitho_user_id
  *
  * See if the username/pw combination is valid.
  */
-
-static int auth_boitho_handler(request_rec *r)
+static int auth_boitho_user_id(request_rec *r)
 {
 
 	/*
@@ -298,8 +324,10 @@ static int auth_boitho_handler(request_rec *r)
         (auth_boitho_config_rec *) ap_get_module_config(r->per_dir_config, &auth_boitho_module);           
 
      if(rc != OK) return rc;
-     if (s->auth_boitho_flag != 1)
-        { return DECLINED; }            
+     if (s->auth_boitho_flag != 1) { 	
+		return DECLINED; 
+     }            
+
 
 #ifdef APACHE_V13
 	conn_rec *c = r->connection;
@@ -358,9 +386,14 @@ static int auth_boitho_handler(request_rec *r)
          ap_note_basic_auth_failure(r);  
          return HTTP_UNAUTHORIZED;
      } else if (ret == 2) {
-        apr_table_setn(r->headers_out, "Location", "/noaccess.html");
-	return HTTP_MOVED_TEMPORARILY;
+	#ifdef APACHE_V13
+		return HTTP_INTERNAL_SERVER_ERROR;
+	#else
+        	apr_table_setn(r->headers_out, "Location", "/noaccess.html");
+		return HTTP_MOVED_TEMPORARILY;
+	#endif
      }
+
 
      return OK;
 }
