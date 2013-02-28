@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "../common/poprank.h"
 
 //var 10 her
@@ -11,7 +15,10 @@ int main (int argc, char *argv[]) {
 
 	struct popl popindex;
 
-	int Rank_extern,DocID_extern,Rank_intern,DocID_intern,DocID_noc,Rank_noc;
+	int Rank_extern,Rank_intern,Rank_noc;
+
+	unsigned int DocID_intern,DocID_noc,DocID_extern;
+
 	int pop;
 
         popopen (&popextern,"/home/boitho/config/popextern");
