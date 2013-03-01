@@ -83,6 +83,18 @@ elsif (defined($state{'submit'})) {
 			= $page->select_dist_version($vars, $state{'dist'});
 	}
 
+	elsif (defined $btn->{'frontpage_select'}) {
+		# User selected a different frontpage tp show for /
+		$tpl_file 
+			= $page->select_frontpage_version($vars, $state{'frontpage'});
+	}
+
+	elsif (defined $btn->{'anostat_select'}) {
+		# User selected info about anonymous usage statistics
+		$tpl_file 
+			= $page->select_anostat_version($vars, $state{'anostat'});
+	}
+
         elsif (defined $btn->{admin_pass}) {
             # User is changing passwords
             $tpl_file = $page->update_admin_passwd($vars, $state{passwd});
@@ -134,6 +146,14 @@ elsif (defined $state{'view'}) {
 
 	elsif ($view eq "advanced") {
 		$tpl_file = $page->show_advanced_settings($vars);
+	}
+
+	elsif ($view eq "frontpage") {
+		$tpl_file = $page->show_frontpage_settings($vars);
+	}
+
+	elsif ($view eq "anostat") {
+		$tpl_file = $page->show_anostat_settings($vars);
 	}
 
         elsif ($view eq "network_restart") {
