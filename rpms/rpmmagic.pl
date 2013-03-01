@@ -19,8 +19,11 @@ if ($#ARGV == -1) {
   my $defattr;
   my $restartsw;
   my $sysconfig;
+  my $config;
+  my $configFiles;
   my $defines = '';
   my $nostrip;
+  my @configFiles;
 
   my $result = GetOptions ("pre=s" 	 => \$pre,    	# rpm pre 
                         "post=s"   	 => \$post,      	# rpm post
@@ -32,6 +35,7 @@ if ($#ARGV == -1) {
 			"initdrestart=s" => \$initdrestart, 		# restarting av en init.d tjeneste
 			"defattr=s" => \$defattr,
 			"sysconfig=s" => \$sysconfig,
+			"config=s" => \$config,
 			"nostrip"	=> \$nostrip,
 			"verbose"  	 => \$verbose);
 
@@ -58,6 +62,37 @@ if (defined($initd)) {
 
 if (defined($sysconfig)) {
 	push(@files, "sysconfig/rpcbind");
+}
+
+if (defined($post)) {
+	sub importfile {
+		my $file = shift;
+		$file = $source . '/' . $file;
+
+		open(INF, $file) or die("Cant open $file: $!");
+			my $lines = join('',<INF>);
+		close(INF);
+
+		return "\n\n#Import of $file\n" . $lines . "\n\n";
+	}
+
+	$post =~ s/\\n /\n/g;
+	$post =~ s/\\n/\n/g;
+	$post =~ s/import\((.*?)\)/ importfile($1) /ge;
+}
+#legger til at dette er en lokal config fil, og ikke skal overskrives
+if (defined($config)) {
+
+	@configFiles = split(' ',$config);
+
+	# sjekker at den ikke finnes fra før. Det skal den nemlig ikke...
+	foreach my $s (@files) {
+		if (inarr($s, @configFiles)) {
+			die("Config file \"$config\" is spesifyed twice.");
+		}
+	}
+	# legger den til som en vanlig fil for nå. Vil legge på %config(noreplace) lengere ned
+	push(@files,@configFiles);
 }
 
 my $name_and_version = $name . '-' . $version;
@@ -94,9 +129,17 @@ my $fileslist = '';
 for my $i (@files) {
 	my $filedest = $dest . '/' . $i;
 
+	#add correct "%" tag befor the config file
+	if (defined($config) && inarr($i,@configFiles)) {
+		$fileslist .= "%config(noreplace) " . $filedest . "\n";
+	}
+	else {
+		$fileslist .= $filedest . "\n";
+	}
+
 	$filesinstal .= "cp -r --parents $i \$DESTDIR/\n";
 
-	$fileslist .= $filedest . "\n";
+
 }
 if (defined($initd)) {
 	$filesinstal .= "install -D -m 755  init.d/$initd \$RPM_BUILD_ROOT/etc/init.d/$initd\n";
@@ -281,3 +324,17 @@ close(OUT);
 
 
 
+sub inarr($$) {
+	my $some = shift;
+	my @arr = @_;
+
+	foreach my $i (@arr) {
+		print "$i == $some\n";
+		if ($i eq $some) {
+			return 1;
+		}
+	}
+
+
+	return 0;
+}
