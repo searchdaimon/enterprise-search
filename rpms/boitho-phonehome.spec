@@ -14,6 +14,7 @@ Group: Boitho/admin
 Prefix: %{_prefix}
 BuildRoot: %{_tmppath}/%{name}-buildroot
 Provides: boitho-phonehome
+requires: boitho-sdesuser
 
 %description
 
