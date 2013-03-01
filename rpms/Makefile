@@ -116,7 +116,7 @@ boitho-gc_name = boitho-garbage-collection
 boitho-gc_version = 1.5.8
 
 boitho-perlxs-sdcrawl_name = boitho-perlxs-sdcrawl
-boitho-perlxs-sdcrawl_version = 0.4
+boitho-perlxs-sdcrawl_version = 0.5
 
 boitho-webadd_name = boitho-bbdocumentwebadd
 boitho-webadd_version = 0.7.10
@@ -130,6 +130,9 @@ boitho-vmware_version = 0.1.1
 boitho-virtualbox_name = boitho-virtualbox
 boitho-virtualbox_version = 0.1.1
 
+boitho-devel_name = boitho-devel
+boitho-devel_version = 0.1.0
+
 boitho-hp-tg3_name = boitho-hp-tg3
 boitho-hp-tg3_version = 0.1.1
 
@@ -139,7 +142,7 @@ boitho-PageInfobb_version = 0.1.3
 boitho-public-htaccess_name = boitho-public-htaccess
 boitho-public-htaccess_version = 0.1.0
 
-all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager2 boitho-bbdn base setuidbb bbAutoUpdate sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch scripts repomod suggest perlxs-sdcrawl webadd list_collections virtualbox hp-tg3
+all: webclient iindex bbadmin boithoad everrun infoquery searchdbb crawlManager2 boitho-bbdn base setuidbb bbAutoUpdate sqldatabase mod_boitho_auth meta phonehome daemonize tlcd-gt14 fileFilter filepermissions configfiles crawl_watch scripts repomod suggest perlxs-sdcrawl webadd list_collections virtualbox hp-tg3 devel
 
 sqlUpdate:
 	perl rpmmagic.pl --sql sql/update-cur.sql --requires "boitho-database" $(boithobb-sqlUpdate_name) $(boithobb-sqlUpdate_version) $(BOITHOHOME) /home/boitho/boithoTools 
@@ -187,7 +190,7 @@ webadd:
 	rpmbuild -bb $(boitho-webadd_name).spec
 
 perlxs-sdcrawl:
-	perl rpmmagic.pl $(boitho-perlxs-sdcrawl_name) $(boitho-perlxs-sdcrawl_version) $(BOITHOHOME) /home/boitho/boithoTools perlxs/SD-Crawl/blib
+	perl rpmmagic.pl --post "chown boitho:boitho /home/boitho/boithoTools/perlxs/ /home/boitho/boithoTools/perlxs/SD-Crawl/" $(boitho-perlxs-sdcrawl_name) $(boitho-perlxs-sdcrawl_version) $(BOITHOHOME) /home/boitho/boithoTools perlxs/SD-Crawl/blib
 	rpmbuild -bb $(boitho-perlxs-sdcrawl_name).spec
 
 iindex:
@@ -294,6 +297,10 @@ virtualbox:
 hp-tg3:
 	perl rpmmagic.pl --requires "hp-tg3-doc>=3.110g-2 kmod-hp-tg3>=3.110g-2" $(boitho-hp-tg3_name) $(boitho-hp-tg3_version) $(BOITHOHOME) /home/boitho/boithoTools
 	rpmbuild -bb $(boitho-hp-tg3_name).spec
+
+devel:
+	perl rpmmagic.pl --post "sh /home/boitho/boithoTools/script/setup-dev-environment.sh" --requires "kernel-devel kernel-headers gcc bison db4-devel glibc-devel libconfig libconfig-devel mysql-devel perl-devel libsmbclient-devel libxml2-devel popt-devel git flex /usr/include/gnu/stubs-32.h openldap-devel /usr/include/openssl/opensslconf-x86_64.h libtool curl-devel zlib-devel openssl-devel /usr/lib/libssl.a" $(boitho-devel_name) $(boitho-devel_version) $(BOITHOHOME) /home/boitho/boithoTools config.mk script/setup-dev-environment.sh script/enable-root-login.sh script/setup-dev-github.sh
+	rpmbuild -bb $(boitho-devel_name).spec
 
 perldummy:
 	perl rpmmagic.pl --requires "/usr/lib/perl5/vendor_perl/5.8.8/i386-linux-thread-multi/JSON/XS.pm /usr/lib/perl5/vendor_perl/5.8.8/i386-linux-thread-multi/Crypt/SSLeay.pm" $(boitho-perldummy_name) $(boitho-perldummy_version) $(BOITHOHOME) /home/boitho/boithoTools
