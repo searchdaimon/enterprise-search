@@ -43,10 +43,7 @@ mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/sql/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/sysconfig/
 mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/bin/
 
-install -d -m 700 $RPM_BUILD_ROOT/home/sdes/.ssh/
-install -D -m 600 authorized_keys $RPM_BUILD_ROOT/home/sdes/.ssh/authorized_keys
 
-#install -D -m 755 boitho.repo $RPM_BUILD_ROOT/etc/yum.repos.d/boitho.repo
 
 %clean
 
@@ -64,11 +61,6 @@ chown boitho /home/boitho/boithoTools/var
 chown boitho /home/boitho/boithoTools/logs/
 chown boitho /boithoData
 
-LOGINUSER=sdes
-getent passwd $LOGINUSER > /dev/null
-if [ $? -eq 2 ]; then
-	/usr/sbin/useradd -m -s /bin/bash $LOGINUSER
-fi
 
 %post
 
@@ -100,10 +92,6 @@ egrep "^PasswordAuthentication yes$" $SSHDCONFIG >/dev/null && sed -i.bak -e 's/
 /home/boitho/boithoTools/sysconfig
 /home/boitho/boithoTools/bin
 
-%defattr(700,sdes,sdes)
-/home/sdes/.ssh
-%defattr(600,sdes,sdes)
-/home/sdes/.ssh/authorized_keys
 
 #/etc/yum.repos.d/boitho.repo
 
