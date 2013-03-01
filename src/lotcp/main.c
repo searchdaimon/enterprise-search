@@ -46,7 +46,6 @@ main (int argc, char *argv[]) {
                	exit(0);
         }
 
-	printf("argc: %i\n",argc);
 
 	lotNr = atol(argv[1 +optind]);
 	char *subname = argv[2 +optind];
@@ -57,8 +56,10 @@ main (int argc, char *argv[]) {
 
 	//void GetFilPathForLot(char *FilePath,int LotNr,char subname[]);		
 	GetFilPathForLot(lotpath,lotNr,argv[2 +optind]);
-
+	
+	#ifdef DEBUG
 	printf("lotpath %s\n",lotpath);
+	#endif
 
 	if ((argc -optind) == 3) {
 		recursiveDir(lotpath,"",lotNr,subname,optHost);
@@ -119,7 +120,9 @@ void recursiveDir (char lotpath[],char lotinternpath[],unsigned int lotNr,char s
 	while ((dp = readdir(DIRH)) != NULL) {
 
 		if ((dp->d_type == DT_DIR) && ((strcmp(dp->d_name,".") == 0) || (strcmp(dp->d_name,"..") == 0))) {
-			printf(". domain\n");
+			#ifdef DEBUG
+				printf(". domain\n");
+			#endif
 		}
 		else if (dp->d_type == DT_DIR) {
 			//if (lotinternpath[0] == '\0') {
