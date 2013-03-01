@@ -299,7 +299,7 @@ hp-tg3:
 	rpmbuild -bb $(boitho-hp-tg3_name).spec
 
 devel:
-	perl rpmmagic.pl --post "sh /home/boitho/boithoTools/script/setup-dev-environment.sh" --requires "kernel-devel kernel-headers gcc bison db4-devel glibc-devel libconfig libconfig-devel mysql-devel perl-devel libsmbclient-devel libxml2-devel popt-devel git flex /usr/include/gnu/stubs-32.h openldap-devel /usr/include/openssl/opensslconf-x86_64.h libtool curl-devel zlib-devel openssl-devel /usr/lib/libssl.a" $(boitho-devel_name) $(boitho-devel_version) $(BOITHOHOME) /home/boitho/boithoTools config.mk script/setup-dev-environment.sh script/enable-root-login.sh script/setup-dev-github.sh
+	perl rpmmagic.pl --post "sh /home/boitho/boithoTools/script/setup-dev-environment.sh" --config "config.mk" --requires "kernel-devel kernel-headers gcc bison db4-devel glibc-devel libconfig libconfig-devel mysql-devel perl-devel libsmbclient-devel libxml2-devel popt-devel git flex /usr/include/gnu/stubs-32.h openldap-devel /usr/include/openssl/opensslconf-x86_64.h libtool curl-devel zlib-devel openssl-devel /usr/lib/libssl.a" $(boitho-devel_name) $(boitho-devel_version) $(BOITHOHOME) /home/boitho/boithoTools script/setup-dev-environment.sh script/enable-root-login.sh script/setup-dev-github.sh
 	rpmbuild -bb $(boitho-devel_name).spec
 
 perldummy:
