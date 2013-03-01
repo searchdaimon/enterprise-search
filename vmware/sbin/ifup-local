@@ -1,12 +1,59 @@
 #!/bin/bash
 
-echo -n "Searchdaimon ES running on " > /etc/issue
-cat /etc/system-release >> /etc/issue
-echo "Kernel \r on an \m" >> /etc/issue
-ADDR=`ifconfig eth1|sed -ne "2p"`
-if [[ `echo $ADDR|awk '{print $1}'` == "inet" ]]; then
-    echo "IP-"`echo $ADDR|awk '{print $2}'` >> /etc/issue
+FILE="/etc/issue"
+#FILE="/tmp/aaa2"
+PFORMAT="%-80s\n"
+
+COLOR3="\033[1;37m" #white
+COLOR4="\033[1;35m" #Magenta
+COLOR5="\033[1;31m" #Red
+COLOR_RESET="\033[0m"
+
+DEFUSERNAME="'"$COLOR4"admin"$COLOR3"'"
+DEFPASSWORD="'"$COLOR4"water66"$COLOR3"'"
+
+SETUSERNAME="'"$COLOR4"setup"$COLOR3"'"
+
+rm -f $FILE
+printf "\033[1;44;37m" >> $FILE #backround collor
+
+printf "%s\n" "Searchdaimon ES running on Kernel \r on an \m                  " >> $FILE
+
+printf $PFORMAT "" >> $FILE
+printf $PFORMAT "Searchdaimon ES is a free enterprise search solution, suitable for corporate" >> $FILE
+printf $PFORMAT "use, adding search to webpages and/or OEM. ES support attributes navigation and ">> $FILE
+printf $PFORMAT "collection sorting and will maintain existing permissions." >> $FILE 
+printf $PFORMAT "" >> $FILE
+printf $PFORMAT "" >> $FILE
+
+#detect ip adress ans show coorect message based on it.
+ADDR_P=`ifconfig eth0|sed -ne "2p"`
+if [[ `echo $ADDR_P|awk '{print $1}'` == "inet" ]]; then
+
+ADDR=`echo $ADDR_P|awk 'BEGIN { FS = "[ :]" } ; { print $3 }'`
+
+printf $PFORMAT "Web based administration of ES:" >> $FILE
+printf $PFORMAT "    [Web] http://$ADDR/admin" >> $FILE
+printf "%-80b\n" "    For the web gui the default username and password is $DEFUSERNAME and $DEFPASSWORD. " >> $FILE
+printf $PFORMAT "" >> $FILE
+printf $PFORMAT "" >> $FILE
+
 else
-    echo "Couldn't get IP-address." >> /etc/issue
+    printf "%b%-80s%b\n"  $COLOR5 "Unable to get IP-address!" $COLOR3 >> $FILE
 fi
-echo >> /etc/issue
+
+
+printf $PFORMAT "" >> $FILE
+printf "%-s%b%-s\n" "Login below as user " $SETUSERNAME " without a password to change network settings.      " >> $FILE
+#printf $PFORMAT "!!The primary network card is eth1!! Not eth0." >> $FILE
+printf $PFORMAT "" >> $FILE
+printf $PFORMAT "" >> $FILE
+printf $PFORMAT "*The documentation is available at http://www.searchdaimon.com/documentation/" >> $FILE
+printf $PFORMAT "*Default root password for login below is l@nport3r47. But please don't do" >> $FILE
+printf $PFORMAT "that, use the web gui and setup program for administration." >> $FILE
+
+
+echo -e $COLOR_RESET >> $FILE
+
+echo >> $FILE
+
