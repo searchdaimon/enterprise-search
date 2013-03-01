@@ -1,5 +1,5 @@
 %define name boitho-apaceconf
-%define version 1.3.0
+%define version 1.4.0
 %define release 1
 
 Summary: Boitho 
