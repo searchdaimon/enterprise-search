@@ -62,7 +62,7 @@ sub add_share {
 	# Start crawling the collection
 	{
 		my $iq = new Boitho::Infoquery($CONFIG->{infoquery});
-		$iq->crawlCollection($attr{collection_name})
+		$iq->crawlCollection($attr{collection_name}, logfile => $CONFIG->{'coll_log_path'} . $attr{collection_name})
 			or carp $iq->error;
 	}
     
