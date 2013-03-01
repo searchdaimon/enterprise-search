@@ -10,11 +10,11 @@ int main()
     system("/usr/sbin/setup");
     printf("Stopping network: eth0"); fflush(stdout);
     system("/sbin/ifdown eth0");
-    printf(" eth1"); fflush(stdout);
-    system("/sbin/ifdown eth1");
+    printf(" eth0"); fflush(stdout);
+    system("/sbin/ifdown eth0");
     printf("\nStarting network: eth0"); fflush(stdout);
     system("/sbin/ifup eth0");
-    printf(" eth1"); fflush(stdout);
-    system("/sbin/ifup eth1");
+    printf(" eth0"); fflush(stdout);
+    system("/sbin/ifup eth0");
     printf("\n");
 }
