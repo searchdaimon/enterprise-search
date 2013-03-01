@@ -19,6 +19,11 @@ my $vars = { };
 my $template = Template->new({INCLUDE_PATH => './templates:./templates/help:./templates/common'});
 my $template_file = "help.html";
 
+#test if it is instaled
+if (-e "/etc/init.d/phonehome") {
+	$vars->{'phone_instaled'} = 1;
+}
+
 if (defined($state->{'action'})) {
 	my $action = $state->{'action'};
 	
