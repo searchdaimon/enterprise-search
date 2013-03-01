@@ -1,5 +1,5 @@
 %define name boitho-syslogconf
-%define version 1.0.0
+%define version 1.0.3
 %define release 1
 
 Summary: Boitho 
