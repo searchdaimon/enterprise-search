@@ -38,6 +38,7 @@ use constant TPL_ACCESS_LEVEL		=> 'overview_accesslevel.html';
 use constant TPL_GRAPHS			=> 'overview_graphs.html';
 use constant TPL_CONSOLE		=> 'overview_console.html';
 use constant TPL_DOCUMENTS		=> 'overview_documents.html';
+use constant TPL_UPLOAD			=> 'overview_upload.html';
 use constant TPL_RREAD			=> 'overview_rread.html';
 use constant TPL_PAGEINFO		=> 'overview_pageinfo.html';
 use constant TPL_HTMLDUMP		=> 'overview_htmldump.html';
@@ -296,6 +297,21 @@ sub show_documents {
 	$vars->{collection_lot_links} = \@lotlinks;
 
         return TPL_DOCUMENTS;
+}
+
+sub show_upload {
+        my ($s, $vars, $id, $connector) = @_;
+
+        my $sqlShares = Sql::Shares->new($s->{dbh});
+        my $sess = Sql::SessionData->new($s->{dbh});
+        my $sessid = $sess->insert('crawled documents' => '');
+        $vars->{sessid} = $sessid;
+        $vars->{id} = $id;
+        $vars->{connector} = $connector;
+        my $collection_name = $sqlShares->get_collection_name($id);
+	$vars->{collection_name} = $collection_name;
+
+        return TPL_UPLOAD;
 }
 
 sub show_rread {

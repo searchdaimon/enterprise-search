@@ -96,6 +96,9 @@ if (defined $state{action}) {
 	elsif ($action eq 'documents') {
 		$tpl_file = $overview->show_documents($vars, $id, $connector);
 	}
+	elsif ($action eq 'upload') {
+		$tpl_file = $overview->show_upload($vars, $id, $connector);
+	}
 	elsif ($action eq 'customize') {
 		$tpl_file = $overview->show_customize($vars, $id, $connector);
 	}
