@@ -25,7 +25,7 @@ ad_list_groupsforuser(usersystem_data_t *data, const char *user, char ***groups,
 int
 ad_authenticate_user(usersystem_data_t *data, char *user, char *password)
 {
-	return 0;
+	return boitho_authenticat(user, password);
 }
 
 char *
