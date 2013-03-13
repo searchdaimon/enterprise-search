@@ -5,7 +5,7 @@
 $user = "boitho";
 $Password = "G7J7v5L5Y7";
 #$server = "localhost";
-$server = "web1.jayde.boitho.com";
+$server = "localhost";
 $database = "boithoweb";
 
 
@@ -192,27 +192,31 @@ sub crawlSomeUrls {
     		# examine response to find cascaded requests (redirects, etc) and
     		# set current response to point to the very first response of this
     		# sequence. (not very exciting if you set '$pua->redirect(0)')
-    		my $r = $res; my @redirects;
+    		my $r = $res; 
+		my @redirects;
+		my $url = $res->request->url;
     		while ($r) { 
-			$res = $r; 
+			#$res = $r; 
+			$url = $r->request->url;
 			$r = $r->previous; 
+			# usikker hva som er riktig her, etter at vi tokk bort "$res = $r;"
 			push (@redirects, $res) if $r;
+			#push (@redirects, $r) if $r;
+
+
     		}
     
+		print "url $url\n";
     
 		#ToDO: $res->request er av og til "undef", hvorfor ? (sjekker for det nå, men hvorfor skjer det)
 		if (defined $res->request) {
 			# summarize response. see "perldoc HTTP::Response"
-    			print "Answer for ",$res->request->url," DcoID: ", $DocIDToUrlHash{$res->request->url}," was \t '",$res->code,"': ", $res->message, "\n";
+    			print "Answer for ",$url," DcoID: ", $DocIDToUrlHash{$url}," was \t '",$res->code,"': ", $res->message, "\n";
 	
-			#$ferdig_side{'url'} = $res->request->url;
-			#$ferdig_side{content_type} = $res->content_type; 
-			#$ferdig_side{'response_code'} = $res->code;
-			#$ferdig_side{response_content} = $res->content;
 		
 			#print "<side>\n";
 			#print "	<head>\n";
-			#print "	URL: " . $res->request->url . "\n";
+			#print "	URL: " . $url . "\n";
 			#print "	content_type: ". $res->content_type . "\n";
 			#print "	response_code: " . $res->code . "\n";
 			#print "	</head>\n";
@@ -228,22 +232,23 @@ sub crawlSomeUrls {
 			my $userID = "internal";
 			my $image = '';
 
-			my $DocID = $DocIDToUrlHash{$res->request->url};
+			my $DocID = $DocIDToUrlHash{$url};
 			my $response = $res->code;
 
 			#hvis vi ikke har urlen i db sjekker vi om vi har url som er lik, men med en / . Kan ha blitt lagt på en /, uten at det er en redirect
-			if ((!exists($DocIDToUrlHash{$res->request->url}) ) && ( exists($DocIDToUrlHash{$res->request->url . '/'}) ) ) {
-				$DocIDToUrlHash{$res->request->url} .= '/';
+			if ((!exists($DocIDToUrlHash{$url}) ) && ( exists($DocIDToUrlHash{$url . '/'}) ) ) {
+				$DocIDToUrlHash{$url} .= '/';
 			}
 
-			if (!exists($DocIDToUrlHash{$res->request->url})) {
-				print "don't have a DocID for ",$res->request->url,"\n";
+			if (!exists($DocIDToUrlHash{$url})) {
+				print "don't have a DocID for ",$url,"\n";
+				next;
 				#exit;
 			}
 
-			print "appening DocID: ", $DocIDToUrlHash{$res->request->url}, ", url: ", $res->request->url, ", res: $response\n";
+			print "appening DocID: ", $DocIDToUrlHash{$url}, ", url: ", $url, ", res: $response\n";
 
-			Boitho::Reposetory::rApendPost($DocIDToUrlHash{$res->request->url},$res->request->url,'htm',
+			Boitho::Reposetory::rApendPost($DocIDToUrlHash{$url},$url,'htm',
 				$res->code,$ipaddress,$curentTime,$clientapplicationversion,$userID,$html_compressed,
 				length($html_compressed),$image,length($image),$subname);
 
@@ -259,11 +264,14 @@ sub crawlSomeUrls {
 		}
 		
 	    	# print redirection history, in case we got redirected
-	    	foreach (@redirects) {
-			print "\t",$_->request->url, "\t", $_->code,": ", $_->message,"\n";
-			print "        content_type: ". $res->content_type . "\n";
-			print          $res->content . "\n";
-	    	}
+		if (scalar(@redirects) != 0) {
+			print "redirection history:\n";
+	    		foreach (@redirects) {
+				print "\t",$_->request->url, "\t", $_->code,": ", $_->message,", ";
+				print "        content_type: ". $res->content_type . "\n";
+				#print          $res->content . "\n";
+	    		}
+		}
   	
 	}
 
