@@ -2,7 +2,7 @@
 CFLAGS?=	
 CFLAGS+=	`pkg-config --cflags libxml-2.0` -L/usr/lib -I/home/boitho/.root/include 
 CFLAGS+=	-O0 -g -DBLACK_BOKS -DIIACL  -DEMAIL_ADRESS_AS_ATTRIBUTE -fPIC
-LDFLAGS=	`pkg-config --cflags libxml-2.0` -lz -lm  -lcurl  -lssl -lcrypto -ldl -L/home/boitho/.root/lib
+LDFLAGS=	`pkg-config --libs libxml-2.0` -lz -lm  -lcurl  -lssl -lcrypto -ldl -L/home/boitho/.root/lib
 PROG?=		crawlExchange
 CC=		gcc
 
