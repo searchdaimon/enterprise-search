@@ -15,7 +15,7 @@ if (!$ARGV[0]) {
 	exit;
 }
 
-my @services = qw(boitho-bbdn crawlManager searchdbb suggest);
+my @services = qw(boitho-bbdn crawlManager searchdbb suggest boithoad);
 
 foreach my $p (@services) {
     die "could not fork" unless defined(my $pid = fork);
