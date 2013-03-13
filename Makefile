@@ -486,9 +486,9 @@ crawlPush: src/crawlPush/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g $(CRAWL_STATIC) $(LIBS)*.c src/crawlPush/main.c -o src/crawlPush/crawlPUSH.so $(LDFLAGS) 
+	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g $(CRAWL_STATIC) $(LIBS)*.c src/crawlPush/main.c -o src/crawlPush/crawlPush.so $(LDFLAGS) 
 	mkdir -p crawlers/crawlPush
-	cp src/crawlPush/crawlPUSH.so crawlers/crawlPush/
+	cp src/crawlPush/crawlPush.so crawlers/crawlPush/
 	
 
 testGetNextLotForIndex: src/testGetNextLotForIndex/main.c
