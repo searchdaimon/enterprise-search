@@ -4,15 +4,28 @@ use DB_File;
 use commonDemon qw(daemonis opt_handler);
 use LWP::Simple;
 
-%opts = opt_handler('dl',$help);
+%opts = opt_handler('dls:',$help);
 
 
 if ($opts{d}) {
 	daemonis(0,1,'lagringsserver');
 }
 
+
+#options:
+# 	-s ip	Bruk bar denne ip adressen til å lagre på
+
 my $terminated = 0;
 my $waitingForConection = 0; #holder om vi står å vente på en tilkobling slik at vi kan avslutte med en gang
+my $opt_storage_server = $opts{s}; 
+
+if (defined $opt_storage_server) {
+
+	print "opt_storage_server: $opt_storage_server\n";
+}
+else {
+	print "opt_storage_server: undefined\n";
+}
 
 $url_server_port = 8080;
 
@@ -820,7 +833,7 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 				
 					my $domene = fin_domene($robottxtha->{'url'}->[0]);
 				
-					print "Motot data om robots.txt for $domene\n";	
+					print "Motok data om robots.txt for $domene\n";	
 			
 					print "Respons: $robottxtha->{'response'}->[0]\n";
 					print "Url: $robottxtha->{'url'}->[0]\n";
@@ -1185,19 +1198,19 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 
                         	$rv = $dbh->do(qq{
                                         update downloaded set crawl=crawl + "$countCrawl", robotstxt=robotstxt + "$countRobotstxt" where user= "$userName"
-                        	}) or warn("can´t do statment: ",$dbh->errstr);
+                        	}) or warn("warn: can´t do statment: ",$dbh->errstr);
 
 				$rv = $dbh->do(qq{
 					insert into okdownloaded values(null,"$userName","$countOKCrawl","$countRobotstxt",now())
-				}) or warn("can´t do statment: ",$dbh->errstr);
+				}) or warn("warn: can´t do statment: ",$dbh->errstr);
 
 
 				if ($GroupName ne '') {
 					$rv = $dbh->do(qq{
                                         	update groupsdownloaded  set crawl=crawl + "$countCrawl", robotstxt=robotstxt + "$countRobotstxt" where user="$userName" AND groupname="$GroupName"
-                                	}) or warn("can´t do statment: ",$dbh->errstr);
+                                	}) or warn("warn: can´t do statment: ",$dbh->errstr);
 				}
-                        	print "query finsis\n";
+                        	print "MySQL query finished\n";
 
 
 			}
@@ -1280,6 +1293,14 @@ sub socketSend {
 #
 sub calkualtStorageServer {
         my $DocID = shift;
+
+	if (defined $opt_storage_server) {
+		return $opt_storage_server;
+	}
+
+
+
+
         my $lot = Boitho::Lot::rLotForDOCid($DocID);
 
         my $ipaddr = '';
