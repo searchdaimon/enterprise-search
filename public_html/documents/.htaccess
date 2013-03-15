@@ -1,0 +1,4 @@
+RewriteEngine on
+
+# forward it to bbdocumentWebAdd
+RewriteRule . /cgi-bin/bbdocumentWebAdd?method=rest&%{QUERY_STRING} [L,QSA]
