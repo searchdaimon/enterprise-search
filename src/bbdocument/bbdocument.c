@@ -697,6 +697,10 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 #endif
 
 	if (strcmp((*fileFilter).outputformat,"text") == 0) {
+                //stripper < og > tegn, da html parseren vil tro det er html tagger.
+                //de er jo som kjent på formater < og >
+                stripTags(documentfinishedbuftmp,strlen(documentfinishedbuftmp));
+
 		bprintf(outbuffer, html_text_tempelate,titlefromadd,documentfinishedbuftmp);
 	}
 	else if (strcmp((*fileFilter).outputformat,"html") == 0) {
@@ -734,6 +738,10 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 		printf("did read back %i bytes from file \"%s\"\n",(int)inode.st_size,filconvertetfile_out_txt);
 
 		printf("strlen cpbuf: %i\n",strlen(cpbuf));
+
+                //stripper < og > tegn, da html parseren vil tro det er html tagger.
+                //de er jo som kjent på formater < og >
+                stripTags(cpbuf,inode.st_size);
 
 		fclose(fh);
 
