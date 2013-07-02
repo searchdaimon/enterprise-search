@@ -1,0 +1,1 @@
+sloccount src/*/*.c src/*/*.h src/*/*.y src/*/*.l perl/*.pl perl/*.pm script/ src/levenstein/ public_html/webclient Modules/ cgi-bin/webadmin/ cgi-bin/dc/ cgi-bin/dedicated/ cgi-bin/hartbip/ cgi-bin/inetadmin/ cgi-bin/discover/ src/*/*.cpp src/*/*.pl src/*/*.awk rpm/rpmmagic.pl perlxs/SD-Crawl
