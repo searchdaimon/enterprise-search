@@ -6,3 +6,10 @@ format: text
 
 documentstype: tapp
 format: text
+
+documentstype: cpp
+format: text
+
+documentstype: c
+format: text
+
