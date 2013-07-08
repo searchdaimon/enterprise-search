@@ -74,3 +74,19 @@ Please see our manual at http://www.searchdaimon.com/documentation/
 
 ### Discussion forum ###
 Talk with the ES staff, users and other developers at http://www.searchdaimon.com/forum/ .
+
+### Administration panel ###
+The ES comes with a strong intuitive web interface for administration.
+
+#### Overview ####
+Show status and allow you to configure your collections. Collections are grouped by type of crawler (SMB, Exchange etc.).
+
+![](https://raw.github.com/searchdaimon/enterprise-search/master/doc/images/admin_overview.png)
+
+#### Manually add new data sources ####
+![](https://raw.github.com/searchdaimon/enterprise-search/master/doc/images/admin_manage_edit.png)
+
+#### Statistics & Logs ####
+View aggregated and raw data to see which users are the most active, what the most popular queries are, and how many searches are performed every day.
+
+![](https://raw.github.com/searchdaimon/enterprise-search/master/doc/images/admin_statistics.png)
