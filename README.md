@@ -1,4 +1,4 @@
-## Searchdaimon enterprise search ##
+## Searchdaimon Enterprise Search ##
 
 Searchdaimon is an open source search engine for corporate data and websites. It aims to be as simple to use as your favorite Internet search engine, yet has the added power of delivering results from numerous systems with standardized attribute navigation.
 
@@ -7,11 +7,13 @@ It comes with a powerful administrator interface and can index websites and seve
 You can setup your development environment directly on the ES with little effort. Then tweak and change what you want. 
 
 ### General information ###
+- [Official website](http://www.searchdaimon.com/)
+- [Documentation](http://www.searchdaimon.com/documentation/)
 - [Road map to the future](http://www.searchdaimon.com/wiki/Road_map_to_the_future)
 - [When to use and not to use the ES](http://www.searchdaimon.com/products/when_to_use_and_not_to_use/)
 - [Help us translate the user interface to different languages](http://www.searchdaimon.com/documentation/C48/#translating_the_search_engine_result_page_into_a_new_language)
 - How to upgrade existing installations to the open source version
-- How Searchdaimon As, our company will make money
+- [How Searchdaimon As, our company will make money](http://www.searchdaimon.com/wiki/Monetizing_the_ES)
 
 ### The software ###
 
@@ -43,17 +45,17 @@ Download an ES virtual machine image from http://www.searchdaimon.com/download/ 
 5.	Compile the source code:  
 `make`  
 
-#### ssh access ####
+##### SSH access #####
 You may also want to enable ssh login as root. As root run:
 `sh /home/boitho/boithoTools/script/enable-root-login.sh`
 **Remember to change the root password!**
 
-#### Disable automatic updates ####
+##### Disable automatic updates #####
 You most disable automatic updates to prevent that new official ES updates overwrite your changes. Open the searchdaimon.repo file for editing:
 `nano -w /etc/yum.repos.d/searchdaimon.repo`
 Find the [boitho-production] section and set it from “enabled=1” to “enabled=0”.
 
-#### Firewall ####
+##### Firewall #####
 yum uses http and git has its own port at 9418, so remember to open ports 80 and 9418 if you have an external firewall.
 
 ### Building on non ESs ###
