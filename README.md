@@ -20,7 +20,7 @@ You can setup your development environment directly on the ES with little effort
 ### The code release ###
 We have released all our source code related to the Searchdaimon enterprise search engine to GitHub, with full commit history. We will from now on be using this GitHub repository internally as our only source code repository. It is currently about 100K lines of code. These is the full source code, tools and build chain to build the ES.
 
-The only exception is that we unfortunately have had to hold on to some related source code that uses proprietary code from 3-partys. However none of thus are essential, and binaries are made freely available for most of it. A list of non-released code is available at: [Statement on non-open source code](http://www.searchdaimon.com/wiki/Statement_on_non_open_source_code.).
+The only exception is that we unfortunately have had to hold on to some related source code that uses proprietary code from 3-partys. However none of thus are essential, and binaries are made freely available for most of it. A list of non-released code is available at: [Statement on non-open source code](http://www.searchdaimon.com/wiki/Statement_on_non_open_source_code).
 
 
 ### The software ###
