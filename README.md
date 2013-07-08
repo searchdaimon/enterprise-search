@@ -6,6 +6,8 @@ It comes with a powerful administrator interface and can index websites and seve
 
 You can setup your development environment directly on the ES with little effort. Then tweak and change what you want. 
 
+**More information about the product and screenshots are available at the bottom of this page.**
+
 ### General information ###
 - [Official website](http://www.searchdaimon.com/)
 - [Documentation](http://www.searchdaimon.com/documentation/)
@@ -75,18 +77,50 @@ Please see our manual at http://www.searchdaimon.com/documentation/
 ### Discussion forum ###
 Talk with the ES staff, users and other developers at http://www.searchdaimon.com/forum/ .
 
+## Features overview ##
+
+### Search ###
+
+##### Filtering and sorting #####
+You can restrict your search to type of document, data source, date and meta-information such as contacts, customers, sales and projects. You can also sort on date or relevancy.
+![](https://raw.github.com/searchdaimon/enterprise-search/master/doc/images/filter2.png)
+
+In the above picture, you can see the results of the query "enterprise search". The search has been further broken down to only include documents from the "Sales" collection. You can also filter the search to only include documents from a file type like Excel or PowerPoint, or from a date interval like this year or older than two years.
+
+##### See your answers immediately in the search interface (content federation) #####
+Structured data can be presented as a table among the results. Often you'll see the information you need in the user interface, without having to open the data source itself.
+
+![](https://raw.github.com/searchdaimon/enterprise-search/master/doc/images/ferie_i_res.jpg)
+
+Above you see a search which gives hits in a holiday schedule. The schedule is a structurized list in SharePoint. We can see that Runar Buvik is entered for a trip to the Netherlands from 07-11-2009 to 07-25-2009.
+
+##### Suggest #####
+The ES suggests query words while you are writing. The words proposed are fetched from documents the user has access to, so that domain and product names, which you can't find in traditional dictionaries, are included.
+
+![](https://raw.github.com/searchdaimon/enterprise-search/master/doc/images/suggest.jpg)
+
+##### Spell checking #####
+The ES can propose correctly spelled words if you have misspelled a word. For example correcting "enterprie serch" to enterprise search. As for Suggest, the dictionary is built from indexed documents.
+
+![](https://raw.github.com/searchdaimon/enterprise-search/master/doc/images/enterprise_search_spellingl2.png)
+
+##### Inflections and stemming #####
+Searching for "car" also shows documents containing "cars", etc.
+
+![](https://raw.github.com/searchdaimon/enterprise-search/master/doc/images/enterprise_search_bil2.png)
+
 ### Administration panel ###
 The ES comes with a strong intuitive web interface for administration.
 
-#### Overview ####
+##### Overview #####
 Show status and allow you to configure your collections. Collections are grouped by type of crawler (SMB, Exchange etc.).
 
 ![](https://raw.github.com/searchdaimon/enterprise-search/master/doc/images/admin_overview.png)
 
-#### Manually add new data sources ####
+##### Add a new data source #####
 ![](https://raw.github.com/searchdaimon/enterprise-search/master/doc/images/admin_manage_edit.png)
 
-#### Statistics & Logs ####
+##### Statistics & Logs #####
 View aggregated and raw data to see which users are the most active, what the most popular queries are, and how many searches are performed every day.
 
 ![](https://raw.github.com/searchdaimon/enterprise-search/master/doc/images/admin_statistics.png)
