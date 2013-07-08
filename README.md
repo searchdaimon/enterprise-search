@@ -14,7 +14,7 @@ You can setup your development environment directly on the ES with little effort
 - [Road map to the future](http://www.searchdaimon.com/wiki/Road_map_to_the_future)
 - [When to use and not to use the ES](http://www.searchdaimon.com/products/when_to_use_and_not_to_use/)
 - [Help us translate the user interface to different languages](http://www.searchdaimon.com/documentation/C48/#translating_the_search_engine_result_page_into_a_new_language)
-- How to upgrade existing installations to the open source version
+- [How to upgrade existing installations to the open source version](http://www.searchdaimon.com/wiki/Upgrade_existing_installations_to_the_open_source_version)
 - [How Searchdaimon As, our company will make money](http://www.searchdaimon.com/wiki/Monetizing_the_ES)
 
 ### The code release ###
