@@ -17,8 +17,8 @@ You can setup your development environment directly on the ES with little effort
 - How to upgrade existing installations to the open source version
 - [How Searchdaimon As, our company will make money](http://www.searchdaimon.com/wiki/Monetizing_the_ES)
 
-### The release ###
-We have released all of our source code related to the Searchdaimon enterprise search engine to GitHub, with full commit history. We will be using the GitHub repository internally as our only source code repository from now on. It is currently about 100K lines of code. These is the full source code, tools and build chain to build the ES.
+### The code release ###
+We have released all our source code related to the Searchdaimon enterprise search engine to GitHub, with full commit history. We will from now on be using this GitHub repository internally as our only source code repository. It is currently about 100K lines of code. These is the full source code, tools and build chain to build the ES.
 
 The only exception is that we unfortunately have had to hold on to some related source code that uses proprietary code from 3-partys. However none of thus are essential, and binaries are made freely available for most of it. A list of non-released code is available at: [Statement on non-open source code](http://www.searchdaimon.com/wiki/Statement_on_non_open_source_code.).
 
@@ -55,12 +55,12 @@ Download an ES virtual machine image from http://www.searchdaimon.com/download/ 
 
 ##### SSH access #####
 You may also want to enable ssh login as root. As root run:
-`sh /home/boitho/boithoTools/script/enable-root-login.sh`
-**Remember to change the root password!**
+`sh /home/boitho/boithoTools/script/enable-root-login.sh`  
+Remember to change the root password!
 
 ##### Disable automatic updates #####
-You most disable automatic updates to prevent that new official ES updates overwrite your changes. Open the searchdaimon.repo file for editing:
-`nano -w /etc/yum.repos.d/searchdaimon.repo`
+You most disable automatic updates to prevent that new official ES updates overwrite your changes. Open the searchdaimon.repo file for editing:  
+`nano -w /etc/yum.repos.d/searchdaimon.repo`  
 Find the [boitho-production] section and set it from “enabled=1” to “enabled=0”.
 
 ##### Firewall #####
@@ -69,7 +69,7 @@ yum uses http and git has its own port at 9418, so remember to open ports 80 and
 ### Building on non ESs ###
 The ES uses many 3-party libraries for data conversion and connecting to data sources. This makes it hard to build on arbitrary systems. For this first release we have decided to only support building of the source code on an existing ES installation. The easiest is to get a virtual machine version running and use the exiting rpms to setup your development environment.
 
-As our software become more wide spread we plan to add support for other *nix environments also. The first step will probably be to start using a new CentOS version that has a life cycle of 10 years as the underlying operating system. Then slowly move to a user space software only version.
+As our software become more wide spread we plan to add support for other *nix environments also. The first step will probably be to start using a new CentOS version that has a life cycle of 10 years as the underlying operating system. Then slowly move to a user-space software only version.
 
 ### Develop crawlers ###
 Crawlers should be developing as plugins so there part of the system can be changed without interfering. The preferred whey is to use Perl as described in the “Creating your own data connector” section of the ES manual http://www.searchdaimon.com/documentation/ .
