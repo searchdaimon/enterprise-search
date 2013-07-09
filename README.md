@@ -1,6 +1,6 @@
 ## Searchdaimon Enterprise Search ##
 
-Searchdaimon is an open source search engine for corporate data and websites. It aims to be as simple to use as your favorite Internet search engine, yet has the added power of delivering results from numerous systems with standardized attribute navigation.
+Jul 08, 2013 - Searchdaimon is an open source search engine for corporate data and websites. It aims to be as simple to use as your favorite Internet search engine, yet has the added power of delivering results from numerous systems with standardized attribute navigation.
 
 It comes with a powerful administrator interface and can index websites and several common enterprise systems like SharePoint, Exchange, SQL databases, Windows file shares etc. The ES supports many data sources (e.g., Word, PDF, Excel) and the possibility of faceted search, attribute navigation and collection sorting.
 
