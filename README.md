@@ -130,3 +130,6 @@ Show status and allow you to configure your collections. Collections are grouped
 View aggregated and raw data to see which users are the most active, what the most popular queries are, and how many searches are performed every day.
 
 ![](https://raw.github.com/searchdaimon/enterprise-search/master/doc/images/admin_statistics.png)
+
+
+[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/0006bafa8684b5f7f2709080974b01ad "githalytics.com")](http://githalytics.com/searchdaimon/enterprise-search)
