@@ -67,6 +67,10 @@ ifndef NO_DEBUG
 CFLAGS+=	-g
 endif
 
+ifdef WALL
+CFLAGS+=	-Wall
+endif
+
 
 OBJPROG=	${OBJDIR}/${PROG}
 
