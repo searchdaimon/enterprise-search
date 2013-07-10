@@ -1,0 +1,55 @@
+enron
+enron
+enron
+enron group:"Adobe PDF"
+enron filetype:"pdf"
+enron group:"Excel"
+enron filetype:"xls"
+enron group:"PowerPoint"
+enron filetype:"ppt"
+enron group:"Webpage"
+enron filetype:"html"
+enron group:"Word"
+enron filetype:"doc"
+enron logo
+Greenpeace Belgium
+desert sky report
+Doug Birdsall party
+gas base contract
+dynegi takeover
+dynagy takover
+confidensial
+the is at which and on
+"The Who"
+The Who
+"to be or not to be"
+obame
+"State and local officials"
+fraud
+the the the
+the the the the the the the the the the
+
+# 20 words in English. Should give many results. (The ES do not filter out stop words)
+the
+of
+and
+to
+in
+that
+is
+was
+he
+for
+it
+with
+as
+his
+on
+be
+at
+by
+this
+had
+
+# Virtually nonexistent phrase. Shouldn.t normally give any hits.
+"submarine ultimo"
