@@ -290,8 +290,8 @@ int main(int argc, char *argv[])
 	if (argc > optind) {
 		strncpy(servername,argv[optind], sizeof(servername) -1);
 	} else {
-		bblog(ERROR, "No hostname supplied");
-		errx(1, "You have to supply a hostname");
+		// No hostname supplied. Will assume "localhost"
+		strncpy(servername,"localhost", sizeof(servername) -1);
 	}
 	
 	lotPreOpenStartl(&searchd_config.lotPreOpen.DocumentIndex,"DocumentIndex","www",searchd_config.optPreOpen);
