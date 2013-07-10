@@ -6,8 +6,6 @@ msgid "search"
 msgstr "search"
 
 # header
-#msgid "Showing %1 - %2 out of %3 results"
-#msgstr "Showing %1 - %2 out of %3 results"
 
 msgid "(search_btn_img)"
 msgstr "img/default/search_en.jpg"
@@ -143,7 +141,8 @@ msgid "(cacheinfo)"
 msgstr "This is the local copy of the document, as stored on the search system at this moment."
 
 
-## Navigation
+# Navigation
+
 # Attribute description
 msgid "SharePoint"
 msgstr "SharePoint"
