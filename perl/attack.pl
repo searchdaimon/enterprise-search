@@ -14,6 +14,14 @@ my %opt;
 getopts('u:wm:n:rt:dshce:', \%opts);
 
 
+if ($#ARGV != 1) {
+	print "\n";
+	print "Please specify a host and a file with queries.\n\n";
+ 	print "Usage:\n\n";
+ 	print "perl/attack.pl host queryfile\n\n";
+	exit;
+}
+
 $opt{host} = shift(@ARGV) or die "must specify a host";
 $opt{file} = shift(@ARGV) or die "must specify a queryfile";
 
@@ -65,7 +73,16 @@ if (exists ($opts{'e'}) ) {
 }
 
 open(INF,$opt{file}) or die("can't open " . $opt{file} . ": $!");
-my @arr = <INF>;
+my @arr;
+while (<INF>) {
+	chomp;
+
+	# Skip empty lines and comments that starts with "#" sign.
+	if ($_ eq '' || $_ =~ /^#/) {
+		next;
+	}
+	push(@arr, $_);
+}
 close(INF);
 
 
@@ -74,7 +91,7 @@ print "Query file: \t" . $opt{file} . "\n";
 print "User: \t\t". $opt{user} . "\n";
 
 print "-----------------------------------------------------------------------\n";
-printf "| %-40s | %-9s | %-7s | %-2s |\n",  "Query", $opt{diff} ? "" : "Time", "Hits", "T";
+printf "| %-40s | %-7s | %-9s | %-2s |\n",  "Query", $opt{diff} ? "" : "Time", "Hits", "T";
 print "-----------------------------------------------------------------------\n";
 
 my @threads;
@@ -140,10 +157,10 @@ sub attack {
 
 			my $url;
 			if ($opt{user}) {
-				$url = "http://" . $opt{user} . $opt{host} . "/webclient2/?query=$query&lang=no";
+				$url = "http://" . $opt{user} . $opt{host} . "/webclient2/?query=$query&lang=en";
 			}
 			else {
-				$url = "http://" . $opt{host} . "/webclient2/indexanon.pl?query=$query&lang=no";
+				$url = "http://" . $opt{host} . "/webclient2/indexanon.pl?query=$query&lang=en";
 			}
 			#print "$url\n";
 	
@@ -164,14 +181,12 @@ sub attack {
 
 
 			my $hits = $content;
-			#webclient 1
-			#$hits =~ s/av totalt (\d+) resultater//g;
-			#webclient 2
-			if ($hits =~ /Viser ingen resultater/) {
+			
+			if ($hits =~ /Showing no results/) {
 				$hits = 0;
 			}
 			else {
-				if ($hits =~ s/av totalt ([\d ,]+) resultat//g) {
+				if ($hits =~ s/out of ([\d ,]+) result//g) {
 					$hits = $1;
 					chop($hits);
 				}
