@@ -43,6 +43,11 @@
 #include "../ds/dvector.h"
 #include "../ds/dpair.h"
 #include "../common/ht.h"
+#include "../common/doc_cache.h"
+#include "../common/strlcpy.h"
+#include "../common/langToNr.h"
+#include "../common/url.h"
+#include "../common/dp.h"
 
 #ifdef WITH_SPELLING
 	#include "../newspelling/spelling.h"
@@ -308,9 +313,7 @@ get_sock_from_pool(struct socket_pool *pool, int *index)
 	assert(1 == 0);
 }
 
-static inline int
-release_sock_to_pool(struct socket_pool *pool, int index)
-{
+static inline void release_sock_to_pool(struct socket_pool *pool, int index) {
 	#ifdef WITH_THREAD
 		pthread_mutex_lock(&pool->mutex);
 	#endif
@@ -329,10 +332,8 @@ release_sock_to_pool(struct socket_pool *pool, int index)
 
 
 #ifdef BLACK_BOX
-static inline int
-handle_url_rewrite(const char *url_in, size_t lenin, enum platform_type ptype, enum browser_type btype, char *collection,
-           char *url_out, size_t len, char *uri_out, size_t uri_out_len, char *fulluri_out, size_t fulluri_out_len, struct socket_pool *pool)
-{
+static inline int handle_url_rewrite(const char *url_in, size_t lenin, enum platform_type ptype, enum browser_type btype, char *collection,
+           char *url_out, size_t len, char *uri_out, size_t uri_out_len, char *fulluri_out, size_t fulluri_out_len, struct socket_pool *pool) {
 
 	int ret = 1;
 
@@ -359,8 +360,7 @@ handle_url_rewrite(const char *url_in, size_t lenin, enum platform_type ptype, e
 #endif
 
 
-int
-popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,
+int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,
 	struct iindexMainElements *TeffArray,struct QueryDataForamt QueryData, char *htmlBuffer,
 	unsigned int htmlBufferSize, char servername[], struct subnamesFormat *subname, 
 	struct queryTimeFormat *queryTime, int summaryFH, struct PagesResultsFormat *PagesResults,
@@ -379,9 +379,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 
 	char *strpointer;
 
-	int termpos;
 	int returnStatus = 0;	
-
 
 
 	htmlBuffer[0] = '\0';
@@ -808,7 +806,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 						continue;
 					    }
 
-					char htmlbuf[1024*1024 * 5], imagebuf[1<<16];
+					char htmlbuf[1024*1024 * 5];
 					unsigned int htmllen = sizeof(htmlbuf);
 					unsigned int imagelen = sizeof(imagelen);
 					char *url, *acla, *acld, *attributes;
@@ -837,7 +835,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 							NULL
 #endif
 							)) {
-						snprintf(tmpurl,sizeof(tmpurl),"XXX-Can't_rewrite_duplicate_url_for_DocID_%u_XXX:%s",dup_docid);
+						snprintf(tmpurl,sizeof(tmpurl),"XXX-Can't_rewrite_duplicate_url_for_DocID_%u",dup_docid);
 					}
 #endif
 					if ((Sider->urls[Sider->n_urls].url = strdup(tmpurl)) == NULL) {
@@ -1267,12 +1265,11 @@ void *generatePagesResults(void *arg)
 	bblog(INFO, "searchkernel: generatePagesResults()");
 	struct PagesResultsFormat *PagesResults = (struct PagesResultsFormat *)arg;
 
-	int i,y;
+	int i;
 	//ToDo: ikke hardkode her
         unsigned int htmlBufferSize = 900000;
 
 	char *htmlBuffer;
-	unsigned short *DomainID;
 
 	double ltime;
 	struct timeval start_time, end_time;
@@ -1284,12 +1281,15 @@ void *generatePagesResults(void *arg)
 	#if BLACK_BOX
 		PagesResults->ptype = get_platform(PagesResults->useragent);
 		PagesResults->btype = get_browser(PagesResults->useragent);
+	#else
+		unsigned short *DomainID;
+		int y;
 	#endif
 
 	if ((htmlBuffer = malloc(htmlBufferSize)) == NULL) {
 		bblog_errno(ERROR, "can't malloc");
 		bblog(INFO, "searchkernel: ~generatePagesResults()");
-		return;
+		return NULL;
 	}
 
 	#ifdef WITH_THREAD
@@ -1617,8 +1617,8 @@ void *generatePagesResults(void *arg)
 			NULL
 #endif
 		)) {
-			snprintf(side->uri, sizeof(side->uri),"XXX-Can't_rewrite_url_for_DocID_%u_XXX:%s",(*PagesResults).TeffArray->iindex[i].DocID);
-			snprintf(side->fulluri, sizeof(side->fulluri),"XXX-Can't_rewrite_fulluri_for_DocID_%u_XXX:%s",(*PagesResults).TeffArray->iindex[i].DocID);
+			snprintf(side->uri, sizeof(side->uri),"XXX-Can't_rewrite_url_for_DocID_%u",(*PagesResults).TeffArray->iindex[i].DocID);
+			snprintf(side->fulluri, sizeof(side->fulluri),"XXX-Can't_rewrite_fulluri_for_DocID_%u",(*PagesResults).TeffArray->iindex[i].DocID);
 		}
 
 #endif
@@ -1967,7 +1967,7 @@ int cmConect_and_pool (struct socket_pool *pool, char *errorbuff, int errorbuffl
 int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct SiderHederFormat *SiderHeder,
 char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames, 
 int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[], 
-char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *searchd_config, char *errorstr,int *errorLen,
+char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *searchd_config, char *errorstr,int errorLen,
 	struct iintegerMemArrayFormat *DomainIDs, char *useragent, char groupOrQuery[], int anonymous, attr_conf *navmenu_cfg,
 	spelling_t *spelling
 	) { 
@@ -2082,7 +2082,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	int readedFromIndex;
 	int i, y, j;
-	int x;
 
 	if ((PagesResults.TeffArray = malloc(sizeof(struct iindexFormat))) == NULL) {
 		perror("Cant malloc PagesResults.TeffArray");
@@ -2094,11 +2093,8 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	struct timeval start_time, end_time;
 	struct timeval popResult_start_time, popResult_end_time;
 
-	int rank;
 	int ret;
 
-
-	struct DocumentIndexFormat DocumentIndexPost;
 	
 	// inaliserer alle queryTime elementene
 	memset(&(*SiderHeder).queryTime, 0, sizeof((*SiderHeder).queryTime));

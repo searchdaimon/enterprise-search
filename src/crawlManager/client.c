@@ -7,7 +7,7 @@
 #include "../common/define.h"
 #include "../common/daemon.h"
 #include "../common/bstr.h"
-//#include "../common/timediff.h"
+#include "../common/strlcpy.h"
 #include "../boithoadClientLib/boithoad.h"
 
 int cmc_getPassword(const char username_in[], char password[]) {
@@ -214,12 +214,10 @@ cmc_pathaccess(int socketha,char collection_in[], char uri_in[], char user_in[],
 	return intrespons;
 }
 
-int
-cmc_rewrite_url(int socketha, char *collection_in, const char *url_in, size_t urlinlen, enum platform_type ptype, 
+int cmc_rewrite_url(int socketha, char *collection_in, const char *url_in, size_t urlinlen, enum platform_type ptype, 
 		enum browser_type btype, char *url_out, size_t url_out_len, char *uri_out, size_t uri_out_len, 
 		char *fulluri_out, size_t fulluri_out_len)
 {
-	char url[1024];
 	struct rewriteFormat rewrite;
 
 	#ifdef DEBUG_TIME
@@ -251,7 +249,7 @@ cmc_rewrite_url(int socketha, char *collection_in, const char *url_in, size_t ur
 	strscpy(fulluri_out, rewrite.fulluri, fulluri_out_len);
 
 	#ifdef DEBUG
-	printf("~cmc_rewrite_url [uri_out=\"%s\", fulluri=\"%s\"]\n",uri_out,fulluri_out);
+		printf("~cmc_rewrite_url [uri_out=\"%s\", fulluri=\"%s\"]\n",uri_out,fulluri_out);
 	#endif
 
 	#ifdef DEBUG_TIME
@@ -320,12 +318,14 @@ int cmc_killcrawl(int socketha, int port) {
 }
 
 int cmc_groupsforuserfromusersystem(int socketha, char *_user, unsigned int us, char ***_groups, char *extra_in) {
-	char user[512];
-	int i, n;
+
+	int n;
 	char **groups;
-	char extrabuf[512];
-	struct timeval ts, te;
 	void *all, *p;
+
+	#ifdef DEBUG_TIME
+		struct timeval ts, te;
+	#endif
 
 	int allsize = 512 + 512 + sizeof(us);
 	if ((all = malloc(allsize)) == NULL) {

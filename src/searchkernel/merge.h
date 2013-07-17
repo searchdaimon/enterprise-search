@@ -9,5 +9,6 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct iindexFormat *a, int alen, struct iindexFormat *b, int blen);
 void frase_stopword(struct iindexFormat *c, int clen);
 void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct iindexFormat *a, int alen, struct iindexFormat *b, int blen);
+void swapiindex(struct iindexFormat **a, struct iindexFormat **b);
 
 #endif

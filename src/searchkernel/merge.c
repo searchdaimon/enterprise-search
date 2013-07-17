@@ -5,6 +5,17 @@
 #include "merge.h"
 #include "verbose.h"
 
+// swap two ponters
+void swapiindex(struct iindexFormat **a, struct iindexFormat **b) {
+
+        struct iindexFormat  *tmp;
+
+        tmp = *a;
+        *a = *b;
+        *b = tmp;
+}
+
+
 static inline void iindexArrayHitsCopy(struct iindexFormat *c, int k, struct iindexFormat *b, int j) {
 	int x;
 
@@ -68,8 +79,6 @@ static inline void rank_explaindSumm(struct rank_explaindFormat *t, struct rank_
 
 
 void or_merge(struct iindexFormat **c, int *baselen, struct iindexFormat **a, int alen, struct iindexFormat **b, int blen) {
-
-	int x;
 
 	int i=0;
 	int j=0;
@@ -480,8 +489,6 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct iindexFormat *a, int alen, struct iindexFormat *b, int blen) {
         int i=0,j=0;
 	int k=originalLen;
-	int y,x;
-	int distance;
 	int ah,bh;
 	int TermRank;
         (*baselen) = 0;
@@ -705,9 +712,9 @@ void frase_stopword(struct iindexFormat *c, int clen) {
 
 //frasesk. Denne er dog ikke bra, egentlig en versjon av andprox_merge der bare de sidene med distanse 1 blir med
 void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct iindexFormat *a, int alen, struct iindexFormat *b, int blen) {
+
         int i=0,j=0;
 	int k=Originallen;
-	int y;
 	int ah,bh;
 	int found;
 	int TermRank;

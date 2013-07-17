@@ -23,9 +23,11 @@ char **userToSubname_getsubnamesList(struct userToSubnameDbFormat *db, char grou
 void userToSubname_freesubnamesList(char ** subnames, int num_subnames);
 int userToSubname_getsubnamesAsString(struct userToSubnameDbFormat *userToSubnameDb,char username[],char subnames[],int subnameslen);
 int userToSubname_getsubnamesAsSaa(struct userToSubnameDbFormat *userToSubnameDb,char username[],char ***subnames, int *nr);
-int userToSubname_close (struct userToSubnameDbFormat *userToSubnameDb);
+void userToSubname_close (struct userToSubnameDbFormat *userToSubnameDb);
 int userToSubname_deletecol(struct userToSubnameDbFormat *userToSubnameDb,char subname[]);
 void aclElementNormalize (char acl[]);
+void userToSubname_add (struct userToSubnameDbFormat *userToSubnameDb,char username[], char subname[]);
+
 #endif
 
 #endif // _ACLS__H_

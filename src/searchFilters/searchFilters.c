@@ -1,5 +1,10 @@
+#ifndef _GNU_SOURCE
+	#define _GNU_SOURCE
+#endif
+
 #include <stdio.h>
 #include <string.h>
+
 
 #include "searchFilters.h"
 
@@ -285,8 +290,6 @@ int filterSameDomain(int showabal,struct SiderFormat *CurentSider, struct SiderF
 
 	int i;
 	int count = 0;
-	char domainCuren[65];
-	char domainOther[65];
 
 	//filtrerer ikke sider vi ikke har noe domne for. Typisk ppc anonser som peger til out.cfi side på samme domene
 	if ((*CurentSider).domain[0] == '\0') {

@@ -5,6 +5,7 @@
 #include "verbose.h"
 
 #include "../common/bstr.h"
+#include "../common/strlcat.h"
 #include "../logger/logger.h"
 
 #ifdef BLACK_BOX
@@ -131,8 +132,8 @@ void shortenurl(char *url,int urllen) {
 		suburllen = strlen(Data[Count]);
 
 		if ((added + suburllen) < (TARGET_VISIBLE_URL_LEN * 0.3)) {
-			strlcat(newurl,Data[Count],sizeof(newurl));
-			strlcat(newurl,slash,sizeof(newurl));
+			strlcat((char *)newurl,Data[Count],sizeof(newurl));
+			strlcat((char *)newurl,slash,sizeof(newurl));
 			
 		}
 		else {
@@ -142,7 +143,7 @@ void shortenurl(char *url,int urllen) {
 		++Count;
 	}
 
-	strlcat(newurl, "...", sizeof(newurl));
+	strlcat((char *)newurl, "...", sizeof(newurl));
 
 	Count = TokCount;
 	added = 0;
@@ -169,8 +170,8 @@ void shortenurl(char *url,int urllen) {
 	//hvis også siste navn er for langt, hånterer vi det spesifikt.
 	if (TokCount == Count) {
 		bblog(DEBUGINFO, "bb");
-		strlcat(newurl,slash,sizeof(newurl));
-		strlcat(newurl,Data[Count],sizeof(newurl));		
+		strlcat((char *)newurl,slash,sizeof(newurl));
+		strlcat((char *)newurl,Data[Count],sizeof(newurl));		
 
 	}
 	else {
@@ -179,8 +180,8 @@ void shortenurl(char *url,int urllen) {
 
 			bblog(DEBUGINFO, "newurl: len %i, \"%s\"",strlen((char*)newurl),newurl);
 
-                	strlcat(newurl,slash,sizeof(newurl));
-			strlcat(newurl,Data[i],sizeof(newurl));
+                	strlcat((char *)newurl,slash,sizeof(newurl));
+			strlcat((char *)newurl,Data[i],sizeof(newurl));
 		}
 	}
 

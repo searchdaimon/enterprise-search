@@ -42,7 +42,7 @@ int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct Side
     char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOfSubnames,
     int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[],
     char search_user[], struct filtersFormat *filters,
-    struct searchd_configFORMAT *searchd_config, char *errorstr,int *errorLen, struct iintegerMemArrayFormat *DomainIDs,
+    struct searchd_configFORMAT *searchd_config, char *errorstr,int errorLen, struct iintegerMemArrayFormat *DomainIDs,
     char *, char *, int anonymous, attr_conf *navmenu_cfg, spelling_t *spelling);
 
 #define RANK_TYPE_FIND	1

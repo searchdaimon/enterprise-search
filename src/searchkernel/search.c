@@ -92,17 +92,6 @@ int compare_elements (const void *,const void *);
 int compare_filetypes (const void *p1, const void *p2);
 
 
-// swap two ponters
-void swapiindex(struct iindexFormat **a, struct iindexFormat **b) {
-
-	struct iindexFormat  *tmp;
-	
-	tmp = *a;
-	*a = *b;
-	*b = tmp;
-
-}
-
 void allrankcalk(struct iindexFormat *TeffArray ,int *TeffArrayElementer) {
 
 	int i;
@@ -225,8 +214,8 @@ static inline int rankUrl(const struct hitsFormat *hits, int nrofhit,const unsig
 #define logrank(v,r,d) ((log((v * d) +1) * r)) 
 
 static inline int rankAnchor(const struct hitsFormat *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexMainElements *TeffArray, int complicacy) {
-	int rank, i;
 
+	int rank;
 
 	rank = logrank(nrofhit,40,0.009);
 
@@ -434,12 +423,8 @@ void iindexArrayCopy2(struct iindexFormat **c, int *baselen,int Originallen, str
 
 
 	int x;
-        int i=0,j=0;
+        int i=0;
 	int k=Originallen;
-	int y;
-	int ah,bh;
-	int found;
-	int TermRank;
 
         (*baselen) = Originallen;
 
@@ -840,7 +825,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 
 	bblog(INFO, "search: searchIndex()");
 
-	int i, y, j,k,h;
+	int i, j, k;
 	char queryelement[128];
 	unsigned int WordIDcrc32;
 	int baseArrayLen;
@@ -853,10 +838,10 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 	(*complicacy) = 0;
 
 	#ifdef DEBUG_TIME
-	struct timeval start_time, end_time;
-	struct timeval start_foo_time, end_foo_time;
-	struct timeval start_time_element, end_time_element;
-	gettimeofday(&start_time, NULL);
+		struct timeval start_time, end_time;
+		struct timeval start_foo_time, end_foo_time;
+		struct timeval start_time_element, end_time_element;
+		gettimeofday(&start_time, NULL);
 	#endif
 
 	if ((tmpResult = (struct iindexFormat *)malloc(sizeof(struct iindexFormat))) == NULL) {
@@ -882,8 +867,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 	bblog(INFO, "searchIndex: Query is %d elements long", (*queryParsed).n);
 	char	first = 1;
 
-for (i=0; i<(*queryParsed).n; i++)
-        {
+	for (i=0; i<(*queryParsed).n; i++) {
 
         	bblog(INFO, "Search type %c",  (*queryParsed).query[i].operand );
 		#ifdef DEBUG_TIME
@@ -1151,9 +1135,7 @@ for (i=0; i<(*queryParsed).n; i++)
         }
 
 	bblog(INFO, "~searchIndex: (*TeffArrayElementer) %i, TeffArrayOriginal %i for subname \"%s\"", (*TeffArrayElementer),TeffArrayOriginal,subname->subname);
-	//toDo: trenger vi denne nå???
-	//tror ikke vi trenger denne mere, da vi har merget queryet inn i den
-	(*TeffArrayElementer) = (*TeffArrayElementer) + TeffArrayOriginal;
+
 	TeffArrayOriginal = (*TeffArrayElementer);
 	bblog(INFO, "new len is %i", (*TeffArrayElementer));
 
@@ -1200,7 +1182,7 @@ void *searchIndex_thread(void *arg)
         struct searchIndex_thread_argFormat *searchIndex_thread_arg = (struct searchIndex_thread_argFormat *)arg;
 	int i,j,y,x;
 
-	int ArrayLen, TmpArrayLen, TmpArray2Len, totAttribLength;
+	int ArrayLen, TmpArrayLen, totAttribLength;
 
 	struct iindexFormat *TmpArray;
 	struct iindexFormat *Array;
@@ -1280,7 +1262,7 @@ void *searchIndex_thread(void *arg)
 	else {
 		bblog(ERROR, "search: Error! Unknown index type \"%s\"",(*searchIndex_thread_arg).indexType);
 		bblog(ERROR, "search: ~searchIndex_thread()");
-		return;
+		return NULL;
 	}
 	#ifdef WITH_THREAD
 		pthread_t tid;
@@ -1306,7 +1288,6 @@ void *searchIndex_thread(void *arg)
 
 	for(i=0;i<(*searchIndex_thread_arg).nrOfSubnames;i++) {
 		query_array *groupquery;
-		struct timeval starttime, endtime;
 		int do_aclcheck = 1;
 
 		(*searchIndex_thread_arg).usersystem_per_subname[i] = -1;
@@ -1573,8 +1554,6 @@ void *searchIndex_thread(void *arg)
 					// Merge acl_denied:			
 					andNot_merge(&Array,&ArrayLen,&hits,&TmpArray,TmpArrayLen,&acl_deniedArray,acl_deniedArrayLen);
 				} else {
-					//swapiindex(&Array, &searcArray);
-					//ArrayLen = searcArrayLen;
 					iindexArrayCopy2(&Array,&hits,ArrayLen,&searcArray,searcArrayLen);
 					ArrayLen = hits;
 				}
@@ -1731,6 +1710,8 @@ void *searchIndex_thread(void *arg)
 	bblog(INFO, "######################################################################");
 
 	bblog(INFO, "search: ~searchIndex_thread()");
+
+	return NULL;
 }
 
 
@@ -1748,14 +1729,10 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 	bblog(INFO, "search: searchSimple()");
 
-	int i,j,y,n;
+	int i,n;
 
-	unsigned char PopRank;
-	int responseShortTo;
 	struct reformat *re;
 
-	int rankcount[256]; // rank går fra 0-252 (unsigned char)
-	int tmpint;
 
 	struct timeval start_time, end_time;
 		
@@ -1767,20 +1744,31 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	struct searchIndex_thread_argFormat searchIndex_thread_arg_Main;
 	
      
-        int baseArrayLen,MainArrayHits;
 	int TmpArrayLen;	
 
-	unsigned int PredictNrAnchor;
-	unsigned int PredictNrUrl;
 	unsigned int PredictNrMain;
-
-	PredictNrAnchor	= 0;
-	PredictNrUrl	= 0;
 	PredictNrMain	= 0;
 
+	#ifndef BLACK_BOX
+		int j,y;
+		unsigned char PopRank;
+		int responseShortTo;
+		int rankcount[256]; // rank går fra 0-252 (unsigned char)
+
+		unsigned int PredictNrAnchor;
+		unsigned int PredictNrUrl;
+
+		PredictNrAnchor	= 0;
+		PredictNrUrl	= 0;
+
+		#ifdef WITH_THREAD
+			pthread_t threadid_Anchor = 0;
+			pthread_t threadid_Url = 0;
+		#endif
+
+	#endif
+
 	#ifdef WITH_THREAD
-		pthread_t threadid_Anchor = 0;
-		pthread_t threadid_Url = 0;
 		pthread_t threadid_Main = 0;
 	#endif
 
@@ -1900,9 +1888,6 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 	#ifdef ATTRIBUTES
 		int	attributes_count = 0;
-		struct searchIndex_thread_argFormat searchIndex_thread_arg_attributes[MAX_ATTRIBUTES_IN_QUERY];
-		pthread_t threadid_attributes[MAX_ATTRIBUTES_IN_QUERY];
-		query_array	query_attributes[MAX_ATTRIBUTES_IN_QUERY];
 
 		for (i=0; i<vector_size((*filteron).attributes) && attributes_count<MAX_ATTRIBUTES_IN_QUERY; i++)
 		    if (pair(vector_get((*filteron).attributes,i)).first.i == QUERY_ATTRIBUTE)
@@ -2660,8 +2645,7 @@ void searchFilterInit(struct filtersFormat *filters, int dates[]) {
 
 }
 
-static attr_crc32_words_block_compare(const void *a, const void *b)
-{
+static int attr_crc32_words_block_compare(const void *a, const void *b) {
     unsigned int         i=*((unsigned int*)a), j=*((unsigned int*)b);
 
 
@@ -2766,9 +2750,9 @@ char* searchFilterCount(int *TeffArrayElementer,
 		int i, j;
 		struct timeval start_time, end_time;
 		struct timeval tot_start_time, tot_end_time;
-		struct timeval att_start_time, att_end_time;
 
 	        #ifdef DEBUG_TIME		
+			struct timeval att_start_time, att_end_time;
 			double att1=0, att2=0, att3=0, att4=0, att5=0;
 		#endif
 
@@ -2923,9 +2907,9 @@ char* searchFilterCount(int *TeffArrayElementer,
 			    }
 
 		        #ifdef DEBUG_TIME
-			gettimeofday(&att_end_time, NULL);
-			att1 += getTimeDifference(&att_start_time, &att_end_time);
-			gettimeofday(&att_start_time, NULL);
+				gettimeofday(&att_end_time, NULL);
+				att1 += getTimeDifference(&att_start_time, &att_end_time);
+				gettimeofday(&att_start_time, NULL);
 			#endif
 
 			if (!no_attributes)
@@ -2944,9 +2928,9 @@ char* searchFilterCount(int *TeffArrayElementer,
 			    }
 
 		        #ifdef DEBUG_TIME
-	                gettimeofday(&att_end_time, NULL);
-	                att2 += getTimeDifference(&att_start_time, &att_end_time);
-                        gettimeofday(&att_start_time, NULL);
+	                	gettimeofday(&att_end_time, NULL);
+	                	att2 += getTimeDifference(&att_start_time, &att_end_time);
+                        	gettimeofday(&att_start_time, NULL);
 			#endif
 
 			// Beregning av attributt-bits:

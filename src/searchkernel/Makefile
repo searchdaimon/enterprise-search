@@ -15,6 +15,7 @@ WANT_HASHTABLE=	true
 WANT_BASE64=	true
 WANT_LOGGER=	true
 
+WALL=		true
 PROG=	searchd
 
 include ../../mk/setup.mk

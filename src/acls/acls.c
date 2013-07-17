@@ -175,10 +175,7 @@ int userToSubname_getsubnamesAsString(struct userToSubnameDbFormat *userToSubnam
 }
 
 
-int userToSubname_add (struct userToSubnameDbFormat *userToSubnameDb,char username[], char subname[]) {
-        DB dbpArray;
-
-	//DB *dbp = (DB *)(*dbpp);
+void userToSubname_add (struct userToSubnameDbFormat *userToSubnameDb,char username[], char subname[]) {
 
         DBT key, data;
         int ret;
@@ -195,17 +192,16 @@ int userToSubname_add (struct userToSubnameDbFormat *userToSubnameDb,char userna
 
 	//legger til i databasen
         if  ((ret = (*userToSubnameDb).dbp->put((*userToSubnameDb).dbp, NULL, &key, &data, 0)) != 0) {
-		printf("can't add \"%s/%s\"\n",key.data,data.data);
+		printf("can't add \"%s/%s\"\n",(char *)key.data,(char *)data.data);
                 (*userToSubnameDb).dbp->err((*userToSubnameDb).dbp, ret, "DB->put");
                 //kan ikke returnere her for da blir den aldr lukket.
                 //return (EXIT_FAILURE);
         }
 
-        //(*dbpp) = (int *)dbp;
 
 }
 
-int userToSubname_close (struct userToSubnameDbFormat *userToSubnameDb) {
+void userToSubname_close (struct userToSubnameDbFormat *userToSubnameDb) {
 
         //DB *dbp = (DB *)(*dbpp);
 
@@ -214,16 +210,16 @@ int userToSubname_close (struct userToSubnameDbFormat *userToSubnameDb) {
         #ifdef DEBUG
                 printf("uriindex_close: closeing\n");
         #endif
+
         if ((ret = (*userToSubnameDb).dbp->close((*userToSubnameDb).dbp, 0)) != 0) {
                 fprintf(stderr, "%s: DB->close: %s\n", "bbdocument", db_strerror(ret));
-                return (EXIT_FAILURE);
+                return;
         }
 
         #ifdef DEBUG
                 printf("uriindex_close: finished\n");
         #endif
 
-        //(*dbpp) = (int *)dbp;
 }
 
 int userToSubname_deletecol(struct userToSubnameDbFormat *userToSubnameDb,char subname[]) {

@@ -68,7 +68,7 @@
 
 
 /* function prototypes and global variables */
-void *do_chld(void *);
+void do_chld(void *);
 int	service_count;
 //global variabel for å holde servernavn
 char servername[MAX_SERVERNAME_LEN];
@@ -112,8 +112,7 @@ void catch_alarm_nolog (int sig) {
 
 void lotPreOpenStartl(int *preOpen[], char filename[], char subname[], int use) {
 
-	int i, n;
-	char buf[1];
+	int i;
 
 	if ((*preOpen = malloc(sizeof(int) * maxLots)) == NULL) {
 		bblog_errno(ERROR, "malloc preOpen");
@@ -125,6 +124,9 @@ void lotPreOpenStartl(int *preOpen[], char filename[], char subname[], int use) 
 		(*preOpen)[i] = -1;
 
 		#ifndef BLACK_BOX
+			int n;
+			char buf[1];
+
 			if (use) {
 				(*preOpen)[i] = lotOpenFileNoCasheByLotNrl(i,filename,"rb", 'r',subname);
 				if ((*preOpen)[i] != -1) {
@@ -380,8 +382,6 @@ int main(int argc, char *argv[])
 		}
 
 		bblog(INFO, "init show-attributes");
-		char	*warnings;
-
 
 	#else
 
@@ -523,7 +523,7 @@ int main(int argc, char *argv[])
 	}
 	//freegjør spelling. Trekt, men kjekt av valgring kan finne ut om noe ikke her blirr frigjort.
 	if (searchd_config.optFastStartup != 1) {
-		untrain(&spelling);
+		untrain(spelling);
 	}
 
 	return(0);
@@ -559,7 +559,7 @@ static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
 /* 
 	This is the routine that is executed from a new thread 
 */
-void *do_chld(void *arg)
+void do_chld(void *arg)
 {
 
 
@@ -571,20 +571,11 @@ void *do_chld(void *arg)
 	struct searchd_configFORMAT *searchd_config = arg;
 	int   mysocfd = (*searchd_config).newsockfd;
 	struct timeval globalstart_time, globalend_time;
-	FILE *LOGFILE;
 	int 	i,n;
 	struct queryNodeHederFormat queryNodeHeder;
 	struct SiderFormat *Sider;
 	int net_status;
-	int ranking;
-	struct hashtable *crc32hashmap;
 	int nrOfSubnames;
-	config_setting_t *cfgstring;
-	config_setting_t *cfgcollection;
-	config_setting_t *cfgcollections;
-	struct subnamesConfigFormat subnamesDefaultsConfig;
-	char **Data;
-        int Count;
         char groupOrQuery[1024];
         groupOrQuery[0] = '\0';
 
@@ -606,7 +597,7 @@ void *do_chld(void *arg)
 	if ((SiderHeder  = malloc(sizeof(struct SiderHederFormat))) == NULL) {
 		bblog(ERROR, "malloc()");
 		bblog(CLEAN, "~do_chld()");
-		return 0;
+		return;
 	}
 
 
@@ -739,7 +730,7 @@ void *do_chld(void *arg)
 		"",queryNodeHeder.orderby,SiderHeder->dates,queryNodeHeder.search_user,
 		&SiderHeder->filters,
 		searchd_config,
-		SiderHeder->errorstr, &SiderHeder->errorstrlen,
+		SiderHeder->errorstr, SiderHeder->errorstrlen,
 		&global_DomainIDs, queryNodeHeder.HTTP_USER_AGENT,
 		groupOrQuery, queryNodeHeder.anonymous, navmenu_cfg,
 		spelling
@@ -902,7 +893,7 @@ void *do_chld(void *arg)
 
 	if ((sendall = malloc(sendtotal)) == NULL) {
 		perror("sendp");
-		return 0;
+		return;
 	}
 	sendp = sendall;
 
@@ -915,7 +906,7 @@ void *do_chld(void *arg)
 
 	if ((n=send(mysocfd, sendall, sendtotal, MSG_NOSIGNAL)) != sendtotal ) {
 		bblog(ERROR, "siderformat: send only %i of %i at %s:%d",n,sendtotal,__FILE__,__LINE__);
-		return 0;
+		return;
 	}
 	bblog(DEBUGINFO,"~sendall(sendarraylength=%i, sendall=%p, sendtotal=%i)\n",sendarraylength,sendall,sendtotal);
 
