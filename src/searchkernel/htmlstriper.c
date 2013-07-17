@@ -8,7 +8,7 @@ void htmlstrip(char html[],char *text,int buffersize) {
 	int textnr = 0;
 
 	#ifdef DEBUG
-	bblog(DEBUG, "htmlstrip(html=\"%s\", buffersize=%d, strlen(html)=%d)",html,buffersize,strlen(html));
+		bblog(DEBUG, "htmlstrip(html=\"%s\", buffersize=%d, strlen(html)=%d)",html,buffersize,strlen(html));
 	#endif
 
 	for (i=0; ((html[i] != '\0') && (i < buffersize)); i++) {
@@ -27,28 +27,16 @@ void htmlstrip(char html[],char *text,int buffersize) {
 		}
 		else if ((unsigned char)html[i] < 11) {
 			#ifdef DEBUG
-			bblog(DEBUG, "ignoring format char c %c (uchar %d)",html[i],(unsigned char)html[i]);			
+				bblog(DEBUG, "ignoring format char c %c (uchar %d)",html[i],(unsigned char)html[i]);			
 			#endif
 		}
 		else {
 			#ifdef DEBUG
-			bblog(DEBUG, "c %c into %d as uchar %d",html[i],textnr,(unsigned char)html[i]);
+				bblog(DEBUG, "c %c into %d as uchar %d",html[i],textnr,(unsigned char)html[i]);
 			#endif
 			text[textnr] = html[i];
 			textnr++;
 		}
-		//Runarb: 1 feb 2009: Hvorfor fjerner vi alle disse andre låvlige tegnene?
-		// da vi ikke bruker denne funksjonen til noe gjør jeg bare om på den.
-		//hvis dette skal brukes til noe annet en snipet må man også tilate utf-8 (tegn større en uchar  128)			
-		//er alfanumerisk eller SPACE eller "," eller "."
-		//else if ( isalnum((int)html[i]) || (html[i] == ' ') || (html[i] == ',') || (html[i] == '.') || (html[i] == '(') || (html[i] == ')') || (html[i] == ':') || (html[i] == '/') || (html[i] == '-')  ) {
-		//	//printf("%c",html[i]);
-		//	text[textnr] = tolower(html[i]);
-		//	textnr++;
-		//}
-		//else {
-		//	printf("ignoring unknown value %c (int %u)\n",html[i],(unsigned char)html[i]);
-		//}
 	} 
 
 	text[textnr] = '\0';

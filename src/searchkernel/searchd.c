@@ -47,6 +47,7 @@
 #include <err.h>
 #include <signal.h>
 #include <locale.h>
+#include <libconfig.h>
 
 #include "../common/sigaction.h"
 
@@ -64,21 +65,15 @@
 #ifdef WITH_THREAD
 	#include <pthread.h>
 #endif
-/* the TCP port that is used for this example */
-//#define TCP_PORT   6500
+
 
 /* function prototypes and global variables */
 void *do_chld(void *);
-//mutex_t lock;
 int	service_count;
-
 //global variabel for å holde servernavn
 char servername[MAX_SERVERNAME_LEN];
+struct config_t cfg;
 
-//#ifndef BLACK_BOKS
-	#include <libconfig.h>
-	struct config_t cfg;
-//#endif
 
 #ifdef WITH_PROFILING
 	static int profiling_runcount = 0;
@@ -103,17 +98,13 @@ int isInSubname(struct subnamesFormat *subnames,int nrOfSubnames,char s[]) {
 
 
 /* The signal handler exit the program. . */
-void
-catch_alarm (int sig)
-{
+void catch_alarm (int sig) {
 	bblog(ERROR, "searchd: Warning! Recieved alarm signal. Exiting.");
 	exit(1);
 }
 
 /* The signal handler exit the program. . */
-void
-catch_alarm_nolog (int sig)
-{
+void catch_alarm_nolog (int sig) {
 	fprintf(stderr, "searchd->catch_alarm_nolog(): Warning! Recieved alarm signal. Exiting.");
 	exit(1);
 }
@@ -161,24 +152,22 @@ int main(int argc, char *argv[])
 
 	int 	sockfd;
 	int runCount;
-	//int newsockfd;
 	socklen_t clilen;
 	struct sockaddr_in cli_addr, serv_addr;
 	FILE *LOGFILE;
-	//FILE *LOCK;
 	struct searchd_configFORMAT searchd_config;
 
 	struct config_t maincfg;
 
-        searchd_config.searchport = 0;
-	searchd_config.optLog = 0;
-	searchd_config.optMax = 0;
-	searchd_config.optSingle = 0;
-	searchd_config.optrankfile = NULL;
-	searchd_config.optPreOpen = 0;
-	searchd_config.optFastStartup = 0;
-	searchd_config.optCacheIndexes = 1;
-	searchd_config.optAlarm = 60;
+        searchd_config.searchport 	= 0;
+	searchd_config.optLog 		= 0;
+	searchd_config.optMax 		= 0;
+	searchd_config.optSingle 	= 0;
+	searchd_config.optrankfile 	= NULL;
+	searchd_config.optPreOpen 	= 0;
+	searchd_config.optFastStartup 	= 0;
+	searchd_config.optCacheIndexes 	= 1;
+	searchd_config.optAlarm 	= 60;
 	
 	// Needed for the speller to properly convert utf8 to wchar_t
 	setlocale(LC_ALL, "en_US.UTF-8");
@@ -242,34 +231,34 @@ int main(int argc, char *argv[])
 	}
 
 	#ifdef BLACK_BOKS
-	bblog(CLEAN, "Blackbox mode (searchdbb)");
+		bblog(CLEAN, "Blackbox mode (searchdbb)");
 
-	time_t starttime;
-	time(&starttime);
+		time_t starttime;
+		time(&starttime);
 
-	if (searchd_config.optLog) {
-		/* Only add file logging if syslog is disabled */
-		if ((bblog_get_appenders() & LOGGER_APPENDER_SYSLOG) == 0)
-			bblog_set_appenders(LOGGER_APPENDER_FILE|bblog_get_appenders());
-	}
+		if (searchd_config.optLog) {
+			/* Only add file logging if syslog is disabled */
+			if ((bblog_get_appenders() & LOGGER_APPENDER_SYSLOG) == 0)
+				bblog_set_appenders(LOGGER_APPENDER_FILE|bblog_get_appenders());
+		}
 
-	/* Write pidfile */
-	FILE  *pidfile = fopen(bfile("var/searchd.pid"), "w");
+		/* Write pidfile */
+		FILE  *pidfile = fopen(bfile("var/searchd.pid"), "w");
 
-	if (pidfile != NULL) {
-		fprintf(pidfile, "%d", getpid());
-		fclose(pidfile);
-	} else {
-		bblog(WARN, "Unable to write to pidfile");
-	}
+		if (pidfile != NULL) {
+			fprintf(pidfile, "%d", getpid());
+			fclose(pidfile);
+		} else {
+			bblog(WARN, "Unable to write to pidfile");
+		}
 
-	bblog(CLEAN, "searchd: Starting. Time is %s",ctime(&starttime));
+		bblog(CLEAN, "searchd: Starting. Time is %s",ctime(&starttime));
 	#endif
 
 
 
 	#ifdef DEBUG
-        bblog(DEBUGINFO, "searchd: Debug: argc %i, optind %i",argc,optind);
+		bblog(DEBUGINFO, "searchd: Debug: argc %i, optind %i",argc,optind);
 	#endif
 
 	if (searchd_config.optrankfile == NULL) {
@@ -277,14 +266,14 @@ int main(int argc, char *argv[])
 	}
 
 	#ifdef WITH_SPELLING
-	if (searchd_config.optFastStartup != 1) {
-        	if ((spelling = train(bfile("var/dictionarywords"))) == NULL) {
-        	        bblog(ERROR, "Can't init spelling.");
-	        }
+		if (searchd_config.optFastStartup != 1) {
+			if ((spelling = train(bfile("var/dictionarywords"))) == NULL) {
+				bblog(ERROR, "Can't init spelling.");
+			}
 
-		cache_spelling_keepalive(&spelling);
-		signal(SIGUSR1, cache_spelling_hup);
-	}
+			cache_spelling_keepalive(&spelling);
+			signal(SIGUSR1, cache_spelling_hup);
+		}
 	#endif
 
 	if (argc > optind) {
@@ -297,26 +286,25 @@ int main(int argc, char *argv[])
 	lotPreOpenStartl(&searchd_config.lotPreOpen.DocumentIndex,"DocumentIndex","www",searchd_config.optPreOpen);
 	lotPreOpenStartl(&searchd_config.lotPreOpen.Summary,"summary","www",searchd_config.optPreOpen);
 
-#ifdef BLACK_BOKS
-	if (searchd_config.optCacheIndexes == 1) {
-		if (searchd_config.optFastStartup != 1) {
-			bblog(INFO, "Reading indexes");
-			cache_indexes(0);
-			bblog(INFO, "Cached indexes: %dMB, cached indexes: %d", indexcachescached[0]/(1024*1024), indexcachescached[1]);
-			preopen();
-			cache_fresh_lot_collection();
+	#ifdef BLACK_BOKS
+		if (searchd_config.optCacheIndexes == 1) {
+			if (searchd_config.optFastStartup != 1) {
+				bblog(INFO, "Reading indexes");
+				cache_indexes(0);
+				bblog(INFO, "Cached indexes: %dMB, cached indexes: %d", indexcachescached[0]/(1024*1024), indexcachescached[1]);
+				preopen();
+				cache_fresh_lot_collection();
 
-			cache_indexes_keepalive();
-			signal(SIGUSR2, cache_indexes_hup);
-		}
-		else {
+				cache_indexes_keepalive();
+				signal(SIGUSR2, cache_indexes_hup);
+			}
+			else {
+				signal(SIGUSR2, SIG_IGN);
+			}
+		} else {
 			signal(SIGUSR2, SIG_IGN);
 		}
-	} else {
-		signal(SIGUSR2, SIG_IGN);
-	}
-
-#endif
+	#endif
 
 
         maincfg = maincfgopen();
@@ -330,30 +318,6 @@ int main(int argc, char *argv[])
 	maincfgclose(&maincfg);
 
 	
-	/***********************************************************************************/
-	//prøver å få fil lock. Bare en deamon kan kjøre avgangen
-
-	/*
-	#ifndef ALLOW_MULTIPLE_SEARCHD
-	if ((LOCK = fopen("/tmp/searchd.loc","w")) == NULL) {
-		perror("lock file");
-		exit(1);
-	}
-
-	if (flock(fileno(LOCK),LOCK_EX | LOCK_NB) != 0) {
-		if (errno == EWOULDBLOCK) {
-			printf("En annen prosses kjører allerede. Steng denne først.\n");
-		}
-		else {
-			perror("cant get lock file");
-		}
-		exit(1);
-	}
-	#endif
-	*/
-	/***********************************************************************************/
-
-	//#ifndef BLACK_BOKS
 
   	/* Initialize the configuration */
   	config_init(&cfg);
@@ -361,26 +325,17 @@ int main(int argc, char *argv[])
 
   	/* Load the file */
 	#ifdef DEBUG
-  	bblog(DEBUGINFO, "searchd: Debug: Loading [%s] ...",bfile(cfg_searchd));
+		bblog(DEBUGINFO, "searchd: Debug: Loading [%s] ...",bfile(cfg_searchd));
 	#endif
 
   	if (!config_read_file(&cfg, bfile(cfg_searchd))) {
 		bblog(ERROR, "config read failed: [%s]: %s at line %i",bfile(cfg_searchd),config_error_text(&cfg),config_error_line(&cfg));
 		exit(1);
 	}
-	//#endif	
+
 
 	html_parser_init();
 
-	/*
-	#ifdef WITH_THREAD
-		pthread_t chld_thr;
-
-		printf("starting whth thread\n");
-	#else
-		printf("starting single thread version\n");
-	#endif
-	*/
 
 	bblog(CLEAN, "Servername: %s", servername);
 
@@ -397,21 +352,21 @@ int main(int argc, char *argv[])
 	#ifdef BLACK_BOKS
 		// Initialiser thesaurus med ouput-filene fra 'build_thesaurus_*':
 		searchd_config.thesaurus_all = NULL;
-#ifndef WITHOUT_THESAURUS
-		bblog(INFO, "init thesaurus");
+		#ifndef WITHOUT_THESAURUS
+			bblog(INFO, "init thesaurus");
 
-		searchd_config.thesaurus_all = NULL;
-		if (searchd_config.optFastStartup != 1) {
-			searchd_config.thesaurus_all = load_all_thesauruses(bfile("data/thesaurus/"));
+			searchd_config.thesaurus_all = NULL;
+			if (searchd_config.optFastStartup != 1) {
+				searchd_config.thesaurus_all = load_all_thesauruses(bfile("data/thesaurus/"));
 
-			if (searchd_config.thesaurus_all == NULL) {
-				bblog(ERROR, "Unable to open thesaurus. Disabling stemming");
-		    	} else {
-				bblog(INFO, "init thesaurus done");
+				if (searchd_config.thesaurus_all == NULL) {
+					bblog(ERROR, "Unable to open thesaurus. Disabling stemming");
+				} else {
+					bblog(INFO, "init thesaurus done");
+				}
 			}
-		}
-
-#endif
+		#endif
+		
 		bblog(INFO, "init file-extensions");
 		searchd_config.getfiletypep = fte_init(bfile("config/file_extensions.conf"));
 		if (searchd_config.getfiletypep == NULL) {
@@ -426,17 +381,7 @@ int main(int argc, char *argv[])
 
 		bblog(INFO, "init show-attributes");
 		char	*warnings;
-		/*searchd_config.showattrp = show_attributes_init(bfile("config/show_attributes.conf"), &warnings);
-		if (searchd_config.showattrp == NULL)
-		    {
-			fprintf(stderr, "searchd: ERROR!! Unable to open show-attributes configuration file. Disabling attributes.\n");
-		    }
-		else if (warnings[0]!='\0')
-		    {
-			fprintf(stderr, "searchd: ******************* Warnings reading show-attributes config: ********************\n");
-			fprintf(stderr, "%s", warnings);
-			fprintf(stderr, "searchd: *********************************************************************************\n");
-		    }*/
+
 
 	#else
 
@@ -480,40 +425,38 @@ int main(int argc, char *argv[])
 		exit(1);
 	}	
 
-	/* set the level of thread concurrency we desire */
-	//thr_setconcurrency(5);
 
 	listen(sockfd, 5);
 
 	runCount = 0;
 
-#ifndef NEW_CHILD_CATCHER
-	signal(SIGCLD, SIG_IGN);  /* now I don't have to wait() for forked children! */
-#else
-	{
-		// runarb 28 juni 2009: 
-		// Hvis vi har verbose output så skal vi wait()e for våre barn, og vise prity print når de dør.
-		// desverre har det vært mye kød, der hovedprosessen blir hengene i sigchild_handler() og ikke kan
-		// fork'e flere barn. For å ungå dtte venter vi ikke på våre barn til vanlig.
-		if (globalOptVerbose) {
-			struct sigaction sa;
-			int ret;
+	#ifndef NEW_CHILD_CATCHER
+		signal(SIGCLD, SIG_IGN);  /* now I don't have to wait() for forked children! */
+	#else
+		{
+			// runarb 28 juni 2009: 
+			// Hvis vi har verbose output så skal vi wait()e for våre barn, og vise prity print når de dør.
+			// desverre har det vært mye kød, der hovedprosessen blir hengene i sigchild_handler() og ikke kan
+			// fork'e flere barn. For å ungå dtte venter vi ikke på våre barn til vanlig.
+			if (globalOptVerbose) {
+				struct sigaction sa;
+				int ret;
 
-			sa.sa_sigaction = sigchild_handler;
-			sigemptyset(&sa.sa_mask);
-			sa.sa_flags = SA_SIGINFO;
+				sa.sa_sigaction = sigchild_handler;
+				sigemptyset(&sa.sa_mask);
+				sa.sa_flags = SA_SIGINFO;
 
-			ret = sigaction(SIGCHLD, &sa, 0);
-			if (ret) {
-				bblog_errno(ERROR, "sigaction()");
-				exit(1);
+				ret = sigaction(SIGCHLD, &sa, 0);
+				if (ret) {
+					bblog_errno(ERROR, "sigaction()");
+					exit(1);
+				}
+			}
+			else {
+				signal(SIGCLD, SIG_IGN);  /* now I don't have to wait() for forked children! */
 			}
 		}
-		else {
-			signal(SIGCLD, SIG_IGN);  /* now I don't have to wait() for forked children! */
-		}
-	}
-#endif
+	#endif
 
 	bblog(CLEAN, "|------------------------------------------------------------------------------------------------|");
 	bblog(CLEAN, "|%-40s | %-11s | %-11s | %-11s | %-11s|","query", "TotaltTreff", "showabal", "filtered", "total_usecs");
@@ -541,16 +484,6 @@ int main(int argc, char *argv[])
 				bblog(DEBUGINFO, "Debug mode; will not fork to new process.");
 				do_chld((void *) &searchd_config);
 			#else
-				/*
-				#ifdef WITH_THREAD
-			 		//create a new thread to process the incomming request
-					//thr_create(NULL, 0, do_chld, (void *) searchd_config, THR_DETACHED, &chld_thr);
-					pthread_create(&chld_thr, NULL, do_chld, (void *) &searchd_config);
-					//the server is now free to accept another socket request
-				#else
-					do_chld((void *) &searchd_config);	
-				#endif
-				*/
 				bblog(DEBUGINFO, "Forking new prosess.");
 				if (fork() == 0) { // this is the child process
 
@@ -573,12 +506,6 @@ int main(int argc, char *argv[])
 		++runCount;
 
 		if ((searchd_config.optMax != 0) && (runCount >= searchd_config.optMax)) {
-			//venter på siste trå. Ikke helt optimalt dette, da vi kan ha flere tråer som kjører i paralell
-			/*
-			#ifdef WITH_THREAD
-				pthread_join(chld_thr, NULL);
-			#endif
-			*/
 			bblog(WARN, "have reached Max runs. Exiting...");
 			break;
 		}
@@ -672,7 +599,6 @@ void *do_chld(void *arg)
 	/* Set an alarm to go off in a little while. This so we don't run forever if we get en ever loop */
        	alarm (searchd_config->optAlarm);
 
-
 	dp_priority_locl_start();
 
 
@@ -726,14 +652,13 @@ void *do_chld(void *arg)
 
 	//sender svar med en gang at vi kan gjøre dette
 	net_status = net_CanDo;
-	//if ((n=sendall(mysocfd,&net_status, sizeof(net_status))) != sizeof(net_status)) {
+
 	if ((n=send(mysocfd,&net_status, sizeof(net_status),MSG_NOSIGNAL)) != sizeof(net_status)) {
 		bblog_errno(ERROR, "searchd_child: Warning! Sent only %i of %i bytes at %s:%d",n,sizeof(net_status),__FILE__,__LINE__);
 	}
 
 
 	bblog(DEBUGINFO, "MaxsHits %i",queryNodeHeder.MaxsHits);
-	//Sider  = (struct SiderFormat *)malloc(sizeof(struct SiderFormat) * (queryNodeHeder.MaxsHits));
 	bblog(DEBUGINFO, "Ranking search?");
 
 
@@ -752,64 +677,50 @@ void *do_chld(void *arg)
 
 	strcpy(SiderHeder->servername,servername);
 
-#ifndef WITHOUT_THESAURUS
-	// TODO: Denne må skalere til flere språk:
-	char	*lang = NULL;
-	switch (queryNodeHeder.lang)
-	    {
-		case LANG_NBO: lang = "nbo"; break;
-		case LANG_ENG: lang = "eng"; break;
-	    }
-
-	bblog(INFO, "[searchd] lang_id = %i", queryNodeHeder.lang);
-	bblog(INFO, "[searchd] lang = %s", lang);
-
-	searchd_config->thesaurusp = NULL;
-	if (lang != NULL && searchd_config->thesaurus_all != NULL)
-	    {
-		iterator	it = map_find(searchd_config->thesaurus_all, lang);
-		if (it.valid)
+	#ifndef WITHOUT_THESAURUS
+		// TODO: Denne må skalere til flere språk:
+		char	*lang = NULL;
+		switch (queryNodeHeder.lang)
 		    {
-			bblog(INFO, "[searchd] Loading %s thesaurus", lang);
-			searchd_config->thesaurusp = map_val(it).ptr;
+			case LANG_NBO: lang = "nbo"; break;
+			case LANG_ENG: lang = "eng"; break;
 		    }
-		else
-		    {
-			bblog(INFO, "[searchd] No thesaurus for %s", lang);
-		    }
-	    }
-#endif
 
-/***************************************/
-	 	/****************/
+		bblog(INFO, "[searchd] lang_id = %i", queryNodeHeder.lang);
+		bblog(INFO, "[searchd] lang = %s", lang);
 
-	//dekoder subname
+		searchd_config->thesaurusp = NULL;
+		if (lang != NULL && searchd_config->thesaurus_all != NULL) {
+			iterator	it = map_find(searchd_config->thesaurus_all, lang);
+			if (it.valid)
+			    {
+				bblog(INFO, "[searchd] Loading %s thesaurus", lang);
+				searchd_config->thesaurusp = map_val(it).ptr;
+			    }
+			else
+			    {
+				bblog(INFO, "[searchd] No thesaurus for %s", lang);
+			    }
+		}
+	#endif
+
 
 	bblog(DEBUGINFO, "nrOfSubnames %i",nrOfSubnames);
   	
-/*
-	nrOfSubnames = 1;
-
-	subnames = malloc(sizeof(struct subnamesFormat) * nrOfSubnames);
-
-	strscpy(subnames[0].subname,"www",sizeof(subnames[0].subname));
-*/
 
 	#ifdef DEBUG
-	bblog(DEBUGINFO, "searchd_child: ");
-	bblog(DEBUGINFO, "##########################################################");
-	bblog(DEBUGINFO, "searchd_child: subnames:");
-	bblog(DEBUGINFO, "Total of %i", nrOfSubnames);
-	for (i=0;i<nrOfSubnames;i++) {
-		bblog(DEBUGINFO, "searchd_child: subname nr %i: \"%s\"",i,subnames[i].subname);
-	}
-	bblog(DEBUGINFO, "searchd_child: ##########################################################");
+		bblog(DEBUGINFO, "searchd_child: ");
+		bblog(DEBUGINFO, "##########################################################");
+		bblog(DEBUGINFO, "searchd_child: subnames:");
+		bblog(DEBUGINFO, "Total of %i", nrOfSubnames);
+		for (i=0;i<nrOfSubnames;i++) {
+			bblog(DEBUGINFO, "searchd_child: subname nr %i: \"%s\"",i,subnames[i].subname);
+		}
+		bblog(DEBUGINFO, "searchd_child: ##########################################################");
 	#endif
 
 	SiderHeder->filtypesnrof = MAXFILTYPES;
-
-	SiderHeder->errorstrlen=sizeof(SiderHeder->errorstr);
-
+	SiderHeder->errorstrlen = sizeof(SiderHeder->errorstr);
 
 
 	int parsing_failed;
@@ -869,8 +780,6 @@ void *do_chld(void *arg)
         SiderHeder->total_usecs = getTimeDifference(&globalstart_time,&globalend_time);
 
 	
-	//printf("query \"%s\", TotaltTreff %i,showabal %i,filtered %i,total_usecs %f\n",queryNodeHeder.query,SiderHeder->TotaltTreff,SiderHeder->showabal,SiderHeder->filtered,SiderHeder->total_usecs);
-
 	bblog(CLEAN, "|%-40s | %-11i | %-11i | %-11i | %-11f|",
 		queryNodeHeder.query,
 		SiderHeder->TotaltTreff,
@@ -887,13 +796,13 @@ void *do_chld(void *arg)
 
 
 	#ifdef DEBUG
-	gettimeofday(&end_time, NULL);
-	bblog(DEBUGINFO, "searchd_child: Time debug: sending SiderHeder %f",getTimeDifference(&start_time,&end_time));
+		gettimeofday(&end_time, NULL);
+		bblog(DEBUGINFO, "searchd_child: Time debug: sending SiderHeder %f",getTimeDifference(&start_time,&end_time));
 	#endif
 	
 
 	#ifdef DEBUG
-	gettimeofday(&start_time, NULL);
+		gettimeofday(&start_time, NULL);
 	#endif
 
 	struct sendarrayFormat{
@@ -905,7 +814,7 @@ void *do_chld(void *arg)
 	void send_to_array (struct sendarrayFormat *sendarray, int *sendarraylength, void *p, int size, int copy) {
 
 		#ifdef DEBUG
-		printf("send_to_array(sendarraylength=%i,size=%i)\n",*sendarraylength,size);
+			printf("send_to_array(sendarraylength=%i,size=%i)\n",*sendarraylength,size);
 		#endif
 
 		if (size == 0) {
@@ -934,12 +843,9 @@ void *do_chld(void *arg)
 	send_to_array(sendarray, &sendarraylength, SiderHeder, sizeof(struct SiderHederFormat),0);
 
 	#ifdef ATTRIBUTES
-	if (SiderHeder->navigation_xml_len > 0)
-	    {
-		send_to_array(sendarray, &sendarraylength, SiderHeder->navigation_xml, SiderHeder->navigation_xml_len, 0);
-	    }
-
-	
+		if (SiderHeder->navigation_xml_len > 0) {
+			send_to_array(sendarray, &sendarraylength, SiderHeder->navigation_xml, SiderHeder->navigation_xml_len, 0);
+		}
 	#endif
 
 
@@ -1020,36 +926,34 @@ void *do_chld(void *arg)
 	#else 
 
 	/* Disable tcp delay */
-#if 0
-	int nodelayflag = 1;
-	setsockopt(mysocfd, IPPROTO_TCP, TCP_NODELAY, &nodelayflag, sizeof(int));
-#endif
+	#if 0
+		int nodelayflag = 1;
+		setsockopt(mysocfd, IPPROTO_TCP, TCP_NODELAY, &nodelayflag, sizeof(int));
+	#endif
 
 	if ((n=send(mysocfd,SiderHeder, sizeof(struct SiderHederFormat),MSG_NOSIGNAL)) != sizeof(struct SiderHederFormat)) {
 		bblog_errno(ERROR, "siderheder: send only %i of %i at %s:%d",n,sizeof(struct SiderHederFormat),__FILE__,__LINE__);
 	}
 
 	#ifdef ATTRIBUTES
-	if (SiderHeder->navigation_xml_len > 0)
-	    {
-		if ((n=send(mysocfd, SiderHeder->navigation_xml, SiderHeder->navigation_xml_len, MSG_NOSIGNAL)) != SiderHeder->navigation_xml_len)
-		    {
-			bblog_errno(ERROR, "navigation xml: send only %i of %i at %s:%d",n,SiderHeder->navigation_xml_len,__FILE__,__LINE__);
-		    }
-	    }
+		if (SiderHeder->navigation_xml_len > 0) {
+			if ((n=send(mysocfd, SiderHeder->navigation_xml, SiderHeder->navigation_xml_len, MSG_NOSIGNAL)) != SiderHeder->navigation_xml_len)
+			    {
+				bblog_errno(ERROR, "navigation xml: send only %i of %i at %s:%d",n,SiderHeder->navigation_xml_len,__FILE__,__LINE__);
+			    }
+		}
 
-	free(SiderHeder->navigation_xml);
-	
+		free(SiderHeder->navigation_xml);
 	#endif
 
 	#ifdef DEBUG
-	gettimeofday(&end_time, NULL);
-	bblog(DEBUGINFO, "searchd_child: Time debug: sending SiderHeder %f",getTimeDifference(&start_time,&end_time));
+		gettimeofday(&end_time, NULL);
+		bblog(DEBUGINFO, "searchd_child: Time debug: sending SiderHeder %f",getTimeDifference(&start_time,&end_time));
 	#endif
 	
 
 	#ifdef DEBUG
-	gettimeofday(&start_time, NULL);
+		gettimeofday(&start_time, NULL);
 	#endif
 
 
@@ -1058,7 +962,6 @@ void *do_chld(void *arg)
 		struct SiderFormat *s = Sider+i;
 		size_t len;
 
-		//printf("N_urls: %d\n", s->n_urls);
 		if ((n=send(mysocfd, s, sizeof(struct SiderFormat), MSG_NOSIGNAL)) != (sizeof(struct SiderFormat))) {
 			bblog(ERROR, "siderformat: send only %i of %i at %s:%d",n,sizeof(struct SiderFormat),__FILE__,__LINE__);
 			break;
@@ -1074,15 +977,9 @@ void *do_chld(void *arg)
 			len = strlen(s->urls[j].fulluri);
 			send(mysocfd, &len, sizeof(len), MSG_NOSIGNAL);
 			send(mysocfd, s->urls[j].fulluri, len, MSG_NOSIGNAL);
-
-
-			//printf("sending url: %s\n", s->urls[j].uri);
-
-			//send(mysocfd, s->urls[j].subname, sizeof(s->urls[j].subname), MSG_NOSIGNAL);
 		}
 
 		/* Send attributes */
-		//printf("### Send attributes: %s\n", s->attributes);
 		if (s->attributes == NULL) {
 			len = 0;
 		}
@@ -1095,40 +992,38 @@ void *do_chld(void *arg)
 	#endif
 
 	#ifdef DEBUG
-	gettimeofday(&end_time, NULL);
-	bblog(DEBUGINFO, "Time debug: sendig sider %f",getTimeDifference(&start_time,&end_time));
+		gettimeofday(&end_time, NULL);
+		bblog(DEBUGINFO, "Time debug: sendig sider %f",getTimeDifference(&start_time,&end_time));
 	#endif
 
 
-	/* close the socket and exit this thread */
+	/* close the socket */
 	close(mysocfd);
 
 	free(Sider);
 	free(SiderHeder);
 
 	#ifdef DEBUG
-	bblog(DEBUGINFO, "exiting");
+		bblog(DEBUGINFO, "exiting");
 	#endif
 
-	//pthread_exit((void *)0); /* exit with status */
 
-	/* cansel alarm */
+	/* Cancel any running alarms */
        	alarm (0);
 
 
-/***************************************/
-		#ifdef WITH_PROFILING
-			++profiling_runcount;
+	#ifdef WITH_PROFILING
+		++profiling_runcount;
 
-			if (profiling_runcount >= WITH_PROFILING) {
-				bblog(INFO, "searchd_child: exiting to do profiling. Have done %i runs",profiling_runcount);
-				sleep(1);
-				exit(1);
-			}
-			bblog(INFO, "searchd_child: Has runned %i times",profiling_runcount);
-		#endif
+		if (profiling_runcount >= WITH_PROFILING) {
+			bblog(INFO, "searchd_child: exiting to do profiling. Have done %i runs",profiling_runcount);
+			sleep(1);
+			exit(1);
+		}
+		bblog(INFO, "searchd_child: Has runned %i times",profiling_runcount);
+	#endif
 
 
-    bblog(DEBUGINFO, "searchd: Normal exit.");
-    bblog(INFO, "searchd: ~do_chld()");
+	bblog(DEBUGINFO, "searchd: Normal exit.");
+	bblog(INFO, "searchd: ~do_chld()");
 }

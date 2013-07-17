@@ -9,9 +9,9 @@ static inline void iindexArrayHitsCopy(struct iindexFormat *c, int k, struct iin
 	int x;
 
 	for(x=0;x<b->iindex[j].TermAntall;x++) {
-#ifdef DEBUG_II
-		bblog(DEBUGINFO, "iindexArrayHitsCopy: b %hu", b->iindex[j].hits[x].pos);
-#endif
+		#ifdef DEBUG_II
+			bblog(DEBUGINFO, "iindexArrayHitsCopy: b %hu", b->iindex[j].hits[x].pos);
+		#endif
 		c->iindex[k].hits[c->iindex[k].TermAntall].pos = b->iindex[j].hits[x].pos;
 		c->iindex[k].hits[c->iindex[k].TermAntall].phrase = 0;
 		++c->iindex[k].TermAntall;
@@ -44,23 +44,22 @@ static inline void rank_explaindSumm(struct rank_explaindFormat *t, struct rank_
 
         //dette er egentlig en hurti fiks, da vi kan kansje kan f� mer en maks for querys med fler en et ord
         if (or) {
-         t->maxBody             = a->maxBody;
-         t->maxHeadline         = a->maxHeadline;
-         t->maxTittel           = a->maxTittel;
-         t->maxUrl_mainbody     = a->maxUrl_mainbody;
-         t->maxUrlDomain        = a->maxUrlDomain;
-         t->maxUrlSub           = a->maxUrlSub;
-         t->maxAthor            = a->maxAthor;
+		t->maxBody             = a->maxBody;
+		t->maxHeadline         = a->maxHeadline;
+		t->maxTittel           = a->maxTittel;
+		t->maxUrl_mainbody     = a->maxUrl_mainbody;
+		t->maxUrlDomain        = a->maxUrlDomain;
+		t->maxUrlSub           = a->maxUrlSub;
+		t->maxAthor            = a->maxAthor;
         }
         else {
-         t->maxBody             = a->maxBody + b->maxBody;
-         t->maxHeadline         = a->maxHeadline + b->maxHeadline;
-         t->maxTittel           = a->maxTittel + b->maxTittel;
-         t->maxUrl_mainbody     = a->maxUrl_mainbody + b->maxUrl_mainbody;
-         t->maxUrlDomain        = a->maxUrlDomain + b->maxUrlDomain;
-         t->maxUrlSub           = a->maxUrlSub + b->maxUrlSub;
-         t->maxAthor            = a->maxAthor + b->maxAthor;
-
+		t->maxBody             = a->maxBody + b->maxBody;
+		t->maxHeadline         = a->maxHeadline + b->maxHeadline;
+		t->maxTittel           = a->maxTittel + b->maxTittel;
+		t->maxUrl_mainbody     = a->maxUrl_mainbody + b->maxUrl_mainbody;
+		t->maxUrlDomain        = a->maxUrlDomain + b->maxUrlDomain;
+		t->maxUrlSub           = a->maxUrlSub + b->maxUrlSub;
+		t->maxAthor            = a->maxAthor + b->maxAthor;
         }
 
 
@@ -76,7 +75,6 @@ void or_merge(struct iindexFormat **c, int *baselen, struct iindexFormat **a, in
 	int j=0;
 	int k=0;
 	(*baselen) = 0;
-	//struct iindexFormat *tempiip;
 
 	bblog(INFO, "or_merge(alen %i, blen %i)", alen,blen);
 
@@ -94,18 +92,14 @@ void or_merge(struct iindexFormat **c, int *baselen, struct iindexFormat **a, in
 	}
 	else if (alen== 0) {
 		bblog(INFO, "alen is 0. Can swap b array and c array");
-		//tempiip = *c;
-		//*c = *b;
-		//*b = tempiip;
+		
 		swapiindex(c, b);
 		(*baselen) = blen;
 		return;
 	}
 	else if (blen==0) {
 		bblog(INFO, "blen is 0. Can swap a array and c array");
-		//tempiip = *c;
-		//*c = *a;
-		//*a = tempiip;
+
 		swapiindex(c, a);
 		(*baselen) = alen;
 		return;
@@ -163,7 +157,6 @@ void or_merge(struct iindexFormat **c, int *baselen, struct iindexFormat **a, in
 			}
 
 			++k; ++j; ++i;
-			//++(*baselen);
 		}
  		else if( (*a)->iindex[i].DocID < (*b)->iindex[j].DocID ) {
 
@@ -183,9 +176,6 @@ void or_merge(struct iindexFormat **c, int *baselen, struct iindexFormat **a, in
 			if ( (*a)->iindex[i].TermAntall != 0) {
 
 				//copying hits
-				//#ifdef DEBUG_II
-				//printf("or_merge: hist a %hu, b %hu\n",(*a)->iindex[i].TermAntall,(*b)->iindex[j].TermAntall);
-				//#endif
 				(*c)->iindex[k].TermAntall = 0;
 				(*c)->iindex[k].hits = &(*c)->hits[(*c)->nrofHits];
 
@@ -195,7 +185,6 @@ void or_merge(struct iindexFormat **c, int *baselen, struct iindexFormat **a, in
 			
 			++i; 
 			++k;
-			//++(*baselen);
 		}
  		else {
 			#ifdef DEBUG_II
@@ -212,9 +201,6 @@ void or_merge(struct iindexFormat **c, int *baselen, struct iindexFormat **a, in
 			if ( (*b)->iindex[j].TermAntall != 0 ) {
 
 				//copying hits
-				//#ifdef DEBUG_II
-				//printf("or_merge: hits a nr %hu, b nr %hu\n",(*a)->iindex[i].TermAntall,(*b)->iindex[j].TermAntall);
-				//#endif
 				(*c)->iindex[k].TermAntall = 0;
 				(*c)->iindex[k].hits = &(*c)->hits[(*c)->nrofHits];
 
@@ -222,13 +208,12 @@ void or_merge(struct iindexFormat **c, int *baselen, struct iindexFormat **a, in
 			}
 			++j; 
 			++k;
-			//++(*baselen);
 		}
 	}
 
 	bblog(INFO, "i %i, alen %i, j %i, blen %i. k %i", i,alen,j,blen,k);
 
-	//runarb: 14 mai
+
 	while (i<alen && (k < maxIndexElements)){
 
 		#ifdef DEBUG_TIME
@@ -248,10 +233,9 @@ void or_merge(struct iindexFormat **c, int *baselen, struct iindexFormat **a, in
 			iindexArrayHitsCopy(*c,k,*a,i);
 		}
 		++k; ++i;
-		//++(*baselen);
 	}
 	
-	//runarb: 14 mai
+
 	while (j<blen && (k < maxIndexElements)) {
 
 		#ifdef DEBUG_TIME
@@ -270,18 +254,17 @@ void or_merge(struct iindexFormat **c, int *baselen, struct iindexFormat **a, in
 			iindexArrayHitsCopy(*c,k,*b,j);
 		}
 		++k; ++j;
-		//++(*baselen);
 	}
 
 	(*baselen) += k;
 
 	#ifdef DEBUG_II
-	bblog(DEBUGINFO, "or_merge result (100 max):");
-	x=0;
-	while ((x<(*baselen)) && (x<100)) {
-                bblog(DEBUGINFO, "\t%u", (*c)->iindex[x].DocID);
-		++x;
-	}
+		bblog(DEBUGINFO, "or_merge result (100 max):");
+		x=0;
+		while ((x<(*baselen)) && (x<100)) {
+			bblog(DEBUGINFO, "\t%u", (*c)->iindex[x].DocID);
+			++x;
+		}
 	#endif
 
 	#ifdef DEBUG_TIME
@@ -312,13 +295,13 @@ void andNot_merge(struct iindexFormat **c, int *baselen, int *added,struct iinde
 
 		if ((*a)->iindex[i].DocID == (*b)->iindex[j].DocID) {
 			#ifdef DEBUG_II
-			bblog(DEBUGINFO, "andNot_merge: Not DocID %u", (*a)->iindex[i].DocID);
+				bblog(DEBUGINFO, "andNot_merge: Not DocID %u", (*a)->iindex[i].DocID);
 			#endif
 			++j; ++i;
 		}
  		else if( (*a)->iindex[i].DocID < (*b)->iindex[j].DocID ) {
 			#ifdef DEBUG_II
-			bblog(DEBUGINFO, "andNot_merge: DocID %u < DocID %u. Add", (*a)->iindex[i].DocID,(*b)->iindex[j].DocID);
+				bblog(DEBUGINFO, "andNot_merge: DocID %u < DocID %u. Add", (*a)->iindex[i].DocID,(*b)->iindex[j].DocID);
 			#endif
                 	(*c)->iindex[k] = (*a)->iindex[i];
 			
@@ -327,18 +310,17 @@ void andNot_merge(struct iindexFormat **c, int *baselen, int *added,struct iinde
 			//kopierer hits
 			(*c)->iindex[k].TermAntall = 0;
 			#ifdef DEBUG_II
-			bblog(DEBUGINFO, "a TermAntall %i, (*c)->nrofHits %i", (*a)->iindex[i].TermAntall,(*c)->nrofHits);
-			bblog(DEBUGINFO, "size %i", sizeof((*c)->iindex[k]));
+				bblog(DEBUGINFO, "a TermAntall %i, (*c)->nrofHits %i", (*a)->iindex[i].TermAntall,(*c)->nrofHits);
+				bblog(DEBUGINFO, "size %i", sizeof((*c)->iindex[k]));
 			#endif
 			for(x=0;x<(*a)->iindex[i].TermAntall;x++) {
 				#ifdef DEBUG_II
-				bblog(DEBUGINFO, "aaa %hu", (*a)->iindex[i].hits[x].pos);
+					bblog(DEBUGINFO, "aaa %hu", (*a)->iindex[i].hits[x].pos);
 				#endif
 				(*c)->iindex[k].hits[(*c)->iindex[k].TermAntall].pos = (*a)->iindex[i].hits[x].pos;
 				(*c)->iindex[k].hits[(*c)->iindex[k].TermAntall].phrase = (*a)->iindex[i].hits[x].phrase;
 				++(*c)->iindex[k].TermAntall;
 				++(*c)->nrofHits;
-
 			}
 			
 			++i; 
@@ -347,19 +329,17 @@ void andNot_merge(struct iindexFormat **c, int *baselen, int *added,struct iinde
 		}
  		else {
 			#ifdef DEBUG_II
-			bblog(DEBUGINFO, "andNot_merge: DocID %u > DocID %u. Wont add", (*a)->iindex[i].DocID,(*b)->iindex[j].DocID);
+				bblog(DEBUGINFO, "andNot_merge: DocID %u > DocID %u. Wont add", (*a)->iindex[i].DocID,(*b)->iindex[j].DocID);
 			#endif
-	                //c[k] = b[j];
 
 			++j; 
-			//++k;
-			//++(*baselen);
+
 		}
 		
 	}
 	#ifdef DEBUG
-	bblog(DEBUGINFO, "andNot_merge: end of one array i %i, alen %i, j %i, blen %i. k %i", i,alen,j,blen,k);
-	bblog(DEBUGINFO, "andNot_merge: i %i, alen %i, blen %i", i,alen,blen);
+		bblog(DEBUGINFO, "andNot_merge: end of one array i %i, alen %i, j %i, blen %i. k %i", i,alen,j,blen,k);
+		bblog(DEBUGINFO, "andNot_merge: i %i, alen %i, blen %i", i,alen,blen);
 	#endif
 	while (i<alen && (k < maxIndexElements)){
 
@@ -371,16 +351,16 @@ void andNot_merge(struct iindexFormat **c, int *baselen, int *added,struct iinde
 
 		for(x=0;x<(*a)->iindex[i].TermAntall;x++) {
 			#ifdef DEBUG_II
-			bblog(DEBUGINFO, "pos %hu", (*a)->iindex[i].hits[x].pos);
+				bblog(DEBUGINFO, "pos %hu", (*a)->iindex[i].hits[x].pos);
 			#endif
 			(*c)->iindex[k].hits[(*c)->iindex[k].TermAntall].pos = (*a)->iindex[i].hits[x].pos;
 			(*c)->iindex[k].hits[(*c)->iindex[k].TermAntall].phrase = (*a)->iindex[i].hits[x].phrase;
 			++(*c)->iindex[k].TermAntall;
 			++(*c)->nrofHits;
-
 		}
+		
 		#ifdef DEBUG_II
-		bblog(DEBUGINFO, "andNot_merge: overflow DocID %u", (*a)->iindex[i].DocID);
+			bblog(DEBUGINFO, "andNot_merge: overflow DocID %u", (*a)->iindex[i].DocID);
 		#endif
 
 		++k; ++i;
@@ -388,10 +368,10 @@ void andNot_merge(struct iindexFormat **c, int *baselen, int *added,struct iinde
 	}
 
 	#ifdef DEBUG_II
-	bblog(DEBUGINFO, "andNot_merge: have:");
-	for(i=0;i<k;i++) {
-		bblog(DEBUGINFO, "\tDocID: %u", (*c)->iindex[i].DocID);
-	}
+		bblog(DEBUGINFO, "andNot_merge: have:");
+		for(i=0;i<k;i++) {
+			bblog(DEBUGINFO, "\tDocID: %u", (*c)->iindex[i].DocID);
+		}
 	#endif
 
 	(*added) = k;
@@ -407,27 +387,24 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 	int x;
 	int k=originalLen;
 
-	//runarb: 28, jul 2007
-	//bytter slik at vi har totalt elementer i array
-	//(*baselen) = 0;
 	(*baselen) = originalLen;
 
 	bblog(INFO, "and_merge(originalLen=%i, alen=%i, blen=%i)", originalLen,alen,blen);
 
 	#ifdef DEBUG_II
-	bblog(DEBUGINFO, "a, first hits (of %i total):", alen);
-	for(x=0;x<alen && x<100;x++) {
-		bblog(DEBUGINFO, "\t%u", a->iindex[x].DocID);
-	}
-	bblog(DEBUGINFO, "b, first hits (of %i total):", blen);
-	for(x=0;x<blen && x<100;x++) {
-		bblog(DEBUGINFO, "\t%u", b->iindex[x].DocID);
-	}
+		bblog(DEBUGINFO, "a, first hits (of %i total):", alen);
+		for(x=0;x<alen && x<100;x++) {
+			bblog(DEBUGINFO, "\t%u", a->iindex[x].DocID);
+		}
+		bblog(DEBUGINFO, "b, first hits (of %i total):", blen);
+		for(x=0;x<blen && x<100;x++) {
+			bblog(DEBUGINFO, "\t%u", b->iindex[x].DocID);
+		}
 	#endif
 
 	#ifdef DEBUG_II
-	bblog(DEBUGINFO, "and_merge: start");
-	bblog(DEBUGINFO, "and_merge:  originalLen %i", originalLen);
+		bblog(DEBUGINFO, "and_merge: start");
+		bblog(DEBUGINFO, "and_merge:  originalLen %i", originalLen);
 	#endif
 
 	while (i<alen && j<blen)
@@ -436,9 +413,7 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 			#ifdef DEBUG_II
 				bblog(DEBUGINFO, "\t%i == %i", a->iindex[i].DocID,b->iindex[j].DocID);
 			#endif
-			//c[k] = a[i];
-
-			//c[k].TermRank = a[i].TermRank + b[j].TermRank;		
+	
 
 			TermRank = a->iindex[i].TermRank + b->iindex[j].TermRank;
                         c->iindex[k] = a->iindex[i];
@@ -448,14 +423,14 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 
 			//copying hits
 			#ifdef DEBUG_II
-			bblog(DEBUGINFO, "and_merge: hist a %hu, b %hu", a->iindex[i].TermAntall,b->iindex[j].TermAntall);
+				bblog(DEBUGINFO, "and_merge: hist a %hu, b %hu", a->iindex[i].TermAntall,b->iindex[j].TermAntall);
 			#endif
 			c->iindex[k].TermAntall = 0;
 			c->iindex[k].hits = &c->hits[c->nrofHits];
 
 			for(x=0;x<a->iindex[i].TermAntall;x++) {
 				#ifdef DEBUG_II
-				bblog(DEBUGINFO, "aaa %hu", a->iindex[i].hits[x].pos);
+					bblog(DEBUGINFO, "aaa %hu", a->iindex[i].hits[x].pos);
 				#endif
 				c->iindex[k].hits[c->iindex[k].TermAntall].pos = a->iindex[i].hits[x].pos;
 				c->iindex[k].hits[c->iindex[k].TermAntall].phrase = a->iindex[i].hits[x].phrase;
@@ -464,7 +439,7 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 			}
 			for(x=0;x<b->iindex[j].TermAntall;x++) {
 				#ifdef DEBUG_II
-				bblog(DEBUGINFO, "bbb %hu", b->iindex[j].hits[x].pos);
+					bblog(DEBUGINFO, "bbb %hu", b->iindex[j].hits[x].pos);
 				#endif
 				c->iindex[k].hits[c->iindex[k].TermAntall].pos = b->iindex[j].hits[x].pos;
 				c->iindex[k].hits[c->iindex[k].TermAntall].phrase = b->iindex[j].hits[x].phrase;
@@ -480,14 +455,13 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 			#ifdef DEBUG_II
 				bblog(DEBUGINFO, "\t%i < %i", a->iindex[i].DocID,b->iindex[j].DocID);
 			#endif
-   			//c[k++] = a[i++];
+			
 			i++;
 		}
  		else {
 			#ifdef DEBUG_II	
 				bblog(DEBUGINFO, "\t%i > %i", a->iindex[i].DocID,b->iindex[j].DocID);
 			#endif
-   			//c[k++] = b[j++];
 			j++;
 		}
 	}
@@ -514,9 +488,8 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 	int found;
 	
 	#ifdef DEBUG
-	struct timeval start_time, end_time;
-
-	gettimeofday(&start_time, NULL);
+		struct timeval start_time, end_time;
+		gettimeofday(&start_time, NULL);
 	#endif
 
 	bblog(INFO, "a nrofHits %i, b nrofHits %i. (c nrofHits %i)", a->nrofHits,b->nrofHits,c->nrofHits);
@@ -568,17 +541,12 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 
 			ah = bh = 0;
 
-
-			//c->iindex[k].TermAntall = 0;
 			int TermAntall;
 
 			TermAntall = 0;
-			//c->iindex[k].hits = &c->hits[c->nrofHits];
 			struct hitsFormat *hits;
 
 			hits = &c->hits[c->nrofHits];
-
-			//printf("ah %i TermAntall %i, bh %i TermAntall %i, MaxsHitsInIndex %i\n",ah,a->iindex[i].TermAntall,bh,b->iindex[j].TermAntall,MaxsHitsInIndex);
 
 			found = 0;
 			//lopper gjenom alle hitene og finner de som er rett etter hverandre
@@ -586,7 +554,7 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 
 				if (c->nrofHits == maxTotalIindexHits) {
 					#ifdef EXPLAIN_RANK
-					bblog(DEBUGINFO, "have now maxTotalIindexHits hits in hits array");
+						bblog(DEBUGINFO, "have now maxTotalIindexHits hits in hits array");
 					#endif
 					break;
 				}
@@ -597,12 +565,10 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 					hits[TermAntall].pos = b->iindex[j].hits[bh].pos;
 					
 					if ((a->iindex[i].hits[ah].phrase != -1) && (b->iindex[j].hits[bh].phrase != -1)) {
-						//c->iindex[k].hits[c->iindex[k].TermAntall].phrase = 1;
 						hits[TermAntall].phrase = 1;
 						++c->phrasenr;
 					}
 					else {
-						//c->iindex[k].hits[c->iindex[k].TermAntall].phrase = -1;
 						hits[TermAntall].phrase = -1;
 						--c->phrasenr;
 					}
@@ -707,14 +673,14 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
         }
 
 	#ifdef DEBUG
-	gettimeofday(&end_time, NULL);
-	bblog(DEBUGINFO, "Time debug: andprox_merge %u", getTimeDifference(&start_time,&end_time));
+		gettimeofday(&end_time, NULL);
+		bblog(DEBUGINFO, "Time debug: andprox_merge %u", getTimeDifference(&start_time,&end_time));
 	#endif
 
 
 	#ifdef EXPLAIN_RANK
-	bblog(INFO, "andprox_merge: Merged a and b of length %i %i. Into %i", alen,blen,(*baselen));
-	bblog(INFO, "andprox_merge: nrofHits: %i", c->nrofHits);
+		bblog(INFO, "andprox_merge: Merged a and b of length %i %i. Into %i", alen,blen,(*baselen));
+		bblog(INFO, "andprox_merge: nrofHits: %i", c->nrofHits);
 	#endif
 }
 
@@ -743,12 +709,9 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 	int k=Originallen;
 	int y;
 	int ah,bh;
-	//int hitcount;
 	int found;
 	int TermRank;
-	//unsigned short hits[MaxTermHit];
-	//runarb: 21 aug 2007: tror vi har byttet til å returnere totalt antal dokumeneter i array nå, ikke bare de som ble lagt til. Da kan vi ikke sette denet til 0
-        //(*baselen) = 0;
+	
         (*baselen) = Originallen;
 
 	struct hitsFormat *hits;
@@ -760,11 +723,10 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 	bblog(DEBUGINFO, "frase_merge: arrays %u %u",(unsigned int)a,(unsigned int)b);
 
 	#ifdef DEBUG
-	bblog(DEBUGINFO, "frase_merge: from before");
-	for (i=0;i<*baselen;i++) {
-		bblog(DEBUGINFO, "\t DocID %u, subname \"%s\"", c->iindex[i].DocID,(*c->iindex[i].subname).subname);
-	}
-
+		bblog(DEBUGINFO, "frase_merge: from before");
+		for (i=0;i<*baselen;i++) {
+			bblog(DEBUGINFO, "\t DocID %u, subname \"%s\"", c->iindex[i].DocID,(*c->iindex[i].subname).subname);
+		}
 	#endif
 
         while (i<alen && j<blen)
@@ -789,12 +751,7 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 				bblog(DEBUGINFO, "");
 			#endif
 
-                   	//c->iindex[k] = b->iindex[j];
 	               	c->iindex[k] = a->iindex[i];
-
-			//c->iindex[k].TermAntall = 0;
-                        //c->iindex[k].hits = &c->hits[c->nrofHits];
-
 
 
 			TermAntall = 0;
@@ -803,12 +760,11 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 
 
 			ah = bh = 0;
-			//hitcount = 0;
 			found = 0;
 			//lopper gjenom alle hitene og finner de som er rett etter hverandre
 
 			#ifdef EXPLAIN_RANK
-			bblog(DEBUGINFO, "a TermAntall %i, b TermAntall %i",a->iindex[i].TermAntall,b->iindex[j].TermAntall);
+				bblog(DEBUGINFO, "a TermAntall %i, b TermAntall %i",a->iindex[i].TermAntall,b->iindex[j].TermAntall);
 			#endif
 
 			while ((ah < a->iindex[i].TermAntall) && (bh < b->iindex[j].TermAntall)) {
@@ -816,35 +772,31 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 				//sjekker om dette er en frase. Altså at "ord2" kommer ret etter "ord1"
 				if ((b->iindex[j].hits[bh].pos - a->iindex[i].hits[ah].pos) == 1) {
 					found = 1;
-					//hits[hitcount].pos = b->iindex[j].hits[bh].pos;
-					//c->iindex[k].hits[c->iindex[k].TermAntall].pos = b->iindex[j].hits[bh].pos;
-					//c->iindex[k].hits[c->iindex[k].TermAntall].phrase = 1;
+
 					hits[TermAntall].pos = b->iindex[j].hits[bh].pos;
 					hits[TermAntall].phrase = 1;
 					++c->phrasenr;
 
 					#ifdef EXPLAIN_RANK
-					bblog(DEBUGINFO, "frase_merge: frase hit DocID %u %hu %hu is now %hu",c->iindex[k].DocID,a->iindex[i].hits[ah].pos,b->iindex[j].hits[bh].pos,c->iindex[k].hits[c->iindex[k].TermAntall].pos);
+						bblog(DEBUGINFO, "frase_merge: frase hit DocID %u %hu %hu is now %hu",c->iindex[k].DocID,a->iindex[i].hits[ah].pos,b->iindex[j].hits[bh].pos,c->iindex[k].hits[c->iindex[k].TermAntall].pos);
 					#endif
 
-					//c->iindex[k].TermAntall++;
 					TermAntall++;
 					c->nrofHits++;
 
-					//hitcount++;
 					ah++;
 					bh++;
 
 				}
 				else if (a->iindex[i].hits[ah].pos < b->iindex[j].hits[bh].pos) {
 					#ifdef EXPLAIN_RANK
-					bblog(DEBUGINFO, "frase_merge: not a hit a: %hu b: %hu, dist %i ah++",b->iindex[j].hits[bh].pos,a->iindex[i].hits[ah].pos,(b->iindex[j].hits[bh].pos - a->iindex[i].hits[ah].pos));
+						bblog(DEBUGINFO, "frase_merge: not a hit a: %hu b: %hu, dist %i ah++",b->iindex[j].hits[bh].pos,a->iindex[i].hits[ah].pos,(b->iindex[j].hits[bh].pos - a->iindex[i].hits[ah].pos));
 					#endif
 					ah++;
 				}
 				else {
 					#ifdef EXPLAIN_RANK
-					bblog(DEBUGINFO, "frase_merge: not a hit a: %hu b: %hu, dist%i. bh++",b->iindex[j].hits[bh].pos,a->iindex[i].hits[ah].pos,(b->iindex[j].hits[bh].pos - a->iindex[i].hits[ah].pos));
+						bblog(DEBUGINFO, "frase_merge: not a hit a: %hu b: %hu, dist%i. bh++",b->iindex[j].hits[bh].pos,a->iindex[i].hits[ah].pos,(b->iindex[j].hits[bh].pos - a->iindex[i].hits[ah].pos));
 					#endif
 					bh++;
 				}
@@ -855,22 +807,11 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 
 
 
-                       	//c->iindex[k] = b->iindex[j];
-
 			c->iindex[k].TermAntall = TermAntall;
 			c->iindex[k].hits = hits;
 
 			if (found) {
-				//printf("hit! %i\n",a[i].DocID);
-                        	//c[k] = a[i];
-				//
-                        	//c[k].TermRank = a[i].TermRank + b[j].TermRank;
-				//
-                        	//c[k].hits[hitcount] = a[i].hits[ah];
-				
 
-				//TermRank = a[i].TermRank + b[j].TermRank;
-				//
  				//termrank blir den verdien som er minst. Det gjør at det lønner seg å ha
                         	//høye verdier for begge. Ikke slik at et dokument som er "ord1, ord1, ord1 ord2"
                         	//komer bra ut på søk for både ord1 og ord2. Da ord2 forekommer skjelden.
@@ -880,48 +821,32 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
                         	else {
                                 	TermRank = b->iindex[j].TermRank;
                         	}
-                        	//c->iindex[k] = b->iindex[j];
+
                         	c->iindex[k].TermRank = TermRank;
 				c->iindex[k].phraseMatch = 1;
 
-
-				/*
-				for(y=0;y<hitcount;y++) {
-                                        c->iindex[k].hits[y] = hits[y];
-                                }
-				*/
 
                         	(*baselen)++;
 				k++;
 			}
 
-			//c[k].TermAntall = hitcount;
 
                         j++; i++;
                 }
                 else if( a->iindex[i].DocID < b->iindex[j].DocID ) {
-                        //printf("%i < %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
-
-                        //c[k++] = a[i++];
                         i++;
                 }
                 else {
-                        //printf("%i > %i\n",a->iindex[i].DocID,b->iindex[j].DocID);
-                        //c[k++] = b[j++];
                         j++;
                 }
-
-
-
 
         }
 
 	#ifdef DEBUG
-	bblog(DEBUGINFO, "frase_merge: results");
-	for (i=0;i<*baselen;i++) {
-		bblog(DEBUGINFO, "\t DocID %u, subname \"%s\"", c->iindex[i].DocID,(*c->iindex[i].subname).subname);
-	}
-
+		bblog(DEBUGINFO, "frase_merge: results");
+		for (i=0;i<*baselen;i++) {
+			bblog(DEBUGINFO, "\t DocID %u, subname \"%s\"", c->iindex[i].DocID,(*c->iindex[i].subname).subname);
+		}
 	#endif
 
 	bblog(INFO, "frase_merge: got %i new elements. k %i, baselen %i", *baselen,k,*baselen);

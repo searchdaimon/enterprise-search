@@ -14,7 +14,7 @@
 #endif
 
 #ifdef WITH_SHORTENURL_MAIN
-int globalOptVerbose = 0;
+	int globalOptVerbose = 0;
 #endif
 
 void
@@ -107,6 +107,7 @@ void shortenurl(char *url,int urllen) {
 	}
 
 	/*
+	// Debug:
 	Count = 0;
   	while( (Data[Count] != NULL) ) {
     		printf("\t\t%d\t\"%s\"\n", Count, Data[Count]);
@@ -143,7 +144,6 @@ void shortenurl(char *url,int urllen) {
 
 	strlcat(newurl, "...", sizeof(newurl));
 
-	//printf("rev:\n");
 	Count = TokCount;
 	added = 0;
 	suburllen = 0;
@@ -174,7 +174,6 @@ void shortenurl(char *url,int urllen) {
 
 	}
 	else {
-		//printf("addint last part:\n");
 		for (i=Count+1;i<TokCount+1;i++) {
 			bblog(DEBUGINFO, "c: \t\t%d\t\"%s\"", i, Data[i]);
 
@@ -195,16 +194,11 @@ void shortenurl(char *url,int urllen) {
 		newurl[i] = '\0';
 		--i;
 	}
-	//if ((strlen(newurl) == (sizeof(newurl) -1) ) 
-	//	// && ( (newurl[sizeof(newurl) -1] > 127) || (newurl[sizeof(newurl) -1] < 10)) 
-	//	) {
-	//	newurl[sizeof(newurl) -1] = 'X';
-	//}	
+	
 	bblog(DEBUGINFO, "shortenurl 2: newurl \"%s\"",newurl);
 
 	FreeSplitList(Data);
 	
-	//strscpy(url,newurl,urllen);
 	snprintf(url, urllen, "%s%s", proto, newurl);
 }
 

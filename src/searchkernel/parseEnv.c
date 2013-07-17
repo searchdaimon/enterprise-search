@@ -1,21 +1,9 @@
-//#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "searchkernel.h"
-
-
-//#include "parseEnv.h"
-
-//#include "../common/define.h"
-
-//#include "grepparseEnv.h"
-
 #include <stdlib.h>
 
-
 #include "cgi-util.h"
-
-//#include "parseEnv.h"
+#include "searchkernel.h"
 
 parseTheEnv (struct QueryDataForamt *QueryData) {
 
@@ -38,12 +26,7 @@ parseTheEnv (struct QueryDataForamt *QueryData) {
 		perror("Did'n receive any query.");
 	}
 	else {
-		//printf("query=%s<p>\n", cgi_getentrystr("query"));
 		strncat(QueryData->query,cgi_getentrystr("query"),sizeof(QueryData->query));
 	}
 
-	// debugg
-	//setter query
-	//strncat(QueryData->query,"sex",3);
-	///debug
 }

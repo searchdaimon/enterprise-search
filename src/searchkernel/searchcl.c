@@ -22,8 +22,7 @@ int main (int argc, char *argv[]) {
                         for(i=1;i<argc ;i++) {
                                 sprintf(QueryData.query,"%s %s",QueryData.query,argv[i]);
                         }
-                        //strcpy(QueryData.query,argv[1]);
-                        //printf("argc :%i %s %s\n",argc,argv[1],argv[2]);
+
                         printf("query %s\n",QueryData.query);
                 }
         }
@@ -41,7 +40,6 @@ int main (int argc, char *argv[]) {
         for(i=0;i<strlen(QueryData.query);i++) {
                 QueryData.query[i] = tolower(QueryData.query[i]);
         }
-
 
 	dosearch(QueryData.query, strlen(QueryData.query));
 

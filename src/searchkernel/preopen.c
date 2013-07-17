@@ -1,5 +1,4 @@
 /*
-
 	runarb: 15 ja. Dette var en test av om å preåpne re filer ville øke ytelsen. Det ble ingen forskjell.
 */
 
@@ -31,9 +30,7 @@
 // maks minne vi kan bruke på å cache i indekser
 #define MAX_INDEX_CACHE (1024*1024*256)
 
-void
-preopen(void)
-{
+void preopen(void) {
 	int i;
         DIR *dirh;
 	FILE *FH;
@@ -80,13 +77,11 @@ pthread_mutex_t index_cache_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t index_cache_cv = PTHREAD_COND_INITIALIZER;
 
 #ifdef WITH_SPELLING
-pthread_mutex_t spelling_cache_lock = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t spelling_cache_cv = PTHREAD_COND_INITIALIZER;
+	pthread_mutex_t spelling_cache_lock = PTHREAD_MUTEX_INITIALIZER;
+	pthread_cond_t spelling_cache_cv = PTHREAD_COND_INITIALIZER;
 #endif
 
-void
-cache_indexes_hup(int sig)
-{
+void cache_indexes_hup(int sig) {
 	/*
 	 * If it is locked we are either in the signal handler somewhere else,
 	 * or the indexer cache in running.
@@ -98,9 +93,7 @@ cache_indexes_hup(int sig)
 }
 
 #ifdef WITH_SPELLING
-void
-cache_spelling_hup(int sig)
-{
+void cache_spelling_hup(int sig) {
 	/*
 	 * If it is locked we are either in the signal handler somewhere else,
 	 * or the indexer cache in running.
@@ -122,9 +115,7 @@ typedef struct {
 struct hashtable *indexcachehash;
 size_t indexcachescached[2];
 
-void *
-cache_index_get(char *path, size_t *size)
-{
+void * cache_index_get(char *path, size_t *size) {
 	indexcache_t *ic;
 
 	if (indexcachehash == NULL)
@@ -143,9 +134,7 @@ cache_index_get(char *path, size_t *size)
 }
 
 
-void
-cache_indexes_empty(void)
-{
+void cache_indexes_empty(void) {
 	size_t *cached;
 	struct hashtable_itr *itr;
 
@@ -165,9 +154,7 @@ cache_indexes_empty(void)
 	hashtable_destroy(indexcachehash, 1);
 }
 
-void
-cache_fresh_lot_collection(void)
-{
+void cache_fresh_lot_collection(void) {
 	DIR *colls;
 	char *coll;
 	char path[2048];
@@ -212,9 +199,7 @@ cache_fresh_lot_collection(void)
 	listAllColl_close(colls);
 }
 
-static size_t
-cache_indexes_handle(char *path, size_t *cached)
-{
+static size_t cache_indexes_handle(char *path, size_t *cached) {
 	int fd;
 	indexcache_t *ic, *icold;
 	void *ptr;
@@ -281,9 +266,7 @@ cache_indexes_handle(char *path, size_t *cached)
 	return 1;
 }
 
-void
-cache_indexes_collection(char *coll)
-{
+void cache_indexes_collection(char *coll) {
 	int i;
 	size_t *cached;
 
@@ -309,12 +292,7 @@ cache_indexes_collection(char *coll)
 	}
 }
 
-void
-cache_indexes_all(void)
-{
-	DIR *dirp;
-	size_t len;
-	int i;
+void cache_indexes_all(void) {
 	size_t *cached;
 	DIR *colls;
 	char *coll;
@@ -352,9 +330,7 @@ cache_indexes_all(void)
 	listAllColl_close(colls);
 }
 
-void
-cache_indexes(int action)
-{
+void cache_indexes(int action) {
 	if (action == 0) { /* All collections */
 		cache_indexes_all();
 	} else if (action == 1) {
@@ -389,9 +365,7 @@ cache_indexes(int action)
 	}
 }
 
-static void *
-cache_indexes_keepalive_thread(void *dummy)
-{
+static void * cache_indexes_keepalive_thread(void *dummy) {
 	for (;;) {
 		// Hush little baby
 		pthread_mutex_lock(&index_cache_lock);
@@ -400,21 +374,17 @@ cache_indexes_keepalive_thread(void *dummy)
 		// Refresh cache
 		bblog(INFO, "Refreshing index cache...");
 		/* We do incremental caching now */
-		/*cache_indexes_empty();*/
 		cache_indexes(1);
 		// Preopen some other files
 		preopen();
 		// Lot directories
-		/*cache_fresh_lot_collection();*/
 		pthread_mutex_unlock(&index_cache_lock);
 
 	}
 }
 
 #ifdef WITH_SPELLING
-static void *
-cache_spelling_keepalive_thread(spelling_t **spelling)
-{
+static void * cache_spelling_keepalive_thread(spelling_t **spelling) {
 
 
 	for (;;) {
@@ -435,7 +405,6 @@ cache_spelling_keepalive_thread(spelling_t **spelling)
 	        }
 
 
-
 		pthread_mutex_unlock(&spelling_cache_lock);
 
 		bblog(INFO, "~Refreshing spelling cache");
@@ -443,9 +412,7 @@ cache_spelling_keepalive_thread(spelling_t **spelling)
 }
 #endif
 
-void *
-cache_indexes_keepalive(void)
-{
+void cache_indexes_keepalive(void) {
 	pthread_t td;
 	int rc;
 
@@ -456,9 +423,7 @@ cache_indexes_keepalive(void)
 }
 
 #ifdef WITH_SPELLING
-void 
-cache_spelling_keepalive(spelling_t *spelling) 
-{
+void cache_spelling_keepalive(spelling_t *spelling) {
 	pthread_t td;
 	int rc;
 
