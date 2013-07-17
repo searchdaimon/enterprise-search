@@ -19,11 +19,11 @@ use constant subname => 'www';
 
 
 #temp:
-#Indekser(42,'Athor',@revindexpaths);
-#Indekser(42,'Athor',('/mnt/hdd1/lot/43/43/revindex/Athor'));
+#Indekser(42,'Anchor',@revindexpaths);
+#Indekser(42,'Anchor',('/mnt/hdd1/lot/43/43/revindex/Anchor'));
 #exit;
 if ($#ARGV < 1) {
-	print "usage: ./LotInvertetIndexMaker.pl type lot\n\n\teks: ./LotInvertetIndexMaker.pl Athor 95\n\n";
+	print "usage: ./LotInvertetIndexMaker.pl type lot\n\n\teks: ./LotInvertetIndexMaker.pl Anchor 95\n\n";
 	exit;
 }
 
@@ -67,8 +67,8 @@ else {
 }
 
 }
-elsif ($type eq 'Athor') {
-############### Athor  #################################################################
+elsif ($type eq 'Anchor') {
+############### Anchor  #################################################################
 if ($#ARGV == 1) {
 	print "Indexing all buvkets\n";
 
@@ -76,14 +76,14 @@ if ($#ARGV == 1) {
         	print "$i\n";
 
         	eval {  #eval slik at vi bare fortsetter hvis det skjer noe feil
-                	Indekser($i,'Athor',Boitho::Lot::GetFilPathForLot($lotNr,subname). 'revindex/Athor');
+                	Indekser($i,'Anchor',Boitho::Lot::GetFilPathForLot($lotNr,subname). 'revindex/Anchor');
         	}; warn $@ if $@;
 	}
 }
 else {
         print "Indexing bucket $ARGV[1]\n";
 
-        Indekser($ARGV[2],'Athor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Athor');
+        Indekser($ARGV[2],'Anchor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Anchor');
 }
 
 #######################################################################################
@@ -95,7 +95,7 @@ exit;
 if ($#ARGV == 1) {
         print "Indexing bucket $ARGV[1]\n";
 
-        Indekser($ARGV[1],'Athor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Athor');
+        Indekser($ARGV[1],'Anchor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Anchor');
 }
 else {
 
@@ -103,7 +103,7 @@ else {
                 print "$i\n";
 
                 eval {  #eval slik at vi bare fortsetter hvis det skjer noe feil
-                        Indekser($i,'Athor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Athor');
+                        Indekser($i,'Anchor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Anchor');
                 }; warn $@ if $@;
         }
 }

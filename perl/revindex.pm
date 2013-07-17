@@ -104,7 +104,7 @@ sub ApendAray {
 					#$y->[0] = $y->[0] + 0;
 					$y->[0] = $y->[0] + 1;
 			}
-			elsif ($y->[1] eq 'Athor') {
+			elsif ($y->[1] eq 'Anchor') {
 					#$y->[0] = $y->[0] + 0;
 			}
 			else {

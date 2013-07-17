@@ -18,7 +18,7 @@ $LotNr = $ARGV[0];
 $subname = $ARGV[1];
 
 
-my $revindexha = revindex->OpenForApending('Athor',$LotNr,'>>',$subname);
+my $revindexha = revindex->OpenForApending('Anchor',$LotNr,'>>',$subname);
 
 our $terminated = 0;
 

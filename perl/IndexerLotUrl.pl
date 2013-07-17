@@ -23,7 +23,7 @@ our $terminated = 0;
 
 $SIG{INT} = $SIG{TERM} = $SIG{HUP} = \&signal_handler;
 
-my $revindexha = revindex->OpenForApending('Athor',$LotNr,'>');
+my $revindexha = revindex->OpenForApending('Anchor',$LotNr,'>');
 
 while ((not $terminated) && (my ($DocID,$url,$sprok,$Offensive_code,$Dokumenttype,$CrawleDato,$AntallFeiledeCrawl,$AdultWeight,$RepositoryPointer,$RepositorySize,$ResourcePointer,$ResourceSize,$IPAddress,$response) = Boitho::DocumentIndex::DIGetNext($LotNr))) {
 

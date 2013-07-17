@@ -13,13 +13,13 @@ use supportedLang qw(isSupportedLang);
 
 
 #temp:
-#Indekser(42,'Athor',@revindexpaths);
-#Indekser(42,'Athor',('/mnt/hdd1/lot/43/43/revindex/Athor'));
+#Indekser(42,'Anchor',@revindexpaths);
+#Indekser(42,'Anchor',('/mnt/hdd1/lot/43/43/revindex/Anchor'));
 #exit;
 #hvis vi fikk inputt argument tar vi bare den bøtten. Slik kan man for eks bare ta 42
 my $lotNr = $ARGV[0];
 
-############### Athor #################################################################
+############### Anchor #################################################################
 if ($#ARGV == 0) {
         print "Indexing all buvkets\n";
 
@@ -46,14 +46,14 @@ if ($#ARGV == 0) {
         	print "$i\n";
 
         	eval {  #eval slik at vi bare fortsetter hvis det skjer noe feil
-                	Indekser($i,'Athor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Athor');
+                	Indekser($i,'Anchor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Anchor');
         	}; warn $@ if $@;
 	}
 }
 else {
         print "Indexing bucket $ARGV[1]\n";
 
-        Indekser($ARGV[1],'Athor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Athor');
+        Indekser($ARGV[1],'Anchor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Anchor');
 }
 
 #######################################################################################
@@ -62,7 +62,7 @@ exit;
 if ($#ARGV == 1) {
         print "Indexing bucket $ARGV[1]\n";
 
-        Indekser($ARGV[1],'Athor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Athor');
+        Indekser($ARGV[1],'Anchor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Anchor');
 }
 else {
 
@@ -70,7 +70,7 @@ else {
                 print "$i\n";
 
                 eval {  #eval slik at vi bare fortsetter hvis det skjer noe feil
-                        Indekser($i,'Athor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Athor');
+                        Indekser($i,'Anchor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Anchor');
                 }; warn $@ if $@;
         }
 }

@@ -11,14 +11,14 @@ use common qw(GetAllLotPaths);
 #Indekser(42,'Main');
 #exit;
 
-my @LotPaths = GetAllLotPaths('revindex/Athor');
+my @LotPaths = GetAllLotPaths('revindex/Anchor');
 
 my @revindexpaths = ();
 
 print "lots med anchors: \n";
 foreach my $lotPath (@LotPaths) {
         #print "lotPath: $lotPath\n";
-        my $revindexPath = "$lotPath/revindex/Athor";
+        my $revindexPath = "$lotPath/revindex/Anchor";
 
         if (-e $revindexPath) {
                 print "skal indekseren $revindexPath\n";
@@ -27,14 +27,14 @@ foreach my $lotPath (@LotPaths) {
 }
 
 #temp:
-#Indekser(42,'Athor',@revindexpaths);
-#Indekser(42,'Athor',('/mnt/node1/hda4/lot/12/12/revindex/Athor'));
+#Indekser(42,'Anchor',@revindexpaths);
+#Indekser(42,'Anchor',('/mnt/node1/hda4/lot/12/12/revindex/Anchor'));
 #exit;
 #hvis vi fikk inputt argument tar vi bare den bøtten. Slik kan man for eks bare ta 42
 if ($#ARGV != -1) {
 	print "Indexing bucket $ARGV[0]\n";
 
-	Indekser($ARGV[0],'Athor',@revindexpaths);
+	Indekser($ARGV[0],'Anchor',@revindexpaths);
 }
 else {
 
@@ -42,7 +42,7 @@ else {
         	print "$i\n";
 
         	eval {  #eval slik at vi bare fortsetter hvis det skjer noe feil
-                	Indekser($i,'Athor',@revindexpaths);
+                	Indekser($i,'Anchor',@revindexpaths);
         	}; warn $@ if $@;
 	}
 }
