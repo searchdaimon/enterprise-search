@@ -120,7 +120,7 @@ void dumpQueryDataForamt(struct QueryDataForamt *d) {
 	warnx("HTTP_USER_AGENT: %s", d->HTTP_USER_AGENT);
 	warnx("HTTP_REFERER: %s", d->HTTP_REFERER);
 	warnx("orederby: %s", d->orderby);
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	warnx("anonymous: %d", d->anonymous);
 #endif
 	warnx("tkey: %s", d->tkey);
@@ -1222,7 +1222,7 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 		/************************************************************************************************
 		Logging av Paid Inclusion til sql db.
 		************************************************************************************************/
-		#ifndef BLACK_BOKS
+		#ifndef BLACK_BOX
 			if (Sider != NULL) {
 				sprintf(query,"insert into pi_search_logg (tid,query,treff,search_tid,ip_adresse,spot,piDocID ) \
 					select NOW(),?,?,?,?,?,id from pi_sider where WWWDocID=? ");
@@ -1364,7 +1364,7 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 		/************************************************************************************************
 		Logging av Paid Inclusion til sql db.
 		************************************************************************************************/
-		#ifndef BLACK_BOKS
+		#ifndef BLACK_BOX
 
 			if (Sider != NULL) {
 			

@@ -70,7 +70,7 @@ int cgi_access_type(char *remoteaddr, char *correct_bbkey) {
 }
 
 void cgi_set_defaults(struct QueryDataForamt *qdata) {
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	qdata->anonymous = 0;
 #endif
 	char *user = getenv("REDIRECT_REMOTE_USER");
@@ -197,7 +197,7 @@ void cgi_fetch_full(struct QueryDataForamt *qdata) {
 #endif
 	else {
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		if (cgi_getentryint("anonymous") != 0) {
 			qdata->anonymous = 1;
 			strscpy(qdata->search_user, ANONYMOUS_USER, sizeof(qdata->search_user));
@@ -209,7 +209,7 @@ void cgi_fetch_full(struct QueryDataForamt *qdata) {
 			}
 			if (qdata->search_user[0] == '\0')
 				errx(1, "search_bruker missing");
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
 		}
 		#endif
 		if ((tmpstr = cgi_getentrystr("subname")) != NULL) {

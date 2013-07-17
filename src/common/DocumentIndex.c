@@ -74,7 +74,7 @@ int DIPostAdress(unsigned int DocID) {
 	//finner lot for denne DocIDen
 	LotNr = rLotForDOCid(DocID);
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		adress = (sizeof(struct DocumentIndexFormat) + sizeof(unsigned int))* (DocID - LotDocIDOfset(LotNr));
 	#else
 		adress = sizeof(struct DocumentIndexFormat) * (DocID - LotDocIDOfset(LotNr));
@@ -250,7 +250,7 @@ void DIWrite (struct DocumentIndexFormat *DocumentIndexPost, unsigned int DocID,
 
 		//printf("motatt tell: %i\n",ftell(file));
 		//printf("aa url: %s\n",(*DocumentIndexPost).Url);
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
 			unsigned int CurrentDocumentIndexVersionAsUInt = CurrentDocumentIndexVersion;
 
 			if (fwrite(&CurrentDocumentIndexVersionAsUInt,sizeof(unsigned int),1,file) != 1) {
@@ -339,7 +339,7 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
         	//leser posten
 		//mystisk at vi får "Can't reed DocumentIndexPost: Success", ved eof her,
 		//i steden for at vi  får eof lenger opp
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
                         unsigned int CurrentDocumentIndexVersionAsUInt;
 			if ((fread(&CurrentDocumentIndexVersionAsUInt,sizeof(unsigned int),1,LotFileOpen)) != 1) {
 				#ifdef DEBUG
@@ -390,7 +390,7 @@ int DIRead_post_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID, int 
 
 	int forReturn = 0;
 
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
                         unsigned int CurrentDocumentIndexVersionAsUInt;
                         if ((read(file,&CurrentDocumentIndexVersionAsUInt,sizeof(unsigned int))) < 0) {
 				#ifdef DEBUG
@@ -429,7 +429,7 @@ int DIRead_post_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID, FIL
 
 	int forReturn = 0;
 
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
                         unsigned int CurrentDocumentIndexVersionAsUInt;
                         if ((fread(&CurrentDocumentIndexVersionAsUInt,sizeof(unsigned int),1,file)) != 1) {
 				#ifdef DEBUG

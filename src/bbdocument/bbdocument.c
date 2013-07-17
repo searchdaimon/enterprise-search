@@ -1,4 +1,4 @@
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 
 #include <db.h>
 #include <stdlib.h>
@@ -341,7 +341,7 @@ void bbdocument_exist_update_di(char subname[],docid DocID) {
 	// Update DI with new existed timestamp
 	struct DocumentIndexFormat docindex;
 
-	#if defined(BLACK_BOKS) && !defined(_24SEVENOFFICE)
+	#if defined(BLACK_BOX) && !defined(_24SEVENOFFICE)
 		DIRead(&docindex, DocID, subname);
 		docindex.lastSeen = time(NULL);
 		DIWrite(&docindex, DocID, subname, NULL);

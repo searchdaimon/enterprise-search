@@ -12,7 +12,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		container ***groups_per_usersystem, int **usersystem_per_subname // For repositoryaccess()
 		);
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 char* searchFilterCount(int *TeffArrayElementer, 
 			struct iindexFormat *TeffArray, 
 			struct filtersFormat *filters,

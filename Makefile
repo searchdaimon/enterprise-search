@@ -55,7 +55,7 @@ IM = /home/eirik/.root/lib/libMagick.a /home/eirik/.root/lib/libWand.a -I/home/e
 SMBCLIENT=src/3pLibs/samba-3.0.25b/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.25b/source/include/
 #SMBCLIENT=-Isrc/3pLibs/samba-3.0.24/source/include/ -Lsrc/3pLibs/samba-3.0.24/source/lib/ -lsmbclient
 
-BBDOCUMENT = src/bbdocument/bbdocument.c src/bbdocument/bbfilters.c lib/libds.a $(BDB_INC) $(BDB_LIB) -D BLACK_BOKS  
+BBDOCUMENT = src/bbdocument/bbdocument.c src/bbdocument/bbfilters.c lib/libds.a $(BDB_INC) $(BDB_LIB) -D BLACK_BOX  
 #BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail.c -DBBDOCUMENT_IMAGE $(IM)
 BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail_by_convert.c -DBBDOCUMENT_IMAGE_BY_CONVERT
 
@@ -233,7 +233,7 @@ IndexerLotbb: src/IndexerLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(IndexerLot) $(HTMLPARSER2) $(BDB_INC) $(BDB_LIB) -D BLACK_BOKS -D PRESERVE_WORDS -o bin/IndexerLotbb -DIIACL
+	$(CC) $(IndexerLot) $(HTMLPARSER2) $(BDB_INC) $(BDB_LIB) -D BLACK_BOX -D PRESERVE_WORDS -o bin/IndexerLotbb -DIIACL
 
 baddsPageAnalyser: src/baddsPageAnalyser/main.c
 	@echo ""
@@ -277,7 +277,7 @@ dictionarywordsLot: src/dictionarywordsLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/dictionarywordsLot/main.c src/dictionarywordsLot/acl.c src/dictionarywordsLot/set.c   -o bin/dictionarywordsLot $(LDFLAGS) -DBLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c src/dictionarywordsLot/main.c src/dictionarywordsLot/acl.c src/dictionarywordsLot/set.c   -o bin/dictionarywordsLot $(LDFLAGS) -DBLACK_BOX
 
 lotlistDispatcher: src/lotlistDispatcher/main.c
 	@echo ""
@@ -306,13 +306,13 @@ bbdocumentMakeLotUrlsdb: src/bbdocumentMakeLotUrlsdb/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/bbdocumentMakeLotUrlsdb/main.c -o bin/bbdocumentMakeLotUrlsdb $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c src/bbdocumentMakeLotUrlsdb/main.c -o bin/bbdocumentMakeLotUrlsdb $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOX
 
 bbdocumentConvertTest: src/bbdocumentConvertTest/main.c
 	@echo ""
 	@echo "$@:"
 
-	#$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c src/bbdocumentConvertTest/main.c -o bin/bbdocumentConvertTest $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOKS
+	#$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c src/bbdocumentConvertTest/main.c -o bin/bbdocumentConvertTest $(LDFLAGS) $(LIBXML) $(BBDOCUMENT) -D BLACK_BOX
 	(cd src/bbdocumentConvertTest && make clean && make)
 
 
@@ -331,8 +331,8 @@ DIconvert: src/DIconvert/main.c
 boithoad: src/boithoad/main.c
 	@echo ""
 	@echo "$@:"
-	#for lokalt på bb: gcc -g src/common/*.c src/boithoad/main.c   -o bin/boithoad -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL -DWITH_OPENLDAP /usr/lib64/libcrypt.a  /usr/lib64/libssl.a -I/usr/include/mysql/ -L/usr/lib64/mysql/ -ldl   -D BLACK_BOKS -D WITH_CONFIG -DDEBUG ../../openldap-2.3.32/libraries/libldap/.libs/libldap.a ../../openldap-2.3.32/libraries/liblber/.libs/liblber.a -lmysqlclient -lsasl2
-	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c $(SLICENCE) -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) $(LIBCACHE) $(OPENSSL) -pthread -DWITH_DAEMON_THREAD -D BLACK_BOKS -D WITH_CONFIG -DWITH_THREAD -DLIBCACHE_SHARE
+	#for lokalt på bb: gcc -g src/common/*.c src/boithoad/main.c   -o bin/boithoad -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL -DWITH_OPENLDAP /usr/lib64/libcrypt.a  /usr/lib64/libssl.a -I/usr/include/mysql/ -L/usr/lib64/mysql/ -ldl   -D BLACK_BOX -D WITH_CONFIG -DDEBUG ../../openldap-2.3.32/libraries/libldap/.libs/libldap.a ../../openldap-2.3.32/libraries/liblber/.libs/liblber.a -lmysqlclient -lsasl2
+	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c $(SLICENCE) -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) $(LIBCACHE) $(OPENSSL) -pthread -DWITH_DAEMON_THREAD -D BLACK_BOX -D WITH_CONFIG -DWITH_THREAD -DLIBCACHE_SHARE
 
 PiToWWWDocID: src/PiToWWWDocID/main.c
 	@echo ""
@@ -480,13 +480,13 @@ crawlFiles: src/crawlFiles/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/crawlFiles/main.c  -o bin/crawlFiles $(LDFLAGS) src/boitho-bbdn/bbdnclient.c -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c src/crawlFiles/main.c  -o bin/crawlFiles $(LDFLAGS) src/boitho-bbdn/bbdnclient.c -D BLACK_BOX
 
 crawlPush: src/crawlPush/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g $(CRAWL_STATIC) $(LIBS)*.c src/crawlPush/main.c -o src/crawlPush/crawlPush.so $(LDFLAGS) 
+	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOX -g $(CRAWL_STATIC) $(LIBS)*.c src/crawlPush/main.c -o src/crawlPush/crawlPush.so $(LDFLAGS) 
 	mkdir -p crawlers/crawlPush
 	cp src/crawlPush/crawlPush.so crawlers/crawlPush/
 	
@@ -549,19 +549,19 @@ mergeUserToSubname: src/mergeUserToSubname/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/mergeUserToSubname/main.c src/acls/acls.c -o bin/mergeUserToSubname $(LDFLAGS) -DBLACK_BOKS $(BDB_INC) $(BDB_LIB)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/mergeUserToSubname/main.c src/acls/acls.c -o bin/mergeUserToSubname $(LDFLAGS) -DBLACK_BOX $(BDB_INC) $(BDB_LIB)
 
 readUserToSubname: src/readUserToSubname/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/readUserToSubname/main.c src/acls/acls.c -o bin/readUserToSubname $(LDFLAGS) -DBLACK_BOKS $(BDB_INC) $(BDB_LIB)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/readUserToSubname/main.c src/acls/acls.c -o bin/readUserToSubname $(LDFLAGS) -DBLACK_BOX $(BDB_INC) $(BDB_LIB)
 
 readUrls.db: src/readUrls.db/main.c
 	@echo ""
 	@echo "$@:"
 
-	#$(CC) $(CFLAGS) $(LIBS)*.c src/readUrls.db/main.c src/acls/acls.c $(BBDOCUMENT) -o bin/readUrls.db $(LDFLAGS) -DBLACK_BOKS $(BDB_INC) $(BDB_LIB)
+	#$(CC) $(CFLAGS) $(LIBS)*.c src/readUrls.db/main.c src/acls/acls.c $(BBDOCUMENT) -o bin/readUrls.db $(LDFLAGS) -DBLACK_BOX $(BDB_INC) $(BDB_LIB)
 	(cd src/readUrls.db/ && make clean && make)
 
 boithoads: src/boithoads/main.c
@@ -610,14 +610,14 @@ dispatcher_allbb: src/dispatcher_all/main.c src/dispatcher_all/qrewrite.o
 	@echo ""
 	@echo "$@:"
 
-	@#$(CC) $(dispatcherCOMAND) $(MYSQL4) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c src/crawlManager/client.c src/query/lex.query.o lib/libds.a -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) src/getFiletype/libfte.a src/attributes/libshow_attr.a  -DWITH_SPELLING $(BDB_INC) $(BDB_LIB)
+	@#$(CC) $(dispatcherCOMAND) $(MYSQL4) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c src/crawlManager/client.c src/query/lex.query.o lib/libds.a -D BLACK_BOX -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) src/getFiletype/libfte.a src/attributes/libshow_attr.a  -DWITH_SPELLING $(BDB_INC) $(BDB_LIB)
 	(cd src/dispatcher_all && make clean && make)
 
 dispatcher_all247: src/dispatcher_all/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(dispatcherCOMAND) $(MYSQL) -D BLACK_BOKS -o cgi-bin/dispatcher_allbb $(LIBCONFIG) lib/libds.a -D_24SEVENOFFICE
+	$(CC) $(dispatcherCOMAND) $(MYSQL) -D BLACK_BOX -o cgi-bin/dispatcher_allbb $(LIBCONFIG) lib/libds.a -D_24SEVENOFFICE
 
 
 dispatcher: src/dispatcher/main.c
@@ -674,13 +674,13 @@ rreadbb : src/rread/rread.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/rread/rread.c -o bin/rreadbb $(LDFLAGS) -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c src/rread/rread.c -o bin/rreadbb $(LDFLAGS) -D BLACK_BOX
 
 readLotbb : src/readLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/readLot/main.c -o bin/readLotbb $(LDFLAGS) -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c src/readLot/main.c -o bin/readLotbb $(LDFLAGS) -D BLACK_BOX
 
 
 convertReposetoryCOMAND = $(CFLAGS) $(LIBS)*.c src/convertReposetory/main.c -o bin/convertReposetory $(LDFLAGS)
@@ -689,7 +689,7 @@ convertReposetory: src/convertReposetory/main.c
 	$(CC) $(convertReposetoryCOMAND)
 
 convertReposetorybb: src/convertReposetory/main.c
-	$(CC) $(convertReposetoryCOMAND) -D BLACK_BOKS
+	$(CC) $(convertReposetoryCOMAND) -D BLACK_BOX
 
 
 makeSumaryCashe: src/makeSumaryCashe/main.c
@@ -732,13 +732,13 @@ gcRepobb: src/gcRepo/gcrepo.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/gcRepo/gcrepo.c -o bin/gcRepobb $(LDFLAGS) -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c src/gcRepo/gcrepo.c -o bin/gcRepobb $(LDFLAGS) -D BLACK_BOX
 
 gcAuthoritybb: src/gcAuthority/main.c
 	@echo ""
 	@echo "$@:"
 
-	@#$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c $(BBDOCUMENT) src/gcAuthority/main.c -o bin/gcAuthoritybb $(LDFLAGS) -D BLACK_BOKS $(BDB_INC) $(BDB_LIB) $(MYSQL)
+	@#$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c $(BBDOCUMENT) src/gcAuthority/main.c -o bin/gcAuthoritybb $(LDFLAGS) -D BLACK_BOX $(BDB_INC) $(BDB_LIB) $(MYSQL)
 	(cd src/gcAuthority && make clean && make)
 
 gcSummary: src/gcSummary/gcsummary.c
@@ -787,7 +787,7 @@ LotInvertetIndexMaker3bb:	src/LotInvertetIndexMaker3/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c  src/LotInvertetIndexMaker3/main.c -o bin/LotInvertetIndexMaker3bb $(LDFLAGS) -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c  src/LotInvertetIndexMaker3/main.c -o bin/LotInvertetIndexMaker3bb $(LDFLAGS) -D BLACK_BOX
 
 readRevIndex:	src/readRevIndex/main.c
 	@echo ""
@@ -880,7 +880,7 @@ PageInfobb: src/PageInfo/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(PageInfoComand) src/boithoadClientLib/boithoadClientLib.c -o bin/PageInfobb -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(PageInfoComand) src/boithoadClientLib/boithoadClientLib.c -o bin/PageInfobb -D BLACK_BOX
 
 addManuellUrlFile: src/addManuellUrlFile/main.c
 	@echo ""
@@ -908,7 +908,7 @@ boithold: src/boithold/main.c
 
 boitho-bbdn: src/boitho-bbdn/bbdnserver.c src/bbdocument/bbfilters.c
 	@#gammelt bygge sys
-	@#$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c src/boitho-bbdn/bbdnserver.c src/maincfg/maincfg.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOKS $(BBDOCUMENT_IMAGE)  $(LIBCONFIG) -DIIACL $(24SEVENOFFICE) -D NO_REUSEADDR -DUSE_LIBEXTRACTOR
+	@#$(CC) $(CFLAGS) $(LIBS)*.c src/acls/acls.c src/boitho-bbdn/bbdnserver.c src/maincfg/maincfg.c -o bin/boitho-bbdn $(LDFLAGS) $(BBDOCUMENT) -D BLACK_BOX $(BBDOCUMENT_IMAGE)  $(LIBCONFIG) -DIIACL $(24SEVENOFFICE) -D NO_REUSEADDR -DUSE_LIBEXTRACTOR
 	@echo ""
 	@echo "$@:"
 
@@ -980,13 +980,13 @@ lookForBadDocIDbb: src/lookForBadDocID/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/lookForBadDocID/main.c -o bin/lookForBadDocIDbb $(LDFLAGS) -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c src/lookForBadDocID/main.c -o bin/lookForBadDocIDbb $(LDFLAGS) -D BLACK_BOX
 
 readDocumentIndexbb: src/readDocumentIndex/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/readDocumentIndex/main.c -o bin/readDocumentIndexbb $(LDFLAGS) -D BLACK_BOKS
+	$(CC) $(CFLAGS) $(LIBS)*.c src/readDocumentIndex/main.c -o bin/readDocumentIndexbb $(LDFLAGS) -D BLACK_BOX
 
 readbrankPageElements: src/readbrankPageElements/main.c
 	@echo ""
@@ -1110,7 +1110,7 @@ ShowThumbbb: src/ShowThumb/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(SHOWTHUMBCMANDS) -o cgi-bin/ShowThumbbb -D BLACK_BOKS
+	$(CC) $(SHOWTHUMBCMANDS) -o cgi-bin/ShowThumbbb -D BLACK_BOX
 
 ShowCacheCOMMAND2 = $(CFLAGS) $(LIBS)*.c src/ShowCache2/main.c src/cgi-util/cgi-util.c $(LDFLAGS) 
 
@@ -1123,7 +1123,7 @@ ShowCache2: src/ShowCache/main.c
 ShowCache2bb: src/ShowCache/main.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(ShowCacheCOMMAND2) -DBLACK_BOKS -o cgi-bin/ShowCache2bb
+	$(CC) $(ShowCacheCOMMAND2) -DBLACK_BOX -o cgi-bin/ShowCache2bb
 
 
 ShowCacheCOMMAND = $(CFLAGS) $(LIBS)*.c src/ShowCache/main.c src/cgi-util/cgi-util.c $(LDFLAGS) -o cgi-bin/ShowCache
@@ -1138,7 +1138,7 @@ ShowCachebb: src/ShowCache/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(ShowCacheCOMMAND) -D BLACK_BOKS
+	$(CC) $(ShowCacheCOMMAND) -D BLACK_BOX
 
 boithoshmd: src/boithoshmd/main.c
 	@echo ""
@@ -1202,7 +1202,7 @@ crawlManager: src/crawlManager/main.c
 	@echo "$@:"
 
 	#22 feb 2007, fjerner -static
-	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) lib/libds.a -rdynamic
+	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOX $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) lib/libds.a -rdynamic
 
 crawlManager2: src/crawlManager2/main.c
 	@echo ""
@@ -1217,7 +1217,7 @@ crawlManager2perltest: src/crawlManager2/perltest.c
 
 
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/crawlManager2/perlxsi.c src/crawlManager2/perlcrawl.c src/crawlManager2/perltest.c src/crawl/crawl.c -o bin/crawlManager2perltest $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOKS -DIIACL -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
+	$(CC) $(CFLAGS) $(LIBS)*.c src/crawlManager2/perlxsi.c src/crawlManager2/perlcrawl.c src/crawlManager2/perltest.c src/crawl/crawl.c -o bin/crawlManager2perltest $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOX -DIIACL -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` 
 
 
 crawlSMB: src/crawlSMB/main.c
@@ -1227,7 +1227,7 @@ crawlSMB: src/crawlSMB/main.c
 	flex -f -8 -i -o src/crawlSMB/lex.acl.c src/crawlSMB/acl.parser.l
 
 
-	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g $(CRAWL_STATIC) $(LIBS)*.c src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) $(SMBCLIENT)
+	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOX -g $(CRAWL_STATIC) $(LIBS)*.c src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) $(SMBCLIENT)
 	mkdir -p crawlers/crawlSMB
 	cp src/crawlSMB/crawlSMB.so crawlers/crawlSMB/
 
@@ -1287,7 +1287,7 @@ crawl247:
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOKS -g $(CRAWL_STATIC) $(LIBS)*.c src/crawl247/crawl.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawl/mailsubject.c -o src/crawl247/crawl247.so $(LDFLAGS) $(SMBCLIENT)
+	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOX -g $(CRAWL_STATIC) $(LIBS)*.c src/crawl247/crawl.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawl/mailsubject.c -o src/crawl247/crawl247.so $(LDFLAGS) $(SMBCLIENT)
 	mkdir -p crawlers/crawl247/
 	cp src/crawl247/crawl247.so crawlers/crawl247/
 	@#(cd src/crawl247 && make clean)

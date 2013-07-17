@@ -50,7 +50,7 @@ void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID) {
 	wordsReset_part(&pagewords->linkWords);
 	wordsReset_part(&pagewords->spamWords);
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		#ifdef IIACL
 			(*pagewords).acl_allow.aclnr = 0;
 			(*pagewords).acl_denied.aclnr = 0;
@@ -137,7 +137,7 @@ void linkwordadd(struct pagewordsFormat *pagewords, char word[]) {
 
 }
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 void acladd(struct IndexerRes_acls *acl, char word[]) {
 
 
@@ -414,7 +414,7 @@ void IndexerRes_fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_f
 			//på vep hånterer vi link tekst som ankertekst. På bb er det en del av dokumentet
 			//ToDo: Vi ser ut til å mangle håntering av link ord her???
 			//har det falt ut ??
-			#ifdef BLACK_BOKS
+			#ifdef BLACK_BOX
 				wordsAdd(&((struct pagewordsFormat *)pagewords)->normalWords,word,puf_none);
 			#else
 				linkwordadd(pagewords,word);
@@ -527,7 +527,7 @@ static int cmp1_crc32(const void *p, const void *q)
    return *(const unsigned long *) p - *(const unsigned long *) q;
 }
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 void aclsMakeRevIndex(struct IndexerRes_acls *acl) {
 
 	int i;
@@ -661,7 +661,7 @@ void wordsMakeRevIndex_part(struct pagewordsFormatPartFormat *wordsPart,struct a
 			#endif
 
 
-			#ifndef BLACK_BOKS
+			#ifndef BLACK_BOX
 			///////////////////////////
 			// adultWords
 
@@ -735,7 +735,7 @@ void wordsMakeRevIndex_part(struct pagewordsFormatPartFormat *wordsPart,struct a
 
 }
 
-#ifndef BLACK_BOKS
+#ifndef BLACK_BOX
 void adultPhrases(struct pagewordsFormatPartFormat *wordsPart, struct adultFormat *adult,int *adultWeight, unsigned char *langnr) {
 
 	int i,y,z,adultFraserpos;
@@ -841,7 +841,7 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 	#endif
 
 	// normal words
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 	adultPhrases(&pagewords->normalWords,adult,adultWeight,langnr);
 	#endif
 
@@ -851,7 +851,7 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 
 	// link word
 	wordsMakeRevIndex_part(&pagewords->linkWords,adult,adultWeight,langnr);
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 	adultPhrases(&pagewords->linkWords,adult,adultWeight,langnr);
 	#endif
 
@@ -861,7 +861,7 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 
 	// spam word
 	wordsMakeRevIndex_part(&pagewords->spamWords,adult,adultWeight,langnr);
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 	adultPhrases(&pagewords->spamWords,adult,adultWeight,langnr);
 	#endif
 
@@ -903,7 +903,7 @@ int compare_elements_AdultFraser (const void *p1, const void *p2) {
 
 void adultLoad (struct adultFormat *adult) {
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		printf("Note: Wont load adult filter. Is abb\n");
 	#else
 
@@ -1133,7 +1133,7 @@ void copyRepToDi(struct DocumentIndexFormat *DocumentIndexPost,struct Reposetory
 
 			(*DocumentIndexPost).ResourcePointer 	= 0;
 			(*DocumentIndexPost).ResourceSize 	= 0;
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 			//runarb: 31 mars 2008: gjør dette bare hvis vi ikke har en tid fra før. Hvis ikke risikerer 
 			//vi og tilbakedatere tiden, og dermed slettes den av garbage collection.
 			if (DocumentIndexPost->lastSeen == 0) {
@@ -1153,7 +1153,7 @@ static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
         return n;
 }
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 
 void aclsMakeRevIndexBucket (struct IndexerRes_acls *acl,unsigned int DocID,unsigned char *langnr) {
 
@@ -1358,7 +1358,7 @@ void dictionaryWordsWrite (struct pagewordsFormat *pagewords,FILE *FH, char *acl
 /**************************************************************************************
 Skriver acl index til disk
 ***************************************************************************************/
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 void aclindexFilesAppendWords(struct IndexerRes_acls *acl,FILE *aclindexFilesHa[],unsigned int DocID,unsigned char *langnr) {
 
 

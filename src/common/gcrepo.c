@@ -10,7 +10,7 @@
 #include "DocumentIndex.h"
 
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 
 #define MaxAgeDiflastSeen 86400
 //#define MaxAgeDiflastSeen 100

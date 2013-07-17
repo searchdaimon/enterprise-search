@@ -1,6 +1,6 @@
 #gcc xml.c url.c main.c -I/usr/include/libxml2/ -L/usr/lib -lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl && ./a.out
 CFLAGS=		
-CFLAGS+=	-W -Wall -O0 -g -DBLACK_BOKS -I/usr/include/mysql -fPIC
+CFLAGS+=	-W -Wall -O0 -g -BLACK_BOX -I/usr/include/mysql -fPIC
 LDFLAGS=	
 PROG=		us_sqlbb.so
 CC=		gcc
@@ -23,7 +23,7 @@ include ../../mk/setup.mk
 all: $(PROG)
 
 $(PROG): $(OBJS)
-	libtool $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOKS -g $(US_STATIC)
+	libtool $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOX -g $(US_STATIC)
 	mkdir -p ../../usersystems/us_sqlbb
 	cp $(PROG) ../../usersystems/us_sqlbb
 

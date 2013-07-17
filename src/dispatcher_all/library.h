@@ -9,7 +9,7 @@
 
         //ikke sikert 1 vil være for altid, da vi blant annent snart vil støtte clustring, men trenger desperat
         //og få ned stack støreslen, så valgrin fungerer igjen
-        #ifdef BLACK_BOKS
+        #ifdef BLACK_BOX
             #define maxServers 30
         #else
             #define maxServers 100

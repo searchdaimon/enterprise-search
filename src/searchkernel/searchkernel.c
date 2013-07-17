@@ -48,7 +48,7 @@
 	#include "../newspelling/spelling.h"
 #endif
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	#include "../getdate/getdate.h"
 #endif
 
@@ -60,7 +60,7 @@
 
 #ifdef WITH_THREAD
         #include <pthread.h>
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		#define NROF_GENERATEPAGES_THREADS 5
 	#else
 		#define NROF_GENERATEPAGES_THREADS 5
@@ -121,7 +121,7 @@ struct PagesResultsFormat {
 		int showabal;
 		int nextPage;
 		int filterOn;
-		#ifndef BLACK_BOKS
+		#ifndef BLACK_BOX
 			int adultpages;
 			int noadultpages;
 		#endif
@@ -276,7 +276,7 @@ get_browser(char *useragent)
 	return UNKNOWN_BROWSER;
 }
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 
 static inline int
 get_sock_from_pool(struct socket_pool *pool, int *index)
@@ -328,7 +328,7 @@ release_sock_to_pool(struct socket_pool *pool, int index)
 
 
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 static inline int
 handle_url_rewrite(const char *url_in, size_t lenin, enum platform_type ptype, enum browser_type btype, char *collection,
            char *url_out, size_t len, char *uri_out, size_t uri_out_len, char *fulluri_out, size_t fulluri_out_len, struct socket_pool *pool)
@@ -394,7 +394,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 
 		imagep =  getImagepFromRadres((*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize2);
 		bblog(DEBUGINFO, "imakep %u", (unsigned int)imagep);
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
 			sprintf((*Sider).thumbnale,"/cgi-bin/ShowThumbbb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",
 					rLotForDOCid(DocID),
 					(unsigned int)imagep,
@@ -481,7 +481,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 					snippet = generate_summary(subname->config.summary, QueryData.queryParsed, body);
 
 					gettimeofday(&end_time, NULL);
-					#ifdef BLACK_BOKS
+					#ifdef BLACK_BOX
 						queryTime->generate_snippet += getTimeDifference(&start_time,&end_time);
 					#endif
 
@@ -545,7 +545,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 		}
 		else if ((*Sider).DocumentIndex.response == 200) {
 
-			#ifdef BLACK_BOKS
+			#ifdef BLACK_BOX
 			       // Include time and sign the parameters.
 				time_t u_time = time(NULL);
 				unsigned int signature;
@@ -825,7 +825,7 @@ popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int ant
 							dup_subname, &repohdr, &acla, &acld, di.imageSize,
 							&url, &attributes);
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 					if (!handle_url_rewrite(url, sizeof(url), PagesResults->ptype,
 							PagesResults->btype,
 							dup_subname, tmpurl, sizeof(tmpurl),
@@ -1045,7 +1045,7 @@ void increaseMemFiltered(struct PagesResultsFormat *PagesResults,int *whichFilte
 	//runarb:4 Dette gjør at tallene for treff i subname minker, gjør heller slik at man viser alle, og så viser filtered meldingen
 	//--(*nrInSubname);
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		(*iindex).deleted = 1;
 	#endif
 
@@ -1075,7 +1075,7 @@ void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTr
 	//runarb:4 Dette gjør at tallene for treff i subname minker, gjør heller slik at man viser alle, og så viser filtered meldingen
 	//--(*nrInSubname);
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		(*iindex).deleted = 1;
 	#endif
 
@@ -1108,7 +1108,7 @@ void increaseFilteredSilent(struct PagesResultsFormat *PagesResults,int *whichFi
 	//runarb:4 Dette gjør at tallene for treff i subname minker, gjør heller slik at man viser alle, og så viser filtered meldingen
 	//--(*nrInSubname);
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		(*iindex).deleted = 1;
 	#endif
 
@@ -1119,7 +1119,7 @@ void increaseFilteredSilent(struct PagesResultsFormat *PagesResults,int *whichFi
 
 }
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 static inline int pathaccess(struct PagesResultsFormat *PagesResults, struct subnamesFormat *subname, char uri_in[], char user_in[], char password_in[]) {
 	int ret = 0;
 
@@ -1281,7 +1281,7 @@ void *generatePagesResults(void *arg)
 
 	struct SiderFormat *side = malloc(sizeof(struct SiderFormat));
 
-	#if BLACK_BOKS
+	#if BLACK_BOX
 		PagesResults->ptype = get_platform(PagesResults->useragent);
 		PagesResults->btype = get_browser(PagesResults->useragent);
 	#endif
@@ -1311,7 +1311,7 @@ void *generatePagesResults(void *arg)
 		#endif
 
 
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
 
 			//hvis index filter tidligere har funet ut at dette ikke er et bra treff går vi til neste
 			if ((*PagesResults).TeffArray->iindex[i].indexFiltered.filename == 1) {
@@ -1347,7 +1347,7 @@ void *generatePagesResults(void *arg)
 			}
 		#endif
 
-		#ifndef BLACK_BOKS
+		#ifndef BLACK_BOX
 			//pre DIread filter
 			#ifdef DEBUG
 				bblog(DEBUGINFO, "adult %u: %i", (*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
@@ -1412,7 +1412,7 @@ void *generatePagesResults(void *arg)
 
 		bblog(INFO, "[tid: %u] looking on  DocID: %u url: \"%s\", subname: \"%s\"", (unsigned int)tid,(*PagesResults).TeffArray->iindex[i].DocID,side->DocumentIndex.Url,(*(*PagesResults).TeffArray->iindex[i].subname).subname);
 
-		#ifndef BLACK_BOKS
+		#ifndef BLACK_BOX
 		//adult fra di
 		if (((*PagesResults).filterOn) && (filterAdultWeight_value(side->DocumentIndex.AdultWeight,(*PagesResults).adultpages,(*PagesResults).noadultpages)) ) {
 			bblog(INFO, "Filter: filtered adult. DocID %u, adult value %i, adult bool value %i", 
@@ -1446,7 +1446,7 @@ void *generatePagesResults(void *arg)
 		
 
 
-		#ifndef BLACK_BOKS
+		#ifndef BLACK_BOX
 
 		if (side->DocumentIndex.Url[0] == '\0') {
 			bblog(INFO, "filter: DocumentIndex url is emty. DocID %u", (*PagesResults).TeffArray->iindex[i].DocID);
@@ -1479,7 +1479,7 @@ void *generatePagesResults(void *arg)
 
 
 
-		#ifndef BLACK_BOKS
+		#ifndef BLACK_BOX
 			//DI filtere
 			if (((*PagesResults).filterOn) && (filterResponse(side->DocumentIndex.response) )) {
 				bblog(INFO, "bad respons kode %i for %u.", side->DocumentIndex.response,(*PagesResults).TeffArray->iindex[i].DocID);
@@ -1537,7 +1537,7 @@ void *generatePagesResults(void *arg)
 		#endif
 
 		/****************************************************************************/		
-		#ifndef BLACK_BOKS
+		#ifndef BLACK_BOX
 
 		//kvalitetsjekker på inn data.
 		if (((*PagesResults).filterOn) && (filterTitle(side->title) )) {
@@ -1558,7 +1558,7 @@ void *generatePagesResults(void *arg)
 		#endif		
 
 		gettimeofday(&start_time, NULL);
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
 
 			#ifdef DEBUG
 			bblog(DEBUGINFO, "pathaccess: start");
@@ -1605,7 +1605,7 @@ void *generatePagesResults(void *arg)
 		#endif
 		gettimeofday(&start_time, NULL);
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 
 		if (!handle_url_rewrite(side->url, sizeof(side->url),
 			PagesResults->ptype, PagesResults->btype, 
@@ -1639,7 +1639,7 @@ void *generatePagesResults(void *arg)
 
 		side->pathlen = find_domain_path_len(side->url);
 
-		#ifndef BLACK_BOKS
+		#ifndef BLACK_BOX
 			memcpy(side->uri, side->url, sizeof(side->uri));
 			memcpy(side->fulluri, side->url, sizeof(side->fulluri));
 		#endif
@@ -1698,10 +1698,10 @@ void *generatePagesResults(void *arg)
 			goto end_filter_lock;
 		}
 
-		#ifndef BLACK_BOKS
+		#ifndef BLACK_BOX
 
 
-#ifndef BLACK_BOKS
+#ifndef BLACK_BOX
 		if (((*PagesResults).filterOn) && (filterSameDomain(nrofGodPages(PagesResults),side,(*PagesResults).Sider))) {
 
 			bblog(INFO, "filter (treadSyncFilter): hav same domain. Domain: \"%s\", domain id %ho. Url %s", side->domain,side->DomainID,side->DocumentIndex.Url);
@@ -1839,7 +1839,7 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 
 				Sider[i].iindex.allrank,
 				Sider[i].iindex.TermRank,
-				#ifdef BLACK_BOKS
+				#ifdef BLACK_BOX
 				-1,
 				#else
 				Sider[i].iindex.PopRank,
@@ -1854,7 +1854,7 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 				#endif
 
 
-				#ifdef BLACK_BOKS
+				#ifdef BLACK_BOX
 				-1,-1,-1,-1,-1,-1,
 				#else
 				Sider[i].iindex.rank_explaind.rankAnchor,
@@ -1869,7 +1869,7 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 				Sider[i].iindex.DocID,
 				rLotForDOCid(Sider[i].iindex.DocID),
 
-				#ifdef BLACK_BOKS
+				#ifdef BLACK_BOX
 				-1,
 				#else
 				Sider[i].DomainID,
@@ -2076,7 +2076,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
          (*SiderHeder).filtersTraped.filterNoUrl 		= 0;
 
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		searchFilterInit(filters,dates);
 	#endif
 
@@ -2106,7 +2106,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	(*SiderHeder).queryTime.cmc_conect 			= 0;
 	(*SiderHeder).queryTime.pathaccess 			= 0;
 	(*SiderHeder).queryTime.urlrewrite 			= 0;
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		(*SiderHeder).queryTime.html_parser_run 	= 0;
 		(*SiderHeder).queryTime.generate_snippet 	= 0;
 		(*SiderHeder).queryTime.duplicat_echecking 	= 0;
@@ -2114,7 +2114,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#endif
 
 
-	#if defined BLACK_BOKS && !defined _24SEVENOFFICE
+	#if defined BLACK_BOX && !defined _24SEVENOFFICE
 
 
 		gettimeofday(&start_time, NULL);
@@ -2156,7 +2156,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	get_query( PagesResults.QueryData.query, queryLen, &PagesResults.QueryData.queryParsed );
 
 
-	#if defined BLACK_BOKS && !defined _24SEVENOFFICE
+	#if defined BLACK_BOX && !defined _24SEVENOFFICE
 		get_query( groupOrQuery, strlen(groupOrQuery), &PagesResults.QueryData.search_user_as_query );
 
 
@@ -2248,7 +2248,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#endif
 
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		#ifdef WITH_THREAD
 			ret = pthread_mutex_init(&PagesResults.cmConn.mutex, NULL);
 			ret = pthread_mutex_init(&PagesResults.cmConnUrlrewrite.mutex, NULL);
@@ -2279,7 +2279,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#endif
 
 	//intresang debug info som viser antall treff pr subname
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		//viser hvordan treffene er i subnames
 		if (globalOptVerbose) {
 			bblog(INFO, "subname records:");
@@ -2301,7 +2301,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	y=0;
        	(*SiderHeder).filtered = 0;
 
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 		gettimeofday(&start_time, NULL);
 
 		//kalkulerer antall adult sier i første n resultater
@@ -2331,7 +2331,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	PagesResults.nextPage = 0;
 
 
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 		//sorterer top treffene etter hvilken disk de ligger på, slik at vi kan jobbe mest mulig i paralell
 		char diskAcces[NrOfDataDirectorys];
 		int toSort = PagesResults.antall;
@@ -2402,7 +2402,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		ret = pthread_mutex_destroy(&PagesResults.mutex);
 		ret = pthread_mutex_destroy(&PagesResults.mutextreadSyncFilter);
 
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
 			ret = pthread_mutex_destroy(&PagesResults.cmConn.mutex);
 			ret = pthread_mutex_destroy(&PagesResults.cmConnUrlrewrite.mutex);
 		#endif
@@ -2412,7 +2412,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		generatePagesResults(&PagesResults);		
 	#endif
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		#ifdef WITH_THREAD
 			{
 				int k;
@@ -2449,7 +2449,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	(*SiderHeder).filtered = PagesResults.filtered + PagesResults.memfiltered;	
 
 	//runarb: 2 nov 2007: trkker ikke fra disse tallene, da det fører til at totalt treff tallene forandres. Viser heller en filtered beskjed
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 		//fjerner filtered fra total oversikten
 		//ToDo: bør dette også gjøres for web?
 		//runarb: 23 jan 2008: ser ut til at dette bare gjøres for web er ifNdef her???
@@ -2463,7 +2463,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	
 
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		(*SiderHeder).navigation_xml = searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,
 		    &(*SiderHeder).queryTime, searchd_config->getfiletypep, searchd_config->attrdescrp, navmenu_cfg, &PagesResults.QueryData.queryParsed);
 
@@ -2605,7 +2605,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	bblog(INFO, "\t%-40s %f", "popResult",(*SiderHeder).queryTime.popResult);
 	bblog(INFO, "\t%-40s %f", "adultcalk",(*SiderHeder).queryTime.adultcalk);
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		bblog(INFO, "\t%-40s %f", "filetypes",(*SiderHeder).queryTime.filetypes);
 		bblog(INFO, "\t%-40s %f", "iintegerGetValueDate",(*SiderHeder).queryTime.iintegerGetValueDate);
 		bblog(INFO, "\t%-40s %f", "dateview",(*SiderHeder).queryTime.dateview);
@@ -2666,7 +2666,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	bblog(INFO, "");
 
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 		bblog(INFO, "\tnoadultpages %i, adultpages %i", PagesResults.noadultpages,PagesResults.adultpages);
 	#endif
 

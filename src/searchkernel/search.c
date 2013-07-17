@@ -37,7 +37,7 @@
 #include "merge.h"
 
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 
 	#include "../getdate/dateview.h"
 	#include "../getdate/getdate.h"
@@ -81,7 +81,7 @@
 #define MainRFC1 	200000
 #define MainRFC2 	10000
 
-#ifndef BLACK_BOKS
+#ifndef BLACK_BOX
 void *
 cache_index_get(char *path, size_t *size) {
 	return NULL;
@@ -770,7 +770,7 @@ void GetIndexAsArray_thesaurus (int *AntallTeff, struct iindexFormat **TeffArray
 	int j,k;
 	int TmpArrayLen;
 
-#ifndef BLACK_BOKS
+#ifndef BLACK_BOX
 	_GetIndexAsArray(AntallTeff,*TeffArray,WordIDcrc32,IndexType,IndexSprok,subname,languageFilterNr,languageFilterAsNr, cache_index_get);
 #else
 
@@ -964,7 +964,7 @@ for (i=0; i<(*queryParsed).n; i++)
                     				bblog(INFO, "aa_ søker på \"%s\"",  (*queryParsed).query[i].s[j]);
                     				strscpy(queryelement,(*queryParsed).query[i].s[j],sizeof(queryelement));
                     			              
-						#ifdef BLACK_BOKS  			
+						#ifdef BLACK_BOX  			
                     			        strsandr(queryelement,"_NBSP_"," ");
 						#endif
 
@@ -1226,7 +1226,7 @@ void *searchIndex_thread(void *arg)
         }
 	resultArrayInit(Array);
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		struct iindexFormat *acl_allowArray;
 		int acl_allowArrayLen;
 		if ((acl_allowArray = malloc(sizeof(struct iindexFormat))) == NULL) {
@@ -1288,7 +1288,7 @@ void *searchIndex_thread(void *arg)
 		bblog(INFO, "is thread id %u. Wil search \"%s\"", (unsigned int)tid,(*searchIndex_thread_arg).indexType);
 	#endif
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		int cmc_sock;
 		char cmc_statusbuf[1024];
 		cmc_conect(&cmc_sock, cmc_statusbuf, sizeof(cmc_statusbuf), searchIndex_thread_arg->cmc_port);
@@ -1318,7 +1318,7 @@ void *searchIndex_thread(void *arg)
 
 		bblog(INFO, "Checking subname: %s",  searchIndex_thread_arg->subnames[i].subname);
 
-		#if defined BLACK_BOKS
+		#if defined BLACK_BOX
 
 		bblog(DEBUGINFO, "Subname: \"%s\", access level: %d", searchIndex_thread_arg->subnames[i].subname, searchIndex_thread_arg->subnames[i].config.accesslevel);
 
@@ -1686,7 +1686,7 @@ void *searchIndex_thread(void *arg)
 		#endif
 		
 	}
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	cmc_close(cmc_sock);
 	{
 		struct hashtable_itr *itr;
@@ -1704,7 +1704,7 @@ void *searchIndex_thread(void *arg)
 
 	free(TmpArray);
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		free(searcArray);
 		free(acl_deniedArray);
 		free(acl_allowArray);
@@ -1789,7 +1789,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		subnames[i].hits = 0;
 	}
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 
 
 	#else
@@ -1815,7 +1815,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		bblog(INFO, "PredictNrAnchor %u, PredictNrUrl %u, PredictNrMain %u", PredictNrAnchor,PredictNrUrl,PredictNrMain);
 	#endif
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		//filter
 		searchIndex_filters(queryParsed, filteron);	//@ax
 	#endif
@@ -1841,7 +1841,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	searchIndex_thread_arg_Main.anonymous 		= anonymous;
 
 	
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 
 
 	#else
@@ -1879,7 +1879,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 	//Main
 	//vi søker ikke main hvis vi antar at vi har flere en xxx elementer i Anchor
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 	if (PredictNrAnchor < 20000) {
 	#else
 	if(1) {
@@ -1931,7 +1931,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 	
 	//joiner trådene
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 		#ifdef WITH_THREAD
 			//joiner trådene
 			if (threadid_Anchor != 0) {
@@ -1965,7 +1965,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	TmpArrayLen = 0;
 	resultArrayInit(TmpArray);
 
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 		//or_merger Anchor og Url inn i en temper array
 		or_merge(&TmpArray,&TmpArrayLen,&searchIndex_thread_arg_Anchor.resultArray,searchIndex_thread_arg_Anchor.resultArrayLen,
 			&searchIndex_thread_arg_Url.resultArray,searchIndex_thread_arg_Url.resultArrayLen);
@@ -1983,7 +1983,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 	//merger inn temperer og main 
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 
 	    #ifdef ATTRIBUTES
 		for (i=0; i<searchIndex_thread_arg_Main.attrib_count; i++)
@@ -2118,7 +2118,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 
 	
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 
 		// gjør ting med TeffArray før vi roter for mye med den.
 		for (i=0; i<*TeffArrayElementer; i++)
@@ -2643,7 +2643,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	bblog(INFO, "search: ~searchSimple()");
 }
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 
 void searchFilterInit(struct filtersFormat *filters, int dates[]) {
 

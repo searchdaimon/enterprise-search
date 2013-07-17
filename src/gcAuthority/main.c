@@ -76,14 +76,14 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt, time_t newest_do
 		}
 
 		#ifdef DEBUG
-			#ifdef BLACK_BOKS
+			#ifdef BLACK_BOX
 				printf("dokument \"%s\", lastSeen: %s",
 					REN_DocumentIndex(re, i)->Url,
 					ctime_s(&REN_DocumentIndex(re, i)->lastSeen));
 			#endif
 		#endif
 
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
 		if ((whisper & GCWHISPER_NOTOLD) == 0 &&
 		    (((gcaopt->lastSeenHack == 1) && (REN_DocumentIndex(re, i)->lastSeen == 0))
 		     || ((REN_DocumentIndex(re, i)->lastSeen != 0) &&
@@ -286,7 +286,7 @@ void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 	}
 	
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 
 		for(LotNr=1;LotNr<maxLots;LotNr++) {
 
@@ -318,7 +318,7 @@ void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 	//newest_document = time(NULL);
 	//printf("</######################## with runarb newest_document hack###################>\n\n");
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		blog(gcaopt->log,1,"Newest document: %s",ctime_s(&newest_document));
 	#endif
 
@@ -431,7 +431,7 @@ main(int argc, char **argv)
 	DIR *ll;
 
 
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 		fprintf("dette fungerer bare med black boks for nå\n");
 		exit(1);
 	#endif

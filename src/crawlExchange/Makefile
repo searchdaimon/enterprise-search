@@ -1,7 +1,7 @@
 #gcc xml.c url.c main.c -I/usr/include/libxml2/ -L/usr/lib -lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl && ./a.out
 CFLAGS?=	
 CFLAGS+=	`pkg-config --cflags libxml-2.0` -L/usr/lib -I/home/boitho/.root/include 
-CFLAGS+=	-O0 -g -DBLACK_BOKS -DIIACL  -DEMAIL_ADRESS_AS_ATTRIBUTE -fPIC
+CFLAGS+=	-O0 -g -BLACK_BOX -DIIACL  -DEMAIL_ADRESS_AS_ATTRIBUTE -fPIC
 LDFLAGS=	`pkg-config --libs libxml-2.0` -lz -lm  -lcurl  -lssl -lcrypto -ldl -L/home/boitho/.root/lib
 PROG?=		crawlExchange
 CC=		gcc
@@ -29,7 +29,7 @@ mail_analyze:
 	$(CC) -c lex.analyze_header.c -fPIC
 
 $(PROG): $(OBJS)
-	libtool $(CC) -o $(PROG).so $(LDFLAGS) $(OBJS) lex.analyze_header.o ../../lib/libds.a -fPIC -shared -D BLACK_BOKS -g $(CRAWL_STATIC)
+	libtool $(CC) -o $(PROG).so $(LDFLAGS) $(OBJS) lex.analyze_header.o ../../lib/libds.a -fPIC -shared -D BLACK_BOX -g $(CRAWL_STATIC)
 	-mkdir -p ../..//crawlers/$(PROG)
 	cp $(PROG).so ../..//crawlers/$(PROG)
 

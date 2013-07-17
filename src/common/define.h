@@ -23,7 +23,7 @@
 
 #define BMAX_RANKARRAY 20
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	#define NrofDocIDsInLot 5000
 #else
 	#define NrofDocIDsInLot 500000
@@ -89,7 +89,7 @@
 #define MaxsHitsInIndex 20
 
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
     #define MaxQueryLen 256
 #else
     #define MaxQueryLen 100
@@ -316,7 +316,7 @@ struct DocumentIndexFormat {
         unsigned int SummaryPointer;
         unsigned short SummarySize;
         unsigned int crc32;
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	time_t lastSeen;
 	unsigned int htmlSize2;
 	char reservedSpace[56]; //18 okt 2012
@@ -329,7 +329,7 @@ struct DocumentIndexFormat {
 
 struct ReposetoryHeaderFormat {
 	unsigned int DocID;
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		//Runerb: denne kan settes til deprecated slik når vi skal fase den ut:
 		//char url[200] __attribute__((deprecated));
 		char url[200];
@@ -344,7 +344,7 @@ struct ReposetoryHeaderFormat {
 	unsigned int time;
 	unsigned short userID;
 	double clientVersion;
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	int acl_allowSize;
 #ifdef IIACL
 	int acl_deniedSize;
@@ -445,7 +445,7 @@ struct iindexMainElements {
 	//19.04.07
 	time_t date; //16 nov 2006
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		char filetype[5];
 		char deleted;
 		struct indexFilteredFormat indexFiltered;
@@ -501,7 +501,7 @@ struct SiderFormat {
 	unsigned int crc32;
 	int type;
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		char uri[1024];
 		char url[1024];
 		char fulluri[1024];
@@ -556,7 +556,7 @@ struct queryTimeFormat {
 	double responseShortning;
 	double searchSimple;
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 	//runerb: 5 feb 2008
 	double html_parser_run;
 	double generate_snippet;
@@ -604,7 +604,7 @@ struct filterinfoFormat {
 };
 
 struct filtersFormat {
-	 #ifdef BLACK_BOKS
+	 #ifdef BLACK_BOX
 	struct filterinfoFormat filtypes;
 	struct filterinfoFormat collections;	
 	#endif
@@ -731,7 +731,7 @@ struct QueryDataForamt {
 	char AmazonSubscriptionId[50];
 //v3	char languageFilter[12];
 	char orderby[10];
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	int anonymous;
 #endif
 	char tkey[33]; // 32 bytes key +1 for \0

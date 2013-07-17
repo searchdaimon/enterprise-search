@@ -26,7 +26,7 @@
 #include <dirent.h>
 #include <unistd.h>
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 #include "attributes.h"
 #include "../ds/dcontainer.h"
 #include "../ds/dpair.h"
@@ -147,7 +147,7 @@ int findLotToIndex(char subname[], int dirty) {
 
 off_t getImagepFromRadres(unsigned int radress64bit,unsigned int htmlbufferSize) {
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		return (radress64bit + sizeof(unsigned int) + sizeof(struct ReposetoryHeaderFormat) + htmlbufferSize);
 	#else
 		return (radress64bit + sizeof(struct ReposetoryHeaderFormat) + htmlbufferSize);
@@ -195,7 +195,7 @@ void fpop(char *buff,int *length,FILE *file,char separator,int nrOfseparators) {
 
 }
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 container* ropen()
 {
     return map_container( pair_container( string_container(), string_container() ), set_container( string_container() ) );
@@ -448,7 +448,7 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 	unsigned long int offset;
 
 	//finner ut når dette ble gjort
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	if ((*ReposetoryHeader).storageTime == 0) {
 		(*ReposetoryHeader).storageTime = time(NULL);
 	}
@@ -479,7 +479,7 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 	offset = ftello64(RFILE);
 
 	// skriver versjon
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	unsigned int CurrentReposetoryVersionAsUInt = CurrentReposetoryVersion;
 	if(fwrite(&CurrentReposetoryVersionAsUInt,sizeof(CurrentReposetoryVersionAsUInt),1,RFILE) < 0) {
 		perror("rApendPost: can't write CurrentReposetoryVersionAsUInt");
@@ -504,7 +504,7 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 		debug("did write image of %i bytes",(*ReposetoryHeader).imageSize);
 	}
 	//skriver acl
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	if(fwrite(acl_allow,(*ReposetoryHeader).acl_allowSize,1,RFILE) < 0) {
 		perror("rApendPost: can't write acl_allow");
 	}
@@ -516,7 +516,7 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 #endif
 #endif
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	fwrite(url, ReposetoryHeader->urllen, 1, RFILE);
 
 	if (attributes!=NULL && attrkeys!=NULL)
@@ -587,7 +587,7 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 	printf("rApendPost: did append %u, url: \"%s\", into subname \"%s\"\n",(*ReposetoryHeader).DocID,(*ReposetoryHeader).url,subname);
 	#endif
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		#ifdef DEBUG
 			printf("rApendPost: acl_allow: \"%s\"\n",acl_allow);	
 			printf("rApendPost: acl_denied:  \"%s\"\n",acl_denied);	
@@ -908,7 +908,7 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 	#endif
 
 #ifndef DO_DIRECT
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 	fd = lotOpenFileNoCashel(DocID,"reposetory","rb",'n',subname);
 	#else
 	//og s
@@ -1035,7 +1035,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 	}
 		
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
                 unsigned int CurrentReposetoryVersionAsUInt;
                 read(fd, &CurrentReposetoryVersionAsUInt,sizeof(unsigned int));
        	#endif
@@ -1098,7 +1098,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 	}
 
 	//leser acl
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 
 		//begrenser størelsen på en acl. Slik at en klikk ikke gjør at alt ikke fungerer. Må tenke på om 16384 er nokk størelse her
 		if ((*ReposetoryHeader).acl_allowSize > 16384) {
@@ -1225,7 +1225,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 	}
 		
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
                 unsigned int CurrentReposetoryVersionAsUInt;
                 read(LotFileOpen,&CurrentReposetoryVersionAsUInt,sizeof(unsigned int));
        	#endif
@@ -1237,7 +1237,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 
 
 	totalread = sizeof(struct ReposetoryHeaderFormat) + rsize + imagesize;
-	#ifndef BLACK_BOKS //for bb skal vi lese mer, så lese record seperator
+	#ifndef BLACK_BOX //for bb skal vi lese mer, så lese record seperator
 	 	totalread += 3;
 	#endif
 	
@@ -1284,7 +1284,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 	}
 
 	//leser acl
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 
 		//begrenser størelsen på en acl. Slik at en klikk ikke gjør at alt ikke fungerer. Må tenke på om 16384 er nokk størelse her
 		if ((*ReposetoryHeader).acl_allowSize > 16384) {
@@ -1407,7 +1407,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		printf("\turl: \"%s\"\n",(*ReposetoryHeader).url);
 		printf("\thtmlSize2: %ho\n",(*ReposetoryHeader).htmlSize2);
 		printf("\timageSize: %ho\n",(*ReposetoryHeader).imageSize);
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
 		printf("\turllen: %ho\n",(*ReposetoryHeader).urllen);
 		printf("\tattributeslen: %ho\n",(*ReposetoryHeader).attributeslen);
 		printf("\tat %s:%d\n",__FILE__,__LINE__);
@@ -1451,7 +1451,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 		
 		int n;
 
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
 	                unsigned int CurrentReposetoryVersionAsUInt;
 	                if (fread(&CurrentReposetoryVersionAsUInt,sizeof(unsigned int),1,LotFileOpen) != 1) {
 				perror("can't read CurrentReposetoryVersionAsUInt");
@@ -1476,7 +1476,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			printf("\thtmlSize2: %ho\n",(*ReposetoryHeader).htmlSize2);
 			printf("\timageSize: %ho\n",(*ReposetoryHeader).imageSize);
 			printf("\tat %s:%d\n",__FILE__,__LINE__);
-			#ifdef BLACK_BOKS
+			#ifdef BLACK_BOX
 			printf("CurrentReposetoryVersionAsUInt: %u\n",CurrentReposetoryVersionAsUInt);
 
 			printf("\tacl_allowSize: %i\n",(*ReposetoryHeader).acl_allowSize);
@@ -1548,7 +1548,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 		}
 
 		//leser acl
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
 
 			//begrenser størelsen på en acl. Slik at en klikk ikke gjør at alt ikke fungerer. Må tenke på om 16384 er nokk størelse her
 			if (((*ReposetoryHeader).acl_allowSize > 16384) || ((*ReposetoryHeader).acl_allowSize < 0)) {
@@ -1759,7 +1759,7 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpe
 
 			*radress = startOffset;
 
-			#ifdef BLACK_BOKS
+			#ifdef BLACK_BOX
 			//hvis dette er en ny nokk rekord retunerer vi denne
 			if ((*ReposetoryHeader).storageTime >= FilterTime){
 			#else

@@ -55,7 +55,7 @@ unsigned int iintegerDocIDPlace(unsigned int DocID,int valuesize) {
 
 	lotNr = rLotForDOCid(DocID);
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 	        DocIDPlace = ((DocID - LotDocIDOfset(lotNr)) * valuesize) - valuesize;
 	#else
 	        DocIDPlace = ((DocID - LotDocIDOfset(lotNr)) * valuesize);

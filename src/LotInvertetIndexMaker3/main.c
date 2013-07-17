@@ -46,7 +46,7 @@ char *getValidDocIDs(int LotNr, char subname[]) {
 				printf("url is emty\n");
 			#endif
 		}
-		#ifndef BLACK_BOKS
+		#ifndef BLACK_BOX
 		else if (filterResponse(DocumentIndexPost.response)) {
 			#ifdef DEBUG
 			printf("bad respons code %i\n",(int)DocumentIndexPost.response);

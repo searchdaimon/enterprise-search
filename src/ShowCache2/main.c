@@ -10,7 +10,7 @@
 #include "../common/reposetory.h"
 #include "../common/DocumentIndex.h"
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	#define URL_EXPIRE_TIME 3600
 #endif
 
@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 	docid iDocID;
 	char subname[maxSubnameLength];
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	bool validate_url = true;
 	unsigned int url_time;
 	unsigned int url_signature;
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 
 		strncpy(subname, query_subname ,sizeof(subname) -1);
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 		url_time = cgi_getentryunsignedint("time");
 		if (cgi_errno == CGIERR_NOT_UNSIGNED_INTEGER)
 			errx(1, "Parameter time missing/invalid");
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 		//iPointer = 9695;
 		//iSize = 2288;
 		//LotNr = 14;
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 		validate_url = false;
 #endif
 
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
 	}
 
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	if (validate_url) {
 		unsigned int our_sign = sign_cache_params(iDocID, subname, url_time);
 

@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 		LotNr = cgi_getentryint("L");
 		iPointer = strtoul(cgi_getentrystr("P"), (char **)NULL, 10);
 
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
 			strcpy(subname,cgi_getentrystr("C"));
 		#else
 			strcpy(subname,"www");

@@ -808,7 +808,7 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 			TeffArray->iindex[y].subname = subname;
 
-			#ifdef BLACK_BOKS
+			#ifdef BLACK_BOX
 				//legger til en peker til subname
 				TeffArray->iindex[y].deleted = 0;
 				TeffArray->iindex[y].indexFiltered.filename = 0;
@@ -850,7 +850,7 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 
 
-			#ifndef BLACK_BOKS
+			#ifndef BLACK_BOX
 				//midlertidig bug fiks. Ignorerer hit med DocID 0.
 				//ser ut til at vi har noen bugger som lager DocID 0. Skal ikke være med i index
 				if (TeffArray->iindex[y].DocID == 0) {

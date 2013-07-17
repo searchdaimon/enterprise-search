@@ -19,7 +19,7 @@ struct ReposetoryHeaderFormat_v13 {
         unsigned long int time;
         unsigned short userID;
         double clientVersion;
-        #ifdef BLACK_BOKS
+        #ifdef BLACK_BOX
                 int aclSize;
                 //time_t storageTime; //3 now
                 //char doctype[4]; //3 now
@@ -107,7 +107,7 @@ int rReadPost_v13(FILE *LotFileOpen,struct ReposetoryHeaderFormat_v13 *Reposetor
                         char imagebuffer[],char **aclbuffer,char recordseparator[]) {
 
 
-                #ifdef BLACK_BOKS
+                #ifdef BLACK_BOX
                         //unsigned int CurrentReposetoryVersionAsUInt;
                         //fread(&CurrentReposetoryVersionAsUInt,sizeof(unsigned int),1,LotFileOpen);
                 #endif
@@ -153,7 +153,7 @@ int rReadPost_v13(FILE *LotFileOpen,struct ReposetoryHeaderFormat_v13 *Reposetor
                 }
 
                 //leser acl
-                #ifdef BLACK_BOKS
+                #ifdef BLACK_BOX
 
                         printf("acl sise %i\n",(*ReposetoryHeader).aclSize);
                         (*aclbuffer) = malloc((*ReposetoryHeader).aclSize +1);
@@ -306,7 +306,7 @@ char subname[], char **aclbuffer) {
                         //*rsize = bufflength;
 
                         //hvis dette er en ny nokk rekord retunerer vi denne
-			#ifdef BLACK_BOKS
+			#ifdef BLACK_BOX
                         //if ((*ReposetoryHeader).storageTime >= FilterTime){
                         #else
                         //if ((*ReposetoryHeader).time >= FilterTime){

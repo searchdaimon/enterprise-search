@@ -29,7 +29,7 @@ Kal "ropen" for å opne Reposetoryet, "rclose" for å stenge Reposetoryet.
 #include <sys/file.h>
 #include <math.h>
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 #include "../ds/dcontainer.h"
 #endif
 
@@ -73,7 +73,7 @@ struct ReposetoryOpenFilesFormat {
 struct ReposetoryOpenFilesFormat OpenReposetoryFiles[MaxOpenReposetoryFiles];
 
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 container* ropen();
 void rclose(container*);
 #endif

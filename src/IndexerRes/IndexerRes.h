@@ -22,7 +22,7 @@
 #define IndexerMaxLinks 4048
 
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	#define maxWordForPage 40000
 	#define maxAclForPage 150
 	#define maxAttribForPage 20
@@ -124,7 +124,7 @@ struct outlinksFormat {
 	int good;
 };
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 
 struct IndexerRes_acls {
 	int aclnr;
@@ -174,7 +174,7 @@ struct pagewordsFormat {
 	//struct outlinksFormat outlinks[IndexerMaxLinks];
 	struct outlinksFormat *outlinks;
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		struct IndexerRes_acls acl_allow;
 		#ifdef IIACL
 		struct IndexerRes_acls acl_denied;
@@ -209,7 +209,7 @@ void wordsEnd(struct pagewordsFormat *pagewords);
 
 void adultLoad (struct adultFormat *adult);
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 void acladd(struct IndexerRes_acls *acl, char word[]);
 void aclsMakeRevIndex(struct IndexerRes_acls *acl);
 void aclsMakeRevIndexBucket (struct IndexerRes_acls *acl,unsigned int DocID,unsigned char *langnr);

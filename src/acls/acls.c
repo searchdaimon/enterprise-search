@@ -1,4 +1,4 @@
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 
 #include "../common/boithohome.h"
 #include <stdio.h>

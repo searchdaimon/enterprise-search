@@ -73,7 +73,7 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 
 }
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 char *aclResolvEl(char value[]) {
 
 	static char user[64];
@@ -285,7 +285,7 @@ int main (int argc, char *argv[]) {
 	
 		printf("crc32: %u\n",DocumentIndexPost.crc32);
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 		printf("Last seen Unix: %u\n",DocumentIndexPost.lastSeen);
 		printf("Last seen ISO: %s", ctime(&DocumentIndexPost.lastSeen));
 #endif
@@ -325,7 +325,7 @@ int main (int argc, char *argv[]) {
 		}
 		printf("Entire url: %s\n", url);
 
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
 			printf("acl allow raw: \"%s\"\n",acl_allowbuffer);
 			printf("acl denied raw: \"%s\"\n",acl_deniedbuffer);
 
@@ -411,7 +411,7 @@ int main (int argc, char *argv[]) {
 	}
 
 
-		#ifndef BLACK_BOKS
+		#ifndef BLACK_BOX
 
 		if (optPopRank) {
 			popopen (&popindex,"/home/boitho/config/popindex");

@@ -37,7 +37,7 @@ bconfig_flush(int mode) {
 	pthread_mutex_lock(&config_lock);
 #endif
 	//bb har confg i mysql
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 
 	//selecter fra db
 	char mysql_query[5][2048];

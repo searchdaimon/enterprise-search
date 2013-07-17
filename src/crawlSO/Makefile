@@ -1,6 +1,6 @@
 #gcc xml.c url.c main.c -I/usr/include/libxml2/ -L/usr/lib -lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl && ./a.out
 CFLAGS=		-I/usr/include/libxml2/ -L/usr/lib -I/home/eirik/.root/include ../common/daemon.c
-CFLAGS+=	-W -Wall -O2 -g -DBLACK_BOKS
+CFLAGS+=	-W -Wall -O2 -g -BLACK_BOX
 LDFLAGS=	-lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl -L/home/eirik/.root/lib
 PROG=		crawlSO.so
 CC=		gcc
@@ -23,7 +23,7 @@ OBJS+=		crawl.o #../base64/base64.o ../crawl/mailsubject.o set.o
 all: $(PROG)
 
 $(PROG): $(OBJS)
-	libtool $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOKS -g -static 
+	libtool $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOX -g -static 
 	-mkdir -p ../..//crawlers/crawlSO
 	cp $(PROG) ../..//crawlers/crawlSO
 

@@ -5,7 +5,7 @@
 #include "../common/bstr.h"
 #include "../logger/logger.h"
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	#define TARGET_VISIBLE_URL_LEN 80
 #else
 	#define TARGET_VISIBLE_URL_LEN 60
@@ -20,7 +20,7 @@ void shortenurl(char *url,int urllen) {
   	char **Data;
 	size_t *datalen, protolen;
   	int Count, TokCount;
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		unsigned char newurl[128];
 	#else
 		unsigned char newurl[201];

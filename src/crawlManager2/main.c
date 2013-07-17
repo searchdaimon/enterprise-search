@@ -1952,7 +1952,7 @@ int crawl(struct collectionFormat *collection,int nrofcollections, int flag, int
 
 		bblog(ERROR,"Starting crawl of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 		long long left = kbytes_left_in_dir(BB_DATA_DIR);
 		if (left == -1)
 			bblog(WARN, "Unable to check space left in lots.");

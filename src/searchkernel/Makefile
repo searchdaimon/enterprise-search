@@ -31,7 +31,7 @@ LDFLAGS+=	\
 		-lpthread
 
 
-#LDFLAGS+=	-DATTRIBUTES ../common/*.c -D_FILE_OFFSET_BITS=64 -DDISK_PROTECTOR -DBLACK_BOKS -DIIACL -DWITH_SPELLING -DWITH_THREAD
+#LDFLAGS+=	-DATTRIBUTES ../common/*.c -D_FILE_OFFSET_BITS=64 -DDISK_PROTECTOR -BLACK_BOX -DIIACL -DWITH_SPELLING -DWITH_THREAD
 
 OBJS=	preopen.o search.o searchkernel.o searchd.o htmlstriper.o dp.o searchFilters.o verbose.o maincfg.o \
 	shortenurl.o client.o merge.o client.o

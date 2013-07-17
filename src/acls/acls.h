@@ -6,7 +6,7 @@
 #ifndef _ACLS__H_
 #define _ACLS__H_
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 
 #include <inttypes.h>
 

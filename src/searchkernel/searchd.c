@@ -1,4 +1,4 @@
-#ifndef BLACK_BOKS
+#ifndef BLACK_BOX
 	// runarb, 14 mai 2008:
 	// for posix_fadvise()
 	// dette kan skape problemer i andre header filer!!!!!
@@ -124,7 +124,7 @@ void lotPreOpenStartl(int *preOpen[], char filename[], char subname[], int use) 
 
 		(*preOpen)[i] = -1;
 
-		#ifndef BLACK_BOKS
+		#ifndef BLACK_BOX
 			if (use) {
 				(*preOpen)[i] = lotOpenFileNoCasheByLotNrl(i,filename,"rb", 'r',subname);
 				if ((*preOpen)[i] != -1) {
@@ -230,7 +230,7 @@ int main(int argc, char *argv[])
         
 	}
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		bblog(CLEAN, "Blackbox mode (searchdbb)");
 
 		time_t starttime;
@@ -286,7 +286,7 @@ int main(int argc, char *argv[])
 	lotPreOpenStartl(&searchd_config.lotPreOpen.DocumentIndex,"DocumentIndex","www",searchd_config.optPreOpen);
 	lotPreOpenStartl(&searchd_config.lotPreOpen.Summary,"summary","www",searchd_config.optPreOpen);
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		if (searchd_config.optCacheIndexes == 1) {
 			if (searchd_config.optFastStartup != 1) {
 				bblog(INFO, "Reading indexes");
@@ -349,7 +349,7 @@ int main(int argc, char *argv[])
         }
 
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		// Initialiser thesaurus med ouput-filene fra 'build_thesaurus_*':
 		searchd_config.thesaurus_all = NULL;
 		#ifndef WITHOUT_THESAURUS
@@ -662,7 +662,7 @@ void *do_chld(void *arg)
 	bblog(DEBUGINFO, "Ranking search?");
 
 
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 	//ToDo: må ha låsing her
         if ((LOGFILE = bfopen("config/query.log","a")) == NULL) {
                 bblog_errno(ERROR, "logfile");

@@ -1,7 +1,7 @@
 #ifndef _BBDOCUMENT__H_
 #define _BBDOCUMENT__H_
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 
 #include <db.h>
 #include "../ds/dcontainer.h"

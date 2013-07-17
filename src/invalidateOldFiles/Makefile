@@ -1,4 +1,4 @@
-CFLAGS=		-W -Wall -O2 -g -D_FILE_OFFSET_BITS=64 -DBLACK_BOKS
+CFLAGS=		-W -Wall -O2 -g -D_FILE_OFFSET_BITS=64 -BLACK_BOX
 LDFLAGS=	-lm -lz
 PROG=		invalidateOldFiles
 CC=		gcc
@@ -11,7 +11,7 @@ OBJS=		main.o
 all: $(PROG)
 
 $(PROG): $(OBJS)
-	$(CC) -g -o $(PROG) $(LDFLAGS) $(OBJS) $(COMMONDIR)/*.c -D_FILE_OFFSET_BITS=64 -DBLACK_BOKS
+	$(CC) -g -o $(PROG) $(LDFLAGS) $(OBJS) $(COMMONDIR)/*.c -D_FILE_OFFSET_BITS=64 -BLACK_BOX
 	#$(CC) -o $(PROG) $(CFLAGS) $(LDFLAGS) $(OBJS) $(COMMONDIR)/*.c
 
 

@@ -143,7 +143,7 @@ void disp_out_sd_v2_0(
 					printf("\t\t<popResult>%f</popResult>\n",SiderHeder[i].queryTime.popResult);
 					printf("\t\t<adultcalk>%f</adultcalk>\n",SiderHeder[i].queryTime.adultcalk);
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 					printf("\t\t<filetypes>%f</filetypes>\n",SiderHeder[i].queryTime.filetypes);
 					printf("\t\t<iintegerGetValueDate>%f</iintegerGetValueDate>\n",SiderHeder[i].queryTime.iintegerGetValueDate);
 					printf("\t\t<dateview>%f</dateview>\n",SiderHeder[i].queryTime.dateview);
@@ -153,7 +153,7 @@ void disp_out_sd_v2_0(
 					printf("\t\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);
 					printf("\t\t<cmc_conect>%f</cmc_conect>\n",SiderHeder[i].queryTime.cmc_conect);
 #endif
-					#ifdef BLACK_BOKS
+					#ifdef BLACK_BOX
 					printf("\t\t<html_parser_run>%f</html_parser_run>\n",SiderHeder[i].queryTime.html_parser_run);
 					printf("\t\t<generate_snippet>%f</generate_snippet>\n",SiderHeder[i].queryTime.generate_snippet);
 					#endif
@@ -214,7 +214,7 @@ void disp_out_sd_v2_0(
         	printf("</ERROR>\n");
 	    }
 
-	    #ifdef BLACK_BOKS
+	    #ifdef BLACK_BOX
 
 	    for(i=0;i<SiderHeder[0].filters.collections.nrof;i++) {
 		if (SiderHeder[0].filters.collections.elements[i].nrof == -1)
@@ -420,7 +420,7 @@ void disp_out_sd_v2_0(
                 		//DocumentIndex
                 		printf("\t<URL><![CDATA[%s]]></URL>\n",Sider[i].url);
                 		printf("\t<URI><![CDATA[%s]]></URI>\n",Sider[i].uri);
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
                 		printf("\t<FULLURI><![CDATA[%s]]></FULLURI>\n",Sider[i].fulluri);
 #endif
 
@@ -524,7 +524,7 @@ void disp_out_sd_v2_0(
 				printf("\t<RESULT_COLLECTION>%s</RESULT_COLLECTION>\n",Sider[i].subname.subname);
 
 
-				#ifdef BLACK_BOKS
+				#ifdef BLACK_BOX
 					char timebuf[64];
 					if (Sider[i].DocumentIndex.CrawleDato != 0) {
 						printf("\t<TIME_UNIX>%u</TIME_UNIX>\n",Sider[i].DocumentIndex.CrawleDato);
@@ -740,7 +740,7 @@ void disp_out_sd_v2_1(
 					printf("\t\t<popResult>%f</popResult>\n",SiderHeder[i].queryTime.popResult);
 					printf("\t\t<adultcalc>%f</adultcalc>\n",SiderHeder[i].queryTime.adultcalk);
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 					printf("\t\t<filetypes>%f</filetypes>\n",SiderHeder[i].queryTime.filetypes);
 					printf("\t\t<iintegerGetValueDate>%f</iintegerGetValueDate>\n",SiderHeder[i].queryTime.iintegerGetValueDate);
 					printf("\t\t<dateview>%f</dateview>\n",SiderHeder[i].queryTime.dateview);
@@ -750,7 +750,7 @@ void disp_out_sd_v2_1(
 					printf("\t\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);
 					printf("\t\t<cmc_connect>%f</cmc_connect>\n",SiderHeder[i].queryTime.cmc_conect);
 #endif
-					#ifdef BLACK_BOKS
+					#ifdef BLACK_BOX
 					printf("\t\t<html_parser_run>%f</html_parser_run>\n",SiderHeder[i].queryTime.html_parser_run);
 					printf("\t\t<generate_snippet>%f</generate_snippet>\n",SiderHeder[i].queryTime.generate_snippet);
 					#endif
@@ -809,7 +809,7 @@ void disp_out_sd_v2_1(
         	printf("</error>\n");
 	    }
 
-	    #ifdef BLACK_BOKS
+	    #ifdef BLACK_BOX
 
 	    for(i=0;i<SiderHeder[0].filters.collections.nrof;i++) {
 		if (SiderHeder[0].filters.collections.elements[i].nrof == -1)
@@ -1016,7 +1016,7 @@ void disp_out_sd_v2_1(
                 		//DocumentIndex
                 		printf("\t<url><![CDATA[%s]]></url>\n",Sider[i].url);
                 		printf("\t<uri><![CDATA[%s]]></uri>\n",Sider[i].uri);
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
                 		printf("\t<fulluri><![CDATA[%s]]></fulluri>\n",Sider[i].fulluri);
 #endif
 
@@ -1121,7 +1121,7 @@ if ((unsigned int)evalue[len] < 31) {
 				printf("\t<result_collection>%s</result_collection>\n",Sider[i].subname.subname);
 
 
-				#ifdef BLACK_BOKS
+				#ifdef BLACK_BOX
 					char timebuf[64];
 					if (Sider[i].DocumentIndex.CrawleDato != 0) {
 						printf("\t<time_unix>%u</time_unix>\n",Sider[i].DocumentIndex.CrawleDato);

@@ -45,7 +45,7 @@
 #include "../ds/dset.h"
 #include "../ds/dmap.h"
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 
 #else
 	#include "../maincfg/maincfg.h"
@@ -58,7 +58,7 @@
         #include <pthread.h>
 
 	
-        #ifdef BLACK_BOKS
+        #ifdef BLACK_BOX
                 #define DEFAULT_NROF_GENERATEPAGES_THREADS 5
         #else
                 #define DEFAULT_NROF_GENERATEPAGES_THREADS 5
@@ -135,7 +135,7 @@ struct IndexerLot_workthreadFormat {
 	struct hashtable *acls;
 	
 
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 		struct addNewUrlhaFormat addNewUrlha[NEWURLFILES_NR];
 	#else
 	#endif
@@ -177,7 +177,7 @@ struct optFormat {
 };
 
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 //acllot includes
 #include "../3pLibs/keyValueHash/hashtable.h"
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
@@ -738,7 +738,7 @@ void *IndexerLot_workthread(void *arg) {
 	Bytef *SummaryBuffer;
 	uLong SummaryBufferSize;
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		int i;
 	#endif
 
@@ -859,7 +859,7 @@ void *IndexerLot_workthread(void *arg) {
 				//printf("D: %u, R: %lu\n",ReposetoryHeader.DocID, radress);
 
 
-				#ifndef BLACK_BOKS
+				#ifndef BLACK_BOX
 				if (isIpBan(ReposetoryHeader.IPAddress)) {
 					debug("ip adrsess %u is on ban list. Url \"%s\"\n",ReposetoryHeader.IPAddress,ReposetoryHeader.url);
 					DIS_delete(DocumentIndexPost);
@@ -953,7 +953,7 @@ void *IndexerLot_workthread(void *arg) {
 					//har ikke metadesc enda
 					metadesc = strdup("");
 
-					#ifndef BLACK_BOKS
+					#ifndef BLACK_BOX
 
 					makePreParsedSummary(body,strlen(body),title,strlen(title),metadesc,strlen(metadesc),
 						&SummaryBuffer,&SummaryBufferSize);
@@ -1013,7 +1013,7 @@ void *IndexerLot_workthread(void *arg) {
 						pthread_mutex_lock(&(*argstruct).restmutex);
 					#endif
 
-					#ifdef BLACK_BOKS
+					#ifdef BLACK_BOX
 						//handel acl
 						//trenger dette acl greiene å være her, kan di ikke være lenger opp, der vi ikke har trå lås ?
 						acllot_add((*argstruct).acllot,acl_allow);
@@ -1071,7 +1071,7 @@ printf("attributes: \"%s\"\n",attributes);
 					//lager summery
 					if ((body != NULL) && (title != NULL) && (metadesc != NULL)) {
 
-						#ifndef BLACK_BOKS
+						#ifndef BLACK_BOX
 
 						SummaryWrite(SummaryBuffer,SummaryBufferSize,&(*DocumentIndexPost).SummaryPointer,
 							&(*DocumentIndexPost).SummarySize,ReposetoryHeader.DocID,(*argstruct).SFH);
@@ -1087,7 +1087,7 @@ printf("attributes: \"%s\"\n",attributes);
 						revindexFilesAppendWords(pagewords,(*argstruct).revindexFilesHa,ReposetoryHeader.DocID,&langnr);
 
 
-						#ifdef BLACK_BOKS
+						#ifdef BLACK_BOX
 							#ifdef IIACL
 							aclindexFilesAppendWords(&(*pagewords).acl_allow,(*argstruct).acl_allowindexFilesHa,ReposetoryHeader.DocID,&langnr);
 							aclindexFilesAppendWords(&(*pagewords).acl_denied,(*argstruct).acl_deniedindexFilesHa,ReposetoryHeader.DocID,&langnr);
@@ -1457,7 +1457,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 	printf("run: indexing lot %i %s\n",lotNr, subname);
 
-	#ifndef BLACK_BOKS		
+	#ifndef BLACK_BOX		
 		if (!ipbanLoad()) {
 			printf("can't load ip ban list\n");
 			exit(1);
@@ -1541,7 +1541,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		//revindexFilesOpenLocal(argstruct->revindexFilesHa,lotNr,"Main",openmode,subname);
 		revindexFilesOpenLocal(argstruct->revindexFilesHa,lotNr,"Main","wb",subname);
 
-		#ifdef BLACK_BOKS		
+		#ifdef BLACK_BOX		
 
 			#ifdef IIACL
 				//støtter ikke å apande revindexer langere. Det betyr at vi må lage ny iindex hver gang, hvis ikke blir
@@ -1759,7 +1759,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		argstruct->n_recrawled				= 0;
 		argstruct->n_untouched				= 0;
 
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
 			flags = RE_HAVE_4_BYTES_VERSION_PREFIX;
 		#else
 			flags = 0;
@@ -1931,7 +1931,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 		revindexFilesCloseLocal(argstruct->revindexFilesHa); 
 
-		#ifdef BLACK_BOKS		
+		#ifdef BLACK_BOX		
 			revindexFilesCloseLocal(argstruct->acl_allowindexFilesHa); 
 			revindexFilesCloseLocal(argstruct->acl_deniedindexFilesHa); 
 			#ifdef ATTRIBUTES
@@ -1963,7 +1963,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 					free(argstruct->DIArray[i].p);
 				}
 
-				#ifndef BLACK_BOKS
+				#ifndef BLACK_BOX
 
 				if (argstruct->DIArray[i].haveawvalue == 1) {
 
@@ -1985,7 +1985,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			closeDICache();
 		}
 
-		#ifndef BLACK_BOKS
+		#ifndef BLACK_BOX
 
 			if ((brankPageElementsFH = lotOpenFileNoCasheByLotNr(lotNr,"brankPageElements",">>",'r',subname)) == NULL) {
 				perror("open brankPageElements");
@@ -2018,7 +2018,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 		#endif
 
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
 			acllot_close(argstruct->acllot);
 			#ifdef ATTRIBUTES
 			attriblot_close(argstruct->attriblot);
@@ -2122,7 +2122,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		}
 
 		//run the Garbage Collection
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
 		if ((opt->RunGarbageCollection == 1) && (1)) {
 		#else
 		if ((opt->RunGarbageCollection == 1) && (argstruct->pageCount > 0)) {
@@ -2155,7 +2155,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
                 	        //printf("indexint part %i for lot %i of type Main\n",lotPart,lotNr);
                 	        Indekser(lotNr,"Main",lotPart,subname,&IndekserOpt);
                 	}
-			#ifdef BLACK_BOKS		
+			#ifdef BLACK_BOX		
                 	for (lotPart=0;lotPart<64;lotPart++) {
                 	        //printf("indexint part %i for lot %i of type acl_allow\n",lotPart,lotNr);
                 	        Indekser(lotNr,"acl_allow",lotPart,subname,&IndekserOpt);
@@ -2199,7 +2199,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			netlot_end(lotNr,subname,opt->NetLot, opt);
 		}
 
-		#ifndef BLACK_BOKS
+		#ifndef BLACK_BOX
 		for (i=0;i<NEWURLFILES_NR;i++) {
 			fclose(argstruct->addNewUrlha[i].NYEURLER);
 		}	
@@ -2224,7 +2224,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		html_parser_exit();
 		langdetectDestroy();
 
-		#ifndef BLACK_BOKS		
+		#ifndef BLACK_BOX		
 			ipbanEnd();
 		#endif
 
@@ -2258,7 +2258,7 @@ int main (int argc, char *argv[]) {
 	opt.dirty = 10000;
 	opt.LotMax = 0;
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		opt.HandleOld = 1;
 	#else
 		opt.HandleOld = 1;
@@ -2344,7 +2344,7 @@ int main (int argc, char *argv[]) {
 
 				//exit(1);
                                 break;
-		        #ifdef BLACK_BOKS
+		        #ifdef BLACK_BOX
 
 			#else
 			case 'q':
@@ -2374,7 +2374,7 @@ int main (int argc, char *argv[]) {
 
 	if ((opt.Query != NULL) && (opt.NetLot != NULL)) {
 
-		#ifndef BLACK_BOKS
+		#ifndef BLACK_BOX
 
         	struct config_t maincfg;
 		struct SiderFormat *Sider;

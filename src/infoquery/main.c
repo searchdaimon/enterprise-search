@@ -699,7 +699,7 @@ int main (int argc, char *argv[]) {
 	
 		thumbnale = NULL;
 
-		#ifdef BLACK_BOKS
+		#ifdef BLACK_BOX
 			if (ReposetoryHeader.imageSize != 0 && ReposetoryHeader.imageSize != 65535) {
 
 				asprintf(&thumbnale,"/cgi-bin/ShowThumbbb?L=%i&amp;P=%u&amp;S=%i&amp;C=%s",

@@ -51,14 +51,14 @@
 
 
     
-#ifndef BLACK_BOKS
+#ifndef BLACK_BOX
     #include <libconfig.h>
     #define CACHE_STRUCT_VERSION "1.7"
 #endif
 
     #define CFG_DISPATCHER "config/dispatcher.conf"
 
-#ifndef BLACK_BOKS
+#ifndef BLACK_BOX
     #include "GeoIP.h"
     #include "GeoIPCity.h"
 #endif
@@ -76,7 +76,7 @@
 
     //#define PORT 6500 // the port client will be connecting to 
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
  	// get user groups
 	#include "../acls/acls.h"
 	#include "../boithoadClientLib/liboithoaut.h"
@@ -101,7 +101,7 @@ void read_dispatcher_cfg(struct config_t * cfg, struct dispconfigFormat * dispco
 
 
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 
 struct subnamesFormat *get_usr_coll(char *usr, int *n_colls, int cmc_port) {
 	char **colls;
@@ -374,7 +374,7 @@ showabal,AddSiderHeder[i].servername);
 	dprintf("mgsort: pageNr %i\n",pageNr);
 
 	//dette skaper problemer for blaingen på bb. Sikkert samme problmet på web, så vi må se på hva vi kan gjøre
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 		mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements);
 	#endif
 
@@ -404,7 +404,7 @@ showabal,AddSiderHeder[i].servername);
 			Sider[i].deletet = 1;
 
 
-			#ifndef BLACK_BOKS
+			#ifndef BLACK_BOX
 			// hvis dette er en pi side, må vi håntere at det kan komme versjoner av den som har bedre rank
 			// hvis det skjer skal vi bruke pi siden, og forkaste den andre
 	
@@ -427,7 +427,7 @@ showabal,AddSiderHeder[i].servername);
 				continue;
 			}
 
-#ifndef BLACK_BOKS
+#ifndef BLACK_BOX
 
 #if 0
 			// 19. juni
@@ -474,7 +474,7 @@ showabal,AddSiderHeder[i].servername);
 			}
 #endif
 #endif
-			#ifndef BLACK_BOKS
+			#ifndef BLACK_BOX
 			if(isDomainBan(Sider[i].domain)) {
 
 				dprintf("hav baned domain \"%s\"\n",Sider[i].domain);
@@ -809,7 +809,7 @@ int main(int argc, char *argv[])
 	struct SiderHederFormat FinalSiderHeder;
 	memset(&FinalSiderHeder,'\0',sizeof(struct SiderHederFormat));
 	//char buff[4096]; //generell buffer
-#ifndef BLACK_BOKS
+#ifndef BLACK_BOX
 	struct in_addr ipaddr;
 #endif
         struct QueryDataForamt QueryData;
@@ -833,12 +833,12 @@ int main(int argc, char *argv[])
 	struct filtersTrapedFormat dispatcherfiltersTraped;
 
 	//char *cpnt;
-#ifndef BLACK_BOKS
+#ifndef BLACK_BOX
 	char *lastdomain = NULL;
 #endif
 
 
-#ifndef BLACK_BOKS
+#ifndef BLACK_BOX
 	unsigned int wantedDocId;
 #endif
 	struct queryNodeHederFormat queryNodeHeder;
@@ -870,7 +870,7 @@ int main(int argc, char *argv[])
 
 	maincfg = maincfgopen();
 
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 		domainLoad();
 	#endif
 
@@ -887,7 +887,7 @@ int main(int argc, char *argv[])
 
 	mysql_init(&demo_db);
 
-#ifndef BLACK_BOKS
+#ifndef BLACK_BOX
 	//if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", "boithoweb", 3306, NULL, 0)){
 	if(!mysql_real_connect(&demo_db, dispconfig.webdb_host, dispconfig.webdb_user, dispconfig.webdb_password, dispconfig.webdb_db, 3306, NULL, 0)){
 		fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
@@ -914,7 +914,7 @@ int main(int argc, char *argv[])
 	int nrOfAddServers;
 
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 
 		char *servers[] = { "localhost" };
 		char *addservers[] = { };
@@ -1067,7 +1067,7 @@ int main(int argc, char *argv[])
 
                 if (argc < 3 ) {
                         printf("Error ingen query spesifisert eller subname .\n\nEksempel på bruk for å søke på boitho:\n");
-			#ifdef BLACK_BOKS
+			#ifdef BLACK_BOX
 				printf("\tdispatcher_all boitho www bruker\n\n\n");
 			#else
 				printf("\tdispatcher_all boitho www\n\n\n");
@@ -1078,7 +1078,7 @@ int main(int argc, char *argv[])
 
                         strcpy(QueryData.query,argv[1 +optind]);
 			strcpy(QueryData.subname,argv[2 +optind]);
-			#ifdef BLACK_BOKS
+			#ifdef BLACK_BOX
 				strcpy(QueryData.search_user,argv[3 +optind]);
 
 			#else
@@ -1168,7 +1168,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr,"Time debug: init %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 		
-#if BLACK_BOKS
+#if BLACK_BOX
 
 	if (cmc_port == 0) {
 		cmc_port = maincfg_get_int(&maincfg,"CMDPORT");
@@ -1287,7 +1287,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 
 	#else
 		//hvis vi har : i seg må vi avslutte da vi ikke støtter dette
@@ -1301,7 +1301,7 @@ int main(int argc, char *argv[])
 	}
 
         //gjør om til liten case
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		//21 feb 2007: collection er case sensetiv. Bare søkeord skal gjøres om. Må gjøre dette en annen plass
 	#else
 		//må gjøres for web da både cashe er lagret på disk som lovercase. Hvis ikke vil ikke søk på Msn treffe msn
@@ -1364,7 +1364,7 @@ int main(int argc, char *argv[])
 		gettimeofday(&start_time, NULL);
 	#endif
 
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 	//prøver å finne ut hvilket land ut fra ip
 	GeoIP *gi;
 	GeoIPRecord * gir;
@@ -1567,7 +1567,7 @@ int main(int argc, char *argv[])
 
 
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 
 	#else 
 		//Sier ikke noe om filtrerte treff hvis vi hadde mange nokk
@@ -1727,7 +1727,7 @@ int main(int argc, char *argv[])
 	free(SiderHeder);
 	free(AddSiderHeder);
 	//hvis vi har web system kan vi ha flere servere, og de er da som en char **
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 		for(i=0;i<nrOfServers;i++) {
 			free(servers[i]);
 		}
@@ -2102,7 +2102,7 @@ void read_dispatcher_cfg(struct config_t * cfg, struct dispconfigFormat * dispco
 
 		dispconfig->usecashe = config_setting_get_bool(cfgarray);
 
-	#ifndef BLACK_BOKS
+	#ifndef BLACK_BOX
 
 	    	if ( (cfgarray = config_lookup(cfg, "UrlToDocID") ) == NULL) {
 			printf("can't load \"UrlToDocID\" from config\n");
