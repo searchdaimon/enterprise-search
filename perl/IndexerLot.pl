@@ -238,7 +238,7 @@ elsif (($response >= 199) && ($response <= 299)) {
 	%termer = lexer($ParsetSide{'innhold'},'Body',%termer);
 
 
-	#lar athor indeksen hondtere urler	
+	#lar anchor indeksen hondtere urler	
 	#my $domene = fin_domene($url);
 	#if (length($domene) < 30) {
 	#	%termer = lexer($domene,'Url',%termer);
