@@ -19,7 +19,6 @@
 
 int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, char execute[], char *error, int errorlength) {
 
-	//int retn;
 	//antar at rutiner som ikke returnerer noe mislykkes. Dette kan for eks skje hvis vi kaller die, eller ikke trenger retur koden
 
 	char perlfile[PATH_MAX];

@@ -4,7 +4,6 @@
 
 VPATH=	.:../acls:../maincfg:../key:../crawl:../boitho-bbdn/:../boithoadClientLib:../bbdocument:../libcache
 
-#WANT_COMMON=	true
 WANT_DS=	true
 WANT_LIBCONFIG=	true
 WANT_HASHTABLE=	true

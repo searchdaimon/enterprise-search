@@ -311,13 +311,13 @@ int documentExist(struct collectionFormat *collection, struct crawldocumentExist
 	int ret;
 
 	#ifdef DEBUG
-	bblog(DEBUGINFO, "documentExist: start");
+		bblog(DEBUGINFO, "documentExist: start");
 	#endif
 
 	ret = bbdocument_exist(collection->collection_name, crawldocumentExist->documenturi, crawldocumentExist->lastmodified);
 
 	#ifdef DEBUG
-	bblog(DEBUGINFO, "documentExist: end");
+		bblog(DEBUGINFO, "documentExist: end");
 	#endif
 
 	return ret;
@@ -344,11 +344,11 @@ int documentError(struct collectionFormat *collection,int level, const char *fmt
 
 int documentAdd(struct collectionFormat *collection, struct crawldocumentAddFormat *crawldocumentAdd) {
 	#ifdef DEBUG
-	bblog(DEBUGINFO, "documentAdd start");
+		bblog(DEBUGINFO, "documentAdd start");
 	#endif
 
 	#ifdef DEBUG
-	bblog(DEBUGINFO, "documentAdd: uri %s, title %s",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).title);
+		bblog(DEBUGINFO, "documentAdd: uri %s, title %s",(*crawldocumentAdd).documenturi,(*crawldocumentAdd).title);
 	#endif
 
 	collection->docsCount++;
@@ -376,7 +376,6 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 		bblog(ERROR, "can't sent to bbdn! Tryed to send doc \"%s\" Will sleep and then reconect. Wont send same doc again.",(*crawldocumentAdd).documenturi);
 		
 		//ber om å lokke sokketen. Dette er ikke det samme som å steneg kollectionen.
-		//bbdn_closecollection((*collection).socketha,(*collection).collection_name);
 		bbdn_close((*collection).socketha);
 
 		sleep(10);
@@ -386,7 +385,6 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 			return 0;
 		}
 
-		//exit(1);
 
 	}
 	else {
@@ -401,7 +399,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 	#endif
 
 	#ifdef DEBUG
-	bblog(DEBUGINFO, "documentAdd end");
+		bblog(DEBUGINFO, "documentAdd end");
 	#endif
 
 	return 1;
@@ -415,7 +413,7 @@ collectionsforuser_collection(struct hashtable *collections, char *user, struct 
 	char **list;
 
 	#ifdef DEBUG
-	bblog(DEBUGINFO, "collectionsforuser_collection:  user=%s", user);
+		bblog(DEBUGINFO, "collectionsforuser_collection:  user=%s", user);
 	#endif
 
 	if (!userToSubname_getsubnamesAsString(usertosubname, user, subnamebuf, sizeof(subnamebuf)))
@@ -424,7 +422,7 @@ collectionsforuser_collection(struct hashtable *collections, char *user, struct 
 	n_collections = split(subnamebuf, ",", &list);
 
 	#ifdef DEBUG
-	bblog(DEBUGINFO, "  n_collections=%i",  n_collections);
+		bblog(DEBUGINFO, "  n_collections=%i",  n_collections);
 	#endif
 
 	for (i = 0; i < n_collections; i++) {
@@ -567,7 +565,7 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 			collectionsforuser_collection(collections, row[0], &userToSubnameDb);
 			for (j = 0; j < n_groups; j++)
 				collectionsforuser_collection(collections, groups[j], &userToSubnameDb);
-			//boithoad_respons_list_free(groups);
+
 			free_usersystem_data(&data);
 		}
 
@@ -608,7 +606,7 @@ int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections)
 
 	for (i=0;i<nrofcollections;i++) {
 		#ifdef DEBUG
-		bblog(DEBUGINFO, "freeing nr %i: start", i);
+			bblog(DEBUGINFO, "freeing nr %i: start", i);
 		#endif
 		free((*collection)[i].resource);
                 free((*collection)[i].user);
@@ -858,14 +856,6 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 
 	bblog(INFO, "pathAccess: start");
 
-	//temp:
-	//26.0207:quiq fix. Lagger til domene i brukernav
-	/*
-	char username_t[64];
-	strcpy(username_t,"i04\\");
-	strcat(username_t,username);
-	strcpy(username,username_t);
-	*/
 
 	gettimeofday(&start_time, NULL);
 	bblog(DEBUGINFO, "cm_searchForCollection");
@@ -1005,8 +995,7 @@ int scan_found_get (char ***scares,int *nr) {
 	(*nr) = found_sharenr;
 
 }
-/************************************************************/
-/************************************************************/
+
 int scan (struct hashtable *h,char ***shares,int *nrofshares,char crawlertype[],char host[],char username[],char password[]) {
 
 	struct crawlLibInfoFormat *crawlLibInfo;
@@ -1300,7 +1289,6 @@ int cm_loadCrawlLib(struct hashtable **h, char name[]) {
 
 		//alt ok. Legg det i en hash
 
-		//dlclose(lib_handle); 
 	}		
 	else if (file_exist(perlpath)) {
 
@@ -1367,7 +1355,6 @@ int cm_start(struct hashtable **h, struct hashtable **usersystems) {
 	closedir(dirp);
 
 	load_usersystems(usersystems);
-	//list_usersystems(*usersystems);
 
 	bblog(INFO, "cm_start end");
 
@@ -1419,8 +1406,7 @@ cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
 
 	if (numUsers == 0) {
 		collection->users = NULL;
-		//returner 1 lengder nede, så for vi også frigjort resursen
-		//return 1;
+		//returner lengder nede, så for vi også frigjort resursen
 	}
 	else {
 		bblog(DEBUGINFO, "nrofrows %i", numUsers);
@@ -1731,21 +1717,21 @@ int cm_handle_crawlcanconect(MYSQL *db, char cvalue[]) {
 	if (nrofcollections == 1) {
 		
 		#ifndef DEBUG
-		//Temp: funger ikke når vi kompilerer debug. Må også compilere crawlManager debug
-		//make a conectina for add to use
-		if (!bbdn_conect(&collections[0].socketha,"",global_bbdnport)) {
-			berror("can't conect to bbdn (boitho backend document server)\n");
-			bblog(ERROR, "can't conect to bbdn (boitho backend document server)");
-			return 0;
-		}
+			//Temp: funger ikke når vi kompilerer debug. Må også compilere crawlManager debug
+			//make a conectina for add to use
+			if (!bbdn_conect(&collections[0].socketha,"",global_bbdnport)) {
+				berror("can't conect to bbdn (boitho backend document server)\n");
+				bblog(ERROR, "can't conect to bbdn (boitho backend document server)");
+				return 0;
+			}
 
-		if (!cmr_crawlcanconect(global_h,&collections[0])) {
-			return 0;
-		}
+			if (!cmr_crawlcanconect(global_h,&collections[0])) {
+				return 0;
+			}
 
-		//ber bbdn om å lukke
-		bblog(INFO, "closeing bbdn conn");
-                bbdn_close(collections[0].socketha);
+			//ber bbdn om å lukke
+			bblog(INFO, "closeing bbdn conn");
+			bbdn_close(collections[0].socketha);
 		#endif
 	}
 	else {
@@ -1805,7 +1791,6 @@ int sql_set_crawler_message(MYSQL *db, int crawler_success  , char mrg[], unsign
 	bblog(INFO, "Status: set_crawler_message: mesage: \"%s\", success: %i, id: %i.",mrg,crawler_success,id);
 
 
-	//printf("mysql_queryEscaped \"%s\"\n",messageEscaped);
 	if (mrg == NULL) {
         	sprintf(mysql_query, "UPDATE shares SET last = NULL WHERE id = '%d'",id);
 	} 
@@ -1823,10 +1808,8 @@ int sql_set_crawler_message(MYSQL *db, int crawler_success  , char mrg[], unsign
 
 	bblog(INFO, "Status: \"%s\".",mysql_query);
 
-        //debug("mysql_query: %s\n",mysql_query);
 
         if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
-                //printf(mysql_error(&demo_db));
 		bblog(ERROR, "Mysql Error: \"%s\".",mysql_error(db));
                 exit(1);
         }
@@ -1962,7 +1945,7 @@ int crawl(struct collectionFormat *collection,int nrofcollections, int flag, int
 			continue;
 		} 
 		else { 
-			// printf("Disk space left: %fMB\n", left / 1024.0); 
+			// debug: printf("Disk space left: %fMB\n", left / 1024.0); 
 		}
 #endif
 
@@ -2096,7 +2079,6 @@ rewriteurl(MYSQL *db, char *collection, char *url, size_t urllen, char *uri, siz
 	else if (!cm_getCrawlLibInfo(global_h,&crawlLibInfo,collections->connector)) {
 		bblog(DEBUGINFO, "rewrite3");
 		bblog(ERROR, "Error: can't get CrawlLibInfo.");
-		//exit(1);
 		forret = 0;
 	} else if (crawlLibInfo->rewrite_url == NULL) {
 		bblog(DEBUGINFO, "Don't have a rewrite url rutine for this connector.");
@@ -2120,7 +2102,7 @@ rewriteurl(MYSQL *db, char *collection, char *url, size_t urllen, char *uri, siz
 
 	sm_collectionfree(&collections,nrofcollections);
 
-	//printf("*** [rewriteurl] [fulluri] [%s] ***\n", fulluri);
+	//debug: printf("*** [rewriteurl] [fulluri] [%s] ***\n", fulluri);
 	return forret;
 
 }
