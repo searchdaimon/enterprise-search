@@ -30,7 +30,7 @@ get_best_results_1_svc(char **argp, numbest_res *result, struct svc_req *rqstp)
 		sd = suggest_init();
 		if (sd == NULL)
 			return FALSE;
-		suggest_read_frequency(sd, "../suggest/UnikeTermerMedForekomst.ENG");
+		suggest_read_frequency(sd, "../../meta/UnikeTermerMedForekomst.ENG");
 		suggest_most_used(sd);
 	}
 	if (pthread_mutex_unlock(&mutex) != 0) {

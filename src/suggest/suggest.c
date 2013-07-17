@@ -227,7 +227,6 @@ main(int argc, char **argv)
 	//printf("%d\n", suggest_read_frequency(sd, "/home/sdtest/src/boitho/websearch/var/somewords"));
 	printf("%d\n", suggest_read_frequency(sd, "/home/sdtest/src/boitho/websearch/var/dictionarywords"));
 	//printf("%d\n", suggest_read_frequency(sd, "testinput.list"));
-	//printf("%d\n", suggest_read_frequency(sd, "UnikeTermerMedForekomst.ENG"));
 	//printf("%d\n", suggest_read_frequency(sd, "liten.list"));
 	//printf("%d\n", suggest_read_frequency(sd, "wordlist.7"));
 #if 0
@@ -262,7 +261,7 @@ main(int argc, char **argv)
 		int foo;
 		struct suggest_input *si;
 		printf("doing shit\n");
-		fp = fopen("UnikeTermerMedForekomst.ENG", "r");
+		fp = fopen("../../meta/UnikeTermerMedForekomst.ENG", "r");
 		while (!feof(fp)) {
 			if (fscanf(fp, "%s %d\n", s, &foo) != 2)
 				continue;

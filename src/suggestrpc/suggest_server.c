@@ -39,7 +39,6 @@ get_best_results_1_svc(char **argp, namenode *result, struct svc_req *rqstp)
 		if (sd == NULL)
 			return FALSE;
 		//runarb: legger inn støtte for å heller bruke dictionarywords.txt som ordbok
-		//suggest_read_frequency(sd, "../suggest/UnikeTermerMedForekomst.ENG");
 		if (suggest_read_frequency(sd, bfile("data/dictionarywords.txt")) == -1) {
 			perror(bfile("data/dictionarywords.txt"));
 			exit(EXIT_FAILURE);
