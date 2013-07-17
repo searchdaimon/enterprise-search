@@ -87,7 +87,7 @@ int main (int argc, char *argv[]) {
 printf("argc %i\n",argc);
         if (argc != 7) {
                 printf("Dette programet printer ut en iindex.\n\n");
-		printf("\tUse:\n\n\t./mergeIIndex lot fralot tillot type (Main | Athor) språk subname\n\n");
+		printf("\tUse:\n\n\t./mergeIIndex lot fralot tillot type (Main | Anchor) språk subname\n\n");
                 exit(0);
         }
 

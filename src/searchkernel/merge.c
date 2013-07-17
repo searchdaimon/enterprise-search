@@ -26,14 +26,14 @@ static inline void rank_explaindSumm(struct rank_explaindFormat *t, struct rank_
          t->rankBody            = a->rankBody + b->rankBody;
          t->rankHeadline        = a->rankHeadline + b->rankHeadline;
          t->rankTittel          = a->rankTittel + b->rankTittel;
-         t->rankAthor           = a->rankAthor + b->rankAthor;
+         t->rankAnchor           = a->rankAnchor + b->rankAnchor;
          t->rankUrl_mainbody    = a->rankUrl_mainbody + b->rankUrl_mainbody;
          t->rankUrlDomain               = a->rankUrlDomain + b->rankUrlDomain;
          t->rankUrlSub          = a->rankUrlSub + b->rankUrlSub;
 
 
-         t->nrAthorPhrase       = a->nrAthorPhrase + b->nrAthorPhrase;
-         t->nrAthor             = a->nrAthor + b->nrAthor;
+         t->nrAnchorPhrase       = a->nrAnchorPhrase + b->nrAnchorPhrase;
+         t->nrAnchor             = a->nrAnchor + b->nrAnchor;
 
          t->nrBody              = a->nrBody + b->nrBody;
          t->nrHeadline          = a->nrHeadline + b->nrHeadline;
@@ -50,7 +50,7 @@ static inline void rank_explaindSumm(struct rank_explaindFormat *t, struct rank_
 		t->maxUrl_mainbody     = a->maxUrl_mainbody;
 		t->maxUrlDomain        = a->maxUrlDomain;
 		t->maxUrlSub           = a->maxUrlSub;
-		t->maxAthor            = a->maxAthor;
+		t->maxAnchor            = a->maxAnchor;
         }
         else {
 		t->maxBody             = a->maxBody + b->maxBody;
@@ -59,7 +59,7 @@ static inline void rank_explaindSumm(struct rank_explaindFormat *t, struct rank_
 		t->maxUrl_mainbody     = a->maxUrl_mainbody + b->maxUrl_mainbody;
 		t->maxUrlDomain        = a->maxUrlDomain + b->maxUrlDomain;
 		t->maxUrlSub           = a->maxUrlSub + b->maxUrlSub;
-		t->maxAthor            = a->maxAthor + b->maxAthor;
+		t->maxAnchor            = a->maxAnchor + b->maxAnchor;
         }
 
 

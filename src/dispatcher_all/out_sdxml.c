@@ -127,12 +127,12 @@ void disp_out_sd_v2_0(
 #ifndef DEBUG
 				printf("\t<TIMES>\n");
 				{
-					printf("\t\t<AthorSearch>%f</AthorSearch>\n",SiderHeder[i].queryTime.AthorSearch);
-					//printf("\t\t<AthorRank>%f</AthorRank>\n",SiderHeder[i].queryTime.AthorRank);
+					printf("\t\t<AnchorSearch>%f</AnchorSearch>\n",SiderHeder[i].queryTime.AnchorSearch);
+					//printf("\t\t<AnchorRank>%f</AnchorRank>\n",SiderHeder[i].queryTime.AnchorRank);
 					printf("\t\t<UrlSearch>%f</UrlSearch>\n",SiderHeder[i].queryTime.UrlSearch);
 					printf("\t\t<MainSearch>%f</MainSearch>\n",SiderHeder[i].queryTime.MainSearch);
 					//printf("\t\t<MainRank>%f</MainRank>\n",SiderHeder[i].queryTime.MainRank);
-					printf("\t\t<MainAthorMerge>%f</MainAthorMerge>\n",SiderHeder[i].queryTime.MainAthorMerge);
+					printf("\t\t<MainAnchorMerge>%f</MainAnchorMerge>\n",SiderHeder[i].queryTime.MainAnchorMerge);
 					printf("\t\t<popRank>%f</popRank>\n",SiderHeder[i].queryTime.popRank);
 					printf("\t\t<responseShortning>%f</responseShortning>\n",SiderHeder[i].queryTime.responseShortning);
 
@@ -345,7 +345,7 @@ void disp_out_sd_v2_0(
                 	"Body",
                 	"Headline",
                 	"Tittel",
-                	"Athor (nr)",
+                	"Anchor (nr)",
                 	"UrlM",
                 	"UrlDom",
                 	"UrlSub"
@@ -362,8 +362,8 @@ void disp_out_sd_v2_0(
                                 Sider[i].iindex.rank_explaind.rankBody,
                                 Sider[i].iindex.rank_explaind.rankHeadline,
                                 Sider[i].iindex.rank_explaind.rankTittel,
-                                Sider[i].iindex.rank_explaind.rankAthor,
-                                Sider[i].iindex.rank_explaind.nrAthor,
+                                Sider[i].iindex.rank_explaind.rankAnchor,
+                                Sider[i].iindex.rank_explaind.nrAnchor,
                                 Sider[i].iindex.rank_explaind.rankUrl_mainbody,
                                 Sider[i].iindex.rank_explaind.rankUrlDomain,
                                 Sider[i].iindex.rank_explaind.rankUrlSub,
@@ -724,12 +724,12 @@ void disp_out_sd_v2_1(
 #ifndef DEBUG
 				printf("\t<time_profile>\n");
 				{
-					printf("\t\t<AuthorSearch>%f</AuthorSearch>\n",SiderHeder[i].queryTime.AthorSearch);
-					//printf("\t\t<AthorRank>%f</AthorRank>\n",SiderHeder[i].queryTime.AthorRank);
+					printf("\t\t<AuthorSearch>%f</AuthorSearch>\n",SiderHeder[i].queryTime.AnchorSearch);
+					//printf("\t\t<AnchorRank>%f</AnchorRank>\n",SiderHeder[i].queryTime.AnchorRank);
 					printf("\t\t<UrlSearch>%f</UrlSearch>\n",SiderHeder[i].queryTime.UrlSearch);
 					printf("\t\t<MainSearch>%f</MainSearch>\n",SiderHeder[i].queryTime.MainSearch);
 					//printf("\t\t<MainRank>%f</MainRank>\n",SiderHeder[i].queryTime.MainRank);
-					printf("\t\t<MainAuthorMerge>%f</MainAuthorMerge>\n",SiderHeder[i].queryTime.MainAthorMerge);
+					printf("\t\t<MainAuthorMerge>%f</MainAuthorMerge>\n",SiderHeder[i].queryTime.MainAnchorMerge);
 					printf("\t\t<popRank>%f</popRank>\n",SiderHeder[i].queryTime.popRank);
 					printf("\t\t<responseShortening>%f</responseShortening>\n",SiderHeder[i].queryTime.responseShortning);
 
@@ -941,7 +941,7 @@ void disp_out_sd_v2_1(
                 	"Body",
                 	"Headline",
                 	"Tittel",
-                	"Athor (nr)",
+                	"Anchor (nr)",
                 	"UrlM",
                 	"UrlDom",
                 	"UrlSub"
@@ -958,8 +958,8 @@ void disp_out_sd_v2_1(
                                 Sider[i].iindex.rank_explaind.rankBody,
                                 Sider[i].iindex.rank_explaind.rankHeadline,
                                 Sider[i].iindex.rank_explaind.rankTittel,
-                                Sider[i].iindex.rank_explaind.rankAthor,
-                                Sider[i].iindex.rank_explaind.nrAthor,
+                                Sider[i].iindex.rank_explaind.rankAnchor,
+                                Sider[i].iindex.rank_explaind.nrAnchor,
                                 Sider[i].iindex.rank_explaind.rankUrl_mainbody,
                                 Sider[i].iindex.rank_explaind.rankUrlDomain,
                                 Sider[i].iindex.rank_explaind.rankUrlSub,

@@ -77,7 +77,7 @@
 
 //rangeringsfilter er der vi har et hvist antall treff, definert som RFC (Rank Filter Cutoff).
 //har vi så mnage treff filtrerer vi ut de under en hvis rankt
-#define AthorRFC1 	10000
+#define AnchorRFC1 	10000
 #define MainRFC1 	200000
 #define MainRFC2 	10000
 
@@ -224,27 +224,27 @@ static inline int rankUrl(const struct hitsFormat *hits, int nrofhit,const unsig
 
 #define logrank(v,r,d) ((log((v * d) +1) * r)) 
 
-static inline int rankAthor(const struct hitsFormat *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexMainElements *TeffArray, int complicacy) {
+static inline int rankAnchor(const struct hitsFormat *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexMainElements *TeffArray, int complicacy) {
 	int rank, i;
 
 
 	rank = logrank(nrofhit,40,0.009);
 
 	#ifdef EXPLAIN_RANK
-		TeffArray->rank_explaind.nrAthorPhrase 	= 0;
-		TeffArray->rank_explaind.nrAthor 	= nrofhit;
-		TeffArray->rank_explaind.rankAthor 	= rank;
+		TeffArray->rank_explaind.nrAnchorPhrase 	= 0;
+		TeffArray->rank_explaind.nrAnchor 	= nrofhit;
+		TeffArray->rank_explaind.rankAnchor 	= rank;
 	#endif
 
-	if (rank > maxPoengAthor) {
-		rank = maxPoengAthor;
+	if (rank > maxPoengAnchor) {
+		rank = maxPoengAnchor;
 	}
 
 
 	return rank;
 }
 
-static inline int rankAthor_complicacy(const struct hitsFormat *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexMainElements *TeffArray, int complicacy) {
+static inline int rankAnchor_complicacy(const struct hitsFormat *hits, int nrofhit,const unsigned int DocID,struct subnamesFormat *subname,struct iindexMainElements *TeffArray, int complicacy) {
 	int rank, i, nr, phrasenr, phraserank, simplerank;
 
 	nr = 0;
@@ -268,20 +268,20 @@ static inline int rankAthor_complicacy(const struct hitsFormat *hits, int nrofhi
 	phraserank = logrank(phrasenr,40,0.009); 
 
 
-	if (phraserank > complicacy_maxPoengAthorPhraserank) {
-		phraserank = complicacy_maxPoengAthorPhraserank;
+	if (phraserank > complicacy_maxPoengAnchorPhraserank) {
+		phraserank = complicacy_maxPoengAnchorPhraserank;
 	}
 
-	if (simplerank > complicacy_maxPoengAthorSimple) {
-		simplerank = complicacy_maxPoengAthorSimple;
+	if (simplerank > complicacy_maxPoengAnchorSimple) {
+		simplerank = complicacy_maxPoengAnchorSimple;
 	}
 
 	rank = phraserank + simplerank;
 
 	#ifdef EXPLAIN_RANK
-		TeffArray->rank_explaind.nrAthorPhrase 	= phrasenr;
-		TeffArray->rank_explaind.nrAthor 	= nr;
-		TeffArray->rank_explaind.rankAthor 	= rank;
+		TeffArray->rank_explaind.nrAnchorPhrase 	= phrasenr;
+		TeffArray->rank_explaind.nrAnchor 	= nr;
+		TeffArray->rank_explaind.rankAnchor 	= rank;
 	#endif
 
 	return rank;
@@ -619,18 +619,18 @@ void rankUrlArray(int TeffArrayElementer, struct iindexFormat *TeffArray, int co
 			TeffArray->iindex[y].DocID,TeffArray->iindex[y].subname,&TeffArray->iindex[y],complicacy);
 	}
 }
-void rankAthorArray(int TeffArrayElementer, struct iindexFormat *TeffArray, int complicacy) {
+void rankAnchorArray(int TeffArrayElementer, struct iindexFormat *TeffArray, int complicacy) {
 	int y;
 
 	if (complicacy == 1) {
 		for (y=0; y<TeffArrayElementer; y++) {
-			TeffArray->iindex[y].TermRank = rankAthor(TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall,
+			TeffArray->iindex[y].TermRank = rankAnchor(TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall,
 				TeffArray->iindex[y].DocID,TeffArray->iindex[y].subname,&TeffArray->iindex[y],complicacy);
 		}
 	}
 	else {
 		for (y=0; y<TeffArrayElementer; y++) {
-			TeffArray->iindex[y].TermRank = rankAthor_complicacy(TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall,
+			TeffArray->iindex[y].TermRank = rankAnchor_complicacy(TeffArray->iindex[y].hits,TeffArray->iindex[y].TermAntall,
 				TeffArray->iindex[y].DocID,TeffArray->iindex[y].subname,&TeffArray->iindex[y],complicacy);
 		}
 
@@ -670,9 +670,9 @@ void explain_max_rankArray(int TeffArrayElementer, struct iindexFormat *TeffArra
 
 	for (y=0; y<TeffArrayElementer; y++) {
 		if (complicacy == 1) {
-			TeffArray->iindex[y].rank_explaind.maxAthor 	= complicacy_maxPoengAthorPhraserank + complicacy_maxPoengAthorSimple;
+			TeffArray->iindex[y].rank_explaind.maxAnchor 	= complicacy_maxPoengAnchorPhraserank + complicacy_maxPoengAnchorSimple;
 		} else {
-			TeffArray->iindex[y].rank_explaind.maxAthor 	= maxPoengAthor;
+			TeffArray->iindex[y].rank_explaind.maxAnchor 	= maxPoengAnchor;
 		}
 
 		TeffArray->iindex[y].rank_explaind.maxBody = TeffArray->iindex[y].subname->config.rankBodyArray[TeffArray->iindex[y].subname->config.rankBodyArrayLen -1];
@@ -1268,8 +1268,8 @@ void *searchIndex_thread(void *arg)
 
 	int hits;
 
-	if (strcmp((*searchIndex_thread_arg).indexType,"Athor") == 0) {
-		rank = rankAthorArray;
+	if (strcmp((*searchIndex_thread_arg).indexType,"Anchor") == 0) {
+		rank = rankAnchorArray;
 	}
 	else if (strcmp((*searchIndex_thread_arg).indexType,"Url") == 0) {
 		rank = rankUrlArray;
@@ -1762,7 +1762,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	
 	struct iindexFormat *TmpArray; 
 
-	struct searchIndex_thread_argFormat searchIndex_thread_arg_Athor;
+	struct searchIndex_thread_argFormat searchIndex_thread_arg_Anchor;
 	struct searchIndex_thread_argFormat searchIndex_thread_arg_Url;
 	struct searchIndex_thread_argFormat searchIndex_thread_arg_Main;
 	
@@ -1770,16 +1770,16 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
         int baseArrayLen,MainArrayHits;
 	int TmpArrayLen;	
 
-	unsigned int PredictNrAthor;
+	unsigned int PredictNrAnchor;
 	unsigned int PredictNrUrl;
 	unsigned int PredictNrMain;
 
-	PredictNrAthor	= 0;
+	PredictNrAnchor	= 0;
 	PredictNrUrl	= 0;
 	PredictNrMain	= 0;
 
 	#ifdef WITH_THREAD
-		pthread_t threadid_Athor = 0;
+		pthread_t threadid_Anchor = 0;
 		pthread_t threadid_Url = 0;
 		pthread_t threadid_Main = 0;
 	#endif
@@ -1796,9 +1796,9 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		//finner først ca hvor mange treff vi fil få. Dette brukes for å avgjøre om vi kan 
 		//klare oss med å søke i bare url og anchor, eller om vi må søke i alt
 
-		//Athor:
+		//Anchor:
 		for(i=0;i<nrOfSubnames;i++) {		
-			PredictNrAthor += searchIndex_getnrs("Athor",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
+			PredictNrAnchor += searchIndex_getnrs("Anchor",queryParsed,&subnames[i],languageFilterNr, languageFilterAsNr);
 		}
 
 		//Url:
@@ -1812,7 +1812,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 			bblog(INFO, "PredictNrMain total with \"%s\" %u", &subnames[i],PredictNrMain);
 		}
 
-		bblog(INFO, "PredictNrAthor %u, PredictNrUrl %u, PredictNrMain %u", PredictNrAthor,PredictNrUrl,PredictNrMain);
+		bblog(INFO, "PredictNrAnchor %u, PredictNrUrl %u, PredictNrMain %u", PredictNrAnchor,PredictNrUrl,PredictNrMain);
 	#endif
 
 	#ifdef BLACK_BOKS
@@ -1823,20 +1823,20 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 
 	//nullstiller alle resultat tellere
-	searchIndex_thread_arg_Athor.resultArrayLen 	= 0;
+	searchIndex_thread_arg_Anchor.resultArrayLen 	= 0;
 	searchIndex_thread_arg_Url.resultArrayLen 	= 0;
 	searchIndex_thread_arg_Main.resultArrayLen 	= 0;
 
 
-	searchIndex_thread_arg_Athor.searchtime 	= 0;
+	searchIndex_thread_arg_Anchor.searchtime 	= 0;
 	searchIndex_thread_arg_Url.searchtime 		= 0;
 	searchIndex_thread_arg_Main.searchtime 		= 0;
 
 	searchIndex_thread_arg_Main.resultArray		= NULL;
-	searchIndex_thread_arg_Athor.resultArray 	= NULL;
+	searchIndex_thread_arg_Anchor.resultArray 	= NULL;
 	searchIndex_thread_arg_Url.resultArray		= NULL;
 
-	searchIndex_thread_arg_Athor.anonymous 		= anonymous;
+	searchIndex_thread_arg_Anchor.anonymous 		= anonymous;
 	searchIndex_thread_arg_Url.anonymous 		= anonymous;
 	searchIndex_thread_arg_Main.anonymous 		= anonymous;
 
@@ -1845,19 +1845,19 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 
 	#else
-		//Athor	
-		searchIndex_thread_arg_Athor.indexType = "Athor";
-		searchIndex_thread_arg_Athor.nrOfSubnames = nrOfSubnames;
-		searchIndex_thread_arg_Athor.subnames = subnames;
-		searchIndex_thread_arg_Athor.queryParsed = queryParsed;
-		searchIndex_thread_arg_Athor.search_user_as_query = search_user_as_query;
-		searchIndex_thread_arg_Athor.languageFilterNr = languageFilterNr;
-		searchIndex_thread_arg_Athor.languageFilterAsNr = languageFilterAsNr;
-		searchIndex_thread_arg_Athor.filters = filters;
+		//Anchor	
+		searchIndex_thread_arg_Anchor.indexType = "Anchor";
+		searchIndex_thread_arg_Anchor.nrOfSubnames = nrOfSubnames;
+		searchIndex_thread_arg_Anchor.subnames = subnames;
+		searchIndex_thread_arg_Anchor.queryParsed = queryParsed;
+		searchIndex_thread_arg_Anchor.search_user_as_query = search_user_as_query;
+		searchIndex_thread_arg_Anchor.languageFilterNr = languageFilterNr;
+		searchIndex_thread_arg_Anchor.languageFilterAsNr = languageFilterAsNr;
+		searchIndex_thread_arg_Anchor.filters = filters;
 		#ifdef WITH_THREAD
-			n = pthread_create(&threadid_Athor, NULL, searchIndex_thread, &searchIndex_thread_arg_Athor);
+			n = pthread_create(&threadid_Anchor, NULL, searchIndex_thread, &searchIndex_thread_arg_Anchor);
 		#else
-			searchIndex_thread(&searchIndex_thread_arg_Athor);
+			searchIndex_thread(&searchIndex_thread_arg_Anchor);
 		#endif
 
 
@@ -1878,9 +1878,9 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	#endif
 
 	//Main
-	//vi søker ikke main hvis vi antar at vi har flere en xxx elementer i Athor
+	//vi søker ikke main hvis vi antar at vi har flere en xxx elementer i Anchor
 	#ifndef BLACK_BOKS
-	if (PredictNrAthor < 20000) {
+	if (PredictNrAnchor < 20000) {
 	#else
 	if(1) {
 	#endif
@@ -1934,8 +1934,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	#ifndef BLACK_BOKS
 		#ifdef WITH_THREAD
 			//joiner trådene
-			if (threadid_Athor != 0) {
-				pthread_join(threadid_Athor, NULL);
+			if (threadid_Anchor != 0) {
+				pthread_join(threadid_Anchor, NULL);
 			}
 			if (threadid_Url != 0) {
 				pthread_join(threadid_Url, NULL);
@@ -1951,11 +1951,11 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	#endif
 
 
-	bblog(INFO, "Athor ArrayLen %i, Url ArrayLen %i, Main ArrayLen %i", searchIndex_thread_arg_Athor.resultArrayLen,
+	bblog(INFO, "Anchor ArrayLen %i, Url ArrayLen %i, Main ArrayLen %i", searchIndex_thread_arg_Anchor.resultArrayLen,
 			searchIndex_thread_arg_Url.resultArrayLen,searchIndex_thread_arg_Main.resultArrayLen);
 
 	//sanker inn tiden
-	(*queryTime).AthorSearch = searchIndex_thread_arg_Athor.searchtime;
+	(*queryTime).AnchorSearch = searchIndex_thread_arg_Anchor.searchtime;
 	(*queryTime).UrlSearch = searchIndex_thread_arg_Url.searchtime;
 	(*queryTime).MainSearch = searchIndex_thread_arg_Main.searchtime;
 
@@ -1966,14 +1966,14 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	resultArrayInit(TmpArray);
 
 	#ifndef BLACK_BOKS
-		//or_merger Athor og Url inn i en temper array
-		or_merge(&TmpArray,&TmpArrayLen,&searchIndex_thread_arg_Athor.resultArray,searchIndex_thread_arg_Athor.resultArrayLen,
+		//or_merger Anchor og Url inn i en temper array
+		or_merge(&TmpArray,&TmpArrayLen,&searchIndex_thread_arg_Anchor.resultArray,searchIndex_thread_arg_Anchor.resultArrayLen,
 			&searchIndex_thread_arg_Url.resultArray,searchIndex_thread_arg_Url.resultArrayLen);
 
 
 
-		if (searchIndex_thread_arg_Athor.resultArray != NULL) {
-			free(searchIndex_thread_arg_Athor.resultArray);
+		if (searchIndex_thread_arg_Anchor.resultArray != NULL) {
+			free(searchIndex_thread_arg_Anchor.resultArray);
 		}
 
 		if (searchIndex_thread_arg_Url.resultArray != NULL) {
@@ -2010,7 +2010,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	free(TmpArray);
 
         gettimeofday(&end_time, NULL);
-        (*queryTime).MainAthorMerge = getTimeDifference(&start_time,&end_time);
+        (*queryTime).MainAnchorMerge = getTimeDifference(&start_time,&end_time);
 
 	#ifdef DEBUG_II
 		//debug: printer ut alle treff, og litt om de.

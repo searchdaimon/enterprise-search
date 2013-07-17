@@ -5,7 +5,7 @@
 
 #define subname "www"
 
-int rankAthor(const unsigned short *hits, int nrofhit) {
+int rankAnchor(const unsigned short *hits, int nrofhit) {
         int rank, i;
 
         rank = 0;
@@ -15,8 +15,8 @@ int rankAthor(const unsigned short *hits, int nrofhit) {
         }
 
 
-        if (rank > maxPoengAthor) {
-                rank = maxPoengAthor;
+        if (rank > maxPoengAnchor) {
+                rank = maxPoengAnchor;
         }
 
         return rank;
@@ -25,8 +25,8 @@ int rankAthor(const unsigned short *hits, int nrofhit) {
 
 int main () {
 
-	struct iindexFormat *AthorArray;
-	int AthorArrayLen;
+	struct iindexFormat *AnchorArray;
+	int AnchorArrayLen;
 	unsigned long WordIDcrc32;
 	
 	char query[] = "chat";
@@ -50,14 +50,14 @@ int main () {
         
 
 	
-	AthorArray = (struct iindexFormat *)malloc(maxIndexElements * sizeof(struct iindexFormat));
-        AthorArrayLen = 0;
+	AnchorArray = (struct iindexFormat *)malloc(maxIndexElements * sizeof(struct iindexFormat));
+        AnchorArrayLen = 0;
 
 	WordIDcrc32 = crc32boitho(query);
 
 
-	GetIndexAsArray(&AthorArrayLen,AthorArray,&WordIDcrc32,"Athor","aa",subname,rankAthor);
+	GetIndexAsArray(&AnchorArrayLen,AnchorArray,&WordIDcrc32,"Anchor","aa",subname,rankAnchor);
 
 
-	printf("AthorArrayLen %i\n",AthorArrayLen);
+	printf("AnchorArrayLen %i\n",AnchorArrayLen);
 }

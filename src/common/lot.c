@@ -644,7 +644,7 @@ int indexNrOffset(int IndexNr,char Type[]) {
 	if (strcmp(Type,"Url") == 0) {
 		return sadd(IndexNr +1,63);
 	}
-	else if (strcmp(Type,"Athor") == 0) {
+	else if (strcmp(Type,"Anchor") == 0) {
 		return sadd(IndexNr +2,63);
 	}
 	else {

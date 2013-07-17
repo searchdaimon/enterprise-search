@@ -202,7 +202,7 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 	cfg->filterResponse   = row[4][0] == '1' ? 1 : 0;
 	cfg->filterSameCrc32  = row[5][0] == '1' ? 1 : 0;
 
-	cfg->rankAthorArrayLen    = cfg_parse_array(cfg->rankAthorArray, row[6]);
+	cfg->rankAnchorArrayLen    = cfg_parse_array(cfg->rankAnchorArray, row[6]);
 	cfg->rankTittelArrayLen   = cfg_parse_array(cfg->rankTittelArray, row[7]);
 	cfg->rankTittelFirstWord = (char) strtol(row[8], NULL, 10);
 	cfg->rankHeadlineArrayLen = cfg_parse_array(cfg->rankHeadlineArray, row[9]);
@@ -568,7 +568,7 @@ void print_explain_rank( struct SiderFormat *Side, char query[]) {
 		Side->iindex.rank_explaind.rankBody,Side->iindex.rank_explaind.nrBody,Side->iindex.rank_explaind.maxBody,
 		Side->iindex.rank_explaind.rankHeadline,Side->iindex.rank_explaind.nrHeadline,Side->iindex.rank_explaind.maxHeadline,
 		Side->iindex.rank_explaind.rankTittel,Side->iindex.rank_explaind.nrTittel,Side->iindex.rank_explaind.maxTittel,
-		Side->iindex.rank_explaind.rankAthor,Side->iindex.rank_explaind.nrAthor,Side->iindex.rank_explaind.maxAthor,
+		Side->iindex.rank_explaind.rankAnchor,Side->iindex.rank_explaind.nrAnchor,Side->iindex.rank_explaind.maxAnchor,
 		Side->iindex.rank_explaind.rankUrl_mainbody,Side->iindex.rank_explaind.nrUrl_mainbody,Side->iindex.rank_explaind.maxUrl_mainbody,
 		Side->iindex.rank_explaind.rankUrlDomain,Side->iindex.rank_explaind.nrUrlDomain,Side->iindex.rank_explaind.maxUrlDomain,
 		Side->iindex.rank_explaind.rankUrlSub,Side->iindex.rank_explaind.nrUrlSub,Side->iindex.rank_explaind.maxUrlSub,
@@ -1951,18 +1951,18 @@ void read_collection_cfg(struct subnamesConfigFormat * dst) {
 	subnamesDefaultsConfig.filterSameCrc32 = config_setting_get_bool(cfgstring);
 
 
-	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankAthorArray") ) == NULL) {
-                fprintf(stderr, "searchd_child: Error! Can't load \"rankAthorArray\" from config\n");
+	if ( (cfgstring = config_setting_get_member(cfgcollection, "rankAnchorArray") ) == NULL) {
+                fprintf(stderr, "searchd_child: Error! Can't load \"rankAnchorArray\" from config\n");
                 exit(1);
         }
 	
-	subnamesDefaultsConfig.rankAthorArrayLen = config_setting_length(cfgstring);
-	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankAthorArrayLen) {
-		subnamesDefaultsConfig.rankAthorArrayLen = BMAX_RANKARRAY;
+	subnamesDefaultsConfig.rankAnchorArrayLen = config_setting_length(cfgstring);
+	if (BMAX_RANKARRAY < subnamesDefaultsConfig.rankAnchorArrayLen) {
+		subnamesDefaultsConfig.rankAnchorArrayLen = BMAX_RANKARRAY;
 	}
 	int i;
-	for(i=0;i<subnamesDefaultsConfig.rankAthorArrayLen;i++) {
-		subnamesDefaultsConfig.rankAthorArray[i] = config_setting_get_int_elem(cfgstring,i);
+	for(i=0;i<subnamesDefaultsConfig.rankAnchorArrayLen;i++) {
+		subnamesDefaultsConfig.rankAnchorArray[i] = config_setting_get_int_elem(cfgstring,i);
 	}
 
 

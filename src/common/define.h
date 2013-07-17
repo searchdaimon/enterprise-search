@@ -100,7 +100,7 @@
 
 #define nrOfUrlToDocIDFiles 64
 
-#define mineAthorTermSizeForMemory 100
+#define mineAnchorTermSizeForMemory 100
 #define mineMainTermSizeForMemory 100
 
 #define MAX_ATTRIBUTES_IN_QUERY	10
@@ -190,10 +190,10 @@ struct cm_listusers_h {
 #define maxPoengBody 5
 #define MaxPoengHeadline 12
 #define MaxPoengTittel 17
-#define maxPoengAthor 260
+#define maxPoengAnchor 260
 
-#define complicacy_maxPoengAthorPhraserank 260
-#define complicacy_maxPoengAthorSimple 6
+#define complicacy_maxPoengAnchorPhraserank 260
+#define complicacy_maxPoengAnchorSimple 6
 
 #define SUMMARY_NONE 0
 #define SUMMARY_START   1
@@ -243,8 +243,8 @@ struct subnamesConfigFormat {
 		char filterResponse;
 		char filterSameCrc32;
 
-		char rankAthorArray[BMAX_RANKARRAY];
-		char rankAthorArrayLen;
+		char rankAnchorArray[BMAX_RANKARRAY];
+		char rankAnchorArrayLen;
 
 		char rankTittelArray[BMAX_RANKARRAY];
 		char rankTittelArrayLen;
@@ -398,13 +398,13 @@ struct rank_explaindFormat {
 	unsigned short rankBody;
 	unsigned short rankHeadline;
 	unsigned short rankTittel;
-	unsigned short rankAthor;
+	unsigned short rankAnchor;
 	unsigned short rankUrl_mainbody;
 	unsigned short rankUrlDomain;
 	unsigned short rankUrlSub;
 
-	unsigned short nrAthorPhrase;
-	unsigned short nrAthor;	
+	unsigned short nrAnchorPhrase;
+	unsigned short nrAnchor;	
 
 	//15 april 2008
 	unsigned short nrBody;
@@ -420,7 +420,7 @@ struct rank_explaindFormat {
 	unsigned short maxUrl_mainbody;
 	unsigned short maxUrlDomain;
 	unsigned short maxUrlSub;
-	unsigned short maxAthor;
+	unsigned short maxAnchor;
 };
 
 struct hitsFormat {
@@ -536,11 +536,11 @@ struct queryTimeFormat {
 	double total;
 	double indexSort;
 	double dictionarySearch;
-	double AthorSearch;
-	//double AthorRank;
+	double AnchorSearch;
+	//double AnchorRank;
 	double MainSearch;
 	//double MainRank;
-	double MainAthorMerge;
+	double MainAnchorMerge;
 	double allrankCalc;
 	double popResult;
 	double adultcalk;

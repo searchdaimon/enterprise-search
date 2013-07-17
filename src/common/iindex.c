@@ -49,7 +49,7 @@ struct revIndexArrayFomat {
 	char tombstone;
 };
 
-struct DictionaryMemoryFormat AthorDictionary[64];
+struct DictionaryMemoryFormat AnchorDictionary[64];
 struct DictionaryMemoryFormat MainDictionary[64];
 
 struct hashtable * loadGced(int lotNr, char subname[]);
@@ -64,7 +64,7 @@ void IIndexInaliser() {
 	int i;
 
 	for (i=0;i<AntallBarrals;i++) {
-		AthorDictionary[i].elements = 0;
+		AnchorDictionary[i].elements = 0;
 		MainDictionary[i].elements = 0;
 	}
 }
@@ -86,8 +86,8 @@ void IIndexLoad (char Type[], char lang[],char subname[]) {
 	TotalTermsForMemory = 0;
 
         for (i=0;i<AntallBarrals;i++) {
-        	GetFilePathForIindex(FilePath,IndexPath,i,"Athor",IndexSprok,subname);
-		//sprintf(IndexPath,"%s/iindex/Athor/dictionary/%s/%i.txt",FilePath,IndexSprok, i);
+        	GetFilePathForIindex(FilePath,IndexPath,i,"Anchor",IndexSprok,subname);
+		//sprintf(IndexPath,"%s/iindex/Anchor/dictionary/%s/%i.txt",FilePath,IndexSprok, i);
 
         	if ((dictionaryha = fopen(IndexPath,"rb")) == NULL) {
                 	printf("Cant read Dictionary for %s at %s:%d\n",IndexPath,__FILE__,__LINE__);
@@ -105,15 +105,15 @@ void IIndexLoad (char Type[], char lang[],char subname[]) {
 			for (y=0;y<max;y++) {
 				fread(&DictionaryPost,sizeof(DictionaryPost),1,dictionaryha);
 
-				if (DictionaryPost.SizeForTerm > mineAthorTermSizeForMemory) {
+				if (DictionaryPost.SizeForTerm > mineAnchorTermSizeForMemory) {
 					//printf("%u: %u\n",DictionaryPost.WordID,DictionaryPost.SizeForTerm);
 					++TermsForMemory;
 				}
 			}
 
-			AthorDictionary[i].Dictionary = malloc(TermsForMemory * sizeof(DictionaryPost));
+			AnchorDictionary[i].Dictionary = malloc(TermsForMemory * sizeof(DictionaryPost));
 
-			AthorDictionary[i].elements = TermsForMemory;
+			AnchorDictionary[i].elements = TermsForMemory;
 
 			fseek(dictionaryha,0, SEEK_SET);
 			//leser de vi skal ha inn i minne
@@ -121,8 +121,8 @@ void IIndexLoad (char Type[], char lang[],char subname[]) {
 			for (y=0;y<max;y++) {
                 	        fread(&DictionaryPost,sizeof(DictionaryPost),1,dictionaryha);
 
-                	        if (DictionaryPost.SizeForTerm > mineAthorTermSizeForMemory) {
-					AthorDictionary[i].Dictionary[x] = DictionaryPost;
+                	        if (DictionaryPost.SizeForTerm > mineAnchorTermSizeForMemory) {
+					AnchorDictionary[i].Dictionary[x] = DictionaryPost;
 					++x;
 					++TotalTermsForMemory;
                         	}
@@ -134,7 +134,7 @@ void IIndexLoad (char Type[], char lang[],char subname[]) {
 
 
 
-			qsort(AthorDictionary[i].Dictionary,AthorDictionary[i].elements,sizeof(struct DictionaryFormat),compare_DictionaryMemoryElements);
+			qsort(AnchorDictionary[i].Dictionary,AnchorDictionary[i].elements,sizeof(struct DictionaryFormat),compare_DictionaryMemoryElements);
 
 
 		}
@@ -230,11 +230,11 @@ int ReadIIndexRecordFromMemeory (unsigned int *Adress, unsigned int *SizeForTerm
 	#ifdef DEBUG
 	printf("ReadIIndexRecordFromMemeory: WordIDcrc32 %u\n",WordIDcrc32);
 
-	printf("FromMemeory iindexfile %i elements %i\n",iindexfile,AthorDictionary[iindexfile].elements);
+	printf("FromMemeory iindexfile %i elements %i\n",iindexfile,AnchorDictionary[iindexfile].elements);
 	#endif
 
-	//for(i=0;i<AthorDictionary[iindexfile].elements;i++) {
-        //        printf("%u\n",AthorDictionary[iindexfile].Dictionary[i].WordID);
+	//for(i=0;i<AnchorDictionary[iindexfile].elements;i++) {
+        //        printf("%u\n",AnchorDictionary[iindexfile].Dictionary[i].WordID);
         //}
 	//
 	//
@@ -271,8 +271,8 @@ int ReadIIndexRecordFromMemeory (unsigned int *Adress, unsigned int *SizeForTerm
 		}
 
 	}
-	else if (strcmp(IndexType,"Athor") == 0) {
-		if ((DictionaryPost = bsearch(&dummy,AthorDictionary[iindexfile].Dictionary,AthorDictionary[iindexfile].elements,sizeof(struct DictionaryFormat),compare_DictionaryMemoryElements)) == NULL) {
+	else if (strcmp(IndexType,"Anchor") == 0) {
+		if ((DictionaryPost = bsearch(&dummy,AnchorDictionary[iindexfile].Dictionary,AnchorDictionary[iindexfile].elements,sizeof(struct DictionaryFormat),compare_DictionaryMemoryElements)) == NULL) {
 			#ifdef DEBUG
 			printf("fant ikke \n");
 			#endif
@@ -822,14 +822,14 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
                 		TeffArray->iindex[y].rank_explaind.rankBody = 0;
                 		TeffArray->iindex[y].rank_explaind.rankHeadline = 0;
                 		TeffArray->iindex[y].rank_explaind.rankTittel = 0;
-                		TeffArray->iindex[y].rank_explaind.rankAthor = 0;
+                		TeffArray->iindex[y].rank_explaind.rankAnchor = 0;
 
                 		TeffArray->iindex[y].rank_explaind.rankUrl_mainbody = 0;
                 		TeffArray->iindex[y].rank_explaind.rankUrlDomain = 0;
                 		TeffArray->iindex[y].rank_explaind.rankUrlSub = 0;
 
-                		TeffArray->iindex[y].rank_explaind.nrAthorPhrase = 0;
-                		TeffArray->iindex[y].rank_explaind.nrAthor = 0;
+                		TeffArray->iindex[y].rank_explaind.nrAnchorPhrase = 0;
+                		TeffArray->iindex[y].rank_explaind.nrAnchor = 0;
 
                 		TeffArray->iindex[y].rank_explaind.nrBody = 0;
                 		TeffArray->iindex[y].rank_explaind.nrHeadline = 0;
@@ -841,7 +841,7 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
                 		TeffArray->iindex[y].rank_explaind.maxBody = 0;
                 		TeffArray->iindex[y].rank_explaind.maxHeadline = 0;
                 		TeffArray->iindex[y].rank_explaind.maxTittel = 0;
-                		TeffArray->iindex[y].rank_explaind.maxAthor = 0;
+                		TeffArray->iindex[y].rank_explaind.maxAnchor = 0;
                 		TeffArray->iindex[y].rank_explaind.maxUrl_mainbody = 0;
                 		TeffArray->iindex[y].rank_explaind.maxUrlDomain = 0;
                 		TeffArray->iindex[y].rank_explaind.maxUrlSub = 0;

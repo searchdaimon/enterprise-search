@@ -1827,7 +1827,7 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 		"Body",
 		"Headline",
 		"Tittel",
-		"Athor (nr nrp)",
+		"Anchor (nr nrp)",
 		"UrlM",
 		"Url",
 		"Adult"
@@ -1857,9 +1857,9 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 				#ifdef BLACK_BOKS
 				-1,-1,-1,-1,-1,-1,
 				#else
-				Sider[i].iindex.rank_explaind.rankAthor,
-				Sider[i].iindex.rank_explaind.nrAthor,
-				Sider[i].iindex.rank_explaind.nrAthorPhrase,
+				Sider[i].iindex.rank_explaind.rankAnchor,
+				Sider[i].iindex.rank_explaind.nrAnchor,
+				Sider[i].iindex.rank_explaind.nrAnchorPhrase,
 				Sider[i].iindex.rank_explaind.rankUrl_mainbody,
 				Sider[i].iindex.rank_explaind.rankUrlDomain + Sider[i].iindex.rank_explaind.rankUrlSub,
 				Sider[i].DocumentIndex.AdultWeight,
@@ -2593,9 +2593,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	//printer ut info om brukt tid
 	bblog(INFO, "Time");
-	bblog(INFO, "\t%-40s %f", "AthorSearch",(*SiderHeder).queryTime.AthorSearch);
+	bblog(INFO, "\t%-40s %f", "AnchorSearch",(*SiderHeder).queryTime.AnchorSearch);
 	bblog(INFO, "\t%-40s %f", "MainSearch",(*SiderHeder).queryTime.MainSearch);
-	bblog(INFO, "\t%-40s %f", "MainAthorMerge",(*SiderHeder).queryTime.MainAthorMerge);
+	bblog(INFO, "\t%-40s %f", "MainAnchorMerge",(*SiderHeder).queryTime.MainAnchorMerge);
 	bblog(INFO, "");
 	bblog(INFO, "\t%-40s %f", "popRank",(*SiderHeder).queryTime.popRank);
 	bblog(INFO, "\t%-40s %f", "responseShortning",(*SiderHeder).queryTime.responseShortning);

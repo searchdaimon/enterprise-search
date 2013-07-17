@@ -53,7 +53,7 @@ int main (int argc, char *argv[]) {
 	}
 	else {
                 printf("Dette programet printer ut en iindex.\n\n");
-		printf("\tUse:\n\n\t./mergeIIndex fralot tillot type (Main | Athor) språk subname [bucket]\n\n");
+		printf("\tUse:\n\n\t./mergeIIndex fralot tillot type (Main | Anchor) språk subname [bucket]\n\n");
                 exit(0);
         }
 

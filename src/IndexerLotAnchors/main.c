@@ -55,7 +55,7 @@ int main (int argc, char *argv[]) {
 	}	
 	fclose(FH);
 
-	revindexFilesOpenLocal(revindexFilesHa,lotNr,"Athor","wb",subname);
+	revindexFilesOpenLocal(revindexFilesHa,lotNr,"Anchor","wb",subname);
 
 	//int anchorGetNext (int LotNr,unsigned int *DocID,char *text,unsigned int *radress,unsigned int *rsize)
 	while (anchorGetNext(lotNr,&DocID,text,sizeof(text),&radress,&rsize,subname) ) {	
