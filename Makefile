@@ -16,14 +16,9 @@ LIBS += src/3pLibs/keyValueHash/hashtable_itr.c src/3pLibs/keyValueHash/hashtabl
 
 LIBGeoIP = -lGeoIP
 
-#bruker culr isteden da det er threadsafe
-#LINWWWCFCLAGS = `libwww-config --cflags`
-#LINWWWLIBS = `libwww-config --libs`
-
+#bruker culr da det er threadsafe
 CURLLIBS = `curl-config --libs`
 
-#LIBCONFIG= -lconfig
-#LIBCONFIG=  /usr/local/lib/libconfig.a
 LIBCONFIG=  /usr/local/lib/libconfig.a
 LIBCACHE=       src/libcache/libcache.c
 
@@ -31,48 +26,16 @@ IM = /home/eirik/.root/lib/libMagick.a /home/eirik/.root/lib/libWand.a -I/home/e
 #IM = -L/home/eirik/.root/lib -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
 #IM = /home/eirik/.root/lib/libMagick.a -I/home/eirik/.root/include `/home/eirik/.root/bin/Wand-config --ldflags --libs`
 
-# #bbh1:
-# BDB = -I/usr/local/BerkeleyDB.4.5/include/ /usr/local/BerkeleyDB.4.5/lib/libdb.a
-# MYSQL = -I/usr/include/mysql /usr/lib/mysql/libmysqlclient.a
-# CC+=-D NO_64_BIT_DIV
-# #MYSQL4 = -I/home/eirik/.root/include/mysql -L/home/eirik/.root/lib/mysql/ -lmysqlclient -DMYSQLFOUR
-# MYSQL4 = -I/home/eirik/.root/include/mysql /home/eirik/.root/lib/mysql/libmysqlclient.a -DMYSQLFOUR
-# #PERLEMBED = lib/libperlembed.a -rdynamic `perl -MExtUtils::Embed -e ccopts -e ldopts` -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE   -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl 
-
-# ##bbh2
-# #BDB = -I/usr/include/db4 /usr/lib/libdb-4.6.a -lpthread
-# #MYSQL = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
-# #CC+=-m32
-# # !!!!!!!!! mangler MYSQL4 !!!!!!!!
-# #PERLEMBED = src/perlembed/*.c -rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE  /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl 
-
-#SMBCLIENT=-lsmbclient
-#skrur dette på igjen. Brukte det og segfeile når vi hadde det med statisk?
-# !! av ukjenet grunner ser dette ut til og altid må være sist hvis vi skal linke statisk
-
-#SMBCLIENT=src/3pLibs/samba-3.0.24/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.24/source/include/
-#SMBCLIENT=/home/boitho/src/samba-3.0.24/source/bin/libsmbclient.a -I/home/boitho/src/samba-3.0.24/source/include/
 SMBCLIENT=src/3pLibs/samba-3.0.25b/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.25b/source/include/
-#SMBCLIENT=-Isrc/3pLibs/samba-3.0.24/source/include/ -Lsrc/3pLibs/samba-3.0.24/source/lib/ -lsmbclient
 
 BBDOCUMENT = src/bbdocument/bbdocument.c src/bbdocument/bbfilters.c lib/libds.a $(BDB_INC) $(BDB_LIB) -D BLACK_BOX  
-#BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail.c -DBBDOCUMENT_IMAGE $(IM)
 BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail_by_convert.c -DBBDOCUMENT_IMAGE_BY_CONVERT
 
 #openldap med venner. Må linke det statisk inn, å bare bruke -lldap fungerer ikke
-#
-#LDAP = -DWITH_OPENLDAP /usr/lib/libldap.a -lsasl2 -lsasl -lcrypt -lssl
-#LDAP = -DWITH_OPENLDAP -lldap -llber
-#LDAP = -DWITH_OPENLDAP /usr/lib/libldap.so.2 /usr/lib/liblber.so.2
-#LDAP = -DWITH_OPENLDAP /usr/lib/libldap.a /usr/lib/liblber.a /usr/lib/libsasl.a /usr/lib/libcrypto.a -lssl
-#LDAP = -DWITH_OPENLDAP /usr/lib/libldap.a /usr/lib/liblber.a /usr/lib/libsasl.a src/3pLibs/openssl-0.9.8d/libssl.a src/3pLibs/openssl-0.9.8d/libcrypto.a -ldl 
-#LDAP = -DWITH_OPENLDAP /usr/lib/libldap.a /usr/lib/liblber.a /usr/lib/libsasl.a /usr/local/lib/libssl.a /usr/local/lib/libcrypto.a -ldl 
-#LDAP = -DWITH_OPENLDAP -I/home/boitho/.root/ -L/home/boitho/.root/ -lldap 
 LDAP = -DWITH_OPENLDAP -I/home/boitho/.root/ -L/home/boitho/.root/ /usr/lib/libcrypto.a -lldap 
 LDAPBB = -DWITH_OPENLDAP -lldap 
 
 #flag for å inkludere mysql
-#MYSQL = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient
 MYSQL = -I/usr/include/mysql /usr/lib/mysql/libmysqlclient.a
 
 SLICENCE=	src/slicense/base32.c  src/slicense/license.c
@@ -80,11 +43,8 @@ SLICENCE=	src/slicense/base32.c  src/slicense/license.c
 
 MYSQL_THREAD = -I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient_r
 
-#LIBXML = -I/usr/include/libxml2 -L/usr/lib -lxml2
 LIBXML = -I/usr/include/libxml2  -lxml2
 
-#HTMLPARSER=src/parser/lex.bhpm.c src/parser/y.tab.c  
-#har rullet tilbake, og bruker gammel html parser for nå, så trenger dermed ikke i ha med css parseren
 HTMLPARSER1=src/parser/libhtml_parser.a lib/libds.a
 HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a lib/libds.a
 
