@@ -22,7 +22,7 @@
 
 #define BMAX_RANKARRAY 20
 
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	#define NrofDocIDsInLot 5000
 #else
 	#define NrofDocIDsInLot 500000
@@ -257,7 +257,7 @@ struct DocumentIndexFormat {
         unsigned int SummaryPointer;
         unsigned short SummarySize;
         unsigned int crc32;
-#ifdef BLACK_BOKS
+#ifdef BLACK_BOX
 	time_t lastSeen;
 	char reservedSpace[60]; //3 now
 #endif
@@ -285,7 +285,7 @@ struct ReposetoryHeaderFormat {
 	unsigned int time;
 	unsigned short userID;
 	double clientVersion;
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		//int aclSize;
 		int acl_allowSize;
 		#ifdef IIACL
@@ -369,7 +369,7 @@ struct iindexMainElements {
 	//19.04.07
 	time_t date; //16 nov 2006
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		char filetype[5];
 		char deleted;
 		struct indexFilteredFormat indexFiltered;
@@ -409,7 +409,7 @@ struct SiderFormat {
 	unsigned int crc32;
 	int type;
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 		char uri[1024];
 		char url[1024];
 	#else
@@ -453,7 +453,7 @@ struct queryTimeFormat {
 	double responseShortning;
 	double searchSimple;
 
-	#ifdef BLACK_BOKS
+	#ifdef BLACK_BOX
 	//runerb: 5 feb 2008
 	double html_parser_run;
 	double generate_snippet;
@@ -499,7 +499,7 @@ struct filterinfoFormat {
 };
 
 struct filtersFormat {
-	 #ifdef BLACK_BOKS
+	 #ifdef BLACK_BOX
 	struct filterinfoFormat filtypes;
 	struct filterinfoFormat collections;	
 	#endif
