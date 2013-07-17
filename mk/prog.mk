@@ -68,7 +68,15 @@ CFLAGS+=	-g
 endif
 
 ifdef WALL
-CFLAGS+=	-Wall
+CFLAGS+=	-Wall -Wno-unused-function
+endif
+
+ifdef WANT_OPENMP
+# Runarb 2013: Untested!
+CFLAGS+= 	-fopenmp
+else
+# If we don't want Open MP we must suppress  the "ignoring #pragma" warnings
+CFLAGS+= 	-Wno-unknown-pragmas
 endif
 
 
