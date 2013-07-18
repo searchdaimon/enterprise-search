@@ -255,7 +255,7 @@ train(const char *dict)
 	int _we=0, _word=0, _soundslike=0, _ints=0, _vector=0, _vn=0, _hash=0;
 
 	if ((fp = fopen(dict, "r")) == NULL) {
-		warn("fopen(dict)");
+		warn("train: Can't open dictionary. fopen(dict)");
 		return NULL;
 	}
 
