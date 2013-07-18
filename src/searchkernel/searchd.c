@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_in cli_addr, serv_addr;
 	FILE *LOGFILE;
 	struct searchd_configFORMAT searchd_config;
-
+	pid_t childPID;
 	struct config_t maincfg;
 
         searchd_config.searchport 	= 0;
@@ -485,19 +485,29 @@ int main(int argc, char *argv[])
 				do_chld((void *) &searchd_config);
 			#else
 				bblog(DEBUGINFO, "Forking new prosess.");
-				if (fork() == 0) { // this is the child process
 
-					close(sockfd); // child doesn't need the listener
+				childPID = fork();
 
-					do_chld((void *) &searchd_config);	
+				if(childPID >= 0) { // fork was successful
+    				
+					if (childPID == 0) { // this is the child process
 
-					close(searchd_config.newsockfd);
-					bblog(DEBUGINFO, "Terminating child.");
-		
-					exit(0);
+						close(sockfd); // child doesn't need the listener
+
+						do_chld((void *) &searchd_config);	
+
+						close(searchd_config.newsockfd);
+						bblog(DEBUGINFO, "Terminating child.");
+	
+						exit(0);
+					}
+					else {
+						close(searchd_config.newsockfd); // perent doesn't need the new socket
+					}
+
 				}
-				else {
-					close(searchd_config.newsockfd); // perent doesn't need the new socket
+				else { // fork failed
+					bblog(ERROR, "Fork failed!");					
 				}
 			#endif
 			}
