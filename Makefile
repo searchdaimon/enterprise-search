@@ -64,13 +64,21 @@ init.d.stop:
 	@echo ""
 	@echo "$@:"
 
-	perl stopstart.pl stop	
+	init.d/boitho-bbdn stop
+	init.d/crawlManager stop
+	init.d/searchdbb stop
+	init.d/suggest stop
+	init.d/boithoad stop
 
 init.d.start:
 	@echo ""
 	@echo "$@:"
 
-	perl stopstart.pl start
+	init.d/boitho-bbdn start
+	init.d/crawlManager start
+	init.d/searchdbb start
+	init.d/suggest start
+	init.d/boithoad start
 
 perlembed:
 	@echo ""
