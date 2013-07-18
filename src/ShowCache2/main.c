@@ -112,17 +112,14 @@ int main(int argc, char *argv[]) {
 
 
 
-	htmlBufSize = (DocumentIndexPost.htmlSize * 30);
+	htmlBufSize = (DocumentIndexPost.htmlSize2 * 30);
 	if ((htmlBuf = malloc(htmlBufSize)) == NULL) {
 		printf("can't malloc space for html buff.\n");
 		exit(1);		
 	}
 
 
-	// (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,
-	// (*Sider).DocumentIndex.htmlSize,DocID,subname,&ReposetoryHeader,&aclbuffer
-
-	if (rReadHtml(htmlBuf,&htmlBufSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize,iDocID,subname,&ReposetoryHeader,&aclbuffer_allow,&aclbuffer_deny,DocumentIndexPost.imageSize, &url, &attributes) != 1) {
+	if (rReadHtml(htmlBuf,&htmlBufSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize2,iDocID,subname,&ReposetoryHeader,&aclbuffer_allow,&aclbuffer_deny,DocumentIndexPost.imageSize, &url, &attributes) != 1) {
 
 		printf("can't read cache file.\n");
 
