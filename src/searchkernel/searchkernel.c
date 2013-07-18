@@ -289,7 +289,10 @@ get_sock_from_pool(struct socket_pool *pool, int *index)
 	int i;
 
 	#ifdef WITH_THREAD
-		pthread_mutex_lock(&pool->mutex);
+		if (pthread_mutex_lock(&pool->mutex) != 0) {
+			bblog(ERROR, "Can't lock mutex!");
+			return 0;
+		}
 	#endif
 
 	while (pool->consumers == pool->max_consumers) {
@@ -301,7 +304,9 @@ get_sock_from_pool(struct socket_pool *pool, int *index)
 		if (pool->used[i] == 0) {
 			pool->used[i] = 1;
 			#ifdef WITH_THREAD
-				pthread_mutex_unlock(&pool->mutex);
+				if (pthread_mutex_unlock(&pool->mutex) != 0) {
+					bblog(ERROR, "Can't unlock mutex!");
+				}
 			#endif
 			*index = i;
 
@@ -315,14 +320,18 @@ get_sock_from_pool(struct socket_pool *pool, int *index)
 
 static inline void release_sock_to_pool(struct socket_pool *pool, int index) {
 	#ifdef WITH_THREAD
-		pthread_mutex_lock(&pool->mutex);
+		if (pthread_mutex_lock(&pool->mutex) != 0) {
+			bblog(ERROR, "Can't lock mutex!");
+		}
 	#endif
 	pool->used[index] = 0;
 	
 	pool->consumers--;
 	#ifdef WITH_THREAD
 		pthread_cond_signal(&pool->cv);
-		pthread_mutex_unlock(&pool->mutex);
+		if (pthread_mutex_unlock(&pool->mutex) != 0) {
+			bblog(ERROR, "Can't unlock mutex!");
+		}
 	#endif
 
 }
@@ -898,7 +907,9 @@ int nextIndex(struct PagesResultsFormat *PagesResults) {
 
 	#ifdef WITH_THREAD
 		//debug: printf("nextIndex: waiting for lock: start\n");
-		pthread_mutex_lock(&(*PagesResults).mutex);
+		if (pthread_mutex_lock(&(*PagesResults).mutex) != 0) {
+			bblog(ERROR, "Can't lock mutex!");
+		}
 		//debug: printf("nextIndex: waiting for lock: end\n");
 	#endif
 
@@ -923,7 +934,9 @@ int nextIndex(struct PagesResultsFormat *PagesResults) {
 
 	#ifdef WITH_THREAD
 		//debug: printf("nextIndex: waiting for UNlock: start\n");
-		pthread_mutex_unlock(&(*PagesResults).mutex);
+		if (pthread_mutex_unlock(&(*PagesResults).mutex) != 0) {
+			bblog(ERROR, "Can't unlock mutex!");
+		}
 		//debug: printf("nextIndex: waiting for UNlock: end\n");
 	#endif
 
@@ -940,7 +953,9 @@ int nextPage(struct PagesResultsFormat *PagesResults) {
 
 	#ifdef WITH_THREAD
 		//debug: printf("nextPage: waiting for lock: start\n");
-		pthread_mutex_lock(&(*PagesResults).mutex);
+		if (pthread_mutex_lock(&(*PagesResults).mutex) != 0) {
+			bblog(ERROR, "Can't lock mutex!");
+		}
 		//debug: printf("nextPage: waiting for lock: end\n");
 	#endif
 
@@ -970,7 +985,9 @@ int nextPage(struct PagesResultsFormat *PagesResults) {
 
 	#ifdef WITH_THREAD
 		//debug: printf("nextPage:waiting for UNlock: start\n");
-		pthread_mutex_unlock(&(*PagesResults).mutex);
+		if (pthread_mutex_unlock(&(*PagesResults).mutex) != 0) {
+			bblog(ERROR, "Can't unlock mutex!");
+		}
 		//debug: printf("nextPage:waiting for UNlock: end\n");
 	#endif
 
@@ -985,7 +1002,9 @@ int foundGodPage(struct PagesResultsFormat *PagesResults) {
 
 	#ifdef WITH_THREAD
 		//debug: printf("nextPage: waiting for lock: start\n");
-		pthread_mutex_lock(&(*PagesResults).mutex);
+		if (pthread_mutex_lock(&(*PagesResults).mutex) != 0) {
+			bblog(ERROR, "Can't lock mutex!");
+		}
 		//debug: printf("nextPage: waiting for lock: end\n");
 	#endif
 
@@ -996,7 +1015,9 @@ int foundGodPage(struct PagesResultsFormat *PagesResults) {
 		
 	#ifdef WITH_THREAD
 		//debug: printf("nextPage:waiting for UNlock: start\n");
-		pthread_mutex_unlock(&(*PagesResults).mutex);
+		if (pthread_mutex_unlock(&(*PagesResults).mutex) != 0) {
+			bblog(ERROR, "Can't unlock mutex!");
+		}
 		//debug: printf("nextPage:waiting for UNlock: end\n");
 	#endif
 
@@ -1008,7 +1029,9 @@ int nrofGodPages(struct PagesResultsFormat *PagesResults) {
 	int ret;
 
 	#ifdef WITH_THREAD
-		pthread_mutex_lock(&(*PagesResults).mutex);
+		if (pthread_mutex_lock(&(*PagesResults).mutex) != 0) {
+			bblog(ERROR, "Can't lock mutex!");
+		}
 	#endif
 
 	ret = (*PagesResults).showabal;
@@ -1018,7 +1041,9 @@ int nrofGodPages(struct PagesResultsFormat *PagesResults) {
 	#endif
 
 	#ifdef WITH_THREAD
-		pthread_mutex_unlock(&(*PagesResults).mutex);
+		if (pthread_mutex_unlock(&(*PagesResults).mutex) != 0) {
+			bblog(ERROR, "Can't unlock mutex!");
+		}
 	#endif
 
 	return ret;
@@ -1030,7 +1055,9 @@ void increaseMemFiltered(struct PagesResultsFormat *PagesResults,int *whichFilte
 
 
 	#ifdef WITH_THREAD
-		pthread_mutex_lock(&(*PagesResults).mutex);
+		if (pthread_mutex_lock(&(*PagesResults).mutex) != 0) {
+			bblog(ERROR, "Can't lock mutex!");
+		}
 	#endif
 
 	++(*PagesResults).memfiltered;
@@ -1048,7 +1075,9 @@ void increaseMemFiltered(struct PagesResultsFormat *PagesResults,int *whichFilte
 	#endif
 
 	#ifdef WITH_THREAD
-		pthread_mutex_unlock(&(*PagesResults).mutex);
+		if (pthread_mutex_unlock(&(*PagesResults).mutex) != 0) {
+			bblog(ERROR, "Can't unlock mutex!");
+		}
 	#endif
 
 
@@ -1058,7 +1087,9 @@ void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTr
 
 
 	#ifdef WITH_THREAD
-		pthread_mutex_lock(&(*PagesResults).mutex);
+		if (pthread_mutex_lock(&(*PagesResults).mutex) != 0) {
+			bblog(ERROR, "Can't lock mutex!");
+		}
 	#endif
 
 	++(*PagesResults).filtered;
@@ -1078,7 +1109,9 @@ void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTr
 	#endif
 
 	#ifdef WITH_THREAD
-		pthread_mutex_unlock(&(*PagesResults).mutex);
+		if (pthread_mutex_unlock(&(*PagesResults).mutex)) {
+			bblog(ERROR, "Can't unlock mutex!");
+		}
 	#endif
 
 
@@ -1089,7 +1122,9 @@ void increaseFilteredSilent(struct PagesResultsFormat *PagesResults,int *whichFi
 
 
 	#ifdef WITH_THREAD
-		pthread_mutex_lock(&(*PagesResults).mutex);
+		if (pthread_mutex_lock(&(*PagesResults).mutex) != 0) {
+			bblog(ERROR, "Can't lock mutex!");
+		}
 	#endif
 
 	//++(*(*PagesResults).SiderHeder).filtered;
@@ -1111,7 +1146,9 @@ void increaseFilteredSilent(struct PagesResultsFormat *PagesResults,int *whichFi
 	#endif
 
 	#ifdef WITH_THREAD
-		pthread_mutex_unlock(&(*PagesResults).mutex);
+		if (pthread_mutex_unlock(&(*PagesResults).mutex) != 0) {
+			bblog(ERROR, "Can't unlock mutex!");
+		}
 	#endif
 
 
@@ -1661,7 +1698,9 @@ void *generatePagesResults(void *arg)
 		*******************************************************************************************/
 
 		#ifdef WITH_THREAD
-			pthread_mutex_lock(&(*PagesResults).mutextreadSyncFilter);
+			if (pthread_mutex_lock(&(*PagesResults).mutextreadSyncFilter) != 0) {
+				bblog(ERROR, "Can't lock mutex!");
+			}
 		#endif
 
 		#ifdef DEBUG_TIME
@@ -1750,7 +1789,9 @@ void *generatePagesResults(void *arg)
 		#endif
 
 		#ifdef WITH_THREAD
-			pthread_mutex_unlock(&(*PagesResults).mutextreadSyncFilter);
+			if (pthread_mutex_unlock(&(*PagesResults).mutextreadSyncFilter) != 0) {
+				bblog(ERROR, "Can't unlock mutex!");
+			}
 		#endif
 		
 		if (treadSyncFilters == 1) {
@@ -2093,7 +2134,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	struct timeval start_time, end_time;
 	struct timeval popResult_start_time, popResult_end_time;
 
-	int ret;
 
 	
 	// inaliserer alle queryTime elementene
@@ -2209,17 +2249,25 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		dp_init();
 
 		
-		ret = pthread_mutex_init(&PagesResults.mutex, NULL);
-		ret = pthread_mutex_init(&PagesResults.mutextreadSyncFilter, NULL);
+		if (pthread_mutex_init(&PagesResults.mutex, NULL) != 0) {
+			bblog(ERROR, "Can't init mutex!");
+		}
+		if (pthread_mutex_init(&PagesResults.mutextreadSyncFilter, NULL) != 0) {
+			bblog(ERROR, "Can't init mutex!");
+		}
 
 		//låser mutex. Vi er jo enda ikke kalre til å kjøre
-		pthread_mutex_lock(&PagesResults.mutex);
+		if (pthread_mutex_lock(&PagesResults.mutex) != 0) {
+			bblog(ERROR, "Can't lock mutex!");
+		}
 
 		if (!searchd_config->optSingle) {
 
 			//start som thread that can get the pages
 			for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
-				ret = pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults);
+				if (pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults) != 0) {
+					bblog(ERROR, "Can't create thread for page geberation!");
+				}
 			}
 
 		}
@@ -2246,8 +2294,12 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	#ifdef BLACK_BOX
 		#ifdef WITH_THREAD
-			ret = pthread_mutex_init(&PagesResults.cmConn.mutex, NULL);
-			ret = pthread_mutex_init(&PagesResults.cmConnUrlrewrite.mutex, NULL);
+			if (pthread_mutex_init(&PagesResults.cmConn.mutex, NULL) != 0) {
+				bblog(ERROR, "Can't init mutex!");
+			}
+			if (pthread_mutex_init(&PagesResults.cmConnUrlrewrite.mutex, NULL) != 0) {
+				bblog(ERROR, "Can't init mutex!");				
+			}
 
 			pthread_cond_init(&PagesResults.cmConn.cv, NULL);
 			pthread_cond_init(&PagesResults.cmConnUrlrewrite.cv, NULL);
@@ -2380,7 +2432,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#ifdef WITH_THREAD
 
 		//vi har data. Lå tårdene jobbe med det
-		pthread_mutex_unlock(&PagesResults.mutex);
+		if (pthread_mutex_unlock(&PagesResults.mutex) != 0) {
+			bblog(ERROR, "Can't unlock mutex!");
+		}
 
 		//av gjør om vi skal starte tråder eller kjøre det selv
 		if (searchd_config->optSingle) {
@@ -2389,18 +2443,28 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		else {
 			//venter på trådene
 			for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
-				ret = pthread_join(threadid[i], NULL);
+				if (pthread_join(threadid[i], NULL) != 0) {
+					bblog(ERROR, "Can't join thread");
+				}
 			}
 
 		}
 
 		//free mutex'en
-		ret = pthread_mutex_destroy(&PagesResults.mutex);
-		ret = pthread_mutex_destroy(&PagesResults.mutextreadSyncFilter);
+		if (pthread_mutex_destroy(&PagesResults.mutex) != 0) {
+			bblog(ERROR, "Can't destroy mutex!");
+		}
+		if(pthread_mutex_destroy(&PagesResults.mutextreadSyncFilter) != 0) {
+			bblog(ERROR, "Can't destroy mutex!");
+		}
 
 		#ifdef BLACK_BOX
-			ret = pthread_mutex_destroy(&PagesResults.cmConn.mutex);
-			ret = pthread_mutex_destroy(&PagesResults.cmConnUrlrewrite.mutex);
+			if (pthread_mutex_destroy(&PagesResults.cmConn.mutex) != 0) {
+				bblog(ERROR, "Can't destroy mutex!");
+			}
+			if (pthread_mutex_destroy(&PagesResults.cmConnUrlrewrite.mutex) != 0) {
+				bblog(ERROR, "Can't destroy mutex!");
+			}
 		#endif
 
 
