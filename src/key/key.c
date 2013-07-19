@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "key.h"
-
+#include "../common/strlcpy.h"
 
 /* MYSQL login information */
 #define MYSQL_HOST	"localhost"
