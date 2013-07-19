@@ -29,7 +29,7 @@ int cache_add(cache_t *c, char *prefix, char *key, void *value, int size);
 void cache_delfiles();
 #endif
 void *cache_fetch(cache_t *c, char *prefix, char *key, int timeout);
-void *cache_free(cache_t *c);
+void cache_free(cache_t *c);
 
 
 

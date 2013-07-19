@@ -28,9 +28,8 @@ typedef struct {
 
 #define KEY_SEPARATOR 0x10
 
-static char *
-gen_key(char *p, char *k)
-{
+static char *gen_key(char *p, char *k) {
+
 	char *key;
 	size_t i, plen;
 
@@ -57,9 +56,8 @@ gen_key(char *p, char *k)
 #ifdef LIBCACHE_SHARE
 
 
-int
-cache_init(cache_t *c, void (*freevalue)(void *value))
-{
+int cache_init(cache_t *c, void (*freevalue)(void *value)) {
+
 	memset(c, '\0', sizeof(*c));
 	c->c_data = create_hashtable(7, ht_stringhash, ht_stringcmp);
 	
@@ -72,9 +70,8 @@ cache_init(cache_t *c, void (*freevalue)(void *value))
 }
 
 
-int
-cache_add(cache_t *c, char *prefix, char *key, void *value)
-{
+int cache_add(cache_t *c, char *prefix, char *key, void *value) {
+
 	char *k;
 	time_t now = time(NULL);
 	cache_value_t *v;
@@ -111,11 +108,7 @@ cache_add(cache_t *c, char *prefix, char *key, void *value)
 	return 1;
 }
 
-void *
-cache_fetch(cache_t *c, char *prefix, char *key, int timeout)
-{
-
-
+void *cache_fetch(cache_t *c, char *prefix, char *key, int timeout) {
 
 	char *k = gen_key(prefix, key);
 	cache_value_t *v;
@@ -147,11 +140,9 @@ cache_fetch(cache_t *c, char *prefix, char *key, int timeout)
 }
 
 
-void *
-cache_free(cache_t *c)
-{
+void cache_free(cache_t *c) {
 
-    	cache_value_t *v;
+    cache_value_t *v;
 
     struct hashtable_itr *itr;
     if (hashtable_count(c->c_data) > 0)
@@ -200,9 +191,8 @@ void cache_delfiles() {
 
 }
 
-int
-cache_init(cache_t *c, void (*freevalue)(void *value))
-{
+int cache_init(cache_t *c, void (*freevalue)(void *value)) {
+
 	memset(c, '\0', sizeof(*c));
 
 	int ret;
@@ -263,14 +253,15 @@ cache_init(cache_t *c, void (*freevalue)(void *value))
 }
 
 
-int
-cache_add(cache_t *c, char *prefix, char *key, void *value, int size)
-{
+int cache_add(cache_t *c, char *prefix, char *key, void *value, int size) {
+
 	char *k;
 	int i;
 	time_t now = time(NULL);
 	cache_value_t *v;
-printf("cache_add(key=\"%s\", size=%d)\n",key,size);
+
+	printf("cache_add(key=\"%s\", size=%d)\n",key,size);
+
 	/* Do we already have this cached? */
 	k = gen_key(prefix, key);
 	if (k == NULL)
@@ -316,22 +307,15 @@ printf("cache_add(key=\"%s\", size=%d)\n",key,size);
         if  ((ret = c->c_data->put(c->c_data, NULL, &dbkey, &dbdata, 0)) != 0) {
                 c->c_data->err(c->c_data, ret, "DB->put");
         }
-//        if  ((ret = c->c_data->sync(c->c_data, 0)) != 0) {
-//                c->c_data->err(c->c_data, ret, "DB->sync");
-//        }	
 
-	printf("Added key %s (size %i) to db\n",dbkey.data, dbdata.size);
+	printf("Added key %s (size %i) to db\n",(char *)dbkey.data, dbdata.size);
 
 	pthread_mutex_unlock(&c->c_lock);
 
 	return 1;
 }
 
-void *
-cache_fetch(cache_t *c, char *prefix, char *key, int timeout)
-{
-
-
+void *cache_fetch(cache_t *c, char *prefix, char *key, int timeout) {
 
 	char *k = gen_key(prefix, key);
 	cache_value_t *v;
@@ -351,7 +335,7 @@ cache_fetch(cache_t *c, char *prefix, char *key, int timeout)
         dbkey.size = strlen(k);
 
 	if ((ret = c->c_data->get(c->c_data, NULL, &dbkey, &dbdata, 0)) != 0) {
-		printf("Diden't find key %s i db\n",dbkey.data);
+		printf("Diden't find key %s i db\n",(char *)dbkey.data);
 		goto nomatch;
 	}
 	v = ((cache_value_t *)dbdata.data);
@@ -359,8 +343,6 @@ cache_fetch(cache_t *c, char *prefix, char *key, int timeout)
 	now = time(NULL);
 	if (now - v->mtime > timeout && timeout!=0) {
 	        c->c_data->del(c->c_data, NULL, &dbkey, 0);
-//		c->c_freevalue(v->p);
-//		free(v);
 		printf("cache_fetch: removed timouted key %s. No match\n",k);
 		goto nomatch;
 	}
@@ -384,12 +366,8 @@ cache_fetch(cache_t *c, char *prefix, char *key, int timeout)
 }
 
 
-void *
-cache_free(cache_t *c)
-{
-
-    	cache_value_t *v;
-
+void cache_free(cache_t *c) {
+	// Do nothing for now...
 }
 
 
