@@ -1,5 +1,5 @@
 
-CFLAGS?=	-O2
+CFLAGS?=	-O2 -g
 yacc=bison
 
 include ../../mk/setup.mk
@@ -7,7 +7,7 @@ include ../../mk/setup.mk
 all:
 	$(yacc) -d -p bsgp snippet.parser.y
 	flex -f -8 -P bsgp -i snippet.parser.l
-	$(CC) -c lex.bsgp.c snippet.parser.tab.c
+	$(CC) $(CFLAGS) -c lex.bsgp.c snippet.parser.tab.c
 	ar rc libsnippet_generator.a lex.bsgp.o snippet.parser.tab.o
 	ranlib libsnippet_generator.a
 	cp libsnippet_generator.a $(LIBDIR)
