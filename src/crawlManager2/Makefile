@@ -13,6 +13,7 @@ WANT_PERLEMBED=	true
 WANT_MYSQL=	true
 WANT_LOGGER=	true
 
+WALL=		true
 PROG=	crawlManager2
 
 CFLAGS?=	

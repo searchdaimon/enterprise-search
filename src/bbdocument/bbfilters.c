@@ -4,6 +4,8 @@
 #include <string.h>
 #include "../common/boithohome.h"
 #include "../common/ht.h"
+#include "../common/strlcpy.h"
+#include "../common/exeoc.h"
 
 #define LIBEXTRACTOR_PATH "/usr/bin/extract"
 //#define LIBEXTRACTOR_PATH "/home/dagurval/websearch/fakeextract/extract"

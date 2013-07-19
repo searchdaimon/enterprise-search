@@ -163,7 +163,6 @@ void shortenurl(char *url,int urllen) {
 		int n = 0;
 		size_t totlen, rtotlen;
 		size_t bp, fp;
-		char *p;
 		int cur;
 		int lastdots;
 

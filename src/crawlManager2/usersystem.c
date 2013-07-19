@@ -12,9 +12,8 @@
 #define PERL_AUTH_USER "PerlUserSystem::authenticate"
 
 
-int
-us_authenticate_perl(usersystem_data_t *data, char *user, char *password)
-{
+int us_authenticate_perl(usersystem_data_t *data, char *user, char *password) {
+
 	usersystem_perl_t *usp = data->usc->usersystem.us_perl;
 	HV *params = newHV();
 	int ret;	
@@ -41,14 +40,11 @@ us_authenticate_perl(usersystem_data_t *data, char *user, char *password)
 	return ret;
 }
 
-int
-us_listUsers_perl(usersystem_data_t *data, char ***users, int *n_users)
-{
+int us_listUsers_perl(usersystem_data_t *data, char ***users, int *n_users) {
 
 	usersystem_perl_t *usp = data->usc->usersystem.us_perl;
 	HV *params = newHV();
 	struct us_cargsF cargs;
-	int i;
 
 
         HV *obj_attr = newHV();
@@ -63,20 +59,18 @@ us_listUsers_perl(usersystem_data_t *data, char ***users, int *n_users)
 		return 0;
 	}
 
-	printf(" n_users=%d\n", n_users);
+	printf(" n_users=%d\n", *n_users);
 
 	return 1;
 
 }
 
 
-int
-us_listGroupsForUser_perl(usersystem_data_t *data, const char *user, char ***groups, int *n_groups)
-{
+int us_listGroupsForUser_perl(usersystem_data_t *data, const char *user, char ***groups, int *n_groups) {
+
 	usersystem_perl_t *usp = data->usc->usersystem.us_perl;
 	HV *params = newHV();
 	struct us_cargsF cargs;
-	int i;
 
 
         HV *obj_attr = newHV();
@@ -97,9 +91,8 @@ us_listGroupsForUser_perl(usersystem_data_t *data, const char *user, char ***gro
 	return 1;
 }
 
-char *
-us_getName_perl(void *data)
-{
+char *us_getName_perl(void *data) {
+
 	usersystem_perl_t *usp = data;
 	char *name;
 	HV *params = newHV();

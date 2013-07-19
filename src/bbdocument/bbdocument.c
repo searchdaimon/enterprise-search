@@ -29,6 +29,8 @@
 #include "../common/reposetory.h"
 #include "../common/bstr.h"
 #include "../common/bprint.h"
+#include "../common/strlcpy.h"
+#include "../common/DocumentIndex.h"
 #include "../acls/acls.h"
 
 #include "bbdocument.h"
@@ -86,10 +88,6 @@ static int bbdocument_hmatch(void *key1, void *key2) {
 
 }
 
-
-
-
-
 int canconvert(char have[]) {
         int i;
 
@@ -104,6 +102,213 @@ int canconvert(char have[]) {
         return 0;
 }
 
+int uriindex_open(DB **dbpp, char subname[], u_int32_t flags) {
+
+	DB *dbp = (*dbpp);
+
+
+	char fileName[512];
+	int ret;
+
+	GetFilPathForLotFile(fileName,"urls.db",1,subname);
+
+	#ifdef DEBUG
+		printf("uriindex_open: Trying to open lotfile \"%s\"\n",fileName);
+	#endif
+        /********************************************************************
+        * Opening nrOfFiles to stor the data in
+        ********************************************************************/
+                /* Create and initialize database object */
+                if ((ret = db_create(&dbp, NULL, 0)) != 0) {
+                        fprintf(stderr,
+                            "%s: db_create: %s\n", "bbdocument", db_strerror(ret));
+                        return 0;
+                }
+
+		//#define dbCashe 314572800       //300 mb
+                ////setter cashe størelsen manuelt
+                //if ((ret = dbp->set_cachesize(dbp, 0, dbCashe, dbCasheBlokes)) != 0) {
+                //        dbp->err(dbp, ret, "set_cachesize");
+                //}
+
+
+
+                /* open the database. */
+                if ((ret = dbp->open(dbp, NULL, fileName, NULL, DB_BTREE, flags, 0664)) != 0) {
+                        dbp->err(dbp, ret, "%s: open", fileName);
+                        //goto err1;
+			//dette skjer nor collection mappen ikke er opprettet enda, typisk forde vi ikke har lagret et dokument der enda
+			#ifdef DEBUG
+			printf("can't dbp->open(), but db_create() was sucessful!\n");
+			#endif
+
+			dbp->close(dbp, 0);
+
+			return 0;
+                }
+
+        /********************************************************************/
+
+	#ifdef DEBUG
+		printf("uriindex_open: finished\n");
+	#endif
+
+	(*dbpp) = dbp;
+
+	return 1;
+}
+
+int uriindex_close (DB **dbpp) {
+
+	DB *dbp = (*dbpp);
+
+	int ret;
+
+	#ifdef DEBUG
+                printf("uriindex_close: closeing\n");
+        #endif
+      	if ((ret = dbp->close(dbp, 0)) != 0) {
+        	fprintf(stderr, "%s: DB->close: %s\n", "bbdocument", db_strerror(ret));
+                return (EXIT_FAILURE);
+       	}
+
+	#ifdef DEBUG
+                printf("uriindex_close: finished\n");
+        #endif
+
+	(*dbpp) = dbp;
+
+
+	return 1;
+}
+
+int uriindex_add (char uri[], unsigned int DocID, unsigned int lastmodified, char subname[]) {
+
+
+	struct uriindexFormat uriindex;
+        DB *dbp = NULL;
+
+        DBT key, data;
+	int ret;
+
+	#ifdef DEBUG
+	printf("uriindex_add: subname %s\n",subname);
+	#endif
+
+	uriindex_open(&dbp,subname, DB_CREATE);
+
+
+	//resetter minne
+        memset(&key, 0, sizeof(DBT));
+        memset(&data, 0, sizeof(DBT));
+
+        //legger inn datane i bdb strukturen
+        key.data = uri;
+        key.size = strlen(uri);
+
+	uriindex.DocID = DocID;
+	uriindex.lastmodified = lastmodified;
+
+	data.data = &uriindex;
+	data.size = sizeof(uriindex);
+
+        //legger til i databasen
+        if  ((ret = dbp->put(dbp, NULL, &key, &data, 0)) != 0) {
+                dbp->err(dbp, ret, "DB->put");
+		//kan ikke returnere her for da blir den aldr lukket.
+        	//return (EXIT_FAILURE);
+        }
+
+	uriindex_close(&dbp);
+
+	return 1;
+
+}
+
+int uriindex_get (char uri[], unsigned int *DocID, unsigned int *lastmodified, char subname[]) {
+
+        DB *dbp = NULL;
+
+        DBT key, data;
+        int ret;
+	int forreturn = 1;
+
+        if (!uriindex_open(&dbp,subname, DB_RDONLY)) {
+		#ifdef DEBUG
+			fprintf(stderr,"can't open uriindex\n");
+		#endif
+		return 0;
+	}
+
+
+        //resetter minne
+        memset(&key, 0, sizeof(DBT));
+        memset(&data, 0, sizeof(DBT));
+
+	//legger inn datane i bdb strukturen
+        key.data = uri;
+        key.size = strlen(uri);
+
+        if ((ret = dbp->get(dbp, NULL, &key, &data, 0)) == 0) {
+
+		*DocID = (*(struct uriindexFormat *)data.data).DocID;
+		*lastmodified = (*(struct uriindexFormat *)data.data).lastmodified;
+                forreturn = 1;
+        }
+        else if (ret == DB_NOTFOUND) {
+		#ifdef DEBUG
+                	dbp->err(dbp, ret, "DBcursor->get");
+			printf("search for \"%s\", len %i\n",key.data,key.size);		
+		#endif
+                forreturn = 0;
+        }
+        else {
+                dbp->err(dbp, ret, "DBcursor->get");
+                forreturn = 0;
+        }
+
+	uriindex_close(&dbp);
+
+	return forreturn;
+
+}
+
+
+int uriindex_delete (char uri[], char subname[]) {
+
+        DB *dbp = NULL;
+
+        DBT key;
+        int ret;
+	int forreturn = 1;
+
+        if (!uriindex_open(&dbp,subname, DB_CREATE)) {
+		fprintf(stderr,"can't open uriindex\n");
+		return 0;
+	}
+
+
+        //resetter minne
+        memset(&key, 0, sizeof(DBT));
+
+	//legger inn datane i bdb strukturen
+        key.data = uri;
+        key.size = strlen(uri);
+
+        if ((ret = dbp->del(dbp, NULL, &key, 0)) == 0) {
+		forreturn = 1;
+        }
+        else {
+                dbp->err(dbp, ret, "DBcursor->get");
+                forreturn = 0;
+        }
+
+	uriindex_close(&dbp);
+
+	return forreturn;
+
+}
+
 int bbdocument_makethumb( char documenttype[],char document[],size_t dokument_size,char **imagebuffer,size_t *imageSize) {
 
 	#ifdef BBDOCUMENT_IMAGE
@@ -114,8 +319,7 @@ int bbdocument_makethumb( char documenttype[],char document[],size_t dokument_si
 			return 0;
 
 		}
-			return 1;
-		return 0;
+		return 1;
 	}
 	else if (canconvert(documenttype) && (((*imagebuffer) = generate_thumbnail( document, dokument_size, imageSize )) == NULL)) {
 		return 0;
@@ -157,6 +361,8 @@ int bbdocument_freethumb(char *imagebuffer) {
 	#ifdef BBDOCUMENT_IMAGE
 	imagebuffer = free_thumbnail_memory( imagebuffer );
 	#endif
+
+	return 1;
 }
 
 int bbdocument_init(container **attrkeys) {
@@ -326,8 +532,11 @@ int bbdocument_init(container **attrkeys) {
 	}
 	closedir(dirp);
 
-	if (attrkeys != NULL)
+	if (attrkeys != NULL) {
 		*attrkeys = ropen();
+	}
+
+	return 1;
 }
 
 int bbdocument_delete (char uri[], char subname[]) {
@@ -422,14 +631,12 @@ void stripTags(char *cpbuf, int cplength) {
 
 int bbdocument_convert(char filetype[],char document[],const int dokument_size, buffer *outbuffer, const char titlefromadd[], char *subname, char *documenturi, unsigned int lastmodified, char *acl_allow, char *acl_denied, struct hashtable **metahash) {
 
-        int TokCount;
-	FILE *fp, *filconfp=NULL;
+	FILE *filconfp=NULL;
 	char filconvertetfile_real[216] = "";
 	char filconvertetfile_out_txt[216] = "";
 	char filconvertetfile_out_html[216] = "";
 	int exeocbuflen;
 	int i;
-	int ret;
 	char *documentfinishedbuftmp;
 	char fileconverttemplate[1024];
 	struct fileFilterFormat *fileFilter = NULL;
@@ -781,7 +988,6 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 		char *p, *pstart;
 		/* Does len do anything any more? */
 		int len, failed = 0;
-		int iter = 0;
 		int type; /* 1 for dir, 2 for diradd */
 
 		type = (strcmp(fileFilter->outputformat, "dir") == 0) ? 1 : 2;
@@ -821,8 +1027,6 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 				char *docbuf;
 				int docbufsize;
 				struct stat st;
-				int n;
-				char buf[1024];
 				FILE *fp;
 
 				if (stat(path, &st) == -1) { /* Unable to access file, move on to the next */
@@ -926,6 +1130,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 int bbdocument_close (container *attrkeys) {
 	rclose(attrkeys);
 
+	return 1;
 }
 
 int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,const char title[], char doctype[], char *attributes, container *attrkeys) {
@@ -1106,10 +1311,11 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		free(imagebuffer);
 	}
 
+	return 1;
 }	
 
 int bbdocument_deletecoll(char collection[]) {
-	char command[512];
+
 	int LotNr;
 	int i;
 	char FilePath[512];
@@ -1172,221 +1378,5 @@ unsigned int bbdocument_nrOfDocuments (char subname[]) {
 	return rLastDocID(subname);
 }
 
-
-
-int uriindex_open(DB **dbpp, char subname[], u_int32_t flags) {
-
-	DB *dbp = (*dbpp);
-
-
-	char fileName[512];
-	int ret;
-
-	GetFilPathForLotFile(fileName,"urls.db",1,subname);
-
-	#ifdef DEBUG
-		printf("uriindex_open: Trying to open lotfile \"%s\"\n",fileName);
-	#endif
-        /********************************************************************
-        * Opening nrOfFiles to stor the data in
-        ********************************************************************/
-                /* Create and initialize database object */
-                if ((ret = db_create(&dbp, NULL, 0)) != 0) {
-                        fprintf(stderr,
-                            "%s: db_create: %s\n", "bbdocument", db_strerror(ret));
-                        return 0;
-                }
-
-		//#define dbCashe 314572800       //300 mb
-                ////setter cashe størelsen manuelt
-                //if ((ret = dbp->set_cachesize(dbp, 0, dbCashe, dbCasheBlokes)) != 0) {
-                //        dbp->err(dbp, ret, "set_cachesize");
-                //}
-
-
-
-                /* open the database. */
-                if ((ret = dbp->open(dbp, NULL, fileName, NULL, DB_BTREE, flags, 0664)) != 0) {
-                        dbp->err(dbp, ret, "%s: open", fileName);
-                        //goto err1;
-			//dette skjer nor collection mappen ikke er opprettet enda, typisk forde vi ikke har lagret et dokument der enda
-			#ifdef DEBUG
-			printf("can't dbp->open(), but db_create() was sucessful!\n");
-			#endif
-
-			dbp->close(dbp, 0);
-
-			return 0;
-                }
-
-        /********************************************************************/
-
-	#ifdef DEBUG
-		printf("uriindex_open: finished\n");
-	#endif
-
-	(*dbpp) = dbp;
-
-	return 1;
-}
-
-int uriindex_close (DB **dbpp) {
-
-	DB *dbp = (*dbpp);
-
-	int ret;
-
-	#ifdef DEBUG
-                printf("uriindex_close: closeing\n");
-        #endif
-      	if ((ret = dbp->close(dbp, 0)) != 0) {
-        	fprintf(stderr, "%s: DB->close: %s\n", "bbdocument", db_strerror(ret));
-                return (EXIT_FAILURE);
-       	}
-
-	#ifdef DEBUG
-                printf("uriindex_close: finished\n");
-        #endif
-
-	(*dbpp) = dbp;
-}
-int uriindex_add (char uri[], unsigned int DocID, unsigned int lastmodified, char subname[]) {
-        DB dbpArray;
-
-        DB *dbp = NULL;
-
-        DBT key, data;
-	int ret;
-
-	struct uriindexFormat uriindex;
-
-
-	#ifdef DEBUG
-	printf("uriindex_add: subname %s\n",subname);
-	#endif
-
-	uriindex_open(&dbp,subname, DB_CREATE);
-
-
-	//resetter minne
-        memset(&key, 0, sizeof(DBT));
-        memset(&data, 0, sizeof(DBT));
-
-        //legger inn datane i bdb strukturen
-        key.data = uri;
-        key.size = strlen(uri);
-
-	uriindex.DocID = DocID;
-	uriindex.lastmodified = lastmodified;
-
-        //data.data = &DocID;
-        //data.size = sizeof(DocID);
-
-	data.data = &uriindex;
-	data.size = sizeof(uriindex);
-
-        //legger til i databasen
-        if  ((ret = dbp->put(dbp, NULL, &key, &data, 0)) != 0) {
-                dbp->err(dbp, ret, "DB->put");
-		//kan ikke returnere her for da blir den aldr lukket.
-        	//return (EXIT_FAILURE);
-        }
-        
-
-
-
-	uriindex_close(&dbp);
-
-
-
-}
-
-int uriindex_get (char uri[], unsigned int *DocID, unsigned int *lastmodified, char subname[]) {
-        DB dbpArray;
-
-        DB *dbp = NULL;
-
-        DBT key, data;
-        int ret;
-	int forreturn = 1;
-	struct uriindexFormat uriindex;
-
-        if (!uriindex_open(&dbp,subname, DB_RDONLY)) {
-		#ifdef DEBUG
-			fprintf(stderr,"can't open uriindex\n");
-		#endif
-		return 0;
-	}
-
-
-        //resetter minne
-        memset(&key, 0, sizeof(DBT));
-        memset(&data, 0, sizeof(DBT));
-
-	//legger inn datane i bdb strukturen
-        key.data = uri;
-        key.size = strlen(uri);
-
-        if ((ret = dbp->get(dbp, NULL, &key, &data, 0)) == 0) {
-
-		*DocID = (*(struct uriindexFormat *)data.data).DocID;
-		*lastmodified = (*(struct uriindexFormat *)data.data).lastmodified;
-                forreturn = 1;
-        }
-        else if (ret == DB_NOTFOUND) {
-		#ifdef DEBUG
-                	dbp->err(dbp, ret, "DBcursor->get");
-			printf("search for \"%s\", len %i\n",key.data,key.size);		
-		#endif
-                forreturn = 0;
-        }
-        else {
-                dbp->err(dbp, ret, "DBcursor->get");
-                forreturn = 0;
-        }
-
-	uriindex_close(&dbp);
-
-	return forreturn;
-
-}
-
-
-int uriindex_delete (char uri[], char subname[]) {
-        DB dbpArray;
-
-        DB *dbp = NULL;
-
-        DBT key;
-        int ret;
-	int forreturn = 1;
-	struct uriindexFormat uriindex;
-
-        if (!uriindex_open(&dbp,subname, DB_CREATE)) {
-		fprintf(stderr,"can't open uriindex\n");
-		return 0;
-	}
-
-
-        //resetter minne
-        memset(&key, 0, sizeof(DBT));
-
-	//legger inn datane i bdb strukturen
-        key.data = uri;
-        key.size = strlen(uri);
-
-        if ((ret = dbp->del(dbp, NULL, &key, 0)) == 0) {
-		forreturn = 1;
-        }
-        else {
-                dbp->err(dbp, ret, "DBcursor->get");
-                forreturn = 0;
-        }
-
-	uriindex_close(&dbp);
-
-	return forreturn;
-
-}
 
 #endif

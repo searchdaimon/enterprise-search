@@ -33,9 +33,10 @@
 #include "../common/ht.h"
 #include "../common/nice.h"
 #include "../common/stdlib.h"
+#include "../common/bfileutil.h"
 #include "../maincfg/maincfg.h"
 #include "../boitho-bbdn/bbdnclient.h"
-
+#include "../common/strlcpy.h"
 #include "../common/boithohome.h"
 #include "../bbdocument/bbdocument.h"
 
@@ -43,7 +44,7 @@
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
 #include "../common/pidfile.h"
 #include "../boithoadClientLib/boithoad.h"
-
+#include "../boithoadClientLib/liboithoaut.h"
 #include "../acls/acls.h"
 #include "perlcrawl.h"
 #include "../perlembed/perlembed.h"
@@ -92,7 +93,28 @@ void mc_add_servers(void);
 
 
 
-int cm_searchForCollection (MYSQL *db, char cvalue[],struct collectionFormat *collection[],int *nrofcollections);
+
+static unsigned int cm_hashfromkey(void *k) {
+
+    return ((int) ((char *)k)[0]);
+}
+
+static int cm_equalkeys(void *k1, void *k2) {
+
+    return (0 == strcmp(k1,k2));
+}
+
+int file_exist (char file[]) {
+
+	FILE *FH;
+	if ((FH = fopen(file,"rb")) == NULL) {
+		return 0;
+	}
+
+	fclose(FH);
+
+	return 1;
+}
 
 void my_freevalue(void *p)
 {
@@ -100,7 +122,7 @@ void my_freevalue(void *p)
 }
 void groups_freevalue(void *p)
 {
-	printf("groups_freevalue(%p, %p)\n",p, (*(char *)p));
+	printf("groups_freevalue(%p, %i)\n",p, (*(char *)p));
         free(p);
 	printf("~groups_freevalue\n");
 }
@@ -119,19 +141,439 @@ void sql_connect(MYSQL *db) {
 	}
 }
 
+void sql_set_crawl_pid(MYSQL *db , int *pid, unsigned int coll_id) {
+	char query[1024];
+	char pid_str[64];
+	if (pid == NULL) 
+		sprintf(pid_str, "NULL");
+	else
+		snprintf(pid_str, sizeof pid_str, "'%d'", *pid);
+
+	snprintf(query, sizeof query, "UPDATE shares SET crawl_pid = %s WHERE id = '%d'",
+		pid_str, coll_id);
+
+	if (mysql_real_query(db, query, strlen(query)))
+		bblog(ERROR, "mysql Error: %s", mysql_error(db));
+}
+
+int sql_coll_by_pid(int crawl_pid) {
+	char query[1024];
+	int coll_id;
+	MYSQL db;
+
+	sql_connect(&db);
+
+	snprintf(query, sizeof query, 
+		"SELECT id FROM shares WHERE crawl_pid = '%d'",
+		crawl_pid);
+    
+	MYSQL_ROW row;
+	if (mysql_real_query(&db, query, strlen(query))) {
+		bblog(ERROR, "mysql error: '%s'", mysql_error(&db));
+        exit(1);
+    }
+    MYSQL_RES * res = mysql_store_result(&db);
+
+	row = mysql_fetch_row(res);
+	coll_id = (row == NULL) ? -1 : atoi(row[0]);
+	mysql_free_result(res);
+
+	mysql_close(&db);
 
 
-usersystem_t *
-get_usersystem(MYSQL *db, unsigned int _id, usersystem_data_t *data)
+	return coll_id;
+}
+
+void sql_fetch_params(MYSQL *db, struct hashtable ** h, unsigned int coll_id)  {
+    char mysql_query[512];
+    MYSQL_ROW row;
+    (*h) = create_hashtable(7, cm_hashfromkey, cm_equalkeys);
+    if ((*h) == NULL) {
+	perror("Fail to creat hash table to hold sql params");
+	exit(-1);
+    }
+
+    snprintf(mysql_query, sizeof mysql_query, "\
+        SELECT shareParam.value, param.param \
+        FROM shareParam, param \
+        WHERE shareParam.param = param.id \
+        AND shareParam.share = %d", coll_id);
+
+    if (mysql_real_query(db, mysql_query, strlen(mysql_query))) {
+        bblog(INFO, mysql_error(db));
+	bblog(ERROR, "MySQL Error: \"%s\".",mysql_error(db));
+        exit(1);
+    }
+
+    MYSQL_RES * res = mysql_store_result(db);
+    while ((row = mysql_fetch_row(res)) != NULL) {
+        if (!hashtable_insert(*h, strdup(row[1]), strdup(row[0]))) {
+            bblog(INFO, "can't insert param into ht");
+            exit(1);
+        }
+    }
+    mysql_free_result(res);
+}
+
+
+int cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
 {
+        char mysql_query [2048];
+	MYSQL_RES *mysqlres; /* To be used to fetch information into */
+        MYSQL_ROW mysqlrow;
+	int i, numUsers;
+
+	sprintf(mysql_query, "SELECT name FROM shareUsers WHERE share = %d",
+	       collection->id);
+
+	if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
+               	bblog(INFO, "%s", mysql_error(db));
+		bblog(ERROR, "MySQL Error: \"%s\".",mysql_error(db));
+               	return 0;
+       	}
+	mysqlres=mysql_store_result(db); /* Download result from server */
+
+	numUsers = mysql_num_rows(mysqlres);
+
+	if (numUsers == 0) {
+		collection->users = NULL;
+		//returner lengder nede, så for vi også frigjort resursen
+	}
+	else {
+		bblog(DEBUGINFO, "nrofrows %i", numUsers);
+		collection->users = malloc((numUsers+1) * sizeof(char *));
+		if (collection->users == NULL)
+			return 0;
+		i=0;
+		while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
+			collection->users[i] = strdup(mysqlrow[0]);
+			i++;
+		}
+		collection->users[i] = NULL;
+	}
+
+	//mysql freeing
+	mysql_free_result(mysqlres);
+	
+	return 1;
+}
+
+int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *collection[],int *nrofcollections) {
+
+        char mysql_query [2048];
+	MYSQL_RES *mysqlres; /* To be used to fetch information into */
+        MYSQL_ROW mysqlrow;
+
+        int i;
+	
+	if (cvalue != NULL) {
+            char cvalue_esc[128];
+            mysql_real_escape_string(db, cvalue_esc, cvalue, strlen(cvalue));
+	    sprintf(mysql_query, "\
+					select \
+						resource, \
+						connectors.name, \
+						collection_name, \
+						UNIX_TIMESTAMP(last), \
+						query1, \
+						query2, \
+						auth_id, \
+						shares.id, \
+						shares.userprefix, \
+						shares.rate, \
+						shares.system, \
+						shares.alias, \
+						shares.crawl_pid \
+					from \
+						shares,connectors \
+					where \
+						connectors.ID = shares.connector \
+						AND collection_name='%s' \
+					",cvalue_esc);
+	}
+	else {
+		sprintf(mysql_query, "\
+					select \
+						resource, \
+						connectors.name, \
+						collection_name, \
+						UNIX_TIMESTAMP(last), \
+						query1, \
+						query2, \
+						auth_id, \
+						shares.id, \
+						shares.userprefix, \
+						shares.rate, \
+						shares.system, \
+						shares.alias, \
+						shares.crawl_pid \
+					from \
+						shares,connectors \
+					where \
+						connectors.ID = shares.connector \
+					");
+	}
+
+	bblog(DEBUGINFO, "mysql_query: %s",mysql_query);
+
+	if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
+               	bblog(INFO, "%s", mysql_error(db));
+		bblog(ERROR, "MySQL Error: \"%s\" '''%s'''.",mysql_error(db), mysql_query);
+		
+               	exit(1);
+       	}
+	mysqlres=mysql_store_result(db); /* Download result from server */
+
+	(*nrofcollections) = (int)mysql_num_rows(mysqlres);
+
+	if ((*nrofcollections) == 0) {
+		bblog(INFO, "dident find any rows");
+		(*collection) = NULL;		
+		return 0;
+	}
+	else {
+
+	bblog(DEBUGINFO, "nrofrows %i",*nrofcollections);
+
+	(*collection) = malloc(sizeof(struct collectionFormat) * (*nrofcollections));
+
+	//resetter minne
+	for (i=0;i<(*nrofcollections);i++) {
+		collectionReset (collection[i]);
+	}
+
+        i=0;
+        while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
+        	bblog(DEBUGINFO, "  data resource: %s, connector: %s, collection_name: %s, lastCrawl: %s, userprefix: %s, auth_id: %s",mysqlrow[0],mysqlrow[1],mysqlrow[2],mysqlrow[3],mysqlrow[8],mysqlrow[6]);
+		
+		//lagger inn i info struct
+		(*collection)[i].resource  		= strdup(mysqlrow[0]);	
+		(*collection)[i].connector		= strdup(mysqlrow[1]);	
+		(*collection)[i].collection_name 	= strdup(mysqlrow[2]);
+
+
+		if (mysqlrow[3] == NULL) {
+			(*collection)[i].lastCrawl = 0;
+		}
+		else {
+			(*collection)[i].lastCrawl = strtoul(mysqlrow[3], (char **)NULL, 10);
+		}
+
+		(*collection)[i].query1 		= strdup(mysqlrow[4]);
+		(*collection)[i].query2		 	= strdup(mysqlrow[5]);
+		
+		if (mysqlrow[6] == NULL) {
+			(*collection)[i].auth_id = 0;
+		}
+		else {
+			(*collection)[i].auth_id = strtoul(mysqlrow[6], (char **)NULL, 10);
+		}
+
+		(*collection)[i].id = strtoul(mysqlrow[7], (char **)NULL, 10);
+		(*collection)[i].userprefix = strdupnul(mysqlrow[8]);
+		(*collection)[i].rate = strtoul(mysqlrow[9], (char **)NULL, 10);
+
+		//runarb: 19 jul 2012 usikker på om dette er riktig. Vi sjekker ikke noen plass om usersystem er -1.
+		if (mysqlrow[10] == NULL) {
+			(*collection)[i].usersystem = -1;
+		}
+		else {
+			(*collection)[i].usersystem = strtoul(mysqlrow[10], (char **)NULL, 10);
+		}
+
+		if (mysqlrow[11] == NULL) {
+			(*collection)[i].alias = NULL;
+		} else {
+			(*collection)[i].alias = strdup(mysqlrow[11]);
+		}
+		(*collection)[i].extra = NULL;
+
+	
+		if (mysqlrow[12] == NULL) {
+			(*collection)[i].pid = 0;
+		}
+		else {
+			(*collection)[i].pid = strtoul(mysqlrow[12], (char **)NULL, 10);
+		}
+		//normaliserer collection navn, ved å fjenre ting som space og - \ / etc
+		collection_normalize_name((*collection)[i].collection_name,strlen((*collection)[i].collection_name));
+
+
+		bblog(DEBUGINFO, "resource \"%s\", connector \"%s\", collection_name \"%s\"",(*collection)[i].resource,(*collection)[i].connector,(*collection)[i].collection_name);
+
+		cm_collectionFetchUsers(collection[i], db);
+                sql_fetch_params(db, &(*collection)[i].params, (*collection)[i].id);
+
+		//crawler ny
+                ++i;
+        }
+
+
+        mysql_free_result(mysqlres);
+
+	/***********************************************************************/
+	// slår opp bruker id hvis vi har det, hvis ikke skal user og password være NULL	
+	for (i=0;i<(*nrofcollections);i++) {
+
+		sprintf(mysql_query,"select username,password from collectionAuth where id = %i",(*collection)[i].auth_id);
+
+		bblog(DEBUGINFO, "mysql_query: %s",mysql_query);
+
+		if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
+	               	bblog(INFO, "%s", mysql_error(db));
+	               	exit(1);
+	       	}
+		mysqlres=mysql_store_result(db); /* Download result from server */
+
+		(*collection)[i].user = NULL;
+		(*collection)[i].password = NULL;
+        
+	        while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
+	        	bblog(DEBUGINFO, "\tUser \"%s\", Password \"%s\"",mysqlrow[0],mysqlrow[1]);
+			(*collection)[i].user 			= strdup(mysqlrow[0]);	
+			(*collection)[i].password 		= strdup(mysqlrow[1]);	
+		
+	        }
+	}
+
+        mysql_free_result(mysqlres);
+
+	//inaliserer andre ting
+	for (i=0;i<(*nrofcollections);i++) {
+		(*collection)[i].errormsg[0] = '\0';
+		(*collection)[i].docsRemaining = -1;
+		(*collection)[i].docsCount = 0;
+		key_get((*collection)[i].systemkey);
+	}
+
+	/***********************************************************************/
+
+	}
+
+
+	bblog(DEBUGINFO, "cm_searchForCollection: end");
+	return 1;
+	
+}
+
+//rutine for å laste et crawler biblotek
+int cm_loadCrawlLib(struct hashtable **h, char name[]) {
+
+	bblog(DEBUGINFO, "cm_loadCrawlLib(name=%s)",name);
+
+
+	char libpath[PATH_MAX];
+	char perlpath[PATH_MAX];
+	char folderpath[PATH_MAX];
+	void* lib_handle;       /* handle of the opened library */
+	struct crawlLibInfoFormat *crawlLibInfo;
+	const char* error_msg;
+
+
+	sprintf(libpath,"%s/%s/%s.so",bfile("crawlers"),name,name);	
+	sprintf(perlpath,"%s/%s/main.pm",bfile("crawlers"),name);	
+	sprintf(folderpath,"%s/%s/",bfile("crawlers"),name);	
+	
+
+
+	if (file_exist(libpath)) {
+		bblog(INFO, "loading path \"%s\"", libpath);
+		lib_handle = dlopen(libpath, RTLD_LAZY);
+		if (!lib_handle) {
+			bblog(ERROR, "Error: during dlopen(): %s. File %s.",dlerror(),libpath);
+		    	//exit(1);
+			return 0;
+		}
+
+	
+		crawlLibInfo = dlsym(lib_handle, "crawlLibInfo");
+
+		/* check that no error occured */
+        	error_msg = dlerror();
+	        if (error_msg) {
+		bblog(ERROR, "Error: Error locating '%s' - %s.",name, error_msg);
+        	    exit(1);
+        	}
+
+		
+		bblog(INFO, "loaded \"%s\"", (*crawlLibInfo).shortname);
+
+		if ((*crawlLibInfo).crawlinit == NULL) {
+
+		}
+		else if (!(*crawlLibInfo).crawlinit()) {
+			bblog(INFO, "crawlinit dident return 1");
+			bblog(ERROR, "Error: crawlinit dident return 1.");
+			exit(1);
+		}
+
+		//sjekk at den ikke finnes i hashen fra før
+		if (hashtable_search((*h),(*crawlLibInfo).shortname) != NULL) {
+			bblog(INFO, "all redy have module with shortname \"%s\"", (*crawlLibInfo).shortname);
+			return 1;
+		}
+
+		if (! hashtable_insert((*h),(*crawlLibInfo).shortname,crawlLibInfo) ) {                        
+			bblog(ERROR, "Error: can't hastable insert.");
+               		exit(-1);
+               	}
+
+		//alt ok. Legg det i en hash
+
+	}		
+	else if (file_exist(perlpath)) {
+
+		crawlLibInfo = perlCrawlStart(folderpath, name);
+
+		bblog(INFO, "loaded \"%s\"", (*crawlLibInfo).shortname);
+
+		//sjekk at den ikke finnes i hashen fra før
+		if (hashtable_search((*h),(*crawlLibInfo).shortname) != NULL) {
+			bblog(INFO, "all redy have module with shortname \"%s\"", (*crawlLibInfo).shortname);
+			return 1;
+		}
+
+		if (! hashtable_insert((*h),(*crawlLibInfo).shortname,crawlLibInfo) ) {                        
+			bblog(ERROR, "Error: can't hastable insert.");
+               		exit(-1);
+               	}
+
+	}
+	else {
+		bblog(ERROR, "can't load \"%s\" crawler.",name);
+		return 0;
+	}
+
+	return 1;
+
+}
+
+int cm_getCrawlLibInfo(struct hashtable *h,struct crawlLibInfoFormat **crawlLibInfo,char shortname[]) {
+	bblog(DEBUGINFO, "cm_getCrawlLibInfo: start");
+	bblog(DEBUGINFO, "wil search for \"%s\"",shortname);
+	if (((*crawlLibInfo) = (struct crawlLibInfoFormat *)hashtable_search(h,shortname)) != NULL) {
+		return 1;
+        }
+	else if ((cm_loadCrawlLib(&h, shortname)) && (((*crawlLibInfo) = (struct crawlLibInfoFormat *)hashtable_search(h,shortname)) != NULL)) {
+		//hvis vi ikke kunne finne det i hashen prøver vi å laset på ny
+		bblog(DEBUGINFO, "Hadde ikke %s fra før, men fikk til å laste den.",shortname);
+		return 1;
+	}
+	else {
+		berror("don't have a crawler for \"%s\"\n",shortname);
+		bblog(ERROR, "don't have a crawler for \"%s\"",shortname);
+
+		return 0;
+	}
+}
+
+
+usersystem_t * get_usersystem(MYSQL *db, unsigned int _id, usersystem_data_t *data) {
 	MYSQL_RES *res, *resparam;
 	MYSQL_ROW row, rowparam;
-	char query[1024], *p;
+	char query[1024];
 	size_t querylen;
 	int n;
-	struct hashtable *collections;
-	struct hashtable_itr *itr;
-	struct userToSubnameDbFormat userToSubnameDb;
 	usersystem_container_t *usc;
 	usersystem_t *us;
 
@@ -340,6 +782,8 @@ int documentError(struct collectionFormat *collection,int level, const char *fmt
 	vsprintf(collection->errormsg ,fmt,ap);
 
         va_end(ap);
+
+	return 1;
 }
 
 int documentAdd(struct collectionFormat *collection, struct crawldocumentAddFormat *crawldocumentAdd) {
@@ -442,7 +886,6 @@ collectionsforuser_collection(struct hashtable *collections, char *user, struct 
 
 int _listGroupsForUser(usersystem_t *us, usersystem_data_t *data, const char *user, char ***groups, int *n_groups) {
 
-	int i = 0;
 	int j;
 	int res;
 	char *gstring, *ps;
@@ -547,7 +990,7 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 		
 		while ((row = mysql_fetch_row(res)) != NULL) {
 			char **groups;
-			int nrofcolls, n_groups;
+			int n_groups;
 			usersystem_t *us;
 			usersystem_data_t data;
 
@@ -600,7 +1043,7 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 	return n;
 }
 
-int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections) {
+void sm_collectionfree(struct collectionFormat *collection[],int nrofcollections) {
 
 	int i;
 
@@ -629,7 +1072,7 @@ int sm_collectionfree(struct collectionFormat *collection[],int nrofcollections)
 	}
 }
 
-int closecollection(struct collectionFormat *collection) {
+void closecollection(struct collectionFormat *collection) {
 	bblog(DEBUGINFO, "closecollection start");
 	bbdn_closecollection((*collection).socketha,(*collection).collection_name);
 	bblog(DEBUGINFO, "closecollection end");
@@ -835,7 +1278,6 @@ int requires_path_access(struct collectionFormat * coll) {
 int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], char username_in[], char password[]) {
 	char *origuri;
 
-	int cacheret;
 
 	struct collectionFormat *collections; // bare en "s" skiller collection og collections her. Ikke bra, bør finne på bedre navn
 	int nrofcollections;
@@ -982,13 +1424,15 @@ int scan_found_share(char share[]) {
 	strcpy(found_share[found_sharenr],share);
 
 	++found_sharenr;
+
+	return 1;
 }
 
-int scan_found_start() {
+void scan_found_start() {
 	found_sharenr = 0;
 }
 
-int scan_found_get (char ***scares,int *nr) {
+void scan_found_get(char ***scares,int *nr) {
 	found_share[found_sharenr] = '\0';
 
 	(*scares) = found_share;
@@ -996,13 +1440,12 @@ int scan_found_get (char ***scares,int *nr) {
 
 }
 
-int scan (struct hashtable *h,char ***shares,int *nrofshares,char crawlertype[],char host[],char username[],char password[]) {
+int scan(struct hashtable *h,char ***shares,int *nrofshares,char crawlertype[],char host[],char username[],char password[]) {
 
 	struct crawlLibInfoFormat *crawlLibInfo;
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,crawlertype)) {
 		bblog(ERROR, "Error: can't get CrawlLibInfo.");
-
                 exit(1);
         }
 
@@ -1025,36 +1468,14 @@ int scan (struct hashtable *h,char ***shares,int *nrofshares,char crawlertype[],
         }
 
 	scan_found_get(shares,nrofshares);
-}
-
-
-
-static unsigned int cm_hashfromkey(void *k)
-{
-	
-    return ((int) ((char *)k)[0]);
-}
-
-static int cm_equalkeys(void *k1, void *k2)
-{
-    return (0 == strcmp(k1,k2));
-}
-
-int file_exist (char file[]) {
-
-	FILE *FH;
-	if ((FH = fopen(file,"rb")) == NULL) {
-		return 0;
-	}
-
-	fclose(FH);
 
 	return 1;
 }
 
-void
-list_usersystems(struct hashtable *us)
-{
+
+
+
+void list_usersystems(struct hashtable *us) {
 	struct hashtable_itr *itr;
 
 	if (hashtable_count(us) > 0) {
@@ -1117,8 +1538,8 @@ load_usersystem(struct hashtable *us, char *name)
 
 	sprintf(folderpath, "%s/%s", bfile("usersystems"), name);
 	sprintf(libpath, "%s/%s.so", folderpath, name);
-	sprintf(perlpath, "%s/main.pm", folderpath, name);
-	sprintf(idpath, "%s/id", folderpath, name);
+	sprintf(perlpath, "%s/main.pm", folderpath);
+	sprintf(idpath, "%s/id", folderpath);
 	usc = malloc(sizeof(*usc));
 
 	fileid = 0;
@@ -1165,7 +1586,6 @@ load_usersystem(struct hashtable *us, char *name)
 	} else if (file_exist(perlpath)) {
 		usersystem_perl_t *usersystem;
 		unsigned int type;
-		int retn;
 
 		if (fileid == 0) {
 			bblog(ERROR, "Perl usersystem require a file id");
@@ -1225,102 +1645,12 @@ load_usersystems(struct hashtable **usersystems)
 
 	closedir(dirp);
 }
-//rutine for å laste et crawler biblotek
-int cm_loadCrawlLib(struct hashtable **h, char name[]) {
 
-	bblog(DEBUGINFO, "cm_loadCrawlLib(name=%s)",name);
-
-
-	char libpath[PATH_MAX];
-	char perlpath[PATH_MAX];
-	char folderpath[PATH_MAX];
-	void* lib_handle;       /* handle of the opened library */
-	struct crawlLibInfoFormat *crawlLibInfo;
-	const char* error_msg;
-
-
-	sprintf(libpath,"%s/%s/%s.so",bfile("crawlers"),name,name);	
-	sprintf(perlpath,"%s/%s/main.pm",bfile("crawlers"),name);	
-	sprintf(folderpath,"%s/%s/",bfile("crawlers"),name);	
-	
-
-
-	if (file_exist(libpath)) {
-		bblog(INFO, "loading path \"%s\"", libpath);
-		lib_handle = dlopen(libpath, RTLD_LAZY);
-		if (!lib_handle) {
-			bblog(ERROR, "Error: during dlopen(): %s. File %s.",dlerror(),libpath);
-		    	//exit(1);
-			return 0;
-		}
-
-	
-		crawlLibInfo = dlsym(lib_handle, "crawlLibInfo");
-
-		/* check that no error occured */
-        	error_msg = dlerror();
-	        if (error_msg) {
-		bblog(ERROR, "Error: Error locating '%s' - %s.",name, error_msg);
-        	    exit(1);
-        	}
-
-		
-		bblog(INFO, "loaded \"%s\"", (*crawlLibInfo).shortname);
-
-		if ((*crawlLibInfo).crawlinit == NULL) {
-
-		}
-		else if (!(*crawlLibInfo).crawlinit()) {
-			bblog(INFO, "crawlinit dident return 1");
-			bblog(ERROR, "Error: crawlinit dident return 1.");
-			exit(1);
-		}
-
-		//sjekk at den ikke finnes i hashen fra før
-		if (hashtable_search((*h),(*crawlLibInfo).shortname) != NULL) {
-			bblog(INFO, "all redy have module with shortname \"%s\"", (*crawlLibInfo).shortname);
-			return 1;
-		}
-
-		if (! hashtable_insert((*h),(*crawlLibInfo).shortname,crawlLibInfo) ) {                        
-			bblog(ERROR, "Error: can't hastable insert.");
-               		exit(-1);
-               	}
-
-		//alt ok. Legg det i en hash
-
-	}		
-	else if (file_exist(perlpath)) {
-
-		crawlLibInfo = perlCrawlStart(folderpath, name);
-
-		bblog(INFO, "loaded \"%s\"", (*crawlLibInfo).shortname);
-
-		//sjekk at den ikke finnes i hashen fra før
-		if (hashtable_search((*h),(*crawlLibInfo).shortname) != NULL) {
-			bblog(INFO, "all redy have module with shortname \"%s\"", (*crawlLibInfo).shortname);
-			return 1;
-		}
-
-		if (! hashtable_insert((*h),(*crawlLibInfo).shortname,crawlLibInfo) ) {                        
-			bblog(ERROR, "Error: can't hastable insert.");
-               		exit(-1);
-               	}
-
-	}
-	else {
-		bblog(ERROR, "can't load \"%s\" crawler.",name);
-		return 0;
-	}
-
-	return 1;
-
-}
-
-int cm_end() {
+void cm_end() {
 	perl_embed_clean();
 }
-int cm_start(struct hashtable **h, struct hashtable **usersystems) {
+
+void cm_start(struct hashtable **h, struct hashtable **usersystems) {
 
 	bblog(INFO, "cm_start start");
 
@@ -1362,352 +1692,15 @@ int cm_start(struct hashtable **h, struct hashtable **usersystems) {
 }
 
 
-/************************************************************/
-
-int cm_getCrawlLibInfo(struct hashtable *h,struct crawlLibInfoFormat **crawlLibInfo,char shortname[]) {
-	bblog(DEBUGINFO, "cm_getCrawlLibInfo: start");
-	bblog(DEBUGINFO, "wil search for \"%s\"",shortname);
-	if (((*crawlLibInfo) = (struct crawlLibInfoFormat *)hashtable_search(h,shortname)) != NULL) {
-		return 1;
-        }
-	else if ((cm_loadCrawlLib(&h, shortname)) && (((*crawlLibInfo) = (struct crawlLibInfoFormat *)hashtable_search(h,shortname)) != NULL)) {
-		//hvis vi ikke kunne finne det i hashen prøver vi å laset på ny
-		bblog(DEBUGINFO, "Hadde ikke %s fra før, men fikk til å laste den.",shortname);
-		return 1;
-	}
-	else {
-		berror("don't have a crawler for \"%s\"\n",shortname);
-		bblog(ERROR, "don't have a crawler for \"%s\"",shortname);
-
-		return 0;
-	}
-}
 
 
-int
-cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
-{
-        char mysql_query [2048];
-	MYSQL_RES *mysqlres; /* To be used to fetch information into */
-        MYSQL_ROW mysqlrow;
-	int i, numUsers;
-
-	sprintf(mysql_query, "SELECT name FROM shareUsers WHERE share = %d",
-	       collection->id);
-
-	if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
-               	bblog(INFO, "%s", mysql_error(db));
-		bblog(ERROR, "MySQL Error: \"%s\".",mysql_error(db));
-               	return 0;
-       	}
-	mysqlres=mysql_store_result(db); /* Download result from server */
-
-	numUsers = mysql_num_rows(mysqlres);
-
-	if (numUsers == 0) {
-		collection->users = NULL;
-		//returner lengder nede, så for vi også frigjort resursen
-	}
-	else {
-		bblog(DEBUGINFO, "nrofrows %i", numUsers);
-		collection->users = malloc((numUsers+1) * sizeof(char *));
-		if (collection->users == NULL)
-			return 0;
-		i=0;
-		while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
-			collection->users[i] = strdup(mysqlrow[0]);
-			i++;
-		}
-		collection->users[i] = NULL;
-	}
-
-	//mysql freeing
-	mysql_free_result(mysqlres);
-	
-	return 1;
-}
-
-void 
-sql_fetch_params(MYSQL *db, struct hashtable ** h, unsigned int coll_id)  {
-    char mysql_query[512];
-    MYSQL_ROW row;
-    (*h) = create_hashtable(7, cm_hashfromkey, cm_equalkeys);
-    if ((*h) == NULL) {
-	perror("Fail to creat hash table to hold sql params");
-	exit(-1);
-    }
-
-    snprintf(mysql_query, sizeof mysql_query, "\
-        SELECT shareParam.value, param.param \
-        FROM shareParam, param \
-        WHERE shareParam.param = param.id \
-        AND shareParam.share = %d", coll_id);
-
-    if (mysql_real_query(db, mysql_query, strlen(mysql_query))) {
-        bblog(INFO, mysql_error(db));
-	bblog(ERROR, "MySQL Error: \"%s\".",mysql_error(db));
-        exit(1);
-    }
-
-    MYSQL_RES * res = mysql_store_result(db);
-    while ((row = mysql_fetch_row(res)) != NULL) {
-        if (!hashtable_insert(*h, strdup(row[1]), strdup(row[0]))) {
-            bblog(INFO, "can't insert param into ht");
-            exit(1);
-        }
-    }
-    mysql_free_result(res);
-}
-
-void
-sql_set_crawl_pid(MYSQL *db , int *pid, unsigned int coll_id) {
-	char query[1024];
-	char pid_str[64];
-	if (pid == NULL) 
-		sprintf(pid_str, "NULL");
-	else
-		snprintf(pid_str, sizeof pid_str, "'%d'", *pid);
-
-	snprintf(query, sizeof query, "UPDATE shares SET crawl_pid = %s WHERE id = '%d'",
-		pid_str, coll_id);
-
-	if (mysql_real_query(db, query, strlen(query)))
-		bblog(ERROR, "mysql Error: %s", mysql_error(db));
-}
-
-int
-sql_coll_by_pid(int crawl_pid) {
-	char query[1024];
-	int coll_id;
-	MYSQL db;
-
-	sql_connect(&db);
-
-	snprintf(query, sizeof query, 
-		"SELECT id FROM shares WHERE crawl_pid = '%d'",
-		crawl_pid);
-    
-	MYSQL_ROW row;
-	if (mysql_real_query(&db, query, strlen(query))) {
-		bblog(ERROR, "mysql error: '%s'", mysql_error(&db));
-        exit(1);
-    }
-    MYSQL_RES * res = mysql_store_result(&db);
-
-	row = mysql_fetch_row(res);
-	coll_id = (row == NULL) ? -1 : atoi(row[0]);
-	mysql_free_result(res);
-
-	mysql_close(&db);
 
 
-	return coll_id;
-}
-
-
-int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *collection[],int *nrofcollections) {
-
-        char mysql_query [2048];
-	MYSQL_RES *mysqlres; /* To be used to fetch information into */
-        MYSQL_ROW mysqlrow;
-
-        int i,y;
-	
-	if (cvalue != NULL) {
-            char cvalue_esc[128];
-            mysql_real_escape_string(db, cvalue_esc, cvalue, strlen(cvalue));
-	    sprintf(mysql_query, "\
-					select \
-						resource, \
-						connectors.name, \
-						collection_name, \
-						UNIX_TIMESTAMP(last), \
-						query1, \
-						query2, \
-						auth_id, \
-						shares.id, \
-						shares.userprefix, \
-						shares.rate, \
-						shares.system, \
-						shares.alias, \
-						shares.crawl_pid \
-					from \
-						shares,connectors \
-					where \
-						connectors.ID = shares.connector \
-						AND collection_name='%s' \
-					",cvalue_esc);
-	}
-	else {
-		sprintf(mysql_query, "\
-					select \
-						resource, \
-						connectors.name, \
-						collection_name, \
-						UNIX_TIMESTAMP(last), \
-						query1, \
-						query2, \
-						auth_id, \
-						shares.id, \
-						shares.userprefix, \
-						shares.rate, \
-						shares.system, \
-						shares.alias, \
-						shares.crawl_pid \
-					from \
-						shares,connectors \
-					where \
-						connectors.ID = shares.connector \
-					");
-	}
-
-	bblog(DEBUGINFO, "mysql_query: %s",mysql_query);
-
-	if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
-               	bblog(INFO, "%s", mysql_error(db));
-		bblog(ERROR, "MySQL Error: \"%s\" '''%s'''.",mysql_error(db), mysql_query);
-		
-               	exit(1);
-       	}
-	mysqlres=mysql_store_result(db); /* Download result from server */
-
-	(*nrofcollections) = (int)mysql_num_rows(mysqlres);
-
-	if ((*nrofcollections) == 0) {
-		bblog(INFO, "dident find any rows");
-		(*collection) = NULL;		
-		return 0;
-	}
-	else {
-
-	bblog(DEBUGINFO, "nrofrows %i",*nrofcollections);
-
-	(*collection) = malloc(sizeof(struct collectionFormat) * (*nrofcollections));
-
-	//resetter minne
-	for (i=0;i<(*nrofcollections);i++) {
-		collectionReset (collection[i]);
-	}
-
-        i=0;
-        while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
-        	bblog(DEBUGINFO, "  data resource: %s, connector: %s, collection_name: %s, lastCrawl: %s, userprefix: %s, auth_id: %s",mysqlrow[0],mysqlrow[1],mysqlrow[2],mysqlrow[3],mysqlrow[8],mysqlrow[6]);
-		
-		//lagger inn i info struct
-		(*collection)[i].resource  		= strdup(mysqlrow[0]);	
-		(*collection)[i].connector		= strdup(mysqlrow[1]);	
-		(*collection)[i].collection_name 	= strdup(mysqlrow[2]);
-
-
-		if (mysqlrow[3] == NULL) {
-			(*collection)[i].lastCrawl = 0;
-		}
-		else {
-			(*collection)[i].lastCrawl = strtoul(mysqlrow[3], (char **)NULL, 10);
-		}
-
-		(*collection)[i].query1 		= strdup(mysqlrow[4]);
-		(*collection)[i].query2		 	= strdup(mysqlrow[5]);
-		
-		if (mysqlrow[6] == NULL) {
-			(*collection)[i].auth_id = 0;
-		}
-		else {
-			(*collection)[i].auth_id = strtoul(mysqlrow[6], (char **)NULL, 10);
-		}
-
-		(*collection)[i].id = strtoul(mysqlrow[7], (char **)NULL, 10);
-		(*collection)[i].userprefix = strdupnul(mysqlrow[8]);
-		(*collection)[i].rate = strtoul(mysqlrow[9], (char **)NULL, 10);
-
-		//runarb: 19 jul 2012 usikker på om dette er riktig. Vi sjekker ikke noen plass om usersystem er -1.
-		if (mysqlrow[10] == NULL) {
-			(*collection)[i].usersystem = -1;
-		}
-		else {
-			(*collection)[i].usersystem = strtoul(mysqlrow[10], (char **)NULL, 10);
-		}
-
-		if (mysqlrow[11] == NULL) {
-			(*collection)[i].alias = NULL;
-		} else {
-			(*collection)[i].alias = strdup(mysqlrow[11]);
-		}
-		(*collection)[i].extra = NULL;
-
-	
-		if (mysqlrow[12] == NULL) {
-			(*collection)[i].pid = 0;
-		}
-		else {
-			(*collection)[i].pid = strtoul(mysqlrow[12], (char **)NULL, 10);
-		}
-		//normaliserer collection navn, ved å fjenre ting som space og - \ / etc
-		collection_normalize_name((*collection)[i].collection_name,strlen((*collection)[i].collection_name));
-
-
-		bblog(DEBUGINFO, "resource \"%s\", connector \"%s\", collection_name \"%s\"",(*collection)[i].resource,(*collection)[i].connector,(*collection)[i].collection_name);
-
-		cm_collectionFetchUsers(collection[i], db);
-                sql_fetch_params(db, &(*collection)[i].params, (*collection)[i].id);
-
-		//crawler ny
-                ++i;
-        }
-
-
-        mysql_free_result(mysqlres);
-
-	/***********************************************************************/
-	// slår opp bruker id hvis vi har det, hvis ikke skal user og password være NULL	
-	for (i=0;i<(*nrofcollections);i++) {
-
-		sprintf(mysql_query,"select username,password from collectionAuth where id = %i",(*collection)[i].auth_id);
-
-		bblog(DEBUGINFO, "mysql_query: %s",mysql_query);
-
-		if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
-	               	bblog(INFO, "%s", mysql_error(db));
-	               	exit(1);
-	       	}
-		mysqlres=mysql_store_result(db); /* Download result from server */
-
-		(*collection)[i].user = NULL;
-		(*collection)[i].password = NULL;
-        
-	        while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
-	        	bblog(DEBUGINFO, "\tUser \"%s\", Password \"%s\"",mysqlrow[0],mysqlrow[1]);
-			(*collection)[i].user 			= strdup(mysqlrow[0]);	
-			(*collection)[i].password 		= strdup(mysqlrow[1]);	
-		
-	        }
-	}
-
-        mysql_free_result(mysqlres);
-
-	//inaliserer andre ting
-	for (i=0;i<(*nrofcollections);i++) {
-		(*collection)[i].errormsg[0] = '\0';
-		(*collection)[i].docsRemaining = -1;
-		(*collection)[i].docsCount = 0;
-		key_get((*collection)[i].systemkey);
-	}
-
-	/***********************************************************************/
-
-	}
-
-
-	bblog(DEBUGINFO, "cm_searchForCollection: end");
-	return 1;
-	
-}
 
 int cm_handle_crawlcanconect(MYSQL *db, char cvalue[]) {
 
 	struct collectionFormat *collections = NULL;
 	int nrofcollections;
-	int i;
 
 	bblog(INFO, "cm_handle_crawlcanconect (%s)", cvalue);
 
@@ -1744,6 +1737,40 @@ int cm_handle_crawlcanconect(MYSQL *db, char cvalue[]) {
 	return 1;
 }
 
+//crawler_success  skal være 0 hvis vi feilet, og 1 hvis vi ikke feilet
+void sql_set_crawler_message(MYSQL *db, int crawler_success  , char mrg[], unsigned int id) {
+
+        char mysql_query [2048];
+	char messageEscaped[2048];
+
+	bblog(INFO, "Status: set_crawler_message: mesage: \"%s\", success: %i, id: %i.",mrg,crawler_success,id);
+
+
+	if (mrg == NULL) {
+        	sprintf(mysql_query, "UPDATE shares SET last = NULL WHERE id = '%d'",id);
+	} 
+	else if (crawler_success  == 0) {
+		//escaper queryet rikit
+		mysql_real_escape_string(db,messageEscaped,mrg,strlen(mrg));
+        	sprintf(mysql_query, "UPDATE shares SET crawler_success = \"%i\", crawler_message = \"%s\" WHERE id  = \"%u\"",crawler_success ,messageEscaped,id);
+	}
+	else {
+		//escaper queryet rikit
+		mysql_real_escape_string(db,messageEscaped,mrg,strlen(mrg));
+        	sprintf(mysql_query, "UPDATE shares SET crawler_success = \"%i\", crawler_message = \"%s\", last = now() WHERE id  = \"%u\"",crawler_success ,messageEscaped,id);
+
+	}
+
+	bblog(INFO, "Status: \"%s\".",mysql_query);
+
+
+        if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
+		bblog(ERROR, "Mysql Error: \"%s\".",mysql_error(db));
+                exit(1);
+        }
+
+}
+
 void set_crawl_state(int state, unsigned int coll_id, char * msg) {
 	
 	MYSQL db;
@@ -1778,44 +1805,6 @@ void set_crawl_state(int state, unsigned int coll_id, char * msg) {
 	}
 
 	mysql_close(&db);
-}
-
-//crawler_success  skal være 0 hvis vi feilet, og 1 hvis vi ikke feilet
-int sql_set_crawler_message(MYSQL *db, int crawler_success  , char mrg[], unsigned int id) {
-
-        char mysql_query [2048];
-	char messageEscaped[2048];
-        MYSQL_RES *mysqlres; /* To be used to fetch information into */
-        MYSQL_ROW mysqlrow;
-
-	bblog(INFO, "Status: set_crawler_message: mesage: \"%s\", success: %i, id: %i.",mrg,crawler_success,id);
-
-
-	if (mrg == NULL) {
-        	sprintf(mysql_query, "UPDATE shares SET last = NULL WHERE id = '%d'",id);
-	} 
-	else if (crawler_success  == 0) {
-		//escaper queryet rikit
-		mysql_real_escape_string(db,messageEscaped,mrg,strlen(mrg));
-        	sprintf(mysql_query, "UPDATE shares SET crawler_success = \"%i\", crawler_message = \"%s\" WHERE id  = \"%u\"",crawler_success ,messageEscaped,id);
-	}
-	else {
-		//escaper queryet rikit
-		mysql_real_escape_string(db,messageEscaped,mrg,strlen(mrg));
-        	sprintf(mysql_query, "UPDATE shares SET crawler_success = \"%i\", crawler_message = \"%s\", last = now() WHERE id  = \"%u\"",crawler_success ,messageEscaped,id);
-
-	}
-
-	bblog(INFO, "Status: \"%s\".",mysql_query);
-
-
-        if(mysql_real_query(db, mysql_query, strlen(mysql_query))){ /* Make query */
-		bblog(ERROR, "Mysql Error: \"%s\".",mysql_error(db));
-                exit(1);
-        }
-
-
-
 }
 
 
@@ -1919,10 +1908,9 @@ int redirect_stdoutput(char * file) {
     return 1;
 }
 
-int crawl(struct collectionFormat *collection,int nrofcollections, int flag, int docsRemaining, char *extra) {
+void crawl(struct collectionFormat *collection,int nrofcollections, int flag, int docsRemaining, char *extra) {
 
 	int i;
-	FILE *LOCK;
 
 	struct collection_lockFormat collection_lock;
 	
@@ -1935,42 +1923,40 @@ int crawl(struct collectionFormat *collection,int nrofcollections, int flag, int
 
 		bblog(ERROR,"Starting crawl of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
 
-#ifdef BLACK_BOX
-		long long left = kbytes_left_in_dir(BB_DATA_DIR);
-		if (left == -1)
-			bblog(WARN, "Unable to check space left in lots.");
-		else if (left < MIN_DISK_REQUIRED) {
-			set_crawl_state(CRAWL_ERROR, collection[i].id, "Crawl request ignored. Not enough disk space.");
-			bblog(ERROR, "Not enough disk space to craw, space left: %fMB", left / 1024.0);
-			continue;
-		} 
-		else { 
-			// debug: printf("Disk space left: %fMB\n", left / 1024.0); 
+		#ifdef BLACK_BOX
+			long long left = kbytes_left_in_dir(BB_DATA_DIR);
+			if (left == -1)
+				bblog(WARN, "Unable to check space left in lots.");
+			else if (left < MIN_DISK_REQUIRED) {
+				set_crawl_state(CRAWL_ERROR, collection[i].id, "Crawl request ignored. Not enough disk space.");
+				bblog(ERROR, "Not enough disk space to craw, space left: %fMB", left / 1024.0);
+				continue;
+			} 
+			else { 
+				// debug: printf("Disk space left: %fMB\n", left / 1024.0); 
+			}
+		#endif
+
+
+		int output_redirected = 0;
+		if ((collection[i].extra != NULL) && (getenv("BBLOGGER_APPENDERS") == NULL)) {
+			if (!redirect_stdoutput(collection[i].extra)) {
+				bblog(ERROR, "test collection error, skipping.");
+				continue;
+			}
+		    
+			// a lock implies that a crawl is still running
+			flock(fileno(stdout), LOCK_SH); 
+			setvbuf(stdout, NULL, _IOLBF, 0); // line buffered
+			setvbuf(stderr, NULL, _IOLBF, 0);
+			output_redirected = 1;
 		}
-#endif
-
-
-        int output_redirected = 0;
-        if ((collection[i].extra != NULL) && (getenv("BBLOGGER_APPENDERS") == NULL)) {
-            if (!redirect_stdoutput(collection[i].extra)) {
-                bblog(ERROR, "test collection error, skipping.");
-                continue;
-            }
-            
-            // a lock implies that a crawl is still running
-            flock(fileno(stdout), LOCK_SH); 
-            setvbuf(stdout, NULL, _IOLBF, 0); // line buffered
-            setvbuf(stderr, NULL, _IOLBF, 0);
-            output_redirected = 1;
-        }
 
 		//sletter collection. Gjør dette uavhenging om vi har lock eller ikke, slik at vi altid får slettet, så kan vi gjøre
 		// ny crawl etterpå hvis vi ikke hadde lock
 		if (flag == crawl_recrawl) {
 			bblog(DEBUGINFO, "crawl_recrawl");
 
-			char querybuf[1024];
-			int querylen;
 
 			// If we have a pid from befor, we are probobly crawling it. Start by killing the old crawler.
 			if (collection[i].pid != 0) {
@@ -2061,8 +2047,7 @@ int crawl(struct collectionFormat *collection,int nrofcollections, int flag, int
 
 }
 
-int
-rewriteurl(MYSQL *db, char *collection, char *url, size_t urllen, char *uri, size_t urilen, char *fulluri, size_t fullurilen, enum platform_type ptype, enum browser_type btype) {
+int rewriteurl(MYSQL *db, char *collection, char *url, size_t urllen, char *uri, size_t urilen, char *fulluri, size_t fullurilen, enum platform_type ptype, enum browser_type btype) {
 
 	struct crawlLibInfoFormat *crawlLibInfo;
 	struct collectionFormat *collections;
@@ -2266,8 +2251,6 @@ void connectHandler(int socket) {
 			recvall(socket,collection,sizeof(collection));
 			bblog(INFO, "collection \"%s\"", collection);
 
-			struct collectionFormat *collections;
-			int nrofcollections;
 			struct collection_lockFormat collection_lock;
 
 			//Tester om noen har en lås på collectionen. Hvis de har de må vi la være i slette den, 
@@ -2315,7 +2298,7 @@ void connectHandler(int socket) {
 
 			bblog(INFO, "gor scan job: crawlertype %s host %s username %s password %s", crawlertype,host,username,password);
 
-			if (!scan (global_h,&shares,&nrofshares,crawlertype,host,username,password)) {
+			if (!scan(global_h,&shares,&nrofshares,crawlertype,host,username,password)) {
 				bblog(INFO, "aa can't scan");
 				socketsendsaa(socket,&shares,0);
 				bblog(INFO, "bb");
@@ -2438,7 +2421,7 @@ void connectHandler(int socket) {
 		}
 		else if (packedHedder.command == cm_killcrawl) {
 			int pid;
-			char errmsg[256];
+
 			recvall(socket, &pid, sizeof pid);
 
 			int coll_id = sql_coll_by_pid(pid);
@@ -2600,9 +2583,6 @@ void connectHandler(int socket) {
 			char user[512], secnduser[512];
 			char **groups, group[MAX_LDAP_ATTR_LEN]; //[MAX_LDAP_ATTR_LEN];
 			int n_groups, j;
-			struct collectionFormat *collections;
-			int nrofcollections;
-			struct crawlLibInfoFormat *crawlLibInfo;
 			unsigned int usersystem;
 			MYSQL db;
 			MYSQL_ROW row;
@@ -2708,7 +2688,6 @@ void connectHandler(int socket) {
 		    	    }
 		}
 		else if (packedHedder.command == cm_usersystemfromcollection) {
-			char collection[512];
 			MYSQL db;
 			int n;
 			MYSQL_RES *res;
@@ -2809,11 +2788,7 @@ void connectHandler(int socket) {
 			sendall(socket, &n, sizeof(n));
 		}
 		else if (packedHedder.command == cm_removeForeignUsers) {
-			char query[2048];
-			size_t querylen;
-			struct collectionFormat *collections;
-			int nrofcollections;
-			MYSQL db;
+
 			int n;
 
 			bblog(INFO, "removeForeignUsers");
