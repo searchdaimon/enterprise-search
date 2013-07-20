@@ -376,12 +376,10 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 	char **acl_allow, char **acl_denied)
 {
 
-	bblog(INFO, "searchkernel: popResult(antall=%i, DocID=%i, subname=%s)",  antall, DocID, subname->subname);
-
 	char *url = NULL, *attributes = NULL;
 	int y;
 	char        *titleaa, *body, *metakeyw, *metadesc;
-	struct ReposetoryHeaderFormat ReposetoryHeader;
+	struct ReposetoryHeaderFormat *ReposetoryHeader;
 	off_t imagep;
 	struct timeval start_time, end_time;
 	titleaa = body = metakeyw = metadesc = NULL;
@@ -393,7 +391,13 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 
 	htmlBuffer[0] = '\0';
 
+	if ((ReposetoryHeader = malloc( sizeof(struct ReposetoryHeaderFormat) )) == NULL) {
+		bblog_errno(ERROR, "Malloc ReposetoryHeader");
+		return 0;
+	}
 
+
+	bblog(INFO, "searchkernel: popResult(antall=%i, DocID=%i, subname=%s)",  antall, DocID, subname->subname);
 
 	//ser om vi har bilde, og at det ikke er på 65535 bytes. (65535  er maks støresle 
 	//for unsigned short. Er bilde så stort skyldes det en feil)
@@ -503,7 +507,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 					free(snippet);
 				}
 				free(resbuf);
-			} else if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize2,DocID,subname->subname,&ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
+			} else if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize2,DocID,subname->subname,ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
 				//kune ikke lese html. Pointer owerflow ?
 				bblog(ERROR, "error reding html for %s", (*Sider).DocumentIndex.Url);
 				sprintf((*Sider).description,"Html error. Can't read html");
@@ -591,7 +595,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 			}
 			else {
 				bblog(DEBUGINFO, "don't hav Summary on disk. Will hav to read html");	
-				if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize2,DocID,subname->subname,&ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
+				if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize2,DocID,subname->subname,ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
 					//printf("Fii faa foo: %s\n", url);
 					//kune ikke lese html. Pointer owerflow ?
 					bblog(ERROR, "error reding html for %s", (*Sider).DocumentIndex.Url);
@@ -815,13 +819,23 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 						continue;
 					    }
 
-					char htmlbuf[1024*1024 * 5];
-					unsigned int htmllen = sizeof(htmlbuf);
-					unsigned int imagelen = sizeof(imagelen);
+					char *htmlbuf;
+					unsigned int htmllen = 1024*1024 * 5;
+					//unsigned int imagelen = sizeof(imagelen);
 					char *url, *acla, *acld, *attributes;
 					struct DocumentIndexFormat di;
 					struct ReposetoryHeaderFormat repohdr;
-					char tmpurl[1024], tmpuri[1024], tmpfulluri[1024];
+					char *tmpurl, *tmpuri, *tmpfulluri;
+
+					tmpurl = malloc(1024);
+					tmpuri = malloc(1024);
+					tmpfulluri = malloc(1024);
+					htmlbuf = malloc(htmllen);
+
+					if(tmpurl == NULL || tmpuri == NULL || tmpfulluri == NULL || htmlbuf == NULL) {
+						bblog_errno(ERROR, "Malloc tmpurl, tmpuri, tmpfulluri or htmlbuf");
+						continue;
+					}
 
 					acld = acla = attributes = url = NULL;
 					if (!DIRead(&di, dup_docid, dup_subname)) {
@@ -857,6 +871,9 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 						bblog_errno(ERROR, "Malloc uri");
 					}
 
+					free(tmpurl);
+					free(tmpuri);
+					free(tmpfulluri);
 					free(attributes);
 					free(acla);
 					free(acld);
@@ -891,6 +908,8 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 		free(url);
 	if (attributes != NULL)
 		free(attributes);
+	if (ReposetoryHeader != NULL)
+		free(ReposetoryHeader);
 
 	bblog(INFO, "searchkernel: ~popResult()");
 	return returnStatus;
