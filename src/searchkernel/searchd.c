@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
 	searchd_config.optFastStartup 	= 0;
 	searchd_config.optCacheIndexes 	= 1;
 	searchd_config.optAlarm 	= 60;
-	
+	searchd_config.optDoNotFork	= 0;		
 	// Needed for the speller to properly convert utf8 to wchar_t
 	setlocale(LC_ALL, "en_US.UTF-8");
 
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 	signal(SIGUSR1, SIG_IGN);
 
         char c;
-        while ((c=getopt(argc,argv,"clp:m:b:vsofA:L:S:a:"))!=-1) {
+        while ((c=getopt(argc,argv,"clp:m:b:vsofA:L:S:a:t"))!=-1) {
                 switch (c) {
                         case 'p':
                                 searchd_config.searchport = atoi(optarg);
@@ -203,8 +203,12 @@ int main(int argc, char *argv[])
 				globalOptVerbose = 1;
                                 break;
                         case 's':
-				bblog(INFO, "Option -s: Won't fork for new connections");
+				bblog(INFO, "Option -s: Won't fork for new connections nor use multiple threads");
 				searchd_config.optSingle = 1;
+                                break;
+                        case 't':
+				bblog(INFO, "Option -s: Won't fork for new connections but will use multiple threads");
+				searchd_config.optDoNotFork = 1;
                                 break;
 			case 'f':
 				searchd_config.optFastStartup = 1;
@@ -476,7 +480,7 @@ int main(int argc, char *argv[])
 		}
 		else {
 
-			if (searchd_config.optSingle) {
+			if (searchd_config.optSingle || searchd_config.optDoNotFork) {
 				do_chld((void *) &searchd_config);
 			}
 			else {

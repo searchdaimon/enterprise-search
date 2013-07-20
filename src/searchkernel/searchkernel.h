@@ -25,17 +25,16 @@ struct searchd_configFORMAT {
         int optMax;
         int optSingle;
         char *optrankfile;
-
 	int optPreOpen;
 	struct lotPreOpenFormat lotPreOpen;
 	container	*thesaurus_all;
 	thesaurus       *thesaurusp;
 	struct fte_data	*getfiletypep;
 	struct adf_data	*attrdescrp;
-	//attr_conf	*showattrp;
 	int optFastStartup;
 	int optCacheIndexes;
 	int optAlarm;
+	int optDoNotFork;
 };
 
 int dosearch(char query[], int queryLen, struct SiderFormat **Sider, struct SiderHederFormat *SiderHeder,
