@@ -1,0 +1,58 @@
+.TH ppt2text 1  "Version @catdoc_version@" "MS-PowerPoint reader"
+.SH NAME
+catppt \- reads MS-PowerPoint file and puts its content on standard output
+.SH SYNOPSIS
+
+.BR "catppt " [ -lV ] 
+.RB [ -b
+.IR " string " ]
+.RB [ -s 
+.IR " charset " ] 
+.RB [ -d 
+.IR " charset " ] 
+.I files
+
+.SH DESCRIPTION
+
+.B catppt
+reads MS-PowerPoint presentations and dumps its content to stdout. 
+.SH "OPTIONS"
+.TP 8
+.BR -l
+list known charsets and exit successfully
+.TP 8
+.BI -b string
+slides break string. This string (by default - formfeed) would be output
+at the end of each slide page.
+
+.TP 8
+.BI -d charset`
+- specifies destination charset name. Charset file has format described in
+CHARACTER SETS section of 
+.BR catdoc (1)
+manual page. By default, current locale
+charset would be used if langinfo support was enabled at the compile time.
+
+.TP 8
+.BI -s charset
+- specifies source charset. Typically, PowerPoint files use UNICODE
+strings with known charsets, but for some reason you may wish to 
+override it.
+
+.TP 8
+.B -V
+outputs version number
+
+.SH "SEE ALSO"
+
+.BR cat (1),
+.BR catdoc (1),
+.BR xls2csv (1),
+.BR strings (1),
+.BR utf (4),
+.BR unicode (4)
+
+.SH AUTHOR
+
+Alex Ott <alexott@gmail.com>
+

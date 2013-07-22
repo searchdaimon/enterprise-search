@@ -1,0 +1,314 @@
+.TH catdoc 1  "Version @catdoc_version@" "MS-Word reader"
+.SH NAME
+catdoc \- reads MS-Word file and puts its content as plain text on standard output
+.SH SYNOPSIS
+
+.BR catdoc " [" -vlu8btawxV "] [" -m " 
+.IR number ] 
+[
+.B -s
+.IR charset ] 
+[
+.B -d 
+.IR charset ] 
+[ 
+.B -f
+.IR output-format ]
+.I file
+
+.SH DESCRIPTION
+
+.B catdoc
+behaves much like
+.BR cat (1)
+but it reads MS-Word file and produces human-readable text on standard output.
+Optionally it can use 
+.BR latex (1)
+escape sequences for characters which have special meaning for LaTeX.
+It also makes some effort to recognize MS-Word tables, although it never
+tries to write correct headers for LaTeX tabular environment. Additional
+output formats, such is HTML can be easily defined. 
+.PP
+.B catdoc
+doesn't attempt to extract formatting information other than tables from
+MS-Word document, so different output modes means mainly that different
+characters should be escaped and different ways used to represent characters,
+missing from output charset. See CHARACTER SUBSTITUTION below 
+
+.PP
+.B catdoc
+uses internal 
+.BR unicode (4)
+representation of text, so it is able to convert texts when charset in
+source document doesn't match charset on target system.
+See CHARACTER SETS below.
+.PP
+If no file names supplied, 
+.B catdoc
+processes its standard input unless it is terminal. It is unlikely that 
+somebody could type Word document from keyboard, so if 
+.B catdoc 
+invoked without arguments and stdin is not redirected, it prints brief
+usage message and exits. 
+Processing of standard input (even among other files) can be forced using
+dash '-' as file name.
+.PP
+By default, 
+.B catdoc
+wraps lines which are more than 72 chars long and separates paragraphs by
+blank lines. This behavior can be turned of by 
+.B -w
+switch. In 
+.I wide
+mode 
+.B  catdoc prints each paragraph as one long line, suitable for import into
+word processors which perform word wrapping theirselves.
+ 
+
+.SH OPTIONS
+.TP 8
+.B -a 
+- shortcut for -f ascii. Produces ASCII text as output.
+Separates table columns with TAB
+.TP 8
+.B -b
+- process broken MS-Word file. Normally,
+.B catdoc checks if first 8 bytes
+of file is Microsoft OLE signature. If so, it processes file, otherwise
+it just copies it to stdin. It is intended to use 
+.B catdoc 
+as filter for viewing all files with 
+.I .doc
+extension.
+.TP 8
+.BI -d charset
+- specifies destination charset name. Charset file has format described in
+CHARACTER SETS below and should have 
+.B .txt
+extension  and reside in 
+.B catdoc library directory ( @libdir@/catdoc). By default, current
+locale charset is used if langinfo support compiled in.
+.TP 8
+.BI -f format
+- specifies output format as described in CHARACTER SUBSTITUTION below.
+.B catdoc
+comes with two output formats - ascii and tex. You can add your own if you
+wish.
+.TP 8
+.B  -l
+Causes 
+.B catdoc
+to list names of available charsets to the stdout and exit successfully.
+.TP 8
+.BI -m number
+Specifies right margin for text  (default 72). 
+.B -m 0
+is equivalent to
+.B -w
+.TP 8
+.BI -s charset
+Specifies source charset. (one used in Word document), if Word document
+doesn't contain UTF-16  text. When reading rtf documents, it is
+typically not necessary, because rtf documents contain ansicpg
+specification. But it can be set wrong by Word (I've seen RTF documents
+on Russian, where cp1252 was specified). In this case this option would
+take precedence over charset, specified in the document. But
+source_charset statement in the configuration file have less priority
+than charset in the document.
+.TP 8
+.B -t
+- shortcut for 
+.B -f tex
+ converts all printable chars, which have special meaning for 
+.BR LaTeX (1)
+into appropriate control sequences. Separates table columns by 
+.BR &.
+.TP 8
+.B -u
+- declares that Word  document  contain  UNICODE   (UTF-16) representation
+of text (as some Word-97 documents). If catdoc fails to correct  Word document
+with  default charset,   try    this  option.
+.TP 8
+.B -8
+- declares is Word document is 8 bit. Just in case that catdoc
+ recognizes file format incorrectly.
+.TP 8
+.B -w
+disables word wrapping. By default 
+.B catdoc
+output is splitted into lines not longer than 72 (or  number, specified by
+-m  option)   characters and paragraphs
+are separated by blank line. With this option each paragraph is one
+long line. 
+.TP 8
+.B -x
+causes catdoc to output unknown UNICODE character as \\xNNNN, instead
+of question marks.
+.TP 8
+.B -v
+causes catdoc to print some useless information about word document
+structure to stdout before actual start of text.
+.TP 8
+.B -V
+outputs catdoc version
+
+.SH CHARACTER SETS
+When processing MS-Word file 
+.B catdoc
+uses information about two character sets, typically different
+ -  input and output. They are stored in plain text files in 
+.B catdoc
+library directory. Character set files should contain two whitespace-separated
+hexadecimal numbers - 8-bit code in character set and 16-bit Unicode code.
+Anything from hash mark to end of line is ignored, as well as blank lines.
+
+.B catdoc 
+distribution includes some of these character sets. Additional character set
+definitions, directly usable by 
+.B catdoc 
+can be obtained from ftp.unicode.org. Charset files have
+.B .txt
+suffix, which shouldn't be specified in command-line or configuration
+files.  
+.PP
+Note that
+.B catdoc 
+is distributed with Cyrillic charsets as default. If you are not
+Russian, you probably don't want it, an should reconfigure catdoc at 
+compile time or in runtime configuration file.
+.PP
+When dealing with documents with charsets other than default, remember
+that Microsoft never uses ISO charsets. While letters in, say cp1252 are
+at the same position as in ISO-8859-1, some punctuation signs would be
+lost, if you specify ISO-8859-1 as input charset. If you use cp1252,
+catdoc would deal with those signs as described in CHARACTER
+SUBSTITUTION below.
+
+.SH CHARACTER SUBSTITUTION 
+.B catdoc
+converts  MS-Word file into following internal Unicode representation:
+.TP 4
+1. Paragraphs are separated by ASCII Line Feed symbol (0x000A)
+.TP 4
+2. Table cells within row are separated by ASCII Field Separator symbol
+(0x001C)
+.TP 4
+3. Table rows are separated by ASCII Record Separator (0x001E) 
+.TP 4
+4. All printable characters, including whitespace are represented with their
+respective UNICODE codes.
+.PP 
+This UNICODE representation is subsequently converted into 8-bit text in
+target character set using following four-step algorithm:
+.TP 4
+1. List of special characters is searched for given Unicode character.
+If found, then appropriate multi-character sequence is output instead of
+character. 
+.TP 4
+2. If there is an equivalent in target character set, it is output.
+.TP 4
+3. Otherwise, replacement list is searched and, if there is multi-character
+substitution for this UNICODE char, it is output.
+.TP 4
+4. If all above fails, "Unknown char" symbol (question mark) is output.
+.PP
+Lists of special characters and list of substitution are character
+set-independent, because special chars should be escaped regardless of their
+existence in target character set  (usually, they are parts of US-ASCII, and
+therefore exist in any character set) and replacement list is searched only
+for those characters, which are not found in target character set.
+.PP
+These lists are stored in
+.B catdoc 
+library directory in files with prefix of format name. These files have
+following format:
+.PP
+Each line can be either comment (starting with hash mark) or contain
+hexadecimal UNICODE value, separated by whitespace from string, which
+would be substituted instead of it. If string contain no whitespace it 
+can be used as is, otherwise it should be enclosed in single or double
+quotes. Usual backslash sequences like 
+.IR '\en' , '\et'
+can be used in these string.
+
+
+.SH RUNTIME CONFIGURATION
+Upon startup catdoc reads its system-wide configuration file (
+.B catdocrc in 
+.B catdoc
+library directory) and then
+user-specific configuration file
+.BR ${HOME}/.catdocrc.
+.PP
+These files can contain following directives:
+.TP 8
+.BI "source_charset = " charset-name
+Sets default source charset, which would be used if no 
+.B -s
+option specified. Consult configuration of nearby windows
+workstation to find one you need.
+.TP 8
+.BI "target_charset = "  charset-name
+ Sets default output charset. You probably know, which one you use.
+.TP 8
+.BI "charset_path = "  directory-list
+colon-separated list of directories, which are searched for charset files.
+This allows you to install additional charsets in your home directory.
+If first directory component of path is ~ it is replaced by contents of
+.B HOME 
+environment variable.
+On MS-DOS platform, if directory name starts with %s, it is replaced
+with directory of executable file. Empty element in list (i.e. two
+consequitve colons) is considered current directory.
+.TP 8
+.BI "map_path = " directory-list
+colon-separated list of directories, which are searched for special character
+map and replacement map.
+Same substitution rules as in
+.B charset_path
+are applied.
+.TP 8
+.BI "format = " "format name"
+Output format which would be used by default.
+.B catdoc
+comes with two formats - 
+.BR ascii " and " tex
+but nothing prevents you from writing your own format (set two map files -
+special character map and replacement map).
+.TP 8
+.BI "unknown_char = " "character specification"
+sets character to output instead of unknown Unicode character (default '?')
+Character specification can have one of two form - character enclosed in
+single quotes or hexadecimal code.
+.TP 8
+.BI "use_locale =" "(yes|no)"
+Enables or disables automatic selection of output charset (default 
+.BR yes ),
+ based on
+system locale settings (if enabled at compile time). If automatic
+detection is enabled, than output charset settings in the configuration
+files (but not in the command line) are ignored, and current system
+locale charset is used instead. There are no automatic choice of input
+charset, based of locale language, because most modern Word files (since
+Word 97) are Unicode anyway
+
+.SH BUGS
+
+Doesn't handle
+fast-saves properly. Prints footnotes as separate paragraphs at the end of
+file, instead of producing correct LaTeX commands. Cannot distinguish
+between empty table cell and end of table row.
+
+
+
+.SH "SEE ALSO"
+
+.BR xls2csv (1),
+.BR cat (1),
+.BR strings (1),
+.BR utf (4),
+.BR unicode (4)
+
+.SH AUTHOR
+
+V.B.Wagner <vitus@45.free.net>

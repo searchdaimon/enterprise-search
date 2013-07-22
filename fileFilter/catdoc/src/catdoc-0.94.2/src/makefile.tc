@@ -1,0 +1,25 @@
+CC=tcc
+TCDIR=c:\tc
+LIB=$(TCDIR)\lib
+CFLAGS=-v -w -mc -DHAVE_LANGINFO -DHAVE_STRDUP -DCATDOC_VERSION="0.94.2"
+OBJ=charsets.obj substmap.obj reader.obj writer.obj fileutil.obj langinfo.obj analyze.obj confutil.obj rtfread.obj numutils.obj sheet.obj xlsparse.obj ole.obj strftime.obj pptparse.obj
+.c.obj:
+	$(CC) -v -c -mc -I../compat  $(CFLAGS) $*
+all: catdoc.exe xls2csv.exe catppt.exe
+catdoc.exe: catdoc.obj catdoc.lib
+	$(CC) -v -mc  catdoc.obj catdoc.lib    
+xls2csv.exe: xls2csv.obj catdoc.lib
+	$(CC) -v -mc  xls2csv.obj catdoc.lib
+catppt.exe: catppt.obj catdoc.lib
+	$(CC) -v -mc catppt.obj catdoc.lib
+langinfo.obj: ..\compat\langinfo.c	
+	$(CC) -c -I../compat $(CFLAGS)  ../compat/langinfo.c 
+strftime.obj: ..\compat\strftime.c
+	$(CC) -c -I../compat $(CFLAGS) ../compat/strftime.c
+	
+catdoc.lib: $(OBJ) catdoc.rsp
+	tlib /E catdoc @catdoc.rsp
+clean:
+	del *.obj
+	del *.exe
+	del *.lib

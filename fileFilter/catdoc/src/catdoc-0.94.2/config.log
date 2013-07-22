@@ -1,0 +1,75 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+configure:549: checking for gcc
+configure:662: checking whether the C compiler (gcc  ) works
+configure:678: gcc -o conftest    conftest.c  1>&5
+configure:704: checking whether the C compiler (gcc  ) is a cross-compiler
+configure:709: checking whether we are using GNU C
+configure:718: gcc -E conftest.c
+configure:737: checking whether gcc accepts -g
+configure:776: checking whether byte ordering is bigendian
+configure:794: gcc -c -g -O2  conftest.c 1>&5
+configure:809: gcc -c -g -O2  conftest.c 1>&5
+configure: In function 'main':
+configure:804: error: 'not' undeclared (first use in this function)
+configure:804: error: (Each undeclared identifier is reported only once
+configure:804: error: for each function it appears in.)
+configure:804: error: syntax error before 'big'
+configure: failed program was:
+#line 798 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/param.h>
+int main() {
+
+#if BYTE_ORDER != BIG_ENDIAN
+ not big endian
+#endif
+; return 0; }
+configure:896: checking for a BSD compatible install
+configure:960: checking for wish
+configure:997: checking checking if wish version is 8.1 or above 
+configure:1080: checking how to run the C preprocessor
+configure:1101: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1160: checking for ANSI C header files
+configure:1173: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1240: gcc -o conftest -g -O2   conftest.c  1>&5
+configure: In function 'main':
+configure:1235: warning: incompatible implicit declaration of built-in function 'exit'
+configure:1267: checking for unistd.h
+configure:1277: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1314: checking for langinfo.h
+configure:1324: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1342: checking For nl_langinfo(CODESET)
+configure:1351: gcc -c -g -O2  conftest.c 1>&5
+configure:1381: checking for working const
+configure:1435: gcc -c -g -O2  conftest.c 1>&5
+configure:1457: checking whether setvbuf arguments are reversed
+configure:1479: gcc -o conftest -g -O2   conftest.c  1>&5
+configure: In function 'main':
+configure:1472: warning: passing argument 2 of 'setvbuf' makes pointer from integer without a cast
+configure:1472: warning: passing argument 3 of 'setvbuf' makes integer from pointer without a cast
+configure:1473: warning: incompatible implicit declaration of built-in function 'exit'
+configure: failed program was:
+#line 1465 "configure"
+#include "confdefs.h"
+#include <stdio.h>
+/* If setvbuf has the reversed format, exit 0. */
+main () {
+  /* This call has the arguments reversed.
+     A reversed system may check and see that the address of main
+     is not _IOLBF, _IONBF, or _IOFBF, and return nonzero.  */
+  if (setvbuf(stdout, _IOLBF, (char *) main, BUFSIZ) != 0)
+    exit(1);
+  putc('\r', stdout);
+  exit(0);			/* Non-reversed systems segv here.  */
+}
+configure:1530: checking for strdup
+configure:1558: gcc -o conftest -g -O2 -Wall   conftest.c  1>&5
+configure:1542: warning: conflicting types for built-in function 'strdup'
+configure:1530: checking for strtol
+configure:1558: gcc -o conftest -g -O2 -Wall   conftest.c  1>&5
+configure:1585: checking for strftime
+configure:1613: gcc -o conftest -g -O2 -Wall   conftest.c  1>&5
+configure:1597: warning: conflicting types for built-in function 'strftime'

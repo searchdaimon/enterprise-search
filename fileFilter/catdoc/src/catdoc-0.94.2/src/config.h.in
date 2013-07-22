@@ -1,0 +1,47 @@
+/* src/config.h.in.  Generated automatically from configure.in by autoheader 2.13.  */
+
+/* Define to empty if the keyword does not work.  */
+#undef const
+
+/* Define if the setvbuf function takes the buffering type as its second
+   argument and the buffer pointer as the third, as on System V
+   before release 3.  */
+#undef SETVBUF_REVERSED
+
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+/* Define if your processor stores words with the most significant
+   byte first (like Motorola and SPARC, unlike Intel and VAX).  */
+#undef WORDS_BIGENDIAN
+
+/* Define if you have the strdup function.  */
+#undef HAVE_STRDUP
+
+/* Define if you have the strftime function.  */
+#undef HAVE_STRFTIME
+
+/* Define if you have the strtol function.  */
+#undef HAVE_STRTOL
+
+/* Define if you have the <unistd.h> header file.  */
+#undef HAVE_UNISTD_H
+
+/* Define this if you have XPG4 comliant nl_langinfo, which accepts CODESET argument */
+#undef HAVE_LANGINFO
+
+/* Character encoding used by default for 8-bit source files */
+#undef SOURCE_CHARSET
+
+/* Output character encoding used by default, if impossible to determine encoding from locale */
+#undef TARGET_CHARSET
+
+/* Suffix for files with special symbols map (ones to be replaced regardless of availability in target encoding) */
+#undef SPEC_EXT
+
+/* Suffix for symbols replacement map (what to do with symbols, which are not available in the target encoding) */
+#undef REPL_EXT
+
+/* Symbol to represent character which is not available either in target encoding or in replacement map */
+#undef UNKNOWN_CHAR
+

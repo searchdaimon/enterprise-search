@@ -1,0 +1,15 @@
+.arch-ids
+.arch-ids
+.arch-inventory
+.arch-ids
+.arch-ids
+.arch-inventory
+Makefile
+autom4te.cache
+config.cache
+config.log
+config.status
+rtf-parser.txt
+semantic.cache
+tests
+{arch}

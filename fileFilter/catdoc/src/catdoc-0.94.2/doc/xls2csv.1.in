@@ -1,0 +1,101 @@
+.TH xls2csv 1  "Version @catdoc_version@" "MS-Word reader"
+.SH NAME
+xls2csv \- reads MS-Excel file and puts its content as comma-separated data on standard output
+.SH SYNOPSIS
+
+.BR "xls2csv " [ -xlV ] 
+.RB [ -f 
+.IR " format " ] 
+.RB [ -b
+.IR " string " ]
+.RB [ -s 
+.IR " charset " ] 
+.RB [ -d 
+.IR " charset " ] 
+.RB [-q 
+.IR " number " ] 
+.RB [ -c 
+.IR " char" ] 
+.I files
+
+.SH DESCRIPTION
+
+.B xls2csv 
+reads MS-Excel spreadsheet and dumps its content as comma-separated
+values to stdout. Numbers are printed without delimiters, strings are
+enclosed in the double quotes. Double-quotes inside string are doubled.
+.SH "OPTIONS"
+.TP 8
+.BR -x
+print unknown Unicode chars as \exNNNN, rather than as question marks
+.TP 8
+.BR -l
+list known charsets and exit successfully
+.TP 8
+.BI -c char
+cell separator char. By default - comma.
+.TP 8
+.BI -b string
+sheet break string. This string (by default - formfeed) would be output
+at the end of each workbook page. This string is printed after page
+starting at start of line, but no linefeed would be automatically added
+at the end of string. Include newline at the ent of sheet separator if
+you want it to appear on separate line by itself
+.TP 9
+.BI -g number
+number of decimal digits in the numbers. By default maximal double
+precision (system-dependent macro DBL_DIG) is used.
+.TP 8
+.BI -q number
+set quote mode. In quote mode 0 cell contents is never quoted.
+In quote mode 1 only strings which contain spaces, double quotes or
+commas are quoted.
+In quote mode 2 (default) all cells with type string are quoted.
+In quote mode 3 all cells are quoted.
+
+.TP 8
+.BI -d charset`
+- specifies destination charset name. Charset file has format described in
+CHARACTER SETS section of 
+.BR catdoc (1)
+manual page. By default, current locale
+charset would be used if langinfo support was enabled at the compile time.
+
+.TP 8
+.BI -s charset
+- specifies source charset. Typically, Excel files have CODE PAGE
+record, which denotes input charset, but for some reason you may wish to 
+override it.
+.TP 8
+.BI -f format
+- specifies date/time format to use for output of all Excel date and
+time  values.  If this option is not specified, format, specified in 
+the spreadsheet is used. On POSIX system any format, allowed by 
+.BR strftime (3)
+can be used as value of this option. Under MS-DOS 
+.B xls2csv
+implements limited set of 
+.B strftime 
+formats, namely 
+.BR m ", " d ", " y ", " Y ", " b ", " l ", " p ", " H ", " M ", " S .
+
+.TP 8
+.B -V
+outputs version number
+
+.SH FILES
+${HOME}/.catdocrc, catdoc charset files and substitution map files (see 
+.BR catdoc (1)
+manual page for details,
+
+.SH "SEE ALSO"
+
+.BR cat (1),
+.BR catdoc (1),
+.BR strings (1),
+.BR utf (4),
+.BR unicode (4)
+
+.SH AUTHOR
+
+V.B.Wagner <vitus@45.free.net>, based on biffview by David Rysdam

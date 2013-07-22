@@ -1,0 +1,45 @@
+CATDOC version 0.93
+
+CATDOC is program which reads MS-Word file and prints readable 
+ASCII text to stdout, just like Unix cat command.
+It also able to produce correct escape sequences if some UNICODE
+charachers have to be represented specially in your typesetting system
+such as (La)TeX.
+
+This is completely new version of catdoc, rewritten from scratch. 
+It features runtime configuration, proper charset handling,
+user-definable output formats and support
+for Word97 files, which contain UNICODE internally.
+
+Since 0.93.0 catdoc parses OLE structure and extracts WordDocment
+stream, but doesn't parse internal structure of it.
+
+This rough approach inevitable results in some garbage in output file,
+especially near the end of file and if file contains embedded OLE objects,
+such as pictures or equations.
+
+So, if you are looking for purely authomatic way to convert Word to LaTeX,
+you can better investigate word2x, wvware or LAOLA.
+
+
+Catdoc is distributed under GNU Public License version 2 or above.
+
+
+Your bug reports and suggestions are welcome.
+
+There is also major work to do - define correct TeX commands
+for accented latin letters into tex.specchars file and commands
+for mathematical symbols (unicode 20xx-25xx). 
+
+
+Contributions are welcome.
+
+See files INSTALL and INSTALL.dos for information about  compiling and
+installing catdoc.
+
+Catdoc is documented in its UNIX-style manual page. For those who don't
+have man command (i.e. MS-DOS users) plain text and postscript versions
+of manual are provided in doc directory
+                    Victor Wagner <vitus@45.free.net>
+
+

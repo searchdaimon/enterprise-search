@@ -1,0 +1,35 @@
+Note: people listed in this file are listed in arbitrary order.
+Kawai Takanori (Hippo2000) kwitknr@cpan.org
+   Author of perl module Spreadsheet::ParseExcel, which I use as
+   reference manual for Excel format	
+Alex Ott  <ott@jet.msk.su>
+   Fixed handling of long SST, contributed handling of RK records,
+   wrote RTF and OLE parsers
+Pawel Wiecek <coven@debian.org>
+   Current maintainer of Debian catdoc packag
+Peter Novodvosky <nidd@debian.org>
+   maintained debian package for catdoc.
+Bjorn Brenander <bjorn@debian.org>
+   maintained debian package for catdoc.
+Eugene B. Byrganov <E.B.Byrganov@inp.nsk.su>
+   Suggested -l switch, found me an example of partly 8-bit/partly
+   16-bit file and some typos in builtin docs. Fixed some long-standing
+   bugs in config-parsed code.
+Artem Chuprina <ran@ran.pp.ru>
+   Provided lot of bugfixes and suggestions. Also maintained some
+   unofficial packaged versions of catdoc.
+Stephen Farrell <stephen@farrell.org> 
+   maintains FreeBSD port, and have persuaded me to write autoconf
+   configuration
+Martin Kraemer <martin.kraemer@mch.sni.de> 
+   contributed some fixes for ascii.rpl and noted typo in catdoc.h
+Arfst Ludwig <Arfst.Ludwig@LHSystems.COM>
+   give me the idea of creating README.charset
+Dmitry Potapov <dpotapov@capitalsoft.com>
+   contributed rtf-parsing code
+David Rysdam
+   Wrote program biffview, which parses XLS file and used as base
+   for xls2csv.
+Duncan Simpson <dps@io.stargate.co.uk>
+   audited catdoc code for possible buffer overruns (and found much more
+   of them than actually existed)

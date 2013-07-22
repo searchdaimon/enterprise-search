@@ -1,0 +1,71 @@
+INSTALLING catdoc 0.91.x
+
+Starting with patchlevel alpha 3 catdoc version 0.90 have autoconf
+configuration. Thanks for Stephen Farell to convince me.
+
+So typically you should run
+./configure
+make
+make install
+
+to compile and install catdoc.
+
+NOTE for HPUX users. If you want to compile catdoc with aCC,
+use CC="aCC -Ae" ./configure
+
+Configure script for catdoc recognizes following options (apart from
+standard --prefix,  --exec-prefix and so on)
+
+--disable-wordview - disables building of Tcl/Tk viewer wordview,
+          which requires X11. (note, it would be disabled automatically,
+	  if you don't have appropriate version of Tcl/Tk). You may
+	  wish to use this if you don't have X installed.
+
+--with-wish=path - specifies path to wish interpreter. This option have
+          two uses
+	  1. If executable named wish, found in your PATH is old, and
+	     you have newer wish installed as wish4.2 or wish8.0, 
+	     you should specify this in order to build wordview viewer
+	  2. If you are compiling catdoc from telnet connection or 
+	     text console, you can specify this option to skip tcl
+	     version check, which would run wish and fail if it couldn't
+	     find X display (which would lead configure to assume, that
+	     you don't have good wish)
+
+--with-input=charset
+--with-output=charset
+          Allows you to specify charset names to expect in 8-bit word
+	  file and to produce as output text file. Do ls ./charsets/*.txt   
+	  to find out which charsets are provided in distribution. 
+	  Additional charsets can be obtained from 
+	  ftp.unicode.org
+	  Note that make would fail if you specify charset, which
+	  doesn't exist in charset directory.
+
+--disable-charset-check 
+          By default, make in charsets directory fails, if it is unable
+          to find *.txt files corresponding to default input and output
+	  charsets. This option allows you to disable this check. Make
+	  in charsets directory would always succeed, but it is your
+	  responsibility to provide charset files in catdoc library
+	  directory after make install.
+--disable-langinfo
+	  By default, catdoc tries to use your current locale charset
+	  as its output charset. It can be, of cource always overriden
+	  by command line switch. But charset from the locale takes
+	  precedence over charset in configuration file, unless
+	  you put use_locale=no into this file.
+
+	  If your C library is not XPG4-compatible, and configure fails
+	  to detect it, you can completely disable langinfo support
+	  using this switch.
+	  
+If you experience strange and unexpected behavoir of catdoc, try to
+remove optimization flag (-02) from FLAGS in src/Makefile. 
+If you can write autoconf test to check for this problem, please send it
+to me.
+
+It was known problem with version 0.35 on HP/UX 9, and I scarcely changed
+my style of writing since.
+
+

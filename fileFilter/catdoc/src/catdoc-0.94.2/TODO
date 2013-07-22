@@ -1,0 +1,11 @@
+* support dual-byte (CJK) encodings as output 
+* Find a way to extract rowspan information from XLS.
+* Make XLS2CSV to output sheet partially when memory exhausted
+* Plain-text output method for XLS2CSV and its support in wordview
+* textmode (ck) wordview
+* Improve RTF support
+* Extract text from Top Level OLE objects ???
+* Write correct TeX commands for most often used mathematical symbols
+   (20xx-25xx) into TeX spec chars  file
+* Add handling of tables & footnotes
+* Fastsave support

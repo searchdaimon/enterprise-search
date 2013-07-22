@@ -1,0 +1,16 @@
+#!/bin/bash
+
+PREFIX=`echo "$0" | sed -e "s|[^/]*$||"`
+GET_REL=`echo "$PREFIX""get_rel"`
+WASH_TAGS=`echo "$PREFIX""wash_tags"`
+
+SLIDES=`unzip -p "$1" ppt/_rels/presentation.xml.rels | $GET_REL --slides`
+
+echo "<html><body>"
+
+for slide in $SLIDES; do
+    unzip -p "$1" ppt/$slide | $WASH_TAGS | sed -e "s|</*a/*>||g" | sed -ne "2,\$p"
+    echo "<hr />"
+done
+
+echo "</body></html>"

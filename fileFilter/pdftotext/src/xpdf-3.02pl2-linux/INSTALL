@@ -1,0 +1,20 @@
+Xpdf - Unix binaries
+====================
+
+The Xpdf software and documentation are
+copyright 1996-2003 Glyph & Cog, LLC.
+
+Email: derekn@foolabs.com
+WWW: http://www.foolabs.com/xpdf/
+
+
+To install this binary package:
+
+1. Copy the executables (xpdf, pdftotext, etc.) to to /usr/local/bin.
+
+2. Copy the man pages (*.1 and *.5) to /usr/local/man/man1 and
+   /usr/local/man/man5.
+
+3. Copy the sample-xpdfrc file to /usr/local/etc/xpdfrc.  You'll
+   probably want to edit its contents (as distributed, everything is
+   commented out) -- see xpdfrc(5) for details.

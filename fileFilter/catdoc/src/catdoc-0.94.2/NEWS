@@ -1,0 +1,67 @@
+   0.90.1 Nov 26 1998
+          Top-level Makefile now uses $MAKE instead of make
+	  fixed missing end-line escaping in wordview.tcl
+	  All occurences of strcpy, strcat and sprinf investigated
+	  to avoid buffer overflows.
+   0.90   Oct 29 1998
+   	  Fixed bug with charset names redeclared locally in main()
+	  Fixed problem in configure with wish 8.0.3
+          Catdoc considered to be stable enough for release 
+   0.90b5 Oct 14 1998
+          Fixed handling of 0x1F char (soft hyphen in Word 6.0),
+	  now it is translated to 0x00AD (unicode soft hyphen)
+	  Fixed permissions for manual page
+	  Added --with-install-root configure arg to simplify
+	  building of binary packages.
+   0.90b4 September 17 1998
+          Added proper configuration of library dir in wordview.
+	  Added --disable-charset-check config option
+	  Added 0x2026 symbol in ascii.rpl
+	  Added more Windows codepages in distribution
+   0.90b3 September 11 1998
+   	  Added -x switch to simplify debugging of substitution maps
+   0.90b2 September 10 1998
+          Added some symbols is 0x2000-0x20FF range to substituton maps
+	  These symbols occurs in cp1251 so they are frequently found
+	  in Word files. Fixed some filename-handling problems in
+	  wordview.tcl
+
+   0.90b1 September 8 1998
+   	  Added us-ascii.charset, fixed small bugs in confugre,
+	  install is used for all installation files. Code is
+	  considered stable enough to be beta.
+  
+   0.90a3 September 7 1998
+          Fixed small bug in table handling, which caused catdoc to
+          output extra column delimiter just before row delimiter. Added
+          autoconf configuration. install is back, although not for
+          charsets
+          
+   0.90a2 August 18 1998
+          version 0.90 was tested on BSDI and Solaris platform. Makefile
+          was rewritten to avoid use of highly incompatible
+          /usr/{ucb,bin}/install
+          
+   0.90a1 August 13 1998
+          Catdoc undergone major rewrite. Now it has proper charset
+          handling, including UNICODE and runtime configurability.
+          
+   0.35 - June 5 1998
+          Fixed bug with -s switch which prevents catdoc from returning
+          non-zero code when invoked on UNIX text file
+          
+   0.34 - Apr 28 1998
+          Files now opened in binary mode thus allowing catdoc to work on
+          DOS and simular systems. All specs arrays now have terminating
+          NULL
+          
+   0.33 - October 1997
+          Fixed missing terminating NUL in specs array, which caused
+          random seqfaults on Linux and many other systems, becouse
+          _specs_ is searched by _strchr_ fynction
+          
+   0.32 - August 1997
+          First mayor public release, uploaded to CTAN. Tk interface
+          appeared, manual page was written. Unfortunately, this release
+          was buggy.
+

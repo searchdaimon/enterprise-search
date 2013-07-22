@@ -1,0 +1,72 @@
+CATDOC CODING STANDARD
+~~~~~~~~~~~~~~~~~~~~~~
+0. CATDOC ISN'T WRITTEN ON C++!!! 
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   C and C++ are different languages.
+   No // comments, no references, no declaration in the middle of block.
+
+1. Catdoc is portable program.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Please never make following assumptions:
+1. That int is more than 16-bit wide
+ (consequentually, that signed int can hold Unicode character)
+2. That sizeof(int)>=sizeof(int *)
+3. That int is always 16-bit (it can be 32 bit as well)
+4. That long is 32-bit
+5. That char (and int and short as well) is either signed or unsigned
+   Always use explicit signedness specifier
+6. That integer arithmetic is 32-bit long. 
+7. That input is always seekable. Catdoc is often used as filter
+8. That filenames are either case-sensitive or case-insensitive
+9. That there is no difference between binary and text file opening mode
+10. That opening file in the text mode will do something reasonable.
+    Always open files in binary mode. This is only way to produce
+	results, consistent on all platforms.
+11. That you can rely on compiler POSIX or C99 compliance. If you need
+   to use some function defined by this standard, write configure test
+   and provide fallback.
+12. That you can allocate chunk of memory larger than 64K.
+13. That filenames can be longer that 8+3.
+
+2. Catdoc is used world-wide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Never write comments on languages other than English.
+2. Never assume that you can output character without passing it through
+   convert_char function.
+   
+3. Code formatting
+~~~~~~~~~~~~~~~~~
+1. Use <Tab> for identation. If your text editor insists on <Tab> being
+   8 char, consider using some other editor. vim is at least a bit more
+   portable than catdoc.
+2. Open curly bracket on the same line as statement it belongs to:
+	if (condition) {
+		code
+	}  
+   rather than
+   	if (condition)
+   	{
+   		code
+	}
+
+3. The only exeception from rule 2 are blocks in the switch statement:
+	switch (var) {
+		case value:
+		{
+			code
+		}
+	}
+	rather than
+	switch (var) {
+		case value: {
+						code
+					}
+	}
+	
+4. Write comments at the start of each function describing its purpose
+   and arguments.
+
+5. If you use some potentially dangerous construct, such as sprintf on
+	static buffer, comment why it is safe in this particular case.
+ 
