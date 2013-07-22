@@ -833,6 +833,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 					htmlbuf = malloc(htmllen);
 
 					if(tmpurl == NULL || tmpuri == NULL || tmpfulluri == NULL || htmlbuf == NULL) {
+						free(tmpurl); free(tmpuri); free(tmpfulluri); free(htmlbuf);
 						bblog_errno(ERROR, "Malloc tmpurl, tmpuri, tmpfulluri or htmlbuf");
 						continue;
 					}
