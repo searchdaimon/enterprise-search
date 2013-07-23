@@ -4,6 +4,11 @@ outputformat: text
 outputtype: stdio
 attrwhitelist: size, resolution
 
+documentstype: jpeg
+command: identify -ping -format "Geometry: %wx%h, Format: %m" #file
+outputformat: text
+outputtype: stdio
+attrwhitelist: size, resolution
 
 documentstype: png
 command: identify -ping -format "Geometry: %wx%h, Format: %m" #file
@@ -48,8 +53,20 @@ outputformat: text
 outputtype: stdio
 attrwhitelist: size, resolution
 
-#documentstype: psd
-#command: identify -ping -format "Format: %m" #file
-#outputformat: text
-#outputtype: stdio
+documentstype: psd
+command: identify -ping -format "Geometry: %wx%h, Format: %m" #file
+outputformat: text
+outputtype: stdio
+attrwhitelist: size, resolution
 
+documentstype: eps
+command: identify -ping -format "Geometry: %wx%h, Format: %m" #file
+outputformat: text
+outputtype: stdio
+attrwhitelist: size, resolution
+
+documentstype: ps
+command: identify -ping -format "Geometry: %wx%h, Format: %m" #file
+outputformat: text
+outputtype: stdio
+attrwhitelist: size, resolution

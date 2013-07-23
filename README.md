@@ -41,7 +41,7 @@ AWK:      0.04%
 ### Developing ###
 It is super easy to get started to develop on the ES. As the ES comes as a virtual machine with all software installed, all you need to do to get a development environment up and running is to add the development plugin and then checkout the source code with git.
 
-Please see full article on how to get started as a developer at: [https://github.com/searchdaimon/enterprise-search/wiki/Setting-up-an-ES-for-development](https://github.com/searchdaimon/enterprise-search/wiki/Setting-up-an-ES-for-development "Setting up an ES for development")
+Please see full article on how to get started as a developer at: [Setting up an ES for development](https://github.com/searchdaimon/enterprise-search/wiki/Setting-up-an-ES-for-development "Setting up an ES for development")
 
 ##### Mailing list for developers
 http://lists.searchdaimon.com/mailman/listinfo/sddev
