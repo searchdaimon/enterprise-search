@@ -817,7 +817,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 				crawldocumentAdd->attributes)
 	   ) {
 
-		bblog(ERROR, "can't sent to bbdn! Tryed to send doc \"%s\" Will sleep and then reconect. Wont send same doc again.",(*crawldocumentAdd).documenturi);
+		bblog(ERROR, "can't send document to document manager! Tried to send document \"%s\" Will sleep and then reconnect. Won't send the same document again.",(*crawldocumentAdd).documenturi);
 		
 		//ber om å lokke sokketen. Dette er ikke det samme som å steneg kollectionen.
 		bbdn_close((*collection).socketha);
