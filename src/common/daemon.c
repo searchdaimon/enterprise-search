@@ -129,12 +129,6 @@ int sconnect (void (*sh_pointer) (int), int PORT, int noFork, int breakAfter) {
             exit(1);
         }
 
-	#ifndef NO_REUSEADDR
-        	if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
-        	    perror("setsockopt");
-        	    exit(1);
-        	}
-	#endif
 
 	#ifdef DEBUG
 	printf("will listen on port %i\n",PORT);
