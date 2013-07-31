@@ -2831,12 +2831,28 @@ int main (int argc, char *argv[]) {
 	struct config_t maincfg;
 	struct config_t cmcfg;
 	config_setting_t *cfgarr;
+	char c;
+
+	int noFork = 0;
+	int breakAfter = 0;
 
 	bblog_init("crawlManager");
 
-	#ifdef DEBUG
-		bblog(DEBUGINFO, "Ble kompilert med -DDEBUG");
-	#endif
+
+	while ((c=getopt(argc,argv,"m:s"))!=-1) {
+	        switch (c) {
+                        case 'm':
+                                breakAfter = atoi(optarg);
+                                break;
+                        case 's':
+				noFork = 1;
+                                break;
+                        default:
+                                bblog(ERROR, "Unknown argument: %c", c);
+                                errx(1, "Unknown argument: %c", c);
+		}
+        }
+
 
 	write_gpidfile("crawlManager");
 
@@ -2898,7 +2914,7 @@ int main (int argc, char *argv[]) {
 	}
 #endif
 
-	sconnect(connectHandler, crawlport);
+	sconnect(connectHandler, crawlport, noFork, breakAfter);
 
 #ifdef WITH_US_CACHE
 	cache_free(cache);

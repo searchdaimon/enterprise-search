@@ -28,7 +28,7 @@ struct packedHedderFormat {
 //tar inn en peker til en rutine som tar en sokket inn og behandler den
 //
 
-int sconnect (void (*sh_pointer) (int), int PORT);
+int sconnect (void (*sh_pointer) (int), int PORT, int noFork, int breakAfter);
 int sconnect_thread(void (*sh_pointer) (int), int port);
 int sconnect_simple(void (*sh_pointer) (int), int port);
 

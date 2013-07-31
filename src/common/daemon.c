@@ -106,7 +106,7 @@ int socketgetsaa(int socketha,char **respons_list[],int *nrofresponses) {
 }
 
 //rutine som binder seg til PORT og kaller sh_pointer hver gang det kommer en ny tilkobling
-int sconnect (void (*sh_pointer) (int), int PORT) {
+int sconnect (void (*sh_pointer) (int), int PORT, int noFork, int breakAfter) {
 
         int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
         struct sockaddr_in my_addr;    // my address information
@@ -116,9 +116,7 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
         int yes=1;
 	pid_t session;
 	pid_t leader;
-	#ifdef DEBUG_BREAK_AFTER
-		static count = 0;
-	#endif
+	static count = 0;
 
 	leader = getpid();
 	session = getpgrp();
@@ -217,13 +215,13 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
 
 		#endif
 	    #else
-		#ifdef NO_FORK
+		if (noFork) {
 			printf("Not in debug mode, but Wont fork.\n");
                         sh_pointer(new_fd);
                         close(new_fd);
 			printf("sconnect: socket closed\n");
-
-		#else 
+		}
+		else {
 		    	printf("runing in normal fork mode\n");
 
         	    	if (!fork()) { // this is the child process
@@ -244,17 +242,17 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
             		    exit(0);
             		}
 	    		close(new_fd);  // parent doesn't need this
-		#endif
+		}
 	    #endif
 
-		#ifdef DEBUG_BREAK_AFTER
+		if (breakAfter != 0) {
 			++count;
 	
-        		if (count >= DEBUG_BREAK_AFTER) {
+        		if (count >= breakAfter) {
 				printf("exeting after %i connects\n",count);
 				break;
 			}
-		#endif
+		}
         }
 
 	fprintf(stderr, "daemon: ~sconnect()\n");
@@ -269,9 +267,7 @@ int sconnect (void (*sh_pointer) (int), int PORT) {
 #endif
 //rutine som binder seg til PORT og kaller sh_pointer hver gang det kommer en ny tilkobling
 // Threaded
-int
-sconnect_thread(void (*sh_pointer)(int), int port)
-{
+int sconnect_thread(void (*sh_pointer)(int), int port) {
 	int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
 	struct sockaddr_in my_addr;    // my address information
 	struct sockaddr_in their_addr; // connector's address information
@@ -354,8 +350,7 @@ sconnect_thread(void (*sh_pointer)(int), int port)
 #endif
 
 //rutine som binder seg til PORT og kaller sh_pointer hver gang det kommer en ny tilkobling
-int
-sconnect_simple(void (*sh_pointer)(int), int port)
+int sconnect_simple(void (*sh_pointer)(int), int port)
 {
 	int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
 	struct sockaddr_in my_addr;    // my address information

@@ -33,9 +33,28 @@ int global_bbdnport = 0;
 
 
 
-int main (void) {
+int main (int argc, char *argv[]) {
 
 	struct config_t maincfg;
+	char c;
+
+	int noFork = 0;
+	int breakAfter = 0;
+
+
+        while ((c=getopt(argc,argv,"m:s"))!=-1) {
+                switch (c) {
+                         case 'm':
+                                breakAfter = atoi(optarg);
+                                break;
+                         case 's':
+                                noFork = 1;
+                         	break;
+                         default:
+                                fprintf(stderr, "Unknown argument: %c", c);
+                                errx(1, "Unknown argument: %c", c);
+                }
+        }
 
 
         printf("crawlManager: running maincfgopen\n");
@@ -45,7 +64,7 @@ int main (void) {
         int bbdnport = maincfg_get_int(&maincfg,"BLDPORT");
 
 
-        sconnect(connectHandler, bbdnport);
+        sconnect(connectHandler, bbdnport, noFork, breakAfter);
 
         printf("bbdnserver:Main() sconnect ferdig\n");
 
