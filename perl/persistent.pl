@@ -1,15 +1,14 @@
- package Embed::Persistent;
- #persistent.pl
+package Embed::Persistent;
 
- use strict;
- our %Cache;
- use Symbol qw(delete_package);
- use Carp;
- BEGIN { 
+use strict;
+our %Cache;
+use Symbol qw(delete_package);
+use Carp;
+BEGIN { 
 	unshift @INC, $ENV{BOITHOHOME} . "/Modules";
- }
+}
 
- sub valid_package_name {
+sub valid_package_name {
      my($string) = @_;
      $string =~ s/([^A-Za-z0-9\/])/sprintf("_%2x",unpack("C",$1))/eg;
      # second pass only for words starting with a digit
@@ -18,7 +17,7 @@
      # Dress it up as a real package name
      $string =~ s|/|::|g;
      return "Embed" . $string;
- }
+}
 
 sub eval_pkg {
 	my ($pkg, $sub) = @_;
@@ -27,7 +26,6 @@ sub eval_pkg {
 	die $@ if $@;
 }
 
-#void perl_embed_run(char *file_path, char *func_name, HV *func_params, char *obj_name, HV *obj_attr) {
 sub eval_file2 {
 	my ($file_path, $keep_cache, $func_name, $func_params_ref, $bless_name, $bless_ref) = @_;
 	my $package = valid_package_name($file_path);
@@ -83,8 +81,8 @@ sub eval_file2 {
  
      #print "eval_file: rutine return value $ret\n";
      return $ret;
- }
+}
 
 	
- 1;
+1;
 
