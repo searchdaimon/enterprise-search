@@ -517,7 +517,7 @@ sub del_confirm {
 }
 
 sub stop_crawl {
-	validate_pos(@_, 1, 1, { regex => qr(^\d+$) });
+	validate_pos(@_, 1, 1, { regex => qr(^\d+$) }, 1);
 	my ($s, $vars, $id, $connector) = @_;
 	my $pid = $sqlShares->get({ id => $id }, 'crawl_pid')->{crawl_pid};
 	
