@@ -49,6 +49,11 @@ sub eval_file2 {
 		my $sub = <$srch>;
 		close $srch;
 
+		# Find which folder this file resists in and add the folder to the include path
+		my $localinc = $file_path;
+		$localinc =~ s/(\/[^\/]+)$//;
+		unshift @INC, $localinc;
+
 		#my $eval = qq|package $package; sub handler {  $sub; } |;
 
 		# eval out of the scope of this func
