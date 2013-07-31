@@ -1033,7 +1033,7 @@ void *IndexerLot_workthread(void *arg) {
 							// attributes:
 							if (attributes != NULL) {
 								attriblot_add((*argstruct).attriblot, attributes);
-printf("attributes: \"%s\"\n",attributes);
+
 								iiattribadd(&(*pagewords).attrib, attributes);
 
 								attribMakeRevIndex(&(*pagewords).attrib);
