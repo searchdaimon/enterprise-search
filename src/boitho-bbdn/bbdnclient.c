@@ -203,15 +203,15 @@ int bbdn_HasSufficientSpace(int socketha, char subname[]) {
         //subname
         len = strlen(subname) +1;
 	debug("sending (len %i): \"%s\"",len,subname);
-        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall subname len"); return 0; }
-        if(sendall(socketha,subname, len) == 0) { perror("sendall subname"); return 0; }
+        if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall subname len"); return 1; }
+        if(sendall(socketha,subname, len) == 0) { perror("sendall subname"); return 1; }
 
         
 
         
         if ((i=recv(socketha, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
             bperror("Cant recv respons");
-            return 0;
+            return 1;
         }
 
 	return intrespons;
