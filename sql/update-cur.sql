@@ -290,3 +290,7 @@ INSERT INTO config (configkey, configvalue) VALUES('frontpage_preference', 'webc
 INSERT INTO `connectors` VALUES (14, 'Push', 'Successfully pushed data', NULL, NULL, NULL, 0, '', NULL, NULL, 1, 1);
 
 INSERT INTO `systemConnector` (`id`, `name`, `extension`, `modified`, `active`, `read_only`) VALUES (4,'Mapback',0,NULL,1,1);
+
+# New RandomDoc connector
+INSERT INTO `connectors` VALUES (15, 'RandomDoc', 'Generat random text', NULL, NULL, NULL, 0, 'user_system, crawling, custom_parameters', 1, NULL, 1, 1);
+INSERT INTO `param` VALUES (NULL, 15, 'ndocuments', 'The number of documents you want to generate');
