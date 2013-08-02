@@ -58,7 +58,7 @@ HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a lib/libds.a
 # generate the file output-data and its dependencies, not plot.png 
 
 
-all : init.d.stop getFiletype dep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb IndexerLotbb mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad Suggest gcRepobb gcAuthoritybb sdperl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb usSQLBB usAD crawlPush init.d.start
+all : init.d.stop getFiletype dep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb IndexerLotbb mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad Suggest gcRepobb gcAuthoritybb sdperl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb usSQLBB usAD crawlPush crawlLocal init.d.start
 
 init.d.stop:
 	@echo ""
@@ -1195,6 +1195,15 @@ crawlSMB: src/crawlSMB/main.c
 	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOX -g $(CRAWL_STATIC) $(LIBS)*.c src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) $(SMBCLIENT)
 	mkdir -p crawlers/crawlSMB
 	cp src/crawlSMB/crawlSMB.so crawlers/crawlSMB/
+
+crawlLocal: src/crawlLocal/rutines.c
+	@echo ""
+	@echo "$@:"
+
+
+	$(CC) $(CFLAGS) -Wall -fPIC -shared -D BLACK_BOX -g $(CRAWL_STATIC) src/crawl/crawlLocalFiles.c src/crawl/crawl.c src/crawlLocal/rutines.c -o src/crawlLocal/crawlLocal.so $(LDFLAGS) 
+	mkdir -p crawlers/crawlLocal
+	cp src/crawlLocal/crawlLocal.so crawlers/crawlLocal/
 
 
 crawlExchange:
