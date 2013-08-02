@@ -6,10 +6,8 @@
 #include "../common/define.h"
 #include "../key/key.h"
 
-//void crawlperror(const char *fmt, ...);
 void crawlWarn(const char *fmt, ...);
 char *strcrawlWarn();
-//char *strcrawlError();
 
 #define crawl_security_acl 1
 #define crawl_security_none 1
@@ -36,26 +34,16 @@ struct collectionFormat {
 	char *test_file_prefix;
 	unsigned int usersystem;
 	struct crawlLibInfoFormat *crawlLibInfo;
-
-	//10 juni 2008:
 	char errormsg[512];
-	//26 juni 2008:
 	unsigned int rate;
-        // 30 juni 2008
         struct hashtable * params;
-	
-	// 28 Jul. 2008; 
 	// Nr of documents yet to crawl.
 	// Set to -1 to crawl the entire collection.
 	int docsRemaining;
-	//9okt 2008
 	void *timeusage;
 	char *alias;
-	//runarb: 23 feb 2009;
 	char systemkey[KEY_STR_LEN];
-	//runarb: 21 aug 2009
 	int docsCount;
-	//rubnarb: 26 jan 2012
 	unsigned int pid;
 };
 
@@ -71,7 +59,6 @@ struct crawldocumentAddFormat {
 	char *document;
         int dokument_size;
 	unsigned int lastmodified;
-	//char *acl;
 	char *acl_allow;
 	char *acl_denied;
 	char *title;
@@ -95,24 +82,15 @@ struct crawldocumentAddFormat {
 
 struct crawlLibInfoFormat {
 	int (*crawlinit)();
-	// a pointer to a crawlfirst rutine
 	int (*crawlfirst)( crawlfirst_args );
-
 	int (*crawlupdate)( crawlupdate_args );
-
 	int (*crawlcanconect)(struct collectionFormat *collection,int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...));
-
 	int (*crawlpatAcces)(char resource[], char username[], char password[],int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...), struct collectionFormat *collection);
-
 	int (*scan)(int (*scan_found_share)(char share[]),char host[],char username[], char password[], int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...));
 	int (*rewrite_url)(struct collectionFormat *, char *, char *, char *, size_t, enum platform_type, enum browser_type);
 
 	int crawl_security;
-	//char *shortname;
-	//22 mai 2008;
 	char shortname[50];
-	//char *(*strcrawlError)();
-
 	char resourcepath[PATH_MAX];
 
 };
