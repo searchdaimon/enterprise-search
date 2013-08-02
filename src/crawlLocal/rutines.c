@@ -14,39 +14,26 @@
 #include "../crawl/crawlLocalFiles.h"
 
 
+int crawlcanconect( struct collectionFormat *collection,int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...)) {
 
-int crawlcanconect(struct collectionFormat *collection) {
 	//tester om vi kan koble til
 	return 1;
 }
 
 int crawlfirst(struct collectionFormat *collection,
-	int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist), 
-	int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd)) {
+        int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist),
+        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd),
+        int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...),
+        int (*documentContinue)(struct collectionFormat *collection)
+        ) {
 
-	struct crawldocumentExistFormat crawldocumentExist;
-	struct crawldocumentAddFormat crawldocumentAdd;
 	
-	char *localfs;
-
 	printf("crawlLocal: crawlfirst: start\n");
-	
 
 	crawlLocalFiles(collection,documentExist,documentAdd,"",(*collection).resource);
 
 	printf("crawlLocal: crawlfirst: end\n");
 
-	return 1;
-}
-
-
-int crawlupdate(struct collectionFormat *collection,
-	int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist), 
-	int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd)) {
-	//opdate
-	printf("crawlupdate: start\n");
-	
-	
 	return 1;
 }
 
@@ -58,9 +45,8 @@ struct crawlLibInfoFormat crawlLibInfo = {
         crawlcanconect,
 	NULL,
 	NULL,
+	NULL,
         crawl_security_acl,
         "Local",
-        strcrawlError
 };
-
 
