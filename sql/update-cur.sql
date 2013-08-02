@@ -294,3 +294,7 @@ INSERT INTO `systemConnector` (`id`, `name`, `extension`, `modified`, `active`, 
 # New RandomDoc connector
 INSERT INTO `connectors` VALUES (15, 'RandomDoc', 'Generat random text', NULL, NULL, NULL, 0, 'user_system, crawling, custom_parameters', 1, NULL, 1, 1);
 INSERT INTO `param` VALUES (NULL, 15, 'ndocuments', 'The number of documents you want to generate');
+
+# Crawler for local files
+INSERT INTO `connectors` VALUES (6, 'Local', 'Local files on your ES. This is mostly used to index exotic network based file systems. You will have to login by ssh and mount the file system, then tell the crawler where it is.', NULL, NULL, NULL, 0, 'user_system, connector, crawling', 1, NULL, 1, 1);
+
