@@ -1,0 +1,15 @@
+#documentstype: evii
+#command: ./test-infinite-loop #file
+#outputformat: text
+#outputtype: stdio
+
+#documentstype: evid
+#command: ./test-infinite-loop-and-data #file
+#outputformat: text
+#outputtype: stdio
+
+#documentstype: evnn
+#command: ./test-normal #file
+#outputformat: text
+#outputtype: stdio
+
