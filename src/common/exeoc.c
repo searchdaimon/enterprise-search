@@ -63,9 +63,7 @@ setrlimits(void)
 
 
 
-int
-exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret,int alsostderr, struct timeval *timeout)
-{
+int exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinishedbufsize, pid_t *ret,int alsostderr, struct timeval *timeout) {
 
 	pid_t pid;
 	int     pipefd[2];
@@ -76,7 +74,6 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 		fprintf(stderr,"Error: buffer must be larger then %i. Did get only %i\n",linelen,*documentfinishedbufsize);
 	}	
 
-	//printf("documentfinishedbufsize %i\n",(*documentfinishedbufsize));
 	#ifdef DEBUG
 		printf("exeoc_stdselect: runing program \"%s\"\n",exeargv[0]);
 		i=0;
@@ -116,9 +113,6 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 		// skrur av core domping
 		setrlimits();
 
-		//sleep(1);
-		//char *execvarg[] = {"/bin/cat","/tmp/test.txt", '\0'};
-		//execv("/bin/cat",execvarg);
 		if (execv(exeargv[0],exeargv) == -1) {
 			fprintf(stderr,"Error: can't execv at %s:%d\n",__FILE__,__LINE__);
 			perror(exeargv[0]);
@@ -205,30 +199,15 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 		}
 
 
-		/*
-		Ser ikke ut til å fungere :(
-		//venter på prossesen
-		if (waitpid(pid,&waitstatus,0) == -1) {
-			printf("error: can't get exit status for %i pid at %s:%d\n",pid,__FILE__,__LINE__);
-			perror("waitpid");
-		}
-		printf("waitpid finished. waitstatus %i\n",waitstatus);
 
-		//hvis vi ikke fikk til å kjøre programet, skal vi returnere med EXIT_FAILURE, som blir waitstatus 256
-		if (waitstatus == 256) {
-			return 0;
-		}
-		*/
-
-#ifdef DEBUG
+		#ifdef DEBUG
 		printf("waitng for pid \"%i\"\n",pid);
-#endif
-		//waitpid(pid,&waitstatus,0);
+		#endif
+
 		if (waitpid(pid, &waitstatus, WUNTRACED) <= 0) {
 			perror("waitpid()");
 			*ret = 1;
 		} else {
-	//		#ifdef DEBUG
 			if (WIFEXITED(waitstatus)==0)
 			    {
 				printf("Child did not exit normally.\n");
@@ -242,7 +221,6 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 					printf("STOPSIG: %i\n", WSTOPSIG(waitstatus));
 				    }
 			    }
-	//		#endif
 
 			(*ret) = WEXITSTATUS(waitstatus);
 
@@ -261,14 +239,13 @@ exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfinished
 				return 0;
 
 			}
-#ifdef DEBUG
-			printf("waitpid finished. waitstatus %i\n",waitstatus);
-			printf("dokument: \"%s\"\n",documentfinishedbuf);
-#endif 
+			#ifdef DEBUG
+				printf("waitpid finished. waitstatus %i\n",waitstatus);
+				printf("dokument: \"%s\"\n",documentfinishedbuf);
+			#endif 
 
 		}
 
-		//printf("WIFEXITED(): %i\nWIFSIGNALED %i\nWIFSTOPPED %i\n\nread_error %i\n40 %i\n",WIFEXITED(waitstatus),WIFSIGNALED(waitstatus),WIFSTOPPED(waitstatus),read_error,SIGRTMIN + 7);
 
 
 		//vi får ofte at vi fikk signal 40, men uten at noe var feil. Ignorerer det for nå.
@@ -295,9 +272,9 @@ int exeoc_timeout(char *exeargv[],char documentfinishedbuf[],int *documentfinish
 
 	n = exeoc_stdselect(exeargv,documentfinishedbuf,documentfinishedbufsize, ret, 0, &tv);
 
-	//#ifdef DEBUG
+	#ifdef DEBUG
 		printf("exeoc_stdselect returned %i\n",n);
-	//#endif
+	#endif
 
 	if (tv.tv_sec == 0 && tv.tv_usec == 0) { // Timeout
               	printf("exeoc_timeout did time out.\n");
