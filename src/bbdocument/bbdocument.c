@@ -689,6 +689,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 
 		#ifdef DEBUG
 			printf("writing to unknownfiltype.log\n");
+			FILE *fp;
 			if ((fp = fopen(bfile("logs/unknownfiltype.log"),"ab")) == NULL) {
 				perror(bfile("logs/unknownfiltype.log"));
 			}
