@@ -13,7 +13,7 @@ WORKSHEETS=`unzip -p "$1" xl/_rels/workbook.xml.rels | $GET_REL --worksheets`
 
 for worksheet in $WORKSHEETS; do
     echo "<hr />"
-    unzip -p "$1" xl/$worksheet | $WASH_TAGS | xsltproc $XSL - | sed -ne "2,\$p"
+    unzip -p "$1" xl/$worksheet | $WASH_TAGS | /home/boitho/boithoTools/fileFilter/ooxml/timeout 100s xsltproc $XSL - | sed -ne "2,\$p"
 done
 
 # Embeddings:
