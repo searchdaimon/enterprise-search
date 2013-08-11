@@ -13,3 +13,8 @@
 #outputformat: text
 #outputtype: stdio
 
+documentstype: evna
+command: ./test-abort #file
+outputformat: text
+outputtype: stdio
+
