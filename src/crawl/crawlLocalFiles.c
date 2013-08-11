@@ -181,6 +181,7 @@ void LocalFilesRecursiveDir (
                         crawldocumentAdd.dokument_size  = dokument_size;
                         crawldocumentAdd.lastmodified   = inode.st_mtime;
                         crawldocumentAdd.acl_allow      = acl;
+                        crawldocumentAdd.acl_denied     = "";
                         crawldocumentAdd.title          = dp->d_name;
                         crawldocumentAdd.doctype        = "";
 			crawldocumentAdd.attributes	= "";
