@@ -171,7 +171,6 @@ int exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfini
 				continue;
 			}
 
-printf("i=%i, linelen=%i, (*documentfinishedbufsize)=%i\n", i, linelen, (*documentfinishedbufsize));
 			if (i + linelen > (*documentfinishedbufsize)) {
 				warn("exeoc_stdselect: Out of bufferspace\n");
 				break;
