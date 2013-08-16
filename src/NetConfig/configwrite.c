@@ -13,7 +13,10 @@
 #include "../common/exeoc.h"
 
 /* header */
-#define NET_IFCFG	   "ifcfg-eth1"
+#warning "*****************************************************"
+#warning "Network interface is hardcoded to eth0. Som need eth1"
+#warning "*****************************************************"
+#define NET_IFCFG	   "ifcfg-eth0"
 #define NETSCRIPT_DIR	   "/etc/sysconfig/network-scripts"
 
 #define RESOLV_PATH	   "/etc/resolv.conf"
