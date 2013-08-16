@@ -499,18 +499,18 @@ xml_users(xmlDocPtr doc, xmlNodePtr top)
 	mysql_close(&db);
 }
 
-int
-main(int argc, char **argv, char **envp)
+int main(int argc, char **argv, char **envp)
 {
 	int postsize;
-	char *xmldata;
+	char *xmldata, *data;
 	xmlDocPtr doc;
         xmlNodePtr cur, anode;
 	int bbdnsock;
 	int bbdnport;
 	struct config_t maincfg;
 
-	printf("Content-type: text/txt\n\n");
+	printf("Content-type: text/plain\n\n");
+
 	/* Read in config file */
 	maincfg = maincfgopen();
 	bbdnport = maincfg_get_int(&maincfg, "BLDPORT");
@@ -530,34 +530,89 @@ main(int argc, char **argv, char **envp)
 		errx(1, "Can't init cgi-util");		
 	}
 
-	char api[100], coll[100], url[512];
-
-	sscanf(getenv("REQUEST_URI"),"/%[a-z]/%[a-zA-Z0-9]/%s", api, coll, url);
-
-	printf("api: \"%s\"\n",api);
-	printf("coll: \"%s\"\n",coll);
-	printf("url: \"%s\"\n",url);
-	printf("request_method: \"%s\"\n",request_method);
-	printf("aaa \"%s\"\n",getenv("REQUEST_URI"));
 
 	/*
 	 * Either called from command line, and then we want a file.
 	 * or a http get/put
 	 * Or we are handling a web request, and getting the data from stdin.
 	 */
-	if (strcmp(cgi_getentrystr("method"),"rest") == 0) {
+	if ((cgi_getentrystr("method") != NULL) && (strcmp(cgi_getentrystr("method"),"rest") == 0)) {
 
-                char** env;
-                  for (env = envp; *env != 0; env++)
-                  {
-                    char* thisEnv = *env;
-                    printf("%s\n", thisEnv);
-                  }
+		char api[100], coll[100], url[512];
+
+		if (getenv("REQUEST_URI") == NULL) {
+			errx(1, "Can't read REQUEST_URI");
+		}
+
+		sscanf(getenv("REQUEST_URI"),"/%[a-z]/%[a-zA-Z0-9]/%s", api, coll, url);
+
+		#ifdef DEBUG
+			printf("api: \"%s\"\n",api);
+			printf("coll: \"%s\"\n",coll);
+			printf("url: \"%s\"\n",url);
+			printf("request_method: \"%s\"\n",request_method);
+			printf("reques url \"%s\"\n",getenv("REQUEST_URI"));
+		#endif
+
+
+		if (strcmp(request_method,"POST") == 0 || strcmp(request_method,"ADDDELAYED") == 0 || strcmp(request_method,"PUT") == 0) {
+
+			if (getenv("CONTENT_LENGTH") == NULL) {
+				errx(1, "Can't read CONTENT_LENGTH");
+			}
+
+			
+	               // Get data length
+	                postsize = atoi(getenv("CONTENT_LENGTH"));
+	                data = malloc(postsize + 1);
+			if (data == NULL) {
+				errx(1, "Can't allocate data.");
+			}
+	                // Read data
+	                fread(data, 1, postsize, stdin);
+	                data[postsize] = '\0';
+
+			// add in to repo
+	        	bbdn_docadd(bbdnsock, coll, url, "", data, postsize,
+      			    0, "Everyone", "", "omp1", "", "");
+
+			
+			if (strcmp(request_method,"ADDDELAYED") != 0) {
+	                	// close it
+	                	sd_close(bbdnsock, coll);
+			}
+
+			printf("Added %s to %s\n",url,coll);
+
+		}
+		else if (strcmp(request_method,"DELETE") == 0) {
+			bbdn_deleteuri(bbdnsock, coll, url);
+
+			printf("Deleted %s in %s\n",url,coll);
+
+		}
+		else if (strcmp(request_method,"CLOSE") == 0) {
+			sd_close(bbdnsock, coll);
+
+			printf("Closed %s\n",coll);
+
+		}
+		else {
+			errx(1, "Unknown request method \"%s\"", request_method );
+		}
+
+		#ifdef DEBUG
+			// Print the envirement so we can better see what is going on.
+	                char** env;
+	                for (env = envp; *env != 0; env++) {
+	                    char* thisEnv = *env;
+	                    printf("%s\n", thisEnv);
+	                }
+		#endif
 
 
 	}
-	else if (strcmp(cgi_getentrystr("do"),"add") == 0) {
-
+	else if ((cgi_getentrystr("do") != NULL) && (strcmp(cgi_getentrystr("do"),"add") == 0)) {
 
 		char *url, *coll;
 		char *data;
@@ -615,7 +670,7 @@ main(int argc, char **argv, char **envp)
 		// close it
 		sd_close(bbdnsock, coll);
 	}
-	else if (strcmp(cgi_getentrystr("do"),"delete") == 0) {
+	else if ((cgi_getentrystr("do") != NULL) && (strcmp(cgi_getentrystr("do"),"delete") == 0)) {
 
 
 		char *url, *coll;
