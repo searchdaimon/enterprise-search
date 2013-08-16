@@ -9,6 +9,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <assert.h>
 
 #include "../common/lot.h"
 #include "../common/define.h"
@@ -30,6 +31,12 @@ typedef struct {
 	set acl_denied;
 	set collections;
 } dictcontent_t;
+
+struct af {
+	dictcontent_t *dc;		
+	char *filesKey;
+};
+
 
 static unsigned int fileshashfromkey(void *ky)
 {
@@ -53,7 +60,7 @@ static int filesequalkeys(void *k1, void *k2)
     return (strcmp(c1, c2) == 0);
 }
 void
-dolot(unsigned int lotNr, char *subname, struct hashtable *h, struct hashtable *aclshash)
+dolot(unsigned int lotNr, char *subname, struct hashtable *h, struct hashtable *aclshash, struct hashtable *stoph)
 {
 	FILE *FH;
 	char line[64*1024];
@@ -77,6 +84,16 @@ dolot(unsigned int lotNr, char *subname, struct hashtable *h, struct hashtable *
 			continue;
 		}
 
+		if (strlen(word) <= 3) {
+			//printf("to short: \"%s\"\n",word);
+			continue;
+		}
+
+		
+		if (hashtable_search(stoph, word) != NULL) {
+			//printf("stop: \"%s\"\n",word);
+			continue;
+		}
 		//printf("word \"%s\", nr %u\n",word,nr);
 
 		if ((dc = hashtable_search(h, word)) == NULL) {
@@ -107,6 +124,148 @@ dolot(unsigned int lotNr, char *subname, struct hashtable *h, struct hashtable *
 	fclose(FH);
 }
 
+
+struct hashtable *stophach() {
+
+	char        *path = "data/stopwords/";
+    	DIR         *dir = opendir(path);
+	struct hashtable *stoph = create_hashtable(200, fileshashfromkey, filesequalkeys);
+
+	if (!dir)
+        {
+            printf("dictionarywordsLot: Could not find directory '%s'. Stopword handling will be disabled.\n", path);
+            return stoph;
+        }
+
+	struct dirent       *entry;
+    	while ((entry = readdir(dir)) != NULL)
+        {
+            // [A-Z][A-Z][A-Z].txt
+            if ((entry->d_name[0] >= 'A' && entry->d_name[0] <= 'Z')
+                && (entry->d_name[1] >= 'A' && entry->d_name[1] <= 'Z')
+                && (entry->d_name[2] >= 'A' && entry->d_name[2] <= 'Z')
+                && (entry->d_name[3] == '.')
+                && (entry->d_name[4] == 't')
+                && (entry->d_name[5] == 'x')
+                && (entry->d_name[6] == 't'))
+                {
+                    char        filename[32];
+
+                    strncpy(filename, path, 31);
+                    strncat(filename, entry->d_name, 31 - strlen(filename));
+	
+                    FILE        *ordliste = fopen(filename, "r");
+                    assert(ordliste!=NULL);
+                    char        s[64];
+
+                    while (fscanf(ordliste, "%63s", &s)!=EOF)
+                    {
+                          printf("Stop %s\n", s);
+
+                        if (!hashtable_insert(stoph, strdup(s), strdup(s))) {
+                                printf("cant insert\n");
+                                exit(-1);
+                        }
+
+                    }
+
+                    fclose(ordliste);
+	
+
+		}
+
+	}
+
+	closedir(dir);
+
+	return stoph;
+}
+
+int compare_elements (const void *p1, const void *p2) {
+
+        if (((struct af *)p1)->dc->hits < ((struct af *)p2)->dc->hits) {
+                return -1;
+        }
+        else {
+                return ((struct af *)p1)->dc->hits > ((struct af *)p2)->dc->hits;
+        }
+}
+
+
+void reduse(struct hashtable *h, int max) {
+
+
+
+	struct af *a;
+	int i,y;
+	struct hashtable_itr *itr;
+	dictcontent_t *dc;
+
+	if ((hashtable_count(h) == 0) || (hashtable_count(h) < max)) {
+		return;
+	}
+
+
+	a = malloc(sizeof(struct af) * hashtable_count(h));
+	if (a == NULL) {
+		err(1, "malloc(a)");		
+	}
+
+
+
+	printf("Redusing from %d to %d words.\n", hashtable_count(h), max);
+        itr = hashtable_iterator(h);
+	i = 0;
+       	do {
+
+               	a[i].filesKey = hashtable_iterator_key(itr);
+                a[i].dc = hashtable_iterator_value(itr);
+		++i;
+
+        } while (hashtable_iterator_advance(itr));
+        free(itr);
+
+
+	qsort(a, i , sizeof(struct af), compare_elements);
+
+	#ifdef DEBUG
+	for(y=0;y<i;y++) {
+		printf("q: %s=%d\n",a[y].filesKey, a[y].dc->hits);
+
+	}
+	#endif
+
+	for(y=0;y<(i-max);y++) {
+
+		dc = hashtable_remove(h, a[y].filesKey);
+
+                //set_free_all(&dc->acl_allow);
+                //set_free_all(&dc->acl_denied);
+                //set_free_all(&dc->collections);
+
+		free(dc);
+		
+	}
+
+
+	printf("Redused to %d words.\n", hashtable_count(h));
+
+	#ifdef DEBUG
+        itr = hashtable_iterator(h);
+	i = 0;
+       	do {
+		
+               	a[i].filesKey = hashtable_iterator_key(itr);
+                a[i].dc = hashtable_iterator_value(itr);
+		printf("q2: %s=%d\n",a[i].filesKey, a[i].dc->hits);
+		++i;
+
+        } while (hashtable_iterator_advance(itr));
+        free(itr);
+	#endif
+
+}
+
 int main (int argc, char *argv[]) {
 	FILE *resultFH;
 	char *filesKey;
@@ -114,11 +273,31 @@ int main (int argc, char *argv[]) {
 	struct hashtable_itr *itr;
 	int all = 0;
 	struct hashtable *aclshash;
+	int maxwords = 1000000;
+	int printwords = 0;
+
+        extern char *optarg;
+        extern int optind, opterr, optopt;
+        char c;
+        while ((c=getopt(argc,argv,"m:p"))!=-1) {
+                switch (c) {
+                        case 'm':
+                                maxwords = atoi(optarg);
+                                break;
+                        case 'p':
+                                printwords = 1;
+                                break;
+                        default:
+                                errx(1, "Unknown argument: %c", c);
+                }
+
+	}
+	--optind;
 
 
-	if (argc >= 2 && strcmp(argv[1], "all") == 0) {
+	if ((argc-optind >= 2) && (strcmp(argv[1+optind], "all") == 0)) {
 		all = 1;
-	} else if (argc != 3) {
+	} else if (argc-optind != 3) {
 		printf("usage: dictionarywordsLot lotnr subname\n");
 		printf("usage: dictionarywordsLot all\n");
 		exit(1);
@@ -126,11 +305,13 @@ int main (int argc, char *argv[]) {
 
 	h = create_hashtable(200, fileshashfromkey, filesequalkeys);
 	aclshash = create_hashtable(101, ht_stringhash, ht_stringcmp);
-	if (all == 0) {
-		unsigned int lotNr = atou(argv[1]);
-		char *subname = argv[2];
+	struct hashtable *stoph = stophach();
 
-		dolot(lotNr, subname, h, aclshash);
+	if (all == 0) {
+		unsigned int lotNr = atou(argv[1+optind]);
+		char *subname = argv[2+optind];
+
+		dolot(lotNr, subname, h, aclshash, stoph);
 	} else {
 		char pathname[PATH_MAX];
 		FILE *map;
@@ -176,11 +357,18 @@ int main (int argc, char *argv[]) {
 
 					sprintf(pathname, "%s/%s/%s/dictionarywords_raw",
 					    line, de2->d_name, de3->d_name);
-					printf("found dictionary: %s\n", pathname);
 					/* XXX: Use stat(2) instead? */
 					if ((tmpfh = fopen(pathname, "r")) != NULL) {
 						fclose(tmpfh);
-						dolot(atoi(de2->d_name), de3->d_name, h, aclshash);
+						printf("found dictionary: %s\n", pathname);
+
+						printf("aaa \"%s\"=%u\n", de2->d_name, atou(de2->d_name));
+
+						if (hashtable_count(h) < maxwords) {
+							reduse(h, maxwords * 0.7);
+						}
+						dolot(atou(de2->d_name), de3->d_name, h, aclshash, stoph);
+
 					}
 				}
 				closedir(d3);
@@ -191,6 +379,9 @@ int main (int argc, char *argv[]) {
 		}
 		fclose(map);
 	}
+
+	reduse(h, maxwords);
+
 
 	//resultFH = lotOpenFileNoCasheByLotNr(lotNr,"dictionarywords","w",'r',subname);
 	resultFH = fopen(bfile("var/dictionarywords"), "w");
@@ -208,7 +399,9 @@ int main (int argc, char *argv[]) {
                 	filesKey = hashtable_iterator_key(itr);
                         dc = hashtable_iterator_value(itr);
 
-                        //printf("\"%s\": %i\n",filesKey,dc->hits);
+			if (printwords) {
+                        	printf("\"%15s\": %i\n",filesKey,dc->hits);
+			}
 			fprintf(resultFH,"%s %u ",filesKey,dc->hits);
 			//printf("acl allow:\n");
 			SET_FOREACH(i, &dc->acl_allow, p) {
