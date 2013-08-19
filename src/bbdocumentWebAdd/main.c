@@ -544,7 +544,7 @@ int main(int argc, char **argv, char **envp)
 			errx(1, "Can't read REQUEST_URI");
 		}
 
-		sscanf(getenv("REQUEST_URI"),"/%[a-z]/%[a-zA-Z0-9]/%s", api, coll, url);
+		sscanf(getenv("REQUEST_URI"),"/%[a-z]/%[a-zA-Z0-9_-]/%s", api, coll, url);
 
 		#ifdef DEBUG
 			printf("api: \"%s\"\n",api);
