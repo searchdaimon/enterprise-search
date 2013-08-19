@@ -5,6 +5,7 @@
 #include <time.h>
 #include <sys/types.h>
 #include "../ds/dcontainer.h"
+#include "../query/query_parser.h" //for "struct query_array"
 
 
 #define maxTotalIindexHits MaxTermHit * maxIndexElements
@@ -192,6 +193,19 @@ struct cm_listusers_h {
 #define LANG_ENG 2
 
 #define MAX_SERVERNAME_LEN 32
+
+#define ANCHORMAGIC 0xb309a213
+
+#define MAXFILTERELEMENTS 30
+
+#define __bunused __attribute__((unused))
+
+#define ANONYMOUS_USER "SDESAnonymous"
+
+/* MYSQL login information */
+#define MYSQL_HOST "localhost"
+#define MYSQL_USER "boitho"
+#define MYSQL_PASS "G7J7v5L5Y7"
 
 
 typedef unsigned int docid;
@@ -548,7 +562,6 @@ struct filtypesFormat {
 	int nrof;
 };
 
-#define MAXFILTERELEMENTS 30
 
 struct filterinfoElementsFormat {
 	char name[50];
@@ -657,8 +670,6 @@ struct queryNodeHederFormat {
 	int lang; // jun 19 09, uses LANG_* constants in define.h 
 };
 
-//for "struct query"
-#include "../query/query_parser.h"
 
 // formater for de forskjelige delene i et query
 struct QueryDataForamt {
@@ -717,7 +728,6 @@ struct rewriteFormat {
 	char fulluri[1024];
 };
 
-#define ANCHORMAGIC 0xb309a213
 
 struct anchorRepo {
 	int magic;
@@ -728,16 +738,6 @@ struct anchorRepo {
 struct anchorIndexFormat {
 	off_t offset;
 };
-
-
-#define __bunused __attribute__((unused))
-
-#define ANONYMOUS_USER "SDESAnonymous"
-
-/* MYSQL login information */
-#define MYSQL_HOST "localhost"
-#define MYSQL_USER "boitho"
-#define MYSQL_PASS "G7J7v5L5Y7"
 
 
 #endif //_DEFINE__H_
