@@ -11,8 +11,10 @@ use Boitho::Infoquery;
 use DBI;
 use JSON;
 use Data::Dumper;
+use LWP::UserAgent;
+use HTTP::Request::Common qw(POST);  
 use SD::Sql::ConnSimple qw(sql_exec
-        sql_fetch_results sql_fetch_single);
+        sql_fetch_results sql_fetch_single sql_fetch_arrayresults);
 use CrawlWatch::Config qw(bb_config_get bb_config_update);
 
 use constant DAYS => 60 * 60 * 24;
@@ -33,6 +35,14 @@ sub new {
 
 sub name { "Anonymous usage statistics" }
 
+# Read the uptime.
+sub uptime {
+	# Read the uptime in seconds from /proc/uptime, skip the idle time...
+	open FILE, "< /proc/uptime" or die return ("Cannot open /proc/uptime: $!");
+		my ($uptime, undef) = split / /, <FILE>;
+	close FILE;
+	return ($uptime);
+}
 
 sub run {
     my $self = shift;
@@ -49,8 +59,8 @@ sub run {
 
 	my $json;
 
-    	my $q = "
-		select connectors.name,count(*),read_only 
+    	my $qconnectors = "
+		select connectors.name,count(*) 
 		from 
 		shares,connectors 
 		where 
@@ -58,13 +68,38 @@ sub run {
 		group by shares.connector
 	";
 
-	my @a = sql_fetch_results($self->{dbh}, $q) ;
-	$json->{"connectors"} = \@a;
+	my @connectors = sql_fetch_arrayresults($self->{dbh}, $qconnectors) ;
 
 
-	print to_json($json);
-exit;
-	bb_config_get($self->{dbh}, 'setup_wizard_done');
+    	my $qsystem = "
+		select systemConnector.name,count(*) 
+		from 
+		systemConnector,system 
+		where 
+		systemConnector.id=system.connector 
+		group by system.connector
+	";
+
+	my @system = sql_fetch_arrayresults($self->{dbh}, $qsystem) ;
+
+
+	$json->{"uptime"} = uptime();
+	$json->{"connectors"} = \@connectors;
+	$json->{"system"} = \@system;
+
+	# Sends the data to Searchdaimon
+	my $userAgent = LWP::UserAgent->new(agent => 'perl post');
+	my $response = $userAgent->request(
+		POST 'http://www.searchdaimon.com/cgi-bin/anostat/post.cgi',
+		Content_Type => 'text/json',
+		Content => JSON::to_json($json)
+	);
+
+
+	# Debug: Print the respone
+	# print $response->as_string;
+
+
 	
     ##############################################################################################################
     1;

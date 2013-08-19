@@ -283,9 +283,9 @@ ALTER TABLE shareResults ALTER rank_body_array SET DEFAULT "1,2,4,7,9,10,11,12";
 INSERT INTO config (configkey, configvalue) VALUES('frontpage_preference', 'webclient2');
 
 # allow usage statistic
--- INSERT INTO config (configkey, configvalue) VALUES('anostat_preference', 'legal');
--- INSERT INTO `config` VALUES ('anostat_default_rate',86400);
--- INSERT INTO `config` VALUES ('anostat_last_run',0);
+INSERT INTO config (configkey, configvalue) VALUES('anostat_preference', 'legal');
+INSERT INTO `config` VALUES ('anostat_default_rate',86400);
+INSERT INTO `config` VALUES ('anostat_last_run',0);
 
 INSERT INTO `connectors` VALUES (14, 'Push', 'Successfully pushed data', NULL, NULL, NULL, 0, '', NULL, NULL, 1, 1);
 
