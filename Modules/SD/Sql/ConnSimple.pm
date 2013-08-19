@@ -7,7 +7,7 @@ use Carp;
 use DBI;
 use Data::Dumper;
 use Exporter;
-our @EXPORT_OK = qw(sql_setup get_dbh sql_exec sql_fetch_results sql_fetch_single);
+our @EXPORT_OK = qw(sql_setup get_dbh sql_exec sql_fetch_results sql_fetch_single sql_fetch_arrayresults);
 our @ISA = qw(Exporter);
 
 use constant SQL_CONFIG_FILE => $ENV{'BOITHOHOME'} . "/config/setup.txt";
@@ -75,6 +75,18 @@ sub sql_fetch_single {
     my $sth = sql_exec(@_);
     my ($value) = $sth->fetchrow_array;
     return $value;
+}
+
+##
+# Fetch db results for given query and binds
+# to arrayref
+sub sql_fetch_arrayresults {
+    my $sth = sql_exec(@_);
+    my @results;
+    while (my @res = $sth->fetchrow_array) {
+        push @results, \@res;
+    }
+    return @results;
 }
 
 1;
