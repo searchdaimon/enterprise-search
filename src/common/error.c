@@ -16,30 +16,35 @@
 
 void bverror(const char *fmt,va_list     ap) {
 
-	printf("bverror: ");	
-	vprintf(fmt,ap);
-	printf("\n");
+	#ifdef DEBUG
+		printf("bverror: ");	
+		vprintf(fmt,ap);
+		printf("\n");
+	#endif
 
 	vsprintf(_errormsg,fmt,ap);
 }
 
 void berror(const char *fmt, ...) {
+
 	va_list     ap;
     	va_start(ap, fmt);
 
-//#ifdef DEBUG	
-	printf("berror: ");	
-	vprintf(fmt,ap);
-	printf("\n");
-//#endif
+	#ifdef DEBUG	
+		printf("berror: ");	
+		vprintf(fmt,ap);
+		printf("\n");
+	#endif
 
 	vsprintf(_errormsg,fmt,ap);
 	va_end(ap);
 }
 void berror_safe(const char *str) {
-//#ifdef DEBUG	
-	printf("berror: %s\n", str);	
-//#endif
+
+	#ifdef DEBUG	
+		printf("berror: %s\n", str);	
+	#endif
+
 	sprintf(_errormsg, "%s", str);
 }
 
@@ -47,28 +52,23 @@ void berror_safe(const char *str) {
 
 void bperror(const char *fmt, ...) {
 
-        //extern int errno;
-
         char *syserror = strerror(errno);
 
         va_list     ap;
 
         va_start(ap, fmt);
 
-        //#ifdef DEBUG
+        #ifdef DEBUG
                 printf("crawlperror: ");
                 vprintf(fmt,ap);
                 printf(": %s\n",syserror);
-        //#endif
+        #endif
 
         vsprintf(_errormsg,fmt,ap);
         strcat(_errormsg,": ");
         strcat(_errormsg,syserror);
 
-
         va_end(ap);
-
-
 }
 
 
