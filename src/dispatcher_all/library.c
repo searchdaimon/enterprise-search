@@ -840,7 +840,6 @@ cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struc
 		if (now - st.st_mtime > cachetimeout) {
 			fprintf(stderr, "Cache too old, invalidating\n");
 			unlink(path);
-			flock(fd, LOCK_UN);
 			close(fd);
 			return 0;
 		}
@@ -849,7 +848,6 @@ cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struc
 	if ((cache = gzdopen(fd, "r")) == NULL) {
 		fprintf(stderr, "can't gzopen().\n");
 		perror("gzopen");
-		flock(fd, LOCK_UN);
 		close(fd);
 		return 0;
 	}
@@ -978,8 +976,6 @@ cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struc
 	ret = 0;
  out:
 	gzclose(cache);
-	//Runarb: 20 may 2008: LOCK_UN før close er vel ikke nødvendig for read, da close låser opp.  
-	//flock(fd, LOCK_UN);
 	close(fd);
 	return ret;
 }
@@ -1107,7 +1103,6 @@ cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, stru
 	unlink(path);
  out:
 	gzclose(cache);
-	flock(fd, LOCK_UN);
 	close(fd);
 	return ret;
 }

@@ -920,7 +920,6 @@ void lot_recache_collection(char subname[]) {
 					flock(fileno(fp), LOCK_EX);
 					fseek(fp, 0, SEEK_END);
 					fprintf(fp, "%s\n", subname);
-					flock(fileno(fp), LOCK_UN);
 					fclose(fp);
 				}
 			}

@@ -305,7 +305,6 @@ void cache_indexes_all(void) {
 	} else {
 		flock(fileno(fp), LOCK_EX);
 		ftruncate(fileno(fp), 0);
-		flock(fileno(fp), LOCK_UN);
 		/*
 		 * Release the lock, so that indexes updated while running the
 		 * cache step will not block. We can recache it later.
@@ -355,7 +354,6 @@ void cache_indexes(int action) {
 				}
 				
 				ftruncate(fileno(fp), 0);
-				flock(fileno(fp), LOCK_UN);
 				fclose(fp);
 				bblog(INFO, "done");
 			}

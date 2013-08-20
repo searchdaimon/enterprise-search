@@ -795,6 +795,5 @@ wait_loglock(char *name)
 	if (fdlock == -1)
 		return;
 	flock(fdlock, LOCK_SH); // Block until exclusive lock is released
-	flock(fdlock, LOCK_UN);	
 	close(fdlock);
 }
