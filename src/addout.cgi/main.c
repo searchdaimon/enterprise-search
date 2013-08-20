@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 
         	// Was there an error initializing the CGI???
         	if (res != CGIERR_NONE) {
-        	        fprintf(stderr,"Error # %d: %s\n", res, cgi_strerror(res));
+        	        fprintf(stderr,"Error # %d: %s\n", res, cgilib_strerror(res));
         		exit(1);
         	}
 

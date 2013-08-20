@@ -18,7 +18,7 @@ parseTheEnv (struct QueryDataForamt *QueryData) {
   
 	// Was there an error initializing the CGI???
 	if (res != CGIERR_NONE) {
-      		printf("Error # %d: %s<p>\n", res, cgi_strerror(res));
+      		printf("Error # %d: %s<p>\n", res, cgilib_strerror(res));
       		exit(0);
     	}
 

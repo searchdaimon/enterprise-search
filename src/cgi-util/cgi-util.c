@@ -12,7 +12,11 @@
   April 6, 1996 - October 18, 2002
 */
 
+#ifndef _GNU_SOURCE
+	#define _GNU_SOURCE
+#endif
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
@@ -1114,11 +1118,32 @@ void cgi_dump(const char * filename)
 
 /* Display a simple error message and quit the CGI: */
 
-void cgi_error(const char * reason)
-{
+void cgi_error(const int httpcode, const char *fmt, ...) {
+
+  va_list     ap;
+  va_start(ap, fmt);
+
+  switch ( httpcode ) {
+  case 404:
+  	printf("HTTP/1.1 404 Not Found\r\n");
+  	break;
+  case 400:
+  	printf("HTTP/1.1 400 Bad Request\r\n");
+  	break;
+  default:
+  	//printf("HTTP/1.1 500 Internal Server Error\r\n");
+	printf("Status: 500 Internal Server Error\r\n");
+  	break;
+  }
+
+  printf("Content-type: text/plain\n\n");
   printf("<h1>Error</h1>\n");
-  printf("%s\n", reason);
-  
+  vprintf(fmt, ap);
+  printf("\n");
+
+  // Log to errorog
+  vfprintf(stderr, fmt, ap);
+  va_end(ap);  
   exit(0);
 }
 
@@ -1172,7 +1197,7 @@ int cgi_goodemailaddress(const char * addr)
 /* Returns the English string description for a particular cgi-util error
    value: */
 
-const char * cgi_strerror(int err)
+const char * cgilib_strerror(int err)
 {
   if (err < 0 || err > CGIERR_NUM_ERRS)
     return("");

@@ -28,7 +28,7 @@ int _lookup_lang(const char *lang) {
 void dispatcher_cgi_init(void) {
 	int res = cgi_init();
 	if (res != CGIERR_NONE)
-		errx(1, "cgi init error %d: %s", res, cgi_strerror(res));
+		errx(1, "cgi init error %d: %s", res, cgilib_strerror(res));
 }
 
 int cgi_access_type(char *remoteaddr, char *correct_bbkey) {

@@ -92,7 +92,7 @@ main (int argc, char *argv[])
 	if (getenv("QUERY_STRING")) {
 		// We are in CGI mode
 		if ((ret = cgi_init()) != CGIERR_NONE) {
-			fprintf(stderr, "Error # %d: %s.\n", ret, cgi_strerror(ret));
+			fprintf(stderr, "Error # %d: %s.\n", ret, cgilib_strerror(ret));
 			exit(0);
 		}
 		if ((prefix = cgi_getentrystr("q")) == NULL) {

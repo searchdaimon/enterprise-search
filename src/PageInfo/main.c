@@ -213,7 +213,7 @@ int main (int argc, char *argv[]) {
 
 	        // Was there an error initializing the CGI???
 	        if (res != CGIERR_NONE) {
-	                printf("Error # %d: %s<p>\n", res, cgi_strerror(res));
+	                printf("Error # %d: %s<p>\n", res, cgilib_strerror(res));
 	                fprintf(stderr,"Cgi-lib error.");
 			return -1;
 	        }

@@ -232,14 +232,13 @@ int cgi_goodemailaddress(const char * addr);
   Displays a generic error message and quits (exit(0);).
 */
 
-void cgi_error(const char * reason);
-
+void cgi_error(const int httpcode, const char *fmt, ...);
 
 /*
   Returns the english text string for a CGI error.
 */
 
-const char * cgi_strerror(int err);
+const char * cgilib_strerror(int err);
 
 
 #ifdef __cplusplus
