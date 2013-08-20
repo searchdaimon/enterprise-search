@@ -588,11 +588,20 @@ int main(int argc, char **argv, char **envp)
 
 		}
 		else if (strcmp(request_method,"DELETE") == 0) {
-			if (bbdn_deleteuri(bbdnsock, coll, url) != 1) {
-				cgi_error(500, "Can't delete document");
-			}
 
-			asprintf(&status,"Deleted %s in %s\n",url,coll);
+			if (url[0] == '\0') {
+
+				cgi_error(500, "Deletions of collections are not implemented yet. Use the admin interface in the meantime.");
+				//asprintf(&status,"Deleted collection %s\n",coll);
+
+			}
+			else {
+				if (bbdn_deleteuri(bbdnsock, coll, url) != 1) {
+					cgi_error(500, "Can't delete document");
+				}
+
+				asprintf(&status,"Deleted url %s in %s\n",url,coll);
+			}
 
 		}
 		else if (strcmp(request_method,"CLOSE") == 0) {
