@@ -21,6 +21,7 @@
 #include "../crawlManager/client.h"
 #include "../common/define.h"
 #include "../key/key.h"
+#include "../common/error.h"
 
 char systemkey[KEY_STR_LEN];
 
@@ -507,9 +508,9 @@ int main(int argc, char **argv, char **envp)
         xmlNodePtr cur, anode;
 	int bbdnsock;
 	int bbdnport;
+	char *status = NULL;
 	struct config_t maincfg;
 
-	printf("Content-type: text/plain\n\n");
 
 	/* Read in config file */
 	maincfg = maincfgopen();
@@ -519,7 +520,7 @@ int main(int argc, char **argv, char **envp)
 	char *request_method;
 
 	if (!bbdn_conect(&bbdnsock, "", bbdnport))
-		errx(1, "Unable to connect to document manager");
+		cgi_error(500, bstrerror());
 
 
 	request_method = strdup(getenv("REQUEST_METHOD"));
@@ -527,7 +528,7 @@ int main(int argc, char **argv, char **envp)
 	setenv("REQUEST_METHOD", "GET", 1);
 
 	if (cgi_init() != CGIERR_NONE) {
-		errx(1, "Can't init cgi-util");		
+		cgi_error(500, "Can't init cgi-util");		
 	}
 
 
@@ -541,7 +542,7 @@ int main(int argc, char **argv, char **envp)
 		char api[100], coll[100], url[512];
 
 		if (getenv("REQUEST_URI") == NULL) {
-			errx(1, "Can't read REQUEST_URI");
+			cgi_error(500, "Can't read REQUEST_URI");
 		}
 
 		sscanf(getenv("REQUEST_URI"),"/%[a-z]/%[a-zA-Z0-9_-]/%s", api, coll, url);
@@ -558,7 +559,7 @@ int main(int argc, char **argv, char **envp)
 		if (strcmp(request_method,"POST") == 0 || strcmp(request_method,"ADDDELAYED") == 0 || strcmp(request_method,"PUT") == 0) {
 
 			if (getenv("CONTENT_LENGTH") == NULL) {
-				errx(1, "Can't read CONTENT_LENGTH");
+				cgi_error(500, "Can't read CONTENT_LENGTH");
 			}
 
 			
@@ -566,15 +567,16 @@ int main(int argc, char **argv, char **envp)
 	                postsize = atoi(getenv("CONTENT_LENGTH"));
 	                data = malloc(postsize + 1);
 			if (data == NULL) {
-				errx(1, "Can't allocate data.");
+				cgi_error(500, "Can't allocate data.");
 			}
 	                // Read data
 	                fread(data, 1, postsize, stdin);
 	                data[postsize] = '\0';
 
 			// add in to repo
-	        	bbdn_docadd(bbdnsock, coll, url, "", data, postsize,
-      			    0, "Everyone", "", "omp1", "", "");
+	        	if (bbdn_docadd(bbdnsock, coll, url, "", data, postsize, 0, "Everyone", "", "omp1", "", "") != 1) {
+				cgi_error(500, "Can't add document");
+			}
 
 			
 			if (strcmp(request_method,"ADDDELAYED") != 0) {
@@ -582,23 +584,25 @@ int main(int argc, char **argv, char **envp)
 	                	sd_close(bbdnsock, coll);
 			}
 
-			printf("Added %s to %s\n",url,coll);
+			asprintf(&status,"Added %s to %s\n",url,coll);
 
 		}
 		else if (strcmp(request_method,"DELETE") == 0) {
-			bbdn_deleteuri(bbdnsock, coll, url);
+			if (bbdn_deleteuri(bbdnsock, coll, url) != 1) {
+				cgi_error(500, "Can't delete document");
+			}
 
-			printf("Deleted %s in %s\n",url,coll);
+			asprintf(&status,"Deleted %s in %s\n",url,coll);
 
 		}
 		else if (strcmp(request_method,"CLOSE") == 0) {
 			sd_close(bbdnsock, coll);
 
-			printf("Closed %s\n",coll);
+			asprintf(&status,"Closed %s\n",coll);
 
 		}
 		else {
-			errx(1, "Unknown request method \"%s\"", request_method );
+			cgi_error(500, "Unknown request method \"%s\"", request_method );
 		}
 
 		#ifdef DEBUG
@@ -623,10 +627,10 @@ int main(int argc, char **argv, char **envp)
 		coll = cgi_getentrystr("collection");
 
 		if (url == NULL) {
-			err(1, "No url specified. Either set http header HTTP_X_FILENAME or get parameter 'url'.\n");
+			cgi_error(500, "No url specified. Either set http header HTTP_X_FILENAME or get parameter 'url'.\n");
 		}
 		if (coll == NULL) {
-			err(1,"No collection specified\n");
+			cgi_error(500, "No collection specified\n");
 		}
 
 
@@ -636,11 +640,11 @@ int main(int argc, char **argv, char **envp)
 	
 		fh = fopen(tmpname,"wb");
 		if (fh == NULL) {
-			err(1,"Can't open file %s",tmpname);
+			cgi_error(500, "Can't open file %s",tmpname);
 		}
 
 		if ((data = malloc( atoi(getenv("CONTENT_LENGTH")) )) == NULL) {
-			errx(1, "Can't malloc data");
+			cgi_error(500, "Can't malloc data");
 		}
 
 		datasize = 0;
@@ -652,13 +656,6 @@ int main(int argc, char **argv, char **envp)
 
 		fclose(fh);
 		free(tmpname);
-
-		//char** env;
-		//  for (env = envp; *env != 0; env++)
-		//  {
-		//    char* thisEnv = *env;
-		//    printf("%s\n", thisEnv);    
-		//  }
 
 
 		//        bbdn_docadd(bbdnsock, xmldoc.collection, uri, xmldoc.documenttype, xmldoc.body, xmldoc.bodysize,
@@ -679,15 +676,15 @@ int main(int argc, char **argv, char **envp)
 		coll = cgi_getentrystr("collection");
 
 		if (url == NULL) {
-			err(1, "No url specified. Either set http header HTTP_X_FILENAME or get parameter 'url'.\n");
+			cgi_error(500, "No url specified. Either set http header HTTP_X_FILENAME or get parameter 'url'.\n");
 		}
 		if (coll == NULL) {
-			err(1,"No collection specified\n");
+			cgi_error(500, "No collection specified\n");
 		}
 
 		bbdn_deleteuri(bbdnsock, coll, url);
 
-		printf("%s deleted.\n", url);
+		asprintf(&status,"%s deleted.\n", url);
 	}
 	else if (getenv("CONTENT_LENGTH") != NULL) {
 		// Get data length
@@ -705,19 +702,19 @@ int main(int argc, char **argv, char **envp)
         	doc = xmlParseDoc((xmlChar*)xmldata);
 
         	if (doc == NULL)
-		errx(1, "Unable to parse document");
+		cgi_error(500, "Unable to parse document");
 
         	cur = xmlDocGetRootElement(doc);
 
         	if (cur == NULL) {
         	        xmlFreeDoc(doc);
-        	        errx(1, "empty document");
+        	        cgi_error(500, "empty document");
         	}
 
 		// Some document checking
         	if (xmlStrcmp(cur->name, (const xmlChar *)ROOT_NODE_NAME)) {
         	        xmlFreeDoc(doc);
-        	        errx(1, "document of the wrong type, root node != %s, but %s\n", ROOT_NODE_NAME, cur->name);
+        	        cgi_error(500, "document of the wrong type, root node != %s, but %s\n", ROOT_NODE_NAME, cur->name);
         	}
 
 		if ((anode = xml_find_child(cur, "key")) != NULL) {
@@ -725,27 +722,23 @@ int main(int argc, char **argv, char **envp)
 		
 			p = (char *)xmlNodeListGetString(doc, anode->xmlChildrenNode, 1);
 			if (p == NULL)
-				errx(1, "No key data");
+				cgi_error(500, "No key data");
 
 			if ((systemkey[0] != '\0') && (!key_equal(systemkey, p))) {
-				fprintf(stderr,"Keys does not match:  Got \"%s\" but wanted \"%s\"\n",p,systemkey);
-				exit(-1);
+				cgi_error(500, "Keys does not match:  Got \"%s\" but wanted \"%s\"\n",p,systemkey);
 			}
 		} else {
-			errx(1, "Did not receive a key");
+			cgi_error(500, "Did not receive a key");
 		}
 		if ((anode = xml_find_child(cur, "version")) != NULL) {
 			xmlChar *p;
 
 			p = xmlNodeListGetString(doc, anode->xmlChildrenNode, 1);
 			version = atoi((char*)p);
-			#ifdef DEBUG
-				fprintf(stderr, "Got a version: %d\n", version);
-			#endif
 
 			xmlFree(p);
 		} else {
-			errx(1, "Did not receive a version number");
+			cgi_error(500, "Did not receive a version number");
 		}
 
 		for (cur = cur->xmlChildrenNode; cur != NULL; cur = cur->next) {
@@ -776,7 +769,7 @@ int main(int argc, char **argv, char **envp)
 		}
 
 	} else {
-		errx(1, "Didn't receive any command or data.");
+		cgi_error(500, "Didn't receive any command or data.");
 	}
 
         struct timespec time;
@@ -786,6 +779,13 @@ int main(int argc, char **argv, char **envp)
 
         nanosleep(&time,NULL);
 
+	if (status != NULL) {
+		printf("Content-type: text/plain\n\n");
+		printf(status);
+	}
+	else {
+		cgi_error(500, "Reached end of program without status.");
+	}
 
 	return 0;
 }
