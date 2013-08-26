@@ -180,7 +180,7 @@ int bbdn_deleteuri(int socketha, char subname[], char *uri) {
 
 /* Delete an uri from the system */
 int bbdn_deletecollection(int socketha, char subname[]) {
-	int len;
+	int len, i;
 	int intrespons = 0;
 	
 	debug("bbdn_deletecollection start");
