@@ -429,6 +429,27 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			}
 			free(subname);
 		}
+		else if (packedHedder.command == bbc_deletecollection) {
+			printf("deletecollection\n");
+			char *subname, *uri;
+			//subname
+                        if ((i=recv(socket, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
+                                perror("Cant read intrespons");
+                                exit(1);
+                        }
+                        subname = malloc(intrespons +1);
+                        if ((i=recv(socket, subname, intrespons,MSG_WAITALL)) == -1) {
+                                perror("Cant read subname");
+                                exit(1);
+                        }
+			subname[intrespons] = '\0';
+
+
+			printf("going to delete collection: %s\n", subname);
+			bbdocument_deletecoll(subname);
+
+			free(subname);
+		}
 		else if (packedHedder.command == bbc_addwhisper) {
 			whisper_t add;
 			char *subname;

@@ -178,6 +178,23 @@ int bbdn_deleteuri(int socketha, char subname[], char *uri) {
 	return 1;
 }
 
+/* Delete an uri from the system */
+int bbdn_deletecollection(int socketha, char subname[]) {
+	int len;
+	
+	debug("bbdn_deletecollection start");
+	sendpacked(socketha,bbc_deletecollection,BLDPROTOCOLVERSION, 0, NULL,"");
+
+       	len = strlen(subname) +1;
+        if(sendall(socketha,&len, sizeof(int)) == -1) { perror("sendall"); exit(1); }
+        if(sendall(socketha,subname, len) == -1) { perror("sendall"); exit(1); }
+
+
+	debug("bbdn_deletecollection end");
+		
+	return 1;
+}
+
 int bbdn_addwhisper(int sock, char *subname, whisper_t whisper) {
 	int len;
 

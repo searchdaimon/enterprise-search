@@ -7,6 +7,7 @@
 #define bbc_docadd 		10
 #define bbc_deleteuri		11
 #define bbc_addwhisper		12
+#define bbc_deletecollection	13
 
 #define bbc_closecollection	20
 #define bbc_HasSufficientSpace  21
