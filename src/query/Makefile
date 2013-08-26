@@ -13,7 +13,7 @@ _query_parser:
 
 test:
 	$(CC) -c test.c
-	$(CC) -o query_parser test.o lex.query.o stemmer.o ../ds/libds.a ../common/xml.c
+	$(CC) -o query_parser test.o lex.query.o stemmer.o ../../lib/libds.a ../common/xml.c
 
 build_thesaurus:
 # Kjør 'src/query/build_thesaurus_from_ordbanken data/ordbanken/fullform_bm.txt data/thesaurus.text data/thesaurus.id'
