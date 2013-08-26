@@ -265,6 +265,52 @@ void sd_close(int bbdnsock, char *coll) {
 
 }
 
+int sd_deletecollection(int bbdnsock, char *coll) {
+
+
+        char *query;
+        MYSQL db;
+
+
+        // delete in the db
+        if (mysql_init(&db) == NULL) {
+                fprintf(stderr, "Unable to init mysql.\n");
+	        return;
+        }
+
+        if (!mysql_real_connect(&db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)) {
+        	fprintf(stderr, "Unable to connect to database: %s\n", mysql_error(&db));
+                return ;
+        }
+
+        asprintf(&query, "UPDATE shares set crawler_success=1,crawler_message=\"Deleting.\",last=now() WHERE collection_name=\"%s\"", coll);
+
+	if (mysql_real_query(&db, query, strlen(query))) {
+        	fprintf(stderr, "Failed to update row, Error: %s\n", mysql_error(&db));
+                return;
+	}
+
+
+	if (bbdn_deletecollection(bbdnsock, coll) != 1) {
+		return 0;
+	}
+
+
+        asprintf(&query, "DELETE from shares WHERE collection_name=\"%s\"", coll);
+
+        if (mysql_real_query(&db, query, strlen(query))) {
+        	fprintf(stderr, "Failed to update row, Error: %s\n", mysql_error(&db));
+                return;
+        }
+
+
+        free(query);
+        mysql_close(&db);
+
+
+	return 1;
+}
+
 
 void
 xml_close(int sock, xmlDocPtr doc, xmlNodePtr top)
@@ -591,9 +637,11 @@ int main(int argc, char **argv, char **envp)
 
 			if (url[0] == '\0') {
 
-				cgi_error(500, "Deletions of collections are not implemented yet. Use the admin interface in the meantime.");
-				//asprintf(&status,"Deleted collection %s\n",coll);
+				if (sd_deletecollection(bbdnsock, coll) != 1) {
+					cgi_error(500, "Can't delete collection");
+				}
 
+				asprintf(&status,"Deleted collection %s\n",coll);
 			}
 			else {
 				if (bbdn_deleteuri(bbdnsock, coll, url) != 1) {
