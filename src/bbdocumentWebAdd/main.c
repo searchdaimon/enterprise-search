@@ -225,43 +225,42 @@ xml_delete(int sock, xmlDocPtr doc, xmlNodePtr top)
 	xmlFree(coll);
 }
 
-void sd_close(int bbdnsock, char *coll) {
 
+void sd_close(int bbdnsock, char *coll) {
 
         char *query;
         MYSQL db;
 
-		bbdn_closecollection(bbdnsock, coll);
+	bbdn_closecollection(bbdnsock, coll);
 
-                // creat it in the sql db
-                if (mysql_init(&db) == NULL) {
-                        fprintf(stderr, "Unable to init mysql.\n");
-                        return;
-                }
-                if (!mysql_real_connect(&db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)) {
-                        fprintf(stderr, "Unable to connect to database: %s\n", mysql_error(&db));
-                        return ;
-                }
+        // creat it in the sql db
+        if (mysql_init(&db) == NULL) {
+	        fprintf(stderr, "Unable to init mysql.\n");
+                return;
+        }
+        if (!mysql_real_connect(&db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)) {
+        	fprintf(stderr, "Unable to connect to database: %s\n", mysql_error(&db));
+                return ;
+        }
 
-                // create the collections if ot don't exist
-                asprintf(&query, "INSERT IGNORE INTO shares VALUES (NULL,'',14,1,NULL,0,NOW(),0,'','','','','',NULL,'Pushing has started.','%s',NULL,NULL,NULL,NULL,'acl',NULL)", coll);
+        // create the collections if it don't exist
+        asprintf(&query, "INSERT IGNORE INTO shares VALUES (NULL,'',14,1,NULL,0,NOW(),0,'','','','','',NULL,'Pushing has started.','%s',NULL,NULL,NULL,NULL,'acl',NULL)", coll);
 
-                if (mysql_real_query(&db, query, strlen(query))) {
-                      fprintf(stderr, "Failed to insert row, Error: %s\n", mysql_error(&db));
-                      return;
-                }
+        if (mysql_real_query(&db, query, strlen(query))) {
+        	fprintf(stderr, "Failed to insert row, Error: %s\n", mysql_error(&db));
+                return;
+        }
 
-                // Update status
-                asprintf(&query, "UPDATE shares set crawler_success=1,crawler_message=\"OK.\",last=now() WHERE collection_name=\"%s\"", coll);
+        // Update status
+        asprintf(&query, "UPDATE shares set crawler_success=1,crawler_message=\"OK.\",last=now() WHERE collection_name=\"%s\"", coll);
 
-                if (mysql_real_query(&db, query, strlen(query))) {
-                      fprintf(stderr, "Failed to update row, Error: %s\n", mysql_error(&db));
-                      return;
-                }
+        if (mysql_real_query(&db, query, strlen(query))) {
+        	fprintf(stderr, "Failed to update row, Error: %s\n", mysql_error(&db));
+                return;
+        }
 
-                free(query);
-                mysql_close(&db);
-
+        free(query);
+        mysql_close(&db);
 
 }
 
