@@ -446,7 +446,14 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 
 
 			printf("going to delete collection: %s\n", subname);
-			bbdocument_deletecoll(subname);
+
+			intrespons = bbdocument_deletecoll(subname);
+
+			if ((n=sendall(socket, &intrespons, sizeof(intrespons))) == -1) {
+                	               perror("Cant recv filerest");
+        	                       exit(1);
+	               	}
+
 
 			free(subname);
 		}

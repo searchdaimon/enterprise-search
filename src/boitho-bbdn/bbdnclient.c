@@ -181,6 +181,7 @@ int bbdn_deleteuri(int socketha, char subname[], char *uri) {
 /* Delete an uri from the system */
 int bbdn_deletecollection(int socketha, char subname[]) {
 	int len;
+	int intrespons = 0;
 	
 	debug("bbdn_deletecollection start");
 	sendpacked(socketha,bbc_deletecollection,BLDPROTOCOLVERSION, 0, NULL,"");
@@ -189,10 +190,15 @@ int bbdn_deletecollection(int socketha, char subname[]) {
         if(sendall(socketha,&len, sizeof(int)) == -1) { perror("sendall"); exit(1); }
         if(sendall(socketha,subname, len) == -1) { perror("sendall"); exit(1); }
 
+        if ((i=recv(socketha, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
+            bperror("Cant recv respons");
+            return 0;
+        }
 
 	debug("bbdn_deletecollection end");
-		
-	return 1;
+
+	return intrespons;
+
 }
 
 int bbdn_addwhisper(int sock, char *subname, whisper_t whisper) {
