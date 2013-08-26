@@ -545,7 +545,7 @@ int main(int argc, char **argv, char **envp)
 			cgi_error(500, "Can't read REQUEST_URI");
 		}
 
-		sscanf(getenv("REQUEST_URI"),"/%[a-z]/%[a-zA-Z0-9_-]/%s", api, coll, url);
+		sscanf(getenv("REQUEST_URI"),"/%[a-z]/%[a-zA-Z0-9_-]/%[^?]", api, coll, url);
 
 		#ifdef DEBUG
 			printf("api: \"%s\"\n",api);
@@ -574,7 +574,7 @@ int main(int argc, char **argv, char **envp)
 	                data[postsize] = '\0';
 
 			// add in to repo
-	        	if (bbdn_docadd(bbdnsock, coll, url, "", data, postsize, 0, "Everyone", "", "omp1", "", "") != 1) {
+	        	if (bbdn_docadd(bbdnsock, coll, url, "", data, postsize, 0, "Everyone", "", "", "", cgi_getentrystr("attributes")) != 1) {
 				cgi_error(500, "Can't add document");
 			}
 
@@ -619,7 +619,7 @@ int main(int argc, char **argv, char **envp)
 	                char** env;
 	                for (env = envp; *env != 0; env++) {
 	                    char* thisEnv = *env;
-	                    printf("%s\n", thisEnv);
+	                    fprintf(stderr, "%s\n", thisEnv);
 	                }
 		#endif
 

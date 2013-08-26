@@ -64,6 +64,7 @@ int bbdn_docadd(int socketha,char subname[],char documenturi[],char documenttype
 	int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied, char title[],char doctype[], char *attributes) {
 
 	int len;
+	char *blank = "";
 
 	//sender heder
         sendpacked(socketha,bbc_docadd,BLDPROTOCOLVERSION, 0, NULL,"");
@@ -124,6 +125,9 @@ int bbdn_docadd(int socketha,char subname[],char documenturi[],char documenttype
         if(sendall(socketha,doctype, len) == 0) { perror("sendall doctype"); return 0; }
 
 	// Attributes
+	if (attributes==NULL) {
+		attributes = blank;
+	}
         len = strlen(attributes) +1;
 	debug("sending (len %i): \"%s\"",len,attributes);
         if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall attributes len"); return 0; }
