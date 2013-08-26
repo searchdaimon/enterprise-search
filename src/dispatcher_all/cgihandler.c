@@ -197,14 +197,14 @@ void cgi_fetch_full(struct QueryDataForamt *qdata) {
 #endif
 	else {
 
-	#ifdef BLACK_BOX
+		#ifdef BLACK_BOX
 		if (cgi_getentryint("anonymous") != 0) {
 			qdata->anonymous = 1;
 			strscpy(qdata->search_user, ANONYMOUS_USER, sizeof(qdata->search_user));
 		}
 		if (!qdata->anonymous) {
 		#endif
-			if ((tmpstr = cgi_getentrystr("search_bruker")) != NULL) {
+			if (((tmpstr = cgi_getentrystr("search_bruker")) != NULL) || ((tmpstr = cgi_getentrystr("user")) != NULL)) {
 				strscpy(qdata->search_user, tmpstr, sizeof(qdata->search_user));
 			}
 			if (qdata->search_user[0] == '\0')
@@ -212,7 +212,7 @@ void cgi_fetch_full(struct QueryDataForamt *qdata) {
 		#ifdef BLACK_BOX
 		}
 		#endif
-		if ((tmpstr = cgi_getentrystr("subname")) != NULL) {
+		if (((tmpstr = cgi_getentrystr("subname")) != NULL) || ((tmpstr = cgi_getentrystr("collection")) != NULL)) {
 			/* 25.05.09: eirik
 			 * Subname has changed it's meaning.
 			 * If subname is non-empty we only want these collection.

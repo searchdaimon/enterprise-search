@@ -73,10 +73,10 @@ sub show_generate_url {
 		$vars->{path} = "/webclient2/api/anonymous/sd/2.1/search?query=$query";
 	}
 	elsif ($searchmode eq "pre_auth" && $outformat eq 'opensearch') {
-		$vars->{path} = "/cgi-bin/dispatcher_allbb?query=$query&search_bruker=$username&bbkey=$key&outformat=opensearch";
+		$vars->{path} = "/cgi-bin/dispatcher_allbb?query=$query&user=$username&bbkey=$key&outformat=opensearch";
 	}
 	elsif ($searchmode eq "pre_auth" && $outformat eq 'nativexml') {
-		$vars->{path} = "/cgi-bin/dispatcher_allbb?query=$query&search_bruker=$username&bbkey=$key";
+		$vars->{path} = "/cgi-bin/dispatcher_allbb?query=$query&user=$username&bbkey=$key";
 	}
 	else {
 		carp "Unknown type $searchmode -> $outformat";
