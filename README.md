@@ -25,7 +25,7 @@ The only exception is that we unfortunately have had to hold on to some related 
 
 ### The software ###
 
-The ES software is currently about 100K lines of code and is mostly written in C and Perl.
+The ES software is currently about 200K lines of code and is mostly written in C and Perl.
 
 <pre>
 C:        72.00%
@@ -38,10 +38,20 @@ C++:      0.13%
 AWK:      0.04%
 </pre>
 
+More statistics is available at our [Ohloh page](https://www.ohloh.net/p/enterprise-search).
+
 ### Developing ###
 It is super easy to get started to develop on the ES. As the ES comes as a virtual machine with all software installed, all you need to do to get a development environment up and running is to add the development plugin and then checkout the source code with git.
 
 Please see full article on how to get started as a developer at: [Setting up an ES for development](https://github.com/searchdaimon/enterprise-search/wiki/Setting-up-an-ES-for-development "Setting up an ES for development")
+
+- [Overview of the code](https://github.com/searchdaimon/enterprise-search/wiki/Overview-of-the-code)
+- [Developing on the four main daemons (Searching, Crawling, Documents and AD)](https://github.com/searchdaimon/enterprise-search/wiki/Developing-on-the-four-main-daemons-\(Searching,-Crawling,-Documents-and-AD\))
+- - [Plugin: File filter](https://github.com/searchdaimon/enterprise-search/wiki/Plugin:-File-filter)
+- - [Plugin: Crawler](https://github.com/searchdaimon/enterprise-search/wiki/Plugin:-Crawler)
+- [Testing & Test data](https://github.com/searchdaimon/enterprise-search/wiki/Testing-&-Test-data)
+- [Tips & Tricks](https://github.com/searchdaimon/enterprise-search/wiki/Tips-&-Tricks)
+
 
 ##### Mailing list for developers
 http://lists.searchdaimon.com/mailman/listinfo/sddev
@@ -52,8 +62,8 @@ Some functions should be developed as plugins so other parts of the system can b
 ### Licensing ###
 The ES is licensed under the GNU General Public License version 2 (GPLv2).
 
-### Full Documentation ###
-Please see our manual at http://www.searchdaimon.com/documentation/
+### Usage documentation ###
+Please see the official manual for information on how to setup and use the ES as a system administrator or end user: http://www.searchdaimon.com/documentation/
 
 ### Discussion forum ###
 Talk with the ES staff, users and other developers at http://www.searchdaimon.com/forum/ .
