@@ -129,6 +129,12 @@ int sconnect (void (*sh_pointer) (int), int PORT, int noFork, int breakAfter) {
             exit(1);
         }
 
+  	#ifndef NO_REUSEADDR
+       		if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
+              		perror("setsockopt");
+              		exit(1);
+        	}
+	#endif
 
 	#ifdef DEBUG
 	printf("will listen on port %i\n",PORT);
@@ -152,10 +158,10 @@ int sconnect (void (*sh_pointer) (int), int PORT, int noFork, int breakAfter) {
 
 	
 	// http://groups.google.com/groups?hl=no&lr=&c2coff=1&rls=GGLD,GGLD:2004-19,GGLD:en&selm=87iuv0b7td.fsf%40erlenstar.demon.co.uk&rnum=2
-	// bare ignorerer signalet og lar barne dø hvis dette er ok. På rare platformer kan vi få problemer
-	// må i såfalt gjøre om flagget
+	// bare ignorerer signalet og lar barne dï¿½ hvis dette er ok. Pï¿½ rare platformer kan vi fï¿½ problemer
+	// mï¿½ i sï¿½falt gjï¿½re om flagget
 	#ifdef CANT_IGNORE_SIGCHLD
-		//sliter met at denne ikke fungerer. Må fikses om vi skal kjøre på andre plattformer
+		//sliter met at denne ikke fungerer. Mï¿½ fikses om vi skal kjï¿½re pï¿½ andre plattformer
 		printf("CANT_IGNORE_SIGCHLD: on\n");
 		sa.sa_handler = sigchld_handler; // reap all dead processes
 		sa.sa_flags = SA_RESTART;		
@@ -257,7 +263,7 @@ int sconnect (void (*sh_pointer) (int), int PORT, int noFork, int breakAfter) {
 #ifdef WITH_DAEMON_THREAD
 
 #ifndef WITH_THREAD
-	#error "Hvis man skal bruke WITH_DAEMON_THREAD, må man også definere WITH_THREAD. Definer WITH_THREAD"
+	#error "Hvis man skal bruke WITH_DAEMON_THREAD, mï¿½ man ogsï¿½ definere WITH_THREAD. Definer WITH_THREAD"
 #endif
 //rutine som binder seg til PORT og kaller sh_pointer hver gang det kommer en ny tilkobling
 // Threaded
@@ -515,7 +521,7 @@ int cconnect (char *hostname, int PORT) {
 	//setter den tilabke til blokin mode
 	fcntl (sockfd, F_SETFL, sockedmode);
 	
-	//printf("ferdig med å konekte\n");
+	//printf("ferdig med ï¿½ konekte\n");
 	//sh_pointer(sockfd);
 
         //if ((numbytes=recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
@@ -591,8 +597,8 @@ int sendall(int s, void *buf, int len) {
 
 /************************************************************************************
 
- Ruting som tar inn data som skal sende, pakker de i en minne blok, og sender de som en send. Dette _kan_ øke socket 
- hastigheten hvis vi kjører med TCP_NODELAY
+ Ruting som tar inn data som skal sende, pakker de i en minne blok, og sender de som en send. Dette _kan_ ï¿½ke socket 
+ hastigheten hvis vi kjï¿½rer med TCP_NODELAY
 
  eks: 
 	sendallPack(socket, 4, &n, sizeof(n), collections, (maxSubnameLength+1)*n);
@@ -614,7 +620,7 @@ int sendallPack(int s, int numargs, ...) {
 	#endif
 
 	/***********************************************
-	 går gjenom dataene en gang for å finne total størelse
+	 gï¿½r gjenom dataene en gang for ï¿½ finne total stï¿½relse
 	***********************************************/
 
 	va_start( listPointer, numargs );
@@ -631,7 +637,7 @@ int sendallPack(int s, int numargs, ...) {
 
 
 	/***********************************************
-	 oppretter minne for å kopiere data inn i
+	 oppretter minne for ï¿½ kopiere data inn i
 	***********************************************/
 
 
@@ -642,7 +648,7 @@ int sendallPack(int s, int numargs, ...) {
 	p = blockToSend;
 
 	/***********************************************
-	 går gjenom dataene en gang til for å kopiere de inn
+	 gï¿½r gjenom dataene en gang til for ï¿½ kopiere de inn
 	***********************************************/
 
 	va_start( listPointer, numargs );
@@ -663,7 +669,7 @@ int sendallPack(int s, int numargs, ...) {
 	va_end( listPointer );
 
 	/***********************************************
-	 Nå når vi har lagget en pakke ut av det, gjør vi det faktisk send kallet.
+	 Nï¿½ nï¿½r vi har lagget en pakke ut av det, gjï¿½r vi det faktisk send kallet.
 	***********************************************/
 
 	/*
@@ -704,7 +710,7 @@ int recvall(int sockfd, void *buf, int len) {
 	while(total < len) {
 
 		//runarb: 17.07.2007
-		//hum, når vi bruker bloacking i/o så skal det vel bare bli 0 hvis det uikke er mere data og lese? 
+		//hum, nï¿½r vi bruker bloacking i/o sï¿½ skal det vel bare bli 0 hvis det uikke er mere data og lese? 
 		//read skal altid blokke til det er noe data og lese, uanset hvor lang tid det tar
 		//if ((n = read(sockfd, buf+total, bytesleft)) == -1) {
 		if ((n = read(sockfd, buf+total, bytesleft)) <= 0) {
@@ -737,7 +743,7 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 		printf("sendpacked(socket=%i, command=%d, version=%d, dataSize=%i, subname=%s)\n",socket,command,version,dataSize,subname);
 	#endif
 
-	//siden vi skal sende pakken over nettet er det like gått å nullstille all data. Da slipper vi at valgring klager også.
+	//siden vi skal sende pakken over nettet er det like gï¿½tt ï¿½ nullstille all data. Da slipper vi at valgring klager ogsï¿½.
 	memset(&packedHedder,0,sizeof(packedHedder));
 
         //setter sammen hedder
@@ -778,7 +784,7 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 	printf("~sendpacked(ret=%i)\n",forret);
 	#endif
 
-	//dene returneres altid, også hvs vi ikke gjort en gotoend_error
+	//dene returneres altid, ogsï¿½ hvs vi ikke gjort en gotoend_error
 	return forret;
 
 }
