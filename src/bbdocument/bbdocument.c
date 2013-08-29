@@ -16,6 +16,7 @@
 
 #include "bbdocdefine.h"
 #include "bbfilters.h"
+#include "bbdocument.h"
 
 #include "../common/define.h"
 #include "../common/debug.h"
@@ -32,19 +33,13 @@
 #include "../common/strlcpy.h"
 #include "../common/DocumentIndex.h"
 #include "../acls/acls.h"
-
-#include "bbdocument.h"
-
 #include "../common/bfileutil.h"
 #include "../common/lot.h"
-
 #include "../ds/dcontainer.h"
-
-//#include "../common/chtbl.h"
-#define PRIME_TBLSIZ 100
-
 #include "../generateThumbnail/generate_thumbnail.h"
 #include "../generateThumbnail/generate_thumbnail_by_convert.h"
+
+#define PRIME_TBLSIZ 100
 
 #define filconvertetfile "/tmp/boithofilconverter"
 

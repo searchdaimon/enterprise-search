@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-//#include "../common/define.h"
-//#include "../common/daemon.h"
 #include "daemon.h"
 #include "boithoad.h"
 

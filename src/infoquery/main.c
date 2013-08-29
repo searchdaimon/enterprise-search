@@ -7,17 +7,13 @@
 #include <time.h>
 
 #include "../common/define.h"
-
 #include "../common/boithohome.h"
 #include "../common/reposetory.h"
 #include "../common/lot.h"
 #include "../acls/acls.h"
 #include "../crawlManager2/client.h"
-
 #include "../boithoadClientLib/liboithoaut.h"
 #include "../boithoadClientLib/boithoad.h"
-
-//#include "../bbdocument/bbdocument.h"
 #include "../maincfg/maincfg.h"
 
 int str_is_nmbr(char * str) {

@@ -46,12 +46,8 @@
 #endif
 
 
-//#include "../liboithoaut/liboithoaut.h"
-//#include "../boithoadClientLib/liboithoaut.h"
 #include "../crawlManager2/client.h"
-
 #include "ap_config.h"
-
 #include "httpd.h"  
 #include "http_config.h"  
 #include "http_core.h"  

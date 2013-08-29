@@ -1,8 +1,5 @@
-
 #include <stdio.h>
-//#include "getfiletype.h"
 
-//#include "../common/boithohome.h"
 /*
 int main()
 {

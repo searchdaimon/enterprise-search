@@ -12,7 +12,6 @@
 
 #include "../common/define.h"
 #include "../ppcXmlParser/ppcXml.h"
-//#include "../searchFilters/searchFilters.h"
 #include "../common/timediff.h"
 #include "../common/bstr.h"
 
