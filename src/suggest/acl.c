@@ -10,7 +10,7 @@
 #if defined US_BOITHOAD
 #include "../boithoadClientLib/liboithoaut.h"
 #elif defined USERSYSTEM
-#include "../crawlManager/client.h"
+#include "../crawlManager2/client.h"
 #elif !defined WITH_ACL
 
 #else

@@ -31,10 +31,10 @@ clean:
 
 
 mod_auth_boitho.soApache1: mod_auth_boitho.c 
-	$(APXS) $(DEFINES) -DAPACHE_V13 -c mod_auth_boitho.c ../crawlManager/client.c ../common/daemon.c ../common/strlcpy.c ../common/bstr.c ../common/strlcat.c
+	$(APXS) $(DEFINES) -DAPACHE_V13 -c mod_auth_boitho.c ../crawlManager2/client.c ../common/daemon.c ../common/strlcpy.c ../common/bstr.c ../common/strlcat.c
 
 mod_auth_boitho.soApache2: mod_auth_boitho.c 
-	$(APXS) $(DEFINES) -c mod_auth_boitho.c ../crawlManager/client.c ../common/daemon.c ../common/strlcpy.c ../common/bstr.c ../common/strlcat.c
+	$(APXS) $(DEFINES) -c mod_auth_boitho.c ../crawlManager2/client.c ../common/daemon.c ../common/strlcpy.c ../common/bstr.c ../common/strlcat.c
 
 #rpm:
 #	mkdir $(NAME)-$(VERSION)

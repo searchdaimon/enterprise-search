@@ -2,7 +2,7 @@
 ## TODO: Remove uneeded dependencies
 
 
-VPATH=	.:../maincfg:../bbdocument:../acls:../boithoadClientLib:../crawlManager:../searchFilters:../cgi-util:../key
+VPATH=	.:../maincfg:../bbdocument:../acls:../boithoadClientLib:../crawlManager2:../searchFilters:../cgi-util:../key
 
 WANT_COMMON=	true
 WANT_DS=	true

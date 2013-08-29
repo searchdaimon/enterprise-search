@@ -581,7 +581,7 @@ dispatcher_allbb: src/dispatcher_all/main.c src/dispatcher_all/qrewrite.o
 	@echo ""
 	@echo "$@:"
 
-	@#$(CC) $(dispatcherCOMAND) $(MYSQL4) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c src/crawlManager/client.c src/query/lex.query.o lib/libds.a -D BLACK_BOX -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) src/getFiletype/libfte.a src/attributes/libshow_attr.a  -DWITH_SPELLING $(BDB_INC) $(BDB_LIB)
+	@#$(CC) $(dispatcherCOMAND) $(MYSQL4) src/acls/acls.c src/boithoadClientLib/boithoadClientLib.c src/crawlManager2/client.c src/query/lex.query.o lib/libds.a -D BLACK_BOX -o cgi-bin/dispatcher_allbb $(LIBCONFIG) $(24SEVENOFFICE) src/getFiletype/libfte.a src/attributes/libshow_attr.a  -DWITH_SPELLING $(BDB_INC) $(BDB_LIB)
 	(cd src/dispatcher_all && make clean && make)
 
 dispatcher_all247: src/dispatcher_all/main.c

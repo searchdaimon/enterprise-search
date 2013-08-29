@@ -1,4 +1,4 @@
-VPATH= .:../boitho-bbdn/:../common/:../base64/:../maincfg/:../crawlManager/:../cgi-util:../key:.
+VPATH= .:../boitho-bbdn/:../common/:../base64/:../maincfg/:../crawlManager2/:../cgi-util:../key:.
 
 CFLAGS=		
 

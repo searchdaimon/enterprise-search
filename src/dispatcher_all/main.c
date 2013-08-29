@@ -35,7 +35,7 @@
 #include "../common/bstr.h"
 #include "../maincfg/maincfg.h"
 #include "../common/cgi.h" // escapeHTML
-#include "../crawlManager/client.h"
+#include "../crawlManager2/client.h"
 #include "../key/key.h" // key_get_existingconn
 #include "../logger/logger.h"
 
