@@ -45,6 +45,9 @@ It is super easy to get started to develop on the ES. As the ES comes as a virtu
 
 Please see full article on how to get started as a developer at: [Setting up an ES for development](https://github.com/searchdaimon/enterprise-search/wiki/Setting-up-an-ES-for-development "Setting up an ES for development")
 
+- [Setting up an ES for development](https://github.com/searchdaimon/enterprise-search/wiki/Setting-up-an-ES-for-development)
+- [Compiling the source code](https://github.com/searchdaimon/enterprise-search/wiki/Compiling-the-source-code)
+- [Crawling som test data to play with ](https://github.com/searchdaimon/enterprise-search/wiki/Crawling-som-test-data-to-play-with)
 - [Overview of the code](https://github.com/searchdaimon/enterprise-search/wiki/Overview-of-the-code)
 - [Developing on the four main daemons (Searching, Crawling, Documents and AD)](https://github.com/searchdaimon/enterprise-search/wiki/Developing-on-the-four-main-daemons-\(Searching,-Crawling,-Documents-and-AD\))
 - - [Plugin: File filter](https://github.com/searchdaimon/enterprise-search/wiki/Plugin:-File-filter)
