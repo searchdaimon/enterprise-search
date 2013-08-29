@@ -31,7 +31,6 @@
 
 struct reformat {
         void *mem;
-        //char *mem;
         int fd;
         size_t maxsize;
         size_t structsize;

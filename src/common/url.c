@@ -71,7 +71,7 @@ int urlMayBeRecursive(const char url[]) {
 
 		len = p - last;
 		#ifdef DEBUG
-		printf("urlMayBeRecursive: p \"%s\", len %i\n",last, len );
+			printf("urlMayBeRecursive: p \"%s\", len %i\n",last, len );
 		#endif
 
 		if (len > _MAX_DIR_LEN) {
@@ -89,7 +89,7 @@ int urlMayBeRecursive(const char url[]) {
 
 	for (y=0;y<i;y++) {
 		#ifdef DEBUG
-		printf("urlMayBeRecursive: dirs \"%s\"\n",directories[y]);
+			printf("urlMayBeRecursive: dirs \"%s\"\n",directories[y]);
 		#endif
 		//samenligner med alle andre
 		for (z=0;z<i;z++) {
@@ -138,12 +138,15 @@ int find_domain_path_len (char url[]) {
 
         //søker oss til / og kapper
         if ((cpnt = strchr(url + 7,'/')) == NULL) {
-                //printf("bad url\n");
+		#ifdef DEBUG
+			printf("bad url\n");
+		#endif
+		
                 return 0;
         }
         else {
                 #ifdef DEBUG
-                printf("aa %s, len %i\n",cpnt,strlen(cpnt));
+			printf("aa %s, len %i\n",cpnt,strlen(cpnt));
                 #endif
 
                 return strlen(cpnt);
@@ -174,9 +177,6 @@ int url_normalization (char url[], int urlsize) {
 	char *cpnt;
 	int subdomains;
 
-	//prøver å finne domener uten trailing slash
-        //kutter av http:// (de 7 første tegnene)
-        //strscpy(domain,url + 7,sizeof(domain));
 
 	if (url[0] == 0) {
 		fprintf(stderr,"url_normalization: Got emty url \"%s\"\n",url);
@@ -221,10 +221,15 @@ int url_normalization (char url[], int urlsize) {
 	//vi ønsker da og legge på / for og få www.boitho.com/
 	// kan også være www.boitho.com?query=chat. Så hvis det er ? i den kan vi ikke bare apende en /
         if ( ((cpnt = strchr((url +7),'/')) == NULL) && ((cpnt = strchr((url +7),'?')) == NULL)) {
-		//printf("no trailing slash. Url \"%s\"\n",url);
-		strlcat(url,"/",urlsize);
-		//printf("no trailing slash. revriten to Url \"%s\"\n",url);
+		#ifdef DEBUG
+			printf("no trailing slash. Url \"%s\"\n",url);
+		#endif
 		
+		strlcat(url,"/",urlsize);
+		
+		#ifdef DEBUG
+			printf("no trailing slash. revriten to Url \"%s\"\n",url);
+		#endif
         }
 
 	/*
@@ -299,7 +304,7 @@ int NotDuplicateUrl(char word[]) {
 			return 0;
 		}
 		else if (strstr(word,"/www4") != NULL) {
-			debug("hav /index",word);
+			debug("hav /www4",word);
 			return 0;
 		}
 
@@ -332,7 +337,6 @@ int legalUrl(char word[]) {
 
 		domainNrOfLines = strchrcount(domain,'-');
 
-		//printf("url: \"%s\", subdomains = %i, domainNrOfLines = %i\n",word,subdomains,domainNrOfLines);
 		
                 //finner siste bokstav
                 if (word[lengt -1] == '/') {
@@ -343,14 +347,12 @@ int legalUrl(char word[]) {
                                 filetype = NULL;
                         }
                 }
-                        //printf("filetype %s\n",filetype);
 
 		//finner lengde på query. Altså det som er etter ?
 		querylength = 0;
 		if ((cpnt = strstr(word,"?")) != NULL) {
 			querylength = strlen(cpnt +1); //+1 da vi ikke skal ha med ?
 		}
-		//printf("url \"%s\", querylength %i\n",word,querylength);
 
 
                 //temp: for nå tar vi bare korte urler
@@ -404,15 +406,15 @@ int legalUrl(char word[]) {
 			return 0;
                 }
                 else if (strchr(word,'#') != NULL) {
-                        //printf("has #: %s\n",word);
+                        debug("has #: %s\n",word);
 			return 0;
                 }
                 else if (strchr(word,'@') != NULL) {
-                        //printf("has @: %s\n",word);
+                        debug("has @: %s\n",word);
 			return 0;
                 }
                 else if (strchr(word,'%') != NULL) {
-                        //printf("has %: %s\n",word);
+                        debug("has %: %s\n",word);
 			return 0;
                 }
                 else if (strcmp(word,lasturl) == 0) {
@@ -465,7 +467,7 @@ int legalUrl(char word[]) {
 			return 0;
                 }
                 else {
-                        //printf("link: %s\n",word);
+                        debug("link: %s\n",word);
 
 			return 1;
 		}
@@ -496,9 +498,8 @@ int url_havpri1(char word[]) {
 		|| (strstr((word + 7),".gov/") != NULL)
 		|| (strstr((word + 7),".mil/") != NULL)
 		|| (strstr((word + 7),".edu/") != NULL)
-		//|| (strstr((word + 7),".org/") != NULL)
 		) {
-                //printf("hav .pri/\n");
+ 
         	return 1;
         }
 	else {
@@ -514,7 +515,6 @@ int url_havpri2(char word[]) {
 		|| (strstr((word + 7),".uo.uk/") != NULL)
 		|| (strstr((word + 7),".com/") != NULL)
 		) {
-                //printf("hav .pri/\n");
         	return 1;
         }
 	else {
@@ -546,7 +546,6 @@ int isOkTttl(char word[]) {
 		|| (strstr((word + 7),".nz/") != NULL)
 		|| (strstr((word + 7),".fm/") != NULL)  // brukes av mange netradioer, som di.fm
 		) {
-                //printf("hav .pri/\n");
         	return 1;
         }
 	else {
@@ -576,7 +575,7 @@ int isSecondLevelDomain(char ttl[]) {
 	while(SecondLevelDomain[i] != NULL) {
 
 		#ifdef DEBUG
-		printf("i %i, SecondLevelDomain %s ?= ttl %s\n",i,SecondLevelDomain[i],ttl);
+			printf("i %i, SecondLevelDomain %s ?= ttl %s\n",i,SecondLevelDomain[i],ttl);
 		#endif
 
 		if (strcmp(SecondLevelDomain[i],ttl) == 0) {
@@ -621,11 +620,10 @@ int find_domains_subname(const char url[],char domain[], int sizeofdomain) {
 
 	#endif
 
-	//--TokCount;
 	domain[0] = '\0';
 
 	#ifdef DEBUG
-	printf("isSecondLevelDomain domain \"%s\", i %i\n",Data[TokCount -1],isSecondLevelDomain(Data[TokCount -1]));
+		printf("isSecondLevelDomain domain \"%s\", i %i\n",Data[TokCount -1],isSecondLevelDomain(Data[TokCount -1]));
 	#endif
 
 	if (isSecondLevelDomain(Data[TokCount -1])) {
@@ -644,17 +642,15 @@ int find_domains_subname(const char url[],char domain[], int sizeofdomain) {
 
 	
 	for (i=0;i<(TokCount -nrToGet);i++) {
-		//printf("i %i (%i), \"%s\"\n",i,TokCount,Data[i]);
 		strlcat(domain,Data[i],sizeofdomain);
 		strlcat(domain,".",sizeofdomain);
 	}
 
 
 	domain[strlen(domain) -1] = '\0';
-	//printf("Count %i\n",Count);
 
 	#ifdef DEBUG
-	printf("domain: \"%s\"\n",domain);
+		printf("domain: \"%s\"\n",domain);
 	#endif
 
 
@@ -693,11 +689,10 @@ int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
 
 	#endif
 
-	//--TokCount;
 	domain[0] = '\0';
 
 	#ifdef DEBUG
-	printf("isSecondLevelDomain domain \"%s\", i %i\n",Data[TokCount -1],isSecondLevelDomain(Data[TokCount -1]));
+		printf("isSecondLevelDomain domain \"%s\", i %i\n",Data[TokCount -1],isSecondLevelDomain(Data[TokCount -1]));
 	#endif
 
 	if (isSecondLevelDomain(Data[TokCount -1])) {
@@ -715,21 +710,21 @@ int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
 
 	
 	for (i=nrToGet;i>0;i--) {
-		//printf("i %i (%i), \"%s\"\n",i,TokCount -i,Data[TokCount -i]);
 		strlcat(domain,Data[TokCount -i],sizeofdomain);
 		strlcat(domain,".",sizeofdomain);
 	}
 
 
 	domain[strlen(domain) -1] = '\0';
-	//printf("Count %i\n",Count);
+
 
 	#ifdef DEBUG
-	printf("domain: \"%s\"\n",domain);
+		printf("domain: \"%s\"\n",domain);
 	#endif
-  FreeSplitList(Data);
+	
+	FreeSplitList(Data);
 
-  return 1;
+	return 1;
 
 }
 /*
@@ -760,8 +755,6 @@ int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
                 strscpy(buff,domain,sizeof(buff));
                 i = 0;
                 while (((cpnt = strrchr(buff,'.'))) != NULL && (i<maxsubdomains)) {
-                        //++cpnt;
-                        //printf("el %s\n",cpnt);
                         strscpy(darray[i],cpnt,sizeof(darray[i]));
                         cpnt[0] = '\0';
                         ++i;
@@ -769,7 +762,6 @@ int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
                 strscpy(darray[i],buff,sizeof(darray[i]));
 
                 if (strlen(darray[1]) > 3) {
-                        //printf("%s > 3\n",darray[1]);
                         domain[0] = '\0';
 
                         snprintf(domain,sizeofdomain,"%s%s",darray[1],darray[0]);
@@ -814,7 +806,10 @@ int find_domain_no_www (const char url[],char domain[], int sizeofdomain) {
 
         //søker oss til / og kapper
         if ((cpnt = strchr(domain,'/')) == NULL) {
-                //printf("bad url\n");
+		#ifdef DEBUG
+			printf("bad url\n");
+		#endif
+		
                 return 0;
         }
         else {
@@ -851,7 +846,9 @@ int find_domain (const char url[],char domain[],const int domainsize) {
 
         //søker oss til / og kapper
         if ((cpnt = strchr(domain,'/')) == NULL) {
-                //printf("bad url\n");
+		#ifdef DEBUG
+			printf("bad url\n");
+		#endif
                 return 0;
         }
         else {

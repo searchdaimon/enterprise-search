@@ -9,17 +9,11 @@
 
 
 #define maxTotalIindexHits MaxTermHit * maxIndexElements
-
 #define NrOfDataDirectorys 64
-
 #define NEWURLFILES_NR 5
-
 #define MAXFILTYPES 100
-
 #define MAX_SUPORTET_LANG 50
-
 #define UrlToDocIDnrOfFiles 999
-
 #define BMAX_RANKARRAY 20
 
 #ifdef BLACK_BOX
@@ -35,11 +29,8 @@
 #define maxLots 10000
 
 #define MAXFILTYPES 100
-
 #define MAX_COLLECTIONS 20
-
 #define BOITHO_MYSQL_DB "boithobb"
-
 #define AdultWeightForXXX 50
 
 
@@ -47,18 +38,13 @@
 #define BoithosAmazonSubscriptionId "0WG4PH85SE9114TS7JR2"
 
 #define MAX_USER_NAME_LEN 64
-
 #define MAX_ATTRIB_LEN	128
-
 #define maxWordlLen 30
-
 #define rNetTrabsferBlok 65536
 
 
-//#define maxSubnameLength 64
-#define maxSubnameLength 512 //512 fra 6 nov
 
-//#define BSDPORT 6501 //search system
+#define maxSubnameLength 512 //512 fra 6 nov
 #define BLDPORT 3490 //lot deamon
 
 //flyttet til boithoad.h
@@ -125,39 +111,39 @@
 #define C_getlotHasSufficientSpace 	18
 #define C_rEOF 				101
 
-#define C_DOCID_DONE	0
-#define C_DOCID_NEXT	1
-#define C_DOCID_NODB	2
-#define C_DOCID_NOTFOUND 3
-#define C_DOCID_FOUND	4
-#define C_DOCID_READY	5
+#define C_DOCID_DONE			0
+#define C_DOCID_NEXT			1
+#define C_DOCID_NODB			2
+#define C_DOCID_NOTFOUND 		3
+#define C_DOCID_FOUND			4
+#define C_DOCID_READY			5
 
-#define net_CanDo		13
-#define net_nomatch		14
-#define net_match		15
+#define net_CanDo			13
+#define net_nomatch			14
+#define net_match			15
 
 
 
-#define siderType_normal 	1
-#define siderType_ppcside 	2
-#define siderType_ppctop 	3
+#define siderType_normal 		1
+#define siderType_ppcside 		2
+#define siderType_ppctop 		3
 
-#define cm_crawlcollection	1
-#define cm_crawlcanconect	2
-#define cm_scan			3
-#define cm_pathaccess		4
-#define cm_groupsforuserfromusersystem 5
-#define cm_collectionsforuser	6
-#define cm_usersystemfromcollection 7
-#define cm_listusersus		8
-#define cm_recrawlcollection	10
-#define cm_collectionislocked   11
-#define cm_authenticateuser	12
-#define cm_deleteCollection	50
-#define cm_rewriteurl		60
-#define cm_killcrawl            70
-#define cm_removeForeignUsers	80
-#define cm_addForeignUser	81
+#define cm_crawlcollection		1
+#define cm_crawlcanconect		2
+#define cm_scan				3
+#define cm_pathaccess			4
+#define cm_groupsforuserfromusersystem 	5
+#define cm_collectionsforuser		6
+#define cm_usersystemfromcollection 	7
+#define cm_listusersus			8
+#define cm_recrawlcollection		10
+#define cm_collectionislocked   	11
+#define cm_authenticateuser		12
+#define cm_deleteCollection		50
+#define cm_rewriteurl			60
+#define cm_killcrawl            	70
+#define cm_removeForeignUsers		80
+#define cm_addForeignUser		81
 
 struct cm_listusers_h {
 	int num_users;
@@ -165,38 +151,36 @@ struct cm_listusers_h {
 };
 
 //verdier av forskjelige term posisjoner
-#define poengForBody 1	
-#define poengForHeadline 4
-#define poengForTittel 15
-//#define poengForUrlSub 2
-//#define poengForUrlMain 30 //temp. til vi har url filtrering i dispatsjer
+#define poengForBody 			1	
+#define poengForHeadline 		4
+#define poengForTittel 			15
 
 
-#define maxPoengBody 5
-#define MaxPoengHeadline 12
-#define MaxPoengTittel 17
-#define maxPoengAnchor 260
+#define maxPoengBody 			5
+#define MaxPoengHeadline 		12
+#define MaxPoengTittel 			17
+#define maxPoengAnchor 			260
 
 #define complicacy_maxPoengAnchorPhraserank 260
 #define complicacy_maxPoengAnchorSimple 6
 
-#define SUMMARY_NONE 0
-#define SUMMARY_START   1
-#define SUMMARY_SNIPPET 2
-#define SUMMARY_DB 3
+#define SUMMARY_NONE 			0
+#define SUMMARY_START   		1
+#define SUMMARY_SNIPPET 		2
+#define SUMMARY_DB 			3
 
-#define NAVMENUCFG_SIZE 4096
-#define MAX_RESULT_OFFSET 1000
+#define NAVMENUCFG_SIZE 		4096
+#define MAX_RESULT_OFFSET 		1000
 
-#define LANG_UNKNOWN -1
-#define LANG_NBO 1
-#define LANG_ENG 2
+#define LANG_UNKNOWN 			-1
+#define LANG_NBO 			1
+#define LANG_ENG 			2
 
-#define MAX_SERVERNAME_LEN 32
+#define MAX_SERVERNAME_LEN 		32
 
-#define ANCHORMAGIC 0xb309a213
+#define ANCHORMAGIC 			0xb309a213
 
-#define MAXFILTERELEMENTS 30
+#define MAXFILTERELEMENTS 		30
 
 #define __bunused __attribute__((unused))
 
@@ -218,10 +202,12 @@ typedef enum {
 	CAL_ANONYMOUS,
 } collection_accesslevel_t;
 
+
 struct subnamesFiltypesFormat {
 	char name[5]; //4 for navn og \0
 	int nrof;
 };
+
 
 struct filteronFormat {
     container	*attributes;
@@ -229,6 +215,7 @@ struct filteronFormat {
     char	*date;
     char	*sort;
 };
+
 
 struct subnamesConfigFormat {
 	char summary; // 23.07.2008 - summary til char (fra const char *), dj
@@ -267,15 +254,19 @@ struct subnamesConfigFormat {
 	char group[128]; /* the group that has access to the collection */
 	char has_config; // Set to true if the config has been retrieved for this collection
 };
+
+
 struct subnamesFormat {
 	char subname[maxSubnameLength]; // 23.07.08 - fra 64 til maxSubnameLength
 	int hits;
 	struct subnamesConfigFormat config;
 };
 
+
 struct brank {
 	unsigned char rank;
 };
+
 
 struct brankPageElementsFormat {
 	unsigned int IPAddress;
@@ -283,6 +274,7 @@ struct brankPageElementsFormat {
 	unsigned short response;
 	unsigned int DomainDI;
 };
+
 
 //formatet på dokumenet indeks posten
 struct DocumentIndexFormat {
@@ -365,6 +357,7 @@ struct DictionaryFormat {
 	unsigned int SizeForTerm;
 };
 
+
 struct indexFilteredFormat {
 	char is_filtered; // alle for en
 	char filename; //bool
@@ -377,10 +370,12 @@ struct indexFilteredFormat {
 	char attrib[MAX_ATTRIBUTES_IN_QUERY]; // en for hver attributt
 };
 
+
 struct duplicate_docids {
         container *V;
 	struct iindexMainElements *fistiindex;
 };
+
 
 struct rank_explaindFormat {
 	unsigned short rankBody;
@@ -407,10 +402,12 @@ struct rank_explaindFormat {
 	unsigned short maxAnchor;
 };
 
+
 struct hitsFormat {
 	unsigned short pos;
 	char phrase;
 };
+
 
 // Formatett på treff i indeksen
 struct iindexMainElements {
@@ -451,6 +448,7 @@ struct iindexFormat {
 	int phrasenr;
 };
 
+
 struct cache_params {
 	docid doc_id;
 	time_t time;
@@ -459,6 +457,7 @@ struct cache_params {
 	unsigned int signature;
 
 };
+
 
 // formatet for dataene for sidene skal være
 struct SiderFormat {
@@ -509,6 +508,7 @@ struct SiderFormat {
 	char reserved[26];
 };
 
+
 struct queryTimeFormat {
 	double total;
 	double indexSort;
@@ -539,6 +539,7 @@ struct queryTimeFormat {
 	#endif
 };
 
+
 struct filtersTrapedFormat {
 	int filterAdultWeight_bool;
 	int filterAdultWeight_value;
@@ -557,6 +558,7 @@ struct filtersTrapedFormat {
 	int filterNoUrl;
 };
 
+
 struct filtypesFormat {
 	char name[5]; //4 for navn og \0
 	int nrof;
@@ -571,10 +573,12 @@ struct filterinfoElementsFormat {
 	char checked; //bool
 };
 
+
 struct filterinfoFormat {
 	struct filterinfoElementsFormat elements[MAXFILTERELEMENTS];
 	int nrof;
 };
+
 
 struct filtersFormat {
 	#ifdef BLACK_BOX
@@ -582,6 +586,7 @@ struct filtersFormat {
 		struct filterinfoFormat collections;	
 	#endif
 };
+
 
 struct SiderHederFormat {
 	int filtered;
@@ -608,11 +613,13 @@ struct SiderHederFormat {
 	#endif
 };
 
+
 //formatet på anchor filer
 struct anchorfileFormat {
 	unsigned int DocID;
 	char text[50];
 };
+
 
 struct linkdb_block {
 	unsigned int        DocID_from;
@@ -625,6 +632,7 @@ struct udfileFormat {
 	unsigned int DocID;
 };
 
+
 struct updateFormat {
     unsigned char       sha1[20];
     unsigned char       url[200];
@@ -632,10 +640,12 @@ struct updateFormat {
     unsigned int        DocID_from;
 };
 
+
 struct mainIndexFormat {
     unsigned char       sha1[20];
     unsigned int        DocID;
 };
+
 
 struct wordsFormat {
         #ifdef PRESERVE_WORDS
@@ -646,7 +656,6 @@ struct wordsFormat {
         unsigned short occurrence;
 	int unsortetIndexPosition;
 };
-
 
 
 struct queryNodeHederFormat {
@@ -666,8 +675,8 @@ struct queryNodeHederFormat {
         char AmazonSubscriptionId[50];
 	char orderby[10];
 	int anonymous;
-	char navmenucfg[NAVMENUCFG_SIZE]; // jun 16 09
-	int lang; // jun 19 09, uses LANG_* constants in define.h 
+	char navmenucfg[NAVMENUCFG_SIZE];
+	int lang; // uses LANG_* constants in define.h 
 };
 
 
@@ -712,12 +721,14 @@ enum platform_type {
 	MAC,
 };
 
+
 enum browser_type {
 	UNKNOWN_BROWSER = 0,
 	MOZILLA,
 	OPERA,
 	IE,
 };
+
 
 struct rewriteFormat {
 	enum platform_type ptype;
@@ -735,10 +746,10 @@ struct anchorRepo {
 	size_t len;
 };
 
+
 struct anchorIndexFormat {
 	off_t offset;
 };
-
 
 #endif //_DEFINE__H_
 

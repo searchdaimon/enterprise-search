@@ -10,6 +10,5 @@
 int next_attribute(char *attributes, char **offset, char *k, char *v, char *kv);
 int next_attribute_key(char *attributes, char **offset, char *k, char *v, char *kv, char *want);
 
-//int next_attribute_kv(char *attributes, char **offset, char *kv);
 
 #endif /* _ATTRIBUTES_H_ */

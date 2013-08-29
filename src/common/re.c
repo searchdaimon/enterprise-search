@@ -157,9 +157,7 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 	printf("########################################\n");
 	int i;
 	for(i=0;i<1000;i++) {
-		printf("%c",(re->mem+i)[0]);
-		//printf("=%c\n",(char)(re->mem + i));
-		
+		printf("%c",(re->mem+i)[0]);		
 	}
 	printf("########################################\n");
 	*/
@@ -187,13 +185,13 @@ struct reformat *reopen_cache(int lotNr, size_t structsize, char file[], char su
 	} else {
 		re = hashtable_search(lots_cache, lotfile);
 		#ifdef DEBUG
-		printf("has cahce for %s:%s lot %d. pointer %p\n", subname, file, lotNr, re);
+			printf("has cahce for %s:%s lot %d. pointer %p\n", subname, file, lotNr, re);
 		#endif
 		if (re != NULL)
 			return re;
 	}
 	#ifdef DEBUG
-	printf("reopen_cache: Cache miss for %s:%s lot %d\n", subname, file, lotNr);
+		printf("reopen_cache: Cache miss for %s:%s lot %d\n", subname, file, lotNr);
 	#endif
 
 	re = reopen(lotNr, structsize, file, subname, flags);
@@ -232,7 +230,7 @@ reclose_cache(void)
                         re = hashtable_iterator_value(itr);
 
 			#ifdef DEBUG
-			printf("reclose_cache: closing \"%s\"\n",filesname);
+				printf("reclose_cache: closing \"%s\"\n",filesname);
 			#endif
 
 			if (re != NULL) {
@@ -322,14 +320,14 @@ void *reget(struct reformat *re, unsigned int DocID) {
 	size_t position = (re->structsize * (DocID - LotDocIDOfset(re->lotNr)));
 	if ((re->flags & RE_STARTS_AT_0) == RE_STARTS_AT_0) {
 		#ifdef DEBUG
-		printf("pso ord %u, position %u\n", position,re->structsize);
+			printf("pso ord %u, position %u\n", position,re->structsize);
 		#endif
 		if (position != 0) {
 			position -= re->structsize;
 		}
 	}
 	#ifdef DEBUG	
-	printf("regetp: DocID %u, position %u, lot %i\n",DocID, position, re->lotNr);
+		printf("regetp: DocID %u, position %u, lot %i\n",DocID, position, re->lotNr);
 	#endif
 
 	return reposread(re,position);;
@@ -342,7 +340,7 @@ void *renget(struct reformat *re, size_t nr) {
 	size_t position = (re->structsize * nr);
 
 	#ifdef DEBUG	
-	printf("rengetp: nr %u, position %u\n",nr, position);
+		printf("rengetp: nr %u, position %u\n",nr, position);
 	#endif
 	
 	return reposread(re,position);;

@@ -16,9 +16,8 @@
 #else
 	int rLotForDOCid (unsigned int DocID);
 	int LotDocIDOfset (int LotNr);
-
 #endif
-//FILE *bfopen(char name[],char flags[]);
+
 char *returnFilPathForLot(int LotNr,char subname[]);
 void GetFilPathForLot(char *FilePath,int LotNr,char subname[]);
 void GetFilPathForLotFile(char *FilePath,char lotfile[],int LotNr,char subname[]);

@@ -116,7 +116,6 @@ int exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfini
 		if (execv(exeargv[0],exeargv) == -1) {
 			fprintf(stderr,"Error: can't execv at %s:%d\n",__FILE__,__LINE__);
 			perror(exeargv[0]);
-			//exit(EXIT_FAILURE);
 		}
 		#ifdef DEBUG
 			fprintf(stderr,"Eror: This can't happend. exexcv returned!\n");
@@ -141,7 +140,7 @@ int exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfini
 		int	read_error = 0;
 		fd_set readfds;
 		fd_set tmp;
-		//printf("perent. Child pid %i\n",(int)pid);
+
 		// Parent process closes up output side of pipe
                 close(pipefd[1]);
 
@@ -199,13 +198,12 @@ int exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfini
 
 		if (i==0) {
 			printf("exeoc_stdselect: Error: dident manage to read back any data\n");
-			//return 0;
 		}
 
 
 
 		#ifdef DEBUG
-		printf("waitng for pid \"%i\"\n",pid);
+			printf("waitng for pid \"%i\"\n",pid);
 		#endif
 
 		if (waitpid(pid, &waitstatus, WUNTRACED) <= 0) {

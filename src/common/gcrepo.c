@@ -1,4 +1,3 @@
-
 #include <string.h>
 #include <stdio.h>
 #include <err.h>
@@ -12,13 +11,11 @@
 
 #ifdef BLACK_BOX
 
+
 #define MaxAgeDiflastSeen 86400
-//#define MaxAgeDiflastSeen 100
 
+int gcrepo(int LotNr, char *subname) {
 
-int
-gcrepo(int LotNr, char *subname)
-{
 	int i;
 	struct ReposetoryHeaderFormat ReposetoryHeader;
 
@@ -58,12 +55,12 @@ gcrepo(int LotNr, char *subname)
 
 
 		#ifdef DEBUG
-		printf("dokument \"%s\", DocID %u.\n",
+			printf("dokument \"%s\", DocID %u.\n",
 			RE_DocumentIndex(re,ReposetoryHeader.DocID)->Url,
 			ReposetoryHeader.DocID);
 		#endif
 
-		//printf("%p\n", docindex.RepositoryPointer);
+
 		if (raddress != RE_DocumentIndex(re,ReposetoryHeader.DocID)->RepositoryPointer) {
 			#ifdef DEBUG
 			printf("Garbage collecting %d at %u. docindex has %u\n", ReposetoryHeader.DocID, raddress,RE_DocumentIndex(re,ReposetoryHeader.DocID)->RepositoryPointer);
@@ -75,7 +72,7 @@ gcrepo(int LotNr, char *subname)
 			offset = rApendPost(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_deny, "repo.wip", url, attributes, attrkeys);
 			RE_DocumentIndex(re,ReposetoryHeader.DocID)->RepositoryPointer = offset;
 			#ifdef DEBUG
-			printf("Writing DocID: %d\n", ReposetoryHeader.DocID);
+				printf("Writing DocID: %d\n", ReposetoryHeader.DocID);
 			#endif
 			++keept;
 
@@ -83,8 +80,7 @@ gcrepo(int LotNr, char *subname)
 	}
 	fclose(FNREPO);
 
-	//lokker filen repo.wip
-	//lotCloseFiles();
+	//lukker filen repo.wip
 	rclose(attrkeys);
 
 	printf("keept %i\ngced %i\n",keept,gced);

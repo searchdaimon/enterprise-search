@@ -30,7 +30,7 @@ Kal "ropen" for å opne Reposetoryet, "rclose" for å stenge Reposetoryet.
 #include <math.h>
 
 #ifdef BLACK_BOX
-#include "../ds/dcontainer.h"
+	#include "../ds/dcontainer.h"
 #endif
 
 struct addNewUrlhaFormat {
@@ -39,26 +39,12 @@ struct addNewUrlhaFormat {
 };
 
 
-//#include "define.h"
-
-//#define MaxReposetoryContent 30000
-
 #define MaxOpenReposetoryFiles 3
 
 
-
-
-
-
-//struct ReposetoryFormat {
-//	int DocID;
-//	char url[201];
-//	char content_type[7];
-//	char content[MaxReposetoryContent];
-//};
 //formatet som brues for å lagre en Reposetory post
 #define ReposetoryStorageFormat "%i\n%s\n%s\n%s"
-//#define ReposetoryStorageFormat "%i;%s;%s;%s;"
+
 
 
 
@@ -74,8 +60,8 @@ struct ReposetoryOpenFilesFormat OpenReposetoryFiles[MaxOpenReposetoryFiles];
 
 
 #ifdef BLACK_BOX
-container* ropen();
-void rclose(container*);
+	container* ropen();
+	void rclose(container*);
 #endif
 
 int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radress64bit,unsigned int rsize,unsigned

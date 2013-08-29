@@ -3,7 +3,6 @@
 #endif
 
 
-
 #include <libio.h>
 #include <inttypes.h>
 #include <sys/types.h>
@@ -14,7 +13,6 @@
 #include <limits.h>
 #include <string.h>
 #include <sys/file.h>
-
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -32,8 +30,8 @@ struct b_fh_cookie {
 
 ssize_t breader (void *cookie, char *buffer, size_t size) {
 	#ifdef DEBUG
-	printf("reader(size=%d)\n",size);
-	printf("breader offset %u\n",(unsigned)((struct b_fh_cookie *)cookie)->offset);
+		printf("reader(size=%d)\n",size);
+		printf("breader offset %u\n",(unsigned)((struct b_fh_cookie *)cookie)->offset);
 	#endif
 
 	((struct b_fh_cookie *)cookie)->offset += size;
@@ -43,8 +41,8 @@ ssize_t breader (void *cookie, char *buffer, size_t size) {
 }
 ssize_t bwriter (void *cookie, const char *buffer, size_t size) {
 	#ifdef DEBUG
-	printf("writer(size=%d)\n",size);
-	printf("bwriter offset %u\n",(unsigned)((struct b_fh_cookie *)cookie)->offset);
+		printf("writer(size=%d)\n",size);
+		printf("bwriter offset %u\n",(unsigned)((struct b_fh_cookie *)cookie)->offset);
 	#endif
 
 	((struct b_fh_cookie *)cookie)->offset += size;
@@ -53,8 +51,8 @@ ssize_t bwriter (void *cookie, const char *buffer, size_t size) {
 }
 int bseeker (void *cookie, _IO_off64_t *position, int whence) {
 	#ifdef DEBUG
-	printf("seeker(position=%lld,whence=%i)\n",*position,whence);
-	printf("seeker(SEEK_SET=%i, SEEK_CUR=%i)\n",SEEK_SET,SEEK_CUR);
+		printf("seeker(position=%lld,whence=%i)\n",*position,whence);
+		printf("seeker(SEEK_SET=%i, SEEK_CUR=%i)\n",SEEK_SET,SEEK_CUR);
 	#endif
 
 	// Bugfiks: ftell kaller bseeker(position=0, whence=SEEK_CUR) for å finne posisjon eller å bufre data.
@@ -92,7 +90,7 @@ int bseeker (void *cookie, _IO_off64_t *position, int whence) {
 }
 int bcleaner (void *cookie) {
 	#ifdef DEBUG
-	printf("cleaner()\n");
+		printf("cleaner()\n");
 	#endif
 
 	//stenger ned fdAtomicallyTmp
@@ -102,7 +100,7 @@ int bcleaner (void *cookie) {
 
 	//renamer fdAtomicallyTmp -> fdOriginal
 	#ifdef DEBUG
-	printf("rename %s -> %s\n",((struct b_fh_cookie *)cookie)->pathAtomicallyTmp,((struct b_fh_cookie *)cookie)->pathOriginal);
+		printf("rename %s -> %s\n",((struct b_fh_cookie *)cookie)->pathAtomicallyTmp,((struct b_fh_cookie *)cookie)->pathOriginal);
 	#endif
 
 	if (rename(((struct b_fh_cookie *)cookie)->pathAtomicallyTmp,((struct b_fh_cookie *)cookie)->pathOriginal) == -1) {
@@ -248,7 +246,6 @@ int main() {
 
 	FH = batomicallyopen("/tmp/aa","wb");
 
-//	fread(&buf,10,1,FH);
 
 	printf("buf \"%s\"\n",buf);
 

@@ -10,7 +10,6 @@
 #include <fcntl.h>
 #include <sys/vfs.h> // statfs
 
-//#include "bfileutil.h"
 #include "boithohome.h"
 
 
@@ -81,7 +80,6 @@ int bmkdir_p(const char *path_to_dir,int mode)
             strcat(current_path, "/");
             strcat(current_path, latest_path_element);
 
-            // 504 == \770 == ug=rwx,o-rwx
             if ( mkdir(current_path, mode) == 0 ) {
 		#ifdef DEBUG
                 	fprintf(stderr,"info: Created directory %s\n", current_path);
@@ -89,7 +87,7 @@ int bmkdir_p(const char *path_to_dir,int mode)
             } else {
                 if ( errno == EEXIST ) {
 			#ifdef DEBUG
-                    	fprintf(stderr,"info: Directory exists: %s\n", current_path);
+				fprintf(stderr,"info: Directory exists: %s\n", current_path);
 			#endif
                 } else {
                     fprintf(stderr,"Unable to create directory %s: %s",
@@ -118,19 +116,16 @@ char *sfindductype(char filepath[]) {
         char *type;
 
         for(i=len;i>0;i--) {
-                //printf("s %i %c\n",i,filepath[i]);
 
                 if (filepath[i] == '/') {
                         return NULL;
                 }
                 else if (filepath[i] == '.') {
-                        //printf("found. %i\n",i);
+
                         cp = (char *)((int)filepath + i +1);
-                        //printf("cp %u, filepath %u\n",(unsigned int)cp,(unsigned int)filepath);
-                        //printf("cp \"%s\"\n",cp);
+
                         type = malloc(strlen(cp) +1);
                         strcpy(type,cp);
-                        //printf("fant type %s, cp %s\n",type,cp);
 
 			//søker oss til første % eller space for å fjerne de
 			if ( ( (cp = strchr(type,'%')) != NULL ) || ((cp = strchr(type,'%')) != NULL)) {
@@ -138,7 +133,6 @@ char *sfindductype(char filepath[]) {
 			}
 
                         return type;
-                        //return cp;
                 }
         }
         return NULL;
@@ -154,9 +148,9 @@ int rrmdir(char dir[]) {
         struct dirent *dp;
 	char path[PATH_MAX];
 
-#ifdef DEBUG
-	printf("rrmdir: opening dir \"%s\"\n",dir);
-#endif
+	#ifdef DEBUG
+		printf("rrmdir: opening dir \"%s\"\n",dir);
+	#endif
 
 	if ((dirp = opendir(dir)) == NULL) {
 
@@ -180,23 +174,20 @@ int rrmdir(char dir[]) {
 		snprintf(path,sizeof(path),"%s/%s",dir,dp->d_name);
 
 		if (dp->d_type == DT_DIR) {
-#ifdef DEBUG 
-			printf("rrmdir: dir: %s\n",path);
-#endif
+			#ifdef DEBUG 
+				printf("rrmdir: dir: %s\n",path);
+			#endif
 			rrmdir(path);
 		} else {
-#ifdef DEBUG
-			printf("rrmdir: file: %s\n",path);
-#endif
+			#ifdef DEBUG
+				printf("rrmdir: file: %s\n",path);
+			#endif
 
 			/* Slett barnet */
 			if (remove(path) != 0) {
 				perror(path);
 			}
-
 		}
-
-
 	}	
 
 	closedir(dirp);
@@ -211,9 +202,9 @@ int rrmdir(char dir[]) {
 }
 
 
-// Ax:
-int readfile_into_buf( char *filename, char **buf )
-{
+
+int readfile_into_buf( char *filename, char **buf ) {
+
     FILE	*file = fopen(filename, "r");
     int		i;
 
@@ -287,7 +278,6 @@ FILE *stretchfile(FILE *FH,char mode[],char file[], off_t branksize) {
 //rutiner som gjør slik at filer ikke arves ved exex og fork(?). Det er et problem med filfiltere i bbdn som
 //arver åpne lot filer, og dermed hinder indeksering.
 //ukjent om batomicallyopen bli close'et eller fclose't. Hvis fclose blir den da renamet.
-
 int closeAtExexo(int fd) {
 
         int flags;
@@ -301,6 +291,7 @@ int closeAtExexo(int fd) {
 
 	return 1;
 }
+
 int fcloseAtExexo(FILE *FILEHANDLER) {
 	return closeAtExexo(fileno(FILEHANDLER));
 }

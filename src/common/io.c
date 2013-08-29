@@ -3,7 +3,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -79,8 +78,6 @@ size_t fread_all(const void *buf, size_t size, FILE *stream, int readlen) {
 	                printf("dident manage to fread all the data as %s:%d.\n",__FILE__,__LINE__);
                         return 0;
             }
-
-	 //	   printf("total %"PRId64" of %"PRId64": n %"PRId64", left %"PRId64"\n",total,size,n,bytesleft);
 
 
             total += n;

@@ -13,9 +13,7 @@
  * rest: 4 byte * subcount
 */
 
-char *
-sid_btotext(char *buf)
-{
+char *sid_btotext(char *buf) {
 	unsigned int rev;
 	unsigned int subcount;
 	unsigned long long int auth;
@@ -26,17 +24,14 @@ sid_btotext(char *buf)
 
 	/* Rev */
 	rev = *p++;
-	//printf("rev: %d\n", rev);
 
 	/* Subcount */
 	subcount = *p++;
-	//printf("subcount: %d\n", subcount);
 
 	/* Auth */
 	auth = 0;
 	for (i = 0; i < 6; i++)
 		auth = ((auth << 8) & 0xffffffffff00ll) | (*p++ & 0xff);
-	//printf("auth: %lld\n", auth);
 
 	unsigned int subauth[subcount];
 	wlen = snprintf(sid, sizeof(sid), "S-%d-%lld", rev, auth);
@@ -51,7 +46,6 @@ sid_btotext(char *buf)
 		for (j = 0; j < 4; j++) {
 			n[j] = *p++;
 		}
-		//printf("subauth[%d]: %u\n", i, subauth[i]);
 		wlen += snprintf(sid+wlen, sizeof(sid)-wlen, "-%u", subauth[i]);
 	}
 
@@ -63,9 +57,7 @@ sid_btotext(char *buf)
 
 }
 
-char *
-sid_b64totext(char *buf, size_t len)
-{
+char *sid_b64totext(char *buf, size_t len) {
 	char *p;
 	char out[1024];
 	
@@ -75,9 +67,7 @@ sid_b64totext(char *buf, size_t len)
 	return sid_btotext(p);
 }
 
-int
-sid_replacelast(char *sidt, char *new)
-{
+int sid_replacelast(char *sidt, char *new) {
 	char *p;
 
 	if ((p = strrchr(sidt, '-')) == NULL)

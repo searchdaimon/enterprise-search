@@ -3,8 +3,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <inttypes.h>
-
-
+#include <stdio.h>
+#include <sys/stat.h>
 
 #include "define.h"
 #include "reposetoryNET.h"
@@ -12,15 +12,11 @@
 #include "DocumentIndex.h"
 #include "lotlist.h"
 
-#include <stdio.h>
-#include <sys/stat.h>
-
 
 //globals
 static char lastServer[32] = "noone";
-
 static int socketha;
-//static int socketOpen = 0;
+
 
 //stenger ned sco hvis vi får en error
 int socketError () {
@@ -38,9 +34,10 @@ int conectTo(int LotNr) {
 
 	char HostName[32]; 
 
-
-        //printf("sendig lot %i to %s\n",LotNr,HostName);
-
+	#ifdef DEBUG
+		printf("sendig lot %i to %s\n",LotNr,HostName);
+	#endif
+	
         lotlistLoad();
         lotlistGetServer(HostName,LotNr);
 
@@ -48,24 +45,24 @@ int conectTo(int LotNr) {
         if (strcmp(HostName,lastServer) != 0) {
 
 		#ifdef DEBUG
-                printf("connecting to %s\n",HostName);
+			printf("connecting to %s\n",HostName);
 		#endif
 
                if (strcmp(lastServer,"noone") != 0) {
 			#ifdef DEBUG
-                        printf("closing socket to %s\n",lastServer);
+				printf("closing socket to %s\n",lastServer);
 			#endif
                         close(socketha);
                }
 
-                strcpy(lastServer,HostName);
+               strcpy(lastServer,HostName);
 
                socketha = cconnect(HostName, BLDPORT);
 
         }
         else {
 		#ifdef DEBUG
-                printf("reusing socket to %s\n",lastServer);
+			printf("reusing socket to %s\n",lastServer);
 		#endif
         }
 
@@ -184,15 +181,6 @@ int rGetFileByOpenHandlerFromSocket(char source[],FILE *FILEHANDLER,int LotNr,ch
 
 	fseek(FILEHANDLER,SEEK_SET,0);
 
-	//trunkerer filen til 0 bytes
-	//Runarb: 11 juli 2008: dette skaper problemer med atonmisk writes
-	/*
-	if (ftruncate( fileno(FILEHANDLER),0) != 0) {
-		perror("rGetFileByOpenHandlerFromSocket: ftruncate");
-		//return 0;
-		exit(1);
-	}
-	*/
 
 	//sender heder
         sendpacked(socketha,C_rGetFile,BLDPROTOCOLVERSION, 0, NULL,subname);
@@ -220,7 +208,7 @@ int rGetFileByOpenHandlerFromSocket(char source[],FILE *FILEHANDLER,int LotNr,ch
         }
 
 	#ifdef DEBUG
-        printf("fileBloks: %" PRId64 ", filerest: %" PRId64 "\n",fileBloks,filerest);
+		printf("fileBloks: %" PRId64 ", filerest: %" PRId64 "\n",fileBloks,filerest);
 	#endif
 	
         filblocbuff = (char *)malloc(rNetTrabsferBlok);
@@ -254,7 +242,7 @@ int rGetFileByOpenHandlerFromSocket(char source[],FILE *FILEHANDLER,int LotNr,ch
 	
 
 	#ifdef DEBUG
-	printf("file read end\n");
+		printf("file read end\n");
 	#endif
 
 
@@ -280,9 +268,6 @@ int rGetFileByOpenHandler(char source[],FILE *FILEHANDLER,int LotNr,char subname
 
 	int socketha;
 
-
-	//printf("rGetFileByOpenHandler\n");
-
 	//kobler til
 	if ((socketha = conectTo(LotNr)) == 0) {
 		perror("rGetFileByOpenHandler: can't conect to storage server");
@@ -301,13 +286,11 @@ int rmkdir(char dest[], int LotNr,char subname[]) {
         //sender heder
         sendpacked(socketha,C_rmkdir,BLDPROTOCOLVERSION, 0, NULL,subname);
 
-
         //sender lotnr
         sendall(socketha,&LotNr, sizeof(LotNr));
 
-
         destLen = strlen(dest) +1; // \0
-        //printf("destlen %i: %s\n",destLen,dest);
+
         //sender destinasjonsstring lengde
         sendall(socketha,&destLen, sizeof(destLen));
 
@@ -331,9 +314,8 @@ int rComand(char dest[], int LotNr,char subname[]) {
         //sender lotnr
         sendall(socketha,&LotNr, sizeof(LotNr));
 
-
         destLen = strlen(dest) +1; // \0
-        //printf("destlen %i: %s\n",destLen,dest);
+
         //sender destinasjonsstring lengde
         sendall(socketha,&destLen, sizeof(destLen));
 
@@ -349,7 +331,7 @@ int rSendFile(char source[], char dest[], int LotNr, char opentype[],char subnam
 	FILE *FILEHANDLER;
 
 	#ifdef DEBUG
-	printf("rSendFile(source=%s, dest=%s, LotNr=%i, opentype=%s, subname=%s)\n",source,dest,LotNr,opentype,subname);
+		printf("rSendFile(source=%s, dest=%s, LotNr=%i, opentype=%s, subname=%s)\n",source,dest,LotNr,opentype,subname);
 	#endif
 
        //opner filen
@@ -419,8 +401,6 @@ int rSendFileByOpenHandlerBySocket(FILE *FILEHANDLER, char dest[], int LotNr, ch
 	off_t fileBloks,filerest;
 	char *filblocbuff;
 
-	//printf("sendig lot %i to %s\n",LotNr,HostName);
-
 
 	if (strlen(opentype) != 1) {
 		printf("Error: rSendFileByOpenHandler: opentype can only be one caracter, and \"w\" or \"a\", not \"%s\"\n.",opentype);
@@ -452,7 +432,7 @@ int rSendFileByOpenHandlerBySocket(FILE *FILEHANDLER, char dest[], int LotNr, ch
 	}
 
 	destLen = strlen(dest) +1; // \0
-	//printf("destlen %i: %s\n",destLen,dest);
+
 	//sender destinasjonsstring lengde
 	sendall(socketha,&destLen, sizeof(destLen));
 
@@ -474,7 +454,7 @@ int rSendFileByOpenHandlerBySocket(FILE *FILEHANDLER, char dest[], int LotNr, ch
 	sendall(socketha,&filerest, sizeof(filerest));
 
 	#ifdef DEBUG
-	printf("fileBloks: %"PRId64", filerest: %"PRId64", size %"PRId64"\n",fileBloks,filerest,inode.st_size);
+		printf("fileBloks: %"PRId64", filerest: %"PRId64", size %"PRId64"\n",fileBloks,filerest,inode.st_size);
 	#endif
 
 	filblocbuff = (char *)malloc(rNetTrabsferBlok);
@@ -491,7 +471,7 @@ int rSendFileByOpenHandlerBySocket(FILE *FILEHANDLER, char dest[], int LotNr, ch
 			socketError();
 			return 0;
 		}
-                //send(socketha,filblocbuff,rNetTrabsferBlok,0);
+
         }
 
 
@@ -533,66 +513,61 @@ int rGetNextNET(char *HostName, unsigned int LotNr,struct ReposetoryHeaderFormat
         }
 
 
-                //printf("sending kommand\n");
-                sendpacked(socketha,C_rGetNext,BLDPROTOCOLVERSION, sizeof(LotNr) + sizeof(FilterTime), NULL,subname);
+        sendpacked(socketha,C_rGetNext,BLDPROTOCOLVERSION, sizeof(LotNr) + sizeof(FilterTime), NULL,subname);
 
-		//sender Lotnr
-		sendall(socketha,&LotNr, sizeof(LotNr));
-		//sender filtertid
-		sendall(socketha,&FilterTime, sizeof(FilterTime));
-
-
-		//printf("gting response\n");
-                //får svar tilbake
-                //leser hedder
-                if ((i=recv(socketha, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) == -1) {
-                        perror("recv");
-                        exit(1);
-                }
-
-                //printf("got comand: %i\n",packedHedder.command);
-
-                if (packedHedder.command == C_rLotData) {
-
-                        if ((i=recv(socketha, ReposetoryHeader, sizeof(struct ReposetoryHeaderFormat),MSG_WAITALL)) == -1) {
-                            perror("recv");
-                            exit(1);
-                        }
-
-                        //printf("url %s\n", (*ReposetoryHeader).url);
-        		if ((*ReposetoryHeader).htmlSize != 0) {
-       			         (*ReposetoryHeader).htmlSize2 = (*ReposetoryHeader).htmlSize;
-		        }
+	//sender Lotnr
+	sendall(socketha,&LotNr, sizeof(LotNr));
+	//sender filtertid
+	sendall(socketha,&FilterTime, sizeof(FilterTime));
 
 
-                        //lseser htmlen
-                        if ((i=recv(socketha, htmlbuffer, (*ReposetoryHeader).htmlSize2 ,MSG_WAITALL))  == -1){
-                           perror("recv html");
-                            exit(1);
-                        }
-                        //lsere adressen
-                        if ((i=recv(socketha, radress, sizeof(radress),MSG_WAITALL)) == -1) {
-                            perror("recv");
-                            exit(1);
-                        }
+	//får svar tilbake
+	//leser hedder
+	if ((i=recv(socketha, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) == -1) {
+		perror("recv");
+		exit(1);
+	}
 
-                        return 1;
-                }
-                else if (packedHedder.command == C_rEOF) {
-                        printf("eof\n");
-                        DataInLot = 0;
+	if (packedHedder.command == C_rLotData) {
 
-			//tror man må stenge ned socketen her slik at serveren gir seg
-			//oppstår det problemer prøv å hak fram linjene under
-                        //close(socketha);
-			//socketOpen := 0;
+		if ((i=recv(socketha, ReposetoryHeader, sizeof(struct ReposetoryHeaderFormat),MSG_WAITALL)) == -1) {
+		    perror("recv");
+		    exit(1);
+		}
 
-                        return 0;
-                }
-                else {
-                        printf("command not understod. Did get %i\n",packedHedder.command);
-                        return 0;
-                }
+
+		if ((*ReposetoryHeader).htmlSize != 0) {
+			 (*ReposetoryHeader).htmlSize2 = (*ReposetoryHeader).htmlSize;
+		}
+
+
+		//lseser htmlen
+		if ((i=recv(socketha, htmlbuffer, (*ReposetoryHeader).htmlSize2 ,MSG_WAITALL))  == -1){
+		   perror("recv html");
+		    exit(1);
+		}
+		//lsere adressen
+		if ((i=recv(socketha, radress, sizeof(radress),MSG_WAITALL)) == -1) {
+		    perror("recv");
+		    exit(1);
+		}
+
+		return 1;
+	}
+	else if (packedHedder.command == C_rEOF) {
+		#ifdef DEBUG
+			printf("eof\n");
+		#endif
+		
+		DataInLot = 0;
+
+
+		return 0;
+	}
+	else {
+		printf("command not understod. Did get %i\n",packedHedder.command);
+		return 0;
+	}
 
 }
 
@@ -618,7 +593,6 @@ unsigned long int DIGetIp (char *HostName, unsigned int DocID,char subname[]) {
               perror("recv");
               exit(1);
         }
-	//printf("ipaa: %u\n",IPAddress);
 
 	return IPAddress;
 
@@ -637,8 +611,6 @@ void DIWriteNET (char *HostName, struct DocumentIndexFormat *DocumentIndexPost, 
         }
 
 	sendpacked(socketha,C_DIWrite,BLDPROTOCOLVERSION, sizeof(struct DocumentIndexFormat) + sizeof(DocID), NULL,subname);
-
-	//printf("size of packet: %i\n",sizeof(struct DocumentIndexFormat) + sizeof(DocID));
 	
 	sendall(socketha,DocumentIndexPost, sizeof(struct DocumentIndexFormat));
 
@@ -669,7 +641,6 @@ int DIReadNET (char *HostName, struct DocumentIndexFormat *DocumentIndexPost, in
         if ((i=recv(socketha, DocumentIndexPost, sizeof(struct DocumentIndexFormat),MSG_WAITALL)) == -1) {
               perror("recv");
 		return 0;
-              //exit(1);
         }
 
 	return 1;

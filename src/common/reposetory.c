@@ -3,9 +3,18 @@
 #include <stdio.h>
 #include <time.h>
 #include <err.h>
+#include <arpa/inet.h> //for inet_aton()
+#include <sys/types.h> //for time()
+#include <sys/stat.h> 
+#include <sys/types.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <locale.h>
+
 
 #include "define.h"
-
 #include "stdlib.h"
 #include "debug.h"
 #include "lot.h"
@@ -15,28 +24,15 @@
 #include "io.h"
 #include "dp.h"
 #include "DocumentIndex.h"
-//#include "define.h"
-#include <errno.h>
-//extern int errno;
 
-#include <arpa/inet.h> //for inet_aton()
-#include <sys/types.h> //for time()
-#include <sys/stat.h> 
-#include <sys/types.h>
-#include <dirent.h>
-#include <unistd.h>
 
 #ifdef BLACK_BOX
-#include "attributes.h"
-#include "../ds/dcontainer.h"
-#include "../ds/dpair.h"
-#include "../ds/dset.h"
-#include "../ds/dmap.h"
+	#include "attributes.h"
+	#include "../ds/dcontainer.h"
+	#include "../ds/dpair.h"
+	#include "../ds/dset.h"
+	#include "../ds/dmap.h"
 #endif
-
-//#define MMAP_REPO
-//#define TIME_DEBUG_L
-
 
 
 #ifdef MMAP_REPO
@@ -52,10 +48,6 @@
         #include "timediff.h"
 #endif
 
-#include <inttypes.h>
-
-//temp77
-#include <locale.h>
 
 #define CurrentReposetoryVersion 6
 
@@ -81,7 +73,7 @@ int findLotToIndex(char subname[], int dirty) {
 			}
 			else {
 	                	#ifdef DEBUG
-				perror("local dirty");
+					perror("local dirty");
 				#endif
 	
 				continue;
@@ -92,7 +84,7 @@ int findLotToIndex(char subname[], int dirty) {
 
 			if ((FH = lotOpenFileNoCasheByLotNr(lotNr,"dirty","r", 's',subname)) == NULL) {
 	                	#ifdef DEBUG
-				perror("local dirty");
+					perror("local dirty");
 				#endif
 	
 				continue;
@@ -167,10 +159,7 @@ void fpop(char *buff,int *length,FILE *file,char separator,int nrOfseparators) {
 	*length = 0;
 	
 	while ((! feof(file)) && (foundSeparators != nrOfseparators)) {
-	//while(*length == 0) {
 		lastchar = getc(file);
-
-		//printf("%c",(char)lastchar);
 
 		if (lastchar == separator) {
 			foundSeparators++;
@@ -181,7 +170,6 @@ void fpop(char *buff,int *length,FILE *file,char separator,int nrOfseparators) {
 		
 		if (*length < BuffLength) {	
 			buff[*length] = lastchar;
-			//printf("%i: %c - %c\n",*length,lastchar,buff[*length]);
 		}
 		
 		(*length)++;
@@ -190,27 +178,23 @@ void fpop(char *buff,int *length,FILE *file,char separator,int nrOfseparators) {
 	*length = (*length - nrOfseparators);
 
 	buff[*length] = '\0';
-	
-	//printf("buff: -%s-\n%i\n%i\n%i\n",buff,*length,foundSeparators,nrOfseparators);
+
 
 }
 
 #ifdef BLACK_BOX
-container* ropen()
-{
+container* ropen() {
     return map_container( pair_container( string_container(), string_container() ), set_container( string_container() ) );
 }
 
-void rclose(container *attrkeys)
-{
+void rclose(container *attrkeys) {
     printf("rclose: attrkeys = ");
-    if (attrkeys!=NULL)
-	{
-	    println(attrkeys);
+	if (attrkeys!=NULL) {
+		println(attrkeys);
 
 /*
-	    iterator	it_m1 = map_begin(attrkeys);
-	    for (; it_m1.valid; it_m1=map_next(it_m1))
+		iterator	it_m1 = map_begin(attrkeys);
+		for (; it_m1.valid; it_m1=map_next(it_m1))
 		{
 				// Legg til pÃ¥ disk:
 		    char	path[128], *filename;
@@ -230,17 +214,17 @@ void rclose(container *attrkeys)
 
 	    destroy(attrkeys);
 	}
-    else
-	{
-	    printf("<empty>\n");
+	else {
+		printf("<empty>\n");
 	}
 
-    lotCloseFiles();
+	lotCloseFiles();
 }
 #endif
 
 
 void setLastIndexTimeForLot(int LotNr,int httpResponsCodes[],char subname[]){
+
 	FILE *RFILE;
 	unsigned int now;
 	int i;
@@ -318,7 +302,6 @@ unsigned int rLastDocID(char subname[]) {
 	#endif
 
 	DocID = atou(buff);
-	//printf("new docid %u = %s\n",DocID,buff);
 
 	fclose(DocIDFILE);
 		
@@ -381,7 +364,6 @@ unsigned int rGeneraeADocID (char subname[]) {
 			exit(-1);
 
 		}
-		//printf("new docid %u = %s\n",DocID,buff);
 
 		fclose(DocIDFILE);
 	}		
@@ -412,9 +394,9 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 	int WorkBuffSize = (HtmlBufferSize * 1.2) + 12;
 	char *WorkBuff;
 
-#ifdef DEBUG
-	printf("rApendPostcompress: starting\n");
-#endif
+	#ifdef DEBUG
+		printf("rApendPostcompress: starting\n");
+	#endif
 
 	if ((WorkBuff = malloc(WorkBuffSize)) == NULL) {
 		fprintf(stderr,"can't malloc WorkBuff of size %d\n",WorkBuffSize);
@@ -437,22 +419,23 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 
 	free(WorkBuff);
 
-#ifdef DEBUG
-	printf("rApendPostcompress: finished\n");
-#endif
+	#ifdef DEBUG
+		printf("rApendPostcompress: finished\n");
+	#endif
 
 	return 1;
 }
+
 unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys) {
 
 	unsigned long int offset;
 
 	//finner ut når dette ble gjort
-#ifdef BLACK_BOX
-	if ((*ReposetoryHeader).storageTime == 0) {
-		(*ReposetoryHeader).storageTime = time(NULL);
-	}
-#endif
+	#ifdef BLACK_BOX
+		if ((*ReposetoryHeader).storageTime == 0) {
+			(*ReposetoryHeader).storageTime = time(NULL);
+		}
+	#endif
 
 	FILE *RFILE;
 
@@ -479,12 +462,12 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 	offset = ftello64(RFILE);
 
 	// skriver versjon
-#ifdef BLACK_BOX
-	unsigned int CurrentReposetoryVersionAsUInt = CurrentReposetoryVersion;
-	if(fwrite(&CurrentReposetoryVersionAsUInt,sizeof(CurrentReposetoryVersionAsUInt),1,RFILE) < 0) {
-		perror("rApendPost: can't write CurrentReposetoryVersionAsUInt");
-	}
-#endif
+	#ifdef BLACK_BOX
+		unsigned int CurrentReposetoryVersionAsUInt = CurrentReposetoryVersion;
+		if(fwrite(&CurrentReposetoryVersionAsUInt,sizeof(CurrentReposetoryVersionAsUInt),1,RFILE) < 0) {
+			perror("rApendPost: can't write CurrentReposetoryVersionAsUInt");
+		}
+	#endif
 
 	//skriver hedder
 	if(fwrite(ReposetoryHeader,sizeof(struct ReposetoryHeaderFormat),1,RFILE) < 0) {
@@ -504,17 +487,16 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 		debug("did write image of %i bytes",(*ReposetoryHeader).imageSize);
 	}
 	//skriver acl
-#ifdef BLACK_BOX
-	if(fwrite(acl_allow,(*ReposetoryHeader).acl_allowSize,1,RFILE) < 0) {
-		perror("rApendPost: can't write acl_allow");
-	}
-#ifdef IIACL
-	if(fwrite(acl_denied,(*ReposetoryHeader).acl_deniedSize,1,RFILE) < 0) {
-		perror("rApendPost: can't write acl_denied");
-	}
-
-#endif
-#endif
+	#ifdef BLACK_BOX
+		if(fwrite(acl_allow,(*ReposetoryHeader).acl_allowSize,1,RFILE) < 0) {
+			perror("rApendPost: can't write acl_allow");
+		}
+		#ifdef IIACL
+			if(fwrite(acl_denied,(*ReposetoryHeader).acl_deniedSize,1,RFILE) < 0) {
+				perror("rApendPost: can't write acl_denied");
+			}
+		#endif
+	#endif
 
 #ifdef BLACK_BOX
 	fwrite(url, ReposetoryHeader->urllen, 1, RFILE);
@@ -584,7 +566,7 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 	}
 	
 	#ifdef DEBUG
-	printf("rApendPost: did append %u, url: \"%s\", into subname \"%s\"\n",(*ReposetoryHeader).DocID,(*ReposetoryHeader).url,subname);
+		printf("rApendPost: did append %u, url: \"%s\", into subname \"%s\"\n",(*ReposetoryHeader).DocID,(*ReposetoryHeader).url,subname);
 	#endif
 
 	#ifdef BLACK_BOX
@@ -618,14 +600,13 @@ int rReadSummary_post(const unsigned int DocID,char **metadesc, char **title, ch
 		return 0;
 	}
 
-	//FILE *SFILE;
+
 	char *WorkBuff_p;
 	char HtmlBuffer[300000];
 	char *cptr, *HtmlBufferPtr;
 	int size;
 	int i;
 	unsigned int DocID_infile;
-
 	unsigned int HtmlBufferSize;
 	int n, nerror;
 
@@ -712,7 +693,7 @@ int rReadSummary_post(const unsigned int DocID,char **metadesc, char **title, ch
 
 	if (DocID_infile != DocID) {
 		printf("DocID_infile != DocID. Summery point to wrong summery\n");
-		//return 0;
+
 		goto rReadSummary_error;
 	}
 
@@ -726,7 +707,6 @@ int rReadSummary_post(const unsigned int DocID,char **metadesc, char **title, ch
         	printf("uncompress error. Code: %i for DocID %u-%i\n",nerror,DocID,rLotForDOCid(DocID));
 		printf("HtmlBufferSize %i, rsize %i",HtmlBufferSize,rsize);
 
-		//return 0;
 		goto rReadSummary_error;
 
 	}
@@ -752,18 +732,18 @@ int rReadSummary_post(const unsigned int DocID,char **metadesc, char **title, ch
 		//title
 		size = (unsigned int)((unsigned int)cptr - (unsigned int)HtmlBufferPtr);
 		#ifdef DEBUG
-		printf("size %i\n",size);
+			printf("size %i\n",size);
 		#endif
-		//printf("title size %i\n",size);
+
 		*title = malloc(size +1);
-		//strncpy(&(*title)[0],HtmlBufferPtr,size);
+
 		for (i=0;i<size;i++) {
 			(*title)[i] = HtmlBufferPtr[i];
 		}
 		(*title)[size] = '\0';
 
 		#ifdef DEBUG
-		printf("title %s, size %i, len %i, len2 %i\n",*title,size,strlen(*title),strlen(&(*title)[0]));
+			printf("title %s, size %i, len %i, len2 %i\n",*title,size,strlen(*title),strlen(&(*title)[0]));
 		#endif
 
 		++cptr;
@@ -781,10 +761,9 @@ int rReadSummary_post(const unsigned int DocID,char **metadesc, char **title, ch
 	if ((cptr = strchr(HtmlBufferPtr,'\n')) != NULL ) {
 		cptr = strchr(HtmlBufferPtr,'\n');
 		size = (cptr - HtmlBufferPtr);
-		
-		//printf("metadesc size %i\n",size);
+
 		*metadesc = malloc(size +1);
-		//strncpy(*metadesc,HtmlBufferPtr,size);
+
 		for (i=0;i<size;i++) {
 			(*metadesc)[i] = HtmlBufferPtr[i];
 		}
@@ -805,8 +784,6 @@ int rReadSummary_post(const unsigned int DocID,char **metadesc, char **title, ch
 	*body = malloc(strlen(HtmlBufferPtr) +1);
 	strcpy(*body,HtmlBufferPtr);
 
-
-	//printf("title: %s\nmetadesc: %s\n",*title,*metadesc);
 
 
         #ifdef TIME_DEBUG_L
@@ -868,7 +845,6 @@ int rReadSummary_l(const unsigned int DocID,char **metadesc, char **title, char 
 }
 
 
-//#define DO_DIRECT
 
 //leser en post
 int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radress64bit,unsigned int 
@@ -907,34 +883,31 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 		dp_lock(rLotForDOCid(DocID));
 	#endif
 
-#ifndef DO_DIRECT
-	#ifdef BLACK_BOX
-	fd = lotOpenFileNoCashel(DocID,"reposetory","rb",'n',subname);
+	#ifndef DO_DIRECT
+		#ifdef BLACK_BOX
+			fd = lotOpenFileNoCashel(DocID,"reposetory","rb",'n',subname);
+		#else
+			fd = lotOpenFileNoCashel(DocID,"reposetory","rb",'s',subname);
+		#endif
+
+
+		if (fd == -1) {
+			forreturn = 0;
+			goto rReadHtml_end;
+
+		}
 	#else
-	//og s
-	fd = lotOpenFileNoCashel(DocID,"reposetory","rb",'s',subname);
+		fd = lotOpenFileNoCache_direct(DocID, "reposetory", "r", 's', subname);	
 	#endif
 
-	//3 nov 2006: radress64bit = radress64bit + sizeof(struct ReposetoryHeaderFormat);
-	if (fd == -1) {
-		//return 0;
- 
-		forreturn = 0;
-		goto rReadHtml_end;
 
-	}
-#else
-	fd = lotOpenFileNoCache_direct(DocID, "reposetory", "r", 's', subname);	
-#endif
-
-	//printf("fseeko64\n");
        	#ifdef TIME_DEBUG_L
        	        gettimeofday(&start_time, NULL);
         #endif
 
 	if (lseek64(fd,offset,SEEK_SET) == -1) {
 		warn("fseeko64: DocID %u, fd %d, adress off_t %"PRId64", adress given %u, rsize %u",DocID, fd,offset,radress64bit,rsize);
-		//return 0;
+
 		forreturn = 0;
 		goto rReadHtml_end;
 	}		
@@ -960,7 +933,7 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 
 
 	#ifdef DDEBUG
-	printf("acl \"%s\"\n",(*aclbuffer));
+		printf("acl \"%s\"\n",(*aclbuffer));
 	#endif
 
 	
@@ -979,8 +952,6 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 
 		forreturn = 1;
 	}
-		//temp44: free(WorkBuff);
-
 
 
 	rReadHtml_end:				
@@ -1080,13 +1051,11 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 
 	}
 
-	//må ha #ifdef, slik at vi ikke kaller ftell unødvendig, når vi ikke er i debug modus
-	#ifdef DEBUG
-	//debug("image is at %u\n",(unsigned int)ftell(LotFileOpen));
-	#endif
 
 	if ((*ReposetoryHeader).imageSize == 0) {
-		//printf("imageSize is 0. Skipping to read it\n");
+		#ifdef DEBUG
+			printf("imageSize is 0. Skipping to read it\n");
+		#endif
 	}
 	else if (imagebuffer == NULL) {
 		//hvis vi ikke har en buffer å putte bilde inn i søker vi bare over
@@ -1114,7 +1083,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 
 			
 		#ifdef DEBUG
-		printf("acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
+			printf("acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
 		#endif
 		(*acl_allowbuffer) = malloc((*ReposetoryHeader).acl_allowSize +1);
 		if ((*ReposetoryHeader).acl_allowSize != 0) {
@@ -1126,27 +1095,24 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 		(*acl_allowbuffer)[(*ReposetoryHeader).acl_allowSize] = '\0';
 
 		#ifdef IIACL
-		#ifdef DEBUG
-		printf("did read acl_allow %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_allowSize,(*acl_allowbuffer));
-		#endif
+			#ifdef DEBUG
+				printf("did read acl_allow %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_allowSize,(*acl_allowbuffer));
+				printf("acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
+			#endif
 
 
-		#ifdef DEBUG
-		printf("acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
-		#endif
-		(*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1);
-		if ((*ReposetoryHeader).acl_deniedSize != 0) {
-			if (read(fd, (*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize) < 0) {
-				printf("cant't read acl_denied. acl_denied size %i. At %s:%d\n",(*ReposetoryHeader).acl_deniedSize,__FILE__,__LINE__);
-				perror("");
+			(*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1);
+			if ((*ReposetoryHeader).acl_deniedSize != 0) {
+				if (read(fd, (*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize) < 0) {
+					printf("cant't read acl_denied. acl_denied size %i. At %s:%d\n",(*ReposetoryHeader).acl_deniedSize,__FILE__,__LINE__);
+					perror("");
+				}
 			}
-		}
-		(*acl_deniedbuffer)[(*ReposetoryHeader).acl_deniedSize] = '\0';
+			(*acl_deniedbuffer)[(*ReposetoryHeader).acl_deniedSize] = '\0';
 
-		#ifdef DEBUG
-		printf("did read acl_denied %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_deniedSize,(*acl_deniedbuffer));
-		#endif
-
+			#ifdef DEBUG
+				printf("did read acl_denied %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_deniedSize,(*acl_deniedbuffer));
+			#endif
 		#endif
 
 		if(read(fd, recordseparator,sizeof(char)*3) != 3) {
@@ -1154,8 +1120,6 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 		}
 
 	#else
-		//(*aclbuffer) = NULL;
-
 		//rart, ser ikke ut til at vi faktsik sjekker om disse er riktige		
 		totalpost_p += memcpyrc(recordseparator,totalpost_p,3);
 
@@ -1207,11 +1171,9 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
         #ifdef TIME_DEBUG_L
 		// for totalt tid i funksjonen
                 struct timeval tot_start_time, tot_end_time;
+		gettimeofday(&tot_start_time, NULL);
         #endif
 
-        #ifdef TIME_DEBUG_L
-                gettimeofday(&tot_start_time, NULL);
-        #endif
 	
 	#ifdef DEBUG
 		printf("rReadPost2(rsize=%u, imagesize=%u, htmlbufferSize=%d, htmlbuffer=%p, imagebuffer=%p)\n",rsize,imagesize,htmlbufferSize,htmlbuffer,imagebuffer);
@@ -1264,9 +1226,9 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 	}
 
 	if ((*ReposetoryHeader).htmlSize2 == 0) {
-#ifdef DEBUG
-		printf("htmlSize2 is 0. Skipping to read it\n");
-#endif
+		#ifdef DEBUG
+			printf("htmlSize2 is 0. Skipping to read it\n");
+		#endif
 	} else if (htmlbuffer == NULL) {
 		//hvis vi ikke har en buffer å putte htmlen inn i søker vi bare over
 		totalpost_p += (*ReposetoryHeader).htmlSize2;
@@ -1275,7 +1237,9 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 	}
 
 	if ((*ReposetoryHeader).imageSize == 0) {
-		//printf("imageSize is 0. Skipping to read it\n");
+		#ifdef DEBUG
+			printf("imageSize is 0. Skipping to read it\n");
+		#endif
 	} else if (imagebuffer == NULL) {
 		//hvis vi ikke har en buffer å putte bilde inn i søker vi bare over
 		totalpost_p += (*ReposetoryHeader).imageSize;
@@ -1292,15 +1256,15 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 			return 0;
 		}
 		#ifdef IIACL
-		if ((*ReposetoryHeader).acl_deniedSize > 16384) {
-			printf("bad acl_deniedSize. size %i\n",(*ReposetoryHeader).acl_deniedSize);
-			return 0;
-		}
+			if ((*ReposetoryHeader).acl_deniedSize > 16384) {
+				printf("bad acl_deniedSize. size %i\n",(*ReposetoryHeader).acl_deniedSize);
+				return 0;
+			}
 		#endif
 
 			
 		#ifdef DEBUG
-		printf("acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
+			printf("acl_allow size %i\n",(*ReposetoryHeader).acl_allowSize);
 		#endif
 		if (((*acl_allowbuffer) = malloc((*ReposetoryHeader).acl_allowSize +1)) == NULL) {
 			perror("Malloc acl_allowd");
@@ -1315,29 +1279,29 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		(*acl_allowbuffer)[(*ReposetoryHeader).acl_allowSize] = '\0';
 
 		#ifdef IIACL
-		#ifdef DEBUG
-		printf("did read acl_allow %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_allowSize,(*acl_allowbuffer));
-		#endif
+			#ifdef DEBUG
+				printf("did read acl_allow %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_allowSize,(*acl_allowbuffer));
+			#endif
 
 
-		#ifdef DEBUG
-		printf("acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
-		#endif
-		if (((*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1)) == NULL) {
-			perror("Malloc acl_denied");
-			return 0;
-		}
-		if ((*ReposetoryHeader).acl_deniedSize != 0) {
-			if (read(LotFileOpen,(*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize) != (*ReposetoryHeader).acl_deniedSize) {
-				printf("cant't read acl_denied. acl_denied size %i at %s:%d\n",(*ReposetoryHeader).acl_deniedSize,__FILE__,__LINE__);
-				perror("");
+			#ifdef DEBUG
+				printf("acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
+			#endif
+			if (((*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1)) == NULL) {
+				perror("Malloc acl_denied");
+				return 0;
 			}
-		}
-		(*acl_deniedbuffer)[(*ReposetoryHeader).acl_deniedSize] = '\0';
+			if ((*ReposetoryHeader).acl_deniedSize != 0) {
+				if (read(LotFileOpen,(*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize) != (*ReposetoryHeader).acl_deniedSize) {
+					printf("cant't read acl_denied. acl_denied size %i at %s:%d\n",(*ReposetoryHeader).acl_deniedSize,__FILE__,__LINE__);
+					perror("");
+				}
+			}
+			(*acl_deniedbuffer)[(*ReposetoryHeader).acl_deniedSize] = '\0';
 
-		#ifdef DEBUG
-		printf("did read acl_denied %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_deniedSize,(*acl_deniedbuffer));
-		#endif
+			#ifdef DEBUG
+				printf("did read acl_denied %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_deniedSize,(*acl_deniedbuffer));
+			#endif
 
 		#endif
 
@@ -1382,7 +1346,6 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		}
 
 	#else
-		//(*aclbuffer) = NULL;
 
 		//rart, ser ikke ut til at vi faktsik sjekker om disse er riktige		
 		totalpost_p += memcpyrc(recordseparator,totalpost_p,3);
@@ -1530,16 +1493,17 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 
 		//må ha #ifdef, slik at vi ikke kaller ftell unødvendig, når vi ikke er i debug modus
 		#ifdef DEBUG
-		debug("image is at %u\n",(unsigned int)ftell(LotFileOpen));
+			debug("image is at %u\n",(unsigned int)ftell(LotFileOpen));
 		#endif
 
 		if ((*ReposetoryHeader).imageSize == 0) {
-			//printf("imageSize is 0. Skipping to read it\n");
+			#ifdef DEBUG
+				printf("imageSize is 0. Skipping to read it\n");
+			#endif
 		}
 		else if (imagebuffer == NULL) {
 			//hvis vi ikke har en buffer å putte bilde inn i søker vi bare over
 			fseek(LotFileOpen,(*ReposetoryHeader).imageSize,SEEK_CUR);
-
 		}
 		else {
 			if ((n=fread(imagebuffer,1,(*ReposetoryHeader).imageSize,LotFileOpen)) != (*ReposetoryHeader).imageSize) {
@@ -1563,9 +1527,6 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			#endif
 
 			
-			#ifdef DEBUG
-			//printf("acl_deniedSize size %i\n",(*ReposetoryHeader).acl_deniedSize);
-			#endif
 			if (((*acl_allowbuffer) = malloc((*ReposetoryHeader).acl_allowSize +1)) == NULL) {
 				perror("malloc acl_allowbuffer");
 				return 0;
@@ -1579,32 +1540,31 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			(*acl_allowbuffer)[(*ReposetoryHeader).acl_allowSize] = '\0';
 
 			#ifdef IIACL
-			#ifdef DEBUG
-				printf("did read acl_allow %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_allowSize,(*acl_allowbuffer));
-			#endif
+				#ifdef DEBUG
+					printf("did read acl_allow %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_allowSize,(*acl_allowbuffer));
+				#endif
 
 
-			#ifdef DEBUG
-			printf("acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
-			#endif
+				#ifdef DEBUG
+					printf("acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
+				#endif
 
-			if (((*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1)) == NULL) {
-				perror("malloc acl_deniedbuffer");
-				return 0;
-			}
-			if ((*ReposetoryHeader).acl_deniedSize != 0) {
-				if (fread((*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize,1,LotFileOpen) != 1) {
-					printf("cant't read acl_denied. acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
-					perror("");
+				if (((*acl_deniedbuffer) = malloc((*ReposetoryHeader).acl_deniedSize +1)) == NULL) {
+					perror("malloc acl_deniedbuffer");
+					return 0;
 				}
-			}
-			(*acl_deniedbuffer)[(*ReposetoryHeader).acl_deniedSize] = '\0';
+				if ((*ReposetoryHeader).acl_deniedSize != 0) {
+					if (fread((*acl_deniedbuffer),(*ReposetoryHeader).acl_deniedSize,1,LotFileOpen) != 1) {
+						printf("cant't read acl_denied. acl_denied size %i\n",(*ReposetoryHeader).acl_deniedSize);
+						perror("");
+					}
+				}
+				(*acl_deniedbuffer)[(*ReposetoryHeader).acl_deniedSize] = '\0';
 
-#ifdef DEBUG
-			printf("did read acl_denied %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_deniedSize,(*acl_deniedbuffer));
-#endif
-
-#endif
+				#ifdef DEBUG
+					printf("did read acl_denied %i b, that vas \"%s\"\n",(*ReposetoryHeader).acl_deniedSize,(*acl_deniedbuffer));
+				#endif
+			#endif
 
 			/* We have variables length url */
 			if (CurrentReposetoryVersionAsUInt > 4) {
@@ -1689,16 +1649,18 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpe
 	/************************************/
 	//ToDo: hvorfor får vi ikke eof lenger nede når vi når eof? Men må sjkke her??
 	//laterlig
-	//struct stat inode;      // lager en struktur for fstat å returnere.
-	//fstat(fileno(LotFileOpen),&inode);
-	//if (stoppOffset == inode.st_size) {
-	//	printf("stoppOffset == inode.st_size\n");
-	//	return 0;
-	//}
+	/*
+	struct stat inode;      // lager en struktur for fstat å returnere.
+	fstat(fileno(LotFileOpen),&inode);
+	if (stoppOffset == inode.st_size) {
+		printf("stoppOffset == inode.st_size\n");
+		return 0;
+	}
+	*/
 	/************************************/
 
 	#ifdef DEBUG
-	printf("\n\nstart rGetNext()\n");
+		printf("\n\nstart rGetNext()\n");
 	#endif
 
 	while (!feof(LotFileOpen) && (!found)) { 
@@ -1723,9 +1685,7 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpe
 				fstat(fileno(LotFileOpen),&inode);
 				printf("ftel64() %u, inode.st_size %u\n",(unsigned int)ftello64(LotFileOpen),(unsigned int)inode.st_size);
 			#endif
-			//printf("Recordseparator vas %c%c%c\n",recordseparator[0],recordseparator[1],recordseparator[2]);
 
-			//printf("lotfordociD %lu != lot %lu\n",rLotForDOCid((*ReposetoryHeader).DocID),LotNr);
 			//søker oss tilbake til der vi var
 			fseek(LotFileOpen,startOffset,SEEK_SET);
 			rscount = 0;
@@ -1733,8 +1693,6 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpe
 			while ((!feof(LotFileOpen)) && (rscount != 3)) {
 			
 				c = fgetc(LotFileOpen);
-
-				//printf("c %c\n",c);
 
 				if (c == '*') {
 					++rscount;
@@ -1769,7 +1727,7 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpe
 			}
 			else {
 				#ifdef DEBUG
-				printf("To old record. Time \"%u\"\n",(unsigned int)(*ReposetoryHeader).time);
+					printf("To old record. Time \"%u\"\n",(unsigned int)(*ReposetoryHeader).time);
 				#endif
 			}
 		}
@@ -1780,15 +1738,14 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpe
 		fstat(fileno(LotFileOpen),&inode);
 		if (ftello64(LotFileOpen) == inode.st_size) {
 			#ifdef DEBUG
-			printf("stoppOffset == inode.st_size\n");
-			printf("reading to eof\n");
+				printf("stoppOffset == inode.st_size\n");
+				printf("reading to eof\n");
 			#endif
 
 			//fremprovoserer eof
 			while (!feof(LotFileOpen)) {
         	        	c = fgetc(LotFileOpen);
 			}
-			//return 1; //returnerer at vi har data da dette er siste, og den skal være med
 		}
 		/************************************/
 
@@ -1796,18 +1753,6 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpe
 	}
 
 
-	/*
-	//hvis vi ikke stoppet på grunn EOF retunerer vi 1, slik at dataene kan leses
-	if (!feof(LotFileOpen)) {
-		return 1;
-	}
-	else {
-	//hvis vi er tom for data stenger vi filen, og retunerer en 0 som sier at vi er ferdig.
-		printf("ferdig\n");
-		fclose(LotFileOpen);
-		return 0;
-	}
-	*/
 
 	return found;
 	
@@ -1833,13 +1778,12 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, 
 		strncat(FileName,reponame,128);
 
 		#ifdef DEBUG
-		printf("rGetNext: Opending lot %s\n",FileName);
+			printf("rGetNext: Opending lot %s\n",FileName);
 		#endif
 
 		if ( (LotFileOpen = fopen(FileName,"rb")) == NULL) {
 			perror(FileName);
 			return 0;
-			//exit(1);
 		}
 		
 
@@ -1883,23 +1827,7 @@ int runpack(char *ReposetoryData,uLong comprLen,char *inndata,int length) {
 	#endif
 
 	int error;
-	//char compressBuff[sizeof(ReposetoryData)];
 
-	//uLong comprLen = sizeof((*ReposetoryData));
-
-	//printf("comprLen: %i\n",comprLen);
-	//uLong comprLen = sizeof(ReposetoryData);
-
-	//int uncompress (Bytef *dest, uLongf *destLen, const Bytef *source, uLong sourceLen);
-	//compress((Bytef*)compr, &comprLen, (const Bytef*)&compressBuff, len)
-	/*
-	int i;
-	for(i=0;i < length;i++) {
-		printf("%i %c - %c\n",i,inndata[i],temp[i]);
-	}
-	*/
-	
-	//if ( uncompress((Bytef*)compressBuff,&comprLen,inndata,length) != 0) {
 	if ( (error = uncompress((Bytef*)ReposetoryData,&comprLen,(Bytef *)inndata,length)) != 0) {
 		//temp: haker ut denne. Bør returnere noe om at vi hadde en feil
 		printf("uncompress error. Code: %i\n",error);
@@ -1907,13 +1835,6 @@ int runpack(char *ReposetoryData,uLong comprLen,char *inndata,int length) {
 	}
 	ReposetoryData[comprLen] = '\0';
 
-	//printf("url: %s\n",(*ReposetoryData).url);
-
-	//ReposetoryData.url[0] = 'e';
-	//printf("%s\ncomprLen: %i\n",compressBuff,comprLen);
-	
-	//sscanf(compressBuff,ReposetoryStorageFormat,&ReposetoryData.DocID,&ReposetoryData.url,&ReposetoryData.content_type,&ReposetoryData.content);
-	
 	return 1;
 }
 
@@ -1974,9 +1895,7 @@ void risave (int DocID, char *image, int size,char subname[]) {
 
 
 /* AnchorIndex */
-FILE *
-anchorIndexOpen(unsigned int DocID, char type, char *subname)
-{
+FILE *anchorIndexOpen(unsigned int DocID, char type, char *subname) {
 	FILE *fp;
 	int LotNr;
 	char path[1024];
@@ -1999,9 +1918,7 @@ anchorIndexOpen(unsigned int DocID, char type, char *subname)
 	return fp;
 }
 
-int
-anchorIndexPosition(FILE *fp, unsigned int DocID)
-{
+int anchorIndexPosition(FILE *fp, unsigned int DocID) {
 	int LotNr;
 
 	LotNr = rLotForDOCid(DocID);
@@ -2013,9 +1930,7 @@ anchorIndexPosition(FILE *fp, unsigned int DocID)
 	return 1;
 }
 
-int
-anchorIndexWrite(unsigned int DocID, char *subname, off_t offset)
-{
+int anchorIndexWrite(unsigned int DocID, char *subname, off_t offset) {
 	FILE *fp;
 	struct anchorIndexFormat ai;
 
@@ -2037,9 +1952,7 @@ anchorIndexWrite(unsigned int DocID, char *subname, off_t offset)
 	return 1;
 }
 
-int
-anchorIndexRead(unsigned int DocID, char *subname, off_t *offset)
-{
+int anchorIndexRead(unsigned int DocID, char *subname, off_t *offset) {
 	FILE *fp;
 	struct anchorIndexFormat ai;
 
@@ -2064,9 +1977,7 @@ anchorIndexRead(unsigned int DocID, char *subname, off_t *offset)
 
 
 //legger til en "anchor" (tekst på link)
-void
-anchoraddnew(unsigned int DocID, char *text, size_t textsize, char *subname, char *filename)
-{
+void anchoraddnew(unsigned int DocID, char *text, size_t textsize, char *subname, char *filename) {
         FILE *ANCHORFILE;
 	struct anchorRepo anchor;
 	off_t offset;
@@ -2087,7 +1998,6 @@ anchoraddnew(unsigned int DocID, char *text, size_t textsize, char *subname, cha
 	}
 
 	if (anchorRead(LotNr, subname, DocID, newtext, oldlen)) {
-		//printf("Got: %s\n", newtext);
 		p = newtext + oldlen-1;
 		strcpy(p, "\n");
 		p++;
@@ -2095,23 +2005,8 @@ anchoraddnew(unsigned int DocID, char *text, size_t textsize, char *subname, cha
 		p = newtext;
 	}
 	strcpy(p, text);
-	//printf("And: %s\n", newtext);
 
 
-        //printf("textsize %i\n",textsize);
-
-#if 0
-        //fjerner eventuelle SPACE på slutten
-        for(i=textsize-1; ((i>0) && ((text[i] == ' ') || (text[i] == '\0'))); i--) {
-                //printf("i: %i, c: %c cn: %i\n",i,text[i],(int)text[i]);
-        }
-        text[i +1] = '\0';
-        //fjerner eventuelle SPACE på slutten
-#endif
-
-        //printf("%i : -%s-\n",DocID,text);
-        //skaf filhandler
-        //FILE *lotOpenFile(int DocID,char resource[],char type[]);
 	GetFilPathForLot(path, LotNr, subname);
 	strcat(path, filename == NULL ? "anchors.new" : filename);
 	if ((ANCHORFILE = fopen(path, "a")) == NULL) {
@@ -2121,7 +2016,6 @@ anchoraddnew(unsigned int DocID, char *text, size_t textsize, char *subname, cha
 	}
 
 	offset = ftello64(ANCHORFILE);
-	//printf("Foo: %x\n", offset);
 
 	anchor.magic = ANCHORMAGIC;
 	anchor.DocID = DocID;
@@ -2139,8 +2033,6 @@ void anchoradd(unsigned int DocID,char *text,int textsize,char subname[], char *
         FILE *ANCHORFILE;
         int i;
 
-        //printf("textsize %i\n",textsize);
-
         //fjerner eventuelle SPACE på slutten
         for(i=textsize; ((i>0) && ((text[i] == ' ') || (text[i] == '\0'))); i--) {
                 //printf("i: %i, c: %c cn: %i\n",i,text[i],(int)text[i]);
@@ -2148,9 +2040,6 @@ void anchoradd(unsigned int DocID,char *text,int textsize,char subname[], char *
         text[i +1] = '\0';
 
 
-        //printf("%i : -%s-\n",DocID,text);
-        //skaf filhandler
-        //FILE *lotOpenFile(int DocID,char resource[],char type[]);
         ANCHORFILE = lotOpenFile(DocID, filename == NULL ? "anchors" : filename,"ab",'s',subname);
 
         //skriver DocID
@@ -2167,14 +2056,9 @@ int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsi
         //global variabel for rGetNext
         static FILE *LotFileOpen;
         static int LotOpen = -1;
-
         int bufflength;
-
-
-
-
         char FileName[128];
-        //char buff[sizeof(*ReposetoryData)];
+
 
         //tester om reposetoriet allerede er open, eller ikke
         if (LotOpen != LotNr) {
@@ -2185,8 +2069,10 @@ int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsi
                 GetFilPathForLot(FileName,LotNr,subname);
                 strncat(FileName,"anchors",128);
 
-                //printf("Opending lot %s\n",FileName);
-
+		#ifdef DEBUG
+			printf("Opending lot %s\n",FileName);
+		#endif
+		
                 if ( (LotFileOpen = fopen(FileName,"rb")) == NULL) {
                         perror(FileName);
                         exit(1);
@@ -2232,7 +2118,6 @@ int anchorGetNextnew(int LotNr,unsigned int *DocID,char *text,int textlength, un
 	static int LotOpen = -1;
 	char FileName[128];
 	struct anchorRepo anchor;
-	//char buff[sizeof(*ReposetoryData)];
 
 	//tester om reposetoriet allerede er open, eller ikke
 	if (LotOpen != LotNr) {
@@ -2243,7 +2128,6 @@ int anchorGetNextnew(int LotNr,unsigned int *DocID,char *text,int textlength, un
 		GetFilPathForLot(FileName,LotNr,subname);
 		strncat(FileName,"anchors.new",128);
 
-		//printf("Opending lot %s\n",FileName);
 
 		if ( (LotFileOpen = fopen(FileName,"rb")) == NULL) {
 			perror(FileName);
@@ -2341,9 +2225,7 @@ anchorRead(int LotNr, char *subname, unsigned int DocID, char *text, int len)
 	return 0;
 }
 
-void
-addResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t resourcelen)
-{
+void addResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t resourcelen) {
 	char FileName[1024];
 	FILE *fp;
 	off_t offset;
@@ -2389,15 +2271,12 @@ addResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t
 
 	DIRead(&docindex, DocID, subname);
 	docindex.ResourcePointer = offset;
-	//printf("Offset: %ld\n", offset);
 	docindex.ResourceSize = WorkBuffSize;
 	DIWrite(&docindex, DocID, subname, NULL);
 	free(WorkBuff);
 }
 
-size_t
-getResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t resourcelen)
-{
+size_t getResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t resourcelen) {
 	char FileName[1024];
 	FILE *fp;
 	struct DocumentIndexFormat docindex;
@@ -2464,38 +2343,35 @@ void addNewUrl (struct addNewUrlhaFormat *addNewUrlha, struct updateFormat *upda
 	int err;
 
 
+	/***********************************************************************
+	Kalkulerer sha1 verdi
+	************************************************************************/
 
-                /***********************************************************************
-                Kalkulerer sha1 verdi
-                ************************************************************************/
-
-                err = SHA1Reset(&sha);
-                if (err) {
-                        printf("SHA1Reset Error %d.\n", err );
-                }
+	err = SHA1Reset(&sha);
+	if (err) {
+		printf("SHA1Reset Error %d.\n", err );
+	}
 
 
-                err = SHA1Input(&sha, (const unsigned char *)(*updatePost).url, strlen((char *)(*updatePost).url));
-                if (err) {
-                        printf("SHA1Input Error %d.\n", err );
-                }
+	err = SHA1Input(&sha, (const unsigned char *)(*updatePost).url, strlen((char *)(*updatePost).url));
+	if (err) {
+		printf("SHA1Input Error %d.\n", err );
+	}
 
-                err = SHA1Result(&sha, (*updatePost).sha1);
-                if (err) {
-                        printf("SHA1Result Error %d, could not compute message digest.\n", err );
-                }
+	err = SHA1Result(&sha, (*updatePost).sha1);
+	if (err) {
+		printf("SHA1Result Error %d, could not compute message digest.\n", err );
+	}
 
-                //printf("%s",Message_Digest);
-                /************************************************************************/
 
-                /*
-                //debug. vis sha1'n
-                for (y=0;y<20;y++) {
-                        printf("%i",(int)(*updatePost).sha1[y]);
-                }
-                printf("\n\n");
-                */
-                fwrite(updatePost,sizeof(struct updateFormat),1,(*addNewUrlha).NYEURLER);
+	/*
+	//debug. vis sha1'n
+	for (y=0;y<20;y++) {
+		printf("%i",(int)(*updatePost).sha1[y]);
+	}
+	printf("\n\n");
+	*/
+	fwrite(updatePost,sizeof(struct updateFormat),1,(*addNewUrlha).NYEURLER);
 
 }
 
