@@ -5,7 +5,6 @@
 
 int main () {
 
-
 	int i, showabal;
 
         struct ppcPagesFormat ppcPages[10];
@@ -19,9 +18,6 @@ int main () {
 	queryNodeHeder.AmazonAssociateTag[0] = '\0';
 	queryNodeHeder.AmazonSubscriptionId[0] = '\0';
 
-//	getPpcAds("hent",ppcPages,&nrOfppcPages,query,userip);
-//	getPpcAds("revenuepilot",ppcPages,&nrOfppcPages,query,userip);
-//	getPpcAds("searchboss",ppcPages,&nrOfppcPages,query,userip);
 	getPpcAds("amazon",ppcPages,&nrOfppcPages,&queryNodeHeder);
 
 
@@ -31,10 +27,7 @@ int main () {
                         
 			printf("-%s-\n-%s-\n%s\n\n",ppcPages[i].url,ppcPages[i].title,ppcPages[i].description);
 
-
-
                 ++showabal;
-
         }
 	printf("nrOfppcPages %i\n",nrOfppcPages);
 }
