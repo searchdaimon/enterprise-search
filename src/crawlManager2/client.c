@@ -448,7 +448,7 @@ cmc_listusersus(int sock, int usersystem, char ***users, char *extra_in)
 	n_users = users_h.num_users;
 	if (n_users >= 0) {
 		*users = malloc((n_users+1) * sizeof(char *));
-		// runarb 2 sept 2009: må finne en måte å sjekke om malloc fungerte her. 
+		// runarb 2 sept 2009: mï¿½ finne en mï¿½te ï¿½ sjekke om malloc fungerte her. 
         	//if (*users == NULL) {
                 //	perror("malloc");
                 //	return 0;
