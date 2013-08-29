@@ -1168,13 +1168,6 @@ yumupdate:
 
 	$(CC) $(CFLAGS) src/common/exeoc.c src/yumupdate/yumupdate.c -o setuid/yumupdate
 
-crawlManager: src/crawlManager/main.c
-	@echo ""
-	@echo "$@:"
-
-	#22 feb 2007, fjerner -static
-	$(CC) $(CFLAGS) -I/home/eirik/.root/include $(LIBS)*.c src/acls/acls.c src/maincfg/maincfg.c src/crawl/crawl.c src/boitho-bbdn/bbdnclient.c src/crawlManager/main.c -o bin/crawlManager $(LDFLAGS) $(LDAP) $(MYSQL) -D BLACK_BOX $(BBDOCUMENT) $(LIBCONFIG) -DIIACL -DWITH_CONFIG $(24SEVENOFFICE) lib/libds.a -rdynamic
-
 crawlManager2: src/crawlManager2/main.c
 	@echo ""
 	@echo "$@:"
