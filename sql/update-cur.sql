@@ -272,3 +272,6 @@ INSERT INTO `param` VALUES (NULL, 15, 'ndocuments', 'The number of documents you
 -- Crawler for local files
 INSERT INTO `connectors` VALUES (6, 'Local', 'Local files on your ES. This is mostly used to index exotic network based file systems. You will have to login by ssh and mount the file system, then tell the crawler where it is.', NULL, NULL, NULL, 0, 'user_system, connector, crawling', 1, NULL, 1, 1);
 
+-- User system that executes a shell command
+INSERT INTO `systemConnector` (`id`, `name`, `extension`, `modified`, `active`, `read_only`) VALUES (5,'Executes shell command',0,NULL,1,1);
+INSERT INTO `systemParam` VALUES (5, 'command', '/home/boitho/boithoTools/src/us_shellexe/example.pl', 1);
