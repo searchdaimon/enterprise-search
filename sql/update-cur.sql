@@ -151,11 +151,6 @@ UPDATE connectors SET inputFields = CONCAT('user_system, ', inputFields) WHERE i
 
 INSERT INTO `connectors` VALUES (70, 'Superoffice', 'Superoffice push crawler', NULL, NULL, NULL, 0, 'custom_parameters, crawling, user_system, authentication', NULL, NULL, 1, 1);
 
--- Runarb: 21 jan. Disabler denne da SharePoint crawleren ikke fungerer.	
--- INSERT INTO `connectors` VALUES (73, 'SharePoint', NULL, NULL, NULL, NULL, 0, 'user_system, custom_parameters, crawling, authentication', 1, '2008-10-14 18:18:24', 1, 1);
--- INSERT INTO `param` VALUES (121, 73, 'delay', 'Delay in seconds between crawl.');
--- INSERT INTO `param` VALUES (108, 73, 'url', 'http://www.example.com');
--- INSERT INTO `param` VALUES (124, 73, 'download_images', '1 to activate, 0 to disable.');
 
 CREATE TABLE `activeUsers` (
   `user` varchar(255) default NULL,
@@ -170,14 +165,6 @@ INSERT INTO `param` VALUES (NULL, 70, 'Host', 'example.com');
 INSERT INTO `connectors` VALUES (99, 'ExchangePublic', 'Microsoft Exchange Public Folder', NULL, NULL, NULL, 0, 'user_system, authentication, connector, crawling', 0, NULL, 1, 1);
 
 -- Active directory system
--- INSERT INTO system (id, name, is_primary, connector) (SELECT 1 AS id, 'Active Directory' AS name, 1 AS is_primary, 1 as connector FROM config WHERE 0 = (SELECT COUNT(*) AS SUM FROM system) LIMIT 1);
-
---INSERT INTO systemParamValue (param, system, value) SELECT 'domain' as param, 1 AS system, configvalue AS value FROM config WHERE config.configkey = 'msad_domain'; 
---INSERT INTO systemParamValue (param, system, value) VALUES('ldapstring', 1, '');
---INSERT INTO systemParamValue (param, system, value) VALUES('ldapbase', 1, '');
---INSERT INTO systemParamValue (param, system, value) VALUES('ldapgroupstring', 1, '');
-
--- setter opp hva som trengs for ad
 INSERT INTO `systemParam` VALUES (1, 'ip', NULL, 1);
 INSERT INTO `systemParam` VALUES (1, 'user', NULL, 1);
 INSERT INTO `systemParam` VALUES (1, 'password', NULL, 1);
@@ -208,11 +195,8 @@ update config set configvalue = '100' where configkey = 'authentication_timeout'
 -- setter inn et tilfeldig tall som en unik nøkkel.
 insert into config (configkey, configvalue) VALUES('key', MD5(RAND()));
 
-# setter at exchange connector ikke er Perl crawler (extension) og er aktiv.
+-- setter at exchange connector ikke er Perl crawler (extension) og er aktiv.
 UPDATE connectors SET extension = 0, active = 1 WHERE id = 9;
-
-
-
 
 
 INSERT INTO `connectors` VALUES (110, 'Sharepoint', NULL, NULL, NULL, NULL, 0, 'user_system, custom_parameters, crawling, authentication', 1, '2009-04-01 15:24:43', 1, 1);
@@ -223,15 +207,6 @@ INSERT INTO param VALUES (187,110,'ignoreperms','1 (ignore permissions), 0 (perm
 ALTER TABLE shares ADD without_aclcheck tinyint(4) DEFAULT 0;
 ALTER TABLE shares ADD alias varchar(255);
 
-
-# Slutter med å sette in dette, men sletter heller ikke da vi trenger bakoverkompalitet.
-#INSERT INTO config (configkey, configvalue) VALUES('licensekey', '');
-#INSERT INTO config (configkey, configvalue) VALUES('licensesystem', 'ohSh7oow');
-#DELETE FROM config WHERE configkey='licensesystem';
-
-#UPDATE config SET configvalue = 'RRYAYACZACJAB6RLANAQ8K4G' WHERE configvalue = '' AND configkey = 'licensekey';
-#Runarb: 14 des 2010. licensekey har blitt flyttet til blackbox/boithobb.sql som er base pakken. Debetyr at alle nye instalasjoner nå har lisensnøkkel som standar
-#INSERT INTO config (configkey, configvalue) VALUES('licensekey', 'RRYAYACZACJAB6RLANAQ8K4G');
 
 CREATE TABLE `systemConnector` (
   `id` int(10) unsigned NOT NULL auto_increment,
@@ -251,7 +226,6 @@ ALTER TABLE search_logg MODIFY treff int(5) unsigned  NULL;
 ALTER TABLE search_logg MODIFY search_tid decimal(12,10) unsigned NULL;
 
 -- Support new ACL scheme for collections
-
 ALTER TABLE shares ADD accesslevel varchar(20) default 'acl';
 ALTER TABLE shares ADD accessgroup varchar(255);
 
@@ -279,10 +253,10 @@ ALTER TABLE shareResults ALTER rank_title_first_word SET DEFAULT "40";
 ALTER TABLE shareResults ALTER rank_headline_array SET DEFAULT "4,6,7,8";
 ALTER TABLE shareResults ALTER rank_body_array SET DEFAULT "1,2,4,7,9,10,11,12";
 
-#select what shal happend if users gos to the / page
+-- select what shal happend if users gos to the / page
 INSERT INTO config (configkey, configvalue) VALUES('frontpage_preference', 'webclient2');
 
-# allow usage statistic
+-- allow usage statistic
 INSERT INTO config (configkey, configvalue) VALUES('anostat_preference', 'legal');
 INSERT INTO `config` VALUES ('anostat_default_rate',86400);
 INSERT INTO `config` VALUES ('anostat_last_run',0);
@@ -291,10 +265,10 @@ INSERT INTO `connectors` VALUES (14, 'Push', 'Successfully pushed data', NULL, N
 
 INSERT INTO `systemConnector` (`id`, `name`, `extension`, `modified`, `active`, `read_only`) VALUES (4,'Mapback',0,NULL,1,1);
 
-# New RandomDoc connector
+-- New RandomDoc connector
 INSERT INTO `connectors` VALUES (15, 'RandomDoc', 'Generat random text', NULL, NULL, NULL, 0, 'user_system, crawling, custom_parameters', 1, NULL, 1, 1);
 INSERT INTO `param` VALUES (NULL, 15, 'ndocuments', 'The number of documents you want to generate');
 
-# Crawler for local files
+-- Crawler for local files
 INSERT INTO `connectors` VALUES (6, 'Local', 'Local files on your ES. This is mostly used to index exotic network based file systems. You will have to login by ssh and mount the file system, then tell the crawler where it is.', NULL, NULL, NULL, 0, 'user_system, connector, crawling', 1, NULL, 1, 1);
 
