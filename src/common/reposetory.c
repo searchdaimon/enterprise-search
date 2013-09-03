@@ -1782,7 +1782,9 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, 
 		#endif
 
 		if ( (LotFileOpen = fopen(FileName,"rb")) == NULL) {
-			perror(FileName);
+			#ifdef DEBUG
+				perror(FileName);
+			#endif
 			return 0;
 		}
 		
