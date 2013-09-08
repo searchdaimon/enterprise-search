@@ -12,49 +12,37 @@ if ($opts{l}) {
 	print "Will log all output to file\n";
 
 	#dublicate stdout to log what is happening
-# Runarb: 07.02.2012: This log is not biing rotated. Commenting it out for now.
+# Runarb: 07.02.2012: This log is not being rotated. Commenting it out for now.
 #	open(STDOUT, ">>$ENV{'BOITHOHOME'}/logs/indexing") || die "Can't dup stdout";
 #	open(STDERR, ">>&STDOUT") || die "Can't dup stdout";
 
 }
 
+if (!defined($opts{'s'})) {
+	die("Sorry, but you have to spesify subname (-s)");
+}
+my $subname = $opts{'s'};
 
-my $lockfile = $ENV{'BOITHOHOME'} . '/var/cleanLots.lock';
 
 my %hiestinlot = ();
 
-#lager en lås, slik at bare en kjører samtidig.
-#todo: kansje lage en lås pr collection?
+my $lockfile = $ENV{'BOITHOHOME'} . '/var/boitho-cleanLots' . $subname . '.lock';
 open(LOCKF,">$lockfile") or die("can't lock lock file $lockfile: $!");
 flock(LOCKF,2);
 
 print "indexing:\n";
 
-foreach my $lot (0 .. 4096) {
+foreach my $lot (1 .. 4096) {
 
-	my $Path = Boitho::Lot::GetFilPathForLot($lot,"");
+	my $Path = Boitho::Lot::GetFilPathForLot($lot,$subname);
 	chop $Path;
+	print "$Path\n";
 
-	if (-e $Path) {
-
-		opendir(DIR, $Path) or die("can't opendir $some_dir: $!");
-
-		while (my $subname = readdir(DIR) ) {
-
-			#skipper . og ..
-			if ($subname =~ /\.$/) {
-				next;
-			}
-	
-			my $dirtyfile = $Path . $subname . '/dirty';
-
+	if (!(-e $Path)) {
+		last;
+	}
 			if (-e $dirtyfile) {
 
-				#hvis vi bare skal ha et subnavn håpper vi over alle andre.
-				if (defined($opts{'s'}) && ($subname ne $opts{'s'}) ) {
-					print "Skipping subname $subname\n";
-					next;
-				}
 
 				print "name $dirtyfile\n";
 				print "lot $lot, subname $subname\n";
@@ -75,11 +63,10 @@ foreach my $lot (0 .. 4096) {
 
 				$hiestinlot{$subname} = $lot;
 			}
-		}
 
 		closedir(DIR);
 
-	}
+	
 }
 
 print "\nmergeIIndex:\n";
@@ -119,6 +106,17 @@ foreach my $key (keys %hiestinlot) {
 print "Clining search cache.\n";
 recdir($ENV{'BOITHOHOME'} . "/var/cache");
 
+
+# unlocking
+close($lockfile) or warn($!);
+unlink($lockfile) or warn($!);
+
+
+###########################################################################################################
+#
+# Subroutine that recurs thru and delete all search cache
+#
+###########################################################################################################
 sub recdir {
     my ($path) = @_;
 
