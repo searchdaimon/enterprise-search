@@ -12,7 +12,7 @@ main (int argc, char *argv[]) {
 	int LotNr, i;
 
 	if (argc < 3) {
-		printf("Error ingen lotnr spesifisert.\n\nEksempel på bruk for å lese lot 2:\n\trread 2 www\n");
+		printf("Error. Pleas specify a lot nr and a collection.\n\nExample, this will read the first lot in the \"www\" colection:\n\trread 1 www\n");
 		exit(1);
 	}
 
