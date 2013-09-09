@@ -41,31 +41,26 @@ foreach my $lot (1 .. 4096) {
 	if (!(-e $Path)) {
 		last;
 	}
-			if (-e $dirtyfile) {
+	if (-e $dirtyfile) {
 
 
-				print "name $dirtyfile\n";
-				print "lot $lot, subname $subname\n";
+		print "name $dirtyfile\n";
+		print "lot $lot, subname $subname\n";
 
-				$command = $ENV{'BOITHOHOME'} . "/bin/IndexerLotbb -i $lot \"$subname\"";
-				print "runing $command\n";
-				system($command);
+		$command = $ENV{'BOITHOHOME'} . "/bin/IndexerLotbb -i $lot \"$subname\"";
+		print "runing $command\n";
+		system($command);
 
-				$command = $ENV{'BOITHOHOME'} . "/bin/mergeUserToSubname $lot \"$subname\"";
-				print "runing $command\n";
-                                system($command);
-
-
+		$command = $ENV{'BOITHOHOME'} . "/bin/mergeUserToSubname $lot \"$subname\"";
+		print "runing $command\n";
+		system($command);
 
 
-				unlink($dirtyfile) or warn($!);
 
+		unlink($dirtyfile) or warn($!);
+		$hiestinlot{$subname} = $lot;
+	}
 
-				$hiestinlot{$subname} = $lot;
-			}
-
-
-	
 }
 
 print "\nmergeIIndex:\n";
