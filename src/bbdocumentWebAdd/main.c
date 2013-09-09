@@ -230,6 +230,9 @@ void sd_close(int bbdnsock, char *coll) {
 
         char *query;
         MYSQL db;
+	MYSQL_RES *mysqlres;
+	MYSQL_ROW row;
+	int systemcont;
 
 	bbdn_closecollection(bbdnsock, coll);
 
@@ -243,8 +246,25 @@ void sd_close(int bbdnsock, char *coll) {
                 return ;
         }
 
+	// see if we have a user system
+        asprintf(&query, "SELECT COUNT(*) FROM system");
+
+        if(mysql_real_query(&db, query, strlen(query))){ /* Make query */
+                fprintf(stderr, "%s", mysql_error(&db));
+                fprintf(stderr, "MySQL Error: \"%s\".",mysql_error(&db));
+                return;
+        }
+        mysqlres=mysql_store_result(&db); /* Download result from server */
+
+        row = mysql_fetch_row(mysqlres);
+        systemcont = (row == NULL) ? -1 : atoi(row[0]);
+
+fprintf(stderr, "systemcont=%i\n",systemcont);
+	free(query);
+	
+
         // create the collections if it don't exist
-        asprintf(&query, "INSERT IGNORE INTO shares VALUES (NULL,'',14,1,NULL,0,NOW(),0,'','','','','',NULL,'Pushing has started.','%s',NULL,NULL,NULL,NULL,'acl',NULL)", coll);
+        asprintf(&query, "INSERT IGNORE INTO shares VALUES (NULL,'',14,1,NULL,0,NOW(),0,'','','','','',NULL,'Pushing has started.','%s',NULL,NULL,NULL,NULL,'%s',NULL)", coll, systemcont == 0 ? "anonymous" : "acl" );
 
         if (mysql_real_query(&db, query, strlen(query))) {
         	fprintf(stderr, "Failed to insert row, Error: %s\n", mysql_error(&db));
