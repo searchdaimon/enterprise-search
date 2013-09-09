@@ -4,8 +4,6 @@
 #endif
 
 #include <sys/types.h>
-
-#include "daemon.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -14,6 +12,7 @@
 #include <sys/file.h>
 #include <stdarg.h>
 
+#include "daemon.h"
 #include "../common/bstr.h"
 #include "boithohome.h"
 
@@ -23,18 +22,15 @@ const int TIMEOUT = 15; /* or whatever... */
 
     /*
     ** server.c -- a stream socket server liabery
-    ** Mya av koden er hentet fra http://www.ecst.csuchico.edu/~beej/guide/net/html/
+    ** Mye av koden er hentet fra http://www.ecst.csuchico.edu/~beej/guide/net/html/
     */
 
 
 void sigchld_handler(int sig __attribute__((unused))) {
-        //while(wait(NULL) > 0){
-	//	printf("waiting\n");
-	//};
 	int s;
     	while (waitpid(-1,&s,WNOHANG) > 0)
-     continue;
-
+     
+	continue;
 }
 
 int socketsendsaa(int socketha,char **respons_list[],int nrofresponses) {
@@ -67,7 +63,7 @@ int socketsendsaa(int socketha,char **respons_list[],int nrofresponses) {
 int socketgetsaa(int socketha,char **respons_list[],int *nrofresponses) {
 
 	fprintf(stderr, "daemon: socketgetsaa(socket=%i)\n", socketha);
-        //char ldaprecord[MAX_LDAP_ATTR_LEN];
+
         int intresponse,i,len;
 
         if (!recvall(socketha,&intresponse,sizeof(intresponse))) {
@@ -75,7 +71,7 @@ int socketgetsaa(int socketha,char **respons_list[],int *nrofresponses) {
         }
 
         #ifdef DEBUG
-        printf("nr of elements %i\n",intresponse);
+		printf("nr of elements %i\n",intresponse);
         #endif
 
         (*respons_list) = malloc((sizeof(char *) * intresponse) +1);
@@ -93,7 +89,7 @@ int socketgetsaa(int socketha,char **respons_list[],int *nrofresponses) {
                 }
 
                 #ifdef DEBUG
-                printf("record \"%s\"\n",(*respons_list)[(*nrofresponses)]);
+			printf("record \"%s\"\n",(*respons_list)[(*nrofresponses)]);
                 #endif
 
 
@@ -137,7 +133,7 @@ int sconnect (void (*sh_pointer) (int), int PORT, int noFork, int breakAfter) {
 	#endif
 
 	#ifdef DEBUG
-	printf("will listen on port %i\n",PORT);
+		printf("will listen on port %i\n",PORT);
         #endif
 
         my_addr.sin_family = AF_INET;         // host byte order
@@ -195,9 +191,6 @@ int sconnect (void (*sh_pointer) (int), int PORT, int noFork, int breakAfter) {
 	
 	                close(sockfd); // child doesn't need the listener
 	                sh_pointer(new_fd);
-
-			//if (send(new_fd, "Hello, world!\n", 14, 0) == -1)
-	                //    perror("send");
                 
 			close(new_fd);
 
@@ -231,9 +224,6 @@ int sconnect (void (*sh_pointer) (int), int PORT, int noFork, int breakAfter) {
 
         		        close(sockfd); // child doesn't need the listener
         		        sh_pointer(new_fd);
-
-				//if (send(new_fd, "Hello, world!\n", 14, 0) == -1)
-        		        //    perror("send");
                 
 				close(new_fd);
 
@@ -290,9 +280,9 @@ int sconnect_thread(void (*sh_pointer)(int), int port) {
 		exit(1);
 	}
 
-#ifdef DEBUG
-	printf("will listen on port %i\n", port);
-#endif
+	#ifdef DEBUG
+		printf("will listen on port %i\n", port);
+	#endif
 
 	my_addr.sin_family = AF_INET;         // host byte order
 	my_addr.sin_port = htons(port);     // short, network byte order
@@ -318,19 +308,19 @@ int sconnect_thread(void (*sh_pointer)(int), int port) {
 			continue;
 		}
 		printf("server: got connection from %s\n", inet_ntoa(their_addr.sin_addr));
-#ifdef DEBUG
-		printf("runing in debug mode\n");
-		printf("runing in debug mode. Will not split out in several threads.\n");
-		sh_pointer(new_fd);
-		printf("sconnect: socket closed\n");
-#else
-		pthread_t thread;
-		printf("runing in normal thread mode\n");
+		#ifdef DEBUG
+			printf("runing in debug mode\n");
+			printf("runing in debug mode. Will not split out in several threads.\n");
+			sh_pointer(new_fd);
+			printf("sconnect: socket closed\n");
+		#else
+			pthread_t thread;
+			printf("runing in normal thread mode\n");
 
-		pthread_create(&thread, NULL, sh_pointer, (void *)new_fd);
-		printf("Thread spawned...\n");
-		pthread_detach(thread);
-#endif
+			pthread_create(&thread, NULL, sh_pointer, (void *)new_fd);
+			printf("Thread spawned...\n");
+			pthread_detach(thread);
+		#endif
 
 		#ifdef DEBUG_BREAK_AFTER
 			++count;
@@ -374,9 +364,9 @@ int sconnect_simple(void (*sh_pointer)(int), int port)
 		exit(1);
 	}
 
-#ifdef DEBUG
-	printf("will listen on port %i\n", port);
-#endif
+	#ifdef DEBUG
+		printf("will listen on port %i\n", port);
+	#endif
 
 	my_addr.sin_family = AF_INET;         // host byte order
 	my_addr.sin_port = htons(port);     // short, network byte order
@@ -424,31 +414,30 @@ int sconnect_simple(void (*sh_pointer)(int), int port)
 int cconnect (char *hostname, int PORT) {
 
         int sockfd;
-        //char buf[MAXDATASIZE];
 	int sockedmode;
 	int Conectet;
         struct hostent *he;
         struct sockaddr_in their_addr; // connector's address information 
 
 	#ifdef DEBUG
-	fprintf(stderr, "daemon: cconnect(hostname=\"%s\", port=%i)\n", hostname, PORT);
+		fprintf(stderr, "daemon: cconnect(hostname=\"%s\", port=%i)\n", hostname, PORT);
 	#endif
 
 
         if ((he=gethostbyname(hostname)) == NULL) {  // get the host info 
-            perror("gethostbyname");
-	    #ifdef DEBUG
-	    	fprintf(stderr, "daemon: ~cconnect()\n");
-	    #endif
-            return(0);
+		perror("gethostbyname");
+		#ifdef DEBUG
+			fprintf(stderr, "daemon: ~cconnect()\n");
+		#endif
+		return(0);
         }
 
         if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-            perror("socket");
-	    #ifdef DEBUG
-	    	fprintf(stderr, "daemon: ~cconnect()\n");
-	    #endif
-            return(0);
+		perror("socket");
+		#ifdef DEBUG
+			fprintf(stderr, "daemon: ~cconnect()\n");
+		#endif
+		return(0);
         }
 
         their_addr.sin_family = AF_INET;    // host byte order 
@@ -456,90 +445,50 @@ int cconnect (char *hostname, int PORT) {
         their_addr.sin_addr = *((struct in_addr *)he->h_addr);
         memset(&(their_addr.sin_zero), '\0', 8);  // zero the rest of the struct 
 
-	//printf("trying to connect\n");
 
-
-        //if (connect(sockfd, (struct sockaddr *)&their_addr, sizeof(struct sockaddr)) == -1) {
-        //    perror("connect");
-        //    exit(1);
-        //}
-
-	/* Set sockfd to non-blocking mode. */ 
-	
+	// Set sockfd to non-blocking mode.  
 	sockedmode = fcntl (sockfd, F_GETFL, 0); 
 	fcntl (sockfd, F_SETFL, sockedmode | O_NONBLOCK); 
-
-
 	
 	Conectet = 0;
-	//while (!Conectet) {
+	
 	// Establish non-blocking connection server.  
 	if (connect(sockfd, (struct sockaddr *)&their_addr, sizeof(struct sockaddr)) == -1) { 
-  	  if (errno == EINPROGRESS) { 
-    		struct timeval tv = {TIMEOUT, 0}; 
-    		fd_set rd_fds, wr_fds; 
-    		FD_ZERO (&rd_fds); 
-    		FD_ZERO (&wr_fds); 
-    		FD_SET (sockfd, &wr_fds); 
-    		FD_SET (sockfd, &rd_fds); 
+		if (errno == EINPROGRESS) { 
+			struct timeval tv = {TIMEOUT, 0}; 
+			fd_set rd_fds, wr_fds; 
+			FD_ZERO (&rd_fds); 
+			FD_ZERO (&wr_fds); 
+			FD_SET (sockfd, &wr_fds); 
+			FD_SET (sockfd, &rd_fds); 
 
-
-    		// Wait for up to TIMEOUT seconds to connect. 
-    		if (select (sockfd + 1, &rd_fds, &wr_fds, 0, &tv) <= 0) {
-			#ifdef DEBUG
-			//errnosave = errno;
-      			//perror ("connection timedout");
-			//errno = errnosave;
-			#endif
-			//close(sockfd); 
-			//sleep(5);
-			#ifdef DEBUG
-		        	fprintf(stderr, "daemon: ~cconnect()\n");
-			#endif
-			return 0;
-		}
-    		// Can use getpeername() here instead of connect(). 
-    		else if (connect (sockfd, (struct sockaddr *) &their_addr, sizeof their_addr) == -1 && errno != EISCONN) { 
-			#ifdef DEBUG
-			//errnosave = errno;
-      			//perror (hostname);
-			//errno = errnosave;
-			#endif
-			//close(sockfd); 
-			//sleep(5);
-			#ifdef DEBUG
-			fprintf(stderr, "daemon: ~cconnect()\n");
-			#endif
-			return 0;
-		}
-		else {
-			Conectet = 1;
-		}
-	  } 
+			// Wait for up to TIMEOUT seconds to connect. 
+			if (select (sockfd + 1, &rd_fds, &wr_fds, 0, &tv) <= 0) {
+				#ifdef DEBUG
+					fprintf(stderr, "daemon: ~cconnect()\n");
+				#endif
+				return 0;
+			}
+			// Can use getpeername() here instead of connect(). 
+			else if (connect (sockfd, (struct sockaddr *) &their_addr, sizeof their_addr) == -1 && errno != EISCONN) { 
+				#ifdef DEBUG
+					fprintf(stderr, "daemon: ~cconnect()\n");
+				#endif
+				return 0;
+			}
+			else {
+				Conectet = 1;
+			}
+		} 
 	}
-	//}
-	//setter den tilabke til blokin mode
+
 	fcntl (sockfd, F_SETFL, sockedmode);
 	
-	//printf("ferdig med � konekte\n");
-	//sh_pointer(sockfd);
-
-        //if ((numbytes=recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-        //    perror("recv");
-        //    exit(1);
-        //}
-
-        //buf[numbytes] = '\0';
-
-        //printf("Received: %s",buf);
-
-        //close(sockfd);
 	#ifdef DEBUG
-        fprintf(stderr, "daemon: ~cconnect(socket=%i)\n", sockfd);
+		fprintf(stderr, "daemon: ~cconnect(socket=%i)\n", sockfd);
 	#endif
 
 	return sockfd;
-        //return 0;
 } 
 
 
@@ -551,46 +500,35 @@ int sendall(int s, void *buf, int len) {
 	int tosend;
 	
 	#ifdef DEBUG
-	printf("sendall(s=%i, len=%i)\n",s,len);
+		printf("sendall(s=%i, len=%i)\n",s,len);
 	#endif
 
         while(total < len) {
 
-	    if (bytesleft > 16392) {
-		tosend = 16392;
-	    }
-	    else {
-		tosend = bytesleft;
-	    }
+		if (bytesleft > 16392) {
+			tosend = 16392;
+		}
+		else {
+			tosend = bytesleft;
+		}
 
-            if ((n = send(s, buf+total, tosend, MSG_NOSIGNAL)) == -1) {
+		if ((n = send(s, buf+total, tosend, MSG_NOSIGNAL)) == -1) {
 
 			fprintf(stderr,"sendall: send() in main while loop. total=%i, len %i\n",total, len);
 			perror("send()");
 			return 0;
 		}
 
-            if (n == -1) { 
-		printf("dident manage to send all the data as %s:%d.\n",__FILE__,__LINE__);
-		//break; 
-		return 0;
-	    }
-	    #ifdef DEBUG
-		//to noisy
-		//printf("sendall: sent %i b. %i b left.\n",n,bytesleft);		
-	    #endif
-
-            total += n;
-            bytesleft -= n;
+		if (n == -1) { 
+			printf("dident manage to send all the data as %s:%d.\n",__FILE__,__LINE__);
+ 
+			return 0;
+		}
+	    
+		total += n;
+		bytesleft -= n;
         }
 
-        //*len = total; // return number actually sent here
-
-        //return n==-1?-1:0; // return -1 on failure, 0 on success
-	#ifdef DEBUG
-		//to noisy
-		//printf("sendall: ending. Will return that we sent %i b\n",total);
-	#endif
 
 	return total;
 }
@@ -603,7 +541,6 @@ int sendall(int s, void *buf, int len) {
  eks: 
 	sendallPack(socket, 4, &n, sizeof(n), collections, (maxSubnameLength+1)*n);
 ************************************************************************************/
-
 int sendallPack(int s, int numargs, ...) {
 
 	va_list listPointer;
@@ -659,7 +596,7 @@ int sendallPack(int s, int numargs, ...) {
         	datasize = va_arg( listPointer, int );
 
 		#ifdef DEBUG
-		fprintf(stderr,"i=%i, datasize=%i, p=%p, size=%i\n",i, datasize, p, size);
+			fprintf(stderr,"i=%i, datasize=%i, p=%p, size=%i\n",i, datasize, p, size);
 		#endif
 
 		memcpy(p,data,datasize);
@@ -672,12 +609,6 @@ int sendallPack(int s, int numargs, ...) {
 	 N� n�r vi har lagget en pakke ut av det, gj�r vi det faktisk send kallet.
 	***********************************************/
 
-	/*
-	fprintf(stderr,"blockToSend=%p\n",blockToSend);
-	for (i=0;i<size;i++) {
-		fprintf(stderr,"\n################\n%c\n##################\n\n",((char *)blockToSend)[i]);	
-	}
-	*/
 	ret = sendall(s,blockToSend,size);
 	free(blockToSend);
 
@@ -686,25 +617,13 @@ int sendallPack(int s, int numargs, ...) {
 }
 
 int recvall(int sockfd, void *buf, int len) {
-	
-	//debug("!!!!resiving data");	
-
-/*
-	if (recv(sockfd, buf,len,MSG_WAITALL) == -1) {
-		return 0;
-	}
-	else {
-		return 1;
-	}
-*/
-
 
 	int total = 0;
         int bytesleft = len; // how many we have left to send
 	int n;
 
 	#ifdef DEBUG
-	printf("will read %i",len);
+		printf("will read %i",len);
 	#endif
 
 	while(total < len) {
@@ -720,7 +639,7 @@ int recvall(int sockfd, void *buf, int len) {
 			return 0;
 
 		#ifdef DEBUG
-		printf("recved %i bytes. total red %i, left %i, total to get %i\n",n,total,bytesleft,len);
+			printf("recved %i bytes. total red %i, left %i, total to get %i\n",n,total,bytesleft,len);
 		#endif
 
 		total += n;
@@ -737,7 +656,6 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 	void *buf;
 	size_t len;
 	int forret = 0;
-        //int i;
 
 	#ifdef DEBUG
 		printf("sendpacked(socket=%i, command=%d, version=%d, dataSize=%i, subname=%s)\n",socket,command,version,dataSize,subname);
@@ -773,15 +691,13 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 	//setter at vi skal returnere 1, som er OK
 	forret =  1;
 
-
-
 	end_error:
 		if (data != NULL) {
 			free(buf);
 		}
 
 	#ifdef DEBUG
-	printf("~sendpacked(ret=%i)\n",forret);
+		printf("~sendpacked(ret=%i)\n",forret);
 	#endif
 
 	//dene returneres altid, ogs� hvs vi ikke gjort en gotoend_error
@@ -789,9 +705,7 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 
 }
 
-void
-wait_loglock(char *name)
-{
+void wait_loglock(char *name) {
 	int fdlock;
 	char *path;
 
@@ -800,6 +714,7 @@ wait_loglock(char *name)
 	free(path);
 	if (fdlock == -1)
 		return;
+	
 	flock(fdlock, LOCK_SH); // Block until exclusive lock is released
 	close(fdlock);
 }

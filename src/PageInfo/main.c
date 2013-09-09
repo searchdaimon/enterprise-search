@@ -11,20 +11,19 @@
 #include "../common/langToNr.h"
 #include "../common/search_automaton.h"
 #include "../common/bstr.h"
-#include "../cgi-util/cgi-util.h"
 
+#include "../cgi-util/cgi-util.h"
 #include "../parser/html_parser.h"
 #include "../IndexerRes/IndexerRes.h"
 
 void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* pagewords )
 {
 
-
-        //#ifdef DEBUG
+        #ifdef DEBUG
                 printf("\t%s (%i) ", word, pos);
 		printf("type %i ",pu);
-        //#endif
-    switch (pu)
+        #endif
+        switch (pu)
         {
             case pu_word:
 
@@ -69,7 +68,7 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
             default: printf("[...]");
         }
 
-                printf("\n");
+        printf("\n");
 
 }
 
@@ -312,7 +311,6 @@ int main (int argc, char *argv[]) {
 		}
 
 
-		///////////////
 
 
 		htmlBufferSize = 3000000;

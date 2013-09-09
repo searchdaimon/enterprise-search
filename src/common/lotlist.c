@@ -20,8 +20,6 @@ struct MemoryLotlistFormat MemoryLotlist[maxLots];
 char overflowServer[64];
 
 void lotlistAdd(char server[], int lot) {
-	//printf("adding %s %i\n",server,lot);
-
 	strcpy(MemoryLotlist[lot].server,server);
 	MemoryLotlist[lot].hasServer = 1;
 }
@@ -43,7 +41,6 @@ void lotlistMarkLocals(char server[]) {
         for (i=0;i<maxLots;i++) {
 
 		if ((MemoryLotlist[i].hasServer) && (strcmp(MemoryLotlist[i].server,server) == 0)) {
-			//printf("%s == %s\n",MemoryLotlist[i].server,server);
                 	MemoryLotlist[i].local = local_true;
           	}
 		else {
@@ -98,7 +95,6 @@ void lotlistLoad() {
 	lineCount = 0;
 	while (fgets(buff,sizeof(buff) -1,LOTLISTFH) != NULL) {
 		++lineCount;
-		//printf("%i: %s\n",lineCount,buff);
 
 		if ((buff[0] == '\n') || (buff[0] == '#')) {
 			//blan linje eller komentar	
@@ -113,7 +109,6 @@ void lotlistLoad() {
 				printf("overflowchar isnt *. At line %i\n",lineCount);
 				exit(1);
 			}
-			//printf("overflov is %s\n",host);
 			strcpy(overflowServer,host);
 
 		}
@@ -125,7 +120,6 @@ void lotlistLoad() {
                                 exit(1);
                         }
 			lotlistAdd(host,lotNr);
-                        //printf("aa: %s aa: %i\n",host,lotNr);
 		}
 		else {
 
@@ -137,7 +131,6 @@ void lotlistLoad() {
 				lotlistAdd(host,i);
 			}
 
-			//printf("aa: %s aa: %i aa: %i\n",host,lotFrom,lotTo);
 		}
 	}
 

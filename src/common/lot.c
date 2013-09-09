@@ -9,6 +9,14 @@
 #include <sys/file.h>
 #include <limits.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/vfs.h>
+#include <dirent.h>
+#include <inttypes.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "lot.h"
 #include "define.h"
@@ -19,20 +27,7 @@
 #include "atomicallyio.h"
 #include "getpath.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/vfs.h>
-#include <dirent.h>
-#include <inttypes.h>
 
-#include <sys/stat.h>
-#include <unistd.h>
-
-
-//hvis det er mac os :
-//#include <sys/param.h> // for statfs 
-//#include <sys/mount.h> // for statfs 
 #include <sys/vfs.h> // for statfs
 
 //formater på cashe over opne filhontarere
@@ -62,16 +57,8 @@ static struct OpenFilesFormat OpenFiles[MaxOpenFiles];
 int rLotForDOCid (unsigned int DocID) {
 	int lot;
 	
-	lot	= (int)((DocID / NrofDocIDsInLot) +1);
+	lot = (int)((DocID / NrofDocIDsInLot) +1);
 
-	/*
-	//gjode litt om her så vi ikke trenger å bruke ceil. Da det er trekt
-	//testen nedenfor sjekker at vi fortsatt får samme resultat
-	if (lot != ceil((DocID / NrofDocIDsInLot) +1)) {
-		printf("lot proble\n");
-		exit(1);
-	}
-	*/
 	return lot;
 }
 
@@ -96,13 +83,11 @@ void makeLotPath(int lotNr,char folder[],char subname[]) {
 	strcat(path,"/");
 	strcat(path,folder);
 	
-
 	makePath(path);	
 
 }
 
 int HasSufficientSpace(char FilePath[], int needSpace) {
-
 
 	struct statfs buf;
 	long fssize;
@@ -112,9 +97,6 @@ int HasSufficientSpace(char FilePath[], int needSpace) {
 		return 0;
 	}	
 	fssize = (long)((long)buf.f_bavail * ((long)buf.f_bsize / 1024));
-
-	//printf("f_bavail %li,f_bsize %li, free %li\n",(long)buf.f_bavail,(long)buf.f_bsize,fssize);
-
 
 	if ((needSpace * 1024) > fssize) {
 		return 0;
@@ -145,9 +127,7 @@ int lotHasSufficientSpace(int lot, int needSpace,char subname[]) {
 
 #ifdef DO_DIRECT
 
-int
-lotOpenFileNoCache_direct(unsigned int DocID, char *resource, char *type, char lock, char *subname)
-{
+int lotOpenFileNoCache_direct(unsigned int DocID, char *resource, char *type, char lock, char *subname) {
 	
 
 	unsigned int LotNr = rLotForDOCid(DocID);
@@ -161,26 +141,27 @@ lotOpenFileNoCache_direct(unsigned int DocID, char *resource, char *type, char l
 	strcpy(File,FilePath);
 	strncat(File,resource,PATH_MAX); //var 128
 
-#ifdef DEBUG
-	printf("lotOpenFileNoCasheByLotNr: opening file \"%s\" for %s\n",File,type);
-#endif
+	#ifdef DEBUG
+		printf("lotOpenFileNoCasheByLotNr: opening file \"%s\" for %s\n",File,type);
+	#endif
 
 	//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
 	if ((strcmp(type,"rb") == 0) || (strcmp(type,"r") == 0)) {
 		if ((fd = open64(File, O_RDONLY|O_DIRECT|O_LARGEFILE)) == -1) {
 			warn("open64: %d", fd);
-#ifdef DEBUG
-			perror(File);
-#endif
+			#ifdef DEBUG
+				perror(File);
+			#endif
+			
 			return -1;
 		}
 	} else {
 		errx(1, "We can only open this for reading right now");
 	}
 
-#ifdef DEBUG
-	printf("lotOpenFile: tryint to obtain lock \"%c\"\n",lock);
-#endif
+	#ifdef DEBUG
+		printf("lotOpenFile: tryint to obtain lock \"%c\"\n",lock);
+	#endif
 	//honterer låsning
 	if (lock == 'e') {
 		//skal vi ha flock64() her ?
@@ -189,13 +170,13 @@ lotOpenFileNoCache_direct(unsigned int DocID, char *resource, char *type, char l
 	else if (lock == 's') {
 		flock(fd, LOCK_SH);
 	}
-#ifdef DEBUG
-	printf("lotOpenFile: lock obtained\n");
-#endif
+	#ifdef DEBUG
+		printf("lotOpenFile: lock obtained\n");
+	#endif
 
-#ifdef DEBUG
-	printf("lotOpenFileNoCasheByLotNr: finished\n");
-#endif
+	#ifdef DEBUG
+		printf("lotOpenFileNoCasheByLotNr: finished\n");
+	#endif
 	return fd;
 
 }
@@ -212,8 +193,8 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
 
 	FILE *FILEHANDLER;
 	int i;
-	char FilePath[PATH_MAX]; 	//var 128
-	char File [PATH_MAX];	//var 128
+	char FilePath[PATH_MAX];
+	char File [PATH_MAX];
 
 	#ifdef DEBUG
 		printf("lotOpenFileNoCasheByLotNr(LotNr=%i, resource= \"%s\", type=\"%s\", lock=\"%c\", subname=\"%s\")\n",LotNr,resource,type,lock,subname);
@@ -237,7 +218,7 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
 
                         		if ( (FILEHANDLER = (FILE *)fopen64(File,"w+")) == NULL ) {
                         		        perror(File);
-                        		        //exit(0);
+
                         		        return NULL;
                         		}
 				}
@@ -275,15 +256,13 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
 			}
 		}
 		else {
-                	//temp: Bytte ut FilePath med filnavnet
                 	if ( (FILEHANDLER = (FILE *)fopen64(File,type)) == NULL ) {
                         	makePath(FilePath);
 
 				//hvorfår har vi type "File" her ???, det verste er at det ser ut til å fungere også
-                        	//if ( (FILEHANDLER = (FILE *)fopen64(File,"File")) == NULL ) {
                         	if ( (FILEHANDLER = (FILE *)fopen64(File,type)) == NULL ) {
                         	        perror(File);
-                        	        //exit(0);
+
 					return NULL;
         	                }
 	                }
@@ -337,83 +316,67 @@ int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,
 		printf("lotOpenFileNoCasheByLotNrl(LotNr=%i, subname=\"%s\", resource=\"%s\")\n",LotNr,subname,resource);
 	#endif
 
-                 GetFilPathForLot(FilePath,LotNr,subname);
-                 strcpy(File,FilePath);
-                 strncat(File,resource,PATH_MAX); //var 128
+	 GetFilPathForLot(FilePath,LotNr,subname);
+	 strcpy(File,FilePath);
+	 strncat(File,resource,PATH_MAX); //var 128
 
-		#ifdef DEBUG
-                	printf("lotOpenFileNoCasheByLotNr: opening file \"%s\" for %s\n",File,type);
-		#endif
+	#ifdef DEBUG
+		printf("lotOpenFileNoCasheByLotNr: opening file \"%s\" for %s\n",File,type);
+	#endif
 
-		if (strcmp(type,">>") == 0) {
-			//emulating perl's >>. If the file eksist is is opene for reading and writing.
-			//if not it is createt and openf for writing and reading
+	if (strcmp(type,">>") == 0) {
+		//emulating perl's >>. If the file eksist is is opene for reading and writing.
+		//if not it is createt and openf for writing and reading
+		if ( (fd = open64(File,O_CREAT|O_RDWR,0664)) == -1 ) {
+			makePath(FilePath);
+
 			if ( (fd = open64(File,O_CREAT|O_RDWR,0664)) == -1 ) {
-                        	makePath(FilePath);
-
-				if ( (fd = open64(File,O_CREAT|O_RDWR,0664)) == -1 ) {
-                       		        perror(File);
-                       		        return -1;                        		
-				}
-                	}
-			
-		}
-		//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
-		else if ((strcmp(type,"rb") == 0) || (strcmp(type,"r") == 0)) {
-			if ( (fd = open64(File,O_RDONLY)) == -1 ) {
-				#ifdef DEBUG
 				perror(File);
-				#endif
-				return -1;
+				return -1;                        		
 			}
 		}
-		//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
-		else if ((strcmp(type,"r+b") == 0) || (strcmp(type,"r+") == 0)) {
-			if ( (fd = open64(File,O_RDWR)) == -1 ) {
-				#ifdef DEBUG
+		
+	}
+	//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
+	else if ((strcmp(type,"rb") == 0) || (strcmp(type,"r") == 0)) {
+		if ( (fd = open64(File,O_RDONLY)) == -1 ) {
+			#ifdef DEBUG
 				perror(File);
-				#endif
-				return -1;
-			}
+			#endif
+			return -1;
 		}
-		else {
-			fprintf(stderr,"lotOpenFileNoCasheByLotNrl: ikke implementert\n");
-			exit(1);
-		/*
-                //temp: Bytte ut FilePath med filnavnet
-                if ( (fd = open64(File,type)) == NULL ) {
-                        makePath(FilePath);
-
-			//hvorfår har vi type "File" her ???, det verste er at det ser ut til å fungere også
-                        //if ( (FILEHANDLER = (FILE *)fopen64(File,"File")) == NULL ) {
-                        if ( (fd = (open64(File,type)) == NULL ) {
-                                perror(File);
-                                //exit(0);
-				return NULL;
-                        }
-                }
-		*/
+	}
+	//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
+	else if ((strcmp(type,"r+b") == 0) || (strcmp(type,"r+") == 0)) {
+		if ( (fd = open64(File,O_RDWR)) == -1 ) {
+			#ifdef DEBUG
+				perror(File);
+			#endif
+			return -1;
 		}
+	}
+	else {
+		fprintf(stderr,"lotOpenFileNoCasheByLotNrl: ikke implementert\n");
+		exit(1);
+	}
 
-            	#ifdef DEBUG
-                        printf("lotOpenFile: tryint to obtain lock \"%c\"\n",lock);
-                #endif
-                //honterer låsning
-                if (lock == 'e') {
-			//skal vi ha flock64() her ?
-                        flock(fd,LOCK_EX);
-                }
-                else if (lock == 's') {
-                        flock(fd,LOCK_SH);
-                }
-		#ifdef DEBUG
-                        printf("lotOpenFile: lock obtained\n");
-                #endif
- 
-		#ifdef DEBUG
-			printf("lotOpenFileNoCasheByLotNr: finished\n");
-		#endif
-                return fd;
+	#ifdef DEBUG
+		printf("lotOpenFile: tryint to obtain lock \"%c\"\n",lock);
+	#endif
+	//honterer låsning
+	if (lock == 'e') {
+		//skal vi ha flock64() her ?
+		flock(fd,LOCK_EX);
+	}
+	else if (lock == 's') {
+		flock(fd,LOCK_SH);
+	}
+	#ifdef DEBUG
+		printf("lotOpenFile: lock obtained\n");
+		printf("lotOpenFileNoCasheByLotNr: finished\n");
+	#endif
+
+	return fd;
 
 }
 
@@ -465,8 +428,6 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
         //finner i hvilken lot vi skal lese fra
         LotNr = rLotForDOCid(DocID);
 
-	//printf("LotNr: %i, DocID: %i\n",LotNr,DocID);
-
         //begynner med å søke cashen. Lopper til vi enten er ferdig, eller til vi har funne ønskede i cashen
 	i = 0;
         while ((i < MaxOpenFiles) && (OpenFiles[i].LotNr != LotNr)) {
@@ -485,10 +446,10 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
         	&& (strcmp(OpenFiles[i].resource,resource)==0)
 	) {
 		#ifdef DEBUG
-		printf("lotOpenFile: fant en tildigere åpnet fil, returnerer den.\n");
-		printf("lotOpenFile: returnerer: i %i, subname \"%s\", type \"%s\", LotNr %i\n",i,OpenFiles[i].subname,OpenFiles[i].type,OpenFiles[i].LotNr);
-		printf("lotOpenFile: file is \"%s\"\n",OpenFiles[i].filename);
-		printf("lotOpenFile: returning file handler %p\n",OpenFiles[i].FILEHANDLER);
+			printf("lotOpenFile: fant en tildigere åpnet fil, returnerer den.\n");
+			printf("lotOpenFile: returnerer: i %i, subname \"%s\", type \"%s\", LotNr %i\n",i,OpenFiles[i].subname,OpenFiles[i].type,OpenFiles[i].LotNr);
+			printf("lotOpenFile: file is \"%s\"\n",OpenFiles[i].filename);
+			printf("lotOpenFile: returning file handler %p\n",OpenFiles[i].FILEHANDLER);
 		#endif
 
 		if (OpenFiles[i].FILEHANDLER == NULL) {
@@ -524,9 +485,9 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
 		strscpy(OpenFiles[i].subname,subname,sizeof(OpenFiles[i].subname));
 		strscpy(OpenFiles[i].type,type,sizeof(OpenFiles[i].type));
 
-		//#ifdef DEBUG
+		#ifdef DEBUG
                 	printf("lotOpenFile: opening file \"%s\" for %s\n",File,type);
-		//#endif
+		#endif
 
 
 
@@ -538,8 +499,6 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
 	
 }
 
-
-//fjerner \n på slutten av strenger
 
 FILE *openMaplist() {
 
@@ -559,7 +518,6 @@ FILE *openMaplist() {
                 perror(bfile("config/maplist.conf"));
                 exit(1);
         }
-
 
 	return MAPLIST;
 }
@@ -608,7 +566,6 @@ void MakeMapListMap () {
 	i = 0;
 	while((fgets(buff,sizeof(buff),MAPLIST) != NULL) && (NrOfDataDirectorys > i)) {
 		chomp(buff);
-		//printf("line -%s-\n",buff);
 		sprintf(dataDirectorys[i].Name,"%s",buff);
 
 		dataDirectorys[i].devid = MakeMapListMap_getfsid(buff);
@@ -631,7 +588,6 @@ int sadd(int in, int max) {
 	int ret = in;
 
 	++ret;
-
 	ret = ret % max;
 
 	return ret;
@@ -639,7 +595,6 @@ int sadd(int in, int max) {
 }
 
 int indexNrOffset(int IndexNr,char Type[]) {
-
 
 	if (strcmp(Type,"Url") == 0) {
 		return sadd(IndexNr +1,63);
@@ -657,14 +612,13 @@ void GetFilePathForIDictionary (char *FilePath, char *FileName,int IndexNr,char 
 
 	//hvis vi ikke har inlisert mapplisten enda gjør vi det.
 	if (!MapListInitialised) {
-		//printf("aaa");
+
 		MakeMapListMap();
 		MapListInitialised = 1;
 	}
 
 	IndexNr = indexNrOffset(IndexNr,Type);
 
-	//printf("dataDirectorys: %s\n",dataDirectorys[IndexNr].Name);
 	if (strcmp(subname,"www") == 0) {
 		sprintf(FilePath,"%s/iindex/%s/dictionary/%s/",dataDirectorys[IndexNr].Name,Type,lang);
 
@@ -683,12 +637,9 @@ void GetFilePathForIindex (char *FilePath, char *FileName,int IndexNr,char Type[
 
 	//hvis vi ikke har inlisert mapplisten enda gjør vi det.
 	if (!MapListInitialised) {
-		//printf("aaa");
 		MakeMapListMap();
 		MapListInitialised = 1;
 	}
-
-	//printf("dataDirectorys: %s\n",dataDirectorys[IndexNr].Name);
 
 	IndexNr = indexNrOffset(IndexNr,Type);
 
@@ -707,7 +658,6 @@ void GetFilePathForIindex (char *FilePath, char *FileName,int IndexNr,char Type[
 void GetFilPathForLotFile(char *FilePath,char lotfile[],int LotNr,char subname[]) {
 
 	GetFilPathForLot(FilePath,LotNr,subname);
-
 	strcat(FilePath,lotfile);
 }
 
@@ -723,7 +673,7 @@ char *returnFilPathForLot(int LotNr,char subname[]) {
 Gir oss pats for en lot. 
 */
 void GetFilPathForLot(char *FilePath,int LotNr,char subname[]) {
-	//char FilePath[64];
+
 	int subdir;
 
 	
@@ -733,22 +683,12 @@ void GetFilPathForLot(char *FilePath,int LotNr,char subname[]) {
 		MapListInitialised = 1;
 	}
 
-	//subdir = fmod(LotNr,64);
-	//subdir = LotNr % 64;
-
-	//sprintf(FilePath,"%s/%i/%i/",dataDirectorys[subdir].Name,subdir,LotNr);
-
 	if (strcmp(subname,"www") == 0) {
 		sprintf(FilePath,"%s/%i/",dataDirectorys[LotNr % 64].Name,LotNr);
 	}
 	else {
 		sprintf(FilePath,"%s/%i/%s/",dataDirectorys[LotNr % 64].Name,LotNr,subname);
 	}
-
-	//printf("%s\n",FilePath);
-	//printf("dataDirectorys: %s\n",dataDirectorys[subdir].Name);
-
-	
 
 }
 
@@ -798,50 +738,6 @@ void makePath (char path[]) {
 		closedir(dp);
 	}
 
-/*
-        int i;
-        char temp[128];
-        int tempnr;
-        char partdir[128];
-        char command[128];
-
-        tempnr = 0;
-        partdir[0] = '\0';
-
-        //printf("gf: -%s-\n",path);
-	
-	sprintf(command,"mkdir -p %s",path);
-
-	system(command);
-
-	//printf("%s\n",command);
-*/
-//temp: fjerner dette gamle skrullet.
-//det nye ovenfor er utestet
-/*
-        for (i=0; path[i] != '\0'; i++) {
-
-                if (path[i] == '/') {
-                        temp[tempnr] = '\0';
-
-                        strncat(partdir,temp,tempnr);
-                        strncat(partdir,"/",1);
-
-                        printf("%s\n",command);
-
-                        sprintf(command,"mkdir %s",partdir);
-
-                        system(command);
-                        tempnr = 0;
-                }
-                else {
-                        temp[tempnr] = path[i];
-                        tempnr++;
-                }
-
-        }
-*/
-
 }
 
 
@@ -850,7 +746,6 @@ DIR *listAllColl_start() {
         DIR *dp;
  	char FilePath[PATH_MAX];
 
-
 	//hvis vi ikke har inlisert mapplisten enda gjør vi det.
 	if (!MapListInitialised) {
 		MakeMapListMap();
@@ -858,7 +753,6 @@ DIR *listAllColl_start() {
 	}
 
 	sprintf(FilePath,"%s/%i/",dataDirectorys[1 % 64].Name,1);
-	
 
         return opendir(FilePath);
 }
@@ -897,55 +791,50 @@ int lotDeleteFile(char File[], int LotNr,char subname[]) {
 	return unlink(FilePath);
 }
 
-void
-lot_get_closed_collections_file(char *buf)
-{
+void lot_get_closed_collections_file(char *buf) {
 	sbfile(buf, "var/closed_collections");
 }
 
 void lot_recache_collection(char subname[]) {
 
+	{
+		char collpath[LINE_MAX];
+		FILE *fp;
 
+		lot_get_closed_collections_file(collpath);
+		fp = fopen(collpath, "a");
+		if (fp == NULL) {
+			warn("fopen(%s, append)", collpath);
+		} else {
+			flock(fileno(fp), LOCK_EX);
+			fseek(fp, 0, SEEK_END);
+			fprintf(fp, "%s\n", subname);
+			fclose(fp);
+		}
+	}
 
+	{
+		int pid;
+		char pidpath[LINE_MAX];
+		FILE *fp;
 
-			{
-				char collpath[LINE_MAX];
-				FILE *fp;
-
-				lot_get_closed_collections_file(collpath);
-				fp = fopen(collpath, "a");
-				if (fp == NULL) {
-					warn("fopen(%s, append)", collpath);
-				} else {
-					flock(fileno(fp), LOCK_EX);
-					fseek(fp, 0, SEEK_END);
-					fprintf(fp, "%s\n", subname);
-					fclose(fp);
-				}
+		sbfile(pidpath, "var/searchd.pid");
+		if ((fp = fopen(pidpath, "r")) == NULL) {
+			warn("Unable to open pidfile for searchdbb: fopen(%s)", pidpath);
+		} else {
+			int scanc = fscanf(fp, "%d", &pid);
+			if (scanc != 1) {
+				fprintf(stderr,"Unable to get a valid pid from %s\n",pidpath);
 			}
-
-			{
-				int pid;
-				char pidpath[LINE_MAX];
-				FILE *fp;
-
-				sbfile(pidpath, "var/searchd.pid");
-				if ((fp = fopen(pidpath, "r")) == NULL) {
-					warn("Unable to open pidfile for searchdbb: fopen(%s)", pidpath);
-				} else {
-					int scanc = fscanf(fp, "%d", &pid);
-					if (scanc != 1) {
-						fprintf(stderr,"Unable to get a valid pid from %s\n",pidpath);
-					}
-					else {
-						printf("pid %i, scanc %i\n", pid, scanc);
-						kill(pid, SIGUSR2);
-					}
-						fclose(fp);
-
-				}
-
+			else {
+				printf("pid %i, scanc %i\n", pid, scanc);
+				kill(pid, SIGUSR2);
 			}
+				fclose(fp);
+
+		}
+
+	}
 
 
 }

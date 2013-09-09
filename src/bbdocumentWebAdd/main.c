@@ -18,7 +18,7 @@
 #include "../boitho-bbdn/bbdnclient.h"
 #include "../cgi-util/cgi-util.h"
 #include "../maincfg/maincfg.h"
-#include "../crawlManager/client.h"
+#include "../crawlManager2/client.h"
 #include "../common/define.h"
 #include "../key/key.h"
 #include "../common/error.h"

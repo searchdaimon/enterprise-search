@@ -1,6 +1,7 @@
 #define __USE_LARGEFILE64 1
 #define _LARGEFILE64_SOURCE
 #define _FILE_OFFSET_BITS 64
+
 #include <string.h>
 #include <stdio.h>
 #include <err.h>
@@ -28,9 +29,7 @@ int compare_d_SummaryPointer (const void *p1, const void *p2) {
 }
 
 
-int
-gcsummary(int LotNr, char *subname)
-{
+int gcsummary(int LotNr, char *subname) {
 	char path[1024];
 	char path_old[1024];
 	struct DocumentIndexFormat docindex;
@@ -68,10 +67,6 @@ gcsummary(int LotNr, char *subname)
 		warn("Unable to read first docid");
 	}
 
-	//inialiserer
-	//for(i=0;i<NrofDocIDsInLot;i++) {
-	//	d[i].DocID = 0;
-	//}
 
 	i = 0;
 	while (DIGetNext(&docindex, LotNr, &DocID, subname)) {
@@ -91,7 +86,6 @@ gcsummary(int LotNr, char *subname)
 
 
 		if(d[i].docindex.SummarySize == 0) {
-			//++gced;
 			continue;
 		}
 

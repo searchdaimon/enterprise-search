@@ -2,7 +2,7 @@
 #	gcc -g shortenurl.c -DWITH_SHORTENURL_MAIN -o shortenurl ../common/*.c -W -Wall -lz -lm
 
 
-VPATH=	.:../dp/:../searchFilters:../maincfg:../crawlManager
+VPATH=	.:../dp/:../searchFilters:../maincfg:../crawlManager2
 
 WITH_PREFIX=	true
 WANT_COMMON=	true

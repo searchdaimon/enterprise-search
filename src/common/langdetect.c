@@ -1,15 +1,14 @@
 // TODO: Rydde i koden!
-//runarb:
-#include "bstr.h"
-
-#include "langdetect.h"
-#include "crc32.h"
 
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <dirent.h>
 #include <assert.h>
+
+#include "bstr.h"
+#include "langdetect.h"
+#include "crc32.h"
 
 #define MALLOC(a) _d_malloc(a, __LINE__)
 #define FREE(a) _d_free(a, __LINE__)
@@ -229,14 +228,7 @@ void langdetectInit()
 	    langdetectSkip = 1;
 	    return;
 	}
-/*
-    //runarb: girbedre feilmelding her
-    if (!dir){
-	printf("can't find stopwords. langdetect will not be avalibal!\n"); 
-	perror(path);
-	exit(1);
-    }
-*/ 
+
 
     struct dirent	*entry;
     while ((entry = readdir(dir)) != NULL)
@@ -257,7 +249,7 @@ void langdetectInit()
 		    strncat(filename, entry->d_name, 31 - strlen(filename));
 
 		    #ifdef DEBUG
-		    printf("Reading stopwords from %s\n", filename);
+			printf("Reading stopwords from %s\n", filename);
 		    #endif
 
 		    iso639.code[0] = entry->d_name[0];
@@ -270,7 +262,6 @@ void langdetectInit()
 
 		    while (fscanf(ordliste, "%63s", &s)!=EOF)
 			{
-//			    printf("%s %i (%.3s)\n", s, crc32boitho(s), iso639.code);
 			    _map_insert( dictionary, crc32boitho(s), iso639 );
 			    total_num_words++;
 			}
@@ -285,7 +276,7 @@ void langdetectInit()
     // Second: Convert dictionary to array:
 
     #ifdef DEBUG
-    printf("%i unique words (%i total).\n", dictionary->size, total_num_words);
+	printf("%i unique words (%i total).\n", dictionary->size, total_num_words);
     #endif
 
     _D = (_dict_elem*)malloc(sizeof(_dict_elem) * dictionary->size);
@@ -294,8 +285,6 @@ void langdetectInit()
     _map_save_and_delete( _D, 0, dictionary->root );
     free( dictionary );
 
-//    for (i=0; i<20; i++)
-//	printf("%u %.3s (+%i)\n", _D[i].key, _D[i].iso639_code.data[0].code, _D[i].iso639_code.size -1);
 }
 
 int _map_save_and_delete( _dict_elem *D, int _pos, _mapnode *it )
@@ -307,7 +296,7 @@ int _map_save_and_delete( _dict_elem *D, int _pos, _mapnode *it )
 
     D[pos].key = it->key;
     D[pos].iso639_code = it->iso639_code;
-//    printf("%i %.3s\n", it->key, it->iso639_code.data[0].code);
+
     pos++;
 
     if (it->right_child != NULL)
@@ -334,19 +323,15 @@ void langdetectDetect(struct wordsFormat words[],int nrofWords, char lang[])
 
     for (i=0; i<nrofWords; i++)
 	{
-	    #ifdef DEBUG
-//		printf("%s - ",words[i].word);
-	    #endif
 
-//	    void *bsearch(const void *key, const void *base, size_t nmemb,
-//	                  size_t size, int (*compar)(const void *, const void *));
 	    ptr = (_dict_elem*)bsearch( &(words[i].WordID), &(_D[0]), _D_size, sizeof(_dict_elem), _dict_elem_compare );
 
-//	    printf("%u %u ", words[i].WordID, words[i].position);
 
 	    if (ptr == NULL)
 		{
-//			printf("(not found)\n");
+			#ifdef DEBUG
+				printf("(not found)\n");
+			#endif
 		}
 	    else
 		{
@@ -354,7 +339,6 @@ void langdetectDetect(struct wordsFormat words[],int nrofWords, char lang[])
 
 		    #ifdef DEBUG
 			//dette fungerer bare når vi har på preserv words
-			//printf("%s - %u %u ", words[i].word, words[i].WordID, words[i].position);
 			printf("( ");
 		    #endif
 
@@ -395,7 +379,7 @@ void langdetectDetect(struct wordsFormat words[],int nrofWords, char lang[])
 			    int		beste_i, nest_beste_i;
 
 			    #ifndef NOWARNINGS
-			    printf("Mellomresultat: ");
+				printf("Mellomresultat: ");
 			    #endif
 
 			    beste_i = 0;
@@ -424,11 +408,10 @@ void langdetectDetect(struct wordsFormat words[],int nrofWords, char lang[])
 				}
 
 			    #ifdef DEBUG
-			    for (k=0; k<V.size; k++)
-				{
-				    denne = sqr(((double)V.data[k].ant)/((double)alle_stoppord)) / total;
-
-				    printf("%.3s[%i, %.2f%%] ", V.data[k].code, V.data[k].ant, denne*100);
+				for (k=0; k<V.size; k++) {
+					denne = sqr(((double)V.data[k].ant)/((double)alle_stoppord)) / total;
+					
+					printf("%.3s[%i, %.2f%%] ", V.data[k].code, V.data[k].ant, denne*100);
 				}
 			    #endif
 
@@ -436,35 +419,34 @@ void langdetectDetect(struct wordsFormat words[],int nrofWords, char lang[])
 			    nest_beste/= total;
 
 			    #ifndef NOWARNINGS
-			    printf(" => %.3s (%.2f%%), %.3s (%.2f%%)\n", V.data[beste_i].code, beste*100,
-				V.data[nest_beste_i].code, nest_beste*100);
+				    printf(" => %.3s (%.2f%%), %.3s (%.2f%%)\n", V.data[beste_i].code, beste*100,
+					V.data[nest_beste_i].code, nest_beste*100);
 			    #endif
 			    if (beste > 0.55 && beste > nest_beste*2)
 				{
 				    #ifndef NOWARNINGS
-				    printf("langdetectDetect: [%.3s] Bra treff! Vi beholder denne og avslutter her.\n", V.data[beste_i].code);
+					printf("langdetectDetect: [%.3s] Bra treff! Vi beholder denne og avslutter her.\n", V.data[beste_i].code);
 				    #endif
-				    //runarb:lang = (char*)strndup(V.data[beste_i].code, 3);
+
 				    strncpy(lang,V.data[beste_i].code,3);
 				    lang[3] = '\0';
 
 				    goto langdetectDetectEnd;
-				    //return;
+
 				}
 			}
 		}
 	}
 
     #ifndef NOWARNINGS
-    printf("langdetectDetect: Dokument ferdig parset. ");
+	printf("langdetectDetect: Dokument ferdig parset. ");
     #endif
     if (V.size == 0)
 	{
 	    #ifndef NOWARNINGS
-	    printf("(ingen stoppord funnet)\n");
+		printf("(ingen stoppord funnet)\n");
 	    #endif
 
-	    //runarb:lang = (char*)strndup("   ", 3);
 	    strcpy(lang,"");
 	}
     else
@@ -495,9 +477,9 @@ void langdetectDetect(struct wordsFormat words[],int nrofWords, char lang[])
 	    #endif
 
 	    #ifndef NOWARNINGS
-	    printf(" => %.3s (%.2f%%)\n", V.data[beste_i].code, (beste*100)/total);
+		printf(" => %.3s (%.2f%%)\n", V.data[beste_i].code, (beste*100)/total);
 	    #endif
-	    //runarb: lang = (char*)strndup(V.data[beste_i].code, 3);
+
  	    strncpy(lang,V.data[beste_i].code,3);
             lang[3] = '\0';
 
@@ -505,7 +487,7 @@ void langdetectDetect(struct wordsFormat words[],int nrofWords, char lang[])
 
 
 	langdetectDetectEnd:	
-    	//runarb: 28 mars 2008
+
 	free(V.data);	
 
 }
@@ -515,7 +497,7 @@ void langdetectDestroy()
     int		i;
 
     #ifndef NOWARNINGS
-    printf("langdetectDestroy\n");
+	printf("langdetectDestroy\n");
     #endif
 
     if (langdetectSkip) return;

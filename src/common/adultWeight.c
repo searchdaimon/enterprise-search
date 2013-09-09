@@ -61,7 +61,6 @@ void adultWeightopenMemArray2(char subname[]) {
 
                         // prøver å opne
                         if ( (FH = fopen(LotFile,"r+b")) == NULL ) {
-                                //perror(LotFile);
 				continue;
                         }
 
@@ -125,7 +124,6 @@ void adultWeightopenMemArray2(char subname[]) {
                                 //låser minne
                                 if (mlock(adultWeightMemArray[i],branksize) != 0) {
                                 	perror("mlock");
-                                        //exit(1);
                                	}
                         }
 
@@ -142,9 +140,11 @@ void adultWeightopenMemArray2(char subname[]) {
 			#endif
 
                         //debug: viser alle rankene vi laster
-                        //for(y=0;y<branksize;y++) {
-                        //      printf("DocID %i, rank %i\n",y,adultWeightMemArray[i][y]);
-                        //}
+			/*
+                        for(y=0;y<branksize;y++) {
+                              printf("DocID %i, rank %i\n",y,adultWeightMemArray[i][y]);
+                        }
+			*/
 
                         fclose(FH);
 
@@ -245,9 +245,11 @@ void adultWeightopenMemArray(char servername[],char subname[]) {
 				#endif
 
                                 //debug: viser alle rankene vi laster
-                                //for(y=0;y<branksize;y++) {
-                                //      printf("DocID %i, rank %i\n",y,adultWeightMemArray[i][y]);
-                                //}
+				/*
+                                for(y=0;y<branksize;y++) {
+                                      printf("DocID %i, rank %i\n",y,adultWeightMemArray[i][y]);
+                                }
+				*/
 
                                 fclose(FH);
 

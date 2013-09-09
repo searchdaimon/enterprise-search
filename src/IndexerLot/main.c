@@ -52,7 +52,6 @@
 	#include "../dispatcher_all/library.h"
 #endif
 
-//#include "../parse_summary/summary.h"
 
 #ifdef WITH_THREAD
         #include <pthread.h>

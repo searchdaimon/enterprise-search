@@ -1563,7 +1563,7 @@ load_usersystem(struct hashtable *us, char *name)
 
 		libhandle = dlopen(libpath, RTLD_LAZY);
 		if (libhandle == NULL) {
-			bblog(WARN, "Unable to load crawler: %s", name);
+			bblog(WARN, "Unable to load crawler: %s: %s", name, dlerror());
 			return 0;
 		}
 

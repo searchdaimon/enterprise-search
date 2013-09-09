@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -8,7 +7,6 @@
 
 #include "boithohome.h"
 
-//FILE *LOGACCESS, *LOGERROR;
 
 void bvlog(FILE *LOG, int level,const char *fmt,va_list ap) {
 
@@ -18,6 +16,7 @@ void bvlog(FILE *LOG, int level,const char *fmt,va_list ap) {
 
 
 void blog(FILE *LOG, int level, const char *fmt, ...) {
+
 	time_t now;
 	char buf[1024];
 	int len;
@@ -71,11 +70,10 @@ int openlogs(FILE **LOGACCESS, FILE **LOGERROR, char name[]) {
 		perror(bfile(file));
 
 		(*LOGACCESS) = NULL;
-		//return 0;
 	}
 	else {
 		#ifdef DEBUG
-		printf("opened log \"%s\"\n",file);
+			printf("opened log \"%s\"\n",file);
 		#endif
 	}
 
@@ -85,11 +83,10 @@ int openlogs(FILE **LOGACCESS, FILE **LOGERROR, char name[]) {
 		perror(bfile(file));
 
 		(*LOGERROR) = NULL;
-		//return 0;
 	}
 	else {
 		#ifdef DEBUG
-		printf("opened log \"%s\"\n",file);
+			printf("opened log \"%s\"\n",file);
 		#endif
 	}
 	return 1;

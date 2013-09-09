@@ -3,7 +3,6 @@ Rutinner for å jobbe på en Boitho DocumentIndex fil.
 
 ToDo: trenger en "close" prosedyre for filhandlerene.
 */
-//#include "define.h"
 #include "DocumentIndex.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,8 +78,6 @@ int DIPostAdress(unsigned int DocID) {
 	#else
 		adress = sizeof(struct DocumentIndexFormat) * (DocID - LotDocIDOfset(LotNr));
 	#endif
-	//printf("tell: %i\n",ftell(DocumentIndexHA));
-	
 
 	return adress;
 
@@ -95,17 +92,12 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 		FILE *DocumentIndexHA;
 	#endif
 	int LotNr;
-
 	char FileName[128];
 	char FilePath[128];
-	//unsigned int adress = -1;
-	//off_t adress = -1;
 	int adress = -1;
 	
 	//finner lot for denne DocIDen
 	LotNr = rLotForDOCid(DocID);
-
-	//printf("%u-%i\n",DocID,LotNr);
 
 	//hvis filen ikke er open åpner vi den
 	//segfeiler en skjelden gang
@@ -144,12 +136,12 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 
 
 		//debug:viser hvpathen til loten
-		//printf("path: %s\n",FileName);
-
+		/*
+		printf("path: %s\n",FileName);
+		*/
+		
 		//prøver først å åpne for lesing
-
 		if (type == 'c') {
-			//printf("opening file\n");
 			//temp: setter filopning til r+ for å få til å samarbeid melom DIRead og DIwrite
 			//dette gjør at søk ikke funker på web på grun av rettighter :-(
 			if ((DocumentIndexHA = fopen(FileName,"r+b")) == NULL) {
@@ -159,7 +151,6 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 			}
 		}
 		else if (type == 'r') {
-			//printf("opening file\n");
 			//temp: setter filopning til r+ for å få til å samarbeid melom DIRead og DIwrite
 			//dette gjør at søk ikke funker på web på grun av rettighter :-(
 			if ((DocumentIndexHA = fopen(FileName,"r+b")) == NULL) {
@@ -169,7 +160,6 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 			}
 		}
 		else if (type == 's') {
-			//printf("opening file\n");
 			//en ekte r read
 			if ((DocumentIndexHA = fopen(FileName,"rb")) == NULL) {
 				printf("%d: cant open file %s for rb\n", __LINE__, FileName);
@@ -179,13 +169,12 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 		}
 
 		else if (type == 'w'){
-			//printf("opening file\n");
 			if ((DocumentIndexHA = fopen(FileName,"r+b")) == NULL) {
 				//hvis det ikke går lager vi og åpne filen
 				makePath(FilePath);
 				if ((DocumentIndexHA = fopen(FileName,"w+b")) == NULL) {
 					perror(FileName);
-					//exit(1);
+
 					return NULL;
 				}
 			}
@@ -203,19 +192,12 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 		exit(1);
 	}
 
-//	printf("tell: %i\n",ftell(DocumentIndexHA));
-		
-	//file = DocumentIndexHA;
-
-//	printf("tell åpen: %i\n",ftell(DocumentIndexHA));
-//	printf("fa åpnet %i\n",(int)DocumentIndexHA);
 
 	return DocumentIndexHA;
 
 }
 
 //sjeker om det fins en DocumentIndex fro denne loten
-
 int DIHaveIndex (int lotNr,char subname[]) {
 
 	char FilePath[512];
@@ -241,15 +223,9 @@ void DIWrite (struct DocumentIndexFormat *DocumentIndexPost, unsigned int DocID,
 
 
 	FILE *file;
-
-	//printf("ha uinalisert %i\n",(int)file);
 	
 	if ((file = GetFileHandler(DocID,'w',subname, diname)) != NULL) {
 
-		//printf("fa mottat %i\n",(int)file);
-
-		//printf("motatt tell: %i\n",ftell(file));
-		//printf("aa url: %s\n",(*DocumentIndexPost).Url);
 		#ifdef BLACK_BOX
 			unsigned int CurrentDocumentIndexVersionAsUInt = CurrentDocumentIndexVersion;
 
@@ -263,9 +239,9 @@ void DIWrite (struct DocumentIndexFormat *DocumentIndexPost, unsigned int DocID,
 			perror("Can't write");
 			exit(1);
 		}
-#ifndef WITHOUT_DIWRITE_FSYNC
-		fsync(fileno(file));
-#endif
+		#ifndef WITHOUT_DIWRITE_FSYNC
+			fsync(fileno(file));
+		#endif
 	}
 	else {
 		printf("Cant get fh\n");
@@ -317,7 +293,7 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
 			#ifdef DEBUG
                         	perror(FileName);
 			#endif
-                        //exit(1);
+
 			LotOpen = -1;
 			return 0;
                 }
@@ -366,17 +342,15 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
 			fclose(LotFileOpen);
 			LotOpen = -1;
 
-                	//exit(1);
 			return 0;
         	}
 		else {
-			//printf("Url: %s\n",(*DocumentIndexPost).Url);
 	       		return 1;
 		}
 
         }
         else {
-        //hvis vi er tom for data stenger vi filen, og retunerer en 0 som sier at vi er ferdig.
+		//hvis vi er tom for data stenger vi filen, og retunerer en 0 som sier at vi er ferdig.
 		#ifdef DEBUG
                 	printf("ferdig\n");
 		#endif
@@ -443,7 +417,7 @@ int DIRead_post_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID, FIL
         	//lesr posten
         	if (fread(DocumentIndexPost,sizeof(*DocumentIndexPost),1,file) != 1) {
 			#ifdef DEBUG
-                	perror("Can't reed");
+				perror("Can't reed");
 			#endif
 			//selv om vi ikke fikk lest fra filen må vi lokke den, så vi kan ikke kalle retun directe her
 			forReturn =  0;
@@ -512,7 +486,7 @@ int DIRead_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subn
 
 	if (file == NULL) {
 		#ifdef DEBUG
-		printf("DIRead_fh: file isent open.\n");
+			printf("DIRead_fh: file isent open.\n");
 		#endif
 		forReturn = DIRead_fmode(DocumentIndexPost,DocID,subname,'r');
 	}
@@ -553,7 +527,7 @@ int DIRead_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subna
 
 	if (file == -1) {
 		#ifdef DEBUG
-		printf("DIRead_fh: file isent open.\n");
+			printf("DIRead_fh: file isent open.\n");
 		#endif
 		forReturn = DIRead_fmode(DocumentIndexPost,DocID,subname,'r');
 	}

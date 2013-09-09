@@ -94,14 +94,10 @@ static inline void print_automaton( char *prefix, automaton *A, int n )
 {
     int		i;
 
-//    for (i=0; i<n; i++) printf(" ");
-//    printf("%s|%s", prefix, A->str);
 
     if (A->terminal>=0)
 	printf("%s|%s\n", prefix, A->str);
 
-//    if (A->terminal>=0) printf(" (x)");
-//    printf("\n");
 
     for (i=0; i<255; i++)
 	{
@@ -113,9 +109,6 @@ static inline void print_automaton( char *prefix, automaton *A, int n )
 		    new_prefix[strlen(new_prefix)+1] = '\0';
 		    new_prefix[strlen(new_prefix)] = (unsigned char)i;
 
-//		    int		j;
-//		    for (j=0; j<n+1; j++) printf(" ");
-//		    printf("%s|%s|%c\n", prefix, A->str, (char)i);
 		    print_automaton(new_prefix, A->next[i], n+2);
 
 		    free(new_prefix);
@@ -137,7 +130,6 @@ static inline automaton* build_automaton( int num_args, unsigned char **_words )
 
     convert_to_lowercase(words[0]);
     base->str = (unsigned char*)strdup( (char*)words[0] );
-//    printf("Adding %s\n", (char*)words[0]);
     base->terminal = 0;
 
     for (i=1; i<num_args; i++)
@@ -147,9 +139,7 @@ static inline automaton* build_automaton( int num_args, unsigned char **_words )
 	    char		terminated = 0;
 
 	    convert_to_lowercase(words[i]);
-//	    printf("Adding %s\n", (char*)words[i]);
 
-//	    while (words[i][p]!='\0' && !terminated)
 	    while (!terminated)
 		{
 		    for (n=0; A->str[n]==words[i][p+n] && A->str[n]!='\0' && words[i][p+n]!='\0'; n++);
@@ -172,8 +162,6 @@ static inline automaton* build_automaton( int num_args, unsigned char **_words )
 
 			    A->next[A->str[n]] = N;
 
-//			    printf("[%s] => [%c]->[%s]\n", &(A->str[n]), A->str[n], &(A->str[n+1]));
-
 			    temp_str = A->str;
 			    temp_str[n] = '\0';
 			    A->str = (unsigned char*)strdup((char*)temp_str);
@@ -189,7 +177,6 @@ static inline automaton* build_automaton( int num_args, unsigned char **_words )
 		    || ((A->str[n]=='\0') && (words[i][p+n]!='\0') && (A->next[words[i][p+n]]==NULL)))
 			{
 			    automaton	*N = new_automaton();
-//			    printf("[%c]->[%s]\n", words[i][p+n], &(words[i][p+n+1]));
 
 			    N->str = (unsigned char*)strdup( (char*)&(words[i][p+n+1]) );
 			    A->next[words[i][p+n]] = N;
@@ -200,7 +187,6 @@ static inline automaton* build_automaton( int num_args, unsigned char **_words )
 		    // If A->str and words[i][p] are equal or len(words[i][p])==n
 		    if (words[i][p+n]=='\0')
 			{
-//			    printf("terminal\n");
 			    A->terminal = i;
 			    terminated = 1;
 			}
@@ -208,13 +194,9 @@ static inline automaton* build_automaton( int num_args, unsigned char **_words )
 		    A = A->next[words[i][p+n]];
 		    p+= n;
 		    if (words[i][p]!='\0') p++;
-//		    printf("-- next iteration --\n");
 		}
 	}
 
-//    printf("Added words to automata:\n");
-//    print_automaton("", base, 0);
-//    printf("---\n");
 
     for (i=0; i<num_args; i++) free(words[i]);
     free(words);
@@ -243,10 +225,7 @@ static inline int search_automaton( automaton *base, const char *word )
 {
     automaton		*A = base;
     int			i, n;
-//    unsigned char	*word = (unsigned char*)_word;
     unsigned char	c, last=255;
-
-//    printf("%s(%i)(%i) ?\n", word, (int)base, (int)word);
 
     for (n=0; A!=NULL; n++)
 	{
@@ -257,19 +236,15 @@ static inline int search_automaton( automaton *base, const char *word )
 			c+= 32;	// 'a' - 'A'
 		    last = c;
 
-//		    printf("(%c,%c)", A->str[i], c);
 		    if (c!=A->str[i])
 			return -1;
 		}
 
-//	    printf("%c", word[n]);
 
 	    if (word[n]=='\0')
 		{
 		    if (A->str[i]=='\0')
 			{
-//			    printf("[%i,§,%i]\n", i, A->terminal);
-//			    print_automaton((char*)word, A, 0);
 			    return A->terminal;
 			}
 		    else
@@ -282,12 +257,10 @@ static inline int search_automaton( automaton *base, const char *word )
 	    last = c;
 
 	    A = A->next[c];
-//	    printf("(next %c)", (char)c);
 	}
 
     return -1;
 }
-
 
 
 #endif	// _SEARCH_AUTOMATON_H_

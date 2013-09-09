@@ -1,4 +1,3 @@
-
 #ifndef _BPRINT_H_
 #define _BPRINT_H_
 
@@ -11,7 +10,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-//#include <err.h>
+
 
 #define BUFFER_BLOCKSIZE	16384
 
@@ -111,7 +110,6 @@ static inline void bprintf( buffer *B, const char *fmt, ... )
 
     va_start(ap, fmt);
 
-//    len_printed = vprintf( fmt, ap );
     old_pos = B->pos;
     len_printed = vsnprintf( &(B->data[B->pos]), B->maxsize - B->pos -1, fmt, ap );
     B->pos+= len_printed;

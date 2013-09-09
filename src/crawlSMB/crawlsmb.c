@@ -17,14 +17,9 @@
 
 #include "get_auth_data_fn.h"
 #include "cleanresource.h"
-
-//#include "../boitho-bbdn/bbdnclient.h"
-//#include "../bbdocument/bbdocument.h"
 #include "../common/iconv.h"
-
 #include "../crawl/crawl.h"
 #include "../logger/logger.h"
-
 #include "acl.parser.h"
 #include "crawlsmb.h"
 

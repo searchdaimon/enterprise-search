@@ -12,7 +12,7 @@ SERVER = suggest_server
 SOURCES_CLNT.c = 
 SOURCES_CLNT.h = 
 SOURCES_SVC.c = ../suggest/suggest.c ../suggest/suffixtree.c ../suggest/acl.c ../3pLibs/keyValueHash/hashtable.c \
-	../crawlManager/client.c
+	../crawlManager2/client.c
 SOURCES_SVC.h = 
 SOURCES.x = suggest.x
 

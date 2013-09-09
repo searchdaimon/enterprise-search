@@ -36,7 +36,7 @@
 #include "../logger/logger.h"
 #include "../common/utf8-strings.h"
 #include "../searchFilters/searchFilters.h"
-#include "../crawlManager/client.h"
+#include "../crawlManager2/client.h"
 #include "../common/reposetory.h"
 #include "../common/reposetoryNET.h"
 #include "../ds/dcontainer.h"

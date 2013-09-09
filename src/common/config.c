@@ -142,7 +142,6 @@ const char *bconfig_getentrystr(char vantkey[]) {
 	}
 
 	for(i=0;i<_configdatanr;i++) {
-		//printf("config %s: %s\n",_configdata[i].configkey,_configdata[i].configvalue);
 
 		if (strcmp(vantkey,_configdata[i].configkey) == 0) {
 			ret = _configdata[i].configvalue;

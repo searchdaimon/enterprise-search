@@ -5,14 +5,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-//search and replace
 
 #include "bstr.h"
 #include "debug.h"
 #include "strlcat.h"
 
-//usikker på om vi skal ha med denne. Er det kansje bedre og lagge inn strcasestr her?
-//#define _GNU_SOURCE //for strcasestr 
 
 
 char *strdupnul(char *in) {
@@ -27,7 +24,6 @@ char *strdupnul(char *in) {
 int btolower(int c) {
 
         c = (unsigned char)c;
-
 
         if ((c >= 65) && (c <= 90)) {
                 //A-Z
@@ -66,8 +62,6 @@ void chomp(char string[]) {
 
 void strsandr (char text[], char find[], char replace[]) {
 
-	//printf("inn %s, find %s, replace %s\n",text,find,replace);
-
 	char *cptr;
 	int rlen = strlen(replace);
 	int flen = strlen(find);
@@ -86,53 +80,32 @@ void strsandr (char text[], char find[], char replace[]) {
 
 	while ((cptr = strstr(cptr,find))) {
 
-		//printf("found!\n");
-	
-
-
-		//printf("ss %i, %i\n",((bptr + (cptr - text)) - bptr), ((bptr + (cptr - cprtold)) - bptr) );
-		//bptr = (bptr + (cptr - text));
 		bptr = (bptr + (cptr - cprtold));
 
 		//går over treffet
 		cptr = (cptr + flen);		
 
-		//printf("kopy to %i, %s\n",(bptr - buff),bptr);
 		//kopierer inn replacmnt
 		strcpy(bptr,replace);
-		//printf("bptr1 %s, buff %s\n",bptr,buff);
 		bptr = (bptr + rlen);
 	
 
 		//kopierer inn resten
 		strcat(bptr,cptr);
-
-		//printf("cptr %s\n",cptr);
-		//printf("bptr2 %s, buff %s\n",bptr,buff);
-
-		//bptr = (bptr + strlen(cptr));
 		
 		cprtold = cptr;
 
-		//cptr = bptr;
 	}
-
-	//printf("end buff: %s\n",buff);
-
 
 	strcpy(text,buff);	
 
 	free(buff);
-
-
 }
 
 void ntobr (char textbuff[], int texbufftsize) {
 
 	char replace[] = {"<br>\n"};
 	char find[] = {"\n"};
-	//printf("inn %s, find %s, replace %s\n",text,find,replace);
-
 	char *cptr;
 	int rlen = strlen(replace);
 	int flen = strlen(find);
@@ -151,56 +124,42 @@ void ntobr (char textbuff[], int texbufftsize) {
 
 		if ((cptr == textbuff) || (cptr[-1] == '>')) {
 
-		//printf("ss %i, %i\n",((bptr + (cptr - textbuff)) - bptr), ((bptr + (cptr - cprtold)) - bptr) );
-		bptr = (bptr + (cptr - cprtold));
+			bptr = (bptr + (cptr - cprtold));
 
-		//går over treffet
-		cptr = (cptr + flen);		
+			//går over treffet
+			cptr = (cptr + flen);		
 
-		//printf("kopy to %i, %s\n",(bptr - buff),bptr);
-		//kopierer inn replacmnt
-		strcpy(bptr,find);
-		//printf("bptr1 %s, buff %s\n",bptr,buff);
-		bptr = (bptr + flen);
-	
+			//kopierer inn replacmnt
+			strcpy(bptr,find);
 
-		//kopierer inn resten
-		strcat(bptr,cptr);
-		} 
-		else if (0) {
+			bptr = (bptr + flen);
 		
-		}
+			//kopierer inn resten
+			strcat(bptr,cptr);
+		} 
 		else {
-		//printf("ss %i, %i\n",((bptr + (cptr - textbuff)) - bptr), ((bptr + (cptr - cprtold)) - bptr) );
-		bptr = (bptr + (cptr - cprtold));
+			bptr = (bptr + (cptr - cprtold));
 
-		//går over treffet
-		cptr = (cptr + flen);		
+			//går over treffet
+			cptr = (cptr + flen);		
 
-		//printf("kopy to %i, %s\n",(bptr - buff),bptr);
-		//kopierer inn replacmnt
-		strcpy(bptr,replace);
-		//printf("bptr1 %s, buff %s\n",bptr,buff);
-		bptr = (bptr + rlen);
-	
+			strcpy(bptr,replace);
 
-		//kopierer inn resten
-		strcat(bptr,cptr);
+			bptr = (bptr + rlen);
+		
+			//kopierer inn resten
+			strcat(bptr,cptr);
 		}
 
 		cprtold = cptr;
-
 	}
 
 	strscpy(textbuff,buff,texbufftsize);	
 
 	free(buff);
-
 }
 
 void strcasesandr (char textbuff[], int texbufftsize,char find[], char replace[]) {
-
-	//printf("inn %s, find %s, replace %s\n",text,find,replace);
 
 	char *cptr;
 	int rlen = strlen(replace);
@@ -218,19 +177,15 @@ void strcasesandr (char textbuff[], int texbufftsize,char find[], char replace[]
 
 	while ((cptr = (char *)strcasestr(cptr,find))) {
 
-		//printf("ss %i, %i\n",((bptr + (cptr - textbuff)) - bptr), ((bptr + (cptr - cprtold)) - bptr) );
 		bptr = (bptr + (cptr - cprtold));
 
 		//går over treffet
 		cptr = (cptr + flen);		
 
-		//printf("kopy to %i, %s\n",(bptr - buff),bptr);
 		//kopierer inn replacmnt
 		strcpy(bptr,replace);
-		//printf("bptr1 %s, buff %s\n",bptr,buff);
 		bptr = (bptr + rlen);
 	
-
 		//kopierer inn resten
 		strcat(bptr,cptr);
 
@@ -245,17 +200,15 @@ void strcasesandr (char textbuff[], int texbufftsize,char find[], char replace[]
 
 void saafree(char **List) {
 
-  int Count;
+	int Count = 0;
 
-  Count = 0;
+	while( (List[Count] != NULL) ) {
+		free(List[Count++]);
+	}
 
-  while( (List[Count] != NULL) ) {
-	free(List[Count++]);
-  }
+	free(List);
 
-  free(List);
-
-  return;
+	return;
 
 }
 
@@ -264,15 +217,6 @@ void saafree(char **List) {
 void strscpy(char *dest, const char *src, size_t n) {
 
 	int i,srcstrlen;
-
-
-	/*
-	--n; //vi skal ha palss til \0
-	for(i=0;( (i<n) && (src[i] != '\0') );i++) {
-
-        }
-	srcstrlen = i;
-	*/
 
  	srcstrlen = strlen(src);
 
@@ -285,7 +229,6 @@ void strscpy(char *dest, const char *src, size_t n) {
 	}
 	dest[srcstrlen] = '\0';
 
-	//return dest;
 
 }
 
@@ -303,138 +246,93 @@ void strscpy(char *dest, const char *src, size_t n) {
    Returns < 0 on any error.
 */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 /* If we're making a test/demo program, make sure DEBUG is defined
    for our debugging mallocs.... */
 #ifdef __TEST_SPLIT__
-#ifndef DEBUG
-#define DEBUG
+	#ifndef DEBUG
+		#define DEBUG
+	#endif
 #endif
-#endif
 
 
 
-int split(const char *Input, char *Delim, char ***List)
-{
-  int Found;
-  int MaxFound;
-  int Length;
-  int DelimLen;
-  const char* Remain;
-  char* Position;
+int split(const char *Input, char *Delim, char ***List) {
 
-  DelimLen = strlen(Delim);
-  Found = 0;
-  Remain = Input;
-  MaxFound = 10;
+	int Found;
+	int MaxFound;
+	int Length;
+	int DelimLen;
+	const char* Remain;
+	char* Position;
 
-  if ((List == NULL) || (Input == NULL) || (Delim == NULL))
-    {
-      return -1;
-    }
+	DelimLen = strlen(Delim);
+	Found = 0;
+	Remain = Input;
+	MaxFound = 10;
 
-
-  if ((*List = (char **)malloc(MaxFound * sizeof(char *))) == NULL) {
-	perror("malloc List");
-	return -1;
-  }
-
-  while ((Position = strstr(Remain, Delim)) != NULL)
-    {
-      Length = Position - Remain;
-      if((((*List)[Found]) = (char *)malloc(sizeof(char)*(Length+1))) == NULL) {
-		perror("split: malloc list element");
+	if ((List == NULL) || (Input == NULL) || (Delim == NULL)) {
 		return -1;
 	}
-      strncpy(((*List)[Found]), Remain, Length);
-      ((*List)[Found])[Length] = 0;
-
-      Found++;
-      Remain = Position + DelimLen;
-      if (Found == MaxFound)
-        {
-          MaxFound += 10;
-          *List = (char **)realloc(*List, MaxFound * sizeof(char *));
-        }
-    }
 
 
- if (Found+1 == MaxFound)
-    {
-      MaxFound += 2;
-      *List = (char **)realloc(*List, MaxFound * sizeof(char *));
-    }
-  Length = strlen(Remain);
-  ((*List)[Found]) = (char *)malloc(sizeof(char)*(Length+1));
-  strncpy(((*List)[Found]), Remain, Length);
-  ((*List)[Found])[Length] = 0;
+	if ((*List = (char **)malloc(MaxFound * sizeof(char *))) == NULL) {
+		perror("malloc List");
+		return -1;
+	}
 
-  Found++;
-  ((*List)[Found]) = NULL;
+	while ((Position = strstr(Remain, Delim)) != NULL) {
+		Length = Position - Remain;
+		
+		if((((*List)[Found]) = (char *)malloc(sizeof(char)*(Length+1))) == NULL) {
+			perror("split: malloc list element");
+			return -1;
+		}
+		strncpy(((*List)[Found]), Remain, Length);
+		((*List)[Found])[Length] = 0;
 
-  return Found;
+		Found++;
+		Remain = Position + DelimLen;
+		
+		if (Found == MaxFound) {
+			MaxFound += 10;
+			*List = (char **)realloc(*List, MaxFound * sizeof(char *));
+		}
+	}
+
+	if (Found+1 == MaxFound) {
+		MaxFound += 2;
+		*List = (char **)realloc(*List, MaxFound * sizeof(char *));
+	}
+	
+	Length = strlen(Remain);
+	((*List)[Found]) = (char *)malloc(sizeof(char)*(Length+1));
+	strncpy(((*List)[Found]), Remain, Length);
+	((*List)[Found])[Length] = 0;
+
+	Found++;
+	((*List)[Found]) = NULL;
+
+	return Found;
 } /* split() */
 
 /* Destroys the array of strings structrue returned by split() */
 void FreeSplitList(char **List) {
-  int Count;
+	int Count;
 
-  if (List == NULL) {
+	if (List == NULL) {
+		return;
+	}
+
+	Count = 0;
+	while( (List[Count] != NULL) ) {
+	free(List[Count++]);
+	}
+
+	free(List);
+
 	return;
-  }
-
-  Count = 0;
-  while( (List[Count] != NULL) ) {
-    free(List[Count++]);
-  }
-
-  //runarb: blir ikke lesten freed riktig??
-  free(List);
-
-  return;
 } /* FreeSplitList() */
-
-#ifdef __TEST_SPLIT__
-
-void dosplit(char *string, char *delim) {
-  char **Data;
-  int Count, TokCount;
-
-  printf("Splitting: \"%s\" on \"%s\"\n", string, delim);
-
-  TokCount = split(string, delim, &Data);
-  printf("\tfound %d token(s):\n", TokCount);
-
-  Count = 0;
-  while( (Data[Count] != NULL) )
-    printf("\t\t%d\t\"%s\"\n", Count, Data[Count++]);
-  printf("\n");
-
-  FreeSplitList(Data);
-
-  return;
-} /* dosplit() */
-
-int main() {
-  char *splitstring1 = "this;is;a;test;of;split";
-  char *splitstring2 = "this<skip>is<skip>a<skip>test<skip>of<skip>split";
-  char *splitstring3 = "this is a test  of skip";
-
-  printf("C Version Of Split testing program\n\n");
-
-  dosplit(splitstring1, ";");
-  dosplit(splitstring2, "<skip>");
-  dosplit(splitstring3, "*");
-  dosplit(splitstring3, " ");
-
-  printf("C-Split Done\n");
-
-  return 0;
-} /* main() */
-#endif //__TEST_SPLIT__
 
 // like strlcat, but test self for if the src is to long to add to dst, and givs a warning
 size_t strlwcat(char *dst, const char *src, size_t siz) {
@@ -447,6 +345,47 @@ size_t strlwcat(char *dst, const char *src, size_t siz) {
 		printf("strlwcat: ENAMETOOLONG\n");
 	}
 
-
 	return len;
 }
+
+#ifdef __TEST_SPLIT__
+void dosplit(char *string, char *delim) {
+
+	char **Data;
+	int Count, TokCount;
+
+	printf("Splitting: \"%s\" on \"%s\"\n", string, delim);
+
+	TokCount = split(string, delim, &Data);
+	printf("\tfound %d token(s):\n", TokCount);
+
+	Count = 0;
+	while( (Data[Count] != NULL) ) {
+		printf("\t\t%d\t\"%s\"\n", Count, Data[Count++]);
+	}
+	
+	printf("\n");
+
+	FreeSplitList(Data);
+
+	return;
+} /* dosplit() */
+
+int main() {
+	char *splitstring1 = "this;is;a;test;of;split";
+	char *splitstring2 = "this<skip>is<skip>a<skip>test<skip>of<skip>split";
+	char *splitstring3 = "this is a test  of skip";
+
+	printf("C Version Of Split testing program\n\n");
+
+	dosplit(splitstring1, ";");
+	dosplit(splitstring2, "<skip>");
+	dosplit(splitstring3, "*");
+	dosplit(splitstring3, " ");
+
+	printf("C-Split Done\n");
+
+	return 0;
+} /* main() */
+#endif //__TEST_SPLIT__
+
