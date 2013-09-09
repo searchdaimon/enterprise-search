@@ -234,11 +234,20 @@ int cgi_goodemailaddress(const char * addr);
 
 void cgi_error(const int httpcode, const char *fmt, ...);
 
+
 /*
   Returns the english text string for a CGI error.
 */
 
 const char * cgilib_strerror(int err);
+
+
+/* 
+  Unescapes "%"-escaped characters in a query:
+*/
+
+void unescape_url(char *url);
+
 
 
 #ifdef __cplusplus
