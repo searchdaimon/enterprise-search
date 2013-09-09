@@ -272,7 +272,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
         		        gettimeofday(&start_time, NULL);
 		        #endif
 
-			bbdocument_add(subname,documenturi,documenttype,document,dokument_size,lastmodified,acl_allow,acl_denied,title,doctype, attributes, attrkeys);
+			intrespons = bbdocument_add(subname,documenturi,documenttype,document,dokument_size,lastmodified,acl_allow,acl_denied,title,doctype, attributes, attrkeys);
 
 			printf(":bbdocument_add end\n");
 			printf("########################################################\n");
@@ -290,6 +290,13 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			free(title);
 			free(doctype);
 			free(attributes);
+
+			// send status
+	                if ((n=sendall(socket, &intrespons, sizeof(intrespons))) == -1) {
+                               perror("Cant recv filerest");
+                               exit(1);
+	                }
+
 		}
 		else if (packedHedder.command == bbc_opencollection) {
 			char *subname;
@@ -331,10 +338,9 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			printf("cleanin lots start\n");
 			char command[PATH_MAX];
 			snprintf(command,sizeof(command),"perl %s -l -s \"%s\"",bfile("perl/cleanLots.pl"),subname);
-			//system("perl /home/boitho/boitho/websearch/perl/cleanLots.pl");
-			//system("perl /home/boitho/boithoTools/perl/cleanLots.pl");
+
 			printf("running \"%s\"\n",command);
-			system(command);
+			intrespons = system(command);
 			printf("cleanin lots end\n");
 
 			// legger subnamet til listen over ventene subnavn, og huper searchd.
@@ -354,6 +360,10 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 
 			free(subname);
 
+                        if ((n=sendall(socket, &intrespons, sizeof(intrespons))) == -1) {
+                                       perror("Cant recv filerest");
+                                       exit(1);
+                        }
 			
 		}
 		else if (packedHedder.command == bbc_deleteuri) {
@@ -428,6 +438,13 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 					bbdocument_delete(uri, subname);
 			}
 			free(subname);
+
+			intrespons = 1; // Always return ok for now
+                        if ((n=sendall(socket, &intrespons, sizeof(intrespons))) == -1) {
+                                       perror("Cant recv filerest");
+                                       exit(1);
+                        }
+
 		}
 		else if (packedHedder.command == bbc_deletecollection) {
 			printf("deletecollection\n");

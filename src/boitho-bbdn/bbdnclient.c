@@ -63,7 +63,7 @@ int bbdn_close(int socketha) {
 int bbdn_docadd(int socketha,char subname[],char documenturi[],char documenttype[],char document[],
 	int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied, char title[],char doctype[], char *attributes) {
 
-	int len;
+	int len, intrespons, i;
 	char *blank = "";
 
 	//sender heder
@@ -133,7 +133,14 @@ int bbdn_docadd(int socketha,char subname[],char documenturi[],char documenttype
         if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall attributes len"); return 0; }
         if(sendall(socketha,attributes, len) == 0) { perror("sendall attributes"); return 0; }
 
-	return 1;
+
+        if ((i=recv(socketha, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
+                bperror("Cant recv respons");
+		intrespons = 0;
+        }
+
+
+	return intrespons;
 }
 
 int bbdn_docexist(int socketha,char subname[],char documenturi[],unsigned int lastmodified) {
@@ -143,7 +150,7 @@ int bbdn_docexist(int socketha,char subname[],char documenturi[],unsigned int la
 //stenger ned å kjører etterpehandler på en koleksin. Dette er ikke det samme som å stenge ned socketen
 int bbdn_closecollection(int socketha, char subname[]) {
 
-	int len;
+	int len, intrespons, i;
 	
 	debug("bbdn_closecollection start");
 	sendpacked(socketha,bbc_closecollection,BLDPROTOCOLVERSION, 0, NULL,"");
@@ -152,14 +159,21 @@ int bbdn_closecollection(int socketha, char subname[]) {
         if(sendall(socketha,&len, sizeof(int)) == -1) { perror("sendall"); exit(1); }
         if(sendall(socketha,subname, len) == -1) { perror("sendall"); exit(1); }
 
+
+        if ((i=recv(socketha, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
+                bperror("Cant recv respons");
+		intrespons = 0;
+        }
+
 	debug("bbdn_closecollection end");
 		
-	return 1;
+	return intrespons;
 }
 
 /* Delete an uri from the system */
 int bbdn_deleteuri(int socketha, char subname[], char *uri) {
-	int len;
+
+	int len, intrespons, i;
 	
 	debug("bbdn_deleteuri start");
 	sendpacked(socketha,bbc_deleteuri,BLDPROTOCOLVERSION, 0, NULL,"");
@@ -173,12 +187,17 @@ int bbdn_deleteuri(int socketha, char subname[], char *uri) {
         if(sendall(socketha,uri, len) == -1) { perror("sendall"); exit(1); }
 
 
+        if ((i=recv(socketha, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
+                bperror("Cant recv respons");
+		intrespons = 0;
+        }
+
 	debug("bbdn_deleteuri end");
 		
-	return 1;
+	return intrespons;
 }
 
-/* Delete an uri from the system */
+/* Delete an collection from the system */
 int bbdn_deletecollection(int socketha, char subname[]) {
 	int len, i;
 	int intrespons = 0;
