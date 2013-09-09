@@ -585,12 +585,15 @@ int main(int argc, char **argv, char **envp)
 	if ((cgi_getentrystr("method") != NULL) && (strcmp(cgi_getentrystr("method"),"rest") == 0)) {
 
 		char api[100], coll[100], url[512];
+		char *requrle;
 
 		if (getenv("REQUEST_URI") == NULL) {
 			cgi_error(500, "Can't read REQUEST_URI");
 		}
 
-		sscanf(getenv("REQUEST_URI"),"/%[a-z]/%[a-zA-Z0-9_-]/%[^?]", api, coll, url);
+		requrle = strdup(getenv("REQUEST_URI"));
+		unescape_url(requrle);
+		sscanf(requrle,"/%[a-z]/%[a-zA-Z0-9_-]/%[^?]", api, coll, url);
 
 		#ifdef DEBUG
 			printf("api: \"%s\"\n",api);
@@ -598,8 +601,10 @@ int main(int argc, char **argv, char **envp)
 			printf("url: \"%s\"\n",url);
 			printf("request_method: \"%s\"\n",request_method);
 			printf("reques url \"%s\"\n",getenv("REQUEST_URI"));
+			printf("reques url unescaped \"%s\"\n",requrle);
 		#endif
 
+		free(requrle);
 
 		if (strcmp(request_method,"POST") == 0 || strcmp(request_method,"ADDDELAYED") == 0 || strcmp(request_method,"PUT") == 0) {
 
@@ -827,13 +832,6 @@ int main(int argc, char **argv, char **envp)
 	} else {
 		cgi_error(500, "Didn't receive any command or data.");
 	}
-
-        struct timespec time;
-        /* Initialize the time data structure. */
-        time.tv_sec = 0;
-        time.tv_nsec = 200000000; // i nanoseconds = 0.2 sek
-
-        nanosleep(&time,NULL);
 
 	if (status != NULL) {
 		printf("Content-type: text/plain\n\n");
