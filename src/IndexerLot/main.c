@@ -388,7 +388,9 @@ void attriblot_close(struct attriblotFormat *attriblot)
     iterator	it = set_begin(attriblot->words);
     container	*mapping = map_container( int_container(), string_container() );
 
-    printf("IndexerLot: Attributes for lot:\n");
+    #ifdef DEBUG
+        printf("IndexerLot: Attributes for lot:\n");
+    #endif
 
     for (; it.valid; it=set_next(it))
 	{
@@ -396,10 +398,11 @@ void attriblot_close(struct attriblotFormat *attriblot)
 
 	    map_insert(mapping, crc32boithonl(attribute, strlen(attribute)), attribute);
 
-	    printf("%s\n", attribute);
+            #ifdef DEBUG
+	        printf("%s\n", attribute);
+	    #endif
        	}
 
-    printf("IndexerLot: Attributes end.\n");
 
     it = map_begin(mapping);
 
@@ -413,7 +416,7 @@ void attriblot_close(struct attriblotFormat *attriblot)
 	    fwrite(&crc32, sizeof(unsigned int), 1, fp);
 	    fwrite(attribute, sizeof(char), MAX_ATTRIB_LEN, fp);
 	    #ifdef DEBUG
-	    printf("%u -> %s\n", crc32, attribute);
+  	        printf("%u -> %s\n", crc32, attribute);
 	    #endif
        	}
 
