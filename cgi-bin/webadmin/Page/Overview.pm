@@ -43,6 +43,8 @@ use constant TPL_RREAD			=> 'overview_rread.html';
 use constant TPL_PAGEINFO		=> 'overview_pageinfo.html';
 use constant TPL_HTMLDUMP		=> 'overview_htmldump.html';
 
+use constant MAX_COLL_DOC_COUNT		=> 50;
+
 Readonly::Scalar my $META_CONN_PUSH => "Pushed collections";
 Readonly::Scalar my $CRAWL_STATUS_OK => qr{^(OK\.|Ok)$};
 
@@ -671,8 +673,15 @@ sub gen_collection_list {
 
 			$coll->{smart_rate} = $s->_minutes_to_text($rate);
 			$coll->{next_crawl} = $s->_get_next_crawl($rate, $coll->{last_crawl});
-			$coll->{doc_count}  = $iq->documentsInCollection(
-				$coll->{collection_name});
+
+			# If we have more than MAX_COLL_DOC_COUNT we won.t lookup the number of documents for it. It uses to much resources.
+			if ($#collections < MAX_COLL_DOC_COUNT) {
+				$coll->{doc_count}  = $iq->documentsInCollection(
+					$coll->{collection_name});
+			}
+			else {
+				$coll->{doc_count}  = "-1";
+			}
 
 			$coll->{warn} = $coll->{crawler_message}
 				if $coll->{crawler_message} !~ $CRAWL_STATUS_OK;
