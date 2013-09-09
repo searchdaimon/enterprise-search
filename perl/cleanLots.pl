@@ -64,7 +64,6 @@ foreach my $lot (1 .. 4096) {
 				$hiestinlot{$subname} = $lot;
 			}
 
-		closedir(DIR);
 
 	
 }
