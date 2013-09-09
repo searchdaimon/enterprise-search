@@ -2,9 +2,11 @@ BEGIN {
 	push @INC, $ENV{BOITHOHOME}."/Modules/";
 };
 
+use strict;
 use Getopt::Std;
 use Boitho::Lot;
 
+my %opts;
 getopts('ls:', \%opts);
 
 
@@ -34,24 +36,29 @@ print "indexing:\n";
 
 foreach my $lot (1 .. 4096) {
 
-	my $Path = Boitho::Lot::GetFilPathForLot($lot,$subname);
-	chop $Path;
-	print "$Path\n";
+	my $path = Boitho::Lot::GetFilPathForLot($lot,$subname);
+	chop $path;
 
-	if (!(-e $Path)) {
+	my $dirtyfile = $path . '/dirty';
+
+	print "$path\n";
+	print "name $dirtyfile\n";
+	print "lot $lot, subname $subname\n";
+
+	if (!(-e $path)) {
 		last;
 	}
+
+
 	if (-e $dirtyfile) {
 
 
-		print "name $dirtyfile\n";
-		print "lot $lot, subname $subname\n";
-
-		$command = $ENV{'BOITHOHOME'} . "/bin/IndexerLotbb -i $lot \"$subname\"";
+		
+		my $command = $ENV{'BOITHOHOME'} . "/bin/IndexerLotbb -i $lot \"$subname\"";
 		print "runing $command\n";
 		system($command);
 
-		$command = $ENV{'BOITHOHOME'} . "/bin/mergeUserToSubname $lot \"$subname\"";
+		my $command = $ENV{'BOITHOHOME'} . "/bin/mergeUserToSubname $lot \"$subname\"";
 		print "runing $command\n";
 		system($command);
 
@@ -68,28 +75,28 @@ print "\nmergeIIndex:\n";
 foreach my $key (keys %hiestinlot) {
 	print "key $key, value \"$hiestinlot{$key}\"\n";
 
-	$command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} Main aa \"$key\"";
+	my $command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} Main aa \"$key\"";
 	print "runing $command\n";
 	system($command);
 
-	$command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} acl_allow aa \"$key\"";
+	my $command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} acl_allow aa \"$key\"";
 	print "runing $command\n";
 	system($command);
 
-	$command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} acl_denied aa \"$key\"";
+	my $command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} acl_denied aa \"$key\"";
 	print "runing $command\n";
 	system($command);
 
-	$command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} attributes aa \"$key\"";
+	my $command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} attributes aa \"$key\"";
 	print "runing $command\n";
 	system($command);
 
-        $command = $ENV{'BOITHOHOME'} . "/bin/sortCrc32attrMap \"$key\"";
+        my $command = $ENV{'BOITHOHOME'} . "/bin/sortCrc32attrMap \"$key\"";
         print "runing $command\n";
         system($command);
 
 	#kjører garbage collection.
-#	$command = $ENV{'BOITHOHOME'} . "/bin/gcRepobb \"$key\"";
+#	my $command = $ENV{'BOITHOHOME'} . "/bin/gcRepobb \"$key\"";
 #	print "runing $command\n";
 #	system($command);
 
@@ -102,7 +109,7 @@ recdir($ENV{'BOITHOHOME'} . "/var/cache");
 
 
 # unlocking
-close($lockfile) or warn($!);
+close(LOCKF) or warn($!);
 unlink($lockfile) or warn($!);
 
 
