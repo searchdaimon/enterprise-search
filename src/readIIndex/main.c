@@ -17,7 +17,7 @@ int main (int argc, char *argv[]) {
 	unsigned char langnr;
 
         if (argc < 2) {
-                printf("Dette programet printer ut en iindex. Gi den en fil inn\n\n");
+                printf("This program prints an inverted index. Pleas specify iindex file\n\n\tUsage: ./readIIndex /boithoData/lot/1/iindex/collection/Main/index/aa/1.txt");
                 exit(0);
         }
 

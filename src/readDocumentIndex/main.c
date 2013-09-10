@@ -13,8 +13,8 @@ int main (int argc, char *argv[]) {
 	unsigned int DocID;
 
         if (argc < 3) {
-                printf("Dette programet leser en DocumentIndex. Gi det et lot nr. \n\n\tUsage: ./readDocumentIndex 1");
-               exit(0);
+        	printf("This program prints a document index for a lot.\n\n\tUsage: ./readDocumentIndex 1 collection\n\n");
+		exit(0);
         }
 
 	LotNr = atoi(argv[1]);
@@ -28,9 +28,6 @@ int main (int argc, char *argv[]) {
 			printf("DocID: %u, url: %s, RepositoryPointer %u, lastSeen %s",DocID,DocumentIndexPost.Url,DocumentIndexPost.RepositoryPointer,ctime(&DocumentIndexPost.lastSeen));
 		}
 	}
-
-
-	//DIClose();
 
 
 }
