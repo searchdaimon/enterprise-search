@@ -259,7 +259,6 @@ void sd_close(int bbdnsock, char *coll) {
         row = mysql_fetch_row(mysqlres);
         systemcont = (row == NULL) ? -1 : atoi(row[0]);
 
-fprintf(stderr, "systemcont=%i\n",systemcont);
 	free(query);
 	
 
@@ -645,7 +644,7 @@ int main(int argc, char **argv, char **envp)
 
 			// add in to repo
 	        	if (bbdn_docadd(bbdnsock, coll, url, "", data, postsize, 0, "Everyone", "", "", "", cgi_getentrystr("attributes")) != 1) {
-				cgi_error(500, "Can't add document");
+				cgi_error(500, "bbdn_docadd() failed. Can't add document.");
 			}
 
 			
