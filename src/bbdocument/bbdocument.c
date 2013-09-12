@@ -1160,7 +1160,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 		if (lastmodifiedForExistTest == lastmodified) {
 			printf("bbdocument_add: Uri \"%s\" all redy exist with DocID \"%u\" and time \"%u\"\n",documenturi,DocIDForExistTest,lastmodifiedForExistTest);
-			return 0;
+			return 1;
 		}
 		//hvis url er kjent, men oppdater rebruker vi den.
 		ReposetoryHeader.DocID = DocIDForExistTest;
