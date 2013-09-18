@@ -83,8 +83,12 @@
 						[% END %]
 					</td>
 					<td>
-						[% IF c.active || c.is_pushed %]
-							[% c.doc_count %]&nbsp;documents
+						[% IF connectors_max_count %]
+							&nbsp;
+						[% ELSE %]
+							[% IF c.active || c.is_pushed %]
+								[% c.doc_count %]&nbsp;documents
+							[% END %]
 						[% END %]
 					</td>
 					<td>

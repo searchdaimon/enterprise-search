@@ -100,6 +100,19 @@ sub list_collections {
 	$vars->{connectors} 
             = [ $s->gen_collection_list() ];
 
+	$vars->{connectors_count} = 0;
+
+	for my $conn (@{ $vars->{connectors} }) {
+		if ($conn->{'collections'}) {
+			$vars->{connectors_count} += scalar( @{$conn->{'collections'}} );
+		}
+	}
+
+	$vars->{connectors_max_count} = 0;
+	if ($vars->{connectors_count} > MAX_COLL_DOC_COUNT) {
+		$vars->{connectors_max_count} = 1;
+	}	
+
 	$s->_post_setup_check($vars)
 		if $from_setup;
 
