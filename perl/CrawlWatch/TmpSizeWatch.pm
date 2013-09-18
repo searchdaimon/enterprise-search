@@ -37,8 +37,10 @@ sub canLock {
 	    return 0;
 	}
 
-	unless (flock(FH, LOCK_EX|LOCK_EX)) {
+	unless (flock(FH, LOCK_EX|LOCK_NB)) {
 		print STDERR "Can't lock $filename: $!\n";
+		close(FH);
+		return 0;
 	}
 
 	close(FH);
@@ -52,6 +54,7 @@ sub cleaneFolder {
 
 	#lager en array over alle /tmp filer
         my @files = getCandidates($folder);
+
 
         foreach my $file (@files) {
 
@@ -91,7 +94,7 @@ sub run {
 
 	$self->cleaneFolder("/coredumps/saved", 86400 * 5); #5 dager
 
-
+	$self->{'log'}->write("TmpSizeWatch done.");
     1;
 }
 

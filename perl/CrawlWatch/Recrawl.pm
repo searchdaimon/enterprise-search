@@ -139,6 +139,7 @@ sub coll_create_sql {
     WHERE active = 1
         AND $rate
         AND {where_clause}
+	AND connector!=14
     ORDER BY next DESC";
     
     my $clause = ($fetch_all) ? "1 = 1"
