@@ -12,7 +12,7 @@ struct config_t maincfgopen() {
 
 	/* Load the file */
         #ifdef DEBUG
-	        printf("loading [%s]..\n",bfile(cfg_main));
+	        fprintf(stderr, "loading [%s]..\n",bfile(cfg_main));
         #endif
 
         if (!config_read_file(&cfg, bfile(cfg_main))) {

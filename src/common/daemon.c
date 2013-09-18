@@ -500,7 +500,7 @@ int sendall(int s, void *buf, int len) {
 	int tosend;
 	
 	#ifdef DEBUG
-		printf("sendall(s=%i, len=%i)\n",s,len);
+		fprintf(stderr, "sendall(s=%i, len=%i)\n",s,len);
 	#endif
 
         while(total < len) {
@@ -658,7 +658,7 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 	int forret = 0;
 
 	#ifdef DEBUG
-		printf("sendpacked(socket=%i, command=%d, version=%d, dataSize=%i, subname=%s)\n",socket,command,version,dataSize,subname);
+		fprintf(stderr, "sendpacked(socket=%i, command=%d, version=%d, dataSize=%i, subname=%s)\n",socket,command,version,dataSize,subname);
 	#endif
 
 	//siden vi skal sende pakken over nettet er det like g�tt � nullstille all data. Da slipper vi at valgring klager ogs�.
@@ -697,7 +697,7 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 		}
 
 	#ifdef DEBUG
-		printf("~sendpacked(ret=%i)\n",forret);
+		fprintf(stderr, "~sendpacked(ret=%i)\n",forret);
 	#endif
 
 	//dene returneres altid, ogs� hvs vi ikke gjort en gotoend_error

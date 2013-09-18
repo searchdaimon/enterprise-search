@@ -537,7 +537,7 @@ xml_users(xmlDocPtr doc, xmlNodePtr top)
 	// Get usersystem id
 	usersystem = atoi((char *)xmlGetProp(top, (xmlChar *)"usersystem"));
 	#ifdef DEBUG
-	fprintf(stderr, "Got a usersystem: %d\n", usersystem);
+		fprintf(stderr, "Got a usersystem: %d\n", usersystem);
 	#endif
 
 	for (cur = top->xmlChildrenNode; cur != NULL; cur = cur->next) {
@@ -549,7 +549,7 @@ xml_users(xmlDocPtr doc, xmlNodePtr top)
 
 			querylen = snprintf(query, sizeof(query), "DELETE FROM foreignUserSystem WHERE usersystem = %d", usersystem);
 			#ifdef DEBUG
-			fprintf(stderr, "Deleting old usersystem rows: %s\n", query);
+				fprintf(stderr, "Deleting old usersystem rows: %s\n", query);
 			#endif
 			if (mysql_real_query(&db, query, querylen)) {
 				fprintf(stderr, "Failed to remove rows, Error: %s\n", mysql_error(&db));
@@ -615,12 +615,12 @@ int main(int argc, char **argv, char **envp)
 		sscanf(requrle,"/%[a-z]/%[a-zA-Z0-9_-]/%[^?]", api, coll, url);
 
 		#ifdef DEBUG
-			printf("api: \"%s\"\n",api);
-			printf("coll: \"%s\"\n",coll);
-			printf("url: \"%s\"\n",url);
-			printf("request_method: \"%s\"\n",request_method);
-			printf("reques url \"%s\"\n",getenv("REQUEST_URI"));
-			printf("reques url unescaped \"%s\"\n",requrle);
+			fprintf(stderr, "api: \"%s\"\n",api);
+			fprintf(stderr, "coll: \"%s\"\n",coll);
+			fprintf(stderr, "url: \"%s\"\n",url);
+			fprintf(stderr, "request_method: \"%s\"\n",request_method);
+			fprintf(stderr, "reques url \"%s\"\n",getenv("REQUEST_URI"));
+			fprintf(stderr, "reques url unescaped \"%s\"\n",requrle);
 		#endif
 
 		free(requrle);
