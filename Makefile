@@ -64,6 +64,7 @@ init.d.stop:
 	@echo ""
 	@echo "$@:"
 
+	init.d/crawl_watch stop
 	init.d/boitho-bbdn stop
 	init.d/crawlManager stop
 	init.d/searchdbb stop
@@ -74,6 +75,7 @@ init.d.start:
 	@echo ""
 	@echo "$@:"
 
+	init.d/crawl_watch start
 	init.d/boitho-bbdn start
 	init.d/crawlManager start
 	init.d/searchdbb start

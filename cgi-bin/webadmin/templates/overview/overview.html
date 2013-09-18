@@ -12,12 +12,17 @@
 	   # Normal view. 
 	  %]
 	
-	[% INCLUDE 'header.html' 
-		title = 'Collections overview'
-		extra_js = ['jquery', 'overview_update']
-		onload = 'overview_update_interval(3)'
-	%]
-
+	[% IF connectors_max_count %]
+		[% INCLUDE 'header.html' 
+			title = 'Collections overview'
+		%]
+	[% ELSE %]
+		[% INCLUDE 'header.html' 
+			title = 'Collections overview'
+			extra_js = ['jquery', 'overview_update']
+			onload = 'overview_update_interval(3)'
+		%]
+	[% END %]
 	[% PROCESS overview_messages.html %]
 
 	[% IF error_usersys %]
@@ -27,7 +32,14 @@
 			Please fix the <a href="usersys.cgi?view=edit&id=[% error_usersys.sys_id %]">user system setup</a>.
 		[% END %]
 	[% END %]
-	
+
+
+	[% IF connectors_max_count %]
+		[% WRAPPER 'tpl_msg.html' type="info" %]
+			You have to many collections for me to lockup the size for each one. Instead view the size at the console tab for each collection.
+		[% END %]
+	[% END %]	
+
 	<h1>Collections</h1>
 	     [% PROCESS pretty_button 
 		icon = "edit_add"
