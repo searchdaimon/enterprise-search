@@ -263,7 +263,7 @@ void sd_close(int bbdnsock, char *coll) {
 	
 
         // create the collections if it don't exist
-        asprintf(&query, "INSERT IGNORE INTO shares VALUES (NULL,'',14,1,NULL,0,NOW(),0,'','','','','',NULL,'Pushing has started.','%s',NULL,NULL,NULL,NULL,'%s',NULL)", coll, systemcont == 0 ? "anonymous" : "acl" );
+        asprintf(&query, "INSERT IGNORE INTO shares VALUES (NULL,'',14,1,NULL,0,NOW(),0,'','','','','',NULL,'Pushing has started.','%s',NULL,NULL,0,NULL,'%s',NULL)", coll, systemcont == 0 ? "anonymous" : "acl" );
 
         if (mysql_real_query(&db, query, strlen(query))) {
         	fprintf(stderr, "Failed to insert row, Error: %s\n", mysql_error(&db));
