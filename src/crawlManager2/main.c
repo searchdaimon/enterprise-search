@@ -854,31 +854,21 @@ collectionsforuser_collection(struct hashtable *collections, char *user, struct 
 {
 	char subnamebuf[maxSubnameLength];
 	int n_collections, i;
-	char **list;
 
 	#ifdef DEBUG
 		bblog(DEBUGINFO, "collectionsforuser_collection:  user=%s", user);
 	#endif
 
-	if (!userToSubname_getsubnamesAsString(usertosubname, user, subnamebuf, sizeof(subnamebuf)))
-		return 0;
+        int num_colls;
+        char **list = userToSubname_getsubnamesList(usertosubname, user, &num_colls);
+        if (list == NULL)
+                return 0;
 
-	n_collections = split(subnamebuf, ",", &list);
-
-	#ifdef DEBUG
-		bblog(DEBUGINFO, "  n_collections=%i",  n_collections);
-	#endif
-
-	for (i = 0; i < n_collections; i++) {
-		#ifdef DEBUG
-	        bblog(DEBUGINFO, "    collection[%i] = %s",  i, list[i]);
-	        #endif
-
+	for (; i < num_colls; i++) {
 		if (!hashtable_search(collections, list[i]))
 			hashtable_insert(collections, strdup(list[i]), (void*)0x1);
-	}
 
-	FreeSplitList(list);
+	}
 
 	return 0;
 }
@@ -1023,6 +1013,7 @@ collectionsforuser(char *user, char **_collections, MYSQL *db)
 	p = *_collections = calloc(n, maxSubnameLength+1/*, and null terminator*/);
 
 	// Get all collections...
+	bblog(INFO, "Collections for user \"%s\":",user);
 	itr = hashtable_iterator(collections);
 	do {
 		char *name = hashtable_iterator_key(itr);
