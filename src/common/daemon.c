@@ -112,7 +112,7 @@ int sconnect (void (*sh_pointer) (int), int PORT, int noFork, int breakAfter) {
         int yes=1;
 	pid_t session;
 	pid_t leader;
-	static count = 0;
+	static int count = 0;
 
 	leader = getpid();
 	session = getpgrp();

@@ -164,7 +164,7 @@ int bbdn_docexist(int socketha,char subname[],char documenturi[],unsigned int la
 }
 
 //stenger ned å kjører etterpehandler på en koleksin. Dette er ikke det samme som å stenge ned socketen
-int bbdn_closecollection(int socketha, char subname[]) {
+int bbdn_closecollection(int socketha, const char subname[]) {
 
 	int len, intrespons, i;
 	

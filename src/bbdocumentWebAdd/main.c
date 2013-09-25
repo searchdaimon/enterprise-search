@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -293,19 +295,19 @@ int sd_deletecollection(int bbdnsock, char *coll) {
         // delete in the db
         if (mysql_init(&db) == NULL) {
                 fprintf(stderr, "Unable to init mysql.\n");
-	        return;
+	        return 0;
         }
 
         if (!mysql_real_connect(&db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)) {
         	fprintf(stderr, "Unable to connect to database: %s\n", mysql_error(&db));
-                return ;
+                return 0;
         }
 
         asprintf(&query, "UPDATE shares set crawler_success=1,crawler_message=\"Deleting.\",last=now() WHERE collection_name=\"%s\"", coll);
 
 	if (mysql_real_query(&db, query, strlen(query))) {
         	fprintf(stderr, "Failed to update row, Error: %s\n", mysql_error(&db));
-                return;
+                return 0;
 	}
 
 
@@ -318,7 +320,7 @@ int sd_deletecollection(int bbdnsock, char *coll) {
 
         if (mysql_real_query(&db, query, strlen(query))) {
         	fprintf(stderr, "Failed to update row, Error: %s\n", mysql_error(&db));
-                return;
+                return 0;
         }
 
 
@@ -334,8 +336,6 @@ void
 xml_close(int sock, xmlDocPtr doc, xmlNodePtr top)
 {
 	xmlNodePtr n;
-	char *query;
-	MYSQL db;
 
 	#ifdef DEBUG
 		fprintf(stderr, "Going to close something!\n");
@@ -466,7 +466,7 @@ xml_gcwhispers(int sock, xmlDocPtr doc, xmlNodePtr top)
 	w = 0;
 	for (cur = top->xmlChildrenNode; cur != NULL; cur = cur->next) {
 		if (xmlStrcmp(cur->name, (xmlChar *)"whisper") == 0) {
-			char *str, *p;
+			char *str;
 
 			str = (char *)xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
 			if (str == NULL)
@@ -509,7 +509,7 @@ xml_errormsg(int sock, xmlDocPtr doc, xmlNodePtr top)
 		return;
 	}
 	now = time(NULL);
-	strlcpy(stime, ctime(&now));
+	strcpy(stime, ctime(&now));
 	stime[strlen(stime)-1] = '\0';
 	fprintf(fp, "%s: %s\n", stime, msg);
 	fclose(fp);
