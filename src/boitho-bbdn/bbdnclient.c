@@ -60,8 +60,9 @@ int bbdn_close(int socketha) {
 	return 1;
 }
 
-int bbdn_docadd(int socketha,char subname[],char documenturi[],char documenttype[],char document[],
-	int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied, char title[],char doctype[], char *attributes) {
+int bbdn_docadd(int socketha, const char subname[], const char documenturi[], const char documenttype[], const char document[],
+	const int dokument_size, const unsigned int lastmodified, const char *acl_allow, const char *acl_denied, const char title[], 
+	const char doctype[], const char *attributes) {
 
 	int len, intrespons, i;
 	char *blank = "";
@@ -82,6 +83,9 @@ int bbdn_docadd(int socketha,char subname[],char documenturi[],char documenttype
         if(sendall(socketha,documenturi, len) == 0) { perror("sendall documenturi"); return 0; }
 
         //documenttype
+	if (documenttype==NULL) {
+		documenttype = blank;
+	}
         len = strlen(documenttype) +1;
 	debug("sending (len %i): \"%s\"",len,documenttype);
         if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall documenttype len"); return 0; }
@@ -101,24 +105,36 @@ int bbdn_docadd(int socketha,char subname[],char documenturi[],char documenttype
         if(sendall(socketha,&lastmodified, sizeof(int)) == 0) { perror("sendall lastmodified"); return 0; }
 
         //acl_allow
+	if (acl_allow==NULL) {
+		acl_allow = blank;
+	}
         len = strlen(acl_allow) +1;
 	debug("sending (len %i): \"%s\"",len,acl_allow);
         if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall acl_allow len"); return 0; }
         if(sendall(socketha,acl_allow, len) == 0) { perror("sendall acl_allow"); return 0; }
 
         //acl_denied
+	if (acl_denied==NULL) {
+		acl_denied = blank;
+	}
         len = strlen(acl_denied) +1;
 	debug("sending (len %i): \"%s\"",len,acl_denied);
         if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall acl_denied len"); return 0; }
         if(sendall(socketha,acl_denied, len) == 0) { perror("sendall acl_denied"); return 0; }
 
         //title
+	if (title==NULL) {
+		title = blank;
+	}
         len = strlen(title) +1;
 	debug("sending (len %i): \"%s\"",len,title);
         if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall title len"); return 0; }
         if(sendall(socketha,title, len) == 0) { perror("sendall title"); return 0; }
 
         //doctype
+	if (doctype==NULL) {
+		doctype = blank;
+	}
         len = strlen(doctype) +1;
 	debug("sending (len %i): \"%s\"",len,doctype);
         if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall doctype len"); return 0; }
@@ -171,7 +187,7 @@ int bbdn_closecollection(int socketha, char subname[]) {
 }
 
 /* Delete an uri from the system */
-int bbdn_deleteuri(int socketha, char subname[], char *uri) {
+int bbdn_deleteuri(int socketha, const char subname[], const char *uri) {
 
 	int len, intrespons, i;
 	
@@ -198,7 +214,7 @@ int bbdn_deleteuri(int socketha, char subname[], char *uri) {
 }
 
 /* Delete an collection from the system */
-int bbdn_deletecollection(int socketha, char subname[]) {
+int bbdn_deletecollection(int socketha, const char subname[]) {
 	int len, i;
 	int intrespons = 0;
 	
