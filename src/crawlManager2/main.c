@@ -864,7 +864,7 @@ collectionsforuser_collection(struct hashtable *collections, char *user, struct 
         if (list == NULL)
                 return 0;
 
-	for (; i < num_colls; i++) {
+	for (i=0; i < num_colls; i++) {
 		if (!hashtable_search(collections, list[i]))
 			hashtable_insert(collections, strdup(list[i]), (void*)0x1);
 

@@ -703,12 +703,13 @@ int in_collectionlist(char *coll, char **wantcolls, int n_wantcolls) {
 	int i;
 
 	if (n_wantcolls == 0) {
-		//fprintf(stderr, "Go ahead...\n");
 		return 1;
 	}
 	
 	for (i = 0; i < n_wantcolls; i++) {
-		//fprintf(stderr, "Checking %s <-> %s\n", coll, wantcolls[i]);
+		#ifdef DEBUG
+			fprintf(stderr, "in_collectionlist: Checking \"%s\" <-> \"%s\"\n", coll, wantcolls[i]);
+		#endif
 		if (strcmp(coll, wantcolls[i]) == 0) {
 			return 1;
 		}
@@ -859,11 +860,9 @@ int main(int argc, char *argv[])
 	#endif
 	dprintf("struct SiderFormat size %i\n",sizeof(struct SiderFormat));
 
-	bblog(DEBUGINFO, "started dispatcher");
 	bblog_init("dispatcher");
 	bblog_set_appenders(LOGGER_APPENDER_FILE);
-	//bblog_set_severity(100);
-	bblog(CLEAN, "started dispatcher");
+	bblog(DEBUGINFO, "started dispatcher");
 
 
 	struct config_t maincfg;

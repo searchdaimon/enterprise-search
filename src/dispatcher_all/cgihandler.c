@@ -156,7 +156,9 @@ void _cgistr_to_str(char *dst, char *cgi_key, size_t dst_len) {
 		strscpy(dst, tmpstr, dst_len);
 	else {
 		dst[0] = '\0';
-		warnx("%s not provided", cgi_key);
+		#ifdef DEBUG
+			warnx("%s not provided", cgi_key);
+		#endif
 	}
 }
 
@@ -227,7 +229,9 @@ void cgi_fetch_full(struct QueryDataForamt *qdata) {
 		strscpy(qdata->userip, tmpstr, sizeof(qdata->userip));
 	}
 	else {
-		warnx("User IP not provided.");
+		#ifdef DEBUG
+			warnx("User IP not provided.");
+		#endif
 		qdata->userip[0] = '\0';
 	}
 
@@ -250,7 +254,10 @@ void cgi_fetch_full(struct QueryDataForamt *qdata) {
 		base64_decode(qdata->navmenucfg, tmpstr, sizeof qdata->navmenucfg);
 	}
 	else {
-		warnx("navmenucfg not provided");
+		#ifdef DEBUG
+			warnx("navmenucfg not provided");
+		#endif
+
 		qdata->navmenucfg[0] = '\0';
 	}
 

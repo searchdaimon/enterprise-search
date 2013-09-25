@@ -155,13 +155,12 @@ int userToSubname_getsubnamesAsString(struct userToSubnameDbFormat *userToSubnam
 
 	subnames[0] = '\0';
 
-	int num_colls;
+	int num_colls, i;
 	char **names_list = userToSubname_getsubnamesList(userToSubnameDb, username, &num_colls);
 	if (names_list == NULL)
 		return 0;
 
-	int i = 0;
-	for (; i < num_colls; i++) {
+	for (i=0; i < num_colls; i++) {
 		strlwcat(subnames, names_list[i], subnameslen);
 		strlwcat(subnames,",",subnameslen);
 	}

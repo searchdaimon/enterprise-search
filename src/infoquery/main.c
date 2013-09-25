@@ -229,19 +229,14 @@ int main (int argc, char *argv[]) {
                 for (i = 0; i < r; i++) {
                 	printf("group: %s\n", group);
 
-			if (userToSubname_getsubnamesAsSaa(&userToSubnameDb,group,&collections, &nrofcollections)) {
+			collections = userToSubname_getsubnamesList(&userToSubnameDb, group, &nrofcollections);
+			if (collections == NULL) {
+				continue;
+			}
 
-
-				if (nrofcollections != 0) {
-					printf("collections: %i\n",nrofcollections);
-
-					for(y=0;y<nrofcollections;y++) {
-						printf("collection: %s\n",collections[y]);
-					}
-
-					saafree(collections);
-
-				}
+			printf("collections: %i\n",nrofcollections);
+			for (y=0; y < nrofcollections; y++) {
+				printf("collection: %s\n",collections[y]);
 			}
 
                         group += MAX_LDAP_ATTR_LEN;
