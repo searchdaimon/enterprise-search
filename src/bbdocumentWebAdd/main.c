@@ -226,7 +226,7 @@ xml_delete(int sock, xmlDocPtr doc, xmlNodePtr top)
 }
 
 
-void sd_close(int bbdnsock, char *coll) {
+void sd_close(int bbdnsock, const char *coll) {
 
         char *query;
         MYSQL db;
@@ -643,7 +643,19 @@ int main(int argc, char **argv, char **envp)
 	                data[postsize] = '\0';
 
 			// add in to repo
-	        	if (bbdn_docadd(bbdnsock, coll, url, "", data, postsize, 0, "Everyone", "", "", "", cgi_getentrystr("attributes")) != 1) {
+	        	if (bbdn_docadd(bbdnsock, 
+					coll, 											// collection name
+					url, 											// url
+					cgi_getentrystr("documenttype"), 							// document type
+					data,											// data
+					postsize, 										// data size
+					0, 											// lastmodified
+					cgi_getentrystr("acl_allow")!=NULL ? cgi_getentrystr("acl_allow") : "Everyone", 	// acl allow
+					cgi_getentrystr("acl_denied"), 								// acl denied
+					cgi_getentrystr("title"), 								// title
+					cgi_getentrystr("documentformat"), 							// document format
+					cgi_getentrystr("attributes")								// attributes
+				) != 1) {
 				cgi_error(500, "bbdn_docadd() failed. Can't add document.");
 			}
 
@@ -698,13 +710,12 @@ int main(int argc, char **argv, char **envp)
 	}
 	else if ((cgi_getentrystr("do") != NULL) && (strcmp(cgi_getentrystr("do"),"add") == 0)) {
 
-		char *url, *coll;
 		char *data;
 		int datasize;
 		int n;
 
-		url = getenv("HTTP_X_FILENAME") ? getenv("HTTP_X_FILENAME") : cgi_getentrystr("url");
-		coll = cgi_getentrystr("collection");
+		const char *url = getenv("HTTP_X_FILENAME") ? getenv("HTTP_X_FILENAME") : cgi_getentrystr("url");
+		const char *coll = cgi_getentrystr("collection");
 
 		if (url == NULL) {
 			cgi_error(500, "No url specified. Either set http header HTTP_X_FILENAME or get parameter 'url'.\n");
@@ -750,10 +761,8 @@ int main(int argc, char **argv, char **envp)
 	else if ((cgi_getentrystr("do") != NULL) && (strcmp(cgi_getentrystr("do"),"delete") == 0)) {
 
 
-		char *url, *coll;
-
-		url = getenv("HTTP_X_FILENAME") ? getenv("HTTP_X_FILENAME") : cgi_getentrystr("url");
-		coll = cgi_getentrystr("collection");
+		const char *url = getenv("HTTP_X_FILENAME") ? getenv("HTTP_X_FILENAME") : cgi_getentrystr("url");
+		const char *coll = cgi_getentrystr("collection");
 
 		if (url == NULL) {
 			cgi_error(500, "No url specified. Either set http header HTTP_X_FILENAME or get parameter 'url'.\n");
