@@ -34,7 +34,7 @@ int sconnect_simple(void (*sh_pointer) (int), int port);
 
 int cconnect (char *hostname, int PORT);
 
-int sendall(int s, void *buf, int len);
+int sendall(int s, const void *buf, int len);
 
 int recvall(int sockfd, void *buf, int len);
 

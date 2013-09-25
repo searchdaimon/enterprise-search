@@ -492,7 +492,7 @@ int cconnect (char *hostname, int PORT) {
 } 
 
 
-int sendall(int s, void *buf, int len) {
+int sendall(int s, const void *buf, int len) {
 
         int total = 0;        // how many bytes we've sent
         int bytesleft = len; // how many we have left to send
