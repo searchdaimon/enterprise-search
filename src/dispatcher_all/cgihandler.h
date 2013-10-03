@@ -1,5 +1,6 @@
 #ifndef _H_DISPATCHER_CGIHANDLER
 #define _H_DISPATCHER_CGIHANDLER
+
 #include "../common/define.h"
 
 #define ACCESS_TYPE_NONE 0

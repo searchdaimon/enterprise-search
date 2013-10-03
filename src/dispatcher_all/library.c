@@ -1,57 +1,44 @@
-/*
-    #include <arpa/inet.h>
-    #include <stdio.h>
-    #include <unistd.h>
-    #include <errno.h>
-    #include <string.h>
-    #include <sys/file.h>
-    #include <arpa/inet.h>
-    #include <netinet/in.h>
-    #include <sys/socket.h>
-    #include <fcntl.h>
-    #include <sys/types.h>
-    #include <netinet/in.h>
-*/
-    #include "../common/boithohome.h"
-    #include "../common/timediff.h"   
-    #include "../common/bstr.h"   
-    #include "../common/daemon.h"   
-    #include "../common/stdlib.h"
-
-    #include <mysql_version.h>
-    #include <stdarg.h>
-    #include <stdio.h>
-    #include <stdlib.h>
-    #include <unistd.h>
-    #include <errno.h>
-    #include <string.h>
-    #include <netdb.h>
-    #include <sys/types.h>
-    #include <sys/stat.h>
-    #include <unistd.h>
-    #include <errno.h>
-    #include <time.h>
-    #include <errno.h>
-    #include <locale.h>
-    #include <fcntl.h>
-    #include <zlib.h>
-    #include <sys/file.h>
+#include <mysql_version.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+#include <time.h>
+#include <errno.h>
+#include <locale.h>
+#include <fcntl.h>
+#include <zlib.h>
+#include <sys/file.h>
 #include <err.h>
 #include <assert.h>
 
-    #include "library.h"
+#include "../common/boithohome.h"
+#include "../common/timediff.h"   
+#include "../common/bstr.h"   
+#include "../common/daemon.h"   
+#include "../common/stdlib.h"
 #include "../common/debug.h"
 
-    #define MAXDATASIZE 100 // max number of bytes we can get at once 
+
+#include "library.h"
 
 
-    #define maxerrors 5
-    #define maxerrorlen 201
+#define MAXDATASIZE 100 // max number of bytes we can get at once 
+
+#define maxerrors 5
+#define maxerrorlen 201
 
 #ifdef DEBUG
-#define dprintf(str, args...) printf(str, ##args)
+	#define dprintf(str, args...) printf(str, ##args)
 #else
-#define dprintf(str, args...) 
+	#define dprintf(str, args...) 
 #endif
 
 
@@ -191,23 +178,19 @@ int bsconnect (int *sockfd, char server[], int port, int timeoutInSec) {
 
 			//hvis vi ikke fikk noen error er vi nå kobblet til
 			if (nerror == 1) {
-				//connected[i] = 1;
 				returnstatus = 1;
 			}
 			else {
-				//connected[i] = 0;
 				perror(server);
 				returnstatus = 0;
 			}
 		}
 		else {
 			perror(server);
-			//connected[i] = 0;
 			returnstatus = 0;
 		}
 	}
 	else {
-		//connected[i] = 1;
 		returnstatus = 1;
 	}
 
@@ -227,7 +210,6 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
         struct timespec time;
         int socketWait;
 	int n;
-	//int i;
 	int returnstatus = 1;
 
 	//hvsi vi fikk en sokket som ikke har noen verdi. Sikkert da den har blit kanselert før
@@ -256,20 +238,15 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 				//noe feil har skjed, eksitter
 				perror("recv SiderHeder");
 
-				//ToDo: utestet
-				//connected[i] = 0;
 				returnstatus = 0;
 				break;
 			}
 		}
 		else if (n==0) {
-			//nanosleep(&time,NULL);
-			//++socketWait;
 			dprintf("n==0. Peer has performed an orderly shutdown when trying to read\n");
-#ifdef DEBUG
-			perror("recv SiderHeder");
-#endif
-			//connected[i] = 0;
+			#ifdef DEBUG
+				perror("recv SiderHeder");
+			#endif
 			returnstatus = 0;
 			break;
 
@@ -298,9 +275,7 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 
 }
 
-int
-bsQuery(int *sock, void *data, size_t data_size) {
-	//printf("Sending %d\n", data_size);
+int bsQuery(int *sock, void *data, size_t data_size) {
 	if (sock == 0)
 		return 0;
 
@@ -321,7 +296,6 @@ int bsMultiConnect(int *sockfd, int server_cnt, char **servers, int port, int of
 		if (!bsconnect(&sockfd[i + offset], servers[i], port, maxSocketWait_Connect)) {
 			fprintf(stderr,"can't connect to server \"%s\"\n", servers[i]);
 			sockfd[i] = 0;
-			// Runarb 23 nov 2009: Skal vi virkelig returnere her. Kan vi ikke ha andre servere å koble til ?
 			return 0;
 		}
 	}
@@ -390,12 +364,9 @@ void bdread(int sockfd[],int nrof,int datasize, void *result, int maxSocketWait)
 	int i,n;
 	void *thisresult;
         struct timespec time;
-	/* Initialize the time data structure. */
-        time.tv_sec = 0;
-        //time.tv_usec = 10 * 1000000; // milliseconds * nanosec. 10 * 1000000 = 0.01 sek
-        time.tv_nsec = 10000000; // i nanoseconds = 0.01 sek
 
-	printf("datasize %i\n",datasize);
+        time.tv_sec = 0;
+        time.tv_nsec = 10000000; // i nanoseconds = 0.01 sek
 
 	//inaliserer sendt og bytesleft
 	for (i=0;i<nrof;i++) {
@@ -425,21 +396,14 @@ void bdread(int sockfd[],int nrof,int datasize, void *result, int maxSocketWait)
 					//noe feil har skjed, eksitter
 					perror("bdread: recv SiderHeder");
 		
-					//ToDo: utestet
-					//connected[i] = 0;
 					close(sockfd[i]);
 					sockfd[i] = 0;
 				}
 			}
 			else if (n==0) {
-				//nanosleep(&time,NULL);
-				//++socketWait;
 				dprintf("n==0. Peer has performed an orderly shutdown when trying to read\n");
-                                //connected[i] = 0;
 				close(sockfd[i]);
 				sockfd[i] = 0;
-
-
 			}
 			else {
 				sendt[i] +=n;
@@ -458,12 +422,12 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 	int net_status;
 
 	#ifdef DEBUG_TIME
-	struct timeval start_time, end_time;
-	gettimeofday(&start_time, NULL);
+		struct timeval start_time, end_time;
+		gettimeofday(&start_time, NULL);
 	#endif
 
 	#ifdef DEBUG
-	printf("brGetPages: alreadynr %i, *pageNr %i, nrOfServers %i\n",alreadynr,*pageNr,nrOfServers);
+		printf("brGetPages: alreadynr %i, *pageNr %i, nrOfServers %i\n",alreadynr,*pageNr,nrOfServers);
 	#endif
 
 	//sejjer om vi har fåt et midlertidig svar på at jobben har begynt
@@ -485,13 +449,11 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 	}
 	/****************************************************************/
 	#ifdef DEBUG_TIME
-	gettimeofday(&end_time, NULL);
-	dprintf("Time debug: brGetPages.jobstart pages %f\n",getTimeDifference(&start_time,&end_time));
+		gettimeofday(&end_time, NULL);
+		dprintf("Time debug: brGetPages.jobstart pages %f\n",getTimeDifference(&start_time,&end_time));
+		gettimeofday(&start_time, NULL);
 	#endif
 
-	#ifdef DEBUG_TIME
-	gettimeofday(&start_time, NULL);
-	#endif
 
 	for (i=alreadynr;i<nrOfServers+alreadynr;i++) {
 
@@ -506,7 +468,7 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 				continue; // ingen vits i å fortsette å lese fra denne hvis vi ikke fik til å gjøre dette read kallet
 			}
 
-			#ifdef ATTRIBUTES
+#ifdef ATTRIBUTES
 			if ((SiderHeder[i].navigation_xml = malloc( sizeof(char) * (SiderHeder[i].navigation_xml_len +1)) ) == NULL) {
 				perror("Can't malloc data for navigation_xml");
 				continue; // ingen vits å å fortsette mer
@@ -515,7 +477,7 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 			if (!bsread (&sockfd[i], SiderHeder[i].navigation_xml_len, SiderHeder[i].navigation_xml, maxSocketWait_SiderHeder)) {
 				dprintf("brGetPages: Failed to bsread navigation_xml");
 				continue; // ingen vits å å fortsette mer
-		    	}
+			}
 
 			SiderHeder[i].navigation_xml[SiderHeder[i].navigation_xml_len] = '\0';
 
@@ -523,18 +485,14 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 				printf("\n\nnavigation_xml: %s\n\n", SiderHeder[i].navigation_xml);
 			#endif
 
-			#endif
+#endif
 		}
 	}
 
 	#ifdef DEBUG_TIME
-	gettimeofday(&end_time, NULL);
-	dprintf("Time debug: brGetPages.reading heder pages %f\n",getTimeDifference(&start_time,&end_time));
-	#endif
-
-
-	#ifdef DEBUG_TIME
-	gettimeofday(&start_time, NULL);
+		gettimeofday(&end_time, NULL);
+		dprintf("Time debug: brGetPages.reading heder pages %f\n",getTimeDifference(&start_time,&end_time));
+		gettimeofday(&start_time, NULL);
 	#endif
 
 
@@ -614,8 +572,8 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 
 
 	#ifdef DEBUG_TIME
-	gettimeofday(&end_time, NULL);
-	dprintf("Time debug: brGetPages.reading pages %f\n",getTimeDifference(&start_time,&end_time));
+		gettimeofday(&end_time, NULL);
+		dprintf("Time debug: brGetPages.reading pages %f\n",getTimeDifference(&start_time,&end_time));
 	#endif
 }
 
@@ -625,27 +583,22 @@ void bsConectAndQueryOneServer(char server[], int searchport, char query[], char
 
 	errx(1, "bsConectAndQueryOneServer() is broken. %s, line %d", __FILE__, __LINE__);
 
-
 	int i;
-
         int nrOfServers;
         int nrOfPiServers;
         int nrOfAddServers;
 	int SiderSize;
         int sockfd[maxServers];
-        //int addsockfd[maxServers];
-
 	struct QueryDataForamt QueryData;
 	struct queryNodeHederFormat queryNodeHeder;
 
-                char *servers[] = { server };
-                char *addservers[] = { };
-                char *piservers[] = { };
+	char *servers[] = { server };
+	char *addservers[] = { };
+	char *piservers[] = { };
 
-
-                nrOfServers = (sizeof(servers) / sizeof(char *));
-                nrOfPiServers = (sizeof(piservers) / sizeof(char *));
-                nrOfAddServers = (sizeof(addservers) / sizeof(char *));
+	nrOfServers = (sizeof(servers) / sizeof(char *));
+	nrOfPiServers = (sizeof(piservers) / sizeof(char *));
+	nrOfAddServers = (sizeof(addservers) / sizeof(char *));
 
         memset(&QueryData,'\0',sizeof(QueryData));
         memset(&queryNodeHeder,'\0',sizeof(queryNodeHeder));
@@ -672,31 +625,18 @@ void bsConectAndQueryOneServer(char server[], int searchport, char query[], char
         strscpy(queryNodeHeder.query,QueryData.query,sizeof(queryNodeHeder.query) -1);
         strscpy(queryNodeHeder.subname,QueryData.subname,sizeof(queryNodeHeder.subname) -1);
         strscpy(queryNodeHeder.userip,QueryData.userip,sizeof(queryNodeHeder.userip) -1);
-
-        //hvorfår får vi broblemer når vi bruker -02 og -1 her ? Ser ut til at strcpy ikke terminerer hvis
-        //den når max lengde.
-        //strscpy(queryNodeHeder.GeoIPcontry,QueryData.GeoIPcontry,sizeof(queryNodeHeder.GeoIPcontry) -1);
         strcpy(queryNodeHeder.GeoIPcontry,QueryData.GeoIPcontry);
-
         strscpy(queryNodeHeder.search_user,QueryData.search_user,sizeof(queryNodeHeder.search_user) -1);
-
         strscpy(queryNodeHeder.HTTP_ACCEPT_LANGUAGE,QueryData.HTTP_ACCEPT_LANGUAGE,sizeof(queryNodeHeder.HTTP_ACCEPT_LANGUAGE));
         strscpy(queryNodeHeder.HTTP_USER_AGENT,QueryData.HTTP_USER_AGENT,sizeof(queryNodeHeder.HTTP_USER_AGENT));
         strscpy(queryNodeHeder.HTTP_REFERER,QueryData.HTTP_REFERER,sizeof(queryNodeHeder.HTTP_REFERER));
-        //v13 strscpy(queryNodeHeder.languageFilter,QueryData.languageFilter,sizeof(queryNodeHeder.languageFilter) -1);
         strscpy(queryNodeHeder.orderby,QueryData.orderby,sizeof(queryNodeHeder.orderby) -1);
-
-
         strscpy(queryNodeHeder.AmazonAssociateTag,QueryData.AmazonAssociateTag,sizeof(queryNodeHeder.AmazonAssociateTag) -1);
         strscpy(queryNodeHeder.AmazonSubscriptionId,QueryData.AmazonSubscriptionId,sizeof(queryNodeHeder.AmazonSubscriptionId) -1);
 
-
         queryNodeHeder.start = 0;
 
-        //queryNodeHeder.MaxsHits = QueryData.MaxsHits;
         queryNodeHeder.MaxsHits = QueryData.MaxsHits * QueryData.start;
-
-
 
         //på første side kan vi la være og hente alle treff siden dataene er fordelt, men for de neste
         //sidene trenger vi de.
@@ -728,8 +668,6 @@ void bsConectAndQueryOneServer(char server[], int searchport, char query[], char
 
 	printf("trying to get %i hist from server \"%s\", starting on %i\n",QueryData.MaxsHits,server,QueryData.start);
 
-	//TODO: Unbreak querying
-	//bsConectAndQuery(sockfd,nrOfServers,servers,&queryNodeHeder,nrOfPiServers,searchport);
 
 	*pageNr = 0;
 	brGetPages(sockfd,nrOfServers,SiderHeder,*Sider,pageNr,0);
@@ -742,9 +680,8 @@ void bsConectAndQueryOneServer(char server[], int searchport, char query[], char
 #ifdef WITH_CASHE
 
 /* Probably very weak */
-unsigned int
-cache_hash(char *query, int start, char *country)
-{
+unsigned int cache_hash(char *query, int start, char *country) {
+
 	unsigned int hash = 0xf23c203;
 	char *p;
 
@@ -757,8 +694,7 @@ cache_hash(char *query, int start, char *country)
 	return hash;
 }
 
-int
-cache_collhash(struct subnamesFormat *collections, int num_colls) {
+int cache_collhash(struct subnamesFormat *collections, int num_colls) {
 
 	int i;
 	int ret = 0;
@@ -773,9 +709,8 @@ cache_collhash(struct subnamesFormat *collections, int num_colls) {
 	return ret;
 }
 
-char *
-cache_path(char *path, size_t len, enum cache_type type, char *query, int start, char *country, int anonymous, char search_user[], struct subnamesFormat *collections, int num_colls)
-{
+char *cache_path(char *path, size_t len, enum cache_type type, char *query, int start, char *country, int anonymous, char search_user[], struct subnamesFormat *collections, int num_colls) {
+
 	char tmppath[PATH_MAX];
 	char modquery[PATH_MAX];
 	unsigned int hash;
@@ -817,10 +752,9 @@ cache_path(char *path, size_t len, enum cache_type type, char *query, int start,
 }
 
 
-int
-cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
-           size_t sider_header_len, struct SiderFormat *sider, int cachetimeout, size_t max_sizer)
-{
+int cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
+           size_t sider_header_len, struct SiderFormat *sider, int cachetimeout, size_t max_sizer) {
+	   
 	gzFile *cache;
 	int fd, i, ret, k, len;
 	struct stat st;
@@ -891,14 +825,14 @@ cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struc
 		fprintf(stderr, "Bug?: cache_read: have more pages in cache then space in buffer! nr of pages was %i\n",*page_nr);
 		*page_nr = max_sizer;
 	}
-	//fprintf(stderr, "Got %d cached pages\n", *page_nr);
+
 	for (i = 0; i < *page_nr; i++) {
 		if (gzread(cache, &sider[i], sizeof(*sider)) != sizeof(*sider)) {
 			perror("Unable to read cache");
 			goto err;
 		}
 
-		#ifdef ATTRIBUTES
+#ifdef ATTRIBUTES
 		if ((sider[i].attributes = malloc(sider[i].attributelen +1)) == NULL) {
 			perror("Mallco attributes");
 			goto err;
@@ -957,17 +891,16 @@ cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struc
 			sider[i].urls[k].fulluri[len] = '\0';
 
 			#ifdef DEBUG
-                        printf("n_urls=%i\n", sider[i].n_urls);
-                        printf("url=\"%s\", uri=\"%s\", fulluri=\"%s\"\n", sider[i].urls[k].url, sider[i].urls[k].uri, sider[i].urls[k].fulluri);
+				printf("n_urls=%i\n", sider[i].n_urls);
+				printf("url=\"%s\", uri=\"%s\", fulluri=\"%s\"\n", sider[i].urls[k].url, sider[i].urls[k].uri, sider[i].urls[k].fulluri);
 			#endif				
 
 		}
 
 
 
-		#endif
+#endif
 
-		//fprintf(stderr, "cache: read: %s\n", sider[i].uri);
 	}
 
 	goto out;
@@ -980,18 +913,11 @@ cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struc
 	return ret;
 }
 
-int
-cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
-            size_t sider_header_len, struct SiderFormat *sider, size_t sider_len)
-{
+int cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
+            size_t sider_header_len, struct SiderFormat *sider, size_t sider_len) {
+	    
 	gzFile *cache;
 	int fd, i, ret, k, len;
-
-	//temp jayde 
-	//final_sider->TotaltTreff = 20;
-	//final_sider->showabal = 20;
-	//sider_len = 20;
-	//*page_nr = 20;
 
 	if ((fd = open(path, O_CREAT|O_WRONLY|O_EXCL, 0644)) == -1) {
 		fprintf(stderr,"cache_write: can't open cache file\n");
@@ -1003,12 +929,6 @@ cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, stru
 		fprintf(stderr,"cache_write: can't gzdopen\n");
 		return 0;
 	}
-
-	// Debug: Disable compresion
-	//if (gzsetparams(cache,Z_NO_COMPRESSION,Z_DEFAULT_STRATEGY) !=  Z_OK) {
-	//	fprintf(stderr,"Cant disable commpresion\n");
-	//	exit(-1);
-	//}
 
 	ret = 1;
 	if (gzwrite(cache, page_nr, sizeof(*page_nr)) != sizeof(*page_nr)) {
@@ -1045,7 +965,7 @@ cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, stru
 			goto err;
 		}
 
-		#ifdef ATTRIBUTES
+#ifdef ATTRIBUTES
 		if (gzwrite(cache, sider[i].attributes, sider[i].attributelen) != (sider[i].attributelen)) {
 			perror("Unable to write cache attributelen");
 			goto err;
@@ -1089,9 +1009,7 @@ cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, stru
 
 		}
 
-
-
-		#endif
+#endif
 
 
 	}
@@ -1330,8 +1248,6 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 	//escaper queryet rikit
 	mysql_real_escape_string(demo_db,queryEscaped,QueryData->query,strlen(QueryData->query));
 
-	// Magnus: Kolonnene 'spot' og 'piDocID' finnes ikke. Har fjernet dem.
-	//logger til mysql
 	sprintf(query,"insert DELAYED into search_logg (id,tid,query,search_bruker,treff,search_tid,ip_adresse,betaler_keywords_treff,\
 		HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang,side) \
 		values(NULL,NOW(),\"%s\",\"%s\",%s,%s,\"%s\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\",\"%i\")",
@@ -1382,7 +1298,7 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 						strsandr(query,"$spot",bitoa(x + (QueryData->start * queryNodeHeder->MaxsHits)));
 
 						#ifdef DEBUG
-						printf("query \"%s\"\n",query);
+							printf("query \"%s\"\n",query);
 						#endif
 
 						mysql_real_query(demo_db, query, strlen(query));
@@ -1390,7 +1306,7 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 					}
 					else {
 						#ifdef DEBUG
-						printf("is NOT pi! :(\n");
+							printf("is NOT pi! :(\n");
 						#endif
 					}
 				}

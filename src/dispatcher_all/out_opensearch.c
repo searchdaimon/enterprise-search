@@ -1,5 +1,7 @@
-#include "out_opensearch.h"
 #include <stdio.h>
+
+#include "out_opensearch.h"
+
 
 void disp_out_opensearch(int total_res, struct SiderFormat *results, struct queryNodeHederFormat *queryNodeHeder, int num_servers, int start, int res_per_page, char *query_escaped) {
 	int i, x;

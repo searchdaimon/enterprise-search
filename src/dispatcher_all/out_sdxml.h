@@ -1,13 +1,16 @@
 #ifndef _H_OUT_SDXML_
 #define _H_OUT_SDXML
-#include "../common/define.h"
+
 #include "library.h"
+
+#include "../common/define.h"
+
 
 void disp_out_sd_v2_0(
 	struct SiderHederFormat FinalSiderHeder,
-        struct QueryDataForamt QueryData,
+    struct QueryDataForamt QueryData,
 	int noDoctype,
-        struct SiderHederFormat *SiderHeder,
+    struct SiderHederFormat *SiderHeder,
 	int hascashe,
 	int nrRespondedServers,
 	int num_servers,
@@ -24,9 +27,9 @@ void disp_out_sd_v2_0(
 
 void disp_out_sd_v2_1(
 	struct SiderHederFormat FinalSiderHeder,
-        struct QueryDataForamt QueryData,
+    struct QueryDataForamt QueryData,
 	int noDoctype,
-        struct SiderHederFormat *SiderHeder,
+    struct SiderHederFormat *SiderHeder,
 	int hascashe,
 	int nrRespondedServers,
 	int num_servers,

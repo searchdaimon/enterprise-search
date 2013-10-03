@@ -1,11 +1,11 @@
-#include "../common/define.h"
-#include "../cgi-util/cgi-util.h"
-#include "../base64/base64.h"
-#include "../common/bstr.h"
 #include <err.h>
 #include "cgihandler.h"
 #include "library.h"
 
+#include "../common/define.h"
+#include "../cgi-util/cgi-util.h"
+#include "../base64/base64.h"
+#include "../common/bstr.h"
 
 int _lookup_lang(const char *lang) {
 	// TODO: lookup table
@@ -42,10 +42,12 @@ int cgi_access_type(char *remoteaddr, char *correct_bbkey) {
 
 	const char *bbkey = cgi_getentrystr("bbkey");
 	#ifdef DEBUG
-	warnx("correct: %s, provided: %s\n", correct_bbkey, bbkey);
+		warnx("correct: %s, provided: %s\n", correct_bbkey, bbkey);
 	#endif
 
-	/*extern char **environ;
+	/*
+	// Debug: Print env
+	extern char **environ;
 	char **next = environ;
 	while (*next) {
 		warnx("environ %s", *next);
@@ -70,9 +72,10 @@ int cgi_access_type(char *remoteaddr, char *correct_bbkey) {
 }
 
 void cgi_set_defaults(struct QueryDataForamt *qdata) {
-#ifdef BLACK_BOX
-	qdata->anonymous = 0;
-#endif
+
+	#ifdef BLACK_BOX
+		qdata->anonymous = 0;
+	#endif
 	char *user = getenv("REDIRECT_REMOTE_USER");
 	if (user == NULL)
 		qdata->search_user[0] = '\0';

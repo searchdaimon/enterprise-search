@@ -1,6 +1,8 @@
-#include "out_sdxml.h"
 #include <locale.h>
 #include <stdio.h>
+
+#include "out_sdxml.h"
+
 #ifdef ATTRIBUTES
 	#include "../attributes/attr_makexml.h"
 	#include "qrewrite.h"
@@ -375,17 +377,11 @@ void disp_out_sd_v2_0(
 		#endif
 	#endif
 
-	    //skal printe ut FinalSiderHeder.showabal sider, men noen av sidene kan være slettet
-
-	    //x=0;
-	    //i=0;
-	    //regner ut hvor vi skal begynne og vise treff. Eks side 2 er fra 11-20
-	    //i er hvor vi skal begynne
 	    i = QueryData.MaxsHits * (QueryData.start -1);
 	    x = i;
 	    #ifdef DEBUG	
-	    printf("x: %i, MaxsHits %i, start %i, showabal %i\n",x,QueryData.MaxsHits,QueryData.start,
-		FinalSiderHeder.showabal);
+		    printf("x: %i, MaxsHits %i, start %i, showabal %i\n",x,QueryData.MaxsHits,QueryData.start,
+			FinalSiderHeder.showabal);
 	    #endif
 
 	    while ((x<(QueryData.MaxsHits*QueryData.start)) && (x<FinalSiderHeder.showabal) && (i < (queryNodeHeder.MaxsHits * num_servers))) {
@@ -401,23 +397,17 @@ void disp_out_sd_v2_0(
 				if (Sider[i].type == siderType_ppctop) {
 					printf("<RESULT_PPC>\n");
 					printf("\t<BID>%f</BID>\n",Sider[i].bid);
-					//++totlaAds; //ikke helt bra denne. Vi teller antall anonser vist, ikke totalt
 				}
 				else if (Sider[i].type == siderType_ppcside) {
 					printf("<RESULT_PPCSIDE>\n");
 					printf("\t<BID>%f</BID>\n",Sider[i].bid);
-					//++totlaAds; //ikke helt bra denne. Vi teller antall anonser vist, ikke totalt 
 				}
 				else {
                 			printf("<RESULT>\n");
 				}
 
 	                	printf("\t<DOCID>%i-%i</DOCID>\n",Sider[i].iindex.DocID,rLotForDOCid(Sider[i].iindex.DocID));
-
-
         	        	printf("\t<TITLE><![CDATA[%s]]></TITLE>\n",Sider[i].title);
-
-                		//DocumentIndex
                 		printf("\t<URL><![CDATA[%s]]></URL>\n",Sider[i].url);
                 		printf("\t<URI><![CDATA[%s]]></URI>\n",Sider[i].uri);
 #ifdef BLACK_BOX
@@ -498,19 +488,10 @@ void disp_out_sd_v2_0(
 				printf("\t<DESCRIPTION_LENGTH>%i</DESCRIPTION_LENGTH>\n",strlen(Sider[i].description));
 				printf("\t<DESCRIPTION_MAX>%i</DESCRIPTION_MAX>\n",sizeof(Sider[i].description));
 				printf("\t<DESCRIPTION>%s</DESCRIPTION>\n",Sider[i].description);
-
-
-
 				printf("\t<CRC32>%u</CRC32>\n",Sider[i].DocumentIndex.crc32);
-	
-				//ser ikke ut til at vi teller den
-				//printf("\t<PAGEGENERATETIME>%f</PAGEGENERATETIME>\n",Sider[i].pageGenerateTime);
-
                			printf("\t<TERMRANK>%i</TERMRANK>\n",Sider[i].iindex.TermRank);
-
                			printf("\t<POPRANK>%i</POPRANK>\n",Sider[i].iindex.PopRank);
        	        		printf("\t<ALLRANK>%i</ALLRANK>\n",Sider[i].iindex.allrank);
-
                 		printf("\t<NROFHITS>%i</NROFHITS>\n",Sider[i].iindex.TermAntall);
                 		//printer ut hits (hvor i dokumenetet orde befinner seg ).
 				/*
@@ -528,7 +509,7 @@ void disp_out_sd_v2_0(
 					char timebuf[64];
 					if (Sider[i].DocumentIndex.CrawleDato != 0) {
 						printf("\t<TIME_UNIX>%u</TIME_UNIX>\n",Sider[i].DocumentIndex.CrawleDato);
-						// Magnus: Konverterer til locale:
+						// Konverterer til locale:
 						if (strcmp(queryNodeHeder.HTTP_ACCEPT_LANGUAGE,"no") == 0) {
 				        		setlocale(LC_TIME, "no_NO.utf8");
 						}
@@ -579,13 +560,10 @@ void disp_out_sd_v2_0(
 	                		printf("\t<CATEGORY></CATEGORY>\n");
 	                		printf("\t<OFFENSIVE_CODE>FALSE</OFFENSIVE_CODE>\n");
 
-
 					ipaddr.s_addr = Sider[i].DocumentIndex.IPAddress;
 
                 			printf("\t<IPADDRESS>%s</IPADDRESS>\n",inet_ntoa(ipaddr));
-
                 			printf("\t<RESPONSE>%hu</RESPONSE>\n",Sider[i].DocumentIndex.response);
-	
 					printf("\t<CRAWLERVERSION>%f</CRAWLERVERSION>\n",Sider[i].DocumentIndex.clientVersion);
 					printf("\t<HTMLPREPARSED>%i</HTMLPREPARSED>\n",Sider[i].HtmlPreparsed);
 
@@ -710,7 +688,6 @@ void disp_out_sd_v2_1(
 	    if (!hascashe) {
 
 		//viser info om serverne som svarte
-		//printf("<SEARCHNODES_INFO NROFSEARCHNODES=\"%i\" />\n",nrRespondedServers);
 
 		for (i=0;i< num_servers ;i++) {
 			if (sockfd[i] != 0) {
@@ -725,21 +702,16 @@ void disp_out_sd_v2_1(
 				printf("\t<time_profile>\n");
 				{
 					printf("\t\t<AuthorSearch>%f</AuthorSearch>\n",SiderHeder[i].queryTime.AnchorSearch);
-					//printf("\t\t<AnchorRank>%f</AnchorRank>\n",SiderHeder[i].queryTime.AnchorRank);
 					printf("\t\t<UrlSearch>%f</UrlSearch>\n",SiderHeder[i].queryTime.UrlSearch);
 					printf("\t\t<MainSearch>%f</MainSearch>\n",SiderHeder[i].queryTime.MainSearch);
-					//printf("\t\t<MainRank>%f</MainRank>\n",SiderHeder[i].queryTime.MainRank);
 					printf("\t\t<MainAuthorMerge>%f</MainAuthorMerge>\n",SiderHeder[i].queryTime.MainAnchorMerge);
 					printf("\t\t<popRank>%f</popRank>\n",SiderHeder[i].queryTime.popRank);
 					printf("\t\t<responseShortening>%f</responseShortening>\n",SiderHeder[i].queryTime.responseShortning);
-
 					printf("\t\t<allrankCalc>%f</allrankCalc>\n",SiderHeder[i].queryTime.allrankCalc);
 					printf("\t\t<indexSort>%f</indexSort>\n",SiderHeder[i].queryTime.indexSort);
 					printf("\t\t<searchSimple>%f</searchSimple>\n",SiderHeder[i].queryTime.searchSimple);
-
 					printf("\t\t<popResult>%f</popResult>\n",SiderHeder[i].queryTime.popResult);
 					printf("\t\t<adultcalc>%f</adultcalc>\n",SiderHeder[i].queryTime.adultcalk);
-
 #ifdef BLACK_BOX
 					printf("\t\t<filetypes>%f</filetypes>\n",SiderHeder[i].queryTime.filetypes);
 					printf("\t\t<iintegerGetValueDate>%f</iintegerGetValueDate>\n",SiderHeder[i].queryTime.iintegerGetValueDate);
@@ -750,10 +722,11 @@ void disp_out_sd_v2_1(
 					printf("\t\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);
 					printf("\t\t<cmc_connect>%f</cmc_connect>\n",SiderHeder[i].queryTime.cmc_conect);
 #endif
-					#ifdef BLACK_BOX
+
+#ifdef BLACK_BOX
 					printf("\t\t<html_parser_run>%f</html_parser_run>\n",SiderHeder[i].queryTime.html_parser_run);
 					printf("\t\t<generate_snippet>%f</generate_snippet>\n",SiderHeder[i].queryTime.generate_snippet);
-					#endif
+#endif
 				}
 				printf("\t</time_profile>\n");
 
@@ -971,17 +944,11 @@ void disp_out_sd_v2_1(
 		#endif
 	#endif
 
-	    //skal printe ut FinalSiderHeder.showabal sider, men noen av sidene kan være slettet
-
-	    //x=0;
-	    //i=0;
-	    //regner ut hvor vi skal begynne og vise treff. Eks side 2 er fra 11-20
-	    //i er hvor vi skal begynne
 	    i = QueryData.MaxsHits * (QueryData.start -1);
 	    x = i;
 	    #ifdef DEBUG	
-	    printf("x: %i, MaxsHits %i, start %i, showabal %i\n",x,QueryData.MaxsHits,QueryData.start,
-		FinalSiderHeder.showabal);
+		    printf("x: %i, MaxsHits %i, start %i, showabal %i\n",x,QueryData.MaxsHits,QueryData.start,
+			FinalSiderHeder.showabal);
 	    #endif
 
 	    while ((x<(QueryData.MaxsHits*QueryData.start)) && (x<FinalSiderHeder.showabal) && (i < (queryNodeHeder.MaxsHits * num_servers))) {
@@ -997,23 +964,17 @@ void disp_out_sd_v2_1(
 				if (Sider[i].type == siderType_ppctop) {
 					printf("<result_ppc>\n");
 					printf("\t<bid>%f</bid>\n",Sider[i].bid);
-					//++totlaAds; //ikke helt bra denne. Vi teller antall anonser vist, ikke totalt
 				}
 				else if (Sider[i].type == siderType_ppcside) {
 					printf("<result_ppcpage>\n");
 					printf("\t<bid>%f</bid>\n",Sider[i].bid);
-					//++totlaAds; //ikke helt bra denne. Vi teller antall anonser vist, ikke totalt 
 				}
 				else {
                 			printf("<result>\n");
 				}
 
 	                	printf("\t<docid>%i-%i</docid>\n",Sider[i].iindex.DocID,rLotForDOCid(Sider[i].iindex.DocID));
-
-
         	        	printf("\t<title><![CDATA[%s]]></title>\n",Sider[i].title);
-
-                		//DocumentIndex
                 		printf("\t<url><![CDATA[%s]]></url>\n",Sider[i].url);
                 		printf("\t<uri><![CDATA[%s]]></uri>\n",Sider[i].uri);
 #ifdef BLACK_BOX
@@ -1052,13 +1013,14 @@ void disp_out_sd_v2_1(
 						escapeHTML(ekey, sizeof ekey, key);
 						escapeHTML(evalue, sizeof evalue, value);
 
-// Runarb: 13.04.2012: Temporery fix for geting bad utf data from http://datasets.opentestset.com/datasets/Enron_files/full/arora-h/McKinsey%20Enterprise%20Report%2011-00.ppt						
-int len, n;
-for(len=0;len<strlen(evalue);len++) {
-if ((unsigned int)evalue[len] < 31) {
-	evalue[len] = 'X';
-}
-}
+						// Runarb: 13.04.2012: Temporery fix for geting bad utf data from http://datasets.opentestset.com/datasets/Enron_files/full/arora-h/McKinsey%20Enterprise%20Report%2011-00.ppt						
+						int len, n;
+						for(len=0;len<strlen(evalue);len++) {
+							if ((unsigned int)evalue[len] < 31) {
+								evalue[len] = 'X';
+							}
+						}
+						
 						printf("\t<attribute key=\"%s\" value=\"%s\" query=\"%s\" attribute_query=\"%s\" />\n", 
 							ekey, evalue, 
 							attrq_esc, attrq2_esc);
@@ -1095,19 +1057,10 @@ if ((unsigned int)evalue[len] < 31) {
 				}
 
 				printf("\t<description>%s</description>\n", Sider[i].description);
-
-
-
 				printf("\t<crc32>%u</crc32>\n",Sider[i].DocumentIndex.crc32);
-	
-				//ser ikke ut til at vi teller den
-				//printf("\t<PAGEGENERATETIME>%f</PAGEGENERATETIME>\n",Sider[i].pageGenerateTime);
-
                			printf("\t<termrank>%i</termrank>\n",Sider[i].iindex.TermRank);
-
                			printf("\t<poprank>%i</poprank>\n",Sider[i].iindex.PopRank);
        	        		printf("\t<allrank>%i</allrank>\n",Sider[i].iindex.allrank);
-
                 		printf("\t<nrofhits>%i</nrofhits>\n",Sider[i].iindex.TermAntall);
                 		//printer ut hits (hvor i dokumenetet orde befinner seg ).
 				/*
@@ -1125,7 +1078,7 @@ if ((unsigned int)evalue[len] < 31) {
 					char timebuf[64];
 					if (Sider[i].DocumentIndex.CrawleDato != 0) {
 						printf("\t<time_unix>%u</time_unix>\n",Sider[i].DocumentIndex.CrawleDato);
-						// Magnus: Konverterer til locale:
+						// Konverterer til locale:
 						if (strcmp(queryNodeHeder.HTTP_ACCEPT_LANGUAGE,"no") == 0) {
 				        		setlocale(LC_TIME, "no_NO.utf8");
 						}

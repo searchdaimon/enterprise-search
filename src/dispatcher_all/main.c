@@ -1,16 +1,3 @@
-#include "../common/define.h"
-#include "../common/lot.h"
-#include "../common/vid.h"
-#include "../common/stdlib.h"
-#include "../common/utf8-strings.h"
-#include "../UrlToDocID/search_index.h"
-#include "../tkey/tkey.h"
-
-#include "../banlists/ban.h"
-
-#include "library.h"
-
-#include <mysql.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,7 +17,18 @@
 #include <fcntl.h>
 #include <zlib.h>
 #include <err.h>
+#include <libconfig.h>
+#include <mysql.h>
 
+
+#include "../common/define.h"
+#include "../common/lot.h"
+#include "../common/vid.h"
+#include "../common/stdlib.h"
+#include "../common/utf8-strings.h"
+#include "../UrlToDocID/search_index.h"
+#include "../tkey/tkey.h"
+#include "../banlists/ban.h"
 #include "../common/boithohome.h"
 #include "../common/bstr.h"
 #include "../maincfg/maincfg.h"
@@ -38,43 +36,39 @@
 #include "../crawlManager2/client.h"
 #include "../key/key.h" // key_get_existingconn
 #include "../logger/logger.h"
+#include "../ds/dcontainer.h"
+#include "../ds/dset.h"
+#include "../query/query_parser.h"
+#include "../common/bprint.h"
+#include "../common/xml.h"
+#include "../searchFilters/searchFilters.h"
+#include "../common/timediff.h"
+#include "../common/mgsort.h"
+#include "../common/bstr.h"
+#include "../tkey/tkey.h"
 
-#include <libconfig.h>
+
+#include "library.h"
+#include "cgihandler.h"
+#include "out_sdxml.h"
+#include "out_opensearch.h"
+
+
 #define CFG_SEARCHD "config/searchd.conf"
-
-
-    #include "../ds/dcontainer.h"
-    #include "../ds/dset.h"
-    #include "../query/query_parser.h"
-    #include "../common/bprint.h"
-    #include "../common/xml.h"
-
 
     
 #ifndef BLACK_BOX
-    #include <libconfig.h>
-    #define CACHE_STRUCT_VERSION "1.7"
+	#include <libconfig.h>
+	#define CACHE_STRUCT_VERSION "1.7"
 #endif
 
-    #define CFG_DISPATCHER "config/dispatcher.conf"
+#define CFG_DISPATCHER "config/dispatcher.conf"
 
 #ifndef BLACK_BOX
-    #include "GeoIP.h"
-    #include "GeoIPCity.h"
+	#include "GeoIP.h"
+	#include "GeoIPCity.h"
 #endif
 
-
-    //temp
-    //#define NO_LOGING
-
-
-    #include "../searchFilters/searchFilters.h"
-    #include "../common/timediff.h"
-    #include "../common/mgsort.h"
-    #include "../common/bstr.h"
-    #include "../tkey/tkey.h"
-
-    //#define PORT 6500 // the port client will be connecting to 
 
 #ifdef BLACK_BOX
  	// get user groups
@@ -83,21 +77,17 @@
 #endif
 
 #ifdef DEBUG
-#define dprintf(str, args...) printf(str, ##args)
+	#define dprintf(str, args...) printf(str, ##args)
 #else
-#define dprintf(str, args...) 
+	#define dprintf(str, args...) 
 #endif
-#include "cgihandler.h"
-#include "out_sdxml.h"
-#include "out_opensearch.h"
+
 
 void read_collection_cfg(struct subnamesConfigFormat * dst);
 void read_dispatcher_cfg(struct config_t * cfg, struct dispconfigFormat * dispconfig, int *cachetimeout);
 
-
-
-    int compare_elements (const void *p1, const void *p2);
-    int compare_elements_posisjon (const void *p1, const void *p2);
+int compare_elements (const void *p1, const void *p2);
+int compare_elements_posisjon (const void *p1, const void *p2);
 
 
 
@@ -196,31 +186,31 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 		cfg->summary = SUMMARY_SNIPPET;
 	}
 
-	cfg->filterSameUrl    = row[1][0] == '1' ? 1 : 0;
-	cfg->filterSameDomain = row[2][0] == '1' ? 1 : 0;
-	cfg->filterTLDs       = row[3][0] == '1' ? 1 : 0;
-	cfg->filterResponse   = row[4][0] == '1' ? 1 : 0;
-	cfg->filterSameCrc32  = row[5][0] == '1' ? 1 : 0;
+	cfg->filterSameUrl    		= row[1][0] == '1' ? 1 : 0;
+	cfg->filterSameDomain 		= row[2][0] == '1' ? 1 : 0;
+	cfg->filterTLDs       		= row[3][0] == '1' ? 1 : 0;
+	cfg->filterResponse   		= row[4][0] == '1' ? 1 : 0;
+	cfg->filterSameCrc32  		= row[5][0] == '1' ? 1 : 0;
 
-	cfg->rankAnchorArrayLen    = cfg_parse_array(cfg->rankAnchorArray, row[6]);
-	cfg->rankTittelArrayLen   = cfg_parse_array(cfg->rankTittelArray, row[7]);
-	cfg->rankTittelFirstWord = (char) strtol(row[8], NULL, 10);
-	cfg->rankHeadlineArrayLen = cfg_parse_array(cfg->rankHeadlineArray, row[9]);
-	cfg->rankBodyArrayLen     = cfg_parse_array(cfg->rankBodyArray, row[10]);
-	cfg->rankUrlArrayLen      = cfg_parse_array(cfg->rankUrlArray, row[11]);
+	cfg->rankAnchorArrayLen    	= cfg_parse_array(cfg->rankAnchorArray, row[6]);
+	cfg->rankTittelArrayLen   	= cfg_parse_array(cfg->rankTittelArray, row[7]);
+	cfg->rankTittelFirstWord 	= (char) strtol(row[8], NULL, 10);
+	cfg->rankHeadlineArrayLen 	= cfg_parse_array(cfg->rankHeadlineArray, row[9]);
+	cfg->rankBodyArrayLen     	= cfg_parse_array(cfg->rankBodyArray, row[10]);
+	cfg->rankUrlArrayLen      	= cfg_parse_array(cfg->rankUrlArray, row[11]);
 
-	cfg->rankUrlMainWord = (char) strtol(row[12], NULL, 10);
+	cfg->rankUrlMainWord 		= (char) strtol(row[12], NULL, 10);
 
-	cfg->defaultthumbnail = NULL;
-	cfg->isPaidInclusion = 0;
-	cfg->sqlImpressionsLogQuery[0] = '\0';
+	cfg->defaultthumbnail 		= NULL;
+	cfg->isPaidInclusion 		= 0;
+	cfg->sqlImpressionsLogQuery[0] 	= '\0';
 
-	cfg->cache_link = row[13][0] == '1' ? 1 : 0;
+	cfg->cache_link 		= row[13][0] == '1' ? 1 : 0;
 
 	strlcpy(cfg->group, "", sizeof(cfg->group));
 
 	#ifdef DEBUG
-	fprintf(stderr, "access level: %s", row[14]);
+		fprintf(stderr, "access level: %s", row[14]);
 	#endif
 
 	if (strcmp(row[14], "anonymous") == 0) {
@@ -245,22 +235,19 @@ int fetch_coll_cfg(MYSQL *db, char *coll_name, struct subnamesConfigFormat *cfg)
 
 /* Cache helper functions */
 
-// sprintf(cashefile,"%s/%s.%i.%s","/home/boitho/var/cashedir",QueryData.queryhtml,QueryData.start,QueryData.GeoIPcontry);
-
-void
-handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
+void handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,
                struct QueryDataForamt *QueryData,
                struct SiderHederFormat *FinalSiderHeder, int fromCache, struct errorhaFormat *errorha,
                int pageNr, int nrOfServers, int nrOfPiServers, struct filtersTrapedFormat *dispatcherfiltersTraped,
-	       int *nrRespondedServers,struct queryNodeHederFormat *queryNodeHeder, MYSQL *demo_db) 
-{
+	       int *nrRespondedServers,struct queryNodeHederFormat *queryNodeHeder, MYSQL *demo_db) {
+	       
 	int AdultPages, NonAdultPages;
 	int posisjon, i;
 	int funnet;
-#ifdef DEBUG_TIME
-	struct timeval start_time, end_time;
-#endif
-
+	
+	#ifdef DEBUG_TIME
+		struct timeval start_time, end_time;
+	#endif
 
 	*nrRespondedServers = 0;
 	if (!fromCache) {
@@ -269,7 +256,6 @@ handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *
 		FinalSiderHeder->filtered = 0;
 
 		for (i=0;i<(nrOfServers + nrOfPiServers);i++) {
-			//aaaaa
 			if (sockfd[i] != 0) {
 				FinalSiderHeder->TotaltTreff += SiderHeder[i].TotaltTreff;
 				FinalSiderHeder->filtered += SiderHeder[i].filtered;
@@ -279,37 +265,10 @@ handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFormat *
 					SiderHeder[i].total_usecs,
 					SiderHeder[i].filtered,
 					SiderHeder[i].showabal);
-				/*
-				runarb: 31.08.07seg feiler her.
-				dprintf("<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\" servername=\"%s\"/>\n",
-					SiderHeder[i].TotaltTreff,
-					QueryData->query,
-					SiderHeder[i].hiliteQuery,
-					SiderHeder[i].total_usecs,
-					SiderHeder[i].filtered,
-					SiderHeder[i].showabal,
-					SiderHeder[i].servername);
-				*/
 				(*nrRespondedServers)++;
 			}
 		}
 
-#if 0
-#ifdef DEBUG
-		dprintf("addservers (have %i):\n",nrOfAddServers);
-		for (i=0;i<nrOfAddServers;i++) {
-			//aaaaa
-			if (addsockfd[i] != 0) {
-				dprintf("\t<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" tid=\"%f\" filtered=\"%i\" showabal=\"%i\" servername=\"%s\"/>\n",AddSiderHeder[i].TotaltTreff,QueryData->query,AddSiderHeder[i].hiliteQuery,AddSiderHeder[i].total_usecs,AddSiderHeder[i].filtered,AddSiderHeder[i].
-showabal,AddSiderHeder[i].servername);
-
-			}
-			else {
-				dprintf("addserver nr %i's sockfd is 0\n",i);
-			}
-		}
-#endif
-#endif
 
 		//finner en hillitet query
 		if (*nrRespondedServers != 0) {
@@ -367,9 +326,9 @@ showabal,AddSiderHeder[i].servername);
 
 	}
 
-#ifdef DEBUG_TIME
-	gettimeofday(&start_time, NULL);
-#endif
+	#ifdef DEBUG_TIME
+		gettimeofday(&start_time, NULL);
+	#endif
 	//sorterer resultatene
 	dprintf("mgsort: pageNr %i\n",pageNr);
 
@@ -378,14 +337,12 @@ showabal,AddSiderHeder[i].servername);
 		mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements);
 	#endif
 
-#ifdef DEBUG_TIME
-	gettimeofday(&end_time, NULL);
-	fprintf(stderr,"Time debug: mgsort_1 %f\n",getTimeDifference(&start_time,&end_time));
-#endif
-
-#ifdef DEBUG_TIME
-	gettimeofday(&start_time, NULL);
-#endif		
+	#ifdef DEBUG_TIME
+		gettimeofday(&end_time, NULL);
+		fprintf(stderr,"Time debug: mgsort_1 %f\n",getTimeDifference(&start_time,&end_time));
+		gettimeofday(&start_time, NULL);
+	#endif
+	
 
 	filtersTrapedReset(dispatcherfiltersTraped);
 
@@ -404,23 +361,21 @@ showabal,AddSiderHeder[i].servername);
 			Sider[i].deletet = 1;
 
 
-			#ifndef BLACK_BOX
-			// hvis dette er en pi side, må vi håntere at det kan komme versjoner av den som har bedre rank
-			// hvis det skjer skal vi bruke pi siden, og forkaste den andre
-	
+#ifndef BLACK_BOX
+				// hvis dette er en pi side, må vi håntere at det kan komme versjoner av den som har bedre rank
+				// hvis det skjer skal vi bruke pi siden, og forkaste den andre
+		
 			if (pi_switch(i,&Sider[i],Sider)) {
 				dprintf("pi switch'ed url \"%s\"\n",Sider[i].url);
 				FinalSiderHeder->filtered++;
 				--FinalSiderHeder->TotaltTreff;
 				continue;
 			}
-
-			#endif
+#endif
 
 			if ((QueryData->filterOn) && (Sider[i].subname.config.filterSameUrl) 
 					&& (filterSameUrl(i,Sider[i].url,Sider)) ) {
 				dprintf("Hav seen url befor. Url '%s', DocID %u\n",Sider[i].url,Sider[i].iindex.DocID);
-				//(*SiderHeder).filtered++;
 				FinalSiderHeder->filtered++;
 				--FinalSiderHeder->TotaltTreff;
 				++dispatcherfiltersTraped->filterSameUrl;					
@@ -429,19 +384,6 @@ showabal,AddSiderHeder[i].servername);
 
 #ifndef BLACK_BOX
 
-#if 0
-			// 19. juni
-			//ToDo: fjerner adult vekt filtrering her. Er det trykt. Hvis vi for eks har misket resultater, men ikke noen noder hadde fø sider, og tilot adoult
-			// hva er egentlig adoult filter statur på searchd nå?
-			if ((QueryData->filterOn) && Sider[i].DocumentIndex.AdultWeight > 50) {
-				dprintf("slettet adult side %s ault %i\n",Sider[i].url,Sider[i].DocumentIndex.AdultWeight);
-				//(*SiderHeder).filtered++;
-				FinalSiderHeder->filtered++;
-				--FinalSiderHeder->TotaltTreff;
-				++dispatcherfiltersTraped->filterAdultWeight_value;
-				continue;
-			}
-#endif
 			if ((QueryData->filterOn) && (Sider[i].subname.config.filterSameCrc32) 
 					&& filterSameCrc32(i,&Sider[i],Sider)) {
 				dprintf("hav same crc32. crc32 from DocumentIndex. Will delete \"%s\"\n",Sider[i].DocumentIndex.Url);
@@ -464,15 +406,6 @@ showabal,AddSiderHeder[i].servername);
 				continue;
 			}
 
-#if 0
-			if ((QueryData->filterOn) && filterDescription(i,&Sider[i],Sider)) {
-				dprintf("hav same Description. DocID %i\n",Sider[i].iindex.DocID);
-				//(*SiderHeder).filtered++;
-				FinalSiderHeder->filtered++;
-				--FinalSiderHeder->TotaltTreff;
-				continue;
-			}
-#endif
 #endif
 			#ifndef BLACK_BOX
 			if(isDomainBan(Sider[i].domain)) {
@@ -489,8 +422,6 @@ showabal,AddSiderHeder[i].servername);
 			}
 			#endif
 
-			//printf("url %s\n",Sider[i].DocumentIndex.Url);
-
 			//hvis siden overlevde helt hit er den ok
 			Sider[i].deletet = 0;
 		}
@@ -503,7 +434,7 @@ showabal,AddSiderHeder[i].servername);
 		if (!Sider[i].deletet) {
 			Sider[i].posisjon = posisjon++;
 			#ifdef DEBUG
-			printf("setting pos %i for %s\n",Sider[i].posisjon,Sider[i].url);
+				printf("setting pos %i for %s\n",Sider[i].posisjon,Sider[i].url);
 			#endif
 		}
 
@@ -522,43 +453,22 @@ showabal,AddSiderHeder[i].servername);
 		printf("\n");
 	#endif
 
-#ifdef DEBUG_TIME
-	gettimeofday(&end_time, NULL);
-	fprintf(stderr,"Time debug: filter pages %f\n",getTimeDifference(&start_time,&end_time));
-#endif
+	#ifdef DEBUG_TIME
+		gettimeofday(&end_time, NULL);
+		fprintf(stderr,"Time debug: filter pages %f\n",getTimeDifference(&start_time,&end_time));
+		gettimeofday(&start_time, NULL);
+	#endif
 
 
-#ifdef DEBUG_TIME
-	gettimeofday(&start_time, NULL);
-#endif
-
-	//resorterer query
-	//mgsort(Sider, nrOfServers * QueryData->MaxsHits , sizeof(struct SiderFormat), compare_elements_posisjon);
 	mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements_posisjon);
 
-#ifdef DEBUG_TIME
-	gettimeofday(&end_time, NULL);
-	fprintf(stderr,"Time debug: mgsort_2 %f\n",getTimeDifference(&start_time,&end_time));
-#endif
-
-	/* tempaa */
-#if 0
-	FinalSiderHeder->showabal = 0;
-	for(i=0;i<queryNodeHeder->MaxsHits * nrOfServers;i++) {
-		if (!Sider[i].deletet) {
-			++FinalSiderHeder->showabal;
-		}
-	}
-#endif
+	#ifdef DEBUG_TIME
+		gettimeofday(&end_time, NULL);
+		fprintf(stderr,"Time debug: mgsort_2 %f\n",getTimeDifference(&start_time,&end_time));
+	#endif
 
 	FinalSiderHeder->showabal = pageNr;
-	/*
-	runarb: 23 okt 2007: dette ser ut til å skape problemer med den nye måten og bla serp på. siden vi kan få flere en MaxsHits
-	Komenterer ut for nå
-	if (FinalSiderHeder->showabal > queryNodeHeder->MaxsHits) {
-		FinalSiderHeder->showabal = queryNodeHeder->MaxsHits;
-	}
-	*/
+
 }
 
 #ifdef EXPLAIN_RANK
@@ -587,10 +497,8 @@ void print_explain_rank( struct SiderFormat *Side, char query[]) {
 unsigned int getDocIDFromSqlRun (MYSQL *demo_db, char mysql_query[], char rankUrl[]) {
 
 	unsigned int retDocID = 0;
-
-
 	int numUsers;
-	MYSQL_RES *mysqlres; // To be used to fetch information into
+	MYSQL_RES *mysqlres;
 	MYSQL_ROW mysqlrow;
 
 
@@ -601,7 +509,6 @@ unsigned int getDocIDFromSqlRun (MYSQL *demo_db, char mysql_query[], char rankUr
 	}
 	else {
 		mysqlres=mysql_store_result(demo_db); // Download result from server 
-
 		numUsers = mysql_num_rows(mysqlres);
 	}
 
@@ -629,7 +536,7 @@ unsigned int getDocIDFromSqlRun (MYSQL *demo_db, char mysql_query[], char rankUr
 int getIntCfg (MYSQL *demo_db, char value[]) {
 
 	int numrows = 0;
-	MYSQL_RES *mysqlres; // To be used to fetch information into
+	MYSQL_RES *mysqlres;
 	MYSQL_ROW mysqlrow;
 	int retint;
 	char *mysql_query;
@@ -671,7 +578,7 @@ unsigned int getDocIDFromSql (MYSQL *demo_db, char rankUrl[]) {
 	unsigned int retDocID = 0;
 		
 	////////////////////
-	//mysql select for pi og freelistnings
+	//mysql select for pi and freelistnings
 	////////////////////
 	char mysql_query[512];
 
@@ -715,7 +622,6 @@ int in_collectionlist(char *coll, char **wantcolls, int n_wantcolls) {
 		}
 	}
 
-	//fprintf(stderr, "No way, don't want that!\n");
 	return 0;
 }
 
@@ -732,12 +638,10 @@ get_collectionnames(MYSQL *db, const char *accesslevel, struct subnamesFormat **
 	querylen = snprintf(query, sizeof(query), "SELECT collection_name FROM shares WHERE accesslevel = '%s'", accesslevel);
 
 	if (mysql_real_query(db, query, querylen) != 0) {
-		warnx("Mysql error (%s line %d): %s\n",
-				__FILE__, __LINE__, mysql_error(db));
+		warnx("Mysql error (%s line %d): %s\n", __FILE__, __LINE__, mysql_error(db));
 		goto error;
 	} else if ((res = mysql_store_result(db)) == NULL) {
-		warnx("Mysql error (%s line %d): %s\n",
-				__FILE__, __LINE__, mysql_error(db));
+		warnx("Mysql error (%s line %d): %s\n", __FILE__, __LINE__, mysql_error(db));
 		goto error;
 	} else {
 		num_colls = mysql_num_rows(res);
@@ -746,7 +650,6 @@ get_collectionnames(MYSQL *db, const char *accesslevel, struct subnamesFormat **
 			
 			collections = calloc(num_colls, sizeof(*collections));
 			while ((row = mysql_fetch_row(res)) != NULL) {
-				//fprintf(stderr, "Yay: %s\n", row[0]);
 				if (in_collectionlist(row[0], wantcolls, n_wantcolls)) {
 					strlcpy(collections[i].subname, row[0], sizeof(collections[i].subname));
 					i++;
@@ -780,73 +683,47 @@ int main(int argc, char *argv[])
 	int pageNr;
 	char documentlangcode[4];
 	int totlaAds;
-	//char *strpointer;  
-	//int net_status;
-	//int res;
-	//int nerror;
-	//int dataReceived[maxServers];
-	//int siderDataReceived[maxServers];
-        //char buf[MAXDATASIZE];
-        //struct hostent *he[maxServers];
 	FILE *LOGFILE;
-	//struct SiderFormat Sider[20 * maxServers];
 	struct SiderFormat *Sider;
 	char colchecked[20];
-
 	int noDoctype = 0;
-
         char vidbuf[64];
         time_t etime;
         time(&etime);
 	
-        //struct SiderHederFormat SiderHeder[maxServers];
-        //struct SiderHederFormat AddSiderHeder[maxServers];
-
         struct SiderHederFormat *SiderHeder = calloc(1,sizeof(struct SiderHederFormat) * maxServers);
         struct SiderHederFormat *AddSiderHeder = calloc(1,sizeof(struct SiderHederFormat) * maxServers);
 	size_t maxSider;
 
-	// ToDo: Use calloc her, like abov for SiderHeder and AddSiderHeder.
+	// ToDo: Use calloc her, like above for SiderHeder and AddSiderHeder.
 	struct SiderHederFormat FinalSiderHeder;
 	memset(&FinalSiderHeder,'\0',sizeof(struct SiderHederFormat));
-	//char buff[4096]; //generell buffer
+
+        struct QueryDataForamt QueryData;
+	struct timeval search_start_time, search_end_time;
+	int nrRespondedServers;
+	struct errorhaFormat errorha;
+	errorha.nr = 0;	
+	int hascashe;
+	int nrOfServers;
+	int nrOfPiServers;
+	int nrOfAddServers;
+	struct filtersTrapedFormat dispatcherfiltersTraped;
+	struct queryNodeHederFormat queryNodeHeder;
+	struct dispconfigFormat dispconfig;
+	int cachetimeout;
 #ifndef BLACK_BOX
 	struct in_addr ipaddr;
+	char *lastdomain = NULL;
+	unsigned int wantedDocId;
 #endif
-        struct QueryDataForamt QueryData;
-	//int connected[maxServers];
-	//int NonAdultPages,AdultPages;
-	struct timeval search_start_time, search_end_time;
+#ifdef WITH_CASHE	
+	char cashefile[512];
+#endif
 #ifdef DEBUG_TIME
 	struct timeval total_start_time, total_end_time;
 	struct timeval start_time, end_time;
 #endif
-	int nrRespondedServers;
-	//char errormessage[maxerrorlen];
-	struct errorhaFormat errorha;
-	errorha.nr = 0;
-	//int posisjon;
-	//int socketWait;	
-	int hascashe;
-#ifdef WITH_CASHE	
-	char cashefile[512];
-#endif
-	struct filtersTrapedFormat dispatcherfiltersTraped;
-
-	//char *cpnt;
-#ifndef BLACK_BOX
-	char *lastdomain = NULL;
-#endif
-
-
-#ifndef BLACK_BOX
-	unsigned int wantedDocId;
-#endif
-	struct queryNodeHederFormat queryNodeHeder;
-
-	struct dispconfigFormat dispconfig;
-	int cachetimeout;
-
 	#ifdef DEBUG_TIME
 		gettimeofday(&total_start_time, NULL);
 	#endif
@@ -856,7 +733,7 @@ int main(int argc, char *argv[])
 
 
 	#ifdef DEBUG_TIME
-	gettimeofday(&start_time, NULL);
+		gettimeofday(&start_time, NULL);
 	#endif
 	dprintf("struct SiderFormat size %i\n",sizeof(struct SiderFormat));
 
@@ -879,39 +756,26 @@ int main(int argc, char *argv[])
 	// TODO: Also read servers witin function (so we can remove cfg from main() )
 	read_dispatcher_cfg(&cfg, &dispconfig, &cachetimeout); 
 
-	//char query [2048];
-
-	//MYSQL_RES *mysqlres; /* To be used to fetch information into */
 	static MYSQL demo_db;
 
 	mysql_init(&demo_db);
 
-#ifndef BLACK_BOX
-	//if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", "boithoweb", 3306, NULL, 0)){
-	if(!mysql_real_connect(&demo_db, dispconfig.webdb_host, dispconfig.webdb_user, dispconfig.webdb_password, dispconfig.webdb_db, 3306, NULL, 0)){
-		fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
-		//exit(1);
-	}
-#else
-	if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
-		fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
-		//exit(1);
-	}
+	#ifndef BLACK_BOX
+		//if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", "boithoweb", 3306, NULL, 0)){
+		if(!mysql_real_connect(&demo_db, dispconfig.webdb_host, dispconfig.webdb_user, dispconfig.webdb_password, dispconfig.webdb_db, 3306, NULL, 0)){
+			fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
+			//exit(1);
+		}
+	#else
+		if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
+			fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
+			//exit(1);
+		}
 
-	// get config overites from the db
-	dispconfig.usecashe = getIntCfg(&demo_db, "scc_usecashe");
+		// get config overites from the db
+		dispconfig.usecashe = getIntCfg(&demo_db, "scc_usecashe");
 
-#endif
-
-
-	//////////////////
-	//for nå angir vi bare servere slik. Må skilles u i egen fil siden
-
-
-	int nrOfServers;
-	int nrOfPiServers;
-	int nrOfAddServers;
-
+	#endif
 
 	#ifdef BLACK_BOX
 
@@ -941,9 +805,6 @@ int main(int argc, char *argv[])
 
 		nrOfServers = config_setting_length(cfgarray);
 
-		//ToDO: vi har nrOfPiServers med her, men uten at jeg kan se at vi fakrisk 
-		//legger inn de. tar bort
-		//servers = malloc(sizeof(char *) * (nrOfServers + nrOfPiServers));
 		servers = malloc(sizeof(char *) * (nrOfServers));
 
 		for(i=0;i<nrOfServers;i++) {
@@ -981,24 +842,7 @@ int main(int argc, char *argv[])
 			addservers[i] = strdup(config_setting_get_string_elem(cfgarray,i));
 		}
 
-
-		//char *servers[] = { "bbs-002.boitho.com" , "bbs-003.boitho.com", "bbs-004.boitho.com", "bbs-005.boitho.com", "bbs-006.boitho.com" , "bbs-007.boitho.com" };
-		//char *servers[] = { "bbs-002.boitho.com" , "bbs-003.boitho.com", "bbs-004.boitho.com", "bbs-005.boitho.com", "bbs-006.boitho.com" };
-		//char *servers[] = { "bbs-002.boitho.com" };
-
-	
-		//char *addservers[] = { "bbh-001.boitho.com" };
-		//char *addservers[] = { "www2.boitho.com" };
-
-		//int nrOfServers = (sizeof(servers) / sizeof(char *));
-		//int nrOfAddServers = (sizeof(addservers) / sizeof(char *));
-
 	#endif
-
-
-
-	//he = (struct hostent *) malloc(nrOfServers * sizeof(struct hostent));
-	//////////////////
 
 
 	memset(&QueryData,'\0',sizeof(QueryData));
@@ -1059,7 +903,7 @@ int main(int argc, char *argv[])
         	--optind;
 
 		#ifdef DEBUG
-        	printf("argc %i, optind %i\n",argc,optind);
+			printf("argc %i, optind %i\n",argc,optind);
 		#endif
 
 
@@ -1095,30 +939,29 @@ int main(int argc, char *argv[])
         		QueryData.HTTP_REFERER[0] = '\0';
 			QueryData.AmazonAssociateTag[0] = '\0';
 			QueryData.AmazonSubscriptionId[0] = '\0';
-			//v3 QueryData.languageFilter[0] = '\0';
 			QueryData.orderby[0] = '\0';
 			QueryData.version = 2.1;
 
-                        	printf("query %s, subname %s\n",QueryData.query,QueryData.subname);
+			printf("query %s, subname %s\n",QueryData.query,QueryData.subname);
 
-				//printer ut oversikt over serverne vi skal koble til
-				printf("server(s):\n");
-				for(i=0;i<nrOfServers;i++) {
-					printf("%i %s\n",i,servers[i]);
-				}
+			//printer ut oversikt over serverne vi skal koble til
+			printf("server(s):\n");
+			for(i=0;i<nrOfServers;i++) {
+				printf("%i %s\n",i,servers[i]);
+			}
 
-				printf("piserver(s):\n");
-				for(i=0;i<nrOfPiServers;i++) {
-					printf("%i %s\n",i,piservers[i]);
-				}
+			printf("piserver(s):\n");
+			for(i=0;i<nrOfPiServers;i++) {
+				printf("%i %s\n",i,piservers[i]);
+			}
 
-				printf("adserver(s):\n");
-				for(i=0;i<nrOfAddServers;i++) {
-					printf("%i %s\n",i,addservers[i]);
-				}
+			printf("adserver(s):\n");
+			for(i=0;i<nrOfAddServers;i++) {
+				printf("%i %s\n",i,addservers[i]);
+			}
 
 
-				printf("\n");
+			printf("\n");
 			
                 }
         }
@@ -1174,7 +1017,7 @@ int main(int argc, char *argv[])
 	}
 
 	#ifdef DEBUG_TIME
-        gettimeofday(&start_time, NULL);
+		gettimeofday(&start_time, NULL);
 	#endif
 
 	int num_colls = 0;
@@ -1230,16 +1073,12 @@ int main(int argc, char *argv[])
 		collections = filtered_collections;
 		num_colls = j;
 	}
-	//FreeSplitList(wantcolls);
 
 
 	#ifdef DEBUG_TIME
         	gettimeofday(&end_time, NULL);
         	fprintf(stderr,"Time debug: get_usr_coll() %f\n",getTimeDifference(&start_time,&end_time));
-	#endif
-
-	#ifdef DEBUG_TIME
-        gettimeofday(&start_time, NULL);
+		gettimeofday(&start_time, NULL);
 	#endif
 
 	for (i = 0; i < num_colls; i++) {
@@ -1301,19 +1140,12 @@ int main(int argc, char *argv[])
 
         //gjør om til liten case
 	#ifdef BLACK_BOX
-		//21 feb 2007: collection er case sensetiv. Bare søkeord skal gjøres om. Må gjøre dette en annen plass
+	
 	#else
 		//må gjøres for web da både cashe er lagret på disk som lovercase. Hvis ikke vil ikke søk på Msn treffe msn
-        	//for(i=0;i<strlen(QueryData.query);i++) {
-                //	QueryData.query[i] = btolower(QueryData.query[i]);
-        	//}
 		convert_to_lowercase_n(QueryData.query,sizeof(QueryData.query));
 	#endif
 
-	//nårmalisere query. 
-	//strcasesandr(QueryData.query,sizeof(QueryData.query),"."," ");
-
-	
 
 	for(i=0;i<strlen(QueryData.query);i++) {
 
@@ -1323,82 +1155,51 @@ int main(int argc, char *argv[])
 			//sprintf(errormessage,"Illegal character in query. \"%c\" ascii value: %u",QueryData.query[i],(unsigned int)QueryData.query[i]);
 			die(15,QueryData.query,"Illegal character in query. \"%c\" ascii value: %u",QueryData.query[i],(unsigned int)QueryData.query[i]);
 		}
-		/*
-		if(
-		(isalnum(QueryData.query[i])) 
-                || (43 == (unsigned int)QueryData.query[i])
-                || (34 == (unsigned int)QueryData.query[i])
-                || (32 == (unsigned int)QueryData.query[i])
-		|| (45 == (unsigned int)QueryData.query[i])
-		|| (58 == (unsigned int)QueryData.query[i])
-		|| (64 == (unsigned int)QueryData.query[i]) // @
-		|| (46 == (unsigned int)QueryData.query[i]) // .
-		|| (128 < (unsigned int)QueryData.query[i])
-
-		) {
-			//gjø ingenting for nå
-		}
-		else {
-			sprintf(errormessage,"Illegal character in query. \"%c\" ascii value: %u",QueryData.query[i],(unsigned int)QueryData.query[i]);
-			die(15,QueryData.query,errormessage);
-
-		}
-		*/
 
 	}
 
-        //fjerner tegn. " blir til &quot;
-
-	//strcpy(QueryData.queryhtml,QueryData.query);
 	escapeHTML(QueryData.queryhtml, sizeof QueryData.queryhtml, QueryData.query);
 
-
-	//printf("query behandlet %s\n",QueryData.queryhtml);
 	#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
 		fprintf(stderr,"Time debug: query normalizeing %f\n",getTimeDifference(&start_time,&end_time));
-	#endif
-
-	#ifdef DEBUG_TIME
 		gettimeofday(&start_time, NULL);
 	#endif
 
+
 	#ifndef BLACK_BOX
-	//prøver å finne ut hvilket land ut fra ip
-	GeoIP *gi;
-	GeoIPRecord * gir;
+		//prøver å finne ut hvilket land ut fra ip
+		GeoIP *gi;
+		GeoIPRecord * gir;
 
-        //gi = GeoIP_open(bfile("data/GeoLiteCity.dat"), GEOIP_MEMORY_CACHE);
-        gi = GeoIP_open(bfile("data/GeoLiteCity.dat"), GEOIP_STANDARD);
-        if (gi == NULL) {
-                fprintf(stderr, "Error opening ip database\n");
-                //exit(1);
-        }
-	else {
-        	//iparesse
-        	if ((gir = GeoIP_record_by_name (gi, (const char *)&QueryData.userip)) == NULL) {
-			strscpy(QueryData.GeoIPcontry,"na",sizeof(QueryData.GeoIPcontry));
-        	        fprintf(stderr, "Error looking up ip for \"%s\". Wil use \"%s\" as country code\n",QueryData.userip,QueryData.GeoIPcontry);
-
-        	}
-		else {
-			strcpy(QueryData.GeoIPcontry, gir->country_code);
-
-        		dprintf("GeoIP: %s\t%s\t%s\t%s\t%s\t%f\t%f\t%d\t%d\n", queryNodeHeder.userip,
-                                         gir->country_code,
-                                         gir->region,
-                                         gir->city,
-                                         gir->postal_code,
-                                         gir->latitude,
-                                         gir->longitude,
-                                         gir->dma_code,
-                                         gir->area_code);
-			dprintf("GeoIPcontry: %s\n",QueryData.GeoIPcontry);
-        		GeoIPRecord_delete(gir);
+		gi = GeoIP_open(bfile("data/GeoLiteCity.dat"), GEOIP_STANDARD);
+		if (gi == NULL) {
+			fprintf(stderr, "Error opening ip database\n");
 		}
+		else {
+			if ((gir = GeoIP_record_by_name (gi, (const char *)&QueryData.userip)) == NULL) {
+				strscpy(QueryData.GeoIPcontry,"na",sizeof(QueryData.GeoIPcontry));
+				fprintf(stderr, "Error looking up ip for \"%s\". Wil use \"%s\" as country code\n",QueryData.userip,QueryData.GeoIPcontry);
 
-		GeoIP_delete(gi);
-	}
+			}
+			else {
+				strcpy(QueryData.GeoIPcontry, gir->country_code);
+
+				dprintf("GeoIP: %s\t%s\t%s\t%s\t%s\t%f\t%f\t%d\t%d\n", queryNodeHeder.userip,
+						 gir->country_code,
+						 gir->region,
+						 gir->city,
+						 gir->postal_code,
+						 gir->latitude,
+						 gir->longitude,
+						 gir->dma_code,
+						 gir->area_code);
+				dprintf("GeoIPcontry: %s\n",QueryData.GeoIPcontry);
+				GeoIPRecord_delete(gir);
+			}
+
+			GeoIP_delete(gi);
+		}
 	#else
 		sprintf(QueryData.GeoIPcontry,"na");
 	#endif
@@ -1406,9 +1207,6 @@ int main(int argc, char *argv[])
 	#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
 		fprintf(stderr,"Time debug: geoip %f\n",getTimeDifference(&start_time,&end_time));
-	#endif
-
-	#ifdef DEBUG_TIME
 		gettimeofday(&start_time, NULL);
 	#endif
 
@@ -1416,24 +1214,14 @@ int main(int argc, char *argv[])
 	strscpy(queryNodeHeder.query,QueryData.query,sizeof(queryNodeHeder.query) -1);
 	strscpy(queryNodeHeder.subname,QueryData.subname,sizeof(queryNodeHeder.subname) -1);
 	strscpy(queryNodeHeder.userip,QueryData.userip,sizeof(queryNodeHeder.userip) -1);
-
-	//hvorfår får vi broblemer når vi bruker -02 og -1 her ? Ser ut til at strcpy ikke terminerer hvis 
-	//den når max lengde.
-	//strscpy(queryNodeHeder.GeoIPcontry,QueryData.GeoIPcontry,sizeof(queryNodeHeder.GeoIPcontry) -1);
 	strcpy(queryNodeHeder.GeoIPcontry,QueryData.GeoIPcontry);
-
 	strscpy(queryNodeHeder.search_user,QueryData.search_user,sizeof(queryNodeHeder.search_user) -1);
-
 	strscpy(queryNodeHeder.HTTP_ACCEPT_LANGUAGE,QueryData.HTTP_ACCEPT_LANGUAGE,sizeof(queryNodeHeder.HTTP_ACCEPT_LANGUAGE));
 	strscpy(queryNodeHeder.HTTP_USER_AGENT,QueryData.HTTP_USER_AGENT,sizeof(queryNodeHeder.HTTP_USER_AGENT));
 	strscpy(queryNodeHeder.HTTP_REFERER,QueryData.HTTP_REFERER,sizeof(queryNodeHeder.HTTP_REFERER));
-	//v13 strscpy(queryNodeHeder.languageFilter,QueryData.languageFilter,sizeof(queryNodeHeder.languageFilter) -1);
 	strscpy(queryNodeHeder.orderby,QueryData.orderby,sizeof(queryNodeHeder.orderby) -1);
-
-
 	strscpy(queryNodeHeder.AmazonAssociateTag,QueryData.AmazonAssociateTag,sizeof(queryNodeHeder.AmazonAssociateTag) -1);
 	strscpy(queryNodeHeder.AmazonSubscriptionId,QueryData.AmazonSubscriptionId,sizeof(queryNodeHeder.AmazonSubscriptionId) -1);
-
 	strscpy(queryNodeHeder.navmenucfg, QueryData.navmenucfg, sizeof queryNodeHeder.navmenucfg);
 	
 	queryNodeHeder.lang = QueryData.lang;
@@ -1443,11 +1231,8 @@ int main(int argc, char *argv[])
 	}
 
 
-	//--QueryData.start; //maskinen begynner på 1, meneske på 0
-	//queryNodeHeder.start = QueryData.start;
 	queryNodeHeder.start = 0;
 
-	//queryNodeHeder.MaxsHits = QueryData.MaxsHits;
 	queryNodeHeder.MaxsHits = QueryData.MaxsHits * QueryData.start;
 
 	//på første side kan vi la være og hente alle treff siden dataene er fordelt, men for de neste 
@@ -1460,10 +1245,6 @@ int main(int argc, char *argv[])
 	queryNodeHeder.filterOn = QueryData.filterOn;
 	queryNodeHeder.anonymous = QueryData.anonymous;
 
-
-
-
-	//Sider = malloc(QueryData.MaxsHits * maxServers * sizeof(struct SiderFormat));
 	maxSider = queryNodeHeder.MaxsHits * maxServers * sizeof(struct SiderFormat);
 
 	Sider = malloc(maxSider);
@@ -1485,26 +1266,25 @@ int main(int argc, char *argv[])
 
 	#ifdef WITH_CASHE
 
-	char cachepath[1024];
+		char cachepath[1024];
 
-	cache_path(cachepath, sizeof(cachepath), CACHE_SEARCH, QueryData.queryhtml, QueryData.start, QueryData.GeoIPcontry, queryNodeHeder.anonymous, QueryData.search_user, collections, num_colls);
+		cache_path(cachepath, sizeof(cachepath), CACHE_SEARCH, QueryData.queryhtml, QueryData.start, QueryData.GeoIPcontry, queryNodeHeder.anonymous, QueryData.search_user, collections, num_colls);
 
-	// ano only! queryNodeHeder.anonymous
-	if ( (dispconfig.usecashe) && (QueryData.filterOn) && 
-	         cache_read(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, cachetimeout, maxSider)) {
-		hascashe = 1;
+		// ano only! queryNodeHeder.anonymous
+		if ( (dispconfig.usecashe) && (QueryData.filterOn) && 
+			 cache_read(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, cachetimeout, maxSider)) {
+			hascashe = 1;
 
-		debug("can open cashe file \"%s\"",cachepath);
-	}
+			debug("can open cashe file \"%s\"",cachepath);
+		}
 
-	#ifdef DEBUG
-		fprintf(stderr, "\tcachepath: \"%s\"\n",cachepath);
-		fprintf(stderr, "\tfilterOn: %i\n",QueryData.filterOn);
-		fprintf(stderr, "\thascashe: %i\n",hascashe);
-		fprintf(stderr, "\tusecashe: %i\n",dispconfig.usecashe);
-	#endif
-
-
+		#ifdef DEBUG
+			fprintf(stderr, "\tcachepath: \"%s\"\n",cachepath);
+			fprintf(stderr, "\tfilterOn: %i\n",QueryData.filterOn);
+			fprintf(stderr, "\thascashe: %i\n",hascashe);
+			fprintf(stderr, "\tusecashe: %i\n",dispconfig.usecashe);
+		#endif
+		
 	#endif
 
 
@@ -1513,7 +1293,6 @@ int main(int argc, char *argv[])
 	#endif
 
 	//Paid inclusion
-	//bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,0,searchport);
 	bsConnectAndQuery(sockfd, nrOfPiServers, piservers,
 		&queryNodeHeder, collections, num_colls, 0, searchport);
 
@@ -1525,12 +1304,8 @@ int main(int argc, char *argv[])
 
 
 	//addservere
-	//bsConectAndQuery(addsockfd,nrOfAddServers,addservers,&queryNodeHeder,0,searchport);
 	bsConnectAndQuery(addsockfd, nrOfAddServers, addservers,
 		&queryNodeHeder, collections, num_colls, 0, searchport);
-
-	//Paid inclusion
-	//bsConectAndQuery(sockfd,nrOfPiServers,piservers,&queryNodeHeder,nrOfServers,searchport);
 	
 	free(collections);
 
@@ -1550,10 +1325,7 @@ int main(int argc, char *argv[])
 	#ifdef DEBUG_TIME
 		gettimeofday(&end_time, NULL);
 		fprintf(stderr,"Time debug: geting pages %f\n",getTimeDifference(&start_time,&end_time));
-	#endif
-
-	#ifdef DEBUG_TIME
-        	gettimeofday(&start_time, NULL);
+		gettimeofday(&start_time, NULL);
 	#endif
 	
 	handle_results(sockfd, Sider, SiderHeder, &QueryData, &FinalSiderHeder, hascashe, &errorha, pageNr,
@@ -1621,34 +1393,25 @@ int main(int argc, char *argv[])
 	#ifdef DEBUG_TIME
 	        gettimeofday(&end_time, NULL);
 	        fprintf(stderr,"Time debug: xml gen %f\n",getTimeDifference(&start_time,&end_time));
-	#endif
-	
-	#ifdef DEBUG_TIME
 		gettimeofday(&start_time, NULL);
 	#endif
 
-	//stenger ned stdout da det ikke skal sendes ut mer data, og dertfor er det ikke noen vits at klienten venter mer
-	//frøykter apache dreper den den da. Kan ikke gjøre
-	//fclose(stdout);
-
-	//30 mai 2007
-	//ser ut til å skape problemer når vi har cashed verdier her
 	if (!hascashe) {
-	//kalkulerer dette på ny, men uten pi servere
-	nrRespondedServers = 0;
-        for (i=0;i<nrOfServers;i++) {
+		//kalkulerer dette på ny, men uten pi servere
+		nrRespondedServers = 0;
+		for (i=0;i<nrOfServers;i++) {
 
-                if (sockfd[i] != 0) {
-                        ++nrRespondedServers;
-                }
-        }
-
-	//stenger ned tilkoblingen til nodene
-	for (i=0;i<nrOfServers + nrOfPiServers;i++) {
-		if (sockfd[i] != 0) {
-        		close(sockfd[i]);
+			if (sockfd[i] != 0) {
+				++nrRespondedServers;
+			}
 		}
-	}
+
+		//stenger ned tilkoblingen til nodene
+		for (i=0;i<nrOfServers + nrOfPiServers;i++) {
+			if (sockfd[i] != 0) {
+				close(sockfd[i]);
+			}
+		}
 	}
 
 
@@ -1659,35 +1422,32 @@ int main(int argc, char *argv[])
 
 
 	#ifdef WITH_CASHE
-	//FILE *CACHE;
-	if (hascashe) {
-		//touch - fremprovoserer en oppdatering av akksestiden
-		u_char byte;
-		int fd;
+		if (hascashe) {
+			u_char byte;
+			int fd;
 
-		if ((fd = open(cachepath, O_RDWR, 0)) == -1) { 
-			perror(cachepath);
-		}
-		else {
-			if (	   (read(fd, &byte, sizeof(byte)) != sizeof(byte)) 
-				|| (lseek(fd, (off_t)0, SEEK_SET) == -1) 
-				|| (write(fd, &byte, sizeof(byte)) != sizeof(byte)) 
-				|| (close(fd) != 0)) 
-			{
+			if ((fd = open(cachepath, O_RDWR, 0)) == -1) { 
 				perror(cachepath);
 			}
+			else {
+				if (	   (read(fd, &byte, sizeof(byte)) != sizeof(byte)) 
+					|| (lseek(fd, (off_t)0, SEEK_SET) == -1) 
+					|| (write(fd, &byte, sizeof(byte)) != sizeof(byte)) 
+					|| (close(fd) != 0)) 
+				{
+					perror(cachepath);
+				}
+			}
 		}
-	}
-	else if (!QueryData.filterOn) {
+		else if (!QueryData.filterOn) {
 
-	}
-	//skriver bare cashe hvis vi fikk svar fra all servere, og vi var ikke ute etter ranking
-	else if ( pageNr > 0 && nrRespondedServers == nrOfServers && dispconfig.usecashe) {
-		if (!cache_write(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, pageNr)) {
-			//fprintf(stderr, "Cache file: %s\n", cachepath);
-			perror("cache_write");
 		}
-	}
+		//skriver bare cashe hvis vi fikk svar fra all servere, og vi var ikke ute etter ranking
+		else if ( pageNr > 0 && nrRespondedServers == nrOfServers && dispconfig.usecashe) {
+			if (!cache_write(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, pageNr)) {
+				perror("cache_write");
+			}
+		}
 	#endif
 
 	#ifdef DEBUG_TIME
@@ -1721,8 +1481,9 @@ int main(int argc, char *argv[])
 
 
 	#ifdef ATTRIBUTES
-	free(SiderHeder[0].navigation_xml);
+		free(SiderHeder[0].navigation_xml);
 	#endif
+	
 	free(SiderHeder);
 	free(AddSiderHeder);
 	//hvis vi har web system kan vi ha flere servere, og de er da som en char **
@@ -1751,7 +1512,6 @@ int main(int argc, char *argv[])
         	gettimeofday(&end_time, NULL);
         	fprintf(stderr,"Time debug: freeing at the end %f\n",getTimeDifference(&start_time,&end_time));
 
-
 		// skriver total tiden
         	gettimeofday(&total_end_time, NULL);
         	fprintf(stderr,"Time debug: Total time %f\n",getTimeDifference(&total_start_time,&total_end_time));
@@ -1769,7 +1529,6 @@ int compare_elements (const void *_p1, const void *_p2) {
 
 	if (p1->type != p2->type) {
                 //sortering på type, slik at ppc kommer sammen, og først
-                //printf("type %i != %i\n",p1->type,p2->type);
                 if (p1->type > p2->type)
                         return -1;
                 else
@@ -1789,7 +1548,6 @@ int compare_elements_posisjon (const void *_p1, const void *_p2) {
 
 	if (p1->type != p2->type) {
 		//sortering på type, slik at ppc kommer sammen, og først. Må så sorteres etter pris og relevans
-		//printf("type %i != %i\n",p1->type,p2->type);
 		if (p1->type > p2->type)
 			return -1;
 		else
@@ -1797,34 +1555,13 @@ int compare_elements_posisjon (const void *_p1, const void *_p2) {
 	}
 	//hvis vi har en normal side, og har forskjelig path lengde
 	else if (p1->type == siderType_normal) {
-		if (p1->posisjon == p2->posisjon ){
-
-			/*
-			//printf("a: %s (%i) - %s (%i)\n",p1->DocumentIndex.Url,p1->pathlen,p2->DocumentIndex.Url,p2->pathlen);
-			if (p1->pathlen == p2->pathlen) {
-				if (p1->iindex.allrank > p2->iindex.allrank) {
-                        		return -1;
-                		}
-                		else {
-                	        	return p1->iindex.allrank < p2->iindex.allrank;
-        	        	}			
-	
-			}
-			else if (p1->pathlen < 
-				p2->pathlen ) {
-				return -1;
-			}
-			else {
-				return 1;
-			}	
-			*/	
+		if (p1->posisjon == p2->posisjon ){	
 			if (p1->iindex.allrank > p2->iindex.allrank) {
                         	return -1;
                 	}
                 	else {
                         	return p1->iindex.allrank < p2->iindex.allrank;
                 	}			
-
 		}
         	else if (p1->posisjon < p2->posisjon)
         	        return -1;
@@ -1833,7 +1570,7 @@ int compare_elements_posisjon (const void *_p1, const void *_p2) {
 		}
 	}
 	else {
-	//for ppc og ppc_side sider. Sorterer først på bud, så pr relevans
+		//for ppc og ppc_side sider. Sorterer først på bud, så pr relevans
 		if (p1->bid == p2->bid) {
 			
 			if (p1->iindex.allrank > p2->iindex.allrank) {
@@ -1884,7 +1621,6 @@ void read_collection_cfg(struct subnamesConfigFormat * dst) {
 	}
 
 
-	/****************/
 	if ( (cfgstring = config_setting_get_member(cfgcollection, "summary") ) == NULL) {
                 fprintf(stderr, "searchd_child: Error! Can't load \"summary\" from config\n");
                 exit(1);

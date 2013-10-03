@@ -2,28 +2,28 @@
 #define _H_DISP_LIBRARHY 
 
 #include <mysql.h>
+
 #include "../common/define.h"
 
-    #define MAXDATASIZE 100 // max number of bytes we can get at once
+
+#define MAXDATASIZE 100 // max number of bytes we can get at once
+
+//ikke sikert 1 vil være for altid, da vi blant annent snart vil støtte clustring, men trenger desperat
+//og få ned stack støreslen, så valgrin fungerer igjen
+#ifdef BLACK_BOX
+	#define maxServers 30
+#else
+	#define maxServers 100
+#endif
 
 
-        //ikke sikert 1 vil være for altid, da vi blant annent snart vil støtte clustring, men trenger desperat
-        //og få ned stack støreslen, så valgrin fungerer igjen
-        #ifdef BLACK_BOX
-            #define maxServers 30
-        #else
-            #define maxServers 100
-        #endif
+//i hundredels sekunder (100 = 1sec)
+#define maxSocketWait_SiderHeder 6001
+#define maxSocketWait_CanDo 6002
+#define maxSocketWait_Connect 6003
 
-    //extern int errno;
-
-    //i hundredels sekunder (100 = 1sec)
-    #define maxSocketWait_SiderHeder 6001
-    #define maxSocketWait_CanDo 6002
-    #define maxSocketWait_Connect 6003
-
-    #define maxerrors 5
-    #define maxerrorlen 201
+#define maxerrors 5
+#define maxerrorlen 201
 
 #define _OUT_FOMRAT_SD 1
 #define _OUT_FOMRAT_OPENSEARCH 2
@@ -33,28 +33,26 @@
 #define DefultMaxsHits 20
 
 
-    struct errorhaFormat {
-                int nr;
-                int errorcode[maxerrors];
-                char errormessage[maxerrorlen][maxerrors];
-    };
+struct errorhaFormat {
+	int nr;
+	int errorcode[maxerrors];
+	char errormessage[maxerrorlen][maxerrors];
+};
 
+struct dispconfigFormat {
+	char usecashe;
+	char useprequery;
+	char writeprequery;
+	const char *UrlToDocID;
 
+	const char *webdb_host;
+	const char *webdb_user;
+	const char *webdb_password;
+	const char *webdb_db;
 
-        struct dispconfigFormat {
-                char usecashe;
-                char useprequery;
-                char writeprequery;
-                const char *UrlToDocID;
-
-                const char *webdb_host;
-                const char *webdb_user;
-                const char *webdb_password;
-                const char *webdb_db;
-
-		char **bannedwords;
-		int bannedwordsnr;
-        };
+	char **bannedwords;
+	int bannedwordsnr;
+};
 
 void dumpQueryDataForamt(struct QueryDataForamt *d);
 
@@ -85,18 +83,14 @@ enum cache_type {
 };
 
 
-unsigned int
-cache_hash(char *query, int start, char *country);
+unsigned int cache_hash(char *query, int start, char *country);
 
-char *
-cache_path(char *path, size_t len, enum cache_type type, char *query, int start, char *country, int anonymous, char search_user[], struct subnamesFormat *collections, int num_colls);
+char *cache_path(char *path, size_t len, enum cache_type type, char *query, int start, char *country, int anonymous, char search_user[], struct subnamesFormat *collections, int num_colls);
 
-int
-cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
+int cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
            size_t sider_header_len, struct SiderFormat *sider, int cachetimeout, size_t max_sizer);
 
-int
-cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
+int cache_write(char *path, int *page_nr, struct SiderHederFormat *final_sider, struct SiderHederFormat *sider_header,
             size_t sider_header_len, struct SiderFormat *sider, size_t sider_len);
 #endif
 #endif

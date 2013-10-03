@@ -1,8 +1,11 @@
 #include "../common/define.h"
 #include <regex.h>
 #include <err.h>
-#include "../common/strlcpy.h"
+
 #include "qrewrite.h"
+
+#include "../common/strlcpy.h"
+
 
 #define ATTR_REGEX "attribute:\"[a-z0-9A-Z ]+=.+\""
 #define COLL_REGEX "collection:[a-z0-9A-Z_\.]+"
