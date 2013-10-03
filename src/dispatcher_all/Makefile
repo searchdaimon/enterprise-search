@@ -13,6 +13,8 @@ WANT_BDB=	true
 WANT_MYSQL=   	true
 WANT_LOGGER=	true
 
+WALL=		true
+
 CGIBIN=		true
 PROG=		dispatcher_allbb
 

@@ -1,5 +1,6 @@
 #include <locale.h>
 #include <stdio.h>
+#include <err.h>
 
 #include "out_sdxml.h"
 
@@ -7,11 +8,19 @@
 	#include "../attributes/attr_makexml.h"
 	#include "qrewrite.h"
 #endif
+
 #include "../common/boithohome.h"
 #include "../common/langToNr.h" // getLangCode
 #include "../common/attributes.h" // next_attribute
+#include "../common/bstr.h"
+#include "../common/lot.h"
+#include "../common/xml.h"
+#include "../common/cgi.h"
+//include fail for vid.h. Commented out for now.
+//#include "../common/vid.h"
 #include "../ds/dcontainer.h"
 #include "../ds/dset.h"
+
 
 char *get_filetype_icon(char *ext) {
 	static struct fte_data *fdata = NULL;
@@ -24,7 +33,7 @@ char *get_filetype_icon(char *ext) {
 
 	if (fdata == NULL) {
 		errx(1, "No fte_data %d %s", __LINE__, __FILE__);
-		return;
+		return NULL;
 	}
 	if (!fte_getdescription(fdata, "eng", ext, &group, &descr, &icon, &version)) {
 		warnx("no icon for ext %s\n", ext);
@@ -316,7 +325,6 @@ void disp_out_sd_v2_0(
 
 	    bsprint_query_with_remove(B, remove, &qa, 1);
 	    char	*basedatequery = buffer_exit(B);
-	    char	xmlescapebuf1[2048];
 	    char	xmlescapebuf2[2048];
 
 	    printf("<group name=\"Date\" query=\"%s\" expanded=\"true\">\n", basedatequery);

@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +48,8 @@
 #include "../common/mgsort.h"
 #include "../common/bstr.h"
 #include "../tkey/tkey.h"
-
+#include "../common/strlcpy.h"
+#include "../common/debug.h"
 
 #include "library.h"
 #include "cgihandler.h"
@@ -679,15 +682,11 @@ int main(int argc, char *argv[])
 	int cmc_port = 0;
         int sockfd[maxServers];
         int addsockfd[maxServers];
-	int i,y,x;
+	int i;
 	int pageNr;
-	char documentlangcode[4];
 	int totlaAds;
-	FILE *LOGFILE;
 	struct SiderFormat *Sider;
-	char colchecked[20];
 	int noDoctype = 0;
-        char vidbuf[64];
         time_t etime;
         time(&etime);
 	
@@ -717,9 +716,7 @@ int main(int argc, char *argv[])
 	char *lastdomain = NULL;
 	unsigned int wantedDocId;
 #endif
-#ifdef WITH_CASHE	
-	char cashefile[512];
-#endif
+
 #ifdef DEBUG_TIME
 	struct timeval total_start_time, total_end_time;
 	struct timeval start_time, end_time;
@@ -761,15 +758,12 @@ int main(int argc, char *argv[])
 	mysql_init(&demo_db);
 
 	#ifndef BLACK_BOX
-		//if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", "boithoweb", 3306, NULL, 0)){
 		if(!mysql_real_connect(&demo_db, dispconfig.webdb_host, dispconfig.webdb_user, dispconfig.webdb_password, dispconfig.webdb_db, 3306, NULL, 0)){
 			fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
-			//exit(1);
 		}
 	#else
 		if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
 			fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
-			//exit(1);
 		}
 
 		// get config overites from the db

@@ -25,7 +25,7 @@
 #include "../common/daemon.h"   
 #include "../common/stdlib.h"
 #include "../common/debug.h"
-
+#include "../common/cgi.h"
 
 #include "library.h"
 
@@ -43,10 +43,9 @@
 
 
 void die_va(int errorcode,char query[], const char *fmt, va_list ap) {
-	FILE *LOGFILE;
-
 	
 	char queryesc[MaxQueryLen*2+1];
+	
 	escapeHTML(queryesc, sizeof queryesc, query);
 
 	printf("<search>\n");
@@ -1046,10 +1045,6 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 	MYSQL_STMT *logstmt, *pilogstmt;
 	my_ulonglong  affected_rows;
 	char query [2048];
-	int x, i;
-
-
-
 	MYSQL_BIND bind[12];
 	unsigned long len[12];
 	memset(bind, 0, sizeof(bind));
