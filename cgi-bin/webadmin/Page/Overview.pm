@@ -45,7 +45,7 @@ use constant TPL_HTMLDUMP		=> 'overview_htmldump.html';
 
 use constant MAX_COLL_DOC_COUNT		=> 50;
 
-Readonly::Scalar my $META_CONN_PUSH => "Pushed collections";
+Readonly::Scalar my $META_CONN_PUSH => "Push unclosed";
 Readonly::Scalar my $CRAWL_STATUS_OK => qr{^(OK\.|Ok)$};
 
 Readonly::Hash my %VALID_CUST => map { $_ => 1 } qw(
@@ -719,6 +719,9 @@ sub gen_collection_list {
 		active => $#pushed_colls > 0 ? 1 : undef,
 	};
 	#carp Dumper(\@connectors);
+
+	@connectors = sort {$a->{'name'} cmp $b->{'name'}} @connectors;
+
 	return @connectors;
 }
 
