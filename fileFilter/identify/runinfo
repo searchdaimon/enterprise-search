@@ -41,12 +41,6 @@ outputformat: text
 outputtype: stdio
 attrwhitelist: size, resolution
 
-documentstype: eps
-command: identify -ping -format "Geometry: %wx%h, Format: %m" #file
-outputformat: text
-outputtype: stdio
-attrwhitelist: size, resolution
-
 documentstype: ai
 command: identify -ping -format "Geometry: %wx%h, Format: %m" #file
 outputformat: text
