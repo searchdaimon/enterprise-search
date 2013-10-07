@@ -54,10 +54,9 @@ char * cgi_error_strings[CGIERR_NUM_ERRS] = {
 
 
 /* Debugging.  If set, this library will attempt to append debugging
-   information to a file named "debug.txt" in the current directory. */
+   information to a file named "debug.txt" in the /tmp directory. */
 
 /* #define DEBUG */
-//#define DEBUG
 
 
 /* Internal use: Write debugging stuff to a file */
