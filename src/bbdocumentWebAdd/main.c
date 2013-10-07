@@ -587,7 +587,7 @@ int main(int argc, char **argv, char **envp)
 		cgi_error(500, bstrerror());
 
 
-	request_method = strdup(getenv("REQUEST_METHOD"));
+	request_method = getenv("HTTP_REQUEST_METHOD")!=NULL ? strdup(getenv("HTTP_REQUEST_METHOD")) : strdup(getenv("REQUEST_METHOD"));
 	// We will handel the post stuf our self. Set REQUEST_METHOD to GET so cgi-util ignores it.
 	setenv("REQUEST_METHOD", "GET", 1);
 
