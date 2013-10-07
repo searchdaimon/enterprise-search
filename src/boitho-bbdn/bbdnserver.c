@@ -59,10 +59,10 @@ int main (int argc, char *argv[]) {
         }
 
 
-        printf("crawlManager: running maincfgopen\n");
+        printf("boitho-bbdn: running maincfgopen\n");
         maincfg = maincfgopen();
 
-        printf("crawlManager: running maincfg_get_int\n");
+        printf("boitho-bbdn: running maincfg_get_int\n");
         int bbdnport = maincfg_get_int(&maincfg,"BLDPORT");
 
 
@@ -74,6 +74,8 @@ int main (int argc, char *argv[]) {
 
 	maincfgclose(&maincfg);
 
+
+	printf("boitho-bbdn: ending\n");
         return 0;
 }
 
@@ -138,7 +140,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 
 		if (packedHedder.command == bbc_docadd) {
 			#ifdef DEBUG
-			printf("bbc_docadd\n");
+				printf("bbc_docadd\n");
 			#endif
 
 			char *subname,*documenturi,*documenttype,*document,*acl_allow,*acl_denied,*title,*doctype;
@@ -527,13 +529,6 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 	}
 
 	++count;
-
-//	#ifdef DEBUG_BREAK_AFTER
-//	if (count >= DEBUG_BREAK_AFTER) {
-//		printf("exeting after %i docoments\n",count);
-//		exit(1);
-//	}
-//	#endif
 
 
 }
