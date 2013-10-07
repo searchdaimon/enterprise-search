@@ -74,6 +74,7 @@ int main (int argc, char *argv[]) {
 
 	maincfgclose(&maincfg);
 
+	bbdocument_clean();
 
 	printf("boitho-bbdn: ending\n");
         return 0;
