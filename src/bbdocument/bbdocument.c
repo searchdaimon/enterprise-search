@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <assert.h>
+#include <err.h>
 
 #include "bbdocdefine.h"
 #include "bbfilters.h"
@@ -1158,10 +1159,18 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	//tester at det ikke finnes først. Hvis det finnes hånterer vi det. Eventuelt også lagre  den nye versjonen hvis det er forandret.
 	if (uriindex_get(documenturi,&DocIDForExistTest,&lastmodifiedForExistTest,subname)) {
 
-		if (lastmodifiedForExistTest == lastmodified) {
-			printf("bbdocument_add: Uri \"%s\" all redy exist with DocID \"%u\" and time \"%u\"\n",documenturi,DocIDForExistTest,lastmodifiedForExistTest);
+		if (lastmodified == 0) {
+			printf("bbdocument_add: Uri \"%s\" all redy exist. And we was asked not to test for modify time (modify time was 0). Will not add.\n",documenturi);
 			return 1;
 		}
+
+		if (lastmodifiedForExistTest == lastmodified) {
+			printf("bbdocument_add: Uri \"%s\" all redy exist with DocID \"%u\" and time \"%u\". Will not add.\n",documenturi,DocIDForExistTest,lastmodifiedForExistTest);
+			return 1;
+		}
+		
+		printf("We have document from before, but modified time have been updated. Will update the document.\n");
+		printf("lastmodifiedForExistTest: %u, lastmodified: %u\n",lastmodifiedForExistTest,lastmodified);
 		//hvis url er kjent, men oppdater rebruker vi den.
 		ReposetoryHeader.DocID = DocIDForExistTest;
 	}
@@ -1258,7 +1267,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	//prøver å lag et bilde
 	//if ( (imagebuffer = generate_thumbnail( document, dokument_size, &imageSize )) == NULL ) {
 	if (!bbdocument_makethumb(documenttype_real,document,dokument_size,&imagebuffer,&imageSize)) {
-		printf("can't generate image\n");
+		printf("Can't generate image.\n");
 		ReposetoryHeader.imageSize = 0;
 		imagebuffer = NULL;
 	}
