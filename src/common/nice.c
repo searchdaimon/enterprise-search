@@ -45,12 +45,13 @@ void ionice_benice(void)
 	int ioprio = 7;
 	int ioclass = IOPRIO_CLASS_BE;
 
-	printf("Setting ionice for process to IDLE.");
+	printf("Setting ionice for process to IDLE.\n");
 	if (ioprio_set(IOPRIO_WHO_PROCESS, getpid(), ioprio | (ioclass << IOPRIO_CLASS_SHIFT))) {
-		fprintf(stderr, "ioprio_set(): Unable to set idle io priority");
+		fprintf(stderr, "ioprio_set(): Unable to set idle io priority.\n");
+		perror("ioprio_set");
 	}
 	if (nice(15) == -1) {
-		fprintf(stderr, "nice(15): Unable to increment cpu nice");
+		fprintf(stderr, "nice(15): Unable to increment cpu nice.\n");
 	}
 }
 
