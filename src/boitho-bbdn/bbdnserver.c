@@ -64,6 +64,8 @@ int main (int argc, char *argv[]) {
         int bbdnport = maincfg_get_int(&maincfg,"BLDPORT");
 
 
+	bbdocument_init(NULL);
+
         sconnect(connectHandler, bbdnport, noFork, breakAfter);
 
         printf("bbdnserver:Main() sconnect ferdig\n");
@@ -109,8 +111,6 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 		if (1) {
 			printf("authenticated\n");
 			intrespons = bbc_authenticate_ok;
-
-			bbdocument_init(NULL);
 
 			isAuthenticated = 1;
 		}
