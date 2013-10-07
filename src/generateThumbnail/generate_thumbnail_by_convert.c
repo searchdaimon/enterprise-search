@@ -20,18 +20,15 @@
 char *generate_thumbnail_by_convert(const void *document, const size_t size, size_t *new_size, char type[]) {
 
 	void *image;
-	void *thumbnail;
 	FILE *fp = NULL;
 	char command[512];
 	char documentfile[PATH_MAX];
 	char imagefile[PATH_MAX];
 	struct stat inode;      // lager en struktur for fstat å returnere.
-	//int n;
 	int exeocbuflenret;
 	char exeocbuf[exeocbuflen];
 	int ret;
 
-	//tmpfilename = mktemp("/tmp/generateThumbnail_XXXXXX"); //make a unique temporary file name
 
 
 	//runarb: 28 aug 2008: Jeg Tror at å legge på [0] skal gjøre det slik at vi bare får første
@@ -66,7 +63,6 @@ char *generate_thumbnail_by_convert(const void *document, const size_t size, siz
 	//composite -gravity center /home/boitho/public_html/div/test.png /home/boitho/boithoTools/data/100x100.png /home/boitho/public_html/div/test2.png
 	snprintf(command,sizeof(command),"%s -gravity center  %s %s %s",compositepath,imagefile,backgroundpng,imagefile);
 	printf("runing %s\n",command);
-	//n = system(command);
 
 	shargs[2] = command;
         printf("generate_thumbnail_by_convert: runnig: /bin/sh -c %s\n",command);
@@ -75,7 +71,6 @@ char *generate_thumbnail_by_convert(const void *document, const size_t size, siz
 		fprintf(stderr,"did timeout doring ImageMagick converting.");
 		goto generate_thumbnail_by_convert_error;
 	}
-
 
 
 	if ((fp = fopen(imagefile,"rb")) == NULL) {
@@ -114,25 +109,18 @@ char *generate_thumbnail_by_convert(const void *document, const size_t size, siz
 }
 
 
-
-
 char *generate_pdf_thumbnail_by_convert( const void *document, const size_t size, size_t *new_size ) {
 
 	void *image;
-	void *thumbnail;
 	FILE *fp = NULL;
 	char command[512];
 	char documentfile[PATH_MAX];
 	char imagefile[PATH_MAX];
 	struct stat inode;      // lager en struktur for fstat å returnere.
-
 	int exeocbuflenret;
 	char exeocbuf[exeocbuflen];
 	int ret;
         char *shargs[] = {"/bin/sh","-c",command ,'\0'};
-
-	//tmpfilename = mktemp("/tmp/generateThumbnail_XXXXXX"); //make a unique temporary file name
-
 
 	
 	snprintf(documentfile,sizeof(documentfile),"%s.pdf",converttemptemplate);
@@ -149,7 +137,6 @@ char *generate_pdf_thumbnail_by_convert( const void *document, const size_t size
 	snprintf(command,sizeof(command),"%s -dBATCH -dFirstPage=1 -dLastPage=1 -sDEVICE=png256 -dNOPAUSE -dSAFER -sOutputFile=%s %s",gspath,imagefile,documentfile);
 
 	printf("runing %s\n",command);
-	//system(command);
 	shargs[2] = command;
 	exeocbuflenret = exeocbuflen;
         exeoc_timeout(shargs,exeocbuf,&exeocbuflenret,&ret,120);
@@ -157,7 +144,6 @@ char *generate_pdf_thumbnail_by_convert( const void *document, const size_t size
 	snprintf(command,sizeof(command),"%s %s -resize 98x98 -bordercolor black -border 1x1 %s",convertpath,imagefile,imagefile);
 
 	printf("runing %s\n",command);
-	//system(command);
 	shargs[2] = command;
 	exeocbuflenret = exeocbuflen;
         exeoc_timeout(shargs,exeocbuf,&exeocbuflenret,&ret,120);
@@ -165,7 +151,6 @@ char *generate_pdf_thumbnail_by_convert( const void *document, const size_t size
 
 	snprintf(command,sizeof(command),"%s -gravity center  %s %s %s",compositepath,imagefile,backgroundpng,imagefile);
 	printf("runing %s\n",command);
-	//system(command);
 	shargs[2] = command;
 	exeocbuflenret = exeocbuflen;
         exeoc_timeout(shargs,exeocbuf,&exeocbuflenret,&ret,120);

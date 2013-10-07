@@ -1,28 +1,31 @@
-#include "bbfilters.h"
-#include "../perlembed/perlembed.h"
 #include <stdio.h>
 #include <string.h>
+#include <err.h>
+
+#include "../perlembed/perlembed.h"
 #include "../common/boithohome.h"
 #include "../common/ht.h"
 #include "../common/strlcpy.h"
 #include "../common/exeoc.h"
+#include "../common/bstr.h"
+
+#include "bbfilters.h"
 
 #define LIBEXTRACTOR_PATH "/usr/bin/extract"
-//#define LIBEXTRACTOR_PATH "/home/dagurval/websearch/fakeextract/extract"
+
 
 void run_filter_perlplugin(char *dst, size_t dst_size, struct fileFilterFormat *filter, struct hashtable **metahash) {
+
 	char perlpath[PATH_MAX];	
 	snprintf(perlpath, sizeof perlpath, "%smain.pm", filter->path);
 
 	HV *perl_metahash = newHV();
 	SV *perl_dst = newSVpv("", strlen(""));
-	//AV *perl_extracted_files = newAV();
 	HV *params = newHV();
 
 	hv_store(params, "file", strlen("file"), sv_2mortal(newSVpv(filter->command, 0)), 0);
 	hv_store(params, "metadata", strlen("metadata"), sv_2mortal(newRV((SV *) perl_metahash)), 0);
 	hv_store(params, "data", strlen("data"),  sv_2mortal(newRV((SV *) perl_dst)), 0);
-	//hv_store(params, "extracted_files", strlen("extracted_files"),  sv_2mortal(newRV((SV *) perl_extracted_files)), 0);
 
 	#ifdef DEBUG
 		printf("perl run: %s:dump(file=%s, metadata=%p)\n",perlpath,filter->command,perl_metahash);
@@ -53,6 +56,7 @@ void run_filter_perlplugin(char *dst, size_t dst_size, struct fileFilterFormat *
 #ifdef USE_LIBEXTRACTOR
 
 static inline const char* in_list(const char *key, char **list) {
+
 	int i;
 	for (i = 0; list[i] != NULL; i++) {
 		int	n = strlen(key);
@@ -69,6 +73,7 @@ static inline const char* in_list(const char *key, char **list) {
 }
 
 void parse_libextractor_output(struct hashtable *dst, const char *output, char **whitelist) {
+
 	char **lines;
 	int n_lines = split(output, "\n", &lines);
 	char key[MAX_ATTRIB_LEN];
@@ -76,7 +81,7 @@ void parse_libextractor_output(struct hashtable *dst, const char *output, char *
 
 	printf("parse_libextractor_output: n_lines %i\n",n_lines);
 	
-	int i, j;
+	int i;
 	for (i = 0; i < n_lines; i++) {
 		char *line = lines[i];
 		char *remain = strchr(line, '-');
@@ -96,8 +101,8 @@ void parse_libextractor_output(struct hashtable *dst, const char *output, char *
 		}
 
 		hashtable_insert(dst, strdup(ret), strdup(val));
-		//warnx("inserted attr %s - %s\n", key, val);
 	}
+
 	FreeSplitList(lines);
 	printf("parse_libextractor_output: done\n");
 }
@@ -134,17 +139,11 @@ void add_libextractor_attr(struct hashtable **metadata, char *filepath, char **w
 
 
 void run_filter_exeoc(char *dst, const size_t dst_size, struct fileFilterFormat *fileFilter, struct hashtable **metahash) {
+
 	#ifdef DEBUG
-	printf("command: %s\n",(*fileFilter).command);
+		printf("command: %s\n",(*fileFilter).command);
 	#endif
 
-
-
-	//hvis vi skal lage en ny fil må vi slette den gamle
-	//sletter den etterpå i steden. Men før vi kaller return
-	//if (strcmp((*fileFilter).outputformat,"textfile") == 0) {
-	//	unlink(filconvertetfile_out_txt);
-	//}
 
 	printf("running: %s\n",(*fileFilter).command);
 

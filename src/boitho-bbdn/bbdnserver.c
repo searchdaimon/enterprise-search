@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <inttypes.h>
 #include <signal.h>
+#include <err.h>
 
 #include "../common/boithohome.h"
 #include "../common/define.h"
@@ -20,6 +21,7 @@
 #include "../common/gcwhisper.h"
 #include "../common/reposetory.h"
 #include "../common/nice.h"
+#include "../common/DocumentIndex.h"
 
 #include "../perlembed/perlembed.h"
 
@@ -448,7 +450,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 		}
 		else if (packedHedder.command == bbc_deletecollection) {
 			printf("deletecollection\n");
-			char *subname, *uri;
+			char *subname;
 			//subname
                         if ((i=recv(socket, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
                                 perror("Cant read intrespons");

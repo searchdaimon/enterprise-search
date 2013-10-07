@@ -13,6 +13,8 @@ WANT_BDB=	true
 WANT_PERLEMBED=	true
 WANT_LOGGER=	true
 
+WALL=           true
+
 PROG=	boitho-bbdn
 
 CFLAGS?=	
