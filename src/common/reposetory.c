@@ -319,39 +319,36 @@ unsigned int rGeneraeADocID (char subname[]) {
 	unsigned int DocID;
 	int n;
 
-	DocIDFILE = lotOpenFileNoCasheByLotNr(1,"DocID","r",'e',subname);
+	DocIDFILE = lotOpenFileNoCasheByLotNr(1,"DocID",">>",'e',subname);
 
 
-	if (DocIDFILE == 0) {
-		if (errno != ENOENT) {
-			fprintf(stderr,"Can't open the \"DocID\" file for reading\n");
-			exit(-1);
-		}
-		printf("file sise is 0\n");
+	if (DocIDFILE == NULL) {
+		fprintf(stderr,"Can't open the \"DocID\" file.\n");
+		exit(-1);
+	}
+	
+	if (fstat(fileno(DocIDFILE),&inode) == -1) {
+		fprintf(stderr,"Can't fstat the \"DocID\" file\n");
+		exit(-1);
+	}
+
+	if (inode.st_size > 10) {
+		fprintf(stderr,"The \"DocID\" file is to large to contain a unsigned int\n");
+		exit(-1);
+	}
+
+	// Empty file means that we have a new one, and will start on DocID 0.		
+	if (inode.st_size == 0) {
+		fprintf(stderr,"The \"DocID\" file is empty. Will start on DocID 0 then.\n");
 		DocID = 0;
 	}
 	else {
-		if (fstat(fileno(DocIDFILE),&inode) == -1) {
-			fprintf(stderr,"Can't fstat the \"DocID\" file\n");
-			exit(-1);
-
-		}
-		else if (inode.st_size > 10) {
-			fprintf(stderr,"The \"DocID\" file is to large to contain a unsigned int\n");
-			exit(-1);
-		}
-		else if (inode.st_size == 0) {
-			fprintf(stderr,"The \"DocID\" file is emty\n");
-			exit(-1);
-
-		}
 		if ((n =fread(&buff,sizeof(char),inode.st_size,DocIDFILE)) != inode.st_size) {
-			printf("dident read %"PRId64" char, but %i\n",inode.st_size,n);
+			fprintf(stderr,"dident read %"PRId64" char, but %i\n",inode.st_size,n);
 			perror("fread");
 			exit(-1);
 		}
 		buff[inode.st_size] = '\0';
-
 
 		DocID = strtoul(buff, &errorbuff, 10);
 
@@ -362,26 +359,21 @@ unsigned int rGeneraeADocID (char subname[]) {
 		if (DocID == 0) {
 			fprintf(stderr,"Parser error. DocID is 0\n");
 			exit(-1);
-
 		}
 
-		fclose(DocIDFILE);
-	}		
-
+		// Reposition the file pointer to the beginning of the file.
+		if (fseek(DocIDFILE,0,SEEK_SET) == -1) {
+			fprintf(stderr,"Can't rewind the DocID file pointer\n");
+			perror("fread");
+			exit(-1);
+		}
+	}
 
 	++DocID; //filen holder siste DOcID. Så vi må øke med 1 får dette er neste
 
 
-	DocIDFILE = lotOpenFileNoCasheByLotNr(1,"DocID","w",'e',subname);
-	if (DocIDFILE == NULL) {
-		fprintf(stderr,"Can't open the \"DocID\" file for writing\n");
-		exit(-1);
-
-	}
-
 	fprintf(DocIDFILE,"%u",DocID);
 
-	fsync(fileno(DocIDFILE));
 	fclose(DocIDFILE);
 
 	printf("rGeneraeADocID: writing DocID %u, subname \"%s\"\n",DocID,subname);
