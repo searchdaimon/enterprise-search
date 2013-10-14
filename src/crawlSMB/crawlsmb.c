@@ -395,36 +395,45 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
 					        //context = context_init(no_auth);
 
 
-			                    	if ( (n = smbc_fgetxattr(fd, "system.nt_sec_desc.*", value, sizeof(value))) < 0 ) {
+			                    	if (smbc_fgetxattr(fd, "system.nt_sec_desc.*", value, sizeof(value)) < 0) {
 
-							if (n == EINVAL) {
+							if (errno == ENOATTR) {
+                        				    documentError(collection, 1,"crawlsmb.c: Warn! Could not get attributes for %s. If the attribute does not exist and the flag SMBC_XATTR_FLAG_REPLACE was specified. Will use an emty acl.", entry_name);
+							    // Acl (file attribut) dos not exist. Make an emty acl
+							    parsed_acl = malloc(sizeof(char*)*2);
+							    parsed_acl[0] = strdup("");
+							    parsed_acl[1] = strdup("");
+							}
+							else if (errno == EINVAL) {
 	                			            documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. The client library is not properly initialized or one of the parameters is not of a correct form.", entry_name);
+							    goto next_it;
 							}
-							else if (n == ENOMEM) {
+							else if (errno == ENOMEM) {
         	                			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. No memory was available for internal needs.", entry_name);
+							    goto next_it;
 							}
-							else if (n == EEXIST) {
+							else if (errno == EEXIST) {
                 	        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. If the attribute already exists and the flag SMBC_XATTR_FLAG_CREAT was specified.", entry_name);
+							    goto next_it;
 							}
-							else if (n == ENOATTR) {
-                        				    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. If the attribute does not exist and the flag SMBC_XATTR_FLAG_REPLACE was specified.", entry_name);
-							}
-							else if (n == EPERM) {
+							else if (errno == EPERM) {
 	                        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. Permission was denied.", entry_name);
+							    goto next_it;
 							}
-							else if (n == ENOTSUP) {
+							else if (errno == ENOTSUP) {
 	                        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. The referenced file system does not support extended attributes", entry_name);
+							    goto next_it;
 							}
 							else {
-	                        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. Unknown error code \"%i\"", entry_name,n);
+	                        			    documentError(collection, 1,"crawlsmb.c: Error! Could not get attributes for %s. Unknown error code \"%i\", name \"%s\"", entry_name, errno, strerror(errno));
+							    goto next_it;
 							}
 
-//2012			    				context_free(context);
-//2012			    				context = context_init(no_auth);
-                            				goto next_it;
                         			}
-                    				
-			    			parsed_acl = parseacl_read_access( value );
+                    				else {
+			    				parsed_acl = parseacl_read_access( value );
+						}
+
 			    			#ifdef DEBUG
 			    				bblog(DEBUG, "crawlsmb.c: Users allowed '%s'", parsed_acl[0]);
 			    				bblog(DEBUG, "crawlsmb.c: Users denied  '%s'", parsed_acl[1]);
