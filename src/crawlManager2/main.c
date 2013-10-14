@@ -2651,7 +2651,6 @@ void connectHandler(int socket) {
 				char *groupbuf = malloc(n_groups * sizeof(group));
 				for (j = 0; j < n_groups; j++) {
 					strlcpy(groupbuf + (j * sizeof(group)), groups[j], sizeof(group));
-printf("aaaa \"%s\"\n", groups[j]);
 				}
 				sendallPack(socket, 4, &n_groups, sizeof(int), groupbuf, n_groups * sizeof(group));
 				free(groupbuf);
