@@ -481,7 +481,6 @@ int cm_loadCrawlLib(struct hashtable **h, char name[]) {
 		lib_handle = dlopen(libpath, RTLD_LAZY);
 		if (!lib_handle) {
 			bblog(ERROR, "Error: during dlopen(): %s. File %s.",dlerror(),libpath);
-		    	//exit(1);
 			return 0;
 		}
 
@@ -1103,7 +1102,6 @@ int cm_crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 
 	if (!cm_getCrawlLibInfo(h,&crawlLibInfo,(*collection).connector)) {
 		bblog(ERROR, "Error: can't get CrawlLibInfo.");
-		//exit(1);
 		return 0;
 	}
 
@@ -1194,12 +1192,11 @@ pathaccess_makekey(char *collection, char *username, char *password, char *uri, 
 	len = 11 + strlen(collection) + strlen(username) + strlen(password) + strlen(uri) + 4;
 	*outlen = len-1;
 	s = malloc(len);
-	//sprintf(s, "pathaccess_%s\1%s\1%s\1%s", collection, username, password, uri);
+
 	sprintf(s, "pathaccess_%s_%s_%s_%s", collection, username, password, uri);
 	bblog(INFO, "Key: %s",  s);
 	for (i = 0; s[i] != '\0'; i++) {
 		if (isspace(s[i]))
-			//s[i] = '\2';
 			s[i] = '!';
 	}
 
@@ -1701,7 +1698,7 @@ int cm_handle_crawlcanconect(MYSQL *db, char cvalue[]) {
 	if (nrofcollections == 1) {
 		
 		#ifndef DEBUG
-			//Temp: funger ikke når vi kompilerer debug. Må også compilere crawlManager debug
+			//funger ikke når vi kompilerer debug. Må også compilere crawlManager debug
 			//make a conectina for add to use
 			if (!bbdn_conect(&collections[0].socketha,"",global_bbdnport)) {
 				berror("can't conect to bbdn (boitho backend document server)\n");
@@ -1968,9 +1965,6 @@ void crawl(struct collectionFormat *collection,int nrofcollections, int flag, in
 		//tester at vi ikke allerede holder på å crawle denne fra før
 		if (!crawl_lock(&collection_lock,collection[i].collection_name)) {
 			bblog(ERROR, "Error: Can't crawl collection \"%s\". We are already crawling it.",collection[i].collection_name);
-			//runarb: 14 jan 2008: ingen grun til å oppdatere beskjeden, da det som står der er med korekt
-                        //set_crawler_message(0,"Error: Can't crawl collection. We are all redy crawling it.",collection[i].id);
-
 			continue;
 		}
 
@@ -2657,10 +2651,10 @@ void connectHandler(int socket) {
 				char *groupbuf = malloc(n_groups * sizeof(group));
 				for (j = 0; j < n_groups; j++) {
 					strlcpy(groupbuf + (j * sizeof(group)), groups[j], sizeof(group));
+printf("aaaa \"%s\"\n", groups[j]);
 				}
 				sendallPack(socket, 4, &n_groups, sizeof(int), groupbuf, n_groups * sizeof(group));
 				free(groupbuf);
-				//boithoad_respons_list_free(groups);
 			}
 			else {
 				sendall(socket, &n_groups, sizeof(int));
