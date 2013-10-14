@@ -230,13 +230,12 @@ int main (int argc, char *argv[]) {
                 	printf("group: %s\n", group);
 
 			collections = userToSubname_getsubnamesList(&userToSubnameDb, group, &nrofcollections);
-			if (collections == NULL) {
-				continue;
-			}
-
-			printf("collections: %i\n",nrofcollections);
-			for (y=0; y < nrofcollections; y++) {
-				printf("collection: %s\n",collections[y]);
+			if (collections != NULL) {
+			
+				printf("collections: %i\n",nrofcollections);
+				for (y=0; y < nrofcollections; y++) {
+					printf("collection: %s\n",collections[y]);
+				}
 			}
 
                         group += MAX_LDAP_ATTR_LEN;
