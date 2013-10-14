@@ -39,8 +39,9 @@ int userToSubname_open(struct userToSubnameDbFormat * userToSubnameDb, char mode
 				filemode = 0664;
 				break;
 			case 'r':
-				flags = DB_RDONLY; break;
+				flags = DB_RDONLY;
 				filemode = 0;
+				break;
 			default:
 				errx(1, "%s %d Unknown open mode '%d'", __FILE__, __LINE__, mode);
 		}
