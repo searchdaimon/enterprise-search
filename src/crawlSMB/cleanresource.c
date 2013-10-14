@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Hack for å løse utf-8-problemet ved Forskningsparken:
+// Hack for å løse utf-8-problemet ved Forskningsparken. Fortiden ikke i bruk:
+/*
 static inline void utf8_hack( char *str )
 {
     char	*match;
@@ -40,7 +41,7 @@ static inline void utf8_hack( char *str )
 	    match = strcasestr( match+1, "%C3%" );
 	}
 }
-
+*/
 
 int cleanresourceWinToUnix(char resource[]) {
 
@@ -57,8 +58,6 @@ int cleanresourceWinToUnix(char resource[]) {
 
         }
 
-	//fp char bug fiks:
-    	//utf8_hack(resource);
 }
 
 int cleanresourceUnixToWin(char resource[]) {
@@ -74,11 +73,8 @@ int cleanresourceUnixToWin(char resource[]) {
 
         }
 
-	//fp char bug fiks:
-    	//utf8_hack(resource);
-
 	#ifdef DEBUG
-	bblog(DEBUG, "new %s",resource);
+		bblog(DEBUG, "new %s",resource);
 	#endif
 }
 

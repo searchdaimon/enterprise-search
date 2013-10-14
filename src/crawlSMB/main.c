@@ -1,18 +1,14 @@
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "crawlsmb.h"
-#include "scan.h"
-#include "cleanresource.h"
 #include "../crawlManager2/shortenurl.h"
-
-
-
 #include "../crawl/crawl.h"
 #include "../logger/logger.h"
 
+#include "crawlsmb.h"
+#include "scan.h"
+#include "cleanresource.h"
 
 
 int crawlpatAcces   (char resource[], char username[], char password[], int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...) , struct collectionFormat *collection) 
@@ -32,7 +28,6 @@ int crawlpatAcces   (char resource[], char username[], char password[], int (*do
 		resourcereal += strlen("file:");
 	}
 
-	//fp char bug fiks:
 	cleanresourceWinToUnix(resourcereal);
 
         bblog(INFO, "crawlSMB: resourcereal: \"%s\" user \"%s\" Password \"%s\"", resourcereal,username,password);
@@ -227,43 +222,3 @@ struct crawlLibInfoFormat crawlLibInfo = {
         crawl_security_acl,
         "SMB"
 };
-
-
-
-/*
-int main( int argc, char *argv[] )
-{
-    char	*prefix;
-
-    if (argc != 5)
-	{
-	    printf("usage ./crawlSMB collection username password path\n");
-	    exit(1);
-	}
-	struct bbdnFormat bbdh;
-
-#ifndef NO_BB
-
-	if (!bbdn_conect(&bbdh,"")) {
-                printf("cant conetc to bbdh.\n");
-                exit(1);
-	}
-#endif
-
-    prefix = smb_mkprefix( argv[2], argv[3] );
-
-//    // Eksempel på bruk av smb_test_open:
-//
-//    if (smb_test_open(prefix, argv[4]))
-//	{
-//	    printf("User %s has access to %s\n", argv[2], argv[4]);
-//	}
-//    else
-//	{
-//	    printf("User %s has NOT access to %s\n", argv[2], argv[4]);
-//	}
-
-    smb_recursive_get( argv[1], prefix, argv[4],&bbdh );
-    free(prefix);
-}
-*/

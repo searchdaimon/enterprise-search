@@ -1,6 +1,4 @@
-//asprintf
 #define _GNU_SOURCE
-
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -101,7 +99,7 @@ int smbc_readloop(int sockfd, void *buf, off_t len) {
         int n;
 
         #ifdef DEBUG
-        bblog(DEBUG, "will read %i",len);
+		bblog(DEBUG, "will read %i",len);
         #endif
 
         while(total < len) {
@@ -136,9 +134,7 @@ int smbc_readloop(int sockfd, void *buf, off_t len) {
  *
  * Returns the remaining buffer length.
  */
-int
-boithosmbc_wholeurlencode(char * dest, char * src, int max_dest_len)
-{
+int boithosmbc_wholeurlencode(char * dest, char * src, int max_dest_len) {
         char hex[] = "0123456789ABCDEF";
 
         for (; *src != '\0' && max_dest_len >= 3; src++) {
@@ -176,8 +172,8 @@ boithosmbc_wholeurlencode(char * dest, char * src, int max_dest_len)
 /*
     Create prefix for smb-url from username and password ("smb://username:password@")
  */
-char* smb_mkprefix( const char *username, const char *passwd )
-{
+char* smb_mkprefix( const char *username, const char *passwd ) {
+
     const int	buf_size = MAX_URI_SIZE;
     char	buf[buf_size];
     int		pos = 0, i;
@@ -222,13 +218,8 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
     char                dblock[512], *dbuf, *dbuf_temp;
     struct smbc_dirent  *dirp;
     char                full_name[strlen(prefix) + strlen(dir_name) + 1];
-//2012    SMBCCTX		*context;
-
     struct crawldocumentExistFormat crawldocumentExist;
     struct crawldocumentAddFormat crawldocumentAdd;
-
-
-//2012    context = context_init(no_auth);
 
     sprintf(full_name, "%s%s", prefix, dir_name);
 
@@ -236,7 +227,6 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
     if (dh < 0)
     {
             documentError(collection, 1,"crawlsmb.c: Error! Could not open directory %s for dir \"%s\" at %s:%d", dir_name,dir_name,__FILE__,__LINE__);
-//2012	    context_free(context);
             return 0;
     }
 
@@ -251,7 +241,6 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
             {
                     documentError(collection, 1,"crawlsmb.c: Error! Could not get directory entries from %s", dir_name);
 		    smbc_closedir(dh);
-//2012		    context_free(context);
                     return 0;
             }
 
@@ -283,7 +272,7 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
             asprintf(&uri, "file:%s",entry_name);
 
 	    #ifdef DEBUG
-	    bblog(DEBUG, "entry_name raw: \"%s\"",entry_name);
+		bblog(DEBUG, "entry_name raw: \"%s\"",entry_name);
 	    #endif
 
             // Skip direntries named "." and "..". 
@@ -312,9 +301,6 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
 				goto next_it;
 			}
 
-		    	//på grunn av en bug i smblib må vi kalle dette før hver opperasjon
-               	    	//context_free(context);
-		    	//context = context_init(no_auth);
 
 		    	bblog(INFO, "opening full_entry_name: \"%s\"",full_entry_name);
 		    	fd = smbc_open( full_entry_name, O_RDONLY, 0 );
@@ -325,21 +311,14 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
 				else {
 				    documentError(collection, 1,"crawlsmb.c: Error! Could not open file %s. Error code %i", entry_name, errno);
 				}
-//2012			    	context_free(context);
-//2012			    	context = context_init(no_auth);
+
 			    	goto next_it;
 			}
 
 
-			//på grunn av en bug i smblib må vi kalle dette før hver opperasjon
-                    	//context_free(context);
-			//context = context_init(no_auth);
-
 			bblog(INFO, "stating \"%s\"",full_entry_name);
                     	if ( smbc_fstat(fd, &file_stat) < 0 ) {
                             	documentError(collection, 1,"crawlsmb.c: Warning[no fatal]! Could not get stat for %s. Skipping document, continue crawl.", entry_name);
-//2012			    	context_free(context);
-//2012			    	context = context_init(no_auth);
 			    	goto next_it;
                         }
 			
@@ -390,10 +369,6 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
 					}
 
 					#ifndef NO_BB
-					        //på grunn av en bug i smblib må vi kalle dette før hver opperasjon
-                		    		//context_free(context);
-					        //context = context_init(no_auth);
-
 
 			                    	if (smbc_fgetxattr(fd, "system.nt_sec_desc.*", value, sizeof(value)) < 0) {
 
@@ -442,8 +417,7 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
 
 
         					
-						crawldocumentAdd.documenturi = uri;
-
+						crawldocumentAdd.documenturi 	= uri;
         					crawldocumentAdd.documenttype	= "";
         					crawldocumentAdd.document	= fbuf;
         					crawldocumentAdd.dokument_size	= file_stat.st_size;
@@ -464,7 +438,6 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
 						free(crawldocumentAdd.title);
 
 
-
 			    			free(parsed_acl[0]);
 					    	free(parsed_acl[1]);
 					    	free(parsed_acl);
@@ -475,13 +448,6 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
 				    	free(fbuf);
 
 				   
-
-	
-
-
-
-	         		//context_free(context);
-		    		//context = context_init(no_auth);
                 }
 
 next_it:
@@ -503,11 +469,6 @@ next_it:
         }
 
     free(dbuf);
-
-//2012    if (!context_free(context)) {
-//2012      	documentError(collection, 1,"crawlsmb.c-smb_recursive_get_next: Error! Could not free smbc context at %s:%d",__FILE__,__LINE__);
-//2012        return 0;
-//2012    }
 
     bblog(INFO,"~smb_recursive_get_next(prefix=\"%s\", dir_name=\"%s\")", prefix, dir_name);
 

@@ -2,9 +2,9 @@
 #ifndef _CRAWLSMB_H_
 #define _CRAWLSMB_H_
 
-#include "../crawl/crawl.h"
 #include <libsmbclient.h>
 
+#include "../crawl/crawl.h"
 #include "../boitho-bbdn/bbdnclient.h"
 
 char* smb_mkprefix( const char *username, const char *passwd );
