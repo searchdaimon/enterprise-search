@@ -1015,6 +1015,21 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 	}
 
+	// Open the revindex.
+	if ((REVINDEXFH = revindexFilesOpenLocalPart(lotNr,type,"r+b",subname,part)) == NULL) {
+		perror("revindexFilesOpenLocalPart");
+		return 0;
+	}
+
+	fstat(fileno(REVINDEXFH),&inode);
+
+	// If there is no data in the revindex there is no need to go thru with an empty merge with the existing iindex. Will just return and let the iindex be.
+	if (inode.st_size == 0) {
+		fclose(REVINDEXFH);
+		return 0;
+	}
+printf("aaaaaaaaaa size %d\n", (unsigned int)inode.st_size);
+
 
 	GetFilPathForLot(path,lotNr,subname);
 	//ToDo: må sette språk annen plass
@@ -1033,20 +1048,11 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		}
 	}
 
-	revIndexArraySize = 0;
-
-
-	if ((REVINDEXFH = revindexFilesOpenLocalPart(lotNr,type,"r+b",subname,part)) == NULL) {
-		perror("revindexFilesOpenLocalPart");
-		return 0;
-	}
-
-	fstat(fileno(REVINDEXFH),&inode);
 
 	//ToDo: runarb 29.03.2008
 	//veldig usikker på om dette er ret, antall DocId'er må være en del mindre en størelsen. Kansje 1/3 ?
 	//må etterforske
-	revIndexArraySize += (inode.st_size / 2);
+	revIndexArraySize = (inode.st_size / 2);
 
 
 	if ((IINDEXFH = fopen(iindexPathOld,"rb")) == NULL) {
