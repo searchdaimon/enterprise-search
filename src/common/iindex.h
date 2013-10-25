@@ -1,3 +1,7 @@
+#ifndef _IINDEX__H_
+#define _IINDEX__H_
+
+
 #include "define.h"
 
 struct IndekserOptFormat {
@@ -33,4 +37,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 void Indekser_deleteGcedFile(int lotNr, char subname[]);
 
-int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char *subname, int *DocIDcount);
+void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char *subname, int *DocIDcount);
+
+
+#endif // _IINDEX__H_
