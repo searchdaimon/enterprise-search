@@ -15,7 +15,7 @@ struct uriindexFormat {
 
 //rutine for å inalisere.
 int bbdocument_init(container **attrkeys);
-int bbdocument_clean();
+void bbdocument_clean();
 
 /*
  bbdocument_exist()

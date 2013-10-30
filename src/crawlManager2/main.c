@@ -851,8 +851,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 int
 collectionsforuser_collection(struct hashtable *collections, char *user, struct userToSubnameDbFormat *usertosubname)
 {
-	char subnamebuf[maxSubnameLength];
-	int n_collections, i;
+	int i;
 
 	#ifdef DEBUG
 		bblog(DEBUGINFO, "collectionsforuser_collection:  user=%s", user);
