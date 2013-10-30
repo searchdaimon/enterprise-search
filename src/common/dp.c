@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "lot.h"
+
 #ifdef WITH_THREAD
         #include <pthread.h>
 #endif
@@ -18,7 +20,6 @@ void dp_init() {
 	for(i=0;i<dp_devises;i++) {
 		pthread_mutex_init(&locks[i], NULL);
 	}
-
 }
 
 int dp_lock(int lot) {
@@ -30,9 +31,10 @@ int dp_lock(int lot) {
 			printf("looking lot %i, dev %i\n",lot,dev);
 		#endif
 
-        	pthread_mutex_lock(&locks[dev]);
+        	return pthread_mutex_lock(&locks[dev]);
+	#else
+		return 0;
 	#endif
-
 }
 
 
@@ -45,7 +47,8 @@ int dp_unlock(int lot) {
 			printf("UNlooking lot %i, dev %i\n",lot,dev);
 		#endif
 
-        	pthread_mutex_unlock(&locks[dev]);
+        	return pthread_mutex_unlock(&locks[dev]);
+	#else
+		return 0;
 	#endif
-
 }

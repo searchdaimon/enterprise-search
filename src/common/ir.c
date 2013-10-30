@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ir.h"
+
 //sjekker om et ord er stoppord
 int isStoppWord(char *term) {
 
@@ -11,6 +13,7 @@ int isStoppWord(char *term) {
 	return 0;
 	
 }
+
 int isShortWord(char *term) {
 	if (strlen(term) < 2) {
 		return 1;
@@ -19,4 +22,3 @@ int isShortWord(char *term) {
 		return 0;
 	}
 }
-

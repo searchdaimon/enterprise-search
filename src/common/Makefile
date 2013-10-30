@@ -2,12 +2,12 @@
 
 CFLAGS?=	-O2
 CFLAGS+=	-DATTRIBUTES -D_FILE_OFFSET_BITS=64 -DDISK_PROTECTOR -BLACK_BOX -DIIACL -DWITH_THREAD -DWITH_RANK_FILTER \
-		-DWITH_CONFIG -DWITH_DAEMON_THREAD
+		-DWITH_CONFIG -DWITH_DAEMON_THREAD -Wall
 # Uncomment if you want debugging info
 #CFLAGS+=	-DDEBUG
 
 LIB=	libcommon.a
-OBJS=	adultWeight.o chtbl.o debug.o iconv.o ir.o logs.o poprank.o sha1.o timediff.o \
+OBJS=	adultWeight.o chtbl.o debug.o ir.o logs.o poprank.o sha1.o timediff.o \
 	bfileutil.o config.o DocumentIndex.o iindex.o langdetect.o lot.o reposetory.o stdlib.o url.o \
 	bsocket.o crc32.o error.o integerindex.o langToNr.o lotlist.o reposetoryNET.o strlcat.o vid.o \
 	bstr.o daemon.o exeoc.o ipdb.o list.o mgsort.o revindex.o strlcpy.o re.o ht.o doc_cache.o \

@@ -18,14 +18,14 @@ void* _d_malloc( size_t size, int line )
 {
     void	*ptr = malloc(size);
 
-    printf("malloc [line: %i] [ptr: %i]\n", line, ptr);
+    printf("malloc [line: %i] [ptr: %p]\n", line, ptr);
 
     return ptr;
 }
 
 void _d_free( void *ptr, int line )
 {
-    printf("free [line: %i] [ptr: %i]\n", line, ptr);
+    printf("free [line: %i] [ptr: %p]\n", line, ptr);
     free(ptr);
 }
 
@@ -142,6 +142,26 @@ _maproot* _map_init()
     return M;
 }
 
+int _map_save_and_delete( _dict_elem *D, int _pos, _mapnode *it )
+{
+    int		pos = _pos;
+
+    if (it->left_child != NULL)
+	pos = _map_save_and_delete( D, pos, it->left_child );
+
+    D[pos].key = it->key;
+    D[pos].iso639_code = it->iso639_code;
+
+    pos++;
+
+    if (it->right_child != NULL)
+	pos = _map_save_and_delete( D, pos, it->right_child );
+
+    free( it );
+
+    return pos;
+}
+
 void _map_insert( _maproot *M, unsigned int key, char3 code )
 {
     _mapnode		*it = M->root, *last_it = M->root;
@@ -214,10 +234,9 @@ void langdetectInit()
     char	*path = "data/stopwords/";
     DIR		*dir = opendir(path);
     int		total_num_words=0;
-    int		i;
 
     #ifndef NOWARNINGS
-    printf("langdetectInit\n");
+	printf("langdetectInit\n");
     #endif
 
     langdetectSkip = 0;
@@ -260,7 +279,7 @@ void langdetectInit()
 		    assert(ordliste!=NULL);
 		    char	s[64];
 
-		    while (fscanf(ordliste, "%63s", &s)!=EOF)
+		    while (fscanf(ordliste, "%63s", s)!=EOF)
 			{
 			    _map_insert( dictionary, crc32boitho(s), iso639 );
 			    total_num_words++;
@@ -285,26 +304,6 @@ void langdetectInit()
     _map_save_and_delete( _D, 0, dictionary->root );
     free( dictionary );
 
-}
-
-int _map_save_and_delete( _dict_elem *D, int _pos, _mapnode *it )
-{
-    int		pos = _pos;
-
-    if (it->left_child != NULL)
-	pos = _map_save_and_delete( D, pos, it->left_child );
-
-    D[pos].key = it->key;
-    D[pos].iso639_code = it->iso639_code;
-
-    pos++;
-
-    if (it->right_child != NULL)
-	pos = _map_save_and_delete( D, pos, it->right_child );
-
-    free( it );
-
-    return pos;
 }
 
 void langdetectDetect(struct wordsFormat words[],int nrofWords, char lang[])

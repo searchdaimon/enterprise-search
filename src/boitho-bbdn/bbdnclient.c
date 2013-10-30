@@ -1,3 +1,4 @@
+#include <err.h>
 
 #include "bbdnclient.h"
 #include "bbdn.h"

@@ -1,3 +1,5 @@
+#include <ctype.h>
+
 #include "debug.h"
 
 void collection_normalize_name(char collection_name[], int length) {

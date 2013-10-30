@@ -58,7 +58,7 @@ setrlimits(void)
                 perror("getrlimit");
                 return;
         }
-        printf("%d %d\n", rlim.rlim_cur, rlim.rlim_max);
+        printf("%d %d\n", (int)rlim.rlim_cur, (int)rlim.rlim_max);
 }
 
 

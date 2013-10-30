@@ -35,7 +35,6 @@ void perl_embed_init(char **incl_path, int cache_perl_files) {
 	char sdlib_arg[512];
 	snprintf(sdlib_arg, sizeof sdlib_arg, "-Mblib=%s", bfile(SD_CRAWL_LIB_PATH));
 
-        //char *perl_argv[] = { "", blib,  "-I", bfile("crawlers/Modules/"), bfile2("perl/persistent.pl"), NULL };
 	char *perl_argv[incl_n ? incl_n + 4 : 3];
 	int perl_argc = 0;
 
@@ -56,9 +55,12 @@ void perl_embed_init(char **incl_path, int cache_perl_files) {
         my_perl = perl_alloc();
         perl_construct(my_perl);
 
-	//int j = 0;
-	//while (perl_argv[j++] != NULL)
-		//printf("perl argument %s\n", perl_argv[j]);
+	/*
+	// Debug: Print perl arguments
+	int j = 0;
+	while (perl_argv[j++] != NULL)
+		printf("perl argument %s\n", perl_argv[j]);
+	*/
 
         perl_parse(my_perl, xs_init, perl_argc, perl_argv, NULL);
         PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
@@ -83,12 +85,8 @@ int perl_embed_run(char *file_path, char *func_name, HV *func_params, char *obj_
 	SAVETMPS;
 	PUSHMARK(SP);
 
-	//filnavnet
+
 	XPUSHs(sv_2mortal(newSVpv(file_path, 0) ));
-
-	//mappen, for å inkludere
-	//XPUSHs(sv_2mortal(newSVpv(collection->crawlLibInfo->resourcepath, 0) ));
-
 	XPUSHs(sv_2mortal(newSViv(perl_opt_cache))); 
 	XPUSHs(sv_2mortal(newSVpv(func_name, 0)));
 	XPUSHs(sv_2mortal(newRV((SV *) func_params)));
@@ -137,12 +135,8 @@ int perl_embed_run_arr(char *file_path, char *func_name, HV *func_params, char *
 	PUSHMARK(SP);
 	AV *retav = newAV();
 
-	//filnavnet
+
 	XPUSHs(sv_2mortal(newSVpv(file_path, 0) ));
-
-	//mappen, for å inkludere
-	//XPUSHs(sv_2mortal(newSVpv(collection->crawlLibInfo->resourcepath, 0) ));
-
 	XPUSHs(sv_2mortal(newSViv(perl_opt_cache))); 
 	XPUSHs(sv_2mortal(newSVpv(func_name, 0)));
 	XPUSHs(sv_2mortal(newRV((SV *) func_params)));

@@ -11,7 +11,7 @@
 
 int main (int argc, char *argv[]) {
 	FILE *fp;
-	char username[MAX_USER_NAME_LEN];
+	char username[MAX_USER_NAME_LEN], username_last[MAX_USER_NAME_LEN];
 	DB *dbp = NULL;
 	DBT key, data;
 	int ret;
@@ -36,12 +36,15 @@ int main (int argc, char *argv[]) {
 		perror("acllist");
 	}
 	else {
+		username_last[0] = '\0';
 		while(fgets(username,sizeof(username),fp) != NULL) {
 			chomp(username);
-			//strsandr(username," ","_NBSP_");
-			printf("username \"%s\"\n",username);
+			if (strcmp(username_last,username) != 0) {
+				printf("username \"%s\"\n",username);
 
-			userToSubname_add(&userToSubnameDb,username,subname);
+				userToSubname_add(&userToSubnameDb,username,subname);
+				strcpy(username_last,username);
+			}
 		}
 
 		fclose(fp);
@@ -53,13 +56,15 @@ int main (int argc, char *argv[]) {
 		perror("aclcollectionlist");
 	}
 	else {
-		printf("looping tru\n");
+		username_last[0] = '\0';
 		while(fgets(username,sizeof(username),fp) != NULL) {
 			chomp(username);
-			//strsandr(username," ","_NBSP_");
-			printf("username \"%s\"\n",username);
+			if (strcmp(username_last,username) != 0) {
+				printf("username \"%s\"\n",username);
 
-			userToSubname_add(&userToSubnameDb,username,subname);
+				userToSubname_add(&userToSubnameDb,username,subname);
+				strcpy(username_last,username);
+			}
 		}
 
 		fclose(fp);

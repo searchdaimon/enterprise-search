@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+static FILE *bfopen(char name[],char flags[]) __attribute__ ((unused));
+static char *bfile(char name[]) __attribute__ ((unused));
+static char *sbfile(char fulname[] ,char name[]) __attribute__ ((unused));
+
 static FILE *bfopen(char name[],char flags[]) {
 
         char *cptr;
@@ -53,28 +57,5 @@ static char *bfile(char name[]) {
 
 	return fulname;
 }
-static char *bfile2(char name[]) {
-
-	//må legge til trå støtte her
-	static char fulname[512];
-
-	if (sbfile(fulname,name) == NULL) {
-		return NULL;
-	}
-
-	return fulname;
-}
-static char *bfile3(char name[]) {
-
-	//må legge til trå støtte her
-	static char fulname[512];
-
-	if (sbfile(fulname,name) == NULL) {
-		return NULL;
-	}
-
-	return fulname;
-}
-
 
 #endif

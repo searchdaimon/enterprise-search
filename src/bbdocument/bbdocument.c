@@ -361,7 +361,7 @@ int bbdocument_freethumb(char *imagebuffer) {
 	return 1;
 }
 
-int bbdocument_clean() {
+void bbdocument_clean() {
 
 	perl_embed_clean();
 }
@@ -1330,11 +1330,12 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 int bbdocument_deletecoll(char collection[]) {
 
 	int LotNr;
-	int i;
+	int i, y;
 	char FilePath[512];
 	char IndexPath[512];
 	char DictionaryPath[512];
 	FILE *fh;
+	char *iindexes[] = { "Main","acl_allow","acl_denied","attributes", NULL };
 
 	debug("Deleting collection: \"%s\"\n",collection);
 
@@ -1350,24 +1351,28 @@ int bbdocument_deletecoll(char collection[]) {
 	}
 
 	for (i=0; i < 64; i++) {
-		GetFilePathForIindex(FilePath,IndexPath,i,"Main","aa",collection);
-		#ifdef DEBUG
-		printf("FilePath: %s\nIndexPath: %s\n",FilePath,IndexPath);
-		#endif
 
-		if ((unlink(IndexPath) != 1) && (errno != ENOENT)) { //ENOENT=No such file or directory. Viser ikke feil hvis filen ikke fantes. Det er helt normalt
-                        perror("remove IndexPath");
-                }
+		for (y=0; iindexes[y] != NULL; y++) {
+
+			GetFilePathForIindex(FilePath,IndexPath,i,iindexes[y],"aa",collection);
+			#ifdef DEBUG
+				printf("Deleting: FilePath: %s\nIndexPath: %s\n",FilePath,IndexPath);
+			#endif
+
+			if ((unlink(IndexPath) != 1) && (errno != ENOENT)) { //ENOENT=No such file or directory. Viser ikke feil hvis filen ikke fantes. Det er helt normalt
+                	        perror("remove IndexPath");
+                	}
 
 
-		GetFilePathForIDictionary(FilePath,DictionaryPath,i,"Main","aa",collection);
-		#ifdef DEBUG
-		printf("FilePath: %s\nDictionaryPath: %s\n",FilePath,DictionaryPath);
-		#endif
+			GetFilePathForIDictionary(FilePath,DictionaryPath,i,iindexes[y],"aa",collection);
+			#ifdef DEBUG
+				printf("Deleting: FilePath: %s\nDictionaryPath: %s\n",FilePath,DictionaryPath);
+			#endif
 
-		if ((unlink(DictionaryPath) != 0) && (errno != ENOENT)) {//ENOENT=No such file or directory. Viser ikke feil hvis filen ikke fantes. Det er helt normalt
-                        perror("remove DictionaryPath");
-                }
+			if ((unlink(DictionaryPath) != 0) && (errno != ENOENT)) {//ENOENT=No such file or directory. Viser ikke feil hvis filen ikke fantes. Det er helt normalt
+                	        perror("remove DictionaryPath");
+                	}
+		}
 	}
 
 	//sletter i userToSubname.db

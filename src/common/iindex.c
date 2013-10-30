@@ -1,13 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <sys/stat.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/mman.h>
-#include <sys/types.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/file.h>
+#include <sys/stat.h>
 
 #include "define.h"
 #include "lot.h"
@@ -195,7 +196,6 @@ int compare_DictionaryMemoryElements (const void *p1, const void *p2) {
 int ReadIIndexRecordFromMemeory (unsigned int *Adress, unsigned int *SizeForTerm, unsigned int Query_WordID,char *IndexType, char *IndexSprok,unsigned int WordIDcrc32,char subname[], void *(filemap)(char *, size_t *)) {
 
 	int iindexfile;
-	int i;
 	struct DictionaryFormat *DictionaryPost;
 	struct DictionaryFormat dummy;
 	iindexfile = WordIDcrc32 % AntallBarrals;
@@ -492,7 +492,6 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	unsigned int SizeForTerm = 0;
 	int iindexfile;
 	char FilePath[255];
-	unsigned short hit;
 
 	char *allindex;
 	char *allindexp;
@@ -909,7 +908,7 @@ struct hashtable * loadGced(int lotNr, char subname[]) {
 	int nrofGced;
 	struct stat inode;      // lager en struktur for fstat å returnere.
 	FILE *GCEDFH;
-	int i, y;
+	int i;
 
 	struct hashtable *h;
 	unsigned int *filesKey;
@@ -977,19 +976,14 @@ struct hashtable * loadGced(int lotNr, char subname[]) {
 int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFormat *IndekserOpt) {
 
 	struct hashtable *h = NULL;
-	int i,y;
+	int i;
 	unsigned int u, uy;
-	int mgsort_i,mgsort_k;
 	FILE *REVINDEXFH = NULL;
 	FILE *IINDEXFH = NULL;
-	unsigned int nrOfHits;
-	unsigned short hit;
-	char recordSeperator[4];
 	char iindexPath[512];
 	char iindexPathNew[512];
 	char iindexPathOld[512];
 	int count;
-	char c;
 	unsigned int lastWordID;
 	unsigned int lastDocID;
 	int forekomstnr;
@@ -1000,7 +994,6 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
         unsigned long term;
         unsigned long Antall;
-        unsigned char langnr;
 	int revIndexArraySize;
 
 	#ifdef DEBUG
@@ -1013,6 +1006,20 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 			return 0;
 		}
 
+	}
+
+	// Open the revindex.
+	if ((REVINDEXFH = revindexFilesOpenLocalPart(lotNr,type,"r+b",subname,part)) == NULL) {
+		perror("revindexFilesOpenLocalPart");
+		return 0;
+	}
+
+	fstat(fileno(REVINDEXFH),&inode);
+
+	// If there is no data in the revindex there is no need to go thru with an empty merge with the existing iindex. Will just return and let the iindex be.
+	if (inode.st_size == 0) {
+		fclose(REVINDEXFH);
+		return 0;
 	}
 
 
@@ -1033,20 +1040,11 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		}
 	}
 
-	revIndexArraySize = 0;
-
-
-	if ((REVINDEXFH = revindexFilesOpenLocalPart(lotNr,type,"r+b",subname,part)) == NULL) {
-		perror("revindexFilesOpenLocalPart");
-		return 0;
-	}
-
-	fstat(fileno(REVINDEXFH),&inode);
 
 	//ToDo: runarb 29.03.2008
 	//veldig usikker på om dette er ret, antall DocId'er må være en del mindre en størelsen. Kansje 1/3 ?
 	//må etterforske
-	revIndexArraySize += (inode.st_size / 2);
+	revIndexArraySize = (inode.st_size / 2);
 
 
 	if ((IINDEXFH = fopen(iindexPathOld,"rb")) == NULL) {
@@ -1098,7 +1096,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 	}
 	else {
-		printf("Syatying to load iindex \"%s\" of size %d\n", iindexPathOld, inode.st_size);
+		printf("Trying to load iindex \"%s\" of size %" PRId64 "\n", iindexPathOld, inode.st_size);
 
 		while ((!feof(IINDEXFH)) && (count < revIndexArraySize)) {
         	        //wordid hedder
@@ -1454,15 +1452,14 @@ struct iindexfileFormat {
 
 
 
-int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char *subname, int *DocIDcount) {
+void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char *subname, int *DocIDcount) {
 
-	int i,y,x,z,n;
-	FILE *fileha;
+	int i,x,z,n;
 	struct iindexfileFormat *iindexfile;
 	struct DictionaryFormat DictionaryPost;
 	int nrOffIindexFiles;
 	int gotEof;
-	unsigned long mergeTerm, totaltAntall, DocID, TermAntall, currentTerm, term, Antall;
+	unsigned long mergeTerm, totaltAntall, DocID, TermAntall, currentTerm;
         unsigned short hits[MaxsHitsInIndex];
 	unsigned char langnr;
 	off_t startAdress;
@@ -1475,8 +1472,9 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 	int count;
 	FILE *FinalIindexFileFA;
 	FILE *FinalDictionaryFileFA;
-	char PathForIindex[128];
 	char PathForLotIndex[128];
+	time_t FinalIindexFileMtime;
+	time_t NewestLotIIndexMtime;
 
 	if (startIndex == 0) {
 		startIndex = 1;
@@ -1489,45 +1487,29 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 		printf("Merge index %i\n",bucket);
 	#endif
 
+
+	// Looking up the paths to the iindex and dictionary.
 	GetFilePathForIindex(FinalIindexFilePath,FinalIindexFileName,bucket,type,lang,subname);
+	GetFilePathForIDictionary(FinalDictionaryFilePath,FinalDictionaryFileName,bucket,type,lang,subname);
 
 	#ifdef DEBUG
 		printf("FinalIindexFileName %s\nFinalIindexFilePath %s\n",FinalIindexFileName,FinalIindexFilePath);
-	#endif
-
-	makePath(FinalIindexFilePath);
-
-	//sjekker om vi har nokk palss for dette
-	if (!HasSufficientSpace(FinalIindexFilePath,4096)) {
-                printf("insufficient disk space\n");
-		exit(1);
-        }
-
-
-	if ((FinalIindexFileFA = batomicallyopen(FinalIindexFileName,"wb")) == NULL) {
-		perror(FinalIindexFileName);
-		exit(1);
-	}
-	flock(fileno(FinalIindexFileFA),LOCK_EX);
-	
-	GetFilePathForIDictionary(FinalDictionaryFilePath,FinalDictionaryFileName,bucket,type,lang,subname);
-
-	makePath(FinalDictionaryFilePath);
-
-	if ((FinalDictionaryFileFA = batomicallyopen(FinalDictionaryFileName,"wb")) == NULL) {
-                perror(FinalDictionaryFileName);
-		exit(1);
-        }
-	flock(fileno(FinalDictionaryFileFA),LOCK_EX);
-
-	#ifdef DEBUG
 		printf("FinalDictionaryFileName \"%s\"\n",FinalDictionaryFileName);
 	#endif
 
-	#ifdef DEBUG
-		printf("mallocing iindexfile of size %i\n", ((stoppIndex - startIndex) * sizeof(struct iindexfileFormat)) );
-	#endif
+	// Finding the last modefy time for the main iindex.
+	FinalIindexFileMtime = 0;
+	if ((FinalIindexFileFA = fopen(FinalIindexFileName,"rb")) != NULL) { 
+		fstat(fileno(FinalIindexFileFA),&inode);
+		FinalIindexFileMtime = inode.st_mtime;
+		fclose(FinalIindexFileFA);
+	}	
 
+        /*
+	******************************************************************************************************
+	Opening the iindex files for each lot.
+	******************************************************************************************************
+        */
 	if ((iindexfile = malloc((stoppIndex - startIndex) * sizeof(struct iindexfileFormat))) == NULL) {
 		perror("malloc iindexfile");
 		exit(-1);
@@ -1538,9 +1520,12 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 	for (i=startIndex;i<stoppIndex;i++) {
 		iindexfile[count].fileha = NULL;
 		iindexfile[count].lastTerm = 0;
+               	iindexfile[count].eof = 1;
+
 		++count;
 	}
 
+	NewestLotIIndexMtime = 0;
 	count=0;
 	for (i=startIndex;i<stoppIndex;i++) {
 
@@ -1549,9 +1534,9 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 		sprintf(iindexfile[count].PathForLotIndex,"%siindex/%s/index/%s/%i.txt",iindexfile[count].PathForLotIndex,type,lang,bucket);
 
                 if ((iindexfile[count].fileha = fopen(iindexfile[count].PathForLotIndex,"rb")) == NULL) {
-			//ENOENT = No such file or directory
-			if (errno == ENOENT) {
-				printf("No such file or directory: %s\n",iindexfile[count].PathForLotIndex);
+
+			if (errno == ENOENT) { //ENOENT = No such file or directory
+				printf("No such file or directory: \"%s\"\n",iindexfile[count].PathForLotIndex);
 			}
 			else {
 				printf("errno %i, ENOENT %i\n",errno,ENOENT);
@@ -1564,19 +1549,47 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 			*/
 			continue;
                 }
+
 		flock(fileno(iindexfile[count].fileha),LOCK_EX);
 
 		fstat(fileno(iindexfile[count].fileha),&inode);
+		iindexfile[count].filesize = inode.st_size;
 
-		if (inode.st_size == 0) {
+		if (iindexfile[count].filesize == 0) {
 			#ifdef DEBUG
 				printf("File %s is emty, vill ignore it.\n",iindexfile[count].PathForLotIndex);
 			#endif
 			fclose(iindexfile[count].fileha);
 			iindexfile[count].fileha = NULL;
+
+			continue;
 		}
+
+		// Update the lot newest iindex time if nessesery
+		if (NewestLotIIndexMtime < inode.st_mtime) {
+			NewestLotIIndexMtime = inode.st_mtime;
+		}
+
+		++count;
+	}
+
+
+	// If none of the files was eligible, we will not do anything more.
+	if (count == 0) {
+		goto mergeiEnd;
+	}
+
+	// If the existing main iindex is newer then the lot iindex there are no update, so we will just go to the end.	
+	if (FinalIindexFileMtime > NewestLotIIndexMtime) {
+		goto mergeiEnd;
+	}
+
+
+	count=0;
+	for (i=startIndex;i<stoppIndex;i++) {
+
                	//leser inn første term
-               	else if (fread(&iindexfile[count].lastTerm,sizeof(unsigned long),1,iindexfile[count].fileha) != 1) {
+               	if (fread(&iindexfile[count].lastTerm,sizeof(unsigned long),1,iindexfile[count].fileha) != 1) {
 			printf("can't read first lastTerm for %s. Ignoring it\n",iindexfile[count].PathForLotIndex);
                         perror("read");
 		}
@@ -1585,33 +1598,60 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
                         perror("read");
 		}
 		else {
-
-			//finner størelsen på filen
-			iindexfile[count].filesize = inode.st_size;
-
 			//debug: viser hvilkene filer vi fikk åpnet
 			/*
 			printf("did open %i - %s\n",count,iindexfile[count].PathForLotIndex);
 			*/
 
                 	iindexfile[count].eof = 0;
-
                 	iindexfile[count].nr = count;
-
 			iindexfile[count].open = 4;
 
-			count++;		
 		}
+
+		++count;
 	}	
 
 	nrOffIindexFiles = count;
 
 	#ifdef DEBUG
-	printf("nrOffIindexFiles %i\n",nrOffIindexFiles);
+		printf("nrOffIindexFiles %i\n",nrOffIindexFiles);
 	#endif
+	/*
+	******************************************************************************************************
+	*/
+
+
+
+
+
+
+	// Make the nesseserly paths to the iindex and dictionary.
+	makePath(FinalIindexFilePath);
+	makePath(FinalDictionaryFilePath);
+
+	// See if we have ecnof space left on the disk
+	if (!HasSufficientSpace(FinalIindexFilePath,4096)) {
+                printf("insufficient disk space\n");
+		exit(1);
+        }
+
+
+	// Open and lock the iindex and dictionary.
+	if ((FinalIindexFileFA = batomicallyopen(FinalIindexFileName,"wb")) == NULL) {
+		perror(FinalIindexFileName);
+		exit(1);
+	}
+	flock(fileno(FinalIindexFileFA),LOCK_EX);
+	
+	if ((FinalDictionaryFileFA = batomicallyopen(FinalDictionaryFileName,"wb")) == NULL) {
+                perror(FinalDictionaryFileName);
+		exit(1);
+        }
+	flock(fileno(FinalDictionaryFileFA),LOCK_EX);
+
 
 	gotEof = 0;
-
 	while (nrOffIindexFiles != 0) {
 		//hvis vi har fått en endoffile siden sist sorterer vi slik at den kommer nederst
 		if (gotEof) {
@@ -1688,13 +1728,13 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 
 
 				if (TermAntall > MaxsHitsInIndex) {
-					fprintf(stderr,"TermAntall %d is lager then MaxsHitsInIndex %d. file \"%s\"\n",TermAntall,MaxsHitsInIndex,iindexfile[i].PathForLotIndex);
+					fprintf(stderr,"TermAntall %lu is lager then MaxsHitsInIndex %d. file \"%s\"\n",TermAntall,MaxsHitsInIndex,iindexfile[i].PathForLotIndex);
 					goto iindexfileReadError;
 				}
 
                         	for (z = 0;z < TermAntall; z++) {
 					if ((n=fread(&hits[z],sizeof(unsigned short),1,iindexfile[i].fileha)) != 1) {
-						fprintf(stderr,"can't read hit for %s. z: %i, TermAntall: %i. DocID %u\n",iindexfile[i].PathForLotIndex,z,TermAntall, DocID);
+						fprintf(stderr,"can't read hit for %s. z: %i, TermAntall: %lu. DocID %u\n",iindexfile[i].PathForLotIndex,z,TermAntall, DocID);
 		                       		perror(iindexfile[i].PathForLotIndex);
 
 						//ToDo: dette er ikke 100% lurt, break her går ut av den første for loppen, men ikke den viktige hoved loopen
@@ -1719,9 +1759,9 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 				//error hånterer som eof
 				iindexfileReadError:	
 		
-					iindexfile[i].eof = 1;
-					++gotEof;
-					nrOffIindexFiles--;
+				iindexfile[i].eof = 1;
+				++gotEof;
+				nrOffIindexFiles--;
 			}
 			else if (iindexfile[i].filesize == ftell(iindexfile[i].fileha)) {
 				iindexfile[i].eof = 1;
@@ -1765,6 +1805,7 @@ int mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char 
 	fclose(FinalDictionaryFileFA);
 	fclose(FinalIindexFileFA);
 
+	mergeiEnd:
 	count=0;
 	for (i=startIndex;i<stoppIndex;i++) {
 		if (iindexfile[count].fileha != NULL) {

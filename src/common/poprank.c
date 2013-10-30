@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -63,8 +64,6 @@ int popGetNext (struct popl *popha, int *Rank,unsigned int *rDocID) {
 void popopenMemArray_oneLot(char subname[], int i) {
 
         FILE *FH;
-	unsigned char rank;
-	int LocalLots;
 	char LotFile[128];
 	int branksize;
 
@@ -102,8 +101,6 @@ void popopenMemArray_oneLot(char subname[], int i) {
 
 		fclose(FH);
 
-		++LocalLots;
-
 	}
 
 }
@@ -112,7 +109,6 @@ void popopenMemArray2(char subname[], char rankfile[]) {
 
         FILE *FH;
 	int i, y, z;
-	unsigned char rank;
 	int LocalLots;
 	char LotFile[128];
 	int branksize;
@@ -236,7 +232,6 @@ void popopenMemArray(char servername[], char subname[], char rankfile[]) {
 
         FILE *FH;
 	int i;
-	unsigned char rank;
 	int LocalLots;
 	char LotFile[128];
 	int branksize;
@@ -372,7 +367,6 @@ void *mmap3264(void *addr, off_t len, int prot, int flags,int fildes, off_t off)
 int popopenMmap(struct popmemmapFormat *popmemmap,char *filname) {
 
         struct stat inode;      // lager en struktur for fstat å returnere.
-	int i;
 	popmemmap->largesDocID = 0;
 
         if ((popmemmap->fd = open(filname, O_RDWR)) == -1) {

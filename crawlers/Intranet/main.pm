@@ -76,15 +76,12 @@ sub path_access  {
                     $req->authorization_basic($user, $passw);
             }
             elsif (($response->www_authenticate =~ m/negotiate/i) || ($response->www_authenticate =~ m/ntlm/i)) {
-                    $url =~ m/http:\/\/([^\/]+)/i;
-                    my $server = $1 . ":80";
+                    my $server = parse_server($url);
                     print "Trying to authenticate by NTLM to server $server\n";
                     $robot->credentials($server, '', $user, $passw);
             }
 	    elsif ($response->www_authenticate =~ m/digest/i) {
-                   $url =~ m/http:\/\/([^\/]+)/i;
-                   my $server = $1 . ":80";
-			
+                   my $server = parse_server($url);
 		   my $ralm = $response->www_authenticate;
 		   $ralm =~ m/realm=\"([^\"]+)\"/i;
 		   $ralm = $1;
@@ -343,14 +340,12 @@ sub process_near_url {
 			$req->authorization_basic($user, $passw);
 		}
 		elsif (($response->www_authenticate =~ m/negotiate/i) || ($response->www_authenticate =~ m/ntlm/i)) {
-			$url =~ m/http:\/\/([^\/]+)/i;
-			my $server = $1 . ":80";
+			my $server = parse_server($url);
 			print "Trying to authenticate by NTLM to server $server\n";
 			$robot->credentials($server, '', $user, $passw);
 		}
 		elsif ($response->www_authenticate =~ m/digest/i) {
-                        $url =~ m/http:\/\/([^\/]+)/i;
-                        my $server = $1 . ":80";
+                        my $server = parse_server($url);
 			
 			my $ralm = $response->www_authenticate;
 			$ralm =~ m/realm=\"([^\"]+)\"/i;
@@ -561,6 +556,22 @@ sub regularize_hostname {
   $host =~ s/\.$//;    # foo.com. => foo.com
   return 'localhost' if $host =~ m/^0*127\.0+\.0+\.0*1$/;
   return $host;
+}
+
+sub parse_server {
+	my ($url) = @_;
+
+	$url =~ m/(http|https):\/\/([^\/]+)/i;
+	my $server = $2;
+
+	if ($url =~ m/^http:\/\//i) {
+		$server .= ':80';
+	}
+	elsif ($url =~ m/^https:\/\//i) {
+		$server .= ':443';
+	}
+
+	return $server;
 }
  
 sub report {  
