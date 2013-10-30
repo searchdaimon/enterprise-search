@@ -11,6 +11,7 @@
 #include "define.h"
 #include "config.h"
 #include "debug.h"
+#include "stdlib.h"
 
 
 struct _configdataFormat *_configdata = NULL;
@@ -69,12 +70,6 @@ bconfig_flush(int mode) {
 		goto _free_and_return_error;
         }
 
-	char ad_select_tpl[] = "SELECT '%s' AS configkey, systemParamValue.value AS configvalue \
-		FROM system, systemParamValue \
-		WHERE systemParamValue.param = \"%s\" \
-		AND system.is_primary = 1 \
-		AND system.id = systemParamValue.system";
-	char selectbfr[512];
 	sprintf(mysql_query[0], "SELECT configkey, configvalue FROM config");
 	sprintf(mysql_query[1], "SELECT param AS configkey, value AS configvalue FROM system, systemParamValue WHERE system.is_primary = 1 AND system.id = systemParamValue.system");
 
@@ -183,4 +178,3 @@ int bconfig_getentryuint(char vantkey[], unsigned int *val) {
 
 }
 #endif
-

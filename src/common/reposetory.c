@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -1446,7 +1447,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 		#endif
 
 		if (rLotForDOCid((*ReposetoryHeader).DocID) != LotNr) {
-			printf("DocID %u is not in the lot ( %i ) we are reading. Somting is wrong.\n",(*ReposetoryHeader).DocID);
+			printf("DocID %u is not in the lot ( %i ) we are reading. Something is wrong.\n",(*ReposetoryHeader).DocID, LotNr);
 			return 0;
 		}
 
@@ -2050,7 +2051,6 @@ int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsi
         //global variabel for rGetNext
         static FILE *LotFileOpen;
         static int LotOpen = -1;
-        int bufflength;
         char FileName[128];
 
 
@@ -2072,7 +2072,7 @@ int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsi
                         exit(1);
                 }
                 LotOpen = LotNr;
- }
+	}
 
 
         //hvis det det er data igjen i filen leser vi den
@@ -2092,13 +2092,13 @@ int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsi
 
 
                 //finner adressen for denne recorden
-                *radress = ((ftell(LotFileOpen) - bufflength) -3);
-                *rsize = bufflength;
+                *radress = ((ftell(LotFileOpen) - textlength) -3);
+                *rsize = textlength;
 
                 return 1;
         }
         else {
-        //hvis vi er tom for data stenger vi filen, og retunerer en 0 som sier at vi er ferdig.
+		//hvis vi er tom for data stenger vi filen, og retunerer en 0 som sier at vi er ferdig.
                 printf("ferdig\n");
                 fclose(LotFileOpen);
                 return 0;

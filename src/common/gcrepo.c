@@ -16,7 +16,6 @@
 
 int gcrepo(int LotNr, char *subname) {
 
-	int i;
 	struct ReposetoryHeaderFormat ReposetoryHeader;
 
 	char htmlbuffer[524288];

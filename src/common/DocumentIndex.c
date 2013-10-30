@@ -94,7 +94,6 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 	int LotNr;
 	char FileName[128];
 	char FilePath[128];
-	int adress = -1;
 	
 	//finner lot for denne DocIDen
 	LotNr = rLotForDOCid(DocID);
@@ -131,14 +130,6 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 			}
 		#endif
 				
-		
-	
-
-
-		//debug:viser hvpathen til loten
-		/*
-		printf("path: %s\n",FileName);
-		*/
 		
 		//prøver først å åpne for lesing
 		if (type == 'c') {

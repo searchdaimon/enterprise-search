@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -190,9 +191,7 @@ FILE *lotOpenFileNoCashe(unsigned int DocID,char resource[],char type[], char lo
 }
 FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock,char subname[]) {
 
-
 	FILE *FILEHANDLER;
-	int i;
 	char FilePath[PATH_MAX];
 	char File [PATH_MAX];
 
@@ -306,9 +305,7 @@ int lotOpenFileNoCashel(unsigned int DocID,char resource[],char type[], char loc
 
 int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,char subname[]) {
 
-
 	int fd;
-	int i;
 	char FilePath[PATH_MAX]; 	//var 128
 	char File [PATH_MAX];	//var 128
 
@@ -557,7 +554,6 @@ Laster mappene som ligger i maplist.conf og lager en oversikt over de.
 void MakeMapListMap () {
 
 	FILE *MAPLIST;
-	char *line;
 	char buff[1024];
 	short int i;
 
@@ -673,9 +669,6 @@ char *returnFilPathForLot(int LotNr,char subname[]) {
 Gir oss pats for en lot. 
 */
 void GetFilPathForLot(char *FilePath,int LotNr,char subname[]) {
-
-	int subdir;
-
 	
 	//hvis vi ikke har inlisert mapplisten enda gjør vi det.
 	if (!MapListInitialised) {
@@ -743,7 +736,6 @@ void makePath (char path[]) {
 
 DIR *listAllColl_start() {
 
-        DIR *dp;
  	char FilePath[PATH_MAX];
 
 	//hvis vi ikke har inlisert mapplisten enda gjør vi det.

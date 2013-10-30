@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <wchar.h>
 
 unsigned int
 ht_stringhash(void *ky)

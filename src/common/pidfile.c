@@ -1,5 +1,6 @@
 #include <sys/types.h>
-
+#include <unistd.h>
+#include <err.h>
 #include <stdio.h>
 
 #include "boithohome.h"

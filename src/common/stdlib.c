@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 //er ikke tread sikker
-char *bitoa(int val) {
+char *bitoa(const int val) {
         static char buf[13];
         sprintf(buf,"%i",val);
 
@@ -11,7 +11,7 @@ char *bitoa(int val) {
 }
 
 //er ikke tread sikker
-char *utoa(unsigned int val) {
+char *utoa(const unsigned int val) {
         static char buf[13];
         sprintf(buf,"%u",val);
 
@@ -19,18 +19,18 @@ char *utoa(unsigned int val) {
 }
 
 //er ikke tread sikker
-char *ftoa(double val) {
+char *ftoa(const double val) {
         static char buf[13];
         sprintf(buf,"%f",val);
 
         return buf;
 }
 
-unsigned int atou(char buf[]) {
+unsigned int atou(const char buf[]) {
 	return strtoul(buf, (char **)NULL, 10);
 }
 
-int *intdup(int i) {
+int *intdup(const int i) {
         int *ret;
 
         if ((ret = malloc(sizeof(int))) == NULL) {
@@ -40,7 +40,7 @@ int *intdup(int i) {
 
         return ret;
 }
-unsigned int *intudup(unsigned int i) {
+unsigned int *intudup(const unsigned int i) {
         unsigned int *ret;
 
         if ((ret = malloc(sizeof(unsigned int))) == NULL) {

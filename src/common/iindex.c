@@ -1,13 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <sys/stat.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/mman.h>
-#include <sys/types.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/file.h>
+#include <sys/stat.h>
 
 #include "define.h"
 #include "lot.h"
@@ -195,7 +196,6 @@ int compare_DictionaryMemoryElements (const void *p1, const void *p2) {
 int ReadIIndexRecordFromMemeory (unsigned int *Adress, unsigned int *SizeForTerm, unsigned int Query_WordID,char *IndexType, char *IndexSprok,unsigned int WordIDcrc32,char subname[], void *(filemap)(char *, size_t *)) {
 
 	int iindexfile;
-	int i;
 	struct DictionaryFormat *DictionaryPost;
 	struct DictionaryFormat dummy;
 	iindexfile = WordIDcrc32 % AntallBarrals;
@@ -492,7 +492,6 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	unsigned int SizeForTerm = 0;
 	int iindexfile;
 	char FilePath[255];
-	unsigned short hit;
 
 	char *allindex;
 	char *allindexp;
@@ -909,7 +908,7 @@ struct hashtable * loadGced(int lotNr, char subname[]) {
 	int nrofGced;
 	struct stat inode;      // lager en struktur for fstat å returnere.
 	FILE *GCEDFH;
-	int i, y;
+	int i;
 
 	struct hashtable *h;
 	unsigned int *filesKey;
@@ -977,19 +976,14 @@ struct hashtable * loadGced(int lotNr, char subname[]) {
 int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFormat *IndekserOpt) {
 
 	struct hashtable *h = NULL;
-	int i,y;
+	int i;
 	unsigned int u, uy;
-	int mgsort_i,mgsort_k;
 	FILE *REVINDEXFH = NULL;
 	FILE *IINDEXFH = NULL;
-	unsigned int nrOfHits;
-	unsigned short hit;
-	char recordSeperator[4];
 	char iindexPath[512];
 	char iindexPathNew[512];
 	char iindexPathOld[512];
 	int count;
-	char c;
 	unsigned int lastWordID;
 	unsigned int lastDocID;
 	int forekomstnr;
@@ -1000,7 +994,6 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
         unsigned long term;
         unsigned long Antall;
-        unsigned char langnr;
 	int revIndexArraySize;
 
 	#ifdef DEBUG
@@ -1103,7 +1096,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 	}
 	else {
-		printf("Trying to load iindex \"%s\" of size %d\n", iindexPathOld, inode.st_size);
+		printf("Trying to load iindex \"%s\" of size %" PRId64 "\n", iindexPathOld, inode.st_size);
 
 		while ((!feof(IINDEXFH)) && (count < revIndexArraySize)) {
         	        //wordid hedder
@@ -1461,13 +1454,12 @@ struct iindexfileFormat {
 
 void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char *subname, int *DocIDcount) {
 
-	int i,y,x,z,n;
-	FILE *fileha;
+	int i,x,z,n;
 	struct iindexfileFormat *iindexfile;
 	struct DictionaryFormat DictionaryPost;
 	int nrOffIindexFiles;
 	int gotEof;
-	unsigned long mergeTerm, totaltAntall, DocID, TermAntall, currentTerm, term, Antall;
+	unsigned long mergeTerm, totaltAntall, DocID, TermAntall, currentTerm;
         unsigned short hits[MaxsHitsInIndex];
 	unsigned char langnr;
 	off_t startAdress;
@@ -1480,7 +1472,6 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 	int count;
 	FILE *FinalIindexFileFA;
 	FILE *FinalDictionaryFileFA;
-	char PathForIindex[128];
 	char PathForLotIndex[128];
 	time_t FinalIindexFileMtime;
 	time_t NewestLotIIndexMtime;
@@ -1737,13 +1728,13 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 
 
 				if (TermAntall > MaxsHitsInIndex) {
-					fprintf(stderr,"TermAntall %d is lager then MaxsHitsInIndex %d. file \"%s\"\n",TermAntall,MaxsHitsInIndex,iindexfile[i].PathForLotIndex);
+					fprintf(stderr,"TermAntall %lu is lager then MaxsHitsInIndex %d. file \"%s\"\n",TermAntall,MaxsHitsInIndex,iindexfile[i].PathForLotIndex);
 					goto iindexfileReadError;
 				}
 
                         	for (z = 0;z < TermAntall; z++) {
 					if ((n=fread(&hits[z],sizeof(unsigned short),1,iindexfile[i].fileha)) != 1) {
-						fprintf(stderr,"can't read hit for %s. z: %i, TermAntall: %i. DocID %u\n",iindexfile[i].PathForLotIndex,z,TermAntall, DocID);
+						fprintf(stderr,"can't read hit for %s. z: %i, TermAntall: %lu. DocID %u\n",iindexfile[i].PathForLotIndex,z,TermAntall, DocID);
 		                       		perror(iindexfile[i].PathForLotIndex);
 
 						//ToDo: dette er ikke 100% lurt, break her går ut av den første for loppen, men ikke den viktige hoved loopen
