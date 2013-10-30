@@ -361,7 +361,7 @@ int bbdocument_freethumb(char *imagebuffer) {
 	return 1;
 }
 
-int bbdocument_clean() {
+void bbdocument_clean() {
 
 	perl_embed_clean();
 }
