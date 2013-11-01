@@ -1536,7 +1536,9 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
                 if ((iindexfile[count].fileha = fopen(iindexfile[count].PathForLotIndex,"rb")) == NULL) {
 
 			if (errno == ENOENT) { //ENOENT = No such file or directory
-				printf("No such file or directory: \"%s\"\n",iindexfile[count].PathForLotIndex);
+				#ifdef DEBUG
+					printf("No such file or directory: \"%s\"\n",iindexfile[count].PathForLotIndex);
+				#endif
 			}
 			else {
 				printf("errno %i, ENOENT %i\n",errno,ENOENT);
