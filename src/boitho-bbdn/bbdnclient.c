@@ -237,7 +237,7 @@ int bbdn_deletecollection(int socketha, const char subname[]) {
 
 }
 
-int bbdn_addwhisper(int sock, char *subname, whisper_t whisper) {
+int bbdn_addwhisper(int sock, const char *subname, whisper_t whisper) {
 	int len;
 
 	debug("bbdn_addwhisper: start");

@@ -16,7 +16,7 @@ int bbdn_docexist(int socketha, char subname[],char documenturi[],unsigned int l
 int bbdn_closecollection(int socketha, const char subname[]);
 int bbdn_deleteuri(int socketha, const char subname[], const char *uri);
 int bbdn_deletecollection(int socketha, const char subname[]);
-int bbdn_addwhisper(int sock, char *subname, whisper_t whisper);
+int bbdn_addwhisper(int sock, const char *subname, whisper_t whisper);
 int bbdn_HasSufficientSpace(int socketha, char subname[]);
 void bbdn_opencollection(int sock, char *subname);
 
