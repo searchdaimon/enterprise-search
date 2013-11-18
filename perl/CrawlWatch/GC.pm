@@ -35,7 +35,7 @@ sub run {
     my $self = shift;
     bb_config_update($self->{dbh}, CONF_LAST_GC, time);
     $self->{'log'}->write("TODO: Add GC collection.");
-    #doint the actual GC run.
+    # Doing the actual GC run.
     system($ENV{'BOITHOHOME'} . "/bin/gcAuthoritybb -l");
     1;
 }
