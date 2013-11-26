@@ -24,6 +24,7 @@
 #include "../common/define.h"
 #include "../key/key.h"
 #include "../common/error.h"
+#include "../common/gcwhisper.h"
 
 char systemkey[KEY_STR_LEN];
 
@@ -235,10 +236,19 @@ void sd_close(int bbdnsock, const char *coll) {
 	MYSQL_RES *mysqlres;
 	MYSQL_ROW row;
 	int systemcont;
+	whisper_t w = 0;
 
+	// add gc whisper
+	w |= GCWHISPER_NOTOLD;
+	bbdn_addwhisper(bbdnsock, coll, w);
+
+	// ask bbdn to close the collection
 	bbdn_closecollection(bbdnsock, coll);
 
-        // creat it in the sql db
+	/*************************************************************************************************
+	 creat collection in the sql db
+	*************************************************************************************************/
+
         if (mysql_init(&db) == NULL) {
 	        fprintf(stderr, "Unable to init mysql.\n");
                 return;
@@ -264,7 +274,7 @@ void sd_close(int bbdnsock, const char *coll) {
 	free(query);
 	
 
-        // create the collections if it don't exist
+        // insert info about the collections in the db if it don't exist there
         asprintf(&query, "INSERT IGNORE INTO shares VALUES (NULL,'',14,1,NULL,0,NOW(),0,'','','','','',NULL,'Pushing has started.','%s',NULL,NULL,0,NULL,'%s',NULL)", coll, systemcont == 0 ? "anonymous" : "acl" );
 
         if (mysql_real_query(&db, query, strlen(query))) {
@@ -282,6 +292,8 @@ void sd_close(int bbdnsock, const char *coll) {
 
         free(query);
         mysql_close(&db);
+	/*************************************************************************************************/
+
 
 }
 
