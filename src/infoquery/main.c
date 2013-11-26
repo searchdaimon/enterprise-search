@@ -74,7 +74,7 @@ int main (int argc, char *argv[]) {
 		puts("userGroups <user> <usersystem> [extra]");
 		puts("addForeignUser <collection> <user> <group>");
 		puts("removeForeignUsers <collection>");
-		printf("repositoryRead <nr> <collection> <offset>\n");
+		printf("repositoryRead <LotNr> <collection> <offset>\n");
 		printf("repositoryPageInfo <pointer> <DocID> <htmlSize> <imagesize> <collection> [html]\n");
 		printf("\nReturns %i on success and %i on failure\n",EXIT_SUCCESS,EXIT_FAILURE);
 		exit(1);
