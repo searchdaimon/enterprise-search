@@ -1444,7 +1444,6 @@ struct iindexfileFormat {
                 unsigned long lastAntall;
 		int nr;
 		int eof;
-		int open;
 		char PathForLotIndex[128];
 		off_t filesize;
 };
@@ -1574,6 +1573,7 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 
 		++count;
 	}
+	nrOffIindexFiles = count;
 
 
 	// If none of the files was eligible, we will not do anything more.
@@ -1588,7 +1588,7 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 
 
 	count=0;
-	for (i=startIndex;i<stoppIndex;i++) {
+	for (i=0;i<nrOffIindexFiles;i++) {
 
                	//leser inn første term
                	if (fread(&iindexfile[count].lastTerm,sizeof(unsigned long),1,iindexfile[count].fileha) != 1) {
@@ -1607,14 +1607,12 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 
                 	iindexfile[count].eof = 0;
                 	iindexfile[count].nr = count;
-			iindexfile[count].open = 4;
 
 		}
 
 		++count;
 	}	
 
-	nrOffIindexFiles = count;
 
 	#ifdef DEBUG
 		printf("nrOffIindexFiles %i\n",nrOffIindexFiles);
