@@ -214,7 +214,7 @@ cmc_pathaccess(int socketha,char collection_in[], char uri_in[], char user_in[],
 	return intrespons;
 }
 
-int cmc_rewrite_url(int socketha, char *collection_in, const char *url_in, size_t urlinlen, enum platform_type ptype, 
+int cmc_rewrite_url(int socketha, char *collection_in, const char *url_in, enum platform_type ptype, 
 		enum browser_type btype, char *url_out, size_t url_out_len, char *uri_out, size_t uri_out_len, 
 		char *fulluri_out, size_t fulluri_out_len)
 {

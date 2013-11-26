@@ -341,7 +341,7 @@ static inline void release_sock_to_pool(struct socket_pool *pool, int index) {
 
 
 #ifdef BLACK_BOX
-static inline int handle_url_rewrite(const char *url_in, size_t lenin, enum platform_type ptype, enum browser_type btype, char *collection,
+static inline int handle_url_rewrite(const char *url_in, enum platform_type ptype, enum browser_type btype, char *collection,
            char *url_out, size_t len, char *uri_out, size_t uri_out_len, char *fulluri_out, size_t fulluri_out_len, struct socket_pool *pool) {
 
 	int ret = 1;
@@ -353,7 +353,7 @@ static inline int handle_url_rewrite(const char *url_in, size_t lenin, enum plat
 
 	sock = get_sock_from_pool(pool, &index);
 
-	ret = cmc_rewrite_url(sock, collection, url_in, lenin, ptype, btype, url_out, len, uri_out, uri_out_len, fulluri_out, fulluri_out_len);
+	ret = cmc_rewrite_url(sock, collection, url_in, ptype, btype, url_out, len, uri_out, uri_out_len, fulluri_out, fulluri_out_len);
 	if (ret == 0) {
 		bblog(ERROR, "Cant rewrite url \"%s\"", url_in);
 	}
@@ -848,7 +848,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 							&url, &attributes);
 
 #ifdef BLACK_BOX
-					if (!handle_url_rewrite(url, sizeof(url), PagesResults->ptype,
+					if (!handle_url_rewrite(url, PagesResults->ptype,
 							PagesResults->btype,
 							dup_subname, tmpurl, sizeof(tmpurl),
 							tmpuri, sizeof(tmpuri),
@@ -1664,7 +1664,7 @@ void *generatePagesResults(void *arg)
 
 #ifdef BLACK_BOX
 
-		if (!handle_url_rewrite(side->url, sizeof(side->url),
+		if (!handle_url_rewrite(side->url,
 			PagesResults->ptype, PagesResults->btype, 
 			(*PagesResults).TeffArray->iindex[i].subname->subname, side->url, 
 			sizeof(side->url), side->uri, sizeof(side->uri), side->fulluri, sizeof(side->fulluri),

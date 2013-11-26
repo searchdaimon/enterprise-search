@@ -25,6 +25,6 @@ struct cm_listusers_h cmc_listusersus(int sock, int usersystem, char ***users, c
 int cmc_authuser(int sock, const char *user, const char *pass, unsigned int usersystem, char *extra_in);
 int cmc_getPassword(const char username_in[], char password[]);
 
-int cmc_rewrite_url(int socketha, char *collection_in, const char *url_in, size_t urlinlen, enum platform_type ptype,
+int cmc_rewrite_url(int socketha, char *collection_in, const char *url_in, enum platform_type ptype,
                 enum browser_type btype, char *url_out, size_t url_out_len, char *uri_out, size_t uri_out_len,
                 char *fulluri_out, size_t fulluri_out_len);
