@@ -843,9 +843,23 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 						bblog_errno(WARN, "DIRead()");
 						continue;
 					}
+
+					if (DIS_isDeleted(&di)) {
+						bblog(WARN, "Duplicate document is deleted (DocID=%u, subname=\"%s\"). Skipping.", dup_docid, dup_subname);
+						continue;
+					}
+
+
 					rReadHtml(htmlbuf, &htmllen, di.RepositoryPointer, di.htmlSize2, dup_docid,
 							dup_subname, &repohdr, &acla, &acld, di.imageSize,
 							&url, &attributes);
+
+
+					if (url == NULL) {
+						bblog(WARN, "Duplicate documents url is NULL (DocID=%u, subname=\"%s\"). Skipping", dup_docid, dup_subname);
+						continue;
+					}
+
 
 #ifdef BLACK_BOX
 					if (!handle_url_rewrite(url, PagesResults->ptype,
