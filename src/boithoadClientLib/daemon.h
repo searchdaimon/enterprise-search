@@ -13,7 +13,7 @@
 
 #include "boithoad.h" // bare for å definere maxSubnameLength
 
-#define BACKLOG 10     // how many pending connections queue will hold
+#define BACKLOG 15     // how many pending connections queue will hold
 
 #define MAXDATASIZE 100 // max number of bytes we can get at once
 
