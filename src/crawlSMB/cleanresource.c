@@ -49,8 +49,7 @@ int cleanresourceWinToUnix(char resource[]) {
 
         //gjør om på formatet slik at \\ blir //
         if (strchr(resource,'\\') != NULL) {
-                crawlWarn("collection \"%s\" contains \"\\\" characters. Corect format \
-                        is //host/shares not \\\\host\\shares. Will convert \"\\\" to \"/\"",resource);
+                crawlWarn("collection \"%s\" contains \"\\\" characters. Correct format is //host/shares not \\\\host\\shares. Will convert \"\\\" to \"/\"",resource);
 
                 while((cp = strchr(resource,'\\')) != NULL) {
                         (*cp) = '/';
