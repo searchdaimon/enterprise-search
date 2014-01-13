@@ -118,7 +118,7 @@ dptest:
 
 	env 24SEVENOFFICE=-D_24SEVENOFFICE make bb
 
-setuid: YumWrapper NetConfig InitServices setuidcaller repomodwrap yumupdate
+setuid: YumWrapper NetConfig InitServices setuidcaller repomodwrap
 
 tempFikes: IndexerLot_fik32bitbug DIconvert
 
@@ -1163,12 +1163,6 @@ YumWrapper: src/YumWrapper/yumwrapper.c
 NetConfig: src/NetConfig/configwrite.c
 	(cd src/NetConfig && make clean && make)
 	cp src/NetConfig/configwrite setuid/
-
-yumupdate:
-	@echo ""
-	@echo "$@:"
-
-	$(CC) $(CFLAGS) src/common/exeoc.c src/yumupdate/yumupdate.c -o setuid/yumupdate
 
 crawlManager2: src/crawlManager2/main.c
 	@echo ""

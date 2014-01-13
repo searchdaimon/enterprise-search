@@ -166,7 +166,7 @@ filepermissions:
 
 
 setuidbb:
-	perl rpmmagic.pl --DEfattr "%defattr(4755, root, -)" $(boithobb-setuid_name) $(boithobb-setuid_version) $(BOITHOHOME) /home/boitho/boithoTools setuid/initwrapper setuid/configwrite setuid/yumwrapper setuid/yumupdate bin/setuidcaller setuid/repomodwrap
+	perl rpmmagic.pl --DEfattr "%defattr(4755, root, -)" $(boithobb-setuid_name) $(boithobb-setuid_version) $(BOITHOHOME) /home/boitho/boithoTools setuid/initwrapper setuid/configwrite setuid/yumwrapper bin/setuidcaller setuid/repomodwrap
 	rpmbuild -bb $(boithobb-setuid_name).spec
 	echo ""
 	echo "***********************************************************"
