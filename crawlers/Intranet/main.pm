@@ -114,7 +114,6 @@ sub crawl_update {
     my $user = $opt->{"user"};
     my $passw = $opt->{"password"};
     my $urls = $opt->{"url"};
-    my $starting_url;
   
     my @urlList = split /;/, $urls;
     my @exclusionsUrlPart = qw ( );  # See Sharpoint crawler on how to use this
@@ -126,20 +125,65 @@ sub crawl_update {
 
     $download_images = $opt->{download_images};
 
-    print "Name : ". bot_name."    mail :". bot_email."\n";
-    my $robot = LWP::RobotUA::SD->new( agent=>bot_name, from=>bot_email, keep_alive=>'1' );
-    $robot->delay($opt->{delay}/60); 
-    $robot->timeout(timeout);
-    $robot->max_size(max_size);
-    $robot->requests_redirectable([qw/ GET HEAD /]); # Allow redirect of get and head request. We will then cachs them using our own redirect_ok() oberrite.
-    $robot->protocols_allowed(['http','https']);  # disabling all others
-    say("bot_name (bot_email) starting at ", scalar(localtime), "\n");
-
-
     process_starting_urls(@urlList);
     
-    foreach $starting_url (@urlList) {
-	schedule($starting_url);
+    foreach my $url (@urlList) {
+
+    	print "Name : ". bot_name."    mail :". bot_email."\n";
+    	my $robot = LWP::RobotUA::SD->new( agent=>bot_name, from=>bot_email, keep_alive=>'1' );
+    	$robot->delay($opt->{delay}/60); 
+    	$robot->timeout(timeout);
+    	$robot->max_size(max_size);
+    	$robot->requests_redirectable([qw/ GET HEAD /]); # Allow redirect of get and head request. We will then cachs them using our own redirect_ok() oberrite.
+    	$robot->protocols_allowed(['http','https']);  # disabling all others
+    	say("bot_name (bot_email) starting at ", scalar(localtime), "\n");
+
+	###########
+	# If we have a username and password we will first have to do a test get to get the authentication method and ralm.
+	if (($user) && ($passw)) {
+
+		my $req = HTTP::Request->new(GET => $url);
+
+		# Ugly hack to get around a limitation in LWP:
+                # 	Make a second robots for this first test because the robots.txt file will get cached as an
+                # 	empty one when we are unable to get it because of missing credentials and raml.
+	    	my $robot2 = LWP::RobotUA::SD->new( agent=>bot_name, from=>bot_email, keep_alive=>'1' );
+	    	$robot2->delay($opt->{delay}/60); 
+	    	$robot2->timeout(timeout);
+	    	$robot2->max_size(max_size);
+	    	$robot2->requests_redirectable([qw/ GET HEAD /]); # Allow redirect of get and head request. We will then cachs them using our own redirect_ok() oberrite.
+	    	$robot2->protocols_allowed(['http','https']);  # disabling all others
+		#
+
+		my $response = $robot2->request($req);
+
+		if ($response->code == 401) {
+			print "asked to authenticate by method: " . $response->www_authenticate . "\n";
+			if (($response->www_authenticate =~ m/negotiate/i) || ($response->www_authenticate =~ m/ntlm/i)) {
+				my $server = parse_server($url);
+				print "Trying to authenticate by NTLM to server $server\n";
+
+				$robot->credentials($server, '', $user, $passw);
+			}
+			elsif (($response->www_authenticate =~ m/basic/i) || ($response->www_authenticate =~ m/digest/i)) {
+	                        my $server = parse_server($url);
+				
+				my $ralm = $response->www_authenticate;
+				$ralm =~ m/realm=\"([^\"]+)\"/i;
+				$ralm = $1;
+
+	                        print "Trying to authenticate by BASIC or Digest to server $server\n";
+	                        $robot->credentials($server, $ralm, $user, $passw);
+			}
+			else {
+				die("Unknown authentication method \"" . $response->www_authenticate . "\".");
+			}
+		} 
+	}
+	###########
+
+
+	schedule($url);
 
    	main_loop( $robot,$user, $passw);
 	report( ) if $hit_count;
@@ -333,34 +377,6 @@ sub process_near_url {
 	my $req = HTTP::Request->new(GET => $url);
 
 	my $response = $robot->request($req);
-
-	if (($response->code == 401) && ($user)) {
-		print "asked to authenticate by method: " . $response->www_authenticate . "\n";
-		if ($response->www_authenticate =~ m/basic/i) {
-			$req->authorization_basic($user, $passw);
-		}
-		elsif (($response->www_authenticate =~ m/negotiate/i) || ($response->www_authenticate =~ m/ntlm/i)) {
-			my $server = parse_server($url);
-			print "Trying to authenticate by NTLM to server $server\n";
-			$robot->credentials($server, '', $user, $passw);
-		}
-		elsif ($response->www_authenticate =~ m/digest/i) {
-                        my $server = parse_server($url);
-			
-			my $ralm = $response->www_authenticate;
-			$ralm =~ m/realm=\"([^\"]+)\"/i;
-			$ralm = $1;
-
-                        print "Trying to authenticate by Digest to server $server\n";
-                        $robot->credentials($server, $ralm, $user, $passw);
-		}
-		else {
-			die("Unknown authentication method \"" . $response->www_authenticate . "\".");
-		}
-
-		#rerun the request
-		$response = $robot->request($req);
-	} 
 
 	return unless consider_response($response);
 
