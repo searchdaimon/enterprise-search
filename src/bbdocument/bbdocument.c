@@ -121,22 +121,21 @@ int uriindex_open(DB **dbpp, char subname[], u_int32_t flags) {
                         return 0;
                 }
 
-		//#define dbCashe 314572800       //300 mb
-                ////setter cashe størelsen manuelt
-                //if ((ret = dbp->set_cachesize(dbp, 0, dbCashe, dbCasheBlokes)) != 0) {
-                //        dbp->err(dbp, ret, "set_cachesize");
-                //}
-
+		/*
+		//Set the cache size manually. May improve performance
+		#define dbCashe 314572800       //300 mb
+                if ((ret = dbp->set_cachesize(dbp, 0, dbCashe, dbCasheBlokes)) != 0) {
+                        dbp->err(dbp, ret, "set_cachesize");
+                }
+		*/
 
 
                 /* open the database. */
                 if ((ret = dbp->open(dbp, NULL, fileName, NULL, DB_BTREE, flags, 0664)) != 0) {
-                        dbp->err(dbp, ret, "%s: open", fileName);
-                        //goto err1;
-			//dette skjer nor collection mappen ikke er opprettet enda, typisk forde vi ikke har lagret et dokument der enda
-			#ifdef DEBUG
-			printf("can't dbp->open(), but db_create() was sucessful!\n");
-			#endif
+
+			if (ret != ENOENT) {
+				printf("can't dbp->open(), but db_create() was sucessful!\n");
+			}
 
 			dbp->close(dbp, 0);
 
@@ -179,7 +178,6 @@ int uriindex_close (DB **dbpp) {
 }
 
 int uriindex_add (char uri[], unsigned int DocID, unsigned int lastmodified, char subname[]) {
-
 
 	struct uriindexFormat uriindex;
         DB *dbp = NULL;
