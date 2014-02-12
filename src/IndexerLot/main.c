@@ -434,9 +434,6 @@ void attriblot_add(struct attriblotFormat *attriblot, char *attributes)
 
     while (next_attribute(attributes, &o, k, v, kv))
         {
-//	    attribElementNormalize(k);
-//	    attribElementNormalize(v);
-//	    attribElementNormalize(kv);
 	    set_insert(attriblot->words, k);
 	    set_insert(attriblot->words, v);
 	    set_insert(attriblot->words, kv);
@@ -453,9 +450,6 @@ void iiattribadd(struct IndexerRes_attrib *iiattrib, char *attributes)
         {
 	    if (k[0] != '\0')
 		{
-//		    attribElementNormalize(k);
-//		    attribElementNormalize(v);
-//		    attribElementNormalize(kv);
 		    attribadd(iiattrib, kv);
 		    attribadd(iiattrib, k);
 		    attribadd(iiattrib, v);
