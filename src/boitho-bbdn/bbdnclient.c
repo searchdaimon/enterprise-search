@@ -53,7 +53,7 @@ int bbdn_conect(int *socketha, char tkey[], int PORT) {
 }
 
 int bbdn_close(int socketha) {
-	if(!close(socketha)) {
+	if(close(socketha) != 0) {
 		printf("Error: bbdn_close can't close\n");
 		perror("close");
 	}
