@@ -18,7 +18,7 @@
 
 #define STEMMING
 
-// --- fra flex:
+// --- from flex:
 typedef void* yyscan_t;
 typedef struct bsgp_buffer_state *YY_BUFFER_STATE;
 YY_BUFFER_STATE bsgp_scan_bytes( const char *bytes, int len, yyscan_t yyscanner );
@@ -328,12 +328,8 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
     // Simple form for cache:
     int		_queue_size_Q;
     value	_queue_peak_Q;
-    char 	verbose = 0;
 
 
-    #ifdef DEBUG_VERBOSE
-	verbose = 1;
-    #endif
     if (data->mode == db_snippet) { /***/
 
     if (forced) return;
@@ -591,94 +587,66 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 		    data->best.hits = bin_hits;
 		}
 
-//#if 1
-//	    if (1)
-#ifdef DEBUG
-	    if (verbose)
+#ifdef DEBUG_VERBOSE
+	    int		_spos = 0;
+	    char	_sbuf[65536];
+
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<29) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<28) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<27) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<26) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<25) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<24) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<23) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<22) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<21) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<20) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<19) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<18) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<17) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<16) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<15) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<14) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<13) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<12) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<11) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<10) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<9) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<8) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<7) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<6) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<5) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<4) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<3) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<2) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<1) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<0) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[0m ");
+
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;31m");
+	    _spos+= sprintf(_sbuf+_spos, "%7i ", score);
+	    _spos+= sprintf(_sbuf+_spos, "\033[0m");
+
+	    for (;pos < data->Bbuf->pos; pos++)
 		{
-		    int		_spos = 0;
-		    char	_sbuf[65536];
-
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<29) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<28) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<27) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<26) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<25) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<24) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<23) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<22) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<21) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<20) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<19) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<18) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<17) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<16) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<15) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<14) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<13) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<12) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<11) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<10) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<9) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<8) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<7) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<6) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<5) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<4) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<3) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<2) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<1) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<0) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[0m ");
-
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;31m");
-		    _spos+= sprintf(_sbuf+_spos, "%7i ", score);
-		    _spos+= sprintf(_sbuf+_spos, "\033[0m");
-
-		    for (;pos < data->Bbuf->pos; pos++)
-			{/*
-			    if (more && pos == mb->bstart)
-				{
-				    _spos+= sprintf(_sbuf+_spos, "\033[1;36m\'");
-				}
-
-			    if (more && pos == mb->bend)
-				{
-				    _spos+= sprintf(_sbuf+_spos, "\'\033[0m");
-
-				    i++;
-				    more = (i < vector_size(data->Match));
-
-				    if (more)
-					{
-					    mb = vector_get(data->Match,i).ptr;
-					}
-				}*/
-
-			    _spos+= sprintf(_sbuf+_spos, "%c", data->Bbuf->data[pos]);
-			}/*
-		    if (more && pos == mb->bend)
-			_spos+= sprintf(_sbuf+_spos, "\'\033[0m");*/
-		    _spos+= sprintf(_sbuf+_spos, "\n");
-		    _sbuf[_spos] = '\0';
-
-//		    if (score<=data->last_score && data->last_top) printf("%s", data->sbuf);
-//		    printf("%i -> %i (%s)\n", data->last_score, score, (data->last_top ? "top" : "-"));
-
-//		    data->last_top = (score > data->last_score);
-//		    data->last_score = score;
-		    printf("%s", _sbuf);
+		    _spos+= sprintf(_sbuf+_spos, "%c", data->Bbuf->data[pos]);
 		}
+	    _spos+= sprintf(_sbuf+_spos, "\n");
+	    _sbuf[_spos] = '\0';
+
+
+	    printf("%s", _sbuf);
+
 #endif
 
 	    /***/
@@ -755,41 +723,39 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 		}
 
 
-#ifdef DEBUG
-	    if (verbose)
-		{
-		    _spos+= sprintf(_sbuf+_spos, "%2i ", data->good_sentence);
+#ifdef DEBUG_VERBOSE
+	    _spos+= sprintf(_sbuf+_spos, "%2i ", data->good_sentence);
 
-		    if (forced)
-			_spos+= sprintf(_sbuf+_spos, "frc ");
-		    else
-			_spos+= sprintf(_sbuf+_spos, "%i ", (data->Bbuf->pos - pos) );
+	    if (forced)
+		_spos+= sprintf(_sbuf+_spos, "frc ");
+	    else
+		_spos+= sprintf(_sbuf+_spos, "%i ", (data->Bbuf->pos - pos) );
 
-		    if (flags & v_section_div)
-			_spos+= sprintf(_sbuf+_spos, "D");
-		    else
-			_spos+= sprintf(_sbuf+_spos, "_");
+	    if (flags & v_section_div)
+		_spos+= sprintf(_sbuf+_spos, "D");
+	    else
+		_spos+= sprintf(_sbuf+_spos, "_");
 
-		    if (flags & v_section_head)
-			_spos+= sprintf(_sbuf+_spos, "H");
-		    else
-			_spos+= sprintf(_sbuf+_spos, "_");
+	    if (flags & v_section_head)
+		_spos+= sprintf(_sbuf+_spos, "H");
+	    else
+		_spos+= sprintf(_sbuf+_spos, "_");
 
-		    if (flags & v_section_span)
-			_spos+= sprintf(_sbuf+_spos, "S");
-		    else
-			_spos+= sprintf(_sbuf+_spos, "_");
+	    if (flags & v_section_span)
+		_spos+= sprintf(_sbuf+_spos, "S");
+	    else
+		_spos+= sprintf(_sbuf+_spos, "_");
 
-		    if (flags & v_section_sentence)
-			_spos+= sprintf(_sbuf+_spos, "s");
-		    else
-			_spos+= sprintf(_sbuf+_spos, "_");
+	    if (flags & v_section_sentence)
+		_spos+= sprintf(_sbuf+_spos, "s");
+	    else
+		_spos+= sprintf(_sbuf+_spos, "_");
 
-		    if (flags & v_capital_word)
-			_spos+= sprintf(_sbuf+_spos, "C");
-		    else
-			_spos+= sprintf(_sbuf+_spos, "_");
-		}
+	    if (flags & v_capital_word)
+		_spos+= sprintf(_sbuf+_spos, "C");
+	    else
+		_spos+= sprintf(_sbuf+_spos, "_");
+		
 #endif
 
 
@@ -921,7 +887,6 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 		    _spos+= sprintf(_sbuf+_spos, " (%i) ", closeness);
 		    _spos+= sprintf(_sbuf+_spos, "\033[0m");
 		}
-//	    _spos+= sprintf(_sbuf+_spos, "[%i] ", hits_in_links);
 	    _spos+= sprintf(_sbuf+_spos, "(%i) ", sentences);
 #endif
 
@@ -1014,7 +979,6 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 			{
 			    if (treff[k] && score > data->q_best[k].score)
 				{
-//				    printf("(%i)", k);
 				    data->q_best[k].score = score;
 				    data->q_best[k].start = pos;
 				    data->q_best[k].stop = data->Bbuf->pos;
@@ -1023,95 +987,63 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 			}
 		}
 
-//#if 1
-//	    if (1)
-#ifdef DEBUG
-	    if (verbose)
-		{
-		    int	_spos = 0;
-		    char _sbuf[65536];
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<29) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<28) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<27) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<26) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<25) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<24) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<23) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<22) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<21) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<20) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<19) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<18) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<17) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<16) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<15) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<14) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<13) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<12) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<11) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<10) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<9) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<8) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<7) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<6) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<5) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<4) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<3) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<2) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<1) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<0) ? '1' : '0'));
-		    _spos+= sprintf(_sbuf+_spos, "\033[0m ");
+#ifdef DEBUG_VERBOSE
+	    int	_spos = 0;
+	    char _sbuf[65536];
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<29) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<28) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<27) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<26) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<25) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<24) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<23) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<22) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<21) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<20) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<19) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<18) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<17) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<16) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<15) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<14) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<13) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<12) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<11) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<10) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<9) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<8) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<7) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<6) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<5) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<4) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;37m");
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<3) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<2) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<1) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<0) ? '1' : '0'));
+	    _spos+= sprintf(_sbuf+_spos, "\033[0m ");
 
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;31m");
-		    _spos+= sprintf(_sbuf+_spos, "%7i ", score);
-		    _spos+= sprintf(_sbuf+_spos, "\033[0m");
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;31m");
+	    _spos+= sprintf(_sbuf+_spos, "%7i ", score);
+	    _spos+= sprintf(_sbuf+_spos, "\033[0m");
 
-		    for (;pos < data->Bbuf->pos; pos++)
-			{/*
-			    if (more && pos == mb->bstart)
-				{
-				    _spos+= sprintf(_sbuf+_spos, "\033[1;36m\'");
-				}
-
-			    if (more && pos == mb->bend)
-				{
-				    _spos+= sprintf(_sbuf+_spos, "\'\033[0m");
-
-				    i++;
-				    more = (i < vector_size(data->Match));
-
-				    if (more)
-					{
-					    mb = vector_get(data->Match,i).ptr;
-					}
-				}*/
-
-			    _spos+= sprintf(_sbuf+_spos, "%c", data->Bbuf->data[pos]);
-			}/*
-		    if (more && pos == mb->bend)
-			_spos+= sprintf(_sbuf+_spos, "\'\033[0m");*/
-		    _spos+= sprintf(_sbuf+_spos, "\n");
-		    _sbuf[_spos] = '\0';
-/*
-		    if (score<=data->last_score && data->last_top) printf("%s", data->sbuf);
-//		    printf("%i -> %i (%s)\n", data->last_score, score, (data->last_top ? "top" : "-"));
-
-		    data->last_top = (score > data->last_score);
-		    data->last_score = score;
-		    memcpy(data->sbuf, _sbuf, 2048);*/
-		    printf("%s", _sbuf);
-
+	    for (;pos < data->Bbuf->pos; pos++)
+		    _spos+= sprintf(_sbuf+_spos, "%c", data->Bbuf->data[pos]);
 		}
+
+	    _spos+= sprintf(_sbuf+_spos, "\n");
+	    _sbuf[_spos] = '\0';
+
+	    printf("%s", _sbuf);
 #endif
 
 	    queue_pop(Q);
@@ -1355,12 +1287,10 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char* b_start, char* b_end, query_array qa)
 {
     int		i, j, x;
-//    int		bestebeste=0, nestebeste=0;
     int		nr, nr1=0, nr2=0;
     int		best_hits = 0;
 
     // Finn de to mini-snippetene som utfyller hverandre best:
-
     for (i=0; i<data->num_queries; i++)
 	for (j=i+1; j<data->num_queries; j++)
 	    {
@@ -1404,8 +1334,6 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
 	    int		active_highl=0;
 	    char	last_was_eos=0;
 	    int		Msize = vector_size(data->Match);
-
-//	    bpos+= sprintf(buf+bpos, "((%i))", nr);
 
 	    for (i=0; i<Msize; i++)
 		if (((struct match_block*)(vector_get(data->Match,i).ptr))->bstart >= data->q_best[nr].start) break;
@@ -1545,7 +1473,6 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 	    if (data->num_queries == 0) goto empty_query;
 
 	    data->phrase_sizes = malloc(sizeof(int)*data->num_queries);
-//	    printf("data->num_queries = %i\n", data->num_queries);
 
 	    qw = malloc(sizeof(char*)*qw_size);
 	    sigma = malloc(sizeof(int)*qw_size);
@@ -1563,7 +1490,6 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 		    if (qa.query[i].n > longest_phrase)
 			longest_phrase = qa.query[i].n;
 
-//		    printf("num_qw(1) = %i\n", phrase_nr);
 		    data->phrase_sizes[phrase_nr++] = qa.query[i].n;
 
 		    for (j=0; j<qa.query[i].n; j++)
@@ -1605,7 +1531,6 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 
 			    for (m=0; m<qa.query[i].alt_n; m++)
 				{
-//				    printf("num_qw(2) = %i\n", phrase_nr);
 				    data->phrase_sizes[phrase_nr++] = qa.query[i].alt[m].n;
 
 				    for (j=0; j<qa.query[i].alt[m].n; j++)
@@ -1696,10 +1621,7 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 
 		    data->accepted[state] = i;
 		}
-/*
-	    printf("%i %i\n", num_states, num_qw);
-	    assert(num_states <= num_qw+1);
-*/
+
 	    // Generere "tilbakehopp" for tilstandsmaskin:
 	    for (i=0; i<num_states; i++)
 		{
@@ -1771,14 +1693,12 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 
 
 	    data->q_best = malloc(sizeof(struct score_block)*data->num_queries);
-//	    data->old_q = malloc(sizeof(struct score_block)*data->num_queries);
 
 	    for (i=0; i<data->num_queries; i++)
 		{
 		    data->q_best[i].score = 0;
 		    data->q_best[i].start = 0;
 		    data->q_best[i].stop = 0;
-//		    data->old_q[i].score = 0;
 		}
 	}
 
@@ -1789,7 +1709,6 @@ empty_query:
     data->best.score = 0;
     data->best.start = 0;
     data->best.stop = 0;
-//    data->old.score = 0;
 
     data->words_ordinary = 0;
     data->words_other = 0;
@@ -1835,8 +1754,6 @@ empty_query:
 	    free_automaton(data->A);
 
 	    free(data->q_best);
-//	    free(data->old_q);
-
 	    free(data->q_stop);
 	    free(data->q_dep);
 	    free(data->accepted);
@@ -1860,7 +1777,6 @@ empty_query:
     destroy(data->Q2);
     destroy(data->Q);
 
-    //free(data->buf);
     free( buffer_abort(data->Bbuf) );
 
     int		success = !data->parse_error;

@@ -16,7 +16,7 @@
 
 enum snippet_mode { plain_snippet, first_snippet, db_snippet, mplain_snippet/*intern*/ };
 
-//int generate_snippet( query_array qa, char text[], int text_size, char **output_text, char* b_start, char* b_end, int snippet_size );
+
 int generate_snippet( query_array qa, char text[], int text_size, char **output_text, char* b_start, char* b_end, int mode, int _snippet_size, int rows, int cols );
 
 
