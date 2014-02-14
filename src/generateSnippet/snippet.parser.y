@@ -880,13 +880,11 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 		    - pair(vector_get(data->WSentence, i)).second.i;
 
 
-#ifdef DEBUG
-	    if (verbose)
-		{
-		    _spos+= sprintf(_sbuf+_spos, "\033[1;35m");
-		    _spos+= sprintf(_sbuf+_spos, " (%i) ", closeness);
-		    _spos+= sprintf(_sbuf+_spos, "\033[0m");
-		}
+#ifdef DEBUG_VERBOSE
+	    _spos+= sprintf(_sbuf+_spos, "\033[1;35m");
+	    _spos+= sprintf(_sbuf+_spos, " (%i) ", closeness);
+	    _spos+= sprintf(_sbuf+_spos, "\033[0m");
+	
 	    _spos+= sprintf(_sbuf+_spos, "(%i) ", sentences);
 #endif
 
@@ -988,8 +986,9 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 		}
 
 #ifdef DEBUG_VERBOSE
-	    int	_spos = 0;
-	    char _sbuf[65536];
+	    
+	    _spos = 0;
+	    _sbuf[65536];
 	    _spos+= sprintf(_sbuf+_spos, "\033[1;30m");
 	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<29) ? '1' : '0'));
 	    _spos+= sprintf(_sbuf+_spos, "%c", (score&(1<<28) ? '1' : '0'));
@@ -1037,6 +1036,7 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 	    _spos+= sprintf(_sbuf+_spos, "\033[0m");
 
 	    for (;pos < data->Bbuf->pos; pos++)
+		{
 		    _spos+= sprintf(_sbuf+_spos, "%c", data->Bbuf->data[pos]);
 		}
 
@@ -1044,6 +1044,7 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 	    _sbuf[_spos] = '\0';
 
 	    printf("%s", _sbuf);
+	    
 #endif
 
 	    queue_pop(Q);
