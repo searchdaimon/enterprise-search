@@ -1,0 +1,161 @@
+<div>
+    <span><link>/home/siddhi</link> /Software, management and photography/</span>
+</div>
+<div>
+    <span><link>Get this widget!</link></span>
+</div>
+<div>
+    <span>Hi there! I'm a software developer working in Chennai, India. Are you passionate about delivering good software? I am too! I write about software and management. I have <link>an agile tools blog</link> about agile methodologies and tools. I am the founder and developer at Silver Stripe Software Pvt. Ltd. where I develop <link>Silver Catalyst, an agile project management tool</link>. If you would like to contact me, my email address is <link>siddharta@gmail.com</link>.</span>
+</div>
+<div>
+    <span>If you like what you read, you can <link>subscribe to this blog</link>.</span>
+</div>
+<div>
+    <span>You can also get email notifications of new content. To do that, enter your email address into the form below. This service is provided by <link>FeedBlitz</link>. You can view their privacy policy <link>here</link>.</span>
+</div>
+<div>
+    <span>If this is your first visit, or you are returning after a while, check out the <link>selected archives</link>. This page contains a list of my favourite posts. The complete monthly archives are also available. You can find it on the sidebar of the <link>home page</link>.</span>
+</div>
+<div>
+    <span>View my <link>digital identity</link></span>
+</div>
+<div>
+  <h2>
+    <span>Previous Posts</span>
+  </h2>
+</div>
+<div>
+    <span><link>Agile India 2006</link></span>
+    <span><link>Recursion Part 3: Exercises in tail recursion</link></span>
+    <span><link>Frog &amp; Lily</link></span>
+    <span><link>J2ME notes</link></span>
+    <span><link>Recursion Part 2: Tail recursion, Accumulators and...</link></span>
+    <span><link>Recursion Part 1: Introduction to Recursion</link></span>
+    <span><link>Elliot's Beach</link></span>
+    <span><link>Flickr Uploads</link></span>
+    <span><link>Really cool rube goldberg video</link></span>
+    <span><link>ipod packaging parody</link></span>
+</div>
+<div>
+  <h2>
+    <span>Thursday, April 27, 2006</span>
+  </h2>
+</div>
+<div>
+  <h2>
+    <span>Recursion Part 4: Tree Recursion and Dynamic Programming</span>
+  </h2>
+</div>
+<div>
+    <span>The following is a part of a series of articles I had written on recursion.</span>
+</div>
+<div>
+    <span>This part introduces tree recursion, a form of recursion that occurs when a function calls itself more than once in a path. We then introduce dynamic programming, a class of algorithms to tackle certain types of tree recursive problems.</span>
+</div>
+<div>
+    <span>All Parts: <link>Recursion Part 1: Introduction to recursion</link> <link>Recursion Part 2: Tail recursion, Accumulators and Iteration</link> <link>Recursion Part 3: Exercises in tail recursion</link> <link>Recursion Part 4: Tree Recursion and Dynamic Programming</link> <link>Recursion Part 5: Structural and Generative Recursion</link> <link>Recursion Part 6: References and Further Information</link></span>
+</div>
+<div>
+    <span>Some recursive functions call themselves more than once. Consider the function to calculate the nth term of a fibonacci series:</span>
+</div>
+<div>
+    <span>int fibonacci(int n) { if (0 == n) { return 0; } else if (1 == n) { return 1; } else { return fibonacci(n - 2) + fibonacci(n - 1); } }</span>
+</div>
+<div>
+    <span>In order to calculate fibonacci(4), we need to calculate fibonacci(2) and fibonacci(3). For each call, there are two more recursive calls. This proceeds until n becomes 0 or 1, which are the terminating points of the recursion. We see that execution follows a tree form like this:</span>
+</div>
+<div>
+    <span>fibonacci(4) +------------------------------ | | fibonacci(2) fibonacci(3) +----------------- +--------------- | | | | fibonacci(0) fibonacci(1) fibonacci(1) fibonacci(2) +----------- | | fibonacci(0) fibonacci(1)</span>
+</div>
+<div>
+    <span>Each node has two children, one for each recursive call. A function with 'n' recursive calls will have 'n' children at each node. Since program execution follows a tree like structure, we call this form of recursion tree recursion</span>
+</div>
+<div>
+    <span>Is there any way to convert tree recursion to iteration?</span>
+</div>
+<div>
+    <span>The short answer is no1. There is no general algorithm to convert tree recursion to iteration. However, specialised algorithms do exists for certain problems. These algorithms (if they exist) are usually specific to each problem.</span>
+</div>
+<div>
+    <span>And it just so happens that our fibonacci algorithm falls into a class of tree recursive problems that can be converted to iteration using a technique called dynamic programming!</span>
+</div>
+<div>
+    <span>Look at the execution pattern for fibonacci(4) again. Notice how fibonacci(2) is calculated twice: Once in the computation of fibonacci(4) and once again in the computation of fibonacci(3). fibonacci(1) is computed thrice!</span>
+</div>
+<div>
+    <span>What if we could save the values of previous fibonacci terms when they are first computed and reuse the values later on without having to compute them again? This optimisation is the cornerstone of dynamic programming.</span>
+</div>
+<div>
+    <span>Here is how we can proceed: 1. Store the initial values of fibonacci(0) and fibonacci(1) 2. Compute fibonacci(2) from fibonacci(0) and fibonacci(1). The saved value of fibonacci(0) is now no longer required, so we can discard it. 2a. In general, compute fibonacci(n + 1) from the saved values of fibonacci(n - 1) and fibonacci(n). Discard the value of fibonacci(n - 1). 4. Repeat step 2a until we have computed the desired term</span>
+</div>
+<div>
+    <span>Look at the execution tree again. Notice how we start the computation from the leaf nodes of the tree and work our way up the tree computing each node, until we reach the root, which is the value we desire.</span>
+</div>
+<div>
+    <span>Here is the implementation using iteration:</span>
+</div>
+<div>
+    <span>int fibonacci(int n) { int a = 0, b = 1, temp = 0; int i = 0; for (i=1; i temp = a + b; a = b; b = temp; } return a; }</span>
+</div>
+<div>
+    <span>We have just used dynamic programming to convert a tree recursive algorithm into an iterative algorithm. The basic idea of dynamic programming is to look at the execution tree, identify repeated computations and perform the calculations 'bottom-up' from leaf to root. At each step, the computed values of the subproblems are stored to be reused later.</span>
+</div>
+<div>
+    <span>Dynamic programming cannot be used on every problem. Some problems can be converted to iteration using other methods, and some problems cannot be converted to iteration at all. Nevertheless, dynamic programming works on a large class of problems, and it is a useful tool to have in the toolbox</span>
+</div>
+<div>
+    <span>1 You can write an iterative loop that manages it's own stack, but that is basically equivalent to recursion.</span>
+</div>
+<div>
+    <span>Any questions? Comments? Please leave a comment using the comment form below.</span>
+</div>
+<div>
+    <span>This post is a part of the <link>selected archive</link>.</span>
+</div>
+<div>
+    <span>Labels: <link>programming</link>, <link>recursion</link></span>
+</div>
+<div>
+    <span>posted by Siddhi at <link>12:12</link> | <link>Bookmark This</link> | <link>Reddit</link> | <link>Digg this</link></span>
+</div>
+<div>
+  <h2>
+    <span>2 Comments:</span>
+  </h2>
+</div>
+<div>
+    <span><link>Ravi</link> said...</span>
+</div>
+<div>
+    <span>Excellent (series of ) posts if I may say so. :-)</span>
+</div>
+<div>
+    <span><link>May 21, 2006 4:53 AM</link></span>
+</div>
+<div>
+    <span><link>Siddhi</link> said...</span>
+</div>
+<div>
+    <span>Thanks :)</span>
+</div>
+<div>
+    <span><link>May 21, 2006 10:37 PM</link></span>
+</div>
+<div>
+    <span><link>Post a Comment</link></span>
+</div>
+<div>
+  <h2>
+    <span>Links to this post:</span>
+  </h2>
+</div>
+<div>
+    <span><link>posted</link> by @</span>
+</div>
+<div>
+    <span><link>Create a Link</link></span>
+</div>
+<div>
+    <span><link>&lt;&lt; Home</link></span>
+</div>
+
