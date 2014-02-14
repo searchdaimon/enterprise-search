@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 
 	    int		size = fileinfo.st_size;
 	    char	*buf = malloc(size);
-	    int		i;
+	    int		i, has_hits;
 
 	    for (i=0; i<size;)
 		{
@@ -67,7 +67,8 @@ int main(int argc, char *argv[])
 		{
 		    char	*snippet;
 
-		    int		success = generate_snippet( qa, buf, size, &snippet, "\033[1;32m[", "]\033[0m", modes[i], 320, 4, 80 );
+		    printf("Mode: %d\n", modes[i]);
+		    int		success = generate_snippet( qa, buf, size, &snippet, "\033[1;32m[", "]\033[0m", modes[i], 320, 4, 80, &has_hits );
 
 		    if (i>0) printf("\n");
 		    printf("%s\n", snippet);

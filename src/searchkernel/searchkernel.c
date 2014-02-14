@@ -183,15 +183,16 @@ static int equal_domainid_fn(void *key1, void *key2) {
 char *generate_summary(char summary_cfg, query_array query_parsed, char *body)  {
 	char *summary;
 	size_t body_len = strlen(body);
+	int has_hits;
 
 	if (summary_cfg == SUMMARY_DB) {
-		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , db_snippet, SUMMARY_LEN, 4, 80);
+		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , db_snippet, SUMMARY_LEN, 4, 60, &has_hits);
 	}
 	else if (summary_cfg == SUMMARY_SNIPPET) {
-		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , plain_snippet, SUMMARY_LEN, 4, 80);
+		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , plain_snippet, SUMMARY_LEN, 4, 80, &has_hits);
 	}
 	else if (summary_cfg == SUMMARY_START) {
-		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , first_snippet, SUMMARY_LEN, 4, 80);
+		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , first_snippet, SUMMARY_LEN, 4, 80, &has_hits);
 	}
 	/*
 	  ++Ax:

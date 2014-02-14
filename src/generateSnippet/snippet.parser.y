@@ -649,9 +649,6 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 
 #endif
 
-	    /***/
-
-	    //if (forced) break;
 
 	    queue_pop(Q);
 
@@ -1089,7 +1086,7 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
     char	*buf;
     char	*p;
     int  	success;
-
+    int 	has_hits;
 
     for (i=0; i<Msize; i++)
 	if (((struct match_block*)(vector_get(data->Match,i).ptr))->bstart >= data->best.start) break;
@@ -1153,11 +1150,19 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 					    buf = buffer_exit(BC);
 					    asprintf(&p,"<div><span>%s</span></div>",buf);
 
-					    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, plain_snippet, data->cols, 0, 0 );
+					    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, plain_snippet, data->cols, 0, 0, &has_hits);
 
-					    if (success) {
+					    if (success && has_hits) {
 				    	        bprintf(B, snippet);
 					    }
+					    else {
+						    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, first_snippet, data->cols, 0, 0, &has_hits);
+
+						    if (success) {
+							bprintf(B, snippet);
+						    }
+					    }
+
 					    free(buf);
 					    free(p);
 		        	        }
@@ -1188,11 +1193,19 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 				buf = buffer_exit(BC);
 				asprintf(&p,"<div><span>%s</span></div>",buf);
 
-				success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, plain_snippet, data->cols, 0, 0 );
+			    	success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, plain_snippet, data->cols, 0, 0, &has_hits);
 
-				if (success) {
-			    	    bprintf(B, snippet);
-				}
+			        if (success && has_hits) {
+		    	             bprintf(B, snippet);
+			        }
+			        else {
+				    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, first_snippet, data->cols, 0, 0, &has_hits);
+
+				    if (success) {
+					bprintf(B, snippet);
+				    }
+			        }
+
 				free(buf);
 				free(p);
 		            }
@@ -1255,11 +1268,19 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 	    // We have a to long text. We will have to snipet it
 	    buf = buffer_exit(BC);
 	    asprintf(&p,"<div><span>%s</span></div>",buf);
-	    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, plain_snippet, data->cols, 0, 0 );
+	    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, plain_snippet, data->cols, 0, 0, &has_hits);
 
-	    if (success) {
-	        bprintf(B, snippet);
+	    if (success && has_hits) {
+    	        bprintf(B, snippet);
 	    }
+	    else {
+		    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, first_snippet, data->cols, 0, 0, &has_hits);
+
+	    	    if (success) {
+			bprintf(B, snippet);
+		    }
+	    }
+
 	    free(buf);
 	    free(p);
 
@@ -1400,7 +1421,7 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
 }
 
 
-int generate_snippet( query_array qa, char text[], int text_size, char **output_text, char* b_start, char* b_end, int mode, int _snippet_size, int rows, int cols )
+int generate_snippet( query_array qa, char text[], int text_size, char **output_text, char* b_start, char* b_end, int mode, int _snippet_size, int rows, int cols, int *has_hits )
 {
     #ifdef DEBUG
         fprintf(stderr, "snippet.parser: generate_snippet()\n");
@@ -1746,6 +1767,8 @@ empty_query:
 
     if (data->mode == plain_snippet) *output_text = print_best_dual_snippet(data, b_start, b_end, qa);
     else  *output_text = print_best_snippet(data, b_start, b_end, qa);
+
+    *has_hits = data->has_hits;
 
     bsgp_delete_buffer( bs, scanner );
     bsgplex_destroy( scanner );
