@@ -1303,6 +1303,12 @@ slicense_info:
 	cp -v  src/slicense/slicense_info bin/slicense_info
 
 
+attributes_test:
+	@echo ""
+	@echo "$@:"
+
+	$(CC) src/common/attributes.c -D_ATTRIB_TEST_ -o bin/attributes_test
+
 
 #kopierer filer slik at de blir tilgjengelig fra web
 webpublish:
