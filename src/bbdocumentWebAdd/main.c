@@ -160,7 +160,7 @@ xml_add_one(int sock, xmlDocPtr doc, xmlNodePtr top)
 	//fprintf(stderr, "Adding: %s\n", xmldoc.body);
 
 	bbdn_docadd(sock, xmldoc.collection, xmldoc.uri, xmldoc.documenttype, xmldoc.body, xmldoc.bodysize,
-	    xmldoc.lastmodified, xmldoc.aclallow, xmldoc.acldeny, xmldoc.title, xmldoc.documentformat, xmldoc.attributes);
+	    xmldoc.lastmodified, xmldoc.aclallow, xmldoc.acldeny, xmldoc.title, xmldoc.documentformat, xmldoc.attributes, NULL, 0);
 
  err:
 	free(xmldoc.title);
@@ -666,7 +666,9 @@ int main(int argc, char **argv, char **envp)
 					cgi_getentrystr("acl_denied"), 								// acl denied
 					cgi_getentrystr("title"), 								// title
 					cgi_getentrystr("documentformat"), 							// document format
-					cgi_getentrystr("attributes")								// attributes
+					cgi_getentrystr("attributes"),								// attributes
+					NULL,											// image
+					0											// image size
 				) != 1) {
 				cgi_error(500, "bbdn_docadd() failed. Can't add document.");
 			}
@@ -762,9 +764,9 @@ int main(int argc, char **argv, char **envp)
 
 
 		//        bbdn_docadd(bbdnsock, xmldoc.collection, uri, xmldoc.documenttype, xmldoc.body, xmldoc.bodysize,
-		//            xmldoc.lastmodified, xmldoc.aclallow, xmldoc.acldeny, xmldoc.title, xmldoc.documentformat, xmldoc.attributes);
+		//            xmldoc.lastmodified, xmldoc.aclallow, xmldoc.acldeny, xmldoc.title, xmldoc.documentformat, xmldoc.attributes, image, image_size);
         	bbdn_docadd(bbdnsock, coll, url, "", data, datasize,
-      		    0, "Everyone", "", "omp1", "", "");
+      		    0, "Everyone", "", "omp1", "", "", NULL, 0);
 
 
 		// close it

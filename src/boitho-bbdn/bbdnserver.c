@@ -144,9 +144,9 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 				printf("bbc_docadd\n");
 			#endif
 
-			char *subname,*documenturi,*documenttype,*document,*acl_allow,*acl_denied,*title,*doctype;
+			char *subname,*documenturi,*documenttype,*document,*acl_allow,*acl_denied,*title,*doctype,*image;
 			char *attributes;
-			int dokument_size;
+			int dokument_size, image_size;
 			unsigned int lastmodified;
 
 			#ifdef DEBUG_TIME
@@ -262,6 +262,28 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			if ((i=recvall(socket, attributes, intrespons)) == 0)
 				err(1, "Can't receive attribute list");
 
+
+
+			//image
+			//image_size
+			if ((i=recvall(socket, &image_size, sizeof(image_size))) == 0) {
+                    		perror("Cant read image_size");
+                    		exit(1);
+                	}
+
+			image = malloc(image_size +1);
+
+			if (image_size == 0) {
+				image[0] = '\0';
+			}
+			else {
+				if ((i=recvall(socket, image, image_size)) == 0) {
+                        	        fprintf(stderr,"Can't read image of size %i\n",image_size);
+					perror("recvall");
+                        	        exit(1);
+                        	}
+			}
+
 			#ifdef DEBUG_TIME
                 		gettimeofday(&end_time, NULL);
                 		printf("Time debug: bbdn_docadd recv data time: %f\n",getTimeDifference(&start_time, &end_time));
@@ -277,7 +299,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
         		        gettimeofday(&start_time, NULL);
 		        #endif
 
-			intrespons = bbdocument_add(subname,documenturi,documenttype,document,dokument_size,lastmodified,acl_allow,acl_denied,title,doctype, attributes, attrkeys);
+			intrespons = bbdocument_add(subname,documenturi,documenttype,document,dokument_size,lastmodified,acl_allow,acl_denied,title,doctype, attributes, attrkeys, image, image_size);
 
 			printf(":bbdocument_add end\n");
 			printf("########################################################\n");

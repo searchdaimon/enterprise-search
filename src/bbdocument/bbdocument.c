@@ -1136,7 +1136,7 @@ int bbdocument_close (container *attrkeys) {
 	return 1;
 }
 
-int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,const char title[], char doctype[], char *attributes, container *attrkeys) {
+int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,const char title[], char doctype[], char *attributes, container *attrkeys, char *image, int image_size) {
 
 	struct ReposetoryHeaderFormat ReposetoryHeader;
 
@@ -1266,17 +1266,19 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	char *all_attributes = buffer_exit(attrbuffer);
 
 
-
 	//prøver å lag et bilde
-	//if ( (imagebuffer = generate_thumbnail( document, dokument_size, &imageSize )) == NULL ) {
-	if (!bbdocument_makethumb(documenttype_real,document,dokument_size,&imagebuffer,&imageSize)) {
+	if ((image_size != 0) && (bbdocument_makethumb("jpg",image,image_size,&imagebuffer,&imageSize))) {
+		debug("generated image from input image\n");
+		ReposetoryHeader.imageSize = imageSize;
+	}
+	else if (bbdocument_makethumb(documenttype_real,document,dokument_size,&imagebuffer,&imageSize)) {
+		debug("generated image from document\n");
+		ReposetoryHeader.imageSize = imageSize;
+	}
+	else {
 		printf("Can't generate image.\n");
 		ReposetoryHeader.imageSize = 0;
 		imagebuffer = NULL;
-	}
-	else {
-		debug("generated image\n");
-		ReposetoryHeader.imageSize = imageSize;
 	}
 
 

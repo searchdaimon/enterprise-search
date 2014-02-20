@@ -64,6 +64,8 @@ struct crawldocumentAddFormat {
 	char *title;
 	char *doctype;
 	char *attributes;
+	char *image;
+	int image_size;
 };
 
 //argumenter til crawlfirst()

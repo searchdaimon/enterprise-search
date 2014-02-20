@@ -801,6 +801,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
                 gettimeofday(&start_time, NULL);
         #endif
 
+
 	//send it inn
 	if (!bbdn_docadd(collection->socketha,
 				collection->collection_name,
@@ -813,7 +814,9 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 				crawldocumentAdd->acl_denied,
 				crawldocumentAdd->title,
 				crawldocumentAdd->doctype,
-				crawldocumentAdd->attributes)
+				crawldocumentAdd->attributes,
+				crawldocumentAdd->image,
+				crawldocumentAdd->image_size)
 	   ) {
 
 		bblog(ERROR, "can't send document to document manager! Tried to send document \"%s\" Will sleep and then reconnect. Won't send the same document again.",(*crawldocumentAdd).documenturi);

@@ -49,7 +49,8 @@ sub add_document {
         $params{type},
         $params{acl_allow},
         $params{acl_denied},
-        $params{attributes} || ""
+        $params{attributes} || "",
+        $params{image} || ""
     );
 }
 

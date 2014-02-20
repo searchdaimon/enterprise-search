@@ -9,7 +9,7 @@ int bbdn_conect(int *socketha, char tkey[], int PORT);
 
 int bbdn_docadd(int socketha, const char subname[], const char documenturi[], const char documenttype[], const char document[],
         const int dokument_size, const unsigned int lastmodified, const char *acl_allow, const char *acl_denied, const char title[],
-        const char doctype[], const char *attributes);
+        const char doctype[], const char *attributes, char *image, int image_size);
 
 int bbdn_docexist(int socketha, char subname[],char documenturi[],unsigned int lastmodified);
 

@@ -53,7 +53,8 @@ int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified
 */
 //rutine for å legge til et dokument
 int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int 
-	lastmodified,char *acl_allow, char *acl_denied, const char title[],char doctype[], char *attributes, container *attrkeys);
+	lastmodified,char *acl_allow, char *acl_denied, const char title[],char doctype[], char *attributes, container *attrkeys,
+	char *image, int image_size);
 
 
 struct hashtable; /* so everyone who include bbdocument.h does not have to include hashtable.h */

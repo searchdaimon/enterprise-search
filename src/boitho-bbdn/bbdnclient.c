@@ -63,7 +63,7 @@ int bbdn_close(int socketha) {
 
 int bbdn_docadd(int socketha, const char subname[], const char documenturi[], const char documenttype[], const char document[],
 	const int dokument_size, const unsigned int lastmodified, const char *acl_allow, const char *acl_denied, const char title[], 
-	const char doctype[], const char *attributes) {
+	const char doctype[], const char *attributes, char *image, int image_size) {
 
 	int len, intrespons, i;
 	char *blank = "";
@@ -149,6 +149,17 @@ int bbdn_docadd(int socketha, const char subname[], const char documenturi[], co
 	debug("sending (len %i): \"%s\"",len,attributes);
         if(sendall(socketha,&len, sizeof(int)) == 0) { perror("sendall attributes len"); return 0; }
         if(sendall(socketha,attributes, len) == 0) { perror("sendall attributes"); return 0; }
+
+        //image
+        //image_size
+	debug("sending image(len %i)",image_size);
+	debug("sending1 %d\n", image_size);
+        if(sendall(socketha,&image_size, sizeof(int)) == 0) { perror("sendall image_size"); return 0; }
+	debug("sending2 %d\n", image_size);
+	if (image_size != 0) {
+        	if(sendall(socketha,image, image_size) == 0) { perror("sendall image"); return 0; }
+	}
+	debug("sending3 %d\n", image_size);
 
 
         if ((i=recv(socketha, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
