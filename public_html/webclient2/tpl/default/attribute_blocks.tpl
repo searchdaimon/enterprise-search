@@ -46,9 +46,11 @@
 [% END %]
 
 [% BLOCK _attr_row %]
-	<li>
-		[% title | i18n_nowarn FILTER ucfirst %]:
-		<a href="[% a.query | query_url %]">[% a.value %]</a> 
-		[% PROCESS filter_icon q = a.attr_query %]
-	</li>
+	[% IF title != "snippet" %]
+		<li>
+			[% title | i18n_nowarn FILTER ucfirst %]:
+			<a href="[% a.query | query_url %]">[% a.value %]</a> 
+			[% PROCESS filter_icon q = a.attr_query %]
+		</li>
+	[% END %]
 [% END %]
