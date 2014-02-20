@@ -707,7 +707,7 @@ int main (int argc, char *argv[]) {
 			deleted = 1;
                 }
 
-                printf("DocId: %i, url: %s, res: %hi, htmlsize: %hi, imagesize: %hi, time: %lu, radress: %lu, deleted: %i",
+                printf("DocId: %i, url: %s, res: %hi, htmlsize: %u, imagesize: %hu, time: %lu, radress: %lu, deleted: %i",
 				ReposetoryHeader.DocID,ReposetoryHeader.url,ReposetoryHeader.response,
 				ReposetoryHeader.htmlSize2,ReposetoryHeader.imageSize,ReposetoryHeader.time,radress, deleted);
 		if (thumbnale!=NULL) {printf(", thumbnale: %s", thumbnale);}
