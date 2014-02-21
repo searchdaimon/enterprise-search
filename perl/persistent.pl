@@ -31,6 +31,11 @@ sub eval_file2 {
 	my $package = valid_package_name($file_path);
 	my $mtime = -M $file_path;
 
+	# 
+	select(STDERR);
+	$| = 1;
+	select(STDOUT);
+	$| = 1;
 
 	if(defined $Cache{$package}{mtime}
 			&&
