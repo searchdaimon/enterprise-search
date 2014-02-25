@@ -959,11 +959,14 @@ int getAllGroupsForUser(struct hashtable **grouphash, LDAP *ld, char *user_usern
 		ldap_simple_free(respons);			
 	}
 
-	/* Add Everyone and the username for the user */
+	/* Add Everyone, Authenticated Users and the username for the user */
 	id = strdup("Everyone");
 	if (!insert_group(*grouphash, id))
 		free(id);
 	id = strdup("S-1-1-0"); /* The SID for Everyone */
+	if (!insert_group(*grouphash, id))
+		free(id);
+	id = strdup("S-1-5-11"); /* The SID for Authenticated Users */
 	if (!insert_group(*grouphash, id))
 		free(id);
 	id = strdup(user_username);
