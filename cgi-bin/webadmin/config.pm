@@ -243,7 +243,8 @@ sub crawl_update {
         ));
     }
 
-};
+    return 0; # 0 = OK
+}
 
 sub path_access {
     my ($undef, $self, $opt) = @_;
