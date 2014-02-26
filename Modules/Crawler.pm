@@ -4,6 +4,10 @@ use warnings;
 use SD::Crawl;
 use Data::Dumper;
 use Carp;
+use threads;
+use threads::shared;
+
+my $t_lock :shared = 0;
 
 sub add_document {
     my ($self, %params) = @_;
@@ -41,6 +45,7 @@ sub add_document {
     }
 
 # run
+    lock($t_lock); # Lock to prevent to threads to access the below at the same time
     return SD::Crawl::pdocumentAdd($self->{ptr},
         $params{url},
         $params{last_modified},
@@ -64,22 +69,28 @@ sub document_exists {
     croak "document_exists(): Required second parameter (last modified) needs to be unixtime."
         if $last_modified !~ /^\d+$/ || $last_modified < 0;
 
+    lock($t_lock); # Lock to prevent to threads to access the below at the same time
     return SD::Crawl::pdocumentExist($self->{ptr}, $url, $last_modified, $size_bytes);
 }
 
 sub normalize_http_url {
 	my ($self, $url) = @_;
+
+	lock($t_lock); # Lock to prevent to threads to access the below at the same time
 	return SD::Crawl::htttp_url_normalization($url);
 }
 
 sub continue {
 	my $self = shift;
+
+	lock($t_lock); # Lock to prevent to threads to access the below at the same time
 	return SD::Crawl::pdocumentContinue($self->{ptr});
 }
 
 sub change_collection {
 	my ($self, $collection) = @_;
 
+	lock($t_lock); # Lock to prevent to threads to access the below at the same time
 	SD::Crawl::pdocumentChangeCollection($self->{ptr}, $collection);
 }
 
@@ -89,30 +100,35 @@ sub add_foreign_user {
 	croak "Need a user" unless defined $user;
 	$group = $user unless (defined $group);
 
+	lock($t_lock); # Lock to prevent to threads to access the below at the same time
 	return SD::Crawl::paddForeignUser($self->{ptr}, $user, $group);
 }
 
 sub remove_foreign_users {
 	my ($self) = @_;
 
+	lock($t_lock); # Lock to prevent to threads to access the below at the same time
 	return SD::Crawl::premoveForeignUsers($self->{ptr});
 }
 
 sub closeCurrentCollection {
 	my ($self) = @_;
 
+	lock($t_lock); # Lock to prevent to threads to access the below at the same time
 	SD::Crawl::pcloseCurrentCollection($self->{ptr});
 };
 
 sub get_last_crawl_time {
 	my ($self) = @_;
 
+	lock($t_lock); # Lock to prevent to threads to access the below at the same time
 	return SD::Crawl::pget_last_crawl($self->{ptr});
 }
 
 sub delete_uri {
 	my ($self, $subname, $uri) = @_;
 
+	lock($t_lock); # Lock to prevent to threads to access the below at the same time
 	return SD::Crawl::pdeleteuri($self->{ptr}, $subname, $uri);
 }
 
