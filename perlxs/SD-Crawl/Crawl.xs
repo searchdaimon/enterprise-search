@@ -38,7 +38,7 @@ int pdocumentError(struct cargsF *cargs, char error[]) {
 }
 
 
-int pdocumentExist(struct cargsF *cargs, char * url, int lastmodified, int dokument_size) {
+int pdocumentExist(struct cargsF *cargs, char * url, int lastmodified, int dokument_size, int no_lottery) {
 	int ret;
 
 	debug("pdocumentExist");
@@ -65,6 +65,7 @@ int pdocumentExist(struct cargsF *cargs, char * url, int lastmodified, int dokum
 	debug("to send \"%s\"",crawldocumentExist->documenturi);
 	crawldocumentExist->lastmodified = lastmodified;
 	crawldocumentExist->dokument_size = dokument_size;
+	crawldocumentExist->no_lottery	 = no_lottery;
 
 	ret = cargs->documentExist(cargs->collection,crawldocumentExist);
 
@@ -190,15 +191,16 @@ pdocumentAdd( x , url , lastmodified, document, title, type, acl_allow, acl_deni
 	
 
 int
-pdocumentExist( x , url , lastmodified, dokument_size)
+pdocumentExist( x , url , lastmodified, dokument_size, no_lottery)
 	void * x
 	char * url
 	int lastmodified
 	int dokument_size
+	int no_lottery
 	INIT:
 		int ret;
 	PPCODE:
-		ret = pdocumentExist(x, url, lastmodified, dokument_size);
+		ret = pdocumentExist(x, url, lastmodified, dokument_size, no_lottery);
 		XPUSHs(sv_2mortal(newSVnv(ret)));
 
 

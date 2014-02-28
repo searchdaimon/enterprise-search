@@ -755,7 +755,7 @@ int documentExist(struct collectionFormat *collection, struct crawldocumentExist
 		bblog(DEBUGINFO, "documentExist: start");
 	#endif
 
-	ret = bbdocument_exist(collection->collection_name, crawldocumentExist->documenturi, crawldocumentExist->lastmodified);
+	ret = bbdocument_exist(collection->collection_name, crawldocumentExist->documenturi, crawldocumentExist->lastmodified, crawldocumentExist->no_lottery);
 
 	#ifdef DEBUG
 		bblog(DEBUGINFO, "documentExist: end");

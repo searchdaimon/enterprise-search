@@ -60,7 +60,7 @@ sub add_document {
 }
 
 sub document_exists {
-    my ($self, $url, $last_modified, $size_bytes) = @_;
+    my ($self, $url, $last_modified, $size_bytes, $no_lottery) = @_;
 
 
     $size_bytes ||= 0;
@@ -69,8 +69,12 @@ sub document_exists {
     croak "document_exists(): Required second parameter (last modified) needs to be unixtime."
         if $last_modified !~ /^\d+$/ || $last_modified < 0;
 
+    if (!$no_lottery) {
+	$no_lottery = 0;
+    }
+
     lock($t_lock); # Lock to prevent to threads to access the below at the same time
-    return SD::Crawl::pdocumentExist($self->{ptr}, $url, $last_modified, $size_bytes);
+    return SD::Crawl::pdocumentExist($self->{ptr}, $url, $last_modified, $size_bytes, $no_lottery);
 }
 
 sub normalize_http_url {

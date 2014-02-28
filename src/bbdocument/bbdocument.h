@@ -30,7 +30,7 @@ void bbdocument_clean();
  lastmodified
 
 */
-int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified);
+int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified, unsigned int no_lottery);
 
 /*
  bbdocument_add()

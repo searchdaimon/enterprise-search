@@ -51,6 +51,7 @@ struct crawldocumentExistFormat {
 	char *documenturi;
 	int dokument_size;
 	unsigned int lastmodified;
+	unsigned int no_lottery;
 };
 
 struct crawldocumentAddFormat {
