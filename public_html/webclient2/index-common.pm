@@ -21,6 +21,13 @@ our $StartTime  = Time::HiRes::time;
 
 
 BEGIN {
+
+	# Remove the binmode() statements below to remove the "wide character in print" warning 
+	# that occurs on some virtualizations platforms.
+	# Enable Unicode output
+	#binmode(STDIN, ":encoding(utf8)");
+	#binmode(STDOUT, ":encoding(utf8)");
+
 	CGI::Carp::set_message(" ");
 	{
 		# We want warnings to be shown in browser.
