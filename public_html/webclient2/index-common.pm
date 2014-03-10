@@ -211,7 +211,7 @@ sub gen_search_uri {
 	# Add defaults
 	$attr{lang}     ||= $query_params{lang} || $CFG{lang};
 	$attr{username} ||= $CFG{username};
-	$attr{maxhits}  ||= $CFG{num_results};
+	$attr{maxhits}  ||= $query_params{maxhits} || $CFG{num_results};
 	$attr{subname}  ||= $CFG{subname};
 	$attr{secret}   ||= $CFG{secret};
 	$attr{tkey}     ||= $CFG{tkey};
@@ -300,6 +300,13 @@ sub init_tpl {
 		$lang = valid_lang($tpl_name. $CFG{lang}) 
 			? $CFG{lang} : undef;
 	}
+
+	if ($state{maxhits}) {
+		croak "Maxhits must be an integer" unless is_integer($state{maxhits});
+		croak "Maxhits must be above 0" unless ($state{maxhits} > -1);
+		croak "Maxhits must be below 250" unless ($state{maxhits} < 250);
+		$query_params{maxhits} = $state{maxhits};
+	}	
 
 	my ($i18n_filter, $i18n_nowarn_filter) = init_lang($tpl_name, $lang);
 
@@ -408,6 +415,10 @@ sub valid_lang {
 	my ($tpl_name, $lang) = @_;
 	if (!defined $lang) { return 0; }
 	return $lang =~ /^[a-z_]+$/ && (-d "./locale/$tpl_name/$lang");
+}
+
+sub is_integer {
+   defined $_[0] && $_[0] =~ /^[+-]?\d+$/;
 }
 
 1;
