@@ -114,6 +114,11 @@ void cgi_fetch_common(struct QueryDataForamt *qdata, int *noDocType) {
 		qdata->start = tmpint;
 	}
 
+	// "page" is an alternative name for "start", and describes which page to start at. Page takes precedence over start.
+	if (((tmpint = cgi_getentryint("page")) != 0) ) {
+		qdata->start = tmpint;
+	}
+
 	if ((cgi_getentrystr("outformat") != NULL) && (strcmp(cgi_getentrystr("outformat"),"opensearch") == 0)) {
                	qdata->outformat = _OUT_FOMRAT_OPENSEARCH;
         }
