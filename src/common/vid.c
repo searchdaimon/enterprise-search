@@ -9,11 +9,11 @@
 void vid_u(char buf[], int bufsize, char asalt[], unsigned int value, time_t etime, char ip[]) {
 
 	#ifdef DEBUG
-		printf("bufsize %i, salt %s, value %u, etime %u\n",bufsize,salt,value,etime);
+		printf("bufsize %i, salt %s, value %u, etime %u\n",bufsize,asalt,value,etime);
 	#endif
 	
         unsigned int crc;
-        snprintf(buf,bufsize,"%s%u%u%s",salt,value,(unsigned int)etime,ip);
+        snprintf(buf,bufsize,"%s%u%u%s",asalt,value,(unsigned int)etime,ip);
 
         crc = crc32boitho(buf);
 
