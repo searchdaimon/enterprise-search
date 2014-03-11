@@ -871,7 +871,7 @@ int main(int argc, char *argv[])
                 	                break;
         	                case 'o':
         	                        searchport = atoi(optarg);
-                	                printf("will use prot %i\n",searchport);
+                	                printf("will use port %i\n",searchport);
                 	                break;
         	                case 'm':
         	                        optMaxsHits = atoi(optarg);
@@ -902,22 +902,34 @@ int main(int argc, char *argv[])
 
 
 
-                if (argc < 3 ) {
-                        printf("Error ingen query spesifisert eller subname .\n\nEksempel på bruk for å søke på boitho:\n");
+                if (argc +optind < 2 ) {
+                        printf("Error no query or username given:\n");
 			#ifdef BLACK_BOX
-				printf("\tdispatcher_all boitho www bruker\n\n\n");
+				printf("\tdispatcher_all query collection (user)\n\n\n");
 			#else
-				printf("\tdispatcher_all boitho www\n\n\n");
+				printf("\tdispatcher_all query collection\n\n\n");
 			#endif
+			exit(0);
                 }
                 else {
-			strcpy(QueryData.userip,"213.179.58.99");
+			strcpy(QueryData.userip,"127.0.0.1");
 
                         strcpy(QueryData.query,argv[1 +optind]);
-			strcpy(QueryData.subname,argv[2 +optind]);
-			#ifdef BLACK_BOX
-				strcpy(QueryData.search_user,argv[3 +optind]);
 
+			if (argc +optind == 3) {
+				strcpy(QueryData.subname,argv[2 +optind]);
+			}
+			else {
+				QueryData.subname[0] = '\0';
+			}
+			#ifdef BLACK_BOX
+				if (argc +optind == 4) {
+					strcpy(QueryData.search_user,argv[3 +optind]);
+				}
+				else {
+					anonymous=1;
+					QueryData.search_user[0] = '\0';
+				}
 			#else
 				QueryData.search_user[0] = '\0';
 			#endif
