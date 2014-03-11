@@ -1,5 +1,5 @@
 #ifndef _H_OUT_SDXML_
-#define _H_OUT_SDXML
+#define _H_OUT_SDXML_
 
 #include "library.h"
 
