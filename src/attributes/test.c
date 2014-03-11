@@ -24,7 +24,7 @@ int main()
 
     char	*warnings;
     int		failed;
-    attr_conf	*ac = show_attributes_init(buf, &warnings, &failed);
+    attr_conf	*ac = show_attributes_init(buf, &warnings, &failed, 1);
 
     printf("Warnings:\n\n%s", warnings);
 
