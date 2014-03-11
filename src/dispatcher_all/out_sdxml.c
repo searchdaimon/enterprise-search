@@ -3,6 +3,7 @@
 #include <err.h>
 
 #include "out_sdxml.h"
+#include "out_common.h"
 
 #ifdef ATTRIBUTES
 	#include "../attributes/attr_makexml.h"
@@ -16,33 +17,9 @@
 #include "../common/lot.h"
 #include "../common/xml.h"
 #include "../common/cgi.h"
-//include fail for vid.h. Commented out for now.
-//#include "../common/vid.h"
+#include "../common/vid.h"
 #include "../ds/dcontainer.h"
 #include "../ds/dset.h"
-
-
-char *get_filetype_icon(char *ext) {
-	static struct fte_data *fdata = NULL;
-	if (fdata == NULL)
-		fdata = fte_init(bfile("config/file_extensions.conf"));
- 	/* TODO? fte_destroy(fdata) */
-
-	static char *icon, *version;
-	char *group, *descr;
-
-	if (fdata == NULL) {
-		errx(1, "No fte_data %d %s", __LINE__, __FILE__);
-		return NULL;
-	}
-	if (!fte_getdescription(fdata, "eng", ext, &group, &descr, &icon, &version)) {
-		warnx("no icon for ext %s\n", ext);
-		icon[0] = '\0';
-		return icon;
-	}
-
-	return icon;
-}
 
 
 
@@ -534,8 +511,8 @@ void disp_out_sd_v2_0(
 					// Sender med cache link hvis 
 					// collection er konfigurert til aa vise cache.
 					if ((int) Sider[i].subname.config.cache_link)
-	                			printf("\t<CACHE document=\"%u\" time=\"%u\" signature=\"%u\" collection=\"%s\" host=\"%s\"></CACHE>\n", 
-							Sider[i].cache_params.doc_id, Sider[i].cache_params.time, 
+	                			printf("\t<CACHE document=\"%u\" time=\"%lld\" signature=\"%u\" collection=\"%s\" host=\"%s\"></CACHE>\n", 
+							Sider[i].cache_params.doc_id, (long long)Sider[i].cache_params.time, 
 							Sider[i].cache_params.signature, Sider[i].cache_params.subname, 
 							Sider[i].cache_params.cache_host);
 
@@ -1022,7 +999,7 @@ void disp_out_sd_v2_1(
 						escapeHTML(evalue, sizeof evalue, value);
 
 						// Runarb: 13.04.2012: Temporery fix for geting bad utf data from http://datasets.opentestset.com/datasets/Enron_files/full/arora-h/McKinsey%20Enterprise%20Report%2011-00.ppt						
-						int len, n;
+						int len;
 						for(len=0;len<strlen(evalue);len++) {
 							if ((unsigned int)evalue[len] < 31) {
 								evalue[len] = 'X';
@@ -1103,8 +1080,8 @@ void disp_out_sd_v2_1(
 					// Sender med cache link hvis 
 					// collection er konfigurert til aa vise cache.
 					if ((int) Sider[i].subname.config.cache_link)
-	                			printf("\t<cache document=\"%u\" time=\"%u\" signature=\"%u\" collection=\"%s\" host=\"%s\" />\n", 
-							Sider[i].cache_params.doc_id, Sider[i].cache_params.time, 
+	                			printf("\t<cache document=\"%u\" time=\"%lld\" signature=\"%u\" collection=\"%s\" host=\"%s\" />\n", 
+							Sider[i].cache_params.doc_id, (long long)Sider[i].cache_params.time, 
 							Sider[i].cache_params.signature, Sider[i].cache_params.subname, 
 							Sider[i].cache_params.cache_host);
 					else 

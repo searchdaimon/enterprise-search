@@ -27,6 +27,7 @@
 
 #define _OUT_FOMRAT_SD 1
 #define _OUT_FOMRAT_OPENSEARCH 2
+#define _OUT_FOMRAT_SD_JSON 3
    
 #define salt "sdjbjolQdfgkkf"
 

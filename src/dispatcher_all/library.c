@@ -1043,7 +1043,6 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 
 
 	MYSQL_STMT *logstmt, *pilogstmt;
-	my_ulonglong  affected_rows;
 	char query [2048];
 	MYSQL_BIND bind[12];
 	unsigned long len[12];

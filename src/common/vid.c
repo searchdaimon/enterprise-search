@@ -6,7 +6,7 @@
 #include "../common/crc32.h"
 
 
-void vid_u (char buf[], int bufsize,char salt[], unsigned int value, time_t etime, char ip[]) {
+void vid_u(char buf[], int bufsize, char asalt[], unsigned int value, time_t etime, char ip[]) {
 
 	#ifdef DEBUG
 		printf("bufsize %i, salt %s, value %u, etime %u\n",bufsize,salt,value,etime);
