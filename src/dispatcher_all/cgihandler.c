@@ -122,6 +122,9 @@ void cgi_fetch_common(struct QueryDataForamt *qdata, int *noDocType) {
 	if ((cgi_getentrystr("outformat") != NULL) && (strcmp(cgi_getentrystr("outformat"),"opensearch") == 0)) {
                	qdata->outformat = _OUT_FOMRAT_OPENSEARCH;
         }
+	else if ((cgi_getentrystr("outformat") != NULL) && (strcmp(cgi_getentrystr("outformat"),"json") == 0)) {
+               	qdata->outformat = _OUT_FOMRAT_SD_JSON;
+        }
 
 	const char *tmpstr;
 	if ((tmpstr = cgi_getentrystr("lang")) != NULL) {

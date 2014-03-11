@@ -895,7 +895,7 @@ container* _attribute_dissect_query_(query_array *qa, int group_filter_id)
 
 
 char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf *showattrp,
-			struct fte_data *getfiletypep, struct adf_data *attrdescrp, query_array *qa)
+			struct fte_data *getfiletypep, struct adf_data *attrdescrp, query_array *qa, int outformat)
 {
     int		i, j;
 

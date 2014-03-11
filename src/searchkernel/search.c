@@ -2741,7 +2741,8 @@ char* searchFilterCount(int *TeffArrayElementer,
 			struct fte_data *getfiletypep,
 			struct adf_data	*attrdescrp,
 			attr_conf *showattrp,
-			query_array *qa
+			query_array *qa,
+			int outformat
 		) {
 
 		char *filesKey;
@@ -3632,7 +3633,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 		// Attributter:
 		bblog(INFO, "search: generating xml for attributes");
 
-		char	*nav_xml = attribute_generate_xml(attributes, TeffArray->attrib_count+1, showattrp, getfiletypep, attrdescrp, qa);
+		char	*nav_xml = attribute_generate_xml(attributes, TeffArray->attrib_count+1, showattrp, getfiletypep, attrdescrp, qa, outformat);
 
 		#ifdef DEBUG
 			//skriver ut atribut xml'en.

@@ -2560,7 +2560,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	#ifdef BLACK_BOX
 		(*SiderHeder).navigation_xml = searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,
-		    &(*SiderHeder).queryTime, searchd_config->getfiletypep, searchd_config->attrdescrp, navmenu_cfg, &PagesResults.QueryData.queryParsed);
+		    &(*SiderHeder).queryTime, searchd_config->getfiletypep, searchd_config->attrdescrp, navmenu_cfg, &PagesResults.QueryData.queryParsed, PagesResults.QueryData.outformat);
 
 		(*SiderHeder).navigation_xml_len = strlen((*SiderHeder).navigation_xml);
 

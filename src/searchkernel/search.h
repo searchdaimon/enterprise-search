@@ -24,7 +24,8 @@ char* searchFilterCount(int *TeffArrayElementer,
 			struct fte_data *getfiletypep,
 			struct adf_data *attrdescrp,
 			attr_conf *showattrp,
-			query_array *qa
+			query_array *qa,
+			int outformat
 		);
 
 void searchFilterInit(struct filtersFormat *filters,int dates[]);

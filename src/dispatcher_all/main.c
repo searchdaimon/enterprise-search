@@ -55,6 +55,7 @@
 #include "cgihandler.h"
 #include "out_sdxml.h"
 #include "out_opensearch.h"
+#include "out_sdjson.h"
 
 
 #define CFG_SEARCHD "config/searchd.conf"
@@ -875,17 +876,20 @@ int main(int argc, char *argv[])
                 	                break;
         	                case 'm':
         	                        optMaxsHits = atoi(optarg);
-                	                printf("will show max %i pages\n",optStart);
+                	                printf("will show max %i pages\n",optMaxsHits);
                 	                break;
         	                case 'f':
         	                        if (strcmp(optarg,"opensearch") == 0) {
 						QueryData.outformat = _OUT_FOMRAT_OPENSEARCH;
 					}
+        	                        else if (strcmp(optarg,"json") == 0) {
+						QueryData.outformat = _OUT_FOMRAT_SD_JSON;
+					}
 					else {
-						printf("Unknown out format %s\n",optRank);
+						printf("Unknown out format %s\n",optarg);
 						exit(-1);
 					}
-                	                printf("will output data in \"%s\" format\n",optRank);
+                	                printf("will output data in \"%s\" format\n",optarg);
                 	                break;
 
                         	default:
@@ -972,12 +976,6 @@ int main(int argc, char *argv[])
                 }
         }
         else {
-        	//send out an HTTP header:
-		#ifdef DEBUG
-	        	printf("Content-type: text/plain\n\n");
-		#else
-	        	printf("Content-type: text/xml\n\n");
-		#endif
 		
 		char *remoteaddr = getenv("REMOTE_ADDR");
 		if (remoteaddr == NULL)
@@ -993,6 +991,15 @@ int main(int argc, char *argv[])
 			die(1,"", "Access key missing, or wrong access key for ip \"%s\".",remoteaddr);
 		
 		cgi_fetch_common(&QueryData, &noDoctype);
+
+		// Send correct Content-type HTTP header:
+		if ( QueryData.outformat == _OUT_FOMRAT_SD_JSON) {
+			printf("Content-type: application/json\n\n");
+		}
+		else {
+			printf("Content-type: text/xml\n\n");
+		}
+
 		if (access == ACCESS_TYPE_LIMITED)
 			cgi_fetch_limited(&QueryData, remoteaddr);
 		else if (access == ACCESS_TYPE_FULL) 
@@ -1380,6 +1387,18 @@ int main(int argc, char *argv[])
 			QueryData.queryhtml
 		
 		);
+	}
+	else if (QueryData.outformat == _OUT_FOMRAT_SD_JSON) {
+
+    		disp_out_sd_json(
+			FinalSiderHeder, 
+			QueryData, noDoctype, SiderHeder, 
+			hascashe, nrRespondedServers, (nrOfServers + nrOfPiServers), 
+			nrOfAddServers, dispatcherfiltersTraped,
+			sockfd, addsockfd, AddSiderHeder, 
+			errorha, Sider, queryNodeHeder, etime
+		);
+
 	}
 	else if ((QueryData.outformat == _OUT_FOMRAT_SD) && (QueryData.version == 2.0)) {
 		noDoctype = 1; //det var ikke doctype orginalt i xml'en. Og sende den bryter 24so.
