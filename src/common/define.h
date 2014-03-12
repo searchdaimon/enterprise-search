@@ -190,6 +190,11 @@ struct cm_listusers_h {
 #define MYSQL_USER "boitho"
 #define MYSQL_PASS "G7J7v5L5Y7"
 
+/* Output formats */
+#define _OUT_FOMRAT_SD 			1
+#define _OUT_FOMRAT_OPENSEARCH 		2
+#define _OUT_FOMRAT_SD_JSON 		3
+
 
 typedef unsigned int docid;
 
