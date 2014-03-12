@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <locale.h>
 #include <stdio.h>
 #include <err.h>
@@ -80,117 +82,8 @@ void disp_out_sd_json(
 
 		return;
 	}
-/*
-	    //viser info om dispatcher_all
-	    printf("<dispatcher_info>\n");
-	    printf("\t<filters>\n");
-	    {
-		printf("\t\t<filterAdultWeight_bool>%i</filterAdultWeight_bool>\n",dispatcherfiltersTraped.filterAdultWeight_bool);
-		printf("\t\t<filterAdultWeight_value>%i</filterAdultWeight_value>\n",dispatcherfiltersTraped.filterAdultWeight_value);
-		printf("\t\t<filterSameCrc32_1>%i</filterSameCrc32_1>\n",dispatcherfiltersTraped.filterSameCrc32_1);
-		printf("\t\t<filterSameUrl>%i</filterSameUrl>\n",dispatcherfiltersTraped.filterSameUrl);
-		printf("\t\t<filterNoUrl>%i</filterNoUrl>\n",dispatcherfiltersTraped.filterNoUrl);
-		printf("\t\t<find_domain_no_subname>%i</find_domain_no_subname>\n",dispatcherfiltersTraped.find_domain_no_subname);
-		printf("\t\t<filterSameDomain>%i</filterSameDomain>\n",dispatcherfiltersTraped.filterSameDomain);
-		printf("\t\t<filterTLDs>%i</filterTLDs>\n",dispatcherfiltersTraped.filterTLDs);
-		printf("\t\t<filterResponse>%i</filterResponse>\n",dispatcherfiltersTraped.filterResponse);
-		printf("\t\t<cantpopResult>%i</cantpopResult>\n",dispatcherfiltersTraped.cantpopResult);
-		printf("\t\t<cmc_pathaccess>%i</cmc_pathaccess>\n",dispatcherfiltersTraped.cmc_pathaccess);
-		printf("\t\t<filterSameCrc32_2>%i</filterSameCrc32_2>\n",dispatcherfiltersTraped.filterSameCrc32_2);
-	    }
-	    printf("\t</filters>\n");
-	    printf("</dispatcher_info>\n");
 
 
-	    if (!hascashe) {
-
-		//viser info om serverne som svarte
-
-		for (i=0;i< num_servers ;i++) {
-			if (sockfd[i] != 0) {
-				printf("<searchnode>\n");
-				printf("\t<nodename>%s</nodename>\n",SiderHeder[i].servername);
-				printf("\t<totaltime>%f</totaltime>\n",SiderHeder[i].total_usecs);
-				printf("\t<hits>%i</hits>\n",SiderHeder[i].TotaltTreff);
-				printf("\t<filtered>%i</filtered>\n",SiderHeder[i].filtered);
-				printf("\t<shown>%i</shown>\n",SiderHeder[i].showabal);
-
-#ifndef DEBUG
-				printf("\t<time_profile>\n");
-				{
-					printf("\t\t<AuthorSearch>%f</AuthorSearch>\n",SiderHeder[i].queryTime.AnchorSearch);
-					printf("\t\t<UrlSearch>%f</UrlSearch>\n",SiderHeder[i].queryTime.UrlSearch);
-					printf("\t\t<MainSearch>%f</MainSearch>\n",SiderHeder[i].queryTime.MainSearch);
-					printf("\t\t<MainAuthorMerge>%f</MainAuthorMerge>\n",SiderHeder[i].queryTime.MainAnchorMerge);
-					printf("\t\t<popRank>%f</popRank>\n",SiderHeder[i].queryTime.popRank);
-					printf("\t\t<responseShortening>%f</responseShortening>\n",SiderHeder[i].queryTime.responseShortning);
-					printf("\t\t<allrankCalc>%f</allrankCalc>\n",SiderHeder[i].queryTime.allrankCalc);
-					printf("\t\t<indexSort>%f</indexSort>\n",SiderHeder[i].queryTime.indexSort);
-					printf("\t\t<searchSimple>%f</searchSimple>\n",SiderHeder[i].queryTime.searchSimple);
-					printf("\t\t<popResult>%f</popResult>\n",SiderHeder[i].queryTime.popResult);
-					printf("\t\t<adultcalc>%f</adultcalc>\n",SiderHeder[i].queryTime.adultcalk);
-#ifdef BLACK_BOX
-					printf("\t\t<filetypes>%f</filetypes>\n",SiderHeder[i].queryTime.filetypes);
-					printf("\t\t<iintegerGetValueDate>%f</iintegerGetValueDate>\n",SiderHeder[i].queryTime.iintegerGetValueDate);
-					printf("\t\t<dateview>%f</dateview>\n",SiderHeder[i].queryTime.dateview);
-					printf("\t\t<FilterCount>%f</FilterCount>\n",SiderHeder[i].queryTime.FilterCount);
-					printf("\t\t<pathaccess>%f</pathaccess>\n",SiderHeder[i].queryTime.pathaccess);
-					printf("\t\t<urlrewrite>%f</urlrewrite>\n",SiderHeder[i].queryTime.urlrewrite);
-					printf("\t\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);
-					printf("\t\t<cmc_connect>%f</cmc_connect>\n",SiderHeder[i].queryTime.cmc_conect);
-#endif
-
-#ifdef BLACK_BOX
-					printf("\t\t<html_parser_run>%f</html_parser_run>\n",SiderHeder[i].queryTime.html_parser_run);
-					printf("\t\t<generate_snippet>%f</generate_snippet>\n",SiderHeder[i].queryTime.generate_snippet);
-#endif
-				}
-				printf("\t</time_profile>\n");
-
-				printf("\t<filters>\n");
-				{
-					printf("\t\t<filterAdultWeight_bool>%i</filterAdultWeight_bool>\n",SiderHeder[i].filtersTraped.filterAdultWeight_bool);
-					printf("\t\t<filterAdultWeight_value>%i</filterAdultWeight_value>\n",SiderHeder[i].filtersTraped.filterAdultWeight_value);
-					printf("\t\t<filterSameCrc32_1>%i</filterSameCrc32_1>\n",SiderHeder[i].filtersTraped.filterSameCrc32_1);
-					printf("\t\t<filterSameUrl>%i</filterSameUrl>\n",SiderHeder[i].filtersTraped.filterSameUrl);
-					printf("\t\t<filterNoUrl>%i</filterNoUrl>\n",SiderHeder[i].filtersTraped.filterNoUrl);
-					printf("\t\t<find_domain_no_subname>%i</find_domain_no_subname>\n",SiderHeder[i].filtersTraped.find_domain_no_subname);
-					printf("\t\t<filterSameDomain>%i</filterSameDomain>\n",SiderHeder[i].filtersTraped.filterSameDomain);
-					printf("\t\t<filterTLDs>%i</filterTLDs>\n",SiderHeder[i].filtersTraped.filterTLDs);
-					printf("\t\t<filterResponse>%i</filterResponse>\n",SiderHeder[i].filtersTraped.filterResponse);
-					printf("\t\t<cantpopResult>%i</cantpopResult>\n",SiderHeder[i].filtersTraped.cantpopResult);
-					printf("\t\t<cmc_pathaccess>%i</cmc_pathaccess>\n",SiderHeder[i].filtersTraped.cmc_pathaccess);
-					printf("\t\t<filterSameCrc32_2>%i</filterSameCrc32_2>\n",SiderHeder[i].filtersTraped.filterSameCrc32_2);
-				}
-				printf("\t</filters>\n");
-#endif
-
-				printf("</searchnode>\n");
-			}	
-		}
-	    }
-	    else {
-		printf("<searchnode>\n");
-		printf("\t<nodename>cache.localhost.com</nodename>\n");
-		printf("\t<totaltime>%f</totaltime>\n",FinalSiderHeder.total_usecs);
-		printf("\t<hits>%i</hits>\n",FinalSiderHeder.TotaltTreff);
-		printf("\t<filtered>0</filtered>\n");
-		printf("</searchnode>\n");
-	    }
-
-	    //cashe eller ingen cashe. Adserverene skal vises
-	    for (i=0;i<nrOfAddServers;i++) {
-       	        if (addsockfd[i] != 0) {
-			printf("<searchnode>\n");
-				printf("\t<nodename>%s</nodename>\n",AddSiderHeder[i].servername);
-       	         		printf("\t<totaltime>%f</totaltime>\n",AddSiderHeder[i].total_usecs);
-				printf("\t<hits>%i</hits>\n",AddSiderHeder[i].TotaltTreff);
-				printf("\t<filtered>%i</filtered>\n",AddSiderHeder[i].filtered);
-			printf("</searchnode>\n");
-		}	
-	    }
-
-*/
 /*
 
 	    //hvis vi har noen feil viser vi dem
@@ -229,37 +122,45 @@ void disp_out_sd_json(
 
 
 
-	// filtypes
-	JsonNode *filetypes = json_mkarray();
-	for (i=0;i<SiderHeder[0].filters.filtypes.nrof;i++) {
-		JsonNode *filetype = json_mkobject();
+	// filtypes (currently not in use. Integrated in normal navconfig insted)
+	if (SiderHeder[0].filters.filtypes.nrof!=0) {
+		JsonNode *filetypes = json_mkarray();
+		for (i=0;i<SiderHeder[0].filters.filtypes.nrof;i++) {
+			JsonNode *filetype = json_mkobject();
 
-		json_append_member(filetype, "filename", json_mkstring(SiderHeder[0].filters.filtypes.elements[i].name) );
-		json_append_member(filetype, "filelongname", json_mkstring(SiderHeder[0].filters.filtypes.elements[i].longname) );
-		json_append_member(filetype, "filenr", json_mknumber(SiderHeder[0].filters.filtypes.elements[i].nrof) );
+			json_append_member(filetype, "filename", json_mkstring(SiderHeder[0].filters.filtypes.elements[i].name) );
+			json_append_member(filetype, "filelongname", json_mkstring(SiderHeder[0].filters.filtypes.elements[i].longname) );
+			json_append_member(filetype, "filenr", json_mknumber(SiderHeder[0].filters.filtypes.elements[i].nrof) );
 
-		json_append_element(filetypes, filetype );
-	}		
-	json_append_member(root, "filetypes", filetypes );
+			json_append_element(filetypes, filetype );
+		}		
+		json_append_member(root, "filetypes", filetypes );
+	}
+
+	JsonNode *navigations = json_mkarray();
 
 
-	JsonNode *navigation = json_mkobject();
-
-/*
 	#ifdef ATTRIBUTES
 		// Vi definerer <navigation> i searchdbb da vi vil ha med query. Hvis noe gikk feil må vi derfor definere den her også 
 		if (SiderHeder[0].navigation_xml[0] != '\0') {
-		    	printf("%s\n", SiderHeder[0].navigation_xml);
-		}
-		else {
-			printf("<navigation>\n");
+		    	//printf("%s\n", SiderHeder[0].navigation_xml);
+			JsonNode *nav = json_decode( SiderHeder[0].navigation_xml );
+			if (nav==NULL) {
+				fprintf(stderr,"Can't decode json!\n-\n-%s-\n", SiderHeder[0].navigation_xml);
+			}
+			else {	
+				JsonNode *triple;
+				json_foreach(triple, nav)
+					json_append_element(navigations, triple);
+
+				//json_append_element(navigations, nav);
+			}
+			//json_append_member(navigation, "attribs", json_decode( SiderHeder[0].navigation_xml ) );
 		}
 	#endif
-*/
+
 
 	{
-
-
 	    char *dateview_type_names[] = {
 					"Today",
 					"Yesterday",
@@ -318,33 +219,32 @@ void disp_out_sd_json(
 
 	    JsonNode *dates = json_mkarray();
 
-	/*
-	    printf("<group name=\"Date\" query=\"%s\" expanded=\"true\">\n", 
-			xml_escape_uri(basedatequery, xmlescapebuf1, sizeof(xmlescapebuf1)));
-	*/
 		for (y=0;y<7;y++) {
-		    JsonNode *date = json_mkobject();
-	/*
-		    printf("\t<item name=\"%s\" query=\"%s%s\" hits=\"%i\"%s />\n",
-			dateview_type_names[y],
-			xml_escape_uri(basedatequery, xmlescapebuf1, sizeof(xmlescapebuf1)),
-			xml_escape_uri(dateview_type_query[y], xmlescapebuf2, sizeof(xmlescapebuf2)),
-			SiderHeder[0].dates[y],
-			highlight_date==y ? " selected=\"true\"" : "");
-	*/
+		    	JsonNode *date = json_mkobject();
+
 			json_append_member(date, "name", json_mkstring(dateview_type_names[y]) );
-			//json_append_member(date, "query", json_mkstring() );
+			if (asprintf(&tmps, "%s%s", basedatequery,dateview_type_query[y]) > 0) {
+				json_append_member(date, "query", json_mkstring(tmps) );
+			}
+			free(tmps);
 			json_append_member(date, "hits", json_mknumber(SiderHeder[0].dates[y]) );
-			//json_append_member(date, "selected", json_mkbool() );
-
-		    json_append_element(dates, date );
+			if (highlight_date==y) {
+				json_append_member(date, "selected", json_mkbool(1) );
+			}
+		    	json_append_element(dates, date );
 		}
-	    json_append_member(navigation, "dates", dates );
-	    json_append_member(root, "navigation", navigation );
+
+                JsonNode *dategroup = json_mkobject();
+                json_append_member(dategroup, "name", json_mkstring("Date") );
+	        json_append_member(dategroup, "items", dates );
+
+	        json_append_element(navigations, dategroup);
+
+	        json_append_member(root, "navigation", navigations );
 
 
-	    destroy(remove);
-	    destroy_query(&qa);
+	        destroy(remove);
+	        destroy_query(&qa);
 
 	    }
 
@@ -405,33 +305,29 @@ void disp_out_sd_json(
 
 				qrewrite qrewrite;
 				qrewrite_init(&qrewrite, QueryData.query);
-				char attbuff[MaxQueryLen], attrq_esc[MaxQueryLen * 4], attrq2_esc[MaxQueryLen * 4];
-				char ekey[1024], evalue[1024];
+				char att_query[MaxQueryLen], att_attribute_query[MaxQueryLen], attbuff[MaxQueryLen];
 
 				while (next_attribute(Sider[i].attributes, &o, key, value, keyvalue)) {
 
 					JsonNode *attribute = json_mkobject();
 
-					query_attr_set_filter(attbuff, sizeof attbuff, &qrewrite, key, value, 0);
-					xml_escape_uri(attbuff, attrq_esc, sizeof attrq_esc);
+					query_attr_set_filter(att_query, sizeof attbuff, &qrewrite, key, value, 0);
 						
-					query_attr_set_filter(attbuff, sizeof attbuff, &qrewrite, key, value, 1);
-					xml_escape_uri(attbuff, attrq2_esc, sizeof attrq2_esc);
-					escapeHTML(ekey, sizeof ekey, key);
-					escapeHTML(evalue, sizeof evalue, value);
+					query_attr_set_filter(att_attribute_query, sizeof attbuff, &qrewrite, key, value, 1);
 
 					// Runarb: 13.04.2012: Temporery fix for geting bad utf data from http://datasets.opentestset.com/datasets/Enron_files/full/arora-h/McKinsey%20Enterprise%20Report%2011-00.ppt						
-					int len, n;
-					for(len=0;len<strlen(evalue);len++) {
-						if ((unsigned int)evalue[len] < 31) {
-							evalue[len] = 'X';
+					int len;
+					for(len=0;len<strlen(value);len++) {
+						if ((unsigned int)value[len] < 31) {
+							value[len] = 'X';
 						}
 					}
+
 						
-					json_append_member(attribute, "key", json_mkstring(ekey) );
-					json_append_member(attribute, "value", json_mkstring(evalue) );
-					json_append_member(attribute, "query", json_mkstring(attrq_esc) );
-					json_append_member(attribute, "attribute_query", json_mkstring(attrq2_esc) );
+					json_append_member(attribute, "key", json_mkstring(key) );
+					json_append_member(attribute, "value", json_mkstring(value) );
+					json_append_member(attribute, "query", json_mkstring(att_query) );
+					json_append_member(attribute, "attribute_query", json_mkstring(att_attribute_query) );
 
 					json_append_element(attributes, attribute );
 				}

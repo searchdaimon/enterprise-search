@@ -747,7 +747,7 @@ void do_chld(void *arg)
 		SiderHeder->errorstr, SiderHeder->errorstrlen,
 		&global_DomainIDs, queryNodeHeder.HTTP_USER_AGENT,
 		groupOrQuery, queryNodeHeder.anonymous, navmenu_cfg,
-		spelling
+		spelling, queryNodeHeder.outformat
 		)) 
 	{
 		bblog(WARN, "searchd_child: dosearch did not return success");

@@ -681,6 +681,7 @@ struct queryNodeHederFormat {
 	int anonymous;
 	char navmenucfg[NAVMENUCFG_SIZE];
 	int lang; // uses LANG_* constants in define.h 
+	int outformat;
 };
 
 

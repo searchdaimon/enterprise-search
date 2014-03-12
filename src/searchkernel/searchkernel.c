@@ -2045,7 +2045,7 @@ char *hiliteQuery, char servername[], struct subnamesFormat subnames[], int nrOf
 int MaxsHits, int start, int filterOn, char languageFilter[],char orderby[],int dates[], 
 char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *searchd_config, char *errorstr,int errorLen,
 	struct iintegerMemArrayFormat *DomainIDs, char *useragent, char groupOrQuery[], int anonymous, attr_conf *navmenu_cfg,
-	spelling_t *spelling
+	spelling_t *spelling, int outformat
 	) { 
 
 	bblog(INFO, "searchkernel: dosearch(query=\"%s\")",  query);
@@ -2560,7 +2560,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	#ifdef BLACK_BOX
 		(*SiderHeder).navigation_xml = searchFilterCount(&PagesResults.antall,PagesResults.TeffArray,filters,subnames,nrOfSubnames,&filteron,dates,
-		    &(*SiderHeder).queryTime, searchd_config->getfiletypep, searchd_config->attrdescrp, navmenu_cfg, &PagesResults.QueryData.queryParsed, PagesResults.QueryData.outformat);
+		    &(*SiderHeder).queryTime, searchd_config->getfiletypep, searchd_config->attrdescrp, navmenu_cfg, &PagesResults.QueryData.queryParsed, outformat);
 
 		(*SiderHeder).navigation_xml_len = strlen((*SiderHeder).navigation_xml);
 

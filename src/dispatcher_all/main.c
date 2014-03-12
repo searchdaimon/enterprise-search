@@ -1238,6 +1238,7 @@ int main(int argc, char *argv[])
 	strscpy(queryNodeHeder.navmenucfg, QueryData.navmenucfg, sizeof queryNodeHeder.navmenucfg);
 	
 	queryNodeHeder.lang = QueryData.lang;
+	queryNodeHeder.outformat = QueryData.outformat;
 
 	if (QueryData.nocache) {
 		dispconfig.usecashe = 0;

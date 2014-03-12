@@ -8,9 +8,10 @@
 #include "../ds/dtuple.h"
 #include "../common/bprint.h"
 #include "../common/xml.h"
+#include "../common/define.h"
 #include "../query/query_parser.h"
 #include "attr_makexml.h"
-
+#include "../ccan/json/json.h"
 
 int	ant[10];
 
@@ -756,7 +757,7 @@ void _attribute_sort_items_(container **X, enum attr_sort_enum sort, char sort_r
 }
 
 
-void _attribute_print_and_delete_tree_(buffer *bout, container *X, int indent, int max_items)
+void _attribute_print_and_delete_tree_xml_(buffer *bout, container *X, int indent, int max_items)
 {
     if (X==NULL) return;
 
@@ -770,7 +771,7 @@ void _attribute_print_and_delete_tree_(buffer *bout, container *X, int indent, i
 		{
 		    if (item->children!=NULL)
 			{
-			    _attribute_print_and_delete_tree_(bout, item->children, -1, item->max_items);
+			    _attribute_print_and_delete_tree_xml_(bout, item->children, -1, item->max_items);
 			}
 
 		    if (item->free_value) free(item->value);
@@ -820,7 +821,7 @@ void _attribute_print_and_delete_tree_(buffer *bout, container *X, int indent, i
 		    if (item->children!=NULL)
 			{
 			    bprintf(bout, ">\n");
-			    _attribute_print_and_delete_tree_(bout, item->children, indent+4, item->max_items);
+			    _attribute_print_and_delete_tree_xml_(bout, item->children, indent+4, item->max_items);
 			    for (j=0; j<indent; j++) bprintf(bout, " ");
 			    bprintf(bout, "</group>\n");
 			}
@@ -834,6 +835,83 @@ void _attribute_print_and_delete_tree_(buffer *bout, container *X, int indent, i
 	    destroy(item->query_param);
 	    free(item);
 	}
+}
+
+void _attribute_print_and_delete_tree_json_(container *X, int indent, int max_items, JsonNode *root)
+{
+    if (X==NULL) return;
+
+
+    int		i, j;
+    JsonNode *jsonitems = NULL;
+    int isgroup = 0;
+
+    jsonitems = json_mkarray();
+
+
+    for (i=0; i<vector_size(X); i++)
+	{
+        JsonNode *jsonitem = json_mkobject();
+	    struct _attr_tree_	*item = vector_get(X, i).ptr;
+
+	    if ((item->container_id == 0 && (item->hits == 0 || indent==-1)) || (item->hits==0 && !item->show_empty))
+		{
+		    if (item->children!=NULL)
+			{
+			    _attribute_print_and_delete_tree_json_(item->children, -1, item->max_items, jsonitem);
+			}
+
+		    if (item->free_value) free(item->value);
+		    if (item->free_name) free(item->name);
+		    if (item->querystr != NULL) free(item->querystr);
+		    destroy(item->children);
+		    destroy(item->query_param);
+		    free(item);
+		    continue;
+		}
+
+
+	    if (!(max_items > 0 && i>=max_items))
+		{
+		    char buf[1024];
+
+		    if (item->children!=NULL) {
+                isgroup = 1;
+		    }
+		    else { 
+                isgroup = 0;
+		    }
+
+
+		    //if (item->key!=NULL) json_append_member(jsonitem, "key", json_mkstring(item->key) ); 
+		    //if (item->value!=NULL) json_append_member(jsonitem, "value", json_mkstring(item->value) ); 
+		    if (item->name!=NULL) json_append_member(jsonitem, "name", json_mkstring(item->name) ); 
+		    if (item->icon!=NULL) json_append_member(jsonitem, "icon", json_mkstring(item->icon) );
+		    if (item->querystr!=NULL) json_append_member(jsonitem, "query", json_mkstring(item->querystr) );
+            if (item->container_id == 0) json_append_member(jsonitem, "hits", json_mknumber(item->hits) );
+
+		    if (item->children!=NULL)
+			{
+			    _attribute_print_and_delete_tree_json_(item->children, indent+4, item->max_items, jsonitem);
+
+			}
+		}
+
+	    if (item->free_value) free(item->value);
+	    if (item->free_name) free(item->name);
+	    if (item->querystr != NULL) free(item->querystr);
+	    destroy(item->children);
+	    destroy(item->query_param);
+	    free(item);
+
+        json_append_element(jsonitems, jsonitem );
+	}
+
+
+    if (isgroup==1)
+        json_append_member(root, "group", jsonitems );
+    else
+        json_append_member(root, "items", jsonitems );
 }
 
 
@@ -912,7 +990,6 @@ char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf 
     _attribute_sort_items_(&ret.C, showattrp->sort, showattrp->flags & sort_reverse);
 
     buffer	*bout = buffer_init(-1);
-    bprintf(bout, "<navigation query=\"");
 
     for (i=0; i<vector_size(A); i++)
 	{
@@ -929,10 +1006,20 @@ char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf 
 	if (qa->query[i].operand == QUERY_DATE)
 	    qa->query[i].hide = 1;
 
-    bsprint_query_with_remove(bout, NULL, qa, 1);
-    bprintf(bout, "\">\n");
+    if (outformat==_OUT_FOMRAT_SD_JSON) {
+        JsonNode *root = json_mkobject();
+        _attribute_print_and_delete_tree_json_(ret.C, 4, showattrp->max_items, root);
+        char *tmps = json_stringify(root, "\t");
+        bprintf(bout, tmps);
+	    free(tmps);
+    }
+    else {
+        bprintf(bout, "<navigation query=\"");
+        bsprint_query_with_remove(bout, NULL, qa, 1);
+        bprintf(bout, "\">\n");
 
-    _attribute_print_and_delete_tree_(bout, ret.C, 4, showattrp->max_items);
+        _attribute_print_and_delete_tree_xml_(bout, ret.C, 4, showattrp->max_items);
+    }
 
     free(container_id);
     destroy(ret.C);
@@ -946,7 +1033,10 @@ char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf 
     destroy(A);
 
     char	*out = buffer_exit(bout);
-    printf("%s\n", out);
+    #ifdef DEBUG
+        printf("%s\n", out);
+    #endif
+
     return out;
     /*** *** ***/
 

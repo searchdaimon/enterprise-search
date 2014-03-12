@@ -14,7 +14,8 @@ all:
 	$(CC) -c lex.adf.c
 	$(CC) -c adf.tab.c
 	$(CC) -c attr_makexml.c
-	ar rc libshow_attr.a lex.rac.o rac.tab.o lex.adf.o adf.tab.o attr_makexml.o
+	$(CC) -c ../ccan/json/json.c
+	ar rc libshow_attr.a lex.rac.o rac.tab.o lex.adf.o adf.tab.o attr_makexml.o json.o
 	ranlib libshow_attr.a
 	cp libshow_attr.a $(LIBDIR)
 
