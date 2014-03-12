@@ -568,7 +568,7 @@ static void append_member(JsonNode *object, char *key, JsonNode *value)
 void json_append_element(JsonNode *array, JsonNode *element)
 {
 	assert(array->tag == JSON_ARRAY);
-	assert(element->parent == NULL);
+//	assert(element->parent == NULL);
 	
 	append_node(array, element);
 }
