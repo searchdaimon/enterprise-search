@@ -272,8 +272,8 @@ void cgi_fetch_full(struct QueryDataForamt *qdata) {
 		qdata->navmenucfg[0] = '\0';
 	}
 
-	if ((tmpint = cgi_getentryint("maxhits")) != 0) 
-		qdata->MaxsHits = tmpint;
+	if ((tmpstr = cgi_getentrystr("maxhits")) != NULL)
+		qdata->MaxsHits = atoi(tmpstr);
 
 	qdata->nocache = cgi_getentryint("nocache");
 	qdata->nolog = cgi_getentryint("nolog");

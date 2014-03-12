@@ -76,6 +76,11 @@ void disp_out_sd_v2_0(
 		nrRespondedServers
 	    );
 
+	    // If we are asked to not generate any hits we don't have to generate navigation menu other.
+	    if (QueryData.MaxsHits == 0) {
+	    	printf("</SEARCH>\n");
+		return;
+	    }
 	
 	    //viser info om dispatcher_all
 	    printf("<DISPATCHER_INFO>\n");
@@ -648,6 +653,12 @@ void disp_out_sd_v2_1(
 		bfile(""),
 		nrRespondedServers
 	    );
+
+	    // If we are asked to not generate any hits we don't have to generate navigation menu other.
+	    if (QueryData.MaxsHits == 0) {
+	    	printf("</search>\n");
+		return;
+	    }
 
 	    //viser info om dispatcher_all
 	    printf("<dispatcher_info>\n");

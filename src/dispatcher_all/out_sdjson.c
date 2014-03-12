@@ -43,6 +43,7 @@ void disp_out_sd_json(
 ) {
 	int i, x, y;
 	char colchecked[20];
+	char *tmps;
 
 	JsonNode *results_info = json_mkobject();
 	JsonNode *root = json_mkobject();
@@ -68,6 +69,17 @@ void disp_out_sd_json(
 	json_append_member(root,"results_info", results_info);
 
 
+	// If we are asked to not generate any hits we don't have to generate navigation menu other.
+	if (QueryData.MaxsHits == 0) {
+	        tmps = json_stringify(root, "\t");
+	        puts(tmps);
+	        free(tmps);
+
+		json_delete(results_info);
+		json_delete(root);
+
+		return;
+	}
 /*
 	    //viser info om dispatcher_all
 	    printf("<dispatcher_info>\n");
@@ -557,9 +569,9 @@ void disp_out_sd_json(
 	json_append_member(root, "results", results );
 
 
-        char *tmp = json_stringify(root, "\t");
-        puts(tmp);
-        free(tmp);
+        tmps = json_stringify(root, "\t");
+        puts(tmps);
+        free(tmps);
 
 
 	json_delete(results_info);
