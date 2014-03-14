@@ -1,4 +1,5 @@
 
+#include "../common/timediff.h"
 #include "../common/define.h"
 #include "../logger/logger.h"
 
@@ -117,6 +118,7 @@ void or_merge(struct iindexFormat **c, int *baselen, struct iindexFormat **a, in
 
 	//debug: print ot verdiene før de merges
 	#ifdef DEBUG_II	
+		int x;
 		x=0;
 		bblog(DEBUGINFO, "a array (100 max):");
 		while (x<alen && x<100){
