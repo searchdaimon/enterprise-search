@@ -42,8 +42,7 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 
 				convert_to_lowercase(word);
 
-                                printf("[word] is now %s ",word);
-				printf("crc32 %u",crc32boitho(word));                      
+                                printf("[word] is now %s (crc32 %u, pos %i)", word, crc32boitho(word), pos);
 
 
                 break;
