@@ -403,11 +403,11 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 	bblog(INFO, "and_merge(originalLen=%i, alen=%i, blen=%i)", originalLen,alen,blen);
 
 	#ifdef DEBUG_II
-		bblog(DEBUGINFO, "a, first hits (of %i total):", alen);
+		bblog(DEBUGINFO, "a, first DocID hits (of %i total):", alen);
 		for(x=0;x<alen && x<100;x++) {
 			bblog(DEBUGINFO, "\t%u", a->iindex[x].DocID);
 		}
-		bblog(DEBUGINFO, "b, first hits (of %i total):", blen);
+		bblog(DEBUGINFO, "b, first DocID hits (of %i total):", blen);
 		for(x=0;x<blen && x<100;x++) {
 			bblog(DEBUGINFO, "\t%u", b->iindex[x].DocID);
 		}

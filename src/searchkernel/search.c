@@ -885,7 +885,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 					queryelement[0] = '\0';
 
 					for (j=0; j<(*queryParsed).query[i].n; j++) {
-                    				bblog(INFO, "aa_ søker på \"%s\"",  (*queryParsed).query[i].s[j]);
+                    				bblog(INFO, "And searchding for \"%s\"", (*queryParsed).query[i].s[j]);
                     				strncat(queryelement,(*queryParsed).query[i].s[j],sizeof(queryelement));
                     			                			
                 				bblog(INFO, "queryelement:  %s",  queryelement);
@@ -907,11 +907,14 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 							TmpArrayLen = (*TeffArrayElementer);
 							GetIndexAsArray_thesaurus(TeffArrayElementer,TeffArray,WordIDcrc32,indexType,"aa",subname,languageFilterNr, languageFilterAsNr, (*queryParsed).query[i].alt, (*queryParsed).query[i].alt_n);
 							
-							bblog(INFO, "oooooo: (*TeffArrayElementer) %i,TmpArrayLen %i", (*TeffArrayElementer),TmpArrayLen);
+							bblog(DEBUGINFO, "And query is first element. This result will become main hit array.");
 
 							//rar b-2 bug her. Skal det være + ikke -?
 							//Runarb: 19 aug 2007: skaper igjen problemer. ser ut til å skal være '-'
 							(*TeffArrayElementer) = (*TeffArrayElementer) - TmpArrayLen;
+
+							bblog(DEBUGINFO, "(*TeffArrayElementer) %i,TmpArrayLen %i", (*TeffArrayElementer),TmpArrayLen);
+
 							
 							
 						}
@@ -1105,7 +1108,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 					//hvis dette er første forekomst så kopierer vi bare inn
 					//hvis ikke må vi and merge
 					if (first) {
-						bblog(INFO, "er første fraseelement");
+						bblog(DEBUGINFO, "Phrase is first element. This result will become main hit array.");
 						
 						k=TeffArrayOriginal;
 
@@ -1115,6 +1118,8 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 						(*TeffArrayElementer) = tmpResultElementer;
 					}
 					else {
+						bblog(DEBUGINFO, "Have hits from before. We will have to and merge the phrase into existing main hits array.");
+						bblog(DEBUGINFO, "(*TeffArrayElementer): %i, tmpResultElementer %i",(*TeffArrayElementer),tmpResultElementer);
 						and_merge(*TeffArray,&baseArrayLen,TeffArrayOriginal,&newadded,*TeffArray,(*TeffArrayElementer),tmpResult,tmpResultElementer);
 
 						(*TeffArrayElementer) = baseArrayLen;
