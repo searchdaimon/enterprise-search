@@ -1,4 +1,0 @@
-BSDPORT = 7501; //search system
-BLDPORT = 7490; //lot deamon
-BADPORT = 7491; //Boitho autentifisering
-CMDPORT = 7492; //boitho crawler manager
