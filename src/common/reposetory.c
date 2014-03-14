@@ -845,7 +845,7 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 		char **acl_allowbuffer,char **acl_deniedbuffer, unsigned int imagesize, char **url, char **attributes) {
 
 	#ifdef DEBUG
-		printf("rreadhtml(HtmlBufferSize=%u, radress64bit=%u, rsize=%u, DocID=%u, subname=\"%s\",imagesize=%u)\n",HtmlBufferSize,radress64bit,rsize,DocID,subname,imagesize);
+		printf("rreadhtml(HtmlBufferSize=%u, radress64bit=%u, rsize=%u, DocID=%u, subname=\"%s\",imagesize=%u)\n",*HtmlBufferSize,radress64bit,rsize,DocID,subname,imagesize);
 	#endif
 
         #ifdef TIME_DEBUG_L
