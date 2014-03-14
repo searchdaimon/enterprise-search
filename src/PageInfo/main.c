@@ -319,6 +319,7 @@ int main (int argc, char *argv[]) {
 
 		if (!rReadHtml(htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize2,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,DocumentIndexPost.imageSize, &url, &attributes)) {
 			printf("rReadHtml: did not returne true!\n");
+			return;
 		}
 		printf("Entire url: %s\n", url);
 
