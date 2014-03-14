@@ -1096,9 +1096,6 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 							//dette er ikke en ekts frasesøk, kan bare ha en frase
 							frase_merge(tmpResult,&tmpResultElementer,0,tmpResult,tmpResultElementer,TmpArray,TmpArrayLen);
 
-                                               					
-							(*TeffArrayElementer) = baseArrayLen;
-							
                 				}
 						
 
