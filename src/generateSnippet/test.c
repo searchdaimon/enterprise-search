@@ -9,6 +9,7 @@
 #include "../query/query_parser.h"
 #include "../query/stemmer.h"
 #include "snippet.parser.h"
+#include "../common/define.h"
 
 int main(int argc, char *argv[])
 {
@@ -66,9 +67,11 @@ int main(int argc, char *argv[])
 	    for (i=0; i<3; i++)
 		{
 		    char	*snippet;
-
+            int     success;
 		    printf("Mode: %d\n", modes[i]);
-		    int		success = generate_snippet( qa, buf, size, &snippet, "\033[1;32m[", "]\033[0m", modes[i], 320, 4, 80, &has_hits );
+
+            // XML snippet
+		    success = generate_snippet( qa, buf, size, &snippet, "\033[1;32m[", "]\033[0m", modes[i], 320, 4, 80, &has_hits, xml_format );
 
 		    if (i>0) printf("\n");
 		    printf("%s\n", snippet);
@@ -76,6 +79,17 @@ int main(int argc, char *argv[])
 
 		    if (!success)
 			printf("FAILURE WHEN PARSING.\n");
+
+            // JSON snippet
+		    success = generate_snippet( qa, buf, size, &snippet, "\033[1;32m[", "]\033[0m", modes[i], 320, 4, 80, &has_hits, json_format );
+
+		    if (i>0) printf("\n");
+		    printf("%s\n", snippet);
+		    free(snippet);
+
+		    if (!success)
+			printf("FAILURE WHEN PARSING.\n");
+
 		}
 
 	    free(buf);

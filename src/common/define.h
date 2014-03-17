@@ -196,6 +196,8 @@ struct cm_listusers_h {
 #define _OUT_FOMRAT_SD_JSON 		3
 
 
+enum snippet_format { xml_format, json_format };
+
 typedef unsigned int docid;
 
 

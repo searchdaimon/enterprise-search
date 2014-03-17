@@ -169,6 +169,7 @@ struct PagesResultsFormat {
 		struct subnamesFormat *subnames;
 		container **groups_per_usersystem;
 		int *usersystem_per_subname;
+		int outformat;
 };
 
 
@@ -180,19 +181,28 @@ static int equal_domainid_fn(void *key1, void *key2) {
 }
 
 
-char *generate_summary(char summary_cfg, query_array query_parsed, char *body)  {
+char *generate_summary(char summary_cfg, query_array query_parsed, char *body, int outformat)  {
 	char *summary;
 	size_t body_len = strlen(body);
 	int has_hits;
+	int outformat_snippet;
+
+	// Find out if we shall have json or xml
+	if (outformat == _OUT_FOMRAT_SD_JSON) {
+		outformat_snippet = json_format;
+	}
+	else {
+		outformat_snippet = xml_format;
+	}
 
 	if (summary_cfg == SUMMARY_DB) {
-		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , db_snippet, SUMMARY_LEN, 4, 60, &has_hits);
+		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , db_snippet, SUMMARY_LEN, 4, 60, &has_hits, outformat_snippet);
 	}
 	else if (summary_cfg == SUMMARY_SNIPPET) {
-		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , plain_snippet, SUMMARY_LEN, 4, 80, &has_hits);
+		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , plain_snippet, SUMMARY_LEN, 4, 80, &has_hits, outformat_snippet);
 	}
 	else if (summary_cfg == SUMMARY_START) {
-		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , first_snippet, SUMMARY_LEN, 4, 80, &has_hits);
+		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , first_snippet, SUMMARY_LEN, 4, 80, &has_hits, outformat_snippet);
 	}
 	/*
 	  ++Ax:
@@ -490,7 +500,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 					gettimeofday(&start_time, NULL);
 
 
-					snippet = generate_summary(subname->config.summary, QueryData.queryParsed, body);
+					snippet = generate_summary(subname->config.summary, QueryData.queryParsed, body, PagesResults->outformat);
 
 					gettimeofday(&end_time, NULL);
 					#ifdef BLACK_BOX
@@ -683,7 +693,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 					}
 				}
 
-				summary = generate_summary(summary_cfg, QueryData.queryParsed, body);
+				summary = generate_summary(summary_cfg, QueryData.queryParsed, body, PagesResults->outformat);
 
 
 				#ifdef DEBUG_TIME
@@ -2068,6 +2078,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	PagesResults.subnames = subnames;
 	PagesResults.groups_per_usersystem = NULL;
 	PagesResults.usersystem_per_subname = NULL;
+	PagesResults.outformat = outformat;
 
 	#ifdef DEBUG_TIME
 		PagesResults.popResultBreakDownTime.DocumentIndex.nr = 0;

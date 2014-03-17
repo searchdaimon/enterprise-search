@@ -14,7 +14,7 @@
 #include "../ds/dqueue.h"
 #include "snippet.parser.common.h"
 #include "snippet.parser.h"
-
+#include "../common/define.h"
 
 #define STEMMING
 
@@ -1067,8 +1067,7 @@ static inline void test_for_snippet(struct bsg_intern_data *data, char forced)
     else calculate_snippet(data, forced, data->mode, data->Q, &(data->calc_data1), data->snippet_size);
 }
 
-
-static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_start, char* b_end, query_array qa )
+static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_start, char* b_end, query_array qa, int format )
 {
     int		i, pos;
     char	more;
@@ -1093,16 +1092,25 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 
     if (data->mode == db_snippet)
 	{
-            for (eoln=0; eoln<Eoln_size; eoln++)
-	        if (vector_get(data->Eoln, eoln).i > data->best.start) break;
+        for (eoln=0; eoln<Eoln_size; eoln++)
+	    if (vector_get(data->Eoln, eoln).i > data->best.start) break;
 
-            for (tab=0; tab<vector_size(data->Tab); tab++)
-	        if (vector_get(data->Tab, tab).i > data->best.start) break;
+        for (tab=0; tab<vector_size(data->Tab); tab++)
+	    if (vector_get(data->Tab, tab).i > data->best.start) break;
 
-	    bprintf(B, "<snippet type=\"db\">\n\t<table>\n");
+        if (format == json_format) {
+            bprintf(B, "[\n");
+        }
+        else {
+	        bprintf(B, "<snippet type=\"db\">\n\t<table>\n");
+        }
 	}
-    else bprintf(B, "<![CDATA[");
-
+    else if (format == json_format) {
+        bprintf(B, "\"");
+    }
+    else {
+        bprintf(B, "<![CDATA[");
+    }
     more = (i < Msize);
 
     if (more)
@@ -1118,7 +1126,12 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 		{
 		    if (active_highl)
 			{
-			    bprintf(B, b_end);
+                if (data->mode == db_snippet) {
+    			    bprintf(BC, b_end);
+                }
+                else {
+                    bprintf(B, b_end);
+                }
 			    active_highl--;
 			}
 		    i++;
@@ -1135,7 +1148,12 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 		    if (table_tab==-1)
 			{
 			    table_tab = 0;
-			    bprintf(B, "\t\t<tr><td>");
+                if (format == json_format) {
+                    bprintf(B, "\t\t{");
+                }
+                else {
+			        bprintf(B, "\t\t<tr><td>");
+                }
 			}
 
 		    if (tab<vector_size(data->Tab) && pos==vector_get(data->Tab, tab).i)
@@ -1146,36 +1164,48 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 				{
 				    if (line_cut) 
 					{
-				            // We have a to long text. We will have to snipet it
+				        // We have a to long text. We will have to snipet it
 					    buf = buffer_exit(BC);
 					    asprintf(&p,"<div><span>%s</span></div>",buf);
 
-					    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, plain_snippet, data->cols, 0, 0, &has_hits);
+					    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, plain_snippet, data->cols, 0, 0, &has_hits, format);
 
 					    if (success && has_hits) {
 				    	        bprintf(B, snippet);
 					    }
 					    else {
-						    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, first_snippet, data->cols, 0, 0, &has_hits);
+						    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, first_snippet, data->cols, 0, 0, &has_hits, format);
 
 						    if (success) {
-							bprintf(B, snippet);
+							    bprintf(B, snippet);
 						    }
 					    }
 
 					    free(buf);
 					    free(p);
-		        	        }
-		        	    else 
+		        	}
+		        	else 
    					{
-					    bprintf(B, "<![CDATA[");
-					    bprintf(B, buffer_exit(BC));
-					    bprintf(B, "]]>");
-			   	    	}
+                        if (format == xml_format) {
+					        bprintf(B, "<![CDATA[");
+					        bprintf(B, buffer_exit(BC));
+					        bprintf(B, "]]>");
+                        }
+                        else if (format == json_format) {
+                            bprintf(B, " \"");
+                            bprintf(B, buffer_exit(BC));
+                            bprintf(B, "\" ");
+                        }
+			   	    }
 
-	                            BC = buffer_init(-1);
+	                BC = buffer_init(-1);
 
-				    bprintf(B, "</td><td>");
+                    if (format == json_format) {
+                        bprintf(B, " : ");
+                    }
+                    else {
+				        bprintf(B, "</td><td>");
+                    }
 				    table_tab = 1;
 				    crnt_col = 0;
 				}
@@ -1190,61 +1220,84 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 			{
 			    if (line_cut) {
 			        // We have a to long text. We will have to snipet it
-				buf = buffer_exit(BC);
-				asprintf(&p,"<div><span>%s</span></div>",buf);
+				    buf = buffer_exit(BC);
+				    asprintf(&p,"<div><span>%s</span></div>",buf);
 
-			    	success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, plain_snippet, data->cols, 0, 0, &has_hits);
+			    	success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, plain_snippet, data->cols, 0, 0, &has_hits, format);
 
 			        if (success && has_hits) {
 		    	             bprintf(B, snippet);
 			        }
 			        else {
-				    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, first_snippet, data->cols, 0, 0, &has_hits);
+    				    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, first_snippet, data->cols, 0, 0, &has_hits, format);
 
-				    if (success) {
-					bprintf(B, snippet);
-				    }
+	    			    if (success) {
+    		    			bprintf(B, snippet);
+			    	    }
 			        }
 
-				free(buf);
-				free(p);
-		            }
-		            else {
-				bprintf(B, "<![CDATA[");
-				bprintf(B, buffer_exit(BC));
-				bprintf(B, "]]>");
+				    free(buf);
+				    free(p);
+		        }
+		        else {
+                    if (format == xml_format) {
+    				    bprintf(B, "<![CDATA[");
+	    			    bprintf(B, buffer_exit(BC));
+		    		    bprintf(B, "]]>");
+                    }
+                    else if (format == json_format) {
+                        bprintf(B, " \"");
+                        bprintf(B, buffer_exit(BC));
+                        bprintf(B, "\" ");
+                    }
 			    }
-                            BC = buffer_init(-1);
 
-			    if (table_tab==0) bprintf(B, "</td><td></td></tr>\n");
-			    else if (table_tab==1) bprintf(B, "</td></tr>\n");
+                BC = buffer_init(-1);
+
+                if (format == json_format) {
+                    if (table_tab==0) bprintf(B, "\"\" },\n");
+                    else if (table_tab==1) bprintf(B, "},\n");
+                }
+                else {
+			        if (table_tab==0) bprintf(B, "</td><td></td></tr>\n");
+			        else if (table_tab==1) bprintf(B, "</td></tr>\n");
+                }
 			    line_cut = 0;
 			    eoln++;
 			    col = 0;
 			    crnt_col = 0;
 			    table_tab = -1;
+
 			}
+
 		}
 
 	    if (more && pos == mb->bstart && !line_cut)
 		{
-		    bprintf(B, b_start);
+            if (data->mode == db_snippet) {
+		        bprintf(BC, b_start);
+            }
+            else {
+                bprintf(B, b_start);
+            }
 		    active_highl++;
 		}
 
 	    if (data->mode == db_snippet) 
 		{
-		    // Save to a temporary, cell buffer
+
+		        // Save to a temporary, cell buffer
 	    	    bprintf(BC, "%c", data->Bbuf->data[pos]);
 	    	    col++;
 	    	    crnt_col++;
-	        }
+	    }
 	    else 
 		{
 	    	    bprintf(B, "%c", data->Bbuf->data[pos]);
 	    	    col++;
 	    	    crnt_col++;
-	        }
+	    }
+
 
 	    switch (data->Bbuf->data[pos])
 		{
@@ -1254,8 +1307,9 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 		}
 	}
 
-    if (active_highl>0)
-	bprintf(B, b_end);
+    if (active_highl>0) {
+        bprintf(B, b_end);
+    }
 
     if (data->mode == db_snippet)
 	{
@@ -1268,45 +1322,62 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
 	    // We have a to long text. We will have to snipet it
 	    buf = buffer_exit(BC);
 	    asprintf(&p,"<div><span>%s</span></div>",buf);
-	    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, plain_snippet, data->cols, 0, 0, &has_hits);
+	    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, plain_snippet, data->cols, 0, 0, &has_hits, format);
 
 	    if (success && has_hits) {
     	        bprintf(B, snippet);
 	    }
 	    else {
-		    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, first_snippet, data->cols, 0, 0, &has_hits);
+		    success = generate_snippet( qa, p, strlen(p), &snippet, b_start, b_end, first_snippet, data->cols, 0, 0, &has_hits, format);
 
-	    	    if (success) {
-			bprintf(B, snippet);
+	    	if (success) {
+			    bprintf(B, snippet);
 		    }
 	    }
 
+        if (format == json_format) {
+            printf("bbbb %s\n", snippet);
+        }
 	    free(buf);
 	    free(p);
 
-	    if (table_tab==0) bprintf(B, "</td><td></td></tr>\n");
-	    else if (table_tab==1) bprintf(B, "</td></tr>\n");
-	    bprintf(B, "\t</table>\n</snippet>");
+        if (format == json_format) {
+	        if (table_tab==0) bprintf(B, "{}\n");
+	        else if (table_tab==1) bprintf(B, "}\n");
+	        bprintf(B, "]\n");
+        }
+        else {
+	        if (table_tab==0) bprintf(B, "</td><td></td></tr>\n");
+	        else if (table_tab==1) bprintf(B, "</td></tr>\n");
+	        bprintf(B, "\t</table>\n</snippet>");
+        }
 	}
     else
 	{
-    	    if (data->Bbuf->pos - data->best.stop < 5)
+    	if (data->Bbuf->pos - data->best.stop < 5)
 		{
-    	    	    bprintf(B, "%s", &(data->Bbuf->data[pos]));
+    	    bprintf(B, "%s", &(data->Bbuf->data[pos]));
 		}
-    	    else if (!last_was_eos && data->best.stop < data->Bbuf->pos)
+    	else if (!last_was_eos && data->best.stop < data->Bbuf->pos)
 		{
-	    	    bprintf(B, " ...");
+	        bprintf(B, " ...");
 		}
 
-	    bprintf(B, "]]>\n");
+        if (format == json_format) {
+            bprintf(B, "\"");
+        }
+        else {
+	        bprintf(B, "]]>\n");
+        }
 	}
 
+
     return buffer_exit(B);
+    
 }
 
 
-static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char* b_start, char* b_end, query_array qa)
+static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char* b_start, char* b_end, query_array qa, int format)
 {
     int		i, j, x;
     int		nr, nr1=0, nr2=0;
@@ -1341,7 +1412,7 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
 	|| (best_hits < data->best.hits)
 	|| (best_hits == data->best.hits && ((data->q_best[nr1].score | data->q_best[nr2].score) <= data->best.score)))
 	{
-	    return print_best_snippet( data, b_start, b_end, qa );
+	    return print_best_snippet( data, b_start, b_end, qa, format );
 	}
 
     buffer	*B = buffer_init(-1);
@@ -1421,7 +1492,7 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
 }
 
 
-int generate_snippet( query_array qa, char text[], int text_size, char **output_text, char* b_start, char* b_end, int mode, int _snippet_size, int rows, int cols, int *has_hits )
+int generate_snippet( query_array qa, char text[], int text_size, char **output_text, char* b_start, char* b_end, int mode, int _snippet_size, int rows, int cols, int *has_hits, int format )
 {
     #ifdef DEBUG
         fprintf(stderr, "snippet.parser: generate_snippet()\n");
@@ -1765,8 +1836,8 @@ empty_query:
 		data->best.stop = data->snippet_size-4;
 	}
 
-    if (data->mode == plain_snippet) *output_text = print_best_dual_snippet(data, b_start, b_end, qa);
-    else  *output_text = print_best_snippet(data, b_start, b_end, qa);
+    if (data->mode == plain_snippet) *output_text = print_best_dual_snippet(data, b_start, b_end, qa, format);
+    else  *output_text = print_best_snippet(data, b_start, b_end, qa, format);
 
     *has_hits = data->has_hits;
 

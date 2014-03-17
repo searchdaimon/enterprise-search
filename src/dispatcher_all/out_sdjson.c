@@ -373,7 +373,14 @@ void disp_out_sd_json(
 					json_append_member(result, "thumbnail", json_mknull() );
 				}
 
-				json_append_member(result, "description", json_mkstring(Sider[i].description) );
+				JsonNode *description = json_decode(Sider[i].description);
+				if (description==NULL) {
+					fprintf(stderr,"Can't decode json!\n-\n-%s-\n", Sider[i].description);
+				}
+				else {
+					json_append_member(result, "description", description );
+				}
+
 				json_append_member(result, "crc32", json_mknumber(Sider[i].DocumentIndex.crc32) );
 				json_append_member(result, "termrank", json_mknumber(Sider[i].iindex.TermRank) );
 				json_append_member(result, "poprank", json_mknumber(Sider[i].iindex.PopRank) );
