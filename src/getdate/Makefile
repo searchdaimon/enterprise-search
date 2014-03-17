@@ -4,8 +4,6 @@
 
 #all: clean getdate dateview
 
-#getdate: getdate.tab.o test.o
-#	$(CC) $(LDFLAGS) getdate.tab.o test.o -o getdate
 
 include ../../mk/setup.mk
 
@@ -20,10 +18,11 @@ getdate.tab.c: getdate.y
 #clean:
 #	rm -f getdate getdate.tab.c getdate.tab.o test.o
 
+test: getdate.tab.o test.o
+	$(CC) $(LDFLAGS) getdate.tab.o test.o -o getdate
+
 
 OBJS=	getdate.tab.o dateview.o
 LIB=	libgetdate.a
-
-
 
 include ../../mk/lib.mk
