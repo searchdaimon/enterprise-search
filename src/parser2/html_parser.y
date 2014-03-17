@@ -17,6 +17,7 @@ Runar 21.des
 Håndtering av at page_uri er  NULL en skjelden gang i create_full_link
 
 */
+#define _GNU_SOURCE
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
