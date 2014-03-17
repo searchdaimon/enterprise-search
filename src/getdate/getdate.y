@@ -464,6 +464,7 @@ sd_getdate(char *str, struct datelib *dl)
 	struct tm tmend;
 	struct nexttoken nexttoken;
 	int i;
+	unsigned int tstamp;
 
 	if (input == NULL)
 		return -1;
@@ -472,21 +473,29 @@ sd_getdate(char *str, struct datelib *dl)
 	
 	now = time(NULL);
 	gmtime_r(&now, &dl->tmstart);
-	dl->lowest = YEAR;
-	dl->frombigbang = 0;
-	memset(&dl->modify, '\0', sizeof(dl->modify));
-	nexttoken.token = unknown;
-	yyparse(&input, dl, &nexttoken);
-	if (dl->frombigbang == 2) {
-		free(p);
-		return -1;
+
+	// If this is a valid Unix timestamp we will use it directly
+	if (sscanf(str, "%u", &tstamp) == 1) {
+		dl->start = tstamp;
+		dl->end = now;
 	}
-	fixdate(dl, &tmend);
-	test = mktime(&dl->tmstart);
-	dl->start = dl->frombigbang ? 0 : test;
-	free(p);
-	test = mktime(&tmend);
-	dl->end = test;
+	else {
+		dl->lowest = YEAR;
+		dl->frombigbang = 0;
+		memset(&dl->modify, '\0', sizeof(dl->modify));
+		nexttoken.token = unknown;
+		yyparse(&input, dl, &nexttoken);
+		if (dl->frombigbang == 2) {
+			free(p);
+			return -1;
+		}
+		fixdate(dl, &tmend);
+		test = mktime(&dl->tmstart);
+		dl->start = dl->frombigbang ? 0 : test;
+		free(p);
+		test = mktime(&tmend);
+		dl->end = test;
+	}
 	return 0;
 }
 

@@ -84,7 +84,14 @@ main(int argc, char **argv)
         printf("%s\n", ctime(&dl.start));
         printf("%s\n", ctime(&dl.end));
 
-	sprintf(buf,"this month");
+	sprintf(buf,"this months");
+	printf("date: %s\n",buf);
+        n = sd_getdate(buf, &dl);
+	printf("n: %i\n",n);
+        printf("%s\n", ctime(&dl.start));
+        printf("%s\n", ctime(&dl.end));
+
+	sprintf(buf,"1395059009");
 	printf("date: %s\n",buf);
         n = sd_getdate(buf, &dl);
 	printf("n: %i\n",n);
