@@ -23,7 +23,12 @@
 
 #include "json.h"
 
-#include <assert.h>
+#ifdef DEBUG
+	# include <assert.h>
+#else /* debugging not enabled */
+	# define assert(x) /* empty macro to prevent errors */
+#endif
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
