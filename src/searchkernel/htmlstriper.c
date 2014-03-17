@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "../logger/logger.h"
+
 void htmlstrip(char html[],char *text,int buffersize) {
 	int i;
 	int open;

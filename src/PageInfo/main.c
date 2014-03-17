@@ -42,8 +42,7 @@ void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, vo
 
 				convert_to_lowercase(word);
 
-                                printf("[word] is now %s ",word);
-				printf("crc32 %u",crc32boitho(word));                      
+                                printf("[word] is now %s (crc32 %u, pos %i)", word, crc32boitho(word), pos);
 
 
                 break;
@@ -320,6 +319,7 @@ int main (int argc, char *argv[]) {
 
 		if (!rReadHtml(htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize2,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,DocumentIndexPost.imageSize, &url, &attributes)) {
 			printf("rReadHtml: did not returne true!\n");
+			return;
 		}
 		printf("Entire url: %s\n", url);
 

@@ -158,7 +158,9 @@ int main(int argc, char *argv[])
 	struct sockaddr_in cli_addr, serv_addr;
 	FILE *LOGFILE;
 	struct searchd_configFORMAT searchd_config;
+	#ifndef DEBUG
 	pid_t childPID;
+	#endif
 	struct config_t maincfg;
 
         searchd_config.searchport 	= 0;
