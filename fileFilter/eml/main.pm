@@ -39,7 +39,13 @@ sub fetch_attachments {
 		my $filename = $_->filename;
 		print $fh "$filename\n" if $filename;
 
-		my ($ct) = split(";", $_->content_type);
+		my $ct;
+		if ($_->content_type) {
+			($ct) = split(";", $_->content_type);
+		}
+		else {
+			$ct = "text/plain";
+		}
 		$fn = $fileprefix . $_->invent_filename($ct);
 		my $suffix;
 		$suffix = sdMimeMap::mapMimeType($ct);
