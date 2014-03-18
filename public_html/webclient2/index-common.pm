@@ -26,7 +26,7 @@ BEGIN {
 	# that occurs on some virtualizations platforms.
 	# Enable Unicode output
 	#binmode(STDIN, ":encoding(utf8)");
-	#binmode(STDOUT, ":encoding(utf8)");
+	#binmode(STDOUT, ":utf8"); 
 
 	CGI::Carp::set_message(" ");
 	{
@@ -131,7 +131,6 @@ sub show_search {
 
 	my $res = ResultParse::SD_v2_1->new($xml_str, \&fatal, $query);
 
-	
 	fatal($res->errors()) 
 		if $res->errors();
 
@@ -141,7 +140,7 @@ sub show_search {
 		results      => $res->results(),
 		navigation   => $res->navigation(),
 		sort_info    => $res->sort_info(),
-		query        => $query,
+		query        => $res->res_info($page)->{'query'},
 		#filters     => $res->filters(),
 		icon_url     => sub {
 			my $icon = shift;

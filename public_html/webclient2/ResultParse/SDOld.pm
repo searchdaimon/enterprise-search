@@ -31,6 +31,7 @@ sub res_info {
 		total_res     => $res_info->[0]{TOTAL},
 		search_time   => $res_info->[0]{TIME},
 		filtered      => $res_info->[0]{FILTERED},
+		filtered      => $res_info->[0]{QUERY},
 		res_from      => $res_from,
 		res_to        => $res_to,
 		spelling      => {

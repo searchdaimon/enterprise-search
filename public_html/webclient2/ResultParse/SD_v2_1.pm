@@ -35,6 +35,7 @@ sub res_info {
 		filtered      => $res_info->[0]{filtered},
 		res_from      => $res_from,
 		res_to        => $res_to,
+		query         => $res_info->[0]{query},
 		spelling      => {
 			text   => $res_info->[0]{spellcheckedquery},
 			query  => $res_info->[0]{spellcheckedquery},
