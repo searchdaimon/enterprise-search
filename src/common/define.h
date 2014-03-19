@@ -562,6 +562,7 @@ struct filtersTrapedFormat {
 	int getingDomainID;
 	int sameDomainID;
 	int filterNoUrl;
+	int deleted;
 };
 
 

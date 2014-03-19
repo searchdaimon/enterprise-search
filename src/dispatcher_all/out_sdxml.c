@@ -167,6 +167,7 @@ void disp_out_sd_v2_0(
 					printf("\t\t<cantpopResult>%i</cantpopResult>\n",SiderHeder[i].filtersTraped.cantpopResult);
 					printf("\t\t<cmc_pathaccess>%i</cmc_pathaccess>\n",SiderHeder[i].filtersTraped.cmc_pathaccess);
 					printf("\t\t<filterSameCrc32_2>%i</filterSameCrc32_2>\n",SiderHeder[i].filtersTraped.filterSameCrc32_2);
+					printf("\t\t<deleted>%i</deleted>\n",SiderHeder[i].filtersTraped.deleted);
 				}
 				printf("\t</FILTERTRAPP>\n");
 #endif
@@ -740,6 +741,7 @@ void disp_out_sd_v2_1(
 					printf("\t\t<cantpopResult>%i</cantpopResult>\n",SiderHeder[i].filtersTraped.cantpopResult);
 					printf("\t\t<cmc_pathaccess>%i</cmc_pathaccess>\n",SiderHeder[i].filtersTraped.cmc_pathaccess);
 					printf("\t\t<filterSameCrc32_2>%i</filterSameCrc32_2>\n",SiderHeder[i].filtersTraped.filterSameCrc32_2);
+					printf("\t\t<deleted>%i</deleted>\n",SiderHeder[i].filtersTraped.deleted);
 				}
 				printf("\t</filters>\n");
 #endif

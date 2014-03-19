@@ -359,7 +359,7 @@ void handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFor
 		}
 		else {
 
-			dprintf("looking on url %s, adult %i, allrank %u, i %i, type %i\n",Sider[i].DocumentIndex.Url,Sider[i].DocumentIndex.AdultWeight,Sider[i].iindex.allrank,i,Sider[i].type);
+			dprintf("looking on url %s, DocID %u, adult %i, allrank %u, i %i, type %i\n",Sider[i].DocumentIndex.Url,Sider[i].iindex.DocID,Sider[i].DocumentIndex.AdultWeight,Sider[i].iindex.allrank,i,Sider[i].type);
 
 			//setter som slettet
 			Sider[i].deletet = 1;
