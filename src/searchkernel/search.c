@@ -3638,7 +3638,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 		char	*nav_xml = attribute_generate_xml(attributes, TeffArray->attrib_count+1, showattrp, getfiletypep, attrdescrp, qa, outformat);
 
 		#ifdef DEBUG
-			//skriver ut atribut xml'en.
+			//skriver ut attribut xml'en.
 			bblog(DEBUGINFO, "Navigation xml: %s", nav_xml);
 		#endif
 
