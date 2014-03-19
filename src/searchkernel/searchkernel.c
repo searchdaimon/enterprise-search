@@ -937,7 +937,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 	if (ReposetoryHeader != NULL)
 		free(ReposetoryHeader);
 
-	bblog(INFO, "searchkernel: ~popResult()");
+	bblog(INFO, "searchkernel: ~popResult(returnStatus=%i)", returnStatus);
 	return returnStatus;
 }
 
@@ -1227,7 +1227,7 @@ static inline int repositoryaccess(struct PagesResultsFormat *PagesResults, int 
 
     int error = 0; // if error, then return no access
 
-    bblog(DEBUGINFO, "repositoryaccess %s-%i\n", subname->subname, DocID);
+    bblog(DEBUGINFO, "repositoryaccess %s-%i", subname->subname, DocID);
 
     if (PagesResults->anonymous) return 1;
 
@@ -1493,6 +1493,13 @@ void *generatePagesResults(void *arg)
 
 
 		bblog(INFO, "[tid: %u] looking on  DocID: %u url: \"%s\", subname: \"%s\"", (unsigned int)tid,(*PagesResults).TeffArray->iindex[i].DocID,side->DocumentIndex.Url,(*(*PagesResults).TeffArray->iindex[i].subname).subname);
+
+
+		if (DIS_isDeleted(&side->DocumentIndex)) {
+			bblog(INFO, "DocID: %u is deleted in DocumentIndex.", (*PagesResults).TeffArray->iindex[i].DocID);
+			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.deleted,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
+			continue;
+		}
 
 		#ifndef BLACK_BOX
 		//adult fra di
@@ -2766,6 +2773,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	bblog(INFO, "\t%-40s %i", "cantpopResult",(*SiderHeder).filtersTraped.cantpopResult);
 	bblog(INFO, "\t%-40s %i", "cmc_pathaccess",(*SiderHeder).filtersTraped.cmc_pathaccess);
 	bblog(INFO, "\t%-40s %i", "filterSameCrc32_2",(*SiderHeder).filtersTraped.filterSameCrc32_2);
+	bblog(INFO, "\t%-40s %i", "filterSameCrc32_2",(*SiderHeder).filtersTraped.deleted);
 
 	bblog(INFO, "");
 	bblog(INFO, "\t%-40s %i", "filteredsilent",PagesResults.filteredsilent);
