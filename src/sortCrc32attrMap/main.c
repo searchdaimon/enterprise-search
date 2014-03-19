@@ -20,10 +20,10 @@ static attr_crc32_words_block_compare(const void *a, const void *b)
 }
 
 
-main (int argc, char *argv[]) {
+int main (int argc, char *argv[]) {
 
         if (argc < 2) {
-                printf("Error ingen subna,e spesifisert.\n\nEksempel på bruk for å lese lot 2:\n\trread www\n");
+                printf("Program to sort a crc32attr.map\n\nUsage:\n\t./sortCrc32attrMap subname\n");
                 exit(1);
         }
 
@@ -36,7 +36,7 @@ main (int argc, char *argv[]) {
 
 	if ((f_crc32_words = lotOpenFileNoCasheByLotNr(1, "crc32attr.map", "r+", 's', subname)) == NULL) {
 		perror("Can't open thecrc32attr.map file for lot");
-		exit(-1);
+		return -1;
 	}
 
 
@@ -45,11 +45,13 @@ main (int argc, char *argv[]) {
 
 	if (crc32_words_size==0) {
 		printf("Map is 0 bytes. Skipping\n");
+		return -1;
 	}
 
 	if ((m_crc32_words=mmap(NULL, crc32_words_size, PROT_READ|PROT_WRITE, MAP_SHARED, fileno(f_crc32_words), 0)) == MAP_FAILED)
         {
 		perror("Can't mmap");
+		return -1;
 	}
 
 
@@ -61,4 +63,6 @@ main (int argc, char *argv[]) {
 	fclose(f_crc32_words);		
 
 	printf("Done\n");
+
+	return 1;
 }
