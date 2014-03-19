@@ -657,6 +657,14 @@ void GetFilPathForLotFile(char *FilePath,char lotfile[],int LotNr,char subname[]
 	strcat(FilePath,lotfile);
 }
 
+char *returnFilPathForLotFile(int LotNr, char subname[], char lotfile[]) {
+	static char FilePath[PATH_MAX];
+
+	GetFilPathForLot(FilePath,LotNr,subname);
+	strcat(FilePath,lotfile);
+
+	return FilePath;
+}
 
 char *returnFilPathForLot(int LotNr,char subname[]) {
 	static char FilePath[PATH_MAX];

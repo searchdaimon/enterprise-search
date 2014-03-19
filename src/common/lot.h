@@ -19,6 +19,7 @@
 #endif
 
 char *returnFilPathForLot(int LotNr,char subname[]);
+char *returnFilPathForLotFile(int LotNr, char subname[], char lotfile[]);
 void GetFilPathForLot(char *FilePath,int LotNr,char subname[]);
 void GetFilPathForLotFile(char *FilePath,char lotfile[],int LotNr,char subname[]);
 void GetFilPathForLotByDocID(char *FilePath,int DocID,char subname[]);
