@@ -226,6 +226,11 @@ sortCrc32attrMap: src/sortCrc32attrMap/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/sortCrc32attrMap/main.c -o bin/sortCrc32attrMap $(LDFLAGS)
 
+readCrc32attrMap: src/readCrc32attrMap/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/readCrc32attrMap/main.c -o bin/readCrc32attrMap $(LDFLAGS)
 
 IndexerLot_langtest: src/IndexerLot_langtest/main.c
 	@echo ""
@@ -936,6 +941,7 @@ readDocumentIndexByRe: src/readDocumentIndexByRe/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/readDocumentIndexByRe/main.c -o bin/readDocumentIndexByRe $(LDFLAGS)
+
 
 readAttributeIndex: src/readAttributeIndex/main.c
 	@echo ""

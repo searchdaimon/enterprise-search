@@ -759,6 +759,12 @@ struct anchorIndexFormat {
 	off_t offset;
 };
 
+
+struct Crc32attrMapFormat {
+	unsigned int crc32;
+	char text[MAX_ATTRIB_LEN];
+};
+
 #endif //_DEFINE__H_
 
 
