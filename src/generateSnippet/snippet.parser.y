@@ -1416,7 +1416,12 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
 	}
 
     buffer	*B = buffer_init(-1);
-    bprintf(B, "<![CDATA[");
+    if (format == json_format) {
+        bprintf(B, "\"");
+    }
+    else {
+        bprintf(B, "<![CDATA[");
+    }
 
     // Skriv ut to mini-snippets med '...' imellom:
     for (nr=nr1, x=0; x<2; nr=nr2, x++)
@@ -1487,7 +1492,12 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
 		}
 	}
 
-    bprintf(B, "]]>\n");
+    if (format == json_format) {
+        bprintf(B, "\"\n");
+    }
+    else {
+        bprintf(B, "]]>\n");
+    }
     return buffer_exit(B);
 }
 
