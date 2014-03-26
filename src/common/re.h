@@ -62,6 +62,8 @@ void *renget(struct reformat *re, size_t nr);
 #define REN_Int(re, nr) ((int *)renget(re, nr))
 
 #define RE_Char(re, DocID) ((char *)reget(re, DocID))
+#define RE_Uchar(re, DocID) ((unsigned char *)reget(re, DocID))
+#define REN_Uchar(re, nr) ((unsigned char *)renget(re, nr))
 
 #define RE_Brank(re, DocID) ((struct brank *)reget(re, DocID))
 #define REN_Brank(re, nr) ((struct brank *)renget(re, nr))
