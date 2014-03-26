@@ -415,7 +415,7 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
                         			
 
 
-        					
+        					memset(&crawldocumentAdd, 0 , sizeof(crawldocumentAdd));
 						crawldocumentAdd.documenturi 	= uri;
         					crawldocumentAdd.documenttype	= "";
         					crawldocumentAdd.document	= fbuf;

@@ -174,7 +174,7 @@ void LocalFilesRecursiveDir (
 			//leser hele dokumentet
 			fread(dokument_buff,sizeof(char),dokument_size,FH);
 
-
+			memset(&crawldocumentAdd, 0, sizeof(crawldocumentAdd));
 			crawldocumentAdd.documenturi    = uri;
                         crawldocumentAdd.documenttype   = "";
                         crawldocumentAdd.document       = dokument_buff;

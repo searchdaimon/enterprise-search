@@ -167,6 +167,8 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 	struct crawldocumentExistFormat crawldocumentExist;
 	struct crawldocumentAddFormat crawldocumentAdd;
 
+	memset(&crawldocumentAdd, 0 , sizeof(crawldocumentAdd));
+
 	len = strlen(url);
 
 	//printf("%s\n", cur->str);
