@@ -63,7 +63,7 @@ int bbdn_close(int socketha) {
 
 int bbdn_docadd(int socketha, const char subname[], const char documenturi[], const char documenttype[], const char document[],
 	const int dokument_size, const unsigned int lastmodified, const char *acl_allow, const char *acl_denied, const char title[], 
-	const char doctype[], const char *attributes, char *image, int image_size) {
+	const char doctype[], const char *attributes, char *image, int image_size, unsigned char PopRank) {
 
 	int len, intrespons, i;
 	char *blank = "";
@@ -159,8 +159,10 @@ int bbdn_docadd(int socketha, const char subname[], const char documenturi[], co
 	if (image_size != 0) {
         	if(sendall(socketha,image, image_size) == 0) { perror("sendall image"); return 0; }
 	}
-	debug("sending3 %d\n", image_size);
 
+	// PopRank
+	if(sendall(socketha,&PopRank, sizeof(unsigned char)) == 0) { perror("sendall PopRank"); return 0; }
+	debug("sending PopRank: %d\n", PopRank);
 
         if ((i=recv(socketha, &intrespons, sizeof(intrespons),MSG_WAITALL)) == -1) {
                 bperror("Cant recv respons");

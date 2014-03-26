@@ -343,7 +343,8 @@ struct ReposetoryHeaderFormat {
 		unsigned short urllen;
 		unsigned int attributeslen;
 		unsigned int htmlSize2;
-		char reservedSpace[50];
+		unsigned char PopRank;
+		char reservedSpace[49];
 	#else
 		unsigned int htmlSize2;
 	#endif
@@ -421,7 +422,7 @@ struct iindexMainElements {
 	int TermAntall;
 	struct hitsFormat *hits;
 	int TermRank;
-	int PopRank;
+	unsigned char PopRank;
 	unsigned int allrank; //byttet til unsigned long 24. okt 2006. unsigned long er 4 bit int. 05 augus 2007: dropper "long", er 8 bytes på x86_64
 	char phraseMatch;
 	unsigned char langnr;

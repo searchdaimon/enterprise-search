@@ -81,6 +81,7 @@ struct relocal {
 	struct reformat *crc32map;
 	struct reformat	*attributeIndex;
 	container	*attributeKeys;
+	struct reformat *PopRank;
 };
 
 struct filteredf {
@@ -1145,7 +1146,8 @@ void *IndexerLot_workthread(void *arg) {
 
 				DocumentIndexPost->crc32 = crc32;
 				*RE_Uint(argstruct->re.crc32map, ReposetoryHeader.DocID) = crc32;
-			
+				*RE_Uchar(argstruct->re.PopRank, ReposetoryHeader.DocID) = ReposetoryHeader.PopRank;
+			printf("Wrote %d for %u\n", ReposetoryHeader.PopRank, ReposetoryHeader.DocID);
 				(*argstruct).DIArray[DocIDPlace].p = DocumentIndexPost;
 			
 
@@ -1766,6 +1768,9 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
         	if((argstruct->re.crc32map = reopen(lotNr, sizeof(unsigned int), "crc32map", subname, 0)) == NULL) {
         	        err(1, "can't reopen(crc32map)");
 	        }
+        	if((argstruct->re.PopRank = reopen(lotNr, sizeof(unsigned char), "PopRank", subname, 0)) == NULL) {
+        	        err(1, "can't reopen(PopRank)");
+	        }
 
 
 		//malloc
@@ -2178,6 +2183,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 		reclose(argstruct->re.DocumentIndexFormat);
 		reclose(argstruct->re.crc32map);
+		reclose(argstruct->re.PopRank);
 
 		#ifdef ATTRIBUTES
 		if (argstruct->re.attributeIndex!=NULL)

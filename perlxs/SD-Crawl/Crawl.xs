@@ -75,7 +75,7 @@ int pdocumentExist(struct cargsF *cargs, char * url, int lastmodified, int dokum
 }
 
 void pdocumentAdd(struct cargsF *cargs, char * url, int lastmodified, char * document, char title[], 
-	char type[], char acl_allow[], char acl_denied[], char attributes[], int doc_size, char *image, int image_size) {
+	char type[], char acl_allow[], char acl_denied[], char attributes[], int doc_size, char *image, int image_size, unsigned char PopRank) {
 
 	struct crawldocumentAddFormat *crawldocumentAdd;
 
@@ -104,6 +104,7 @@ void pdocumentAdd(struct cargsF *cargs, char * url, int lastmodified, char * doc
 	crawldocumentAdd->attributes 	 = attributes;
         crawldocumentAdd->image       	 = image;
         crawldocumentAdd->image_size   	 = image_size;
+        crawldocumentAdd->PopRank   	 = PopRank;
 
 	cargs->documentAdd(cargs->collection ,crawldocumentAdd);
 
@@ -172,7 +173,7 @@ pdocumentChangeCollection(x, collection)
 		pdocumentChangeCollection(x, collection);
 
 void
-pdocumentAdd( x , url , lastmodified, document, title, type, acl_allow, acl_denied, attributes, image)
+pdocumentAdd( x , url , lastmodified, document, title, type, acl_allow, acl_denied, attributes, image, PopRank)
 		void * x
 		char * url
 		int lastmodified
@@ -183,11 +184,12 @@ pdocumentAdd( x , url , lastmodified, document, title, type, acl_allow, acl_deni
 		char * acl_denied
 		char * attributes
 		SV * image
+		unsigned char PopRank
 	CODE:
 		int doc_size, image_size;
 		char * doc_str = SvPV(document, doc_size);
 		char * image_str = SvPV(image, image_size);
-		pdocumentAdd( x , url , lastmodified, doc_str, title, type, acl_allow, acl_denied, attributes, doc_size, image_str, image_size);
+		pdocumentAdd( x , url , lastmodified, doc_str, title, type, acl_allow, acl_denied, attributes, doc_size, image_str, image_size, PopRank);
 	
 
 int

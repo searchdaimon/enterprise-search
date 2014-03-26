@@ -55,7 +55,8 @@ sub add_document {
         $params{acl_allow},
         $params{acl_denied},
         $params{attributes} || "",
-        $params{image} || ""
+        $params{image} || "",
+        $params{poprank} || 0
     );
 }
 

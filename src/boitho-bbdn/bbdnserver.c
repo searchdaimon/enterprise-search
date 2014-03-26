@@ -148,6 +148,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			char *attributes;
 			int dokument_size, image_size;
 			unsigned int lastmodified;
+			unsigned char PopRank;
 
 			#ifdef DEBUG_TIME
                 		gettimeofday(&start_time, NULL);
@@ -284,6 +285,12 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
                         	}
 			}
 
+			// PopRank
+			if ((i=recvall(socket, &PopRank, sizeof(PopRank))) == 0) {
+				perror("Cant read image_size");
+				exit(1);
+			}
+
 			#ifdef DEBUG_TIME
                 		gettimeofday(&end_time, NULL);
                 		printf("Time debug: bbdn_docadd recv data time: %f\n",getTimeDifference(&start_time, &end_time));
@@ -299,7 +306,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
         		        gettimeofday(&start_time, NULL);
 		        #endif
 
-			intrespons = bbdocument_add(subname,documenturi,documenttype,document,dokument_size,lastmodified,acl_allow,acl_denied,title,doctype, attributes, attrkeys, image, image_size);
+			intrespons = bbdocument_add(subname,documenturi,documenttype,document,dokument_size,lastmodified,acl_allow,acl_denied,title,doctype, attributes, attrkeys, image, image_size, PopRank);
 
 			printf(":bbdocument_add end\n");
 			printf("########################################################\n");

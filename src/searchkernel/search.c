@@ -99,9 +99,6 @@ void allrankcalk(struct iindexFormat *TeffArray ,int *TeffArrayElementer) {
 
 			for (i = 0; i < *TeffArrayElementer; i++) {
 
-				//legger til en her da vi kan ha 0, og vi har * med 0. Bør fikkses en anne plass. da 255++ rt 0
-				++TeffArray->iindex[i].PopRank;
-
 				TermRankNormalized = TeffArray->iindex[i].TermRank;
 
 				if (TermRankNormalized > (TeffArray->iindex[i].PopRank +30)) {
@@ -110,6 +107,8 @@ void allrankcalk(struct iindexFormat *TeffArray ,int *TeffArrayElementer) {
 
 
 				PopRankNormalized = TeffArray->iindex[i].PopRank;
+				//legger til en her da vi kan ha 0, og vi har * med 0. Bør fikkses en anne plass. da 255++ rt 0
+ 				++PopRankNormalized;
  
 				if (PopRankNormalized > (TeffArray->iindex[i].TermRank +30)) {
 					PopRankNormalized = (TeffArray->iindex[i].TermRank +30);
@@ -1750,10 +1749,10 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 	unsigned int PredictNrMain;
 	PredictNrMain	= 0;
+	int nreopen;
 
 	#ifndef BLACK_BOX
 		int j,y;
-		unsigned char PopRank;
 		int responseShortTo;
 		int rankcount[256]; // rank går fra 0-252 (unsigned char)
 
@@ -2013,6 +2012,42 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 
 	gettimeofday(&start_time, NULL);
+
+	bblog(INFO, "looking opp PopRank");
+
+	//slår opp PopRank
+	re = NULL;
+	nreopen = 0;
+	#pragma omp parallel for firstprivate(re)
+	for (i = 0; i < *TeffArrayElementer; i++) {
+
+		if (!reIsOpen(re,rLotForDOCid((*TeffArray)->iindex[i].DocID), (*TeffArray)->iindex[i].subname->subname, "PopRank") ) {
+
+			#pragma omp critical
+			{
+				++nreopen;
+				re = reopen_cache( rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(unsigned char), "PopRank", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY);
+			}
+
+			if (re == NULL) {
+				debug("reopen(PopRank)\n");
+				continue;
+			}
+
+		}
+		(*TeffArray)->iindex[i].PopRank = *RE_Uchar(re, (*TeffArray)->iindex[i].DocID);
+
+
+		#ifdef DEBUG
+			bblog(DEBUGINFO, "got rank %d for DocID %u-%s", 
+				(*TeffArray)->iindex[i].PopRank,
+                                (*TeffArray)->iindex[i].DocID,
+                                (*(*TeffArray)->iindex[i].subname).subname);
+		#endif
+	}
+
+	bblog(INFO, "We did reopen %i times", nreopen);
+	bblog(INFO, "looking opp PopRank end");
 
 	#if 0
 	//runarb: bug: denne manglet i en cvs oppdatering. Skal nokk også bare være for websøk (ikke bb)
@@ -2332,7 +2367,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 		//slår opp alle datoene
 		re = NULL;
-		int nreopen = 0;
+		nreopen = 0;
 		#pragma omp parallel for firstprivate(re)
 		for (i = 0; i < *TeffArrayElementer; i++) {
 
@@ -2588,16 +2623,15 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		gettimeofday(&end_time, NULL);
                 (*queryTime).allrankCalc = getTimeDifference(&start_time,&end_time);
 
-	#else
-
-		gettimeofday(&start_time, NULL);
-
-		allrankcalk((*TeffArray),TeffArrayElementer);
-
-       		gettimeofday(&end_time, NULL);
-        	(*queryTime).allrankCalc = getTimeDifference(&start_time,&end_time);
-
 	#endif
+
+	gettimeofday(&start_time, NULL);
+
+	allrankcalk((*TeffArray),TeffArrayElementer);
+
+	gettimeofday(&end_time, NULL);
+	(*queryTime).allrankCalc = getTimeDifference(&start_time,&end_time);
+
 
 
 	gettimeofday(&start_time, NULL);
@@ -2605,6 +2639,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		bblog(INFO, "vil sortere %i", *TeffArrayElementer);
  		qsort((*TeffArray)->iindex, *TeffArrayElementer , sizeof(struct iindexMainElements), compare_elements);
 		bblog(INFO, "sort ferdig");
+
 	gettimeofday(&end_time, NULL);
 	(*queryTime).indexSort = getTimeDifference(&start_time,&end_time);
 

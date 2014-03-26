@@ -1138,7 +1138,7 @@ int bbdocument_close (container *attrkeys) {
 	return 1;
 }
 
-int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,const char title[], char doctype[], char *attributes, container *attrkeys, char *image, int image_size) {
+int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int lastmodified,char *acl_allow, char *acl_denied,const char title[], char doctype[], char *attributes, container *attrkeys, char *image, int image_size, unsigned char PopRank) {
 
 	struct ReposetoryHeaderFormat ReposetoryHeader;
 
@@ -1308,6 +1308,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 	ReposetoryHeader.urllen = strlen(documenturi);
 	ReposetoryHeader.attributeslen = strlen(all_attributes);
+	ReposetoryHeader.PopRank = PopRank;
 	rApendPostcompress(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_denied, NULL, documenturi, all_attributes, attrkeys, htmlbuffersize);
 
 #ifdef DEBUG	

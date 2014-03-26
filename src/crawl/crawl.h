@@ -67,6 +67,7 @@ struct crawldocumentAddFormat {
 	char *attributes;
 	char *image;
 	int image_size;
+	unsigned char PopRank;
 };
 
 //argumenter til crawlfirst()

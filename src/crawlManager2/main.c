@@ -816,7 +816,8 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 				crawldocumentAdd->doctype,
 				crawldocumentAdd->attributes,
 				crawldocumentAdd->image,
-				crawldocumentAdd->image_size)
+				crawldocumentAdd->image_size,
+				crawldocumentAdd->PopRank)
 	   ) {
 
 		bblog(ERROR, "can't send document to document manager! Tried to send document \"%s\" Will sleep and then reconnect. Won't send the same document again.",(*crawldocumentAdd).documenturi);

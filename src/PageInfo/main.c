@@ -279,7 +279,9 @@ int main (int argc, char *argv[]) {
 		ctime_r((time_t *)&DocumentIndexPost.CrawleDato,timebuf);
 		timebuf[24] = '\0';
 
-		printf("Last crawled time: %s\n",timebuf);
+
+		printf("Last crawled time: %u\n",DocumentIndexPost.CrawleDato);
+		printf("Last crawled time ISO: %s\n",timebuf);
 	
 		printf("crc32: %u\n",DocumentIndexPost.crc32);
 
@@ -329,6 +331,8 @@ int main (int argc, char *argv[]) {
 
 			printf("acl allow resolved: \"%s\"\n",aclResolv(acl_allowbuffer));
 			printf("acl denied resolved: \"%s\"\n",aclResolv(acl_deniedbuffer));
+
+			printf("PopRank: %d\n", ReposetoryHeader.PopRank);
 		#endif
 
 		if (optShowhtml) {
