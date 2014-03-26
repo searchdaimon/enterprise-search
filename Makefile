@@ -942,6 +942,12 @@ readDocumentIndexByRe: src/readDocumentIndexByRe/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/readDocumentIndexByRe/main.c -o bin/readDocumentIndexByRe $(LDFLAGS)
 
+readPopRank: src/readPopRank/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/readPopRank/main.c -o bin/readPopRank $(LDFLAGS)
+
 
 readAttributeIndex: src/readAttributeIndex/main.c
 	@echo ""
