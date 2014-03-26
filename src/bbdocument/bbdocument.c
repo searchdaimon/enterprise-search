@@ -549,6 +549,8 @@ void bbdocument_exist_update_di(char subname[],docid DocID) {
 	// Update DI with new existed timestamp
 	struct DocumentIndexFormat docindex;
 
+	memset(&docindex,0,sizeof(docindex));
+
 	#if defined(BLACK_BOX) && !defined(_24SEVENOFFICE)
 		DIRead(&docindex, DocID, subname);
 		docindex.lastSeen = time(NULL);
