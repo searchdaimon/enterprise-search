@@ -107,6 +107,7 @@ struct popResultBreakDownTimeFormat {
 #define MAX_CM_CONSUMERS 2
 #define MAX_CM_CONSUMERS_URLREWRITE 2
 #define SUMMARY_LEN 160
+#define MAX_URL_LEN 1024
 
 struct socket_pool {
 	int sock[MAX_CM_CONSUMERS];
@@ -838,9 +839,9 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 					struct ReposetoryHeaderFormat repohdr;
 					char *tmpurl, *tmpuri, *tmpfulluri;
 
-					tmpurl = malloc(1024);
-					tmpuri = malloc(1024);
-					tmpfulluri = malloc(1024);
+					tmpurl = malloc(MAX_URL_LEN);
+					tmpuri = malloc(MAX_URL_LEN);
+					tmpfulluri = malloc(MAX_URL_LEN);
 					htmlbuf = malloc(htmllen);
 
 					if(tmpurl == NULL || tmpuri == NULL || tmpfulluri == NULL || htmlbuf == NULL) {
@@ -875,9 +876,10 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 #ifdef BLACK_BOX
 					if (!handle_url_rewrite(url, PagesResults->ptype,
 							PagesResults->btype,
-							dup_subname, tmpurl, sizeof(tmpurl),
-							tmpuri, sizeof(tmpuri),
-							tmpfulluri, sizeof(tmpfulluri),
+							dup_subname, 
+							tmpurl, MAX_URL_LEN,
+							tmpuri, MAX_URL_LEN,
+							tmpfulluri, MAX_URL_LEN,
 #ifdef WITH_THREAD
 							&PagesResults->cmConnUrlrewrite
 #else
@@ -896,6 +898,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 					if ((Sider->urls[Sider->n_urls].fulluri = strdup(tmpfulluri)) == NULL) {
 						bblog_errno(ERROR, "Malloc uri");
 					}
+
 
 					free(tmpurl);
 					free(tmpuri);
@@ -1932,11 +1935,7 @@ void print_explane_rank(struct SiderFormat *Sider, int showabal) {
 
 				Sider[i].iindex.allrank,
 				Sider[i].iindex.TermRank,
-				#ifdef BLACK_BOX
-				-1,
-				#else
 				Sider[i].iindex.PopRank,
-				#endif
 
 				#ifdef EXPLAIN_RANK
 					Sider[i].iindex.rank_explaind.rankBody,
