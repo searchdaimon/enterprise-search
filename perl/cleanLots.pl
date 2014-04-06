@@ -120,6 +120,7 @@ recdir($ENV{'BOITHOHOME'} . "/var/cache");
 close(LOCKF) or warn($!);
 unlink($lockfile) or warn($!);
 
+print "~cleanLots.pl";
 
 ###########################################################################################################
 #
@@ -167,16 +168,16 @@ sub exitstatus {
 	my $n = shift;
 
 	if ($n == -1) {
-		carp "failed to execute: $!";
+		carp "Warn: failed to execute: $!";
 	}
 	elsif ($n & 127) {
-		carp sprintf("child died with signal %d, %s coredump", ($n & 127),  ($n & 128) ? 'with' : 'without');
+		carp sprintf("Warn: child died with signal %d, %s coredump", ($n & 127),  ($n & 128) ? 'with' : 'without');
 	}
 	elsif (($n >> 8) == 0) {
 		# ok
 	}
 	else {
-		carp sprintf("child exited with value %d", $n >> 8);
+		carp sprintf("Warn: child exited with value %d", $n >> 8);
 	}
 	
 }
