@@ -3,6 +3,7 @@ BEGIN {
 };
 
 use strict;
+use Carp;
 use Getopt::Std;
 use Boitho::Lot;
 
@@ -57,10 +58,12 @@ foreach my $lot (1 .. 4096) {
 		my $command = $ENV{'BOITHOHOME'} . "/bin/IndexerLotbb -i $lot \"$subname\"";
 		print "runing $command\n";
 		system($command);
+		exitstatus($?);
 
 		my $command = $ENV{'BOITHOHOME'} . "/bin/mergeUserToSubname $lot \"$subname\"";
 		print "runing $command\n";
 		system($command);
+		exitstatus($?);
 
 
 
@@ -78,22 +81,27 @@ foreach my $key (keys %hiestinlot) {
 	my $command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} Main aa \"$key\"";
 	print "runing $command\n";
 	system($command);
+	exitstatus($?);
 
 	my $command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} acl_allow aa \"$key\"";
 	print "runing $command\n";
 	system($command);
+	exitstatus($?);
 
 	my $command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} acl_denied aa \"$key\"";
 	print "runing $command\n";
 	system($command);
+	exitstatus($?);
 
 	my $command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} attributes aa \"$key\"";
 	print "runing $command\n";
 	system($command);
+	exitstatus($?);
 
         my $command = $ENV{'BOITHOHOME'} . "/bin/sortCrc32attrMap \"$key\"";
         print "runing $command\n";
         system($command);
+	exitstatus($?);
 
 	#kjører garbage collection.
 #	my $command = $ENV{'BOITHOHOME'} . "/bin/gcRepobb \"$key\"";
@@ -155,3 +163,20 @@ sub recdir {
     return 1;
 }
 
+sub exitstatus {
+	my $n = shift;
+
+	if ($n == -1) {
+		carp "failed to execute: $!";
+	}
+	elsif ($n & 127) {
+		carp sprintf("child died with signal %d, %s coredump", ($n & 127),  ($n & 128) ? 'with' : 'without');
+	}
+	elsif (($n >> 8) == 0) {
+		# ok
+	}
+	else {
+		carp sprintf("child exited with value %d", $n >> 8);
+	}
+	
+}
