@@ -552,8 +552,9 @@ void aclsMakeRevIndex(struct IndexerRes_acls *acl) {
 	for(i=0;i<(*acl).aclnr;i++) {
 
 		if (lastWodID == (*acl).acls_sorted[i].WordID) {
+			#ifdef DEBUG
 			printf("aclsMakeRevIndex: is the same as last WordId: %u\n",(*acl).acls_sorted[i].WordID);
-
+			#endif
 		}
 		else {
 			#ifdef DEBUG
@@ -594,8 +595,9 @@ void attribMakeRevIndex(struct IndexerRes_attrib *attrib) {
 	for(i=0;i<(*attrib).attribnr;i++) {
 
 		if (lastWordID == (*attrib).attrib_sorted[i].WordID) {
+			#ifdef DEBUG
 			printf("attribMakeRevIndex: is the same as last WordId: %u\n",(*attrib).attrib_sorted[i].WordID);
-
+			#endif
 		}
 		else {
 			#ifdef DEBUG
