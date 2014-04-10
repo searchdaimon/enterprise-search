@@ -838,3 +838,19 @@ void lot_recache_collection(char subname[]) {
 
 
 }
+
+
+int lotRename(int LotNr,char subname[], char *oldpath, char *newpath) {
+
+	char lotoldpath[PATH_MAX], newoldpath[PATH_MAX];
+
+	GetFilPathForLotFile(lotoldpath,oldpath,LotNr,subname);
+	GetFilPathForLotFile(newoldpath,newpath,LotNr,subname);
+
+	#ifdef DEBUG
+	printf("rename %s -> %s\n",lotoldpath,newoldpath);
+	#endif
+
+	return rename(lotoldpath, newoldpath);
+
+}

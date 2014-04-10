@@ -55,6 +55,8 @@ void lot_get_closed_collections_file(char *buf);
 
 void lot_recache_collection(char subname[]);
 
+int lotRename(int LotNr,char subname[], char *oldpath, char *newpath);
+
 #endif //_LOT__H_
 
 
