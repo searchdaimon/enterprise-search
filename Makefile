@@ -45,7 +45,7 @@ LIBXML = -I/usr/include/libxml2  -lxml2
 HTMLPARSER1=src/parser/libhtml_parser.a lib/libds.a
 HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a lib/libds.a
 
-WALL = -Wall -Wno-unused-function -Wno-char-subscripts
+WALL = -Wall -Wno-unused-function -Wno-char-subscripts -Wno-strict-aliasing
 
 
 
