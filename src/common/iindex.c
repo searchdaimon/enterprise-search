@@ -481,12 +481,12 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 		gettimeofday(&start_time_total, NULL);
 	#endif
 
-	FILE *fileha;
+	FILE *fileha = NULL;
 
 	unsigned int term;
 	int Antall;
 	int i,z,y;
-	off_t mmap_size;
+	off_t mmap_size = 0;
 	char IndexPath[255];
 	unsigned int Adress = 0;
 	unsigned int SizeForTerm = 0;
@@ -1138,14 +1138,14 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 				#endif
 
 				if (revIndexArray[count].nrOfHits > MaxsHitsInIndex) {
-					printf("iindex: nrOfHits lager then MaxsHitsInIndex (%i). Nr was %i\n",MaxsHitsInIndex ,revIndexArray[count].nrOfHits );
+					printf("iindex: nrOfHits lager then MaxsHitsInIndex (%i). Nr was %lu\n",MaxsHitsInIndex ,revIndexArray[count].nrOfHits );
 					goto IndekserError;			
 				}
 
 
 				for (uy = 0;uy < revIndexArray[count].nrOfHits; uy++) {
                                         if (fread(&revIndexArray[count].hits[uy],sizeof(unsigned short),1,IINDEXFH) != 1) {
-						fprintf(stderr,"Can't read hit. DocID %u, nr of hits %d\n",revIndexArray[count].DocID,revIndexArray[count].nrOfHits);
+						fprintf(stderr,"Can't read hit. DocID %u, nr of hits %lu\n",revIndexArray[count].DocID,revIndexArray[count].nrOfHits);
 						perror(iindexPathOld);
 						goto IndekserError;
 					}
@@ -1217,7 +1217,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		#endif
 
 		if (revIndexArray[count].nrOfHits > MaxsHitsInIndex) {
-			printf("revinde: nrOfHits lager then MaxsHitsInIndex (%i). Nr was %i\n",MaxsHitsInIndex ,revIndexArray[count].nrOfHits );
+			printf("revinde: nrOfHits lager then MaxsHitsInIndex (%i). Nr was %lu\n",MaxsHitsInIndex ,revIndexArray[count].nrOfHits );
 			goto IndekserError;			
 		}
 
@@ -1346,7 +1346,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		lastWordID = revIndexArray[i].WordID;
 
 		if (revIndexArray[i].nrOfHits > MaxsHitsInIndex) {
-			printf("Writing iindex: nrOfHits lager then MaxsHitsInIndex (%i). Nr was %i\n",MaxsHitsInIndex ,revIndexArray[i].nrOfHits );
+			printf("Writing iindex: nrOfHits lager then MaxsHitsInIndex (%i). Nr was %lu\n",MaxsHitsInIndex ,revIndexArray[i].nrOfHits );
 			goto IndekserError;			
 		}
 
@@ -1736,7 +1736,7 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 
                         	for (z = 0;z < TermAntall; z++) {
 					if ((n=fread(&hits[z],sizeof(unsigned short),1,iindexfile[i].fileha)) != 1) {
-						fprintf(stderr,"can't read hit for %s. z: %i, TermAntall: %lu. DocID %u\n",iindexfile[i].PathForLotIndex,z,TermAntall, DocID);
+						fprintf(stderr,"can't read hit for %s. z: %i, TermAntall: %lu. DocID %lu\n",iindexfile[i].PathForLotIndex,z,TermAntall, DocID);
 		                       		perror(iindexfile[i].PathForLotIndex);
 
 						//ToDo: dette er ikke 100% lurt, break her går ut av den første for loppen, men ikke den viktige hoved loopen

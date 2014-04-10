@@ -89,7 +89,7 @@ finner riktig fil og Søker seg frem til riktig adresse, slik at man bare kan les
 FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname) {
 
 	#ifndef DI_FILE_CASHE
-		FILE *DocumentIndexHA;
+		FILE *DocumentIndexHA = NULL;
 	#endif
 	int LotNr;
 	char FileName[128];
