@@ -83,4 +83,6 @@ int main (int argc, char *argv[]) {
 	userToSubname_close(&dbpp);
 	*/
 
+	return 0;
+
 }

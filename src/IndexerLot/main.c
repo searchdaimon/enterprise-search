@@ -1615,46 +1615,66 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 					if (set_size(new_keys) > set_size(old_keys))
 					    {
-						// Merge gamle og nye attributter i index:
-						fprintf(stderr, "**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n");
-						fprintf(stderr, "Utvider attributt-indeksen...\n");
-						fprintf(stderr, "*ADVARSEL* utestet!\n");
-						struct reformat *oldIndex = reopen(lotNr, sizeof(unsigned int)*set_size(old_keys), "attributeIndex", subname, 0);
-						struct reformat	*newIndex = reopen(lotNr, sizeof(unsigned int)*set_size(new_keys), "attributeIndex.tmp", subname, 0);
 
-						for (i=0; i<oldIndex->maxsize; i++)
-						    {
-						        unsigned int *oval = reget(oldIndex, i),
-								    *nval = reget(newIndex, i);
-						        iterator	it_sn = set_begin(new_keys),
-									it_so = set_begin(old_keys);
+						int stretchLot;
+						for (stretchLot=0;stretchLot<maxLots;stretchLot++) {
+							// Merge gamle og nye attributter i index:
 
-						        for (; it_sn.valid; it_sn=set_next(it_sn))
+							struct reformat *oldIndex = reopen(stretchLot, sizeof(unsigned int)*set_size(old_keys), "attributeIndex", subname, RE_READ_ONLY);
+							if (oldIndex == NULL) {
+								// No index to strech. 
+								continue;
+							}
+
+							struct reformat	*newIndex = reopen(stretchLot, sizeof(unsigned int)*set_size(new_keys), "attributeIndex.tmp", subname, 0);
+							if (newIndex == NULL) {
+								perror("attributeIndex.tmp");
+								continue;
+							}
+
+							fprintf(stderr, "Utvider attributt-indeksen...\n");
+							fprintf(stderr, "*ADVARSEL* utestet!\n");
+
+
+
+							for (i=0; i<NrofDocIDsInLot; i++)
 							    {
-								if (it_so.valid && !strcmp((const char*)set_key(it_so).ptr, (const char*)set_key(it_sn).ptr))
-								    {
-									*nval = *oval;
-									oval++;
-									it_so = set_next(it_so);
-								    }
-								else
-								    {
-									*nval = 0;
-								    }
+							        unsigned int *oval = renget(oldIndex, i),
+									    *nval = renget(newIndex, i);
+							        iterator	it_sn = set_begin(new_keys),
+										it_so = set_begin(old_keys);
 
-								nval++;
+							        for (; it_sn.valid; it_sn=set_next(it_sn))
+								    {
+									if (it_so.valid && !strcmp((const char*)set_key(it_so).ptr, (const char*)set_key(it_sn).ptr))
+									    {
+										*nval = *oval;
+										oval++;
+										it_so = set_next(it_so);
+									    }
+									else
+									    {
+										*nval = 0;
+									    }
+
+									nval++;
+								    }
 							    }
-						    }
 
-						char	indx_fullpath[PATH_MAX], tmpindx_fullpath[PATH_MAX];
-						GetFilPathForLotFile(indx_fullpath, "attributeIndex", lotNr, subname);
-						GetFilPathForLotFile(tmpindx_fullpath, "attributeIndex.tmp", lotNr, subname);
-						fprintf(stderr, "Deleting '%s'...\n", indx_fullpath);
-						unlink(indx_fullpath);
-						fprintf(stderr, "Inserting '%s' instead.\n", tmpindx_fullpath);
-						rename(tmpindx_fullpath, indx_fullpath);
-						fprintf(stderr, "...ferdig\n");
-						fprintf(stderr, "**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n**\n");
+							reclose(oldIndex);
+							reclose(newIndex);
+
+
+							char	indx_fullpath[PATH_MAX], tmpindx_fullpath[PATH_MAX];
+							GetFilPathForLotFile(indx_fullpath, "attributeIndex", stretchLot, subname);
+							GetFilPathForLotFile(tmpindx_fullpath, "attributeIndex.tmp", stretchLot, subname);
+							fprintf(stderr, "Deleting '%s'...\n", indx_fullpath);
+							unlink(indx_fullpath);
+							fprintf(stderr, "Inserting '%s' instead.\n", tmpindx_fullpath);
+							rename(tmpindx_fullpath, indx_fullpath);
+							fprintf(stderr, "...ferdig\n");
+
+						}
 					    }
 				    }
 

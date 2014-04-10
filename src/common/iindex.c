@@ -1096,7 +1096,9 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 	}
 	else {
+		#ifdef DEBUG
 		printf("Trying to load iindex \"%s\" of size %" PRId64 "\n", iindexPathOld, inode.st_size);
+		#endif
 
 		while ((!feof(IINDEXFH)) && (count < revIndexArraySize)) {
         	        //wordid hedder

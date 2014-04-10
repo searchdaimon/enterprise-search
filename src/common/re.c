@@ -283,7 +283,7 @@ static inline void *reposread(struct reformat *re, size_t position) {
 
 
 	if (position > re->maxsize) {
-		fprintf(stderr,"DocID is not in the lot that is open!. position %u > maxsize %d.\n",position,re->maxsize);
+		fprintf(stderr,"DocID is not in the lot that is open!. position %zu > maxsize %zu.\n",position,re->maxsize);
 		exit(-1);
 	}
 
@@ -316,18 +316,17 @@ static inline void *reposread(struct reformat *re, size_t position) {
 
 void *reget(struct reformat *re, unsigned int DocID) {
 
-
 	size_t position = (re->structsize * (DocID - LotDocIDOfset(re->lotNr)));
 	if ((re->flags & RE_STARTS_AT_0) == RE_STARTS_AT_0) {
 		#ifdef DEBUG
-			printf("pso ord %u, position %u\n", position,re->structsize);
+			printf("position %zu, structsize %zu\n", position,re->structsize);
 		#endif
 		if (position != 0) {
 			position -= re->structsize;
 		}
 	}
 	#ifdef DEBUG	
-		printf("regetp: DocID %u, position %u, lot %i\n",DocID, position, re->lotNr);
+		printf("regetp: DocID %u, position %zu, lot %i, structsize %zu\n",DocID, position, re->lotNr, re->structsize);
 	#endif
 
 	return reposread(re,position);;
