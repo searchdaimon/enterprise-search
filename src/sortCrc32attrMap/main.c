@@ -27,12 +27,14 @@ int main (int argc, char *argv[]) {
                 exit(1);
         }
 
-        char *subname = argv[1];
-	FILE            *f_crc32_words = NULL;
-	int             crc32_words_size = 0;
-	struct stat     inode;
-	int             attr_crc32_words_blocksize = sizeof(unsigned int) + sizeof(char)*MAX_ATTRIB_LEN;
-	void            *m_crc32_words = NULL;
+        char 				*subname = argv[1];
+	FILE            		*f_crc32_words = NULL, *f_crc32_words_new = NULL;
+	int             		crc32_words_size = 0;
+	struct stat     		inode;
+	int             		attr_crc32_words_blocksize = sizeof(unsigned int) + sizeof(char)*MAX_ATTRIB_LEN;
+	struct Crc32attrMapFormat	*m_crc32_words = NULL;
+	unsigned int			last;
+	int 				i;
 
 	if ((f_crc32_words = lotOpenFileNoCasheByLotNr(1, "crc32attr.map", "r+", 's', subname)) == NULL) {
 		perror("Can't open thecrc32attr.map file for lot");
@@ -59,7 +61,42 @@ int main (int argc, char *argv[]) {
 
 	qsort(m_crc32_words,(crc32_words_size / attr_crc32_words_blocksize),attr_crc32_words_blocksize, attr_crc32_words_block_compare);
 
+
+	/************************************************************************************
+	 Now when we have it sorted we will print out only uniq elements in a new file. 
+	************************************************************************************/
+	if ((f_crc32_words_new = lotOpenFileNoCasheByLotNr(1, "crc32attr.map.new", "wb", 'e', subname)) == NULL) {
+		perror("Can't open thecrc32attr.map.new file for lot");
+		return -1;
+	}
+
+	last = 0;
+        for(i=0;i<(crc32_words_size / attr_crc32_words_blocksize);i++) {
+
+		if (m_crc32_words[i].crc32 != last) {
+			#ifdef DEBUG
+                	printf("crc32 %u, text %s\n",m_crc32_words[i].crc32, m_crc32_words[i].text);
+			#endif
+
+			if (fwrite(&m_crc32_words[i], sizeof(struct Crc32attrMapFormat), 1, f_crc32_words_new) != 1) {
+				perror("fwrite crc32attr.map.new");
+				return -1;
+			}
+		}
+
+		last = m_crc32_words[i].crc32;
+        }
+
+
 	munmap(m_crc32_words,crc32_words_size);
+
+	// Swap the files
+	if (lotRename(1, subname, "crc32attr.map.new", "crc32attr.map") != 0) {
+		perror("rename");
+		return -1;
+	}
+
+	fclose(f_crc32_words_new);
 	fclose(f_crc32_words);		
 
 	printf("Done\n");
