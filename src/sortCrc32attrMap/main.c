@@ -9,7 +9,7 @@
 #include "../common/define.h"
 #include "../common/lot.h"
 
-static attr_crc32_words_block_compare(const void *a, const void *b)
+int attr_crc32_words_block_compare(const void *a, const void *b)
 {
     unsigned int         i=*((unsigned int*)a), j=*((unsigned int*)b);
 

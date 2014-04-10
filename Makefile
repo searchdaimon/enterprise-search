@@ -45,6 +45,8 @@ LIBXML = -I/usr/include/libxml2  -lxml2
 HTMLPARSER1=src/parser/libhtml_parser.a lib/libds.a
 HTMLPARSER2=src/parser2/libhtml_parser.a src/parser2/libcss_parser.a lib/libds.a
 
+WALL = -Wall -Wno-unused-function -Wno-char-subscripts
+
 
 
 # The Dependency Rules
@@ -224,7 +226,7 @@ sortCrc32attrMap: src/sortCrc32attrMap/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(CFLAGS) $(LIBS)*.c src/sortCrc32attrMap/main.c -o bin/sortCrc32attrMap $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LIBS)*.c src/sortCrc32attrMap/main.c -o bin/sortCrc32attrMap $(LDFLAGS) $(WALL)
 
 readCrc32attrMap: src/readCrc32attrMap/main.c
 	@echo ""
