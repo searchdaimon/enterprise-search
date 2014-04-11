@@ -190,13 +190,12 @@ void pagewordsSortOnOccurrence();
 
 void copyRepToDi(struct DocumentIndexFormat *DocumentIndexPost,struct ReposetoryHeaderFormat *ReposetoryHeader);
 
-void revindexFilesAppendWords(struct pagewordsFormat *pagewords,FILE *revindexFilesHa[],unsigned int DocID,unsigned char *langnr);
+void revindexFilesAppendWords(struct pagewordsFormat *pagewords,FILE *revindexFilesHa[]);
 
 void wordsMakeRevIndexBucket (struct pagewordsFormat *pagewords,unsigned int DocID,unsigned char *langnr) ;
 
-void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader,
+void handelPage(struct pagewordsFormat *pagewords, struct ReposetoryHeaderFormat *ReposetoryHeader,
                 char HtmlBuffer[],int HtmlBufferLength,
-                int DocID,int httpResponsCodes[], struct adultFormat *adult,
                 char **title, char **body);
 
 void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID);
@@ -207,15 +206,17 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 void wordsInit(struct pagewordsFormat *pagewords);
 void wordsEnd(struct pagewordsFormat *pagewords);
 
+#ifndef BLACK_BOX
 void adultLoad (struct adultFormat *adult);
+#endif
 
 #ifdef BLACK_BOX
 void acladd(struct IndexerRes_acls *acl, char word[]);
 void aclsMakeRevIndex(struct IndexerRes_acls *acl);
 void aclsMakeRevIndexBucket (struct IndexerRes_acls *acl,unsigned int DocID,unsigned char *langnr);
-void aclindexFilesAppendWords(struct IndexerRes_acls *acl,FILE *aclindexFilesHa[],unsigned int DocID,unsigned char *langnr);
+void aclindexFilesAppendWords(struct IndexerRes_acls *acl,FILE *aclindexFilesHa[]);
 
-#ifdef ATTRIBUTE
+#ifdef ATTRIBUTES
 void attribadd(struct IndexerRes_attrib *attrib, char word[]);
 void attribMakeRevIndex(struct IndexerRes_attrib *attrib);
 void attribMakeRevIndexBucket (struct IndexerRes_attrib *attrib,unsigned int DocID,unsigned char *langnr);

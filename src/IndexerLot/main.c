@@ -77,7 +77,9 @@ struct DIArrayFormat {
 	unsigned char awvalue;
 	struct brankPageElementsFormat brankPageElements;
 	char haverankPageElements;
+	#ifndef BLACK_BOX
 	unsigned short int DomainDI;
+	#endif
 };
 
 struct relocal {
@@ -316,8 +318,6 @@ void iiacladd(struct IndexerRes_acls *iiacl,char acl[]) {
 void acllot_add(struct acllotFormat *acllot,char acl[]) {
 
 
-	struct hashtable **h; //temp
-
   	char **Data;
   	int Count, TokCount;
 	int *oldvalue;
@@ -329,11 +329,7 @@ void acllot_add(struct acllotFormat *acllot,char acl[]) {
   	Count = 0;
   	while( (Data[Count] != NULL) ) {
 
-		//gruppenavn med spacer skaper problemer. Erstater det med _ i steden
-		//strsandr(Data[Count]," ","_");
-		//strsandr(Data[Count],"-","_");
 		aclElementNormalize(Data[Count]);
-
 
 		#ifdef DEBUG
 		printf("god user \"%s\"\n",Data[Count]);
@@ -573,7 +569,10 @@ int getNextPage(struct IndexerLot_workthreadFormat *argstruct,char htmlcompressd
 	}
 
 	if(((*argstruct).optMaxDocuments) != 0 && ((*argstruct).optMaxDocuments <= (*argstruct).pageCount)) {
-		//printf("Exeting after only %i docs\n",(*argstruct).pageCount);
+		#ifdef DEBUG
+		printf("Exeting after only %i docs\n",(*argstruct).pageCount);
+		#endif
+
 		forreturn = 0;
 	}
 	else if (lastpage) {
@@ -707,27 +706,21 @@ void *IndexerLot_workthread(void *arg) {
 	
 	int sizeofimagebuffer = 524288; //0.5 mb
 	char *imagebuffer =  malloc(sizeofimagebuffer);
-        //char imagebuffer[524288];  //0.5 mb
 	unsigned int sizeofHtmlBuffer = 524288 * 2;
 	char *HtmlBuffer = malloc(sizeofHtmlBuffer);
 
 	struct pagewordsFormat *pagewords = malloc(sizeof(struct pagewordsFormat));
 
 	int nerror;
-	char TLD[5];
 	unsigned long int radress;
 	char *acl_allow = NULL;
 	char *acl_denied = NULL;
-	unsigned short int DomainDI;
 
 	unsigned int HtmlBufferLength;
 	unsigned char langnr;
 	unsigned char awvalue;
 	off_t DocIDPlace;
 	int AdultWeight;
-	//begrenser dette midlertidig. Ser ut til å skape segfeil
-	//char domain[129];
-	char domain[65];
 	char *title;
         char *body;
 	char *metadesc;
@@ -735,11 +728,15 @@ void *IndexerLot_workthread(void *arg) {
 	unsigned int crc32;
 	int isnew, isrecrawled, isuntouched;
 
-	Bytef *SummaryBuffer;
-	uLong SummaryBufferSize;
 
 	#ifdef BLACK_BOX
 		int i;
+	#else
+		unsigned short int DomainDI;
+		char domain[65];
+		char TLD[5];
+		Bytef *SummaryBuffer;
+		uLong SummaryBufferSize;
 	#endif
 
 	struct ReposetoryHeaderFormat ReposetoryHeader;
@@ -759,7 +756,6 @@ void *IndexerLot_workthread(void *arg) {
 		                body = NULL;
 				metadesc = NULL;
 				DocumentIndexPost = NULL;
-				SummaryBuffer = NULL;
 
 				DocIDPlace = (ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr));
 
@@ -920,7 +916,7 @@ void *IndexerLot_workthread(void *arg) {
         	                        }
 	
 
-					handelPage(pagewords,(*argstruct).lotNr,&ReposetoryHeader,HtmlBuffer,HtmlBufferLength,ReposetoryHeader.DocID,(*argstruct).httpResponsCodes,(*argstruct).adult,&title,&body);
+					handelPage(pagewords,&ReposetoryHeader,HtmlBuffer,HtmlBufferLength,&title,&body);
 
 
 
@@ -954,6 +950,7 @@ void *IndexerLot_workthread(void *arg) {
 					metadesc = strdup("");
 
 					#ifndef BLACK_BOX
+					SummaryBuffer = NULL;
 
 					makePreParsedSummary(body,strlen(body),title,strlen(title),metadesc,strlen(metadesc),
 						&SummaryBuffer,&SummaryBufferSize);
@@ -1056,9 +1053,7 @@ void *IndexerLot_workthread(void *arg) {
 						iintegerSetValueNoCashe(&ReposetoryHeader.doctype,4,ReposetoryHeader.DocID,"filtypes",(*argstruct).subname);
 
 					#else
-
 						DomainDI = calcDomainID(domain);
-
 					#endif
 
 
@@ -1080,20 +1075,16 @@ void *IndexerLot_workthread(void *arg) {
 
 						#endif
 
-						//printf("SummaryBufferSize %i\n",SummaryBufferSize);
-						
 
-
-						revindexFilesAppendWords(pagewords,(*argstruct).revindexFilesHa,ReposetoryHeader.DocID,&langnr);
+						revindexFilesAppendWords(pagewords,(*argstruct).revindexFilesHa);
 
 
 						#ifdef BLACK_BOX
 							#ifdef IIACL
-							aclindexFilesAppendWords(&(*pagewords).acl_allow,(*argstruct).acl_allowindexFilesHa,ReposetoryHeader.DocID,&langnr);
-							aclindexFilesAppendWords(&(*pagewords).acl_denied,(*argstruct).acl_deniedindexFilesHa,ReposetoryHeader.DocID,&langnr);
+							aclindexFilesAppendWords(&(*pagewords).acl_allow,(*argstruct).acl_allowindexFilesHa);
+							aclindexFilesAppendWords(&(*pagewords).acl_denied,(*argstruct).acl_deniedindexFilesHa);
 							#endif
 							#ifdef ATTRIBUTES
-//							attribindexFilesAppendWords(&(*pagewords).attrib,(*argstruct).attribindexFilesHa,ReposetoryHeader.DocID,&langnr);
 							attribindexFilesAppendWords(&(*pagewords).attrib,(*argstruct).attribindexFilesHa);
 							#endif
 						#endif
@@ -1150,7 +1141,7 @@ void *IndexerLot_workthread(void *arg) {
 				DocumentIndexPost->crc32 = crc32;
 				*RE_Uint(argstruct->re.crc32map, ReposetoryHeader.DocID) = crc32;
 				*RE_Uchar(argstruct->re.PopRank, ReposetoryHeader.DocID) = ReposetoryHeader.PopRank;
-			printf("Wrote %d for %u\n", ReposetoryHeader.PopRank, ReposetoryHeader.DocID);
+				printf("Wrote %d for %u\n", ReposetoryHeader.PopRank, ReposetoryHeader.DocID);
 				(*argstruct).DIArray[DocIDPlace].p = DocumentIndexPost;
 			
 
@@ -1163,13 +1154,16 @@ void *IndexerLot_workthread(void *arg) {
 				(*argstruct).DIArray[DocIDPlace].brankPageElements.response = 		DocumentIndexPost->response;
 				(*argstruct).DIArray[DocIDPlace].haverankPageElements = 1;
 
+				#ifndef BLACK_BOX
 				(*argstruct).DIArray[DocIDPlace].DomainDI = DomainDI;
-
+				#endif
 pageDone:
 
+				#ifndef BLACK_BOX
 				if (SummaryBuffer != NULL) {
 					free(SummaryBuffer);
 				}
+				#endif
 				if (body != NULL) {
        					free(body);
 				}
@@ -1278,10 +1272,9 @@ void netlot_end_recursiveDir (char lotpath[],char lotinternpath[],unsigned int l
 /*******************************************************
 rutine for å sende date tilbake til lagringserver.
 *******************************************************/
-void netlot_end (int lotNr,char subname[], char server[], struct optFormat *opt) {
+void netlot_end (int lotNr,char subname[], char server[]) {
 
 	char lotpath[512];
-	char reposetuoypath[512];
 	FILE *FH;
 
 	//åpretter en tom dyrty fil, slik at vi får en som overskriver den vi har fra før
@@ -1296,23 +1289,6 @@ void netlot_end (int lotNr,char subname[], char server[], struct optFormat *opt)
 
 	printf("lotpath %s\n",lotpath);
 
-/*
-
-	//sletter reposetor. Vi skal ikke trenge og skrive tilbake det.
-	//temp: vi kan ikke slette reposetory når vi også kjører gc
-	// da må rApendPost lokke tilkoblingen under gc
-	if (opt->RunGarbageCollection == 1) {
-		printf("\n##############################\ntemp: remember to delete reposetory before this movs to production\n##############################\n\n");
-	}
-
-	sprintf(reposetuoypath,"%s%s",lotpath,"reposetory");
-	printf("unlinking %s\n",reposetuoypath);
-
-	if (unlink(reposetuoypath) != 0) {
-		perror(reposetuoypath);
-		exit(1);
-	}
-*/
 	netlot_end_recursiveDir(lotpath,"",lotNr,subname, server);
 
 	//sletter loten
@@ -1425,16 +1401,12 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 	struct IndexerLot_workthreadFormat *argstruct;
 
-	int i,n;
+	int i;
 	int lotPart;
 	int flags;
         unsigned int FiltetTime;
-	//char lotServer[64];
-	struct iintegerFormat iinteger;
-	off_t DocIDPlace;	
 	unsigned int lastIndexTime;
 	char openmode[4];
-	FILE *brankPageElementsFH;
 	FILE *INDEXLOCK;
 
 	struct IndekserOptFormat IndekserOpt;
@@ -1451,7 +1423,9 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 
         langdetectInit();
+	#ifndef BLACK_BOX
 	adultLoad(argstruct->adult);
+	#endif
 	html_parser_init();
 
 
@@ -2216,7 +2190,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			//lokker eventuelt åpne filer, som etter gced.
 			lotCloseFiles();
 			
-			netlot_end(lotNr,subname,opt->NetLot, opt);
+			netlot_end(lotNr,subname,opt->NetLot);
 		}
 
 		#ifndef BLACK_BOX
@@ -2232,7 +2206,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			if ((indexlog = lotOpenFileNoCasheByLotNr(lotNr,"indexlog.txt","a",'e',subname)) == NULL) {
 				warn("Unable to write index log");
 			} else {
-				fprintf(indexlog, "%d new=%d,recrawled=%d,untouched=%d\n", time(NULL),
+				fprintf(indexlog, "%lld new=%d,recrawled=%d,untouched=%d\n", (long long)time(NULL),
 				    argstruct->n_new, argstruct->n_recrawled, argstruct->n_untouched);
 				fclose(indexlog);
 			}

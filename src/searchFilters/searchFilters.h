@@ -1,7 +1,7 @@
 #include "../common/define.h"
 
-int filterAdultWeight_bool(char AdultWeight,int adultpages,int noadultpages);
-int filterAdultWeight_value(int AdultWeight,int adultpages,int noadultpages);
+int filterAdultWeight_bool(char AdultWeight, int noadultpages);
+int filterAdultWeight_value(int AdultWeight, int noadultpages);
 int filterResponse(int responscode);
 int filterSameIp(int showabal,struct SiderFormat *CurentSider, struct SiderFormat *Sider);
 int filterSameDomain(int showabal,struct SiderFormat *CurentSider, struct SiderFormat *Sider);

@@ -98,7 +98,7 @@ int filterTitle(char title[]) {
 	return 0;
 }
 
-int filterAdultWeight_bool(char AdultWeight,int adultpages,int noadultpages) {
+int filterAdultWeight_bool(char AdultWeight, int noadultpages) {
 
 	if (noadultpages > 10) {
 		//hvis vi har mange nokk sider, viser vi ikke en side hvis den er adult
@@ -116,7 +116,7 @@ int filterAdultWeight_bool(char AdultWeight,int adultpages,int noadultpages) {
 
 }
 
-int filterAdultWeight_value(int AdultWeight,int adultpages,int noadultpages) {
+int filterAdultWeight_value(int AdultWeight, int noadultpages) {
 
 	if (noadultpages > 10) {
 		//hvis vi har mange nokk sider, viser vi ikke en side hvis den er adult

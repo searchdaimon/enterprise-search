@@ -1,4 +1,3 @@
-/*****************************************/
 #include <stdio.h>
 #include <string.h>
 #include <zlib.h>
@@ -26,13 +25,13 @@ struct AdultFraserRecordFormat {
 void wordsInit(struct pagewordsFormat *pagewords) {
 
 	(*pagewords).outlinks = malloc(sizeof(struct outlinksFormat) * IndexerMaxLinks);	
-
 }	
 
 //kalles sist når man skal slutte og bruke en pagewords. Free'er det som er alokert
 void wordsEnd(struct pagewordsFormat *pagewords) {
 	free((*pagewords).outlinks);
 }
+
 void wordsReset_part(struct pagewordsFormatPartFormat *wordsPart) {
 
 	wordsPart->nr = 0;
@@ -91,7 +90,6 @@ void linksWrite(struct pagewordsFormat *pagewords,struct addNewUrlhaFormat addNe
 				strscpy((char *)updatePost.linktext,(*pagewords).outlinks[i].linktext,sizeof( (*pagewords).outlinks[i].linktext ));
 				updatePost.DocID_from = (*pagewords).curentDocID;
 
-				//printf("linksWrite: \"%s\", text \"%s\", len %i\n",updatePost.url,updatePost.linktext,len);
 				//bruker sidens DocID til å velge hvilken fil. Usikker på om det er lurt, men det er lett og implementere for nå
 				addNewUrl(&addNewUrlha[(*pagewords).curentDocID % NEWURLFILES_NR],&updatePost);			
 
@@ -107,8 +105,6 @@ void linkwordadd(struct pagewordsFormat *pagewords, char word[]) {
 
 
 	int wordlLength;
-
-	//printf("link word \"%s\"\n",word);
 
 	wordlLength = strlen(word);
 
@@ -189,12 +185,9 @@ void attribadd(struct IndexerRes_attrib *attrib, char word[]) {
 
 void linkadd(struct pagewordsFormat *pagewords, char word[]) {
 
-		int i;
 		char url[201];
 
 		strscpy(url,word,sizeof(url));
-
-		//printf("linkadd. DocID %u, link \"%s\"\n",(*pagewords).DocID,url);
 
 
 		if (IndexerMaxLinks > (*pagewords).nrOfOutLinks) {
@@ -204,14 +197,9 @@ void linkadd(struct pagewordsFormat *pagewords, char word[]) {
 
 			url_normalization (url,sizeof(url));
 
-			//temp: butt ut linje 1 med linje 2 når wiki bugen er reparset
-			//if (!globalIndexerLotConfig.collectUrls) {
-			if ((!globalIndexerLotConfig.collectUrls) && (strstr(url,".no/") == NULL)) {
+			if (!globalIndexerLotConfig.collectUrls) {
 				//skal ikke lagge til urler
 			}
-			//else if (strcmp((*pagewords).lasturl,url) == 0) {
-			//	//gider ikke legge til like url. Men hva hvis dette er på en ny side. Denne burde bli resettet			
-			//}
 			else if ((strchr(url,'?') != NULL) && ((*pagewords).curentUrlIsDynamic)) {
                 	        //printf("NO add, dynamic -> dunamic %s\n",(*pagewords).updatePost[i].url);
                 	}
@@ -223,9 +211,6 @@ void linkadd(struct pagewordsFormat *pagewords, char word[]) {
 			}
 			else {
 
-
-
-				//(*pagewords).updatePost[(*pagewords).nrOfOutLinks].DocID_from = (*pagewords).curentDocID;
 				 strscpy((char *)(*pagewords).outlinks[(*pagewords).nrOfOutLinks].url,url,sizeof((*pagewords).outlinks[(*pagewords).nrOfOutLinks].url));
 				(*pagewords).outlinks[(*pagewords).nrOfOutLinks].linktext[0] = '\0';
 				(*pagewords).outlinks[(*pagewords).nrOfOutLinks].linktextlen = 0;
@@ -236,84 +221,14 @@ void linkadd(struct pagewordsFormat *pagewords, char word[]) {
 		//øker oversikten over antall utgående linker
 		++(*pagewords).nrOfOutLinks;
 
-
-
-	
-
-		/*
-
-                struct updateFormat updatePost;
-
-		if (!globalIndexerLotConfig.collectUrls) {
-			//skal ikke lagge til urler
-		}
-		else if (strcmp((*pagewords).lasturl,word) == 0) {
-			//gider ikke legge til like url. Men hva hvis dette er på en ny side. Denne burde bli resettet			
-		}
-		else if ((strchr(word,'?') != NULL) && ((*pagewords).curentUrlIsDynamic)) {
-                        //printf("NO add %s\n",word);
-                }
-		else if (gyldig_url(word)) {
-
-			
-			//printf("ADD %s\n",word);
-                      
-			strncpy((char *)updatePost.url,word,sizeof(updatePost.url));
-			//ToDo: se fn() også. Ser ut til å mangle håntering av anker tekst her??
-                        strncpy((char *)updatePost.linktext,"",sizeof(updatePost.linktext));
-                        updatePost.DocID_from = (*pagewords).curentDocID;
-
-			if (globalIndexerLotConfig.urlfilter == NULL) {
-                        	addNewUrl(&global_addNewUrlha_pri1,&updatePost);
-			}
-			else {
-				//tester filterer om vi skal legge til en url
-				i=0;
-				while( (globalIndexerLotConfig.urlfilter[i] != NULL) ) {
-	                                //printf("\t\t%i\tis ttl \"%s\" in url \"%s\"\n", i, globalIndexerLotConfig.urlfilter[i],word);
-					if (url_isttl(word,globalIndexerLotConfig.urlfilter[i])) {
-						//printf("added url\n");
-						addNewUrl(&global_addNewUrlha_pri1,&updatePost);
-						break;
-					}
-					++i;
-                                }				
-			}
-			
-
-			//if (url_havpri1(word) || global_source_url_havpri) {
-			//	//printf("hav pri %s\n",word);
-                        //	addNewUrl(&global_addNewUrlha_pri1,&updatePost,"_pri1",subname);
-			//}
-			//
-			//temp: skrur av crawling av ikke pri sider
-			//else if (url_havpri2(word)) {
-			//	//printf("source_url_havpri %s\n",word);
-                        //        addNewUrl(&global_addNewUrlha_pri2,&updatePost,"_pri2",subname);
-			//}
-			//else {
-			//	//printf("normal %s\n",word);
-                        //	addNewUrl(&global_addNewUrlha,&updatePost,"",subname);
-			//
-			//}
-			
-
-                }
-		else {
-			//printf("NO ADD %s\n",word);
-		}
-
-		strncpy((*pagewords).lasturl,word,sizeof((*pagewords).lasturl));
-
-		*/
 }
 
 
 void wordsAdd(struct pagewordsFormatPartFormat *wordsPart, char word[],enum parsed_unit_flag puf) {
 
-int i;
-int wordlLength;
-int wordTypeadd;
+			int wordlLength;
+			int wordTypeadd = 0;
+
 			if (wordsPart->nr > maxWordForPage){
 				#ifdef DEBUG
 					printf("mor then maxWordForPage words\n");
@@ -354,15 +269,13 @@ int wordTypeadd;
 				wordlLength = strlen(word);
 
 				//gjør om til små bokstaver
-				//for(i=0;i<wordlLength;i++) {
-				//	word[i] = (char)btolower(word[i]);
-				//}
 				convert_to_lowercase((unsigned char *)word);
 
 
 				#ifdef PRESERVE_WORDS
 					strcpy(wordsPart->words[wordsPart->nr].word,word);
 				#endif
+
 				wordsPart->words[wordsPart->nr].WordID =  crc32boitho(word);
 
 				#ifdef DEBUG
@@ -382,7 +295,7 @@ int wordTypeadd;
 			}
 }
 
-void IndexerRes_fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void *pagewords )
+void IndexerRes_fn( char* word, int __attribute__((unused))pos, enum parsed_unit pu, enum parsed_unit_flag puf, void *pagewords )
 {
 
 
@@ -480,9 +393,6 @@ void IndexerRes_fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_f
 
 
 
-/**************************************/
-
-
 int compare_elements_AdultFraserRecordFormat (const void *p1, const void *p2) {
 
 	int n;
@@ -501,8 +411,6 @@ int compare_elements_AdultFraserRecordFormat (const void *p1, const void *p2) {
 }
 int compare_elements_words (const void *p1, const void *p2) {
 
-//        struct iindexFormat *t1 = (struct iindexFormat*)p1;
-//        struct iindexFormat *t2 = (struct iindexFormat*)p2;
 
         if (((struct wordsFormat*)p1)->WordID < ((struct wordsFormat*)p2)->WordID)
                 return -1;
@@ -525,9 +433,11 @@ int compare_elements_nr (const void *p1, const void *p2) {
 
 static int cmp1_crc32(const void *p, const void *q)
 {
+	#ifdef DEBUG
 	printf("%lu %lu\n",*(const unsigned long *) p,*(const unsigned long *) q);
+	#endif
 
-   return *(const unsigned long *) p - *(const unsigned long *) q;
+	return *(const unsigned long *) p - *(const unsigned long *) q;
 }
 
 #ifdef BLACK_BOX
@@ -566,7 +476,6 @@ void aclsMakeRevIndex(struct IndexerRes_acls *acl) {
 
 			(*acl).aclIndex[(*acl).aclIndexnr].WordID = (*acl).acls_sorted[i].WordID;
 			(*acl).aclIndex[(*acl).aclIndexnr].nr = 0;
-			//(*acl).aclIndex[(*acl).aclIndexnr].hits[ (*acl).aclIndex[(*acl).aclIndexnr].nr ].pos = (*acl).acls_sorted[i].position;
 			lastWodID = (*acl).aclIndex[(*acl).aclIndexnr].WordID;
 			++(*acl).aclIndexnr;
 		}
@@ -609,7 +518,6 @@ void attribMakeRevIndex(struct IndexerRes_attrib *attrib) {
 
 			(*attrib).attribIndex[(*attrib).attribIndexnr].WordID = (*attrib).attrib_sorted[i].WordID;
 			(*attrib).attribIndex[(*attrib).attribIndexnr].nr = 0;
-			//(*attrib).attribIndex[(*attrib).attribIndexnr].hits[ (*attrib).attribIndex[(*attrib).attribIndexnr].nr ].pos = (*attrib).attrib_sorted[i].position;
 			lastWordID = (*attrib).attribIndex[(*attrib).attribIndexnr].WordID;
 			++(*attrib).attribIndexnr;
 		}
@@ -618,11 +526,11 @@ void attribMakeRevIndex(struct IndexerRes_attrib *attrib) {
 #endif
 /****************************************************/
 
-void wordsMakeRevIndex_part(struct pagewordsFormatPartFormat *wordsPart,struct adultFormat *adult,int *adultWeight, unsigned char *langnr) {
+void wordsMakeRevIndex_part(struct pagewordsFormatPartFormat *wordsPart,struct adultFormat __attribute__((unused))*adult,int __attribute__((unused))*adultWeight) {
 
-	int i,y,adultpos,adultFraserpos;
+	int i,adultpos,adultFraserpos;
 	unsigned long oldcrc32;
-	int oldRevIndexnr;
+	int oldRevIndexnr = 0;
 
 	//kopierer over til den word arrayn som skal være sortert
 	for(i=0;i<wordsPart->nr;i++) {
@@ -768,7 +676,6 @@ void adultPhrases(struct pagewordsFormatPartFormat *wordsPart, struct adultForma
 			//har hitt. Lopper gjenom word2'ene på jakt etter ord nr to
 			#ifdef DEBUG_ADULT
 				printf("word is first in frase %s\n",(*adult).adultFraser[adultFraserpos].word);
-				//printf("bb nex word is \"%s\"\n",wordsPart->words[ wordsPart->revIndex[i].hits[y].realpos +1 ].word);
 				printf("x words to try %i, pos %i\n",(*adult).adultFraser[adultFraserpos].adultWordCount,
 							adultFraserpos);
 			#endif
@@ -833,7 +740,7 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 
 	(*adultWeight) = 0;
 
-	wordsMakeRevIndex_part(&pagewords->normalWords,adult,adultWeight,langnr);
+	wordsMakeRevIndex_part(&pagewords->normalWords,adult,adultWeight);
 
 
 	//finner språk
@@ -855,7 +762,7 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 	#endif
 
 	// link word
-	wordsMakeRevIndex_part(&pagewords->linkWords,adult,adultWeight,langnr);
+	wordsMakeRevIndex_part(&pagewords->linkWords,adult,adultWeight);
 	#ifndef BLACK_BOX
 	adultPhrases(&pagewords->linkWords,adult,adultWeight,langnr);
 	#endif
@@ -865,7 +772,7 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 	#endif
 
 	// spam word
-	wordsMakeRevIndex_part(&pagewords->spamWords,adult,adultWeight,langnr);
+	wordsMakeRevIndex_part(&pagewords->spamWords,adult,adultWeight);
 	#ifndef BLACK_BOX
 	adultPhrases(&pagewords->spamWords,adult,adultWeight,langnr);
 	#endif
@@ -878,12 +785,9 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 
 
 
-/**************************/
 
 int compare_elements_adultWord (const void *p1, const void *p2) {
 
-//        struct iindexFormat *t1 = (struct iindexFormat*)p1;
-//        struct iindexFormat *t2 = (struct iindexFormat*)p2;
 
         if (((struct adultWordFormat*)p1)->crc32 < ((struct adultWordFormat*)p2)->crc32)
                 return -1;
@@ -894,8 +798,6 @@ int compare_elements_adultWord (const void *p1, const void *p2) {
 
 int compare_elements_AdultFraser (const void *p1, const void *p2) {
 
-//        struct iindexFormat *t1 = (struct iindexFormat*)p1;
-//        struct iindexFormat *t2 = (struct iindexFormat*)p2;
 
         if (((struct adultWordFraserFormat*)p1)->crc32 < ((struct adultWordFraserFormat*)p2)->crc32)
                 return -1;
@@ -905,12 +807,8 @@ int compare_elements_AdultFraser (const void *p1, const void *p2) {
 }
 
 
-
+#ifndef BLACK_BOX
 void adultLoad (struct adultFormat *adult) {
-
-	#ifdef BLACK_BOX
-		printf("Note: Wont load adult filter. Is abb\n");
-	#else
 
 	FILE *FH;
 	char buff[128];
@@ -944,9 +842,7 @@ void adultLoad (struct adultFormat *adult) {
                 cpoint = strchr(buff,' ');
 		if (cpoint != NULL) {
 
-			//strncpy((*adult).AdultWords[i].word,buff,cpoint - buff);
 			strscpy((*adult).AdultWords[i].word,buff,cpoint - buff +1);
-
 
 			//vil ikke ha men spacen. Går et hakk vidre
 			++cpoint;
@@ -1095,8 +991,8 @@ void adultLoad (struct adultFormat *adult) {
 	#endif
 	
 
-	#endif
 }
+#endif
 
 void revindexFilesOpenNET(FILE *revindexFilesHa[]) {
 	int i;
@@ -1236,7 +1132,6 @@ void attribMakeRevIndexBucket (struct IndexerRes_attrib *attrib,unsigned int Doc
 
 	for(i=0;i<NrOfDataDirectorys;i++) {
 		(*attrib).nrofAttribBucketElements[i].bucketbuffsize = ((sizeof(unsigned int) + sizeof(char) + sizeof(unsigned long) + sizeof(unsigned long)) * (*attrib).nrofAttribBucketElements[i].records) + ((*attrib).nrofAttribBucketElements[i].hits * sizeof(unsigned short));
-		//printf("bucketbuffsize %i\n",(*attrib).nrofattribBucketElements[i].bucketbuffsize);
 
 		(*attrib).nrofAttribBucketElements[i].bucketbuff = malloc((*attrib).nrofAttribBucketElements[i].bucketbuffsize);
 	}
@@ -1307,7 +1202,7 @@ void wordsMakeRevIndexBucket_part(struct pagewordsFormatPartFormat *wordsPart,un
 	for(i=0;i<wordsPart->revIndexnr;i++) {
 
 			if(wordsPart->revIndex[i].nr > MaxsHitsInIndex) {
-				fprintf(stderr,"have more then MaxsHitsInIndex (%i). Have %i\n",MaxsHitsInIndex,wordsPart->revIndex[i].nr);
+				fprintf(stderr,"have more then MaxsHitsInIndex (%i). Have %lu\n",MaxsHitsInIndex,wordsPart->revIndex[i].nr);
 				exit(-1);
 			}
 
@@ -1364,12 +1259,10 @@ void dictionaryWordsWrite (struct pagewordsFormat *pagewords,FILE *FH, char *acl
 Skriver acl index til disk
 ***************************************************************************************/
 #ifdef BLACK_BOX
-void aclindexFilesAppendWords(struct IndexerRes_acls *acl,FILE *aclindexFilesHa[],unsigned int DocID,unsigned char *langnr) {
+void aclindexFilesAppendWords(struct IndexerRes_acls *acl,FILE *aclindexFilesHa[]) {
 
 
-	int i,y;
-	int bucket;
-
+	int i;
 
 	for(i=0;i<NrOfDataDirectorys;i++) {
 		if ((*acl).nrofAclBucketElements[i].bucketbuffsize != 0) {
@@ -1388,9 +1281,7 @@ void aclindexFilesAppendWords(struct IndexerRes_acls *acl,FILE *aclindexFilesHa[
 void attribindexFilesAppendWords(struct IndexerRes_attrib *attrib,FILE *attribindexFilesHa[]) {
 
 
-	int i,y;
-	int bucket;
-
+	int i;
 
 	for(i=0;i<NrOfDataDirectorys;i++) {
 		if ((*attrib).nrofAttribBucketElements[i].bucketbuffsize != 0) {
@@ -1409,10 +1300,9 @@ void attribindexFilesAppendWords(struct IndexerRes_attrib *attrib,FILE *attribin
 /**************************************************************************************
 Skriver reversert index til disk
 ***************************************************************************************/
-void revindexFilesAppendWords_part(struct pagewordsFormatPartFormat *wordsPart,FILE *revindexFilesHa[],unsigned int DocID,unsigned char *langnr) {
+void revindexFilesAppendWords_part(struct pagewordsFormatPartFormat *wordsPart,FILE *revindexFilesHa[]) {
 
-	int i,y;
-	int bucket;
+	int i;
 
 	for(i=0;i<NrOfDataDirectorys;i++) {
 		if (wordsPart->nrofBucketElements[i].bucketbuffsize != 0) {
@@ -1429,9 +1319,9 @@ void revindexFilesAppendWords_part(struct pagewordsFormatPartFormat *wordsPart,F
 
 }
 
-void revindexFilesAppendWords(struct pagewordsFormat *pagewords,FILE *revindexFilesHa[],unsigned int DocID,unsigned char *langnr) {
+void revindexFilesAppendWords(struct pagewordsFormat *pagewords,FILE *revindexFilesHa[]) {
 
-	revindexFilesAppendWords_part(&pagewords->normalWords,revindexFilesHa,DocID,langnr);
+	revindexFilesAppendWords_part(&pagewords->normalWords,revindexFilesHa);
 }
 
 void html_parser_timout( int signo )
@@ -1446,46 +1336,11 @@ void html_parser_timout( int signo )
 
 
 
-void handelPage(struct pagewordsFormat *pagewords, unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, 
+void handelPage(struct pagewordsFormat *pagewords,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 		char HtmlBuffer[],int HtmlBufferLength, 
-		int DocID,int httpResponsCodes[], struct adultFormat *adult,
 		char **title, char **body) {
 
-		//int AdultWeight;
-		//char *title = NULL;
-		//char *body = NULL;
-
-
-		//printf("%lu %s\n",(*ReposetoryHeader).DocID, (*ReposetoryHeader).url);
-
-
-		
-
-					//setter opp en alarm slik at run_html_parser blir avbrut hvis den henger seg 
-					//alarm_got_raised = 0;
-					//signal(SIGALRM, html_parser_timout);
-					
-					//alarm( 5 );
-					//parser htmlen
-					//printf("html: %s\n\nUrl \"%s\"\nHtmlBufferLength %i\n",HtmlBuffer,(*ReposetoryHeader).url,HtmlBufferLength);
-					//run_html_parser( (*ReposetoryHeader).url, HtmlBuffer, HtmlBufferLength, fn );
-					//html_parser_run( "http://YAHOOgroups.com/svada/index.html", buf, size, &title, &body, IndexerRes_fn, NULL );
-					html_parser_run((*ReposetoryHeader).url,HtmlBuffer, HtmlBufferLength,title, body,IndexerRes_fn,pagewords );
-					//printf("title %s\n",(*title));
-					//alarm( 0);
-					//if(alarm_got_raised) {
-					//	printf("run_html_parser did time out. At DocID %lu\n",(*ReposetoryHeader).DocID);
-					//}
-					//else {
-
-
-					//}
-				
-
-		
-		//free(body);
-		//free(title);
+		html_parser_run((*ReposetoryHeader).url,HtmlBuffer, HtmlBufferLength,title, body,IndexerRes_fn,pagewords );
 }
 
 
-/******************************************/

@@ -44,7 +44,7 @@ int
 add_acls(char *acl, set *s, struct hashtable *aclshash)
 {
 	char **acls;
-	int a, i;
+	int i;
 
 	if (split(acl, ",", &acls) == -1)
 		return 0;

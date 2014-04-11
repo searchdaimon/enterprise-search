@@ -1438,7 +1438,7 @@ void *generatePagesResults(void *arg)
 				bblog(DEBUGINFO, "adult %u: %i", (*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
 			#endif
 
-			if (((*PagesResults).filterOn) && (filterAdultWeight_bool(adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID),(*PagesResults).adultpages,(*PagesResults).noadultpages) == 1)) {
+			if (((*PagesResults).filterOn) && (filterAdultWeight_bool(adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID), (*PagesResults).noadultpages) == 1)) {
 				#ifdef DEBUG
 					bblog(DEBUGINFO, "%u is adult whith %i", (*PagesResults).TeffArray->iindex[i].DocID,adultWeightForDocIDMemArray((*PagesResults).TeffArray->iindex[i].DocID));
 				#endif
@@ -1506,7 +1506,7 @@ void *generatePagesResults(void *arg)
 
 		#ifndef BLACK_BOX
 		//adult fra di
-		if (((*PagesResults).filterOn) && (filterAdultWeight_value(side->DocumentIndex.AdultWeight,(*PagesResults).adultpages,(*PagesResults).noadultpages)) ) {
+		if (((*PagesResults).filterOn) && (filterAdultWeight_value(side->DocumentIndex.AdultWeight, (*PagesResults).noadultpages)) ) {
 			bblog(INFO, "Filter: filtered adult. DocID %u, adult value %i, adult bool value %i", 
 				(*PagesResults).TeffArray->iindex[i].DocID, 
 				(int)side->DocumentIndex.AdultWeight ,(

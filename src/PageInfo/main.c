@@ -361,6 +361,20 @@ int main (int argc, char *argv[]) {
 				printf("%s\n", buf);
 			}
 		}
+
+		printf("attributes:\"%s\"\n", attributes);
+
+		free(url);
+		free(attributes);
+		free(acl_allowbuffer);
+		free(acl_deniedbuffer);
+	}
+	else {
+		printf("Cant read post\n");
+	}
+
+	#ifndef BLACK_BOX
+
 		if (optAdult) {
 			int httpResponsCodes[nrOfHttpResponsCodes];
 	        	//char *title;
@@ -380,25 +394,13 @@ int main (int argc, char *argv[]) {
 
 			AdultWeight -1;
 
-			handelPage(pagewords,rLotForDOCid(DocID),&ReposetoryHeader,htmlBuffer,htmlBufferSize,DocID,httpResponsCodes,adult,&title,&body);
+			handelPage(pagewords,&ReposetoryHeader,htmlBuffer,htmlBufferSize,&title,&body);
 
 			wordsMakeRevIndex(pagewords,adult,&AdultWeight,&langnr);
 
 			printf("adult %i\n",AdultWeight);
 		}
 
-		printf("attributes:\"%s\"\n", attributes);
-
-		free(url);
-		free(attributes);
-		free(acl_allowbuffer);
-		free(acl_deniedbuffer);
-	}
-	else {
-		printf("Cant read post\n");
-	}
-
-	#ifndef BLACK_BOX
 		if (optAnchor) {
 			int anchorBufferSize;
 			char *anchorBuffer;
