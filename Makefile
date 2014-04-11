@@ -208,7 +208,7 @@ IndexerLotbb: src/IndexerLot/main.c
 	@echo ""
 	@echo "$@:"
 
-	$(CC) $(IndexerLot) $(HTMLPARSER2) $(BDB_INC) $(BDB_LIB) -D BLACK_BOX -D PRESERVE_WORDS -o bin/IndexerLotbb -DIIACL
+	$(CC) $(IndexerLot) $(HTMLPARSER2) $(BDB_INC) $(BDB_LIB) -D BLACK_BOX -D PRESERVE_WORDS -o bin/IndexerLotbb -DIIACL $(WALL)
 
 baddsPageAnalyser: src/baddsPageAnalyser/main.c
 	@echo ""
