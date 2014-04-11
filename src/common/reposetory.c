@@ -457,35 +457,35 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 	// skriver versjon
 	#ifdef BLACK_BOX
 		unsigned int CurrentReposetoryVersionAsUInt = CurrentReposetoryVersion;
-		if(fwrite(&CurrentReposetoryVersionAsUInt,sizeof(CurrentReposetoryVersionAsUInt),1,RFILE) < 0) {
+		if(fwrite(&CurrentReposetoryVersionAsUInt,sizeof(CurrentReposetoryVersionAsUInt),1,RFILE) != 1) {
 			perror("rApendPost: can't write CurrentReposetoryVersionAsUInt");
 		}
 	#endif
 
 	//skriver hedder
-	if(fwrite(ReposetoryHeader,sizeof(struct ReposetoryHeaderFormat),1,RFILE) < 0) {
+	if(fwrite(ReposetoryHeader,sizeof(struct ReposetoryHeaderFormat),1,RFILE) != 1) {
 		perror("rApendPost: can't write ReposetoryHeader");
 	}
 
 	//skriver html
-	if(fwrite(htmlbuffer,(*ReposetoryHeader).htmlSize2,1,RFILE) < 0) {
+	if(fwrite(htmlbuffer,(*ReposetoryHeader).htmlSize2,1,RFILE) != 1) {
                 perror("rApendPost: can't write html");
         }
 
 	//skriver bilde
 	if ((*ReposetoryHeader).imageSize != 0) {
-		if(fwrite(imagebuffer,(*ReposetoryHeader).imageSize,1,RFILE) < 0) {
+		if(fwrite(imagebuffer,(*ReposetoryHeader).imageSize,1,RFILE) != 1) {
        		        perror("rApendPost: can't write image");
        		}
 		debug("did write image of %i bytes",(*ReposetoryHeader).imageSize);
 	}
 	//skriver acl
 	#ifdef BLACK_BOX
-		if(fwrite(acl_allow,(*ReposetoryHeader).acl_allowSize,1,RFILE) < 0) {
+		if(fwrite(acl_allow,(*ReposetoryHeader).acl_allowSize,1,RFILE) != 1) {
 			perror("rApendPost: can't write acl_allow");
 		}
 		#ifdef IIACL
-			if(fwrite(acl_denied,(*ReposetoryHeader).acl_deniedSize,1,RFILE) < 0) {
+			if(fwrite(acl_denied,(*ReposetoryHeader).acl_deniedSize,1,RFILE) != 1) {
 				perror("rApendPost: can't write acl_denied");
 			}
 		#endif
@@ -537,7 +537,7 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 		        fclose(f_attrkeys);
 		    }
 
-		if (fwrite(attributes, ReposetoryHeader->attributeslen, 1, RFILE) < 0)
+		if (fwrite(attributes, ReposetoryHeader->attributeslen, 1, RFILE) != 1)
 		    {
 			perror("rApendPost: can't write attributes");
 		    }
@@ -546,7 +546,7 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 #endif
 
         //skriver record seperator
-        if(fwrite("***",sizeof(char),3,RFILE) < 0) {
+        if(fwrite("***",sizeof(char),3,RFILE) != 3) {
                 perror("rApendPost: can't write record seperator");
         }
 
@@ -572,10 +572,10 @@ unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, c
 	return offset;
 }
 
-int rReadSummary_post(const unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[], 	int fd) {
+int rReadSummary_post(const unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize, int fd) {
 
 	#ifdef DEBUG
-		printf("rReadSummary_post(DocID=%u, radress64bit=%u, rsize=%hu,subname=\"%s\"\n",DocID,radress64bit,rsize,subname);
+		printf("rReadSummary_post(DocID=%u, radress64bit=%u, rsize=%hu\n",DocID,radress64bit,rsize);
 	#endif
 
         #ifdef TIME_DEBUG_L
@@ -816,7 +816,7 @@ int rReadSummary(const unsigned int DocID,char **metadesc, char **title, char **
 	if ((fd = lotOpenFileNoCashel(DocID,"summary","rb",'s',subname)) == -1) {
 		return 0;
 	}
-	ret = rReadSummary_post(DocID,metadesc,title,body,radress64bit,rsize,subname,fd);
+	ret = rReadSummary_post(DocID,metadesc,title,body,radress64bit,rsize,fd);
 
 	close(fd);
 
@@ -831,7 +831,7 @@ int rReadSummary_l(const unsigned int DocID,char **metadesc, char **title, char 
 		ret = rReadSummary(DocID,metadesc,title,body,radress64bit,rsize,subname);
 	}
 	else {
-		ret = rReadSummary_post(DocID,metadesc,title,body,radress64bit,rsize,subname,fd);
+		ret = rReadSummary_post(DocID,metadesc,title,body,radress64bit,rsize,fd);
 	}
 
 	return ret;
@@ -1624,8 +1624,8 @@ while (rGetNext(LotNr,ReposetoryData)) {
 */
 
 int rGetNext_fh (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
-int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,
-char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, char **attributes) {
+int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime,
+char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, char **attributes) {
 
 	//global variabel for rGetNext
 	unsigned int startOffset,stoppOffset;
@@ -1790,7 +1790,7 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, 
 		}
 	}
 
-	found = rGetNext_fh(LotNr, ReposetoryHeader, htmlbuffer, htmlbufferSize, imagebuffer, radress, FilterTime, FileOffset, subname, acl_allowbuffer, acl_deniedbuffer, LotFileOpen, url, attributes);
+	found = rGetNext_fh(LotNr, ReposetoryHeader, htmlbuffer, htmlbufferSize, imagebuffer, radress, FilterTime, acl_allowbuffer, acl_deniedbuffer, LotFileOpen, url, attributes);
 
 
 	if (!found) {
@@ -1971,6 +1971,7 @@ int anchorIndexRead(unsigned int DocID, char *subname, off_t *offset) {
 }
 
 
+#ifndef BLACK_BOX
 //legger til en "anchor" (tekst på link)
 void anchoraddnew(unsigned int DocID, char *text, size_t textsize, char *subname, char *filename) {
         FILE *ANCHORFILE;
@@ -2021,8 +2022,9 @@ void anchoraddnew(unsigned int DocID, char *text, size_t textsize, char *subname
 	fclose(ANCHORFILE);
 	free(newtext);
 }
+#endif
 
-
+#ifndef BLACK_BOX
 //legger til en "anchor" (tekst på link)
 void anchoradd(unsigned int DocID,char *text,int textsize,char subname[], char *filename) {
         FILE *ANCHORFILE;
@@ -2045,7 +2047,9 @@ void anchoradd(unsigned int DocID,char *text,int textsize,char subname[], char *
         fwrite("***",sizeof(char),3,ANCHORFILE);
 
 }
+#endif
 
+#ifndef BLACK_BOX
 int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsigned int *radress,unsigned int *rsize,char subname[]) {
 
         //global variabel for rGetNext
@@ -2105,8 +2109,9 @@ int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsi
         }
 
 }
+#endif
 
-
+#ifndef BLACK_BOX
 int anchorGetNextnew(int LotNr,unsigned int *DocID,char *text,int textlength, unsigned int *radress,unsigned int *rsize,char *subname, off_t *offset) {
 	static FILE *LotFileOpen;
 	static int LotOpen = -1;
@@ -2151,7 +2156,9 @@ int anchorGetNextnew(int LotNr,unsigned int *DocID,char *text,int textlength, un
 
 	return 0;
 }
+#endif
 
+#ifndef BLACK_BOX
 int
 anchorRead(int LotNr, char *subname, unsigned int DocID, char *text, int len)
 {
@@ -2218,6 +2225,7 @@ anchorRead(int LotNr, char *subname, unsigned int DocID, char *text, int len)
 	fclose(fp);
 	return 0;
 }
+#endif
 
 void addResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t resourcelen) {
 	char FileName[1024];
@@ -2332,6 +2340,8 @@ void addNewUrlOpen(struct addNewUrlhaFormat *addNewUrlha,int lotNr, char openmod
 	}
 }
 
+
+#ifndef BLACK_BOX
 void addNewUrl (struct addNewUrlhaFormat *addNewUrlha, struct updateFormat *updatePost) {
         SHA1Context sha;
 	int err;
@@ -2368,4 +2378,4 @@ void addNewUrl (struct addNewUrlhaFormat *addNewUrlha, struct updateFormat *upda
 	fwrite(updatePost,sizeof(struct updateFormat),1,(*addNewUrlha).NYEURLER);
 
 }
-
+#endif

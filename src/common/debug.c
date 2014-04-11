@@ -5,10 +5,9 @@
 
 #include "debug.h"
 
+#ifdef DEBUG
+
 void debug(const char *fmt, ...) {
-
-        #ifdef DEBUG
-
 
         va_list     ap;
 
@@ -18,20 +17,11 @@ void debug(const char *fmt, ...) {
                 vprintf(fmt,ap);
                 printf("\n");
 
-
-
-
         va_end(ap);
-
-        #endif
 
 }
 
-
 void bwarn(const char *fmt, ...) {
-
-        #ifdef DEBUG
-
 
         va_list     ap;
 
@@ -41,12 +31,8 @@ void bwarn(const char *fmt, ...) {
                 vprintf(fmt,ap);
                 printf("\n");
 
-
-
-
         va_end(ap);
 
-	//kansje skrive det til fil?
-        #endif
-
 }
+
+#endif

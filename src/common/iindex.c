@@ -68,7 +68,7 @@ void IIndexInaliser() {
 }
 
 //laster ordbken i minne
-void IIndexLoad (char Type[], char lang[],char subname[]) {
+void IIndexLoad (char subname[]) {
 	int i,y,x;
 	char FilePath[255];
 	char IndexPath[255];
@@ -193,7 +193,7 @@ int compare_DictionaryMemoryElements (const void *p1, const void *p2) {
 }
 
 //ToDo: bruker ikke subname her enda. Må spesifisere det når vi loader
-int ReadIIndexRecordFromMemeory (unsigned int *Adress, unsigned int *SizeForTerm, unsigned int Query_WordID,char *IndexType, char *IndexSprok,unsigned int WordIDcrc32,char subname[], void *(filemap)(char *, size_t *)) {
+int ReadIIndexRecordFromMemeory (unsigned int *Adress, unsigned int *SizeForTerm,char *IndexType, char *IndexSprok,unsigned int WordIDcrc32,char subname[], void *(filemap)(char *, size_t *)) {
 
 	int iindexfile;
 	struct DictionaryFormat *DictionaryPost;
@@ -265,6 +265,7 @@ int ReadIIndexRecordFromMemeory (unsigned int *Adress, unsigned int *SizeForTerm
 		return 0;
 	}
 }
+
 /////////////////////////////////////////////////////////////////////
 // Finner indeks adressen til en term, ved å binærsøke ordboken
 /////////////////////////////////////////////////////////////////////
@@ -519,7 +520,7 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	#endif
 
 	#ifdef EXPLAIN_RANK
-		printf("_GetIndexAsArray( AntallTeff: %i, IndexType: \"%s\", IndexSprok:\"%s\", subname: \"%s\", languageFilterNr: %i )\n",*AntallTeff,IndexType,IndexSprok,subname,languageFilterNr);
+		printf("_GetIndexAsArray( AntallTeff: %i, IndexType: \"%s\", IndexSprok:\"%s\", subname: \"%s\", languageFilterNr: %i )\n",*AntallTeff,IndexType,IndexSprok,(*subname).subname,languageFilterNr);
 	#endif
 
 
@@ -531,7 +532,7 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	//(*AntallTeff) = 0;
 
 	//prøver førs å lese fra minne
-	if ((!ReadIIndexRecordFromMemeory(&Adress, &SizeForTerm,WordIDcrc32,IndexType,IndexSprok,WordIDcrc32,(*subname).subname,filemap))
+	if ((!ReadIIndexRecordFromMemeory(&Adress, &SizeForTerm,IndexType,IndexSprok,WordIDcrc32,(*subname).subname,filemap))
 	&& (!ReadIIndexRecord(&Adress, &SizeForTerm,WordIDcrc32,IndexType,IndexSprok,WordIDcrc32,(*subname).subname))
 	) {
 
@@ -840,7 +841,7 @@ void _GetNForTerm(unsigned int WordIDcrc32, char *IndexType, char *IndexSprok, i
 		unsigned int Antall;
 		FILE *fileha;		    
 
-		if ((!ReadIIndexRecordFromMemeory(&Adress, &SizeForTerm,WordIDcrc32,IndexType,IndexSprok,WordIDcrc32,(*subname).subname, filemap))
+		if ((!ReadIIndexRecordFromMemeory(&Adress, &SizeForTerm,IndexType,IndexSprok,WordIDcrc32,(*subname).subname, filemap))
 		&& (!ReadIIndexRecord(&Adress, &SizeForTerm,WordIDcrc32,IndexType,IndexSprok,WordIDcrc32,(*subname).subname))
 		) {
 			(*TotaltTreff) = 0;

@@ -18,6 +18,10 @@ sigchild_handler(int sig, siginfo_t *sip, void *extra)
 	pid_t child = sip->si_pid;
 	int status;
 
+	if (extra!= NULL) {
+		// We are just using extra her so gcc won't complain about unused parameters
+	}
+
 	if (sig != SIGCHLD) {
 		fprintf(stderr,"sigchild_handler() ble calt med noe som ikke var SIGCHLD (%d), men sig %d\n",SIGCHLD,sig);
 		fprintf(stderr,"signal stacken må ha blirr korypt. Exiter.\n");

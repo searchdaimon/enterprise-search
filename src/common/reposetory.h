@@ -78,8 +78,8 @@ int rGetNext (unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader
 
 
 int rGetNext_fh (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],
-		int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,
-		char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, char **attributes);
+		int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, 
+		char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, char **attributes);
 
 int runpack(char *ReposetoryData,uLong comprLen,char *inndata,int length);
 int rReadSummary(unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[]);
@@ -88,6 +88,7 @@ int rReadSummary_l(const unsigned int DocID,char **metadesc, char **title, char 
 void risave (int DocID, char *image, int size,char subname[]);
 
 //anchor
+#ifndef BLACK_BOX
 void anchoradd(unsigned int DocID,char *text,int textsize,char subname[], char *);
 int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsigned int *radress,unsigned int *rsize,char subname[]);
 
@@ -98,6 +99,7 @@ int anchorGetNextnew(int,unsigned int *,char *,int, unsigned int *,unsigned int 
 void anchoraddnew(unsigned int, char *, size_t, char *, char *);
 int anchorIndexWrite(unsigned int, char *, off_t);
 int anchorIndexRead(unsigned int, char *, off_t *);
+#endif
 
 /* Resource */
 void addResource(int LotNr, char *subname, unsigned int DocID, char *resource, size_t resourcelen);

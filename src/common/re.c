@@ -31,7 +31,7 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 	struct reformat *re = NULL;
 	char openmode[4];
 	int mmapmode;
-	int i;
+	size_t i;
 	int stretch = 0;
 
 	#ifdef DEBUG

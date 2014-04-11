@@ -36,11 +36,11 @@ double sqr( double d )
 }
 
 
-struct
+typedef struct
 {
     int		ant;
     char	code[3];
-} typedef char3;
+} char3;
 
 char3 new_char3( const char *c )
 {
@@ -54,11 +54,11 @@ char3 new_char3( const char *c )
     return c3;
 }
 
-struct
+typedef struct
 {
     int		size, maxsize;
     char3	*data;
-} typedef _c_vector_char3;
+} _c_vector_char3;
 
 _c_vector_char3 _c_vector_char3_init()
 {
@@ -97,11 +97,11 @@ void _c_vector_char3_push_back( _c_vector_char3 *V, char3 D )
 }
 
 
-struct
+typedef struct
 {
     unsigned int	key;
     _c_vector_char3	iso639_code;
-} typedef _dict_elem;
+} _dict_elem;
 
 
 int _dict_elem_compare( const void *_a, const void *_b )
@@ -125,11 +125,11 @@ struct _mapnode
     _c_vector_char3	iso639_code;
 };
 
-struct
+typedef struct
 {
     _mapnode		*root;
     int			size;
-} typedef _maproot;
+} _maproot;
 
 
 _maproot* _map_init()

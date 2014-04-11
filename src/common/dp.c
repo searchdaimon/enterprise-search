@@ -5,53 +5,42 @@
 
 #ifdef WITH_THREAD
         #include <pthread.h>
-#endif
 
 
 #define dp_devises 63
 
-#ifdef WITH_THREAD
-	static pthread_mutex_t locks[dp_devises];
-#endif
+static pthread_mutex_t locks[dp_devises];
 
 void dp_init() {
 
-	#ifdef WITH_THREAD
-		int i;
+	int i;
 
-		for(i=0;i<dp_devises;i++) {
-			pthread_mutex_init(&locks[i], NULL);
-		}
-	#endif
+	for(i=0;i<dp_devises;i++) {
+		pthread_mutex_init(&locks[i], NULL);
+	}
 }
 
 int dp_lock(int lot) {
 
-	#ifdef WITH_THREAD
-		int dev = GetDevIdForLot(lot);
+	int dev = GetDevIdForLot(lot);
 
-		#ifdef DEBUG
-			printf("looking lot %i, dev %i\n",lot,dev);
-		#endif
-
-        	return pthread_mutex_lock(&locks[dev]);
-	#else
-		return 0;
+	#ifdef DEBUG
+		printf("looking lot %i, dev %i\n",lot,dev);
 	#endif
+
+       	return pthread_mutex_lock(&locks[dev]);
 }
 
 
 int dp_unlock(int lot) {
 
-	#ifdef WITH_THREAD
-		int dev = GetDevIdForLot(lot);
+	int dev = GetDevIdForLot(lot);
 
-		#ifdef DEBUG
-			printf("UNlooking lot %i, dev %i\n",lot,dev);
-		#endif
-
-        	return pthread_mutex_unlock(&locks[dev]);
-	#else
-		return 0;
+	#ifdef DEBUG
+		printf("UNlooking lot %i, dev %i\n",lot,dev);
 	#endif
+
+       	return pthread_mutex_unlock(&locks[dev]);
 }
+
+#endif

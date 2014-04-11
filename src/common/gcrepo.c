@@ -50,7 +50,7 @@ int gcrepo(int LotNr, char *subname) {
         }
 
 
-	while (rGetNext_fh(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&raddress,0,0,subname,&acl_allow,&acl_deny, FNREPO ,&url, &attributes)) {
+	while (rGetNext_fh(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&raddress,0,&acl_allow,&acl_deny, FNREPO ,&url, &attributes)) {
 
 
 		#ifdef DEBUG

@@ -7,12 +7,12 @@ ToDo: trenger en "close" prosedyre for filhandlerene.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#ifndef WITHOUT_DIWRITE_FSYNC
-	#include <unistd.h>
-#endif
-
+#include "bstr.h"
 #include "dp.h"
+
 //skrur av filcashn da vi deiver å segge feiler med den
 //#define DI_FILE_CASHE
 
@@ -351,7 +351,7 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
         }
 }
 
-int DIRead_post_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID, int file) {
+int DIRead_post_i(struct DocumentIndexFormat *DocumentIndexPost, int file) {
 
 	int forReturn = 0;
 
@@ -386,10 +386,10 @@ int DIRead_post_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID, int 
 		
 }
 
-int DIRead_post_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID, FILE *file) {
+int DIRead_post_fh(struct DocumentIndexFormat *DocumentIndexPost, FILE *file) {
 
 	#ifdef DEBUG
-		printf("DIRead_post_fh(DocID=%i)\n",DocID);
+		printf("DIRead_post_fh()\n");
 	#endif
 
 	int forReturn = 0;
@@ -442,7 +442,7 @@ int DIRead_fmode (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char 
 
 	if ((file = GetFileHandler(DocID,filemode,subname, NULL)) != NULL) {
 
-		if (DIRead_post_fh(DocumentIndexPost,DocID,file)) {
+		if (DIRead_post_fh(DocumentIndexPost,file)) {
 			forReturn = 1;
 		}
 
@@ -494,7 +494,7 @@ int DIRead_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subn
 			exit(1);
 		}
 
-		if (DIRead_post_fh(DocumentIndexPost,DocID,file)) {
+		if (DIRead_post_fh(DocumentIndexPost,file)) {
 			forReturn = 1;
 		}
 		#ifdef DISK_PROTECTOR
@@ -534,7 +534,7 @@ int DIRead_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subna
 			perror("Can't lseek");
 			forReturn = 0;
 		}
-		else if (DIRead_post_i(DocumentIndexPost,DocID,file)) {
+		else if (DIRead_post_i(DocumentIndexPost,file)) {
 			forReturn = 1;
 		}
 		#ifdef DISK_PROTECTOR
@@ -565,5 +565,5 @@ int DIRead (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subnam
 
 //stenger ned filer
 void DIClose(FILE *DocumentIndexHA) {
-//	fclose(DocumentIndexHA);
+	fclose(DocumentIndexHA);
 }

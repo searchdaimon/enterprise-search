@@ -2,7 +2,7 @@
 #include <string.h>                         
 
 size_t _append(char *buff, size_t buffn, const char *str) {
-	int i = 0;                                         
+	size_t i = 0;                                         
 	for (; i < strlen(str); i++) {                     
 		if (i >= buffn)                            
 			return i - 1;
@@ -13,8 +13,8 @@ size_t _append(char *buff, size_t buffn, const char *str) {
 
 size_t escapeHTML(char *buff, size_t buffn, const char *str) {
 
-	int i = 0, pos = 0;
-	int strl = strlen(str);
+	size_t i = 0, pos = 0;
+	size_t strl = strlen(str);
 	for (; i < strl; i++, pos++) {
 		if (pos >= buffn) {
 			buff[pos] = '\0';

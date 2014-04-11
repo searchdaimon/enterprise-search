@@ -29,7 +29,7 @@ void _GetNForTerm(unsigned int WordIDcrc32, char *IndexType, char *IndexSprok, i
 
 
 
-void IIndexLoad (char Type[], char lang[],char subname[]);
+void IIndexLoad (char subname[]);
 
 void IIndexInaliser();
 
