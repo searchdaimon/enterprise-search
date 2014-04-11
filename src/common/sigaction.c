@@ -13,14 +13,10 @@
 #include <string.h>
 
 void
-sigchild_handler(int sig, siginfo_t *sip, void *extra)
+sigchild_handler(int sig, siginfo_t *sip, void __attribute__((unused))*extra)
 {
 	pid_t child = sip->si_pid;
 	int status;
-
-	if (extra!= NULL) {
-		// We are just using extra her so gcc won't complain about unused parameters
-	}
 
 	if (sig != SIGCHLD) {
 		fprintf(stderr,"sigchild_handler() ble calt med noe som ikke var SIGCHLD (%d), men sig %d\n",SIGCHLD,sig);
