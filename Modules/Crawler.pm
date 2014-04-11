@@ -34,14 +34,23 @@ sub add_document {
 
 	    my $attrstr = q{};
 	    while (my ($k, $v) = each %{$params{attributes}}) {
-		    next unless defined $v;
-		    next if $v eq '';
+            next unless defined $v;
 
-		    $v =~ s/[,=]/ /g; #remove all , and = because they are used as seperators.
-		    $attrstr .= "$k=$v,";
-	    }
-	    chop($attrstr); #remove last ","
-	    $params{attributes} = $attrstr;
+            # If it is an array if key, make "key=val1,key=val2,key=val3"
+            if (ref($v) eq  "ARRAY") {
+                foreach my $i (@{ $v }) {
+                    $i =~ s/[,=]/ /g; #remove all , and = because they are used as seperators.
+                    $attrstr .= "$k=$i,";
+                }
+            }
+            else {
+    		    next if $v eq '';
+    		    $v =~ s/[,=]/ /g; #remove all , and = because they are used as seperators.
+          	    $attrstr .= "$k=$v,";
+            }
+        }
+        chop($attrstr); #remove last ","
+        $params{attributes} = $attrstr;
     }
 
 # run
