@@ -398,22 +398,22 @@ int main (int argc, char *argv[]) {
 		printf("Cant read post\n");
 	}
 
-	if (optAnchor) {
-		int anchorBufferSize;
-		char *anchorBuffer;
+	#ifndef BLACK_BOX
+		if (optAnchor) {
+			int anchorBufferSize;
+			char *anchorBuffer;
 	
-		anchorBufferSize = anchorRead(rLotForDOCid(DocID),subname,DocID,NULL,-1);
-		anchorBufferSize += 1;
-		anchorBuffer = malloc(anchorBufferSize);
-		anchorRead(rLotForDOCid(DocID),subname,DocID,anchorBuffer,anchorBufferSize);
+			anchorBufferSize = anchorRead(rLotForDOCid(DocID),subname,DocID,NULL,-1);
+			anchorBufferSize += 1;
+			anchorBuffer = malloc(anchorBufferSize);
+			anchorRead(rLotForDOCid(DocID),subname,DocID,anchorBuffer,anchorBufferSize);
 
-		printf("#######################################\nanchors:\n%s\n#######################################\n",anchorBuffer);
+			printf("#######################################\nanchors:\n%s\n#######################################\n",anchorBuffer);
 
-		free(anchorBuffer);
-	}
+			free(anchorBuffer);
+		}
+	
 
-
-		#ifndef BLACK_BOX
 
 		if (optPopRank) {
 			popopen (&popindex,"/home/boitho/config/popindex");
@@ -467,7 +467,7 @@ int main (int argc, char *argv[]) {
 				fclose(FH);
 			}
 		} // if optPopRank
-		#endif
+	#endif
 
 
 }

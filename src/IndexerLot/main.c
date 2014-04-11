@@ -1,3 +1,7 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <zlib.h>
@@ -14,7 +18,7 @@
 #include "../common/define.h"
 #include "../common/langdetect.h"
 #include "../common/reposetoryNET.h"
-
+#include "../common/gc.h"
 #include "../common/crc32.h"
 #include "../common/gcrepo.h"
 #include "../common/gcsummary.h"
@@ -98,7 +102,6 @@ struct IndexerLot_workthreadFormat {
 	int lotNr;
 	char *subname;
         unsigned int FiltetTime;
-        unsigned int FileOffset;
 	FILE *revindexFilesHa[NrOfDataDirectorys];
 	#ifdef IIACL
 	FILE *acl_allowindexFilesHa[NrOfDataDirectorys];
@@ -577,7 +580,7 @@ int getNextPage(struct IndexerLot_workthreadFormat *argstruct,char htmlcompressd
 		 forreturn = 0;
 	}
 	else if (rGetNext_fh((*argstruct).lotNr,ReposetoryHeader,htmlcompressdbuffer,htmlcompressdbuffer_size,
-			imagebuffer,radress,(*argstruct).FiltetTime,(*argstruct).FileOffset,(*argstruct).subname,acl_allow,acl_denied,argstruct->FNREPO, url, attributes)) {
+			imagebuffer,radress,(*argstruct).FiltetTime,acl_allow,acl_denied,argstruct->FNREPO, url, attributes)) {
 
 
 		++(*argstruct).pageCount;
@@ -1426,7 +1429,6 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 	int lotPart;
 	int flags;
         unsigned int FiltetTime;
-        unsigned int FileOffset;
 	//char lotServer[64];
 	struct iintegerFormat iinteger;
 	off_t DocIDPlace;	
@@ -1465,9 +1467,6 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 	for(i=0;i<nrOfHttpResponsCodes;i++) {
 		argstruct->httpResponsCodes[i] = 0;
 	}
-
-	//temp: må hente dette fra lot server eller fil
-	FileOffset = 0;
 
 
 	argstruct->pageCount = 0;
@@ -1752,7 +1751,6 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		argstruct->lotNr 		= lotNr;
 		argstruct->subname 		= subname;
         	argstruct->FiltetTime 		= FiltetTime;
-        	argstruct->FileOffset 		= FileOffset;
 		argstruct->optMaxDocuments	= opt->MaxDocuments;
 		argstruct->optPrintInfo		= opt->PrintInfo;
 		argstruct->optOnlyTLD		= opt->OnlyTLD;

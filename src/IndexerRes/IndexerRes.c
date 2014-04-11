@@ -65,6 +65,7 @@ void wordsReset(struct pagewordsFormat *pagewords,unsigned int DocID) {
 
 }
 
+#ifndef BLACK_BOX
 void linksWrite(struct pagewordsFormat *pagewords,struct addNewUrlhaFormat addNewUrlha[]) {
 	int i, len;
 
@@ -99,8 +100,9 @@ void linksWrite(struct pagewordsFormat *pagewords,struct addNewUrlhaFormat addNe
 	}
 
 }
+#endif
 
-
+#ifndef BLACK_BOX
 void linkwordadd(struct pagewordsFormat *pagewords, char word[]) {
 
 
@@ -136,6 +138,7 @@ void linkwordadd(struct pagewordsFormat *pagewords, char word[]) {
 	}
 
 }
+#endif
 
 #ifdef BLACK_BOX
 void acladd(struct IndexerRes_acls *acl, char word[]) {

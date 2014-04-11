@@ -14,7 +14,7 @@
 #include "../common/boithohome.h"
 #include "../common/logs.h"
 #include "../common/time.h"
-
+#include "../common/debug.h"
 #include "../common/iindex.h"
 #include "../common/gc.h"
 #include "../common/gcrepo.h"

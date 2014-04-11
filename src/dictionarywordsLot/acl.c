@@ -3,6 +3,8 @@
 #include <unistd.h>
 
 #include "../common/bstr.h"
+#include "../common/strlcpy.h"
+#include "../common/stdlib.h"
 #include "../common/define.h"
 #include "../3pLibs/keyValueHash/hashtable.h"
 #include "set.h"
