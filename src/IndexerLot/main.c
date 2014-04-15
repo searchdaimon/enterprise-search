@@ -198,7 +198,6 @@ struct acllotFormat {
 
 struct attriblotFormat {
 	char subname[maxSubnameLength];
-	char openmode[4];
 	container *words;
 	// Alt gÃ¥r i lot 1.
 };
@@ -372,11 +371,10 @@ void acllot_add(struct acllotFormat *acllot,char acl[]) {
  */
 
 // InitialisÃ©r mapping-fil mellom crc32 og attributter:
-void attriblot_init(struct attriblotFormat **attriblot, char *subname, char *openmode)
+void attriblot_init(struct attriblotFormat **attriblot, char *subname)
 {
     (*attriblot) = malloc(sizeof(struct attriblotFormat));
     strcpy((*attriblot)->subname, subname);
-    strcpy((*attriblot)->openmode, openmode);
 
     (*attriblot)->words = set_container( string_container() );
 }
@@ -384,7 +382,7 @@ void attriblot_init(struct attriblotFormat **attriblot, char *subname, char *ope
 // Skriv mapping mellom crc32 og attributter til disk:
 void attriblot_close(struct attriblotFormat *attriblot)
 {
-    FILE	*fp = lotOpenFileNoCasheByLotNr(1, "crc32attr.map", attriblot->openmode, 'e', attriblot->subname);
+    FILE	*fp = lotOpenFileNoCasheByLotNr(1, "crc32attr.map", "ab", 'e', attriblot->subname);
     iterator	it = set_begin(attriblot->words);
     container	*mapping = map_container( int_container(), string_container() );
 
@@ -1528,7 +1526,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			#ifdef ATTRIBUTES
 			// Åpne reversert index:
 			revindexFilesOpenLocal(argstruct->attribindexFilesHa,lotNr,"attributes","wb",subname);
-			attriblot_init(&argstruct->attriblot,subname,openmode);
+			attriblot_init(&argstruct->attriblot,subname);
 
 			// Initialiser og åpne vanlig index:
 
