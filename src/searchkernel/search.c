@@ -1578,6 +1578,9 @@ void *searchIndex_thread(void *arg)
 			}
 
 			if(!empty_search_query) {
+				#ifdef DEBUG_II
+					bblog(DEBUGINFO, "Doing attribute filtering:");
+				#endif
 				for (j=0; j<(*searchIndex_thread_arg).attrib_count; j++) {
 
 					for (x=start,y=0; x<ArrayLen; x++) {
@@ -1593,6 +1596,10 @@ void *searchIndex_thread(void *arg)
 						    {
 							iff_set_filter(&Array->iindex[x].indexFiltered, FILTER_ATTRIBUTE);
 						        Array->iindex[x].indexFiltered.attrib[j] = 1;
+
+							#ifdef DEBUG_II
+								printf("Filtered: Array.DocID %u, tmpAttribArray.DocID %u\n",Array->iindex[x].DocID,tmpAttribArray[j]->iindex[y].DocID);
+							#endif
 						    }
 					}
 
@@ -1615,7 +1622,7 @@ void *searchIndex_thread(void *arg)
 			for (y = 0; y < ArrayLen; y++) {
 				bblog(DEBUGINFO, "TeffArray: DocID %u, filtered %d, Hits (%i): ", Array->iindex[y].DocID,Array->iindex[y].indexFiltered.is_filtered,Array->iindex[y].TermAntall);
 				for (x=0;x<Array->iindex[y].TermAntall;x++) {
-					bblog(DEBUGINFO, "\t%hu", Array->iindex[y].hits[x]);
+					bblog(DEBUGINFO, "\t\t%hu", Array->iindex[y].hits[x]);
 				}
 			}
 			#endif
@@ -1999,13 +2006,19 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
         (*queryTime).MainAnchorMerge = getTimeDifference(&start_time,&end_time);
 
 	#ifdef DEBUG_II
-		//debug: printer ut alle treff, og litt om de.
 		bblog(DEBUGINFO, "hits befoe filters:");
-		bblog(DEBUGINFO, "\t| %-5s | %-20s |", "DocID", "Subname");
+		bblog(DEBUGINFO, "\t| %-5s | %-20s | %-8s | %-8s | %-8s | %-8s | %-8s | %-8s | %-8s |",  "DocId", "Subname", "Date", "Subname", "Filename", "dup", "dup_c", "attr", "fltr");
 		for (i = 0; (i < (*TeffArrayElementer)) && (i < 100); i++) {
-			bblog(DEBUGINFO, "\t| %-5u | %-20s |", 
+			bblog(DEBUGINFO, "\t| %-5u | %-20s | %-8d | %-8d | %-8d | %-8d | %-8d | %-8d | %-8d |", 
 				(*TeffArray)->iindex[i].DocID,
-				(*(*TeffArray)->iindex[i].subname).subname
+				(*(*TeffArray)->iindex[i].subname).subname,
+				(*TeffArray)->iindex[i].indexFiltered.date,
+				(*TeffArray)->iindex[i].indexFiltered.subname,
+				(*TeffArray)->iindex[i].indexFiltered.filename,
+				(*TeffArray)->iindex[i].indexFiltered.duplicate,
+				(*TeffArray)->iindex[i].indexFiltered.duplicate_in_collection,
+				(*TeffArray)->iindex[i].indexFiltered.attribute,
+				(*TeffArray)->iindex[i].indexFiltered.is_filtered
 			);
 		}
 	#endif
