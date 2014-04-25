@@ -25,7 +25,7 @@
 #ifdef BLACK_BOX
 	#define maxWordForPage 40000
 	#define maxAclForPage 150
-	#define maxAttribForPage 20
+	#define maxAttribForPage 1000
 #else
 	#define maxWordForPage 4000
 #endif
