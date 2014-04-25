@@ -1323,6 +1323,11 @@ attributes_test:
 
 	$(CC) src/common/attributes.c -D_ATTRIB_TEST_ -o bin/attributes_test
 
+common:
+	@echo ""
+	@echo "$@:"
+	(cd src/common && make clean)
+	(cd src/common && make)
 
 #kopierer filer slik at de blir tilgjengelig fra web
 webpublish:
