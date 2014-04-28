@@ -18,6 +18,7 @@ struct attr_group
     char 	flags;
     enum attr_sort_enum	sort;
     int		max_items;
+    int		max_sub_items;
 };
 
 struct attr_select

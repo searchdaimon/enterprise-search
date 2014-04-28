@@ -160,6 +160,7 @@ struct _attr_tree_
     enum attr_sort_enum sort;
     char	sort_reverse, free_name, free_value;
     int		max_items;
+    int		max_sub_items;
 };
 
 struct _attr_ret_
@@ -197,7 +198,6 @@ struct _attr_tree_* _attribute_tree_malloc_()
     this_item->show_empty = 1;
     this_item->sort = sort_none;
     this_item->sort_reverse = 0;
-    this_item->max_items = -1;
 
     return this_item;
 }
@@ -420,7 +420,8 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 			    this_item->sort_reverse = G->flags & sort_reverse;
 			    this_item->show_empty = G->flags & show_empty;
 			    this_item->max_items = G->max_items;
-
+			    this_item->max_sub_items = G->max_sub_items;
+printf("max_sub_items: %d\n", this_item->max_sub_items);
 			    (*container_id)++; // NB! Will fail miserably for recursive container-groups.
 			    this_item->container_id = *container_id;
 			    //printf("  Container #id: %i\n", this_item->container_id);
@@ -757,11 +758,13 @@ void _attribute_sort_items_(container **X, enum attr_sort_enum sort, char sort_r
 }
 
 
-void _attribute_print_and_delete_tree_xml_(buffer *bout, container *X, int indent, int max_items)
+void _attribute_print_and_delete_tree_xml_(buffer *bout, container *X, int indent, int max_items, int max_sub_items, int depth)
 {
     if (X==NULL) return;
 
     int		i, j;
+
+    ++depth;
 
     for (i=0; i<vector_size(X); i++)
 	{
@@ -771,7 +774,7 @@ void _attribute_print_and_delete_tree_xml_(buffer *bout, container *X, int inden
 		{
 		    if (item->children!=NULL)
 			{
-			    _attribute_print_and_delete_tree_xml_(bout, item->children, -1, item->max_items);
+			    _attribute_print_and_delete_tree_xml_(bout, item->children, -1, max_items, max_sub_items, depth);
 			}
 
 		    if (item->free_value) free(item->value);
@@ -783,8 +786,7 @@ void _attribute_print_and_delete_tree_xml_(buffer *bout, container *X, int inden
 		    continue;
 		}
 
-
-	    if (max_items > 0 && i>=max_items)
+	    if ((depth!=3 && max_items>0 && i>=max_items) || (depth==3 && max_sub_items>0 && i>=max_sub_items))
 		{
 		    if (i==max_items)
 			{
@@ -821,7 +823,7 @@ void _attribute_print_and_delete_tree_xml_(buffer *bout, container *X, int inden
 		    if (item->children!=NULL)
 			{
 			    bprintf(bout, ">\n");
-			    _attribute_print_and_delete_tree_xml_(bout, item->children, indent+4, item->max_items);
+			    _attribute_print_and_delete_tree_xml_(bout, item->children, indent+4, max_items, max_sub_items, depth);
 			    for (j=0; j<indent; j++) bprintf(bout, " ");
 			    bprintf(bout, "</group>\n");
 			}
@@ -837,10 +839,11 @@ void _attribute_print_and_delete_tree_xml_(buffer *bout, container *X, int inden
 	}
 }
 
-void _attribute_print_and_delete_tree_json_(container *X, int indent, int max_items, JsonNode *root)
+void _attribute_print_and_delete_tree_json_(container *X, int indent, int max_items, int max_sub_items, int depth, JsonNode *root)
 {
     if (X==NULL) return;
 
+    ++depth;
 
     int		i, j;
     JsonNode *jsonitems = NULL;
@@ -858,7 +861,7 @@ void _attribute_print_and_delete_tree_json_(container *X, int indent, int max_it
 		{
 		    if (item->children!=NULL)
 			{
-			    _attribute_print_and_delete_tree_json_(item->children, -1, item->max_items, jsonitem);
+			    _attribute_print_and_delete_tree_json_(item->children, -1, max_items, max_sub_items, depth, jsonitem);
 			}
 
 		    if (item->free_value) free(item->value);
@@ -871,7 +874,8 @@ void _attribute_print_and_delete_tree_json_(container *X, int indent, int max_it
 		}
 
 
-	    if (!(max_items > 0 && i>=max_items))
+
+	    if (!((depth!=3 && max_items>0 && i>=max_items) || (depth==3 && max_sub_items>0 && i>=max_sub_items)))
 		{
 		    char buf[1024];
 
@@ -892,7 +896,7 @@ void _attribute_print_and_delete_tree_json_(container *X, int indent, int max_it
 
 		    if (item->children!=NULL)
 			{
-			    _attribute_print_and_delete_tree_json_(item->children, indent+4, item->max_items, jsonitem);
+			    _attribute_print_and_delete_tree_json_(item->children, indent+4, max_items, max_sub_items, depth, jsonitem);
 
 			}
 		}
@@ -1008,7 +1012,7 @@ char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf 
 
     if (outformat==_OUT_FOMRAT_SD_JSON) {
         JsonNode *root = json_mkobject();
-        _attribute_print_and_delete_tree_json_(ret.C, 4, showattrp->max_items, root);
+        _attribute_print_and_delete_tree_json_(ret.C, 4, showattrp->max_items, showattrp->max_sub_items, 0, root);
         char *tmps = json_stringify(root, "\t");
         bprintf(bout, tmps);
 	    free(tmps);
@@ -1018,7 +1022,7 @@ char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf 
         bsprint_query_with_remove(bout, NULL, qa, 1);
         bprintf(bout, "\">\n");
 
-        _attribute_print_and_delete_tree_xml_(bout, ret.C, 4, showattrp->max_items);
+        _attribute_print_and_delete_tree_xml_(bout, ret.C, 4, showattrp->max_items, showattrp->max_sub_items, 0);
     }
 
     free(container_id);

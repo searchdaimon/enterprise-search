@@ -25,6 +25,7 @@ hide			{ return HIDE_ID; }
 show.duplicates		{ /* ignore */ }
 show.empty		{ return SHOW_EMPTY_ID; }
 show.max		{ return SHOW_MAX_ID; }
+show.max_sub		{ return SHOW_MAX_SUB_ID; }
 sort.reverse		{ return SORT_REVERSE_ID; }
 build_groups[^\n]*	{ /* ignore */ }
 sort			{ return SORT_ID; }
