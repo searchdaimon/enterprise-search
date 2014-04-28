@@ -18,15 +18,9 @@
 #include "show_attributes.h"
 #include "show_attributes_common.h"
 
-
-// --- fra flex:
-typedef void* yyscan_t;
-typedef struct rac_buffer_state *YY_BUFFER_STATE;
-YY_BUFFER_STATE rac_scan_bytes( const char *bytes, int len, yyscan_t yyscanner );
-struct rac_yy_extra *racget_extra( yyscan_t yyscanner );
-//YY_BUFFER_STATE racscan_bytes( const char *bytes, int len, yyscan_t yyscanner );
-
-// ---
+#include "show_attributes.h"
+#include "rac.tab.h"
+#include "lex.rac.h"
 
 
 
@@ -43,6 +37,8 @@ void print_strings( container *V )
     if (i<vector_size(V)) printf(" ...");
 }
 */
+
+
 typedef struct item item;
 
 struct item
@@ -67,6 +63,7 @@ struct rac_yacc_data
     item	*current_item;
     int		failed;
 };
+
 
 %}
 
@@ -622,7 +619,6 @@ void print_recurse_items(item *I, int indent)
 	    print_recurse_items(vector_get(I->child, i).ptr, indent+1);
 	}
 }
-
 
 racerror( struct rac_yacc_data *data, void *yyscan_t, char *s )
 {

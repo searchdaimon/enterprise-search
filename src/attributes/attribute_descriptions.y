@@ -14,12 +14,9 @@
 #define YYSTYPE long int
 #endif
 
-// --- fra flex:
-typedef void* yyscan_t;
-typedef struct adf_buffer_state *YY_BUFFER_STATE;
-YY_BUFFER_STATE adf_scan_bytes( const char *bytes, int len, yyscan_t yyscanner );
-struct adf_yy_extra *adfget_extra( yyscan_t yyscanner );
-// ---
+#include "attribute_descriptions.h"
+#include "adf.tab.h"
+#include "lex.adf.h"
 
 
 static inline int adf_findc(container *V, char *str)
@@ -421,7 +418,6 @@ int adf_get_key_descr(struct adf_data *adata, char *lang, char *key, char **desc
 
     return 1;	// Successful.
 }
-
 
 adferror( struct adf_yacc_data *data, void *yyscan_t, char *s )
 {

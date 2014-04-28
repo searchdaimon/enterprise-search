@@ -39,7 +39,6 @@ void attribute_finish_count()
 void va_attribute_count_add( int size, int count, container *attributes, int argc, va_list *ap )
 {
     ant[0]++;
-    int		i;
     char	*id = va_arg(*ap, char*);
     container	*subattr;
 
@@ -421,7 +420,6 @@ struct _attr_ret_ _attribute_build_tree_(container *attributes, struct attr_grou
 			    this_item->show_empty = G->flags & show_empty;
 			    this_item->max_items = G->max_items;
 			    this_item->max_sub_items = G->max_sub_items;
-printf("max_sub_items: %d\n", this_item->max_sub_items);
 			    (*container_id)++; // NB! Will fail miserably for recursive container-groups.
 			    this_item->container_id = *container_id;
 			    //printf("  Container #id: %i\n", this_item->container_id);
@@ -439,7 +437,6 @@ printf("max_sub_items: %d\n", this_item->max_sub_items);
 			}
 		    case item_import:
 			{
-			    struct attr_import	*I = pair(vector_get(parent->child,i)).second.ptr;
 			    break;
 			}
 		}
@@ -675,7 +672,7 @@ void _attribute_sort_items_(container **X, enum attr_sort_enum sort, char sort_r
 {
     if (*X == NULL) return;
 
-    int		i, j;
+    int		i;
     container	*N = NULL;
 
     /*
@@ -845,7 +842,7 @@ void _attribute_print_and_delete_tree_json_(container *X, int indent, int max_it
 
     ++depth;
 
-    int		i, j;
+    int		i;
     JsonNode *jsonitems = NULL;
     int isgroup = 0;
 
@@ -877,8 +874,6 @@ void _attribute_print_and_delete_tree_json_(container *X, int indent, int max_it
 
 	    if (!((depth!=3 && max_items>0 && i>=max_items) || (depth==3 && max_sub_items>0 && i>=max_sub_items)))
 		{
-		    char buf[1024];
-
 		    if (item->children!=NULL) {
                 isgroup = 1;
 		    }
@@ -923,7 +918,6 @@ void _attribute_print_and_delete_tree_json_(container *X, int indent, int max_it
 container* _attribute_dissect_query_(query_array *qa, int group_filter_id)
 {
     int		i;
-    int		exists = -1;
     container	*A = vector_container( ptr_container() );
     int		acount = 0;
 

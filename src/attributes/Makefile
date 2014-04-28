@@ -1,16 +1,20 @@
 
 CFLAGS= -O2 -g
+# Enable build warinings
+#CFLAGS+= -Wall -W -Wno-unused-parameter
+
+
 yacc=bison
 
 include ../../mk/setup.mk
 
 all:
 	$(yacc) -d -b rac -p rac show_attributes.y
-	flex -f -8 -P rac -i show_attributes.l
+	flex --header-file=lex.rac.h -f -8 -P rac -i show_attributes.l
 	$(CC) $(CFLAGS) -c lex.rac.c
 	$(CC) $(CFLAGS) -c rac.tab.c
 	$(yacc) -d -b adf -p adf attribute_descriptions.y
-	flex -f -8 -P adf -i attribute_descriptions.l
+	flex --header-file=lex.adf.h -f -8 -P adf -i attribute_descriptions.l
 	$(CC) $(CFLAGS) -c lex.adf.c
 	$(CC) $(CFLAGS) -c adf.tab.c
 	$(CC) $(CFLAGS) -c attr_makexml.c
