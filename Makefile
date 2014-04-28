@@ -1329,6 +1329,12 @@ common:
 	(cd src/common && make clean)
 	(cd src/common && make)
 
+attributes:
+	@echo ""
+	@echo "$@:"
+	(cd src/attributes && make clean)
+	(cd src/attributes && make)
+
 #kopierer filer slik at de blir tilgjengelig fra web
 webpublish:
 	cp bin/searchkernel /home/boitho/cgi-bin/v13.3/bin
