@@ -1102,7 +1102,7 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
             bprintf(B, "[\n");
         }
         else {
-	        bprintf(B, "<snippet type=\"db\">\n\t<table>\n");
+	        bprintf(B, "\n\t<snippet type=\"db\">\n\t<table>\n");
         }
 	}
     else if (format == json_format) {
@@ -1349,7 +1349,7 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
         else {
 	        if (table_tab==0) bprintf(B, "</td><td></td></tr>\n");
 	        else if (table_tab==1) bprintf(B, "</td></tr>\n");
-	        bprintf(B, "\t</table>\n</snippet>");
+	        bprintf(B, "\t</table>\n\t</snippet>\n");
         }
 	}
     else
@@ -1367,7 +1367,7 @@ static inline char* print_best_snippet( struct bsg_intern_data *data, char* b_st
             bprintf(B, "\"");
         }
         else {
-	        bprintf(B, "]]>\n");
+	        bprintf(B, "]]>");
         }
 	}
 
@@ -1496,7 +1496,7 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
         bprintf(B, "\"\n");
     }
     else {
-        bprintf(B, "]]>\n");
+        bprintf(B, "]]>");
     }
     return buffer_exit(B);
 }
