@@ -894,6 +894,9 @@ void _attribute_print_and_delete_tree_json_(container *X, int indent, int max_it
 			    _attribute_print_and_delete_tree_json_(item->children, indent+4, max_items, max_sub_items, depth, jsonitem);
 
 			}
+
+            json_append_element(jsonitems, jsonitem );
+
 		}
 
 	    if (item->free_value) free(item->value);
@@ -903,7 +906,6 @@ void _attribute_print_and_delete_tree_json_(container *X, int indent, int max_it
 	    destroy(item->query_param);
 	    free(item);
 
-        json_append_element(jsonitems, jsonitem );
 	}
 
 
