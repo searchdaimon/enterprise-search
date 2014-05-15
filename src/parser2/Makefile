@@ -1,9 +1,11 @@
 
 #CC=/usr/local/bin/gcc -p -g -DDEBUG -DDEBUG_2
-CC=gcc -O2 -g -D NOWARNINGS -m32
+#CC=gcc -O2 -g -D NOWARNINGS -m32
 #CC=/usr/local/bin/gcc
 # -O2 -Wall
 yacc=bison
+
+include ../../mk/setup.mk
 
 all: css html
 
