@@ -2,6 +2,7 @@
 #define _GETDATE_H_
 
 #include <time.h>
+#include "getdate.tab.h"
 
 struct datelib {
         time_t start;
