@@ -37,7 +37,7 @@ int main (int argc, char *argv[]) {
 	int 				i;
 
 	if ((f_crc32_words = lotOpenFileNoCasheByLotNr(1, "crc32attr.map", "r+", 's', subname)) == NULL) {
-		perror("Can't open thecrc32attr.map file for lot");
+		perror("Can't open the crc32attr.map file.");
 		return -1;
 	}
 
