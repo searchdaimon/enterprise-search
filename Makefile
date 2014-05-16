@@ -23,17 +23,12 @@ LIBCONFIG=  /usr/local/lib/libconfig.a
 LIBCACHE=       src/libcache/libcache.c
 
 
-SMBCLIENT=src/3pLibs/samba-3.0.25b/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.25b/source/include/
 
 BBDOCUMENT = src/bbdocument/bbdocument.c src/bbdocument/bbfilters.c lib/libds.a $(BDB_INC) $(BDB_LIB) -D BLACK_BOX  
 BBDOCUMENT_IMAGE = src/generateThumbnail/generate_thumbnail_by_convert.c -DBBDOCUMENT_IMAGE_BY_CONVERT
 
-#openldap med venner. Må linke det statisk inn, å bare bruke -lldap fungerer ikke
-LDAP = -DWITH_OPENLDAP -I/home/boitho/.root/ -L/home/boitho/.root/ /usr/lib/libcrypto.a -lldap 
-LDAPBB = -DWITH_OPENLDAP -lldap 
-
 #flag for å inkludere mysql
-MYSQL = -I/usr/include/mysql /usr/lib/mysql/libmysqlclient.a
+MYSQL = $(MYSQL_LIB)
 
 SLICENCE=	src/slicense/base32.c  src/slicense/license.c
 
@@ -311,7 +306,6 @@ DIconvert: src/DIconvert/main.c
 boithoad: src/boithoad/main.c
 	@echo ""
 	@echo "$@:"
-	#for lokalt på bb: gcc -g src/common/*.c src/boithoad/main.c   -o bin/boithoad -lm -lz -D_FILE_OFFSET_BITS=64 -O2 -DIIACL -DWITH_OPENLDAP /usr/lib64/libcrypt.a  /usr/lib64/libssl.a -I/usr/include/mysql/ -L/usr/lib64/mysql/ -ldl   -D BLACK_BOX -D WITH_CONFIG -DDEBUG ../../openldap-2.3.32/libraries/libldap/.libs/libldap.a ../../openldap-2.3.32/libraries/liblber/.libs/liblber.a -lmysqlclient -lsasl2
 	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c $(SLICENCE) -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) $(LIBCACHE) $(OPENSSL) -pthread -DWITH_DAEMON_THREAD -D BLACK_BOX -D WITH_CONFIG -DWITH_THREAD -DLIBCACHE_SHARE
 
 PiToWWWDocID: src/PiToWWWDocID/main.c
@@ -661,16 +655,6 @@ readLotbb : src/readLot/main.c
 	@echo "$@:"
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/readLot/main.c -o bin/readLotbb $(LDFLAGS) -D BLACK_BOX
-
-
-convertReposetoryCOMAND = $(CFLAGS) $(LIBS)*.c src/convertReposetory/main.c -o bin/convertReposetory $(LDFLAGS)
-
-convertReposetory: src/convertReposetory/main.c
-	$(CC) $(convertReposetoryCOMAND)
-
-convertReposetorybb: src/convertReposetory/main.c
-	$(CC) $(convertReposetoryCOMAND) -D BLACK_BOX
-
 
 makeSumaryCashe: src/makeSumaryCashe/main.c
 	@echo ""
