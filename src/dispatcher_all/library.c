@@ -18,6 +18,7 @@
 #include <sys/file.h>
 #include <err.h>
 #include <assert.h>
+#include <limits.h>
 
 #include "../common/boithohome.h"
 #include "../common/timediff.h"   
@@ -1039,8 +1040,102 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 
 	#error "MYSQL_VERSION_ID fra mysql_version.h er ikke definert"
 
-#elif MYSQL_VERSION_ID==50045
+#elif MYSQL_VERSION_ID==32358
 
+
+	char queryEscaped[MaxQueryLen*2+1];
+	char query [2048];
+	int x, i;
+
+	char TotaltTreff[10], total_usecs[23];
+	
+	if (FinalSiderHeder==NULL) {
+		strcpy(TotaltTreff,"NULL");
+		strcpy(total_usecs,"NULL");
+	}
+	else {
+		snprintf(TotaltTreff,sizeof(TotaltTreff),"\"%i\"",FinalSiderHeder->TotaltTreff);
+		snprintf(total_usecs,sizeof(total_usecs),"\"%f\"",FinalSiderHeder->total_usecs);
+	}
+
+	//escaper queryet rikit
+	mysql_real_escape_string(demo_db,queryEscaped,QueryData->query,strlen(QueryData->query));
+
+	sprintf(query,"insert DELAYED into search_logg (id,tid,query,search_bruker,treff,search_tid,ip_adresse,betaler_keywords_treff,\
+		HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang,side) \
+		values(NULL,NOW(),\"%s\",\"%s\",%s,%s,\"%s\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\",\"%i\")",
+		queryEscaped,
+		QueryData->search_user,
+		TotaltTreff,
+		total_usecs,
+		QueryData->userip,
+		totlaAds,
+		QueryData->HTTP_ACCEPT_LANGUAGE,
+		QueryData->HTTP_USER_AGENT,
+		QueryData->HTTP_REFERER,
+		QueryData->GeoIPcontry,
+		QueryData->start
+	);
+
+
+	mysql_real_query(demo_db, query, strlen(query));
+
+
+	/************************************************************************************************
+	Logging av Paid Inclusion til sql db.
+	************************************************************************************************/
+	#ifndef BLACK_BOX
+
+		if (Sider != NULL) {
+		
+			x = 0;
+			i = 0;			
+		
+			while ((x<FinalSiderHeder->showabal) && (i < (queryNodeHeder->MaxsHits * (nrOfServers + nrOfPiServers)))) {
+			
+				if (!Sider[i].deletet) {
+					#ifdef DEBUG
+					printf("pi analyse. Subname \"%s\", pi \"%i\"\n",Sider[i].subname.subname, (int)Sider[i].subname.config.isPaidInclusion);
+					#endif
+
+					if (Sider[i].subname.config.isPaidInclusion) {
+					
+
+						strscpy(query,Sider[i].subname.config.sqlImpressionsLogQuery,sizeof(query));
+						strsandr(query,"$DocID",utoa(Sider[i].iindex.DocID));
+
+						strsandr(query,"$query",queryEscaped);
+						strsandr(query,"$hits",bitoa(FinalSiderHeder->TotaltTreff) );
+						strsandr(query,"$time",ftoa(FinalSiderHeder->total_usecs));
+						strsandr(query,"$ipadress",QueryData->userip);
+						strsandr(query,"$spot",bitoa(x + (QueryData->start * queryNodeHeder->MaxsHits)));
+
+						#ifdef DEBUG
+							printf("query \"%s\"\n",query);
+						#endif
+
+						mysql_real_query(demo_db, query, strlen(query));
+
+					}
+					else {
+						#ifdef DEBUG
+							printf("is NOT pi! :(\n");
+						#endif
+					}
+				}
+				//teller bare normale sider (hva med Paid Inclusion ?)
+				if (Sider[i].type == siderType_normal) {
+					++x;
+				}
+
+				++i;
+			}
+		}
+	#endif
+	/************************************************************************************************/
+
+
+#else
 
 	MYSQL_STMT *logstmt, *pilogstmt;
 	char query [2048];
@@ -1221,104 +1316,6 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 
 
 
-#elif MYSQL_VERSION_ID==32358
-
-
-	char queryEscaped[MaxQueryLen*2+1];
-	char query [2048];
-	int x, i;
-
-	char TotaltTreff[10], total_usecs[23];
-	
-	if (FinalSiderHeder==NULL) {
-		strcpy(TotaltTreff,"NULL");
-		strcpy(total_usecs,"NULL");
-	}
-	else {
-		snprintf(TotaltTreff,sizeof(TotaltTreff),"\"%i\"",FinalSiderHeder->TotaltTreff);
-		snprintf(total_usecs,sizeof(total_usecs),"\"%f\"",FinalSiderHeder->total_usecs);
-	}
-
-	//escaper queryet rikit
-	mysql_real_escape_string(demo_db,queryEscaped,QueryData->query,strlen(QueryData->query));
-
-	sprintf(query,"insert DELAYED into search_logg (id,tid,query,search_bruker,treff,search_tid,ip_adresse,betaler_keywords_treff,\
-		HTTP_ACCEPT_LANGUAGE,HTTP_USER_AGENT,HTTP_REFERER,GeoIPLang,side) \
-		values(NULL,NOW(),\"%s\",\"%s\",%s,%s,\"%s\",\"%i\",\"%s\",\"%s\",\"%s\",\"%s\",\"%i\")",
-		queryEscaped,
-		QueryData->search_user,
-		TotaltTreff,
-		total_usecs,
-		QueryData->userip,
-		totlaAds,
-		QueryData->HTTP_ACCEPT_LANGUAGE,
-		QueryData->HTTP_USER_AGENT,
-		QueryData->HTTP_REFERER,
-		QueryData->GeoIPcontry,
-		QueryData->start
-	);
-
-
-	mysql_real_query(demo_db, query, strlen(query));
-
-
-	/************************************************************************************************
-	Logging av Paid Inclusion til sql db.
-	************************************************************************************************/
-	#ifndef BLACK_BOX
-
-		if (Sider != NULL) {
-		
-			x = 0;
-			i = 0;			
-		
-			while ((x<FinalSiderHeder->showabal) && (i < (queryNodeHeder->MaxsHits * (nrOfServers + nrOfPiServers)))) {
-			
-				if (!Sider[i].deletet) {
-					#ifdef DEBUG
-					printf("pi analyse. Subname \"%s\", pi \"%i\"\n",Sider[i].subname.subname, (int)Sider[i].subname.config.isPaidInclusion);
-					#endif
-
-					if (Sider[i].subname.config.isPaidInclusion) {
-					
-
-						strscpy(query,Sider[i].subname.config.sqlImpressionsLogQuery,sizeof(query));
-						strsandr(query,"$DocID",utoa(Sider[i].iindex.DocID));
-
-						strsandr(query,"$query",queryEscaped);
-						strsandr(query,"$hits",bitoa(FinalSiderHeder->TotaltTreff) );
-						strsandr(query,"$time",ftoa(FinalSiderHeder->total_usecs));
-						strsandr(query,"$ipadress",QueryData->userip);
-						strsandr(query,"$spot",bitoa(x + (QueryData->start * queryNodeHeder->MaxsHits)));
-
-						#ifdef DEBUG
-							printf("query \"%s\"\n",query);
-						#endif
-
-						mysql_real_query(demo_db, query, strlen(query));
-
-					}
-					else {
-						#ifdef DEBUG
-							printf("is NOT pi! :(\n");
-						#endif
-					}
-				}
-				//teller bare normale sider (hva med Paid Inclusion ?)
-				if (Sider[i].type == siderType_normal) {
-					++x;
-				}
-
-				++i;
-			}
-		}
-	#endif
-	/************************************************************************************************/
-
-
-
-#else
-	#error "Ukjent mysql versjon i MYSQL_VERSION_ID fra mysql_version.h. Må være 32358 eller 50045."
 #endif 
 
 	/********************************************************************************************/
