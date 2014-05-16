@@ -1142,7 +1142,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 	struct ReposetoryHeaderFormat ReposetoryHeader;
 
-	int htmlbuffersize = 0;//((dokument_size *2) +512);	//+512 da vi skal ha med div meta data, som html kode
+	size_t htmlbuffersize = 0;//((dokument_size *2) +512);	//+512 da vi skal ha med div meta data, som html kode
 	char *htmlbuffer = NULL;// = malloc(htmlbuffersize);
 	char *imagebuffer;
 	char *documenttype_real;
