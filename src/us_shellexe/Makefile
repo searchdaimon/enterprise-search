@@ -1,9 +1,9 @@
 #gcc xml.c url.c main.c -I/usr/include/libxml2/ -L/usr/lib -lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl && ./a.out
-CFLAGS=		
+#CFLAGS=		
 CFLAGS+=	-W -Wall -O0 -g -DBLACK_BOKS -fPIC
-LDFLAGS=	
+#LDFLAGS=	
 PROG=		us_shellexe.so
-CC=		gcc
+#CC=		gcc
 
 # Hack to get common lib files from boitho
 COMMONDIR=	../common
@@ -23,7 +23,7 @@ include ../../mk/setup.mk
 all: $(PROG)
 
 $(PROG): $(OBJS)
-	libtool $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOKS -g -static
+	libtool --mode=execute $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOKS -g $(US_STATIC)
 	mkdir -p ../../usersystems/us_shellexe
 	cp $(PROG) ../../usersystems/us_shellexe
 
