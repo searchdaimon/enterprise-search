@@ -26,6 +26,8 @@ LIBCONFIG=	/usr/local/lib/libconfig.a
 LIBCONFIG_64=	/usr/local/lib64/libconfig.a
 CRAWL_STATIC=	-Wl,-static
 US_STATIC=	-static
+SMBCLIENT=src/3pLibs/samba-3.0.25b/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.25b/source/include/
+LDAP = -DWITH_OPENLDAP -I/home/boitho/.root/ -L/home/boitho/.root/ /usr/lib/libcrypto.a -lldap
 endif
 
 ifeq ($(strip $(host)),bbh-002.boitho.com)
@@ -41,6 +43,8 @@ LIBCONFIG=	/usr/local/lib/libconfig.a
 LIBCONFIG_64=	/usr/local/lib64/libconfig.a
 CRAWL_STATIC=	-Wl,-static
 US_STATIC=	-static
+SMBCLIENT=src/3pLibs/samba-3.0.25b/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.25b/source/include/
+LDAP = -DWITH_OPENLDAP -I/home/boitho/.root/ -L/home/boitho/.root/ /usr/lib/libcrypto.a -lldap
 endif
 
 ifeq ($(strip $(host)),searchdaimon)
@@ -56,6 +60,25 @@ LIBCONFIG=	`pkg-config --libs libconfig`
 LIBCONFIG_64=	`pkg-config --libs libconfig`
 CRAWL_STATIC=	
 US_STATIC=	
+SMBCLIENT=src/3pLibs/samba-3.0.25b/source/bin/libsmbclient.a -Isrc/3pLibs/samba-3.0.25b/source/include/
+LDAP = -DWITH_OPENLDAP -I/home/boitho/.root/ -L/home/boitho/.root/ /usr/lib/libcrypto.a -lldap
+endif
+
+ifeq ($(strip $(host)),searchdaimon3)
+# Local on ES v3
+PERL_EMBED_INC=	`perl -MExtUtils::Embed -e ccopts`
+PERL_EMBED_LIB=	`perl -MExtUtils::Embed -e ldopts`
+BDB_INC=	-I/usr/include/db4
+BDB_LIB=	-ldb -lpthread
+CC=		gcc
+MYSQL_LIB+=	`mysql_config --cflags --libs`
+MYSQL_INC+=	`mysql_config --cflags --libs`
+LIBCONFIG=	`pkg-config --libs libconfig`
+LIBCONFIG_64=	`pkg-config --libs libconfig`
+CRAWL_STATIC=	
+US_STATIC=
+SMBCLIENT=-lsmbclient
+LDAP = -DWITH_OPENLDAP -lldap
 endif
 
 ifdef NO_DEPRECATED_WARNINGS

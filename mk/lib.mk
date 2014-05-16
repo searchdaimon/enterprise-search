@@ -11,7 +11,7 @@ $(OBJLIB): $(addprefix $(OBJDIR)/, $(OBJS))
 	ranlib $(OBJLIB)
 
 $(OBJDIR)/%.o: %.c
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -fPIC -c $(CFLAGS) $< -o $@
 
 $(LIB): $(OBJLIB)
 	cp $(OBJLIB) ${LIBDIR}/${LIB}
