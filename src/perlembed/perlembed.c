@@ -51,7 +51,7 @@ void perl_embed_init(char **incl_path, int cache_perl_files) {
 
 	
 	extern char **environ;
-        PERL_SYS_INIT3(&argc, &argv, &environ);
+        PERL_SYS_INIT3(&perl_argc, &perl_argv, &environ);
         my_perl = perl_alloc();
         perl_construct(my_perl);
 

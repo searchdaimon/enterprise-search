@@ -3,7 +3,7 @@
 
 # Parameters
 
-CC=gcc  -m32 
+include ../../mk/setup.mk
 
 CLIENT = suggest_client
 CLIENTREDICT = suggest_client_redict

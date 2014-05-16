@@ -1,5 +1,4 @@
 
-CC=gcc -g
 
 include ../../mk/setup.mk
 
