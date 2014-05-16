@@ -29,7 +29,7 @@ mail_analyze:
 	$(CC) -c lex.analyze_header.c -fPIC
 
 $(PROG): $(OBJS)
-	libtool $(CC) -o $(PROG).so $(LDFLAGS) $(OBJS) lex.analyze_header.o ../../lib/libds.a -fPIC -shared -D BLACK_BOX -g $(CRAWL_STATIC)
+	libtool --mode=execute $(CC) -o $(PROG).so $(LDFLAGS) $(OBJS) lex.analyze_header.o ../../lib/libds.a -fPIC -shared -D BLACK_BOX -g $(CRAWL_STATIC)
 	-mkdir -p ../..//crawlers/$(PROG)
 	cp $(PROG).so ../..//crawlers/$(PROG)
 

@@ -23,7 +23,7 @@ include ../../mk/setup.mk
 all: $(PROG)
 
 $(PROG): $(OBJS)
-	libtool $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOX -g $(US_STATIC)
+	libtool --mode=execute $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOX -g $(US_STATIC)
 	-mkdir ../../usersystems/us_mapback
 	cp $(PROG) ../../usersystems/us_mapback
 

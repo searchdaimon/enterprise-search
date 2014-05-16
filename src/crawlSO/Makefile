@@ -23,7 +23,7 @@ OBJS+=		crawl.o #../base64/base64.o ../crawl/mailsubject.o set.o
 all: $(PROG)
 
 $(PROG): $(OBJS)
-	libtool $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOX -g -static 
+	libtool --mode=execute $(CC) -o $(PROG) $(LDFLAGS) $(OBJS) -fPIC -shared -D BLACK_BOX -g $(US_STATIC)
 	-mkdir -p ../..//crawlers/crawlSO
 	cp $(PROG) ../..//crawlers/crawlSO
 
