@@ -13,7 +13,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <locale.h>
-
+#include <zlib.h>
 
 #include "define.h"
 #include "stdlib.h"
@@ -382,10 +382,17 @@ unsigned int rGeneraeADocID (char subname[]) {
 	return DocID;
 }
 
-int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys, int HtmlBufferSize) {
+int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys, size_t HtmlBufferSize) {
+
 	int error;
-	int WorkBuffSize = (HtmlBufferSize * 1.2) + 12;
-	char *WorkBuff;
+	uLongf WorkBuffSize;
+	Bytef *WorkBuff;
+
+	#ifdef ZLIB_VERSION > 1.2
+		WorkBuffSize = compressBound(HtmlBufferSize);
+	#else
+		WorkBuffSize = (HtmlBufferSize * 1.2) + 12;
+	#endif
 
 	#ifdef DEBUG
 		printf("rApendPostcompress: starting\n");
@@ -400,7 +407,7 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 
 	printf("HtmlBufferSize: %i, WorkBuffSize: %i\n",HtmlBufferSize,WorkBuffSize);
 	
-	if ((error = compress((Bytef *)WorkBuff,(uLongf *)&WorkBuffSize,(Bytef *)htmlbuffer,(uLongf)HtmlBufferSize)) != 0) {
+	if ((error = compress(WorkBuff, &WorkBuffSize, (Bytef *)htmlbuffer, HtmlBufferSize)) != Z_OK) {
                 printf("compress error. Code: %i\n",error);
 		printf("WorkBuffSize %i, HtmlBufferSize %i at %s:%d\n",WorkBuffSize,HtmlBufferSize,__FILE__,__LINE__);
 		return 0;

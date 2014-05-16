@@ -28,6 +28,7 @@ Kal "ropen" for å opne Reposetoryet, "rclose" for å stenge Reposetoryet.
 #include <zlib.h>
 #include <sys/file.h>
 #include <math.h>
+#include <zlib.h>
 
 #ifdef BLACK_BOX
 	#include "../ds/dcontainer.h"
@@ -108,7 +109,7 @@ size_t getResource(int LotNr, char *subname, unsigned int DocID, char *resource,
 
 
 unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys);
-int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys, int HtmlBufferSize);
+int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys, size_t HtmlBufferSize);
 void setLastIndexTimeForLot(int LotNr,int httpResponsCodes[],char subname[]);
 unsigned int GetLastIndexTimeForLot(int LotNr,char subname[]);
 
