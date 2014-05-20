@@ -8,18 +8,18 @@
 #include "../common/define.h"
 #include "../common/lot.h"
 
-//#define subname "www"
+
 #define revIndexArraySize 2000000
 
 struct revIndexArrayFomat {
 	unsigned int DocID;
-        unsigned long WordID;
+        unsigned int WordID;
 	unsigned char langnr;
-        unsigned long nrOfHits;
+        unsigned int nrOfHits;
         unsigned short hits[MaxsHitsInIndex];
 };
 
-int Indekser(char revindexPath[]);
+int _Indekser(char revindexPath[]);
 int compare_elements (const void *p1, const void *p2);
 
 int main (int argc, char *argv[]) {
@@ -50,7 +50,7 @@ int main (int argc, char *argv[]) {
 
 		sprintf(revpath,"%srevindex/%s/%i.txt",path,argv[1],lotPart);
 
-		Indekser(revpath);	
+		_Indekser(revpath);	
 
 	
 	}
@@ -62,7 +62,7 @@ int main (int argc, char *argv[]) {
 
 }
 
-int Indekser(char revindexPath[]) {
+int _Indekser(char revindexPath[]) {
 
 	struct revIndexArrayFomat *revIndexArray; 
 	revIndexArray = malloc(sizeof(struct revIndexArrayFomat) * revIndexArraySize);
@@ -77,7 +77,6 @@ int Indekser(char revindexPath[]) {
 	char c;
         unsigned int DocID;
 	unsigned int lastWordID;
-        //char lang[4];
 	unsigned int nrofDocIDsForWordID[revIndexArraySize];
 	int forekomstnr;
 
@@ -103,7 +102,6 @@ int Indekser(char revindexPath[]) {
 			}
 			//v3
 			fread(&revIndexArray[count].langnr,sizeof(char),1,REVINDEXFH);
-			//printf("lang1 %i\n",(int)revIndexArray[count].langnr);
 
 
 			fread(&revIndexArray[count].WordID,sizeof(revIndexArray[count].WordID),1,REVINDEXFH);
