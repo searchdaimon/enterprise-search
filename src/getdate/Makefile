@@ -7,7 +7,9 @@
 
 include ../../mk/setup.mk
 
-getdate.tab.c: getdate.y
+getdate.tab.h:
+
+getdate.tab.c: getdate.y getdate.tab.h
 	bison --defines=getdate.tab.h -v getdate.y
 
 #getdate.lex.c: getdate.l
