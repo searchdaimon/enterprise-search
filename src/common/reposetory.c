@@ -388,10 +388,10 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 	uLongf WorkBuffSize;
 	Bytef *WorkBuff;
 
-	#ifdef ZLIB_VERSION > 1.2
-		WorkBuffSize = compressBound(HtmlBufferSize);
-	#else
+	#ifdef NO_ZLIB_COMMPRESSBOUND 
 		WorkBuffSize = (HtmlBufferSize * 1.2) + 12;
+	#else
+		WorkBuffSize = compressBound(HtmlBufferSize);
 	#endif
 
 	#ifdef DEBUG
