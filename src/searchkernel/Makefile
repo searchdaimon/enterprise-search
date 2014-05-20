@@ -22,6 +22,11 @@ include ../../mk/setup.mk
 
 CFLAGS+=	-DIIACL -DWITH_SPELLING -DWITH_THREAD -DDISK_PROTECTOR -DATTRIBUTES -D_FILE_OFFSET_BITS=64 \
 		-DNEW_CHILD_CATCHER
+
+# Uncomment if you want debugging info
+#CFLAGS+=        -DDEBUG
+
+
 LDFLAGS+=	\
 		$(LIBDIR)/libfte.a $(LIBDIR)/libshow_attr.a \
 		$(LIBDIR)/libsnippet_generator.a \
