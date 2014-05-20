@@ -1,19 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 int main (int argc, char *argv[]) {
 
 	int i,y;
 
 	FILE *fileha;
 
-        unsigned long DocID;
-        unsigned long TermAntall;
+        unsigned int DocID;
+        unsigned int TermAntall;
         unsigned short hit;
 
-	unsigned long term;
-	unsigned long Antall;;
+	unsigned int term;
+	unsigned int Antall;;
 	unsigned char langnr;
 
         if (argc < 2) {
@@ -31,9 +30,12 @@ int main (int argc, char *argv[]) {
 		//wordid hedder
         	if (fread(&term,sizeof(unsigned long),1,fileha) != 1) {
 			perror("can't read term: ");
-			continue;
+			return -1;
 		}
-        	fread(&Antall,sizeof(unsigned long),1,fileha);
+        	if (fread(&Antall,sizeof(unsigned long),1,fileha) != 1) {
+			perror("can't read number of hits: ");
+			return -1;
+		}
 
 		printf("term: %u antall: %u\n",term,Antall);
 
@@ -41,8 +43,8 @@ int main (int argc, char *argv[]) {
 			//side hedder
 			if (fread(&DocID,sizeof(unsigned long),1,fileha) != 1) {
 				printf("can't read DocID for nr %i\n",i);
-				perror("");
-				continue;
+				perror("Error: ");
+				return -1;
 			}
 			fread(&langnr,sizeof(char),1,fileha);
         		fread(&TermAntall,sizeof(unsigned long),1,fileha);
