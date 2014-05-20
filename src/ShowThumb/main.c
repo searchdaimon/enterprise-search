@@ -24,7 +24,6 @@ int main(int argc, char *argv[]) {
 	unsigned char pnghedder[] = { 0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A };
 
 	off_t iPointer;
-	//unsigned long int iPointer;
 	int iSize;
 	int LotNr;
 	char subname[64];

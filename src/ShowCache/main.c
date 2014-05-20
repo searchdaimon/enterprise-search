@@ -23,7 +23,6 @@ int main(int argc, char *argv[]) {
 	char *url;
 
 	off_t iPointer;
-	//unsigned long int iPointer;
 	unsigned int iSize;
 	int iDocID;
 	char subname[maxSubnameLength];
