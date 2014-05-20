@@ -28,11 +28,11 @@ int main (int argc, char *argv[]) {
 
 	while (!feof(fileha)) {
 		//wordid hedder
-        	if (fread(&term,sizeof(unsigned long),1,fileha) != 1) {
+        	if (fread(&term,sizeof(term),1,fileha) != 1) {
 			perror("can't read term: ");
 			return -1;
 		}
-        	if (fread(&Antall,sizeof(unsigned long),1,fileha) != 1) {
+        	if (fread(&Antall,sizeof(Antall),1,fileha) != 1) {
 			perror("can't read number of hits: ");
 			return -1;
 		}
@@ -41,13 +41,13 @@ int main (int argc, char *argv[]) {
 
 		for (i=0;i<Antall;i++) {
 			//side hedder
-			if (fread(&DocID,sizeof(unsigned long),1,fileha) != 1) {
+			if (fread(&DocID,sizeof(DocID),1,fileha) != 1) {
 				printf("can't read DocID for nr %i\n",i);
 				perror("Error: ");
 				return -1;
 			}
 			fread(&langnr,sizeof(char),1,fileha);
-        		fread(&TermAntall,sizeof(unsigned long),1,fileha);
+        		fread(&TermAntall,sizeof(TermAntall),1,fileha);
 
 			printf("DocID: %u, langnr: %i, nr: %u. Hits: ",DocID,(int)langnr,TermAntall);
 
