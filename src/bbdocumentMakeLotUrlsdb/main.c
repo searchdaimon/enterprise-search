@@ -18,7 +18,7 @@ main (int argc, char *argv[]) {
 	char lotPath[255];
 
 	struct ReposetoryHeaderFormat ReposetoryHeader;
-	unsigned long int radress;
+	unsigned int radress;
 
 	char htmlbuffer[524288];
 	char imagebuffer[524288];
@@ -47,13 +47,13 @@ main (int argc, char *argv[]) {
 	}
 	//loppergjenom alle
 // int rGetNext (unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],
-// int htmlbufferSize, char imagebuffer[], unsigned long int *radress,
+// int htmlbufferSize, char imagebuffer[], unsigned int *radress,
 // unsigned int FilterTime, unsigned int FileOffset, char subname[]);
 	count =0;
 	while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&radress,0,0,subname,&acl)) {
 
 		#ifdef DEBUG
-		printf("DocId: %i url: %s res %hi htmls %hi time %lu\n",ReposetoryHeader.DocID,ReposetoryHeader.url,ReposetoryHeader.response,ReposetoryHeader.htmlSize,ReposetoryHeader.time);
+		printf("DocId: %i url: %s res %hi htmls %hi time %u\n",ReposetoryHeader.DocID,ReposetoryHeader.url,ReposetoryHeader.response,ReposetoryHeader.htmlSize,ReposetoryHeader.time);
 		#endif
 
 		uriindex_add (ReposetoryHeader.url, ReposetoryHeader.DocID, ReposetoryHeader.time, subname);

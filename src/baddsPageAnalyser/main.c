@@ -32,7 +32,7 @@ int main (int argc, char *argv[]) {
 
 	struct ReposetoryHeaderFormat ReposetoryHeader;
 	struct DocumentIndexFormat DocumentIndexPost;
-	unsigned long int radress;
+	unsigned int radress;
 	FILE *revindexFilesHa[NrOfDataDirectorys];
 	struct adultFormat adult;
 	unsigned int lastIndexTime;
@@ -76,7 +76,7 @@ int main (int argc, char *argv[]) {
 	pagewordsSortOnOccurrence();
 
 	for(i=0;i<pagewords.revIndexnr;i++) {
-                printf("%lu forekomster %i (+1) '%s'\n",pagewords.revIndex[i].WordID,pagewords.revIndex[i].nr,pagewords.revIndex[i].word);
+                printf("%u forekomster %i (+1) '%s'\n",pagewords.revIndex[i].WordID,pagewords.revIndex[i].nr,pagewords.revIndex[i].word);
 
 	}
 

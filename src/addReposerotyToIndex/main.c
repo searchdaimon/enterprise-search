@@ -13,7 +13,7 @@ main (int argc, char *argv[]) {
 	char lotPath[255];
 
 	struct ReposetoryHeaderFormat ReposetoryHeader;
-	unsigned long int radress;
+	unsigned int radress;
 
 	char htmlbuffer[524288];
 	char imagebuffer[524288];

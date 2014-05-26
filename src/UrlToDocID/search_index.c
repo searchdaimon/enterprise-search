@@ -85,7 +85,7 @@ unsigned int urldocid_search_index(urldocid_data *data, unsigned char *sha1)
     off_t	pos = turn(*(unsigned int*)&sha1[0]);
     off_t	adr[2];
     record	*block;
-    unsigned long long int	bsize;
+    unsigned int long int	bsize;
 /*
     {
 	int	x;

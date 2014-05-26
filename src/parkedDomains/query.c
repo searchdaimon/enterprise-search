@@ -46,7 +46,7 @@ equalkeys_url(void *k1, void *k2)
 
 struct dbkey {
 	unsigned int num;
-	unsigned long int addr;
+	unsigned int addr;
 };
 
 DB *maindb;

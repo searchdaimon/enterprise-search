@@ -16,7 +16,7 @@ main(int argc, char **argv) {
 	struct DocumentIndexFormat docindex;
 	unsigned int DocID;
 	char text[40];
-	unsigned long int radress;
+	unsigned int radress;
 
 	if (argc < 3)
 		errx(1, "Usage: ./DIread lotNr subname");

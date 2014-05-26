@@ -25,19 +25,19 @@
 
 struct dbkey {
 	unsigned int num;
-	unsigned long int addr;
+	unsigned int addr;
 };
 
 #if 0
 struct dburlkey {
-	unsigned long int addr;
+	unsigned int addr;
 	char url[128];
 };
 
 #else
 
 struct dburlkey {
-	unsigned long int addr;
+	unsigned int addr;
 	unsigned int hash;
 };
 
@@ -52,7 +52,7 @@ FILE *cfp;
 FILE *log;
 
 int
-insert_url(DB *dbp, unsigned long int addr, char *url)
+insert_url(DB *dbp, unsigned int addr, char *url)
 {
 	struct dburlkey dbkey;
 	char *p, *p2;
@@ -122,7 +122,7 @@ insert_url(DB *dbp, unsigned long int addr, char *url)
 		fprintf(log, "%s %s\n", inet_ntoa(in), url2);
 #endif
 		if ((ret = dbp->put(dbp, NULL, &key, &data, 0)) == 0) {
-			//printf("db: %d: key stored.\n", *(unsigned long int *)key.data);
+			//printf("db: %d: key stored.\n", *(unsigned int *)key.data);
 		} else {
 			dbp->err(dbp, ret, "DB->put");
 			return 0;
@@ -197,7 +197,7 @@ traverse_dictionary(char *filename, DB *dbp)
 		if ((ret = dbp->get(dbp, NULL, &key, &data, 0)) == 0) {
 			int anum = *(unsigned int *)data.data;
 			//printf(" %d\n", num);// documentIndex[n].IPAddress, num);
-			in.s_addr = dbkey.addr; //*(unsigned long int *)key.data;
+			in.s_addr = dbkey.addr; //*(unsigned int *)key.data;
 			//printf("db: %s: key retrieved: data was %d.\n", inet_ntoa(in), anum); 
 
 	
@@ -236,7 +236,7 @@ traverse_dictionary(char *filename, DB *dbp)
 			data.size = sizeof(anum);
 
 			if ((ret = dbp->put(dbp, NULL, &key, &data, 0)) == 0) {
-				//printf("db: %d: key stored.\n", *(unsigned long int *)key.data);
+				//printf("db: %d: key stored.\n", *(unsigned int *)key.data);
 			} else {
 				dbp->err(dbp, ret, "DB->put");
 				//exit(1);
@@ -255,7 +255,7 @@ traverse_dictionary(char *filename, DB *dbp)
 			data.data = &anum; 
 			data.size = sizeof(anum);
 			if ((ret = dbp->put(dbp, NULL, &key, &data, 0)) == 0) {
-				//printf("db: %d: key stored.\n", *(unsigned long int *)key.data);
+				//printf("db: %d: key stored.\n", *(unsigned int *)key.data);
 			} else {
 				dbp->err(dbp, ret, "DB->put");
 				//exit(1);

@@ -32,11 +32,11 @@ int main (int argc, char *argv[]) {
 	off64_t offset;
         unsigned int lastDocID;
 	FILE *IPDBHA;
-	unsigned long int ipadress, classaadress;
+	unsigned int ipadress, classaadress;
 	CHTbl htbl;
 	CHTbl htbl_classa;
 
-	unsigned long int *prti;
+	unsigned int *prti;
         if (argc < 4) {
                 printf("Dette programet tar inn en linkdb fil og lager Brank\n\n\tUsage: ./searchIndexLinkdb LINKDBFILE INDEXFILE\n");
                 exit(0);
@@ -63,7 +63,7 @@ int main (int argc, char *argv[]) {
 
 	DocID = atol(argv[3]);
 
-	printf("links ti %lu:\n",DocID);
+	printf("links ti %u:\n",DocID);
 
 	//finner offset
 	fseek(INDEXFILE,DocID * sizeof(offset),SEEK_SET);
@@ -107,7 +107,7 @@ int main (int argc, char *argv[]) {
 			}
 			else {
 				//siden denne dataen skal ligge i hashen må vi ha et egetminne om råde på hippen for $
-                                prti = malloc(sizeof(unsigned long int));
+                                prti = malloc(sizeof(unsigned int));
 				*prti = ipadress;
                                 chtbl_insert(&htbl,(void *)prti);
 				++unixipes;
@@ -122,7 +122,7 @@ int main (int argc, char *argv[]) {
 			}
 			else {
 				//siden denne dataen skal ligge i hashen må vi ha et egetminne om råde på hippen for $
-                                prti = malloc(sizeof(unsigned long int));
+                                prti = malloc(sizeof(unsigned int));
 				*prti = classaadress;
                                 chtbl_insert(&htbl_classa,(void *)prti);
 				++unixclassa;
@@ -155,7 +155,7 @@ int h(const void *key) {
         int ir;
 
         //int i2 = * (int *) p2
-        unsigned long int  *i  = (unsigned long int  *) key;
+        unsigned int  *i  = (unsigned int  *) key;
         ir = *i % PRIME_TBLSIZ;
         return ir;
 
@@ -165,8 +165,8 @@ int h(const void *key) {
 
 int match(const void *key1, const void *key2) {
 
-        unsigned long int  *i1  = (unsigned long int  *) key1;
-        unsigned long int  *i2  = (unsigned long int  *) key2;
+        unsigned int  *i1  = (unsigned int  *) key1;
+        unsigned int  *i2  = (unsigned int  *) key2;
 
         if (*i1 == *i2) {
                 return 1;

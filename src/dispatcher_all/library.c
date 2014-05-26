@@ -1140,7 +1140,7 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 	MYSQL_STMT *logstmt, *pilogstmt;
 	char query [2048];
 	MYSQL_BIND bind[12];
-	unsigned long len[12];
+	unsigned int len[12];
 	memset(bind, 0, sizeof(bind));
 	logstmt = mysql_stmt_init(demo_db);
 	pilogstmt = mysql_stmt_init(demo_db);
@@ -1292,7 +1292,7 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 						if (affected_rows != 1) /* validate affected rows */
 						{
 							fprintf(stderr, " invalid affected rows by MySQL\n");
-							fprintf(stderr, " total affected rows(insert 1): %lu\n", (unsigned long) affected_rows);
+							fprintf(stderr, " total affected rows(insert 1): %lu\n", (unsigned int) affected_rows);
 							break;
 						}
 					}

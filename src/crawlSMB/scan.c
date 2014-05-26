@@ -211,7 +211,7 @@ int browse(int (*scan_found_share)(char share[]),char * path, int scan, int inde
             }
             else
             {
-                bblog(INFO, " size %lu", (unsigned long) stat.st_size);
+                bblog(INFO, " size %lu", (unsigned int) stat.st_size);
             }
             *p = '\0';
 

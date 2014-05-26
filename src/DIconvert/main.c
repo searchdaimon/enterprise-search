@@ -13,7 +13,7 @@ struct DocumentIndexFormatOLD {
         unsigned short imageSize;
         unsigned int ResourcePointer;
         unsigned short ResourceSize;
-        unsigned long int IPAddress;
+        unsigned int IPAddress;
         unsigned short response;
         unsigned short userID;
         double clientVersion;
@@ -32,7 +32,7 @@ struct DocumentIndexFormatNEW {
         unsigned short imageSize;
         unsigned int ResourcePointer;
         unsigned short ResourceSize;
-        unsigned long int IPAddress;
+        unsigned int IPAddress;
         unsigned short response;
         unsigned short userID;
         double clientVersion;

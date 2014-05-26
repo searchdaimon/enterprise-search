@@ -6,7 +6,7 @@
 int main () {
 
 	char FilePath[255];
-	unsigned long DocID;
+	unsigned int DocID;
 	FILE *Thumbnale;
 	char buff[6144];	//6kb
 	int c;

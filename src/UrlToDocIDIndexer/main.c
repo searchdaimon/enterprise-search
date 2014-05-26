@@ -45,7 +45,7 @@ int main (int argc, char *argv[]) {
 
 	int ret;
 	//DB *dbp;
-	unsigned long crc32Value;
+	unsigned int crc32Value;
 
 	DB dbpArray;
 

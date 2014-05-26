@@ -14,7 +14,7 @@ int main (int argc, char *argv[]) {
 	FILE *LINKDBFILE;
 	FILE *INDEXFILE;
 
-	unsigned long int ranged;
+	unsigned int ranged;
 	struct linkdb_block linkdbPost;
 	off64_t offset;
 	int lastLotNr, lotNr = -1;

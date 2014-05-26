@@ -31,7 +31,7 @@ int main (int argc, char *argv[]) {
 	DocID = 0;
 	while (DIGetNext (&DocumentIndexPost,LotNr,&DocID,subname)) {
 
-		fwrite(&DocumentIndexPost.IPAddress,sizeof(unsigned long int),1,LOTIPDB);
+		fwrite(&DocumentIndexPost.IPAddress,sizeof(unsigned int),1,LOTIPDB);
 
 		//printf("%u %u\n",DocID,DocumentIndexPost.IPAddress);
 	}

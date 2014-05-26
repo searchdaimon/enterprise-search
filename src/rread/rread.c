@@ -65,7 +65,7 @@ void dolot(int LotNr, char *subname, int optPrintHtml, int optPrintAcl, int optS
 	char lotPath[255];
 
 	struct ReposetoryHeaderFormat ReposetoryHeader;
-	unsigned long int radress;
+	unsigned int radress;
 
 	char htmlbuffer[524288];
 	char htmlbuffer_uncom[524288];
@@ -78,7 +78,7 @@ void dolot(int LotNr, char *subname, int optPrintHtml, int optPrintAcl, int optS
 	int StatisticsUncompressOk = 0;
 
 	char uncompresshtml[500000];
-	int uncompresshtmlLength;
+	unsigned int uncompresshtmlLength;
 	int nerror;
 
 	if (optReponame == NULL) {
@@ -93,12 +93,13 @@ void dolot(int LotNr, char *subname, int optPrintHtml, int optPrintAcl, int optS
 	while (rGetNext_reponame(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&radress,0,0,subname,&acl_allow,&acl_deny,optReponame, &url, &attributes)) {
 
 
-		printf("DocId: %i, url: %s, res: %hi, htmlsize: %hi, time: %lu, radress: %lu",ReposetoryHeader.DocID,ReposetoryHeader.url,ReposetoryHeader.response,ReposetoryHeader.htmlSize2,ReposetoryHeader.time,radress);
+		printf("DocId: %i, url: %s, res: %hi, htmlsize: %u, time: %lu, radress: %u",ReposetoryHeader.DocID,ReposetoryHeader.url,ReposetoryHeader.response,ReposetoryHeader.htmlSize2,ReposetoryHeader.time,radress);
 		uncompresshtmlLength = sizeof(uncompresshtml);
 		if ( (nerror = uncompress((Bytef*)uncompresshtml,(uLong *)&uncompresshtmlLength,(Bytef*)htmlbuffer,ReposetoryHeader.htmlSize2)) != 0) {
                 	printf("uncompress error. Code: %i\n",nerror);
+			printf("uncompresshtmlLength: %u, htmlSize2 %u\n",uncompresshtmlLength,ReposetoryHeader.htmlSize2);
                 
-                        continue;
+//                        continue;
                 }
 
 

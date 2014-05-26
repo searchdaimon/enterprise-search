@@ -16,7 +16,7 @@ int main (int argc, char *argv[]) {
 
 	struct ReposetoryHeaderFormat ReposetoryHeader;
         char htmlbuffer[524288];
-        unsigned long int radress;
+        unsigned int radress;
 
 
 	if (argc < 3) {

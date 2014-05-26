@@ -16,7 +16,7 @@ main(int argc, char **argv) {
 	struct DocumentIndexFormat docindex;
 	unsigned int DocID;
 	char text[40];
-	unsigned long int radress;
+	unsigned int radress;
 
 	// 125502594
 	anchoraddnewNET("localhost", 125502594, "fii faa foo", strlen("fii faa foo"), "www");

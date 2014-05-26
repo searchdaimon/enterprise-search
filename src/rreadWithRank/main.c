@@ -18,7 +18,7 @@ main (int argc, char *argv[]) {
 	int rank;
 
 	struct ReposetoryHeaderFormat ReposetoryHeader;
-	unsigned long int radress;
+	unsigned int radress;
 
 	char htmlbuffer[524288];
 	char imagebuffer[524288];
@@ -43,7 +43,7 @@ main (int argc, char *argv[]) {
 
 	//loppergjenom alle
 // int rGetNext (unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],
-// int htmlbufferSize, char imagebuffer[], unsigned long int *radress,
+// int htmlbufferSize, char imagebuffer[], unsigned int *radress,
 // unsigned int FilterTime, unsigned int FileOffset, char subname[]);
 
 	while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&radress,0,0,subname,&acl)) {

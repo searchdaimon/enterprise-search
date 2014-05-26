@@ -53,7 +53,7 @@ int main (int argc, char *argv[]) {
 
 	DocID = atol(argv[3]);
 
-	printf("links ti %lu:\n",DocID);
+	printf("links ti %u:\n",DocID);
 
 	rank =  popRankForDocID(&popha,DocID);
         ipadress = ipdbForDocID(&ipdbha,DocID);

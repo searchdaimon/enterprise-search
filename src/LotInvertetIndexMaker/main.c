@@ -12,9 +12,9 @@
 
 struct revIndexArrayFomat {
 	unsigned int DocID;
-        unsigned long WordID;
+        unsigned int WordID;
 	char lang[4];
-        unsigned long nrOfHits;
+        unsigned int nrOfHits;
         unsigned short hits[MaxsHitsInIndex];
 };
 

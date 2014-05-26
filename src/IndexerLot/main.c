@@ -550,7 +550,7 @@ void makePreParsedSummary(const char body[], int bodylen,const  char title[],int
 
 
 int getNextPage(struct IndexerLot_workthreadFormat *argstruct,char htmlcompressdbuffer[],int htmlcompressdbuffer_size, 
-	char imagebuffer[],int imagebuffer_size,unsigned long int *radress, char **acl_allow, char **acl_denied,struct ReposetoryHeaderFormat *ReposetoryHeader, char **url, char **attributes) {
+	char imagebuffer[],int imagebuffer_size,unsigned int *radress, char **acl_allow, char **acl_denied,struct ReposetoryHeaderFormat *ReposetoryHeader, char **url, char **attributes) {
 	//lock
 	int forreturn;
 	//må holde status om rGetNext() har sakt at dette er siste. Hvis ikke hamrer vi bortenfor eof
@@ -710,7 +710,7 @@ void *IndexerLot_workthread(void *arg) {
 	struct pagewordsFormat *pagewords = malloc(sizeof(struct pagewordsFormat));
 
 	int nerror;
-	unsigned long int radress;
+	unsigned int radress;
 	char *acl_allow = NULL;
 	char *acl_denied = NULL;
 
@@ -795,7 +795,7 @@ void *IndexerLot_workthread(void *arg) {
 					goto pageDone;
 				} else if ((DocumentIndexPost->CrawleDato!=0) && (DocumentIndexPost->CrawleDato > ReposetoryHeader.time)) {
 					#ifdef DEBUG
-						printf("Dokument is older then indexed. Time DocID %lu > Time this %lu\n",DocumentIndexPost->CrawleDato, ReposetoryHeader.time);
+						printf("Dokument is older then indexed. Time DocID %u > Time this %u\n",DocumentIndexPost->CrawleDato, ReposetoryHeader.time);
 					#endif
 					isuntouched++;
 					++(*argstruct).optHandleOld_thencur;
@@ -850,7 +850,7 @@ void *IndexerLot_workthread(void *arg) {
 
 
 
-				//printf("D: %u, R: %lu\n",ReposetoryHeader.DocID, radress);
+				//printf("D: %u, R: %u\n",ReposetoryHeader.DocID, radress);
 
 
 				#ifndef BLACK_BOX

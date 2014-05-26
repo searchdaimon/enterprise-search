@@ -19,7 +19,7 @@ extern int getopt(int, char * const *, const char *);
 *************************************************************************************/
 int getDocIDFromUrl(char bdbfiledir[],char url[],unsigned int *DocID) {
 
-        unsigned long crc32Value;
+        unsigned int crc32Value;
         int dbFileForUrl;
         int ret;
         DB *dbp;

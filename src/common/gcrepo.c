@@ -23,7 +23,7 @@ int gcrepo(int LotNr, char *subname) {
 	char *acl_allow;
 	char *acl_deny;
 	char *url, *attributes;
-	unsigned long int raddress;
+	unsigned int raddress;
 	char path[1024];
 	char path2[1024];
 	char path3[1024];
@@ -67,7 +67,7 @@ int gcrepo(int LotNr, char *subname) {
 			++gced;
 		}
 		else {
-			unsigned long int offset;
+			unsigned int offset;
 			offset = rApendPost(&ReposetoryHeader, htmlbuffer, imagebuffer, subname, acl_allow, acl_deny, "repo.wip", url, attributes, attrkeys);
 			RE_DocumentIndex(re,ReposetoryHeader.DocID)->RepositoryPointer = offset;
 			#ifdef DEBUG

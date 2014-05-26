@@ -675,7 +675,7 @@ int main (int argc, char *argv[]) {
             char *acl_allow;
             char *acl_deny;
             char *url, *attributes;
-            unsigned long int radress;
+            unsigned int radress;
 	    char *thumbnale;
 	    int deleted;
 	    unsigned int uriindex_DocID;

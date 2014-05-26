@@ -275,7 +275,7 @@ static void browse(char * path, int scan, int indent)
             }
             else
             {
-                printf(" size %lu", (unsigned long) stat.st_size);
+                printf(" size %lu", (unsigned int) stat.st_size);
             }
             *p = '\0';
 

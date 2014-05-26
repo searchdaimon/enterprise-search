@@ -426,9 +426,9 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 	return 1;
 }
 
-unsigned long int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys) {
+unsigned int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys) {
 
-	unsigned long int offset;
+	unsigned int offset;
 
 	//finner ut når dette ble gjort
 	#ifdef BLACK_BOX
@@ -852,7 +852,7 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 		char **acl_allowbuffer,char **acl_deniedbuffer, unsigned int imagesize, char **url, char **attributes) {
 
 	#ifdef DEBUG
-		printf("rreadhtml(HtmlBufferSize=%u, radress64bit=%u, rsize=%u, DocID=%u, subname=\"%s\",imagesize=%u)\n",*HtmlBufferSize,radress64bit,rsize,DocID,subname,imagesize);
+		printf("rReadhtml(HtmlBufferSize=%u, radress64bit=%u, rsize=%u, DocID=%u, subname=\"%s\",imagesize=%u)\n",*HtmlBufferSize,radress64bit,rsize,DocID,subname,imagesize);
 	#endif
 
         #ifdef TIME_DEBUG_L
@@ -939,6 +939,7 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 	
 	if ( (error = uncompress((Bytef*)HtmlBuffer,(uLong *)HtmlBufferSize,(Bytef *)WorkBuff,rsize)) != 0) {
                	printf("uncompress error. Code: %i for DocID %u-%i\n",error,DocID,rLotForDOCid(DocID));
+		printf("HtmlBufferSize: %u, rsize: %u\n", *HtmlBufferSize, rsize);
         		
 		HtmlBuffer[0] = '\0';
 		(*HtmlBufferSize) = 0;
@@ -1631,7 +1632,7 @@ while (rGetNext(LotNr,ReposetoryData)) {
 */
 
 int rGetNext_fh (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
-int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime,
+int htmlbufferSize, char imagebuffer[], unsigned int *radress, unsigned int FilterTime,
 char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, char **attributes) {
 
 	//global variabel for rGetNext
@@ -1759,7 +1760,7 @@ char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, c
 }
 
 int rGetNext_reponame (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
-int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,
+int htmlbufferSize, char imagebuffer[], unsigned int *radress, unsigned int FilterTime, unsigned int FileOffset,
 char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, char **url, char **attributes) {
 
 	static FILE *LotFileOpen;
@@ -1815,7 +1816,7 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, 
 
 
 int rGetNext (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
-int htmlbufferSize, char imagebuffer[], unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset,
+int htmlbufferSize, char imagebuffer[], unsigned int *radress, unsigned int FilterTime, unsigned int FileOffset,
 char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char **url, char **attributes) {
 
 	return rGetNext_reponame(LotNr,ReposetoryHeader,htmlbuffer,htmlbufferSize,imagebuffer,radress,FilterTime,FileOffset,subname,acl_allowbuffer,acl_deniedbuffer,"reposetory", url, attributes);
@@ -1831,8 +1832,8 @@ int runpack(char *ReposetoryData,uLong comprLen,char *inndata,int length) {
 	int error;
 
 	if ( (error = uncompress((Bytef*)ReposetoryData,&comprLen,(Bytef *)inndata,length)) != 0) {
-		//temp: haker ut denne. Bør returnere noe om at vi hadde en feil
 		printf("uncompress error. Code: %i\n",error);
+		printf("comprLen: %u, length: %i\n", (unsigned int)comprLen, length);
 		return 0;
 	}
 	ReposetoryData[comprLen] = '\0';

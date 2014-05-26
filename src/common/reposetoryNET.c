@@ -495,7 +495,7 @@ int rSendFileByOpenHandlerBySocket(FILE *FILEHANDLER, char dest[], int LotNr, ch
 	return 1;
 }
 
-int rGetNextNET(char *HostName, unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffebuffer[] __bunused, unsigned long int *radress, unsigned int FilterTime, unsigned int FileOffset __bunused,char subname[]) {
+int rGetNextNET(char *HostName, unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffebuffer[] __bunused, unsigned int *radress, unsigned int FilterTime, unsigned int FileOffset __bunused,char subname[]) {
 
 
 	static int socketha;
@@ -571,9 +571,9 @@ int rGetNextNET(char *HostName, unsigned int LotNr,struct ReposetoryHeaderFormat
 
 }
 
-unsigned long int DIGetIp (char *HostName, unsigned int DocID,char subname[]) {
+unsigned int DIGetIp (char *HostName, unsigned int DocID,char subname[]) {
 
-	unsigned long int IPAddress;
+	unsigned int IPAddress;
 	int i;
 
 	static int socketha;

@@ -17,9 +17,9 @@ Dette programet spleiser sammen en iindex hvis den har fragmenterte poster, som 
 
 struct revIndexArrayFomat {
 	unsigned int DocID;
-        unsigned long WordID;
+        unsigned int WordID;
 	unsigned char langnr;
-        unsigned long nrOfHits;
+        unsigned int nrOfHits;
         unsigned short hits[MaxsHitsInIndex];
 };
 
@@ -196,12 +196,12 @@ int IndekserSplice(char iindexPath[]) {
 
 	FILE *fileha;
 
-        unsigned long DocID;
-        unsigned long TermAntall;
+        unsigned int DocID;
+        unsigned int TermAntall;
         unsigned short hit, lasthit;
 
-	unsigned long term;
-	unsigned long Antall;
+	unsigned int term;
+	unsigned int Antall;
 	unsigned char langnr;
 
 	unsigned short *allhit = malloc(sizeof(unsigned short) * maxHitsToSplice);
@@ -243,14 +243,14 @@ int IndekserSplice(char iindexPath[]) {
 	int n;
 	while (!feof(fileha)) {
 		//wordid hedder
-        	if ((n=fread(&term,sizeof(unsigned long),1,fileha)) != 1) {
+        	if ((n=fread(&term,sizeof(unsigned int),1,fileha)) != 1) {
 			#ifdef DEBUG
 				printf("last hit\n");
 			#endif
 			break;
 		}
 		//printf("n %i\n",n);
-        	if(fread(&Antall,sizeof(unsigned long),1,fileha)!= 1) {
+        	if(fread(&Antall,sizeof(unsigned int),1,fileha)!= 1) {
                         printf("can't read Antall\n");
                         break;
                 }
@@ -268,7 +268,7 @@ int IndekserSplice(char iindexPath[]) {
 		lasthit = 0;
 		for (i=0;i<Antall;i++) {
 			//side hedder
-			if(fread(&DocID,sizeof(unsigned long),1,fileha)!= 1) {
+			if(fread(&DocID,sizeof(unsigned int),1,fileha)!= 1) {
                        	        printf("can't read DocID\n");
                         	break;
                 	}
@@ -276,7 +276,7 @@ int IndekserSplice(char iindexPath[]) {
                                 printf("can't read langnr\n");
                                 break;
                         }
-        		if(fread(&TermAntall,sizeof(unsigned long),1,fileha)!= 1) {
+        		if(fread(&TermAntall,sizeof(unsigned int),1,fileha)!= 1) {
                                 printf("can't read term antall\n");
                                 break;
                         }

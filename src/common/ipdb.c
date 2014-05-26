@@ -22,7 +22,7 @@ int ipdbOpen(struct ipdbl *ipdbha) {
 
 unsigned int ipdbForDocID(struct ipdbl *ipdbha,unsigned int DocID) {
 
-	unsigned long int toIPAddress;
+	unsigned int toIPAddress;
 
 
                                 if (fseek((*ipdbha).FH,DocID * sizeof(toIPAddress),SEEK_SET) == -1) {

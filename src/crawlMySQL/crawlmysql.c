@@ -56,7 +56,7 @@ int mysql_recurse (char host[], char user[], char password[], char dbname[],
 	int nrOfTables,nrOfColumns;
 	char **tables;
 	char **columns;
-	unsigned long *lengths;
+	unsigned int *lengths;
 	unsigned int num_fields;
 	unsigned int totlengths,columnstotlengths;
 	char *document;

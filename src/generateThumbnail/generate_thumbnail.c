@@ -86,7 +86,7 @@ unsigned char* generate_thumbnail( const void *image, const size_t size, size_t 
 {
     MagickWand		*magick_wand, *magick_wand_canvas;
     PixelWand		*pixel_wand;
-    unsigned long	cols, rows, ncols, nrows;
+    unsigned int	cols, rows, ncols, nrows;
     unsigned char	*new_blob;
 
     // Initialize MagickWand:

@@ -13,7 +13,7 @@ main (int argc, char *argv[]) {
 	char FileName[255];
 
         struct ReposetoryHeaderFormat ReposetoryHeader;
-        unsigned long int radress;
+        unsigned int radress;
 
         char htmlbuffer[524288];
 	Bytef  *htmlncompressBuffer;

@@ -30,7 +30,7 @@ int main (int argc, char *argv[]) {
 
 
 	//DB *dbp;
-	unsigned long crc32Value;
+	unsigned int crc32Value;
 	char fileName[255];
 
 	/********************************************************************

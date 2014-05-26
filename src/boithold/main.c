@@ -64,7 +64,7 @@ void connectHandler(int socket) {
 	int DocID;
 
 	struct ReposetoryHeaderFormat ReposetoryHeader;
-	unsigned long int radress;
+	unsigned int radress;
 
 	char htmlbuffer[524288];
 	int destLeng;

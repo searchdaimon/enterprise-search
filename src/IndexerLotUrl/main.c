@@ -21,7 +21,7 @@ int main (int argc, char *argv[]) {
 	char domain[64];
 	FILE *revindexFilesHa[NrOfDataDirectorys];
 	char *cpnt, *cpntlast;
-	unsigned long WordID;
+	unsigned int WordID;
 	int bucket;
 	unsigned short hits;
 	int nr;
@@ -102,8 +102,8 @@ int main (int argc, char *argv[]) {
 					lang = 0;
 					fwrite(&lang,sizeof(unsigned char),1,revindexFilesHa[bucket]);
 
-        	        		fwrite(&WordID,sizeof(unsigned long),1,revindexFilesHa[bucket]);
-        	        		fwrite(&nr,sizeof(unsigned long),1,revindexFilesHa[bucket]);
+        	        		fwrite(&WordID,sizeof(unsigned int),1,revindexFilesHa[bucket]);
+        	        		fwrite(&nr,sizeof(unsigned int),1,revindexFilesHa[bucket]);
 
         	        		for(y=0;y<nr;y++) {
         	        		        //printf("\thits %i\n",pagewords.revIndex[i].hits[y]);

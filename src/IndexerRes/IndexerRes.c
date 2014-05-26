@@ -289,7 +289,7 @@ void wordsAdd(struct pagewordsFormatPartFormat *wordsPart, char word[],enum pars
 
 				++wordsPart->nextPosition;
 
-				//printf("%s : %lu\n",word,wordsPart->words[wordsPart->nr]);
+				//printf("%s : %u\n",word,wordsPart->words[wordsPart->nr]);
 
 				++wordsPart->nr;		
 			}
@@ -434,10 +434,10 @@ int compare_elements_nr (const void *p1, const void *p2) {
 static int cmp1_crc32(const void *p, const void *q)
 {
 	#ifdef DEBUG
-	printf("%lu %lu\n",*(const unsigned long *) p,*(const unsigned long *) q);
+	printf("%u %u\n",*(const unsigned int *) p,*(const unsigned int *) q);
 	#endif
 
-	return *(const unsigned long *) p - *(const unsigned long *) q;
+	return *(const unsigned int *) p - *(const unsigned int *) q;
 }
 
 #ifdef BLACK_BOX
@@ -529,7 +529,7 @@ void attribMakeRevIndex(struct IndexerRes_attrib *attrib) {
 void wordsMakeRevIndex_part(struct pagewordsFormatPartFormat *wordsPart,struct adultFormat __attribute__((unused))*adult,int __attribute__((unused))*adultWeight) {
 
 	int i,adultpos,adultFraserpos;
-	unsigned long oldcrc32;
+	unsigned int oldcrc32;
 	int oldRevIndexnr = 0;
 
 	//kopierer over til den word arrayn som skal være sortert
@@ -570,7 +570,7 @@ void wordsMakeRevIndex_part(struct pagewordsFormatPartFormat *wordsPart,struct a
 			#ifdef PRESERVE_WORDS
 				strcpy(wordsPart->revIndex[wordsPart->revIndexnr].word,wordsPart->words_sorted[i].word);
 				wordsPart->revIndex[wordsPart->revIndexnr].wordnr = 1;
-				//printf("word %lu %s\n",wordsPart->revIndex[wordsPart->revIndexnr].WordID,wordsPart->words_sorted[i].word);
+				//printf("word %u %s\n",wordsPart->revIndex[wordsPart->revIndexnr].WordID,wordsPart->words_sorted[i].word);
 			#endif
 
 
@@ -584,7 +584,7 @@ void wordsMakeRevIndex_part(struct pagewordsFormatPartFormat *wordsPart,struct a
 				&& wordsPart->revIndex[wordsPart->revIndexnr].WordID > (*adult).AdultWords[adultpos].crc32) 
 				) {
 				#ifdef DEBUG
-					//printf("testing for %lu %s\n",(*adult).AdultWords[adultpos].crc32,(*adult).AdultWords[adultpos].word);
+					//printf("testing for %u %s\n",(*adult).AdultWords[adultpos].crc32,(*adult).AdultWords[adultpos].word);
 				#endif
 				++adultpos;
 			}
@@ -666,7 +666,7 @@ void adultPhrases(struct pagewordsFormatPartFormat *wordsPart, struct adultForma
 
 		while ((wordsPart->revIndex[i].WordID > (*adult).adultFraser[adultFraserpos].crc32) && (adultFraserpos < (*adult).adultWordFrasernr)) {
 			#ifdef DEBUG
-				printf("searching to next adult word, skipping: s %lu %s\n",(*adult).adultFraser[adultFraserpos].crc32,(*adult).adultFraser[adultFraserpos].word);
+				printf("searching to next adult word, skipping: s %u %s\n",(*adult).adultFraser[adultFraserpos].crc32,(*adult).adultFraser[adultFraserpos].word);
 			#endif
 			++adultFraserpos;
 		}
@@ -814,7 +814,7 @@ void adultLoad (struct adultFormat *adult) {
 	char buff[128];
 	int i,y,x;
 	char *cpoint;
-	unsigned long crc32tmp;
+	unsigned int crc32tmp;
 
 	//AdultWordsFile
 	if ((FH = bfopen(AdultWordsVektetFile,"r")) == NULL) {
@@ -872,7 +872,7 @@ void adultLoad (struct adultFormat *adult) {
 
 //debug: vis alle ordene, sortert
 //	for(y=0;y<i;y++) {
-//		printf("%i: -%s- %lu %i\n",y,(*adult).AdultWords[y].word,(*adult).AdultWords[y].crc32,(*adult).AdultWords[y].weight);
+//		printf("%i: -%s- %u %i\n",y,(*adult).AdultWords[y].word,(*adult).AdultWords[y].crc32,(*adult).AdultWords[y].weight);
 //	}
 
 
@@ -1077,7 +1077,7 @@ void aclsMakeRevIndexBucket (struct IndexerRes_acls *acl,unsigned int DocID,unsi
 	}
 
 	for(i=0;i<NrOfDataDirectorys;i++) {
-		(*acl).nrofAclBucketElements[i].bucketbuffsize = ((sizeof(unsigned int) + sizeof(char) + sizeof(unsigned long) + sizeof(unsigned long)) * (*acl).nrofAclBucketElements[i].records) + ((*acl).nrofAclBucketElements[i].hits * sizeof(unsigned short));
+		(*acl).nrofAclBucketElements[i].bucketbuffsize = ((sizeof(unsigned int) + sizeof(char) + sizeof(unsigned int) + sizeof(unsigned int)) * (*acl).nrofAclBucketElements[i].records) + ((*acl).nrofAclBucketElements[i].hits * sizeof(unsigned short));
 		//printf("bucketbuffsize %i\n",(*acl).nrofaclBucketElements[i].bucketbuffsize);
 
 		(*acl).nrofAclBucketElements[i].bucketbuff = malloc((*acl).nrofAclBucketElements[i].bucketbuffsize);
@@ -1097,8 +1097,8 @@ void aclsMakeRevIndexBucket (struct IndexerRes_acls *acl,unsigned int DocID,unsi
 
 			p += memcpyrc(p,&DocID,sizeof(unsigned int));
 			p += memcpyrc(p,langnr,sizeof(char));
-			p += memcpyrc(p,&(*acl).aclIndex[i].WordID,sizeof(unsigned long));
-			p += memcpyrc(p,&(*acl).aclIndex[i].nr,sizeof(unsigned long));
+			p += memcpyrc(p,&(*acl).aclIndex[i].WordID,sizeof(unsigned int));
+			p += memcpyrc(p,&(*acl).aclIndex[i].nr,sizeof(unsigned int));
 			for(y=0;y<(*acl).aclIndex[i].nr;y++) {
 				p += memcpyrc(p,&(*acl).aclIndex[i].hits[y].pos,sizeof(unsigned short));
 			}
@@ -1131,7 +1131,7 @@ void attribMakeRevIndexBucket (struct IndexerRes_attrib *attrib,unsigned int Doc
 	}
 
 	for(i=0;i<NrOfDataDirectorys;i++) {
-		(*attrib).nrofAttribBucketElements[i].bucketbuffsize = ((sizeof(unsigned int) + sizeof(char) + sizeof(unsigned long) + sizeof(unsigned long)) * (*attrib).nrofAttribBucketElements[i].records) + ((*attrib).nrofAttribBucketElements[i].hits * sizeof(unsigned short));
+		(*attrib).nrofAttribBucketElements[i].bucketbuffsize = ((sizeof(unsigned int) + sizeof(char) + sizeof(unsigned int) + sizeof(unsigned int)) * (*attrib).nrofAttribBucketElements[i].records) + ((*attrib).nrofAttribBucketElements[i].hits * sizeof(unsigned short));
 
 		(*attrib).nrofAttribBucketElements[i].bucketbuff = malloc((*attrib).nrofAttribBucketElements[i].bucketbuffsize);
 	}
@@ -1150,8 +1150,8 @@ void attribMakeRevIndexBucket (struct IndexerRes_attrib *attrib,unsigned int Doc
 
 			p += memcpyrc(p,&DocID,sizeof(unsigned int));
 			p += memcpyrc(p,langnr,sizeof(char));
-			p += memcpyrc(p,&(*attrib).attribIndex[i].WordID,sizeof(unsigned long));
-			p += memcpyrc(p,&(*attrib).attribIndex[i].nr,sizeof(unsigned long));
+			p += memcpyrc(p,&(*attrib).attribIndex[i].WordID,sizeof(unsigned int));
+			p += memcpyrc(p,&(*attrib).attribIndex[i].nr,sizeof(unsigned int));
 			for(y=0;y<(*attrib).attribIndex[i].nr;y++) {
 				p += memcpyrc(p,&(*attrib).attribIndex[i].hits[y].pos,sizeof(unsigned short));
 			}
@@ -1183,7 +1183,7 @@ void wordsMakeRevIndexBucket_part(struct pagewordsFormatPartFormat *wordsPart,un
 	}
 	
 	for(i=0;i<NrOfDataDirectorys;i++) {
-		wordsPart->nrofBucketElements[i].bucketbuffsize = ((sizeof(unsigned int) + sizeof(char) + sizeof(unsigned long) + sizeof(unsigned long)) * wordsPart->nrofBucketElements[i].records) + (wordsPart->nrofBucketElements[i].hits * sizeof(unsigned short));
+		wordsPart->nrofBucketElements[i].bucketbuffsize = ((sizeof(unsigned int) + sizeof(char) + sizeof(unsigned int) + sizeof(unsigned int)) * wordsPart->nrofBucketElements[i].records) + (wordsPart->nrofBucketElements[i].hits * sizeof(unsigned short));
 
 		if((wordsPart->nrofBucketElements[i].bucketbuff = malloc(wordsPart->nrofBucketElements[i].bucketbuffsize)) == NULL) {
 			perror("malloc nrofBucketElements");
@@ -1202,7 +1202,7 @@ void wordsMakeRevIndexBucket_part(struct pagewordsFormatPartFormat *wordsPart,un
 	for(i=0;i<wordsPart->revIndexnr;i++) {
 
 			if(wordsPart->revIndex[i].nr > MaxsHitsInIndex) {
-				fprintf(stderr,"have more then MaxsHitsInIndex (%i). Have %lu\n",MaxsHitsInIndex,wordsPart->revIndex[i].nr);
+				fprintf(stderr,"have more then MaxsHitsInIndex (%i). Have %u\n",MaxsHitsInIndex,wordsPart->revIndex[i].nr);
 				exit(-1);
 			}
 
@@ -1214,8 +1214,8 @@ void wordsMakeRevIndexBucket_part(struct pagewordsFormatPartFormat *wordsPart,un
 
 			p += memcpyrc(p,&DocID,sizeof(unsigned int));
 			p += memcpyrc(p,langnr,sizeof(char));
-			p += memcpyrc(p,&wordsPart->revIndex[i].WordID,sizeof(unsigned long));
-			p += memcpyrc(p,&wordsPart->revIndex[i].nr,sizeof(unsigned long));
+			p += memcpyrc(p,&wordsPart->revIndex[i].WordID,sizeof(unsigned int));
+			p += memcpyrc(p,&wordsPart->revIndex[i].nr,sizeof(unsigned int));
 			for(y=0;y<wordsPart->revIndex[i].nr;y++) {
 				p += memcpyrc(p,&wordsPart->revIndex[i].hits[y].pos,sizeof(unsigned short));
 			}

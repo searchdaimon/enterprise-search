@@ -40,9 +40,9 @@ struct DictionaryMemoryFormat {
 
 struct revIndexArrayFomat {
 	unsigned int DocID;
-        unsigned long WordID;
+        unsigned int WordID;
 	unsigned char langnr;
-        unsigned long nrOfHits;
+        unsigned int nrOfHits;
         unsigned short hits[MaxsHitsInIndex];
 	char tombstone;
 };
@@ -993,8 +993,8 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 	unsigned int *nrofDocIDsForWordID;
 	struct revIndexArrayFomat *revIndexArray; 
 
-        unsigned long term;
-        unsigned long Antall;
+        unsigned int term;
+        unsigned int Antall;
 	int revIndexArraySize;
 
 	#ifdef DEBUG
@@ -1103,7 +1103,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 		while ((!feof(IINDEXFH)) && (count < revIndexArraySize)) {
         	        //wordid hedder
-                	if (fread(&term,sizeof(unsigned long),1,IINDEXFH) != 1) {
+                	if (fread(&term,sizeof(unsigned int),1,IINDEXFH) != 1) {
 				//skriver ut feilmelding hvis vi fik en feil, men ikke eof
 				if (!feof(IINDEXFH)) {
                         		printf("can't read term\n");
@@ -1111,7 +1111,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 				}
 				break;
                 	}
-			fread(&Antall,sizeof(unsigned long),1,IINDEXFH);
+			fread(&Antall,sizeof(unsigned int),1,IINDEXFH);
 
 			#ifdef DEBUG
 				printf("term: %u antall: %u\n",term,Antall);
@@ -1121,14 +1121,14 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 				revIndexArray[count].WordID = term;
 
-				if (fread(&revIndexArray[count].DocID,sizeof(unsigned long),1,IINDEXFH) != 1) {
+				if (fread(&revIndexArray[count].DocID,sizeof(unsigned int),1,IINDEXFH) != 1) {
                         	        printf("can't read DocID for nr %i\n",u);
                         	        perror("");
                         	        continue;
                         	}
 
 				fread(&revIndexArray[count].langnr,sizeof(char),1,IINDEXFH);
-                        	fread(&revIndexArray[count].nrOfHits,sizeof(unsigned long),1,IINDEXFH);
+                        	fread(&revIndexArray[count].nrOfHits,sizeof(unsigned int),1,IINDEXFH);
 
 				revIndexArray[count].tombstone = 0;
 
@@ -1139,14 +1139,14 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 				#endif
 
 				if (revIndexArray[count].nrOfHits > MaxsHitsInIndex) {
-					printf("iindex: nrOfHits lager then MaxsHitsInIndex (%i). Nr was %lu\n",MaxsHitsInIndex ,revIndexArray[count].nrOfHits );
+					printf("iindex: nrOfHits lager then MaxsHitsInIndex (%i). Nr was %u\n",MaxsHitsInIndex ,revIndexArray[count].nrOfHits );
 					goto IndekserError;			
 				}
 
 
 				for (uy = 0;uy < revIndexArray[count].nrOfHits; uy++) {
                                         if (fread(&revIndexArray[count].hits[uy],sizeof(unsigned short),1,IINDEXFH) != 1) {
-						fprintf(stderr,"Can't read hit. DocID %u, nr of hits %lu\n",revIndexArray[count].DocID,revIndexArray[count].nrOfHits);
+						fprintf(stderr,"Can't read hit. DocID %u, nr of hits %u\n",revIndexArray[count].DocID,revIndexArray[count].nrOfHits);
 						perror(iindexPathOld);
 						goto IndekserError;
 					}
@@ -1218,7 +1218,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		#endif
 
 		if (revIndexArray[count].nrOfHits > MaxsHitsInIndex) {
-			printf("revinde: nrOfHits lager then MaxsHitsInIndex (%i). Nr was %lu\n",MaxsHitsInIndex ,revIndexArray[count].nrOfHits );
+			printf("revinde: nrOfHits lager then MaxsHitsInIndex (%i). Nr was %u\n",MaxsHitsInIndex ,revIndexArray[count].nrOfHits );
 			goto IndekserError;			
 		}
 
@@ -1347,7 +1347,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		lastWordID = revIndexArray[i].WordID;
 
 		if (revIndexArray[i].nrOfHits > MaxsHitsInIndex) {
-			printf("Writing iindex: nrOfHits lager then MaxsHitsInIndex (%i). Nr was %lu\n",MaxsHitsInIndex ,revIndexArray[i].nrOfHits );
+			printf("Writing iindex: nrOfHits lager then MaxsHitsInIndex (%i). Nr was %u\n",MaxsHitsInIndex ,revIndexArray[i].nrOfHits );
 			goto IndekserError;			
 		}
 
@@ -1443,8 +1443,8 @@ int Indekser_compare_elements (const void *p1, const void *p2) {
 
 struct iindexfileFormat {
                 FILE *fileha;
-                unsigned long lastTerm;
-                unsigned long lastAntall;
+                unsigned int lastTerm;
+                unsigned int lastAntall;
 		int nr;
 		int eof;
 		char PathForLotIndex[128];
@@ -1461,7 +1461,7 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 	struct DictionaryFormat DictionaryPost;
 	int nrOffIindexFiles;
 	int gotEof;
-	unsigned long mergeTerm, totaltAntall, DocID, TermAntall, currentTerm;
+	unsigned int mergeTerm, totaltAntall, DocID, TermAntall, currentTerm;
         unsigned short hits[MaxsHitsInIndex];
 	unsigned char langnr;
 	off_t startAdress;
@@ -1594,11 +1594,11 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 	for (i=0;i<nrOffIindexFiles;i++) {
 
                	//leser inn første term
-               	if (fread(&iindexfile[count].lastTerm,sizeof(unsigned long),1,iindexfile[count].fileha) != 1) {
+               	if (fread(&iindexfile[count].lastTerm,sizeof(unsigned int),1,iindexfile[count].fileha) != 1) {
 			printf("can't read first lastTerm for %s. Ignoring it\n",iindexfile[count].PathForLotIndex);
                         perror("read");
 		}
-            	else if (fread(&iindexfile[count].lastAntall,sizeof(unsigned long),1,iindexfile[count].fileha) != 1) {
+            	else if (fread(&iindexfile[count].lastAntall,sizeof(unsigned int),1,iindexfile[count].fileha) != 1) {
 			printf("can't read first lastAntall for %s. Ignoring it\n",iindexfile[count].PathForLotIndex);
                         perror("read");
 		}
@@ -1681,7 +1681,7 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 		qsort(iindexfile, i , sizeof(struct iindexfileFormat), mergei_compare_filenr);
 	
 		#ifdef DEBUG
-			printf("totaltAntall %lu for term %lu\n",totaltAntall,iindexfile[0].lastTerm);
+			printf("totaltAntall %u for term %u\n",totaltAntall,iindexfile[0].lastTerm);
 		#endif
 
 		currentTerm = iindexfile[0].lastTerm;
@@ -1696,7 +1696,7 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 		while ( (mergeTerm == iindexfile[i].lastTerm) && (i<stoppIndex) ) {
 		
 			#ifdef DEBUG
-				printf("i: %i skriv lastTerm %lu : lastAntall %lu fra nr %i\n",i,iindexfile[i].lastTerm,iindexfile[i].lastAntall,iindexfile[i].nr);
+				printf("i: %i skriv lastTerm %u : lastAntall %u fra nr %i\n",i,iindexfile[i].lastTerm,iindexfile[i].lastAntall,iindexfile[i].nr);
 			#endif
 			
 
@@ -1731,13 +1731,13 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 
 
 				if (TermAntall > MaxsHitsInIndex) {
-					fprintf(stderr,"TermAntall %lu is lager then MaxsHitsInIndex %d. file \"%s\"\n",TermAntall,MaxsHitsInIndex,iindexfile[i].PathForLotIndex);
+					fprintf(stderr,"TermAntall %u is lager then MaxsHitsInIndex %d. file \"%s\"\n",TermAntall,MaxsHitsInIndex,iindexfile[i].PathForLotIndex);
 					goto iindexfileReadError;
 				}
 
                         	for (z = 0;z < TermAntall; z++) {
 					if ((n=fread(&hits[z],sizeof(unsigned short),1,iindexfile[i].fileha)) != 1) {
-						fprintf(stderr,"can't read hit for %s. z: %i, TermAntall: %lu. DocID %lu\n",iindexfile[i].PathForLotIndex,z,TermAntall, DocID);
+						fprintf(stderr,"can't read hit for %s. z: %i, TermAntall: %u. DocID %u\n",iindexfile[i].PathForLotIndex,z,TermAntall, DocID);
 		                       		perror(iindexfile[i].PathForLotIndex);
 
 						//ToDo: dette er ikke 100% lurt, break her går ut av den første for loppen, men ikke den viktige hoved loopen
@@ -1746,9 +1746,9 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
                         	}
 
 				//skriver til final index
-				fwrite(&DocID,sizeof(unsigned long),1,FinalIindexFileFA);
+				fwrite(&DocID,sizeof(unsigned int),1,FinalIindexFileFA);
 				fwrite(&langnr,sizeof(char),1,FinalIindexFileFA);
-				fwrite(&TermAntall,sizeof(unsigned long),1,FinalIindexFileFA);
+				fwrite(&TermAntall,sizeof(unsigned int),1,FinalIindexFileFA);
 
 				//skriver hits
                         	for (z = 0;z < TermAntall; z++) {
@@ -1773,12 +1773,12 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 			}
 			else {
 				//leser inn neste term
-                        	if ((n=fread(&iindexfile[i].lastTerm,sizeof(unsigned long),1,iindexfile[i].fileha)) != 1) { 
+                        	if ((n=fread(&iindexfile[i].lastTerm,sizeof(unsigned int),1,iindexfile[i].fileha)) != 1) { 
 					printf("cant read lastTerm for %s\n",iindexfile[i].PathForLotIndex);
                        			perror("read");
 					exit(1);			
 				}
-                        	if ((n=fread(&iindexfile[i].lastAntall,sizeof(unsigned long),1,iindexfile[i].fileha)) != 1) {
+                        	if ((n=fread(&iindexfile[i].lastAntall,sizeof(unsigned int),1,iindexfile[i].fileha)) != 1) {
 					printf("cant read lastAntall for %s\n",iindexfile[i].PathForLotIndex);
                         		perror("read");
                                 	exit(1);

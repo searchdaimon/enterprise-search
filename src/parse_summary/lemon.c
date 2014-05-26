@@ -1548,7 +1548,7 @@ char **argv;
 /*
 ** Return a pointer to the next structure in the linked list.
 */
-#define NEXT(A) (*(char**)(((unsigned long)A)+offset))
+#define NEXT(A) (*(char**)(((unsigned int)A)+offset))
 
 /*
 ** Inputs:
@@ -1622,11 +1622,11 @@ char *list;
 char **next;
 int (*cmp)();
 {
-  unsigned long offset;
+  unsigned int offset;
   char *ep;
   char *set[LISTSIZE];
   int i;
-  offset = (unsigned long)next - (unsigned long)list;
+  offset = (unsigned int)next - (unsigned int)list;
   for(i=0; i<LISTSIZE; i++) set[i] = 0;
   while( list ){
     ep = list;
@@ -1775,7 +1775,7 @@ FILE *err;
         if( *end ){
           if( err ){
             fprintf(err,"%sillegal character in floating-point argument.\n",emsg);
-            errline(i,((unsigned long)end)-(unsigned long)argv[i],err);
+            errline(i,((unsigned int)end)-(unsigned int)argv[i],err);
           }
           errcnt++;
         }
@@ -1786,7 +1786,7 @@ FILE *err;
         if( *end ){
           if( err ){
             fprintf(err,"%sillegal character in integer argument.\n",emsg);
-            errline(i,((unsigned long)end)-(unsigned long)argv[i],err);
+            errline(i,((unsigned int)end)-(unsigned int)argv[i],err);
           }
           errcnt++;
         }
