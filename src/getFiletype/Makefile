@@ -1,5 +1,5 @@
 
-CFLAGS?=	-O2
+CFLAGS+=	-O2
 
 include ../../mk/setup.mk
 

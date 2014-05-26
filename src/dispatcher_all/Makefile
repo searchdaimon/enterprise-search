@@ -22,7 +22,7 @@ CFLAGS?=
 
 CFLAGS+=	-DATTRIBUTES -D_FILE_OFFSET_BITS=64 -DIIACL -BLACK_BOX -DWITH_SPELLING -DWITH_CASHE
 
-LDFLAGS+=	-lm -lz ../getFiletype/libfte.a ../query/lex.query.o -lpthread
+LDFLAGS+=      ../query/lex.query.o -lpthread -lm -lz $(LIBDIR)/libfte.a
 
 OBJS=	main.o maincfg.o acls.o out_opensearch.o  out_sdxml.o library.o qrewrite.o cgihandler.o client.o \
 	boithoadClientLib.o searchFilters.o cgi-util.o key.o out_sdjson.o out_common.o json.o

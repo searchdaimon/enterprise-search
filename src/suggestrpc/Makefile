@@ -59,7 +59,7 @@ $(CLIENTREDICT) : $(OBJECTS_CLNT_REDICT)
 $(SERVER) : $(OBJECTS_SVC) 
 	$(CC) -o $(SERVER) $(OBJECTS_SVC) $(LDLIBS) ../boithoadClientLib/liboithoaut.a
 
- clean:
-	 $(RM) core $(TARGETS) $(OBJECTS_CLNT) $(OBJECTS_SVC) $(CLIENT) $(SERVER)
+clean:
+	 $(RM) core $(TARGETS) $(OBJECTS_CLNT) $(OBJECTS_SVC) $(CLIENT) $(SERVER) *.o
 
 

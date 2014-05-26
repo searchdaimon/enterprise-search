@@ -1,5 +1,4 @@
-# The compiler to be used
-CC = gcc
+include ../../mk/setup.mk
 
 # Arguments passed to the compiler: -g causes the compiler to insert
 # debugging info into the executable and -Wall turns on all warnings

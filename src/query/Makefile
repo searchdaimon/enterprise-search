@@ -1,6 +1,6 @@
 
-CC=gcc -O2 -Wall -g
-CPP=g++ -O2 -Wall -g
+#CC=gcc -O2 -Wall -g
+#CPP=g++ -O2 -Wall -g
 
 include ../../mk/setup.mk
 

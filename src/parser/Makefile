@@ -1,7 +1,9 @@
 
-CC=gcc -O2 -g -D NOWARNINGS
+#CC=gcc -O2 -g -D NOWARNINGS
 yacc=bison -y
 # -O2 -Wall
+
+include ../../mk/setup.mk
 
 all: html
 

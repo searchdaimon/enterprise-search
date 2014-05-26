@@ -1,6 +1,7 @@
 
-CC=gcc -m32
 yacc=bison
+
+include ../../mk/setup.mk
 
 all:	config_parser
 

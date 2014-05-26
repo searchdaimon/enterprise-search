@@ -1,6 +1,8 @@
-CC=	gcc
+#CC=	gcc
 LDFLAGS= -lm -L/usr/local/lib -lssl -lcrypto
 CFLAGS=	-g -Wall -DWITH_MAKE_LICENSE -std=c99 -O2
+
+include ../../mk/setup.mk
 
 OBJS=	license.o base32.o
 IOBJS=	$(OBJS) slicense_info.o
