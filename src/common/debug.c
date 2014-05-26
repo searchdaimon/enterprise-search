@@ -3,9 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "debug.h"
+//#include "debug.h"
 
-#ifdef DEBUG
 
 void debug(const char *fmt, ...) {
 
@@ -35,4 +34,3 @@ void bwarn(const char *fmt, ...) {
 
 }
 
-#endif
