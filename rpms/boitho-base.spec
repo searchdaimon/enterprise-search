@@ -58,7 +58,11 @@ chmod o+x /home/boitho/
 
 mkdir -p /home/boitho/boithoTools/var
 chown boitho /home/boitho/boithoTools/var
-chown boitho /home/boitho/boithoTools/logs/
+
+mkdir -p /home/boitho/boithoTools/logs
+chown boitho /home/boitho/boithoTools/logs
+
+mkdir -p /boithoData
 chown boitho /boithoData
 
 
