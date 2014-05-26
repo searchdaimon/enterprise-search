@@ -449,7 +449,7 @@ static inline void send_word( char *str, yyscan_t scanner )
 	    end--;
 	}
 
-    if (utf8_strlen((utf8_byte*)str) < 2) return;
+    if (utf8_strlen((utf8_byte*)str) < 2) return;  // Twho char minimum
 
     utf8_strtolower((utf8_byte*)str);
 
