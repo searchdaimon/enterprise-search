@@ -423,7 +423,7 @@ struct iindexMainElements {
 	struct hitsFormat *hits;
 	int TermRank;
 	unsigned char PopRank;
-	unsigned int allrank; //byttet til unsigned long 24. okt 2006. unsigned long er 4 bit int. 05 augus 2007: dropper "long", er 8 bytes på x86_64
+	unsigned int allrank;
 	char phraseMatch;
 	unsigned char langnr;
 	struct subnamesFormat *subname;
