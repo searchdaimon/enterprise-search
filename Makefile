@@ -55,7 +55,7 @@ WALL = -Wall -Wno-unused-function -Wno-char-subscripts -Wno-strict-aliasing -W -
 # generate the file output-data and its dependencies, not plot.png 
 
 
-all : init.d.stop dbupdate getFiletype dep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb IndexerLotbb mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad Suggest gcRepobb gcAuthoritybb sdperl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb usSQLBB usAD crawlPush crawlLocal usShell sortCrc32attrMap perlxs-sdcrawl init.d.start
+all : init.d.stop dbupdate dep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb IndexerLotbb mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad Suggest gcRepobb gcAuthoritybb sdperl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb usSQLBB usAD crawlPush crawlLocal usShell sortCrc32attrMap perlxs-sdcrawl init.d.start
 
 init.d.stop:
 	@echo ""
@@ -156,7 +156,7 @@ perlxs-sdcrawl:
 	@echo ""
 	@echo "$@:"
 
-	(cd perlxs/SD-Crawl make clean && ../../bin/perl Makefile.PL && make)
+	(cd perlxs/SD-Crawl && make clean && ../../bin/perl Makefile.PL && make)
 
 bbdocumentWebAdd:
 	@echo ""
@@ -499,11 +499,11 @@ dep:
 	#ting searchd trenger
 	@echo ""
 	@echo "$@:"
-	for i in src/query src/generateSnippet src/ds src/utf8-filter src/getdate src/parser2 src/newspelling src/getFiletype src/attributes/ src/base64/ src/common/ src/getdate/ src/3pLibs/keyValueHash/ src/perlembed src/logger src/boithoadClientLib; do\
-           echo ""; 												\
-	   echo "Making $$i:"; 											\
-           (cd $$i && $(MAKE) clean && $(MAKE) all); 										\
-	   if [ $$? -ne 0 ];  then echo ""; echo "Sorry, can't build $$i! Please see errors above."; break; fi 	\
+	for i in src/query src/generateSnippet src/ds src/utf8-filter src/getdate src/parser2 src/newspelling src/getFiletype src/attributes/ src/base64/ src/common/ src/getdate/ src/3pLibs/keyValueHash/ src/perlembed src/logger src/boithoadClientLib; do \
+           echo "";                                                                                                 \
+           echo "Making $$i:";                                                                                      \
+           (cd $$i && $(MAKE) clean && $(MAKE) all);                                                                \
+           if [ $$? -ne 0 ];  then echo ""; echo "Sorry, can't build $$i! Please see errors above."; break; fi      \
         done
 
 

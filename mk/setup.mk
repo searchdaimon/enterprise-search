@@ -22,6 +22,7 @@ LDFLAGS+=	/usr/lib/mysql/libmysqlclient.a
 CFLAGS+=	-I/usr/include/mysql
 #`perl -MExtUtils::Embed -e ccopts -e ldopts` -I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE   -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl
 CC=		gcc -D NO_64_BIT_DIV
+CPP=		g++ -O2 -Wall -g
 LIBCONFIG=	/usr/local/lib/libconfig.a
 LIBCONFIG_64=	/usr/local/lib64/libconfig.a
 CRAWL_STATIC=	-Wl,-static
@@ -37,6 +38,7 @@ PERL_EMBED_LIB=	-rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thre
 BDB_INC=	-I/usr/include/db4
 BDB_LIB=	/usr/lib/libdb-4.6.a
 CC=		gcc -m32
+CPP=		g++ -O2 -Wall -g
 MYSQL_LIB+=	/usr/lib/mysql/libmysqlclient.a -lssl
 MYSQL_INC+=	-I/usr/include/mysql
 LIBCONFIG=	/usr/local/lib/libconfig.a
@@ -54,6 +56,7 @@ PERL_EMBED_LIB=	-rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thre
 BDB_INC=	-I/usr/include/db4
 BDB_LIB=	/usr/lib/libdb-4.6.a -lpthread
 CC=		gcc -m32
+CPP=		g++ -O2 -Wall -g
 MYSQL_LIB+=	/usr/lib/mysql/libmysqlclient.a -lssl
 MYSQL_INC+=	-I/usr/include/mysql
 LIBCONFIG=	`pkg-config --libs libconfig`
@@ -66,19 +69,28 @@ endif
 
 ifeq ($(strip $(host)),searchdaimon3)
 # Local on ES v3
-PERL_EMBED_INC=	`perl -MExtUtils::Embed -e ccopts`
-PERL_EMBED_LIB=	`perl -MExtUtils::Embed -e ldopts`
-BDB_INC=	-I/usr/include/db4
-BDB_LIB=	-ldb -lpthread
-CC=		gcc
-MYSQL_LIB+=	`mysql_config --cflags --libs`
-MYSQL_INC+=	`mysql_config --cflags --libs`
-LIBCONFIG=	`pkg-config --libs libconfig`
-LIBCONFIG_64=	`pkg-config --libs libconfig`
+PERL_EMBED_INC=		`perl -MExtUtils::Embed -e ccopts`
+PERL_EMBED_LIB=		`perl -MExtUtils::Embed -e ldopts`
+BDB_INC=		-I/usr/include/db4
+BDB_LIB=		-ldb -lpthread
+CC=			gcc
+CPP=			g++ -O2 -Wall -g
+MYSQL_LIB+=		`mysql_config --libs`
+MYSQL_INC+=		`mysql_config --include` 
+LIBCONFIG=		`pkg-config --libs libconfig`
+LIBCONFIG_64=		`pkg-config --libs libconfig`
 CRAWL_STATIC=	
 US_STATIC=
-SMBCLIENT=-lsmbclient
-LDAP = -DWITH_OPENLDAP -lldap
+SMBCLIENT=		-lsmbclient
+LDAP = 			-DWITH_OPENLDAP -lldap
+# 32 bit
+MYSQL_LIB=     		-L/usr/lib/mysql -lmysqlclient
+#PERL_EMBED_INC= 	-I/usr/lib/perl5/CORE `perl -MExtUtils::Embed -e ccopts`
+#PERL_EMBED_LIB= 	-L/usr/lib/perl5/CORE `perl -MExtUtils::Embed -e ldopts`
+PERL_EMBED_INC= 	-D_REENTRANT -D_GNU_SOURCE -fno-strict-aliasing -pipe -fstack-protector -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64  -I/usr/lib/perl5/CORE
+PERL_EMBED_LIB= 	-Wl,-E -Wl,-rpath,/usr/lib/perl5/CORE  -fstack-protector  -L/usr/lib/perl5/CORE -lperl -lresolv -lnsl -ldl -lm -lcrypt -lutil -lpthread -lc
+CC+=			-m32
+
 endif
 
 ifdef NO_DEPRECATED_WARNINGS
