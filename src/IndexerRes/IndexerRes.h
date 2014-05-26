@@ -35,7 +35,6 @@
 #define MaxAdultWordCount 250
 
 
-//#define subname "www"
 
 #define AdultWordsVektetFile "data/AdultWordsVektet.txt"
 #define AdultFraserVektetFile "data/AdultFraserVektet.txt"
@@ -62,7 +61,7 @@ struct addNewUrlhaFormat global_addNewUrlha_pri2;
 
 struct adultWordFormat {
 	char word[maxWordlLen +1];
-	unsigned long crc32;
+	unsigned int crc32;
 	int weight;
 	int addedAllReady;
 };
@@ -78,15 +77,15 @@ struct revIndexFomat {
 		char word[maxWordlLen +1];
 		unsigned int wordnr;
 	#endif
-        unsigned long WordID;
-        unsigned long nr;
+        unsigned int WordID;
+        unsigned int nr;
         struct revHitsFormat hits[MaxsHitsInIndex];
 	int bucket;
 
 };
 struct adultWordFraserFormat {
         char word[maxWordlLen +1];
-        unsigned long crc32;
+        unsigned int crc32;
 	struct adultWordFormat adultWord[MaxAdultWordCount];
 	int adultWordCount;
         
