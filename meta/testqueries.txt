@@ -60,3 +60,14 @@ template
 
 # Virtually nonexistent phrase. Shouldn.t normally give any hits.
 "submarine ultimo"
+don't
+dont
+c++
+c#
+1%
+30%
+Objective-C
+c
+#hashtag
+#enron
+enron#
