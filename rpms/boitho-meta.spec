@@ -18,7 +18,7 @@ Requires: boitho-base boitho-bbadmin boitho-everrun boitho-infoquery boitho-iind
 Requires: boithobb-setuid boithobb-crawl_watch bbAutoUpdate
 Requires: boitho-database daemonize mod_auth_boitho boitho-configfiles
 Requires: boitho-scripts boitho-dictionary boitho-apaceconf boitho-bbdocumentwebadd
-Requires: perl-version perl-Authen-NTLM boitho-syslogconf boitho-setup_login
+Requires: perl-version boitho-syslogconf boitho-setup_login
 
 
 #Turn off automatic dependency generation
