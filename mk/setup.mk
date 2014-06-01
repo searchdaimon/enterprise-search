@@ -51,7 +51,7 @@ endif
 
 ifeq ($(strip $(host)),searchdaimon)
 # Local on ES
-PERL_EMBED_INC=	-I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -D_GNU_SOURCE
+PERL_EMBED_INC=	-I/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64
 PERL_EMBED_LIB=	-rdynamic -Wl,-E -Wl,-rpath,/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE /usr/lib/perl5/5.8.8/i386-linux-thread-multi/auto/DynaLoader/DynaLoader.a -L/usr/lib/perl5/5.8.8/i386-linux-thread-multi/CORE -lperl
 BDB_INC=	-I/usr/include/db4
 BDB_LIB=	/usr/lib/libdb-4.6.a -lpthread
