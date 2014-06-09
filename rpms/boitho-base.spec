@@ -51,7 +51,7 @@ mkdir -p $RPM_BUILD_ROOT/home/boitho/boithoTools/bin/
 %postun
 
 %pre
-#creat boitho user bu running useradd. Settng login to bash, ( should change to nologin )
+#creat boitho user by running useradd. Settng login to bash, ( should change to nologin )
 /usr/sbin/useradd -s /bin/bash "boitho"
 # and set executable bit on boitho's home
 chmod o+x /home/boitho/
