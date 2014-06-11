@@ -169,6 +169,12 @@
 				[% IF r.cache %]
 				<a href="[% gen_cache_url(r.cache) %]">[% "cache" | i18n %]</a>
 				[% END %]
+				[%
+					open_folder = folder( r.uri )
+				%]
+				[% IF open_folder %]
+				- <a href="[% open_folder | html %]">[% "open folder" | i18n %]</a>
+				[% END %]
 				[% IF r.age %]
 				 - [% r.age | html %]
 				[% END %]

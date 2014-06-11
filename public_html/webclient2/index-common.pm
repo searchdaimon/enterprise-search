@@ -154,6 +154,17 @@ sub show_search {
 			num_results => $CFG{num_results},
 			page        => $page,
 		},
+		folder => sub {
+			my $url = shift;
+			if ($url && $url =~ /^sdsmb:|^file:|^smb:/) {
+				$url =~ s/(\\|\/)[^\\\/]+$/$1/;
+
+				return $url;
+			}
+			# else
+			return undef;
+			
+		},
 	));
 }
 

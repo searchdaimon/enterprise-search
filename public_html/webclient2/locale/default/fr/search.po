@@ -65,6 +65,9 @@ msgstr "Tous les résultats"
 msgid "cache"
 msgstr "En cache"
 
+msgid "open folder"
+msgstr "dossier"
+
 msgid "Found 1 other copies"
 msgstr "%quant(%1, autre exemplaire trouvé, autres exemplaires trouvés)"
 
