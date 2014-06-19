@@ -709,7 +709,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 				#endif
 
 				if (strlen(summary) > (sizeof((*Sider).description) -1) ) {
-					sprintf((*Sider).description,"Error: Sumary to large. Was %i but only space for %i.",strlen(summary),sizeof((*Sider).description) -1);
+					sprintf((*Sider).description,"Error: Sumary to large. Was %zu but only space for %zu.",strlen(summary),sizeof((*Sider).description) -1);
 				}
 				else {
 					strscpy((*Sider).description,summary,sizeof((*Sider).description));
@@ -756,25 +756,24 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 
 				//søker oss til siste space , eller ; og avslutter der
 				if ((strpointer = strrchr((*Sider).title,' ')) != NULL) {
-					bblog(INFO, "aa strpointer %u", (unsigned int)strpointer);
 					//midlertidg fiks på at title altid begynner med space på bb.
 					//vil dermed altidd føre til treff i første tegn, og
 					// dermed bare vise ".." som title
-					//if ( ((int)(*Sider).title - (int)strpointer) > 10) {
-					if ( ((int)strpointer - (int)(*Sider).title) > 10) {
+					if ( (strpointer - (*Sider).title) > 10) {
 						bblog(DEBUGINFO, "chop");
 						strpointer[0] = '\0';
 					}
-					else {
-						bblog(DEBUGINFO, "no chop, ing %i",  (int)(*Sider).title - (int)strpointer);
-					}
-					bblog(INFO, "fant space at %i", ((int)strpointer) - (int)(*Sider).title);
+					#ifdef DEBUG
+					bblog(DEBUGINFO, "fant space at %i", ((int)strpointer) - (int)(*Sider).title);
+					#endif
 				}						
 				else if ((strpointer = strrchr((*Sider).title,';')) != NULL) {
 					++strpointer; //pekeren peker på semikolonet. SKal ha det med, så må legge il en
 					strpointer[0] = '\0';
 
-					bblog(INFO, "fant semi colon at %i", ((int)(*Sider).title - (int)strpointer));
+					#ifdef DEBUG
+					bblog(DEBUGINFO, "fant semi colon at %i", ((int)(*Sider).title - (int)strpointer));
+					#endif
 				}
 				strncat((*Sider).title,"..",2);    
 
