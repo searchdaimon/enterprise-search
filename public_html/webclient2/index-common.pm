@@ -1,6 +1,9 @@
 use strict;
 use warnings;
 
+# Also use our own module directory.
+BEGIN { push @INC, $ENV{BOITHOHOME} . "/Modules" };
+
 use CGI::Carp qw(fatalsToBrowser warningsToBrowser);
 use Readonly;
 use URI::Escape qw(uri_escape);
