@@ -1,6 +1,11 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+
+BEGIN {
+	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
+}
+
 use CGI;
 use Carp;
 use Data::Dumper;
@@ -8,10 +13,6 @@ use Sql::Config;
 use Page::Overview;
 use Page::Overview::API;
 use JSON::XS;
-BEGIN {
-	#push @INC, "Modules";
-	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
-}
 
 
 my $vars = { };

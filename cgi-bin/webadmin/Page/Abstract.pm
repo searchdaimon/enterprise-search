@@ -3,6 +3,11 @@
 package Page::Abstract;
 use strict;
 use warnings;
+
+BEGIN {
+        push @INC, $ENV{'BOITHOHOME'} . '/Modules';
+}
+
 use Carp;
 use Data::Dumper;
 use Sql::Sql;
