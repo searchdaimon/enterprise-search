@@ -1319,6 +1319,12 @@ attributes:
 	(cd src/attributes && make clean)
 	(cd src/attributes && make)
 
+parser2:
+	@echo ""
+	@echo "$@:"
+	(cd src/parser2 && make clean)
+	(cd src/parser2 && make)
+
 #kopierer filer slik at de blir tilgjengelig fra web
 webpublish:
 	cp bin/searchkernel /home/boitho/cgi-bin/v13.3/bin
