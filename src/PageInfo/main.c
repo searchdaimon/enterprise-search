@@ -13,7 +13,7 @@
 #include "../common/bstr.h"
 
 #include "../cgi-util/cgi-util.h"
-#include "../parser/html_parser.h"
+#include "../parser2/html_parser.h"
 #include "../IndexerRes/IndexerRes.h"
 
 void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* pagewords )
