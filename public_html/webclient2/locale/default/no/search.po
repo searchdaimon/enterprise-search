@@ -65,6 +65,9 @@ msgstr "Alle resultater"
 msgid "cache"
 msgstr "bufret side"
 
+msgid "open folder"
+msgstr "mappe"
+
 msgid "Found 1 other copies"
 msgstr "Fant %quant(%1, annen kopi, andre kopier)"
 

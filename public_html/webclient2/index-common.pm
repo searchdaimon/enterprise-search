@@ -1,6 +1,9 @@
 use strict;
 use warnings;
 
+# Also use our own module directory.
+BEGIN { push @INC, $ENV{BOITHOHOME} . "/Modules" };
+
 use CGI::Carp qw(fatalsToBrowser warningsToBrowser);
 use Readonly;
 use URI::Escape qw(uri_escape);
@@ -153,6 +156,17 @@ sub show_search {
 			show_pages  => $CFG{page_nav}->{show_pages},
 			num_results => $CFG{num_results},
 			page        => $page,
+		},
+		folder => sub {
+			my $url = shift;
+			if ($url && $url =~ /^sdsmb:|^file:|^smb:/) {
+				$url =~ s/(\\|\/)[^\\\/]+$/$1/;
+
+				return $url;
+			}
+			# else
+			return undef;
+			
 		},
 	));
 }

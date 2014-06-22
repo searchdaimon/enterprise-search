@@ -1,12 +1,15 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
-use CGI;
-use CGI::State;
+
 BEGIN {
 	#push @INC, 'Modules';
 	push @INC, $ENV{'BOITHOHOME'} . '/Modules';
 }
+
+use CGI;
+use CGI::State;
+
 use Boitho::WebFile qw(get);
 
 

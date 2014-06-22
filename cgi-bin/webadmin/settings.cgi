@@ -1,6 +1,11 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+
+BEGIN {
+        push @INC, $ENV{'BOITHOHOME'} . '/Modules';
+}
+
 use CGI;
 use Carp;
 use Sql::Sql;

@@ -156,7 +156,8 @@ perlxs-sdcrawl:
 	@echo ""
 	@echo "$@:"
 
-	(cd perlxs/SD-Crawl && make clean && ../../bin/perl Makefile.PL && make)
+	-(cd perlxs/SD-Crawl && make clean)
+	(cd perlxs/SD-Crawl && ../../bin/perl Makefile.PL && make)
 
 bbdocumentWebAdd:
 	@echo ""

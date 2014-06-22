@@ -3405,13 +3405,13 @@ char* searchFilterCount(int *TeffArrayElementer,
 			    // value
 			    struct _attribute_temp_1_val *val = hashtable_iterator_value(h_it);
 			    if (val->value2 == NULL) {
+				bblog(INFO, "Att 2: key=\"%s\",value=\"%s\", count=\"%d\"",val->key, val->value, val->count);
 				attribute_count_add(val->size, val->count, attributes, 2, val->key, val->value);
-				bblog(INFO, "Att 2: key=\"%s\",value=\"%s\"",val->key, val->value);
 
 			    }
 			    else {
+				bblog(INFO, "Att 3: key=\"%s\",value1=\"%s\", value2=\"%s\", count=\"%d\"",val->key, val->value, val->value2, val->count);
 				attribute_count_add(val->size, val->count, attributes, 3, val->key, val->value, val->value2);
-				bblog(INFO, "Att 3: key=\"%s\",value1=\"%s\", value2=\"%s\"",val->key, val->value, val->value2);
 			    }
 
 			    free(val->key);

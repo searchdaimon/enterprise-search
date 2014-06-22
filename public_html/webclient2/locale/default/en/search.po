@@ -63,6 +63,9 @@ msgstr "All results"
 msgid "cache"
 msgstr "cache"
 
+msgid "open folder"
+msgstr "folder"
+
 msgid "Found 1 other copies"
 msgstr "Found %quant(%1, other copy, other copies)"
 
