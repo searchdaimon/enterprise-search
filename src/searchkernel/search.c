@@ -3463,11 +3463,11 @@ char* searchFilterCount(int *TeffArrayElementer,
 		destroy(file_groups);
 
 
-		//#ifdef DEBUG
+		#ifdef DEBUG
 		bblog(DEBUGINFO, "attributes:");
 		attribute_count_print(attributes, TeffArray->attrib_count+1, 2);
 		bblog(DEBUGINFO, "------");
-		//#endif
+		#endif
 
 		#endif // ATTRIBUTES
 
