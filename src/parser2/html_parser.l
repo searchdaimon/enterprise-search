@@ -37,7 +37,7 @@ static inline void bhpm_newunicode( int val, yyscan_t scanner );
 %}
 
 character	[a-z]
-legalchar	[a-z0-9']
+legalchar	[a-z0-9'+#%]
 attrchar	[a-z0-9\-_]
 legaltegn	[!"#$%()*+,\-_./:;=?@[\\\]^{|}~]
 tfchars		[a-z0-9_`!#$%()*+,\-./:;=?@[\]^{|}~]
@@ -72,6 +72,9 @@ utf8-all	([\300-\337][\200-\277]|[\340-\357][\200-\277][\200-\277]|[\360-\367][\
 (\&amp;?|\&#38;?)	{ D; if (BHPM_VISIBLE) bhpm_newstring("&amp;", yyscanner, ESC); }
 (\&lt;?|\&#60;?)	{ D; if (BHPM_VISIBLE) bhpm_newstring("&lt;", yyscanner, ESC); }
 (\&gt;?|\&#62;?)	{ D; if (BHPM_VISIBLE) bhpm_newstring("&gt;", yyscanner, ESC); }
+(\&#35;?)		{ D; if (BHPM_VISIBLE) bhpm_newstring("#", yyscanner, WORD); }
+(\&#43;?)		{ D; if (BHPM_VISIBLE) bhpm_newstring("+", yyscanner, WORD); }
+(\&#45;?)		{ D; if (BHPM_VISIBLE) bhpm_newstring("%", yyscanner, WORD); }
 \&nbsp;?		{ /* ignore */ }
 \&#[0-9]+;		{ D; if (BHPM_VISIBLE) bhpm_newunicode( atoi(&(yytext[2])), yyscanner ); }
 \&#(x|X)[0-9a-fA-F]+;	{ D; if (BHPM_VISIBLE) bhpm_newunicode( strtol(&(yytext[3]), NULL, 16), yyscanner ); }
@@ -449,7 +452,7 @@ static inline void send_word( char *str, yyscan_t scanner )
 	    end--;
 	}
 
-    if (utf8_strlen((utf8_byte*)str) < 2) return;  // Twho char minimum
+    if (utf8_strlen((utf8_byte*)str) < 1) return;  // One char minimum
 
     utf8_strtolower((utf8_byte*)str);
 

@@ -17,7 +17,6 @@
 #include "../common/iindex.h"
 #include "../common/debug.h"
 #include "../common/crc32.h"
-#include "../common/ir.h"
 #include "../common/timediff.h"
 #include "../common/integerindex.h"
 #include "../3pLibs/keyValueHash/hashtable.h"
@@ -889,13 +888,6 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
                     			                			
                 				bblog(INFO, "queryelement:  %s",  queryelement);
 
-						// hvis vi er et kort ord så har vi ikke fått noen ord nummer palssering, så vi skal ikke søke etter det
-						if ( isShortWord(queryelement) ) {
-							bblog(INFO, "is short word");
-							continue;
-						}
-
-
 						convert_to_lowercase((unsigned char *)queryelement);
 
 						WordIDcrc32 = crc32boitho(queryelement);
@@ -955,12 +947,6 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 						#endif
 
                 				bblog(INFO, "queryelement:  %s",  queryelement);
-
-						// hvis vi er et kort ord så har vi ikke fåt noen ord nummer palssering, så vi skal ikke øke hits
-						if ( isShortWord(queryelement) ) {
-							bblog(INFO, "is short word");
-							continue;
-						}
 
 
 						convert_to_lowercase((unsigned char *)queryelement);
@@ -1059,12 +1045,6 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 
                     				bblog(INFO, "element %s",  queryelement);
 
-
-						// hvis vi er et kort ord så har vi ikke fåt noen ord nummer palssering, så vi skal ikke øke hits
-						if ( isShortWord(queryelement) ) {
-							bblog(INFO, "is short word");
-							continue;
-						}						
 
 						convert_to_lowercase((unsigned char *)queryelement);
 

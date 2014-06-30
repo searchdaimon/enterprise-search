@@ -80,7 +80,7 @@ int main (int argc, char *argv[]) {
 
 			
 
-				if ((strcmp(Data[i],"www") != 0) && (!isStoppWord(Data[i]))) {
+				if (strcmp(Data[i],"www") != 0) {
 				
 					#ifdef DEBUG
 					printf("\t\"%s\" %i\n",Data[i],hits);

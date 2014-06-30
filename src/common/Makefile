@@ -7,7 +7,7 @@ CFLAGS+=	-DATTRIBUTES -D_FILE_OFFSET_BITS=64 -DDISK_PROTECTOR -BLACK_BOX -DIIACL
 #CFLAGS+=	-DDEBUG
 
 LIB=	libcommon.a
-OBJS=	adultWeight.o chtbl.o debug.o ir.o logs.o poprank.o sha1.o timediff.o \
+OBJS=	adultWeight.o chtbl.o debug.o logs.o poprank.o sha1.o timediff.o \
 	bfileutil.o config.o DocumentIndex.o iindex.o langdetect.o lot.o reposetory.o stdlib.o url.o \
 	bsocket.o crc32.o error.o integerindex.o langToNr.o lotlist.o reposetoryNET.o strlcat.o vid.o \
 	bstr.o daemon.o exeoc.o ipdb.o list.o mgsort.o revindex.o strlcpy.o re.o ht.o doc_cache.o \

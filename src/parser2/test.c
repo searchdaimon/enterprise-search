@@ -88,8 +88,6 @@ int main( int argc, char *argv[] )
 //		    printf("%i...\n", i);
 		}
 
-//	    printf("\n");
-//	    for (;;)
 	    char	*title, *body;
 
 	    html_parser_run( "http://YAHOOgroups.com/svada/index.html", buf, size, &title, &body, fn, NULL );
@@ -97,9 +95,7 @@ int main( int argc, char *argv[] )
 	    free(buf);
 	    fclose(file);
 
-//	    printf("Title: %s\n", title);
 	    printf("Title: %s\nBody:\n%.512s\n", title, body);
-//	    printf("Title: %s\nBody:\n%s\n", title, body);
 
 //	    printf("\n\033[1;34mTitle\033[0m: %s\n\033[1;34mBody\033[0m:\n%s\n", title, body);
 	    free(title);

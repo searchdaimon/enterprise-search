@@ -1147,8 +1147,8 @@ int main(int argc, char *argv[])
 			die(4,QueryData.query,"Command not yet implemented.");
 		}
 	#endif
-	//hvis vi har et for kort query
-	if(strlen(QueryData.query) < 2) {
+	//hvis vi har et tomt query
+	if(strlen(QueryData.query) == 0) {
 		die(5,QueryData.query,"Query too short.");
 	}
 
