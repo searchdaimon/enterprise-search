@@ -69,6 +69,7 @@ int pdocumentExist(struct cargsF *cargs, char * url, int lastmodified, int dokum
 
 	ret = cargs->documentExist(cargs->collection,crawldocumentExist);
 
+	free(crawldocumentExist->documenturi);
 	free(crawldocumentExist);
 
 	return ret;
