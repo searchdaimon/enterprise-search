@@ -31,6 +31,7 @@ graph_title Number of new documents
 graph_vlabel Documents / hours
 graph_category Searchdaimon
 graph_period hour
+graph_args -l 0
 };
 
 
