@@ -18,7 +18,6 @@ use Sql::Sql;
 use Page::Setup;
 use Page::Setup::Network;
 #use Page::Setup::Auth;
-use Page::Setup::Login;
 use Page::Setup::Integration;
 use Common::FormFlow qw(FLOW_START_FORM);
 use Digest::MD5 qw(md5_hex);
@@ -33,7 +32,6 @@ my $tpl_file;
 
 my $pageNet     = Page::Setup::Network->new($dbh);
 my $pageAuth        = undef; # Page::Setup::Auth->new($dbh); fjerner til bi begynner med lisens
-my $pageLogin       = Page::Setup::Login->new($dbh);
 my $pageIntegr = Page::Setup::Integration->new($dbh);
     
 my $flow = Common::FormFlow->new();
@@ -61,7 +59,6 @@ else {
     # The setup flow.
     # Add takes 'id for form submitted' => 'what function to run'
     $flow  
-        #->add($FLOW_START_FORM, \&process_login) 
         ->add(FLOW_START_FORM,  \&process_network)
         ->add('network_config', \&process_network)
         ->add('network_restarted', sub { $pageIntegr->show($vars) })
@@ -78,24 +75,6 @@ $page->process_tpl($tpl_file, $vars,
 
 # Group: Form functions
 
-#sub process_login {
-#	my ($success, $status) 
-#		= $pageLogin->process_login();
-#
-#	# login failed, show again.
-#	return $pageLogin->show_login()
-#		unless $success;
-#
-#	# login ok.
-#
-#	if ($status eq "FIRST_LOGIN") { #continue with wizard
-#		return $pageNet->show_network_config($vars);	
-#	}
-#	else { #skip wizard
-#		print CGI::redirect("overview.cgi");
-#		exit 0;
-#	}
-#}
 sub process_network {
     my ($netconf, $resolv) = ($state{netconf}, $state{resolv});
 
