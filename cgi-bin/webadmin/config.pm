@@ -140,8 +140,9 @@ $CONFIG{'gdb_report_cmd'} = qq{bt};
 # URL to submit crash reports to
 $CONFIG->{'core_report_url'} = "http://dagurval.boitho.com/cgi-bin/report/submit.pl";
 
+# Path to admin panel password file
 $CONFIG{login_htpasswd_path} = $ENV{BOITHOHOME} . "/config/.htpasswd"; 
-    #"/home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd";
+
 $CONFIG{login_admin_user} = "admin";
 
 $CONFIG{adv_starred_fields} = ['msad_password', 'ldap_password', 'sudo', 'licensesystem'];
