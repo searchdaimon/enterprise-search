@@ -17,7 +17,6 @@ use Page::Logs;
 use Sql::Sql;
 use Page::Setup;
 use Page::Setup::Network;
-#use Page::Setup::Auth;
 use Page::Setup::Integration;
 use Common::FormFlow qw(FLOW_START_FORM);
 use Digest::MD5 qw(md5_hex);
@@ -31,7 +30,6 @@ my $tpl_file;
 #warn Dumper(\%state);
 
 my $pageNet     = Page::Setup::Network->new($dbh);
-my $pageAuth        = undef; # Page::Setup::Auth->new($dbh); fjerner til bi begynner med lisens
 my $pageIntegr = Page::Setup::Integration->new($dbh);
     
 my $flow = Common::FormFlow->new();
@@ -40,11 +38,7 @@ my $tpl_folders = ['setup', 'common/network', 'usersys'];
 if (defined $state{view}) {
     # Non-wizard pages.
     my $view = $state{view};
-    if ($view eq 'manual_activation') {
-        ($vars, $tpl_file) 
-            = $pageAuth->show_activation_dialog($vars);
-    }
-    elsif ($view eq 'network_restart') {
+    if ($view eq 'network_restart') {
         $tpl_file = $pageNet->show_post_restart($vars, $state{id});
     }
     elsif ($view eq 'network_cfg') {
@@ -62,8 +56,6 @@ else {
         ->add(FLOW_START_FORM,  \&process_network)
         ->add('network_config', \&process_network)
         ->add('network_restarted', sub { $pageIntegr->show($vars) })
-        #->add('license_valid', \&process_license)
-        #->add('manual_act', \&process_manual_act)
         ->add('integration_method', \&process_integration_method)
         ->add('integration_values', \&process_integration_values);
     $tpl_file = $flow->process($form_submitted);
@@ -96,32 +88,6 @@ sub process_network {
 
     return $pageNet->show_network_config(
         $vars, $netconf, $resolv);
-}
-
-
-sub process_license {
-	my ($vars, $success) = 
-		$pageAuth->process_license($vars, $state{'license'});
-
-	if ($success) {
-		return $pageIntegr->show_integration_methods($vars);
-	}
-	else {
-		return $pageAuth->show_license_dialog($vars, $state{'license'});
-	}
-}
-
-
-sub process_manual_act {
-	my ($vars, $success) = $pageAuth->process_signature($vars, $state{'license'}, 
-											$state{'hardware'}, $state{'signature'});
-
-	if ($success) {
-		return $pageIntegr->show_integration_methods($vars);
-	}
-	else {
-		return $pageAuth->show_activation_dialog($vars, $state{'license'}, $state{'signature'});
-	}
 }
 
 sub process_integration_method {

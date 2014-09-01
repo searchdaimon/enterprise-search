@@ -180,12 +180,6 @@ if (!exists $CONFIG{'network_interface'}) {
 $CONFIG{'bb_sha_test_path'} = $ENV{'BOITHOHOME'} . "/bin/bb_sha_test";
 $CONFIG{'bb_verify_msg'}    = $ENV{'BOITHOHOME'} . "/bin/bb_verify_msg";
 
-# URL to the search daimon interface
-$CONFIG{'interface_url'} = "http://dagurval.boitho.com/cgi-bin/license_auth/if.pl";
-
-# URL to the search daimon manual activation
-$CONFIG{'activate_url'} = "http://dagurval.boitho.com/cgi-bin/license_auth/custom.pl";
-
 # File to store license in
 $CONFIG{'license_file'}   = $ENV{'BOITHOHOME'} . "/config/bb_license";
 $CONFIG{'signature_file'} = $ENV{'BOITHOHOME'} . "/config/bb_signature";
