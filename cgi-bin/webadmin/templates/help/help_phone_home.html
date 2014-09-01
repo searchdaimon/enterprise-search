@@ -1,13 +1,13 @@
 [% INCLUDE 'header.html'
-	title = "Searchdaimon phone home" %]
+	title = "Phone home" %]
 
-<h2>Searchdaimon phone home</h2>
+<h2>Phone home</h2>
 
 
 [% IF phone_instaled.defined %]
 
 	[% WRAPPER 'template_message.html' type='info' %]
-		Searchdaimon phone home service opens up a connection to Searchdaimon, and allows us to assist remotely.<br />
+		Phone home service opens up an encrypted connection back to us to allow us to assist remotely.
 		You should not leave this service running when not in need of support.
 	[% END %]
 
@@ -35,9 +35,9 @@
 
 
 	[% IF phone_running_pid %]
-		Searchdaimon phone home service is currently <strong>running</strong>.
+		Phone home service is currently <strong>running</strong>.
 	[% ELSE %]
-		Searchdaimon phone home service is currently <strong>not running</strong>.
+		Phone home service is currently <strong>not running</strong>.
 	[% END %]
 
 
@@ -57,8 +57,8 @@
 [% ELSE %]
 
 	[% WRAPPER 'template_message.html' type='info' %]
-		Searchdaimon phone home service is a system to open up a connection to Searchdaimon, and allows us to assist remotely.<br />
-		<b>Searchdaimon phone home is not installed on this server.</b>
+		The phone home service is a system to open up an encrypted connection back to us to allow us to assist remotely.<br />
+		<b>Phone home is not installed on this server.</b>
 	[% END %]
 
 [% END %]

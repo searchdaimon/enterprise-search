@@ -70,7 +70,7 @@ sub show_activation_dialog {
 }
 
 ##
-# Authenticates license against search daimon authserver. 
+# Authenticates license against our authserver. 
 #
 # Attributes:
 #	vars - Template vars

@@ -42,7 +42,7 @@
 	<p>No local connectors created</p>
 [% END %]
 
-<h2>Seachdaimon connectors</h2>
+<h2>Official connectors</h2>
 [% IF sd_connectors.size %]
 	[% PROCESS connector_list 
 		connectors = sd_connectors
@@ -52,7 +52,7 @@
 		]
 	%]
 [% ELSE %]
-	<p>No Searchdaimon connectors installed.</p>
+	<p>No official connectors installed.</p>
 [% END %]
 
 

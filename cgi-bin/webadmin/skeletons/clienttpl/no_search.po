@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 
 ## main.tpl
-msgid "Searchdaimon search"
-msgstr "Searchdaimon søk"
+msgid "Enterprise search"
+msgstr "Virksomhetssøk"
 
 
 ## results.tpl
