@@ -83,7 +83,36 @@ if (defined($post)) {
 #legger til at dette er en lokal config fil, og ikke skal overskrives
 if (defined($config)) {
 
-	@configFiles = split(' ',$config);
+
+	my @configFilesList = split(' ',$config);
+
+	# If the config file statement is a directory, treat all files in the directory as config files.
+	foreach my $path ( @configFilesList ) {
+
+		my $full = $source . '/' . $path;
+
+		if (-d $full) {
+			opendir(DIR, $full) or die("can't opendir $full: $!");
+
+
+			while (my $file = readdir(DIR) ) {
+
+				if ($file =~ /\.$/ || -d $file ) {
+					next;
+				}
+
+				push(@configFiles, $path . '/' .  $file);
+			}
+
+			closedir(DIR);
+		}
+		elsif( -f $full ) {
+			push(@configFiles, $path);
+		}
+		else {
+			die("$full is somting not a file nor directory.");
+		}
+	}
 
 	# sjekker at den ikke finnes fra før. Det skal den nemlig ikke...
 	foreach my $s (@files) {
