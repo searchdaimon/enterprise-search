@@ -2,7 +2,7 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>[% query | html %] - Searchdaimon</title>
+    <title>[% query | html %] - [% "Enterprise search" | html %]</title>
 
 
     [% PROCESS 'shoulder.tpl' %]
@@ -16,7 +16,7 @@
 <div id="topNav">
     
     <a href="?">
-        <img src="img/common/logo_top.jpg" alt="Searchdaimon" width="368" height="102"/>
+        <img src="img/common/logo_top.jpg" alt="Logo" width="368" height="102"/>
     </a>
 
 

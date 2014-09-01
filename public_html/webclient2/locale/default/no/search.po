@@ -134,8 +134,8 @@ msgstr "Mente du: <a href=\"%2\">%1</a>?"
 msgid "(copyright)"
 msgstr "Copyright &copy; "
 
-msgid "Searchdaimon AS"
-msgstr "Searchdaimon AS"
+msgid "Enterprise search"
+msgstr "Virksomhetssøk"
 
 msgid "All Rights Reserved."
 msgstr "All Rights Reserved."

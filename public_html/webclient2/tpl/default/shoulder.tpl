@@ -4,7 +4,7 @@
     <link rel="shortcut icon" href="/webclient2/favicon.ico">
     <link rel="icon" type="image/ico" href="/webclient2/favicon.ico">
 
-    <link rel="alternate" type="application/rss+xml" title="[% query | html %] - Searchdaimon search" href="api/opensearch/1.1/search?query=[% query | html %]" />
+    <link rel="alternate" type="application/rss+xml" title="[% query | html %] - [% "Enterprise search" | html %]" href="api/opensearch/1.1/search?query=[% query | html %]" />
     <link type="text/css" rel="stylesheet" href="css/common/suggest.css" />
     <link type="text/css" rel="stylesheet" href="css/common/jquery.treeview.css" />
     <link type="text/css" rel="stylesheet" href="css/default/searchpage.css" />

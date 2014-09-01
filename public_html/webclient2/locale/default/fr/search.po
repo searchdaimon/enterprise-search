@@ -135,8 +135,8 @@ msgstr "Essayez avec l'orthographe : <a href=\"%2\">%1</a>?"
 msgid "(copyright)"
 msgstr "Copyright &copy; "
 
-msgid "Searchdaimon AS"
-msgstr "Searchdaimon AS"
+msgid "Enterprise search"
+msgstr "La recherche d'entreprise"
 
 msgid "All Rights Reserved."
 msgstr "All Rights Reserved."

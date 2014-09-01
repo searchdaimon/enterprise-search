@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>[% "Searchdaimon" | html %] [% "search" | i18n %]</title>
+  <title>[% "Enterprise search" | html %] [% "search" | i18n %]</title>
 
     [% PROCESS 'shoulder.tpl' %]
 
@@ -129,7 +129,7 @@ A:active { color : blue; }
 )">
 <center>
 <div>
-<img src="img/common/logo_smaller.gif" alt="Searchdaimon" title="Searchdaimon" width="600" height="90" />
+<img src="img/common/logo_smaller.gif" alt="Logo" title="Logo" width="600" height="90" />
 <form action="#" method="get">
 	<table><tr>
 		<td>
