@@ -1,31 +1,26 @@
 use strict;
 use File::Copy;
 
-print "$#ARGV\n";
 
-if ($#ARGV == -1) {
+use Getopt::Long;
+my $pre = '';
+my $post = '';
+my $initd;
+my $initdnostart;
+my $verbose;
+my $requires;
+my $sql;
+my $initdrestart;
+my $defattr;
+my $restartsw;
+my $sysconfig;
+my $config;
+my $configFiles;
+my $defines = '';
+my $nostrip;
+my @configFiles;
 
-}
-
-  use Getopt::Long;
-  my $pre = '';
-  my $post = '';
-  my $initd;
-  my $initdnostart;
-  my $verbose;
-  my $requires;
-  my $sql;
-  my $initdrestart;
-  my $defattr;
-  my $restartsw;
-  my $sysconfig;
-  my $config;
-  my $configFiles;
-  my $defines = '';
-  my $nostrip;
-  my @configFiles;
-
-  my $result = GetOptions ("pre=s" 	 => \$pre,    	# rpm pre 
+my $result = GetOptions ("pre=s" 	 => \$pre,    	# rpm pre 
                         "post=s"   	 => \$post,      	# rpm post
                         "initd=s"   	 => \$initd,      	# rpm post
                         "initdnostart"   	 => \$initdnostart,      	# rpm post
@@ -41,7 +36,6 @@ if ($#ARGV == -1) {
 
 my $name = shift @ARGV or die("please suply a name");
 my $version = shift @ARGV or die("please suply a version");
-
 my $source = shift @ARGV or die("please suply a source");
 my $dest = shift @ARGV or die("please suply a dest");
 
