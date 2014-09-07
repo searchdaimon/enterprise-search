@@ -2006,9 +2006,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 	gettimeofday(&start_time, NULL);
 
-	bblog(INFO, "looking opp PopRank");
+	bblog(INFO, "Looking up PopRank: start");
 
-	//slår opp PopRank
 	re = NULL;
 	nreopen = 0;
 	#pragma omp parallel for firstprivate(re)
@@ -2032,7 +2031,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 
 		#ifdef DEBUG
-			bblog(DEBUGINFO, "got rank %d for DocID %u-%s", 
+			bblog(DEBUGINFO, "Got rank %d for DocID %u-%s.", 
 				(*TeffArray)->iindex[i].PopRank,
                                 (*TeffArray)->iindex[i].DocID,
                                 (*(*TeffArray)->iindex[i].subname).subname);
@@ -2040,7 +2039,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	}
 
 	bblog(INFO, "We did reopen %i times", nreopen);
-	bblog(INFO, "looking opp PopRank end");
+	bblog(INFO, "Looking up PopRank: end");
 
 	#if 0
 	//runarb: bug: denne manglet i en cvs oppdatering. Skal nokk også bare være for websøk (ikke bb)
@@ -3385,12 +3384,18 @@ char* searchFilterCount(int *TeffArrayElementer,
 			    // value
 			    struct _attribute_temp_1_val *val = hashtable_iterator_value(h_it);
 			    if (val->value2 == NULL) {
-				bblog(INFO, "Att 2: key=\"%s\",value=\"%s\", count=\"%d\"",val->key, val->value, val->count);
+				#ifdef DEBUG
+					bblog(DEBUGINFO, "Att 2: key=\"%s\",value=\"%s\", count=\"%d\"",val->key, val->value, val->count);
+				#endif
+
 				attribute_count_add(val->size, val->count, attributes, 2, val->key, val->value);
 
 			    }
 			    else {
-				bblog(INFO, "Att 3: key=\"%s\",value1=\"%s\", value2=\"%s\", count=\"%d\"",val->key, val->value, val->value2, val->count);
+				#ifdef DEBUG
+					bblog(DEBUGINFO, "Att 3: key=\"%s\",value1=\"%s\", value2=\"%s\", count=\"%d\"",val->key, val->value, val->value2, val->count);
+				#endif
+
 				attribute_count_add(val->size, val->count, attributes, 3, val->key, val->value, val->value2);
 			    }
 
