@@ -3660,10 +3660,15 @@ char* searchFilterCount(int *TeffArrayElementer,
 			bblog(DEBUGINFO, "Time debug: searchFilterCount data sum time: %f", (*queryTime).dateview);
 		#endif
 
+
+		gettimeofday(&tot_end_time, NULL);
+                (*queryTime).FilterCount = getTimeDifference(&tot_start_time,&tot_end_time);
+
+		bblog(INFO, "search: ~searchFilterCount()");
+
 #ifdef ATTRIBUTES
-	        #ifdef DEBUG_TIME
-        	        gettimeofday(&start_time, NULL);
-	        #endif
+
+       	        gettimeofday(&start_time, NULL);
 
 		// Attributter:
 		bblog(INFO, "search: generating xml for attributes");
@@ -3679,16 +3684,16 @@ char* searchFilterCount(int *TeffArrayElementer,
 
 		bblog(INFO, "search: done attributes");
 		
-        	#ifdef DEBUG_TIME
-                	gettimeofday(&end_time, NULL);
-                	bblog(DEBUGINFO, "Time debug: searchFilterCount attr xml time: %f", getTimeDifference(&start_time, &end_time));
-        	#endif
+
+		gettimeofday(&end_time, NULL);
+		(*queryTime).attrxml = getTimeDifference(&start_time,&end_time);
+
+		#ifdef DEBUG_TIME
+	               	bblog(DEBUGINFO, "Time debug: searchFilterCount attr xml time: %f", (*queryTime).attrxml);
+		#endif
+
 #endif
 
-		gettimeofday(&tot_end_time, NULL);
-                (*queryTime).FilterCount = getTimeDifference(&tot_start_time,&tot_end_time);
-
-		bblog(INFO, "search: ~searchFilterCount()");
 #ifdef ATTRIBUTES
     return nav_xml;
 #else

@@ -543,6 +543,7 @@ struct queryTimeFormat {
 		double generate_snippet;
 		double duplicat_echecking;
 		double FilterCount;
+		double attrxml;
 	#endif
 };
 

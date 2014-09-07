@@ -141,6 +141,7 @@ void disp_out_sd_v2_0(
 					printf("\t\t<iintegerGetValueDate>%f</iintegerGetValueDate>\n",SiderHeder[i].queryTime.iintegerGetValueDate);
 					printf("\t\t<dateview>%f</dateview>\n",SiderHeder[i].queryTime.dateview);
 					printf("\t\t<FilterCount>%f</FilterCount>\n",SiderHeder[i].queryTime.FilterCount);
+					printf("\t\t<attrxml>%f</attrxml>\n",SiderHeder[i].queryTime.attrxml);
 					printf("\t\t<pathaccess>%f</pathaccess>\n",SiderHeder[i].queryTime.pathaccess);
 					printf("\t\t<urlrewrite>%f</urlrewrite>\n",SiderHeder[i].queryTime.urlrewrite);
 					printf("\t\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);
@@ -714,6 +715,7 @@ void disp_out_sd_v2_1(
 					printf("\t\t<iintegerGetValueDate>%f</iintegerGetValueDate>\n",SiderHeder[i].queryTime.iintegerGetValueDate);
 					printf("\t\t<dateview>%f</dateview>\n",SiderHeder[i].queryTime.dateview);
 					printf("\t\t<FilterCount>%f</FilterCount>\n",SiderHeder[i].queryTime.FilterCount);
+					printf("\t\t<attrxml>%f</attrxml>\n",SiderHeder[i].queryTime.attrxml);
 					printf("\t\t<pathaccess>%f</pathaccess>\n",SiderHeder[i].queryTime.pathaccess);
 					printf("\t\t<urlrewrite>%f</urlrewrite>\n",SiderHeder[i].queryTime.urlrewrite);
 					printf("\t\t<getUserObjekt>%f</getUserObjekt>\n",SiderHeder[i].queryTime.getUserObjekt);

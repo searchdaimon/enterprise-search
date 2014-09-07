@@ -2198,6 +2198,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		(*SiderHeder).queryTime.generate_snippet 	= 0;
 		(*SiderHeder).queryTime.duplicat_echecking 	= 0;
 		(*SiderHeder).queryTime.FilterCount 		= 0;
+		(*SiderHeder).queryTime.attrxml 		= 0;
 	#endif
 
 
@@ -2721,6 +2722,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		bblog(INFO, "\t%-40s %f", "iintegerGetValueDate",(*SiderHeder).queryTime.iintegerGetValueDate);
 		bblog(INFO, "\t%-40s %f", "dateview",(*SiderHeder).queryTime.dateview);
 		bblog(INFO, "\t%-40s %f", "FilterCount",(*SiderHeder).queryTime.FilterCount);
+		bblog(INFO, "\t%-40s %f", "attrxml",(*SiderHeder).queryTime.attrxml);
 		bblog(INFO, "\t%-40s %f", "pathaccess",(*SiderHeder).queryTime.pathaccess);
 		bblog(INFO, "\t%-40s %f", "urlrewrite",(*SiderHeder).queryTime.urlrewrite);
 		bblog(INFO, "\t%-40s %f", "duplicat echecking",(*SiderHeder).queryTime.duplicat_echecking);
