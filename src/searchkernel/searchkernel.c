@@ -1358,9 +1358,13 @@ void *generatePagesResults(void *arg)
 	double ltime;
 	struct timeval start_time, end_time;
 	int localshowabal;
-	//tread lock
 
-	struct SiderFormat *side = malloc(sizeof(struct SiderFormat));
+	struct SiderFormat *side;
+
+	if ((side = malloc(sizeof(struct SiderFormat))) == NULL) {
+		perror("Can not allocate memory for side");
+		return NULL;
+	}
 
 	#if BLACK_BOX
 		PagesResults->ptype = get_platform(PagesResults->useragent);
