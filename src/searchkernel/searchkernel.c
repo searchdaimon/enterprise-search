@@ -93,9 +93,7 @@ struct popResultBreakDownTimeFormat {
         struct popResultTimesFormat ReadHtml;
         struct popResultTimesFormat memGetDomainID;
         struct popResultTimesFormat totalpopResult;
-        struct popResultTimesFormat makecrc32;
         struct popResultTimesFormat treadSyncFilter;
-
         struct popResultTimesFormat titleClean;
         struct popResultTimesFormat bodyClean;
         struct popResultTimesFormat iindexMemcpy;
@@ -1616,21 +1614,6 @@ void *generatePagesResults(void *arg)
 		#endif
 
 
-		#ifdef DEBUG_TIME
-			gettimeofday(&start_time, NULL);
-		#endif
-		
-		//Så lenge vi ikke har crc32 for alle domener
-		if (side->DocumentIndex.crc32 == 0) {
-			side->DocumentIndex.crc32 = crc32boitho(htmlBuffer);
-		}
-		#ifdef DEBUG_TIME
-		        gettimeofday(&end_time, NULL);
-        	        PagesResults->popResultBreakDownTime.makecrc32.time += getTimeDifference(&start_time,&end_time);
-	                ++PagesResults->popResultBreakDownTime.makecrc32.nr;
-
-		#endif
-
 		/****************************************************************************/		
 		#ifndef BLACK_BOX
 
@@ -2105,15 +2088,11 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		PagesResults.popResultBreakDownTime.ReadHtml.nr = 0;
 		PagesResults.popResultBreakDownTime.ReadHtml.time = 0;
 
-
 		PagesResults.popResultBreakDownTime.memGetDomainID.nr = 0;
 		PagesResults.popResultBreakDownTime.memGetDomainID.time = 0;
 
 		PagesResults.popResultBreakDownTime.totalpopResult.nr = 0;
 		PagesResults.popResultBreakDownTime.totalpopResult.time = 0;
-
-		PagesResults.popResultBreakDownTime.makecrc32.nr = 0;
-		PagesResults.popResultBreakDownTime.makecrc32.time = 0;
 
 		PagesResults.popResultBreakDownTime.treadSyncFilter.nr = 0;
 		PagesResults.popResultBreakDownTime.treadSyncFilter.time = 0;
@@ -2748,7 +2727,6 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 		bblog(DEBUGINFO, "\t%-40s %i, %f", "memGetDomainID",PagesResults.popResultBreakDownTime.memGetDomainID.nr,PagesResults.popResultBreakDownTime.memGetDomainID.time);
 		bblog(DEBUGINFO, "\t%-40s %i, %f", "totalpopResult",PagesResults.popResultBreakDownTime.totalpopResult.nr,PagesResults.popResultBreakDownTime.totalpopResult.time);
-		bblog(DEBUGINFO, "\t%-40s %i, %f", "makecrc32",PagesResults.popResultBreakDownTime.makecrc32.nr,PagesResults.popResultBreakDownTime.makecrc32.time);
 		bblog(DEBUGINFO, "\t%-40s %i, %f", "treadSyncFilter",PagesResults.popResultBreakDownTime.treadSyncFilter.nr,PagesResults.popResultBreakDownTime.treadSyncFilter.time);
 		bblog(DEBUGINFO, "\t%-40s %i, %f", "titleClean",PagesResults.popResultBreakDownTime.titleClean.nr,PagesResults.popResultBreakDownTime.titleClean.time);
 		bblog(DEBUGINFO, "\t%-40s %i, %f", "bodyClean",PagesResults.popResultBreakDownTime.bodyClean.nr,PagesResults.popResultBreakDownTime.bodyClean.time);
