@@ -1310,6 +1310,7 @@ void *searchIndex_thread(void *arg)
 				bblog(INFO, "Getting mappings for system %d",  system);
 
 				#ifdef DEBUG_TIME
+					struct timeval starttime, endtime;
 					gettimeofday(&starttime, NULL);
 				#endif
 
@@ -2006,40 +2007,46 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 	gettimeofday(&start_time, NULL);
 
-	bblog(INFO, "Looking up PopRank: start");
-
-	re = NULL;
-	nreopen = 0;
-	#pragma omp parallel for firstprivate(re)
-	for (i = 0; i < *TeffArrayElementer; i++) {
-
-		if (!reIsOpen(re,rLotForDOCid((*TeffArray)->iindex[i].DocID), (*TeffArray)->iindex[i].subname->subname, "PopRank") ) {
-
-			#pragma omp critical
-			{
-				++nreopen;
-				re = reopen_cache( rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(unsigned char), "PopRank", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY);
-			}
-
-			if (re == NULL) {
-				debug("reopen(PopRank)\n");
-				continue;
-			}
-
-		}
-		(*TeffArray)->iindex[i].PopRank = *RE_Uchar(re, (*TeffArray)->iindex[i].DocID);
-
-
-		#ifdef DEBUG
-			bblog(DEBUGINFO, "Got rank %d for DocID %u-%s.", 
-				(*TeffArray)->iindex[i].PopRank,
-                                (*TeffArray)->iindex[i].DocID,
-                                (*(*TeffArray)->iindex[i].subname).subname);
-		#endif
+	if((re = reopen_cache( 1, sizeof(unsigned char), "PopRank", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY)) == NULL) {
+		bblog(INFO, "Looking up PopRank: No poprank file for collection. Will skipp.");
 	}
+	else {
 
-	bblog(INFO, "We did reopen %i times", nreopen);
-	bblog(INFO, "Looking up PopRank: end");
+		bblog(INFO, "Looking up PopRank: start");
+
+		re = NULL;
+		nreopen = 0;
+		#pragma omp parallel for firstprivate(re)
+		for (i = 0; i < *TeffArrayElementer; i++) {
+
+			if (!reIsOpen(re,rLotForDOCid((*TeffArray)->iindex[i].DocID), (*TeffArray)->iindex[i].subname->subname, "PopRank") ) {
+	
+				#pragma omp critical
+				{
+					++nreopen;
+					re = reopen_cache( rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(unsigned char), "PopRank", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY);
+				}
+
+				if (re == NULL) {
+					debug("reopen(PopRank)\n");
+					continue;
+				}
+
+			}
+			(*TeffArray)->iindex[i].PopRank = *RE_Uchar(re, (*TeffArray)->iindex[i].DocID);
+
+
+			#ifdef DEBUG
+				bblog(DEBUGINFO, "Got rank %d for DocID %u-%s.", 
+					(*TeffArray)->iindex[i].PopRank,
+	                                (*TeffArray)->iindex[i].DocID,
+	                                (*(*TeffArray)->iindex[i].subname).subname);
+			#endif
+		}
+
+		bblog(INFO, "We did reopen %i times", nreopen);
+		bblog(INFO, "Looking up PopRank: end");
+	}
 
 	#if 0
 	//runarb: bug: denne manglet i en cvs oppdatering. Skal nokk også bare være for websøk (ikke bb)
@@ -2783,7 +2790,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 
 	        #ifdef DEBUG_TIME		
 			struct timeval att_start_time, att_end_time;
-			double att1=0, att2=0, att3=0, att4=0, att5=0;
+			double att1=0, att2=0, att3a=0, att3b=0, att3c=0, att4=0, att5=0;
 		#endif
 
 		gettimeofday(&tot_start_time, NULL);
@@ -2972,6 +2979,12 @@ char* searchFilterCount(int *TeffArrayElementer,
 			count+= (1 - TeffArray->iindex[i].indexFiltered.filename)<<(len-1);
 
 			// Ax: Attribute dup-handling:
+		        #ifdef DEBUG_TIME		
+				gettimeofday(&att_end_time, NULL);
+				att3a += getTimeDifference(&att_start_time, &att_end_time);
+				gettimeofday(&att_start_time, NULL);
+			#endif
+
 			container *alist = NULL;
 
 			if (TeffArray->iindex[i].indexFiltered.duplicate_to_show == 1
@@ -3010,7 +3023,6 @@ char* searchFilterCount(int *TeffArrayElementer,
 							this_key.crc32val = *crc32val;
 							this_key.arg1 = NULL;
 							this_key.arg2 = NULL;
-
 							// Attr-dup:
 							if (alist != NULL)
 							    {
@@ -3020,7 +3032,6 @@ char* searchFilterCount(int *TeffArrayElementer,
 								if (value != NULL)
 								    {
 								        value+= sizeof(unsigned int);
-
 								    	struct _attribute_temp_dup_data_ *atdd =
 									    malloc(sizeof(struct _attribute_temp_dup_data_));
 									atdd->key = strdup(key);
@@ -3086,6 +3097,11 @@ char* searchFilterCount(int *TeffArrayElementer,
 				    }
 			    }
 
+		        #ifdef DEBUG_TIME		
+				gettimeofday(&att_end_time, NULL);
+				att3b += getTimeDifference(&att_start_time, &att_end_time);
+				gettimeofday(&att_start_time, NULL);
+			#endif
 			// Attr-dup:
 			if (alist!=NULL && TeffArray->iindex[i].indexFiltered.duplicate_to_show == 1)
 			    {
@@ -3170,7 +3186,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 
 		        #ifdef DEBUG_TIME		
 				gettimeofday(&att_end_time, NULL);
-				att3 += getTimeDifference(&att_start_time, &att_end_time);
+				att3c += getTimeDifference(&att_start_time, &att_end_time);
 				gettimeofday(&att_start_time, NULL);
 			#endif
 
@@ -3370,25 +3386,37 @@ char* searchFilterCount(int *TeffArrayElementer,
 		#ifdef DEBUG_TIME
 			bblog(DEBUGINFO, "Time debug: searchFilterCount att1 time: %f", att1);
 			bblog(DEBUGINFO, "Time debug: searchFilterCount att2 time: %f", att2);
-			bblog(DEBUGINFO, "Time debug: searchFilterCount att3 time: %f", att3);
+			bblog(DEBUGINFO, "Time debug: searchFilterCount att3a time: %f", att3a);
+			bblog(DEBUGINFO, "Time debug: searchFilterCount att3b time: %f", att3b);
+			bblog(DEBUGINFO, "Time debug: searchFilterCount att3c time: %f", att3c);
 			bblog(DEBUGINFO, "Time debug: searchFilterCount att4 time: %f", att4);
 			bblog(DEBUGINFO, "Time debug: searchFilterCount att5 time: %f", att5);
+			bblog(DEBUGINFO, "Time debug: attrib_count_temp count: %i", hashtable_count(attrib_count_temp));
 
 			gettimeofday(&att_start_time, NULL);
 		#endif
 
 		struct hashtable_itr	*h_it = hashtable_iterator(attrib_count_temp);
 		if (hashtable_count(attrib_count_temp))
-		    do
-			{
-			    // value
-			    struct _attribute_temp_1_val *val = hashtable_iterator_value(h_it);
-			    if (val->value2 == NULL) {
-				#ifdef DEBUG
-					bblog(DEBUGINFO, "Att 2: key=\"%s\",value=\"%s\", count=\"%d\"",val->key, val->value, val->count);
-				#endif
+		    do {
+                            // value
+                            struct _attribute_temp_1_val *val = hashtable_iterator_value(h_it);
+                            if (val->value2 == NULL) {
 
-				attribute_count_add(val->size, val->count, attributes, 2, val->key, val->value);
+				// If we have more then 10000 hits we will not add thus wid only a single occurrence
+				if ((*TeffArrayElementer > 10000) && (val->size==1)) {
+					#ifdef DEBUG
+						bblog(DEBUGINFO, "Skipped Att 2: key=\"%s\",value=\"%s\", count=\"%d\", size=\"%d\"",val->key, val->value, val->count, val->size);
+					#endif
+				}
+				else {
+
+					#ifdef DEBUG
+						bblog(DEBUGINFO, "Att 2: key=\"%s\",value=\"%s\", count=\"%d\", size=\"%d\"",val->key, val->value, val->count, val->size);
+					#endif
+
+					attribute_count_add(val->size, val->count, attributes, 2, val->key, val->value);
+				}
 
 			    }
 			    else {

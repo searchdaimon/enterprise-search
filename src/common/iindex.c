@@ -718,6 +718,7 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 					TeffArray->iindex[y].indexFiltered.filename = 0;
 					TeffArray->iindex[y].indexFiltered.date = 0;
 					TeffArray->iindex[y].indexFiltered.subname = 0;
+					TeffArray->iindex[y].PopRank = 0;
 				#endif
 
 				//seter disse til 0 da vi ikke altid kjører body søk, og dermed ikke inaliserer disse.
