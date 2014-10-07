@@ -132,8 +132,8 @@ int main (int argc, char *argv[]) {
         struct popl popintern;
         struct popl popnoc;
 	struct popl popindex;	
-	unsigned int htmlBufferSize;
-	char *htmlBuffer;
+	uLong htmlBufferSize = 0;
+	char *htmlBuffer = NULL;
 	char *acl_allowbuffer = NULL;
 	char *acl_deniedbuffer = NULL;
 
@@ -314,12 +314,10 @@ int main (int argc, char *argv[]) {
 
 
 
-		htmlBufferSize = 3000000;
-		htmlBuffer = malloc(htmlBufferSize);
 		struct ReposetoryHeaderFormat ReposetoryHeader;
 		char *url, *attributes;
 
-		if (!rReadHtml(htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize2,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,DocumentIndexPost.imageSize, &url, &attributes)) {
+		if (!rReadHtml(&htmlBuffer,&htmlBufferSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize2,DocID,subname,&ReposetoryHeader,&acl_allowbuffer,&acl_deniedbuffer,DocumentIndexPost.imageSize, &url, &attributes)) {
 			printf("rReadHtml: did not returne true!\n");
 			return;
 		}

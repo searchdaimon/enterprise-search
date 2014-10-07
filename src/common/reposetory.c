@@ -1261,7 +1261,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 
 
 //leser en post
-int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radress64bit,unsigned int rsize,
+int rReadHtml (char *HtmlBuffer[],uLong *HtmlBufferSize,unsigned int radress64bit,unsigned int rsize,
 		unsigned int DocID,char subname[],struct ReposetoryHeaderFormat *ReposetoryHeader,
 		char **acl_allowbuffer,char **acl_deniedbuffer, unsigned int imagesize, char **url, char **attributes) {
 
@@ -1283,7 +1283,7 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 	off_t offset = radress64bit;
 	int error;
 	int forreturn = 0;
-	char *WorkBuff;
+	Bytef *WorkBuff;
 	char recordseparator[5];
 
 
@@ -1350,13 +1350,20 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 		}
 	#endif
 
+	*HtmlBufferSize = ReposetoryHeader->htmlSize2 * 10;
+	if ((*HtmlBuffer = malloc(*HtmlBufferSize)) == NULL) {
+		perror("Can't malloc HtmlBuffer");
+		forreturn = 0;
+		goto rReadHtml_end;
+	}
 
+	printf("aaaa: %lu\n", *HtmlBufferSize);
 	
-	if ( (error = uncompress((Bytef*)HtmlBuffer,(uLong *)HtmlBufferSize,(Bytef *)WorkBuff,rsize)) != 0) {
+	if ( (error = uncompress((Bytef *)(*HtmlBuffer),HtmlBufferSize,WorkBuff,rsize)) != 0) {
                	printf("uncompress error. Code: %i for DocID %u-%i\n",error,DocID,rLotForDOCid(DocID));
 		printf("HtmlBufferSize: %u, rsize: %u\n", *HtmlBufferSize, rsize);
         		
-		HtmlBuffer[0] = '\0';
+		*HtmlBuffer[0] = '\0';
 		(*HtmlBufferSize) = 0;
 
 		forreturn = 0;
@@ -1364,7 +1371,7 @@ int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radre
 	else {
 
 		//er det ikke \0 med i buferren ??
-		HtmlBuffer[(*HtmlBufferSize)] = '\0';
+		(*HtmlBuffer)[(*HtmlBufferSize)] = '\0';
 
 		forreturn = 1;
 	}

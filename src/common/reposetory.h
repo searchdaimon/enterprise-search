@@ -65,7 +65,7 @@ struct ReposetoryOpenFilesFormat OpenReposetoryFiles[MaxOpenReposetoryFiles];
 	void rclose(container*);
 #endif
 
-int rReadHtml (char HtmlBuffer[],unsigned int *HtmlBufferSize,unsigned int radress64bit,unsigned int rsize,unsigned
+int rReadHtml (char *HtmlBuffer[],uLong *HtmlBufferSize,unsigned int radress64bit,unsigned int rsize,unsigned
 				int DocID,char subname[],struct ReposetoryHeaderFormat *ReposetoryHeader,
 				char **acl_allowbuffer,char **acl_deniedbuffer, unsigned int imagesize, char **url,
 				char **attributes

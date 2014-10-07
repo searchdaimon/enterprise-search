@@ -380,8 +380,8 @@ static inline int handle_url_rewrite(const char *url_in, enum platform_type ptyp
 
 
 int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int antall,unsigned int DocID,
-	struct iindexMainElements *TeffArray,struct QueryDataForamt QueryData, char *htmlBuffer,
-	unsigned int htmlBufferSize, char servername[], struct subnamesFormat *subname, 
+	struct iindexMainElements *TeffArray,struct QueryDataForamt QueryData,
+	char servername[], struct subnamesFormat *subname, 
 	struct queryTimeFormat *queryTime, int summaryFH, struct PagesResultsFormat *PagesResults,
 	char **acl_allow, char **acl_denied)
 {
@@ -393,13 +393,11 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 	off_t imagep;
 	struct timeval start_time, end_time;
 	titleaa = body = metakeyw = metadesc = NULL;
-
+	uLong htmlBufferSize;
+	char *htmlBuffer;
 	char *strpointer;
-
 	int returnStatus = 0;	
-
-
-	htmlBuffer[0] = '\0';
+	
 
 	if ((ReposetoryHeader = malloc( sizeof(struct ReposetoryHeaderFormat) )) == NULL) {
 		bblog_errno(ERROR, "Malloc ReposetoryHeader");
@@ -458,7 +456,6 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 	}
 	else {
 		
-		htmlBuffer[0] = '\0';
 
 		if ((*Sider).DocumentIndex.response == 404) {
 			//404 sider kan dukke opp i anchor indeksen, da den som kjent er basert på data som ikke ser på om siden er crawlet
@@ -517,7 +514,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 					free(snippet);
 				}
 				free(resbuf);
-			} else if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize2,DocID,subname->subname,ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
+			} else if (rReadHtml(&htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize2,DocID,subname->subname,ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
 				//kune ikke lese html. Pointer owerflow ?
 				bblog(ERROR, "error reding html for %s", (*Sider).DocumentIndex.Url);
 				sprintf((*Sider).description,"Html error. Can't read html");
@@ -605,7 +602,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 			}
 			else {
 				bblog(DEBUGINFO, "don't hav Summary on disk. Will hav to read html");	
-				if (rReadHtml(htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize2,DocID,subname->subname,ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
+				if (rReadHtml(&htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize2,DocID,subname->subname,ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
 					//printf("Fii faa foo: %s\n", url);
 					//kune ikke lese html. Pointer owerflow ?
 					bblog(ERROR, "error reding html for %s", (*Sider).DocumentIndex.Url);
@@ -829,7 +826,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 					    }
 
 					char *htmlbuf;
-					unsigned int htmllen = 1024*1024 * 5;
+					uLong htmllen;
 					//unsigned int imagelen = sizeof(imagelen);
 					char *url, *acla, *acld, *attributes;
 					struct DocumentIndexFormat di;
@@ -839,11 +836,10 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 					tmpurl = malloc(MAX_URL_LEN);
 					tmpuri = malloc(MAX_URL_LEN);
 					tmpfulluri = malloc(MAX_URL_LEN);
-					htmlbuf = malloc(htmllen);
 
-					if(tmpurl == NULL || tmpuri == NULL || tmpfulluri == NULL || htmlbuf == NULL) {
-						free(tmpurl); free(tmpuri); free(tmpfulluri); free(htmlbuf);
-						bblog_errno(ERROR, "Malloc tmpurl, tmpuri, tmpfulluri or htmlbuf");
+					if(tmpurl == NULL || tmpuri == NULL || tmpfulluri == NULL) {
+						free(tmpurl); free(tmpuri); free(tmpfulluri);
+						bblog_errno(ERROR, "Malloc tmpurl, tmpuri or tmpfulluri");
 						continue;
 					}
 
@@ -859,7 +855,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 					}
 
 
-					rReadHtml(htmlbuf, &htmllen, di.RepositoryPointer, di.htmlSize2, dup_docid,
+					rReadHtml(&htmlbuf, &htmllen, di.RepositoryPointer, di.htmlSize2, dup_docid,
 							dup_subname, &repohdr, &acla, &acld, di.imageSize,
 							&url, &attributes);
 
@@ -1348,15 +1344,9 @@ void *generatePagesResults(void *arg)
 	struct PagesResultsFormat *PagesResults = (struct PagesResultsFormat *)arg;
 
 	int i;
-	//ToDo: ikke hardkode her
-        unsigned int htmlBufferSize = 900000;
-
-	char *htmlBuffer;
-
 	double ltime;
 	struct timeval start_time, end_time;
 	int localshowabal;
-
 	struct SiderFormat *side;
 
 	if ((side = malloc(sizeof(struct SiderFormat))) == NULL) {
@@ -1372,11 +1362,6 @@ void *generatePagesResults(void *arg)
 		int y;
 	#endif
 
-	if ((htmlBuffer = malloc(htmlBufferSize)) == NULL) {
-		bblog_errno(ERROR, "can't malloc");
-		bblog(INFO, "searchkernel: ~generatePagesResults()");
-		return NULL;
-	}
 
 	#ifdef WITH_THREAD
 		pthread_t tid;
@@ -1587,7 +1572,7 @@ void *generatePagesResults(void *arg)
 		#endif
 		char	*acl_allow=NULL, *acl_denied=NULL;
 
-		if (!popResult(side, (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,htmlBuffer,htmlBufferSize,(*PagesResults).servername,PagesResults->TeffArray->iindex[i].subname, &PagesResults->SiderHeder->queryTime,PagesResults->searchd_config->lotPreOpen.Summary[rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID)],PagesResults, &acl_allow, &acl_denied)) {
+		if (!popResult(side, (*PagesResults).SiderHeder,(*PagesResults).antall,(*PagesResults).TeffArray->iindex[i].DocID,&(*PagesResults).TeffArray->iindex[i],(*PagesResults).QueryData,(*PagesResults).servername,PagesResults->TeffArray->iindex[i].subname, &PagesResults->SiderHeder->queryTime,PagesResults->searchd_config->lotPreOpen.Summary[rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID)],PagesResults, &acl_allow, &acl_denied)) {
                        	bblog(INFO, "can't popResult");
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantpopResult,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 			if (acl_allow!=NULL) free(acl_allow);
@@ -1857,8 +1842,6 @@ void *generatePagesResults(void *arg)
 	}
 	}
 
-	//printf("******************************\nfreeing htmlBuffer\n******************************\n");
-	free(htmlBuffer);
 	free(side);
 
 

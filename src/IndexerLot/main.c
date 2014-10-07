@@ -704,8 +704,8 @@ void *IndexerLot_workthread(void *arg) {
 	
 	int sizeofimagebuffer = 524288; //0.5 mb
 	char *imagebuffer =  malloc(sizeofimagebuffer);
-	unsigned int sizeofHtmlBuffer = 524288 * 2;
-	char *HtmlBuffer = malloc(sizeofHtmlBuffer);
+	uLong HtmlBufferLength;
+	char *HtmlBuffer;
 
 	struct pagewordsFormat *pagewords = malloc(sizeof(struct pagewordsFormat));
 
@@ -714,7 +714,6 @@ void *IndexerLot_workthread(void *arg) {
 	char *acl_allow = NULL;
 	char *acl_denied = NULL;
 
-	unsigned int HtmlBufferLength;
 	unsigned char langnr;
 	unsigned char awvalue;
 	off_t DocIDPlace;
@@ -754,6 +753,7 @@ void *IndexerLot_workthread(void *arg) {
 		                body = NULL;
 				metadesc = NULL;
 				DocumentIndexPost = NULL;
+				HtmlBuffer = NULL;
 
 				DocIDPlace = (ReposetoryHeader.DocID - LotDocIDOfset((*argstruct).lotNr));
 
@@ -804,11 +804,16 @@ void *IndexerLot_workthread(void *arg) {
 					documentUpdate = 1;
 				}
 
-				HtmlBufferLength = sizeofHtmlBuffer;
-				if ( (nerror = uncompress((Bytef*)HtmlBuffer,(uLong *)&HtmlBufferLength,(Bytef*)htmlcompressdbuffer,ReposetoryHeader.htmlSize2)) != 0) {
-					#ifdef DEBUG
-               				printf("uncompress error. Code: %i for DocID %u-%i. ReposetoryHeader.htmlSize2 %i,sizeofHtmlBuffer %i\n",nerror,ReposetoryHeader.DocID,rLotForDOCid(ReposetoryHeader.DocID),ReposetoryHeader.htmlSize2,sizeofHtmlBuffer);
-					#endif
+				HtmlBufferLength = ReposetoryHeader.htmlSize2 * 10; // Real value unknown. Will just have to malloc ecnof
+				if ((HtmlBuffer = malloc(HtmlBufferLength)) == NULL) {
+					perror("malloc HtmlBuffer");
+					exit;
+				}
+
+				if ( (nerror = uncompress((Bytef*)HtmlBuffer,&HtmlBufferLength,(Bytef*)htmlcompressdbuffer,(uLong)ReposetoryHeader.htmlSize2)) != 0) {
+					//#ifdef DEBUG
+               				printf("uncompress error. Code: %i for DocID %u-%i. ReposetoryHeader.htmlSize2 %i, HtmlBufferLength %lu\n",nerror,ReposetoryHeader.DocID,rLotForDOCid(ReposetoryHeader.DocID),ReposetoryHeader.htmlSize2,HtmlBufferLength);
+					//#endif
                				goto pageDone;
 		                }
 
@@ -1175,6 +1180,8 @@ pageDone:
 					free(url);
 				if (attributes != NULL)
 					free(attributes);
+
+				free(HtmlBuffer);
 				//hvis vi ikke har peket til DocumentIndexPost, men har allokert den, kan vi slette den
 				if ((argstruct->DIArray[DocIDPlace].p == NULL) && (DocumentIndexPost != NULL)) {
 					free(DocumentIndexPost);
@@ -1197,7 +1204,6 @@ pageDone:
 
 	free(htmlcompressdbuffer);
 	free(imagebuffer);
-	free(HtmlBuffer);
 	free(pagewords);
 
 	return NULL;
