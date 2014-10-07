@@ -66,11 +66,6 @@ if [ -z "${BOOTUP:-}" ]; then
   fi
 fi
 
-if [ "${BOOTUP:-}" != "verbose" ]; then
-   INITLOG_ARGS="-q"
-else
-   INITLOG_ARGS=
-fi
 
 # Check if $pid (could be plural) are running
 checkpid() {
@@ -347,14 +342,6 @@ echo_warning() {
 
 # Log that something succeeded
 success() {
-  if [ -z "${IN_INITLOG:-}" ]; then
-     initlog $INITLOG_ARGS -n $0 -s "$1" -e 1
-  else
-     # silly hack to avoid EPIPE killing rc.sysinit
-     trap "" SIGPIPE
-     echo "$INITLOG_ARGS -n $0 -s \"$1\" -e 1" >&21
-     trap - SIGPIPE
-  fi
   [ "$BOOTUP" != "verbose" -a -z "$LSB" ] && echo_success
   return 0
 }
@@ -362,13 +349,6 @@ success() {
 # Log that something failed
 failure() {
   rc=$?
-  if [ -z "${IN_INITLOG:-}" ]; then
-     initlog $INITLOG_ARGS -n $0 -s "$1" -e 2
-  else
-     trap "" SIGPIPE
-     echo "$INITLOG_ARGS -n $0 -s \"$1\" -e 2" >&21
-     trap - SIGPIPE
-  fi
   [ "$BOOTUP" != "verbose" -a -z "$LSB" ] && echo_failure
   return $rc
 }
@@ -376,13 +356,6 @@ failure() {
 # Log that something passed, but may have had errors. Useful for fsck
 passed() {
   rc=$?
-  if [ -z "${IN_INITLOG:-}" ]; then
-     initlog $INITLOG_ARGS -n $0 -s "$1" -e 1
-  else
-     trap "" SIGPIPE
-     echo "$INITLOG_ARGS -n $0 -s \"$1\" -e 1" >&21
-     trap - SIGPIPE
-  fi
   [ "$BOOTUP" != "verbose" -a -z "$LSB" ] && echo_passed
   return $rc
 }  
@@ -390,13 +363,6 @@ passed() {
 # Log a warning
 warning() {
   rc=$?
-  if [ -z "${IN_INITLOG:-}" ]; then
-     initlog $INITLOG_ARGS -n $0 -s "$1" -e 1
-  else
-     trap "" SIGPIPE
-     echo "$INITLOG_ARGS -n $0 -s \"$1\" -e 1" >&21
-     trap - SIGPIPE
-  fi
   [ "$BOOTUP" != "verbose" -a -z "$LSB" ] && echo_warning
   return $rc
 }  
@@ -406,7 +372,6 @@ action() {
   STRING=$1
   echo -n "$STRING "
   shift
-  initlog $INITLOG_ARGS -c "$*" && success $"$STRING" || failure $"$STRING"
   rc=$?
   echo
   return $rc
