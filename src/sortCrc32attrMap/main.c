@@ -46,8 +46,8 @@ int main (int argc, char *argv[]) {
      	crc32_words_size = inode.st_size;
 
 	if (crc32_words_size==0) {
-		printf("Map is 0 bytes. Skipping\n");
-		return -1;
+		printf("crc32attr.map is 0 bytes. Skipping\n");
+		return 0;
 	}
 
 	if ((m_crc32_words=mmap(NULL, crc32_words_size, PROT_READ|PROT_WRITE, MAP_SHARED, fileno(f_crc32_words), 0)) == MAP_FAILED)
