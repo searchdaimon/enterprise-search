@@ -331,7 +331,7 @@ void iintegerSetValue(struct iintegerFormat *iinteger,void *value,int valuesize,
 int iintegerSetValueNoCashe(void *value,int valuesize,unsigned int DocID,char indexname[],char subname[]) {
 
 	FILE *fh;
-	unsigned int DocIDPlace;
+	long DocIDPlace;
 
 	#ifdef DEBUG
 		printf("set value %u for DocID %u\n",value,DocID);
@@ -340,9 +340,15 @@ int iintegerSetValueNoCashe(void *value,int valuesize,unsigned int DocID,char in
 	fh = lotOpenFileNoCashe(DocID,indexname,">>",'w',subname);
 
 	DocIDPlace = iintegerDocIDPlace(DocID,valuesize);
-
-	fseek(fh,DocIDPlace,SEEK_SET);
-	fwrite(value,valuesize,1,fh);
+printf("DocIDPlace: %ld\n", DocIDPlace);
+	if (fseek(fh,DocIDPlace,SEEK_SET) != 0) {
+		perror("fseek");
+		return 0;
+	}
+	if (fwrite(value,valuesize,1,fh) != 1) {
+		perror("fwrite");
+		return 0;
+	}
 
 
 	fclose(fh);
