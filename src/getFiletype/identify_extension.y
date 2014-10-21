@@ -277,6 +277,7 @@ struct fte_data* fte_init( char *conf_file )
     if (fyyin==NULL)
 	{
     	    fprintf(stderr, "getfiletype: Error! Could not open file '%s'.\n", conf_file);
+	    perror(conf_file);
 	    return NULL;
 	}
 

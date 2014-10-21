@@ -632,7 +632,7 @@ int rReadSummary_post(const unsigned int DocID,char **metadesc, char **title, ch
 
                                 mmap_size = rsize + sizeof(DocID_infile) + mmap_offset;
                                 if ((WorkBuff = mmap(0,mmap_size,PROT_READ,MAP_SHARED,fd,(radress64bit - mmap_offset)) ) == NULL) {
-                                        perror("mmap");
+                                        perror("rReadSummary_post mmap");
                                 }
 
                                 WorkBuff_p = WorkBuff;
