@@ -2217,7 +2217,9 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 				}
 				else if ((re = reopen_cache(rLotForDOCid((*TeffArray)->iindex[i].DocID), 4, "filtypes", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY|RE_STARTS_AT_0)) == NULL) {
-					bblog(DEBUGINFO, "reopen(filtypes)");
+					#ifdef DEBUG
+						bblog(DEBUGINFO, "reopen(filtypes)");
+					#endif
 					(*TeffArray)->iindex[i].filetype[0] = '\0';
 
 					continue;
