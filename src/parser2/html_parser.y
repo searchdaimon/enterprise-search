@@ -1095,7 +1095,7 @@ void html_parser_exit()
 void html_parser_run( char *url, char text[], int textsize, char **output_title, char **output_body,
     void (*fn)(char*,int,enum parsed_unit,enum parsed_unit_flag,void* wordlist), void* wordlist )
 {
-    #ifndef NOWARNINGS
+    #ifdef DEBUG
 	fprintf(stderr, "html_parser: run(\"%s\")\n", url);
     #endif
 
