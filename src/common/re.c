@@ -35,13 +35,14 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 	int stretch = 0;
 
 	#ifdef DEBUG
-	printf("reopen(lotNr=%i, structsize=%d, file=%s, subname=%s, flags=%i)\n",lotNr,structsize,file,subname,flags);
+	printf("reopen(lotNr=%i, structsize=%zu, file=%s, subname=%s, flags=%i)\n",lotNr,structsize,file,subname,flags);
 	#endif
 
 	if ((re = malloc(sizeof(struct reformat))) == NULL) {
 		return NULL;
 	}
 
+	re->fd = -1;
 	re->flags = flags;
 
 	if ((re->flags & RE_HAVE_4_BYTES_VERSION_PREFIX) == RE_HAVE_4_BYTES_VERSION_PREFIX) {
@@ -136,7 +137,8 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 	}
 
         if ((re->mem = mmap(0,re->maxsize,mmapmode,MAP_SHARED,re->fd,0) ) == MAP_FAILED) {
-	        perror("mmap");
+		printf("reopen(lotNr=%i, structsize=%zu, file=%s, subname=%s, flags=%i)\n",lotNr,structsize,file,subname,flags);
+	        perror("reopen mmap");
 		//nullsetter dene, slik at det er lettere og se at det er en feil under debugging.
 		re->mem = NULL;
 		goto reopen_error;
@@ -165,9 +167,11 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 	return re;
 
 	reopen_error:
-		if (re != NULL) {
-			free(re);
+		if (re->fd != -1) {
+			close(re->fd);
 		}
+		free(re);
+		
 		return NULL;
 }
 
