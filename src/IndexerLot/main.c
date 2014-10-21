@@ -1139,7 +1139,9 @@ void *IndexerLot_workthread(void *arg) {
 				DocumentIndexPost->crc32 = crc32;
 				*RE_Uint(argstruct->re.crc32map, ReposetoryHeader.DocID) = crc32;
 				*RE_Uchar(argstruct->re.PopRank, ReposetoryHeader.DocID) = ReposetoryHeader.PopRank;
-				printf("Wrote %d for %u\n", ReposetoryHeader.PopRank, ReposetoryHeader.DocID);
+				#ifdef DEBUG
+					printf("Wrote rank %d for %u\n", ReposetoryHeader.PopRank, ReposetoryHeader.DocID);
+				#endif
 				(*argstruct).DIArray[DocIDPlace].p = DocumentIndexPost;
 			
 
