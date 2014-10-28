@@ -596,7 +596,7 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 					mmap_size = SizeForTerm + mmap_offset;
 					if ((allindex = mmap(0,mmap_size,PROT_READ,MAP_SHARED,fileno(fileha),Adress - mmap_offset) ) == MAP_FAILED) {
 						fprintf(stderr,"can't mmap file \"%s\", Adress: %u, SizeForTerm: %u\n",IndexPath,Adress,SizeForTerm);
-						perror("mmap");
+						perror("_GetIndexAsArray mmap");
 						return;
 					}
 

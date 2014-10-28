@@ -1,14 +1,15 @@
 BEGIN {
-	push @INC, $ENV{BOITHOHOME}."/Modules/";
+	unshift @INC, $ENV{BOITHOHOME}."/Modules/";
 };
 
 use strict;
 use Carp;
 use Getopt::Std;
 use Boitho::Lot;
+use File::Path qw(remove_tree);
 
 my %opts;
-getopts('ls:', \%opts);
+getopts('ls:r', \%opts);
 
 
 if ($opts{l}) {
@@ -33,6 +34,74 @@ my $lockfile = $ENV{'BOITHOHOME'} . '/var/boitho-cleanLots' . $subname . '.lock'
 open(LOCKF,">$lockfile") or die("can't lock lock file $lockfile: $!");
 flock(LOCKF,2);
 
+if ($opts{'r'}) {
+	print "Deleting:\n";
+	foreach my $lot (1 .. 4096) {
+
+		my $path = Boitho::Lot::GetFilPathForLot($lot,$subname);
+		chop $path;
+
+		my $dirtyfile = $path . '/dirty';
+
+		print "Reseting lot $lot, subname $subname\n";
+
+
+		if (!(-e $path)) {
+			last;
+		}
+
+		# Remove the iindex and revindex folders
+		remove_tree( $path . '/iindex', $path . '/revindex', {error => \my $err} );
+	  	if (@$err) {
+	  	    for my $diag (@$err) {
+	  	        my ($file, $message) = %$diag;
+	  	        if ($file eq '') {
+	  	            print "general error: $message\n";
+	  	        }
+	  	        else {
+	  	            print "problem unlinking $file: $message\n";
+	  	        }
+	  	    }
+	  	}
+
+		# Delete all but: dirty  DocID  reposetory  urls.db reposetory.attribute_columns and *new_attribute_keys
+	      	my $DIR;
+	      	opendir($DIR, $path) or warn("can't opendir $path: $!") && return;
+
+	        while (my $file = readdir($DIR) ) {
+
+	                #skiping . and ..
+	                if ($file =~ /\.$/) {
+	                      next;
+	                }
+
+			if ($file eq 'dirty' || $file eq 'DocID' || $file eq 'reposetory' || $file eq 'urls.db' || $file eq 'reposetory.attribute_columns') {
+				next;
+			}
+
+	                if ($file =~ /new_attribute_keys/) {
+	                      next;
+	                }
+
+	                my $candidate = $path . "\/" . $file;
+
+			#print "rm $candidate\n";
+	                unlink($candidate) or warn("Cant delete cache file \"$candidate\": $!");
+
+	      	}
+
+	      	closedir($DIR);
+
+		# Creat dirty file if it dos not exist.
+		if (!(-e $dirtyfile)) {
+			open(OUT, ">",$dirtyfile) or die("Can't open $dirtyfile: ");
+			print OUT "1";
+			close(OUT);
+		}
+
+	}
+}
+
 print "indexing:\n";
 
 foreach my $lot (1 .. 4096) {
@@ -42,9 +111,7 @@ foreach my $lot (1 .. 4096) {
 
 	my $dirtyfile = $path . '/dirty';
 
-	print "$path\n";
-	print "name $dirtyfile\n";
-	print "lot $lot, subname $subname\n";
+	print "Indexing lot $lot, subname $subname\n";
 
 	if (!(-e $path)) {
 		last;
@@ -112,15 +179,15 @@ foreach my $key (keys %hiestinlot) {
 }
 
 # Clean search cache
-print "Clining search cache.\n";
+print "Cleaning search cache.\n";
 recdir($ENV{'BOITHOHOME'} . "/var/cache");
 
 
-# unlocking
+# Release the collection lock
 close(LOCKF) or warn($!);
 unlink($lockfile) or warn($!);
 
-print "~cleanLots.pl";
+print "~cleanLots.pl\n";
 
 ###########################################################################################################
 #

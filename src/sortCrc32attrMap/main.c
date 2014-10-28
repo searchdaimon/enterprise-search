@@ -29,12 +29,13 @@ int main (int argc, char *argv[]) {
 
         char 				*subname = argv[1];
 	FILE            		*f_crc32_words = NULL, *f_crc32_words_new = NULL;
-	int             		crc32_words_size = 0;
+	size_t             		crc32_words_size = 0;
 	struct stat     		inode;
 	int             		attr_crc32_words_blocksize = sizeof(unsigned int) + sizeof(char)*MAX_ATTRIB_LEN;
 	struct Crc32attrMapFormat	*m_crc32_words = NULL;
 	unsigned int			last;
-	int 				i;
+	size_t 				i;
+	size_t				nrOfElements;
 
 	if ((f_crc32_words = lotOpenFileNoCasheByLotNr(1, "crc32attr.map", "r+", 's', subname)) == NULL) {
 		perror("Can't open the crc32attr.map file.");
@@ -42,7 +43,10 @@ int main (int argc, char *argv[]) {
 	}
 
 
-     	fstat(fileno(f_crc32_words), &inode);
+     	if (fstat(fileno(f_crc32_words), &inode) != 0) {
+		perror("Can't fstat crc32attr.map");
+		return -1;
+	}
      	crc32_words_size = inode.st_size;
 
 	if (crc32_words_size==0) {
@@ -56,10 +60,10 @@ int main (int argc, char *argv[]) {
 		return -1;
 	}
 
+	nrOfElements = (crc32_words_size / attr_crc32_words_blocksize);
+	printf("Will sort %zu elements of sise %d\n",nrOfElements, attr_crc32_words_blocksize);
 
-	printf("Will sort %d elements of sise %d\n",(crc32_words_size / attr_crc32_words_blocksize), attr_crc32_words_blocksize);
-
-	qsort(m_crc32_words,(crc32_words_size / attr_crc32_words_blocksize),attr_crc32_words_blocksize, attr_crc32_words_block_compare);
+	qsort(m_crc32_words,nrOfElements,attr_crc32_words_blocksize, attr_crc32_words_block_compare);
 
 
 	/************************************************************************************
@@ -71,7 +75,7 @@ int main (int argc, char *argv[]) {
 	}
 
 	last = 0;
-        for(i=0;i<(crc32_words_size / attr_crc32_words_blocksize);i++) {
+        for(i=0;i<nrOfElements;i++) {
 
 		if (m_crc32_words[i].crc32 != last) {
 			#ifdef DEBUG
@@ -90,14 +94,15 @@ int main (int argc, char *argv[]) {
 
 	munmap(m_crc32_words,crc32_words_size);
 
+	fclose(f_crc32_words);		
+	fclose(f_crc32_words_new);
+
 	// Swap the files
 	if (lotRename(1, subname, "crc32attr.map.new", "crc32attr.map") != 0) {
-		perror("rename");
+		perror("rename crc32attr.map.new crc32attr.map");
 		return -1;
 	}
 
-	fclose(f_crc32_words_new);
-	fclose(f_crc32_words);		
 
 	printf("Done\n");
 

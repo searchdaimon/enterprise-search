@@ -2217,7 +2217,9 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 				}
 				else if ((re = reopen_cache(rLotForDOCid((*TeffArray)->iindex[i].DocID), 4, "filtypes", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY|RE_STARTS_AT_0)) == NULL) {
-					bblog(DEBUGINFO, "reopen(filtypes)");
+					#ifdef DEBUG
+						bblog(DEBUGINFO, "reopen(filtypes)");
+					#endif
 					(*TeffArray)->iindex[i].filetype[0] = '\0';
 
 					continue;
@@ -2866,7 +2868,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 			container	*attr_keys = NULL;
 			FILE		*f_crc32_words = NULL;
 			void		*m_crc32_words = NULL;
-			int		crc32_words_size = 0;
+			size_t		crc32_words_size = 0;
 			char		no_attributes = 0;
 
 			// Les inn og åpne nødvendige filer:
@@ -2881,7 +2883,10 @@ char* searchFilterCount(int *TeffArrayElementer,
 				else
 				    {
 					struct stat	inode;
-					fstat(fileno(f_crc32_words), &inode);
+					if (fstat(fileno(f_crc32_words), &inode) != 0) {
+						perror("Can't fstat crc32attr.map");
+						// ToDo: What if?
+					}
 					crc32_words_size = inode.st_size;
 
 					if (crc32_words_size > 0

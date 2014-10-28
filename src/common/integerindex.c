@@ -152,7 +152,7 @@ int iintegerLoadMemArray(struct iintegerMemArrayFormat *iintegerMemArray,char in
 
 			if ((iintegerMemArray->MemArray[i] = mmap(0,size,PROT_READ,MAP_SHARED,fileno(iinteger.FH),0) ) == NULL) {
 				fprintf(stderr,"iintegerLoadMemArray: can't mmap for lot %i\n",i);
-                        	perror("mmap");
+                        	perror("iintegerLoadMemArray mmap");
                         }
 			
 			#else
@@ -268,7 +268,7 @@ int iintegerLoadMemArray2(struct iintegerMemArrayFormat *iintegerMemArray,char i
 
 			if ((iintegerMemArray->MemArray[i] = mmap(0,size,PROT_READ,MAP_SHARED,fileno(iinteger.FH),0) ) == NULL) {
 				fprintf(stderr,"iintegerLoadMemArray: can't mmap for lot %i\n",i);
-                        	perror("mmap");
+                        	perror("iintegerLoadMemArray2 mmap");
                         }
 
                         //hvis vi kan låse uendelig med minne gjør vi det

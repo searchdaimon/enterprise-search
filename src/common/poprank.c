@@ -178,7 +178,7 @@ void popopenMemArray2(char subname[], char rankfile[]) {
 
 			if ((popMemArray[i] = mmap(0,branksize,PROT_READ,MAP_SHARED,fileno(FH),0) ) == MAP_FAILED) {
 				fprintf(stderr,"popopenMemArray: can't mmap for lot %i\n",i);
-				perror("mmap");
+				perror("popopenMemArray2 mmap");
 			}
 
 
@@ -273,7 +273,7 @@ void popopenMemArray(char servername[], char subname[], char rankfile[]) {
 
                         		if ((popMemArray[i] = mmap(0,branksize,PROT_READ,MAP_SHARED,fileno(FH),0) ) == NULL) {
                                 		fprintf(stderr,"popopenMemArray: can't mmap for lot %i\n",i);
-                                		perror("mmap");
+                                		perror("popopenMemArray mmap");
                         		}
 				#else
 
@@ -354,7 +354,7 @@ void *mmap3264(void *addr, off_t len, int prot, int flags,int fildes, off_t off)
 		printf("mmap ret %i\n",(unsigned int)mem[i]);
 
        		if ((int)mem[i] == -1) {
-       		        perror("mmap");
+       		        perror("mmap3264 mmap");
 			return 0;
         	}
 
@@ -417,7 +417,7 @@ int popopenMmap(struct popmemmapFormat *popmemmap,char *filname) {
 
 
        	if ((int)popmemmap->ranks == -1) {
-       	        perror("mmap");
+       	        perror("popopenMmap mmap");
 		return 0;
         }
 
