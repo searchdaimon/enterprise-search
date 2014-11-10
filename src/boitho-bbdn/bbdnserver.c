@@ -371,7 +371,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			//toDo må bruke subname, og C ikke perl her
 			printf("cleanin lots start\n");
 			char command[PATH_MAX];
-			snprintf(command,sizeof(command),"perl %s -l -s \"%s\"",bfile("perl/cleanLots.pl"),subname);
+			snprintf(command,sizeof(command),"perl %s -i \"%s\"",bfile("perl/cleanLots.pl"),subname);
 
 			printf("running \"%s\"\n",command);
 			intrespons = system(command);

@@ -9,23 +9,17 @@ use Boitho::Lot;
 use File::Path qw(remove_tree);
 
 my %opts;
-getopts('ls:r', \%opts);
+getopts('lir', \%opts);
 
 
 if ($opts{l}) {
 	print "Will log all output to file\n";
 
-	#dublicate stdout to log what is happening
-# Runarb: 07.02.2012: This log is not being rotated. Commenting it out for now.
-#	open(STDOUT, ">>$ENV{'BOITHOHOME'}/logs/indexing") || die "Can't dup stdout";
-#	open(STDERR, ">>&STDOUT") || die "Can't dup stdout";
-
+	open(STDOUT, ">>$ENV{'BOITHOHOME'}/logs/indexing") || die "Can't dup stdout";
+	open(STDERR, ">>&STDOUT") || die "Can't dup stdout";
 }
 
-if (!defined($opts{'s'})) {
-	die("Sorry, but you have to spesify subname (-s)");
-}
-my $subname = $opts{'s'};
+my $subname = shift @ARGV or die("Sorry, but you have to spesify subname as arg 1");
 
 
 my %hiestinlot = ();
@@ -102,82 +96,82 @@ if ($opts{'r'}) {
 	}
 }
 
-print "indexing:\n";
+if ($opts{'i'}) {
+	print "indexing:\n";
 
-foreach my $lot (1 .. 4096) {
+	foreach my $lot (1 .. 4096) {
 
-	my $path = Boitho::Lot::GetFilPathForLot($lot,$subname);
-	chop $path;
+		my $path = Boitho::Lot::GetFilPathForLot($lot,$subname);
+		chop $path;
 
-	my $dirtyfile = $path . '/dirty';
+		my $dirtyfile = $path . '/dirty';
 
-	print "Indexing lot $lot, subname $subname\n";
+		print "Indexing lot $lot, subname $subname\n";
 
-	if (!(-e $path)) {
-		last;
+		if (!(-e $path)) {
+			last;
+		}
+
+
+		if (-e $dirtyfile) {
+
+
+			
+			my $command = $ENV{'BOITHOHOME'} . "/bin/IndexerLotbb -i $lot \"$subname\"";
+			print "runing $command\n";
+			system($command);
+			exitstatus($?);
+
+			my $command = $ENV{'BOITHOHOME'} . "/bin/mergeUserToSubname $lot \"$subname\"";
+			print "runing $command\n";
+			system($command);
+			exitstatus($?);
+
+
+
+			unlink($dirtyfile) or warn($!);
+			$hiestinlot{$subname} = $lot;
+		}
+
 	}
 
+	print "\nmergeIIndex:\n";
 
-	if (-e $dirtyfile) {
+	foreach my $key (keys %hiestinlot) {
+		print "key $key, value \"$hiestinlot{$key}\"\n";
 
-
-		
-		my $command = $ENV{'BOITHOHOME'} . "/bin/IndexerLotbb -i $lot \"$subname\"";
+		my $command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} Main aa \"$key\"";
 		print "runing $command\n";
 		system($command);
 		exitstatus($?);
 
-		my $command = $ENV{'BOITHOHOME'} . "/bin/mergeUserToSubname $lot \"$subname\"";
+		my $command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} acl_allow aa \"$key\"";
 		print "runing $command\n";
 		system($command);
 		exitstatus($?);
 
+		my $command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} acl_denied aa \"$key\"";
+		print "runing $command\n";
+		system($command);
+		exitstatus($?);
 
+		my $command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} attributes aa \"$key\"";
+		print "runing $command\n";
+		system($command);
+		exitstatus($?);
 
-		unlink($dirtyfile) or warn($!);
-		$hiestinlot{$subname} = $lot;
+			my $command = $ENV{'BOITHOHOME'} . "/bin/sortCrc32attrMap \"$key\"";
+			print "runing $command\n";
+			system($command);
+		exitstatus($?);
+
+		# Running garbage collection.
+		#	my $command = $ENV{'BOITHOHOME'} . "/bin/gcRepobb \"$key\"";
+		#	print "runing $command\n";
+		#	system($command);
+
 	}
-
 }
-
-print "\nmergeIIndex:\n";
-
-foreach my $key (keys %hiestinlot) {
-	print "key $key, value \"$hiestinlot{$key}\"\n";
-
-	my $command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} Main aa \"$key\"";
-	print "runing $command\n";
-	system($command);
-	exitstatus($?);
-
-	my $command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} acl_allow aa \"$key\"";
-	print "runing $command\n";
-	system($command);
-	exitstatus($?);
-
-	my $command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} acl_denied aa \"$key\"";
-	print "runing $command\n";
-	system($command);
-	exitstatus($?);
-
-	my $command = $ENV{'BOITHOHOME'} . "/bin/mergeIIndex 1 $hiestinlot{$key} attributes aa \"$key\"";
-	print "runing $command\n";
-	system($command);
-	exitstatus($?);
-
-        my $command = $ENV{'BOITHOHOME'} . "/bin/sortCrc32attrMap \"$key\"";
-        print "runing $command\n";
-        system($command);
-	exitstatus($?);
-
-	#kjører garbage collection.
-#	my $command = $ENV{'BOITHOHOME'} . "/bin/gcRepobb \"$key\"";
-#	print "runing $command\n";
-#	system($command);
-
-
-}
-
 # Clean search cache
 print "Cleaning search cache.\n";
 recdir($ENV{'BOITHOHOME'} . "/var/cache");
