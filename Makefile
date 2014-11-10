@@ -76,7 +76,7 @@ init.d.start:
 	init.d/crawlManager start
 	init.d/searchdbb start
 	init.d/boithoad start
-	init.d/suggest start
+	-init.d/suggest start
 
 dbupdate:
 	@echo ""
