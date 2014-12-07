@@ -1194,7 +1194,7 @@ crawlLocal: src/crawlLocal/rutines.c
 	@echo "$@:"
 
 
-	$(CC) $(CFLAGS) -Wall -fPIC -shared -D BLACK_BOX -g $(CRAWL_STATIC) src/crawl/crawlLocalFiles.c src/crawl/crawl.c src/crawlLocal/rutines.c -o src/crawlLocal/crawlLocal.so $(LDFLAGS) 
+	$(CC) $(CFLAGS) -Wall -fPIC -shared -D BLACK_BOX -g $(CRAWL_STATIC) src/crawl/crawlLocalFiles.c src/crawl/crawl.c src/crawlLocal/rutines.c -o src/crawlLocal/crawlLocal.so src/logger/logger.c $(LDFLAGS) 
 	mkdir -p crawlers/crawlLocal
 	cp src/crawlLocal/crawlLocal.so crawlers/crawlLocal/
 

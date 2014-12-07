@@ -10,7 +10,7 @@
 
 
 #include "crawl.h"
-
+#include "../logger/logger.h"
 
 void LocalFilesRecursiveDir (
 	struct collectionFormat *collection,
@@ -133,36 +133,36 @@ void LocalFilesRecursiveDir (
 			dokument_size = inode.st_size;
 			dokument_buff = malloc(dokument_size +1);
 
-			printf("uid %i, gid %i\n",inode.st_uid,inode.st_gid);
+			bblog(DEBUGINFO, "uid %i, gid %i\n",inode.st_uid,inode.st_gid);
 			//lager acl
 			acl[0] = '\0';
 			filecessmode = ownaccessmode & inode.st_mode;
-			printf("mode %i\n",(int)inode.st_mode);
+			bblog(DEBUGINFO, "mode %i\n",(int)inode.st_mode);
 			if (filecessmode & S_IRUSR) {
-				printf("ovner have read permission. S_IRUSR %i\n",inode.st_mode & S_IRUSR);
+				bblog(DEBUGINFO, "ovner have read permission. S_IRUSR %i\n",inode.st_mode & S_IRUSR);
 				//find username and appendit
 				if ((pw = getpwuid(inode.st_uid)) == NULL) {
 					printf("unknown user id %i\n",inode.st_uid);
 				}
 				else {
-					printf("user name is %s\n",pw->pw_name);
+					bblog(DEBUGINFO, "user name is %s\n",pw->pw_name);
 					strcat(acl,pw->pw_name);
 					strcat(acl,",");
 				}
 			}
 			if (filecessmode & S_IRGRP) {
-				printf("group have read permission. S_IRGRP %i\n",inode.st_mode & S_IRGRP);
+				bblog(DEBUGINFO, "group have read permission. S_IRGRP %i\n",inode.st_mode & S_IRGRP);
 				if ((gp = getgrgid(inode.st_gid)) == NULL) {
 					printf("unknown group id %i\n",inode.st_gid);
 				}
 				else {
-					printf("group is %s\n",gp->gr_name);					
+					bblog(DEBUGINFO, "group is %s\n",gp->gr_name);					
 					strcat(acl,gp->gr_name);
 					strcat(acl,",");
 					}
 			}
 			if (filecessmode & S_IROTH) {
-				printf("others have read permission. S_IROTH %i\n",inode.st_mode & S_IROTH);
+				bblog(DEBUGINFO, "others have read permission. S_IROTH %i\n",inode.st_mode & S_IROTH);
 				strcat(acl,"Everyone"); //toDo bruker msad sin gruppe fro alle her. Bør kansje ha en engen??
 				strcat(acl,",");
 			}
@@ -186,8 +186,6 @@ void LocalFilesRecursiveDir (
                         crawldocumentAdd.doctype        = "";
 			crawldocumentAdd.attributes	= "";
 
-
-			printf("\tdokument_size \"%i\"\n",dokument_size);
 
                         (*documentAdd)(collection ,&crawldocumentAdd);
 
