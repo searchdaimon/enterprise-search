@@ -64,6 +64,7 @@
 #define CRAWL_DONE     2
 #define CRAWL_ERROR    3
 #define CRAWL_NOLAST   4
+#define CRAWL_INDEXING 5
 
 #define TEST_COLL_NAME "_%s_TestCollection" // %s is connector name.
 
@@ -1065,13 +1066,6 @@ void sm_collectionfree(struct collectionFormat *collection[],int nrofcollections
 	}
 }
 
-void closecollection(struct collectionFormat *collection) {
-	bblog(DEBUGINFO, "closecollection start");
-	bbdn_closecollection((*collection).socketha,(*collection).collection_name);
-	bblog(DEBUGINFO, "closecollection end");
-
-}
-
 int cmr_crawlcanconect(struct hashtable *h, struct collectionFormat *collection) {
 
 	struct crawlLibInfoFormat *crawlLibInfo;
@@ -1766,12 +1760,20 @@ void set_crawl_state(int state, unsigned int coll_id, char * msg) {
 	
 	MYSQL db;
 	sql_connect(&db);
+	int pid;
 
 	switch (state) {
 		case CRAWL_CRAWLING:
 			sql_set_crawler_message(&db, 0, "Crawling it now.", coll_id);
 			
-			int pid = getpid();
+			pid = getpid();
+			sql_set_crawl_pid(&db, &pid, coll_id);
+			break;
+
+		case CRAWL_INDEXING:
+			sql_set_crawler_message(&db, 0, "Running indexer.", coll_id);
+			
+			pid = getpid();
 			sql_set_crawl_pid(&db, &pid, coll_id);
 			break;
 
@@ -1887,15 +1889,32 @@ int redirect_stdoutput(char * file) {
         return 0;
     }
 
-    // Deliting old version
+    // Delete the old file
     unlink(file);
 
-    printf("tc: redirecting std[out,err] to %s",  file);
-    if ((freopen(file, "a+", stdout)) == NULL
-            || freopen(file, "a+", stderr) == NULL) {
+    printf("tc: redirecting std[out,err] to %s.\n",  file);
+
+
+    if ((freopen(file, "a+", stdout)) == NULL) {
+        fprintf(stderr, "Can't redirect stdout.\n");
         perror(file);
         return 0;
     }
+    if ((freopen(file, "a+", stderr)) == NULL) {
+        fprintf(stdout, "Can't redirect stderr.\n");
+        return 0;
+    }
+
+
+    // a lock implies that a crawl is still running
+    if(flock(fileno(stdout), LOCK_SH) == -1) {
+        fprintf(stderr, "Can't lock stdout (redirected to '%s'): ", file);
+        perror(file);
+        return 0;
+    } 
+    setvbuf(stdout, NULL, _IOLBF, 0); // line buffered
+    setvbuf(stderr, NULL, _IOLBF, 0);
+
     return 1;
 }
 
@@ -1932,14 +1951,10 @@ void crawl(struct collectionFormat *collection,int nrofcollections, int flag, in
 		int output_redirected = 0;
 		if ((collection[i].extra != NULL) && (getenv("BBLOGGER_APPENDERS") == NULL)) {
 			if (!redirect_stdoutput(collection[i].extra)) {
-				bblog(ERROR, "test collection error, skipping.");
+				bblog(ERROR, "redirect of std[out,err] faild.");
 				continue;
 			}
 		    
-			// a lock implies that a crawl is still running
-			flock(fileno(stdout), LOCK_SH); 
-			setvbuf(stdout, NULL, _IOLBF, 0); // line buffered
-			setvbuf(stderr, NULL, _IOLBF, 0);
 			output_redirected = 1;
 		}
 
@@ -1996,25 +2011,32 @@ void crawl(struct collectionFormat *collection,int nrofcollections, int flag, in
 
 			if (flag == crawl_recrawl || (*collection).lastCrawl == 0) {
 				if (cm_crawlfirst(global_h,&collection[i])) { 
-					set_crawl_state(CRAWL_DONE, collection[i].id, NULL);
 					success = 1;
-				} else {
-					set_crawl_state(CRAWL_ERROR, collection[i].id, bstrerror());
 				}
 			}
 			else {
 				if (cm_crawlupdate(global_h,&collection[i])) {
-					set_crawl_state(CRAWL_DONE, collection[i].id, NULL);
 					success = 1;
-				} else {
-					set_crawl_state(CRAWL_ERROR, collection[i].id, bstrerror());
 				}
 			}
 
-			closecollection(&collection[i]);
+			// Must print status with normal printf to get it to stdout, and thus into the log.
+			fprintf(stdout, "Running indexer.\n"); 
 
-			//ber bbdn om å lukke sokket
+			set_crawl_state(CRAWL_INDEXING, collection[i].id, NULL);
+
+			// Closing the collection. This is a command, and is not the same as to close the socket.
+			bbdn_closecollection(collection[i].socketha, collection[i].collection_name);
+
+			// Ask bbdn to close the socket.			
 			bbdn_close(collection[i].socketha);
+
+			if (success) {
+				set_crawl_state(CRAWL_DONE, collection[i].id, NULL);
+			}
+			else {
+				set_crawl_state(CRAWL_ERROR, collection[i].id, bstrerror());
+			}
    
     		}
                 
@@ -2451,10 +2473,6 @@ void connectHandler(int socket) {
 				    }
 				else
 				    {
-			                // a lock implies that a crawl is still running
-			                flock(fileno(stdout), LOCK_SH); 
-			                setvbuf(stdout, NULL, _IOLBF, 0); // line buffered
-			                setvbuf(stderr, NULL, _IOLBF, 0);
 			                output_redirected = 1;
 				    }
 			    }
@@ -2518,10 +2536,6 @@ void connectHandler(int socket) {
 				    }
 				else
 				    {
-			                // a lock implies that a crawl is still running
-			                flock(fileno(stdout), LOCK_SH); 
-			                setvbuf(stdout, NULL, _IOLBF, 0); // line buffered
-			                setvbuf(stderr, NULL, _IOLBF, 0);
 			                output_redirected = 1;
 				    }
 			    }
@@ -2598,10 +2612,6 @@ void connectHandler(int socket) {
 				    }
 				else
 				    {
-			                // a lock implies that a crawl is still running
-			                flock(fileno(stdout), LOCK_SH); 
-			                setvbuf(stdout, NULL, _IOLBF, 0); // line buffered
-			                setvbuf(stderr, NULL, _IOLBF, 0);
 			                output_redirected = 1;
 				    }
 			    }
