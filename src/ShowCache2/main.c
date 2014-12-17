@@ -73,9 +73,6 @@ int main(int argc, char *argv[]) {
 
 	}
 	else if (argc > 2) {
-		//iPointer = 9695;
-		//iSize = 2288;
-		//LotNr = 14;
 #ifdef BLACK_BOX
 		validate_url = false;
 #endif
@@ -121,11 +118,9 @@ int main(int argc, char *argv[]) {
 
 	if (rReadHtml(htmlBuf,&htmlBufSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize2,iDocID,subname,&ReposetoryHeader,&aclbuffer_allow,&aclbuffer_deny,DocumentIndexPost.imageSize, &url, &attributes) != 1) {
 
-		printf("can't read cache file.\n");
-
+		printf("Can't read cache file.\n");
 	}
 	else {
-		//printf(htmlBuf);
 		fwrite(htmlBuf,htmlBufSize,1,stdout);
 	}
 
