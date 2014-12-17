@@ -606,15 +606,14 @@ int main (int argc, char *argv[]) {
 		int htmlSize = atoi(value3);
 		int imageSize = atoi(value4);
 
-                int htmlBufferSize = 3000000;
+                uLong htmlBufferSize;
 		char *htmlBuffer, *acl_allowbuffer, *acl_deniedbuffer, *attributes, *url;
             	unsigned int uriindex_DocID;
             	unsigned int uriindex_lastmodified;
 
-                htmlBuffer = malloc(htmlBufferSize);
                 struct ReposetoryHeaderFormat ReposetoryHeader;
 
-                if (!rReadHtml(htmlBuffer,&htmlBufferSize,RepositoryPointer,htmlSize,DocID,value5,&ReposetoryHeader,
+                if (!rReadHtml(&htmlBuffer,&htmlBufferSize,RepositoryPointer,htmlSize,DocID,value5,&ReposetoryHeader,
 			&acl_allowbuffer,&acl_deniedbuffer,imageSize, &url, &attributes)) {
                         printf("rReadHtml: did not returne true!\n");
                 }
@@ -637,7 +636,7 @@ int main (int argc, char *argv[]) {
 			printf("time: %s", ctime(&ReposetoryHeader.time));
 			printf("storageTime: %s", ctime(&ReposetoryHeader.storageTime));
 
-			printf("PopRank: %d", ReposetoryHeader.PopRank);
+			printf("PopRank: %d\n", ReposetoryHeader.PopRank);
 
 			if (uriindex_get(url, &uriindex_DocID, &uriindex_lastmodified, value5) == 0) {
 				printf("deleted: 1\n");
