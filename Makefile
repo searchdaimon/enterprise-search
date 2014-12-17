@@ -1083,7 +1083,7 @@ ShowThumbbb: src/ShowThumb/main.c
 
 	$(CC) $(SHOWTHUMBCMANDS) -o cgi-bin/ShowThumbbb -D BLACK_BOX
 
-ShowCacheCOMMAND2 = $(CFLAGS) $(LIBS)*.c src/ShowCache2/main.c src/cgi-util/cgi-util.c $(LDFLAGS) 
+ShowCacheCOMMAND2 = $(CFLAGS) $(LIBS)*.c src/ShowCache2/main.c src/cgi-util/cgi-util.c $(LDFLAGS) $(WALL)
 
 ShowCache2: src/ShowCache/main.c
 	@echo ""
