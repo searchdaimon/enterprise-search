@@ -1357,7 +1357,6 @@ int rReadHtml (char *HtmlBuffer[],uLong *HtmlBufferSize,unsigned int radress64bi
 		goto rReadHtml_end;
 	}
 
-	printf("aaaa: %lu\n", *HtmlBufferSize);
 	
 	if ( (error = uncompress((Bytef *)(*HtmlBuffer),HtmlBufferSize,WorkBuff,rsize)) != 0) {
                	printf("uncompress error. Code: %i for DocID %u-%i\n",error,DocID,rLotForDOCid(DocID));
