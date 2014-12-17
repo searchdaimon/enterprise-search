@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 	char FilePath[255];
 	FILE *REPOSETORY;
 	char *htmlBuf;
-	unsigned int htmlBufSize;
+	uLong htmlBufSize;
 	struct ReposetoryHeaderFormat ReposetoryHeader;
         char *aclbuffer_allow = NULL;
         char *aclbuffer_deny = NULL;
@@ -108,15 +108,7 @@ int main(int argc, char *argv[]) {
 	DIRead_fmode (&DocumentIndexPost,iDocID,subname, 's');
 
 
-
-	htmlBufSize = (DocumentIndexPost.htmlSize2 * 30);
-	if ((htmlBuf = malloc(htmlBufSize)) == NULL) {
-		printf("can't malloc space for html buff.\n");
-		exit(1);		
-	}
-
-
-	if (rReadHtml(htmlBuf,&htmlBufSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize2,iDocID,subname,&ReposetoryHeader,&aclbuffer_allow,&aclbuffer_deny,DocumentIndexPost.imageSize, &url, &attributes) != 1) {
+	if (rReadHtml(&htmlBuf,&htmlBufSize,DocumentIndexPost.RepositoryPointer,DocumentIndexPost.htmlSize2,iDocID,subname,&ReposetoryHeader,&aclbuffer_allow,&aclbuffer_deny,DocumentIndexPost.imageSize, &url, &attributes) != 1) {
 
 		printf("Can't read cache file.\n");
 	}
