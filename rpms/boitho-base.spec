@@ -68,15 +68,6 @@ chown boitho /boithoData
 
 %post
 
-SSHDCONFIG=/etc/ssh/sshd_config
-
-# Do not permit root to log directly in
-egrep "^PermitRootLogin no$" $SSHDCONFIG > /dev/null  || echo "PermitRootLogin no" >> $SSHDCONFIG
-# Do not allow password logins
-egrep "^PasswordAuthentication yes$" $SSHDCONFIG >/dev/null && sed -i.bak -e 's/^PasswordAuthentication yes$/PasswordAuthentication no/' $SSHDCONFIG 
-
-/etc/init.d/sshd restart
-
 %files
 %defattr(-,boitho,boitho)
 #/home/boitho/bin/boithoad
