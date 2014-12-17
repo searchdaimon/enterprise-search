@@ -45,8 +45,6 @@ int main(int argc, char *argv[]) {
         	        perror("Did'n receive any query.");
         	}
 
-		//iPointer = cgi_getentryint("P");
-		//iPointer = atol(cgi_getentrystr("P"));
 		iSize = cgi_getentryint("S");
 		LotNr = cgi_getentryint("L");
 		iPointer = strtoul(cgi_getentrystr("P"), (char **)NULL, 10);
@@ -59,12 +57,8 @@ int main(int argc, char *argv[]) {
 
 	}
 	else if (argc > 4) {
-		//iPointer = 9695;
-		//iSize = 2288;
-		//LotNr = 14;
 
 		LotNr = atoi(argv[1]); //L
-		//iPointer = atoi(argv[2]); //P
 		iPointer = strtoul(argv[2], (char **)NULL, 10);
 		
 		iSize = atoi(argv[3]); //s
@@ -78,18 +72,14 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	//må legge til størelsen på hedderen også
-	//iPointer += sizeof(struct ReposetoryHeaderFormat);
 
 	imageBuf = malloc(iSize);
 
-	//printf("Content-type: text/html\n\n");
 
 
 	GetFilPathForLot(FilePath,LotNr,subname);
 	sprintf(FilePath,"%sreposetory",FilePath);	
 
-	//printf("path %s\n",FilePath);
 
 	if ((REPOSETORY = (FILE *)fopen64(FilePath,"rb")) == NULL) {
 		fprintf(stderr,"Can't read udfile \"%s\".\n",FilePath);

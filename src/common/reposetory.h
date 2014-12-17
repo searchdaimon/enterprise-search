@@ -71,14 +71,14 @@ int rReadHtml (char *HtmlBuffer[],uLong *HtmlBufferSize,unsigned int radress64bi
 				char **attributes
 				);
 
-int rGetNext_reponame (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],
+int rGetNext_reponame (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef *htmlbuffer,
 		int htmlbufferSize, char imagebuffer[], unsigned int *radress, unsigned int FilterTime, unsigned int FileOffset,
 		char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, char **url, char **attributes);
 
-int rGetNext (unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],int htmlbufferSize, char imagebuffer[], unsigned int *radress, unsigned int FilterTime, unsigned int FileOffset, char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char **url, char **attributes);
+int rGetNext (unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef *htmlbuffer,int htmlbufferSize, char imagebuffer[], unsigned int *radress, unsigned int FilterTime, unsigned int FileOffset, char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char **url, char **attributes);
 
 
-int rGetNext_fh (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],
+int rGetNext_fh (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef *htmlbuffer,
 		int htmlbufferSize, char imagebuffer[], unsigned int *radress, unsigned int FilterTime, 
 		char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, char **attributes);
 
@@ -108,12 +108,12 @@ size_t getResource(int LotNr, char *subname, unsigned int DocID, char *resource,
 
 
 
-unsigned int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys);
+unsigned int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef *htmlbuffer, char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys);
 int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys, size_t HtmlBufferSize);
 void setLastIndexTimeForLot(int LotNr,int httpResponsCodes[],char subname[]);
 unsigned int GetLastIndexTimeForLot(int LotNr,char subname[]);
 
-int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
+int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef *htmlbuffer, int htmlbufferSize,
                         char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[], char **url,
 			char **attributes, int LotNr);
 

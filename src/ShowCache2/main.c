@@ -2,13 +2,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#include "../cgi-util/cgi-util.h"
+#include <err.h>
 
+#include "../cgi-util/cgi-util.h"
 
 #include "../common/define.h"
 #include "../common/lot.h"
 #include "../common/reposetory.h"
 #include "../common/DocumentIndex.h"
+#include "../common/doc_cache.h"
 
 #ifdef BLACK_BOX
 	#define URL_EXPIRE_TIME 3600
@@ -17,9 +19,6 @@
 int main(int argc, char *argv[]) {
 
 	int res;
-	int i;
-	char FilePath[255];
-	FILE *REPOSETORY;
 	char *htmlBuf;
 	uLong htmlBufSize;
 	struct ReposetoryHeaderFormat ReposetoryHeader;
@@ -117,4 +116,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	free(htmlBuf);
+
+
+	return 1;
 }

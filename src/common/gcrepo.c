@@ -18,7 +18,7 @@ int gcrepo(int LotNr, char *subname) {
 
 	struct ReposetoryHeaderFormat ReposetoryHeader;
 
-	char htmlbuffer[524288];
+	Bytef htmlbuffer[524288];
 	char imagebuffer[524288];
 	char *acl_allow;
 	char *acl_deny;

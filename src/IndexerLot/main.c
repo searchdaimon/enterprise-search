@@ -549,8 +549,8 @@ void makePreParsedSummary(const char body[], int bodylen,const  char title[],int
 }
 
 
-int getNextPage(struct IndexerLot_workthreadFormat *argstruct,char htmlcompressdbuffer[],int htmlcompressdbuffer_size, 
-	char imagebuffer[],int imagebuffer_size,unsigned int *radress, char **acl_allow, char **acl_denied,struct ReposetoryHeaderFormat *ReposetoryHeader, char **url, char **attributes) {
+int getNextPage(struct IndexerLot_workthreadFormat *argstruct,Bytef *htmlcompressdbuffer,int htmlcompressdbuffer_size, 
+	char imagebuffer[],unsigned int *radress, char **acl_allow, char **acl_denied,struct ReposetoryHeaderFormat *ReposetoryHeader, char **url, char **attributes) {
 	//lock
 	int forreturn;
 	//må holde status om rGetNext() har sakt at dette er siste. Hvis ikke hamrer vi bortenfor eof
@@ -695,7 +695,7 @@ void *IndexerLot_workthread(void *arg) {
 
 	int sizeofhtmlcompressdbuffer = 524288 * 2;
 
-	char *htmlcompressdbuffer;
+	Bytef *htmlcompressdbuffer;
         if ((htmlcompressdbuffer = malloc(sizeofhtmlcompressdbuffer)) == NULL) {
 		perror("malloc");
 		exit(1);
@@ -743,7 +743,7 @@ void *IndexerLot_workthread(void *arg) {
 	wordsInit(pagewords);
 
 	isnew = isrecrawled = isuntouched = 0;
-	while (getNextPage(argstruct,htmlcompressdbuffer,sizeofhtmlcompressdbuffer,imagebuffer,sizeofimagebuffer,
+	while (getNextPage(argstruct,htmlcompressdbuffer,sizeofhtmlcompressdbuffer,imagebuffer,
 		&radress,&acl_allow,&acl_denied,&ReposetoryHeader, &url, &attributes)) {
 
 				int documentUpdate = 0;
@@ -807,7 +807,7 @@ void *IndexerLot_workthread(void *arg) {
 				HtmlBufferLength = ReposetoryHeader.htmlSize2 * 10; // Real value unknown. Will just have to malloc ecnof
 				if ((HtmlBuffer = malloc(HtmlBufferLength)) == NULL) {
 					perror("malloc HtmlBuffer");
-					exit;
+					exit(0);
 				}
 
 				if ( (nerror = uncompress((Bytef*)HtmlBuffer,&HtmlBufferLength,(Bytef*)htmlcompressdbuffer,(uLong)ReposetoryHeader.htmlSize2)) != 0) {

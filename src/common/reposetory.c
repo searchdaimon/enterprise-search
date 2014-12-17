@@ -399,17 +399,17 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 	#endif
 
 	if ((WorkBuff = malloc(WorkBuffSize)) == NULL) {
-		fprintf(stderr,"can't malloc WorkBuff of size %d\n",WorkBuffSize);
+		fprintf(stderr,"can't malloc WorkBuff of size %lu\n",WorkBuffSize);
 		perror("malloc WorkBuff");
 		return 0;
 	}
 
 
-	printf("HtmlBufferSize: %zu, WorkBuffSize: %i\n",HtmlBufferSize,WorkBuffSize);
+	printf("HtmlBufferSize: %zu, WorkBuffSize: %lu\n",HtmlBufferSize,WorkBuffSize);
 	
 	if ((error = compress(WorkBuff, &WorkBuffSize, (Bytef *)htmlbuffer, HtmlBufferSize)) != Z_OK) {
                 printf("compress error. Code: %i\n",error);
-		printf("WorkBuffSize %i, HtmlBufferSize %i at %s:%d\n",WorkBuffSize,HtmlBufferSize,__FILE__,__LINE__);
+		printf("WorkBuffSize %lu, HtmlBufferSize %zu at %s:%d\n",WorkBuffSize,HtmlBufferSize,__FILE__,__LINE__);
 		return 0;
 	}
 
@@ -426,7 +426,7 @@ int rApendPostcompress (struct ReposetoryHeaderFormat *ReposetoryHeader, char ht
 	return 1;
 }
 
-unsigned int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys) {
+unsigned int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef *htmlbuffer, char imagebuffer[],char subname[], char acl_allow[], char acl_denied[], char *reponame, char *url, char *attributes, container *attrkeys) {
 
 	unsigned int offset;
 
@@ -858,7 +858,7 @@ int rReadSummary_l(const unsigned int DocID,char **metadesc, char **title, char 
 }
 
 
-int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],
+int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef *htmlbuffer,
 			char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[],
 			unsigned int rsize,unsigned int imagesize) {
 
@@ -1031,7 +1031,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, char h
 
 
 
-int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],
+int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef *htmlbuffer,
 			char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[],
 			unsigned int rsize,unsigned int imagesize, char **url, char **attributes) {
 
@@ -1360,7 +1360,7 @@ int rReadHtml (char *HtmlBuffer[],uLong *HtmlBufferSize,unsigned int radress64bi
 	
 	if ( (error = uncompress((Bytef *)(*HtmlBuffer),HtmlBufferSize,WorkBuff,rsize)) != 0) {
                	printf("uncompress error. Code: %i for DocID %u-%i\n",error,DocID,rLotForDOCid(DocID));
-		printf("HtmlBufferSize: %u, rsize: %u\n", *HtmlBufferSize, rsize);
+		printf("HtmlBufferSize: %lu, rsize: %u\n", *HtmlBufferSize, rsize);
         		
 		*HtmlBuffer[0] = '\0';
 		(*HtmlBufferSize) = 0;
@@ -1396,7 +1396,7 @@ int rReadHtml (char *HtmlBuffer[],uLong *HtmlBufferSize,unsigned int radress64bi
 }
 
 
-int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], int htmlbufferSize,
+int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef *htmlbuffer, int htmlbufferSize,
 			char imagebuffer[],char **acl_allowbuffer,char **acl_deniedbuffer,char recordseparator[], char **url,
 			char **attributes, int LotNr) {
 
@@ -1629,7 +1629,7 @@ while (rGetNext(LotNr,ReposetoryData)) {
 }
 */
 
-int rGetNext_fh (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
+int rGetNext_fh (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef *htmlbuffer, 
 int htmlbufferSize, char imagebuffer[], unsigned int *radress, unsigned int FilterTime,
 char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, char **attributes) {
 
@@ -1757,7 +1757,7 @@ char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, c
 	
 }
 
-int rGetNext_reponame (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
+int rGetNext_reponame (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef *htmlbuffer, 
 int htmlbufferSize, char imagebuffer[], unsigned int *radress, unsigned int FilterTime, unsigned int FileOffset,
 char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, char **url, char **attributes) {
 
@@ -1813,7 +1813,7 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, 
 }
 
 
-int rGetNext (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[], 
+int rGetNext (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef *htmlbuffer, 
 int htmlbufferSize, char imagebuffer[], unsigned int *radress, unsigned int FilterTime, unsigned int FileOffset,
 char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char **url, char **attributes) {
 
