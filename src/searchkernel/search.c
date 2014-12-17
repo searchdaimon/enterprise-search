@@ -2007,45 +2007,47 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 	gettimeofday(&start_time, NULL);
 
-	if((re = reopen_cache( 1, sizeof(unsigned char), "PopRank", (*TeffArray)->iindex[0].subname->subname, RE_READ_ONLY)) == NULL) {
-		bblog(INFO, "Looking up PopRank: No poprank file for collection. Will skipp.");
-	}
-	else {
-
-		bblog(INFO, "Looking up PopRank: start");
-
-		re = NULL;
-		nreopen = 0;
-		#pragma omp parallel for firstprivate(re)
-		for (i = 0; i < *TeffArrayElementer; i++) {
-
-			if (!reIsOpen(re,rLotForDOCid((*TeffArray)->iindex[i].DocID), (*TeffArray)->iindex[i].subname->subname, "PopRank") ) {
-	
-				#pragma omp critical
-				{
-					++nreopen;
-					re = reopen_cache( rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(unsigned char), "PopRank", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY);
-				}
-
-				if (re == NULL) {
-					debug("reopen(PopRank)\n");
-					continue;
-				}
-
-			}
-			(*TeffArray)->iindex[i].PopRank = *RE_Uchar(re, (*TeffArray)->iindex[i].DocID);
-
-
-			#ifdef DEBUG
-				bblog(DEBUGINFO, "Got rank %d for DocID %u-%s.", 
-					(*TeffArray)->iindex[i].PopRank,
-	                                (*TeffArray)->iindex[i].DocID,
-	                                (*(*TeffArray)->iindex[i].subname).subname);
-			#endif
+	if (*TeffArrayElementer != 0) {
+		if((re = reopen_cache( 1, sizeof(unsigned char), "PopRank", (*TeffArray)->iindex[0].subname->subname, RE_READ_ONLY)) == NULL) {
+			bblog(INFO, "Looking up PopRank: No poprank file for collection. Will skipp.");
 		}
+		else {
 
-		bblog(INFO, "We did reopen %i times", nreopen);
-		bblog(INFO, "Looking up PopRank: end");
+			bblog(INFO, "Looking up PopRank: start");
+
+			re = NULL;
+			nreopen = 0;
+			#pragma omp parallel for firstprivate(re)
+			for (i = 0; i < *TeffArrayElementer; i++) {
+
+				if (!reIsOpen(re,rLotForDOCid((*TeffArray)->iindex[i].DocID), (*TeffArray)->iindex[i].subname->subname, "PopRank") ) {
+		
+					#pragma omp critical
+					{
+						++nreopen;
+						re = reopen_cache( rLotForDOCid((*TeffArray)->iindex[i].DocID), sizeof(unsigned char), "PopRank", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY);
+					}
+
+					if (re == NULL) {
+						debug("reopen(PopRank)\n");
+						continue;
+					}
+
+				}
+				(*TeffArray)->iindex[i].PopRank = *RE_Uchar(re, (*TeffArray)->iindex[i].DocID);
+
+
+				#ifdef DEBUG
+					bblog(DEBUGINFO, "Got rank %d for DocID %u-%s.", 
+						(*TeffArray)->iindex[i].PopRank,
+		                                (*TeffArray)->iindex[i].DocID,
+		                                (*(*TeffArray)->iindex[i].subname).subname);
+				#endif
+			}
+
+			bblog(INFO, "We did reopen %i times", nreopen);
+			bblog(INFO, "Looking up PopRank: end");
+		}
 	}
 
 	#if 0
