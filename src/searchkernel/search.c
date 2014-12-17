@@ -2007,7 +2007,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 	gettimeofday(&start_time, NULL);
 
-	if((re = reopen_cache( 1, sizeof(unsigned char), "PopRank", (*TeffArray)->iindex[i].subname->subname, RE_READ_ONLY)) == NULL) {
+	if((re = reopen_cache( 1, sizeof(unsigned char), "PopRank", (*TeffArray)->iindex[0].subname->subname, RE_READ_ONLY)) == NULL) {
 		bblog(INFO, "Looking up PopRank: No poprank file for collection. Will skipp.");
 	}
 	else {
