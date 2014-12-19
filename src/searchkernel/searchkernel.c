@@ -585,7 +585,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 
 			gettimeofday(&start_time, NULL);						
 
-
+			#ifndef BLACK_BOX
 			if (((*Sider).DocumentIndex.SummaryPointer != 0) && 
 					((rReadSummary_l(DocID,&metadesc, &titleaa,&body,(*Sider).DocumentIndex.SummaryPointer,(*Sider).DocumentIndex.SummarySize,subname->subname,summaryFH) != 0))) {
 
@@ -601,6 +601,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 
 			}
 			else {
+			#endif
 				bblog(DEBUGINFO, "don't hav Summary on disk. Will hav to read html");	
 				if (rReadHtml(&htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize2,DocID,subname->subname,ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
 					//printf("Fii faa foo: %s\n", url);
@@ -648,8 +649,9 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 				sprintf(body,"aaaaaaaaaa");;						
 				 */
 
+			#ifndef BLACK_BOX
 			}
-
+			#endif
 
 			char        *summary;
 			//temp: bug generate_snippet er ikke ut til å takle og ha en tom body

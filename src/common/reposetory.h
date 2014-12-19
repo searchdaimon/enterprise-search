@@ -83,8 +83,10 @@ int rGetNext_fh (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHe
 		char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, char **attributes);
 
 int runpack(char *ReposetoryData,uLong comprLen,char *inndata,int length);
+#ifdef BLACK_BOX
 int rReadSummary(unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[]);
 int rReadSummary_l(const unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[],  int fd);
+#endif
 //Bilde rutiner
 void risave (int DocID, char *image, int size,char subname[]);
 

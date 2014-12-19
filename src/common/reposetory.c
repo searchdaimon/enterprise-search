@@ -579,6 +579,7 @@ unsigned int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef 
 	return offset;
 }
 
+#ifndef BLACK_BOX
 int rReadSummary_post(const unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize, int fd) {
 
 	#ifdef DEBUG
@@ -843,7 +844,7 @@ int rReadSummary_l(const unsigned int DocID,char **metadesc, char **title, char 
 
 	return ret;
 }
-
+#endif
 
 //copy a memory area, and return the size copyed
 #ifdef DEBUG
