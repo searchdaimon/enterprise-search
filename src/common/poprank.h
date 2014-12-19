@@ -1,6 +1,8 @@
 #ifndef _POPRANK__H_
 #define _POPRANK__H_
 
+#ifndef BLACK_BOX
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -34,5 +36,7 @@ int popopenMmap(struct popmemmapFormat *popmemmap,char *filname);
 int popRankForDocIDMmap(struct popmemmapFormat *popmemmap,unsigned int DocID);
 int popRankForDocIDMmapSet(struct popmemmapFormat *popmemmap,unsigned int DocID,int increasement);
 void popcloseMmap (struct popmemmapFormat *popmemmap);
+
+#endif // ifndef BLACK_BOX
 
 #endif

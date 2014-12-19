@@ -128,10 +128,12 @@ int main (int argc, char *argv[]) {
 	int PopRanindex;
 	char ShortRank;
 	FILE *FH;
+	#ifndef BLACK_BOX
         struct popl popextern;
         struct popl popintern;
         struct popl popnoc;
 	struct popl popindex;	
+	#endif
 	uLong htmlBufferSize = 0;
 	char *htmlBuffer = NULL;
 	char *acl_allowbuffer = NULL;
@@ -144,7 +146,9 @@ int main (int argc, char *argv[]) {
 	int optSummary = 0;
 	int optAnchor = 0;
 	int optResource = 0;
+	#ifndef BLACK_BOX
 	int optPopRank = 0;
+	#endif
 	int optDelete = 0;
 	int optAdult = 0;
 
@@ -174,7 +178,9 @@ int main (int argc, char *argv[]) {
 					optAnchor = 1;
 	                                break;
 				case 'p':
+					#ifndef BLACK_BOX
 					optPopRank = 1;
+					#endif
 					break;
 				case 'r':
 					optResource = 1;
@@ -415,7 +421,7 @@ int main (int argc, char *argv[]) {
 		}
 	
 
-
+		#ifndef BLACK_BOX
 		if (optPopRank) {
 			popopen (&popindex,"/home/boitho/config/popindex");
 			PopRanindex = popRankForDocID(&popindex,DocID);		
@@ -468,6 +474,7 @@ int main (int argc, char *argv[]) {
 				fclose(FH);
 			}
 		} // if optPopRank
+		#endif
 	#endif
 
 

@@ -1,3 +1,5 @@
+#ifndef BLACK_BOX
+
 #define _GNU_SOURCE
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -413,7 +415,6 @@ int popopenMmap(struct popmemmapFormat *popmemmap,char *filname) {
 
 
         popmemmap->ranks = mmap(0,popmemmap->size,PROT_READ|PROT_WRITE,MAP_SHARED,popmemmap->fd,0);
-	printf("mmap ret %i\n",(unsigned int)popmemmap->ranks);
 
 
        	if ((int)popmemmap->ranks == -1) {
@@ -562,3 +563,6 @@ void popadd (struct popl *popha,int DocID,int increasement) {
 	}
 	
 }
+
+
+#endif
