@@ -250,7 +250,7 @@ void cgi_fetch_full(struct QueryDataForamt *qdata) {
 		strscpy(qdata->orderby, tmpstr, sizeof(qdata->orderby));
 
 	int tmpint;
-	if (tmpint = cgi_getentryint("filter")) 
+	if ((tmpint = cgi_getentryint("filter"))) 
 		qdata->filterOn = tmpint;
 
 	_cgistr_to_str(qdata->HTTP_ACCEPT_LANGUAGE, "HTTP_ACCEPT_LANGUAGE", sizeof qdata->HTTP_ACCEPT_LANGUAGE);

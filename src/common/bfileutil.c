@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <sys/vfs.h> // statfs
+#include <stdint.h>
 
 #include "boithohome.h"
 
@@ -118,7 +119,7 @@ char *sfindductype(char filepath[]) {
                 }
                 else if (filepath[i] == '.') {
 
-                        cp = (char *)((int)filepath + i +1);
+                        cp = (char *)((intptr_t)filepath + i +1);
 
                         type = malloc(strlen(cp) +1);
                         strcpy(type,cp);

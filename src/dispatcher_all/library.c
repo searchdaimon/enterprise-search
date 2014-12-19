@@ -91,7 +91,7 @@ void dieLog(MYSQL *demo_db, struct QueryDataForamt *QueryData, int errorcode, ch
 }
 
 void dumpQueryDataForamt(struct QueryDataForamt *d) {
-	warnx("=dump start ptr: %p size: %d", d, sizeof *d);
+	warnx("=dump start ptr: %p size: %lu", d, sizeof *d);
 	warnx("query: %s", d->query);
 	warnx("queryhtml: %s", d->queryhtml);
 	warnx("userip: %s", d->userip);

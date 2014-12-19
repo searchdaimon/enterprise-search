@@ -363,7 +363,7 @@ void cache_indexes(int action) {
 	}
 }
 
-static void * cache_indexes_keepalive_thread(void *dummy) {
+void *cache_indexes_keepalive_thread(void *dummy) {
 	for (;;) {
 		// Hush little baby
 		pthread_mutex_lock(&index_cache_lock);
@@ -382,7 +382,7 @@ static void * cache_indexes_keepalive_thread(void *dummy) {
 }
 
 #ifdef WITH_SPELLING
-static void * cache_spelling_keepalive_thread(spelling_t **spelling) {
+void *cache_spelling_keepalive_thread(spelling_t **spelling) {
 
 
 	for (;;) {
@@ -425,7 +425,7 @@ void cache_spelling_keepalive(spelling_t *spelling) {
 	pthread_t td;
 	int rc;
 
-	if ((rc = pthread_create(&td, NULL, cache_spelling_keepalive_thread, spelling))) {
+	if ((rc = pthread_create(&td, NULL, (void * (*)(void *))cache_spelling_keepalive_thread, spelling))) {
 		bblog_errno(ERROR, "Unable to start spelling keepalive thread");
 		exit(1);
 	}

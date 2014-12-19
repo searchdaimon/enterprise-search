@@ -173,8 +173,8 @@ static inline automaton* build_automaton( int num_args, unsigned char **_words )
 
 		    // If A->str and words[i][p] share their first n characters, and n< length of both,
 		    // OR if n==len(A->str) and the path for words[i] stops here:
-		    if ((A->str[n]!=words[i][p+n]) && (A->str[n]!='\0') && (words[i][p+n]!='\0')
-		    || ((A->str[n]=='\0') && (words[i][p+n]!='\0') && (A->next[words[i][p+n]]==NULL)))
+		    if (((A->str[n]!=words[i][p+n]) && (A->str[n]!='\0') && (words[i][p+n]!='\0'))
+		     || ((A->str[n]=='\0') && (words[i][p+n]!='\0') && (A->next[words[i][p+n]]==NULL)))
 			{
 			    automaton	*N = new_automaton();
 

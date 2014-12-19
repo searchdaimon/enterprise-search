@@ -729,7 +729,7 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 	bblog(DEBUGINFO, "frase_merge: start");
 	bblog(DEBUGINFO, "have %i hits from before",Originallen);
 	bblog(DEBUGINFO, "frase_merge: merging array a of len %i to b of len %i",alen,blen);
-	bblog(DEBUGINFO, "frase_merge: arrays %u %u",(unsigned int)a,(unsigned int)b);
+	bblog(DEBUGINFO, "frase_merge: arrays %p %p",a,b);
 
 	#ifdef DEBUG
 		bblog(DEBUGINFO, "frase_merge: from before");

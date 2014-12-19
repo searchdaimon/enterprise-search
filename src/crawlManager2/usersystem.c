@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdarg.h>
+#include <err.h>
 #include <EXTERN.h>
 #include <perl.h>
 

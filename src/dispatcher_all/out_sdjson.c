@@ -216,8 +216,6 @@ void disp_out_sd_json(
 
 	    bsprint_query_with_remove(B, remove, &qa, 0);
 	    char	*basedatequery = buffer_exit(B);
-	    char	xmlescapebuf1[2048];
-	    char	xmlescapebuf2[2048];
 
 	    JsonNode *dates = json_mkarray();
 

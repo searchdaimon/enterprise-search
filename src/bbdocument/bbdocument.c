@@ -949,7 +949,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 
 		printf("did read back %i bytes from file \"%s\"\n",(int)inode.st_size,filconvertetfile_out_txt);
 
-		printf("strlen cpbuf: %i\n",strlen(cpbuf));
+		printf("strlen cpbuf: %zu\n",strlen(cpbuf));
 
                 //stripper < og > tegn, da html parseren vil tro det er html tagger.
                 //de er jo som kjent på formater < og >
@@ -1230,7 +1230,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		snprintf(htmlbuffer, htmlbuffersize, html_text_tempelate,title,"");
 		htmlbuffersize = strlen(htmlbuffer);
 		printf("useing title \"%s\" as title\n",title);
-		printf("htmlbuffersize %i\n",htmlbuffersize);
+		printf("htmlbuffersize %zu\n",htmlbuffersize);
 		free(buffer_abort(documentbuffer));
 	} else {
 		htmlbuffersize = buffer_length(documentbuffer);

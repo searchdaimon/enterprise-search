@@ -1644,7 +1644,7 @@ void cm_start(struct hashtable **h, struct hashtable **usersystems) {
 
 	(*h) = create_hashtable(20, cm_hashfromkey, cm_equalkeys);
 
-	const char *perl_incl[] = { bfile("crawlers/Modules"), NULL };                                                                 
+	char *perl_incl[] = { bfile("crawlers/Modules"), NULL };                                                                 
 	perl_embed_init(perl_incl, 1);
 
 	if ((dirp = opendir(bfile("crawlers"))) == NULL) {

@@ -86,7 +86,7 @@ char *generate_thumbnail_by_convert(const void *document, const size_t size, siz
 	fclose(fp);
 	fp = NULL;
 
-	printf("created image om size %i\n",(*new_size));
+	printf("created image om size %zu\n",(*new_size));
     
 	unlink(documentfile);
 	unlink(imagefile);

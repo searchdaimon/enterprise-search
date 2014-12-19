@@ -477,8 +477,8 @@ void disp_out_sd_v2_0(
 					printf("\t<THUMBNAILHEIGHT></THUMBNAILHEIGHT>\n");
 				}
 
-				printf("\t<DESCRIPTION_LENGTH>%i</DESCRIPTION_LENGTH>\n",strlen(Sider[i].description));
-				printf("\t<DESCRIPTION_MAX>%i</DESCRIPTION_MAX>\n",sizeof(Sider[i].description));
+				printf("\t<DESCRIPTION_LENGTH>%zu</DESCRIPTION_LENGTH>\n",strlen(Sider[i].description));
+				printf("\t<DESCRIPTION_MAX>%lu</DESCRIPTION_MAX>\n",sizeof(Sider[i].description));
 				printf("\t<DESCRIPTION>%s</DESCRIPTION>\n",Sider[i].description);
 				printf("\t<CRC32>%u</CRC32>\n",Sider[i].DocumentIndex.crc32);
                			printf("\t<TERMRANK>%i</TERMRANK>\n",Sider[i].iindex.TermRank);
