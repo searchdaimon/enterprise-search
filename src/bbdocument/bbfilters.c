@@ -23,9 +23,9 @@ void run_filter_perlplugin(char *dst, size_t dst_size, struct fileFilterFormat *
 	SV *perl_dst = newSVpv("", strlen(""));
 	HV *params = newHV();
 
-	hv_store(params, "file", strlen("file"), sv_2mortal(newSVpv(filter->command, 0)), 0);
-	hv_store(params, "metadata", strlen("metadata"), sv_2mortal(newRV((SV *) perl_metahash)), 0);
-	hv_store(params, "data", strlen("data"),  sv_2mortal(newRV((SV *) perl_dst)), 0);
+	(void)hv_store(params, "file", strlen("file"), sv_2mortal(newSVpv(filter->command, 0)), 0);
+	(void)hv_store(params, "metadata", strlen("metadata"), sv_2mortal(newRV((SV *) perl_metahash)), 0);
+	(void)hv_store(params, "data", strlen("data"),  sv_2mortal(newRV((SV *) perl_dst)), 0);
 
 	#ifdef DEBUG
 		printf("perl run: %s:dump(file=%s, metadata=%p)\n",perlpath,filter->command,perl_metahash);

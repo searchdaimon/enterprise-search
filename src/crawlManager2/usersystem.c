@@ -21,13 +21,13 @@ int us_authenticate_perl(usersystem_data_t *data, char *user, char *password) {
 
 
         HV *obj_attr = newHV();
-        hv_store(obj_attr, "ptr", strlen("ptr"), sv_2mortal(newSViv(PTR2IV(&cargs))), 0);
+        (void)hv_store(obj_attr, "ptr", strlen("ptr"), sv_2mortal(newSViv(PTR2IV(&cargs))), 0);
 
 
 	ht_to_perl_ht(params, data->parameters);
 
-	hv_store(params, "Enduser", strlen("Enduser"), sv_2mortal(newSVpv(user, 0)), 0);
-	hv_store(params, "Endpassword", strlen("Endpassword"), sv_2mortal(newSVpv(password, 0)), 0);
+	(void)hv_store(params, "Enduser", strlen("Enduser"), sv_2mortal(newSVpv(user, 0)), 0);
+	(void)hv_store(params, "Endpassword", strlen("Endpassword"), sv_2mortal(newSVpv(password, 0)), 0);
 
 
 	ret = perl_embed_run(usp->perlpath, PERL_AUTH_USER, params, "PerlUserSystem", obj_attr, NULL, 0);
@@ -48,7 +48,7 @@ int us_listUsers_perl(usersystem_data_t *data, char ***users, int *n_users) {
 
 
         HV *obj_attr = newHV();
-        hv_store(obj_attr, "ptr", strlen("ptr"), sv_2mortal(newSViv(PTR2IV(&cargs))), 0);
+        (void)hv_store(obj_attr, "ptr", strlen("ptr"), sv_2mortal(newSViv(PTR2IV(&cargs))), 0);
 	
 	ht_to_perl_ht(params, data->parameters);
 
@@ -74,10 +74,10 @@ int us_listGroupsForUser_perl(usersystem_data_t *data, const char *user, char **
 
 
         HV *obj_attr = newHV();
-        hv_store(obj_attr, "ptr", strlen("ptr"), sv_2mortal(newSViv(PTR2IV(&cargs))), 0);
+        (void)hv_store(obj_attr, "ptr", strlen("ptr"), sv_2mortal(newSViv(PTR2IV(&cargs))), 0);
 	
 	ht_to_perl_ht(params, data->parameters);
-	hv_store(params, "Enduser", strlen("Enduser"), sv_2mortal(newSVpv(user, 0)), 0);
+	(void)hv_store(params, "Enduser", strlen("Enduser"), sv_2mortal(newSVpv(user, 0)), 0);
 
 	if (perl_embed_run_arr(usp->perlpath, PERL_LIST_GROUPS, params, "PerlUserSystem", obj_attr, NULL, 0, groups, n_groups) == -1) {
 		warnx("perl error");
@@ -99,7 +99,7 @@ char *us_getName_perl(void *data) {
 	SV *perl_name = newSVpv("", strlen(""));
 	STRLEN data_size;
 
-	hv_store(params, "_internal_name", strlen("_internal_name"),  sv_2mortal(newRV((SV *) perl_name)), 0);
+	(void)hv_store(params, "_internal_name", strlen("_internal_name"),  sv_2mortal(newRV((SV *) perl_name)), 0);
 
 	if (!perl_embed_run(usp->perlpath, PERL_GET_NAME, params, NULL, NULL, NULL, 0))
 		name = "error";

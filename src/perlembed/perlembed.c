@@ -220,7 +220,7 @@ void ht_to_perl_ht(HV *perl_ht, struct hashtable *params) {
             continue;
         }
 
-        hv_store(perl_ht, param, strlen(param),
+        (void)hv_store(perl_ht, param, strlen(param),
             sv_2mortal(newSVpv(value, 0)), 0);
         
     } while (hashtable_iterator_advance(itr));
@@ -255,7 +255,7 @@ int perl_ht_add_str(HV *ht, char *key, char *val) {
 		fprintf(stderr, "perl ht key '%s' exists, ignoring", key);
 		return 0;
 	}
-	hv_store(ht, key, strlen(key), sv_2mortal(newSVpv(val, 0)), 0);
+	(void)hv_store(ht, key, strlen(key), sv_2mortal(newSVpv(val, 0)), 0);
 	return 1;
 }
 
