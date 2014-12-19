@@ -293,6 +293,7 @@ int main (int argc, char *argv[]) {
 		printf("Nr of out links: %u\n",(unsigned int)DocumentIndexPost.nrOfOutLinks);
 
 
+		#ifndef BLACK_BOX
 		char *metadesc, *title, *body;
 		if (DocumentIndexPost.SummarySize == 0) {
 			printf("Summary: Don't have pre-parsed summery (summary size is 0)\n");
@@ -310,7 +311,7 @@ int main (int argc, char *argv[]) {
 		else {
 			printf("Don't have pre-parsed summery\n");
 		}
-
+		#endif
 
 
 
