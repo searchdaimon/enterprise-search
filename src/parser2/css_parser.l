@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "flex.h"
 #include "../ds/dcontainer.h"
 #include "../ds/dpair.h"
 #include "../ds/dlist.h"
@@ -171,6 +172,6 @@ static inline void savestring( char *text, yyscan_t scanner )
     if (ce->string==32) ce->string = 0;
 
     strncpy(ce->text[ce->string], text, 511);
-    *bcpmget_lval(scanner) = (int)ce->text[ce->string];
+    *bcpmget_lval(scanner) = ce->text[ce->string];
 }
 

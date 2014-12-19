@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "flex.h"
 #include "../common/search_automaton.h"
 #include "../ds/dcontainer.h"
 #include "../ds/dpair.h"

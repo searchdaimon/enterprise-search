@@ -24,6 +24,7 @@ Håndtering av at page_uri er  NULL en skjelden gang i create_full_link
 #include <unistd.h>
 #include <stdlib.h>
 
+#include "flex.h"
 #include "../common/utf8-strings.h"
 #include "../common/search_automaton.h"
 #include "html_parser_common.h"
@@ -43,7 +44,6 @@ typedef struct bhpm_buffer_state *YY_BUFFER_STATE;
 YY_BUFFER_STATE bhpm_scan_bytes( const char *bytes, int len, yyscan_t yyscanner );
 struct bhpm_yy_extra *bhpmget_extra( yyscan_t yyscanner );
 // ---
-
 
 struct tag_info
 {
@@ -112,10 +112,14 @@ tag	: starttag
 	;
 starttag	: TAG_START ATTR attrlist TAG_STOPP
 	    {
-		struct bhpm_yy_extra	*he = bhpmget_extra(yyscanner);
-		int			hit = search_automaton(tags_automaton, (char*)$2);
 
-//		printf("tag:%s\n", (char*)$2);
+
+		struct bhpm_yy_extra	*he = bhpmget_extra(yyscanner);
+		int			hit = search_automaton(tags_automaton, $2);
+
+		#ifdef DEBUG
+			printf("tag:%s\n", $2);
+		#endif
 
 		if (hit>=0)
 		    {

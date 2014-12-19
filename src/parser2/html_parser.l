@@ -1,4 +1,5 @@
 %{
+#include "flex.h"
 #include "html_parser_common.h"
 #include "bhpm.tab.h"
 #include "../common/search_automaton.h"
@@ -525,7 +526,7 @@ static inline void bhpm_newstring( char *str, yyscan_t scanner, int tt )
 	    he->stringcircle[he->stringtop][maxNewString] = '\0';		// I tilfelle 'str' er lengre enn maxlengden.
 
 	    he->slen = strlen( he->stringcircle[he->stringtop] );
-	    *bhpmget_lval(scanner) = (int)he->stringcircle[he->stringtop];
+	    *bhpmget_lval(scanner) = he->stringcircle[he->stringtop];
 	}
 
     if (tt == WORD || tt == ESC)
@@ -559,7 +560,7 @@ static inline void bhpm_newutf8( int val, yyscan_t scanner, int tt )
 	    if (he->stringtop >= 32) he->stringtop = 0;
 	    he->slen = 0;
 	    he->tt = tt;
-	    *bhpmget_lval(scanner) = (int)he->stringcircle[he->stringtop];
+	    *bhpmget_lval(scanner) = he->stringcircle[he->stringtop];
 	}
     else if (he->slen >= maxNewString - 5)
 	return;
