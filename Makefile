@@ -54,7 +54,7 @@ WALL = -Wall -Wno-unused-function -Wno-char-subscripts -Wno-strict-aliasing -W -
 # generate the file output-data and its dependencies, not plot.png 
 
 
-all : init.d.stop dbupdate dep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb IndexerLotbb mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad Suggest gcRepobb gcAuthoritybb sdperl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb usSQLBB usAD crawlPush crawlLocal usShell sortCrc32attrMap perlxs-sdcrawl init.d.start
+all : init.d.stop dbupdate dep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb IndexerLotbb mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad Suggest gcRepobb gcAuthoritybb sdperl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb usSQLBB usAD crawlPush crawlLocal usShell sortCrc32attrMap perlxs-sdcrawl setuid init.d.start
 
 init.d.stop:
 	@echo ""
@@ -114,9 +114,13 @@ dptest:
 
 	env 24SEVENOFFICE=-D_24SEVENOFFICE make bb
 
-setuid: YumWrapper NetConfig InitServices setuidcaller repomodwrap
+setuid: YumWrapper NetConfig InitServices repomodwrap setuidcaller
 
 tempFikes: IndexerLot_fik32bitbug DIconvert
+
+
+
+dist: mod_auth_boitho_a2 setuid
 
 
 wordConverter: src/wordConverter/main.c
@@ -132,7 +136,8 @@ repomodwrap:
 	@echo ""
 	@echo "$@:"
 
-	$(CC) -Wall -o setuid/repomodwrap src/repomodsetuid/repomodwrap.c -O2
+	mkdir -p blackbox/boithoTools/setuid
+	$(CC) -Wall -o blackbox/boithoTools/setuid/repomodwrap src/repomodsetuid/repomodwrap.c -O2
 
 setuidcaller:
 	@echo ""
@@ -140,9 +145,10 @@ setuidcaller:
 
 	(cd src/bb-phone-home/ && make clean &&  make)
 	cp src/bb-phone-home/bb-phone-home-client.conf config
-	cp src/bb-phone-home/bb-client.pl bin/
-	cp src/bb-phone-home/setuidcaller bin/
-	cp src/bb-phone-home/bbph-keep-alive.pl bin/
+	mkdir -p blackbox/boithoTools/bin
+	cp src/bb-phone-home/bb-client.pl blackbox/boithoTools/bin/
+	cp src/bb-phone-home/setuidcaller blackbox/boithoTools/bin/
+	cp src/bb-phone-home/bbph-keep-alive.pl blackbox/boithoTools/bin/
 
 invalidateOldFiles:
 	@echo ""
@@ -934,6 +940,12 @@ readPopRank: src/readPopRank/main.c
 
 	$(CC) $(CFLAGS) $(LIBS)*.c src/readPopRank/main.c -o bin/readPopRank $(LDFLAGS)
 
+readFiletypes: src/readFiletypes/main.c
+	@echo ""
+	@echo "$@:"
+
+	$(CC) $(CFLAGS) $(LIBS)*.c src/readFiletypes/main.c -o bin/readFiletypes $(LDFLAGS) -Wall
+
 
 readAttributeIndex: src/readAttributeIndex/main.c
 	@echo ""
@@ -1151,16 +1163,18 @@ boithoadClientLib: src/boithoadClientLib/boithoadClientLib.c
 
 InitServices: src/InitServices/initwrapper.c
 	(cd src/InitServices/ && make clean && make)
-
-	cp src/InitServices/initwrapper setuid/
+	mkdir -p blackbox/boithoTools/setuid
+	cp src/InitServices/initwrapper blackbox/boithoTools/setuid/
 
 YumWrapper: src/YumWrapper/yumwrapper.c
 	(cd src/YumWrapper && make clean && make)
-	cp src/YumWrapper/yumwrapper setuid/
+	mkdir -p blackbox/boithoTools/setuid
+	cp src/YumWrapper/yumwrapper blackbox/boithoTools/setuid/
 
 NetConfig: src/NetConfig/configwrite.c
 	(cd src/NetConfig && make clean && make)
-	cp src/NetConfig/configwrite setuid/
+	mkdir -p blackbox/boithoTools/setuid
+	cp src/NetConfig/configwrite blackbox/boithoTools/setuid/
 
 crawlManager2: src/crawlManager2/main.c
 	@echo ""
@@ -1318,6 +1332,12 @@ attributes:
 	@echo "$@:"
 	(cd src/attributes && make clean)
 	(cd src/attributes && make)
+
+ds:
+	@echo ""
+	@echo "$@:"
+	(cd src/ds && make clean)
+	(cd src/ds && make)
 
 parser2:
 	@echo ""
