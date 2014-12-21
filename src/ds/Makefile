@@ -1,5 +1,5 @@
 
-CFLAGS?=	-O3
+CFLAGS?=	-O2 -g -Wall -W -Wno-unused-parameter
 
 LIB=	libds.a
 OBJS=	dcontainer.o dpair.o dtuple.o dvector.o dstack.o dqueue.o dlist.o dmap.o dmultimap.o dset.o
