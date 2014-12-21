@@ -321,6 +321,8 @@ static inline void *reposread(struct reformat *re, size_t position) {
 void *reget(struct reformat *re, unsigned int DocID) {
 
 	size_t position = (re->structsize * (DocID - LotDocIDOfset(re->lotNr)));
+	// Runarb: 20.12.2014This seems not to work/not be nessesserly on 64 bit. If it is on we sellect the wrong (off by 1) value.
+	#ifndef __LP64__
 	if ((re->flags & RE_STARTS_AT_0) == RE_STARTS_AT_0) {
 		#ifdef DEBUG
 			printf("position %zu, structsize %zu\n", position,re->structsize);
@@ -329,6 +331,7 @@ void *reget(struct reformat *re, unsigned int DocID) {
 			position -= re->structsize;
 		}
 	}
+	#endif
 	#ifdef DEBUG	
 		printf("regetp: DocID %u, position %zu, lot %i, structsize %zu\n",DocID, position, re->lotNr, re->structsize);
 	#endif
