@@ -68,7 +68,7 @@ CFLAGS+=	-g
 endif
 
 ifdef WALL
-CFLAGS+=	-Wall -Wno-unused-function -Wno-char-subscripts
+CFLAGS+=	-Wall -Wno-unused-function -Wno-char-subscripts -Werror
 endif
 
 ifdef WANT_OPENMP
