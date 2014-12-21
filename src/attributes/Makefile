@@ -1,7 +1,7 @@
 
 CFLAGS= -O2 -g
 # Enable build warinings
-#CFLAGS+= -Wall -W -Wno-unused-parameter
+CFLAGS+= -Wall -W -Wno-unused-parameter
 
 
 yacc=bison
