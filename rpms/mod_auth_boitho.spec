@@ -1,5 +1,5 @@
 Name: mod_auth_boitho
-Version: 1.13
+Version: 1.7.3
 Release: 1
 Source: /home/eirik/redhat/SOURCES/%{name}-%{version}.tar.gz
 License: GPL
