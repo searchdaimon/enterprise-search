@@ -22,7 +22,9 @@
 #include "rac.tab.h"
 #include "lex.rac.h"
 
-
+#ifdef __LP64__
+#define YYSTYPE long int
+#endif
 
 /*
 void print_strings( container *V )
@@ -514,13 +516,13 @@ void print_recurse_items(item *I, int indent)
 		{
 		    if (i==0) printf(" ");
 		    else printf("/");
-		    printf("%s", vector_get(I->parameters, i).ptr);
+		    printf("%s", (char *)vector_get(I->parameters, i).ptr);
 		}
 	}
     else if (I->type == item_import)
 	{
 	    for (i=0; i<vector_size(I->parameters); i++)
-		printf(" %s", vector_get(I->parameters, i).ptr);
+		printf(" %s", (char *)vector_get(I->parameters, i).ptr);
 	}
 
     printf("\n");
@@ -533,7 +535,7 @@ void print_recurse_items(item *I, int indent)
 			if (j%3==2) printf("|");
 			else printf(" ");
 
-    	    	    printf("name(%s): %s\n", vector_get(I->parameters, i).ptr, vector_get(I->parameters, i+1).ptr);
+    	    	    printf("name(%s): %s\n", (char *)vector_get(I->parameters, i).ptr, (char *)vector_get(I->parameters, i+1).ptr);
 		}
 
 	    for (j=0; j<indent*3+2; j++)
@@ -603,7 +605,7 @@ void print_recurse_items(item *I, int indent)
 			{
 			    if (j==0) printf(" ");
 			    else printf("/");
-			    printf("%s", vector_get(hide, j).ptr);
+			    printf("%s", (char *)vector_get(hide, j).ptr);
 			}
 		    printf("\n");
 		}

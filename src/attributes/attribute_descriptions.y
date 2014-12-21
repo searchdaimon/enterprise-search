@@ -11,7 +11,7 @@
 #include "attribute_descriptions.h"
 
 #ifdef __LP64__
-#define YYSTYPE long int
+#define YYSTYPE char const *
 #endif
 
 #include "attribute_descriptions.h"
@@ -75,7 +75,7 @@ lang	: lang_id EQUALS_ID string_list SEMICOLON_ID
 	    for (i=0; i<data->lang_size; i++)
 		{
 		    if (i>0) printf(",");
-		    printf("%s", vector_get( data->lang, i ).ptr);
+		    printf("%s", (char *)vector_get( data->lang, i ).ptr);
 		}
 	    printf("}\n");
 
