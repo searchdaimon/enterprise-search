@@ -2228,6 +2228,15 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 				}
 
 				strncpy((*TeffArray)->iindex[i].filetype, RE_Char(re, (*TeffArray)->iindex[i].DocID),4);
+
+				#ifdef DEBUG
+					bblog(DEBUGINFO, "filetype: DocID %u, type %c%c%c%c.", 
+						(*TeffArray)->iindex[i].DocID, 
+						(*TeffArray)->iindex[i].filetype[0],
+						(*TeffArray)->iindex[i].filetype[1],
+						(*TeffArray)->iindex[i].filetype[2],
+						(*TeffArray)->iindex[i].filetype[3]);
+				#endif
 			#else 
 				if (iintegerGetValue(&(*TeffArray)->iindex[i].filetype,4,(*TeffArray)->iindex[i].DocID,"filtypes",(*(*TeffArray)->iindex[i].subname).subname) == 0) {
 					bblog(WARN, "woldent get integerindex");

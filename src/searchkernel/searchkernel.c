@@ -14,6 +14,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <assert.h>
+#include <stdint.h>
 
 #include "shortenurl.h"
 #include "searchkernel.h"
@@ -761,7 +762,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 						strpointer[0] = '\0';
 					}
 					#ifdef DEBUG
-					bblog(DEBUGINFO, "fant space at %i", ((int)strpointer) - (int)(*Sider).title);
+					bblog(DEBUGINFO, "fant space at %ul", ((intptr_t)strpointer) - (intptr_t)(*Sider).title);
 					#endif
 				}						
 				else if ((strpointer = strrchr((*Sider).title,';')) != NULL) {
@@ -769,7 +770,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 					strpointer[0] = '\0';
 
 					#ifdef DEBUG
-					bblog(DEBUGINFO, "fant semi colon at %i", ((int)(*Sider).title - (int)strpointer));
+					bblog(DEBUGINFO, "fant semi colon at %i", ((intptr_t)(*Sider).title - (intptr_t)strpointer));
 					#endif
 				}
 				strncat((*Sider).title,"..",2);    
