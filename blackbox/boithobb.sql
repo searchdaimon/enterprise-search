@@ -261,4 +261,4 @@ CREATE TABLE `shares` (
 
 #
 #Runarb: 14 des 2010. licensekey har blitt flyttet fra sql/update-cur.sql til blackbox/boithobb.sql som er base pakken. Dete betyr at alle nye instalasjoner nå har lisensnøkkel som standar
-INSERT INTO config (configkey, configvalue) VALUES('licensekey', 'RRYAYACZACJAB6RLANAQ8K4G');
+INSERT INTO config (configkey, configvalue) VALUES('licensekey', '5W4CEAA4AAZRBXRA9RADFK56');
