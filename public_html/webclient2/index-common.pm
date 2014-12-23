@@ -29,7 +29,7 @@ BEGIN {
 	# that occurs on some virtualizations platforms.
 	# Enable Unicode output
 	#binmode(STDIN, ":encoding(utf8)");
-	#binmode(STDOUT, ":utf8"); 
+	binmode(STDOUT, ":utf8"); 
 
 	CGI::Carp::set_message(" ");
 	{
