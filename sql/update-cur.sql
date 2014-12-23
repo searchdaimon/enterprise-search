@@ -254,7 +254,7 @@ ALTER TABLE shareResults ALTER rank_headline_array SET DEFAULT "4,6,7,8";
 ALTER TABLE shareResults ALTER rank_body_array SET DEFAULT "1,2,4,7,9,10,11,12";
 
 -- select what shal happend if users gos to the / page
-INSERT INTO config (configkey, configvalue) VALUES('frontpage_preference', 'webclient2');
+INSERT INTO config (configkey, configvalue) VALUES('frontpage_preference', 'infopage.html');
 
 -- allow usage statistic
 INSERT INTO config (configkey, configvalue) VALUES('anostat_preference', 'legal');
