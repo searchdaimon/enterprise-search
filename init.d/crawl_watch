@@ -15,7 +15,15 @@ else
   exit 0
 fi
 
-
+# Find the daemonize binary
+if [ -f /usr/local/sbin/daemonize ] ; then
+  DAEMONIZE="/usr/local/sbin/daemonize"
+elif [ -f /usr/sbin/daemonize ] ; then
+  DAEMONIZE="/usr/sbin/daemonize"
+else
+  echo "Can not find the daemonize binary"
+  exit 0
+fi
 
 if [ "$BOITHOHOME" == "" ]; then
     export BOITHOHOME=/home/boitho/boithoTools
@@ -28,9 +36,9 @@ RETVAL=0
 
 #poor mans setuid. If we are root we will run the program as user boitho
 if [ `id -u` == 0 ]; then
-        B_RUN="/usr/local/sbin/daemonize -c $BOITHOHOME/perl/ -u boitho $BOITHOHOME/bin/everrun $B_SCRIPT"
+        B_RUN="$DAEMONIZE -c $BOITHOHOME/perl/ -u boitho $BOITHOHOME/bin/everrun $B_SCRIPT"
 else
-        B_RUN="/usr/local/sbin/daemonize -c $BOITHOHOME/perl/ $BOITHOHOME/bin/everrun $B_SCRIPT"
+        B_RUN="$DAEMONIZE -c $BOITHOHOME/perl/ $BOITHOHOME/bin/everrun $B_SCRIPT"
 fi
 
 
