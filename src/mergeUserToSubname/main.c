@@ -74,15 +74,6 @@ int main (int argc, char *argv[]) {
 
 	userToSubname_close(&userToSubnameDb);
 
-	/*
-	//temp
-	userToSubname_open(&dbpp);
-	char buf[128] = "*****";
-	userToSubname_getsubnamesAsString(&dbpp,"Everyone",buf);
-	printf("aa  subnames \"%s\"\n",buf);
-	userToSubname_close(&dbpp);
-	*/
-
 	return 0;
 
 }
