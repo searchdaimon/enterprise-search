@@ -207,7 +207,7 @@ int main (int argc, char *argv[]) {
 
 
                 if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
-                        printf("Error: %s\n",errorbuff);
+                        printf("Can't connect to crawlerManager. Error: %s\n",errorbuff);
                         return EXIT_FAILURE;			
                 }
 
@@ -221,28 +221,31 @@ int main (int argc, char *argv[]) {
                 printf("groups: %i\n",r);
 
                 if (!userToSubname_open(&userToSubnameDb,'r')) {
-			perror("can't open userToSubname");
-			return EXIT_FAILURE;
-		}
-
-		group = (char *)groups;
-                for (i = 0; i < r; i++) {
-                	printf("group: %s\n", group);
-
-			collections = userToSubname_getsubnamesList(&userToSubnameDb, group, &nrofcollections);
-			if (collections != NULL) {
-			
-				printf("collections: %i\n",nrofcollections);
-				for (y=0; y < nrofcollections; y++) {
-					printf("collection: %s\n",collections[y]);
-				}
+			group = (char *)groups;
+			for (i = 0; i < r; i++) {
+				printf("group: %s\n", group);
+				group += MAX_LDAP_ATTR_LEN;
 			}
+		}
+		else {
+			group = (char *)groups;
+                	for (i = 0; i < r; i++) {
+                		printf("group: %s\n", group);
 
-                        group += MAX_LDAP_ATTR_LEN;
-	        }
+				collections = userToSubname_getsubnamesList(&userToSubnameDb, group, &nrofcollections);
+				if (collections != NULL) {
+			
+					printf("collections: %i\n",nrofcollections);
+					for (y=0; y < nrofcollections; y++) {
+						printf("collection: %s\n",collections[y]);
+					}
+				}
+
+                	        group += MAX_LDAP_ATTR_LEN;
+	        	}
 		
-                userToSubname_close(&userToSubnameDb);
-
+                	userToSubname_close(&userToSubnameDb);
+		}
 	}
 	else if (strcmp(key,"collectionFor") == 0) {
 		if(value == NULL) {printf("no value given.\n");exit(1);}

@@ -53,9 +53,11 @@ int userToSubname_open(struct userToSubnameDbFormat * userToSubnameDb, char mode
 			errx(1, "set dupsort flags, %s\n", db_strerror(ret));
 
 		ret = db->open(db, NULL, bfile(userToSubnameDbFile), NULL, DB_BTREE, flags, filemode);
-		if (ret != 0)
-			errx(1, "db open error %s\n", db_strerror(ret));
-	
+		if (ret != 0) {
+			warnx("db open error: '%s'.", db_strerror(ret));
+			return 0;
+		}
+
 		(*userToSubnameDb).dbp = db;
 
 		return 1;
