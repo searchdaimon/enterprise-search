@@ -5,3 +5,5 @@ int boithoad_groupsForUser(const char username_in[],char **respons_list[],int *n
 void boithoad_respons_list_free(char *respons_list[]);
 int boithoad_listGroups(char **respons_list[],int *nrofresponses);
 int boithoad_getPassword(const char username_in[], char password[]);
+int boithoad_sidToUser(char sid_in[], char username_in[]);
+int boithoad_sidToGroup(char sid_in[], char username_in[]);
