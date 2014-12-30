@@ -42,7 +42,7 @@ base64(const unsigned char *input, int length)
 	bmem = BIO_new(BIO_s_mem());
 	b64 = BIO_push(b64, bmem);
 	BIO_write(b64, input, length);
-	BIO_flush(b64);
+	(void)BIO_flush(b64);
 	BIO_get_mem_ptr(b64, &bptr);
 
 	buf = malloc(bptr->length);
@@ -98,7 +98,7 @@ get_serial(size_t *len)
 		err(1, "fopen(%s)", SERIAL_FILE);
 	*len = fread(num,  sizeof(unsigned int), SERIAL_LEN, fp);
 	if (*len != SERIAL_LEN)
-		err(1, "fread(serial): %d", *len);
+		err(1, "fread(serial): %zu", *len);
 	fclose(fp);
 	
 	p = malloc(sizeof(num));

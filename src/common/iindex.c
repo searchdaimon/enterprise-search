@@ -79,7 +79,7 @@ void IIndexLoad (char subname[]) {
 	struct DictionaryFormat DictionaryPost;
 	int TermsForMemory, TotalTermsForMemory;
 
-	printf("size : %i\n",sizeof(struct DictionaryFormat));
+	printf("size : %lu\n",sizeof(struct DictionaryFormat));
 
 	TotalTermsForMemory = 0;
 
