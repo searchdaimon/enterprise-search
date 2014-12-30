@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+#define LDAP_DEPRECATED 1 // For ldap_init on 64bit
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,6 +25,8 @@
 #include "../common/sid.h"
 #include "../common/ht.h"
 #include "../common/crc32.h"
+#include "../common/strlcpy.h"
+#include "../common/strlcat.h"
 #include "userobjekt.h"
 
 #include "../libcache/libcache.h"
@@ -73,6 +77,21 @@ static int boithoad_equalkeys(void *k1, void *k2)
 	//printf("equalkeys: \"%s\" ? \"%s\"\n",k1,k2);
 
 	return (0 == strcmp(k1,k2));
+}
+
+int
+get_number_of_licenced_users(const char *licensekey)
+{
+	unsigned short int users;
+	unsigned int serial;
+
+
+	if (!get_licenseinfo(licensekey, &serial, &users)) {
+		fprintf(stderr, "Invalid license key...");
+		return -1;
+	}
+
+	return users;
 }
 
 
@@ -156,7 +175,6 @@ void connectHandler(int socket);
 
 int ldap_connect(LDAP **ld, const char ldap_host[] , int ldap_port,const char base[],const char distinguishedName[], const char password[]) {
 
-   int  result;
    int  auth_method = LDAP_AUTH_SIMPLE;
    int desired_version = LDAP_VERSION3;
    //char root_dn[512]; 
@@ -244,10 +262,12 @@ int ldap_close(LDAP **ld) {
    }
 
    printf("ldap_close: end\n");
+
+   return RETURN_SUCCESS;
 }
 
 //	Finner base name
-int ldap_genBaseName(char ldap_base[],const char ldap_domain[]) {
+void ldap_genBaseName(char ldap_base[],const char ldap_domain[]) {
 
   char **Data;
   int Count, TokCount;
@@ -343,16 +363,11 @@ int compare_ldap_vals (const void *p1, const void *p2) {
 #define LS_WANT_OBJECTSID 0x1
 
 
-int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[],int *nrofresponses,const char ldap_base[]) {
-	return ldap_simple_search_count(ld, filter, vantattrs, respons, nrofresponses, ldap_base, -1, NULL, 0);
-}
-
 
 int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **respons[],int *nrofresponses,const char ldap_base[], int maxcount, const char *valfilter, int flags) {
 
 	printf("ldap_simple_search_count( filter=\"%s\", vantattrs=\"%s\", ldap_base=\"%s\", maxcount=%i ,valfilter=\"%s\" )\n",filter,vantattrs,ldap_base,maxcount,valfilter);
 
-   	int  result;
 	int i,len,count;
 	List list;
 	(*nrofresponses) = 0;
@@ -409,7 +424,7 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
 	#endif
    	// ldap_search() returns -1 if there is an error, otherwise the msgid 
    	if ((rc = ldap_search_ext((*ld), ldap_base, LDAP_SCOPE_SUBTREE, filter, attrs, 0, NULL , NULL,&ldap_time_out, ldap_sizelimit,&msgid)) == -1) {
-   	   ldap_perror( ld, "ldap_search" );
+   	   ldap_perror( (*ld), "ldap_search" );
    	   return RETURN_FAILURE;
    	}
 
@@ -567,7 +582,7 @@ done:
   	FreeSplitList(attrs);
 
 
-	printf("list size if %i, count %i, size %i\n",list_size(&list),count,( sizeof(char *) * (count +1) ));
+	printf("list size if %i, count %i, size %lu\n",list_size(&list),count,( sizeof(char *) * (count +1) ));
 
 	(*respons) = malloc(( sizeof(char *) * (count +1) ));
 
@@ -602,6 +617,10 @@ done:
 	//printf("ldap_simple_search: end\n");
 
 	return 1;
+}
+
+int ldap_simple_search(LDAP **ld,char filter[],char vantattrs[],char **respons[],int *nrofresponses,const char ldap_base[]) {
+	return ldap_simple_search_count(ld, filter, vantattrs, respons, nrofresponses, ldap_base, -1, NULL, 0);
 }
 
 int ldap_getcnForUser(LDAP **ld,char cn[],char user_username[],const char ldap_base[]) {
@@ -880,7 +899,6 @@ int getAllGroupsForUser(struct hashtable **grouphash, LDAP *ld, char *user_usern
 
 	printf("getAllGroupsForUser(user_username=%s, msad_ldapgroupstrin=%s, ldap_domain=%s, ldap_base=%s)\n",user_username,msad_ldapgroupstring,ldap_domain,ldap_base);
 
-	char primarygroup[64];
 	char ldapbasegroup[128];
 	char *sid;
 	char *groupsid;
@@ -996,7 +1014,7 @@ int userIsLogedIn (char *user_username, const char *user_password, int time_out)
 
 		}
 		else if ((now - userobjekt->ctime) >= time_out) {
-			printf("User objekt was to old. Was %u\n",now - userobjekt->ctime);
+			printf("User objekt was to old. Was %lld\n",(long long)(now - userobjekt->ctime));
 			intresponse = 0;
 		}
 		else if ((strcmp(userobjekt->username,user_username) != 0) || ((strcmp(userobjekt->password,user_password)))) {
@@ -1498,22 +1516,6 @@ void connectHandler(int socket) {
 
 	closelogs(LOGACCESS,LOGERROR);
 	printf("closed logs\n");
-}
-
-
-int
-get_number_of_licenced_users(const char *licensekey)
-{
-	unsigned short int users;
-	unsigned int serial;
-
-
-	if (!get_licenseinfo(licensekey, &serial, &users)) {
-		fprintf(stderr, "Invalid license key...");
-		return -1;
-	}
-
-	return users;
 }
 
 

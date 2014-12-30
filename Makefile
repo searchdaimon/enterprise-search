@@ -312,7 +312,7 @@ DIconvert: src/DIconvert/main.c
 boithoad: src/boithoad/main.c
 	@echo ""
 	@echo "$@:"
-	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c $(SLICENCE) -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) $(LIBCACHE) $(OPENSSL) -pthread -DWITH_DAEMON_THREAD -D BLACK_BOX -D WITH_CONFIG -DWITH_THREAD -DLIBCACHE_SHARE
+	$(CC) $(CFLAGS) $(LIBS)*.c src/boithoad/main.c $(SLICENCE) -o bin/boithoad $(LDFLAGS) $(LDAP) $(MYSQL) $(LIBCACHE) $(OPENSSL) -pthread -DWITH_DAEMON_THREAD -D BLACK_BOX -D WITH_CONFIG -DWITH_THREAD -DLIBCACHE_SHARE $(WALL)
 
 PiToWWWDocID: src/PiToWWWDocID/main.c
 	@echo ""
