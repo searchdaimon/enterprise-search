@@ -5,6 +5,7 @@
 #include <err.h>
 #include <signal.h>
 #include <time.h>
+#include <ctype.h>
 
 #include "../common/define.h"
 #include "../common/boithohome.h"
@@ -15,6 +16,7 @@
 #include "../boithoadClientLib/liboithoaut.h"
 #include "../boithoadClientLib/boithoad.h"
 #include "../maincfg/maincfg.h"
+#include "../bbdocument/bbdocument.h"
 
 int str_is_nmbr(char * str) {
 	int i;
@@ -352,7 +354,6 @@ int main (int argc, char *argv[]) {
 		int socketha;
 		int errorbufflen = 512;
                 char errorbuff[errorbufflen];
-		char **respons_list;
 		char *errormsg;
 
 		//runarb: 01.10.07 hvorfor var denne slåt av
@@ -498,7 +499,6 @@ int main (int argc, char *argv[]) {
 		//printf("Collection locked: %s\n", r == 0 ? "no" : "yes");
 	}
 	else if (strcmp(key, "listUsers") == 0) {
-		int r;
 		int i;
 		int socketha;
 		int errorbufflen = 512;
@@ -556,7 +556,7 @@ int main (int argc, char *argv[]) {
 		int errorbufflen = 512;
                 char errorbuff[errorbufflen];
 
-		if (value == NULL | value2 == NULL || value3 == NULL)
+		if (value == NULL || value2 == NULL || value3 == NULL)
 			errx(1, "infoquery addForeignUser collection user group");
 		
 		if (!cmc_conect(&s,errorbuff,errorbufflen,cmc_port)) {
@@ -636,7 +636,7 @@ int main (int argc, char *argv[]) {
 
 			printf("DocID: %u\n", ReposetoryHeader.DocID);
 
-			printf("time: %s", ctime(&ReposetoryHeader.time));
+			printf("time: %s", ctime((time_t *)&ReposetoryHeader.time));
 			printf("storageTime: %s", ctime(&ReposetoryHeader.storageTime));
 
 			printf("PopRank: %d\n", ReposetoryHeader.PopRank);
@@ -671,8 +671,7 @@ int main (int argc, char *argv[]) {
 	    int offset = atoi(value3);
 
 	    struct ReposetoryHeaderFormat ReposetoryHeader;
-            char htmlbuffer[524288];
-            char htmlbuffer_uncom[524288];
+            Bytef htmlbuffer[524288];
             char imagebuffer[524288];
             char *acl_allow;
             char *acl_deny;
@@ -711,7 +710,7 @@ int main (int argc, char *argv[]) {
 			deleted = 1;
                 }
 
-                printf("DocId: %i, url: %s, res: %hi, htmlsize: %u, imagesize: %hu, time: %lu, radress: %lu, deleted: %i",
+                printf("DocId: %i, url: %s, res: %hi, htmlsize: %u, imagesize: %hu, time: %u, radress: %u, deleted: %i",
 				ReposetoryHeader.DocID,ReposetoryHeader.url,ReposetoryHeader.response,
 				ReposetoryHeader.htmlSize2,ReposetoryHeader.imageSize,ReposetoryHeader.time,radress, deleted);
 		if (thumbnale!=NULL) {printf(", thumbnale: %s", thumbnale);}
@@ -731,7 +730,7 @@ int main (int argc, char *argv[]) {
                 puts("pid not provided"); exit(1); 
                 exit(1);
             }
-            int i = 0;
+
 	    if (!str_is_nmbr(value)) {
 		    puts("pid must be a number");
                     exit(1);
