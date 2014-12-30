@@ -1,5 +1,5 @@
 #define _GNU_SOURCE
-#define LDAP_DEPRECATED 1 // For ldap_init on 64bit
+//#define LDAP_DEPRECATED 1 // For ldap_init on 64bit
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -177,7 +177,8 @@ int ldap_connect(LDAP **ld, const char ldap_host[] , int ldap_port,const char ba
 
    int  auth_method = LDAP_AUTH_SIMPLE;
    int desired_version = LDAP_VERSION3;
-   //char root_dn[512]; 
+   char ldap_uri[128];
+   int ret;
 	
    printf("ldap_connect(host=%s, user=%s, base=%s)\n",ldap_host,distinguishedName,base);
 
@@ -199,11 +200,19 @@ int ldap_connect(LDAP **ld, const char ldap_host[] , int ldap_port,const char ba
    #endif
 
 
-   if (((*ld) = (LDAP *)ldap_init(ldap_host, ldap_port)) == NULL) {
-      perror("ldap_init failed");
-      return RETURN_FAILURE;
-   }
+   #if LDAP_DEPRECATED
+   	if (((*ld) = (LDAP *)ldap_init(ldap_host, ldap_port)) == NULL) {
+   	   perror("ldap_init failed");
+   	   return RETURN_FAILURE;
+   	}
+   #else
 
+   	sprintf(ldap_uri,"ldap://%s:%i",ldap_host,ldap_port);
+   	if(ldap_initialize(ld, ldap_uri) != LDAP_SUCCESS) {
+   	    perror("ldap_uri failed");
+   	    return RETURN_FAILURE;
+   	}
+   #endif
 
    printf("~ldap_init\n");
    /* referrals */
@@ -214,31 +223,33 @@ int ldap_connect(LDAP **ld, const char ldap_host[] , int ldap_port,const char ba
    printf("~ldap_set_option\n");
 
    /* set the LDAP version to be 3 */
-   if (ldap_set_option((*ld), LDAP_OPT_PROTOCOL_VERSION, &desired_version) != LDAP_OPT_SUCCESS)
+   if ((ret = ldap_set_option((*ld), LDAP_OPT_PROTOCOL_VERSION, &desired_version)) != LDAP_OPT_SUCCESS)
    {
-      	ldap_perror((*ld), "ldap_set_option");
+	ldap_err2string(ret);
    }
    printf("~ldap_set_option\n");
 
-   //hvis vi vil bruke sasl tilkobling. Tror det er en type secure layer tilkobling, men er ikke sikker.
-   #if 0
+   #if LDAP_DEPRECATED
+	   if ((ret = ldap_bind_s((*ld), distinguishedName, password, auth_method)) != LDAP_SUCCESS ) {
+		fprintf(stderr,"Can't conect. Tryed to bind ldap server at %s:%i\n",ldap_host,ldap_port);
+		ldap_err2string(ret);
+   	   	return RETURN_FAILURE;
+   	   }
+   #else
+	   //hvis vi vil bruke sasl tilkobling. Tror det er en type secure layer tilkobling, men er ikke sikker.
 	   struct berval cred;
 	   cred.bv_val = password;
 	   cred.bv_len = strlen(password);
 	   struct berval *msgidp=NULL;
 
 
-	   if (ldap_sasl_bind_s((*ld), distinguishedName, LDAP_SASL_SIMPLE, &cred, NULL, NULL,&msgidp) != LDAP_SUCCESS ) {
+	   if ((ret = ldap_sasl_bind_s((*ld), distinguishedName, LDAP_SASL_SIMPLE, &cred, NULL, NULL,&msgidp)) != LDAP_SUCCESS ) {
 		fprintf(stderr,"Can't conect. Tryed to bind ldap server at %s:%i\n",ldap_host,ldap_port);
-	      	ldap_perror( (*ld), "ldap_bind" );
+		ldap_err2string(ret);
 	        return RETURN_FAILURE;
 	   }
-   #else
-	   if (ldap_bind_s((*ld), distinguishedName, password, auth_method) != LDAP_SUCCESS ) {
-		fprintf(stderr,"Can't conect. Tryed to bind ldap server at %s:%i\n",ldap_host,ldap_port);
-   	   	ldap_perror( (*ld), "ldap_bind" );
-   	   	return RETURN_FAILURE;
-   	}
+
+
    #endif
    printf("~ldap_bind_s\n");
 
@@ -254,8 +265,11 @@ int ldap_close(LDAP **ld) {
 
    printf("ldap_close: start\n");
 
-   result = ldap_unbind_s((*ld));
-
+   #if LDAP_DEPRECATED
+       result = ldap_unbind_s((*ld));
+   #else
+       result = ldap_unbind_ext_s((*ld), NULL, NULL);
+   #endif
    if (result != 0) {
       fprintf(stderr, "ldap_unbind_s: %s\n", ldap_err2string(result));
       return RETURN_FAILURE;
@@ -350,9 +364,9 @@ static void print_reference(LDAP *ld, LDAPMessage *reference)
 
 int compare_ldap_vals (const void *p1, const void *p2) {
 	#ifdef DEBUG
-	//printf("compare_ldap_vals (p1=\"%s\", p2\"%s\")\n",(*(char **)p1), (*(char **)p2));
+	//printf("compare_ldap_vals (p1=\"%s\", p2\"%s\")\n",(*(struct berval **)p1)->bv_val,(*(struct berval **)p2)->bv_val);
 	#endif
-	return (strcmp((*(char **)p1),(*(char **)p2)) == 0);
+	return (strcmp((*(struct berval **)p1)->bv_val,(*(struct berval **)p2)->bv_val) == 0);
 }
 
 /* 
@@ -405,7 +419,7 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
 
    	char *dn = NULL;
    	char *attr;
-   	char **vals;
+   	struct berval **vals;
    	//int msgid;
 	ber_int_t             msgid;
    	//struct timeval tm;
@@ -424,7 +438,7 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
 	#endif
    	// ldap_search() returns -1 if there is an error, otherwise the msgid 
    	if ((rc = ldap_search_ext((*ld), ldap_base, LDAP_SCOPE_SUBTREE, filter, attrs, 0, NULL , NULL,&ldap_time_out, ldap_sizelimit,&msgid)) == -1) {
-   	   ldap_perror( (*ld), "ldap_search" );
+	   ldap_err2string(rc);
    	   return RETURN_FAILURE;
    	}
 
@@ -484,24 +498,24 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
 
 						//###########################
 
-					 	if ((vals = (char **)ldap_get_values((*ld), entry, attr)) != NULL)  {
+					 	if ((vals = ldap_get_values_len((*ld), entry, attr)) != NULL)  {
 							counter = 0;
 
-							printf("rbrb: got %i values\n",ldap_count_values(vals));
+							printf("rbrb: got %i values\n",ldap_count_values_len(vals));
 							//det ser ut som om ad sender verdiene i fårskjelige rekkefølge
 							//sorterer de derfor
-							qsort(vals,ldap_count_values(vals),sizeof(char *),compare_ldap_vals);
+							qsort(vals,ldap_count_values_len(vals),sizeof(char *),compare_ldap_vals);
 							
 
 		    					for(i = 0; vals[i] != NULL; i++) {
 								if (valfilter &&
 								    !((strcmp(attr, "objectSid") == 0) && (flags & LS_WANT_OBJECTSID)) &&
-								    strncmp(vals[i], valfilter, strlen(valfilter)) != 0) {
-									printf("Skiping: value \"%s\" thats not in filter \"%s\" for att %s\n", vals[i], valfilter,attr);
+								    strncmp(vals[i]->bv_val, valfilter, strlen(valfilter)) != 0) {
+									printf("Skiping: value \"%s\" thats not in filter \"%s\" for att %s\n", vals[i]->bv_val, valfilter,attr);
 									continue;
 								}
 								if (strcasecmp(attr, "objectSid") == 0) {
-									char *p = sid_btotext(vals[i]);
+									char *p = sid_btotext(vals[i]->bv_val);
 									tempresults = malloc(sizeof(struct tempresultsFormat));
 									strncpy((*tempresults).value,p,MAX_LDAP_ATTR_LEN);
 									strncpy((*tempresults).key,attr,MAX_LDAP_ATTR_LEN);
@@ -511,11 +525,11 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
 									}
 									free(p);
 								} else {
-									printf("attr: %s, vals %s\n", attr, vals[i]);
+									printf("attr: %s, vals %s\n", attr, vals[i]->bv_val);
 
 									tempresults = malloc(sizeof(struct tempresultsFormat));
 
-									strncpy((*tempresults).value,vals[i],MAX_LDAP_ATTR_LEN);
+									strncpy((*tempresults).value,vals[i]->bv_val,MAX_LDAP_ATTR_LEN);
 									strncpy((*tempresults).key,attr,MAX_LDAP_ATTR_LEN);
 									if (list_ins_next(&list,NULL,tempresults) != 0) {
 										printf("cant insert into list\n");
@@ -533,7 +547,7 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
 
 	
 
-	    						ldap_value_free(vals);
+	    						ldap_value_free_len(vals);
 	 					} //if
 					//printf("attr adress %u\n",(unsigned int)attr);
 					ldap_memfree(attr);
@@ -1174,7 +1188,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 					else if (ldap_authenticat (&ld,user_username,user_password,ldap_base,ldap_host,ldap_port)) {
 						printf("Main: user authenticated\n");
 						printf("user_username: \"%s\"\n",user_username);
-						blog(LOGACCESS,1,"user \"%s\" successfuly authenticated.",user_username);
+			//			blog(LOGACCESS,1,"user \"%s\" successfuly authenticated.",user_username);
 						intresponse = ad_userauthenticated_OK;
 						firstOkLogin = 1;
 					}
