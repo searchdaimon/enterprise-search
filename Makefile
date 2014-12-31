@@ -1199,7 +1199,7 @@ crawlSMB: src/crawlSMB/main.c
 	flex -f -8 -i -o src/crawlSMB/lex.acl.c src/crawlSMB/acl.parser.l
 
 
-	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOX -g $(CRAWL_STATIC) $(LIBS)*.c src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) $(SMBCLIENT)
+	$(CC) $(CFLAGS) -fPIC -shared -D BLACK_BOX -g $(CRAWL_STATIC) $(LIBS)*.c src/crawlSMB/cleanresource.c src/crawlSMB/scan.c src/crawlSMB/lex.acl.c src/crawlSMB/crawlsmb.c src/crawl/crawl.c src/crawlSMB/main.c src/boitho-bbdn/bbdnclient.c -o src/crawlSMB/crawlSMB.so $(LDFLAGS) $(SMBCLIENT) $(WALL)
 	mkdir -p crawlers/crawlSMB
 	cp src/crawlSMB/crawlSMB.so crawlers/crawlSMB/
 
@@ -1338,6 +1338,12 @@ ds:
 	@echo "$@:"
 	(cd src/ds && make clean)
 	(cd src/ds && make)
+
+generateSnippet:
+	@echo ""
+	@echo "$@:"
+	(cd src/generateSnippet && make clean)
+	(cd src/generateSnippet && make)
 
 parser2:
 	@echo ""
