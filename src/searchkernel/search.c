@@ -1177,7 +1177,7 @@ void *searchIndex_thread(void *arg)
 	bblog(INFO, "######################################################################");
 
 	if ((TmpArray = malloc(sizeof(struct iindexFormat))) == NULL) {
-                perror("malloc TmpArray");
+                perror("Can not malloc TmpArray");
                 exit(1);
         }
 	resultArrayInit(TmpArray);
