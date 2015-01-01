@@ -225,7 +225,7 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
     dh = smbc_opendir( full_name );
     if (dh < 0)
     {
-            documentError(collection, 1,"crawlsmb.c: Error! Could not open directory %s for dir \"%s\" at %s:%d", dir_name,dir_name,__FILE__,__LINE__);
+            documentError(collection, 1,"crawlsmb.c: Error! Could not open directory \"%s\" for dir at %s:%d.", dir_name,__FILE__,__LINE__);
             return 0;
     }
 
