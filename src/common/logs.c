@@ -12,10 +12,11 @@ void blog(FILE *LOG, int level, const char *fmt, ...) {
 	time_t now;
 	char buf[1024];
 	int len;
-        va_list     ap;
+        va_list     ap, ap2;
 	struct tm tm;
 
         va_start(ap, fmt);
+	va_copy(ap2, ap);
 
 		//skriver til log
 		if (LOG == NULL) {
@@ -43,10 +44,12 @@ void blog(FILE *LOG, int level, const char *fmt, ...) {
 		//viser på skjerm
 		if (level <= 1) {
                		printf("log: ");
-               		vprintf(fmt,ap);
+               		vprintf(fmt,ap2);
           		printf("\n");
 		}
-        va_end(ap);
+		else {
+		        va_end(ap2);
+		}
 }
 
 
