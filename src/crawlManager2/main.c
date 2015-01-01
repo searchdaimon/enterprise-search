@@ -772,14 +772,16 @@ char *documentErrorGetlast(struct collectionFormat *collection) {
 
 
 int documentError(struct collectionFormat *collection,int level, const char *fmt, ...) {
-        va_list     ap;
+        va_list     ap, ap2;
 
         va_start(ap, fmt);
+
+	va_copy(ap2,ap);
 
 	bblog(ERROR, "documentError: level: %d", level);
 	bblogv(ERROR, fmt, ap);
 
-	vsprintf(collection->errormsg ,fmt,ap);
+	vsprintf(collection->errormsg ,fmt,ap2);
 
         va_end(ap);
 
