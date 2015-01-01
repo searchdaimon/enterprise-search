@@ -9,8 +9,10 @@
 
 
 /* int_container: */
-
-static inline int int_compare( container *C, value a, value b )
+#ifndef DEBUG
+static inline 
+#endif
+int int_compare( container *C, value a, value b )
 {
     if (a.i < b.i)
 	return -1;
@@ -20,8 +22,10 @@ static inline int int_compare( container *C, value a, value b )
 	return 0;
 }
 
-
-static inline alloc_data int_ap_allocate( container *C, va_list ap )
+#ifndef DEBUG
+static inline 
+#endif
+alloc_data int_ap_allocate( container *C, va_list ap )
 {
     alloc_data	x;
 
@@ -33,31 +37,48 @@ static inline alloc_data int_ap_allocate( container *C, va_list ap )
     return x;
 }
 
-
-static inline void int_deallocate( container *C, value a )
+#ifndef DEBUG
+static inline 
+#endif
+void int_deallocate( container *C, value a )
 {
 }
 
-inline void int_destroy( container *C )
+#ifndef DEBUG
+inline 
+#endif
+void int_destroy( container *C )
 {
     free(C);
 }
 
-inline void int_clear( container *C )
+#ifndef DEBUG
+inline 
+#endif
+void int_clear( container *C )
 {
 }
 
-inline container* int_clone( container *C )
+#ifndef DEBUG
+inline 
+#endif
+container* int_clone( container *C )
 {
     return int_container();
 }
 
-inline value int_copy( container *C, value a )
+#ifndef DEBUG
+inline 
+#endif
+value int_copy( container *C, value a )
 {
     return a;
 }
 
-inline void int_print( container *C, value a )
+#ifndef DEBUG
+inline 
+#endif
+void int_print( container *C, value a )
 {
     printf("%i", a.i);
 }
@@ -81,14 +102,18 @@ container* int_container()
 
 
 /* string_container: */
-
-static inline int string_compare( container *C, value a, value b )
+#ifndef DEBUG
+static inline 
+#endif
+int string_compare( container *C, value a, value b )
 {
     return strcmp((char*)a.ptr, (char*)b.ptr);
 }
 
-
-inline alloc_data string_ap_allocate( container *C, va_list ap )
+#ifndef DEBUG
+inline 
+#endif
+alloc_data string_ap_allocate( container *C, va_list ap )
 {
     alloc_data	x;
     char	*c = va_arg(ap, char*);
@@ -104,8 +129,10 @@ inline alloc_data string_ap_allocate( container *C, va_list ap )
     return x;
 }
 
-
-inline void string_deallocate( container *C, value a )
+#ifndef DEBUG
+inline 
+#endif
+void string_deallocate( container *C, value a )
 {
     if (a.ptr!=NULL)
         free(a.ptr);
@@ -162,8 +189,10 @@ container* string_container()
 
 
 /* ptr_container: */
-
-static inline int ptr_compare( container *C, value a, value b )
+#ifndef DEBUG
+static inline 
+#endif
+int ptr_compare( container *C, value a, value b )
 {
     if (a.i < b.i)
 	return -1;
@@ -173,8 +202,10 @@ static inline int ptr_compare( container *C, value a, value b )
 	return 0;
 }
 
-
-static inline alloc_data ptr_ap_allocate( container *C, va_list ap )
+#ifndef DEBUG
+static inline 
+#endif
+alloc_data ptr_ap_allocate( container *C, va_list ap )
 {
     alloc_data	x;
 
