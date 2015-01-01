@@ -29,6 +29,12 @@ alloc_data int_ap_allocate( container *C, va_list ap )
 {
     alloc_data	x;
 
+    // Runarb: 01.01.2015
+    // Clear the x variable in int_ap_allocate(). This prevents a segfault, but I am unsure if this is the correct fix, or 
+    // we are just masking the real issue. Should be better investigated in the future. May have to memset the values in 
+    // the other * _ap_allocate() functions also.
+    memset(&x,0,sizeof(alloc_data));
+
     x.v.i = va_arg(ap, int);
 //    printf("allocated %i\n", x.v.i);
 
