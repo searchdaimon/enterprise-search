@@ -30,7 +30,7 @@ sub insert_new_results {
         return;
     }
 
-    my $query = "INSERT INTO $table (connector, range, time, authid)	
+    my $query = "INSERT INTO $table (connector, `range`, time, authid)	
         VALUES (?, ?, NOW(), ?)";
 
     Sql::Sql::simple_execute($dbh, $query, [$connector, $range, $auth_id]);
