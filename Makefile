@@ -54,7 +54,7 @@ WALL = -Wall -Wno-unused-function -Wno-char-subscripts -Wno-strict-aliasing -W -
 # generate the file output-data and its dependencies, not plot.png 
 
 
-all : init.d.stop dbupdate dep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb IndexerLotbb mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad Suggest gcRepobb gcAuthoritybb sdperl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb usSQLBB usAD crawlPush crawlLocal usShell sortCrc32attrMap perlxs-sdcrawl setuid usMapback init.d.start
+all : init.d.stop dbupdate dep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb IndexerLotbb mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad Suggest gcRepobb gcAuthoritybb sdperl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb usSQLBB usAD crawlPush crawlLocal usShell sortCrc32attrMap perlxs-sdcrawl setuid usMapback mod_auth_boitho_a2 setuid init.d.start
 
 init.d.stop:
 	@echo ""
@@ -117,10 +117,6 @@ dptest:
 setuid: YumWrapper NetConfig InitServices repomodwrap setuidcaller
 
 tempFikes: IndexerLot_fik32bitbug DIconvert
-
-
-
-dist: mod_auth_boitho_a2 setuid
 
 
 wordConverter: src/wordConverter/main.c
