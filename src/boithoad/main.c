@@ -1188,7 +1188,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 					else if (ldap_authenticat (&ld,user_username,user_password,ldap_base,ldap_host,ldap_port)) {
 						printf("Main: user authenticated\n");
 						printf("user_username: \"%s\"\n",user_username);
-			//			blog(LOGACCESS,1,"user \"%s\" successfuly authenticated.",user_username);
+						blog(LOGACCESS,1,"user \"%s\" successfuly authenticated.",user_username);
 						intresponse = ad_userauthenticated_OK;
 						firstOkLogin = 1;
 					}
