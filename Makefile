@@ -54,7 +54,7 @@ WALL = -Wall -Wno-unused-function -Wno-char-subscripts -Wno-strict-aliasing -W -
 # generate the file output-data and its dependencies, not plot.png 
 
 
-all : init.d.stop dbupdate dep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb IndexerLotbb mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad Suggest gcRepobb gcAuthoritybb sdperl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb usSQLBB usAD crawlPush crawlLocal usShell sortCrc32attrMap perlxs-sdcrawl setuid usMapback mod_auth_boitho_a2 setuid init.d.start
+all : init.d.stop dbupdate dep searchdbb dispatcher_allbb crawlManager2 infoquery crawlSMB crawlExchange boitho-bbdn PageInfobb IndexerLotbb mergeIIndex mergeUserToSubname ShowThumbbb everrun dictionarywordsLot boithoad Suggest gcRepobb gcAuthoritybb sdperl readUserToSubname bbdocumentWebAdd slicense_info usSQLBB usAD ShowCache2bb list_collections crawlExchangePublic LotInvertetIndexMaker3bb readIIndex rreadbb readDocumentIndexbb usSQLBB usAD crawlPush crawlLocal usShell sortCrc32attrMap perlxs-sdcrawl setuid usMapback mod_auth_boitho_a2 setuid ppt2html init.d.start
 
 init.d.stop:
 	@echo ""
@@ -1346,6 +1346,12 @@ parser2:
 	@echo "$@:"
 	(cd src/parser2 && make clean)
 	(cd src/parser2 && make)
+
+ppt2html:
+	@echo ""
+	@echo "$@:"
+	(cd fileFilter/ppt2html/src && make clean)
+	(cd fileFilter/ppt2html/src && make)
 
 #kopierer filer slik at de blir tilgjengelig fra web
 webpublish:
