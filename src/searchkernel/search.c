@@ -854,6 +854,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
                 perror("malloc TmpArray");
                 exit(1);
         }
+	memset(TmpArray, 0, sizeof(struct iindexFormat));
 
 	bblog(INFO, "######################################################################");
 	bblog(INFO, "searchIndex: vil search index \"%s\"", indexType);
