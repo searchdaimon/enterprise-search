@@ -615,7 +615,7 @@ void do_chld(void *arg)
 		bblog(CLEAN, "~do_chld()");
 		return;
 	}
-
+	memset(SiderHeder, 0, sizeof(struct SiderHederFormat));
 
 	gettimeofday(&globalstart_time, NULL);
 
