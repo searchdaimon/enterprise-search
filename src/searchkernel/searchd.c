@@ -81,6 +81,37 @@ struct config_t cfg;
 
 struct iintegerMemArrayFormat global_DomainIDs;
 
+struct sendarrayFormat{
+	int size;
+	void *p;
+	int copy;
+};
+
+void send_to_array (struct sendarrayFormat *sendarray, int *sendarraylength, void *p, int size, int copy) {
+
+	#ifdef DEBUG
+		printf("send_to_array(sendarraylength=%i,size=%i)\n",*sendarraylength,size);
+	#endif
+
+	if (size == 0) {
+		return;
+	}
+
+	sendarray[*sendarraylength].copy = copy;
+
+	if (copy) {
+		sendarray[*sendarraylength].p = malloc(size);
+		memcpy(sendarray[*sendarraylength].p,p,size); 
+		sendarray[*sendarraylength].size = size;
+	}
+	else {
+		sendarray[*sendarraylength].p = p;
+		sendarray[*sendarraylength].size = size; 
+
+	}
+	*sendarraylength += 1;
+}
+
 int isInSubname(struct subnamesFormat *subnames,int nrOfSubnames,char s[]) {
 
 	int i;
@@ -93,8 +124,6 @@ int isInSubname(struct subnamesFormat *subnames,int nrOfSubnames,char s[]) {
 
 	return 0;
 }
-
-
 
 
 /* The signal handler exit the program. . */
@@ -163,7 +192,7 @@ int main(int argc, char *argv[])
 	#endif
 	struct config_t maincfg;
 
-        searchd_config.searchport 	= 0;
+	searchd_config.searchport 	= 0;
 	searchd_config.optLog 		= 0;
 	searchd_config.optMax 		= 0;
 	searchd_config.optSingle 	= 0;
@@ -795,53 +824,9 @@ void do_chld(void *arg)
 		SiderHeder->total_usecs);
 
 	#ifdef DEBUG
-	gettimeofday(&start_time, NULL);
-	#endif
-
-
-	#if 1
-
-
-	#ifdef DEBUG
-		gettimeofday(&end_time, NULL);
-		bblog(DEBUGINFO, "searchd_child: Time debug: sending SiderHeder %f",getTimeDifference(&start_time,&end_time));
-	#endif
-	
-
-	#ifdef DEBUG
 		gettimeofday(&start_time, NULL);
 	#endif
 
-	struct sendarrayFormat{
-		int size;
-		void *p;
-		int copy;
-	};
-
-	void send_to_array (struct sendarrayFormat *sendarray, int *sendarraylength, void *p, int size, int copy) {
-
-		#ifdef DEBUG
-			printf("send_to_array(sendarraylength=%i,size=%i)\n",*sendarraylength,size);
-		#endif
-
-		if (size == 0) {
-			return;
-		}
-
-		sendarray[*sendarraylength].copy = copy;
-	
-		if (copy) {
-			sendarray[*sendarraylength].p = malloc(size);
-			memcpy(sendarray[*sendarraylength].p,p,size); 
-			sendarray[*sendarraylength].size = size;
-		}
-		else {
-			sendarray[*sendarraylength].p = p;
-			sendarray[*sendarraylength].size = size; 
-
-		}
-		*sendarraylength += 1;
-	}
 
 	int sendarraylength = 0;
 	struct sendarrayFormat sendarray[SiderHeder->showabal + 2 + (SiderHeder->showabal * 32)];
@@ -926,77 +911,6 @@ void do_chld(void *arg)
 	}
 	bblog(DEBUGINFO,"~sendall(sendarraylength=%i, sendall=%p, sendtotal=%i)\n",sendarraylength,sendall,sendtotal);
 
-	free(SiderHeder->navigation_xml);
-
-	free(sendall);
-	
-	#else 
-
-	/* Disable tcp delay */
-	#if 0
-		int nodelayflag = 1;
-		setsockopt(mysocfd, IPPROTO_TCP, TCP_NODELAY, &nodelayflag, sizeof(int));
-	#endif
-
-	if ((n=send(mysocfd,SiderHeder, sizeof(struct SiderHederFormat),MSG_NOSIGNAL)) != sizeof(struct SiderHederFormat)) {
-		bblog_errno(ERROR, "siderheder: send only %i of %i at %s:%d",n,sizeof(struct SiderHederFormat),__FILE__,__LINE__);
-	}
-
-	#ifdef ATTRIBUTES
-		if (SiderHeder->navigation_xml_len > 0) {
-			if ((n=send(mysocfd, SiderHeder->navigation_xml, SiderHeder->navigation_xml_len, MSG_NOSIGNAL)) != SiderHeder->navigation_xml_len)
-			    {
-				bblog_errno(ERROR, "navigation xml: send only %i of %i at %s:%d",n,SiderHeder->navigation_xml_len,__FILE__,__LINE__);
-			    }
-		}
-
-		free(SiderHeder->navigation_xml);
-	#endif
-
-	#ifdef DEBUG
-		gettimeofday(&end_time, NULL);
-		bblog(DEBUGINFO, "searchd_child: Time debug: sending SiderHeder %f",getTimeDifference(&start_time,&end_time));
-	#endif
-	
-
-	#ifdef DEBUG
-		gettimeofday(&start_time, NULL);
-	#endif
-
-
-	for (i = 0; i < SiderHeder->showabal; i++) {
-		int j;
-		struct SiderFormat *s = Sider+i;
-		size_t len;
-
-		if ((n=send(mysocfd, s, sizeof(struct SiderFormat), MSG_NOSIGNAL)) != (sizeof(struct SiderFormat))) {
-			bblog(ERROR, "siderformat: send only %i of %i at %s:%d",n,sizeof(struct SiderFormat),__FILE__,__LINE__);
-			break;
-		}
-		/* Send duplicate urls */
-		for (j = 0; j < s->n_urls; j++) {
-			len = strlen(s->urls[j].url);
-			send(mysocfd, &len, sizeof(len), MSG_NOSIGNAL);
-			send(mysocfd, s->urls[j].url, len, MSG_NOSIGNAL);
-			len = strlen(s->urls[j].uri);
-			send(mysocfd, &len, sizeof(len), MSG_NOSIGNAL);
-			send(mysocfd, s->urls[j].uri, len, MSG_NOSIGNAL);
-			len = strlen(s->urls[j].fulluri);
-			send(mysocfd, &len, sizeof(len), MSG_NOSIGNAL);
-			send(mysocfd, s->urls[j].fulluri, len, MSG_NOSIGNAL);
-		}
-
-		/* Send attributes */
-		if (s->attributes == NULL) {
-			len = 0;
-		}
-		else {
-			len = strlen(s->attributes);
-		}
-		send(mysocfd, &len, sizeof(len), MSG_NOSIGNAL);
-		send(mysocfd, s->attributes, len, MSG_NOSIGNAL);
-	}
-	#endif
 
 	#ifdef DEBUG
 		gettimeofday(&end_time, NULL);
@@ -1006,6 +920,15 @@ void do_chld(void *arg)
 
 	/* close the socket */
 	close(mysocfd);
+	
+	free(SiderHeder->navigation_xml);
+
+	free(sendall);
+	
+	for (i = 0; i < SiderHeder->showabal; i++) {
+		struct SiderFormat *s = Sider+i;
+		free(s->attributes);
+	}
 
 	free(Sider);
 	free(SiderHeder);
@@ -1016,7 +939,7 @@ void do_chld(void *arg)
 
 
 	/* Cancel any running alarms */
-       	alarm (0);
+    alarm (0);
 
 
 	#ifdef WITH_PROFILING
