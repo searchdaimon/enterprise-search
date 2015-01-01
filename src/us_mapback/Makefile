@@ -1,6 +1,6 @@
 #gcc xml.c url.c main.c -I/usr/include/libxml2/ -L/usr/lib -lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl && ./a.out
 CFLAGS=		
-CFLAGS+=	-W -Wall -O0 -g -BLACK_BOX -I/usr/include/mysql
+CFLAGS+=	-W -Wall -O0 -g -BLACK_BOX -I/usr/include/mysql -fPIC
 LDFLAGS=	
 PROG=		us_mapback.so
 CC=		gcc
