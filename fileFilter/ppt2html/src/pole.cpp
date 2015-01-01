@@ -31,6 +31,7 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <cstring>
 
 #include "pole.h"
 

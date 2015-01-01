@@ -32,6 +32,8 @@
 //#include <kdebug.h>
 #include <stdio.h>
 
+typedef unsigned int uint;
+
 // Use anonymous namespace to cover following functions
 namespace{
 
