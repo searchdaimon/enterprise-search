@@ -631,6 +631,8 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 
 				html_parser_run(url, htmlBuffer, htmlBufferSize, &titleaa, &body, fn, NULL);
 
+				free(htmlBuffer);
+
 				gettimeofday(&end_time, NULL);
 				#ifdef DEBUG_TIME
 					PagesResults->popResultBreakDownTime.html_parser_run.time += getTimeDifference(&start_time,&end_time);
