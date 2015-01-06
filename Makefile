@@ -1352,6 +1352,14 @@ ppt2html:
 	@echo "$@:"
 	(cd fileFilter/ppt2html/src && make clean)
 	(cd fileFilter/ppt2html/src && make)
+	cp -v  fileFilter/ppt2html/src/ppt2html fileFilter/ppt2html/
+
+
+newspelling:
+	@echo ""
+	@echo "$@:"
+	(cd src/newspelling && make clean)
+	(cd src/newspelling && make)
 
 #kopierer filer slik at de blir tilgjengelig fra web
 webpublish:
