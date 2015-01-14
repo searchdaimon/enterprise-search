@@ -19,6 +19,7 @@ use config qw(%TPL_FILE %CFG @SEARCH_ENV_LOGGING %DEF_TPL_OPT);
 use ResultParse::SD_v2_1;
 use NavMenu qw(read_navmenu_cfg);
 use Time::HiRes;
+use Encode;
 
 our $StartTime  = Time::HiRes::time;
 
@@ -29,7 +30,7 @@ BEGIN {
 	# that occurs on some virtualizations platforms.
 	# Enable Unicode output
 	#binmode(STDIN, ":encoding(utf8)");
-	binmode(STDOUT, ":utf8"); 
+	#binmode(STDOUT, ":utf8"); 
 
 	CGI::Carp::set_message(" ");
 	{
@@ -125,6 +126,8 @@ sub show_search {
 	my $search_uri = gen_search_uri(query => $query, page => $page, anonymous => $anonymous, navmenucfg => $navmenu_cfg);
 	my $xml_str = get($search_uri)
 		or fatal("No result from dispatcher.");
+
+	$xml_str = encode('utf-8', $xml_str);
 
 	if ($show_debug) {
 		print CGI::header(-type => "text/xml", -charset => "UTF-8");
