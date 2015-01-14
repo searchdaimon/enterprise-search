@@ -995,10 +995,10 @@ int main(int argc, char *argv[])
 		// Send correct Content-type HTTP header:
 		if ( QueryData.outformat == _OUT_FOMRAT_SD_JSON) {
 			printf("Access-Control-Allow-Origin: *\n"); // Alwo all JavaScript to access this
-			printf("Content-type: application/json\n\n");
+			printf("Content-type: application/json;charset=UTF-8\n\n");
 		}
 		else {
-			printf("Content-type: text/xml\n\n");
+			printf("Content-type: text/xml;charset=UTF-8\n\n");
 		}
 
 		if (access == ACCESS_TYPE_LIMITED)
