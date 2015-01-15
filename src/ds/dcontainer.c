@@ -223,31 +223,48 @@ alloc_data ptr_ap_allocate( container *C, va_list ap )
     return x;
 }
 
-
-static inline void ptr_deallocate( container *C, value a )
+#ifndef DEBUG
+static inline 
+#endif
+void ptr_deallocate( container *C, value a )
 {
 }
 
-inline void ptr_destroy( container *C )
+#ifndef DEBUG
+inline 
+#endif
+void ptr_destroy( container *C )
 {
     free(C);
 }
 
-inline void ptr_clear( container *C )
+#ifndef DEBUG
+inline 
+#endif
+void ptr_clear( container *C )
 {
 }
 
-inline container* ptr_clone( container *C )
+#ifndef DEBUG
+inline 
+#endif
+container* ptr_clone( container *C )
 {
     return ptr_container();
 }
 
-inline value ptr_copy( container *C, value a )
+#ifndef DEBUG
+inline 
+#endif
+value ptr_copy( container *C, value a )
 {
     return a;
 }
 
-inline void ptr_print( container *C, value a )
+#ifndef DEBUG
+inline 
+#endif
+void ptr_print( container *C, value a )
 {
     printf("(ptr:%x)", a.i);
 }
@@ -355,17 +372,26 @@ void clear( container *C )
     C->clear(C);
 }
 
-inline void print( container *C )
+#ifndef DEBUG
+inline 
+#endif
+void print( container *C )
 {
     C->print(C, container_value(C));
 }
 
-inline void printv( container *C, value v )
+#ifndef DEBUG
+inline 
+#endif
+void printv( container *C, value v )
 {
     C->print(C, v);
 }
 
-inline void println( container *C )
+#ifndef DEBUG
+inline 
+#endif
+void println( container *C )
 {
     C->print(C, container_value(C));
     printf("\n");
@@ -380,7 +406,10 @@ char* asprint( container *C, char *delim )
     return buffer_exit(B);
 }
 
-inline void bprintv( container *C, buffer *B, char *delim, value v )
+#ifndef DEBUG
+inline 
+#endif
+void bprintv( container *C, buffer *B, char *delim, value v )
 {
     C->bprint(C, B, delim, v);
 }
@@ -392,7 +421,10 @@ void destroy_iterator( iterator *it )
 }
 */
 
-inline container* ds_intersection( iterator2 a, iterator2 b )
+#ifndef DEBUG
+inline 
+#endif
+container* ds_intersection( iterator2 a, iterator2 b )
 {
     container	*C = a.C;
     container	*R = C->clone(C);
@@ -420,8 +452,10 @@ inline container* ds_intersection( iterator2 a, iterator2 b )
     return R;
 }
 
-
-inline container* ds_union( iterator2 a, iterator2 b )
+#ifndef DEBUG
+inline 
+#endif
+container* ds_union( iterator2 a, iterator2 b )
 {
     container	*C = a.C;
     container	*R = C->clone(C);
