@@ -31,5 +31,6 @@ void* vector_new_data();
 void vector_destroy_data( container *C );
 extern inline void vector_attach_data( container *V, void *data );
 
+void vector_new_data_free(void *V);
 
 #endif	// _DVECTOR_H_

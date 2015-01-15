@@ -225,6 +225,21 @@ void* vector_new_data()
     return (void*)VP;
 }
 
+/*
+	Runarb: 15.01.2015:
+	This is one bug mess. vector_new_data() dos not return a true container, so the privies 
+	method of using the free function from containers dos not work.
+
+	Has made the routine below to get around it for now.
+*/
+void vector_new_data_free(void *V)
+{
+	vector_container_priv       *VP = V;
+	free(VP->elem);
+	free(VP);
+	
+}
+
 void vector_destroy_data( container *V )
 {
     vector_container_priv	*VP = V->priv;
