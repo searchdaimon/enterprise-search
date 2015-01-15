@@ -14,6 +14,7 @@
 #include "../3pLibs/keyValueHash/hashtable_itr.h"
 #include "../common/ht.h"
 #include "../common/utf8-strings.h"
+#include "../common/bstr.h"
 #include "../ds/dcontainer.h"
 #include "../ds/dlist.h"
 #include "../ds/dset.h"
@@ -48,7 +49,7 @@ wchar_t* strtowcsdup(char *str)
 {
     wchar_t     *w = malloc((strlen(str)+1)*sizeof(wchar_t));
 
-    if (mbstowcs(w, str, strlen(str)+1) == -1)
+    if (mbstowcs(w, str, strlen(str)+1) == (size_t) -1)
         {
             // Has probably encountered utf8-characters
             int         slen = strlen(str);
@@ -58,8 +59,7 @@ wchar_t* strtowcsdup(char *str)
                 {
                     int         n;
 
-                    unsigned char z = str[len];
-                    if (n=valid_utf8_byte((utf8_byte*)&str[len], slen-len))
+                    if ((n=valid_utf8_byte((utf8_byte*)&str[len], slen-len)) != 0)
                         {
                             int U = convert_utf8_U((utf8_byte*)&str[len]);
 
@@ -83,8 +83,13 @@ wchar_t* strtowcsdup(char *str)
 
 char* wcstostrdup(wchar_t *w)
 {
+    size_t	i, len=0;
     char	*tempstr = malloc((wcslen(w)+1)*sizeof(char)*4);
-    int		i, len=0;
+	
+    if (tempstr == NULL) {
+        perror("wcstostrdup malloc:");
+        return NULL;
+    }
 
     for (i=0; i<wcslen(w); i++)
 	{
@@ -94,6 +99,11 @@ char* wcstostrdup(wchar_t *w)
     tempstr[len] = '\0';
 
     char	*str = strdup(tempstr);
+    if (str == NULL) {
+        perror("wcstostrdup strdup:");
+        return NULL;
+    }
+
     free(tempstr);
 
     return str;
@@ -110,6 +120,9 @@ int* create_intarray_from_list(struct hashtable *H, container *V, char *L, unsig
         {
             for (Count=0; Data[Count] != NULL && Count<65535; Count++) len++;
 	    ret = malloc(len * sizeof(int));
+            if (ret == NULL) {
+                perror("create_intarray_from_list malloc ret: ");
+            }
 
             for (Count=0; Data[Count] != NULL && Count<65535; Count++)
     		{
@@ -345,6 +358,10 @@ train(const char *dict)
 		if (wel == NULL) {
 			container *list;
 			we = malloc(sizeof(*we));
+			if (we == NULL) {
+                            perror("Malloc we:");
+                            return NULL;
+                        }
 			_we+= sizeof(*we);
 			we->frequency = strtol(token[1], NULL, 10);
 			we->word = word;
@@ -366,6 +383,7 @@ train(const char *dict)
 
 			if (!hashtable_insert(s->words, word, we)) {
 				warn("hashtable_insert()");
+				return NULL;
 			}
 			_hash++;
 
@@ -375,10 +393,14 @@ train(const char *dict)
 				char *sl = strdup(we->soundslike);
 				list = vector_new_data();
 				_vector+= 16;
-				if (!hashtable_insert(s->soundslike, we->soundslike, list))
+				if (!hashtable_insert(s->soundslike, we->soundslike, list)) {
 					warn("hashtable_insert(soundslike)");
-				if (!hashtable_insert(soundslikelookup, sl, we->soundslike))
+					return NULL;
+				}
+				if (!hashtable_insert(soundslikelookup, sl, we->soundslike)) {
 					warn("hashtable_insert(soundslikelookup)");
+					return NULL;
+				}
 				_hash+= 2;
 			} else {
 				char *sl = hashtable_search(soundslikelookup, we->soundslike);
@@ -406,7 +428,7 @@ train(const char *dict)
 
  		if (((num_words % 10000) == 0 && num_words != last_printed)
 		    || ((num_dup_words % 10000) == 0 && num_dup_words != last_printed_dup)) {
-			printf("Words: %d (dups: %d)\t\t(we:%i word:%i soundslike:%i ints:%i hash:%i vector:%i+%i aclV:%i subV:%i)\n",
+			printf("Words: %d (dups: %d)\t\t(we:%i word:%i soundslike:%i ints:%i hash:%i vector:%i+%zu aclV:%i subV:%i)\n",
 			    num_words, num_dup_words,
 			    _we, _word, _soundslike, _ints, _hash, _vector, _vn*sizeof(void*),
 			    vector_size(s->_aclV), vector_size(s->_subnameV));
@@ -447,16 +469,31 @@ untrain(spelling_t *s)
 	itr = hashtable_iterator(s->soundslike);
 	do {
 		container *list = hashtable_iterator_value(itr);
-
-		destroy(list);
+		vector_new_data_free(list);
 	} while (hashtable_iterator_advance(itr));
 	free(itr);
+
 	hashtable_destroy(s->soundslike, 0);
 	s->soundslike = NULL;
 
 	// firgjør s->words. Vil kalle free() på alle elementene
+	itr = hashtable_iterator(s->words);
+	do {
+		struct wordelem *we = hashtable_iterator_value(itr);
+
+		free(we->acl_allowed);
+		free(we->acl_denied);
+		free(we->collections);
+
+	} while (hashtable_iterator_advance(itr));
+	free(itr);
+
 	hashtable_destroy(s->words, 1);
 	s->words = NULL;
+
+	destroy(s->_aclV);
+	destroy(s->_subnameV);
+	destroy(s->_vp_tmpl);
 
 	printf("~untrain\n");
 
@@ -484,6 +521,7 @@ untrain(spelling_t *s)
 
 	printf("~untrain\n");
 */
+	free(s);
 }
 
 void editsn(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int levels, container *groups, container *subnames);
@@ -565,7 +603,7 @@ editsn(const spelling_t *s, scache_t *c, wchar_t *wword, wchar_t *word, wchar_t 
 }
 
 static inline void
-handle_soundslike(scache_t *c, int dist, int frequency, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq, int phase)
+handle_soundslike(int dist, int frequency, wchar_t *word, wchar_t **best, int *mindist, int *maxfreq)
 {
 	if (dist < *mindist) {
 		*mindist = dist;
@@ -761,7 +799,7 @@ check_soundslike(const spelling_t *s, scache_t *c,  wchar_t *wword, wchar_t *lik
 		wchar_t *we_wword = strtowcsdup(we->word);
 
 		dist = levenshteindistance(wword, we_wword);
-		handle_soundslike(c, dist, we->frequency, we_wword, bestw, mindist, maxfreq, phase);
+		handle_soundslike(dist, we->frequency, we_wword, bestw, mindist, maxfreq);
 
 		free(we_wword);
 
@@ -780,7 +818,6 @@ check_word(const spelling_t *s, char *word, int *found, container *groups, conta
 	wchar_t *like;
 	scache_t *cache;
 	char u8word[LINE_MAX];
-	int i;
 
 	*found = 0;
 
@@ -834,27 +871,32 @@ main(int argc, char **argv)
 {
 	int found;
 	int i;
-	spelling_t s;
+	spelling_t *s;
 	//time_t start, end;
 
 	setlocale(LC_ALL, "en_US.UTF-8");
 
-	train(&s, "/home/eirik/wordlist-100freq");
-	//train(&s, "/home/eirik/Boitho/boitho/websearch/var/dictionarywords");
+	s = train("/home/boitho/boithoTools/var/dictionarywords");
+	if (s == NULL) {
+		printf("Error: train() returned NULL.");
+		return 0;
+	}
 
 #if 0
 
 	struct hashtable_itr *itr;
-	itr = hashtable_iterator(s.soundslike);
+	itr = hashtable_iterator(s->soundslike);
 
 	do {
 		wchar_t *key = hashtable_iterator_key(itr);
 
 		printf("Sounds like: %ls\n", key);
+		printf("Sounds like2: %s\n", key);
 	} while (hashtable_iterator_advance(itr));
 
 #endif
 
+#if 0
 	for (i = 1; i < argc; i++) {
 		char *p;
 
@@ -868,8 +910,9 @@ main(int argc, char **argv)
 			//printf("No better word found\n");
 		}
 	}
+#endif
 
-	untrain(&s);
+	untrain(s);
 
 	return 0;
 }
