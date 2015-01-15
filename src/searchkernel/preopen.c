@@ -105,7 +105,6 @@ void cache_spelling_hup(int sig) {
 }
 #endif
 
-#define MAX_INDEX_CACHE (1024*1024*256)
 
 typedef struct {
 	void *ptr;
