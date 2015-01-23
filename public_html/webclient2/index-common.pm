@@ -213,6 +213,7 @@ sub show_cache {
 	fatal("Unable to load cache, cache server provided no data.")
 		unless defined $cache_data;
 
+	$cache_data = encode('utf-8',$cache_data);
 	return ($TPL_FILE{cache}, cache_data => $cache_data);
 }
 
