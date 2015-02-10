@@ -275,3 +275,6 @@ INSERT INTO `connectors` VALUES (6, 'Local', 'Local files on your ES. This is mo
 -- User system that executes a shell command
 INSERT INTO `systemConnector` (`id`, `name`, `extension`, `modified`, `active`, `read_only`) VALUES (5,'Executes shell command',0,NULL,1,1);
 INSERT INTO `systemParam` VALUES (5, 'command', '/home/boitho/boithoTools/src/us_shellexe/example.pl', 1);
+
+
+INSERT INTO `config` VALUES ('allow_multi_crawl',0);

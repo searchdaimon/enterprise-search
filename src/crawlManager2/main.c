@@ -1923,6 +1923,7 @@ int redirect_stdoutput(char * file) {
 void crawl(struct collectionFormat *collection,int nrofcollections, int flag, int docsRemaining, char *extra) {
 
 	int i;
+	int allow_multi_crawl;
 
 	struct collection_lockFormat collection_lock;
 	
@@ -1982,22 +1983,29 @@ void crawl(struct collectionFormat *collection,int nrofcollections, int flag, in
 			bbdocument_deletecoll(collection[i].collection_name);
 		}
 
+		// See if we allow multipal 
+		bconfig_flush(CONFIG_CACHE_IS_OK);
+		if (!bconfig_getentryint("allow_multi_crawl",&allow_multi_crawl)) {
+			allow_multi_crawl = 0;
+		}
+
 		//tester at vi ikke allerede holder på å crawle denne fra før
 		if (!crawl_lock(&collection_lock,collection[i].collection_name)) {
 			bblog(ERROR, "Error: Can't crawl collection \"%s\". We are already crawling it.",collection[i].collection_name);
 			continue;
 		}
 
-		//tester at vi ikke driver å crawler med den crawleren fra før. Her burde vi kansje 
-		//heller satset på å begrense på server. Slik at for eks to smb servere kan crawles samtidig
-		if (!crawl_element_lock(&collection_lock,collection[i].connector)) {
-			bblog(ERROR, "Error: Can't crawl collection \"%s\". We are already crawling this type/server.",collection[i].collection_name);
-			set_crawl_state(CRAWL_ERROR, collection[i].id,
-				"Can't crawl collection. We are already crawling this type/server.");
+		if(!allow_multi_crawl) {
+			//tester at vi ikke driver å crawler med den crawleren fra før. Her burde vi kansje 
+			//heller satset på å begrense på server. Slik at for eks to smb servere kan crawles samtidig
+			if (!crawl_element_lock(&collection_lock,collection[i].connector)) {
+				bblog(ERROR, "Error: Can't crawl collection \"%s\". We are already crawling this type/server.",collection[i].collection_name);
+				set_crawl_state(CRAWL_ERROR, collection[i].id,
+					"Can't crawl collection. We are already crawling this type/server.");
 
-			continue;
+				continue;
+			}
 		}
-		
 		//setter at vi har begynt og cralwe
 		set_crawl_state(CRAWL_CRAWLING, collection[i].id, NULL);
 	
@@ -2048,7 +2056,9 @@ void crawl(struct collectionFormat *collection,int nrofcollections, int flag, in
         	}
 
 		crawl_unlock(&collection_lock);
-		crawl_element_unlock(&collection_lock);
+		if(!allow_multi_crawl) {
+			crawl_element_unlock(&collection_lock);
+		}
 
 		bblog(CLEAN, "Finished crawling of collection \"%s\" (id %u).",collection[i].collection_name,collection[i].id);
 
