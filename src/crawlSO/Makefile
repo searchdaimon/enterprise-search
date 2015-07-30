@@ -1,7 +1,7 @@
 #gcc xml.c url.c main.c -I/usr/include/libxml2/ -L/usr/lib -lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl && ./a.out
-CFLAGS=		-I/usr/include/libxml2/ -L/usr/lib -I/home/eirik/.root/include ../common/daemon.c
+CFLAGS=		-I/usr/include/libxml2/ -L/usr/lib ../common/daemon.c
 CFLAGS+=	-W -Wall -O2 -g -BLACK_BOX
-LDFLAGS=	-lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl -L/home/eirik/.root/lib
+LDFLAGS=	-lxml2 -lz -lm  -lcurl  -lssl -lcrypto -ldl
 PROG=		crawlSO.so
 CC=		gcc
 
