@@ -53,6 +53,11 @@ sub add_document {
         $params{attributes} = $attrstr;
     }
 
+    if ($params{poprank} && $params{poprank} > 255) {
+        carp "PopRank can not be larger then 255. Rank value " . $params{poprank} . " was truncated to 255.";
+        $params{poprank} = 255;
+    }
+
 # run
     lock($t_lock); # Lock to prevent to threads to access the below at the same time
     return SD::Crawl::pdocumentAdd($self->{ptr},
