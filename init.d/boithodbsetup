@@ -14,12 +14,23 @@ else
   exit 0
 fi
 
+
+# Find correct path to daemonize
+if [ -f /usr/local/sbin/daemonize ] ; then
+  DAEMONIZE="/usr/local/sbin/daemonize"
+elif [ -f /usr/sbin/daemonize ] ; then
+  DAEMONIZE="/usr/sbin/daemonize"
+else
+  echo "Cannot find path to daemonize"
+  exit 0
+fi
+
+
 if [ "$BOITHOHOME" == "" ]; then
     export BOITHOHOME=/home/boitho/boithoTools
 fi
-# Byttes ut:
-#B_RUN="/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $BOITHOHOME/bin/searchdbb localhost"
-B_RUN="/usr/local/sbin/daemonize /bin/sh $BOITHOHOME/blackbox/boithodbsetup"
+
+B_RUN="$DAEMONIZE /bin/sh $BOITHOHOME/blackbox/boithodbsetup"
 B_NAME=boithodbsetup
 RETVAL=0
 

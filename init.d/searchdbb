@@ -4,6 +4,17 @@
 # description: Starts and stops the Boitho Daemon searchdbb.
 # processname: searchdbb
 
+# Find correct path to daemonize
+if [ -f /usr/local/sbin/daemonize ] ; then
+  DAEMONIZE="/usr/local/sbin/daemonize"
+elif [ -f /usr/sbin/daemonize ] ; then
+  DAEMONIZE="/usr/sbin/daemonize"
+else
+  echo "Cannot find path to daemonize"
+  exit 0
+fi
+
+
 if [ "$BOITHOHOME" == "" ]; then
     export BOITHOHOME=/home/boitho/boithoTools
 fi
@@ -25,10 +36,10 @@ fi
 
 #poor mans setuid. If we are root we will run the program as user boitho
 if [ `id -u` == 0 ]; then
-	B_RUN="/usr/local/sbin/daemonize -u boitho $BOITHOHOME/bin/everrun $BOITHOHOME/bin/searchdbb -l localhost"
+	B_RUN="$DAEMONIZE -u boitho $BOITHOHOME/bin/everrun $BOITHOHOME/bin/searchdbb -l localhost"
 
 else
-	B_RUN="/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $BOITHOHOME/bin/searchdbb -l localhost"
+	B_RUN="$DAEMONIZE $BOITHOHOME/bin/everrun $BOITHOHOME/bin/searchdbb -l localhost"
 fi
 
 

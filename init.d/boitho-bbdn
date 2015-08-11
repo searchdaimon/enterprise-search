@@ -4,10 +4,20 @@
 # description: Starts and stops the Boitho Daemon boitho-bbdn.
 # processname: boitho-bbdn
 
+# Find correct path to daemonize
+if [ -f /usr/local/sbin/daemonize ] ; then
+  DAEMONIZE="/usr/local/sbin/daemonize"
+elif [ -f /usr/sbin/daemonize ] ; then
+  DAEMONIZE="/usr/sbin/daemonize"
+else
+  echo "Cannot find path to daemonize"
+  exit 0
+fi
+
+
 if [ "$BOITHOHOME" == "" ]; then
     export BOITHOHOME=/home/boitho/boithoTools
 fi
-
 
 # Source function library.
 
@@ -25,10 +35,10 @@ fi
 # Byttes ut:
 #poor mans setuid. If we are root we will run the program as user boitho
 if [ `id -u` == 0 ]; then
-	B_RUN="/usr/local/sbin/daemonize -u boitho $BOITHOHOME/bin/everrun $BOITHOHOME/bin/boitho-bbdn"
+	B_RUN="$DAEMONIZE -u boitho $BOITHOHOME/bin/everrun $BOITHOHOME/bin/boitho-bbdn"
 
 else
-	B_RUN="/usr/local/sbin/daemonize $BOITHOHOME/bin/everrun $BOITHOHOME/bin/boitho-bbdn"
+	B_RUN="$DAEMONIZE $BOITHOHOME/bin/everrun $BOITHOHOME/bin/boitho-bbdn"
 fi
 
 B_NAME=boitho-bbdn
