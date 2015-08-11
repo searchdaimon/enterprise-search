@@ -100,20 +100,35 @@ void allrankcalk(struct iindexFormat *TeffArray ,int *TeffArrayElementer) {
 
 				TermRankNormalized = TeffArray->iindex[i].TermRank;
 
-				if (TermRankNormalized > (TeffArray->iindex[i].PopRank +30)) {
-					TermRankNormalized = (TeffArray->iindex[i].PopRank +30);
-				}
 
 
 				PopRankNormalized = TeffArray->iindex[i].PopRank;
 				//legger til en her da vi kan ha 0, og vi har * med 0. Bør fikkses en anne plass. da 255++ rt 0
  				++PopRankNormalized;
  
+				#ifndef BLACK_BOX
+				if (TermRankNormalized > (TeffArray->iindex[i].PopRank +30)) {
+					TermRankNormalized = (TeffArray->iindex[i].PopRank +30);
+				}
+
 				if (PopRankNormalized > (TeffArray->iindex[i].TermRank +30)) {
 					PopRankNormalized = (TeffArray->iindex[i].TermRank +30);
 				}
+				#endif
+
+				if (TermRankNormalized == 0) {
+					TermRankNormalized = 1;
+				}
+
+				if (PopRankNormalized == 0) {
+					PopRankNormalized = 1;
+				}
 
 				TeffArray->iindex[i].allrank = (((100.0/255.0) * TermRankNormalized) * PopRankNormalized);
+
+				#ifdef DEBUG
+				printf("Rank: PopRank=%i (normalized=%i), TermRank=%i (normalized=%i), allrank=%i\n", TeffArray->iindex[i].PopRank, PopRankNormalized,TeffArray->iindex[i].TermRank,TermRankNormalized,TeffArray->iindex[i].allrank);
+				#endif
 
 			}
 
