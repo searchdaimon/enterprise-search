@@ -1,0 +1,25 @@
+#########################################################################################################
+#                                                                                                       #
+# Packages made by Searchdaimon                                                                         #
+#                                                                                                       #
+#########################################################################################################
+[boitho-production]
+name=Searchdaimon-$releasever - Base
+baseurl=http://repo.searchdaimon.com/closed/CentOSRepository/boitho/$releasever/updates/$basearch/
+enabled=1
+gpgcheck=0
+
+# For testing
+[boitho-testing]
+name=Searchdaimon-$releasever - Base
+baseurl=http://repo.searchdaimon.com/closed/CentOSRepository/boitho-testing/$releasever/updates/$basearch/
+enabled=0
+gpgcheck=0
+
+# For development
+[boitho-devel]
+name=Searchdaimon-$releasever - Base
+baseurl=http://repo.searchdaimon.com/closed/CentOSRepository/boitho-devel/$releasever/updates/$basearch/
+enabled=0
+gpgcheck=0
+

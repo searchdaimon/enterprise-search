@@ -1,0 +1,39 @@
+[sdfedora]
+name=Fedora $releasever - $basearch
+failovermethod=priority
+#baseurl=http://download.fedora.redhat.com/pub/fedora/linux/releases/$releasever/Everything/$basearch/os/
+baseurl=http://boitho:water66@www.searchdaimon.com/closed/FedoraRepository/Fedora/core/$releasever/$basearch/os/
+#mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-$releasever&arch=$basearch
+enabled=1
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora file:///etc/pki/rpm-gpg/RPM-GPG-KEY
+
+[boitho-production]
+name=Fedora $releasever - $basearch - Baseline
+failovermethod=priority
+#baseurl=http://download.fedora.redhat.com/pub/fedora/linux/releases/$releasever/Everything/$basearch/debug/
+baseurl=http://boitho:water66@www.searchdaimon.com/closed/FedoraRepository/boitho/updates/$releasever/$basearch/
+#mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-debug-$releasever&arch=$basearch
+enabled=0
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora file:///etc/pki/rpm-gpg/RPM-GPG-KEY
+
+[boitho-testing]
+name=Fedora $releasever - $basearch - Testing
+failovermethod=priority
+#baseurl=http://download.fedora.redhat.com/pub/fedora/linux/releases/$releasever/Everything/$basearch/debug/
+baseurl=http://boitho:water66@www.searchdaimon.com/closed/FedoraRepository/boitho-testing/updates/$releasever/$basearch/
+#mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-debug-$releasever&arch=$basearch
+enabled=0
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora file:///etc/pki/rpm-gpg/RPM-GPG-KEY
+
+[boitho-devel]
+name=Fedora $releasever - $basearch - Development
+failovermethod=priority
+#baseurl=http://download.fedora.redhat.com/pub/fedora/linux/releases/$releasever/Everything/$basearch/debug/
+baseurl=http://boitho:water66@www.searchdaimon.com/closed/FedoraRepository/boitho-devel/updates/$releasever/$basearch/
+#mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-debug-$releasever&arch=$basearch
+enabled=0
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora file:///etc/pki/rpm-gpg/RPM-GPG-KEY
