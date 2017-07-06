@@ -42,12 +42,12 @@ yum clean all
 yum -y install perl-Template-Toolkit perl-XML-NamespaceSupport perl-XML-SimpleObject perl-XML-LibXML perl-XML-Parser perl-XML-LibXML-Common perl-XML-SAX perl-Net-IP perl-XML-Writer perl-IO-String perl-Apache-Htpasswd perl-DBI perl-Params-Validate perl-HTTP-Request-AsCGI perl-JSON-XS perl-DateTime perl-ExtUtils-Embed perl-Time-HiRes perl-DBD-MySQL perl-Template-Toolkit perl-XML-Parser perl-XML-Writer perl-IO-String perl-Net-IP perl-Text-Iconv.x86_64
 
 # Install catdoc and abiword
-yum -y install catdoc
-yum -y install abiword
+yum -y --enablerepo=epel install catdoc
+yum -y --enablerepo=epel install abiword
 
 # Instal the setup tool with network and firewall utiletis
 yum -y install system-config-firewall-tui system-config-network-tui setuptool
 
 # Rest of the boitho packages
-yum -y install boitho-meta
+yum -y --enablerepo=epel install boitho-meta
 
