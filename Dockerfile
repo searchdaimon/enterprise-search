@@ -4,6 +4,9 @@ ENV container docker
 
 WORKDIR /tmp
 
+RUN sed -i 's/mirror\.centos\.org/vault.centos.org/g' /etc/yum.repos.d/CentOS-*.repo
+RUN sed -i 's/^#.*baseurl=http/baseurl=http/g' /etc/yum.repos.d/CentOS-*.repo
+RUN sed -i 's/^mirrorlist=http/#mirrorlist=http/g' /etc/yum.repos.d/CentOS-*.repo
 
 RUN yum update -y && yum install -y epel-release && yum install --enablerepo="epel" install -y \
     rootfiles \
