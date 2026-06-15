@@ -61,5 +61,9 @@
     <img src="img/default/infobar_right.jpg" alt="" width="18" height="27"/>
 </div>
 [% END %]
+[% IF query.defined %]
+<button type="button" id="navToggle" onclick="document.body.classList.toggle('nav-visible');"
+        aria-label="[% "Refine search" | i18n %]">&#9776; [% "Refine search" | i18n %]</button>
+[% END %]
 <div style="clear : both; position : relative;">
 [% END %]

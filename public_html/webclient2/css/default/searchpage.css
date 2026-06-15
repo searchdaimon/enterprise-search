@@ -432,3 +432,103 @@ ul.genericAttributes {
     width: 10em;
     border-width: 1px 1px 1px 0;
 }
+
+
+/* ----------------------------------------------------------------------------
+ * Responsive layout for phones / narrow screens.
+ *
+ * The desktop layout positions the facet navigation as a fixed 15em sidebar and
+ * offsets the results by 16em. On small screens we stack everything into a
+ * single column and collapse the sidebar behind a toggle button (#navToggle,
+ * rendered in head.tpl), which adds the body class "nav-visible" when tapped.
+ * ------------------------------------------------------------------------- */
+
+/* The filter toggle is hidden on desktop; the media query below reveals it. */
+#navToggle {
+    display : none;
+}
+
+@media (max-width: 768px) {
+    /* Fluid logo instead of the fixed 368x102 attributes. */
+    #topNav a img {
+        max-width : 100%;
+        height : auto;
+    }
+
+    /* Full-width search form; drop the absolute submit-button offset. */
+    #topNav form div {
+        float : none;
+        position : static;
+        padding : 0.5em;
+        width : auto;
+    }
+    #topNav #queryField {
+        width : 70%;
+        font-size : 1em;
+        padding : 0.4em;
+        box-sizing : border-box;
+    }
+    #topNav #queryBtn {
+        position : static;
+        top : auto;
+        right : auto;
+        vertical-align : middle;
+    }
+
+    /* Reveal the filter toggle as a full-width bar. */
+    #navToggle {
+        display : block;
+        width : 100%;
+        box-sizing : border-box;
+        margin : 0;
+        padding : 0.7em 1em;
+        border : 0;
+        background : #014f99;
+        color : white;
+        font-size : 1em;
+        text-align : left;
+        cursor : pointer;
+    }
+
+    /* The facet sidebar flows in-page and is hidden until toggled open. */
+    #nav, #filterText {
+        position : static;
+        width : auto;
+        left : auto;
+        top : auto;
+    }
+    #nav {
+        display : none;
+    }
+    body.nav-visible #nav {
+        display : block;
+    }
+
+    /* Remove the 16em offsets that reserved space for the sidebar. */
+    #collectionNav,
+    #messages,
+    #results,
+    #filtered {
+        margin-left : 0.5em;
+        margin-right : 0.5em;
+    }
+    #collectionNav {
+        margin-left : 0;
+    }
+    #results {
+        max-width : none;
+    }
+    #results .snippet {
+        max-width : none;
+    }
+
+    /* Pagination and sort bar back into the normal flow. */
+    #navWrapper {
+        width : auto;
+    }
+    #sortBar {
+        position : static;
+        margin : 0.5em;
+        text-align : right;
+    }
+}

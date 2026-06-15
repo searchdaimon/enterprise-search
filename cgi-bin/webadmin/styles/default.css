@@ -465,3 +465,80 @@ table .error {
 .infotable td {
 	padding: 2px;
 }
+
+
+/* ----------------------------------------------------------------------------
+ * Responsive layout for phones / narrow screens.
+ *
+ * The desktop admin layout absolutely positions the left menu (20%) and offsets
+ * the content (left:22%/30%). On small screens we stack everything into one
+ * column and collapse the menu behind a toggle button (#menuToggle in
+ * header.html), which adds the class "menu-open" to #main when tapped.
+ * !important is required because the content column's offset is an inline style.
+ * ------------------------------------------------------------------------- */
+
+/* The menu toggle is hidden on desktop; the media query below reveals it. */
+#menuToggle {
+	display : none;
+}
+
+@media (max-width: 768px) {
+	/* Reveal the menu toggle as a full-width bar. */
+	#menuToggle {
+		display : block;
+		width : 100%;
+		box-sizing : border-box;
+		margin : 0 0 0.5em 0;
+		padding : 0.7em 1em;
+		border : 0;
+		background : #044a90;
+		color : white;
+		font-size : 1em;
+		text-align : left;
+		cursor : pointer;
+	}
+
+	/* The left menu flows in-page and is hidden until toggled open. */
+	#left_menu {
+		position : static !important;
+		width : auto !important;
+		top : auto !important;
+	}
+	#main #left_menu {
+		display : none;
+	}
+	#main.menu-open #left_menu {
+		display : block;
+	}
+
+	/* Content column: drop the absolute offset and use the full width. */
+	#content_main,
+	.block_inner {
+		position : static !important;
+		left : auto !important;
+		width : auto !important;
+		top : auto !important;
+	}
+
+	/* Fluid blocks/forms and tables instead of fixed ems/percentages. */
+	.block_resource {
+		width : auto !important;
+		max-width : 100%;
+	}
+	.indent_form {
+		margin-left : 0 !important;
+	}
+	table {
+		max-width : 100%;
+	}
+
+	/* Header action buttons: let them wrap instead of forcing a wide row. */
+	body > p {
+		float : none !important;
+	}
+
+	img {
+		max-width : 100%;
+		height : auto;
+	}
+}
