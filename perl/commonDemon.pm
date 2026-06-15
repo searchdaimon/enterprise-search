@@ -5,14 +5,14 @@ require Exporter;
 @commonDemon::EXPORT_OK = qw(daemonis signal_handler_inaliser signal_handler opt_handler);
 
 ###############################################################################################################
-# blir er demon :-)																  #
+# become a daemon :-)																  #
 ###############################################################################################################
 sub daemonis {
 	my($logOUT,$logError,$programnavn) = @_;
 
 	my($output);
 	my($pid);
-#setter arbeidsdirekroty riktig
+#set the working directory correctly
 
 	print "Prover å bli en demon\n";
 	$output = `pwd 2>&1`;
@@ -35,8 +35,8 @@ sub daemonis {
 	use POSIX;
 	POSIX::setsid() or die "Can't start a new session: $!";
 	
-	#redirekter filhanterere.
-	#bør kansje redirekte filhandleren til /dev/null lenger den da vi risikerer å ikke få med feilmeldigner nå
+	#redirect the file handles.
+	#should perhaps redirect the file handle to /dev/null instead, since we risk missing error messages now
 
 	if ($logOUT) {
 		print "Logger til OUT til /tmp/" .$programnavn. "OUT.log\n";
@@ -66,7 +66,7 @@ sub daemonis {
 ###############################################################################################################
 ###############################################################################################################
 sub signal_handler_inaliser {
-	#instalerer ny signal handler, slik at hvir vi dør blir data lagret
+	#install a new signal handler, so that if we die the data is saved
 	#$SIG{INT} = \&signal_handler;
 	$SIG{INT} = $SIG{TERM} = $SIG{HUP} = \&signal_handler;
 }
@@ -86,21 +86,21 @@ sub signal_handler {
 sub hendelselog {
 	my($hvem,$hva) = @_;
 	
-	#printer ut hvis vi er i verbos mode
+	#print out if we are in verbose mode
 	if ($GLOBAL_verbos) {
 		print "$hvem: $hva\n";
 	}
 }
 ###############################################################################################################
-# parser og honterer argumenter som kommer inn via komandolinjen
+# parse and handle arguments that come in via the command line
 ###############################################################################################################
 sub opt_handler {
 	my($egene_argumeneter,$help) = @_;
 	my(%opts) = '';
 	my($argumenter);
 	
-	#lovlige argumenter
-	# t = bruk tmpfs space
+	#valid arguments
+	# t = use tmpfs space
 	$argumenter = 'vh';
 	
 	$argumenter .= $egene_argumeneter; 
@@ -110,7 +110,7 @@ sub opt_handler {
 	getopts($argumenter, \%opts);
 	
 
-	#verbos mode? i sofal skal vi printe ut massa data fra hendelsesloggen
+	#verbose mode? if so we print out lots of data from the event log
 	if ($opts{v}) {
 		$GLOBAL_verbos = 1;
 	}
@@ -123,7 +123,7 @@ Generell bruk:
 			
 	-v verbos mode, viser debugingsinfor
 		};
-		print "\n"; # onkelig avslutning slik at vi ikke får terminalpromt på feil plass
+		print "\n"; # tidy termination so that we do not get the terminal prompt in the wrong place
 		exit;
 	}
 

@@ -30,7 +30,7 @@ foreach my $lotPath (@LotPaths) {
 #Indekser(42,'Anchor',@revindexpaths);
 #Indekser(42,'Anchor',('/mnt/node1/hda4/lot/12/12/revindex/Anchor'));
 #exit;
-#hvis vi fikk inputt argument tar vi bare den bøtten. Slik kan man for eks bare ta 42
+#if we got an input argument we only take that bucket. This way you can for example take only 42
 if ($#ARGV != -1) {
 	print "Indexing bucket $ARGV[0]\n";
 
@@ -41,7 +41,7 @@ else {
 	for my $i (0 .. 64) {
         	print "$i\n";
 
-        	eval {  #eval slik at vi bare fortsetter hvis det skjer noe feil
+        	eval {  #eval so that we just continue if an error occurs
                 	Indekser($i,'Anchor',@revindexpaths);
         	}; warn $@ if $@;
 	}
@@ -67,7 +67,7 @@ foreach my $lotPath (@LotPaths) {
 for my $i (0 .. 64) {
 	print "$i\n";
 
-	eval {	#eval slik at vi bare fortsetter hvis det skjer noe feil
+	eval {	#eval so that we just continue if an error occurs
 		Indekser($i,'Main',@revindexpaths);
 	}; warn $@ if $@;
 
@@ -85,7 +85,7 @@ sub Indekser {
 	my $iindex_ha = iindex->new;
 
 
-	#går gjenom alle revindeksene 
+	#goes through all the revindexes 
 	my $count = 0;
 	foreach my $revindexPath (@revindexpaths) {
 
@@ -102,18 +102,18 @@ sub Indekser {
 	
 		my $buf = '';
 		my $char = '';
-		#lsere filen char for char i påvente eof
-		#leter etter **\n
+		#reads the file char by char while waiting for eof
+		#looks for **\n
 		#while (not eof(INF)) {
 		while (<INF>) {
 			chomp;
 		
 				
-						my $RindexRecord = $_;       #bruker $buf
+						my $RindexRecord = $_;       #uses $buf
 						#print "Ny record: $RindexRecord\n";
 			
-						my $lestTilOgMed = 0; #viser hvor langt vi har kommet med å lese posten
-						#hvis vi har mere en DocID og sprok lagret om denne DocIDen
+						my $lestTilOgMed = 0; #shows how far we have come reading the record
+						#if we have more than a DocID and language stored about this DocID
 						if (length($RindexRecord) > 7) {
 
 							#print "$RindexRecord\n";
@@ -131,7 +131,7 @@ sub Indekser {
 							
 							
 								######
-								# debug - viser data for et bestemt ord
+								# debug - shows data for a specific word
 								#if ($WordID == 4020398583) {
 									#print "WordID: $WordID antall: $antall\n";
 								#}
@@ -143,7 +143,7 @@ sub Indekser {
 								$lestTilOgMed = $lestTilOgMed + $HitListSize;
 			
 								#print "HitList: -$HitList- som er " . unpack('L',$HitList) . "\n";
-								#temp: bygger bare for ett ord, "chat"
+								#temp: builds for only one word, "chat"
 								
 								$iindex_ha->add($sprok,$DocID,$WordID,$antall,$HitList);
 								
@@ -152,11 +152,11 @@ sub Indekser {
 		
 		}
 		#print "file end\n";
-		#temp: skal denne være her insteden ???
+		#temp: should this be here instead ???
 		close(INF) or warn ("Cant close file: $!");
 		#$iindex_ha->WriteIIndexToFile($type,$revindexFilNr);
 
-		#temp: indekserer ikke de siste lotene
+		#temp: does not index the last lots
 		if ($count > 66) {
 			last;
 		}

@@ -23,7 +23,7 @@ typedef struct
 
 
 /**
- *	Returnerer container-struktur for pair basert på de to input-containerne.
+ *	Returns the container struct for a pair based on the two input containers.
  */
 container* pair_container( container *A, container *B );
 

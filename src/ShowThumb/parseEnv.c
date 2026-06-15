@@ -8,7 +8,7 @@ parseEnv (struct QueryDataForamt *QueryData) {
 
 	int res;
 
-	//inaliserer
+	//initialize
 	QueryData->query[0] = '\0';
 	
 
@@ -30,7 +30,7 @@ parseEnv (struct QueryDataForamt *QueryData) {
 	}
 
 	// debugg
-	//setter query
+	//set query
 	//strncat(QueryData->query,"sex",3);
 	///debug
 }

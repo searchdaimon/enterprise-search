@@ -18,7 +18,7 @@ ACL:BUILTIN\Users:0/0/0x001200a9
 /*
 
 doc := statement[, statement]
-statement := REVISION:<tall>
+statement := REVISION:<number>
 statement := OWNER:<id>
 statement := GROUP:<id>
 statement := ACL:<id>:<mask>
@@ -124,7 +124,7 @@ char** parseacl_read_access( char *acl_code )
     dbuf_pos = 0;
     read_everyone = 0;
 
-    // Vi skiller ikke mellom brukere over domener. Derfor dropper vi domenenavnet fra brukernavnet.
+    // We don't distinguish between users across domains. We therefore drop the domain name from the user name.
 //    yylex_init();
     YY_BUFFER_STATE	bs;
     bs = yy_scan_bytes( acl_code, strlen(acl_code) );

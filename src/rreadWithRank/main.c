@@ -41,7 +41,7 @@ main (int argc, char *argv[]) {
 
 	popopenMemArray(servername,"www");
 
-	//loppergjenom alle
+	//loop through all
 // int rGetNext (unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],
 // int htmlbufferSize, char imagebuffer[], unsigned int *radress,
 // unsigned int FilterTime, unsigned int FileOffset, char subname[]);

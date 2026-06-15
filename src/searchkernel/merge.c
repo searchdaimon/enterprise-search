@@ -6,7 +6,7 @@
 #include "merge.h"
 #include "verbose.h"
 
-// swap two ponters
+// swap two pointers
 void swapiindex(struct iindexFormat **a, struct iindexFormat **b) {
 
         struct iindexFormat  *tmp;
@@ -54,7 +54,7 @@ static inline void rank_explaindSumm(struct rank_explaindFormat *t, struct rank_
          t->nrUrlDomain         = a->nrUrlDomain + b->nrUrlDomain;
          t->nrUrlSub            = a->nrUrlSub + b->nrUrlSub;
 
-        //dette er egentlig en hurti fiks, da vi kan kansje kan f� mer en maks for querys med fler en et ord
+        //this is really a quick fix, since we may end up with more than max for queries with more than one word
         if (or) {
 		t->maxBody             = a->maxBody;
 		t->maxHeadline         = a->maxHeadline;
@@ -116,7 +116,7 @@ void or_merge(struct iindexFormat **c, int *baselen, struct iindexFormat **a, in
 	}
 	
 
-	//debug: print ot verdiene før de merges
+	//debug: print out the values before they are merged
 	#ifdef DEBUG_II	
 		int x;
 		x=0;
@@ -147,8 +147,8 @@ void or_merge(struct iindexFormat **c, int *baselen, struct iindexFormat **a, in
 
 			(*c)->iindex[k] = (*a)->iindex[i];
 		
-			//hvis vi ikke har noen hits så a og b helt like. Dette skjer typisk for acl'er. Ved å ikke merge hits da
-			//kan vi merge store acl arrayer kjapt.
+			//if we have no hits then a and b are completely equal. This typically happens for ACLs. By not merging hits then
+			//we can merge large acl arrays quickly.
 			if ( ((*a)->iindex[i].TermAntall != 0) &&  ((*b)->iindex[j].TermAntall != 0) ) {
 
 				(*c)->iindex[k].TermRank = (*a)->iindex[i].TermRank + (*b)->iindex[j].TermRank;
@@ -231,7 +231,7 @@ void or_merge(struct iindexFormat **c, int *baselen, struct iindexFormat **a, in
 			++count_overflow;
 		#endif
 
-		//her kan minne overlappe. For å ungå det sjekker vi først om pekere til struktene er like
+		//here memory can overlap. To avoid that we first check whether the pointers to the structs are equal
 		if (&(*c)->iindex[k] != &(*a)->iindex[i]) {
 	                (*c)->iindex[k] = (*a)->iindex[i];
 		}
@@ -318,7 +318,7 @@ void andNot_merge(struct iindexFormat **c, int *baselen, int *added,struct iinde
 			
 			(*c)->iindex[k].hits = &(*c)->hits[(*c)->nrofHits];
 
-			//kopierer hits
+			//copying hits
 			(*c)->iindex[k].TermAntall = 0;
 			#ifdef DEBUG_II
 				bblog(DEBUGINFO, "a TermAntall %i, (*c)->nrofHits %i", (*a)->iindex[i].TermAntall,(*c)->nrofHits);
@@ -356,7 +356,7 @@ void andNot_merge(struct iindexFormat **c, int *baselen, int *added,struct iinde
 
                 (*c)->iindex[k] = (*a)->iindex[i];
 
-		//kopierer hits
+		//copying hits
 		(*c)->iindex[k].TermAntall = 0;
 		(*c)->iindex[k].hits = &(*c)->hits[(*c)->nrofHits];
 
@@ -487,7 +487,7 @@ void and_merge(struct iindexFormat *c, int *baselen, int originalLen, int *added
 
 
 
-//and søk med progsymasjon () mere vekt  hvis ordene er nerme en fjernt.
+//and search with proximity (): more weight if the words are near rather than far apart.
 void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct iindexFormat *a, int alen, struct iindexFormat *b, int blen) {
         int i=0,j=0;
 	int k=originalLen;
@@ -513,12 +513,12 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 			c->iindex[k] = a->iindex[i];
 
 			
-			//20 mai 2007. Usikker på om dette er så lurt. fjerner for nå			
+			//20 May 2007. Unsure whether this is a good idea. Removing it for now			
 
 			//TermRank = a[i].TermRank + b[j].TermRank;
-			//termrank blir den verdien som er minst. Det gjør at det lønner seg å ha 
-			//høye verdier for begge. Ikke slik at et dokument som er "ord1, ord1, ord1 ord2"
-			//komer bra ut på søk for både ord1 og ord2. Da ord2 forekommer skjelden.
+			//termrank becomes the smaller value. This makes it pay off to have
+			//high values for both. So that a document like "ord1, ord1, ord1 ord2"
+			//does not score well on a search for both ord1 and ord2, since ord2 occurs rarely.
 			if (a->iindex[i].TermRank < b->iindex[j].TermRank) {
 				TermRank = a->iindex[i].TermRank;
 			}
@@ -558,7 +558,7 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 			hits = &c->hits[c->nrofHits];
 
 			found = 0;
-			//lopper gjenom alle hitene og finner de som er rett etter hverandre
+			//loop through all the hits and find the ones that come right after each other
 			while ((ah < a->iindex[i].TermAntall) && (bh < b->iindex[j].TermAntall)) {
 
 				if (c->nrofHits == maxTotalIindexHits) {
@@ -569,7 +569,7 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 				}
 
 
-				//sjekker om dette er en frase. Altså at "ord2" kommer ret etter "ord1"
+				//check whether this is a phrase. That is, that "ord2" comes right after "ord1"
 				if ((b->iindex[j].hits[bh].pos - a->iindex[i].hits[ah].pos) == 1) {
 					hits[TermAntall].pos = b->iindex[j].hits[bh].pos;
 					
@@ -625,7 +625,7 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 
 			}
 
-			// kopis inn the last one
+			// copy in the last one
 			while ((ah < a->iindex[i].TermAntall) && (c->nrofHits < maxTotalIindexHits)) {
 				#ifdef EXPLAIN_RANK
 					bblog(DEBUGINFO, "Tail hit DocID %u, hit a: %hu b: %hu. ah++", a->iindex[i].DocID,a->iindex[i].hits[ah].pos,b->iindex[j].hits[bh].pos);
@@ -693,7 +693,7 @@ void andprox_merge(struct iindexFormat *c, int *baselen, int originalLen, struct
 	#endif
 }
 
-//hopper over orde. Må da flytte alle ordene et hakk bortover
+//skip over the word. Must then shift all the words one step over
 void frase_stopword(struct iindexFormat *c, int clen) {
 	int i,y;
 
@@ -712,7 +712,7 @@ void frase_stopword(struct iindexFormat *c, int clen) {
 
 
 
-//frasesk. Denne er dog ikke bra, egentlig en versjon av andprox_merge der bare de sidene med distanse 1 blir med
+//phrase search. This one isn't great though, really a version of andprox_merge where only the pages with distance 1 are included
 void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct iindexFormat *a, int alen, struct iindexFormat *b, int blen) {
 
         int i=0,j=0;
@@ -770,7 +770,7 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 
 			ah = bh = 0;
 			found = 0;
-			//lopper gjenom alle hitene og finner de som er rett etter hverandre
+			//loop through all the hits and find the ones that come right after each other
 
 			#ifdef EXPLAIN_RANK
 				bblog(DEBUGINFO, "a TermAntall %i, b TermAntall %i",a->iindex[i].TermAntall,b->iindex[j].TermAntall);
@@ -778,7 +778,7 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 
 			while ((ah < a->iindex[i].TermAntall) && (bh < b->iindex[j].TermAntall)) {
 
-				//sjekker om dette er en frase. Altså at "ord2" kommer ret etter "ord1"
+				//check whether this is a phrase. That is, that "ord2" comes right after "ord1"
 				if ((b->iindex[j].hits[bh].pos - a->iindex[i].hits[ah].pos) == 1) {
 					found = 1;
 
@@ -821,9 +821,9 @@ void frase_merge(struct iindexFormat *c, int *baselen,int Originallen, struct ii
 
 			if (found) {
 
- 				//termrank blir den verdien som er minst. Det gjør at det lønner seg å ha
-                        	//høye verdier for begge. Ikke slik at et dokument som er "ord1, ord1, ord1 ord2"
-                        	//komer bra ut på søk for både ord1 og ord2. Da ord2 forekommer skjelden.
+ 				//termrank becomes the smaller value. This makes it pay off to have
+                        	//high values for both. So that a document like "ord1, ord1, ord1 ord2"
+                        	//does not score well on a search for both ord1 and ord2, since ord2 occurs rarely.
                         	if (a->iindex[i].TermRank < b->iindex[j].TermRank) {
                                 	TermRank = a->iindex[i].TermRank;
                         	}

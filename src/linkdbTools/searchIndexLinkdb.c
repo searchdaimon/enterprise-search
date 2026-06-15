@@ -60,14 +60,14 @@ int main (int argc, char *argv[]) {
 
 	printf("rank %i, ipadress %u\n",rank,ipadress);
 
-	//finner offset
+	//find the offset
 	fseek(INDEXFILE,DocID * sizeof(offset),SEEK_SET);
 	fread(&offset,sizeof(offset),1,INDEXFILE);
 	printf("offset: %llu\n",offset);
 
 	printf("offset: %" PRId64 "\n",offset);
 
-	//søker til offsetten
+	//seek to the offset
 	if(fseeko64(LINKDBFILE,offset,SEEK_SET) == -1) {
 		perror("seek");
 		exit(1);

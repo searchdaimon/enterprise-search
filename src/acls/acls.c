@@ -62,7 +62,7 @@ int userToSubname_open(struct userToSubnameDbFormat * userToSubnameDb, char mode
 }
 
 /***************************************************************************************************
-userToSubname som et string array array. Ikke helt god å kalle split slig, kunne heler slåt opp i databasen selv
+userToSubname as a string array of arrays. Not really great to call split like this; could rather have looked it up in the database directly
 ****************************************************************************************************/
 int userToSubname_getsubnamesAsSaa(struct userToSubnameDbFormat *userToSubnameDb,char username[],char ***subnames, int *nr) {
 
@@ -77,7 +77,7 @@ int userToSubname_getsubnamesAsSaa(struct userToSubnameDbFormat *userToSubnameDb
 
 	if (buf[0] == '\0') {
 		(*nr) = 0;
-		return 0; //toDo skal vi returnere 1 eller 0 her. Vi klarte jo og slå opp gruppe, men det var ingen å vise
+		return 0; //toDo should we return 1 or 0 here. We did manage to look up the group, but there was nothing to show
 	}
 
 	(*nr) = split(buf, ",", subnames);
@@ -94,7 +94,7 @@ char **userToSubname_getsubnamesList(struct userToSubnameDbFormat *db, char grou
 
 		aclElementNormalize(group);
 
-		//resetter minne
+		//reset the memory
 		memset(&key, 0, sizeof(DBT));
 		memset(&data, 0, sizeof(DBT));
 
@@ -112,7 +112,7 @@ char **userToSubname_getsubnamesList(struct userToSubnameDbFormat *db, char grou
 		ret = cursorp->c_get(cursorp, &key, &data, DB_SET);
 
 
-		//fant ingen
+		//found none
 		if (ret == DB_NOTFOUND) {
 				debug("DB_NOTFOUND for key \"%s\"\n",key.data);
 				return NULL;
@@ -126,8 +126,8 @@ char **userToSubname_getsubnamesList(struct userToSubnameDbFormat *db, char grou
 			ret = cursorp->c_get(cursorp, &key, &data, DB_NEXT_DUP);
 			(*num_colls)++;
 		}
-		// vi skal kjøre cursorp->c_get() helt til siste record, og da returnerer den feil not fund.
-		//hvis vi er her, og ret ikke er not found, så må vi ha hatt en annen feil...
+		// we run cursorp->c_get() all the way to the last record, at which point it returns the not-found error.
+		//if we are here, and ret is not not-found, then we must have had some other error...
 	        if (ret != DB_NOTFOUND) {
 	                perror("Can't get all record by db->c_get");
 	        }
@@ -167,7 +167,7 @@ int userToSubname_getsubnamesAsString(struct userToSubnameDbFormat *userToSubnam
 	}
 	userToSubname_freesubnamesList(names_list, num_colls);
 
-	//fjernes siste ,
+	//remove the trailing ,
 	subnames[strlen(subnames) -1] = '\0';
 
 	return 1;
@@ -180,7 +180,7 @@ void userToSubname_add (struct userToSubnameDbFormat *userToSubnameDb,char usern
         DBT key, data;
         int ret;
 
-	//resetter minne
+	//reset the memory
 	memset(&key, 0, sizeof(DBT));
 	memset(&data, 0, sizeof(DBT));
 
@@ -190,11 +190,11 @@ void userToSubname_add (struct userToSubnameDbFormat *userToSubnameDb,char usern
 	data.data = subname;
 	data.size = (strlen(subname) +1);
 
-	//legger til i databasen
+	//add it to the database
         if  ((ret = (*userToSubnameDb).dbp->put((*userToSubnameDb).dbp, NULL, &key, &data, 0)) != 0) {
 		printf("can't add \"%s/%s\"\n",(char *)key.data,(char *)data.data);
                 (*userToSubnameDb).dbp->err((*userToSubnameDb).dbp, ret, "DB->put");
-                //kan ikke returnere her for da blir den aldr lukket.
+                //cannot return here, because then it would never be closed.
                 //return (EXIT_FAILURE);
         }
 
@@ -232,7 +232,7 @@ int userToSubname_deletecol(struct userToSubnameDbFormat *userToSubnameDb,char s
 	/* Get a cursor */
 	(*userToSubnameDb).dbp->cursor((*userToSubnameDb).dbp, NULL, &cursorp, 0);
 
-	//resetter minne
+	//reset the memory
         memset(&key, 0, sizeof(DBT));
         memset(&data, 0, sizeof(DBT));
 

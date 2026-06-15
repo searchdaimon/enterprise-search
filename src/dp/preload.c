@@ -101,7 +101,7 @@ void wooinit(void) {
     	}
 
 
-	//foepn
+	//fopen
  	fopen_orig = dlsym(RTLD_NEXT, "fopen64");
 
     	if(fopen_orig == NULL)
@@ -131,7 +131,7 @@ void wooinit(void) {
     	}
 
 
-	//foepn
+	//send
  	send_orig = dlsym(RTLD_NEXT, "send");
 
     	if(send_orig == NULL)

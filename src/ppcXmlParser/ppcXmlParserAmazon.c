@@ -20,7 +20,7 @@ int *nrOfPpcPages,struct nodenamesFormat *NodeName) {
 		#ifdef DEBUG
 			printf("got start\n");
 		#endif
-		//temp: dorlig begrensing her
+		//temp: poor limit here
 		if ((*nrOfPpcPages) < 9) {
 			++(*nrOfPpcPages);
 		}
@@ -46,7 +46,7 @@ int *nrOfPpcPages,struct nodenamesFormat *NodeName) {
 		#ifdef DEBUG
 			printf("description for %i: %s\n",(*nrOfPpcPages),value);
 		#endif
-		//bare hvis vi ikke har noe fra før. Skal bare ta første element
+		//only if we don't already have something. Should only take the first element
 		if (ppcPages[(*nrOfPpcPages) -1].description[0] == '\0') {
 			strscpy(ppcPages[(*nrOfPpcPages) -1].description,value,sizeof((*ppcPages).description));
 		}

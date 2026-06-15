@@ -9,7 +9,7 @@
 
 int main() {
 	FILE *FH, *LOTFILE;
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	int nrOfElements;
 	int LotNr, DocIDPlace, oldLotNr,i,n,rank;
 
@@ -28,7 +28,7 @@ int main() {
                 if ((n=fread(&rank,sizeof(unsigned char),1,FH)) == -1) {
                         perror("read");
                 }
-                //finner lot og offset
+                //find lot and offset
                 LotNr = rLotForDOCid(i);
                 DocIDPlace = (i - LotDocIDOfset(LotNr));
 
@@ -37,13 +37,13 @@ int main() {
                 //}
 
                 /////////////////////////////
-                //debug: vise hvilkene lot vi laster
+                //debug: show which lot we are loading
                 if (LotNr != oldLotNr) {
 			if (oldLotNr != -1) {
 				rSendFileByOpenHandler(LOTFILE,"Brank",oldLotNr,"w",subname);
 				close(LOTFILE);
 			}
-			//oppret et midlertidig fil får å holde datane
+			//create a temporary file to hold the data
 			LOTFILE = tmpfile();
 		
                         printf("lot %i\n",LotNr);
@@ -52,7 +52,7 @@ int main() {
                 oldLotNr = LotNr;
                 ////////////////////////////
 
-		//søker til rikig plass og skiiver
+		//seek to the right place and write
 		fseek(LOTFILE,DocIDPlace,SEEK_SET);
 		fwrite(&rank,sizeof(unsigned char),1,LOTFILE);
 

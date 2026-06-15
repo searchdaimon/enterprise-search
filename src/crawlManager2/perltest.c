@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
 	struct crawlLibInfoFormat *crawlLibInfo;
 	struct collectionFormat collection;
         FILE *FH;
-        struct stat inode;      // lager en struktur for fstat å returnere.
+        struct stat inode;      // create a struct for fstat to return into.
 
 	collectionReset (&collection);
 
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
 
 	if (!(*(*crawlLibInfo).crawlfirst)(&collection,documentExist,documentAdd,documentError,documentContinue)) {
                 printf("problems in crawlfirst_ld\n");
-                //overfører error
+                //pass on the error
                 printf("Error: %s\n",(*crawlLibInfo).strcrawlError());
 
                 return 0;

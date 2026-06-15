@@ -69,7 +69,7 @@ void recursiveDir (char fileTree[], char dirname[], unsigned char havemkdirs[]) 
                         sprintf(nextdirname,"%s%s/",dirname,dp->d_name);
                         printf("dir (nextdirname %s)\n",nextdirname);
 
-                        //kaller seg selv rekurift
+                        //calls itself recursively
                         recursiveDir(fileTree,nextdirname,havemkdirs);
                 }
                 else if (dp->d_type == DT_REG) {

@@ -5,7 +5,7 @@ void findDomain(char url[], char domain[]);
 
 int filterDocumentIndex(struct DocumentIndexFormat *DocumentIndex) {
 
-	char domain[65]; //domane kan maks være på 64 bokstaver, + \0
+	char domain[65]; //a domain can be at most 64 letters, + \0
 	char *cpoint;
 	int hyphenCount;
 
@@ -13,11 +13,11 @@ int filterDocumentIndex(struct DocumentIndexFormat *DocumentIndex) {
 
 	findDomain((*DocumentIndex).Url,domain);
 
-	//teller antal forekomster av -
+	//count the number of occurrences of -
 	hyphenCount = 0;
 	cpoint = domain;
 	while(cpoint = strchr(cpoint,'-')) {
-		//går vidre
+		//continue
 		++cpoint;
 		++hyphenCount;
 	}	
@@ -27,19 +27,19 @@ int filterDocumentIndex(struct DocumentIndexFormat *DocumentIndex) {
 }
 
 /*******************************************************
-Finner doemene for en url. Denne må bare brukes på velformede urler, 
-som begynner på http://
+Finds the domain for a url. This must only be used on well-formed urls
+that start with http://
 ********************************************************/
 void findDomain(char url[], char domain[]) {
 
 	char *cpoint;
 
-	// +7 fjerner http://, som er de første 7 bokstavene i urlen
+	// +7 removes http://, which is the first 7 letters of the url
 	strcpy(domain,url +7);
 	printf("domain: %s\n",domain);
-	//begynner med å fjerne http://
+	//start by removing http://
 	cpoint = strchr(domain,'/');
-	//vil ikke ha med / på slutten
+	//we don't want the trailing /
 	
 
 	domain[cpoint - domain] = '\0';

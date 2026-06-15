@@ -12,7 +12,7 @@ int isShortWord(char *term) {
 	}
 }
 
-//sjekker om et ord er stoppord
+//check whether a word is a stop word
 int isStoppWord(char *term) {
 
 	if (isShortWord(term)) {

@@ -78,8 +78,8 @@ void lotlistLoad() {
 		MemoryLotlist[i].hasServer = 0;
 	}
 
-        //sjekker først om vi har en env variabel kalt "BOITHOLOTLIST". Hvis vi har det så bruker vi den filen
-        //gjør det slik slik at vi kan ha lokal lotlist, på hver bbs, man fortsat ha resten likt på alle, og på read$
+        // first check if we have an env variable called "BOITHOLOTLIST". If we do, we use that file
+        // do it this way so that we can have a local lotlist on each bbs, while still keeping the rest identical on all, and on read$
         if (getenv("BOITHOLOTLIST") != NULL) {
                 if ( (LOTLISTFH = fopen(getenv("BOITHOLOTLIST"),"r")) == NULL) {
                         perror(getenv("BOITHOLOTLIST"));
@@ -97,7 +97,7 @@ void lotlistLoad() {
 		++lineCount;
 
 		if ((buff[0] == '\n') || (buff[0] == '#')) {
-			//blan linje eller komentar	
+			// blank line or comment	
 		}
 		else if (strchr(buff,'*')) {
 			if (sscanf(buff,"%s %c\n",host,&overflowchar) != 2) {

@@ -12,7 +12,7 @@ extern int getopt(int, char * const *, const char *);
 
 
 #define dbCashe 314572800	//300 mb
-#define dbCasheBlokes 1		//hvor mange deler vi skal dele cashen opp i. Ofte kan man ikke alokere store blikker samenhengenede
+#define dbCasheBlokes 1		//how many parts we should split the cache into. Often you can't allocate large blocks contiguously
 
 #include "../common/define.h"
 
@@ -63,7 +63,7 @@ int main (int argc, char *argv[]) {
 
 for (i=0; i < UrlToDocIDnrOfFiles;i++) {
 
-		//finner db navne
+		//find the db name
 		sprintf(udfile,"%s%i",udfilerdir,i);
 		sprintf(bdbfile,"%s%i.db",bdbfilerdir,i);
 
@@ -73,7 +73,7 @@ for (i=0; i < UrlToDocIDnrOfFiles;i++) {
                 	printf("Openig database: %s\n",bdbfile);
                 //#endif
 
-		//opner databasen
+		//open the database
 	/********************************************************************
         * Opening db to stor det data in
         ********************************************************************/
@@ -85,7 +85,7 @@ for (i=0; i < UrlToDocIDnrOfFiles;i++) {
                 }
 
 
-                //setter cashe størelsen manuelt
+                //set the cache size manually
                 if ((ret = dbp->set_cachesize(dbp, 0, dbCashe, dbCasheBlokes)) != 0) {
                         dbp->err(dbp, ret, "set_cachesize");
                 }
@@ -102,7 +102,7 @@ for (i=0; i < UrlToDocIDnrOfFiles;i++) {
 
 
 
-	//opner filen
+	//open the file
 
 	printf("udfile %s\n",udfile);
 	
@@ -130,18 +130,18 @@ for (i=0; i < UrlToDocIDnrOfFiles;i++) {
                 printf("Url %s, DocID %u length %i\n",udfilePost.url,udfilePost.DocID,strlen(udfilePost.url));
 		#endif
 
-		//resetter minne
+		//reset memory
                 memset(&key, 0, sizeof(DBT));
                 memset(&data, 0, sizeof(DBT));
 
-                //legger inn datane i bdb strukturen
+                //put the data into the bdb structure
                 key.data = udfilePost.url;
                 key.size = strlen(udfilePost.url);
 
                 data.data = &udfilePost.DocID;
                 data.size = sizeof(udfilePost.DocID);
 
-		//legger til i databasen
+		//add to the database
                 switch (ret = dbp->put(dbp, NULL, &key, &data, DB_NOOVERWRITE)) {
                         case 0:
                                 break;
@@ -151,7 +151,7 @@ for (i=0; i < UrlToDocIDnrOfFiles;i++) {
                 		fprintf(stderr,"Url %s, DocID %u length %i\n",udfilePost.url,udfilePost.DocID,strlen(udfilePost.url));
 
                                 if (ret != DB_KEYEXIST) {
-					//vi dør ikke hvis det bare er en vedi som finnes
+					//we don't die if it is only a value that already exists
                                         exit (EXIT_FAILURE);
                                 }
 				

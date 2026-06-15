@@ -19,7 +19,7 @@
 
 int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, char execute[], char *error, int errorlength) {
 
-	//antar at rutiner som ikke returnerer noe mislykkes. Dette kan for eks skje hvis vi kaller die, eller ikke trenger retur koden
+	//assume that routines that don't return anything have failed. This can happen for example if we call die, or don't need the return code
 
 	char perlfile[PATH_MAX];
 
@@ -29,7 +29,7 @@ int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, 
 
 
 	#ifdef DEBUG
-		//printer ut pekere til colection info, og alle rutinene
+		//print out pointers to collection info, and all the routines
 		bblog(DEBUGINFO, "collection %p, documentExist %p, documentAdd %p, documentError %p, documentContinue %p",cargs->collection,cargs->documentExist,cargs->documentAdd,cargs->documentError,cargs->documentContinue);
 	#endif
 
@@ -39,10 +39,10 @@ int preprocessAndRun(struct collectionFormat *collection, struct cargsF *cargs, 
 
 	HV *hv = newHV();
 
-	//sendes altid med
+	//always sent along
 	hv_store(hv, "last_crawl", strlen("last_crawl"), sv_2mortal(newSVuv(collection->lastCrawl)), 0);
 
-	//sendes bare med hvis vi har verdi
+	//only sent along if we have a value
 	if (collection->resource != NULL)
 		hv_store(hv, "resource", strlen("resource"), sv_2mortal(newSVpv(collection->resource, 0)), 0);
 	if (collection->connector != NULL)
@@ -91,7 +91,7 @@ int perlcm_crawlupdate(struct collectionFormat *collection,
 
 	ret = preprocessAndRun(collection,&cargs,"Perlcrawl::crawl_update", error,sizeof(error) );
 
-	//hvis vi fik 0 som retur verdi, er alt ok, og vi returnerer 1
+	//if we got 0 as the return value, everything is ok, and we return 1
 	if (ret == 0) {
 		return 1;
 	}
@@ -126,9 +126,9 @@ int perlcm_crawlpatAcces(char resource[], char username[], char password[], int 
 
 	struct collectionFormat collectionWithUserData;
 	
-	//siden preprocessAndRun baserer seg på data i collection, må vi koppoerer brukerens data inn i en ny
-	// collection struct, og sende den.
-	//dette er kansje litt hårete
+	//since preprocessAndRun relies on data in collection, we must copy the user's data into a new
+	// collection struct, and send that.
+	//this is maybe a bit hairy
 	memcpy(&collectionWithUserData,collection,sizeof(collectionWithUserData));
 
 

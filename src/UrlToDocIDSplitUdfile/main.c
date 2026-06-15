@@ -70,7 +70,7 @@ int main (int argc, char *argv[]) {
 
 
 		
-		//lager en has verdi slik at vi kan velge en av filene
+		//create a hash value so we can pick one of the files
 		crc32Value = crc32(udfilePost.url);
 		FileForUrl = (crc32Value % nrOfFiles);
 
@@ -100,7 +100,7 @@ int main (int argc, char *argv[]) {
 
 	fclose(UDFILE);
 
-	//lokker alle filene
+	//close all the files
 	for (i=0; i < nrOfFiles;i++) {
 		fclose(SPLITFILE[i]);
 	}

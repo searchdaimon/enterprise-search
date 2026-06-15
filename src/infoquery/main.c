@@ -120,8 +120,8 @@ int main (int argc, char *argv[]) {
 	}
 
 
-	// Setter signalhånterer for allarm, da vi bruker alarm som timout. Hvis allarm skjer i straten av programet, er noe seriøst galt. For eks er vi tom for minne.
-        //Da fungerer det dårlig å logge, syslog kan kalle malloc og slikt. Vil resette den til en versjon som logger før vi kjører søk.   $
+	// Set the alarm signal handler, since we use alarm as a timeout. If the alarm fires early in the program, something is seriously wrong. For example we are out of memory.
+        // In that case logging works poorly, syslog can call malloc and such. Will reset it to a version that logs before we run searches.   $
         signal (SIGALRM, catch_alarm_nolog);
 
 
@@ -352,9 +352,9 @@ int main (int argc, char *argv[]) {
 		char **respons_list;
 		char *errormsg;
 
-		//runarb: 01.10.07 hvorfor var denne slåt av
-		//ser ut til at vi kan seltte ting vi ikke vil
-		//eller stamer det fra dagur problemet????
+		//runarb: 01.10.07 why was this turned off
+		//looks like we can delete things we don't want to
+		//or does it stem from the dagur problem????
 		
 		if (!cmc_conect(&socketha,errorbuff,errorbufflen,cmc_port)) {
                         printf("Error: %s\n",errorbuff);
@@ -680,7 +680,7 @@ int main (int argc, char *argv[]) {
 	    unsigned int uriindex_DocID;
 	    unsigned int uriindex_lastmodified;
 
-	    //loppergjenom alle
+	    //loop through all
             while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&radress,0,offset,value2,
 		&acl_allow,&acl_deny, &url, &attributes)) {
 

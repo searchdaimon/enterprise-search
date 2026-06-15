@@ -56,7 +56,7 @@ void shortenurl(char *url,int urllen) {
 	newurl[0] = '\0';
 	proto[0] = '\0';
 
-	//tar bort proto:// først
+	//strip off proto:// first
 	p = strstr(url, "://");
 	if (p != NULL && p > url) {
 		p += 3; /* Skip past :// */
@@ -79,7 +79,7 @@ void shortenurl(char *url,int urllen) {
 		bblog(DEBUGINFO, "shortenurl: after proto \"%s\"", url);
 	#endif
 
-	//hvis den er kort kan vi bare returnere
+	//if it is short we can just return
 	if (len < TARGET_VISIBLE_URL_LEN) {
 		#ifdef DEBUG
  			bblog(DEBUGINFO, "shortenurl: url is short enough. Don't need to shorten");
@@ -117,7 +117,7 @@ void shortenurl(char *url,int urllen) {
 		Count++;
   	}
 	*/
-	--TokCount; //split ser ut til å begynner på 1, ikke på 0 
+	--TokCount; //split appears to start at 1, not at 0 
 
 	#ifdef DEBUG
   	bblog(DEBUGINFO, "\tfound %d token(s):", TokCount);
@@ -167,7 +167,7 @@ void shortenurl(char *url,int urllen) {
 
 	bblog(DEBUGINFO, "TokCount %i, count %i",TokCount,Count);
 
-	//hvis også siste navn er for langt, hånterer vi det spesifikt.
+	//if the last name is also too long, we handle it specifically.
 	if (TokCount == Count) {
 		bblog(DEBUGINFO, "bb");
 		strlcat((char *)newurl,slash,sizeof(newurl));
@@ -186,8 +186,8 @@ void shortenurl(char *url,int urllen) {
 	}
 
 	bblog(DEBUGINFO, "shortenurl 1: newurl \"%s\"",newurl);
-	//runarb 27 mai
-	//Hvis den har et utf 8 tegn der vi slutter å kopierer for vi med bare halve tegnet, og bryter da xml'en
+	//runarb 27 May
+	//If it has a utf-8 char where we stop copying, we get only half the char, which then breaks the xml
 	bblog(DEBUGINFO, "strlen %i, size %i",strlen((char*)newurl),sizeof(newurl));
 	i = strlen((char*)newurl) -1;
 	while(i!=0 && newurl[i] > 127) {

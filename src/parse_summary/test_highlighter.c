@@ -62,7 +62,7 @@ int main( int argc, char *argv[] )
 	    printf("body: \"%s\"\n",body);
 	    // Invoke highlighter:
 
-	    // Lage query:
+	    // Build query:
 	    query_array		qa;
 //	    char		*tekst = "\"hotel and casino\" \"Las Vegas\"";
 //	    char		*tekst = "\"et treff\"";
@@ -72,11 +72,11 @@ int main( int argc, char *argv[] )
 	    char		*tekst = "yahoo";
 	    get_query( tekst, strlen(tekst), &qa );
 
-		// Generer highlighting:
+		// Generate highlighting:
 	    char	*summary;
 	    generate_highlighting( qa, body, strlen(body)+1, &summary );
 
-	    // Ødelegge query:
+	    // Destroy query:
 	    destroy_query( &qa );
 
 	    printf("\n%s\n", summary);

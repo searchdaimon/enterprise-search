@@ -118,7 +118,7 @@ int _Indekser(char revindexPath[]) {
 				return 0;
 			}
 
-			//leser antal hist vi skulle ha
+			//read the number of hits we were supposed to have
 			fread(&revIndexArray[count].hits,revIndexArray[count].nrOfHits * sizeof(short),1,REVINDEXFH);
 
 
@@ -137,7 +137,7 @@ int _Indekser(char revindexPath[]) {
 		//}
 		//}
 			
-		////hvis vi når grensen
+		////if we reach the limit
 		//if (count == revIndexArraySize) {
 		//	printf("revIndexArraySize hit\n");
 		//	break;

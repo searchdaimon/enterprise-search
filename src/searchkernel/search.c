@@ -74,8 +74,8 @@
 
 #include "../searchkernel/preopen.h"
 
-//rangeringsfilter er der vi har et hvist antall treff, definert som RFC (Rank Filter Cutoff).
-//har vi så mnage treff filtrerer vi ut de under en hvis rankt
+//rank filter is where we have a certain number of hits, defined as RFC (Rank Filter Cutoff).
+//if we have that many hits we filter out the ones below a certain rank
 #define AnchorRFC1 	10000
 #define MainRFC1 	200000
 #define MainRFC2 	10000
@@ -103,7 +103,7 @@ void allrankcalk(struct iindexFormat *TeffArray ,int *TeffArrayElementer) {
 
 
 				PopRankNormalized = TeffArray->iindex[i].PopRank;
-				//legger til en her da vi kan ha 0, og vi har * med 0. Bør fikkses en anne plass. da 255++ rt 0
+				//add one here since we can have 0, and we multiply by 0. Should be fixed elsewhere, since 255++ wraps to 0
  				++PopRankNormalized;
  
 				#ifndef BLACK_BOX
@@ -266,7 +266,7 @@ static inline int rankAnchor_complicacy(const struct hitsFormat *hits, int nrofh
 	}
 
 
-	simplerank = logrank((nr/complicacy),40,0.009);// deler på complicacy for ikke fraser da vi ser på en total for alle ord
+	simplerank = logrank((nr/complicacy),40,0.009);// divide by complicacy for non-phrases since we look at a total for all words
 	phraserank = logrank(phrasenr,40,0.009); 
 
 
@@ -307,7 +307,7 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 	};
 
 	#ifdef EXPLAIN_RANK
-		//printer ut elementet
+		//print out the element
 		bblog(DEBUGINFO, "rankMain: DocID %u, subname \"%s\", complicacy %d", DocID,subname->subname, complicacy);
 		for (i = 0;i < nrofhit; i++) {
 			bblog(DEBUGINFO, "\thit %i, phrase %i", (int)hits[i].pos,(int)hits[i].phrase);
@@ -324,12 +324,12 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 
 
 	int rank;
-	// kjører gjenom anttall hit
+	// loop through the number of hits
 	for (i = 0;i < nrofhit; i++) {
 
 
                 /*************************************************
-                lagger til poeng
+                add points
                 *************************************************/
                 if (hits[i].pos >= 1000) {      //Body
                 	++nrBody;
@@ -345,8 +345,8 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 
                 }
                 else if (hits[i].pos >= 100) {  //Tittel
-			//spesialtilfelle. er først title ord 
-			//Hvis vi er første ord i titleen vil det rangeres spesielt
+			//special case. is the first title word
+			//If we are the first word in the title it is ranked specially
 			if (
 				  ((hits[i].pos == 100) && (hits[i].phrase!=1) && (complicacy==1))
 				||((hits[i].pos == (99 + complicacy)) && (hits[i].phrase==1))
@@ -358,7 +358,7 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
 				#endif
 				++nrTittelFirst;
 			}
-			//starter på 100, så det mø være under. For eks under 106 gir til 6
+			//starts at 100, so it must be below. For example below 106 gives up to 6
 			else if (hits[i].pos < 106) {
                                	++nrTittel;
 				if (hits[i].phrase == 1) {
@@ -377,7 +377,7 @@ static inline int rankMain(const struct hitsFormat *hits, int nrofhit,const unsi
                 	//poengUrl += poengForMainUrlWord;
                	}
                 else if (hits[i].pos >= 1) {    //url
-                	// ingen urler i body mere
+                	// no urls in body anymore
                 }
                 else {
 			#ifdef DEBUG
@@ -444,9 +444,9 @@ void iindexArrayCopy2(struct iindexFormat **c, int *baselen,int Originallen, str
 	bblog(DEBUGINFO, "iindexArrayCopy2(baselen=%i, Originallen=%i, alen=%i)\n",*baselen,Originallen,alen);
 
 	if (Originallen==0) {
-		//hvis vi ikke har hits, og ikke har noe fra før kan vi bare bruke memcpy
+		//if we have no hits, and have nothing from before, we can just use memcpy
 		bblog(INFO, "can use swap in iindexArrayCopy2()");
-		//flytter bare pekerene
+		//just move the pointers
 		swapiindex(c, a);
 
 		(*baselen) = alen;
@@ -520,8 +520,8 @@ void iff_clear_all(struct indexFilteredFormat *filter)
 	filter->attrib[i] = 0;
 }
 
-// Dette er filter som filtrerer dokumenter.
-// Filter kun for telling (som duplicate_in_collection) håndteres separat.
+// This is the filter that filters documents.
+// Filters used only for counting (like duplicate_in_collection) are handled separately.
 char iff_set_filter(struct indexFilteredFormat *filter, unsigned int mask)
 {
     char	is_filtered = filter->is_filtered;
@@ -541,7 +541,7 @@ char iff_set_filter(struct indexFilteredFormat *filter, unsigned int mask)
 void searchIndex_filters(query_array *queryParsed, struct filteronFormat *filteron) {
 	int i,len,j;
 	
-	// Ax: Disse frigjÃ¸res i searchkernel.c:
+	// Ax: These are freed in searchkernel.c:
 	(*filteron).attributes = vector_container( pair_container( int_container(), string_container() ) );
 	(*filteron).collection = NULL;
 	(*filteron).date = NULL;
@@ -915,8 +915,8 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 							
 							bblog(DEBUGINFO, "And query is first element. This result will become main hit array.");
 
-							//rar b-2 bug her. Skal det være + ikke -?
-							//Runarb: 19 aug 2007: skaper igjen problemer. ser ut til å skal være '-'
+							//odd b-2 bug here. Should it be + not -?
+							//Runarb: 19 Aug 2007: causing problems again. seems it should be '-'
 							(*TeffArrayElementer) = (*TeffArrayElementer) - TmpArrayLen;
 
 							bblog(DEBUGINFO, "(*TeffArrayElementer) %i,TmpArrayLen %i", (*TeffArrayElementer),TmpArrayLen);
@@ -992,7 +992,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 							
 
 							bblog(INFO, "did find %i pages", TmpArrayLen);
-							//hvis vi ikke hadde noe resulateter kan vi droppe å merge denne inn.
+							//if we had no results we can skip merging this in.
 							if (TmpArrayLen == 0) {
 								continue;
 							}
@@ -1000,7 +1000,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 							resultArrayInit(tmpResult);
 							tmpResultElementer = 0;
 												
-							//merger først til en tempurar array, for så å kopiere inn denne.
+							//merge first into a temporary array, then copy this in.
 							int ti;
 							#ifdef DEBUG_TIME				
 								gettimeofday(&start_foo_time, NULL);
@@ -1046,7 +1046,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 						debug("\t%s",(*queryParsed).query[i].s[j]);
 					}
 
-					//Vi må først frasesøke de ordene vi skal, og lagre dete i en temp array. Så merge dette med resten
+					//We must first phrase-search the words we want, and store this in a temp array. Then merge this with the rest
 					resultArrayInit(tmpResult);
 					tmpResultElementer = 0;
 
@@ -1069,7 +1069,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
                     				debug("crc32: %u",WordIDcrc32);
                     				
 
-						//hvsi dette er første element leger vi de inn
+						//if this is the first element we add them in
 						if (j == 0) {
 							tmpResultElementer = 0;
 							resultArrayInit(tmpResult);
@@ -1087,7 +1087,7 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 
 							bblog(INFO, "\t dddd: frase_merge %i %i", (*TeffArrayElementer),TmpArrayLen);
 
-							//dette er ikke en ekts frasesøk, kan bare ha en frase
+							//this is not a real phrase search, can only have one phrase
 							frase_merge(tmpResult,&tmpResultElementer,0,tmpResult,tmpResultElementer,TmpArray,TmpArrayLen);
 
                 				}
@@ -1095,9 +1095,9 @@ void searchIndex (char *indexType, int *TeffArrayElementer, struct iindexFormat 
 
 					}
 						
-					//så må vi and merge frasene inn i queryet
-					//hvis dette er første forekomst så kopierer vi bare inn
-					//hvis ikke må vi and merge
+					//then we must and-merge the phrases into the query
+					//if this is the first occurrence we just copy it in
+					//if not we must and-merge
 					if (first) {
 						bblog(DEBUGINFO, "Phrase is first element. This result will become main hit array.");
 						
@@ -1278,7 +1278,7 @@ void *searchIndex_thread(void *arg)
 	bblog(INFO, "nrOfSubnames %i Search user: %s", (*searchIndex_thread_arg).nrOfSubnames, searchIndex_thread_arg->search_user);
 
 	(*searchIndex_thread_arg).usersystem_per_subname = malloc(sizeof(int) * (*searchIndex_thread_arg).nrOfSubnames);
-	// Er det mulig å hente ut hvor mange forskjellige brukersystem vi har?
+	// Is it possible to find out how many different user systems we have?
 	(*searchIndex_thread_arg).groups_per_usersystem = malloc(sizeof(container*) * 256);
 	for (i=0; i<256; i++) (*searchIndex_thread_arg).groups_per_usersystem[i] = NULL;
 
@@ -1348,7 +1348,7 @@ void *searchIndex_thread(void *arg)
 					grouplist = strdup("");
 				}
 
-				if (system < 256)	// hva gjør vi dersom system >= 256 ?
+				if (system < 256)	// what do we do if system >= 256 ?
 				    {
 					if ((*searchIndex_thread_arg).groups_per_usersystem[system] != NULL)
 					    destroy((*searchIndex_thread_arg).groups_per_usersystem[system]);
@@ -1408,7 +1408,7 @@ void *searchIndex_thread(void *arg)
 
 			searcArrayLen = 0;
 
-			//acl_allow sjekk
+			//acl_allow check
 			acl_allowArrayLen = 0;
 			acl_deniedArrayLen = 0;
 
@@ -1429,7 +1429,7 @@ void *searchIndex_thread(void *arg)
 						for (j=0; j<(*searchIndex_thread_arg).attrib_count; j++) {
 							tmpAttribArrayLen[j] = 0;
 
-							// Skriv ut hvilke attributter det søkes på til skjermen:
+							// Print which attributes are being searched to the screen:
 							char	qbuf[1024];
 							sprint_query(qbuf,1023,&(*searchIndex_thread_arg).attribute_query[j]);
 							bblog(INFO, "Looking up attributes: %s",  qbuf);
@@ -1523,10 +1523,10 @@ void *searchIndex_thread(void *arg)
 			#ifdef ATTRIBUTES
 			char	empty_search_query = 0;
 
-			// Merge resultater med attributter og acl_allowed:
+			// Merge results with attributes and acl_allowed:
 			if ((*searchIndex_thread_arg).attrib_count > 0)
 			    {
-				// Test for query-words i standard søkequery:
+				// Test for query words in the standard search query:
 				char	null_query = 1;
 
 				for (j=0; j<(*searchIndex_thread_arg).queryParsed->n && null_query; j++)
@@ -1558,7 +1558,7 @@ void *searchIndex_thread(void *arg)
 			else
 			    {
 				if (do_aclcheck) {
-					// Merge med attributter istedet:
+					// Merge with attributes instead:
 					and_merge(TmpArray,&TmpArrayLen,0,&hits,acl_allowArray,acl_allowArrayLen,tmpAttribArray[0],tmpAttribArrayLen[0]);
 					// Merge acl_denied:			
 					andNot_merge(&Array,&ArrayLen,&hits,&TmpArray,TmpArrayLen,&acl_deniedArray,acl_deniedArrayLen);
@@ -1568,7 +1568,7 @@ void *searchIndex_thread(void *arg)
 				}
 			    }
 
-			// Ettersom merging mÃ¥ gjÃ¸res per collection, gjÃ¸r vi attributt-filtreringa allerede her:
+			// Since merging must be done per collection, we do the attribute filtering already here:
 			for (x=start; x<ArrayLen; x++) {
 				iff_clear_all(&Array->iindex[x].indexFiltered);
 			}
@@ -1757,7 +1757,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	#ifndef BLACK_BOX
 		int j,y;
 		int responseShortTo;
-		int rankcount[256]; // rank går fra 0-252 (unsigned char)
+		int rankcount[256]; // rank goes from 0-252 (unsigned char)
 
 		unsigned int PredictNrAnchor;
 		unsigned int PredictNrUrl;
@@ -1776,7 +1776,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		pthread_t threadid_Main = 0;
 	#endif
 
-	//resetter subnmes hits
+	//reset subnames hits
 	for(i=0;i<nrOfSubnames;i++) {		
 		subnames[i].hits = 0;
 	}
@@ -1785,8 +1785,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 
 	#else
-		//finner først ca hvor mange treff vi fil få. Dette brukes for å avgjøre om vi kan 
-		//klare oss med å søke i bare url og anchor, eller om vi må søke i alt
+		//first find roughly how many hits we will get. This is used to decide whether we can
+		//get by with searching only url and anchor, or whether we must search everything
 
 		//Anchor:
 		for(i=0;i<nrOfSubnames;i++) {		
@@ -1814,7 +1814,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 
 
-	//nullstiller alle resultat tellere
+	//zero out all result counters
 	searchIndex_thread_arg_Anchor.resultArrayLen 	= 0;
 	searchIndex_thread_arg_Url.resultArrayLen 	= 0;
 	searchIndex_thread_arg_Main.resultArrayLen 	= 0;
@@ -1870,7 +1870,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	#endif
 
 	//Main
-	//vi søker ikke main hvis vi antar at vi har flere en xxx elementer i Anchor
+	//we don't search main if we assume we have more than xxx elements in Anchor
 	#ifndef BLACK_BOX
 	if (PredictNrAnchor < 20000) {
 	#else
@@ -1919,10 +1919,10 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	}
 
 	
-	//joiner trådene
+	//join the threads
 	#ifndef BLACK_BOX
 		#ifdef WITH_THREAD
-			//joiner trådene
+			//join the threads
 			if (threadid_Anchor != 0) {
 				pthread_join(threadid_Anchor, NULL);
 			}
@@ -1943,7 +1943,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	bblog(INFO, "Anchor ArrayLen %i, Url ArrayLen %i, Main ArrayLen %i", searchIndex_thread_arg_Anchor.resultArrayLen,
 			searchIndex_thread_arg_Url.resultArrayLen,searchIndex_thread_arg_Main.resultArrayLen);
 
-	//sanker inn tiden
+	//collect the time
 	(*queryTime).AnchorSearch = searchIndex_thread_arg_Anchor.searchtime;
 	(*queryTime).UrlSearch = searchIndex_thread_arg_Url.searchtime;
 	(*queryTime).MainSearch = searchIndex_thread_arg_Main.searchtime;
@@ -1955,7 +1955,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	resultArrayInit(TmpArray);
 
 	#ifndef BLACK_BOX
-		//or_merger Anchor og Url inn i en temper array
+		//or_merge Anchor and Url into a temp array
 		or_merge(&TmpArray,&TmpArrayLen,&searchIndex_thread_arg_Anchor.resultArray,searchIndex_thread_arg_Anchor.resultArrayLen,
 			&searchIndex_thread_arg_Url.resultArray,searchIndex_thread_arg_Url.resultArrayLen);
 
@@ -1970,7 +1970,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		}
 	#endif
 
-	//merger inn temperer og main 
+	//merge in temp and main 
 
 	#ifdef BLACK_BOX
 
@@ -1979,7 +1979,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		    destroy_query( &searchIndex_thread_arg_Main.attribute_query[i] );
 	    #endif
 
-	// Bytter om på disse arrayene da kunden nedenfor TeffArray.
+	// Swap these arrays since the code below uses TeffArray.
 	*TeffArrayElementer = searchIndex_thread_arg_Main.resultArrayLen;
 	swapiindex(TeffArray,&searchIndex_thread_arg_Main.resultArray);
 
@@ -2066,15 +2066,15 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	}
 
 	#if 0
-	//runarb: bug: denne manglet i en cvs oppdatering. Skal nokk også bare være for websøk (ikke bb)
+	//runarb: bug: this was missing in a cvs update. Should probably only be for web search (not bb)
 	//y=0;
        	for (i = 0; i < (*TeffArrayElementer); i++) {
        	        //PopRank = popRankForDocIDMemArray((*TeffArray)[i].DocID);
-		//neste linje må fjeres hvis vi skal ha forkorting
+		//the next line must be removed if we want shortening
 		//(*TeffArray)[i].PopRank = PopRank;
 		(*TeffArray)->iindex[i].PopRank = popRankForDocIDMemArray((*TeffArray)->iindex[i].DocID);
 
-		//her kan vi ha forkortning av array
+		//here we can shorten the array
 		//if (PopRank > 0) {
                	//	(*TeffArray)[y] = (*TeffArray)[i];
                 //        (*TeffArray)[y].PopRank = PopRank;
@@ -2086,9 +2086,9 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
         gettimeofday(&end_time, NULL);
         (*queryTime).popRank = getTimeDifference(&start_time,&end_time);
 
-	//kutter ned på treff errayen, basert på rank. Slik at vå får ferre elemeneter å sortere
+	//cut down the hit array, based on rank. So that we get fewer elements to sort
 
-	//totalt treff. Vi vil så korte ned TeffArray
+	//total hits. We then want to shorten TeffArray
 	*TotaltTreff = *TeffArrayElementer;
 
 	gettimeofday(&start_time, NULL);
@@ -2101,15 +2101,15 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 			rankcount[i] = 0;
 		}
 
-		//først gå vi gjenom alle hittene og finner hvilkene rank som fårekommer
+		//first we go through all the hits and find which ranks occur
 		for (i=0; i < (*TeffArrayElementer); i++) {
 
 
 			++rankcount[(*TeffArray)->iindex[i].PopRank];
 		}
 
-		//vi går så gjenom alle rankene og finner den største ranken som vil gi 
-		//oss responseShortToMin sider
+		//we then go through all the ranks and find the highest rank that will give
+		//us responseShortToMin pages
 		y=0;
 		responseShortTo=256;
 
@@ -2128,7 +2128,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		bblog(INFO, "responseShortTo: %i, y: %i", responseShortTo,y);
 		
 		if (responseShortTo != 0) {
-			//fjerner sider som er lavere en responseShortTo 
+			//remove pages that are lower than responseShortTo 
 			y=0;
        			for (i = 0; i < (*TeffArrayElementer); i++) {
 			
@@ -2158,10 +2158,10 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	
 	#ifdef BLACK_BOX
 
-		// gjør ting med TeffArray før vi roter for mye med den.
+		// do things with TeffArray before we mess with it too much.
 		for (i=0; i<*TeffArrayElementer; i++)
 		    {
-			// lagrer den orgianla posisjoene. Trenger denne for å gjøre en stabil sortering siden.
+			// store the original position. Need this to do a stable sort later.
 			(*TeffArray)->iindex[i].originalPosition = i;
 
 
@@ -2204,15 +2204,15 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 		/*
 		*********************************************************************************************************************
-		filformater 
+		file formats
 
-		lager en oversikt over, og filtrerer på, filformater
+		build an overview of, and filter on, file formats
 
-			Dette her blit en ganske komplisert sak. Vi har hash nøkler på fårmatet "subname-filtype", i en strukt.
+			This becomes a fairly complicated affair. We have hash keys on the format "subname-filtype", in a struct.
 			
-			Vi har også med en peker til subname strukten, slik at vi kan manipulere denne direkte. Slik har vi
-			bare en gjenomgang av dataene får å legge inn filtype infoen. Så en gjenomgang av alle subname-filetype
-			som finnes for å lagge de inn i subname struktuen.
+			We also include a pointer to the subname struct, so we can manipulate it directly. That way we have
+			only one pass over the data to add the filetype info. Then one pass over all subname-filetype
+			entries that exist to add them into the subname struct.
 
 		*********************************************************************************************************************
 		*/
@@ -2256,9 +2256,9 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 				}
 			#endif
 
-			// filetype kan være på opptil 4 bokstaver. Hvis det er ferre en 4 så vil 
-			// det være \0 er paddet på slutten, men hvis det er 4 så er det ikke det.
-			// legger derfor til \0 som 5 char, slik at vi har en gyldig string
+			// filetype can be up to 4 letters. If it is fewer than 4 then
+			// it will be \0-padded at the end, but if it is 4 then it is not.
+			// therefore add \0 as the 5th char, so that we have a valid string
 			(*TeffArray)->iindex[i].filetype[4] = '\0';
 			
 
@@ -2287,7 +2287,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		#ifdef ATTRIBUTES
 
 		//
-		// filtrerer
+		// filter
 		if (vector_size((*filteron).attributes) > 0)
 		    {
 
@@ -2349,7 +2349,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 				    }
 			    }
 
-			// Marker dokumenter som filtrert ut:
+			// Mark documents as filtered out:
 			if (filtered)
 			    {
 				for (i = 0; i < (*TeffArrayElementer); i++)
@@ -2374,7 +2374,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 		*********************************************************************************************************************
 		datoer
 
-		lager en oversikt over, og filtrerer på, dato
+		build an overview of, and filter on, dates
 		*********************************************************************************************************************
 		*/
 		bblog(INFO, "<################################# date filter ######################################>");
@@ -2383,7 +2383,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 		bblog(INFO, "looking opp dates");
 
-		//slår opp alle datoene
+		//look up all the dates
 		re = NULL;
 		nreopen = 0;
 		#pragma omp parallel for firstprivate(re)
@@ -2422,7 +2422,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 
 		//
-		//filter på dato
+		//filter on date
 
 		if ((*filteron).date != NULL) {
 			bblog(DEBUGINFO, "wil filter on date \"%s\"", (*filteron).date);
@@ -2528,7 +2528,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 				if (dup == NULL) {
 					dup = &(*dups)[i];
 					dup->V = NULL;
-					//setter dublicat rekorden til å peke på den første 
+					//set the duplicate record to point to the first one 
 					dup->fistiindex = &(*TeffArray)->iindex[i];
 
 					hashtable_insert(*crc32maphash, uinttouintp(crc32), dup);
@@ -2539,7 +2539,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 					/* Remove duplicated */
 					if (dup->V == NULL) {
 						dup->V = vector_container( pair_container( int_container(), ptr_container() ) );
-						//legger til den første
+						//add the first one
 						#ifdef DEBUG
 						bblog(DEBUGINFO, "DUPLICATE first: DocID=%u, subname=%s",  dup->fistiindex->DocID, dup->fistiindex->subname->subname);
 						#endif
@@ -2547,8 +2547,8 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 						dup->fistiindex->indexFiltered.duplicate_to_show = 1;
 					}
 
-					//går gjenom de vi har fra før, og sjekker om dette er den første duplikaten i en kollection
-					//hvis det ikke er det skal vi markere det.
+					//go through the ones we have from before, and check if this is the first duplicate in a collection
+					//if it is not, we should mark it.
 					for (k = 0; k<vector_size(dup->V); k++) { 
 
 						if (pair(vector_get(dup->V,k)).second.ptr == (*TeffArray)->iindex[i].subname->subname) {
@@ -2558,11 +2558,11 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 						}
 					}
 
-					// Hvis den første allerede er filtrert ut:
+					// If the first one is already filtered out:
 					if (dup->fistiindex->indexFiltered.is_filtered && !(*TeffArray)->iindex[i].indexFiltered.is_filtered)
 					    {
 						if (iff_set_filter(&dup->fistiindex->indexFiltered, FILTER_DUPLICATE)) {
-						    --(*TotaltTreff);	// Vil ikke denne alltid bli false?
+						    --(*TotaltTreff);	// Won't this always be false?
 						}
 						dup->fistiindex->indexFiltered.duplicate_to_show = 0;
 						dup->fistiindex = &(*TeffArray)->iindex[i];
@@ -2586,7 +2586,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 
 
 
-		//debug: printer ut alle treff, og litt om de.
+		//debug: print out all hits, and a bit about them.
 		#ifdef DEBUG_II
 			bblog(DEBUGINFO, "hits after duplicate checking:");
 			bblog(DEBUGINFO, "\t| %-5s | %-20s | %-8s | %-8s | %-8s | %-8s | %-8s | %-8s | %-8s |",  "DocId", "Subname", "Date", "Subname", "Filename",
@@ -2662,7 +2662,7 @@ void searchSimple (int *TeffArrayElementer, struct iindexFormat **TeffArray,int 
 	(*queryTime).indexSort = getTimeDifference(&start_time,&end_time);
 
 
-	// Debug: viser alle treffene 
+	// Debug: show all the hits 
 	/********************************************************************************/
 	//for (i=0;i<*TeffArrayElementer;i++) {
 	//	printf("DocID=%u, rank=%hu, Subname=%s\n", (*TeffArray)->iindex[i].DocID, (*TeffArray)->iindex[i].allrank, (*TeffArray)->iindex[i].subname->subname);
@@ -2816,7 +2816,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 
 
 		/***********************************************************************************************
-		teller filtyper
+		count filetypes
 		***********************************************************************************************/
 	        #ifdef DEBUG_TIME
         	        gettimeofday(&start_time, NULL);
@@ -2846,7 +2846,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 	                bblog(DEBUGINFO, "Time debug: searchFilterCount init time: %f", getTimeDifference(&start_time, &end_time));
 	        #endif
 
-		// Teller filtyper og attributter til navigasjonsmenyen:
+		// Count filetypes and attributes for the navigation menu:
 	        #ifdef DEBUG_TIME
         	        gettimeofday(&start_time, NULL);
 	        #endif
@@ -2863,20 +2863,20 @@ char* searchFilterCount(int *TeffArrayElementer,
 			else if (TeffArray->iindex[i].indexFiltered.duplicate == 1) {
 				bblog(INFO, "docid(%i) (duplicate)",  TeffArray->iindex[i].DocID);
 				//continue;
-				// Ax: Vi merger attributter for alle duplikater.
-				// Dette vil fikse tellefeil når en av duplikatene for et dokument f.eks
-				// er lagret i SuperOffice (med tilhørende attributt).
-				// Det vil feile miserabelt dersom duplikatene er i flere forskjellige systemer
-				// (f.eks både .doc og .pdf e.l.).
+				// Ax: We merge attributes for all duplicates.
+				// This will fix a counting error when one of the duplicates for a document is e.g.
+				// stored in SuperOffice (with an associated attribute).
+				// It will fail miserably if the duplicates are in several different systems
+				// (e.g. both .doc and .pdf or similar).
 			}
 
-			// Ax: Slå opp attributter for dokumentet.
+			// Ax: Look up attributes for the document.
 		        #ifdef DEBUG_TIME
 				gettimeofday(&att_start_time, NULL);
 			#endif
 
 			int	DocID = TeffArray->iindex[i].DocID;
-			int	checksum = TeffArray->iindex[i].crc32; // Døpt checksum for å ikke blande sammen med crc32attr.
+			int	checksum = TeffArray->iindex[i].crc32; // Named checksum so as not to confuse it with crc32attr.
 			char	*subname = TeffArray->iindex[i].subname->subname;
 
 			iterator	it_re = map_find(attr_subname_re, subname);
@@ -2888,7 +2888,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 			size_t		crc32_words_size = 0;
 			char		no_attributes = 0;
 
-			// Les inn og åpne nødvendige filer:
+			// Read in and open the necessary files:
 			if (!it_re.valid)
 			    {
 			        f_crc32_words = lotOpenFileNoCasheByLotNr(1, "crc32attr.map", "r", 's', subname);
@@ -2912,7 +2912,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 					    {
 						crc32_words_size/= attr_crc32_words_blocksize;
 
-						// Putt i cache:
+						// Put in cache:
 						iterator it_pre = map_insert(attr_subname_re, subname, f_crc32_words, m_crc32_words, crc32_words_size);
 						attr_keys = tuple(map_val(it_pre)).element[1].C;
 						// Read attribute columns for this subname.
@@ -2992,7 +2992,7 @@ char* searchFilterCount(int *TeffArrayElementer,
                         	gettimeofday(&att_start_time, NULL);
 			#endif
 
-			// Beregning av attributt-bits:
+			// Computing the attribute bits:
 			int	len = TeffArray->attrib_count + 1;
 			int	count = 0;
 
@@ -3021,7 +3021,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 
 			if (!no_attributes)
 			    {
-				// Faktisk oppslag:
+				// Actual lookup:
 				if (re!=NULL && attr_keys!=NULL && f_crc32_words!=NULL && m_crc32_words!=NULL)
 				    {
 					unsigned int	*crc32val = reget(re, DocID);
@@ -3037,7 +3037,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 						    {
 							char	*key = (char*)set_key(it_s1).ptr;
 							char	*value = NULL;
-							// Sjekk cache
+							// Check cache
 							struct _attribute_temp_1_key	this_key, *hash_key;
 							struct _attribute_temp_1_val	*hash_val;
 							this_key.count = count;
@@ -3084,7 +3084,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 
 								        if (value != NULL)
 									    {
-										// Legg til:
+										// Add:
 										//attribute_count_add(count, attributes, 2, key, value);
 										hash_key = malloc(sizeof(struct _attribute_temp_1_key));
 										hash_key->count = count;
@@ -3127,7 +3127,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 			// Attr-dup:
 			if (alist!=NULL && TeffArray->iindex[i].indexFiltered.duplicate_to_show == 1)
 			    {
-				// Hovedattr
+				// Main attr
 				struct _attribute_dups_ *ads;
 				iterator		it_ads = map_find(dup_attributes, checksum);
 
@@ -3169,7 +3169,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 					    }
 					else
 					    {
-						// Ax: O(n^2), men antar n vil være så liten at dette allikevel er raskeste løsning.
+						// Ax: O(n^2), but assume n will be so small that this is still the fastest solution.
 						for (ai=0; ai<vector_size(alist); ai++)
 						    {
 							char	has_dup = 0;
@@ -3179,8 +3179,8 @@ char* searchFilterCount(int *TeffArrayElementer,
 							for (aj=0; aj<vector_size(ads->dups); aj++)
 							    {
 								ajd = vector_get(ads->dups, aj).ptr;
-								// Ax: Om to duplikater har forskjellige verdier for samme nøkkel,
-								// så vil bare den ene bli med, ettersom vi ikke støtter multinøkler.
+								// Ax: If two duplicates have different values for the same key,
+								// then only one will be included, since we don't support multi-keys.
 								if (!strcmp(aid->key, ajd->key))
 								    has_dup = 1;
 							    }
@@ -3201,7 +3201,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 					    }
 				    }
 
-				// Vi merger bare duplikat-attributter, ikke filetype og group:
+				// We only merge duplicate attributes, not filetype and group:
 				continue;
 			    }
 
@@ -3320,7 +3320,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 			struct _attribute_temp_dup_data_ *aid, *ajd;
 
 			if (ads->dups!=NULL && ads->main!=NULL) {
-			    // Ax: O(n^2), men antar n vil være så liten at dette allikevel er raskeste løsning.
+			    // Ax: O(n^2), but assume n will be so small that this is still the fastest solution.
 			    for (ai=0; ai<vector_size(ads->dups); ai++)
 				{
 				    char	has_dup = 0;
@@ -3330,15 +3330,15 @@ char* searchFilterCount(int *TeffArrayElementer,
 				    for (aj=0; aj<vector_size(ads->main); aj++)
 					{
 					    ajd = vector_get(ads->main, aj).ptr;
-					    // Ax: Om to duplikater har forskjellige verdier for samme nøkkel,
-					    // så vil bare den ene bli med, ettersom vi ikke støtter multinøkler.
+					    // Ax: If two duplicates have different values for the same key,
+					    // then only one will be included, since we don't support multi-keys.
 					    if (!strcmp(aid->key, ajd->key))
 						has_dup = 1;
 				        }
 
 				    if (!has_dup)
 					{
-					    // Sjekk cache
+					    // Check cache
 				    	    struct _attribute_temp_1_key	this_key, *hash_key;
 					    struct _attribute_temp_1_val	*hash_val;
 					    this_key.count = aid->count;
@@ -3351,7 +3351,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 
 					    if (hash_val == NULL)
 						{
-						    // Legg til:
+						    // Add:
 						    hash_key = malloc(sizeof(struct _attribute_temp_1_key));
 						    hash_key->count = aid->count;
 						    hash_key->key = strdup(aid->key);
@@ -3477,7 +3477,7 @@ char* searchFilterCount(int *TeffArrayElementer,
         	        gettimeofday(&start_time, NULL);
         	#endif
 
-		// Lukk åpne filer og frigjør ledig minne:
+		// Close open files and free unused memory:
 		{
 		    iterator	it_re1 = map_begin(attr_subname_re);
 		    for (; it_re1.valid; it_re1=map_next(it_re1))
@@ -3518,16 +3518,16 @@ char* searchFilterCount(int *TeffArrayElementer,
         	        gettimeofday(&start_time, NULL);
         	#endif
 		//collections
-		//finner hvilken vi har trykket på, og markerer denne slik at det kan markeres i designed i klienten
-		//kopierer også inn antall treff i hver subname
+		//find which one we have clicked on, and mark it so it can be highlighted in the design in the client
+		//also copy in the number of hits in each subname
 
 		h = create_hashtable(200, fileshashfromkey, filesequalkeys);
 
-		//legger først inn alle subnames med verdien 0, slik at de blir med i tellingen.
+		//first add all subnames with the value 0, so that they are included in the count.
 		for(i=0;i<nrOfSubnames;i++) {
 
 
-			//ser ut til at subnames kan komme flere ganger. Hvis man for eks er med i to grupper som begge har tilgant til "felles"
+			//it seems subnames can appear several times. For example if you are in two groups that both have access to "felles"
 			if (NULL == (filesValue = hashtable_search(h,subnames[i].subname) )) {    
 
 				filesValue = malloc(sizeof(int));
@@ -3592,11 +3592,11 @@ char* searchFilterCount(int *TeffArrayElementer,
 		if (hashtable_count(h) > 0)
 		{
 
-			//legger inn All feltet
+			//add the All field
 			strscpy((*filters).collections.elements[ (*filters).collections.nrof ].name,
                                 "All",
 	                        sizeof((*filters).collections.elements[ (*filters).collections.nrof ].name));
-			(*filters).collections.elements[(*filters).collections.nrof].nrof = 0; //må vi ha dene her. Blir All brukt ?
+			(*filters).collections.elements[(*filters).collections.nrof].nrof = 0; //do we need this here. Is All used ?
 			++(*filters).collections.nrof;
 
 			struct hashtable_itr *itr;
@@ -3624,19 +3624,19 @@ char* searchFilterCount(int *TeffArrayElementer,
 		}
 		hashtable_destroy(h,1); 
 
-		//legger en hvilken som er trykket på, om noen
-		//inaliserer alle først
-		for(i=0;((i<nrOfSubnames +1) && (i<MAXFILTERELEMENTS));i++) { //+1 for og få med All
+		//set which one is clicked, if any
+		//initialize all first
+		for(i=0;((i<nrOfSubnames +1) && (i<MAXFILTERELEMENTS));i++) { //+1 to include All
 				(*filters).collections.elements[i].checked = 0;			
 		}
-		//hvis vi ikke har trykket på noen så markerer vi All, som er nr 0.
-		//hvis ikke skal vi søke oss gjenom og finne den som er trykket på
+		//if we haven't clicked any, we mark All, which is nr 0.
+		//if not, we search through and find the one that was clicked
 
 		if ((*filteron).collection == NULL) {
 			(*filters).collections.elements[0].checked = 1;
 		}
 		else {
-			for(i=0;((i<nrOfSubnames +1) && (i<MAXFILTERELEMENTS));i++) { //+1 for og få med All
+			for(i=0;((i<nrOfSubnames +1) && (i<MAXFILTERELEMENTS));i++) { //+1 to include All
 
 				if (strcasecmp((*filters).collections.elements[i].name,(*filteron).collection) == 0) {
 					(*filters).collections.elements[i].checked = 1;
@@ -3660,7 +3660,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 		//dates
 		***********************************************************************************************/
 		gettimeofday(&start_time, NULL);
-		//kjører dateview
+		//run dateview
 		dateview dv;
 		dateview *dvo;
 
@@ -3688,7 +3688,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 		dvo = date_info_end(&dv);
 
 
-		//inaliserer
+		//initialize
 		for (i=0;i<10;i++) {
 			dates[i] = 0;
 		}
@@ -3701,7 +3701,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 	        }
 		
 
-		date_info_free(dvo); // ax: Fjerner minnelekasje.
+		date_info_free(dvo); // ax: Fixes a memory leak.
 
 		gettimeofday(&end_time, NULL);
 		(*queryTime).dateview = getTimeDifference(&start_time,&end_time);
@@ -3726,7 +3726,7 @@ char* searchFilterCount(int *TeffArrayElementer,
 		char	*nav_xml = attribute_generate_xml(attributes, TeffArray->attrib_count+1, showattrp, getfiletypep, attrdescrp, qa, outformat);
 
 		#ifdef DEBUG
-			//skriver ut attribut xml'en.
+			//write out the attribute xml.
 			bblog(DEBUGINFO, "Navigation xml: %s", nav_xml);
 		#endif
 

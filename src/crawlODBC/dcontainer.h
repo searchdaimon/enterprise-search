@@ -4,7 +4,7 @@
  *
  *	dcontainer.h: Basic containers.
  *
- *	Dette er under utvikling.
+ *	This is under development.
  */
 
 #ifndef _DCONTAINER_H_

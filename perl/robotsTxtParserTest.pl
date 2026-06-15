@@ -5,7 +5,7 @@ use constant RobotName => 'boitho.com-dc';
 $url = 'http://www.vg.no/test.htm';
 
 #$RobotsTxtData = qq{
-##test robts.txt fil
+##test robots.txt file
 #User-agent: boitho.com-dc
 #Disallow: /
 #};
@@ -15,7 +15,7 @@ my $domene = fin_domene($url);
 my $robotstxturl = "http://$domene/robots.txt";
 
 
-#opner databasen
+#open the database
 tie %DBMrobottxt, "DB_File", '../data/robottxt' or die("Can't open dbm ../data/robottxt: $!");
 
 

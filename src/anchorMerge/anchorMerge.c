@@ -78,7 +78,7 @@ main(int argc, char **argv)
 	char anchorPath[512], anchorPath2[512];
 	int i;
 
-        //tester for at vi har fåt hvilken lot vi skal bruke
+        //test that we have got which lot we should use
         if (argc < 3)
                 errx(1, "Usage: ./anchorMerge lotnr subname\n\n");
 

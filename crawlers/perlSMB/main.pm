@@ -17,7 +17,7 @@ sub recursdir {
 	my $fd = $smb->opendir('smb://' . $dirname) or warn("can't open dir \"$dirname\": $!") && return 0;
   	while (my $f = $smb->readdir_struct($fd)) {
 		print "$f->[1]\n";
-		#tar ikke med . .. og filer som begynner med .
+		# skip ., .. and files starting with .
 		if ($f->[1] =~ /^\./) {
 			next;
 		}
@@ -42,7 +42,7 @@ sub recursdir {
 				}
 				$smb->close($fileh);
 
-				#send the fil to the search system
+				# send the file to the search system
 				$sd->add_document((
 			            content   => $filecontent,
 			            title     => $f->[1],
@@ -96,16 +96,16 @@ sub path_access {
 		print "$i: \"$opt->{$i}\"\n";
 	}
 
-	#setter opp tilkoblingen
+	# Set up the connection
 	my $smb = new Filesys::SmbClient(username  => $opt->{'user'},
                                        password  => $opt->{'password'},
                                        debug     => 0);
 	
-	#gjør det faktiske open() kallet mot resursen.
+	# Make the actual open() call against the resource.
 	my $fd = $smb->open($opt->{"resource"},0666);
 	
 	if (!$fd) {
-		#hvis vi ikke fikk til å åpne filen skal vi returnere 0
+		# if we could not open the file we return 0
 		warn("can't open $opt->{'resource'} for user $opt->{'user'}: $!");
 		return 0;
 	}

@@ -13,7 +13,7 @@
 
 int crawlpatAcces   (char resource[], char username[], char password[], int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...) , struct collectionFormat *collection) 
 {
-        //tester om vi kan koble til
+        //test whether we can connect
 	char        *prefix;
 	char	*resourcereal;
 	int status;
@@ -23,7 +23,7 @@ int crawlpatAcces   (char resource[], char username[], char password[], int (*do
 
 	resourcereal = resource;
 
-	//fjerner file: i begyndelsen
+	//remove the leading "file:"
 	if (strncmp("file:",resourcereal,strlen("file:")) == 0) {
 		resourcereal += strlen("file:");
 	}
@@ -51,7 +51,7 @@ int crawlpatAcces   (char resource[], char username[], char password[], int (*do
 
 int crawlcanconect( struct collectionFormat *collection,int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...)) 
 {
-        //tester om vi kan koble til
+        //test whether we can connect
 	char        *prefix;
 	int status;
 	int no_auth = 0;

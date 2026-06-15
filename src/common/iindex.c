@@ -67,7 +67,7 @@ void IIndexInaliser() {
 	}
 }
 
-//laster ordbken i minne
+// load the dictionary into memory
 void IIndexLoad (char subname[]) {
 	int i,y,x;
 	char FilePath[255];
@@ -95,7 +95,7 @@ void IIndexLoad (char subname[]) {
 	
 			max = inode.st_size / sizeof(DictionaryPost);
 
-			//analyserer for å finne de vi skal lese inn
+			// analyze to find the ones we should read in
 			TermsForMemory=0;
 			for (y=0;y<max;y++) {
 				fread(&DictionaryPost,sizeof(DictionaryPost),1,dictionaryha);
@@ -110,7 +110,7 @@ void IIndexLoad (char subname[]) {
 			AnchorDictionary[i].elements = TermsForMemory;
 
 			fseek(dictionaryha,0, SEEK_SET);
-			//leser de vi skal ha inn i minne
+			// read the ones we want into memory
 			x=0;
 			for (y=0;y<max;y++) {
                 	        fread(&DictionaryPost,sizeof(DictionaryPost),1,dictionaryha);
@@ -142,7 +142,7 @@ void IIndexLoad (char subname[]) {
 
                         max = inode.st_size / sizeof(DictionaryPost);
 
-                        //analyserer for å finne de vi skal lese inn
+                        // analyze to find the ones we should read in
                         TermsForMemory=0;
                         for (y=0;y<max;y++) {
                                 fread(&DictionaryPost,sizeof(DictionaryPost),1,dictionaryha);
@@ -157,7 +157,7 @@ void IIndexLoad (char subname[]) {
                         MainDictionary[i].elements = TermsForMemory;
 
                         fseek(dictionaryha,0, SEEK_SET);
-                        //leser de vi skal ha inn i minne
+                        // read the ones we want into memory
 			x=0;
                         for (y=0;y<max;y++) {
                                 fread(&DictionaryPost,sizeof(DictionaryPost),1,dictionaryha);
@@ -192,7 +192,7 @@ int compare_DictionaryMemoryElements (const void *p1, const void *p2) {
 
 }
 
-//ToDo: bruker ikke subname her enda. Må spesifisere det når vi loader
+// ToDo: not using subname here yet. Must specify it when we load
 int ReadIIndexRecordFromMemeory (unsigned int *Adress, unsigned int *SizeForTerm,char *IndexType, char *IndexSprok,unsigned int WordIDcrc32,char subname[], void *(filemap)(char *, size_t *)) {
 
 	int iindexfile;
@@ -267,7 +267,7 @@ int ReadIIndexRecordFromMemeory (unsigned int *Adress, unsigned int *SizeForTerm
 }
 
 /////////////////////////////////////////////////////////////////////
-// Finner indeks adressen til en term, ved å binærsøke ordboken
+// Find the index address of a term by binary-searching the dictionary
 /////////////////////////////////////////////////////////////////////
 int ReadIIndexRecord (unsigned int *Adress, unsigned int *SizeForTerm, unsigned int Query_WordID,char *IndexType, char *IndexSprok,unsigned int WordIDcrc32,char subname[]) {
 
@@ -282,7 +282,7 @@ int ReadIIndexRecord (unsigned int *Adress, unsigned int *SizeForTerm, unsigned 
 	char IndexPath[255];
 	char FilePath[255];
 	struct DictionaryFormat DictionaryPost;
-	struct stat inode;	// lager en struktur for fstat å returnere.
+	struct stat inode;	// create a struct for fstat to return into.
 
 
 	#ifdef TIME_DEBUG
@@ -304,7 +304,7 @@ int ReadIIndexRecord (unsigned int *Adress, unsigned int *SizeForTerm, unsigned 
 
 	if ((dictionaryha = fopen(IndexPath,"rb")) == NULL) {
 		#ifdef DEBUG
-			//viser ikke denne da vi ofte har subname som ikke er på den serveren med i queryet
+			// do not show this since we often have a subname in the query that is not on that server
 			printf("Can't read Dictionary for index %i, path \"%s\" at %s:%d\n",iindexfile,IndexPath,__FILE__,__LINE__);
 			perror(IndexPath);
 		#endif
@@ -332,7 +332,7 @@ int ReadIIndexRecord (unsigned int *Adress, unsigned int *SizeForTerm, unsigned 
 		printf("min %i, max %i\n",min,max);
 	#endif
 
-	//debug: Viser alle forekomstene i indeksen
+	// debug: show all occurrences in the index
 	/*
 	printf("\n####################################################\n");
 	printf("alle Dictionary forekomster:\n");
@@ -346,10 +346,10 @@ int ReadIIndexRecord (unsigned int *Adress, unsigned int *SizeForTerm, unsigned 
 	*/
 	
 
-	//binersøker
+	// binary search
 	fant = 0;
 	halvert = 0;
-	//to do. er >0 riktig her? Synes vi har fåt problem med forever looping før 
+	// to do. is >0 correct here? Seems we have had problems with forever looping before 
 	count = 0;
 	while (((max - min) > 0) && (!fant)) { 
 		halvert = floor((((max - min) / 2) + min));
@@ -376,9 +376,9 @@ int ReadIIndexRecord (unsigned int *Adress, unsigned int *SizeForTerm, unsigned 
 			fant = 1;
 		}
 		else if (min == halvert) {
-			//hvis vi ikke her mere halveringer igjen å kjøre. Litt usikker på 
-			//hvorfår vi må ha dette, og den under. Men (max - min) blir aldri mindre en 1, hvis vi ikke finner
-			//recorden, og vi evverlooper
+			// if we have no more halvings left to run. A bit unsure about 
+			// why we need this, and the one below. But (max - min) never gets smaller than 1, if we do not find
+			// the record, and we loop forever
 			break;
 		}
 		else if (max == halvert) {
@@ -395,9 +395,9 @@ int ReadIIndexRecord (unsigned int *Adress, unsigned int *SizeForTerm, unsigned 
 		++count;
 	}
 
-	//leser siste
-	//toDo: hvorfor kommer ikke altid siste post med når vi halverer. Skyldes det bruk av floor() lengere opp?
-	//leser manuelt får nå
+	// read the last one
+	// toDo: why does the last record not always get included when we halve. Is it due to the use of floor() further up?
+	// read manually for now
 	if (!fant) {
 		posisjon = (halvert -1) * sizeof(struct DictionaryFormat);
 		fseek(dictionaryha,posisjon,0);
@@ -460,16 +460,16 @@ static inline size_t memcpyrc(void *s1, const void *s2, size_t n) {
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-// Returnerer en array med termner, forekomster og posisjoner for enkelt ord. 
+// Returns an array of terms, occurrences and positions for a single word. 
 //
-//	Inn:
+//	In:
 //	WordID
 //	IndexSprok
 //	IndexType
 //	
-//	Ut:
+//	Out:
 //	struct iindex
-//	int antall //antal forekomster
+//	int antall // number of occurrences (count)
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray, 
 		unsigned int WordIDcrc32, char * IndexType, char *IndexSprok,
@@ -504,7 +504,7 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 	#ifdef HAVE_IS3_BUG
 
-	//temp. FIkser at ikke alle indekser er v3
+	// temp. Handle that not all indexes are v3
 	if (strcmp(IndexType,"Main") == 0) {
 		printf("vv: %s is v3\n",IndexType);
 		isv3 = 0;
@@ -524,14 +524,14 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 	#endif
 
 
-	//setter denne til 0, slik at hvis i ikke fr til å opne filen, eller hente ordboken er den 0
-	//runarb: 19 aug 2007: gjør om slik at vi kan ha elementer fra før i indeksen
-	//tror vi ikke kan nulle den ut da
-	//må sjekkes opp
-	//ser ut til at dette er antall treff i indexsen, inklysive de vi har fra før, ikke bare nye treff for denne index
+	// set this to 0, so that if we fail to open the file or fetch the dictionary it is 0
+	// runarb: 19 aug 2007: changed so that we can have pre-existing elements in the index
+	// think we cannot zero it out then
+	// needs to be checked
+	// looks like this is the number of hits in the index, including the ones we already have, not just new hits for this index
 	//(*AntallTeff) = 0;
 
-	//prøver førs å lese fra minne
+	// first try to read from memory
 	if ((!ReadIIndexRecordFromMemeory(&Adress, &SizeForTerm,IndexType,IndexSprok,WordIDcrc32,(*subname).subname,filemap))
 	&& (!ReadIIndexRecord(&Adress, &SizeForTerm,WordIDcrc32,IndexType,IndexSprok,WordIDcrc32,(*subname).subname))
 	) {
@@ -611,7 +611,7 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 			#else
 				fseek(fileha,Adress,0);
 
-				//forhindrer at vi leser inn en for stor index, og bruker mye tid på det. Kan dog skje at vi buffer owerflover her
+				// prevent us from reading in too large an index and spending much time on it. May happen that we buffer overflow here though
 				maxIIindexSize = maxIndexElements * 209;
 
 				if (SizeForTerm > maxIIindexSize) { // DocID 4b +  langnr 1b + TermAntall 4b + (100 hit * 2b)
@@ -681,7 +681,7 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 				if (TeffArray->iindex[y].TermAntall != 0) {
 
-					//slutter hvis vi har tat for mange hits
+					// stop if we have taken too many hits
 					if ((TeffArray->nrofHits + TeffArray->iindex[y].TermAntall) > maxTotalIindexHits) {
 						printf("Har max hits. Har nå %i, TermAntall: %i, maxTotalIindexHits: %i\n",TeffArray->nrofHits,TeffArray->iindex[y].TermAntall,maxTotalIindexHits);
 						TeffArray->iindex[y].TermAntall = 0;
@@ -690,7 +690,7 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 					TeffArray->iindex[y].hits = &TeffArray->hits[TeffArray->nrofHits];
 
-					//vi må koppiere de inn 1 og 1 slik at posisjon blir riktig, og phrase blir 0
+					// we must copy them in one by one so that position is correct and phrase becomes 0
 					for (z=0;z<TeffArray->iindex[y].TermAntall;z++) {
 						allindex += memcpyrc( &TeffArray->hits[TeffArray->nrofHits].pos,allindex,sizeof(unsigned short) );
 						TeffArray->hits[TeffArray->nrofHits].phrase = 0;
@@ -713,7 +713,7 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 				TeffArray->iindex[y].subname = subname;
 
 				#ifdef BLACK_BOX
-					//legger til en peker til subname
+					// add a pointer to subname
 					TeffArray->iindex[y].deleted = 0;
 					TeffArray->iindex[y].indexFiltered.filename = 0;
 					TeffArray->iindex[y].indexFiltered.date = 0;
@@ -721,8 +721,8 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 					TeffArray->iindex[y].PopRank = 0;
 				#endif
 
-				//seter disse til 0 da vi ikke altid kjører body søk, og dermed ikke inaliserer disse.
-				//dog noe uefektift og altid sette disse til 0, tar tid
+				// set these to 0 since we do not always run a body search, and thus do not initialize these.
+				// somewhat inefficient to always set these to 0 though, takes time
 				#ifdef EXPLAIN_RANK
 					TeffArray->iindex[y].rank_explaind.rankBody = 0;
 					TeffArray->iindex[y].rank_explaind.rankHeadline = 0;
@@ -756,8 +756,8 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 
 
 				#ifndef BLACK_BOX
-					//midlertidig bug fiks. Ignorerer hit med DocID 0.
-					//ser ut til at vi har noen bugger som lager DocID 0. Skal ikke være med i index
+					// temporary bug fix. Ignore hits with DocID 0.
+					// looks like we have some bugs that create DocID 0. Should not be in the index
 					if (TeffArray->iindex[y].DocID == 0) {
 						#ifdef EXPLAIN_RANK
 							printf("Bug: Hva docid=0!\n");
@@ -777,7 +777,7 @@ void _GetIndexAsArray (int *AntallTeff, struct iindexFormat *TeffArray,
 					}
 				}
 				else {
-					//søker os gjenom språkene vi skal filtrerte på
+					// loop through the languages we should filter on
 					/*
 					int h;
 					for(h=0;h<(languageFilterNr -1);h++) {
@@ -908,7 +908,7 @@ struct hashtable * loadGced(int lotNr, char subname[]) {
 
 	unsigned int *gcedArray;
 	int nrofGced;
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	FILE *GCEDFH;
 	int i;
 
@@ -989,7 +989,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 	unsigned int lastWordID;
 	unsigned int lastDocID;
 	int forekomstnr;
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	char path[256];
 	unsigned int *nrofDocIDsForWordID;
 	struct revIndexArrayFomat *revIndexArray; 
@@ -1026,10 +1026,10 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 
 	GetFilPathForLot(path,lotNr,subname);
-	//ToDo: må sette språk annen plass
+	// ToDo: must set language elsewhere
 	sprintf(iindexPath,"%siindex/%s/index/aa/",path,type);
 
-	//oppretter paths
+	// build paths
 	makePath(iindexPath);			
 
 	sprintf(iindexPathOld,"%s%i.txt",iindexPath,part);
@@ -1044,8 +1044,8 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 
 	//ToDo: runarb 29.03.2008
-	//veldig usikker på om dette er ret, antall DocId'er må være en del mindre en størelsen. Kansje 1/3 ?
-	//må etterforske
+	// very unsure whether this is right, the number of DocIDs must be considerably smaller than the size. Maybe 1/3 ?
+	// must investigate
 	revIndexArraySize = (inode.st_size / 2);
 
 
@@ -1081,7 +1081,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 	vi må fortsatt kjøre garbarge collection. En ytelsesforbedring i frmtiden vi være å bare gjøre det når det er 
 	DocID'er i gced filen
 
-	//kjører 
+	// run 
 	if (inode.st_size == 0) {
 		printf("rev index is emty. We dont have to do any thing.");
 		return 0;
@@ -1090,9 +1090,9 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 	count = 0;
 
-	//last iindex
+	// load iindex
 	if (IINDEXFH == NULL) {
-		//ingen vits å å gjøre noe hvis vi ikke fikk til å åpne filen	
+		// no point doing anything if we failed to open the file	
 	}
 	else if (!IndekserOpt->sequenceMode) {
 
@@ -1103,9 +1103,9 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		#endif
 
 		while ((!feof(IINDEXFH)) && (count < revIndexArraySize)) {
-        	        //wordid hedder
+        	        // wordid header
                 	if (fread(&term,sizeof(unsigned int),1,IINDEXFH) != 1) {
-				//skriver ut feilmelding hvis vi fik en feil, men ikke eof
+				// print error message if we got an error, but not eof
 				if (!feof(IINDEXFH)) {
                         		printf("can't read term\n");
                         		perror(iindexPathOld);
@@ -1188,7 +1188,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 		if (fread(&revIndexArray[count].DocID,sizeof(revIndexArray[count].DocID),1,REVINDEXFH) != 1) {
 			#ifdef DEBUG
-				//har kommer vi til eof, det er helt normalt
+				// here we reach eof, that is completely normal
 				printf("can't read any more data\n");
 				perror("revindex");
 			#endif
@@ -1223,7 +1223,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 			goto IndekserError;			
 		}
 
-		//leser antall hist vi skulle ha
+		// read the number of hits we should have
 		if (fread(&revIndexArray[count].hits,1,revIndexArray[count].nrOfHits * sizeof(short),REVINDEXFH) != (revIndexArray[count].nrOfHits * sizeof(short)) ) {
 			perror("read hits");
 			goto IndekserError;
@@ -1241,15 +1241,15 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		#endif
 
 		
-		//Runarb  3 juni 2008: 	Dette er ikke rikig, vi skal slette gamle forekomster, men ikke nye, som har oppstått i ettertid.
-		//Runarb 16 juni 2008: 	Vi bytter om, slik at vi bare analyserer DocumentIndex for å finne gcede sider. Hvis den er slettet der, så er den pr deg slettet. 
-		//			Slik hånterer vi at det kan ligge nydata1->nydata2->nydata3 i reposetoriet, og v1 er ok, v2 er ok, men siste, v3 er ikke ok, og skal lsettes
-		//			Da skal de ut av alle indekser.
-		//Runarb 14 jan 2009:   Forstår ikke hvorfor dettte er slik. Nå kan vi ikke legge til dokumentet i gced filen hvis det er endret. Og alle 
-		//			tidligere ord i et dokument vil være søkbar for det. Tror v1,v2,v3 problemet gjelder på web, der vi av og til
-		//			sletter dokumenter vi ikke liker. Har ikke endret noe nåe.
-		//Runarb 23 main 2011: 	Hadde ret i 2009. Gc må gjøres når vi laster ii index dokumentenem, hvis ikke blir oppdateringer av dokumenter feil.
-		//garbare collection
+		// Runarb 3 June 2008: This is not right, we should delete old occurrences, but not new ones that appeared later.
+		// Runarb 16 June 2008: We switch around so that we only analyze DocumentIndex to find gced pages. If it is deleted there, then it is considered deleted. 
+		//			This way we handle that the repository may contain newdata1->newdata2->newdata3, and v1 is ok, v2 is ok, but the last, v3, is not ok and should be deleted
+		//			Then they should be removed from all indexes.
+		// Runarb 14 Jan 2009: Do not understand why this is so. Now we cannot add the document to the gced file if it has changed. And all 
+		//			earlier words in a document will be searchable for it. Think the v1,v2,v3 problem applies on web, where we sometimes
+		//			delete documents we do not like. Have not changed anything now.
+		// Runarb 23 May 2011: Was right in 2009. Gc must be done when we load the ii index documents, otherwise document updates become wrong.
+		// garbage collection
 		/* if ((IndekserOpt->garbareCollection) && (NULL != hashtable_search(h,&revIndexArray[count].DocID)) ) {
 			#ifdef DEBUG
 			printf("DocID %u is deleted\n",revIndexArray[count].DocID);
@@ -1286,7 +1286,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 	}
 	flock(fileno(IINDEXFH),LOCK_EX);
 
-	//teller forkomster av DocID's pr WordID
+	// count occurrences of DocIDs per WordID
 	lastWordID = 0;
 	forekomstnr = -1;
 	lastDocID = 0;
@@ -1325,7 +1325,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 		printf("looking at  WordID %u, nr %u\n",revIndexArray[i].WordID,nrofDocIDsForWordID[forekomstnr]);
 		#endif
 
-		//sjekker at dette ikke er en slettet DocID
+		// check that this is not a deleted DocID
 		if (revIndexArray[i].tombstone) {
 			#ifdef DEBUG
 				fprintf(stderr,"DocID %u is tombstoned.\n",revIndexArray[i].DocID);
@@ -1354,12 +1354,12 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 
 
-		//skrive DocID og antall hit vi har
+		// write DocID and the number of hits we have
 		fwrite(&revIndexArray[i].DocID,sizeof(revIndexArray[i].DocID),1,IINDEXFH);
 		fwrite(&revIndexArray[i].langnr,sizeof(char),1,IINDEXFH);
 		fwrite(&revIndexArray[i].nrOfHits,sizeof(revIndexArray[i].nrOfHits),1,IINDEXFH);
 
-		//skriver alle hittene		
+		// write all the hits		
 		for(uy=0;uy<revIndexArray[i].nrOfHits;uy++) {
 			#ifdef DEBUG		
 				printf("\t\thit %hu\n",revIndexArray[i].hits[uy]);
@@ -1376,7 +1376,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 	IINDEXFH = NULL;
 
 	if (IndekserOpt->sequenceMode) {
-		//trunkerer rev index. i LotInvertetIndexMaker3 er det bare en oppdateringsfil
+		// truncate rev index. in LotInvertetIndexMaker3 it is only an update file
 		if (ftruncate(fileno(REVINDEXFH), 0) != 0) {
 			perror("can't truncate rev index");
 		}
@@ -1400,7 +1400,7 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 	return 1;
 
-	//hvis vi ikke fik til å indeksere skal vi free gi resursene våre, så returnere 0
+	// if we failed to index we should free our resources, then return 0
 	IndekserError:
 		free(revIndexArray);
 		free(nrofDocIDsForWordID);
@@ -1417,8 +1417,8 @@ int Indekser(int lotNr,char type[],int part,char subname[], struct IndekserOptFo
 
 }
 
-//sortere først på WordID, så DocID
-//krever en stabil algoritme
+// sort first by WordID, then DocID
+// requires a stable algorithm
 int Indekser_compare_elements (const void *p1, const void *p2) {
 	
 	if (((struct revIndexArrayFomat*)p1)->WordID == ((struct revIndexArrayFomat*)p2)->WordID) {
@@ -1471,7 +1471,7 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 	char FinalDictionaryFileName[128];
 	char FinalIindexFilePath[128];
         char FinalDictionaryFilePath[128];
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	int count;
 	FILE *FinalIindexFileFA;
 	FILE *FinalDictionaryFileFA;
@@ -1518,7 +1518,7 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 		exit(-1);
 	}
 
-	//setter alle som ikke åpnet	
+	// set all as not opened	
         count=0;
 	for (i=startIndex;i<stoppIndex;i++) {
 		iindexfile[count].fileha = NULL;
@@ -1548,7 +1548,7 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
                         	perror(PathForLotIndex);
 				exit(1);
 			}
-			//debug: viser hvilkene filer vi IKKE fikk åpnet
+			// debug: show which files we did NOT manage to open
 			/*
 			printf("can't open %s\n",iindexfile[count].PathForLotIndex);
 			*/
@@ -1594,7 +1594,7 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 	count=0;
 	for (i=0;i<nrOffIindexFiles;i++) {
 
-               	//leser inn første term
+               	// read in the first term
                	if (fread(&iindexfile[count].lastTerm,sizeof(unsigned int),1,iindexfile[count].fileha) != 1) {
 			printf("can't read first lastTerm for %s. Ignoring it\n",iindexfile[count].PathForLotIndex);
                         perror("read");
@@ -1604,7 +1604,7 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
                         perror("read");
 		}
 		else {
-			//debug: viser hvilkene filer vi fikk åpnet
+			// debug: show which files we managed to open
 			/*
 			printf("did open %i - %s\n",count,iindexfile[count].PathForLotIndex);
 			*/
@@ -1657,20 +1657,20 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 
 	gotEof = 0;
 	while (nrOffIindexFiles != 0) {
-		//hvis vi har fått en endoffile siden sist sorterer vi slik at den kommer nederst
+		// if we have reached end of file since last time we sort it so that it comes last
 		if (gotEof) {
-			//+gotEof da vi skal også ha med de sidene vi sorterer ut nå i sorteringen
+			// +gotEof since we should also include the pages we sort out now in the sorting
 			qsort(iindexfile, nrOffIindexFiles + gotEof, sizeof(struct iindexfileFormat), mergei_compare_elements_eof);
 
 			gotEof = 0;
 
 		}
 
-		//sorter de etter term
-		//ToDo: dette er nokk ikke optimalt når man tenker på hastighet. Må se på dette
+		// sort them by term
+		// ToDo: this is probably not optimal performance-wise. Must look into this
 		qsort(iindexfile, nrOffIindexFiles , sizeof(struct iindexfileFormat), mergei_compare_elements);
 
-		//finner elementene som skal kopieres inn
+		// find the elements that should be copied in
 		mergeTerm = iindexfile[0].lastTerm;
 		i = 0;
 		totaltAntall = 0;
@@ -1678,7 +1678,7 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 			totaltAntall += iindexfile[i].lastAntall;
 			i++;
 		}
-		//sorterer etter fil nr slik at vi får minste docid først
+		// sort by file number so we get the smallest docid first
 		qsort(iindexfile, i , sizeof(struct iindexfileFormat), mergei_compare_filenr);
 	
 		#ifdef DEBUG
@@ -1693,7 +1693,7 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 
 		
 		i = 0;
-		//kjører gjenom alle filene og skriver ut de som har index
+		// loop through all the files and write out the ones that have an index
 		while ( (mergeTerm == iindexfile[i].lastTerm) && (i<stoppIndex) ) {
 		
 			#ifdef DEBUG
@@ -1702,7 +1702,7 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 			
 
 			for (x=0;x<iindexfile[i].lastAntall;x++) {
-                        	//side hedder
+                        	// page header
 
 
 				if ((n=fread(&DocID,sizeof(DocID),1,iindexfile[i].fileha)) != 1) {
@@ -1741,26 +1741,26 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 						fprintf(stderr,"can't read hit for %s. z: %i, TermAntall: %u. DocID %u\n",iindexfile[i].PathForLotIndex,z,TermAntall, DocID);
 		                       		perror(iindexfile[i].PathForLotIndex);
 
-						//ToDo: dette er ikke 100% lurt, break her går ut av den første for loppen, men ikke den viktige hoved loopen
+						// ToDo: this is not 100% smart, break here exits the first for loop, but not the important main loop
 						goto iindexfileReadError;
                                 	}
                         	}
 
-				//skriver til final index
+				// write to final index
 				fwrite(&DocID,sizeof(unsigned int),1,FinalIindexFileFA);
 				fwrite(&langnr,sizeof(char),1,FinalIindexFileFA);
 				fwrite(&TermAntall,sizeof(unsigned int),1,FinalIindexFileFA);
 
-				//skriver hits
+				// write hits
                         	for (z = 0;z < TermAntall; z++) {
-					//skriver til final index
+					// write to final index
 					fwrite(&hits[z],sizeof(unsigned short),1,FinalIindexFileFA);
 				}
                 	}
 
 						
 			if (feof(iindexfile[i].fileha)) {
-				//error hånterer som eof
+				// error handled as eof
 				iindexfileReadError:	
 		
 				iindexfile[i].eof = 1;
@@ -1773,7 +1773,7 @@ void mergei (int bucket,int startIndex,int stoppIndex,char *type,char *lang,char
 				nrOffIindexFiles--;
 			}
 			else {
-				//leser inn neste term
+				// read in the next term
                         	if ((n=fread(&iindexfile[i].lastTerm,sizeof(unsigned int),1,iindexfile[i].fileha)) != 1) { 
 					printf("cant read lastTerm for %s\n",iindexfile[i].PathForLotIndex);
                        			perror("read");

@@ -11,7 +11,7 @@
 #include <signal.h>
 #include <netdb.h>
 
-#include "boithoad.h" // bare for å definere maxSubnameLength
+#include "boithoad.h" // only to define maxSubnameLength
 
 #define BACKLOG 15     // how many pending connections queue will hold
 
@@ -24,7 +24,7 @@ struct packedHedderFormat {
 	char subname[maxSubnameLength];
 };
 
-//tar inn en peker til en rutine som tar en sokket inn og behandler den
+//takes a pointer to a routine that takes a socket and handles it
 //
 
 

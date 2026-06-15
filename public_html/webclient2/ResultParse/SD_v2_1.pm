@@ -55,8 +55,8 @@ sub collections {
 	);
 
 	if (ref $coll_xml ne "ARRAY") {
-		#Runarb 2010, tar bort denne da vi ikke sender collections hvis vi ikke har noen å søke i. For esk under /public
-		#uten noen offentlige collectioner.
+		#Runarb 2010, removing this since we do not send collections if we have none to search in. For example under /public
+		#without any public collections.
 		#carp "No collections in XML";
 		return \%coll_info;
 	}

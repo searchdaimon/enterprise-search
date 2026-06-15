@@ -91,7 +91,7 @@ sub upd_usr_access {
 	my @users = grep { defined } @{$users_raw};
 	my $selected_users = $#users +1;
 
-	# Ikke oppdater hvis antall valgte brukere er større enn lisensierte brukere.
+	# Do not update if the number of selected users is greater than the number of licensed users.
 	my %license = license_info($s->{license_key}, $CONFIG{slicense_info_path});
 
 	if ($license{valid} && ($selected_users <= $license{users} || $license{users}==0)) {

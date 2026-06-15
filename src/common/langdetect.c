@@ -337,7 +337,7 @@ void langdetectDetect(struct wordsFormat words[],int nrofWords, char lang[])
 		    alle_stoppord++;
 
 		    #ifdef DEBUG
-			//dette fungerer bare når vi har på preserv words
+			// this only works when we have preserve words enabled
 			printf("( ");
 		    #endif
 

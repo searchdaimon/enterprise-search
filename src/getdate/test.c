@@ -4,7 +4,7 @@
 
 #include "getdate.h"
 
-//Runarb: Vi vil ikke ha en main metode i o filen vi skal inkludere andre plasser
+//Runarb: We don't want a main method in the .o file we will include in other places
 int
 main(int argc, char **argv)
 {

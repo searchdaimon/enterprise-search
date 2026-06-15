@@ -69,12 +69,12 @@ int main(int argc, char *argv[]) {
 
 	printf("Content-type: text/html\n\n");
 
-	//runarb: 20 nov 2007: midlertidig fiks på at vi trenger bilde størelsen også
+	//runarb: 20 nov 2007: temporary fix because we also need the image size
 	//DIRead (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[])
 	struct DocumentIndexFormat DocumentIndexPost;
 	DocumentIndexPost.imageSize = 0;
 
-	//må legge til størelsen på hedderen også
+	//must also add the size to the header
 
 	htmlBufSize = (iSize * 30);
 	if ((htmlBuf = malloc(htmlBufSize)) == NULL) {

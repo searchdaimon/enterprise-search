@@ -8,7 +8,7 @@
 #include "../crawl/crawl.h"
 #include "../common/bstr.h"
 
-//usikker på om vi skal ha med denne. Er det kansje bedre og lagge inn strcasestr her?
+//unsure whether we should include this. Maybe it's better to add strcasestr here?
 //#define _GNU_SOURCE //for strcasestr
 
 #define hedderTemplate "<table width='75%' border='1'>\n"
@@ -72,7 +72,7 @@ int mysql_recurse (char host[], char user[], char password[], char dbname[],
 
         mysql_init(&demo_db);
 
-        //koble til mysql
+        //connect to mysql
         if(!mysql_real_connect(&demo_db, host, user, password, dbname, 3306, NULL, 0)){
                 printf(mysql_error(&demo_db));
                 exit(1);
@@ -80,7 +80,7 @@ int mysql_recurse (char host[], char user[], char password[], char dbname[],
 
 
 
-	//get alle the tables
+	//get all the tables
         sprintf(mysql_query, "show tables");
 
         printf("mysql_query: %s\n",mysql_query);
@@ -115,7 +115,7 @@ int mysql_recurse (char host[], char user[], char password[], char dbname[],
 
 		printf("table: %s\n",tables[i]);
 
-		//hent ut alle colonne navnene
+		//fetch all the column names
         	sprintf(mysql_query, "SHOW COLUMNS FROM %s",tables[i]);
 
         	printf("mysql_query: %s\n",mysql_query);
@@ -148,7 +148,7 @@ int mysql_recurse (char host[], char user[], char password[], char dbname[],
 		printf("found titlecollon %i\n",titlecollon);
 
 
-		//hent ut all dataen
+		//fetch all the data
         	sprintf(mysql_query, "select * FROM %s",tables[i]);
 
         	printf("mysql_query: %s\n",mysql_query);
@@ -228,7 +228,7 @@ int mysql_recurse (char host[], char user[], char password[], char dbname[],
                         (*documentAdd)(collection ,&crawldocumentAdd);
 
 
-			//treneger vi ikke denne ? mysql_fetch_lengths lager vel ikke en ny, men returnerer en peker til sin interne lengths
+			//do we not need this? mysql_fetch_lengths probably doesn't create a new one, but returns a pointer to its internal lengths
 			//free(lengths);
 
 			free(document);

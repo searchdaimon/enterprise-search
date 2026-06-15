@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 
 	}
 	else {
-		//leser inn cgi variabler
+		//read in cgi variables
 		// Initialize the CGI lib
         	res = cgi_init();
 
@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
         }
 
 
-        //henter svaret
+        //fetch the answer
         mysqlres=mysql_store_result(&demo_db); /* Download result from server */
         if  ((mysqlrow=mysql_fetch_row(mysqlres)) == NULL) { /* Get a row from the results */
 		fprintf(stderr,"cnat't fint the add in db.\n");
@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
 		issuedadd.DocID = strtoul(mysqlrow[13], (char **)NULL, 10);
 
 		
-		//sjekker om vi har noe klikk på denne ipen til samme side fra før
+		//check if we already have any click on this ip to the same site
 		
 	        sprintf(mysql_query, "select * from short_out_logg where betaler_side_id='%u' AND ip_adresse='%s' AND tid > (NOW() - INTERVAL 24 HOUR)",issuedadd.DocID,issuedadd.ipadress); 
 
@@ -147,12 +147,12 @@ int main(int argc, char *argv[]) {
 		mysqlres=mysql_store_result(&demo_db); /* Download result from server */
         	if  ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
 			//printf("we have a record in short_out_logg\n");
-			//bør kansje oppdatere klikk frekvens her
+			//should maybe update click frequency here
 			limit24hour = 1;
 		}
 		else {
 			//printf("we dont have a record in short_out_logg.\n %s\n",mysql_query);
-			//legger den inn
+			//insert it
 			sprintf(mysql_query, "insert into short_out_logg values('%u','%s','%i',%s)",
 				issuedadd.DocID,
 				issuedadd.ipadress,
@@ -165,13 +165,13 @@ int main(int argc, char *argv[]) {
 			limit24hour = 0;
 		}
 
-		//sjekker om dette er et gyldig klikk 
+		//check if this is a valid click 
 		if (strcmp(remote_addr,issuedadd.ipadress) != 0){
 			strcpy(clickStatus,"IP_MISS_MATCH");
 		}
-		//Sjekker om annonsen er ung nokk. 
-		// bruker now time fra mysql server isteden for time() da vi ikke nødvendivis kjører på 
-		//samme server, og klokkene ikke er synkronisert
+		//Check if the ad is young enough. 
+		// use now time from the mysql server instead of time() since we do not necessarily run on 
+		//the same server, and the clocks are not synchronized
 		else if (issuedadd.nowtime > (issuedadd.issuetime + 3600)) { 
 
 			strcpy(clickStatus,"ADD_TO_OLD");
@@ -183,12 +183,12 @@ int main(int argc, char *argv[]) {
 			strcpy(clickStatus,"24_HOUR_LIMIT");
 		}
 		else {
-			//vi har en ok status
+			//we have an ok status
 			strcpy(clickStatus,"OK");
 			
 		}
 
-		//redirekter brukeren
+		//redirect the user
 		if (strcmp(clickStatus,"OK") == 0) {
 			printf("Location:%s\n\n",issuedadd.uri);			
 		}
@@ -196,9 +196,9 @@ int main(int argc, char *argv[]) {
 			printf("Location:%s\n\n",addurl);
 		}
 
-		//kan vel egentlig stenge ned standat utputt nå?
+		//could probably close down standard output now?
 
-		//oppdaterer klikk frekvens
+		//update click frequency
 		sprintf(mysql_query, "update issuedadds set clickfrequency = clickfrequency+1 where id='%u'",addid);
 
         	if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
@@ -206,10 +206,10 @@ int main(int argc, char *argv[]) {
              		exit(1);
         	}
 
-		//trekker penger hvis vi har ok status
+		//deduct money if we have an ok status
 		if (strcmp(clickStatus,"OK") == 0) {
 
-			//trekker penger fra ppc brukene
+			//deduct money from the ppc user
 			sprintf(mysql_query, "update brukere set penger=penger - %f where bruker_navn='%s'",issuedadd.bid,issuedadd.ppcuser);
 
 			if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
@@ -217,7 +217,7 @@ int main(int argc, char *argv[]) {
         	                exit(1);
         	        }
 
-			//betaler search/aff brukeren
+			//pay the search/aff user
 			sprintf(mysql_query, "update brukere set penger=penger + %f where bruker_navn='%s'",issuedadd.bid,issuedadd.affuser);
 		
 			if(mysql_real_query(&demo_db, mysql_query, strlen(mysql_query))){ /* Make query */
@@ -228,7 +228,7 @@ int main(int argc, char *argv[]) {
 
 
 
-		//logger
+		//log
 		sprintf(mysql_query, "insert DELAYED into out_logg values(%s,%s,'%s','%s','%s','%i','%s','%s','%f','%s')",
 			"NULL",
 			"NOW()",

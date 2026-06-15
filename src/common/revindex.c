@@ -13,7 +13,7 @@ FILE *revindexFilesOpenLocalPart(int lotNr,char type[],char filemode[],char subn
 
         GetFilPathForLot(lotPath,lotNr,subname);
 
-        //oppretter path
+        //create path
         sprintf(revfile,"%srevindex/%s/",lotPath,type);
         makePath(revfile);
 
@@ -37,7 +37,7 @@ void revindexFilesOpenLocal(FILE *revindexFilesHa[],int lotNr,char type[],char f
 
         GetFilPathForLot(lotPath,lotNr,subname);
 
-        //oppretter path
+        //create path
         sprintf(revfile,"%srevindex/%s/",lotPath,type);
         makePath(revfile);
 

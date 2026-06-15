@@ -44,7 +44,7 @@ static inline void bsgp_newstring( const char* str, yyscan_t scanner )
     if (he->stringtop>=32) he->stringtop = 0;
 
     strncpy( he->stringcircle[he->stringtop], str, bsgp_maxNewString );
-    he->stringcircle[he->stringtop][bsgp_maxNewString] = '\0';		// I tilfelle str er for lang.
+    he->stringcircle[he->stringtop][bsgp_maxNewString] = '\0';		// In case str is too long.
 
     *bsgpget_lval(scanner) = (YYSTYPE)he->stringcircle[he->stringtop];
 }

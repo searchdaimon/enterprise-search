@@ -69,7 +69,7 @@ int main (int argc, char *argv[]) {
 	#endif
 
 
-	//setter opp socket
+	//set up socket
         if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
                 fprintf(stderr,"server: can't open stream socket\n"), exit(0);
 
@@ -83,7 +83,7 @@ int main (int argc, char *argv[]) {
 
 
 
-        //seter at sokket kan rebrukes
+        //mark the socket as reusable
         int yes=1;
         if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
             perror("setsockopt");
@@ -153,7 +153,7 @@ void *issueAdd(void *arg) {
 
 	int i,n, y, net_status, showabal;;
 
-	//sjekker vårt egent anonsesystem
+	//check our own ad system
 
 	char mysql_query [2048];
 
@@ -180,12 +180,12 @@ void *issueAdd(void *arg) {
 
 	Sider  = (struct SiderFormat *)malloc(sizeof(struct SiderFormat) * (queryNodeHeder.MaxsHits));
 
-        //setter alle sidene som sletett
+        //mark all the pages as deleted
         for (i=0;i<queryNodeHeder.MaxsHits;i++) {
                 Sider[i].deletet = 1;
         }
 
-        //sender svar med en gang at vi kan gjøre dette
+        //send a reply right away that we can do this
         net_status = net_CanDo;
         if ((n=sendall(mysocfd,&net_status, sizeof(net_status))) != sizeof(net_status)) {
                 printf("send only %i of %i\n",n,sizeof(net_status));
@@ -203,7 +203,7 @@ void *issueAdd(void *arg) {
         mysql_init(&demo_db);
 
 	#ifdef WITH_THREAD
-		mysql_thread_init(); // kalt mysql_thread_init() i mysql 5.0
+		mysql_thread_init(); // called mysql_thread_init() in mysql 5.0
 	#endif
 
 
@@ -216,7 +216,7 @@ void *issueAdd(void *arg) {
 		pthread_exit((void *)1); /* exit with status */
         }
 
-        //escaper queryet rikit
+        //escape the query properly
         mysql_real_escape_string(&demo_db,queryEscaped,queryNodeHeder.query,strlen(queryNodeHeder.query));
 
         sprintf(mysql_query, "select tittel,url,beskrivelse,betaler_sider.bruker_navn,betaler_keywords.betaler,betaler_keywords.kid,betaler_sider.id from betaler_keywords,betaler_sider where betaler_keywords.keyword ='%s' and betaler_keywords.betaler_side_id=betaler_sider.id order by betaler desc",queryEscaped);
@@ -237,7 +237,7 @@ void *issueAdd(void *arg) {
 	SiderHeder.TotaltTreff = 0;
 	int nrOfppcPages = 0;
 	int nrOfBoithoAds = 0;
-        //printer ut eventuelt ppc ord
+        //print any ppc word
         mysqlres=mysql_store_result(&demo_db); /* Download result from server */
         while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
                         //printf("\t<beskrivelse>%s</beskrivelse>\n",mysqlrow[2]);
@@ -282,16 +282,16 @@ void *issueAdd(void *arg) {
 
 	}
 	else {
-		//alle språk
+		//all languages
 		//strcpy(ppcprovider,"revenuepilot");
 		//strcpy(ppcprovider,"searchboss");
 	}
 	strcpy(ppcprovider,"amazon");
 
-	//temp: skrur av 3p xml feeds
+	//temp: turn off 3p xml feeds
 	//getPpcAds(ppcprovider,ppcPages,&nrOfppcPages,&queryNodeHeder);
 
-	//temp: Viser en mindre side da vi får problemer med siste?
+	//temp: Show one fewer page since we have trouble with the last one?
 	//nrOfppcPages--;
 
 	showabal = 0;        
@@ -397,24 +397,24 @@ void *issueAdd(void *arg) {
 
 
 
-		//lager fin beskrivlse som slutter på .. isteden får bare et kappet ord, hvis beskrivlese er for lang                
+		//build a nice description that ends in .. instead of just a chopped-off word, if the description is too long                
                 if (strlen(Sider[i].description) >= 250) {
-                	//søker oss til siste space , eller ; og avslutter der
+                	//seek to the last space, or ;, and end there
                         if ((strpointer = (char *)strrchr(Sider[i].description,' ')) != NULL) {
                         	strpointer[0] = '\0';
                         }
                         else if ((strpointer = (char *)strrchr(Sider[i].description,';')) != NULL) {
-                        	++strpointer; //pekeren peker på semikolonet. SKal ha det med, så må legge il en
+                        	++strpointer; //the pointer points at the semicolon. We want to keep it, so we must add one
                                 strpointer[0] = '\0';
                         }
                         strncat(Sider[i].description,"..",2);
             	}
                	
-		//hiliter ordet
+		//highlight the word
 		sprintf(buff,"<b>%s</b>",queryNodeHeder.query);
 		strcasesandr(Sider[i].description,sizeof(Sider[i].description),queryNodeHeder.query,buff);
 
-		//bestemmer ppc type
+		//determine ppc type
 		//Sider[showabal].type = siderType_ppcside
 		//Sider[i].type = siderType_ppctop;
 		if ((siderType_ppctopNr < 2) && (strcasestr(Sider[i].description,queryNodeHeder.query) != 0)) {
@@ -428,7 +428,7 @@ void *issueAdd(void *arg) {
 
 	}	
 
-	//legger datane in i mysql database.
+	//insert the data into the mysql database.
         for(i=0;i<showabal;i++) {
 
 
@@ -469,7 +469,7 @@ void *issueAdd(void *arg) {
                 //}
         }
 
-	//logger alle visningene vi har hatt på egen ppc ord
+	//log all the impressions we have had on our own ppc words
 	for (i=0;i<nrOfBoithoAds;i++) {
 		sprintf(mysql_query, "insert DELAYED into betaler_keywords_visninger values(NULL,'%i','%i',NOW())",betaler_keywords_visninger[i].kid,betaler_keywords_visninger[i].betaler_side_id);
 
@@ -493,7 +493,7 @@ void *issueAdd(void *arg) {
 	close(mysocfd);
 
  	#ifdef WITH_THREAD
-		my_thread_end(); // kalt mysql_thread_end() i mysql 5.0
+		my_thread_end(); // called mysql_thread_end() in mysql 5.0
             	pthread_exit((void *)0); /* exit with status */
         #endif
 

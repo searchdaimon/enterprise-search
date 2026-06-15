@@ -16,7 +16,7 @@ use supportedLang qw(isSupportedLang);
 #Indekser(42,'Anchor',@revindexpaths);
 #Indekser(42,'Anchor',('/mnt/hdd1/lot/43/43/revindex/Anchor'));
 #exit;
-#hvis vi fikk inputt argument tar vi bare den bøtten. Slik kan man for eks bare ta 42
+#if we got an input argument we only take that bucket. This way you can for example take only 42
 my $lotNr = $ARGV[0];
 
 ############### Anchor #################################################################
@@ -26,7 +26,7 @@ if ($#ARGV == 0) {
         for my $i (0 .. 64) {
                 print "$i\n";
 
-                eval {  #eval slik at vi bare fortsetter hvis det skjer noe feil
+                eval {  #eval so that we just continue if an error occurs
                         Indekser($i,'Main',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Main');
                 }; warn $@ if $@;
         }
@@ -45,7 +45,7 @@ if ($#ARGV == 0) {
 	for my $i (0 .. 64) {
         	print "$i\n";
 
-        	eval {  #eval slik at vi bare fortsetter hvis det skjer noe feil
+        	eval {  #eval so that we just continue if an error occurs
                 	Indekser($i,'Anchor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Anchor');
         	}; warn $@ if $@;
 	}
@@ -69,7 +69,7 @@ else {
         for my $i (0 .. 64) {
                 print "$i\n";
 
-                eval {  #eval slik at vi bare fortsetter hvis det skjer noe feil
+                eval {  #eval so that we just continue if an error occurs
                         Indekser($i,'Anchor',Boitho::Lot::GetFilPathForLot($lotNr). 'revindex/Anchor');
                 }; warn $@ if $@;
         }
@@ -94,7 +94,7 @@ exit;
 #for my $i (0 .. 64) {
 #	print "$i\n";
 #
-#	eval {	#eval slik at vi bare fortsetter hvis det skjer noe feil
+#	eval {	#eval so that we just continue if an error occurs
 #		Indekser($i,'Main',@revindexpaths);
 #	}; warn $@ if $@;
 #
@@ -112,7 +112,7 @@ sub Indekser {
 	my $iindex_ha = iindex->new;
 
 
-	#går gjenom alle revindeksene 
+	#goes through all the revindexes 
 	foreach my $revindexPath (@revindexpaths) {
 	
 		#my $iindex_ha = iindex->new;
@@ -126,14 +126,14 @@ sub Indekser {
 	
 		my $buf = '';
 		my $char = '';
-		#lsere filen char for char i påvente eof
-		#leter etter **\n
+		#reads the file char by char while waiting for eof
+		#looks for **\n
 		while (not eof(INF)) {
 		#while (<INF>) {
 		#	chomp;
 		
 				
-						#my $RindexRecord = $_;       #bruker $buf
+						#my $RindexRecord = $_;       #uses $buf
 		
 						read(INF,$DocID,4);
 						$DocID = unpack('L',$DocID);
@@ -144,9 +144,9 @@ sub Indekser {
 						exit;
 						#print "Ny record: $RindexRecord\n";
 			
-						my $lestTilOgMed = 0; #viser hvor langt vi har kommet med å lese posten
+						my $lestTilOgMed = 0; #shows how far we have come reading the record
 						
-						#hvis vi har mere en DocID og sprok lagret om denne DocIDen
+						#if we have more than a DocID and language stored about this DocID
 						if (length($RindexRecord) > 7) {
 
 							#print "length " . length($RindexRecord) . "\n";
@@ -171,7 +171,7 @@ sub Indekser {
 								#print "\t$WordID : $antall\n";							
 
 								######
-								# debug - viser data for et bestemt ord
+								# debug - shows data for a specific word
 								#if ($WordID == 4020398583) {
 								#	print "WordID: $WordID antall: $antall\n";
 								#}
@@ -198,7 +198,7 @@ sub Indekser {
 							}
 						}
 		}
-		#temp: skal denne være her insteden ???
+		#temp: should this be here instead ???
 		close(INF) or warn ("Cant close file: $!");
 		#$iindex_ha->WriteIIndexToFile($type,$revindexFilNr,$lotNr);
 	}

@@ -79,10 +79,10 @@ void *generatePagesResults(void *arg)
 
 	while (( DocID = NexDocID(thargs) ) != 0) {
 
-		//leser DI
+		//read DI
 		if (!DIRead_fmode(&DocumentIndex,DocID,subname,'r')) 
 		{
-                        //hvis vi av en eller annen grun ikke kunne gjøre det kalger vi
+                        //if for some reason we could not do it, complain
                         printf("Can't read DI post for %u-%i\n",DocID,rLotForDOCid(DocID));
                         continue;
                 }
@@ -339,10 +339,10 @@ int main () {
 
 	//ret = pthread_mutex_init(&PagesResults.mutextreadSyncFilter, NULL);
 
-	//låser mutex. Vi er jo enda ikke kalre til å kjøre
+	//lock the mutex. We are not ready to run yet
 	pthread_mutex_lock(&thargs.mutex);
 	
-	//start som thread that can get the pages
+	//start the thread that can get the pages
 	for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
 
 		ret = pthread_create(&threadid[i], NULL, generatePagesResults, &thargs);		
@@ -354,15 +354,15 @@ int main () {
 
 	#ifdef WITH_THREAD
 
-	//vi har data. Lå tårdene jobbe med det
+	//we have data. Let the threads work on it
 	pthread_mutex_unlock(&thargs.mutex);
 
-	//venter på trådene
+	//wait for the threads
 	for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
 		ret = pthread_join(threadid[i], NULL);
 	}
 
-	//free mutex'en
+	//free the mutex
 	//ret = pthread_mutex_destroy(&PagesResults.mutex);
 	#endif
 }

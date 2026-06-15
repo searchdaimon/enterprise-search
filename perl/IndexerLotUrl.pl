@@ -31,13 +31,13 @@ while ((not $terminated) && (my ($DocID,$url,$sprok,$Offensive_code,$Dokumenttyp
 	#print "$DocID\n";
 	
 	my $domene = fin_domene($url);
-	#er ganske kritisk på hvilkene urler vi vil ha med her, så får vi heller opne opp i hovedindeksen
+	#fairly strict about which URLs we want to include here, we can rather open up in the main index instead
         my $domeneForTesting = $domene;
 	my $lineCount = 0;
         while ($domeneForTesting =~ /-/g) { $lineCount++ }
 
 	if ($domene eq '') {
-		#ToDo: hvorfor er så mange blanke ???
+		#ToDo: why are so many blank ???
 		print "no domain given DocID: $DocID, Url: $url\n";
 	}
 	elsif (length($domene) > 30) {
@@ -49,20 +49,20 @@ while ((not $terminated) && (my ($DocID,$url,$sprok,$Offensive_code,$Dokumenttyp
 	else {
 		#print "$domene:\n";
 
-		#reverser domene, slik at "www.boitho.com" blir til "com.boitho.www"
+		#reverse domain, so that "www.boitho.com" becomes "com.boitho.www"
 		my @temp = split(/\./,$domene);
 		@temp = reverse(@temp);
 		$domene = join('.',@temp);
 
 		#print "$DocID  $domene\n";
 
-		my %termer = {};	#inaliserer
+		my %termer = {};	#initializes
 		%termer = lexer($domene,'Url',%termer);
 
 	
 		%termer = stoppord($sprok,minimum_term_lengde,maksimum_term_lengde,%termer);
 
-		#debug: vise orden
+		#debug: show the words
 		#foreach my $s (keys %termer) {
 		#	print "$s\n";
 		#}		
@@ -77,7 +77,7 @@ $revindexha->FileClose();
 
 
 ############################################################################################################################
-# hånterer signaler
+# handles signals
 ############################################################################################################################
 sub signal_handler {	
 	if (not $terminated) {

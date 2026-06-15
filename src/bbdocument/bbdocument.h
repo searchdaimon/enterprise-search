@@ -13,17 +13,17 @@ struct uriindexFormat {
 };
 
 
-//rutine for å inalisere.
+// routine for initialization.
 int bbdocument_init(container **attrkeys);
 void bbdocument_clean();
 
 /*
  bbdocument_exist()
 
- rutine for å sjekke om en dokument eksisterer. Hvis det ikke gjør det bruke bbdocument_add får å legge det til.
- subname	Hvilken koleksjon dette er. Som grunregel har vi en koleksjon for hver kilde, og for hver bruker. For eks 
-		får 24so søk her vi en bruker som heter per. Han her kolekson 24soper_mail for mailen sin.
-		Koleksons navnet må bli gitt inn fra komandolinjen.
+ routine to check whether a document exists. If it does not, use bbdocument_add to add it.
+ subname	Which collection this is. As a general rule we have one collection per source, and per user. For example 
+		for 24so search we have a user named per. He has the collection 24soper_mail for his mail.
+		The collection name must be supplied on the command line.
 
  documenturi
 
@@ -35,23 +35,23 @@ int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified
 /*
  bbdocument_add()
 
- subname        Hvilken koleksjon dette er. Som grunregel har vi en koleksjon for hver kilde, og for hver bruker. For eks
-                får 24so søk her vi en bruker som heter per. Han her kolekson 24soper_mail for mailen sin.
-                Koleksons navnet må bli gitt inn fra komandolinjen. 
+ subname        Which collection this is. As a general rule we have one collection per source, and per user. For example
+                for 24so search we have a user named per. He has the collection 24soper_mail for his mail.
+                The collection name must be supplied on the command line. 
 
  documenturi
 
- documenttype	Hvilken type. Set til NULL får å la systemet gjette denne basert på filnavn
+ documenttype	Which type. Set to NULL to let the system guess it based on the filename
 
- document	Selve dokumentet. dokument_size langt.
+ document	The document itself. dokument_size bytes long.
 
- dokument_size	Størelsen på dokumentet i bytes.
+ dokument_size	The size of the document in bytes.
 
  lastmodified
 
  acl
 */
-//rutine for å legge til et dokument
+// routine to add a document
 int bbdocument_add(char subname[],char documenturi[],char documenttype[],char document[],const int dokument_size,unsigned int 
 	lastmodified,char *acl_allow, char *acl_denied, const char title[],char doctype[], char *attributes, container *attrkeys,
 	char *image, int image_size, unsigned char PopRank);

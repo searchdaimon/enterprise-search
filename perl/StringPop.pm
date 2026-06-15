@@ -1,12 +1,12 @@
 ##########################################################################################
-# Biblotek for å kunne poppe av elementer fra en string
+# Library for popping elements off a string
 #
-#	$self->{'LastCharacterAdress'} holder hvor vi er, slik at vi kan bruke substr til 
-#	å kopiere inn det vi vil ha.
+#	$self->{'LastCharacterAdress'} keeps track of where we are, so that we can use substr to
+#	copy in what we want.
 #
-#	$self->{'InnString'} Stringen vi jobber på.
+#	$self->{'InnString'} The string we are working on.
 #
-# 	For eksempel henet 10 tegn, så de 5 som kommer etter, og så 10 som kommer etter der:
+# 	For example fetch 10 characters, then the 5 that come after, and then 10 that come after that:
 #
 #	$ha = StringPop->new($RawIndex);
 #
@@ -23,9 +23,9 @@ require Exporter;
 sub new {
 	my($class,$InnString) = @_;
 	#my $class = '';
-	my $self = {}; #allocate new hash for objekt
+	my $self = {}; #allocate new hash for object
 	
-	$self->{'LastCharacterAdress'} = 0;	#oversikt over hvor mange elemeneter vi har i minne
+	$self->{'LastCharacterAdress'} = 0;	#overview of how many elements we have in memory
 		
 	$self->{'InnString'} = $InnString;	
 	bless($self, $class);
@@ -36,7 +36,7 @@ sub new {
 sub Pop {
 	my($self,$lengyh) = @_;
 
-	my $data = substr($self->{'InnString'},$self->{'LastCharacterAdress'},$lengyh); # bør kansje returnere med en gang her? Men blir problemer med å oppdatere $self->{'LastCharacterAdress'} da
+	my $data = substr($self->{'InnString'},$self->{'LastCharacterAdress'},$lengyh); # should maybe return right away here? But that causes problems with updating $self->{'LastCharacterAdress'}
 	$self->{'LastCharacterAdress'} = $self->{'LastCharacterAdress'} + $lengyh;
 	
 	return $data;

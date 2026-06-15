@@ -4,12 +4,12 @@
  *
  *	(C) Copyright SearchDaimon AS 2008-2009, Magnus Galåen (mg@searchdaimon.com)
  *
- *	Slår opp stems og bøyninger av ord.
+ *	Looks up stems and inflections of words.
  *
- *	TODO: utnytte endinger (ord som begynner med '-').
- *	Støtter ikke bøyninger av f.eks "world cup" (flerordsbøyninger),
- *	men støtter motsatt vei "tv2" blir "tv 2". Bør forandre query-struct'en
- *	for å få med disse.
+ *	TODO: make use of endings (words starting with '-').
+ *	Does not support inflections of e.g. "world cup" (multi-word inflections),
+ *	but supports the opposite direction "tv2" becomes "tv 2". Should change the query struct
+ *	to include these.
  */
 
 #ifndef _GNU_SOURCE

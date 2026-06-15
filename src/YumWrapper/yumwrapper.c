@@ -18,7 +18,7 @@
 #define SUID_USER 0
 
 #define YUM_PATH    "/usr/bin/yum"
-#define YUM_FLAGS   "-y" //asume yes
+#define YUM_FLAGS   "-y" //assume yes
 #define RPM_PATH    "/bin/rpm"
 #define RPM_FLAGS   "-Uvh"
 

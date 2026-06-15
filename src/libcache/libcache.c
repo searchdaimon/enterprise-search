@@ -233,7 +233,7 @@ int cache_init(cache_t *c, void (*freevalue)(void *value)) {
         if ((ret = c->c_data->open(c->c_data, NULL, "libcachedb", NULL, DB_BTREE, DB_CREATE, 0)) != 0) {
                         c->c_data->err(c->c_data, ret, "db open");
                         //goto err1;
-                        //dette skjer nor collection mappen ikke er opprettet enda, typisk forde vi ikke har lagret et dokument der enda
+                        //this happens when the collection directory has not been created yet, typically because we have not stored a document there yet
                         #ifdef DEBUG
                         printf("can't dbp->open(), but db_create() was sucessful!\n");
                         #endif
@@ -271,11 +271,11 @@ int cache_add(cache_t *c, char *prefix, char *key, void *value, int size) {
 
 	int ret;
 	DBT dbkey, dbdata;
-        //resetter minne
+        //reset memory
         memset(&dbkey, 0, sizeof(DBT));
         memset(&dbdata, 0, sizeof(DBT));
 
-        //legger inn nøkkelen i bdb strukturen
+        //insert the key into the bdb structure
         dbkey.data = k;
         dbkey.size = strlen(k);
 
@@ -303,7 +303,7 @@ int cache_add(cache_t *c, char *prefix, char *key, void *value, int size) {
         dbdata.data = v;
 
 
-        //legger til i databasen
+        //add to the database
         if  ((ret = c->c_data->put(c->c_data, NULL, &dbkey, &dbdata, 0)) != 0) {
                 c->c_data->err(c->c_data, ret, "DB->put");
         }
@@ -326,11 +326,11 @@ void *cache_fetch(cache_t *c, char *prefix, char *key, int timeout) {
 
 	int ret;
 	DBT dbkey, dbdata;
-        //resetter minne
+        //reset memory
         memset(&dbkey, 0, sizeof(DBT));
         memset(&dbdata, 0, sizeof(DBT));
 
-        //legger inn key i bdb strukturen
+        //insert the key into the bdb structure
         dbkey.data = k;
         dbkey.size = strlen(k);
 

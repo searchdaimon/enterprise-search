@@ -1,14 +1,14 @@
 sub loadeBaqnnList {
 	my %DomainBlockList = {};
 
-	#leser inn alle sidene som er blokert
+	#read in all the blocked sites
 	open(INF,'../data/bann_list.txt') or die($!);
 	while (<INF>) {
 
 		chomp;
 		s/#.*//;	#no comments
 		s/^\s+//;	#no leading white
-		s/\s+$//;	#no traling white	
+		s/\s+$//;	#no trailing white
 		#print "-$_- \n";
 	
 		$DomainBlockList{$_} = 1;
@@ -27,7 +27,7 @@ sub IsBlocketByDomain() {
 	my $domain = shift;
 	my $ReturnStatus = 0;
 
-	my @elements = split(/\./,$domain);	#splitter opp domene i enkeltdele
+	my @elements = split(/\./,$domain);	#split the domain into individual parts
 	@elements = reverse(@elements);
 
 	my $forTest = '';

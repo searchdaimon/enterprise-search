@@ -83,7 +83,7 @@ int cmc_recrawl(int socketha,char collection_inn[], int docsRemaining, char *ext
 	int intrespons;
 	int i;
 
-	//toDo bruk strSspy
+	//toDo use strSspy
 	strncpy(collection,collection_inn,sizeof(collection));
 	strncpy(extrabuf, extra_in, sizeof extrabuf);
 
@@ -107,7 +107,7 @@ int cmc_crawl(int socketha,char collection_inn[], char *extra_in) {
 	int intrespons;
 	int i;
 
-	//toDo bruk strSspy
+	//toDo use strSspy
 	strncpy(collection,collection_inn,sizeof(collection));
 	strncpy(extrabuf, extra_in, sizeof(extrabuf));
 
@@ -147,7 +147,7 @@ int cmc_deleteCollection(int socketha,char collection_in[], char **errormsgp) {
 	int i, len;
 	static char errormsg[512];
 
-	//toDo bruk strSspy
+	//toDo use strSspy
 	strncpy(collection,collection_in,sizeof(collection));
 
 	sendpacked(socketha,cm_deleteCollection,BLDPROTOCOLVERSION, 0, NULL,"");
@@ -193,7 +193,7 @@ cmc_pathaccess(int socketha,char collection_in[], char uri_in[], char user_in[],
 
 	memset(collection,'\0',sizeof(collection));
 
-	//toDo bruk strSspy
+	//toDo use strSspy
 	strncpy(all,collection_in,sizeof(collection));
 	strncpy(all+64,uri_in,sizeof(uri));
 
@@ -334,7 +334,7 @@ int cmc_groupsforuserfromusersystem(int socketha, char *_user, unsigned int us, 
 	}
 	p = all;
 
-	// kopierer all dataen i en pakke
+	// copy all the data into one packet
 	strncpy(p, _user, 512);
 	p += 512;
 
@@ -448,7 +448,7 @@ cmc_listusersus(int sock, int usersystem, char ***users, char *extra_in)
 	n_users = users_h.num_users;
 	if (n_users >= 0) {
 		*users = malloc((n_users+1) * sizeof(char *));
-		// runarb 2 sept 2009: m� finne en m�te � sjekke om malloc fungerte her. 
+		// runarb 2 sept 2009: need to find a way to check whether malloc worked here. 
         	//if (*users == NULL) {
                 //	perror("malloc");
                 //	return 0;

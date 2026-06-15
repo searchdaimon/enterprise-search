@@ -70,13 +70,13 @@ struct crawldocumentAddFormat {
 	unsigned char PopRank;
 };
 
-//argumenter til crawlfirst()
+//arguments to crawlfirst()
 #define crawlfirst_args struct collectionFormat *collection, \
 		int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist), \
 	        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd), \
 		int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...), \
 		int (*documentContinue)(struct collectionFormat *collection)
-//argumenter ter crawlupdate()
+//arguments to crawlupdate()
 #define crawlupdate_args struct collectionFormat *collection, \
 		int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist), \
 	        int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd), \

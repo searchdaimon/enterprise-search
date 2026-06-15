@@ -24,7 +24,7 @@ print "Leter etter loter med $ARGV[0]\n";
                 #print "$MainlotPath\n";
 
                 if (-e $MainlotPath) {
-                        #nå må en lot ha reposetory får å bli med. Er det riktig ?
+                        #now a lot must have a reposetory to be included. Is that correct ?
                         my $comand = "ls -1 -d $MainlotPath/*/$ARGV[0]";
 
                         #print "comand: $comand\n";

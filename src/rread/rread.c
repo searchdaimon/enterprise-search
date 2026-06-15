@@ -89,7 +89,7 @@ void dolot(int LotNr, char *subname, int optPrintHtml, int optPrintAcl, int optS
 	GetFilPathForLot(lotPath,LotNr,subname);
 
 
-	//loppergjenom alle
+	//loop through all
 	while (rGetNext_reponame(LotNr,&ReposetoryHeader,htmlbuffer,sizeof(htmlbuffer),imagebuffer,&radress,0,0,subname,&acl_allow,&acl_deny,optReponame, &url, &attributes)) {
 
 

@@ -7,9 +7,9 @@ char *ctime_s(const time_t *timep) {
 
 	char *cp;
 
-        //Finner menesklig lesbar tid
+        // Find human-readable time
         ctime_r(timep,tbuf);
-        //tar bort \n som ctime driver å legger på
+        // remove the \n that ctime keeps adding
         cp = strchr(tbuf,'\n');
         if (cp != NULL)
         	cp[0] = '\0';

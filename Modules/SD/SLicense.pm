@@ -1,5 +1,5 @@
 ##
-# slicence wrapper
+# slicense wrapper
 package SD::SLicense;
 use strict;
 use warnings;

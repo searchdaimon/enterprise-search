@@ -17,7 +17,7 @@ main (int argc, char *argv[]) {
 
 
 	FILE *fh;
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	char *data;
 	char *documenttype_real;
 	char *documentfinishedbuf;

@@ -14,7 +14,7 @@
 #include "css_parser.h"
 
 
-// --- fra flex:
+// --- from flex:
 typedef void* yyscan_t;
 typedef struct bcpm_buffer_state *YY_BUFFER_STATE;
 YY_BUFFER_STATE bcpm_scan_bytes( const char *bytes, int len, yyscan_t yyscanner );
@@ -678,7 +678,7 @@ css_selector_block* css_parser_run( char text[], int textsize )
 		    iterator	sit = map_find( C, token->str );
 		    if (!sit.valid)
 			{
-		    	    map_insert( C, token->str );  // list legges til automatisk
+		    	    map_insert( C, token->str );  // list is added automatically
 			    sit = map_find( C, token->str );
 			}
 

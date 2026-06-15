@@ -110,7 +110,7 @@ int anyLoad(char file[],struct hashtable *h, unsigned int (*pac)(char s[])) {
 		#endif
 
                 if (NULL == hashtable_search(h,key) ) {
-                        //printf("not found!. Vil insert first");
+                        //printf("not found!. Will insert first");
 			if ((value = strdup(line)) == NULL) {
 				perror("strdup");
 				exit(-1);

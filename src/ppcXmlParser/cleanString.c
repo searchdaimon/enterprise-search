@@ -1,10 +1,10 @@
 #include <string.h>
 #include <stdio.h>
 
-//av og til begynner en xml feed med tabb eller spaces både foran og bak. Denne fjerner dette
+// sometimes an xml feed starts with a tab or spaces both before and after. This removes that
 void cleanString(char *key) {
 int i;
-        if (((int)key[0] == 10) || ((int)key[0] == 32)) { // tab og space
+        if (((int)key[0] == 10) || ((int)key[0] == 32)) { // tab and space
                 printf("aa -%s-\n",key);
                 i =0;
                 while (((int)key[i] == 10) || ((int)key[i] == 32)) {
@@ -13,7 +13,7 @@ int i;
                 strcpy(key,key +i);
                 printf("ab -%s-\n",key);
                 i = strlen(key);
-                --i; //vi skal ikke test \0
+                --i; // we should not test \0
                 printf("1 i %i\n",i);
                 while (((int)key[i] == 10) || ((int)key[i] == 32)) {
                         --i;

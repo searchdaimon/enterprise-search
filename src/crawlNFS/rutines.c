@@ -23,7 +23,7 @@ int crawlNFS_myUmount (char localfs[]) {
 	int pid,n,forkstatus;
         char *testaray[] = { "mount", localfs, NULL };
 
-        //for aa kunne kalle et program og fortsat ha samme id kan vi ikke bruke systm(), men må bruke execv
+        //to be able to call a program and still keep the same id we can't use system(), but must use execv
         if ((pid = fork()) == 0) {
                 //child process
 
@@ -33,7 +33,7 @@ int crawlNFS_myUmount (char localfs[]) {
         else {
                 printf("child has pid %i\n",pid);
 
-                //venter på barnet skal gjøre seg ferdig
+                //wait for the child to finish
                 n = wait(&forkstatus);
                 printf("status %i, %i\n",forkstatus,n);
 
@@ -48,7 +48,7 @@ int crawlNFS_mymount (char nfsfs[], char localfs[]) {
 
 	printf("mount %s %s\n",nfsfs,localfs);
 
-        //for aa kunne kalle et program og fortsat ha samme id kan vi ikke bruke systm(), men må bruke execv
+        //to be able to call a program and still keep the same id we can't use system(), but must use execv
         if ((pid = fork()) == 0) {
                 //child process
 
@@ -58,7 +58,7 @@ int crawlNFS_mymount (char nfsfs[], char localfs[]) {
         else {
                 printf("child has pid %i\n",pid);
 
-                //venter på barnet skal gjøre seg ferdig
+                //wait for the child to finish
                 n = wait(&forkstatus);
                 printf("status %i, %i\n",forkstatus,n);
 
@@ -66,7 +66,7 @@ int crawlNFS_mymount (char nfsfs[], char localfs[]) {
 
 }
 
-//hadde alg.dat l�reren min sette denne hash funksjonen hadde han blit leiseg
+//had my alg.dat teacher seen this hash function he would have been sad
 static unsigned int crawlNFS_hash_from_key_fn(void *ky)
 {
 	int i;
@@ -107,7 +107,7 @@ char *getfs(char nfsfs[]) {
 		printf("found!");
 		return found;
 	}
-	//finner ut mappen vi vil ha.
+	//figure out the directory we want.
 	sprintf(localfsdir,"%s/mounted_XXXXXX",bfile("var"));
 
 	if ((localfs = mktemp(localfsdir)) == NULL) {
@@ -117,13 +117,13 @@ char *getfs(char nfsfs[]) {
 
 
 
-	//oppretter den hvis vi ikke har
+	//create it if we don't have it
 	if (mkdir(localfs,0755) != 0) {
 		perror("mkdir");
 		return NULL;
 	}
 
-	//ask mont to mont
+	//ask mount to mount
 	crawlNFS_mymount(nfsfs,localfs);
 
 	v = strdup(localfsdir);
@@ -153,7 +153,7 @@ int crawlinit() {
     	}
 
 
-	//kj�rer gjenom alle filsystemer vi eventeult har mountet og unmunter og fjerner mappen
+	//go through all filesystems we may have mounted and unmount and remove the directory
 	if ((DIRH = opendir(bfile("var"))) == NULL) {
                 perror(bfile("var"));
                 return 0;
@@ -171,7 +171,7 @@ int crawlinit() {
 
 			printf("cleaning mountet fs %s\n",nextdirname);
 
-			//forhindrer dobeltmount
+			//prevent double mount
 			crawlNFS_myUmount(nextdirname);
 			
 			if (rmdir(nextdirname) != 0) {
@@ -184,7 +184,7 @@ int crawlinit() {
 }
 
 int crawlcanconect(struct collectionFormat *collection) {
-	//tester om vi kan koble til
+	//test whether we can connect
 	return 1;
 }
 
@@ -216,7 +216,7 @@ int crawlfirst(struct collectionFormat *collection,
 int crawlupdate(struct collectionFormat *collection,
 	int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist), 
 	int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd)) {
-	//opdate
+	//update
 	printf("crawlupdate: start\n");
 	
 	

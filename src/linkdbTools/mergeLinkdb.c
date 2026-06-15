@@ -31,7 +31,7 @@ int main (int argc, char *argv[]) {
                 exit(0);
         }
 
-	//kontrolerer at vi ikke overskriver en fil
+	//make sure we are not overwriting an existing file
        	if ((MAINLINKDBFILE = fopen(argv[1],"rb")) != NULL) {
                 printf("New file exsist. It shud not!\n");
                 exit(1);
@@ -55,7 +55,7 @@ int main (int argc, char *argv[]) {
                 	exit(1);
         	}
 
-		//leser første post
+		//read the first record
 		fread(&files[nrOffiles].lastlink,sizeof(struct linkdb_block),1,files[nrOffiles].FH);
 
 		printf("merge %s hav link to %u\n",argv[i],files[nrOffiles].lastlink.DocID_to);
@@ -72,7 +72,7 @@ int main (int argc, char *argv[]) {
 		
 		current = files[0].lastlink.DocID_to;
 
-		//fortsetter så lenge vi har samme DocID
+		//continue as long as we have the same DocID
 		i=0;
 		while ((current == files[i].lastlink.DocID_to) && (i<nrOffOpenfiles)) {
 			//printf("i: %i write %u\n",i,files[i].lastlink.DocID_to);

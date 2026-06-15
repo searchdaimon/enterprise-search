@@ -60,7 +60,7 @@ static SMBCCTX* context_init(int no_auth)
     context->debug = 0;
     //context->callbacks.auth_fn = no_auth_data_fn;
     context->callbacks.auth_fn = (no_auth ? no_auth_data_fn : get_auth_data_fn);
-    context->options.urlencode_readdir_entries = 1;		// Sørg for at alle url-er er kodet.
+    context->options.urlencode_readdir_entries = 1;		// Ensure that all URLs are encoded.
     smbc_option_set(context, "debug_stderr", (void*)1);
 
     if (!smbc_init_context(context))
@@ -80,8 +80,8 @@ static int context_free( SMBCCTX *context )
     if (smbc_free_context(context, 1) != 0)
 	{
 	    bblog(ERROR, "crawlsmb.c: Could not free smbc context: %s", strerror(errno));
-		//ToDo: returnerer free uanset. Får nemlig altid feil her
-                //hvis ikke. Er dette en minne lekasj prblem?
+		//ToDo: return free regardless. We always get an error here
+                //otherwise. Is this a memory leak problem?
 	    return 1;
 
 	}
@@ -178,7 +178,7 @@ char* smb_mkprefix( const char *username, const char *passwd ) {
     int		pos = 0, i;
 
 
-	//håndterer at vi ikke altid har en bruker og passord
+	//handle the case where we don't always have a user and password
 	if (username != 0) {
 	    	pos = snprintf( buf, buf_size, "smb://" );
 	    	i = smbc_urlencode( buf + pos, username, buf_size - pos );
@@ -275,7 +275,7 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
 	    #endif
 
             // Skip direntries named "." and "..". 
-	    // tar heller ikke med filer som begynner på ~ da det er temp filer i windows.
+	    // also skip files starting with ~ since those are temp files in windows.
             if ((dirp->name[0] == '.') || (dirp->name[0] == '~')) {
 
 	    }
@@ -291,8 +291,8 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
 	
 			crawldocumentExist.documenturi = uri;
 
-			//kaller documentExist første gang, men indikerer at vi ikke her noe ide om lastmodified eller dokument_size
-			//documentExist vil da avgjøre om vi skal gå videre eller ikke.
+			//call documentExist the first time, but indicate that we have no idea about lastmodified or dokument_size
+			//documentExist then decides whether we should proceed or not.
 			crawldocumentExist.lastmodified = 0;
 			crawldocumentExist.dokument_size = 0;
 
@@ -323,7 +323,7 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
 			
 
 
-			//kaller documentExist andre gang
+			//call documentExist the second time
 			crawldocumentExist.lastmodified = file_stat.st_mtime;
 			crawldocumentExist.dokument_size = file_stat.st_size;
 		    	if ((documentExist)(collection, &crawldocumentExist )) {
@@ -343,12 +343,12 @@ static int smb_recursive_get_next( char *prefix, char *dir_name,
 				    	int	i;
 				    	char	*fbuf;
 
-					//tester størelsen på filen. Hvis den er for stor dropper vi å laste den ned.
+					//check the size of the file. If it is too large we skip downloading it.
 					if (file_stat.st_size > MAX_FILE_SIZE) {
 						bblog(WARN, "Warning: document \"%s\" is larger then maximum size of %i. Size is %"PRId64"",entry_name,MAX_FILE_SIZE,file_stat.st_size);
 
 						fbuf = strdup("");
-						//setter at dokumentet er 0 bytes
+						//set the document to 0 bytes
 						file_stat.st_size = 0;
 
 					}
@@ -507,8 +507,8 @@ int smb_recursive_get( char *prefix, char *dir_name,
  */
 int smb_test_conect(struct collectionFormat *collection, char *prefix, char *dir_name , int no_auth, int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...))
 {
-    // Det viser seg at dersom vi koder den dekodete URI-en blir den ødelagt ('/' blir %2F).
-    // Har derfor fjernet støtte for å lagre menneskelig lesbar uri.
+    // It turns out that if we encode the decoded URI it gets corrupted ('/' becomes %2F).
+    // Have therefore removed support for storing a human-readable uri.
 
     char        full_name[strlen(prefix) + strlen(dir_name) + 1];
     int		dh;
@@ -579,13 +579,13 @@ dirp = (struct smbc_dirent*)dblock;
 int smb_test_open(struct collectionFormat *collection,  char *prefix, char *dir_name, int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...))
 {
 
-    	// Det viser seg at dersom vi koder den dekodete URI-en blir den ødelagt ('/' blir %2F).
-    	// Har derfor fjernet støtte for å lagre menneskelig lesbar uri.
+    	// It turns out that if we encode the decoded URI it gets corrupted ('/' becomes %2F).
+    	// Have therefore removed support for storing a human-readable uri.
     	int		uri_size = strlen(prefix) + (strlen(dir_name) *2) + 1;
     	char	uri[uri_size];
     	int		fd;
     	SMBCCTX	*context;
-    	int no_auth = 0; //kan ikke ha manglende bruker og passord her
+    	int no_auth = 0; //cannot have a missing user and password here
 
     	context = context_init(no_auth);
 	snprintf(uri, uri_size, "%s%s", prefix, dir_name);

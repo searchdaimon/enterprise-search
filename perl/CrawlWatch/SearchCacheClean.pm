@@ -45,7 +45,7 @@ sub recdir {
 
         while (my $file = readdir($DIR) ) {
 
-                #skipper . og ..
+                #skip . and ..
                 if ($file =~ /\.$/) {
                       next;
                 }

@@ -18,7 +18,7 @@ static char lastServer[32] = "noone";
 static int socketha;
 
 
-//stenger ned sco hvis vi får en error
+// close down sco if we get an error
 int socketError () {
 
 	close(socketha);
@@ -82,14 +82,14 @@ int lotHasSufficientSpaceNetToHostname(int LotNr, int needSpace, char subname[],
 		return 0;
 	}
 
-	//sender heder
+	// send header
         sendpacked(sock,C_getlotHasSufficientSpace,BLDPROTOCOLVERSION, 0, NULL,subname);
 
-	//sender needSpace og lotnr
+	// send needSpace and lotnr
         sendall(sock,&LotNr, sizeof(LotNr));	
         sendall(sock,&needSpace, sizeof(needSpace));	
 
-        //leser inn svar
+        // read in the response
         if ((i=recv(sock, &response, sizeof(response),MSG_WAITALL)) == -1) {
                 perror("lotHasSufficientSpaceNetToHostname: Cant recv response");
 		return 0;
@@ -113,15 +113,15 @@ int getLotToIndex(char subname[],char HostName[], int dirty) {
 		return 0;
 	}
 
-	//sender heder
+	// send header
 	printf("sending heder\n");
         sendpacked(sock,C_getLotToIndex,BLDPROTOCOLVERSION, 0, NULL,subname);
 
-	//sender dirty
+	// send dirty
 	printf("sending dirty (%i)\n",dirty);
         sendall(sock,&dirty, sizeof(dirty));	
 
-        //leser inn lotnr
+        // read in lotnr
         if ((i=recv(sock, &LotNr, sizeof(LotNr),MSG_WAITALL)) == -1) {
                 perror("getLotToIndex: Cant recv lot");
 		return 0;
@@ -147,21 +147,21 @@ off_t rGetFileSize(char source[], int LotNr,char subname[]) {
 
 
 	
-	//sender heder
+	// send header
         sendpacked(socketha,C_rGetSize,BLDPROTOCOLVERSION, 0, NULL,subname);
 
-	//sender lotnr
+	// send lotnr
         sendall(socketha,&LotNr, sizeof(LotNr));	
 
-	//sender filnavn lengde
+	// send filename length
 	filnamelen = strlen(source) +1; // +1 for \0
 	sendall(socketha,&filnamelen, sizeof(filnamelen));
 
-	//sender hvilken fil vi vil ha
+	// send which file we want
 	sendall(socketha,source, filnamelen);
 
 
-        //leser inn filstørelsen
+        // read in the file size
         if ((i=recv(socketha, &fileBloks, sizeof(fileBloks),MSG_WAITALL)) == -1) {
             perror("rGetFileSize: Cant recv fileBloks");
             exit(1);
@@ -182,21 +182,21 @@ int rGetFileByOpenHandlerFromSocket(char source[],FILE *FILEHANDLER,int LotNr,ch
 	fseek(FILEHANDLER,SEEK_SET,0);
 
 
-	//sender heder
+	// send header
         sendpacked(socketha,C_rGetFile,BLDPROTOCOLVERSION, 0, NULL,subname);
 
-	//sender lotnr
+	// send lotnr
         sendall(socketha,&LotNr, sizeof(LotNr));	
 
-	//sender filnavn lengde
+	// send filename length
 	filnamelen = strlen(source) +1; // +1 for \0
 	sendall(socketha,&filnamelen, sizeof(filnamelen));
 
-	//sender hvilken fil vi vil ha
+	// send which file we want
 	sendall(socketha,source, filnamelen);
 
 
-        //leser inn filstørelsen
+        // read in the file size
         if ((i=recv(socketha, &fileBloks, sizeof(fileBloks),MSG_WAITALL)) == -1) {
             perror("rGetFileByOpenHandler: Can't recv fileBloks");
             return 0;
@@ -268,7 +268,7 @@ int rGetFileByOpenHandler(char source[],FILE *FILEHANDLER,int LotNr,char subname
 
 	int socketha;
 
-	//kobler til
+	// connect
 	if ((socketha = conectTo(LotNr)) == 0) {
 		perror("rGetFileByOpenHandler: can't conect to storage server");
 		return 0;
@@ -283,18 +283,18 @@ int rmkdir(char dest[], int LotNr,char subname[]) {
 
 	int socketha = conectTo(LotNr);
 
-        //sender heder
+        // send header
         sendpacked(socketha,C_rmkdir,BLDPROTOCOLVERSION, 0, NULL,subname);
 
-        //sender lotnr
+        // send lotnr
         sendall(socketha,&LotNr, sizeof(LotNr));
 
         destLen = strlen(dest) +1; // \0
 
-        //sender destinasjonsstring lengde
+        // send destination string length
         sendall(socketha,&destLen, sizeof(destLen));
 
-        //sender destinasjon
+        // send destination
         sendall(socketha,dest, destLen);
 
 
@@ -307,19 +307,19 @@ int rComand(char dest[], int LotNr,char subname[]) {
 
 	int socketha = conectTo(LotNr);
 
-        //sender heder
+        // send header
         sendpacked(socketha,C_rComand,BLDPROTOCOLVERSION, 0, NULL,subname);
 
 
-        //sender lotnr
+        // send lotnr
         sendall(socketha,&LotNr, sizeof(LotNr));
 
         destLen = strlen(dest) +1; // \0
 
-        //sender destinasjonsstring lengde
+        // send destination string length
         sendall(socketha,&destLen, sizeof(destLen));
 
-        //sender destinasjon
+        // send destination
         sendall(socketha,dest, destLen);
 
 	return 1;
@@ -334,7 +334,7 @@ int rSendFile(char source[], char dest[], int LotNr, char opentype[],char subnam
 		printf("rSendFile(source=%s, dest=%s, LotNr=%i, opentype=%s, subname=%s)\n",source,dest,LotNr,opentype,subname);
 	#endif
 
-       //opner filen
+       // open the file
         if ( (FILEHANDLER = fopen(source,"r")) == NULL ) {
                 perror(source);
                 return 0;
@@ -365,7 +365,7 @@ int rSendFileToHostname(char source[], char dest[], int LotNr, char opentype[],c
 
 	FILE *FILEHANDLER;
 
-       //opner filen
+       // open the file
         if ( (FILEHANDLER = fopen(source,"r")) == NULL ) {
                 perror(source);
                 return 0;
@@ -396,7 +396,7 @@ int rSendFileByOpenHandler(FILE *FILEHANDLER, char dest[], int LotNr, char opent
 int rSendFileByOpenHandlerBySocket(FILE *FILEHANDLER, char dest[], int LotNr, char opentype[],char subname[],int socketha) {
 
 	int n,i;
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	int destLen;
 	off_t fileBloks,filerest;
 	char *filblocbuff;
@@ -413,11 +413,11 @@ int rSendFileByOpenHandlerBySocket(FILE *FILEHANDLER, char dest[], int LotNr, ch
 
 
 
-	//søker til starten
+	// seek to the start
 	fseek(FILEHANDLER,0,SEEK_SET);	
 
 
-	//sender heder
+	// send header
 	if (!sendpacked(socketha,C_rSendFile,BLDPROTOCOLVERSION, 0, NULL,subname)) {
 		fprintf(stderr,"Can't sendpacked() on header\n");
 		perror("sendpacked");
@@ -425,7 +425,7 @@ int rSendFileByOpenHandlerBySocket(FILE *FILEHANDLER, char dest[], int LotNr, ch
 		return 0;
 	}
 
-	//sender lotnr
+	// send lotnr
         if (!sendall(socketha,&LotNr, sizeof(LotNr))) {
 		printf("can't send lotnr\n");
 		return 0;
@@ -433,16 +433,16 @@ int rSendFileByOpenHandlerBySocket(FILE *FILEHANDLER, char dest[], int LotNr, ch
 
 	destLen = strlen(dest) +1; // \0
 
-	//sender destinasjonsstring lengde
+	// send destination string length
 	sendall(socketha,&destLen, sizeof(destLen));
 
-	//sender destinasjon
+	// send destination
 	sendall(socketha,dest, destLen);
 
-        //sender fil opningstype, write, apend. Sender også \0
+        // send file open type, write, append. Also send \0
         sendall(socketha,opentype, sizeof(char) +1);
 
-	//finner hvor stor filen er
+	// find out how big the file is
 	fstat(fileno(FILEHANDLER),&inode);
 	
 
@@ -515,14 +515,14 @@ int rGetNextNET(char *HostName, unsigned int LotNr,struct ReposetoryHeaderFormat
 
         sendpacked(socketha,C_rGetNext,BLDPROTOCOLVERSION, sizeof(LotNr) + sizeof(FilterTime), NULL,subname);
 
-	//sender Lotnr
+	// send Lotnr
 	sendall(socketha,&LotNr, sizeof(LotNr));
-	//sender filtertid
+	// send filter time
 	sendall(socketha,&FilterTime, sizeof(FilterTime));
 
 
-	//får svar tilbake
-	//leser hedder
+	// get the response back
+	// read header
 	if ((i=recv(socketha, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) == -1) {
 		perror("recv");
 		exit(1);
@@ -541,12 +541,12 @@ int rGetNextNET(char *HostName, unsigned int LotNr,struct ReposetoryHeaderFormat
 		}
 
 
-		//lseser htmlen
+		// read the html
 		if ((i=recv(socketha, htmlbuffer, (*ReposetoryHeader).htmlSize2 ,MSG_WAITALL))  == -1){
 		   perror("recv html");
 		    exit(1);
 		}
-		//lsere adressen
+		// read the address
 		if ((i=recv(socketha, radress, sizeof(radress),MSG_WAITALL)) == -1) {
 		    perror("recv");
 		    exit(1);
@@ -588,7 +588,7 @@ unsigned int DIGetIp (char *HostName, unsigned int DocID,char subname[]) {
 	
 	sendpacked(socketha,C_DIGetIp,BLDPROTOCOLVERSION, sizeof(DocID), &DocID,subname);
 
-	//leser svar
+	// read the response
         if ((i=recv(socketha, &IPAddress, sizeof(IPAddress),MSG_WAITALL)) == -1) {
               perror("recv");
               exit(1);
@@ -633,11 +633,11 @@ int DIReadNET (char *HostName, struct DocumentIndexFormat *DocumentIndexPost, in
                 socketOpen = 1;
         }
 
-	//sender forespørsel
+	// send request
 	sendpacked(socketha,C_DIRead,BLDPROTOCOLVERSION, sizeof(DocID), &DocID,subname);
 
 
-	//leser svar
+	// read the response
         if ((i=recv(socketha, DocumentIndexPost, sizeof(struct DocumentIndexFormat),MSG_WAITALL)) == -1) {
               perror("recv");
 		return 0;
@@ -653,11 +653,11 @@ int DIReadNET2 ( struct DocumentIndexFormat *DocumentIndexPost, int DocID,char s
 
 	int socketha = conectTo(rLotForDOCid(DocID));
 
-	//sender forespørsel
+	// send request
 	sendpacked(socketha,C_DIRead,BLDPROTOCOLVERSION, sizeof(DocID), &DocID,subname);
 
 
-	//leser svar
+	// read the response
         if ((i=recv(socketha, DocumentIndexPost, sizeof(struct DocumentIndexFormat),MSG_WAITALL)) == -1) {
               perror("recv");
               exit(1);
@@ -814,11 +814,11 @@ unsigned int GetLastIndexTimeForLotNET(char *HostName, int LotNr,char subname[])
                 socketOpen = 1;
         }
 
-        //sender forespørsel
+        // send request
         sendpacked(socketha,C_rGetIndexTime,BLDPROTOCOLVERSION, sizeof(LotNr), &LotNr,subname);
 
 
-        //leser svar
+        // read the response
         if ((i=recv(socketha, &IndexTime, sizeof(IndexTime),MSG_WAITALL)) == -1) {
               perror("recv");
               exit(1);
@@ -840,7 +840,7 @@ void setLastIndexTimeForLotNET(char *HostName, int LotNr,char subname[]){
                 socketOpen = 1;
         }
 
-        //sender forespørsel
+        // send request
         sendpacked(socketha,C_rSetIndexTime,BLDPROTOCOLVERSION, sizeof(LotNr), &LotNr,subname);
 
 }
@@ -853,7 +853,7 @@ openUrlTODocIDNET(char *hostname)
 
 	sock = cconnect(hostname, BLDPORT);
 
-        //sender forespørsel
+        // send request
         sendpacked(sock, C_urltodocid, BLDPROTOCOLVERSION, 0, NULL, "www");
 
 	recv(sock, &cmd, sizeof(cmd), MSG_WAITALL);

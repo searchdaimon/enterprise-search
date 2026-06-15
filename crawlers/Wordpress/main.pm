@@ -235,7 +235,7 @@ sub note_error_response {
     mutter(sprintf "Noting {%s} error at %s\n",$response->status_line, $url );
     $notable_url_error{$url} = $response->status_line;
   } else {
-    #skriver feilmelding, og lagrer den i $!
+    # write the error message and store it in $!
     mutter(sprintf "Can't get url %s: %s\n",$url, $response->status_line );
   }
   return;

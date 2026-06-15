@@ -75,10 +75,10 @@ int gcsummary(int LotNr, char *subname) {
 		++i;
 	}
 
-	//sorterer på SummaryPointer for å få å kunne lese så sekvensielt som mulig.
+	// sort by SummaryPointer to be able to read as sequentially as possible.
 	qsort(d, NrofDocIDsInLot, sizeof(struct dFormat), compare_d_SummaryPointer);
 
-	//går igjenom alle
+	// go through all
 	for(i=0;i<NrofDocIDsInLot;i++) {
 	
 		char sumbuf[65536];

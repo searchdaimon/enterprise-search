@@ -64,7 +64,7 @@ if ($opts{'r'}) {
 
 	        while (my $file = readdir($DIR) ) {
 
-	                #skiping . and ..
+	                #skipping . and ..
 	                if ($file =~ /\.$/) {
 	                      next;
 	                }
@@ -86,7 +86,7 @@ if ($opts{'r'}) {
 
 	      	closedir($DIR);
 
-		# Creat dirty file if it dos not exist.
+		# Create dirty file if it does not exist.
 		if (!(-e $dirtyfile)) {
 			open(OUT, ">",$dirtyfile) or die("Can't open $dirtyfile: ");
 			print OUT "1";
@@ -201,7 +201,7 @@ sub recdir {
 
         while (my $file = readdir($DIR) ) {
 
-                #skiping . and ..
+                #skipping . and ..
                 if ($file =~ /\.$/) {
                       next;
                 }

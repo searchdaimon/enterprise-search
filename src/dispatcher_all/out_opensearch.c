@@ -31,7 +31,7 @@ void disp_out_opensearch(int total_res, struct SiderFormat *results, struct quer
 			printf("\t<description>%s</description>\n", results[i].description);
 			printf("</item>\n");
 
-			//teller bare normale sider
+			// only count normal pages
 			if (results[i].type == siderType_normal) {
 				++x;
 			}

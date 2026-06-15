@@ -39,18 +39,18 @@ int main (int argc, char *argv[]) {
 		printf("get ipdb for %i\n",i);
 
 
-		//ber om at ipdb skal lages
+		//ask for the ipdb to be built
 		sprintf(command,"/home/boitho/boithoTools/bin/ipdbBuildLotIndex %i",i);
 		rComand(command,i,subname);
 
 		//int rGetFileByOpenHandler(char source[],FILE *FILEHANDLER,int LotNr,char subname[]);
 		rGetFileByOpenHandler("ipdb",TMPTRANSFER,i,subname);
 		printf("rGetFileByOpenHandler end\n");
-		//resetter
+		//reset
 		fseek(TMPTRANSFER,0,SEEK_SET);
 		
 
-		//finer filofset
+		//find file offset
 		int lottoffset = LotDocIDOfset(i);
 		DocID = lottoffset;
 	
@@ -67,7 +67,7 @@ int main (int argc, char *argv[]) {
 		}
 		//printf("offset: %" PRId64 ", ftell: %ul\n",offset,ftell(IPDBFH));
 		
-		//kopierer over ipadresser
+		//copy over IP addresses
 		while(!feof(TMPTRANSFER)) {
 
 			fread(&IPadress,sizeof(IPadress),1,TMPTRANSFER);

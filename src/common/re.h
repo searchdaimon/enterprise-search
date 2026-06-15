@@ -18,8 +18,8 @@
 #include "define.h"
 
 /*
-        RE_COPYONCLOSE: lager en kopi av filen, og kopierer så inn denne kopien når vi avslutter. Dette gjør at vi kan jobbe på vår egen private, låste kopi, og
-        så kopiere den inn anatomisk, når vi er ferdige med den, og alt gikk bra. Lesing til orginalen er fortsatt tilat, men man kan ikke lge nye kopier før vi er ferdige.
+        RE_COPYONCLOSE: creates a copy of the file, and then copies this copy back in when we close. This lets us work on our own private, locked copy, and
+        then copy it back in atomically when we are done with it and everything went well. Reading from the original is still allowed, but new copies cannot be made until we are done.
 */
 #define RE_COPYONCLOSE 			0x1
 #define RE_HAVE_4_BYTES_VERSION_PREFIX 	0x2

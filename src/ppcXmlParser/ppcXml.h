@@ -6,7 +6,7 @@ struct ppcPagesFormat {
         char title[70];
         char description[255];
         char uri[1024];
-        char url[1024]; //ToDo: har vi økt alle andre også ??
+        char url[1024]; //ToDo: have we increased all the others too ??
         float bid;
 	char user[21];
 	char domain[65];
@@ -21,7 +21,7 @@ struct ppcPagesFormat {
 
 struct nodenamesFormat {
         char rootNodeName[162];
-	char startNodeName[162]; //start value. The fist in an new element
+	char startNodeName[162]; //start value. The first in a new element
         char titleNodeName[162];
         char descriptionNodeName[162];
         char uriNodeName[162];

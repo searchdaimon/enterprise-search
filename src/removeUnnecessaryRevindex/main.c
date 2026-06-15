@@ -13,7 +13,7 @@
 int main (int argc, char *argv[]) {
 
 	FILE *fh;
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // a struct for fstat to fill in.
 	char lotPath[512];
 	char revindexPath[512];
 	int i;
@@ -46,7 +46,7 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
-	//ToDo. Her BØR vi sjekke om det finnes noen gyldig iindex for lot'en
+	//ToDo. Here we SHOULD check whether a valid index exists for the lot
 	for (i=0;i<64;i++) {
 		sprintf(revindexPath,"%srevindex/Main/%i.txt",lotPath,i);
 		printf("revindexPath %s\n",revindexPath);

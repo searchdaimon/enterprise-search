@@ -22,7 +22,7 @@ main(int argc, char **argv)
 	time_t timeout;
 	int dry;
 
-        //tester for at vi har fåt hvilken lot vi skal bruke
+        //test that we have been given which lot we should use
         if (argc < 3)
                 errx(1, "Usage: ./%s lotnr subname [dry]", argv[0]);
 

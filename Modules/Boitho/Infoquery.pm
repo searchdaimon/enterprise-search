@@ -207,9 +207,9 @@ sub documentsInCollection($$) {
 	
 	my $doc_count_ref = $self->_getList("documentsInCollection \Q$collection\E", 'Documents');
 
-	#runarb, legger til at infoquery kan feile, og ikke gi liste
+	#runarb, adding that infoquery can fail and not return a list
 	if (not defined($doc_count_ref)) {
-		return -1; #returnerer -1 som en feilkode
+		return -1; #return -1 as an error code
 	}
 	else {
 		return $doc_count_ref->[0];
@@ -225,9 +225,9 @@ sub lotsInCollection($$) {
 	
 	my $doc_count_ref = $self->_getList("lotsInCollection \Q$collection\E", 'Lots');
 
-	#runarb, legger til at infoquery kan feile, og ikke gi liste
+	#runarb, adding that infoquery can fail and not return a list
 	if (not defined($doc_count_ref)) {
-		return -1; #returnerer -1 som en feilkode
+		return -1; #return -1 as an error code
 	}
 	else {
 		return $doc_count_ref->[0];

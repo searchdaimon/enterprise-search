@@ -30,7 +30,7 @@ int main (int argc, char *argv[]) {
         /* Get a cursor */
         userToSubnameDb.dbp->cursor(userToSubnameDb.dbp, NULL, &cursorp, 0);
 
-        //resetter minne
+        //reset memory
         memset(&key, 0, sizeof(DBT));
         memset(&data, 0, sizeof(DBT));
 

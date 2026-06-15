@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 	    exit(-1);
 	}
 
-    // FreeTDS krasjer på SQLDriverConnect! Derfor bruker vi SQLConnect istedet.
+    // FreeTDS crashes on SQLDriverConnect! That's why we use SQLConnect instead.
     ret = SQLConnect(hdbc, (SQLCHAR*) "adventure", SQL_NTS, (SQLCHAR*) "ax", SQL_NTS, (SQLCHAR*) "Ju13brz;", SQL_NTS);
 
     if (ret==SQL_SUCCESS_WITH_INFO)
@@ -101,8 +101,8 @@ int main(int argc, char *argv[])
 
     STMT_CATCH( SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt) );
 
-    // Å spesifisere "TABLE" direkte fungerer ikke :\ (FreeTDS?)
-    // Derfor er vi nødt til å sortere ut tabellene etterpå.
+    // Specifying "TABLE" directly does not work :\ (FreeTDS?)
+    // Therefore we have to filter out the tables afterwards.
     STMT_CATCH( SQLTables(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0) );
 
     STMT_CATCH( SQLNumResultCols(hstmt, &columns) );

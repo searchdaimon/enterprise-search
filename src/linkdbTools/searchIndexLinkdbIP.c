@@ -65,18 +65,18 @@ int main (int argc, char *argv[]) {
 
 	printf("links ti %u:\n",DocID);
 
-	//finner offset
+	//find the offset
 	fseek(INDEXFILE,DocID * sizeof(offset),SEEK_SET);
 	fread(&offset,sizeof(offset),1,INDEXFILE);
 
-	//søker til offsetten
+	//seek to the offset
 	if(fseeko64(LINKDBFILE,offset,SEEK_SET) == -1) {
 		perror("seek");
 		exit(1);
 	}
 
 
-	//inaliserer hashen
+	//initialize the hash table
 	chtbl_init(&htbl, PRIME_TBLSIZ, h, match, free);
 	chtbl_init(&htbl_classa, PRIME_TBLSIZ, h, match, free);
 	
@@ -103,10 +103,10 @@ int main (int argc, char *argv[]) {
 			prti = &ipadress;
 
 			if (chtbl_lookup(&htbl,(void *)&prti) == 0) {
-				//printf("set ip før\n");
+				//printf("ip already set\n");
 			}
 			else {
-				//siden denne dataen skal ligge i hashen må vi ha et egetminne om råde på hippen for $
+				//since this data will live in the hash table we need our own memory on the heap for $
                                 prti = malloc(sizeof(unsigned int));
 				*prti = ipadress;
                                 chtbl_insert(&htbl,(void *)prti);
@@ -118,10 +118,10 @@ int main (int argc, char *argv[]) {
 			prti = &classaadress;
 
 			if (chtbl_lookup(&htbl_classa,(void *)&prti) == 0) {
-				//printf("set ip før\n");
+				//printf("ip already set\n");
 			}
 			else {
-				//siden denne dataen skal ligge i hashen må vi ha et egetminne om råde på hippen for $
+				//since this data will live in the hash table we need our own memory on the heap for $
                                 prti = malloc(sizeof(unsigned int));
 				*prti = classaadress;
                                 chtbl_insert(&htbl_classa,(void *)prti);

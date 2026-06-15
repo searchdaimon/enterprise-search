@@ -123,7 +123,7 @@ char *sfindductype(char filepath[]) {
                         type = malloc(strlen(cp) +1);
                         strcpy(type,cp);
 
-			//søker oss til første % eller space for å fjerne de
+			// seek to the first % or space to remove them
 			if ( ( (cp = strchr(type,'%')) != NULL ) || ((cp = strchr(type,'%')) != NULL)) {
 				cp[0] = '\0';
 			}
@@ -150,7 +150,7 @@ int rrmdir(char dir[]) {
 
 	if ((dirp = opendir(dir)) == NULL) {
 
-		//hvis mappen ikke finnes så er den nå sletter, og vi returnerer at atl er ok, selv om vi ikke gjorde noe
+		// if the directory does not exist then it is now deleted, and we return that all is ok, even though we did nothing
 		if (errno == ENOENT) {
 			#ifdef DEBUG
 				printf("Folder \"%s\" don't exist. Ignoring delete command\n");
@@ -179,7 +179,7 @@ int rrmdir(char dir[]) {
 				printf("rrmdir: file: %s\n",path);
 			#endif
 
-			/* Slett barnet */
+			/* Delete the child */
 			if (remove(path) != 0) {
 				perror(path);
 			}
@@ -189,7 +189,7 @@ int rrmdir(char dir[]) {
 	closedir(dirp);
 
 
-	//sletter seg selv
+	// delete itself
 	if (remove(dir) != 0) {
         	perror(dir);
         }
@@ -229,10 +229,10 @@ int readfile_into_buf( char *filename, char **buf ) {
 
 FILE *stretchfile(FILE *FH,char mode[],char file[], off_t branksize) {
 
-        //stenger ned filen
+        // close down the file
         fclose(FH);
 
-        //åpner for skriving også
+        // open for writing too
         if ( (FH = fopen(file,"r+b")) == NULL ) {
                 return NULL;
         }
@@ -261,7 +261,7 @@ FILE *stretchfile(FILE *FH,char mode[],char file[], off_t branksize) {
 
         fclose(FH);
 
-        //åpner med ønsket mode
+        // open with the desired mode
         if ( (FH = fopen(file,mode)) == NULL ) {
                 return NULL;
         }
@@ -271,9 +271,9 @@ FILE *stretchfile(FILE *FH,char mode[],char file[], off_t branksize) {
 }
 
 #ifdef SD_CLOEXEC
-//rutiner som gjør slik at filer ikke arves ved exex og fork(?). Det er et problem med filfiltere i bbdn som
-//arver åpne lot filer, og dermed hinder indeksering.
-//ukjent om batomicallyopen bli close'et eller fclose't. Hvis fclose blir den da renamet.
+// routines that make files not be inherited on exec and fork(?). There is a problem with file filters in bbdn that
+// inherit open lot files, and thus hinder indexing.
+// unknown whether batomicallyopen is close()d or fclose()d. If fclose, it is then renamed.
 int closeAtExexo(int fd) {
 
         int flags;

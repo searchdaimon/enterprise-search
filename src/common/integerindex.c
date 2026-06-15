@@ -92,7 +92,7 @@ int iintegerLoadMemArray(struct iintegerMemArrayFormat *iintegerMemArray,char in
 
 	int i;
 	struct iintegerFormat iinteger;
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	int size;
 	off_t totsize = 0;
 
@@ -106,7 +106,7 @@ int iintegerLoadMemArray(struct iintegerMemArrayFormat *iintegerMemArray,char in
 	size = elementsize * NrofDocIDsInLot;
 
 	for (i=0;i<maxLots;i++) {
-                //sjekekr om dette er en lokal lot
+                // check whether this is a local lot
 
                 if (lotlistIsLocal(i)) {
 
@@ -187,12 +187,12 @@ int iintegerLoadMemArray2(struct iintegerMemArrayFormat *iintegerMemArray,char i
 
 	int i, y ,z;
 	struct iintegerFormat iinteger;
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	int size;
 	off_t totsize = 0;
         int locklimit;
 
-        //finner grensen på antal sider vi kan låse i minne
+        // find the limit on the number of pages we can lock in memory
         struct rlimit rlim;
 
         if (getrlimit(RLIMIT_MEMLOCK, &rlim) < 0) {
@@ -212,7 +212,7 @@ int iintegerLoadMemArray2(struct iintegerMemArrayFormat *iintegerMemArray,char i
 	size = elementsize * NrofDocIDsInLot;
 
 	for (i=0;i<maxLots;i++) {
-                //sjekekr om dette er en lokal lot
+                // check whether this is a local lot
 
 
 
@@ -276,14 +276,14 @@ int iintegerLoadMemArray2(struct iintegerMemArrayFormat *iintegerMemArray,char i
                         	perror("iintegerLoadMemArray2 mmap");
                         }
 
-                        //hvis vi kan låse uendelig med minne gjør vi det
+                        // if we can lock unlimited memory we do it
                         if (locklimit == -1) {
-                        	//laster all rankerings dataen fra minne, slik ad det går fort å leste den inn siden
+                        	// load all the ranking data from memory, so that it is fast to read it in later
                                 z = 0;
                                 for(y=0;y<NrofDocIDsInLot;y++) {
                                 	z += iintegerMemArray->MemArray[i][y];
                                	}
-                                //låser minne
+                                // lock memory
                                 if (mlock(iintegerMemArray->MemArray[i],size) != 0) {
                                 	perror("iintegerLoadMemArray2: mlock array");
                                 }

@@ -19,10 +19,10 @@
 //#define ex(_type,_var) (*((_type##_value*)_var.ptr))
 
 /*
-    La oss kalle datastrukturer for containere.
-    Containere skal kunne inneholde andre containere.
-    Maa ha allocate og deallocate.
-    Og compare.
+    Let's call data structures containers.
+    Containers must be able to contain other containers.
+    Must have allocate and deallocate.
+    And compare.
 */
 
 typedef struct container container;

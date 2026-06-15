@@ -368,7 +368,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			bbdocument_close(attrkeys);
 			attrkeys = NULL;
 
-			//toDo må bruke subname, og C ikke perl her
+			//toDo should use subname, and C instead of perl here
 			printf("cleanin lots start\n");
 			char command[PATH_MAX];
 			snprintf(command,sizeof(command),"perl %s -i \"%s\"",bfile("perl/cleanLots.pl"),subname);
@@ -377,7 +377,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 			intrespons = system(command);
 			printf("cleanin lots end\n");
 
-			// legger subnamet til listen over ventene subnavn, og huper searchd.
+			// add the subname to the list of pending subnames, and signal searchd.
 			lot_recache_collection(subname);
 
 
@@ -461,7 +461,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
 						reclose(re);
 					}
 				}
-				//markerer at den er skitten
+				//mark it as dirty
 				if (!err) {
 					FILE *dirtfh;
 					dirtfh = lotOpenFileNoCashe(DocID,"dirty","ab",'e',subname);
@@ -541,7 +541,7 @@ while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAIT
                                 exit(1);
                         }
 
-			// tester bare i lot 1 her. Må også sjekke andre loter når vi begynner å støtte frlere disker på ES.
+			// only checks lot 1 here. Must also check other lots once we start supporting multiple disks on ES.
 			intrespons = lotHasSufficientSpace(1, 4096, subname);
 
 			if ((n=sendall(socket, &intrespons, sizeof(intrespons))) == -1) {

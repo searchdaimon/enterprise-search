@@ -36,7 +36,7 @@ int main (int argc, char *argv[]) {
 						
 			printf("%s \"%s\" %u ",updatePost.url,updatePost.linktext,updatePost.DocID_from);
 			//printf("%u\n",updatePost.DocID_from);
-			//debug vise sha1'en
+			//debug: show the sha1
 			for (y=0;y<20;y++) {
 				printf("%i",(int)updatePost.sha1[y]);
 			}

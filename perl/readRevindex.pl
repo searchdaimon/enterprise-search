@@ -25,20 +25,20 @@ use Boitho::Lot;
 	
 		my $buf = '';
 		my $char = '';
-		#lsere filen char for char i påvente eof
-		#leter etter **\n
+		#reads the file char by char while waiting for eof
+		#looks for **\n
 		#while (not eof(INF)) {
 		while (<INF>) {
 			chomp;
 		
 				
-						my $RindexRecord = $_;       #bruker $buf
+						my $RindexRecord = $_;       #uses $buf
 		
 						#print "Ny record: $RindexRecord\n";
 			
-						my $lestTilOgMed = 0; #viser hvor langt vi har kommet med å lese posten
+						my $lestTilOgMed = 0; #shows how far we have gotten in reading the record
 						
-						#hvis vi har mere en DocID og sprok lagret om denne DocIDen
+						#if we have more than DocID and language stored about this DocID
 						if (length($RindexRecord) > 7) {
 
 							#print "length " . length($RindexRecord) . "\n";
@@ -73,6 +73,6 @@ use Boitho::Lot;
 							print "\n";
 						}
 		}
-		#temp: skal denne være her insteden ???
+		#temp: should this be here instead ???
 		close(INF) or warn ("Cant close file: $!");
 		#$iindex_ha->WriteIIndexToFile($type,$revindexFilNr,$lotNr);

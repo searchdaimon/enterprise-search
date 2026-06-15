@@ -236,7 +236,7 @@ print_all(void)
 
 
 #define dbCashe 314572800+314572800       //300 mb
-#define dbCasheBlokes 1         //hvor mange deler vi skal dele cashen opp i. Ofte kan man ikke alokere store blikker samenhengenede
+#define dbCasheBlokes 1         //how many parts to split the cache into. Often you can't allocate large contiguous blocks
 
 
 int

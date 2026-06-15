@@ -11,7 +11,7 @@ int main (int argc, char *argv[]) {
 	char buf[1024];
 	int len;
 
-	//tester for at vi har fåt hvilken fil vi skal bruke
+	//check that we were told which file to use
 	if (argc < 2) {
 		printf("Usage: ./addanchors anchorfile\n\n\tanchorfile, fil med tekster på linker\n\n");
 		exit(1);

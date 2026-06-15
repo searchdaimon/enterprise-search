@@ -47,7 +47,7 @@ struct indexerLotConfigFormat {
 struct indexerLotConfigFormat globalIndexerLotConfig;
 
 
-//global veriabel som sier fra om en alarm ble utløst. Trenger bare en da man bare kan ha en alarm av gangen
+//global variable that signals whether an alarm was raised. Need only one since you can only have one alarm at a time
 volatile sig_atomic_t alarm_got_raised;
 unsigned int global_curentDocID;
 int global_curentUrlIsDynamic;

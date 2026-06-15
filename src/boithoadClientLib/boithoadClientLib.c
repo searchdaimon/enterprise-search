@@ -8,7 +8,7 @@
 #include "daemon.h"
 #include "boithoad.h"
 
-//motar en enkel respons liste. Den begynner med en int som sier hov lang den er
+//receive a simple response list. It begins with an int that says how long it is
 int boithoa_getLdapResponsList(int socketha,char **respons_list[],int *nrofresponses) {
 
 	char ldaprecord[MAX_LDAP_ATTR_LEN];
@@ -123,7 +123,7 @@ int boithoad_listUsers(char **respons_list[],int *nrofresponses){
 
 	int socketha;
 
-	//hvis nos skulle skje lendere nede så har vi 0 brukere.
+	//if anything should go wrong further down we have 0 users.
 	*nrofresponses = 0;
 
 	if ((socketha = cconnect("localhost", BADPORT)) == 0) {

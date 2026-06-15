@@ -2,7 +2,7 @@
 #include "highlight.parser.c"
 #include <assert.h>
 
-// --- fra flex:
+// --- from flex:
 typedef void* yyscan_t;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 YY_BUFFER_STATE highlight_scan_bytes (const char *bytes,int len ,yyscan_t yyscanner );
@@ -27,7 +27,7 @@ int buf_printf(struct parser_data *pd, const char *fmt, ...)
 	    pd->cur_stop_rpos-= diff;
 	    memmove( pd->buf, &(pd->buf[diff]), pd->cur_rpos );
 
-	    pd->cur_rpos--;	// Fix: Det dukket opp en mystisk '\0' her som ødela.
+	    pd->cur_rpos--;	// Fix: A mysterious '\0' showed up here that broke things.
 
 	    int		i;
 	    for (i=0; i<POS_DATA_SIZE; i++)

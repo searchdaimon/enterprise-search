@@ -16,7 +16,7 @@ void gc_reduce(struct reformat *re, int LotNr, char subname[]) {
 	int i;
 	unsigned int DocID;
 
-        //lagrer hvilkene filer vi har slettet
+        //store which files we have deleted
         GCEDFH =  lotOpenFileNoCasheByLotNr(LotNr,"gced","a", 'e',subname);
 
         for (i=0;i<NrofDocIDsInLot;i++) {

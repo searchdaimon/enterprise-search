@@ -105,7 +105,7 @@ if ($opt{threads}) {
 
 	}
 
-	#venter på trådene
+	#wait for the threads
 	foreach my $thr (@threads) {
 		$thr->join;
 	}
@@ -119,7 +119,7 @@ sub attack {
 	my ($arr, $opt, $tid) = @_;
 
 	if ($opt{threads} > 1) {
-		#sover mellom 0 og 1 for å la den komme litt igang.
+		#sleep between 0 and 1 to let it get going a bit.
 		my $random_number = rand(1);
 		print "Veter i $random_number sec\n";
 		sleep($random_number);
@@ -141,7 +141,7 @@ sub attack {
 			++$count;
 
 			chomp($i);
-			#fjerner alt etter første ugyldige tegn. Kjekt for å parse ordbøker og slikt
+			#remove everything after the first invalid character. Handy for parsing dictionaries and such
 			if ($opt{wordwash}) {
 				$i =~ /(^[\wæøåÆØÅ ]+)/;
 				$i = $1;
@@ -150,7 +150,7 @@ sub attack {
 			my $query = $i;
 			$query =~ s/([^A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg;
 
-			#skipper tomme querys hvis vi har på haltOnError, da det altid vil feile.
+			#skip empty queries if haltOnError is on, since it would always fail.
 			if ( ($opt{haltOnError} == 1) && ($query eq "") ) {
 				next;
 			}
@@ -225,7 +225,7 @@ sub attack {
 	}
 
 }
-# array randomiserings funksjon. Se perl cookbook side 121
+# array randomizing function. See perl cookbook page 121
 sub fisher_yates_shuffle {
          my $array = shift;
          my $i;

@@ -14,7 +14,7 @@ int scanMySQL(int (*scan_found_share)(char share[]),char host[],char username[],
 
         mysql_init(&demo_db);
 
-        //koble til mysql
+        //connect to mysql
         if(!mysql_real_connect(&demo_db, host, username, password, NULL, 3306, NULL, 0)){
                 printf(mysql_error(&demo_db));
                 return 0;
@@ -22,7 +22,7 @@ int scanMySQL(int (*scan_found_share)(char share[]),char host[],char username[],
 
 
 
-        //get alle the databases
+        //get all the databases
         sprintf(mysql_query, "show databases");
 
         printf("mysql_query: %s\n",mysql_query);
@@ -39,7 +39,7 @@ int scanMySQL(int (*scan_found_share)(char share[]),char host[],char username[],
         while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
                 printf("\tdata %s\n",mysqlrow[0]);
 
-		//tel cm about it
+		//tell cm about it
 		(*scan_found_share)(mysqlrow[0]);
 
         }

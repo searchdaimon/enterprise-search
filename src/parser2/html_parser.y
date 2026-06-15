@@ -4,17 +4,17 @@
 /*
 Changelog
 
-Juli 2008 (Magnus):
-    Fjerner ugyldig charsets, men sparer det som er gyldig.
+July 2008 (Magnus):
+    Removes invalid charsets, but keeps what is valid.
 
 August 2007 (Magnus):
-    Parser nå css og detekterer cloaking.
+    Now parses css and detects cloaking.
 
-Januar 2007 (Magnus):
-    Kildekoden er oppgradert til reentrant, og spytter i tillegg ut tekst-summary.
+January 2007 (Magnus):
+    The source code has been upgraded to reentrant, and additionally emits a text summary.
 
-Runar 21.des
-Håndtering av at page_uri er  NULL en skjelden gang i create_full_link
+Runar 21 Dec
+Handling of page_uri being NULL on rare occasions in create_full_link
 
 */
 #define _GNU_SOURCE
@@ -37,7 +37,7 @@ Håndtering av at page_uri er  NULL en skjelden gang i create_full_link
 #include "css_parser.h"
 
 
-// --- fra flex:
+// --- from flex:
 typedef void* yyscan_t;
 typedef struct bhpm_buffer_state *YY_BUFFER_STATE;
 YY_BUFFER_STATE bhpm_scan_bytes( const char *bytes, int len, yyscan_t yyscanner );
@@ -482,8 +482,8 @@ starttag	: TAG_START ATTR attrlist TAG_STOPP
 
 					if (ptr != NULL)
 					    {
-						// Husk: Oppdater j når det legges til charsets.
-						// Husk: Sjekk også startendtag.
+						// Remember: Update j when charsets are added.
+						// Remember: Also check startendtag.
 						int	j = 0;
 						char	charset_match = 0;
 						char	*allowed_charsets[] = {"iso-8859", "iso8859", "utf-8", "latin1", "windows-1252", "us-ascii", "macintosh"};
@@ -936,7 +936,7 @@ void lexwords(unsigned char *s)	// Lex for words in textfield.
 
 
 // in: url
-// out: uri, path, rel_path	NB: minne må frigjøres!!
+// out: uri, path, rel_path	NB: memory must be freed!!
 void url_split( char *url, char **uri, char **path, char **rel_path )
 {
     int		i=0;
@@ -978,7 +978,7 @@ void url_split( char *url, char **uri, char **path, char **rel_path )
 	}
 }
 
-// NB: minne må frigjøres!
+// NB: memory must be freed!
 char* create_full_link( char *url, int page_url_len, char *page_uri, char *page_path )
 {
     char	*new_url = (char*)malloc( page_url_len + strlen(url) +1 ); // Largest possible output.
@@ -986,9 +986,9 @@ char* create_full_link( char *url, int page_url_len, char *page_uri, char *page_
 
     url_split( url, &uri, &path, &rel_path );
 
-    // Runar: honterer feil der page_uri er NULL (komer dette av at urlen ikke 
-    // begynner på http:// ?. url_split splitt ser vel etter http:// og setter den til NULL
-    // hvis det mangler)
+    // Runar: handles the error where page_uri is NULL (does this come from the url not
+    // starting with http:// ?. url_split presumably looks for http:// and sets it to NULL
+    // if it is missing)
     if (page_uri == NULL) {
 	//fprintf(stderr, "html_parser: Warning! page_uri==NULL\n");
 	new_url[0] = '\0';
@@ -1099,7 +1099,7 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
 	fprintf(stderr, "html_parser: run(\"%s\")\n", url);
     #endif
 
-    assert(tags_automaton!=NULL);	// Gir feilmelding dersom man har glemt å kjøre html_parser_init().
+    assert(tags_automaton!=NULL);	// Gives an error message if html_parser_init() has been forgotten.
 
     struct bhpm_yy_extra	*he = malloc(sizeof(struct bhpm_yy_extra));
     struct bhpm_intern_data	*data = malloc(sizeof(struct bhpm_intern_data));
@@ -1213,7 +1213,7 @@ void html_parser_run( char *url, char text[], int textsize, char **output_title,
             fprintf(stderr, "%s\n", text);
             fprintf(stderr, "html_parser: --- Content end ---\n");
             #endif
-	    // Magnus: Fjernet buffer_abort(). Den teksten som allerede har blitt indeksert, bÃ¸r finnes.
+	    // Magnus: Removed buffer_abort(). The text that has already been indexed should be present.
 	    *output_title = buffer_exit( he->Btitle );
 	    *output_body = buffer_exit( he->Bbody );
 	}

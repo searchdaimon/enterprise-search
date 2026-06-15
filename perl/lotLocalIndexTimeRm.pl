@@ -15,6 +15,6 @@ $lotpath .= 'IndexTime';
 
 print "removing $lotpath\n";
 
-#kjører recrosiv rm
+#runs recursive rm
 #system("rm -r $lotpath");
 unlink($lotpath);

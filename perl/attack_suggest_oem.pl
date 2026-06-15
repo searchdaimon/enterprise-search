@@ -58,10 +58,10 @@ foreach my $i (@arr) {
 	my $hits = $content;
 
 	$hits = 0;
-	#teller antall \n
+	#counts the number of \n
 	$hits += ($content =~ tr/\n//);
 
-	# markerer at vi fikk 0 hoits
+	# mark that we got 0 hits
 	if ($hits == 0) {
 		$hits = "\033[1;32m      $hits\033[0m";
 	}

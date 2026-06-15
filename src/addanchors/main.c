@@ -28,7 +28,7 @@ int main (int argc, char *argv[]) {
 	int openfilescount,usetimeForclose;
 	
 	int usetime;
-	//tester for at vi har fåt hvilken fil vi skal bruke
+	//test that we have figured out which file to use
 	if (argc < 2) {
 		printf("Usage: ./addanchors subname < anchorfile \n\n\tanchorfile, fil med tekster på linker\n\n");
 		exit(1);
@@ -58,7 +58,7 @@ int main (int argc, char *argv[]) {
 		
 		lotNr = rLotForDOCid(anchorfileData.DocID);
 
-		//hvis filen ikke er open opner vi den
+		//if the file is not open we open it
 		if (!files[lotNr].open) {
 			//printf("opening file %i\n",lotNr);
 			if ((files[lotNr].fh = fopen(files[lotNr].name,"ab")) == NULL) {
@@ -70,9 +70,9 @@ int main (int argc, char *argv[]) {
 			openfilescount++;
 		}
 		else {
-			//printf("fil allerede open: %i\n",lotNr);
+			//printf("file already open: %i\n",lotNr);
 		}
-		//setter når den ble brukt sist
+		//set when it was last used
 		files[lotNr].usetime = usetime++;
 
 		for(i=sizeof(anchorfileData.text); ((i>0) && ((anchorfileData.text[i] == ' ') || (anchorfileData.text[i] == '\0'))); i--) {
@@ -82,11 +82,11 @@ int main (int argc, char *argv[]) {
 
 		//printf("anchorfileData.text %s\n",anchorfileData.text);
 
-		//skriver DocID
+		//write DocID
         	fwrite(&anchorfileData.DocID,sizeof(unsigned int),1,files[lotNr].fh);
-        	//skriver teksten
+        	//write the text
         	fputs(anchorfileData.text,files[lotNr].fh);
-        	//skriver line seperator
+        	//write line separator
         	fwrite("***",sizeof(char),3,files[lotNr].fh);
 
 		//printf("%i (%i): %s\n",anchorfileData.DocID,lotNr,anchorfileData.text);
@@ -130,12 +130,12 @@ int main (int argc, char *argv[]) {
                 	if (files[i].open) {
 				fclose(files[i].fh);
 			}
-			//sender den over nettverket
+			//send it over the network
 
 			rSendFile(files[i].name, "anchors", i, "a", subname);
 			
 			
-			//sletter filen
+			//delete the file
 			unlink(files[i].name);
 		}	
 	}

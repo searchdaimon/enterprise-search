@@ -4,13 +4,13 @@ require Exporter;
 @iindex::EXPORT = qw();
 @iindex::EXPORT_OK = qw(WriteIIndexToFile add new);
 
-use constant DictionaryAdressSizeForTerm => 'L L ';						#templaten som brukes på $adress,$SizeForTerm i DictionaryHash og i DictionaryTemplate
+use constant DictionaryAdressSizeForTerm => 'L L ';						#the template used for $adress,$SizeForTerm in DictionaryHash and in DictionaryTemplate
 use constant DictionaryTemplate => 'L' . DictionaryAdressSizeForTerm;
-use constant DictionaryRecordSize => 12; #størelsen på hver ordbok record
+use constant DictionaryRecordSize => 12; #the size of each dictionary record
 
-use constant AntallBarrals => 64; # må være lik som i revindex.pm
+use constant AntallBarrals => 64; # must be equal to the value in revindex.pm
 
-#poneger for plasseringenr i dokumeneter
+#points for positions in documents
 use constant poengBody => 4;		#4
 use constant poengHeadline  => 10;	#10
 use constant poengTittel  => 15;	#15
@@ -22,13 +22,13 @@ use StringPop;
 
 use Boitho::Lot;
 
-#new funksjon
+#new function
 sub new {
 	my($class) = @_;
 	#my $class = '';
-	my $self = {}; #allocate new hash for objekt
+	my $self = {}; #allocate new hash for object
 	
-	$self->{'AntallIIndexElementer'} = 0;	#oversikt over hvor mange elemeneter vi har i minne
+	$self->{'AntallIIndexElementer'} = 0;	#tracks how many elements we have in memory
 		
 	bless($self, $class);
 
@@ -49,7 +49,7 @@ sub add {
 	
 #	print "$WordID ($self->{'AntallIIndexElementer'}): $#{ $self->{'iindex'}->{$sprok}->{$WordID} }\n";	
 	
-	#print "nn: $DocID,$antall\n";
+	#print "nn: $DocID,$count\n";
 	
 	$self->{'AntallIIndexElementer'}++;
 }
@@ -60,19 +60,19 @@ sub WriteIIndexToFile {
 	
 	foreach my $sprok (keys %{ $self->{'iindex'} }) {
 	
-		#lagrer på samme plass som lot med samme nr
+		#stores in the same place as the lot with the same number
 		#my $LotPath = Boitho::Lot::GetFilePathForIindex($revindexFilNr);
 		
 		my $LotPath = Boitho::Lot::GetFilPathForLot($lotNr,$subname);
-		#fjerner / på slutten
+		#removes the trailing /
 		chop($LotPath);
 
 		#print "LotPath for $revindexFilNr: $LotPath\n";
 
 		#5: my $indexPath = "data/iindex/$type/index/$sprok";
 		my $indexPath = "$LotPath/iindex/$type/index/$sprok";
-		if (not -e $indexPath ) {	#sjekker og eventuel lager pathen.
-			#print "oppretter path $indexPath\n";
+		if (not -e $indexPath ) {	#checks and creates the path if needed.
+			#print "creating path $indexPath\n";
 			MakePath($indexPath);
 		}
 		$fil = $indexPath  . '/' . $revindexFilNr . '.txt';
@@ -82,8 +82,8 @@ sub WriteIIndexToFile {
 		
 		#5: $DictionaryPath  = "data/iindex/$type/dictionary/$sprok";
 		$DictionaryPath  = "$LotPath/iindex/$type/dictionary/$sprok";
-		if (not -e $path_komet_til) {	#sjekker og eventuel lager pathen.
-			#print "oppretter path $DictionaryPath\n";
+		if (not -e $path_komet_til) {	#checks and creates the path if needed.
+			#print "creating path $DictionaryPath\n";
 			MakePath($DictionaryPath);
 		}
 		$fil = $DictionaryPath   . '/' . $revindexFilNr . '.txt';
@@ -91,7 +91,7 @@ sub WriteIIndexToFile {
 		binmode(IDICTIONARY);
 	
 		#print "indexPath $indexPath, DictionaryPath $DictionaryPath\n";
-		foreach my $term (sort {$a <=> $b} keys %{ $self->{'iindex'}->{$sprok} }) { # {$a <=> $b} får å sortere numerisk, ikke alfabetisk etter ASCII som er perl standar.
+		foreach my $term (sort {$a <=> $b} keys %{ $self->{'iindex'}->{$sprok} }) { # {$a <=> $b} to sort numerically, not alphabetically by ASCII which is the perl default.
 		
 			my $AntallSiderMedTerm = scalar(@{ $self->{'iindex'}->{$sprok}->{$term} });
 		
@@ -100,18 +100,18 @@ sub WriteIIndexToFile {
 			foreach my $i (@{ $self->{'iindex'}->{$sprok}->{$term} }) {
 			
 			
-				#legger datane inn i en hash
+				#puts the data into a hash
 				if (exists $TermHash{$i->[1]}) {
-					#print "$i->[1] fins fra før\n";
+					#print "$i->[1] already exists\n";
 					#exit;
 					
-					#hvis vi allerede har info om denne docIDen skal vi legge til hitliste og øke antall hitt
-					${ $TermHash{$i->[1]} }[0] += $i->[0]; #legger til antall
-                                        ${ $TermHash{$i->[1]} }[1] .= $i->[2];    #legger til hit list
+					#if we already have info about this docID, add to the hit list and increment the hit count
+					${ $TermHash{$i->[1]} }[0] += $i->[0]; #adds to the count
+                                        ${ $TermHash{$i->[1]} }[1] .= $i->[2];    #adds to the hit list
 				}	
 				else {
-					${ $TermHash{$i->[1]} }[0] = $i->[0]; #legger til antall
-					${ $TermHash{$i->[1]} }[1] = $i->[2];	#legger til hit list
+					${ $TermHash{$i->[1]} }[0] = $i->[0]; #adds to the count
+					${ $TermHash{$i->[1]} }[1] = $i->[2];	#adds to the hit list
 				}		
 			}
 
@@ -119,13 +119,13 @@ sub WriteIIndexToFile {
 
 			print IINDEX pack('L L',$term,$countAntall);
 
-			#debug: viser hva vi har av treff
-			#print "term $term, antall $countAntall\n";
-			#sorterer på DocID og lager index
+			#debug: shows what hits we have
+			#print "term $term, count $countAntall\n";
+			#sorts by DocID and builds the index
 			foreach my $DocID (sort {$a <=> $b} keys %TermHash) {
 					
 
-				#temp: div tall tester			
+				#temp: misc number tests			
 				if (${ $TermHash{$DocID} }[0] =~ /\D/) {
         				die "not a number";
 				}
@@ -137,24 +137,24 @@ sub WriteIIndexToFile {
                                 }
 
 				#print IINDEX pack('L L',$DocID,${ $TermHash{$DocID} }[0]);
-				#14 may. språk støtte
+				#14 may. language support
 				print IINDEX pack('L A L',$DocID,0,${ $TermHash{$DocID} }[0]);
 
-				print IINDEX ${ $TermHash{$DocID} }[1]; #legger til hit list
+				print IINDEX ${ $TermHash{$DocID} }[1]; #adds the hit list
 					
-				#debug: viser ting
-				#print "\tDocID: $DocID antall: ${ $TermHash{$DocID} }[0]\n";
+				#debug: shows things
+				#print "\tDocID: $DocID count: ${ $TermHash{$DocID} }[0]\n";
 			
 			}
 			
-			#legger til info om wordid og antall sider
+			#adds info about wordid and number of pages
 			
 			
 		
 			#print " SizeForTerm: $SizeForTerm ";
 			#print "\n\n";
 
-			#temp, dette fungerer ikke. Bruk tell før og etter for å finne lengden		
+			#temp, this does not work. Use tell before and after to find the length		
 			my $adress = tell(IINDEX) - $SizeForTerm;
 			#print IDICTIONARY "$term $adress:$SizeForTerm\n";
 			print IDICTIONARY pack(DictionaryTemplate,$term, $adress, $SizeForTerm);
@@ -168,11 +168,11 @@ sub WriteIIndexToFile {
 }
 
 ##########################################################################################
-# Laster ordboken inn i en hash
+# Loads the dictionary into a hash
 #
-#	$self->{'DictionaryHash'}->{WordID} holder hele ordboken
-# 	mapper WordID til adresse og stårelse
-#	Adresse og størelse lagres i følge konstanten DictionaryAdressSizeForTerm 
+#	$self->{'DictionaryHash'}->{WordID} holds the entire dictionary
+# 	maps WordID to address and size
+#	Address and size are stored according to the constant DictionaryAdressSizeForTerm 
 ##########################################################################################
 sub HashLodeDictionary {
 	my($self) = @_;
@@ -193,7 +193,7 @@ sub HashLodeDictionary {
 			#push(@languages,$File::Find::name);
 			
 			#print "$File::Find::name\n";
-			#hvis vi har en ordbok fil, som da skal ha "dictionary_" i seg
+			#if we have a dictionary file, which then should have "dictionary_" in it
 			if ($File::Find::name =~ /dictionary_/) {
 					print "aa: $File::Find::name " . keys(%{ $self->{'DictionaryHash'} }) . "\n";
 				
@@ -222,9 +222,9 @@ sub HashLodeDictionary {
 exit;
 }
 ##########################################################################################
-# Leser fra indeksen
+# Reads from the index
 #
-#	bruker $self->{'DictionaryHash'}->{WordID} for å finne adresse og størelse
+#	uses $self->{'DictionaryHash'}->{WordID} to find address and size
 ##########################################################################################
 sub ReadIIndexRecordOLD {
 	my($self,$WordID) = @_;
@@ -260,7 +260,7 @@ sub ReadIIndexRecordOLD {
 	}
 }
 ##########################################################################################
-# Binørsøker seg fram til å leser en post fra en index
+# Binary searches to read a record from an index
 #
 ##########################################################################################
 sub ReadIIndexRecord {
@@ -268,13 +268,13 @@ sub ReadIIndexRecord {
 	
 	
 	#print "L:" . unpack('L',pack('L',$Query_WordID)) . "\n";
-	#print "Søker for $Query_WordID\n";
-	#finner riktig fil
+	#print "Searching for $Query_WordID\n";
+	#finds the correct file
 	my $revindexFilNr = fmod($Query_WordID,AntallBarrals);
 	
 	my $dictionary_fil  = "data/iindex/$type/dictionary/$sprok/$revindexFilNr.txt";
 	
-	#prøver å opne filer i tmpfs 
+	#tries to open files in tmpfs 
 	open(IDICTIONARY ,"tmpfs/$dictionary_fil") or open(IDICTIONARY ,"$dictionary_fil") or die("Can't open dictionary $dictionary_fil: $!");
 	binmode(IDICTIONARY);
 		
@@ -286,7 +286,7 @@ sub ReadIIndexRecord {
 	#print "\tmin: $min, max: $max, halvert: $halvert\n";
 	
 	
-	#binærsøk
+	#binary search
 	my $seeks = 0;
 	my $fant = 0;
 	#if (0) {
@@ -332,7 +332,7 @@ sub ReadIIndexRecord {
 	
 	
 	
-	#print "prukte $seeks forsøk\n";
+	#print "used $seeks attempts\n";
 	
 	close(IDICTIONARY);
 	#}
@@ -342,7 +342,7 @@ sub ReadIIndexRecord {
 	#$SizeForTerm = 1040162;
 	#$fant = 1;
 	
-	#hvis vi fant noe slår vi opp i indeksen og leser inn indeksen
+	#if we found something we look it up in the index and read in the index
 	if ($fant) {
 		#$revindexFilNr = fmod($WordID,AntallBarrals);
 		my $fil = "data/iindex/$type/index/$sprok/$revindexFilNr.txt";
@@ -372,25 +372,25 @@ sub ReadIIndexRecord {
 }
 
 ##########################################################################################
-# Returnerer en array med termner, forekomster og posisjoner for enkelt ord. 
+# Returns an array with terms, occurrences and positions for a single word. 
 #
 #	Inn:
 #	WordID
 #
 #	return
-#	string	-Antall sider som har dette treffe
+#	string	-Number of pages that have this hit
 #	array
-#		DocID	- DocID for en side som har dette orde i seg
-#		Antall	- Antall treff på den siden
-#		Hitt	- Array med posisjoner
-#	bruker $self->{'DictionaryHash'}->{WordID} for å finne adresse og størelse
+#		DocID	- DocID of a page that has this word in it
+#		Antall	- Number of hits on that page
+#		Hitt	- Array of positions
+#	uses $self->{'DictionaryHash'}->{WordID} to find address and size
 ##########################################################################################
 sub GetIndexAsArray {
 	my($self,$type,$sprok,$WordID) = @_;
 
 	my $RawIndex = $self->ReadIIndexRecord($type,$sprok,$WordID);
 	## temp ##
-	#print "\nSekuensielt søk: \n";
+	#print "\nSequential search: \n";
 	#$self->ReadIIndexRecordMedSekuensiseltSeach($WordID);
 	#exit;
 	# /temp ##
@@ -407,7 +407,7 @@ sub GetIndexAsArray {
 		my ($term,$AntallTreff) = unpack('L L',$StringPopHa->Pop(8));
 	
 		#print "\nterm: $term, AntallTreff: $AntallTreff\n";
-		#loper gjenom hele indeksen
+		#loops through the entire index
 		my $lest = 8;
 		while ($indexLengde > $lest) {
 			my ($DocID,$Antall) = unpack('L L',$StringPopHa->Pop(8));
@@ -418,12 +418,12 @@ sub GetIndexAsArray {
 	
 			$lest = $lest + 8 + ($Antall * 2);
 	
-			#for hver hitt do:
+			#for each hit do:
 			#foreach my $i (@hits) {
 			#	print "\thit: $i\n";
 			#}
 		
-			#for hver hitt legger til poeng:
+			#for each hit add points:
 			my $poeng = 0;
 	
 			my $urlPoeng = 0;
@@ -465,7 +465,7 @@ sub GetIndexAsArray {
 				#	print "aaaa\n";
 				#}
 				#else {
-				#	warn("Ukjent posisjon $i");	
+				#	warn("Unknown position $i");	
 				#}
 			}
 			
@@ -481,7 +481,7 @@ sub GetIndexAsArray {
 			$treffArray[$#treffArray][1] = $Antall;
 			$treffArray[$#treffArray][2] = \@hits;
 			$treffArray[$#treffArray][3] = $poeng;
-			$treffArray[$#treffArray][4] = 0; #link vekt
+			$treffArray[$#treffArray][4] = 0; #link weight
 		}
 		
 		return $AntallTreff,@treffArray;
@@ -493,7 +493,7 @@ sub GetIndexAsArray {
 }
 
 ##########################################################################################
-# Sorterer en indeks array etter poeng
+# Sorts an index array by points
 #
 ##########################################################################################
 sub SortIndexArrayByPoints {

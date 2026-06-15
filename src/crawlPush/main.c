@@ -35,7 +35,7 @@ int crawlinit() {
 }
 
 int crawlcanconect(struct collectionFormat *collection) {
-	//tester om vi kan koble til
+	//test whether we can connect
 	return 1;
 }
 
@@ -58,7 +58,7 @@ int crawlfirst(struct collectionFormat *collection,
 int crawlupdate(struct collectionFormat *collection,
 	int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist), 
 	int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd)) {
-	//opdate
+	//update
 	printf("crawlupdate: start\n");
 	
 	

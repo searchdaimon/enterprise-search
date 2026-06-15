@@ -11,11 +11,11 @@
 #include "../searchFilters/searchFilters.h"
 
 /*****************************************************************
-Finner gyldige sider, ved å se på DocumentIndex, slik at vi bare 
-har de gyldige sidene med i indexksen. 
+Finds valid pages by looking at the DocumentIndex, so that we only
+include the valid pages in the index.
 
-Dette brukes for å hindre at anker tekst indeksen blir full av 
-sider som ikke kan vises.
+This is used to prevent the anchor text index from filling up with
+pages that cannot be displayed.
 *****************************************************************/
 char *getValidDocIDs(int LotNr, char subname[]) {
 
@@ -92,7 +92,7 @@ int main (int argc, char *argv[]) {
                                 IndekserOpt.garbareCollection = 1;
                                 break;
                         case 'a':
-				//lager en peker til ikke null for å markere at vi skal bruke den
+				//create a non-null pointer to mark that we should use it
                                 IndekserOpt.optValidDocIDs = "x";
                                 break;
 
@@ -128,7 +128,7 @@ int main (int argc, char *argv[]) {
 
 	if ((argc -optind)== 4) {
 
-                //finner siste indekseringstid
+                //get the last indexing time
                 lastIndexTime =  GetLastIndexTimeForLot(lotNr,subname);
 
 
@@ -137,7 +137,7 @@ int main (int argc, char *argv[]) {
                         exit(1);
                 }
 
-               //sjekker om vi har nokk plass
+               //check that we have enough space
                 if (!lotHasSufficientSpace(lotNr,4096,subname)) {
                         printf("insufficient disk space\n");
                         exit(1);
@@ -153,7 +153,7 @@ int main (int argc, char *argv[]) {
 
 		}
 
-		//siden vi nå har lagt til alle andringer fra rev index kan vi nå slettet gced filen også
+		//since we have now applied all changes from the rev index, we can now delete the gced file as well
 		//Indekser_deleteGcedFile(lotNr, subname);
 		lotDeleteFile("gced", lotNr, subname);
 

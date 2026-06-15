@@ -2,7 +2,7 @@
  * Exchange crawler
  *
  * June, 2007
- * Oktober, 2008:	Registrerer attributter.
+ * Oktober, 2008:	Registers attributes.
  */
 
 #define _GNU_SOURCE 1
@@ -216,7 +216,7 @@ grab_email(struct crawlinfo *ci, set *acl_allow, set *acl_deny, char *url, char 
 		crawldocumentAdd.dokument_size = mail.size-1; // Last byte is string null terminator
 		crawldocumentAdd.lastmodified = lastmodified;
 
-		//hvis vi har blitt sendt en user sid så bruker vi den som acl.
+		//if we have been passed a user sid, use it as the acl.
 		if (usersid == NULL) {
 			crawldocumentAdd.acl_allow = set_to_string(acl_allow, ",");
 			crawldocumentAdd.acl_denied = set_to_string(acl_deny, ",");

@@ -8,8 +8,8 @@
 
 #define MAXDATASIZE 100 // max number of bytes we can get at once
 
-//ikke sikert 1 vil være for altid, da vi blant annent snart vil støtte clustring, men trenger desperat
-//og få ned stack støreslen, så valgrin fungerer igjen
+//not certain 1 will hold forever, since among other things we will soon support clustering, but we desperately
+//need to shrink the stack size so valgrind works again
 #ifdef BLACK_BOX
 	#define maxServers 30
 #else
@@ -17,7 +17,7 @@
 #endif
 
 
-//i hundredels sekunder (100 = 1sec)
+//in hundredths of a second (100 = 1sec)
 #define maxSocketWait_SiderHeder 6001
 #define maxSocketWait_CanDo 6002
 #define maxSocketWait_Connect 6003

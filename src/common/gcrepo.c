@@ -79,7 +79,7 @@ int gcrepo(int LotNr, char *subname) {
 	}
 	fclose(FNREPO);
 
-	//lukker filen repo.wip
+	//close the file repo.wip
 	rclose(attrkeys);
 
 	printf("keept %i\ngced %i\n",keept,gced);

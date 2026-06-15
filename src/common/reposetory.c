@@ -55,7 +55,7 @@
 int findLotToIndex(char subname[], int dirty) {
 
 	FILE *FH;
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	int lotNr;
 	time_t tloc;
 
@@ -64,8 +64,8 @@ int findLotToIndex(char subname[], int dirty) {
 	for (lotNr=1;lotNr<maxLots;lotNr++) {
 
 		if (dirty == -1) {
-			//hvis dirty er -1 skal vi indeksere selv om vi ikke har noen dirty fil, så vi sjekker om det er et reposetory isteden. 
-			// men bare hvis vi ikke har noen dirty fil
+			// if dirty is -1 we should index even if we have no dirty file, so we check whether there is a repository instead. 
+			// but only if we have no dirty file
 			if ((FH = lotOpenFileNoCasheByLotNr(lotNr,"dirty","r", 's',subname)) != NULL) {
 
 			}
@@ -108,7 +108,7 @@ int findLotToIndex(char subname[], int dirty) {
 			goto next;
 		}
 
-		//må ikke ha blitt modifisert sise 3 timer
+		// must not have been modified in the last 3 hours
 		if (inode.st_mtime > (tloc - (3600 * 3))) {
 			printf("to new dirty file. Lot isent stable\n");
 			
@@ -117,14 +117,14 @@ int findLotToIndex(char subname[], int dirty) {
 
 
 
-		//tester at det er nokk plass
+		// check that there is enough space
 	        if (!lotHasSufficientSpace(lotNr,4096,subname)) {
 	                printf("insufficient disk space\n");
 			goto next;
                 }
 
 
-		//vi har en lot som er klar for indeksering
+		// we have a lot that is ready for indexing
 		fclose(FH);
 		return lotNr;
 
@@ -147,7 +147,7 @@ off_t getImagepFromRadres(unsigned int radress64bit,unsigned int htmlbufferSize)
 	#endif
 }
 
-//popper en post av en filhonterer
+// pop a record off a file handle
 void fpop(char *buff,int *length,FILE *file,char separator,int nrOfseparators) {
 
 	char lastchar;
@@ -197,7 +197,7 @@ void rclose(container *attrkeys) {
 		iterator	it_m1 = map_begin(attrkeys);
 		for (; it_m1.valid; it_m1=map_next(it_m1))
 		{
-				// Legg til pÃ¥ disk:
+				// Add to disk:
 		    char	path[128], *filename;
 		    GetFilPathForLot(path, 1, (char*)pair(map_key(it_m1)).first.ptr);
 		    asprintf(&filename, "%s%s.new_attribute_keys", path, (char*)pair(map_key(it_m1)).second.ptr);
@@ -241,7 +241,7 @@ void setLastIndexTimeForLot(int LotNr,int httpResponsCodes[],char subname[]){
 	if (httpResponsCodes != NULL) {
 		RFILE = lotOpenFileNoCasheByLotNr(LotNr,"HttpResponsCodes.txt","wb",'e',subname);
 
-        	//skriver ut en oversikt over hvilkene http responser vi kom over
+        	// print an overview of which http responses we encountered
         	for(i=0;i<nrOfHttpResponsCodes;i++) {
         	      if (httpResponsCodes[i] != 0) {
         	              fprintf(RFILE,"%i: %i\n",i,httpResponsCodes[i]);
@@ -255,7 +255,7 @@ unsigned int GetLastIndexTimeForLot(int LotNr,char subname[]){
         
 	FILE *RFILE;
         unsigned int now;
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 
         if ((RFILE = lotOpenFileNoCasheByLotNr(LotNr,"IndexTime","rb",'s',subname)) != NULL) {
 
@@ -280,7 +280,7 @@ unsigned int GetLastIndexTimeForLot(int LotNr,char subname[]){
 unsigned int rLastDocID(char subname[]) {
 
 	FILE *DocIDFILE;
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	char buff[64];
 	unsigned int DocID;
 	int n;
@@ -310,11 +310,11 @@ unsigned int rLastDocID(char subname[]) {
 	return DocID;
 }
 
-//hvis vi ikke har et system som slev tar vare på docider
+// if we do not have a system that keeps track of DocIDs itself
 unsigned int rGeneraeADocID (char subname[]) {
 
 	FILE *DocIDFILE;
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	char buff[64];
 	char *errorbuff;
 	unsigned int DocID;
@@ -370,7 +370,7 @@ unsigned int rGeneraeADocID (char subname[]) {
 		}
 	}
 
-	++DocID; //filen holder siste DOcID. Så vi må øke med 1 får dette er neste
+	++DocID; // the file holds the last DocID, so we must add 1 to get the next one
 
 
 	fprintf(DocIDFILE,"%u",DocID);
@@ -430,7 +430,7 @@ unsigned int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef 
 
 	unsigned int offset;
 
-	//finner ut når dette ble gjort
+	// find out when this was done
 	#ifdef BLACK_BOX
 		if ((*ReposetoryHeader).storageTime == 0) {
 			(*ReposetoryHeader).storageTime = time(NULL);
@@ -453,7 +453,7 @@ unsigned int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef 
 	}
 
 
-        //søker til slutten
+        // seek to the end
         if (fseek(RFILE,0,SEEK_END) != 0){
 		perror("fseek");
 		return 0;
@@ -461,7 +461,7 @@ unsigned int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef 
 
 	offset = ftello64(RFILE);
 
-	// skriver versjon
+	// write version
 	#ifdef BLACK_BOX
 		unsigned int CurrentReposetoryVersionAsUInt = CurrentReposetoryVersion;
 		if(fwrite(&CurrentReposetoryVersionAsUInt,sizeof(CurrentReposetoryVersionAsUInt),1,RFILE) != 1) {
@@ -469,24 +469,24 @@ unsigned int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef 
 		}
 	#endif
 
-	//skriver hedder
+	// write header
 	if(fwrite(ReposetoryHeader,sizeof(struct ReposetoryHeaderFormat),1,RFILE) != 1) {
 		perror("rApendPost: can't write ReposetoryHeader");
 	}
 
-	//skriver html
+	// write html
 	if(fwrite(htmlbuffer,(*ReposetoryHeader).htmlSize2,1,RFILE) != 1) {
                 perror("rApendPost: can't write html");
         }
 
-	//skriver bilde
+	// write image
 	if ((*ReposetoryHeader).imageSize != 0) {
 		if(fwrite(imagebuffer,(*ReposetoryHeader).imageSize,1,RFILE) != 1) {
        		        perror("rApendPost: can't write image");
        		}
 		debug("did write image of %i bytes",(*ReposetoryHeader).imageSize);
 	}
-	//skriver acl
+	// write acl
 	#ifdef BLACK_BOX
 		if(fwrite(acl_allow,(*ReposetoryHeader).acl_allowSize,1,RFILE) != 1) {
 			perror("rApendPost: can't write acl_allow");
@@ -529,7 +529,7 @@ unsigned int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef 
 
 		if (update)
 		    {
-			// Legg til pÃ¥ disk:
+			// Add to disk:
     			char	path[128], *filename;
 		        GetFilPathForLot(path, 1, subname);
 		        asprintf(&filename, "%s%s.new_attribute_keys", path, reponame);
@@ -552,13 +552,13 @@ unsigned int rApendPost (struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef 
 
 #endif
 
-        //skriver record seperator
+        // write record separator
         if(fwrite("***",sizeof(char),3,RFILE) != 3) {
                 perror("rApendPost: can't write record seperator");
         }
 
 	if (!strcmp(reponame,"reposetory")) {
-		//markerer at den er skitten
+		// mark it as dirty
 		FILE *dirtfh;
 		dirtfh = lotOpenFileNoCashe((*ReposetoryHeader).DocID,"dirty","ab",'e',subname);
 		fwrite("1",1,1,dirtfh); 
@@ -587,7 +587,7 @@ int rReadSummary_post(const unsigned int DocID,char **metadesc, char **title, ch
 
         #ifdef TIME_DEBUG_L
                 struct timeval start_time, end_time;
-		// for totalt tid i funksjonen
+		// for total time in the function
                 struct timeval tot_start_time, tot_end_time;
         #endif
 
@@ -670,7 +670,7 @@ int rReadSummary_post(const unsigned int DocID,char **metadesc, char **title, ch
                 	gettimeofday(&start_time, NULL);
         	#endif
 
-		//leser både DocID og data i samme jafs, så kopierer DocID inn rikit etterpå.
+		// read both DocID and data in one go, then copy the DocID in correctly afterwards.
 		if ((n=read(fd,WorkBuff,rsize + sizeof(DocID_infile))) != (rsize + sizeof(DocID_infile))) {
         		printf("cant read. n = %i, rsize = %i\n",n,rsize);
         	        perror("read");
@@ -719,10 +719,10 @@ int rReadSummary_post(const unsigned int DocID,char **metadesc, char **title, ch
                 gettimeofday(&start_time, NULL);
         #endif
 
-	//er det ikke \0 med i buferren ??
+	// is there no \0 in the buffer ??
        	HtmlBuffer[HtmlBufferSize] = '\0';
 
-	//finner titel, meta og body
+	// find title, meta and body
 
 	HtmlBufferPtr = HtmlBuffer;
 
@@ -805,7 +805,7 @@ int rReadSummary_post(const unsigned int DocID,char **metadesc, char **title, ch
 	return 1;
 
 
-	//hånterer error
+	// handle error
 	rReadSummary_error:
 	#ifdef MMAP_REPO
 		munmap(WorkBuff,mmap_size);
@@ -864,7 +864,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef 
 
         #ifdef TIME_DEBUG_L
                 struct timeval start_time, end_time;
-		// for totalt tid i funksjonen
+		// for total time in the function
                 struct timeval tot_start_time, tot_end_time;
         #endif
 
@@ -878,7 +878,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef 
                 read(fd, &CurrentReposetoryVersionAsUInt,sizeof(unsigned int));
        	#endif
 
-	//regner ut totalt hva vi skal lese
+	// compute total amount to read
 	int totalread;
 	char *totalpost;
 	char *totalpost_p;
@@ -897,7 +897,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef 
 
 	totalpost_p = totalpost;
 
-	//hedder	
+	// header	
 	totalpost_p += memcpyrc(ReposetoryHeader,totalpost_p,sizeof(struct ReposetoryHeaderFormat));
 
 
@@ -911,7 +911,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef 
 		#endif
 	}
 	else if (htmlbuffer == NULL) {
-		//hvis vi ikke har en buffer å putte htmlen inn i søker vi bare over
+		// if we have no buffer to put the html into we just seek past it
 	}
 	else {
 		totalpost_p += memcpyrc(htmlbuffer,totalpost_p,(*ReposetoryHeader).htmlSize2);
@@ -925,7 +925,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef 
 		#endif
 	}
 	else if (imagebuffer == NULL) {
-		//hvis vi ikke har en buffer å putte bilde inn i søker vi bare over
+		// if we have no buffer to put the image into we just seek past it
 		//fseek(LotFileOpen,(*ReposetoryHeader).imageSize,SEEK_CUR);
 	}
 	else {
@@ -933,10 +933,10 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef 
 
 	}
 
-	//leser acl
+	// read acl
 	#ifdef BLACK_BOX
 
-		//begrenser størelsen på en acl. Slik at en klikk ikke gjør at alt ikke fungerer. Må tenke på om 16384 er nokk størelse her
+		// limit the size of an acl, so that one click does not break everything. Should consider whether 16384 is a sufficient size here
 		if ((*ReposetoryHeader).acl_allowSize > 16384) {
 			printf("bad acl_allowSize. size %i\n",(*ReposetoryHeader).acl_allowSize);
 			return 0;
@@ -987,7 +987,7 @@ int rReadPost2_fd(int fd,struct ReposetoryHeaderFormat *ReposetoryHeader, Bytef 
 		}
 
 	#else
-		//rart, ser ikke ut til at vi faktsik sjekker om disse er riktige		
+		// odd, does not look like we actually check whether these are correct		
 		totalpost_p += memcpyrc(recordseparator,totalpost_p,3);
 
 	#endif
@@ -1036,7 +1036,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 			unsigned int rsize,unsigned int imagesize, char **url, char **attributes) {
 
         #ifdef TIME_DEBUG_L
-		// for totalt tid i funksjonen
+		// for total time in the function
                 struct timeval tot_start_time, tot_end_time;
 		gettimeofday(&tot_start_time, NULL);
         #endif
@@ -1054,14 +1054,14 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
                 read(LotFileOpen,&CurrentReposetoryVersionAsUInt,sizeof(unsigned int));
        	#endif
 
-	//regner ut totalt hva vi skal lese
+	// compute total amount to read
 	int totalread;
 	char *totalpost;
 	char *totalpost_p;
 
 
 	totalread = sizeof(struct ReposetoryHeaderFormat) + rsize + imagesize;
-	#ifndef BLACK_BOX //for bb skal vi lese mer, så lese record seperator
+	#ifndef BLACK_BOX // for bb we read more, so read record separator
 	 	totalread += 3;
 	#endif
 	
@@ -1080,7 +1080,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 
 	totalpost_p = totalpost;
 
-	//hedder	
+	// header	
 	totalpost_p += memcpyrc(ReposetoryHeader,totalpost_p,sizeof(struct ReposetoryHeaderFormat));
 
 	if ((*ReposetoryHeader).htmlSize != 0) {
@@ -1092,7 +1092,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 			printf("htmlSize2 is 0. Skipping to read it\n");
 		#endif
 	} else if (htmlbuffer == NULL) {
-		//hvis vi ikke har en buffer å putte htmlen inn i søker vi bare over
+		// if we have no buffer to put the html into we just seek past it
 		totalpost_p += (*ReposetoryHeader).htmlSize2;
 	} else {
 		totalpost_p += memcpyrc(htmlbuffer,totalpost_p,(*ReposetoryHeader).htmlSize2);
@@ -1103,16 +1103,16 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 			printf("imageSize is 0. Skipping to read it\n");
 		#endif
 	} else if (imagebuffer == NULL) {
-		//hvis vi ikke har en buffer å putte bilde inn i søker vi bare over
+		// if we have no buffer to put the image into we just seek past it
 		totalpost_p += (*ReposetoryHeader).imageSize;
 	} else {
 		totalpost_p += memcpyrc(imagebuffer,totalpost_p,(*ReposetoryHeader).imageSize);
 	}
 
-	//leser acl
+	// read acl
 	#ifdef BLACK_BOX
 
-		//begrenser størelsen på en acl. Slik at en klikk ikke gjør at alt ikke fungerer. Må tenke på om 16384 er nokk størelse her
+		// limit the size of an acl, so that one click does not break everything. Should consider whether 16384 is a sufficient size here
 		if ((*ReposetoryHeader).acl_allowSize > 16384) {
 			printf("bad acl_allowSize. size %i\n",(*ReposetoryHeader).acl_allowSize);
 			return 0;
@@ -1209,7 +1209,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 
 	#else
 
-		//rart, ser ikke ut til at vi faktsik sjekker om disse er riktige		
+		// odd, does not look like we actually check whether these are correct		
 		totalpost_p += memcpyrc(recordseparator,totalpost_p,3);
 
 		if ((*url = malloc(strlen(ReposetoryHeader->url)+1)) == NULL) {
@@ -1260,7 +1260,7 @@ int rReadPost2(int LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader, 
 }
 
 
-//leser en post
+// read a record
 int rReadHtml (char *HtmlBuffer[],uLong *HtmlBufferSize,unsigned int radress64bit,unsigned int rsize,
 		unsigned int DocID,char subname[],struct ReposetoryHeaderFormat *ReposetoryHeader,
 		char **acl_allowbuffer,char **acl_deniedbuffer, unsigned int imagesize, char **url, char **attributes) {
@@ -1271,7 +1271,7 @@ int rReadHtml (char *HtmlBuffer[],uLong *HtmlBufferSize,unsigned int radress64bi
 
         #ifdef TIME_DEBUG_L
                 struct timeval start_time, end_time;
-		// for totalt tid i funksjonen
+		// for total time in the function
                 struct timeval tot_start_time, tot_end_time;
         #endif
 
@@ -1287,7 +1287,7 @@ int rReadHtml (char *HtmlBuffer[],uLong *HtmlBufferSize,unsigned int radress64bi
 	char recordseparator[5];
 
 
-	//kontrolerer at vi ikke blir bett om å lese 0 bytes
+	// verify that we are not asked to read 0 bytes
 	if (rsize == 0) {
 		printf("rsize is 0\n");
 		return 0;
@@ -1369,7 +1369,7 @@ int rReadHtml (char *HtmlBuffer[],uLong *HtmlBufferSize,unsigned int radress64bi
 	}
 	else {
 
-		//er det ikke \0 med i buferren ??
+		// is there no \0 in the buffer ??
 		(*HtmlBuffer)[(*HtmlBufferSize)] = '\0';
 
 		forreturn = 1;
@@ -1402,7 +1402,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 
         #ifdef TIME_DEBUG_L
                 struct timeval start_time, end_time;
-		// for totalt tid i funksjonen
+		// for total time in the function
                 struct timeval tot_start_time, tot_end_time;
         #endif
 
@@ -1420,7 +1420,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			}
         	#endif
 
-		//leser hedder
+		// read header
 		if (fread(ReposetoryHeader,sizeof(struct ReposetoryHeaderFormat),1,LotFileOpen) != 1) {
 			perror("cant read ReposetoryHeader");
 		}
@@ -1468,7 +1468,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			#endif
 		}
 		else if (htmlbuffer == NULL) {
-			//hvis vi ikke har en buffer å putte htmlen inn i søker vi bare over
+			// if we have no buffer to put the html into we just seek past it
 			fseek(LotFileOpen,(*ReposetoryHeader).htmlSize2,SEEK_CUR);
 		}
 		else if (htmlbufferSize < (*ReposetoryHeader).htmlSize2) {
@@ -1490,7 +1490,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			}
 		}
 
-		//må ha #ifdef, slik at vi ikke kaller ftell unødvendig, når vi ikke er i debug modus
+		// need #ifdef so we do not call ftell unnecessarily when we are not in debug mode
 		#ifdef DEBUG
 			debug("image is at %u\n",(unsigned int)ftell(LotFileOpen));
 		#endif
@@ -1501,7 +1501,7 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			#endif
 		}
 		else if (imagebuffer == NULL) {
-			//hvis vi ikke har en buffer å putte bilde inn i søker vi bare over
+			// if we have no buffer to put the image into we just seek past it
 			fseek(LotFileOpen,(*ReposetoryHeader).imageSize,SEEK_CUR);
 		}
 		else {
@@ -1510,10 +1510,10 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 			}
 		}
 
-		//leser acl
+		// read acl
 		#ifdef BLACK_BOX
 
-			//begrenser størelsen på en acl. Slik at en klikk ikke gjør at alt ikke fungerer. Må tenke på om 16384 er nokk størelse her
+			// limit the size of an acl, so that one click does not break everything. Should consider whether 16384 is a sufficient size here
 			if (((*ReposetoryHeader).acl_allowSize > 16384) || ((*ReposetoryHeader).acl_allowSize < 0)) {
 				printf("bad acl_allowSize. size %i\n",(*ReposetoryHeader).acl_allowSize);
 				return 0;
@@ -1618,13 +1618,13 @@ int rReadPost(FILE *LotFileOpen,struct ReposetoryHeaderFormat *ReposetoryHeader,
 }
 
 /*
-tar et lott nr inn og henter neste post
+takes a lot number and fetches the next record
 
-Den vil retunere 1 så lenge det er data og lese. slik at man kan ha en lopp slik
+It returns 1 as long as there is data to read, so that one can have a loop like
 
 while (rGetNext(LotNr,ReposetoryData)) {
 
-	..gjør noe med ReposetoryData..
+	..do something with ReposetoryData..
 
 }
 */
@@ -1633,23 +1633,23 @@ int rGetNext_fh (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHe
 int htmlbufferSize, char imagebuffer[], unsigned int *radress, unsigned int FilterTime,
 char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, char **attributes) {
 
-	//global variabel for rGetNext
+	// global variable for rGetNext
 	unsigned int startOffset,stoppOffset;
 	int rscount;
 	int found = 0;	
 	char c;
 	int i;
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	char recordseparator[5];
 
-	//hvis vi tidligere har indikert at dette er siste run, stopper vi her
+	// if we previously indicated that this is the last run, we stop here
 
 
 	/************************************/
-	//ToDo: hvorfor får vi ikke eof lenger nede når vi når eof? Men må sjkke her??
-	//laterlig
+	// ToDo: why do we no longer get eof further down when we reach eof? But have to check here??
+	// silly
 	/*
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	fstat(fileno(LotFileOpen),&inode);
 	if (stoppOffset == inode.st_size) {
 		printf("stoppOffset == inode.st_size\n");
@@ -1665,15 +1665,15 @@ char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, c
 	while (!feof(LotFileOpen) && (!found)) { 
 	
 
-		//finner hvor i filen vi starter
+		// find where in the file we start
 		startOffset = ftell(LotFileOpen);
 
 
-		//recovery av bad records
-		// sjekker at rReadPost() ikke returnerete 0
-		//sjekker om vi kan kalkulere en gyldig lot id fra docIDen, hvis ikke her vi nokk en bad record.
-		//eller hvis recordseparator ikke er ***
-		//skal søke til record seperatoren og prøve på ny
+		// recovery of bad records
+		// check that rReadPost() did not return 0
+		// check whether we can compute a valid lot id from the DocID, if not we probably have a bad record.
+		// or if the record separator is not ***
+		// should seek to the record separator and try again
 		if ((rReadPost(LotFileOpen,ReposetoryHeader,htmlbuffer,htmlbufferSize,imagebuffer,acl_allowbuffer,acl_deniedbuffer,recordseparator, url, attributes, LotNr) == 0) 
 			|| (rLotForDOCid((*ReposetoryHeader).DocID) != LotNr) 
 			|| (strncmp(recordseparator,"***",3) != 0)) {
@@ -1685,7 +1685,7 @@ char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, c
 				printf("ftel64() %u, inode.st_size %u\n",(unsigned int)ftello64(LotFileOpen),(unsigned int)inode.st_size);
 			#endif
 
-			//søker oss tilbake til der vi var
+			// seek back to where we were
 			fseek(LotFileOpen,startOffset,SEEK_SET);
 			rscount = 0;
 			i =0;
@@ -1711,13 +1711,13 @@ char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, c
 		}
 		else {
 
-			//finner adressen på denne recorden
+			// find the address of this record
 			stoppOffset = ftello64(LotFileOpen);
 
 			*radress = startOffset;
 
 			#ifdef BLACK_BOX
-			//hvis dette er en ny nokk rekord retunerer vi denne
+			// if this is a recent enough record we return it
 			if ((*ReposetoryHeader).storageTime >= FilterTime){
 			#else
 			if ((*ReposetoryHeader).time >= FilterTime){
@@ -1732,8 +1732,8 @@ char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, c
 		}
 
 		/************************************/
-		//ToDo: hvorfor får vi ikke eof lenger nede når vi når eof? Men må sjkke her??
-		//laterlig
+		// ToDo: why do we no longer get eof further down when we reach eof? But have to check here??
+		// silly
 		fstat(fileno(LotFileOpen),&inode);
 		if (ftello64(LotFileOpen) == inode.st_size) {
 			#ifdef DEBUG
@@ -1741,7 +1741,7 @@ char **acl_allowbuffer,char **acl_deniedbuffer, FILE *LotFileOpen, char **url, c
 				printf("reading to eof\n");
 			#endif
 
-			//fremprovoserer eof
+			// force eof
 			while (!feof(LotFileOpen)) {
         	        	c = fgetc(LotFileOpen);
 			}
@@ -1766,9 +1766,9 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, 
 	int found = 0;	
 	char FileName[128];
 
-	//tester om reposetoriet allerede er open, eller ikke
+	// test whether the repository is already open or not
 	if (LotOpen != LotNr) {
-		//hvis den har vært open, lokker vi den. Hvis den er -1 er den ikke brukt enda, så ingen vits å å lokke den da :-)
+		// if it has been open, we close it. If it is -1 it has not been used yet, so no point in closing it then :-)
 		if (LotOpen != -1) {
 			fclose(LotFileOpen);
 		}
@@ -1790,7 +1790,7 @@ char subname[], char **acl_allowbuffer,char **acl_deniedbuffer, char *reponame, 
 
 		LotOpen = LotNr;
 
-		//hvis vi fikk en offset skal vi søke ditt
+		// if we got an offset we should seek there
 		if (FileOffset != 0) {
 			fseek(LotFileOpen,FileOffset,SEEK_SET);
 		}
@@ -1845,7 +1845,7 @@ int runpack(char *ReposetoryData,uLong comprLen,char *inndata,int length) {
 Bilde rutiner
 */
 
-//finer path for et bilde
+// find the path for an image
 void rigetpath (int DocID,char *FileName, char subname[]) {
 
 	int LotNr;
@@ -1853,7 +1853,7 @@ void rigetpath (int DocID,char *FileName, char subname[]) {
 	
 	ImageBucket = fmod(DocID,512);
 
-	//finner path
+	// find path
 	LotNr = rLotForDOCid(DocID);
 	GetFilPathForLot(FileName,LotNr,subname);
 
@@ -1862,7 +1862,7 @@ void rigetpath (int DocID,char *FileName, char subname[]) {
 
 }
 
-//lagre bilde
+// store image
 void risave (int DocID, char *image, int size,char subname[]) {
 
 	char FilePath[128];
@@ -1873,12 +1873,12 @@ void risave (int DocID, char *image, int size,char subname[]) {
 
 	rigetpath(DocID,FilePath,subname);
 
-	//lager filnavn fra docid og path
+	// build filename from docid and path
 	sprintf(FileName,"%s%i.jpg",FilePath,DocID);
 
 	printf("image: %s\n",FileName);
 
-	//prøver å åpne filen
+	// try to open the file
 	if ( (IMAGEFILEHA = fopen(FileName,"r+b")) == NULL ) {
 		makePath(FilePath);
 
@@ -1978,7 +1978,7 @@ int anchorIndexRead(unsigned int DocID, char *subname, off_t *offset) {
 
 
 #ifndef BLACK_BOX
-//legger til en "anchor" (tekst på link)
+// add an "anchor" (text on a link)
 void anchoraddnew(unsigned int DocID, char *text, size_t textsize, char *subname, char *filename) {
         FILE *ANCHORFILE;
 	struct anchorRepo anchor;
@@ -2031,12 +2031,12 @@ void anchoraddnew(unsigned int DocID, char *text, size_t textsize, char *subname
 #endif
 
 #ifndef BLACK_BOX
-//legger til en "anchor" (tekst på link)
+// add an "anchor" (text on a link)
 void anchoradd(unsigned int DocID,char *text,int textsize,char subname[], char *filename) {
         FILE *ANCHORFILE;
         int i;
 
-        //fjerner eventuelle SPACE på slutten
+        // remove any trailing SPACE
         for(i=textsize; ((i>0) && ((text[i] == ' ') || (text[i] == '\0'))); i--) {
                 //printf("i: %i, c: %c cn: %i\n",i,text[i],(int)text[i]);
         }
@@ -2045,11 +2045,11 @@ void anchoradd(unsigned int DocID,char *text,int textsize,char subname[], char *
 
         ANCHORFILE = lotOpenFile(DocID, filename == NULL ? "anchors" : filename,"ab",'s',subname);
 
-        //skriver DocID
+        // write DocID
         fwrite(&DocID,sizeof(unsigned int),1,ANCHORFILE);
-        //skriver teksten
+        // write the text
         fputs(text,ANCHORFILE);
-        //skriver line seperator
+        // write line separator
         fwrite("***",sizeof(char),3,ANCHORFILE);
 
 }
@@ -2058,15 +2058,15 @@ void anchoradd(unsigned int DocID,char *text,int textsize,char subname[], char *
 #ifndef BLACK_BOX
 int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsigned int *radress,unsigned int *rsize,char subname[]) {
 
-        //global variabel for rGetNext
+        // global variable for rGetNext
         static FILE *LotFileOpen;
         static int LotOpen = -1;
         char FileName[128];
 
 
-        //tester om reposetoriet allerede er open, eller ikke
+        // test whether the repository is already open or not
         if (LotOpen != LotNr) {
-                //hvis den har vært open, lokker vi den. Hvi den er -1 er den ikke brukt enda, så ingen vits å å lokke den da :-)
+                // if it has been open, we close it. If it is -1 it has not been used yet, so no point in closing it then :-)
                 if (LotOpen != -1) {
                         fclose(LotFileOpen);
                 }
@@ -2085,30 +2085,30 @@ int anchorGetNext (int LotNr,unsigned int *DocID,char *text,int textlength, unsi
 	}
 
 
-        //hvis det det er data igjen i filen leser vi den
+        // if there is still data left in the file we read it
         if (!feof(LotFileOpen)) {
 
-                //inaliserer med lengden på buff, slik at vi ikke får en buffer overflow
+                // initialize with the length of buff so that we do not get a buffer overflow
                 
-		//leser DocID
+		// read DocID
 		if (fread(DocID,sizeof(unsigned int),1,LotFileOpen) != 1) {
 			perror("anchorGetNext can't read DocID");
 			return 0;
 		}
 
 		
-		//poper av teksten
+		// pop off the text
                 fpop(text,&textlength,LotFileOpen,'*',3);
 
 
-                //finner adressen for denne recorden
+                // find the address for this record
                 *radress = ((ftell(LotFileOpen) - textlength) -3);
                 *rsize = textlength;
 
                 return 1;
         }
         else {
-		//hvis vi er tom for data stenger vi filen, og retunerer en 0 som sier at vi er ferdig.
+		// if we are out of data we close the file and return a 0 to say we are done.
                 printf("ferdig\n");
                 fclose(LotFileOpen);
                 return 0;
@@ -2124,9 +2124,9 @@ int anchorGetNextnew(int LotNr,unsigned int *DocID,char *text,int textlength, un
 	char FileName[128];
 	struct anchorRepo anchor;
 
-	//tester om reposetoriet allerede er open, eller ikke
+	// test whether the repository is already open or not
 	if (LotOpen != LotNr) {
-		//hvis den har vært open, lokker vi den. Hvi den er -1 er den ikke brukt enda, så ingen vits å å lokke den da :-)
+		// if it has been open, we close it. If it is -1 it has not been used yet, so no point in closing it then :-)
 		if (LotOpen != -1) {
 			fclose(LotFileOpen);
 		}
@@ -2375,7 +2375,7 @@ void addNewUrl (struct addNewUrlhaFormat *addNewUrlha, struct updateFormat *upda
 
 
 	/*
-	//debug. vis sha1'n
+	// debug. show the sha1
 	for (y=0;y<20;y++) {
 		printf("%i",(int)(*updatePost).sha1[y]);
 	}

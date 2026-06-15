@@ -6,7 +6,7 @@
 
 #ifdef WITH_THREAD
 
-	//toDo hvorfor funker ikke __thread her ???
+	//toDo why doesn't __thread work here ???
 	// __thread static char _errormsg[512] = { "" };
 	static char _errormsg[512] = { "" };
 #else

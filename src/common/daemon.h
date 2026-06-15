@@ -25,7 +25,7 @@ struct packedHedderFormat {
 	char subname[maxSubnameLength];
 };
 
-//tar inn en peker til en rutine som tar en sokket inn og behandler den
+//takes a pointer to a routine that takes a socket and handles it
 //
 
 int sconnect (void (*sh_pointer) (int), int PORT, int noFork, int breakAfter);

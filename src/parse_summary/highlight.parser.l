@@ -12,7 +12,7 @@ character	[a-z]
 legalchar	[a-z0-9_]
 word		[0-9a-z'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþ]
 allemuligetegn	[!"#$%'()*+,\-./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþ]
-  /* Tok vekk '&': */
+  /* Removed '&': */
 url		[0-9a-z-\.:/\\?=]
 blank		[ \t\n]
 L		[A-Za-z0-9_'´ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ]
@@ -36,30 +36,30 @@ letternumesc	(#192|#193|#194|#195|#196|#197|#198|#199|#200|#201|#202|#203|#204|#
     /* \&{letternumesc};	{ _h_newstring(yytext, yyscanner); return OTHER; }	// Numeric escape */
     /* \&{letteresc};		{ _h_newstring(yytext, yyscanner); printf("%s\n", yytext); return OTHER; }	// Escape */
     /* [A-Za-z]+:\/\/{url}*	{ _h_newstring(yytext, yyscanner); return OTHER; }	// URL */
-    /* {legalchar}+(\.{legalchar}+)*@{legalchar}+(\.{legalchar}+)*  { _h_newstring(yytext, yyscanner); return OTHER; }	// Epostadresse */
-    /* {letter}*(\.{letter}+)+	{ _h_newstring(yytext, yyscanner); return OTHER; }	// Forkortelse eller URI */
+    /* {legalchar}+(\.{legalchar}+)*@{legalchar}+(\.{legalchar}+)*  { _h_newstring(yytext, yyscanner); return OTHER; }	// Email address */
+    /* {letter}*(\.{letter}+)+	{ _h_newstring(yytext, yyscanner); return OTHER; }	// Abbreviation or URI */
 [\.!?:;,]+		{ _h_newstring(yytext, yyscanner); return EOS; }	// End-Of-Sentence
 [\ \t\n\r]+		{ (yyget_extra(yyscanner))->token.space = 1; }
-<*>.			{ _h_newstring(yytext, yyscanner); return OTHER; }	// Andre tegn
+<*>.			{ _h_newstring(yytext, yyscanner); return OTHER; }	// Other characters
 %%
 
-// Kopier teksten til 'token':
+// Copy the text into 'token':
 void _h_newstring( const char* c, yyscan_t scanner )
 {
     struct _hp_yy_extra		*he = yyget_extra( scanner );
 
 //Runar
-// Bruker statisk minne, ikke dynamisk, da vi en skjelden gang får segfeil i free
-// desuten er det raskere, ved at vi ikke gjør systemkallet malloc heletiden
+// Use static memory, not dynamic, since we occasionally got a segfault in free
+// besides it is faster, since we don't make the malloc system call all the time
 
     he->stringtop++;
     if (he->stringtop>=128) he->stringtop = 0;
 
     #ifdef DEBUG
-        //har fast lengde på stringene. Hvis den er for lang vil ikke alt bli kopiert over. Usikker på hva
-        //det kan fære til
-	// Ax: Strenger lengre enn 2k er uansett søppel som ikke bør vises i sammendraget.
-	// Ax: Tror ikke dette skal ha noen dårlige ringvirkninger.
+        //strings have a fixed length. If it is too long, not everything will be copied over. Unsure what
+        //that could lead to
+	// Ax: Strings longer than 2k are garbage anyway and should not be shown in the summary.
+	// Ax: I don't think this should have any bad side effects.
         if (strlen(c) > h_maxNewString) {
                 printf("New string is too long, will be truncated. Length was %i\n",strlen(c));
         }

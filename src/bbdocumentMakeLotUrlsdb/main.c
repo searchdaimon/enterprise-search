@@ -39,13 +39,13 @@ main (int argc, char *argv[]) {
 
 	printf("Working on \"%s\"\n",fileName);
 
-	//skal bare slette hvis dette er førte lot
+	//only delete if this is the first lot
 	if (LotNr == 1) {
 		if (unlink(fileName) != 0) {
 			perror(fileName);
 		}
 	}
-	//loppergjenom alle
+	//loop through all
 // int rGetNext (unsigned int LotNr,struct ReposetoryHeaderFormat *ReposetoryHeader, char htmlbuffer[],
 // int htmlbufferSize, char imagebuffer[], unsigned int *radress,
 // unsigned int FilterTime, unsigned int FileOffset, char subname[]);

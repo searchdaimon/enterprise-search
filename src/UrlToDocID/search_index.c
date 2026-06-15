@@ -135,7 +135,7 @@ unsigned int urldocid_search_index(urldocid_data *data, unsigned char *sha1)
     }
 */
     block = malloc(bsize);
-    //fungerer ikke på web1, se http://www.captain.at/howto-udivdi3-umoddi3.php
+    //does not work on web1, see http://www.captain.at/howto-udivdi3-umoddi3.php
     #ifdef NO_64_BIT_DIV
 	    do_div(bsize,sizeof(record));
     #else

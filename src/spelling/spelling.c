@@ -104,7 +104,7 @@ spelling_document_init(char *lang)
 }
 
 /* XXX: Not wide char safe */
-/* Remeber to free returned string */
+/* Remember to free returned string */
 char *
 spelling_document_line(struct spelling_document *sd, char *in_line)
 {

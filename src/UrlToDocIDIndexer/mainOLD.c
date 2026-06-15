@@ -72,7 +72,7 @@ int main (int argc, char *argv[]) {
 		memset(&key, 0, sizeof(DBT));
                 memset(&data, 0, sizeof(DBT));
 
-		//legger inn datane i bdb strukturen
+		//insert the data into the bdb structure
 		key.data = udfilePost.url;
 		key.size = strlen(udfilePost.url);
 

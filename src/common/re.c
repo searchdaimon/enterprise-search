@@ -53,7 +53,7 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 	}
 
 	if ( ( (re->flags & RE_READ_ONLY) == RE_READ_ONLY ) && ( (re->flags & RE_STRETCH) == RE_STRETCH ) ) {
-		// skal strekke hvis filen er for liten, men ikke opprette hvis den ikke er der.
+		// should stretch if the file is too small, but not create it if it is not there.
 		strcpy(openmode,"r+b");
 		mmapmode = PROT_READ;
 		stretch = 1;
@@ -81,10 +81,10 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 	strcpy(re->mainfile,file);
 	strcpy(re->subname,subname);
 
-	//lager en privat kopi, som vil erstatte orginalen når vi lokker filen.
+	// create a private copy that will replace the original when we close the file.
 	if ((re->flags & RE_COPYONCLOSE) == RE_COPYONCLOSE) {
 		printf("Making private copy of file \"%s\"\n",file);
-		//åpner en temperer fil
+		// open a temporary file
 		sprintf(re->tmpfile,"%s_retmp",re->mainfile);
 		if((re->fd = lotOpenFileNoCasheByLotNrl(lotNr, re->tmpfile, ">>", 'w', subname)) == -1) {
 			goto reopen_error;
@@ -93,7 +93,7 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
 			goto reopen_error;
 		}
 
-		//kopierer tmp til fd
+		// copy tmp to fd
 		_filecpy(re->fd, re->fd_tmp);
 
 	}
@@ -139,7 +139,7 @@ struct reformat *reopen(int lotNr, size_t structsize, char file[], char subname[
         if ((re->mem = mmap(0,re->maxsize,mmapmode,MAP_SHARED,re->fd,0) ) == MAP_FAILED) {
 		printf("reopen(lotNr=%i, structsize=%zu, file=%s, subname=%s, flags=%i)\n",lotNr,structsize,file,subname,flags);
 	        perror("reopen mmap");
-		//nullsetter dene, slik at det er lettere og se at det er en feil under debugging.
+		// zero this, so that it is easier to see that there is an error during debugging.
 		re->mem = NULL;
 		goto reopen_error;
         }
@@ -199,9 +199,9 @@ struct reformat *reopen_cache(int lotNr, size_t structsize, char file[], char su
 	#endif
 
 	re = reopen(lotNr, structsize, file, subname, flags);
-	//Runarb 11 feb 2009:
-	//vi må nesten cache at filen ikke fantes, for bakoverkompetabilitet. Når vi siden gjør om dette på preopning til å ikke
-	//reåpne etter hver crawl, må vi gjøre om
+	// Runarb 11 Feb 2009:
+	// we pretty much have to cache that the file did not exist, for backwards compatibility. When we later change this in preopening to not
+	// reopen after each crawl, we must change it
 	if (re == NULL) {
 		return NULL;
 	}
@@ -223,7 +223,7 @@ reclose_cache(void)
 	        gettimeofday(&start_time, NULL);
 	#endif
 
-      	//itererer over hash, frigjør alle elementer
+      	// iterate over the hash, free all elements
         if (lots_cache!= NULL && hashtable_count(lots_cache) > 0)
         {
 
@@ -298,7 +298,7 @@ static inline void *reposread(struct reformat *re, size_t position) {
 	}
 	
 	/*
-	//debug: dumper allle data i struct.
+	// debug: dump all data in the struct.
 	int i;
 	printf("pointer p: %u, mem %u\n",p,re->mem);
 	printf("dumping record of %i bytes\n",re->structsize);

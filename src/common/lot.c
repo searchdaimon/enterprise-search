@@ -31,7 +31,7 @@
 
 #include <sys/vfs.h> // for statfs
 
-//formater på cashe over opne filhontarere
+// format of the cache over open file handles
 struct OpenFilesFormat {
         int LotNr;
         FILE *FILEHANDLER;
@@ -42,19 +42,19 @@ struct OpenFilesFormat {
 };
 
 
-//array med mapper som kan brukes til å lagre i
+// array of directories that can be used to store in
 struct StorageDirectorysFormat dataDirectorys[NrOfDataDirectorys];
 
-//holder om vi har inalisert. Slik at MakeMapListMap() bare bli kalt 1 gang, nemlig første gangen vi buker denne rutinen.
+// tracks whether we have initialized. So that MakeMapListMap() is only called once, namely the first time we use this routine.
 static int MapListInitialised = 0;
 
 static int LotFilesInalisert = 0;
 
-//array med åpne filhånterere
+// array of open file handles
 static struct OpenFilesFormat OpenFiles[MaxOpenFiles];
 
 #ifndef DEFLOT
-//LotForDOCid returnerer hvilken lot DOCid skal i
+// LotForDOCid returns which lot a DOCid belongs in
 int rLotForDOCid (unsigned int DocID) {
 	int lot;
 	
@@ -114,7 +114,7 @@ int lotHasSufficientSpace(int lot, int needSpace,char subname[]) {
 	int i;
 
 	GetFilPathForLot(FilePath,lot,subname);
-	//må lage, slik at vi er 100% sikker på at vi har noe å teste mot
+	// must create, so that we are 100% sure we have something to test against
 
 	#ifdef DEBUG
 		printf("will hav to make lot path sow we can test for space\n");
@@ -140,13 +140,13 @@ int lotOpenFileNoCache_direct(unsigned int DocID, char *resource, char *type, ch
 	printf("lotOpenFileNoCache_direct(subname: \"%s\", resource %s)\n",subname,resource);
 	GetFilPathForLot(FilePath,LotNr,subname);
 	strcpy(File,FilePath);
-	strncat(File,resource,PATH_MAX); //var 128
+	strncat(File,resource,PATH_MAX); // was 128
 
 	#ifdef DEBUG
 		printf("lotOpenFileNoCasheByLotNr: opening file \"%s\" for %s\n",File,type);
 	#endif
 
-	//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
+	// if this is a read it does not help to try to create the path. The file will still not exist
 	if ((strcmp(type,"rb") == 0) || (strcmp(type,"r") == 0)) {
 		if ((fd = open64(File, O_RDONLY|O_DIRECT|O_LARGEFILE)) == -1) {
 			warn("open64: %d", fd);
@@ -163,9 +163,9 @@ int lotOpenFileNoCache_direct(unsigned int DocID, char *resource, char *type, ch
 	#ifdef DEBUG
 		printf("lotOpenFile: tryint to obtain lock \"%c\"\n",lock);
 	#endif
-	//honterer låsning
+	// handle locking
 	if (lock == 'e') {
-		//skal vi ha flock64() her ?
+		// should we have flock64() here ?
 		flock(fd, LOCK_EX);
 	}
 	else if (lock == 's') {
@@ -200,7 +200,7 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
 	#endif
 
 		GetFilPathForLotFile(File,resource,LotNr,subname);
-		//finer hvilken mappe vi skal i, tar også hensyn til sub mapper i lotten.
+		// find which directory we go into, also taking subdirectories within the lot into account.
 		strscpy(FilePath,getpath(File),sizeof(FilePath));
 
 		#ifdef DEBUG
@@ -208,8 +208,8 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
 		#endif
 
 		if (strcmp(type,">>") == 0) {
-			//emulating perl's >>. If the file eksist is is opene for reading and writing.
-			//if not it is createt and open for reading and writing
+			// emulating perl's >>. If the file exists it is opened for reading and writing.
+			// if not it is created and opened for reading and writing
 			if ( (FILEHANDLER = (FILE *)fopen64(File,"r+")) == NULL ) {
                         	makePath(FilePath);
 
@@ -230,7 +230,7 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
 			#endif
 
 		}
-		//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
+		// if this is a read it does not help to try to create the path. The file will still not exist
 		else if ((strcmp(type,"rb") == 0) || (strcmp(type,"r") == 0) || (strcmp(type,"r+") == 0)) {
 			if ( (FILEHANDLER = (FILE *)fopen64(File,type)) == NULL ) {
 				#ifdef DEBUG
@@ -258,7 +258,7 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
                 	if ( (FILEHANDLER = (FILE *)fopen64(File,type)) == NULL ) {
                         	makePath(FilePath);
 
-				//hvorfår har vi type "File" her ???, det verste er at det ser ut til å fungere også
+				// why do we have type "File" here ???, the worst part is that it seems to work too
                         	if ( (FILEHANDLER = (FILE *)fopen64(File,type)) == NULL ) {
                         	        perror(File);
 
@@ -279,9 +279,9 @@ FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock
             	#ifdef DEBUG
                         printf("lotOpenFile: tryint to obtain lock \"%c\"\n",lock);
                 #endif
-                //honterer låsning
+                // handle locking
                 if (lock == 'e') {
-			//skal vi ha flock64() her ?
+			// should we have flock64() here ?
                         flock(fileno(FILEHANDLER),LOCK_EX);
                 }
                 else if (lock == 's') {
@@ -306,8 +306,8 @@ int lotOpenFileNoCashel(unsigned int DocID,char resource[],char type[], char loc
 int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,char subname[]) {
 
 	int fd;
-	char FilePath[PATH_MAX]; 	//var 128
-	char File [PATH_MAX];	//var 128
+	char FilePath[PATH_MAX]; 	// was 128
+	char File [PATH_MAX];	// was 128
 
 	#ifdef DEBUG
 		printf("lotOpenFileNoCasheByLotNrl(LotNr=%i, subname=\"%s\", resource=\"%s\")\n",LotNr,subname,resource);
@@ -315,15 +315,15 @@ int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,
 
 	 GetFilPathForLot(FilePath,LotNr,subname);
 	 strcpy(File,FilePath);
-	 strncat(File,resource,PATH_MAX); //var 128
+	 strncat(File,resource,PATH_MAX); // was 128
 
 	#ifdef DEBUG
 		printf("lotOpenFileNoCasheByLotNr: opening file \"%s\" for %s\n",File,type);
 	#endif
 
 	if (strcmp(type,">>") == 0) {
-		//emulating perl's >>. If the file eksist is is opene for reading and writing.
-		//if not it is createt and openf for writing and reading
+		// emulating perl's >>. If the file exists it is opened for reading and writing.
+		// if not it is created and opened for writing and reading
 		if ( (fd = open64(File,O_CREAT|O_RDWR,0664)) == -1 ) {
 			makePath(FilePath);
 
@@ -334,7 +334,7 @@ int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,
 		}
 		
 	}
-	//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
+	// if this is a read it does not help to try to create the path. The file will still not exist
 	else if ((strcmp(type,"rb") == 0) || (strcmp(type,"r") == 0)) {
 		if ( (fd = open64(File,O_RDONLY)) == -1 ) {
 			#ifdef DEBUG
@@ -343,7 +343,7 @@ int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,
 			return -1;
 		}
 	}
-	//hvis dette er lesing så hjelper det ikke og prøve å opprette path. Filen vil fortsatt ikke finnes
+	// if this is a read it does not help to try to create the path. The file will still not exist
 	else if ((strcmp(type,"r+b") == 0) || (strcmp(type,"r+") == 0)) {
 		if ( (fd = open64(File,O_RDWR)) == -1 ) {
 			#ifdef DEBUG
@@ -360,9 +360,9 @@ int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,
 	#ifdef DEBUG
 		printf("lotOpenFile: tryint to obtain lock \"%c\"\n",lock);
 	#endif
-	//honterer låsning
+	// handle locking
 	if (lock == 'e') {
-		//skal vi ha flock64() her ?
+		// should we have flock64() here ?
 		flock(fd,LOCK_EX);
 	}
 	else if (lock == 's') {
@@ -377,7 +377,7 @@ int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,
 
 }
 
-//stenger ned filer (og frigjør låser)
+// close down files (and release locks)
 void lotCloseFiles() {
 	int i;
 
@@ -404,7 +404,7 @@ void lotCloseFiles() {
 }
 
 
-//gir andre tilgan til lot filer. Casher opne filhandlere
+// gives others access to lot files. Caches open file handles
 FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char subname[]) {
 
         int LotNr;
@@ -422,21 +422,21 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
 
         File[0] = '\0';
 
-        //finner i hvilken lot vi skal lese fra
+        // find which lot we should read from
         LotNr = rLotForDOCid(DocID);
 
-        //begynner med å søke cashen. Lopper til vi enten er ferdig, eller til vi har funne ønskede i cashen
+        // start by searching the cache. Loop until we are either done, or until we have found the desired one in the cache
 	i = 0;
         while ((i < MaxOpenFiles) && (OpenFiles[i].LotNr != LotNr)) {
                 i++;
         }
-        //temp: skrur av søking her med i=0
-        //type of og subname er også lagt til uten at det tar hensyn til det i søket
+        // temp: disable searching here with i=0
+        // type of and subname are also added without it being taken into account in the search
         i = 0;
 
 
 
-        //hvis vi fant i casehn returnerer vi den
+        // if we found it in the cache we return it
         if (OpenFiles[i].LotNr == LotNr  
 		&& (strcmp(OpenFiles[i].subname,subname) == 0)
         	&& (strcmp(OpenFiles[i].type,type)==0)
@@ -457,10 +457,10 @@ FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char
 		}
                 return OpenFiles[i].FILEHANDLER;
         }
-        //hvis ikke åpner vi og returnerer
+        // otherwise we open and return
         else {
 
-		//hvis dette er en åpen filhånterer, må vi lukke den
+		// if this is an open file handle, we must close it
 		if (OpenFiles[i].LotNr != -1) {
 			printf("lotOpenFile: closeing: i %i\n",i);
 			fclose(OpenFiles[i].FILEHANDLER);
@@ -502,15 +502,15 @@ FILE *openMaplist() {
 	FILE *MAPLIST;
 	char *cptr;
 
-	//sjekker først om vi har en env variabel kalt "BOITHOMAPLIST". Hvis vi har det så bruker vi den filen
-	//gjør det slik slik at vi kan ha lokal maplist, på hver bbs, man fortsat ha resten likt på alle, og på read onlu nfs.
+	// first check if we have an env variable called "BOITHOMAPLIST". If we do, we use that file
+	// do it this way so that we can have a local maplist on each bbs, while still keeping the rest identical on all, and on read-only nfs.
 	if ((cptr = getenv("BOITHOMAPLIST")) != NULL) {
 		if ( (MAPLIST = fopen(cptr,"r")) == NULL) {
 			perror(cptr);
 			exit(1);
 		}
 	}
-        //leser liten over mapper vi kan bruke.
+        // read the list of directories we can use.
         else if ( (MAPLIST = bfopen("config/maplist.conf","r")) == NULL) {
                 perror(bfile("config/maplist.conf"));
                 exit(1);
@@ -529,14 +529,14 @@ int GetDevIdForLot(int LotNr) {
 
 }
 
-//lager/henter ut en unik id for hver device
+// create/fetch a unique id for each device
 int MakeMapListMap_getfsid (const char *path) {
 
 	struct stat buf;
 	int i;
 
 	if (stat(path, &buf) != 0) {
-		//Er ikke sikkert at mappen er oppretttet enda, det er helt normalt.
+		// the directory may not be created yet, that is completely normal.
 		#ifdef DEBUG
 			perror(path);
 		#endif
@@ -574,7 +574,7 @@ void MakeMapListMap () {
 
 
 
-// gir hav som er første DocID i en lot
+// returns what is the first DocID in a lot
 int GetStartDocIFForLot (int LotNr) {
 	return ((LotNr * NrofDocIDsInLot) - NrofDocIDsInLot);
 }
@@ -606,7 +606,7 @@ int indexNrOffset(int IndexNr,char Type[]) {
 
 void GetFilePathForIDictionary (char *FilePath, char *FileName,int IndexNr,char Type[], char lang[],char subname[]) {
 
-	//hvis vi ikke har inlisert mapplisten enda gjør vi det.
+	// if we have not initialized the maplist yet we do it.
 	if (!MapListInitialised) {
 
 		MakeMapListMap();
@@ -631,7 +631,7 @@ void GetFilePathForIDictionary (char *FilePath, char *FileName,int IndexNr,char 
 
 void GetFilePathForIindex (char *FilePath, char *FileName,int IndexNr,char Type[], char lang[],char subname[]) {
 
-	//hvis vi ikke har inlisert mapplisten enda gjør vi det.
+	// if we have not initialized the maplist yet we do it.
 	if (!MapListInitialised) {
 		MakeMapListMap();
 		MapListInitialised = 1;
@@ -678,7 +678,7 @@ Gir oss pats for en lot.
 */
 void GetFilPathForLot(char *FilePath,int LotNr,char subname[]) {
 	
-	//hvis vi ikke har inlisert mapplisten enda gjør vi det.
+	// if we have not initialized the maplist yet we do it.
 	if (!MapListInitialised) {
 		MakeMapListMap();
 		MapListInitialised = 1;
@@ -706,7 +706,7 @@ void GetFilPathForLotByDocID(char *FilePath,int DocID,char subname[]) {
 }
 
 
-//gir ful path for et bilde fra DocID
+// returns the full path for an image from DocID
 void GetFilPathForThumbnaleByDocID(char *FileName,int DocID,char subname[]) {
 
 	int LotNr;
@@ -714,7 +714,7 @@ void GetFilPathForThumbnaleByDocID(char *FileName,int DocID,char subname[]) {
 
         ImageBucket = fmod(DocID,512);
 
-        //finner path
+        // find path
         LotNr = rLotForDOCid(DocID);
         GetFilPathForLot(FileName,LotNr,subname);
 
@@ -746,7 +746,7 @@ DIR *listAllColl_start() {
 
  	char FilePath[PATH_MAX];
 
-	//hvis vi ikke har inlisert mapplisten enda gjør vi det.
+	// if we have not initialized the maplist yet we do it.
 	if (!MapListInitialised) {
 		MakeMapListMap();
 		MapListInitialised = 1;

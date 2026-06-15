@@ -12,7 +12,7 @@ int main (int argc, char *argv[]) {
 
 
 
-        //hvis vi har argumeneter er det første et query
+        //if we have arguments, the first one is a query
         if (getenv("QUERY_STRING") == NULL) {
                 if (argc < 2 ) {
                         printf("Error ingen query spesifisert.\n\nEksempel på bruk for å søke på boitho:\n\tsearchkernel boitho\n");
@@ -36,7 +36,7 @@ int main (int argc, char *argv[]) {
                 exit(1);
         }
 
- 	//gjør om til liten case
+ 	//convert to lower case
         for(i=0;i<strlen(QueryData.query);i++) {
                 QueryData.query[i] = tolower(QueryData.query[i]);
         }

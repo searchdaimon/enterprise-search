@@ -4,7 +4,7 @@ use common qw(fin_domene);
 use constant UrlQueuePostLength => 204;
 use constant nrOfqueues => 2500;
 
-#make elementer man skal ha i minne fo hver kø. Når dette nåes lagres den køen på disk.
+#max number of elements to keep in memory per queue. When this is reached the queue is stored to disk.
 use constant maxQueuesElementsInMemory => 30000;
 
 our $terminated = 0;
@@ -35,7 +35,7 @@ while ((!eof(UDFILE)) && (not $terminated)) {
 close(UDFILE);
 
 ############################################################################################################################
-# hånterer signaler
+# handles signals
 ############################################################################################################################
 sub signal_handler {
         if (not $terminated) {

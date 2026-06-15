@@ -105,10 +105,10 @@ int cconnect (char *hostname, int PORT) {
 	  } 
 	}
 	//}
-	//setter den tilabke til blokin mode
+	//set it back to blocking mode
 	fcntl (sockfd, F_SETFL, sockedmode);
 	
-	//printf("ferdig med å konekte\n");
+	//printf("done connecting\n");
 	//sh_pointer(sockfd);
 
         //if ((numbytes=recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
@@ -218,7 +218,7 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 
         struct packedHedderFormat packedHedder;
         int i;
-        //setter sammen hedder
+        //assemble the header
         packedHedder.size       = sizeof(struct packedHedderFormat) + dataSize;
         packedHedder.version    = version;
         packedHedder.command    = command;
@@ -231,7 +231,7 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
         //printf("sent %i of %i packedsize: %i\n",i, sizeof(struct packedHedderFormat), packedHedder.size,packedHedder.size);
 	//printf("command: %i\n",packedHedder.command);
 
-	//hvi data er null betur det at denne vil bli sent siden, av annen kode
+	//if data is null it means this will be sent later, by other code
         if (data != NULL) {
 		#ifdef DEBUG
 		printf("sendpacked: data NOT NULL. Will sendit");

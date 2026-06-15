@@ -38,7 +38,7 @@ void shortenurl(char *url,int urllen) {
 	newurl[0] = '\0';
 	proto[0] = '\0';
 
-	//tar bort proto:// først
+	//strip off proto:// first
 	p = strstr(url, "://");
 	if (p != NULL && p > url) {
 		p += 3; /* Skip past :// */
@@ -58,7 +58,7 @@ void shortenurl(char *url,int urllen) {
 		bblog(DEBUG, "shortenurl: after proto \"%s\"",url);
 	#endif
 
-	//hvis den er kort kan vi bare returnere
+	//if it's short we can just return
 	if (len < TARGET_VISIBLE_URL_LEN) {
 		#ifdef DEBUG
  			bblog(DEBUG, "shortenurl: url is short enough. Don't need to shorten");
@@ -95,7 +95,7 @@ void shortenurl(char *url,int urllen) {
 
 		Count++;
   	}
-	--TokCount; //split ser ut til å begynner på 1, ikke på 0 
+	--TokCount; //split seems to start at 1, not at 0 
 
 #ifdef DEBUG
   	bblog(DEBUG, "found %d token(s):",  TokCount);

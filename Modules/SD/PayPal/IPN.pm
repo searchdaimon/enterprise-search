@@ -1,8 +1,8 @@
 ##
 # Handle IPN notifications from PayPal.
-# Losely based on sample script provided on paypal.com
+# Loosely based on sample script provided on paypal.com
 #
-# See eof for an usage example.
+# See eof for a usage example.
 package SD::PayPal::IPN;
 use strict;
 use warnings;

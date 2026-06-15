@@ -1,6 +1,6 @@
 
 ########################################################################################################
-#honterer alt arbeid mot URL indekser
+#handles all work against the URL index
 ########################################################################################################
 
 package urlindex;   
@@ -17,7 +17,7 @@ require Exporter;
 #    unsigned int        DocID_from;
 #};
 
-use constant NyeUrlerFilRecord => 'A20 A200 A50 L'; #sha1(nyUrl),nyUrl,linketekst,KildeDocID
+use constant NyeUrlerFilRecord => 'A20 A200 A50 L'; #sha1(newUrl),newUrl,linktext,sourceDocID
 use constant MasterIndexFilRecord => 'A40 L A200';
 use constant MasterIndexFilRecordSize => 244;
 
@@ -27,11 +27,11 @@ use Boitho::Lot;
 
 #:4use common qw(count_handler);
 
-#new funksjon
+#new function
 sub New {
 	my($class,$LotNr) = @_;
 	#my $class = '';
-	my $self = {}; #allocate new hash for objekt
+	my $self = {}; #allocate new hash for object
 	
 	if ($LotNr eq '') {
 		die("No lot nr given");
@@ -60,7 +60,7 @@ sub addNewUrl {
 
 	print "$kildeDocID,$urltext\n";
 	#if (length($url) <= 200) {
-		#'A20 A200 A50 L'; sha1(nyUrl),nyUrl,linketekst,KildeDocID
+		#'A20 A200 A50 L'; sha1(newUrl),newUrl,linktext,sourceDocID
 		print { $self->{'NyeUrlerFH'} } pack(NyeUrlerFilRecord,$sha1Vedi,$nyUrl,$urltext,$kildeDocID);
 		
 	#}

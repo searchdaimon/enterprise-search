@@ -35,7 +35,7 @@ int crawlLocalFiles (
 
 	printf("path %s\n",path);
 
-	//fjerner eventuel / på slutten
+	//remove any trailing /
 	strncpy(path_real,path,sizeof(path_real));
 	if (path_real[strlen(path_real)] == '/') {
 		printf("removed / at end\n");
@@ -69,7 +69,7 @@ void LocalFilesRecursiveDir (
 	char nextdirname[512];
 	char filname[512];
 	FILE *FH;
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // a struct for fstat to return into.
 	int dokument_size;
 	int filecessmode;
 	struct passwd *pw;
@@ -84,7 +84,7 @@ void LocalFilesRecursiveDir (
 		perror("stat");
 		return;
 	}
-	//har ownaccessmode som den laveste i hele pathen
+	//keep ownaccessmode as the lowest in the whole path
 	int ownaccessmode = inode.st_mode & accessmode;
 	
 	if ((DIRH = opendir(dirname)) == NULL) {
@@ -110,7 +110,7 @@ void LocalFilesRecursiveDir (
 			sprintf(nextdirname,"%s/%s",dirname,dp->d_name);
 			printf("dir (nextdirname %s)\n",nextdirname);
 
-			//kaller seg selv rekurift
+			//call itself recursively
 			LocalFilesRecursiveDir(collection,documentExist,documentAdd,prefix,nextdirname,ownaccessmode);
 		}
 		else if (S_ISREG(inode.st_mode)) {
@@ -129,12 +129,12 @@ void LocalFilesRecursiveDir (
                         crawldocumentExist.dokument_size = inode.st_size;
 
 
-			//spør Boitho om filområdet finnes
+			//ask Boitho whether the file area exists
 			dokument_size = inode.st_size;
 			dokument_buff = malloc(dokument_size +1);
 
 			bblog(DEBUGINFO, "uid %i, gid %i\n",inode.st_uid,inode.st_gid);
-			//lager acl
+			//build acl
 			acl[0] = '\0';
 			filecessmode = ownaccessmode & inode.st_mode;
 			bblog(DEBUGINFO, "mode %i\n",(int)inode.st_mode);
@@ -163,15 +163,15 @@ void LocalFilesRecursiveDir (
 			}
 			if (filecessmode & S_IROTH) {
 				bblog(DEBUGINFO, "others have read permission. S_IROTH %i\n",inode.st_mode & S_IROTH);
-				strcat(acl,"Everyone"); //toDo bruker msad sin gruppe fro alle her. Bør kansje ha en engen??
+				strcat(acl,"Everyone"); //toDo using msad's group for everyone here. Should perhaps have a separate one??
 				strcat(acl,",");
 			}
-			//uefektift, bruker strlen() to ganger
+			//inefficient, uses strlen() twice
 			if (acl[strlen(acl)] == ',') {
 				acl[strlen(acl)] = '\0';
 			}				
 
-			//leser hele dokumentet
+			//read the whole document
 			fread(dokument_buff,sizeof(char),dokument_size,FH);
 
 			memset(&crawldocumentAdd, 0, sizeof(crawldocumentAdd));

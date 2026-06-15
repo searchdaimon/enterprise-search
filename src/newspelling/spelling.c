@@ -436,14 +436,14 @@ train(const char *dict)
 void
 untrain(spelling_t *s)
 {
-	// @@TODO: Her mangler det mye
+	// @@TODO: A lot is missing here
 	struct hashtable_itr *itr;
 
 	printf("untrain()\n");
 
 	s->inited = 0;
 
-	// frigjør s->soundslike, vil kalle egen free funksjon ved å iterere over alle.
+	// free s->soundslike, will call its own free function by iterating over all of them.
 	itr = hashtable_iterator(s->soundslike);
 	do {
 		container *list = hashtable_iterator_value(itr);
@@ -454,7 +454,7 @@ untrain(spelling_t *s)
 	hashtable_destroy(s->soundslike, 0);
 	s->soundslike = NULL;
 
-	// firgjør s->words. Vil kalle free() på alle elementene
+	// free s->words. Will call free() on all the elements
 	hashtable_destroy(s->words, 1);
 	s->words = NULL;
 

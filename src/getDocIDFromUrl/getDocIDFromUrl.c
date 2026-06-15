@@ -15,7 +15,7 @@ extern int getopt(int, char * const *, const char *);
 
 
 /*************************************************************************************
-* slår opp i databasen for å finne DoCID for en url
+* looks up the DocID for a url in the database
 *************************************************************************************/
 int getDocIDFromUrl(char bdbfiledir[],char url[],unsigned int *DocID) {
 
@@ -57,8 +57,8 @@ int getDocIDFromUrl(char bdbfiledir[],char url[],unsigned int *DocID) {
 	dbp = dbp_store[dbFileForUrl];
 
 
-        //finner ut hvilken database vi skal opne
-        //lager en has verdi slik at vi kan velge en av filene
+        //figure out which database to open
+        //create a hash value so we can pick one of the files
 
 
         #ifdef DEBUG

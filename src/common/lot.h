@@ -46,7 +46,7 @@ int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,
 int GetDevIdForLot(int LotNr);
 void makeLotPath(int lotNr,char folder[],char subname[]);
 
-//rutiner for å lsite ut alle lokale subnames
+// routines to list all local subnames
 DIR *listAllColl_start();
 char *listAllColl_next(DIR * ll);
 void listAllColl_close(DIR * ll);

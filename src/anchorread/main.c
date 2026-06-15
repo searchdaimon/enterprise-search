@@ -10,7 +10,7 @@ int main (int argc, char *argv[]) {
 	unsigned int rsize;
 	char *subname;
 
-        //tester for at vi har fåt hvilken lot vi skal bruke
+        //test that we have received which lot we should use
         if (argc < 3) {
                 printf("Usage: ./anchorreadnew lotnr subname\n\n");
 		exit(1);

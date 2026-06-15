@@ -12,5 +12,5 @@ my $lotpath = Boitho::Lot::GetFilPathForLot($ARGV[0],$ARGV[1]);
 
 print "removing $lotpath\n";
 
-#kjører recrosiv rm
+#runs recursive rm
 system("rm -r $lotpath");

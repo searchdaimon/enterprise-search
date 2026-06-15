@@ -98,13 +98,13 @@ int perl_embed_run(char *file_path, char *func_name, HV *func_params, char *obj_
 	PUTBACK;
 
 	int retn = call_pv("Embed::Persistent::eval_file2", G_SCALAR | G_EVAL);
-	//antar at rutiner som ikke returnerer noe mislykkes. Dette kan for eks skje hvis vi kaller die, eller ikke trenger retur koden
+	//assume that routines returning nothing have failed. This can for example happen if we call die, or don't need the return code
 	int retv = 0;
 
 	SPAGAIN; //refresh stack pointer
 	if (SvTRUE(ERRSV)) {
 		fprintf(stderr, "Perl preprocessor error: %s\n", SvPV_nolen(ERRSV));
-		// overfører error beskjeden.
+		// pass on the error message.
 		if (errorlength != 0) {
 			snprintf(error,errorlength,SvPV_nolen(ERRSV));
 		}
@@ -148,12 +148,12 @@ int perl_embed_run_arr(char *file_path, char *func_name, HV *func_params, char *
 	PUTBACK;
 
 	int retn = call_pv("Embed::Persistent::eval_file2", G_SCALAR | G_EVAL);
-	//antar at rutiner som ikke returnerer noe mislykkes. Dette kan for eks skje hvis vi kaller die, eller ikke trenger retur koden
+	//assume that routines returning nothing have failed. This can for example happen if we call die, or don't need the return code
 
 	SPAGAIN; //refresh stack pointer
 	if (SvTRUE(ERRSV)) {
 		fprintf(stderr, "Perl preprocessor error: %s\n", SvPV_nolen(ERRSV));
-		// overfører error beskjeden.
+		// pass on the error message.
 		if (errorlength != 0) {
 			snprintf(error,errorlength,SvPV_nolen(ERRSV));
 		}

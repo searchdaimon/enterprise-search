@@ -151,9 +151,9 @@ fix_subject(char *subject, size_t inlen)
 		strncpy(subject, p4, inlen);
 		/*
 		runarb: 17 jan 2008: 
-		ser ikke ut til at isprint() fungerer med utf-8.
-		Ser uansett ikke ut til at vi trenger den, da vi har fikset alle problemene med 
-		titler, men lar den stå litt for sikkerhets skyld.
+		isprint() does not seem to work with utf-8.
+		In any case we do not seem to need it, since we have fixed all the problems with
+		titles, but leave it here just to be safe.
 
 		for(i = 0; i < strlen(subject); i++) {
 			if (!isprint(subject[i])) {

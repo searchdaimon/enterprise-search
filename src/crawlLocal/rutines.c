@@ -16,7 +16,7 @@
 
 int crawlcanconect( struct collectionFormat *collection,int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...)) {
 
-	//tester om vi kan koble til
+	//test whether we can connect
 	return 1;
 }
 

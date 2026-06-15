@@ -369,7 +369,7 @@ sub _validate_ifcfg_options {
 
 	# Valid network device
 	#if (defined $option{'DEVICE'}) {
-	#runarb: ser ut til og ha glemt en s her. Skal være optionS, ikke option
+	#runarb: looks like an 's' was forgotten here. Should be optionS, not option
 	if (defined $options{'DEVICE'}) {
 	    my $value = $options{'DEVICE'};
 	    my @valid_devices = qw(eth0 eth1);

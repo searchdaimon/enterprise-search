@@ -7,20 +7,20 @@ require Exporter;
 
 
 ####################################################################
-#settup
+#setup
 #####
-#MySQL settup
+#MySQL setup
 $user = "boitho";
 $Password = "G7J7v5L5Y7";
 $server = "localhost";
 $database = "boithodc";
 
-use DBI; #bruker DBI databse interfase
+use DBI; #uses the DBI database interface
 
-#kobler opp og returnerer database hantereren
+#connects and returns the database handle
 sub GetHandler {
-	# dette kjøres hver gang mymod.pm kalles
-	my $dbh = DBI->connect("DBI:mysql:database=$database;host=$server;port=3306",						#Kobler til databasen
+	# this runs every time mymod.pm is called
+	my $dbh = DBI->connect("DBI:mysql:database=$database;host=$server;port=3306",						#connects to the database
                              $user, $Password) or warn("Can`t connect: $DBI::errstr");	#
 	
 return $dbh;						 

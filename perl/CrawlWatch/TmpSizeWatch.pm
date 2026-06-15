@@ -28,7 +28,7 @@ sub new {
 
 sub name { "TmpSizeWatch" }
 
-#tester om vi kan låse filen.
+#test whether we can lock the file.
 sub canLock {
 	my $filename = shift;
 
@@ -52,17 +52,17 @@ sub canLock {
 sub cleaneFolder {
 	my($self, $folder, $maxtime) = @_;
 
-	#lager en array over alle /tmp filer
+	#build an array of all /tmp files
         my @files = getCandidates($folder);
 
 
         foreach my $file (@files) {
 
-		#statter, for å finne atime (last access time)
+		#stat, to find atime (last access time)
                 my ($fdev,$fino,$fmode,$fnlink,$fuid,$fgid,$frdev,$fsize,
                         $fatime,$fmtime,$fctime,$fblksize,$fblocks) = stat($file);
 
-		# get user info. Bør være nåverdende bruker, ikke boitho her.
+		# get user info. Should be the current user, not boitho here.
 		my ($uname, $upass, $uuid, $ugid, $uquota, $ucomment, $ugcos,
 			 $udir, $ushell, $uexpire) = getpwnam('boitho');
 
@@ -104,7 +104,7 @@ sub next_run {
 	my $s = shift;
 	my $time_now = time;
 
-	#if først run, run at ones
+	#if first run, run at once
 	unless (defined $last_run) {
 		$last_run = $time_now;
 		return 0;

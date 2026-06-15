@@ -39,7 +39,7 @@ int main (int argc, char *argv[]) {
 
 
 
-	//åpner filer
+	//open files
         if ((UDFILE = fopen(udfile,"rb")) == NULL) {
                 printf("Cant read udfile ");
                 perror(udfile);

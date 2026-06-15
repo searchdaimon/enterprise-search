@@ -15,7 +15,7 @@ int main (int argc, char *argv[]) {
 
         if (argc == 7) {
 
-		//lager for bare en bøtte
+		//build for just one bucket
 		
 		int startIndex = atoi(argv[1]);
         	int stoppIndex = atoi(argv[2]) +1;	
@@ -32,7 +32,7 @@ int main (int argc, char *argv[]) {
 	}
 	else if (argc == 6) {
 
-		//skal lage for alle bøttene
+		//build for all the buckets
 		int i;
 
 		int startIndex = atoi(argv[1]);

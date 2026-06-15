@@ -74,7 +74,7 @@ print_html($tpl_file, %tpl_vars);
 our $EndTime  = Time::HiRes::time;
 
 print "<!-- Total runtime: " . ($EndTime - $StartTime) . "-->\n";;
-# logger hvis vi brukte mer en normal tid.
+# log if we took longer than normal.
 if (($EndTime - $StartTime) > $CFG{'slow_query_warning'}) {
 	if (defined(my $query = $state{query})) {
 		print STDERR "index.pl: Posible slow query '" . $query . "'. Used " . ($EndTime - $StartTime) . " sek. \n";

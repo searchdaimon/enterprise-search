@@ -45,7 +45,7 @@ while(defined($page = $pages->next)) {
 
 #$title = from_utf8(-string =>$title, -charset => 'ISO-8859-1');
 
-#fjerner ting som ikke er lov i filnavnet
+#remove characters that are not allowed in the filename
 	$filename = $title;
 	$filename =~ s/[^a-zA-Z0-9 ]/_/g;
 
@@ -92,13 +92,13 @@ while(defined($page = $pages->next)) {
 
 		foreach my $i (@lines) {
 			$i =~ s/\[\[([^\|]+\|)([^\]]+)\]\]/$2/g;
-			#honterer linker med annen link en beskrivelse
+			#handle links that have a separate link and description
 			$i =~ s/\[\[([^\]]+)\]\]/$1/g;
 
-			#honterer linker
+			#handle links
 			$i =~ s/\[\[([^\]]+)\]\]/$1/g;
 
-			#seltter overskrift makup
+			#strip heading markup
 			$i =~ s/'//g;
 
 			$i =~ s/=//g;

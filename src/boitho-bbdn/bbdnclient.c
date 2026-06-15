@@ -17,7 +17,7 @@ int bbdn_conect(int *socketha, char tkey[], int PORT) {
 		return 0;
 	}
 
-	//sender heder
+	//send header
         sendpacked((*socketha),bbc_askToAuthenticate,BLDPROTOCOLVERSION, 0, NULL,"");
 
         
@@ -68,7 +68,7 @@ int bbdn_docadd(int socketha, const char subname[], const char documenturi[], co
 	int len, intrespons, i;
 	char *blank = "";
 
-	//sender heder
+	//send header
         sendpacked(socketha,bbc_docadd,BLDPROTOCOLVERSION, 0, NULL,"");
 
         //subname
@@ -177,7 +177,7 @@ int bbdn_docexist(int socketha,char subname[],char documenturi[],unsigned int la
 	return 0;
 }
 
-//stenger ned å kjører etterpehandler på en koleksin. Dette er ikke det samme som å stenge ned socketen
+//close down and run the post-handler on a collection. This is not the same as closing the socket
 int bbdn_closecollection(int socketha, const char subname[]) {
 
 	int len, intrespons, i;
@@ -273,7 +273,7 @@ int bbdn_HasSufficientSpace(int socketha, char subname[]) {
 	int intrespons = 0;
 	int len, i;
 
-	//sender heder
+	//send header
         sendpacked(socketha,bbc_HasSufficientSpace,BLDPROTOCOLVERSION, 0, NULL,"");
 
         //subname

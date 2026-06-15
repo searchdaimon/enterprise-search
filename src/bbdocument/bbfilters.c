@@ -164,7 +164,7 @@ void run_filter_exeoc(char *dst, const size_t dst_size, struct fileFilterFormat 
 	if (!exeoc_timeout(shargs, dst, &exeocbuflen, &retval,120)) {
 
 		printf("dident get any data from exeoc. But can be a filter that creates files, sow we wil continue\n");
-		//kan ikke sette den til 0 da vi bruker den får å vite hvos stor bufferen er lengere nede
+		// can't set it to 0 since we use it to know how large the buffer is further down
 		//(*dst) = 0;
 		dst[0] = '\0';
 		//return 0;

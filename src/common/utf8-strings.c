@@ -2,7 +2,7 @@
 #include "utf8-strings.h"
 
 /**
- *	Bibliotek for å behandle strenger kodet med utf-8, med særskilt vekt på de europeiske tegnene.
+ *	Library for handling strings encoded in utf-8, with particular emphasis on the European characters.
  *
  *	(C) Copyright 2007-2008, SearchDaimon AS (Magnus Galåen)
  */

@@ -5,7 +5,7 @@
 #include "../crawl/crawl.h"
 
 int crawlcanconect(struct collectionFormat *collection) {
-	//tester om vi kan koble til
+	//test if we can connect
 }
 
 int crawlfirst(struct collectionFormat *collection,
@@ -33,7 +33,7 @@ int crawlfirst(struct collectionFormat *collection,
 int crawlupdate(struct collectionFormat *collection,
 	int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist), 
 	int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd)) {
-	//opdate
+	//update
 	
 	
 	

@@ -14,10 +14,10 @@ while (<>) {
 	if (not defined $w) { # Unable to convert
 		next;
 	}
-	# Magnus: Kun ord som begynner på a-z, og som ikke inneholder siffer eller '.
-	# Fjerner også ord på to bokstaver, da aspell foreslår mange rare rettskrivinger med de:
+	# Magnus: Only words that start with a-z and do not contain digits or '.
+	# Also drop two-letter words, since aspell suggests many odd spellings for them:
 	if (not $w =~ /^[^a-z]/ and not $w =~ /[\'0-9]/ and length($w) > 2)
-	# Magnus: Vi fjerner utf8-tegn midlertidig, ser ut til å skape en del problemer:
+	# Magnus: We temporarily remove utf8 characters, they seem to cause some problems:
 #	if (not $a[0] =~ /[^a-z]/ and length($a[0])>2)
 	    {
 		print $w."\n";

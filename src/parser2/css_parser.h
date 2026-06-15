@@ -39,7 +39,7 @@ typedef struct
 } css_selector_block;
 
 
-// Viktig: Kjør denne på returverdien fra css_parser_run for å frigi minne.
+// Important: Run this on the return value from css_parser_run to free its memory.
 void destroy_selectors(css_selector_block *selector_block);
 
 void css_parser_init();

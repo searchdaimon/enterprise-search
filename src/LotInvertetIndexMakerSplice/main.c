@@ -1,5 +1,5 @@
 /**********************************************************************************
-Dette programet spleiser sammen en iindex hvis den har fragmenterte poster, som en anker index
+This program splices together an iindex if it has fragmented records, such as an anchor index
 **********************************************************************************/
 
 #include <stdlib.h>
@@ -56,7 +56,7 @@ int main (int argc, char *argv[]) {
 		lotNr = atoi(argv[2 +optind]);
 		strncpy(subname,argv[3 +optind],sizeof(subname) -1);
 
-                //finner siste indekseringstid
+                //get the last indexing time
                 lastIndexTime =  GetLastIndexTimeForLot(lotNr,subname);
 
 
@@ -65,7 +65,7 @@ int main (int argc, char *argv[]) {
                         exit(1);
                 }
 
-               //sjekker om vi har nokk palss
+               //check that we have enough space
                 if (!lotHasSufficientSpace(lotNr,4096,subname)) {
                         printf("insufficient disk space\n");
                         exit(1);
@@ -79,7 +79,7 @@ int main (int argc, char *argv[]) {
 
 			//"$revindexPath/$revindexFilNr.txt";
 			GetFilPathForLot(path,lotNr,subname);
-			//ToDo: må sette språk annen plass
+			//ToDo: must set the language somewhere else
 			sprintf(iipath,"%siindex/%s/index/aa/",path,argv[1 +optind]);
 
 
@@ -99,9 +99,9 @@ int main (int argc, char *argv[]) {
 
 		//"$revindexPath/$revindexFilNr.txt";
 		GetFilPathForLot(path,lotNr,subname);
-		//ToDo: må sette språk annen plass
+		//ToDo: must set the language somewhere else
 		//aa sprintf(iipath,"%siindex/%s/index/aa/%i.txt",path,argv[1 +optind],lotPart);
-                        //ToDo: må sette språk annen plass
+                        //ToDo: must set the language somewhere else
                         sprintf(iipath,"%siindex/%s/index/aa/",path,argv[1 +optind]);
 
 
@@ -155,7 +155,7 @@ void addindex( char **termrecord,int *termrecordlen,int termrecordsize,int *tota
 		return;
 	}
 
-	//sorterer hittene
+	//sort the hits
 	if (TermAntall > 1) {
 		qsort(allhit, TermAntall , sizeof(unsigned short), compare_elements);
 	}
@@ -301,7 +301,7 @@ int IndekserSplice(char iindexPath[]) {
 						#ifdef DEBUG
 						printf("%i,",allhit[allAntall]);
 						#endif
-						//ToDo: tar ikke med dublikater. Vil det skape problemer for anker indexkser??
+						//ToDo: skips duplicates. Will this cause problems for anchor indexes??
 						if (hit != lasthit) {
 							allhit[allAntall] = hit;
 							
@@ -335,7 +335,7 @@ int IndekserSplice(char iindexPath[]) {
 			lastDocID = DocID;
 
 		}	
-		//siste for denne termen
+		//last one for this term
 		addindex(&termrecordptr,&termrecordlen,maxtermrecord,&newTermAntall,lastDocID,lastlangnr,allAntall,allhit);
 
 		writeterm(outfh,termrecord,termrecordlen,newTermAntall, term);
@@ -344,12 +344,12 @@ int IndekserSplice(char iindexPath[]) {
 
 	fclose(fileha);
 
-       	//må lokke før vi kopierer. Hvis ikke kan det være data i bufferen som ikke blir med.
+       	//must close before we copy. Otherwise there may be data left in the buffer that won't be included.
         fclose(outfh);
     	//close(outfd);
 
 
-        //sletter den gamle filen
+        //delete the old file
         if (unlink(iindexPath) != 0) {
                 perror(iindexPath);
         }
@@ -357,7 +357,7 @@ int IndekserSplice(char iindexPath[]) {
 	#ifdef DEBUG
 	printf("renaming %s -> %s\n",outfile,iindexPath);
 	#endif
-        //flytter den nye filen slik at den blir output filen
+        //move the new file so that it becomes the output file
         if (rename(outfile,iindexPath) == -1) {
                 perror("rename");
                 exit(EXIT_FAILURE);
@@ -372,17 +372,17 @@ int IndekserSplice(char iindexPath[]) {
 
 	return 1;
 
-	//hånterer error. Vi sletter index filen, da det er noe feil med den, og vi ikke
-	//ønsker å dra med den feilen videre.
+	//handle the error. We delete the index file, since something is wrong with it, and we don't
+	//want to carry that error forward.
 	IndekserSpliceError:
 
 	fprintf(stderr,"Error: will delte index \"%s\"\n",iindexPath);		
 
-	//lokker filer
+	//close files
 	fclose(outfh);	
 	fclose(fileha);
 
-        //sletter den gamle filen
+        //delete the old file
         if (unlink(iindexPath) != 0) {
                 perror(iindexPath);
         }

@@ -34,7 +34,7 @@ popopen ();
     /*
      * Create the shared memory segment.
      */
-	//ikke glem å regne ut størelsen hvis man ikke bruker char som enhet her
+	//don't forget to compute the size if you don't use char as the unit here
 	if ((shmid = shmget(key, popMemorySize, IPC_CREAT | 0666)) < 0) {
         	perror("shmget");
         	exit(1);

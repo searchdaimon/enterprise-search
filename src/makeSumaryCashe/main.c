@@ -46,7 +46,7 @@ main (int argc, char *argv[]) {
 	GetFilPathForLot(lotPath,LotNr,subname);
 	printf("Opning lot at: %s for %s\n",lotPath,subname);
 
-		//sjekker om vi har nokk palss
+		//check if we have enough space
                 if (!lotHasSufficientSpace(LotNr,4096,subname)) {
                         printf("insufficient disk space\n");
                         exit(1);
@@ -55,7 +55,7 @@ main (int argc, char *argv[]) {
 	SFH = lotOpenFileNoCasheByLotNr(LotNr,"summary","wb",'r',subname);
 	RANKFH = lotOpenFileNoCasheByLotNr(LotNr,"Brank","rb",'r',subname);
 
-	//loppergjenom alle
+	//loop through all
 	count = 0;
 	while (rGetNext(LotNr,&ReposetoryHeader,WorkBuff,sizeof(WorkBuff),imagebuffer,&radress,0,0,subname)) {
 
@@ -63,12 +63,12 @@ main (int argc, char *argv[]) {
 
 
 
-			//finner rank for siden
+			//find rank for the page
 			offset = ((ReposetoryHeader.DocID - LotDocIDOfset(LotNr)) * sizeof(unsigned char));
 			fseek(RANKFH,offset,SEEK_SET);				
 			fread(&rank,sizeof(unsigned char),1,RANKFH);
 	
-			//hvsi ranken er for liten gir vi faen i å lage summery for den
+			//if the rank is too low we don't bother making a summary for it
 			if (rank > 40) {
 			
 				WorkBuffSize = ReposetoryHeader.htmlSize;
@@ -81,7 +81,7 @@ main (int argc, char *argv[]) {
                 		}
                 	
 
-                	        	//er det ikke \0 med i buferren ??
+                	        	//isn't there a \0 in the buffer ??
         	                HtmlBuffer[HtmlBufferSize] = '\0';
 
 				pageCrc32 = crc32boitho(HtmlBuffer);
