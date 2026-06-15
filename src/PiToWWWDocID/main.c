@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 
 
  	#ifdef WITH_THREAD
-                my_init();
+                mysql_library_init(0, NULL, NULL);
                 if (mysql_thread_safe() == 0) {
                         printf("The MYSQL client is'en compiled at thread safe! This will broboble crash.\n");
                 }

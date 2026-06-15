@@ -19,9 +19,11 @@ OBJECTS_CLNT = $(SOURCES_CLNT.c:%.c=%.o) $(TARGETS_CLNT.c:%.c=%.o)
 # Compiler flags 
 
 CPPFLAGS += -D_REENTRANT
-CFLAGS += -g 
+CFLAGS += -g
 CFLAGS += ${EXTRA_CFLAGS}
-LDLIBS += -lnsl -lpthread 
+# glibc dropped Sun RPC; the rpc/*.h headers and runtime now come from libtirpc.
+CFLAGS += -I/usr/include/tirpc
+LDLIBS += -ltirpc -lpthread
 RPCGENFLAGS = -M
 
 # Targets 

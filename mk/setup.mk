@@ -69,11 +69,18 @@ endif
 
 ifeq ($(strip $(host)),searchdaimon3)
 # Local on ES v3
-PERL_EMBED_INC=		`perl -MExtUtils::Embed -e ccopts`
+# Perl's ccopts carry the distro hardening flag -Werror=format-security, which is
+# appended to CFLAGS after our -Wno-error=format-security and would otherwise win.
+# Re-disable it at the very end so the perl-embedded sources build too.
+PERL_EMBED_INC=		`perl -MExtUtils::Embed -e ccopts` -Wno-error=format-security
 PERL_EMBED_LIB=		`perl -MExtUtils::Embed -e ldopts`
 BDB_INC=		-I/usr/include/db4
 BDB_LIB=		-ldb -lpthread
-CC=			gcc
+# Fold the legacy-compat flags into CC itself (not just CFLAGS): several component
+# Makefiles have custom link rules that invoke $(CC) on extra .c files without
+# $(CFLAGS), and those translation units still need -fgnu89-inline (GNU89 inline
+# semantics) and -fcommon (pre-gcc-10 tentative definitions) to build on modern gcc.
+CC=			gcc -fgnu89-inline -fcommon
 CPP=			g++ -O2 -Wall -g
 MYSQL_LIB+=		`mysql_config --libs`
 MYSQL_INC+=		`mysql_config --include` 
@@ -85,6 +92,9 @@ US_STATIC=
 # as -lsmbclient; the header is not in the default include path on RHEL/CentOS.
 SMBCLIENT=		`pkg-config --cflags --libs smbclient`
 LDAP = 			-DWITH_OPENLDAP -lldap -llber
+# boithoad pulls in OpenSSL (BIO_*, used via LDAP/TLS). On the older hosts crypto
+# came in through the static libcrypto.a in $(LDAP); here we link it explicitly.
+OPENSSL =		-lssl -lcrypto
 # Uncomment this to build 32 bit binaries on 64 bit ES v3
 #MYSQL_LIB=     		-L/usr/lib/mysql -lmysqlclient
 #PERL_EMBED_INC= 	-D_REENTRANT -D_GNU_SOURCE -fno-strict-aliasing -pipe -fstack-protector -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64  -I/usr/lib/perl5/CORE
@@ -92,6 +102,25 @@ LDAP = 			-DWITH_OPENLDAP -lldap -llber
 #CC+=			-m32
 
 endif
+
+# The data-structure library in src/ds (and several inline string helpers) rely
+# on GNU89 "extern inline" semantics, which were the gcc default before gcc 5.
+# Modern gcc (C11 inline) otherwise emits no external definition for those inline
+# functions, producing "undefined reference" link errors (e.g. map_ap_allocate,
+# string_bprint). Restore the old semantics for the whole build.
+CFLAGS+=	-fgnu89-inline
+
+# gcc 10+ defaults to -fno-common, which rejects the several global variables this
+# code defines (without extern) in headers included by multiple translation units
+# (e.g. OpenReposetoryFiles in reposetory.h) as "multiple definition" link errors.
+# -fcommon restores the pre-gcc-10 tentative-definition merging.
+CFLAGS+=	-fcommon
+
+# Amazon Linux 2023's gcc enables -Werror=format-security by default. This legacy
+# code has many printf-style calls with a non-literal format and no args (e.g.
+# printf(mysql_error(db))), which are not worth rewriting wholesale; keep them as
+# warnings rather than hard errors.
+CFLAGS+=	-Wno-error=format-security
 
 ifdef NO_DEPRECATED_WARNINGS
 CFLAGS+=	-Wno-deprecated-declarations

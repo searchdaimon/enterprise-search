@@ -49,7 +49,7 @@ bconfig_flush(int mode) {
         MYSQL_ROW mysqlrow;
 
 #ifdef WITH_THREAD
-	my_init();
+	mysql_library_init(0, NULL, NULL);
 
 	#ifdef DEBUG
 	if (mysql_thread_safe() == 0) {
@@ -65,7 +65,7 @@ bconfig_flush(int mode) {
 		goto _free_and_return_error;
 	}
 
-        if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
+        if(!mysql_real_connect(&demo_db, getenv("BOITHO_MYSQL_HOST") ? getenv("BOITHO_MYSQL_HOST") : "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
                 printf(mysql_error(&demo_db));
 		goto _free_and_return_error;
         }

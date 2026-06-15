@@ -82,7 +82,7 @@ int	unicodeletter[628][2] = {
 
 
 // Is 'f' defined as a letter in unicode?
-inline char U_isletter( int f )
+char U_isletter( int f )
 {
     int         o[2] = {-1,-1};
     int         max = 628;

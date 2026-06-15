@@ -517,7 +517,7 @@ dmetaphone(wchar_t *word)
                                 break;
 
 #if  0
-                        case L'Ñ':
+                        case L'\xD1':
                                 offset += 1;
                                 DMPAdd(p2, L"N");
                                 break;

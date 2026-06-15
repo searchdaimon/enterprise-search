@@ -3,7 +3,6 @@
 #endif
 
 
-#include <libio.h>
 #include <inttypes.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -49,7 +48,7 @@ ssize_t bwriter (void *cookie, const char *buffer, size_t size) {
 
 	return write(((struct b_fh_cookie *)cookie)->fdAtomicallyTmp,buffer,size);;
 }
-int bseeker (void *cookie, _IO_off64_t *position, int whence) {
+int bseeker (void *cookie, off64_t *position, int whence) {
 	#ifdef DEBUG
 		printf("seeker(position=%lld,whence=%i)\n",*position,whence);
 		printf("seeker(SEEK_SET=%i, SEEK_CUR=%i)\n",SEEK_SET,SEEK_CUR);
@@ -223,7 +222,7 @@ off_t batomicallyftell(FILE *stream) {
 	  struct _IO_FILE __file;
 	  const void *__vtable;
 	  void *__cookie;
-	  _IO_cookie_io_functions_t __io_functions;
+	  cookie_io_functions_t __io_functions;
 	};
 
 	// f* fonksjonene bufrer dataene. Kaller fseek for å tvinge den til å sende data til writer funksjonen, og dermed oppdatere cookie->offset

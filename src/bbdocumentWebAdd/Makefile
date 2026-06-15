@@ -6,6 +6,7 @@ CGIBIN=		true
 
 WANT_LIBCONFIG=	true
 WANT_MYSQL=	true
+WANT_BDB=	true
 WANT_BASE64=	true
 WANT_COMMON=	true
 WANT_LIBXML=	true

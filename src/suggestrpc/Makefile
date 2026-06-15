@@ -30,8 +30,10 @@ CPPFLAGS += -D_REENTRANT
 CFLAGS += -g  -DWITH_ACL -D_FILE_OFFSET_BITS=64 #-DUS_BOITHOAD
 # For using a different usersystem use this, and set usersystem id in acl.c
 CFLAGS += -g  -DWITH_ACL -DUSERSYSTEM
-LDLIBS += -lnsl -lpthread -lm ../../lib/libcommon.a ../../lib/liblogger.a
-RPCGENFLAGS = 
+# glibc dropped Sun RPC; the rpc/*.h headers and runtime now come from libtirpc.
+CFLAGS += -I/usr/include/tirpc
+LDLIBS += -ltirpc -lpthread -lm ../../lib/libcommon.a ../../lib/liblogger.a
+RPCGENFLAGS =
 
 # Targets 
 
