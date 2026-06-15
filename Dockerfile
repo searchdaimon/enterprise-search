@@ -36,7 +36,7 @@ RUN dnf -y install \
         perl-File-ReadBackwards perl-JSON-XS perl-JSON perl-DateTime perl-Switch \
         perl-File-Copy-Recursive perl-Text-Iconv perl-CGI perl-libwww-perl \
         perl-LWP-Protocol-https perl-URI perl-Config-Tiny perl-Archive-Tar \
-        perl-Time-HiRes perl-Digest-MD5 perl-Storable \
+        perl-Time-HiRes perl-OLE-Storage_Lite perl-Digest-MD5 perl-Storable \
         perl-Test-Simple perl-Encode \
     && dnf clean all
 
@@ -44,14 +44,18 @@ RUN dnf -y install \
 # (fatpacked) installer that needs only the system perl.
 RUN curl -sL https://cpanmin.us -o /usr/local/bin/cpanm && chmod +x /usr/local/bin/cpanm
 
-# Modules not in the AL2023 repos; app/admin runtime deps.
+# Modules not in the AL2023 repos; app/admin runtime deps. MIME::Tools
+# (MIME::Entity / MIME::Parser), together with the distro perl-OLE-Storage_Lite
+# above, are what the .msg file filter needs to index Outlook messages
+# (upstream issues #18 / #27).
 RUN cpanm --notest \
         XML::SimpleObject \
         Net::IP \
         Locale::Maketext::Lexicon \
         Apache::Htpasswd \
         HTTP::Request::AsCGI \
-        SQL::Abstract
+        SQL::Abstract \
+        MIME::Tools
 
 ##############################################################################
 # Berkeley DB (built from source)
