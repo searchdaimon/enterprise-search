@@ -1,6 +1,9 @@
 #!/bin/sh
 
 export BOITHOHOME=/home/boitho/boithoTools
+# Database host: its own container in compose (BOITHO_MYSQL_HOST=db),
+# or the local server on the appliance (the default).
+DBHOST="${BOITHO_MYSQL_HOST:-localhost}"
 
 # Wait for the database server to accept connections before seeding it. On
 # systemd platforms there is no ordering between this service and the native
@@ -8,7 +11,7 @@ export BOITHOHOME=/home/boitho/boithoTools
 # the server is up (leaving boithobb uncreated). Harmless where the DB is
 # already running.
 i=0
-while ! mysqladmin ping --silent 2>/dev/null; do
+while ! mysqladmin ping -h "$DBHOST" --silent 2>/dev/null; do
 	i=$((i + 1))
 	if [ $i -gt 60 ]; then
 		echo "boithodbsetup: timed out waiting for the database server" >&2
@@ -20,18 +23,22 @@ done
 # Seed only once. The web admin's activeUsers table is created by the migrations
 # below, so its presence means the DB is already set up — skip re-seeding, which
 # would otherwise spew harmless-but-noisy duplicate-key errors on every restart.
-if mysql -uboitho -pG7J7v5L5Y7 boithobb -e 'SELECT 1 FROM activeUsers LIMIT 1' >/dev/null 2>&1; then
+if mysql -h "$DBHOST" -uboitho -pG7J7v5L5Y7 boithobb -e 'SELECT 1 FROM activeUsers LIMIT 1' >/dev/null 2>&1; then
 	echo "boithodbsetup: database already seeded, skipping"
 else
-	# Create the database and user.
-	mysql < $BOITHOHOME/blackbox/creatuser.sql
+	# Create the database and user. When the database runs in its own
+	# container the official MariaDB image already created boithobb and the
+	# boitho user, so only do this for a local server.
+	if [ "$DBHOST" = "localhost" ]; then
+		mysql < $BOITHOHOME/blackbox/creatuser.sql
+	fi
 	# Load the base schema, then the current schema migrations (which add the
 	# newer tables the web admin needs, e.g. activeUsers/system/shareResults).
 	# Both dumps predate MariaDB 5.5 and use the removed `TYPE=<engine>` clause,
 	# so rewrite it to `ENGINE=` on the fly. --force skips statements that are
 	# already applied instead of aborting the load.
-	sed 's/TYPE=MyISAM/ENGINE=MyISAM/g' $BOITHOHOME/blackbox/boithobb.sql | mysql --force -uboitho -pG7J7v5L5Y7 boithobb
-	sed 's/TYPE=MyISAM/ENGINE=MyISAM/g' $BOITHOHOME/sql/update-cur.sql     | mysql --force -uboitho -pG7J7v5L5Y7 boithobb
+	sed 's/TYPE=MyISAM/ENGINE=MyISAM/g' $BOITHOHOME/blackbox/boithobb.sql | mysql -h "$DBHOST" --force -uboitho -pG7J7v5L5Y7 boithobb
+	sed 's/TYPE=MyISAM/ENGINE=MyISAM/g' $BOITHOHOME/sql/update-cur.sql     | mysql -h "$DBHOST" --force -uboitho -pG7J7v5L5Y7 boithobb
 fi
 
 # And remove it from the boot process

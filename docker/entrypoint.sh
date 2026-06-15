@@ -2,29 +2,35 @@
 #
 # Container entrypoint: bring up the Searchdaimon appliance WITHOUT systemd.
 #
-# CentOS 7's systemd (v219) only supports cgroup v1, so `/usr/sbin/init` will not
-# boot on a cgroup-v2 host (Docker Desktop, modern Linux). This script starts the
-# same services systemd would, in the same order, so the image runs anywhere. It
-# reuses the appliance's own init.d scripts to launch (and everrun-supervise) the
-# daemons; only the orchestration differs.
+# Modern hosts (Amazon Linux 2023, Docker Desktop) use cgroup v2, on which the
+# CentOS-style systemd init won't boot. This script starts the same services
+# systemd would, in the same order, so the image runs anywhere. It reuses the
+# appliance's own init.d scripts to launch (and everrun-supervise) the daemons;
+# only the orchestration differs.
 #
-# (A real cgroup-v1 host can still run the systemd path instead — see the
-#  commented `/usr/sbin/init` CMD in the Dockerfile.)
+# The MariaDB server runs in its own container (service `db` in
+# docker-compose.yml); this script waits for it, points the app at it, and seeds
+# the schema. BOITHO_MYSQL_HOST selects the DB host (default: localhost).
 
 export BOITHOHOME=/home/boitho/boithoTools
+export BOITHO_MYSQL_HOST="${BOITHO_MYSQL_HOST:-localhost}"
 log() { echo "[entrypoint] $*"; }
 
-log "starting MariaDB"
-if [ ! -d /var/lib/mysql/mysql ]; then
-	mysql_install_db --user=mysql >/dev/null 2>&1
+log "using database host: $BOITHO_MYSQL_HOST"
+
+# Point the Perl side at the database host. The C daemons read BOITHO_MYSQL_HOST
+# directly; the Perl modules read the server from config/setup.txt, so rewrite it
+# here to match.
+if [ -f "$BOITHOHOME/config/setup.txt" ]; then
+	sed -ri "s/^server=.*/server=${BOITHO_MYSQL_HOST}/" "$BOITHOHOME/config/setup.txt"
 fi
-mkdir -p /var/run/mariadb && chown mysql:mysql /var/run/mariadb
-mysqld_safe >/var/log/mariadb/mariadb-safe.log 2>&1 &
+
+log "waiting for MariaDB at $BOITHO_MYSQL_HOST"
 for i in $(seq 1 60); do
-	mysqladmin ping --silent 2>/dev/null && break
+	mysqladmin ping -h "$BOITHO_MYSQL_HOST" --silent 2>/dev/null && break
 	sleep 1
 done
-log "MariaDB: $(mysqladmin ping 2>&1 | head -1)"
+log "MariaDB: $(mysqladmin ping -h "$BOITHO_MYSQL_HOST" 2>&1 | head -1)"
 
 log "starting rpcbind (required by suggest_server's SunRPC registration)"
 /sbin/rpcbind 2>/dev/null || rpcbind 2>/dev/null || true
@@ -55,7 +61,8 @@ log "startup complete; streaming logs to stdout (docker logs / CloudWatch)."
 # any platform that captures container stdout (AWS ECS awslogs -> CloudWatch,
 # Kubernetes, etc.) — no files to scrape. -F retries files not present yet;
 # daemon logs land under $BOITHOHOME/logs and $BOITHOHOME/var.
+mkdir -p /var/log/httpd
 touch /var/log/httpd/error_log /var/log/httpd/access_log
-LOGS="/var/log/httpd/error_log /var/log/httpd/access_log /var/log/mariadb/mariadb.log"
+LOGS="/var/log/httpd/error_log /var/log/httpd/access_log"
 for f in "$BOITHOHOME"/logs/*.log "$BOITHOHOME"/var/*.log; do [ -f "$f" ] && LOGS="$LOGS $f"; done
 exec tail -n0 -F $LOGS 2>/dev/null

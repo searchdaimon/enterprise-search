@@ -1,18 +1,47 @@
-# Searchdaimon Enterprise Search — development container.
+# Searchdaimon Enterprise Search — development stack.
 #
-# The image's default CMD is systemd (/usr/sbin/init), faithful to the appliance,
-# but CentOS 7's systemd needs cgroup v1 and won't boot on a cgroup-v2 host
-# (Docker Desktop, modern Linux). So for compose we override the command with a
-# small entrypoint script that starts the same services WITHOUT systemd — it runs
-# anywhere (Mac included) and needs none of systemd's privileges.
+# Two services:
+#   db  — MariaDB holding the `boithobb` configuration/state database.
+#   es  — the appliance itself (httpd + the C daemons + crawlers).
 #
-#   docker compose up -d --build   # build + start the appliance
+# The appliance image's default CMD starts the stack WITHOUT systemd: Amazon
+# Linux 2023 / modern hosts use cgroup v2, on which CentOS-style systemd init
+# won't boot. The entrypoint script starts the same services directly, so the
+# image runs anywhere (Mac included) and needs none of systemd's privileges.
+#
+#   docker compose up -d --build   # build + start the stack
 #   docker compose logs -f es      # follow startup
 #   docker compose exec es bash    # shell inside
 #
 # The web UI / admin panel is served by httpd and published on host port 8080.
 
 services:
+  db:
+    image: mariadb:10.11
+    container_name: enterprise-search-db
+    # The appliance's MySQL used latin1, and the legacy schema relies on it: e.g.
+    # `config` has a varchar(255) PRIMARY KEY, which is 255 bytes in latin1 but
+    # 1020 in MariaDB's default utf8mb4 — over MyISAM's 1000-byte key limit, so
+    # the table (and everything that reads it) would fail to create. Keep latin1.
+    command: --character-set-server=latin1 --collation-server=latin1_swedish_ci
+    environment:
+      # The official image creates the database and the `boitho` user (granted on
+      # boithobb) on first boot, so the appliance no longer has to create them.
+      # The password matches the credentials the app is built with.
+      MARIADB_DATABASE: boithobb
+      MARIADB_USER: boitho
+      MARIADB_PASSWORD: G7J7v5L5Y7
+      MARIADB_ROOT_PASSWORD: G7J7v5L5Y7root
+    volumes:
+      # The boithobb config DB. (The search index/lots live with `es`, not here.)
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
   es:
     build:
       context: .
@@ -20,18 +49,22 @@ services:
     image: searchdaimon/enterprise-search:latest
     container_name: enterprise-search
     hostname: searchdaimon3        # matches an mk/setup.mk build profile so `make` works in-container
+    depends_on:
+      db:
+        condition: service_healthy
     # Start the stack without systemd (see header). The script is mounted below.
     command: ["bash", "/usr/local/bin/es-entrypoint.sh"]
     init: true                     # tini as PID 1 reaps the daemonized processes
     environment:
       BOITHOHOME: /home/boitho/boithoTools
+      # Point the app at the separate database container. The C code reads this
+      # at runtime (falling back to localhost); the entrypoint writes it into
+      # config/setup.txt for the Perl side.
+      BOITHO_MYSQL_HOST: db
     volumes:
       - ./docker/entrypoint.sh:/usr/local/bin/es-entrypoint.sh:ro
-      # Persist the search index/lot data and the MariaDB (boithobb) config DB
-      # across container recreation. Keep these together — the lots are the index
-      # and the DB holds which collections produced them.
+      # Persist the search index/lot data across container recreation.
       - boithodata:/boithoData
-      - mariadb-data:/var/lib/mysql
       # NOTE: do NOT bind-mount the source tree over /home/boitho/boithoTools for
       # a normal run — it would shadow the binaries compiled into the image
       # (bin/, lib/, crawlers/*.so) and config.mk with the host tree, which has
@@ -39,6 +72,7 @@ services:
     ports:
       - "8080:80"    # web UI + admin panel (httpd)
       - "8443:443"
+    restart: unless-stopped
 
 volumes:
   boithodata:
