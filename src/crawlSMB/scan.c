@@ -12,6 +12,28 @@
 #include "../crawl/crawl.h"
 #include "../logger/logger.h"
 
+/* Mask the password in an "smb://user:password@host" URL so credentials are
+ * never written to the logs (issue #19). The masked URL is written to `out`
+ * (size outlen) and returned; URLs without an embedded password are copied
+ * unchanged. The original URL is left intact for the SMB client to use. */
+static const char *
+redact_smb_url(const char *url, char *out, size_t outlen)
+{
+    const char *scheme = strstr(url, "://");
+    const char *at = scheme ? strchr(scheme + 3, '@') : NULL;
+    if (scheme && at) {
+        const char *userinfo = scheme + 3;
+        const char *pwcolon = memchr(userinfo, ':', (size_t)(at - userinfo));
+        if (pwcolon) {
+            int prefix = (int)(pwcolon - url) + 1;   /* up to and incl. ':' */
+            snprintf(out, outlen, "%.*s***%s", prefix, url, at);
+            return out;
+        }
+    }
+    snprintf(out, outlen, "%s", url);
+    return out;
+}
+
 static void
 no_auth_data_fn(const char * pServer,
                 const char * pShare,
@@ -52,7 +74,7 @@ int scanSMB(int (*scan_found_share)(char share[]),char host[],char username[], c
     poptContext                 pc;
     SMBCCTX *                   context;
 
-    bblog(INFO, "scan.c: host %s username %s password %s",host,username,password);
+    bblog(INFO, "scan.c: host %s username %s password ***",host,username);
 
 
     /* Allocate a new context */
@@ -148,18 +170,19 @@ int browse(int (*scan_found_share)(char share[]),char * path, int scan, int inde
 {
     char *                      p;
     char                        buf[1024];
+    char                        safe_path[1024];
     int                         dir;
     struct stat                 stat;
     struct smbc_dirent *        dirent;
 
     if (! scan)
     {
-        bblog(INFO, "Opening (%s)...", path);
+        bblog(INFO, "Opening (%s)...", redact_smb_url(path, safe_path, sizeof safe_path));
     }
-        
+
     if ((dir = smbc_opendir(path)) < 0)
     {
-        bblog(ERROR, "Could not open directory [%s] (%d:%s)", path, errno, strerror(errno));
+        bblog(ERROR, "Could not open directory [%s] (%d:%s)", redact_smb_url(path, safe_path, sizeof safe_path), errno, strerror(errno));
         return 0;
     }
 
