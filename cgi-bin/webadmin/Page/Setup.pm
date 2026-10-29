@@ -161,7 +161,7 @@ sub add_collections($$$) {
 		my $success = 1;
 		my $errmsg;
 		eval {
-			$success = $sqlShares->insert_share(
+			$success = $sqlShares->insert(
 			{
 				'connector'       => $connector_id,
 				'resource'        => $resource,
