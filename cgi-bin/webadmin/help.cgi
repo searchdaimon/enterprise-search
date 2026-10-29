@@ -30,7 +30,12 @@ if (-e "/etc/init.d/phonehome") {
 if (defined($state->{'action'})) {
 	my $action = $state->{'action'};
 	
-	if ($action eq 'phone_home') {
+	if ($action eq 'phone_home' && !$vars->{phone_instaled}) {
+		# Not installed (no init script, no setuidcaller binary): the template
+		# shows a "not installed" notice, so don't call the missing helper.
+		$template_file = 'help_phone_home.html';
+	}
+	elsif ($action eq 'phone_home') {
 		# User is working with call home
 		my $do = $state->{'do'};
 		$do = '' unless $do;
