@@ -143,7 +143,7 @@ sub rename_template {
 		croak "Template already exists"
 			if $s->tpl_exists($new_tpl_name);
 
-		for my $path_func qw(tpl_path lang_path cfg_path) {
+		for my $path_func (qw(tpl_path lang_path cfg_path)) {
 			my $old_path = $s->$path_func($tpl);
 			my $new_path = $s->$path_func($new_tpl_name);
 			move($old_path, $new_path)
