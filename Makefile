@@ -137,6 +137,7 @@ repomodwrap:
 	@echo ""
 	@echo "$@:"
 
+	mkdir -p setuid
 	$(CC) -Wall -o setuid/repomodwrap src/repomodsetuid/repomodwrap.c -O2
 
 setuidcaller:
@@ -1155,15 +1156,17 @@ boithoadClientLib: src/boithoadClientLib/boithoadClientLib.c
 
 
 InitServices: src/InitServices/initwrapper.c
+	mkdir -p setuid
 	(cd src/InitServices/ && make clean && make)
-
 	cp src/InitServices/initwrapper setuid/
 
 YumWrapper: src/YumWrapper/yumwrapper.c
+	mkdir -p setuid
 	(cd src/YumWrapper && make clean && make)
 	cp src/YumWrapper/yumwrapper setuid/
 
 NetConfig: src/NetConfig/configwrite.c
+	mkdir -p setuid
 	(cd src/NetConfig && make clean && make)
 	cp src/NetConfig/configwrite setuid/
 

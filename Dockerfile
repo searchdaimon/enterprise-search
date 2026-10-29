@@ -120,6 +120,12 @@ RUN ./configure && make && make install
 # above stay cached when this changes.
 RUN dnf -y install rpcgen libtirpc libtirpc-devel && dnf clean all
 
+# procps-ng: the init.d scripts use pidof/ps for status and stop. Without them
+# the admin panel's "Manage services" page reports every daemon as stopped and
+# cannot stop or restart them (start still works, which is why the entrypoint
+# got by without it).
+RUN dnf -y install procps-ng && dnf clean all
+
 ##############################################################################
 # Main setup
 ##############################################################################
@@ -153,6 +159,12 @@ RUN make build host=searchdaimon3 \
         BDB_INC="-I/usr/local/BerkeleyDB/include" \
         BDB_LIB="/usr/local/BerkeleyDB/lib/libdb.a -lpthread"
 
+# The setuid helpers the admin panel (running as apache) uses to control the
+# daemons, run yum and switch the package repo. The appliance ships them in the
+# boithobb-setuid RPM, which `make build` does not cover. Built unprivileged
+# here; owner/mode are set in the runtime section below, after the chown -R.
+RUN make InitServices YumWrapper NetConfig repomodwrap host=searchdaimon3
+
 ##############################################################################
 # Runtime services
 ##############################################################################
@@ -167,6 +179,20 @@ RUN mkdir -p /home/boitho/boithoTools/var /boithoData/lot \
                                   /home/boitho/boithoTools/var/webadmin_tmp \
  && install -o apache -g apache -m 600 /home/boitho/boithoTools/cgi-bin/webadmin/.htpasswd \
                                        /home/boitho/boithoTools/config/.htpasswd
+
+# Install the setuid helpers as root 4755 (what the boithobb-setuid RPM does on
+# the appliance). initwrapper runs /etc/init.d/<service>, so link the appliance
+# init scripts there for the services it knows about (phonehome is left out on
+# purpose: help.cgi treats its presence as "phone home installed").
+RUN chown root:root /home/boitho/boithoTools/setuid/* \
+ && chmod 4755 /home/boitho/boithoTools/setuid/* \
+ && for s in boithoad boitho-bbdn searchdbb crawlManager suggest crawl_watch bbAutoUpdate; do \
+      ln -s /home/boitho/boithoTools/init.d/$s /etc/init.d/$s; \
+    done
+
+# Where the admin panel's "Crashes" page looks for core dumps (the appliance
+# kernel core_pattern writes there). Empty in a container, but it must exist.
+RUN install -d -o apache -g apache /coredumps/saved
 
 # The compose entrypoint (docker/entrypoint.sh) starts the stack without systemd
 # (cgroup-v2 friendly) and is mounted in at run time. Copy it in too so a plain
