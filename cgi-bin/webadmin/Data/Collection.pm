@@ -130,6 +130,13 @@ sub _tbl_shares_attr {
 		$tbl_attr{$nullable} = undef
 			if defined $tbl_attr{$nullable} && $tbl_attr{$nullable} eq '';
 	}
+	# The authentication select posts the literal "new_values" when the user
+	# picks "(New values)". set_auth() replaces it with a real id when a
+	# username and password were given; otherwise it must not reach the int
+	# column (old MySQL stored 0, strict MariaDB rejects it). Dropping it keeps
+	# the existing auth_id on update and the NULL default on insert.
+	delete $tbl_attr{auth_id}
+		if defined $tbl_attr{auth_id} && $tbl_attr{auth_id} eq 'new_values';
 	return %tbl_attr;
 }
 
