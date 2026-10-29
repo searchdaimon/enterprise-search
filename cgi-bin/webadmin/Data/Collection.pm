@@ -119,6 +119,17 @@ sub _tbl_shares_attr {
 		next unless exists $s->{attr}{$field};
 		$tbl_attr{$field} = $s->{attr}{$field};
 	}
+
+	# HTML selects post "" for "(Default rate)" and unset lookups. The appliance's
+	# old MySQL silently coerced "" to 0 for int columns; MariaDB 10.x runs in
+	# STRICT mode by default and rejects it ("Incorrect integer value"), so map
+	# "" to the column default here: 0 for NOT NULL rate, NULL for nullable ints.
+	$tbl_attr{rate} = 0
+		if defined $tbl_attr{rate} && $tbl_attr{rate} eq '';
+	for my $nullable (qw(auth_id system)) {
+		$tbl_attr{$nullable} = undef
+			if defined $tbl_attr{$nullable} && $tbl_attr{$nullable} eq '';
+	}
 	return %tbl_attr;
 }
 

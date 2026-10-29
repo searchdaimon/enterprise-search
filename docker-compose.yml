@@ -23,7 +23,12 @@ services:
     # `config` has a varchar(255) PRIMARY KEY, which is 255 bytes in latin1 but
     # 1020 in MariaDB's default utf8mb4 — over MyISAM's 1000-byte key limit, so
     # the table (and everything that reads it) would fail to create. Keep latin1.
+    # The appliance's MySQL also ran without STRICT mode: the legacy Perl/C code
+    # relies on lenient coercion (e.g. the admin forms post "" for int columns
+    # such as shares.rate, which old MySQL stored as 0). MariaDB 10.x defaults to
+    # STRICT_TRANS_TABLES and would reject those inserts, so turn it off.
     command: --character-set-server=latin1 --collation-server=latin1_swedish_ci
+      --sql-mode=NO_ENGINE_SUBSTITUTION
     environment:
       # The official image creates the database and the `boitho` user (granted on
       # boithobb) on first boot, so the appliance no longer has to create them.
