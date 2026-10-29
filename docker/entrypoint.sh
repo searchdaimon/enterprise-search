@@ -45,6 +45,13 @@ log "starting httpd"
 # is unchanged.
 sed -ri 's#^[[:space:]]*ErrorLog .*#ErrorLog /var/log/httpd/error_log#; s#^[[:space:]]*CustomLog .*#CustomLog /var/log/httpd/access_log common#' \
 	/etc/httpd/conf.d/bbdemo.boitho.com.conf
+# Daemons started from the admin panel's "Manage services" page inherit Apache's
+# CGI environment, so the database host has to be visible there as well: the C
+# daemons read BOITHO_MYSQL_HOST and otherwise fall back to localhost, exit, and
+# everrun respawns them forever while the page reports them as running.
+grep -q '^SetEnv BOITHO_MYSQL_HOST ' /etc/httpd/conf.d/bbdemo.boitho.com.conf \
+	|| sed -i "/^SetEnv BOITHOHOME /a SetEnv BOITHO_MYSQL_HOST ${BOITHO_MYSQL_HOST}" \
+		/etc/httpd/conf.d/bbdemo.boitho.com.conf
 # httpd needs its runtime dir for the pid/lock; with no systemd-tmpfiles here it
 # is not created automatically, and httpd then fails to start. (Don't hide the
 # error — let it surface in the streamed logs.)
