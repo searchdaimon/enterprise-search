@@ -1,4 +1,4 @@
-FROM amazonlinux:2023.9.20250929.0
+FROM amazonlinux:2023.12.20261021.0
 
 ENV container=docker
 WORKDIR /tmp
