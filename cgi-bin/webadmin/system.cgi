@@ -23,7 +23,11 @@ my $template_file;
 
 
 my $pageServices = Page::System::Services->new($page->get_dbh);
-my $pageCrashes  = Page::System::Crashes->new($page->get_dbh);
+# Built on first use only: its constructor dies when the core dump directory
+# is missing and cannot be created, and that must not take the diagnostics
+# and services pages down with it.
+my $pageCrashes;
+sub pageCrashes { $pageCrashes ||= Page::System::Crashes->new($page->get_dbh) }
 
 
 if (defined $state{'submit'}) { #POST actions
@@ -37,7 +41,7 @@ if (defined $state{'submit'}) { #POST actions
 
 	# USe wants to send a crash report.
 	if (defined $button->{'crash_send_report'}) {
-		($vars, $template_file) = $pageCrashes->send_report($vars, $state{'core_file'}, 
+		($vars, $template_file) = pageCrashes()->send_report($vars, $state{'core_file'}, 
 			$state{'core_time'}, $state{'report'})
 	}
 }
@@ -51,11 +55,11 @@ elsif (defined $state{'view'}) {
 		}
 
 		case "crashes" {
-			($vars, $template_file) = $pageCrashes->show($vars);
+			($vars, $template_file) = pageCrashes()->show($vars);
 		}
 
 		case "crash_report" {
-			($vars, $template_file) = $pageCrashes->show_report($vars, $state{'core'});
+			($vars, $template_file) = pageCrashes()->show_report($vars, $state{'core'});
 		}
                 default { croak "unknown view '$view'" }
 	}
