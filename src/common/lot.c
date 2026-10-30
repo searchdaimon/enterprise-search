@@ -651,6 +651,22 @@ void GetFilePathForIindex (char *FilePath, char *FileName,int IndexNr,char Type[
 	}
 }
 
+/*
+ * Path of a collection's whole inverted-index tree in data directory IndexNr
+ * ("<datadir>/iindex/<subname>", no trailing slash). The per-file helpers above
+ * only name one index or dictionary file; this is what to remove when the
+ * collection itself is deleted.
+ */
+void GetFilePathForIindexCollection(char *FilePath, int IndexNr, char subname[]) {
+
+	if (!MapListInitialised) {
+		MakeMapListMap();
+		MapListInitialised = 1;
+	}
+
+	sprintf(FilePath,"%s/iindex/%s",dataDirectorys[IndexNr % NrOfDataDirectorys].Name,subname);
+}
+
 void GetFilPathForLotFile(char *FilePath,char lotfile[],int LotNr,char subname[]) {
 
 	GetFilPathForLot(FilePath,LotNr,subname);

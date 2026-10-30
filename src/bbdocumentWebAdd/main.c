@@ -626,7 +626,14 @@ int main(int argc, char **argv, char **envp)
 
 		requrle = strdup(getenv("REQUEST_URI"));
 		unescape_url(requrle);
-		sscanf(requrle,"/%[a-z]/%[a-zA-Z0-9_-]/%[^?]", api, coll, url);
+		// sscanf leaves a field untouched when its conversion does not match,
+		// so start from empty strings: for "DELETE /documents/<coll>/" there is
+		// no url, and an uninitialised url[] made that request delete a random
+		// document instead of the collection.
+		api[0] = coll[0] = url[0] = '\0';
+		if (sscanf(requrle,"/%99[a-z]/%99[a-zA-Z0-9_-]/%511[^?]", api, coll, url) < 2) {
+			cgi_error(400, "Request path must be /documents/<collection>/[<url>]");
+		}
 
 		#ifdef DEBUG
 			fprintf(stderr, "api: \"%s\"\n",api);

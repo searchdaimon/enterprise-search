@@ -1342,6 +1342,14 @@ int bbdocument_deletecoll(char collection[]) {
 
 	debug("Deleting collection: \"%s\"\n",collection);
 
+	// An empty name would make the paths below point at the shared "iindex/"
+	// trees themselves; "www" is the legacy shared layout with no per-collection
+	// directory. Neither is a collection anyone can delete.
+	if (collection[0] == '\0' || strcmp(collection,"www") == 0) {
+		fprintf(stderr,"bbdocument_deletecoll: refusing to delete collection \"%s\"\n",collection);
+		return 0;
+	}
+
 	LotNr = 1;
 	while((fh =lotOpenFileNoCasheByLotNr(LotNr,"reposetory","r",'s',collection)) != NULL) {
 		GetFilPathForLot(FilePath,LotNr,collection);
@@ -1375,6 +1383,20 @@ int bbdocument_deletecoll(char collection[]) {
 			if ((unlink(DictionaryPath) != 0) && (errno != ENOENT)) {//ENOENT=No such file or directory. Don't show an error if the file didn't exist. That is completely normal
                 	        perror("remove DictionaryPath");
                 	}
+		}
+	}
+
+	// The loop above only knows the index files for one language ("aa") and
+	// left everything else behind: per-language index and dictionary files,
+	// attribute indexes and the directories themselves. A collection recreated
+	// under the same name then answered queries with stale DocIDs. Remove the
+	// whole iindex/<collection> tree from every data directory.
+	for (i=0; i < NrOfDataDirectorys; i++) {
+		struct stat st;
+		GetFilePathForIindexCollection(IndexPath,i,collection);
+		if (stat(IndexPath,&st) == 0 && S_ISDIR(st.st_mode)) {
+			debug("Deleting iindex tree: %s\n",IndexPath);
+			rrmdir(IndexPath);
 		}
 	}
 

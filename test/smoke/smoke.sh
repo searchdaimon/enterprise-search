@@ -181,6 +181,12 @@ if [ "${SMOKE_KEEP:-0}" = 1 ]; then
 else
 	code=$(http_code -X DELETE "$BASE/documents/$COLL/")
 	[ "$code" = 200 ] && ok "test collection $COLL deleted" || not_ok "test collection $COLL deleted" "got HTTP $code"
+	body=$(curl -s "$(query_url zzqqnothingmatches)")
+	if printf '%s' "$body" | grep -qF "\"$COLL\""; then not_ok "dispatcher no longer lists the deleted collection" "still in the collections list"; else ok "dispatcher no longer lists the deleted collection"; fi
+	if [ -d /boithoData ]; then
+		left=$(find /boithoData -maxdepth 4 -name "$COLL" 2>/dev/null)
+		if [ -z "$left" ]; then ok "deleting the collection removed its lot and iindex directories"; else not_ok "deleting the collection removed its lot and iindex directories" "left behind:" $left; fi
+	fi
 fi
 
 echo "1..$ran"

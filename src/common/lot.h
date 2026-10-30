@@ -25,6 +25,7 @@ void GetFilPathForLotFile(char *FilePath,char lotfile[],int LotNr,char subname[]
 void GetFilPathForLotByDocID(char *FilePath,int DocID,char subname[]);
 void GetFilePathForIindex (char *FilePath, char *FileName,int IndexNr,char Type[], char lang[],char subname[]);
 void GetFilePathForIDictionary(char *FilePath, char *FileName,int IndexNr,char Type[], char lang[],char subname[]);
+void GetFilePathForIindexCollection(char *FilePath, int IndexNr, char subname[]);
 void GetFilPathForThumbnaleByDocID(char *FileName,int DocID,char subname[]);
 FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char subname[]);
 FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock,char subname[]);
