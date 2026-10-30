@@ -118,13 +118,13 @@ char *sfindductype(char filepath[]) {
                 }
                 else if (filepath[i] == '.') {
 
-                        cp = (char *)((int)filepath + i +1);
+                        cp = filepath + i + 1;
 
                         type = malloc(strlen(cp) +1);
                         strcpy(type,cp);
 
 			// seek to the first % or space to remove them
-			if ( ( (cp = strchr(type,'%')) != NULL ) || ((cp = strchr(type,'%')) != NULL)) {
+			if ( ( (cp = strchr(type,'%')) != NULL ) || ((cp = strchr(type,' ')) != NULL)) {
 				cp[0] = '\0';
 			}
 
