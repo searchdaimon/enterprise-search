@@ -37,4 +37,8 @@
 	[% checkList.add(restart_message, state) %]
 [% END %]
 
+[% IF network_error.defined %]
+	[% checkList.add(network_error, checkList.FAILED) %]
+[% END %]
+
 [% checkListHTML = checkList.getList(1) %]

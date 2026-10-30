@@ -20,13 +20,34 @@ use Boitho::NetConfig;
 sub _init {
     my $s = shift;
 
-    $s->{netConfig} = Boitho::NetConfig
-        ->new($CONFIG->{'net_ifcfg'}, 
-                $CONFIG->{'netscript_dir'}, 
-                $CONFIG->{'configwrite_path'}, 
+    # Boitho::NetConfig refuses to construct unless the appliance network files
+    # (ifcfg-ethN, resolv.conf, the setuid configwrite helper) all exist. In a
+    # container or on a non-appliance host they do not, and dying here used to
+    # turn the whole settings page into a 500. Remember the reason instead and
+    # let the page explain that network configuration is unavailable.
+    $s->{netConfig} = eval {
+        Boitho::NetConfig->new($CONFIG->{'net_ifcfg'},
+                $CONFIG->{'netscript_dir'},
+                $CONFIG->{'configwrite_path'},
                 $CONFIG->{'resolv_path'});
+    };
+    if (!$s->{netConfig}) {
+        ($s->{netConfigError} = $@ || "unknown error") =~ s/ at \S+ line \d+\.?\s*$//;
+    }
 
     $s->{sessData} = Sql::SessionData->new($s->{dbh});
+}
+
+##
+# True when the network configuration files are available on this system.
+sub network_available { defined $_[0]->{netConfig} }
+
+# The Boitho::NetConfig instance, or croak with the reason it is unavailable.
+sub _netconfig {
+    my $s = shift;
+    croak "Network configuration is not available on this system: $s->{netConfigError}"
+        unless $s->{netConfig};
+    return $s->{netConfig};
 }
 
 ##
@@ -38,9 +59,18 @@ sub _init {
 sub show_network_config {
 	my ($s, $vars, $netconf_usr_ref, $resolv_usr_ref) = @_;
 
-	# get defaults
-	my $netconf_ref = $s->{netConfig}->parse_netconf();
-	my $resolv_ref  = $s->{netConfig}->parse_resolv();
+	# get defaults (empty, with an explanation, when this system has no
+	# appliance network configuration to read)
+	my ($netconf_ref, $resolv_ref) = ({}, {});
+	if ($s->network_available) {
+		$netconf_ref = $s->{netConfig}->parse_netconf();
+		$resolv_ref  = $s->{netConfig}->parse_resolv();
+	}
+	else {
+		$vars->{network_unavailable} = 1;
+		$vars->{network_error} = "Network configuration is not available on this system: "
+			. $s->{netConfigError};
+	}
 	
 	
 	# overwrite defaults with user values
@@ -80,7 +110,7 @@ sub run_updates {
 
     my $output;
     eval {
-        $output = $s->{netConfig}->restart();
+        $output = $s->_netconfig->restart();
         push @res, ["Network restarted", 1];
     };
     if ($@) {   
@@ -137,8 +167,8 @@ sub save_netconf {
     # only in the UI.
     delete $settings_ref->{'method'};
 
-    $s->{netConfig}->generate_netconf($settings_ref);
-    $s->{netConfig}->save_netconf();
+    $s->_netconfig->generate_netconf($settings_ref);
+    $s->_netconfig->save_netconf();
     1;
 }
 
@@ -150,8 +180,8 @@ sub save_netconf {
 sub save_resolv {
     my ($s, $keywords_ref) = @_;
     $s->_clean_resolv($keywords_ref);
-    $s->{netConfig}->generate_resolv($keywords_ref);
-    $s->{netConfig}->save_resolv();
+    $s->_netconfig->generate_resolv($keywords_ref);
+    $s->_netconfig->save_resolv();
 }
 
 sub upd_net_results {
