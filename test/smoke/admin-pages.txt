@@ -1,0 +1,49 @@
+# Admin panel pages the smoke test loads (GET, authenticated) and expects to
+# render: HTTP 200 and no Perl "Software error" / Apache error page in the body.
+# One path per line, relative to /cgi-bin/webadmin/. Only idempotent views go
+# here: nothing that creates, deletes, starts or stops anything, and nothing
+# that needs an id of an existing object.
+# (overview.cgi?action=manage/customize/accesslevel and usersys.cgi?view=map
+# are per-object pages that need id= and are therefore not listed.)
+# system.cgi?view=package_upload only exists inside a commented-out tab bar.
+#
+# A line may be prefixed with "XFAIL <reason>: " for a page known to be broken;
+# it is then reported as a TODO instead of a failure, and flagged if it starts
+# passing so the prefix can be removed.
+overview.cgi
+overview.cgi?action=documents
+overview.cgi?action=graphs
+overview.cgi?action=upload
+overview.cgi?action=console
+add.cgi
+connector.cgi
+authentication.cgi
+users.cgi
+usersys.cgi
+logs.cgi
+logs.cgi?view=search
+logs.cgi?view=statistics
+settings.cgi
+settings.cgi?view=advanced
+settings.cgi?view=anostat
+settings.cgi?view=collection_manager
+settings.cgi?view=frontpage
+settings.cgi?view=import_export
+settings.cgi?view=network
+system.cgi
+system.cgi?view=services
+system.cgi?view=crashes
+updates.cgi
+updates.cgi?view=updates
+updates.cgi?view=advanced
+synonym.cgi
+clienttpl.cgi
+apiinfo.cgi
+apiinfo.cgi?view=push
+help.cgi
+help.cgi?action=phone_home
+help.cgi?topic=connectors
+scan.cgi
+setup.cgi
+Graph/config.cgi?action=crawleddocs
+Graph/graph.cgi?action=searchesday&last=30

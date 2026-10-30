@@ -1347,3 +1347,20 @@ webpublish:
 #clean :
 #	rm -f program *.png output-data
 
+
+# --- Tests -------------------------------------------------------------------
+# See test/README.md. `test` needs `make dep` first (it links against lib/*.a);
+# `smoke` needs the compose stack running and talks to the appliance container.
+# Like every target here this needs BOITHOHOME and config.mk; from a plain host
+# checkout use `make -C test smoke-compose` directly.
+test:
+	@echo ""
+	@echo "$@:"
+	$(MAKE) -C test check
+
+smoke:
+	@echo ""
+	@echo "$@:"
+	$(MAKE) -C test smoke-compose
+
+.PHONY: test smoke

@@ -29,3 +29,6 @@ perlxs/*/pm_to_blib
 
 # Local logs / scratch
 logs/*.log
+
+# Test build outputs (built inside the test stage)
+test/c/bin/
