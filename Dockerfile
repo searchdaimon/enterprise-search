@@ -68,7 +68,7 @@ RUN dnf -y install \
 # appliance Filesys::SmbClient), and the appliance itself ships a compiler. Its
 # own layer, so a toolchain change does not invalidate the two large (and slow
 # to download) package layers above.
-RUN dnf -y install gcc gcc-c++ make perl-devel perl-ExtUtils-MakeMaker && dnf clean all
+RUN dnf -y install gcc gcc-c++ make patch perl-devel perl-ExtUtils-MakeMaker libsmbclient-devel && dnf clean all
 
 # cpanm itself isn't packaged on AL2023; the cpanmin.us script is a self-contained
 # (fatpacked) installer that needs only the system perl.
@@ -80,6 +80,7 @@ RUN curl -sL https://cpanmin.us -o /usr/local/bin/cpanm && chmod +x /usr/local/b
 # SOAP::Lite is what the Sharepoint and Entropysoft connectors (crawlers/,
 # Modules/SD*) and crawlManager2/getacl.pl talk SOAP with. HTML::Strip (XS, built
 # with the toolchain installed above) is the Sharepoint connector's other dependency.
+# Parse::MediaWikiDump is what crawlers/wikipediadump reads dumps with.
 RUN cpanm --notest \
         XML::SimpleObject \
         Net::IP \
@@ -89,7 +90,23 @@ RUN cpanm --notest \
         SQL::Abstract \
         MIME::Tools \
         SOAP::Lite \
-        HTML::Strip
+        HTML::Strip \
+        Parse::MediaWikiDump
+
+# Filesys::SmbClient (crawlers/perlSMB) is a 2008 XS module written against
+# the Samba 2/3 libsmbclient API, whose SMBCCTX function pointers Samba 4
+# replaced with smbc_getFunction*() getters, so stock 3.2 does not compile
+# against the libsmbclient this image has. Build it from the CPAN tarball with
+# a small patch that rewrites those calls (docker/patches/).
+COPY docker/patches/Filesys-SmbClient-3.2-samba4.patch /tmp/
+RUN cd /tmp \
+ && curl -sL -o Filesys-SmbClient-3.2.tar.gz https://cpan.metacpan.org/authors/id/A/AL/ALIAN/Filesys-SmbClient-3.2.tar.gz \
+ && tar xf Filesys-SmbClient-3.2.tar.gz \
+ && cd Filesys-SmbClient-3.2 \
+ && patch -p1 < /tmp/Filesys-SmbClient-3.2-samba4.patch \
+ && perl Makefile.PL INC=-I/usr/include/samba-4.0 \
+ && make && make install \
+ && cd /tmp && rm -rf Filesys-SmbClient-3.2 Filesys-SmbClient-3.2.tar.gz Filesys-SmbClient-3.2-samba4.patch
 
 RUN useradd boitho && chmod 701 /home/boitho
 

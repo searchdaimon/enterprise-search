@@ -1,0 +1,137 @@
+--- a/SmbClient.xs
++++ b/SmbClient.xs
+@@ -101,7 +101,7 @@
+  * Create directory fname
+  *
+  */
+-RETVAL = context->mkdir(context, fname, mode);
++RETVAL = smbc_getFunctionMkdir(context)(context, fname, mode);
+ if (RETVAL < 0) {
+   RETVAL=0;
+ #ifdef VERBOSE
+@@ -125,7 +125,7 @@
+  * Remove directory fname
+  *
+  */
+-RETVAL = context->rmdir(context, fname);
++RETVAL = smbc_getFunctionRmdir(context)(context, fname);
+ if (RETVAL < 0) {
+   RETVAL = 0;
+ #ifdef VERBOSE
+@@ -147,7 +147,7 @@
+  * Open directory fname
+  *
+  */
+-  RETVAL = context->opendir(context, fname);
++  RETVAL = smbc_getFunctionOpendir(context)(context, fname);
+ #ifdef VERBOSE
+   fprintf(stderr, "! Filesys::SmbClient : _opendir: %d\n", RETVAL); 
+ #endif
+@@ -174,7 +174,7 @@
+  * Close file descriptor for directory fd
+  *
+  */
+-RETVAL = context->closedir(context, fd);
++RETVAL = smbc_getFunctionClosedir(context)(context, fd);
+ #ifdef VERBOSE
+   if (RETVAL < 0) { 
+     fprintf(stderr, "*** Error Filesys::SmbClient : "
+@@ -206,7 +206,7 @@
+ #if !(defined (__SVR4) && defined (__sun)) && !defined(_AIX)
+ #undef readdir
+ #endif
+-  dirp = (struct smbc_dirent *)context->readdir(context, fd);
++  dirp = (struct smbc_dirent *)smbc_getFunctionReaddir(context)(context, fd);
+   if (dirp) {
+     XPUSHs(sv_2mortal(newSVnv(dirp->smbc_type)));
+ /*
+@@ -234,7 +234,7 @@
+   int i;
+   struct stat buf;
+ PPCODE:
+-  i = context->stat(context, fname, &buf);
++  i = smbc_getFunctionStat(context)(context, fname, &buf);
+   if (i == 0) {
+     XPUSHs(sv_2mortal(newSVnv(buf.st_dev)));
+     XPUSHs(sv_2mortal(newSVnv(buf.st_ino)));
+@@ -270,7 +270,7 @@
+   int i;
+   struct stat buf;
+ PPCODE:
+-i = context->fstat(context, fd, &buf);
++i = smbc_getFunctionFstat(context)(context, fd, &buf);
+ if (i == 0) {
+   XPUSHs(sv_2mortal(newSVnv(buf.st_dev)));
+   XPUSHs(sv_2mortal(newSVnv(buf.st_ino)));
+@@ -302,7 +302,7 @@
+  * Rename old file oname in nname
+  *
+  */
+-RETVAL = context->rename(context, oname, context, nname);
++RETVAL = smbc_getFunctionRename(context)(context, oname, context, nname);
+ if (RETVAL < 0) { 
+   RETVAL = 0;
+ #ifdef VERBOSE	
+@@ -347,7 +347,7 @@
+     flags = O_RDONLY; fname++; 
+   /* Mod < */
+   } else flags =  O_RDONLY;
+-RETVAL = context->open(context, fname, flags, mode);	
++RETVAL = smbc_getFunctionOpen(context)(context, fname, flags, mode);	
+ #ifdef VERBOSE
+   fprintf(stderr, "! Filesys::SmbClient :"
+ 	          "Open %s return %d\n", fname, RETVAL); 
+@@ -358,7 +358,7 @@
+  fprintf(stderr, "*** Error Filesys::SmbClient :"
+                  "Open %s : %s\n", fname, strerror(errno)); 
+ #endif
+-} else if (seek_end) { context->lseek(context, RETVAL, 0, SEEK_END); }
++} else if (seek_end) { smbc_getFunctionLseek(context)(context, RETVAL, 0, SEEK_END); }
+ OUTPUT:
+   RETVAL
+ 
+@@ -377,7 +377,7 @@
+   int returnValue;
+ CODE:
+   buf = (char*)alloca(sizeof(char)*(count+1));
+-  returnValue = context->read(context, fd, buf, count);
++  returnValue = smbc_getFunctionRead(context)(context, fd, buf, count);
+   buf[returnValue]='\0';
+ #ifdef VERBOSE
+   if (returnValue <= 0){ 
+@@ -401,7 +401,7 @@
+  * Write buf on file descriptor fd
+  *
+  */
+-  RETVAL=context->write(context, fd, buf, count);
++  RETVAL=smbc_getFunctionWrite(context)(context, fd, buf, count);
+ #ifdef VERBOSE
+   fprintf(stderr, "! Filesys::SmbClient :"
+ 	          "write %d bytes: %s\n",count, buf);	
+@@ -427,7 +427,7 @@
+   int offset
+   int whence
+ CODE:
+-  RETVAL=context->lseek(context, fd, offset, whence);
++  RETVAL=smbc_getFunctionLseek(context)(context, fd, offset, whence);
+ #ifdef VERBOSE
+ if (RETVAL < 0) { 
+   if (RETVAL == EBADF) 
+@@ -457,7 +457,7 @@
+ #ifdef HAVE_CLOSEFN
+   RETVAL=context->close_fn(context, fd);
+ #else
+-  RETVAL=context->close(context, fd);
++  RETVAL=smbc_getFunctionClose(context)(context, fd);
+ #endif
+ OUTPUT:
+   RETVAL
+@@ -473,7 +473,7 @@
+  * Remove file fname
+  *
+  */
+-  RETVAL = context->unlink(context, fname);
++  RETVAL = smbc_getFunctionUnlink(context)(context, fname);
+   if (RETVAL < 0) { 
+     RETVAL = 0;
+ #ifdef VERBOSE	
