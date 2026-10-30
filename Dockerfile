@@ -17,12 +17,11 @@
 # The appliance semantics are kept: the tree lives at /home/boitho/boithoTools and
 # is both the install location and $BOITHOHOME.
 
-ARG BASE_IMAGE=amazonlinux:2023.12.20261021.0
-
 ##############################################################################
 # base: runtime packages
 ##############################################################################
-FROM ${BASE_IMAGE} AS base
+# The tag is written out here (not via an ARG) so Dependabot can bump it.
+FROM amazonlinux:2023.12.20261021.0 AS base
 
 ENV container=docker
 ENV BOITHOHOME=/home/boitho/boithoTools
