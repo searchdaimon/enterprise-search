@@ -1,0 +1,19 @@
+# Dependabot version updates. Only the ecosystems it can see in this repo:
+# the GitHub Actions used by the CI workflow and the Docker image tags in the
+# Dockerfile and docker-compose.yml. The CPAN modules, dnf packages and the
+# from-source libraries (Berkeley DB, flex, bison) are not covered and stay
+# manual. Monthly, because every image bump means a full rebuild in CI.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: monthly
